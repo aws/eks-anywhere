@@ -12,7 +12,7 @@ Be sure to refer to the [troubleshooting guide]({{< relref "../troubleshoot" >}}
 
   {{% alert title="Important" color="warning" %}}
    * Starting at `eksctl anywhere` version `v0.12.0`, packages on workload clusters are remotely managed by the management cluster.
-   * While following this guide to install packages on a workload cluster, please make sure the `kubeconfig` is pointing to the management cluster that was used to create the workload cluster. The only exception is the `kubectl create namespace` command below, which should be run with `kubeconfig` pointing to the workload cluster.
+   * While following this guide to install packages on a workload cluster, please make sure the `kubeconfig` is pointing to the management cluster that was used to create the workload cluster.
    {{% /alert %}}
 
 ## Choose a Deployment Approach
@@ -137,7 +137,7 @@ First, retrieve the management cluster's kubeconfig secret:
 kubectl -n eksa-system get secrets <management-cluster-name>-kubeconfig -o yaml > mgmt-secret.yaml
 ```
 
-Update the secret's namespace to the namespace in the workload cluster that you would like to deploy the cluster autoscaler to.
+Update the secret's namespace to the `targetNamespace`, the namespace in the workload cluster that you would like to deploy the cluster autoscaler to.
 Then, apply the secret to the workload cluster.
 ```yaml
 kubectl --kubeconfig /path/to/workload/kubeconfig apply -f mgmt-secret.yaml
