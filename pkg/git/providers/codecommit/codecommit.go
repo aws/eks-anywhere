@@ -25,9 +25,6 @@ func IsCodeCommitURL(repoURL string) (string, error) {
 		if !codeCommitRegex.MatchString(repoURL) {
 			return "", fmt.Errorf("invalid AWS CodeCommit url: url should be in format ssh://<SSH-Key-ID>@git-codecommit.<region>.amazonaws.com/v1/repos/<repository>")
 		}
-		if parsedRepoURL.User == nil || parsedRepoURL.User.Username() == "" {
-			return "", fmt.Errorf("invalid AWS CodeCommit url: ssh key id should be specified in the url")
-		}
 		if parsedRepoURL.User.Username() == DefaultSSHAuthUser {
 			return "", fmt.Errorf("invalid AWS CodeCommit url: ssh username should be the SSH key ID for the provided private key")
 		}

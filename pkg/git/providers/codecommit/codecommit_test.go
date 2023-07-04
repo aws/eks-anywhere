@@ -43,6 +43,12 @@ func TestIsCodeCommitURL(t *testing.T) {
 			"invalid AWS CodeCommit url: url should be in format ssh://<SSH-Key-ID>@git-codecommit.<region>.amazonaws.com/v1/repos/<repository>",
 			false,
 		},
+		{
+			"invalid url - invalid user",
+			"ssh://git@git-codecommit.us-west-1.amazonaws.com/v1/repos/test-repo",
+			"invalid AWS CodeCommit url: ssh username should be the SSH key ID for the provided private key",
+			false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.testName, func(t *testing.T) {
