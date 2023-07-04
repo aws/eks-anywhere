@@ -9,6 +9,7 @@ const (
 	EksaSecretAccessKeyEnv    = "EKSA_AWS_SECRET_ACCESS_KEY"
 	AwsAccessKeyIdEnv         = "AWS_ACCESS_KEY_ID"
 	AwsSecretAccessKeyEnv     = "AWS_SECRET_ACCESS_KEY"
+	EksaAwsConfigFileEnv      = "EKSA_AWS_CONFIG_FILE"
 	EksaRegionEnv             = "EKSA_AWS_REGION"
 )
 

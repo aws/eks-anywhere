@@ -1193,6 +1193,16 @@ func (f *Factory) WithPackageControllerClient(spec *cluster.Spec, kubeConfig str
 
 		httpProxy, httpsProxy, noProxy := getProxyConfiguration(spec)
 		eksaAccessKeyID, eksaSecretKey, eksaRegion := os.Getenv(cliconfig.EksaAccessKeyIdEnv), os.Getenv(cliconfig.EksaSecretAccessKeyEnv), os.Getenv(cliconfig.EksaRegionEnv)
+
+		eksaAwsConfig := ""
+		p := os.Getenv(cliconfig.EksaAwsConfigFileEnv)
+		if p != "" {
+			b, err := os.ReadFile(p)
+			if err != nil {
+				return err
+			}
+			eksaAwsConfig = string(b)
+		}
 		writer, err := filewriter.NewWriter(spec.Cluster.Name)
 		if err != nil {
 			return err
@@ -1207,6 +1217,7 @@ func (f *Factory) WithPackageControllerClient(spec *cluster.Spec, kubeConfig str
 			curatedpackages.WithEksaAccessKeyId(eksaAccessKeyID),
 			curatedpackages.WithEksaSecretAccessKey(eksaSecretKey),
 			curatedpackages.WithEksaRegion(eksaRegion),
+			curatedpackages.WithEksaAwsConfig(eksaAwsConfig),
 			curatedpackages.WithHTTPProxy(httpProxy),
 			curatedpackages.WithHTTPSProxy(httpsProxy),
 			curatedpackages.WithNoProxy(noProxy),

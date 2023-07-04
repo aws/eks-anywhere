@@ -52,6 +52,7 @@ type PackageControllerClient struct {
 	eksaAccessKeyID       string
 	eksaSecretAccessKey   string
 	eksaRegion            string
+	eksaAwsConfig         string
 	httpProxy             string
 	httpsProxy            string
 	noProxy               []string
@@ -297,6 +298,7 @@ func (pc *PackageControllerClient) generateHelmOverrideValues() ([]byte, error) 
 		"eksaAccessKeyId":     base64.StdEncoding.EncodeToString([]byte(pc.eksaAccessKeyID)),
 		"eksaSecretAccessKey": base64.StdEncoding.EncodeToString([]byte(pc.eksaSecretAccessKey)),
 		"eksaRegion":          base64.StdEncoding.EncodeToString([]byte(pc.eksaRegion)),
+		"eksaAwsConfig":       base64.StdEncoding.EncodeToString([]byte(pc.eksaAwsConfig)),
 		"mirrorEndpoint":      base64.StdEncoding.EncodeToString([]byte(endpoint)),
 		"mirrorUsername":      base64.StdEncoding.EncodeToString([]byte(username)),
 		"mirrorPassword":      base64.StdEncoding.EncodeToString([]byte(password)),
@@ -549,6 +551,15 @@ func WithEksaRegion(eksaRegion string) func(client *PackageControllerClient) {
 	return func(config *PackageControllerClient) {
 		if eksaRegion != "" {
 			config.eksaRegion = eksaRegion
+		}
+	}
+}
+
+// WithEksaAwsConfig set the eksaAwsConfig field.
+func WithEksaAwsConfig(eksaAwsConfig string) func(client *PackageControllerClient) {
+	return func(config *PackageControllerClient) {
+		if eksaAwsConfig != "" {
+			config.eksaAwsConfig = eksaAwsConfig
 		}
 	}
 }
