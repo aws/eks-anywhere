@@ -2614,7 +2614,7 @@ func TestValidateNetworking(t *testing.T) {
 		},
 		{
 			name:    "vsphere cluster uses kindnetd CNI",
-			wantErr: fmt.Errorf("kindnetd not supported as production CNI. Please use Cilium as CNI for production clusters"),
+			wantErr: fmt.Errorf("kindnetd is only supported on Docker provider for development and testing. For all other providers please use Cilium CNI"),
 			cluster: &Cluster{
 				Spec: ClusterSpec{
 					DatacenterRef: Ref{
@@ -2639,7 +2639,7 @@ func TestValidateNetworking(t *testing.T) {
 		},
 		{
 			name:    "vsphere cluster uses kindnetd CNIConfig",
-			wantErr: fmt.Errorf("kindnetd not supported as production CNI. Please use Cilium as CNI for production clusters"),
+			wantErr: fmt.Errorf("kindnetd is only supported on Docker provider for development and testing. For all other providers please use Cilium CNI"),
 			cluster: &Cluster{
 				Spec: ClusterSpec{
 					DatacenterRef: Ref{
