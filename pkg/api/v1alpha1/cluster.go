@@ -558,7 +558,11 @@ func validateEtcdReplicas(clusterConfig *Cluster) error {
 
 func validateNetworking(clusterConfig *Cluster) error {
 	clusterNetwork := clusterConfig.Spec.ClusterNetwork
-
+	if clusterNetwork.CNI == Kindnetd || clusterNetwork.CNIConfig != nil && clusterNetwork.CNIConfig.Kindnetd != nil {
+		if clusterConfig.Spec.DatacenterRef.Kind != DockerDatacenterKind {
+			return errors.New("kindnetd not supported as production CNI. Please use Cilium as CNI for production clusters")
+		}
+	}
 	if len(clusterNetwork.Pods.CidrBlocks) <= 0 {
 		return errors.New("pods CIDR block not specified or empty")
 	}

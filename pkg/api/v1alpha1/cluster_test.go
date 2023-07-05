@@ -2245,6 +2245,9 @@ func TestValidateNetworking(t *testing.T) {
 			wantErr: fmt.Errorf("invalid format for cni plugin: both old and new formats used, use only the CNIConfig field"),
 			cluster: &Cluster{
 				Spec: ClusterSpec{
+					DatacenterRef: Ref{
+						Kind: VSphereDatacenterKind,
+					},
 					ClusterNetwork: ClusterNetwork{
 						Pods: Pods{
 							CidrBlocks: []string{
@@ -2267,6 +2270,9 @@ func TestValidateNetworking(t *testing.T) {
 			wantErr: nil,
 			cluster: &Cluster{
 				Spec: ClusterSpec{
+					DatacenterRef: Ref{
+						Kind: VSphereDatacenterKind,
+					},
 					ClusterNetwork: ClusterNetwork{
 						Pods: Pods{
 							CidrBlocks: []string{
@@ -2289,6 +2295,9 @@ func TestValidateNetworking(t *testing.T) {
 			wantErr: fmt.Errorf("cni not specified"),
 			cluster: &Cluster{
 				Spec: ClusterSpec{
+					DatacenterRef: Ref{
+						Kind: VSphereDatacenterKind,
+					},
 					ClusterNetwork: ClusterNetwork{
 						Pods: Pods{
 							CidrBlocks: []string{
@@ -2311,6 +2320,9 @@ func TestValidateNetworking(t *testing.T) {
 			wantErr: nil,
 			cluster: &Cluster{
 				Spec: ClusterSpec{
+					DatacenterRef: Ref{
+						Kind: VSphereDatacenterKind,
+					},
 					ClusterNetwork: ClusterNetwork{
 						Pods: Pods{
 							CidrBlocks: []string{
@@ -2336,6 +2348,9 @@ func TestValidateNetworking(t *testing.T) {
 			wantErr: fmt.Errorf("the size of pod subnet with mask 30 is smaller than or equal to the size of node subnet with mask 28"),
 			cluster: &Cluster{
 				Spec: ClusterSpec{
+					DatacenterRef: Ref{
+						Kind: VSphereDatacenterKind,
+					},
 					ClusterNetwork: ClusterNetwork{
 						Pods: Pods{
 							CidrBlocks: []string{
@@ -2361,6 +2376,9 @@ func TestValidateNetworking(t *testing.T) {
 			wantErr: fmt.Errorf("pod subnet mask (6) and node-mask (28) difference is greater than 16"),
 			cluster: &Cluster{
 				Spec: ClusterSpec{
+					DatacenterRef: Ref{
+						Kind: VSphereDatacenterKind,
+					},
 					ClusterNetwork: ClusterNetwork{
 						Pods: Pods{
 							CidrBlocks: []string{
@@ -2419,6 +2437,9 @@ func TestValidateNetworking(t *testing.T) {
 			wantErr: fmt.Errorf("invalid CIDR block format for Pods: {[1.2.3]}. Please specify a valid CIDR block for pod subnet"),
 			cluster: &Cluster{
 				Spec: ClusterSpec{
+					DatacenterRef: Ref{
+						Kind: VSphereDatacenterKind,
+					},
 					ClusterNetwork: ClusterNetwork{
 						Pods: Pods{
 							CidrBlocks: []string{
@@ -2477,6 +2498,9 @@ func TestValidateNetworking(t *testing.T) {
 			wantErr: fmt.Errorf("invalid CIDR block for Services: {[1.2.3]}. Please specify a valid CIDR block for service subnet"),
 			cluster: &Cluster{
 				Spec: ClusterSpec{
+					DatacenterRef: Ref{
+						Kind: VSphereDatacenterKind,
+					},
 					ClusterNetwork: ClusterNetwork{
 						Pods: Pods{
 							CidrBlocks: []string{
@@ -2559,6 +2583,106 @@ func TestValidateNetworking(t *testing.T) {
 						},
 						CNI:       Cilium,
 						CNIConfig: nil,
+					},
+				},
+			},
+		},
+		{
+			name:    "vsphere cluster uses cilium CNI",
+			wantErr: nil,
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					DatacenterRef: Ref{
+						Kind: VSphereDatacenterKind,
+					},
+					ClusterNetwork: ClusterNetwork{
+						Pods: Pods{
+							CidrBlocks: []string{
+								"1.2.3.4/8",
+							},
+						},
+						Services: Services{
+							CidrBlocks: []string{
+								"1.2.3.4/7",
+							},
+						},
+						CNI:       Cilium,
+						CNIConfig: nil,
+					},
+				},
+			},
+		},
+		{
+			name:    "vsphere cluster uses kindnetd CNI",
+			wantErr: fmt.Errorf("kindnetd not supported as production CNI. Please use Cilium as CNI for production clusters"),
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					DatacenterRef: Ref{
+						Kind: VSphereDatacenterKind,
+					},
+					ClusterNetwork: ClusterNetwork{
+						Pods: Pods{
+							CidrBlocks: []string{
+								"1.2.3.4/8",
+							},
+						},
+						Services: Services{
+							CidrBlocks: []string{
+								"1.2.3.4/7",
+							},
+						},
+						CNI:       Kindnetd,
+						CNIConfig: nil,
+					},
+				},
+			},
+		},
+		{
+			name:    "vsphere cluster uses kindnetd CNIConfig",
+			wantErr: fmt.Errorf("kindnetd not supported as production CNI. Please use Cilium as CNI for production clusters"),
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					DatacenterRef: Ref{
+						Kind: VSphereDatacenterKind,
+					},
+					ClusterNetwork: ClusterNetwork{
+						Pods: Pods{
+							CidrBlocks: []string{
+								"1.2.3.4/8",
+							},
+						},
+						Services: Services{
+							CidrBlocks: []string{
+								"1.2.3.4/7",
+							},
+						},
+						CNI:       "",
+						CNIConfig: &CNIConfig{Kindnetd: &KindnetdConfig{}},
+					},
+				},
+			},
+		},
+		{
+			name:    "docker cluster uses kindnetd CNIConfig",
+			wantErr: nil,
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					DatacenterRef: Ref{
+						Kind: DockerDatacenterKind,
+					},
+					ClusterNetwork: ClusterNetwork{
+						Pods: Pods{
+							CidrBlocks: []string{
+								"1.2.3.4/8",
+							},
+						},
+						Services: Services{
+							CidrBlocks: []string{
+								"1.2.3.4/7",
+							},
+						},
+						CNI:       "",
+						CNIConfig: &CNIConfig{Kindnetd: &KindnetdConfig{}},
 					},
 				},
 			},
