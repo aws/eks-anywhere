@@ -10,11 +10,6 @@ description: >
 If you have not already done so, make sure your cluster meets the [package prerequisites.]({{< relref "../prereq" >}})
 Be sure to refer to the [troubleshooting guide]({{< relref "../troubleshoot" >}}) in the event of a problem.
 
-  {{% alert title="Important" color="warning" %}}
-   * Starting at `eksctl anywhere` version `v0.12.0`, packages on workload clusters are remotely managed by the management cluster.
-   * While following this guide to install packages on a workload cluster, please make sure the `kubeconfig` is pointing to the management cluster that was used to create the workload cluster.
-   {{% /alert %}}
-
 ## Choose a Deployment Approach
 
 Each Cluster Autoscaler instance can target one cluster for autoscaling.
@@ -129,6 +124,12 @@ eksctl anywhere delete package --cluster <cluster-name> cluster-autoscaler
 ```
 
 ## Install Cluster Autoscaler in workload cluster
+
+  {{% alert title="Important" color="warning" %}}
+
+   While following this guide to install packages on a workload cluster, please make sure the `kubeconfig` is pointing to the management cluster that was used to create the workload cluster. The only exception is when you need to create a new namespace, the command `kubectl create <namespace>` should be executed with `kubeconfig` pointing to the workload cluster.
+   
+  {{% /alert %}}
 
 A few extra steps are required to install cluster autoscaler in a workload cluster instead of the management cluster.
 
