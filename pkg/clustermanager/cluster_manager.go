@@ -1167,6 +1167,21 @@ func (c *ClusterManager) CreateEKSAResources(ctx context.Context, cluster *types
 	return c.ApplyReleases(ctx, clusterSpec, cluster)
 }
 
+// UpgradeEKSAResources applies the eks-a cluster specs (cluster, datacenterconfig, machine configs, etc.), as well as the
+// release bundle to the cluster. For Kindless management cluster upgrade task, we don't need to pause the cluserSpec and
+// datacenterConfig webhook validation.
+func (c *ClusterManager) UpgradeEKSAResources(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec,
+	datacenterConfig providers.DatacenterConfig, machineConfigs []providers.MachineConfig,
+) error {
+	resourcesSpec, err := clustermarshaller.MarshalClusterSpec(clusterSpec, datacenterConfig, machineConfigs)
+	if err != nil {
+		return err
+	}
+	logger.V(4).Info("Applying eksa yaml resources to cluster")
+	logger.V(6).Info(string(resourcesSpec))
+	return c.applyResource(ctx, cluster, resourcesSpec)
+}
+
 func (c *ClusterManager) ApplyBundles(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error {
 	bundleObj, err := yaml.Marshal(clusterSpec.Bundles)
 	if err != nil {

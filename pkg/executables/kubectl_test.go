@@ -32,6 +32,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	mockexecutables "github.com/aws/eks-anywhere/pkg/executables/mocks"
+	"github.com/aws/eks-anywhere/pkg/retrier"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
@@ -3916,5 +3917,115 @@ func TestKubectlDeleteCRD(t *testing.T) {
 				t.Fatalf("Expected error: %v; Received: %v", tt.ExpectErr, err)
 			}
 		})
+	}
+}
+
+func TestKubectlWaitForClusterCondition(t *testing.T) {
+	t.Parallel()
+	r := *retrier.NewWithMaxRetries(2, time.Second)
+	for _, tt := range []struct {
+		Name      string
+		Error     error
+		ExpectErr bool
+	}{
+		{
+			Name: "WaitForClusterCondition ControlPlaneInitialized success",
+		},
+		{
+			Name:      "WaitForClusterCondition ControlPlaneInitialized failure",
+			Error:     errors.New("some error"),
+			ExpectErr: true,
+		},
+	} {
+		t.Run(tt.Name, func(t *testing.T) {
+			kc := newKubectlTest(t)
+			expectedTimeout := "300.00s"
+			cluster := &v1alpha1.Cluster{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: kc.cluster.Name,
+				},
+			}
+			b, _ := json.Marshal(cluster)
+
+			kc.e.EXPECT().Execute(kc.ctx, []string{"get", "clusters.anywhere.eks.amazonaws.com", "-A", "-o", "jsonpath={.items[0]}", "--kubeconfig", kc.kubeconfig, "--field-selector=metadata.name=" + kc.cluster.Name}).Return(*bytes.NewBuffer(b), nil)
+
+			params := []string{"wait", "--timeout", expectedTimeout, "--for=condition=ControlPlaneInitialized", "clusters.anywhere.eks.amazonaws.com/test-cluster", "--kubeconfig", kc.kubeconfig, "-n", "default"}
+			kc.e.EXPECT().Execute(kc.ctx, gomock.Eq(params)).Return(bytes.Buffer{}, tt.Error)
+
+			err := kc.k.WaitForClusterCondition(context.Background(), kc.cluster, r, string(v1alpha1.ControlPlaneInitializedCondition), expectedTimeout)
+
+			if tt.ExpectErr && !strings.Contains(err.Error(), tt.Error.Error()) {
+				t.Fatalf("Expected error: %v; Received: %v", tt.ExpectErr, err)
+			}
+		})
+	}
+}
+
+func TestKubectlWaitForClusterConditionWithRetry(t *testing.T) {
+	t.Parallel()
+
+	r := *retrier.NewWithMaxRetries(3, time.Second)
+	kc := newKubectlTest(t)
+	expectedTimeout := "300.00s"
+	clusterConfig := &v1alpha1.Cluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: kc.cluster.Name,
+		},
+	}
+	correctConfig, _ := json.Marshal(clusterConfig)
+
+	incorrectClusterConfig := &v1alpha1.Cluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:       kc.cluster.Name,
+			Generation: 1,
+		},
+		Spec: v1alpha1.ClusterSpec{},
+	}
+	incorrectConfig, _ := json.Marshal(incorrectClusterConfig)
+
+	// This is if call to GetEksaCluster fails
+	firstTry := kc.e.EXPECT().Execute(kc.ctx, []string{"get", "clusters.anywhere.eks.amazonaws.com", "-A", "-o", "jsonpath={.items[0]}", "--kubeconfig", kc.kubeconfig, "--field-selector=metadata.name=" + kc.cluster.Name}).Return(bytes.Buffer{}, errors.New(""))
+	secondTry := kc.e.EXPECT().Execute(kc.ctx, []string{"get", "clusters.anywhere.eks.amazonaws.com", "-A", "--kubeconfig", kc.kubeconfig, "--field-selector=metadata.name=" + kc.cluster.Name}).Return(bytes.Buffer{}, errors.New(""))
+
+	// This is if generation and observed generation field differ
+	thirdTry := kc.e.EXPECT().Execute(kc.ctx, []string{"get", "clusters.anywhere.eks.amazonaws.com", "-A", "-o", "jsonpath={.items[0]}", "--kubeconfig", kc.kubeconfig, "--field-selector=metadata.name=" + kc.cluster.Name}).Return(*bytes.NewBuffer(incorrectConfig), errors.New(""))
+	fourthTry := kc.e.EXPECT().Execute(kc.ctx, []string{"get", "clusters.anywhere.eks.amazonaws.com", "-A", "--kubeconfig", kc.kubeconfig, "--field-selector=metadata.name=" + kc.cluster.Name}).Return(bytes.Buffer{}, errors.New(""))
+
+	// Success retry
+	fifthTry := kc.e.EXPECT().Execute(kc.ctx, []string{"get", "clusters.anywhere.eks.amazonaws.com", "-A", "-o", "jsonpath={.items[0]}", "--kubeconfig", kc.kubeconfig, "--field-selector=metadata.name=" + kc.cluster.Name}).Return(*bytes.NewBuffer(correctConfig), nil)
+
+	gomock.InOrder(
+		firstTry,
+		secondTry,
+		thirdTry,
+		fourthTry,
+		fifthTry,
+	)
+
+	params := []string{"wait", "--timeout", expectedTimeout, "--for=condition=ControlPlaneInitialized", "clusters.anywhere.eks.amazonaws.com/test-cluster", "--kubeconfig", kc.kubeconfig, "-n", "default"}
+	kc.e.EXPECT().Execute(kc.ctx, gomock.Eq(params)).Return(bytes.Buffer{}, nil)
+
+	if err := kc.k.WaitForClusterCondition(context.Background(), kc.cluster, r, string(v1alpha1.ControlPlaneInitializedCondition), expectedTimeout); err != nil {
+		t.Errorf("Kubectl.WaitForClusterCondition() error = %v, want nil", err)
+	}
+}
+
+func TestKubectlWaitForClusterConditionWithRetryExhausted(t *testing.T) {
+	t.Parallel()
+
+	r := *retrier.NewWithMaxRetries(1, time.Second)
+	kc := newKubectlTest(t)
+	expectedTimeout := "300.00s"
+
+	// This is if call to GetEksaCluster fails
+	firstTry := kc.e.EXPECT().Execute(kc.ctx, []string{"get", "clusters.anywhere.eks.amazonaws.com", "-A", "-o", "jsonpath={.items[0]}", "--kubeconfig", kc.kubeconfig, "--field-selector=metadata.name=" + kc.cluster.Name}).Return(bytes.Buffer{}, errors.New(""))
+	secondTry := kc.e.EXPECT().Execute(kc.ctx, []string{"get", "clusters.anywhere.eks.amazonaws.com", "-A", "--kubeconfig", kc.kubeconfig, "--field-selector=metadata.name=" + kc.cluster.Name}).Return(bytes.Buffer{}, errors.New(""))
+	gomock.InOrder(
+		firstTry,
+		secondTry,
+	)
+
+	if err := kc.k.WaitForClusterCondition(context.Background(), kc.cluster, r, string(v1alpha1.ControlPlaneInitializedCondition), expectedTimeout); err == nil {
+		t.Errorf("Kubectl.WaitForClusterCondition() error = nil, want not nil")
 	}
 }

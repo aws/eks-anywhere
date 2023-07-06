@@ -85,6 +85,7 @@ type Dependencies struct {
 	EksdInstaller               *eksd.Installer
 	EksdUpgrader                *eksd.Upgrader
 	ClusterApplier              clustermanager.Applier
+	ManagementUpgrader          *clustermanager.ManagementUpgrader
 	AnalyzerFactory             diagnostics.AnalyzerFactory
 	CollectorFactory            diagnostics.CollectorFactory
 	DignosticCollectorFactory   diagnostics.DiagnosticBundleFactory
@@ -1113,6 +1114,26 @@ func (f *Factory) WithClusterApplier() *Factory {
 		f.dependencies.ClusterApplier = clustermanager.NewApplier(
 			f.dependencies.Logger,
 			f.dependencies.UnAuthKubeClient,
+			opts...,
+		)
+		return nil
+	})
+	return f
+}
+
+// WithManagementUpgrader builds a KubeProxyCLIUpgrader.
+func (f *Factory) WithManagementUpgrader() *Factory {
+	f.WithLogger().WithUnAuthKubeClient()
+
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		var opts []clustermanager.ManagementUpgraderOpt
+		if f.config.noTimeouts {
+			// opts = append(opts, clustermanager.ManagementUpgraderRetrier(*retrier.NewWithNoTimeout()))
+			opts = append(opts, clustermanager.WithUpgraderNoTimeouts())
+		}
+
+		f.dependencies.ManagementUpgrader = clustermanager.NewManagementUpgrader(
+			f.dependencies.Kubectl,
 			opts...,
 		)
 		return nil

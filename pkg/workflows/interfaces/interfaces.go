@@ -34,6 +34,7 @@ type ClusterManager interface {
 	InstallCustomComponents(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster, provider providers.Provider) error
 	CreateEKSANamespace(ctx context.Context, cluster *types.Cluster) error
 	CreateEKSAResources(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, datacenterConfig providers.DatacenterConfig, machineConfigs []providers.MachineConfig) error
+	UpgradeEKSAResources(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, datacenterConfig providers.DatacenterConfig, machineConfigs []providers.MachineConfig) error
 	ApplyBundles(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error
 	ApplyReleases(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error
 	PauseEKSAControllerReconcile(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, provider providers.Provider) error
@@ -79,4 +80,9 @@ type EksdUpgrader interface {
 
 type PackageInstaller interface {
 	InstallCuratedPackages(ctx context.Context)
+}
+
+// ManagementUpgrader prepares the cluster for an upgrade.
+type ManagementUpgrader interface {
+	UpgradeManagementCluster(ctx context.Context, managementCluster *types.Cluster) error
 }

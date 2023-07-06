@@ -11,6 +11,7 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/types"
@@ -184,7 +185,24 @@ func (uc *upgradeClusterOptions) upgradeCluster(cmd *cobra.Command) error {
 
 	upgradeValidations := upgradevalidations.New(validationOpts)
 
-	err = upgradeCluster.Run(ctx, clusterSpec, managementCluster, workloadCluster, upgradeValidations, uc.forceClean)
+	if features.ExperimentalSelfManagedClusterUpgrade().IsActive() && clusterConfig.IsSelfManaged() {
+		logger.Info("POC Inside controller via CLI workflow")
+		upgradeManagementCluster := workflows.NewUpgradeManagement(
+			deps.Provider,
+			deps.CAPIManager,
+			deps.ClusterManager,
+			deps.GitOpsFlux,
+			deps.Writer,
+			deps.EksdUpgrader,
+			deps.EksdInstaller,
+			deps.ManagementUpgrader)
+
+		err = upgradeManagementCluster.Run(ctx, clusterSpec, managementCluster, upgradeValidations)
+
+	} else {
+		err = upgradeCluster.Run(ctx, clusterSpec, managementCluster, workloadCluster, upgradeValidations, uc.forceClean)
+	}
+
 	cleanup(deps, &err)
 	return err
 }

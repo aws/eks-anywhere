@@ -572,6 +572,18 @@ func TestFactoryBuildWithClusterApplierNoTimeout(t *testing.T) {
 	tt.Expect(deps.ClusterApplier).NotTo(BeNil())
 }
 
+func TestFactoryBuildWithManagementUpgraderNoTimeout(t *testing.T) {
+	tt := newTest(t, vsphere)
+	deps, err := dependencies.NewFactory().
+		WithLocalExecutables().
+		WithNoTimeouts().
+		WithManagementUpgrader().
+		Build(context.Background())
+
+	tt.Expect(err).To(BeNil())
+	tt.Expect(deps.ManagementUpgrader).NotTo(BeNil())
+}
+
 func TestFactoryBuildWithAwsIamAuthNoTimeout(t *testing.T) {
 	tt := newTest(t, vsphere)
 	deps, err := dependencies.NewFactory().

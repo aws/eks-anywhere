@@ -143,6 +143,27 @@ type capiMachinesResponse struct {
 	Items []clusterv1.Machine
 }
 
+// WaitForClusterCondition blocks until the given condition meets for EKSA cluster.
+func (k *Kubectl) WaitForClusterCondition(ctx context.Context, cluster *types.Cluster, retrier retrier.Retrier, condition string, conditionWaitTimeout string) error {
+	isStatusUpdated := func() error {
+		eksaCluster, err := k.GetEksaCluster(ctx, cluster, cluster.Name)
+		if err != nil {
+			return fmt.Errorf("getting EKS-A cluster details for getting observed generation during an upgrade %v", err)
+		}
+		observedGeneration := eksaCluster.Status.ObservedGeneration
+		generation := eksaCluster.Generation
+		if observedGeneration != generation {
+			return fmt.Errorf("generation and observed generation fields differ")
+		}
+		return nil
+	}
+
+	if err := retrier.Retry(isStatusUpdated); err != nil {
+		return fmt.Errorf("retries exhausted waiting for status ObservedGeneration field to be updated: %v", err)
+	}
+	return k.Wait(ctx, cluster.KubeconfigFile, conditionWaitTimeout, condition, fmt.Sprintf("%s/%s", eksaClusterResourceType, cluster.Name), constants.DefaultNamespace)
+}
+
 // GetCAPIMachines returns all the CAPI machines for the provided clusterName.
 func (k *Kubectl) GetCAPIMachines(ctx context.Context, cluster *types.Cluster, clusterName string) ([]clusterv1.Machine, error) {
 	params := []string{

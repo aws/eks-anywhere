@@ -2878,3 +2878,18 @@ func TestClusterManagerDeleteClusterManagedCluster(t *testing.T) {
 		tt.clusterManager.DeleteCluster(tt.ctx, managementCluster, tt.cluster, tt.mocks.provider, tt.clusterSpec),
 	).To(Succeed())
 }
+
+func TestClusterManagerUpgradeEKSAResourcesSuccess(t *testing.T) {
+	features.ClearCache()
+	ctx := context.Background()
+	tt := newTest(t)
+
+	datacenterConfig := &v1alpha1.VSphereDatacenterConfig{}
+	machineConfigs := []providers.MachineConfig{}
+
+	c, m := newClusterManager(t)
+
+	m.client.EXPECT().ApplyKubeSpecFromBytesForce(ctx, tt.cluster, gomock.Any())
+
+	tt.Expect(c.UpgradeEKSAResources(ctx, tt.cluster, tt.clusterSpec, datacenterConfig, machineConfigs)).To(Succeed())
+}

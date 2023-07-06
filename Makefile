@@ -535,7 +535,7 @@ mocks: ## Generate mocks
 	${MOCKGEN} -destination=pkg/bootstrapper/mocks/bootstrapper.go -package=mocks "github.com/aws/eks-anywhere/pkg/bootstrapper" ClusterClient
 	${MOCKGEN} -destination=pkg/git/providers/github/mocks/github.go -package=mocks "github.com/aws/eks-anywhere/pkg/git/providers/github" GithubClient
 	${MOCKGEN} -destination=pkg/git/mocks/git.go -package=mocks "github.com/aws/eks-anywhere/pkg/git" Client,ProviderClient
-	${MOCKGEN} -destination=pkg/workflows/interfaces/mocks/clients.go -package=mocks "github.com/aws/eks-anywhere/pkg/workflows/interfaces" Bootstrapper,ClusterManager,GitOpsManager,Validator,CAPIManager,EksdInstaller,EksdUpgrader,PackageInstaller
+	${MOCKGEN} -destination=pkg/workflows/interfaces/mocks/clients.go -package=mocks "github.com/aws/eks-anywhere/pkg/workflows/interfaces" Bootstrapper,ClusterManager,GitOpsManager,Validator,CAPIManager,EksdInstaller,EksdUpgrader,PackageInstaller,ManagementUpgrader
 	${MOCKGEN} -destination=pkg/git/gogithub/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/git/gogithub" Client
 	${MOCKGEN} -destination=pkg/git/gitclient/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/git/gitclient" GoGit
 	${MOCKGEN} -destination=pkg/validations/mocks/docker.go -package=mocks "github.com/aws/eks-anywhere/pkg/validations" DockerExecutable
@@ -602,6 +602,7 @@ mocks: ## Generate mocks
 	${MOCKGEN} -destination=pkg/controller/clusters/mocks/ipvalidator.go -package=mocks -source "pkg/controller/clusters/ipvalidator.go" IPUniquenessValidator
 	${MOCKGEN} -destination=pkg/registry/mocks/storage.go -package=mocks -source "pkg/registry/storage.go" StorageClient
 	${MOCKGEN} -destination=pkg/registry/mocks/repository.go -package=mocks oras.land/oras-go/v2/registry Repository
+	${MOCKGEN} -destination=pkg/clustermanager/mocks/management_upgrader.go -package=mocks -source "pkg/clustermanager/management_upgrader.go"
 
 .PHONY: verify-mocks
 verify-mocks: mocks ## Verify if mocks need to be updated
