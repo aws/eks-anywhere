@@ -38,6 +38,8 @@ const (
 	cloudstackSshAuthorizedKeyVar      = "T_CLOUDSTACK_SSH_AUTHORIZED_KEY"
 	cloudstackTemplateRedhat123Var     = "T_CLOUDSTACK_TEMPLATE_REDHAT_1_23"
 	cloudstackTemplateRedhat124Var     = "T_CLOUDSTACK_TEMPLATE_REDHAT_1_24"
+	cloudstackTemplateRedhat125Var     = "T_CLOUDSTACK_TEMPLATE_REDHAT_1_25"
+	cloudstackTemplateRedhat126Var     = "T_CLOUDSTACK_TEMPLATE_REDHAT_1_26"
 	cloudstackComputeOfferingLargeVar  = "T_CLOUDSTACK_COMPUTE_OFFERING_LARGE"
 	cloudstackComputeOfferingLargerVar = "T_CLOUDSTACK_COMPUTE_OFFERING_LARGER"
 	cloudStackClusterIPPoolEnvVar      = "T_CLOUDSTACK_CLUSTER_IP_POOL"
@@ -98,6 +100,16 @@ func UpdateRedhatTemplate123Var() api.CloudStackFiller {
 // UpdateRedhatTemplate124Var updates the CloudStackTemplate for all machines to the one corresponding to K8s 1.24.
 func UpdateRedhatTemplate124Var() api.CloudStackFiller {
 	return api.WithCloudStackStringFromEnvVar(cloudstackTemplateRedhat124Var, api.WithCloudStackTemplateForAllMachines)
+}
+
+// UpdateRedhatTemplate125Var updates the CloudStackTemplate for all machines to the one corresponding to K8s 1.24.
+func UpdateRedhatTemplate125Var() api.CloudStackFiller {
+	return api.WithCloudStackStringFromEnvVar(cloudstackTemplateRedhat125Var, api.WithCloudStackTemplateForAllMachines)
+}
+
+// UpdateRedhatTemplate126Var updates the CloudStackTemplate for all machines to the one corresponding to K8s 1.24.
+func UpdateRedhatTemplate126Var() api.CloudStackFiller {
+	return api.WithCloudStackStringFromEnvVar(cloudstackTemplateRedhat126Var, api.WithCloudStackTemplateForAllMachines)
 }
 
 func UpdateLargerCloudStackComputeOffering() api.CloudStackFiller {
@@ -176,6 +188,24 @@ func WithCloudStackRedhat124() CloudStackOpt {
 	return func(c *CloudStack) {
 		c.fillers = append(c.fillers,
 			api.WithCloudStackTemplateForAllMachines(c.templateForDevRelease(anywherev1.RedHat, anywherev1.Kube124)),
+		)
+	}
+}
+
+// WithCloudStackRedhat125 returns a function which can be invoked to configure the Cloudstack object to be compatible with K8s 1.24.
+func WithCloudStackRedhat125() CloudStackOpt {
+	return func(c *CloudStack) {
+		c.fillers = append(c.fillers,
+			api.WithCloudStackTemplateForAllMachines(c.templateForDevRelease(anywherev1.RedHat, anywherev1.Kube125)),
+		)
+	}
+}
+
+// WithCloudStackRedhat126 returns a function which can be invoked to configure the Cloudstack object to be compatible with K8s 1.24.
+func WithCloudStackRedhat126() CloudStackOpt {
+	return func(c *CloudStack) {
+		c.fillers = append(c.fillers,
+			api.WithCloudStackTemplateForAllMachines(c.templateForDevRelease(anywherev1.RedHat, anywherev1.Kube126)),
 		)
 	}
 }
@@ -298,6 +328,16 @@ func (c *CloudStack) Redhat124Template() api.CloudStackFiller {
 	return api.WithCloudStackStringFromEnvVar(cloudstackTemplateRedhat124Var, api.WithCloudStackTemplateForAllMachines)
 }
 
+// Redhat125Template returns cloudstack filler for 1.24 Ubuntu.
+func (c *CloudStack) Redhat125Template() api.CloudStackFiller {
+	return api.WithCloudStackStringFromEnvVar(cloudstackTemplateRedhat125Var, api.WithCloudStackTemplateForAllMachines)
+}
+
+// Redhat126Template returns cloudstack filler for 1.24 Ubuntu.
+func (c *CloudStack) Redhat126Template() api.CloudStackFiller {
+	return api.WithCloudStackStringFromEnvVar(cloudstackTemplateRedhat126Var, api.WithCloudStackTemplateForAllMachines)
+}
+
 func buildCloudStackWorkerNodeGroupClusterFiller(machineConfigName string, workerNodeGroup *WorkerNodeGroup) api.ClusterFiller {
 	// Set worker node group ref to cloudstack machine config
 	workerNodeGroup.MachineConfigKind = anywherev1.CloudStackMachineConfigKind
@@ -333,6 +373,28 @@ func (c *CloudStack) WithRedhat124() api.ClusterConfigFiller {
 		api.ClusterToConfigFiller(api.WithKubernetesVersion(anywherev1.Kube124)),
 		api.CloudStackToConfigFiller(
 			UpdateRedhatTemplate124Var(),
+		),
+	)
+}
+
+// WithRedhat125 returns a cluster config filler that sets the kubernetes version of the cluster to 1.25
+// as well as the right redhat template for all CloudStackMachineConfigs.
+func (c *CloudStack) WithRedhat125() api.ClusterConfigFiller {
+	return api.JoinClusterConfigFillers(
+		api.ClusterToConfigFiller(api.WithKubernetesVersion(anywherev1.Kube125)),
+		api.CloudStackToConfigFiller(
+			UpdateRedhatTemplate125Var(),
+		),
+	)
+}
+
+// WithRedhat126 returns a cluster config filler that sets the kubernetes version of the cluster to 1.26
+// as well as the right redhat template for all CloudStackMachineConfigs.
+func (c *CloudStack) WithRedhat126() api.ClusterConfigFiller {
+	return api.JoinClusterConfigFillers(
+		api.ClusterToConfigFiller(api.WithKubernetesVersion(anywherev1.Kube126)),
+		api.CloudStackToConfigFiller(
+			UpdateRedhatTemplate126Var(),
 		),
 	)
 }
