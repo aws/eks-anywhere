@@ -269,7 +269,9 @@ This will generate a known hosts file which contains only the entry necessary to
 ### Example FluxConfig cluster configuration for a generic git provider
 For a full spec reference see the [Cluster Spec reference]({{< relref "../getting-started/optional/gitops" >}}).
 
->**_NOTE:_** The `repositoryUrl` value is of the format `ssh://git@provider.com/$REPO_OWNER/$REPO_NAME.git`. This may differ from the default SSH URL given by your provider. For Example, the github.com user interface provides an SSH URL containing a `:` before the repository owner, rather than a `/`. Make sure to replace this `:` with a `/`, if present.
+A common `repositoryUrl` value can be of the format `ssh://git@provider.com/$REPO_OWNER/$REPO_NAME.git`. This may differ from the default SSH URL given by your provider. Consider these differences between github and CodeCommit URLs:
+- The github.com user interface provides an SSH URL containing a `:` before the repository owner, rather than a `/`. Make sure to replace this `:` with a `/`, if present.
+- The CodeCommit SSH URL must include SSH-KEY-ID in format `ssh://<SSH-Key-ID>@git-codecommit.<region>.amazonaws.com/v1/repos/<repository>`.  
 
 ```yaml
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
