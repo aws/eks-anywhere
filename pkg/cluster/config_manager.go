@@ -135,6 +135,10 @@ func (c *ConfigManager) unmarshal(yamlManifest []byte) (*parsed, error) {
 			continue
 		}
 
+		if k.APIVersion == "" {
+			return nil, fmt.Errorf("apiVersion not set for Kind: %s", k.Kind)
+		}
+
 		var obj APIObject
 
 		if k.Kind == anywherev1.ClusterKind {
