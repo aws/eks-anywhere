@@ -202,10 +202,10 @@ func TestValidatorValidateVsphereCPUserPrivsError(t *testing.T) {
 	vsc := mocks.NewMockVSphereClient(ctrl)
 
 	wantEnv := map[string]string{
-		config.EksavSphereUsernameKey:    "foo",
-		config.EksavSpherePasswordKey:    "bar",
-		config.EksavSphereCPUsernameKey:  "foo2",
-		config.EksavSphereCPPasswordKey:  "bar2",
+		config.EksavSphereUsernameKey:   "foo",
+		config.EksavSpherePasswordKey:   "bar",
+		config.EksavSphereCPUsernameKey: "foo2",
+		config.EksavSphereCPPasswordKey: "bar2",
 	}
 	for k, v := range wantEnv {
 		t.Setenv(k, v)

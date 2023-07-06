@@ -10,10 +10,10 @@ func TestNewVsphereUserConfig(t *testing.T) {
 	wantUsername := "FOO"
 	wantPassword := "BAR"
 	wantEnv := map[string]string{
-		config.EksavSphereUsernameKey:    wantUsername,
-		config.EksavSpherePasswordKey:    wantPassword,
-		config.EksavSphereCPUsernameKey:  "",
-		config.EksavSphereCPPasswordKey:  "",
+		config.EksavSphereUsernameKey:   wantUsername,
+		config.EksavSpherePasswordKey:   wantPassword,
+		config.EksavSphereCPUsernameKey: "",
+		config.EksavSphereCPPasswordKey: "",
 	}
 	for k, v := range wantEnv {
 		t.Setenv(k, v)

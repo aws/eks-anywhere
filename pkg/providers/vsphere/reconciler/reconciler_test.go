@@ -597,10 +597,10 @@ func createSecret() *corev1.Secret {
 			APIVersion: "v1",
 		},
 		Data: map[string][]byte{
-			"username":    []byte("user"),
-			"password":    []byte("pass"),
-			"usernameCP":  []byte("userCP"),
-			"passwordCP":  []byte("passCP"),
+			"username":   []byte("user"),
+			"password":   []byte("pass"),
+			"usernameCP": []byte("userCP"),
+			"passwordCP": []byte("passCP"),
 		},
 	}
 }
