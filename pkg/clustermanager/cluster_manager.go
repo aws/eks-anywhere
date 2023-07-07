@@ -497,7 +497,7 @@ func (c *ClusterManager) getWorkloadClusterKubeconfig(ctx context.Context, clust
 func (c *ClusterManager) RunPostCreateWorkloadCluster(ctx context.Context, managementCluster, workloadCluster *types.Cluster, clusterSpec *cluster.Spec) error {
 	logger.V(3).Info("Waiting for controlplane and worker machines to be ready")
 	labels := []string{clusterv1.MachineControlPlaneNameLabel, clusterv1.MachineDeploymentNameLabel}
-	return c.waitForNodesReady(ctx, managementCluster, workloadCluster.Name, labels, types.WithNodeRef())
+	return c.waitForNodesReady(ctx, managementCluster, workloadCluster.Name, labels, types.WithNodeRef(), types.WithNodeHealthy())
 }
 
 func (c *ClusterManager) DeleteCluster(ctx context.Context, managementCluster, clusterToDelete *types.Cluster, provider providers.Provider, clusterSpec *cluster.Spec) error {
