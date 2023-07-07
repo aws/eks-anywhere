@@ -79,6 +79,7 @@ func newPackageControllerTests(t *testing.T) []*packageControllerTest {
 	}
 	eksaAccessId := "test-access-id"
 	eksaAccessKey := "test-access-key"
+	eksaAwsConfigFile := "test-aws-config-file"
 	eksaRegion := "test-region"
 	clusterName := "billy"
 	registryMirror := &registrymirror.RegistryMirror{
@@ -120,6 +121,7 @@ func newPackageControllerTests(t *testing.T) []*packageControllerTest {
 				curatedpackages.WithEksaSecretAccessKey(eksaAccessKey),
 				curatedpackages.WithEksaRegion(eksaRegion),
 				curatedpackages.WithEksaAccessKeyId(eksaAccessId),
+				curatedpackages.WithEksaAwsConfig(eksaAwsConfigFile),
 				curatedpackages.WithManagementClusterName(clusterName),
 				curatedpackages.WithValuesFileWriter(writer),
 				curatedpackages.WithClusterSpec(clusterSpec),
