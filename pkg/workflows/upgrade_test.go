@@ -292,9 +292,15 @@ func (c *upgradeTestSetup) expectMoveManagementToBootstrap() {
 	)
 }
 
-func (c *upgradeTestSetup) expectBackupManagementToBootstrapFailed() {
+func (c *upgradeTestSetup) expectBackupManagementFromCluster(cluster *types.Cluster) {
 	gomock.InOrder(
-		c.clusterManager.EXPECT().BackupCAPI(c.ctx, c.managementCluster, c.managementStatePath).Return(fmt.Errorf("backup management failed")),
+		c.clusterManager.EXPECT().BackupCAPI(c.ctx, cluster, c.managementStatePath),
+	)
+}
+
+func (c *upgradeTestSetup) expectBackupManagementFromClusterFailed(cluster *types.Cluster) {
+	gomock.InOrder(
+		c.clusterManager.EXPECT().BackupCAPI(c.ctx, cluster, c.managementStatePath).Return(fmt.Errorf("backup management failed")),
 	)
 }
 
@@ -620,6 +626,7 @@ func TestUpgradeRunFailedUpgrade(t *testing.T) {
 	test.expectMoveManagementToBootstrap()
 	test.expectPrepareUpgradeWorkload(test.bootstrapCluster, test.workloadCluster)
 	test.expectUpgradeWorkloadToReturn(test.bootstrapCluster, test.workloadCluster, errors.New("failed upgrading"))
+	test.expectBackupManagementFromClusterFailed(test.bootstrapCluster)
 	test.expectSaveLogs(test.workloadCluster)
 	test.expectWriteCheckpointFile()
 	test.expectPreCoreComponentsUpgrade()
@@ -643,7 +650,7 @@ func TestUpgradeRunFailedBackupManagementUpgrade(t *testing.T) {
 	test.expectPauseEKSAControllerReconcile(test.workloadCluster)
 	test.expectPauseGitOpsReconcile(test.workloadCluster)
 	test.expectCreateBootstrap()
-	test.expectBackupManagementToBootstrapFailed()
+	test.expectBackupManagementFromClusterFailed(test.managementCluster)
 	test.expectSaveLogs(test.workloadCluster)
 	test.expectWriteCheckpointFile()
 	test.expectPreCoreComponentsUpgrade()
@@ -722,6 +729,7 @@ func TestUpgradeWithCheckpointSecondRunSuccess(t *testing.T) {
 	test.expectMoveManagementToBootstrap()
 	test.expectPrepareUpgradeWorkload(test.bootstrapCluster, test.workloadCluster)
 	test.expectUpgradeWorkloadToReturn(test.bootstrapCluster, test.workloadCluster, errors.New("failed upgrading"))
+	test.expectBackupManagementFromCluster(test.bootstrapCluster)
 	test.expectSaveLogs(test.workloadCluster)
 	test.expectWriteCheckpointFile()
 	test.expectPreCoreComponentsUpgrade()
