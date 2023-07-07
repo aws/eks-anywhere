@@ -118,6 +118,17 @@ func NewWriter(t *testing.T) (dir string, writer filewriter.FileWriter) {
 	return dir, writer
 }
 
+// NewDirectory creates new test directory with cleanup.
+func NewDirectory(t *testing.T) (dir string) {
+	dir, err := os.MkdirTemp(".", SanitizePath(t.Name())+"-")
+	if err != nil {
+		t.Fatalf("error setting up folder for test: %v", err)
+	}
+
+	t.Cleanup(cleanupDir(t, dir))
+	return dir
+}
+
 func cleanupDir(t *testing.T, dir string) func() {
 	return func() {
 		if !t.Failed() {

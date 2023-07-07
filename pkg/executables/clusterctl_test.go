@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -224,6 +225,7 @@ func TestClusterctlBackupManagement(t *testing.T) {
 	tests := []struct {
 		testName     string
 		cluster      *types.Cluster
+		setup        func(*testing.T, *clusterctlTest)
 		wantMoveArgs []interface{}
 	}{
 		{
@@ -232,21 +234,46 @@ func TestClusterctlBackupManagement(t *testing.T) {
 				Name:           clusterName,
 				KubeconfigFile: "cluster.kubeconfig",
 			},
-			wantMoveArgs: []interface{}{"move", "--to-directory", fmt.Sprintf("%s/%s", clusterName, managementClusterState), "--kubeconfig", "cluster.kubeconfig", "--namespace", constants.EksaSystemNamespace},
+			setup: func(t *testing.T, clusterTest *clusterctlTest) {
+				existingPath := filepath.Join(clusterTest.writer.Dir(), managementClusterState)
+				clusterTest.e.EXPECT().
+					Execute(clusterTest.ctx, []interface{}{"move", "--to-directory", existingPath, "--kubeconfig", "cluster.kubeconfig", "--namespace", constants.EksaSystemNamespace}...)
+			},
 		},
 		{
 			testName: "no kubeconfig file",
 			cluster: &types.Cluster{
 				Name: clusterName,
 			},
-			wantMoveArgs: []interface{}{"move", "--to-directory", fmt.Sprintf("%s/%s", clusterName, managementClusterState), "--kubeconfig", "", "--namespace", constants.EksaSystemNamespace},
+			setup: func(t *testing.T, clusterTest *clusterctlTest) {
+				existingPath := filepath.Join(clusterTest.writer.Dir(), managementClusterState)
+				clusterTest.e.EXPECT().
+					Execute(clusterTest.ctx, []interface{}{"move", "--to-directory", existingPath, "--kubeconfig", "", "--namespace", constants.EksaSystemNamespace}...)
+			},
+		},
+		{
+			testName: "existing backup",
+			cluster: &types.Cluster{
+				Name:           clusterName,
+				KubeconfigFile: "cluster.kubeconfig",
+			},
+			setup: func(t *testing.T, clusterTest *clusterctlTest) {
+				existingPath := filepath.Join(clusterTest.writer.Dir(), managementClusterState)
+				tempPath := filepath.Join(clusterTest.writer.TempDir(), managementClusterState)
+				createTestDirectory(t, existingPath)
+				clusterTest.e.EXPECT().
+					Execute(clusterTest.ctx, []interface{}{"move", "--to-directory", tempPath, "--kubeconfig", "cluster.kubeconfig", "--namespace", constants.EksaSystemNamespace}...)
+			},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.testName, func(t *testing.T) {
 			tc := newClusterctlTest(t)
-			tc.e.EXPECT().Execute(tc.ctx, tt.wantMoveArgs...)
+			tc.writer, _ = tc.writer.WithDir(clusterName)
+			tc.clusterctl = executables.NewClusterctl(tc.e, tc.writer, files.NewReader())
+
+			tt.setup(t, tc)
 
 			if err := tc.clusterctl.BackupManagement(tc.ctx, tt.cluster, managementClusterState); err != nil {
 				t.Fatalf("Clusterctl.BackupManagement() error = %v, want nil", err)
@@ -257,18 +284,55 @@ func TestClusterctlBackupManagement(t *testing.T) {
 
 func TestClusterctlBackupManagementFailed(t *testing.T) {
 	managementClusterState := fmt.Sprintf("cluster-state-backup-%s", time.Now().Format("2006-01-02T15_04_05"))
-	tt := newClusterctlTest(t)
+	clusterName := "cluster"
 
-	cluster := &types.Cluster{
-		Name:           "cluster",
-		KubeconfigFile: "cluster.kubeconfig",
+	tests := []struct {
+		testName     string
+		cluster      *types.Cluster
+		setup        func(*testing.T, *clusterctlTest)
+		wantMoveArgs []interface{}
+	}{
+		{
+			testName: "backup failed",
+			cluster: &types.Cluster{
+				Name:           clusterName,
+				KubeconfigFile: "cluster.kubeconfig",
+			},
+			setup: func(t *testing.T, clusterTest *clusterctlTest) {
+				existingPath := filepath.Join(clusterTest.writer.Dir(), managementClusterState)
+				clusterTest.e.EXPECT().
+					Execute(clusterTest.ctx, []interface{}{"move", "--to-directory", existingPath, "--kubeconfig", "cluster.kubeconfig", "--namespace", constants.EksaSystemNamespace}...).
+					Return(bytes.Buffer{}, fmt.Errorf("error backing up management cluster resources"))
+			},
+		},
+		{
+			testName: "temp backup failed",
+			cluster: &types.Cluster{
+				Name:           clusterName,
+				KubeconfigFile: "cluster.kubeconfig",
+			},
+			setup: func(t *testing.T, clusterTest *clusterctlTest) {
+				existingPath := filepath.Join(clusterTest.writer.Dir(), managementClusterState)
+				tempPath := filepath.Join(clusterTest.writer.TempDir(), managementClusterState)
+				createTestDirectory(t, existingPath)
+				clusterTest.e.EXPECT().
+					Execute(clusterTest.ctx, []interface{}{"move", "--to-directory", tempPath, "--kubeconfig", "cluster.kubeconfig", "--namespace", constants.EksaSystemNamespace}...).
+					Return(bytes.Buffer{}, fmt.Errorf("error backing up management cluster resources"))
+			},
+		},
 	}
+	for _, tt := range tests {
+		t.Run(tt.testName, func(t *testing.T) {
+			tc := newClusterctlTest(t)
+			tc.writer, _ = tc.writer.WithDir(clusterName)
+			tc.clusterctl = executables.NewClusterctl(tc.e, tc.writer, files.NewReader())
 
-	wantMoveArgs := []interface{}{"move", "--to-directory", fmt.Sprintf("%s/%s", cluster.Name, managementClusterState), "--kubeconfig", "cluster.kubeconfig", "--namespace", constants.EksaSystemNamespace}
+			tt.setup(t, tc)
 
-	tt.e.EXPECT().Execute(tt.ctx, wantMoveArgs...).Return(bytes.Buffer{}, fmt.Errorf("error backing up management cluster resources"))
-	if err := tt.clusterctl.BackupManagement(tt.ctx, cluster, managementClusterState); err == nil {
-		t.Fatalf("Clusterctl.BackupManagement() error = %v, want nil", err)
+			if err := tc.clusterctl.BackupManagement(tc.ctx, tt.cluster, managementClusterState); err == nil {
+				t.Fatalf("Clusterctl.BackupManagement() error = %v, want nil", err)
+			}
+		})
 	}
 }
 
@@ -425,9 +489,64 @@ func TestClusterctlUpgradeInfrastructureProvidersError(t *testing.T) {
 	tt.Expect(tt.clusterctl.Upgrade(tt.ctx, tt.cluster, tt.provider, clusterSpec, changeDiff)).NotTo(Succeed())
 }
 
+func TestReplacePath(t *testing.T) {
+	oldpath := "oldDir"
+	newpath := "newDir"
+
+	tests := []struct {
+		testName    string
+		directories []string
+		wantErr     error
+	}{
+		{
+			testName:    "replace success",
+			directories: []string{"oldDir", "newDir"},
+			wantErr:     nil,
+		},
+		{
+			testName:    "fail temp path",
+			directories: []string{"oldDir", "newDir", "newDir_temp"},
+			wantErr:     errors.New("renaming new path to temp"),
+		},
+		{
+			testName:    "fail old path",
+			directories: []string{"newDir"},
+			wantErr:     errors.New("renaming old path"),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.testName, func(t *testing.T) {
+			g := NewWithT(t)
+			testpath := test.NewDirectory(t)
+
+			for _, dir := range tt.directories {
+				createTestDirectory(t, filepath.Join(testpath, dir))
+			}
+
+			err := executables.ReplacePath(filepath.Join(testpath, oldpath), filepath.Join(testpath, newpath))
+			if tt.wantErr != nil {
+				g.Expect(err).To(MatchError(ContainSubstring(tt.wantErr.Error())))
+			} else {
+				g.Expect(err).To(BeNil())
+			}
+		})
+	}
+}
+
 var clusterSpec = test.NewClusterSpec(func(s *cluster.Spec) {
 	s.VersionsBundle = versionBundle
 })
+
+func createTestDirectory(t *testing.T, dirpath string) {
+	err := os.MkdirAll(dirpath, os.ModePerm)
+	if err != nil {
+		t.Fatalf("Could not create directory: %s", err)
+	}
+	t.Cleanup(func() {
+		os.RemoveAll(dirpath)
+	})
+}
 
 var versionBundle = &cluster.VersionsBundle{
 	KubeDistro: &cluster.KubeDistro{

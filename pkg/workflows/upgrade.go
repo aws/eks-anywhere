@@ -527,6 +527,11 @@ func (s *upgradeWorkloadClusterTask) Run(ctx context.Context, commandContext *ta
 	err := commandContext.ClusterManager.UpgradeCluster(ctx, commandContext.ManagementCluster, commandContext.WorkloadCluster, commandContext.ClusterSpec, commandContext.Provider)
 	if err != nil {
 		commandContext.SetError(err)
+		logger.Info("Backing up management components from bootstrap cluster")
+		err := commandContext.ClusterManager.BackupCAPI(ctx, commandContext.BootstrapCluster, commandContext.ManagementClusterStateDir)
+		if err != nil {
+			logger.Info("Bootstrap management component backup failed, use existing workload cluster backup", "error", err)
+		}
 		return &CollectDiagnosticsTask{}
 	}
 

@@ -152,14 +152,33 @@ func (c *Clusterctl) writeInfrastructureBundle(clusterSpec *cluster.Spec, rootFo
 	return nil
 }
 
-// BackupManagement save CAPI resources of a workload cluster before moving it to the bootstrap cluster during upgrade.
+// BackupManagement saves the CAPI resources of a cluster to the provided path. This will overwrite any existing contents
+// in the path if the backup succeeds.
 func (c *Clusterctl) BackupManagement(ctx context.Context, cluster *types.Cluster, managementStatePath string) error {
-	filePath := filepath.Join(".", cluster.Name, managementStatePath)
+	filePath := filepath.Join(c.writer.Dir(), managementStatePath)
+
+	// check for existing backup to prevent partial overwrites
+	_, err := os.Stat(filePath)
+	if err == nil {
+		tempPath := filepath.Join(c.writer.TempDir(), managementStatePath)
+		defer func() {
+			os.RemoveAll(tempPath)
+		}()
+		err = c.backupManagement(ctx, cluster, tempPath)
+		if err != nil {
+			return err
+		}
+
+		return ReplacePath(tempPath, filePath)
+	}
+	return c.backupManagement(ctx, cluster, filePath)
+}
+
+func (c *Clusterctl) backupManagement(ctx context.Context, cluster *types.Cluster, filePath string) error {
 	err := os.MkdirAll(filePath, os.ModePerm)
 	if err != nil {
 		return fmt.Errorf("could not create backup file for CAPI objects: %v", err)
 	}
-
 	_, err = c.Execute(
 		ctx, "move",
 		"--to-directory", filePath,
@@ -424,5 +443,24 @@ func (c *Clusterctl) InstallEtcdadmProviders(ctx context.Context, clusterSpec *c
 		return fmt.Errorf("executing init: %v", err)
 	}
 
+	return nil
+}
+
+// ReplacePath replaces the contents of newpath with oldpath. The contents of newpath are first saved off to a temp directory
+// before being replaced to prevent overwriting existing files on os.Rename failure.
+func ReplacePath(oldpath string, newpath string) error {
+	tempPath := fmt.Sprintf("%s_temp", newpath)
+	err := os.Rename(newpath, tempPath)
+	if err != nil {
+		return fmt.Errorf("renaming new path to temp: %v", err)
+	}
+	err = os.Rename(oldpath, newpath)
+	if err != nil {
+		return fmt.Errorf("renaming old path: %v", err)
+	}
+	err = os.RemoveAll(tempPath)
+	if err != nil {
+		return fmt.Errorf("removing temp path: %v", err)
+	}
 	return nil
 }
