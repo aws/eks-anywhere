@@ -380,9 +380,9 @@ update-golden-files:
 	make -C release update-bundle-golden-files
 	scripts/golden_create_pr.sh
 
-.PHONY: generate-checksums
-generate-checksums:
-	scripts/generate_checksum.sh
+.PHONY: prepare-release-artifacts
+prepare-release-artifacts:
+	scripts/prepare_release_artifacts.sh
 
 .PHONY: update-brew-formula
 update-brew-formula:
