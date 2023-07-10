@@ -119,19 +119,6 @@ kubectl delete secret -n eksa-packages aws-secret
 kubectl create secret -n eksa-packages generic aws-secret --from-literal=AWS_ACCESS_KEY_ID=${EKSA_AWS_ACCESS_KEY_ID} --from-literal=AWS_SECRET_ACCESS_KEY=${EKSA_AWS_SECRET_ACCESS_KEY}  --from-literal=REGION=${EKSA_AWS_REGION}
 ```
 
-If you recreate secrets, you can manually re-enable the cronjob and run the job to update the image pull secrets:
-```bash
-kubectl get cronjob -n eksa-packages cron-ecr-renew -o yaml | yq e '.spec.suspend |= false' - | kubectl apply -f -
-kubectl create job -n eksa-packages --from=cronjob/cron-ecr-renew run-it-now
-```
-
-### Warning: not able to trigger cron job
-```
-secret/aws-secret created
-Warning: not able to trigger cron job, please be aware this will prevent the package controller from installing curated packages.
-```
-This is most likely caused by an action to install curated packages in a cluster that is running `Kubernetes` at version `v1.20` or below. Note curated packages only support `Kubernetes` `v1.21` and above.
-
 ## Package on workload clusters
 
 Starting at `eksctl anywhere` version `v0.12.0`, packages on workload clusters are remotely managed by the management cluster. While interacting with the package resources by the following commands for a workload cluster, please make sure the kubeconfig is pointing to the **management cluster** that was used to create the workload cluster.
