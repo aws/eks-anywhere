@@ -205,12 +205,6 @@ kubectl create secret -n eksa-packages generic aws-secret \
    --from-literal=REGION=${EKSA_AWS_REGION}
 ```
 
-If you recreate secrets, you can manually re-enable the cronjob and run the job to update the image pull secrets:
-```bash
-kubectl get cronjob -n eksa-packages cron-ecr-renew -o yaml | yq e '.spec.suspend |= false' - | kubectl apply -f -
-kubectl create job -n eksa-packages --from=cronjob/cron-ecr-renew run-it-now
-```
-
 ### Upgrade the packages controller
 
 Starting with EKS Anywhere v0.15.0 (packages controller v0.3.9+) the package controller will upgrade automatically according to the selected bundle. For any version prior to v0.3.X,
