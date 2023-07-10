@@ -12,29 +12,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-SHASUM_FILES="shasums-eksctl-anywhere"
-
-#Clean up any existing old folders for shasum files
-if [ -d "$SHASUM_FILES" ]; then rm -Rf $SHASUM_FILES; fi
 
 YQ_LATEST_RELEASE_URL="https://github.com/mikefarah/yq/releases/latest"
 
 if ! command -v yq &> /dev/null
 then
-    echo "Please install YQ from $YQ_LATEST_RELEASE_URL and rerun this script."
+    echo "Please install YQ  from $YQ_LATEST_RELEASE_URL and rerun this script."
     exit
 fi
 
-echo "YQ is installed, continuing.."
-
-FILE_PREFIX="eksctl-anywhere"
-
-TAR="amd64.tar.gz"
-
-
 CURRENT_YQ_VERSION=$(yq -V | awk '{print $NF}')
 
-versionSplit=($(echo $CURRENT_YQ_VERSION | tr "." "\n"))
+versionSplit=($(echo $CURRENT_YQ_VERSION | tr -d "v" | tr "." "\n"))
 CURRENT_YQ_MAJOR_VERSION=${versionSplit[0]}
 CURRENT_YQ_MINOR_VERSION=${versionSplit[1]}
 EXPECTED_YQ_MAJOR_VERSION=4
@@ -52,24 +41,38 @@ if [ $CURRENT_YQ_MAJOR_VERSION == $EXPECTED_YQ_MAJOR_VERSION ] && [ $CURRENT_YQ_
     exit 1
 fi
 
-mkdir -p $SHASUM_FILES
-cd $SHASUM_FILES
-curl --silent 'https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml' -o release.yaml
+OUT_DIR="release-artifacts"
 
-latest_release_version=$(cat release.yaml | yq e '.spec.latestVersion')
+# Clean up any existing old folders
+if [ -d "$OUT_DIR" ]; then rm -Rf $OUT_DIR; fi
 
-latest_release=$(cat release.yaml | yq e '.spec.releases[] | select(.version == "'$latest_release_version'")' >> latest_release.yaml)
+mkdir -p $OUT_DIR
+( 
+cd $OUT_DIR
 
-for sha in 256 512
-do
-  for os in linux darwin
-  do
-    SHA_VALUE=$(cat latest_release.yaml | yq e ".eksABinary.${os}.sha${sha}")
-    echo "${SHA_VALUE}  ${FILE_PREFIX}-${latest_release_version}-${os}-${TAR}" >> "${FILE_PREFIX}-${latest_release_version}-sha${sha}sums.txt"
-  done
+release_yaml="$(curl --silent 'https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml')"
+latest_release_version=$(echo "$release_yaml" | yq '.spec.latestVersion')
+latest_release=$(echo "$release_yaml" | yq '.spec.releases[] | select(.version == "'$latest_release_version'")')
+
+
+echo "Building checksum files..."
+for platform in amd64 arm64; do
+    for os in linux darwin; do
+        checksum256=$(echo "$latest_release" | yq ".eksACLI.${os}.${platform}.sha256")
+        checksum512=$(echo "$latest_release" | yq ".eksACLI.${os}.${platform}.sha512")
+        uri=$(echo "$latest_release" | yq ".eksACLI.${os}.${platform}.uri")
+        file=${uri##*/}
+        echo "${checksum256} ${file}" >> "eksctl-anywhere-${latest_release_version}-sha256sums.txt"
+        echo "${checksum512} ${file}" >> "eksctl-anywhere-${latest_release_version}-sha512sums.txt"
+    done
 done
 
-echo "Generated the check sum files inside the ${SHASUM_FILES} folder at the directory where you ran this script from."
+release_urls=($(echo "$release_yaml" | yq e '.spec.releases[] | select(.version == "'$latest_release_version'") | .eksACLI.*.*.uri'))
 
-rm release.yaml
-rm latest_release.yaml
+echo "Downloading release binaries..."
+for uri in ${release_urls[@]}; do
+    curl -fSsLO "$uri"
+done;
+
+echo "Release artifacts can be found in ${OUT_DIR}."
+)
