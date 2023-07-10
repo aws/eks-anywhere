@@ -21,16 +21,39 @@ Each Cluster Autoscaler instance can target one cluster for autoscaling.
 
 There are three ways to deploy a Cluster Autoscaler instance:
 
-1. Cluster Autoscaler deployed in the management cluster to autoscale the management cluster itself
-1. Cluster Autoscaler deployed in the management cluster to autoscale a remote workload cluster
+1. [RECOMMENDED] Cluster Autoscaler deployed in the management cluster to autoscale the management cluster itself
+1. [RECOMMENDED] Cluster Autoscaler deployed in the management cluster to autoscale a remote workload cluster
 1. Cluster Autoscaler deployed in the workload cluster to autoscale the workload cluster itself
 
-To read more about the tradeoffs of these different approaches, see [here]({{< relref "../../getting-started/optional/autoscaling/" >}}).
+To read more about the tradeoffs of these different approaches, see [Autoscaling configuration]({{< relref "../../getting-started/optional/autoscaling/" >}}).
 
-## Install Cluster Autoscaler in management cluster
+## Install Cluster Autoscaler in management cluster [RECOMMENDED]
 
 <!-- this content needs to be indented so the numbers are automatically incremented -->
-1. Ensure you have configured at least one WorkerNodeGroup in your cluster to support autoscaling as outlined [here]({{< relref "../../getting-started/optional/autoscaling/" >}})
+1. Ensure you have configured at least one WorkerNodeGroup in your cluster to support autoscaling as outlined [Autoscaling configuration]({{< relref "../../getting-started/optional/autoscaling/" >}})
+
+    Cluster autoscaler only works on node groups with an autoscalingConfiguration set:
+
+    **Note**: Here, the `<cluster-name>` value represents the name of the management or workload cluster you would like to autoscale.*
+
+    ```yaml
+    apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+    kind: Cluster
+    metadata:
+      name: <cluster-name>
+    spec:
+      ...
+      workerNodeGroupConfigurations:
+        - autoscalingConfiguration:
+            minCount: 1
+            maxCount: 5
+          machineGroupRef:
+            kind: VSphereMachineConfig
+            name: <worker-machine-config-name>
+          count: 1
+          name: md-0
+    ```
+    See [Autoscaling configuration]({{< relref "../../getting-started/optional/autoscaling/" >}}) for details.
 
 1. Generate the package configuration
    ```bash
@@ -60,7 +83,6 @@ To read more about the tradeoffs of these different approaches, see [here]({{< r
             clusterName: "<cluster-name>"
     ```
 
-
 1. Install Cluster Autoscaler
 
    ```bash
@@ -78,6 +100,15 @@ To read more about the tradeoffs of these different approaches, see [here]({{< r
    NAMESPACE                  NAME                          PACKAGE              AGE   STATE       CURRENTVERSION                                               TARGETVERSION                                                         DETAIL
    eksa-packages-mgmt-v-vmc   cluster-autoscaler            cluster-autoscaler   18h   installed   9.21.0-1.21-147e2a701f6ab625452fe311d5c94a167270f365         9.21.0-1.21-147e2a701f6ab625452fe311d5c94a167270f365 (latest)
    ```
+
+   To verify that autoscaling works, apply this deployment:
+   ```bash
+   kubectl apply -f https://raw.githubusercontent.com/aws/eks-anywhere/d8575bbd2a85a6c6bbcb1a54868cf7790df56a63/test/framework/testdata/hpa_busybox.yaml
+   kubectl scale deployment hpa-busybox-test --replicas 100
+   ```
+   You must continue scaling pods until the deployment has pods in a pending state.
+   This is when cluster autoscaler will begin to autoscale your machine deployment.
+   This process may take a few minutes.
 
 ## Update
 To update package configuration, update cluster-autoscaler.yaml file, and run the following command:
