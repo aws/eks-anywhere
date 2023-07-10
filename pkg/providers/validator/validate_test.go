@@ -31,3 +31,22 @@ func TestValidateControlPlaneIPUniqueness(t *testing.T) {
 
 	g.Expect(ipValidator.ValidateControlPlaneIPUniqueness(cluster)).To(Succeed())
 }
+
+func TestSkipValidateControlPlaneIPUniqueness(t *testing.T) {
+	g := NewWithT(t)
+	cluster := &v1alpha1.Cluster{
+		Spec: v1alpha1.ClusterSpec{
+			ControlPlaneConfiguration: v1alpha1.ControlPlaneConfiguration{
+				Endpoint: &v1alpha1.Endpoint{
+					Host: "1.2.3.4",
+				},
+			},
+		},
+	}
+	cluster.DisableControlPlaneIPCheck()
+	ctrl := gomock.NewController(t)
+	client := mocks.NewMockNetClient(ctrl)
+	ipValidator := validator.NewIPValidator(validator.CustomNetClient(client))
+
+	g.Expect(ipValidator.ValidateControlPlaneIPUniqueness(cluster)).To(BeNil())
+}

@@ -31,6 +31,7 @@ type factoryTest struct {
 	hardwareConfigFile    string
 	tinkerbellBootstrapIP string
 	cliConfig             config.CliConfig
+	createCLIConfig       config.CreateClusterCLIConfig
 }
 
 type provider string
@@ -57,11 +58,16 @@ func newTest(t *testing.T, p provider) *factoryTest {
 		t.Fatalf("Not a valid provider: %v", p)
 	}
 
+	createCLIConfig := config.CreateClusterCLIConfig{
+		SkipCPIPCheck: false,
+	}
+
 	return &factoryTest{
 		WithT:             NewGomegaWithT(t),
 		clusterConfigFile: clusterConfigFile,
 		clusterSpec:       test.NewFullClusterSpec(t, clusterConfigFile),
 		ctx:               context.Background(),
+		createCLIConfig:   createCLIConfig,
 	}
 }
 
@@ -215,6 +221,7 @@ func TestFactoryBuildWithMultipleDependencies(t *testing.T) {
 		WithIPValidator().
 		WithKubeProxyCLIUpgrader().
 		WithValidatorClients().
+		WithCreateClusterDefaulter(tt.createCLIConfig).
 		Build(context.Background())
 
 	tt.Expect(err).To(BeNil())

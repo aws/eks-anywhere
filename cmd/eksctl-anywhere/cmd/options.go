@@ -162,6 +162,13 @@ func buildCliConfig(clusterSpec *cluster.Spec) *config.CliConfig {
 	return cliConfig
 }
 
+func buildCreateCliConfig(clusterOptions *createClusterOptions) config.CreateClusterCLIConfig {
+	createCliConfig := config.CreateClusterCLIConfig{}
+	createCliConfig.SkipCPIPCheck = clusterOptions.skipIpCheck
+
+	return createCliConfig
+}
+
 func getManagementCluster(clusterSpec *cluster.Spec) *types.Cluster {
 	if clusterSpec.ManagementCluster == nil {
 		return &types.Cluster{

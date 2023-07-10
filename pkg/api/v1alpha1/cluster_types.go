@@ -33,6 +33,9 @@ const (
 	// etcdAnnotation can be applied to EKS-A machineconfig CR for etcd, to prevent controller from making changes to it.
 	etcdAnnotation = "anywhere.eks.amazonaws.com/etcd"
 
+	// skipIPCheckAnnotation skips the availability control plane IP validation during cluster creation. Use only if your network configuration is conflicting with the default port scan.
+	skipIPCheckAnnotation = "anywhere.eks.amazonaws.com/skip-ip-check"
+
 	// managementAnnotation points to the name of a management cluster
 	// cluster object.
 	managementAnnotation = "anywhere.eks.amazonaws.com/managed-by"
@@ -1154,6 +1157,22 @@ func (c *Cluster) PausedAnnotation() string {
 
 func (c *Cluster) ControlPlaneAnnotation() string {
 	return controlPlaneAnnotation
+}
+
+// DisableControlPlaneIPCheck sets the `skip-ip-check` annotation on the Cluster object.
+func (c *Cluster) DisableControlPlaneIPCheck() {
+	if c.Annotations == nil {
+		c.Annotations = make(map[string]string, 1)
+	}
+	c.Annotations[skipIPCheckAnnotation] = "true"
+}
+
+// ControlPlaneIPCheckDisabled checks it the `skip-ip-check` annotation is set on the Cluster object.
+func (c *Cluster) ControlPlaneIPCheckDisabled() bool {
+	if s, ok := c.Annotations[skipIPCheckAnnotation]; ok {
+		return s == "true"
+	}
+	return false
 }
 
 func (c *Cluster) ResourceType() string {

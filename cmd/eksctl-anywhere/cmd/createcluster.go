@@ -106,6 +106,8 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 		return err
 	}
 
+	createCLIConfig := buildCreateCliConfig(cc)
+
 	clusterManagerTimeoutOpts, err := buildClusterManagerOpts(cc.timeoutOptions, clusterSpec.Cluster.Spec.DatacenterRef.Kind)
 	if err != nil {
 		return fmt.Errorf("failed to build cluster manager opts: %v", err)
@@ -120,7 +122,8 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 		WithWriter().
 		WithEksdInstaller().
 		WithPackageInstaller(clusterSpec, cc.installPackages, cc.managementKubeconfig).
-		WithValidatorClients()
+		WithValidatorClients().
+		WithCreateClusterDefaulter(createCLIConfig)
 
 	if cc.timeoutOptions.noTimeouts {
 		factory.WithNoTimeouts()
@@ -131,6 +134,11 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 		return err
 	}
 	defer close(ctx, deps)
+
+	clusterSpec, err = deps.CreateClusterDefaulter.Run(ctx, clusterSpec)
+	if err != nil {
+		return err
+	}
 
 	createCluster := workflows.NewCreate(
 		deps.Bootstrapper,
