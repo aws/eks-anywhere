@@ -43,7 +43,7 @@ Each VM will require:
 
 The administrative machine and the target workload environment will need network access to:
 
-{{% content "./domains.sh" %}}
+{{% content "./domains.md" %}}
 
 
 ### vSphere information needed before creating the cluster
