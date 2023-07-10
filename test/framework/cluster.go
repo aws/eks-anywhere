@@ -2207,7 +2207,7 @@ func (e *ClusterE2ETest) CreateCloudStackCredentialsSecretFromEnvVar(name string
 
 	secretContent, err := yaml.Marshal(secret)
 	if err != nil {
-		e.T.Fatalf("error mashalling credentials secret : %v", err)
+		e.T.Fatalf("error marshalling credentials secret : %v", err)
 		return
 	}
 
