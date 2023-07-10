@@ -15,7 +15,24 @@ Please upgrade to `v0.15.3` if you are using Tinkerbell (Bare Metal) provider.
 [documentation]({{< relref "/docs/getting-started/vsphere/vsphere-spec#disablecsi-optional-deprecated" >}}) for more information.
 {{% /alert %}}
 
-## Unreleased
+## [v0.16.2](https://github.com/aws/eks-anywhere/releases/tag/v0.16.2)
+
+## Fixes
+
+- CLI: Ensure importing packages and bundles honors the insecure flag [#6056](https://github.com/aws/eks-anywhere/pull/6056)
+- vSphere: Fix credential configuration when using the full lifecycle controller [#6058](https://github.com/aws/eks-anywhere/pull/6058)
+- Bare Metal: Fix handling of Hardware validation errors in Tinkerbell full lifecycle cluster provisioning [#6091](https://github.com/aws/eks-anywhere/pull/6091)
+- Bare Metal: Fix parsing of bare metal cluster configurations containing embedded PEM certs [#6095](https://github.com/aws/eks-anywhere/pull/6095)
+
+## Upgrades
+
+- AWS Cloud Provider: v1.27.0 to v1.27.1
+- EKS Distro:
+	- Kubernetes v1.24.13 to v1.24.15
+	- Kubernetes v1.25.9 to v1.25.11
+	- Kubernetes v1.26.4 to v1.26.6
+	- Kubernetes v1.27.1 to v1.27.3
+- Cluster API Provider Snow: v0.1.25 to v0.1.26
 
 ## [0.16.1](https://github.com/aws/eks-anywhere/releases/tag/v0.16.1)
 
