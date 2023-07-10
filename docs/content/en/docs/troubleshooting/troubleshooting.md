@@ -25,12 +25,12 @@ You may want to search this document for a fragment of the error you are seeing.
 
 If you’re having trouble running `eksctl anywhere` you may get more verbose output with the `-v 6` option. The highest level of verbosity is `-v 9` and the default level of logging is level equivalent to `-v 0`.
 
-### Cannot run docker commands
+### Cannot run Docker commands
 
-The EKS Anywhere binary requires access to run docker commands without using `sudo`.
-If you're using a Linux distribution you will need to be using Docker 20.x.x add your user needs to be part of the docker group.
+The EKS Anywhere binary requires access to run Docker commands without using `sudo`.
+If you're using a Linux distribution you will need to be using Docker 20.x.x and your user needs to be part of the Docker group.
 
-To add your user to the docker group you can use.
+To add your user to the Docker group you can use.
 
 ```bash
 sudo usermod -a -G docker $USER
@@ -38,10 +38,10 @@ sudo usermod -a -G docker $USER
 
 Now you need to log out and back in to get the new group permissions.
 
-### Minimum requirements for docker version have not been met
+### Minimum requirements for Docker version have not been met
 
 ```
-Error: failed to validate docker: minimum requirements for docker version have not been met. Install Docker version 20.x.x or above
+Error: failed to validate Docker: minimum requirements for Docker version have not been met. Install Docker version 20.x.x or above
 ```
 Ensure you are running Docker 20.x.x for example:
 ```
@@ -61,66 +61,58 @@ Remove cached credentials by running:
 docker logout public.ecr.aws
 ```
 
-### error unmarshaling JSON: while decoding JSON: json: unknown field "spec"
+### Error unmarshaling JSON: while decoding JSON: json: unknown field "spec"
+
 ```
 Error: loading config file "cluster.yaml": error unmarshaling JSON: while decoding JSON: json: unknown field "spec"
 ```
 Use `eksctl anywhere create cluster -f cluster.yaml` instead of `eksctl create cluster -f cluster.yaml` to create an EKS Anywhere cluster.
 
 ### Error: old cluster config file exists under my-cluster, please use a different clusterName to proceed
+
 ```
 Error: old cluster config file exists under my-cluster, please use a different clusterName to proceed
 ```
 The `my-cluster` directory already exists in the current directory.
 Either use a different cluster name or move the directory.
 
-### failed to create cluster: node(s) already exist for a cluster with the name
-```
-Performing provider setup and validations
-Creating new bootstrap cluster
-Error create bootstrapcluster	{"error": "error creating bootstrap cluster: error executing create cluster: ERROR: failed to create cluster: node(s) already exist for a cluster with the name \"cluster-name\"\n, try rerunning with --force-cleanup to force delete previously created bootstrap cluster"}
-Failed to create cluster	{"error": "error creating bootstrap cluster: error executing create cluster: ERROR: failed to create cluster: node(s) already exist for a cluster with the name \"cluster-name\"\n, try rerunning with --force-cleanup to force delete previously created bootstrap cluster"}ry rerunning with --force-cleanup to force delete previously created bootstrap cluster"}
-```
-A bootstrap cluster already exists with the same name. If you are sure the cluster is not being used, you may use the `--force-cleanup` option to `eksctl anywhere` to delete the cluster or you may delete the cluster with `kind delete cluster --name <cluster-name>`. If you do not have `kind` installed, you may use `docker stop` to stop the docker container running the KinD cluster.
-
-
 ### Memory or disk resource problem
-There are various disk and memory issues that can cause problems.
-Make sure docker is configured with enough memory.
-Make sure the system wide Docker memory configuration provides enough RAM for the bootstrap cluster.
 
-Make sure you do not have unneeded KinD clusters running `kind get clusters`.
-You may want to delete unneeded clusters with `kind delete cluster --name <cluster-name>`.
-If you do not have kind installed, you may install it from https://kind.sigs.k8s.io/ or use `docker ps` to see the KinD clusters and `docker stop` to stop the cluster.
- 
-Make sure you do not have any unneeded Docker containers running with `docker ps`.
-Terminate any unneeded Docker containers.
-   
-Make sure Docker isn't out of disk resources.
-If you don't have any other docker containers running you may want to run `docker system prune` to clean up disk space.
+There are various disk and memory issues on the Admin machine that can cause problems. Make sure:
+* Docker is configured with enough memory.
+* The system-wide Docker memory configuration provides enough RAM for the bootstrap cluster.
+* You do not have unneeded KinD clusters by running `kind get clusters`.
+* You should delete unneeded clusters with `kind delete cluster --name <cluster-name>`. If you do not have `kind` installed, you can install it from https://kind.sigs.k8s.io/ or use `docker ps` to see the KinD clusters and run `docker stop` to stop the cluster.
+* You do not have any unneeded Docker containers running with `docker ps`.
+* Terminate any unneeded Docker containers.
+* Make sure Docker isn't out of disk resources.
+* If you don't have any other Docker containers running you may want to run `docker system prune` to clean up disk space.
 
 You may want to restart Docker.
 To restart Docker on Ubuntu `sudo systemctl restart docker`.
 
 ### Waiting for cert-manager to be available... Error: timed out waiting for the condition
+
 ```
 Failed to create cluster {"error": "error initializing capi resources in cluster: error executing init: Fetching providers\nInstalling cert-manager Version=\"v1.1.0\"\nWaiting for cert-manager to be available...\nError: timed out waiting for the condition\n"}
 ```
-This is likely a [Memory or disk resource problem]({{< relref "#memory-or-disk-resource-problem" >}}).
+This is likely a [memory or disk resource problem]({{< relref "#memory-or-disk-resource-problem" >}}).
 You can also try using techniques from [Generic cluster unavailable]({{< relref "#generic-cluster-unavailable" >}}).
 
-### NTP Time sync issues
+### NTP Time sync issue
+
 ```
 level=error msg=k8sError error="github.com/cilium/cilium/pkg/k8s/watchers/endpoint_slice.go:91: Failed to watch *v1beta1.EndpointSlice: failed to list *v1beta1.EndpointSlice: Unauthorized" subsys=k8s
 ```
-You might notice authorization errors if the timestamps on your EKS Anywhere control plane nodes and worker nodes are out-of-sync. Please ensure that all the nodes are configured with same healthy NTP servers to avoid out-of-sync issues.
+You might notice authorization errors if the timestamps on your EKS Anywhere control plane nodes and worker nodes are out-of-sync. Please ensure that all the nodes are configured with the same healthy NTP servers to avoid out-of-sync issues.
 
 ```
 Error running bootstrapper cmd: error joining as worker: Error waiting for worker join files: Kubeadm join kubelet-start killed after timeout
 ```
-You might also notice that the joining of nodes will fail if your admin machine differs in time compared to your nodes. Make sure to check the server time matches between the two as well.
+You might also notice that the joining of nodes will fail if your Admin machine differs in time compared to your nodes. Make sure to check the server time matches between the two as well.
 
 ### The connection to the server localhost:8080 was refused 
+
 ```
 Performing provider setup and validations
 Creating new bootstrap cluster
@@ -128,19 +120,20 @@ Installing cluster-api providers on bootstrap cluster
 Error initializing capi in bootstrap cluster	{"error": "error waiting for capi-kubeadm-control-plane-controller-manager in namespace capi-kubeadm-control-plane-system: error executing wait: The connection to the server localhost:8080 was refused - did you specify the right host or port?\n"}
 Failed to create cluster	{"error": "error waiting for capi-kubeadm-control-plane-controller-manager in namespace capi-kubeadm-control-plane-system: error executing wait: The connection to the server localhost:8080 was refused - did you specify the right host or port?\n"}
 ```
-This is likely a [Memory or disk resource problem]({{< relref "#memory-or-disk-resource-problem" >}}).
+Initializing Cluster API components on the bootstrap cluster fails. This is likely a [memory or disk resource problem]({{< relref "#memory-or-disk-resource-problem" >}}).
 
 ### Generic cluster unavailable
-Troubleshoot more by inspecting bootstrap cluster or workload cluster (depending on the stage of failure) using kubectl commands. 
+
+Troubleshoot more by inspecting bootstrap cluster or workload cluster (depending on the stage of the failure) using kubectl commands. 
 ```
 kubectl get pods -A --kubeconfig=<kubeconfig>
 kubectl get nodes -A --kubeconfig=<kubeconfig>
-kubectl get logs <podname> -n <namespace> --kubeconfig=<kubeconfig>
+kubectl logs <podname> -n <namespace> --kubeconfig=<kubeconfig>
 ....
 ```
-Capv troubleshooting guide: https://github.com/kubernetes-sigs/cluster-api-provider-vsphere/blob/master/docs/troubleshooting.md#debugging-issues
 
 ### Bootstrap cluster fails to come up
+
 If your bootstrap cluster has problems you may get detailed logs by looking at the files created under the `${CLUSTER_NAME}/logs` folder. The capv-controller-manager log file will surface issues with vsphere specific configuration while the capi-controller-manager log file might surface other generic issues with the cluster configuration passed in.
 
 You may also access the logs from your bootstrap cluster directly as below:
@@ -149,17 +142,16 @@ export KUBECONFIG=${PWD}/${CLUSTER_NAME}/generated/${CLUSTER_NAME}.kind.kubeconf
 kubectl logs -f -n capv-system -l control-plane="controller-manager" -c manager
 ```
 
-It also might be useful to start a shell session on the docker container running the bootstrap cluster by running `docker ps` and then `docker exec -it <container-id> bash` the kind container.
+It is also useful to start a shell session on the Docker container running the bootstrap cluster by running `docker ps` and then `docker exec -it <container-id> bash` the kind container.
 
-### Bootstrap cluster fails to come up
+### Bootstrap cluster fails to come up: node(s) already exist for a cluster with the name
 
 ```
 Error: creating bootstrap cluster: executing create cluster: ERROR: failed to create cluster: node(s) already exist for a cluster with the name \"cluster-name\"
 , try rerunning with —force-cleanup to force delete previously created bootstrap cluster
 ```
 
-Cluster creation fails because a cluster of the same name already exists.
-Try running the `eksctl anywhere create cluster` again, adding the `--force-cleanup` option.
+Cluster creation fails because a cluster of the same name already exists. If you are sure the cluster is not being used, try running the `eksctl anywhere create cluster` again, adding the `--force-cleanup` option.
 
 If that doesn't work, you can manually delete the old cluster:
 
@@ -167,7 +159,7 @@ If that doesn't work, you can manually delete the old cluster:
 kind delete cluster --name cluster-name
 ```
 
-### Cluster upgrade fails with management cluster on bootstrap cluster
+### Cluster upgrade fails with management components on bootstrap cluster
 
 If a cluster upgrade of a management (or self managed) cluster fails or is halted in the middle, you may be left in a
 state where the management resources (CAPI) are still on the KinD bootstrap cluster on the Admin machine. Right now, you will have to
@@ -205,6 +197,105 @@ do
   kubectl get $crd -A
 done
 ```
+
+### Upgrade command stuck on `Waiting for external etcd to be ready`
+
+There can be a few reasons if the upgrade command is stuck on `waiting for external etcd for workload cluster to be ready` and eventually times out.
+
+First, check the underlying infrastructure to see if any new etcd machines are created.
+
+#### No new etcd machines are created in the infrastrure provider
+
+If no etcd machines are created, check the `etcdadm-bootstrap-provider-controller-manager`, `etcdadm-controller-controller-manager`, `capi-controller-manager`, `capi-kubeadm-control-plane-controller-manager`, and other Cluster API controller logs using the commands mentioned in [Generic cluster unavailable]({{< relref "#generic-cluster-unavailable" >}}) section.
+
+#### No IP assigned to the new etcd machine
+
+Refer to [no IP assigned to a VM]({{< relref "#no-ip-assigned-to-a-vm" >}}) section.
+
+### Machines are unhealthy after restoring CAPI control from the backup
+
+When an EKS Anywhere management cluster loses its CAPI resources, you need use the backup stored in the <cluster-name> folder to regain the management control. It is possible that after recovering the cluster from CAPI backup, the machine objects are in unhealthy/not ready state. For example:
+
+```sh
+$ kubectl get machines -n eksa-system
+
+NAME                                    PHASE
+cluster1-etcd-2md6m                     Failed
+cluster1-etcd-s8qs5                     Failed
+cluster1-etcd-vqs6w                     Failed
+cluster1-md-0-75584b4fccxfgs86-pfk22    Failed
+cluster1-x6rzc                          Failed
+```
+
+This can happen when the new machines got rolled out after the backup was taken, thus the backup objects being applied do not have the latest machine configurations. When applying an outdated CAPI backup, the provider machine object is out of sync with the actual infrastructure VM.
+
+
+#### etcdadm join failed in etcd machine bootstrap log
+
+When an etcd machine object is not in ready state, you can `ssh` into the etcd node and check the etcd bootstrap log:
+
+{{< tabpane >}}
+{{< tab header="Ubuntu or RHEL" lang="bash" >}}
+cat /var/log/cloud-init.log
+{{< /tab >}}
+{{< tab header="Bottlerocket" lang="bash" >}}
+sudo sheltie
+journalctl _COMM=host-ctr
+{{< /tab >}}
+{{< /tabpane >}}
+
+If the bootstrap log indicates that the etcadm join operation fail, this can mean that the etcd cluster contains unhealthy member(s). Looking at the log details you can further troubleshoot from below sections.
+
+#### New etcd machine cannot find the existing etcd cluster members
+
+The edcdadm log shows error that the new etcd machine cannot connect to the existing etcd cluster memebers. This means the `etcdadm-init` secret is outdated. To update it, run
+
+```sh
+kubectl edit <cluster-name>-etcd-init -n eksa-system
+```
+
+and make sure the new etcd machine IP is included in the secret.
+
+#### New etcd machine cannot join the cluster due to loss of quorum
+
+An etcd cluster needs a majority of nodes, a quorum, to agree on updates to the cluster state. For a cluster with n members, quorum is (n/2)+1. If etcd could not automatically recover and restore quorum, it is possible that there was an unhealthy or broken VM (e.g. a VM without IP assigned) that is still a member of the etcd cluster. You need to find and manually remove the unhealthy member. 
+
+To achieve that, first `ssh` into the etcd node and use `etcdctl member list` command to detect the unhealthy member.
+
+{{< tabpane >}}
+{{< tab header="Ubuntu or RHEL" lang="bash" >}}
+sudo etcdctl --cacert=/etc/etcd/pki/ca.crt --cert=/etc/etcd/pki/etcdctl-etcd-client.crt --key=/etc/etcd/pki/etcdctl-etcd-client.key member list
+{{< /tab >}}
+{{< tab header="Bottlerocket" lang="bash" >}}
+ETCD_CONTAINER_ID=$(ctr -n k8s.io c ls | grep -w "etcd-io" | cut -d " " -f1)
+ctr -n k8s.io t exec -t --exec-id etcd ${ETCD_CONTAINER_ID} etcdctl \
+     --cacert=/var/lib/etcd/pki/ca.crt \
+     --cert=/var/lib/etcd/pki/server.crt \
+     --key=/var/lib/etcd/pki/server.key \
+     member list
+{{< /tab >}}
+{{< /tabpane >}}
+
+After identifying the unhealthy member, use `etcdctl member remove` to remove it from the cluster.
+
+{{< tabpane >}}
+{{< tab header="Ubuntu or RHEL" lang="bash" >}}
+sudo etcdctl --cacert=/etc/etcd/pki/ca.crt --cert=/etc/etcd/pki/etcdctl-etcd-client.crt --key=/etc/etcd/pki/etcdctl-etcd-client.key member remove ${UNHEALTHY_MEMBER_ID}
+{{< /tab >}}
+{{< tab header="Bottlerocket" lang="bash" >}}
+ctr -n k8s.io t exec -t --exec-id etcd ${ETCD_CONTAINER_ID} etcdctl \
+     --cacert=/var/lib/etcd/pki/ca.crt \
+     --cert=/var/lib/etcd/pki/server.crt \
+     --key=/var/lib/etcd/pki/server.key \
+     member remove ${UNHEALTHY_MEMBER_ID}
+{{< /tab >}}
+{{< /tabpane >}}
+
+#### Provider machine does not point to the underlying VMs
+
+Follow the VM restore process in provider-specific section.
+* [Restore VM for machine in vSphere]({{< relref "#restore-vm-for-machine-in-vsphere" >}})
+
 ## Bare Metal troubleshooting
 
 ### Creating new workload cluster hangs or fails
@@ -343,14 +434,17 @@ or the capv-controller-manager pod log which can be extracted with the following
 export KUBECONFIG=${PWD}/${CLUSTER_NAME}/generated/${CLUSTER_NAME}.kind.kubeconfig
 kubectl logs -f -n capv-system -l control-plane="controller-manager" -c manager
 ```
-Make sure you are choosing an ip in your network range that does not conflict with other VMs.
+Make sure you are choosing a control plane ip in your network range that does not conflict with other VMs.
 
 ### Generic cluster unavailable
+
 The first thing to look at is: were virtual machines created on your target provider? In the case of vSphere, you should see some VMs in your folder and they should be up. Check the console and if you see:
 ```
 [FAILED] Failed to start Wait for Network to be Configured.
 ```
 Make sure your DHCP server is up and working.
+
+For more troubleshooting tips. see the [CAPV Troubleshooting](https://github.com/kubernetes-sigs/cluster-api-provider-vsphere/blob/master/docs/troubleshooting.md#debugging-issues) guide.
 
 ### Workload VM is created on vSphere but can not power on
 A similar issue is the VM does power on but does not show any logs on the console and does not have any IPs assigned.
@@ -366,38 +460,46 @@ kubectl get nodes -o=custom-columns="NAME:.metadata.name,IP:.status.addresses[2]
 ```
 If Kubernetes is not working at all, you can get the IPs of the VMs from vCenter or using `govc`.
 
-When you get the external IP you can ssh into the nodes using the private ssh key associated with the public ssh key you provided in your cluster configuration:
+When you get the external IP you can `ssh` into the nodes using the private ssh key associated with the public ssh key you provided in your cluster configuration:
 ```
 ssh -i <ssh-private-key> <ssh-username>@<external-IP>
 ```
 
-### create command stuck on `Creating new workload cluster`
-There can we a few reasons if the create command is stuck on `Creating new workload cluster` for over 30 min.
+### Create command stuck on `Creating new workload cluster`
+
+There can be a few reasons that the create command is stuck on `Creating new workload cluster` for over 30 min.
+
 First, check the vSphere UI to see if any workload VM are created.
+
+#### No node VMs are created in vSphere
+
+If no VMs are created, check the `capi-controller-manager`, `capv-controller-manager` and `capi-kubeadm-control-plane-controller-manager` logs using the commands mentioned in [Generic cluster unavailable]({{< relref "#generic-cluster-unavailable" >}}) section.
+
+#### No IP assigned to a VM
 
 If any VMs are created, check to see if they have any IPv4 IPs assigned to them.
 
-If there are no IPv4 IPs assigned to them, this is most likely because you don't have a DHCP server configured for the `network` configured in the cluster config yaml.
-Ensure that you have DHCP running and run the create command again.
+If there are no IPv4 IPs assigned to VMs, this is most likely because you don't have a DHCP server configured for the `network` configured in the cluster config yaml, OR there are not enough IP addresses available in the DHCP pool to assign to the VMs. Ensure that you either have a DHCP running with [enough IP addresses to create a cluster]({{< relref "../clustermgmt/cluster-upgrades/vsphere-and-cloudstack-upgrades/#prepare-dhcp-ip-addresses-pool" >}}), or [create your own DHCP server]({{< relref "../getting-started/vsphere/customize/vsphere-dhcp" >}}), before running the create or upgrade command again.
+
+#### Control Plane IP in clusterconfig is not present on any Control Plane VM
 
 If there are any IPv4 IPs assigned, check if one of the VMs have the controlPlane IP specified in `Cluster.spec.controlPlaneConfiguration.endpoint.host` in the clusterconfig yaml.
 If this IP is not present on any control plane VM, make sure the `network` has access to the following endpoints:
 
-{{% content "../reference/vsphere/domains.md" %}}
+{{% content "../getting-started/vsphere/domains.md" %}}
+
+#### `Failed to connect to <vSphere-FQDN>: connection refused` on vsphere-cloud-controller-manager
 
 If the IPv4 IPs are assigned to the VM and you have the workload kubeconfig under `<cluster-name>/<cluster-name>-eks-a-cluster.kubeconfig`, you can use it to check `vsphere-cloud-controller-manager` logs.
 ```
 kubectl logs -n kube-system vsphere-cloud-controller-manager-<xxxxx> --kubeconfig <cluster-name>/<cluster-name>-eks-a-cluster.kubeconfig
 ```
 
-If you see this message in the logs, it means your cluster nodes do not have access to vSphere, which is required for cluster to get to a ready state.
+If you see the message below in the logs, it means your cluster nodes do not have access to vSphere, which is required for the cluster to get to a ready state.
 ```
 Failed to connect to <vSphere-FQDN>: connection refused
 ```
 In this case, you need to enable inbound traffic from your cluster nodes on your vCenter's management network.
-
-If VMs are created, but they do not get a network connection and DHCP is not configured for your vSphere deployment, you may need to [create your own DHCP server]({{< relref "../getting-started/vsphere/customize/vsphere-dhcp" >}}).
-If no VMs are created, check the `capi-controller-manager`, `capv-controller-manager` and `capi-kubeadm-control-plane-controller-manager` logs using the commands mentioned in [Generic cluster unavailable]({{< relref "#generic-cluster-unavailable" >}}) section.
 
 ### Cluster Deletion Fails
 If cluster deletion fails, you may need to manually delete the VMs associated with the cluster.
@@ -414,6 +516,12 @@ VM_NAME=vm-to-destroy
 govc vm.power -off -force $VM_NAME
 govc object.destroy $VM_NAME
 ```
+
+### Restore VM for machine in vSphere
+
+When a CAPI machine is in not ready state, it is possible that the machine object does not match the underlying VM in vSphere. Instead, the machine is pointing to a VM that does not exist anymore.
+
+In order to solve this, you need to update the `vspheremachine` and `vspherevm` objects to point to the new VM running in vSphere. This requires getting the `UUID` for the new VM (using `govc` command), and using it to update the `biosUUID` and `providerID` fields. Notice that this would create a mismatch between the CAPI resources names (`vspheremachine` and `vspherevm`) and the actual VM in vSphere. However, that is only an aesthetic inconvenience, since the mapping is done based on `UUID` and not name. Once the objects are updated, a machine rollout would replace the VM with a new one, removing the name mismatch problem. You also need to cleanup the error message and error reason from the statuses to resume the reconciliation of these objects. With that done, the machine objects should move to `Running` state.
 
 ## Troubleshooting GitOps integration
 ### Cluster creation failure leaves outdated cluster configuration in GitHub.com repository
