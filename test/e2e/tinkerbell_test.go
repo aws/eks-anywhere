@@ -1932,3 +1932,18 @@ func TestTinkerbellAirgappedKubernetes127UbuntuProxyConfigFlow(t *testing.T) {
 
 	runTinkerbellAirgapConfigProxyFlow(test, "10.80.0.0/16")
 }
+
+func TestTinkerbellKubernetes127UbuntuCuratedPackagesClusterAutoscalerSimpleFlow(t *testing.T) {
+		minNodes := 1
+		maxNodes := 2
+		test := framework.NewClusterE2ETest(t,
+			framework.NewTinkerbell(t, framework.WithUbuntu127Tinkerbell()),
+			framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127), api.WithWorkerNodeAutoScalingConfig(minNodes, maxNodes)),
+			framework.WithControlPlaneHardware(1),
+			framework.WithWorkerHardware(2),
+			framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube127),
+				EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
+				EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
+		)
+		runAutoscalerWithMetricsServerSimpleFlow(test)
+	}
