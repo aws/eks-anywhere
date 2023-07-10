@@ -107,7 +107,7 @@ export REGISTRY_PASSWORD=<password>
 ```
 
 {{% alert title="Warning" color="warning" %}}
-`eksctl anywhere download images` and `eksctl anywhere import images` command need to be run on an amd64 machine, to prevent the arm64 images being imported to the registry mirror.
+`eksctl anywhere download images` and `eksctl anywhere import images` command need to be run on an amd64 machine to import amd64 images to the registry mirror.
 {{% /alert %}}
 
 Download the EKS Anywhere artifacts to get the EKS Anywhere bundle:
