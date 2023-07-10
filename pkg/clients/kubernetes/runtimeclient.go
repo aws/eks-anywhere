@@ -76,3 +76,13 @@ type restConfigurator func([]byte) (*rest.Config, error)
 func (c restConfigurator) Config(data []byte) (*rest.Config, error) {
 	return c(data)
 }
+
+// ObjectsToRuntimeObjects converts objects of another type to runtime.Object's.
+func ObjectsToRuntimeObjects[T runtime.Object](objs []T) []runtime.Object {
+	runtimeObjs := make([]runtime.Object, 0, len(objs))
+	for _, o := range objs {
+		runtimeObjs = append(runtimeObjs, o)
+	}
+
+	return runtimeObjs
+}
