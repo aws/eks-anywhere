@@ -560,6 +560,10 @@ spec:
                 description: Descriptive message about a fatal problem while reconciling
                   a cluster
                 type: string
+              failureReason:
+                description: Machine readable value about a terminal problem while
+                  reconciling the cluster set at the same time as failureMessage
+                type: string
               observedGeneration:
                 description: ObservedGeneration is the latest generation observed
                   by the controller.

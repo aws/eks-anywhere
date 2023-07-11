@@ -12,6 +12,7 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/semver"
+	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
 
 const (
@@ -835,11 +836,51 @@ var validCiliumPolicyEnforcementModes = map[CiliumPolicyEnforcementMode]bool{
 	CiliumPolicyModeNever:   true,
 }
 
+// FailureReasonType is a type for defining failure reasons.
+type FailureReasonType string
+
+// Reasons for the terminal failures while reconciling the Cluster object.
+const (
+	// MissingDependentObjectsReason reports that the Cluster is missing dependent objects.
+	MissingDependentObjectsReason FailureReasonType = "MissingDependentObjects"
+
+	// ManagementClusterRefInvalidReason reports that the Cluster management cluster reference is invalid. This
+	// can whether if it does not exist or the cluster referenced is not a management cluster.
+	ManagementClusterRefInvalidReason FailureReasonType = "ManagementClusterRefInvalid"
+
+	// ClusterInvalidReason reports that the Cluster spec validation has failed.
+	ClusterInvalidReason FailureReasonType = "ClusterInvalid"
+
+	// DatacenterConfigInvalidReason reports that the Cluster datacenterconfig validation has failed.
+	DatacenterConfigInvalidReason FailureReasonType = "DatacenterConfigInvalid"
+
+	// MachineConfigInvalidReason reports that the Cluster machineconfig validation has failed.
+	MachineConfigInvalidReason FailureReasonType = "MachineConfigInvalid"
+
+	// UnavailableControlPlaneIPReason reports that the Cluster controlPlaneIP is already in use.
+	UnavailableControlPlaneIPReason FailureReasonType = "UnavailableControlPlaneIP"
+)
+
+// Reasons for the terminal failures while reconciling the Cluster object specific for Tinkerbell.
+const (
+	// HardwareInvalidReason reports that the hardware validation has failed.
+	HardwareInvalidReason FailureReasonType = "HardwareInvalid"
+
+	// MachineInvalidReason reports that the baremetal machine validation has failed.
+	MachineInvalidReason FailureReasonType = "MachineInvalid"
+)
+
 // ClusterStatus defines the observed state of Cluster.
 type ClusterStatus struct {
 	// Descriptive message about a fatal problem while reconciling a cluster
 	// +optional
 	FailureMessage *string `json:"failureMessage,omitempty"`
+
+	// Machine readable value about a terminal problem while reconciling the cluster
+	// set at the same time as failureMessage
+	// +optional
+	FailureReason *FailureReasonType `json:"failureReason,omitempty"`
+
 	// EksdReleaseRef defines the properties of the EKS-D object on the cluster
 	EksdReleaseRef *EksdReleaseRef `json:"eksdReleaseRef,omitempty"`
 	// +optional
@@ -1228,6 +1269,18 @@ func (c *Cluster) MachineConfigRefs() []Ref {
 	}
 
 	return machineConfigRefMap.toSlice()
+}
+
+// SetFailure sets the failureMessage and failureReason of the Cluster status.
+func (c *Cluster) SetFailure(failureReason FailureReasonType, failureMessage string) {
+	c.Status.FailureMessage = ptr.String(failureMessage)
+	c.Status.FailureReason = &failureReason
+}
+
+// ClearFailure clears the failureMessage and failureReason of the Cluster status by setting them to nil.
+func (c *Cluster) ClearFailure() {
+	c.Status.FailureMessage = nil
+	c.Status.FailureReason = nil
 }
 
 type refSet map[Ref]struct{}

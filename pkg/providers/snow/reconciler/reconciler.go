@@ -89,7 +89,7 @@ func (r *Reconciler) ValidateMachineConfigs(ctx context.Context, log logr.Logger
 		if !machineConfig.Status.SpecValid {
 			if machineConfig.Status.FailureMessage != nil {
 				failureMessage := fmt.Sprintf("Invalid %s SnowMachineConfig: %s", machineConfig.Name, *machineConfig.Status.FailureMessage)
-				clusterSpec.Cluster.Status.FailureMessage = &failureMessage
+				clusterSpec.Cluster.SetFailure(anywherev1.MachineConfigInvalidReason, failureMessage)
 				log.Error(errors.New(*machineConfig.Status.FailureMessage), "Invalid SnowMachineConfig", "machineConfig", klog.KObj(machineConfig))
 			} else {
 				log.Info("SnowMachineConfig hasn't been validated yet", "machineConfig", klog.KObj(machineConfig))

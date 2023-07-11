@@ -42,7 +42,7 @@ const (
 func TestReconcilerReconcileSuccess(t *testing.T) {
 	tt := newReconcilerTest(t)
 	// We want to check that the cluster status is cleaned up if validations are passed
-	tt.cluster.Status.FailureMessage = ptr.String("invalid cluster")
+	tt.cluster.SetFailure(anywherev1.FailureReasonType("InvalidCluster"), "invalid cluster")
 
 	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
 		c.Name = tt.cluster.Name
@@ -78,6 +78,8 @@ func TestReconcilerReconcileSuccess(t *testing.T) {
 	)
 	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
 	tt.Expect(tt.cluster.Status.FailureMessage).To(BeNil())
+	tt.Expect(tt.cluster.Status.FailureReason).To(BeZero())
+	tt.Expect(tt.cluster.Status.FailureReason).To(BeNil())
 }
 
 func TestReconcilerValidateDatacenterConfigRequeue(t *testing.T) {
@@ -132,6 +134,7 @@ func TestReconcilerValidateMachineConfigInvalidSecret(t *testing.T) {
 	tt.Expect(err).To(MatchError(ContainSubstring("Secret \"global\" not found")))
 	tt.Expect(result).To(Equal(controller.Result{}))
 	tt.Expect(tt.cluster.Status.FailureMessage).To(BeNil())
+	tt.Expect(tt.cluster.Status.FailureReason).To(BeNil())
 }
 
 func TestReconcilerValidateMachineConfigGetValidatorFail(t *testing.T) {
@@ -150,6 +153,7 @@ func TestReconcilerValidateMachineConfigGetValidatorFail(t *testing.T) {
 	tt.Expect(err).To(MatchError(ContainSubstring(errMsg)))
 	tt.Expect(result).To(Equal(controller.Result{}))
 	tt.Expect(tt.cluster.Status.FailureMessage).To(BeNil())
+	tt.Expect(tt.cluster.Status.FailureReason).To(BeNil())
 }
 
 func TestReconcilerValidateMachineConfigFail(t *testing.T) {
@@ -171,6 +175,7 @@ func TestReconcilerValidateMachineConfigFail(t *testing.T) {
 	tt.Expect(err).To(BeNil())
 	tt.Expect(result).To(Equal(controller.Result{Result: &reconcile.Result{}}), "result should stop reconciliation")
 	tt.Expect(tt.cluster.Status.FailureMessage).To(HaveValue(ContainSubstring(errMsg)))
+	tt.Expect(tt.cluster.Status.FailureReason).To(HaveValue(Equal(anywherev1.MachineConfigInvalidReason)))
 }
 
 func TestReconcilerControlPlaneIsNotReady(t *testing.T) {
@@ -201,6 +206,7 @@ func TestReconcilerControlPlaneIsNotReady(t *testing.T) {
 
 	tt.Expect(err).NotTo(HaveOccurred())
 	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
+	tt.Expect(tt.cluster.Status.FailureReason).To(BeZero())
 	tt.Expect(result).To(Equal(controller.ResultWithRequeue(30 * time.Second)))
 }
 
@@ -220,6 +226,7 @@ func TestReconcileControlPlaneUnstackedEtcdSuccess(t *testing.T) {
 
 	tt.Expect(err).NotTo(HaveOccurred())
 	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
+	tt.Expect(tt.cluster.Status.FailureReason).To(BeZero())
 	tt.Expect(result).To(Equal(controller.Result{}))
 
 	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
@@ -276,6 +283,7 @@ func TestReconcileControlPlaneStackedEtcdSuccess(t *testing.T) {
 
 	tt.Expect(err).NotTo(HaveOccurred())
 	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
+	tt.Expect(tt.cluster.Status.FailureReason).To(BeZero())
 	tt.Expect(result).To(Equal(controller.Result{}))
 
 	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
@@ -351,6 +359,7 @@ func TestReconcileCNISuccess(t *testing.T) {
 
 	tt.Expect(err).NotTo(HaveOccurred())
 	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
+	tt.Expect(tt.cluster.Status.FailureReason).To(BeZero())
 	tt.Expect(result).To(Equal(controller.Result{}))
 }
 
@@ -370,6 +379,7 @@ func TestReconcileCNIErrorClientRegistry(t *testing.T) {
 
 	tt.Expect(err).To(MatchError(ContainSubstring("building client")))
 	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
+	tt.Expect(tt.cluster.Status.FailureReason).To(BeZero())
 	tt.Expect(result).To(Equal(controller.Result{}))
 }
 
@@ -387,6 +397,7 @@ func TestReconcilerReconcileWorkersSuccess(t *testing.T) {
 
 	tt.Expect(err).NotTo(HaveOccurred())
 	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
+	tt.Expect(tt.cluster.Status.FailureReason).To(BeZero())
 	tt.Expect(result).To(Equal(controller.Result{}))
 
 	tt.ShouldEventuallyExist(tt.ctx,
@@ -452,6 +463,7 @@ func TestReconcilerReconcileWorkerNodesSuccess(t *testing.T) {
 
 	tt.Expect(err).NotTo(HaveOccurred())
 	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
+	tt.Expect(tt.cluster.Status.FailureReason).To(BeZero())
 	tt.Expect(result).To(Equal(controller.Result{}))
 
 	tt.ShouldEventuallyExist(tt.ctx,

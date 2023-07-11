@@ -178,7 +178,7 @@ func (r *Reconciler) ValidateClusterSpec(ctx context.Context, log logr.Logger, c
 	if err := r.validator.ValidateClusterSpec(ctx, clusterSpec, creds); err != nil {
 		log.Error(err, "Invalid cluster spec", "cluster", clusterSpec.Cluster.Name)
 		failureMessage := err.Error()
-		clusterSpec.Cluster.Status.FailureMessage = &failureMessage
+		clusterSpec.Cluster.SetFailure(anywherev1.ClusterInvalidReason, failureMessage)
 		return controller.ResultWithReturn(), nil
 	}
 

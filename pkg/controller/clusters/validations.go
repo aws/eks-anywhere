@@ -16,7 +16,7 @@ import (
 // CleanupStatusAfterValidate removes errors from the cluster status. Intended to be used as a reconciler phase
 // after all validation phases have been executed.
 func CleanupStatusAfterValidate(_ context.Context, _ logr.Logger, spec *cluster.Spec) (controller.Result, error) {
-	spec.Cluster.Status.FailureMessage = nil
+	spec.Cluster.ClearFailure()
 	return controller.Result{}, nil
 }
 
