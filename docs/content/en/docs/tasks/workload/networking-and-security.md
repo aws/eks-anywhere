@@ -27,48 +27,46 @@ The following table lists Cilium features and notes which of those features are 
 
 <details><summary>Expand to see Cilium Features</summary>
 
-| Cilium Features         | EKS Anywhere | Open Source     | Enterprise |
-|-------------------------|--------------|-----------------|------------|
-| **Networking and Security (Cilium)** ||||
-| **Advanced Networking & Routing (CNI)** ||||
-| eBPF powered high performance datapath | | **&#10004;** | **&#10004;** |
-| Overlay, Direct, and Cloud Provider Routing Modes |   | **&mdash;** | **&#10004;** |
-| High-performance L3/L4 Pod Load-balancing (kube-proxy replacement) |   | **&#10004;** | **&#10004;** |
-| Advanced Bandwidth Management (Fair Queueing, TCP Optimization, Rate Limiting) |   | **&#10004;** | **&#10004;** |
-| 3rd-party BGP integrations (MetalLB, BIRD, etc.) |   | **&#10004;** | **&#10004;** |
-| SRv6 |   | **&mdash;** | **&#10004;** |
-| Native support for public cloud integration |   | **&#10004;** | **&#10004;** |
-| **Network Policy & Segmentation** |   |  |  |
-| Kubernetes Label, Services, CIDR |   | **&#10004;** | **&#10004;** |
-| Identity-based enforcement |   | **&#10004;** | **&#10004;** |
-| DNS-aware policies |   | **&#10004;** | **&#10004;** |
-| - HA Capability |   | **&mdash;** | **&#10004;** |
-| Automatic Policy Creation based on Network Traffic |   | **&mdash;** | **&#10004;** |
-| Policy Management, Approvals, GitOps, CI/CD Guardrails |   | **&mdash;** | **&#10004;** |
-| Advanced Policy Troubleshooting UI |   | **&mdash;** | **&#10004;** |
-| Simplified Policy Creation Tools & APIs |   | **&mdash;** | **&#10004;** |
-| **Multi-Cluster** |   |  |  |
-| Service Discovery & Global Services |   | **&#10004;** | **&#10004;** |
-| Multi-Cluster Routing |   | **&#10004;** | **&#10004;** |
-| Network Policy & Encryption |   | **&#10004;** | **&#10004;** |
-| Global Visibility & Flow Export |   | **&mdash;** | **&#10004;** |
-| Automated Cluster Management |   | **&mdash;** | **&#10004;** |
-| **Load-Balancing** ||||
-| Kubernetes services (kube-proxy replacement) |   | **&#10004;** | **&#10004;** |
-| Advanced L3/L4 External Load-balancing (including XDP-acceleration, Direct Server Return, Maglev) |   | **&#10004;** | **&#10004;** |
-| Topology-aware Routing |   | **&#10004;** | **&#10004;** |
-| Network health-based routing & load-balancing |   | **&mdash;** | **&#10004;** |
-| **Encryption** |   |  |  |
-| Transparent IPsec Encryption |   | **&#10004;** | **&#10004;** |
-| Transparent Wireguard Encryption |   | **&#10004;** | **&#10004;** |
-| Multi cluster automation |   | **&mdash;** | **&#10004;** |
-| **Non-Kubernetes Workloads & Endpoints** |   |  |  |
-| Traditional Firewall Integration / Static Egress Gateway |   | **&#10004;** | **&#10004;** |
-| - HA Capability |    | **&mdash;** | **&#10004;** |
-| VM & Metal Workload Support |   | **&#10004;** | **&#10004;** |
-| Control plane automation | |   | **&mdash;** | **&#10004;** |
-| Additional hypervisor orchestration  |   | **&mdash;** | **&#10004;** |
-| And so on...  | | | |
+| Headline/Feature    | AWS EKS Anywhere |  &nbsp;&nbsp;&nbsp;Isovalent Cilium Enterprise |
+| :---------------    |    :----------:  |     :--------------------:   |
+| **Cilium** |||
+| Networking Routing (CNI) |  **&#10004;** |  **&#10004;** |
+| Identity-based Network Policy (Labels, CIDR)  | **&#10004;** | **&#10004;** |
+| Load-Balancing (L3/L4) | **&#10004;** | **&#10004;** |
+| Advanced Networking (Multi-Homing, SRv6, Bandwidth Management, ...) | **&mdash;** | **&#10004;** |
+| Advanced Network Policy (DNS, L7, TLS/SNI, ...) | **&mdash;** | **&#10004;** |
+| Multi-Cluster (Routing, Load-Balancing, Service Discovery, Policy) | **&mdash;** | **&#10004;** |
+| 3rd Party BGP Implementation Support | **&#10004;** | **&#10004;** |
+| Built-in BGP Support | **&mdash;** | **&#10004;** |
+| Transparent Encryption | **&mdash;** | **&#10004;** |
+| Egress Gateway | **&mdash;** | **&#10004;** |
+| Ingress via 3rd-party Ingress Controller | **&#10004;** | **&#10004;** |
+| Built-in Ingress & Gateway API Support | **&mdash;** | **&#10004;** |
+| Non-Kubernetes Workloads | **&mdash;** | **&#10004;** |
+| **Clilim Service Mesh** |||
+| Service Mesh (eBPF & Envoy, sidecar-free) | **&mdash;** | **&#10004;** |
+| Canary Rollouts, Retries, Rate Limiting | **&mdash;** | **&#10004;** |
+| L7 Load-Balancing | **&mdash;** | **&#10004;** |
+| OpenTelemetry, Prometheus, Grafana Support | **&mdash;** | **&#10004;** |
+| **Hubble - Network Observability** |||
+| Hubble Network Observability (TCP, UDP, SCTP, DNS, HTTP, gRPC, TLS, ...) | **&mdash;** | **&#10004;** |
+| Prometheus, Grafana, OpenTelemetry, Fluentd export | **&mdash;** | **&#10004;** |
+| Service & Tracing Map | **&mdash;** | **&#10004;** |
+| SIEM Integration | **&mdash;** | **&#10004;** |
+| Timescape - Historic Flow/Tracing Data & Analytics | **&mdash;** | **&#10004;** |
+| Multi-Tenancy / RBAC | **&mdash;** | **&#10004;** |
+| **Tetragon - (Security Visibility and Enforcement)** |||
+| Security Observability (Process, Syscall, File, Network, ...) | **&mdash;** | **&#10004;** |
+| File Integrity Monitoring (FIM) | **&mdash;** | **&#10004;** |
+| Combined Network & Runtime Visibility | **&mdash;** | **&#10004;** |
+| Real-Time Enforcement | **&mdash;** | **&#10004;** |
+| SIEM Integration | **&mdash;** | **&#10004;** |
+| Timescape - Historic Security Visibility & Analytics | **&mdash;** | **&#10004;** |
+| **Enterprise Distribution & Support** |||
+| Collaborative Support Agreement | **&#10004;** | **&#10004;** |
+| Enterprise-hardened Cilium Versions and Testing | **&mdash;** | **&#10004;** |
+| 24x7 Enterprise Grade Support SLA | **&mdash;** | **&#10004;** |
+| Proactive Support Environment Reviews | **&mdash;** | **&#10004;** |
 
 </details>
 
