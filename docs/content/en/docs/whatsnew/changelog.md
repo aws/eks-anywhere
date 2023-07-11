@@ -16,14 +16,14 @@ Please upgrade to `v0.15.3` if you are using Tinkerbell (Bare Metal) provider.
 
 ## [v0.16.2](https://github.com/aws/eks-anywhere/releases/tag/v0.16.2)
 
-## Fixes
+### Fixes
 
 - CLI: Ensure importing packages and bundles honors the insecure flag [#6056](https://github.com/aws/eks-anywhere/pull/6056)
 - vSphere: Fix credential configuration when using the full lifecycle controller [#6058](https://github.com/aws/eks-anywhere/pull/6058)
 - Bare Metal: Fix handling of Hardware validation errors in Tinkerbell full lifecycle cluster provisioning [#6091](https://github.com/aws/eks-anywhere/pull/6091)
 - Bare Metal: Fix parsing of bare metal cluster configurations containing embedded PEM certs [#6095](https://github.com/aws/eks-anywhere/pull/6095)
 
-## Upgrades
+### Upgrades
 
 - AWS Cloud Provider: v1.27.0 to v1.27.1
 - EKS Distro:
