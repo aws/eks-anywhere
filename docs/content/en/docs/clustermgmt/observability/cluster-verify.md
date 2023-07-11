@@ -108,7 +108,7 @@ w01    true                 true                   true                         
 
 To verify that the expected number of cluster machines are up and running, use the `kubectl` command to show that the machines are `Running`.
 
-This will confirm that the expected number of provider machines are present, they are the correct version, and running.
+This will confirm that the expected number of provider machines with the correct version have been provisioned and running.
 The machine objects are named using the cluster name as a prefix and there should be one created for each node in your cluster.
 
 ```
