@@ -31,7 +31,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/controller/handlers"
 	"github.com/aws/eks-anywhere/pkg/curatedpackages"
 	"github.com/aws/eks-anywhere/pkg/registrymirror"
-	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 	"github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
@@ -355,7 +354,7 @@ func (r *ClusterReconciler) preClusterProviderReconcile(ctx context.Context, log
 	}
 	if cluster.IsManaged() {
 		if err := r.clusterValidator.ValidateManagementClusterName(ctx, log, cluster); err != nil {
-			cluster.Status.FailureMessage = ptr.String(err.Error())
+			cluster.SetFailure(err.Error(), anywherev1.ManagementClusterRefInvalidReason)
 			return controller.Result{}, err
 		}
 	}
@@ -486,7 +485,8 @@ func (r *ClusterReconciler) buildClusterConfig(ctx context.Context, clus *anywhe
 	if err != nil {
 		var notFound apierrors.APIStatus
 		if apierrors.IsNotFound(err) && errors.As(err, &notFound) {
-			clus.Status.FailureMessage = ptr.String(fmt.Sprintf("Dependent cluster objects don't exist: %s", notFound))
+			failureMessage := fmt.Sprintf("Dependent cluster objects don't exist: %s", notFound)
+			clus.SetFailure(failureMessage, anywherev1.MissingDependentObjectsReason)
 		}
 		return nil, err
 	}
@@ -547,7 +547,8 @@ func (r *ClusterReconciler) setBundlesRef(ctx context.Context, clus *anywherev1.
 	mgmtCluster := &anywherev1.Cluster{}
 	if err := r.client.Get(ctx, types.NamespacedName{Name: clus.ManagedBy(), Namespace: clus.Namespace}, mgmtCluster); err != nil {
 		if apierrors.IsNotFound(err) {
-			clus.Status.FailureMessage = ptr.String(fmt.Sprintf("Management cluster %s does not exist", clus.Spec.ManagementCluster.Name))
+			failureMessage := fmt.Sprintf("Management cluster %s does not exist", clus.Spec.ManagementCluster.Name)
+			clus.SetFailure(failureMessage, anywherev1.ManagementClusterRefInvalidReason)
 		}
 		return err
 	}

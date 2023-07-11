@@ -102,6 +102,7 @@ func TestReconcilerValidateDatacenterConfigMissingManagementCluster(t *testing.T
 	tt.Expect(err).To(BeNil(), "error should be nil to prevent requeue")
 	tt.Expect(result).To(Equal(controller.Result{Result: &reconcile.Result{}}), "result should stop reconciliation")
 	tt.Expect(tt.cluster.Status.FailureMessage).To(HaveValue(ContainSubstring("\"nonexistent-management-cluster\" not found")))
+	tt.Expect(tt.cluster.Status.FailureReason).To(HaveValue(Equal(anywherev1.DatacenterConfigInvalidReason)))
 	tt.cleanup()
 }
 
@@ -115,6 +116,7 @@ func TestReconcilerValidateDatacenterConfigMissingManagementDatacenter(t *testin
 	tt.Expect(err).To(BeNil(), "error should be nil to prevent requeue")
 	tt.Expect(result).To(Equal(controller.Result{Result: &reconcile.Result{}}), "result should stop reconciliation")
 	tt.Expect(tt.cluster.Status.FailureMessage).To(HaveValue(ContainSubstring("\"nonexistent-datacenter\" not found")))
+	tt.Expect(tt.cluster.Status.FailureReason).To(HaveValue(Equal(anywherev1.DatacenterConfigInvalidReason)))
 	tt.cleanup()
 }
 
@@ -133,6 +135,7 @@ func TestReconcilerValidateDatacenterConfigIpMismatch(t *testing.T) {
 	tt.Expect(err).To(BeNil(), "error should be nil to prevent requeue")
 	tt.Expect(result).To(Equal(controller.Result{Result: &reconcile.Result{}}), "result should stop reconciliation")
 	tt.Expect(tt.cluster.Status.FailureMessage).To(HaveValue(ContainSubstring("workload cluster Tinkerbell IP must match managment cluster Tinkerbell IP")))
+	tt.Expect(tt.cluster.Status.FailureReason).To(HaveValue(Equal(anywherev1.DatacenterConfigInvalidReason)))
 	tt.cleanup()
 }
 
@@ -153,6 +156,8 @@ func TestReconcileCNISuccess(t *testing.T) {
 
 	tt.Expect(err).NotTo(HaveOccurred())
 	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
+	tt.Expect(tt.cluster.Status.FailureReason).To(BeZero())
+
 	tt.Expect(result).To(Equal(controller.Result{}))
 	tt.cleanup()
 }
@@ -172,6 +177,7 @@ func TestReconcileCNIErrorClientRegistry(t *testing.T) {
 
 	tt.Expect(err).To(MatchError(ContainSubstring("building client")))
 	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
+	tt.Expect(tt.cluster.Status.FailureReason).To(BeZero())
 	tt.Expect(result).To(Equal(controller.Result{}))
 	tt.cleanup()
 }
@@ -191,6 +197,7 @@ func TestReconcilerReconcileControlPlaneScaleSuccess(t *testing.T) {
 
 	tt.Expect(err).NotTo(HaveOccurred())
 	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
+	tt.Expect(tt.cluster.Status.FailureReason).To(BeZero())
 	tt.Expect(result).To(Equal(controller.Result{}))
 
 	kcp := &controlplanev1.KubeadmControlPlane{
@@ -217,6 +224,7 @@ func TestReconcilerReconcileControlPlaneSuccess(t *testing.T) {
 
 	tt.Expect(err).NotTo(HaveOccurred())
 	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
+	tt.Expect(tt.cluster.Status.FailureReason).To(BeZero())
 	tt.Expect(result).To(Equal(controller.Result{}))
 
 	tt.ShouldEventuallyExist(tt.ctx, kubeadmControlPlane())
@@ -261,6 +269,7 @@ func TestReconcilerReconcileControlPlaneSuccessRegistryMirrorAuthentication(t *t
 
 	tt.Expect(err).NotTo(HaveOccurred())
 	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
+	tt.Expect(tt.cluster.Status.FailureReason).To(BeZero())
 	tt.Expect(result).To(Equal(controller.Result{}))
 
 	tt.ShouldEventuallyExist(tt.ctx, kubeadmControlPlane())
@@ -300,7 +309,7 @@ func TestReconcilerReconcileControlPlaneFailure(t *testing.T) {
 	tt.cleanup()
 }
 
-func TestReconcilerValidateClusterSpecInvalidDatacenterConfig(t *testing.T) {
+func TestReconcilerValidateClusterSpecValidationFailedDatacenterConfig(t *testing.T) {
 	tt := newReconcilerTest(t)
 
 	logger := test.NewNullLogger()
@@ -316,11 +325,12 @@ func TestReconcilerValidateClusterSpecInvalidDatacenterConfig(t *testing.T) {
 
 	tt.Expect(err).To(BeNil(), "error should be nil to prevent requeue")
 	tt.Expect(*tt.cluster.Status.FailureMessage).To(ContainSubstring("missing spec.tinkerbellIP field"))
+	tt.Expect(tt.cluster.Status.FailureReason).To(HaveValue(Equal(anywherev1.ClusterInvalidReason)))
 	tt.Expect(result).To(Equal(controller.Result{Result: &reconcile.Result{}}), "result should stop reconciliation")
 	tt.cleanup()
 }
 
-func TestReconcilerValidateClusterSpecInvalidOSFamily(t *testing.T) {
+func TestReconcilerValidateClusterSpecValidationFailedOSFamily(t *testing.T) {
 	tt := newReconcilerTest(t)
 
 	logger := test.NewNullLogger()
@@ -336,6 +346,8 @@ func TestReconcilerValidateClusterSpecInvalidOSFamily(t *testing.T) {
 	tt.Expect(err).To(BeNil(), "error should be nil to prevent requeue")
 	tt.Expect(result).To(Equal(controller.Result{Result: &reconcile.Result{}}), "result should stop reconciliation")
 	tt.Expect(*tt.cluster.Status.FailureMessage).To(ContainSubstring("unsupported spec.osFamily (invalidOS); Please use one of the following: ubuntu, redhat, bottlerocket"))
+	tt.Expect(tt.cluster.Status.FailureReason).To(HaveValue(Equal(anywherev1.ClusterInvalidReason)))
+
 	tt.cleanup()
 }
 
@@ -357,6 +369,8 @@ func TestReconcilerReconcileWorkerNodesSuccess(t *testing.T) {
 
 	tt.Expect(err).NotTo(HaveOccurred())
 	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
+	tt.Expect(tt.cluster.Status.FailureReason).To(BeZero())
+
 	tt.Expect(result).To(Equal(controller.Result{}))
 
 	tt.ShouldEventuallyExist(tt.ctx,
@@ -414,6 +428,7 @@ func TestReconcilerReconcileWorkersScaleSuccess(t *testing.T) {
 
 	tt.Expect(err).NotTo(HaveOccurred())
 	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
+	tt.Expect(tt.cluster.Status.FailureReason).To(BeZero())
 	tt.Expect(result).To(Equal(controller.Result{}))
 
 	tt.ShouldEventuallyExist(tt.ctx, mt)
@@ -452,6 +467,7 @@ func TestReconcilerReconcileWorkersSuccess(t *testing.T) {
 
 	tt.Expect(err).NotTo(HaveOccurred())
 	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
+	tt.Expect(tt.cluster.Status.FailureReason).To(BeZero())
 	tt.Expect(result).To(Equal(controller.Result{}))
 
 	tt.ShouldEventuallyExist(tt.ctx,
@@ -517,6 +533,7 @@ func TestReconcilerValidateHardwareCountNewClusterFail(t *testing.T) {
 	tt.Expect(err).ToNot(BeNil())
 	tt.Expect(result).To(Equal(controller.Result{}), "result should not stop reconciliation")
 	tt.Expect(*tt.cluster.Status.FailureMessage).To(ContainSubstring("minimum hardware count not met for selector '{\"type\":\"worker\"}': have 0, require 1"))
+	tt.Expect(tt.cluster.Status.FailureReason).To(HaveValue(Equal(anywherev1.HardwareInvalidReason)))
 	tt.cleanup()
 }
 
@@ -536,6 +553,7 @@ func TestReconcilerValidateHardwareCountRollingUpdateFail(t *testing.T) {
 	tt.Expect(err).ToNot(BeNil())
 	tt.Expect(result).To(Equal(controller.Result{}), "result should not stop reconciliation")
 	tt.Expect(*tt.cluster.Status.FailureMessage).To(ContainSubstring("minimum hardware count not met for selector"))
+	tt.Expect(tt.cluster.Status.FailureReason).To(HaveValue(Equal(anywherev1.HardwareInvalidReason)))
 	tt.cleanup()
 }
 
@@ -556,6 +574,7 @@ func TestReconcilerValidateHardwareScalingUpdateFail(t *testing.T) {
 	tt.Expect(err).NotTo(BeNil())
 	tt.Expect(result).To(Equal(controller.Result{}), "result should stop reconciliation")
 	tt.Expect(*tt.cluster.Status.FailureMessage).To(ContainSubstring("minimum hardware count not met for selector '{\"type\":\"worker\"}': have 0, require 1"))
+	tt.Expect(tt.cluster.Status.FailureReason).To(HaveValue(Equal(anywherev1.HardwareInvalidReason)))
 	tt.cleanup()
 }
 
@@ -574,6 +593,7 @@ func TestReconcilerValidateHardwareNoHardware(t *testing.T) {
 	tt.Expect(err).NotTo(BeNil())
 	tt.Expect(result).To(Equal(controller.Result{}), "result should not stop reconciliation")
 	tt.Expect(*tt.cluster.Status.FailureMessage).To(ContainSubstring("minimum hardware count not met for selector '{\"type\":\"cp\"}': have 0, require 1"))
+	tt.Expect(tt.cluster.Status.FailureReason).To(HaveValue(Equal(anywherev1.HardwareInvalidReason)))
 	tt.cleanup()
 }
 
@@ -632,6 +652,7 @@ func TestReconcilerValidateRufioMachinesFail(t *testing.T) {
 	tt.Expect(err).ToNot(BeNil())
 	tt.Expect(result).To(Equal(controller.Result{}), "result should not stop reconciliation")
 	tt.Expect(*tt.cluster.Status.FailureMessage).To(ContainSubstring("bmc connection failure"))
+	tt.Expect(tt.cluster.Status.FailureReason).To(HaveValue(Equal(anywherev1.MachineInvalidReason)))
 	tt.cleanup()
 }
 

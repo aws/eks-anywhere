@@ -2812,6 +2812,32 @@ func TestClusterIsSingleNode(t *testing.T) {
 	}
 }
 
+func TestCluster_SetFailure(t *testing.T) {
+	g := NewWithT(t)
+	wantFailureMessage := "invalid cluster"
+	wantFailureReason := v1alpha1.FailureReasonType("InvalidCluster")
+	cluster := &v1alpha1.Cluster{}
+	cluster.SetFailure(wantFailureMessage, wantFailureReason)
+	g.Expect(cluster.Status.FailureMessage).To(HaveValue(Equal(wantFailureMessage)))
+	g.Expect(cluster.Status.FailureReason).To(HaveValue(Equal(wantFailureReason)))
+}
+
+func TestCluster_ClearFailure(t *testing.T) {
+	g := NewWithT(t)
+	failureMessage := "invalid cluster"
+	failureReason := v1alpha1.FailureReasonType("InvalidCluster")
+	cluster := &v1alpha1.Cluster{
+		Status: v1alpha1.ClusterStatus{
+			FailureMessage: &failureMessage,
+			FailureReason:  &failureReason,
+		},
+	}
+
+	cluster.ClearFailure()
+	g.Expect(cluster.Status.FailureMessage).To(BeNil())
+	g.Expect(cluster.Status.FailureReason).To(BeNil())
+}
+
 func TestClusterDisableControlPlaneIPCheck(t *testing.T) {
 	tests := []struct {
 		name    string

@@ -934,6 +934,9 @@ func TestClusterReconcilerDeleteExistingCAPIClusterSuccess(t *testing.T) {
 	if apiCluster.Status.FailureMessage != nil {
 		t.Errorf("Expected failure message to be nil. FailureMessage:%s", *apiCluster.Status.FailureMessage)
 	}
+	if apiCluster.Status.FailureReason != nil {
+		t.Errorf("Expected failure message to be nil. FailureReason:%s", *apiCluster.Status.FailureReason)
+	}
 }
 
 func TestClusterReconcilerReconcileDeletePausedCluster(t *testing.T) {
@@ -1065,6 +1068,9 @@ func TestClusterReconcilerDeleteNoCAPIClusterSuccess(t *testing.T) {
 
 	if apiCluster.Status.FailureMessage != nil {
 		t.Errorf("Expected failure message to be nil. FailureMessage:%s", *apiCluster.Status.FailureMessage)
+	}
+	if apiCluster.Status.FailureReason != nil {
+		t.Errorf("Expected failure reason to be nil. FailureReason:%s", *apiCluster.Status.FailureReason)
 	}
 }
 

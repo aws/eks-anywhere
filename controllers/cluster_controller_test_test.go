@@ -190,6 +190,7 @@ func TestClusterReconcilerReconcileChildObjectNotFound(t *testing.T) {
 		g.Expect(c.Status.FailureMessage).To(HaveValue(Equal(
 			"Dependent cluster objects don't exist: oidcconfigs.anywhere.eks.amazonaws.com \"my-oidc\" not found",
 		)))
+		g.Expect(c.Status.FailureReason).To(HaveValue(Equal(anywherev1.MissingDependentObjectsReason)))
 	})
 }
 
@@ -229,6 +230,7 @@ func TestClusterReconcilerManagementClusterNotFound(t *testing.T) {
 	c := envtest.CloneNameNamespace(cluster)
 	api.ShouldEventuallyMatch(ctx, c, func(g Gomega) {
 		g.Expect(c.Status.FailureMessage).To(HaveValue(Equal("Management cluster my-management-cluster does not exist")))
+		g.Expect(c.Status.FailureReason).To(HaveValue(Equal(anywherev1.ManagementClusterRefInvalidReason)))
 	})
 }
 
@@ -349,6 +351,13 @@ func TestClusterReconcilerWorkloadClusterMgmtClusterNameFail(t *testing.T) {
 	r := controllers.NewClusterReconciler(cl, newRegistryForDummyProviderReconciler(), newMockAWSIamConfigReconciler(t), validator, nil)
 	_, err := r.Reconcile(ctx, clusterRequest(cluster))
 	g.Expect(err).To(HaveOccurred())
+
+	api := envtest.NewAPIExpecter(t, cl)
+	c := envtest.CloneNameNamespace(cluster)
+	api.ShouldEventuallyMatch(ctx, c, func(g Gomega) {
+		g.Expect(c.Status.FailureMessage).To(HaveValue(Equal("test error")))
+		g.Expect(c.Status.FailureReason).To(HaveValue(Equal(anywherev1.ManagementClusterRefInvalidReason)))
+	})
 }
 
 func newRegistryForDummyProviderReconciler() controllers.ProviderClusterReconcilerRegistry {
