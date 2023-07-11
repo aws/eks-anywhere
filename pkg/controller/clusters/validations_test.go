@@ -21,7 +21,7 @@ import (
 func TestCleanupStatusAfterValidate(t *testing.T) {
 	g := NewWithT(t)
 	spec := test.NewClusterSpec(func(s *cluster.Spec) {
-		s.Cluster.SetFailure("invalid cluster", "InvalidCluster")
+		s.Cluster.SetFailure(anywherev1.FailureReasonType("InvalidCluster"), "invalid cluster")
 	})
 
 	g.Expect(

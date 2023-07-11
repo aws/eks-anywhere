@@ -354,7 +354,7 @@ func (r *ClusterReconciler) preClusterProviderReconcile(ctx context.Context, log
 	}
 	if cluster.IsManaged() {
 		if err := r.clusterValidator.ValidateManagementClusterName(ctx, log, cluster); err != nil {
-			cluster.SetFailure(err.Error(), anywherev1.ManagementClusterRefInvalidReason)
+			cluster.SetFailure(anywherev1.ManagementClusterRefInvalidReason, err.Error())
 			return controller.Result{}, err
 		}
 	}
@@ -486,7 +486,7 @@ func (r *ClusterReconciler) buildClusterConfig(ctx context.Context, clus *anywhe
 		var notFound apierrors.APIStatus
 		if apierrors.IsNotFound(err) && errors.As(err, &notFound) {
 			failureMessage := fmt.Sprintf("Dependent cluster objects don't exist: %s", notFound)
-			clus.SetFailure(failureMessage, anywherev1.MissingDependentObjectsReason)
+			clus.SetFailure(anywherev1.MissingDependentObjectsReason, failureMessage)
 		}
 		return nil, err
 	}
@@ -548,7 +548,7 @@ func (r *ClusterReconciler) setBundlesRef(ctx context.Context, clus *anywherev1.
 	if err := r.client.Get(ctx, types.NamespacedName{Name: clus.ManagedBy(), Namespace: clus.Namespace}, mgmtCluster); err != nil {
 		if apierrors.IsNotFound(err) {
 			failureMessage := fmt.Sprintf("Management cluster %s does not exist", clus.Spec.ManagementCluster.Name)
-			clus.SetFailure(failureMessage, anywherev1.ManagementClusterRefInvalidReason)
+			clus.SetFailure(anywherev1.ManagementClusterRefInvalidReason, failureMessage)
 		}
 		return err
 	}

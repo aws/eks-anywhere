@@ -2817,7 +2817,7 @@ func TestCluster_SetFailure(t *testing.T) {
 	wantFailureMessage := "invalid cluster"
 	wantFailureReason := v1alpha1.FailureReasonType("InvalidCluster")
 	cluster := &v1alpha1.Cluster{}
-	cluster.SetFailure(wantFailureMessage, wantFailureReason)
+	cluster.SetFailure(wantFailureReason, wantFailureMessage)
 	g.Expect(cluster.Status.FailureMessage).To(HaveValue(Equal(wantFailureMessage)))
 	g.Expect(cluster.Status.FailureReason).To(HaveValue(Equal(wantFailureReason)))
 }

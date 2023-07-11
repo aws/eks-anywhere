@@ -44,7 +44,7 @@ func (i *IPValidator) ValidateControlPlaneIP(ctx context.Context, log logr.Logge
 		return controller.Result{}, nil
 	}
 	if err := i.ipUniquenessValidator.ValidateControlPlaneIPUniqueness(spec.Cluster); err != nil {
-		spec.Cluster.SetFailure(err.Error(), anywherev1.UnavailableControlPlaneIPReason)
+		spec.Cluster.SetFailure(anywherev1.UnavailableControlPlaneIPReason, err.Error())
 		log.Error(err, "Unavailable control plane IP")
 		return controller.ResultWithReturn(), nil
 	}

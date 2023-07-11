@@ -1272,7 +1272,7 @@ func (c *Cluster) MachineConfigRefs() []Ref {
 }
 
 // SetFailure sets the failureMessage and failureReason of the Cluster status.
-func (c *Cluster) SetFailure(failureMessage string, failureReason FailureReasonType) {
+func (c *Cluster) SetFailure(failureReason FailureReasonType, failureMessage string) {
 	c.Status.FailureMessage = ptr.String(failureMessage)
 	c.Status.FailureReason = &failureReason
 }

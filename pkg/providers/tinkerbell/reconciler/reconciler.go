@@ -132,7 +132,7 @@ func (r *Reconciler) ValidateClusterSpec(ctx context.Context, log logr.Logger, t
 	if err := clusterSpecValidator.Validate(tinkerbellClusterSpec); err != nil {
 		log.Error(err, "Invalid Tinkerbell Cluster spec")
 		failureMessage := err.Error()
-		clusterSpec.Cluster.SetFailure(failureMessage, anywherev1.ClusterInvalidReason)
+		clusterSpec.Cluster.SetFailure(anywherev1.ClusterInvalidReason, failureMessage)
 		return controller.ResultWithReturn(), nil
 	}
 	return controller.Result{}, nil
@@ -279,7 +279,7 @@ func (r *Reconciler) ValidateDatacenterConfig(ctx context.Context, log logr.Logg
 	if err := r.validateTinkerbellIPMatch(ctx, tinkerbellScope.ClusterSpec); err != nil {
 		log.Error(err, "Invalid TinkerbellDatacenterConfig")
 		failureMessage := err.Error()
-		tinkerbellScope.ClusterSpec.Cluster.SetFailure(failureMessage, anywherev1.DatacenterConfigInvalidReason)
+		tinkerbellScope.ClusterSpec.Cluster.SetFailure(anywherev1.DatacenterConfigInvalidReason, failureMessage)
 		return controller.ResultWithReturn(), nil
 	}
 
@@ -357,7 +357,7 @@ func (r *Reconciler) ValidateHardware(ctx context.Context, log logr.Logger, tink
 	if err := kubeReader.LoadHardware(ctx); err != nil {
 		log.Error(err, "Loading hardware failure")
 		failureMessage := err.Error()
-		clusterSpec.Cluster.SetFailure(failureMessage, anywherev1.HardwareInvalidReason)
+		clusterSpec.Cluster.SetFailure(anywherev1.HardwareInvalidReason, failureMessage)
 
 		return controller.ResultWithReturn(), nil
 	}
@@ -410,7 +410,7 @@ func (r *Reconciler) ValidateHardware(ctx context.Context, log logr.Logger, tink
 	if err := v.Validate(tinkClusterSpec); err != nil {
 		log.Error(err, "Hardware validation failure")
 		failureMessage := fmt.Errorf("hardware validation failure: %v", err).Error()
-		clusterSpec.Cluster.SetFailure(failureMessage, anywherev1.HardwareInvalidReason)
+		clusterSpec.Cluster.SetFailure(anywherev1.HardwareInvalidReason, failureMessage)
 
 		return controller.Result{}, err
 	}
@@ -427,7 +427,7 @@ func (r *Reconciler) ValidateRufioMachines(ctx context.Context, log logr.Logger,
 	if err := kubeReader.LoadRufioMachines(ctx); err != nil {
 		log.Error(err, "loading existing rufio machines from the cluster")
 		failureMessage := err.Error()
-		clusterSpec.Cluster.SetFailure(failureMessage, anywherev1.MachineInvalidReason)
+		clusterSpec.Cluster.SetFailure(anywherev1.MachineInvalidReason, failureMessage)
 
 		return controller.Result{}, err
 	}
@@ -436,7 +436,7 @@ func (r *Reconciler) ValidateRufioMachines(ctx context.Context, log logr.Logger,
 		if err := r.checkContactable(rm); err != nil {
 			log.Error(err, "rufio machine check failure")
 			failureMessage := err.Error()
-			clusterSpec.Cluster.SetFailure(failureMessage, anywherev1.MachineInvalidReason)
+			clusterSpec.Cluster.SetFailure(anywherev1.MachineInvalidReason, failureMessage)
 
 			return controller.Result{}, err
 		}
