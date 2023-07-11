@@ -3,6 +3,7 @@ package cilium
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
@@ -103,6 +104,8 @@ func (u *Upgrader) Upgrade(ctx context.Context, cluster *types.Cluster, currentS
 		return nil, err
 	}
 
+	logger.V(2).Info(string(upgradeManifest))
+
 	logger.V(2).Info("Installing new Cilium version")
 	if err := u.client.Apply(ctx, cluster, upgradeManifest); err != nil {
 		return nil, fmt.Errorf("failed applying cilium upgrade: %v", err)
@@ -136,6 +139,9 @@ func (u *Upgrader) waitForCilium(ctx context.Context, cluster *types.Cluster) er
 	if err := u.client.WaitForCiliumDeployment(ctx, cluster); err != nil {
 		return err
 	}
+
+	logger.V(2).Info("Testing to confirm if this is the issue E2E")
+	time.Sleep(2 * time.Minute)
 
 	return nil
 }
