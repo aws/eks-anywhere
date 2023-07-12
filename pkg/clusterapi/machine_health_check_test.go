@@ -7,11 +7,11 @@ import (
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/constants"
 )
@@ -21,7 +21,7 @@ func TestMachineHealthCheckForControlPlane(t *testing.T) {
 	for _, timeout := range timeouts {
 		tt := newApiBuilerTest(t)
 		want := expectedMachineHealthCheckForControlPlane(timeout)
-		got := clusterapi.MachineHealthCheckForControlPlane(tt.clusterSpec, timeout, timeout)
+		got := clusterapi.MachineHealthCheckForControlPlane(tt.clusterSpec.Cluster, timeout, timeout)
 		tt.Expect(got).To(BeComparableTo(want))
 	}
 }
@@ -68,7 +68,7 @@ func TestMachineHealthCheckForWorkers(t *testing.T) {
 		tt := newApiBuilerTest(t)
 		tt.clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations = []v1alpha1.WorkerNodeGroupConfiguration{*tt.workerNodeGroupConfig}
 		want := expectedMachineHealthCheckForWorkers(timeout)
-		got := clusterapi.MachineHealthCheckForWorkers(tt.clusterSpec, timeout, timeout)
+		got := clusterapi.MachineHealthCheckForWorkers(tt.clusterSpec.Cluster, timeout, timeout)
 		tt.Expect(got).To(Equal(want))
 	}
 }
@@ -116,9 +116,9 @@ func TestMachineHealthCheckObjects(t *testing.T) {
 	tt.clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations = []v1alpha1.WorkerNodeGroupConfiguration{*tt.workerNodeGroupConfig}
 	timeout := 5 * time.Minute
 
-	wantWN := clusterapi.MachineHealthCheckForWorkers(tt.clusterSpec, timeout, timeout)
-	wantCP := clusterapi.MachineHealthCheckForControlPlane(tt.clusterSpec, timeout, timeout)
+	wantWN := clusterapi.MachineHealthCheckForWorkers(tt.clusterSpec.Cluster, timeout, timeout)
+	wantCP := clusterapi.MachineHealthCheckForControlPlane(tt.clusterSpec.Cluster, timeout, timeout)
 
-	got := clusterapi.MachineHealthCheckObjects(tt.clusterSpec, timeout, timeout)
-	tt.Expect(got).To(Equal([]runtime.Object{wantWN[0], wantCP}))
+	got := clusterapi.MachineHealthCheckObjects(tt.clusterSpec.Cluster, timeout, timeout)
+	tt.Expect(got).To(Equal([]kubernetes.Object{wantWN[0], wantCP}))
 }

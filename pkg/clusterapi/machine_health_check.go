@@ -5,12 +5,11 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/constants"
 )
 
@@ -53,9 +52,9 @@ func machineHealthCheck(clusterName string, unhealthyTimeout, nodeStartupTimeout
 }
 
 // MachineHealthCheckForControlPlane creates MachineHealthCheck resources for the control plane.
-func MachineHealthCheckForControlPlane(clusterSpec *cluster.Spec, unhealthyTimeout, nodeStartupTimeout time.Duration) *clusterv1.MachineHealthCheck {
-	mhc := machineHealthCheck(ClusterName(clusterSpec.Cluster), unhealthyTimeout, nodeStartupTimeout)
-	mhc.SetName(ControlPlaneMachineHealthCheckName(clusterSpec))
+func MachineHealthCheckForControlPlane(cluster *v1alpha1.Cluster, unhealthyTimeout, nodeStartupTimeout time.Duration) *clusterv1.MachineHealthCheck {
+	mhc := machineHealthCheck(ClusterName(cluster), unhealthyTimeout, nodeStartupTimeout)
+	mhc.SetName(ControlPlaneMachineHealthCheckName(cluster))
 	mhc.Spec.Selector.MatchLabels[clusterv1.MachineControlPlaneLabel] = ""
 	maxUnhealthy := intstr.Parse(maxUnhealthyControlPlane)
 	mhc.Spec.MaxUnhealthy = &maxUnhealthy
@@ -63,30 +62,30 @@ func MachineHealthCheckForControlPlane(clusterSpec *cluster.Spec, unhealthyTimeo
 }
 
 // MachineHealthCheckForWorkers creates MachineHealthCheck resources for the workers.
-func MachineHealthCheckForWorkers(clusterSpec *cluster.Spec, unhealthyTimeout, nodeStartupTimeout time.Duration) []*clusterv1.MachineHealthCheck {
-	m := make([]*clusterv1.MachineHealthCheck, 0, len(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations))
-	for _, workerNodeGroupConfig := range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
-		mhc := machineHealthCheckForWorker(clusterSpec, workerNodeGroupConfig, unhealthyTimeout, nodeStartupTimeout)
+func MachineHealthCheckForWorkers(cluster *v1alpha1.Cluster, unhealthyTimeout, nodeStartupTimeout time.Duration) []*clusterv1.MachineHealthCheck {
+	m := make([]*clusterv1.MachineHealthCheck, 0, len(cluster.Spec.WorkerNodeGroupConfigurations))
+	for _, workerNodeGroupConfig := range cluster.Spec.WorkerNodeGroupConfigurations {
+		mhc := machineHealthCheckForWorker(cluster, workerNodeGroupConfig, unhealthyTimeout, nodeStartupTimeout)
 		m = append(m, mhc)
 	}
 	return m
 }
 
-func machineHealthCheckForWorker(clusterSpec *cluster.Spec, workerNodeGroupConfig v1alpha1.WorkerNodeGroupConfiguration, unhealthyTimeout, nodeStartupTimeout time.Duration) *clusterv1.MachineHealthCheck {
-	mhc := machineHealthCheck(ClusterName(clusterSpec.Cluster), unhealthyTimeout, nodeStartupTimeout)
-	mhc.SetName(WorkerMachineHealthCheckName(clusterSpec, workerNodeGroupConfig))
-	mhc.Spec.Selector.MatchLabels[clusterv1.MachineDeploymentNameLabel] = MachineDeploymentName(clusterSpec.Cluster, workerNodeGroupConfig)
+func machineHealthCheckForWorker(cluster *v1alpha1.Cluster, workerNodeGroupConfig v1alpha1.WorkerNodeGroupConfiguration, unhealthyTimeout, nodeStartupTimeout time.Duration) *clusterv1.MachineHealthCheck {
+	mhc := machineHealthCheck(ClusterName(cluster), unhealthyTimeout, nodeStartupTimeout)
+	mhc.SetName(WorkerMachineHealthCheckName(cluster, workerNodeGroupConfig))
+	mhc.Spec.Selector.MatchLabels[clusterv1.MachineDeploymentNameLabel] = MachineDeploymentName(cluster, workerNodeGroupConfig)
 	maxUnhealthy := intstr.Parse(maxUnhealthyWorker)
 	mhc.Spec.MaxUnhealthy = &maxUnhealthy
 	return mhc
 }
 
 // MachineHealthCheckObjects creates MachineHealthCheck resources for control plane and all the worker node groups.
-func MachineHealthCheckObjects(clusterSpec *cluster.Spec, unhealthyTimeout, nodeStartupTimeout time.Duration) []runtime.Object {
-	mhcWorkers := MachineHealthCheckForWorkers(clusterSpec, unhealthyTimeout, nodeStartupTimeout)
-	o := make([]runtime.Object, 0, len(mhcWorkers)+1)
+func MachineHealthCheckObjects(cluster *v1alpha1.Cluster, unhealthyTimeout, nodeStartupTimeout time.Duration) []kubernetes.Object {
+	mhcWorkers := MachineHealthCheckForWorkers(cluster, unhealthyTimeout, nodeStartupTimeout)
+	o := make([]kubernetes.Object, 0, len(mhcWorkers)+1)
 	for _, item := range mhcWorkers {
 		o = append(o, item)
 	}
-	return append(o, MachineHealthCheckForControlPlane(clusterSpec, unhealthyTimeout, nodeStartupTimeout))
+	return append(o, MachineHealthCheckForControlPlane(cluster, unhealthyTimeout, nodeStartupTimeout))
 }

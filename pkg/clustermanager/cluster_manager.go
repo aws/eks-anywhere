@@ -775,7 +775,7 @@ func getProviderNamespaces(providerDeployments map[string][]string) []string {
 }
 
 func (c *ClusterManager) InstallMachineHealthChecks(ctx context.Context, clusterSpec *cluster.Spec, workloadCluster *types.Cluster) error {
-	mhc, err := templater.ObjectsToYaml(clusterapi.MachineHealthCheckObjects(clusterSpec, c.unhealthyMachineTimeout, c.nodeStartupTimeout)...)
+	mhc, err := templater.ObjectsToYaml(kubernetes.ObjectsToRuntimeObjects(clusterapi.MachineHealthCheckObjects(clusterSpec.Cluster, c.unhealthyMachineTimeout, c.nodeStartupTimeout))...)
 	if err != nil {
 		return err
 	}
