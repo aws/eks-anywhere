@@ -76,8 +76,11 @@ func (uc *upgradeClusterOptions) upgradePlanCluster(ctx context.Context) error {
 		return err
 	}
 
+	kubeconfigPath := getKubeconfigPath(newClusterSpec.Cluster.Name, uc.wConfig)
+
 	deps, err := dependencies.ForSpec(ctx, newClusterSpec).
-		WithClusterManager(newClusterSpec.Cluster, nil).
+		WithUnAuthKubeClient().
+		WithClusterManager(newClusterSpec.Cluster, kubeconfigPath, nil).
 		WithProvider(uc.fileName, newClusterSpec.Cluster, false, uc.hardwareCSVPath, uc.forceClean, uc.tinkerbellBootstrapIP).
 		WithGitOpsFlux(newClusterSpec.Cluster, newClusterSpec.FluxConfig, nil).
 		WithCAPIManager().

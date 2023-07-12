@@ -116,7 +116,8 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 	factory := dependencies.ForSpec(ctx, clusterSpec).WithExecutableMountDirs(dirs...).
 		WithBootstrapper().
 		WithCliConfig(cliConfig).
-		WithClusterManager(clusterSpec.Cluster, clusterManagerTimeoutOpts).
+		WithUnAuthKubeClient().
+		WithClusterManager(clusterSpec.Cluster, kubeconfigPath, clusterManagerTimeoutOpts).
 		WithProvider(cc.fileName, clusterSpec.Cluster, cc.skipIpCheck, cc.hardwareCSVPath, cc.forceClean, cc.tinkerbellBootstrapIP).
 		WithGitOpsFlux(clusterSpec.Cluster, clusterSpec.FluxConfig, cliConfig).
 		WithWriter().

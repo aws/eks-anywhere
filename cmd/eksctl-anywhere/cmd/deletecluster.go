@@ -90,10 +90,13 @@ func (dc *deleteClusterOptions) deleteCluster(ctx context.Context) error {
 		return err
 	}
 
+	kubeconfigPath := getKubeconfigPath(clusterSpec.Cluster.Name, dc.wConfig)
+
 	deps, err := dependencies.ForSpec(ctx, clusterSpec).WithExecutableMountDirs(dirs...).
 		WithBootstrapper().
 		WithCliConfig(cliConfig).
-		WithClusterManager(clusterSpec.Cluster, nil).
+		WithUnAuthKubeClient().
+		WithClusterManager(clusterSpec.Cluster, kubeconfigPath, nil).
 		WithProvider(dc.fileName, clusterSpec.Cluster, cc.skipIpCheck, dc.hardwareFileName, false, dc.tinkerbellBootstrapIP).
 		WithGitOpsFlux(clusterSpec.Cluster, clusterSpec.FluxConfig, cliConfig).
 		WithWriter().

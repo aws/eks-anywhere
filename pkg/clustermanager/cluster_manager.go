@@ -76,6 +76,7 @@ var (
 
 type ClusterManager struct {
 	eksaComponents     EKSAComponents
+	Client             cluster.Client
 	clusterClient      *RetrierClient
 	retrier            *retrier.Retrier
 	writer             filewriter.FileWriter
@@ -171,9 +172,10 @@ func DefaultRetrier() *retrier.Retrier {
 }
 
 // New constructs a new ClusterManager.
-func New(clusterClient *RetrierClient, networking Networking, writer filewriter.FileWriter, diagnosticBundleFactory diagnostics.DiagnosticBundleFactory, awsIamAuth AwsIamAuth, eksaComponents EKSAComponents, opts ...ClusterManagerOpt) *ClusterManager {
+func New(client cluster.Client, clusterClient *RetrierClient, networking Networking, writer filewriter.FileWriter, diagnosticBundleFactory diagnostics.DiagnosticBundleFactory, awsIamAuth AwsIamAuth, eksaComponents EKSAComponents, opts ...ClusterManagerOpt) *ClusterManager {
 	c := &ClusterManager{
 		eksaComponents:                   eksaComponents,
+		Client:                           client,
 		clusterClient:                    clusterClient,
 		writer:                           writer,
 		networking:                       networking,
@@ -1303,43 +1305,7 @@ func (c *ClusterManager) GetCurrentClusterSpec(ctx context.Context, clus *types.
 }
 
 func (c *ClusterManager) buildSpecForCluster(ctx context.Context, clus *types.Cluster, eksaCluster *v1alpha1.Cluster) (*cluster.Spec, error) {
-	return cluster.BuildSpecForCluster(ctx, eksaCluster, c.bundlesFetcher(clus), c.eksdReleaseFetcher(clus), c.gitOpsFetcher(clus), c.fluxConfigFetcher(clus), c.oidcFetcher(clus), c.awsIamConfigFetcher(clus))
-}
-
-func (c *ClusterManager) bundlesFetcher(cluster *types.Cluster) cluster.BundlesFetch {
-	return func(ctx context.Context, name, namespace string) (*releasev1alpha1.Bundles, error) {
-		return c.clusterClient.GetBundles(ctx, cluster.KubeconfigFile, name, namespace)
-	}
-}
-
-func (c *ClusterManager) eksdReleaseFetcher(cluster *types.Cluster) cluster.EksdReleaseFetch {
-	return func(ctx context.Context, name, namespace string) (*eksdv1alpha1.Release, error) {
-		return c.clusterClient.GetEksdRelease(ctx, name, namespace, cluster.KubeconfigFile)
-	}
-}
-
-func (c *ClusterManager) gitOpsFetcher(cluster *types.Cluster) cluster.GitOpsFetch {
-	return func(ctx context.Context, name, namespace string) (*v1alpha1.GitOpsConfig, error) {
-		return c.clusterClient.GetEksaGitOpsConfig(ctx, name, cluster.KubeconfigFile, namespace)
-	}
-}
-
-func (c *ClusterManager) fluxConfigFetcher(cluster *types.Cluster) cluster.FluxConfigFetch {
-	return func(ctx context.Context, name, namespace string) (*v1alpha1.FluxConfig, error) {
-		return c.clusterClient.GetEksaFluxConfig(ctx, name, cluster.KubeconfigFile, namespace)
-	}
-}
-
-func (c *ClusterManager) oidcFetcher(cluster *types.Cluster) cluster.OIDCFetch {
-	return func(ctx context.Context, name, namespace string) (*v1alpha1.OIDCConfig, error) {
-		return c.clusterClient.GetEksaOIDCConfig(ctx, name, cluster.KubeconfigFile, namespace)
-	}
-}
-
-func (c *ClusterManager) awsIamConfigFetcher(cluster *types.Cluster) cluster.AWSIamConfigFetch {
-	return func(ctx context.Context, name, namespace string) (*v1alpha1.AWSIamConfig, error) {
-		return c.clusterClient.GetEksaAWSIamConfig(ctx, name, cluster.KubeconfigFile, namespace)
-	}
+	return cluster.BuildSpec(ctx, c.Client, eksaCluster)
 }
 
 func (c *ClusterManager) DeletePackageResources(ctx context.Context, managementCluster *types.Cluster, clusterName string) error {
