@@ -139,12 +139,6 @@ func ModifyAndPushChartYaml(i releasetypes.ImageArtifact, r *releasetypes.Releas
 
 	// If the chart is packages, we find the image tag values and overide them in the values.yaml.
 	if strings.Contains(helmDest, "eks-anywhere-packages") {
-		imageTagMap, err := GetPackagesImageTags(eksArtifacts)
-		fmt.Printf("Overwriting helm values.yaml version to new image tags %v\n", imageTagMap)
-		err = OverWriteChartValuesImageTag(helmDest, imageTagMap)
-		if err != nil {
-			return fmt.Errorf("overwriting the values.yaml version: %w", err)
-		}
 		if shaMap != nil {
 			fmt.Printf("Overwriting helm values.yaml image shas to new image shas for Dev Release %v\n", shaMap)
 			err = OverWriteChartValuesImageSha(helmDest, shaMap)
@@ -454,7 +448,9 @@ func OverWriteChartValuesImageSha(filename string, shaMap map[string]anywherev1a
 		return err
 	}
 	values["controller"].(map[string]interface{})["digest"] = shaMap["eks-anywhere-packages"].ImageDigest
+	values["controller"].(map[string]interface{})["tag"] = shaMap["eks-anywhere-packages"].ImageDigest
 	values["cronjob"].(map[string]interface{})["digest"] = shaMap["ecr-token-refresher"].ImageDigest
+	values["cronjob"].(map[string]interface{})["tag"] = shaMap["ecr-token-refresher"].ImageDigest
 	yamlData, err := yaml.Marshal(&values)
 	if err != nil {
 		return fmt.Errorf("unable to Marshal %v\nyamlData: %s\n %v", values, yamlData, err)
