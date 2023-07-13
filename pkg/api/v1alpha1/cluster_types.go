@@ -893,7 +893,7 @@ type ClusterCNI struct {
 	// +optional
 	Version string `json:"version,omitempty"`
 
-	// Applied, Not Applied
+	// Status reports the current state of the default CNI.
 	Status ClusterCNIStatus `json:"status,omitempty"`
 }
 
