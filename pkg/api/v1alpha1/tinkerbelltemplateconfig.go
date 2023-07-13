@@ -1,11 +1,14 @@
 package v1alpha1
 
 import (
+	"bufio"
+	"bytes"
 	"fmt"
+	"io"
 	"os"
-	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	yamlutil "k8s.io/apimachinery/pkg/util/yaml"
 	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1/thirdparty/tinkerbell"
@@ -72,18 +75,29 @@ func GetTinkerbellTemplateConfig(fileName string) (map[string]*TinkerbellTemplat
 	if err != nil {
 		return nil, fmt.Errorf("unable to read file due to: %v", err)
 	}
-	for _, c := range strings.Split(string(content), YamlSeparator) {
+
+	r := yamlutil.NewYAMLReader(bufio.NewReader(bytes.NewReader(content)))
+	for {
+		d, err := r.Read()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return nil, err
+		}
+
 		var template TinkerbellTemplateConfig
-		if err := yaml.Unmarshal([]byte(c), &template); err != nil {
+		if err := yaml.Unmarshal(d, &template); err != nil {
 			return nil, fmt.Errorf("unable to unmarshall content from file due to: %v", err)
 		}
 
 		if template.Kind() == template.ExpectedKind() {
-			if err = yaml.UnmarshalStrict([]byte(c), &template); err != nil {
+			if err := yamlutil.UnmarshalStrict(d, &template); err != nil {
 				return nil, fmt.Errorf("invalid template config content: %v", err)
 			}
 			templates[template.Name] = &template
 		}
+
 	}
 	return templates, nil
 }

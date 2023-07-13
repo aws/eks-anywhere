@@ -1,12 +1,15 @@
 package v1alpha1
 
 import (
+	"bufio"
+	"bytes"
 	"fmt"
+	"io"
 	"os"
-	"strings"
 
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	yamlutil "k8s.io/apimachinery/pkg/util/yaml"
 	"sigs.k8s.io/yaml"
 )
 
@@ -126,24 +129,38 @@ func GetNutanixMachineConfigs(fileName string) (map[string]*NutanixMachineConfig
 	if err != nil {
 		return nil, fmt.Errorf("unable to read file due to: %v", err)
 	}
-	for _, c := range strings.Split(string(content), YamlSeparator) {
+
+	r := yamlutil.NewYAMLReader(bufio.NewReader(bytes.NewReader(content)))
+	for {
+		d, err := r.Read()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return nil, err
+		}
+
 		config := NutanixMachineConfig{
 			TypeMeta: metav1.TypeMeta{},
 			ObjectMeta: metav1.ObjectMeta{
 				Annotations: map[string]string{},
 			},
 		}
-		if err = yaml.UnmarshalStrict([]byte(c), &config); err == nil {
+
+		if err = yaml.UnmarshalStrict(d, &config); err == nil {
 			if config.Kind == NutanixMachineConfigKind {
 				configs[config.Name] = &config
 				continue
 			}
 		}
-		_ = yaml.Unmarshal([]byte(c), &config) // this is to check if there is a bad spec in the file
+
+		_ = yaml.Unmarshal(d, &config) // this is to check if there is a bad spec in the file
 		if config.Kind == NutanixMachineConfigKind {
 			return nil, fmt.Errorf("unable to unmarshall content from file due to: %v", err)
 		}
+
 	}
+
 	if len(configs) == 0 {
 		return nil, fmt.Errorf("unable to find kind %v in file", NutanixMachineConfigKind)
 	}
