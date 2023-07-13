@@ -2266,15 +2266,23 @@ func newSpecChangedTest(t *testing.T, opts ...clustermanager.ClusterManagerOpt) 
 				Kind: v1alpha1.OIDCConfigKind,
 				Name: clusterName,
 			}},
+			BundlesRef: &v1alpha1.BundlesRef{
+				Name:      "bundles-1",
+				Namespace: "default",
+			},
 		},
 	}
 	newClusterConfig := clusterConfig.DeepCopy()
 	datacenterConfig := &v1alpha1.VSphereDatacenterConfig{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "VSphereDatacenterConfig",
+			APIVersion: "anywhere.eks.amazonaws.com/v1alpha1",
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name: clusterName,
 		},
 		Spec: v1alpha1.VSphereDatacenterConfigSpec{
-			Insecure: true,
+			Insecure: false,
 		},
 	}
 	machineConfig := &v1alpha1.VSphereMachineConfig{
@@ -2313,9 +2321,9 @@ func newSpecChangedTest(t *testing.T, opts ...clustermanager.ClusterManagerOpt) 
 		oldOIDCConfig:                oidcConfig,
 	}
 
-	changedTest.clusterSpec = test.NewClusterSpecForCluster(t, newClusterConfig)
-	changedTest.clusterSpec.VersionsBundle.EksD.Name = "test"
-	changedTest.clusterSpec.OIDCConfig = &v1alpha1.OIDCConfig{
+	b := test.Bundle()
+	r := test.EksdRelease()
+	oc := &v1alpha1.OIDCConfig{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "OIDCConfig",
 			APIVersion: "anywhere.eks.amazonaws.com/v1alpha1",
@@ -2325,13 +2333,16 @@ func newSpecChangedTest(t *testing.T, opts ...clustermanager.ClusterManagerOpt) 
 		},
 	}
 
-	br := &v1alpha1.BundlesRef{
-		Name:      "bundles-1",
-		Namespace: "default",
+	config := &cluster.Config{
+		Cluster:               newClusterConfig,
+		VSphereDatacenter:     datacenterConfig,
+		OIDCConfigs:           map[string]*v1alpha1.OIDCConfig{clusterName: oc},
+		VSphereMachineConfigs: map[string]*v1alpha1.VSphereMachineConfig{},
+		AWSIAMConfigs:         map[string]*v1alpha1.AWSIamConfig{},
 	}
 
-	changedTest.clusterSpec.Cluster.Spec.BundlesRef = br
-	changedTest.oldClusterConfig.Spec.BundlesRef = br
+	cs, _ := cluster.NewSpec(config, b, r)
+	changedTest.clusterSpec = cs
 
 	return changedTest
 }
