@@ -11,12 +11,13 @@ import (
 // Default timeout for Tink tests to poll for hardware.
 const hwPollingTimeout = 120 * time.Minute
 
-type hardwareQueue struct {
+// hardwareCatalogue has a thread safe FIFO queue implementation to facilitate hardware reservation.
+type hardwareCatalogue struct {
 	hws []*api.Hardware
 	mu  sync.Mutex
 }
 
-func (hwQu *hardwareQueue) reserveHardware(count int) ([]*api.Hardware, error) {
+func (hwQu *hardwareCatalogue) reserveHardware(count int) ([]*api.Hardware, error) {
 	now := time.Now()
 	after := now.Add(hwPollingTimeout)
 	for {
@@ -25,7 +26,7 @@ func (hwQu *hardwareQueue) reserveHardware(count int) ([]*api.Hardware, error) {
 		}
 		hwQu.mu.Lock()
 		if count <= len(hwQu.hws) {
-			hardwareReserved := hwQu.dequeueHw(count)
+			hardwareReserved := hwQu.acquireHw(count)
 			hwQu.mu.Unlock()
 			return hardwareReserved, nil
 		}
@@ -34,24 +35,20 @@ func (hwQu *hardwareQueue) reserveHardware(count int) ([]*api.Hardware, error) {
 	}
 }
 
-func (hwQu *hardwareQueue) releaseHardware(hardwareToRelease []*api.Hardware) {
+func (hwQu *hardwareCatalogue) releaseHardware(hws []*api.Hardware) {
 	hwQu.mu.Lock()
-	hwQu.enqueueHw(hardwareToRelease)
+	hwQu.hws = append(hwQu.hws, hws...)
 	hwQu.mu.Unlock()
 }
 
-func (hwQu *hardwareQueue) enqueueHw(hws []*api.Hardware) {
-	hwQu.hws = append(hwQu.hws, hws...)
-}
-
-func (hwQu *hardwareQueue) dequeueHw(count int) []*api.Hardware {
+func (hwQu *hardwareCatalogue) acquireHw(count int) []*api.Hardware {
 	hwsToRet := hwQu.hws[:count]
 	hwQu.hws = hwQu.hws[count:]
 	return hwsToRet
 }
 
-func newHardwareQueue(hws []*api.Hardware) *hardwareQueue {
-	return &hardwareQueue{
+func newHardwareCatalogue(hws []*api.Hardware) *hardwareCatalogue {
+	return &hardwareCatalogue{
 		hws: hws,
 		mu:  sync.Mutex{},
 	}
