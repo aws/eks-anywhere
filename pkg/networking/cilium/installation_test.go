@@ -85,9 +85,19 @@ func TestInstallationVersion(t *testing.T) {
 		name         string
 		installation cilium.Installation
 		want         string
+		wantErr      string
 	}{
 		{
-			name: "installed",
+			name: "no cilium daemon set, no version",
+			installation: cilium.Installation{
+				DaemonSet: nil,
+				Operator:  &appsv1.Deployment{},
+			},
+			want:    "",
+			wantErr: "",
+		},
+		{
+			name: "repository, cilium and version",
 			installation: cilium.Installation{
 				DaemonSet: &appsv1.DaemonSet{
 					Spec: appsv1.DaemonSetSpec{
@@ -102,13 +112,77 @@ func TestInstallationVersion(t *testing.T) {
 				},
 				Operator: &appsv1.Deployment{},
 			},
-			want: "v1.11.15-eksa.1",
+			want:    "v1.11.15-eksa.1",
+			wantErr: "",
+		},
+		{
+			name: "cilium and version",
+			installation: cilium.Installation{
+				DaemonSet: &appsv1.DaemonSet{
+					Spec: appsv1.DaemonSetSpec{
+						Template: v1.PodTemplateSpec{
+							Spec: v1.PodSpec{
+								Containers: []v1.Container{
+									{Image: "cilium:v1.11.15-eksa.1"},
+								},
+							},
+						},
+					},
+				},
+				Operator: &appsv1.Deployment{},
+			},
+			want:    "v1.11.15-eksa.1",
+			wantErr: "",
+		},
+		{
+			name: "cilium and version only, no pre-release",
+			installation: cilium.Installation{
+				DaemonSet: &appsv1.DaemonSet{
+					Spec: appsv1.DaemonSetSpec{
+						Template: v1.PodTemplateSpec{
+							Spec: v1.PodSpec{
+								Containers: []v1.Container{
+									{Image: "cilium:v1.11.15"},
+								},
+							},
+						},
+					},
+				},
+				Operator: &appsv1.Deployment{},
+			},
+			want:    "v1.11.15",
+			wantErr: "",
+		},
+		{
+			name: "invalid semver",
+			installation: cilium.Installation{
+				DaemonSet: &appsv1.DaemonSet{
+					Spec: appsv1.DaemonSetSpec{
+						Template: v1.PodTemplateSpec{
+							Spec: v1.PodSpec{
+								Containers: []v1.Container{
+									{Image: "v1.15-eksa.1"},
+								},
+							},
+						},
+					},
+				},
+				Operator: &appsv1.Deployment{},
+			},
+			want:    "",
+			wantErr: "invalid major version in semver",
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			g := NewWithT(t)
-			g.Expect(tt.installation.Version()).To(Equal(tt.want))
+			version, err := tt.installation.Version()
+			if tt.wantErr != "" {
+				g.Expect(err).To(MatchError(ContainSubstring("")))
+			} else {
+				g.Expect(err).To(BeNil())
+				g.Expect(version).To(Equal(tt.want))
+			}
 		})
 	}
 }

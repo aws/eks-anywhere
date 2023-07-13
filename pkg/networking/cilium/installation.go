@@ -36,12 +36,17 @@ func (i Installation) Version() (string, error) {
 
 	dsImage := i.DaemonSet.Spec.Template.Spec.Containers[0].Image
 	_, dsImageTag := oci.Split(dsImage)
-	version, err := semver.New(dsImageTag)
+	semVer, err := semver.New(dsImageTag)
 	if err != nil {
 		return "", err
 	}
 
-	return fmt.Sprintf("v%d.%d.%d-%s", version.Major, version.Minor, version.Patch, version.Prerelease), nil
+	version := fmt.Sprintf("v%d.%d.%d", semVer.Major, semVer.Minor, semVer.Patch)
+	if semVer.Prerelease != "" {
+		version = fmt.Sprintf("%s-%s", version, semVer.Prerelease)
+	}
+
+	return version, nil
 }
 
 // Installed determines if all EKS-A Embedded Cilium components are present. It identifies

@@ -105,7 +105,8 @@ func (r *Reconciler) Reconcile(ctx context.Context, logger logr.Logger, client c
 
 		version, err := installation.Version()
 		if err != nil {
-			return controller.Result{}, err
+			dsImage := installation.DaemonSet.Spec.Template.Spec.Containers[0].Image
+			return controller.Result{}, errors.Wrapf(err, "installed cilium DS has an invalid version tag: %s", dsImage)
 		}
 
 		clusters.SetClusterDefaultCNI(spec.Cluster, anywherev1.ClusterCNIInstalled, version)
