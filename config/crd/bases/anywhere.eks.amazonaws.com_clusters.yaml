@@ -532,6 +532,19 @@ spec:
                   - type
                   type: object
                 type: array
+              defaultCNI:
+                description: information on the EKS Anywhere CNI configured
+                properties:
+                  name:
+                    description: Name of the default CNI
+                    type: string
+                  status:
+                    description: Applied, Not Applied
+                    type: string
+                  version:
+                    description: Empty if not applied or no version can be inferred.
+                    type: string
+                type: object
               eksdReleaseRef:
                 description: EksdReleaseRef defines the properties of the EKS-D object
                   on the cluster

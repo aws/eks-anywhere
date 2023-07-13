@@ -411,7 +411,9 @@ func (r *ClusterReconciler) updateStatus(ctx context.Context, log logr.Logger, c
 		return errors.Wrap(err, "updating status for workers")
 	}
 
-	clusters.UpdateClusterStatusForCNI(ctx, cluster)
+	if err := clusters.UpdateClusterStatusForCNI(ctx, r.client, cluster); err != nil {
+		return errors.Wrap(err, "updating status for cni")
+	}
 
 	// Always update the readyCondition by summarizing the state of other conditions.
 	conditions.SetSummary(cluster,

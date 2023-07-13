@@ -2,9 +2,13 @@ package clusters_test
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	. "github.com/onsi/gomega"
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
@@ -18,10 +22,54 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/controller/clusters"
+	"github.com/aws/eks-anywhere/pkg/networking/cilium"
 	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
 
 const controlPlaneInitalizationInProgressReason = "The first control plane instance is not available yet"
+
+func ciliumDaemonSet(name string, image string) *appsv1.DaemonSet {
+	return &appsv1.DaemonSet{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "DaemonSet",
+			APIVersion: "apps/v1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: "kube-system",
+		},
+		Spec: appsv1.DaemonSetSpec{
+			Selector: &metav1.LabelSelector{
+				MatchLabels: map[string]string{
+					"app": "cilium",
+				},
+			},
+			Template: corev1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: map[string]string{
+						"app": "cilium",
+					},
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  name,
+							Image: image,
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func defaultCNI(status anywherev1.ClusterCNIStatus, version string) *anywherev1.ClusterCNI {
+	return &anywherev1.ClusterCNI{
+		Name:    "cilium",
+		Version: version,
+		Status:  status,
+	}
+}
 
 func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 	g := NewWithT(t)
@@ -692,22 +740,20 @@ func TestUpdateClusterStatusForCNI(t *testing.T) {
 	g := NewWithT(t)
 
 	tests := []struct {
-		name          string
-		spec          *cluster.Spec
-		conditions    []anywherev1.Condition
-		wantCondition *anywherev1.Condition
-		skipUpgrade   *bool
-		wantErr       string
+		name           string
+		conditions     []anywherev1.Condition
+		wantDefaultCNI *anywherev1.ClusterCNI
+		wantCondition  *anywherev1.Condition
 	}{
 		{
-			name:        "control plane is not ready",
-			skipUpgrade: ptr.Bool(false),
+			name: "control plane is not ready",
 			conditions: []anywherev1.Condition{
 				{
 					Type:   anywherev1.ControlPlaneReadyCondition,
 					Status: "False",
 				},
 			},
+			wantDefaultCNI: defaultCNI(anywherev1.ClusterCNIInitializing, ""),
 			wantCondition: &anywherev1.Condition{
 				Type:     anywherev1.DefaultCNIConfiguredCondition,
 				Reason:   anywherev1.ControlPlaneNotReadyReason,
@@ -716,34 +762,137 @@ func TestUpdateClusterStatusForCNI(t *testing.T) {
 			},
 		},
 		{
-			name:        "cilium is unmanaged",
-			skipUpgrade: ptr.Bool(true),
+			name: "control plane ready",
+			conditions: []anywherev1.Condition{
+				{
+					Type:   anywherev1.ControlPlaneReadyCondition,
+					Status: "True",
+				},
+				{
+					Type:     anywherev1.DefaultCNIConfiguredCondition,
+					Reason:   anywherev1.ControlPlaneNotReadyReason,
+					Status:   "False",
+					Severity: clusterv1.ConditionSeverityInfo,
+				},
+			},
+			wantDefaultCNI: nil,
+			wantCondition: &anywherev1.Condition{
+				Type:     anywherev1.DefaultCNIConfiguredCondition,
+				Reason:   anywherev1.ControlPlaneNotReadyReason,
+				Status:   "False",
+				Severity: clusterv1.ConditionSeverityInfo,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+			spec := test.NewClusterSpec(func(s *cluster.Spec) {
+				s.Cluster.Name = "test-cluster"
+				s.Cluster.Spec.ManagementCluster = anywherev1.ManagementCluster{Name: "management-cluster"}
+				s.Cluster.Status.Conditions = tt.conditions
+			})
+
+			client := fake.NewClientBuilder().Build()
+
+			err := clusters.UpdateClusterStatusForCNI(ctx, client, spec.Cluster)
+			g.Expect(err).To(BeNil())
+
+			if tt.wantCondition != nil {
+				condition := conditions.Get(spec.Cluster, tt.wantCondition.Type)
+				g.Expect(condition).ToNot(BeNil())
+				g.Expect(condition.Type).To(Equal(tt.wantCondition.Type))
+				g.Expect(condition.Severity).To(Equal(tt.wantCondition.Severity))
+				g.Expect(condition.Status).To(Equal(tt.wantCondition.Status))
+				g.Expect(condition.Reason).To(Equal(tt.wantCondition.Reason))
+				g.Expect(condition.Message).To(ContainSubstring(tt.wantCondition.Message))
+			}
+		})
+	}
+}
+
+func TestUpdateClusterStatusForCNISelfManagedCluster(t *testing.T) {
+	g := NewWithT(t)
+
+	ciliumVersion := "v1.10.1-eksa-1"
+	ciliumImage := fmt.Sprintf("cilium:%s", ciliumVersion)
+
+	tests := []struct {
+		name            string
+		conditions      []anywherev1.Condition
+		ciliumDaemonSet *appsv1.DaemonSet
+		wantDefaultCNI  *anywherev1.ClusterCNI
+		wantCondition   *anywherev1.Condition
+		skipUpgrade     *bool
+		wantErr         string
+	}{
+		{
+			name:            "cilium is unmanaged",
+			skipUpgrade:     ptr.Bool(true),
+			ciliumDaemonSet: ciliumDaemonSet(cilium.DaemonSetName, ciliumImage),
 			conditions: []anywherev1.Condition{
 				{
 					Type:   anywherev1.ControlPlaneReadyCondition,
 					Status: "True",
 				},
 			},
+			wantDefaultCNI: nil,
 			wantCondition: &anywherev1.Condition{
 				Type:     anywherev1.DefaultCNIConfiguredCondition,
 				Reason:   anywherev1.SkipUpgradesForDefaultCNIConfiguredReason,
 				Status:   "False",
 				Severity: clusterv1.ConditionSeverityWarning,
 			},
+			wantErr: "",
 		},
 		{
-			name:        "cilium is managed",
-			skipUpgrade: ptr.Bool(false),
+			name:            "cilium is managed",
+			skipUpgrade:     ptr.Bool(false),
+			ciliumDaemonSet: ciliumDaemonSet(cilium.DaemonSetName, ciliumImage),
 			conditions: []anywherev1.Condition{
 				{
 					Type:   anywherev1.ControlPlaneReadyCondition,
 					Status: "True",
 				},
 			},
+			wantDefaultCNI: defaultCNI(anywherev1.ClusterCNIInstalled, ciliumVersion),
 			wantCondition: &anywherev1.Condition{
 				Type:   anywherev1.DefaultCNIConfiguredCondition,
 				Status: "True",
 			},
+			wantErr: "",
+		},
+		{
+			name:            "cilium is managed",
+			skipUpgrade:     ptr.Bool(false),
+			ciliumDaemonSet: ciliumDaemonSet(cilium.DaemonSetName, ciliumImage),
+			conditions: []anywherev1.Condition{
+				{
+					Type:   anywherev1.ControlPlaneReadyCondition,
+					Status: "True",
+				},
+			},
+			wantDefaultCNI: defaultCNI(anywherev1.ClusterCNIInstalled, ciliumVersion),
+			wantCondition: &anywherev1.Condition{
+				Type:   anywherev1.DefaultCNIConfiguredCondition,
+				Status: "True",
+			},
+			wantErr: "",
+		},
+		{
+			name:            "cilium is managed, version cilium installed version",
+			skipUpgrade:     ptr.Bool(false),
+			ciliumDaemonSet: ciliumDaemonSet(cilium.DaemonSetName, "cilium:eksa-invalid-version"),
+			conditions: []anywherev1.Condition{
+				{
+					Type:   anywherev1.ControlPlaneReadyCondition,
+					Status: "True",
+				},
+			},
+			wantDefaultCNI: defaultCNI(anywherev1.ClusterCNIInstalled, ciliumVersion),
+			wantCondition:  nil,
+			wantErr:        "installed cilium DS has an invalid version tag",
 		},
 	}
 
@@ -764,9 +913,14 @@ func TestUpdateClusterStatusForCNI(t *testing.T) {
 				s.Cluster.Status.Conditions = tt.conditions
 			})
 
-			clusters.UpdateClusterStatusForCNI(ctx, spec.Cluster)
+			client := fake.NewClientBuilder().WithRuntimeObjects(tt.ciliumDaemonSet).Build()
 
-			if tt.wantCondition != nil {
+			err := clusters.UpdateClusterStatusForCNI(ctx, client, spec.Cluster)
+
+			if tt.wantErr != "" {
+				g.Expect(err).To(MatchError(ContainSubstring(tt.wantErr)))
+			} else {
+				g.Expect(err).To(BeNil())
 				condition := conditions.Get(spec.Cluster, tt.wantCondition.Type)
 				g.Expect(condition).ToNot(BeNil())
 				g.Expect(condition.Type).To(Equal(tt.wantCondition.Type))

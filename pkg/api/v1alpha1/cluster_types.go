@@ -870,6 +870,33 @@ const (
 	MachineInvalidReason FailureReasonType = "MachineInvalid"
 )
 
+// ClusterCNIStatus is a type for defining statuses for Cluster default cni.
+type ClusterCNIStatus string
+
+const (
+	// ClusterCNIInitializing reports that the default CNI is initializing.
+	ClusterCNIInitializing ClusterCNIStatus = "initializing"
+
+	// ClusterCNIInstalled reports that the default CNI has been installed.
+	ClusterCNIInstalled ClusterCNIStatus = "installed"
+
+	// ClusterCNIUpdating reports that the default CNI is updating.
+	ClusterCNIUpdating ClusterCNIStatus = "updating"
+)
+
+// ClusterCNI represents a CNI cluster component.
+type ClusterCNI struct {
+	// Name of the default CNI
+	Name string `json:"name,omitempty"`
+
+	// Empty if not applied or no version can be inferred.
+	// +optional
+	Version string `json:"version,omitempty"`
+
+	// Applied, Not Applied
+	Status ClusterCNIStatus `json:"status,omitempty"`
+}
+
 // ClusterStatus defines the observed state of Cluster.
 type ClusterStatus struct {
 	// Descriptive message about a fatal problem while reconciling a cluster
@@ -883,6 +910,11 @@ type ClusterStatus struct {
 
 	// EksdReleaseRef defines the properties of the EKS-D object on the cluster
 	EksdReleaseRef *EksdReleaseRef `json:"eksdReleaseRef,omitempty"`
+
+	// information on the EKS Anywhere CNI configured
+	// +optional
+	DefaultCNI *ClusterCNI `json:"defaultCNI,omitempty"`
+
 	// +optional
 	Conditions []Condition `json:"conditions,omitempty"`
 

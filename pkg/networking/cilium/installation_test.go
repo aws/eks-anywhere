@@ -79,3 +79,36 @@ func TestInstallationInstalled(t *testing.T) {
 		})
 	}
 }
+
+func TestInstallationVersion(t *testing.T) {
+	tests := []struct {
+		name         string
+		installation cilium.Installation
+		want         string
+	}{
+		{
+			name: "installed",
+			installation: cilium.Installation{
+				DaemonSet: &appsv1.DaemonSet{
+					Spec: appsv1.DaemonSetSpec{
+						Template: v1.PodTemplateSpec{
+							Spec: v1.PodSpec{
+								Containers: []v1.Container{
+									{Image: "public.ecr.aws/isovalent/cilium:v1.11.15-eksa.1"},
+								},
+							},
+						},
+					},
+				},
+				Operator: &appsv1.Deployment{},
+			},
+			want: "v1.11.15-eksa.1",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			g.Expect(tt.installation.Version()).To(Equal(tt.want))
+		})
+	}
+}
