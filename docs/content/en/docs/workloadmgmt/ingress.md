@@ -9,8 +9,10 @@ description: >
   How to deploy an ingress controller for simple host or URL-based HTTP routing into workload running in EKS-A
 ---
 
-While you are free to use any Ingress Controller you like with your EKS Anywhere cluster, AWS currently only supports Emissary Ingress.
+While you are free to use any Ingress Controller you like with your EKS Anywhere cluster, AWS supports Emissary Ingress & Cilium Ingress
 For information on how to configure a Emissary Ingress curated package for EKS Anywhere, see the [Add Emissary Ingress]({{< relref "../packages/emissary" >}}) page.
+
+Operators can also leverage Ingress support provided by Cilium that uses the standard Kubernetes Ingress resource definition, with an `ingressClassName` of `cilium`. This can be used for path-based routing and for TLS termination. See [Kubernetes Ingress Support](https://docs.cilium.io/en/stable/network/servicemesh/ingress/) for details.
 
 ## Setting up Emissary-ingress for Ingress Controller
 
