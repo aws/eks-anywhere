@@ -169,7 +169,7 @@ func TestFactoryBuildWithClusterManager(t *testing.T) {
 	deps, err := dependencies.NewFactory().
 		WithLocalExecutables().
 		WithCliConfig(&tt.cliConfig).
-		WithClusterManager(tt.clusterSpec.Cluster, "", nil).
+		WithClusterManager(tt.clusterSpec.Cluster, nil).
 		Build(context.Background())
 
 	tt.Expect(err).To(BeNil())
@@ -180,7 +180,7 @@ func TestFactoryBuildWithClusterManagerWithoutCliConfig(t *testing.T) {
 	tt := newTest(t, vsphere)
 	deps, err := dependencies.NewFactory().
 		WithLocalExecutables().
-		WithClusterManager(tt.clusterSpec.Cluster, "", nil).
+		WithClusterManager(tt.clusterSpec.Cluster, nil).
 		Build(context.Background())
 
 	tt.Expect(err).To(BeNil())
@@ -201,7 +201,7 @@ func TestFactoryBuildWithMultipleDependencies(t *testing.T) {
 		WithLocalExecutables().
 		WithBootstrapper().
 		WithCliConfig(&tt.cliConfig).
-		WithClusterManager(tt.clusterSpec.Cluster, "", timeoutOpts).
+		WithClusterManager(tt.clusterSpec.Cluster, timeoutOpts).
 		WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, tt.hardwareConfigFile, false, tt.tinkerbellBootstrapIP).
 		WithGitOpsFlux(tt.clusterSpec.Cluster, tt.clusterSpec.FluxConfig, nil).
 		WithWriter().

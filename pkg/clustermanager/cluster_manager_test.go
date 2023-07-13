@@ -2493,7 +2493,9 @@ func newClusterManager(t *testing.T, opts ...clustermanager.ClusterManagerOpt) (
 	gc := &v1alpha1.GitOpsConfig{}
 
 	fakeClient := test.NewFakeKubeClient(dc, oc, b, r, ac, gc)
-	c := clustermanager.New(fakeClient, client, m.networking, m.writer, m.diagnosticsFactory, m.awsIamAuth, m.eksaComponents, opts...)
+	cf := mocksmanager.NewMockClientFactory(mockCtrl)
+	cf.EXPECT().BuildClientFromKubeconfig("").Return(fakeClient, nil).AnyTimes()
+	c := clustermanager.New(cf, client, m.networking, m.writer, m.diagnosticsFactory, m.awsIamAuth, m.eksaComponents, opts...)
 
 	return c, m
 }

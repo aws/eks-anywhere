@@ -76,7 +76,7 @@ var (
 
 type ClusterManager struct {
 	eksaComponents     EKSAComponents
-	Client             cluster.Client
+	ClientFactory      ClientFactory
 	clusterClient      *RetrierClient
 	retrier            *retrier.Retrier
 	writer             filewriter.FileWriter
@@ -172,10 +172,10 @@ func DefaultRetrier() *retrier.Retrier {
 }
 
 // New constructs a new ClusterManager.
-func New(client cluster.Client, clusterClient *RetrierClient, networking Networking, writer filewriter.FileWriter, diagnosticBundleFactory diagnostics.DiagnosticBundleFactory, awsIamAuth AwsIamAuth, eksaComponents EKSAComponents, opts ...ClusterManagerOpt) *ClusterManager {
+func New(client ClientFactory, clusterClient *RetrierClient, networking Networking, writer filewriter.FileWriter, diagnosticBundleFactory diagnostics.DiagnosticBundleFactory, awsIamAuth AwsIamAuth, eksaComponents EKSAComponents, opts ...ClusterManagerOpt) *ClusterManager {
 	c := &ClusterManager{
 		eksaComponents:                   eksaComponents,
-		Client:                           client,
+		ClientFactory:                    client,
 		clusterClient:                    clusterClient,
 		writer:                           writer,
 		networking:                       networking,
@@ -1305,7 +1305,11 @@ func (c *ClusterManager) GetCurrentClusterSpec(ctx context.Context, clus *types.
 }
 
 func (c *ClusterManager) buildSpecForCluster(ctx context.Context, clus *types.Cluster, eksaCluster *v1alpha1.Cluster) (*cluster.Spec, error) {
-	return cluster.BuildSpec(ctx, c.Client, eksaCluster)
+	client, err := c.ClientFactory.BuildClientFromKubeconfig(clus.KubeconfigFile)
+	if err != nil {
+		return nil, err
+	}
+	return cluster.BuildSpec(ctx, client, eksaCluster)
 }
 
 func (c *ClusterManager) DeletePackageResources(ctx context.Context, managementCluster *types.Cluster, clusterName string) error {
