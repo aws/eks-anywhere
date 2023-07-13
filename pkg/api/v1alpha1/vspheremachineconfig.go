@@ -1,11 +1,14 @@
 package v1alpha1
 
 import (
+	"bufio"
+	"bytes"
 	"fmt"
+	"io"
 	"os"
-	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	yamlutil "k8s.io/apimachinery/pkg/util/yaml"
 	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/pkg/logger"
@@ -60,19 +63,32 @@ func GetVSphereMachineConfigs(fileName string) (map[string]*VSphereMachineConfig
 	if err != nil {
 		return nil, fmt.Errorf("unable to read file due to: %v", err)
 	}
-	for _, c := range strings.Split(string(content), YamlSeparator) {
+
+	r := yamlutil.NewYAMLReader(bufio.NewReader(bytes.NewReader(content)))
+	for {
+		d, err := r.Read()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return nil, err
+		}
+
 		var config VSphereMachineConfig
-		if err = yaml.UnmarshalStrict([]byte(c), &config); err == nil {
+
+		if err = yaml.UnmarshalStrict(d, &config); err == nil {
 			if config.Kind == VSphereMachineConfigKind {
 				configs[config.Name] = &config
 				continue
 			}
 		}
-		_ = yaml.Unmarshal([]byte(c), &config) // this is to check if there is a bad spec in the file
+
+		_ = yaml.Unmarshal(d, &config) // this is to check if there is a bad spec in the file
 		if config.Kind == VSphereMachineConfigKind {
 			return nil, fmt.Errorf("unable to unmarshall content from file due to: %v", err)
 		}
 	}
+
 	if len(configs) == 0 {
 		return nil, fmt.Errorf("unable to find kind %v in file", VSphereMachineConfigKind)
 	}
