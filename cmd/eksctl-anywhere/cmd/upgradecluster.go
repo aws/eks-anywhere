@@ -101,7 +101,6 @@ func (uc *upgradeClusterOptions) upgradeCluster(cmd *cobra.Command) error {
 	factory := dependencies.ForSpec(ctx, clusterSpec).WithExecutableMountDirs(dirs...).
 		WithBootstrapper().
 		WithCliConfig(cliConfig).
-		WithUnAuthKubeClient().
 		WithClusterManager(clusterSpec.Cluster, clusterManagerTimeoutOpts).
 		WithKubeProxyCLIUpgrader().
 		WithProvider(uc.fileName, clusterSpec.Cluster, cc.skipIpCheck, uc.hardwareCSVPath, uc.forceClean, uc.tinkerbellBootstrapIP).
