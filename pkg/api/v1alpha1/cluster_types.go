@@ -67,8 +67,9 @@ type ClusterSpec struct {
 	Packages                    *PackageConfiguration        `json:"packages,omitempty"`
 	// BundlesRef contains a reference to the Bundles containing the desired dependencies for the cluster.
 	// DEPRECATED: Use EksaVersion instead.
-	BundlesRef  *BundlesRef  `json:"bundlesRef,omitempty"`
-	EksaVersion *EksaVersion `json:"eksaVersion,omitempty"`
+	BundlesRef         *BundlesRef         `json:"bundlesRef,omitempty"`
+	EksaVersion        *EksaVersion        `json:"eksaVersion,omitempty"`
+	MachineHealthCheck *MachineHealthCheck `json:"machineHealthCheck,omitempty"`
 }
 
 // EksaVersion is the semver identifying the release of eks-a used to populate the cluster components.
@@ -273,6 +274,14 @@ type ControlPlaneConfiguration struct {
 	// SkipLoadBalancerDeployment skip deploying control plane load balancer.
 	// Make sure your infrastructure can handle control plane load balancing when you set this field to true.
 	SkipLoadBalancerDeployment bool `json:"skipLoadBalancerDeployment,omitempty"`
+}
+
+// MachineHealthCheck allows to configure timeouts for machine health checks.
+type MachineHealthCheck struct {
+	// NodeStartupTimeout overrides the the default node startup timeout in machine health checks.
+	NodeStartupTimeout string `json:"nodeStartupTimeout,omitempty"`
+	// UnhealthyMachineTimeout overrides default unhealthy machine timeout in machine health checks.
+	UnhealthyMachineTimeout string `json:"unhealthyMachineTimeout,omitempty"`
 }
 
 func TaintsSliceEqual(s1, s2 []corev1.Taint) bool {

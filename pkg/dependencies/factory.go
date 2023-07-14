@@ -1014,8 +1014,9 @@ func (f *Factory) WithCliConfig(cliConfig *cliconfig.CliConfig) *Factory {
 func (f *Factory) WithCreateClusterDefaulter(createCliConfig cliconfig.CreateClusterCLIConfig) *Factory {
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		controlPlaneIPCheckAnnotationDefaulter := cluster.NewControlPlaneIPCheckAnnotationDefaulter(createCliConfig.SkipCPIPCheck)
+		machineHealthCheckDefaulter := cluster.NewMachineHealthCheckDefaulter(createCliConfig.NodeStartupTimeout, createCliConfig.UnhealthyMachineTimeout)
 
-		createClusterDefaulter := cli.NewCreateClusterDefaulter(controlPlaneIPCheckAnnotationDefaulter)
+		createClusterDefaulter := cli.NewCreateClusterDefaulter(controlPlaneIPCheckAnnotationDefaulter, machineHealthCheckDefaulter)
 
 		f.dependencies.CreateClusterDefaulter = createClusterDefaulter
 

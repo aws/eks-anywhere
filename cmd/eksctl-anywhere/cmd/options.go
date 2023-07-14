@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"math"
 	"os"
 	"path/filepath"
 	"strings"
@@ -13,6 +14,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clustermanager"
 	"github.com/aws/eks-anywhere/pkg/config"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/files"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
@@ -39,8 +41,8 @@ func applyTimeoutFlags(flagSet *pflag.FlagSet, t *timeoutOptions) {
 	flagSet.StringVar(&t.cpWaitTimeout, cpWaitTimeoutFlag, clustermanager.DefaultControlPlaneWait.String(), "Override the default control plane wait timeout")
 	flagSet.StringVar(&t.externalEtcdWaitTimeout, externalEtcdWaitTimeoutFlag, clustermanager.DefaultEtcdWait.String(), "Override the default external etcd wait timeout")
 	flagSet.StringVar(&t.perMachineWaitTimeout, perMachineWaitTimeoutFlag, clustermanager.DefaultMaxWaitPerMachine.String(), "Override the default machine wait timeout per machine")
-	flagSet.StringVar(&t.unhealthyMachineTimeout, unhealthyMachineTimeoutFlag, clustermanager.DefaultUnhealthyMachineTimeout.String(), "Override the default unhealthy machine timeout")
-	flagSet.StringVar(&t.nodeStartupTimeout, nodeStartupTimeoutFlag, clustermanager.DefaultNodeStartupTimeout.String(), "Override the default node startup timeout (Defaults to 20m for Tinkerbell clusters)")
+	flagSet.StringVar(&t.unhealthyMachineTimeout, unhealthyMachineTimeoutFlag, constants.DefaultUnhealthyMachineTimeout.String(), "Override the default unhealthy machine timeout")
+	flagSet.StringVar(&t.nodeStartupTimeout, nodeStartupTimeoutFlag, constants.DefaultNodeStartupTimeout.String(), "Override the default node startup timeout (Defaults to 20m for Tinkerbell clusters)")
 	flagSet.BoolVar(&t.noTimeouts, noTimeoutsFlag, false, "Disable timeout for all wait operations")
 }
 
@@ -169,6 +171,15 @@ func buildCliConfig(clusterSpec *cluster.Spec) *config.CliConfig {
 func buildCreateCliConfig(clusterOptions *createClusterOptions) config.CreateClusterCLIConfig {
 	createCliConfig := config.CreateClusterCLIConfig{}
 	createCliConfig.SkipCPIPCheck = clusterOptions.skipIpCheck
+	if clusterOptions.noTimeouts {
+		maxTime := time.Duration(math.MaxInt64)
+		createCliConfig.NodeStartupTimeout = maxTime.String()
+		createCliConfig.UnhealthyMachineTimeout = maxTime.String()
+
+		return createCliConfig
+	}
+	createCliConfig.NodeStartupTimeout = clusterOptions.nodeStartupTimeout
+	createCliConfig.UnhealthyMachineTimeout = clusterOptions.unhealthyMachineTimeout
 
 	return createCliConfig
 }

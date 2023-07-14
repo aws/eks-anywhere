@@ -134,6 +134,74 @@ func TestNewControlPlaneIPCheckAnnotationDefaulterAddAnnotation(t *testing.T) {
 	g.Expect(oldCluster).To(Equal(clusterSpec.Config.Cluster))
 }
 
+func TestNewMachineHealthCheckDefaulter(t *testing.T) {
+	g := NewWithT(t)
+
+	newMachineHealthCheckDefaulter := cluster.NewMachineHealthCheckDefaulter("15m0s", "20m10s")
+
+	c := baseCluster()
+
+	clusterSpec := &cluster.Spec{
+		Config: &cluster.Config{
+			Cluster: c,
+		},
+	}
+
+	machineHealthcheck := &anywherev1.MachineHealthCheck{NodeStartupTimeout: "15m0s", UnhealthyMachineTimeout: "20m10s"}
+
+	updatedClusterSpec, err := newMachineHealthCheckDefaulter.MachineHealthCheckDefault(context.Background(), clusterSpec)
+
+	g.Expect(err).To(BeNil())
+	g.Expect(updatedClusterSpec.Cluster.Spec.MachineHealthCheck).To(Equal(machineHealthcheck))
+}
+
+func TestNewMachineHealthCheckDefaulterTinkerbell(t *testing.T) {
+	g := NewWithT(t)
+
+	newMachineHealthCheckDefaulter := cluster.NewMachineHealthCheckDefaulter(constants.DefaultNodeStartupTimeout.String(), constants.DefaultUnhealthyMachineTimeout.String())
+
+	c := baseCluster()
+	c.Spec.DatacenterRef.Kind = anywherev1.TinkerbellDatacenterKind
+
+	clusterSpec := &cluster.Spec{
+		Config: &cluster.Config{
+			Cluster: c,
+		},
+	}
+
+	machineHealthcheck := &anywherev1.MachineHealthCheck{NodeStartupTimeout: constants.DefaultTinkerbellNodeStartupTimeout.String(), UnhealthyMachineTimeout: constants.DefaultUnhealthyMachineTimeout.String()}
+
+	updatedClusterSpec, err := newMachineHealthCheckDefaulter.MachineHealthCheckDefault(context.Background(), clusterSpec)
+
+	g.Expect(err).To(BeNil())
+	g.Expect(updatedClusterSpec.Cluster.Spec.MachineHealthCheck).To(Equal(machineHealthcheck))
+}
+
+func TestNewMachineHealthCheckDefaulterNoChange(t *testing.T) {
+	g := NewWithT(t)
+
+	newMachineHealthCheckDefaulter := cluster.NewMachineHealthCheckDefaulter("10m0s", "10m0s")
+
+	c := baseCluster()
+	c.Spec.MachineHealthCheck = &anywherev1.MachineHealthCheck{
+		NodeStartupTimeout:      "5m0s",
+		UnhealthyMachineTimeout: "5m0s",
+	}
+
+	clusterSpec := &cluster.Spec{
+		Config: &cluster.Config{
+			Cluster: c,
+		},
+	}
+
+	machineHealthcheck := &anywherev1.MachineHealthCheck{NodeStartupTimeout: "5m0s", UnhealthyMachineTimeout: "5m0s"}
+
+	updatedClusterSpec, err := newMachineHealthCheckDefaulter.MachineHealthCheckDefault(context.Background(), clusterSpec)
+
+	g.Expect(err).To(BeNil())
+	g.Expect(updatedClusterSpec.Cluster.Spec.MachineHealthCheck).To(Equal(machineHealthcheck))
+}
+
 type clusterOpt func(c *anywherev1.Cluster)
 
 func baseCluster(opts ...clusterOpt) *anywherev1.Cluster {

@@ -15,7 +15,7 @@ spec:
   gitOpsRef:
     kind: FluxConfig
     name: test-gitops
-  kubernetesVersion: "1.19"
+  kubernetesVersion: "1.24"
   managementCluster:
     name: management-cluster
 

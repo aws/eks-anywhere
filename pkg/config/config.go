@@ -21,5 +21,7 @@ type CliConfig struct {
 
 // CreateClusterCLIConfig is the config we use for create cluster specific configurations.
 type CreateClusterCLIConfig struct {
-	SkipCPIPCheck bool
+	SkipCPIPCheck           bool
+	NodeStartupTimeout      string
+	UnhealthyMachineTimeout string
 }

@@ -49,6 +49,7 @@ type ClusterReconciler struct {
 	awsIamAuth                 AWSIamConfigReconciler
 	clusterValidator           ClusterValidator
 	packagesClient             PackagesClient
+	machineHealthCheck         MachineHealthCheckReconciler
 
 	// experimentalSelfManagedUpgrade enables management cluster full upgrades.
 	// The default behavior for management cluster only reconciles the worker nodes.
@@ -77,6 +78,11 @@ type AWSIamConfigReconciler interface {
 	ReconcileDelete(ctx context.Context, logger logr.Logger, cluster *anywherev1.Cluster) error
 }
 
+// MachineHealthCheckReconciler manages machine health checks for an eks-a cluster.
+type MachineHealthCheckReconciler interface {
+	Reconcile(ctx context.Context, logger logr.Logger, cluster *anywherev1.Cluster) error
+}
+
 // ClusterValidator runs cluster level preflight validations before it goes to provider reconciler.
 type ClusterValidator interface {
 	ValidateManagementClusterName(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) error
@@ -86,13 +92,14 @@ type ClusterValidator interface {
 type ClusterReconcilerOption func(*ClusterReconciler)
 
 // NewClusterReconciler constructs a new ClusterReconciler.
-func NewClusterReconciler(client client.Client, registry ProviderClusterReconcilerRegistry, awsIamAuth AWSIamConfigReconciler, clusterValidator ClusterValidator, pkgs PackagesClient, opts ...ClusterReconcilerOption) *ClusterReconciler {
+func NewClusterReconciler(client client.Client, registry ProviderClusterReconcilerRegistry, awsIamAuth AWSIamConfigReconciler, clusterValidator ClusterValidator, pkgs PackagesClient, machineHealthCheck MachineHealthCheckReconciler, opts ...ClusterReconcilerOption) *ClusterReconciler {
 	c := &ClusterReconciler{
 		client:                     client,
 		providerReconcilerRegistry: registry,
 		awsIamAuth:                 awsIamAuth,
 		clusterValidator:           clusterValidator,
 		packagesClient:             pkgs,
+		machineHealthCheck:         machineHealthCheck,
 	}
 
 	for _, opt := range opts {
@@ -192,6 +199,7 @@ func (r *ClusterReconciler) SetupWithManager(mgr ctrl.Manager, log logr.Logger) 
 // +kubebuilder:rbac:groups=bootstrap.cluster.x-k8s.io,resources=kubeadmconfigtemplates,verbs=create;get;list;patch;update;watch
 // +kubebuilder:rbac:groups="cluster.x-k8s.io",resources=machinedeployments,verbs=list;watch;get;patch;update;create;delete
 // +kubebuilder:rbac:groups="cluster.x-k8s.io",resources=clusters,verbs=list;watch;get;patch;update;create;delete
+// +kubebuilder:rbac:groups="cluster.x-k8s.io",resources=machinehealthchecks,verbs=list;watch;get;patch;update;create;delete
 // +kubebuilder:rbac:groups=clusterctl.cluster.x-k8s.io,resources=providers,verbs=get;list;watch
 // +kubebuilder:rbac:groups=controlplane.cluster.x-k8s.io,resources=kubeadmcontrolplanes,verbs=list;get;watch;patch;update;create;delete
 // +kubebuilder:rbac:groups=coordination.k8s.io,resources=leases,verbs=create;get;list;update;watch;delete
@@ -380,6 +388,12 @@ func (r *ClusterReconciler) preClusterProviderReconcile(ctx context.Context, log
 		}
 
 		if err := config.SetCredentialsEnv(rUsername, rPassword); err != nil {
+			return controller.Result{}, err
+		}
+	}
+
+	if cluster.IsManaged() {
+		if err := r.machineHealthCheck.Reconcile(ctx, log, cluster); err != nil {
 			return controller.Result{}, err
 		}
 	}

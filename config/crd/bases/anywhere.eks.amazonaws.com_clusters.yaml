@@ -250,6 +250,19 @@ spec:
                 type: array
               kubernetesVersion:
                 type: string
+              machineHealthCheck:
+                description: MachineHealthCheck allows to configure timeouts for machine
+                  health checks.
+                properties:
+                  nodeStartupTimeout:
+                    description: NodeStartupTimeout overrides the the default node
+                      startup timeout in machine health checks.
+                    type: string
+                  unhealthyMachineTimeout:
+                    description: UnhealthyMachineTimeout overrides default unhealthy
+                      machine timeout in machine health checks.
+                    type: string
+                type: object
               managementCluster:
                 properties:
                   name:

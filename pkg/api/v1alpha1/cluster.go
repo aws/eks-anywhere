@@ -10,6 +10,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/validation"
@@ -23,11 +24,13 @@ import (
 	"github.com/aws/eks-anywhere/pkg/semver"
 )
 
+// constants defined for cluster.go.
 const (
-	ClusterKind              = "Cluster"
-	YamlSeparator            = "\n---\n"
-	RegistryMirrorCAKey      = "EKSA_REGISTRY_MIRROR_CA"
-	podSubnetNodeMaskMaxDiff = 16
+	ClusterKind                = "Cluster"
+	YamlSeparator              = "\n---\n"
+	RegistryMirrorCAKey        = "EKSA_REGISTRY_MIRROR_CA"
+	podSubnetNodeMaskMaxDiff   = 16
+	parseDurationErrorTemplate = "MachineHealthCheck: failed to parse %s: %v"
 )
 
 var re = regexp.MustCompile(constants.DefaultCuratedPackagesRegistryRegex)
@@ -166,25 +169,6 @@ func WithEtcdMachineGroupRef(ref ProviderRefAccessor) ClusterGenerateOpt {
 	}
 }
 
-func NewCluster(clusterName string) *Cluster {
-	c := &Cluster{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       ClusterKind,
-			APIVersion: SchemeBuilder.GroupVersion.String(),
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name: clusterName,
-		},
-		Spec: ClusterSpec{
-			KubernetesVersion: Kube119,
-		},
-		Status: ClusterStatus{},
-	}
-	c.SetSelfManaged()
-
-	return c
-}
-
 var clusterConfigValidations = []func(*Cluster) error{
 	validateClusterConfigName,
 	validateControlPlaneEndpoint,
@@ -203,6 +187,7 @@ var clusterConfigValidations = []func(*Cluster) error{
 	validateControlPlaneLabels,
 	validatePackageControllerConfiguration,
 	validateEksaVersion,
+	validateMachineHealthChecks,
 }
 
 // GetClusterConfig parses a Cluster object from a multiobject yaml file in disk
@@ -863,6 +848,7 @@ func validatePackageControllerConfiguration(clusterConfig *Cluster) error {
 	return nil
 }
 
+<<<<<<< HEAD
 func validateEksaVersion(clusterConfig *Cluster) error {
 	if clusterConfig.Spec.BundlesRef != nil && clusterConfig.Spec.EksaVersion != nil {
 		return fmt.Errorf("cannot pass both bundlesRef and eksaVersion. New clusters should use eksaVersion instead of bundlesRef")
@@ -872,6 +858,25 @@ func validateEksaVersion(clusterConfig *Cluster) error {
 		_, err := semver.New(string(*clusterConfig.Spec.EksaVersion))
 		if err != nil {
 			return fmt.Errorf("eksaVersion is not a valid semver")
+=======
+func validateMachineHealthChecks(cluster *Cluster) error {
+	if cluster.Spec.MachineHealthCheck == nil {
+		return nil
+	}
+
+	mhc := cluster.Spec.MachineHealthCheck
+	if len(mhc.NodeStartupTimeout) != 0 {
+		_, err := time.ParseDuration(mhc.NodeStartupTimeout)
+		if err != nil {
+			return fmt.Errorf(parseDurationErrorTemplate, "nodeStartupTimeout", err)
+		}
+	}
+
+	if len(mhc.UnhealthyMachineTimeout) != 0 {
+		_, err := time.ParseDuration(mhc.UnhealthyMachineTimeout)
+		if err != nil {
+			return fmt.Errorf(parseDurationErrorTemplate, "unhealthyMachineTimeout", err)
+>>>>>>> 8e560494 (Configure machine health checks for cluster controller)
 		}
 	}
 

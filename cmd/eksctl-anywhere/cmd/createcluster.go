@@ -150,6 +150,7 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 	if err != nil {
 		return err
 	}
+	fmt.Printf("\n clusterSpec %v\n", clusterSpec.Cluster.Spec.MachineHealthCheck)
 
 	createCluster := workflows.NewCreate(
 		deps.Bootstrapper,

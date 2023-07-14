@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"strings"
 	"testing"
 	"time"
 
@@ -1885,7 +1886,11 @@ func TestInstallMachineHealthChecks(t *testing.T) {
 	ctx := context.Background()
 	tt := newTest(t)
 	tt.clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].Name = "worker-1"
-	wantMHC := expectedMachineHealthCheck(clustermanager.DefaultUnhealthyMachineTimeout, clustermanager.DefaultNodeStartupTimeout)
+	tt.clusterSpec.Cluster.Spec.MachineHealthCheck = &v1alpha1.MachineHealthCheck{
+		UnhealthyMachineTimeout: constants.DefaultUnhealthyMachineTimeout.String(),
+		NodeStartupTimeout:      constants.DefaultNodeStartupTimeout.String(),
+	}
+	wantMHC := expectedMachineHealthCheck(constants.DefaultUnhealthyMachineTimeout, constants.DefaultNodeStartupTimeout)
 	tt.mocks.client.EXPECT().ApplyKubeSpecFromBytes(ctx, tt.cluster, wantMHC)
 
 	if err := tt.clusterManager.InstallMachineHealthChecks(ctx, tt.clusterSpec, tt.cluster); err != nil {
@@ -1893,9 +1898,42 @@ func TestInstallMachineHealthChecks(t *testing.T) {
 	}
 }
 
+func TestInstallMachineHealthChecksMachineFailure(t *testing.T) {
+	ctx := context.Background()
+	tt := newTest(t)
+	tt.clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].Name = "worker-1"
+	tt.clusterSpec.Cluster.Spec.MachineHealthCheck = &v1alpha1.MachineHealthCheck{
+		UnhealthyMachineTimeout: "invalid",
+	}
+
+	err := tt.clusterManager.InstallMachineHealthChecks(ctx, tt.clusterSpec, tt.cluster)
+	if !strings.Contains(err.Error(), "time: invalid duration") {
+		t.Errorf("ClusterManager.InstallMachineHealthChecks() error = %v, wantErr nil", err)
+	}
+}
+
+func TestInstallMachineHealthChecksNodeFailure(t *testing.T) {
+	ctx := context.Background()
+	tt := newTest(t)
+	tt.clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].Name = "worker-1"
+	tt.clusterSpec.Cluster.Spec.MachineHealthCheck = &v1alpha1.MachineHealthCheck{
+		UnhealthyMachineTimeout: "10m0s",
+		NodeStartupTimeout:      "invalid",
+	}
+
+	err := tt.clusterManager.InstallMachineHealthChecks(ctx, tt.clusterSpec, tt.cluster)
+	if !strings.Contains(err.Error(), "time: invalid duration") {
+		t.Errorf("ClusterManager.InstallMachineHealthChecks() error = %v, wantErr nil", err)
+	}
+}
+
 func TestInstallMachineHealthChecksWithTimeoutOverride(t *testing.T) {
 	ctx := context.Background()
-	tt := newTest(t, clustermanager.WithUnhealthyMachineTimeout(30*time.Minute), clustermanager.WithNodeStartupTimeout(20*time.Minute))
+	tt := newTest(t)
+	tt.clusterSpec.Cluster.Spec.MachineHealthCheck = &v1alpha1.MachineHealthCheck{
+		UnhealthyMachineTimeout: (30 * time.Minute).String(),
+		NodeStartupTimeout:      (20 * time.Minute).String(),
+	}
 	tt.clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].Name = "worker-1"
 	wantMHC := expectedMachineHealthCheck(30*time.Minute, 20*time.Minute)
 	tt.mocks.client.EXPECT().ApplyKubeSpecFromBytes(ctx, tt.cluster, wantMHC)
@@ -1906,9 +1944,15 @@ func TestInstallMachineHealthChecksWithTimeoutOverride(t *testing.T) {
 }
 
 func TestInstallMachineHealthChecksWithNoTimeout(t *testing.T) {
-	tt := newTest(t, clustermanager.WithNoTimeouts())
+	tt := newTest(t)
 	tt.clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].Name = "worker-1"
+	maxTime := time.Duration(math.MaxInt64)
+	tt.clusterSpec.Cluster.Spec.MachineHealthCheck = &v1alpha1.MachineHealthCheck{
+		NodeStartupTimeout:      maxTime.String(),
+		UnhealthyMachineTimeout: maxTime.String(),
+	}
 	wantMHC := expectedMachineHealthCheck(maxTime, maxTime)
+
 	tt.mocks.client.EXPECT().ApplyKubeSpecFromBytes(tt.ctx, tt.cluster, wantMHC)
 
 	tt.Expect(tt.clusterManager.InstallMachineHealthChecks(tt.ctx, tt.clusterSpec, tt.cluster)).To(Succeed())
@@ -1918,6 +1962,10 @@ func TestInstallMachineHealthChecksApplyError(t *testing.T) {
 	ctx := context.Background()
 	tt := newTest(t, clustermanager.WithRetrier(retrier.NewWithMaxRetries(2, 0)))
 	tt.clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].Name = "worker-1"
+	tt.clusterSpec.Cluster.Spec.MachineHealthCheck = &v1alpha1.MachineHealthCheck{
+		UnhealthyMachineTimeout: constants.DefaultUnhealthyMachineTimeout.String(),
+		NodeStartupTimeout:      constants.DefaultNodeStartupTimeout.String(),
+	}
 	wantMHC := expectedMachineHealthCheck(clustermanager.DefaultUnhealthyMachineTimeout, clustermanager.DefaultNodeStartupTimeout)
 	tt.mocks.client.EXPECT().ApplyKubeSpecFromBytes(ctx, tt.cluster, wantMHC).Return(errors.New("apply error")).MaxTimes(2)
 

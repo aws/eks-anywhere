@@ -2,6 +2,9 @@ package cluster
 
 import (
 	"context"
+
+	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/constants"
 )
 
 func SetConfigDefaults(c *Config) error {
@@ -27,4 +30,50 @@ func (d ControlPlaneIPCheckAnnotationDefaulter) ControlPlaneIPCheckDefault(ctx c
 	}
 
 	return spec, nil
+}
+
+// MachineHealthCheckDefaulter is the defaulter created to configure the machine health check timeouts.
+type MachineHealthCheckDefaulter struct {
+	nodeStartupTimeout      string
+	unhealthyMachineTimeout string
+}
+
+// NewMachineHealthCheckDefaulter allows to create a new MachineHealthCheckDefaulter.
+func NewMachineHealthCheckDefaulter(nodeStartupTimeout, unhealthyMachineTimeout string) MachineHealthCheckDefaulter {
+	return MachineHealthCheckDefaulter{
+		nodeStartupTimeout:      nodeStartupTimeout,
+		unhealthyMachineTimeout: unhealthyMachineTimeout,
+	}
+}
+
+// MachineHealthCheckDefault sets the defaults for machine health check timeouts.
+func (d MachineHealthCheckDefaulter) MachineHealthCheckDefault(ctx context.Context, spec *Spec) (*Spec, error) {
+	if spec.Config.Cluster.Spec.MachineHealthCheck != nil && len(spec.Config.Cluster.Spec.MachineHealthCheck.NodeStartupTimeout) != 0 && len(spec.Config.Cluster.Spec.MachineHealthCheck.UnhealthyMachineTimeout) != 0 {
+		return spec, nil
+	}
+
+	if spec.Config.Cluster.Spec.MachineHealthCheck == nil {
+		spec.Config.Cluster.Spec.MachineHealthCheck = &anywherev1.MachineHealthCheck{}
+	}
+
+	if len(spec.Cluster.Spec.MachineHealthCheck.NodeStartupTimeout) == 0 {
+		if spec.Cluster.Spec.DatacenterRef.Kind == anywherev1.TinkerbellDatacenterKind && d.nodeStartupTimeout == constants.DefaultNodeStartupTimeout.String() {
+			d.nodeStartupTimeout = constants.DefaultTinkerbellNodeStartupTimeout.String()
+		}
+	}
+
+	setMachineHealthCheckTimeoutDefaults(spec.Cluster, d.nodeStartupTimeout, d.unhealthyMachineTimeout)
+
+	return spec, nil
+}
+
+// setMachineHealthCheckTimeoutDefaults sets default tiemout values for cluster's machine health checks.
+func setMachineHealthCheckTimeoutDefaults(cluster *anywherev1.Cluster, nodeStartupTimeout, unhealthyMachineTimeout string) {
+	if len(cluster.Spec.MachineHealthCheck.NodeStartupTimeout) == 0 {
+		cluster.Spec.MachineHealthCheck.NodeStartupTimeout = nodeStartupTimeout
+	}
+
+	if len(cluster.Spec.MachineHealthCheck.UnhealthyMachineTimeout) == 0 {
+		cluster.Spec.MachineHealthCheck.UnhealthyMachineTimeout = unhealthyMachineTimeout
+	}
 }

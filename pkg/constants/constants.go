@@ -1,5 +1,7 @@
 package constants
 
+import "time"
+
 // Namespace constants.
 const (
 	EksaSystemNamespace                     = "eksa-system"
@@ -77,6 +79,13 @@ const (
 
 	BottlerocketDefaultUser = "ec2-user"
 	UbuntuDefaultUser       = "capv"
+
+	// DefaultUnhealthyMachineTimeout is the default timeout for an unhealthy machine health check.
+	DefaultUnhealthyMachineTimeout = 5 * time.Minute
+	// DefaultNodeStartupTimeout is the default timeout for a machine without a node to be considered to have failed machine health check.
+	DefaultNodeStartupTimeout = 10 * time.Minute
+	// DefaultTinkerbellNodeStartupTimeout is the default node start up timeout for Tinkerbell.
+	DefaultTinkerbellNodeStartupTimeout = 20 * time.Minute
 )
 
 type Operation int
