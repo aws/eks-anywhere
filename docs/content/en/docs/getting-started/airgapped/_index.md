@@ -64,3 +64,33 @@ If you are using the vSphere provider, be sure that the requirements in the
 ## Deploy a cluster
 
 Once you have the tools installed you can deploy a cluster by [choosing a provider]({{< relref "/docs/getting-started/chooseprovider/" >}})
+
+## Upgrade an airgapped cluster
+
+To upgrade a cluster in an airgapped environment, perform the following:
+
+1. [Upgrade eksctl-anywhere binary]({{< relref "../../clustermgmt/cluster-upgrades/vsphere-and-cloudstack-upgrades.md#eks-anywhere-version-upgrades" >}}).
+
+1. Use the upgraded binary to download new artifacts that will be used by the cluster nodes to the Admin machine:
+   ```bash
+   eksctl anywhere download artifacts
+   ```
+   A compressed file `eks-anywhere-downloads.tar.gz` will be downloaded.
+
+1. Decompress this file:
+   ```bash
+   tar -xvf eks-anywhere-downloads.tar.gz
+   ```
+   This will create an eks-anywhere-downloads folder that we’ll be using later.
+
+1. Use the upgraded binary to download new images:
+   ```bash
+   eksctl anywhere download images -o images.tar
+   ```
+   
+1. Use the upgraded binary to import new images to your local registry mirror.
+   ```bash
+   eksctl anywhere import images -i images.tar -r <registryUrl> \
+      --bundles ./eks-anywhere-downloads/bundle-release.yaml
+   ```
+1. You are now ready to [upgrade your cluster] ({{< relref "../../clustermgmt/cluster-upgrades/" >}})
