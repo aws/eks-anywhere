@@ -161,7 +161,7 @@ func EtcdadmCluster(log logr.Logger, clusterSpec *cluster.Spec, snowMachineTempl
 		clusterapi.SetBottlerocketHostConfigInEtcdCluster(etcd, machineConfig.Spec.HostOSConfiguration)
 
 	case v1alpha1.Ubuntu:
-		clusterapi.SetUbuntuConfigInEtcdCluster(etcd, versionsBundle.KubeDistro.EtcdVersion)
+		clusterapi.SetUbuntuConfigInEtcdCluster(etcd, versionsBundle, clusterSpec)
 		etcd.Spec.EtcdadmConfigSpec.PreEtcdadmCommands = append(etcd.Spec.EtcdadmConfigSpec.PreEtcdadmCommands,
 			"/etc/eks/bootstrap.sh",
 		)

@@ -195,6 +195,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec) (map[string]interface{}, erro
 		"schedulerExtraArgs":                         sharedExtraArgs.ToPartialYaml(),
 		"format":                                     format,
 		"externalEtcdVersion":                        versionsBundle.KubeDistro.EtcdVersion,
+		"externalEtcdReleaseUrl":                     versionsBundle.KubeDistro.EtcdURL,
 		"etcdImage":                                  versionsBundle.KubeDistro.EtcdImage.VersionedImage(),
 		"eksaSystemNamespace":                        constants.EksaSystemNamespace,
 	}
@@ -230,6 +231,10 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec) (map[string]interface{}, erro
 		values["externalEtcd"] = true
 		values["externalEtcdReplicas"] = clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.Count
 		values["etcdSshUsername"] = etcdMachineSpec.Users[0].Name
+		etcdUrl, _ := common.GetExternalEtcdReleaseUrl(string(*clusterSpec.Cluster.Spec.EksaVersion), versionsBundle)
+		if etcdUrl != "" {
+			values["externalEtcdReleaseUrl"] = etcdUrl
+		}
 	}
 
 	if len(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Taints) > 0 {

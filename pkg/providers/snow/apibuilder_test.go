@@ -1074,8 +1074,9 @@ func wantEtcdClusterUbuntu() *etcdv1.EtcdadmCluster {
 	etcd := wantEtcdCluster()
 	etcd.Spec.EtcdadmConfigSpec.Format = etcdbootstrapv1.Format("cloud-config")
 	etcd.Spec.EtcdadmConfigSpec.CloudInitConfig = &etcdbootstrapv1.CloudInitConfig{
-		Version:    "3.4.16",
-		InstallDir: "/usr/bin",
+		Version:        "3.4.16",
+		InstallDir:     "/usr/bin",
+		EtcdReleaseURL: "https://distro.eks.amazonaws.com/kubernetes-1-21/releases/4/artifacts/etcd/v3.4.16/etcd-linux-amd64-v3.4.16.tar.gz",
 	}
 	etcd.Spec.EtcdadmConfigSpec.PreEtcdadmCommands = []string{
 		"/etc/eks/bootstrap.sh",
@@ -1119,6 +1120,8 @@ func wantEtcdClusterBottlerocket() *etcdv1.EtcdadmCluster {
 
 func TestEtcdadmClusterUbuntu(t *testing.T) {
 	tt := newApiBuilerTest(t)
+	eksaVersion := v1alpha1.EksaVersion("v0.19.0")
+	tt.clusterSpec.Cluster.Spec.EksaVersion = &eksaVersion
 	tt.clusterSpec.Cluster.Spec.ExternalEtcdConfiguration = &v1alpha1.ExternalEtcdConfiguration{
 		Count: 3,
 		MachineGroupRef: &v1alpha1.Ref{
