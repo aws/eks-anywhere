@@ -7,7 +7,7 @@ aliases:
 description: >
   How to perform eks-anywhere upgrade for an airgapped cluster
 ---
-If you want to upgrade EKS Anywhere version, or your airgapped cluster upgrade requires EKS Anywhere version upgrade, perform the following:
+If you want to upgrade EKS Anywhere version, or your cluster upgrade requires EKS Anywhere version upgrade in airgapped environment, perform the following steps to prepare new artifacts in your registry mirror:
 
 1. [Upgrade EKS Anywhere version]({{< relref "./vsphere-and-cloudstack-upgrades.md#eks-anywhere-version-upgrades" >}}).
 
