@@ -991,7 +991,7 @@ func (k *Kubectl) ValidatePods(ctx context.Context, kubeconfig string) error {
 
 // RunBusyBoxPod will run Kubectl run with a busybox curl image and the command you pass in.
 func (k *Kubectl) RunBusyBoxPod(ctx context.Context, namespace, name, kubeconfig string, command []string) (string, error) {
-	params := []string{"run", name, "--image=yauritux/busybox-curl", "-o", "json", "--kubeconfig", kubeconfig, "--namespace", namespace, "--restart=Never"}
+	params := []string{"run", name, "--image=public.ecr.aws/eks-anywhere/diagnostic-collector:v0.16.2-eks-a-41", "-o", "json", "--kubeconfig", kubeconfig, "--namespace", namespace, "--restart=Never"}
 	params = append(params, command...)
 	_, err := k.Execute(ctx, params...)
 	if err != nil {
