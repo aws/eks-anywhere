@@ -300,7 +300,7 @@ func TestClusterEqualKubernetesVersion(t *testing.T) {
 	}
 }
 
-func TestClusterEqualWorkerNodeGroupConfigurations(t *testing.T) {
+func TestWorkerNodeGroupConfigurationEqual(t *testing.T) {
 	var emptyTaints []corev1.Taint
 	taint1 := corev1.Taint{Key: "key1"}
 	taint2 := corev1.Taint{Key: "key2"}
@@ -354,6 +354,7 @@ func TestClusterEqualWorkerNodeGroupConfigurations(t *testing.T) {
 			testName: "both exist, order diff",
 			cluster1Wngs: []v1alpha1.WorkerNodeGroupConfiguration{
 				{
+					Name:  "w-1",
 					Count: ptr.Int(1),
 					MachineGroupRef: &v1alpha1.Ref{
 						Kind: "k1",
@@ -361,6 +362,7 @@ func TestClusterEqualWorkerNodeGroupConfigurations(t *testing.T) {
 					},
 				},
 				{
+					Name:  "w-2",
 					Count: ptr.Int(2),
 					MachineGroupRef: &v1alpha1.Ref{
 						Kind: "k2",
@@ -370,6 +372,7 @@ func TestClusterEqualWorkerNodeGroupConfigurations(t *testing.T) {
 			},
 			cluster2Wngs: []v1alpha1.WorkerNodeGroupConfiguration{
 				{
+					Name:  "w-2",
 					Count: ptr.Int(2),
 					MachineGroupRef: &v1alpha1.Ref{
 						Kind: "k2",
@@ -377,6 +380,7 @@ func TestClusterEqualWorkerNodeGroupConfigurations(t *testing.T) {
 					},
 				},
 				{
+					Name:  "w-1",
 					Count: ptr.Int(1),
 					MachineGroupRef: &v1alpha1.Ref{
 						Kind: "k1",
@@ -562,19 +566,8 @@ func TestClusterEqualWorkerNodeGroupConfigurations(t *testing.T) {
 	}
 	for _, tt := range testCases {
 		t.Run(tt.testName, func(t *testing.T) {
-			cluster1 := &v1alpha1.Cluster{
-				Spec: v1alpha1.ClusterSpec{
-					WorkerNodeGroupConfigurations: tt.cluster1Wngs,
-				},
-			}
-			cluster2 := &v1alpha1.Cluster{
-				Spec: v1alpha1.ClusterSpec{
-					WorkerNodeGroupConfigurations: tt.cluster2Wngs,
-				},
-			}
-
 			g := NewWithT(t)
-			g.Expect(cluster1.Equal(cluster2)).To(Equal(tt.want))
+			g.Expect(v1alpha1.WorkerNodeGroupConfigurationsSliceEqual(tt.cluster1Wngs, tt.cluster2Wngs)).To(Equal(tt.want))
 		})
 	}
 }
@@ -2887,6 +2880,79 @@ func TestClusterControlPlaneIPCheckDisabled(t *testing.T) {
 			if got := tt.cluster.ControlPlaneIPCheckDisabled(); got != tt.want {
 				t.Errorf("ControlPlaneIPCheckDisabled() = %v, want %v", got, tt.want)
 			}
+		})
+	}
+}
+
+func TestWorkerNodesUpgradeRolloutStrategyEqual(t *testing.T) {
+	tests := []struct {
+		name string
+		a, b *v1alpha1.WorkerNodesUpgradeRolloutStrategy
+		want bool
+	}{
+		{
+			name: "both nil",
+			want: true,
+		},
+		{
+			name: "a nil",
+			b:    &v1alpha1.WorkerNodesUpgradeRolloutStrategy{},
+			want: false,
+		},
+		{
+			name: "b nil",
+			a:    &v1alpha1.WorkerNodesUpgradeRolloutStrategy{},
+			want: false,
+		},
+		{
+			name: "diff type",
+			a: &v1alpha1.WorkerNodesUpgradeRolloutStrategy{
+				Type: "Rolling",
+			},
+			b: &v1alpha1.WorkerNodesUpgradeRolloutStrategy{
+				Type: "Replace",
+			},
+			want: false,
+		},
+		{
+			name: "diff rolling update",
+			a: &v1alpha1.WorkerNodesUpgradeRolloutStrategy{
+				Type: "Rolling",
+				RollingUpdate: v1alpha1.WorkerNodesRollingUpdateParams{
+					MaxSurge: 1,
+				},
+			},
+			b: &v1alpha1.WorkerNodesUpgradeRolloutStrategy{
+				Type: "Rolling",
+				RollingUpdate: v1alpha1.WorkerNodesRollingUpdateParams{
+					MaxSurge: 2,
+				},
+			},
+			want: false,
+		},
+		{
+			name: "equal",
+			a: &v1alpha1.WorkerNodesUpgradeRolloutStrategy{
+				Type: "Rolling",
+				RollingUpdate: v1alpha1.WorkerNodesRollingUpdateParams{
+					MaxSurge:       2,
+					MaxUnavailable: 2,
+				},
+			},
+			b: &v1alpha1.WorkerNodesUpgradeRolloutStrategy{
+				Type: "Rolling",
+				RollingUpdate: v1alpha1.WorkerNodesRollingUpdateParams{
+					MaxSurge:       2,
+					MaxUnavailable: 2,
+				},
+			},
+			want: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			g.Expect(tt.a.Equal(tt.b)).To(Equal(tt.want))
 		})
 	}
 }
