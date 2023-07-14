@@ -307,6 +307,9 @@ func TestWorkerNodeGroupConfigurationEqual(t *testing.T) {
 	taints1 := []corev1.Taint{taint1, taint2}
 	taints1DiffOrder := []corev1.Taint{taint2, taint1}
 	taints2 := []corev1.Taint{taint1}
+	kube127 := v1alpha1.Kube127
+	kube118 := v1alpha1.Kube118
+	kube118Again := v1alpha1.KubernetesVersion("1.18")
 
 	testCases := []struct {
 		testName                   string
@@ -562,6 +565,48 @@ func TestWorkerNodeGroupConfigurationEqual(t *testing.T) {
 				},
 			},
 			want: true,
+		},
+		{
+			testName: "both exist, same kube version",
+			cluster1Wngs: []v1alpha1.WorkerNodeGroupConfiguration{
+				{
+					KubernetesVersion: &kube118,
+				},
+			},
+			cluster2Wngs: []v1alpha1.WorkerNodeGroupConfiguration{
+				{
+					KubernetesVersion: &kube118Again,
+				},
+			},
+			want: true,
+		},
+		{
+			testName: "both exist, different kube version",
+			cluster1Wngs: []v1alpha1.WorkerNodeGroupConfiguration{
+				{
+					KubernetesVersion: &kube118,
+				},
+			},
+			cluster2Wngs: []v1alpha1.WorkerNodeGroupConfiguration{
+				{
+					KubernetesVersion: &kube127,
+				},
+			},
+			want: false,
+		},
+		{
+			testName: "one exists, other kube version nil",
+			cluster1Wngs: []v1alpha1.WorkerNodeGroupConfiguration{
+				{
+					KubernetesVersion: &kube118,
+				},
+			},
+			cluster2Wngs: []v1alpha1.WorkerNodeGroupConfiguration{
+				{
+					KubernetesVersion: nil,
+				},
+			},
+			want: false,
 		},
 	}
 	for _, tt := range testCases {
