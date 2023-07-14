@@ -379,6 +379,7 @@ spec:
     cloudInitConfig:
       version: {{.externalEtcdVersion}}
       installDir: "/usr/bin"
+      etcdReleaseURL: {{.externalEtcdReleaseUrl}}
     etcdadmInstallCommands:
       - echo this line exists so that etcdadmInstallCommands is not empty
       - echo etcdadmInstallCommands can be removed once etcdadm bootstrap and controller fix the bug

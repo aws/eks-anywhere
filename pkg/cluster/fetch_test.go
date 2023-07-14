@@ -293,6 +293,14 @@ func wantKubeDistroForEksdRelease() (*eksdv1.Release, *cluster.KubeDistro) {
 				{
 					Name:   "etcd",
 					GitTag: "v3.4.14",
+					Assets: []eksdv1.Asset{
+						{
+							Arch: []string{"amd64"},
+							Archive: &eksdv1.AssetArchive{
+								URI: "https://distro.eks.amazonaws.com/kubernetes-1-19/releases/4/artifacts/etcd/v3.4.14/etcd-linux-amd64-v3.4.14.tar.gz",
+							},
+						},
+					},
 				},
 				{
 					Name: "comp-1",
@@ -404,6 +412,7 @@ func wantKubeDistroForEksdRelease() (*eksdv1.Release, *cluster.KubeDistro) {
 			URI: "public.ecr.aws/eks-distro/kubernetes/kube-proxy:v1.19.8",
 		},
 		EtcdVersion: "3.4.14",
+		EtcdURL:     "https://distro.eks.amazonaws.com/kubernetes-1-19/releases/4/artifacts/etcd/v3.4.14/etcd-linux-amd64-v3.4.14.tar.gz",
 	}
 
 	return eksdRelease, kubeDistro

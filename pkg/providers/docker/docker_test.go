@@ -548,6 +548,7 @@ var versionsBundle = &cluster.VersionsBundle{
 			Tag:        "v3.4.14-eks-1-19-2",
 		},
 		EtcdVersion: "3.4.14",
+		EtcdURL:     "https://distro.eks.amazonaws.com/kubernetes-1-21/releases/4/artifacts/etcd/v3.4.16/etcd-linux-amd64-v3.4.16.tar.gz",
 	},
 	VersionsBundle: &releasev1alpha1.VersionsBundle{
 		EksD: releasev1alpha1.EksDRelease{

@@ -119,6 +119,8 @@ func newApiBuilerTest(t *testing.T) apiBuilerTest {
 					EtcdImage: v1alpha1.Image{
 						URI: "public.ecr.aws/eks-distro/etcd-io/etcd:0.0.1",
 					},
+					EtcdURL:     "https://distro.eks.amazonaws.com/kubernetes-1-19/releases/4/artifacts/etcd/v3.4.14/etcd-linux-amd64-v3.4.14.tar.gz",
+					EtcdVersion: "3.4.14",
 					Pause: v1alpha1.Image{
 						URI: "public.ecr.aws/eks-distro/kubernetes/pause:0.0.1",
 					},
