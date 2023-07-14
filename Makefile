@@ -29,7 +29,7 @@ UNIT_TEST_PACKAGE_EXCLUSION_REGEX ?=mocks$
 UNIT_TEST_PACKAGES ?= $$($(GO) list ./... | grep -vE "$(UNIT_TEST_PACKAGE_EXCLUSION_REGEX)")
 
 ## ensure local execution uses the 'main' branch bundle
-BRANCH_NAME?=main
+BRANCH_NAME?=release-0.17
 ifneq ($(PULL_BASE_REF),) # PULL_BASE_REF originates from prow
 	BRANCH_NAME=$(PULL_BASE_REF)
 endif
