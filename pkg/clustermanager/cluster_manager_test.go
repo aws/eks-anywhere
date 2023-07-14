@@ -603,6 +603,34 @@ func TestClusterManagerRunPostCreateWorkloadClusterWaitForMachinesSuccessAfterRe
 	}
 }
 
+func TestClusterManagerUpgradeSelfManagedClusterFailClientError(t *testing.T) {
+	clusterName := "cluster-name"
+	mCluster := &types.Cluster{
+		Name: clusterName,
+	}
+	wCluster := &types.Cluster{
+		Name: clusterName,
+	}
+
+	tt := newSpecChangedTest(t)
+	mockCtrl := gomock.NewController(t)
+	m := &clusterManagerMocks{
+		client: mocksmanager.NewMockClusterClient(mockCtrl),
+	}
+	client := clustermanager.NewRetrierClient(m.client, clustermanager.DefaultRetrier())
+	cf := mocksmanager.NewMockClientFactory(mockCtrl)
+	cf.EXPECT().BuildClientFromKubeconfig("").Return(nil, errors.New("can't build client"))
+	c := clustermanager.New(cf, client, nil, nil, nil, nil, nil)
+	tt.clusterManager = c
+	tt.mocks.client = m.client
+
+	tt.mocks.client.EXPECT().GetEksaCluster(tt.ctx, tt.cluster, tt.clusterSpec.Cluster.Name).Return(tt.oldClusterConfig, nil)
+
+	if err := tt.clusterManager.UpgradeCluster(tt.ctx, mCluster, wCluster, tt.clusterSpec, tt.mocks.provider); err == nil {
+		t.Errorf("ClusterManager.UpgradeCluster() error is nil, wantErr %v", err)
+	}
+}
+
 func TestClusterManagerUpgradeSelfManagedClusterSuccess(t *testing.T) {
 	clusterName := "cluster-name"
 	mCluster := &types.Cluster{
