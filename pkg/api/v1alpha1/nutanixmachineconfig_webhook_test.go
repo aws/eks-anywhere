@@ -8,7 +8,6 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
 
@@ -318,13 +317,6 @@ func TestValidateUpdate_OldObjectNotMachineConfig(t *testing.T) {
 	newConfig := nutanixMachineConfig()
 	err := newConfig.ValidateUpdate(oldConfig)
 	g.Expect(err).To(HaveOccurred())
-}
-
-func TestNutanixMachineConfigSetupWebhookWithManager(t *testing.T) {
-	t.Setenv(features.FullLifecycleAPIEnvVar, "true")
-	g := NewWithT(t)
-	conf := nutanixMachineConfig()
-	g.Expect(conf.SetupWebhookWithManager(env.Manager())).To(Succeed())
 }
 
 func TestNutanixMachineConfigWebhooksValidateDelete(t *testing.T) {
