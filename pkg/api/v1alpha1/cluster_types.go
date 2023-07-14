@@ -405,6 +405,8 @@ type WorkerNodeGroupConfiguration struct {
 	// UpgradeRolloutStrategy determines the rollout strategy to use for rolling upgrades
 	// and related parameters/knobs
 	UpgradeRolloutStrategy *WorkerNodesUpgradeRolloutStrategy `json:"upgradeRolloutStrategy,omitempty"`
+	// KuberenetesVersion defines the version for worker nodes. If not set, the top level spec kubernetesVersion will be used.
+	KubernetesVersion *KubernetesVersion `json:"kubernetesVersion,omitempty"`
 }
 
 // Equal compares two WorkerNodeGroupConfigurations.
@@ -413,9 +415,23 @@ func (w WorkerNodeGroupConfiguration) Equal(other WorkerNodeGroupConfiguration) 
 		intPtrEqual(w.Count, other.Count) &&
 		w.AutoScalingConfiguration.Equal(other.AutoScalingConfiguration) &&
 		w.MachineGroupRef.Equal(other.MachineGroupRef) &&
+		w.KubernetesVersion.Equal(other.KubernetesVersion) &&
 		TaintsSliceEqual(w.Taints, other.Taints) &&
 		MapEqual(w.Labels, other.Labels) &&
 		w.UpgradeRolloutStrategy.Equal(other.UpgradeRolloutStrategy)
+}
+
+// Equal compares two KubernetesVersions.
+func (k *KubernetesVersion) Equal(other *KubernetesVersion) bool {
+	if k == other {
+		return true
+	}
+
+	if k == nil || other == nil {
+		return false
+	}
+
+	return *k == *other
 }
 
 func intPtrEqual(a, b *int) bool {
