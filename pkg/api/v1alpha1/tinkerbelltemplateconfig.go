@@ -1,11 +1,7 @@
 package v1alpha1
 
 import (
-	"bufio"
-	"bytes"
 	"fmt"
-	"io"
-	"os"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	yamlutil "k8s.io/apimachinery/pkg/util/yaml"
@@ -13,6 +9,8 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1/thirdparty/tinkerbell"
 	"github.com/aws/eks-anywhere/release/api/v1alpha1"
+
+	yamlutilpkg "github.com/aws/eks-anywhere/pkg/yamlutil"
 )
 
 const TinkerbellTemplateConfigKind = "TinkerbellTemplateConfig"
@@ -71,21 +69,12 @@ func (c *TinkerbellTemplateConfigGenerate) Name() string {
 
 func GetTinkerbellTemplateConfig(fileName string) (map[string]*TinkerbellTemplateConfig, error) {
 	templates := make(map[string]*TinkerbellTemplateConfig)
-	content, err := os.ReadFile(fileName)
+	resources, err := yamlutilpkg.ParseMultiYamlFile(fileName)
 	if err != nil {
-		return nil, fmt.Errorf("unable to read file due to: %v", err)
+		return nil, err
 	}
 
-	r := yamlutil.NewYAMLReader(bufio.NewReader(bytes.NewReader(content)))
-	for {
-		d, err := r.Read()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			return nil, err
-		}
-
+	for _, d := range resources {
 		var template TinkerbellTemplateConfig
 		if err := yaml.Unmarshal(d, &template); err != nil {
 			return nil, fmt.Errorf("unable to unmarshall content from file due to: %v", err)

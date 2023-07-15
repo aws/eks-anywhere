@@ -4,8 +4,10 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/onsi/gomega"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
+	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/yamlutil"
@@ -175,4 +177,85 @@ func TestParserRegisterMappingsError(t *testing.T) {
 			}),
 		),
 	).To(MatchError(ContainSubstring("mapping for api object Secret already registered")))
+}
+
+type TestGenericYaml struct {
+	ApiVersion string       `yaml:"apiVersion"`
+	Kind       string       `yaml:"kind"`
+	MetaData   TestMetaData `yaml:"metadata"`
+	Spec       interface{}  `yaml:"spec"`
+}
+
+type TestMetaData struct {
+	Name string `yaml:"name"`
+}
+
+func TestParseMultiYamlFile(t *testing.T) {
+	fileName := "testdata/multi_resource_manifests.yaml"
+	wantErr := false
+	noOfResources := 3
+
+	expectedClusterYaml := TestGenericYaml{
+		ApiVersion: "v1",
+		Kind:       "Cluster",
+		MetaData: TestMetaData{
+			Name: "cluster-1",
+		},
+		Spec: map[string]interface{}{
+			"machineConfigRef": map[string]interface{}{
+				"name": "test-machine-config",
+			},
+			"templateConfigRef": map[string]interface{}{
+				"name": "test-template-config",
+			},
+		},
+	}
+
+	expectedMachineYaml := TestGenericYaml{
+		ApiVersion: "v1",
+		Kind:       "MachineConfigRef",
+		MetaData: TestMetaData{
+			Name: "test-machine-config",
+		},
+		Spec: map[string]interface{}{
+			"machine": map[string]interface{}{
+				"count": float64(1),
+			},
+		},
+	}
+
+	expectedTemplateYaml := TestGenericYaml{
+		ApiVersion: "v1",
+		Kind:       "TemplateConfigRef",
+		MetaData: TestMetaData{
+			Name: "test-template-config",
+		},
+		Spec: map[string]interface{}{
+			"template": map[string]interface{}{
+				"name": "test-template",
+			},
+		},
+	}
+
+	t.Run("split yaml resources", func(t *testing.T) {
+		g := gomega.NewWithT(t)
+		got, err := yamlutil.ParseMultiYamlFile(fileName)
+		g.Expect((err != nil)).To(gomega.BeEquivalentTo(wantErr))
+		g.Expect((len(got))).To(gomega.BeEquivalentTo(noOfResources))
+
+		gotClusterYaml := TestGenericYaml{}
+		err = yaml.Unmarshal(got[0], &gotClusterYaml)
+		g.Expect((err != nil)).To(gomega.BeEquivalentTo(wantErr))
+		g.Expect(gotClusterYaml).To(gomega.BeEquivalentTo(expectedClusterYaml))
+
+		gotMachineYaml := TestGenericYaml{}
+		err = yaml.Unmarshal(got[1], &gotMachineYaml)
+		g.Expect((err != nil)).To(gomega.BeEquivalentTo(wantErr))
+		g.Expect(gotMachineYaml).To(gomega.BeEquivalentTo(expectedMachineYaml))
+
+		gotTemplateYaml := TestGenericYaml{}
+		err = yaml.Unmarshal(got[2], &gotTemplateYaml)
+		g.Expect((err != nil)).To(gomega.BeEquivalentTo(wantErr))
+		g.Expect(gotTemplateYaml).To(gomega.BeEquivalentTo(expectedTemplateYaml))
+	})
 }

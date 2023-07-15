@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: Cluster
+metadata:
+  name: cluster-1
+spec:
+  machineConfigRef:
+    name: test-machine-config
+  templateConfigRef:
+    name: test-template-config
+---
+apiVersion: v1
+kind: MachineConfigRef
+metadata:
+  name: test-machine-config
+spec:
+  machine:
+    count: 1
+---
+apiVersion: v1
+kind: TemplateConfigRef
+metadata:
+  name: test-template-config
+spec:
+  template:
+    name: test-template

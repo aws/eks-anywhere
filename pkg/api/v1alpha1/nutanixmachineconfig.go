@@ -1,16 +1,13 @@
 package v1alpha1
 
 import (
-	"bufio"
-	"bytes"
 	"fmt"
-	"io"
-	"os"
 
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	yamlutil "k8s.io/apimachinery/pkg/util/yaml"
 	"sigs.k8s.io/yaml"
+
+	"github.com/aws/eks-anywhere/pkg/yamlutil"
 )
 
 // NutanixIdentifierType is an enumeration of different resource identifier types.
@@ -125,21 +122,12 @@ func (c *NutanixMachineConfigGenerate) Name() string {
 
 func GetNutanixMachineConfigs(fileName string) (map[string]*NutanixMachineConfig, error) {
 	configs := make(map[string]*NutanixMachineConfig)
-	content, err := os.ReadFile(fileName)
+	resources, err := yamlutil.ParseMultiYamlFile(fileName)
 	if err != nil {
-		return nil, fmt.Errorf("unable to read file due to: %v", err)
+		return nil, err
 	}
 
-	r := yamlutil.NewYAMLReader(bufio.NewReader(bytes.NewReader(content)))
-	for {
-		d, err := r.Read()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			return nil, err
-		}
-
+	for _, d := range resources {
 		config := NutanixMachineConfig{
 			TypeMeta: metav1.TypeMeta{},
 			ObjectMeta: metav1.ObjectMeta{

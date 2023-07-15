@@ -3,7 +3,9 @@ package yamlutil
 import (
 	"bufio"
 	"bytes"
+	"fmt"
 	"io"
+	"os"
 
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
@@ -173,4 +175,29 @@ func (p *Parser) unmarshal(reader io.Reader) (*parsed, error) {
 
 func (p *Parser) buildConfigFromParsed(parsed *parsed, b Builder) error {
 	return b.BuildFromParsed(parsed.objects)
+}
+
+func ParseMultiYamlFile(fileName string) ([][]byte, error) {
+
+	resources := make([][]byte, 0)
+
+	content, err := os.ReadFile(fileName)
+	if err != nil {
+		return nil, fmt.Errorf("unable to read file due to: %v", err)
+	}
+
+	r := apiyaml.NewYAMLReader(bufio.NewReader(bytes.NewReader(content)))
+	for {
+		d, err := r.Read()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return nil, err
+		}
+
+		resources = append(resources, d)
+	}
+
+	return resources, nil
 }
