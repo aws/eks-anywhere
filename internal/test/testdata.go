@@ -111,6 +111,28 @@ func Bundle() *releasev1.Bundles {
 		Spec: releasev1.BundlesSpec{
 			VersionsBundles: []releasev1.VersionsBundle{
 				{
+					KubeVersion: "1.19",
+					EksD: releasev1.EksDRelease{
+						Name:           "test",
+						EksDReleaseUrl: "testdata/release.yaml",
+						KubeVersion:    "1.19",
+					},
+					CertManager:                releasev1.CertManagerBundle{},
+					ClusterAPI:                 releasev1.CoreClusterAPI{},
+					Bootstrap:                  releasev1.KubeadmBootstrapBundle{},
+					ControlPlane:               releasev1.KubeadmControlPlaneBundle{},
+					VSphere:                    releasev1.VSphereBundle{},
+					Docker:                     releasev1.DockerBundle{},
+					Eksa:                       releasev1.EksaBundle{},
+					Cilium:                     releasev1.CiliumBundle{},
+					Kindnetd:                   releasev1.KindnetdBundle{},
+					Flux:                       releasev1.FluxBundle{},
+					BottleRocketHostContainers: releasev1.BottlerocketHostContainersBundle{},
+					ExternalEtcdBootstrap:      releasev1.EtcdadmBootstrapBundle{},
+					ExternalEtcdController:     releasev1.EtcdadmControllerBundle{},
+					Tinkerbell:                 releasev1.TinkerbellBundle{},
+				},
+				{
 					KubeVersion: "1.22",
 					EksD: releasev1.EksDRelease{
 						Name:           "test",

@@ -952,7 +952,7 @@ func (f *Factory) clusterManagerOpts(timeoutOpts *ClusterManagerTimeoutOptions) 
 
 // WithClusterManager builds a cluster manager based on the cluster config and timeout options.
 func (f *Factory) WithClusterManager(clusterConfig *v1alpha1.Cluster, timeoutOpts *ClusterManagerTimeoutOptions) *Factory {
-	f.WithClusterctl().WithKubectl().WithNetworking(clusterConfig).WithWriter().WithDiagnosticBundleFactory().WithAwsIamAuth().WithFileReader()
+	f.WithClusterctl().WithKubectl().WithNetworking(clusterConfig).WithWriter().WithDiagnosticBundleFactory().WithAwsIamAuth().WithFileReader().WithUnAuthKubeClient()
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.ClusterManager != nil {
@@ -977,6 +977,7 @@ func (f *Factory) WithClusterManager(clusterConfig *v1alpha1.Cluster, timeoutOpt
 		installer := clustermanager.NewEKSAInstaller(client, f.dependencies.FileReader, f.eksaInstallerOpts()...)
 
 		f.dependencies.ClusterManager = clustermanager.New(
+			f.dependencies.UnAuthKubeClient,
 			client,
 			f.dependencies.Networking,
 			f.dependencies.Writer,

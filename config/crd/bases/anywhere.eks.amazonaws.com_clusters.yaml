@@ -407,6 +407,11 @@ spec:
                       description: Count defines the number of desired worker nodes.
                         Defaults to 1.
                       type: integer
+                    kubernetesVersion:
+                      description: KuberenetesVersion defines the version for worker
+                        nodes. If not set, the top level spec kubernetesVersion will
+                        be used.
+                      type: string
                     labels:
                       additionalProperties:
                         type: string
