@@ -11,7 +11,6 @@ import (
 
 	"gopkg.in/yaml.v2"
 
-	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/config"
@@ -170,7 +169,7 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, vsphereCl
 	logger.MarkPass("Control plane and Workload templates validated")
 
 	for _, mc := range vsphereClusterSpec.VSphereMachineConfigs {
-		if mc.OSFamily() == v1alpha1.Bottlerocket {
+		if mc.OSFamily() == anywherev1.Bottlerocket {
 			if err := v.validateBRHardDiskSize(ctx, vsphereClusterSpec, mc); err != nil {
 				return fmt.Errorf("failed validating BR Hard Disk size: %v", err)
 			}
