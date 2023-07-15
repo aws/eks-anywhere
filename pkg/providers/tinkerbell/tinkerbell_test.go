@@ -1858,3 +1858,57 @@ func TestTinkerbellProvider_GenerateCAPISpecForUpgrade_RegistryMirror(t *testing
 
 	test.AssertContentToFile(t, string(cp), "testdata/expected_results_cluster_tinkerbell_upgrade_registry_mirror.yaml")
 }
+
+func TestTinkerbellProviderWithMismatchedExternalEtcd(t *testing.T) {
+	clusterSpecManifest := "cluster_tinkerbell_mismatched_external_etcd.yaml"
+	mockCtrl := gomock.NewController(t)
+	docker := stackmocks.NewMockDocker(mockCtrl)
+	helm := stackmocks.NewMockHelm(mockCtrl)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	stackInstaller := stackmocks.NewMockStackInstaller(mockCtrl)
+	writer := filewritermocks.NewMockFileWriter(mockCtrl)
+	forceCleanup := false
+
+	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
+	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
+	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
+
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+	provider.stackInstaller = stackInstaller
+
+	numberOfMatchingMachineConfigs := 2
+	mismatchedEtcdMachineConfigName := "test-etcd-1"
+
+	got := provider.MachineConfigs(clusterSpec)
+	assert.Equal(t, numberOfMatchingMachineConfigs, len(got))
+
+	gotMachineConfigNames := make([]string, 0)
+	for _, mc := range got {
+		gotMachineConfigNames = append(gotMachineConfigNames, mc.GetName())
+	}
+
+	assert.NotContains(t, gotMachineConfigNames, mismatchedEtcdMachineConfigName)
+
+}
+
+func TestTinkerbellProviderWithMismatchedMachineConfig(t *testing.T) {
+	clusterSpecManifest := "cluster_tinkerbell_mismatched_machine_config.yaml"
+	mockCtrl := gomock.NewController(t)
+	docker := stackmocks.NewMockDocker(mockCtrl)
+	helm := stackmocks.NewMockHelm(mockCtrl)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	stackInstaller := stackmocks.NewMockStackInstaller(mockCtrl)
+	writer := filewritermocks.NewMockFileWriter(mockCtrl)
+	forceCleanup := false
+
+	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
+	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
+	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
+
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+	provider.stackInstaller = stackInstaller
+
+	got := provider.MachineConfigs(clusterSpec)
+	assert.True(t, len(got) == 0)
+
+}
