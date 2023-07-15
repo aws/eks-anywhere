@@ -379,12 +379,13 @@ func (f *Factory) WithExecutableBuilder() *Factory {
 	return f
 }
 
-func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1.Cluster, skipIpCheck bool, hardwareCSVPath string, force bool, tinkerbellBootstrapIp string) *Factory {
+// WithProvider initializes the provider dependency and adds to the build steps.
+func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1.Cluster, skipIPCheck bool, hardwareCSVPath string, force bool, tinkerbellBootstrapIP string, skippedValidations map[string]bool) *Factory { // nolint:gocyclo
 	switch clusterConfig.Spec.DatacenterRef.Kind {
 	case v1alpha1.VSphereDatacenterKind:
 		f.WithKubectl().WithGovc().WithWriter().WithIPValidator()
 	case v1alpha1.CloudStackDatacenterKind:
-		f.WithKubectl().WithCloudStackValidatorRegistry(skipIpCheck).WithWriter()
+		f.WithKubectl().WithCloudStackValidatorRegistry(skipIPCheck).WithWriter()
 	case v1alpha1.DockerDatacenterKind:
 		f.WithDocker().WithKubectl()
 	case v1alpha1.TinkerbellDatacenterKind:
@@ -419,7 +420,8 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 				f.dependencies.Writer,
 				f.dependencies.IPValidator,
 				time.Now,
-				skipIpCheck,
+				skipIPCheck,
+				skippedValidations,
 			)
 
 		case v1alpha1.CloudStackDatacenterKind:
@@ -442,7 +444,7 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 			f.dependencies.Provider = snow.NewProvider(
 				f.dependencies.UnAuthKubeClient,
 				f.dependencies.SnowConfigManager,
-				skipIpCheck,
+				skipIPCheck,
 			)
 
 		case v1alpha1.TinkerbellDatacenterKind:
@@ -456,16 +458,16 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 				return fmt.Errorf("unable to get machine config from file %s: %v", clusterConfigFile, err)
 			}
 
-			tinkerbellIp := tinkerbellBootstrapIp
-			if tinkerbellIp == "" {
+			tinkerbellIP := tinkerbellBootstrapIP
+			if tinkerbellIP == "" {
 				logger.V(4).Info("Inferring local Tinkerbell Bootstrap IP from environment")
 				localIp, err := networkutils.GetLocalIP()
 				if err != nil {
 					return err
 				}
-				tinkerbellIp = localIp.String()
+				tinkerbellIP = localIp.String()
 			}
-			logger.V(4).Info("Tinkerbell IP", "tinkerbell-ip", tinkerbellIp)
+			logger.V(4).Info("Tinkerbell IP", "tinkerbell-ip", tinkerbellIP)
 
 			provider, err := tinkerbell.NewProvider(
 				datacenterConfig,
@@ -476,10 +478,10 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 				f.dependencies.DockerClient,
 				f.dependencies.Helm,
 				f.dependencies.Kubectl,
-				tinkerbellIp,
+				tinkerbellIP,
 				time.Now,
 				force,
-				skipIpCheck,
+				skipIPCheck,
 			)
 			if err != nil {
 				return err
@@ -524,7 +526,7 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 				crypto.NewTlsValidator(),
 				httpClient,
 				time.Now,
-				skipIpCheck,
+				skipIPCheck,
 			)
 			f.dependencies.Provider = provider
 		default:

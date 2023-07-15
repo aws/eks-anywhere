@@ -29,6 +29,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/providers/common"
 	"github.com/aws/eks-anywhere/pkg/retrier"
 	"github.com/aws/eks-anywhere/pkg/types"
+	"github.com/aws/eks-anywhere/pkg/validations/createvalidations"
 	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
@@ -76,6 +77,7 @@ type vsphereProvider struct {
 	validator             *Validator
 	defaulter             *Defaulter
 	ipValidator           IPValidator
+	skippedValidations    map[string]bool
 }
 
 type ProviderGovcClient interface {
@@ -140,7 +142,18 @@ type IPValidator interface {
 	ValidateControlPlaneIPUniqueness(cluster *v1alpha1.Cluster) error
 }
 
-func NewProvider(datacenterConfig *v1alpha1.VSphereDatacenterConfig, clusterConfig *v1alpha1.Cluster, providerGovcClient ProviderGovcClient, providerKubectlClient ProviderKubectlClient, writer filewriter.FileWriter, ipValidator IPValidator, now types.NowFunc, skipIpCheck bool) *vsphereProvider { //nolint:revive
+// NewProvider initializes and returns a new vsphereProvider.
+func NewProvider(
+	datacenterConfig *v1alpha1.VSphereDatacenterConfig,
+	clusterConfig *v1alpha1.Cluster,
+	providerGovcClient ProviderGovcClient,
+	providerKubectlClient ProviderKubectlClient,
+	writer filewriter.FileWriter,
+	ipValidator IPValidator,
+	now types.NowFunc,
+	skipIPCheck bool,
+	skippedValidations map[string]bool,
+) *vsphereProvider { //nolint:revive
 	// TODO(g-gaston): ignoring linter error for exported function returning unexported member
 	// We should make it exported, but that would involve a bunch of changes, so will do it separately
 	vcb := govmomi.NewVMOMIClientBuilder()
@@ -157,12 +170,25 @@ func NewProvider(datacenterConfig *v1alpha1.VSphereDatacenterConfig, clusterConf
 		writer,
 		ipValidator,
 		now,
-		skipIpCheck,
+		skipIPCheck,
 		v,
+		skippedValidations,
 	)
 }
 
-func NewProviderCustomNet(datacenterConfig *v1alpha1.VSphereDatacenterConfig, clusterConfig *v1alpha1.Cluster, providerGovcClient ProviderGovcClient, providerKubectlClient ProviderKubectlClient, writer filewriter.FileWriter, ipValidator IPValidator, now types.NowFunc, skipIpCheck bool, v *Validator) *vsphereProvider { //nolint:revive
+// NewProviderCustomNet initializes and returns a new vsphereProvider.
+func NewProviderCustomNet(
+	datacenterConfig *v1alpha1.VSphereDatacenterConfig,
+	clusterConfig *v1alpha1.Cluster,
+	providerGovcClient ProviderGovcClient,
+	providerKubectlClient ProviderKubectlClient,
+	writer filewriter.FileWriter,
+	ipValidator IPValidator,
+	now types.NowFunc,
+	skipIPCheck bool,
+	v *Validator,
+	skippedValidations map[string]bool,
+) *vsphereProvider { //nolint:revive
 	// TODO(g-gaston): ignoring linter error for exported function returning unexported member
 	// We should make it exported, but that would involve a bunch of changes, so will do it separately
 	retrier := retrier.NewWithMaxRetries(maxRetries, backOffPeriod)
@@ -174,11 +200,12 @@ func NewProviderCustomNet(datacenterConfig *v1alpha1.VSphereDatacenterConfig, cl
 		templateBuilder: NewVsphereTemplateBuilder(
 			now,
 		),
-		skipIPCheck: skipIpCheck,
-		Retrier:     retrier,
-		validator:   v,
-		defaulter:   NewDefaulter(providerGovcClient),
-		ipValidator: ipValidator,
+		skipIPCheck:        skipIPCheck,
+		Retrier:            retrier,
+		validator:          v,
+		defaulter:          NewDefaulter(providerGovcClient),
+		ipValidator:        ipValidator,
+		skippedValidations: skippedValidations,
 	}
 }
 
@@ -339,8 +366,10 @@ func (p *vsphereProvider) SetupAndValidateCreateCluster(ctx context.Context, clu
 		logger.Info("Skipping check for whether control plane ip is in use")
 	}
 
-	if err := p.validator.validateVsphereUserPrivs(ctx, vSphereClusterSpec); err != nil {
-		return fmt.Errorf("validating vsphere user privileges: %v", err)
+	if !p.skippedValidations[createvalidations.VSphereUserPriv] {
+		if err := p.validator.validateVsphereUserPrivs(ctx, vSphereClusterSpec); err != nil {
+			return fmt.Errorf("validating vsphere user privileges: %v", err)
+		}
 	}
 
 	return nil
@@ -380,8 +409,10 @@ func (p *vsphereProvider) SetupAndValidateUpgradeCluster(ctx context.Context, cl
 		return fmt.Errorf("validating vsphere machine configs datastore usage: %v", err)
 	}
 
-	if err := p.validator.validateVsphereUserPrivs(ctx, vSphereClusterSpec); err != nil {
-		return fmt.Errorf("validating vsphere user privileges: %v", err)
+	if !p.skippedValidations[createvalidations.VSphereUserPriv] {
+		if err := p.validator.validateVsphereUserPrivs(ctx, vSphereClusterSpec); err != nil {
+			return fmt.Errorf("validating vsphere user privileges: %v", err)
+		}
 	}
 
 	err := p.validateMachineConfigsNameUniqueness(ctx, cluster, clusterSpec)

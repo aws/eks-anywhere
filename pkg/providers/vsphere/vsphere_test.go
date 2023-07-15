@@ -389,6 +389,7 @@ func TestNewProvider(t *testing.T) {
 	ipValidator := mocks.NewMockIPValidator(mockCtrl)
 	_, writer := test.NewWriter(t)
 	skipIPCheck := true
+	skippedValidations := map[string]bool{}
 
 	provider := NewProvider(
 		datacenterConfig,
@@ -399,6 +400,7 @@ func TestNewProvider(t *testing.T) {
 		ipValidator,
 		time.Now,
 		skipIPCheck,
+		skippedValidations,
 	)
 
 	if provider == nil {
@@ -503,6 +505,7 @@ func newProvider(t *testing.T, datacenterConfig *v1alpha1.VSphereDatacenterConfi
 		test.FakeNow,
 		false,
 		v,
+		map[string]bool{},
 	)
 }
 
