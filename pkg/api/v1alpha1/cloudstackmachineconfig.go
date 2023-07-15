@@ -1,15 +1,12 @@
 package v1alpha1
 
 import (
-	"bufio"
-	"bytes"
 	"fmt"
-	"io"
-	"os"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	yamlutil "k8s.io/apimachinery/pkg/util/yaml"
 	"sigs.k8s.io/yaml"
+
+	"github.com/aws/eks-anywhere/pkg/yamlutil"
 )
 
 // DefaultCloudStackUser is the default CloudStackMachingConfig username.
@@ -69,23 +66,13 @@ func (c *CloudStackMachineConfigGenerate) Name() string {
 
 func GetCloudStackMachineConfigs(fileName string) (map[string]*CloudStackMachineConfig, error) {
 	configs := make(map[string]*CloudStackMachineConfig)
-	content, err := os.ReadFile(fileName)
+	resources, err := yamlutil.ParseMultiYamlFile(fileName)
 	if err != nil {
-		return nil, fmt.Errorf("unable to read file due to: %v", err)
+		return nil, err
 	}
 
-	r := yamlutil.NewYAMLReader(bufio.NewReader(bytes.NewReader(content)))
-	for {
-		d, err := r.Read()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			return nil, err
-		}
-
+	for _, d := range resources {
 		var config CloudStackMachineConfig
-
 		if err = yaml.UnmarshalStrict(d, &config); err == nil {
 			if config.Kind == CloudStackMachineConfigKind {
 				configs[config.Name] = &config
