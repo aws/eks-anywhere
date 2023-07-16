@@ -58,7 +58,7 @@ kube-system                         vsphere-csi-node-r8lwp                      
 To verify that the expected number of cluster nodes are up and running, use the `kubectl` command to show that nodes are `Ready`.
 
 This will confirm that the expected number of nodes are present.
-Worker nodes are named using the cluster name followed by the worker node group name (example: my-cluster-md-0), the others are control plane nodes.
+Worker nodes are named using the cluster name followed by the worker node group name (example: mgmt-md-0), the others are control plane nodes.
 
 ```
 kubectl get nodes
@@ -69,9 +69,10 @@ mgmt-md-0-5557f7c7bxsjkdg-l2kpt   Ready    <none>          3d22h   v1.27.1-eks-6
 
 **Verify an EKS Anywhere cluster from the management cluster**
 
-First, set up `KUBECONFIG` environment variable for the management cluster:
+Set up `CLUSTER_NAME` and `KUBECONFIG` environment variable for the management cluster:
 ```
-export KUBECONFIG=<path-to-management-cluster-kubeconfig>
+export CLUSTER_NAME=mgmt
+export KUBECONFIG=${CLUSTER_NAME}/${CLUSTER_NAME}-eks-a-cluster.kubeconfig
 ```
 
 You may verify the control plane is up and running by filtering the pods by the `control-plane=controller-manager` label.
@@ -91,7 +92,7 @@ You may also check the status of the cluster control plane resource directly.
 This can be especially useful to verify clusters with multiple control plane nodes after an upgrade.
 
 ```
-kubectl get kubeadmcontrolplanes.controlplane.cluster.x-k8s.io -n eksa-system $CLUSTER_NAME
+kubectl get kubeadmcontrolplanes.controlplane.cluster.x-k8s.io -n eksa-system
 NAME   CLUSTER   INITIALIZED   API SERVER AVAILABLE   REPLICAS   READY   UPDATED   UNAVAILABLE   AGE     VERSION
 mgmt   mgmt      true          true                   1          1       1                       3d22h   v1.27.1-eks-1-27-4
 w01    w01       true          true                   1          1       1         0             16h     v1.27.1-eks-1-27-4
