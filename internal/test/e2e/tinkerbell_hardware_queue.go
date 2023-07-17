@@ -26,7 +26,8 @@ func (hwQu *hardwareCatalogue) reserveHardware(count int) ([]*api.Hardware, erro
 		}
 		hwQu.mu.Lock()
 		if count <= len(hwQu.hws) {
-			hardwareReserved := hwQu.acquireHw(count)
+			hardwareReserved := hwQu.hws[:count]
+			hwQu.hws = hwQu.hws[count:]
 			hwQu.mu.Unlock()
 			return hardwareReserved, nil
 		}
@@ -39,12 +40,6 @@ func (hwQu *hardwareCatalogue) releaseHardware(hws []*api.Hardware) {
 	hwQu.mu.Lock()
 	hwQu.hws = append(hwQu.hws, hws...)
 	hwQu.mu.Unlock()
-}
-
-func (hwQu *hardwareCatalogue) acquireHw(count int) []*api.Hardware {
-	hwsToRet := hwQu.hws[:count]
-	hwQu.hws = hwQu.hws[count:]
-	return hwsToRet
 }
 
 func newHardwareCatalogue(hws []*api.Hardware) *hardwareCatalogue {
