@@ -89,7 +89,7 @@ func (gsbo *generateSupportBundleOptions) generateBundleConfig(ctx context.Conte
 	}
 
 	deps, err := dependencies.ForSpec(ctx, clusterSpec).
-		WithProvider(clusterConfigPath, clusterSpec.Cluster, cc.skipIpCheck, gsbo.hardwareFileName, false, gsbo.tinkerbellBootstrapIP).
+		WithProvider(clusterConfigPath, clusterSpec.Cluster, cc.skipIpCheck, gsbo.hardwareFileName, false, gsbo.tinkerbellBootstrapIP, map[string]bool{}).
 		WithDiagnosticBundleFactory().
 		Build(ctx)
 	if err != nil {
