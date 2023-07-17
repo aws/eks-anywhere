@@ -483,7 +483,7 @@ func (v *Validator) validatePrivs(ctx context.Context, privObjs []PrivAssociatio
 		t := obj.objectType
 		privs, err = v.getMissingPrivs(ctx, vsc, path, t, privsContent, username)
 		if err != nil {
-			return passed, fmt.Errorf("failed to get missing privs: %v", err)
+			return passed, fmt.Errorf("failed to get missing privileges: %v", err)
 		} else if len(privs) > 0 {
 			mp := missingPriv{
 				Username:    username,
