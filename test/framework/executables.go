@@ -22,7 +22,7 @@ func buildLocalKubectl() *executables.Kubectl {
 func executableBuilder(ctx context.Context, t T) *executables.ExecutablesBuilder {
 	executableBuilder, close, err := executables.InitInDockerExecutablesBuilder(ctx, executables.DefaultEksaImage())
 	if err != nil {
-		t.Fatalf("Unable initialize executable builder: %v", err)
+		t.Fatalf("Unable to initialize executable builder: %v", err)
 	}
 	t.Cleanup(func() {
 		if err := close(ctx); err != nil {
