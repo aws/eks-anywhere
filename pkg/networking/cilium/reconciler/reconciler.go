@@ -16,7 +16,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/controller"
 	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
-	"github.com/aws/eks-anywhere/pkg/controller/clusters"
 	"github.com/aws/eks-anywhere/pkg/controller/serverside"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/networking/cilium"
@@ -103,13 +102,12 @@ func (r *Reconciler) Reconcile(ctx context.Context, logger logr.Logger, client c
 			return controller.Result{}, err
 		}
 
-		version, err := installation.Version()
-		if err != nil {
-			dsImage := installation.DaemonSet.Spec.Template.Spec.Containers[0].Image
-			return controller.Result{}, errors.Wrapf(err, "installed cilium DS has an invalid version tag: %s", dsImage)
+		version := installation.Version()
+		spec.Cluster.Status.DefaultCNI = &anywherev1.ClusterCNI{
+			Name:    "cilium",
+			Version: version,
+			State:   anywherev1.ClusterCNIInstalled,
 		}
-
-		clusters.SetClusterDefaultCNI(spec.Cluster, anywherev1.ClusterCNIInstalled, version)
 		return controller.Result{}, nil
 	}
 
@@ -120,11 +118,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, logger logr.Logger, client c
 		return controller.Result{}, nil
 	}
 
-	version, err := installation.Version()
-	if err != nil {
-		dsImage := installation.DaemonSet.Spec.Template.Spec.Containers[0].Image
-		return controller.Result{}, errors.Wrapf(err, "installed cilium DS has an invalid version tag: %s", dsImage)
-	}
+	version := installation.Version()
 
 	logger.Info("Cilium is already installed, checking if it needs upgrade")
 	upgradeInfo := cilium.BuildUpgradePlan(installation, spec)
@@ -135,7 +129,11 @@ func (r *Reconciler) Reconcile(ctx context.Context, logger logr.Logger, client c
 			return controller.Result{}, err
 		} else if result.Return() {
 			conditions.MarkFalse(spec.Cluster, anywherev1.DefaultCNIConfiguredCondition, anywherev1.DefaultCNIUpgradeInProgressReason, clusterv1.ConditionSeverityInfo, "Cilium version upgrade needed")
-			clusters.SetClusterDefaultCNI(spec.Cluster, anywherev1.ClusterCNIUpdating, version)
+			spec.Cluster.Status.DefaultCNI = &anywherev1.ClusterCNI{
+				Name:    "cilium",
+				Version: version,
+				State:   anywherev1.ClusterCNIUpdating,
+			}
 			return result, nil
 		}
 
@@ -150,9 +148,58 @@ func (r *Reconciler) Reconcile(ctx context.Context, logger logr.Logger, client c
 
 	// Upgrade process has run its course, and so we can now mark that the default cni has been configured.
 	conditions.MarkTrue(spec.Cluster, anywherev1.DefaultCNIConfiguredCondition)
-	clusters.SetClusterDefaultCNI(spec.Cluster, anywherev1.ClusterCNIInstalled, version)
+	spec.Cluster.Status.DefaultCNI = &anywherev1.ClusterCNI{
+		Name:    "cilium",
+		Version: version,
+		State:   anywherev1.ClusterCNIInstalled,
+	}
 
 	return r.deletePreflightIfExists(ctx, client, spec)
+}
+
+// UpdateClusterStatusForCNI updates the Cluster status for the default cni before the control plane is ready. The CNI reconciler
+// handles the rest of the logic for determining the condition and updating the status based on the current state of the cluster.
+func (r *Reconciler) UpdateClusterStatusForCNI(ctx context.Context, client client.Client, cluster *anywherev1.Cluster) error {
+	if conditions.Get(cluster, anywherev1.DefaultCNIConfiguredCondition) == nil {
+		conditions.MarkFalse(cluster, anywherev1.DefaultCNIConfiguredCondition, anywherev1.ControlPlaneNotReadyReason, clusterv1.ConditionSeverityInfo, "")
+		cluster.Status.DefaultCNI = &anywherev1.ClusterCNI{
+			Name:    "cilium",
+			Version: "",
+			State:   anywherev1.ClusterCNIInitializing,
+		}
+	}
+
+	// Self managed clusters do not use the CNI reconciler, so this status would never get resolved.
+	// TODO: Remove after self-managed clusters are created with the controller in the CLI
+	if cluster.IsSelfManaged() {
+		ciliumCfg := cluster.Spec.ClusterNetwork.CNIConfig.Cilium
+		// Though it may be installed initially to successfully create the cluster,
+		// if the CNI is configured to skip upgrades, we mark the condition as "False"
+		if !ciliumCfg.IsManaged() {
+			conditions.MarkFalse(cluster, anywherev1.DefaultCNIConfiguredCondition, anywherev1.SkipUpgradesForDefaultCNIConfiguredReason, clusterv1.ConditionSeverityWarning, "Configured to skip default Cilium CNI upgrades")
+			cluster.Status.DefaultCNI = nil
+			return nil
+		}
+
+		installation, err := cilium.GetInstallation(ctx, client)
+		if err != nil {
+			return err
+		}
+
+		if installation.Installed() {
+			version := installation.Version()
+			// Otherwise, since the control plane is fully ready we can assume the CNI has been configured.
+			conditions.MarkTrue(cluster, anywherev1.DefaultCNIConfiguredCondition)
+			cluster.Status.DefaultCNI = &anywherev1.ClusterCNI{
+				Name:    "cilium",
+				Version: version,
+				State:   anywherev1.ClusterCNIInstalled,
+			}
+		}
+
+	}
+
+	return nil
 }
 
 func (r *Reconciler) install(ctx context.Context, log logr.Logger, client client.Client, spec *cluster.Spec) error {

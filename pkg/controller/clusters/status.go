@@ -11,7 +11,6 @@ import (
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/controller"
-	"github.com/aws/eks-anywhere/pkg/networking/cilium"
 )
 
 // UpdateClusterStatusForControlPlane checks the current state of the Cluster's control plane and updates the
@@ -37,45 +36,6 @@ func UpdateClusterStatusForWorkers(ctx context.Context, client client.Client, cl
 	}
 
 	updateWorkersReadyCondition(cluster, machineDeployments)
-	return nil
-}
-
-// UpdateClusterStatusForCNI updates the Cluster status for the default cni before the control plane is ready. The CNI reconciler
-// handles the rest of the logic for determining the condition and updating the status based on the current state of the cluster.
-func UpdateClusterStatusForCNI(ctx context.Context, client client.Client, cluster *anywherev1.Cluster) error {
-	if !conditions.IsTrue(cluster, anywherev1.ControlPlaneReadyCondition) {
-		conditions.MarkFalse(cluster, anywherev1.DefaultCNIConfiguredCondition, anywherev1.ControlPlaneNotReadyReason, clusterv1.ConditionSeverityInfo, "")
-		SetClusterDefaultCNI(cluster, anywherev1.ClusterCNIInitializing, "")
-		return nil
-	}
-
-	// Self managed clusters do not use the CNI reconciler, so this status would never get resolved.
-	// TODO: Remove after self-managed clusters are created with the controller in the CLI
-	if cluster.IsSelfManaged() {
-		ciliumCfg := cluster.Spec.ClusterNetwork.CNIConfig.Cilium
-		// Though it may be installed initially to successfully create the cluster,
-		// if the CNI is configured to skip upgrades, we mark the condition as "False"
-		if !ciliumCfg.IsManaged() {
-			conditions.MarkFalse(cluster, anywherev1.DefaultCNIConfiguredCondition, anywherev1.SkipUpgradesForDefaultCNIConfiguredReason, clusterv1.ConditionSeverityWarning, "Configured to skip default Cilium CNI upgrades")
-			cluster.Status.DefaultCNI = nil
-			return nil
-		}
-
-		installation, err := cilium.GetInstallation(ctx, client)
-		if err != nil {
-			return err
-		}
-
-		version, err := installation.Version()
-		if err != nil {
-			dsImage := installation.DaemonSet.Spec.Template.Spec.Containers[0].Image
-			return errors.Wrapf(err, "installed cilium DS has an invalid version tag: %s", dsImage)
-		}
-		// Otherwise, since the control plane is fully ready we can assume the CNI has been configured.
-		conditions.MarkTrue(cluster, anywherev1.DefaultCNIConfiguredCondition)
-		SetClusterDefaultCNI(cluster, anywherev1.ClusterCNIInstalled, version)
-	}
-
 	return nil
 }
 
@@ -225,13 +185,4 @@ func updateWorkersReadyCondition(cluster *anywherev1.Cluster, machineDeployments
 // controlPlaneInitializationInProgressCondition returns a new "False" condition for the ControlPlaneInitializationInProgress reason.
 func controlPlaneInitializationInProgressCondition() *anywherev1.Condition {
 	return conditions.FalseCondition(anywherev1.ControlPlaneInitializedCondition, anywherev1.ControlPlaneInitializationInProgressReason, clusterv1.ConditionSeverityInfo, "The first control plane instance is not available yet")
-}
-
-// SetClusterDefaultCNI sets the DefaultCNI for the Cluster status.
-func SetClusterDefaultCNI(cluster *anywherev1.Cluster, status anywherev1.ClusterCNIStatus, version string) {
-	cluster.Status.DefaultCNI = &anywherev1.ClusterCNI{
-		Name:    "cilium",
-		Version: version,
-		Status:  status,
-	}
 }

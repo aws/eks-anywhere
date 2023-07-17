@@ -53,3 +53,38 @@ func TestReconcilerReconcileUnsupportedCNI(t *testing.T) {
 	_, err := r.Reconcile(ctx, logger, client, spec)
 	g.Expect(err).To(MatchError(ContainSubstring("unsupported CNI, only Cilium is supported at this time")))
 }
+
+func TestReconcilerUpdateClusterStatusForCNI(t *testing.T) {
+	ctx := context.Background()
+	client := fake.NewClientBuilder().Build()
+	spec := test.NewClusterSpec(func(s *cluster.Spec) {
+		s.Cluster.Spec.ClusterNetwork.CNIConfig = &v1alpha1.CNIConfig{
+			Cilium: &v1alpha1.CiliumConfig{},
+		}
+	})
+
+	g := NewWithT(t)
+	ctrl := gomock.NewController(t)
+	ciliumReconciler := mocks.NewMockCiliumReconciler(ctrl)
+	ciliumReconciler.EXPECT().UpdateClusterStatusForCNI(ctx, client, spec.Cluster)
+
+	r := reconciler.New(ciliumReconciler)
+	err := r.UpdateClusterStatusForCNI(ctx, client, spec.Cluster)
+	g.Expect(err).NotTo(HaveOccurred())
+}
+
+func TestReconcilerUpdateClusterStatusForCNIUnsupportedCNI(t *testing.T) {
+	ctx := context.Background()
+	client := fake.NewClientBuilder().Build()
+	spec := test.NewClusterSpec(func(s *cluster.Spec) {
+		s.Cluster.Spec.ClusterNetwork.CNIConfig = &v1alpha1.CNIConfig{}
+	})
+
+	g := NewWithT(t)
+	ctrl := gomock.NewController(t)
+	ciliumReconciler := mocks.NewMockCiliumReconciler(ctrl)
+
+	r := reconciler.New(ciliumReconciler)
+	err := r.UpdateClusterStatusForCNI(ctx, client, spec.Cluster)
+	g.Expect(err).To(MatchError(ContainSubstring("unsupported CNI, only Cilium is supported at this time")))
+}

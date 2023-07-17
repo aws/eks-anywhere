@@ -229,3 +229,40 @@ func (mr *MockClusterValidatorMockRecorder) ValidateManagementClusterName(ctx, l
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateManagementClusterName", reflect.TypeOf((*MockClusterValidator)(nil).ValidateManagementClusterName), ctx, log, cluster)
 }
+
+// MockClusterCNIReconciler is a mock of ClusterCNIReconciler interface.
+type MockClusterCNIReconciler struct {
+	ctrl     *gomock.Controller
+	recorder *MockClusterCNIReconcilerMockRecorder
+}
+
+// MockClusterCNIReconcilerMockRecorder is the mock recorder for MockClusterCNIReconciler.
+type MockClusterCNIReconcilerMockRecorder struct {
+	mock *MockClusterCNIReconciler
+}
+
+// NewMockClusterCNIReconciler creates a new mock instance.
+func NewMockClusterCNIReconciler(ctrl *gomock.Controller) *MockClusterCNIReconciler {
+	mock := &MockClusterCNIReconciler{ctrl: ctrl}
+	mock.recorder = &MockClusterCNIReconcilerMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockClusterCNIReconciler) EXPECT() *MockClusterCNIReconcilerMockRecorder {
+	return m.recorder
+}
+
+// UpdateClusterStatusForCNI mocks base method.
+func (m *MockClusterCNIReconciler) UpdateClusterStatusForCNI(ctx context.Context, client client.Client, cluster *v1alpha1.Cluster) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateClusterStatusForCNI", ctx, client, cluster)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateClusterStatusForCNI indicates an expected call of UpdateClusterStatusForCNI.
+func (mr *MockClusterCNIReconcilerMockRecorder) UpdateClusterStatusForCNI(ctx, client, cluster interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateClusterStatusForCNI", reflect.TypeOf((*MockClusterCNIReconciler)(nil).UpdateClusterStatusForCNI), ctx, client, cluster)
+}

@@ -2,7 +2,6 @@ package cilium
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -12,7 +11,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/aws/eks-anywhere/pkg/constants"
-	"github.com/aws/eks-anywhere/pkg/semver"
 	"github.com/aws/eks-anywhere/pkg/utils/oci"
 )
 
@@ -29,24 +27,14 @@ type Installation struct {
 }
 
 // Version returns the version of the cilium Installation.
-func (i Installation) Version() (string, error) {
+func (i Installation) Version() string {
 	if i.DaemonSet == nil {
-		return "", nil
+		return ""
 	}
 
 	dsImage := i.DaemonSet.Spec.Template.Spec.Containers[0].Image
 	_, dsImageTag := oci.Split(dsImage)
-	semVer, err := semver.New(dsImageTag)
-	if err != nil {
-		return "", err
-	}
-
-	version := fmt.Sprintf("v%d.%d.%d", semVer.Major, semVer.Minor, semVer.Patch)
-	if semVer.Prerelease != "" {
-		version = fmt.Sprintf("%s-%s", version, semVer.Prerelease)
-	}
-
-	return version, nil
+	return dsImageTag
 }
 
 // Installed determines if all EKS-A Embedded Cilium components are present. It identifies

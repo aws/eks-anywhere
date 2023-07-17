@@ -538,8 +538,8 @@ spec:
                   name:
                     description: Name of the default CNI
                     type: string
-                  status:
-                    description: Applied, Not Applied
+                  state:
+                    description: State reports the current state of the default CNI.
                     type: string
                   version:
                     description: Empty if not applied or no version can be inferred.

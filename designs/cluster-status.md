@@ -178,8 +178,8 @@ type ClusterCNI struct {
     // +optional
     Version string`json:"version,omitempty"`
     
-    // Applied, Not Applied
-    Status string`json:"status,omitempty"`
+   	// State reports the current state of the default CNI.
+    state string`json:"state,omitempty"`
 }
 ```
 

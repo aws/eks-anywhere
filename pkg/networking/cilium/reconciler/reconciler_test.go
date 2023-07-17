@@ -16,6 +16,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/rand"
 	"sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/cluster-api/util/conditions"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
@@ -556,6 +557,207 @@ func TestReconcilerReconcileSkipUpgradeWithAnnotationWithCilium(t *testing.T) {
 	tt.Expect(tt.spec.Cluster.Status.DefaultCNI).To(BeNil())
 }
 
+func TestUpdateClusterStatusForCNI(t *testing.T) {
+	g := NewWithT(t)
+
+	tests := []struct {
+		name           string
+		defaultCNI     *anywherev1.ClusterCNI
+		conditions     []anywherev1.Condition
+		wantDefaultCNI *anywherev1.ClusterCNI
+		wantCondition  *anywherev1.Condition
+	}{
+		{
+			name:       "default cni, not initialized",
+			defaultCNI: nil,
+			conditions: []anywherev1.Condition{},
+			wantDefaultCNI: &anywherev1.ClusterCNI{
+				Name:    "cilium",
+				Version: "",
+				State:   anywherev1.ClusterCNIInitializing,
+			},
+			wantCondition: &anywherev1.Condition{
+				Type:     anywherev1.DefaultCNIConfiguredCondition,
+				Reason:   anywherev1.ControlPlaneNotReadyReason,
+				Status:   "False",
+				Severity: clusterv1.ConditionSeverityInfo,
+			},
+		},
+		{
+			name: "default cni, initialized",
+			defaultCNI: &anywherev1.ClusterCNI{
+				Name:    "cilium",
+				Version: "1.10.1-eksa-1",
+				State:   anywherev1.ClusterCNIInstalled,
+			},
+			conditions: []anywherev1.Condition{
+				{
+					Type:   anywherev1.DefaultCNIConfiguredCondition,
+					Status: "True",
+				},
+			},
+			wantDefaultCNI: &anywherev1.ClusterCNI{
+				Name:    "cilium",
+				Version: "1.10.1-eksa-1",
+				State:   anywherev1.ClusterCNIInstalled,
+			},
+			wantCondition: &anywherev1.Condition{
+				Type:   anywherev1.DefaultCNIConfiguredCondition,
+				Status: "True",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+			rt := newReconcileTest(t)
+
+			rt.spec = test.NewClusterSpec(func(s *cluster.Spec) {
+				s.Cluster.Name = rand.String(10)
+				s.Cluster.Namespace = "default"
+				s.Cluster.Spec.ManagementCluster = anywherev1.ManagementCluster{Name: "management-cluster"}
+			})
+
+			if err := rt.client.Create(context.Background(), rt.spec.Cluster); err != nil {
+				t.Fatal(err)
+			}
+
+			rt.spec.Cluster.Status.DefaultCNI = tt.defaultCNI
+			rt.spec.Cluster.Status.Conditions = tt.conditions
+
+			err := rt.reconciler.UpdateClusterStatusForCNI(ctx, rt.client, rt.spec.Cluster)
+			g.Expect(err).To(BeNil())
+			g.Expect(rt.spec.Cluster.Status.DefaultCNI).To(Equal(tt.wantDefaultCNI))
+
+			if tt.wantCondition != nil {
+				condition := conditions.Get(rt.spec.Cluster, tt.wantCondition.Type)
+				g.Expect(condition).ToNot(BeNil())
+				g.Expect(condition.Type).To(Equal(tt.wantCondition.Type))
+				g.Expect(condition.Severity).To(Equal(tt.wantCondition.Severity))
+				g.Expect(condition.Status).To(Equal(tt.wantCondition.Status))
+				g.Expect(condition.Reason).To(Equal(tt.wantCondition.Reason))
+				g.Expect(condition.Message).To(ContainSubstring(tt.wantCondition.Message))
+			}
+		})
+	}
+}
+
+func TestUpdateClusterStatusForCNISelfManagedCluster(t *testing.T) {
+	g := NewWithT(t)
+
+	ciliumVersion := "1.10.1-eksa-1"
+	tests := []struct {
+		name            string
+		ciliumInstalled bool
+		wantDefaultCNI  *anywherev1.ClusterCNI
+		wantCondition   *anywherev1.Condition
+		skipUpgrade     *bool
+	}{
+		{
+			name:            "cilium is unmanaged, not installed",
+			skipUpgrade:     ptr.Bool(true),
+			ciliumInstalled: false,
+			wantDefaultCNI:  nil,
+			wantCondition: &anywherev1.Condition{
+				Type:     anywherev1.DefaultCNIConfiguredCondition,
+				Reason:   anywherev1.SkipUpgradesForDefaultCNIConfiguredReason,
+				Status:   "False",
+				Severity: clusterv1.ConditionSeverityWarning,
+			},
+		},
+		{
+			name:            "cilium is unmanaged, installed",
+			skipUpgrade:     ptr.Bool(true),
+			ciliumInstalled: true,
+			wantDefaultCNI:  nil,
+			wantCondition: &anywherev1.Condition{
+				Type:     anywherev1.DefaultCNIConfiguredCondition,
+				Reason:   anywherev1.SkipUpgradesForDefaultCNIConfiguredReason,
+				Status:   "False",
+				Severity: clusterv1.ConditionSeverityWarning,
+			},
+		},
+		{
+			name:            "cilium is managed, not installed",
+			skipUpgrade:     ptr.Bool(false),
+			ciliumInstalled: false,
+			wantDefaultCNI: &anywherev1.ClusterCNI{
+				Name:    "cilium",
+				Version: "",
+				State:   anywherev1.ClusterCNIInitializing,
+			},
+			wantCondition: &anywherev1.Condition{
+				Type:     anywherev1.DefaultCNIConfiguredCondition,
+				Reason:   anywherev1.ControlPlaneNotReadyReason,
+				Status:   "False",
+				Severity: clusterv1.ConditionSeverityInfo,
+			},
+		},
+		{
+			name:            "cilium is managed, installed",
+			skipUpgrade:     ptr.Bool(false),
+			ciliumInstalled: true,
+			wantDefaultCNI: &anywherev1.ClusterCNI{
+				Name:    "cilium",
+				Version: ciliumVersion,
+				State:   anywherev1.ClusterCNIInstalled,
+			},
+			wantCondition: &anywherev1.Condition{
+				Type:   anywherev1.DefaultCNIConfiguredCondition,
+				Status: "True",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+
+			objs := make([]client.Object, 0, 2)
+
+			if tt.ciliumInstalled {
+				objs = append(objs, ciliumDaemonSet(), ciliumOperator())
+			}
+
+			rt := newReconcileTest(t).withObjects(objs...)
+
+			rt.spec = test.NewClusterSpec(func(s *cluster.Spec) {
+				clusterName := rand.String(10)
+				s.Cluster.Name = clusterName
+				s.Cluster.Namespace = "default"
+
+				s.Cluster.Spec.ClusterNetwork = anywherev1.ClusterNetwork{
+					CNIConfig: &anywherev1.CNIConfig{
+						Cilium: &anywherev1.CiliumConfig{
+							SkipUpgrade: tt.skipUpgrade,
+						},
+					},
+				}
+
+				s.Cluster.Spec.ManagementCluster = anywherev1.ManagementCluster{Name: clusterName}
+			})
+
+			if err := rt.client.Create(context.Background(), rt.spec.Cluster); err != nil {
+				t.Fatal(err)
+			}
+
+			err := rt.reconciler.UpdateClusterStatusForCNI(ctx, rt.client, rt.spec.Cluster)
+
+			g.Expect(err).To(BeNil())
+			g.Expect(rt.spec.Cluster.Status.DefaultCNI).To(Equal(tt.wantDefaultCNI))
+
+			condition := conditions.Get(rt.spec.Cluster, tt.wantCondition.Type)
+			g.Expect(condition).ToNot(BeNil())
+			g.Expect(condition.Type).To(Equal(tt.wantCondition.Type))
+			g.Expect(condition.Severity).To(Equal(tt.wantCondition.Severity))
+			g.Expect(condition.Status).To(Equal(tt.wantCondition.Status))
+			g.Expect(condition.Reason).To(Equal(tt.wantCondition.Reason))
+			g.Expect(condition.Message).To(ContainSubstring(tt.wantCondition.Message))
+		})
+	}
+}
+
 type reconcileTest struct {
 	*WithT
 	t          *testing.T
@@ -758,11 +960,11 @@ func buildManifest(g *WithT, objs ...client.Object) []byte {
 	return templater.AppendYamlResources(manifests...)
 }
 
-func defaultCNI(status anywherev1.ClusterCNIStatus) *anywherev1.ClusterCNI {
+func defaultCNI(status anywherev1.ClusterCNIState) *anywherev1.ClusterCNI {
 	return &anywherev1.ClusterCNI{
 		Name:    "cilium",
-		Version: "v1.10.1-eksa-1",
-		Status:  status,
+		Version: "1.10.1-eksa-1",
+		State:   status,
 	}
 }
 

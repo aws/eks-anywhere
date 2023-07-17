@@ -47,6 +47,7 @@ type ClusterReconciler struct {
 	awsIamAuth                 AWSIamConfigReconciler
 	clusterValidator           ClusterValidator
 	packagesClient             PackagesClient
+	cniReconconciler           ClusterCNIReconciler
 
 	// experimentalSelfManagedUpgrade enables management cluster full upgrades.
 	// The default behavior for management cluster only reconciles the worker nodes.
@@ -83,14 +84,20 @@ type ClusterValidator interface {
 // ClusterReconcilerOption allows to configure the ClusterReconciler.
 type ClusterReconcilerOption func(*ClusterReconciler)
 
+// ClusterCNIReconciler manages the installation and configuration for an eks-a cluster.
+type ClusterCNIReconciler interface {
+	UpdateClusterStatusForCNI(ctx context.Context, client client.Client, cluster *anywherev1.Cluster) error
+}
+
 // NewClusterReconciler constructs a new ClusterReconciler.
-func NewClusterReconciler(client client.Client, registry ProviderClusterReconcilerRegistry, awsIamAuth AWSIamConfigReconciler, clusterValidator ClusterValidator, pkgs PackagesClient, opts ...ClusterReconcilerOption) *ClusterReconciler {
+func NewClusterReconciler(client client.Client, registry ProviderClusterReconcilerRegistry, awsIamAuth AWSIamConfigReconciler, clusterValidator ClusterValidator, pkgs PackagesClient, cniReconciler ClusterCNIReconciler, opts ...ClusterReconcilerOption) *ClusterReconciler {
 	c := &ClusterReconciler{
 		client:                     client,
 		providerReconcilerRegistry: registry,
 		awsIamAuth:                 awsIamAuth,
 		clusterValidator:           clusterValidator,
 		packagesClient:             pkgs,
+		cniReconconciler:           cniReconciler,
 	}
 
 	for _, opt := range opts {
@@ -411,7 +418,7 @@ func (r *ClusterReconciler) updateStatus(ctx context.Context, log logr.Logger, c
 		return errors.Wrap(err, "updating status for workers")
 	}
 
-	if err := clusters.UpdateClusterStatusForCNI(ctx, r.client, cluster); err != nil {
+	if err := r.cniReconconciler.UpdateClusterStatusForCNI(ctx, r.client, cluster); err != nil {
 		return errors.Wrap(err, "updating status for cni")
 	}
 

@@ -105,7 +105,8 @@ func (f *Factory) WithClusterReconciler(capiProviders []clusterctlv1.Provider, o
 	f.withTracker().
 		WithProviderClusterReconcilerRegistry(capiProviders).
 		withAWSIamConfigReconciler().
-		withPackageControllerClient()
+		withPackageControllerClient().
+		withCNIReconciler()
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.reconcilers.ClusterReconciler != nil {
@@ -118,6 +119,7 @@ func (f *Factory) WithClusterReconciler(capiProviders []clusterctlv1.Provider, o
 			f.awsIamConfigReconciler,
 			clusters.NewClusterValidator(f.manager.GetClient()),
 			f.packageControllerClient,
+			f.cniReconciler,
 			opts...,
 		)
 

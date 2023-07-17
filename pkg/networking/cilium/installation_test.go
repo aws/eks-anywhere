@@ -85,7 +85,6 @@ func TestInstallationVersion(t *testing.T) {
 		name         string
 		installation cilium.Installation
 		want         string
-		wantErr      string
 	}{
 		{
 			name: "no cilium daemon set, no version",
@@ -93,8 +92,7 @@ func TestInstallationVersion(t *testing.T) {
 				DaemonSet: nil,
 				Operator:  &appsv1.Deployment{},
 			},
-			want:    "",
-			wantErr: "",
+			want: "",
 		},
 		{
 			name: "repository, cilium and version",
@@ -112,8 +110,7 @@ func TestInstallationVersion(t *testing.T) {
 				},
 				Operator: &appsv1.Deployment{},
 			},
-			want:    "v1.11.15-eksa.1",
-			wantErr: "",
+			want: "v1.11.15-eksa.1",
 		},
 		{
 			name: "cilium and version",
@@ -131,8 +128,7 @@ func TestInstallationVersion(t *testing.T) {
 				},
 				Operator: &appsv1.Deployment{},
 			},
-			want:    "v1.11.15-eksa.1",
-			wantErr: "",
+			want: "v1.11.15-eksa.1",
 		},
 		{
 			name: "cilium and version only, no pre-release",
@@ -150,8 +146,7 @@ func TestInstallationVersion(t *testing.T) {
 				},
 				Operator: &appsv1.Deployment{},
 			},
-			want:    "v1.11.15",
-			wantErr: "",
+			want: "v1.11.15",
 		},
 		{
 			name: "invalid semver",
@@ -169,20 +164,14 @@ func TestInstallationVersion(t *testing.T) {
 				},
 				Operator: &appsv1.Deployment{},
 			},
-			want:    "",
-			wantErr: "invalid major version in semver",
+			want: "",
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			g := NewWithT(t)
-			version, err := tt.installation.Version()
-			if tt.wantErr != "" {
-				g.Expect(err).To(MatchError(ContainSubstring("")))
-			} else {
-				g.Expect(err).To(BeNil())
-				g.Expect(version).To(Equal(tt.want))
-			}
+			version := tt.installation.Version()
+			g.Expect(version).To(Equal(tt.want))
 		})
 	}
 }

@@ -870,18 +870,18 @@ const (
 	MachineInvalidReason FailureReasonType = "MachineInvalid"
 )
 
-// ClusterCNIStatus is a type for defining statuses for Cluster default cni.
-type ClusterCNIStatus string
+// ClusterCNIState is a type for defining statuses for Cluster default cni.
+type ClusterCNIState string
 
 const (
 	// ClusterCNIInitializing reports that the default CNI is initializing.
-	ClusterCNIInitializing ClusterCNIStatus = "initializing"
+	ClusterCNIInitializing ClusterCNIState = "initializing"
 
 	// ClusterCNIInstalled reports that the default CNI has been installed.
-	ClusterCNIInstalled ClusterCNIStatus = "installed"
+	ClusterCNIInstalled ClusterCNIState = "installed"
 
 	// ClusterCNIUpdating reports that the default CNI is updating.
-	ClusterCNIUpdating ClusterCNIStatus = "updating"
+	ClusterCNIUpdating ClusterCNIState = "updating"
 )
 
 // ClusterCNI represents a CNI cluster component.
@@ -893,8 +893,8 @@ type ClusterCNI struct {
 	// +optional
 	Version string `json:"version,omitempty"`
 
-	// Status reports the current state of the default CNI.
-	Status ClusterCNIStatus `json:"status,omitempty"`
+	// State reports the current state of the default CNI.
+	State ClusterCNIState `json:"state,omitempty"`
 }
 
 // ClusterStatus defines the observed state of Cluster.

@@ -8,6 +8,7 @@ import (
 	context "context"
 	reflect "reflect"
 
+	v1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	cluster "github.com/aws/eks-anywhere/pkg/cluster"
 	controller "github.com/aws/eks-anywhere/pkg/controller"
 	logr "github.com/go-logr/logr"
@@ -51,4 +52,18 @@ func (m *MockCiliumReconciler) Reconcile(ctx context.Context, logger logr.Logger
 func (mr *MockCiliumReconcilerMockRecorder) Reconcile(ctx, logger, client, spec interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Reconcile", reflect.TypeOf((*MockCiliumReconciler)(nil).Reconcile), ctx, logger, client, spec)
+}
+
+// UpdateClusterStatusForCNI mocks base method.
+func (m *MockCiliumReconciler) UpdateClusterStatusForCNI(ctx context.Context, client client.Client, cluster *v1alpha1.Cluster) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateClusterStatusForCNI", ctx, client, cluster)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateClusterStatusForCNI indicates an expected call of UpdateClusterStatusForCNI.
+func (mr *MockCiliumReconcilerMockRecorder) UpdateClusterStatusForCNI(ctx, client, cluster interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateClusterStatusForCNI", reflect.TypeOf((*MockCiliumReconciler)(nil).UpdateClusterStatusForCNI), ctx, client, cluster)
 }
