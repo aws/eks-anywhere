@@ -7,9 +7,8 @@ package mocks
 import (
 	reflect "reflect"
 
-	gomock "github.com/golang/mock/gomock"
-
 	v1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	gomock "github.com/golang/mock/gomock"
 )
 
 // MockIPValidator is a mock of IPValidator interface.
