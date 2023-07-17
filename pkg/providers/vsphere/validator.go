@@ -11,7 +11,6 @@ import (
 
 	"gopkg.in/yaml.v2"
 
-	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/config"
@@ -170,7 +169,7 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, vsphereCl
 	logger.MarkPass("Control plane and Workload templates validated")
 
 	for _, mc := range vsphereClusterSpec.VSphereMachineConfigs {
-		if mc.OSFamily() == v1alpha1.Bottlerocket {
+		if mc.OSFamily() == anywherev1.Bottlerocket {
 			if err := v.validateBRHardDiskSize(ctx, vsphereClusterSpec, mc); err != nil {
 				return fmt.Errorf("failed validating BR Hard Disk size: %v", err)
 			}
@@ -476,15 +475,15 @@ func (v *Validator) validatePrivs(ctx context.Context, privObjs []PrivAssociatio
 	var err error
 	missingPrivs := []missingPriv{}
 	passed := false
+	username := vsc.Username()
 
 	for _, obj := range privObjs {
 		path := obj.path
 		privsContent := obj.privsContent
 		t := obj.objectType
-		username := vsc.Username()
 		privs, err = v.getMissingPrivs(ctx, vsc, path, t, privsContent, username)
 		if err != nil {
-			return passed, err
+			return passed, fmt.Errorf("failed to get missing privs: %v", err)
 		} else if len(privs) > 0 {
 			mp := missingPriv{
 				Username:    username,
@@ -493,22 +492,22 @@ func (v *Validator) validatePrivs(ctx context.Context, privObjs []PrivAssociatio
 				Permissions: privs,
 			}
 			missingPrivs = append(missingPrivs, mp)
-			content, err := yaml.Marshal(mp)
-			if err == nil {
-				s := fmt.Sprintf("  Warning: User %s missing %d vSphere permissions on %s, cluster creation may fail.\nRe-run create cluster with --verbosity=3 to see specific missing permissions.", username, len(privs), path)
-				logger.MarkWarning(s)
-				s = fmt.Sprintf("Missing Permissions:\n%s", string(content))
-				logger.V(3).Info(s)
-			} else {
-				s := fmt.Sprintf("  Warning: failed to list missing privs: %v", err)
-				logger.MarkWarning(s)
-			}
 		}
 	}
 
-	if len(missingPrivs) == 0 {
-		passed = true
+	if len(missingPrivs) != 0 {
+		content, err := yaml.Marshal(missingPrivs)
+		if err != nil {
+			return passed, fmt.Errorf("failed to marshal missing permissions: %v", err)
+		}
+
+		errMsg := fmt.Sprintf("user %s missing vSphere permissions", username)
+		logger.V(3).Info(errMsg, "Permissions", string(content))
+
+		return passed, fmt.Errorf("user %s missing vSphere permissions", username)
 	}
+
+	passed = true
 
 	return passed, nil
 }
