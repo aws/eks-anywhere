@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/aws/eks-anywhere/pkg/validations"
+	"github.com/aws/eks-anywhere/pkg/validations/createvalidations"
 	"github.com/aws/eks-anywhere/pkg/validations/upgradevalidations"
 )
 
@@ -23,16 +24,17 @@ func TestValidateSkippableValidation(t *testing.T) {
 			want:                 nil,
 			wantErr:              fmt.Errorf("invalid validation name to be skipped. The supported validations that can be skipped using --skip-validations are %s", strings.Join(upgradevalidations.SkippableValidations[:], ",")),
 			skippedValidations:   []string{"test"},
-			skippableValidations: []string{validations.PDB},
+			skippableValidations: upgradevalidations.SkippableValidations,
 		},
 		{
 			name: "valid upgrade validation param",
 			want: map[string]bool{
-				validations.PDB: true,
+				validations.PDB:             true,
+				validations.VSphereUserPriv: false,
 			},
 			wantErr:              nil,
 			skippedValidations:   []string{validations.PDB},
-			skippableValidations: []string{validations.PDB},
+			skippableValidations: upgradevalidations.SkippableValidations,
 		},
 		{
 			name: "valid create validation param",
@@ -41,7 +43,7 @@ func TestValidateSkippableValidation(t *testing.T) {
 			},
 			wantErr:              nil,
 			skippedValidations:   []string{validations.VSphereUserPriv},
-			skippableValidations: []string{validations.VSphereUserPriv},
+			skippableValidations: createvalidations.SkippableValidations,
 		},
 	}
 	for _, tt := range tests {
