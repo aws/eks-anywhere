@@ -46,6 +46,8 @@ Download the [latest or target EKS Anywhere release](https://github.com/aws/eks-
 
 **Skipping Amazon EKS Anywhere minor versions during cluster upgrade (such as going from v0.14 directly to v0.16) is NOT allowed.** EKS Anywhere team performs regular upgrade reliability testing for sequential version upgrade (e.g. going from version 0.14 to 0.15, then from version 0.15 to 0.16), but we do not perform testing on non-sequential upgrade path (e.g. going from version 0.14 directly to 0.16). You should not skip minor versions during cluster upgrade. However, you can choose to skip patch versions.
 
+To upgrade EKS Anywhere version for an airgapped cluster, you need to [download new artifacts and images]({{< relref "./airgapped-upgrades" >}}).
+
 {{% alert title="Important" color="warning" %}}
 
 We provide a maximum skew version support of one EKS Anywhere minor version for management and workload clusters.

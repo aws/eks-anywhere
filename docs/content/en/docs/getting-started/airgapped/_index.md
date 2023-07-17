@@ -60,3 +60,7 @@ If you are using the vSphere provider, be sure that the requirements in the
 ## Deploy a cluster
 
 Once you have the tools installed you can deploy a cluster by [choosing a provider]({{< relref "/docs/getting-started/chooseprovider/" >}})
+
+## Upgrade an airgapped cluster
+
+To upgrade an airgapped cluster, see [upgrade airgapped cluster]({{< relref "../../clustermgmt/cluster-upgrades/airgapped-upgrades.md" >}})
