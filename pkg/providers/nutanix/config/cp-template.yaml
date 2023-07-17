@@ -413,14 +413,6 @@ spec:
 {{ .registryCACert | indent 8 }}
       {{- end }}
 {{- end }}
-{{- if .etcdCertBundles }}
-    certBundles:
-    {{- range .etcdCertBundles }}
-    - name: "{{ .Name }}"
-      data: |
-{{ .Data | indent 8 }}
-      {{- end }}
-{{- end}}
   infrastructureTemplate:
     apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
     kind: NutanixMachineTemplate

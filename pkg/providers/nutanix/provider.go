@@ -8,6 +8,8 @@ import (
 	"os"
 	"reflect"
 
+	etcdv1beta1 "github.com/aws/etcdadm-controller/api/v1beta1"
+
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
 	"github.com/aws/eks-anywhere/pkg/cluster"
@@ -20,9 +22,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/providers/common"
 	"github.com/aws/eks-anywhere/pkg/templater"
 	"github.com/aws/eks-anywhere/pkg/types"
-
 	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
-	etcdv1beta1 "github.com/aws/etcdadm-controller/api/v1beta1"
 )
 
 //go:embed config/cp-template.yaml
@@ -420,20 +420,20 @@ func (p *Provider) getEtcdTemplateNameForCAPISpecUpgrade(ctx context.Context, ek
 			return "", err
 		}
 		return etcdadmCluster.Spec.InfrastructureTemplate.Name, nil
-	} else {
-		/* During a cluster upgrade, etcd machines need to be upgraded first, so that the etcd machines with new spec get created and can be used by controlplane machines
-		   as etcd endpoints. KCP rollout should not start until then. As a temporary solution in the absence of static etcd endpoints, we annotate the etcd cluster as "upgrading",
-		   so that KCP checks this annotation and does not proceed if etcd cluster is upgrading. The etcdadm controller removes this annotation once the etcd upgrade is complete.
-		*/
-		err = p.kubectlClient.UpdateAnnotation(ctx, "etcdadmcluster", fmt.Sprintf("%s-etcd", clusterName),
-			map[string]string{etcdv1beta1.UpgradeInProgressAnnotation: "true"},
-			executables.WithCluster(bootstrapCluster),
-			executables.WithNamespace(constants.EksaSystemNamespace))
-		if err != nil {
-			return "", err
-		}
-		return common.EtcdMachineTemplateName(clusterName, p.templateBuilder.now), nil
 	}
+	/*
+		During a cluster upgrade, etcd machines need to be upgraded first, so that the etcd machines with new spec get created and can be used by controlplane machines
+		as etcd endpoints. KCP rollout should not start until then. As a temporary solution in the absence of static etcd endpoints, we annotate the etcd cluster as "upgrading",
+		so that KCP checks this annotation and does not proceed if etcd cluster is upgrading. The etcdadm controller removes this annotation once the etcd upgrade is complete.
+	*/
+	err = p.kubectlClient.UpdateAnnotation(ctx, "etcdadmcluster", fmt.Sprintf("%s-etcd", clusterName),
+		map[string]string{etcdv1beta1.UpgradeInProgressAnnotation: "true"},
+		executables.WithCluster(bootstrapCluster),
+		executables.WithNamespace(constants.EksaSystemNamespace))
+	if err != nil {
+		return "", err
+	}
+	return common.EtcdMachineTemplateName(clusterName, p.templateBuilder.now), nil
 }
 
 func (p *Provider) GenerateCAPISpecForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, currentSpec, newClusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
