@@ -11,10 +11,10 @@ import (
 
 // providerTemplateNameGenerator is an interface for getting template name for each provider.
 type providerTemplateNameGenerator interface {
-	envVarForTemplate(osFamilyStr, eksDName string) string
-	defaultNameForTemplate(osFamilyStr, eksDName string) string
+	envVarForTemplate(os OS, eksDName string) string
+	defaultNameForTemplate(os OS, eksDName string) string
+	defaultEnvVarForTemplate(os OS, kubeVersion anywherev1.KubernetesVersion) string
 	searchTemplate(ctx context.Context, template string) (string, error)
-	defaultEnvVarForTemplate(osFamilyStr string, kubeVersion anywherev1.KubernetesVersion) string
 }
 
 // templateCache is a map of template name.
@@ -38,12 +38,12 @@ type templateRegistry struct {
 // 3. If the template doesn't exist, default to the value of the default template env vars: eg. "T_CLOUDSTACK_TEMPLATE_REDHAT_1_23".
 // This is a catch all condition. Mostly for edge cases where the bundle has been updated with a new eks-d version, but the
 // the new template hasn't been imported yet. It also preserves backwards compatibility.
-func (tc *templateRegistry) templateForRelease(t *testing.T, osFamily anywherev1.OSFamily, release *releasev1.EksARelease, kubeVersion anywherev1.KubernetesVersion) string {
+func (tc *templateRegistry) templateForRelease(t *testing.T, release *releasev1.EksARelease, kubeVersion anywherev1.KubernetesVersion, operatingSystem OS) string {
 	t.Helper()
-	osFamilyStr := string(osFamily)
 	versionsBundle := readVersionsBundles(t, release, kubeVersion)
 	eksDName := versionsBundle.EksD.Name
-	templateEnvVarName := tc.generator.envVarForTemplate(osFamilyStr, eksDName)
+
+	templateEnvVarName := tc.generator.envVarForTemplate(operatingSystem, eksDName)
 	cacheKey := templateEnvVarName
 	if template, ok := tc.cache[cacheKey]; ok {
 		t.Logf("Template for release found in cache, using %s template.", template)
@@ -59,7 +59,7 @@ func (tc *templateRegistry) templateForRelease(t *testing.T, osFamily anywherev1
 	t.Logf("Env var %s is not set, trying default generated template name", templateEnvVarName)
 
 	// Env var is not set, try default template name
-	template = tc.generator.defaultNameForTemplate(osFamilyStr, eksDName)
+	template = tc.generator.defaultNameForTemplate(operatingSystem, eksDName)
 	if template != "" {
 		foundTemplate, err := tc.generator.searchTemplate(context.Background(), template)
 		if err != nil {
@@ -77,7 +77,7 @@ func (tc *templateRegistry) templateForRelease(t *testing.T, osFamily anywherev1
 	// It is not guaranteed that this template will work for the given release, if they don't match the
 	// same ekd-d release, the test will fail. This is just a catch all last try for cases where the new template
 	// hasn't been imported with its own name but the default one matches the same eks-d release.
-	templateEnvVarName = tc.generator.defaultEnvVarForTemplate(osFamilyStr, kubeVersion)
+	templateEnvVarName = tc.generator.defaultEnvVarForTemplate(operatingSystem, kubeVersion)
 	template, ok = os.LookupEnv(templateEnvVarName)
 	if !ok || template == "" {
 		t.Fatalf("Env var %s for default template is not set, can't determine which template to use", templateEnvVarName)

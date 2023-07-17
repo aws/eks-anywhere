@@ -6,10 +6,11 @@ import (
 	"fmt"
 	"testing"
 
+	corev1 "k8s.io/api/core/v1"
+
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/test/framework"
-	corev1 "k8s.io/api/core/v1"
 )
 
 type cloudStackAPIUpgradeTestStep struct {
@@ -23,7 +24,7 @@ type cloudStackAPIUpgradeTest struct {
 	steps []cloudStackAPIUpgradeTestStep
 }
 
-func clusterPrefix(value string, prefix string) string {
+func clusterPrefix(value, prefix string) string {
 	return fmt.Sprintf("%s-%s", prefix, value)
 }
 
