@@ -105,7 +105,7 @@ func (u *UpgradeValidations) PreflightValidations(ctx context.Context) []validat
 			})
 	}
 
-	if !u.Opts.SkippedValidations[PDB] {
+	if !u.Opts.SkippedValidations[validations.PDB] {
 		upgradeValidations = append(
 			upgradeValidations,
 			func() *validations.ValidationResult {

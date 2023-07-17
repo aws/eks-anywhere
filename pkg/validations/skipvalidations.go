@@ -5,6 +5,12 @@ import (
 	"strings"
 )
 
+// string values of supported validation names that can be skipped.
+const (
+	PDB             = "pod-disruption"
+	VSphereUserPriv = "vsphere-user-privilege"
+)
+
 // ValidSkippableValidationsMap returns a map for all valid skippable validations as keys, defaulting values to false.
 // Defaulting to False means these validations won't be skipped unless set to True.
 func validSkippableValidationsMap(skippableValidations []string) map[string]bool {
