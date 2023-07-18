@@ -202,6 +202,16 @@ func buildTemplateMapCP(
 		"subnetUUID":                   controlPlaneMachineSpec.Subnet.UUID,
 	}
 
+	if controlPlaneMachineSpec.Project != nil {
+		values["projectIDType"] = controlPlaneMachineSpec.Project.Type
+		values["projectName"] = controlPlaneMachineSpec.Project.Name
+		values["projectUUID"] = controlPlaneMachineSpec.Project.UUID
+	}
+
+	if len(controlPlaneMachineSpec.AdditionalCategories) > 0 {
+		values["additionalCategories"] = controlPlaneMachineSpec.AdditionalCategories
+	}
+
 	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration != nil {
 		registryMirror := registrymirror.FromCluster(clusterSpec.Cluster)
 		values["registryMirrorMap"] = containerd.ToAPIEndpoints(registryMirror.NamespacedRegistryMap)
@@ -227,12 +237,30 @@ func buildTemplateMapCP(
 		values["externalEtcd"] = true
 		values["externalEtcdReplicas"] = clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.Count
 		values["etcdSshUsername"] = etcdMachineSpec.Users[0].Name
-	}
+		values["etcdSshAuthorizedKey"] = etcdMachineSpec.Users[0].SshAuthorizedKeys[0]
+		values["etcdVCPUsPerSocket"] = etcdMachineSpec.VCPUsPerSocket
+		values["etcdVcpuSockets"] = etcdMachineSpec.VCPUSockets
+		values["etcdMemorySize"] = etcdMachineSpec.MemorySize.String()
+		values["etcdSystemDiskSize"] = etcdMachineSpec.SystemDiskSize.String()
+		values["etcdImageIDType"] = etcdMachineSpec.Image.Type
+		values["etcdImageName"] = etcdMachineSpec.Image.Name
+		values["etcdImageUUID"] = etcdMachineSpec.Image.UUID
+		values["etcdSubnetIDType"] = etcdMachineSpec.Subnet.Type
+		values["etcdSubnetName"] = etcdMachineSpec.Subnet.Name
+		values["etcdSubnetUUID"] = etcdMachineSpec.Subnet.UUID
+		values["etcdNutanixPEClusterIDType"] = etcdMachineSpec.Cluster.Type
+		values["etcdNutanixPEClusterName"] = etcdMachineSpec.Cluster.Name
+		values["etcdNutanixPEClusterUUID"] = etcdMachineSpec.Cluster.UUID
 
-	if controlPlaneMachineSpec.Project != nil {
-		values["projectIDType"] = controlPlaneMachineSpec.Project.Type
-		values["projectName"] = controlPlaneMachineSpec.Project.Name
-		values["projectUUID"] = controlPlaneMachineSpec.Project.UUID
+		if etcdMachineSpec.Project != nil {
+			values["etcdProjectIDType"] = etcdMachineSpec.Project.Type
+			values["etcdProjectName"] = etcdMachineSpec.Project.Name
+			values["etcdProjectUUID"] = etcdMachineSpec.Project.UUID
+		}
+
+		if len(etcdMachineSpec.AdditionalCategories) > 0 {
+			values["etcdAdditionalCategories"] = etcdMachineSpec.AdditionalCategories
+		}
 	}
 
 	if clusterSpec.AWSIamConfig != nil {
@@ -244,10 +272,6 @@ func buildTemplateMapCP(
 		values["httpProxy"] = clusterSpec.Cluster.Spec.ProxyConfiguration.HttpProxy
 		values["httpsProxy"] = clusterSpec.Cluster.Spec.ProxyConfiguration.HttpsProxy
 		values["noProxy"] = generateNoProxyList(clusterSpec)
-	}
-
-	if len(controlPlaneMachineSpec.AdditionalCategories) > 0 {
-		values["additionalCategories"] = controlPlaneMachineSpec.AdditionalCategories
 	}
 
 	return values, nil

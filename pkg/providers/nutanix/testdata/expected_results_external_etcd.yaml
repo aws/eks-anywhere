@@ -37,6 +37,11 @@ spec:
     apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
     kind: NutanixCluster
     name: "eksa-unit-test"
+  managedExternalEtcdRef:
+    apiVersion: etcdcluster.cluster.x-k8s.io/v1beta1
+    kind: EtcdadmCluster
+    name: "eksa-unit-test-etcd"
+    namespace: "eksa-system"
 ---
 apiVersion: controlplane.cluster.x-k8s.io/v1beta1
 kind: KubeadmControlPlane
@@ -66,9 +71,11 @@ spec:
         imageRepository: public.ecr.aws/eks-distro/coredns
         imageTag: v1.8.0-eks-1-19-4
       etcd:
-        local:
-          imageRepository: public.ecr.aws/eks-distro/etcd-io
-          imageTag: v3.4.14-eks-1-19-4
+        external:
+          endpoints: []
+          caFile: "/etc/kubernetes/pki/etcd/ca.crt"
+          certFile: "/etc/kubernetes/pki/apiserver-etcd-client.crt"
+          keyFile: "/etc/kubernetes/pki/apiserver-etcd-client.key"
     files:
     - content: |
         apiVersion: v1
@@ -130,13 +137,6 @@ spec:
         status: {}
       owner: root:root
       path: /etc/kubernetes/manifests/kube-vip.yaml
-    - content: |
-        [Service]
-        Environment="HTTP_PROXY=proxy.nutanix.com:8888"
-        Environment="HTTPS_PROXY=proxy.nutanix.com:8888"
-        Environment="NO_PROXY=192.168.0.0/16,10.96.0.0/12,noproxy1.nutanix.com,noproxy2.nutanix.com,noproxy3.nutanix.com,localhost,127.0.0.1,.svc,prism.nutanix.com,test-ip"
-      owner: root:root
-      path: /etc/systemd/system/containerd.service.d/http-proxy.conf
     initConfiguration:
       nodeRegistration:
         kubeletExtraArgs:
@@ -161,8 +161,6 @@ spec:
         sshAuthorizedKeys:
           - "mySshAuthorizedKey"
     preKubeadmCommands:
-      - sudo systemctl daemon-reload
-      - sudo systemctl restart containerd
       - hostnamectl set-hostname "{{ ds.meta_data.hostname }}"
       - echo "::1         ipv6-localhost ipv6-loopback" >/etc/hosts
       - echo "127.0.0.1   localhost" >>/etc/hosts
@@ -170,6 +168,60 @@ spec:
     postKubeadmCommands:
       - echo export KUBECONFIG=/etc/kubernetes/admin.conf >> /root/.bashrc
     useExperimentalRetryJoin: true
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: NutanixMachineTemplate
+metadata:
+  name: "<no value>"
+  namespace: "eksa-system"
+spec:
+  template:
+    spec:
+      providerID: "nutanix://eksa-unit-test-m1"
+      vcpusPerSocket: 1
+      vcpuSockets: 4
+      memorySize: 8Gi
+      systemDiskSize: 40Gi
+      image:
+        type: name
+        name: "prism-image"
+
+      cluster:
+        type: name
+        name: "prism-cluster"
+      subnet:
+        - type: name
+          name: "prism-subnet"
+---
+kind: EtcdadmCluster
+apiVersion: etcdcluster.cluster.x-k8s.io/v1beta1
+metadata:
+  name: "eksa-unit-test-etcd"
+  namespace: "eksa-system"
+spec:
+  replicas: 3
+  etcdadmConfigSpec:
+    etcdadmBuiltin: true
+    format: cloud-config
+    cloudInitConfig:
+      version: 3.4.14
+      installDir: "/usr/bin"
+    preEtcdadmCommands:
+      - hostname "{{ ds.meta_data.hostname }}"
+      - echo "::1         ipv6-localhost ipv6-loopback" >/etc/hosts
+      - echo "127.0.0.1   localhost" >>/etc/hosts
+      - echo "127.0.0.1   {{ ds.meta_data.hostname }}" >>/etc/hosts
+      - echo "{{ ds.meta_data.hostname }}" >/etc/hostname
+    cipherSuites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+    users:
+      - name: "mySshUsername"
+        sshAuthorizedKeys:
+          - "mySshAuthorizedKey"
+        sudo: ALL=(ALL) NOPASSWD:ALL
+  infrastructureTemplate:
+    apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+    kind: NutanixMachineTemplate
+    name: "<no value>"
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: NutanixMachineTemplate
