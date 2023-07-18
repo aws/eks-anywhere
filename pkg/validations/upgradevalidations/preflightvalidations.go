@@ -79,6 +79,13 @@ func (u *UpgradeValidations) PreflightValidations(ctx context.Context) []validat
 		},
 		func() *validations.ValidationResult {
 			return &validations.ValidationResult{
+				Name:        "upgrade cluster worker node group kubernetes version increment",
+				Remediation: "ensure that the cluster worker node group kubernetes version is incremented by one minor version exactly (e.g. 1.18 -> 1.19) and top level kubernetes version does not exceed worker node group version by one minor version",
+				Err:         ValidateWorkerServerVersionSkew(ctx, u.Opts.Spec.Cluster, u.Opts.WorkloadCluster, u.Opts.ManagementCluster, k),
+			}
+		},
+		func() *validations.ValidationResult {
+			return &validations.ValidationResult{
 				Name:        "validate authentication for git provider",
 				Remediation: fmt.Sprintf("ensure %s, %s env variable are set and valid", config.EksaGitPrivateKeyTokenEnv, config.EksaGitKnownHostsFileEnv),
 				Err:         validations.ValidateAuthenticationForGitProvider(u.Opts.Spec, u.Opts.CliConfig),
