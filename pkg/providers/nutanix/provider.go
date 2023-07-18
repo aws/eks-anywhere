@@ -362,8 +362,8 @@ func (p *Provider) getWorkerNodeMachineConfigs(ctx context.Context, workloadClus
 }
 
 func (p *Provider) needsNewMachineTemplate(currentSpec, newClusterSpec *cluster.Spec, workerNodeGroupConfiguration v1alpha1.WorkerNodeGroupConfiguration, ndc *v1alpha1.NutanixDatacenterConfig, prevWorkerNodeGroupConfigs map[string]v1alpha1.WorkerNodeGroupConfiguration, oldWorkerMachineConfig *v1alpha1.NutanixMachineConfig, newWorkerMachineConfig *v1alpha1.NutanixMachineConfig) (bool, error) {
-	if _, ok := prevWorkerNodeGroupConfigs[workerNodeGroupConfiguration.Name]; ok {
-		needsNewWorkloadTemplate := NeedsNewWorkloadTemplate(currentSpec, newClusterSpec, oldWorkerMachineConfig, newWorkerMachineConfig)
+	if prev, ok := prevWorkerNodeGroupConfigs[workerNodeGroupConfiguration.Name]; ok {
+		needsNewWorkloadTemplate := NeedsNewWorkloadTemplate(currentSpec, newClusterSpec, oldWorkerMachineConfig, newWorkerMachineConfig, workerNodeGroupConfiguration, prev)
 		return needsNewWorkloadTemplate, nil
 	}
 	return true, nil
@@ -377,15 +377,13 @@ func (p *Provider) needsNewKubeadmConfigTemplate(workerNodeGroupConfiguration v1
 	return true, nil
 }
 
-func NeedsNewWorkloadTemplate(oldSpec, newSpec *cluster.Spec, oldNmc, newNmc *v1alpha1.NutanixMachineConfig) bool {
-	if oldSpec.Cluster.Spec.KubernetesVersion != newSpec.Cluster.Spec.KubernetesVersion {
-		return true
-	}
+func NeedsNewWorkloadTemplate(oldSpec, newSpec *cluster.Spec, oldNmc, newNmc *v1alpha1.NutanixMachineConfig, newWorker, oldWorker v1alpha1.WorkerNodeGroupConfiguration) bool {
 	if oldSpec.Bundles.Spec.Number != newSpec.Bundles.Spec.Number {
 		return true
 	}
 	if !v1alpha1.WorkerNodeGroupConfigurationSliceTaintsEqual(oldSpec.Cluster.Spec.WorkerNodeGroupConfigurations, newSpec.Cluster.Spec.WorkerNodeGroupConfigurations) ||
-		!v1alpha1.WorkerNodeGroupConfigurationsLabelsMapEqual(oldSpec.Cluster.Spec.WorkerNodeGroupConfigurations, newSpec.Cluster.Spec.WorkerNodeGroupConfigurations) {
+		!v1alpha1.WorkerNodeGroupConfigurationsLabelsMapEqual(oldSpec.Cluster.Spec.WorkerNodeGroupConfigurations, newSpec.Cluster.Spec.WorkerNodeGroupConfigurations) ||
+		!v1alpha1.WorkerNodeGroupConfigurationKubeVersionUnchanged(&newWorker, &oldWorker, newSpec.Cluster.Spec.KubernetesVersion, oldSpec.Cluster.Spec.KubernetesVersion) {
 		return true
 	}
 	return AnyImmutableFieldChanged(oldNmc, newNmc)

@@ -343,12 +343,13 @@ func NeedsNewControlPlaneTemplate(oldSpec, newSpec *cluster.Spec) bool {
 	return (oldSpec.Cluster.Spec.KubernetesVersion != newSpec.Cluster.Spec.KubernetesVersion) || (oldSpec.Bundles.Spec.Number != newSpec.Bundles.Spec.Number)
 }
 
-func NeedsNewWorkloadTemplate(oldSpec, newSpec *cluster.Spec) bool {
+func NeedsNewWorkloadTemplate(oldSpec, newSpec *cluster.Spec, newWorker, oldWorker v1alpha1.WorkerNodeGroupConfiguration) bool {
 	if !v1alpha1.WorkerNodeGroupConfigurationSliceTaintsEqual(oldSpec.Cluster.Spec.WorkerNodeGroupConfigurations, newSpec.Cluster.Spec.WorkerNodeGroupConfigurations) ||
-		!v1alpha1.WorkerNodeGroupConfigurationsLabelsMapEqual(oldSpec.Cluster.Spec.WorkerNodeGroupConfigurations, newSpec.Cluster.Spec.WorkerNodeGroupConfigurations) {
+		!v1alpha1.WorkerNodeGroupConfigurationsLabelsMapEqual(oldSpec.Cluster.Spec.WorkerNodeGroupConfigurations, newSpec.Cluster.Spec.WorkerNodeGroupConfigurations) ||
+		!v1alpha1.WorkerNodeGroupConfigurationKubeVersionUnchanged(&newWorker, &oldWorker, newSpec.Cluster.Spec.KubernetesVersion, oldSpec.Cluster.Spec.KubernetesVersion) {
 		return true
 	}
-	return (oldSpec.Cluster.Spec.KubernetesVersion != newSpec.Cluster.Spec.KubernetesVersion) || (oldSpec.Bundles.Spec.Number != newSpec.Bundles.Spec.Number)
+	return oldSpec.Bundles.Spec.Number != newSpec.Bundles.Spec.Number
 }
 
 func NeedsNewKubeadmConfigTemplate(newWorkerNodeGroup *v1alpha1.WorkerNodeGroupConfiguration, oldWorkerNodeGroup *v1alpha1.WorkerNodeGroupConfiguration) bool {
@@ -457,8 +458,8 @@ func (p *provider) generateCAPISpecForUpgrade(ctx context.Context, bootstrapClus
 }
 
 func (p *provider) needsNewMachineTemplate(currentSpec, newClusterSpec *cluster.Spec, workerNodeGroupConfiguration v1alpha1.WorkerNodeGroupConfiguration, prevWorkerNodeGroupConfigs map[string]v1alpha1.WorkerNodeGroupConfiguration) (bool, error) {
-	if _, ok := prevWorkerNodeGroupConfigs[workerNodeGroupConfiguration.Name]; ok {
-		needsNewWorkloadTemplate := NeedsNewWorkloadTemplate(currentSpec, newClusterSpec)
+	if prev, ok := prevWorkerNodeGroupConfigs[workerNodeGroupConfiguration.Name]; ok {
+		needsNewWorkloadTemplate := NeedsNewWorkloadTemplate(currentSpec, newClusterSpec, workerNodeGroupConfiguration, prev)
 		return needsNewWorkloadTemplate, nil
 	}
 	return true, nil

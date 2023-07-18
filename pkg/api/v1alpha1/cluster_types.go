@@ -510,6 +510,20 @@ func WorkerNodeGroupConfigurationsLabelsMapEqual(a, b []WorkerNodeGroupConfigura
 	return true
 }
 
+func WorkerNodeGroupConfigurationKubeVersionUnchanged(o, n *WorkerNodeGroupConfiguration, oldTopVersion, newTopVersion KubernetesVersion) bool {
+	oldVersion := o.KubernetesVersion
+	newVersion := n.KubernetesVersion
+
+	if oldVersion == nil {
+		oldVersion = &oldTopVersion
+	}
+	if newVersion == nil {
+		newVersion = &newTopVersion
+	}
+
+	return newVersion.Equal(oldVersion)
+}
+
 type ClusterNetwork struct {
 	// Comma-separated list of CIDR blocks to use for pod and service subnets.
 	// Defaults to 192.168.0.0/16 for pod subnet.
