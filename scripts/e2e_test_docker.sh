@@ -39,6 +39,7 @@ BIN_FOLDER=$REPO_ROOT/bin
 TEST_REGEX="${1:-TestDockerKubernetes121SimpleFlow}"
 BRANCH_NAME="${2:-main}"
 
+
 cat << EOF > config_file
 [default]
 output=json
@@ -85,6 +86,7 @@ $BIN_FOLDER/test e2e run \
     -r ${TEST_REGEX} \
     --bundles-override=${BUNDLES_OVERRIDE} \
     --test-report-folder=${TEST_REPORT_FOLDER} \
+    --baremetal-branch="" \
     -v4
 
 # Faking cross-platform versioned folders for dry-run

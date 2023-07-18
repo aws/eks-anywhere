@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 	"regexp"
-	"strconv"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -16,6 +16,7 @@ import (
 	"github.com/aws/eks-anywhere/internal/pkg/s3"
 	"github.com/aws/eks-anywhere/internal/pkg/ssm"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
+	e2etest "github.com/aws/eks-anywhere/test/e2e"
 )
 
 const (
@@ -23,11 +24,12 @@ const (
 	testResultFail  = "fail"
 	testResultError = "error"
 
-	maxIPPoolSize = 10
-	minIPPoolSize = 1
+	maxIPPoolSize        = 10
+	minIPPoolSize        = 1
+	tinkerbellIPPoolSize = 2
 
 	// Default timeout for E2E test instance.
-	e2eTimeout           = 300 * time.Minute
+	e2eTimeout           = 120 * time.Minute
 	e2eSSMTimeoutPadding = 10 * time.Minute
 
 	// Default timeout used for all SSM commands besides running the actual E2E test.
@@ -85,6 +87,17 @@ func RunTestsInParallel(conf ParallelRunConf) error {
 	results := make([]instanceTestsResults, 0, len(instancesConf))
 	logTestGroups(conf.Logger, instancesConf)
 	maxConcurrentTests := conf.MaxConcurrentTests
+
+	// For Tinkerbell tests, get hardware inventory pool
+	var invCatalogue *hardwareCatalogue
+	if strings.EqualFold(conf.BranchName, conf.BaremetalBranchName) {
+		hardwareInv, err := getHardwarePool(conf.StorageBucket)
+		if err != nil {
+			return fmt.Errorf("failed to get hardware inventory for Tinkerbell Tests: %v", err)
+		}
+		invCatalogue = newHardwareCatalogue(hardwareInv)
+	}
+
 	// Add a blocking channel to only allow for certain number of tests to run at a time
 	queue := make(chan struct{}, maxConcurrentTests)
 	for _, instanceConf := range instancesConf {
@@ -93,7 +106,7 @@ func RunTestsInParallel(conf ParallelRunConf) error {
 			defer wg.Done()
 			r := instanceTestsResults{conf: c}
 
-			r.conf.instanceId, r.testCommandResult, err = RunTests(c)
+			r.conf.instanceId, r.testCommandResult, err = RunTests(c, invCatalogue)
 			if err != nil {
 				r.err = err
 			}
@@ -150,6 +163,7 @@ type instanceRunConf struct {
 	testReportFolder, branchName                                              string
 	ipPool                                                                    networkutils.IPPool
 	hardware                                                                  []*api.Hardware
+	hardwareCount                                                             int
 	bundlesOverride                                                           bool
 	testRunnerType                                                            TestRunnerType
 	testRunnerConfig                                                          TestInfraConfig
@@ -157,10 +171,19 @@ type instanceRunConf struct {
 	logger                                                                    logr.Logger
 }
 
-func RunTests(conf instanceRunConf) (testInstanceID string, testCommandResult *testCommandResult, err error) {
+//nolint:gocyclo, revive // RunTests responsible launching test runner to run tests is complex.
+func RunTests(conf instanceRunConf, hardwareCatalogue *hardwareCatalogue) (testInstanceID string, testCommandResult *testCommandResult, err error) {
 	testRunner, err := newTestRunner(conf.testRunnerType, conf.testRunnerConfig)
 	if err != nil {
 		return "", nil, err
+	}
+	if conf.hardwareCount > 0 {
+		err = reserveTinkerbellHardware(conf, hardwareCatalogue)
+		if err != nil {
+			return "", nil, err
+		}
+		// Release hardware back to inventory for Tinkerbell Tests
+		defer releaseTinkerbellHardware(conf, hardwareCatalogue)
 	}
 
 	instanceId, err := testRunner.createInstance(conf)
@@ -326,7 +349,7 @@ func splitTests(testsList []string, conf ParallelRunConf) ([]instanceRunConf, er
 		}
 
 		if len(testsInEC2Instance) == testPerInstance || (len(testsList)-1) == i {
-			runConfs = append(runConfs, newInstanceRunConf(awsSession, conf, len(runConfs), strings.Join(testsInEC2Instance, "|"), ips, []*api.Hardware{}, Ec2TestRunnerType, testRunnerConfig))
+			runConfs = append(runConfs, newInstanceRunConf(awsSession, conf, len(runConfs), strings.Join(testsInEC2Instance, "|"), ips, []*api.Hardware{}, 0, Ec2TestRunnerType, testRunnerConfig))
 			testsInEC2Instance = make([]string, 0, testPerInstance)
 		}
 	}
@@ -349,78 +372,40 @@ func splitTests(testsList []string, conf ParallelRunConf) ([]instanceRunConf, er
 
 //nolint:gocyclo // This legacy function is complex but the team too busy to simplify it
 func appendNonAirgappedTinkerbellRunConfs(awsSession *session.Session, testsList []string, conf ParallelRunConf, testRunnerConfig *TestInfraConfig, runConfs []instanceRunConf, ipManager *E2EIPManager) ([]instanceRunConf, error) {
-	err := s3.DownloadToDisk(awsSession, os.Getenv(tinkerbellHardwareS3FileKeyEnvVar), conf.StorageBucket, e2eHardwareCsvFilePath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to download tinkerbell hardware csv: %v", err)
-	}
-
-	hardware, err := api.NewHardwareSliceFromFile(e2eHardwareCsvFilePath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get Tinkerbell hardware: %v", err)
-	}
-
-	maxHardwarePerE2ETest := tinkerbellDefaultMaxHardwarePerE2ETest
-	maxHardwareEnvValue := os.Getenv(maxHardwarePerE2ETestEnvVar)
-	if len(maxHardwareEnvValue) > 0 {
-		maxHardwarePerE2ETest, err = strconv.Atoi(maxHardwareEnvValue)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get Tinkerbell max hardware per test env var: %v", err)
-		}
-	}
-
-	conf.Logger.V(1).Info("INFO:", "totalHardware", len(hardware))
-
 	tinkerbellTests := getTinkerbellNonAirgappedTests(testsList)
 	conf.Logger.V(1).Info("INFO:", "tinkerbellTests", len(tinkerbellTests))
 
-	tinkTestInstances := len(hardware) / maxHardwarePerE2ETest
-	conf.Logger.V(1).Info("INFO:", "tinkTestInstances", tinkTestInstances)
-
-	tinkTestsPerInstance := 1
-	var remainingTests int
-	overflowTests := false
-	if len(tinkerbellTests) > tinkTestInstances {
-		tinkTestsPerInstance = len(tinkerbellTests) / tinkTestInstances
-		remainingTests = len(tinkerbellTests) % tinkTestInstances
-		if remainingTests != 0 {
-			tinkTestsPerInstance++
-			overflowTests = true
-		}
+	testPerInstance := len(tinkerbellTests) / conf.MaxInstances
+	if testPerInstance == 0 {
+		testPerInstance = 1
+	}
+	testsInVSphereInstance := make([]string, 0, testPerInstance)
+	ipPool := ipManager.reserveIPPool(tinkerbellIPPoolSize)
+	tinkerbellTestsHwRequirements, err := e2etest.GetTinkerbellTestsHardwareRequirements()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get tinkerbell tests hardware count: %v", err)
 	}
 
-	conf.Logger.V(1).Info("INFO:", "tinkTestsPerInstance", tinkTestsPerInstance)
-	conf.Logger.V(1).Info("INFO:", "tinkTestInstances", tinkTestInstances)
-	conf.Logger.V(1).Info("INFO:", "remainingTests", remainingTests)
+	tinkerbellTestsWithCount := make([]TinkerbellTest, 0, len(tinkerbellTests))
 
-	hardwareChunks := api.SplitHardware(hardware, maxHardwarePerE2ETest)
+	for _, testName := range tinkerbellTests {
+		hwCount, ok := tinkerbellTestsHwRequirements[testName]
+		if !ok {
+			conf.Logger.V(1).Info(fmt.Sprintf("WARN: Test not found in %s", e2etest.TinkerbellHardwareCountFile), "test", testName)
+		} else {
+			tinkerbellTestsWithCount = append(tinkerbellTestsWithCount, TinkerbellTest{Name: testName, Count: hwCount})
+		}
+	}
+	// sort tests by Hardware count, to enable running smaller tests first for Tink Provider
+	sort.Slice(tinkerbellTestsWithCount, func(i, j int) bool {
+		return tinkerbellTestsWithCount[i].Count < tinkerbellTestsWithCount[j].Count
+	})
 
-	testsInVSphereInstance := make([]string, 0, tinkTestsPerInstance)
-	for i, testName := range tinkerbellTests {
-		testsInVSphereInstance = append(testsInVSphereInstance, testName)
-
-		if len(testsInVSphereInstance) == tinkTestsPerInstance || (len(testsList)-1) == i {
-			conf.Logger.V(1).Info("INFO:", "hardwareChunksSize", len(hardwareChunks))
-			conf.Logger.V(1).Info("INFO:", "hardwareSize", len(hardware))
-
-			// each tinkerbell test requires 2 floating ip's (cp & tink server)
-			ips := ipManager.reserveIPPool(tinkTestsPerInstance * 2)
-
-			if len(hardwareChunks) > 0 {
-				hardware, hardwareChunks = hardwareChunks[0], hardwareChunks[1:]
-			}
-
-			runConfs = append(runConfs, newInstanceRunConf(awsSession, conf, len(runConfs), strings.Join(testsInVSphereInstance, "|"), ips, hardware, VSphereTestRunnerType, testRunnerConfig))
-
-			if remainingTests > 0 {
-				remainingTests--
-			}
-
-			if remainingTests == 0 && overflowTests {
-				tinkTestsPerInstance--
-				overflowTests = false
-			}
-
-			testsInVSphereInstance = make([]string, 0, tinkTestsPerInstance)
+	for i, test := range tinkerbellTestsWithCount {
+		testsInVSphereInstance = append(testsInVSphereInstance, test.Name)
+		if len(testsInVSphereInstance) == testPerInstance || (len(testsList)-1) == i {
+			runConfs = append(runConfs, newInstanceRunConf(awsSession, conf, len(runConfs), strings.Join(testsInVSphereInstance, "|"), ipPool, []*api.Hardware{}, test.Count, VSphereTestRunnerType, testRunnerConfig))
+			testsInVSphereInstance = make([]string, 0, testPerInstance)
 		}
 	}
 
@@ -449,12 +434,12 @@ func appendAirgappedTinkerbellRunConfs(awsSession *session.Session, testsList []
 	conf.Logger.V(1).Info("INFO:", "totalAirgappedHardware", len(hardware))
 
 	pool := ipManager.reserveIPPool(len(tinkerbellTests) * 2)
-	runConfs = append(runConfs, newInstanceRunConf(awsSession, conf, len(runConfs), strings.Join(tinkerbellTests, "|"), pool, hardware, VSphereTestRunnerType, testRunnerConfig))
+	runConfs = append(runConfs, newInstanceRunConf(awsSession, conf, len(runConfs), strings.Join(tinkerbellTests, "|"), pool, hardware, 0, VSphereTestRunnerType, testRunnerConfig))
 
 	return runConfs, nil
 }
 
-func newInstanceRunConf(awsSession *session.Session, conf ParallelRunConf, jobNumber int, testRegex string, ipPool networkutils.IPPool, hardware []*api.Hardware, testRunnerType TestRunnerType, testRunnerConfig *TestInfraConfig) instanceRunConf {
+func newInstanceRunConf(awsSession *session.Session, conf ParallelRunConf, jobNumber int, testRegex string, ipPool networkutils.IPPool, hardware []*api.Hardware, hardwareCount int, testRunnerType TestRunnerType, testRunnerConfig *TestInfraConfig) instanceRunConf {
 	jobID := fmt.Sprintf("%s-%d", conf.JobId, jobNumber)
 	return instanceRunConf{
 		session:             awsSession,
@@ -465,6 +450,7 @@ func newInstanceRunConf(awsSession *session.Session, conf ParallelRunConf, jobNu
 		regex:               testRegex,
 		ipPool:              ipPool,
 		hardware:            hardware,
+		hardwareCount:       hardwareCount,
 		bundlesOverride:     conf.BundlesOverride,
 		testReportFolder:    conf.TestReportFolder,
 		branchName:          conf.BranchName,
@@ -481,4 +467,44 @@ func logTestGroups(logger logr.Logger, instancesConf []instanceRunConf) {
 		testGroups = append(testGroups, i.regex)
 	}
 	logger.V(1).Info("Running tests in parallel", "testsGroups", testGroups)
+}
+
+func getHardwarePool(storageBucket string) ([]*api.Hardware, error) {
+	awsSession, err := session.NewSession()
+	if err != nil {
+		return nil, fmt.Errorf("creating aws session for tests: %v", err)
+	}
+	err = s3.DownloadToDisk(awsSession, os.Getenv(tinkerbellHardwareS3FileKeyEnvVar), storageBucket, e2eHardwareCsvFilePath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to download tinkerbell hardware csv: %v", err)
+	}
+
+	hardware, err := api.NewHardwareSliceFromFile(e2eHardwareCsvFilePath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get Tinkerbell hardware: %v", err)
+	}
+	return hardware, nil
+}
+
+func reserveTinkerbellHardware(conf instanceRunConf, invCatalogue *hardwareCatalogue) error {
+	reservedTinkerbellHardware, err := invCatalogue.reserveHardware(conf.hardwareCount)
+	if err != nil {
+		return fmt.Errorf("timed out waiting for hardware: test instanceId=%v", conf.instanceId)
+	}
+	conf.hardware = reservedTinkerbellHardware
+	logTinkerbellTestHardwareInfo(conf, "Reserved")
+	return nil
+}
+
+func releaseTinkerbellHardware(conf instanceRunConf, invCatalogue *hardwareCatalogue) {
+	invCatalogue.releaseHardware(conf.hardware)
+	logTinkerbellTestHardwareInfo(conf, "Released")
+}
+
+func logTinkerbellTestHardwareInfo(conf instanceRunConf, action string) {
+	var hardwareInfo []string
+	for _, hardware := range conf.hardware {
+		hardwareInfo = append(hardwareInfo, hardware.Hostname)
+	}
+	conf.logger.V(1).Info(action+" hardware for TestRunner", "instanceId", conf.instanceId, "hardwarePool", strings.Join(hardwareInfo, ", "))
 }
