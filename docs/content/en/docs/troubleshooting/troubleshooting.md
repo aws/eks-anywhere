@@ -76,6 +76,48 @@ Error: old cluster config file exists under my-cluster, please use a different c
 The `my-cluster` directory already exists in the current directory.
 Either use a different cluster name or move the directory.
 
+### At least one WorkerNodeGroupConfiguration must not have NoExecute and/or NoSchedule taints
+
+```
+Error: the cluster config file provided is invalid: at least one WorkerNodeGroupConfiguration must not have NoExecute and/or NoSchedule taints
+```
+At least one schedulable worker node group is required to run cluster administration components. Both `NoExecute` and `NoSchedule` taints must be absent from the workerNodeGroup for it to be considered schedulable.
+
+To remedy, remove `NoExecute` and `NoSchedule` taints from at least one WorkerNodeGroupConfiguration.
+
+Invalid configuration example:
+```
+# Invalid workerNodeGroupConfiguration
+workerNodeGroupConfigurations:    # List of node groups you can define for workers 
+  - count: 1                        
+    name: md-0                      
+    taints:                       # NoSchedule taint applied to md-0, not schedulable
+    - key: "key1"                       
+      value: "value1"
+      effect: "NoSchedule"
+  - count: 1                        
+    name: md-1                      
+    taints:                       # NoExecute taint applied to md-1, not schedulable
+    - key: "key2"                       
+      value: "value2"
+      effect: "NoExecute"
+```
+
+Valid configuration example:
+```
+# Valid workerNodeGroupConfiguration
+workerNodeGroupConfigurations:    # List of node groups you can define for workers 
+- count: 1                        
+  name: md-0                      
+  taints:                         # NoSchedule taint applied to md-0, not schedulable
+  - key: "key1"                       
+    value: "value1"
+    effect: "NoSchedule"
+- count: 1                        
+  name: md-1                      # md-1 has no NoSchedule/NoExecute taints applied, is schedulable
+```
+
+
 ### Memory or disk resource problem
 
 There are various disk and memory issues on the Admin machine that can cause problems. Make sure:
