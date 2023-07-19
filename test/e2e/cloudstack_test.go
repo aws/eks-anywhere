@@ -87,7 +87,7 @@ func TestCloudStackKubernetes124to125AWSIamAuthUpgrade(t *testing.T) {
 		test,
 		v1alpha1.Kube125,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube125)),
-		provider.WithProviderUpgrade(provider.Redhat125Template()),
+		provider.WithProviderUpgrade(provider.UpdateRedhatTemplate125Var()),
 	)
 }
 
@@ -103,7 +103,7 @@ func TestCloudStackKubernetes125to126AWSIamAuthUpgrade(t *testing.T) {
 		test,
 		v1alpha1.Kube126,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube126)),
-		provider.WithProviderUpgrade(provider.Redhat126Template()),
+		provider.WithProviderUpgrade(provider.UpdateRedhatTemplate126Var()),
 	)
 }
 
@@ -515,7 +515,7 @@ func TestCloudStackKubernetes124To125GitFluxUpgrade(t *testing.T) {
 		test,
 		v1alpha1.Kube125,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube125)),
-		provider.WithProviderUpgrade(provider.Redhat125Template()),
+		provider.WithProviderUpgrade(provider.UpdateRedhatTemplate125Var()),
 	)
 }
 
@@ -533,7 +533,7 @@ func TestCloudStackKubernetes125To126GitFluxUpgrade(t *testing.T) {
 		test,
 		v1alpha1.Kube126,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube126)),
-		provider.WithProviderUpgrade(provider.Redhat126Template()),
+		provider.WithProviderUpgrade(provider.UpdateRedhatTemplate126Var()),
 	)
 }
 
@@ -1097,7 +1097,7 @@ func TestCloudStackUpgradeKubernetes125MulticlusterWorkloadClusterWithGithubFlux
 			api.WithWorkerNodeCount(3),
 		),
 		provider.WithProviderUpgradeGit(
-			provider.Redhat125Template(),
+			provider.UpdateRedhatTemplate125Var(),
 		),
 	)
 }
@@ -1137,7 +1137,7 @@ func TestCloudStackUpgradeKubernetes126MulticlusterWorkloadClusterWithGithubFlux
 			api.WithWorkerNodeCount(3),
 		),
 		provider.WithProviderUpgradeGit(
-			provider.Redhat126Template(),
+			provider.UpdateRedhatTemplate126Var(),
 		),
 	)
 }
@@ -1154,12 +1154,12 @@ func TestCloudStackKubernetes124WithOIDCManagementClusterUpgradeFromLatestSideEf
 
 func TestCloudStackKubernetes125WithOIDCManagementClusterUpgradeFromLatestSideEffects(t *testing.T) {
 	cloudstack := framework.NewCloudStack(t)
-	runTestCloudstackManagementClusterUpgradeSideEffects(t, anywherev1.RedHat, anywherev1.Kube125)
+	runTestManagementClusterUpgradeSideEffects(t, cloudstack, anywherev1.RedHat, anywherev1.Kube125)
 }
 
 func TestCloudStackKubernetes126WithOIDCManagementClusterUpgradeFromLatestSideEffects(t *testing.T) {
 	cloudstack := framework.NewCloudStack(t)
-	runTestCloudstackManagementClusterUpgradeSideEffects(t, anywherev1.RedHat, anywherev1.Kube126)
+	runTestManagementClusterUpgradeSideEffects(t, cloudstack, anywherev1.RedHat, anywherev1.Kube126)
 }
 
 // OIDC
@@ -1250,7 +1250,7 @@ func TestCloudStackKubernetes124To125OIDCUpgrade(t *testing.T) {
 		test,
 		v1alpha1.Kube124,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube125)),
-		provider.WithProviderUpgrade(provider.Redhat125Template()),
+		provider.WithProviderUpgrade(provider.UpdateRedhatTemplate125Var()),
 	)
 }
 
@@ -1269,7 +1269,7 @@ func TestCloudStackKubernetes125To126OIDCUpgrade(t *testing.T) {
 		test,
 		v1alpha1.Kube126,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube126)),
-		provider.WithProviderUpgrade(provider.Redhat126Template()),
+		provider.WithProviderUpgrade(provider.UpdateRedhatTemplate126Var()),
 	)
 }
 
@@ -1905,7 +1905,7 @@ func TestCloudStackKubernetes124RedhatTo125UpgradeCiliumPolicyEnforcementMode(t 
 		v1alpha1.Kube125,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube125)),
 		framework.WithClusterFiller(api.WithCiliumPolicyEnforcementMode(v1alpha1.CiliumPolicyModeAlways)),
-		provider.WithProviderUpgrade(provider.Redhat125Template()),
+		provider.WithProviderUpgrade(provider.UpdateRedhatTemplate125Var()),
 	)
 }
 
@@ -1924,7 +1924,7 @@ func TestCloudStackKubernetes125RedhatTo126UpgradeCiliumPolicyEnforcementMode(t 
 		v1alpha1.Kube126,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube126)),
 		framework.WithClusterFiller(api.WithCiliumPolicyEnforcementMode(v1alpha1.CiliumPolicyModeAlways)),
-		provider.WithProviderUpgrade(provider.Redhat126Template()),
+		provider.WithProviderUpgrade(provider.UpdateRedhatTemplate126Var()),
 	)
 }
 
