@@ -4,5 +4,5 @@ linkTitle: "Operating System management"
 date: 2017-01-05
 weight: 30
 description: >
-  Common tasks for managing clusters.
+  Managing node operating systems in EKS Anywhere clusters.
 ---
