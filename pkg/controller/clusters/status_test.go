@@ -716,7 +716,7 @@ func TestUpdateClusterStatusForCNI(t *testing.T) {
 			},
 		},
 		{
-			name:        "control plane is ready, default cni initialized",
+			name:        "control plane is not ready, default cni initialized",
 			skipUpgrade: ptr.Bool(false),
 			conditions: []anywherev1.Condition{
 				{
@@ -725,7 +725,7 @@ func TestUpdateClusterStatusForCNI(t *testing.T) {
 				},
 				{
 					Type:   anywherev1.ControlPlaneReadyCondition,
-					Status: "True",
+					Status: "False",
 				},
 			},
 			wantCondition: &anywherev1.Condition{
