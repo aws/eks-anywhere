@@ -109,8 +109,10 @@ func ReconcileControlPlane(ctx context.Context, c client.Client, cp *ControlPlan
 	// We do not want to update the field with an empty slice again, so here we check if the endpoints for the
 	// external etcd have already been populated on the KubeadmControlPlane object and override ours before applying it.
 	kcp := &controlplanev1.KubeadmControlPlane{}
-	kcpKey := client.ObjectKeyFromObject(cp.KubeadmControlPlane)
-
+	kcpKey := client.ObjectKey{
+		Name:      cluster.Spec.ControlPlaneRef.Name,
+		Namespace: cluster.Spec.ControlPlaneRef.Namespace,
+	}
 	if err = c.Get(ctx, kcpKey, kcp); err != nil {
 		return controller.Result{}, errors.Wrap(err, "reading kubeadmcontrolplane object")
 	}

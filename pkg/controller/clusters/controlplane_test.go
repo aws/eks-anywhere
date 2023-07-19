@@ -160,6 +160,7 @@ func TestReconcileControlPlaneExternalEtcdWithExistingEndpoints(t *testing.T) {
 }
 
 func controlPlaneStackedEtcd(namespace string) *clusters.ControlPlane {
+	clusterName := "my-cluster"
 	return &clusters.ControlPlane{
 		Cluster: &clusterv1.Cluster{
 			TypeMeta: metav1.TypeMeta{
@@ -167,8 +168,14 @@ func controlPlaneStackedEtcd(namespace string) *clusters.ControlPlane {
 				Kind:       "Cluster",
 			},
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      "my-cluster",
+				Name:      clusterName,
 				Namespace: namespace,
+			},
+			Spec: clusterv1.ClusterSpec{
+				ControlPlaneRef: &corev1.ObjectReference{
+					Name:      clusterName,
+					Namespace: namespace,
+				},
 			},
 		},
 		KubeadmControlPlane: &controlplanev1.KubeadmControlPlane{
@@ -177,7 +184,7 @@ func controlPlaneStackedEtcd(namespace string) *clusters.ControlPlane {
 				Kind:       "KubeadmControlPlane",
 			},
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      "my-cluster",
+				Name:      clusterName,
 				Namespace: namespace,
 			},
 			Spec: controlplanev1.KubeadmControlPlaneSpec{
@@ -192,7 +199,7 @@ func controlPlaneStackedEtcd(namespace string) *clusters.ControlPlane {
 				Kind:       "DockerCluster",
 			},
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      "my-cluster",
+				Name:      clusterName,
 				Namespace: namespace,
 			},
 		},
