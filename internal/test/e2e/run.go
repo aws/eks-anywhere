@@ -401,9 +401,9 @@ func appendNonAirgappedTinkerbellRunConfs(awsSession *session.Session, testsList
 		return tinkerbellTestsWithCount[i].Count < tinkerbellTestsWithCount[j].Count
 	})
 
-	var ipPool networkutils.IPPool
 	for i, test := range tinkerbellTestsWithCount {
 		testsInVSphereInstance = append(testsInVSphereInstance, test.Name)
+		var ipPool networkutils.IPPool
 		ipPool = ipManager.reserveIPPool(tinkerbellIPPoolSize)
 		if len(testsInVSphereInstance) == testPerInstance || (len(testsList)-1) == i {
 			runConfs = append(runConfs, newInstanceRunConf(awsSession, conf, len(runConfs), strings.Join(testsInVSphereInstance, "|"), ipPool, []*api.Hardware{}, test.Count, VSphereTestRunnerType, testRunnerConfig))
