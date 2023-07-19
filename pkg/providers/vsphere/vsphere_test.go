@@ -389,6 +389,7 @@ func TestNewProvider(t *testing.T) {
 	ipValidator := mocks.NewMockIPValidator(mockCtrl)
 	_, writer := test.NewWriter(t)
 	skipIPCheck := true
+	skippedValidations := map[string]bool{}
 
 	provider := NewProvider(
 		datacenterConfig,
@@ -399,6 +400,7 @@ func TestNewProvider(t *testing.T) {
 		ipValidator,
 		time.Now,
 		skipIPCheck,
+		skippedValidations,
 	)
 
 	if provider == nil {
@@ -503,6 +505,7 @@ func newProvider(t *testing.T, datacenterConfig *v1alpha1.VSphereDatacenterConfi
 		test.FakeNow,
 		false,
 		v,
+		map[string]bool{},
 	)
 }
 
@@ -1365,6 +1368,46 @@ func TestSetupAndValidateCreateClusterNoPassword(t *testing.T) {
 	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
 
 	thenErrorExpected(t, "failed setup and validations: EKSA_VSPHERE_PASSWORD is not set or is empty", err)
+}
+
+func TestSetupAndValidateCreateClusterMissingPrivError(t *testing.T) {
+	ctx := context.Background()
+	provider := givenProvider(t)
+	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
+	setupContext(t)
+	mockCtrl := gomock.NewController(t)
+	ipValidator := mocks.NewMockIPValidator(mockCtrl)
+	ipValidator.EXPECT().ValidateControlPlaneIPUniqueness(clusterSpec.Cluster).Return(nil)
+	provider.ipValidator = ipValidator
+	vscb := mocks.NewMockVSphereClientBuilder(mockCtrl)
+	vscb.EXPECT().Build(ctx, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), clusterSpec.VSphereDatacenter.Spec.Datacenter).Return(nil, fmt.Errorf("error"))
+	provider.validator.vSphereClientBuilder = vscb
+
+	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
+
+	thenErrorExpected(t, "validating vsphere user privileges: error", err)
+}
+
+func TestSetupAndValidateUpgradeClusterMissingPrivError(t *testing.T) {
+	ctx := context.Background()
+	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
+	cluster := &types.Cluster{}
+	provider := givenProvider(t)
+	mockCtrl := gomock.NewController(t)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	provider.providerKubectlClient = kubectl
+	setupContext(t)
+
+	kubectl.EXPECT().GetEksaCluster(ctx, cluster, clusterSpec.Cluster.GetName()).Return(clusterSpec.Cluster.DeepCopy(), nil).Times(1)
+	kubectl.EXPECT().GetEksaVSphereMachineConfig(ctx, gomock.Any(), cluster.KubeconfigFile, clusterSpec.Cluster.GetNamespace()).Times(3)
+
+	vscb := mocks.NewMockVSphereClientBuilder(mockCtrl)
+	vscb.EXPECT().Build(ctx, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), clusterSpec.VSphereDatacenter.Spec.Datacenter).Return(nil, fmt.Errorf("error"))
+	provider.validator.vSphereClientBuilder = vscb
+
+	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec, clusterSpec)
+
+	thenErrorExpected(t, "validating vsphere user privileges: error", err)
 }
 
 func TestSetupAndValidateCreateCPUpgradeRolloutStrategy(t *testing.T) {
