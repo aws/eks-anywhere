@@ -49,7 +49,8 @@ EKS Anywhere documentation uses the [Hugo](https://gohugo.io/categories/fundamen
 
   <b><tt>\!\[Create workload clusters\]\(/images/eks-a_cluster_management.png\)</b></tt>
 
-You can use tools such as [draw.io](https://diagrams.net) or image creation programs, such as gimp, to create SVG diagrams.
+You can use tools such as [draw.io](https://diagrams.net) or image creation programs, such as inkscape, to create SVG diagrams.
+Use a white background for images and have cropping focus on the content you are highlighing (in other words, don't show a whole web page if you are only interested in one field).
 
 ## Where to put content
 
