@@ -15,17 +15,14 @@ make container-serve
 Open http://127.0.0.1:1313 to see the local site.
 With the serve container running you can now edit the documentation in your git clone and changes will be rebuilt automatically.
 
-To serve documentation more permanently, detach the container from the current shell.
-One way to do that is to install the `tmux` package and run:
+To serve documentation more permanently, detach the container using the `DETACH=true` option to the `container-serve` recipe.
 
 ```bash
-tmux
 make container-build
-make container-serve
-Ctrl-b d
+make container-serve DETACH=true
 ```
-This runs the commands in a tmux session, then detaches it from the current shell.
-To reopen the `tmux` session later, type `tmux attach`.
+
+You may notice an update to the `/docs/themes/docsy` submodule which is the result of a patch. The submodule patches should not be committed with your docs changes. Before committing your changes, reset the submodule using `make submodule-reset` (this will impact any containers serving the site locally).
 
 ## Public development
 
