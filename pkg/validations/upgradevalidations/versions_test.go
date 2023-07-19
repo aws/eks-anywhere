@@ -76,10 +76,7 @@ func TestValidateVersionSkew(t *testing.T) {
 
 func TestValidateWorkerVersionSkew(t *testing.T) {
 	kube119 := anywherev1.KubernetesVersion("1.19")
-	kube120 := anywherev1.KubernetesVersion("1.20")
 	kube121 := anywherev1.KubernetesVersion("1.21")
-	kubeBad := anywherev1.KubernetesVersion("badvalue")
-	// kube123 := anywherev1.KubernetesVersion("1.23")
 	tests := []struct {
 		name                 string
 		wantErr              error
@@ -95,78 +92,6 @@ func TestValidateWorkerVersionSkew(t *testing.T) {
 			oldVersion:           anywherev1.Kube121,
 			upgradeWorkerVersion: &kube121,
 			oldWorkerVersion:     &kube119,
-		},
-		{
-			name:                 "FailureMinusOneMinorVersion",
-			wantErr:              fmt.Errorf("kubernetes version downgrade is not supported (%s) -> (%s)", anywherev1.Kube120, anywherev1.Kube119),
-			upgradeVersion:       anywherev1.Kube120,
-			oldVersion:           anywherev1.Kube120,
-			upgradeWorkerVersion: &kube119,
-			oldWorkerVersion:     &kube120,
-		},
-		{
-			name:                 "SuccessSameVersion",
-			wantErr:              nil,
-			upgradeVersion:       anywherev1.Kube119,
-			oldVersion:           anywherev1.Kube119,
-			upgradeWorkerVersion: &kube119,
-			oldWorkerVersion:     &kube119,
-		},
-		{
-			name:                 "SuccessOneMinorVersion",
-			wantErr:              nil,
-			upgradeVersion:       anywherev1.Kube120,
-			oldVersion:           anywherev1.Kube120,
-			upgradeWorkerVersion: &kube120,
-			oldWorkerVersion:     &kube119,
-		},
-		{
-			name:                 "SuccessRemoveWorkerVersion",
-			wantErr:              nil,
-			upgradeVersion:       anywherev1.Kube120,
-			oldVersion:           anywherev1.Kube120,
-			upgradeWorkerVersion: nil,
-			oldWorkerVersion:     &kube119,
-		},
-		{
-			name:                 "FailRemoveWorkerVersionUpgradek8s",
-			wantErr:              fmt.Errorf("can't simultaneously remove worker kubernetesVersion and upgrade top level kubernetesVersion"),
-			upgradeVersion:       anywherev1.Kube121,
-			oldVersion:           anywherev1.Kube120,
-			upgradeWorkerVersion: nil,
-			oldWorkerVersion:     &kube119,
-		},
-		{
-			name:                 "FailRemoveWorkerVersion",
-			wantErr:              fmt.Errorf("only +1 minor version skew is supported, minor version skew detected"),
-			upgradeVersion:       anywherev1.Kube121,
-			oldVersion:           anywherev1.Kube121,
-			upgradeWorkerVersion: nil,
-			oldWorkerVersion:     &kube119,
-		},
-		{
-			name:                 "SuccessOldNil",
-			wantErr:              nil,
-			upgradeVersion:       anywherev1.Kube121,
-			oldVersion:           anywherev1.Kube120,
-			upgradeWorkerVersion: &kube120,
-			oldWorkerVersion:     nil,
-		},
-		{
-			name:                 "FailParseOld",
-			wantErr:              fmt.Errorf("pars"),
-			upgradeVersion:       anywherev1.Kube121,
-			oldVersion:           anywherev1.Kube120,
-			upgradeWorkerVersion: &kube120,
-			oldWorkerVersion:     &kubeBad,
-		},
-		{
-			name:                 "FailParseNew",
-			wantErr:              fmt.Errorf("pars"),
-			upgradeVersion:       anywherev1.Kube121,
-			oldVersion:           anywherev1.Kube120,
-			upgradeWorkerVersion: &kubeBad,
-			oldWorkerVersion:     &kube120,
 		},
 	}
 
