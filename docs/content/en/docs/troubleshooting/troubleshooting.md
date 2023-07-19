@@ -338,6 +338,23 @@ ctr -n k8s.io t exec -t --exec-id etcd ${ETCD_CONTAINER_ID} etcdctl \
 Follow the VM restore process in provider-specific section.
 * [Restore VM for machine in vSphere]({{< relref "#restore-vm-for-machine-in-vsphere" >}})
 
+#### Nodes cycling due to insufficient pod CIDRs
+
+Kubernetes controller manager allocates a dedicated CIDR block per node for pod IPs from within `clusterNetwork.pods.cidrBlocks`. The size of this node CIDR block defaults to /24 and can be adjusted at cluster creation using the [optional cidrMaskSize field]({{< relref "../getting-started/optional/cni/#node-ips-configuration-option" >}}).
+
+Since each node requires a CIDR block, the maximum number of nodes in a cluster is limited to the number of non-overlapping subnets of `cidrMaskSize` that fit in the pods CIDR block. For example, for a pod CIDR block mask of `/18` and a node CIDR mask size of `/22`, a maximum of 16 nodes can be proivisioned since there are 16 subnets of size `/22` in the overall `/18` block. If more nodes are created than the `clusterNetwork.pods.cidrBlocks` can accomodate, `kube-controller-manager` will not be able to allocate a CIDR block to the extra nodes. 
+
+This can cause nodes to become `NotReady` with the following sympotoms:
+
+- `kubectl describe node <unhealthy node>` indicates `CIDRNotAvailable` events.
+- kube-controller-manager log displays:
+    ```
+    Error while processing Node Add/Delete: failed to allocate cidr from cluster cidr at idx:0: CIDR allocation failed; there are no remaining CIDRs left to allocate in the accepted range
+    ```
+- Kubelet log on unhealthy node contains `NetworkPluginNotReady message:Network plugin returns error: cni plugin not initialized`
+
+If more nodes need to be provisioned, either the `clusterNetwork.pods.cidrBlocks` must be expanded or the `node-cidr-mask-size` [should be reduced.]({{< relref "../getting-started/optional/cni/#node-ips-configuration-option" >}}).
+
 ## Bare Metal troubleshooting
 
 ### Creating new workload cluster hangs or fails
