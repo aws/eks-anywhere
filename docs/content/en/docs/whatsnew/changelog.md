@@ -12,7 +12,7 @@ description: >
 * EKS Anywhere releases `v0.15.0` - `v0.15.2` have an issue with Tinkerbell provider where BMC/IPMI calls time out for certain hardware.<br>
 Please upgrade to `v0.15.3` if you are using Tinkerbell (Bare Metal) provider.
 * Installing CSI as part of VSphere cluster creation was deprecated in version `v0.16.0` and has been removed in `v0.17.0`. Please refer to the [deprecation section]({{< relref "../clustermgmt/storage/vsphere-storage/#vsphere-csi-driver-deprecation" >}}) in the vSphere provider documentation for more information.
-* When upgrading to a new minor version, a new image must be created using the new image-builder cli.
+* When upgrading to a new minor version, a new OS image must be created using the new image-builder cli.
 {{% /alert %}}
 
 ## [v0.17.0](https://github.com/aws/eks-anywhere/releases/tag/v0.17.0)

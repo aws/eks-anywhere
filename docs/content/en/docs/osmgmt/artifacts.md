@@ -530,7 +530,7 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
 
    Using a specific EKS Anywhere version
    ```bash
-   EKSA_RELEASE_VERSION=0.17.0
+   EKSA_RELEASE_VERSION=v0.17.0
    ```
 
    ```bash
