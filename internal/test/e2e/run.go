@@ -178,12 +178,12 @@ func RunTests(conf instanceRunConf, hardwareCatalogue *hardwareCatalogue) (testI
 		return "", nil, err
 	}
 	if conf.hardwareCount > 0 {
-		err = reserveTinkerbellHardware(conf, hardwareCatalogue)
+		err = reserveTinkerbellHardware(&conf, hardwareCatalogue)
 		if err != nil {
 			return "", nil, err
 		}
 		// Release hardware back to inventory for Tinkerbell Tests
-		defer releaseTinkerbellHardware(conf, hardwareCatalogue)
+		defer releaseTinkerbellHardware(&conf, hardwareCatalogue)
 	}
 
 	instanceId, err := testRunner.createInstance(conf)
@@ -380,7 +380,7 @@ func appendNonAirgappedTinkerbellRunConfs(awsSession *session.Session, testsList
 		testPerInstance = 1
 	}
 	testsInVSphereInstance := make([]string, 0, testPerInstance)
-	ipPool := ipManager.reserveIPPool(tinkerbellIPPoolSize)
+
 	tinkerbellTestsHwRequirements, err := e2etest.GetTinkerbellTestsHardwareRequirements()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get tinkerbell tests hardware count: %v", err)
@@ -401,8 +401,10 @@ func appendNonAirgappedTinkerbellRunConfs(awsSession *session.Session, testsList
 		return tinkerbellTestsWithCount[i].Count < tinkerbellTestsWithCount[j].Count
 	})
 
+	var ipPool networkutils.IPPool
 	for i, test := range tinkerbellTestsWithCount {
 		testsInVSphereInstance = append(testsInVSphereInstance, test.Name)
+		ipPool = ipManager.reserveIPPool(tinkerbellIPPoolSize)
 		if len(testsInVSphereInstance) == testPerInstance || (len(testsList)-1) == i {
 			runConfs = append(runConfs, newInstanceRunConf(awsSession, conf, len(runConfs), strings.Join(testsInVSphereInstance, "|"), ipPool, []*api.Hardware{}, test.Count, VSphereTestRunnerType, testRunnerConfig))
 			testsInVSphereInstance = make([]string, 0, testPerInstance)
@@ -486,25 +488,25 @@ func getHardwarePool(storageBucket string) ([]*api.Hardware, error) {
 	return hardware, nil
 }
 
-func reserveTinkerbellHardware(conf instanceRunConf, invCatalogue *hardwareCatalogue) error {
+func reserveTinkerbellHardware(conf *instanceRunConf, invCatalogue *hardwareCatalogue) error {
 	reservedTinkerbellHardware, err := invCatalogue.reserveHardware(conf.hardwareCount)
 	if err != nil {
-		return fmt.Errorf("timed out waiting for hardware: test instanceId=%v", conf.instanceId)
+		return fmt.Errorf("timed out waiting for hardware")
 	}
 	conf.hardware = reservedTinkerbellHardware
 	logTinkerbellTestHardwareInfo(conf, "Reserved")
 	return nil
 }
 
-func releaseTinkerbellHardware(conf instanceRunConf, invCatalogue *hardwareCatalogue) {
+func releaseTinkerbellHardware(conf *instanceRunConf, invCatalogue *hardwareCatalogue) {
+	logTinkerbellTestHardwareInfo(conf, "Releasing")
 	invCatalogue.releaseHardware(conf.hardware)
-	logTinkerbellTestHardwareInfo(conf, "Released")
 }
 
-func logTinkerbellTestHardwareInfo(conf instanceRunConf, action string) {
+func logTinkerbellTestHardwareInfo(conf *instanceRunConf, action string) {
 	var hardwareInfo []string
 	for _, hardware := range conf.hardware {
 		hardwareInfo = append(hardwareInfo, hardware.Hostname)
 	}
-	conf.logger.V(1).Info(action+" hardware for TestRunner", "instanceId", conf.instanceId, "hardwarePool", strings.Join(hardwareInfo, ", "))
+	conf.logger.V(1).Info(action+" hardware for TestRunner", "hardwarePool", strings.Join(hardwareInfo, ", "))
 }
