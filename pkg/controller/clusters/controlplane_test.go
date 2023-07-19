@@ -9,6 +9,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	"sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 	dockerv1 "sigs.k8s.io/cluster-api/test/infrastructure/docker/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -132,6 +133,32 @@ func TestReconcileControlPlaneExternalEtcdUpgradeWithNoNamespace(t *testing.T) {
 	api.ShouldEventuallyExist(ctx, cp.EtcdMachineTemplate)
 }
 
+func TestReconcileControlPlaneExternalEtcdWithExistingEndpoints(t *testing.T) {
+	g := NewWithT(t)
+	c := env.Client()
+	api := envtest.NewAPIExpecter(t, c)
+	ctx := context.Background()
+	ns := env.CreateNamespaceForTest(ctx, t)
+	cp := controlPlaneExternalEtcd(ns)
+	cp.KubeadmControlPlane.Spec.KubeadmConfigSpec.ClusterConfiguration.Etcd.External.Endpoints = []string{"https://1.1.1.1:2379"}
+	envtest.CreateObjs(ctx, t, c, cp.AllObjects()...)
+
+	cp.KubeadmControlPlane.Spec.KubeadmConfigSpec.ClusterConfiguration.Etcd.External.Endpoints = []string{}
+	g.Expect(clusters.ReconcileControlPlane(ctx, c, cp)).To(Equal(controller.Result{}))
+	api.ShouldEventuallyExist(ctx, cp.Cluster)
+	api.ShouldEventuallyExist(ctx, cp.KubeadmControlPlane)
+	api.ShouldEventuallyExist(ctx, cp.ControlPlaneMachineTemplate)
+	api.ShouldEventuallyExist(ctx, cp.ProviderCluster)
+	api.ShouldEventuallyExist(ctx, cp.EtcdCluster)
+	api.ShouldEventuallyExist(ctx, cp.EtcdMachineTemplate)
+
+	kcp := envtest.CloneNameNamespace(cp.KubeadmControlPlane)
+	api.ShouldEventuallyMatch(ctx, kcp, func(g Gomega) {
+		endpoints := kcp.Spec.KubeadmConfigSpec.ClusterConfiguration.Etcd.External.Endpoints
+		g.Expect(endpoints).To(ContainElement("https://1.1.1.1:2379"))
+	})
+}
+
 func controlPlaneStackedEtcd(namespace string) *clusters.ControlPlane {
 	return &clusters.ControlPlane{
 		Cluster: &clusterv1.Cluster{
@@ -152,6 +179,11 @@ func controlPlaneStackedEtcd(namespace string) *clusters.ControlPlane {
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "my-cluster",
 				Namespace: namespace,
+			},
+			Spec: controlplanev1.KubeadmControlPlaneSpec{
+				KubeadmConfigSpec: v1beta1.KubeadmConfigSpec{
+					ClusterConfiguration: &v1beta1.ClusterConfiguration{},
+				},
 			},
 		},
 		ProviderCluster: &dockerv1.DockerCluster{
@@ -179,6 +211,14 @@ func controlPlaneStackedEtcd(namespace string) *clusters.ControlPlane {
 
 func controlPlaneExternalEtcd(namespace string) *clusters.ControlPlane {
 	cp := controlPlaneStackedEtcd(namespace)
+	cp.KubeadmControlPlane.Spec.KubeadmConfigSpec.ClusterConfiguration.Etcd.External = &v1beta1.ExternalEtcd{
+		// Endpoints of etcd members. Required for ExternalEtcd.
+		Endpoints: []string{},
+		CAFile:    "",
+		CertFile:  "",
+		KeyFile:   "",
+	}
+
 	cp.EtcdCluster = &etcdv1.EtcdadmCluster{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "etcdcluster.cluster.x-k8s.io/v1beta1",
