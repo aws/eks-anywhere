@@ -377,6 +377,7 @@ func (p *Provider) needsNewKubeadmConfigTemplate(workerNodeGroupConfiguration v1
 	return true, nil
 }
 
+// NeedsNewWorkloadTemplate determines if a new workload template is needed.
 func NeedsNewWorkloadTemplate(oldSpec, newSpec *cluster.Spec, oldNmc, newNmc *v1alpha1.NutanixMachineConfig, newWorker, oldWorker v1alpha1.WorkerNodeGroupConfiguration) bool {
 	if oldSpec.Bundles.Spec.Number != newSpec.Bundles.Spec.Number {
 		return true

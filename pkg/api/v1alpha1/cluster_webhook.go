@@ -392,8 +392,6 @@ func validateKubeVersionSkew(newVersion, oldVersion KubernetesVersion, path *fie
 func ValidateWorkerKubernetesVersionSkew(new, old *Cluster) field.ErrorList {
 	var allErrs field.ErrorList
 
-	path := field.NewPath("spec").Child("WorkerNodeConfiguration.kubernetesVersion")
-
 	topKubeVersion := new.Spec.KubernetesVersion
 	oldTopKubeVersion := old.Spec.KubernetesVersion
 
@@ -406,34 +404,43 @@ func ValidateWorkerKubernetesVersionSkew(new, old *Cluster) field.ErrorList {
 			oldVersion := workerNodeGrpOldSpec.KubernetesVersion
 			newVersion := nodeGroupNewSpec.KubernetesVersion
 
-			if oldVersion != nil && newVersion == nil {
-				allErrs = append(
-					allErrs,
-					validateRemoveWorkerKubernetesVersion(topKubeVersion, oldTopKubeVersion, newVersion, oldVersion)...,
-				)
-			}
-
-			if oldVersion != nil && newVersion != nil {
-				allErrs = append(
-					allErrs,
-					validateKubeVersionSkew(*newVersion, *oldVersion, path)...,
-				)
-			}
-
-			if oldVersion == nil && newVersion != nil {
-				allErrs = append(
-					allErrs,
-					validateKubeVersionSkew(*newVersion, oldTopKubeVersion, path)...,
-				)
-			}
-
-			if newVersion != nil {
-				allErrs = append(
-					allErrs,
-					validateCPWorkerKubeSkew(topKubeVersion, *newVersion)...,
-				)
-			}
+			allErrs = performWorkerKubernetesValidations(oldVersion, newVersion, oldTopKubeVersion, topKubeVersion)
 		}
+	}
+
+	return allErrs
+}
+
+func performWorkerKubernetesValidations(oldVersion, newVersion *KubernetesVersion, oldTopKubeVersion, topKubeVersion KubernetesVersion) field.ErrorList {
+	var allErrs field.ErrorList
+	path := field.NewPath("spec").Child("WorkerNodeConfiguration.kubernetesVersion")
+
+	if oldVersion != nil && newVersion == nil {
+		allErrs = append(
+			allErrs,
+			validateRemoveWorkerKubernetesVersion(topKubeVersion, oldTopKubeVersion, newVersion, oldVersion)...,
+		)
+	}
+
+	if oldVersion != nil && newVersion != nil {
+		allErrs = append(
+			allErrs,
+			validateKubeVersionSkew(*newVersion, *oldVersion, path)...,
+		)
+	}
+
+	if oldVersion == nil && newVersion != nil {
+		allErrs = append(
+			allErrs,
+			validateKubeVersionSkew(*newVersion, oldTopKubeVersion, path)...,
+		)
+	}
+
+	if newVersion != nil {
+		allErrs = append(
+			allErrs,
+			validateCPWorkerKubeSkew(topKubeVersion, *newVersion)...,
+		)
 	}
 
 	return allErrs
@@ -515,7 +522,6 @@ func validateCPWorkerKubeSkew(cpVersion, workerVersion KubernetesVersion) field.
 	cpPath := field.NewPath("spec").Child("kubernetesVersion")
 
 	validSkew, err := validKubeMinorVersionDiff(workerVersion, cpVersion)
-
 	if err != nil {
 		allErrs = append(
 			allErrs,

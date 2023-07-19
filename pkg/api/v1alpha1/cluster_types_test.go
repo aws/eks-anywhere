@@ -3001,3 +3001,33 @@ func TestWorkerNodesUpgradeRolloutStrategyEqual(t *testing.T) {
 		})
 	}
 }
+
+func TestWorkerNodeGroupConfigurationKubeVersionUnchanged(t *testing.T) {
+	g := NewWithT(t)
+
+	tests := []struct {
+		name string
+		want bool
+		old  *v1alpha1.KubernetesVersion
+		new  *v1alpha1.KubernetesVersion
+	}{
+		{
+			name: "both nil",
+			want: true,
+			old:  nil,
+			new:  nil,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			old := &v1alpha1.WorkerNodeGroupConfiguration{
+				KubernetesVersion: tt.old,
+			}
+			new := old.DeepCopy()
+			new.KubernetesVersion = tt.new
+
+			changed := v1alpha1.WorkerNodeGroupConfigurationKubeVersionUnchanged(old, new, v1alpha1.Kube119, v1alpha1.Kube119)
+			g.Expect(changed).To(Equal(tt.want))
+		})
+	}
+}

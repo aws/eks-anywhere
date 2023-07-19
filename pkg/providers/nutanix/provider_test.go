@@ -1012,6 +1012,7 @@ func TestNeedsNewControlPlaneTemplate(t *testing.T) {
 	}
 }
 
+// NeedsNewWorkloadTemplate determines if a new workload template is needed.
 func TestNeedsNewWorkloadTemplate(t *testing.T) {
 	tests := []struct {
 		name             string

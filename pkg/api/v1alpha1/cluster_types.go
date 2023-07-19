@@ -510,6 +510,7 @@ func WorkerNodeGroupConfigurationsLabelsMapEqual(a, b []WorkerNodeGroupConfigura
 	return true
 }
 
+// WorkerNodeGroupConfigurationKubeVersionUnchanged checks if a worker node group's k8s version has not changed.
 func WorkerNodeGroupConfigurationKubeVersionUnchanged(o, n *WorkerNodeGroupConfiguration, oldTopVersion, newTopVersion KubernetesVersion) bool {
 	oldVersion := o.KubernetesVersion
 	newVersion := n.KubernetesVersion
