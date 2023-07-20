@@ -716,6 +716,24 @@ func TestUpdateClusterStatusForCNI(t *testing.T) {
 			},
 		},
 		{
+			name:        "control plane is not ready, default cni initialized",
+			skipUpgrade: ptr.Bool(false),
+			conditions: []anywherev1.Condition{
+				{
+					Type:   anywherev1.DefaultCNIConfiguredCondition,
+					Status: "True",
+				},
+				{
+					Type:   anywherev1.ControlPlaneReadyCondition,
+					Status: "False",
+				},
+			},
+			wantCondition: &anywherev1.Condition{
+				Type:   anywherev1.DefaultCNIConfiguredCondition,
+				Status: "True",
+			},
+		},
+		{
 			name:        "cilium is unmanaged",
 			skipUpgrade: ptr.Bool(true),
 			conditions: []anywherev1.Condition{

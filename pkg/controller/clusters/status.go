@@ -42,7 +42,11 @@ func UpdateClusterStatusForWorkers(ctx context.Context, client client.Client, cl
 // UpdateClusterStatusForCNI updates the Cluster status for the default cni before the control plane is ready. The CNI reconciler
 // handles the rest of the logic for determining the condition and updating the status based on the current state of the cluster.
 func UpdateClusterStatusForCNI(ctx context.Context, cluster *anywherev1.Cluster) {
-	if !conditions.IsTrue(cluster, anywherev1.ControlPlaneReadyCondition) {
+	// Here, we want to initialize the DefaultCNIConfigured condition only when the condition does not exist,
+	// such as in the event of cluster creation. In this case, when the control plane is not ready, we can assume
+	// the CNI is not ready yet.
+	if !conditions.IsTrue(cluster, anywherev1.ControlPlaneReadyCondition) &&
+		conditions.Get(cluster, anywherev1.DefaultCNIConfiguredCondition) == nil {
 		conditions.MarkFalse(cluster, anywherev1.DefaultCNIConfiguredCondition, anywherev1.ControlPlaneNotReadyReason, clusterv1.ConditionSeverityInfo, "")
 		return
 	}
