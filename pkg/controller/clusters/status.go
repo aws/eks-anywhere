@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/pkg/errors"
+	v1 "k8s.io/api/core/v1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 	"sigs.k8s.io/cluster-api/util/conditions"
@@ -119,8 +120,14 @@ func updateControlPlaneReadyCondition(cluster *anywherev1.Cluster, kcp *controlp
 
 	// We check the condition signifying the overall health of the control plane components. Usually, the control plane should be healthy
 	// at this point but if that is not the case, we report it as an error.
-	if conditions.IsFalse(kcp, controlplanev1.ControlPlaneComponentsHealthyCondition) {
-		conditions.MarkFalse(cluster, anywherev1.ControlPlaneReadyCondition, anywherev1.ControlPlaneComponentsUnhealthyReason, clusterv1.ConditionSeverityError, conditions.GetMessage(kcp, controlplanev1.ControlPlaneComponentsHealthyCondition))
+	kcpControlPlaneHealthyCondition := conditions.Get(kcp, controlplanev1.ControlPlaneComponentsHealthyCondition)
+	if kcpControlPlaneHealthyCondition == nil {
+		conditions.MarkFalse(cluster, anywherev1.ControlPlaneReadyCondition, anywherev1.ControlPlaneComponentsUnhealthyReason, clusterv1.ConditionSeverityError, "")
+		return
+	}
+
+	if kcpControlPlaneHealthyCondition.Status == v1.ConditionFalse {
+		conditions.MarkFalse(cluster, anywherev1.ControlPlaneReadyCondition, anywherev1.ControlPlaneComponentsUnhealthyReason, clusterv1.ConditionSeverityError, kcpControlPlaneHealthyCondition.Message)
 		return
 	}
 
