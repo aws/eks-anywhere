@@ -67,7 +67,7 @@ func WithRootCACerts(certs []*x509.Certificate) ReaderOpt {
 }
 
 // WithNonCachedProxyConfig configures the HTTP client to read the Proxy configuration
-// from the enviroment on every request instead of relying on the default package
+// from the environment on every request instead of relying on the default package
 // level cache (implemented in the http package with envProxyFuncValue), which is only
 // read once. If Proxy is not configured in the client's transport, nothing is changed.
 // This is only for testing.
