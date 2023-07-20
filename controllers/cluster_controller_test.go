@@ -65,6 +65,10 @@ func testKubeadmControlPlaneFromCluster(cluster *anywherev1.Cluster) *controlpla
 			ReadyReplicas:   expectedReplicas,
 			Conditions: clusterv1.Conditions{
 				{
+					Type:   controlplanev1.ControlPlaneComponentsHealthyCondition,
+					Status: apiv1.ConditionStatus("True"),
+				},
+				{
 					Type:   controlplanev1.AvailableCondition,
 					Status: apiv1.ConditionStatus("True"),
 				},
@@ -234,6 +238,10 @@ func TestClusterReconcilerReconcileConditions(t *testing.T) {
 				UpdatedReplicas: 1,
 				Conditions: clusterv1.Conditions{
 					{
+						Type:   controlplanev1.ControlPlaneComponentsHealthyCondition,
+						Status: apiv1.ConditionStatus("True"),
+					},
+					{
 						Type:   controlplanev1.AvailableCondition,
 						Status: apiv1.ConditionStatus("True"),
 					},
@@ -259,6 +267,10 @@ func TestClusterReconcilerReconcileConditions(t *testing.T) {
 				Replicas:        1,
 				UpdatedReplicas: 1,
 				Conditions: clusterv1.Conditions{
+					{
+						Type:   controlplanev1.ControlPlaneComponentsHealthyCondition,
+						Status: apiv1.ConditionStatus("True"),
+					},
 					{
 						Type:   controlplanev1.AvailableCondition,
 						Status: apiv1.ConditionStatus("True"),
@@ -404,6 +416,10 @@ func TestClusterReconcilerReconcileSelfManagedClusterConditions(t *testing.T) {
 				UpdatedReplicas: 1,
 				Conditions: clusterv1.Conditions{
 					{
+						Type:   controlplanev1.ControlPlaneComponentsHealthyCondition,
+						Status: apiv1.ConditionStatus("True"),
+					},
+					{
 						Type:   controlplanev1.AvailableCondition,
 						Status: apiv1.ConditionStatus("True"),
 					},
@@ -432,6 +448,10 @@ func TestClusterReconcilerReconcileSelfManagedClusterConditions(t *testing.T) {
 				UpdatedReplicas: 1,
 				Conditions: clusterv1.Conditions{
 					{
+						Type:   controlplanev1.ControlPlaneComponentsHealthyCondition,
+						Status: apiv1.ConditionStatus("True"),
+					},
+					{
 						Type:   controlplanev1.AvailableCondition,
 						Status: apiv1.ConditionStatus("True"),
 					},
@@ -459,6 +479,10 @@ func TestClusterReconcilerReconcileSelfManagedClusterConditions(t *testing.T) {
 				Replicas:        1,
 				UpdatedReplicas: 1,
 				Conditions: clusterv1.Conditions{
+					{
+						Type:   controlplanev1.ControlPlaneComponentsHealthyCondition,
+						Status: apiv1.ConditionStatus("True"),
+					},
 					{
 						Type:   controlplanev1.AvailableCondition,
 						Status: apiv1.ConditionStatus("True"),
@@ -491,6 +515,10 @@ func TestClusterReconcilerReconcileSelfManagedClusterConditions(t *testing.T) {
 				Replicas:        1,
 				UpdatedReplicas: 1,
 				Conditions: clusterv1.Conditions{
+					{
+						Type:   controlplanev1.ControlPlaneComponentsHealthyCondition,
+						Status: apiv1.ConditionStatus("True"),
+					},
 					{
 						Type:   controlplanev1.AvailableCondition,
 						Status: apiv1.ConditionStatus("True"),
