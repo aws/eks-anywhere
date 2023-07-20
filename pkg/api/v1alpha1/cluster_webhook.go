@@ -488,7 +488,7 @@ func validateRemoveWorkerKubernetesVersion(newCPVersion, oldCPVersion Kubernetes
 	if parsedOldClusterVersion.LessThan(parsedNewClusterVersion) {
 		allErrs = append(
 			allErrs,
-			field.Invalid(path, oldWorkerVersion, fmt.Sprintf("can't simultaneously remove worker kubernetesVersion and upgrade top level kubernetesVersion: %v", newCPVersion)))
+			field.Invalid(path, oldWorkerVersion, fmt.Sprintf("can't simultaneously remove worker kubernetesVersion and upgrade cluster level kubernetesVersion: %v", newCPVersion)))
 		return allErrs
 	}
 
