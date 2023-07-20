@@ -122,7 +122,8 @@ func (p *Provider) PostBootstrapSetup(ctx context.Context, clusterConfig *v1alph
 	return nil
 }
 
-func (p *Provider) PostBootstrapDeleteForUpgrade(ctx context.Context) error {
+// PostBootstrapDeleteForUpgrade runs any provider-specific operations after bootstrap cluster has been deleted.
+func (p *Provider) PostBootstrapDeleteForUpgrade(ctx context.Context, cluster *types.Cluster) error {
 	// TODO(nutanix): figure out if we need something else here
 	return nil
 }

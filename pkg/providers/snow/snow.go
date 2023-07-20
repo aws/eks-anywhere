@@ -168,7 +168,8 @@ func (p *SnowProvider) PostBootstrapSetup(ctx context.Context, clusterConfig *v1
 	return nil
 }
 
-func (p *SnowProvider) PostBootstrapDeleteForUpgrade(ctx context.Context) error {
+// PostBootstrapDeleteForUpgrade runs any provider-specific operations after bootstrap cluster has been deleted.
+func (p *SnowProvider) PostBootstrapDeleteForUpgrade(ctx context.Context, cluster *types.Cluster) error {
 	return nil
 }
 

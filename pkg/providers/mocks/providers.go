@@ -242,17 +242,17 @@ func (mr *MockProviderMockRecorder) Name() *gomock.Call {
 }
 
 // PostBootstrapDeleteForUpgrade mocks base method.
-func (m *MockProvider) PostBootstrapDeleteForUpgrade(arg0 context.Context) error {
+func (m *MockProvider) PostBootstrapDeleteForUpgrade(arg0 context.Context, arg1 *types.Cluster) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "PostBootstrapDeleteForUpgrade", arg0)
+	ret := m.ctrl.Call(m, "PostBootstrapDeleteForUpgrade", arg0, arg1)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // PostBootstrapDeleteForUpgrade indicates an expected call of PostBootstrapDeleteForUpgrade.
-func (mr *MockProviderMockRecorder) PostBootstrapDeleteForUpgrade(arg0 interface{}) *gomock.Call {
+func (mr *MockProviderMockRecorder) PostBootstrapDeleteForUpgrade(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PostBootstrapDeleteForUpgrade", reflect.TypeOf((*MockProvider)(nil).PostBootstrapDeleteForUpgrade), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PostBootstrapDeleteForUpgrade", reflect.TypeOf((*MockProvider)(nil).PostBootstrapDeleteForUpgrade), arg0, arg1)
 }
 
 // PostBootstrapSetup mocks base method.

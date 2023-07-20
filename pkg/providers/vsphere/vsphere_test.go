@@ -20,6 +20,7 @@ import (
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
 	"github.com/stretchr/testify/assert"
+	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
@@ -3717,4 +3718,201 @@ func TestProviderGenerateDeploymentFileForBottlerocketWithTrustedCertBundles(t *
 
 	test.AssertContentToFile(t, string(cp), "testdata/expected_results_bottlerocket_cert_bundles_config_cp.yaml")
 	test.AssertContentToFile(t, string(md), "testdata/expected_results_bottlerocket_cert_bundles_config_md.yaml")
+}
+
+func TestPreCoreComponentsUpgradeSuccess(t *testing.T) {
+	ctx := context.Background()
+	datacenterConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
+	clusterConfig := givenClusterConfig(t, testClusterConfigMainFilename)
+	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
+	mockCtrl := gomock.NewController(t)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	ipValidator := mocks.NewMockIPValidator(mockCtrl)
+	provider := newProviderWithKubectl(t, datacenterConfig, clusterConfig, kubectl, ipValidator)
+	cluster := &types.Cluster{
+		Name:           "test",
+		KubeconfigFile: "",
+	}
+	values := map[string]string{
+		"kindNodeImage":       "test",
+		"eksaSystemNamespace": constants.EksaSystemNamespace,
+	}
+	daemonSet := &appsv1.DaemonSet{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "ds",
+		},
+		Status: appsv1.DaemonSetStatus{
+			DesiredNumberScheduled: 5,
+			NumberReady:            5,
+		},
+	}
+
+	setupContext(t)
+
+	kubectl.EXPECT().ApplyKubeSpecFromBytes(ctx, cluster, gomock.Any())
+	kubectl.EXPECT().GetDaemonSet(ctx, ethtoolDaemonSetName, constants.EksaSystemNamespace, gomock.Any()).Return(daemonSet, nil)
+
+	template, err := template.New("test").Funcs(sprig.TxtFuncMap()).Parse(ethtoolDaemonSetObject)
+	if err != nil {
+		t.Fatalf("template create error: %v", err)
+	}
+	err = template.Execute(&bytes.Buffer{}, values)
+	if err != nil {
+		t.Fatalf("template execute error: %v", err)
+	}
+
+	err = provider.PreCoreComponentsUpgrade(ctx, cluster, clusterSpec)
+	if err != nil {
+		t.Fatalf("PreCoreComponentsUpgrade error %v", err)
+	}
+}
+
+func TestPreCoreComponentsUpgradeBottlerocketNoOpSuccess(t *testing.T) {
+	ctx := context.Background()
+	clusterSpecManifest := "cluster_bottlerocket_external_etcd.yaml"
+	datacenterConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
+	clusterConfig := givenClusterConfig(t, testClusterConfigMainFilename)
+	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
+	mockCtrl := gomock.NewController(t)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	ipValidator := mocks.NewMockIPValidator(mockCtrl)
+	provider := newProviderWithKubectl(t, datacenterConfig, clusterConfig, kubectl, ipValidator)
+	cluster := &types.Cluster{
+		Name:           "test",
+		KubeconfigFile: "",
+	}
+
+	setupContext(t)
+
+	// No EXPECTs because this should not execute for Bottlerocket
+
+	err := provider.PreCoreComponentsUpgrade(ctx, cluster, clusterSpec)
+	if err != nil {
+		t.Fatalf("PreCoreComponentsUpgrade error %v", err)
+	}
+}
+
+func TestPreCoreComponentsUpgradeApplyError(t *testing.T) {
+	ctx := context.Background()
+	datacenterConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
+	clusterConfig := givenClusterConfig(t, testClusterConfigMainFilename)
+	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
+	mockCtrl := gomock.NewController(t)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	ipValidator := mocks.NewMockIPValidator(mockCtrl)
+	provider := newProviderWithKubectl(t, datacenterConfig, clusterConfig, kubectl, ipValidator)
+	cluster := &types.Cluster{
+		Name:           "test",
+		KubeconfigFile: "",
+	}
+	values := map[string]string{
+		"kindNodeImage":       "test",
+		"eksaSystemNamespace": constants.EksaSystemNamespace,
+	}
+
+	setupContext(t)
+
+	kubectl.EXPECT().ApplyKubeSpecFromBytes(ctx, cluster, gomock.Any()).Return(errors.New("error in apply"))
+
+	template, err := template.New("test").Funcs(sprig.TxtFuncMap()).Parse(ethtoolDaemonSetObject)
+	if err != nil {
+		t.Fatalf("template create error: %v", err)
+	}
+	err = template.Execute(&bytes.Buffer{}, values)
+	if err != nil {
+		t.Fatalf("template execute error: %v", err)
+	}
+
+	err = provider.PreCoreComponentsUpgrade(ctx, cluster, clusterSpec)
+	if err == nil || !strings.Contains(err.Error(), "error in apply") {
+		t.Errorf("expected \"error in apply\" error, got %s", err)
+	}
+}
+
+func TestPreCoreComponentsUpgradeDSNotReadyError(t *testing.T) {
+	ctx := context.Background()
+	datacenterConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
+	clusterConfig := givenClusterConfig(t, testClusterConfigMainFilename)
+	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
+	mockCtrl := gomock.NewController(t)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	ipValidator := mocks.NewMockIPValidator(mockCtrl)
+	provider := newProviderWithKubectl(t, datacenterConfig, clusterConfig, kubectl, ipValidator)
+	cluster := &types.Cluster{
+		Name:           "test",
+		KubeconfigFile: "",
+	}
+	values := map[string]string{
+		"kindNodeImage":       "test",
+		"eksaSystemNamespace": constants.EksaSystemNamespace,
+	}
+	daemonSet := &appsv1.DaemonSet{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "ds",
+		},
+		Status: appsv1.DaemonSetStatus{
+			DesiredNumberScheduled: 5,
+			NumberReady:            3,
+		},
+	}
+
+	setupContext(t)
+
+	kubectl.EXPECT().ApplyKubeSpecFromBytes(ctx, cluster, gomock.Any())
+	kubectl.EXPECT().GetDaemonSet(ctx, ethtoolDaemonSetName, constants.EksaSystemNamespace, gomock.Any()).AnyTimes().Return(daemonSet, nil)
+
+	template, err := template.New("test").Funcs(sprig.TxtFuncMap()).Parse(ethtoolDaemonSetObject)
+	if err != nil {
+		t.Fatalf("template create error: %v", err)
+	}
+	err = template.Execute(&bytes.Buffer{}, values)
+	if err != nil {
+		t.Fatalf("template execute error: %v", err)
+	}
+
+	notReadyErr := "not ready: 3/5 ready"
+	err = provider.PreCoreComponentsUpgrade(ctx, cluster, clusterSpec)
+	if err == nil || !strings.Contains(err.Error(), notReadyErr) {
+		t.Errorf("expected %s error, got %v", notReadyErr, err)
+	}
+}
+
+func TestPostBootstrapDeleteForUpgradeSuccess(t *testing.T) {
+	ctx := context.Background()
+	datacenterConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
+	clusterConfig := givenClusterConfig(t, testClusterConfigMainFilename)
+	mockCtrl := gomock.NewController(t)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	ipValidator := mocks.NewMockIPValidator(mockCtrl)
+	provider := newProviderWithKubectl(t, datacenterConfig, clusterConfig, kubectl, ipValidator)
+	cluster := &types.Cluster{
+		Name:           "test",
+		KubeconfigFile: "",
+	}
+
+	kubectl.EXPECT().Delete(ctx, "daemonset", gomock.Any(), gomock.Any())
+
+	err := provider.PostBootstrapDeleteForUpgrade(ctx, cluster)
+	assert.NoError(t, err)
+}
+
+func TestPostBootstrapDeleteForUpgradeError(t *testing.T) {
+	ctx := context.Background()
+	datacenterConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
+	clusterConfig := givenClusterConfig(t, testClusterConfigMainFilename)
+	mockCtrl := gomock.NewController(t)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	ipValidator := mocks.NewMockIPValidator(mockCtrl)
+	provider := newProviderWithKubectl(t, datacenterConfig, clusterConfig, kubectl, ipValidator)
+	cluster := &types.Cluster{
+		Name:           "test",
+		KubeconfigFile: "",
+	}
+
+	kubectl.EXPECT().Delete(ctx, "daemonset", gomock.Any(), gomock.Any()).Return(errors.New("delete error"))
+
+	err := provider.PostBootstrapDeleteForUpgrade(ctx, cluster)
+	if err == nil || !strings.Contains(err.Error(), "delete error") {
+		t.Errorf("expected \"delete error\" error, got %s", err)
+	}
 }
