@@ -356,7 +356,7 @@ func buildTemplateMapMD(
 		"workerVsphereResourcePool":      workerNodeGroupMachineSpec.ResourcePool,
 		"vsphereServer":                  datacenterSpec.Server,
 		"workerVsphereStoragePolicyName": workerNodeGroupMachineSpec.StoragePolicyName,
-		"vsphereTemplate":                workerNodeGroupMachineSpec.Template,
+		"workerTemplate":                 workerNodeGroupMachineSpec.Template,
 		"workloadVMsMemoryMiB":           workerNodeGroupMachineSpec.MemoryMiB,
 		"workloadVMsNumCPUs":             workerNodeGroupMachineSpec.NumCPUs,
 		"workloadDiskGiB":                workerNodeGroupMachineSpec.DiskGiB,
