@@ -3001,3 +3001,80 @@ func TestWorkerNodesUpgradeRolloutStrategyEqual(t *testing.T) {
 		})
 	}
 }
+
+func TestWorkerNodeGroupConfigurationKubeVersionUnchanged(t *testing.T) {
+	g := NewWithT(t)
+
+	kube119 := v1alpha1.KubernetesVersion("1.19")
+	kube122 := v1alpha1.KubernetesVersion("1.22")
+	tests := []struct {
+		name              string
+		want              bool
+		oldVersion        *v1alpha1.KubernetesVersion
+		newVersion        *v1alpha1.KubernetesVersion
+		oldClusterVersion v1alpha1.KubernetesVersion
+		newClusterVersion v1alpha1.KubernetesVersion
+	}{
+		{
+			name:              "both nil unchanged",
+			want:              true,
+			oldVersion:        nil,
+			newVersion:        nil,
+			oldClusterVersion: v1alpha1.Kube119,
+			newClusterVersion: v1alpha1.Kube119,
+		},
+		{
+			name:       "worker level changed",
+			want:       false,
+			oldVersion: &kube119,
+			newVersion: &kube122,
+		},
+		{
+			name:              "cluster level changed",
+			want:              false,
+			oldVersion:        nil,
+			newVersion:        nil,
+			oldClusterVersion: v1alpha1.Kube119,
+			newClusterVersion: v1alpha1.Kube118,
+		},
+		{
+			name:              "one worker level nil unchanged",
+			want:              true,
+			oldVersion:        nil,
+			newVersion:        &kube119,
+			oldClusterVersion: v1alpha1.Kube119,
+			newClusterVersion: v1alpha1.Kube120,
+		},
+		{
+			name:              "one worker level nil changed",
+			want:              false,
+			oldVersion:        &kube119,
+			newVersion:        nil,
+			oldClusterVersion: v1alpha1.Kube119,
+			newClusterVersion: v1alpha1.Kube120,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			old := &v1alpha1.WorkerNodeGroupConfiguration{
+				KubernetesVersion: tt.oldVersion,
+			}
+			new := &v1alpha1.WorkerNodeGroupConfiguration{
+				KubernetesVersion: tt.newVersion,
+			}
+			oldCluster := &v1alpha1.Cluster{
+				Spec: v1alpha1.ClusterSpec{
+					KubernetesVersion: tt.oldClusterVersion,
+				},
+			}
+			newCluster := &v1alpha1.Cluster{
+				Spec: v1alpha1.ClusterSpec{
+					KubernetesVersion: tt.newClusterVersion,
+				},
+			}
+
+			changed := v1alpha1.WorkerNodeGroupConfigurationKubeVersionUnchanged(old, new, oldCluster, newCluster)
+			g.Expect(changed).To(Equal(tt.want))
+		})
+	}
+}

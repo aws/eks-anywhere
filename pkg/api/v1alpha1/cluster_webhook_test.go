@@ -1,6 +1,8 @@
 package v1alpha1_test
 
 import (
+	"fmt"
+	"strings"
 	"testing"
 
 	. "github.com/onsi/gomega"
@@ -2016,4 +2018,167 @@ func baseCluster(opts ...clusterOpt) *v1alpha1.Cluster {
 	}
 
 	return c
+}
+
+func TestValidateWorkerVersionSkew(t *testing.T) {
+	kube119 := v1alpha1.KubernetesVersion("1.19")
+	kube120 := v1alpha1.KubernetesVersion("1.20")
+	kube121 := v1alpha1.KubernetesVersion("1.21")
+	kubeBad := v1alpha1.KubernetesVersion("badvalue")
+	tests := []struct {
+		name                 string
+		wantErr              error
+		upgradeVersion       v1alpha1.KubernetesVersion
+		oldVersion           v1alpha1.KubernetesVersion
+		upgradeWorkerVersion *v1alpha1.KubernetesVersion
+		oldWorkerVersion     *v1alpha1.KubernetesVersion
+	}{
+		{
+			name:                 "FailureTwoMinorVersions",
+			wantErr:              fmt.Errorf("only +1 minor version skew is supported"),
+			upgradeVersion:       v1alpha1.Kube121,
+			oldVersion:           v1alpha1.Kube121,
+			upgradeWorkerVersion: &kube121,
+			oldWorkerVersion:     &kube119,
+		},
+		{
+			name:                 "FailureMinusOneMinorVersion",
+			wantErr:              fmt.Errorf("kubernetes version downgrade is not supported (%s) -> (%s)", v1alpha1.Kube120, v1alpha1.Kube119),
+			upgradeVersion:       v1alpha1.Kube120,
+			oldVersion:           v1alpha1.Kube120,
+			upgradeWorkerVersion: &kube119,
+			oldWorkerVersion:     &kube120,
+		},
+		{
+			name:                 "SuccessSameVersion",
+			wantErr:              nil,
+			upgradeVersion:       v1alpha1.Kube119,
+			oldVersion:           v1alpha1.Kube119,
+			upgradeWorkerVersion: &kube119,
+			oldWorkerVersion:     &kube119,
+		},
+		{
+			name:                 "SuccessOneMinorVersion",
+			wantErr:              nil,
+			upgradeVersion:       v1alpha1.Kube120,
+			oldVersion:           v1alpha1.Kube120,
+			upgradeWorkerVersion: &kube120,
+			oldWorkerVersion:     &kube119,
+		},
+		{
+			name:                 "SuccessRemoveWorkerVersion",
+			wantErr:              nil,
+			upgradeVersion:       v1alpha1.Kube120,
+			oldVersion:           v1alpha1.Kube120,
+			upgradeWorkerVersion: nil,
+			oldWorkerVersion:     &kube119,
+		},
+		{
+			name:                 "FailRemoveWorkerVersionUpgradek8s",
+			wantErr:              fmt.Errorf("can't simultaneously remove worker kubernetesVersion and upgrade cluster level kubernetesVersion"),
+			upgradeVersion:       v1alpha1.Kube121,
+			oldVersion:           v1alpha1.Kube120,
+			upgradeWorkerVersion: nil,
+			oldWorkerVersion:     &kube119,
+		},
+		{
+			name:                 "FailRemoveWorkerVersion",
+			wantErr:              fmt.Errorf("only +1 minor version skew is supported, minor version skew detected"),
+			upgradeVersion:       v1alpha1.Kube121,
+			oldVersion:           v1alpha1.Kube121,
+			upgradeWorkerVersion: nil,
+			oldWorkerVersion:     &kube119,
+		},
+		{
+			name:                 "FailOldNil",
+			wantErr:              fmt.Errorf("immutable"),
+			upgradeVersion:       v1alpha1.Kube121,
+			oldVersion:           v1alpha1.Kube120,
+			upgradeWorkerVersion: &kube120,
+			oldWorkerVersion:     nil,
+		},
+		{
+			name:                 "FailParseOld",
+			wantErr:              fmt.Errorf("pars"),
+			upgradeVersion:       v1alpha1.Kube121,
+			oldVersion:           v1alpha1.Kube120,
+			upgradeWorkerVersion: &kube120,
+			oldWorkerVersion:     &kubeBad,
+		},
+		{
+			name:                 "FailParseNew",
+			wantErr:              fmt.Errorf("pars"),
+			upgradeVersion:       v1alpha1.Kube121,
+			oldVersion:           v1alpha1.Kube120,
+			upgradeWorkerVersion: &kubeBad,
+			oldWorkerVersion:     &kube120,
+		},
+		{
+			name:                 "FailParseOldRemoveVersion",
+			wantErr:              fmt.Errorf("pars"),
+			upgradeVersion:       v1alpha1.Kube121,
+			oldVersion:           v1alpha1.Kube120,
+			upgradeWorkerVersion: nil,
+			oldWorkerVersion:     &kubeBad,
+		},
+		{
+			name:                 "FailParseOldClusterRemoveVersion",
+			wantErr:              fmt.Errorf("pars"),
+			upgradeVersion:       kube119,
+			oldVersion:           kubeBad,
+			upgradeWorkerVersion: nil,
+			oldWorkerVersion:     &kube119,
+		},
+		{
+			name:                 "FailParseNewClusterRemoveVersion",
+			wantErr:              fmt.Errorf("pars"),
+			upgradeVersion:       kubeBad,
+			oldVersion:           kube119,
+			upgradeWorkerVersion: nil,
+			oldWorkerVersion:     &kube119,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(tt *testing.T) {
+			newCluster := baseCluster()
+			newCluster.Spec.KubernetesVersion = tc.upgradeVersion
+			newCluster.Spec.WorkerNodeGroupConfigurations[0].KubernetesVersion = tc.upgradeWorkerVersion
+
+			oldCluster := baseCluster()
+			oldCluster.Spec.KubernetesVersion = tc.oldVersion
+			oldCluster.Spec.WorkerNodeGroupConfigurations[0].KubernetesVersion = tc.oldWorkerVersion
+
+			err := newCluster.ValidateUpdate(oldCluster)
+			if err != nil && !strings.Contains(err.Error(), tc.wantErr.Error()) {
+				t.Errorf("%v got = %v, \nwant %v", tc.name, err, tc.wantErr)
+			}
+		})
+	}
+}
+
+func TestValidateWorkerVersionSkewAddNodeGroup(t *testing.T) {
+	kube119 := v1alpha1.KubernetesVersion("1.19")
+
+	newCluster := baseCluster()
+	newCluster.Spec.KubernetesVersion = kube119
+	newCluster.Spec.WorkerNodeGroupConfigurations[0].KubernetesVersion = &kube119
+	newWorker := v1alpha1.WorkerNodeGroupConfiguration{
+		Name:  "md-1",
+		Count: ptr.Int(1),
+		MachineGroupRef: &v1alpha1.Ref{
+			Kind: v1alpha1.VSphereMachineConfigKind,
+			Name: "eksa-unit-test",
+		},
+		KubernetesVersion: &kube119,
+	}
+	newCluster.Spec.WorkerNodeGroupConfigurations = append(newCluster.Spec.WorkerNodeGroupConfigurations, newWorker)
+
+	oldCluster := baseCluster()
+	oldCluster.Spec.KubernetesVersion = kube119
+	oldCluster.Spec.WorkerNodeGroupConfigurations[0].KubernetesVersion = &kube119
+
+	err := newCluster.ValidateUpdate(oldCluster)
+	g := NewWithT(t)
+	g.Expect(err).To(Succeed())
 }
