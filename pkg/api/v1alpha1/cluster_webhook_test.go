@@ -2121,6 +2121,22 @@ func TestValidateWorkerVersionSkew(t *testing.T) {
 			upgradeWorkerVersion: nil,
 			oldWorkerVersion:     &kubeBad,
 		},
+		{
+			name:                 "FailParseOldClusterRemoveVersion",
+			wantErr:              fmt.Errorf("pars"),
+			upgradeVersion:       kube119,
+			oldVersion:           kubeBad,
+			upgradeWorkerVersion: nil,
+			oldWorkerVersion:     &kube119,
+		},
+		{
+			name:                 "FailParseNewClusterRemoveVersion",
+			wantErr:              fmt.Errorf("pars"),
+			upgradeVersion:       kubeBad,
+			oldVersion:           kube119,
+			upgradeWorkerVersion: nil,
+			oldWorkerVersion:     &kube119,
+		},
 	}
 
 	for _, tc := range tests {
