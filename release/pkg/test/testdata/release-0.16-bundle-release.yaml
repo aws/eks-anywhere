@@ -164,7 +164,7 @@ spec:
         uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.5.12-eks-a-v0.0.0-dev-release-0.16-build.1
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.16-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.9-rc5/metadata.yaml
-      version: v0.4.9-rc6
+      version: v0.4.9-rc5+abcdef1
     clusterAPI:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.16-build.0/cluster-api/manifests/cluster-api/v1.4.2/core-components.yaml
@@ -941,7 +941,7 @@ spec:
         uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.5.12-eks-a-v0.0.0-dev-release-0.16-build.1
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.16-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.9-rc5/metadata.yaml
-      version: v0.4.9-rc6
+      version: v0.4.9-rc5+abcdef1
     clusterAPI:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.16-build.0/cluster-api/manifests/cluster-api/v1.4.2/core-components.yaml
@@ -1718,7 +1718,7 @@ spec:
         uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.5.12-eks-a-v0.0.0-dev-release-0.16-build.1
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.16-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.9-rc5/metadata.yaml
-      version: v0.4.9-rc6
+      version: v0.4.9-rc5+abcdef1
     clusterAPI:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.16-build.0/cluster-api/manifests/cluster-api/v1.4.2/core-components.yaml
@@ -2468,7 +2468,7 @@ spec:
         uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.5.12-eks-a-v0.0.0-dev-release-0.16-build.1
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.16-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.9-rc5/metadata.yaml
-      version: v0.4.9-rc6
+      version: v0.4.9-rc5+abcdef1
     clusterAPI:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.16-build.0/cluster-api/manifests/cluster-api/v1.4.2/core-components.yaml
@@ -3218,7 +3218,7 @@ spec:
         uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.5.12-eks-a-v0.0.0-dev-release-0.16-build.1
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.16-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.9-rc5/metadata.yaml
-      version: v0.4.9-rc6
+      version: v0.4.9-rc5+abcdef1
     clusterAPI:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.16-build.0/cluster-api/manifests/cluster-api/v1.4.2/core-components.yaml
