@@ -15,6 +15,9 @@ skipped_tests:
 - TestCloudStackKubernetes124AddRemoveAz
 - TestCloudStackKubernetes123MultiEndpointSimpleFlow
 - TestCloudStackKubernetes124MultiEndpointSimpleFlow
+- TestCloudStackKubernetes125MultiEndpointSimpleFlow
+- TestCloudStackKubernetes126MultiEndpointSimpleFlow
+- TestCloudStackKubernetes127MultiEndpointSimpleFlow
 
 # CloudStack Registry Mirror endpoint was not set up
 - TestCloudStackKubernetes123UbuntuAirgappedRegistryMirror
