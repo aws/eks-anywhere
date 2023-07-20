@@ -1487,6 +1487,8 @@ func TestClusterManagerBackupCAPIRetrySuccess(t *testing.T) {
 func TestClusterctlWaitRetryPolicy(t *testing.T) {
 	connectionRefusedError := fmt.Errorf("Error: failed to connect to the management cluster: action failed after 9 attempts: Get \"https://127.0.0.1:53733/api?timeout=30s\": dial tcp 127.0.0.1:53733: connect: connection refused")
 	ioTimeoutError := fmt.Errorf("Error: failed to connect to the management cluster: action failed after 9 attempts: Get \"https://127.0.0.1:61994/api?timeout=30s\": net/http: TLS handshake timeout")
+	infrastructureError := fmt.Errorf("Error: failed to get object graph: failed to check for provisioned infrastructure: cannot start the move operation while cluster is still provisioning the infrastructure")
+	nodeError := fmt.Errorf("Error: failed to get object graph: failed to check for provisioned infrastructure: cannot start the move operation while machine is still provisioning the node")
 	miscellaneousError := fmt.Errorf("Some other random miscellaneous error")
 
 	_, wait := clustermanager.ClusterctlMoveRetryPolicy(1, connectionRefusedError)
@@ -1507,6 +1509,16 @@ func TestClusterctlWaitRetryPolicy(t *testing.T) {
 	_, wait = clustermanager.ClusterctlMoveRetryPolicy(1, ioTimeoutError)
 	if wait != 10*time.Second {
 		t.Errorf("ClusterctlMoveRetryPolicy didn't correctly calculate first retry wait for ioTimeout")
+	}
+
+	_, wait = clustermanager.ClusterctlMoveRetryPolicy(1, infrastructureError)
+	if wait != 10*time.Second {
+		t.Errorf("ClusterctlMoveRetryPolicy didn't correctly calculate first retry wait for infrastructureError")
+	}
+
+	_, wait = clustermanager.ClusterctlMoveRetryPolicy(1, nodeError)
+	if wait != 10*time.Second {
+		t.Errorf("ClusterctlMoveRetryPolicy didn't correctly calculate first retry wait for nodeError")
 	}
 
 	retry, _ := clustermanager.ClusterctlMoveRetryPolicy(1, miscellaneousError)

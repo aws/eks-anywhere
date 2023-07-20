@@ -71,6 +71,7 @@ const (
 
 var (
 	clusterctlNetworkErrorRegex = regexp.MustCompile(`.*failed to connect to the management cluster:.*`)
+	clusterctlMoveErrorRegex    = regexp.MustCompile(`.*cannot start the move operation while.*`)
 	eksaClusterResourceType     = fmt.Sprintf("clusters.%s", v1alpha1.GroupVersion.Group)
 )
 
@@ -271,7 +272,7 @@ func WithNoTimeouts() ClusterManagerOpt {
 }
 
 func clusterctlMoveRetryPolicy(totalRetries int, err error) (retry bool, wait time.Duration) {
-	// Exponential backoff on network errors.  Retrier built-in backoff is linear, so implementing here.
+	// Exponential backoff on network and cluster move errors.  Retrier built-in backoff is linear, so implementing here.
 
 	// Retrier first calls the policy before retry #1.  We want it zero-based for exponentiation.
 	if totalRetries < 1 {
@@ -282,7 +283,7 @@ func clusterctlMoveRetryPolicy(totalRetries int, err error) (retry bool, wait ti
 	const backoffFactor = 1.5
 	waitTime := time.Duration(float64(networkFaultBaseRetryTime) * math.Pow(backoffFactor, float64(totalRetries-1)))
 
-	if match := clusterctlNetworkErrorRegex.MatchString(err.Error()); match {
+	if match := (clusterctlNetworkErrorRegex.MatchString(err.Error()) || clusterctlMoveErrorRegex.MatchString(err.Error())); match {
 		return true, waitTime
 	}
 	return false, 0
