@@ -2414,7 +2414,8 @@ func TestNeedsNewWorkloadTemplateK8sVersion(t *testing.T) {
 	oldSpec := givenClusterSpec(t, testClusterConfigMainFilename)
 	newK8sSpec := oldSpec.DeepCopy()
 	newK8sSpec.Cluster.Spec.KubernetesVersion = "1.25"
-	assert.True(t, NeedsNewWorkloadTemplate(oldSpec, newK8sSpec, nil, nil, nil, nil, nil, nil, test.NewNullLogger()))
+	wng := &oldSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0]
+	assert.True(t, NeedsNewWorkloadTemplate(oldSpec, newK8sSpec, nil, nil, nil, nil, wng, wng, test.NewNullLogger()))
 }
 
 func TestNeedsNewWorkloadTemplateBundleNumber(t *testing.T) {
