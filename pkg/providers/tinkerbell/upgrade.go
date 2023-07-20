@@ -35,7 +35,7 @@ func needsNewControlPlaneTemplate(oldSpec, newSpec *cluster.Spec) bool {
 	return false
 }
 
-func needsNewWorkloadTemplate(oldSpec, newSpec *cluster.Spec, newWorker, oldWorker v1alpha1.WorkerNodeGroupConfiguration) bool {
+func needsNewWorkloadTemplate(oldSpec, newSpec *cluster.Spec, oldWorker, newWorker v1alpha1.WorkerNodeGroupConfiguration) bool {
 	if oldSpec.Bundles.Spec.Number != newSpec.Bundles.Spec.Number {
 		return true
 	}

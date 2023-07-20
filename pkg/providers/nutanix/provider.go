@@ -362,8 +362,8 @@ func (p *Provider) getWorkerNodeMachineConfigs(ctx context.Context, workloadClus
 }
 
 func (p *Provider) needsNewMachineTemplate(currentSpec, newClusterSpec *cluster.Spec, workerNodeGroupConfiguration v1alpha1.WorkerNodeGroupConfiguration, ndc *v1alpha1.NutanixDatacenterConfig, prevWorkerNodeGroupConfigs map[string]v1alpha1.WorkerNodeGroupConfiguration, oldWorkerMachineConfig *v1alpha1.NutanixMachineConfig, newWorkerMachineConfig *v1alpha1.NutanixMachineConfig) (bool, error) {
-	if prev, ok := prevWorkerNodeGroupConfigs[workerNodeGroupConfiguration.Name]; ok {
-		needsNewWorkloadTemplate := NeedsNewWorkloadTemplate(currentSpec, newClusterSpec, oldWorkerMachineConfig, newWorkerMachineConfig, workerNodeGroupConfiguration, prev)
+	if prevWorkerGroup, ok := prevWorkerNodeGroupConfigs[workerNodeGroupConfiguration.Name]; ok {
+		needsNewWorkloadTemplate := NeedsNewWorkloadTemplate(currentSpec, newClusterSpec, oldWorkerMachineConfig, newWorkerMachineConfig, prevWorkerGroup, workerNodeGroupConfiguration)
 		return needsNewWorkloadTemplate, nil
 	}
 	return true, nil
@@ -378,7 +378,7 @@ func (p *Provider) needsNewKubeadmConfigTemplate(workerNodeGroupConfiguration v1
 }
 
 // NeedsNewWorkloadTemplate determines if a new workload template is needed.
-func NeedsNewWorkloadTemplate(oldSpec, newSpec *cluster.Spec, oldNmc, newNmc *v1alpha1.NutanixMachineConfig, newWorker, oldWorker v1alpha1.WorkerNodeGroupConfiguration) bool {
+func NeedsNewWorkloadTemplate(oldSpec, newSpec *cluster.Spec, oldNmc, newNmc *v1alpha1.NutanixMachineConfig, oldWorker, newWorker v1alpha1.WorkerNodeGroupConfiguration) bool {
 	if oldSpec.Bundles.Spec.Number != newSpec.Bundles.Spec.Number {
 		return true
 	}

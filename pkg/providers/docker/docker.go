@@ -344,7 +344,7 @@ func NeedsNewControlPlaneTemplate(oldSpec, newSpec *cluster.Spec) bool {
 }
 
 // NeedsNewWorkloadTemplate determines if a new workload template is needed.
-func NeedsNewWorkloadTemplate(oldSpec, newSpec *cluster.Spec, newWorker, oldWorker v1alpha1.WorkerNodeGroupConfiguration) bool {
+func NeedsNewWorkloadTemplate(oldSpec, newSpec *cluster.Spec, oldWorker, newWorker v1alpha1.WorkerNodeGroupConfiguration) bool {
 	if !v1alpha1.WorkerNodeGroupConfigurationSliceTaintsEqual(oldSpec.Cluster.Spec.WorkerNodeGroupConfigurations, newSpec.Cluster.Spec.WorkerNodeGroupConfigurations) ||
 		!v1alpha1.WorkerNodeGroupConfigurationsLabelsMapEqual(oldSpec.Cluster.Spec.WorkerNodeGroupConfigurations, newSpec.Cluster.Spec.WorkerNodeGroupConfigurations) ||
 		!v1alpha1.WorkerNodeGroupConfigurationKubeVersionUnchanged(&oldWorker, &newWorker, oldSpec.Cluster, newSpec.Cluster) {
@@ -459,8 +459,8 @@ func (p *provider) generateCAPISpecForUpgrade(ctx context.Context, bootstrapClus
 }
 
 func (p *provider) needsNewMachineTemplate(currentSpec, newClusterSpec *cluster.Spec, workerNodeGroupConfiguration v1alpha1.WorkerNodeGroupConfiguration, prevWorkerNodeGroupConfigs map[string]v1alpha1.WorkerNodeGroupConfiguration) (bool, error) {
-	if prev, ok := prevWorkerNodeGroupConfigs[workerNodeGroupConfiguration.Name]; ok {
-		needsNewWorkloadTemplate := NeedsNewWorkloadTemplate(currentSpec, newClusterSpec, workerNodeGroupConfiguration, prev)
+	if prevWorkerNodeGroup, ok := prevWorkerNodeGroupConfigs[workerNodeGroupConfiguration.Name]; ok {
+		needsNewWorkloadTemplate := NeedsNewWorkloadTemplate(currentSpec, newClusterSpec, prevWorkerNodeGroup, workerNodeGroupConfiguration)
 		return needsNewWorkloadTemplate, nil
 	}
 	return true, nil

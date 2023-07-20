@@ -587,7 +587,7 @@ func NeedsNewControlPlaneTemplate(oldSpec, newSpec *cluster.Spec, oldVdc, newVdc
 }
 
 // NeedsNewWorkloadTemplate determines if a new workload template is needed.
-func NeedsNewWorkloadTemplate(oldSpec, newSpec *cluster.Spec, oldVdc, newVdc *v1alpha1.VSphereDatacenterConfig, oldVmc, newVmc *v1alpha1.VSphereMachineConfig, newWorker, oldWorker v1alpha1.WorkerNodeGroupConfiguration) bool {
+func NeedsNewWorkloadTemplate(oldSpec, newSpec *cluster.Spec, oldVdc, newVdc *v1alpha1.VSphereDatacenterConfig, oldVmc, newVmc *v1alpha1.VSphereMachineConfig, oldWorker, newWorker v1alpha1.WorkerNodeGroupConfiguration) bool {
 	if oldSpec.Bundles.Spec.Number != newSpec.Bundles.Spec.Number {
 		return true
 	}
@@ -1006,8 +1006,8 @@ func (p *vsphereProvider) getWorkerNodeMachineConfigs(ctx context.Context, workl
 }
 
 func (p *vsphereProvider) needsNewMachineTemplate(currentSpec, newClusterSpec *cluster.Spec, workerNodeGroupConfiguration v1alpha1.WorkerNodeGroupConfiguration, vdc *v1alpha1.VSphereDatacenterConfig, prevWorkerNodeGroupConfigs map[string]v1alpha1.WorkerNodeGroupConfiguration, oldWorkerMachineConfig *v1alpha1.VSphereMachineConfig, newWorkerMachineConfig *v1alpha1.VSphereMachineConfig) (bool, error) {
-	if prev, ok := prevWorkerNodeGroupConfigs[workerNodeGroupConfiguration.Name]; ok {
-		needsNewWorkloadTemplate := NeedsNewWorkloadTemplate(currentSpec, newClusterSpec, vdc, newClusterSpec.VSphereDatacenter, oldWorkerMachineConfig, newWorkerMachineConfig, workerNodeGroupConfiguration, prev)
+	if prevWorkerNode, ok := prevWorkerNodeGroupConfigs[workerNodeGroupConfiguration.Name]; ok {
+		needsNewWorkloadTemplate := NeedsNewWorkloadTemplate(currentSpec, newClusterSpec, vdc, newClusterSpec.VSphereDatacenter, oldWorkerMachineConfig, newWorkerMachineConfig, prevWorkerNode, workerNodeGroupConfiguration)
 		return needsNewWorkloadTemplate, nil
 	}
 	return true, nil
