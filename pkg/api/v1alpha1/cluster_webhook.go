@@ -401,11 +401,22 @@ func ValidateWorkerKubernetesVersionSkew(new, old *Cluster) field.ErrorList {
 	}
 	for _, nodeGroupNewSpec := range new.Spec.WorkerNodeGroupConfigurations {
 		newVersion := nodeGroupNewSpec.KubernetesVersion
-		oldVersion := nodeGroupNewSpec.KubernetesVersion
 		if workerNodeGrpOldSpec, ok := workerNodeGroupMap[nodeGroupNewSpec.Name]; ok {
-			oldVersion = workerNodeGrpOldSpec.KubernetesVersion
+			oldVersion := workerNodeGrpOldSpec.KubernetesVersion
+			allErrs = append(allErrs, performWorkerKubernetesValidations(oldVersion, newVersion, oldClusterVersion, newClusterVersion)...)
+		} else {
+			allErrs = append(allErrs, performWorkerKubernetesValidationsNewNodeGroup(newVersion, newClusterVersion)...)
 		}
-		allErrs = performWorkerKubernetesValidations(oldVersion, newVersion, oldClusterVersion, newClusterVersion)
+	}
+
+	return allErrs
+}
+
+func performWorkerKubernetesValidationsNewNodeGroup(newVersion *KubernetesVersion, newClusterVersion KubernetesVersion) field.ErrorList {
+	var allErrs field.ErrorList
+
+	if newVersion != nil {
+		allErrs = append(allErrs, validateCPWorkerKubeSkew(newClusterVersion, *newVersion)...)
 	}
 
 	return allErrs
