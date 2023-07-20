@@ -543,7 +543,7 @@ func validateCPWorkerKubeSkew(cpVersion, workerVersion KubernetesVersion) field.
 	if !validSkew {
 		allErrs = append(
 			allErrs,
-			field.Invalid(cpPath, cpVersion, fmt.Sprintf("top level minor version must be within 2 versions greater than worker node group version: %v", workerVersion)))
+			field.Invalid(cpPath, cpVersion, fmt.Sprintf("cluster level minor version must be within 2 versions greater than worker node group version: %v", workerVersion)))
 	}
 
 	return allErrs
