@@ -66,7 +66,7 @@ spec:
 {{- if (ne .controlPlaneVsphereStoragePolicyName "") }}
       storagePolicyName: "{{.controlPlaneVsphereStoragePolicyName}}"
 {{- end }}
-      template: {{.vsphereTemplate}}
+      template: {{.controlPlaneTemplate}}
       thumbprint: '{{.thumbprint}}'
 {{- if .controlPlaneTagIDs }}
       tagIDs: {{.controlPlaneTagIDs}}
@@ -589,7 +589,7 @@ spec:
 {{- if (ne .etcdVsphereStoragePolicyName "") }}
       storagePolicyName: "{{.etcdVsphereStoragePolicyName}}"
 {{- end }}
-      template: {{.vsphereTemplate}}
+      template: {{.etcdTemplate}}
       thumbprint: '{{.thumbprint}}'
 {{- if .etcdTagIDs }}
       tagIDs: {{.etcdTagIDs}}
