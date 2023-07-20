@@ -399,7 +399,7 @@ func (c *upgradeTestSetup) expectResumeGitOpsReconcile(expectedCluster *types.Cl
 
 func (c *upgradeTestSetup) expectPostBootstrapDeleteForUpgrade() {
 	gomock.InOrder(
-		c.provider.EXPECT().PostBootstrapDeleteForUpgrade(c.ctx),
+		c.provider.EXPECT().PostBootstrapDeleteForUpgrade(c.ctx, c.managementCluster),
 	)
 }
 

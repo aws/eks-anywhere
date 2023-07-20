@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: vsphere-disable-udp-offload
+  namespace: {{.eksaSystemNamespace}}
+spec:
+  selector:
+    matchLabels:
+      name: vsphere-disable-udp-offload
+  template:
+    metadata:
+      labels:
+        name: vsphere-disable-udp-offload
+    spec:
+      containers:
+        - name: vsphere-disable-udp-offload-complete
+          image: {{.kindNodeImage}}
+          imagePullPolicy: IfNotPresent
+          command: [ "/bin/sh" ]
+          args: [ "-c", "sleep infinity" ]
+      initContainers:
+        - name: vsphere-disable-udp-offload
+          image: {{.kindNodeImage}}
+          command:
+            - "/bin/sh"
+            - "-c"
+            - "ethtool -K eth0 tx-udp_tnl-segmentation off && ethtool -K eth0 tx-udp_tnl-csum-segmentation off && echo 'done'"
+          securityContext:
+            privileged: true
+      hostNetwork: true
+      restartPolicy: Always
+      tolerations:
+        - operator: "Exists"

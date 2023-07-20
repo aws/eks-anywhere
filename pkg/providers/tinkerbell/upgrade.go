@@ -163,7 +163,8 @@ func (p *Provider) validateAvailableHardwareForUpgrade(ctx context.Context, curr
 	return nil
 }
 
-func (p *Provider) PostBootstrapDeleteForUpgrade(ctx context.Context) error {
+// PostBootstrapDeleteForUpgrade runs any provider-specific operations after bootstrap cluster has been deleted.
+func (p *Provider) PostBootstrapDeleteForUpgrade(ctx context.Context, cluster *types.Cluster) error {
 	if err := p.stackInstaller.UninstallLocal(ctx); err != nil {
 		return err
 	}

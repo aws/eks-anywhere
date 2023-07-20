@@ -56,7 +56,7 @@ func (tc *templateRegistry) templateForRelease(t *testing.T, osFamily anywherev1
 		tc.cache[cacheKey] = template
 		return template
 	}
-	t.Logf("Env var %s not is set, trying default generated template name", templateEnvVarName)
+	t.Logf("Env var %s is not set, trying default generated template name", templateEnvVarName)
 
 	// Env var is not set, try default template name
 	template = tc.generator.defaultNameForTemplate(osFamilyStr, eksDName)

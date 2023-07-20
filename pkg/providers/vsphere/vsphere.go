@@ -12,12 +12,15 @@ import (
 
 	"github.com/Masterminds/sprig"
 	etcdv1 "github.com/aws/etcdadm-controller/api/v1beta1"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
+	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/constants"
@@ -28,6 +31,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/providers/common"
 	"github.com/aws/eks-anywhere/pkg/retrier"
+	"github.com/aws/eks-anywhere/pkg/templater"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
 	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
@@ -48,6 +52,7 @@ const (
 	backOffPeriod            = 5 * time.Second
 	disk1                    = "Hard disk 1"
 	disk2                    = "Hard disk 2"
+	ethtoolDaemonSetName     = "vsphere-disable-udp-offload"
 )
 
 //go:embed config/template-cp.yaml
@@ -58,6 +63,9 @@ var defaultClusterConfigMD string
 
 //go:embed config/secret.yaml
 var defaultSecretObject string
+
+//go:embed config/ethtool_daemonset.yaml
+var ethtoolDaemonSetObject string
 
 var (
 	eksaVSphereDatacenterResourceType = fmt.Sprintf("vspheredatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
@@ -135,6 +143,8 @@ type ProviderKubectlClient interface {
 	DeleteEksaDatacenterConfig(ctx context.Context, vsphereDatacenterResourceType string, vsphereDatacenterConfigName string, kubeconfigFile string, namespace string) error
 	DeleteEksaMachineConfig(ctx context.Context, vsphereMachineResourceType string, vsphereMachineConfigName string, kubeconfigFile string, namespace string) error
 	ApplyTolerationsFromTaintsToDaemonSet(ctx context.Context, oldTaints []corev1.Taint, newTaints []corev1.Taint, dsName string, kubeconfigFile string) error
+	GetDaemonSet(ctx context.Context, name, namespace, kubeconfig string) (*appsv1.DaemonSet, error)
+	Delete(ctx context.Context, resourceType, kubeconfig string, opts ...kubernetes.KubectlDeleteOption) error
 }
 
 // IPValidator is an interface that defines methods to validate the control plane IP.
@@ -1147,15 +1157,72 @@ func (p *vsphereProvider) InstallCustomProviderComponents(ctx context.Context, k
 	return nil
 }
 
-func (p *vsphereProvider) PostBootstrapDeleteForUpgrade(ctx context.Context) error {
+// PostBootstrapDeleteForUpgrade runs any provider-specific operations after bootstrap cluster has been deleted.
+func (p *vsphereProvider) PostBootstrapDeleteForUpgrade(ctx context.Context, cluster *types.Cluster) error {
+	// Delete the daemonset that was used to disable udp offloading in ubuntu/redhat nodes.
+	logger.V(3).Info("Deleting vsphere-disable-udp-offload daemonset")
+	o := &kubernetes.KubectlDeleteOptions{
+		Name:      ethtoolDaemonSetName,
+		Namespace: constants.EksaSystemNamespace,
+	}
+	if err := p.providerKubectlClient.Delete(ctx, "daemonset", cluster.KubeconfigFile, o); err != nil && !apierrors.IsNotFound(err) {
+		return fmt.Errorf("deleting daemonset: %v", err)
+	}
 	return nil
 }
 
-// PreCoreComponentsUpgrade staisfies the Provider interface.
+// PreCoreComponentsUpgrade satisfies the Provider interface.
 func (p *vsphereProvider) PreCoreComponentsUpgrade(
 	ctx context.Context,
 	cluster *types.Cluster,
 	clusterSpec *cluster.Spec,
 ) error {
+	// This is only needed for EKS-A v0.17 because UDP offloading needs to be disabled for
+	// the new Cilium version to work with VSphere clusters. Since our templates that were shipped
+	// in v0.16 releases still have UDP offloading enabled in the nodes, we must apply the daemon set
+	// to disable UDP offloading in all the nodes before upgrading Cilium.
+	// We will remove this in EKS-A release v0.18.0.
+	return p.applyEthtoolDaemonSet(ctx, cluster, clusterSpec)
+}
+
+func (p *vsphereProvider) applyEthtoolDaemonSet(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
+	for _, mc := range clusterSpec.Config.VSphereMachineConfigs {
+		// This is only needed for Ubuntu and Redhat OS.
+		// We only need to check one since the OS family has to be the same for all machine configs
+		if mc.Spec.OSFamily == v1alpha1.Bottlerocket {
+			return nil
+		}
+	}
+	logger.V(4).Info("Applying vsphere-disable-udp-offload daemonset")
+	bundle := clusterSpec.VersionsBundle
+	values := map[string]interface{}{
+		"eksaSystemNamespace": constants.EksaSystemNamespace,
+		"kindNodeImage":       bundle.EksD.KindNode.VersionedImage(),
+	}
+	b, err := templater.Execute(ethtoolDaemonSetObject, values)
+	if err != nil {
+		return err
+	}
+
+	if err = p.providerKubectlClient.ApplyKubeSpecFromBytes(ctx, cluster, b); err != nil {
+		return err
+	}
+
+	return p.Retrier.Retry(
+		func() error {
+			return p.checkEthtoolDaemonSetReady(ctx, cluster)
+		},
+	)
+}
+
+func (p *vsphereProvider) checkEthtoolDaemonSetReady(ctx context.Context, cluster *types.Cluster) error {
+	ethtoolDaemonSet, err := p.providerKubectlClient.GetDaemonSet(ctx, ethtoolDaemonSetName, constants.EksaSystemNamespace, cluster.KubeconfigFile)
+	if err != nil {
+		return err
+	}
+
+	if ethtoolDaemonSet.Status.DesiredNumberScheduled != ethtoolDaemonSet.Status.NumberReady {
+		return fmt.Errorf("daemonSet %s is not ready: %d/%d ready", ethtoolDaemonSetName, ethtoolDaemonSet.Status.NumberReady, ethtoolDaemonSet.Status.DesiredNumberScheduled)
+	}
 	return nil
 }
