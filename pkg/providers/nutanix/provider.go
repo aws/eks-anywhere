@@ -384,7 +384,7 @@ func NeedsNewWorkloadTemplate(oldSpec, newSpec *cluster.Spec, oldNmc, newNmc *v1
 	}
 	if !v1alpha1.WorkerNodeGroupConfigurationSliceTaintsEqual(oldSpec.Cluster.Spec.WorkerNodeGroupConfigurations, newSpec.Cluster.Spec.WorkerNodeGroupConfigurations) ||
 		!v1alpha1.WorkerNodeGroupConfigurationsLabelsMapEqual(oldSpec.Cluster.Spec.WorkerNodeGroupConfigurations, newSpec.Cluster.Spec.WorkerNodeGroupConfigurations) ||
-		!v1alpha1.WorkerNodeGroupConfigurationKubeVersionUnchanged(&newWorker, &oldWorker, newSpec.Cluster.Spec.KubernetesVersion, oldSpec.Cluster.Spec.KubernetesVersion) {
+		!v1alpha1.WorkerNodeGroupConfigurationKubeVersionUnchanged(&oldWorker, &newWorker, oldSpec.Cluster, newSpec.Cluster) {
 		return true
 	}
 	return AnyImmutableFieldChanged(oldNmc, newNmc)

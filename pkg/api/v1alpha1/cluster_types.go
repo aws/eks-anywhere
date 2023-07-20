@@ -510,16 +510,16 @@ func WorkerNodeGroupConfigurationsLabelsMapEqual(a, b []WorkerNodeGroupConfigura
 	return true
 }
 
-// WorkerNodeGroupConfigurationKubeVersionUnchanged checks if a worker node group's k8s version has not changed.
-func WorkerNodeGroupConfigurationKubeVersionUnchanged(o, n *WorkerNodeGroupConfiguration, oldTopVersion, newTopVersion KubernetesVersion) bool {
+// WorkerNodeGroupConfigurationKubeVersionUnchanged checks if a worker node group's k8s version has not changed. The ClusterVersions are the top level kubernetes version of a cluster.
+func WorkerNodeGroupConfigurationKubeVersionUnchanged(o, n *WorkerNodeGroupConfiguration, oldCluster, newCluster *Cluster) bool {
 	oldVersion := o.KubernetesVersion
 	newVersion := n.KubernetesVersion
 
 	if oldVersion == nil {
-		oldVersion = &oldTopVersion
+		oldVersion = &oldCluster.Spec.KubernetesVersion
 	}
 	if newVersion == nil {
-		newVersion = &newTopVersion
+		newVersion = &newCluster.Spec.KubernetesVersion
 	}
 
 	return newVersion.Equal(oldVersion)

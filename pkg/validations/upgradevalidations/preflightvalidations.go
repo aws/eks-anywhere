@@ -80,7 +80,7 @@ func (u *UpgradeValidations) PreflightValidations(ctx context.Context) []validat
 		func() *validations.ValidationResult {
 			return &validations.ValidationResult{
 				Name:        "upgrade cluster worker node group kubernetes version increment",
-				Remediation: "ensure that the cluster worker node group kubernetes version is incremented by one minor version exactly (e.g. 1.18 -> 1.19) and top level kubernetes version does not exceed worker node group version by one minor version",
+				Remediation: "ensure that the cluster worker node group kubernetes version is incremented by one minor version exactly (e.g. 1.18 -> 1.19) and top level kubernetes version does not exceed worker node group version by two minors version",
 				Err:         ValidateWorkerServerVersionSkew(ctx, u.Opts.Spec.Cluster, u.Opts.WorkloadCluster, u.Opts.ManagementCluster, k),
 			}
 		},

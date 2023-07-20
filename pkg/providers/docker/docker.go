@@ -347,7 +347,7 @@ func NeedsNewControlPlaneTemplate(oldSpec, newSpec *cluster.Spec) bool {
 func NeedsNewWorkloadTemplate(oldSpec, newSpec *cluster.Spec, newWorker, oldWorker v1alpha1.WorkerNodeGroupConfiguration) bool {
 	if !v1alpha1.WorkerNodeGroupConfigurationSliceTaintsEqual(oldSpec.Cluster.Spec.WorkerNodeGroupConfigurations, newSpec.Cluster.Spec.WorkerNodeGroupConfigurations) ||
 		!v1alpha1.WorkerNodeGroupConfigurationsLabelsMapEqual(oldSpec.Cluster.Spec.WorkerNodeGroupConfigurations, newSpec.Cluster.Spec.WorkerNodeGroupConfigurations) ||
-		!v1alpha1.WorkerNodeGroupConfigurationKubeVersionUnchanged(&newWorker, &oldWorker, newSpec.Cluster.Spec.KubernetesVersion, oldSpec.Cluster.Spec.KubernetesVersion) {
+		!v1alpha1.WorkerNodeGroupConfigurationKubeVersionUnchanged(&oldWorker, &newWorker, oldSpec.Cluster, newSpec.Cluster) {
 		return true
 	}
 	return oldSpec.Bundles.Spec.Number != newSpec.Bundles.Spec.Number
