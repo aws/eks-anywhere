@@ -24,6 +24,12 @@ spec:
       machineGroupRef:
         name: eksa-unit-test-md-2
         kind: NutanixMachineConfig
+  externalEtcdConfiguration:
+    name: eksa-unit-test
+    count: 3
+    machineGroupRef:
+      name: eksa-unit-test
+      kind: NutanixMachineConfig
   datacenterRef:
     kind: NutanixDatacenterConfig
     name: eksa-unit-test

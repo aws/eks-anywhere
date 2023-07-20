@@ -33,6 +33,12 @@ spec:
       labels:
         key1-md: value1-md
         key2-md: value2-md
+  externalEtcdConfiguration:
+    name: eksa-unit-test
+    count: 3
+    machineGroupRef:
+      name: eksa-unit-test
+      kind: NutanixMachineConfig
   datacenterRef:
     kind: NutanixDatacenterConfig
     name: eksa-unit-test
