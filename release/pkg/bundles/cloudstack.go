@@ -87,6 +87,9 @@ func GetCloudStackBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]
 		return anywherev1alpha1.CloudStackBundle{}, errors.Wrapf(err, "Error getting version for cluster-api-provider-cloudstack")
 	}
 
+	_ = version
+	version = "v0.4.9-rc6"
+
 	bundle := anywherev1alpha1.CloudStackBundle{
 		Version:              version,
 		ClusterAPIController: bundleImageArtifacts["cluster-api-provider-cloudstack"],
