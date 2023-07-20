@@ -1425,7 +1425,6 @@ func TestCloudStackSkipKubernetesVersionUpgradeWorkerNodes(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
 		provider,
-		framework.WithFluxGithub(),
 		framework.WithClusterFiller(
 			api.WithKubernetesVersion(v1alpha1.Kube123),
 			api.WithControlPlaneCount(1),
@@ -1437,7 +1436,7 @@ func TestCloudStackSkipKubernetesVersionUpgradeWorkerNodes(t *testing.T) {
 		test,
 		v1alpha1.Kube124,
 		v1alpha1.Kube123,
-		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube124), api.WithWorkerNodeKubernetesVersion("1.23")),
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube124), api.WithWorkerNodeKubernetesVersion(v1alpha1.Kube123)),
 		provider.WithProviderUpgrade(provider.Redhat124Template()),
 	)
 }

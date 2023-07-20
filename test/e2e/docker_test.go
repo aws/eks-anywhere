@@ -1320,3 +1320,23 @@ func TestDockerCiliumSkipUpgrade_ControllerUpgrade(t *testing.T) {
 	test.ManagementCluster.StopIfFailed()
 	test.DeleteManagementCluster()
 }
+
+func TestDockerSkipKubernetesVersionUpgradeWorkerNodes(t *testing.T) {
+	provider := framework.NewDocker(t)
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube126),
+			api.WithControlPlaneCount(1),
+			api.WithWorkerNodeCount(1),
+			api.WithStackedEtcdTopology(),
+		),
+	)
+	runSimpleUpgradeFlowWorkerNodeVersion(
+		test,
+		v1alpha1.Kube127,
+		v1alpha1.Kube126,
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube127), api.WithWorkerNodeKubernetesVersion(v1alpha1.Kube126)),
+	)
+}
