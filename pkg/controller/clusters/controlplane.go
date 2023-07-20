@@ -101,6 +101,27 @@ func ReconcileControlPlane(ctx context.Context, c client.Client, cp *ControlPlan
 		clientutil.AddAnnotation(cp.KubeadmControlPlane, clusterv1.PausedAnnotation, "true")
 	}
 
+	// When the controller reconciles the control plane for a cluster with an external etcd configuration
+	// the KubeadmControlPlane.Spec.KubeadmConfigSpec.ClusterConfiguration.Etcd.External.Endpoints field is
+	// defaulted to an empty slice. However, at some point that field in KubeadmControlPlane object is filled
+	// and updated by another component
+
+	// We do not want to update the field with an empty slice again, so here we check if the endpoints for the
+	// external etcd have already been populated on the KubeadmControlPlane object and override ours before applying it.
+	kcp := &controlplanev1.KubeadmControlPlane{}
+	kcpKey := client.ObjectKey{
+		Name:      cluster.Spec.ControlPlaneRef.Name,
+		Namespace: cluster.Spec.ControlPlaneRef.Namespace,
+	}
+	if err = c.Get(ctx, kcpKey, kcp); err != nil {
+		return controller.Result{}, errors.Wrap(err, "reading kubeadmcontrolplane object")
+	}
+
+	externalEndpoints := kcp.Spec.KubeadmConfigSpec.ClusterConfiguration.Etcd.External.Endpoints
+	if len(externalEndpoints) != 0 {
+		cp.KubeadmControlPlane.Spec.KubeadmConfigSpec.ClusterConfiguration.Etcd.External.Endpoints = externalEndpoints
+	}
+
 	return controller.Result{}, applyAllControlPlaneObjects(ctx, c, cp)
 }
 
