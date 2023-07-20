@@ -2075,7 +2075,7 @@ func TestValidateWorkerVersionSkew(t *testing.T) {
 		},
 		{
 			name:                 "FailRemoveWorkerVersionUpgradek8s",
-			wantErr:              fmt.Errorf("can't simultaneously remove worker kubernetesVersion and upgrade top level kubernetesVersion"),
+			wantErr:              fmt.Errorf("can't simultaneously remove worker kubernetesVersion and upgrade cluster level kubernetesVersion"),
 			upgradeVersion:       v1alpha1.Kube121,
 			oldVersion:           v1alpha1.Kube120,
 			upgradeWorkerVersion: nil,
