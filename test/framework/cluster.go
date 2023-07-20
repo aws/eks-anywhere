@@ -741,6 +741,39 @@ func (e *ClusterE2ETest) ValidateCluster(kubeVersion v1alpha1.KubernetesVersion)
 	}
 }
 
+func (e *ClusterE2ETest) ValidateClusterWorkerNodeVersion(kubeVersion, workerKubeVersion v1alpha1.KubernetesVersion) {
+	ctx := context.Background()
+	e.T.Log("Validating cluster node status")
+	r := retrier.New(10 * time.Minute)
+	err := r.Retry(func() error {
+		err := e.KubectlClient.ValidateNodes(ctx, e.Cluster().KubeconfigFile)
+		if err != nil {
+			return fmt.Errorf("validating nodes status: %v", err)
+		}
+		return nil
+	})
+	if err != nil {
+		e.T.Fatal(err)
+	}
+	e.T.Log("Validating cluster cp node version")
+	err = retrier.Retry(180, 1*time.Second, func() error {
+		if err = e.KubectlClient.ValidateCPNodeVersion(ctx, e.Cluster().KubeconfigFile, kubeVersion); err != nil {
+			return fmt.Errorf("validating cp nodes version: %v", err)
+		}
+		return nil
+	})
+	e.T.Log("Validating cluster worker node version")
+	err = retrier.Retry(180, 1*time.Second, func() error {
+		if err = e.KubectlClient.ValidateWorkerNodeVersion(ctx, e.Cluster().KubeconfigFile, workerKubeVersion); err != nil {
+			return fmt.Errorf("validating worker nodes version: %v", err)
+		}
+		return nil
+	})
+	if err != nil {
+		e.T.Fatal(err)
+	}
+}
+
 func (e *ClusterE2ETest) WaitForMachineDeploymentReady(machineDeploymentName string) {
 	ctx := context.Background()
 	e.T.Logf("Waiting for machine deployment %s to be ready for cluster %s", machineDeploymentName, e.ClusterName)

@@ -131,6 +131,19 @@ func WithWorkerNodeCount(r int) ClusterFiller {
 	}
 }
 
+// WithWorkerNodeKubernetesVersion adds a worker node level kubernetes version configuration with the given version.
+func WithWorkerNodeKubernetesVersion(version string) ClusterFiller {
+	return func(c *anywherev1.Cluster) {
+		if len(c.Spec.WorkerNodeGroupConfigurations) == 0 {
+			c.Spec.WorkerNodeGroupConfigurations = []anywherev1.WorkerNodeGroupConfiguration{{
+				Count:             ptr.Int(1),
+				KubernetesVersion: (*anywherev1.KubernetesVersion)(&version),
+			}}
+		}
+		c.Spec.WorkerNodeGroupConfigurations[0].KubernetesVersion = (*anywherev1.KubernetesVersion)(&version)
+	}
+}
+
 // WithWorkerNodeAutoScalingConfig adds an autoscaling configuration with a given min and max count.
 func WithWorkerNodeAutoScalingConfig(min int, max int) ClusterFiller {
 	return func(c *anywherev1.Cluster) {
