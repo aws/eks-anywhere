@@ -7,7 +7,7 @@ import (
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	cloudstackv1 "sigs.k8s.io/cluster-api-provider-cloudstack/api/v1beta2"
+	cloudstackv1 "sigs.k8s.io/cluster-api-provider-cloudstack/api/v1beta3"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
@@ -232,7 +232,7 @@ func capiCluster() *clusterv1.Cluster {
 			InfrastructureRef: &corev1.ObjectReference{
 				Kind:       "CloudStackCluster",
 				Name:       "test",
-				APIVersion: "infrastructure.cluster.x-k8s.io/v1beta2",
+				APIVersion: "infrastructure.cluster.x-k8s.io/v1beta3",
 			},
 		},
 	}
@@ -242,7 +242,7 @@ func cloudstackCluster() *cloudstackv1.CloudStackCluster {
 	return &cloudstackv1.CloudStackCluster{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "CloudStackCluster",
-			APIVersion: "infrastructure.cluster.x-k8s.io/v1beta2",
+			APIVersion: "infrastructure.cluster.x-k8s.io/v1beta3",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test",
@@ -286,7 +286,7 @@ func kubeadmControlPlane(opts ...func(*controlplanev1.KubeadmControlPlane)) *con
 		Spec: controlplanev1.KubeadmControlPlaneSpec{
 			MachineTemplate: controlplanev1.KubeadmControlPlaneMachineTemplate{
 				InfrastructureRef: corev1.ObjectReference{
-					APIVersion: "infrastructure.cluster.x-k8s.io/v1beta2",
+					APIVersion: "infrastructure.cluster.x-k8s.io/v1beta3",
 					Kind:       "CloudStackMachineTemplate",
 					Name:       "test-control-plane-1",
 				},
@@ -602,7 +602,7 @@ func cloudstackMachineTemplate(name string) *cloudstackv1.CloudStackMachineTempl
 	return &cloudstackv1.CloudStackMachineTemplate{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "CloudStackMachineTemplate",
-			APIVersion: "infrastructure.cluster.x-k8s.io/v1beta2",
+			APIVersion: "infrastructure.cluster.x-k8s.io/v1beta3",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
@@ -616,7 +616,7 @@ func cloudstackMachineTemplate(name string) *cloudstackv1.CloudStackMachineTempl
 			},
 		},
 		Spec: cloudstackv1.CloudStackMachineTemplateSpec{
-			Spec: cloudstackv1.CloudStackMachineTemplateResource{
+			Template: cloudstackv1.CloudStackMachineTemplateResource{
 				Spec: cloudstackv1.CloudStackMachineSpec{
 					Template: cloudstackv1.CloudStackResourceIdentifier{
 						Name: "centos7-k8s-118",

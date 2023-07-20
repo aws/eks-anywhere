@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	cloudstackv1 "sigs.k8s.io/cluster-api-provider-cloudstack/api/v1beta2"
+	cloudstackv1 "sigs.k8s.io/cluster-api-provider-cloudstack/api/v1beta3"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
 
@@ -64,7 +64,7 @@ func setDiskOffering(machineConfig *v1alpha1.CloudStackMachineConfigSpec, templa
 		return
 	}
 
-	template.Spec.Spec.Spec.DiskOffering = cloudstackv1.CloudStackResourceDiskOffering{
+	template.Spec.Template.Spec.DiskOffering = cloudstackv1.CloudStackResourceDiskOffering{
 		CloudStackResourceIdentifier: cloudstackv1.CloudStackResourceIdentifier{
 			ID:   machineConfig.DiskOffering.Id,
 			Name: machineConfig.DiskOffering.Name,
@@ -90,7 +90,7 @@ func MachineTemplate(name string, machineConfig *v1alpha1.CloudStackMachineConfi
 			Annotations: generateMachineTemplateAnnotations(machineConfig),
 		},
 		Spec: cloudstackv1.CloudStackMachineTemplateSpec{
-			Spec: cloudstackv1.CloudStackMachineTemplateResource{
+			Template: cloudstackv1.CloudStackMachineTemplateResource{
 				Spec: cloudstackv1.CloudStackMachineSpec{
 					Details: machineConfig.UserCustomDetails,
 					Offering: cloudstackv1.CloudStackResourceIdentifier{

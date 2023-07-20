@@ -20,7 +20,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
-	"github.com/aws/eks-anywhere/pkg/semver"
 )
 
 const (
@@ -202,7 +201,6 @@ var clusterConfigValidations = []func(*Cluster) error{
 	validateCPUpgradeRolloutStrategy,
 	validateControlPlaneLabels,
 	validatePackageControllerConfiguration,
-	validateCloudStackK8sVersion,
 }
 
 // GetClusterConfig parses a Cluster object from a multiobject yaml file in disk
@@ -859,28 +857,6 @@ func validatePackageControllerConfiguration(clusterConfig *Cluster) error {
 				return fmt.Errorf("packages: cronjob should not be specified for a workload cluster")
 			}
 		}
-	}
-	return nil
-}
-
-func validateCloudStackK8sVersion(cluster *Cluster) error {
-	if cluster.Spec.DatacenterRef.Kind == CloudStackDatacenterKind {
-		return ValidateCloudStackK8sVersion(cluster.Spec.KubernetesVersion)
-	}
-	return nil
-}
-
-// ValidateCloudStackK8sVersion validates version is supported by CAPC.
-func ValidateCloudStackK8sVersion(version KubernetesVersion) error {
-	kubeVersionSemver, err := semver.New(string(version) + ".0")
-	if err != nil {
-		return fmt.Errorf("converting kubeVersion %v to semver %v", version, err)
-	}
-
-	kube125Semver, _ := semver.New(string(Kube125) + ".0")
-
-	if kubeVersionSemver.Compare(kube125Semver) != -1 {
-		return errors.New("cloudstack provider does not support K8s version > 1.24")
 	}
 	return nil
 }
