@@ -12,8 +12,9 @@ description: >
 
 ### Cluster Autoscaler configuration in EKS Anywhere cluster spec
 
-EKS Anywhere supports autoscaling worker node groups using the [Kubernetes Cluster Autoscaler](https://github.com/kubernetes/autoscaler/)'s `clusterapi` cloudProvider.
+EKS Anywhere supports autoscaling worker node groups using the [Kubernetes Cluster Autoscaler](https://github.com/kubernetes/autoscaler/). The Kubernetes Cluster Autoscaler Curated Package is an image and helm chart installed via the Curated Packages Controller.
 
+The helm chart utilizes the Cluster Autoscaler binary's `clusterapi` mode to scale resources.
 
 - Configure a worker node group to be picked up by a cluster autoscaler deployment by adding a `autoscalingConfiguration` block to the `workerNodeGroupConfiguration`:
     ```yaml
@@ -42,25 +43,8 @@ EKS Anywhere supports autoscaling worker node groups using the [Kubernetes Clust
 
 Note that if no `count` is specified it will default to the `minCount` value.
 
-EKS Anywhere will automatically apply the following annotations to your MachineDeployment objects:
+EKS Anywhere will automatically apply the following annotations to your MachineDeployment objects. The autoscaler component uses these annotations to identify which node groups to autoscale. If a node group is not auto scaling as expected, checking for these annotations on the machine deployment can be a good debugging step:
 ```
 cluster.x-k8s.io/cluster-api-autoscaler-node-group-max-size: <minCount>
 cluster.x-k8s.io/cluster-api-autoscaler-node-group-max-size: <maxCount>
 ```
-
-After deploying the Kubernetes Cluster Autoscaler from upstream or as a [curated package]({{< relref "../../packages/cluster-autoscaler/" >}}).
-
-### Cluster Autoscaler Deployment Topologies
-
-The Kubernetes Cluster Autoscaler can only scale a single cluster per deployment.
-
-This means that each cluster you want to scale will need its own cluster autoscaler deployment.
-
-We support three deployment topologies:
-1. [RECOMMENDED] Cluster Autoscaler deployed in the management cluster to autoscale the management cluster itself
-2. [RECOMMENDED] Cluster Autoscaler deployed in the management cluster to autoscale a remote workload cluster
-3. Cluster Autoscaler deployed in the workload cluster to autoscale the workload cluster itself
-
-If your cluster architecture supports management clusters with resources to run additional workloads, you may want to consider using deployment topologies (1) and (2). Instructions for using this topology can be found on the [Cluster Autoscaler]({{< relref "../../packages/cluster-autoscaler/addclauto#install-cluster-autoscaler-in-management-cluster-recommended" >}}) page.
-
-If your deployment topology runs small management clusters though, you may want to follow deployment topology (3) and deploy the cluster autoscaler to run in a [workload cluster]({{< relref "../../packages/cluster-autoscaler/addclauto#install-cluster-autoscaler-in-workload-cluster" >}}).
