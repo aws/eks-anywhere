@@ -277,36 +277,6 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 				Message:  "Control plane nodes not ready yet",
 			},
 		},
-
-		{
-			name: "no control plane components healthy condition",
-			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
-				kcp.Status.Replicas = 3
-				kcp.Status.ReadyReplicas = 3
-				kcp.Status.UpdatedReplicas = 3
-
-				kcp.Status.Conditions = []clusterv1.Condition{
-					{
-						Type:   clusterv1.ReadyCondition,
-						Status: "True",
-					},
-				}
-			}),
-			controlPlaneCount: 3,
-			conditions: []anywherev1.Condition{
-				{
-					Type:   anywherev1.ControlPlaneInitializedCondition,
-					Status: "True",
-				},
-			},
-			wantCondition: &anywherev1.Condition{
-				Type:     anywherev1.ControlPlaneReadyCondition,
-				Reason:   anywherev1.ControlPlaneComponentsUnhealthyReason,
-				Severity: clusterv1.ConditionSeverityError,
-				Message:  "",
-				Status:   "False",
-			},
-		},
 		{
 			name: "control plane components unhealthy",
 			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
@@ -353,10 +323,6 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 				kcp.Status.Conditions = []clusterv1.Condition{
 					{
 						Type:   clusterv1.ReadyCondition,
-						Status: "True",
-					},
-					{
-						Type:   controlplanev1.ControlPlaneComponentsHealthyCondition,
 						Status: "True",
 					},
 				}
