@@ -28,3 +28,15 @@ func runCuratedPackageHarborInstallSimpleFlowLocalStorageProvisioner(test *frame
 		test.VerifyHarborPackageInstalled(packagePrefix, installNs)
 	})
 }
+
+func runCuratedPackageHarborInstallTinkerbellSimpleFlow(test *framework.ClusterE2ETest) {
+	test.GenerateClusterConfig()
+	test.GenerateHardwareConfig()
+	test.PowerOnHardware()
+	test.CreateCluster(framework.WithControlPlaneWaitTimeout("20m"))
+	test.ValidateControlPlaneNodes(framework.ValidateControlPlaneNoTaints, framework.ValidateControlPlaneLabels)
+	runCuratedPackageHarborInstallSimpleFlowLocalStorageProvisioner(test)
+	test.DeleteCluster()
+	test.PowerOffHardware()
+	test.ValidateHardwareDecommissioned()
+}
