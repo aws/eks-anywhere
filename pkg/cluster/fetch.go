@@ -11,8 +11,11 @@ import (
 	v1alpha1release "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
-func bundlesNamespacedKey(cluster *v1alpha1.Cluster) (name, namespace string) {
-	if cluster.Spec.BundlesRef != nil {
+func bundlesNamespacedKey(cluster *v1alpha1.Cluster, release *v1alpha1release.EKSARelease) (name, namespace string) {
+	if release != nil && release.Spec.BundlesRef.Name != "" {
+		name = release.Spec.BundlesRef.Name
+		namespace = release.Spec.BundlesRef.Namespace
+	} else if cluster.Spec.BundlesRef != nil {
 		name = cluster.Spec.BundlesRef.Name
 		namespace = cluster.Spec.BundlesRef.Namespace
 	} else {
@@ -53,7 +56,19 @@ func BuildSpec(ctx context.Context, client Client, cluster *v1alpha1.Cluster) (*
 
 // BuildSpecFromConfig constructs a cluster.Spec for an eks-a cluster config by retrieving all dependencies objects from the cluster using a kubernetes client.
 func BuildSpecFromConfig(ctx context.Context, client Client, config *Config) (*Spec, error) {
-	bundlesName, bundlesNamespace := bundlesNamespacedKey(config.Cluster)
+	eksaRelease := &v1alpha1release.EKSARelease{}
+	if config.Cluster.Spec.BundlesRef == nil {
+		if config.Cluster.Spec.EksaVersion == nil {
+			return nil, fmt.Errorf("either cluster's EksaVersion or BundlesRef need to be set")
+		}
+		version := string(*config.Cluster.Spec.EksaVersion)
+		eksaReleaseName := v1alpha1release.GenerateEKSAReleaseName(version)
+		if err := client.Get(ctx, eksaReleaseName, constants.EksaSystemNamespace, eksaRelease); err != nil {
+			return nil, fmt.Errorf("error getting EKSARelease %s", eksaReleaseName)
+		}
+	}
+
+	bundlesName, bundlesNamespace := bundlesNamespacedKey(config.Cluster, eksaRelease)
 	bundles := &v1alpha1release.Bundles{}
 	if err := client.Get(ctx, bundlesName, bundlesNamespace, bundles); err != nil {
 		return nil, err
@@ -71,5 +86,5 @@ func BuildSpecFromConfig(ctx context.Context, client Client, config *Config) (*S
 		return nil, err
 	}
 
-	return NewSpec(config, bundles, eksdRelease)
+	return NewSpec(config, bundles, eksdRelease, eksaRelease)
 }

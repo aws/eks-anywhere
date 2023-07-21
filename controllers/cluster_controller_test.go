@@ -140,6 +140,7 @@ func newVsphereClusterReconcilerTest(t *testing.T, objs ...runtime.Object) *vsph
 func TestClusterReconcilerReconcileSelfManagedCluster(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
+	version := test.DevEksaVersion()
 
 	selfManagedCluster := &anywherev1.Cluster{
 		ObjectMeta: metav1.ObjectMeta{
@@ -149,6 +150,7 @@ func TestClusterReconcilerReconcileSelfManagedCluster(t *testing.T) {
 			BundlesRef: &anywherev1.BundlesRef{
 				Name: "my-bundles-ref",
 			},
+			EksaVersion: &version,
 			ClusterNetwork: anywherev1.ClusterNetwork{
 				CNIConfig: &anywherev1.CNIConfig{
 					Cilium: &anywherev1.CiliumConfig{},
@@ -693,7 +695,8 @@ func TestClusterReconcilerReconcileGenerations(t *testing.T) {
 	for _, tt := range testCases {
 		t.Run(tt.testName, func(t *testing.T) {
 			config, bundles := baseTestVsphereCluster()
-
+			version := test.DevEksaVersion()
+			config.Cluster.Spec.EksaVersion = &version
 			config.Cluster.Generation = tt.clusterGeneration
 			config.Cluster.Status.ObservedGeneration = tt.clusterGeneration
 			config.Cluster.Status.ReconciledGeneration = tt.reconciledGeneration
@@ -771,6 +774,7 @@ func TestClusterReconcilerReconcileGenerations(t *testing.T) {
 func TestClusterReconcilerReconcileSelfManagedClusterWithExperimentalUpgrades(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
+	version := test.DevEksaVersion()
 
 	selfManagedCluster := &anywherev1.Cluster{
 		ObjectMeta: metav1.ObjectMeta{
@@ -780,6 +784,7 @@ func TestClusterReconcilerReconcileSelfManagedClusterWithExperimentalUpgrades(t 
 			BundlesRef: &anywherev1.BundlesRef{
 				Name: "my-bundles-ref",
 			},
+			EksaVersion: &version,
 			ClusterNetwork: anywherev1.ClusterNetwork{
 				CNIConfig: &anywherev1.CNIConfig{
 					Cilium: &anywherev1.CiliumConfig{},
@@ -889,6 +894,7 @@ func TestClusterReconcilerReconcileDeletedSelfManagedCluster(t *testing.T) {
 func TestClusterReconcilerReconcileSelfManagedClusterRegAuthFailNoSecret(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
+	version := test.DevEksaVersion()
 
 	selfManagedCluster := &anywherev1.Cluster{
 		ObjectMeta: metav1.ObjectMeta{
@@ -906,6 +912,7 @@ func TestClusterReconcilerReconcileSelfManagedClusterRegAuthFailNoSecret(t *test
 			RegistryMirrorConfiguration: &anywherev1.RegistryMirrorConfiguration{
 				Authenticate: true,
 			},
+			EksaVersion: &version,
 		},
 		Status: anywherev1.ClusterStatus{
 			ReconciledGeneration: 1,
@@ -1104,6 +1111,7 @@ func TestClusterReconcilerDeleteNoCAPIClusterSuccess(t *testing.T) {
 
 func TestClusterReconcilerSkipDontInstallPackagesOnSelfManaged(t *testing.T) {
 	ctx := context.Background()
+	version := test.DevEksaVersion()
 	cluster := &anywherev1.Cluster{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "my-cluster",
@@ -1123,6 +1131,7 @@ func TestClusterReconcilerSkipDontInstallPackagesOnSelfManaged(t *testing.T) {
 			ManagementCluster: anywherev1.ManagementCluster{
 				Name: "",
 			},
+			EksaVersion: &version,
 		},
 		Status: anywherev1.ClusterStatus{
 			ReconciledGeneration: 1,
@@ -1243,6 +1252,7 @@ func TestClusterReconcilerPackagesDeletion(s *testing.T) {
 }
 
 func TestClusterReconcilerPackagesInstall(s *testing.T) {
+	version := test.DevEksaVersion()
 	newTestCluster := func() *anywherev1.Cluster {
 		return &anywherev1.Cluster{
 			ObjectMeta: metav1.ObjectMeta{
@@ -1263,6 +1273,7 @@ func TestClusterReconcilerPackagesInstall(s *testing.T) {
 				ManagementCluster: anywherev1.ManagementCluster{
 					Name: "my-management-cluster",
 				},
+				EksaVersion: &version,
 			},
 			Status: anywherev1.ClusterStatus{
 				ReconciledGeneration: 1,
@@ -1460,6 +1471,7 @@ func vsphereDataCenter(cluster *anywherev1.Cluster) *anywherev1.VSphereDatacente
 }
 
 func vsphereCluster() *anywherev1.Cluster {
+	version := test.DevEksaVersion()
 	return &anywherev1.Cluster{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      clusterName,
@@ -1497,6 +1509,7 @@ func vsphereCluster() *anywherev1.Cluster {
 					Labels: nil,
 				},
 			},
+			EksaVersion: &version,
 		},
 		Status: anywherev1.ClusterStatus{
 			ReconciledGeneration: 1,

@@ -1,6 +1,7 @@
 package manifests_test
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -71,6 +72,19 @@ spec:
 	r := manifests.NewReader(reader)
 	_, err := r.ReadBundlesForVersion("v0.0.2")
 	g.Expect(err).To(MatchError(ContainSubstring("invalid version v0.0.2, no matching release found")))
+}
+
+func TestReaderReadBundleForVersionNotExists(t *testing.T) {
+	g := NewWithT(t)
+	ctrl := gomock.NewController(t)
+	reader := mocks.NewMockReader(ctrl)
+
+	releasesURL := releases.ManifestURL()
+
+	reader.EXPECT().ReadFile(releasesURL).Return(nil, errors.New("reading Releases file"))
+	r := manifests.NewReader(reader)
+	_, err := r.ReadBundlesForVersion("")
+	g.Expect(err).To(MatchError(ContainSubstring("reading Releases file")))
 }
 
 func TestReaderReadEKSD(t *testing.T) {
