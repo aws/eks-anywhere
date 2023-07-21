@@ -376,6 +376,7 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 	ipValidator := vspherereconcilermocks.NewMockIPValidator(ctrl)
 
 	bundle := test.Bundle()
+	version := test.DevEksaVersion()
 
 	managementCluster := vsphereCluster(func(c *anywherev1.Cluster) {
 		c.Name = "management-cluster"
@@ -387,6 +388,7 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 			Namespace:  bundle.Namespace,
 			APIVersion: bundle.APIVersion,
 		}
+		c.Spec.EksaVersion = &version
 	})
 
 	machineConfigCP := machineConfig(func(m *anywherev1.VSphereMachineConfig) {
@@ -437,6 +439,8 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 				Labels: nil,
 			},
 		)
+
+		c.Spec.EksaVersion = &version
 	})
 
 	tt := &reconcilerTest{
@@ -460,6 +464,7 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 			bundle,
 			test.EksdRelease(),
 			credentialsSecret,
+			test.EKSARelease(),
 		},
 		bundle:                    bundle,
 		cluster:                   cluster,

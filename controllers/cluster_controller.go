@@ -31,6 +31,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/controller/handlers"
 	"github.com/aws/eks-anywhere/pkg/curatedpackages"
 	"github.com/aws/eks-anywhere/pkg/registrymirror"
+	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 	"github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
@@ -200,7 +201,10 @@ func (r *ClusterReconciler) SetupWithManager(mgr ctrl.Manager, log logr.Logger) 
 // +kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=awssnowclusters;awssnowmachinetemplates;awssnowippools;vsphereclusters;vspheremachinetemplates;dockerclusters;dockermachinetemplates;tinkerbellclusters;tinkerbellmachinetemplates;cloudstackclusters;cloudstackmachinetemplates;nutanixclusters;nutanixmachinetemplates,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=packages.eks.amazonaws.com,resources=packages,verbs=create;delete;get;list;patch;update;watch
 // +kubebuilder:rbac:groups=packages.eks.amazonaws.com,namespace=eksa-system,resources=packagebundlecontrollers,verbs=delete
-// +kubebuilder:rbac:groups=anywhere.eks.amazonaws.com,namespace=eksa-system,resources=eksareleases,verbs=get;list;watch
+// +kubebuilder:rbac:groups=anywhere.eks.amazonaws.com,resources=eksareleases,verbs=get;list;watch
+// The eksareleases permissions are being moved to the ClusterRole due to client trying to list this resource from cache.
+// When trying to list resources not already in cache, it starts an informer for that type using the scope of the cache.
+// So if the manager is cluster-scoped, the new informers created by the cache will be cluster-scoped
 
 // Reconcile reconciles a cluster object.
 // nolint:gocyclo
@@ -266,9 +270,9 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (re
 	// AddFinalizer	is idempotent
 	controllerutil.AddFinalizer(cluster, ClusterFinalizerName)
 
-	if cluster.Spec.BundlesRef == nil {
-		if err = r.setBundlesRef(ctx, cluster); err != nil {
-			return ctrl.Result{}, err
+	if !cluster.IsSelfManaged() && cluster.Spec.BundlesRef == nil && cluster.Spec.EksaVersion == nil {
+		if err = r.setDefaultBundlesRefOrEksaVersion(ctx, cluster); err != nil {
+			return ctrl.Result{}, nil
 		}
 	}
 
@@ -543,15 +547,35 @@ func aggregatedGeneration(config *cluster.Config) int64 {
 	return aggregatedGeneration
 }
 
-func (r *ClusterReconciler) setBundlesRef(ctx context.Context, clus *anywherev1.Cluster) error {
+func getManagementCluster(ctx context.Context, clus *anywherev1.Cluster, client client.Client) (*anywherev1.Cluster, error) {
 	mgmtCluster := &anywherev1.Cluster{}
-	if err := r.client.Get(ctx, types.NamespacedName{Name: clus.ManagedBy(), Namespace: clus.Namespace}, mgmtCluster); err != nil {
+	if err := client.Get(ctx, types.NamespacedName{Name: clus.ManagedBy(), Namespace: clus.Namespace}, mgmtCluster); err != nil {
 		if apierrors.IsNotFound(err) {
 			failureMessage := fmt.Sprintf("Management cluster %s does not exist", clus.Spec.ManagementCluster.Name)
 			clus.SetFailure(anywherev1.ManagementClusterRefInvalidReason, failureMessage)
 		}
+		return nil, err
+	}
+
+	return mgmtCluster, nil
+}
+
+func (r *ClusterReconciler) setDefaultBundlesRefOrEksaVersion(ctx context.Context, clus *anywherev1.Cluster) error {
+	mgmtCluster, err := getManagementCluster(ctx, clus, r.client)
+	if err != nil {
 		return err
 	}
-	clus.Spec.BundlesRef = mgmtCluster.Spec.BundlesRef
-	return nil
+
+	if mgmtCluster.Spec.EksaVersion != nil {
+		clus.Spec.EksaVersion = mgmtCluster.Spec.EksaVersion
+		return nil
+	}
+
+	if mgmtCluster.Spec.BundlesRef != nil {
+		clus.Spec.BundlesRef = mgmtCluster.Spec.BundlesRef
+		return nil
+	}
+
+	clus.Status.FailureMessage = ptr.String("Management cluster must have either EksaVersion or BundlesRef")
+	return fmt.Errorf("could not set default values")
 }

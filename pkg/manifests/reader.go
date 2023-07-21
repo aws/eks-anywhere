@@ -40,7 +40,8 @@ func NewReader(filereader FileReader, opts ...ReaderOpt) *Reader {
 	return r
 }
 
-func (r *Reader) ReadBundlesForVersion(version string) (*releasev1.Bundles, error) {
+// ReadReleaseForVersion returns an EksaRelease based on a version.
+func (r *Reader) ReadReleaseForVersion(version string) (*releasev1.EksARelease, error) {
 	rls, err := releases.ReadReleasesFromURL(r, r.releasesManifestURL)
 	if err != nil {
 		return nil, err
@@ -50,8 +51,19 @@ func (r *Reader) ReadBundlesForVersion(version string) (*releasev1.Bundles, erro
 	if err != nil {
 		return nil, err
 	}
+
 	if release == nil {
 		return nil, fmt.Errorf("invalid version %s, no matching release found", version)
+	}
+
+	return release, nil
+}
+
+// ReadBundlesForVersion returns a Bundle based on the version.
+func (r *Reader) ReadBundlesForVersion(version string) (*releasev1.Bundles, error) {
+	release, err := r.ReadReleaseForVersion(version)
+	if err != nil {
+		return nil, err
 	}
 
 	return releases.ReadBundlesForRelease(r, release)

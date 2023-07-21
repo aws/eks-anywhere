@@ -580,6 +580,7 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 	}
 
 	bundle := test.Bundle()
+	version := test.DevEksaVersion()
 
 	managementCluster := cloudstackCluster(func(c *anywherev1.Cluster) {
 		c.Name = "management-cluster"
@@ -591,6 +592,7 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 			Namespace:  bundle.Namespace,
 			APIVersion: bundle.APIVersion,
 		}
+		c.Spec.EksaVersion = &version
 	})
 
 	machineConfigCP := machineConfig(func(m *anywherev1.CloudStackMachineConfig) {
@@ -655,6 +657,8 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 				Labels: nil,
 			},
 		)
+
+		c.Spec.EksaVersion = &version
 	})
 	secret := &corev1.Secret{
 		TypeMeta: metav1.TypeMeta{
@@ -686,6 +690,7 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 			workloadClusterDatacenter,
 			bundle,
 			test.EksdRelease(),
+			test.EKSARelease(),
 		},
 		cluster:                   cluster,
 		datacenterConfig:          workloadClusterDatacenter,
