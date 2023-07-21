@@ -78,7 +78,8 @@ func (p *cloudstackProvider) PostBootstrapSetup(ctx context.Context, clusterConf
 	return nil
 }
 
-func (p *cloudstackProvider) PostBootstrapDeleteForUpgrade(ctx context.Context) error {
+// PostBootstrapDeleteForUpgrade runs any provider-specific operations after bootstrap cluster has been deleted.
+func (p *cloudstackProvider) PostBootstrapDeleteForUpgrade(ctx context.Context, cluster *types.Cluster) error {
 	return nil
 }
 
