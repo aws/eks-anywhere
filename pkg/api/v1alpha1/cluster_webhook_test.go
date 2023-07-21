@@ -1074,7 +1074,6 @@ func TestClusterValidateUpdateSuccess(t *testing.T) {
 
 func TestClusterCreateManagementCluster(t *testing.T) {
 	features.ClearCache()
-	t.Setenv(features.FullLifecycleAPIEnvVar, "true")
 	workerConfiguration := append([]v1alpha1.WorkerNodeGroupConfiguration{}, v1alpha1.WorkerNodeGroupConfiguration{Count: ptr.Int(5)})
 	cluster := &v1alpha1.Cluster{
 		Spec: v1alpha1.ClusterSpec{
@@ -1093,7 +1092,6 @@ func TestClusterCreateManagementCluster(t *testing.T) {
 
 func TestClusterCreateCloudStackMultipleWorkerNodeGroupsValidation(t *testing.T) {
 	features.ClearCache()
-	t.Setenv(features.FullLifecycleAPIEnvVar, "true")
 	cluster := baseCluster()
 	cluster.Spec.WorkerNodeGroupConfigurations = append([]v1alpha1.WorkerNodeGroupConfiguration{},
 		v1alpha1.WorkerNodeGroupConfiguration{Count: ptr.Int(5), Name: "test", MachineGroupRef: &v1alpha1.Ref{Name: "ref-name"}},
@@ -1107,7 +1105,6 @@ func TestClusterCreateCloudStackMultipleWorkerNodeGroupsValidation(t *testing.T)
 
 func TestClusterCreateWorkloadCluster(t *testing.T) {
 	features.ClearCache()
-	t.Setenv(features.FullLifecycleAPIEnvVar, "true")
 	cluster := baseCluster()
 	cluster.Spec.WorkerNodeGroupConfigurations = append([]v1alpha1.WorkerNodeGroupConfiguration{},
 		v1alpha1.WorkerNodeGroupConfiguration{
@@ -1250,19 +1247,8 @@ func TestClusterValidateCreateSelfManagedUnpaused(t *testing.T) {
 	g.Expect(err).To(MatchError(ContainSubstring("creating new cluster on existing cluster is not supported for self managed clusters")))
 }
 
-func TestClusterValidateCreateManagedUnpaused(t *testing.T) {
-	features.ClearCache()
-	t.Setenv(features.FullLifecycleAPIEnvVar, "")
-	cluster := baseCluster()
-	g := NewWithT(t)
-	cluster.SetManagedBy("mgmt2")
-	err := cluster.ValidateCreate()
-	g.Expect(err.Error()).To(ContainSubstring("creating new managed cluster on existing cluster is not supported"))
-}
-
 func TestClusterValidateCreateSelfManagedNotPaused(t *testing.T) {
 	features.ClearCache()
-	t.Setenv(features.FullLifecycleAPIEnvVar, "true")
 	cluster := baseCluster()
 	cluster.SetSelfManaged()
 
@@ -1273,33 +1259,15 @@ func TestClusterValidateCreateSelfManagedNotPaused(t *testing.T) {
 
 func TestClusterValidateCreateInvalidCluster(t *testing.T) {
 	tests := []struct {
-		name               string
-		featureGateEnabled bool
-		cluster            *v1alpha1.Cluster
+		name    string
+		cluster *v1alpha1.Cluster
 	}{
-		{
-			name: "Paused self-managed cluster, feature gate off",
-			cluster: newCluster(func(c *v1alpha1.Cluster) {
-				c.SetSelfManaged()
-				c.PauseReconcile()
-			}),
-			featureGateEnabled: false,
-		},
-		{
-			name: "Paused workload cluster, feature gate off",
-			cluster: newCluster(func(c *v1alpha1.Cluster) {
-				c.SetManagedBy("my-management-cluster")
-				c.PauseReconcile()
-			}),
-			featureGateEnabled: false,
-		},
 		{
 			name: "Paused self-managed cluster, feature gate on",
 			cluster: newCluster(func(c *v1alpha1.Cluster) {
 				c.SetSelfManaged()
 				c.PauseReconcile()
 			}),
-			featureGateEnabled: true,
 		},
 		{
 			name: "Paused workload cluster, feature gate on",
@@ -1307,23 +1275,16 @@ func TestClusterValidateCreateInvalidCluster(t *testing.T) {
 				c.SetManagedBy("my-management-cluster")
 				c.PauseReconcile()
 			}),
-			featureGateEnabled: true,
 		},
 		{
 			name: "Unpaused workload cluster, feature gate on",
 			cluster: newCluster(func(c *v1alpha1.Cluster) {
 				c.SetManagedBy("my-management-cluster")
 			}),
-			featureGateEnabled: true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			features.ClearCache()
-			if tt.featureGateEnabled {
-				t.Setenv(features.FullLifecycleAPIEnvVar, "true")
-			}
-
 			// Invalid control plane configuration
 			tt.cluster.Spec.ControlPlaneConfiguration = v1alpha1.ControlPlaneConfiguration{Endpoint: &v1alpha1.Endpoint{Host: "test-ip"}, MachineGroupRef: &v1alpha1.Ref{Name: "test"}}
 
@@ -1337,40 +1298,19 @@ func TestClusterValidateCreateInvalidCluster(t *testing.T) {
 func TestClusterValidateUpdateInvalidManagementCluster(t *testing.T) {
 	features.ClearCache()
 	tests := []struct {
-		name               string
-		featureGateEnabled bool
-		clusterNew         *v1alpha1.Cluster
+		name       string
+		clusterNew *v1alpha1.Cluster
 	}{
-		{
-			name: "Paused self-managed cluster, feature gate off",
-			clusterNew: newCluster(func(c *v1alpha1.Cluster) {
-				c.SetSelfManaged()
-				c.PauseReconcile()
-			}),
-			featureGateEnabled: false,
-		},
-		{
-			name: "Unpaused self-managed cluster, feature gate off",
-			clusterNew: newCluster(func(c *v1alpha1.Cluster) {
-				c.SetSelfManaged()
-			}),
-			featureGateEnabled: false,
-		},
 		{
 			name: "Paused self-managed cluster, feature gate on",
 			clusterNew: newCluster(func(c *v1alpha1.Cluster) {
 				c.SetSelfManaged()
 				c.PauseReconcile()
 			}),
-			featureGateEnabled: true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			features.ClearCache()
-			if tt.featureGateEnabled {
-				t.Setenv(features.FullLifecycleAPIEnvVar, "true")
-			}
 			clusterOld := baseCluster()
 			clusterOld.SetSelfManaged()
 			tt.clusterNew.Spec.WorkerNodeGroupConfigurations = []v1alpha1.WorkerNodeGroupConfiguration{{
@@ -1391,47 +1331,26 @@ func TestClusterValidateUpdateInvalidManagementCluster(t *testing.T) {
 func TestClusterValidateUpdateInvalidWorkloadCluster(t *testing.T) {
 	features.ClearCache()
 	tests := []struct {
-		name               string
-		featureGateEnabled bool
-		clusterNew         *v1alpha1.Cluster
+		name       string
+		clusterNew *v1alpha1.Cluster
 	}{
-		{
-			name: "Paused workload cluster, feature gate off",
-			clusterNew: newCluster(func(c *v1alpha1.Cluster) {
-				c.SetManagedBy("my-management-cluster")
-				c.PauseReconcile()
-			}),
-			featureGateEnabled: false,
-		},
-		{
-			name: "Unpaused workload cluster, feature gate off",
-			clusterNew: newCluster(func(c *v1alpha1.Cluster) {
-				c.SetManagedBy("my-management-cluster")
-			}),
-			featureGateEnabled: false,
-		},
 		{
 			name: "Paused workload cluster, feature gate on",
 			clusterNew: newCluster(func(c *v1alpha1.Cluster) {
 				c.SetManagedBy("my-management-cluster")
 				c.PauseReconcile()
 			}),
-			featureGateEnabled: true,
 		},
 		{
 			name: "Unpaused workload cluster, feature gate on",
 			clusterNew: newCluster(func(c *v1alpha1.Cluster) {
 				c.SetManagedBy("my-management-cluster")
 			}),
-			featureGateEnabled: true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			features.ClearCache()
-			if tt.featureGateEnabled {
-				t.Setenv(features.FullLifecycleAPIEnvVar, "true")
-			}
 			clusterOld := baseCluster()
 			clusterOld.SetManagedBy("my-management-cluster")
 
@@ -1455,33 +1374,15 @@ func TestClusterValidateUpdateInvalidWorkloadCluster(t *testing.T) {
 
 func TestClusterValidateCreateValidCluster(t *testing.T) {
 	tests := []struct {
-		name               string
-		featureGateEnabled bool
-		cluster            *v1alpha1.Cluster
+		name    string
+		cluster *v1alpha1.Cluster
 	}{
-		{
-			name: "Paused self-managed cluster, feature gate off",
-			cluster: newCluster(func(c *v1alpha1.Cluster) {
-				c.SetSelfManaged()
-				c.PauseReconcile()
-			}),
-			featureGateEnabled: false,
-		},
-		{
-			name: "Paused workload cluster, feature gate off",
-			cluster: newCluster(func(c *v1alpha1.Cluster) {
-				c.SetManagedBy("my-management-cluster")
-				c.PauseReconcile()
-			}),
-			featureGateEnabled: false,
-		},
 		{
 			name: "Paused self-managed cluster, feature gate on",
 			cluster: newCluster(func(c *v1alpha1.Cluster) {
 				c.SetSelfManaged()
 				c.PauseReconcile()
 			}),
-			featureGateEnabled: true,
 		},
 		{
 			name: "Paused workload cluster, feature gate on",
@@ -1489,22 +1390,16 @@ func TestClusterValidateCreateValidCluster(t *testing.T) {
 				c.SetManagedBy("my-management-cluster")
 				c.PauseReconcile()
 			}),
-			featureGateEnabled: true,
 		},
 		{
 			name: "Unpaused workload cluster, feature gate on",
 			cluster: newCluster(func(c *v1alpha1.Cluster) {
 				c.SetManagedBy("my-management-cluster")
 			}),
-			featureGateEnabled: true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			features.ClearCache()
-			if tt.featureGateEnabled {
-				t.Setenv(features.FullLifecycleAPIEnvVar, "true")
-			}
 			g := NewWithT(t)
 			g.Expect(tt.cluster.ValidateCreate()).To(Succeed())
 		})
@@ -1514,28 +1409,10 @@ func TestClusterValidateCreateValidCluster(t *testing.T) {
 func TestClusterValidateUpdateValidManagementCluster(t *testing.T) {
 	features.ClearCache()
 	tests := []struct {
-		name               string
-		featureGateEnabled bool
-		oldCluster         *v1alpha1.Cluster
-		updateCluster      clusterOpt
+		name          string
+		oldCluster    *v1alpha1.Cluster
+		updateCluster clusterOpt
 	}{
-		{
-			name:       "Paused self-managed cluster, feature gate off",
-			oldCluster: baseCluster(),
-			updateCluster: func(c *v1alpha1.Cluster) {
-				c.SetSelfManaged()
-				c.PauseReconcile()
-			},
-			featureGateEnabled: false,
-		},
-		{
-			name:       "Unpaused self-managed cluster, feature gate off",
-			oldCluster: baseCluster(),
-			updateCluster: func(c *v1alpha1.Cluster) {
-				c.SetSelfManaged()
-			},
-			featureGateEnabled: false,
-		},
 		{
 			name:       "Paused self-managed cluster, feature gate on",
 			oldCluster: baseCluster(),
@@ -1543,7 +1420,6 @@ func TestClusterValidateUpdateValidManagementCluster(t *testing.T) {
 				c.SetSelfManaged()
 				c.PauseReconcile()
 			},
-			featureGateEnabled: true,
 		},
 		{
 			name: "Unpaused self-managed cluster, feature gate on, no changes",
@@ -1552,17 +1428,11 @@ func TestClusterValidateUpdateValidManagementCluster(t *testing.T) {
 					c.SetSelfManaged()
 				},
 			),
-			updateCluster:      func(c *v1alpha1.Cluster) {},
-			featureGateEnabled: true,
+			updateCluster: func(c *v1alpha1.Cluster) {},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			features.ClearCache()
-			if tt.featureGateEnabled {
-				t.Setenv(features.FullLifecycleAPIEnvVar, "true")
-			}
-
 			tt.oldCluster.Spec.WorkerNodeGroupConfigurations = []v1alpha1.WorkerNodeGroupConfiguration{{
 				Name:  "md-0",
 				Count: ptr.Int(4),
@@ -1585,47 +1455,25 @@ func TestClusterValidateUpdateValidManagementCluster(t *testing.T) {
 func TestClusterValidateUpdateValidWorkloadCluster(t *testing.T) {
 	features.ClearCache()
 	tests := []struct {
-		name               string
-		featureGateEnabled bool
-		clusterNew         *v1alpha1.Cluster
+		name       string
+		clusterNew *v1alpha1.Cluster
 	}{
-		{
-			name: "Paused workload cluster, feature gate off",
-			clusterNew: newCluster(func(c *v1alpha1.Cluster) {
-				c.SetManagedBy("my-management-cluster")
-				c.PauseReconcile()
-			}),
-			featureGateEnabled: false,
-		},
-		{
-			name: "Unpaused workload cluster, feature gate off",
-			clusterNew: newCluster(func(c *v1alpha1.Cluster) {
-				c.SetManagedBy("my-management-cluster")
-			}),
-			featureGateEnabled: false,
-		},
 		{
 			name: "Paused workload cluster, feature gate on",
 			clusterNew: newCluster(func(c *v1alpha1.Cluster) {
 				c.SetManagedBy("my-management-cluster")
 				c.PauseReconcile()
 			}),
-			featureGateEnabled: true,
 		},
 		{
 			name: "Unpaused workload cluster, feature gate on",
 			clusterNew: newCluster(func(c *v1alpha1.Cluster) {
 				c.SetManagedBy("my-management-cluster")
 			}),
-			featureGateEnabled: true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			features.ClearCache()
-			if tt.featureGateEnabled {
-				t.Setenv(features.FullLifecycleAPIEnvVar, "true")
-			}
 			clusterOld := baseCluster()
 			clusterOld.SetManagedBy("my-management-cluster")
 			tt.clusterNew.Spec.WorkerNodeGroupConfigurations = []v1alpha1.WorkerNodeGroupConfiguration{{
@@ -1648,7 +1496,6 @@ func TestClusterValidateUpdateInvalidRequest(t *testing.T) {
 	features.ClearCache()
 	cOld := baseCluster()
 	cOld.SetSelfManaged()
-	t.Setenv(features.FullLifecycleAPIEnvVar, "true")
 	t.Setenv(features.ExperimentalSelfManagedClusterUpgradeEnvVar, "false")
 
 	cNew := cOld.DeepCopy()
@@ -1659,10 +1506,8 @@ func TestClusterValidateUpdateInvalidRequest(t *testing.T) {
 }
 
 func TestClusterValidateUpdateRollingAndScalingTinkerbellRequest(t *testing.T) {
-	features.ClearCache()
 	cOld := baseCluster()
 	cOld.IsManaged()
-	t.Setenv(features.FullLifecycleAPIEnvVar, "true")
 	cOld.Spec.DatacenterRef.Kind = v1alpha1.TinkerbellDatacenterKind
 	cOld.Spec.KubernetesVersion = "1.22"
 
@@ -1675,10 +1520,8 @@ func TestClusterValidateUpdateRollingAndScalingTinkerbellRequest(t *testing.T) {
 }
 
 func TestClusterValidateUpdateAddWNConfig(t *testing.T) {
-	features.ClearCache()
 	cOld := baseCluster()
 	cOld.IsManaged()
-	t.Setenv(features.FullLifecycleAPIEnvVar, "true")
 	cOld.Spec.DatacenterRef.Kind = v1alpha1.TinkerbellDatacenterKind
 	cOld.Spec.KubernetesVersion = "1.22"
 
@@ -1695,10 +1538,8 @@ func TestClusterValidateUpdateAddWNConfig(t *testing.T) {
 }
 
 func TestClusterValidateUpdateAddWNCount(t *testing.T) {
-	features.ClearCache()
 	cOld := baseCluster()
 	cOld.IsManaged()
-	t.Setenv(features.FullLifecycleAPIEnvVar, "true")
 	cOld.Spec.DatacenterRef.Kind = v1alpha1.TinkerbellDatacenterKind
 	cOld.Spec.KubernetesVersion = "1.22"
 
@@ -1711,10 +1552,8 @@ func TestClusterValidateUpdateAddWNCount(t *testing.T) {
 }
 
 func TestClusterValidateUpdateRollingTinkerbellRequest(t *testing.T) {
-	features.ClearCache()
 	cOld := baseCluster()
 	cOld.Spec.ManagementCluster.Name = "test"
-	t.Setenv(features.FullLifecycleAPIEnvVar, "true")
 	cOld.Spec.DatacenterRef.Kind = v1alpha1.TinkerbellDatacenterKind
 	cOld.Spec.KubernetesVersion = "1.22"
 
@@ -1725,10 +1564,8 @@ func TestClusterValidateUpdateRollingTinkerbellRequest(t *testing.T) {
 }
 
 func TestClusterValidateUpdateLabelTaintsCPTinkerbellRequest(t *testing.T) {
-	features.ClearCache()
 	cOld := baseCluster()
 	cOld.Spec.ManagementCluster.Name = "test"
-	t.Setenv(features.FullLifecycleAPIEnvVar, "true")
 	cOld.Spec.DatacenterRef.Kind = v1alpha1.TinkerbellDatacenterKind
 
 	nodeLabels := map[string]string{"label1": "foo", "label2": "bar"}
@@ -1748,10 +1585,8 @@ func TestClusterValidateUpdateLabelTaintsCPTinkerbellRequest(t *testing.T) {
 }
 
 func TestClusterValidateUpdateLabelTaintsWNTinkerbellRequest(t *testing.T) {
-	features.ClearCache()
 	cOld := baseCluster()
 	cOld.Spec.ManagementCluster.Name = "test"
-	t.Setenv(features.FullLifecycleAPIEnvVar, "true")
 	cOld.Spec.DatacenterRef.Kind = v1alpha1.TinkerbellDatacenterKind
 
 	nodeLabels := map[string]string{"label1": "foo", "label2": "bar"}
@@ -1774,10 +1609,8 @@ func TestClusterValidateUpdateLabelTaintsWNTinkerbellRequest(t *testing.T) {
 }
 
 func TestClusterValidateUpdateLabelTaintsMultiWNTinkerbellRequest(t *testing.T) {
-	features.ClearCache()
 	cOld := baseCluster()
 	cOld.Spec.ManagementCluster.Name = "test"
-	t.Setenv(features.FullLifecycleAPIEnvVar, "true")
 	cOld.Spec.DatacenterRef.Kind = v1alpha1.TinkerbellDatacenterKind
 
 	nodeLabels := map[string]string{"label1": "foo", "label2": "bar"}

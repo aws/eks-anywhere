@@ -138,7 +138,6 @@ func vsphereDatacenterConfig() v1alpha1.VSphereDatacenterConfig {
 }
 
 func TestVSphereDatacenterValidateCreateFullManagementCycleOn(t *testing.T) {
-	t.Setenv("FULL_LIFECYCLE_API", "true")
 	dataCenterConfig := vsphereDatacenterConfig()
 
 	g := NewWithT(t)
