@@ -936,7 +936,7 @@ func TestCloudStackKubernetes124InstallGitFluxDuringUpgrade(t *testing.T) {
 }
 
 func TestCloudStackKubernetes125InstallGitFluxDuringUpgrade(t *testing.T) {
-	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat124())
+	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat125())
 	test := framework.NewClusterE2ETest(t,
 		provider,
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
@@ -1783,7 +1783,7 @@ func TestCloudStackKubernetes124To125OIDCUpgrade(t *testing.T) {
 	)
 	runUpgradeFlowWithOIDC(
 		test,
-		v1alpha1.Kube124,
+		v1alpha1.Kube125,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube125)),
 		provider.WithProviderUpgrade(provider.UpdateRedhatTemplate125Var()),
 	)
@@ -3007,7 +3007,7 @@ func TestCloudStackKubernetes125RedhatAndRemoveWorkerNodeGroups(t *testing.T) {
 			"worker-2",
 			framework.WithWorkerNodeGroup("workers-2", api.WithCount(1)),
 		),
-		framework.WithCloudStackRedhat124(),
+		framework.WithCloudStackRedhat125(),
 	)
 	test := framework.NewClusterE2ETest(
 		t,
