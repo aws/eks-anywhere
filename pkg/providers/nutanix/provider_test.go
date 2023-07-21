@@ -144,7 +144,7 @@ func TestNutanixProviderPostBootstrapSetup(t *testing.T) {
 
 func TestNutanixProviderPostBootstrapDeleteForUpgrade(t *testing.T) {
 	provider := testDefaultNutanixProvider(t)
-	err := provider.PostBootstrapDeleteForUpgrade(context.Background())
+	err := provider.PostBootstrapDeleteForUpgrade(context.Background(), &types.Cluster{Name: "eksa-unit-test"})
 	assert.NoError(t, err)
 }
 
