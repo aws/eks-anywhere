@@ -11,7 +11,6 @@ For more information on CNI customization see [Use a custom CNI]({{< ref "../../
 
 {{% alert title="Note" color="primary" %}}
 When replacing EKS Anywhere Cilium with a custom CNI, it is your responsibility to manage the custom CNI, including version upgrades and support.
-Operators can also leverage the CNI chaining feature from Isovalent where in both Cilium as the CNI and another CNI can work in a chain mode (https://docs.cilium.io/en/v1.13/installation/cni-chaining/).
 {{% /alert %}}
 
 ## Prerequisites
