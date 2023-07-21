@@ -80,8 +80,3 @@ type PackageInstaller interface {
 	InstallCuratedPackages(ctx context.Context)
 }
 
-// ClusterUpgrader prepares the cluster for an upgrade.
-type ClusterUpgrader interface {
-	PrepareUpgrade(ctx context.Context, spec *cluster.Spec, managementClusterKubeconfigPath, workloadClusterKubeconfigPath string) error
-	CleanupAfterUpgrade(ctx context.Context, spec *cluster.Spec, managementClusterKubeconfigPath, workloadClusterKubeconfigPath string) error
-}
