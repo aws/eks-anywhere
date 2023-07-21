@@ -433,6 +433,7 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 	c := env.Client()
 
 	bundle := test.Bundle()
+	version := test.DevEksaVersion()
 
 	managementCluster := dockerCluster(func(c *anywherev1.Cluster) {
 		c.Name = "management-cluster"
@@ -444,6 +445,7 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 			Namespace:  bundle.Namespace,
 			APIVersion: bundle.APIVersion,
 		}
+		c.Spec.EksaVersion = &version
 	})
 
 	workloadClusterDatacenter := dataCenter()
@@ -471,6 +473,7 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 				Name:  "md-0",
 			},
 		)
+		c.Spec.EksaVersion = &version
 	})
 
 	tt := &reconcilerTest{
@@ -490,6 +493,7 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 			workloadClusterDatacenter,
 			bundle,
 			test.EksdRelease(),
+			test.EKSARelease(),
 		},
 		datacenterConfig: workloadClusterDatacenter,
 	}

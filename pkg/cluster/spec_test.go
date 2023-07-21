@@ -20,6 +20,7 @@ import (
 var testdataFS embed.FS
 
 func TestNewSpecError(t *testing.T) {
+	version := test.DevEksaVersion()
 	tests := []struct {
 		name        string
 		config      *cluster.Config
@@ -33,6 +34,7 @@ func TestNewSpecError(t *testing.T) {
 				Cluster: &anywherev1.Cluster{
 					Spec: anywherev1.ClusterSpec{
 						KubernetesVersion: anywherev1.Kube124,
+						EksaVersion:       &version,
 					},
 				},
 			},
@@ -50,6 +52,7 @@ func TestNewSpecError(t *testing.T) {
 				Cluster: &anywherev1.Cluster{
 					Spec: anywherev1.ClusterSpec{
 						KubernetesVersion: anywherev1.Kube124,
+						EksaVersion:       &version,
 					},
 				},
 			},
@@ -71,7 +74,7 @@ func TestNewSpecError(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			g := NewWithT(t)
-			g.Expect(cluster.NewSpec(tt.config, tt.bundles, tt.eksdRelease)).Error().To(
+			g.Expect(cluster.NewSpec(tt.config, tt.bundles, tt.eksdRelease, test.EKSARelease())).Error().To(
 				MatchError(ContainSubstring(tt.error)),
 			)
 		})
@@ -80,10 +83,12 @@ func TestNewSpecError(t *testing.T) {
 
 func TestNewSpecValid(t *testing.T) {
 	g := NewWithT(t)
+	version := test.DevEksaVersion()
 	config := &cluster.Config{
 		Cluster: &anywherev1.Cluster{
 			Spec: anywherev1.ClusterSpec{
 				KubernetesVersion: anywherev1.Kube124,
+				EksaVersion:       &version,
 			},
 		},
 		OIDCConfigs: map[string]*anywherev1.OIDCConfig{
@@ -105,7 +110,7 @@ func TestNewSpecValid(t *testing.T) {
 	}
 	eksdRelease := readEksdRelease(t, "testdata/eksd_valid.yaml")
 
-	spec, err := cluster.NewSpec(config, bundles, eksdRelease)
+	spec, err := cluster.NewSpec(config, bundles, eksdRelease, test.EKSARelease())
 	g.Expect(err).NotTo(HaveOccurred())
 	g.Expect(spec.AWSIamConfig).NotTo(BeNil())
 	g.Expect(spec.OIDCConfig).NotTo(BeNil())
@@ -117,10 +122,11 @@ func TestSpecDeepCopy(t *testing.T) {
 	yaml, err := r.ReadFile("testdata/docker_cluster_oidc_awsiam_flux.yaml")
 	g.Expect(err).To(Succeed())
 	config, err := cluster.ParseConfig(yaml)
+
 	g.Expect(err).To(Succeed())
 	bundles := test.Bundles(t)
 	eksd := test.EksdRelease()
-	spec, err := cluster.NewSpec(config, bundles, eksd)
+	spec, err := cluster.NewSpec(config, bundles, eksd, test.EKSARelease())
 	g.Expect(err).To(Succeed())
 
 	g.Expect(spec.DeepCopy()).To(Equal(spec))

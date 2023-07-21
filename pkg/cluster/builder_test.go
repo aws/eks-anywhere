@@ -55,6 +55,16 @@ func TestFileSpecBuilderBuildError(t *testing.T) {
 	}
 }
 
+func TestFileSpecBuilderBuildErrorGetReleases(t *testing.T) {
+	g := NewWithT(t)
+
+	v := version.Info{GitVersion: "v0.0.0"}
+	reader := files.NewReader()
+	b := cluster.NewFileSpecBuilder(reader, v, cluster.WithReleasesManifest("invalid.yaml"), cluster.WithOverrideBundlesManifest("testdata/simple_bundle.yaml"))
+
+	g.Expect(b.Build("testdata/cluster_1_19.yaml")).Error().NotTo(Succeed())
+}
+
 func TestFileSpecBuilderBuildSuccess(t *testing.T) {
 	g := NewWithT(t)
 
@@ -74,7 +84,7 @@ func TestNewSpecWithBundlesOverrideValid(t *testing.T) {
 	v := version.Info{GitVersion: "v0.0.1"}
 	reader := files.NewReader()
 	b := cluster.NewFileSpecBuilder(reader, v,
-		cluster.WithReleasesManifest("testdata/invalid_release_version.yaml"),
+		cluster.WithReleasesManifest("testdata/simple_release.yaml"),
 		cluster.WithOverrideBundlesManifest("testdata/simple_bundle.yaml"),
 	)
 
@@ -82,4 +92,18 @@ func TestNewSpecWithBundlesOverrideValid(t *testing.T) {
 
 	g.Expect(err).NotTo(HaveOccurred())
 	validateSpecFromSimpleBundle(t, gotSpec)
+}
+
+func TestNewSpecWithBundlesOverrideInvalid(t *testing.T) {
+	g := NewWithT(t)
+
+	v := version.Info{GitVersion: "v12.9.6"}
+	reader := files.NewReader()
+	b := cluster.NewFileSpecBuilder(reader, v,
+		cluster.WithOverrideBundlesManifest("testdata/simple_bundle.yaml"),
+	)
+
+	_, err := b.Build("testdata/cluster_1_19.yaml")
+
+	g.Expect(err).To(HaveOccurred())
 }

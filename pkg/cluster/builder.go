@@ -2,7 +2,9 @@ package cluster
 
 import (
 	"github.com/pkg/errors"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/manifests"
 	"github.com/aws/eks-anywhere/pkg/manifests/bundles"
@@ -60,7 +62,9 @@ func (b FileSpecBuilder) Build(clusterConfigURL string) (*Spec, error) {
 	if err != nil {
 		return nil, err
 	}
-	bundlesManifest, err := b.getBundles()
+
+	mReader := b.createManifestReader()
+	bundlesManifest, err := b.getBundles(mReader)
 	if err != nil {
 		return nil, errors.Wrapf(err, "getting Bundles file")
 	}
@@ -92,7 +96,16 @@ func (b FileSpecBuilder) Build(clusterConfigURL string) (*Spec, error) {
 		return nil, err
 	}
 
-	return NewSpec(config, bundlesManifest, eksd)
+	release, err := mReader.ReadReleaseForVersion(b.cliVersion.GitVersion)
+	if err != nil {
+		return nil, err
+	}
+
+	releaseVersion := v1alpha1.EksaVersion(release.Version)
+	config.Cluster.Spec.EksaVersion = &releaseVersion
+	eksaRelease := buildEKSARelease(release, bundlesManifest)
+
+	return NewSpec(config, bundlesManifest, eksd, eksaRelease)
 }
 
 func (b FileSpecBuilder) getConfig(clusterConfigURL string) (*Config, error) {
@@ -104,16 +117,44 @@ func (b FileSpecBuilder) getConfig(clusterConfigURL string) (*Config, error) {
 	return ParseConfig(yaml)
 }
 
-func (b FileSpecBuilder) getBundles() (*releasev1.Bundles, error) {
+func (b FileSpecBuilder) createManifestReader() *manifests.Reader {
+	var opts []manifests.ReaderOpt
+	if b.releasesManifestURL != "" {
+		opts = append(opts, manifests.WithReleasesManifest(b.releasesManifestURL))
+	}
+	return manifests.NewReader(b.reader, opts...)
+}
+
+func (b FileSpecBuilder) getBundles(manifestReader *manifests.Reader) (*releasev1.Bundles, error) {
 	bundlesURL := b.bundlesManifestURL
 	if bundlesURL == "" {
-		var opts []manifests.ReaderOpt
-		if b.releasesManifestURL != "" {
-			opts = append(opts, manifests.WithReleasesManifest(b.releasesManifestURL))
-		}
-		manifestReader := manifests.NewReader(b.reader, opts...)
 		return manifestReader.ReadBundlesForVersion(b.cliVersion.GitVersion)
 	}
 
 	return bundles.Read(b.reader, bundlesURL)
+}
+
+func buildEKSARelease(release *releasev1.EksARelease, bundle *releasev1.Bundles) *releasev1.EKSARelease {
+	eksaRelease := &releasev1.EKSARelease{
+		TypeMeta: v1.TypeMeta{
+			Kind:       releasev1.EKSAReleaseKind,
+			APIVersion: releasev1.SchemeBuilder.GroupVersion.String(),
+		},
+		ObjectMeta: v1.ObjectMeta{
+			Name:      releasev1.GenerateEKSAReleaseName(release.Version),
+			Namespace: constants.EksaSystemNamespace,
+		},
+		Spec: releasev1.EKSAReleaseSpec{
+			ReleaseDate:       release.Date,
+			Version:           release.Version,
+			GitCommit:         release.GitCommit,
+			BundleManifestURL: release.BundleManifestUrl,
+			BundlesRef: releasev1.BundlesRef{
+				APIVersion: releasev1.GroupVersion.String(),
+				Name:       bundle.Name,
+				Namespace:  bundle.Namespace,
+			},
+		},
+	}
+	return eksaRelease
 }
