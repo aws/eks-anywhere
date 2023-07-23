@@ -276,28 +276,13 @@ type ControlPlaneConfiguration struct {
 	SkipLoadBalancerDeployment bool `json:"skipLoadBalancerDeployment,omitempty"`
 }
 
-// MachineHealthCheck allows to configure timeouts for machine health checks.
+// MachineHealthCheck allows to configure timeouts for machine health checks. Machine Health Checks are responsible for remediating unhealthy Machines.
+// Configuring these values will decide how long to wait to remediate unhealthy machine or determine health of nodes' machines.
 type MachineHealthCheck struct {
-	// NodeStartupTimeout overrides the the default node startup timeout in machine health checks.
+	// NodeStartupTimeout is used to configure the node startup timeout in machine health checks. It determines how long a MachineHealthCheck should wait for a Node to join the cluster, before considering a Machine unhealthy. If not configured, the default value is set to "10m0s" (10 minutes) for all providers. For Tinkerbell provider the default is "20m0s".
 	NodeStartupTimeout *metav1.Duration `json:"nodeStartupTimeout,omitempty"`
-	// UnhealthyMachineTimeout overrides default unhealthy machine timeout in machine health checks.
+	// UnhealthyMachineTimeout is used to configure the unhealthy machine timeout in machine health checks. If any unhealthy conditions are met for the amount of time specified as the timeout, the machines are considered unhealthy. If not configured, the default value is set to "5m0s" (5 minutes).
 	UnhealthyMachineTimeout *metav1.Duration `json:"unhealthyMachineTimeout,omitempty"`
-}
-
-// Equal compares machine health check objects to check if they are equal.
-func (n *MachineHealthCheck) Equal(o *MachineHealthCheck) bool {
-	if n == o {
-		return true
-	}
-	if n == nil || o == nil {
-		return false
-	}
-
-	if n.NodeStartupTimeout != o.NodeStartupTimeout || n.UnhealthyMachineTimeout != o.UnhealthyMachineTimeout {
-		return false
-	}
-
-	return true
 }
 
 func TaintsSliceEqual(s1, s2 []corev1.Taint) bool {

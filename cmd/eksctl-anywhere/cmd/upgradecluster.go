@@ -136,7 +136,7 @@ func (uc *upgradeClusterOptions) upgradeCluster(cmd *cobra.Command) error {
 	}
 	defer close(ctx, deps)
 
-	clusterSpec.Cluster, err = deps.UpgradeClusterDefaulter.Run(ctx, clusterSpec.Cluster)
+	clusterSpec, err = deps.UpgradeClusterDefaulter.Run(ctx, clusterSpec)
 	if err != nil {
 		return err
 	}

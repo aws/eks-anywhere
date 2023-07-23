@@ -3859,15 +3859,25 @@ spec:
                 type: string
               machineHealthCheck:
                 description: MachineHealthCheck allows to configure timeouts for machine
-                  health checks.
+                  health checks. Machine Health Checks are responsible for remediating
+                  unhealthy Machines. Configuring these values will decide how long
+                  to wait to remediate unhealthy machine or determine health of nodes'
+                  machines.
                 properties:
                   nodeStartupTimeout:
-                    description: NodeStartupTimeout overrides the the default node
-                      startup timeout in machine health checks.
+                    description: NodeStartupTimeout is used to configure the node
+                      startup timeout in machine health checks. It determines how
+                      long a MachineHealthCheck should wait for a Node to join the
+                      cluster, before considering a Machine unhealthy. If not configured,
+                      the default value is set to "10m0s" (10 minutes) for all providers.
+                      For Tinkerbell provider the default is "20m0s".
                     type: string
                   unhealthyMachineTimeout:
-                    description: UnhealthyMachineTimeout overrides default unhealthy
-                      machine timeout in machine health checks.
+                    description: UnhealthyMachineTimeout is used to configure the
+                      unhealthy machine timeout in machine health checks. If any unhealthy
+                      conditions are met for the amount of time specified as the timeout,
+                      the machines are considered unhealthy. If not configured, the
+                      default value is set to "5m0s" (5 minutes).
                     type: string
                 type: object
               managementCluster:
@@ -6347,11 +6357,9 @@ rules:
   - machinehealthchecks
   verbs:
   - create
-  - delete
   - get
   - list
   - patch
-  - update
   - watch
 - apiGroups:
   - clusterctl.cluster.x-k8s.io

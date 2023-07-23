@@ -5,7 +5,6 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/google/uuid"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	clusterctlv1 "sigs.k8s.io/cluster-api/cmd/clusterctl/api/v1alpha3"
 	"sigs.k8s.io/cluster-api/controllers/remote"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
@@ -13,6 +12,7 @@ import (
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	awsiamconfigreconciler "github.com/aws/eks-anywhere/pkg/awsiamauth/reconciler"
 	anywhereCluster "github.com/aws/eks-anywhere/pkg/cluster"
+	mhcreconciler "github.com/aws/eks-anywhere/pkg/clusterapi/machinehealthcheck/reconciler"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/controller/clusters"
 	"github.com/aws/eks-anywhere/pkg/crypto"
@@ -20,7 +20,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/executables/cmk"
-	mhcreconciler "github.com/aws/eks-anywhere/pkg/machinehealthcheck/reconciler"
 	ciliumreconciler "github.com/aws/eks-anywhere/pkg/networking/cilium/reconciler"
 	cnireconciler "github.com/aws/eks-anywhere/pkg/networking/reconciler"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack"
@@ -539,14 +538,7 @@ func (f *Factory) withMachineHealthCheckReconciler() *Factory {
 			return nil
 		}
 
-		nodeStartupTimeout := &metav1.Duration{
-			Duration: constants.DefaultNodeStartupTimeout,
-		}
-		unhealthyTimeout := &metav1.Duration{
-			Duration: constants.DefaultUnhealthyMachineTimeout,
-		}
-
-		machineHealthCheckDefaulter := anywhereCluster.NewMachineHealthCheckDefaulter(nodeStartupTimeout, unhealthyTimeout)
+		machineHealthCheckDefaulter := anywhereCluster.NewMachineHealthCheckDefaulter(constants.DefaultNodeStartupTimeout, constants.DefaultUnhealthyMachineTimeout)
 
 		f.machineHealthCheckReconciler = mhcreconciler.New(
 			f.manager.GetClient(),

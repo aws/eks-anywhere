@@ -64,12 +64,8 @@ func newTest(t *testing.T, p provider) *factoryTest {
 	}
 
 	upgradeCLIConfig := config.UpgradeClusterCLIConfig{
-		NodeStartupTimeout: &v1.Duration{
-			Duration: 5 * time.Minute,
-		},
-		UnhealthyMachineTimeout: &v1.Duration{
-			Duration: 5 * time.Minute,
-		},
+		NodeStartupTimeout:      5 * time.Minute,
+		UnhealthyMachineTimeout: 5 * time.Minute,
 	}
 
 	return &factoryTest{
@@ -231,8 +227,8 @@ func TestFactoryBuildWithMultipleDependencies(t *testing.T) {
 		WithCiliumTemplater().
 		WithIPValidator().
 		WithValidatorClients().
-		WithCreateClusterDefaulter(tt.createCLIConfig).
-		WithUpgradeClusterDefaulter(tt.upgradeCLIConfig).
+		WithCreateClusterDefaulter(&tt.createCLIConfig).
+		WithUpgradeClusterDefaulter(&tt.upgradeCLIConfig).
 		Build(context.Background())
 
 	tt.Expect(err).To(BeNil())

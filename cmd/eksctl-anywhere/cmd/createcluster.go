@@ -149,7 +149,7 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 	}
 	defer close(ctx, deps)
 
-	clusterSpec.Cluster, err = deps.CreateClusterDefaulter.Run(ctx, clusterSpec.Cluster)
+	clusterSpec, err = deps.CreateClusterDefaulter.Run(ctx, clusterSpec)
 	if err != nil {
 		return err
 	}

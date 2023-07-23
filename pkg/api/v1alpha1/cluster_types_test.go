@@ -3,7 +3,6 @@ package v1alpha1_test
 import (
 	"reflect"
 	"testing"
-	"time"
 
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
@@ -11,7 +10,6 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/semver"
 	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
@@ -1293,77 +1291,6 @@ func TestClusterEqualPackageConfigurationNetwork(t *testing.T) {
 
 			g := NewWithT(t)
 			g.Expect(cluster1.Equal(cluster2)).To(Equal(tt.want))
-		})
-	}
-}
-
-func TestMachineHealthCheckEqual(t *testing.T) {
-	testCases := []struct {
-		testName   string
-		mhc1, mhc2 *v1alpha1.MachineHealthCheck
-		want       bool
-	}{
-		{
-			testName: "both nil",
-			mhc1:     nil,
-			mhc2:     nil,
-			want:     true,
-		},
-		{
-			testName: "both empty",
-			mhc1:     &v1alpha1.MachineHealthCheck{},
-			mhc2:     &v1alpha1.MachineHealthCheck{},
-			want:     true,
-		},
-		{
-			testName: "one nil",
-			mhc1:     nil,
-			mhc2: &v1alpha1.MachineHealthCheck{
-				NodeStartupTimeout: &metav1.Duration{
-					Duration: constants.DefaultNodeStartupTimeout,
-				},
-			},
-			want: false,
-		},
-		{
-			testName: "both not nil",
-			mhc1: &v1alpha1.MachineHealthCheck{
-				NodeStartupTimeout: &metav1.Duration{
-					Duration: constants.DefaultNodeStartupTimeout,
-				},
-			},
-			mhc2: &v1alpha1.MachineHealthCheck{
-				NodeStartupTimeout: &metav1.Duration{
-					Duration: (30 * time.Minute),
-				},
-			},
-			want: false,
-		},
-		{
-			testName: "both not nil",
-			mhc1: &v1alpha1.MachineHealthCheck{
-				NodeStartupTimeout: &metav1.Duration{
-					Duration: (20 * time.Minute),
-				},
-			},
-			mhc2: &v1alpha1.MachineHealthCheck{
-				NodeStartupTimeout: &metav1.Duration{
-					Duration: (30 * time.Minute),
-				},
-			},
-			want: false,
-		},
-		{
-			testName: "both empty",
-			mhc1:     &v1alpha1.MachineHealthCheck{},
-			mhc2:     &v1alpha1.MachineHealthCheck{},
-			want:     true,
-		},
-	}
-	for _, tt := range testCases {
-		t.Run(tt.testName, func(t *testing.T) {
-			g := NewWithT(t)
-			g.Expect(tt.mhc1.Equal(tt.mhc2)).To(Equal(tt.want))
 		})
 	}
 }

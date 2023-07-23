@@ -22,7 +22,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/cluster"
+	c "github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/controller"
@@ -199,7 +199,7 @@ func (r *ClusterReconciler) SetupWithManager(mgr ctrl.Manager, log logr.Logger) 
 // +kubebuilder:rbac:groups=bootstrap.cluster.x-k8s.io,resources=kubeadmconfigtemplates,verbs=create;get;list;patch;update;watch
 // +kubebuilder:rbac:groups="cluster.x-k8s.io",resources=machinedeployments,verbs=list;watch;get;patch;update;create;delete
 // +kubebuilder:rbac:groups="cluster.x-k8s.io",resources=clusters,verbs=list;watch;get;patch;update;create;delete
-// +kubebuilder:rbac:groups="cluster.x-k8s.io",resources=machinehealthchecks,verbs=list;watch;get;patch;update;create;delete
+// +kubebuilder:rbac:groups="cluster.x-k8s.io",resources=machinehealthchecks,verbs=list;watch;get;patch;create
 // +kubebuilder:rbac:groups=clusterctl.cluster.x-k8s.io,resources=providers,verbs=get;list;watch
 // +kubebuilder:rbac:groups=controlplane.cluster.x-k8s.io,resources=kubeadmcontrolplanes,verbs=list;get;watch;patch;update;create;delete
 // +kubebuilder:rbac:groups=coordination.k8s.io,resources=leases,verbs=create;get;list;update;watch;delete
@@ -392,12 +392,6 @@ func (r *ClusterReconciler) preClusterProviderReconcile(ctx context.Context, log
 		}
 	}
 
-	if cluster.IsManaged() {
-		if err := r.machineHealthCheck.Reconcile(ctx, log, cluster); err != nil {
-			return controller.Result{}, err
-		}
-	}
-
 	return controller.Result{}, nil
 }
 
@@ -416,6 +410,10 @@ func (r *ClusterReconciler) postClusterProviderReconcile(ctx context.Context, lo
 		if err := r.packagesClient.Reconcile(ctx, log, r.client, cluster); err != nil {
 			return controller.Result{}, err
 		}
+	}
+
+	if err := r.machineHealthCheck.Reconcile(ctx, log, cluster); err != nil {
+		return controller.Result{}, err
 	}
 
 	return controller.Result{}, nil
@@ -507,8 +505,8 @@ func (r *ClusterReconciler) reconcileDelete(ctx context.Context, log logr.Logger
 	return ctrl.Result{}, nil
 }
 
-func (r *ClusterReconciler) buildClusterConfig(ctx context.Context, clus *anywherev1.Cluster) (*cluster.Config, error) {
-	builder := cluster.NewDefaultConfigClientBuilder()
+func (r *ClusterReconciler) buildClusterConfig(ctx context.Context, clus *anywherev1.Cluster) (*c.Config, error) {
+	builder := c.NewDefaultConfigClientBuilder()
 	config, err := builder.Build(ctx, clientutil.NewKubeClient(r.client), clus)
 	if err != nil {
 		var notFound apierrors.APIStatus
@@ -522,7 +520,7 @@ func (r *ClusterReconciler) buildClusterConfig(ctx context.Context, clus *anywhe
 	return config, nil
 }
 
-func (r *ClusterReconciler) ensureClusterOwnerReferences(ctx context.Context, clus *anywherev1.Cluster, config *cluster.Config) error {
+func (r *ClusterReconciler) ensureClusterOwnerReferences(ctx context.Context, clus *anywherev1.Cluster, config *c.Config) error {
 	for _, obj := range config.ChildObjects() {
 		numberOfOwnerReferences := len(obj.GetOwnerReferences())
 		if err := controllerutil.SetOwnerReference(clus, obj, r.client.Scheme()); err != nil {
@@ -562,7 +560,7 @@ func patchCluster(ctx context.Context, patchHelper *patch.Helper, cluster *anywh
 // aggregatedGeneration computes the combined generation of the resources linked
 // by the cluster by summing up the .metadata.generation value for all the child
 // objects of this cluster.
-func aggregatedGeneration(config *cluster.Config) int64 {
+func aggregatedGeneration(config *c.Config) int64 {
 	var aggregatedGeneration int64
 	for _, obj := range config.ChildObjects() {
 		aggregatedGeneration += obj.GetGeneration()

@@ -22,7 +22,7 @@ import (
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/internal/test/envtest"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/cluster"
+	c "github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/controller"
 	"github.com/aws/eks-anywhere/pkg/controller/clusters"
@@ -409,6 +409,11 @@ func TestClusterReconcilerWorkloadClusterMgmtClusterNameFail(t *testing.T) {
 		},
 	}
 	cluster.SetManagedBy("my-management-cluster")
+	// clusterSpec := &c.Spec{
+	// 	Config: &c.Config{
+	// 		Cluster: cluster,
+	// 	},
+	// }
 
 	objs := []runtime.Object{cluster, managementCluster}
 	cb := fake.NewClientBuilder()
@@ -454,7 +459,7 @@ func (dummyProviderReconciler) Reconcile(ctx context.Context, log logr.Logger, c
 	return controller.Result{}, nil
 }
 
-func (dummyProviderReconciler) ReconcileCNI(ctx context.Context, log logr.Logger, clusterSpec *cluster.Spec) (controller.Result, error) {
+func (dummyProviderReconciler) ReconcileCNI(ctx context.Context, log logr.Logger, clusterSpec *c.Spec) (controller.Result, error) {
 	return controller.Result{}, nil
 }
 

@@ -2,6 +2,7 @@ package cluster
 
 import (
 	"context"
+	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -26,22 +27,22 @@ func NewControlPlaneIPCheckAnnotationDefaulter(skipIPCheck bool) ControlPlaneIPC
 }
 
 // ControlPlaneIPCheckDefault sets the annotation for control plane skip ip check if the flag is set to true.
-func (d ControlPlaneIPCheckAnnotationDefaulter) ControlPlaneIPCheckDefault(ctx context.Context, cluster *anywherev1.Cluster) (*anywherev1.Cluster, error) {
+func (d ControlPlaneIPCheckAnnotationDefaulter) ControlPlaneIPCheckDefault(ctx context.Context, spec *Spec) (*Spec, error) {
 	if d.skipCPIPCheck {
-		cluster.DisableControlPlaneIPCheck()
+		spec.Cluster.DisableControlPlaneIPCheck()
 	}
 
-	return cluster, nil
+	return spec, nil
 }
 
 // MachineHealthCheckDefaulter is the defaulter created to configure the machine health check timeouts.
 type MachineHealthCheckDefaulter struct {
-	NodeStartupTimeout      *metav1.Duration
-	UnhealthyMachineTimeout *metav1.Duration
+	NodeStartupTimeout      time.Duration
+	UnhealthyMachineTimeout time.Duration
 }
 
 // NewMachineHealthCheckDefaulter allows to create a new MachineHealthCheckDefaulter.
-func NewMachineHealthCheckDefaulter(nodeStartupTimeout, unhealthyMachineTimeout *metav1.Duration) MachineHealthCheckDefaulter {
+func NewMachineHealthCheckDefaulter(nodeStartupTimeout, unhealthyMachineTimeout time.Duration) MachineHealthCheckDefaulter {
 	return MachineHealthCheckDefaulter{
 		NodeStartupTimeout:      nodeStartupTimeout,
 		UnhealthyMachineTimeout: unhealthyMachineTimeout,
@@ -49,9 +50,16 @@ func NewMachineHealthCheckDefaulter(nodeStartupTimeout, unhealthyMachineTimeout 
 }
 
 // MachineHealthCheckDefault sets the defaults for machine health check timeouts.
-func (d MachineHealthCheckDefaulter) MachineHealthCheckDefault(ctx context.Context, cluster *anywherev1.Cluster) (*anywherev1.Cluster, error) {
+func (d MachineHealthCheckDefaulter) MachineHealthCheckDefault(ctx context.Context, spec *Spec) (*Spec, error) {
+	SetMachineHealthCheckTimeoutDefaults(spec.Cluster, d.NodeStartupTimeout, d.UnhealthyMachineTimeout)
+
+	return spec, nil
+}
+
+// SetMachineHealthCheckTimeoutDefaults sests defaults for mhcs in the EKSA cluster object based on the input.
+func SetMachineHealthCheckTimeoutDefaults(cluster *anywherev1.Cluster, nodeStartupTimeout, unhealthyMachineTimeout time.Duration) {
 	if cluster.Spec.MachineHealthCheck != nil && cluster.Spec.MachineHealthCheck.NodeStartupTimeout != nil && cluster.Spec.MachineHealthCheck.UnhealthyMachineTimeout != nil {
-		return cluster, nil
+		return
 	}
 
 	if cluster.Spec.MachineHealthCheck == nil {
@@ -59,22 +67,24 @@ func (d MachineHealthCheckDefaulter) MachineHealthCheckDefault(ctx context.Conte
 	}
 
 	if cluster.Spec.MachineHealthCheck.NodeStartupTimeout == nil {
-		if cluster.Spec.DatacenterRef.Kind == anywherev1.TinkerbellDatacenterKind && d.NodeStartupTimeout.Duration == constants.DefaultNodeStartupTimeout {
-			d.NodeStartupTimeout.Duration = constants.DefaultTinkerbellNodeStartupTimeout
+		if cluster.Spec.DatacenterRef.Kind == anywherev1.TinkerbellDatacenterKind && nodeStartupTimeout == constants.DefaultNodeStartupTimeout {
+			nodeStartupTimeout = constants.DefaultTinkerbellNodeStartupTimeout
 		}
 	}
 
-	setMachineHealthCheckTimeoutDefaults(cluster, *d.NodeStartupTimeout, *d.UnhealthyMachineTimeout)
-
-	return cluster, nil
+	setMachineHealthCheckTimeoutDefaults(cluster, nodeStartupTimeout, unhealthyMachineTimeout)
 }
 
-// setMachineHealthCheckTimeoutDefaults sets default tiemout values for cluster's machine health checks.
-func setMachineHealthCheckTimeoutDefaults(cluster *anywherev1.Cluster, nodeStartupTimeout, unhealthyMachineTimeout metav1.Duration) {
+// setMachineHealthCheckTimeoutDefaults sets default timeout values for cluster's machine health checks.
+func setMachineHealthCheckTimeoutDefaults(cluster *anywherev1.Cluster, nodeStartupTimeout, unhealthyMachineTimeout time.Duration) {
 	if cluster.Spec.MachineHealthCheck.NodeStartupTimeout == nil {
-		cluster.Spec.MachineHealthCheck.NodeStartupTimeout = &nodeStartupTimeout
+		cluster.Spec.MachineHealthCheck.NodeStartupTimeout = &metav1.Duration{
+			Duration: nodeStartupTimeout,
+		}
 	}
 	if cluster.Spec.MachineHealthCheck.UnhealthyMachineTimeout == nil {
-		cluster.Spec.MachineHealthCheck.UnhealthyMachineTimeout = &unhealthyMachineTimeout
+		cluster.Spec.MachineHealthCheck.UnhealthyMachineTimeout = &metav1.Duration{
+			Duration: unhealthyMachineTimeout,
+		}
 	}
 }

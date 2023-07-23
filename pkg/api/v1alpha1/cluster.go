@@ -25,11 +25,10 @@ import (
 
 // constants defined for cluster.go.
 const (
-	ClusterKind                = "Cluster"
-	YamlSeparator              = "\n---\n"
-	RegistryMirrorCAKey        = "EKSA_REGISTRY_MIRROR_CA"
-	podSubnetNodeMaskMaxDiff   = 16
-	parseDurationErrorTemplate = "MachineHealthCheck: failed to parse %s: %v"
+	ClusterKind              = "Cluster"
+	YamlSeparator            = "\n---\n"
+	RegistryMirrorCAKey      = "EKSA_REGISTRY_MIRROR_CA"
+	podSubnetNodeMaskMaxDiff = 16
 )
 
 var re = regexp.MustCompile(constants.DefaultCuratedPackagesRegistryRegex)
@@ -855,7 +854,6 @@ func validateEksaVersion(clusterConfig *Cluster) error {
 		_, err := semver.New(string(*clusterConfig.Spec.EksaVersion))
 		if err != nil {
 			return fmt.Errorf("eksaVersion is not a valid semver")
-
 		}
 	}
 

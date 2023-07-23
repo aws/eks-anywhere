@@ -3,19 +3,18 @@ package cli
 import (
 	"context"
 
-	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/defaulting"
 )
 
 // UpgradeClusterDefaulter defines the cluster defaulter for Upgrade cluster command defaults.
 type UpgradeClusterDefaulter struct {
-	runner *defaulting.Runner[*anywherev1.Cluster]
+	runner *defaulting.Runner[*cluster.Spec]
 }
 
 // NewUpgradeClusterDefaulter to instantiate and register defaults.
 func NewUpgradeClusterDefaulter(mhcDefaulter cluster.MachineHealthCheckDefaulter) UpgradeClusterDefaulter {
-	r := defaulting.NewRunner[*anywherev1.Cluster]()
+	r := defaulting.NewRunner[*cluster.Spec]()
 	r.Register(
 		mhcDefaulter.MachineHealthCheckDefault,
 	)
@@ -26,6 +25,6 @@ func NewUpgradeClusterDefaulter(mhcDefaulter cluster.MachineHealthCheckDefaulter
 }
 
 // Run will run all the defaults registered to the Upgrade Cluster Defaulter.
-func (v UpgradeClusterDefaulter) Run(ctx context.Context, cluster *anywherev1.Cluster) (*anywherev1.Cluster, error) {
-	return v.runner.RunAll(ctx, cluster)
+func (v UpgradeClusterDefaulter) Run(ctx context.Context, spec *cluster.Spec) (*cluster.Spec, error) {
+	return v.runner.RunAll(ctx, spec)
 }

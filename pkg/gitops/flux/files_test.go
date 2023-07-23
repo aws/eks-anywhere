@@ -32,7 +32,7 @@ spec:
   gitOpsRef:
     kind: FluxConfig
     name: test-gitops
-  kubernetesVersion: "1.24"
+  kubernetesVersion: "1.19"
   managementCluster:
     name: test-cluster
 
@@ -172,7 +172,7 @@ func newFileGeneratorTest(t *testing.T) *fileGeneratorTest {
 		g:                flux.NewFileGeneratorWithWriterTemplater(writer, writer, templater, templater),
 		w:                writer,
 		t:                templater,
-		clusterSpec:      newClusterSpec(t, newCluster(clusterName), ""),
+		clusterSpec:      newClusterSpec(t, NewCluster(clusterName), ""),
 		datacenterConfig: datacenterConfig(clusterName),
 		machineConfigs:   []providers.MachineConfig{machineConfig(clusterName)},
 	}
@@ -275,7 +275,7 @@ func TestFileGeneratorWriteFluxSystemFilesWriteFluxPatchesError(t *testing.T) {
 	tt.Expect(tt.g.WriteFluxSystemFiles(tt.clusterSpec)).To(MatchError(ContainSubstring("error in write patches")))
 }
 
-func newCluster(clusterName string) *anywherev1.Cluster {
+func NewCluster(clusterName string) *anywherev1.Cluster {
 	c := &anywherev1.Cluster{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       anywherev1.ClusterKind,
@@ -285,7 +285,7 @@ func newCluster(clusterName string) *anywherev1.Cluster {
 			Name: clusterName,
 		},
 		Spec: anywherev1.ClusterSpec{
-			KubernetesVersion: anywherev1.Kube124,
+			KubernetesVersion: anywherev1.Kube119,
 		},
 		Status: anywherev1.ClusterStatus{},
 	}

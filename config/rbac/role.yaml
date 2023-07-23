@@ -174,11 +174,9 @@ rules:
   - machinehealthchecks
   verbs:
   - create
-  - delete
   - get
   - list
   - patch
-  - update
   - watch
 - apiGroups:
   - clusterctl.cluster.x-k8s.io

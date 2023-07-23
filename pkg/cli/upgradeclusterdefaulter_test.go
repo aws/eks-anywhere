@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	. "github.com/onsi/gomega"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aws/eks-anywhere/pkg/cli"
 	"github.com/aws/eks-anywhere/pkg/cluster"
@@ -15,19 +14,18 @@ import (
 func TestRunUpgradeClusterDefaulter(t *testing.T) {
 	g := NewWithT(t)
 
-	baseCluster := baseCluster()
+	c := baseCluster()
 
-	unhealthyTimeout := &metav1.Duration{
-		Duration: constants.DefaultUnhealthyMachineTimeout,
+	clusterSpec := &cluster.Spec{
+		Config: &cluster.Config{
+			Cluster: c,
+		},
 	}
-	nodeStartupTimeout := &metav1.Duration{
-		Duration: constants.DefaultNodeStartupTimeout,
-	}
-	mhcDefaulter := cluster.NewMachineHealthCheckDefaulter(nodeStartupTimeout, unhealthyTimeout)
+	mhcDefaulter := cluster.NewMachineHealthCheckDefaulter(constants.DefaultNodeStartupTimeout, constants.DefaultUnhealthyMachineTimeout)
 
 	upgradeClusterDefaulter := cli.NewUpgradeClusterDefaulter(mhcDefaulter)
-	updatedCluster, err := upgradeClusterDefaulter.Run(context.Background(), baseCluster)
+	clusterSpec, err := upgradeClusterDefaulter.Run(context.Background(), clusterSpec)
 
 	g.Expect(err).To(BeNil())
-	g.Expect(updatedCluster.Spec.MachineHealthCheck).ToNot(BeNil())
+	g.Expect(clusterSpec.Cluster.Spec.MachineHealthCheck).ToNot(BeNil())
 }
