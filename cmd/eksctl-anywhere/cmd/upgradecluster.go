@@ -94,6 +94,8 @@ func (uc *upgradeClusterOptions) upgradeCluster(cmd *cobra.Command) error {
 		return err
 	}
 
+	upgradeCLIConfig := buildUpgradeCliConfig(uc)
+
 	clusterManagerTimeoutOpts, err := buildClusterManagerOpts(uc.timeoutOptions, clusterSpec.Cluster.Spec.DatacenterRef.Kind)
 	if err != nil {
 		return fmt.Errorf("failed to build cluster manager opts: %v", err)
@@ -118,7 +120,8 @@ func (uc *upgradeClusterOptions) upgradeCluster(cmd *cobra.Command) error {
 		WithEksdUpgrader().
 		WithEksdInstaller().
 		WithKubectl().
-		WithValidatorClients()
+		WithValidatorClients().
+		WithUpgradeClusterDefaulter(upgradeCLIConfig)
 
 	if uc.timeoutOptions.noTimeouts {
 		factory.WithNoTimeouts()
@@ -129,6 +132,11 @@ func (uc *upgradeClusterOptions) upgradeCluster(cmd *cobra.Command) error {
 		return err
 	}
 	defer close(ctx, deps)
+
+	clusterSpec.Cluster, err = deps.UpgradeClusterDefaulter.Run(ctx, clusterSpec.Cluster)
+	if err != nil {
+		return err
+	}
 
 	upgradeCluster := workflows.NewUpgrade(
 		deps.Bootstrapper,

@@ -21,7 +21,7 @@ func TestNewCreateClusterDefaulter(t *testing.T) {
 	skipIPCheck := cluster.NewControlPlaneIPCheckAnnotationDefaulter(false)
 	mhcDefaulter := cluster.NewMachineHealthCheckDefaulter(constants.DefaultNodeStartupTimeout.String(), constants.DefaultUnhealthyMachineTimeout.String())
 
-	r := defaulting.NewRunner[*cluster.Spec]()
+	r := defaulting.NewRunner[*anywherev1.Cluster]()
 	r.Register(
 		skipIPCheck.ControlPlaneIPCheckDefault,
 	)
@@ -34,18 +34,15 @@ func TestNewCreateClusterDefaulter(t *testing.T) {
 func TestRunWithoutSkipIPAnnotation(t *testing.T) {
 	g := NewWithT(t)
 
-	clusterSpec := &cluster.Spec{
-		Config: &cluster.Config{
-			Cluster: baseCluster(),
-		},
-	}
+	baseCluster := baseCluster()
+
 	skipIPCheck := cluster.NewControlPlaneIPCheckAnnotationDefaulter(false)
 	mhcDefaulter := cluster.NewMachineHealthCheckDefaulter(constants.DefaultNodeStartupTimeout.String(), constants.DefaultUnhealthyMachineTimeout.String())
 
 	createClusterDefaulter := cli.NewCreateClusterDefaulter(skipIPCheck, mhcDefaulter)
-	clusterSpec, err := createClusterDefaulter.Run(context.Background(), clusterSpec)
+	baseCluster, err := createClusterDefaulter.Run(context.Background(), baseCluster)
 
-	skipIPClusterAnnotation := clusterSpec.Config.Cluster.ControlPlaneIPCheckDisabled()
+	skipIPClusterAnnotation := baseCluster.ControlPlaneIPCheckDisabled()
 
 	g.Expect(err).To(BeNil())
 	g.Expect(skipIPClusterAnnotation).To(BeFalse())
@@ -54,18 +51,15 @@ func TestRunWithoutSkipIPAnnotation(t *testing.T) {
 func TestRunWithSkipIPAnnotation(t *testing.T) {
 	g := NewWithT(t)
 
-	clusterSpec := &cluster.Spec{
-		Config: &cluster.Config{
-			Cluster: baseCluster(),
-		},
-	}
+	baseCluster := baseCluster()
+
 	skipIPCheck := cluster.NewControlPlaneIPCheckAnnotationDefaulter(true)
 	mhcDefaulter := cluster.NewMachineHealthCheckDefaulter(constants.DefaultNodeStartupTimeout.String(), constants.DefaultUnhealthyMachineTimeout.String())
 
 	createClusterDefaulter := cli.NewCreateClusterDefaulter(skipIPCheck, mhcDefaulter)
-	clusterSpec, err := createClusterDefaulter.Run(context.Background(), clusterSpec)
+	baseCluster, err := createClusterDefaulter.Run(context.Background(), baseCluster)
 
-	skipIPClusterAnnotation := clusterSpec.Config.Cluster.ControlPlaneIPCheckDisabled()
+	skipIPClusterAnnotation := baseCluster.ControlPlaneIPCheckDisabled()
 
 	g.Expect(err).To(BeNil())
 	g.Expect(skipIPClusterAnnotation).To(BeTrue())

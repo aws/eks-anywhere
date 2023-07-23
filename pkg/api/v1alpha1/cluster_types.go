@@ -284,6 +284,22 @@ type MachineHealthCheck struct {
 	UnhealthyMachineTimeout string `json:"unhealthyMachineTimeout,omitempty"`
 }
 
+// Equal compares machine health check objects to check if they are equal.
+func (n *MachineHealthCheck) Equal(o *MachineHealthCheck) bool {
+	if n == o {
+		return true
+	}
+	if n == nil || o == nil {
+		return false
+	}
+
+	if n.NodeStartupTimeout != o.NodeStartupTimeout || n.UnhealthyMachineTimeout != o.UnhealthyMachineTimeout {
+		return false
+	}
+
+	return true
+}
+
 func TaintsSliceEqual(s1, s2 []corev1.Taint) bool {
 	if len(s1) != len(s2) {
 		return false

@@ -146,11 +146,10 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 	}
 	defer close(ctx, deps)
 
-	clusterSpec, err = deps.CreateClusterDefaulter.Run(ctx, clusterSpec)
+	clusterSpec.Cluster, err = deps.CreateClusterDefaulter.Run(ctx, clusterSpec.Cluster)
 	if err != nil {
 		return err
 	}
-	fmt.Printf("\n clusterSpec %v\n", clusterSpec.Cluster.Spec.MachineHealthCheck)
 
 	createCluster := workflows.NewCreate(
 		deps.Bootstrapper,

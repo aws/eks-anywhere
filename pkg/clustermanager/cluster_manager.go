@@ -133,6 +133,7 @@ type ClusterClient interface {
 	PauseCAPICluster(ctx context.Context, cluster, kubeconfig string) error
 	ResumeCAPICluster(ctx context.Context, cluster, kubeconfig string) error
 	GetEksaCluster(ctx context.Context, cluster *types.Cluster, clusterName string) (*v1alpha1.Cluster, error)
+	GetMachineHealthCheck(ctx context.Context, cluster *types.Cluster, clusterName string) (*clusterv1.MachineHealthCheck, error)
 	GetEksaVSphereDatacenterConfig(ctx context.Context, VSphereDatacenterName string, kubeconfigFile string, namespace string) (*v1alpha1.VSphereDatacenterConfig, error)
 	UpdateEnvironmentVariablesInNamespace(ctx context.Context, resourceType, resourceName string, envMap map[string]string, cluster *types.Cluster, namespace string) error
 	GetEksaVSphereMachineConfig(ctx context.Context, VSphereDatacenterName string, kubeconfigFile string, namespace string) (*v1alpha1.VSphereMachineConfig, error)
@@ -756,6 +757,14 @@ func compareEKSAClusterSpec(ctx context.Context, currentClusterSpec, newClusterS
 		}
 	}
 
+	if newClusterSpec.Cluster.Spec.MachineHealthCheck != nil && currentClusterSpec.Cluster.Spec.MachineHealthCheck != nil {
+		if !newClusterSpec.Cluster.Spec.MachineHealthCheck.Equal(currentClusterSpec.Cluster.Spec.MachineHealthCheck) {
+			logger.V(3).Info("Machine health check changes detected")
+			return true, nil
+		}
+	}
+
+	logger.V(3).Info("Clusters are the same")
 	return false, nil
 }
 
@@ -806,6 +815,7 @@ func getProviderNamespaces(providerDeployments map[string][]string) []string {
 	return namespaces
 }
 
+// InstallMachineHealthChecks installs machine health checks for a given eksa cluster.
 func (c *ClusterManager) InstallMachineHealthChecks(ctx context.Context, clusterSpec *cluster.Spec, workloadCluster *types.Cluster) error {
 	unhealthyMachineTimeout, err := time.ParseDuration(clusterSpec.Cluster.Spec.MachineHealthCheck.UnhealthyMachineTimeout)
 	if err != nil {
@@ -827,6 +837,46 @@ func (c *ClusterManager) InstallMachineHealthChecks(ctx context.Context, cluster
 		return fmt.Errorf("applying machine health checks: %v", err)
 	}
 	return nil
+}
+
+// UpdateMachineHealthChecks updates machine health checks for a given eksa cluster.
+func (c *ClusterManager) UpdateMachineHealthChecks(ctx context.Context, clusterSpec *cluster.Spec, workloadCluster *types.Cluster) error {
+	mhcCP, err := c.clusterClient.GetMachineHealthCheck(ctx, workloadCluster, clusterapi.ControlPlaneMachineHealthCheckName(clusterSpec.Cluster))
+	if err != nil {
+		return err
+	}
+
+	if mhcCP != nil && machineHealthCheckDiffExists(clusterSpec.Cluster.Spec.MachineHealthCheck, mhcCP) {
+		logger.V(0).Info("Updating machine health checks")
+		err = c.InstallMachineHealthChecks(ctx, clusterSpec, workloadCluster)
+		if err != nil {
+			return err
+		}
+	}
+
+	logger.V(0).Info("Skipping machine health checks upgrade")
+
+	return nil
+}
+
+func machineHealthCheckDiffExists(eksaMachineHealthCheck *v1alpha1.MachineHealthCheck, capiMachineHealthCheck *clusterv1.MachineHealthCheck) bool {
+	if eksaMachineHealthCheck == nil && capiMachineHealthCheck == nil {
+		return false
+	}
+
+	if eksaMachineHealthCheck == nil || capiMachineHealthCheck == nil {
+		return true
+	}
+
+	if eksaMachineHealthCheck.NodeStartupTimeout != capiMachineHealthCheck.Spec.NodeStartupTimeout.Duration.String() {
+		return true
+	}
+
+	if len(capiMachineHealthCheck.Spec.UnhealthyConditions) > 0 && eksaMachineHealthCheck.UnhealthyMachineTimeout != capiMachineHealthCheck.Spec.UnhealthyConditions[0].Timeout.Duration.String() {
+		return true
+	}
+
+	return false
 }
 
 // InstallAwsIamAuth applies the aws-iam-authenticator manifest based on cluster spec inputs.

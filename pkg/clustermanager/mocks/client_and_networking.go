@@ -485,6 +485,21 @@ func (mr *MockClusterClientMockRecorder) GetMachineDeploymentsForCluster(arg0, a
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMachineDeploymentsForCluster", reflect.TypeOf((*MockClusterClient)(nil).GetMachineDeploymentsForCluster), varargs...)
 }
 
+// GetMachineHealthCheck mocks base method.
+func (m *MockClusterClient) GetMachineHealthCheck(arg0 context.Context, arg1 *types.Cluster, arg2 string) (*v1beta1.MachineHealthCheck, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetMachineHealthCheck", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*v1beta1.MachineHealthCheck)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetMachineHealthCheck indicates an expected call of GetMachineHealthCheck.
+func (mr *MockClusterClientMockRecorder) GetMachineHealthCheck(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMachineHealthCheck", reflect.TypeOf((*MockClusterClient)(nil).GetMachineHealthCheck), arg0, arg1, arg2)
+}
+
 // GetMachines mocks base method.
 func (m *MockClusterClient) GetMachines(arg0 context.Context, arg1 *types.Cluster, arg2 string) ([]types.Machine, error) {
 	m.ctrl.T.Helper()

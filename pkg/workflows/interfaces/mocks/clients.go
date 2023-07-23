@@ -441,6 +441,20 @@ func (mr *MockClusterManagerMockRecorder) SaveLogsWorkloadCluster(arg0, arg1, ar
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveLogsWorkloadCluster", reflect.TypeOf((*MockClusterManager)(nil).SaveLogsWorkloadCluster), arg0, arg1, arg2, arg3)
 }
 
+// UpdateMachineHealthChecks mocks base method.
+func (m *MockClusterManager) UpdateMachineHealthChecks(arg0 context.Context, arg1 *cluster.Spec, arg2 *types.Cluster) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateMachineHealthChecks", arg0, arg1, arg2)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateMachineHealthChecks indicates an expected call of UpdateMachineHealthChecks.
+func (mr *MockClusterManagerMockRecorder) UpdateMachineHealthChecks(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateMachineHealthChecks", reflect.TypeOf((*MockClusterManager)(nil).UpdateMachineHealthChecks), arg0, arg1, arg2)
+}
+
 // Upgrade mocks base method.
 func (m *MockClusterManager) Upgrade(arg0 context.Context, arg1 *types.Cluster, arg2, arg3 *cluster.Spec) (*types.ChangeDiff, error) {
 	m.ctrl.T.Helper()

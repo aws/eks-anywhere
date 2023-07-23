@@ -24,12 +24,12 @@ func NewControlPlaneIPCheckAnnotationDefaulter(skipIPCheck bool) ControlPlaneIPC
 }
 
 // ControlPlaneIPCheckDefault sets the annotation for control plane skip ip check if the flag is set to true.
-func (d ControlPlaneIPCheckAnnotationDefaulter) ControlPlaneIPCheckDefault(ctx context.Context, spec *Spec) (*Spec, error) {
+func (d ControlPlaneIPCheckAnnotationDefaulter) ControlPlaneIPCheckDefault(ctx context.Context, cluster *anywherev1.Cluster) (*anywherev1.Cluster, error) {
 	if d.skipCPIPCheck {
-		spec.Cluster.DisableControlPlaneIPCheck()
+		cluster.DisableControlPlaneIPCheck()
 	}
 
-	return spec, nil
+	return cluster, nil
 }
 
 // MachineHealthCheckDefaulter is the defaulter created to configure the machine health check timeouts.
@@ -47,24 +47,24 @@ func NewMachineHealthCheckDefaulter(nodeStartupTimeout, unhealthyMachineTimeout 
 }
 
 // MachineHealthCheckDefault sets the defaults for machine health check timeouts.
-func (d MachineHealthCheckDefaulter) MachineHealthCheckDefault(ctx context.Context, spec *Spec) (*Spec, error) {
-	if spec.Config.Cluster.Spec.MachineHealthCheck != nil && len(spec.Config.Cluster.Spec.MachineHealthCheck.NodeStartupTimeout) != 0 && len(spec.Config.Cluster.Spec.MachineHealthCheck.UnhealthyMachineTimeout) != 0 {
-		return spec, nil
+func (d MachineHealthCheckDefaulter) MachineHealthCheckDefault(ctx context.Context, cluster *anywherev1.Cluster) (*anywherev1.Cluster, error) {
+	if cluster.Spec.MachineHealthCheck != nil && len(cluster.Spec.MachineHealthCheck.NodeStartupTimeout) != 0 && len(cluster.Spec.MachineHealthCheck.UnhealthyMachineTimeout) != 0 {
+		return cluster, nil
 	}
 
-	if spec.Config.Cluster.Spec.MachineHealthCheck == nil {
-		spec.Config.Cluster.Spec.MachineHealthCheck = &anywherev1.MachineHealthCheck{}
+	if cluster.Spec.MachineHealthCheck == nil {
+		cluster.Spec.MachineHealthCheck = &anywherev1.MachineHealthCheck{}
 	}
 
-	if len(spec.Cluster.Spec.MachineHealthCheck.NodeStartupTimeout) == 0 {
-		if spec.Cluster.Spec.DatacenterRef.Kind == anywherev1.TinkerbellDatacenterKind && d.nodeStartupTimeout == constants.DefaultNodeStartupTimeout.String() {
+	if len(cluster.Spec.MachineHealthCheck.NodeStartupTimeout) == 0 {
+		if cluster.Spec.DatacenterRef.Kind == anywherev1.TinkerbellDatacenterKind && d.nodeStartupTimeout == constants.DefaultNodeStartupTimeout.String() {
 			d.nodeStartupTimeout = constants.DefaultTinkerbellNodeStartupTimeout.String()
 		}
 	}
 
-	setMachineHealthCheckTimeoutDefaults(spec.Cluster, d.nodeStartupTimeout, d.unhealthyMachineTimeout)
+	setMachineHealthCheckTimeoutDefaults(cluster, d.nodeStartupTimeout, d.unhealthyMachineTimeout)
 
-	return spec, nil
+	return cluster, nil
 }
 
 // setMachineHealthCheckTimeoutDefaults sets default tiemout values for cluster's machine health checks.

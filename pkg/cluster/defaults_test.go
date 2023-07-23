@@ -98,18 +98,12 @@ func TestNewControlPlaneIPCheckAnnotationDefaulterNoAnnotation(t *testing.T) {
 
 	newControlPlaneIPCheckAnnotationDefaulter := cluster.NewControlPlaneIPCheckAnnotationDefaulter(false)
 
-	c := baseCluster()
+	baseCluster := baseCluster()
 
-	clusterSpec := &cluster.Spec{
-		Config: &cluster.Config{
-			Cluster: c,
-		},
-	}
-
-	updatedClusterSpec, err := newControlPlaneIPCheckAnnotationDefaulter.ControlPlaneIPCheckDefault(context.Background(), clusterSpec)
+	updatedCluster, err := newControlPlaneIPCheckAnnotationDefaulter.ControlPlaneIPCheckDefault(context.Background(), baseCluster)
 
 	g.Expect(err).To(BeNil())
-	g.Expect(clusterSpec).To(Equal(updatedClusterSpec))
+	g.Expect(baseCluster).To(Equal(updatedCluster))
 }
 
 func TestNewControlPlaneIPCheckAnnotationDefaulterAddAnnotation(t *testing.T) {
@@ -117,21 +111,15 @@ func TestNewControlPlaneIPCheckAnnotationDefaulterAddAnnotation(t *testing.T) {
 
 	newControlPlaneIPCheckAnnotationDefaulter := cluster.NewControlPlaneIPCheckAnnotationDefaulter(true)
 
-	c := baseCluster()
+	baseCluster := baseCluster()
 
-	clusterSpec := &cluster.Spec{
-		Config: &cluster.Config{
-			Cluster: c,
-		},
-	}
-
-	oldCluster := clusterSpec.Config.Cluster.DeepCopy()
+	oldCluster := baseCluster.DeepCopy()
 	oldCluster.DisableControlPlaneIPCheck()
 
-	_, err := newControlPlaneIPCheckAnnotationDefaulter.ControlPlaneIPCheckDefault(context.Background(), clusterSpec)
+	updatedCluster, err := newControlPlaneIPCheckAnnotationDefaulter.ControlPlaneIPCheckDefault(context.Background(), baseCluster)
 
 	g.Expect(err).To(BeNil())
-	g.Expect(oldCluster).To(Equal(clusterSpec.Config.Cluster))
+	g.Expect(oldCluster).To(Equal(updatedCluster))
 }
 
 func TestNewMachineHealthCheckDefaulter(t *testing.T) {
@@ -139,20 +127,14 @@ func TestNewMachineHealthCheckDefaulter(t *testing.T) {
 
 	newMachineHealthCheckDefaulter := cluster.NewMachineHealthCheckDefaulter("15m0s", "20m10s")
 
-	c := baseCluster()
-
-	clusterSpec := &cluster.Spec{
-		Config: &cluster.Config{
-			Cluster: c,
-		},
-	}
+	baseCluster := baseCluster()
 
 	machineHealthcheck := &anywherev1.MachineHealthCheck{NodeStartupTimeout: "15m0s", UnhealthyMachineTimeout: "20m10s"}
 
-	updatedClusterSpec, err := newMachineHealthCheckDefaulter.MachineHealthCheckDefault(context.Background(), clusterSpec)
+	updatedCluster, err := newMachineHealthCheckDefaulter.MachineHealthCheckDefault(context.Background(), baseCluster)
 
 	g.Expect(err).To(BeNil())
-	g.Expect(updatedClusterSpec.Cluster.Spec.MachineHealthCheck).To(Equal(machineHealthcheck))
+	g.Expect(updatedCluster.Spec.MachineHealthCheck).To(Equal(machineHealthcheck))
 }
 
 func TestNewMachineHealthCheckDefaulterTinkerbell(t *testing.T) {
@@ -160,21 +142,15 @@ func TestNewMachineHealthCheckDefaulterTinkerbell(t *testing.T) {
 
 	newMachineHealthCheckDefaulter := cluster.NewMachineHealthCheckDefaulter(constants.DefaultNodeStartupTimeout.String(), constants.DefaultUnhealthyMachineTimeout.String())
 
-	c := baseCluster()
-	c.Spec.DatacenterRef.Kind = anywherev1.TinkerbellDatacenterKind
-
-	clusterSpec := &cluster.Spec{
-		Config: &cluster.Config{
-			Cluster: c,
-		},
-	}
+	baseCluster := baseCluster()
+	baseCluster.Spec.DatacenterRef.Kind = anywherev1.TinkerbellDatacenterKind
 
 	machineHealthcheck := &anywherev1.MachineHealthCheck{NodeStartupTimeout: constants.DefaultTinkerbellNodeStartupTimeout.String(), UnhealthyMachineTimeout: constants.DefaultUnhealthyMachineTimeout.String()}
 
-	updatedClusterSpec, err := newMachineHealthCheckDefaulter.MachineHealthCheckDefault(context.Background(), clusterSpec)
+	updatedCluster, err := newMachineHealthCheckDefaulter.MachineHealthCheckDefault(context.Background(), baseCluster)
 
 	g.Expect(err).To(BeNil())
-	g.Expect(updatedClusterSpec.Cluster.Spec.MachineHealthCheck).To(Equal(machineHealthcheck))
+	g.Expect(updatedCluster.Spec.MachineHealthCheck).To(Equal(machineHealthcheck))
 }
 
 func TestNewMachineHealthCheckDefaulterNoChange(t *testing.T) {
@@ -182,24 +158,18 @@ func TestNewMachineHealthCheckDefaulterNoChange(t *testing.T) {
 
 	newMachineHealthCheckDefaulter := cluster.NewMachineHealthCheckDefaulter("10m0s", "10m0s")
 
-	c := baseCluster()
-	c.Spec.MachineHealthCheck = &anywherev1.MachineHealthCheck{
+	baseCluster := baseCluster()
+	baseCluster.Spec.MachineHealthCheck = &anywherev1.MachineHealthCheck{
 		NodeStartupTimeout:      "5m0s",
 		UnhealthyMachineTimeout: "5m0s",
 	}
 
-	clusterSpec := &cluster.Spec{
-		Config: &cluster.Config{
-			Cluster: c,
-		},
-	}
-
 	machineHealthcheck := &anywherev1.MachineHealthCheck{NodeStartupTimeout: "5m0s", UnhealthyMachineTimeout: "5m0s"}
 
-	updatedClusterSpec, err := newMachineHealthCheckDefaulter.MachineHealthCheckDefault(context.Background(), clusterSpec)
+	updatedCluster, err := newMachineHealthCheckDefaulter.MachineHealthCheckDefault(context.Background(), baseCluster)
 
 	g.Expect(err).To(BeNil())
-	g.Expect(updatedClusterSpec.Cluster.Spec.MachineHealthCheck).To(Equal(machineHealthcheck))
+	g.Expect(updatedCluster.Spec.MachineHealthCheck).To(Equal(machineHealthcheck))
 }
 
 type clusterOpt func(c *anywherev1.Cluster)

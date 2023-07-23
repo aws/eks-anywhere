@@ -1295,6 +1295,65 @@ func TestClusterEqualPackageConfigurationNetwork(t *testing.T) {
 	}
 }
 
+func TestMachineHealthCheckEqual(t *testing.T) {
+	testCases := []struct {
+		testName   string
+		mhc1, mhc2 *v1alpha1.MachineHealthCheck
+		want       bool
+	}{
+		{
+			testName: "both nil",
+			mhc1:     nil,
+			mhc2:     nil,
+			want:     true,
+		},
+		{
+			testName: "one nil",
+			mhc1:     nil,
+			mhc2: &v1alpha1.MachineHealthCheck{
+				NodeStartupTimeout: "0s",
+			},
+			want: false,
+		},
+		{
+			testName: "both not nil",
+			mhc1: &v1alpha1.MachineHealthCheck{
+				NodeStartupTimeout: "5s",
+			},
+			mhc2: &v1alpha1.MachineHealthCheck{
+				NodeStartupTimeout: "0s",
+			},
+			want: false,
+		},
+		{
+			testName: "both not nil",
+			mhc1: &v1alpha1.MachineHealthCheck{
+				UnhealthyMachineTimeout: "5s",
+			},
+			mhc2: &v1alpha1.MachineHealthCheck{
+				UnhealthyMachineTimeout: "0s",
+			},
+			want: false,
+		},
+		{
+			testName: "both empty",
+			mhc1: &v1alpha1.MachineHealthCheck{
+				UnhealthyMachineTimeout: "5s",
+			},
+			mhc2: &v1alpha1.MachineHealthCheck{
+				UnhealthyMachineTimeout: "5s",
+			},
+			want: true,
+		},
+	}
+	for _, tt := range testCases {
+		t.Run(tt.testName, func(t *testing.T) {
+			g := NewWithT(t)
+			g.Expect(tt.mhc1.Equal(tt.mhc2)).To(Equal(tt.want))
+		})
+	}
+}
+
 func TestClusterEqualManagement(t *testing.T) {
 	testCases := []struct {
 		testName                               string

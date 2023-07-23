@@ -172,7 +172,7 @@ func newFileGeneratorTest(t *testing.T) *fileGeneratorTest {
 		g:                flux.NewFileGeneratorWithWriterTemplater(writer, writer, templater, templater),
 		w:                writer,
 		t:                templater,
-		clusterSpec:      newClusterSpec(t, NewCluster(clusterName), ""),
+		clusterSpec:      newClusterSpec(t, newCluster(clusterName), ""),
 		datacenterConfig: datacenterConfig(clusterName),
 		machineConfigs:   []providers.MachineConfig{machineConfig(clusterName)},
 	}
@@ -275,7 +275,7 @@ func TestFileGeneratorWriteFluxSystemFilesWriteFluxPatchesError(t *testing.T) {
 	tt.Expect(tt.g.WriteFluxSystemFiles(tt.clusterSpec)).To(MatchError(ContainSubstring("error in write patches")))
 }
 
-func NewCluster(clusterName string) *anywherev1.Cluster {
+func newCluster(clusterName string) *anywherev1.Cluster {
 	c := &anywherev1.Cluster{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       anywherev1.ClusterKind,

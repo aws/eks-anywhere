@@ -25,3 +25,9 @@ type CreateClusterCLIConfig struct {
 	NodeStartupTimeout      string
 	UnhealthyMachineTimeout string
 }
+
+// UpgradeClusterCLIConfig is the config we use for create cluster specific configurations.
+type UpgradeClusterCLIConfig struct {
+	NodeStartupTimeout      string
+	UnhealthyMachineTimeout string
+}

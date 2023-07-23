@@ -184,6 +184,21 @@ func buildCreateCliConfig(clusterOptions *createClusterOptions) config.CreateClu
 	return createCliConfig
 }
 
+func buildUpgradeCliConfig(clusterOptions *upgradeClusterOptions) config.UpgradeClusterCLIConfig {
+	upgradeCliConfig := config.UpgradeClusterCLIConfig{}
+	if clusterOptions.noTimeouts {
+		maxTime := time.Duration(math.MaxInt64)
+		upgradeCliConfig.NodeStartupTimeout = maxTime.String()
+		upgradeCliConfig.UnhealthyMachineTimeout = maxTime.String()
+
+		return upgradeCliConfig
+	}
+	upgradeCliConfig.NodeStartupTimeout = clusterOptions.nodeStartupTimeout
+	upgradeCliConfig.UnhealthyMachineTimeout = clusterOptions.unhealthyMachineTimeout
+
+	return upgradeCliConfig
+}
+
 func getManagementCluster(clusterSpec *cluster.Spec) *types.Cluster {
 	if clusterSpec.ManagementCluster == nil {
 		return &types.Cluster{

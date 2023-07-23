@@ -19,7 +19,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/executables/cmk"
-	mhcreconciler "github.com/aws/eks-anywhere/pkg/machinehealthcheck"
+	mhcreconciler "github.com/aws/eks-anywhere/pkg/machinehealthcheck/reconciler"
 	ciliumreconciler "github.com/aws/eks-anywhere/pkg/networking/cilium/reconciler"
 	cnireconciler "github.com/aws/eks-anywhere/pkg/networking/reconciler"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack"
