@@ -543,7 +543,7 @@ func TestReconcilerValidateHardwareCountRollingUpdateFail(t *testing.T) {
 
 	logger := test.NewNullLogger()
 	scope := tt.buildScope()
-	scope.ClusterSpec.VersionsBundle.KubeDistro.Kubernetes.Tag = "1.23"
+	scope.ClusterSpec.VersionsBundles["1.22"].KubeDistro.Kubernetes.Tag = "1.23"
 	_, err := tt.reconciler().GenerateSpec(tt.ctx, logger, scope)
 	tt.Expect(err).NotTo(HaveOccurred())
 	_, err = tt.reconciler().DetectOperation(tt.ctx, logger, scope)
@@ -662,7 +662,7 @@ func TestReconcilerDetectOperationK8sVersionUpgrade(t *testing.T) {
 
 	logger := test.NewNullLogger()
 	scope := tt.buildScope()
-	scope.ClusterSpec.VersionsBundle.KubeDistro.Kubernetes.Tag = "1.23"
+	scope.ClusterSpec.VersionsBundles["1.22"].KubeDistro.Kubernetes.Tag = "1.23"
 	_, err := tt.reconciler().GenerateSpec(tt.ctx, logger, scope)
 	tt.Expect(err).NotTo(HaveOccurred())
 	op, err := tt.reconciler().DetectOperation(tt.ctx, logger, scope)
@@ -898,7 +898,7 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 			workloadClusterDatacenter,
 			managementClusterDatacenter,
 			bundle,
-			test.EksdRelease(),
+			test.EksdRelease("1-22"),
 			test.EKSARelease(),
 		},
 		cluster:                   cluster,

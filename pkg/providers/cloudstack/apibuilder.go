@@ -19,8 +19,8 @@ import (
 // CloudStackMachineTemplateKind defines the K8s Kind corresponding with the MachineTemplate.
 const CloudStackMachineTemplateKind = "CloudStackMachineTemplate"
 
-func machineDeployment(clusterSpec *cluster.Spec, workerNodeGroupConfig v1alpha1.WorkerNodeGroupConfiguration, kubeadmConfigTemplate *bootstrapv1.KubeadmConfigTemplate, cloudstackMachineTemplate *cloudstackv1.CloudStackMachineTemplate) clusterv1.MachineDeployment {
-	return *clusterapi.MachineDeployment(clusterSpec, workerNodeGroupConfig, kubeadmConfigTemplate, cloudstackMachineTemplate)
+func machineDeployment(clusterSpec *cluster.Spec, workerNodeGroupConfig v1alpha1.WorkerNodeGroupConfiguration, kubeadmConfigTemplate *bootstrapv1.KubeadmConfigTemplate, cloudstackMachineTemplate *cloudstackv1.CloudStackMachineTemplate) *clusterv1.MachineDeployment {
+	return clusterapi.MachineDeployment(clusterSpec, workerNodeGroupConfig, kubeadmConfigTemplate, cloudstackMachineTemplate)
 }
 
 // MachineDeployments returns generated CAPI MachineDeployment objects for a given cluster spec.
@@ -32,7 +32,8 @@ func MachineDeployments(clusterSpec *cluster.Spec, kubeadmConfigTemplates map[st
 			kubeadmConfigTemplates[workerNodeGroupConfig.Name],
 			machineTemplates[workerNodeGroupConfig.Name],
 		)
-		m[workerNodeGroupConfig.Name] = &deployment
+
+		m[workerNodeGroupConfig.Name] = deployment
 	}
 	return m
 }

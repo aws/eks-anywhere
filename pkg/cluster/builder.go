@@ -1,6 +1,7 @@
 package cluster
 
 import (
+	eksdv1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
 	"github.com/pkg/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -82,12 +83,8 @@ func (b FileSpecBuilder) Build(clusterConfigURL string) (*Spec, error) {
 		return nil, err
 	}
 
-	versionsBundle, err := GetVersionsBundle(config.Cluster, bundlesManifest)
-	if err != nil {
-		return nil, err
-	}
+	eksdReleases, err := getAllEksdReleases(config.Cluster, bundlesManifest, b.reader)
 
-	eksd, err := bundles.ReadEKSD(b.reader, *versionsBundle)
 	if err != nil {
 		return nil, err
 	}
@@ -101,7 +98,34 @@ func (b FileSpecBuilder) Build(clusterConfigURL string) (*Spec, error) {
 	config.Cluster.Spec.EksaVersion = &releaseVersion
 	eksaRelease := buildEKSARelease(release, bundlesManifest)
 
-	return NewSpec(config, bundlesManifest, eksd, eksaRelease)
+	return NewSpec(config, bundlesManifest, eksdReleases, eksaRelease)
+}
+
+func getAllEksdReleases(cluster *v1alpha1.Cluster, bundlesManifest *releasev1.Bundles, reader bundles.Reader) ([]eksdv1.Release, error) {
+	versions := cluster.KubernetesVersions()
+	m := make([]eksdv1.Release, 0, len(versions))
+	for _, version := range versions {
+		eksd, err := getEksdReleases(version, bundlesManifest, reader)
+		if err != nil {
+			return nil, err
+		}
+		m = append(m, *eksd)
+	}
+	return m, nil
+}
+
+func getEksdReleases(version v1alpha1.KubernetesVersion, bundlesManifest *releasev1.Bundles, reader bundles.Reader) (*eksdv1.Release, error) {
+	versionsBundle, err := GetVersionsBundle(version, bundlesManifest)
+	if err != nil {
+		return nil, err
+	}
+
+	eksd, err := bundles.ReadEKSD(reader, *versionsBundle)
+	if err != nil {
+		return nil, err
+	}
+
+	return eksd, nil
 }
 
 func (b FileSpecBuilder) getConfig(clusterConfigURL string) (*Config, error) {

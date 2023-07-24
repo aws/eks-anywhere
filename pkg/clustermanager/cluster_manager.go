@@ -690,8 +690,9 @@ func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, 
 	return nil
 }
 
-func (c *ClusterManager) EKSAClusterSpecChanged(ctx context.Context, cluster *types.Cluster, newClusterSpec *cluster.Spec) (bool, error) {
-	cc, err := c.clusterClient.GetEksaCluster(ctx, cluster, newClusterSpec.Cluster.Name)
+// EKSAClusterSpecChanged checks if a cluster's new Spec is different from the current Spec.
+func (c *ClusterManager) EKSAClusterSpecChanged(ctx context.Context, clus *types.Cluster, newClusterSpec *cluster.Spec) (bool, error) {
+	cc, err := c.clusterClient.GetEksaCluster(ctx, clus, newClusterSpec.Cluster.Name)
 	if err != nil {
 		return false, err
 	}
@@ -701,12 +702,27 @@ func (c *ClusterManager) EKSAClusterSpecChanged(ctx context.Context, cluster *ty
 		return true, nil
 	}
 
-	currentClusterSpec, err := c.buildSpecForCluster(ctx, cluster, cc)
+	currentClusterSpec, err := c.buildSpecForCluster(ctx, clus, cc)
 	if err != nil {
 		return false, err
 	}
 
-	if currentClusterSpec.VersionsBundle.EksD.Name != newClusterSpec.VersionsBundle.EksD.Name {
+	changed, err := compareEKSAClusterSpec(ctx, currentClusterSpec, newClusterSpec)
+	if err != nil {
+		return false, err
+	}
+
+	if !changed {
+		logger.V(3).Info("Clusters are the same")
+	}
+	return changed, nil
+}
+
+func compareEKSAClusterSpec(ctx context.Context, currentClusterSpec, newClusterSpec *cluster.Spec) (bool, error) {
+	currentVersionsBundle := currentClusterSpec.ControlPlaneVersionsBundle()
+	newVersionsBundle := newClusterSpec.ControlPlaneVersionsBundle()
+
+	if currentVersionsBundle.EksD.Name != newVersionsBundle.EksD.Name {
 		logger.V(3).Info("New eks-d release detected")
 		return true, nil
 	}
@@ -726,7 +742,6 @@ func (c *ClusterManager) EKSAClusterSpecChanged(ctx context.Context, cluster *ty
 		}
 	}
 
-	logger.V(3).Info("Clusters are the same")
 	return false, nil
 }
 

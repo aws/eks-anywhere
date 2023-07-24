@@ -396,7 +396,7 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 			managementCluster,
 			workloadClusterDatacenter,
 			bundle,
-			test.EksdRelease(),
+			test.EksdRelease("1-22"),
 			credentialsSecret,
 			ipPool,
 			test.EKSARelease(),

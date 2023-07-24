@@ -70,18 +70,6 @@ func TestControlPlaneSpecNewCluster(t *testing.T) {
 	g.Expect(cp.ControlPlaneMachineTemplate.Name).To(Equal("test-control-plane-1"))
 }
 
-func TestControlPlaneSpecNoKubeVersion(t *testing.T) {
-	g := NewWithT(t)
-	logger := test.NewNullLogger()
-	ctx := context.Background()
-	client := test.NewFakeKubeClient()
-	spec := test.NewFullClusterSpec(t, testClusterConfigFilename)
-	spec.Cluster.Spec.KubernetesVersion = ""
-
-	_, err := ControlPlaneSpec(ctx, logger, client, spec)
-	g.Expect(err).To(MatchError(ContainSubstring("generating cloudstack control plane yaml spec")))
-}
-
 func TestControlPlaneSpecNoChangesMachineTemplates(t *testing.T) {
 	g := NewWithT(t)
 	logger := test.NewNullLogger()

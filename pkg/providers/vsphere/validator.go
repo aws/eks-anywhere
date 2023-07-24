@@ -154,8 +154,7 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, vsphereCl
 		}
 	}
 
-	if err := v.validateTemplate(ctx, vsphereClusterSpec, controlPlaneMachineConfig); err != nil {
-		logger.V(1).Info("Control plane template validation failed.")
+	if err := v.validateTemplates(ctx, vsphereClusterSpec); err != nil {
 		return err
 	}
 
@@ -185,42 +184,58 @@ func (v *Validator) validateControlPlaneIp(ip string) error {
 	return nil
 }
 
-func (v *Validator) validateTemplate(ctx context.Context, spec *Spec, machineConfig *anywherev1.VSphereMachineConfig) error {
-	if err := v.validateTemplatePresence(ctx, spec.VSphereDatacenter.Spec.Datacenter, machineConfig); err != nil {
-		return err
+func (v *Validator) validateTemplates(ctx context.Context, spec *Spec) error {
+	tagsForTemplates := make(map[string][]string)
+	for _, w := range spec.Cluster.Spec.WorkerNodeGroupConfigurations {
+		machineConfig := spec.VSphereMachineConfigs[w.MachineGroupRef.Name]
+		versionsBundle := spec.WorkerNodeGroupVersionsBundle(w)
+
+		currentTags := tagsForTemplates[machineConfig.Spec.Template]
+		tagsForTemplates[machineConfig.Spec.Template] = append(
+			currentTags,
+			requiredTemplateTags(machineConfig, versionsBundle)...,
+		)
 	}
 
-	if err := v.validateTemplateTags(ctx, spec, machineConfig); err != nil {
-		return err
+	for template, requiredTags := range tagsForTemplates {
+		datacenter := spec.VSphereDatacenter.Spec.Datacenter
+
+		if err := v.validateTemplatePresence(ctx, datacenter, template); err != nil {
+			return err
+		}
+
+		if err := v.validateTemplateTags(ctx, template, requiredTags); err != nil {
+			return err
+		}
 	}
 
 	return nil
 }
 
-func (v *Validator) validateTemplatePresence(ctx context.Context, datacenter string, machineConfig *anywherev1.VSphereMachineConfig) error {
-	templateFullPath, err := v.govc.SearchTemplate(ctx, datacenter, machineConfig.Spec.Template)
+func (v *Validator) validateTemplatePresence(ctx context.Context, datacenter, templatePath string) error {
+	templateFullPath, err := v.govc.SearchTemplate(ctx, datacenter, templatePath)
 	if err != nil {
 		return fmt.Errorf("validating template: %v", err)
 	}
 
 	if len(templateFullPath) <= 0 {
-		return fmt.Errorf("template <%s> not found. Has the template been imported?", machineConfig.Spec.Template)
+		return fmt.Errorf("template <%s> not found. Has the template been imported?", templatePath)
 	}
 
 	return nil
 }
 
-func (v *Validator) validateTemplateTags(ctx context.Context, spec *Spec, machineConfig *anywherev1.VSphereMachineConfig) error {
-	tags, err := v.govc.GetTags(ctx, machineConfig.Spec.Template)
+func (v *Validator) validateTemplateTags(ctx context.Context, templatePath string, requiredTags []string) error {
+	tags, err := v.govc.GetTags(ctx, templatePath)
 	if err != nil {
 		return fmt.Errorf("validating template tags: %v", err)
 	}
 
 	tagsLookup := types.SliceToLookup(tags)
-	for _, t := range requiredTemplateTags(spec.Spec, machineConfig) {
+	for _, t := range requiredTags {
 		if !tagsLookup.IsPresent(t) {
 			// TODO: maybe add help text about to how to tag a template?
-			return fmt.Errorf("template %s is missing tag %s", machineConfig.Spec.Template, t)
+			return fmt.Errorf("template %s is missing tag %s", templatePath, t)
 		}
 	}
 

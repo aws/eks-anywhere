@@ -318,10 +318,6 @@ func TestValidateImmutableFields(t *testing.T) {
 						},
 					},
 				},
-				VersionsBundle: &cluster.VersionsBundle{
-					VersionsBundle: &releasev1alpha1.VersionsBundle{},
-					KubeDistro:     &cluster.KubeDistro{},
-				},
 				Bundles: &releasev1alpha1.Bundles{},
 			}
 			desired := current.DeepCopy()
