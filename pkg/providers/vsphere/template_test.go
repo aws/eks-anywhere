@@ -14,14 +14,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
 
-func TestVsphereTemplateBuilderGenerateCAPISpecControlPlaneNoKubeVersion(t *testing.T) {
-	clusterSpec := vsphereClusterSpec()
-	g := NewWithT(t)
-	vs := vsphere.NewVsphereTemplateBuilder(time.Now)
-	_, err := vs.GenerateCAPISpecControlPlane(clusterSpec)
-	g.Expect(err).NotTo(MatchError(ContainSubstring("error building template map from CP")))
-}
-
 func TestVsphereTemplateBuilderGenerateCAPISpecWorkersInvalidSSHKey(t *testing.T) {
 	g := NewWithT(t)
 	spec := test.NewFullClusterSpec(t, "testdata/cluster_main.yaml")

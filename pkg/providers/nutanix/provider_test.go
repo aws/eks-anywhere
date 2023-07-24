@@ -552,6 +552,27 @@ func TestNutanixProviderGenerateCAPISpecForCreate(t *testing.T) {
 	assert.NotNil(t, workerSpec)
 }
 
+func TestNutanixProviderGenerateCAPISpecForCreateWorkerVersion(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	executable := mockexecutables.NewMockExecutable(ctrl)
+	executable.EXPECT().ExecuteWithStdin(gomock.Any(), gomock.Any(), gomock.Any()).Return(bytes.Buffer{}, nil).Times(2)
+	kubectl := executables.NewKubectl(executable)
+	mockClient := mocknutanix.NewMockClient(ctrl)
+	mockCertValidator := mockCrypto.NewMockTlsValidator(ctrl)
+	mockTransport := mocknutanix.NewMockRoundTripper(ctrl)
+	mockTransport.EXPECT().RoundTrip(gomock.Any()).Return(&http.Response{}, nil).AnyTimes()
+	mockHTTPClient := &http.Client{Transport: mockTransport}
+	mockWriter := filewritermocks.NewMockFileWriter(ctrl)
+	provider := testNutanixProvider(t, mockClient, kubectl, mockCertValidator, mockHTTPClient, mockWriter)
+
+	cluster := &types.Cluster{Name: "eksa-unit-test"}
+	clusterSpec := test.NewFullClusterSpec(t, "testdata/eksa-cluster-worker-version.yaml")
+	cpSpec, workerSpec, err := provider.GenerateCAPISpecForCreate(context.Background(), cluster, clusterSpec)
+	assert.NoError(t, err)
+	assert.NotNil(t, cpSpec)
+	assert.NotNil(t, workerSpec)
+}
+
 func TestNutanixProviderGenerateCAPISpecForCreate_Error(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	executable := mockexecutables.NewMockExecutable(ctrl)
@@ -929,8 +950,8 @@ func TestNutanixProviderChangeDiffWithChange(t *testing.T) {
 	provider := testDefaultNutanixProvider(t)
 	clusterSpec := test.NewFullClusterSpec(t, "testdata/eksa-cluster.yaml")
 	newClusterSpec := clusterSpec.DeepCopy()
-	clusterSpec.VersionsBundle.Nutanix.Version = "v0.5.2"
-	newClusterSpec.VersionsBundle.Nutanix.Version = "v1.0.0"
+	clusterSpec.VersionsBundles["1.19"].Nutanix.Version = "v0.5.2"
+	newClusterSpec.VersionsBundles["1.19"].Nutanix.Version = "v1.0.0"
 	want := &types.ComponentChangeDiff{
 		ComponentName: "nutanix",
 		NewVersion:    "v1.0.0",

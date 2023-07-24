@@ -161,7 +161,7 @@ func newClusterSpec(t *testing.T, clusterConfig *v1alpha1.Cluster, fluxPath stri
 
 	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
 		s.Cluster = clusterConfig
-		s.VersionsBundle.Flux = fluxBundle()
+		s.VersionsBundles["1.19"].Flux = fluxBundle()
 		s.FluxConfig = &fluxConfig
 	})
 	if err := cluster.SetConfigDefaults(clusterSpec.Config); err != nil {

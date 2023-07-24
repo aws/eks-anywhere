@@ -300,14 +300,19 @@ func TestFactoryBuildWithPackageInstaller(t *testing.T) {
 				ObjectMeta: v1.ObjectMeta{
 					Name: "test-cluster",
 				},
+				Spec: anywherev1.ClusterSpec{
+					KubernetesVersion: "1.19",
+				},
 			},
 		},
-		VersionsBundle: &cluster.VersionsBundle{
-			VersionsBundle: &v1alpha1.VersionsBundle{
-				PackageController: v1alpha1.PackageBundle{
-					HelmChart: v1alpha1.Image{
-						URI:  "test_registry/test/eks-anywhere-packages:v1",
-						Name: "test_chart",
+		VersionsBundles: map[anywherev1.KubernetesVersion]*cluster.VersionsBundle{
+			"1.19": {
+				VersionsBundle: &v1alpha1.VersionsBundle{
+					PackageController: v1alpha1.PackageBundle{
+						HelmChart: v1alpha1.Image{
+							URI:  "test_registry/test/eks-anywhere-packages:v1",
+							Name: "test_chart",
+						},
 					},
 				},
 			},
@@ -359,15 +364,18 @@ func TestFactoryBuildWithPackageControllerClientNoProxy(t *testing.T) {
 					ManagementCluster: anywherev1.ManagementCluster{
 						Name: "mgmt-1",
 					},
+					KubernetesVersion: "1.19",
 				},
 			},
 		},
-		VersionsBundle: &cluster.VersionsBundle{
-			VersionsBundle: &v1alpha1.VersionsBundle{
-				PackageController: v1alpha1.PackageBundle{
-					HelmChart: v1alpha1.Image{
-						URI:  "test_registry/test/eks-anywhere-packages:v1",
-						Name: "test_chart",
+		VersionsBundles: map[anywherev1.KubernetesVersion]*cluster.VersionsBundle{
+			"1.19": {
+				VersionsBundle: &v1alpha1.VersionsBundle{
+					PackageController: v1alpha1.PackageBundle{
+						HelmChart: v1alpha1.Image{
+							URI:  "test_registry/test/eks-anywhere-packages:v1",
+							Name: "test_chart",
+						},
 					},
 				},
 			},
@@ -399,15 +407,18 @@ func TestFactoryBuildWithPackageControllerClientProxy(t *testing.T) {
 						HttpsProxy: "1.1.1.1",
 						NoProxy:    []string{"1.1.1.1"},
 					},
+					KubernetesVersion: "1.19",
 				},
 			},
 		},
-		VersionsBundle: &cluster.VersionsBundle{
-			VersionsBundle: &v1alpha1.VersionsBundle{
-				PackageController: v1alpha1.PackageBundle{
-					HelmChart: v1alpha1.Image{
-						URI:  "test_registry/test/eks-anywhere-packages:v1",
-						Name: "test_chart",
+		VersionsBundles: map[anywherev1.KubernetesVersion]*cluster.VersionsBundle{
+			"1.19": {
+				VersionsBundle: &v1alpha1.VersionsBundle{
+					PackageController: v1alpha1.PackageBundle{
+						HelmChart: v1alpha1.Image{
+							URI:  "test_registry/test/eks-anywhere-packages:v1",
+							Name: "test_chart",
+						},
 					},
 				},
 			},

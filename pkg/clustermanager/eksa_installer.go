@@ -86,7 +86,7 @@ func (i *EKSAInstaller) Install(ctx context.Context, log logr.Logger, cluster *t
 
 // Upgrade re-installs the eksa components in a cluster if the VersionBundle defined in the
 // new spec has a different eks-a components version. Workload clusters are ignored.
-func (i *EKSAInstaller) Upgrade(ctx context.Context, log logr.Logger, cluster *types.Cluster, currentSpec, newSpec *cluster.Spec) (*types.ChangeDiff, error) {
+func (i *EKSAInstaller) Upgrade(ctx context.Context, log logr.Logger, c *types.Cluster, currentSpec, newSpec *cluster.Spec) (*types.ChangeDiff, error) {
 	log.V(1).Info("Checking for EKS-A components upgrade")
 	if !newSpec.Cluster.IsSelfManaged() {
 		log.V(1).Info("Skipping EKS-A components upgrade, not a self-managed cluster")
@@ -98,9 +98,11 @@ func (i *EKSAInstaller) Upgrade(ctx context.Context, log logr.Logger, cluster *t
 		return nil, nil
 	}
 	log.V(1).Info("Starting EKS-A components upgrade")
-	oldVersion := currentSpec.VersionsBundle.Eksa.Version
-	newVersion := newSpec.VersionsBundle.Eksa.Version
-	if err := i.Install(ctx, log, cluster, newSpec); err != nil {
+	oldVersionsBundle := currentSpec.ControlPlaneVersionsBundle()
+	newVersionsBundle := newSpec.ControlPlaneVersionsBundle()
+	oldVersion := oldVersionsBundle.Eksa.Version
+	newVersion := newVersionsBundle.Eksa.Version
+	if err := i.Install(ctx, log, c, newSpec); err != nil {
 		return nil, fmt.Errorf("upgrading EKS-A components from version %v to version %v: %v", oldVersion, newVersion, err)
 	}
 
@@ -183,7 +185,8 @@ func fullLifeCycleControllerForProvider(cluster *anywherev1.Cluster) bool {
 }
 
 func (g *EKSAComponentGenerator) parseEKSAComponentsSpec(spec *cluster.Spec) (*eksaComponents, error) {
-	componentsManifest, err := bundles.ReadManifest(g.reader, spec.VersionsBundle.Eksa.Components)
+	bundle := spec.ControlPlaneVersionsBundle()
+	componentsManifest, err := bundles.ReadManifest(g.reader, bundle.Eksa.Components)
 	if err != nil {
 		return nil, fmt.Errorf("loading manifest for eksa components: %v", err)
 	}
@@ -230,13 +233,16 @@ func (c *eksaComponents) BuildFromParsed(lookup yamlutil.ObjectLookup) error {
 
 // EksaChangeDiff computes the version diff in eksa components between two specs.
 func EksaChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ChangeDiff {
-	if currentSpec.VersionsBundle.Eksa.Version != newSpec.VersionsBundle.Eksa.Version {
+	oldVersionsBundle := currentSpec.ControlPlaneVersionsBundle()
+	newVersionsBundle := newSpec.ControlPlaneVersionsBundle()
+
+	if oldVersionsBundle.Eksa.Version != newVersionsBundle.Eksa.Version {
 		return &types.ChangeDiff{
 			ComponentReports: []types.ComponentChangeDiff{
 				{
 					ComponentName: "EKS-A",
-					NewVersion:    newSpec.VersionsBundle.Eksa.Version,
-					OldVersion:    currentSpec.VersionsBundle.Eksa.Version,
+					NewVersion:    newVersionsBundle.Eksa.Version,
+					OldVersion:    oldVersionsBundle.Eksa.Version,
 				},
 			},
 		}

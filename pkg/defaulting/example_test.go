@@ -31,6 +31,7 @@ func ExampleRunner_RunAll() {
 
 	ctx := context.Background()
 	spec := test.NewClusterSpec(func(s *cluster.Spec) {
+		s.Cluster.Spec.KubernetesVersion = "1.24"
 		s.Cluster.Spec.ControlPlaneConfiguration.Count = 5
 	})
 	updatedSpec, agg := r.RunAll(ctx, *spec)

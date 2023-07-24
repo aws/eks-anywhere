@@ -45,14 +45,16 @@ func (u Upgrader) Upgrade(ctx context.Context, cluster *types.Cluster, currentSp
 }
 
 func kindnetdChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ComponentChangeDiff {
-	if currentSpec.VersionsBundle.Kindnetd.Version == newSpec.VersionsBundle.Kindnetd.Version {
+	currentVersionsBundle := currentSpec.ControlPlaneVersionsBundle()
+	newVersionsBundle := newSpec.ControlPlaneVersionsBundle()
+	if currentVersionsBundle.Kindnetd.Version == newVersionsBundle.Kindnetd.Version {
 		return nil
 	}
 
 	return &types.ComponentChangeDiff{
 		ComponentName: "kindnetd",
-		OldVersion:    currentSpec.VersionsBundle.Kindnetd.Version,
-		NewVersion:    newSpec.VersionsBundle.Kindnetd.Version,
+		OldVersion:    currentVersionsBundle.Kindnetd.Version,
+		NewVersion:    newVersionsBundle.Kindnetd.Version,
 	}
 }
 

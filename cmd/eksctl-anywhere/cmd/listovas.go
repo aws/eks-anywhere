@@ -65,8 +65,18 @@ func listOvas(context context.Context, clusterSpecPath, bundlesOverride string) 
 		return err
 	}
 
-	bundle := clusterSpec.VersionsBundle
+	for _, version := range clusterSpec.Cluster.KubernetesVersions() {
+		bundle := clusterSpec.VersionsBundle(version)
+		err := printOvas(bundle)
+		if err != nil {
+			return err
+		}
+	}
 
+	return nil
+}
+
+func printOvas(bundle *cluster.VersionsBundle) error {
 	titler := cases.Title(language.English)
 	for _, ova := range bundle.Ovas() {
 		if strings.Contains(ova.URI, string(eksav1alpha1.Bottlerocket)) {
@@ -85,7 +95,6 @@ func listOvas(context context.Context, clusterSpecPath, bundlesOverride string) 
 		}
 		fmt.Println(yamlIndent(2, string(yamlOutput)))
 	}
-
 	return nil
 }
 

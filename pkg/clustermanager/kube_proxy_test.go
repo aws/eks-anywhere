@@ -59,9 +59,10 @@ func newPrepareKubeProxyTest() *prepareKubeProxyTest {
 	tt.spec = test.NewClusterSpec(func(s *cluster.Spec) {
 		s.Cluster.Name = "my-cluster-test"
 		s.Cluster.Spec.KubernetesVersion = anywherev1.Kube123
-		s.VersionsBundle.KubeDistro.EKSD.Channel = "1.23"
-		s.VersionsBundle.KubeDistro.EKSD.Number = 18
-		s.VersionsBundle.KubeDistro.KubeProxy.URI = "public.ecr.aws/eks-distro/kubernetes/kube-proxy:v1.23.16-eks-1-23-18"
+		s.VersionsBundles["1.23"] = test.VersionBundle()
+		s.VersionsBundles["1.23"].KubeDistro.EKSD.Channel = "1.23"
+		s.VersionsBundles["1.23"].KubeDistro.EKSD.Number = 18
+		s.VersionsBundles["1.23"].KubeDistro.KubeProxy.URI = "public.ecr.aws/eks-distro/kubernetes/kube-proxy:v1.23.16-eks-1-23-18"
 	})
 	tt.kcp = &controlplanev1.KubeadmControlPlane{
 		TypeMeta: metav1.TypeMeta{
@@ -298,9 +299,9 @@ func TestKubeProxyUpgraderPrepareForUpgradeAlreadyUsingNewKubeProxy(t *testing.T
 func TestKubeProxyUpgraderPrepareForUpgradeNewSpecHasOldKubeProxy(t *testing.T) {
 	g := NewWithT(t)
 	tt := newPrepareKubeProxyTest()
-	tt.spec.VersionsBundle.KubeDistro.EKSD.Channel = "1.23"
-	tt.spec.VersionsBundle.KubeDistro.EKSD.Number = 16
-	tt.spec.VersionsBundle.KubeDistro.KubeProxy.URI = "public.ecr.aws/eks-distro/kubernetes/kube-proxy:v1.23.16-eks-1-23-16"
+	tt.spec.VersionsBundles["1.23"].KubeDistro.EKSD.Channel = "1.23"
+	tt.spec.VersionsBundles["1.23"].KubeDistro.EKSD.Number = 16
+	tt.spec.VersionsBundles["1.23"].KubeDistro.KubeProxy.URI = "public.ecr.aws/eks-distro/kubernetes/kube-proxy:v1.23.16-eks-1-23-16"
 	tt.kcp.Spec.Version = "1.23.16-eks-1-23-15"
 	tt.kubeProxy.Spec.Template.Spec.Containers[0].Image = "public.ecr.aws/eks-distro/kubernetes/kube-proxy:v1.23.16-eks-1-23-15"
 	tt.initClients(t)

@@ -13,6 +13,8 @@ import (
 )
 
 func TestParseConfig(t *testing.T) {
+	kube120 := anywherev1.KubernetesVersion("1.20")
+	kube119 := anywherev1.KubernetesVersion("1.19")
 	tests := []struct {
 		name                         string
 		yamlManifest                 []byte
@@ -50,8 +52,18 @@ func TestParseConfig(t *testing.T) {
 					},
 					WorkerNodeGroupConfigurations: []anywherev1.WorkerNodeGroupConfiguration{
 						{
-							Name:  "workers-1",
-							Count: ptr.Int(1),
+							Name:              "workers-1",
+							KubernetesVersion: &kube119,
+							Count:             ptr.Int(1),
+							MachineGroupRef: &anywherev1.Ref{
+								Kind: "VSphereMachineConfig",
+								Name: "eksa-unit-test",
+							},
+						},
+						{
+							Name:              "workers-2",
+							KubernetesVersion: &kube120,
+							Count:             ptr.Int(1),
 							MachineGroupRef: &anywherev1.Ref{
 								Kind: "VSphereMachineConfig",
 								Name: "eksa-unit-test",
@@ -400,8 +412,9 @@ func TestParseConfig(t *testing.T) {
 					},
 					WorkerNodeGroupConfigurations: []anywherev1.WorkerNodeGroupConfiguration{
 						{
-							Name:  "workers-1",
-							Count: ptr.Int(1),
+							Name:              "workers-1",
+							KubernetesVersion: &kube120,
+							Count:             ptr.Int(1),
 						},
 					},
 					DatacenterRef: anywherev1.Ref{

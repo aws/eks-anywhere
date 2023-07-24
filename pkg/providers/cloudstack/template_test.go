@@ -28,15 +28,6 @@ func TestTemplateBuilderGenerateCAPISpecControlPlaneNilDatacenter(t *testing.T) 
 	g.Expect(err).To(MatchError(ContainSubstring("provided clusterSpec CloudStackDatacenter is nil. Unable to generate CAPI spec control plane")))
 }
 
-func TestTemplateBuilderGenerateCAPISpecControlPlaneNoKubernetesVersion(t *testing.T) {
-	g := NewWithT(t)
-	templateBuilder := cloudstack.NewTemplateBuilder(time.Now)
-	clusterSpec := test.NewFullClusterSpec(t, path.Join(testDataDir, testClusterConfigMainFilename))
-	clusterSpec.Cluster.Spec.KubernetesVersion = ""
-	_, err := templateBuilder.GenerateCAPISpecControlPlane(clusterSpec)
-	g.Expect(err).To(MatchError(ContainSubstring("error building template map from CP error converting kubeVersion")))
-}
-
 func TestTemplateBuilderGenerateCAPISpecControlPlaneMissingNames(t *testing.T) {
 	clusterSpec := test.NewFullClusterSpec(t, path.Join(testDataDir, testClusterConfigMainFilename))
 
