@@ -75,16 +75,12 @@ func (b FileSpecBuilder) Build(clusterConfigURL string) (*Spec, error) {
 	if err != nil {
 		return nil, err
 	}
-	configManager.RegisterDefaulters(BundlesRefDefaulter())
+
+	config.Cluster.Spec.BundlesRef = nil
 
 	if err = configManager.SetDefaults(config); err != nil {
 		return nil, err
 	}
-
-	// We are pulling the latest available Bundles, so making sure we update the ref to make the spec consistent
-	config.Cluster.Spec.BundlesRef.Name = bundlesManifest.Name
-	config.Cluster.Spec.BundlesRef.Namespace = bundlesManifest.Namespace
-	config.Cluster.Spec.BundlesRef.APIVersion = releasev1.GroupVersion.String()
 
 	versionsBundle, err := GetVersionsBundle(config.Cluster, bundlesManifest)
 	if err != nil {

@@ -9,6 +9,7 @@ import (
 const (
 	PDB             = "pod-disruption"
 	VSphereUserPriv = "vsphere-user-privilege"
+	EksaVersionSkew = "eksa-version-skew"
 )
 
 // ValidSkippableValidationsMap returns a map for all valid skippable validations as keys, defaulting values to false.

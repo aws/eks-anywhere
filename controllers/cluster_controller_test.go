@@ -307,6 +307,9 @@ func TestClusterReconcilerReconcileConditions(t *testing.T) {
 
 			config.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.SkipUpgrade = ptr.Bool(tt.skipCNIUpgrade)
 
+			mgmt := config.DeepCopy()
+			mgmt.Cluster.Name = "management-cluster"
+
 			g := NewWithT(t)
 
 			objs := make([]runtime.Object, 0, 4+len(config.ChildObjects()))
@@ -324,7 +327,7 @@ func TestClusterReconcilerReconcileConditions(t *testing.T) {
 				md.Status = tt.machineDeploymentStatus
 			})
 
-			objs = append(objs, config.Cluster, bundles, kcp, md1)
+			objs = append(objs, config.Cluster, bundles, kcp, md1, mgmt.Cluster)
 
 			for _, o := range config.ChildObjects() {
 				objs = append(objs, o)
@@ -1298,7 +1301,9 @@ func TestClusterReconcilerPackagesInstall(s *testing.T) {
 				Name:      cluster.Name + "-kubeconfig",
 			},
 		}
-		objs := []runtime.Object{cluster, bundles, secret}
+		mgmt := cluster.DeepCopy()
+		mgmt.Name = "my-management-cluster"
+		objs := []runtime.Object{cluster, bundles, secret, mgmt}
 		fakeClient := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
 		nullRegistry := newRegistryForDummyProviderReconciler()
 		mockIAM := mocks.NewMockAWSIamConfigReconciler(ctrl)
@@ -1315,6 +1320,52 @@ func TestClusterReconcilerPackagesInstall(s *testing.T) {
 			t.Errorf("expected nil error, got %s", err)
 		}
 	})
+}
+
+func TestClusterReconcilerValidateManagementEksaVersionFail(t *testing.T) {
+	lower := anywherev1.EksaVersion("v0.0.0")
+	higher := anywherev1.EksaVersion("v0.5.0")
+	config, _ := baseTestVsphereCluster()
+	config.Cluster.Name = "test-cluster"
+	config.Cluster.Spec.ManagementCluster = anywherev1.ManagementCluster{Name: "management-cluster"}
+	config.Cluster.Spec.BundlesRef = nil
+	config.Cluster.Spec.EksaVersion = &higher
+
+	mgmt := config.DeepCopy()
+	mgmt.Cluster.Name = "management-cluster"
+	mgmt.Cluster.Spec.BundlesRef = nil
+	mgmt.Cluster.Spec.EksaVersion = &lower
+
+	g := NewWithT(t)
+
+	objs := make([]runtime.Object, 0, 4+len(config.ChildObjects()))
+	objs = append(objs, config.Cluster, mgmt.Cluster)
+
+	for _, o := range config.ChildObjects() {
+		objs = append(objs, o)
+	}
+
+	testClient := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
+
+	mockCtrl := gomock.NewController(t)
+	providerReconciler := mocks.NewMockProviderClusterReconciler(mockCtrl)
+	iam := mocks.NewMockAWSIamConfigReconciler(mockCtrl)
+	clusterValidator := mocks.NewMockClusterValidator(mockCtrl)
+	registry := newRegistryMock(providerReconciler)
+	mockPkgs := mocks.NewMockPackagesClient(mockCtrl)
+
+	ctx := context.Background()
+	log := testr.New(t)
+	logCtx := ctrl.LoggerInto(ctx, log)
+
+	iam.EXPECT().EnsureCASecret(logCtx, log, sameName(config.Cluster)).Return(controller.Result{}, nil)
+	clusterValidator.EXPECT().ValidateManagementClusterName(logCtx, log, sameName(config.Cluster)).Return(nil)
+
+	r := controllers.NewClusterReconciler(testClient, registry, iam, clusterValidator, mockPkgs)
+
+	_, err := r.Reconcile(logCtx, clusterRequest(config.Cluster))
+
+	g.Expect(err).To(HaveOccurred())
 }
 
 func vsphereWorkerMachineConfig() *anywherev1.VSphereMachineConfig {

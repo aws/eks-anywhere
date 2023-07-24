@@ -895,6 +895,9 @@ const (
 
 	// UnavailableControlPlaneIPReason reports that the Cluster controlPlaneIP is already in use.
 	UnavailableControlPlaneIPReason FailureReasonType = "UnavailableControlPlaneIP"
+
+	// EksaVersionInvalidReason reports that the Cluster eksaVersion validation has failed.
+	EksaVersionInvalidReason FailureReasonType = "EksaVersionInvalid"
 )
 
 // Reasons for the terminal failures while reconciling the Cluster object specific for Tinkerbell.
