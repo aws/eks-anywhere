@@ -191,7 +191,7 @@ In order to grant certain service accounts access to the desired AWS resources, 
     ```
     "$ISSUER_HOSTPATH:sub": "system:serviceaccount:KUBERNETES_SERVICE_ACCOUNT_NAMESPACE:KUBERNETES_SERVICE_ACCOUNT_NAME"
     ```
-    Below are the one exmaple to whitelist your `my-serviceaccount` service account in `default` namespace and all service accounts in `observability` namespace for `us-west-2` region. Remember to replace `Account_ID` and `S3_BUCKET` with   required values.
+    Below are the one exmaple to allow list your `my-serviceaccount` service account in `default` namespace and all service accounts in `observability` namespace for `us-west-2` region. Remember to replace `Account_ID` and `S3_BUCKET` with   required values.
    	```
    {
     "Version": "2012-10-17",
