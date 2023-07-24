@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+# Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+E2E_BINARY="${1?Specify first argument - E2E tests binary for the current build}"
+TINKERBELL_HARDWARE_COUNT_FILE="${2?Specify second argument - tinkerbell hardware requirements file}"
+
+ALL_TINKERBELL_TESTS=$(exec $E2E_BINARY -test.list 'TestTinkerbell')
+
+declare -A TINKERBELL_HARDWARE_COUNT_LIST
+
+HARDWARE_COUNT_VALIDATION_STATUS=true 
+while IFS="@" read -r TEST_NAME HARDWARE_COUNT
+do
+    TINKERBELL_HARDWARE_COUNT_LIST[$TEST_NAME]="$HARDWARE_COUNT"
+done < <(yq e 'to_entries | .[] | (.key + "@" + .value)' ${TINKERBELL_HARDWARE_COUNT_FILE})
+for test in $ALL_TINKERBELL_TESTS
+do 
+    if [[ ${!TINKERBELL_HARDWARE_COUNT_LIST[@]} =~ $test ]] 
+    then 
+        if  [[ ${TINKERBELL_HARDWARE_COUNT_LIST[$test]} =~ ^[0-9]+$ ]]; then
+            if (( ${TINKERBELL_HARDWARE_COUNT_LIST[$test]} >= 1 && ${TINKERBELL_HARDWARE_COUNT_LIST[$test]} <= 10)); then
+                :
+            else
+                HARDWARE_COUNT_VALIDATION_STATUS=false 
+                echo "$test has count higher than permissible range 1 - 10"
+            fi
+        else
+            HARDWARE_COUNT_VALIDATION_STATUS=false 
+            echo "hardware count for $test is not a integer"
+        fi
+    else
+        HARDWARE_COUNT_VALIDATION_STATUS=false
+        echo "$test not found in $TINKERBELL_HARDWARE_COUNT_FILE"
+    fi
+done
+if [ $HARDWARE_COUNT_VALIDATION_STATUS = false ]; then
+    echo "Hardware Count file validations failed"
+    exit 1
+else    
+    echo "Hardware Count file validations passed!"
+    exit 0
+fi

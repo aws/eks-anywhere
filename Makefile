@@ -766,3 +766,11 @@ $(BINARY_DEPS_DIR)/linux-%:
 ifneq ($(FETCH_BINARIES_TARGETS),)
 .SECONDARY: $(call FULL_FETCH_BINARIES_TARGETS, $(FETCH_BINARIES_TARGETS))
 endif
+
+E2E_BINARY?=./bin/e2e.test
+TINKERBELL_HARDWARE_REQUIREMENTS?=test/e2e/tinkerbell_hardware_count.yaml
+
+# validate-tinkerbell-hardware-requirements checks the tinkerbell hardware requirement file with pre-defined validations
+.PHONY: validate-tinkerbell-hardware-requirements # Run eksa controller from local repo with tilt
+validate-tinkerbell-hardware-requirements: build-e2e-test-binary
+	scripts/validate_tinkerbell_hardware_file.sh $(E2E_BINARY) $(TINKERBELL_HARDWARE_REQUIREMENTS)
