@@ -741,7 +741,7 @@ func (e *ClusterE2ETest) ValidateCluster(kubeVersion v1alpha1.KubernetesVersion)
 	}
 }
 
-func (e *ClusterE2ETest) ValidateClusterWorkerNodeVersion(kubeVersion, workerKubeVersion v1alpha1.KubernetesVersion) {
+func (e *ClusterE2ETest) ValidateClusterWorkerNodeVersion(kubeVersion v1alpha1.KubernetesVersion, workerKubeVersion *v1alpha1.KubernetesVersion) {
 	ctx := context.Background()
 	e.T.Log("Validating cluster node status")
 	r := retrier.New(10 * time.Minute)
@@ -757,14 +757,17 @@ func (e *ClusterE2ETest) ValidateClusterWorkerNodeVersion(kubeVersion, workerKub
 	}
 	e.T.Log("Validating cluster cp node version")
 	err = retrier.Retry(180, 1*time.Second, func() error {
-		if err = e.KubectlClient.ValidateCPNodeVersion(ctx, e.Cluster().KubeconfigFile, kubeVersion); err != nil {
+		if err = e.KubectlClient.ValidateClusterNodeVersion(ctx, e.Cluster().KubeconfigFile, kubeVersion); err != nil {
 			return fmt.Errorf("validating cp nodes version: %v", err)
 		}
 		return nil
 	})
 	e.T.Log("Validating cluster worker node version")
+	if workerKubeVersion == nil {
+		workerKubeVersion = &kubeVersion
+	}
 	err = retrier.Retry(180, 1*time.Second, func() error {
-		if err = e.KubectlClient.ValidateWorkerNodeVersion(ctx, e.Cluster().KubeconfigFile, workerKubeVersion); err != nil {
+		if err = e.KubectlClient.ValidateWorkerNodeVersion(ctx, e.Cluster().KubeconfigFile, *workerKubeVersion); err != nil {
 			return fmt.Errorf("validating worker nodes version: %v", err)
 		}
 		return nil

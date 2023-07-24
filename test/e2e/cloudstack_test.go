@@ -1420,27 +1420,6 @@ func TestCloudStackKubernetes124RedhatWorkerNodeUpgrade(t *testing.T) {
 	)
 }
 
-func TestCloudStackSkipKubernetesVersionUpgradeWorkerNodes(t *testing.T) {
-	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat123())
-	test := framework.NewClusterE2ETest(
-		t,
-		provider,
-		framework.WithClusterFiller(
-			api.WithKubernetesVersion(v1alpha1.Kube123),
-			api.WithControlPlaneCount(1),
-			api.WithWorkerNodeCount(1),
-			api.WithStackedEtcdTopology(),
-		),
-	)
-	runSimpleUpgradeFlowWorkerNodeVersion(
-		test,
-		v1alpha1.Kube124,
-		v1alpha1.Kube123,
-		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube124), api.WithWorkerNodeKubernetesVersion(v1alpha1.Kube123)),
-		provider.WithProviderUpgrade(provider.Redhat124Template()),
-	)
-}
-
 func TestCloudStackKubernetes123UpgradeFromLatestMinorRelease(t *testing.T) {
 	release := latestMinorRelease(t)
 	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat123())
@@ -2215,4 +2194,28 @@ func TestCloudStackWorkloadClusterOIDCAuthGithubFluxAPI(t *testing.T) {
 
 	test.ManagementCluster.StopIfFailed()
 	test.DeleteManagementCluster()
+}
+
+func TestCloudStackSkipKubernetesVersionUpgradeWorkerNodes(t *testing.T) {
+	kube123 := v1alpha1.KubernetesVersion("1.23")
+	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat123())
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube123),
+			api.WithControlPlaneCount(1),
+			api.WithStackedEtcdTopology(),
+			api.RemoveAllWorkerNodeGroups(),
+			api.WithWorkerNodeGroup(worker0, api.WithCount(1)),
+			api.WithWorkerNodeGroup(worker1, api.WithCount(1)),
+		),
+	)
+	runSimpleUpgradeFlowWorkerNodeVersion(
+		test,
+		v1alpha1.Kube124,
+		&kube123,
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube124), api.WithWorkerKubernetesVersion(&kube123)),
+		provider.WithProviderUpgrade(provider.Redhat124Template()),
+	)
 }

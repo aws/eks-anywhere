@@ -1870,9 +1870,9 @@ func (k *Kubectl) ValidateNodesVersion(ctx context.Context, kubeconfig string, k
 }
 
 // ValidateCPNodeVersion validates the Control Plane node's kubernetes version in E2E tests.
-func (k *Kubectl) ValidateCPNodeVersion(ctx context.Context, kubeconfig string, kubeVersion v1alpha1.KubernetesVersion) error {
+func (k *Kubectl) ValidateClusterNodeVersion(ctx context.Context, kubeconfig string, kubeVersion v1alpha1.KubernetesVersion) error {
 	template := "{{range .items}}{{.status.nodeInfo.kubeletVersion}}\n{{end}}"
-	params := []string{"get", "nodes", "-o", "go-template", "--template", template, "--selector", "'!node-role.kubernetes.io/master'", "--kubeconfig", kubeconfig}
+	params := []string{"get", "nodes", "-o", "go-template", "--template", template, "-l", "!workerk8s=yes", "--kubeconfig", kubeconfig}
 	buffer, err := k.Execute(ctx, params...)
 	if err != nil {
 		return err
@@ -1892,7 +1892,7 @@ func (k *Kubectl) ValidateCPNodeVersion(ctx context.Context, kubeconfig string, 
 // ValidateWorkerNodeVersion validates the worker node's kubernetes version in E2E tests.
 func (k *Kubectl) ValidateWorkerNodeVersion(ctx context.Context, kubeconfig string, kubeVersion v1alpha1.KubernetesVersion) error {
 	template := "{{range .items}}{{.status.nodeInfo.kubeletVersion}}\n{{end}}"
-	params := []string{"get", "nodes", "-o", "go-template", "--template", template, "--selector", "'!node-role.kubernetes.io/master'", "--kubeconfig", kubeconfig}
+	params := []string{"get", "nodes", "-o", "go-template", "--template", template, "-l", "workerk8s=yes", "--kubeconfig", kubeconfig}
 	buffer, err := k.Execute(ctx, params...)
 	if err != nil {
 		return err

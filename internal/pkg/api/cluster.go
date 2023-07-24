@@ -131,16 +131,20 @@ func WithWorkerNodeCount(r int) ClusterFiller {
 	}
 }
 
-// WithWorkerNodeKubernetesVersion adds a worker node level kubernetes version configuration with the given version.
-func WithWorkerNodeKubernetesVersion(version anywherev1.KubernetesVersion) ClusterFiller {
+// WithWorkerKubernetesVersion adds a worker node level kubernetes version configuration with the given version.
+func WithWorkerKubernetesVersion(version *anywherev1.KubernetesVersion) ClusterFiller {
 	return func(c *anywherev1.Cluster) {
 		if len(c.Spec.WorkerNodeGroupConfigurations) == 0 {
 			c.Spec.WorkerNodeGroupConfigurations = []anywherev1.WorkerNodeGroupConfiguration{{
 				Count:             ptr.Int(1),
-				KubernetesVersion: (*anywherev1.KubernetesVersion)(&version),
+				KubernetesVersion: (*anywherev1.KubernetesVersion)(version),
 			}}
 		}
-		c.Spec.WorkerNodeGroupConfigurations[0].KubernetesVersion = &version
+		if c.Spec.WorkerNodeGroupConfigurations[0].Labels == nil {
+			c.Spec.WorkerNodeGroupConfigurations[0].Labels = map[string]string{}
+		}
+		c.Spec.WorkerNodeGroupConfigurations[0].KubernetesVersion = version
+		c.Spec.WorkerNodeGroupConfigurations[0].Labels["workerk8s"] = "yes"
 	}
 }
 

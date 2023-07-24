@@ -3049,3 +3049,26 @@ func runVSphereCloneModeFlow(test *framework.ClusterE2ETest, vsphere *framework.
 	vsphere.ValidateNodesDiskGiB(test.GetCapiMachinesForCluster(test.ClusterName), diskSize)
 	test.DeleteCluster()
 }
+
+func TestVsphereSkipKubernetesVersionUpgradeWorkerNodes(t *testing.T) {
+	kube123 := v1alpha1.KubernetesVersion("1.23")
+	provider := framework.NewVSphere(t, framework.WithUbuntu123())
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube123),
+			api.RemoveAllWorkerNodeGroups(),
+			api.WithWorkerNodeGroup(worker0, api.WithCount(1)),
+			api.WithWorkerNodeGroup(worker1, api.WithCount(1)),
+			api.WithStackedEtcdTopology(),
+		),
+	)
+	runSimpleUpgradeFlowWorkerNodeVersion(
+		test,
+		v1alpha1.Kube124,
+		&kube123,
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube127), api.WithWorkerKubernetesVersion(&kube123)),
+		provider.WithProviderUpgrade(provider.Ubuntu124Template()),
+	)
+}
