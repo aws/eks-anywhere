@@ -60,8 +60,8 @@ func (vs *VsphereTemplateBuilder) GenerateCAPISpecControlPlane(
 	return bytes, nil
 }
 
-func (vs *VsphereTemplateBuilder) isCgroupDriverSystemd(clusterSpec *cluster.Spec) (bool, error) {
-	bundle := clusterSpec.VersionsBundle
+func (vs *VsphereTemplateBuilder) isCgroupDriverSystemd(clusterSpec *cluster.Spec, worker anywherev1.WorkerNodeGroupConfiguration) (bool, error) {
+	bundle := clusterSpec.WorkerNodeGroupVersionsBundle(worker)
 	k8sVersion, err := semver.New(bundle.KubeDistro.Kubernetes.Tag)
 	if err != nil {
 		return false, fmt.Errorf("parsing kubernetes version %v: %v", bundle.KubeDistro.Kubernetes.Tag, err)
@@ -85,16 +85,15 @@ func (vs *VsphereTemplateBuilder) GenerateCAPISpecWorkers(
 	workloadTemplateNames,
 	kubeadmconfigTemplateNames map[string]string,
 ) (content []byte, err error) {
-	// pin cgroupDriver to systemd for k8s >= 1.21 when generating template in controller
-	// remove this check once the controller supports order upgrade.
-	// i.e. control plane, etcd upgrade before worker nodes.
-	cgroupDriverSystemd, err := vs.isCgroupDriverSystemd(clusterSpec)
-	if err != nil {
-		return nil, err
-	}
-
 	workerSpecs := make([][]byte, 0, len(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations))
 	for _, workerNodeGroupConfiguration := range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
+		// pin cgroupDriver to systemd for k8s >= 1.21 when generating template in controller
+		// remove this check once the controller supports order upgrade.
+		// i.e. control plane, etcd upgrade before worker nodes.
+		cgroupDriverSystemd, err := vs.isCgroupDriverSystemd(clusterSpec, workerNodeGroupConfiguration)
+		if err != nil {
+			return nil, err
+		}
 		values, err := buildTemplateMapMD(
 			clusterSpec,
 			clusterSpec.VSphereDatacenter.Spec,
@@ -125,7 +124,7 @@ func buildTemplateMapCP(
 	datacenterSpec anywherev1.VSphereDatacenterConfigSpec,
 	controlPlaneMachineSpec, etcdMachineSpec anywherev1.VSphereMachineConfigSpec,
 ) (map[string]interface{}, error) {
-	bundle := clusterSpec.VersionsBundle
+	versionsBundle := clusterSpec.ControlPlaneVersionsBundle()
 	format := "cloud-config"
 	etcdExtraArgs := clusterapi.SecureEtcdTlsCipherSuitesExtraArgs()
 	sharedExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs()
@@ -151,28 +150,29 @@ func buildTemplateMapCP(
 		"clusterName":                          clusterSpec.Cluster.Name,
 		"controlPlaneEndpointIp":               clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host,
 		"controlPlaneReplicas":                 clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Count,
-		"kubernetesRepository":                 bundle.KubeDistro.Kubernetes.Repository,
-		"kubernetesVersion":                    bundle.KubeDistro.Kubernetes.Tag,
-		"etcdRepository":                       bundle.KubeDistro.Etcd.Repository,
-		"etcdImageTag":                         bundle.KubeDistro.Etcd.Tag,
-		"corednsRepository":                    bundle.KubeDistro.CoreDNS.Repository,
-		"corednsVersion":                       bundle.KubeDistro.CoreDNS.Tag,
-		"nodeDriverRegistrarImage":             bundle.KubeDistro.NodeDriverRegistrar.VersionedImage(),
-		"livenessProbeImage":                   bundle.KubeDistro.LivenessProbe.VersionedImage(),
-		"externalAttacherImage":                bundle.KubeDistro.ExternalAttacher.VersionedImage(),
-		"externalProvisionerImage":             bundle.KubeDistro.ExternalProvisioner.VersionedImage(),
+		"kubernetesRepository":                 versionsBundle.KubeDistro.Kubernetes.Repository,
+		"kubernetesVersion":                    versionsBundle.KubeDistro.Kubernetes.Tag,
+		"etcdRepository":                       versionsBundle.KubeDistro.Etcd.Repository,
+		"etcdImageTag":                         versionsBundle.KubeDistro.Etcd.Tag,
+		"corednsRepository":                    versionsBundle.KubeDistro.CoreDNS.Repository,
+		"corednsVersion":                       versionsBundle.KubeDistro.CoreDNS.Tag,
+		"nodeDriverRegistrarImage":             versionsBundle.KubeDistro.NodeDriverRegistrar.VersionedImage(),
+		"livenessProbeImage":                   versionsBundle.KubeDistro.LivenessProbe.VersionedImage(),
+		"externalAttacherImage":                versionsBundle.KubeDistro.ExternalAttacher.VersionedImage(),
+		"externalProvisionerImage":             versionsBundle.KubeDistro.ExternalProvisioner.VersionedImage(),
 		"thumbprint":                           datacenterSpec.Thumbprint,
 		"vsphereDatacenter":                    datacenterSpec.Datacenter,
 		"controlPlaneVsphereDatastore":         controlPlaneMachineSpec.Datastore,
 		"controlPlaneVsphereFolder":            controlPlaneMachineSpec.Folder,
-		"managerImage":                         bundle.VSphere.Manager.VersionedImage(),
-		"kubeVipImage":                         bundle.VSphere.KubeVip.VersionedImage(),
+		"managerImage":                         versionsBundle.VSphere.Manager.VersionedImage(),
+		"kubeVipImage":                         versionsBundle.VSphere.KubeVip.VersionedImage(),
 		"insecure":                             datacenterSpec.Insecure,
 		"vsphereNetwork":                       datacenterSpec.Network,
 		"controlPlaneVsphereResourcePool":      controlPlaneMachineSpec.ResourcePool,
 		"vsphereServer":                        datacenterSpec.Server,
 		"controlPlaneVsphereStoragePolicyName": controlPlaneMachineSpec.StoragePolicyName,
-		"vsphereTemplate":                      controlPlaneMachineSpec.Template,
+		"controlPlaneTemplate":                 controlPlaneMachineSpec.Template,
+		"etcdTemplate":                         etcdMachineSpec.Template,
 		"controlPlaneVMsMemoryMiB":             controlPlaneMachineSpec.MemoryMiB,
 		"controlPlaneVMsNumCPUs":               controlPlaneMachineSpec.NumCPUs,
 		"controlPlaneDiskGiB":                  controlPlaneMachineSpec.DiskGiB,
@@ -189,8 +189,8 @@ func buildTemplateMapCP(
 		"schedulerExtraArgs":                   sharedExtraArgs.ToPartialYaml(),
 		"kubeletExtraArgs":                     kubeletExtraArgs.ToPartialYaml(),
 		"format":                               format,
-		"externalEtcdVersion":                  bundle.KubeDistro.EtcdVersion,
-		"etcdImage":                            bundle.KubeDistro.EtcdImage.VersionedImage(),
+		"externalEtcdVersion":                  versionsBundle.KubeDistro.EtcdVersion,
+		"etcdImage":                            versionsBundle.KubeDistro.EtcdImage.VersionedImage(),
 		"eksaSystemNamespace":                  constants.EksaSystemNamespace,
 		"cpiResourceSetName":                   cpiResourceSetName(clusterSpec),
 		"eksaVsphereUsername":                  vuc.EksaVsphereUsername,
@@ -293,10 +293,10 @@ func buildTemplateMapCP(
 
 	if controlPlaneMachineSpec.OSFamily == anywherev1.Bottlerocket {
 		values["format"] = string(anywherev1.Bottlerocket)
-		values["pauseRepository"] = bundle.KubeDistro.Pause.Image()
-		values["pauseVersion"] = bundle.KubeDistro.Pause.Tag()
-		values["bottlerocketBootstrapRepository"] = bundle.BottleRocketHostContainers.KubeadmBootstrap.Image()
-		values["bottlerocketBootstrapVersion"] = bundle.BottleRocketHostContainers.KubeadmBootstrap.Tag()
+		values["pauseRepository"] = versionsBundle.KubeDistro.Pause.Image()
+		values["pauseVersion"] = versionsBundle.KubeDistro.Pause.Tag()
+		values["bottlerocketBootstrapRepository"] = versionsBundle.BottleRocketHostContainers.KubeadmBootstrap.Image()
+		values["bottlerocketBootstrapVersion"] = versionsBundle.BottleRocketHostContainers.KubeadmBootstrap.Tag()
 	}
 
 	if len(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Taints) > 0 {
@@ -332,7 +332,10 @@ func buildTemplateMapMD(
 	workerNodeGroupMachineSpec anywherev1.VSphereMachineConfigSpec,
 	workerNodeGroupConfiguration anywherev1.WorkerNodeGroupConfiguration,
 ) (map[string]interface{}, error) {
-	bundle := clusterSpec.VersionsBundle
+	bundle := clusterSpec.WorkerNodeGroupVersionsBundle(workerNodeGroupConfiguration)
+	if bundle == nil {
+		return nil, fmt.Errorf("could not find VersionsBundle")
+	}
 	format := "cloud-config"
 	kubeletExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs().
 		Append(clusterapi.WorkerNodeLabelsExtraArgs(workerNodeGroupConfiguration)).
@@ -355,7 +358,7 @@ func buildTemplateMapMD(
 		"workerVsphereResourcePool":      workerNodeGroupMachineSpec.ResourcePool,
 		"vsphereServer":                  datacenterSpec.Server,
 		"workerVsphereStoragePolicyName": workerNodeGroupMachineSpec.StoragePolicyName,
-		"vsphereTemplate":                workerNodeGroupMachineSpec.Template,
+		"workerTemplate":                 workerNodeGroupMachineSpec.Template,
 		"workloadVMsMemoryMiB":           workerNodeGroupMachineSpec.MemoryMiB,
 		"workloadVMsNumCPUs":             workerNodeGroupMachineSpec.NumCPUs,
 		"workloadDiskGiB":                workerNodeGroupMachineSpec.DiskGiB,

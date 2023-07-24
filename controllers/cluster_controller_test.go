@@ -65,6 +65,10 @@ func testKubeadmControlPlaneFromCluster(cluster *anywherev1.Cluster) *controlpla
 			ReadyReplicas:   expectedReplicas,
 			Conditions: clusterv1.Conditions{
 				{
+					Type:   controlplanev1.ControlPlaneComponentsHealthyCondition,
+					Status: apiv1.ConditionStatus("True"),
+				},
+				{
 					Type:   controlplanev1.AvailableCondition,
 					Status: apiv1.ConditionStatus("True"),
 				},
@@ -136,6 +140,7 @@ func newVsphereClusterReconcilerTest(t *testing.T, objs ...runtime.Object) *vsph
 func TestClusterReconcilerReconcileSelfManagedCluster(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
+	version := test.DevEksaVersion()
 
 	selfManagedCluster := &anywherev1.Cluster{
 		ObjectMeta: metav1.ObjectMeta{
@@ -145,6 +150,7 @@ func TestClusterReconcilerReconcileSelfManagedCluster(t *testing.T) {
 			BundlesRef: &anywherev1.BundlesRef{
 				Name: "my-bundles-ref",
 			},
+			EksaVersion: &version,
 			ClusterNetwork: anywherev1.ClusterNetwork{
 				CNIConfig: &anywherev1.CNIConfig{
 					Cilium: &anywherev1.CiliumConfig{},
@@ -234,6 +240,10 @@ func TestClusterReconcilerReconcileConditions(t *testing.T) {
 				UpdatedReplicas: 1,
 				Conditions: clusterv1.Conditions{
 					{
+						Type:   controlplanev1.ControlPlaneComponentsHealthyCondition,
+						Status: apiv1.ConditionStatus("True"),
+					},
+					{
 						Type:   controlplanev1.AvailableCondition,
 						Status: apiv1.ConditionStatus("True"),
 					},
@@ -259,6 +269,10 @@ func TestClusterReconcilerReconcileConditions(t *testing.T) {
 				Replicas:        1,
 				UpdatedReplicas: 1,
 				Conditions: clusterv1.Conditions{
+					{
+						Type:   controlplanev1.ControlPlaneComponentsHealthyCondition,
+						Status: apiv1.ConditionStatus("True"),
+					},
 					{
 						Type:   controlplanev1.AvailableCondition,
 						Status: apiv1.ConditionStatus("True"),
@@ -293,6 +307,9 @@ func TestClusterReconcilerReconcileConditions(t *testing.T) {
 
 			config.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.SkipUpgrade = ptr.Bool(tt.skipCNIUpgrade)
 
+			mgmt := config.DeepCopy()
+			mgmt.Cluster.Name = "management-cluster"
+
 			g := NewWithT(t)
 
 			objs := make([]runtime.Object, 0, 4+len(config.ChildObjects()))
@@ -310,7 +327,7 @@ func TestClusterReconcilerReconcileConditions(t *testing.T) {
 				md.Status = tt.machineDeploymentStatus
 			})
 
-			objs = append(objs, config.Cluster, bundles, kcp, md1)
+			objs = append(objs, config.Cluster, bundles, kcp, md1, mgmt.Cluster)
 
 			for _, o := range config.ChildObjects() {
 				objs = append(objs, o)
@@ -404,6 +421,10 @@ func TestClusterReconcilerReconcileSelfManagedClusterConditions(t *testing.T) {
 				UpdatedReplicas: 1,
 				Conditions: clusterv1.Conditions{
 					{
+						Type:   controlplanev1.ControlPlaneComponentsHealthyCondition,
+						Status: apiv1.ConditionStatus("True"),
+					},
+					{
 						Type:   controlplanev1.AvailableCondition,
 						Status: apiv1.ConditionStatus("True"),
 					},
@@ -432,6 +453,10 @@ func TestClusterReconcilerReconcileSelfManagedClusterConditions(t *testing.T) {
 				UpdatedReplicas: 1,
 				Conditions: clusterv1.Conditions{
 					{
+						Type:   controlplanev1.ControlPlaneComponentsHealthyCondition,
+						Status: apiv1.ConditionStatus("True"),
+					},
+					{
 						Type:   controlplanev1.AvailableCondition,
 						Status: apiv1.ConditionStatus("True"),
 					},
@@ -459,6 +484,10 @@ func TestClusterReconcilerReconcileSelfManagedClusterConditions(t *testing.T) {
 				Replicas:        1,
 				UpdatedReplicas: 1,
 				Conditions: clusterv1.Conditions{
+					{
+						Type:   controlplanev1.ControlPlaneComponentsHealthyCondition,
+						Status: apiv1.ConditionStatus("True"),
+					},
 					{
 						Type:   controlplanev1.AvailableCondition,
 						Status: apiv1.ConditionStatus("True"),
@@ -491,6 +520,10 @@ func TestClusterReconcilerReconcileSelfManagedClusterConditions(t *testing.T) {
 				Replicas:        1,
 				UpdatedReplicas: 1,
 				Conditions: clusterv1.Conditions{
+					{
+						Type:   controlplanev1.ControlPlaneComponentsHealthyCondition,
+						Status: apiv1.ConditionStatus("True"),
+					},
 					{
 						Type:   controlplanev1.AvailableCondition,
 						Status: apiv1.ConditionStatus("True"),
@@ -665,7 +698,8 @@ func TestClusterReconcilerReconcileGenerations(t *testing.T) {
 	for _, tt := range testCases {
 		t.Run(tt.testName, func(t *testing.T) {
 			config, bundles := baseTestVsphereCluster()
-
+			version := test.DevEksaVersion()
+			config.Cluster.Spec.EksaVersion = &version
 			config.Cluster.Generation = tt.clusterGeneration
 			config.Cluster.Status.ObservedGeneration = tt.clusterGeneration
 			config.Cluster.Status.ReconciledGeneration = tt.reconciledGeneration
@@ -743,6 +777,7 @@ func TestClusterReconcilerReconcileGenerations(t *testing.T) {
 func TestClusterReconcilerReconcileSelfManagedClusterWithExperimentalUpgrades(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
+	version := test.DevEksaVersion()
 
 	selfManagedCluster := &anywherev1.Cluster{
 		ObjectMeta: metav1.ObjectMeta{
@@ -752,6 +787,7 @@ func TestClusterReconcilerReconcileSelfManagedClusterWithExperimentalUpgrades(t 
 			BundlesRef: &anywherev1.BundlesRef{
 				Name: "my-bundles-ref",
 			},
+			EksaVersion: &version,
 			ClusterNetwork: anywherev1.ClusterNetwork{
 				CNIConfig: &anywherev1.CNIConfig{
 					Cilium: &anywherev1.CiliumConfig{},
@@ -861,6 +897,7 @@ func TestClusterReconcilerReconcileDeletedSelfManagedCluster(t *testing.T) {
 func TestClusterReconcilerReconcileSelfManagedClusterRegAuthFailNoSecret(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
+	version := test.DevEksaVersion()
 
 	selfManagedCluster := &anywherev1.Cluster{
 		ObjectMeta: metav1.ObjectMeta{
@@ -878,6 +915,7 @@ func TestClusterReconcilerReconcileSelfManagedClusterRegAuthFailNoSecret(t *test
 			RegistryMirrorConfiguration: &anywherev1.RegistryMirrorConfiguration{
 				Authenticate: true,
 			},
+			EksaVersion: &version,
 		},
 		Status: anywherev1.ClusterStatus{
 			ReconciledGeneration: 1,
@@ -1076,6 +1114,7 @@ func TestClusterReconcilerDeleteNoCAPIClusterSuccess(t *testing.T) {
 
 func TestClusterReconcilerSkipDontInstallPackagesOnSelfManaged(t *testing.T) {
 	ctx := context.Background()
+	version := test.DevEksaVersion()
 	cluster := &anywherev1.Cluster{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "my-cluster",
@@ -1095,6 +1134,7 @@ func TestClusterReconcilerSkipDontInstallPackagesOnSelfManaged(t *testing.T) {
 			ManagementCluster: anywherev1.ManagementCluster{
 				Name: "",
 			},
+			EksaVersion: &version,
 		},
 		Status: anywherev1.ClusterStatus{
 			ReconciledGeneration: 1,
@@ -1215,6 +1255,7 @@ func TestClusterReconcilerPackagesDeletion(s *testing.T) {
 }
 
 func TestClusterReconcilerPackagesInstall(s *testing.T) {
+	version := test.DevEksaVersion()
 	newTestCluster := func() *anywherev1.Cluster {
 		return &anywherev1.Cluster{
 			ObjectMeta: metav1.ObjectMeta{
@@ -1235,6 +1276,7 @@ func TestClusterReconcilerPackagesInstall(s *testing.T) {
 				ManagementCluster: anywherev1.ManagementCluster{
 					Name: "my-management-cluster",
 				},
+				EksaVersion: &version,
 			},
 			Status: anywherev1.ClusterStatus{
 				ReconciledGeneration: 1,
@@ -1259,7 +1301,9 @@ func TestClusterReconcilerPackagesInstall(s *testing.T) {
 				Name:      cluster.Name + "-kubeconfig",
 			},
 		}
-		objs := []runtime.Object{cluster, bundles, secret}
+		mgmt := cluster.DeepCopy()
+		mgmt.Name = "my-management-cluster"
+		objs := []runtime.Object{cluster, bundles, secret, mgmt}
 		fakeClient := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
 		nullRegistry := newRegistryForDummyProviderReconciler()
 		mockIAM := mocks.NewMockAWSIamConfigReconciler(ctrl)
@@ -1276,6 +1320,52 @@ func TestClusterReconcilerPackagesInstall(s *testing.T) {
 			t.Errorf("expected nil error, got %s", err)
 		}
 	})
+}
+
+func TestClusterReconcilerValidateManagementEksaVersionFail(t *testing.T) {
+	lower := anywherev1.EksaVersion("v0.0.0")
+	higher := anywherev1.EksaVersion("v0.5.0")
+	config, _ := baseTestVsphereCluster()
+	config.Cluster.Name = "test-cluster"
+	config.Cluster.Spec.ManagementCluster = anywherev1.ManagementCluster{Name: "management-cluster"}
+	config.Cluster.Spec.BundlesRef = nil
+	config.Cluster.Spec.EksaVersion = &higher
+
+	mgmt := config.DeepCopy()
+	mgmt.Cluster.Name = "management-cluster"
+	mgmt.Cluster.Spec.BundlesRef = nil
+	mgmt.Cluster.Spec.EksaVersion = &lower
+
+	g := NewWithT(t)
+
+	objs := make([]runtime.Object, 0, 4+len(config.ChildObjects()))
+	objs = append(objs, config.Cluster, mgmt.Cluster)
+
+	for _, o := range config.ChildObjects() {
+		objs = append(objs, o)
+	}
+
+	testClient := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
+
+	mockCtrl := gomock.NewController(t)
+	providerReconciler := mocks.NewMockProviderClusterReconciler(mockCtrl)
+	iam := mocks.NewMockAWSIamConfigReconciler(mockCtrl)
+	clusterValidator := mocks.NewMockClusterValidator(mockCtrl)
+	registry := newRegistryMock(providerReconciler)
+	mockPkgs := mocks.NewMockPackagesClient(mockCtrl)
+
+	ctx := context.Background()
+	log := testr.New(t)
+	logCtx := ctrl.LoggerInto(ctx, log)
+
+	iam.EXPECT().EnsureCASecret(logCtx, log, sameName(config.Cluster)).Return(controller.Result{}, nil)
+	clusterValidator.EXPECT().ValidateManagementClusterName(logCtx, log, sameName(config.Cluster)).Return(nil)
+
+	r := controllers.NewClusterReconciler(testClient, registry, iam, clusterValidator, mockPkgs)
+
+	_, err := r.Reconcile(logCtx, clusterRequest(config.Cluster))
+
+	g.Expect(err).To(HaveOccurred())
 }
 
 func vsphereWorkerMachineConfig() *anywherev1.VSphereMachineConfig {
@@ -1432,6 +1522,7 @@ func vsphereDataCenter(cluster *anywherev1.Cluster) *anywherev1.VSphereDatacente
 }
 
 func vsphereCluster() *anywherev1.Cluster {
+	version := test.DevEksaVersion()
 	return &anywherev1.Cluster{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      clusterName,
@@ -1469,6 +1560,7 @@ func vsphereCluster() *anywherev1.Cluster {
 					Labels: nil,
 				},
 			},
+			EksaVersion: &version,
 		},
 		Status: anywherev1.ClusterStatus{
 			ReconciledGeneration: 1,

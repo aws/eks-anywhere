@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -28,6 +29,7 @@ type createClusterOptions struct {
 	hardwareCSVPath       string
 	tinkerbellBootstrapIP string
 	installPackages       string
+	skipValidations       []string
 }
 
 var cc = &createClusterOptions{}
@@ -50,6 +52,7 @@ func init() {
 	createClusterCmd.Flags().BoolVar(&cc.forceClean, "force-cleanup", false, "Force deletion of previously created bootstrap cluster")
 	createClusterCmd.Flags().BoolVar(&cc.skipIpCheck, "skip-ip-check", false, "Skip check for whether cluster control plane ip is in use")
 	createClusterCmd.Flags().StringVar(&cc.installPackages, "install-packages", "", "Location of curated packages configuration files to install to the cluster")
+	createClusterCmd.Flags().StringArrayVar(&cc.skipValidations, "skip-validations", []string{}, fmt.Sprintf("Bypass create validations by name. Valid arguments you can pass are --skip-validations=%s", strings.Join(createvalidations.SkippableValidations[:], ",")))
 
 	if err := createClusterCmd.MarkFlagRequired("filename"); err != nil {
 		log.Fatalf("Error marking flag as required: %v", err)
@@ -113,11 +116,19 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 		return fmt.Errorf("failed to build cluster manager opts: %v", err)
 	}
 
+	var skippedValidations map[string]bool
+	if len(cc.skipValidations) != 0 {
+		skippedValidations, err = validations.ValidateSkippableValidation(cc.skipValidations, createvalidations.SkippableValidations)
+		if err != nil {
+			return err
+		}
+	}
+
 	factory := dependencies.ForSpec(ctx, clusterSpec).WithExecutableMountDirs(dirs...).
 		WithBootstrapper().
 		WithCliConfig(cliConfig).
 		WithClusterManager(clusterSpec.Cluster, clusterManagerTimeoutOpts).
-		WithProvider(cc.fileName, clusterSpec.Cluster, cc.skipIpCheck, cc.hardwareCSVPath, cc.forceClean, cc.tinkerbellBootstrapIP).
+		WithProvider(cc.fileName, clusterSpec.Cluster, cc.skipIpCheck, cc.hardwareCSVPath, cc.forceClean, cc.tinkerbellBootstrapIP, skippedValidations).
 		WithGitOpsFlux(clusterSpec.Cluster, clusterSpec.FluxConfig, cliConfig).
 		WithWriter().
 		WithEksdInstaller().
@@ -157,9 +168,10 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 			Name:           clusterSpec.Cluster.Name,
 			KubeconfigFile: kubeconfig.FromClusterName(clusterSpec.Cluster.Name),
 		},
-		ManagementCluster: getManagementCluster(clusterSpec),
-		Provider:          deps.Provider,
-		CliConfig:         cliConfig,
+		ManagementCluster:  getManagementCluster(clusterSpec),
+		Provider:           deps.Provider,
+		CliConfig:          cliConfig,
+		SkippedValidations: skippedValidations,
 	}
 	createValidations := createvalidations.New(validationOpts)
 

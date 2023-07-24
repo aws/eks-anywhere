@@ -29,8 +29,8 @@ func TestBuildUpgradePlan(t *testing.T) {
 				ConfigMap: ciliumConfigMap("default", ""),
 			},
 			clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
-				s.VersionsBundle.Cilium.Cilium.URI = "cilium:v1.0.0"
-				s.VersionsBundle.Cilium.Operator.URI = "cilium-operator:v1.0.0"
+				s.VersionsBundles["1.19"].Cilium.Cilium.URI = "cilium:v1.0.0"
+				s.VersionsBundles["1.19"].Cilium.Operator.URI = "cilium-operator:v1.0.0"
 				s.Cluster.Spec.ClusterNetwork.CNIConfig = &anywherev1.CNIConfig{
 					Cilium: &anywherev1.CiliumConfig{},
 				}
@@ -65,8 +65,8 @@ func TestBuildUpgradePlan(t *testing.T) {
 				ConfigMap: ciliumConfigMap("default", ""),
 			},
 			clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
-				s.VersionsBundle.Cilium.Cilium.URI = "cilium:v1.0.0"
-				s.VersionsBundle.Cilium.Operator.URI = "cilium-operator:v1.0.0"
+				s.VersionsBundles["1.19"].Cilium.Cilium.URI = "cilium:v1.0.0"
+				s.VersionsBundles["1.19"].Cilium.Operator.URI = "cilium-operator:v1.0.0"
 				s.Cluster.Spec.ClusterNetwork.CNIConfig = &anywherev1.CNIConfig{
 					Cilium: &anywherev1.CiliumConfig{},
 				}
@@ -102,8 +102,8 @@ func TestBuildUpgradePlan(t *testing.T) {
 				ConfigMap: ciliumConfigMap("default", ""),
 			},
 			clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
-				s.VersionsBundle.Cilium.Cilium.URI = "cilium:v1.0.1"
-				s.VersionsBundle.Cilium.Operator.URI = "cilium-operator:v1.0.0"
+				s.VersionsBundles["1.19"].Cilium.Cilium.URI = "cilium:v1.0.1"
+				s.VersionsBundles["1.19"].Cilium.Operator.URI = "cilium-operator:v1.0.0"
 				s.Cluster.Spec.ClusterNetwork.CNIConfig = &anywherev1.CNIConfig{
 					Cilium: &anywherev1.CiliumConfig{},
 				}
@@ -147,8 +147,8 @@ func TestBuildUpgradePlan(t *testing.T) {
 				ConfigMap: ciliumConfigMap("default", ""),
 			},
 			clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
-				s.VersionsBundle.Cilium.Cilium.URI = "cilium:v1.0.1"
-				s.VersionsBundle.Cilium.Operator.URI = "cilium-operator:v1.0.0"
+				s.VersionsBundles["1.19"].Cilium.Cilium.URI = "cilium:v1.0.1"
+				s.VersionsBundles["1.19"].Cilium.Operator.URI = "cilium-operator:v1.0.0"
 				s.Cluster.Spec.ClusterNetwork.CNIConfig = &anywherev1.CNIConfig{
 					Cilium: &anywherev1.CiliumConfig{},
 				}
@@ -184,8 +184,8 @@ func TestBuildUpgradePlan(t *testing.T) {
 				ConfigMap: ciliumConfigMap("default", ""),
 			},
 			clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
-				s.VersionsBundle.Cilium.Cilium.URI = "cilium:v1.0.0"
-				s.VersionsBundle.Cilium.Operator.URI = "cilium-operator:v1.0.0"
+				s.VersionsBundles["1.19"].Cilium.Cilium.URI = "cilium:v1.0.0"
+				s.VersionsBundles["1.19"].Cilium.Operator.URI = "cilium-operator:v1.0.0"
 				s.Cluster.Spec.ClusterNetwork.CNIConfig = &anywherev1.CNIConfig{
 					Cilium: &anywherev1.CiliumConfig{},
 				}
@@ -223,8 +223,8 @@ func TestBuildUpgradePlan(t *testing.T) {
 				ConfigMap: ciliumConfigMap("default", ""),
 			},
 			clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
-				s.VersionsBundle.Cilium.Cilium.URI = "cilium:v1.0.0"
-				s.VersionsBundle.Cilium.Operator.URI = "cilium-operator:v1.0.1"
+				s.VersionsBundles["1.19"].Cilium.Cilium.URI = "cilium:v1.0.0"
+				s.VersionsBundles["1.19"].Cilium.Operator.URI = "cilium-operator:v1.0.1"
 				s.Cluster.Spec.ClusterNetwork.CNIConfig = &anywherev1.CNIConfig{
 					Cilium: &anywherev1.CiliumConfig{},
 				}
@@ -260,8 +260,8 @@ func TestBuildUpgradePlan(t *testing.T) {
 				ConfigMap: ciliumConfigMap("default", ""),
 			},
 			clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
-				s.VersionsBundle.Cilium.Cilium.URI = "cilium:v1.0.0"
-				s.VersionsBundle.Cilium.Operator.URI = "cilium-operator:v1.0.1"
+				s.VersionsBundles["1.19"].Cilium.Cilium.URI = "cilium:v1.0.0"
+				s.VersionsBundles["1.19"].Cilium.Operator.URI = "cilium-operator:v1.0.1"
 				s.Cluster.Spec.ClusterNetwork.CNIConfig = &anywherev1.CNIConfig{
 					Cilium: &anywherev1.CiliumConfig{},
 				}
@@ -297,8 +297,8 @@ func TestBuildUpgradePlan(t *testing.T) {
 				Operator:  deployment("cilium-operator:v1.0.0"),
 			},
 			clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
-				s.VersionsBundle.Cilium.Cilium.URI = "cilium:v1.0.0"
-				s.VersionsBundle.Cilium.Operator.URI = "cilium-operator:v1.0.0"
+				s.VersionsBundles["1.19"].Cilium.Cilium.URI = "cilium:v1.0.0"
+				s.VersionsBundles["1.19"].Cilium.Operator.URI = "cilium-operator:v1.0.0"
 				s.Cluster.Spec.ClusterNetwork.CNIConfig = &anywherev1.CNIConfig{
 					Cilium: &anywherev1.CiliumConfig{},
 				}
@@ -334,8 +334,8 @@ func TestBuildUpgradePlan(t *testing.T) {
 				ConfigMap: ciliumConfigMap("default", ""),
 			},
 			clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
-				s.VersionsBundle.Cilium.Cilium.URI = "cilium:v1.0.0"
-				s.VersionsBundle.Cilium.Operator.URI = "cilium-operator:v1.0.0"
+				s.VersionsBundles["1.19"].Cilium.Cilium.URI = "cilium:v1.0.0"
+				s.VersionsBundles["1.19"].Cilium.Operator.URI = "cilium-operator:v1.0.0"
 				s.Cluster.Spec.ClusterNetwork.CNIConfig = &anywherev1.CNIConfig{
 					Cilium: &anywherev1.CiliumConfig{
 						PolicyEnforcementMode: anywherev1.CiliumPolicyModeAlways,
@@ -377,8 +377,8 @@ func TestBuildUpgradePlan(t *testing.T) {
 				}),
 			},
 			clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
-				s.VersionsBundle.Cilium.Cilium.URI = "cilium:v1.0.0"
-				s.VersionsBundle.Cilium.Operator.URI = "cilium-operator:v1.0.0"
+				s.VersionsBundles["1.19"].Cilium.Cilium.URI = "cilium:v1.0.0"
+				s.VersionsBundles["1.19"].Cilium.Operator.URI = "cilium-operator:v1.0.0"
 				s.Cluster.Spec.ClusterNetwork.CNIConfig = &anywherev1.CNIConfig{
 					Cilium: &anywherev1.CiliumConfig{
 						PolicyEnforcementMode: anywherev1.CiliumPolicyModeAlways,
@@ -418,8 +418,8 @@ func TestBuildUpgradePlan(t *testing.T) {
 				ConfigMap: ciliumConfigMap("default", "old"),
 			},
 			clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
-				s.VersionsBundle.Cilium.Cilium.URI = "cilium:v1.0.0"
-				s.VersionsBundle.Cilium.Operator.URI = "cilium-operator:v1.0.0"
+				s.VersionsBundles["1.19"].Cilium.Cilium.URI = "cilium:v1.0.0"
+				s.VersionsBundles["1.19"].Cilium.Operator.URI = "cilium-operator:v1.0.0"
 				s.Cluster.Spec.ClusterNetwork.CNIConfig = &anywherev1.CNIConfig{
 					Cilium: &anywherev1.CiliumConfig{
 						EgressMasqueradeInterfaces: "new",
@@ -463,8 +463,8 @@ func TestBuildUpgradePlan(t *testing.T) {
 				}),
 			},
 			clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
-				s.VersionsBundle.Cilium.Cilium.URI = "cilium:v1.0.0"
-				s.VersionsBundle.Cilium.Operator.URI = "cilium-operator:v1.0.0"
+				s.VersionsBundles["1.19"].Cilium.Cilium.URI = "cilium:v1.0.0"
+				s.VersionsBundles["1.19"].Cilium.Operator.URI = "cilium-operator:v1.0.0"
 				s.Cluster.Spec.ClusterNetwork.CNIConfig = &anywherev1.CNIConfig{
 					Cilium: &anywherev1.CiliumConfig{
 						EgressMasqueradeInterfaces: "new",

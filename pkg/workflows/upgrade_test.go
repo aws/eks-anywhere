@@ -257,9 +257,15 @@ func (c *upgradeTestSetup) expectUpgradeWorkload(managementCluster *types.Cluste
 	}
 
 	if managementCluster != nil && managementCluster.ExistingManagement {
-		calls = append(calls, c.clusterManager.EXPECT().ApplyBundles(c.ctx, c.newClusterSpec, managementCluster))
+		calls = append(calls,
+			c.clusterManager.EXPECT().ApplyBundles(c.ctx, c.newClusterSpec, managementCluster),
+			c.clusterManager.EXPECT().ApplyReleases(c.ctx, c.newClusterSpec, managementCluster),
+		)
 	} else {
-		calls = append(calls, c.clusterManager.EXPECT().ApplyBundles(c.ctx, c.newClusterSpec, workloadCluster))
+		calls = append(calls,
+			c.clusterManager.EXPECT().ApplyBundles(c.ctx, c.newClusterSpec, workloadCluster),
+			c.clusterManager.EXPECT().ApplyReleases(c.ctx, c.newClusterSpec, workloadCluster),
+		)
 	}
 
 	gomock.InOrder(calls...)
@@ -399,7 +405,7 @@ func (c *upgradeTestSetup) expectResumeGitOpsReconcile(expectedCluster *types.Cl
 
 func (c *upgradeTestSetup) expectPostBootstrapDeleteForUpgrade() {
 	gomock.InOrder(
-		c.provider.EXPECT().PostBootstrapDeleteForUpgrade(c.ctx),
+		c.provider.EXPECT().PostBootstrapDeleteForUpgrade(c.ctx, c.managementCluster),
 	)
 }
 

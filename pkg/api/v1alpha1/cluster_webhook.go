@@ -27,7 +27,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	"github.com/aws/eks-anywhere/pkg/features"
+	"github.com/aws/eks-anywhere/pkg/semver"
 )
+
+const supportedMinorVersionIncrement int64 = 1
 
 // log is for logging in this package.
 var clusterlog = logf.Log.WithName("cluster-resource")
@@ -59,12 +62,8 @@ func (r *Cluster) ValidateCreate() error {
 
 	var allErrs field.ErrorList
 
-	if !r.IsReconcilePaused() {
-		if r.IsSelfManaged() {
-			return apierrors.NewBadRequest("creating new cluster on existing cluster is not supported for self managed clusters")
-		} else if !features.IsActive(features.FullLifecycleAPI()) {
-			return apierrors.NewBadRequest("creating new managed cluster on existing cluster is not supported")
-		}
+	if !r.IsReconcilePaused() && r.IsSelfManaged() {
+		return apierrors.NewBadRequest("creating new cluster on existing cluster is not supported for self managed clusters")
 	}
 
 	if err := r.Validate(); err != nil {
@@ -98,6 +97,12 @@ func (r *Cluster) ValidateUpdate(old runtime.Object) error {
 
 	allErrs = append(allErrs, ValidateKubernetesVersionSkew(r, oldCluster)...)
 
+	allErrs = append(allErrs, validateEksaVersionCluster(r, oldCluster)...)
+
+	allErrs = append(allErrs, ValidateEksaVersionSkew(r, oldCluster)...)
+
+	allErrs = append(allErrs, ValidateWorkerKubernetesVersionSkew(r, oldCluster)...)
+
 	if len(allErrs) != 0 {
 		return apierrors.NewInvalid(GroupVersion.WithKind(ClusterKind).GroupKind(), r.Name, allErrs)
 	}
@@ -113,14 +118,80 @@ func (r *Cluster) ValidateUpdate(old runtime.Object) error {
 	return nil
 }
 
+// ValidateEksaVersionSkew ensures that upgrades are sequential by CLI minor versions.
+func ValidateEksaVersionSkew(new, old *Cluster) field.ErrorList {
+	var allErrs field.ErrorList
+	eksaVersionPath := field.NewPath("spec").Child("EksaVersion")
+
+	if new.Spec.EksaVersion == nil || old.Spec.EksaVersion == nil {
+		return nil
+	}
+
+	// allow users to update cluster if old cluster is invalid
+	oldEksaVersion, err := semver.New(string(*old.Spec.EksaVersion))
+	if err != nil {
+		return nil
+	}
+
+	newEksaVersion, err := semver.New(string(*new.Spec.EksaVersion))
+	if err != nil {
+		allErrs = append(
+			allErrs,
+			field.Invalid(eksaVersionPath, new.Spec.EksaVersion, "EksaVersion is not a valid semver"))
+		return allErrs
+	}
+
+	majorVersionDifference := int64(newEksaVersion.Major) - int64(oldEksaVersion.Major)
+	minorVersionDifference := int64(newEksaVersion.Minor) - int64(oldEksaVersion.Minor)
+
+	// if major different or upgrade difference greater than one minor version
+	if majorVersionDifference != 0 || minorVersionDifference > supportedMinorVersionIncrement {
+		allErrs = append(
+			allErrs,
+			field.Invalid(eksaVersionPath, new.Spec.EksaVersion, fmt.Sprintf("cannot upgrade to %v from %v: EksaVersion upgrades must have a skew of 1 minor version", newEksaVersion, oldEksaVersion)))
+		return allErrs
+	}
+
+	// Allow "downgrades" if old version is greater than managment cluster. We can't check if a cluster's EksaVersion
+	// is less than or equal to the mgmt cluster in the webhook. Instead we check it in the controller where the
+	// EksaVersion will already be applied. However, the cluster will never begin to reconcile due to the validation.
+	// We should not block users from changing EksaVersion to a lower semver in this scenario.
+	failure := old.Status.FailureReason
+	if failure != nil && *failure == EksaVersionInvalidReason {
+		return nil
+	}
+
+	// don't allow downgrades if old version was valid
+	if minorVersionDifference < 0 {
+		allErrs = append(
+			allErrs,
+			field.Invalid(eksaVersionPath, new.Spec.EksaVersion, fmt.Sprintf("cannot downgrade from %v to %v: EksaVersion upgrades must be incremental", oldEksaVersion, newEksaVersion)))
+	}
+
+	return allErrs
+}
+
 func validateBundlesRefCluster(new, old *Cluster) field.ErrorList {
 	var allErrs field.ErrorList
 	bundlesRefPath := field.NewPath("spec").Child("BundlesRef")
 
-	if old.Spec.BundlesRef != nil && new.Spec.BundlesRef == nil {
+	if old.Spec.BundlesRef != nil && new.Spec.BundlesRef == nil && new.Spec.EksaVersion == nil {
 		allErrs = append(
 			allErrs,
 			field.Invalid(bundlesRefPath, new.Spec.BundlesRef, fmt.Sprintf("field cannot be removed after setting. Previous value %v", old.Spec.BundlesRef)))
+	}
+
+	return allErrs
+}
+
+func validateEksaVersionCluster(new, old *Cluster) field.ErrorList {
+	var allErrs field.ErrorList
+	eksaVersionPath := field.NewPath("spec").Child("EksaVersion")
+
+	if old.Spec.EksaVersion != nil && new.Spec.EksaVersion == nil {
+		allErrs = append(
+			allErrs,
+			field.Invalid(eksaVersionPath, new.Spec.EksaVersion, fmt.Sprintf("field cannot be removed after setting. Previous value %v", old.Spec.EksaVersion)))
 	}
 
 	return allErrs
@@ -347,18 +418,21 @@ func (r *Cluster) ValidateDelete() error {
 
 // ValidateKubernetesVersionSkew validates Kubernetes version skew between upgrades.
 func ValidateKubernetesVersionSkew(new, old *Cluster) field.ErrorList {
-	var allErrs field.ErrorList
-
 	path := field.NewPath("spec")
-
 	oldVersion := old.Spec.KubernetesVersion
 	newVersion := new.Spec.KubernetesVersion
+
+	return validateKubeVersionSkew(newVersion, oldVersion, path)
+}
+
+func validateKubeVersionSkew(newVersion, oldVersion KubernetesVersion, path *field.Path) field.ErrorList {
+	var allErrs field.ErrorList
 
 	parsedOldVersion, err := version.ParseGeneric(string(oldVersion))
 	if err != nil {
 		allErrs = append(
 			allErrs,
-			field.Invalid(path, new.Spec.KubernetesVersion, fmt.Sprintf("parsing cluster version: %v", err.Error())))
+			field.Invalid(path, oldVersion, fmt.Sprintf("parsing cluster version: %v", err.Error())))
 		return allErrs
 	}
 
@@ -366,7 +440,7 @@ func ValidateKubernetesVersionSkew(new, old *Cluster) field.ErrorList {
 	if err != nil {
 		allErrs = append(
 			allErrs,
-			field.Invalid(path, new.Spec.KubernetesVersion, fmt.Sprintf("parsing comparison version: %v", err.Error())))
+			field.Invalid(path, newVersion, fmt.Sprintf("parsing comparison version: %v", err.Error())))
 		return allErrs
 	}
 
@@ -377,7 +451,168 @@ func ValidateKubernetesVersionSkew(new, old *Cluster) field.ErrorList {
 	if err := ValidateVersionSkew(parsedOldVersion, parsedNewVersion); err != nil {
 		allErrs = append(
 			allErrs,
-			field.Invalid(path, new.Spec.KubernetesVersion, err.Error()))
+			field.Invalid(path, newVersion, err.Error()))
+	}
+
+	return allErrs
+}
+
+// ValidateWorkerKubernetesVersionSkew validates worker node group Kubernetes version skew between upgrades.
+func ValidateWorkerKubernetesVersionSkew(new, old *Cluster) field.ErrorList {
+	var allErrs field.ErrorList
+
+	newClusterVersion := new.Spec.KubernetesVersion
+	oldClusterVersion := old.Spec.KubernetesVersion
+
+	workerNodeGroupMap := make(map[string]*WorkerNodeGroupConfiguration)
+	for i := range old.Spec.WorkerNodeGroupConfigurations {
+		workerNodeGroupMap[old.Spec.WorkerNodeGroupConfigurations[i].Name] = &old.Spec.WorkerNodeGroupConfigurations[i]
+	}
+	for _, nodeGroupNewSpec := range new.Spec.WorkerNodeGroupConfigurations {
+		newVersion := nodeGroupNewSpec.KubernetesVersion
+		if workerNodeGrpOldSpec, ok := workerNodeGroupMap[nodeGroupNewSpec.Name]; ok {
+			oldVersion := workerNodeGrpOldSpec.KubernetesVersion
+			allErrs = append(allErrs, performWorkerKubernetesValidations(oldVersion, newVersion, oldClusterVersion, newClusterVersion)...)
+		} else {
+			allErrs = append(allErrs, performWorkerKubernetesValidationsNewNodeGroup(newVersion, newClusterVersion)...)
+		}
+	}
+
+	return allErrs
+}
+
+func performWorkerKubernetesValidationsNewNodeGroup(newVersion *KubernetesVersion, newClusterVersion KubernetesVersion) field.ErrorList {
+	var allErrs field.ErrorList
+
+	if newVersion != nil {
+		allErrs = append(allErrs, validateCPWorkerKubeSkew(newClusterVersion, *newVersion)...)
+	}
+
+	return allErrs
+}
+
+func performWorkerKubernetesValidations(oldVersion, newVersion *KubernetesVersion, oldClusterVersion, newClusterVersion KubernetesVersion) field.ErrorList {
+	var allErrs field.ErrorList
+	path := field.NewPath("spec").Child("WorkerNodeConfiguration.kubernetesVersion")
+
+	if oldVersion != nil && newVersion == nil {
+		allErrs = append(
+			allErrs,
+			validateRemoveWorkerKubernetesVersion(newClusterVersion, oldClusterVersion, oldVersion)...,
+		)
+	}
+
+	if oldVersion != nil && newVersion != nil {
+		allErrs = append(
+			allErrs,
+			validateKubeVersionSkew(*newVersion, *oldVersion, path)...,
+		)
+	}
+
+	if oldVersion == nil && newVersion != nil {
+		allErrs = append(
+			allErrs,
+			validateKubeVersionSkew(*newVersion, oldClusterVersion, path)...,
+		)
+	}
+
+	if newVersion != nil {
+		allErrs = append(
+			allErrs,
+			validateCPWorkerKubeSkew(newClusterVersion, *newVersion)...,
+		)
+	}
+
+	return allErrs
+}
+
+func validateRemoveWorkerKubernetesVersion(newCPVersion, oldCPVersion KubernetesVersion, oldWorkerVersion *KubernetesVersion) field.ErrorList {
+	var allErrs field.ErrorList
+	path := field.NewPath("spec").Child("WorkerNodeConfiguration.kubernetesVersion")
+
+	parsedWorkerVersion, err := version.ParseGeneric(string(*oldWorkerVersion))
+	if err != nil {
+		allErrs = append(
+			allErrs,
+			field.Invalid(path, oldWorkerVersion, fmt.Sprintf("could not parse version: %v", err)))
+		return allErrs
+	}
+
+	parsedOldClusterVersion, err := version.ParseGeneric(string(oldCPVersion))
+	if err != nil {
+		allErrs = append(
+			allErrs,
+			field.Invalid(path, oldCPVersion, fmt.Sprintf("could not parse version: %v", err)))
+		return allErrs
+	}
+
+	parsedNewClusterVersion, err := version.ParseGeneric(string(newCPVersion))
+	if err != nil {
+		allErrs = append(
+			allErrs,
+			field.Invalid(path, newCPVersion, fmt.Sprintf("could not parse version: %v", err)))
+		return allErrs
+	}
+
+	if parsedOldClusterVersion.LessThan(parsedNewClusterVersion) {
+		allErrs = append(
+			allErrs,
+			field.Invalid(path, oldWorkerVersion, fmt.Sprintf("can't simultaneously remove worker kubernetesVersion and upgrade cluster level kubernetesVersion: %v", newCPVersion)))
+		return allErrs
+	}
+
+	if err := ValidateVersionSkew(parsedWorkerVersion, parsedNewClusterVersion); err != nil {
+		allErrs = append(
+			allErrs,
+			field.Invalid(path, oldWorkerVersion, err.Error()))
+	}
+
+	return allErrs
+}
+
+func validKubeMinorVersionDiff(old, new KubernetesVersion) (bool, error) {
+	parsedOldVersion, err := version.ParseGeneric(string(old))
+	if err != nil {
+		return false, fmt.Errorf("could not parse version: %v, %v", old, err)
+	}
+
+	parsedNewVersion, err := version.ParseGeneric(string(new))
+	if err != nil {
+		return false, fmt.Errorf("could not parse version: %v, %v", new, err)
+	}
+
+	if parsedOldVersion.Major() != parsedNewVersion.Major() {
+		return false, fmt.Errorf("major versions are not the same: %v and %v", parsedOldVersion, parsedNewVersion)
+	}
+
+	oldMinor := int(parsedOldVersion.Minor())
+	newMinor := int(parsedNewVersion.Minor())
+	minorDiff := newMinor - oldMinor
+
+	if minorDiff < 0 || minorDiff > 2 {
+		return false, nil
+	}
+
+	return true, nil
+}
+
+func validateCPWorkerKubeSkew(cpVersion, workerVersion KubernetesVersion) field.ErrorList {
+	var allErrs field.ErrorList
+	workerPath := field.NewPath("spec").Child("WorkerNodeConfiguration.kubernetesVersion")
+	cpPath := field.NewPath("spec").Child("kubernetesVersion")
+
+	validSkew, err := validKubeMinorVersionDiff(workerVersion, cpVersion)
+	if err != nil {
+		allErrs = append(
+			allErrs,
+			field.Invalid(workerPath, workerVersion, fmt.Sprintf("could not determine minor version difference: %v", err.Error())))
+		return allErrs
+	}
+
+	if !validSkew {
+		allErrs = append(
+			allErrs,
+			field.Invalid(cpPath, cpVersion, fmt.Sprintf("cluster level minor version must be within 2 versions greater than worker node group version: %v", workerVersion)))
 	}
 
 	return allErrs

@@ -65,8 +65,12 @@ func NewTemplateBuilder(datacenterSpec *v1alpha1.TinkerbellDatacenterConfigSpec,
 
 func (tb *TemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *cluster.Spec, buildOptions ...providers.BuildMapOption) (content []byte, err error) {
 	cpTemplateConfig := clusterSpec.TinkerbellTemplateConfigs[tb.controlPlaneMachineSpec.TemplateRef.Name]
+	bundle := clusterSpec.ControlPlaneVersionsBundle()
+	if err != nil {
+		return nil, err
+	}
 	if cpTemplateConfig == nil {
-		versionBundle := clusterSpec.VersionsBundle.VersionsBundle
+		versionBundle := bundle.VersionsBundle
 		cpTemplateConfig = v1alpha1.NewDefaultTinkerbellTemplateConfigCreate(clusterSpec.Cluster, *versionBundle, tb.datacenterSpec.OSImageURL, tb.tinkerbellIP, tb.datacenterSpec.TinkerbellIP, tb.controlPlaneMachineSpec.OSFamily)
 	}
 
@@ -81,7 +85,7 @@ func (tb *TemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *cluster.Spe
 		etcdMachineSpec = *tb.etcdMachineSpec
 		etcdTemplateConfig := clusterSpec.TinkerbellTemplateConfigs[tb.etcdMachineSpec.TemplateRef.Name]
 		if etcdTemplateConfig == nil {
-			versionBundle := clusterSpec.VersionsBundle.VersionsBundle
+			versionBundle := bundle.VersionsBundle
 			etcdTemplateConfig = v1alpha1.NewDefaultTinkerbellTemplateConfigCreate(clusterSpec.Cluster, *versionBundle, tb.datacenterSpec.OSImageURL, tb.tinkerbellIP, tb.datacenterSpec.TinkerbellIP, tb.etcdMachineSpec.OSFamily)
 		}
 		etcdTemplateString, err = etcdTemplateConfig.ToTemplateString()
@@ -106,11 +110,12 @@ func (tb *TemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *cluster.Spe
 
 func (tb *TemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, workloadTemplateNames, kubeadmconfigTemplateNames map[string]string) (content []byte, err error) {
 	workerSpecs := make([][]byte, 0, len(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations))
+	bundle := clusterSpec.ControlPlaneVersionsBundle()
 	for _, workerNodeGroupConfiguration := range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
 		workerNodeMachineSpec := tb.WorkerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name]
 		wTemplateConfig := clusterSpec.TinkerbellTemplateConfigs[workerNodeMachineSpec.TemplateRef.Name]
 		if wTemplateConfig == nil {
-			versionBundle := clusterSpec.VersionsBundle.VersionsBundle
+			versionBundle := bundle.VersionsBundle
 			wTemplateConfig = v1alpha1.NewDefaultTinkerbellTemplateConfigCreate(clusterSpec.Cluster, *versionBundle, tb.datacenterSpec.OSImageURL, tb.tinkerbellIP, tb.datacenterSpec.TinkerbellIP, workerNodeMachineSpec.OSFamily)
 		}
 
@@ -330,8 +335,8 @@ func (p *Provider) generateCAPISpecForCreate(ctx context.Context, clusterSpec *c
 }
 
 func (p *Provider) needsNewMachineTemplate(ctx context.Context, workloadCluster *types.Cluster, currentSpec, newClusterSpec *cluster.Spec, workerNodeGroupConfiguration v1alpha1.WorkerNodeGroupConfiguration, vdc *v1alpha1.TinkerbellDatacenterConfig, prevWorkerNodeGroupConfigs map[string]v1alpha1.WorkerNodeGroupConfiguration) (bool, error) {
-	if _, ok := prevWorkerNodeGroupConfigs[workerNodeGroupConfiguration.Name]; ok {
-		return needsNewWorkloadTemplate(currentSpec, newClusterSpec), nil
+	if prevWorkerNode, ok := prevWorkerNodeGroupConfigs[workerNodeGroupConfiguration.Name]; ok {
+		return needsNewWorkloadTemplate(currentSpec, newClusterSpec, prevWorkerNode, workerNodeGroupConfiguration), nil
 	}
 	return true, nil
 }
@@ -357,7 +362,7 @@ func buildTemplateMapCP(
 	etcdTemplateOverride string,
 	datacenterSpec v1alpha1.TinkerbellDatacenterConfigSpec,
 ) (map[string]interface{}, error) {
-	bundle := clusterSpec.VersionsBundle
+	versionsBundle := clusterSpec.ControlPlaneVersionsBundle()
 	format := "cloud-config"
 
 	apiServerExtraArgs := clusterapi.OIDCToExtraArgs(clusterSpec.OIDCConfig).
@@ -381,20 +386,20 @@ func buildTemplateMapCP(
 		"controlPlaneSshUsername":       controlPlaneMachineSpec.Users[0].Name,
 		"eksaSystemNamespace":           constants.EksaSystemNamespace,
 		"format":                        format,
-		"kubernetesVersion":             bundle.KubeDistro.Kubernetes.Tag,
-		"kubeVipImage":                  bundle.Tinkerbell.KubeVip.VersionedImage(),
+		"kubernetesVersion":             versionsBundle.KubeDistro.Kubernetes.Tag,
+		"kubeVipImage":                  versionsBundle.Tinkerbell.KubeVip.VersionedImage(),
 		"podCidrs":                      clusterSpec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks,
 		"serviceCidrs":                  clusterSpec.Cluster.Spec.ClusterNetwork.Services.CidrBlocks,
 		"apiserverExtraArgs":            apiServerExtraArgs.ToPartialYaml(),
 		"baseRegistry":                  "", // TODO: need to get this values for creating template IMAGE_URL
 		"osDistro":                      "", // TODO: need to get this values for creating template IMAGE_URL
 		"osVersion":                     "", // TODO: need to get this values for creating template IMAGE_URL
-		"kubernetesRepository":          bundle.KubeDistro.Kubernetes.Repository,
-		"corednsRepository":             bundle.KubeDistro.CoreDNS.Repository,
-		"corednsVersion":                bundle.KubeDistro.CoreDNS.Tag,
-		"etcdRepository":                bundle.KubeDistro.Etcd.Repository,
-		"etcdImageTag":                  bundle.KubeDistro.Etcd.Tag,
-		"externalEtcdVersion":           bundle.KubeDistro.EtcdVersion,
+		"kubernetesRepository":          versionsBundle.KubeDistro.Kubernetes.Repository,
+		"corednsRepository":             versionsBundle.KubeDistro.CoreDNS.Repository,
+		"corednsVersion":                versionsBundle.KubeDistro.CoreDNS.Tag,
+		"etcdRepository":                versionsBundle.KubeDistro.Etcd.Repository,
+		"etcdImageTag":                  versionsBundle.KubeDistro.Etcd.Tag,
+		"externalEtcdVersion":           versionsBundle.KubeDistro.EtcdVersion,
 		"etcdCipherSuites":              crypto.SecureCipherSuitesString(),
 		"kubeletExtraArgs":              kubeletExtraArgs.ToPartialYaml(),
 		"hardwareSelector":              controlPlaneMachineSpec.HardwareSelector,
@@ -440,10 +445,10 @@ func buildTemplateMapCP(
 
 	if controlPlaneMachineSpec.OSFamily == v1alpha1.Bottlerocket {
 		values["format"] = string(v1alpha1.Bottlerocket)
-		values["pauseRepository"] = bundle.KubeDistro.Pause.Image()
-		values["pauseVersion"] = bundle.KubeDistro.Pause.Tag()
-		values["bottlerocketBootstrapRepository"] = bundle.BottleRocketHostContainers.KubeadmBootstrap.Image()
-		values["bottlerocketBootstrapVersion"] = bundle.BottleRocketHostContainers.KubeadmBootstrap.Tag()
+		values["pauseRepository"] = versionsBundle.KubeDistro.Pause.Image()
+		values["pauseVersion"] = versionsBundle.KubeDistro.Pause.Tag()
+		values["bottlerocketBootstrapRepository"] = versionsBundle.BottleRocketHostContainers.KubeadmBootstrap.Image()
+		values["bottlerocketBootstrapVersion"] = versionsBundle.BottleRocketHostContainers.KubeadmBootstrap.Tag()
 	}
 
 	if clusterSpec.AWSIamConfig != nil {
@@ -476,7 +481,7 @@ func buildTemplateMapMD(
 	workerTemplateOverride string,
 	datacenterSpec v1alpha1.TinkerbellDatacenterConfigSpec,
 ) (map[string]interface{}, error) {
-	bundle := clusterSpec.VersionsBundle
+	versionsBundle := clusterSpec.WorkerNodeGroupVersionsBundle(workerNodeGroupConfiguration)
 	format := "cloud-config"
 
 	kubeletExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs().
@@ -488,7 +493,7 @@ func buildTemplateMapMD(
 		"eksaSystemNamespace":    constants.EksaSystemNamespace,
 		"kubeletExtraArgs":       kubeletExtraArgs.ToPartialYaml(),
 		"format":                 format,
-		"kubernetesVersion":      bundle.KubeDistro.Kubernetes.Tag,
+		"kubernetesVersion":      versionsBundle.KubeDistro.Kubernetes.Tag,
 		"workerNodeGroupName":    workerNodeGroupConfiguration.Name,
 		"workerSshAuthorizedKey": workerNodeGroupMachineSpec.Users[0].SshAuthorizedKeys[0],
 		"workerSshUsername":      workerNodeGroupMachineSpec.Users[0].Name,
@@ -498,10 +503,10 @@ func buildTemplateMapMD(
 
 	if workerNodeGroupMachineSpec.OSFamily == v1alpha1.Bottlerocket {
 		values["format"] = string(v1alpha1.Bottlerocket)
-		values["pauseRepository"] = bundle.KubeDistro.Pause.Image()
-		values["pauseVersion"] = bundle.KubeDistro.Pause.Tag()
-		values["bottlerocketBootstrapRepository"] = bundle.BottleRocketHostContainers.KubeadmBootstrap.Image()
-		values["bottlerocketBootstrapVersion"] = bundle.BottleRocketHostContainers.KubeadmBootstrap.Tag()
+		values["pauseRepository"] = versionsBundle.KubeDistro.Pause.Image()
+		values["pauseVersion"] = versionsBundle.KubeDistro.Pause.Tag()
+		values["bottlerocketBootstrapRepository"] = versionsBundle.BottleRocketHostContainers.KubeadmBootstrap.Image()
+		values["bottlerocketBootstrapVersion"] = versionsBundle.BottleRocketHostContainers.KubeadmBootstrap.Tag()
 	}
 
 	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration != nil {

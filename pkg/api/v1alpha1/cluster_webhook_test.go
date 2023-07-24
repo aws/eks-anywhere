@@ -1,6 +1,8 @@
 package v1alpha1_test
 
 import (
+	"fmt"
+	"strings"
 	"testing"
 
 	. "github.com/onsi/gomega"
@@ -8,6 +10,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	_ "k8s.io/apimachinery/pkg/runtime"
 
+	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/features"
@@ -839,11 +842,82 @@ func TestClusterValidateUpdateAWSIamNameImmutableAddConfig(t *testing.T) {
 
 func TestClusterValidateUpdateUnsetBundlesRefImmutable(t *testing.T) {
 	cOld := baseCluster()
+	cOld.Spec.BundlesRef = &v1alpha1.BundlesRef{}
 	c := cOld.DeepCopy()
 	c.Spec.BundlesRef = nil
+	c.Spec.EksaVersion = nil
 
 	g := NewWithT(t)
 	g.Expect(c.ValidateUpdate(cOld)).To(MatchError(ContainSubstring("spec.BundlesRef: Invalid value: \"null\": field cannot be removed after setting")))
+}
+
+func TestClusterValidateUpdateEksaVersionSkew(t *testing.T) {
+	tests := []struct {
+		name           string
+		wantErr        string
+		upgradeVersion v1alpha1.EksaVersion
+		oldVersion     v1alpha1.EksaVersion
+		allow          bool
+	}{
+		{
+			name:           "old version parse failure",
+			wantErr:        "Invalid value",
+			upgradeVersion: v1alpha1.EksaVersion("bad"),
+			oldVersion:     v1alpha1.EksaVersion("wrong"),
+		},
+		{
+			name:           "new version parse failure",
+			wantErr:        "Invalid value",
+			upgradeVersion: v1alpha1.EksaVersion("bad"),
+			oldVersion:     v1alpha1.EksaVersion("v0.0.0"),
+		},
+		{
+			name:           "skew too big",
+			wantErr:        "EksaVersion upgrades must have a skew of 1 minor version",
+			upgradeVersion: v1alpha1.EksaVersion("v1.0.0"),
+			oldVersion:     v1alpha1.EksaVersion("v0.0.0"),
+		},
+		{
+			name:           "allow downgrade",
+			wantErr:        "",
+			upgradeVersion: v1alpha1.EksaVersion("v0.0.0"),
+			oldVersion:     v1alpha1.EksaVersion("v0.1.0"),
+			allow:          true,
+		},
+		{
+			name:           "forbid downgrade",
+			wantErr:        "cannot downgrade",
+			upgradeVersion: v1alpha1.EksaVersion("v0.0.0"),
+			oldVersion:     v1alpha1.EksaVersion("v0.1.0"),
+		},
+		{
+			name:           "success",
+			wantErr:        "",
+			upgradeVersion: v1alpha1.EksaVersion("v0.1.0"),
+			oldVersion:     v1alpha1.EksaVersion("v0.0.0"),
+		},
+	}
+	for _, tt := range tests {
+		cOld := baseCluster()
+		cOld.Spec.EksaVersion = &tt.oldVersion
+		cOld.Spec.BundlesRef = nil
+		c := cOld.DeepCopy()
+		c.Spec.EksaVersion = &tt.upgradeVersion
+		c.Spec.BundlesRef = nil
+
+		if tt.allow {
+			reason := v1alpha1.EksaVersionInvalidReason
+			cOld.Status.FailureReason = &reason
+		}
+
+		err := c.ValidateUpdate(cOld)
+		g := NewWithT(t)
+		if tt.wantErr != "" {
+			g.Expect(c.ValidateUpdate(cOld)).To(MatchError(ContainSubstring(tt.wantErr)))
+		} else {
+			g.Expect(err).To(Succeed())
+		}
+	}
 }
 
 func TestClusterValidateUpdateOIDCNameMutableUpdateNameWorkloadCluster(t *testing.T) {
@@ -1072,7 +1146,6 @@ func TestClusterValidateUpdateSuccess(t *testing.T) {
 
 func TestClusterCreateManagementCluster(t *testing.T) {
 	features.ClearCache()
-	t.Setenv(features.FullLifecycleAPIEnvVar, "true")
 	workerConfiguration := append([]v1alpha1.WorkerNodeGroupConfiguration{}, v1alpha1.WorkerNodeGroupConfiguration{Count: ptr.Int(5)})
 	cluster := &v1alpha1.Cluster{
 		Spec: v1alpha1.ClusterSpec{
@@ -1091,7 +1164,6 @@ func TestClusterCreateManagementCluster(t *testing.T) {
 
 func TestClusterCreateCloudStackMultipleWorkerNodeGroupsValidation(t *testing.T) {
 	features.ClearCache()
-	t.Setenv(features.FullLifecycleAPIEnvVar, "true")
 	cluster := baseCluster()
 	cluster.Spec.WorkerNodeGroupConfigurations = append([]v1alpha1.WorkerNodeGroupConfiguration{},
 		v1alpha1.WorkerNodeGroupConfiguration{Count: ptr.Int(5), Name: "test", MachineGroupRef: &v1alpha1.Ref{Name: "ref-name"}},
@@ -1105,7 +1177,6 @@ func TestClusterCreateCloudStackMultipleWorkerNodeGroupsValidation(t *testing.T)
 
 func TestClusterCreateWorkloadCluster(t *testing.T) {
 	features.ClearCache()
-	t.Setenv(features.FullLifecycleAPIEnvVar, "true")
 	cluster := baseCluster()
 	cluster.Spec.WorkerNodeGroupConfigurations = append([]v1alpha1.WorkerNodeGroupConfiguration{},
 		v1alpha1.WorkerNodeGroupConfiguration{
@@ -1248,19 +1319,8 @@ func TestClusterValidateCreateSelfManagedUnpaused(t *testing.T) {
 	g.Expect(err).To(MatchError(ContainSubstring("creating new cluster on existing cluster is not supported for self managed clusters")))
 }
 
-func TestClusterValidateCreateManagedUnpaused(t *testing.T) {
-	features.ClearCache()
-	t.Setenv(features.FullLifecycleAPIEnvVar, "")
-	cluster := baseCluster()
-	g := NewWithT(t)
-	cluster.SetManagedBy("mgmt2")
-	err := cluster.ValidateCreate()
-	g.Expect(err.Error()).To(ContainSubstring("creating new managed cluster on existing cluster is not supported"))
-}
-
 func TestClusterValidateCreateSelfManagedNotPaused(t *testing.T) {
 	features.ClearCache()
-	t.Setenv(features.FullLifecycleAPIEnvVar, "true")
 	cluster := baseCluster()
 	cluster.SetSelfManaged()
 
@@ -1271,33 +1331,15 @@ func TestClusterValidateCreateSelfManagedNotPaused(t *testing.T) {
 
 func TestClusterValidateCreateInvalidCluster(t *testing.T) {
 	tests := []struct {
-		name               string
-		featureGateEnabled bool
-		cluster            *v1alpha1.Cluster
+		name    string
+		cluster *v1alpha1.Cluster
 	}{
-		{
-			name: "Paused self-managed cluster, feature gate off",
-			cluster: newCluster(func(c *v1alpha1.Cluster) {
-				c.SetSelfManaged()
-				c.PauseReconcile()
-			}),
-			featureGateEnabled: false,
-		},
-		{
-			name: "Paused workload cluster, feature gate off",
-			cluster: newCluster(func(c *v1alpha1.Cluster) {
-				c.SetManagedBy("my-management-cluster")
-				c.PauseReconcile()
-			}),
-			featureGateEnabled: false,
-		},
 		{
 			name: "Paused self-managed cluster, feature gate on",
 			cluster: newCluster(func(c *v1alpha1.Cluster) {
 				c.SetSelfManaged()
 				c.PauseReconcile()
 			}),
-			featureGateEnabled: true,
 		},
 		{
 			name: "Paused workload cluster, feature gate on",
@@ -1305,23 +1347,16 @@ func TestClusterValidateCreateInvalidCluster(t *testing.T) {
 				c.SetManagedBy("my-management-cluster")
 				c.PauseReconcile()
 			}),
-			featureGateEnabled: true,
 		},
 		{
 			name: "Unpaused workload cluster, feature gate on",
 			cluster: newCluster(func(c *v1alpha1.Cluster) {
 				c.SetManagedBy("my-management-cluster")
 			}),
-			featureGateEnabled: true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			features.ClearCache()
-			if tt.featureGateEnabled {
-				t.Setenv(features.FullLifecycleAPIEnvVar, "true")
-			}
-
 			// Invalid control plane configuration
 			tt.cluster.Spec.ControlPlaneConfiguration = v1alpha1.ControlPlaneConfiguration{Endpoint: &v1alpha1.Endpoint{Host: "test-ip"}, MachineGroupRef: &v1alpha1.Ref{Name: "test"}}
 
@@ -1335,40 +1370,19 @@ func TestClusterValidateCreateInvalidCluster(t *testing.T) {
 func TestClusterValidateUpdateInvalidManagementCluster(t *testing.T) {
 	features.ClearCache()
 	tests := []struct {
-		name               string
-		featureGateEnabled bool
-		clusterNew         *v1alpha1.Cluster
+		name       string
+		clusterNew *v1alpha1.Cluster
 	}{
-		{
-			name: "Paused self-managed cluster, feature gate off",
-			clusterNew: newCluster(func(c *v1alpha1.Cluster) {
-				c.SetSelfManaged()
-				c.PauseReconcile()
-			}),
-			featureGateEnabled: false,
-		},
-		{
-			name: "Unpaused self-managed cluster, feature gate off",
-			clusterNew: newCluster(func(c *v1alpha1.Cluster) {
-				c.SetSelfManaged()
-			}),
-			featureGateEnabled: false,
-		},
 		{
 			name: "Paused self-managed cluster, feature gate on",
 			clusterNew: newCluster(func(c *v1alpha1.Cluster) {
 				c.SetSelfManaged()
 				c.PauseReconcile()
 			}),
-			featureGateEnabled: true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			features.ClearCache()
-			if tt.featureGateEnabled {
-				t.Setenv(features.FullLifecycleAPIEnvVar, "true")
-			}
 			clusterOld := baseCluster()
 			clusterOld.SetSelfManaged()
 			tt.clusterNew.Spec.WorkerNodeGroupConfigurations = []v1alpha1.WorkerNodeGroupConfiguration{{
@@ -1389,47 +1403,26 @@ func TestClusterValidateUpdateInvalidManagementCluster(t *testing.T) {
 func TestClusterValidateUpdateInvalidWorkloadCluster(t *testing.T) {
 	features.ClearCache()
 	tests := []struct {
-		name               string
-		featureGateEnabled bool
-		clusterNew         *v1alpha1.Cluster
+		name       string
+		clusterNew *v1alpha1.Cluster
 	}{
-		{
-			name: "Paused workload cluster, feature gate off",
-			clusterNew: newCluster(func(c *v1alpha1.Cluster) {
-				c.SetManagedBy("my-management-cluster")
-				c.PauseReconcile()
-			}),
-			featureGateEnabled: false,
-		},
-		{
-			name: "Unpaused workload cluster, feature gate off",
-			clusterNew: newCluster(func(c *v1alpha1.Cluster) {
-				c.SetManagedBy("my-management-cluster")
-			}),
-			featureGateEnabled: false,
-		},
 		{
 			name: "Paused workload cluster, feature gate on",
 			clusterNew: newCluster(func(c *v1alpha1.Cluster) {
 				c.SetManagedBy("my-management-cluster")
 				c.PauseReconcile()
 			}),
-			featureGateEnabled: true,
 		},
 		{
 			name: "Unpaused workload cluster, feature gate on",
 			clusterNew: newCluster(func(c *v1alpha1.Cluster) {
 				c.SetManagedBy("my-management-cluster")
 			}),
-			featureGateEnabled: true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			features.ClearCache()
-			if tt.featureGateEnabled {
-				t.Setenv(features.FullLifecycleAPIEnvVar, "true")
-			}
 			clusterOld := baseCluster()
 			clusterOld.SetManagedBy("my-management-cluster")
 
@@ -1453,33 +1446,15 @@ func TestClusterValidateUpdateInvalidWorkloadCluster(t *testing.T) {
 
 func TestClusterValidateCreateValidCluster(t *testing.T) {
 	tests := []struct {
-		name               string
-		featureGateEnabled bool
-		cluster            *v1alpha1.Cluster
+		name    string
+		cluster *v1alpha1.Cluster
 	}{
-		{
-			name: "Paused self-managed cluster, feature gate off",
-			cluster: newCluster(func(c *v1alpha1.Cluster) {
-				c.SetSelfManaged()
-				c.PauseReconcile()
-			}),
-			featureGateEnabled: false,
-		},
-		{
-			name: "Paused workload cluster, feature gate off",
-			cluster: newCluster(func(c *v1alpha1.Cluster) {
-				c.SetManagedBy("my-management-cluster")
-				c.PauseReconcile()
-			}),
-			featureGateEnabled: false,
-		},
 		{
 			name: "Paused self-managed cluster, feature gate on",
 			cluster: newCluster(func(c *v1alpha1.Cluster) {
 				c.SetSelfManaged()
 				c.PauseReconcile()
 			}),
-			featureGateEnabled: true,
 		},
 		{
 			name: "Paused workload cluster, feature gate on",
@@ -1487,22 +1462,16 @@ func TestClusterValidateCreateValidCluster(t *testing.T) {
 				c.SetManagedBy("my-management-cluster")
 				c.PauseReconcile()
 			}),
-			featureGateEnabled: true,
 		},
 		{
 			name: "Unpaused workload cluster, feature gate on",
 			cluster: newCluster(func(c *v1alpha1.Cluster) {
 				c.SetManagedBy("my-management-cluster")
 			}),
-			featureGateEnabled: true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			features.ClearCache()
-			if tt.featureGateEnabled {
-				t.Setenv(features.FullLifecycleAPIEnvVar, "true")
-			}
 			g := NewWithT(t)
 			g.Expect(tt.cluster.ValidateCreate()).To(Succeed())
 		})
@@ -1512,28 +1481,10 @@ func TestClusterValidateCreateValidCluster(t *testing.T) {
 func TestClusterValidateUpdateValidManagementCluster(t *testing.T) {
 	features.ClearCache()
 	tests := []struct {
-		name               string
-		featureGateEnabled bool
-		oldCluster         *v1alpha1.Cluster
-		updateCluster      clusterOpt
+		name          string
+		oldCluster    *v1alpha1.Cluster
+		updateCluster clusterOpt
 	}{
-		{
-			name:       "Paused self-managed cluster, feature gate off",
-			oldCluster: baseCluster(),
-			updateCluster: func(c *v1alpha1.Cluster) {
-				c.SetSelfManaged()
-				c.PauseReconcile()
-			},
-			featureGateEnabled: false,
-		},
-		{
-			name:       "Unpaused self-managed cluster, feature gate off",
-			oldCluster: baseCluster(),
-			updateCluster: func(c *v1alpha1.Cluster) {
-				c.SetSelfManaged()
-			},
-			featureGateEnabled: false,
-		},
 		{
 			name:       "Paused self-managed cluster, feature gate on",
 			oldCluster: baseCluster(),
@@ -1541,7 +1492,6 @@ func TestClusterValidateUpdateValidManagementCluster(t *testing.T) {
 				c.SetSelfManaged()
 				c.PauseReconcile()
 			},
-			featureGateEnabled: true,
 		},
 		{
 			name: "Unpaused self-managed cluster, feature gate on, no changes",
@@ -1550,17 +1500,11 @@ func TestClusterValidateUpdateValidManagementCluster(t *testing.T) {
 					c.SetSelfManaged()
 				},
 			),
-			updateCluster:      func(c *v1alpha1.Cluster) {},
-			featureGateEnabled: true,
+			updateCluster: func(c *v1alpha1.Cluster) {},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			features.ClearCache()
-			if tt.featureGateEnabled {
-				t.Setenv(features.FullLifecycleAPIEnvVar, "true")
-			}
-
 			tt.oldCluster.Spec.WorkerNodeGroupConfigurations = []v1alpha1.WorkerNodeGroupConfiguration{{
 				Name:  "md-0",
 				Count: ptr.Int(4),
@@ -1583,47 +1527,25 @@ func TestClusterValidateUpdateValidManagementCluster(t *testing.T) {
 func TestClusterValidateUpdateValidWorkloadCluster(t *testing.T) {
 	features.ClearCache()
 	tests := []struct {
-		name               string
-		featureGateEnabled bool
-		clusterNew         *v1alpha1.Cluster
+		name       string
+		clusterNew *v1alpha1.Cluster
 	}{
-		{
-			name: "Paused workload cluster, feature gate off",
-			clusterNew: newCluster(func(c *v1alpha1.Cluster) {
-				c.SetManagedBy("my-management-cluster")
-				c.PauseReconcile()
-			}),
-			featureGateEnabled: false,
-		},
-		{
-			name: "Unpaused workload cluster, feature gate off",
-			clusterNew: newCluster(func(c *v1alpha1.Cluster) {
-				c.SetManagedBy("my-management-cluster")
-			}),
-			featureGateEnabled: false,
-		},
 		{
 			name: "Paused workload cluster, feature gate on",
 			clusterNew: newCluster(func(c *v1alpha1.Cluster) {
 				c.SetManagedBy("my-management-cluster")
 				c.PauseReconcile()
 			}),
-			featureGateEnabled: true,
 		},
 		{
 			name: "Unpaused workload cluster, feature gate on",
 			clusterNew: newCluster(func(c *v1alpha1.Cluster) {
 				c.SetManagedBy("my-management-cluster")
 			}),
-			featureGateEnabled: true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			features.ClearCache()
-			if tt.featureGateEnabled {
-				t.Setenv(features.FullLifecycleAPIEnvVar, "true")
-			}
 			clusterOld := baseCluster()
 			clusterOld.SetManagedBy("my-management-cluster")
 			tt.clusterNew.Spec.WorkerNodeGroupConfigurations = []v1alpha1.WorkerNodeGroupConfiguration{{
@@ -1646,7 +1568,6 @@ func TestClusterValidateUpdateInvalidRequest(t *testing.T) {
 	features.ClearCache()
 	cOld := baseCluster()
 	cOld.SetSelfManaged()
-	t.Setenv(features.FullLifecycleAPIEnvVar, "true")
 	t.Setenv(features.ExperimentalSelfManagedClusterUpgradeEnvVar, "false")
 
 	cNew := cOld.DeepCopy()
@@ -1657,10 +1578,8 @@ func TestClusterValidateUpdateInvalidRequest(t *testing.T) {
 }
 
 func TestClusterValidateUpdateRollingAndScalingTinkerbellRequest(t *testing.T) {
-	features.ClearCache()
 	cOld := baseCluster()
 	cOld.IsManaged()
-	t.Setenv(features.FullLifecycleAPIEnvVar, "true")
 	cOld.Spec.DatacenterRef.Kind = v1alpha1.TinkerbellDatacenterKind
 	cOld.Spec.KubernetesVersion = "1.22"
 
@@ -1673,10 +1592,8 @@ func TestClusterValidateUpdateRollingAndScalingTinkerbellRequest(t *testing.T) {
 }
 
 func TestClusterValidateUpdateAddWNConfig(t *testing.T) {
-	features.ClearCache()
 	cOld := baseCluster()
 	cOld.IsManaged()
-	t.Setenv(features.FullLifecycleAPIEnvVar, "true")
 	cOld.Spec.DatacenterRef.Kind = v1alpha1.TinkerbellDatacenterKind
 	cOld.Spec.KubernetesVersion = "1.22"
 
@@ -1693,10 +1610,8 @@ func TestClusterValidateUpdateAddWNConfig(t *testing.T) {
 }
 
 func TestClusterValidateUpdateAddWNCount(t *testing.T) {
-	features.ClearCache()
 	cOld := baseCluster()
 	cOld.IsManaged()
-	t.Setenv(features.FullLifecycleAPIEnvVar, "true")
 	cOld.Spec.DatacenterRef.Kind = v1alpha1.TinkerbellDatacenterKind
 	cOld.Spec.KubernetesVersion = "1.22"
 
@@ -1709,10 +1624,8 @@ func TestClusterValidateUpdateAddWNCount(t *testing.T) {
 }
 
 func TestClusterValidateUpdateRollingTinkerbellRequest(t *testing.T) {
-	features.ClearCache()
 	cOld := baseCluster()
 	cOld.Spec.ManagementCluster.Name = "test"
-	t.Setenv(features.FullLifecycleAPIEnvVar, "true")
 	cOld.Spec.DatacenterRef.Kind = v1alpha1.TinkerbellDatacenterKind
 	cOld.Spec.KubernetesVersion = "1.22"
 
@@ -1723,10 +1636,8 @@ func TestClusterValidateUpdateRollingTinkerbellRequest(t *testing.T) {
 }
 
 func TestClusterValidateUpdateLabelTaintsCPTinkerbellRequest(t *testing.T) {
-	features.ClearCache()
 	cOld := baseCluster()
 	cOld.Spec.ManagementCluster.Name = "test"
-	t.Setenv(features.FullLifecycleAPIEnvVar, "true")
 	cOld.Spec.DatacenterRef.Kind = v1alpha1.TinkerbellDatacenterKind
 
 	nodeLabels := map[string]string{"label1": "foo", "label2": "bar"}
@@ -1746,10 +1657,8 @@ func TestClusterValidateUpdateLabelTaintsCPTinkerbellRequest(t *testing.T) {
 }
 
 func TestClusterValidateUpdateLabelTaintsWNTinkerbellRequest(t *testing.T) {
-	features.ClearCache()
 	cOld := baseCluster()
 	cOld.Spec.ManagementCluster.Name = "test"
-	t.Setenv(features.FullLifecycleAPIEnvVar, "true")
 	cOld.Spec.DatacenterRef.Kind = v1alpha1.TinkerbellDatacenterKind
 
 	nodeLabels := map[string]string{"label1": "foo", "label2": "bar"}
@@ -1772,10 +1681,8 @@ func TestClusterValidateUpdateLabelTaintsWNTinkerbellRequest(t *testing.T) {
 }
 
 func TestClusterValidateUpdateLabelTaintsMultiWNTinkerbellRequest(t *testing.T) {
-	features.ClearCache()
 	cOld := baseCluster()
 	cOld.Spec.ManagementCluster.Name = "test"
-	t.Setenv(features.FullLifecycleAPIEnvVar, "true")
 	cOld.Spec.DatacenterRef.Kind = v1alpha1.TinkerbellDatacenterKind
 
 	nodeLabels := map[string]string{"label1": "foo", "label2": "bar"}
@@ -1962,6 +1869,7 @@ func newCluster(opts ...func(*v1alpha1.Cluster)) *v1alpha1.Cluster {
 type clusterOpt func(c *v1alpha1.Cluster)
 
 func baseCluster(opts ...clusterOpt) *v1alpha1.Cluster {
+	version := test.DevEksaVersion()
 	c := &v1alpha1.Cluster{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       v1alpha1.ClusterKind,
@@ -1981,11 +1889,6 @@ func baseCluster(opts ...clusterOpt) *v1alpha1.Cluster {
 					Kind: v1alpha1.VSphereMachineConfigKind,
 					Name: "eksa-unit-test",
 				},
-			},
-			BundlesRef: &v1alpha1.BundlesRef{
-				Name:       "bundles-1",
-				Namespace:  constants.EksaSystemNamespace,
-				APIVersion: v1alpha1.SchemeBuilder.GroupVersion.String(),
 			},
 			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
 				Name:  "md-0",
@@ -2008,6 +1911,7 @@ func baseCluster(opts ...clusterOpt) *v1alpha1.Cluster {
 				Kind: v1alpha1.VSphereDatacenterKind,
 				Name: "eksa-unit-test",
 			},
+			EksaVersion: &version,
 		},
 	}
 
@@ -2016,4 +1920,167 @@ func baseCluster(opts ...clusterOpt) *v1alpha1.Cluster {
 	}
 
 	return c
+}
+
+func TestValidateWorkerVersionSkew(t *testing.T) {
+	kube119 := v1alpha1.KubernetesVersion("1.19")
+	kube120 := v1alpha1.KubernetesVersion("1.20")
+	kube121 := v1alpha1.KubernetesVersion("1.21")
+	kubeBad := v1alpha1.KubernetesVersion("badvalue")
+	tests := []struct {
+		name                 string
+		wantErr              error
+		upgradeVersion       v1alpha1.KubernetesVersion
+		oldVersion           v1alpha1.KubernetesVersion
+		upgradeWorkerVersion *v1alpha1.KubernetesVersion
+		oldWorkerVersion     *v1alpha1.KubernetesVersion
+	}{
+		{
+			name:                 "FailureTwoMinorVersions",
+			wantErr:              fmt.Errorf("only +1 minor version skew is supported"),
+			upgradeVersion:       v1alpha1.Kube121,
+			oldVersion:           v1alpha1.Kube121,
+			upgradeWorkerVersion: &kube121,
+			oldWorkerVersion:     &kube119,
+		},
+		{
+			name:                 "FailureMinusOneMinorVersion",
+			wantErr:              fmt.Errorf("kubernetes version downgrade is not supported (%s) -> (%s)", v1alpha1.Kube120, v1alpha1.Kube119),
+			upgradeVersion:       v1alpha1.Kube120,
+			oldVersion:           v1alpha1.Kube120,
+			upgradeWorkerVersion: &kube119,
+			oldWorkerVersion:     &kube120,
+		},
+		{
+			name:                 "SuccessSameVersion",
+			wantErr:              nil,
+			upgradeVersion:       v1alpha1.Kube119,
+			oldVersion:           v1alpha1.Kube119,
+			upgradeWorkerVersion: &kube119,
+			oldWorkerVersion:     &kube119,
+		},
+		{
+			name:                 "SuccessOneMinorVersion",
+			wantErr:              nil,
+			upgradeVersion:       v1alpha1.Kube120,
+			oldVersion:           v1alpha1.Kube120,
+			upgradeWorkerVersion: &kube120,
+			oldWorkerVersion:     &kube119,
+		},
+		{
+			name:                 "SuccessRemoveWorkerVersion",
+			wantErr:              nil,
+			upgradeVersion:       v1alpha1.Kube120,
+			oldVersion:           v1alpha1.Kube120,
+			upgradeWorkerVersion: nil,
+			oldWorkerVersion:     &kube119,
+		},
+		{
+			name:                 "FailRemoveWorkerVersionUpgradek8s",
+			wantErr:              fmt.Errorf("can't simultaneously remove worker kubernetesVersion and upgrade cluster level kubernetesVersion"),
+			upgradeVersion:       v1alpha1.Kube121,
+			oldVersion:           v1alpha1.Kube120,
+			upgradeWorkerVersion: nil,
+			oldWorkerVersion:     &kube119,
+		},
+		{
+			name:                 "FailRemoveWorkerVersion",
+			wantErr:              fmt.Errorf("only +1 minor version skew is supported, minor version skew detected"),
+			upgradeVersion:       v1alpha1.Kube121,
+			oldVersion:           v1alpha1.Kube121,
+			upgradeWorkerVersion: nil,
+			oldWorkerVersion:     &kube119,
+		},
+		{
+			name:                 "FailOldNil",
+			wantErr:              fmt.Errorf("immutable"),
+			upgradeVersion:       v1alpha1.Kube121,
+			oldVersion:           v1alpha1.Kube120,
+			upgradeWorkerVersion: &kube120,
+			oldWorkerVersion:     nil,
+		},
+		{
+			name:                 "FailParseOld",
+			wantErr:              fmt.Errorf("pars"),
+			upgradeVersion:       v1alpha1.Kube121,
+			oldVersion:           v1alpha1.Kube120,
+			upgradeWorkerVersion: &kube120,
+			oldWorkerVersion:     &kubeBad,
+		},
+		{
+			name:                 "FailParseNew",
+			wantErr:              fmt.Errorf("pars"),
+			upgradeVersion:       v1alpha1.Kube121,
+			oldVersion:           v1alpha1.Kube120,
+			upgradeWorkerVersion: &kubeBad,
+			oldWorkerVersion:     &kube120,
+		},
+		{
+			name:                 "FailParseOldRemoveVersion",
+			wantErr:              fmt.Errorf("pars"),
+			upgradeVersion:       v1alpha1.Kube121,
+			oldVersion:           v1alpha1.Kube120,
+			upgradeWorkerVersion: nil,
+			oldWorkerVersion:     &kubeBad,
+		},
+		{
+			name:                 "FailParseOldClusterRemoveVersion",
+			wantErr:              fmt.Errorf("pars"),
+			upgradeVersion:       kube119,
+			oldVersion:           kubeBad,
+			upgradeWorkerVersion: nil,
+			oldWorkerVersion:     &kube119,
+		},
+		{
+			name:                 "FailParseNewClusterRemoveVersion",
+			wantErr:              fmt.Errorf("pars"),
+			upgradeVersion:       kubeBad,
+			oldVersion:           kube119,
+			upgradeWorkerVersion: nil,
+			oldWorkerVersion:     &kube119,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(tt *testing.T) {
+			newCluster := baseCluster()
+			newCluster.Spec.KubernetesVersion = tc.upgradeVersion
+			newCluster.Spec.WorkerNodeGroupConfigurations[0].KubernetesVersion = tc.upgradeWorkerVersion
+
+			oldCluster := baseCluster()
+			oldCluster.Spec.KubernetesVersion = tc.oldVersion
+			oldCluster.Spec.WorkerNodeGroupConfigurations[0].KubernetesVersion = tc.oldWorkerVersion
+
+			err := newCluster.ValidateUpdate(oldCluster)
+			if err != nil && !strings.Contains(err.Error(), tc.wantErr.Error()) {
+				t.Errorf("%v got = %v, \nwant %v", tc.name, err, tc.wantErr)
+			}
+		})
+	}
+}
+
+func TestValidateWorkerVersionSkewAddNodeGroup(t *testing.T) {
+	kube119 := v1alpha1.KubernetesVersion("1.19")
+
+	newCluster := baseCluster()
+	newCluster.Spec.KubernetesVersion = kube119
+	newCluster.Spec.WorkerNodeGroupConfigurations[0].KubernetesVersion = &kube119
+	newWorker := v1alpha1.WorkerNodeGroupConfiguration{
+		Name:  "md-1",
+		Count: ptr.Int(1),
+		MachineGroupRef: &v1alpha1.Ref{
+			Kind: v1alpha1.VSphereMachineConfigKind,
+			Name: "eksa-unit-test",
+		},
+		KubernetesVersion: &kube119,
+	}
+	newCluster.Spec.WorkerNodeGroupConfigurations = append(newCluster.Spec.WorkerNodeGroupConfigurations, newWorker)
+
+	oldCluster := baseCluster()
+	oldCluster.Spec.KubernetesVersion = kube119
+	oldCluster.Spec.WorkerNodeGroupConfigurations[0].KubernetesVersion = &kube119
+
+	err := newCluster.ValidateUpdate(oldCluster)
+	g := NewWithT(t)
+	g.Expect(err).To(Succeed())
 }

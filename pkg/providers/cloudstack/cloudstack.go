@@ -78,7 +78,8 @@ func (p *cloudstackProvider) PostBootstrapSetup(ctx context.Context, clusterConf
 	return nil
 }
 
-func (p *cloudstackProvider) PostBootstrapDeleteForUpgrade(ctx context.Context) error {
+// PostBootstrapDeleteForUpgrade runs any provider-specific operations after bootstrap cluster has been deleted.
+func (p *cloudstackProvider) PostBootstrapDeleteForUpgrade(ctx context.Context, cluster *types.Cluster) error {
 	return nil
 }
 
@@ -202,14 +203,16 @@ func (p *cloudstackProvider) ValidateNewSpec(ctx context.Context, cluster *types
 }
 
 func (p *cloudstackProvider) ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ComponentChangeDiff {
-	if currentSpec.VersionsBundle.CloudStack.Version == newSpec.VersionsBundle.CloudStack.Version {
+	currentVersionsBundle := currentSpec.ControlPlaneVersionsBundle()
+	newVersionsBundle := newSpec.ControlPlaneVersionsBundle()
+	if currentVersionsBundle.CloudStack.Version == newVersionsBundle.CloudStack.Version {
 		return nil
 	}
 
 	return &types.ComponentChangeDiff{
 		ComponentName: constants.CloudStackProviderName,
-		NewVersion:    newSpec.VersionsBundle.CloudStack.Version,
-		OldVersion:    currentSpec.VersionsBundle.CloudStack.Version,
+		NewVersion:    newVersionsBundle.CloudStack.Version,
+		OldVersion:    currentVersionsBundle.CloudStack.Version,
 	}
 }
 
@@ -362,10 +365,6 @@ func (p *cloudstackProvider) SetupAndValidateCreateCluster(ctx context.Context, 
 		return fmt.Errorf("validating environment variables: %v", err)
 	}
 
-	if err := v1alpha1.ValidateCloudStackK8sVersion(clusterSpec.Cluster.Spec.KubernetesVersion); err != nil {
-		return fmt.Errorf("validating K8s version for provider: %v", err)
-	}
-
 	if err := p.validateClusterSpec(ctx, clusterSpec); err != nil {
 		return fmt.Errorf("validating cluster spec: %v", err)
 	}
@@ -403,10 +402,6 @@ func (p *cloudstackProvider) SetupAndValidateCreateCluster(ctx context.Context, 
 func (p *cloudstackProvider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, currentSpec *cluster.Spec) error {
 	if err := p.validateEnv(ctx); err != nil {
 		return fmt.Errorf("validating environment variables: %v", err)
-	}
-
-	if err := v1alpha1.ValidateCloudStackK8sVersion(clusterSpec.Cluster.Spec.KubernetesVersion); err != nil {
-		return fmt.Errorf("validating K8s version for provider: %v", err)
 	}
 
 	p.setMachineConfigDefaults(clusterSpec)
@@ -447,15 +442,14 @@ func needsNewControlPlaneTemplate(oldSpec, newSpec *cluster.Spec, oldCsmc, newCs
 	return NeedNewMachineTemplate(oldSpec.CloudStackDatacenter, newSpec.CloudStackDatacenter, oldCsmc, newCsmc, log)
 }
 
-func NeedsNewWorkloadTemplate(oldSpec, newSpec *cluster.Spec, oldCsdc, newCsdc *v1alpha1.CloudStackDatacenterConfig, oldCsmc, newCsmc *v1alpha1.CloudStackMachineConfig, log logr.Logger) bool {
-	if oldSpec.Cluster.Spec.KubernetesVersion != newSpec.Cluster.Spec.KubernetesVersion {
-		return true
-	}
+// NeedsNewWorkloadTemplate determines if a new workload template is needed.
+func NeedsNewWorkloadTemplate(oldSpec, newSpec *cluster.Spec, oldCsdc, newCsdc *v1alpha1.CloudStackDatacenterConfig, oldCsmc, newCsmc *v1alpha1.CloudStackMachineConfig, oldWorker, newWorker *v1alpha1.WorkerNodeGroupConfiguration, log logr.Logger) bool {
 	if oldSpec.Bundles.Spec.Number != newSpec.Bundles.Spec.Number {
 		return true
 	}
 	if !v1alpha1.WorkerNodeGroupConfigurationSliceTaintsEqual(oldSpec.Cluster.Spec.WorkerNodeGroupConfigurations, newSpec.Cluster.Spec.WorkerNodeGroupConfigurations) ||
-		!v1alpha1.WorkerNodeGroupConfigurationsLabelsMapEqual(oldSpec.Cluster.Spec.WorkerNodeGroupConfigurations, newSpec.Cluster.Spec.WorkerNodeGroupConfigurations) {
+		!v1alpha1.WorkerNodeGroupConfigurationsLabelsMapEqual(oldSpec.Cluster.Spec.WorkerNodeGroupConfigurations, newSpec.Cluster.Spec.WorkerNodeGroupConfigurations) ||
+		!v1alpha1.WorkerNodeGroupConfigurationKubeVersionUnchanged(oldWorker, newWorker, oldSpec.Cluster, newSpec.Cluster) {
 		return true
 	}
 	return NeedNewMachineTemplate(oldCsdc, newCsdc, oldCsmc, newCsmc, log)
@@ -482,7 +476,7 @@ func (p *cloudstackProvider) needsNewMachineTemplate(ctx context.Context, worklo
 		if err != nil {
 			return false, err
 		}
-		needsNewWorkloadTemplate := NeedsNewWorkloadTemplate(currentSpec, newClusterSpec, csdc, newClusterSpec.CloudStackDatacenter, oldWorkerMachineConfig, newWorkerMachineConfig, p.log)
+		needsNewWorkloadTemplate := NeedsNewWorkloadTemplate(currentSpec, newClusterSpec, csdc, newClusterSpec.CloudStackDatacenter, oldWorkerMachineConfig, newWorkerMachineConfig, &oldWorkerNodeGroup, &workerNodeGroupConfiguration, p.log)
 		return needsNewWorkloadTemplate, nil
 	}
 	return true, nil
@@ -818,7 +812,8 @@ func (p *cloudstackProvider) BootstrapSetup(ctx context.Context, clusterConfig *
 }
 
 func (p *cloudstackProvider) Version(clusterSpec *cluster.Spec) string {
-	return clusterSpec.VersionsBundle.CloudStack.Version
+	versionsBundle := clusterSpec.ControlPlaneVersionsBundle()
+	return versionsBundle.CloudStack.Version
 }
 
 func (p *cloudstackProvider) EnvMap(_ *cluster.Spec) (map[string]string, error) {
@@ -838,14 +833,14 @@ func (p *cloudstackProvider) GetDeployments() map[string][]string {
 }
 
 func (p *cloudstackProvider) GetInfrastructureBundle(clusterSpec *cluster.Spec) *types.InfrastructureBundle {
-	bundle := clusterSpec.VersionsBundle
-	folderName := fmt.Sprintf("infrastructure-cloudstack/%s/", bundle.CloudStack.Version)
+	versionsBundle := clusterSpec.ControlPlaneVersionsBundle()
+	folderName := fmt.Sprintf("infrastructure-cloudstack/%s/", versionsBundle.CloudStack.Version)
 
 	infraBundle := types.InfrastructureBundle{
 		FolderName: folderName,
 		Manifests: []releasev1alpha1.Manifest{
-			bundle.CloudStack.Components,
-			bundle.CloudStack.Metadata,
+			versionsBundle.CloudStack.Components,
+			versionsBundle.CloudStack.Metadata,
 		},
 	}
 	return &infraBundle

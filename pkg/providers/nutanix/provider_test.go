@@ -11,16 +11,12 @@ import (
 	"testing"
 	"time"
 
-	etcdv1 "github.com/aws/etcdadm-controller/api/v1beta1"
 	"github.com/golang/mock/gomock"
 	"github.com/nutanix-cloud-native/prism-go-client/utils"
 	v3 "github.com/nutanix-cloud-native/prism-go-client/v3"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	kubeadmv1beta1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/internal/test"
@@ -77,52 +73,8 @@ func testDefaultNutanixProvider(t *testing.T) *Provider {
 	return provider
 }
 
-func testNutanixProviderWithProviderKubectl(t *testing.T, nutanixClient Client, kubectl *mocknutanix.MockProviderKubectlClient, certValidator crypto.TlsValidator, httpClient *http.Client, writer filewriter.FileWriter) *Provider {
-	clusterConf := &anywherev1.Cluster{
-		Spec: anywherev1.ClusterSpec{
-			ExternalEtcdConfiguration: &anywherev1.ExternalEtcdConfiguration{
-				Count: 3,
-				MachineGroupRef: &anywherev1.Ref{
-					Kind: "NutanixMachineConfig",
-					Name: "eksa-unit-test",
-				},
-			},
-		},
-	}
-	err := yaml.Unmarshal([]byte(nutanixClusterConfigSpec), clusterConf)
-	require.NoError(t, err)
-
-	dcConf := &anywherev1.NutanixDatacenterConfig{}
-	err = yaml.Unmarshal([]byte(nutanixDatacenterConfigSpec), dcConf)
-	require.NoError(t, err)
-
-	machineConf := &anywherev1.NutanixMachineConfig{}
-	err = yaml.Unmarshal([]byte(nutanixMachineConfigSpec), machineConf)
-	require.NoError(t, err)
-
-	workerConfs := map[string]*anywherev1.NutanixMachineConfig{
-		"eksa-unit-test": machineConf,
-	}
-
-	t.Setenv(constants.EksaNutanixUsernameKey, "admin")
-	t.Setenv(constants.EksaNutanixPasswordKey, "password")
-
-	clientCache := &ClientCache{
-		clients: make(map[string]Client),
-	}
-
-	ctrl := gomock.NewController(t)
-	mockIPValidator := mocknutanix.NewMockIPValidator(ctrl)
-
-	kubectl.EXPECT().ApplyKubeSpecFromBytes(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
-	provider := NewProvider(dcConf, workerConfs, clusterConf, kubectl, writer, clientCache, mockIPValidator, certValidator, httpClient, time.Now, false)
-	require.NotNil(t, provider)
-	return provider
-}
-
 func testNutanixProvider(t *testing.T, nutanixClient Client, kubectl *executables.Kubectl, certValidator crypto.TlsValidator, httpClient *http.Client, writer filewriter.FileWriter) *Provider {
 	clusterConf := &anywherev1.Cluster{}
-
 	err := yaml.Unmarshal([]byte(nutanixClusterConfigSpec), clusterConf)
 	require.NoError(t, err)
 
@@ -192,7 +144,7 @@ func TestNutanixProviderPostBootstrapSetup(t *testing.T) {
 
 func TestNutanixProviderPostBootstrapDeleteForUpgrade(t *testing.T) {
 	provider := testDefaultNutanixProvider(t)
-	err := provider.PostBootstrapDeleteForUpgrade(context.Background())
+	err := provider.PostBootstrapDeleteForUpgrade(context.Background(), &types.Cluster{Name: "eksa-unit-test"})
 	assert.NoError(t, err)
 }
 
@@ -600,6 +552,27 @@ func TestNutanixProviderGenerateCAPISpecForCreate(t *testing.T) {
 	assert.NotNil(t, workerSpec)
 }
 
+func TestNutanixProviderGenerateCAPISpecForCreateWorkerVersion(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	executable := mockexecutables.NewMockExecutable(ctrl)
+	executable.EXPECT().ExecuteWithStdin(gomock.Any(), gomock.Any(), gomock.Any()).Return(bytes.Buffer{}, nil).Times(2)
+	kubectl := executables.NewKubectl(executable)
+	mockClient := mocknutanix.NewMockClient(ctrl)
+	mockCertValidator := mockCrypto.NewMockTlsValidator(ctrl)
+	mockTransport := mocknutanix.NewMockRoundTripper(ctrl)
+	mockTransport.EXPECT().RoundTrip(gomock.Any()).Return(&http.Response{}, nil).AnyTimes()
+	mockHTTPClient := &http.Client{Transport: mockTransport}
+	mockWriter := filewritermocks.NewMockFileWriter(ctrl)
+	provider := testNutanixProvider(t, mockClient, kubectl, mockCertValidator, mockHTTPClient, mockWriter)
+
+	cluster := &types.Cluster{Name: "eksa-unit-test"}
+	clusterSpec := test.NewFullClusterSpec(t, "testdata/eksa-cluster-worker-version.yaml")
+	cpSpec, workerSpec, err := provider.GenerateCAPISpecForCreate(context.Background(), cluster, clusterSpec)
+	assert.NoError(t, err)
+	assert.NotNil(t, cpSpec)
+	assert.NotNil(t, workerSpec)
+}
+
 func TestNutanixProviderGenerateCAPISpecForCreate_Error(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	executable := mockexecutables.NewMockExecutable(ctrl)
@@ -650,299 +623,6 @@ func TestNutanixProviderGenerateCAPISpecForUpgrade(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotEmpty(t, cpSpec)
 	assert.NotEmpty(t, workerSpec)
-}
-
-func TestNutanixProviderGenerateCAPISpecForUpgradeUpdateMachineTemplateExternalEtcd(t *testing.T) {
-	bootstrapCluster := &types.Cluster{
-		Name: "eksa-unit-test-bootstrap",
-	}
-
-	cluster := &types.Cluster{Name: "eksa-unit-test", KubeconfigFile: "testdata/kubeconfig.yaml"}
-	clusterSpec := test.NewFullClusterSpec(t, "testdata/eksa-cluster-external-etcd.yaml")
-	ntnxDc := &anywherev1.NutanixDatacenterConfig{
-		Spec: anywherev1.NutanixDatacenterConfigSpec{},
-	}
-
-	ntnxMachineConfig := func(ntnxMachineConfigs map[string]*anywherev1.NutanixMachineConfig) *anywherev1.NutanixMachineConfig {
-		var result *anywherev1.NutanixMachineConfig
-		for _, ntnxMachineConfig := range ntnxMachineConfigs {
-			result = ntnxMachineConfig
-			break
-		}
-		return result
-	}(clusterSpec.NutanixMachineConfigs).DeepCopy()
-
-	oldCP := &kubeadmv1beta1.KubeadmControlPlane{
-		Spec: kubeadmv1beta1.KubeadmControlPlaneSpec{
-			MachineTemplate: kubeadmv1beta1.KubeadmControlPlaneMachineTemplate{
-				InfrastructureRef: v1.ObjectReference{
-					Name: "eksa-unit-test",
-				},
-			},
-		},
-	}
-
-	cpMD := &clusterv1.MachineDeployment{
-		Spec: clusterv1.MachineDeploymentSpec{
-			Template: clusterv1.MachineTemplateSpec{
-				Spec: clusterv1.MachineSpec{
-					Bootstrap: clusterv1.Bootstrap{
-						ConfigRef: &v1.ObjectReference{
-							Name: "eksa-unit-test",
-						},
-					},
-				},
-			},
-		},
-	}
-
-	wdMD := &clusterv1.MachineDeployment{
-		Spec: clusterv1.MachineDeploymentSpec{
-			Template: clusterv1.MachineTemplateSpec{
-				Spec: clusterv1.MachineSpec{
-					InfrastructureRef: v1.ObjectReference{
-						Name: "eksa-unit-test",
-					},
-					Bootstrap: clusterv1.Bootstrap{
-						ConfigRef: &v1.ObjectReference{
-							Name: "eksa-unit-test",
-						},
-					},
-				},
-			},
-		},
-	}
-
-	etcdadmCluster := &etcdv1.EtcdadmCluster{
-		Spec: etcdv1.EtcdadmClusterSpec{
-			InfrastructureTemplate: v1.ObjectReference{
-				Name: "eksa-unit-test",
-			},
-		},
-	}
-
-	tests := []struct {
-		name     string
-		testFunc func()
-	}{
-		{
-			name: "no etcd update",
-			testFunc: func() {
-				ctx := context.Background()
-				mockCtrl := gomock.NewController(t)
-				kubectl := mocknutanix.NewMockProviderKubectlClient(mockCtrl)
-				mockClient := mocknutanix.NewMockClient(mockCtrl)
-				mockCertValidator := mockCrypto.NewMockTlsValidator(mockCtrl)
-				mockTransport := mocknutanix.NewMockRoundTripper(mockCtrl)
-				mockHTTPClient := &http.Client{Transport: mockTransport}
-				mockWriter := filewritermocks.NewMockFileWriter(mockCtrl)
-				provider := testNutanixProviderWithProviderKubectl(t, mockClient, kubectl, mockCertValidator, mockHTTPClient, mockWriter)
-
-				oldCluster := cluster
-				newCluster := cluster
-
-				oldClusterSpec := clusterSpec.DeepCopy()
-				newClusterSpec := clusterSpec.DeepCopy()
-
-				kubectl.EXPECT().GetEksaCluster(ctx, cluster, clusterSpec.Cluster.Name).Return(clusterSpec.Cluster, nil)
-				kubectl.EXPECT().GetEksaNutanixDatacenterConfig(ctx, cluster.Name, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(ntnxDc, nil)
-				kubectl.EXPECT().GetEksaNutanixMachineConfig(ctx, clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(ntnxMachineConfig, nil)
-				kubectl.EXPECT().GetKubeadmControlPlane(ctx, cluster, cluster.Name, gomock.Any(), gomock.Any()).Return(oldCP, nil)
-				kubectl.EXPECT().GetEksaNutanixMachineConfig(ctx, clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(ntnxMachineConfig, nil)
-				kubectl.EXPECT().GetMachineDeployment(ctx, "eksa-unit-test-eksa-unit-test", gomock.Any(), gomock.Any()).Return(cpMD, nil)
-				kubectl.EXPECT().GetMachineDeployment(ctx, "eksa-unit-test-eksa-unit-test", gomock.Any(), gomock.Any()).Return(wdMD, nil)
-				kubectl.EXPECT().GetEksaNutanixMachineConfig(ctx, clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(ntnxMachineConfig, nil)
-				kubectl.EXPECT().GetEtcdadmCluster(ctx, cluster, cluster.Name, gomock.Any(), gomock.Any()).Return(etcdadmCluster, nil)
-
-				cpSpec, workerSpec, err := provider.GenerateCAPISpecForUpgrade(context.Background(), oldCluster, newCluster, oldClusterSpec, newClusterSpec)
-				assert.NoError(t, err)
-				assert.NotEmpty(t, cpSpec)
-				assert.NotEmpty(t, workerSpec)
-			},
-		},
-		{
-			name: "etcd update",
-			testFunc: func() {
-				ctx := context.Background()
-				mockCtrl := gomock.NewController(t)
-				kubectl := mocknutanix.NewMockProviderKubectlClient(mockCtrl)
-				mockClient := mocknutanix.NewMockClient(mockCtrl)
-				mockCertValidator := mockCrypto.NewMockTlsValidator(mockCtrl)
-				mockTransport := mocknutanix.NewMockRoundTripper(mockCtrl)
-				mockHTTPClient := &http.Client{Transport: mockTransport}
-				mockWriter := filewritermocks.NewMockFileWriter(mockCtrl)
-				provider := testNutanixProviderWithProviderKubectl(t, mockClient, kubectl, mockCertValidator, mockHTTPClient, mockWriter)
-
-				oldCluster := cluster
-				newCluster := cluster
-
-				oldClusterSpec := clusterSpec.DeepCopy()
-				newClusterSpec := clusterSpec.DeepCopy()
-
-				newClusterSpec.NutanixMachineConfigs["eksa-unit-test-etcd"] = oldClusterSpec.NutanixMachineConfigs["eksa-unit-test"].DeepCopy()
-				newClusterSpec.NutanixMachineConfigs["eksa-unit-test-etcd"].Spec.VCPUSockets = 2
-				newClusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name = "eksa-unit-test-etcd"
-
-				kubectl.EXPECT().GetEksaCluster(ctx, cluster, clusterSpec.Cluster.Name).Return(clusterSpec.Cluster, nil)
-				kubectl.EXPECT().GetEksaNutanixDatacenterConfig(ctx, cluster.Name, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(ntnxDc, nil)
-				kubectl.EXPECT().GetEksaNutanixMachineConfig(ctx, clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(ntnxMachineConfig, nil)
-				kubectl.EXPECT().GetKubeadmControlPlane(ctx, cluster, cluster.Name, gomock.Any(), gomock.Any()).Return(oldCP, nil)
-				kubectl.EXPECT().GetEksaNutanixMachineConfig(ctx, clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(ntnxMachineConfig, nil)
-				kubectl.EXPECT().GetMachineDeployment(ctx, "eksa-unit-test-eksa-unit-test", gomock.Any(), gomock.Any()).Return(cpMD, nil)
-				kubectl.EXPECT().GetMachineDeployment(ctx, "eksa-unit-test-eksa-unit-test", gomock.Any(), gomock.Any()).Return(wdMD, nil)
-				kubectl.EXPECT().GetEksaNutanixMachineConfig(ctx, clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(ntnxMachineConfig, nil)
-				kubectl.EXPECT().UpdateAnnotation(ctx, "etcdadmcluster", fmt.Sprintf("%s-etcd", cluster.Name), map[string]string{etcdv1.UpgradeInProgressAnnotation: "true"}, gomock.AssignableToTypeOf(executables.WithCluster(bootstrapCluster)))
-
-				cpSpec, workerSpec, err := provider.GenerateCAPISpecForUpgrade(context.Background(), oldCluster, newCluster, oldClusterSpec, newClusterSpec)
-				assert.NoError(t, err)
-				assert.NotEmpty(t, cpSpec)
-				assert.NotEmpty(t, workerSpec)
-			},
-		},
-		{
-			name: "etcd no update GetEksaNutanixMachineConfig error",
-			testFunc: func() {
-				ctx := context.Background()
-				mockCtrl := gomock.NewController(t)
-				kubectl := mocknutanix.NewMockProviderKubectlClient(mockCtrl)
-				mockClient := mocknutanix.NewMockClient(mockCtrl)
-				mockCertValidator := mockCrypto.NewMockTlsValidator(mockCtrl)
-				mockTransport := mocknutanix.NewMockRoundTripper(mockCtrl)
-				mockHTTPClient := &http.Client{Transport: mockTransport}
-				mockWriter := filewritermocks.NewMockFileWriter(mockCtrl)
-				provider := testNutanixProviderWithProviderKubectl(t, mockClient, kubectl, mockCertValidator, mockHTTPClient, mockWriter)
-
-				oldCluster := cluster
-				newCluster := cluster
-
-				oldClusterSpec := clusterSpec.DeepCopy()
-				newClusterSpec := clusterSpec.DeepCopy()
-
-				kubectl.EXPECT().GetEksaCluster(ctx, cluster, clusterSpec.Cluster.Name).Return(clusterSpec.Cluster, nil)
-				kubectl.EXPECT().GetEksaNutanixDatacenterConfig(ctx, cluster.Name, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(ntnxDc, nil)
-				kubectl.EXPECT().GetEksaNutanixMachineConfig(ctx, clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(ntnxMachineConfig, nil)
-				kubectl.EXPECT().GetKubeadmControlPlane(ctx, cluster, cluster.Name, gomock.Any(), gomock.Any()).Return(oldCP, nil)
-				kubectl.EXPECT().GetEksaNutanixMachineConfig(ctx, clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(ntnxMachineConfig, nil)
-				kubectl.EXPECT().GetMachineDeployment(ctx, "eksa-unit-test-eksa-unit-test", gomock.Any(), gomock.Any()).Return(cpMD, nil)
-				kubectl.EXPECT().GetMachineDeployment(ctx, "eksa-unit-test-eksa-unit-test", gomock.Any(), gomock.Any()).Return(wdMD, nil)
-				kubectl.EXPECT().GetEksaNutanixMachineConfig(ctx, clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(nil, errors.New("error"))
-
-				_, _, err := provider.GenerateCAPISpecForUpgrade(context.Background(), oldCluster, newCluster, oldClusterSpec, newClusterSpec)
-				assert.Error(t, err)
-			},
-		},
-		{
-			name: "etcd no update GetEtcdadmCluster error",
-			testFunc: func() {
-				ctx := context.Background()
-				mockCtrl := gomock.NewController(t)
-				kubectl := mocknutanix.NewMockProviderKubectlClient(mockCtrl)
-				mockClient := mocknutanix.NewMockClient(mockCtrl)
-				mockCertValidator := mockCrypto.NewMockTlsValidator(mockCtrl)
-				mockTransport := mocknutanix.NewMockRoundTripper(mockCtrl)
-				mockHTTPClient := &http.Client{Transport: mockTransport}
-				mockWriter := filewritermocks.NewMockFileWriter(mockCtrl)
-				provider := testNutanixProviderWithProviderKubectl(t, mockClient, kubectl, mockCertValidator, mockHTTPClient, mockWriter)
-
-				oldCluster := cluster
-				newCluster := cluster
-
-				oldClusterSpec := clusterSpec.DeepCopy()
-				newClusterSpec := clusterSpec.DeepCopy()
-
-				kubectl.EXPECT().GetEksaCluster(ctx, cluster, clusterSpec.Cluster.Name).Return(clusterSpec.Cluster, nil)
-				kubectl.EXPECT().GetEksaNutanixDatacenterConfig(ctx, cluster.Name, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(ntnxDc, nil)
-				kubectl.EXPECT().GetEksaNutanixMachineConfig(ctx, clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(ntnxMachineConfig, nil)
-				kubectl.EXPECT().GetKubeadmControlPlane(ctx, cluster, cluster.Name, gomock.Any(), gomock.Any()).Return(oldCP, nil)
-				kubectl.EXPECT().GetEksaNutanixMachineConfig(ctx, clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(ntnxMachineConfig, nil)
-				kubectl.EXPECT().GetMachineDeployment(ctx, "eksa-unit-test-eksa-unit-test", gomock.Any(), gomock.Any()).Return(cpMD, nil)
-				kubectl.EXPECT().GetMachineDeployment(ctx, "eksa-unit-test-eksa-unit-test", gomock.Any(), gomock.Any()).Return(wdMD, nil)
-				kubectl.EXPECT().GetEksaNutanixMachineConfig(ctx, clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(ntnxMachineConfig, nil)
-				kubectl.EXPECT().GetEtcdadmCluster(ctx, cluster, cluster.Name, gomock.Any(), gomock.Any()).Return(nil, errors.New("error"))
-
-				_, _, err := provider.GenerateCAPISpecForUpgrade(context.Background(), oldCluster, newCluster, oldClusterSpec, newClusterSpec)
-				assert.Error(t, err)
-			},
-		},
-		{
-			name: "etcd update UpdateAnnotation error",
-			testFunc: func() {
-				ctx := context.Background()
-				mockCtrl := gomock.NewController(t)
-				kubectl := mocknutanix.NewMockProviderKubectlClient(mockCtrl)
-				mockClient := mocknutanix.NewMockClient(mockCtrl)
-				mockCertValidator := mockCrypto.NewMockTlsValidator(mockCtrl)
-				mockTransport := mocknutanix.NewMockRoundTripper(mockCtrl)
-				mockHTTPClient := &http.Client{Transport: mockTransport}
-				mockWriter := filewritermocks.NewMockFileWriter(mockCtrl)
-				provider := testNutanixProviderWithProviderKubectl(t, mockClient, kubectl, mockCertValidator, mockHTTPClient, mockWriter)
-
-				oldCluster := cluster
-				newCluster := cluster
-
-				oldClusterSpec := clusterSpec.DeepCopy()
-				newClusterSpec := clusterSpec.DeepCopy()
-
-				newClusterSpec.NutanixMachineConfigs["eksa-unit-test-etcd"] = oldClusterSpec.NutanixMachineConfigs["eksa-unit-test"].DeepCopy()
-				newClusterSpec.NutanixMachineConfigs["eksa-unit-test-etcd"].Spec.VCPUSockets = 2
-				newClusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name = "eksa-unit-test-etcd"
-
-				kubectl.EXPECT().GetEksaCluster(ctx, cluster, clusterSpec.Cluster.Name).Return(clusterSpec.Cluster, nil)
-				kubectl.EXPECT().GetEksaNutanixDatacenterConfig(ctx, cluster.Name, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(ntnxDc, nil)
-				kubectl.EXPECT().GetEksaNutanixMachineConfig(ctx, clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(ntnxMachineConfig, nil)
-				kubectl.EXPECT().GetKubeadmControlPlane(ctx, cluster, cluster.Name, gomock.Any(), gomock.Any()).Return(oldCP, nil)
-				kubectl.EXPECT().GetEksaNutanixMachineConfig(ctx, clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(ntnxMachineConfig, nil)
-				kubectl.EXPECT().GetMachineDeployment(ctx, "eksa-unit-test-eksa-unit-test", gomock.Any(), gomock.Any()).Return(cpMD, nil)
-				kubectl.EXPECT().GetMachineDeployment(ctx, "eksa-unit-test-eksa-unit-test", gomock.Any(), gomock.Any()).Return(wdMD, nil)
-				kubectl.EXPECT().GetEksaNutanixMachineConfig(ctx, clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(ntnxMachineConfig, nil)
-				kubectl.EXPECT().UpdateAnnotation(ctx, "etcdadmcluster", fmt.Sprintf("%s-etcd", cluster.Name), map[string]string{etcdv1.UpgradeInProgressAnnotation: "true"}, gomock.AssignableToTypeOf(executables.WithCluster(bootstrapCluster))).Return(errors.New("error"))
-
-				_, _, err := provider.GenerateCAPISpecForUpgrade(context.Background(), oldCluster, newCluster, oldClusterSpec, newClusterSpec)
-				assert.Error(t, err)
-			},
-		},
-		{
-			name: "etcd update KubernetesVersion update",
-			testFunc: func() {
-				ctx := context.Background()
-				mockCtrl := gomock.NewController(t)
-				kubectl := mocknutanix.NewMockProviderKubectlClient(mockCtrl)
-				mockClient := mocknutanix.NewMockClient(mockCtrl)
-				mockCertValidator := mockCrypto.NewMockTlsValidator(mockCtrl)
-				mockTransport := mocknutanix.NewMockRoundTripper(mockCtrl)
-				mockHTTPClient := &http.Client{Transport: mockTransport}
-				mockWriter := filewritermocks.NewMockFileWriter(mockCtrl)
-				provider := testNutanixProviderWithProviderKubectl(t, mockClient, kubectl, mockCertValidator, mockHTTPClient, mockWriter)
-
-				oldCluster := cluster
-				newCluster := cluster
-
-				oldClusterSpec := clusterSpec.DeepCopy()
-				newClusterSpec := clusterSpec.DeepCopy()
-
-				newClusterSpec.Cluster.Spec.KubernetesVersion = "1.20"
-
-				kubectl.EXPECT().GetEksaCluster(ctx, cluster, clusterSpec.Cluster.Name).Return(clusterSpec.Cluster, nil)
-				kubectl.EXPECT().GetEksaNutanixDatacenterConfig(ctx, cluster.Name, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(ntnxDc, nil)
-				kubectl.EXPECT().GetEksaNutanixMachineConfig(ctx, oldClusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name, oldCluster.KubeconfigFile, oldClusterSpec.Cluster.Namespace).Return(ntnxMachineConfig, nil)
-				kubectl.EXPECT().GetEksaNutanixMachineConfig(ctx, oldClusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name, oldCluster.KubeconfigFile, oldClusterSpec.Cluster.Namespace).Return(ntnxMachineConfig, nil)
-				kubectl.EXPECT().GetMachineDeployment(ctx, "eksa-unit-test-eksa-unit-test", gomock.Any(), gomock.Any()).Return(wdMD, nil)
-				kubectl.EXPECT().GetEksaNutanixMachineConfig(ctx, clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(ntnxMachineConfig, nil)
-				kubectl.EXPECT().UpdateAnnotation(ctx, "etcdadmcluster", fmt.Sprintf("%s-etcd", cluster.Name), map[string]string{etcdv1.UpgradeInProgressAnnotation: "true"}, gomock.AssignableToTypeOf(executables.WithCluster(bootstrapCluster))).Return(nil)
-
-				cpSpec, workerSpec, err := provider.GenerateCAPISpecForUpgrade(context.Background(), oldCluster, newCluster, oldClusterSpec, newClusterSpec)
-				assert.NoError(t, err)
-				assert.NotEmpty(t, cpSpec)
-				assert.NotEmpty(t, workerSpec)
-			},
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			test.testFunc()
-		})
-	}
 }
 
 func TestNutanixProviderGenerateCAPISpecForUpgrade_Error(t *testing.T) {
@@ -1012,6 +692,7 @@ func TestNeedsNewControlPlaneTemplate(t *testing.T) {
 	}
 }
 
+// NeedsNewWorkloadTemplate determines if a new workload template is needed.
 func TestNeedsNewWorkloadTemplate(t *testing.T) {
 	tests := []struct {
 		name             string
@@ -1066,7 +747,10 @@ func TestNeedsNewWorkloadTemplate(t *testing.T) {
 		require.NoError(t, err)
 		newMachineConf := tt.newMachineConfig(*oldMachineConf)
 
-		assert.Equal(t, tt.expectedResult, NeedsNewWorkloadTemplate(oldClusterSpec, &newClusterSpec, oldMachineConf, &newMachineConf))
+		newWorkerConfig := newClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0]
+		oldWorkerConfig := oldClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0]
+
+		assert.Equal(t, tt.expectedResult, NeedsNewWorkloadTemplate(oldClusterSpec, &newClusterSpec, oldMachineConf, &newMachineConf, newWorkerConfig, oldWorkerConfig))
 	}
 }
 
@@ -1266,8 +950,8 @@ func TestNutanixProviderChangeDiffWithChange(t *testing.T) {
 	provider := testDefaultNutanixProvider(t)
 	clusterSpec := test.NewFullClusterSpec(t, "testdata/eksa-cluster.yaml")
 	newClusterSpec := clusterSpec.DeepCopy()
-	clusterSpec.VersionsBundle.Nutanix.Version = "v0.5.2"
-	newClusterSpec.VersionsBundle.Nutanix.Version = "v1.0.0"
+	clusterSpec.VersionsBundles["1.19"].Nutanix.Version = "v0.5.2"
+	newClusterSpec.VersionsBundles["1.19"].Nutanix.Version = "v1.0.0"
 	want := &types.ComponentChangeDiff{
 		ComponentName: "nutanix",
 		NewVersion:    "v1.0.0",

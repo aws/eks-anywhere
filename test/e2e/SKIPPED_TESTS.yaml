@@ -15,6 +15,9 @@ skipped_tests:
 - TestCloudStackKubernetes124AddRemoveAz
 - TestCloudStackKubernetes123MultiEndpointSimpleFlow
 - TestCloudStackKubernetes124MultiEndpointSimpleFlow
+- TestCloudStackKubernetes125MultiEndpointSimpleFlow
+- TestCloudStackKubernetes126MultiEndpointSimpleFlow
+- TestCloudStackKubernetes127MultiEndpointSimpleFlow
 
 # CloudStack Registry Mirror endpoint was not set up
 - TestCloudStackKubernetes123UbuntuAirgappedRegistryMirror
@@ -50,16 +53,12 @@ skipped_tests:
 # Skipping Workload upgrade tests due to hardware limitation
 - TestTinkerbellUpgradeMulticlusterWorkloadClusterK8sUpgrade
 - TestTinkerbellUpgradeMulticlusterWorkloadClusterK8sUpgrade125To126
-- TestTinkerbellUpgradeMulticlusterWorkloadClusterK8sUpgrade126To127
 - TestTinkerbellUpgrade126MulticlusterWorkloadClusterWorkerScaleup
 - TestTinkerbellUpgrade126MulticlusterWorkloadClusterCPScaleup
-- TestTinkerbellUpgrade127MulticlusterWorkloadClusterCPScaleup
 - TestTinkerbellUpgrade126MulticlusterWorkloadClusterWorkerScaleDown
 - TestTinkerbellUpgrade125MulticlusterWorkloadClusterWorkerScaleupWithAPI
 - TestTinkerbellUpgrade126MulticlusterWorkloadClusterWorkerScaleupWithFluxAPI
 - TestTinkerbellUpgrade127MulticlusterWorkloadClusterWorkerScaleupGitFluxWithAPI
-- TestTinkerbellUpgrade127MulticlusterWorkloadClusterWorkerScaleDown
-- TestTinkerbellUpgrade127MulticlusterWorkloadClusterWorkerScaleup
 # Skipping ETCD tests
 - TestTinkerbellKubernetes126UbuntuExternalEtcdSimpleFlow
 # Skipping skip power action tests - Not going to work because e2e test powers on CP and worker node at the same time and worker node times out early waiting for ipxe

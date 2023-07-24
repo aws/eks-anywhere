@@ -180,16 +180,16 @@ func (k *Kind) DeleteBootstrapCluster(ctx context.Context, cluster *types.Cluste
 }
 
 func (k *Kind) setupExecConfig(clusterSpec *cluster.Spec) error {
-	bundle := clusterSpec.VersionsBundle
+	versionsBundle := clusterSpec.ControlPlaneVersionsBundle()
 	registryMirror := registrymirror.FromCluster(clusterSpec.Cluster)
 	k.execConfig = &kindExecConfig{
-		KindImage:            registryMirror.ReplaceRegistry(bundle.EksD.KindNode.VersionedImage()),
-		KubernetesRepository: registryMirror.ReplaceRegistry(bundle.KubeDistro.Kubernetes.Repository),
-		KubernetesVersion:    bundle.KubeDistro.Kubernetes.Tag,
-		EtcdRepository:       registryMirror.ReplaceRegistry(bundle.KubeDistro.Etcd.Repository),
-		EtcdVersion:          bundle.KubeDistro.Etcd.Tag,
-		CorednsRepository:    registryMirror.ReplaceRegistry(bundle.KubeDistro.CoreDNS.Repository),
-		CorednsVersion:       bundle.KubeDistro.CoreDNS.Tag,
+		KindImage:            registryMirror.ReplaceRegistry(versionsBundle.EksD.KindNode.VersionedImage()),
+		KubernetesRepository: registryMirror.ReplaceRegistry(versionsBundle.KubeDistro.Kubernetes.Repository),
+		KubernetesVersion:    versionsBundle.KubeDistro.Kubernetes.Tag,
+		EtcdRepository:       registryMirror.ReplaceRegistry(versionsBundle.KubeDistro.Etcd.Repository),
+		EtcdVersion:          versionsBundle.KubeDistro.Etcd.Tag,
+		CorednsRepository:    registryMirror.ReplaceRegistry(versionsBundle.KubeDistro.CoreDNS.Repository),
+		CorednsVersion:       versionsBundle.KubeDistro.CoreDNS.Tag,
 		env:                  make(map[string]string),
 	}
 	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration != nil {

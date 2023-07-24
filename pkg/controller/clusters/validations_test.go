@@ -76,11 +76,15 @@ type clusterValidatorTest struct {
 }
 
 func newClusterValidatorTest(t *testing.T) *clusterValidatorTest {
+	version := anywherev1.EksaVersion("v0.0.0")
 	logger := test.NewNullLogger()
 	managementCluster := &anywherev1.Cluster{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "my-management-cluster",
 			Namespace: "my-namespace",
+		},
+		Spec: anywherev1.ClusterSpec{
+			EksaVersion: &version,
 		},
 	}
 
@@ -88,6 +92,9 @@ func newClusterValidatorTest(t *testing.T) *clusterValidatorTest {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "my-cluster",
 			Namespace: "my-namespace",
+		},
+		Spec: anywherev1.ClusterSpec{
+			EksaVersion: &version,
 		},
 	}
 	cluster.SetManagedBy("my-management-cluster")

@@ -55,19 +55,19 @@ anchor = "smart"
 [languages.en]
 title = "EKS Anywhere"
 description = "Documentation for Amazon EKS Anywhere"
-languageName ="English"
+languageName = "English"
 # Weight used for sorting.
 weight = 1
 
 [markup]
-  [markup.goldmark]
-    [markup.goldmark.renderer]
-      unsafe = true
-  [markup.highlight]
-      # See a complete list of available styles at https://xyproto.github.io/splash/docs/all.html
-      style = "tango"
-      # Uncomment if you want your chosen highlight style used for code blocks without a specified language
-      # guessSyntax = "true"
+[markup.goldmark]
+[markup.goldmark.renderer]
+unsafe = true
+[markup.highlight]
+# See a complete list of available styles at https://xyproto.github.io/splash/docs/all.html
+style = "tango"
+# Uncomment if you want your chosen highlight style used for code blocks without a specified language
+# guessSyntax = "true"
 
 # Everything below this are Site Params
 
@@ -76,14 +76,14 @@ weight = 1
 section = ["HTML", "print"]
 
 [[menu.main]]
-    name = "Contact us"
-    weight = 70
-    url = "https://aws.amazon.com/contact-us/sales-support-eks/"
+name = "Contact us"
+weight = 70
+url = "https://aws.amazon.com/contact-us/sales-support-eks/"
 
 [[menu.main]]
-    name = "GitHub"
-    weight = 50
-    url = "https://github.com/aws/eks-anywhere"
+name = "GitHub"
+weight = 50
+url = "https://github.com/aws/eks-anywhere"
 
 [params]
 copyright = "Amazon.com, Inc. or its affilliates."
@@ -121,7 +121,7 @@ github_subdir = "docs"
 
 # Uncomment this if you have a newer GitHub repo with "main" as the default branch,
 # or specify a new value if you want to reference another branch in your GitHub links
-github_branch= "main"
+github_branch = "main"
 
 # Google Custom Search Engine ID. Remove or comment out to disable search.
 # gcs_engine_id = "d72aa9b2712488cc3"
@@ -134,6 +134,11 @@ offlineSearch = true
 
 # Enable syntax highlighting and copy buttons on code blocks with Prism
 prism_syntax_highlighting = true
+
+[params.cilium]
+# The Cilium documentation version we reference in hyperlinks. It should coincide with the Cilium
+# available in EKS-A.
+docs_version = "v1.12"
 
 # User interface configuration
 [params.ui]
@@ -169,10 +174,10 @@ enable = false
 [params.links]
 # Developer relevant links. These will show up on right side of footer and in the community page if you have one.
 [[params.links.developer]]
-	name = "GitHub"
-	url = "https://github.com/aws/eks-anywhere"
-	icon = "fab fa-github"
-        desc = "Development takes place here!"
+name = "GitHub"
+url = "https://github.com/aws/eks-anywhere"
+icon = "fab fa-github"
+desc = "Development takes place here!"
 
 [[params.versions]]
 fullversion = "v0.16"

@@ -54,8 +54,6 @@ func TestBootstrapperCreateBootstrapClusterFailureOnCreateNamespaceIfNotPresentF
 	kubeconfigFile := "c.kubeconfig"
 	clusterName := "cluster-name"
 	clusterSpec, _ := given(t, clusterName, kubeconfigFile)
-	clusterSpec.VersionsBundle.KubeVersion = "1.20"
-	clusterSpec.VersionsBundle.KubeDistro.CoreDNS.Tag = "v1.8.3-eks-1-20-1"
 
 	ctx := context.Background()
 	b, client := newBootstrapper(t)
@@ -302,8 +300,8 @@ func newBootstrapper(t *testing.T) (*bootstrapper.Bootstrapper, *mocks.MockClust
 func given(t *testing.T, clusterName, kubeconfig string) (clusterSpec *cluster.Spec, wantCluster *types.Cluster) {
 	return test.NewClusterSpec(func(s *cluster.Spec) {
 			s.Cluster.Name = clusterName
-			s.VersionsBundle.KubeVersion = "1.19"
-			s.VersionsBundle.KubeDistro.CoreDNS.Tag = "v1.8.3-eks-1-20-1"
+			s.VersionsBundles["1.19"].KubeVersion = "1.19"
+			s.VersionsBundles["1.19"].KubeDistro.CoreDNS.Tag = "v1.8.3-eks-1-20-1"
 		}), &types.Cluster{
 			Name:           clusterName,
 			KubeconfigFile: kubeconfig,

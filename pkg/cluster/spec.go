@@ -14,30 +14,38 @@ import (
 type Spec struct {
 	*Config
 	Bundles           *v1alpha1.Bundles
-	VersionsBundle    *VersionsBundle
-	eksdRelease       *eksdv1alpha1.Release
 	OIDCConfig        *eksav1alpha1.OIDCConfig
 	AWSIamConfig      *eksav1alpha1.AWSIamConfig
 	ManagementCluster *types.Cluster // TODO(g-gaston): cleanup, this doesn't belong here
+	EKSARelease       *v1alpha1.EKSARelease
+	VersionsBundles   map[eksav1alpha1.KubernetesVersion]*VersionsBundle
 }
 
 func (s *Spec) DeepCopy() *Spec {
 	return &Spec{
-		Config:       s.Config.DeepCopy(),
-		OIDCConfig:   s.OIDCConfig.DeepCopy(),
-		AWSIamConfig: s.AWSIamConfig.DeepCopy(),
-		VersionsBundle: &VersionsBundle{
-			VersionsBundle: s.VersionsBundle.VersionsBundle.DeepCopy(),
-			KubeDistro:     s.VersionsBundle.KubeDistro.deepCopy(),
-		},
-		eksdRelease: s.eksdRelease.DeepCopy(),
-		Bundles:     s.Bundles.DeepCopy(),
+		Config:          s.Config.DeepCopy(),
+		OIDCConfig:      s.OIDCConfig.DeepCopy(),
+		AWSIamConfig:    s.AWSIamConfig.DeepCopy(),
+		Bundles:         s.Bundles.DeepCopy(),
+		VersionsBundles: deepCopyVersionsBundles(s.VersionsBundles),
+		EKSARelease:     s.EKSARelease.DeepCopy(),
 	}
 }
 
 type VersionsBundle struct {
 	*v1alpha1.VersionsBundle
 	KubeDistro *KubeDistro
+}
+
+func deepCopyVersionsBundles(v map[eksav1alpha1.KubernetesVersion]*VersionsBundle) map[eksav1alpha1.KubernetesVersion]*VersionsBundle {
+	m := make(map[eksav1alpha1.KubernetesVersion]*VersionsBundle, len(v))
+	for key, val := range v {
+		m[key] = &VersionsBundle{
+			VersionsBundle: val.VersionsBundle.DeepCopy(),
+			KubeDistro:     val.KubeDistro.deepCopy(),
+		}
+	}
+	return m
 }
 
 // EKSD represents an eks-d release.
@@ -47,6 +55,11 @@ type EKSD struct {
 	// Number is the monotonically increasing number that distinguishes the different eks-d releases
 	// for the same Kubernetes minor version (channel).
 	Number int
+}
+
+func (k *KubeDistro) deepCopy() *KubeDistro {
+	k2 := *k
+	return &k2
 }
 
 type KubeDistro struct {
@@ -65,36 +78,23 @@ type KubeDistro struct {
 	KubeProxy           v1alpha1.Image
 }
 
-func (k *KubeDistro) deepCopy() *KubeDistro {
-	k2 := *k
-	return &k2
-}
-
 type VersionedRepository struct {
 	Repository, Tag string
 }
 
 // NewSpec builds a new [Spec].
-func NewSpec(config *Config, bundles *v1alpha1.Bundles, eksdRelease *eksdv1alpha1.Release) (*Spec, error) {
+func NewSpec(config *Config, bundles *v1alpha1.Bundles, eksdReleases []eksdv1alpha1.Release, eksaRelease *v1alpha1.EKSARelease) (*Spec, error) {
 	s := &Spec{}
-
-	versionsBundle, err := GetVersionsBundle(config.Cluster, bundles)
-	if err != nil {
-		return nil, err
-	}
-
-	kubeDistro, err := buildKubeDistro(eksdRelease)
-	if err != nil {
-		return nil, err
-	}
 
 	s.Bundles = bundles
 	s.Config = config
-	s.VersionsBundle = &VersionsBundle{
-		VersionsBundle: versionsBundle,
-		KubeDistro:     kubeDistro,
+
+	vb, err := getAllVersionsBundles(s.Cluster, bundles, eksdReleases)
+	if err != nil {
+		return nil, err
 	}
-	s.eksdRelease = eksdRelease
+	s.VersionsBundles = vb
+	s.EKSARelease = eksaRelease
 
 	// Get first aws iam config if it exists
 	// Config supports multiple configs because Cluster references a slice
@@ -113,16 +113,72 @@ func NewSpec(config *Config, bundles *v1alpha1.Bundles, eksdRelease *eksdv1alpha
 	return s, nil
 }
 
-func (s *Spec) KubeDistroImages() []v1alpha1.Image {
-	images := []v1alpha1.Image{}
-	for _, component := range s.eksdRelease.Status.Components {
-		for _, asset := range component.Assets {
-			if asset.Image != nil {
-				images = append(images, v1alpha1.Image{URI: asset.Image.URI})
-			}
-		}
+func getAllVersionsBundles(cluster *eksav1alpha1.Cluster, bundles *v1alpha1.Bundles, eksdReleases []eksdv1alpha1.Release) (map[eksav1alpha1.KubernetesVersion]*VersionsBundle, error) {
+	if len(eksdReleases) < 1 {
+		return nil, fmt.Errorf("no eksd releases were found")
 	}
-	return images
+
+	m := make(map[eksav1alpha1.KubernetesVersion]*VersionsBundle, len(eksdReleases))
+
+	for _, eksd := range eksdReleases {
+		channel := strings.Replace(eksd.Spec.Channel, "-", ".", 1)
+		version := eksav1alpha1.KubernetesVersion(channel)
+
+		if _, ok := m[version]; ok {
+			continue
+		}
+
+		versionBundle, err := getVersionBundles(version, bundles, &eksd)
+		if err != nil {
+			return nil, err
+		}
+
+		m[version] = versionBundle
+	}
+
+	return m, nil
+}
+
+func getVersionBundles(version eksav1alpha1.KubernetesVersion, b *v1alpha1.Bundles, eksdRelease *eksdv1alpha1.Release) (*VersionsBundle, error) {
+	v, err := GetVersionsBundle(version, b)
+	if err != nil {
+		return nil, err
+	}
+
+	kd, err := buildKubeDistro(eksdRelease)
+	if err != nil {
+		return nil, err
+	}
+
+	vb := &VersionsBundle{
+		VersionsBundle: v,
+		KubeDistro:     kd,
+	}
+
+	return vb, nil
+}
+
+// VersionsBundle returns a VersionsBundle if one exists for the provided kubernetes version and nil otherwise.
+func (s *Spec) VersionsBundle(version eksav1alpha1.KubernetesVersion) *VersionsBundle {
+	vb, ok := s.VersionsBundles[version]
+	if !ok {
+		return nil
+	}
+
+	return vb
+}
+
+// ControlPlaneVersionsBundle returns a VersionsBundle for the top level kubernetes version.
+func (s *Spec) ControlPlaneVersionsBundle() *VersionsBundle {
+	return s.VersionsBundle(s.Cluster.Spec.KubernetesVersion)
+}
+
+// WorkerNodeGroupVersionsBundle returns a VersionsBundle for the Worker Node's kubernetes version.
+func (s *Spec) WorkerNodeGroupVersionsBundle(w eksav1alpha1.WorkerNodeGroupConfiguration) *VersionsBundle {
+	if w.KubernetesVersion != nil {
+		return s.VersionsBundle(*w.KubernetesVersion)
+	}
+	return s.ControlPlaneVersionsBundle()
 }
 
 func buildKubeDistro(eksd *eksdv1alpha1.Release) (*KubeDistro, error) {
@@ -193,26 +249,6 @@ func kubeDistroRepository(image *eksdv1alpha1.AssetImage) (repo, tag string) {
 	}
 
 	return i.Image()[:lastInd], i.Tag()
-}
-
-func (vb *VersionsBundle) KubeDistroImages() []v1alpha1.Image {
-	var images []v1alpha1.Image
-	images = append(images, vb.KubeDistro.EtcdImage)
-	images = append(images, vb.KubeDistro.ExternalAttacher)
-	images = append(images, vb.KubeDistro.ExternalProvisioner)
-	images = append(images, vb.KubeDistro.LivenessProbe)
-	images = append(images, vb.KubeDistro.NodeDriverRegistrar)
-	images = append(images, vb.KubeDistro.Pause)
-
-	return images
-}
-
-func (vb *VersionsBundle) Images() []v1alpha1.Image {
-	var images []v1alpha1.Image
-	images = append(images, vb.VersionsBundle.Images()...)
-	images = append(images, vb.KubeDistroImages()...)
-
-	return images
 }
 
 func (vb *VersionsBundle) Ovas() []v1alpha1.Archive {

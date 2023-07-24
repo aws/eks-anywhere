@@ -70,6 +70,30 @@ However, instead of using CAPI directly with the `clusterctl` command to manage 
 With your Administrative machine in place, you need to prepare your [provider]({{< relref "../getting-started/chooseprovider/" >}}) for EKS Anywhere.
 The following sections describe how to create a Bare Metal, vSphere or Nutanix cluster.
 
+### Cluster Network
+
+EKS Anywhere clusters use the `clusterNetwork` field in the cluster spec to allocate pod and service IPs. Once the cluster is created, the `pods.cidrBlocks`, `services.cidrBlocks` and `nodes.cidrMaskSize` fields are immutable. As a result, extra care should be taken to ensure that there are sufficient IPs and IP blocks available when provisioning large clusters.
+```yaml
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: Cluster
+metadata:
+  name: my-cluster-name
+spec:
+  clusterNetwork:
+    pods:
+      cidrBlocks:
+      - 192.168.0.0/16
+    services:
+      cidrBlocks:
+      - 10.96.0.0/12
+```
+
+The cluster `pods.cidrBlocks` is subdivided between nodes with a default block of size `/24` per node, which can also be [configured via]({{< relref "../getting-started/optional/cni/#node-ips-configuration-option" >}}) the  `nodes.cidrMaskSize` field. This node CIDR block is then used to assign pod IPs on the node.
+
+>**_NOTE:_** The maximum number of nodes will be limited to the number of subnets of size `/24` (or `nodes.cidrMaskSize` if configured) that can fit in the cluster `pods.cidrBlocks`.
+
+>**_NOTE:_** The maximum number of pods per node is also limited by the size of the node CIDR block. For example with the default `/24` node CIDR mask size, there are a maximum of 256 IPs available for pods. Kubernetes recommends [no more than 110 pods per node](https://kubernetes.io/docs/setup/best-practices/cluster-large/).
+
 ## Creating a Bare Metal cluster
 The following diagram illustrates what happens when you start the cluster creation process for a Bare Metal provider, as described in the [Bare Metal Getting started]({{< relref "../getting-started/baremetal" >}}) guide.
 

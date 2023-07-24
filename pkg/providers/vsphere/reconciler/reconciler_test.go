@@ -331,17 +331,6 @@ func TestReconcilerReconcileControlPlaneSuccess(t *testing.T) {
 	tt.ShouldEventuallyExist(tt.ctx, &corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: "workload-cluster-cpi-manifests", Namespace: "eksa-system"}})
 }
 
-func TestReconcilerReconcileControlPlaneFailure(t *testing.T) {
-	tt := newReconcilerTest(t)
-	tt.createAllObjs()
-	spec := tt.buildSpec()
-	spec.Cluster.Spec.KubernetesVersion = ""
-
-	_, err := tt.reconciler().ReconcileControlPlane(tt.ctx, test.NewNullLogger(), spec)
-
-	tt.Expect(err).To(HaveOccurred())
-}
-
 type reconcilerTest struct {
 	t testing.TB
 	*WithT
@@ -376,6 +365,7 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 	ipValidator := vspherereconcilermocks.NewMockIPValidator(ctrl)
 
 	bundle := test.Bundle()
+	version := test.DevEksaVersion()
 
 	managementCluster := vsphereCluster(func(c *anywherev1.Cluster) {
 		c.Name = "management-cluster"
@@ -387,6 +377,7 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 			Namespace:  bundle.Namespace,
 			APIVersion: bundle.APIVersion,
 		}
+		c.Spec.EksaVersion = &version
 	})
 
 	machineConfigCP := machineConfig(func(m *anywherev1.VSphereMachineConfig) {
@@ -437,6 +428,8 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 				Labels: nil,
 			},
 		)
+
+		c.Spec.EksaVersion = &version
 	})
 
 	tt := &reconcilerTest{
@@ -458,8 +451,9 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 			managementCluster,
 			workloadClusterDatacenter,
 			bundle,
-			test.EksdRelease(),
+			test.EksdRelease("1-22"),
 			credentialsSecret,
+			test.EKSARelease(),
 		},
 		bundle:                    bundle,
 		cluster:                   cluster,

@@ -3,6 +3,7 @@ package files_test
 import (
 	"crypto/x509"
 	"embed"
+	"fmt"
 	"io"
 	"net"
 	"net/http"
@@ -94,19 +95,6 @@ func TestReaderReadFileHTTPSSuccess(t *testing.T) {
 }
 
 func TestReaderReadFileHTTPSProxySuccess(t *testing.T) {
-	t.Run("prepapre", func(t *testing.T) {
-		g := NewWithT(t)
-		filePath := "testdata/file.yaml"
-
-		server := test.NewHTTPSServerForFile(t, filePath)
-		uri := server.URL + "/" + filePath
-
-		r := files.NewReader(files.WithRootCACerts(serverCerts(g, server)))
-		got, err := r.ReadFile(uri)
-		g.Expect(err).To(BeNil())
-		test.AssertContentToFile(t, string(got), filePath)
-	})
-
 	g := NewWithT(t)
 	filePath := "testdata/file.yaml"
 	// It's important to use example.com because the certificate created for
@@ -125,7 +113,7 @@ func TestReaderReadFileHTTPSProxySuccess(t *testing.T) {
 	// Which means that it will never honor the HTTPS_PROXY env var since our
 	// request will be pointing to a loopback address.
 	// In order to make it work, we pass example.com in our request and use the
-	// roxy to map this domain to 127.0.0.1, where our file server is listening.
+	// proxy to map this domain to 127.0.0.1, where our file server is listening.
 	hostMappings := map[string]string{fakeServerHost: serverHost}
 	proxy := newProxyServer(t, hostMappings)
 
@@ -182,7 +170,7 @@ func newProxyServer(tb testing.TB, hostMappings map[string]string) *proxyServer 
 
 type proxy struct {
 	sync.Mutex
-	// proxied maitains a count of how many proxied requests\
+	// proxied maintains a count of how many proxied requests
 	// have been completed per host.
 	proxied map[string]int
 	// hostMappings allows to map the dst host in the CONNECT
@@ -230,8 +218,20 @@ func (p *proxy) tunnelConnection(w http.ResponseWriter, r *http.Request) {
 
 	p.countRequest(host)
 
-	go pipe(w, destConn, clientConn)
-	go pipe(w, clientConn, destConn)
+	wg := sync.WaitGroup{}
+	wg.Add(2)
+	go func() {
+		pipe(w, destConn, clientConn)
+		wg.Done()
+	}()
+	go func() {
+		pipe(w, clientConn, destConn)
+		wg.Done()
+	}()
+
+	wg.Wait()
+	destConn.Close()
+	clientConn.Close()
 }
 
 // countRequest increases the proxied counter for the given host.
@@ -251,9 +251,7 @@ func (p *proxy) countForHost(host string) int {
 }
 
 func pipe(w http.ResponseWriter, destination io.WriteCloser, source io.ReadCloser) {
-	defer destination.Close()
-	defer source.Close()
 	if _, err := io.Copy(destination, source); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, fmt.Sprintf("piping: %s", err), http.StatusInternalServerError)
 	}
 }

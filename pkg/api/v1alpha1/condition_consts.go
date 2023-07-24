@@ -36,6 +36,9 @@ const (
 	// NodesNotReadyReason reports the Cluster has some nodes that are not ready.
 	NodesNotReadyReason = "NodesNotReady"
 
+	// ControlPlaneComponentsUnhealthyReason reports that the Cluster control plane components are unhealthy.
+	ControlPlaneComponentsUnhealthyReason = "ControlPlaneComponentsUnhealthy"
+
 	// ScalingUpReason reports the Cluster is increasing the number of replicas for a set of nodes.
 	ScalingUpReason = "ScalingUp"
 

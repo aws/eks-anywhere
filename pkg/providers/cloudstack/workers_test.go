@@ -10,7 +10,7 @@ import (
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	cloudstackv1 "sigs.k8s.io/cluster-api-provider-cloudstack/api/v1beta2"
+	cloudstackv1 "sigs.k8s.io/cluster-api-provider-cloudstack/api/v1beta3"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
 
@@ -128,7 +128,7 @@ func TestWorkersSpec(t *testing.T) {
 						KubeadmConfigTemplate: kubeadmConfigTemplate(),
 						MachineDeployment:     machineDeployment(),
 						ProviderMachineTemplate: machineTemplate(func(csmt *cloudstackv1.CloudStackMachineTemplate) {
-							spec := &csmt.Spec.Spec.Spec
+							spec := &csmt.Spec.Template.Spec
 
 							clientutil.AddAnnotation(csmt, "device.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1", "/dev/sda")
 							clientutil.AddAnnotation(csmt, "filesystem.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1", "ext3")
@@ -180,7 +180,7 @@ func TestWorkersSpec(t *testing.T) {
 						KubeadmConfigTemplate: kubeadmConfigTemplate(),
 						MachineDeployment:     machineDeployment(),
 						ProviderMachineTemplate: machineTemplate(func(csmt *cloudstackv1.CloudStackMachineTemplate) {
-							csmt.Spec.Spec.Spec.AffinityGroupIDs = []string{"affinity_group_id"}
+							csmt.Spec.Template.Spec.AffinityGroupIDs = []string{"affinity_group_id"}
 						}),
 					},
 				}
@@ -197,7 +197,7 @@ func TestWorkersSpec(t *testing.T) {
 						KubeadmConfigTemplate: kubeadmConfigTemplate(),
 						MachineDeployment:     machineDeployment(),
 						ProviderMachineTemplate: machineTemplate(func(csmt *cloudstackv1.CloudStackMachineTemplate) {
-							csmt.Spec.Spec.Spec.Details = map[string]string{"qux": "baz"}
+							csmt.Spec.Template.Spec.Details = map[string]string{"qux": "baz"}
 						}),
 					},
 				}
@@ -282,7 +282,7 @@ func TestWorkersSpec(t *testing.T) {
 						}),
 						ProviderMachineTemplate: machineTemplate(func(csmt *cloudstackv1.CloudStackMachineTemplate) {
 							csmt.Name = "test-md-0-2"
-							csmt.Spec.Spec.Spec.Offering = cloudstackv1.CloudStackResourceIdentifier{
+							csmt.Spec.Template.Spec.Offering = cloudstackv1.CloudStackResourceIdentifier{
 								Name: "m4-medium",
 							}
 						}),
@@ -319,7 +319,7 @@ func TestWorkersSpec(t *testing.T) {
 						}),
 						ProviderMachineTemplate: machineTemplate(func(csmt *cloudstackv1.CloudStackMachineTemplate) {
 							csmt.Name = "test-md-0-2"
-							csmt.Spec.Spec.Spec.DiskOffering = cloudstackv1.CloudStackResourceDiskOffering{
+							csmt.Spec.Template.Spec.DiskOffering = cloudstackv1.CloudStackResourceDiskOffering{
 								CustomSize: 10,
 								MountPath:  "/mnt/sda",
 								Device:     "/dev/sda",
@@ -392,7 +392,7 @@ func TestWorkersSpec(t *testing.T) {
 						}),
 						ProviderMachineTemplate: machineTemplate(func(csmt *cloudstackv1.CloudStackMachineTemplate) {
 							csmt.Name = "test-md-0-2"
-							csmt.Spec.Spec.Spec.AffinityGroupIDs = []string{"changed"}
+							csmt.Spec.Template.Spec.AffinityGroupIDs = []string{"changed"}
 						}),
 					},
 				}
@@ -409,7 +409,7 @@ func TestWorkersSpec(t *testing.T) {
 						KubeadmConfigTemplate: kubeadmConfigTemplate(),
 						MachineDeployment:     machineDeployment(),
 						ProviderMachineTemplate: machineTemplate(func(csmt *cloudstackv1.CloudStackMachineTemplate) {
-							csmt.Spec.Spec.Spec.Details = map[string]string{"foo": "bar"}
+							csmt.Spec.Template.Spec.Details = map[string]string{"foo": "bar"}
 						}),
 					},
 				}
@@ -423,7 +423,7 @@ func TestWorkersSpec(t *testing.T) {
 						}),
 						ProviderMachineTemplate: machineTemplate(func(csmt *cloudstackv1.CloudStackMachineTemplate) {
 							csmt.Name = "test-md-0-2"
-							csmt.Spec.Spec.Spec.Details = map[string]string{"qux": "baz"}
+							csmt.Spec.Template.Spec.Details = map[string]string{"qux": "baz"}
 						}),
 					},
 				}
@@ -445,7 +445,7 @@ func TestWorkersSpec(t *testing.T) {
 						}),
 						ProviderMachineTemplate: machineTemplate(func(csmt *cloudstackv1.CloudStackMachineTemplate) {
 							csmt.Name = "test-md-0-2"
-							csmt.Spec.Spec.Spec.DiskOffering = cloudstackv1.CloudStackResourceDiskOffering{
+							csmt.Spec.Template.Spec.DiskOffering = cloudstackv1.CloudStackResourceDiskOffering{
 								CustomSize: 10,
 								MountPath:  "/mnt/sda",
 								Device:     "/dev/sda",
@@ -523,7 +523,7 @@ func TestWorkersSpec(t *testing.T) {
 						KubeadmConfigTemplate: kubeadmConfigTemplate(),
 						MachineDeployment:     machineDeployment(),
 						ProviderMachineTemplate: machineTemplate(func(csmt *cloudstackv1.CloudStackMachineTemplate) {
-							csmt.Spec.Spec.Spec.AffinityGroupIDs = []string{"affinity_group_id"}
+							csmt.Spec.Template.Spec.AffinityGroupIDs = []string{"affinity_group_id"}
 						}),
 					},
 				}
@@ -537,7 +537,7 @@ func TestWorkersSpec(t *testing.T) {
 						}),
 						ProviderMachineTemplate: machineTemplate(func(csmt *cloudstackv1.CloudStackMachineTemplate) {
 							csmt.Name = "test-md-0-2"
-							csmt.Spec.Spec.Spec.AffinityGroupIDs = nil
+							csmt.Spec.Template.Spec.AffinityGroupIDs = nil
 						}),
 					},
 				}
@@ -554,7 +554,7 @@ func TestWorkersSpec(t *testing.T) {
 						KubeadmConfigTemplate: kubeadmConfigTemplate(),
 						MachineDeployment:     machineDeployment(),
 						ProviderMachineTemplate: machineTemplate(func(csmt *cloudstackv1.CloudStackMachineTemplate) {
-							csmt.Spec.Spec.Spec.Details = map[string]string{"foo": "bar"}
+							csmt.Spec.Template.Spec.Details = map[string]string{"foo": "bar"}
 						}),
 					},
 				}
@@ -568,7 +568,7 @@ func TestWorkersSpec(t *testing.T) {
 						}),
 						ProviderMachineTemplate: machineTemplate(func(csmt *cloudstackv1.CloudStackMachineTemplate) {
 							csmt.Name = "test-md-0-2"
-							csmt.Spec.Spec.Spec.Details = nil
+							csmt.Spec.Template.Spec.Details = nil
 						}),
 					},
 				}
@@ -740,7 +740,7 @@ func machineDeployment(opts ...func(*clusterv1.MachineDeployment)) *clusterv1.Ma
 					InfrastructureRef: corev1.ObjectReference{
 						Kind:       "CloudStackMachineTemplate",
 						Name:       "test-md-0-1",
-						APIVersion: "infrastructure.cluster.x-k8s.io/v1beta2",
+						APIVersion: "infrastructure.cluster.x-k8s.io/v1beta3",
 					},
 					Version: ptr.String("v1.21.2-eks-1-21-4"),
 				},
@@ -820,14 +820,14 @@ func machineTemplate(opts ...func(*cloudstackv1.CloudStackMachineTemplate)) *clo
 	o := &cloudstackv1.CloudStackMachineTemplate{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "CloudStackMachineTemplate",
-			APIVersion: "infrastructure.cluster.x-k8s.io/v1beta2",
+			APIVersion: "infrastructure.cluster.x-k8s.io/v1beta3",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-md-0-1",
 			Namespace: "eksa-system",
 		},
 		Spec: cloudstackv1.CloudStackMachineTemplateSpec{
-			Spec: cloudstackv1.CloudStackMachineTemplateResource{
+			Template: cloudstackv1.CloudStackMachineTemplateResource{
 				Spec: cloudstackv1.CloudStackMachineSpec{
 					Details: map[string]string{"foo": "bar"},
 					Offering: cloudstackv1.CloudStackResourceIdentifier{

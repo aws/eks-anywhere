@@ -35,17 +35,14 @@ func needsNewControlPlaneTemplate(oldSpec, newSpec *cluster.Spec) bool {
 	return false
 }
 
-func needsNewWorkloadTemplate(oldSpec, newSpec *cluster.Spec) bool {
-	if oldSpec.Cluster.Spec.KubernetesVersion != newSpec.Cluster.Spec.KubernetesVersion {
-		return true
-	}
-
+func needsNewWorkloadTemplate(oldSpec, newSpec *cluster.Spec, oldWorker, newWorker v1alpha1.WorkerNodeGroupConfiguration) bool {
 	if oldSpec.Bundles.Spec.Number != newSpec.Bundles.Spec.Number {
 		return true
 	}
 
 	if !v1alpha1.WorkerNodeGroupConfigurationSliceTaintsEqual(oldSpec.Cluster.Spec.WorkerNodeGroupConfigurations, newSpec.Cluster.Spec.WorkerNodeGroupConfigurations) ||
-		!v1alpha1.WorkerNodeGroupConfigurationsLabelsMapEqual(oldSpec.Cluster.Spec.WorkerNodeGroupConfigurations, newSpec.Cluster.Spec.WorkerNodeGroupConfigurations) {
+		!v1alpha1.WorkerNodeGroupConfigurationsLabelsMapEqual(oldSpec.Cluster.Spec.WorkerNodeGroupConfigurations, newSpec.Cluster.Spec.WorkerNodeGroupConfigurations) ||
+		!v1alpha1.WorkerNodeGroupConfigurationKubeVersionUnchanged(&oldWorker, &newWorker, oldSpec.Cluster, newSpec.Cluster) {
 		return true
 	}
 
@@ -166,7 +163,8 @@ func (p *Provider) validateAvailableHardwareForUpgrade(ctx context.Context, curr
 	return nil
 }
 
-func (p *Provider) PostBootstrapDeleteForUpgrade(ctx context.Context) error {
+// PostBootstrapDeleteForUpgrade runs any provider-specific operations after bootstrap cluster has been deleted.
+func (p *Provider) PostBootstrapDeleteForUpgrade(ctx context.Context, cluster *types.Cluster) error {
 	if err := p.stackInstaller.UninstallLocal(ctx); err != nil {
 		return err
 	}
@@ -378,11 +376,13 @@ func (p *Provider) PreCoreComponentsUpgrade(
 		return errors.New("cluster spec is nil")
 	}
 
+	versionsBundle := clusterSpec.ControlPlaneVersionsBundle()
+
 	// Attempt the upgrade. This should upgrade the stack in the mangement cluster by updating
 	// images, installing new CRDs and possibly removing old ones.
 	err := p.stackInstaller.Upgrade(
 		ctx,
-		clusterSpec.VersionsBundle.Tinkerbell,
+		versionsBundle.Tinkerbell,
 		p.datacenterConfig.Spec.TinkerbellIP,
 		cluster.KubeconfigFile,
 		p.datacenterConfig.Spec.HookImagesURLPath,

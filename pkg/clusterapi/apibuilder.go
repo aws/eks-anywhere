@@ -126,6 +126,7 @@ func Cluster(clusterSpec *cluster.Spec, infrastructureObject, controlPlaneObject
 
 func KubeadmControlPlane(clusterSpec *cluster.Spec, infrastructureObject APIObject) (*controlplanev1.KubeadmControlPlane, error) {
 	replicas := int32(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Count)
+	bundle := clusterSpec.ControlPlaneVersionsBundle()
 
 	kcp := &controlplanev1.KubeadmControlPlane{
 		TypeMeta: metav1.TypeMeta{
@@ -146,11 +147,11 @@ func KubeadmControlPlane(clusterSpec *cluster.Spec, infrastructureObject APIObje
 			},
 			KubeadmConfigSpec: bootstrapv1.KubeadmConfigSpec{
 				ClusterConfiguration: &bootstrapv1.ClusterConfiguration{
-					ImageRepository: clusterSpec.VersionsBundle.KubeDistro.Kubernetes.Repository,
+					ImageRepository: bundle.KubeDistro.Kubernetes.Repository,
 					DNS: bootstrapv1.DNS{
 						ImageMeta: bootstrapv1.ImageMeta{
-							ImageRepository: clusterSpec.VersionsBundle.KubeDistro.CoreDNS.Repository,
-							ImageTag:        clusterSpec.VersionsBundle.KubeDistro.CoreDNS.Tag,
+							ImageRepository: bundle.KubeDistro.CoreDNS.Repository,
+							ImageTag:        bundle.KubeDistro.CoreDNS.Tag,
 						},
 					},
 					APIServer: bootstrapv1.APIServer{
@@ -187,14 +188,14 @@ func KubeadmControlPlane(clusterSpec *cluster.Spec, infrastructureObject APIObje
 				Files:               []bootstrapv1.File{},
 			},
 			Replicas: &replicas,
-			Version:  clusterSpec.VersionsBundle.KubeDistro.Kubernetes.Tag,
+			Version:  bundle.KubeDistro.Kubernetes.Tag,
 		},
 	}
 
 	SetIdentityAuthInKubeadmControlPlane(kcp, clusterSpec)
 
 	if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration == nil {
-		setStackedEtcdConfigInKubeadmControlPlane(kcp, clusterSpec.VersionsBundle.KubeDistro.Etcd)
+		setStackedEtcdConfigInKubeadmControlPlane(kcp, bundle.KubeDistro.Etcd)
 	}
 
 	return kcp, nil
@@ -244,7 +245,8 @@ func KubeadmConfigTemplate(clusterSpec *cluster.Spec, workerNodeGroupConfig anyw
 func MachineDeployment(clusterSpec *cluster.Spec, workerNodeGroupConfig anywherev1.WorkerNodeGroupConfiguration, bootstrapObject, infrastructureObject APIObject) *clusterv1.MachineDeployment {
 	clusterName := clusterSpec.Cluster.GetName()
 	replicas := int32(*workerNodeGroupConfig.Count)
-	version := clusterSpec.VersionsBundle.KubeDistro.Kubernetes.Tag
+	bundle := clusterSpec.WorkerNodeGroupVersionsBundle(workerNodeGroupConfig)
+	version := bundle.KubeDistro.Kubernetes.Tag
 
 	md := &clusterv1.MachineDeployment{
 		TypeMeta: metav1.TypeMeta{

@@ -59,7 +59,7 @@ after the cluster is created.
 
 Cilium accepts policy enforcement modes from the users to determine the allowed traffic between pods.
 The allowed values for this mode are: `default`, `always` and `never`.
-Please refer the official [Cilium documentation](https://docs.cilium.io/en/stable/policy/intro/) for more details on how each mode affects
+Please refer the official [Cilium documentation]({{< cilium "policy/intro/" >}}) for more details on how each mode affects
 the communication within the cluster and choose a mode accordingly.
 You can choose to not set this field so that cilium will be launched with the `default` mode.
 Starting release 0.8, Cilium's policy enforcement mode can be set through the cluster spec

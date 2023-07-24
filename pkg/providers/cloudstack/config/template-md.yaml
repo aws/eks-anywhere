@@ -144,7 +144,7 @@ spec:
           name: {{.workloadkubeadmconfigTemplateName}}
       clusterName: {{.clusterName}}
       infrastructureRef:
-        apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
+        apiVersion: infrastructure.cluster.x-k8s.io/v1beta3
         kind: CloudStackMachineTemplate
         name: {{.workloadTemplateName}}
       version: {{.kubernetesVersion}}

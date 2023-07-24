@@ -38,9 +38,11 @@ func (t *TemplateBuilder) GenerateManifest(clusterSpec *cluster.Spec, clusterID 
 		clusterIDValue = clusterID.String()
 	}
 
+	bundle := clusterSpec.ControlPlaneVersionsBundle()
+
 	data := map[string]interface{}{
-		"image":              clusterSpec.VersionsBundle.KubeDistro.AwsIamAuthImage.VersionedImage(),
-		"initContainerImage": clusterSpec.VersionsBundle.Eksa.DiagnosticCollector.VersionedImage(),
+		"image":              bundle.KubeDistro.AwsIamAuthImage.VersionedImage(),
+		"initContainerImage": bundle.Eksa.DiagnosticCollector.VersionedImage(),
 		"awsRegion":          clusterSpec.AWSIamConfig.Spec.AWSRegion,
 		"clusterID":          clusterIDValue,
 		"backendMode":        strings.Join(clusterSpec.AWSIamConfig.Spec.BackendMode, ","),

@@ -6,7 +6,7 @@ import (
 
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	cloudstackv1 "sigs.k8s.io/cluster-api-provider-cloudstack/api/v1beta2"
+	cloudstackv1 "sigs.k8s.io/cluster-api-provider-cloudstack/api/v1beta3"
 	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -99,7 +99,7 @@ func fullCloudStackMachineTemplate() *cloudstackv1.CloudStackMachineTemplate {
 			},
 		},
 		Spec: cloudstackv1.CloudStackMachineTemplateSpec{
-			Spec: cloudstackv1.CloudStackMachineTemplateResource{
+			Template: cloudstackv1.CloudStackMachineTemplateResource{
 				Spec: cloudstackv1.CloudStackMachineSpec{
 					Details: testDetails,
 					Offering: cloudstackv1.CloudStackResourceIdentifier{
@@ -133,7 +133,7 @@ func TestFullCloudStackMachineTemplate(t *testing.T) {
 	tt := newAPIBuilderTest(t)
 	got := cloudstack.MachineTemplate("cloudstack-test-control-plane-1", tt.machineConfig)
 	want := fullCloudStackMachineTemplate()
-	tt.Expect(got.Spec.Spec.Spec).To(Equal(want.Spec.Spec.Spec))
+	tt.Expect(got.Spec.Template.Spec).To(Equal(want.Spec.Template.Spec))
 	tt.Expect(got.Annotations).To(Equal(want.Annotations))
 }
 
@@ -160,10 +160,12 @@ func TestBasicCloudStackMachineDeployment(t *testing.T) {
 		workerNodeGroupConfig.Name: fullMatchineTemplate,
 	}
 	spec := &cluster.Spec{
-		VersionsBundle: &cluster.VersionsBundle{
-			KubeDistro: &cluster.KubeDistro{
-				Kubernetes: cluster.VersionedRepository{
-					Tag: "eksd-tag",
+		VersionsBundles: map[v1alpha1.KubernetesVersion]*cluster.VersionsBundle{
+			v1alpha1.Kube119: {
+				KubeDistro: &cluster.KubeDistro{
+					Kubernetes: cluster.VersionedRepository{
+						Tag: "eksd-tag",
+					},
 				},
 			},
 		},
@@ -173,6 +175,7 @@ func TestBasicCloudStackMachineDeployment(t *testing.T) {
 					WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{
 						workerNodeGroupConfig,
 					},
+					KubernetesVersion: v1alpha1.Kube119,
 				},
 			},
 		},

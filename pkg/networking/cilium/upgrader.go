@@ -83,13 +83,15 @@ func (u *Upgrader) Upgrade(ctx context.Context, cluster *types.Cluster, currentS
 		return nil, fmt.Errorf("failed deleting cilium preflight check: %v", err)
 	}
 
+	versionsBundle := currentSpec.ControlPlaneVersionsBundle()
+
 	logger.V(3).Info("Generating Cilium upgrade manifest")
-	currentKubeVersion, err := getKubeVersionString(currentSpec)
+	currentKubeVersion, err := getKubeVersionString(currentSpec, versionsBundle)
 	if err != nil {
 		return nil, err
 	}
 
-	previousCiliumVersion, err := semver.New(currentSpec.VersionsBundle.Cilium.Version)
+	previousCiliumVersion, err := semver.New(versionsBundle.Cilium.Version)
 	if err != nil {
 		return nil, err
 	}
@@ -141,7 +143,9 @@ func (u *Upgrader) waitForCilium(ctx context.Context, cluster *types.Cluster) er
 }
 
 func ciliumChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ChangeDiff {
-	if currentSpec.VersionsBundle.Cilium.Version == newSpec.VersionsBundle.Cilium.Version {
+	currentVersionsBundle := currentSpec.ControlPlaneVersionsBundle()
+	newVersionsBundle := newSpec.ControlPlaneVersionsBundle()
+	if currentVersionsBundle.Cilium.Version == newVersionsBundle.Cilium.Version {
 		return nil
 	}
 
@@ -149,8 +153,8 @@ func ciliumChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ChangeDiff {
 		ComponentReports: []types.ComponentChangeDiff{
 			{
 				ComponentName: "cilium",
-				OldVersion:    currentSpec.VersionsBundle.Cilium.Version,
-				NewVersion:    newSpec.VersionsBundle.Cilium.Version,
+				OldVersion:    currentVersionsBundle.Cilium.Version,
+				NewVersion:    newVersionsBundle.Cilium.Version,
 			},
 		},
 	}

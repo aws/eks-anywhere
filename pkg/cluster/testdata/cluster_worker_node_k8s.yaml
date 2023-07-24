@@ -1,0 +1,89 @@
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: Cluster
+metadata:
+  name: test
+  namespace: test-namespace
+spec:
+  clusterNetwork:
+    cni: cilium
+    pods:
+      cidrBlocks:
+        - 192.168.0.0/16
+    services:
+      cidrBlocks:
+        - 10.96.0.0/12
+  controlPlaneConfiguration:
+    count: 1
+    endpoint:
+      host: 1.2.3.4
+    machineGroupRef:
+      name: test-cp
+      kind: TinkerbellMachineConfig
+  datacenterRef:
+    kind: TinkerbellDatacenterConfig
+    name: test
+  externalEtcdConfiguration:
+    count: 1
+    machineGroupRef:
+      name: test-cp
+      kind: TinkerbellMachineConfig
+  kubernetesVersion: "1.19"
+  managementCluster:
+    name: test
+  workerNodeGroupConfigurations:
+    - count: 1
+      kubernetesVersion: "1.18"
+      machineGroupRef:
+        name: test-md
+        kind: TinkerbellMachineConfig
+
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: TinkerbellDatacenterConfig
+metadata:
+  name: test
+spec:
+  tinkerbellIP: "1.2.3.4"
+
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: TinkerbellMachineConfig
+metadata:
+  name: test-cp
+  namespace: test-namespace
+spec:
+  osFamily: ubuntu
+  templateRef:
+    kind: TinkerbellTemplateConfig
+    name: tink-test
+  users:
+    - name: tink-user
+      sshAuthorizedKeys:
+        - "ssh-rsa AAAAB3"
+
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: TinkerbellTemplateConfig
+metadata:
+  name: tink-test
+spec:
+  template:
+    global_timeout: 6000
+    id: ""
+    name: tink-test
+    tasks:
+      - actions:
+          - environment:
+              COMPRESSED: "true"
+              DEST_DISK: /dev/sda
+              IMG_URL: ""
+            image: image2disk:v1.0.0
+            name: stream-image
+            timeout: 360
+        name: tink-test
+        volumes:
+          - /dev:/dev
+          - /dev/console:/dev/console
+          - /lib/firmware:/lib/firmware:ro
+        worker: "{{.device_1}}"
+    version: "0.1"

@@ -71,6 +71,7 @@ const (
 
 var (
 	clusterctlNetworkErrorRegex = regexp.MustCompile(`.*failed to connect to the management cluster:.*`)
+	clusterctlMoveErrorRegex    = regexp.MustCompile(`.*cannot start the move operation while.*`)
 	eksaClusterResourceType     = fmt.Sprintf("clusters.%s", v1alpha1.GroupVersion.Group)
 )
 
@@ -273,7 +274,7 @@ func WithNoTimeouts() ClusterManagerOpt {
 }
 
 func clusterctlMoveRetryPolicy(totalRetries int, err error) (retry bool, wait time.Duration) {
-	// Exponential backoff on network errors.  Retrier built-in backoff is linear, so implementing here.
+	// Exponential backoff on network and cluster move errors.  Retrier built-in backoff is linear, so implementing here.
 
 	// Retrier first calls the policy before retry #1.  We want it zero-based for exponentiation.
 	if totalRetries < 1 {
@@ -284,7 +285,7 @@ func clusterctlMoveRetryPolicy(totalRetries int, err error) (retry bool, wait ti
 	const backoffFactor = 1.5
 	waitTime := time.Duration(float64(networkFaultBaseRetryTime) * math.Pow(backoffFactor, float64(totalRetries-1)))
 
-	if match := clusterctlNetworkErrorRegex.MatchString(err.Error()); match {
+	if match := (clusterctlNetworkErrorRegex.MatchString(err.Error()) || clusterctlMoveErrorRegex.MatchString(err.Error())); match {
 		return true, waitTime
 	}
 	return false, 0
@@ -689,8 +690,9 @@ func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, 
 	return nil
 }
 
-func (c *ClusterManager) EKSAClusterSpecChanged(ctx context.Context, cluster *types.Cluster, newClusterSpec *cluster.Spec) (bool, error) {
-	cc, err := c.clusterClient.GetEksaCluster(ctx, cluster, newClusterSpec.Cluster.Name)
+// EKSAClusterSpecChanged checks if a cluster's new Spec is different from the current Spec.
+func (c *ClusterManager) EKSAClusterSpecChanged(ctx context.Context, clus *types.Cluster, newClusterSpec *cluster.Spec) (bool, error) {
+	cc, err := c.clusterClient.GetEksaCluster(ctx, clus, newClusterSpec.Cluster.Name)
 	if err != nil {
 		return false, err
 	}
@@ -700,12 +702,27 @@ func (c *ClusterManager) EKSAClusterSpecChanged(ctx context.Context, cluster *ty
 		return true, nil
 	}
 
-	currentClusterSpec, err := c.buildSpecForCluster(ctx, cluster, cc)
+	currentClusterSpec, err := c.buildSpecForCluster(ctx, clus, cc)
 	if err != nil {
 		return false, err
 	}
 
-	if currentClusterSpec.VersionsBundle.EksD.Name != newClusterSpec.VersionsBundle.EksD.Name {
+	changed, err := compareEKSAClusterSpec(ctx, currentClusterSpec, newClusterSpec)
+	if err != nil {
+		return false, err
+	}
+
+	if !changed {
+		logger.V(3).Info("Clusters are the same")
+	}
+	return changed, nil
+}
+
+func compareEKSAClusterSpec(ctx context.Context, currentClusterSpec, newClusterSpec *cluster.Spec) (bool, error) {
+	currentVersionsBundle := currentClusterSpec.ControlPlaneVersionsBundle()
+	newVersionsBundle := newClusterSpec.ControlPlaneVersionsBundle()
+
+	if currentVersionsBundle.EksD.Name != newVersionsBundle.EksD.Name {
 		logger.V(3).Info("New eks-d release detected")
 		return true, nil
 	}
@@ -725,7 +742,6 @@ func (c *ClusterManager) EKSAClusterSpecChanged(ctx context.Context, cluster *ty
 		}
 	}
 
-	logger.V(3).Info("Clusters are the same")
 	return false, nil
 }
 
@@ -1107,7 +1123,10 @@ func (c *ClusterManager) CreateEKSAResources(ctx context.Context, cluster *types
 	if err = c.applyResource(ctx, cluster, resourcesSpec); err != nil {
 		return err
 	}
-	return c.ApplyBundles(ctx, clusterSpec, cluster)
+	if err = c.ApplyBundles(ctx, clusterSpec, cluster); err != nil {
+		return err
+	}
+	return c.ApplyReleases(ctx, clusterSpec, cluster)
 }
 
 func (c *ClusterManager) ApplyBundles(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error {
@@ -1119,6 +1138,20 @@ func (c *ClusterManager) ApplyBundles(ctx context.Context, clusterSpec *cluster.
 	err = c.clusterClient.ApplyKubeSpecFromBytes(ctx, cluster, bundleObj)
 	if err != nil {
 		return fmt.Errorf("applying bundle spec: %v", err)
+	}
+	return nil
+}
+
+// ApplyReleases applies the EKSARelease manifest.
+func (c *ClusterManager) ApplyReleases(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error {
+	releaseObj, err := yaml.Marshal(clusterSpec.EKSARelease)
+	if err != nil {
+		return fmt.Errorf("outputting release yaml: %v", err)
+	}
+	logger.V(1).Info("Applying EKSARelease to cluster")
+	err = c.clusterClient.ApplyKubeSpecFromBytes(ctx, cluster, releaseObj)
+	if err != nil {
+		return fmt.Errorf("applying release spec: %v", err)
 	}
 	return nil
 }

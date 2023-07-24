@@ -70,6 +70,7 @@ Documentation for software that is not part of EKS Anywhere software can still b
 * **Partners**: Documentation PRs for software from vendors listed on the [EKS Anywhere Partner page]({{< relref "../concepts/eksafeatures/" >}})) can be considered to add to the EKS Anywhere docs.
   Links point to partners from the [Compare EKS Anywhere to EKS](https://anywhere.eks.amazonaws.com/docs/concepts/eksafeatures/) page and other content can be added to EKS Anywhere documentation for features from those partners.
   Contact the AWS container partner team if you are interested in becoming a partner: aws-container-partners@amazon.com
+
 ### Tips for contributing third-party docs
 
 The Kubernetes docs project itself describes a similar approach to docs covering third-party software in the [How Docs Handle Third Party and Dual Sourced Content](https://kubernetes.io/blog/2020/05/third-party-dual-sourced-content/) blog.

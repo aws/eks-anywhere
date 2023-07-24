@@ -567,7 +567,6 @@ mocks: ## Generate mocks
 	${MOCKGEN} -destination=pkg/aws/mocks/snowballdevice.go -package=mocks -source "pkg/aws/snowballdevice.go"
 	${MOCKGEN} -destination=pkg/providers/nutanix/mocks/client.go -package=mocks -source "pkg/providers/nutanix/client.go"
 	${MOCKGEN} -destination=pkg/providers/nutanix/mocks/validator.go -package=mocks -source "pkg/providers/nutanix/validator.go"
-	${MOCKGEN} -destination=pkg/providers/nutanix/mocks/kubectl.go -package=mocks -source "pkg/providers/nutanix/kubectl.go"
 	${MOCKGEN} -destination=pkg/providers/nutanix/mocks/roundtripper.go -package=mocks net/http RoundTripper
 	${MOCKGEN} -destination=pkg/providers/snow/mocks/aws.go -package=mocks -source "pkg/providers/snow/aws.go"
 	${MOCKGEN} -destination=pkg/providers/snow/mocks/defaults.go -package=mocks -source "pkg/providers/snow/defaults.go"

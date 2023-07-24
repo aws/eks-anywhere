@@ -550,6 +550,11 @@ func (s *upgradeWorkloadClusterTask) Run(ctx context.Context, commandContext *ta
 			commandContext.SetError(err)
 			return &CollectDiagnosticsTask{}
 		}
+
+		if err = commandContext.ClusterManager.ApplyReleases(ctx, commandContext.ClusterSpec, eksaManagementCluster); err != nil {
+			commandContext.SetError(err)
+			return &CollectDiagnosticsTask{}
+		}
 	}
 
 	return &moveManagementToWorkloadTask{}
@@ -706,8 +711,8 @@ func (s *deleteBootstrapClusterTask) Run(ctx context.Context, commandContext *ta
 		if commandContext.OriginalError == nil {
 			logger.MarkSuccess("Cluster upgraded!")
 		}
-		if err := commandContext.Provider.PostBootstrapDeleteForUpgrade(ctx); err != nil {
-			// Cluster has been succesfully upgraded, bootstrap cluster successfully deleted
+		if err := commandContext.Provider.PostBootstrapDeleteForUpgrade(ctx, commandContext.ManagementCluster); err != nil {
+			// Cluster has been successfully upgraded, bootstrap cluster successfully deleted
 			// We don't necessarily need to return with an error here and abort
 			logger.Info(fmt.Sprintf("%v", err))
 		}

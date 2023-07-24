@@ -510,6 +510,21 @@ func WorkerNodeGroupConfigurationsLabelsMapEqual(a, b []WorkerNodeGroupConfigura
 	return true
 }
 
+// WorkerNodeGroupConfigurationKubeVersionUnchanged checks if a worker node group's k8s version has not changed. The ClusterVersions are the top level kubernetes version of a cluster.
+func WorkerNodeGroupConfigurationKubeVersionUnchanged(o, n *WorkerNodeGroupConfiguration, oldCluster, newCluster *Cluster) bool {
+	oldVersion := o.KubernetesVersion
+	newVersion := n.KubernetesVersion
+
+	if oldVersion == nil {
+		oldVersion = &oldCluster.Spec.KubernetesVersion
+	}
+	if newVersion == nil {
+		newVersion = &newCluster.Spec.KubernetesVersion
+	}
+
+	return newVersion.Equal(oldVersion)
+}
+
 type ClusterNetwork struct {
 	// Comma-separated list of CIDR blocks to use for pod and service subnets.
 	// Defaults to 192.168.0.0/16 for pod subnet.
@@ -880,6 +895,9 @@ const (
 
 	// UnavailableControlPlaneIPReason reports that the Cluster controlPlaneIP is already in use.
 	UnavailableControlPlaneIPReason FailureReasonType = "UnavailableControlPlaneIP"
+
+	// EksaVersionInvalidReason reports that the Cluster eksaVersion validation has failed.
+	EksaVersionInvalidReason FailureReasonType = "EksaVersionInvalid"
 )
 
 // Reasons for the terminal failures while reconciling the Cluster object specific for Tinkerbell.
@@ -1328,6 +1346,25 @@ func (c *Cluster) SetFailure(failureReason FailureReasonType, failureMessage str
 func (c *Cluster) ClearFailure() {
 	c.Status.FailureMessage = nil
 	c.Status.FailureReason = nil
+}
+
+// KubernetesVersions returns a set of all unique k8s versions specified in the cluster
+// for both CP and workers.
+func (c *Cluster) KubernetesVersions() []KubernetesVersion {
+	versionsSet := map[string]struct{}{}
+	versions := make([]KubernetesVersion, 0, 1)
+
+	versionsSet[string(c.Spec.KubernetesVersion)] = struct{}{}
+	versions = append(versions, c.Spec.KubernetesVersion)
+	for _, w := range c.Spec.WorkerNodeGroupConfigurations {
+		if w.KubernetesVersion != nil {
+			if _, ok := versionsSet[string(*w.KubernetesVersion)]; !ok {
+				versions = append(versions, *w.KubernetesVersion)
+			}
+		}
+	}
+
+	return versions
 }
 
 type refSet map[Ref]struct{}
