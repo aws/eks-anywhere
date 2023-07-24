@@ -92,7 +92,7 @@ var (
 	eksaPackageBundlesType               = fmt.Sprintf("packagebundles.%s", packagesv1.GroupVersion.Group)
 	kubectlConnectionRefusedRegex        = regexp.MustCompile("The connection to the server .* was refused")
 	kubectlIoTimeoutRegex                = regexp.MustCompile("Unable to connect to the server.*i/o timeout.*")
-	machineHealtchCheckResourceType      = fmt.Sprintf("machinehealthchecks.%s", clusterv1.GroupVersion.Group)
+	machineHealthCheckResourceType       = fmt.Sprintf("machinehealthchecks.%s", clusterv1.GroupVersion.Group)
 )
 
 type Kubectl struct {
@@ -1520,15 +1520,15 @@ func (k *Kubectl) GetEksaCluster(ctx context.Context, cluster *types.Cluster, cl
 
 // GetMachineHealthCheck gets machine health check objects for a cluster.
 func (k *Kubectl) GetMachineHealthCheck(ctx context.Context, cluster *types.Cluster, machineHealthCheckName string) (*clusterv1.MachineHealthCheck, error) {
-	params := []string{"get", machineHealtchCheckResourceType, "-A", "-o", "jsonpath={.items[0]}", "--kubeconfig", cluster.KubeconfigFile, "--field-selector=metadata.name=" + machineHealthCheckName}
+	params := []string{"get", machineHealthCheckResourceType, "-A", "-o", "jsonpath={.items[0]}", "--kubeconfig", cluster.KubeconfigFile, "--field-selector=metadata.name=" + cluster.Name}
 	stdOut, err := k.Execute(ctx, params...)
 	if err != nil {
-		params := []string{"get", machineHealtchCheckResourceType, "-A", "--kubeconfig", cluster.KubeconfigFile, "--field-selector=metadata.name=" + cluster.Name}
+		params := []string{"get", machineHealthCheckResourceType, "-A", "--kubeconfig", cluster.KubeconfigFile, "--field-selector=metadata.name=" + cluster.Name}
 		stdOut, err = k.Execute(ctx, params...)
 		if err != nil {
 			return nil, fmt.Errorf("getting machine health checks: %v", err)
 		}
-		return nil, fmt.Errorf("getting custom resource type %s for cluster %s", machineHealtchCheckResourceType, machineHealthCheckName)
+		return nil, fmt.Errorf("getting custom resource type %s for cluster %s", machineHealthCheckResourceType, machineHealthCheckName)
 	}
 
 	response := &clusterv1.MachineHealthCheck{}
