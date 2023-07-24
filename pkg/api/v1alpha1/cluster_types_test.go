@@ -1308,6 +1308,12 @@ func TestMachineHealthCheckEqual(t *testing.T) {
 			want:     true,
 		},
 		{
+			testName: "both empty",
+			mhc1:     &v1alpha1.MachineHealthCheck{},
+			mhc2:     &v1alpha1.MachineHealthCheck{},
+			want:     true,
+		},
+		{
 			testName: "one nil",
 			mhc1:     nil,
 			mhc2: &v1alpha1.MachineHealthCheck{

@@ -757,11 +757,9 @@ func compareEKSAClusterSpec(ctx context.Context, currentClusterSpec, newClusterS
 		}
 	}
 
-	if newClusterSpec.Cluster.Spec.MachineHealthCheck != nil && currentClusterSpec.Cluster.Spec.MachineHealthCheck != nil {
-		if !newClusterSpec.Cluster.Spec.MachineHealthCheck.Equal(currentClusterSpec.Cluster.Spec.MachineHealthCheck) {
-			logger.V(3).Info("Machine health check changes detected")
-			return true, nil
-		}
+	if !newClusterSpec.Cluster.Spec.MachineHealthCheck.Equal(currentClusterSpec.Cluster.Spec.MachineHealthCheck) {
+		logger.V(3).Info("Machine health check changes detected")
+		return true, nil
 	}
 
 	logger.V(3).Info("Clusters are the same")
