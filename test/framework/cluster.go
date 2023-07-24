@@ -741,6 +741,7 @@ func (e *ClusterE2ETest) ValidateCluster(kubeVersion v1alpha1.KubernetesVersion)
 	}
 }
 
+// ValidateClusterWorkerNodeVersion validates the nodes on a cluster match kubeVersion if they use the top level kubernetes version or workerKubeVersion for a worker node that has its own version.
 func (e *ClusterE2ETest) ValidateClusterWorkerNodeVersion(kubeVersion v1alpha1.KubernetesVersion, workerKubeVersion *v1alpha1.KubernetesVersion) {
 	ctx := context.Background()
 	e.T.Log("Validating cluster node status")

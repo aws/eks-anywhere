@@ -3887,7 +3887,7 @@ func TestKubectlValidateWorkerNodesVersion(t *testing.T) {
 			tt := newKubectlTest(t)
 			fileContent := test.ReadFile(t, tc.jsonResponseFile)
 			template := "{{range .items}}{{.status.nodeInfo.kubeletVersion}}\n{{end}}"
-			params := []string{"get", "nodes", "-o", "go-template", "--template", template, "--selector=!node-role.kubernetes.io/control-plane", "--kubeconfig", kubeconfig}
+			params := []string{"get", "nodes", "-o", "go-template", "--template", template, "-l", "workerk8s=yes", "--kubeconfig", kubeconfig}
 			e.EXPECT().
 				Execute(ctx, params).
 				Return(*bytes.NewBufferString(fileContent), nil)
