@@ -3414,6 +3414,51 @@ func TestValidateMDUpgradeRolloutStrategy(t *testing.T) {
 	}
 }
 
+func TestValidateEksaVersion(t *testing.T) {
+	tests := []struct {
+		name       string
+		wantErr    string
+		version    string
+		bundlesRef *BundlesRef
+	}{
+		{
+			name:       "both bundlesref and version",
+			wantErr:    "cannot pass both bundlesRef and eksaVersion",
+			version:    "v0.0.0",
+			bundlesRef: &BundlesRef{},
+		},
+		{
+			name:       "eksaversion success",
+			wantErr:    "",
+			version:    "v0.0.0",
+			bundlesRef: nil,
+		},
+		{
+			name:       "eksaversion fail",
+			wantErr:    "eksaVersion is not a valid semver",
+			version:    "invalid",
+			bundlesRef: nil,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			config := &Cluster{
+				Spec: ClusterSpec{
+					EksaVersion: (*EksaVersion)(&tt.version),
+					BundlesRef:  tt.bundlesRef,
+				},
+			}
+			err := validateEksaVersion(config)
+			if tt.wantErr == "" {
+				g.Expect(err).To(BeNil())
+			} else {
+				g.Expect(err).To(MatchError(ContainSubstring(tt.wantErr)))
+			}
+		})
+	}
+}
+
 func TestGetClusterDefaultKubernetesVersion(t *testing.T) {
 	g := NewWithT(t)
 	g.Expect(GetClusterDefaultKubernetesVersion()).To(Equal(Kube127))

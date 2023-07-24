@@ -10,6 +10,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	_ "k8s.io/apimachinery/pkg/runtime"
 
+	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/features"
@@ -841,11 +842,82 @@ func TestClusterValidateUpdateAWSIamNameImmutableAddConfig(t *testing.T) {
 
 func TestClusterValidateUpdateUnsetBundlesRefImmutable(t *testing.T) {
 	cOld := baseCluster()
+	cOld.Spec.BundlesRef = &v1alpha1.BundlesRef{}
 	c := cOld.DeepCopy()
 	c.Spec.BundlesRef = nil
+	c.Spec.EksaVersion = nil
 
 	g := NewWithT(t)
 	g.Expect(c.ValidateUpdate(cOld)).To(MatchError(ContainSubstring("spec.BundlesRef: Invalid value: \"null\": field cannot be removed after setting")))
+}
+
+func TestClusterValidateUpdateEksaVersionSkew(t *testing.T) {
+	tests := []struct {
+		name           string
+		wantErr        string
+		upgradeVersion v1alpha1.EksaVersion
+		oldVersion     v1alpha1.EksaVersion
+		allow          bool
+	}{
+		{
+			name:           "old version parse failure",
+			wantErr:        "Invalid value",
+			upgradeVersion: v1alpha1.EksaVersion("bad"),
+			oldVersion:     v1alpha1.EksaVersion("wrong"),
+		},
+		{
+			name:           "new version parse failure",
+			wantErr:        "Invalid value",
+			upgradeVersion: v1alpha1.EksaVersion("bad"),
+			oldVersion:     v1alpha1.EksaVersion("v0.0.0"),
+		},
+		{
+			name:           "skew too big",
+			wantErr:        "EksaVersion upgrades must have a skew of 1 minor version",
+			upgradeVersion: v1alpha1.EksaVersion("v1.0.0"),
+			oldVersion:     v1alpha1.EksaVersion("v0.0.0"),
+		},
+		{
+			name:           "allow downgrade",
+			wantErr:        "",
+			upgradeVersion: v1alpha1.EksaVersion("v0.0.0"),
+			oldVersion:     v1alpha1.EksaVersion("v0.1.0"),
+			allow:          true,
+		},
+		{
+			name:           "forbid downgrade",
+			wantErr:        "cannot downgrade",
+			upgradeVersion: v1alpha1.EksaVersion("v0.0.0"),
+			oldVersion:     v1alpha1.EksaVersion("v0.1.0"),
+		},
+		{
+			name:           "success",
+			wantErr:        "",
+			upgradeVersion: v1alpha1.EksaVersion("v0.1.0"),
+			oldVersion:     v1alpha1.EksaVersion("v0.0.0"),
+		},
+	}
+	for _, tt := range tests {
+		cOld := baseCluster()
+		cOld.Spec.EksaVersion = &tt.oldVersion
+		cOld.Spec.BundlesRef = nil
+		c := cOld.DeepCopy()
+		c.Spec.EksaVersion = &tt.upgradeVersion
+		c.Spec.BundlesRef = nil
+
+		if tt.allow {
+			reason := v1alpha1.EksaVersionInvalidReason
+			cOld.Status.FailureReason = &reason
+		}
+
+		err := c.ValidateUpdate(cOld)
+		g := NewWithT(t)
+		if tt.wantErr != "" {
+			g.Expect(c.ValidateUpdate(cOld)).To(MatchError(ContainSubstring(tt.wantErr)))
+		} else {
+			g.Expect(err).To(Succeed())
+		}
+	}
 }
 
 func TestClusterValidateUpdateOIDCNameMutableUpdateNameWorkloadCluster(t *testing.T) {
@@ -1964,6 +2036,7 @@ func newCluster(opts ...func(*v1alpha1.Cluster)) *v1alpha1.Cluster {
 type clusterOpt func(c *v1alpha1.Cluster)
 
 func baseCluster(opts ...clusterOpt) *v1alpha1.Cluster {
+	version := test.DevEksaVersion()
 	c := &v1alpha1.Cluster{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       v1alpha1.ClusterKind,
@@ -1983,11 +2056,6 @@ func baseCluster(opts ...clusterOpt) *v1alpha1.Cluster {
 					Kind: v1alpha1.VSphereMachineConfigKind,
 					Name: "eksa-unit-test",
 				},
-			},
-			BundlesRef: &v1alpha1.BundlesRef{
-				Name:       "bundles-1",
-				Namespace:  constants.EksaSystemNamespace,
-				APIVersion: v1alpha1.SchemeBuilder.GroupVersion.String(),
 			},
 			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
 				Name:  "md-0",
@@ -2010,6 +2078,7 @@ func baseCluster(opts ...clusterOpt) *v1alpha1.Cluster {
 				Kind: v1alpha1.VSphereDatacenterKind,
 				Name: "eksa-unit-test",
 			},
+			EksaVersion: &version,
 		},
 	}
 
