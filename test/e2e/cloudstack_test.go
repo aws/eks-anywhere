@@ -3918,7 +3918,7 @@ func TestCloudStackKubernetes126RedhatAirgappedRegistryMirror(t *testing.T) {
 func TestCloudStackKubernetes123RedHatAPI(t *testing.T) {
 	cloudstack := framework.NewCloudStack(t)
 	test := framework.NewClusterE2ETest(
-		t, cloudstack, framework.WithEnvVar(features.FullLifecycleAPIEnvVar, "true"),
+		t, cloudstack,
 	).WithClusterConfig(
 		api.ClusterToConfigFiller(
 			api.WithExternalEtcdTopology(1),
@@ -3944,7 +3944,7 @@ func TestCloudStackKubernetes123RedHatAPI(t *testing.T) {
 func TestCloudStackKubernetes124RedHatAPI(t *testing.T) {
 	cloudstack := framework.NewCloudStack(t)
 	test := framework.NewClusterE2ETest(
-		t, cloudstack, framework.WithEnvVar(features.FullLifecycleAPIEnvVar, "true"),
+		t, cloudstack,
 	).WithClusterConfig(
 		api.ClusterToConfigFiller(
 			api.WithStackedEtcdTopology(),
@@ -3970,7 +3970,7 @@ func TestCloudStackKubernetes124RedHatAPI(t *testing.T) {
 func TestCloudStackMulticlusterWorkloadClusterAPI(t *testing.T) {
 	cloudstack := framework.NewCloudStack(t)
 	managementCluster := framework.NewClusterE2ETest(
-		t, cloudstack, framework.WithEnvVar(features.FullLifecycleAPIEnvVar, "true"),
+		t, cloudstack,
 	).WithClusterConfig(
 		api.ClusterToConfigFiller(
 			api.WithControlPlaneCount(1),
@@ -3986,7 +3986,6 @@ func TestCloudStackMulticlusterWorkloadClusterAPI(t *testing.T) {
 			t,
 			cloudstack,
 			framework.WithClusterName(test.NewWorkloadClusterName()),
-			framework.WithEnvVar(features.FullLifecycleAPIEnvVar, "true"),
 		).WithClusterConfig(
 			api.ClusterToConfigFiller(
 				api.WithManagementCluster(managementCluster.ClusterName),
@@ -4002,7 +4001,6 @@ func TestCloudStackMulticlusterWorkloadClusterAPI(t *testing.T) {
 			t,
 			cloudstack,
 			framework.WithClusterName(test.NewWorkloadClusterName()),
-			framework.WithEnvVar(features.FullLifecycleAPIEnvVar, "true"),
 		).WithClusterConfig(
 			api.ClusterToConfigFiller(
 				api.WithManagementCluster(managementCluster.ClusterName),
@@ -4040,7 +4038,7 @@ func TestCloudStackMulticlusterWorkloadClusterAPI(t *testing.T) {
 func TestCloudStackMulticlusterWorkloadClusterNewCredentialsSecretsAPI(t *testing.T) {
 	cloudstack := framework.NewCloudStack(t)
 	managementCluster := framework.NewClusterE2ETest(
-		t, cloudstack, framework.WithEnvVar(features.FullLifecycleAPIEnvVar, "true"),
+		t, cloudstack,
 	).WithClusterConfig(
 		api.ClusterToConfigFiller(
 			api.WithControlPlaneCount(1),
@@ -4056,7 +4054,6 @@ func TestCloudStackMulticlusterWorkloadClusterNewCredentialsSecretsAPI(t *testin
 		t,
 		cloudstack,
 		framework.WithClusterName(test.NewWorkloadClusterName()),
-		framework.WithEnvVar(features.FullLifecycleAPIEnvVar, "true"),
 	).WithClusterConfig(
 		api.ClusterToConfigFiller(
 			api.WithManagementCluster(managementCluster.ClusterName),
@@ -4073,7 +4070,6 @@ func TestCloudStackMulticlusterWorkloadClusterNewCredentialsSecretsAPI(t *testin
 		t,
 		cloudstack,
 		framework.WithClusterName(test.NewWorkloadClusterName()),
-		framework.WithEnvVar(features.FullLifecycleAPIEnvVar, "true"),
 	).WithClusterConfig(
 		api.ClusterToConfigFiller(
 			api.WithManagementCluster(managementCluster.ClusterName),
@@ -4108,7 +4104,6 @@ func TestCloudStackKubernetesRedHat123To124UpgradeFromLatestMinorReleaseAPI(t *t
 	managementCluster := framework.NewClusterE2ETest(
 		t,
 		cloudstack,
-		framework.WithEnvVar(features.FullLifecycleAPIEnvVar, "true"),
 	)
 	managementCluster.GenerateClusterConfigForVersion(release.Version, framework.ExecuteWithEksaRelease(release))
 	managementCluster.UpdateClusterConfig(
@@ -4122,7 +4117,6 @@ func TestCloudStackKubernetesRedHat123To124UpgradeFromLatestMinorReleaseAPI(t *t
 		t,
 		cloudstack,
 		framework.WithClusterName(test.NewWorkloadClusterName()),
-		framework.WithEnvVar(features.FullLifecycleAPIEnvVar, "true"),
 	)
 	wc.GenerateClusterConfigForVersion(release.Version, framework.ExecuteWithEksaRelease(release))
 	wc.UpdateClusterConfig(
@@ -4147,7 +4141,7 @@ func TestCloudStackKubernetesRedHat123to124UpgradeFromLatestMinorReleaseGitHubFl
 	managementCluster := framework.NewClusterE2ETest(
 		t,
 		cloudstack,
-		framework.WithEnvVar(features.FullLifecycleAPIEnvVar, "true"),
+
 		framework.WithFluxGithubEnvVarCheck(),
 		framework.WithFluxGithubCleanup(),
 	)
@@ -4165,7 +4159,7 @@ func TestCloudStackKubernetesRedHat123to124UpgradeFromLatestMinorReleaseGitHubFl
 		t,
 		cloudstack,
 		framework.WithClusterName(test.NewWorkloadClusterName()),
-		framework.WithEnvVar(features.FullLifecycleAPIEnvVar, "true"),
+
 		framework.WithFluxGithubEnvVarCheck(),
 		framework.WithFluxGithubCleanup(),
 	)
@@ -4191,7 +4185,7 @@ func TestCloudStackMulticlusterWorkloadClusterGitHubFluxAPI(t *testing.T) {
 	managementCluster := framework.NewClusterE2ETest(
 		t,
 		cloudstack,
-		framework.WithEnvVar(features.FullLifecycleAPIEnvVar, "true"),
+
 		framework.WithFluxGithubEnvVarCheck(),
 		framework.WithFluxGithubCleanup(),
 	).WithClusterConfig(
@@ -4210,7 +4204,6 @@ func TestCloudStackMulticlusterWorkloadClusterGitHubFluxAPI(t *testing.T) {
 			t,
 			cloudstack,
 			framework.WithClusterName(test.NewWorkloadClusterName()),
-			framework.WithEnvVar(features.FullLifecycleAPIEnvVar, "true"),
 		).WithClusterConfig(
 			api.ClusterToConfigFiller(
 				api.WithManagementCluster(managementCluster.ClusterName),
@@ -4226,7 +4219,6 @@ func TestCloudStackMulticlusterWorkloadClusterGitHubFluxAPI(t *testing.T) {
 			t,
 			cloudstack,
 			framework.WithClusterName(test.NewWorkloadClusterName()),
-			framework.WithEnvVar(features.FullLifecycleAPIEnvVar, "true"),
 		).WithClusterConfig(
 			api.ClusterToConfigFiller(
 				api.WithManagementCluster(managementCluster.ClusterName),
@@ -4265,7 +4257,7 @@ func TestCloudStackMulticlusterWorkloadClusterNewCredentialsSecretGitHubFluxAPI(
 	managementCluster := framework.NewClusterE2ETest(
 		t,
 		cloudstack,
-		framework.WithEnvVar(features.FullLifecycleAPIEnvVar, "true"),
+
 		framework.WithFluxGithubEnvVarCheck(),
 		framework.WithFluxGithubCleanup(),
 	).WithClusterConfig(
@@ -4284,7 +4276,6 @@ func TestCloudStackMulticlusterWorkloadClusterNewCredentialsSecretGitHubFluxAPI(
 		t,
 		cloudstack,
 		framework.WithClusterName(test.NewWorkloadClusterName()),
-		framework.WithEnvVar(features.FullLifecycleAPIEnvVar, "true"),
 	).WithClusterConfig(
 		api.ClusterToConfigFiller(
 			api.WithManagementCluster(managementCluster.ClusterName),
@@ -4301,7 +4292,6 @@ func TestCloudStackMulticlusterWorkloadClusterNewCredentialsSecretGitHubFluxAPI(
 		t,
 		cloudstack,
 		framework.WithClusterName(test.NewWorkloadClusterName()),
-		framework.WithEnvVar(features.FullLifecycleAPIEnvVar, "true"),
 	).WithClusterConfig(
 		api.ClusterToConfigFiller(
 			api.WithManagementCluster(managementCluster.ClusterName),
@@ -4333,7 +4323,7 @@ func TestCloudStackMulticlusterWorkloadClusterNewCredentialsSecretGitHubFluxAPI(
 func TestCloudStackWorkloadClusterAWSIamAuthAPI(t *testing.T) {
 	cloudstack := framework.NewCloudStack(t)
 	managementCluster := framework.NewClusterE2ETest(
-		t, cloudstack, framework.WithEnvVar(features.FullLifecycleAPIEnvVar, "true"),
+		t, cloudstack,
 	).WithClusterConfig(
 		api.ClusterToConfigFiller(
 			api.WithControlPlaneCount(1),
@@ -4349,7 +4339,7 @@ func TestCloudStackWorkloadClusterAWSIamAuthAPI(t *testing.T) {
 			t,
 			cloudstack,
 			framework.WithClusterName(test.NewWorkloadClusterName()),
-			framework.WithEnvVar(features.FullLifecycleAPIEnvVar, "true"),
+
 			framework.WithAwsIamEnvVarCheck(),
 		).WithClusterConfig(
 			api.ClusterToConfigFiller(
@@ -4383,7 +4373,7 @@ func TestCloudStackWorkloadClusterAWSIamAuthGithubFluxAPI(t *testing.T) {
 	managementCluster := framework.NewClusterE2ETest(
 		t,
 		cloudstack,
-		framework.WithEnvVar(features.FullLifecycleAPIEnvVar, "true"),
+
 		framework.WithFluxGithubEnvVarCheck(),
 		framework.WithFluxGithubCleanup(),
 	).WithClusterConfig(
@@ -4402,7 +4392,7 @@ func TestCloudStackWorkloadClusterAWSIamAuthGithubFluxAPI(t *testing.T) {
 			t,
 			cloudstack,
 			framework.WithClusterName(test.NewWorkloadClusterName()),
-			framework.WithEnvVar(features.FullLifecycleAPIEnvVar, "true"),
+
 			framework.WithAwsIamEnvVarCheck(),
 		).WithClusterConfig(
 			api.ClusterToConfigFiller(
@@ -4434,7 +4424,7 @@ func TestCloudStackWorkloadClusterAWSIamAuthGithubFluxAPI(t *testing.T) {
 func TestCloudStackWorkloadClusterOIDCAuthAPI(t *testing.T) {
 	cloudstack := framework.NewCloudStack(t)
 	managementCluster := framework.NewClusterE2ETest(
-		t, cloudstack, framework.WithEnvVar(features.FullLifecycleAPIEnvVar, "true"),
+		t, cloudstack,
 	).WithClusterConfig(
 		api.ClusterToConfigFiller(
 			api.WithControlPlaneCount(1),
@@ -4450,7 +4440,7 @@ func TestCloudStackWorkloadClusterOIDCAuthAPI(t *testing.T) {
 			t,
 			cloudstack,
 			framework.WithClusterName(test.NewWorkloadClusterName()),
-			framework.WithEnvVar(features.FullLifecycleAPIEnvVar, "true"),
+
 			framework.WithOIDCEnvVarCheck(),
 		).WithClusterConfig(
 			api.ClusterToConfigFiller(
@@ -4484,7 +4474,7 @@ func TestCloudStackWorkloadClusterOIDCAuthGithubFluxAPI(t *testing.T) {
 	managementCluster := framework.NewClusterE2ETest(
 		t,
 		cloudstack,
-		framework.WithEnvVar(features.FullLifecycleAPIEnvVar, "true"),
+
 		framework.WithFluxGithubEnvVarCheck(),
 		framework.WithFluxGithubCleanup(),
 	).WithClusterConfig(
@@ -4503,7 +4493,7 @@ func TestCloudStackWorkloadClusterOIDCAuthGithubFluxAPI(t *testing.T) {
 			t,
 			cloudstack,
 			framework.WithClusterName(test.NewWorkloadClusterName()),
-			framework.WithEnvVar(features.FullLifecycleAPIEnvVar, "true"),
+
 			framework.WithOIDCEnvVarCheck(),
 		).WithClusterConfig(
 			api.ClusterToConfigFiller(

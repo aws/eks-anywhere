@@ -2,7 +2,6 @@ package clustermanager_test
 
 import (
 	"context"
-	"os"
 	"testing"
 
 	"github.com/go-logr/logr"
@@ -18,7 +17,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clustermanager"
 	"github.com/aws/eks-anywhere/pkg/clustermanager/mocks"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/files"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/release/api/v1alpha1"
@@ -103,7 +101,6 @@ func TestEKSAInstallerInstallSuccessWithTestManifest(t *testing.T) {
 						{
 							Args: []string{
 								"--leader-elect",
-								"--feature-gates=FullLifecycleAPI=true",
 							},
 							Env: []corev1.EnvVar{
 								{
@@ -214,94 +211,9 @@ func TestSetManagerFlags(t *testing.T) {
 			spec:       test.NewClusterSpec(),
 			want:       deployment(),
 		},
-		{
-			name:       "full lifecycle, vsphere",
-			deployment: deployment(),
-			spec: test.NewClusterSpec(func(s *cluster.Spec) {
-				s.Cluster.Spec.DatacenterRef.Kind = anywherev1.VSphereDatacenterKind
-			}),
-			want: deployment(func(d *appsv1.Deployment) {
-				d.Spec.Template.Spec.Containers[0].Args = []string{
-					"--feature-gates=FullLifecycleAPI=true",
-				}
-			}),
-		},
-		{
-			name:       "full lifecycle, docker",
-			deployment: deployment(),
-			spec: test.NewClusterSpec(func(s *cluster.Spec) {
-				s.Cluster.Spec.DatacenterRef.Kind = anywherev1.DockerDatacenterKind
-			}),
-			want: deployment(func(d *appsv1.Deployment) {
-				d.Spec.Template.Spec.Containers[0].Args = []string{
-					"--feature-gates=FullLifecycleAPI=true",
-				}
-			}),
-		},
-		{
-			name:       "full lifecycle, snow",
-			deployment: deployment(),
-			spec: test.NewClusterSpec(func(s *cluster.Spec) {
-				s.Cluster.Spec.DatacenterRef.Kind = anywherev1.SnowDatacenterKind
-			}),
-			want: deployment(func(d *appsv1.Deployment) {
-				d.Spec.Template.Spec.Containers[0].Args = []string{
-					"--feature-gates=FullLifecycleAPI=true",
-				}
-			}),
-		},
-		{
-			name:       "full lifecycle, nutanix",
-			deployment: deployment(),
-			spec: test.NewClusterSpec(func(s *cluster.Spec) {
-				s.Cluster.Spec.DatacenterRef.Kind = anywherev1.NutanixDatacenterKind
-			}),
-			want: deployment(func(d *appsv1.Deployment) {
-				d.Spec.Template.Spec.Containers[0].Args = []string{
-					"--feature-gates=FullLifecycleAPI=true",
-				}
-			}),
-		},
-		{
-			name:       "full lifecycle, tinkerbell",
-			deployment: deployment(),
-			spec: test.NewClusterSpec(func(s *cluster.Spec) {
-				s.Cluster.Spec.DatacenterRef.Kind = anywherev1.TinkerbellDatacenterKind
-			}),
-			want: deployment(func(d *appsv1.Deployment) {
-				d.Spec.Template.Spec.Containers[0].Args = []string{
-					"--feature-gates=FullLifecycleAPI=true",
-				}
-			}),
-		},
-		{
-			name:       "full lifecycle, cloudstack",
-			deployment: deployment(),
-			spec: test.NewClusterSpec(func(s *cluster.Spec) {
-				s.Cluster.Spec.DatacenterRef.Kind = anywherev1.CloudStackDatacenterKind
-			}),
-			want: deployment(func(d *appsv1.Deployment) {
-				d.Spec.Template.Spec.Containers[0].Args = []string{
-					"--feature-gates=FullLifecycleAPI=true",
-				}
-			}),
-		},
-		{
-			name:           "full lifecycle, feature flag enabled",
-			deployment:     deployment(),
-			spec:           test.NewClusterSpec(),
-			featureEnvVars: []string{features.FullLifecycleAPIEnvVar},
-			want: deployment(func(d *appsv1.Deployment) {
-				d.Spec.Template.Spec.Containers[0].Args = []string{
-					"--feature-gates=FullLifecycleAPI=true",
-				}
-			}),
-		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			os.Unsetenv(features.FullLifecycleAPIEnvVar)
-			features.ClearCache()
 			for _, e := range tt.featureEnvVars {
 				t.Setenv(e, "true")
 			}

@@ -18,7 +18,6 @@ import (
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/manifests"
 	"github.com/aws/eks-anywhere/pkg/manifests/bundles"
 	"github.com/aws/eks-anywhere/pkg/types"
@@ -161,13 +160,7 @@ func setManagerEnvVars(d *appsv1.Deployment, spec *cluster.Spec) {
 }
 
 func managerEnabledGates(spec *cluster.Spec) []string {
-	g := []string{}
-	// TODO(g-gaston): inject a "features" checker instead of using global one
-	if features.IsActive(features.FullLifecycleAPI()) || fullLifeCycleControllerForProvider(spec.Cluster) {
-		g = append(g, features.FullLifecycleGate)
-	}
-
-	return g
+	return nil
 }
 
 func fullLifeCycleControllerForProvider(cluster *anywherev1.Cluster) bool {

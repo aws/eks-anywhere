@@ -3,8 +3,6 @@ package features
 // These are environment variables used as flags to enable/disable features.
 const (
 	CloudStackKubeVipDisabledEnvVar = "CLOUDSTACK_KUBE_VIP_DISABLED"
-	FullLifecycleAPIEnvVar          = "FULL_LIFECYCLE_API"
-	FullLifecycleGate               = "FullLifecycleAPI"
 	CheckpointEnabledEnvVar         = "CHECKPOINT_ENABLED"
 	UseNewWorkflowsEnvVar           = "USE_NEW_WORKFLOWS"
 
@@ -28,13 +26,6 @@ func IsActive(feature Feature) bool {
 // ClearCache is mainly used for unit tests as of now.
 func ClearCache() {
 	globalFeatures.clearCache()
-}
-
-func FullLifecycleAPI() Feature {
-	return Feature{
-		Name:     "Full lifecycle API support through the EKS-A controller",
-		IsActive: globalFeatures.isActiveForEnvVarOrGate(FullLifecycleAPIEnvVar, FullLifecycleGate),
-	}
 }
 
 // ExperimentalSelfManagedClusterUpgrade allows self managed cluster upgrades through the API.
