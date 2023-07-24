@@ -6,23 +6,37 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/executables"
+	"github.com/aws/eks-anywhere/pkg/files"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
+	"github.com/aws/eks-anywhere/pkg/manifests/bundles"
 	"github.com/aws/eks-anywhere/pkg/version"
 	"github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
+// getImages returns all the images in the Bundle for the cluster kubernetes versions.
+// This is deprecated. It builds a file reader in line, prefer using the dependency factory.
 func getImages(clusterSpecPath, bundlesOverride string) ([]v1alpha1.Image, error) {
 	var specOpts []cluster.FileSpecBuilderOpt
 	if bundlesOverride != "" {
 		specOpts = append(specOpts, cluster.WithOverrideBundlesManifest(bundlesOverride))
 	}
-	clusterSpec, err := readAndValidateClusterSpec(clusterSpecPath, version.Get(), specOpts...)
+	cliVersion := version.Get()
+	spec, err := readClusterSpec(clusterSpecPath, cliVersion, specOpts...)
 	if err != nil {
 		return nil, err
 	}
-	bundle := clusterSpec.VersionsBundle
-	images := append(bundle.Images(), clusterSpec.KubeDistroImages()...)
-	return images, nil
+
+	kubeVersions := spec.Cluster.KubernetesVersions()
+	kubeVersionsFilter := make([]string, 0, len(kubeVersions))
+	for _, version := range kubeVersions {
+		kubeVersionsFilter = append(kubeVersionsFilter, string(version))
+	}
+
+	return bundles.ReadImages(
+		files.NewReader(files.WithEKSAUserAgent("cli", cliVersion.GitVersion)),
+		spec.Bundles,
+		kubeVersionsFilter...,
+	)
 }
 
 // getKubeconfigPath returns an EKS-A kubeconfig path. The return van be overriden using override

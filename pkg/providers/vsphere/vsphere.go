@@ -890,7 +890,8 @@ func (p *vsphereProvider) PostWorkloadInit(ctx context.Context, cluster *types.C
 }
 
 func (p *vsphereProvider) Version(clusterSpec *cluster.Spec) string {
-	return clusterSpec.VersionsBundle.VSphere.Version
+	versionsBundle := clusterSpec.ControlPlaneVersionsBundle()
+	return versionsBundle.VSphere.Version
 }
 
 func (p *vsphereProvider) EnvMap(_ *cluster.Spec) (map[string]string, error) {
@@ -912,15 +913,15 @@ func (p *vsphereProvider) GetDeployments() map[string][]string {
 }
 
 func (p *vsphereProvider) GetInfrastructureBundle(clusterSpec *cluster.Spec) *types.InfrastructureBundle {
-	bundle := clusterSpec.VersionsBundle
-	folderName := fmt.Sprintf("infrastructure-vsphere/%s/", bundle.VSphere.Version)
+	versionsBundle := clusterSpec.ControlPlaneVersionsBundle()
+	folderName := fmt.Sprintf("infrastructure-vsphere/%s/", versionsBundle.VSphere.Version)
 
 	infraBundle := types.InfrastructureBundle{
 		FolderName: folderName,
 		Manifests: []releasev1alpha1.Manifest{
-			bundle.VSphere.Components,
-			bundle.VSphere.Metadata,
-			bundle.VSphere.ClusterTemplate,
+			versionsBundle.VSphere.Components,
+			versionsBundle.VSphere.Metadata,
+			versionsBundle.VSphere.ClusterTemplate,
 		},
 	}
 	return &infraBundle
@@ -1098,14 +1099,16 @@ func (p *vsphereProvider) secretContentsChanged(ctx context.Context, workloadClu
 }
 
 func (p *vsphereProvider) ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ComponentChangeDiff {
-	if currentSpec.VersionsBundle.VSphere.Version == newSpec.VersionsBundle.VSphere.Version {
+	currentVersionsBundle := currentSpec.ControlPlaneVersionsBundle()
+	newVersionsBundle := newSpec.ControlPlaneVersionsBundle()
+	if currentVersionsBundle.VSphere.Version == newVersionsBundle.VSphere.Version {
 		return nil
 	}
 
 	return &types.ComponentChangeDiff{
 		ComponentName: constants.VSphereProviderName,
-		NewVersion:    newSpec.VersionsBundle.VSphere.Version,
-		OldVersion:    currentSpec.VersionsBundle.VSphere.Version,
+		NewVersion:    newVersionsBundle.VSphere.Version,
+		OldVersion:    currentVersionsBundle.VSphere.Version,
 	}
 }
 
@@ -1117,15 +1120,17 @@ func cpiResourceSetName(clusterSpec *cluster.Spec) string {
 	return fmt.Sprintf("%s-cpi", clusterSpec.Cluster.Name)
 }
 
-func (p *vsphereProvider) UpgradeNeeded(ctx context.Context, newSpec, currentSpec *cluster.Spec, cluster *types.Cluster) (bool, error) {
-	newV, oldV := newSpec.VersionsBundle.VSphere, currentSpec.VersionsBundle.VSphere
+func (p *vsphereProvider) UpgradeNeeded(ctx context.Context, newSpec, currentSpec *cluster.Spec, c *types.Cluster) (bool, error) {
+	currentVersionsBundle := currentSpec.ControlPlaneVersionsBundle()
+	newVersionsBundle := newSpec.ControlPlaneVersionsBundle()
+	newV, oldV := newVersionsBundle.VSphere, currentVersionsBundle.VSphere
 
 	if newV.Manager.ImageDigest != oldV.Manager.ImageDigest ||
 		newV.KubeVip.ImageDigest != oldV.KubeVip.ImageDigest {
 		return true, nil
 	}
 	cc := currentSpec.Cluster
-	existingVdc, err := p.providerKubectlClient.GetEksaVSphereDatacenterConfig(ctx, cc.Spec.DatacenterRef.Name, cluster.KubeconfigFile, newSpec.Cluster.Namespace)
+	existingVdc, err := p.providerKubectlClient.GetEksaVSphereDatacenterConfig(ctx, cc.Spec.DatacenterRef.Name, c.KubeconfigFile, newSpec.Cluster.Namespace)
 	if err != nil {
 		return false, err
 	}
@@ -1134,7 +1139,7 @@ func (p *vsphereProvider) UpgradeNeeded(ctx context.Context, newSpec, currentSpe
 		return true, nil
 	}
 
-	machineConfigsSpecChanged, err := p.machineConfigsSpecChanged(ctx, cc, cluster, newSpec)
+	machineConfigsSpecChanged, err := p.machineConfigsSpecChanged(ctx, cc, c, newSpec)
 	if err != nil {
 		return false, err
 	}
@@ -1194,7 +1199,7 @@ func (p *vsphereProvider) applyEthtoolDaemonSet(ctx context.Context, cluster *ty
 		}
 	}
 	logger.V(4).Info("Applying vsphere-disable-udp-offload daemonset")
-	bundle := clusterSpec.VersionsBundle
+	bundle := clusterSpec.ControlPlaneVersionsBundle()
 	values := map[string]interface{}{
 		"eksaSystemNamespace": constants.EksaSystemNamespace,
 		"kindNodeImage":       bundle.EksD.KindNode.VersionedImage(),

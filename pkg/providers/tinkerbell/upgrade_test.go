@@ -72,10 +72,11 @@ func TestProviderPreCoreComponentsUpgrade_StackUpgradeError(t *testing.T) {
 	tconfig := NewPreCoreComponentsUpgradeTestConfig(t)
 
 	expect := "foobar"
+	bundle := tconfig.ClusterSpec.ControlPlaneVersionsBundle()
 	tconfig.Installer.EXPECT().
 		Upgrade(
 			gomock.Any(),
-			tconfig.ClusterSpec.VersionsBundle.Tinkerbell,
+			bundle.Tinkerbell,
 			tconfig.DatacenterConfig.Spec.TinkerbellIP,
 			tconfig.Management.KubeconfigFile,
 			tconfig.DatacenterConfig.Spec.HookImagesURLPath,
@@ -96,10 +97,12 @@ func TestProviderPreCoreComponentsUpgrade_StackUpgradeError(t *testing.T) {
 func TestProviderPreCoreComponentsUpgrade_HasBaseboardManagementCRDError(t *testing.T) {
 	tconfig := NewPreCoreComponentsUpgradeTestConfig(t)
 
+	bundle := tconfig.ClusterSpec.ControlPlaneVersionsBundle()
+
 	tconfig.Installer.EXPECT().
 		Upgrade(
 			gomock.Any(),
-			tconfig.ClusterSpec.VersionsBundle.Tinkerbell,
+			bundle.Tinkerbell,
 			tconfig.TinkerbellIP,
 			tconfig.Management.KubeconfigFile,
 			tconfig.DatacenterConfig.Spec.HookImagesURLPath,
@@ -129,10 +132,12 @@ func TestProviderPreCoreComponentsUpgrade_HasBaseboardManagementCRDError(t *test
 func TestProviderPreCoreComponentsUpgrade_NoBaseboardManagementCRD(t *testing.T) {
 	tconfig := NewPreCoreComponentsUpgradeTestConfig(t)
 
+	bundle := tconfig.ClusterSpec.ControlPlaneVersionsBundle()
+
 	tconfig.Installer.EXPECT().
 		Upgrade(
 			gomock.Any(),
-			tconfig.ClusterSpec.VersionsBundle.Tinkerbell,
+			bundle.Tinkerbell,
 			tconfig.TinkerbellIP,
 			tconfig.Management.KubeconfigFile,
 			tconfig.DatacenterConfig.Spec.HookImagesURLPath,
@@ -436,12 +441,14 @@ func TestProviderPreCoreComponentsUpgrade_RufioConversions(t *testing.T) {
 		t.Run(tc.Name, func(t *testing.T) {
 			tconfig := NewPreCoreComponentsUpgradeTestConfig(t)
 
+			bundle := tconfig.ClusterSpec.ControlPlaneVersionsBundle()
+
 			// Configure the mocks to successfully upgrade the Tinkerbell stack using the installer
 			// and identify the need to convert deprecated Rufio custom resources.
 			tconfig.Installer.EXPECT().
 				Upgrade(
 					gomock.Any(),
-					tconfig.ClusterSpec.VersionsBundle.Tinkerbell,
+					bundle.Tinkerbell,
 					tconfig.DatacenterConfig.Spec.TinkerbellIP,
 					tconfig.Management.KubeconfigFile,
 					tconfig.DatacenterConfig.Spec.HookImagesURLPath,
@@ -606,10 +613,12 @@ func (t *PreCoreComponentsUpgradeTestConfig) GetProvider() (*Provider, error) {
 
 // WithStackUpgrade configures t mocks to get successfully reach Rufio CRD conversion.
 func (t *PreCoreComponentsUpgradeTestConfig) WithStackUpgrade() *PreCoreComponentsUpgradeTestConfig {
+	bundle := t.ClusterSpec.ControlPlaneVersionsBundle()
+
 	t.Installer.EXPECT().
 		Upgrade(
 			gomock.Any(),
-			t.ClusterSpec.VersionsBundle.Tinkerbell,
+			bundle.Tinkerbell,
 			t.TinkerbellIP,
 			t.Management.KubeconfigFile,
 			t.DatacenterConfig.Spec.HookImagesURLPath,

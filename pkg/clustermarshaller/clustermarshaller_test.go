@@ -21,6 +21,7 @@ func TestWriteClusterConfigWithOIDCAndGitOps(t *testing.T) {
 		s.Cluster.TypeMeta.Kind = v1alpha1.ClusterKind
 		s.Cluster.CreationTimestamp = v1.Time{Time: time.Now()}
 		s.Cluster.Name = "mycluster"
+		s.Cluster.Spec.KubernetesVersion = ""
 		s.Cluster.Spec.ExternalEtcdConfiguration = &v1alpha1.ExternalEtcdConfiguration{
 			Count: 3,
 		}
@@ -129,6 +130,7 @@ func TestWriteClusterConfigWithFluxAndGitOpsConfigs(t *testing.T) {
 		s.Cluster.TypeMeta.Kind = v1alpha1.ClusterKind
 		s.Cluster.CreationTimestamp = v1.Time{Time: time.Now()}
 		s.Cluster.Name = "mycluster"
+		s.Cluster.Spec.KubernetesVersion = ""
 		s.Cluster.Spec.ExternalEtcdConfiguration = &v1alpha1.ExternalEtcdConfiguration{
 			Count: 3,
 		}
@@ -235,6 +237,7 @@ func TestWriteClusterConfigWithFluxConfig(t *testing.T) {
 		s.Cluster.TypeMeta.Kind = v1alpha1.ClusterKind
 		s.Cluster.CreationTimestamp = v1.Time{Time: time.Now()}
 		s.Cluster.Name = "mycluster"
+		s.Cluster.Spec.KubernetesVersion = ""
 		s.Cluster.Spec.ExternalEtcdConfiguration = &v1alpha1.ExternalEtcdConfiguration{
 			Count: 3,
 		}

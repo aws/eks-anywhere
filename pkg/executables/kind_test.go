@@ -31,7 +31,7 @@ func TestKindCreateBootstrapClusterSuccess(t *testing.T) {
 	clusterName := "test_cluster"
 	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
 		s.Cluster.Name = clusterName
-		s.VersionsBundle = versionBundle
+		s.VersionsBundles["1.19"] = versionBundle
 	})
 	eksClusterName := "test_cluster-eks-a-cluster"
 	kubeConfigFile := "test_cluster.kind.kubeconfig"
@@ -165,7 +165,7 @@ func TestKindCreateBootstrapClusterSuccessWithRegistryMirror(t *testing.T) {
 			wantKubeconfig: kubeConfigFile,
 			clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
 				s.Cluster.Name = clusterName
-				s.VersionsBundle = versionBundle
+				s.VersionsBundles["1.19"] = versionBundle
 				s.Cluster.Spec.RegistryMirrorConfiguration = &v1alpha1.RegistryMirrorConfiguration{
 					Endpoint: registryMirror,
 					Port:     constants.DefaultHttpsPort,
@@ -185,7 +185,7 @@ func TestKindCreateBootstrapClusterSuccessWithRegistryMirror(t *testing.T) {
 			wantKubeconfig: kubeConfigFile,
 			clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
 				s.Cluster.Name = clusterName
-				s.VersionsBundle = versionBundle
+				s.VersionsBundles["1.19"] = versionBundle
 				s.Cluster.Spec.RegistryMirrorConfiguration = &v1alpha1.RegistryMirrorConfiguration{
 					Endpoint:      registryMirror,
 					Port:          constants.DefaultHttpsPort,
@@ -200,7 +200,7 @@ func TestKindCreateBootstrapClusterSuccessWithRegistryMirror(t *testing.T) {
 			wantKubeconfig: kubeConfigFile,
 			clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
 				s.Cluster.Name = clusterName
-				s.VersionsBundle = versionBundle
+				s.VersionsBundles["1.19"] = versionBundle
 				s.Cluster.Spec.RegistryMirrorConfiguration = &v1alpha1.RegistryMirrorConfiguration{
 					Endpoint: registryMirror,
 					Port:     constants.DefaultHttpsPort,
@@ -271,7 +271,7 @@ func TestKindCreateBootstrapClusterSuccessWithRegistryMirror(t *testing.T) {
 func TestKindCreateBootstrapClusterExecutableError(t *testing.T) {
 	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
 		s.Cluster.Name = "clusterName"
-		s.VersionsBundle = versionBundle
+		s.VersionsBundles["1.19"] = versionBundle
 	})
 
 	ctx := context.Background()
@@ -295,7 +295,7 @@ func TestKindCreateBootstrapClusterExecutableWithRegistryMirrorError(t *testing.
 	registryMirror := "registry-mirror.test"
 	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
 		s.Cluster.Name = "clusterName"
-		s.VersionsBundle = versionBundle
+		s.VersionsBundles["1.19"] = versionBundle
 		s.Cluster.Spec.RegistryMirrorConfiguration = &v1alpha1.RegistryMirrorConfiguration{
 			Endpoint:     registryMirror,
 			Port:         constants.DefaultHttpsPort,

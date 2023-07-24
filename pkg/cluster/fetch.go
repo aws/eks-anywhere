@@ -29,8 +29,9 @@ func bundlesNamespacedKey(cluster *v1alpha1.Cluster, release *v1alpha1release.EK
 	return name, namespace
 }
 
-func GetVersionsBundle(clusterConfig *v1alpha1.Cluster, bundles *v1alpha1release.Bundles) (*v1alpha1release.VersionsBundle, error) {
-	return getVersionsBundleForKubernetesVersion(clusterConfig.Spec.KubernetesVersion, bundles)
+// GetVersionsBundle gets the VersionsBundle that corresponds to KubernetesVersion.
+func GetVersionsBundle(version v1alpha1.KubernetesVersion, bundles *v1alpha1release.Bundles) (*v1alpha1release.VersionsBundle, error) {
+	return getVersionsBundleForKubernetesVersion(version, bundles)
 }
 
 func getVersionsBundleForKubernetesVersion(kubernetesVersion v1alpha1.KubernetesVersion, bundles *v1alpha1release.Bundles) (*v1alpha1release.VersionsBundle, error) {
@@ -66,7 +67,30 @@ func BuildSpecFromConfig(ctx context.Context, client Client, config *Config) (*S
 		return nil, err
 	}
 
-	versionsBundle, err := GetVersionsBundle(config.Cluster, bundles)
+	eksdReleases, err := fetchAllEksdReleases(ctx, client, config.Cluster, bundles)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewSpec(config, bundles, eksdReleases, eksaRelease)
+}
+
+func fetchAllEksdReleases(ctx context.Context, client Client, cluster *v1alpha1.Cluster, bundles *v1alpha1release.Bundles) ([]eksdv1alpha1.Release, error) {
+	versions := cluster.KubernetesVersions()
+	m := make([]eksdv1alpha1.Release, 0, len(versions))
+	for _, version := range versions {
+		eksd, err := getEksdRelease(ctx, client, version, bundles)
+		if err != nil {
+			return nil, err
+		}
+		m = append(m, *eksd)
+	}
+
+	return m, nil
+}
+
+func getEksdRelease(ctx context.Context, client Client, version v1alpha1.KubernetesVersion, bundles *v1alpha1release.Bundles) (*eksdv1alpha1.Release, error) {
+	versionsBundle, err := GetVersionsBundle(version, bundles)
 	if err != nil {
 		return nil, err
 	}
@@ -78,7 +102,7 @@ func BuildSpecFromConfig(ctx context.Context, client Client, config *Config) (*S
 		return nil, err
 	}
 
-	return NewSpec(config, bundles, eksdRelease, eksaRelease)
+	return eksdRelease, nil
 }
 
 // BundlesForCluster returns a bundles resource for the cluster.

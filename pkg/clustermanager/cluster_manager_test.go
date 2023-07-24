@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	eksdv1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
 	"github.com/stretchr/testify/assert"
@@ -909,8 +910,9 @@ func TestClusterManagerUpgradeWorkloadClusterAWSIamConfigSuccess(t *testing.T) {
 	tt.oldClusterConfig.Spec.IdentityProviderRefs = []v1alpha1.Ref{{Kind: v1alpha1.AWSIamConfigKind, Name: oldIamConfig.Name}}
 	tt.newClusterConfig = tt.oldClusterConfig.DeepCopy()
 
-	r := test.EksdRelease()
-	r.ResourceVersion = "999"
+	r := []eksdv1.Release{
+		*test.EksdRelease("1-19"),
+	}
 	er := test.EKSARelease()
 	er.ResourceVersion = "999"
 
@@ -1725,8 +1727,6 @@ func TestClusterManagerCreateEKSAResourcesSuccess(t *testing.T) {
 	features.ClearCache()
 	ctx := context.Background()
 	tt := newTest(t)
-	tt.clusterSpec.VersionsBundle.EksD.Components = "testdata/eksa_components.yaml"
-	tt.clusterSpec.VersionsBundle.EksD.EksDReleaseUrl = "testdata/eksa_components.yaml"
 
 	datacenterConfig := &v1alpha1.VSphereDatacenterConfig{}
 	machineConfigs := []providers.MachineConfig{}
@@ -1748,8 +1748,6 @@ func TestClusterManagerCreateEKSAResourcesFailure(t *testing.T) {
 	features.ClearCache()
 	ctx := context.Background()
 	tt := newTest(t)
-	tt.clusterSpec.VersionsBundle.EksD.Components = "testdata/eksa_components.yaml"
-	tt.clusterSpec.VersionsBundle.EksD.EksDReleaseUrl = "testdata/eksa_components.yaml"
 	tt.clusterSpec.Cluster.Namespace = "test_namespace"
 
 	datacenterConfig := &v1alpha1.VSphereDatacenterConfig{}
@@ -1765,8 +1763,6 @@ func TestClusterManagerCreateEKSAResourcesFailureBundles(t *testing.T) {
 	features.ClearCache()
 	ctx := context.Background()
 	tt := newTest(t)
-	tt.clusterSpec.VersionsBundle.EksD.Components = "testdata/eksa_components.yaml"
-	tt.clusterSpec.VersionsBundle.EksD.EksDReleaseUrl = "testdata/eksa_components.yaml"
 	tt.clusterSpec.Cluster.Namespace = "test_namespace"
 
 	datacenterConfig := &v1alpha1.VSphereDatacenterConfig{}
@@ -1799,8 +1795,6 @@ func TestClusterManagerCreateEKSAResourcesFailureEKSARelease(t *testing.T) {
 	features.ClearCache()
 	ctx := context.Background()
 	tt := newTest(t)
-	tt.clusterSpec.VersionsBundle.EksD.Components = "testdata/eksa_components.yaml"
-	tt.clusterSpec.VersionsBundle.EksD.EksDReleaseUrl = "testdata/eksa_components.yaml"
 	tt.clusterSpec.Cluster.Namespace = "test_namespace"
 
 	datacenterConfig := &v1alpha1.VSphereDatacenterConfig{}
@@ -2449,8 +2443,6 @@ func newSpecChangedTest(t *testing.T, opts ...clustermanager.ClusterManagerOpt) 
 
 	b := test.Bundle()
 	b.ResourceVersion = "999"
-	r := test.EksdRelease()
-	r.ResourceVersion = "999"
 	er := test.EKSARelease()
 	er.ResourceVersion = "999"
 
@@ -2462,7 +2454,14 @@ func newSpecChangedTest(t *testing.T, opts ...clustermanager.ClusterManagerOpt) 
 		AWSIAMConfigs:         map[string]*v1alpha1.AWSIamConfig{},
 	}
 
-	cs, _ := cluster.NewSpec(config, b, r, er)
+	r := []eksdv1.Release{
+		*test.EksdRelease("1-19"),
+	}
+
+	cs, err := cluster.NewSpec(config, b, r, er)
+	if err != nil {
+		t.Fatalf("could not create clusterSpec")
+	}
 	changedTest.clusterSpec = cs
 
 	return changedTest
@@ -2491,7 +2490,7 @@ func TestClusterManagerClusterSpecChangedClusterChanged(t *testing.T) {
 
 func TestClusterManagerClusterSpecChangedEksDReleaseChanged(t *testing.T) {
 	tt := newSpecChangedTest(t)
-	tt.clusterSpec.VersionsBundle.EksD.Name = "kubernetes-1-19-eks-5"
+	tt.clusterSpec.Cluster.Spec.KubernetesVersion = "1.22"
 
 	tt.mocks.client.EXPECT().GetEksaCluster(tt.ctx, tt.cluster, tt.clusterSpec.Cluster.Name).Return(tt.oldClusterConfig, nil)
 
@@ -2616,7 +2615,7 @@ func newClusterManager(t *testing.T, opts ...clustermanager.ClusterManagerOpt) (
 		},
 	}
 	b := test.Bundle()
-	r := test.EksdRelease()
+	r := test.EksdRelease("1-19")
 	ac := &v1alpha1.AWSIamConfig{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: clusterName,
@@ -2644,6 +2643,7 @@ func TestClusterManagerGetCurrentClusterSpecGetClusterError(t *testing.T) {
 
 func TestClusterManagerGetCurrentClusterSpecGetBundlesError(t *testing.T) {
 	tt := newTest(t)
+	tt.clusterSpec.Cluster.Spec.BundlesRef = &v1alpha1.BundlesRef{}
 
 	tt.mocks.client.EXPECT().GetEksaCluster(tt.ctx, tt.cluster, tt.clusterName).Return(tt.clusterSpec.Cluster, nil)
 

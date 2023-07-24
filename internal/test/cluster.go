@@ -38,14 +38,17 @@ func NewClusterSpec(opts ...ClusterSpecOpt) *cluster.Spec {
 				Name: "fluxTestCluster",
 			},
 			Spec: v1alpha1.ClusterSpec{
+				KubernetesVersion:             "1.19",
 				WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{}},
 				EksaVersion:                   &version,
 			},
 		},
 	}
-	s.VersionsBundle = &cluster.VersionsBundle{
-		VersionsBundle: &releasev1alpha1.VersionsBundle{},
-		KubeDistro:     &cluster.KubeDistro{},
+	s.VersionsBundles = map[v1alpha1.KubernetesVersion]*cluster.VersionsBundle{
+		v1alpha1.Kube119: {
+			VersionsBundle: &releasev1alpha1.VersionsBundle{},
+			KubeDistro:     &cluster.KubeDistro{},
+		},
 	}
 	s.Bundles = &releasev1alpha1.Bundles{}
 	s.EKSARelease = EKSARelease()
@@ -83,7 +86,7 @@ func NewClusterSpecForConfig(tb testing.TB, config *cluster.Config) *cluster.Spe
 	spec, err := cluster.NewSpec(
 		config,
 		Bundles(tb),
-		EksdRelease(),
+		EksdReleases(),
 		EKSARelease(),
 	)
 	if err != nil {

@@ -3079,3 +3079,14 @@ func TestWorkerNodeGroupConfigurationKubeVersionUnchanged(t *testing.T) {
 		})
 	}
 }
+
+func TestKubernetesVersions(t *testing.T) {
+	g := NewWithT(t)
+	cluster := baseCluster()
+	kube120 := v1alpha1.KubernetesVersion("1.20")
+	wng := cluster.Spec.WorkerNodeGroupConfigurations[0].DeepCopy()
+	cluster.Spec.WorkerNodeGroupConfigurations[0].KubernetesVersion = &kube120
+	cluster.Spec.WorkerNodeGroupConfigurations = append(cluster.Spec.WorkerNodeGroupConfigurations, *wng)
+	expected := []v1alpha1.KubernetesVersion{v1alpha1.Kube121, v1alpha1.Kube120}
+	g.Expect(cluster.KubernetesVersions()).To(Equal(expected))
+}

@@ -18,7 +18,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	filewritermock "github.com/aws/eks-anywhere/pkg/filewriter/mocks"
 	"github.com/aws/eks-anywhere/pkg/types"
-	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
 func TestInstallAWSIAMAuth(t *testing.T) {
@@ -57,20 +56,7 @@ func TestInstallAWSIAMAuth(t *testing.T) {
 				},
 			},
 		},
-		VersionsBundle: &cluster.VersionsBundle{
-			VersionsBundle: &releasev1.VersionsBundle{
-				Eksa: releasev1.EksaBundle{
-					DiagnosticCollector: releasev1.Image{
-						URI: "public.ecr.aws/eks-anywhere/diagnostic-collector:v0.9.1-eks-a-10",
-					},
-				},
-			},
-			KubeDistro: &cluster.KubeDistro{
-				AwsIamAuthImage: releasev1.Image{
-					URI: "public.ecr.aws/eks-distro/kubernetes-sigs/aws-iam-authenticator:v0.5.2-eks-1-18-11",
-				},
-			},
-		},
+		VersionsBundles: test.VersionsBundlesMap(),
 		AWSIamConfig: &v1alpha1.AWSIamConfig{
 			Spec: v1alpha1.AWSIamConfigSpec{
 				AWSRegion:   "test-region",
@@ -163,20 +149,7 @@ func TestInstallAWSIAMAuthErrors(t *testing.T) {
 						},
 					},
 				},
-				VersionsBundle: &cluster.VersionsBundle{
-					VersionsBundle: &releasev1.VersionsBundle{
-						Eksa: releasev1.EksaBundle{
-							DiagnosticCollector: releasev1.Image{
-								URI: "public.ecr.aws/eks-anywhere/diagnostic-collector:v0.9.1-eks-a-10",
-							},
-						},
-					},
-					KubeDistro: &cluster.KubeDistro{
-						AwsIamAuthImage: releasev1.Image{
-							URI: "public.ecr.aws/eks-distro/kubernetes-sigs/aws-iam-authenticator:v0.5.2-eks-1-18-11",
-						},
-					},
-				},
+				VersionsBundles: test.VersionsBundlesMap(),
 				AWSIamConfig: &v1alpha1.AWSIamConfig{
 					Spec: v1alpha1.AWSIamConfigSpec{
 						AWSRegion:   "test-region",
@@ -320,20 +293,7 @@ func TestUpgradeAWSIAMAuth(t *testing.T) {
 				},
 			},
 		},
-		VersionsBundle: &cluster.VersionsBundle{
-			VersionsBundle: &releasev1.VersionsBundle{
-				Eksa: releasev1.EksaBundle{
-					DiagnosticCollector: releasev1.Image{
-						URI: "public.ecr.aws/eks-anywhere/diagnostic-collector:v0.9.1-eks-a-10",
-					},
-				},
-			},
-			KubeDistro: &cluster.KubeDistro{
-				AwsIamAuthImage: releasev1.Image{
-					URI: "public.ecr.aws/eks-distro/kubernetes-sigs/aws-iam-authenticator:v0.5.2-eks-1-18-11",
-				},
-			},
-		},
+		VersionsBundles: test.VersionsBundlesMap(),
 		AWSIamConfig: &v1alpha1.AWSIamConfig{
 			Spec: v1alpha1.AWSIamConfigSpec{
 				AWSRegion:   "test-region",
