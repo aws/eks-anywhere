@@ -32,6 +32,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/curatedpackages"
 	"github.com/aws/eks-anywhere/pkg/registrymirror"
 	"github.com/aws/eks-anywhere/pkg/utils/ptr"
+	"github.com/aws/eks-anywhere/pkg/validations"
 	"github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
@@ -359,6 +360,15 @@ func (r *ClusterReconciler) preClusterProviderReconcile(ctx context.Context, log
 	if cluster.IsManaged() {
 		if err := r.clusterValidator.ValidateManagementClusterName(ctx, log, cluster); err != nil {
 			cluster.SetFailure(anywherev1.ManagementClusterRefInvalidReason, err.Error())
+			return controller.Result{}, err
+		}
+
+		mgmt, err := getManagementCluster(ctx, cluster, r.client)
+		if err != nil {
+			return controller.Result{}, err
+		}
+
+		if err := validations.ValidateManagementEksaVersion(mgmt, cluster); err != nil {
 			return controller.Result{}, err
 		}
 	}
