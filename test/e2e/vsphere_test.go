@@ -2271,6 +2271,32 @@ func TestVSphereKubernetes124UbuntuUpgradeFromLatestMinorRelease(t *testing.T) {
 	)
 }
 
+func TestVSphereKubernetes127RedhatUpgradeFromLatestMinorRelease(t *testing.T) {
+	release := latestMinorRelease(t)
+	provider := framework.NewVSphere(t,
+		framework.WithVSphereFillers(
+			api.WithOsFamilyForAllMachines(v1alpha1.RedHat),
+		),
+		framework.WithRedhatForRelease(release, v1alpha1.Kube127),
+	)
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127)),
+		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
+	)
+	runUpgradeFromReleaseFlow(
+		test,
+		release,
+		v1alpha1.Kube127,
+		provider.WithProviderUpgrade(
+			provider.Redhat127Template(), // Set the template so it doesn't get autoimported
+		),
+	)
+}
+
 func TestVSphereKubernetes126WithOIDCManagementClusterUpgradeFromLatestSideEffects(t *testing.T) {
 	provider := framework.NewVSphere(t)
 	runTestManagementClusterUpgradeSideEffects(t, provider, v1alpha1.Ubuntu, v1alpha1.Kube126)
@@ -2448,6 +2474,33 @@ func TestVSphereKubernetes127BottlerocketAndRemoveWorkerNodeGroups(t *testing.T)
 				api.WithCount(1),
 			),
 		),
+	)
+}
+
+func TestVSphereKubernetes126To127RedhatUpgradeFromLatestMinorRelease(t *testing.T) {
+	release := latestMinorRelease(t)
+	provider := framework.NewVSphere(t,
+		framework.WithVSphereFillers(
+			api.WithOsFamilyForAllMachines(v1alpha1.RedHat),
+		),
+		framework.WithRedhatForRelease(release, v1alpha1.Kube126),
+	)
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube126)),
+		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
+	)
+	runUpgradeFromReleaseFlow(
+		test,
+		release,
+		v1alpha1.Kube127,
+		provider.WithProviderUpgrade(
+			provider.Redhat127Template(), // Set the template so it doesn't get auto-imported
+		),
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube127)),
 	)
 }
 
