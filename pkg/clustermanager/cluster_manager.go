@@ -719,7 +719,9 @@ func (c *ClusterManager) EKSAClusterSpecChanged(ctx context.Context, clus *types
 }
 
 func compareEKSAClusterSpec(ctx context.Context, currentClusterSpec, newClusterSpec *cluster.Spec) (bool, error) {
-	for version, newVersionsBundle := range newClusterSpec.VersionsBundles {
+	versions := newClusterSpec.Cluster.KubernetesVersions()
+	for _, version := range versions {
+		newVersionsBundle := newClusterSpec.VersionsBundles[version]
 		currentVersionsBundle, ok := currentClusterSpec.VersionsBundles[version]
 		if !ok {
 			logger.V(3).Info("New versions bundle detected")
