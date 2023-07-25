@@ -17,7 +17,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/validations"
 	"github.com/aws/eks-anywhere/pkg/validations/createvalidations"
 	"github.com/aws/eks-anywhere/pkg/validations/mocks"
-	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
 type preflightValidationsTest struct {
@@ -83,17 +82,10 @@ func TestPreFlightValidationsWorkloadCluster(t *testing.T) {
 		},
 	}
 
-	mgmtBundle := &releasev1alpha1.Bundles{
-		Spec: releasev1alpha1.BundlesSpec{
-			Number: tt.c.Opts.Spec.Bundles.Spec.Number + 1,
-		},
-	}
-
 	tt.k.EXPECT().GetClusters(tt.ctx, tt.c.Opts.WorkloadCluster).Return(nil, nil)
 	tt.k.EXPECT().ValidateClustersCRD(tt.ctx, tt.c.Opts.WorkloadCluster).Return(nil)
 	tt.k.EXPECT().ValidateEKSAClustersCRD(tt.ctx, tt.c.Opts.WorkloadCluster).Return(nil)
 	tt.k.EXPECT().GetEksaCluster(tt.ctx, tt.c.Opts.ManagementCluster, mgmtClusterName).Return(mgmt, nil).MaxTimes(3)
-	tt.k.EXPECT().GetBundles(tt.ctx, tt.c.Opts.ManagementCluster.KubeconfigFile, mgmt.Spec.BundlesRef.Name, mgmt.Spec.BundlesRef.Namespace).Return(mgmtBundle, nil)
 
 	tt.Expect(validations.ProcessValidationResults(tt.c.PreflightValidations(tt.ctx))).To(Succeed())
 }
