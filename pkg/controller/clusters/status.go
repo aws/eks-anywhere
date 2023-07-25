@@ -22,6 +22,11 @@ func UpdateClusterStatusForControlPlane(ctx context.Context, client client.Clien
 		return errors.Wrapf(err, "getting kubeadmcontrolplane")
 	}
 
+	if kcp == nil {
+		conditions.Set(cluster, controlPlaneInitializationInProgressCondition())
+		return nil
+	}
+
 	updateControlPlaneInitializedCondition(cluster, kcp)
 	updateControlPlaneReadyCondition(cluster, kcp)
 
@@ -134,11 +139,6 @@ func updateControlPlaneReadyCondition(cluster *anywherev1.Cluster, kcp *controlp
 func updateControlPlaneInitializedCondition(cluster *anywherev1.Cluster, kcp *controlplanev1.KubeadmControlPlane) {
 	// Return early if the ControlPlaneInitializedCondition is already "True"
 	if conditions.IsTrue(cluster, anywherev1.ControlPlaneInitializedCondition) {
-		return
-	}
-
-	if kcp == nil {
-		conditions.Set(cluster, controlPlaneInitializationInProgressCondition())
 		return
 	}
 
