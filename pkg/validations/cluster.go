@@ -93,30 +93,6 @@ func ValidateManagementClusterName(ctx context.Context, k KubectlClient, mgmtClu
 	return nil
 }
 
-// ValidateManagementClusterBundlesVersion checks if management cluster's bundle version
-// is greater than or equal to the bundle version used to upgrade a workload cluster.
-func ValidateManagementClusterBundlesVersion(ctx context.Context, k KubectlClient, mgmtCluster *types.Cluster, workload *cluster.Spec) error {
-	cluster, err := k.GetEksaCluster(ctx, mgmtCluster, mgmtCluster.Name)
-	if err != nil {
-		return err
-	}
-
-	if cluster.Spec.BundlesRef == nil {
-		return fmt.Errorf("management cluster bundlesRef cannot be nil")
-	}
-
-	mgmtBundles, err := k.GetBundles(ctx, mgmtCluster.KubeconfigFile, cluster.Spec.BundlesRef.Name, cluster.Spec.BundlesRef.Namespace)
-	if err != nil {
-		return err
-	}
-
-	if mgmtBundles.Spec.Number < workload.Bundles.Spec.Number {
-		return fmt.Errorf("cannot upgrade workload cluster with bundle spec.number %d while management cluster %s is on older bundle spec.number %d", workload.Bundles.Spec.Number, mgmtCluster.Name, mgmtBundles.Spec.Number)
-	}
-
-	return nil
-}
-
 // ValidateEksaVersion ensures that the version matches EKS-A CLI.
 func ValidateEksaVersion(ctx context.Context, cliVersion string, workload *cluster.Spec) error {
 	v := workload.Cluster.Spec.EksaVersion
