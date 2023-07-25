@@ -20,6 +20,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
+	"github.com/aws/eks-anywhere/pkg/semver"
 )
 
 const (
@@ -201,6 +202,7 @@ var clusterConfigValidations = []func(*Cluster) error{
 	validateCPUpgradeRolloutStrategy,
 	validateControlPlaneLabels,
 	validatePackageControllerConfiguration,
+	validateEksaVersion,
 }
 
 // GetClusterConfig parses a Cluster object from a multiobject yaml file in disk
@@ -858,5 +860,20 @@ func validatePackageControllerConfiguration(clusterConfig *Cluster) error {
 			}
 		}
 	}
+	return nil
+}
+
+func validateEksaVersion(clusterConfig *Cluster) error {
+	if clusterConfig.Spec.BundlesRef != nil && clusterConfig.Spec.EksaVersion != nil {
+		return fmt.Errorf("cannot pass both bundlesRef and eksaVersion. New clusters should use eksaVersion instead of bundlesRef")
+	}
+
+	if clusterConfig.Spec.EksaVersion != nil {
+		_, err := semver.New(string(*clusterConfig.Spec.EksaVersion))
+		if err != nil {
+			return fmt.Errorf("eksaVersion is not a valid semver")
+		}
+	}
+
 	return nil
 }
