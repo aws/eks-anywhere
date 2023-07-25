@@ -20,6 +20,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/version"
+	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/api/v1beta1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	addons "sigs.k8s.io/cluster-api/exp/addons/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -34,6 +35,7 @@ import (
 	mockexecutables "github.com/aws/eks-anywhere/pkg/executables/mocks"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/utils/ptr"
+	"github.com/aws/eks-anywhere/test/framework"
 )
 
 const (
@@ -2907,6 +2909,52 @@ func TestGetUnprovisionedTinkerbellHardware_MarshallingError(t *testing.T) {
 
 	_, err := tt.k.GetUnprovisionedTinkerbellHardware(tt.ctx, kubeconfig, tt.namespace)
 	tt.Expect(err).NotTo(BeNil())
+}
+
+func TestGetVsphereMachine(t *testing.T) {
+	t.Parallel()
+	tt := newKubectlTest(t)
+	vsphereMachineJSON := test.ReadFile(t, "testdata/kubectl_vspheremachine.json")
+	expect := []vspherev1.VSphereMachine{
+		{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "VSphereMachine",
+				APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "testcluster-control-plane-template-1234-1234",
+				Namespace: constants.EksaSystemNamespace,
+				Labels: map[string]string{
+					"cluster.x-k8s.io/control-plane": "",
+				},
+			},
+			Spec: vspherev1.VSphereMachineSpec{
+				VirtualMachineCloneSpec: vspherev1.VirtualMachineCloneSpec{
+					Template: "test-template",
+				},
+			},
+		},
+	}
+
+	selector := framework.ControlPlaneMachineLabel
+	params := []string{"get", "vspheremachines", "-o", "json", "--namespace", constants.EksaSystemNamespace, "--kubeconfig", tt.cluster.KubeconfigFile, "--selector=" + selector}
+	tt.e.EXPECT().Execute(tt.ctx, gomock.Eq(params)).Return(*bytes.NewBufferString(vsphereMachineJSON), nil)
+
+	got, err := tt.k.GetVsphereMachine(tt.ctx, tt.cluster.KubeconfigFile, selector)
+	tt.Expect(err).To(Succeed())
+	tt.Expect(got).To(Equal(expect))
+}
+
+func TestGetVsphereMachineFail(t *testing.T) {
+	t.Parallel()
+	tt := newKubectlTest(t)
+
+	selector := framework.ControlPlaneMachineLabel
+	params := []string{"get", "vspheremachines", "-o", "json", "--namespace", constants.EksaSystemNamespace, "--kubeconfig", tt.cluster.KubeconfigFile, "--selector=" + selector}
+	tt.e.EXPECT().Execute(tt.ctx, gomock.Eq(params)).Return(bytes.Buffer{}, errors.New("error"))
+
+	_, err := tt.k.GetVsphereMachine(tt.ctx, tt.cluster.KubeconfigFile, selector)
+	tt.Expect(err).To(MatchError(ContainSubstring("getting VSphere machine: error")))
 }
 
 func TestGetUnprovisionedTinkerbellHardware_ExecutableErrors(t *testing.T) {

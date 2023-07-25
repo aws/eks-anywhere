@@ -97,6 +97,13 @@ func WithTemplateForAllMachines(value string) VSphereFiller {
 	}
 }
 
+// WithMachineTemplate configs template in machine config.
+func WithMachineTemplate(machineConfigName string, template string) VSphereFiller {
+	return func(config VSphereConfig) {
+		config.machineConfigs[machineConfigName].Spec.Template = template
+	}
+}
+
 func WithStoragePolicyNameForAllMachines(value string) VSphereFiller {
 	return func(config VSphereConfig) {
 		for _, m := range config.machineConfigs {
