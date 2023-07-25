@@ -1183,7 +1183,7 @@ func (p *vsphereProvider) PreCoreComponentsUpgrade(
 	clusterSpec *cluster.Spec,
 ) error {
 	// This is only needed for EKS-A v0.17 because UDP offloading needs to be disabled for
-	// the new Cilium version to work with VSphere clusters. Since our templates that were shipped
+	// the new Cilium version to work with VSphere clusters with Redhat OS family. Since our templates that were shipped
 	// in v0.16 releases still have UDP offloading enabled in the nodes, we must apply the daemon set
 	// to disable UDP offloading in all the nodes before upgrading Cilium.
 	// We will remove this in EKS-A release v0.18.0.
@@ -1192,9 +1192,9 @@ func (p *vsphereProvider) PreCoreComponentsUpgrade(
 
 func (p *vsphereProvider) applyEthtoolDaemonSet(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
 	for _, mc := range clusterSpec.Config.VSphereMachineConfigs {
-		// This is only needed for Ubuntu and Redhat OS.
+		// This is only needed for Redhat OS.
 		// We only need to check one since the OS family has to be the same for all machine configs
-		if mc.Spec.OSFamily == v1alpha1.Bottlerocket {
+		if mc.Spec.OSFamily != v1alpha1.RedHat {
 			return nil
 		}
 	}

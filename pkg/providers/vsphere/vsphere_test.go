@@ -47,6 +47,7 @@ const (
 	testClusterConfigMain121CPOnlyFilename = "cluster_main_121_cp_only.yaml"
 	testClusterConfigWithCPUpgradeStrategy = "cluster_main_121_cp_upgrade_strategy.yaml"
 	testClusterConfigWithMDUpgradeStrategy = "cluster_main_121_md_upgrade_strategy.yaml"
+	testClusterConfigRedhatFilename        = "cluster_redhat_external_etcd.yaml"
 	testDataDir                            = "testdata"
 	expectedVSphereName                    = "vsphere"
 	expectedVSphereUsername                = "vsphere_username"
@@ -3807,9 +3808,9 @@ func TestProviderGenerateDeploymentFileForBottlerocketWithTrustedCertBundles(t *
 
 func TestPreCoreComponentsUpgradeSuccess(t *testing.T) {
 	ctx := context.Background()
-	datacenterConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
-	clusterConfig := givenClusterConfig(t, testClusterConfigMainFilename)
-	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
+	datacenterConfig := givenDatacenterConfig(t, testClusterConfigRedhatFilename)
+	clusterConfig := givenClusterConfig(t, testClusterConfigRedhatFilename)
+	clusterSpec := givenClusterSpec(t, testClusterConfigRedhatFilename)
 	mockCtrl := gomock.NewController(t)
 	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
 	ipValidator := mocks.NewMockIPValidator(mockCtrl)
@@ -3879,9 +3880,9 @@ func TestPreCoreComponentsUpgradeBottlerocketNoOpSuccess(t *testing.T) {
 
 func TestPreCoreComponentsUpgradeApplyError(t *testing.T) {
 	ctx := context.Background()
-	datacenterConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
-	clusterConfig := givenClusterConfig(t, testClusterConfigMainFilename)
-	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
+	datacenterConfig := givenDatacenterConfig(t, testClusterConfigRedhatFilename)
+	clusterConfig := givenClusterConfig(t, testClusterConfigRedhatFilename)
+	clusterSpec := givenClusterSpec(t, testClusterConfigRedhatFilename)
 	mockCtrl := gomock.NewController(t)
 	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
 	ipValidator := mocks.NewMockIPValidator(mockCtrl)
@@ -3916,9 +3917,9 @@ func TestPreCoreComponentsUpgradeApplyError(t *testing.T) {
 
 func TestPreCoreComponentsUpgradeDSNotReadyError(t *testing.T) {
 	ctx := context.Background()
-	datacenterConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
-	clusterConfig := givenClusterConfig(t, testClusterConfigMainFilename)
-	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
+	datacenterConfig := givenDatacenterConfig(t, testClusterConfigRedhatFilename)
+	clusterConfig := givenClusterConfig(t, testClusterConfigRedhatFilename)
+	clusterSpec := givenClusterSpec(t, testClusterConfigRedhatFilename)
 	mockCtrl := gomock.NewController(t)
 	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
 	ipValidator := mocks.NewMockIPValidator(mockCtrl)
@@ -3964,8 +3965,8 @@ func TestPreCoreComponentsUpgradeDSNotReadyError(t *testing.T) {
 
 func TestPostBootstrapDeleteForUpgradeSuccess(t *testing.T) {
 	ctx := context.Background()
-	datacenterConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
-	clusterConfig := givenClusterConfig(t, testClusterConfigMainFilename)
+	datacenterConfig := givenDatacenterConfig(t, testClusterConfigRedhatFilename)
+	clusterConfig := givenClusterConfig(t, testClusterConfigRedhatFilename)
 	mockCtrl := gomock.NewController(t)
 	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
 	ipValidator := mocks.NewMockIPValidator(mockCtrl)
@@ -3983,8 +3984,8 @@ func TestPostBootstrapDeleteForUpgradeSuccess(t *testing.T) {
 
 func TestPostBootstrapDeleteForUpgradeError(t *testing.T) {
 	ctx := context.Background()
-	datacenterConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
-	clusterConfig := givenClusterConfig(t, testClusterConfigMainFilename)
+	datacenterConfig := givenDatacenterConfig(t, testClusterConfigRedhatFilename)
+	clusterConfig := givenClusterConfig(t, testClusterConfigRedhatFilename)
 	mockCtrl := gomock.NewController(t)
 	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
 	ipValidator := mocks.NewMockIPValidator(mockCtrl)
