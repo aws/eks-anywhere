@@ -528,14 +528,14 @@ mocks: ## Generate mocks
 	${MOCKGEN} -destination=pkg/providers/vsphere/setupuser/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/providers/vsphere/setupuser" GovcClient
 	${MOCKGEN} -destination=pkg/govmomi/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/govmomi" VSphereClient,VMOMIAuthorizationManager,VMOMIFinder,VMOMISessionBuilder,VMOMIFinderBuilder,VMOMIAuthorizationManagerBuilder
 	${MOCKGEN} -destination=pkg/filewriter/mocks/filewriter.go -package=mocks "github.com/aws/eks-anywhere/pkg/filewriter" FileWriter
-	${MOCKGEN} -destination=pkg/clustermanager/mocks/client_and_networking.go -package=mocks "github.com/aws/eks-anywhere/pkg/clustermanager" ClusterClient,Networking,AwsIamAuth,EKSAComponents,KubernetesClient
+	${MOCKGEN} -destination=pkg/clustermanager/mocks/client_and_networking.go -package=mocks "github.com/aws/eks-anywhere/pkg/clustermanager" ClusterClient,Networking,AwsIamAuth,EKSAComponents,KubernetesClient,ClientFactory
 	${MOCKGEN} -destination=pkg/gitops/flux/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/gitops/flux" FluxClient,KubeClient,GitOpsFluxClient,GitClient,Templater
 	${MOCKGEN} -destination=pkg/task/mocks/task.go -package=mocks "github.com/aws/eks-anywhere/pkg/task" Task
 	${MOCKGEN} -destination=pkg/bootstrapper/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/bootstrapper" KindClient,KubernetesClient
 	${MOCKGEN} -destination=pkg/bootstrapper/mocks/bootstrapper.go -package=mocks "github.com/aws/eks-anywhere/pkg/bootstrapper" ClusterClient
 	${MOCKGEN} -destination=pkg/git/providers/github/mocks/github.go -package=mocks "github.com/aws/eks-anywhere/pkg/git/providers/github" GithubClient
 	${MOCKGEN} -destination=pkg/git/mocks/git.go -package=mocks "github.com/aws/eks-anywhere/pkg/git" Client,ProviderClient
-	${MOCKGEN} -destination=pkg/workflows/interfaces/mocks/clients.go -package=mocks "github.com/aws/eks-anywhere/pkg/workflows/interfaces" Bootstrapper,ClusterManager,GitOpsManager,Validator,CAPIManager,EksdInstaller,EksdUpgrader,PackageInstaller,ClusterUpgrader
+	${MOCKGEN} -destination=pkg/workflows/interfaces/mocks/clients.go -package=mocks "github.com/aws/eks-anywhere/pkg/workflows/interfaces" Bootstrapper,ClusterManager,GitOpsManager,Validator,CAPIManager,EksdInstaller,EksdUpgrader,PackageInstaller
 	${MOCKGEN} -destination=pkg/git/gogithub/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/git/gogithub" Client
 	${MOCKGEN} -destination=pkg/git/gitclient/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/git/gitclient" GoGit
 	${MOCKGEN} -destination=pkg/validations/mocks/docker.go -package=mocks "github.com/aws/eks-anywhere/pkg/validations" DockerExecutable
@@ -601,7 +601,6 @@ mocks: ## Generate mocks
 	${MOCKGEN} -destination=pkg/controller/clusters/mocks/ipvalidator.go -package=mocks -source "pkg/controller/clusters/ipvalidator.go" IPUniquenessValidator
 	${MOCKGEN} -destination=pkg/registry/mocks/storage.go -package=mocks -source "pkg/registry/storage.go" StorageClient
 	${MOCKGEN} -destination=pkg/registry/mocks/repository.go -package=mocks oras.land/oras-go/v2/registry Repository
-	${MOCKGEN} -destination=pkg/clustermanager/mocks/kube_proxy.go -package=mocks -source "pkg/clustermanager/kube_proxy.go"
 
 .PHONY: verify-mocks
 verify-mocks: mocks ## Verify if mocks need to be updated

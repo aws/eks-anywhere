@@ -98,6 +98,12 @@ type ClusterManager struct {
 	clusterctlMoveTimeout            time.Duration
 }
 
+// ClientFactory builds Kubernetes clients.
+type ClientFactory interface {
+	// BuildClientFromKubeconfig builds a Kubernetes client from a kubeconfig file.
+	BuildClientFromKubeconfig(kubeconfigPath string) (kubernetes.Client, error)
+}
+
 type ClusterClient interface {
 	KubernetesClient
 	BackupManagement(ctx context.Context, cluster *types.Cluster, managementStatePath string) error
