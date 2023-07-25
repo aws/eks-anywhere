@@ -8,7 +8,8 @@ import (
 )
 
 const (
-	cloudstackRegex = `^.*CloudStack.*$`
+	cloudstackRegex   = `^.*CloudStack.*$`
+	cloudstackCidrVar = "T_CLOUDSTACK_CIDR"
 )
 
 func (e *E2ESession) setupCloudStackEnv(testRegex string) error {
