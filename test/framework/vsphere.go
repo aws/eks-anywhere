@@ -588,6 +588,11 @@ func (v *VSphere) Bottlerocket127Template() api.VSphereFiller {
 	return api.WithTemplateForAllMachines(v.templateForDevRelease(anywherev1.Bottlerocket, anywherev1.Kube127))
 }
 
+// Redhat127Template returns vsphere filler for 1.27 Redhat.
+func (v *VSphere) Redhat127Template() api.VSphereFiller {
+	return api.WithTemplateForAllMachines(v.templateForDevRelease(anywherev1.RedHat, anywherev1.Kube127))
+}
+
 func (v *VSphere) getDevRelease() *releasev1.EksARelease {
 	v.t.Helper()
 	if v.devRelease == nil {
@@ -648,6 +653,11 @@ func WithUbuntuForRelease(release *releasev1.EksARelease, kubeVersion anywherev1
 
 func WithBottlerocketFromRelease(release *releasev1.EksARelease, kubeVersion anywherev1.KubernetesVersion) VSphereOpt {
 	return optionToSetTemplateForRelease(anywherev1.Bottlerocket, release, kubeVersion)
+}
+
+// WithRedhatForRelease sets the redhat template for the given release.
+func WithRedhatForRelease(release *releasev1.EksARelease, kubeVersion anywherev1.KubernetesVersion) VSphereOpt {
+	return optionToSetTemplateForRelease(anywherev1.RedHat, release, kubeVersion)
 }
 
 func (v *VSphere) WithBottleRocketForRelease(release *releasev1.EksARelease, kubeVersion anywherev1.KubernetesVersion) api.ClusterConfigFiller {
