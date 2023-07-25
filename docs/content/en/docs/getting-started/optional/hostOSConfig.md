@@ -12,14 +12,14 @@ description: >
 You can configure certain host OS settings through EKS Anywhere.
 
 {{% alert title="Note" color="primary" %}}
-Currently, these settings are only supported for vSphere, Tinkerbell and Snow providers.<br>
+Currently, these settings are only supported for vSphere and Tinkerbell providers.<br>
 Additionally, settings under `bottlerocketConfiguration` are only supported for `osFamily: bottlerocket`
 {{% /alert %}}
 
 The following cluster spec shows an example of how to configure host OS settings:
 ```yaml
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
-kind: VSphereMachineConfig        # Replace the kind with "TinkerbellMachineConfig", or "SnowMachineConfig"
+kind: VSphereMachineConfig        # Replace "VSphereMachineConfig" with "TinkerbellMachineConfig" for Tinkerbell clusters
 metadata:
   name: machine-config
 spec:
