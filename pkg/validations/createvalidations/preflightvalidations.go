@@ -91,13 +91,6 @@ func (v *CreateValidations) PreflightValidations(ctx context.Context) []validati
 			},
 			func() *validations.ValidationResult {
 				return &validations.ValidationResult{
-					Name:        "validate management cluster bundle version compatibility",
-					Remediation: fmt.Sprintf("upgrade management cluster %s before creating workload cluster %s", v.Opts.Spec.Cluster.ManagedBy(), v.Opts.WorkloadCluster.Name),
-					Err:         validations.ValidateManagementClusterBundlesVersion(ctx, k, v.Opts.ManagementCluster, v.Opts.Spec),
-				}
-			},
-			func() *validations.ValidationResult {
-				return &validations.ValidationResult{
 					Name:        "validate management cluster eksaVersion compatibility",
 					Remediation: fmt.Sprintf("upgrade management cluster %s before creating workload cluster %s", v.Opts.Spec.Cluster.ManagedBy(), v.Opts.WorkloadCluster.Name),
 					Err:         validations.ValidateManagementClusterEksaVersion(ctx, k, v.Opts.ManagementCluster, v.Opts.Spec),
