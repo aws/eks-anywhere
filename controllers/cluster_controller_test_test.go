@@ -19,6 +19,7 @@ import (
 
 	"github.com/aws/eks-anywhere/controllers"
 	"github.com/aws/eks-anywhere/controllers/mocks"
+	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/internal/test/envtest"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
@@ -152,11 +153,15 @@ func TestClusterReconcilerEnsureOwnerReferences(t *testing.T) {
 func TestClusterReconcilerReconcileChildObjectNotFound(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
+	version := test.DevEksaVersion()
 
 	managementCluster := &anywherev1.Cluster{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "my-management-cluster",
 			Namespace: "my-namespace",
+		},
+		Spec: anywherev1.ClusterSpec{
+			EksaVersion: &version,
 		},
 	}
 
@@ -226,7 +231,7 @@ func TestClusterReconcilerManagementClusterNotFound(t *testing.T) {
 	api := envtest.NewAPIExpecter(t, cl)
 
 	r := controllers.NewClusterReconciler(cl, newRegistryForDummyProviderReconciler(), newMockAWSIamConfigReconciler(t), newMockClusterValidator(t), nil)
-	g.Expect(r.Reconcile(ctx, clusterRequest(cluster))).Error().To(MatchError(ContainSubstring("\"my-management-cluster\" not found")))
+	g.Expect(r.Reconcile(ctx, clusterRequest(cluster))).Error().To(BeNil())
 	c := envtest.CloneNameNamespace(cluster)
 	api.ShouldEventuallyMatch(ctx, c, func(g Gomega) {
 		g.Expect(c.Status.FailureMessage).To(HaveValue(Equal("Management cluster my-management-cluster does not exist")))
@@ -315,14 +320,69 @@ func TestClusterReconcilerSetBundlesRef(t *testing.T) {
 	g.Expect(newCluster.Spec.BundlesRef).To(Equal(mgmtCluster.Spec.BundlesRef))
 }
 
+func TestClusterReconcilerSetDefaultEksaVersion(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+	version := test.DevEksaVersion()
+
+	managementCluster := &anywherev1.Cluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "my-management-cluster",
+		},
+		Spec: anywherev1.ClusterSpec{
+			EksaVersion: &version,
+		},
+		Status: anywherev1.ClusterStatus{
+			ReconciledGeneration: 1,
+		},
+	}
+
+	cluster := &anywherev1.Cluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "my-cluster",
+		},
+		Spec: anywherev1.ClusterSpec{
+			KubernetesVersion: "v1.25",
+		},
+		Status: anywherev1.ClusterStatus{
+			ReconciledGeneration: 1,
+		},
+	}
+	cluster.SetManagedBy("my-management-cluster")
+
+	objs := []runtime.Object{cluster, managementCluster}
+	cb := fake.NewClientBuilder()
+	cl := cb.WithRuntimeObjects(objs...).Build()
+
+	mgmtCluster := &anywherev1.Cluster{}
+	g.Expect(cl.Get(ctx, client.ObjectKey{Namespace: cluster.Namespace, Name: managementCluster.Name}, mgmtCluster)).To(Succeed())
+	pcc := newMockPackagesClient(t)
+	pcc.EXPECT().Reconcile(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
+
+	validator := newMockClusterValidator(t)
+	validator.EXPECT().ValidateManagementClusterName(ctx, gomock.AssignableToTypeOf(logr.Logger{}), gomock.AssignableToTypeOf(cluster)).Return(nil)
+
+	r := controllers.NewClusterReconciler(cl, newRegistryForDummyProviderReconciler(), newMockAWSIamConfigReconciler(t), validator, pcc)
+	_, err := r.Reconcile(ctx, clusterRequest(cluster))
+	g.Expect(err).ToNot(HaveOccurred())
+
+	newCluster := &anywherev1.Cluster{}
+	g.Expect(cl.Get(ctx, client.ObjectKey{Namespace: cluster.Namespace, Name: "my-cluster"}, newCluster)).To(Succeed())
+	g.Expect(newCluster.Spec.EksaVersion).To(Equal(mgmtCluster.Spec.EksaVersion))
+}
+
 func TestClusterReconcilerWorkloadClusterMgmtClusterNameFail(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
+	version := test.DevEksaVersion()
 
 	managementCluster := &anywherev1.Cluster{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "my-management-cluster",
 			Namespace: "my-namespace",
+		},
+		Spec: anywherev1.ClusterSpec{
+			EksaVersion: &version,
 		},
 		Status: anywherev1.ClusterStatus{
 			ReconciledGeneration: 1,

@@ -19,6 +19,7 @@ type Spec struct {
 	OIDCConfig        *eksav1alpha1.OIDCConfig
 	AWSIamConfig      *eksav1alpha1.AWSIamConfig
 	ManagementCluster *types.Cluster // TODO(g-gaston): cleanup, this doesn't belong here
+	EKSARelease       *v1alpha1.EKSARelease
 }
 
 func (s *Spec) DeepCopy() *Spec {
@@ -32,6 +33,7 @@ func (s *Spec) DeepCopy() *Spec {
 		},
 		eksdRelease: s.eksdRelease.DeepCopy(),
 		Bundles:     s.Bundles.DeepCopy(),
+		EKSARelease: s.EKSARelease.DeepCopy(),
 	}
 }
 
@@ -75,7 +77,7 @@ type VersionedRepository struct {
 }
 
 // NewSpec builds a new [Spec].
-func NewSpec(config *Config, bundles *v1alpha1.Bundles, eksdRelease *eksdv1alpha1.Release) (*Spec, error) {
+func NewSpec(config *Config, bundles *v1alpha1.Bundles, eksdRelease *eksdv1alpha1.Release, eksaRelease *v1alpha1.EKSARelease) (*Spec, error) {
 	s := &Spec{}
 
 	versionsBundle, err := GetVersionsBundle(config.Cluster, bundles)
@@ -95,6 +97,7 @@ func NewSpec(config *Config, bundles *v1alpha1.Bundles, eksdRelease *eksdv1alpha
 		KubeDistro:     kubeDistro,
 	}
 	s.eksdRelease = eksdRelease
+	s.EKSARelease = eksaRelease
 
 	// Get first aws iam config if it exists
 	// Config supports multiple configs because Cluster references a slice

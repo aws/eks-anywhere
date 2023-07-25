@@ -1368,7 +1368,8 @@ func TestClusterEqualManagement(t *testing.T) {
 }
 
 func TestClusterEqualEksaVersion(t *testing.T) {
-	ver := v1alpha1.EksaVersion("v1.0.0")
+	version := test.DevEksaVersion()
+	version2 := v1alpha1.EksaVersion("v1.0.0")
 	testCases := []struct {
 		testName           string
 		version1, version2 *v1alpha1.EksaVersion
@@ -1382,20 +1383,20 @@ func TestClusterEqualEksaVersion(t *testing.T) {
 		},
 		{
 			testName: "one nil, one exists",
-			version1: &test.DevEksaVersion,
+			version1: &version,
 			version2: nil,
 			want:     false,
 		},
 		{
 			testName: "both exist, same",
-			version1: &test.DevEksaVersion,
-			version2: &test.DevEksaVersion,
+			version1: &version,
+			version2: &version,
 			want:     true,
 		},
 		{
 			testName: "both exist, diff",
-			version1: &test.DevEksaVersion,
-			version2: &ver,
+			version1: &version,
+			version2: &version2,
 			want:     false,
 		},
 	}

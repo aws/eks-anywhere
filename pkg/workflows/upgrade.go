@@ -550,6 +550,11 @@ func (s *upgradeWorkloadClusterTask) Run(ctx context.Context, commandContext *ta
 			commandContext.SetError(err)
 			return &CollectDiagnosticsTask{}
 		}
+
+		if err = commandContext.ClusterManager.ApplyReleases(ctx, commandContext.ClusterSpec, eksaManagementCluster); err != nil {
+			commandContext.SetError(err)
+			return &CollectDiagnosticsTask{}
+		}
 	}
 
 	return &moveManagementToWorkloadTask{}
