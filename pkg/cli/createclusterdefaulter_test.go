@@ -19,7 +19,14 @@ func TestNewCreateClusterDefaulter(t *testing.T) {
 	g := NewWithT(t)
 
 	skipIPCheck := cluster.NewControlPlaneIPCheckAnnotationDefaulter(false)
-	mhcDefaulter := cluster.NewMachineHealthCheckDefaulter(constants.DefaultNodeStartupTimeout.String(), constants.DefaultUnhealthyMachineTimeout.String())
+
+	unhealthyTimeout := &metav1.Duration{
+		Duration: constants.DefaultUnhealthyMachineTimeout,
+	}
+	nodeStartupTimeout := &metav1.Duration{
+		Duration: constants.DefaultNodeStartupTimeout,
+	}
+	mhcDefaulter := cluster.NewMachineHealthCheckDefaulter(nodeStartupTimeout, unhealthyTimeout)
 
 	r := defaulting.NewRunner[*anywherev1.Cluster]()
 	r.Register(
@@ -37,7 +44,13 @@ func TestRunWithoutSkipIPAnnotation(t *testing.T) {
 	baseCluster := baseCluster()
 
 	skipIPCheck := cluster.NewControlPlaneIPCheckAnnotationDefaulter(false)
-	mhcDefaulter := cluster.NewMachineHealthCheckDefaulter(constants.DefaultNodeStartupTimeout.String(), constants.DefaultUnhealthyMachineTimeout.String())
+	unhealthyTimeout := &metav1.Duration{
+		Duration: constants.DefaultUnhealthyMachineTimeout,
+	}
+	nodeStartupTimeout := &metav1.Duration{
+		Duration: constants.DefaultNodeStartupTimeout,
+	}
+	mhcDefaulter := cluster.NewMachineHealthCheckDefaulter(nodeStartupTimeout, unhealthyTimeout)
 
 	createClusterDefaulter := cli.NewCreateClusterDefaulter(skipIPCheck, mhcDefaulter)
 	baseCluster, err := createClusterDefaulter.Run(context.Background(), baseCluster)
@@ -54,8 +67,13 @@ func TestRunWithSkipIPAnnotation(t *testing.T) {
 	baseCluster := baseCluster()
 
 	skipIPCheck := cluster.NewControlPlaneIPCheckAnnotationDefaulter(true)
-	mhcDefaulter := cluster.NewMachineHealthCheckDefaulter(constants.DefaultNodeStartupTimeout.String(), constants.DefaultUnhealthyMachineTimeout.String())
-
+	unhealthyTimeout := &metav1.Duration{
+		Duration: constants.DefaultUnhealthyMachineTimeout,
+	}
+	nodeStartupTimeout := &metav1.Duration{
+		Duration: constants.DefaultNodeStartupTimeout,
+	}
+	mhcDefaulter := cluster.NewMachineHealthCheckDefaulter(nodeStartupTimeout, unhealthyTimeout)
 	createClusterDefaulter := cli.NewCreateClusterDefaulter(skipIPCheck, mhcDefaulter)
 	baseCluster, err := createClusterDefaulter.Run(context.Background(), baseCluster)
 

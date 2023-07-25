@@ -109,7 +109,10 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 		return err
 	}
 
-	createCLIConfig := buildCreateCliConfig(cc)
+	createCLIConfig, err := buildCreateCliConfig(cc)
+	if err != nil {
+		return err
+	}
 
 	clusterManagerTimeoutOpts, err := buildClusterManagerOpts(cc.timeoutOptions, clusterSpec.Cluster.Spec.DatacenterRef.Kind)
 	if err != nil {

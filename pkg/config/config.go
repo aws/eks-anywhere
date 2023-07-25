@@ -1,5 +1,9 @@
 package config
 
+import (
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
+
 const (
 	EksaGitPassphraseTokenEnv = "EKSA_GIT_SSH_KEY_PASSPHRASE"
 	EksaGitPrivateKeyTokenEnv = "EKSA_GIT_PRIVATE_KEY"
@@ -22,12 +26,12 @@ type CliConfig struct {
 // CreateClusterCLIConfig is the config we use for create cluster specific configurations.
 type CreateClusterCLIConfig struct {
 	SkipCPIPCheck           bool
-	NodeStartupTimeout      string
-	UnhealthyMachineTimeout string
+	NodeStartupTimeout      *metav1.Duration
+	UnhealthyMachineTimeout *metav1.Duration
 }
 
 // UpgradeClusterCLIConfig is the config we use for create cluster specific configurations.
 type UpgradeClusterCLIConfig struct {
-	NodeStartupTimeout      string
-	UnhealthyMachineTimeout string
+	NodeStartupTimeout      *metav1.Duration
+	UnhealthyMachineTimeout *metav1.Duration
 }

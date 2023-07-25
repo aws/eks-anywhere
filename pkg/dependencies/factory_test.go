@@ -64,8 +64,12 @@ func newTest(t *testing.T, p provider) *factoryTest {
 	}
 
 	upgradeCLIConfig := config.UpgradeClusterCLIConfig{
-		NodeStartupTimeout:      "10m0s",
-		UnhealthyMachineTimeout: "5m0s",
+		NodeStartupTimeout: &v1.Duration{
+			Duration: 5 * time.Minute,
+		},
+		UnhealthyMachineTimeout: &v1.Duration{
+			Duration: 5 * time.Minute,
+		},
 	}
 
 	return &factoryTest{

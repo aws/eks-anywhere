@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/spf13/pflag"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
@@ -168,35 +169,65 @@ func buildCliConfig(clusterSpec *cluster.Spec) *config.CliConfig {
 	return cliConfig
 }
 
-func buildCreateCliConfig(clusterOptions *createClusterOptions) config.CreateClusterCLIConfig {
+func buildCreateCliConfig(clusterOptions *createClusterOptions) (config.CreateClusterCLIConfig, error) {
 	createCliConfig := config.CreateClusterCLIConfig{}
 	createCliConfig.SkipCPIPCheck = clusterOptions.skipIpCheck
 	if clusterOptions.noTimeouts {
 		maxTime := time.Duration(math.MaxInt64)
-		createCliConfig.NodeStartupTimeout = maxTime.String()
-		createCliConfig.UnhealthyMachineTimeout = maxTime.String()
+		createCliConfig.NodeStartupTimeout.Duration = maxTime
+		createCliConfig.UnhealthyMachineTimeout.Duration = maxTime
 
-		return createCliConfig
+		return createCliConfig, nil
 	}
-	createCliConfig.NodeStartupTimeout = clusterOptions.nodeStartupTimeout
-	createCliConfig.UnhealthyMachineTimeout = clusterOptions.unhealthyMachineTimeout
 
-	return createCliConfig
+	unhealthyMachineTimeout, err := time.ParseDuration(clusterOptions.unhealthyMachineTimeout)
+	if err != nil {
+		return createCliConfig, err
+	}
+
+	nodeStartupTimeout, err := time.ParseDuration(clusterOptions.nodeStartupTimeout)
+	if err != nil {
+		return createCliConfig, err
+	}
+
+	createCliConfig.NodeStartupTimeout = &v1.Duration{
+		Duration: nodeStartupTimeout,
+	}
+	createCliConfig.UnhealthyMachineTimeout = &v1.Duration{
+		Duration: unhealthyMachineTimeout,
+	}
+
+	return createCliConfig, nil
 }
 
-func buildUpgradeCliConfig(clusterOptions *upgradeClusterOptions) config.UpgradeClusterCLIConfig {
+func buildUpgradeCliConfig(clusterOptions *upgradeClusterOptions) (config.UpgradeClusterCLIConfig, error) {
 	upgradeCliConfig := config.UpgradeClusterCLIConfig{}
 	if clusterOptions.noTimeouts {
 		maxTime := time.Duration(math.MaxInt64)
-		upgradeCliConfig.NodeStartupTimeout = maxTime.String()
-		upgradeCliConfig.UnhealthyMachineTimeout = maxTime.String()
+		upgradeCliConfig.NodeStartupTimeout.Duration = maxTime
+		upgradeCliConfig.UnhealthyMachineTimeout.Duration = maxTime
 
-		return upgradeCliConfig
+		return upgradeCliConfig, nil
 	}
-	upgradeCliConfig.NodeStartupTimeout = clusterOptions.nodeStartupTimeout
-	upgradeCliConfig.UnhealthyMachineTimeout = clusterOptions.unhealthyMachineTimeout
 
-	return upgradeCliConfig
+	unhealthyMachineTimeout, err := time.ParseDuration(clusterOptions.unhealthyMachineTimeout)
+	if err != nil {
+		return upgradeCliConfig, err
+	}
+
+	nodeStartupTimeout, err := time.ParseDuration(clusterOptions.nodeStartupTimeout)
+	if err != nil {
+		return upgradeCliConfig, err
+	}
+
+	upgradeCliConfig.NodeStartupTimeout = &v1.Duration{
+		Duration: nodeStartupTimeout,
+	}
+	upgradeCliConfig.UnhealthyMachineTimeout = &v1.Duration{
+		Duration: unhealthyMachineTimeout,
+	}
+
+	return upgradeCliConfig, nil
 }
 
 func getManagementCluster(clusterSpec *cluster.Spec) *types.Cluster {

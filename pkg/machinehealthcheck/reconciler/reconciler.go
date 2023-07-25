@@ -3,7 +3,6 @@ package reconciler
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/go-logr/logr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -35,11 +34,6 @@ func New(client client.Client, defaulter anywhereCluster.MachineHealthCheckDefau
 func (r *Reconciler) Reconcile(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) error {
 	log.Info("Installing machine health checks for workload", "cluster", cluster.Name)
 
-	// clusterSpec, err := anywhereCluster.BuildSpec(ctx, clientutil.NewKubeClient(r.client), cluster)
-	// if err != nil {
-	// 	return err
-	// }
-
 	if cluster.Spec.MachineHealthCheck == nil {
 		mhc, err := machinehealthcheck.GetMachineHealthChecks(ctx, r.client, cluster)
 		if err != nil {
@@ -48,13 +42,13 @@ func (r *Reconciler) Reconcile(ctx context.Context, log logr.Logger, cluster *an
 		if mhc != nil {
 			if mhc.Spec.NodeStartupTimeout != nil {
 				cluster.Spec.MachineHealthCheck = &anywherev1.MachineHealthCheck{
-					NodeStartupTimeout: mhc.Spec.NodeStartupTimeout.Duration.String(),
+					NodeStartupTimeout: mhc.Spec.NodeStartupTimeout,
 				}
 			}
 
 			if len(mhc.Spec.UnhealthyConditions) > 0 {
 				cluster.Spec.MachineHealthCheck = &anywherev1.MachineHealthCheck{
-					UnhealthyMachineTimeout: mhc.Spec.UnhealthyConditions[0].Timeout.Duration.String(),
+					UnhealthyMachineTimeout: &mhc.Spec.UnhealthyConditions[0].Timeout,
 				}
 			}
 		}
@@ -65,19 +59,9 @@ func (r *Reconciler) Reconcile(ctx context.Context, log logr.Logger, cluster *an
 		return err
 	}
 
-	unhealthyMachineTimeout, err := time.ParseDuration(cluster.Spec.MachineHealthCheck.UnhealthyMachineTimeout)
-	if err != nil {
-		return err
-	}
+	mhcObject := clusterapi.MachineHealthCheckObjects(cluster)
 
-	nodeStartupTimeout, err := time.ParseDuration(cluster.Spec.MachineHealthCheck.NodeStartupTimeout)
-	if err != nil {
-		return err
-	}
-
-	mhc := clusterapi.MachineHealthCheckObjects(cluster, unhealthyMachineTimeout, nodeStartupTimeout)
-
-	err = serverside.ReconcileObjects(ctx, r.client, clientutil.ObjectsToClientObjects(mhc))
+	err = serverside.ReconcileObjects(ctx, r.client, clientutil.ObjectsToClientObjects(mhcObject))
 	if err != nil {
 		return fmt.Errorf("applying machine health checks: %v", err)
 	}

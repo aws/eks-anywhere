@@ -1520,10 +1520,10 @@ func (k *Kubectl) GetEksaCluster(ctx context.Context, cluster *types.Cluster, cl
 
 // GetMachineHealthCheck gets machine health check objects for a cluster.
 func (k *Kubectl) GetMachineHealthCheck(ctx context.Context, cluster *types.Cluster, machineHealthCheckName string) (*clusterv1.MachineHealthCheck, error) {
-	params := []string{"get", machineHealthCheckResourceType, "-A", "-o", "jsonpath={.items[0]}", "--kubeconfig", cluster.KubeconfigFile, "--field-selector=metadata.name=" + cluster.Name}
+	params := []string{"get", machineHealthCheckResourceType, "-A", "-o", "json", "--kubeconfig", cluster.KubeconfigFile, "--field-selector=metadata.name=" + machineHealthCheckName}
 	stdOut, err := k.Execute(ctx, params...)
 	if err != nil {
-		params := []string{"get", machineHealthCheckResourceType, "-A", "--kubeconfig", cluster.KubeconfigFile, "--field-selector=metadata.name=" + cluster.Name}
+		params := []string{"get", machineHealthCheckResourceType, "-A", "-o", "json", "--kubeconfig", cluster.KubeconfigFile, "--field-selector=metadata.name=" + machineHealthCheckName}
 		stdOut, err = k.Execute(ctx, params...)
 		if err != nil {
 			return nil, fmt.Errorf("getting machine health checks: %v", err)

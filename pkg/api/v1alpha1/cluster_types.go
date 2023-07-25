@@ -279,9 +279,9 @@ type ControlPlaneConfiguration struct {
 // MachineHealthCheck allows to configure timeouts for machine health checks.
 type MachineHealthCheck struct {
 	// NodeStartupTimeout overrides the the default node startup timeout in machine health checks.
-	NodeStartupTimeout string `json:"nodeStartupTimeout,omitempty"`
+	NodeStartupTimeout *metav1.Duration `json:"nodeStartupTimeout,omitempty"`
 	// UnhealthyMachineTimeout overrides default unhealthy machine timeout in machine health checks.
-	UnhealthyMachineTimeout string `json:"unhealthyMachineTimeout,omitempty"`
+	UnhealthyMachineTimeout *metav1.Duration `json:"unhealthyMachineTimeout,omitempty"`
 }
 
 // Equal compares machine health check objects to check if they are equal.

@@ -5,6 +5,7 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/google/uuid"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	clusterctlv1 "sigs.k8s.io/cluster-api/cmd/clusterctl/api/v1alpha3"
 	"sigs.k8s.io/cluster-api/controllers/remote"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
@@ -538,7 +539,14 @@ func (f *Factory) withMachineHealthCheckReconciler() *Factory {
 			return nil
 		}
 
-		machineHealthCheckDefaulter := anywhereCluster.NewMachineHealthCheckDefaulter(constants.DefaultNodeStartupTimeout.String(), constants.DefaultUnhealthyMachineTimeout.String())
+		nodeStartupTimeout := &metav1.Duration{
+			Duration: constants.DefaultNodeStartupTimeout,
+		}
+		unhealthyTimeout := &metav1.Duration{
+			Duration: constants.DefaultUnhealthyMachineTimeout,
+		}
+
+		machineHealthCheckDefaulter := anywhereCluster.NewMachineHealthCheckDefaulter(nodeStartupTimeout, unhealthyTimeout)
 
 		f.machineHealthCheckReconciler = mhcreconciler.New(
 			f.manager.GetClient(),

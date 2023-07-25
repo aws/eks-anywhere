@@ -133,7 +133,7 @@ type ClusterClient interface {
 	PauseCAPICluster(ctx context.Context, cluster, kubeconfig string) error
 	ResumeCAPICluster(ctx context.Context, cluster, kubeconfig string) error
 	GetEksaCluster(ctx context.Context, cluster *types.Cluster, clusterName string) (*v1alpha1.Cluster, error)
-	GetMachineHealthCheck(ctx context.Context, cluster *types.Cluster, clusterName string) (*clusterv1.MachineHealthCheck, error)
+	GetMachineHealthCheck(ctx context.Context, cluster *types.Cluster, mhcName string) (*clusterv1.MachineHealthCheck, error)
 	GetEksaVSphereDatacenterConfig(ctx context.Context, VSphereDatacenterName string, kubeconfigFile string, namespace string) (*v1alpha1.VSphereDatacenterConfig, error)
 	UpdateEnvironmentVariablesInNamespace(ctx context.Context, resourceType, resourceName string, envMap map[string]string, cluster *types.Cluster, namespace string) error
 	GetEksaVSphereMachineConfig(ctx context.Context, VSphereDatacenterName string, kubeconfigFile string, namespace string) (*v1alpha1.VSphereMachineConfig, error)
@@ -815,17 +815,8 @@ func getProviderNamespaces(providerDeployments map[string][]string) []string {
 
 // InstallMachineHealthChecks installs machine health checks for a given eksa cluster.
 func (c *ClusterManager) InstallMachineHealthChecks(ctx context.Context, clusterSpec *cluster.Spec, workloadCluster *types.Cluster) error {
-	unhealthyMachineTimeout, err := time.ParseDuration(clusterSpec.Cluster.Spec.MachineHealthCheck.UnhealthyMachineTimeout)
-	if err != nil {
-		return err
-	}
-
-	nodeStartupTimeout, err := time.ParseDuration(clusterSpec.Cluster.Spec.MachineHealthCheck.NodeStartupTimeout)
-	if err != nil {
-		return err
-	}
-
-	mhc, err := templater.ObjectsToYaml(kubernetes.ObjectsToRuntimeObjects(clusterapi.MachineHealthCheckObjects(clusterSpec.Cluster, unhealthyMachineTimeout, nodeStartupTimeout))...)
+	logger.Info("Installing machine health checks")
+	mhc, err := templater.ObjectsToYaml(kubernetes.ObjectsToRuntimeObjects(clusterapi.MachineHealthCheckObjects(clusterSpec.Cluster))...)
 	if err != nil {
 		return err
 	}
@@ -844,37 +835,29 @@ func (c *ClusterManager) UpdateMachineHealthChecks(ctx context.Context, clusterS
 		return err
 	}
 
-	if mhcCP != nil && machineHealthCheckDiffExists(clusterSpec.Cluster.Spec.MachineHealthCheck, mhcCP) {
-		logger.V(0).Info("Updating machine health checks")
+	if mhcCP != nil && !machineHealthCheckEqual(clusterSpec.Cluster.Spec.MachineHealthCheck, mhcCP) {
 		err = c.InstallMachineHealthChecks(ctx, clusterSpec, workloadCluster)
 		if err != nil {
 			return err
 		}
 	}
 
-	logger.V(0).Info("Skipping machine health checks upgrade")
-
 	return nil
 }
 
-func machineHealthCheckDiffExists(eksaMachineHealthCheck *v1alpha1.MachineHealthCheck, capiMachineHealthCheck *clusterv1.MachineHealthCheck) bool {
-	if eksaMachineHealthCheck == nil && capiMachineHealthCheck == nil {
-		return false
+func machineHealthCheckEqual(eksaMachineHealthCheck *v1alpha1.MachineHealthCheck, capiMachineHealthCheck *clusterv1.MachineHealthCheck) bool {
+	oldEksaMachineHealthCheck := &v1alpha1.MachineHealthCheck{
+		NodeStartupTimeout: &clusterv1.DefaultNodeStartupTimeout,
 	}
 
-	if eksaMachineHealthCheck == nil || capiMachineHealthCheck == nil {
-		return true
+	if len(capiMachineHealthCheck.Spec.UnhealthyConditions) > 0 {
+		oldEksaMachineHealthCheck.UnhealthyMachineTimeout = &capiMachineHealthCheck.Spec.UnhealthyConditions[0].Timeout
 	}
 
-	if eksaMachineHealthCheck.NodeStartupTimeout != capiMachineHealthCheck.Spec.NodeStartupTimeout.Duration.String() {
-		return true
-	}
+	fmt.Printf("old MHC %v", oldEksaMachineHealthCheck)
+	fmt.Printf("new MHC %v", eksaMachineHealthCheck)
 
-	if len(capiMachineHealthCheck.Spec.UnhealthyConditions) > 0 && eksaMachineHealthCheck.UnhealthyMachineTimeout != capiMachineHealthCheck.Spec.UnhealthyConditions[0].Timeout.Duration.String() {
-		return true
-	}
-
-	return false
+	return oldEksaMachineHealthCheck.Equal(eksaMachineHealthCheck)
 }
 
 // InstallAwsIamAuth applies the aws-iam-authenticator manifest based on cluster spec inputs.

@@ -158,8 +158,12 @@ func TestClusterReconcilerReconcileSelfManagedCluster(t *testing.T) {
 				},
 			},
 			MachineHealthCheck: &anywherev1.MachineHealthCheck{
-				NodeStartupTimeout:      "10m0s",
-				UnhealthyMachineTimeout: "5m0s",
+				UnhealthyMachineTimeout: &metav1.Duration{
+					Duration: constants.DefaultUnhealthyMachineTimeout,
+				},
+				NodeStartupTimeout: &metav1.Duration{
+					Duration: constants.DefaultNodeStartupTimeout,
+				},
 			},
 		},
 		Status: anywherev1.ClusterStatus{
@@ -317,8 +321,12 @@ func TestClusterReconcilerReconcileConditions(t *testing.T) {
 			mgmt := config.DeepCopy()
 			mgmt.Cluster.Name = "management-cluster"
 			config.Cluster.Spec.MachineHealthCheck = &anywherev1.MachineHealthCheck{
-				NodeStartupTimeout:      constants.DefaultNodeStartupTimeout.String(),
-				UnhealthyMachineTimeout: constants.DefaultUnhealthyMachineTimeout.String(),
+				UnhealthyMachineTimeout: &metav1.Duration{
+					Duration: constants.DefaultUnhealthyMachineTimeout,
+				},
+				NodeStartupTimeout: &metav1.Duration{
+					Duration: constants.DefaultNodeStartupTimeout,
+				},
 			}
 
 			g := NewWithT(t)
@@ -1306,8 +1314,12 @@ func TestClusterReconcilerPackagesInstall(s *testing.T) {
 				},
 				EksaVersion: &version,
 				MachineHealthCheck: &anywherev1.MachineHealthCheck{
-					NodeStartupTimeout:      constants.DefaultNodeStartupTimeout.String(),
-					UnhealthyMachineTimeout: constants.DefaultUnhealthyMachineTimeout.String(),
+					UnhealthyMachineTimeout: &metav1.Duration{
+						Duration: constants.DefaultUnhealthyMachineTimeout,
+					},
+					NodeStartupTimeout: &metav1.Duration{
+						Duration: constants.DefaultNodeStartupTimeout,
+					},
 				},
 			},
 			Status: anywherev1.ClusterStatus{
@@ -1598,8 +1610,12 @@ func vsphereCluster() *anywherev1.Cluster {
 			},
 			EksaVersion: &version,
 			MachineHealthCheck: &anywherev1.MachineHealthCheck{
-				NodeStartupTimeout:      constants.DefaultNodeStartupTimeout.String(),
-				UnhealthyMachineTimeout: constants.DefaultUnhealthyMachineTimeout.String(),
+				UnhealthyMachineTimeout: &metav1.Duration{
+					Duration: constants.DefaultUnhealthyMachineTimeout,
+				},
+				NodeStartupTimeout: &metav1.Duration{
+					Duration: constants.DefaultNodeStartupTimeout,
+				},
 			},
 		},
 		Status: anywherev1.ClusterStatus{

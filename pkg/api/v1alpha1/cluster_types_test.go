@@ -3,6 +3,7 @@ package v1alpha1_test
 import (
 	"reflect"
 	"testing"
+	"time"
 
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
@@ -10,6 +11,7 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/semver"
 	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
@@ -1317,39 +1319,45 @@ func TestMachineHealthCheckEqual(t *testing.T) {
 			testName: "one nil",
 			mhc1:     nil,
 			mhc2: &v1alpha1.MachineHealthCheck{
-				NodeStartupTimeout: "0s",
+				NodeStartupTimeout: &metav1.Duration{
+					Duration: constants.DefaultNodeStartupTimeout,
+				},
 			},
 			want: false,
 		},
 		{
 			testName: "both not nil",
 			mhc1: &v1alpha1.MachineHealthCheck{
-				NodeStartupTimeout: "5s",
+				NodeStartupTimeout: &metav1.Duration{
+					Duration: constants.DefaultNodeStartupTimeout,
+				},
 			},
 			mhc2: &v1alpha1.MachineHealthCheck{
-				NodeStartupTimeout: "0s",
+				NodeStartupTimeout: &metav1.Duration{
+					Duration: (30 * time.Minute),
+				},
 			},
 			want: false,
 		},
 		{
 			testName: "both not nil",
 			mhc1: &v1alpha1.MachineHealthCheck{
-				UnhealthyMachineTimeout: "5s",
+				NodeStartupTimeout: &metav1.Duration{
+					Duration: (20 * time.Minute),
+				},
 			},
 			mhc2: &v1alpha1.MachineHealthCheck{
-				UnhealthyMachineTimeout: "0s",
+				NodeStartupTimeout: &metav1.Duration{
+					Duration: (30 * time.Minute),
+				},
 			},
 			want: false,
 		},
 		{
 			testName: "both empty",
-			mhc1: &v1alpha1.MachineHealthCheck{
-				UnhealthyMachineTimeout: "5s",
-			},
-			mhc2: &v1alpha1.MachineHealthCheck{
-				UnhealthyMachineTimeout: "5s",
-			},
-			want: true,
+			mhc1:     &v1alpha1.MachineHealthCheck{},
+			mhc2:     &v1alpha1.MachineHealthCheck{},
+			want:     true,
 		},
 	}
 	for _, tt := range testCases {

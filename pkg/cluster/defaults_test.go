@@ -3,6 +3,7 @@ package cluster_test
 import (
 	"context"
 	"testing"
+	"time"
 
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -125,11 +126,24 @@ func TestNewControlPlaneIPCheckAnnotationDefaulterAddAnnotation(t *testing.T) {
 func TestNewMachineHealthCheckDefaulter(t *testing.T) {
 	g := NewWithT(t)
 
-	newMachineHealthCheckDefaulter := cluster.NewMachineHealthCheckDefaulter("15m0s", "20m10s")
+	unhealthyTimeout := &metav1.Duration{
+		Duration: 15 * time.Minute,
+	}
+	nodeStartupTimeout := &metav1.Duration{
+		Duration: 15 * time.Minute,
+	}
+	newMachineHealthCheckDefaulter := cluster.NewMachineHealthCheckDefaulter(nodeStartupTimeout, unhealthyTimeout)
 
 	baseCluster := baseCluster()
 
-	machineHealthcheck := &anywherev1.MachineHealthCheck{NodeStartupTimeout: "15m0s", UnhealthyMachineTimeout: "20m10s"}
+	machineHealthcheck := &anywherev1.MachineHealthCheck{
+		NodeStartupTimeout: &metav1.Duration{
+			Duration: 15 * time.Minute,
+		},
+		UnhealthyMachineTimeout: &metav1.Duration{
+			Duration: 15 * time.Minute,
+		},
+	}
 
 	updatedCluster, err := newMachineHealthCheckDefaulter.MachineHealthCheckDefault(context.Background(), baseCluster)
 
@@ -140,12 +154,23 @@ func TestNewMachineHealthCheckDefaulter(t *testing.T) {
 func TestNewMachineHealthCheckDefaulterTinkerbell(t *testing.T) {
 	g := NewWithT(t)
 
-	newMachineHealthCheckDefaulter := cluster.NewMachineHealthCheckDefaulter(constants.DefaultNodeStartupTimeout.String(), constants.DefaultUnhealthyMachineTimeout.String())
+	unhealthyTimeout := metav1.Duration{
+		Duration: constants.DefaultUnhealthyMachineTimeout,
+	}
+	nodeStartupTimeout := metav1.Duration{
+		Duration: constants.DefaultNodeStartupTimeout,
+	}
+	newMachineHealthCheckDefaulter := cluster.NewMachineHealthCheckDefaulter(&nodeStartupTimeout, &unhealthyTimeout)
 
 	baseCluster := baseCluster()
 	baseCluster.Spec.DatacenterRef.Kind = anywherev1.TinkerbellDatacenterKind
 
-	machineHealthcheck := &anywherev1.MachineHealthCheck{NodeStartupTimeout: constants.DefaultTinkerbellNodeStartupTimeout.String(), UnhealthyMachineTimeout: constants.DefaultUnhealthyMachineTimeout.String()}
+	machineHealthcheck := &anywherev1.MachineHealthCheck{
+		NodeStartupTimeout: &metav1.Duration{
+			Duration: constants.DefaultTinkerbellNodeStartupTimeout,
+		},
+		UnhealthyMachineTimeout: &unhealthyTimeout,
+	}
 
 	updatedCluster, err := newMachineHealthCheckDefaulter.MachineHealthCheckDefault(context.Background(), baseCluster)
 
@@ -156,15 +181,28 @@ func TestNewMachineHealthCheckDefaulterTinkerbell(t *testing.T) {
 func TestNewMachineHealthCheckDefaulterNoChange(t *testing.T) {
 	g := NewWithT(t)
 
-	newMachineHealthCheckDefaulter := cluster.NewMachineHealthCheckDefaulter("10m0s", "10m0s")
+	unhealthyTimeout := metav1.Duration{
+		Duration: constants.DefaultUnhealthyMachineTimeout,
+	}
+	nodeStartupTimeout := metav1.Duration{
+		Duration: constants.DefaultNodeStartupTimeout,
+	}
+	newMachineHealthCheckDefaulter := cluster.NewMachineHealthCheckDefaulter(&nodeStartupTimeout, &unhealthyTimeout)
 
 	baseCluster := baseCluster()
 	baseCluster.Spec.MachineHealthCheck = &anywherev1.MachineHealthCheck{
-		NodeStartupTimeout:      "5m0s",
-		UnhealthyMachineTimeout: "5m0s",
+		NodeStartupTimeout: &metav1.Duration{
+			Duration: 5 * time.Minute,
+		},
+		UnhealthyMachineTimeout: &unhealthyTimeout,
 	}
 
-	machineHealthcheck := &anywherev1.MachineHealthCheck{NodeStartupTimeout: "5m0s", UnhealthyMachineTimeout: "5m0s"}
+	machineHealthcheck := &anywherev1.MachineHealthCheck{
+		NodeStartupTimeout: &metav1.Duration{
+			Duration: 5 * time.Minute,
+		},
+		UnhealthyMachineTimeout: &unhealthyTimeout,
+	}
 
 	updatedCluster, err := newMachineHealthCheckDefaulter.MachineHealthCheckDefault(context.Background(), baseCluster)
 
