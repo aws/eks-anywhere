@@ -85,6 +85,9 @@ spec:
        - ssh-rsa AAAA…
  vcpuSockets: 2
  vcpusPerSocket: 1
+ additionalCategories:
+   - key: my-category
+     value: my-category-value 
 ---
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: NutanixMachineConfig
@@ -278,7 +281,15 @@ Name of the project
  
 ### project.uuid (`name` or `UUID` required)
 UUID of the project
+
+### additionalCategories (optional)
+Reference to a list of existing [Nutanix Categories](https://portal.nutanix.com/page/documents/details?targetId=Prism-Central-Guide:ssp-ssp-categories-manage-pc-c.html) to be assigned to virtual machines. 
  
+### additionalCategories[0].key
+Nutanix Category to add to the virtual machine. 
+ 
+### additionalCategories[0].value
+Value of the Nutanix Category to add to the virtual machine
 
 ### users (optional)
 The users you want to configure to access your virtual machines. Only one is permitted at this time.
