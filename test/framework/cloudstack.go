@@ -241,9 +241,9 @@ func (c *CloudStack) UpdateKubeConfig(content *[]byte, clusterName string) error
 
 // ClusterConfigUpdates satisfies the test framework Provider.
 func (c *CloudStack) ClusterConfigUpdates() []api.ClusterConfigFiller {
-	controlPlaneIP, err := c.getControlPlaneIP()
+	controlPlaneIP, err := GetIP(c.cidr, ClusterIPPoolEnvVar)
 	if err != nil {
-		c.t.Fatalf("failed to pop cluster ip from test environment: %v", err)
+		c.t.Fatalf("failed to get cluster ip for test environment: %v", err)
 	}
 
 	f := make([]api.ClusterFiller, 0, len(c.clusterFillers)+3)

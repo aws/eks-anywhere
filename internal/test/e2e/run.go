@@ -300,6 +300,7 @@ func splitTests(testsList []string, conf ParallelRunConf) ([]instanceRunConf, er
 
 	vsphereTestsRe := regexp.MustCompile(vsphereRegex)
 	tinkerbellTestsRe := regexp.MustCompile(tinkerbellTestsRe)
+	cloudstackTestRe := regexp.MustCompile(cloudstackRegex)
 	nutanixTestsRe := regexp.MustCompile(nutanixRegex)
 	privateNetworkTestsRe := regexp.MustCompile(`^.*(Proxy|RegistryMirror).*$`)
 	multiClusterTestsRe := regexp.MustCompile(`^.*Multicluster.*$`)
@@ -307,6 +308,7 @@ func splitTests(testsList []string, conf ParallelRunConf) ([]instanceRunConf, er
 	runConfs := make([]instanceRunConf, 0, conf.MaxInstances)
 	vsphereIPMan := newE2EIPManager(conf.Logger, os.Getenv(vsphereCidrVar))
 	vspherePrivateIPMan := newE2EIPManager(conf.Logger, os.Getenv(vspherePrivateNetworkCidrVar))
+	cloudstackIPMan := newE2EIPManager(conf.Logger, os.Getenv(cloudstackCidrVar))
 	nutanixIPMan := newE2EIPManager(conf.Logger, os.Getenv(nutanixCidrVar))
 
 	awsSession, err := session.NewSession()
@@ -343,9 +345,14 @@ func splitTests(testsList []string, conf ParallelRunConf) ([]instanceRunConf, er
 					ips = vsphereIPMan.reserveIPPool(minIPPoolSize)
 				}
 			}
-		}
-		if nutanixTestsRe.MatchString(testName) {
+		} else if nutanixTestsRe.MatchString(testName) {
 			ips = nutanixIPMan.reserveIPPool(minIPPoolSize)
+		} else if cloudstackTestRe.MatchString(testName) {
+			if multiClusterTest {
+				ips = cloudstackIPMan.reserveIPPool(maxIPPoolSize)
+			} else {
+				ips = cloudstackIPMan.reserveIPPool(minIPPoolSize)
+			}
 		}
 
 		if len(testsInEC2Instance) == testPerInstance || (len(testsList)-1) == i {
