@@ -536,7 +536,7 @@ If no VMs are created, check the `capi-controller-manager`, `capv-controller-man
 
 #### No IP assigned to a VM
 
-If you see the message "Failed to read current IP data" in a Bottlerocket machine boot logs, check to see if the VM has an IPv4 IP assigned.
+If a VM is created, check to see if it has an IPv4 IP assigned. For example, in BottleRocket machine boot logs, you might see `Failed to read current IP data`.
 
 If there are no IPv4 IPs assigned to VMs, this is most likely because you don't have a DHCP server configured for the `network` configured in the cluster config yaml, OR there are not enough IP addresses available in the DHCP pool to assign to the VMs. Ensure that you either have a DHCP running with [enough IP addresses to create a cluster]({{< relref "../clustermgmt/cluster-upgrades/vsphere-and-cloudstack-upgrades/#prepare-dhcp-ip-addresses-pool" >}}), or [create your own DHCP server]({{< relref "../getting-started/vsphere/customize/vsphere-dhcp" >}}), before running the create or upgrade command again.
 
