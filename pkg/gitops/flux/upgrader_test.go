@@ -30,7 +30,7 @@ type upgraderTest struct {
 func newUpgraderTest(t *testing.T) *upgraderTest {
 	currentSpec := test.NewClusterSpec(func(s *cluster.Spec) {
 		s.Bundles.Spec.Number = 1
-		s.VersionsBundle.Flux.Version = "v0.1.0"
+		s.VersionsBundles["1.19"].Flux.Version = "v0.1.0"
 		s.Cluster = &v1alpha1.Cluster{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "management-cluster",
@@ -39,6 +39,7 @@ func newUpgraderTest(t *testing.T) *upgraderTest {
 				GitOpsRef: &v1alpha1.Ref{
 					Name: "testGitOpsRef",
 				},
+				KubernetesVersion: "1.19",
 			},
 		}
 	})
@@ -81,14 +82,14 @@ func TestFluxUpgradeNoSelfManaged(t *testing.T) {
 func TestFluxUpgradeNoChanges(t *testing.T) {
 	tt := newUpgraderTest(t)
 	g := newFluxTest(t)
-	tt.newSpec.VersionsBundle.Flux.Version = "v0.1.0"
+	tt.newSpec.VersionsBundles["1.19"].Flux.Version = "v0.1.0"
 
 	tt.Expect(g.gitOpsFlux.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)).To(BeNil())
 }
 
 func TestFluxUpgradeSuccess(t *testing.T) {
 	tt := newUpgraderTest(t)
-	tt.newSpec.VersionsBundle.Flux.Version = "v0.2.0"
+	tt.newSpec.VersionsBundles["1.19"].Flux.Version = "v0.2.0"
 
 	tt.newSpec.FluxConfig = &tt.fluxConfig
 
@@ -124,7 +125,7 @@ func TestFluxUpgradeSuccess(t *testing.T) {
 
 func TestFluxUpgradeBootstrapGithubError(t *testing.T) {
 	tt := newUpgraderTest(t)
-	tt.newSpec.VersionsBundle.Flux.Version = "v0.2.0"
+	tt.newSpec.VersionsBundles["1.19"].Flux.Version = "v0.2.0"
 
 	tt.newSpec.FluxConfig = &tt.fluxConfig
 	g := newFluxTest(t)
@@ -148,7 +149,7 @@ func TestFluxUpgradeBootstrapGithubError(t *testing.T) {
 
 func TestFluxUpgradeBootstrapGitError(t *testing.T) {
 	tt := newUpgraderTest(t)
-	tt.newSpec.VersionsBundle.Flux.Version = "v0.2.0"
+	tt.newSpec.VersionsBundles["1.19"].Flux.Version = "v0.2.0"
 
 	tt.newSpec.FluxConfig = &tt.fluxConfig
 	g := newFluxTest(t)
@@ -173,7 +174,7 @@ func TestFluxUpgradeBootstrapGitError(t *testing.T) {
 
 func TestFluxUpgradeAddError(t *testing.T) {
 	tt := newUpgraderTest(t)
-	tt.newSpec.VersionsBundle.Flux.Version = "v0.2.0"
+	tt.newSpec.VersionsBundles["1.19"].Flux.Version = "v0.2.0"
 
 	tt.newSpec.FluxConfig = &tt.fluxConfig
 

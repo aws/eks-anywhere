@@ -101,37 +101,39 @@ func newApiBuilerTest(t *testing.T) apiBuilerTest {
 			},
 		}
 
-		s.VersionsBundle = &cluster.VersionsBundle{
-			KubeDistro: &cluster.KubeDistro{
-				Kubernetes: cluster.VersionedRepository{
-					Repository: "public.ecr.aws/eks-distro/kubernetes",
-					Tag:        "v1.21.5-eks-1-21-9",
-				},
-				CoreDNS: cluster.VersionedRepository{
-					Repository: "public.ecr.aws/eks-distro/coredns",
-					Tag:        "v1.8.4-eks-1-21-9",
-				},
-				Etcd: cluster.VersionedRepository{
-					Repository: "public.ecr.aws/eks-distro/etcd-io",
-					Tag:        "v3.4.16-eks-1-21-9",
-				},
-				EtcdImage: v1alpha1.Image{
-					URI: "public.ecr.aws/eks-distro/etcd-io/etcd:0.0.1",
-				},
-				Pause: v1alpha1.Image{
-					URI: "public.ecr.aws/eks-distro/kubernetes/pause:0.0.1",
-				},
-			},
-			VersionsBundle: &v1alpha1.VersionsBundle{
-				BottleRocketHostContainers: v1alpha1.BottlerocketHostContainersBundle{
-					Admin: v1alpha1.Image{
-						URI: "public.ecr.aws/eks-anywhere/bottlerocket-admin:0.0.1",
+		s.VersionsBundles = map[anywherev1.KubernetesVersion]*cluster.VersionsBundle{
+			"1.21": {
+				KubeDistro: &cluster.KubeDistro{
+					Kubernetes: cluster.VersionedRepository{
+						Repository: "public.ecr.aws/eks-distro/kubernetes",
+						Tag:        "v1.21.5-eks-1-21-9",
 					},
-					Control: v1alpha1.Image{
-						URI: "public.ecr.aws/eks-anywhere/bottlerocket-control:0.0.1",
+					CoreDNS: cluster.VersionedRepository{
+						Repository: "public.ecr.aws/eks-distro/coredns",
+						Tag:        "v1.8.4-eks-1-21-9",
 					},
-					KubeadmBootstrap: v1alpha1.Image{
-						URI: "public.ecr.aws/eks-anywhere/bottlerocket-bootstrap:0.0.1",
+					Etcd: cluster.VersionedRepository{
+						Repository: "public.ecr.aws/eks-distro/etcd-io",
+						Tag:        "v3.4.16-eks-1-21-9",
+					},
+					EtcdImage: v1alpha1.Image{
+						URI: "public.ecr.aws/eks-distro/etcd-io/etcd:0.0.1",
+					},
+					Pause: v1alpha1.Image{
+						URI: "public.ecr.aws/eks-distro/kubernetes/pause:0.0.1",
+					},
+				},
+				VersionsBundle: &v1alpha1.VersionsBundle{
+					BottleRocketHostContainers: v1alpha1.BottlerocketHostContainersBundle{
+						Admin: v1alpha1.Image{
+							URI: "public.ecr.aws/eks-anywhere/bottlerocket-admin:0.0.1",
+						},
+						Control: v1alpha1.Image{
+							URI: "public.ecr.aws/eks-anywhere/bottlerocket-control:0.0.1",
+						},
+						KubeadmBootstrap: v1alpha1.Image{
+							URI: "public.ecr.aws/eks-anywhere/bottlerocket-bootstrap:0.0.1",
+						},
 					},
 				},
 			},
@@ -478,7 +480,6 @@ func wantMachineDeployment() *clusterv1.MachineDeployment {
 func TestMachineDeployment(t *testing.T) {
 	tt := newApiBuilerTest(t)
 	got := clusterapi.MachineDeployment(tt.clusterSpec, *tt.workerNodeGroupConfig, tt.kubeadmConfigTemplate, tt.providerMachineTemplate)
-
 	tt.Expect(got).To(BeComparableTo(wantMachineDeployment()))
 }
 

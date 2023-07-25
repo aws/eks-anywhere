@@ -535,7 +535,7 @@ func TestReplacePath(t *testing.T) {
 }
 
 var clusterSpec = test.NewClusterSpec(func(s *cluster.Spec) {
-	s.VersionsBundle = versionBundle
+	s.VersionsBundles["1.19"] = versionBundle
 })
 
 func createTestDirectory(t *testing.T, dirpath string) {

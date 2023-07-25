@@ -1348,6 +1348,25 @@ func (c *Cluster) ClearFailure() {
 	c.Status.FailureReason = nil
 }
 
+// KubernetesVersions returns a set of all unique k8s versions specified in the cluster
+// for both CP and workers.
+func (c *Cluster) KubernetesVersions() []KubernetesVersion {
+	versionsSet := map[string]struct{}{}
+	versions := make([]KubernetesVersion, 0, 1)
+
+	versionsSet[string(c.Spec.KubernetesVersion)] = struct{}{}
+	versions = append(versions, c.Spec.KubernetesVersion)
+	for _, w := range c.Spec.WorkerNodeGroupConfigurations {
+		if w.KubernetesVersion != nil {
+			if _, ok := versionsSet[string(*w.KubernetesVersion)]; !ok {
+				versions = append(versions, *w.KubernetesVersion)
+			}
+		}
+	}
+
+	return versions
+}
+
 type refSet map[Ref]struct{}
 
 func (r refSet) addIfNotNil(ref *Ref) bool {
