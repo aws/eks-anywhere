@@ -2807,7 +2807,7 @@ func TestSetupAndValidateCreateClusterErrorGettingTags(t *testing.T) {
 	thenErrorExpected(t, "validating template tags: failed getting tags", err)
 }
 
-func TestSetupAndValidateCreateClusterDefaultTemplate(t *testing.T) {
+func TestSetupAndValidateCreateClusterDefaultTemplateWorker(t *testing.T) {
 	ctx := context.Background()
 	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
 	clusterSpec.VersionsBundles["1.19"].EksD.Ova.Bottlerocket.URI = "https://amazonaws.com/artifacts/0.0.1/eks-distro/ova/1-19/1-19-4/bottlerocket-eks-a-0.0.1.build.38-amd64.ova"
@@ -2822,6 +2822,30 @@ func TestSetupAndValidateCreateClusterDefaultTemplate(t *testing.T) {
 	clusterSpec.VSphereMachineConfigs[controlPlaneMachineConfigName].Spec.Template = ""
 	workerNodeMachineConfigName := clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
 	clusterSpec.VSphereMachineConfigs[workerNodeMachineConfigName].Spec.Template = ""
+	etcdMachineConfigName := clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
+	clusterSpec.VSphereMachineConfigs[etcdMachineConfigName].Spec.Template = ""
+	wantError := fmt.Errorf("failed setting default values for vsphere machine configs: can not import ova for osFamily: ubuntu, please use bottlerocket as osFamily for auto-importing or provide a valid template")
+
+	setupContext(t)
+
+	if err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec); err == nil || err.Error() != wantError.Error() {
+		t.Fatalf("provider.SetupAndValidateCreateCluster() err = %v, want err = %v", err, wantError)
+	}
+}
+
+func TestSetupAndValidateCreateClusterDefaultTemplateCP(t *testing.T) {
+	ctx := context.Background()
+	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
+	clusterSpec.VersionsBundles["1.19"].EksD.Ova.Bottlerocket.URI = "https://amazonaws.com/artifacts/0.0.1/eks-distro/ova/1-19/1-19-4/bottlerocket-eks-a-0.0.1.build.38-amd64.ova"
+	clusterSpec.VersionsBundles["1.19"].EksD.Ova.Bottlerocket.SHA256 = "63a8dce1683379cb8df7d15e9c5adf9462a2b9803a544dd79b16f19a4657967f"
+	clusterSpec.VersionsBundles["1.19"].EksD.Ova.Bottlerocket.Arch = []string{"amd64"}
+	clusterSpec.VersionsBundles["1.19"].EksD.Name = eksd119Release
+	clusterSpec.VersionsBundles["1.19"].EksD.KubeVersion = "v1.19.8"
+	clusterSpec.VersionsBundles["1.19"].KubeVersion = "1.19"
+	clusterSpec.Cluster.Namespace = "test-namespace"
+	provider := givenProvider(t)
+	controlPlaneMachineConfigName := clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
+	clusterSpec.VSphereMachineConfigs[controlPlaneMachineConfigName].Spec.Template = ""
 	etcdMachineConfigName := clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
 	clusterSpec.VSphereMachineConfigs[etcdMachineConfigName].Spec.Template = ""
 	wantError := fmt.Errorf("failed setting default values for vsphere machine configs: can not import ova for osFamily: ubuntu, please use bottlerocket as osFamily for auto-importing or provide a valid template")
