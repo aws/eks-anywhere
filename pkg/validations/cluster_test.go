@@ -416,7 +416,7 @@ func TestValidateEksaVersionSkew(t *testing.T) {
 			tt.kubectl.EXPECT().GetEksaCluster(ctx, mgmtCluster, mgmtCluster.Name).Return(mgmtClusterObject, nil)
 			tt.kubectl.EXPECT().GetBundles(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(test.Bundle(), nil).AnyTimes()
 
-			err := validations.ValidateEksaVersionSkew(ctx, tt.kubectl, mgmtCluster, mgmtCluster, tt.clusterSpec)
+			err := validations.ValidateEksaVersionSkew(ctx, tt.kubectl, mgmtCluster, tt.clusterSpec)
 			if err != nil {
 				tt.Expect(err.Error()).To(ContainSubstring(tc.wantErr.Error()))
 			} else {
