@@ -13,6 +13,7 @@ import (
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/types"
+	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
@@ -206,7 +207,6 @@ func newEKSAPackagedBinaryForLocalBinary(tb testing.TB) eksaPackagedBinary {
 }
 
 func runTestManagementClusterUpgradeSideEffects(t *testing.T, provider framework.Provider, latestRelease *releasev1.EksARelease, configFillers ...api.ClusterConfigFiller) {
-
 	managementCluster := framework.NewClusterE2ETest(t, provider, framework.PersistentCluster())
 	managementCluster.GenerateClusterConfigForVersion(latestRelease.Version, framework.ExecuteWithEksaRelease(latestRelease))
 	managementCluster.UpdateClusterConfig(
