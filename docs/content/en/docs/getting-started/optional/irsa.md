@@ -118,8 +118,7 @@ Set the remaining fields in cluster spec as required and create the cluster usin
 #### Generate keys.json and make it publicly accessible
 
 1. The cluster provisioning workflow generates a pair of service account signing keys. Retrieve the public signing key generated and used by the cluster, and create a keys.json document containing the public signing key.
-2. We need minimum go version 1.19 to run it . Use  `go version` command to check installed Go version.
-   
+     
     ```bash
     git clone https://github.com/aws/amazon-eks-pod-identity-webhook
     cd amazon-eks-pod-identity-webhook
