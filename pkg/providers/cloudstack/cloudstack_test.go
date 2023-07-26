@@ -1581,7 +1581,7 @@ func TestProviderGenerateCAPISpecForUpgradeWorkerNodeGroupsKubernetesVersion(t *
 			testName:          "adding a worker node group",
 			clusterconfigFile: "cluster_main_worker_node_group_kubernetes_version.yaml",
 			wantMDFile:        "testdata/expected_results_main_md_worker_kubernetes_version.yaml",
-			wantCPFile:        "testdata/expected_results_main_cp.yaml",
+			wantCPFile:        "testdata/expected_results_main_cp_kubernetes_version.yaml",
 		},
 	}
 	for _, tt := range tests {
