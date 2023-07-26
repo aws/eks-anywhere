@@ -138,7 +138,7 @@ func (u *UpgradeValidations) PreflightValidations(ctx context.Context) []validat
 				return &validations.ValidationResult{
 					Name:        "validate eksaVersion skew is one minor version",
 					Remediation: "ensure eksaVersion upgrades are sequential by minor version",
-					Err:         validations.ValidateEksaVersionSkew(ctx, k, u.Opts.WorkloadCluster, u.Opts.Spec),
+					Err:         validations.ValidateEksaVersionSkew(ctx, k, u.Opts.WorkloadCluster, u.Opts.ManagementCluster, u.Opts.Spec),
 				}
 			})
 	}
