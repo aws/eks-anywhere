@@ -189,7 +189,7 @@ func TestTinkerbellKubernetes127UbuntuSingleNodeCuratedPackagesHarborFlow(t *tes
 			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
 			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
-	runCuratedPackageHarborInstallSimpleFlowLocalStorageProvisioner(test)
+	runCuratedPackageHarborInstallTinkerbellSimpleFlow(test)
 }
 
 func TestTinkerbellKubernetes127BottleRocketSingleNodeCuratedPackagesHarborFlow(t *testing.T) {
@@ -201,7 +201,7 @@ func TestTinkerbellKubernetes127BottleRocketSingleNodeCuratedPackagesHarborFlow(
 			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
 			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
-	runCuratedPackageHarborInstallSimpleFlowLocalStorageProvisioner(test)
+	runCuratedPackageHarborInstallTinkerbellSimpleFlow(test)
 }
 
 func TestTinkerbellKubernetes127UbuntuCuratedPackagesAdotSimpleFlow(t *testing.T) {
@@ -313,7 +313,7 @@ func TestTinkerbellKubernetes126UbuntuSingleNodeCuratedPackagesHarborFlow(t *tes
 			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
 			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
-	runCuratedPackageHarborInstallSimpleFlowLocalStorageProvisioner(test)
+	runCuratedPackageHarborInstallTinkerbellSimpleFlow(test)
 }
 
 func TestTinkerbellKubernetes126BottleRocketSingleNodeCuratedPackagesHarborFlow(t *testing.T) {
@@ -325,7 +325,7 @@ func TestTinkerbellKubernetes126BottleRocketSingleNodeCuratedPackagesHarborFlow(
 			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
 			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
-	runCuratedPackageHarborInstallSimpleFlowLocalStorageProvisioner(test)
+	runCuratedPackageHarborInstallTinkerbellSimpleFlow(test)
 }
 
 func TestTinkerbellKubernetes126UbuntuCuratedPackagesAdotSimpleFlow(t *testing.T) {
@@ -437,7 +437,7 @@ func TestTinkerbellKubernetes125UbuntuSingleNodeCuratedPackagesHarborFlow(t *tes
 			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
 			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
-	runCuratedPackageHarborInstallSimpleFlowLocalStorageProvisioner(test)
+	runCuratedPackageHarborInstallTinkerbellSimpleFlow(test)
 }
 
 func TestTinkerbellKubernetes125BottleRocketSingleNodeCuratedPackagesHarborFlow(t *testing.T) {
@@ -449,7 +449,7 @@ func TestTinkerbellKubernetes125BottleRocketSingleNodeCuratedPackagesHarborFlow(
 			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
 			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
-	runCuratedPackageHarborInstallSimpleFlowLocalStorageProvisioner(test)
+	runCuratedPackageHarborInstallTinkerbellSimpleFlow(test)
 }
 
 func TestTinkerbellKubernetes125UbuntuCuratedPackagesAdotSimpleFlow(t *testing.T) {
@@ -561,7 +561,7 @@ func TestTinkerbellKubernetes124UbuntuSingleNodeCuratedPackagesHarborFlow(t *tes
 			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
 			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
-	runCuratedPackageHarborInstallSimpleFlowLocalStorageProvisioner(test)
+	runCuratedPackageHarborInstallTinkerbellSimpleFlow(test)
 }
 
 func TestTinkerbellKubernetes124BottleRocketSingleNodeCuratedPackagesHarborFlow(t *testing.T) {
@@ -573,7 +573,7 @@ func TestTinkerbellKubernetes124BottleRocketSingleNodeCuratedPackagesHarborFlow(
 			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
 			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
-	runCuratedPackageHarborInstallSimpleFlowLocalStorageProvisioner(test)
+	runCuratedPackageHarborInstallTinkerbellSimpleFlow(test)
 }
 
 func TestTinkerbellKubernetes124UbuntuCuratedPackagesAdotSimpleFlow(t *testing.T) {
@@ -685,7 +685,7 @@ func TestTinkerbellKubernetes123UbuntuSingleNodeCuratedPackagesHarborFlow(t *tes
 			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
 			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
-	runCuratedPackageHarborInstallSimpleFlowLocalStorageProvisioner(test)
+	runCuratedPackageHarborInstallTinkerbellSimpleFlow(test)
 }
 
 func TestTinkerbellKubernetes123BottleRocketSingleNodeCuratedPackagesHarborFlow(t *testing.T) {
@@ -697,7 +697,7 @@ func TestTinkerbellKubernetes123BottleRocketSingleNodeCuratedPackagesHarborFlow(
 			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
 			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
-	runCuratedPackageHarborInstallSimpleFlowLocalStorageProvisioner(test)
+	runCuratedPackageHarborInstallTinkerbellSimpleFlow(test)
 }
 
 func TestTinkerbellKubernetes123UbuntuCuratedPackagesAdotSimpleFlow(t *testing.T) {
