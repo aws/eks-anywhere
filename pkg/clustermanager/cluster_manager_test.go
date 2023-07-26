@@ -2478,6 +2478,81 @@ func TestClusterManagerClusterSpecChangedNoChanges(t *testing.T) {
 	assert.False(t, diff, "No changes should have been detected")
 }
 
+func TestClusterManagerClusterSpecChangedNewVersionsBundle(t *testing.T) {
+	tt := newSpecChangedTest(t)
+	tt.clusterSpec.Cluster.Spec.IdentityProviderRefs = []v1alpha1.Ref{{Kind: v1alpha1.OIDCConfigKind, Name: tt.clusterName}}
+
+	kube122 := v1alpha1.KubernetesVersion("1.22")
+	tt.oldClusterConfig.Spec.WorkerNodeGroupConfigurations[0].KubernetesVersion = &kube122
+	tt.mocks.client.EXPECT().GetEksaCluster(tt.ctx, tt.cluster, tt.clusterSpec.Cluster.Name).Return(tt.oldClusterConfig, nil)
+	tt.clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].KubernetesVersion = &kube122
+	tt.clusterSpec.VersionsBundles[v1alpha1.Kube118] = test.VersionBundle()
+
+	diff, err := tt.clusterManager.EKSAClusterSpecChanged(tt.ctx, tt.cluster, tt.clusterSpec)
+	assert.Nil(t, err, "Error should be nil")
+	assert.True(t, diff, "Changes should have been detected")
+}
+
+func TestClusterManagerClusterSpecChangedNewEksdRelease(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	m := &clusterManagerMocks{
+		writer:             mockswriter.NewMockFileWriter(mockCtrl),
+		networking:         mocksmanager.NewMockNetworking(mockCtrl),
+		awsIamAuth:         mocksmanager.NewMockAwsIamAuth(mockCtrl),
+		client:             mocksmanager.NewMockClusterClient(mockCtrl),
+		provider:           mocksprovider.NewMockProvider(mockCtrl),
+		diagnosticsFactory: mocksdiagnostics.NewMockDiagnosticBundleFactory(mockCtrl),
+		diagnosticsBundle:  mocksdiagnostics.NewMockDiagnosticBundle(mockCtrl),
+		eksaComponents:     mocksmanager.NewMockEKSAComponents(mockCtrl),
+	}
+
+	client := clustermanager.NewRetrierClient(m.client, clustermanager.DefaultRetrier())
+	clusterName := "cluster-name"
+	dc := &v1alpha1.VSphereDatacenterConfig{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: clusterName,
+		},
+	}
+	oc := &v1alpha1.OIDCConfig{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: clusterName,
+		},
+	}
+	b := test.Bundle()
+	b.Spec.VersionsBundles[1].EksD.Name = "test2"
+	r := test.EksdRelease("1-19")
+	r2 := test.EksdRelease("1-22")
+	r2.Name = "test2"
+	ac := &v1alpha1.AWSIamConfig{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: clusterName,
+		},
+	}
+	gc := &v1alpha1.GitOpsConfig{}
+	er := test.EKSARelease()
+
+	fakeClient := test.NewFakeKubeClient(dc, oc, b, r, ac, gc, er, r2)
+	cf := mocksmanager.NewMockClientFactory(mockCtrl)
+	cf.EXPECT().BuildClientFromKubeconfig("").Return(fakeClient, nil).AnyTimes()
+	c := clustermanager.New(cf, client, m.networking, m.writer, m.diagnosticsFactory, m.awsIamAuth, m.eksaComponents)
+
+	tt := newSpecChangedTest(t)
+	tt.clusterManager = c
+	tt.mocks = m
+
+	kube122 := v1alpha1.KubernetesVersion("1.22")
+	tt.oldClusterConfig.Spec.WorkerNodeGroupConfigurations[0].KubernetesVersion = &kube122
+	tt.mocks.client.EXPECT().GetEksaCluster(tt.ctx, tt.cluster, tt.clusterSpec.Cluster.Name).Return(tt.oldClusterConfig, nil)
+	tt.clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].KubernetesVersion = &kube122
+	diffBundle := test.VersionBundle()
+	diffBundle.EksD.Name = "different"
+	tt.clusterSpec.VersionsBundles[v1alpha1.Kube122] = diffBundle
+
+	diff, err := tt.clusterManager.EKSAClusterSpecChanged(tt.ctx, tt.cluster, tt.clusterSpec)
+	assert.Nil(t, err, "Error should be nil")
+	assert.True(t, diff, "Changes should have been detected")
+}
+
 func TestClusterManagerClusterSpecChangedClusterChanged(t *testing.T) {
 	tt := newSpecChangedTest(t)
 	tt.newClusterConfig.Spec.KubernetesVersion = "1.20"
