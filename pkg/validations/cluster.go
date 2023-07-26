@@ -119,8 +119,8 @@ func ValidateEksaVersion(ctx context.Context, cliVersion string, workload *clust
 }
 
 // ValidateEksaVersionSkew ensures that upgrades are sequential by CLI minor versions.
-func ValidateEksaVersionSkew(ctx context.Context, k KubectlClient, cluster *types.Cluster, spec *cluster.Spec) error {
-	currentCluster, err := k.GetEksaCluster(ctx, cluster, cluster.Name)
+func ValidateEksaVersionSkew(ctx context.Context, k KubectlClient, mgmtCluster *types.Cluster, spec *cluster.Spec) error {
+	currentCluster, err := k.GetEksaCluster(ctx, mgmtCluster, spec.Cluster.Name)
 	if err != nil {
 		return err
 	}

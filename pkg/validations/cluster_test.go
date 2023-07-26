@@ -413,7 +413,7 @@ func TestValidateEksaVersionSkew(t *testing.T) {
 			mgmtClusterObject.Spec.EksaVersion = tc.version
 			tt.clusterSpec.Cluster.Spec.EksaVersion = tc.upgradeVersion
 			ctx := context.Background()
-			tt.kubectl.EXPECT().GetEksaCluster(ctx, mgmtCluster, mgmtCluster.Name).Return(mgmtClusterObject, nil)
+			tt.kubectl.EXPECT().GetEksaCluster(ctx, mgmtCluster, tt.clusterSpec.Cluster.Name).Return(mgmtClusterObject, nil)
 			tt.kubectl.EXPECT().GetBundles(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(test.Bundle(), nil).AnyTimes()
 
 			err := validations.ValidateEksaVersionSkew(ctx, tt.kubectl, mgmtCluster, tt.clusterSpec)
