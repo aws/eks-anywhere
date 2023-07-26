@@ -216,7 +216,7 @@ func runTestManagementClusterUpgradeSideEffects(t *testing.T, provider framework
 			api.WithWorkerNodeCount(1),
 			api.WithEtcdCountIfExternal(1),
 		),
-		provider.WithKubeVersionAndOS(osFamily, kubeVersion),
+		provider.WithKubeVersionAndOS(osFamily, kubeVersion, latestRelease),
 	)
 
 	test := framework.NewMulticlusterE2ETest(t, managementCluster)
@@ -241,7 +241,7 @@ func runTestManagementClusterUpgradeSideEffects(t *testing.T, provider framework
 				api.WithCount(2),
 				api.WithLabel("cluster.x-k8s.io/failure-domain", "ds.meta_data.failuredomain"))),
 		framework.WithOIDCClusterConfig(t),
-		provider.WithKubeVersionAndOS(osFamily, kubeVersion),
+		provider.WithKubeVersionAndOS(osFamily, kubeVersion, latestRelease),
 	)
 	test.WithWorkloadClusters(workloadCluster)
 
