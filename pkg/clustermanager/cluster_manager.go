@@ -725,12 +725,22 @@ func (c *ClusterManager) EKSAClusterSpecChanged(ctx context.Context, clus *types
 }
 
 func compareEKSAClusterSpec(ctx context.Context, currentClusterSpec, newClusterSpec *cluster.Spec) (bool, error) {
-	currentVersionsBundle := currentClusterSpec.ControlPlaneVersionsBundle()
 	newVersionsBundle := newClusterSpec.ControlPlaneVersionsBundle()
+	oldVersionsBundle := currentClusterSpec.ControlPlaneVersionsBundle()
 
-	if currentVersionsBundle.EksD.Name != newVersionsBundle.EksD.Name {
+	if oldVersionsBundle.EksD.Name != newVersionsBundle.EksD.Name {
 		logger.V(3).Info("New eks-d release detected")
 		return true, nil
+	}
+
+	for _, workerNode := range newClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
+		newVersionsBundle = newClusterSpec.WorkerNodeGroupVersionsBundle(workerNode)
+		oldVersionsBundle = currentClusterSpec.WorkerNodeGroupVersionsBundle(workerNode)
+
+		if oldVersionsBundle.EksD.Name != newVersionsBundle.EksD.Name {
+			logger.V(3).Info("New eks-d release detected")
+			return true, nil
+		}
 	}
 
 	if newClusterSpec.OIDCConfig != nil && currentClusterSpec.OIDCConfig != nil {
