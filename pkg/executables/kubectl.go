@@ -1869,46 +1869,6 @@ func (k *Kubectl) ValidateNodesVersion(ctx context.Context, kubeconfig string, k
 	return nil
 }
 
-// ValidateClusterNodeVersion validates the Control Plane node's kubernetes version in E2E tests.
-func (k *Kubectl) ValidateClusterNodeVersion(ctx context.Context, kubeconfig string, kubeVersion v1alpha1.KubernetesVersion) error {
-	template := "{{range .items}}{{.status.nodeInfo.kubeletVersion}}\n{{end}}"
-	params := []string{"get", "nodes", "-o", "go-template", "--template", template, "-l", "!workerk8s=yes", "--kubeconfig", kubeconfig}
-	buffer, err := k.Execute(ctx, params...)
-	if err != nil {
-		return err
-	}
-	scanner := bufio.NewScanner(strings.NewReader(buffer.String()))
-	for scanner.Scan() {
-		kubeletVersion := scanner.Text()
-		if len(kubeletVersion) != 0 {
-			if !strings.Contains(kubeletVersion, string(kubeVersion)) {
-				return fmt.Errorf("validating node version: kubernetes version %s does not match expected version %s", kubeletVersion, kubeVersion)
-			}
-		}
-	}
-	return nil
-}
-
-// ValidateWorkerNodeVersion validates the worker node's kubernetes version in E2E tests.
-func (k *Kubectl) ValidateWorkerNodeVersion(ctx context.Context, kubeconfig string, kubeVersion v1alpha1.KubernetesVersion) error {
-	template := "{{range .items}}{{.status.nodeInfo.kubeletVersion}}\n{{end}}"
-	params := []string{"get", "nodes", "-o", "go-template", "--template", template, "-l", "workerk8s=yes", "--kubeconfig", kubeconfig}
-	buffer, err := k.Execute(ctx, params...)
-	if err != nil {
-		return err
-	}
-	scanner := bufio.NewScanner(strings.NewReader(buffer.String()))
-	for scanner.Scan() {
-		kubeletVersion := scanner.Text()
-		if len(kubeletVersion) != 0 {
-			if !strings.Contains(kubeletVersion, string(kubeVersion)) {
-				return fmt.Errorf("validating node version: kubernetes version %s does not match expected version %s", kubeletVersion, kubeVersion)
-			}
-		}
-	}
-	return nil
-}
-
 func (k *Kubectl) GetBundles(ctx context.Context, kubeconfigFile, name, namespace string) (*releasev1alpha1.Bundles, error) {
 	params := []string{"get", bundlesResourceType, name, "-o", "json", "--kubeconfig", kubeconfigFile, "--namespace", namespace}
 	stdOut, err := k.Execute(ctx, params...)

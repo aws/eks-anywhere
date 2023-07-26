@@ -3866,38 +3866,3 @@ func TestKubectlDeleteCRD(t *testing.T) {
 		})
 	}
 }
-
-func TestKubectlValidateWorkerNodesVersion(t *testing.T) {
-	t.Parallel()
-	tests := []struct {
-		testName         string
-		jsonResponseFile string
-		wantError        bool
-	}{
-		{
-			testName:         "no nodes deployments",
-			jsonResponseFile: "testdata/kubectl_nodes.json",
-			wantError:        false,
-		},
-	}
-	const kubeconfig = "kubeconfig"
-	for _, tc := range tests {
-		t.Run(tc.testName, func(t *testing.T) {
-			k, ctx, _, e := newKubectl(t)
-			tt := newKubectlTest(t)
-			fileContent := test.ReadFile(t, tc.jsonResponseFile)
-			template := "{{range .items}}{{.status.nodeInfo.kubeletVersion}}\n{{end}}"
-			params := []string{"get", "nodes", "-o", "go-template", "--template", template, "-l", "workerk8s=yes", "--kubeconfig", kubeconfig}
-			e.EXPECT().
-				Execute(ctx, params).
-				Return(*bytes.NewBufferString(fileContent), nil)
-
-			err := k.ValidateWorkerNodeVersion(ctx, kubeconfig, v1alpha1.Kube118)
-			if tc.wantError {
-				tt.Expect(err).NotTo(BeNil())
-			} else {
-				tt.Expect(err).To(BeNil())
-			}
-		})
-	}
-}
