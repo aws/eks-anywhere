@@ -13,6 +13,8 @@ import (
 	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
 
+const workerNodeGroupNameLabel = "eks-anywhere.amazon.com/workerNodeGroup="
+
 type ClusterFiller func(c *anywherev1.Cluster)
 
 // ClusterToConfigFiller updates the Cluster in the cluster.Config by applying all the fillers.
@@ -132,19 +134,41 @@ func WithWorkerNodeCount(r int) ClusterFiller {
 }
 
 // WithWorkerKubernetesVersion adds a worker node level kubernetes version configuration with the given version.
-func WithWorkerKubernetesVersion(version *anywherev1.KubernetesVersion) ClusterFiller {
+func WithWorkerKubernetesVersion(name string, version *anywherev1.KubernetesVersion) ClusterFiller {
 	return func(c *anywherev1.Cluster) {
 		if len(c.Spec.WorkerNodeGroupConfigurations) == 0 {
-			c.Spec.WorkerNodeGroupConfigurations = []anywherev1.WorkerNodeGroupConfiguration{{
-				Count:             ptr.Int(1),
-				KubernetesVersion: (*anywherev1.KubernetesVersion)(version),
-			}}
+			c.Spec.WorkerNodeGroupConfigurations = []anywherev1.WorkerNodeGroupConfiguration{
+				workerNodeWithKubernetesVersion(name, version),
+			}
 		}
-		if c.Spec.WorkerNodeGroupConfigurations[0].Labels == nil {
-			c.Spec.WorkerNodeGroupConfigurations[0].Labels = map[string]string{}
+
+		changed := false
+		for index, workerNodeGroup := range c.Spec.WorkerNodeGroupConfigurations {
+			if workerNodeGroup.Name == name {
+				workerNodeGroup.KubernetesVersion = version
+				if workerNodeGroup.Labels == nil {
+					workerNodeGroup.Labels = map[string]string{}
+				}
+				workerNodeGroup.Labels["eks-anywhere.amazon.com/workerNodeGroup="] = name
+				c.Spec.WorkerNodeGroupConfigurations[index] = workerNodeGroup
+				changed = true
+			}
 		}
-		c.Spec.WorkerNodeGroupConfigurations[0].KubernetesVersion = version
-		c.Spec.WorkerNodeGroupConfigurations[0].Labels["workerk8s"] = "yes"
+
+		if !changed {
+			c.Spec.WorkerNodeGroupConfigurations = append(c.Spec.WorkerNodeGroupConfigurations, workerNodeWithKubernetesVersion(name, version))
+		}
+	}
+}
+
+func workerNodeWithKubernetesVersion(name string, version *anywherev1.KubernetesVersion) anywherev1.WorkerNodeGroupConfiguration {
+	return anywherev1.WorkerNodeGroupConfiguration{
+		Name:              name,
+		Count:             ptr.Int(1),
+		KubernetesVersion: version,
+		Labels: map[string]string{
+			workerNodeGroupNameLabel: name,
+		},
 	}
 }
 
