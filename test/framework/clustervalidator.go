@@ -91,6 +91,9 @@ func buildClusterSpec(ctx context.Context, client client.Client, config *cluster
 			return nil, fmt.Errorf("failed to get cluster to build spec: %s", err)
 		}
 		clusterConfig.Cluster.Spec.BundlesRef = clus.Spec.BundlesRef
+		if clusterConfig.Cluster.Spec.BundlesRef == nil {
+			clusterConfig.Cluster.Spec.EksaVersion = clus.Spec.EksaVersion
+		}
 	}
 	spec, err := cluster.BuildSpecFromConfig(ctx, clientutil.NewKubeClient(client), clusterConfig)
 	if err != nil {

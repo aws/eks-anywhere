@@ -77,6 +77,10 @@ func updateControlPlaneReadyCondition(cluster *anywherev1.Cluster, kcp *controlp
 		return
 	}
 
+	if kcp == nil {
+		return
+	}
+
 	// We make sure to check that the status is up to date before using it
 	if kcp.Status.ObservedGeneration != kcp.ObjectMeta.Generation {
 		conditions.MarkFalse(cluster, anywherev1.ControlPlaneReadyCondition, anywherev1.OutdatedInformationReason, clusterv1.ConditionSeverityInfo, "")

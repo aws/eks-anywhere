@@ -142,6 +142,25 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 			},
 		},
 		{
+			name:              "controlplaneready, kcp is nil",
+			kcp:               nil,
+			controlPlaneCount: 1,
+			conditions: []anywherev1.Condition{
+				{
+					Type:   anywherev1.ControlPlaneInitializedCondition,
+					Status: "True",
+				},
+				{
+					Type:   anywherev1.ControlPlaneReadyCondition,
+					Status: "True",
+				},
+			},
+			wantCondition: &anywherev1.Condition{
+				Type:   anywherev1.ControlPlaneReadyCondition,
+				Status: "True",
+			},
+		},
+		{
 			name: "kubeadmcontrolplane status out of date",
 			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
 				kcp.Generation = 1
