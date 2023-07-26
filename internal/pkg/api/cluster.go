@@ -76,7 +76,7 @@ func WithCiliumSkipUpgrade() ClusterFiller {
 	}
 }
 
-// WithKindnetd configures the cluster to use the Kindnetd cni
+// WithKindnetd configures the cluster to use the Kindnetd cni.
 func WithKindnetd() ClusterFiller {
 	return func(cluster *anywherev1.Cluster) {
 		cluster.Spec.ClusterNetwork.CNIConfig = &anywherev1.CNIConfig{
