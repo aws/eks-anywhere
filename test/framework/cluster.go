@@ -804,6 +804,14 @@ func WithClusterUpgrade(fillers ...api.ClusterFiller) ClusterE2ETestOpt {
 	}
 }
 
+// WithUpgradeClusterConfig adds a cluster upgrade.
+// When we migrate usages of ClusterFiller to ClusterConfigFiller we can rename this to WithClusterUpgrade.
+func WithUpgradeClusterConfig(fillers ...api.ClusterConfigFiller) ClusterE2ETestOpt {
+	return func(e *ClusterE2ETest) {
+		e.UpdateClusterConfig(fillers...)
+	}
+}
+
 // LoadClusterConfigGeneratedByCLI loads the full cluster config from the file generated when a cluster is created using the CLI.
 func (e *ClusterE2ETest) LoadClusterConfigGeneratedByCLI(fillers ...api.ClusterConfigFiller) {
 	fullClusterConfigLocation := filepath.Join(e.ClusterConfigFolder, e.ClusterName+"-eks-a-cluster.yaml")
