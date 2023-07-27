@@ -1888,7 +1888,6 @@ func TestTinkerbellProviderWithMismatchedExternalEtcd(t *testing.T) {
 	}
 
 	assert.NotContains(t, gotMachineConfigNames, mismatchedEtcdMachineConfigName)
-
 }
 
 func TestTinkerbellProviderWithMismatchedMachineConfig(t *testing.T) {
@@ -1910,7 +1909,6 @@ func TestTinkerbellProviderWithMismatchedMachineConfig(t *testing.T) {
 
 	got := provider.MachineConfigs(clusterSpec)
 	assert.True(t, len(got) == 0)
-
 }
 
 func TestTinkerbellProvider_GenerateCAPISpecForUpgrade_CertBundles(t *testing.T) {
