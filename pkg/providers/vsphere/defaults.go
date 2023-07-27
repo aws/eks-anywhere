@@ -29,7 +29,7 @@ func (d *Defaulter) setDefaultsForMachineConfig(ctx context.Context, spec *Spec)
 	setDefaultsForEtcdMachineConfig(spec.etcdMachineConfig())
 
 	for _, w := range spec.Cluster.Spec.WorkerNodeGroupConfigurations {
-		if err := d.setDefaultTemplateIfMissing(ctx, spec, w); err != nil {
+		if err := d.setWorkerDefaultTemplateIfMissing(ctx, spec, w); err != nil {
 			return err
 		}
 	}
@@ -37,6 +37,10 @@ func (d *Defaulter) setDefaultsForMachineConfig(ctx context.Context, spec *Spec)
 	for _, m := range spec.machineConfigs() {
 		m.SetDefaults()
 		m.SetUserDefaults()
+
+		if err := d.setDefaultTemplateIfMissing(ctx, spec, m); err != nil {
+			return err
+		}
 
 		if err := d.setTemplateFullPath(ctx, spec.VSphereDatacenter, m); err != nil {
 			return err
@@ -69,17 +73,29 @@ func setDefaultsForEtcdMachineConfig(machineConfig *anywherev1.VSphereMachineCon
 	}
 }
 
-func (d *Defaulter) setDefaultTemplateIfMissing(ctx context.Context, spec *Spec, workerNodeGroup anywherev1.WorkerNodeGroupConfiguration) error {
+func (d *Defaulter) setWorkerDefaultTemplateIfMissing(ctx context.Context, spec *Spec, workerNodeGroup anywherev1.WorkerNodeGroupConfiguration) error {
 	machineConfigName := workerNodeGroup.MachineGroupRef.Name
 	machineConfig := spec.VSphereMachineConfigs[machineConfigName]
 	if machineConfig == nil {
 		return fmt.Errorf("cannot find VSphereMachineConfig %v for worker nodes", machineConfigName)
 	}
 	if machineConfig.Spec.Template == "" {
-		logger.V(1).Info("Control plane VSphereMachineConfig template is not set. Using default template.")
+		logger.V(1).Info("Worker node VSphereMachineConfig template is not set. Using default template.")
 
 		versionsBundle := spec.WorkerNodeGroupVersionsBundle(workerNodeGroup)
 		if err := d.setupDefaultTemplate(ctx, spec, machineConfig, versionsBundle); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (d *Defaulter) setDefaultTemplateIfMissing(ctx context.Context, spec *Spec, m *anywherev1.VSphereMachineConfig) error {
+	if m.Spec.Template == "" {
+		logger.V(1).Info("VSphereMachineConfig template is not set. Using default template.")
+		versionsBundle := spec.ControlPlaneVersionsBundle()
+		if err := d.setupDefaultTemplate(ctx, spec, m, versionsBundle); err != nil {
 			return err
 		}
 	}
