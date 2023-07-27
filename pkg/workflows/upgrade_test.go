@@ -269,7 +269,7 @@ func (c *upgradeTestSetup) expectUpgradeWorkloadToReturn(managementCluster *type
 
 func (c *upgradeTestSetup) expectMoveManagementToBootstrap() {
 	gomock.InOrder(
-		c.clusterManager.EXPECT().BackupCAPI(c.ctx, c.managementCluster, c.managementStatePath),
+		c.clusterManager.EXPECT().BackupCAPI(c.ctx, c.managementCluster, c.managementStatePath, c.managementCluster.Name),
 		c.clusterManager.EXPECT().PauseCAPIWorkloadClusters(c.ctx, c.managementCluster),
 		c.clusterManager.EXPECT().MoveCAPI(
 			c.ctx, c.managementCluster, c.bootstrapCluster, gomock.Any(), c.newClusterSpec, gomock.Any(),
@@ -282,13 +282,13 @@ func (c *upgradeTestSetup) expectMoveManagementToBootstrap() {
 
 func (c *upgradeTestSetup) expectBackupManagementFromCluster(cluster *types.Cluster) {
 	gomock.InOrder(
-		c.clusterManager.EXPECT().BackupCAPI(c.ctx, cluster, c.managementStatePath),
+		c.clusterManager.EXPECT().BackupCAPI(c.ctx, cluster, c.managementStatePath, c.managementCluster.Name),
 	)
 }
 
 func (c *upgradeTestSetup) expectBackupManagementFromClusterFailed(cluster *types.Cluster) {
 	gomock.InOrder(
-		c.clusterManager.EXPECT().BackupCAPI(c.ctx, cluster, c.managementStatePath).Return(fmt.Errorf("backup management failed")),
+		c.clusterManager.EXPECT().BackupCAPI(c.ctx, cluster, c.managementStatePath, c.managementCluster.Name).Return(fmt.Errorf("backup management failed")),
 	)
 }
 

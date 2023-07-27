@@ -153,8 +153,8 @@ func (c *Clusterctl) writeInfrastructureBundle(clusterSpec *cluster.Spec, rootFo
 }
 
 // BackupManagement saves the CAPI resources of a cluster to the provided path. This will overwrite any existing contents
-// in the path if the backup succeeds.
-func (c *Clusterctl) BackupManagement(ctx context.Context, cluster *types.Cluster, managementStatePath string) error {
+// in the path if the backup succeeds. If `clusterName` is provided, it filters and backs up only the provided cluster.
+func (c *Clusterctl) BackupManagement(ctx context.Context, cluster *types.Cluster, managementStatePath, clusterName string) error {
 	filePath := filepath.Join(c.writer.Dir(), managementStatePath)
 
 	// check for existing backup to prevent partial overwrites
@@ -164,17 +164,17 @@ func (c *Clusterctl) BackupManagement(ctx context.Context, cluster *types.Cluste
 		defer func() {
 			os.RemoveAll(tempPath)
 		}()
-		err = c.backupManagement(ctx, cluster, tempPath)
+		err = c.backupManagement(ctx, cluster, tempPath, clusterName)
 		if err != nil {
 			return err
 		}
 
 		return ReplacePath(tempPath, filePath)
 	}
-	return c.backupManagement(ctx, cluster, filePath)
+	return c.backupManagement(ctx, cluster, filePath, clusterName)
 }
 
-func (c *Clusterctl) backupManagement(ctx context.Context, cluster *types.Cluster, filePath string) error {
+func (c *Clusterctl) backupManagement(ctx context.Context, cluster *types.Cluster, filePath, clusterName string) error {
 	err := os.MkdirAll(filePath, os.ModePerm)
 	if err != nil {
 		return fmt.Errorf("could not create backup file for CAPI objects: %v", err)
@@ -184,6 +184,7 @@ func (c *Clusterctl) backupManagement(ctx context.Context, cluster *types.Cluste
 		"--to-directory", filePath,
 		"--kubeconfig", cluster.KubeconfigFile,
 		"--namespace", constants.EksaSystemNamespace,
+		"--filter-cluster", clusterName,
 	)
 	if err != nil {
 		return fmt.Errorf("failed taking backup of CAPI objects: %v", err)
