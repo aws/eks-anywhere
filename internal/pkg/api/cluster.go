@@ -76,6 +76,15 @@ func WithCiliumSkipUpgrade() ClusterFiller {
 	}
 }
 
+// WithKindnetd configures the cluster to use the Kindnetd cni.
+func WithKindnetd() ClusterFiller {
+	return func(cluster *anywherev1.Cluster) {
+		cluster.Spec.ClusterNetwork.CNIConfig = &anywherev1.CNIConfig{
+			Kindnetd: &anywherev1.KindnetdConfig{},
+		}
+	}
+}
+
 func WithClusterNamespace(ns string) ClusterFiller {
 	return func(c *anywherev1.Cluster) {
 		c.Namespace = ns

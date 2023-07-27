@@ -205,7 +205,7 @@ func newEKSAPackagedBinaryForLocalBinary(tb testing.TB) eksaPackagedBinary {
 	}
 }
 
-func runTestManagementClusterUpgradeSideEffects(t *testing.T, provider framework.Provider, osFamily anywherev1.OSFamily, kubeVersion anywherev1.KubernetesVersion) {
+func runTestManagementClusterUpgradeSideEffects(t *testing.T, provider framework.Provider, osFamily anywherev1.OSFamily, kubeVersion anywherev1.KubernetesVersion, configFillers ...api.ClusterConfigFiller) {
 	latestRelease := latestMinorRelease(t)
 
 	managementCluster := framework.NewClusterE2ETest(t, provider, framework.PersistentCluster())
@@ -217,6 +217,9 @@ func runTestManagementClusterUpgradeSideEffects(t *testing.T, provider framework
 			api.WithEtcdCountIfExternal(1),
 		),
 		provider.WithKubeVersionAndOS(osFamily, kubeVersion, latestRelease),
+		api.JoinClusterConfigFillers(
+			configFillers...,
+		),
 	)
 
 	test := framework.NewMulticlusterE2ETest(t, managementCluster)
@@ -242,6 +245,9 @@ func runTestManagementClusterUpgradeSideEffects(t *testing.T, provider framework
 				api.WithLabel("cluster.x-k8s.io/failure-domain", "ds.meta_data.failuredomain"))),
 		framework.WithOIDCClusterConfig(t),
 		provider.WithKubeVersionAndOS(osFamily, kubeVersion, latestRelease),
+		api.JoinClusterConfigFillers(
+			configFillers...,
+		),
 	)
 	test.WithWorkloadClusters(workloadCluster)
 
