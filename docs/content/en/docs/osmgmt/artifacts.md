@@ -433,8 +433,9 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
 
       * `--os`: `ubuntu`
       * `--hypervisor`: For vSphere use `vsphere`
-      * `--release-channel`: Supported EKS Distro releases include 1-21, 1-22, 1-23, 1-24 and 1-25.
+      * `--release-channel`: Supported EKS Distro releases include 1-21, 1-22, 1-23, 1-24 and 1-25
       * `--vsphere-config`: vSphere configuration file (`vsphere-connection.json` in this example)
+      * `--firmware efi`: (optional) To enable EFI in Ubuntu. This is only supported for vSphere Ubuntu image
 
       ```bash
       image-builder build --os ubuntu --hypervisor vsphere --release-channel 1-25 --vsphere-config vsphere-connection.json
@@ -443,7 +444,7 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
 
       * `--os`: `redhat`
       * `--hypervisor`: For vSphere use `vsphere`
-      * `--release-channel`: Supported EKS Distro releases include 1-21, 1-22, 1-23, 1-24 and 1-25.
+      * `--release-channel`: Supported EKS Distro releases include 1-21, 1-22, 1-23, 1-24 and 1-25
       * `--vsphere-config`: vSphere configuration file (`vsphere-connection.json` in this example)
 
       ```bash
