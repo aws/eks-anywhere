@@ -851,15 +851,9 @@ func TestDockerKubernetes126to127GithubFluxEnabledUpgradeFromLatestMinorRelease(
 
 func TestDockerKubernetes126WithOIDCManagementClusterUpgradeFromLatestSideEffects(t *testing.T) {
 	provider := framework.NewDocker(t)
-	latestRelease := latestMinorRelease(t)
-	runTestManagementClusterUpgradeSideEffects(
-		t,
-		provider,
-		latestRelease,
-		provider.WithKubeVersionAndOS("", v1alpha1.Kube126, latestRelease),
-		api.ClusterToConfigFiller(
-			api.WithKindnetd(),
-		),
+	runTestManagementClusterUpgradeSideEffects(t, provider, "", v1alpha1.Kube126, api.ClusterToConfigFiller(
+		api.WithKindnetd(),
+	),
 	)
 }
 

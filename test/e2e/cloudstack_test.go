@@ -1661,32 +1661,27 @@ func TestCloudStackUpgradeKubernetes127MulticlusterWorkloadClusterWithGithubFlux
 
 func TestCloudStackKubernetes123WithOIDCManagementClusterUpgradeFromLatestSideEffects(t *testing.T) {
 	cloudstack := framework.NewCloudStack(t)
-	latestRelease := latestMinorRelease(t)
-	runTestManagementClusterUpgradeSideEffects(t, cloudstack, latestRelease, cloudstack.WithKubeVersionAndOS(anywherev1.RedHat, anywherev1.Kube123, latestRelease))
+	runTestManagementClusterUpgradeSideEffects(t, cloudstack, anywherev1.RedHat, anywherev1.Kube123)
 }
 
 func TestCloudStackKubernetes124WithOIDCManagementClusterUpgradeFromLatestSideEffects(t *testing.T) {
 	cloudstack := framework.NewCloudStack(t)
-	latestRelease := latestMinorRelease(t)
-	runTestManagementClusterUpgradeSideEffects(t, cloudstack, latestRelease, cloudstack.WithKubeVersionAndOS(anywherev1.RedHat, anywherev1.Kube124, latestRelease))
+	runTestManagementClusterUpgradeSideEffects(t, cloudstack, anywherev1.RedHat, anywherev1.Kube124)
 }
 
 func TestCloudStackKubernetes125WithOIDCManagementClusterUpgradeFromLatestSideEffects(t *testing.T) {
 	cloudstack := framework.NewCloudStack(t)
-	latestRelease := latestMinorRelease(t)
-	runTestManagementClusterUpgradeSideEffects(t, cloudstack, latestRelease, cloudstack.WithKubeVersionAndOS(anywherev1.RedHat, anywherev1.Kube125, latestRelease))
+	runTestManagementClusterUpgradeSideEffects(t, cloudstack, anywherev1.RedHat, anywherev1.Kube125)
 }
 
 func TestCloudStackKubernetes126WithOIDCManagementClusterUpgradeFromLatestSideEffects(t *testing.T) {
 	cloudstack := framework.NewCloudStack(t)
-	latestRelease := latestMinorRelease(t)
-	runTestManagementClusterUpgradeSideEffects(t, cloudstack, latestRelease, cloudstack.WithKubeVersionAndOS(anywherev1.RedHat, anywherev1.Kube126, latestRelease))
+	runTestManagementClusterUpgradeSideEffects(t, cloudstack, anywherev1.RedHat, anywherev1.Kube126)
 }
 
 func TestCloudStackKubernetes127WithOIDCManagementClusterUpgradeFromLatestSideEffects(t *testing.T) {
 	cloudstack := framework.NewCloudStack(t)
-	latestRelease := latestMinorRelease(t)
-	runTestManagementClusterUpgradeSideEffects(t, cloudstack, latestRelease, cloudstack.WithKubeVersionAndOS(anywherev1.RedHat, anywherev1.Kube127, latestRelease))
+	runTestManagementClusterUpgradeSideEffects(t, cloudstack, anywherev1.RedHat, anywherev1.Kube127)
 }
 
 // OIDC
