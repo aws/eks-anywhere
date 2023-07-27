@@ -75,7 +75,7 @@ type clusterWithMachines struct {
 
 type clusterMachines map[string]types.Machine
 
-func anyMachinesChanged(original clusterMachines, current clusterMachines) (changed bool, reason string) {
+func anyMachinesChanged(original, current clusterMachines) (changed bool, reason string) {
 	if len(original) != len(current) {
 		return true, fmt.Sprintf("Different number of machines: before %d, after %d", len(original), len(current))
 	}
@@ -205,7 +205,7 @@ func newEKSAPackagedBinaryForLocalBinary(tb testing.TB) eksaPackagedBinary {
 	}
 }
 
-func runTestManagementClusterUpgradeSideEffects(t *testing.T, provider framework.Provider, osFamily anywherev1.OSFamily, kubeVersion anywherev1.KubernetesVersion, configFillers ...api.ClusterConfigFiller) {
+func runTestManagementClusterUpgradeSideEffects(t *testing.T, provider framework.Provider, os framework.OS, kubeVersion anywherev1.KubernetesVersion, configFillers ...api.ClusterConfigFiller) {
 	latestRelease := latestMinorRelease(t)
 
 	managementCluster := framework.NewClusterE2ETest(t, provider, framework.PersistentCluster())
@@ -216,7 +216,7 @@ func runTestManagementClusterUpgradeSideEffects(t *testing.T, provider framework
 			api.WithWorkerNodeCount(1),
 			api.WithEtcdCountIfExternal(1),
 		),
-		provider.WithKubeVersionAndOS(osFamily, kubeVersion, latestRelease),
+		provider.WithKubeVersionAndOS(kubeVersion, os, latestRelease),
 		api.JoinClusterConfigFillers(
 			configFillers...,
 		),
@@ -244,7 +244,7 @@ func runTestManagementClusterUpgradeSideEffects(t *testing.T, provider framework
 				api.WithCount(2),
 				api.WithLabel("cluster.x-k8s.io/failure-domain", "ds.meta_data.failuredomain"))),
 		framework.WithOIDCClusterConfig(t),
-		provider.WithKubeVersionAndOS(osFamily, kubeVersion, latestRelease),
+		provider.WithKubeVersionAndOS(kubeVersion, os, latestRelease),
 		api.JoinClusterConfigFillers(
 			configFillers...,
 		),
