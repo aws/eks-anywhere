@@ -2299,8 +2299,7 @@ func TestVSphereKubernetes127RedhatUpgradeFromLatestMinorRelease(t *testing.T) {
 
 func TestVSphereKubernetes126WithOIDCManagementClusterUpgradeFromLatestSideEffects(t *testing.T) {
 	provider := framework.NewVSphere(t)
-	latestRelease := latestMinorRelease(t)
-	runTestManagementClusterUpgradeSideEffects(t, provider, latestRelease, provider.WithKubeVersionAndOS(v1alpha1.Ubuntu, v1alpha1.Kube126, latestRelease))
+	runTestManagementClusterUpgradeSideEffects(t, provider, v1alpha1.Ubuntu, v1alpha1.Kube126)
 }
 
 func TestVSphereKubernetes124UbuntuUpgradeFromLatestMinorReleaseAlwaysNetworkPolicy(t *testing.T) {
