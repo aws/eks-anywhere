@@ -1599,7 +1599,7 @@ func (e *ClusterE2ETest) VerifyEmissaryPackageInstalled(packageName string, mgmt
 }
 
 // TestEmissaryPackageRouting is checking if emissary is able to create Ingress, host, and mapping that function correctly.
-func (e *ClusterE2ETest) TestEmissaryPackageRouting(packageName string, mgmtCluster *types.Cluster) {
+func (e *ClusterE2ETest) TestEmissaryPackageRouting(packageName, checkName string, mgmtCluster *types.Cluster) {
 	ctx := context.Background()
 	packageMetadatNamespace := fmt.Sprintf("%s-%s", constants.EksaPackagesName, e.ClusterName)
 
@@ -1629,9 +1629,9 @@ func (e *ClusterE2ETest) TestEmissaryPackageRouting(packageName string, mgmtClus
 	}
 
 	// Functional testing of Emissary Ingress
-	ingresssvcAddress := packageName + "." + constants.EksaPackagesName + ".svc.cluster.local" + "/backend/"
+	ingresssvcAddress := checkName + "." + constants.EksaPackagesName + ".svc.cluster.local"
 	e.T.Log("Validate content at endpoint", ingresssvcAddress)
-	expectedLogs := "quote"
+	expectedLogs := "Thank you for using"
 	e.ValidateEndpointContent(ingresssvcAddress, constants.EksaPackagesName, expectedLogs)
 }
 

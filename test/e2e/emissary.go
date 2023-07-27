@@ -22,7 +22,7 @@ func runCuratedPackageEmissaryInstall(test *framework.ClusterE2ETest) {
 	test.InstallCuratedPackageFile(packageFile, kubeconfig.FromClusterName(test.ClusterName))
 	test.VerifyEmissaryPackageInstalled(emissaryPackagePrefix+"-"+emissaryPackageName, withMgmtCluster(test))
 	if test.Provider.Name() == constants.DockerProviderName {
-		test.TestEmissaryPackageRouting(emissaryPackagePrefix+"-"+emissaryPackageName, withMgmtCluster(test))
+		test.TestEmissaryPackageRouting(emissaryPackagePrefix+"-"+emissaryPackageName, "hello", withMgmtCluster(test))
 	}
 }
 
