@@ -117,7 +117,7 @@ Set the remaining fields in cluster spec as required and create the cluster usin
 
 #### Generate keys.json and make it publicly accessible
 
-1. The cluster provisioning workflow generates a pair of service account signing keys. Retrieve the public signing key generated and used by the cluster, and create a keys.json document containing the public signing key. 
+1. The cluster provisioning workflow generates a pair of service account signing keys. Retrieve the public signing key generated and used by the cluster, and create a keys.json document containing the public signing key.
 
     ```bash
     git clone https://github.com/aws/amazon-eks-pod-identity-webhook
@@ -190,6 +190,31 @@ In order to grant certain service accounts access to the desired AWS resources, 
     ```
     "$ISSUER_HOSTPATH:sub": "system:serviceaccount:KUBERNETES_SERVICE_ACCOUNT_NAMESPACE:KUBERNETES_SERVICE_ACCOUNT_NAME"
     ```
+    Below are the one exmaple to allow list your `my-serviceaccount` service account in `default` namespace and all service accounts in `observability` namespace for `us-west-2` region. Remember to replace `Account_ID` and `S3_BUCKET` with   required values.
+   	```
+   {
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Principal": {
+                "Federated": "arn:aws:iam::$Account_ID:oidc-provider/s3.us-west-2.amazonaws.com/$S3_BUCKET"
+            },
+            "Action": "sts:AssumeRoleWithWebIdentity",
+            "Condition": {
+                "StringLike": {
+                    "s3.us-west-2.amazonaws.com/$S3_BUCKET:sub": [
+                        "system:serviceaccount:default:my-serviceaccount",
+                        "system:serviceaccount:amazon-cloudwatch:*"
+                        ]
+                      }
+                   }
+             }
+         ]
+    }
+   ``` 
+
+
 
 1. Refer [this](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_condition_operators.html) doc for different ways of configuring one or multiple service accounts through the condition operators in the trust relationship.
 
