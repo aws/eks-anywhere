@@ -89,7 +89,7 @@ func (b FileSpecBuilder) Build(clusterConfigURL string) (*Spec, error) {
 		return nil, err
 	}
 
-	release, err := mReader.ReadReleaseForVersion(b.cliVersion.GitVersion)
+	release, err := b.getEksaRelease(mReader)
 	if err != nil {
 		return nil, err
 	}
@@ -152,6 +152,23 @@ func (b FileSpecBuilder) getBundles(manifestReader *manifests.Reader) (*releasev
 	}
 
 	return bundles.Read(b.reader, bundlesURL)
+}
+
+func (b FileSpecBuilder) getEksaRelease(mReader *manifests.Reader) (*releasev1.EksARelease, error) {
+	if b.bundlesManifestURL == "" {
+		// this shouldn't return an error at this point due to getBundles performing similar operations prior to this call
+		release, err := mReader.ReadReleaseForVersion(b.cliVersion.GitVersion)
+		if err != nil {
+			return nil, err
+		}
+		return release, nil
+	}
+
+	// When using bundles-override or a custom bundle, a fake EksaRelease can be used since using a custom bundle
+	// is like creating a new EKS-A version.
+	return &releasev1.EksARelease{
+		Version: b.cliVersion.GitVersion,
+	}, nil
 }
 
 func buildEKSARelease(release *releasev1.EksARelease, bundle *releasev1.Bundles) *releasev1.EKSARelease {
