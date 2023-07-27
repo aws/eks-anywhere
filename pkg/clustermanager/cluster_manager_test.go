@@ -1316,9 +1316,9 @@ func TestClusterManagerBackupCAPISuccess(t *testing.T) {
 	ctx := context.Background()
 
 	c, m := newClusterManager(t)
-	m.client.EXPECT().BackupManagement(ctx, from, managementStatePath)
+	m.client.EXPECT().BackupManagement(ctx, from, managementStatePath, from.Name)
 
-	if err := c.BackupCAPI(ctx, from, managementStatePath); err != nil {
+	if err := c.BackupCAPI(ctx, from, managementStatePath, from.Name); err != nil {
 		t.Errorf("ClusterManager.BackupCAPI() error = %v, wantErr nil", err)
 	}
 }
@@ -1332,13 +1332,13 @@ func TestClusterManagerBackupCAPIRetrySuccess(t *testing.T) {
 
 	c, m := newClusterManager(t)
 	// m.client.EXPECT().BackupManagement(ctx, from, managementStatePath)
-	firstTry := m.client.EXPECT().BackupManagement(ctx, from, managementStatePath).Return(errors.New("Error: failed to connect to the management cluster: action failed after 9 attempts: Get \"https://127.0.0.1:61994/api?timeout=30s\": EOF"))
-	secondTry := m.client.EXPECT().BackupManagement(ctx, from, managementStatePath).Return(nil)
+	firstTry := m.client.EXPECT().BackupManagement(ctx, from, managementStatePath, from.Name).Return(errors.New("Error: failed to connect to the management cluster: action failed after 9 attempts: Get \"https://127.0.0.1:61994/api?timeout=30s\": EOF"))
+	secondTry := m.client.EXPECT().BackupManagement(ctx, from, managementStatePath, from.Name).Return(nil)
 	gomock.InOrder(
 		firstTry,
 		secondTry,
 	)
-	if err := c.BackupCAPI(ctx, from, managementStatePath); err != nil {
+	if err := c.BackupCAPI(ctx, from, managementStatePath, from.Name); err != nil {
 		t.Errorf("ClusterManager.BackupCAPI() error = %v, wantErr nil", err)
 	}
 }
@@ -1387,14 +1387,16 @@ func TestClusterctlWaitRetryPolicy(t *testing.T) {
 }
 
 func TestClusterManagerBackupCAPIError(t *testing.T) {
-	from := &types.Cluster{}
+	from := &types.Cluster{
+		Name: "from-cluster",
+	}
 
 	ctx := context.Background()
 
 	c, m := newClusterManager(t)
-	m.client.EXPECT().BackupManagement(ctx, from, managementStatePath).Return(errors.New("backing up CAPI resources"))
+	m.client.EXPECT().BackupManagement(ctx, from, managementStatePath, from.Name).Return(errors.New("backing up CAPI resources"))
 
-	if err := c.BackupCAPI(ctx, from, managementStatePath); err == nil {
+	if err := c.BackupCAPI(ctx, from, managementStatePath, from.Name); err == nil {
 		t.Errorf("ClusterManager.BackupCAPI() error = %v, wantErr nil", err)
 	}
 }

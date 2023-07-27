@@ -104,17 +104,17 @@ func (mr *MockClusterClientMockRecorder) ApplyKubeSpecFromBytesWithNamespace(arg
 }
 
 // BackupManagement mocks base method.
-func (m *MockClusterClient) BackupManagement(arg0 context.Context, arg1 *types.Cluster, arg2 string) error {
+func (m *MockClusterClient) BackupManagement(arg0 context.Context, arg1 *types.Cluster, arg2, arg3 string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "BackupManagement", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "BackupManagement", arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // BackupManagement indicates an expected call of BackupManagement.
-func (mr *MockClusterClientMockRecorder) BackupManagement(arg0, arg1, arg2 interface{}) *gomock.Call {
+func (mr *MockClusterClientMockRecorder) BackupManagement(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BackupManagement", reflect.TypeOf((*MockClusterClient)(nil).BackupManagement), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BackupManagement", reflect.TypeOf((*MockClusterClient)(nil).BackupManagement), arg0, arg1, arg2, arg3)
 }
 
 // CountMachineDeploymentReplicasReady mocks base method.

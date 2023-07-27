@@ -457,7 +457,7 @@ func (s *installCAPITask) Restore(ctx context.Context, commandContext *task.Comm
 
 func (s *moveManagementToBootstrapTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
 	logger.Info("Backing up workload cluster's management resources before moving to bootstrap cluster")
-	err := commandContext.ClusterManager.BackupCAPI(ctx, commandContext.WorkloadCluster, commandContext.ManagementClusterStateDir)
+	err := commandContext.ClusterManager.BackupCAPI(ctx, commandContext.WorkloadCluster, commandContext.ManagementClusterStateDir, commandContext.WorkloadCluster.Name)
 	if err != nil {
 		commandContext.SetError(err)
 		return &CollectDiagnosticsTask{}
@@ -514,7 +514,7 @@ func (s *upgradeWorkloadClusterTask) Run(ctx context.Context, commandContext *ta
 	if err != nil {
 		commandContext.SetError(err)
 		logger.Info("Backing up management components from bootstrap cluster")
-		err := commandContext.ClusterManager.BackupCAPI(ctx, commandContext.BootstrapCluster, commandContext.ManagementClusterStateDir)
+		err := commandContext.ClusterManager.BackupCAPI(ctx, commandContext.ManagementCluster, commandContext.ManagementClusterStateDir, commandContext.WorkloadCluster.Name)
 		if err != nil {
 			logger.Info("Bootstrap management component backup failed, use existing workload cluster backup", "error", err)
 		}
