@@ -167,14 +167,7 @@ func (b FileSpecBuilder) getEksaRelease(mReader *manifests.Reader) (*releasev1.E
 	// When using bundles-override or a custom bundle, a fake EksaRelease can be used since using a custom bundle
 	// is like creating a new EKS-A version.
 	return &releasev1.EksARelease{
-		Date:              "",
-		Version:           b.cliVersion.GitVersion,
-		Number:            1,
-		GitCommit:         "",
-		GitTag:            "",
-		BundleManifestUrl: "",
-		EksABinary:        releasev1.BinaryBundle{},
-		EksACLI:           releasev1.PlatformBundle{},
+		Version: b.cliVersion.GitVersion,
 	}, nil
 }
 
