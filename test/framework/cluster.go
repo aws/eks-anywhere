@@ -42,6 +42,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/semver"
 	"github.com/aws/eks-anywhere/pkg/templater"
 	"github.com/aws/eks-anywhere/pkg/types"
+	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 	clusterf "github.com/aws/eks-anywhere/test/framework/cluster"
 )
 
@@ -318,7 +319,7 @@ type Provider interface {
 	CleanupVMs(clusterName string) error
 	UpdateKubeConfig(content *[]byte, clusterName string) error
 	ClusterStateValidations() []clusterf.StateValidation
-	WithKubeVersionAndOS(osFamily v1alpha1.OSFamily, kubeVersion v1alpha1.KubernetesVersion) api.ClusterConfigFiller
+	WithKubeVersionAndOS(osFamily v1alpha1.OSFamily, kubeVersion v1alpha1.KubernetesVersion, release *releasev1.EksARelease) api.ClusterConfigFiller
 	WithNewWorkerNodeGroup(name string, workerNodeGroup *WorkerNodeGroup) api.ClusterConfigFiller
 }
 

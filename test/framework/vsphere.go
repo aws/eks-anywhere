@@ -502,11 +502,18 @@ func (v *VSphere) ClusterConfigUpdates() []api.ClusterConfigFiller {
 
 // WithKubeVersionAndOS returns a cluster config filler that sets the cluster kube version and the right template for all
 // vsphere machine configs.
-func (v *VSphere) WithKubeVersionAndOS(osFamily anywherev1.OSFamily, kubeVersion anywherev1.KubernetesVersion) api.ClusterConfigFiller {
+func (v *VSphere) WithKubeVersionAndOS(osFamily anywherev1.OSFamily, kubeVersion anywherev1.KubernetesVersion, release *releasev1.EksARelease) api.ClusterConfigFiller {
+	var template string
+	if release == nil {
+		template = v.templateForDevRelease(osFamily, kubeVersion)
+	} else {
+		template = v.templatesRegistry.templateForRelease(v.t, osFamily, release, kubeVersion)
+	}
+
 	return api.JoinClusterConfigFillers(
 		api.ClusterToConfigFiller(api.WithKubernetesVersion(kubeVersion)),
 		api.VSphereToConfigFiller(
-			api.WithTemplateForAllMachines(v.templateForDevRelease(osFamily, kubeVersion)),
+			api.WithTemplateForAllMachines(template),
 			api.WithOsFamilyForAllMachines(osFamily),
 		),
 	)

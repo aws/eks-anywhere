@@ -6,6 +6,7 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 	clusterf "github.com/aws/eks-anywhere/test/framework/cluster"
 )
 
@@ -155,7 +156,7 @@ func (t *Tinkerbell) CleanupVMs(_ string) error {
 
 // WithKubeVersionAndOS returns a cluster config filler that sets the cluster kube version and the right template for all
 // tinkerbell machine configs.
-func (t *Tinkerbell) WithKubeVersionAndOS(osFamily anywherev1.OSFamily, kubeVersion anywherev1.KubernetesVersion) api.ClusterConfigFiller {
+func (t *Tinkerbell) WithKubeVersionAndOS(osFamily anywherev1.OSFamily, kubeVersion anywherev1.KubernetesVersion, release *releasev1.EksARelease) api.ClusterConfigFiller {
 	// TODO: Update tests to use this
 	panic("Not implemented for Tinkerbell yet")
 }
