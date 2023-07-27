@@ -25,7 +25,7 @@ type eksaPackagedBinary interface {
 // runFlowUpgradeManagementClusterCheckForSideEffects creates management and workload cluster
 // with a specific eks-a version then upgrades the management cluster with another CLI version
 // and checks that this doesn't cause any side effects (machine rollout) in the workload clusters.
-func runFlowUpgradeManagementClusterCheckForSideEffects(test *framework.MulticlusterE2ETest, currentEKSA, newEKSA eksaPackagedBinary) {
+func runFlowUpgradeManagementClusterCheckForSideEffects(test *framework.MulticlusterE2ETest, currentEKSA, newEKSA eksaPackagedBinary, clusterOpts ...framework.ClusterE2ETestOpt) {
 	test.T.Logf("Creating management cluster with EKS-A version %s", currentEKSA.Version())
 	test.CreateManagementCluster(framework.ExecuteWithBinary(currentEKSA))
 
@@ -41,7 +41,7 @@ func runFlowUpgradeManagementClusterCheckForSideEffects(test *framework.Multiclu
 	printStateOfMachines(test.ManagementCluster.ClusterConfig.Cluster, preUpgradeWorkloadClustersState)
 
 	test.T.Logf("Upgrading management cluster with EKS-A version %s", newEKSA.Version())
-	test.ManagementCluster.UpgradeCluster(framework.ExecuteWithBinary(newEKSA))
+	test.ManagementCluster.UpgradeClusterWithNewConfig(clusterOpts, framework.ExecuteWithBinary(newEKSA))
 
 	checker := machineSideEffectChecker{
 		tb:                 test.T,
@@ -254,5 +254,6 @@ func runTestManagementClusterUpgradeSideEffects(t *testing.T, provider framework
 	runFlowUpgradeManagementClusterCheckForSideEffects(test,
 		framework.NewEKSAReleasePackagedBinary(latestRelease),
 		newEKSAPackagedBinaryForLocalBinary(t),
+		framework.WithUpgradeClusterConfig(provider.WithKubeVersionAndOS(kubeVersion, os, nil)),
 	)
 }
