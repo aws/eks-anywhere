@@ -89,7 +89,7 @@ func (b FileSpecBuilder) Build(clusterConfigURL string) (*Spec, error) {
 		return nil, err
 	}
 
-	release, err := mReader.ReadReleaseForVersion(b.cliVersion.GitVersion)
+	release, err := b.getEksaRelease(mReader)
 	if err != nil {
 		return nil, err
 	}
@@ -152,6 +152,28 @@ func (b FileSpecBuilder) getBundles(manifestReader *manifests.Reader) (*releasev
 	}
 
 	return bundles.Read(b.reader, bundlesURL)
+}
+
+func (b FileSpecBuilder) getEksaRelease(mReader *manifests.Reader) (*releasev1.EksARelease, error) {
+	if b.bundlesManifestURL == "" {
+		// this shouldn't return an error at this point due to getBundles performing similar operations prior to this call
+		release, err := mReader.ReadReleaseForVersion(b.cliVersion.GitVersion)
+		if err != nil {
+			return nil, err
+		}
+		return release, nil
+	}
+
+	return &releasev1.EksARelease{
+		Date:              "2023-07-26 20:02:17.931339039 +0000 UTC",
+		Version:           b.cliVersion.GitVersion,
+		Number:            1,
+		GitCommit:         "",
+		GitTag:            "",
+		BundleManifestUrl: "",
+		EksABinary:        releasev1.BinaryBundle{},
+		EksACLI:           releasev1.PlatformBundle{},
+	}, nil
 }
 
 func buildEKSARelease(release *releasev1.EksARelease, bundle *releasev1.Bundles) *releasev1.EKSARelease {
