@@ -148,8 +148,8 @@ func TestReconcilerReconcileUpgradeButCiliumDaemonSetNotReady(t *testing.T) {
 	operator := ciliumOperator()
 	tt := newReconcileTest(t).withObjects(ds, operator)
 	tt.spec = test.NewClusterSpec(func(s *cluster.Spec) {
-		s.VersionsBundle.Cilium.Cilium.URI = "cilium:1.11.1-eksa-1"
-		s.VersionsBundle.Cilium.Operator.URI = "cilium-operator:1.11.1-eksa-1"
+		s.VersionsBundles["1.19"].Cilium.Cilium.URI = "cilium:1.11.1-eksa-1"
+		s.VersionsBundles["1.19"].Cilium.Operator.URI = "cilium-operator:1.11.1-eksa-1"
 		s.Cluster.Spec.ClusterNetwork.CNIConfig = &anywherev1.CNIConfig{
 			Cilium: &anywherev1.CiliumConfig{},
 		}
@@ -168,8 +168,8 @@ func TestReconcilerReconcileUpgradeNeedsPreflightAndPreflightDaemonSetNotAvailab
 	operator := ciliumOperator()
 	tt := newReconcileTest(t).withObjects(ds, operator)
 	tt.spec = test.NewClusterSpec(func(s *cluster.Spec) {
-		s.VersionsBundle.Cilium.Cilium.URI = "cilium:1.11.1-eksa-1"
-		s.VersionsBundle.Cilium.Operator.URI = "cilium-operator:1.11.1-eksa-1"
+		s.VersionsBundles["1.19"].Cilium.Cilium.URI = "cilium:1.11.1-eksa-1"
+		s.VersionsBundles["1.19"].Cilium.Operator.URI = "cilium-operator:1.11.1-eksa-1"
 		s.Cluster.Spec.ClusterNetwork.CNIConfig = &anywherev1.CNIConfig{
 			Cilium: &anywherev1.CiliumConfig{},
 		}
@@ -190,8 +190,8 @@ func TestReconcilerReconcileUpgradeErrorGeneratingPreflight(t *testing.T) {
 	operator := ciliumOperator()
 	tt := newReconcileTest(t).withObjects(ds, operator)
 	tt.spec = test.NewClusterSpec(func(s *cluster.Spec) {
-		s.VersionsBundle.Cilium.Cilium.URI = "cilium:1.11.1-eksa-1"
-		s.VersionsBundle.Cilium.Operator.URI = "cilium-operator:1.11.1-eksa-1"
+		s.VersionsBundles["1.19"].Cilium.Cilium.URI = "cilium:1.11.1-eksa-1"
+		s.VersionsBundles["1.19"].Cilium.Operator.URI = "cilium-operator:1.11.1-eksa-1"
 		s.Cluster.Spec.ClusterNetwork.CNIConfig = &anywherev1.CNIConfig{
 			Cilium: &anywherev1.CiliumConfig{},
 		}
@@ -210,8 +210,8 @@ func TestReconcilerReconcileUpgradeNeedsPreflightAndPreflightDeploymentNotAvaila
 	operator := ciliumOperator()
 	tt := newReconcileTest(t).withObjects(ds, operator)
 	tt.spec = test.NewClusterSpec(func(s *cluster.Spec) {
-		s.VersionsBundle.Cilium.Cilium.URI = "cilium:1.11.1-eksa-1"
-		s.VersionsBundle.Cilium.Operator.URI = "cilium-operator:1.11.1-eksa-1"
+		s.VersionsBundles["1.19"].Cilium.Cilium.URI = "cilium:1.11.1-eksa-1"
+		s.VersionsBundles["1.19"].Cilium.Operator.URI = "cilium-operator:1.11.1-eksa-1"
 		s.Cluster.Spec.ClusterNetwork.CNIConfig = &anywherev1.CNIConfig{
 			Cilium: &anywherev1.CiliumConfig{},
 		}
@@ -233,8 +233,8 @@ func TestReconcilerReconcileUpgradeNeedsPreflightAndPreflightNotReady(t *testing
 	operator := ciliumOperator()
 	tt := newReconcileTest(t).withObjects(ds, operator)
 	tt.spec = test.NewClusterSpec(func(s *cluster.Spec) {
-		s.VersionsBundle.Cilium.Cilium.URI = "cilium:1.11.1-eksa-1"
-		s.VersionsBundle.Cilium.Operator.URI = "cilium-operator:1.11.1-eksa-1"
+		s.VersionsBundles["1.19"].Cilium.Cilium.URI = "cilium:1.11.1-eksa-1"
+		s.VersionsBundles["1.19"].Cilium.Operator.URI = "cilium-operator:1.11.1-eksa-1"
 		s.Cluster.Spec.ClusterNetwork.CNIConfig = &anywherev1.CNIConfig{
 			Cilium: &anywherev1.CiliumConfig{},
 		}
@@ -256,8 +256,8 @@ func TestReconcilerReconcileUpgradePreflightDaemonSetNotReady(t *testing.T) {
 	operator := ciliumOperator()
 	tt := newReconcileTest(t).withObjects(ds, operator, ciliumPreflightDaemonSet(), ciliumPreflightDeployment())
 	tt.spec = test.NewClusterSpec(func(s *cluster.Spec) {
-		s.VersionsBundle.Cilium.Cilium.URI = "cilium:1.11.1-eksa-1"
-		s.VersionsBundle.Cilium.Operator.URI = "cilium-operator:1.11.1-eksa-1"
+		s.VersionsBundles["1.19"].Cilium.Cilium.URI = "cilium:1.11.1-eksa-1"
+		s.VersionsBundles["1.19"].Cilium.Operator.URI = "cilium-operator:1.11.1-eksa-1"
 		s.Cluster.Spec.ClusterNetwork.CNIConfig = &anywherev1.CNIConfig{
 			Cilium: &anywherev1.CiliumConfig{},
 		}
@@ -277,8 +277,8 @@ func TestReconcilerReconcileUpgradePreflightDeploymentSetNotReady(t *testing.T) 
 	preflight := ciliumPreflightDaemonSet()
 	tt := newReconcileTest(t).withObjects(ds, operator, preflight, ciliumPreflightDeployment())
 	tt.spec = test.NewClusterSpec(func(s *cluster.Spec) {
-		s.VersionsBundle.Cilium.Cilium.URI = "cilium:1.11.1-eksa-1"
-		s.VersionsBundle.Cilium.Operator.URI = "cilium-operator:1.11.1-eksa-1"
+		s.VersionsBundles["1.19"].Cilium.Cilium.URI = "cilium:1.11.1-eksa-1"
+		s.VersionsBundles["1.19"].Cilium.Operator.URI = "cilium-operator:1.11.1-eksa-1"
 		s.Cluster.Spec.ClusterNetwork.CNIConfig = &anywherev1.CNIConfig{
 			Cilium: &anywherev1.CiliumConfig{},
 		}
@@ -303,8 +303,8 @@ func TestReconcilerReconcileUpgradeInvalidCiliumInstalledVersion(t *testing.T) {
 
 	tt := newReconcileTest(t).withObjects(ds, operator, preflight, ciliumPreflightDeployment())
 	tt.spec = test.NewClusterSpec(func(s *cluster.Spec) {
-		s.VersionsBundle.Cilium.Cilium.URI = newDSImage
-		s.VersionsBundle.Cilium.Operator.URI = newOperatorImage
+		s.VersionsBundles["1.19"].Cilium.Cilium.URI = newDSImage
+		s.VersionsBundles["1.19"].Cilium.Operator.URI = newOperatorImage
 		s.Cluster.Spec.ClusterNetwork.CNIConfig = &anywherev1.CNIConfig{
 			Cilium: &anywherev1.CiliumConfig{},
 		}
@@ -328,8 +328,8 @@ func TestReconcilerReconcileUpgradeErrorGeneratingManifest(t *testing.T) {
 
 	tt := newReconcileTest(t).withObjects(ds, operator, preflight, ciliumPreflightDeployment())
 	tt.spec = test.NewClusterSpec(func(s *cluster.Spec) {
-		s.VersionsBundle.Cilium.Cilium.URI = newDSImage
-		s.VersionsBundle.Cilium.Operator.URI = newOperatorImage
+		s.VersionsBundles["1.19"].Cilium.Cilium.URI = newDSImage
+		s.VersionsBundles["1.19"].Cilium.Operator.URI = newOperatorImage
 		s.Cluster.Spec.ClusterNetwork.CNIConfig = &anywherev1.CNIConfig{
 			Cilium: &anywherev1.CiliumConfig{},
 		}
@@ -356,8 +356,8 @@ func TestReconcilerReconcileUpgradePreflightErrorYamlReconcile(t *testing.T) {
 
 	tt := newReconcileTest(t).withObjects(ds, operator, preflight, ciliumPreflightDeployment())
 	tt.spec = test.NewClusterSpec(func(s *cluster.Spec) {
-		s.VersionsBundle.Cilium.Cilium.URI = newDSImage
-		s.VersionsBundle.Cilium.Operator.URI = newOperatorImage
+		s.VersionsBundles["1.19"].Cilium.Cilium.URI = newDSImage
+		s.VersionsBundles["1.19"].Cilium.Operator.URI = newOperatorImage
 		s.Cluster.Spec.ClusterNetwork.CNIConfig = &anywherev1.CNIConfig{
 			Cilium: &anywherev1.CiliumConfig{},
 		}
@@ -387,8 +387,8 @@ func TestReconcilerReconcileUpgradePreflightReady(t *testing.T) {
 
 	tt := newReconcileTest(t).withObjects(ds, operator, preflight, ciliumPreflightDeployment())
 	tt.spec = test.NewClusterSpec(func(s *cluster.Spec) {
-		s.VersionsBundle.Cilium.Cilium.URI = newDSImage
-		s.VersionsBundle.Cilium.Operator.URI = newOperatorImage
+		s.VersionsBundles["1.19"].Cilium.Cilium.URI = newDSImage
+		s.VersionsBundles["1.19"].Cilium.Operator.URI = newOperatorImage
 		s.Cluster.Spec.ClusterNetwork.CNIConfig = &anywherev1.CNIConfig{
 			Cilium: &anywherev1.CiliumConfig{},
 		}
@@ -422,8 +422,8 @@ func TestReconcilerReconcileUpdateConfigConfigMapEnablePolicyChange(t *testing.T
 	upgradeManifest := tt.buildManifest(ds, operator, cm)
 
 	tt.spec = test.NewClusterSpec(func(s *cluster.Spec) {
-		s.VersionsBundle.Cilium.Cilium.URI = newDSImage
-		s.VersionsBundle.Cilium.Operator.URI = newOperatorImage
+		s.VersionsBundles["1.19"].Cilium.Cilium.URI = newDSImage
+		s.VersionsBundles["1.19"].Cilium.Operator.URI = newOperatorImage
 		s.Cluster.Spec.ClusterNetwork.CNIConfig = &anywherev1.CNIConfig{
 			Cilium: &anywherev1.CiliumConfig{
 				PolicyEnforcementMode: "always",
@@ -561,8 +561,8 @@ func newReconcileTest(t *testing.T) *reconcileTest {
 		t:     t,
 		ctx:   context.Background(),
 		spec: test.NewClusterSpec(func(s *cluster.Spec) {
-			s.VersionsBundle.Cilium.Cilium.URI = "cilium:1.10.1-eksa-1"
-			s.VersionsBundle.Cilium.Operator.URI = "cilium-operator:1.10.1-eksa-1"
+			s.VersionsBundles["1.19"].Cilium.Cilium.URI = "cilium:1.10.1-eksa-1"
+			s.VersionsBundles["1.19"].Cilium.Operator.URI = "cilium-operator:1.10.1-eksa-1"
 			s.Cluster.Spec.ClusterNetwork.CNIConfig = &anywherev1.CNIConfig{
 				Cilium: &anywherev1.CiliumConfig{
 					PolicyEnforcementMode: "default",

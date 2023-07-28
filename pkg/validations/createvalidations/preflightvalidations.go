@@ -41,6 +41,13 @@ func (v *CreateValidations) PreflightValidations(ctx context.Context) []validati
 				Err:         validations.ValidateAuthenticationForGitProvider(v.Opts.Spec, v.Opts.CliConfig),
 			}
 		},
+		func() *validations.ValidationResult {
+			return &validations.ValidationResult{
+				Name:        "validate cluster's eksaVersion matches EKS-A version",
+				Remediation: "ensure EksaVersion matches the EKS-A release or omit the value from the cluster config",
+				Err:         validations.ValidateEksaVersion(ctx, v.Opts.CliVersion, v.Opts.Spec),
+			}
+		},
 	}
 
 	if v.Opts.Spec.Cluster.IsManaged() {
@@ -84,9 +91,9 @@ func (v *CreateValidations) PreflightValidations(ctx context.Context) []validati
 			},
 			func() *validations.ValidationResult {
 				return &validations.ValidationResult{
-					Name:        "validate management cluster bundle version compatibility",
+					Name:        "validate management cluster eksaVersion compatibility",
 					Remediation: fmt.Sprintf("upgrade management cluster %s before creating workload cluster %s", v.Opts.Spec.Cluster.ManagedBy(), v.Opts.WorkloadCluster.Name),
-					Err:         validations.ValidateManagementClusterBundlesVersion(ctx, k, v.Opts.ManagementCluster, v.Opts.Spec),
+					Err:         validations.ValidateManagementClusterEksaVersion(ctx, k, v.Opts.ManagementCluster, v.Opts.Spec),
 				}
 			},
 		)

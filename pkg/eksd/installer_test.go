@@ -37,7 +37,7 @@ func newInstallerTest(t *testing.T) *installerTest {
 	client := mocks.NewMockEksdInstallerClient(ctrl)
 	reader := m.NewMockReader(ctrl)
 	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
-		s.VersionsBundle.EksD.Name = "eks-d-1"
+		s.VersionsBundles["1.19"].EksD.Name = "eks-d-1"
 	})
 
 	return &installerTest{

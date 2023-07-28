@@ -92,6 +92,60 @@ func TestReadImages(t *testing.T) {
 	g.Expect(gotImages).To(ContainElement(csiImage), "it should return the csi image in the eksd manifest")
 }
 
+func TestReadImagesWithKubeVersionFilter(t *testing.T) {
+	g := NewWithT(t)
+	ctrl := gomock.NewController(t)
+	reader := mocks.NewMockReader(ctrl)
+
+	eksdURL := "eksdurl"
+	b := &releasev1.Bundles{
+		Spec: releasev1.BundlesSpec{
+			VersionsBundles: []releasev1.VersionsBundle{
+				{
+					KubeVersion: "1.20",
+					EksD: releasev1.EksDRelease{
+						EksDReleaseUrl: eksdURL,
+					},
+				},
+				{
+					KubeVersion: "1.21",
+					EksD: releasev1.EksDRelease{
+						EksDReleaseUrl: "fake url",
+					},
+				},
+			},
+		},
+	}
+
+	driverImage := releasev1.Image{
+		Name:        "csi-snapshotter-image",
+		Description: "csi-snapshotter container image",
+		OS:          "linux",
+		OSName:      "",
+		Arch:        []string{"amd64", "arm64"},
+		URI:         "public.ecr.aws/eks-distro/kubernetes-csi/external-snapshotter/csi-snapshotter:v3.0.3-eks-1-20-1",
+		ImageDigest: "",
+	}
+
+	csiImage := releasev1.Image{
+		Name:        "csi-snapshotter-image",
+		Description: "csi-snapshotter container image",
+		OS:          "linux",
+		OSName:      "",
+		Arch:        []string{"amd64", "arm64"},
+		URI:         "public.ecr.aws/eks-distro/kubernetes-csi/external-snapshotter/csi-snapshotter:v3.0.3-eks-1-20-1",
+		ImageDigest: "",
+	}
+
+	reader.EXPECT().ReadFile(eksdURL).Return([]byte(eksdManifest), nil)
+
+	gotImages, err := bundles.ReadImages(reader, b, "1.20")
+	g.Expect(err).NotTo(HaveOccurred())
+	g.Expect(len(gotImages)).To(BeNumerically(">", 2), "it should return more than the two images from eksd")
+	g.Expect(gotImages).To(ContainElement(driverImage), "it should return the node drive registar image in the eksd manifest")
+	g.Expect(gotImages).To(ContainElement(csiImage), "it should return the csi image in the eksd manifest")
+}
+
 func TestReadImagesError(t *testing.T) {
 	g := NewWithT(t)
 	ctrl := gomock.NewController(t)

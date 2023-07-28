@@ -94,6 +94,11 @@ func (uc *upgradeClusterOptions) upgradeCluster(cmd *cobra.Command) error {
 		return err
 	}
 
+	upgradeCLIConfig, err := buildUpgradeCliConfig(uc)
+	if err != nil {
+		return err
+	}
+
 	clusterManagerTimeoutOpts, err := buildClusterManagerOpts(uc.timeoutOptions, clusterSpec.Cluster.Spec.DatacenterRef.Kind)
 	if err != nil {
 		return fmt.Errorf("failed to build cluster manager opts: %v", err)
@@ -111,7 +116,6 @@ func (uc *upgradeClusterOptions) upgradeCluster(cmd *cobra.Command) error {
 		WithBootstrapper().
 		WithCliConfig(cliConfig).
 		WithClusterManager(clusterSpec.Cluster, clusterManagerTimeoutOpts).
-		WithKubeProxyCLIUpgrader().
 		WithProvider(uc.fileName, clusterSpec.Cluster, cc.skipIpCheck, uc.hardwareCSVPath, uc.forceClean, uc.tinkerbellBootstrapIP, skippedValidations).
 		WithGitOpsFlux(clusterSpec.Cluster, clusterSpec.FluxConfig, cliConfig).
 		WithWriter().
@@ -119,7 +123,8 @@ func (uc *upgradeClusterOptions) upgradeCluster(cmd *cobra.Command) error {
 		WithEksdUpgrader().
 		WithEksdInstaller().
 		WithKubectl().
-		WithValidatorClients()
+		WithValidatorClients().
+		WithUpgradeClusterDefaulter(upgradeCLIConfig)
 
 	if uc.timeoutOptions.noTimeouts {
 		factory.WithNoTimeouts()
@@ -131,6 +136,11 @@ func (uc *upgradeClusterOptions) upgradeCluster(cmd *cobra.Command) error {
 	}
 	defer close(ctx, deps)
 
+	clusterSpec, err = deps.UpgradeClusterDefaulter.Run(ctx, clusterSpec)
+	if err != nil {
+		return err
+	}
+
 	upgradeCluster := workflows.NewUpgrade(
 		deps.Bootstrapper,
 		deps.Provider,
@@ -140,7 +150,6 @@ func (uc *upgradeClusterOptions) upgradeCluster(cmd *cobra.Command) error {
 		deps.Writer,
 		deps.EksdUpgrader,
 		deps.EksdInstaller,
-		deps.KubeProxyCLIUpgrader,
 	)
 
 	workloadCluster := &types.Cluster{

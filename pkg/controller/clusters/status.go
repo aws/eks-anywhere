@@ -58,7 +58,7 @@ func UpdateClusterStatusForCNI(ctx context.Context, cluster *anywherev1.Cluster)
 		ciliumCfg := cluster.Spec.ClusterNetwork.CNIConfig.Cilium
 		// Though it may be installed initially to successfully create the cluster,
 		// if the CNI is configured to skip upgrades, we mark the condition as "False"
-		if !ciliumCfg.IsManaged() {
+		if ciliumCfg != nil && !ciliumCfg.IsManaged() {
 			conditions.MarkFalse(cluster, anywherev1.DefaultCNIConfiguredCondition, anywherev1.SkipUpgradesForDefaultCNIConfiguredReason, clusterv1.ConditionSeverityWarning, "Configured to skip default Cilium CNI upgrades")
 			return
 		}
@@ -74,6 +74,10 @@ func updateControlPlaneReadyCondition(cluster *anywherev1.Cluster, kcp *controlp
 	initializedCondition := conditions.Get(cluster, anywherev1.ControlPlaneInitializedCondition)
 	if initializedCondition.Status != "True" {
 		conditions.MarkFalse(cluster, anywherev1.ControlPlaneReadyCondition, initializedCondition.Reason, initializedCondition.Severity, initializedCondition.Message)
+		return
+	}
+
+	if kcp == nil {
 		return
 	}
 

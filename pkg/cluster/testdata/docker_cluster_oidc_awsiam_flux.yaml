@@ -21,6 +21,7 @@ spec:
     name: m-docker
   workerNodeGroupConfigurations:
   - name: workers-1
+    kubernetesVersion: "1.20"
     count: 1
   identityProviderRefs:
   - kind: OIDCConfig

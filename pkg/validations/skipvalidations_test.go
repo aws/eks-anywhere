@@ -31,6 +31,7 @@ func TestValidateSkippableValidation(t *testing.T) {
 			want: map[string]bool{
 				validations.PDB:             true,
 				validations.VSphereUserPriv: false,
+				validations.EksaVersionSkew: false,
 			},
 			wantErr:              nil,
 			skippedValidations:   []string{validations.PDB},

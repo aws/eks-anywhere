@@ -25,7 +25,7 @@ type eksaPackagedBinary interface {
 // runFlowUpgradeManagementClusterCheckForSideEffects creates management and workload cluster
 // with a specific eks-a version then upgrades the management cluster with another CLI version
 // and checks that this doesn't cause any side effects (machine rollout) in the workload clusters.
-func runFlowUpgradeManagementClusterCheckForSideEffects(test *framework.MulticlusterE2ETest, currentEKSA, newEKSA eksaPackagedBinary) {
+func runFlowUpgradeManagementClusterCheckForSideEffects(test *framework.MulticlusterE2ETest, currentEKSA, newEKSA eksaPackagedBinary, clusterOpts ...framework.ClusterE2ETestOpt) {
 	test.T.Logf("Creating management cluster with EKS-A version %s", currentEKSA.Version())
 	test.CreateManagementCluster(framework.ExecuteWithBinary(currentEKSA))
 
@@ -41,7 +41,7 @@ func runFlowUpgradeManagementClusterCheckForSideEffects(test *framework.Multiclu
 	printStateOfMachines(test.ManagementCluster.ClusterConfig.Cluster, preUpgradeWorkloadClustersState)
 
 	test.T.Logf("Upgrading management cluster with EKS-A version %s", newEKSA.Version())
-	test.ManagementCluster.UpgradeCluster(framework.ExecuteWithBinary(newEKSA))
+	test.ManagementCluster.UpgradeClusterWithNewConfig(clusterOpts, framework.ExecuteWithBinary(newEKSA))
 
 	checker := machineSideEffectChecker{
 		tb:                 test.T,
@@ -75,7 +75,7 @@ type clusterWithMachines struct {
 
 type clusterMachines map[string]types.Machine
 
-func anyMachinesChanged(original clusterMachines, current clusterMachines) (changed bool, reason string) {
+func anyMachinesChanged(original, current clusterMachines) (changed bool, reason string) {
 	if len(original) != len(current) {
 		return true, fmt.Sprintf("Different number of machines: before %d, after %d", len(original), len(current))
 	}
@@ -205,7 +205,7 @@ func newEKSAPackagedBinaryForLocalBinary(tb testing.TB) eksaPackagedBinary {
 	}
 }
 
-func runTestManagementClusterUpgradeSideEffects(t *testing.T, provider framework.Provider, osFamily anywherev1.OSFamily, kubeVersion anywherev1.KubernetesVersion) {
+func runTestManagementClusterUpgradeSideEffects(t *testing.T, provider framework.Provider, os framework.OS, kubeVersion anywherev1.KubernetesVersion, configFillers ...api.ClusterConfigFiller) {
 	latestRelease := latestMinorRelease(t)
 
 	managementCluster := framework.NewClusterE2ETest(t, provider, framework.PersistentCluster())
@@ -216,7 +216,10 @@ func runTestManagementClusterUpgradeSideEffects(t *testing.T, provider framework
 			api.WithWorkerNodeCount(1),
 			api.WithEtcdCountIfExternal(1),
 		),
-		provider.WithKubeVersionAndOS(osFamily, kubeVersion),
+		provider.WithKubeVersionAndOS(kubeVersion, os, latestRelease),
+		api.JoinClusterConfigFillers(
+			configFillers...,
+		),
 	)
 
 	test := framework.NewMulticlusterE2ETest(t, managementCluster)
@@ -241,12 +244,16 @@ func runTestManagementClusterUpgradeSideEffects(t *testing.T, provider framework
 				api.WithCount(2),
 				api.WithLabel("cluster.x-k8s.io/failure-domain", "ds.meta_data.failuredomain"))),
 		framework.WithOIDCClusterConfig(t),
-		provider.WithKubeVersionAndOS(osFamily, kubeVersion),
+		provider.WithKubeVersionAndOS(kubeVersion, os, latestRelease),
+		api.JoinClusterConfigFillers(
+			configFillers...,
+		),
 	)
 	test.WithWorkloadClusters(workloadCluster)
 
 	runFlowUpgradeManagementClusterCheckForSideEffects(test,
 		framework.NewEKSAReleasePackagedBinary(latestRelease),
 		newEKSAPackagedBinaryForLocalBinary(t),
+		framework.WithUpgradeClusterConfig(provider.WithKubeVersionAndOS(kubeVersion, os, nil)),
 	)
 }

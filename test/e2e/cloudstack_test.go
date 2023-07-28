@@ -97,7 +97,7 @@ func TestCloudStackKubernetes124to125AWSIamAuthUpgrade(t *testing.T) {
 		test,
 		v1alpha1.Kube125,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube125)),
-		provider.WithProviderUpgrade(provider.UpdateRedhatTemplate125Var()),
+		provider.WithProviderUpgrade(provider.Redhat125Template()),
 	)
 }
 
@@ -113,7 +113,7 @@ func TestCloudStackKubernetes125to126AWSIamAuthUpgrade(t *testing.T) {
 		test,
 		v1alpha1.Kube126,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube126)),
-		provider.WithProviderUpgrade(provider.UpdateRedhatTemplate126Var()),
+		provider.WithProviderUpgrade(provider.Redhat126Template()),
 	)
 }
 
@@ -129,7 +129,7 @@ func TestCloudStackKubernetes126to127AWSIamAuthUpgrade(t *testing.T) {
 		test,
 		v1alpha1.Kube127,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube127)),
-		provider.WithProviderUpgrade(provider.UpdateRedhatTemplate127Var()),
+		provider.WithProviderUpgrade(provider.Redhat127Template()),
 	)
 }
 
@@ -861,7 +861,7 @@ func TestCloudStackKubernetes124To125GitFluxUpgrade(t *testing.T) {
 		test,
 		v1alpha1.Kube125,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube125)),
-		provider.WithProviderUpgrade(provider.UpdateRedhatTemplate125Var()),
+		provider.WithProviderUpgrade(provider.Redhat125Template()),
 	)
 }
 
@@ -879,7 +879,7 @@ func TestCloudStackKubernetes125To126GitFluxUpgrade(t *testing.T) {
 		test,
 		v1alpha1.Kube126,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube126)),
-		provider.WithProviderUpgrade(provider.UpdateRedhatTemplate126Var()),
+		provider.WithProviderUpgrade(provider.Redhat126Template()),
 	)
 }
 
@@ -897,7 +897,7 @@ func TestCloudStackKubernetes126To127GitFluxUpgrade(t *testing.T) {
 		test,
 		v1alpha1.Kube127,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube127)),
-		provider.WithProviderUpgrade(provider.UpdateRedhatTemplate127Var()),
+		provider.WithProviderUpgrade(provider.Redhat127Template()),
 	)
 }
 
@@ -936,7 +936,7 @@ func TestCloudStackKubernetes124InstallGitFluxDuringUpgrade(t *testing.T) {
 }
 
 func TestCloudStackKubernetes125InstallGitFluxDuringUpgrade(t *testing.T) {
-	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat124())
+	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat125())
 	test := framework.NewClusterE2ETest(t,
 		provider,
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
@@ -1574,7 +1574,7 @@ func TestCloudStackUpgradeKubernetes125MulticlusterWorkloadClusterWithGithubFlux
 			api.WithWorkerNodeCount(3),
 		),
 		provider.WithProviderUpgradeGit(
-			provider.UpdateRedhatTemplate125Var(),
+			provider.Redhat125Template(),
 		),
 	)
 }
@@ -1614,7 +1614,7 @@ func TestCloudStackUpgradeKubernetes126MulticlusterWorkloadClusterWithGithubFlux
 			api.WithWorkerNodeCount(3),
 		),
 		provider.WithProviderUpgradeGit(
-			provider.UpdateRedhatTemplate126Var(),
+			provider.Redhat126Template(),
 		),
 	)
 }
@@ -1654,34 +1654,34 @@ func TestCloudStackUpgradeKubernetes127MulticlusterWorkloadClusterWithGithubFlux
 			api.WithWorkerNodeCount(3),
 		),
 		provider.WithProviderUpgradeGit(
-			provider.UpdateRedhatTemplate127Var(),
+			provider.Redhat127Template(),
 		),
 	)
 }
 
 func TestCloudStackKubernetes123WithOIDCManagementClusterUpgradeFromLatestSideEffects(t *testing.T) {
 	cloudstack := framework.NewCloudStack(t)
-	runTestManagementClusterUpgradeSideEffects(t, cloudstack, anywherev1.RedHat, anywherev1.Kube123)
+	runTestManagementClusterUpgradeSideEffects(t, cloudstack, framework.RedHat8, anywherev1.Kube123)
 }
 
 func TestCloudStackKubernetes124WithOIDCManagementClusterUpgradeFromLatestSideEffects(t *testing.T) {
 	cloudstack := framework.NewCloudStack(t)
-	runTestManagementClusterUpgradeSideEffects(t, cloudstack, anywherev1.RedHat, anywherev1.Kube124)
+	runTestManagementClusterUpgradeSideEffects(t, cloudstack, framework.RedHat8, anywherev1.Kube124)
 }
 
 func TestCloudStackKubernetes125WithOIDCManagementClusterUpgradeFromLatestSideEffects(t *testing.T) {
 	cloudstack := framework.NewCloudStack(t)
-	runTestManagementClusterUpgradeSideEffects(t, cloudstack, anywherev1.RedHat, anywherev1.Kube125)
+	runTestManagementClusterUpgradeSideEffects(t, cloudstack, framework.RedHat8, anywherev1.Kube125)
 }
 
 func TestCloudStackKubernetes126WithOIDCManagementClusterUpgradeFromLatestSideEffects(t *testing.T) {
 	cloudstack := framework.NewCloudStack(t)
-	runTestManagementClusterUpgradeSideEffects(t, cloudstack, anywherev1.RedHat, anywherev1.Kube126)
+	runTestManagementClusterUpgradeSideEffects(t, cloudstack, framework.RedHat8, anywherev1.Kube126)
 }
 
 func TestCloudStackKubernetes127WithOIDCManagementClusterUpgradeFromLatestSideEffects(t *testing.T) {
 	cloudstack := framework.NewCloudStack(t)
-	runTestManagementClusterUpgradeSideEffects(t, cloudstack, anywherev1.RedHat, anywherev1.Kube127)
+	runTestManagementClusterUpgradeSideEffects(t, cloudstack, framework.RedHat8, anywherev1.Kube127)
 }
 
 // OIDC
@@ -1783,9 +1783,9 @@ func TestCloudStackKubernetes124To125OIDCUpgrade(t *testing.T) {
 	)
 	runUpgradeFlowWithOIDC(
 		test,
-		v1alpha1.Kube124,
+		v1alpha1.Kube125,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube125)),
-		provider.WithProviderUpgrade(provider.UpdateRedhatTemplate125Var()),
+		provider.WithProviderUpgrade(provider.Redhat125Template()),
 	)
 }
 
@@ -1804,7 +1804,7 @@ func TestCloudStackKubernetes125To126OIDCUpgrade(t *testing.T) {
 		test,
 		v1alpha1.Kube126,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube126)),
-		provider.WithProviderUpgrade(provider.UpdateRedhatTemplate126Var()),
+		provider.WithProviderUpgrade(provider.Redhat126Template()),
 	)
 }
 
@@ -1823,7 +1823,7 @@ func TestCloudStackKubernetes126To127OIDCUpgrade(t *testing.T) {
 		test,
 		v1alpha1.Kube127,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube127)),
-		provider.WithProviderUpgrade(provider.UpdateRedhatTemplate127Var()),
+		provider.WithProviderUpgrade(provider.Redhat127Template()),
 	)
 }
 
@@ -2607,7 +2607,7 @@ func TestCloudStackKubernetes124RedhatTo125UpgradeCiliumPolicyEnforcementMode(t 
 		v1alpha1.Kube125,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube125)),
 		framework.WithClusterFiller(api.WithCiliumPolicyEnforcementMode(v1alpha1.CiliumPolicyModeAlways)),
-		provider.WithProviderUpgrade(provider.UpdateRedhatTemplate125Var()),
+		provider.WithProviderUpgrade(provider.Redhat125Template()),
 	)
 }
 
@@ -2626,7 +2626,7 @@ func TestCloudStackKubernetes125RedhatTo126UpgradeCiliumPolicyEnforcementMode(t 
 		v1alpha1.Kube126,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube126)),
 		framework.WithClusterFiller(api.WithCiliumPolicyEnforcementMode(v1alpha1.CiliumPolicyModeAlways)),
-		provider.WithProviderUpgrade(provider.UpdateRedhatTemplate126Var()),
+		provider.WithProviderUpgrade(provider.Redhat126Template()),
 	)
 }
 
@@ -2645,7 +2645,7 @@ func TestCloudStackKubernetes126RedhatTo127UpgradeCiliumPolicyEnforcementMode(t 
 		v1alpha1.Kube127,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube127)),
 		framework.WithClusterFiller(api.WithCiliumPolicyEnforcementMode(v1alpha1.CiliumPolicyModeAlways)),
-		provider.WithProviderUpgrade(provider.UpdateRedhatTemplate127Var()),
+		provider.WithProviderUpgrade(provider.Redhat127Template()),
 	)
 }
 
@@ -3007,7 +3007,7 @@ func TestCloudStackKubernetes125RedhatAndRemoveWorkerNodeGroups(t *testing.T) {
 			"worker-2",
 			framework.WithWorkerNodeGroup("workers-2", api.WithCount(1)),
 		),
-		framework.WithCloudStackRedhat124(),
+		framework.WithCloudStackRedhat125(),
 	)
 	test := framework.NewClusterE2ETest(
 		t,
@@ -3150,7 +3150,7 @@ func TestCloudStackKubernetes124To125RedhatUpgrade(t *testing.T) {
 		v1alpha1.Kube125,
 		framework.WithClusterFiller(api.WithStackedEtcdTopology()),
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube125)),
-		provider.WithProviderUpgrade(provider.UpdateRedhatTemplate125Var()),
+		provider.WithProviderUpgrade(provider.Redhat125Template()),
 	)
 }
 
@@ -3168,7 +3168,7 @@ func TestCloudStackKubernetes125To126RedhatUpgrade(t *testing.T) {
 		v1alpha1.Kube126,
 		framework.WithClusterFiller(api.WithStackedEtcdTopology()),
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube126)),
-		provider.WithProviderUpgrade(provider.UpdateRedhatTemplate126Var()),
+		provider.WithProviderUpgrade(provider.Redhat126Template()),
 	)
 }
 
@@ -3186,7 +3186,7 @@ func TestCloudStackKubernetes126To127RedhatUpgrade(t *testing.T) {
 		v1alpha1.Kube127,
 		framework.WithClusterFiller(api.WithStackedEtcdTopology()),
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube127)),
-		provider.WithProviderUpgrade(provider.UpdateRedhatTemplate127Var()),
+		provider.WithProviderUpgrade(provider.Redhat127Template()),
 	)
 }
 
@@ -3220,7 +3220,7 @@ func TestCloudStackKubernetes124To125RedhatUnstackedUpgrade(t *testing.T) {
 		test,
 		v1alpha1.Kube125,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube125)),
-		provider.WithProviderUpgrade(provider.UpdateRedhatTemplate125Var()),
+		provider.WithProviderUpgrade(provider.Redhat125Template()),
 	)
 }
 
@@ -3237,7 +3237,7 @@ func TestCloudStackKubernetes125To126RedhatUnstackedUpgrade(t *testing.T) {
 		test,
 		v1alpha1.Kube126,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube126)),
-		provider.WithProviderUpgrade(provider.UpdateRedhatTemplate126Var()),
+		provider.WithProviderUpgrade(provider.Redhat126Template()),
 	)
 }
 
@@ -3254,7 +3254,7 @@ func TestCloudStackKubernetes126To127RedhatUnstackedUpgrade(t *testing.T) {
 		test,
 		v1alpha1.Kube127,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube127)),
-		provider.WithProviderUpgrade(provider.UpdateRedhatTemplate127Var()),
+		provider.WithProviderUpgrade(provider.Redhat127Template()),
 	)
 }
 
@@ -3290,7 +3290,7 @@ func TestCloudStackKubernetes124RedhatTo125StackedEtcdUpgrade(t *testing.T) {
 		test,
 		v1alpha1.Kube125,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube125)),
-		provider.WithProviderUpgrade(provider.UpdateRedhatTemplate125Var()),
+		provider.WithProviderUpgrade(provider.Redhat125Template()),
 	)
 }
 
@@ -3308,7 +3308,7 @@ func TestCloudStackKubernetes125RedhatTo126StackedEtcdUpgrade(t *testing.T) {
 		test,
 		v1alpha1.Kube126,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube126)),
-		provider.WithProviderUpgrade(provider.UpdateRedhatTemplate126Var()),
+		provider.WithProviderUpgrade(provider.Redhat126Template()),
 	)
 }
 
@@ -3326,7 +3326,7 @@ func TestCloudStackKubernetes126RedhatTo127StackedEtcdUpgrade(t *testing.T) {
 		test,
 		v1alpha1.Kube127,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube127)),
-		provider.WithProviderUpgrade(provider.UpdateRedhatTemplate127Var()),
+		provider.WithProviderUpgrade(provider.Redhat127Template()),
 	)
 }
 
@@ -3380,7 +3380,7 @@ func TestCloudStackKubernetes124RedhatTo125UpgradeWithCheckpoint(t *testing.T) {
 	commandOpts := []framework.CommandOpt{framework.WithExternalEtcdWaitTimeout("10m")}
 
 	clusterOpts2 = append(clusterOpts, framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube125)), framework.ExpectFailure(false),
-		provider.WithProviderUpgrade(provider.UpdateRedhatTemplate125Var()), framework.WithEnvVar(features.CheckpointEnabledEnvVar, "true"), framework.WithEnvVar(framework.CleanupVmsVar, "true"))
+		provider.WithProviderUpgrade(provider.Redhat125Template()), framework.WithEnvVar(features.CheckpointEnabledEnvVar, "true"), framework.WithEnvVar(framework.CleanupVmsVar, "true"))
 
 	runUpgradeFlowWithCheckpoint(
 		test,
@@ -3405,12 +3405,12 @@ func TestCloudStackKubernetes125RedhatTo126UpgradeWithCheckpoint(t *testing.T) {
 	)
 
 	clusterOpts = append(clusterOpts, framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube126)), framework.ExpectFailure(true),
-		provider.WithProviderUpgrade(provider.UpdateRedhatTemplate125Var()), framework.WithEnvVar(features.CheckpointEnabledEnvVar, "true"), framework.WithEnvVar(framework.CleanupVmsVar, "false"))
+		provider.WithProviderUpgrade(provider.Redhat125Template()), framework.WithEnvVar(features.CheckpointEnabledEnvVar, "true"), framework.WithEnvVar(framework.CleanupVmsVar, "false"))
 
 	commandOpts := []framework.CommandOpt{framework.WithExternalEtcdWaitTimeout("10m")}
 
 	clusterOpts2 = append(clusterOpts, framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube126)), framework.ExpectFailure(false),
-		provider.WithProviderUpgrade(provider.UpdateRedhatTemplate126Var()), framework.WithEnvVar(features.CheckpointEnabledEnvVar, "true"), framework.WithEnvVar(framework.CleanupVmsVar, "true"))
+		provider.WithProviderUpgrade(provider.Redhat126Template()), framework.WithEnvVar(features.CheckpointEnabledEnvVar, "true"), framework.WithEnvVar(framework.CleanupVmsVar, "true"))
 
 	runUpgradeFlowWithCheckpoint(
 		test,
@@ -3435,12 +3435,12 @@ func TestCloudStackKubernetes126RedhatTo127UpgradeWithCheckpoint(t *testing.T) {
 	)
 
 	clusterOpts = append(clusterOpts, framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube127)), framework.ExpectFailure(true),
-		provider.WithProviderUpgrade(provider.UpdateRedhatTemplate126Var()), framework.WithEnvVar(features.CheckpointEnabledEnvVar, "true"), framework.WithEnvVar(framework.CleanupVmsVar, "false"))
+		provider.WithProviderUpgrade(provider.Redhat126Template()), framework.WithEnvVar(features.CheckpointEnabledEnvVar, "true"), framework.WithEnvVar(framework.CleanupVmsVar, "false"))
 
 	commandOpts := []framework.CommandOpt{framework.WithExternalEtcdWaitTimeout("10m")}
 
 	clusterOpts2 = append(clusterOpts, framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube127)), framework.ExpectFailure(false),
-		provider.WithProviderUpgrade(provider.UpdateRedhatTemplate127Var()), framework.WithEnvVar(features.CheckpointEnabledEnvVar, "true"), framework.WithEnvVar(framework.CleanupVmsVar, "true"))
+		provider.WithProviderUpgrade(provider.Redhat127Template()), framework.WithEnvVar(features.CheckpointEnabledEnvVar, "true"), framework.WithEnvVar(framework.CleanupVmsVar, "true"))
 
 	runUpgradeFlowWithCheckpoint(
 		test,
@@ -3726,7 +3726,7 @@ func TestCloudStackKubernetes124To125RedhatMultipleFieldsUpgrade(t *testing.T) {
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube125)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		provider.WithProviderUpgrade(
-			provider.UpdateRedhatTemplate125Var(),
+			provider.Redhat125Template(),
 			framework.UpdateLargerCloudStackComputeOffering(),
 		),
 	)
@@ -3745,7 +3745,7 @@ func TestCloudStackKubernetes125To126RedhatMultipleFieldsUpgrade(t *testing.T) {
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube126)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		provider.WithProviderUpgrade(
-			provider.UpdateRedhatTemplate126Var(),
+			provider.Redhat126Template(),
 			framework.UpdateLargerCloudStackComputeOffering(),
 		),
 	)
@@ -3764,7 +3764,7 @@ func TestCloudStackKubernetes126To127RedhatMultipleFieldsUpgrade(t *testing.T) {
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube127)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		provider.WithProviderUpgrade(
-			provider.UpdateRedhatTemplate127Var(),
+			provider.Redhat127Template(),
 			framework.UpdateLargerCloudStackComputeOffering(),
 		),
 	)
@@ -3918,7 +3918,7 @@ func TestCloudStackKubernetes126RedhatAirgappedRegistryMirror(t *testing.T) {
 func TestCloudStackKubernetes123RedHatAPI(t *testing.T) {
 	cloudstack := framework.NewCloudStack(t)
 	test := framework.NewClusterE2ETest(
-		t, cloudstack, framework.WithEnvVar(features.FullLifecycleAPIEnvVar, "true"),
+		t, cloudstack,
 	).WithClusterConfig(
 		api.ClusterToConfigFiller(
 			api.WithExternalEtcdTopology(1),
@@ -3944,7 +3944,7 @@ func TestCloudStackKubernetes123RedHatAPI(t *testing.T) {
 func TestCloudStackKubernetes124RedHatAPI(t *testing.T) {
 	cloudstack := framework.NewCloudStack(t)
 	test := framework.NewClusterE2ETest(
-		t, cloudstack, framework.WithEnvVar(features.FullLifecycleAPIEnvVar, "true"),
+		t, cloudstack,
 	).WithClusterConfig(
 		api.ClusterToConfigFiller(
 			api.WithStackedEtcdTopology(),
@@ -3970,7 +3970,7 @@ func TestCloudStackKubernetes124RedHatAPI(t *testing.T) {
 func TestCloudStackMulticlusterWorkloadClusterAPI(t *testing.T) {
 	cloudstack := framework.NewCloudStack(t)
 	managementCluster := framework.NewClusterE2ETest(
-		t, cloudstack, framework.WithEnvVar(features.FullLifecycleAPIEnvVar, "true"),
+		t, cloudstack,
 	).WithClusterConfig(
 		api.ClusterToConfigFiller(
 			api.WithControlPlaneCount(1),
@@ -3986,7 +3986,6 @@ func TestCloudStackMulticlusterWorkloadClusterAPI(t *testing.T) {
 			t,
 			cloudstack,
 			framework.WithClusterName(test.NewWorkloadClusterName()),
-			framework.WithEnvVar(features.FullLifecycleAPIEnvVar, "true"),
 		).WithClusterConfig(
 			api.ClusterToConfigFiller(
 				api.WithManagementCluster(managementCluster.ClusterName),
@@ -4002,7 +4001,6 @@ func TestCloudStackMulticlusterWorkloadClusterAPI(t *testing.T) {
 			t,
 			cloudstack,
 			framework.WithClusterName(test.NewWorkloadClusterName()),
-			framework.WithEnvVar(features.FullLifecycleAPIEnvVar, "true"),
 		).WithClusterConfig(
 			api.ClusterToConfigFiller(
 				api.WithManagementCluster(managementCluster.ClusterName),
@@ -4040,7 +4038,7 @@ func TestCloudStackMulticlusterWorkloadClusterAPI(t *testing.T) {
 func TestCloudStackMulticlusterWorkloadClusterNewCredentialsSecretsAPI(t *testing.T) {
 	cloudstack := framework.NewCloudStack(t)
 	managementCluster := framework.NewClusterE2ETest(
-		t, cloudstack, framework.WithEnvVar(features.FullLifecycleAPIEnvVar, "true"),
+		t, cloudstack,
 	).WithClusterConfig(
 		api.ClusterToConfigFiller(
 			api.WithControlPlaneCount(1),
@@ -4056,7 +4054,6 @@ func TestCloudStackMulticlusterWorkloadClusterNewCredentialsSecretsAPI(t *testin
 		t,
 		cloudstack,
 		framework.WithClusterName(test.NewWorkloadClusterName()),
-		framework.WithEnvVar(features.FullLifecycleAPIEnvVar, "true"),
 	).WithClusterConfig(
 		api.ClusterToConfigFiller(
 			api.WithManagementCluster(managementCluster.ClusterName),
@@ -4073,7 +4070,6 @@ func TestCloudStackMulticlusterWorkloadClusterNewCredentialsSecretsAPI(t *testin
 		t,
 		cloudstack,
 		framework.WithClusterName(test.NewWorkloadClusterName()),
-		framework.WithEnvVar(features.FullLifecycleAPIEnvVar, "true"),
 	).WithClusterConfig(
 		api.ClusterToConfigFiller(
 			api.WithManagementCluster(managementCluster.ClusterName),
@@ -4108,7 +4104,6 @@ func TestCloudStackKubernetesRedHat123To124UpgradeFromLatestMinorReleaseAPI(t *t
 	managementCluster := framework.NewClusterE2ETest(
 		t,
 		cloudstack,
-		framework.WithEnvVar(features.FullLifecycleAPIEnvVar, "true"),
 	)
 	managementCluster.GenerateClusterConfigForVersion(release.Version, framework.ExecuteWithEksaRelease(release))
 	managementCluster.UpdateClusterConfig(
@@ -4122,7 +4117,6 @@ func TestCloudStackKubernetesRedHat123To124UpgradeFromLatestMinorReleaseAPI(t *t
 		t,
 		cloudstack,
 		framework.WithClusterName(test.NewWorkloadClusterName()),
-		framework.WithEnvVar(features.FullLifecycleAPIEnvVar, "true"),
 	)
 	wc.GenerateClusterConfigForVersion(release.Version, framework.ExecuteWithEksaRelease(release))
 	wc.UpdateClusterConfig(
@@ -4147,7 +4141,7 @@ func TestCloudStackKubernetesRedHat123to124UpgradeFromLatestMinorReleaseGitHubFl
 	managementCluster := framework.NewClusterE2ETest(
 		t,
 		cloudstack,
-		framework.WithEnvVar(features.FullLifecycleAPIEnvVar, "true"),
+
 		framework.WithFluxGithubEnvVarCheck(),
 		framework.WithFluxGithubCleanup(),
 	)
@@ -4165,7 +4159,7 @@ func TestCloudStackKubernetesRedHat123to124UpgradeFromLatestMinorReleaseGitHubFl
 		t,
 		cloudstack,
 		framework.WithClusterName(test.NewWorkloadClusterName()),
-		framework.WithEnvVar(features.FullLifecycleAPIEnvVar, "true"),
+
 		framework.WithFluxGithubEnvVarCheck(),
 		framework.WithFluxGithubCleanup(),
 	)
@@ -4191,7 +4185,7 @@ func TestCloudStackMulticlusterWorkloadClusterGitHubFluxAPI(t *testing.T) {
 	managementCluster := framework.NewClusterE2ETest(
 		t,
 		cloudstack,
-		framework.WithEnvVar(features.FullLifecycleAPIEnvVar, "true"),
+
 		framework.WithFluxGithubEnvVarCheck(),
 		framework.WithFluxGithubCleanup(),
 	).WithClusterConfig(
@@ -4210,7 +4204,6 @@ func TestCloudStackMulticlusterWorkloadClusterGitHubFluxAPI(t *testing.T) {
 			t,
 			cloudstack,
 			framework.WithClusterName(test.NewWorkloadClusterName()),
-			framework.WithEnvVar(features.FullLifecycleAPIEnvVar, "true"),
 		).WithClusterConfig(
 			api.ClusterToConfigFiller(
 				api.WithManagementCluster(managementCluster.ClusterName),
@@ -4226,7 +4219,6 @@ func TestCloudStackMulticlusterWorkloadClusterGitHubFluxAPI(t *testing.T) {
 			t,
 			cloudstack,
 			framework.WithClusterName(test.NewWorkloadClusterName()),
-			framework.WithEnvVar(features.FullLifecycleAPIEnvVar, "true"),
 		).WithClusterConfig(
 			api.ClusterToConfigFiller(
 				api.WithManagementCluster(managementCluster.ClusterName),
@@ -4265,7 +4257,7 @@ func TestCloudStackMulticlusterWorkloadClusterNewCredentialsSecretGitHubFluxAPI(
 	managementCluster := framework.NewClusterE2ETest(
 		t,
 		cloudstack,
-		framework.WithEnvVar(features.FullLifecycleAPIEnvVar, "true"),
+
 		framework.WithFluxGithubEnvVarCheck(),
 		framework.WithFluxGithubCleanup(),
 	).WithClusterConfig(
@@ -4284,7 +4276,6 @@ func TestCloudStackMulticlusterWorkloadClusterNewCredentialsSecretGitHubFluxAPI(
 		t,
 		cloudstack,
 		framework.WithClusterName(test.NewWorkloadClusterName()),
-		framework.WithEnvVar(features.FullLifecycleAPIEnvVar, "true"),
 	).WithClusterConfig(
 		api.ClusterToConfigFiller(
 			api.WithManagementCluster(managementCluster.ClusterName),
@@ -4301,7 +4292,6 @@ func TestCloudStackMulticlusterWorkloadClusterNewCredentialsSecretGitHubFluxAPI(
 		t,
 		cloudstack,
 		framework.WithClusterName(test.NewWorkloadClusterName()),
-		framework.WithEnvVar(features.FullLifecycleAPIEnvVar, "true"),
 	).WithClusterConfig(
 		api.ClusterToConfigFiller(
 			api.WithManagementCluster(managementCluster.ClusterName),
@@ -4333,7 +4323,7 @@ func TestCloudStackMulticlusterWorkloadClusterNewCredentialsSecretGitHubFluxAPI(
 func TestCloudStackWorkloadClusterAWSIamAuthAPI(t *testing.T) {
 	cloudstack := framework.NewCloudStack(t)
 	managementCluster := framework.NewClusterE2ETest(
-		t, cloudstack, framework.WithEnvVar(features.FullLifecycleAPIEnvVar, "true"),
+		t, cloudstack,
 	).WithClusterConfig(
 		api.ClusterToConfigFiller(
 			api.WithControlPlaneCount(1),
@@ -4349,7 +4339,7 @@ func TestCloudStackWorkloadClusterAWSIamAuthAPI(t *testing.T) {
 			t,
 			cloudstack,
 			framework.WithClusterName(test.NewWorkloadClusterName()),
-			framework.WithEnvVar(features.FullLifecycleAPIEnvVar, "true"),
+
 			framework.WithAwsIamEnvVarCheck(),
 		).WithClusterConfig(
 			api.ClusterToConfigFiller(
@@ -4383,7 +4373,7 @@ func TestCloudStackWorkloadClusterAWSIamAuthGithubFluxAPI(t *testing.T) {
 	managementCluster := framework.NewClusterE2ETest(
 		t,
 		cloudstack,
-		framework.WithEnvVar(features.FullLifecycleAPIEnvVar, "true"),
+
 		framework.WithFluxGithubEnvVarCheck(),
 		framework.WithFluxGithubCleanup(),
 	).WithClusterConfig(
@@ -4402,7 +4392,7 @@ func TestCloudStackWorkloadClusterAWSIamAuthGithubFluxAPI(t *testing.T) {
 			t,
 			cloudstack,
 			framework.WithClusterName(test.NewWorkloadClusterName()),
-			framework.WithEnvVar(features.FullLifecycleAPIEnvVar, "true"),
+
 			framework.WithAwsIamEnvVarCheck(),
 		).WithClusterConfig(
 			api.ClusterToConfigFiller(
@@ -4434,7 +4424,7 @@ func TestCloudStackWorkloadClusterAWSIamAuthGithubFluxAPI(t *testing.T) {
 func TestCloudStackWorkloadClusterOIDCAuthAPI(t *testing.T) {
 	cloudstack := framework.NewCloudStack(t)
 	managementCluster := framework.NewClusterE2ETest(
-		t, cloudstack, framework.WithEnvVar(features.FullLifecycleAPIEnvVar, "true"),
+		t, cloudstack,
 	).WithClusterConfig(
 		api.ClusterToConfigFiller(
 			api.WithControlPlaneCount(1),
@@ -4450,7 +4440,7 @@ func TestCloudStackWorkloadClusterOIDCAuthAPI(t *testing.T) {
 			t,
 			cloudstack,
 			framework.WithClusterName(test.NewWorkloadClusterName()),
-			framework.WithEnvVar(features.FullLifecycleAPIEnvVar, "true"),
+
 			framework.WithOIDCEnvVarCheck(),
 		).WithClusterConfig(
 			api.ClusterToConfigFiller(
@@ -4484,7 +4474,7 @@ func TestCloudStackWorkloadClusterOIDCAuthGithubFluxAPI(t *testing.T) {
 	managementCluster := framework.NewClusterE2ETest(
 		t,
 		cloudstack,
-		framework.WithEnvVar(features.FullLifecycleAPIEnvVar, "true"),
+
 		framework.WithFluxGithubEnvVarCheck(),
 		framework.WithFluxGithubCleanup(),
 	).WithClusterConfig(
@@ -4503,7 +4493,7 @@ func TestCloudStackWorkloadClusterOIDCAuthGithubFluxAPI(t *testing.T) {
 			t,
 			cloudstack,
 			framework.WithClusterName(test.NewWorkloadClusterName()),
-			framework.WithEnvVar(features.FullLifecycleAPIEnvVar, "true"),
+
 			framework.WithOIDCEnvVarCheck(),
 		).WithClusterConfig(
 			api.ClusterToConfigFiller(

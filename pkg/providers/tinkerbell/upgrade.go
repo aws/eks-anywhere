@@ -163,7 +163,8 @@ func (p *Provider) validateAvailableHardwareForUpgrade(ctx context.Context, curr
 	return nil
 }
 
-func (p *Provider) PostBootstrapDeleteForUpgrade(ctx context.Context) error {
+// PostBootstrapDeleteForUpgrade runs any provider-specific operations after bootstrap cluster has been deleted.
+func (p *Provider) PostBootstrapDeleteForUpgrade(ctx context.Context, cluster *types.Cluster) error {
 	if err := p.stackInstaller.UninstallLocal(ctx); err != nil {
 		return err
 	}
@@ -375,11 +376,13 @@ func (p *Provider) PreCoreComponentsUpgrade(
 		return errors.New("cluster spec is nil")
 	}
 
+	versionsBundle := clusterSpec.ControlPlaneVersionsBundle()
+
 	// Attempt the upgrade. This should upgrade the stack in the mangement cluster by updating
 	// images, installing new CRDs and possibly removing old ones.
 	err := p.stackInstaller.Upgrade(
 		ctx,
-		clusterSpec.VersionsBundle.Tinkerbell,
+		versionsBundle.Tinkerbell,
 		p.datacenterConfig.Spec.TinkerbellIP,
 		cluster.KubeconfigFile,
 		p.datacenterConfig.Spec.HookImagesURLPath,

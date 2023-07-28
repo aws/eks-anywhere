@@ -84,7 +84,6 @@ type Dependencies struct {
 	Git                         *gitfactory.GitTools
 	EksdInstaller               *eksd.Installer
 	EksdUpgrader                *eksd.Upgrader
-	KubeProxyCLIUpgrader        clustermanager.KubeProxyCLIUpgrader
 	AnalyzerFactory             diagnostics.AnalyzerFactory
 	CollectorFactory            diagnostics.CollectorFactory
 	DignosticCollectorFactory   diagnostics.DiagnosticBundleFactory
@@ -107,6 +106,7 @@ type Dependencies struct {
 	IPValidator                 *validator.IPValidator
 	UnAuthKubectlClient         KubeClients
 	CreateClusterDefaulter      cli.CreateClusterDefaulter
+	UpgradeClusterDefaulter     cli.UpgradeClusterDefaulter
 }
 
 // KubeClients defines super struct that exposes all behavior.
@@ -127,13 +127,14 @@ func (d *Dependencies) Close(ctx context.Context) error {
 }
 
 func ForSpec(ctx context.Context, clusterSpec *cluster.Spec) *Factory {
-	eksaToolsImage := clusterSpec.VersionsBundle.Eksa.CliTools
+	versionsBundle := clusterSpec.ControlPlaneVersionsBundle()
+	eksaToolsImage := versionsBundle.Eksa.CliTools
 	return NewFactory().
 		UseExecutableImage(eksaToolsImage.VersionedImage()).
 		WithRegistryMirror(registrymirror.FromCluster(clusterSpec.Cluster)).
 		UseProxyConfiguration(clusterSpec.Cluster.ProxyConfiguration()).
 		WithWriterFolder(clusterSpec.Cluster.Name).
-		WithDiagnosticCollectorImage(clusterSpec.VersionsBundle.Eksa.DiagnosticCollector.VersionedImage())
+		WithDiagnosticCollectorImage(versionsBundle.Eksa.DiagnosticCollector.VersionedImage())
 }
 
 // Factory helps initialization.
@@ -1011,13 +1012,29 @@ func (f *Factory) WithCliConfig(cliConfig *cliconfig.CliConfig) *Factory {
 }
 
 // WithCreateClusterDefaulter builds a create cluster defaulter that builds defaulter dependencies specific to the create cluster command. The defaulter is then run once the factory is built in the create cluster command.
-func (f *Factory) WithCreateClusterDefaulter(createCliConfig cliconfig.CreateClusterCLIConfig) *Factory {
+func (f *Factory) WithCreateClusterDefaulter(createCliConfig *cliconfig.CreateClusterCLIConfig) *Factory {
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		controlPlaneIPCheckAnnotationDefaulter := cluster.NewControlPlaneIPCheckAnnotationDefaulter(createCliConfig.SkipCPIPCheck)
+		machineHealthCheckDefaulter := cluster.NewMachineHealthCheckDefaulter(createCliConfig.NodeStartupTimeout, createCliConfig.UnhealthyMachineTimeout)
 
-		createClusterDefaulter := cli.NewCreateClusterDefaulter(controlPlaneIPCheckAnnotationDefaulter)
+		createClusterDefaulter := cli.NewCreateClusterDefaulter(controlPlaneIPCheckAnnotationDefaulter, machineHealthCheckDefaulter)
 
 		f.dependencies.CreateClusterDefaulter = createClusterDefaulter
+
+		return nil
+	})
+
+	return f
+}
+
+// WithUpgradeClusterDefaulter builds a create cluster defaulter that builds defaulter dependencies specific to the create cluster command. The defaulter is then run once the factory is built in the create cluster command.
+func (f *Factory) WithUpgradeClusterDefaulter(upgradeCliConfig *cliconfig.UpgradeClusterCLIConfig) *Factory {
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		machineHealthCheckDefaulter := cluster.NewMachineHealthCheckDefaulter(upgradeCliConfig.NodeStartupTimeout, upgradeCliConfig.UnhealthyMachineTimeout)
+
+		upgradeClusterDefaulter := cli.NewUpgradeClusterDefaulter(machineHealthCheckDefaulter)
+
+		f.dependencies.UpgradeClusterDefaulter = upgradeClusterDefaulter
 
 		return nil
 	})
@@ -1078,26 +1095,6 @@ func (f *Factory) WithEksdUpgrader() *Factory {
 		return nil
 	})
 
-	return f
-}
-
-// WithKubeProxyCLIUpgrader builds a KubeProxyCLIUpgrader.
-func (f *Factory) WithKubeProxyCLIUpgrader() *Factory {
-	f.WithLogger().WithUnAuthKubeClient()
-
-	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
-		var opts []clustermanager.KubeProxyCLIUpgraderOpt
-		if f.config.noTimeouts {
-			opts = append(opts, clustermanager.KubeProxyCLIUpgraderRetrier(*retrier.NewWithNoTimeout()))
-		}
-
-		f.dependencies.KubeProxyCLIUpgrader = clustermanager.NewKubeProxyCLIUpgrader(
-			f.dependencies.Logger,
-			f.dependencies.UnAuthKubeClient,
-			opts...,
-		)
-		return nil
-	})
 	return f
 }
 
@@ -1228,12 +1225,16 @@ func (f *Factory) WithPackageControllerClient(spec *cluster.Spec, kubeConfig str
 		if err != nil {
 			return err
 		}
+		bundle := spec.ControlPlaneVersionsBundle()
+		if bundle == nil {
+			return fmt.Errorf("could not find VersionsBundle")
+		}
 		f.dependencies.PackageControllerClient = curatedpackages.NewPackageControllerClient(
 			f.dependencies.Helm,
 			f.dependencies.Kubectl,
 			spec.Cluster.Name,
 			mgmtKubeConfig,
-			&spec.VersionsBundle.PackageController.HelmChart,
+			&bundle.PackageController.HelmChart,
 			f.registryMirror,
 			curatedpackages.WithEksaAccessKeyId(eksaAccessKeyID),
 			curatedpackages.WithEksaSecretAccessKey(eksaSecretKey),

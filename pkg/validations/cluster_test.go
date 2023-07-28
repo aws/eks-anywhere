@@ -3,6 +3,7 @@ package validations_test
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
 	"testing"
 
@@ -13,13 +14,11 @@ import (
 	"github.com/aws/eks-anywhere/internal/test"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
-	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	providermocks "github.com/aws/eks-anywhere/pkg/providers/mocks"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
 	"github.com/aws/eks-anywhere/pkg/validations/mocks"
-	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
 type clusterTest struct {
@@ -312,105 +311,186 @@ func anywhereCluster(name string) *anywherev1.Cluster {
 	}
 }
 
-func TestValidateManagementClusterBundlesVersion(t *testing.T) {
-	type testParam struct {
-		mgmtBundlesName   string
-		mgmtBundlesNumber int
-		wkBundlesName     string
-		wkBundlesNumber   int
-		wantErr           string
-		errGetEksaCluster error
-		errGetBundles     error
-	}
-
-	testParams := []testParam{
+func TestValidateEksaVersion(t *testing.T) {
+	v := test.DevEksaVersion()
+	badVersion := anywherev1.EksaVersion("invalid")
+	tests := []struct {
+		name       string
+		wantErr    error
+		version    *anywherev1.EksaVersion
+		cliVersion string
+	}{
 		{
-			mgmtBundlesName:   "bundles-28",
-			mgmtBundlesNumber: 28,
-			wkBundlesName:     "bundles-27",
-			wkBundlesNumber:   27,
-			wantErr:           "",
+			name:       "Success",
+			wantErr:    nil,
+			version:    &v,
+			cliVersion: "v0.0.0-dev",
 		},
 		{
-			mgmtBundlesName:   "bundles-28",
-			mgmtBundlesNumber: 28,
-			wkBundlesName:     "bundles-29",
-			wkBundlesNumber:   29,
-			wantErr:           "cannot upgrade workload cluster with bundle spec.number 29 while management cluster management-cluster is on older bundle spec.number 28",
+			name:       "Bad Cluster version",
+			wantErr:    fmt.Errorf("parsing cluster eksa version: invalid major version in semver invalid: strconv.ParseUint: parsing \"\": invalid syntax"),
+			version:    &badVersion,
+			cliVersion: "v0.0.0-dev",
 		},
 		{
-			mgmtBundlesName:   "bundles-28",
-			mgmtBundlesNumber: 28,
-			wkBundlesName:     "bundles-27",
-			wkBundlesNumber:   27,
-			wantErr:           "failed to reach cluster",
-			errGetEksaCluster: errors.New("failed to reach cluster"),
-		},
-		{
-			mgmtBundlesName:   "bundles-28",
-			mgmtBundlesNumber: 28,
-			wkBundlesName:     "bundles-27",
-			wkBundlesNumber:   27,
-			wantErr:           "failed to reach cluster",
-			errGetBundles:     errors.New("failed to reach cluster"),
+			name:       "Bad CLI version",
+			wantErr:    fmt.Errorf("parsing eksa cli version: invalid major version in semver badvalue: strconv.ParseUint: parsing \"\": invalid syntax"),
+			version:    &v,
+			cliVersion: "badvalue",
 		},
 	}
 
-	for _, p := range testParams {
-		tt := newTest(t, withKubectl())
-		mgmtName := "management-cluster"
-		mgmtCluster := managementCluster(mgmtName)
-		mgmtClusterObject := anywhereCluster(mgmtName)
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			tt := newTest(t, withKubectl())
 
-		mgmtClusterObject.Spec.BundlesRef = &anywherev1.BundlesRef{
-			Name:      p.mgmtBundlesName,
-			Namespace: constants.EksaSystemNamespace,
-		}
+			tt.clusterSpec.Cluster.Spec.EksaVersion = tc.version
+			ctx := context.Background()
 
-		tt.clusterSpec.Config.Cluster.Spec.BundlesRef = &anywherev1.BundlesRef{
-			Name:      p.wkBundlesName,
-			Namespace: constants.EksaSystemNamespace,
-		}
-		wkBundle := &releasev1alpha1.Bundles{
-			Spec: releasev1alpha1.BundlesSpec{
-				Number: p.wkBundlesNumber,
-			},
-		}
-		tt.clusterSpec.Bundles = wkBundle
-
-		mgmtBundle := &releasev1alpha1.Bundles{
-			Spec: releasev1alpha1.BundlesSpec{
-				Number: p.mgmtBundlesNumber,
-			},
-		}
-
-		ctx := context.Background()
-		tt.kubectl.EXPECT().GetEksaCluster(ctx, mgmtCluster, mgmtCluster.Name).Return(mgmtClusterObject, p.errGetEksaCluster)
-		if p.errGetEksaCluster == nil {
-			tt.kubectl.EXPECT().GetBundles(ctx, mgmtCluster.KubeconfigFile, mgmtClusterObject.Spec.BundlesRef.Name, mgmtClusterObject.Spec.BundlesRef.Namespace).Return(mgmtBundle, p.errGetBundles)
-		}
-
-		if p.wantErr == "" {
-			err := validations.ValidateManagementClusterBundlesVersion(ctx, tt.kubectl, mgmtCluster, tt.clusterSpec)
-			tt.Expect(err).To(BeNil())
-		} else {
-			err := validations.ValidateManagementClusterBundlesVersion(ctx, tt.kubectl, mgmtCluster, tt.clusterSpec)
-			tt.Expect(err.Error()).To(Equal(p.wantErr))
-		}
+			err := validations.ValidateEksaVersion(ctx, tc.cliVersion, tt.clusterSpec)
+			if err != nil {
+				tt.Expect(err).To(MatchError(tc.wantErr))
+			}
+		})
 	}
 }
 
-func TestValidateManagementClusterBundlesVersionMissingBundlesRef(t *testing.T) {
-	tt := newTest(t, withKubectl())
-	wantErr := "management cluster bundlesRef cannot be nil"
-	mgmtName := "management-cluster"
-	mgmtCluster := managementCluster(mgmtName)
-	mgmtClusterObject := anywhereCluster(mgmtName)
+func TestValidateEksaVersionSkew(t *testing.T) {
+	v := test.DevEksaVersion()
+	uv := anywherev1.EksaVersion("v0.1.0")
+	badVersion := anywherev1.EksaVersion("invalid")
+	tests := []struct {
+		name           string
+		wantErr        error
+		version        *anywherev1.EksaVersion
+		upgradeVersion *anywherev1.EksaVersion
+	}{
+		{
+			name:           "Success",
+			wantErr:        nil,
+			version:        &v,
+			upgradeVersion: &uv,
+		},
+		{
+			name:           "Bad Cluster version",
+			wantErr:        nil,
+			version:        &badVersion,
+			upgradeVersion: &v,
+		},
+		{
+			name:           "Bad upgrade version",
+			wantErr:        fmt.Errorf("spec.EksaVersion: Invalid value: \"invalid\": EksaVersion is not a valid semver"),
+			version:        &v,
+			upgradeVersion: &badVersion,
+		},
+		{
+			name:           "Fail",
+			wantErr:        fmt.Errorf("spec.EksaVersion: Invalid value: \"v0.0.0-dev\": cannot downgrade from v0.1.0 to v0.0.0: EksaVersion upgrades must be incremental"),
+			version:        &uv,
+			upgradeVersion: &v,
+		},
+		{
+			name:           "Cluster nil",
+			wantErr:        nil,
+			version:        nil,
+			upgradeVersion: &v,
+		},
+		{
+			name:           "Upgrade nil",
+			wantErr:        nil,
+			version:        &uv,
+			upgradeVersion: nil,
+		},
+	}
 
-	mgmtClusterObject.Spec.BundlesRef = nil
-	ctx := context.Background()
-	tt.kubectl.EXPECT().GetEksaCluster(ctx, mgmtCluster, mgmtCluster.Name).Return(mgmtClusterObject, nil)
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			tt := newTest(t, withKubectl())
+			mgmtName := "management-cluster"
+			mgmtCluster := managementCluster(mgmtName)
+			mgmtClusterObject := anywhereCluster(mgmtName)
+			mgmtClusterObject.Spec.BundlesRef = &anywherev1.BundlesRef{}
+			mgmtClusterObject.Spec.EksaVersion = tc.version
+			tt.clusterSpec.Cluster.Spec.EksaVersion = tc.upgradeVersion
+			ctx := context.Background()
+			tt.kubectl.EXPECT().GetEksaCluster(ctx, mgmtCluster, tt.clusterSpec.Cluster.Name).Return(mgmtClusterObject, nil)
+			tt.kubectl.EXPECT().GetBundles(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(test.Bundle(), nil).AnyTimes()
 
-	err := validations.ValidateManagementClusterBundlesVersion(ctx, tt.kubectl, mgmtCluster, tt.clusterSpec)
-	tt.Expect(err.Error()).To(Equal(wantErr))
+			err := validations.ValidateEksaVersionSkew(ctx, tt.kubectl, mgmtCluster, tt.clusterSpec)
+			if err != nil {
+				tt.Expect(err.Error()).To(ContainSubstring(tc.wantErr.Error()))
+			} else {
+				tt.Expect(tc.wantErr).To(BeNil())
+			}
+		})
+	}
+}
+
+func TestValidateManagementClusterEksaVersion(t *testing.T) {
+	v := test.DevEksaVersion()
+	uv := anywherev1.EksaVersion("v0.1.0")
+	badVersion := anywherev1.EksaVersion("invalid")
+	tests := []struct {
+		name              string
+		wantErr           error
+		version           *anywherev1.EksaVersion
+		managementVersion *anywherev1.EksaVersion
+	}{
+		{
+			name:              "Success",
+			wantErr:           nil,
+			version:           &v,
+			managementVersion: &v,
+		},
+		{
+			name:              "Bad workload version",
+			wantErr:           fmt.Errorf("parsing workload"),
+			version:           &badVersion,
+			managementVersion: &v,
+		},
+		{
+			name:              "Bad management version",
+			wantErr:           fmt.Errorf("parsing management"),
+			version:           &v,
+			managementVersion: &badVersion,
+		},
+		{
+			name:              "Fail",
+			wantErr:           fmt.Errorf("cannot upgrade workload cluster to"),
+			version:           &uv,
+			managementVersion: &v,
+		},
+		{
+			name:              "workload nil",
+			wantErr:           fmt.Errorf("cluster has nil EksaVersion"),
+			version:           nil,
+			managementVersion: &v,
+		},
+		{
+			name:              "managment nil",
+			wantErr:           fmt.Errorf("management cluster has nil EksaVersion"),
+			version:           &uv,
+			managementVersion: nil,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			tt := newTest(t, withKubectl())
+			mgmtName := "management-cluster"
+			mgmtCluster := managementCluster(mgmtName)
+			mgmtClusterObject := anywhereCluster(mgmtName)
+			mgmtClusterObject.Spec.BundlesRef = &anywherev1.BundlesRef{}
+			mgmtClusterObject.Spec.EksaVersion = tc.managementVersion
+			tt.clusterSpec.Cluster.Spec.EksaVersion = tc.version
+			ctx := context.Background()
+			tt.kubectl.EXPECT().GetEksaCluster(ctx, mgmtCluster, mgmtCluster.Name).Return(mgmtClusterObject, nil)
+			tt.kubectl.EXPECT().GetBundles(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(test.Bundle(), nil).AnyTimes()
+
+			err := validations.ValidateManagementClusterEksaVersion(ctx, tt.kubectl, mgmtCluster, tt.clusterSpec)
+			if err != nil {
+				tt.Expect(err.Error()).To(ContainSubstring(tc.wantErr.Error()))
+			}
+		})
+	}
 }

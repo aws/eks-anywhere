@@ -1368,7 +1368,8 @@ func TestClusterEqualManagement(t *testing.T) {
 }
 
 func TestClusterEqualEksaVersion(t *testing.T) {
-	ver := v1alpha1.EksaVersion("v1.0.0")
+	version := test.DevEksaVersion()
+	version2 := v1alpha1.EksaVersion("v1.0.0")
 	testCases := []struct {
 		testName           string
 		version1, version2 *v1alpha1.EksaVersion
@@ -1382,20 +1383,20 @@ func TestClusterEqualEksaVersion(t *testing.T) {
 		},
 		{
 			testName: "one nil, one exists",
-			version1: &test.DevEksaVersion,
+			version1: &version,
 			version2: nil,
 			want:     false,
 		},
 		{
 			testName: "both exist, same",
-			version1: &test.DevEksaVersion,
-			version2: &test.DevEksaVersion,
+			version1: &version,
+			version2: &version,
 			want:     true,
 		},
 		{
 			testName: "both exist, diff",
-			version1: &test.DevEksaVersion,
-			version2: &ver,
+			version1: &version,
+			version2: &version2,
 			want:     false,
 		},
 	}
@@ -3077,4 +3078,15 @@ func TestWorkerNodeGroupConfigurationKubeVersionUnchanged(t *testing.T) {
 			g.Expect(changed).To(Equal(tt.want))
 		})
 	}
+}
+
+func TestKubernetesVersions(t *testing.T) {
+	g := NewWithT(t)
+	cluster := baseCluster()
+	kube120 := v1alpha1.KubernetesVersion("1.20")
+	wng := cluster.Spec.WorkerNodeGroupConfigurations[0].DeepCopy()
+	cluster.Spec.WorkerNodeGroupConfigurations[0].KubernetesVersion = &kube120
+	cluster.Spec.WorkerNodeGroupConfigurations = append(cluster.Spec.WorkerNodeGroupConfigurations, *wng)
+	expected := []v1alpha1.KubernetesVersion{v1alpha1.Kube121, v1alpha1.Kube120}
+	g.Expect(cluster.KubernetesVersions()).To(Equal(expected))
 }

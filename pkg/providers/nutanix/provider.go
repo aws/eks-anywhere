@@ -120,7 +120,8 @@ func (p *Provider) PostBootstrapSetup(ctx context.Context, clusterConfig *v1alph
 	return nil
 }
 
-func (p *Provider) PostBootstrapDeleteForUpgrade(ctx context.Context) error {
+// PostBootstrapDeleteForUpgrade runs any provider-specific operations after bootstrap cluster has been deleted.
+func (p *Provider) PostBootstrapDeleteForUpgrade(ctx context.Context, cluster *types.Cluster) error {
 	// TODO(nutanix): figure out if we need something else here
 	return nil
 }
@@ -500,6 +501,7 @@ func (p *Provider) GenerateStorageClass() []byte {
 	return nil
 }
 
+// GenerateMHC returns MachineHealthCheck for the cluster in yaml format.
 func (p *Provider) GenerateMHC(_ *cluster.Spec) ([]byte, error) {
 	data := map[string]string{
 		"clusterName":         p.clusterConfig.Name,
@@ -518,8 +520,10 @@ func (p *Provider) UpdateKubeConfig(content *[]byte, clusterName string) error {
 	return nil
 }
 
+// Version returns the nutanix version from the VersionsBundle.
 func (p *Provider) Version(clusterSpec *cluster.Spec) string {
-	return clusterSpec.VersionsBundle.Nutanix.Version
+	versionsBundle := clusterSpec.ControlPlaneVersionsBundle()
+	return versionsBundle.Nutanix.Version
 }
 
 func (p *Provider) EnvMap(_ *cluster.Spec) (map[string]string, error) {
@@ -542,11 +546,11 @@ func (p *Provider) GetDeployments() map[string][]string {
 }
 
 func (p *Provider) GetInfrastructureBundle(clusterSpec *cluster.Spec) *types.InfrastructureBundle {
-	bundle := clusterSpec.VersionsBundle
+	versionsBundle := clusterSpec.ControlPlaneVersionsBundle()
 	manifests := []releasev1alpha1.Manifest{
-		bundle.Nutanix.Components,
-		bundle.Nutanix.Metadata,
-		bundle.Nutanix.ClusterTemplate,
+		versionsBundle.Nutanix.Components,
+		versionsBundle.Nutanix.Metadata,
+		versionsBundle.Nutanix.ClusterTemplate,
 	}
 	folderName := fmt.Sprintf("infrastructure-nutanix/%s/", p.Version(clusterSpec))
 	infraBundle := types.InfrastructureBundle{
@@ -560,6 +564,7 @@ func (p *Provider) DatacenterConfig(_ *cluster.Spec) providers.DatacenterConfig 
 	return p.datacenterConfig
 }
 
+// MachineConfigs returns a MachineConfig slice.
 func (p *Provider) MachineConfigs(_ *cluster.Spec) []providers.MachineConfig {
 	configs := make(map[string]providers.MachineConfig, len(p.machineConfigs))
 	controlPlaneMachineName := p.clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
@@ -607,14 +612,16 @@ func (p *Provider) ValidateNewSpec(_ context.Context, _ *types.Cluster, _ *clust
 }
 
 func (p *Provider) ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ComponentChangeDiff {
-	if currentSpec.VersionsBundle.Nutanix.Version == newSpec.VersionsBundle.Nutanix.Version {
+	currentVersionsBundle := currentSpec.ControlPlaneVersionsBundle()
+	newVersionsBundle := newSpec.ControlPlaneVersionsBundle()
+	if currentVersionsBundle.Nutanix.Version == newVersionsBundle.Nutanix.Version {
 		return nil
 	}
 
 	return &types.ComponentChangeDiff{
 		ComponentName: constants.NutanixProviderName,
-		NewVersion:    newSpec.VersionsBundle.Nutanix.Version,
-		OldVersion:    currentSpec.VersionsBundle.Nutanix.Version,
+		NewVersion:    newVersionsBundle.Nutanix.Version,
+		OldVersion:    currentVersionsBundle.Nutanix.Version,
 	}
 }
 

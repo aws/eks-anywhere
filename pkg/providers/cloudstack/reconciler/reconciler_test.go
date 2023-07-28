@@ -331,16 +331,6 @@ func TestReconcileControlPlaneStackedEtcdSuccess(t *testing.T) {
 	)
 }
 
-func TestReconcilerReconcileControlPlaneFailure(t *testing.T) {
-	tt := newReconcilerTest(t)
-	tt.eksaSupportObjs = append(tt.eksaSupportObjs, tt.secret)
-	tt.createAllObjs()
-	spec := tt.buildSpec()
-	spec.Cluster.Spec.KubernetesVersion = ""
-	_, err := tt.reconciler().ReconcileControlPlane(tt.ctx, test.NewNullLogger(), spec)
-	tt.Expect(err).To(MatchError(ContainSubstring("generating cloudstack control plane yaml spec")))
-}
-
 func TestReconcileCNISuccess(t *testing.T) {
 	tt := newReconcilerTest(t)
 	tt.withFakeClient()
@@ -580,6 +570,7 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 	}
 
 	bundle := test.Bundle()
+	version := test.DevEksaVersion()
 
 	managementCluster := cloudstackCluster(func(c *anywherev1.Cluster) {
 		c.Name = "management-cluster"
@@ -591,6 +582,7 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 			Namespace:  bundle.Namespace,
 			APIVersion: bundle.APIVersion,
 		}
+		c.Spec.EksaVersion = &version
 	})
 
 	machineConfigCP := machineConfig(func(m *anywherev1.CloudStackMachineConfig) {
@@ -655,6 +647,8 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 				Labels: nil,
 			},
 		)
+
+		c.Spec.EksaVersion = &version
 	})
 	secret := &corev1.Secret{
 		TypeMeta: metav1.TypeMeta{
@@ -685,7 +679,8 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 			managementCluster,
 			workloadClusterDatacenter,
 			bundle,
-			test.EksdRelease(),
+			test.EksdRelease("1-22"),
+			test.EKSARelease(),
 		},
 		cluster:                   cluster,
 		datacenterConfig:          workloadClusterDatacenter,

@@ -42,7 +42,9 @@ func newCiliumTest(t *testing.T) *ciliumtest {
 			KubeconfigFile: "config.kubeconfig",
 		},
 		spec: test.NewClusterSpec(func(s *cluster.Spec) {
-			s.VersionsBundle.Cilium = v1alpha1.CiliumBundle{
+			s.Cluster.Spec.KubernetesVersion = "1.21"
+			s.VersionsBundles["1.21"] = test.VersionBundle()
+			s.VersionsBundles["1.21"].Cilium = v1alpha1.CiliumBundle{
 				Cilium: v1alpha1.Image{
 					URI: "public.ecr.aws/isovalent/cilium:v1.9.13-eksa.2",
 				},
@@ -54,7 +56,7 @@ func newCiliumTest(t *testing.T) *ciliumtest {
 					URI:  "public.ecr.aws/isovalent/cilium:1.9.13-eksa.2",
 				},
 			}
-			s.VersionsBundle.KubeDistro.Kubernetes.Tag = "v1.21.9-eks-1-21-10"
+			s.VersionsBundles["1.21"].KubeDistro.Kubernetes.Tag = "v1.21.9-eks-1-21-10"
 			s.Cluster.Spec.ClusterNetwork.CNIConfig = &v1alpha12.CNIConfig{Cilium: &v1alpha12.CiliumConfig{}}
 		}),
 		ciliumValues: []byte("manifest"),

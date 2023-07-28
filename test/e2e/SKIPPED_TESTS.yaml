@@ -3,6 +3,8 @@ skipped_tests:
 #Airgapped tests
 - TestCloudStackKubernetes123RedhatAirgappedRegistryMirror
 - TestCloudStackKubernetes124RedhatAirgappedRegistryMirror
+- TestCloudStackKubernetes125RedhatAirgappedRegistryMirror
+- TestCloudStackKubernetes126RedhatAirgappedRegistryMirror
 # This test will fail until we the latest minor release version is 15.x as there is a preflight for 1.24
 - TestCloudStackKubernetes124RedhatUpgradeFromLatestMinorReleaseAlwaysNetworkPolicy
 - TestCloudStackKubernetes124ManagementClusterUpgradeFromLatest
@@ -19,8 +21,18 @@ skipped_tests:
 - TestCloudStackKubernetes126MultiEndpointSimpleFlow
 - TestCloudStackKubernetes127MultiEndpointSimpleFlow
 
-# CloudStack Registry Mirror endpoint was not set up
-- TestCloudStackKubernetes123UbuntuAirgappedRegistryMirror
+# These tests will fail until there is a new latest minor release version as 16.2 has a preflight check to prevent k8s version > 1.24
+- TestCloudStackKubernetes125WithOIDCManagementClusterUpgradeFromLatestSideEffects
+- TestCloudStackKubernetes126WithOIDCManagementClusterUpgradeFromLatestSideEffects
+- TestCloudStackKubernetes127WithOIDCManagementClusterUpgradeFromLatestSideEffects
+
+# Proxy tests
+- TestCloudStackKubernetes123RedhatProxyConfigAPI
+- TestCloudStackKubernetes124RedhatProxyConfigAPI
+- TestCloudStackKubernetes125RedhatProxyConfigAPI
+- TestCloudStackKubernetes126RedhatProxyConfigAPI
+- TestCloudStackKubernetes127RedhatProxyConfigAPI
+
 # Nutanix
 
 # Snow
@@ -74,10 +86,16 @@ skipped_tests:
 - TestTinkerbellKubernetes123UbuntuSimpleFlow
 - TestTinkerbellKubernetes124UbuntuSimpleFlow
 - TestTinkerbellKubernetes125UbuntuSimpleFlow
-- TestTinkerbellKubernetes126SimpleFlow
+- TestTinkerbellKubernetes126UbuntuSimpleFlow
+- TestTinkerbellKubernetes123Ubuntu2204SimpleFlow
+- TestTinkerbellKubernetes124Ubuntu2204SimpleFlow
+- TestTinkerbellKubernetes125Ubuntu2204SimpleFlow
+- TestTinkerbellKubernetes126Ubuntu2204SimpleFlow
 - TestTinkerbellKubernetes123BottleRocketSimpleFlow
 - TestTinkerbellKubernetes124BottleRocketSimpleFlow
 - TestTinkerbellKubernetes123UbuntuTo124Upgrade
+- TestTinkerbellKubernetes125To126Ubuntu2204Upgrade
+- TestTinkerbellKubernetes126Ubuntu2004To2204Upgrade
 - TestTinkerbellKubernetes126UbuntuThreeWorkersSimpleFlow
 - TestTinkerbellAirgappedKubernetes126BottleRocketRegistryMirror
 - TestTinkerbellKubernetes124UbuntuTo125Upgrade
@@ -123,3 +141,7 @@ skipped_tests:
 - TestTinkerbellKubernetes123BottleRocketCuratedPackagesPrometheusSimpleFlow
 # Conformance
 - TestSnowKubernetes123ThreeWorkersConformanceFlow
+
+#Docker
+#Skipping because upgrade from latest minor release with cilium is currently broken for docker and the controller does not support kindnet.
+- TestDockerKubernetes123to124UpgradeFromLatestMinorReleaseAPI

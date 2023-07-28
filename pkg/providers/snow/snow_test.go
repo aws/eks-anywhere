@@ -86,7 +86,7 @@ func givenClusterSpec() *cluster.Spec {
 		s.SnowCredentialsSecret = wantEksaCredentialsSecret()
 		s.SnowMachineConfigs = givenMachineConfigs()
 		s.SnowIPPools = givenIPPools()
-		s.VersionsBundle = givenVersionsBundle()
+		s.VersionsBundles["1.21"] = givenVersionsBundle()
 		s.ManagementCluster = givenManagementCluster()
 	})
 }
@@ -97,7 +97,7 @@ func givenClusterSpecWithCPUpgradeStrategy() *cluster.Spec {
 		s.SnowDatacenter = givenDatacenterConfig()
 		s.SnowCredentialsSecret = wantEksaCredentialsSecret()
 		s.SnowMachineConfigs = givenMachineConfigs()
-		s.VersionsBundle = givenVersionsBundle()
+		s.VersionsBundles["1.19"] = givenVersionsBundle()
 		s.ManagementCluster = givenManagementCluster()
 	})
 }
@@ -108,7 +108,7 @@ func givenClusterSpecWithMDUpgradeStrategy() *cluster.Spec {
 		s.SnowDatacenter = givenDatacenterConfig()
 		s.SnowCredentialsSecret = wantEksaCredentialsSecret()
 		s.SnowMachineConfigs = givenMachineConfigs()
-		s.VersionsBundle = givenVersionsBundle()
+		s.VersionsBundles["1.19"] = givenVersionsBundle()
 		s.ManagementCluster = givenManagementCluster()
 	})
 }
@@ -459,7 +459,7 @@ func givenProvider(t *testing.T) *snow.SnowProvider {
 
 func givenEmptyClusterSpec() *cluster.Spec {
 	return test.NewClusterSpec(func(s *cluster.Spec) {
-		s.VersionsBundle.KubeVersion = "1.21"
+		s.VersionsBundles["1.19"].KubeVersion = "1.21"
 	})
 }
 
@@ -863,11 +863,127 @@ func TestGenerateCAPISpecForUpgrade(t *testing.T) {
 	test.AssertContentToFile(t, string(gotMd), "testdata/expected_results_main_md_ubuntu.yaml")
 }
 
+func TestGenerateCAPISpecForUpgradeWorkerVersion(t *testing.T) {
+	tt := newSnowTest(t)
+	workerVersionsBundle := givenVersionsBundle()
+	workerVersionsBundle.KubeDistro.Kubernetes.Tag = "v1.20.2-eks-1-20-7"
+	tt.clusterSpec.VersionsBundles["1.20"] = workerVersionsBundle
+	nodeGroups := tt.clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations
+	wng := nodeGroups[0].DeepCopy()
+	wng.Name = "md-1"
+	kube120 := v1alpha1.KubernetesVersion("1.20")
+	nodeGroups[0].KubernetesVersion = &kube120
+	tt.clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations = append(nodeGroups, *wng)
+	mt := wantSnowMachineTemplate()
+	tt.kubeUnAuthClient.EXPECT().KubeconfigClient(tt.cluster.KubeconfigFile).Return(tt.kubeconfigClient)
+	tt.kubeconfigClient.EXPECT().
+		Get(
+			tt.ctx,
+			"snow-test",
+			constants.EksaSystemNamespace,
+			&controlplanev1.KubeadmControlPlane{},
+		).
+		DoAndReturn(func(_ context.Context, _, _ string, obj *controlplanev1.KubeadmControlPlane) error {
+			obj.Spec.MachineTemplate.InfrastructureRef.Name = "snow-test-control-plane-1"
+			return nil
+		})
+	tt.kubeconfigClient.EXPECT().
+		Get(
+			tt.ctx,
+			"snow-test-control-plane-1",
+			constants.EksaSystemNamespace,
+			&snowv1.AWSSnowMachineTemplate{},
+		).
+		DoAndReturn(func(_ context.Context, _, _ string, obj *snowv1.AWSSnowMachineTemplate) error {
+			wantSnowMachineTemplate().DeepCopyInto(obj)
+			obj.SetName("snow-test-control-plane-1")
+			obj.Spec.Template.Spec.InstanceType = "sbe-c.large"
+			return nil
+		})
+	tt.kubeconfigClient.EXPECT().
+		Get(
+			tt.ctx,
+			"snow-test-md-0",
+			constants.EksaSystemNamespace,
+			&clusterv1.MachineDeployment{},
+		).
+		DoAndReturn(func(_ context.Context, _, _ string, obj *clusterv1.MachineDeployment) error {
+			wantMachineDeployment().DeepCopyInto(obj)
+			obj.Spec.Template.Spec.InfrastructureRef.Name = "snow-test-md-0-1"
+			obj.Spec.Template.Spec.Bootstrap.ConfigRef.Name = "snow-test-md-0-1"
+			return nil
+		})
+	tt.kubeconfigClient.EXPECT().
+		Get(
+			tt.ctx,
+			"snow-test-md-0-1",
+			constants.EksaSystemNamespace,
+			&bootstrapv1.KubeadmConfigTemplate{},
+		).
+		DoAndReturn(func(_ context.Context, _, _ string, obj *bootstrapv1.KubeadmConfigTemplate) error {
+			wantKubeadmConfigTemplate().DeepCopyInto(obj)
+			return nil
+		})
+	tt.kubeconfigClient.EXPECT().
+		Get(
+			tt.ctx,
+			"snow-test-md-0-1",
+			constants.EksaSystemNamespace,
+			&snowv1.AWSSnowMachineTemplate{},
+		).
+		DoAndReturn(func(_ context.Context, _, _ string, obj *snowv1.AWSSnowMachineTemplate) error {
+			mt.DeepCopyInto(obj)
+			obj.SetName("snow-test-md-0-1")
+			return nil
+		})
+	tt.kubeconfigClient.EXPECT().
+		Get(
+			tt.ctx,
+			"snow-test-md-1",
+			constants.EksaSystemNamespace,
+			&clusterv1.MachineDeployment{},
+		).
+		DoAndReturn(func(_ context.Context, _, _ string, obj *clusterv1.MachineDeployment) error {
+			wantMachineDeployment().DeepCopyInto(obj)
+			obj.Spec.Template.Spec.InfrastructureRef.Name = "snow-test-md-1-1"
+			obj.Spec.Template.Spec.Bootstrap.ConfigRef.Name = "snow-test-md-1-1"
+			return nil
+		})
+	tt.kubeconfigClient.EXPECT().
+		Get(
+			tt.ctx,
+			"snow-test-md-1-1",
+			constants.EksaSystemNamespace,
+			&bootstrapv1.KubeadmConfigTemplate{},
+		).
+		DoAndReturn(func(_ context.Context, _, _ string, obj *bootstrapv1.KubeadmConfigTemplate) error {
+			wantKubeadmConfigTemplate().DeepCopyInto(obj)
+			return nil
+		})
+	tt.kubeconfigClient.EXPECT().
+		Get(
+			tt.ctx,
+			"snow-test-md-1-1",
+			constants.EksaSystemNamespace,
+			&snowv1.AWSSnowMachineTemplate{},
+		).
+		DoAndReturn(func(_ context.Context, _, _ string, obj *snowv1.AWSSnowMachineTemplate) error {
+			mt.DeepCopyInto(obj)
+			obj.SetName("snow-test-md-1-1")
+			return nil
+		})
+
+	gotCp, gotMd, err := tt.provider.GenerateCAPISpecForUpgrade(tt.ctx, tt.cluster, nil, nil, tt.clusterSpec)
+	tt.Expect(err).To(Succeed())
+	test.AssertContentToFile(t, string(gotCp), "testdata/expected_results_main_cp_ubuntu.yaml")
+	test.AssertContentToFile(t, string(gotMd), "testdata/expected_results_main_md_ubuntu_worker_version.yaml")
+}
+
 func TestVersion(t *testing.T) {
 	snowVersion := "v1.0.2"
 	provider := givenProvider(t)
 	clusterSpec := givenEmptyClusterSpec()
-	clusterSpec.VersionsBundle.Snow.Version = snowVersion
+	clusterSpec.VersionsBundles["1.19"].Snow.Version = snowVersion
 	g := NewWithT(t)
 	result := provider.Version(clusterSpec)
 	g.Expect(result).To(Equal(snowVersion))
@@ -875,11 +991,12 @@ func TestVersion(t *testing.T) {
 
 func TestGetInfrastructureBundle(t *testing.T) {
 	tt := newSnowTest(t)
+	bundle := tt.clusterSpec.ControlPlaneVersionsBundle()
 	want := &types.InfrastructureBundle{
 		FolderName: "infrastructure-snow/v1.0.2/",
 		Manifests: []releasev1alpha1.Manifest{
-			tt.clusterSpec.VersionsBundle.Snow.Components,
-			tt.clusterSpec.VersionsBundle.Snow.Metadata,
+			bundle.Snow.Components,
+			bundle.Snow.Metadata,
 		},
 	}
 	got := tt.provider.GetInfrastructureBundle(tt.clusterSpec)
@@ -1246,7 +1363,7 @@ func TestUpgradeNeededBundle(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			g := newSnowTest(t)
 			new := g.clusterSpec.DeepCopy()
-			new.VersionsBundle.Snow = tt.bundle
+			new.VersionsBundles["1.21"].Snow = tt.bundle
 			new.SnowMachineConfigs = givenMachineConfigs()
 			got, err := g.provider.UpgradeNeeded(g.ctx, new, g.clusterSpec, g.cluster)
 			g.Expect(err).To(Succeed())
@@ -1267,8 +1384,8 @@ func TestChangeDiffWithChange(t *testing.T) {
 	provider := givenProvider(t)
 	clusterSpec := givenEmptyClusterSpec()
 	newClusterSpec := clusterSpec.DeepCopy()
-	clusterSpec.VersionsBundle.Snow.Version = "v1.0.2"
-	newClusterSpec.VersionsBundle.Snow.Version = "v1.0.3"
+	clusterSpec.VersionsBundles["1.19"].Snow.Version = "v1.0.2"
+	newClusterSpec.VersionsBundles["1.19"].Snow.Version = "v1.0.3"
 	want := &types.ComponentChangeDiff{
 		ComponentName: "snow",
 		NewVersion:    "v1.0.3",

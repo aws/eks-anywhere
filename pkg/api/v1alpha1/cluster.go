@@ -20,8 +20,10 @@ import (
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
+	"github.com/aws/eks-anywhere/pkg/semver"
 )
 
+// constants defined for cluster.go.
 const (
 	ClusterKind              = "Cluster"
 	YamlSeparator            = "\n---\n"
@@ -165,25 +167,6 @@ func WithEtcdMachineGroupRef(ref ProviderRefAccessor) ClusterGenerateOpt {
 	}
 }
 
-func NewCluster(clusterName string) *Cluster {
-	c := &Cluster{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       ClusterKind,
-			APIVersion: SchemeBuilder.GroupVersion.String(),
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name: clusterName,
-		},
-		Spec: ClusterSpec{
-			KubernetesVersion: Kube119,
-		},
-		Status: ClusterStatus{},
-	}
-	c.SetSelfManaged()
-
-	return c
-}
-
 var clusterConfigValidations = []func(*Cluster) error{
 	validateClusterConfigName,
 	validateControlPlaneEndpoint,
@@ -201,6 +184,7 @@ var clusterConfigValidations = []func(*Cluster) error{
 	validateCPUpgradeRolloutStrategy,
 	validateControlPlaneLabels,
 	validatePackageControllerConfiguration,
+	validateEksaVersion,
 }
 
 // GetClusterConfig parses a Cluster object from a multiobject yaml file in disk
@@ -858,5 +842,20 @@ func validatePackageControllerConfiguration(clusterConfig *Cluster) error {
 			}
 		}
 	}
+	return nil
+}
+
+func validateEksaVersion(clusterConfig *Cluster) error {
+	if clusterConfig.Spec.BundlesRef != nil && clusterConfig.Spec.EksaVersion != nil {
+		return fmt.Errorf("cannot pass both bundlesRef and eksaVersion. New clusters should use eksaVersion instead of bundlesRef")
+	}
+
+	if clusterConfig.Spec.EksaVersion != nil {
+		_, err := semver.New(string(*clusterConfig.Spec.EksaVersion))
+		if err != nil {
+			return fmt.Errorf("eksaVersion is not a valid semver")
+		}
+	}
+
 	return nil
 }

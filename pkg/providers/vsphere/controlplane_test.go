@@ -116,18 +116,6 @@ func TestControlPlaneSpecNewCluster(t *testing.T) {
 	g.Expect(cp.EtcdMachineTemplate.Name).To(Equal("test-etcd-1"))
 }
 
-func TestControlPlaneSpecNoKubeVersion(t *testing.T) {
-	g := NewWithT(t)
-	logger := test.NewNullLogger()
-	ctx := context.Background()
-	client := test.NewFakeKubeClient()
-	spec := test.NewFullClusterSpec(t, testClusterConfigMainFilename)
-	spec.Cluster.Spec.KubernetesVersion = ""
-
-	_, err := vsphere.ControlPlaneSpec(ctx, logger, client, spec)
-	g.Expect(err).To(MatchError(ContainSubstring("generating vsphere control plane yaml spec")))
-}
-
 func TestControlPlaneSpecUpdateMachineTemplates(t *testing.T) {
 	g := NewWithT(t)
 	logger := test.NewNullLogger()

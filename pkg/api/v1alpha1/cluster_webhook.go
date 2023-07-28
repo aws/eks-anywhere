@@ -27,7 +27,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	"github.com/aws/eks-anywhere/pkg/features"
+	"github.com/aws/eks-anywhere/pkg/semver"
 )
+
+const supportedMinorVersionIncrement int64 = 1
 
 // log is for logging in this package.
 var clusterlog = logf.Log.WithName("cluster-resource")
@@ -59,12 +62,8 @@ func (r *Cluster) ValidateCreate() error {
 
 	var allErrs field.ErrorList
 
-	if !r.IsReconcilePaused() {
-		if r.IsSelfManaged() {
-			return apierrors.NewBadRequest("creating new cluster on existing cluster is not supported for self managed clusters")
-		} else if !features.IsActive(features.FullLifecycleAPI()) {
-			return apierrors.NewBadRequest("creating new managed cluster on existing cluster is not supported")
-		}
+	if !r.IsReconcilePaused() && r.IsSelfManaged() {
+		return apierrors.NewBadRequest("creating new cluster on existing cluster is not supported for self managed clusters")
 	}
 
 	if err := r.Validate(); err != nil {
@@ -98,6 +97,10 @@ func (r *Cluster) ValidateUpdate(old runtime.Object) error {
 
 	allErrs = append(allErrs, ValidateKubernetesVersionSkew(r, oldCluster)...)
 
+	allErrs = append(allErrs, validateEksaVersionCluster(r, oldCluster)...)
+
+	allErrs = append(allErrs, ValidateEksaVersionSkew(r, oldCluster)...)
+
 	allErrs = append(allErrs, ValidateWorkerKubernetesVersionSkew(r, oldCluster)...)
 
 	if len(allErrs) != 0 {
@@ -115,14 +118,80 @@ func (r *Cluster) ValidateUpdate(old runtime.Object) error {
 	return nil
 }
 
+// ValidateEksaVersionSkew ensures that upgrades are sequential by CLI minor versions.
+func ValidateEksaVersionSkew(new, old *Cluster) field.ErrorList {
+	var allErrs field.ErrorList
+	eksaVersionPath := field.NewPath("spec").Child("EksaVersion")
+
+	if new.Spec.EksaVersion == nil || old.Spec.EksaVersion == nil {
+		return nil
+	}
+
+	// allow users to update cluster if old cluster is invalid
+	oldEksaVersion, err := semver.New(string(*old.Spec.EksaVersion))
+	if err != nil {
+		return nil
+	}
+
+	newEksaVersion, err := semver.New(string(*new.Spec.EksaVersion))
+	if err != nil {
+		allErrs = append(
+			allErrs,
+			field.Invalid(eksaVersionPath, new.Spec.EksaVersion, "EksaVersion is not a valid semver"))
+		return allErrs
+	}
+
+	majorVersionDifference := int64(newEksaVersion.Major) - int64(oldEksaVersion.Major)
+	minorVersionDifference := int64(newEksaVersion.Minor) - int64(oldEksaVersion.Minor)
+
+	// if major different or upgrade difference greater than one minor version
+	if majorVersionDifference != 0 || minorVersionDifference > supportedMinorVersionIncrement {
+		allErrs = append(
+			allErrs,
+			field.Invalid(eksaVersionPath, new.Spec.EksaVersion, fmt.Sprintf("cannot upgrade to %v from %v: EksaVersion upgrades must have a skew of 1 minor version", newEksaVersion, oldEksaVersion)))
+		return allErrs
+	}
+
+	// Allow "downgrades" if old version is greater than managment cluster. We can't check if a cluster's EksaVersion
+	// is less than or equal to the mgmt cluster in the webhook. Instead we check it in the controller where the
+	// EksaVersion will already be applied. However, the cluster will never begin to reconcile due to the validation.
+	// We should not block users from changing EksaVersion to a lower semver in this scenario.
+	failure := old.Status.FailureReason
+	if failure != nil && *failure == EksaVersionInvalidReason {
+		return nil
+	}
+
+	// don't allow downgrades if old version was valid
+	if minorVersionDifference < 0 {
+		allErrs = append(
+			allErrs,
+			field.Invalid(eksaVersionPath, new.Spec.EksaVersion, fmt.Sprintf("cannot downgrade from %v to %v: EksaVersion upgrades must be incremental", oldEksaVersion, newEksaVersion)))
+	}
+
+	return allErrs
+}
+
 func validateBundlesRefCluster(new, old *Cluster) field.ErrorList {
 	var allErrs field.ErrorList
 	bundlesRefPath := field.NewPath("spec").Child("BundlesRef")
 
-	if old.Spec.BundlesRef != nil && new.Spec.BundlesRef == nil {
+	if old.Spec.BundlesRef != nil && new.Spec.BundlesRef == nil && new.Spec.EksaVersion == nil {
 		allErrs = append(
 			allErrs,
 			field.Invalid(bundlesRefPath, new.Spec.BundlesRef, fmt.Sprintf("field cannot be removed after setting. Previous value %v", old.Spec.BundlesRef)))
+	}
+
+	return allErrs
+}
+
+func validateEksaVersionCluster(new, old *Cluster) field.ErrorList {
+	var allErrs field.ErrorList
+	eksaVersionPath := field.NewPath("spec").Child("EksaVersion")
+
+	if old.Spec.EksaVersion != nil && new.Spec.EksaVersion == nil {
+		allErrs = append(
+			allErrs,
+			field.Invalid(eksaVersionPath, new.Spec.EksaVersion, fmt.Sprintf("field cannot be removed after setting. Previous value %v", old.Spec.EksaVersion)))
 	}
 
 	return allErrs

@@ -53,8 +53,10 @@ func FluxChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ChangeDiff {
 		logger.V(1).Info("Skipping Flux upgrades, GitOps not enabled")
 		return nil
 	}
-	oldVersion := currentSpec.VersionsBundle.Flux.Version
-	newVersion := newSpec.VersionsBundle.Flux.Version
+	oldVersionsBundle := currentSpec.ControlPlaneVersionsBundle()
+	newVersionsBundle := newSpec.ControlPlaneVersionsBundle()
+	oldVersion := oldVersionsBundle.Flux.Version
+	newVersion := newVersionsBundle.Flux.Version
 	if oldVersion != newVersion {
 		logger.V(1).Info("Flux change diff ", "oldVersion ", oldVersion, "newVersion ", newVersion)
 		return &types.ChangeDiff{

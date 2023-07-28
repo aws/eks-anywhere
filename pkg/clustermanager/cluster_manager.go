@@ -98,9 +98,15 @@ type ClusterManager struct {
 	clusterctlMoveTimeout            time.Duration
 }
 
+// ClientFactory builds Kubernetes clients.
+type ClientFactory interface {
+	// BuildClientFromKubeconfig builds a Kubernetes client from a kubeconfig file.
+	BuildClientFromKubeconfig(kubeconfigPath string) (kubernetes.Client, error)
+}
+
 type ClusterClient interface {
 	KubernetesClient
-	BackupManagement(ctx context.Context, cluster *types.Cluster, managementStatePath string) error
+	BackupManagement(ctx context.Context, cluster *types.Cluster, managementStatePath, clusterName string) error
 	MoveManagement(ctx context.Context, from, target *types.Cluster, clusterName string) error
 	WaitForClusterReady(ctx context.Context, cluster *types.Cluster, timeout string, clusterName string) error
 	WaitForControlPlaneAvailable(ctx context.Context, cluster *types.Cluster, timeout string, newClusterName string) error
@@ -265,8 +271,6 @@ func WithNoTimeouts() ClusterManagerOpt {
 		c.controlPlaneWaitTimeout = maxTime
 		c.controlPlaneWaitAfterMoveTimeout = maxTime
 		c.externalEtcdWaitTimeout = maxTime
-		c.unhealthyMachineTimeout = maxTime
-		c.nodeStartupTimeout = maxTime
 		c.clusterWaitTimeout = maxTime
 		c.deploymentWaitTimeout = maxTime
 		c.clusterctlMoveTimeout = maxTime
@@ -292,7 +296,7 @@ func clusterctlMoveRetryPolicy(totalRetries int, err error) (retry bool, wait ti
 }
 
 // BackupCAPI takes backup of management cluster's resources during uograde process.
-func (c *ClusterManager) BackupCAPI(ctx context.Context, cluster *types.Cluster, managementStatePath string) error {
+func (c *ClusterManager) BackupCAPI(ctx context.Context, cluster *types.Cluster, managementStatePath, clusterName string) error {
 	// Network errors, most commonly connection refused or timeout, can occur if either source
 	// cluster becomes inaccessible during the move operation.  If this occurs without retries, clusterctl
 	// abandons the move operation, and fails cluster upgrade.
@@ -303,7 +307,7 @@ func (c *ClusterManager) BackupCAPI(ctx context.Context, cluster *types.Cluster,
 
 	r := retrier.New(c.clusterctlMoveTimeout, retrier.WithRetryPolicy(clusterctlMoveRetryPolicy))
 	err := r.Retry(func() error {
-		return c.clusterClient.BackupManagement(ctx, cluster, managementStatePath)
+		return c.clusterClient.BackupManagement(ctx, cluster, managementStatePath, clusterName)
 	})
 	if err != nil {
 		return fmt.Errorf("backing up CAPI resources of management cluster before moving to bootstrap cluster: %v", err)
@@ -690,8 +694,9 @@ func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, 
 	return nil
 }
 
-func (c *ClusterManager) EKSAClusterSpecChanged(ctx context.Context, cluster *types.Cluster, newClusterSpec *cluster.Spec) (bool, error) {
-	cc, err := c.clusterClient.GetEksaCluster(ctx, cluster, newClusterSpec.Cluster.Name)
+// EKSAClusterSpecChanged checks if a cluster's new Spec is different from the current Spec.
+func (c *ClusterManager) EKSAClusterSpecChanged(ctx context.Context, clus *types.Cluster, newClusterSpec *cluster.Spec) (bool, error) {
+	cc, err := c.clusterClient.GetEksaCluster(ctx, clus, newClusterSpec.Cluster.Name)
 	if err != nil {
 		return false, err
 	}
@@ -701,14 +706,39 @@ func (c *ClusterManager) EKSAClusterSpecChanged(ctx context.Context, cluster *ty
 		return true, nil
 	}
 
-	currentClusterSpec, err := c.buildSpecForCluster(ctx, cluster, cc)
+	currentClusterSpec, err := c.buildSpecForCluster(ctx, clus, cc)
 	if err != nil {
 		return false, err
 	}
 
-	if currentClusterSpec.VersionsBundle.EksD.Name != newClusterSpec.VersionsBundle.EksD.Name {
+	changed, err := compareEKSAClusterSpec(ctx, currentClusterSpec, newClusterSpec)
+	if err != nil {
+		return false, err
+	}
+
+	if !changed {
+		logger.V(3).Info("Clusters are the same")
+	}
+	return changed, nil
+}
+
+func compareEKSAClusterSpec(ctx context.Context, currentClusterSpec, newClusterSpec *cluster.Spec) (bool, error) {
+	newVersionsBundle := newClusterSpec.ControlPlaneVersionsBundle()
+	oldVersionsBundle := currentClusterSpec.ControlPlaneVersionsBundle()
+
+	if oldVersionsBundle.EksD.Name != newVersionsBundle.EksD.Name {
 		logger.V(3).Info("New eks-d release detected")
 		return true, nil
+	}
+
+	for _, workerNode := range newClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
+		newVersionsBundle = newClusterSpec.WorkerNodeGroupVersionsBundle(workerNode)
+		oldVersionsBundle = currentClusterSpec.WorkerNodeGroupVersionsBundle(workerNode)
+
+		if oldVersionsBundle.EksD.Name != newVersionsBundle.EksD.Name {
+			logger.V(3).Info("New eks-d release detected")
+			return true, nil
+		}
 	}
 
 	if newClusterSpec.OIDCConfig != nil && currentClusterSpec.OIDCConfig != nil {
@@ -726,7 +756,6 @@ func (c *ClusterManager) EKSAClusterSpecChanged(ctx context.Context, cluster *ty
 		}
 	}
 
-	logger.V(3).Info("Clusters are the same")
 	return false, nil
 }
 
@@ -777,8 +806,9 @@ func getProviderNamespaces(providerDeployments map[string][]string) []string {
 	return namespaces
 }
 
+// InstallMachineHealthChecks installs machine health checks for a given eksa cluster.
 func (c *ClusterManager) InstallMachineHealthChecks(ctx context.Context, clusterSpec *cluster.Spec, workloadCluster *types.Cluster) error {
-	mhc, err := templater.ObjectsToYaml(kubernetes.ObjectsToRuntimeObjects(clusterapi.MachineHealthCheckObjects(clusterSpec.Cluster, c.unhealthyMachineTimeout, c.nodeStartupTimeout))...)
+	mhc, err := templater.ObjectsToYaml(kubernetes.ObjectsToRuntimeObjects(clusterapi.MachineHealthCheckObjects(clusterSpec.Cluster))...)
 	if err != nil {
 		return err
 	}
@@ -1108,7 +1138,10 @@ func (c *ClusterManager) CreateEKSAResources(ctx context.Context, cluster *types
 	if err = c.applyResource(ctx, cluster, resourcesSpec); err != nil {
 		return err
 	}
-	return c.ApplyBundles(ctx, clusterSpec, cluster)
+	if err = c.ApplyBundles(ctx, clusterSpec, cluster); err != nil {
+		return err
+	}
+	return c.ApplyReleases(ctx, clusterSpec, cluster)
 }
 
 func (c *ClusterManager) ApplyBundles(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error {
@@ -1120,6 +1153,20 @@ func (c *ClusterManager) ApplyBundles(ctx context.Context, clusterSpec *cluster.
 	err = c.clusterClient.ApplyKubeSpecFromBytes(ctx, cluster, bundleObj)
 	if err != nil {
 		return fmt.Errorf("applying bundle spec: %v", err)
+	}
+	return nil
+}
+
+// ApplyReleases applies the EKSARelease manifest.
+func (c *ClusterManager) ApplyReleases(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error {
+	releaseObj, err := yaml.Marshal(clusterSpec.EKSARelease)
+	if err != nil {
+		return fmt.Errorf("outputting release yaml: %v", err)
+	}
+	logger.V(1).Info("Applying EKSARelease to cluster")
+	err = c.clusterClient.ApplyKubeSpecFromBytes(ctx, cluster, releaseObj)
+	if err != nil {
+		return fmt.Errorf("applying release spec: %v", err)
 	}
 	return nil
 }
