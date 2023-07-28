@@ -57,6 +57,10 @@ func BuildSpec(ctx context.Context, client Client, cluster *v1alpha1.Cluster) (*
 
 // BuildSpecFromConfig constructs a cluster.Spec for an eks-a cluster config by retrieving all dependencies objects from the cluster using a kubernetes client.
 func BuildSpecFromConfig(ctx context.Context, client Client, config *Config) (*Spec, error) {
+	if config.Cluster.Spec.EksaVersion == nil && config.Cluster.Spec.BundlesRef == nil {
+		return nil, fmt.Errorf("either cluster's EksaVersion or BundlesRef need to be set")
+	}
+
 	eksaRelease, err := eksaReleaseForCluster(ctx, client, config.Cluster)
 	if err != nil {
 		return nil, err
@@ -107,6 +111,9 @@ func getEksdRelease(ctx context.Context, client Client, version v1alpha1.Kuberne
 
 // BundlesForCluster returns a bundles resource for the cluster.
 func BundlesForCluster(ctx context.Context, client Client, cluster *v1alpha1.Cluster) (*v1alpha1release.Bundles, error) {
+	if cluster.Spec.EksaVersion == nil && cluster.Spec.BundlesRef == nil {
+		return nil, fmt.Errorf("either cluster's EksaVersion or BundlesRef need to be set")
+	}
 	release, err := eksaReleaseForCluster(ctx, client, cluster)
 	if err != nil {
 		return nil, err
@@ -117,9 +124,6 @@ func BundlesForCluster(ctx context.Context, client Client, cluster *v1alpha1.Clu
 
 func eksaReleaseForCluster(ctx context.Context, client Client, cluster *v1alpha1.Cluster) (*v1alpha1release.EKSARelease, error) {
 	eksaRelease := &v1alpha1release.EKSARelease{}
-	if cluster.Spec.EksaVersion == nil && cluster.Spec.BundlesRef == nil {
-		return nil, fmt.Errorf("either cluster's EksaVersion or BundlesRef need to be set")
-	}
 	if cluster.Spec.EksaVersion != nil {
 		version := string(*cluster.Spec.EksaVersion)
 		eksaReleaseName := v1alpha1release.GenerateEKSAReleaseName(version)

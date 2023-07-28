@@ -1302,6 +1302,27 @@ func TestReconcile(s *testing.T) {
 		}
 	})
 
+	s.Run("errors when eksaVersion and bundlesRef are nil", func(t *testing.T) {
+		ctx := context.Background()
+		log := testr.New(t)
+		cluster := newReconcileTestCluster()
+		cluster.Spec.BundlesRef = nil
+		cluster.Spec.EksaVersion = nil
+		ctrl := gomock.NewController(t)
+		k := mocks.NewMockKubectlRunner(ctrl)
+		cm := mocks.NewMockChartManager(ctrl)
+
+		objs := []runtime.Object{cluster}
+		fakeClient := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
+
+		pcc := curatedpackages.NewPackageControllerClientFullLifecycle(log, cm, k, nil)
+		expectedErr := "either cluster's EksaVersion or BundlesRef need to be set"
+		err := pcc.Reconcile(ctx, log, fakeClient, cluster)
+		if err == nil || !strings.Contains(err.Error(), expectedErr) {
+			t.Errorf("expected %s, got %s", expectedErr, err)
+		}
+	})
+
 	s.Run("errors when a matching k8s bundle version isn't found", func(t *testing.T) {
 		ctx := context.Background()
 		log := testr.New(t)
