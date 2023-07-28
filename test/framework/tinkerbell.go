@@ -135,8 +135,13 @@ func (t *Tinkerbell) CleanupVMs(_ string) error {
 // WithKubeVersionAndOS returns a cluster config filler that sets the cluster kube version and the right image for all
 // tinkerbell machine configs.
 func (t *Tinkerbell) WithKubeVersionAndOS(kubeVersion anywherev1.KubernetesVersion, os OS, release *releasev1.EksARelease) api.ClusterConfigFiller {
-	// TODO: Update tests to use this
-	panic("Not implemented for Tinkerbell yet")
+	return api.JoinClusterConfigFillers(
+		api.ClusterToConfigFiller(api.WithKubernetesVersion(kubeVersion)),
+		api.TinkerbellToConfigFiller(
+			imageForKubeVersionAndOS(kubeVersion, os),
+			api.WithOsFamilyForAllTinkerbellMachines(osFamiliesForOS[os]),
+		),
+	)
 }
 
 // WithNewWorkerNodeGroup returns an api.ClusterFiller that adds a new workerNodeGroupConfiguration and
