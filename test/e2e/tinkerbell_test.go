@@ -1339,7 +1339,7 @@ func TestTinkerbellUpgrade127MulticlusterWorkloadClusterCPScaleup(t *testing.T) 
 			provider,
 			framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127)),
 			framework.WithControlPlaneHardware(4),
-			framework.WithWorkerHardware(1),
+			framework.WithWorkerHardware(2),
 		),
 		framework.NewClusterE2ETest(
 			t,
