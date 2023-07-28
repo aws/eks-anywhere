@@ -169,6 +169,16 @@ rules:
   - update
   - watch
 - apiGroups:
+  - cluster.x-k8s.io
+  resources:
+  - machinehealthchecks
+  verbs:
+  - create
+  - get
+  - list
+  - patch
+  - watch
+- apiGroups:
   - clusterctl.cluster.x-k8s.io
   resources:
   - providers

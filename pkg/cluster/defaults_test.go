@@ -3,6 +3,7 @@ package cluster_test
 import (
 	"context"
 	"testing"
+	"time"
 
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -91,6 +92,97 @@ func TestSetConfigDefaults(t *testing.T) {
 	originalC := clusterConfigFromFile(t, "testdata/cluster_1_19.yaml")
 	g.Expect(cluster.SetConfigDefaults(c)).To(Succeed())
 	g.Expect(c).NotTo(Equal(originalC))
+}
+
+func TestNewMachineHealthCheckDefaulter(t *testing.T) {
+	g := NewWithT(t)
+
+	timeout := 15 * time.Minute
+
+	newMachineHealthCheckDefaulter := cluster.NewMachineHealthCheckDefaulter(timeout, timeout)
+
+	c := baseCluster()
+	machineHealthcheck := &anywherev1.MachineHealthCheck{
+		NodeStartupTimeout: &metav1.Duration{
+			Duration: 15 * time.Minute,
+		},
+		UnhealthyMachineTimeout: &metav1.Duration{
+			Duration: 15 * time.Minute,
+		},
+	}
+
+	clusterSpec := &cluster.Spec{
+		Config: &cluster.Config{
+			Cluster: c,
+		},
+	}
+
+	clusterSpec, err := newMachineHealthCheckDefaulter.MachineHealthCheckDefault(context.Background(), clusterSpec)
+
+	g.Expect(err).To(BeNil())
+	g.Expect(clusterSpec.Cluster.Spec.MachineHealthCheck).To(Equal(machineHealthcheck))
+}
+
+func TestNewMachineHealthCheckDefaulterTinkerbell(t *testing.T) {
+	g := NewWithT(t)
+
+	unhealthyTimeout := metav1.Duration{
+		Duration: constants.DefaultUnhealthyMachineTimeout,
+	}
+	mhcDefaulter := cluster.NewMachineHealthCheckDefaulter(constants.DefaultNodeStartupTimeout, constants.DefaultUnhealthyMachineTimeout)
+
+	c := baseCluster()
+	c.Spec.DatacenterRef.Kind = anywherev1.TinkerbellDatacenterKind
+	machineHealthcheck := &anywherev1.MachineHealthCheck{
+		NodeStartupTimeout: &metav1.Duration{
+			Duration: constants.DefaultTinkerbellNodeStartupTimeout,
+		},
+		UnhealthyMachineTimeout: &unhealthyTimeout,
+	}
+
+	clusterSpec := &cluster.Spec{
+		Config: &cluster.Config{
+			Cluster: c,
+		},
+	}
+	clusterSpec, err := mhcDefaulter.MachineHealthCheckDefault(context.Background(), clusterSpec)
+
+	g.Expect(err).To(BeNil())
+	g.Expect(clusterSpec.Cluster.Spec.MachineHealthCheck).To(Equal(machineHealthcheck))
+}
+
+func TestNewMachineHealthCheckDefaulterNoChange(t *testing.T) {
+	g := NewWithT(t)
+
+	unhealthyTimeout := metav1.Duration{
+		Duration: constants.DefaultUnhealthyMachineTimeout,
+	}
+	mhcDefaulter := cluster.NewMachineHealthCheckDefaulter(constants.DefaultNodeStartupTimeout, constants.DefaultUnhealthyMachineTimeout)
+
+	c := baseCluster()
+	c.Spec.MachineHealthCheck = &anywherev1.MachineHealthCheck{
+		NodeStartupTimeout: &metav1.Duration{
+			Duration: 5 * time.Minute,
+		},
+		UnhealthyMachineTimeout: &unhealthyTimeout,
+	}
+	clusterSpec := &cluster.Spec{
+		Config: &cluster.Config{
+			Cluster: c,
+		},
+	}
+
+	machineHealthcheck := &anywherev1.MachineHealthCheck{
+		NodeStartupTimeout: &metav1.Duration{
+			Duration: 5 * time.Minute,
+		},
+		UnhealthyMachineTimeout: &unhealthyTimeout,
+	}
+
+	clusterSpec, err := mhcDefaulter.MachineHealthCheckDefault(context.Background(), clusterSpec)
+
+	g.Expect(err).To(BeNil())
+	g.Expect(clusterSpec.Cluster.Spec.MachineHealthCheck).To(Equal(machineHealthcheck))
 }
 
 func TestNewControlPlaneIPCheckAnnotationDefaulterNoAnnotation(t *testing.T) {

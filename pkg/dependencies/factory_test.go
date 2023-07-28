@@ -32,6 +32,7 @@ type factoryTest struct {
 	tinkerbellBootstrapIP string
 	cliConfig             config.CliConfig
 	createCLIConfig       config.CreateClusterCLIConfig
+	upgradeCLIConfig      config.UpgradeClusterCLIConfig
 }
 
 type provider string
@@ -62,12 +63,18 @@ func newTest(t *testing.T, p provider) *factoryTest {
 		SkipCPIPCheck: false,
 	}
 
+	upgradeCLIConfig := config.UpgradeClusterCLIConfig{
+		NodeStartupTimeout:      5 * time.Minute,
+		UnhealthyMachineTimeout: 5 * time.Minute,
+	}
+
 	return &factoryTest{
 		WithT:             NewGomegaWithT(t),
 		clusterConfigFile: clusterConfigFile,
 		clusterSpec:       test.NewFullClusterSpec(t, clusterConfigFile),
 		ctx:               context.Background(),
 		createCLIConfig:   createCLIConfig,
+		upgradeCLIConfig:  upgradeCLIConfig,
 	}
 }
 
@@ -220,7 +227,8 @@ func TestFactoryBuildWithMultipleDependencies(t *testing.T) {
 		WithCiliumTemplater().
 		WithIPValidator().
 		WithValidatorClients().
-		WithCreateClusterDefaulter(tt.createCLIConfig).
+		WithCreateClusterDefaulter(&tt.createCLIConfig).
+		WithUpgradeClusterDefaulter(&tt.upgradeCLIConfig).
 		Build(context.Background())
 
 	tt.Expect(err).To(BeNil())

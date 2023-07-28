@@ -193,6 +193,43 @@ func (mr *MockAWSIamConfigReconcilerMockRecorder) ReconcileDelete(ctx, logger, c
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReconcileDelete", reflect.TypeOf((*MockAWSIamConfigReconciler)(nil).ReconcileDelete), ctx, logger, cluster)
 }
 
+// MockMachineHealthCheckReconciler is a mock of MachineHealthCheckReconciler interface.
+type MockMachineHealthCheckReconciler struct {
+	ctrl     *gomock.Controller
+	recorder *MockMachineHealthCheckReconcilerMockRecorder
+}
+
+// MockMachineHealthCheckReconcilerMockRecorder is the mock recorder for MockMachineHealthCheckReconciler.
+type MockMachineHealthCheckReconcilerMockRecorder struct {
+	mock *MockMachineHealthCheckReconciler
+}
+
+// NewMockMachineHealthCheckReconciler creates a new mock instance.
+func NewMockMachineHealthCheckReconciler(ctrl *gomock.Controller) *MockMachineHealthCheckReconciler {
+	mock := &MockMachineHealthCheckReconciler{ctrl: ctrl}
+	mock.recorder = &MockMachineHealthCheckReconcilerMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockMachineHealthCheckReconciler) EXPECT() *MockMachineHealthCheckReconcilerMockRecorder {
+	return m.recorder
+}
+
+// Reconcile mocks base method.
+func (m *MockMachineHealthCheckReconciler) Reconcile(ctx context.Context, logger logr.Logger, cluster *v1alpha1.Cluster) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Reconcile", ctx, logger, cluster)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Reconcile indicates an expected call of Reconcile.
+func (mr *MockMachineHealthCheckReconcilerMockRecorder) Reconcile(ctx, logger, cluster interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Reconcile", reflect.TypeOf((*MockMachineHealthCheckReconciler)(nil).Reconcile), ctx, logger, cluster)
+}
+
 // MockClusterValidator is a mock of ClusterValidator interface.
 type MockClusterValidator struct {
 	ctrl     *gomock.Controller
