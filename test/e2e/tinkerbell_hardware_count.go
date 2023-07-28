@@ -7,7 +7,7 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-//go:embed tinkerbell_hardware_count.yaml
+//go:embed TINKERBELL_HARDWARE_COUNT.yaml
 var tinkerbellHardwareCountFile []byte
 
 // GetTinkerbellTestsHardwareRequirements returns a map of Tinkerbell test name to required hardware.
