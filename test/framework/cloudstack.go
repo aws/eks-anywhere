@@ -445,7 +445,7 @@ func (c *CloudStack) defaultEnvVarForTemplate(os OS, kubeVersion anywherev1.Kube
 	if osFamiliesForOS[os] == anywherev1.Bottlerocket {
 		os = OS(strings.ReplaceAll(string(os), "bottlerocket", "br"))
 	}
-	return fmt.Sprintf("T_VSPHERE_TEMPLATE_%s_%s", strings.ToUpper(strings.ReplaceAll(string(os), "-", "_")), strings.ReplaceAll(string(kubeVersion), ".", "_"))
+	return fmt.Sprintf("T_CLOUDSTACK_TEMPLATE_%s_%s", strings.ToUpper(strings.ReplaceAll(string(os), "-", "_")), strings.ReplaceAll(string(kubeVersion), ".", "_"))
 }
 
 // searchTemplate returns template name if the given template exists in the datacenter.
