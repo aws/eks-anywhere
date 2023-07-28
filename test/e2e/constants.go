@@ -43,7 +43,7 @@ const (
 	vsphereNetwork3UpdateVar            = "/SDDC-Datacenter/network/sddc-cgw-network-3"
 	vsphereInvalidResourcePoolUpdateVar = "*/Resources/INVALID-ResourcePool"
 	vsphereResourcePoolVar              = "T_VSPHERE_RESOURCE_POOL"
-	TinkerbellHardwareCountFile         = "tinkerbell_hardware_count.yaml"
+	TinkerbellHardwareCountFile         = "TINKERBELL_HARDWARE_COUNT.yaml"
 )
 
 var (

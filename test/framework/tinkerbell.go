@@ -256,8 +256,8 @@ func WithHookImagesURLPath(url string) TinkerbellOpt {
 	}
 }
 
-func imageForKubeVersionAndOS(kubeVersion anywherev1.KubernetesVersion, os OS) api.TinkerbellFiller {
-	return api.WithTinkerbellOSImageURL(envVarForImage(os, kubeVersion))
+func imageForKubeVersionAndOS(kubeVersion anywherev1.KubernetesVersion, operatingSystem OS) api.TinkerbellFiller {
+	return api.WithTinkerbellOSImageURL(os.Getenv(envVarForImage(operatingSystem, kubeVersion)))
 }
 
 // Ubuntu123Image represents an Ubuntu raw image corresponding to Kubernetes 1.23.
