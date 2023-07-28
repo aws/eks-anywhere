@@ -12,7 +12,6 @@ import (
 	anywhereCluster "github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/clusterapi/machinehealthcheck"
-	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
 	"github.com/aws/eks-anywhere/pkg/controller/serverside"
 )
@@ -67,15 +66,13 @@ func (r *Reconciler) Reconcile(ctx context.Context, log logr.Logger, cluster *an
 }
 
 func copyNodeStartupTimeoutToCluster(cluster *anywherev1.Cluster, capiMHC *clusterv1.MachineHealthCheck) {
-	if capiMHC.Spec.NodeStartupTimeout != nil && capiMHC.Spec.NodeStartupTimeout.Duration != constants.DefaultNodeStartupTimeout {
+	if capiMHC.Spec.NodeStartupTimeout != nil {
 		cluster.Spec.MachineHealthCheck.NodeStartupTimeout = capiMHC.Spec.NodeStartupTimeout
 	}
 }
 
 func copyUnhealthyMachineTimeoutToCluster(cluster *anywherev1.Cluster, capiMHC *clusterv1.MachineHealthCheck) {
 	if len(capiMHC.Spec.UnhealthyConditions) > 0 {
-		if capiMHC.Spec.UnhealthyConditions[0].Timeout.Size() != 0 && capiMHC.Spec.UnhealthyConditions[0].Timeout.Duration != constants.DefaultUnhealthyMachineTimeout {
-			cluster.Spec.MachineHealthCheck.UnhealthyMachineTimeout = &capiMHC.Spec.UnhealthyConditions[0].Timeout
-		}
+		cluster.Spec.MachineHealthCheck.UnhealthyMachineTimeout = &capiMHC.Spec.UnhealthyConditions[0].Timeout
 	}
 }
