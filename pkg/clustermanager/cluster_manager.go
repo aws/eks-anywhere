@@ -100,7 +100,7 @@ type ClusterManager struct {
 
 type ClusterClient interface {
 	KubernetesClient
-	BackupManagement(ctx context.Context, cluster *types.Cluster, managementStatePath string) error
+	BackupManagement(ctx context.Context, cluster *types.Cluster, managementStatePath, clusterName string) error
 	MoveManagement(ctx context.Context, from, target *types.Cluster, clusterName string) error
 	WaitForClusterReady(ctx context.Context, cluster *types.Cluster, timeout string, clusterName string) error
 	WaitForControlPlaneAvailable(ctx context.Context, cluster *types.Cluster, timeout string, newClusterName string) error
@@ -292,7 +292,7 @@ func clusterctlMoveRetryPolicy(totalRetries int, err error) (retry bool, wait ti
 }
 
 // BackupCAPI takes backup of management cluster's resources during uograde process.
-func (c *ClusterManager) BackupCAPI(ctx context.Context, cluster *types.Cluster, managementStatePath string) error {
+func (c *ClusterManager) BackupCAPI(ctx context.Context, cluster *types.Cluster, managementStatePath, clusterName string) error {
 	// Network errors, most commonly connection refused or timeout, can occur if either source
 	// cluster becomes inaccessible during the move operation.  If this occurs without retries, clusterctl
 	// abandons the move operation, and fails cluster upgrade.
@@ -303,7 +303,7 @@ func (c *ClusterManager) BackupCAPI(ctx context.Context, cluster *types.Cluster,
 
 	r := retrier.New(c.clusterctlMoveTimeout, retrier.WithRetryPolicy(clusterctlMoveRetryPolicy))
 	err := r.Retry(func() error {
-		return c.clusterClient.BackupManagement(ctx, cluster, managementStatePath)
+		return c.clusterClient.BackupManagement(ctx, cluster, managementStatePath, clusterName)
 	})
 	if err != nil {
 		return fmt.Errorf("backing up CAPI resources of management cluster before moving to bootstrap cluster: %v", err)
