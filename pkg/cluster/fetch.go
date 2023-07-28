@@ -117,14 +117,14 @@ func BundlesForCluster(ctx context.Context, client Client, cluster *v1alpha1.Clu
 
 func eksaReleaseForCluster(ctx context.Context, client Client, cluster *v1alpha1.Cluster) (*v1alpha1release.EKSARelease, error) {
 	eksaRelease := &v1alpha1release.EKSARelease{}
-	if cluster.Spec.BundlesRef == nil {
-		if cluster.Spec.EksaVersion == nil {
-			return nil, fmt.Errorf("either cluster's EksaVersion or BundlesRef need to be set")
-		}
+	if cluster.Spec.EksaVersion == nil && cluster.Spec.BundlesRef == nil {
+		return nil, fmt.Errorf("either cluster's EksaVersion or BundlesRef need to be set")
+	}
+	if cluster.Spec.EksaVersion != nil {
 		version := string(*cluster.Spec.EksaVersion)
 		eksaReleaseName := v1alpha1release.GenerateEKSAReleaseName(version)
 		if err := client.Get(ctx, eksaReleaseName, constants.EksaSystemNamespace, eksaRelease); err != nil {
-			return nil, fmt.Errorf("error getting EKSARelease %s", eksaReleaseName)
+			return nil, err
 		}
 	}
 

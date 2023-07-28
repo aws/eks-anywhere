@@ -185,7 +185,7 @@ func TestBuildSpecGetEKSAReleaseError(t *testing.T) {
 	tt.client.EXPECT().Get(tt.ctx, "eksa-v0-0-0-dev", "eksa-system", &releasev1.EKSARelease{}).Return(errors.New("client error"))
 
 	_, err := cluster.BuildSpec(tt.ctx, tt.client, tt.cluster)
-	tt.Expect(err).To(MatchError(ContainSubstring("error getting EKSARelease")))
+	tt.Expect(err).To(MatchError(ContainSubstring("client error")))
 }
 
 func TestBuildSpecNilEksaVersion(t *testing.T) {

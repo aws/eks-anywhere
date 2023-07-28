@@ -846,10 +846,6 @@ func validatePackageControllerConfiguration(clusterConfig *Cluster) error {
 }
 
 func validateEksaVersion(clusterConfig *Cluster) error {
-	if clusterConfig.Spec.BundlesRef != nil && clusterConfig.Spec.EksaVersion != nil {
-		return fmt.Errorf("cannot pass both bundlesRef and eksaVersion. New clusters should use eksaVersion instead of bundlesRef")
-	}
-
 	if clusterConfig.Spec.EksaVersion != nil {
 		_, err := semver.New(string(*clusterConfig.Spec.EksaVersion))
 		if err != nil {

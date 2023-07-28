@@ -3422,12 +3422,6 @@ func TestValidateEksaVersion(t *testing.T) {
 		bundlesRef *BundlesRef
 	}{
 		{
-			name:       "both bundlesref and version",
-			wantErr:    "cannot pass both bundlesRef and eksaVersion",
-			version:    "v0.0.0",
-			bundlesRef: &BundlesRef{},
-		},
-		{
 			name:       "eksaversion success",
 			wantErr:    "",
 			version:    "v0.0.0",

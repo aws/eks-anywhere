@@ -2752,6 +2752,7 @@ func TestClusterManagerGetCurrentClusterSpecGetClusterError(t *testing.T) {
 
 func TestClusterManagerGetCurrentClusterSpecGetBundlesError(t *testing.T) {
 	tt := newTest(t)
+	tt.clusterSpec.Cluster.Spec.EksaVersion = nil
 	tt.clusterSpec.Cluster.Spec.BundlesRef = &v1alpha1.BundlesRef{}
 
 	tt.mocks.client.EXPECT().GetEksaCluster(tt.ctx, tt.cluster, tt.clusterName).Return(tt.clusterSpec.Cluster, nil)
