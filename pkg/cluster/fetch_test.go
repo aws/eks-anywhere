@@ -197,6 +197,15 @@ func TestBuildSpecNilEksaVersion(t *testing.T) {
 	tt.Expect(err).To(MatchError(ContainSubstring("either cluster's EksaVersion or BundlesRef need to be set")))
 }
 
+func TestBundlesForClusterNilEksaVersion(t *testing.T) {
+	tt := newBuildSpecTest(t)
+	tt.cluster.Spec.BundlesRef = nil
+	tt.cluster.Spec.EksaVersion = nil
+
+	_, err := cluster.BundlesForCluster(tt.ctx, tt.client, tt.cluster)
+	tt.Expect(err).To(MatchError(ContainSubstring("either cluster's EksaVersion or BundlesRef need to be set")))
+}
+
 func TestBuildSpecGetBundlesError(t *testing.T) {
 	tt := newBuildSpecTest(t)
 	tt.expectGetEKSARelease()
