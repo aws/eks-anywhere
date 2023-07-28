@@ -767,8 +767,8 @@ ifneq ($(FETCH_BINARIES_TARGETS),)
 .SECONDARY: $(call FULL_FETCH_BINARIES_TARGETS, $(FETCH_BINARIES_TARGETS))
 endif
 
-E2E_BINARY?=./bin/e2e.test
-TINKERBELL_HARDWARE_REQUIREMENTS?=test/e2e/tinkerbell_hardware_count.yaml
+E2E_BINARY?=bin/e2e.test
+TINKERBELL_HARDWARE_REQUIREMENTS?=test/e2e/TINKERBELL_HARDWARE_COUNT.yaml
 
 # validate-tinkerbell-hardware-requirements checks the tinkerbell hardware requirement file with pre-defined validations
 .PHONY: validate-tinkerbell-hardware-requirements
