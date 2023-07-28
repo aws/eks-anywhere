@@ -67,8 +67,9 @@ type ClusterSpec struct {
 	Packages                    *PackageConfiguration        `json:"packages,omitempty"`
 	// BundlesRef contains a reference to the Bundles containing the desired dependencies for the cluster.
 	// DEPRECATED: Use EksaVersion instead.
-	BundlesRef  *BundlesRef  `json:"bundlesRef,omitempty"`
-	EksaVersion *EksaVersion `json:"eksaVersion,omitempty"`
+	BundlesRef         *BundlesRef         `json:"bundlesRef,omitempty"`
+	EksaVersion        *EksaVersion        `json:"eksaVersion,omitempty"`
+	MachineHealthCheck *MachineHealthCheck `json:"machineHealthCheck,omitempty"`
 }
 
 // EksaVersion is the semver identifying the release of eks-a used to populate the cluster components.
@@ -273,6 +274,15 @@ type ControlPlaneConfiguration struct {
 	// SkipLoadBalancerDeployment skip deploying control plane load balancer.
 	// Make sure your infrastructure can handle control plane load balancing when you set this field to true.
 	SkipLoadBalancerDeployment bool `json:"skipLoadBalancerDeployment,omitempty"`
+}
+
+// MachineHealthCheck allows to configure timeouts for machine health checks. Machine Health Checks are responsible for remediating unhealthy Machines.
+// Configuring these values will decide how long to wait to remediate unhealthy machine or determine health of nodes' machines.
+type MachineHealthCheck struct {
+	// NodeStartupTimeout is used to configure the node startup timeout in machine health checks. It determines how long a MachineHealthCheck should wait for a Node to join the cluster, before considering a Machine unhealthy. If not configured, the default value is set to "10m0s" (10 minutes) for all providers. For Tinkerbell provider the default is "20m0s".
+	NodeStartupTimeout *metav1.Duration `json:"nodeStartupTimeout,omitempty"`
+	// UnhealthyMachineTimeout is used to configure the unhealthy machine timeout in machine health checks. If any unhealthy conditions are met for the amount of time specified as the timeout, the machines are considered unhealthy. If not configured, the default value is set to "5m0s" (5 minutes).
+	UnhealthyMachineTimeout *metav1.Duration `json:"unhealthyMachineTimeout,omitempty"`
 }
 
 func TaintsSliceEqual(s1, s2 []corev1.Taint) bool {

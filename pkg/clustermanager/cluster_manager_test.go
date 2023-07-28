@@ -1887,7 +1887,15 @@ func TestInstallMachineHealthChecks(t *testing.T) {
 	ctx := context.Background()
 	tt := newTest(t)
 	tt.clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].Name = "worker-1"
-	wantMHC := expectedMachineHealthCheck(clustermanager.DefaultUnhealthyMachineTimeout, clustermanager.DefaultNodeStartupTimeout)
+	tt.clusterSpec.Cluster.Spec.MachineHealthCheck = &v1alpha1.MachineHealthCheck{
+		UnhealthyMachineTimeout: &metav1.Duration{
+			Duration: constants.DefaultUnhealthyMachineTimeout,
+		},
+		NodeStartupTimeout: &metav1.Duration{
+			Duration: constants.DefaultNodeStartupTimeout,
+		},
+	}
+	wantMHC := expectedMachineHealthCheck(constants.DefaultUnhealthyMachineTimeout, constants.DefaultNodeStartupTimeout)
 	tt.mocks.client.EXPECT().ApplyKubeSpecFromBytes(ctx, tt.cluster, wantMHC)
 
 	if err := tt.clusterManager.InstallMachineHealthChecks(ctx, tt.clusterSpec, tt.cluster); err != nil {
@@ -1897,9 +1905,17 @@ func TestInstallMachineHealthChecks(t *testing.T) {
 
 func TestInstallMachineHealthChecksWithTimeoutOverride(t *testing.T) {
 	ctx := context.Background()
-	tt := newTest(t, clustermanager.WithUnhealthyMachineTimeout(30*time.Minute), clustermanager.WithNodeStartupTimeout(20*time.Minute))
+	tt := newTest(t)
+	tt.clusterSpec.Cluster.Spec.MachineHealthCheck = &v1alpha1.MachineHealthCheck{
+		UnhealthyMachineTimeout: &metav1.Duration{
+			Duration: (30 * time.Minute),
+		},
+		NodeStartupTimeout: &metav1.Duration{
+			Duration: (30 * time.Minute),
+		},
+	}
 	tt.clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].Name = "worker-1"
-	wantMHC := expectedMachineHealthCheck(30*time.Minute, 20*time.Minute)
+	wantMHC := expectedMachineHealthCheck(30*time.Minute, 30*time.Minute)
 	tt.mocks.client.EXPECT().ApplyKubeSpecFromBytes(ctx, tt.cluster, wantMHC)
 
 	if err := tt.clusterManager.InstallMachineHealthChecks(ctx, tt.clusterSpec, tt.cluster); err != nil {
@@ -1908,9 +1924,19 @@ func TestInstallMachineHealthChecksWithTimeoutOverride(t *testing.T) {
 }
 
 func TestInstallMachineHealthChecksWithNoTimeout(t *testing.T) {
-	tt := newTest(t, clustermanager.WithNoTimeouts())
+	tt := newTest(t)
 	tt.clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].Name = "worker-1"
+	maxTime := time.Duration(math.MaxInt64)
+	tt.clusterSpec.Cluster.Spec.MachineHealthCheck = &v1alpha1.MachineHealthCheck{
+		UnhealthyMachineTimeout: &metav1.Duration{
+			Duration: maxTime,
+		},
+		NodeStartupTimeout: &metav1.Duration{
+			Duration: maxTime,
+		},
+	}
 	wantMHC := expectedMachineHealthCheck(maxTime, maxTime)
+
 	tt.mocks.client.EXPECT().ApplyKubeSpecFromBytes(tt.ctx, tt.cluster, wantMHC)
 
 	tt.Expect(tt.clusterManager.InstallMachineHealthChecks(tt.ctx, tt.clusterSpec, tt.cluster)).To(Succeed())
@@ -1920,6 +1946,14 @@ func TestInstallMachineHealthChecksApplyError(t *testing.T) {
 	ctx := context.Background()
 	tt := newTest(t, clustermanager.WithRetrier(retrier.NewWithMaxRetries(2, 0)))
 	tt.clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].Name = "worker-1"
+	tt.clusterSpec.Cluster.Spec.MachineHealthCheck = &v1alpha1.MachineHealthCheck{
+		UnhealthyMachineTimeout: &metav1.Duration{
+			Duration: constants.DefaultUnhealthyMachineTimeout,
+		},
+		NodeStartupTimeout: &metav1.Duration{
+			Duration: constants.DefaultNodeStartupTimeout,
+		},
+	}
 	wantMHC := expectedMachineHealthCheck(clustermanager.DefaultUnhealthyMachineTimeout, clustermanager.DefaultNodeStartupTimeout)
 	tt.mocks.client.EXPECT().ApplyKubeSpecFromBytes(ctx, tt.cluster, wantMHC).Return(errors.New("apply error")).MaxTimes(2)
 

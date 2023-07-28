@@ -13,10 +13,11 @@ type CreateClusterDefaulter struct {
 }
 
 // NewCreateClusterDefaulter to instantiate and register defaults.
-func NewCreateClusterDefaulter(skipIPCheck cluster.ControlPlaneIPCheckAnnotationDefaulter) CreateClusterDefaulter {
+func NewCreateClusterDefaulter(skipIPCheck cluster.ControlPlaneIPCheckAnnotationDefaulter, mhcDefaulter cluster.MachineHealthCheckDefaulter) CreateClusterDefaulter {
 	r := defaulting.NewRunner[*cluster.Spec]()
 	r.Register(
 		skipIPCheck.ControlPlaneIPCheckDefault,
+		mhcDefaulter.MachineHealthCheckDefault,
 	)
 
 	return CreateClusterDefaulter{

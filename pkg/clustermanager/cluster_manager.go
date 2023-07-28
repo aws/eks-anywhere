@@ -265,8 +265,6 @@ func WithNoTimeouts() ClusterManagerOpt {
 		c.controlPlaneWaitTimeout = maxTime
 		c.controlPlaneWaitAfterMoveTimeout = maxTime
 		c.externalEtcdWaitTimeout = maxTime
-		c.unhealthyMachineTimeout = maxTime
-		c.nodeStartupTimeout = maxTime
 		c.clusterWaitTimeout = maxTime
 		c.deploymentWaitTimeout = maxTime
 		c.clusterctlMoveTimeout = maxTime
@@ -802,8 +800,9 @@ func getProviderNamespaces(providerDeployments map[string][]string) []string {
 	return namespaces
 }
 
+// InstallMachineHealthChecks installs machine health checks for a given eksa cluster.
 func (c *ClusterManager) InstallMachineHealthChecks(ctx context.Context, clusterSpec *cluster.Spec, workloadCluster *types.Cluster) error {
-	mhc, err := templater.ObjectsToYaml(kubernetes.ObjectsToRuntimeObjects(clusterapi.MachineHealthCheckObjects(clusterSpec.Cluster, c.unhealthyMachineTimeout, c.nodeStartupTimeout))...)
+	mhc, err := templater.ObjectsToYaml(kubernetes.ObjectsToRuntimeObjects(clusterapi.MachineHealthCheckObjects(clusterSpec.Cluster))...)
 	if err != nil {
 		return err
 	}

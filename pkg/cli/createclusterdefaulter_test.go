@@ -20,12 +20,14 @@ func TestNewCreateClusterDefaulter(t *testing.T) {
 
 	skipIPCheck := cluster.NewControlPlaneIPCheckAnnotationDefaulter(false)
 
+	mhcDefaulter := cluster.NewMachineHealthCheckDefaulter(constants.DefaultNodeStartupTimeout, constants.DefaultUnhealthyMachineTimeout)
+
 	r := defaulting.NewRunner[*cluster.Spec]()
 	r.Register(
 		skipIPCheck.ControlPlaneIPCheckDefault,
 	)
 
-	got := cli.NewCreateClusterDefaulter(skipIPCheck)
+	got := cli.NewCreateClusterDefaulter(skipIPCheck, mhcDefaulter)
 
 	g.Expect(got).NotTo(BeNil())
 }
@@ -33,17 +35,20 @@ func TestNewCreateClusterDefaulter(t *testing.T) {
 func TestRunWithoutSkipIPAnnotation(t *testing.T) {
 	g := NewWithT(t)
 
+	c := baseCluster()
+
 	clusterSpec := &cluster.Spec{
 		Config: &cluster.Config{
-			Cluster: baseCluster(),
+			Cluster: c,
 		},
 	}
 	skipIPCheck := cluster.NewControlPlaneIPCheckAnnotationDefaulter(false)
+	mhcDefaulter := cluster.NewMachineHealthCheckDefaulter(constants.DefaultNodeStartupTimeout, constants.DefaultUnhealthyMachineTimeout)
 
-	createClusterDefaulter := cli.NewCreateClusterDefaulter(skipIPCheck)
+	createClusterDefaulter := cli.NewCreateClusterDefaulter(skipIPCheck, mhcDefaulter)
 	clusterSpec, err := createClusterDefaulter.Run(context.Background(), clusterSpec)
 
-	skipIPClusterAnnotation := clusterSpec.Config.Cluster.ControlPlaneIPCheckDisabled()
+	skipIPClusterAnnotation := c.ControlPlaneIPCheckDisabled()
 
 	g.Expect(err).To(BeNil())
 	g.Expect(skipIPClusterAnnotation).To(BeFalse())
@@ -52,17 +57,20 @@ func TestRunWithoutSkipIPAnnotation(t *testing.T) {
 func TestRunWithSkipIPAnnotation(t *testing.T) {
 	g := NewWithT(t)
 
+	c := baseCluster()
+
 	clusterSpec := &cluster.Spec{
 		Config: &cluster.Config{
-			Cluster: baseCluster(),
+			Cluster: c,
 		},
 	}
-	skipIPCheck := cluster.NewControlPlaneIPCheckAnnotationDefaulter(true)
 
-	createClusterDefaulter := cli.NewCreateClusterDefaulter(skipIPCheck)
+	skipIPCheck := cluster.NewControlPlaneIPCheckAnnotationDefaulter(true)
+	mhcDefaulter := cluster.NewMachineHealthCheckDefaulter(constants.DefaultNodeStartupTimeout, constants.DefaultUnhealthyMachineTimeout)
+	createClusterDefaulter := cli.NewCreateClusterDefaulter(skipIPCheck, mhcDefaulter)
 	clusterSpec, err := createClusterDefaulter.Run(context.Background(), clusterSpec)
 
-	skipIPClusterAnnotation := clusterSpec.Config.Cluster.ControlPlaneIPCheckDisabled()
+	skipIPClusterAnnotation := c.ControlPlaneIPCheckDisabled()
 
 	g.Expect(err).To(BeNil())
 	g.Expect(skipIPClusterAnnotation).To(BeTrue())

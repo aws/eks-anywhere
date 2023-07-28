@@ -55,7 +55,7 @@ func newFluxTest(t *testing.T) fluxTest {
 	_, w := test.NewWriter(t)
 	f := flux.NewFluxFromGitOpsFluxClient(mockGitOpsFlux, mockGit, w, nil)
 
-	clusterConfig := v1alpha1.NewCluster("management-cluster")
+	clusterConfig := NewCluster("management-cluster")
 	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
 		s.Cluster = clusterConfig
 	})
@@ -236,7 +236,7 @@ func TestInstallGitOpsOnManagementClusterWithPrexistingRepo(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.testName, func(t *testing.T) {
 			cluster := &types.Cluster{}
-			clusterConfig := v1alpha1.NewCluster(tt.clusterName)
+			clusterConfig := NewCluster(tt.clusterName)
 			g := newFluxTest(t)
 			clusterSpec := newClusterSpec(t, clusterConfig, tt.fluxpath)
 
@@ -302,7 +302,7 @@ func TestInstallGitOpsOnManagementClusterWithoutClusterSpec(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.testName, func(t *testing.T) {
 			cluster := &types.Cluster{}
-			clusterConfig := v1alpha1.NewCluster(tt.clusterName)
+			clusterConfig := NewCluster(tt.clusterName)
 			g := newFluxTest(t)
 			clusterSpec := newClusterSpec(t, clusterConfig, tt.fluxpath)
 
@@ -337,7 +337,7 @@ func TestInstallGitOpsOnManagementClusterWithoutClusterSpec(t *testing.T) {
 func TestInstallGitOpsOnWorkloadClusterWithPrexistingRepo(t *testing.T) {
 	cluster := &types.Cluster{}
 	clusterName := "workload-cluster"
-	clusterConfig := v1alpha1.NewCluster(clusterName)
+	clusterConfig := NewCluster(clusterName)
 	clusterConfig.SetManagedBy("management-cluster")
 	g := newFluxTest(t)
 	clusterSpec := newClusterSpec(t, clusterConfig, "")
@@ -378,7 +378,7 @@ func TestInstallGitOpsOnWorkloadClusterWithPrexistingRepo(t *testing.T) {
 func TestInstallGitOpsSetupRepoError(t *testing.T) {
 	cluster := &types.Cluster{}
 	clusterName := "test-cluster"
-	clusterConfig := v1alpha1.NewCluster(clusterName)
+	clusterConfig := NewCluster(clusterName)
 	g := newFluxTest(t)
 	clusterSpec := newClusterSpec(t, clusterConfig, "")
 
@@ -393,7 +393,7 @@ func TestInstallGitOpsSetupRepoError(t *testing.T) {
 func TestInstallGitOpsBootstrapError(t *testing.T) {
 	cluster := &types.Cluster{}
 	clusterName := "test-cluster"
-	clusterConfig := v1alpha1.NewCluster(clusterName)
+	clusterConfig := NewCluster(clusterName)
 	g := newFluxTest(t)
 	clusterSpec := newClusterSpec(t, clusterConfig, "")
 
@@ -412,7 +412,7 @@ func TestInstallGitOpsBootstrapError(t *testing.T) {
 func TestInstallGitOpsGitProviderSuccess(t *testing.T) {
 	cluster := &types.Cluster{}
 	clusterName := "management-cluster"
-	clusterConfig := v1alpha1.NewCluster(clusterName)
+	clusterConfig := NewCluster(clusterName)
 	g := newFluxTest(t)
 	clusterSpec := newClusterSpec(t, clusterConfig, "")
 	clusterSpec.FluxConfig.Spec.Git = &v1alpha1.GitProviderConfig{RepositoryUrl: "git.xyz"}
@@ -435,7 +435,7 @@ func TestInstallGitOpsGitProviderSuccess(t *testing.T) {
 func TestInstallGitOpsCommitFilesError(t *testing.T) {
 	cluster := &types.Cluster{}
 	clusterName := "test-cluster"
-	clusterConfig := v1alpha1.NewCluster(clusterName)
+	clusterConfig := NewCluster(clusterName)
 	g := newFluxTest(t)
 	clusterSpec := newClusterSpec(t, clusterConfig, "")
 
@@ -491,7 +491,7 @@ func TestInstallGitOpsNoPrexistingRepo(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.testName, func(t *testing.T) {
 			cluster := &types.Cluster{}
-			clusterConfig := v1alpha1.NewCluster(tt.clusterName)
+			clusterConfig := NewCluster(tt.clusterName)
 			g := newFluxTest(t)
 			clusterSpec := newClusterSpec(t, clusterConfig, tt.fluxpath)
 
@@ -566,7 +566,7 @@ func TestInstallGitOpsToolkitsBareRepo(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.testName, func(t *testing.T) {
 			cluster := &types.Cluster{}
-			clusterConfig := v1alpha1.NewCluster(tt.clusterName)
+			clusterConfig := NewCluster(tt.clusterName)
 			g := newFluxTest(t)
 			clusterSpec := newClusterSpec(t, clusterConfig, tt.fluxpath)
 
@@ -604,7 +604,7 @@ func TestInstallGitOpsToolkitsBareRepo(t *testing.T) {
 
 func TestResumeClusterResourcesReconcile(t *testing.T) {
 	cluster := &types.Cluster{}
-	clusterConfig := v1alpha1.NewCluster("management-cluster")
+	clusterConfig := NewCluster("management-cluster")
 	clusterConfig.Spec.DatacenterRef = v1alpha1.Ref{Name: "datacenter"}
 	clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef = &v1alpha1.Ref{Name: "cp-machine"}
 	clusterConfig.Spec.WorkerNodeGroupConfigurations = []v1alpha1.WorkerNodeGroupConfiguration{
@@ -628,7 +628,7 @@ func TestResumeClusterResourcesReconcile(t *testing.T) {
 
 func TestResumeClusterResourcesReconcileEnableClusterReconcileError(t *testing.T) {
 	cluster := &types.Cluster{}
-	clusterConfig := v1alpha1.NewCluster("management-cluster")
+	clusterConfig := NewCluster("management-cluster")
 	clusterSpec := newClusterSpec(t, clusterConfig, "")
 
 	g := newFluxTest(t)
@@ -640,7 +640,7 @@ func TestResumeClusterResourcesReconcileEnableClusterReconcileError(t *testing.T
 
 func TestResumeClusterResourcesReconcileEnableDatacenterReconcileError(t *testing.T) {
 	cluster := &types.Cluster{}
-	clusterConfig := v1alpha1.NewCluster("management-cluster")
+	clusterConfig := NewCluster("management-cluster")
 	clusterConfig.Spec.DatacenterRef = v1alpha1.Ref{Name: "datacenter"}
 	clusterSpec := newClusterSpec(t, clusterConfig, "")
 
@@ -655,7 +655,7 @@ func TestResumeClusterResourcesReconcileEnableDatacenterReconcileError(t *testin
 
 func TestResumeClusterResourcesReconcileEnableMachineReconcileError(t *testing.T) {
 	cluster := &types.Cluster{}
-	clusterConfig := v1alpha1.NewCluster("management-cluster")
+	clusterConfig := NewCluster("management-cluster")
 	clusterConfig.Spec.DatacenterRef = v1alpha1.Ref{Name: "datacenter"}
 	clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef = &v1alpha1.Ref{Name: "cp-machine"}
 	clusterSpec := newClusterSpec(t, clusterConfig, "")
@@ -673,7 +673,7 @@ func TestResumeClusterResourcesReconcileEnableMachineReconcileError(t *testing.T
 
 func TestPauseClusterResourcesReconcile(t *testing.T) {
 	cluster := &types.Cluster{}
-	clusterConfig := v1alpha1.NewCluster("management-cluster")
+	clusterConfig := NewCluster("management-cluster")
 	clusterSpec := newClusterSpec(t, clusterConfig, "")
 	clusterConfig.Spec.DatacenterRef = v1alpha1.Ref{Name: "datacenter"}
 	clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef = &v1alpha1.Ref{Name: "cp-machine"}
@@ -697,7 +697,7 @@ func TestPauseClusterResourcesReconcile(t *testing.T) {
 
 func TestPauseClusterResourcesReconcileEnableClusterReconcileError(t *testing.T) {
 	cluster := &types.Cluster{}
-	clusterConfig := v1alpha1.NewCluster("management-cluster")
+	clusterConfig := NewCluster("management-cluster")
 	clusterSpec := newClusterSpec(t, clusterConfig, "")
 
 	g := newFluxTest(t)
@@ -709,7 +709,7 @@ func TestPauseClusterResourcesReconcileEnableClusterReconcileError(t *testing.T)
 
 func TestPauseClusterResourcesReconcileEnableDatacenterReconcileError(t *testing.T) {
 	cluster := &types.Cluster{}
-	clusterConfig := v1alpha1.NewCluster("management-cluster")
+	clusterConfig := NewCluster("management-cluster")
 	clusterConfig.Spec.DatacenterRef = v1alpha1.Ref{Name: "datacenter"}
 	clusterSpec := newClusterSpec(t, clusterConfig, "")
 
@@ -724,7 +724,7 @@ func TestPauseClusterResourcesReconcileEnableDatacenterReconcileError(t *testing
 
 func TestPauseClusterResourcesReconcileEnableMachineReconcileError(t *testing.T) {
 	cluster := &types.Cluster{}
-	clusterConfig := v1alpha1.NewCluster("management-cluster")
+	clusterConfig := NewCluster("management-cluster")
 	clusterConfig.Spec.DatacenterRef = v1alpha1.Ref{Name: "datacenter"}
 	clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef = &v1alpha1.Ref{Name: "cp-machine"}
 	clusterSpec := newClusterSpec(t, clusterConfig, "")
@@ -742,7 +742,7 @@ func TestPauseClusterResourcesReconcileEnableMachineReconcileError(t *testing.T)
 
 func TestUpdateGitRepoEksaSpecLocalRepoNotExists(t *testing.T) {
 	clusterName := "management-cluster"
-	clusterConfig := v1alpha1.NewCluster(clusterName)
+	clusterConfig := NewCluster(clusterName)
 	eksaSystemDirPath := "clusters/management-cluster/management-cluster/eksa-system"
 	g := newFluxTest(t)
 	clusterSpec := newClusterSpec(t, clusterConfig, "")
@@ -765,7 +765,7 @@ func TestUpdateGitRepoEksaSpecLocalRepoExists(t *testing.T) {
 	g := newFluxTest(t)
 	mockCtrl := gomock.NewController(t)
 	clusterName := "management-cluster"
-	clusterConfig := v1alpha1.NewCluster(clusterName)
+	clusterConfig := NewCluster(clusterName)
 	eksaSystemDirPath := "clusters/management-cluster/management-cluster/eksa-system"
 	clusterSpec := newClusterSpec(t, clusterConfig, "")
 	mocks := fluxMocks.NewMockFluxClient(mockCtrl)
@@ -800,7 +800,7 @@ func TestUpdateGitRepoEksaSpecLocalRepoExists(t *testing.T) {
 
 func TestUpdateGitRepoEksaSpecErrorCloneRepo(t *testing.T) {
 	clusterName := "management-cluster"
-	clusterConfig := v1alpha1.NewCluster(clusterName)
+	clusterConfig := NewCluster(clusterName)
 	clusterSpec := newClusterSpec(t, clusterConfig, "")
 	g := newFluxTest(t)
 
@@ -813,7 +813,7 @@ func TestUpdateGitRepoEksaSpecErrorCloneRepo(t *testing.T) {
 
 func TestUpdateGitRepoEksaSpecErrorSwitchBranch(t *testing.T) {
 	clusterName := "management-cluster"
-	clusterConfig := v1alpha1.NewCluster(clusterName)
+	clusterConfig := NewCluster(clusterName)
 	clusterSpec := newClusterSpec(t, clusterConfig, "")
 	g := newFluxTest(t)
 
@@ -827,7 +827,7 @@ func TestUpdateGitRepoEksaSpecErrorSwitchBranch(t *testing.T) {
 
 func TestUpdateGitRepoEksaSpecErrorAddFile(t *testing.T) {
 	clusterName := "management-cluster"
-	clusterConfig := v1alpha1.NewCluster(clusterName)
+	clusterConfig := NewCluster(clusterName)
 	clusterSpec := newClusterSpec(t, clusterConfig, "")
 	g := newFluxTest(t)
 
@@ -842,7 +842,7 @@ func TestUpdateGitRepoEksaSpecErrorAddFile(t *testing.T) {
 
 func TestUpdateGitRepoEksaSpecErrorCommit(t *testing.T) {
 	clusterName := "management-cluster"
-	clusterConfig := v1alpha1.NewCluster(clusterName)
+	clusterConfig := NewCluster(clusterName)
 	clusterSpec := newClusterSpec(t, clusterConfig, "")
 	g := newFluxTest(t)
 
@@ -858,7 +858,7 @@ func TestUpdateGitRepoEksaSpecErrorCommit(t *testing.T) {
 
 func TestUpdateGitRepoEksaSpecErrorPushAfterRetry(t *testing.T) {
 	clusterName := "management-cluster"
-	clusterConfig := v1alpha1.NewCluster(clusterName)
+	clusterConfig := NewCluster(clusterName)
 	clusterSpec := newClusterSpec(t, clusterConfig, "")
 	g := newFluxTest(t)
 
@@ -876,7 +876,7 @@ func TestUpdateGitRepoEksaSpecErrorPushAfterRetry(t *testing.T) {
 func TestUpdateGitRepoEksaSpecSkip(t *testing.T) {
 	g := newFluxTest(t)
 	clusterName := "management-cluster"
-	clusterConfig := v1alpha1.NewCluster(clusterName)
+	clusterConfig := NewCluster(clusterName)
 	clusterSpec := newClusterSpec(t, clusterConfig, "")
 	f := flux.NewFlux(nil, nil, nil, nil)
 
@@ -887,7 +887,7 @@ func TestUpdateGitRepoEksaSpecSkip(t *testing.T) {
 
 func TestForceReconcileGitRepo(t *testing.T) {
 	cluster := &types.Cluster{}
-	clusterConfig := v1alpha1.NewCluster("")
+	clusterConfig := NewCluster("")
 	clusterSpec := newClusterSpec(t, clusterConfig, "")
 	g := newFluxTest(t)
 
@@ -907,7 +907,7 @@ func TestForceReconcileGitRepoSkip(t *testing.T) {
 func TestCleanupGitRepo(t *testing.T) {
 	g := newFluxTest(t)
 	mockCtrl := gomock.NewController(t)
-	clusterConfig := v1alpha1.NewCluster("management-cluster")
+	clusterConfig := NewCluster("management-cluster")
 	expectedClusterPath := "clusters/management-cluster"
 	clusterSpec := newClusterSpec(t, clusterConfig, "")
 
@@ -937,7 +937,7 @@ func TestCleanupGitRepo(t *testing.T) {
 func TestCleanupGitRepoWorkloadCluster(t *testing.T) {
 	g := newFluxTest(t)
 	mockCtrl := gomock.NewController(t)
-	clusterConfig := v1alpha1.NewCluster("workload-cluster")
+	clusterConfig := NewCluster("workload-cluster")
 	clusterConfig.SetManagedBy("management-cluster")
 	expectedClusterPath := "clusters/management-cluster/workload-cluster/" + constants.EksaSystemNamespace
 	clusterSpec := newClusterSpec(t, clusterConfig, "")
@@ -966,7 +966,7 @@ func TestCleanupGitRepoWorkloadCluster(t *testing.T) {
 }
 
 func TestCleanupGitRepoSkip(t *testing.T) {
-	clusterConfig := v1alpha1.NewCluster("management-cluster")
+	clusterConfig := NewCluster("management-cluster")
 	clusterSpec := newClusterSpec(t, clusterConfig, "")
 	g := newFluxTest(t)
 
@@ -979,7 +979,7 @@ func TestCleanupGitRepoSkip(t *testing.T) {
 func TestCleanupGitRepoRemoveError(t *testing.T) {
 	g := newFluxTest(t)
 	mockCtrl := gomock.NewController(t)
-	clusterConfig := v1alpha1.NewCluster("management-cluster")
+	clusterConfig := NewCluster("management-cluster")
 	expectedClusterPath := "clusters/management-cluster"
 	clusterSpec := newClusterSpec(t, clusterConfig, "")
 
@@ -1038,7 +1038,7 @@ func TestValidationsSuccess(t *testing.T) {
 func TestBootstrapGithubSkip(t *testing.T) {
 	g := newFluxTest(t)
 	c := &types.Cluster{}
-	clusterConfig := v1alpha1.NewCluster("management-cluster")
+	clusterConfig := NewCluster("management-cluster")
 	clusterSpec := newClusterSpec(t, clusterConfig, "")
 	clusterSpec.FluxConfig.Spec.Github = nil
 
@@ -1048,7 +1048,7 @@ func TestBootstrapGithubSkip(t *testing.T) {
 func TestBootstrapGithubError(t *testing.T) {
 	g := newFluxTest(t)
 	c := &types.Cluster{}
-	clusterConfig := v1alpha1.NewCluster("management-cluster")
+	clusterConfig := NewCluster("management-cluster")
 	clusterSpec := newClusterSpec(t, clusterConfig, "")
 
 	g.flux.EXPECT().BootstrapGithub(g.ctx, c, clusterSpec.FluxConfig).Return(errors.New("error in bootstrap github"))
@@ -1060,7 +1060,7 @@ func TestBootstrapGithubError(t *testing.T) {
 func TestBootstrapGitError(t *testing.T) {
 	g := newFluxTest(t)
 	c := &types.Cluster{}
-	clusterConfig := v1alpha1.NewCluster("management-cluster")
+	clusterConfig := NewCluster("management-cluster")
 	clusterSpec := newClusterSpec(t, clusterConfig, "")
 	clusterSpec.FluxConfig.Spec.Git = &v1alpha1.GitProviderConfig{RepositoryUrl: "abc"}
 
