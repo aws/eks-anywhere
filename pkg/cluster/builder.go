@@ -84,7 +84,6 @@ func (b FileSpecBuilder) Build(clusterConfigURL string) (*Spec, error) {
 	}
 
 	eksdReleases, err := getAllEksdReleases(config.Cluster, bundlesManifest, b.reader)
-
 	if err != nil {
 		return nil, err
 	}

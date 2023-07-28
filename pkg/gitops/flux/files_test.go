@@ -7,8 +7,9 @@ import (
 
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	writerMocks "github.com/aws/eks-anywhere/pkg/filewriter/mocks"
 	"github.com/aws/eks-anywhere/pkg/gitops/flux"
@@ -171,7 +172,7 @@ func newFileGeneratorTest(t *testing.T) *fileGeneratorTest {
 		g:                flux.NewFileGeneratorWithWriterTemplater(writer, writer, templater, templater),
 		w:                writer,
 		t:                templater,
-		clusterSpec:      newClusterSpec(t, v1alpha1.NewCluster(clusterName), ""),
+		clusterSpec:      newClusterSpec(t, NewCluster(clusterName), ""),
 		datacenterConfig: datacenterConfig(clusterName),
 		machineConfigs:   []providers.MachineConfig{machineConfig(clusterName)},
 	}
@@ -272,4 +273,23 @@ func TestFileGeneratorWriteFluxSystemFilesWriteFluxPatchesError(t *testing.T) {
 	tt.t.EXPECT().WriteToFile(wantFluxPatches, wantPatchesValues, "gotk-patches.yaml", gomock.Any()).Return("", errors.New("error in write patches"))
 
 	tt.Expect(tt.g.WriteFluxSystemFiles(tt.clusterSpec)).To(MatchError(ContainSubstring("error in write patches")))
+}
+
+func NewCluster(clusterName string) *anywherev1.Cluster {
+	c := &anywherev1.Cluster{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       anywherev1.ClusterKind,
+			APIVersion: anywherev1.SchemeBuilder.GroupVersion.String(),
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: clusterName,
+		},
+		Spec: anywherev1.ClusterSpec{
+			KubernetesVersion: anywherev1.Kube119,
+		},
+		Status: anywherev1.ClusterStatus{},
+	}
+	c.SetSelfManaged()
+
+	return c
 }

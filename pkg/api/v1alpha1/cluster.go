@@ -23,6 +23,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/semver"
 )
 
+// constants defined for cluster.go.
 const (
 	ClusterKind              = "Cluster"
 	YamlSeparator            = "\n---\n"
@@ -164,25 +165,6 @@ func WithEtcdMachineGroupRef(ref ProviderRefAccessor) ClusterGenerateOpt {
 			}
 		}
 	}
-}
-
-func NewCluster(clusterName string) *Cluster {
-	c := &Cluster{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       ClusterKind,
-			APIVersion: SchemeBuilder.GroupVersion.String(),
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name: clusterName,
-		},
-		Spec: ClusterSpec{
-			KubernetesVersion: Kube119,
-		},
-		Status: ClusterStatus{},
-	}
-	c.SetSelfManaged()
-
-	return c
 }
 
 var clusterConfigValidations = []func(*Cluster) error{
