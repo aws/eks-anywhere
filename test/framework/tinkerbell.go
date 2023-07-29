@@ -13,22 +13,27 @@ import (
 )
 
 const (
-	TinkerbellProviderName                  = "tinkerbell"
-	tinkerbellBootstrapIPEnvVar             = "T_TINKERBELL_BOOTSTRAP_IP"
-	tinkerbellControlPlaneNetworkCidrEnvVar = "T_TINKERBELL_CP_NETWORK_CIDR"
-	tinkerbellImageUbuntu123EnvVar          = "T_TINKERBELL_IMAGE_UBUNTU_1_23"
-	tinkerbellImageUbuntu124EnvVar          = "T_TINKERBELL_IMAGE_UBUNTU_1_24"
-	tinkerbellImageUbuntu125EnvVar          = "T_TINKERBELL_IMAGE_UBUNTU_1_25"
-	tinkerbellImageUbuntu126EnvVar          = "T_TINKERBELL_IMAGE_UBUNTU_1_26"
-	tinkerbellImageUbuntu127EnvVar          = "T_TINKERBELL_IMAGE_UBUNTU_1_27"
-	tinkerbellImageRedHat123EnvVar          = "T_TINKERBELL_IMAGE_REDHAT_1_23"
-	tinkerbellImageRedHat124EnvVar          = "T_TINKERBELL_IMAGE_REDHAT_1_24"
-	tinkerbellImageRedHat125EnvVar          = "T_TINKERBELL_IMAGE_REDHAT_1_25"
-	tinkerbellImageRedHat126EnvVar          = "T_TINKERBELL_IMAGE_REDHAT_1_26"
-	tinkerbellImageRedHat127EnvVar          = "T_TINKERBELL_IMAGE_REDHAT_1_27"
-	tinkerbellInventoryCsvFilePathEnvVar    = "T_TINKERBELL_INVENTORY_CSV"
-	tinkerbellSSHAuthorizedKey              = "T_TINKERBELL_SSH_AUTHORIZED_KEY"
-	TinkerbellCIEnvironment                 = "T_TINKERBELL_CI_ENVIRONMENT"
+	tinkerbellProviderName                       = "tinkerbell"
+	tinkerbellBootstrapIPEnvVar                  = "T_TINKERBELL_BOOTSTRAP_IP"
+	tinkerbellControlPlaneNetworkCidrEnvVar      = "T_TINKERBELL_CP_NETWORK_CIDR"
+	tinkerbellImageUbuntu123EnvVar               = "T_TINKERBELL_IMAGE_UBUNTU_1_23"
+	tinkerbellImageUbuntu124EnvVar               = "T_TINKERBELL_IMAGE_UBUNTU_1_24"
+	tinkerbellImageUbuntu125EnvVar               = "T_TINKERBELL_IMAGE_UBUNTU_1_25"
+	tinkerbellImageUbuntu126EnvVar               = "T_TINKERBELL_IMAGE_UBUNTU_1_26"
+	tinkerbellImageUbuntu127EnvVar               = "T_TINKERBELL_IMAGE_UBUNTU_1_27"
+	tinkerbellImageUbuntu2204Kubernetes123EnvVar = "T_TINKERBELL_IMAGE_UBUNTU_2204_1_23"
+	tinkerbellImageUbuntu2204Kubernetes124EnvVar = "T_TINKERBELL_IMAGE_UBUNTU_2204_1_24"
+	tinkerbellImageUbuntu2204Kubernetes125EnvVar = "T_TINKERBELL_IMAGE_UBUNTU_2204_1_25"
+	tinkerbellImageUbuntu2204Kubernetes126EnvVar = "T_TINKERBELL_IMAGE_UBUNTU_2204_1_26"
+	tinkerbellImageUbuntu2204Kubernetes127EnvVar = "T_TINKERBELL_IMAGE_UBUNTU_2204_1_27"
+	tinkerbellImageRedHat123EnvVar               = "T_TINKERBELL_IMAGE_REDHAT_1_23"
+	tinkerbellImageRedHat124EnvVar               = "T_TINKERBELL_IMAGE_REDHAT_1_24"
+	tinkerbellImageRedHat125EnvVar               = "T_TINKERBELL_IMAGE_REDHAT_1_25"
+	tinkerbellImageRedHat126EnvVar               = "T_TINKERBELL_IMAGE_REDHAT_1_26"
+	tinkerbellImageRedHat127EnvVar               = "T_TINKERBELL_IMAGE_REDHAT_1_27"
+	tinkerbellInventoryCsvFilePathEnvVar         = "T_TINKERBELL_INVENTORY_CSV"
+	tinkerbellSSHAuthorizedKey                   = "T_TINKERBELL_SSH_AUTHORIZED_KEY"
+	TinkerbellCIEnvironment                      = "T_TINKERBELL_CI_ENVIRONMENT"
 )
 
 var requiredTinkerbellEnvVars = []string{
@@ -38,6 +43,11 @@ var requiredTinkerbellEnvVars = []string{
 	tinkerbellImageUbuntu125EnvVar,
 	tinkerbellImageUbuntu126EnvVar,
 	tinkerbellImageUbuntu127EnvVar,
+	tinkerbellImageUbuntu2204Kubernetes123EnvVar,
+	tinkerbellImageUbuntu2204Kubernetes124EnvVar,
+	tinkerbellImageUbuntu2204Kubernetes125EnvVar,
+	tinkerbellImageUbuntu2204Kubernetes126EnvVar,
+	tinkerbellImageUbuntu2204Kubernetes127EnvVar,
 	tinkerbellImageRedHat123EnvVar,
 	tinkerbellImageRedHat124EnvVar,
 	tinkerbellImageRedHat125EnvVar,
@@ -98,7 +108,7 @@ func NewTinkerbell(t *testing.T, opts ...TinkerbellOpt) *Tinkerbell {
 }
 
 func (t *Tinkerbell) Name() string {
-	return TinkerbellProviderName
+	return tinkerbellProviderName
 }
 
 func (t *Tinkerbell) Setup() {}
