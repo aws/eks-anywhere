@@ -28,20 +28,17 @@ do
 done < <(yq e 'to_entries | .[] | (.key + "@" + .value)' ${TINKERBELL_HARDWARE_COUNT_FILE})
 for test in ${ALL_TINKERBELL_TESTS[@]}
 do 
-    if [[ ${!TINKERBELL_HARDWARE_COUNT_LIST[@]} =~ $test ]] 
-    then 
+    if [[ -n "${TINKERBELL_HARDWARE_COUNT_LIST[$test]}" ]]; then 
+        count=${TINKERBELL_HARDWARE_COUNT_LIST[$test]}
     # check if the count value is a number and between 1-10
-        if  [[ ${TINKERBELL_HARDWARE_COUNT_LIST[$test]} =~ ^[0-9]+$ ]]; then
-            if (( ${TINKERBELL_HARDWARE_COUNT_LIST[$test]} >= 1 && ${TINKERBELL_HARDWARE_COUNT_LIST[$test]} <= 10)); then
-                :
-            else
-                HARDWARE_COUNT_VALIDATION_STATUS=false 
-                echo "$test has count higher than permissible range 1 - 10"
-            fi
-    # validation fails if the count value is not a number
-        else
+        if ! [[ $count =~ ^[0-9]+$ ]]; then
             HARDWARE_COUNT_VALIDATION_STATUS=false 
             echo "hardware count for $test is not a integer"
+        else
+            if ! [[ $count -ge 1 && $count -le 10 ]]; then
+                    HARDWARE_COUNT_VALIDATION_STATUS=false 
+                    echo "$test has count higher than permissible range 1 - 10"
+            fi
         fi
     # validation fails if any test is missed from the count file
     else
