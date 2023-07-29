@@ -36,8 +36,8 @@ do
             echo "hardware count for $test is not a integer"
         else
             if ! [[ $count -ge 1 && $count -le 10 ]]; then
-                    HARDWARE_COUNT_VALIDATION_STATUS=false 
-                    echo "$test has count higher than permissible range 1 - 10"
+                HARDWARE_COUNT_VALIDATION_STATUS=false 
+                echo "$test has count higher than permissible range 1 - 10"
             fi
         fi
     # validation fails if any test is missed from the count file
