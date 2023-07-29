@@ -46,7 +46,7 @@ func NewClusterGenerate(clusterName string, opts ...ClusterGenerateOpt) *Cluster
 		ObjectMeta: ObjectMeta{
 			Name: clusterName,
 		},
-		Spec: ClusterSpec{
+		Spec: ClusterSpecGenerate{
 			KubernetesVersion: GetClusterDefaultKubernetesVersion(),
 			ClusterNetwork: ClusterNetwork{
 				Pods: Pods{

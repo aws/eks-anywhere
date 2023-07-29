@@ -4,6 +4,7 @@ metadata:
   name: testcluster
   namespace: default
 spec:
+  bundlesRef: null
   clusterNetwork:
     pods: {}
     services: {}
