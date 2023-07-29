@@ -23,6 +23,7 @@ metadata:
   name: test-cluster
   namespace: default
 spec:
+  bundlesRef: null
   clusterNetwork:
     cniConfig: {}
     pods: {}

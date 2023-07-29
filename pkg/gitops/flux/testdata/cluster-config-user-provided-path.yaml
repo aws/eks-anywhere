@@ -4,6 +4,7 @@ metadata:
   name: management-cluster
   namespace: default
 spec:
+  bundlesRef: null
   clusterNetwork:
     cniConfig: {}
     pods: {}
