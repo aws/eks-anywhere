@@ -143,7 +143,7 @@ func NewClusterE2ETest(t T, provider Provider, opts ...ClusterE2ETestOpt) *Clust
 		e.CleanupVms()
 
 		tinkerbellCIEnvironment := os.Getenv(TinkerbellCIEnvironment)
-		if e.Provider.Name() == TinkerbellProviderName && tinkerbellCIEnvironment == "true" {
+		if e.Provider.Name() == tinkerbellProviderName && tinkerbellCIEnvironment == "true" {
 			e.CleanupDockerEnvironment()
 		}
 	})
@@ -703,7 +703,7 @@ func (e *ClusterE2ETest) createCluster(opts ...CommandOpt) {
 		createClusterArgs = append(createClusterArgs, "--bundles-override", defaultBundleReleaseManifestFile)
 	}
 
-	if e.Provider.Name() == TinkerbellProviderName {
+	if e.Provider.Name() == tinkerbellProviderName {
 		createClusterArgs = append(createClusterArgs, "-z", e.HardwareCsvLocation)
 		dumpFile("Hardware csv file:", e.HardwareCsvLocation, e.T)
 		tinkBootstrapIP := os.Getenv(tinkerbellBootstrapIPEnvVar)
