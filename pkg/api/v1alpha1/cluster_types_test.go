@@ -10,6 +10,7 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/semver"
 	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
@@ -3089,4 +3090,39 @@ func TestKubernetesVersions(t *testing.T) {
 	cluster.Spec.WorkerNodeGroupConfigurations = append(cluster.Spec.WorkerNodeGroupConfigurations, *wng)
 	expected := []v1alpha1.KubernetesVersion{v1alpha1.Kube121, v1alpha1.Kube120}
 	g.Expect(cluster.KubernetesVersions()).To(Equal(expected))
+}
+
+func TestCluster_ConvertConfigToConfigGenerateStruct(t *testing.T) {
+	g := NewWithT(t)
+	testCluster := newCluster(func(c *v1alpha1.Cluster) {
+		c.Namespace = constants.EksaSystemNamespace
+	})
+	wantClusterGenerate := &v1alpha1.ClusterGenerate{
+		TypeMeta: testCluster.TypeMeta,
+		ObjectMeta: v1alpha1.ObjectMeta{
+			Name:        testCluster.Name,
+			Annotations: testCluster.Annotations,
+			Namespace:   testCluster.Namespace,
+		},
+		Spec: v1alpha1.ClusterSpecGenerate{
+			KubernetesVersion:             testCluster.Spec.KubernetesVersion,
+			ControlPlaneConfiguration:     testCluster.Spec.ControlPlaneConfiguration,
+			WorkerNodeGroupConfigurations: testCluster.Spec.WorkerNodeGroupConfigurations,
+			DatacenterRef:                 testCluster.Spec.DatacenterRef,
+			IdentityProviderRefs:          testCluster.Spec.IdentityProviderRefs,
+			GitOpsRef:                     testCluster.Spec.GitOpsRef,
+			ClusterNetwork:                testCluster.Spec.ClusterNetwork,
+			ExternalEtcdConfiguration:     testCluster.Spec.ExternalEtcdConfiguration,
+			ProxyConfiguration:            testCluster.Spec.ProxyConfiguration,
+			RegistryMirrorConfiguration:   testCluster.Spec.RegistryMirrorConfiguration,
+			ManagementCluster:             testCluster.Spec.ManagementCluster,
+			PodIAMConfig:                  testCluster.Spec.PodIAMConfig,
+			Packages:                      testCluster.Spec.Packages,
+			BundlesRef:                    testCluster.Spec.BundlesRef,
+			EksaVersion:                   testCluster.Spec.EksaVersion,
+		},
+	}
+
+	got := testCluster.ConvertConfigToConfigGenerateStruct()
+	g.Expect(got).To(Equal(wantClusterGenerate))
 }

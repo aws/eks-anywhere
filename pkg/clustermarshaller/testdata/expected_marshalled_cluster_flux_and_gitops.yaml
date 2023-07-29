@@ -4,6 +4,7 @@ metadata:
   name: mycluster
   namespace: default
 spec:
+  bundlesRef: null
   clusterNetwork:
     pods: {}
     services: {}
