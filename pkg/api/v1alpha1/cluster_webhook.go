@@ -472,8 +472,9 @@ func ValidateWorkerKubernetesVersionSkew(new, old *Cluster) field.ErrorList {
 	for _, nodeGroupNewSpec := range new.Spec.WorkerNodeGroupConfigurations {
 		newVersion := nodeGroupNewSpec.KubernetesVersion
 
-		if nodeGroupNewSpec.MachineGroupRef.Kind == TinkerbellMachineConfigKind && newVersion != nil {
-			allErrs = append(allErrs, field.Forbidden(path, "worker Node Group level kubernetesVersion is not supported for Tinkerbell"))
+		if newVersion != nil && nodeGroupNewSpec.MachineGroupRef.Kind == TinkerbellMachineConfigKind {
+			allErrs = append(allErrs, field.Forbidden(path, "worker node group level kubernetesVersion is not supported for Tinkerbell"))
+			return allErrs
 		}
 
 		if workerNodeGrpOldSpec, ok := workerNodeGroupMap[nodeGroupNewSpec.Name]; ok {
