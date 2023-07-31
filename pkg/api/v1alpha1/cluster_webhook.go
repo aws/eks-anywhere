@@ -464,6 +464,7 @@ func validateKubeVersionSkew(newVersion, oldVersion KubernetesVersion, path *fie
 // ValidateWorkerKubernetesVersionSkew validates worker node group Kubernetes version skew between upgrades.
 func ValidateWorkerKubernetesVersionSkew(new, old *Cluster) field.ErrorList {
 	var allErrs field.ErrorList
+	path := field.NewPath("spec").Child("WorkerNodeConfiguration.kubernetesVersion")
 
 	newClusterVersion := new.Spec.KubernetesVersion
 	oldClusterVersion := old.Spec.KubernetesVersion
@@ -474,6 +475,11 @@ func ValidateWorkerKubernetesVersionSkew(new, old *Cluster) field.ErrorList {
 	}
 	for _, nodeGroupNewSpec := range new.Spec.WorkerNodeGroupConfigurations {
 		newVersion := nodeGroupNewSpec.KubernetesVersion
+
+		if nodeGroupNewSpec.MachineGroupRef.Kind == TinkerbellMachineConfigKind && newVersion != nil {
+			allErrs = append(allErrs, field.Forbidden(path, "worker Node Group level kubernetesVersion is not supported for Tinkerbell"))
+		}
+
 		if workerNodeGrpOldSpec, ok := workerNodeGroupMap[nodeGroupNewSpec.Name]; ok {
 			oldVersion := workerNodeGrpOldSpec.KubernetesVersion
 			allErrs = append(allErrs, performWorkerKubernetesValidations(oldVersion, newVersion, oldClusterVersion, newClusterVersion)...)
