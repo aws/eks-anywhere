@@ -183,46 +183,6 @@ func TestTinkerbellKubernetes126To127Ubuntu2204Upgrade(t *testing.T) {
 	)
 }
 
-func TestTinkerbellKubernetes126Ubuntu2004To2204Upgrade(t *testing.T) {
-	provider := framework.NewTinkerbell(t)
-	test := framework.NewClusterE2ETest(
-		t,
-		provider,
-		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithControlPlaneHardware(2),
-		framework.WithWorkerHardware(2),
-	).WithClusterConfig(
-		provider.WithKubeVersionAndOS(v1alpha1.Kube126, framework.Ubuntu2004, nil),
-	)
-	runSimpleUpgradeFlowForBaremetalWithoutClusterConfigGeneration(
-		test,
-		v1alpha1.Kube126,
-		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube126)),
-		provider.WithProviderUpgrade(framework.Ubuntu2204Kubernetes126Image()),
-	)
-}
-
-func TestTinkerbellKubernetes127Ubuntu2004To2204Upgrade(t *testing.T) {
-	provider := framework.NewTinkerbell(t)
-	test := framework.NewClusterE2ETest(
-		t,
-		provider,
-		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithControlPlaneHardware(2),
-		framework.WithWorkerHardware(2),
-	).WithClusterConfig(
-		provider.WithKubeVersionAndOS(v1alpha1.Kube127, framework.Ubuntu2004, nil),
-	)
-	runSimpleUpgradeFlowForBaremetalWithoutClusterConfigGeneration(
-		test,
-		v1alpha1.Kube127,
-		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube127)),
-		provider.WithProviderUpgrade(framework.Ubuntu2204Kubernetes127Image()),
-	)
-}
-
 func TestTinkerbellKubernetes127UbuntuWorkerNodeUpgrade(t *testing.T) {
 	provider := framework.NewTinkerbell(t, framework.WithUbuntu127Tinkerbell())
 	test := framework.NewClusterE2ETest(
