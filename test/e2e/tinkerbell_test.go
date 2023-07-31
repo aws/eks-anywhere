@@ -1337,7 +1337,7 @@ func TestTinkerbellUpgrade127MulticlusterWorkloadClusterWorkerScaleDown(t *testi
 	)
 	runSimpleWorkloadUpgradeFlowForBareMetal(
 		test,
-		v1alpha1.Kube126,
+		v1alpha1.Kube127,
 		framework.WithClusterUpgrade(
 			api.WithKubernetesVersion(v1alpha1.Kube127),
 			api.WithWorkerNodeCount(1),
