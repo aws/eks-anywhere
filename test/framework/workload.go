@@ -79,10 +79,20 @@ func (w *WorkloadCluster) WaitForKubeconfig() {
 	ctx := context.Background()
 	w.T.Logf("Waiting for workload cluster %s kubeconfig to be available", w.ClusterName)
 	err := retrier.Retry(120, 5*time.Second, func() error {
-		return w.writeKubeconfigToDisk(ctx)
+		return w.writeKubeconfigToDisk(ctx, fmt.Sprintf("%s-kubeconfig", w.ClusterName), w.KubeconfigFilePath())
 	})
 	if err != nil {
 		w.T.Fatalf("Failed waiting for cluster kubeconfig: %s", err)
+	}
+
+	if len(w.ClusterConfig.AWSIAMConfigs) != 0 {
+		w.T.Logf("Waiting for workload cluster %s iam auth kubeconfig to be available", w.ClusterName)
+		err := retrier.Retry(120, 5*time.Second, func() error {
+			return w.writeKubeconfigToDisk(ctx, fmt.Sprintf("%s-aws-iam-kubeconfig", w.ClusterName), w.iamAuthKubeconfigFilePath())
+		})
+		if err != nil {
+			w.T.Fatalf("Failed waiting for cluster kubeconfig: %s", err)
+		}
 	}
 
 	w.T.Logf("Waiting for workload cluster %s control plane to be ready", w.ClusterName)
@@ -104,8 +114,8 @@ func (w *WorkloadCluster) ValidateClusterDelete() {
 	}
 }
 
-func (w *WorkloadCluster) writeKubeconfigToDisk(ctx context.Context) error {
-	secret, err := w.KubectlClient.GetSecretFromNamespace(ctx, w.ManagementClusterKubeconfigFile(), fmt.Sprintf("%s-kubeconfig", w.ClusterName), constants.EksaSystemNamespace)
+func (w *WorkloadCluster) writeKubeconfigToDisk(ctx context.Context, secretName string, filePath string) error {
+	secret, err := w.KubectlClient.GetSecretFromNamespace(ctx, w.ManagementClusterKubeconfigFile(), secretName, constants.EksaSystemNamespace)
 	if err != nil {
 		return fmt.Errorf("failed to get kubeconfig for cluster: %s", err)
 	}
@@ -118,7 +128,7 @@ func (w *WorkloadCluster) writeKubeconfigToDisk(ctx context.Context) error {
 		return fmt.Errorf("failed to write kubeconfig to disk: %v", err)
 	}
 
-	_, err = writer.Write(filepath.Base(w.kubeconfigFilePath()), kubeconfig, func(op *filewriter.FileOptions) {
+	_, err = writer.Write(filepath.Base(filePath), kubeconfig, func(op *filewriter.FileOptions) {
 		op.IsTemp = false
 	})
 	if err != nil {

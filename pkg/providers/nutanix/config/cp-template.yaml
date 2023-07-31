@@ -347,6 +347,13 @@ spec:
         uuid: "{{.projectUUID}}"
 {{ end }}
 {{ end }}
+{{- if .additionalCategories}}
+      additionalCategories:
+{{- range .additionalCategories}}
+        - key:   "{{ .Key }}"
+          value: "{{ .Value }}"
+{{- end }}
+{{- end }}
 ---
 {{- if .registryAuth }}
 apiVersion: v1

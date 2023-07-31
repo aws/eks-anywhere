@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
 	"strconv"
 	"strings"
 	"testing"
@@ -14,6 +15,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
+	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
@@ -28,12 +30,25 @@ type MetalLBSuite struct {
 }
 
 func RunMetalLBDockerTests(t *testing.T) {
-	for _, v := range KubeVersions {
+	for i, v := range KubeVersions {
 		s := new(MetalLBSuite)
 		s.provider = framework.NewDocker(t)
 		s.kubernetesVersion = v
+		os.Setenv(framework.ClusterPrefixVar, fmt.Sprintf("%s-%d", EksaPackagesNamespace, i))
 		suite.Run(t, s)
 	}
+}
+
+func (suite *MetalLBSuite) SetupSuite() {
+	t := suite.T()
+	suite.cluster = framework.NewClusterE2ETest(t,
+		suite.provider,
+		framework.WithClusterFiller(api.WithKubernetesVersion(suite.kubernetesVersion)),
+		framework.WithPackageConfig(t, packageBundleURI(suite.kubernetesVersion),
+			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
+		kubeVersionNameDiscriminator(suite.kubernetesVersion),
+	)
 }
 
 func kubeVersionNameDiscriminator(version v1alpha1.KubernetesVersion) framework.ClusterE2ETestOpt {

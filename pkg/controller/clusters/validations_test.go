@@ -16,19 +16,19 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/controller"
 	"github.com/aws/eks-anywhere/pkg/controller/clusters"
-	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
 
 func TestCleanupStatusAfterValidate(t *testing.T) {
 	g := NewWithT(t)
 	spec := test.NewClusterSpec(func(s *cluster.Spec) {
-		s.Cluster.Status.FailureMessage = ptr.String("invalid cluster")
+		s.Cluster.SetFailure(anywherev1.FailureReasonType("InvalidCluster"), "invalid cluster")
 	})
 
 	g.Expect(
 		clusters.CleanupStatusAfterValidate(context.Background(), test.NewNullLogger(), spec),
 	).To(Equal(controller.Result{}))
 	g.Expect(spec.Cluster.Status.FailureMessage).To(BeNil())
+	g.Expect(spec.Cluster.Status.FailureReason).To(BeNil())
 }
 
 func TestValidateManagementClusterNameSuccess(t *testing.T) {
@@ -76,11 +76,15 @@ type clusterValidatorTest struct {
 }
 
 func newClusterValidatorTest(t *testing.T) *clusterValidatorTest {
+	version := anywherev1.EksaVersion("v0.0.0")
 	logger := test.NewNullLogger()
 	managementCluster := &anywherev1.Cluster{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "my-management-cluster",
 			Namespace: "my-namespace",
+		},
+		Spec: anywherev1.ClusterSpec{
+			EksaVersion: &version,
 		},
 	}
 
@@ -88,6 +92,9 @@ func newClusterValidatorTest(t *testing.T) *clusterValidatorTest {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "my-cluster",
 			Namespace: "my-namespace",
+		},
+		Spec: anywherev1.ClusterSpec{
+			EksaVersion: &version,
 		},
 	}
 	cluster.SetManagedBy("my-management-cluster")

@@ -1,13 +1,11 @@
 package v1alpha1_test
 
 import (
-	"os"
 	"testing"
 
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/aws/eks-anywhere/internal/test/envtest"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
 )
@@ -94,12 +92,6 @@ func TestNutanixDatacenterConfigWebhooksValidateDelete(t *testing.T) {
 	g.Expect(dcConf.ValidateDelete()).To(Succeed())
 }
 
-func TestNutanixDatacenterConfigSetupWebhookWithManager(t *testing.T) {
-	g := NewWithT(t)
-	dcConf := nutanixDatacenterConfig()
-	g.Expect(dcConf.SetupWebhookWithManager(env.Manager())).To(Succeed())
-}
-
 func nutanixDatacenterConfig() *v1alpha1.NutanixDatacenterConfig {
 	return &v1alpha1.NutanixDatacenterConfig{
 		ObjectMeta: metav1.ObjectMeta{
@@ -114,10 +106,4 @@ func nutanixDatacenterConfig() *v1alpha1.NutanixDatacenterConfig {
 			},
 		},
 	}
-}
-
-var env *envtest.Environment
-
-func TestMain(m *testing.M) {
-	os.Exit(envtest.RunWithEnvironment(m, envtest.WithAssignment(&env)))
 }

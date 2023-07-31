@@ -178,88 +178,91 @@ func GetEksDReleaseManifestUrl(releaseChannel, releaseNumber string, dev bool) s
 	return fmt.Sprintf("https://distro.eks.amazonaws.com/kubernetes-%[1]s/kubernetes-%[1]s-eks-%s.yaml", releaseChannel, releaseNumber)
 }
 
-func GetCurrentEksADevReleaseVersion(releaseVersion string, r *releasetypes.ReleaseConfig) (string, error) {
-	fmt.Println("\n==========================================================")
-	fmt.Println("              Dev Release Version Computation")
-	fmt.Println("==========================================================")
+// GetNextEksADevBuildNumber computes next eksa dev build number for the current eks-a dev build
+func GetNextEksADevBuildNumber(releaseVersion string, r *releasetypes.ReleaseConfig) (int, error) {
+	tempFileName := "latest-dev-release-version"
 
-	var newDevReleaseVersion string
-	if r.Weekly {
-		newDevReleaseVersion = fmt.Sprintf("v0.0.0-dev+build.%s", r.ReleaseDate)
+	var latestReleaseKey, latestBuildVersion string
+	var currentEksaBuildNumber int
+	if r.BuildRepoBranchName == "main" {
+		latestReleaseKey = "LATEST_RELEASE_VERSION"
 	} else {
-		tempFileName := "latest-dev-release-version"
-
-		var latestReleaseKey string
-		if r.BuildRepoBranchName == "main" {
-			latestReleaseKey = "LATEST_RELEASE_VERSION"
-		} else {
-			latestReleaseKey = fmt.Sprintf("%s/LATEST_RELEASE_VERSION", r.BuildRepoBranchName)
-		}
-		if s3.KeyExists(r.ReleaseBucket, latestReleaseKey) {
-			err := s3.DownloadFile(tempFileName, r.ReleaseBucket, latestReleaseKey)
-			if err != nil {
-				return "", errors.Cause(err)
-			}
-
-			// Check if current version and latest version are the same semver
-			latestBuildS3, err := os.ReadFile(tempFileName)
-			if err != nil {
-				return "", errors.Cause(err)
-			}
-			latestBuildVersion := string(latestBuildS3)
-			newDevReleaseVersion, err = GenerateNewDevReleaseVersion(latestBuildVersion, releaseVersion, r.BuildRepoBranchName)
-			if err != nil {
-				return "", errors.Cause(err)
-			}
-			fmt.Printf("Previous release version: %s\n", latestBuildVersion)
-			fmt.Printf("Current release version provided: %s\n", releaseVersion)
-		} else {
-			newDevReleaseVersion = "v0.0.0-dev+build.0"
-			if r.BuildRepoBranchName != "main" {
-				newDevReleaseVersion = fmt.Sprintf("v0.0.0-dev-%s+build.0", r.BuildRepoBranchName)
-			}
-		}
+		latestReleaseKey = fmt.Sprintf("%s/LATEST_RELEASE_VERSION", r.BuildRepoBranchName)
 	}
-
-	fmt.Printf("New dev release release version: %s\n", newDevReleaseVersion)
-
-	fmt.Printf("%s Successfully computed current dev release version\n", constants.SuccessIcon)
-	return newDevReleaseVersion, nil
+	if s3.KeyExists(r.ReleaseBucket, latestReleaseKey) {
+		err := s3.DownloadFile(tempFileName, r.ReleaseBucket, latestReleaseKey)
+		if err != nil {
+			return -1, errors.Cause(err)
+		}
+		// Check if current version and latest version are the same semver
+		latestBuildS3, err := os.ReadFile(tempFileName)
+		if err != nil {
+			return -1, errors.Cause(err)
+		}
+		latestBuildVersion = string(latestBuildS3)
+		if releaseVersion == "vDev" { // TODO: remove when we update the pipeline
+			releaseVersion = "v0.0.0"
+		}
+		currentEksaBuildNumber, err = NewBuildNumberFromLastVersion(latestBuildVersion, releaseVersion, r.BuildRepoBranchName)
+		if err != nil {
+			return -1, errors.Cause(err)
+		}
+	} else {
+		currentEksaBuildNumber = 0
+	}
+	return currentEksaBuildNumber, nil
 }
 
-func GenerateNewDevReleaseVersion(latestBuildVersion, releaseVersion, branchName string) (string, error) {
+// NewBuildNumberFromLastVersion bumps the build number for eksa dev build version if found
+func NewBuildNumberFromLastVersion(latestEksaBuildVersion, releaseVersion, branchName string) (int, error) {
 	if releaseVersion == "vDev" { // TODO: remove when we update the pipeline
 		releaseVersion = "v0.0.0"
 	}
 
-	releaseVersionIdentifier := "dev+build"
-	if branchName != "main" {
-		releaseVersionIdentifier = fmt.Sprintf("dev-%s+build", branchName)
-	}
-
-	if !strings.Contains(latestBuildVersion, releaseVersion) && !strings.Contains(latestBuildVersion, "vDev") { // TODO: adding vDev case temporally to support old run, remove later
+	if !strings.Contains(latestEksaBuildVersion, releaseVersion) && !strings.Contains(latestEksaBuildVersion, "vDev") { // TODO: adding vDev case temporally to support old run, remove later
 		// different semver, reset build number suffix on release version
-
-		newReleaseVersion := fmt.Sprintf("%s-%s.0", releaseVersion, releaseVersionIdentifier)
-
-		return newReleaseVersion, nil
+		return 0, nil
 	}
 
 	// Same semver, only bump build number suffix on release version
-	i := strings.LastIndex(latestBuildVersion, ".")
-	if i == -1 || i >= len(latestBuildVersion)-1 {
-		return "", fmt.Errorf("invalid dev release version found for latest release: %s", latestBuildVersion)
+	i := strings.LastIndex(latestEksaBuildVersion, ".")
+	if i == -1 || i >= len(latestEksaBuildVersion)-1 {
+		return -1, fmt.Errorf("invalid dev release version found for latest release: %s", latestEksaBuildVersion)
 	}
 
-	lastBuildNumber, err := strconv.Atoi(latestBuildVersion[i+1:])
+	lastBuildNumber, err := strconv.Atoi(latestEksaBuildVersion[i+1:])
 	if err != nil {
-		return "", fmt.Errorf("invalid dev release version found for latest release [%s]: %v", latestBuildVersion, err)
+		return -1, fmt.Errorf("invalid dev release version found for latest release [%s]: %v", latestEksaBuildVersion, err)
+	}
+	newBuildNumber := lastBuildNumber + 1
+
+	return newBuildNumber, nil
+}
+
+func GetCurrentEksADevReleaseVersion(releaseVersion string, r *releasetypes.ReleaseConfig, buildNumber int) (string, error) {
+	fmt.Println("\n==========================================================")
+	fmt.Println("              Dev Release Version Computation")
+	fmt.Println("==========================================================")
+
+	if releaseVersion == "vDev" { // TODO: remove when we update the pipeline
+		releaseVersion = "v0.0.0"
+	}
+	releaseVersionIdentifier := "dev+build"
+
+	if r.BuildRepoBranchName != "main" {
+		releaseVersionIdentifier = fmt.Sprintf("dev-%s+build", r.BuildRepoBranchName)
 	}
 
-	newBuildNumber := lastBuildNumber + 1
-	newReleaseVersion := fmt.Sprintf("%s-%s.%d", releaseVersion, releaseVersionIdentifier, newBuildNumber)
+	var newDevReleaseVersion string
+	if r.Weekly {
+		newDevReleaseVersion = fmt.Sprintf("v0.0.0-%s.%s", releaseVersionIdentifier, r.ReleaseDate)
+	} else {
+		newDevReleaseVersion = fmt.Sprintf("v0.0.0-%s.%d", releaseVersionIdentifier, buildNumber)
+	}
+	fmt.Printf("New dev release release version: %s\n", newDevReleaseVersion)
+	fmt.Printf("%s Successfully computed current dev release version\n", constants.SuccessIcon)
 
-	return newReleaseVersion, nil
+	return newDevReleaseVersion, nil
 }
 
 func PutEksAReleaseVersion(version string, r *releasetypes.ReleaseConfig) error {

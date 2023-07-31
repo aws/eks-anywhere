@@ -7,9 +7,14 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	"sigs.k8s.io/cluster-api/util/conditions"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/controller"
 	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
@@ -22,6 +27,12 @@ import (
 
 const (
 	defaultRequeueTime = time.Second * 10
+)
+
+var (
+	serviceKind    = corev1.SchemeGroupVersion.WithKind("Service").GroupKind()
+	daemonSetKind  = appsv1.SchemeGroupVersion.WithKind("DaemonSet").GroupKind()
+	deploymentKind = appsv1.SchemeGroupVersion.WithKind("Deployment").GroupKind()
 )
 
 type Templater interface {
@@ -43,8 +54,10 @@ func New(templater Templater) *Reconciler {
 // Reconcile takes the Cilium CNI in a cluster to the desired state defined in a cluster Spec.
 // It uses a controller.Result to indicate when requeues are needed. client is connected to the
 // target Kubernetes cluster, not the management cluster.
-func (r *Reconciler) Reconcile(ctx context.Context, logger logr.Logger, client client.Client, spec *cluster.Spec) (controller.Result, error) {
-	installation, err := getInstallation(ctx, client)
+// nolint:gocyclo
+// TODO: reduce cyclomatic complexity - https://github.com/aws/eks-anywhere-internal/issues/1461
+func (r *Reconciler) Reconcile(ctx context.Context, logger logr.Logger, client client.Client, spec *cluster.Spec) (res controller.Result, reterr error) {
+	installation, err := cilium.GetInstallation(ctx, client)
 	if err != nil {
 		return controller.Result{}, err
 	}
@@ -65,7 +78,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, logger logr.Logger, client c
 	// equivilent to a typical create scenario where we must install a CNI to satisfy cluster
 	// create success criteria.
 
-	// To accommodate upgrades of cluster cerated prior to introducing markers, we check for
+	// To accommodate upgrades of cluster created prior to introducing markers, we check for
 	// an existing installation and try to mark the cluster as having already had EKS-A
 	// Cilium installed.
 	if !ciliumWasInstalled(ctx, spec.Cluster) && installation.Installed() {
@@ -88,13 +101,15 @@ func (r *Reconciler) Reconcile(ctx context.Context, logger logr.Logger, client c
 			"Applying %v annotation to Cluster object",
 			EKSACiliumInstalledAnnotation,
 		))
-		markCiliumInstalled(ctx, spec.Cluster)
 
+		markCiliumInstalled(ctx, spec.Cluster)
+		conditions.MarkTrue(spec.Cluster, anywherev1.DefaultCNIConfiguredCondition)
 		return controller.Result{}, nil
 	}
 
 	if !ciliumCfg.IsManaged() {
 		logger.Info("Cilium configured as unmanaged, skipping upgrade")
+		conditions.MarkFalse(spec.Cluster, anywherev1.DefaultCNIConfiguredCondition, anywherev1.SkipUpgradesForDefaultCNIConfiguredReason, clusterv1.ConditionSeverityWarning, "Configured to skip default Cilium CNI upgrades")
 		return controller.Result{}, nil
 	}
 
@@ -103,12 +118,13 @@ func (r *Reconciler) Reconcile(ctx context.Context, logger logr.Logger, client c
 
 	if upgradeInfo.VersionUpgradeNeeded() {
 		logger.Info("Cilium upgrade needed", "reason", upgradeInfo.Reason())
-
 		if result, err := r.upgrade(ctx, logger, client, installation, spec); err != nil {
 			return controller.Result{}, err
 		} else if result.Return() {
+			conditions.MarkFalse(spec.Cluster, anywherev1.DefaultCNIConfiguredCondition, anywherev1.DefaultCNIUpgradeInProgressReason, clusterv1.ConditionSeverityInfo, "Cilium version upgrade needed")
 			return result, nil
 		}
+
 	} else if upgradeInfo.ConfigUpdateNeeded() {
 		logger.Info("Cilium config update needed", "reason", upgradeInfo.Reason())
 		if err := r.updateConfig(ctx, client, spec); err != nil {
@@ -117,6 +133,9 @@ func (r *Reconciler) Reconcile(ctx context.Context, logger logr.Logger, client c
 	} else {
 		logger.Info("Cilium is already up to date")
 	}
+
+	// Upgrade process has run its course, and so we can now mark that the default cni has been configured.
+	conditions.MarkTrue(spec.Cluster, anywherev1.DefaultCNIConfiguredCondition)
 
 	return r.deletePreflightIfExists(ctx, client, spec)
 }
@@ -192,7 +211,18 @@ func (r *Reconciler) upgrade(ctx context.Context, logger logr.Logger, client cli
 	}
 
 	logger.Info("Applying Cilium upgrade manifest")
-	if err := serverside.ReconcileYaml(ctx, client, upgradeManifest); err != nil {
+
+	// When upgrading from Cilium v1.11.x --> Cilium v1.12.x, the port number for a few components changed but the port names remained the same.
+	// This caused "duplicate value" errors when upgrading to the new Cilium version using server-side apply because the merge key for these fields is the port number, not the name.
+	// To alleviate this issue, we will use the client.Update strategy to update the yaml to be compatible with the new version of Cilium.
+	// We are only doing this for the Cilium Service, DaemonSet, and Deployment since those are the only objects affected.
+	// The rest of the objects in the Cilium upgrade manifest will continue to be applied using server-side apply.
+	manifestObjs, err := r.reconcileSpecialCases(ctx, client, upgradeManifest)
+	if err != nil {
+		return controller.Result{}, err
+	}
+
+	if err := serverside.ReconcileObjects(ctx, client, manifestObjs); err != nil {
 		return controller.Result{}, err
 	}
 
@@ -217,7 +247,7 @@ func (r *Reconciler) applyFullManifest(ctx context.Context, client client.Client
 }
 
 func (r *Reconciler) deletePreflightIfExists(ctx context.Context, client client.Client, spec *cluster.Spec) (controller.Result, error) {
-	preFlightCiliumDS, err := getPreflightDaemonSet(ctx, client)
+	preFlightCiliumDS, err := getDaemonSet(ctx, client, cilium.PreflightDaemonSetName)
 	if err != nil {
 		return controller.Result{}, err
 	}
@@ -248,4 +278,26 @@ func (r *Reconciler) installPreflight(ctx context.Context, client client.Client,
 	}
 
 	return nil
+}
+
+func (r *Reconciler) reconcileSpecialCases(ctx context.Context, c client.Client, yaml []byte) ([]client.Object, error) {
+	objs, err := clientutil.YamlToClientObjects(yaml)
+	if err != nil {
+		return nil, err
+	}
+
+	index := 0
+	for _, o := range objs {
+		if (o.GetObjectKind().GroupVersionKind().GroupKind() == serviceKind && o.GetName() == cilium.ServiceName) ||
+			(o.GetObjectKind().GroupVersionKind().GroupKind() == daemonSetKind && o.GetName() == cilium.DaemonSetName) ||
+			(o.GetObjectKind().GroupVersionKind().GroupKind() == deploymentKind && o.GetName() == cilium.DeploymentName) {
+			if err := serverside.UpdateObject(ctx, c, o); err != nil {
+				return nil, err
+			}
+		} else {
+			objs[index] = o
+			index++
+		}
+	}
+	return objs[:index], nil
 }

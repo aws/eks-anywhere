@@ -19,7 +19,7 @@ spec:
     kind: KubeadmControlPlane
     name: test
   infrastructureRef:
-    apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
+    apiVersion: infrastructure.cluster.x-k8s.io/v1beta3
     kind: CloudStackCluster
     name: test
   managedExternalEtcdRef:
@@ -27,7 +27,7 @@ spec:
     kind: EtcdadmCluster
     name: test-etcd
 ---
-apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta3
 kind: CloudStackCluster
 metadata:
   name: test
@@ -58,7 +58,7 @@ metadata:
 spec:
   machineTemplate:
     infrastructureRef:
-      apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
+      apiVersion: infrastructure.cluster.x-k8s.io/v1beta3
       kind: CloudStackMachineTemplate
       name: test-control-plane-template-1234567890000
   kubeadmConfigSpec:
@@ -434,11 +434,11 @@ spec:
         9n5t2E4AHPen+YrGeLY1qEn9WMv0XRGWrgJyLW9VSX8T3SlWO2w3okcw
         -----END CERTIFICATE-----
   infrastructureTemplate:
-    apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
+    apiVersion: infrastructure.cluster.x-k8s.io/v1beta3
     kind: CloudStackMachineTemplate
     name: test-etcd-template-1234567890000
 ---
-apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta3
 kind: CloudStackMachineTemplate
 metadata:
   creationTimestamp: null
@@ -446,8 +446,6 @@ metadata:
   namespace: eksa-system
 spec:
   template:
-    metadata:
-      creationTimestamp: null
     spec:
       diskOffering:
         customSizeInGB: 0
@@ -462,7 +460,7 @@ spec:
         name: centos7-k8s-118
 
 ---
-apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta3
 kind: CloudStackMachineTemplate
 metadata:
   creationTimestamp: null
@@ -470,8 +468,6 @@ metadata:
   namespace: eksa-system
 spec:
   template:
-    metadata:
-      creationTimestamp: null
     spec:
       diskOffering:
         customSizeInGB: 0

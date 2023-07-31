@@ -2,6 +2,7 @@
 package e2e
 
 import (
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
@@ -42,6 +43,10 @@ const (
 	vsphereNetwork3UpdateVar            = "/SDDC-Datacenter/network/sddc-cgw-network-3"
 	vsphereInvalidResourcePoolUpdateVar = "*/Resources/INVALID-ResourcePool"
 	vsphereResourcePoolVar              = "T_VSPHERE_RESOURCE_POOL"
+	TinkerbellHardwareCountFile         = "TINKERBELL_HARDWARE_COUNT.yaml"
 )
 
-var EksaPackageControllerHelmValues = []string{"sourceRegistry=public.ecr.aws/l0g8r8j6"}
+var (
+	EksaPackageControllerHelmValues = []string{"sourceRegistry=public.ecr.aws/l0g8r8j6"}
+	KubeVersions                    = []v1alpha1.KubernetesVersion{v1alpha1.Kube123, v1alpha1.Kube124, v1alpha1.Kube125, v1alpha1.Kube126, v1alpha1.Kube127}
+)

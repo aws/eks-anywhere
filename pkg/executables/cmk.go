@@ -36,6 +36,10 @@ type Cmk struct {
 	configMap  map[string]decoder.CloudStackProfileConfig
 }
 
+type listTemplatesResponse struct {
+	CmkTemplates []cmkTemplate `json:"template"`
+}
+
 func (c *Cmk) Close(ctx context.Context) error {
 	return nil
 }
@@ -64,9 +68,7 @@ func (c *Cmk) ValidateTemplatePresent(ctx context.Context, profile string, domai
 		return fmt.Errorf("template %s not found", template)
 	}
 
-	response := struct {
-		CmkTemplates []cmkTemplate `json:"template"`
-	}{}
+	response := listTemplatesResponse{}
 	if err = json.Unmarshal(result.Bytes(), &response); err != nil {
 		return fmt.Errorf("parsing response into json: %v", err)
 	}
@@ -77,6 +79,37 @@ func (c *Cmk) ValidateTemplatePresent(ctx context.Context, profile string, domai
 		return fmt.Errorf("template %s not found", template)
 	}
 	return nil
+}
+
+// SearchTemplate looks for a template by name or by id and returns template name if found.
+func (c *Cmk) SearchTemplate(ctx context.Context, profile string, template v1alpha1.CloudStackResourceIdentifier) (string, error) {
+	command := newCmkCommand("list templates")
+	applyCmkArgs(&command, appendArgs("templatefilter=all"), appendArgs("listall=true"))
+	if len(template.Id) > 0 {
+		applyCmkArgs(&command, withCloudStackId(template.Id))
+	} else {
+		applyCmkArgs(&command, withCloudStackName(template.Name))
+	}
+
+	result, err := c.exec(ctx, profile, command...)
+	if err != nil {
+		return "", fmt.Errorf("getting templates info - %s: %v", result.String(), err)
+	}
+	if result.Len() == 0 {
+		return "", nil
+	}
+
+	response := listTemplatesResponse{}
+	if err = json.Unmarshal(result.Bytes(), &response); err != nil {
+		return "", fmt.Errorf("parsing response into json: %v", err)
+	}
+	templates := response.CmkTemplates
+	if len(templates) > 1 {
+		return "", fmt.Errorf("duplicate templates %s found", template)
+	} else if len(templates) == 0 {
+		return "", nil
+	}
+	return templates[0].Name, nil
 }
 
 func (c *Cmk) ValidateServiceOfferingPresent(ctx context.Context, profile string, zoneId string, serviceOffering v1alpha1.CloudStackResourceIdentifier) error {

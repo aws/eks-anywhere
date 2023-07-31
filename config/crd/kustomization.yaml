@@ -22,6 +22,7 @@ resources:
 - bases/anywhere.eks.amazonaws.com_snowippools.yaml
 - bases/anywhere.eks.amazonaws.com_nutanixmachineconfigs.yaml
 - bases/anywhere.eks.amazonaws.com_nutanixdatacenterconfigs.yaml
+- bases/anywhere.eks.amazonaws.com_eksareleases.yaml
 #+kubebuilder:scaffold:crdkustomizeresource
 
 patchesStrategicMerge:

@@ -6,7 +6,7 @@ import (
 	tinkerbellv1 "github.com/tinkerbell/cluster-api-provider-tinkerbell/api/v1beta1"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
-	cloudstackv1 "sigs.k8s.io/cluster-api-provider-cloudstack/api/v1beta2"
+	cloudstackv1 "sigs.k8s.io/cluster-api-provider-cloudstack/api/v1beta3"
 	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/api/v1beta1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"

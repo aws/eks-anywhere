@@ -6,7 +6,7 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
-	cloudstackv1 "sigs.k8s.io/cluster-api-provider-cloudstack/api/v1beta2"
+	cloudstackv1 "sigs.k8s.io/cluster-api-provider-cloudstack/api/v1beta3"
 
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/cluster"

@@ -26,11 +26,11 @@ func TestBuildUpgradePlan(t *testing.T) {
 			installation: &cilium.Installation{
 				DaemonSet: daemonSet("cilium:v1.0.0"),
 				Operator:  deployment("cilium-operator:v1.0.0"),
-				ConfigMap: ciliumConfigMap("default"),
+				ConfigMap: ciliumConfigMap("default", ""),
 			},
 			clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
-				s.VersionsBundle.Cilium.Cilium.URI = "cilium:v1.0.0"
-				s.VersionsBundle.Cilium.Operator.URI = "cilium-operator:v1.0.0"
+				s.VersionsBundles["1.19"].Cilium.Cilium.URI = "cilium:v1.0.0"
+				s.VersionsBundles["1.19"].Cilium.Operator.URI = "cilium-operator:v1.0.0"
 				s.Cluster.Spec.ClusterNetwork.CNIConfig = &anywherev1.CNIConfig{
 					Cilium: &anywherev1.CiliumConfig{},
 				}
@@ -51,6 +51,9 @@ func TestBuildUpgradePlan(t *testing.T) {
 							OldValue: "default",
 							NewValue: "default",
 						},
+						{
+							Name: "EgressMasqueradeInterfaces",
+						},
 					},
 				},
 			},
@@ -59,11 +62,11 @@ func TestBuildUpgradePlan(t *testing.T) {
 			name: "daemon set not installed",
 			installation: &cilium.Installation{
 				Operator:  deployment("cilium-operator:v1.0.0"),
-				ConfigMap: ciliumConfigMap("default"),
+				ConfigMap: ciliumConfigMap("default", ""),
 			},
 			clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
-				s.VersionsBundle.Cilium.Cilium.URI = "cilium:v1.0.0"
-				s.VersionsBundle.Cilium.Operator.URI = "cilium-operator:v1.0.0"
+				s.VersionsBundles["1.19"].Cilium.Cilium.URI = "cilium:v1.0.0"
+				s.VersionsBundles["1.19"].Cilium.Operator.URI = "cilium-operator:v1.0.0"
 				s.Cluster.Spec.ClusterNetwork.CNIConfig = &anywherev1.CNIConfig{
 					Cilium: &anywherev1.CiliumConfig{},
 				}
@@ -84,6 +87,9 @@ func TestBuildUpgradePlan(t *testing.T) {
 							OldValue: "default",
 							NewValue: "default",
 						},
+						{
+							Name: "EgressMasqueradeInterfaces",
+						},
 					},
 				},
 			},
@@ -93,11 +99,11 @@ func TestBuildUpgradePlan(t *testing.T) {
 			installation: &cilium.Installation{
 				DaemonSet: daemonSet("cilium:v1.0.0"),
 				Operator:  deployment("cilium-operator:v1.0.0"),
-				ConfigMap: ciliumConfigMap("default"),
+				ConfigMap: ciliumConfigMap("default", ""),
 			},
 			clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
-				s.VersionsBundle.Cilium.Cilium.URI = "cilium:v1.0.1"
-				s.VersionsBundle.Cilium.Operator.URI = "cilium-operator:v1.0.0"
+				s.VersionsBundles["1.19"].Cilium.Cilium.URI = "cilium:v1.0.1"
+				s.VersionsBundles["1.19"].Cilium.Operator.URI = "cilium-operator:v1.0.0"
 				s.Cluster.Spec.ClusterNetwork.CNIConfig = &anywherev1.CNIConfig{
 					Cilium: &anywherev1.CiliumConfig{},
 				}
@@ -119,6 +125,9 @@ func TestBuildUpgradePlan(t *testing.T) {
 							OldValue: "default",
 							NewValue: "default",
 						},
+						{
+							Name: "EgressMasqueradeInterfaces",
+						},
 					},
 				},
 			},
@@ -135,11 +144,11 @@ func TestBuildUpgradePlan(t *testing.T) {
 					}
 				}),
 				Operator:  deployment("cilium-operator:v1.0.0"),
-				ConfigMap: ciliumConfigMap("default"),
+				ConfigMap: ciliumConfigMap("default", ""),
 			},
 			clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
-				s.VersionsBundle.Cilium.Cilium.URI = "cilium:v1.0.1"
-				s.VersionsBundle.Cilium.Operator.URI = "cilium-operator:v1.0.0"
+				s.VersionsBundles["1.19"].Cilium.Cilium.URI = "cilium:v1.0.1"
+				s.VersionsBundles["1.19"].Cilium.Operator.URI = "cilium-operator:v1.0.0"
 				s.Cluster.Spec.ClusterNetwork.CNIConfig = &anywherev1.CNIConfig{
 					Cilium: &anywherev1.CiliumConfig{},
 				}
@@ -161,6 +170,9 @@ func TestBuildUpgradePlan(t *testing.T) {
 							OldValue: "default",
 							NewValue: "default",
 						},
+						{
+							Name: "EgressMasqueradeInterfaces",
+						},
 					},
 				},
 			},
@@ -169,11 +181,11 @@ func TestBuildUpgradePlan(t *testing.T) {
 			name: "operator is not present",
 			installation: &cilium.Installation{
 				DaemonSet: daemonSet("cilium:v1.0.0"),
-				ConfigMap: ciliumConfigMap("default"),
+				ConfigMap: ciliumConfigMap("default", ""),
 			},
 			clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
-				s.VersionsBundle.Cilium.Cilium.URI = "cilium:v1.0.0"
-				s.VersionsBundle.Cilium.Operator.URI = "cilium-operator:v1.0.0"
+				s.VersionsBundles["1.19"].Cilium.Cilium.URI = "cilium:v1.0.0"
+				s.VersionsBundles["1.19"].Cilium.Operator.URI = "cilium-operator:v1.0.0"
 				s.Cluster.Spec.ClusterNetwork.CNIConfig = &anywherev1.CNIConfig{
 					Cilium: &anywherev1.CiliumConfig{},
 				}
@@ -194,6 +206,9 @@ func TestBuildUpgradePlan(t *testing.T) {
 							OldValue: "default",
 							NewValue: "default",
 						},
+						{
+							Name: "EgressMasqueradeInterfaces",
+						},
 					},
 				},
 			},
@@ -205,11 +220,11 @@ func TestBuildUpgradePlan(t *testing.T) {
 				Operator: deployment("cilium-operator:v1.0.0", func(d *appsv1.Deployment) {
 					d.Spec.Template.Spec.Containers = nil
 				}),
-				ConfigMap: ciliumConfigMap("default"),
+				ConfigMap: ciliumConfigMap("default", ""),
 			},
 			clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
-				s.VersionsBundle.Cilium.Cilium.URI = "cilium:v1.0.0"
-				s.VersionsBundle.Cilium.Operator.URI = "cilium-operator:v1.0.1"
+				s.VersionsBundles["1.19"].Cilium.Cilium.URI = "cilium:v1.0.0"
+				s.VersionsBundles["1.19"].Cilium.Operator.URI = "cilium-operator:v1.0.1"
 				s.Cluster.Spec.ClusterNetwork.CNIConfig = &anywherev1.CNIConfig{
 					Cilium: &anywherev1.CiliumConfig{},
 				}
@@ -230,6 +245,9 @@ func TestBuildUpgradePlan(t *testing.T) {
 							OldValue: "default",
 							NewValue: "default",
 						},
+						{
+							Name: "EgressMasqueradeInterfaces",
+						},
 					},
 				},
 			},
@@ -239,11 +257,11 @@ func TestBuildUpgradePlan(t *testing.T) {
 			installation: &cilium.Installation{
 				DaemonSet: daemonSet("cilium:v1.0.0"),
 				Operator:  deployment("cilium-operator:v1.0.0"),
-				ConfigMap: ciliumConfigMap("default"),
+				ConfigMap: ciliumConfigMap("default", ""),
 			},
 			clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
-				s.VersionsBundle.Cilium.Cilium.URI = "cilium:v1.0.0"
-				s.VersionsBundle.Cilium.Operator.URI = "cilium-operator:v1.0.1"
+				s.VersionsBundles["1.19"].Cilium.Cilium.URI = "cilium:v1.0.0"
+				s.VersionsBundles["1.19"].Cilium.Operator.URI = "cilium-operator:v1.0.1"
 				s.Cluster.Spec.ClusterNetwork.CNIConfig = &anywherev1.CNIConfig{
 					Cilium: &anywherev1.CiliumConfig{},
 				}
@@ -265,6 +283,9 @@ func TestBuildUpgradePlan(t *testing.T) {
 							OldValue: "default",
 							NewValue: "default",
 						},
+						{
+							Name: "EgressMasqueradeInterfaces",
+						},
 					},
 				},
 			},
@@ -276,8 +297,8 @@ func TestBuildUpgradePlan(t *testing.T) {
 				Operator:  deployment("cilium-operator:v1.0.0"),
 			},
 			clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
-				s.VersionsBundle.Cilium.Cilium.URI = "cilium:v1.0.0"
-				s.VersionsBundle.Cilium.Operator.URI = "cilium-operator:v1.0.0"
+				s.VersionsBundles["1.19"].Cilium.Cilium.URI = "cilium:v1.0.0"
+				s.VersionsBundles["1.19"].Cilium.Operator.URI = "cilium-operator:v1.0.0"
 				s.Cluster.Spec.ClusterNetwork.CNIConfig = &anywherev1.CNIConfig{
 					Cilium: &anywherev1.CiliumConfig{},
 				}
@@ -298,6 +319,9 @@ func TestBuildUpgradePlan(t *testing.T) {
 							Name:     cilium.PolicyEnforcementComponentName,
 							NewValue: "default",
 						},
+						{
+							Name: "EgressMasqueradeInterfaces",
+						},
 					},
 				},
 			},
@@ -307,11 +331,11 @@ func TestBuildUpgradePlan(t *testing.T) {
 			installation: &cilium.Installation{
 				DaemonSet: daemonSet("cilium:v1.0.0"),
 				Operator:  deployment("cilium-operator:v1.0.0"),
-				ConfigMap: ciliumConfigMap("default"),
+				ConfigMap: ciliumConfigMap("default", ""),
 			},
 			clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
-				s.VersionsBundle.Cilium.Cilium.URI = "cilium:v1.0.0"
-				s.VersionsBundle.Cilium.Operator.URI = "cilium-operator:v1.0.0"
+				s.VersionsBundles["1.19"].Cilium.Cilium.URI = "cilium:v1.0.0"
+				s.VersionsBundles["1.19"].Cilium.Operator.URI = "cilium-operator:v1.0.0"
 				s.Cluster.Spec.ClusterNetwork.CNIConfig = &anywherev1.CNIConfig{
 					Cilium: &anywherev1.CiliumConfig{
 						PolicyEnforcementMode: anywherev1.CiliumPolicyModeAlways,
@@ -336,6 +360,9 @@ func TestBuildUpgradePlan(t *testing.T) {
 							NewValue:     "always",
 							UpdateReason: "Cilium enable-policy changed: [default] -> [always]",
 						},
+						{
+							Name: "EgressMasqueradeInterfaces",
+						},
 					},
 				},
 			},
@@ -345,13 +372,13 @@ func TestBuildUpgradePlan(t *testing.T) {
 			installation: &cilium.Installation{
 				DaemonSet: daemonSet("cilium:v1.0.0"),
 				Operator:  deployment("cilium-operator:v1.0.0"),
-				ConfigMap: ciliumConfigMap("default", func(cm *corev1.ConfigMap) {
+				ConfigMap: ciliumConfigMap("default", "", func(cm *corev1.ConfigMap) {
 					cm.Data = nil
 				}),
 			},
 			clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
-				s.VersionsBundle.Cilium.Cilium.URI = "cilium:v1.0.0"
-				s.VersionsBundle.Cilium.Operator.URI = "cilium-operator:v1.0.0"
+				s.VersionsBundles["1.19"].Cilium.Cilium.URI = "cilium:v1.0.0"
+				s.VersionsBundles["1.19"].Cilium.Operator.URI = "cilium-operator:v1.0.0"
 				s.Cluster.Spec.ClusterNetwork.CNIConfig = &anywherev1.CNIConfig{
 					Cilium: &anywherev1.CiliumConfig{
 						PolicyEnforcementMode: anywherev1.CiliumPolicyModeAlways,
@@ -375,6 +402,98 @@ func TestBuildUpgradePlan(t *testing.T) {
 							OldValue:     "",
 							NewValue:     "always",
 							UpdateReason: "Cilium enable-policy field is not present in config",
+						},
+						{
+							Name: "EgressMasqueradeInterfaces",
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "EgressMasqueradeInterfaces has changed",
+			installation: &cilium.Installation{
+				DaemonSet: daemonSet("cilium:v1.0.0"),
+				Operator:  deployment("cilium-operator:v1.0.0"),
+				ConfigMap: ciliumConfigMap("default", "old"),
+			},
+			clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
+				s.VersionsBundles["1.19"].Cilium.Cilium.URI = "cilium:v1.0.0"
+				s.VersionsBundles["1.19"].Cilium.Operator.URI = "cilium-operator:v1.0.0"
+				s.Cluster.Spec.ClusterNetwork.CNIConfig = &anywherev1.CNIConfig{
+					Cilium: &anywherev1.CiliumConfig{
+						EgressMasqueradeInterfaces: "new",
+					},
+				}
+			}),
+			want: cilium.UpgradePlan{
+				DaemonSet: cilium.VersionedComponentUpgradePlan{
+					OldImage: "cilium:v1.0.0",
+					NewImage: "cilium:v1.0.0",
+				},
+				Operator: cilium.VersionedComponentUpgradePlan{
+					OldImage: "cilium-operator:v1.0.0",
+					NewImage: "cilium-operator:v1.0.0",
+				},
+				ConfigMap: cilium.ConfigUpdatePlan{
+					UpdateReason: "Egress masquerade interfaces changed: [old] -> [new]",
+					Components: []cilium.ConfigComponentUpdatePlan{
+						{
+							Name:     cilium.PolicyEnforcementComponentName,
+							OldValue: "default",
+							NewValue: "default",
+						},
+						{
+							Name:         cilium.EgressMasqueradeInterfacesComponentName,
+							OldValue:     "old",
+							NewValue:     "new",
+							UpdateReason: "Egress masquerade interfaces changed: [old] -> [new]",
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "EgressMasqueradeInterfaces not present in config",
+			installation: &cilium.Installation{
+				DaemonSet: daemonSet("cilium:v1.0.0"),
+				Operator:  deployment("cilium-operator:v1.0.0"),
+				ConfigMap: ciliumConfigMap("default", "", func(cm *corev1.ConfigMap) {
+					cm.Data = nil
+				}),
+			},
+			clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
+				s.VersionsBundles["1.19"].Cilium.Cilium.URI = "cilium:v1.0.0"
+				s.VersionsBundles["1.19"].Cilium.Operator.URI = "cilium-operator:v1.0.0"
+				s.Cluster.Spec.ClusterNetwork.CNIConfig = &anywherev1.CNIConfig{
+					Cilium: &anywherev1.CiliumConfig{
+						EgressMasqueradeInterfaces: "new",
+					},
+				}
+			}),
+			want: cilium.UpgradePlan{
+				DaemonSet: cilium.VersionedComponentUpgradePlan{
+					OldImage: "cilium:v1.0.0",
+					NewImage: "cilium:v1.0.0",
+				},
+				Operator: cilium.VersionedComponentUpgradePlan{
+					OldImage: "cilium-operator:v1.0.0",
+					NewImage: "cilium-operator:v1.0.0",
+				},
+				ConfigMap: cilium.ConfigUpdatePlan{
+					UpdateReason: "Cilium enable-policy field is not present in config - Egress masquerade interfaces field is not present in config but is configured in cluster spec",
+					Components: []cilium.ConfigComponentUpdatePlan{
+						{
+							Name:         cilium.PolicyEnforcementComponentName,
+							OldValue:     "",
+							NewValue:     "default",
+							UpdateReason: "Cilium enable-policy field is not present in config",
+						},
+						{
+							Name:         cilium.EgressMasqueradeInterfacesComponentName,
+							OldValue:     "",
+							NewValue:     "new",
+							UpdateReason: "Egress masquerade interfaces field is not present in config but is configured in cluster spec",
 						},
 					},
 				},
@@ -442,7 +561,7 @@ func daemonSet(image string, opts ...dsOpt) *appsv1.DaemonSet {
 
 type cmOpt func(*corev1.ConfigMap)
 
-func ciliumConfigMap(enforcementMode string, opts ...cmOpt) *corev1.ConfigMap {
+func ciliumConfigMap(enforcementMode string, egressMasqueradeInterface string, opts ...cmOpt) *corev1.ConfigMap {
 	cm := &corev1.ConfigMap{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "v1",
@@ -453,7 +572,8 @@ func ciliumConfigMap(enforcementMode string, opts ...cmOpt) *corev1.ConfigMap {
 			Namespace: "kube-system",
 		},
 		Data: map[string]string{
-			cilium.PolicyEnforcementConfigMapKey: enforcementMode,
+			cilium.PolicyEnforcementConfigMapKey:    enforcementMode,
+			cilium.EgressMasqueradeInterfacesMapKey: egressMasqueradeInterface,
 		},
 	}
 

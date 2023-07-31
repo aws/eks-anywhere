@@ -34,8 +34,8 @@ func newInstallerTest(t *testing.T) installerTest {
 
 	currentSpec := test.NewClusterSpec(func(s *cluster.Spec) {
 		s.Bundles.Spec.Number = 1
-		s.VersionsBundle.ExternalEtcdBootstrap.Version = "v0.1.0"
-		s.VersionsBundle.ExternalEtcdController.Version = "v0.1.0"
+		s.VersionsBundles["1.19"].ExternalEtcdBootstrap.Version = "v0.1.0"
+		s.VersionsBundles["1.19"].ExternalEtcdController.Version = "v0.1.0"
 	})
 
 	return installerTest{

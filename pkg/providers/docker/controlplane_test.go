@@ -317,28 +317,30 @@ func testClusterSpec(opts ...test.ClusterSpecOpt) *cluster.Spec {
 			},
 		}
 
-		s.VersionsBundle = &cluster.VersionsBundle{
-			KubeDistro: &cluster.KubeDistro{
-				Kubernetes: cluster.VersionedRepository{
-					Repository: "public.ecr.aws/eks-distro/kubernetes",
-					Tag:        "v1.23.12-eks-1-23-6",
+		s.VersionsBundles = map[anywherev1.KubernetesVersion]*cluster.VersionsBundle{
+			"1.23": {
+				KubeDistro: &cluster.KubeDistro{
+					Kubernetes: cluster.VersionedRepository{
+						Repository: "public.ecr.aws/eks-distro/kubernetes",
+						Tag:        "v1.23.12-eks-1-23-6",
+					},
+					CoreDNS: cluster.VersionedRepository{
+						Repository: "public.ecr.aws/eks-distro/coredns",
+						Tag:        "v1.8.7-eks-1-23-6",
+					},
+					Etcd: cluster.VersionedRepository{
+						Repository: "public.ecr.aws/eks-distro/etcd-io",
+						Tag:        "v3.5.4-eks-1-23-6",
+					},
+					EtcdVersion: "3.5.4",
 				},
-				CoreDNS: cluster.VersionedRepository{
-					Repository: "public.ecr.aws/eks-distro/coredns",
-					Tag:        "v1.8.7-eks-1-23-6",
-				},
-				Etcd: cluster.VersionedRepository{
-					Repository: "public.ecr.aws/eks-distro/etcd-io",
-					Tag:        "v3.5.4-eks-1-23-6",
-				},
-				EtcdVersion: "3.5.4",
-			},
-			VersionsBundle: &releasev1alpha1.VersionsBundle{
-				EksD: releasev1alpha1.EksDRelease{
-					KindNode: releasev1alpha1.Image{
-						Description: "kind/node container image",
-						Name:        "kind/node",
-						URI:         "public.ecr.aws/eks-anywhere/kubernetes-sigs/kind/node:v1.23.12-eks-d-1-23-6-eks-a-19",
+				VersionsBundle: &releasev1alpha1.VersionsBundle{
+					EksD: releasev1alpha1.EksDRelease{
+						KindNode: releasev1alpha1.Image{
+							Description: "kind/node container image",
+							Name:        "kind/node",
+							URI:         "public.ecr.aws/eks-anywhere/kubernetes-sigs/kind/node:v1.23.12-eks-d-1-23-6-eks-a-19",
+						},
 					},
 				},
 			},

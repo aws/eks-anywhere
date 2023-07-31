@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/aws/eks-anywhere/internal/pkg/api"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/types"
@@ -24,14 +25,12 @@ type eksaPackagedBinary interface {
 // runFlowUpgradeManagementClusterCheckForSideEffects creates management and workload cluster
 // with a specific eks-a version then upgrades the management cluster with another CLI version
 // and checks that this doesn't cause any side effects (machine rollout) in the workload clusters.
-func runFlowUpgradeManagementClusterCheckForSideEffects(test *framework.MulticlusterE2ETest, currentEKSA, newEKSA eksaPackagedBinary) {
+func runFlowUpgradeManagementClusterCheckForSideEffects(test *framework.MulticlusterE2ETest, currentEKSA, newEKSA eksaPackagedBinary, clusterOpts ...framework.ClusterE2ETestOpt) {
 	test.T.Logf("Creating management cluster with EKS-A version %s", currentEKSA.Version())
-	test.ManagementCluster.GenerateClusterConfigForVersion(currentEKSA.Version(), framework.ExecuteWithBinary(currentEKSA))
 	test.CreateManagementCluster(framework.ExecuteWithBinary(currentEKSA))
 
 	test.T.Logf("Creating workload clusters with EKS-A version %s", currentEKSA.Version())
 	test.RunInWorkloadClusters(func(w *framework.WorkloadCluster) {
-		w.GenerateClusterConfigForVersion(currentEKSA.Version(), framework.ExecuteWithBinary(currentEKSA))
 		w.CreateCluster(framework.ExecuteWithBinary(currentEKSA))
 	})
 
@@ -42,7 +41,7 @@ func runFlowUpgradeManagementClusterCheckForSideEffects(test *framework.Multiclu
 	printStateOfMachines(test.ManagementCluster.ClusterConfig.Cluster, preUpgradeWorkloadClustersState)
 
 	test.T.Logf("Upgrading management cluster with EKS-A version %s", newEKSA.Version())
-	test.ManagementCluster.UpgradeCluster(framework.ExecuteWithBinary(newEKSA))
+	test.ManagementCluster.UpgradeClusterWithNewConfig(clusterOpts, framework.ExecuteWithBinary(newEKSA))
 
 	checker := machineSideEffectChecker{
 		tb:                 test.T,
@@ -76,7 +75,7 @@ type clusterWithMachines struct {
 
 type clusterMachines map[string]types.Machine
 
-func anyMachinesChanged(original clusterMachines, current clusterMachines) (changed bool, reason string) {
+func anyMachinesChanged(original, current clusterMachines) (changed bool, reason string) {
 	if len(original) != len(current) {
 		return true, fmt.Sprintf("Different number of machines: before %d, after %d", len(original), len(current))
 	}
@@ -204,4 +203,57 @@ func newEKSAPackagedBinaryForLocalBinary(tb testing.TB) eksaPackagedBinary {
 		path:    path,
 		version: version,
 	}
+}
+
+func runTestManagementClusterUpgradeSideEffects(t *testing.T, provider framework.Provider, os framework.OS, kubeVersion anywherev1.KubernetesVersion, configFillers ...api.ClusterConfigFiller) {
+	latestRelease := latestMinorRelease(t)
+
+	managementCluster := framework.NewClusterE2ETest(t, provider, framework.PersistentCluster())
+	managementCluster.GenerateClusterConfigForVersion(latestRelease.Version, framework.ExecuteWithEksaRelease(latestRelease))
+	managementCluster.UpdateClusterConfig(
+		api.ClusterToConfigFiller(
+			api.WithControlPlaneCount(1),
+			api.WithWorkerNodeCount(1),
+			api.WithEtcdCountIfExternal(1),
+		),
+		provider.WithKubeVersionAndOS(kubeVersion, os, latestRelease),
+		api.JoinClusterConfigFillers(
+			configFillers...,
+		),
+	)
+
+	test := framework.NewMulticlusterE2ETest(t, managementCluster)
+
+	workloadCluster := framework.NewClusterE2ETest(t, provider,
+		framework.WithClusterName(test.NewWorkloadClusterName()),
+	)
+	workloadCluster.GenerateClusterConfigForVersion(latestRelease.Version, framework.ExecuteWithEksaRelease(latestRelease))
+	workloadCluster.UpdateClusterConfig(api.ClusterToConfigFiller(
+		api.WithManagementCluster(managementCluster.ClusterName),
+		api.WithControlPlaneCount(2),
+		api.WithControlPlaneLabel("cluster.x-k8s.io/failure-domain", "ds.meta_data.failuredomain"),
+		api.RemoveAllWorkerNodeGroups(),
+		api.WithWorkerNodeGroup("workers-0",
+			api.WithCount(3),
+			api.WithLabel("cluster.x-k8s.io/failure-domain", "ds.meta_data.failuredomain"),
+		),
+		api.WithEtcdCountIfExternal(3),
+		api.WithCiliumPolicyEnforcementMode(anywherev1.CiliumPolicyModeAlways)),
+		provider.WithNewWorkerNodeGroup("workers-0",
+			framework.WithWorkerNodeGroup("workers-0",
+				api.WithCount(2),
+				api.WithLabel("cluster.x-k8s.io/failure-domain", "ds.meta_data.failuredomain"))),
+		framework.WithOIDCClusterConfig(t),
+		provider.WithKubeVersionAndOS(kubeVersion, os, latestRelease),
+		api.JoinClusterConfigFillers(
+			configFillers...,
+		),
+	)
+	test.WithWorkloadClusters(workloadCluster)
+
+	runFlowUpgradeManagementClusterCheckForSideEffects(test,
+		framework.NewEKSAReleasePackagedBinary(latestRelease),
+		newEKSAPackagedBinaryForLocalBinary(t),
+		framework.WithUpgradeClusterConfig(provider.WithKubeVersionAndOS(kubeVersion, os, nil)),
+	)
 }

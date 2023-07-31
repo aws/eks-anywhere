@@ -36,7 +36,6 @@ type CommandContext struct {
 	EksdInstaller             interfaces.EksdInstaller
 	PackageInstaller          interfaces.PackageInstaller
 	EksdUpgrader              interfaces.EksdUpgrader
-	ClusterUpgrader           interfaces.ClusterUpgrader
 	CAPIManager               interfaces.CAPIManager
 	ClusterSpec               *cluster.Spec
 	CurrentClusterSpec        *cluster.Spec
@@ -47,6 +46,7 @@ type CommandContext struct {
 	Profiler                  *Profiler
 	OriginalError             error
 	ManagementClusterStateDir string
+	ForceCleanup              bool
 }
 
 func (c *CommandContext) SetError(err error) {

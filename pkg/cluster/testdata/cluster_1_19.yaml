@@ -24,6 +24,13 @@ spec:
   kubernetesVersion: "1.19"
   workerNodeGroupConfigurations:
     - name: workers-1
+      kubernetesVersion: "1.19"
+      count: 1
+      machineGroupRef:
+        kind: VSphereMachineConfig
+        name: eksa-unit-test
+    - name: workers-2
+      kubernetesVersion: "1.20"
       count: 1
       machineGroupRef:
         kind: VSphereMachineConfig

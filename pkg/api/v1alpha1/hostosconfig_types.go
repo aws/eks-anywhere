@@ -9,6 +9,9 @@ type HostOSConfiguration struct {
 
 	// +optional
 	BottlerocketConfiguration *BottlerocketConfiguration `json:"bottlerocketConfiguration,omitempty"`
+
+	// +optional
+	CertBundles []certBundle `json:"certBundles,omitempty"`
 }
 
 // NTPConfiguration defines the NTP configuration on the host OS.
@@ -29,4 +32,13 @@ type BottlerocketConfiguration struct {
 
 	// Boot defines the boot settings for bottlerocket.
 	Boot *v1beta1.BottlerocketBootSettings `json:"boot,omitempty"`
+}
+
+// Cert defines additional trusted cert bundles on the host OS.
+type certBundle struct {
+	// Name defines the cert bundle name.
+	Name string `json:"name"`
+
+	// Data defines the cert bundle data.
+	Data string `json:"data"`
 }

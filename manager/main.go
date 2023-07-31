@@ -20,7 +20,7 @@ import (
 	logsv1 "k8s.io/component-base/logs/api/v1"
 	_ "k8s.io/component-base/logs/json/register"
 	"k8s.io/klog/v2"
-	cloudstackv1 "sigs.k8s.io/cluster-api-provider-cloudstack/api/v1beta2"
+	cloudstackv1 "sigs.k8s.io/cluster-api-provider-cloudstack/api/v1beta3"
 	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/api/v1beta1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	kubeadmv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
@@ -153,23 +153,7 @@ type closable interface {
 	Close(ctx context.Context) error
 }
 
-type noOpCloser struct{}
-
-func (c noOpCloser) Close(ctx context.Context) error {
-	return nil
-}
-
 func setupReconcilers(ctx context.Context, setupLog logr.Logger, mgr ctrl.Manager) closable {
-	if features.IsActive(features.FullLifecycleAPI()) {
-		return setupFullLifecycleReconcilers(ctx, setupLog, mgr)
-	}
-
-	setupLog.Info("Setting up legacy cluster controller")
-	setupLegacyClusterReconciler(setupLog, mgr)
-	return noOpCloser{}
-}
-
-func setupFullLifecycleReconcilers(ctx context.Context, setupLog logr.Logger, mgr ctrl.Manager) closable {
 	setupLog.Info("Reading CAPI providers")
 	providers, err := clusterapi.GetProviders(ctx, mgr.GetAPIReader())
 	if err != nil {
@@ -236,17 +220,6 @@ func setupFullLifecycleReconcilers(ctx context.Context, setupLog logr.Logger, mg
 	}
 
 	return factory
-}
-
-func setupLegacyClusterReconciler(setupLog logr.Logger, mgr ctrl.Manager) {
-	if err := (controllers.NewClusterReconcilerLegacy(
-		mgr.GetClient(),
-		ctrl.Log.WithName("controllers").WithName(anywherev1.ClusterKind),
-		mgr.GetScheme(),
-	)).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create legacy cluster controller", "controller", anywherev1.ClusterKind)
-		os.Exit(1)
-	}
 }
 
 func setupWebhooks(setupLog logr.Logger, mgr ctrl.Manager) {

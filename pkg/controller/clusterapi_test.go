@@ -96,6 +96,57 @@ func TestGetMachineDeploymentMissingMD(t *testing.T) {
 	g.Expect(controller.GetMachineDeployment(ctx, client, "test")).To(BeNil())
 }
 
+func TestGetMachineDeploymentsSuccess(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+	eksaCluster := eksaCluster()
+	md1 := machineDeployment()
+	md1.Name = "md-1"
+
+	md1.Labels = map[string]string{
+		clusterv1.ClusterNameLabel: eksaCluster.Name,
+	}
+
+	md2 := md1.DeepCopy()
+	md2.Name = "md-2"
+
+	client := fake.NewClientBuilder().WithObjects(eksaCluster, md1, md2).Build()
+
+	g.Expect(controller.GetMachineDeployments(ctx, client, eksaCluster)).To(Equal([]clusterv1.MachineDeployment{*md1, *md2}))
+}
+
+func TestGetMachineDeploymentsMachineDeploymentsInDifferentClusters(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+	eksaCluster := eksaCluster()
+	machineDeployment1 := machineDeployment()
+	machineDeployment1.Name = "md-1"
+	machineDeployment1.Labels = map[string]string{
+		clusterv1.ClusterNameLabel: eksaCluster.Name,
+	}
+
+	machineDeployment2 := machineDeployment()
+	machineDeployment2.Name = "md-2"
+	machineDeployment2.Labels = map[string]string{
+		clusterv1.ClusterNameLabel: "other-cluster",
+	}
+
+	client := fake.NewClientBuilder().WithObjects(eksaCluster, machineDeployment1, machineDeployment2).Build()
+
+	g.Expect(controller.GetMachineDeployments(ctx, client, eksaCluster)).To(Equal([]clusterv1.MachineDeployment{*machineDeployment1}))
+}
+
+func TestGetMachineDeploymentsError(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+	eksaCluster := eksaCluster()
+	// This should make the client fail because CRDs are not registered
+	client := fake.NewClientBuilder().WithScheme(runtime.NewScheme()).Build()
+
+	_, err := controller.GetMachineDeployments(ctx, client, eksaCluster)
+	g.Expect(err).To(MatchError(ContainSubstring("no kind is registered for the type")))
+}
+
 func TestGetMachineDeploymentError(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()

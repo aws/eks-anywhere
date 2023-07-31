@@ -5,116 +5,372 @@
 package e2e
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
 // Curated packages
-func kubeVersionNutanixOpt(version v1alpha1.KubernetesVersion) framework.NutanixOpt {
-	switch version {
-	case v1alpha1.Kube123:
-		return framework.WithUbuntu123Nutanix()
-	case v1alpha1.Kube124:
-		return framework.WithUbuntu124Nutanix()
-	case v1alpha1.Kube125:
-		return framework.WithUbuntu125Nutanix()
-	case v1alpha1.Kube126:
-		return framework.WithUbuntu126Nutanix()
-	case v1alpha1.Kube127:
-		return framework.WithUbuntu127Nutanix()
-	default:
-		panic(fmt.Sprintf("unsupported version: %v", version))
-	}
+func TestNutanixKubernetes127UbuntuCuratedPackagesSimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(t,
+		framework.NewNutanix(t, framework.WithUbuntu127Nutanix()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127)),
+		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube127),
+			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
+	)
+	runCuratedPackageInstallSimpleFlow(test)
 }
 
-func TestNutanixCuratedPackagesSimpleFlow(t *testing.T) {
-	for _, version := range KubeVersions {
-		test := framework.NewClusterE2ETest(t,
-			framework.NewNutanix(t, kubeVersionNutanixOpt(version)),
-			framework.WithClusterFiller(api.WithKubernetesVersion(version)),
-			framework.WithPackageConfig(t, packageBundleURI(version),
-				EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-				EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
-		)
-		runCuratedPackageInstallSimpleFlow(test)
-	}
+func TestNutanixKubernetes127UbuntuCuratedPackagesEmissarySimpleFlow(t *testing.T) {
+	framework.CheckCuratedPackagesCredentials(t)
+	test := framework.NewClusterE2ETest(t,
+		framework.NewNutanix(t, framework.WithUbuntu127Nutanix()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127)),
+		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube127),
+			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
+	)
+	runCuratedPackageEmissaryInstallSimpleFlow(test)
 }
 
-func TestNutanixCuratedPackagesEmissarySimpleFlow(t *testing.T) {
-	for _, version := range KubeVersions {
-		framework.CheckCuratedPackagesCredentials(t)
-		test := framework.NewClusterE2ETest(t,
-			framework.NewNutanix(t, kubeVersionNutanixOpt(version)),
-			framework.WithClusterFiller(api.WithKubernetesVersion(version)),
-			framework.WithPackageConfig(t, packageBundleURI(version),
-				EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-				EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
-		)
-		runCuratedPackageEmissaryInstallSimpleFlow(test)
-	}
+func TestNutanixKubernetes127UbuntuCuratedPackagesHarborSimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(t,
+		framework.NewNutanix(t, framework.WithUbuntu127Nutanix()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127)),
+		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube127),
+			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
+	)
+	runCuratedPackageHarborInstallSimpleFlowLocalStorageProvisioner(test)
 }
 
-func TestNutanixCuratedPackagesHarborSimpleFlow(t *testing.T) {
-	for _, version := range KubeVersions {
-		framework.CheckCuratedPackagesCredentials(t)
-		test := framework.NewClusterE2ETest(t,
-			framework.NewNutanix(t, kubeVersionNutanixOpt(version)),
-			framework.WithClusterFiller(api.WithKubernetesVersion(version)),
-			framework.WithPackageConfig(t, packageBundleURI(version),
-				EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-				EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
-		)
-		runCuratedPackageHarborInstallSimpleFlowLocalStorageProvisioner(test)
-	}
+func TestNutanixKubernetes127UbuntuCuratedPackagesAdotSimpleFlow(t *testing.T) {
+	framework.CheckCuratedPackagesCredentials(t)
+	test := framework.NewClusterE2ETest(t,
+		framework.NewNutanix(t, framework.WithUbuntu127Nutanix()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127)),
+		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube127),
+			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
+	)
+	runCuratedPackagesAdotInstallSimpleFlow(test)
 }
 
-func TestNutanixCuratedPackagesAdotUpdateFlow(t *testing.T) {
-	for _, version := range KubeVersions {
-		framework.CheckCuratedPackagesCredentials(t)
-		test := framework.NewClusterE2ETest(t,
-			framework.NewNutanix(t, kubeVersionNutanixOpt(version)),
-			framework.WithClusterFiller(api.WithKubernetesVersion(version)),
-			framework.WithPackageConfig(t, packageBundleURI(version),
-				EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-				EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
-		)
-		runCuratedPackagesAdotInstallUpdateFlow(test)
-	}
+func TestNutanixKubernetes127UbuntuCuratedPackagesPrometheusSimpleFlow(t *testing.T) {
+	framework.CheckCuratedPackagesCredentials(t)
+	test := framework.NewClusterE2ETest(t,
+		framework.NewNutanix(t, framework.WithUbuntu127Nutanix()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127)),
+		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube127),
+			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
+	)
+	runCuratedPackagesPrometheusInstallSimpleFlow(test)
 }
 
-func TestNutanixCuratedPackagesClusterAutoscalerSimpleFlow(t *testing.T) {
+func TestNutanixKubernetes127UbuntuCuratedPackagesClusterAutoscalerSimpleFlow(t *testing.T) {
 	minNodes := 1
 	maxNodes := 2
-	for _, version := range KubeVersions {
-		framework.CheckCuratedPackagesCredentials(t)
-		test := framework.NewClusterE2ETest(t,
-			framework.NewNutanix(t, kubeVersionNutanixOpt(version)),
-			framework.WithClusterFiller(api.WithKubernetesVersion(version), api.WithWorkerNodeAutoScalingConfig(minNodes, maxNodes)),
-			framework.WithPackageConfig(t, packageBundleURI(version),
-				EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-				EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
-		)
-		runAutoscalerWithMetricsServerSimpleFlow(test)
-	}
+	framework.CheckCuratedPackagesCredentials(t)
+	test := framework.NewClusterE2ETest(t,
+		framework.NewNutanix(t, framework.WithUbuntu127Nutanix()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127), api.WithWorkerNodeAutoScalingConfig(minNodes, maxNodes)),
+		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube127),
+			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
+	)
+	runAutoscalerWithMetricsServerSimpleFlow(test)
 }
 
-func TestNutanixCuratedPackagesPrometheusSimpleFlow(t *testing.T) {
-	for _, version := range KubeVersions {
-		framework.CheckCuratedPackagesCredentials(t)
-		test := framework.NewClusterE2ETest(t,
-			framework.NewNutanix(t, kubeVersionNutanixOpt(version)),
-			framework.WithClusterFiller(api.WithKubernetesVersion(version)),
-			framework.WithPackageConfig(t, packageBundleURI(version),
-				EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-				EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
-		)
-		runCuratedPackagesPrometheusInstallSimpleFlow(test)
-	}
+func TestNutanixKubernetes126UbuntuCuratedPackagesSimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(t,
+		framework.NewNutanix(t, framework.WithUbuntu126Nutanix()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube126)),
+		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube126),
+			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
+	)
+	runCuratedPackageInstallSimpleFlow(test)
+}
+
+func TestNutanixKubernetes126UbuntuCuratedPackagesEmissarySimpleFlow(t *testing.T) {
+	framework.CheckCuratedPackagesCredentials(t)
+	test := framework.NewClusterE2ETest(t,
+		framework.NewNutanix(t, framework.WithUbuntu126Nutanix()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube126)),
+		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube126),
+			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
+	)
+	runCuratedPackageEmissaryInstallSimpleFlow(test)
+}
+
+func TestNutanixKubernetes126UbuntuCuratedPackagesHarborSimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(t,
+		framework.NewNutanix(t, framework.WithUbuntu126Nutanix()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube126)),
+		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube126),
+			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
+	)
+	runCuratedPackageHarborInstallSimpleFlowLocalStorageProvisioner(test)
+}
+
+func TestNutanixKubernetes126UbuntuCuratedPackagesAdotSimpleFlow(t *testing.T) {
+	framework.CheckCuratedPackagesCredentials(t)
+	test := framework.NewClusterE2ETest(t,
+		framework.NewNutanix(t, framework.WithUbuntu126Nutanix()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube126)),
+		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube126),
+			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
+	)
+	runCuratedPackagesAdotInstallSimpleFlow(test)
+}
+
+func TestNutanixKubernetes126UbuntuCuratedPackagesPrometheusSimpleFlow(t *testing.T) {
+	framework.CheckCuratedPackagesCredentials(t)
+	test := framework.NewClusterE2ETest(t,
+		framework.NewNutanix(t, framework.WithUbuntu126Nutanix()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube126)),
+		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube126),
+			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
+	)
+	runCuratedPackagesPrometheusInstallSimpleFlow(test)
+}
+
+func TestNutanixKubernetes126UbuntuCuratedPackagesClusterAutoscalerSimpleFlow(t *testing.T) {
+	minNodes := 1
+	maxNodes := 2
+	framework.CheckCuratedPackagesCredentials(t)
+	test := framework.NewClusterE2ETest(t,
+		framework.NewNutanix(t, framework.WithUbuntu126Nutanix()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube126), api.WithWorkerNodeAutoScalingConfig(minNodes, maxNodes)),
+		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube126),
+			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
+	)
+	runAutoscalerWithMetricsServerSimpleFlow(test)
+}
+
+func TestNutanixKubernetes125UbuntuCuratedPackagesSimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(t,
+		framework.NewNutanix(t, framework.WithUbuntu125Nutanix()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
+		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube125),
+			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
+	)
+	runCuratedPackageInstallSimpleFlow(test)
+}
+
+func TestNutanixKubernetes125UbuntuCuratedPackagesEmissarySimpleFlow(t *testing.T) {
+	framework.CheckCuratedPackagesCredentials(t)
+	test := framework.NewClusterE2ETest(t,
+		framework.NewNutanix(t, framework.WithUbuntu125Nutanix()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
+		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube125),
+			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
+	)
+	runCuratedPackageEmissaryInstallSimpleFlow(test)
+}
+
+func TestNutanixKubernetes125UbuntuCuratedPackagesHarborSimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(t,
+		framework.NewNutanix(t, framework.WithUbuntu125Nutanix()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
+		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube125),
+			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
+	)
+	runCuratedPackageHarborInstallSimpleFlowLocalStorageProvisioner(test)
+}
+
+func TestNutanixKubernetes125UbuntuCuratedPackagesAdotSimpleFlow(t *testing.T) {
+	framework.CheckCuratedPackagesCredentials(t)
+	test := framework.NewClusterE2ETest(t,
+		framework.NewNutanix(t, framework.WithUbuntu125Nutanix()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
+		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube125),
+			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
+	)
+	runCuratedPackagesAdotInstallSimpleFlow(test)
+}
+
+func TestNutanixKubernetes125UbuntuCuratedPackagesPrometheusSimpleFlow(t *testing.T) {
+	framework.CheckCuratedPackagesCredentials(t)
+	test := framework.NewClusterE2ETest(t,
+		framework.NewNutanix(t, framework.WithUbuntu125Nutanix()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
+		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube125),
+			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
+	)
+	runCuratedPackagesPrometheusInstallSimpleFlow(test)
+}
+
+func TestNutanixKubernetes125UbuntuCuratedPackagesClusterAutoscalerSimpleFlow(t *testing.T) {
+	minNodes := 1
+	maxNodes := 2
+	framework.CheckCuratedPackagesCredentials(t)
+	test := framework.NewClusterE2ETest(t,
+		framework.NewNutanix(t, framework.WithUbuntu125Nutanix()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125), api.WithWorkerNodeAutoScalingConfig(minNodes, maxNodes)),
+		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube125),
+			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
+	)
+	runAutoscalerWithMetricsServerSimpleFlow(test)
+}
+
+func TestNutanixKubernetes124UbuntuCuratedPackagesSimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(t,
+		framework.NewNutanix(t, framework.WithUbuntu124Nutanix()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
+		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube124),
+			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
+	)
+	runCuratedPackageInstallSimpleFlow(test)
+}
+
+func TestNutanixKubernetes124UbuntuCuratedPackagesEmissarySimpleFlow(t *testing.T) {
+	framework.CheckCuratedPackagesCredentials(t)
+	test := framework.NewClusterE2ETest(t,
+		framework.NewNutanix(t, framework.WithUbuntu124Nutanix()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
+		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube124),
+			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
+	)
+	runCuratedPackageEmissaryInstallSimpleFlow(test)
+}
+
+func TestNutanixKubernetes124UbuntuCuratedPackagesHarborSimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(t,
+		framework.NewNutanix(t, framework.WithUbuntu124Nutanix()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
+		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube124),
+			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
+	)
+	runCuratedPackageHarborInstallSimpleFlowLocalStorageProvisioner(test)
+}
+
+func TestNutanixKubernetes124UbuntuCuratedPackagesAdotSimpleFlow(t *testing.T) {
+	framework.CheckCuratedPackagesCredentials(t)
+	test := framework.NewClusterE2ETest(t,
+		framework.NewNutanix(t, framework.WithUbuntu124Nutanix()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
+		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube124),
+			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
+	)
+	runCuratedPackagesAdotInstallSimpleFlow(test)
+}
+
+func TestNutanixKubernetes124UbuntuCuratedPackagesPrometheusSimpleFlow(t *testing.T) {
+	framework.CheckCuratedPackagesCredentials(t)
+	test := framework.NewClusterE2ETest(t,
+		framework.NewNutanix(t, framework.WithUbuntu124Nutanix()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
+		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube124),
+			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
+	)
+	runCuratedPackagesPrometheusInstallSimpleFlow(test)
+}
+
+func TestNutanixKubernetes124UbuntuCuratedPackagesClusterAutoscalerSimpleFlow(t *testing.T) {
+	minNodes := 1
+	maxNodes := 2
+	framework.CheckCuratedPackagesCredentials(t)
+	test := framework.NewClusterE2ETest(t,
+		framework.NewNutanix(t, framework.WithUbuntu124Nutanix()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124), api.WithWorkerNodeAutoScalingConfig(minNodes, maxNodes)),
+		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube124),
+			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
+	)
+	runAutoscalerWithMetricsServerSimpleFlow(test)
+}
+
+func TestNutanixKubernetes123UbuntuCuratedPackagesSimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(t,
+		framework.NewNutanix(t, framework.WithUbuntu123Nutanix()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123)),
+		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube123),
+			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
+	)
+	runCuratedPackageInstallSimpleFlow(test)
+}
+
+func TestNutanixKubernetes123UbuntuCuratedPackagesEmissarySimpleFlow(t *testing.T) {
+	framework.CheckCuratedPackagesCredentials(t)
+	test := framework.NewClusterE2ETest(t,
+		framework.NewNutanix(t, framework.WithUbuntu123Nutanix()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123)),
+		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube123),
+			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
+	)
+	runCuratedPackageEmissaryInstallSimpleFlow(test)
+}
+
+func TestNutanixKubernetes123UbuntuCuratedPackagesHarborSimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(t,
+		framework.NewNutanix(t, framework.WithUbuntu123Nutanix()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123)),
+		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube123),
+			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
+	)
+	runCuratedPackageHarborInstallSimpleFlowLocalStorageProvisioner(test)
+}
+
+func TestNutanixKubernetes123UbuntuCuratedPackagesAdotSimpleFlow(t *testing.T) {
+	framework.CheckCuratedPackagesCredentials(t)
+	test := framework.NewClusterE2ETest(t,
+		framework.NewNutanix(t, framework.WithUbuntu123Nutanix()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123)),
+		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube123),
+			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
+	)
+	runCuratedPackagesAdotInstallSimpleFlow(test)
+}
+
+func TestNutanixKubernetes123UbuntuCuratedPackagesPrometheusSimpleFlow(t *testing.T) {
+	framework.CheckCuratedPackagesCredentials(t)
+	test := framework.NewClusterE2ETest(t,
+		framework.NewNutanix(t, framework.WithUbuntu123Nutanix()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123)),
+		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube123),
+			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
+	)
+	runCuratedPackagesPrometheusInstallSimpleFlow(test)
+}
+
+func TestNutanixKubernetes123UbuntuCuratedPackagesClusterAutoscalerSimpleFlow(t *testing.T) {
+	minNodes := 1
+	maxNodes := 2
+	framework.CheckCuratedPackagesCredentials(t)
+	test := framework.NewClusterE2ETest(t,
+		framework.NewNutanix(t, framework.WithUbuntu123Nutanix()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123), api.WithWorkerNodeAutoScalingConfig(minNodes, maxNodes)),
+		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube123),
+			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
+	)
+	runAutoscalerWithMetricsServerSimpleFlow(test)
 }
 
 // Simpleflow
@@ -159,7 +415,6 @@ func TestNutanixKubernetes127SimpleFlowWithName(t *testing.T) {
 		t,
 		framework.NewNutanix(t, framework.WithUbuntu127Nutanix()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127)),
-		framework.WithEnvVar(features.K8s127SupportEnvVar, "true"),
 	)
 	runSimpleFlow(test)
 }
@@ -215,7 +470,6 @@ func TestNutanixKubernetes127SimpleFlowWithUUID(t *testing.T) {
 			framework.WithPrismElementClusterUUID(),
 			framework.WithNutanixSubnetUUID()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127)),
-		framework.WithEnvVar(features.K8s127SupportEnvVar, "true"),
 	)
 	runSimpleFlow(test)
 }
@@ -232,7 +486,7 @@ func TestNutanixKubernetes123To124UbuntuUpgrade(t *testing.T) {
 		test,
 		v1alpha1.Kube124,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube124)),
-		provider.WithProviderUpgrade(framework.UpdateNutanixUbuntuTemplate124Var()),
+		provider.WithProviderUpgrade(provider.Ubuntu124Template()),
 	)
 }
 
@@ -249,7 +503,7 @@ func TestNutanixKubernetes124To125UbuntuUpgrade(t *testing.T) {
 		test,
 		v1alpha1.Kube125,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube125)),
-		provider.WithProviderUpgrade(framework.UpdateNutanixUbuntuTemplate125Var()),
+		provider.WithProviderUpgrade(provider.Ubuntu125Template()),
 	)
 }
 
@@ -266,7 +520,7 @@ func TestNutanixKubernetes125To126UbuntuUpgrade(t *testing.T) {
 		test,
 		v1alpha1.Kube126,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube126)),
-		provider.WithProviderUpgrade(framework.UpdateNutanixUbuntuTemplate126Var()),
+		provider.WithProviderUpgrade(provider.Ubuntu126Template()),
 	)
 }
 
@@ -278,13 +532,12 @@ func TestNutanixKubernetes126To127UbuntuUpgrade(t *testing.T) {
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube126)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithEnvVar(features.K8s127SupportEnvVar, "true"),
 	)
 	runSimpleUpgradeFlow(
 		test,
 		v1alpha1.Kube127,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube127)),
-		provider.WithProviderUpgrade(framework.UpdateNutanixUbuntuTemplate127Var()),
+		provider.WithProviderUpgrade(provider.Ubuntu127Template()),
 	)
 }
 
@@ -363,7 +616,6 @@ func TestNutanixKubernetes127UbuntuWorkerNodeScaleUp1To3(t *testing.T) {
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithEnvVar(features.K8s127SupportEnvVar, "true"),
 	)
 	runSimpleUpgradeFlow(
 		test,
@@ -449,7 +701,6 @@ func TestNutanixKubernetes127UbuntuControlPlaneNodeScaleUp1To3(t *testing.T) {
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(3)),
-		framework.WithEnvVar(features.K8s127SupportEnvVar, "true"),
 	)
 	runSimpleUpgradeFlow(
 		test,
@@ -533,7 +784,6 @@ func TestNutanixKubernetes127UbuntuWorkerNodeScaleDown3To1(t *testing.T) {
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(3)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithEnvVar(features.K8s127SupportEnvVar, "true"),
 	)
 	runSimpleUpgradeFlow(
 		test,
@@ -617,7 +867,6 @@ func TestNutanixKubernetes127UbuntuControlPlaneNodeScaleDown3To1(t *testing.T) {
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(3)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithEnvVar(features.K8s127SupportEnvVar, "true"),
 	)
 	runSimpleUpgradeFlow(
 		test,
@@ -683,7 +932,6 @@ func TestNutanixKubernetes127OIDC(t *testing.T) {
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithEnvVar(features.K8s127SupportEnvVar, "true"),
 	)
 	runOIDCFlow(test)
 }
@@ -745,7 +993,6 @@ func TestNutanixKubernetes127AWSIamAuth(t *testing.T) {
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithEnvVar(features.K8s127SupportEnvVar, "true"),
 	)
 	runAWSIamAuthFlow(test)
 }

@@ -35,6 +35,51 @@ func (m *MockClient) EXPECT() *MockClientMockRecorder {
 	return m.recorder
 }
 
+// GetCategoryKey mocks base method.
+func (m *MockClient) GetCategoryKey(ctx context.Context, name string) (*v3.CategoryKeyStatus, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetCategoryKey", ctx, name)
+	ret0, _ := ret[0].(*v3.CategoryKeyStatus)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetCategoryKey indicates an expected call of GetCategoryKey.
+func (mr *MockClientMockRecorder) GetCategoryKey(ctx, name interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCategoryKey", reflect.TypeOf((*MockClient)(nil).GetCategoryKey), ctx, name)
+}
+
+// GetCategoryQuery mocks base method.
+func (m *MockClient) GetCategoryQuery(ctx context.Context, query *v3.CategoryQueryInput) (*v3.CategoryQueryResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetCategoryQuery", ctx, query)
+	ret0, _ := ret[0].(*v3.CategoryQueryResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetCategoryQuery indicates an expected call of GetCategoryQuery.
+func (mr *MockClientMockRecorder) GetCategoryQuery(ctx, query interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCategoryQuery", reflect.TypeOf((*MockClient)(nil).GetCategoryQuery), ctx, query)
+}
+
+// GetCategoryValue mocks base method.
+func (m *MockClient) GetCategoryValue(ctx context.Context, name, value string) (*v3.CategoryValueStatus, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetCategoryValue", ctx, name, value)
+	ret0, _ := ret[0].(*v3.CategoryValueStatus)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetCategoryValue indicates an expected call of GetCategoryValue.
+func (mr *MockClientMockRecorder) GetCategoryValue(ctx, name, value interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCategoryValue", reflect.TypeOf((*MockClient)(nil).GetCategoryValue), ctx, name, value)
+}
+
 // GetCluster mocks base method.
 func (m *MockClient) GetCluster(ctx context.Context, uuid string) (*v3.ClusterIntentResponse, error) {
 	m.ctrl.T.Helper()
@@ -108,6 +153,36 @@ func (m *MockClient) GetSubnet(ctx context.Context, uuid string) (*v3.SubnetInte
 func (mr *MockClientMockRecorder) GetSubnet(ctx, uuid interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSubnet", reflect.TypeOf((*MockClient)(nil).GetSubnet), ctx, uuid)
+}
+
+// ListCategories mocks base method.
+func (m *MockClient) ListCategories(ctx context.Context, getEntitiesRequest *v3.CategoryListMetadata) (*v3.CategoryKeyListResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListCategories", ctx, getEntitiesRequest)
+	ret0, _ := ret[0].(*v3.CategoryKeyListResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListCategories indicates an expected call of ListCategories.
+func (mr *MockClientMockRecorder) ListCategories(ctx, getEntitiesRequest interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListCategories", reflect.TypeOf((*MockClient)(nil).ListCategories), ctx, getEntitiesRequest)
+}
+
+// ListCategoryValues mocks base method.
+func (m *MockClient) ListCategoryValues(ctx context.Context, name string, getEntitiesRequest *v3.CategoryListMetadata) (*v3.CategoryValueListResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListCategoryValues", ctx, name, getEntitiesRequest)
+	ret0, _ := ret[0].(*v3.CategoryValueListResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListCategoryValues indicates an expected call of ListCategoryValues.
+func (mr *MockClientMockRecorder) ListCategoryValues(ctx, name, getEntitiesRequest interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListCategoryValues", reflect.TypeOf((*MockClient)(nil).ListCategoryValues), ctx, name, getEntitiesRequest)
 }
 
 // ListCluster mocks base method.

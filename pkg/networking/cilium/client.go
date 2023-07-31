@@ -21,6 +21,8 @@ const (
 	// ConfigMapName is the default name for the Cilium ConfigMap
 	// containing Cilium's configuration.
 	ConfigMapName = "cilium-config"
+	// ServiceName is the default name for the Cilium Service installed in EKS-A clusters.
+	ServiceName = "cilium-agent"
 )
 
 // Client allows to interact with the Kubernetes API.

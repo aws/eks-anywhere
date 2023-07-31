@@ -2,13 +2,14 @@ package framework
 
 import (
 	"context"
+	"fmt"
 	"net/url"
 	"os"
 	"path"
+	"path/filepath"
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/internal/pkg/oidc"
-	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/executables"
 )
 
@@ -28,11 +29,19 @@ var oidcRequiredEnvVars = []string{
 
 func WithOIDC() ClusterE2ETestOpt {
 	return func(e *ClusterE2ETest) {
-		checkRequiredEnvVars(e.T, oidcRequiredEnvVars)
-		if e.ClusterConfig.OIDCConfigs == nil {
-			e.ClusterConfig.OIDCConfigs = make(map[string]*anywherev1.OIDCConfig, 1)
-		}
-		e.ClusterConfig.OIDCConfigs[defaultClusterName] = api.NewOIDCConfig(defaultClusterName,
+		e.addClusterConfigFillers(WithOIDCClusterConfig(e.T))
+	}
+}
+
+// WithOIDCClusterConfig returns a ClusterConfigFiller that adds the default
+// OIDCConfig for E2E tests to the cluster Config and links it by name in the
+// Cluster resource.
+func WithOIDCClusterConfig(t T) api.ClusterConfigFiller {
+	checkRequiredEnvVars(t, oidcRequiredEnvVars)
+	name := defaultClusterName
+
+	return api.JoinClusterConfigFillers(
+		api.WithOIDCConfig(name,
 			api.WithOIDCRequiredClaims("kubernetesAccess", "true"),
 			api.WithOIDCGroupsPrefix("s3-oidc:"),
 			api.WithOIDCGroupsClaim("groups"),
@@ -40,11 +49,11 @@ func WithOIDC() ClusterE2ETestOpt {
 			api.WithOIDCUsernameClaim("email"),
 			api.WithStringFromEnvVarOIDCConfig(OIDCIssuerUrlVar, api.WithOIDCIssuerUrl),
 			api.WithStringFromEnvVarOIDCConfig(OIDCClientIdVar, api.WithOIDCClientId),
-		)
-		e.clusterFillers = append(e.clusterFillers,
-			api.WithOIDCIdentityProviderRef(defaultClusterName),
-		)
-	}
+		),
+		api.ClusterToConfigFiller(
+			api.WithOIDCIdentityProviderRef(name),
+		),
+	)
 }
 
 func (e *ClusterE2ETest) ValidateOIDC() {
@@ -91,6 +100,7 @@ func (e *ClusterE2ETest) ValidateOIDC() {
 	e.T.Log("Getting pods with OIDC token")
 	_, err = e.KubectlClient.GetPods(
 		ctx,
+		executables.WithKubeconfig(filepath.Join(e.ClusterName, fmt.Sprintf("%s-eks-a-cluster.kubeconfig", e.ClusterName))),
 		executables.WithServer(apiServerUrl),
 		executables.WithToken(jwt),
 		executables.WithSkipTLSVerify(),
@@ -103,6 +113,7 @@ func (e *ClusterE2ETest) ValidateOIDC() {
 	e.T.Log("Getting deployments with OIDC token")
 	_, err = e.KubectlClient.GetDeployments(
 		ctx,
+		executables.WithKubeconfig(filepath.Join(e.ClusterName, fmt.Sprintf("%s-eks-a-cluster.kubeconfig", e.ClusterName))),
 		executables.WithServer(apiServerUrl),
 		executables.WithToken(jwt),
 		executables.WithSkipTLSVerify(),
@@ -110,5 +121,12 @@ func (e *ClusterE2ETest) ValidateOIDC() {
 	)
 	if err != nil {
 		e.T.Errorf("Error getting deployments: %v", err)
+	}
+}
+
+// WithOIDCEnvVarCheck returns a ClusterE2ETestOpt that checks for the required env vars.
+func WithOIDCEnvVarCheck() ClusterE2ETestOpt {
+	return func(e *ClusterE2ETest) {
+		checkRequiredEnvVars(e.T, oidcRequiredEnvVars)
 	}
 }

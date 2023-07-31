@@ -114,9 +114,6 @@ func (c *createTestSetup) expectCreateWorkload() {
 		c.clusterManager.EXPECT().RunPostCreateWorkloadCluster(
 			c.ctx, c.bootstrapCluster, c.workloadCluster, c.clusterSpec,
 		),
-		c.clusterManager.EXPECT().InstallStorageClass(
-			c.ctx, c.workloadCluster, c.provider,
-		),
 		c.clusterManager.EXPECT().CreateEKSANamespace(
 			c.ctx, c.workloadCluster,
 		),
@@ -147,9 +144,6 @@ func (c *createTestSetup) expectCreateWorkloadSkipCAPI() {
 		),
 		c.clusterManager.EXPECT().RunPostCreateWorkloadCluster(
 			c.ctx, c.bootstrapCluster, c.workloadCluster, c.clusterSpec,
-		),
-		c.clusterManager.EXPECT().InstallStorageClass(
-			c.ctx, c.workloadCluster, c.provider,
 		),
 	)
 	c.clusterManager.EXPECT().InstallCAPI(

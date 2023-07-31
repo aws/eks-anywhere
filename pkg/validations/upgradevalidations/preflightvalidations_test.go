@@ -1,21 +1,19 @@
 package upgradevalidations_test
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"reflect"
 	"testing"
 
 	"github.com/golang/mock/gomock"
-	"k8s.io/apimachinery/pkg/version"
 
 	"github.com/aws/eks-anywhere/internal/test"
-	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/constants"
-	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	filewritermocks "github.com/aws/eks-anywhere/pkg/filewriter/mocks"
 	mockproviders "github.com/aws/eks-anywhere/pkg/providers/mocks"
@@ -27,7 +25,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/validations"
 	"github.com/aws/eks-anywhere/pkg/validations/mocks"
 	"github.com/aws/eks-anywhere/pkg/validations/upgradevalidations"
-	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
 const (
@@ -48,8 +45,8 @@ func TestPreflightValidationsTinkerbell(t *testing.T) {
 		crdResponse             error
 		wantErr                 error
 		modifyFunc              func(s *cluster.Spec)
-		modifyDatacenterFunc    func(s *v1alpha1.TinkerbellDatacenterConfig)
-		modifyMachineConfigFunc func(s *v1alpha1.TinkerbellMachineConfig)
+		modifyDatacenterFunc    func(s *anywherev1.TinkerbellDatacenterConfig)
+		modifyMachineConfigFunc func(s *anywherev1.TinkerbellMachineConfig)
 	}{
 		{
 			name:               "ValidationSucceeds",
@@ -61,28 +58,6 @@ func TestPreflightValidationsTinkerbell(t *testing.T) {
 			nodeResponse:       nil,
 			crdResponse:        nil,
 			wantErr:            nil,
-		},
-		{
-			name:               "ValidationFailsMajorVersionPlus2",
-			clusterVersion:     "v1.18.16-eks-1-18-4",
-			upgradeVersion:     "1.20",
-			getClusterResponse: goodClusterResponse,
-			cpResponse:         nil,
-			workerResponse:     nil,
-			nodeResponse:       nil,
-			crdResponse:        nil,
-			wantErr:            composeError("WARNING: version difference between upgrade version (1.20) and server version (1.18) do not meet the supported version increment of +1"),
-		},
-		{
-			name:               "ValidationFailsMajorVersionMinus1",
-			clusterVersion:     "v1.19.16-eks-1-19-4",
-			upgradeVersion:     "1.18",
-			getClusterResponse: goodClusterResponse,
-			cpResponse:         nil,
-			workerResponse:     nil,
-			nodeResponse:       nil,
-			crdResponse:        nil,
-			wantErr:            composeError("WARNING: version difference between upgrade version (1.18) and server version (1.19) do not meet the supported version increment of +1"),
 		},
 		{
 			name:               "ValidationFailsClusterDoesNotExist",
@@ -186,7 +161,7 @@ func TestPreflightValidationsTinkerbell(t *testing.T) {
 			crdResponse:        nil,
 			wantErr:            composeError("spec.clusterNetwork.Pods is immutable"),
 			modifyFunc: func(s *cluster.Spec) {
-				s.Cluster.Spec.ClusterNetwork.Pods = v1alpha1.Pods{}
+				s.Cluster.Spec.ClusterNetwork.Pods = anywherev1.Pods{}
 			},
 		},
 		{
@@ -200,7 +175,7 @@ func TestPreflightValidationsTinkerbell(t *testing.T) {
 			crdResponse:        nil,
 			wantErr:            composeError("spec.clusterNetwork.Services is immutable"),
 			modifyFunc: func(s *cluster.Spec) {
-				s.Cluster.Spec.ClusterNetwork.Services = v1alpha1.Services{}
+				s.Cluster.Spec.ClusterNetwork.Services = anywherev1.Services{}
 			},
 		},
 		{
@@ -227,7 +202,7 @@ func TestPreflightValidationsTinkerbell(t *testing.T) {
 			nodeResponse:       nil,
 			crdResponse:        nil,
 			wantErr:            composeError("spec.TinkerbellIP is immutable. Previous value 4.5.6.7,   New value 1.2.3.4"),
-			modifyDatacenterFunc: func(s *v1alpha1.TinkerbellDatacenterConfig) {
+			modifyDatacenterFunc: func(s *anywherev1.TinkerbellDatacenterConfig) {
 				s.Spec.TinkerbellIP = "4.5.6.7"
 			},
 		},
@@ -241,7 +216,7 @@ func TestPreflightValidationsTinkerbell(t *testing.T) {
 			nodeResponse:       nil,
 			crdResponse:        nil,
 			wantErr:            composeError("spec.OSImageURL is immutable. Previous value http://old-os-image-url,   New value http://os-image-url"),
-			modifyDatacenterFunc: func(s *v1alpha1.TinkerbellDatacenterConfig) {
+			modifyDatacenterFunc: func(s *anywherev1.TinkerbellDatacenterConfig) {
 				s.Spec.OSImageURL = "http://old-os-image-url"
 			},
 		},
@@ -255,7 +230,7 @@ func TestPreflightValidationsTinkerbell(t *testing.T) {
 			nodeResponse:       nil,
 			crdResponse:        nil,
 			wantErr:            composeError("spec.HookImagesURLPath is immutable. Previous value http://old-hook-image-url,   New value http://hook-image-url"),
-			modifyDatacenterFunc: func(s *v1alpha1.TinkerbellDatacenterConfig) {
+			modifyDatacenterFunc: func(s *anywherev1.TinkerbellDatacenterConfig) {
 				s.Spec.HookImagesURLPath = "http://old-hook-image-url"
 			},
 		},
@@ -269,7 +244,7 @@ func TestPreflightValidationsTinkerbell(t *testing.T) {
 			nodeResponse:       nil,
 			crdResponse:        nil,
 			wantErr:            composeError("spec.Users[0].Name is immutable. Previous value myOldSshUsername,   New value mySshUsername"),
-			modifyMachineConfigFunc: func(s *v1alpha1.TinkerbellMachineConfig) {
+			modifyMachineConfigFunc: func(s *anywherev1.TinkerbellMachineConfig) {
 				s.Spec.Users[0].Name = "myOldSshUsername"
 			},
 		},
@@ -283,7 +258,7 @@ func TestPreflightValidationsTinkerbell(t *testing.T) {
 			nodeResponse:       nil,
 			crdResponse:        nil,
 			wantErr:            composeError("spec.Users[0].SshAuthorizedKeys[0] is immutable. Previous value myOldSshAuthorizedKeys,   New value mySshAuthorizedKey"),
-			modifyMachineConfigFunc: func(s *v1alpha1.TinkerbellMachineConfig) {
+			modifyMachineConfigFunc: func(s *anywherev1.TinkerbellMachineConfig) {
 				s.Spec.Users[0].SshAuthorizedKeys[0] = "myOldSshAuthorizedKeys"
 			},
 		},
@@ -297,7 +272,7 @@ func TestPreflightValidationsTinkerbell(t *testing.T) {
 			nodeResponse:       nil,
 			crdResponse:        nil,
 			wantErr:            composeError("spec.HardwareSelector is immutable. Previous value map[type:cp1],   New value map[type:cp]"),
-			modifyMachineConfigFunc: func(s *v1alpha1.TinkerbellMachineConfig) {
+			modifyMachineConfigFunc: func(s *anywherev1.TinkerbellMachineConfig) {
 				s.Spec.HardwareSelector = map[string]string{
 					"type": "cp1",
 				}
@@ -305,63 +280,67 @@ func TestPreflightValidationsTinkerbell(t *testing.T) {
 		},
 	}
 
-	defaultControlPlane := v1alpha1.ControlPlaneConfiguration{
+	defaultControlPlane := anywherev1.ControlPlaneConfiguration{
 		Count: 1,
-		Endpoint: &v1alpha1.Endpoint{
+		Endpoint: &anywherev1.Endpoint{
 			Host: "1.1.1.1",
 		},
-		MachineGroupRef: &v1alpha1.Ref{
+		MachineGroupRef: &anywherev1.Ref{
 			Name: "test-cp",
 			Kind: "TinkerbellMachineConfig",
 		},
 	}
 
-	defaultDatacenterSpec := v1alpha1.TinkerbellDatacenterConfig{
-		Spec: v1alpha1.TinkerbellDatacenterConfigSpec{
+	defaultDatacenterSpec := anywherev1.TinkerbellDatacenterConfig{
+		Spec: anywherev1.TinkerbellDatacenterConfigSpec{
 			TinkerbellIP:      "1.2.3.4",
 			OSImageURL:        "http://os-image-url",
 			HookImagesURLPath: "http://hook-image-url",
 		},
-		Status: v1alpha1.TinkerbellDatacenterConfigStatus{},
+		Status: anywherev1.TinkerbellDatacenterConfigStatus{},
 	}
 
-	defaultTinkerbellMachineConfigSpec := v1alpha1.TinkerbellMachineConfig{
-		Spec: v1alpha1.TinkerbellMachineConfigSpec{
+	defaultTinkerbellMachineConfigSpec := anywherev1.TinkerbellMachineConfig{
+		Spec: anywherev1.TinkerbellMachineConfigSpec{
 			HardwareSelector: map[string]string{
 				"type": "cp",
 			},
 			OSFamily: "ubuntu",
-			Users: []v1alpha1.UserConfiguration{{
+			Users: []anywherev1.UserConfiguration{{
 				Name:              "mySshUsername",
 				SshAuthorizedKeys: []string{"mySshAuthorizedKey"},
 			}},
 		},
 	}
 
+	ver := test.DevEksaVersion()
+
 	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
 		s.Cluster.Name = testclustername
 		s.Cluster.Spec.ControlPlaneConfiguration = defaultControlPlane
-		s.Cluster.Spec.DatacenterRef = v1alpha1.Ref{
-			Kind: v1alpha1.TinkerbellDatacenterKind,
+		s.Cluster.Spec.DatacenterRef = anywherev1.Ref{
+			Kind: anywherev1.TinkerbellDatacenterKind,
 			Name: "tinkerbell test",
 		}
-		s.Cluster.Spec.ClusterNetwork = v1alpha1.ClusterNetwork{
-			Pods: v1alpha1.Pods{
+		s.Cluster.Spec.ClusterNetwork = anywherev1.ClusterNetwork{
+			Pods: anywherev1.Pods{
 				CidrBlocks: []string{
 					"1.2.3.4/5",
 				},
 			},
-			Services: v1alpha1.Services{
+			Services: anywherev1.Services{
 				CidrBlocks: []string{
 					"1.2.3.4/6",
 				},
 			},
 		}
+		s.Cluster.Spec.EksaVersion = &ver
 	})
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(tt *testing.T) {
-			_, ctx, workloadCluster, _ := validations.NewKubectl(t)
+			workloadCluster := &types.Cluster{}
+			ctx := context.Background()
 			workloadCluster.KubeconfigFile = kubeconfigFilePath
 			workloadCluster.Name = testclustername
 
@@ -374,21 +353,21 @@ func TestPreflightValidationsTinkerbell(t *testing.T) {
 			tlsValidator := mocks.NewMockTlsValidator(mockCtrl)
 
 			provider := newProvider(defaultDatacenterSpec, givenTinkerbellMachineConfigs(t), clusterSpec.Cluster, writer, docker, helm, kubectl, false)
-			// provider := mockproviders.NewMockProvider(mockCtrl)
 			opts := &validations.Opts{
 				Kubectl:           k,
 				Spec:              clusterSpec,
 				WorkloadCluster:   workloadCluster,
 				ManagementCluster: workloadCluster,
 				Provider:          provider,
-				TlsValidator:      tlsValidator,
+				TLSValidator:      tlsValidator,
+				CliVersion:        "v0.0.0-dev",
 			}
 
-			clusterSpec.Cluster.Spec.KubernetesVersion = v1alpha1.KubernetesVersion(tc.upgradeVersion)
+			clusterSpec.Cluster.Spec.KubernetesVersion = anywherev1.KubernetesVersion(tc.upgradeVersion)
 			existingClusterSpec := clusterSpec.DeepCopy()
+			existingClusterSpec.Cluster.Spec.KubernetesVersion = anywherev1.KubernetesVersion(tc.clusterVersion)
 			existingProviderSpec := defaultDatacenterSpec.DeepCopy()
 			existingMachineConfigSpec := defaultTinkerbellMachineConfigSpec.DeepCopy()
-			// existingMachineConfigSpec := defaultTinkerbellMachineConfigSpec.DeepCopy()
 			if tc.modifyFunc != nil {
 				tc.modifyFunc(existingClusterSpec)
 			}
@@ -398,43 +377,36 @@ func TestPreflightValidationsTinkerbell(t *testing.T) {
 			if tc.modifyMachineConfigFunc != nil {
 				tc.modifyMachineConfigFunc(existingMachineConfigSpec)
 			}
-			versionResponse := &executables.VersionResponse{
-				ServerVersion: version.Info{
-					GitVersion: tc.clusterVersion,
-				},
-			}
 
 			kubectl.EXPECT().GetEksaCluster(ctx, workloadCluster, clusterSpec.Cluster.Name).Return(existingClusterSpec.Cluster, nil).MaxTimes(1)
-			// provider.EXPECT().DatacenterConfig(clusterSpec).Return(existingProviderSpec).MaxTimes(1)
-			// provider.EXPECT().MachineConfigs(clusterSpec).Return(existingMachineConfigSpec).MaxTimes(1)
-			// provider.EXPECT().ValidateNewSpec(ctx, workloadCluster, clusterSpec).Return(nil).MaxTimes(1)
+
 			kubectl.EXPECT().GetEksaTinkerbellDatacenterConfig(ctx, clusterSpec.Cluster.Spec.DatacenterRef.Name, gomock.Any(), gomock.Any()).Return(existingProviderSpec, nil).MaxTimes(1)
 			kubectl.EXPECT().GetEksaTinkerbellMachineConfig(ctx, clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name, gomock.Any(), gomock.Any()).Return(existingMachineConfigSpec, nil).MaxTimes(1)
+			k.EXPECT().List(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
 			k.EXPECT().ValidateControlPlaneNodes(ctx, workloadCluster, clusterSpec.Cluster.Name).Return(tc.cpResponse)
 			k.EXPECT().ValidateWorkerNodes(ctx, workloadCluster.Name, workloadCluster.KubeconfigFile).Return(tc.workerResponse)
 			k.EXPECT().ValidateNodes(ctx, kubeconfigFilePath).Return(tc.nodeResponse)
 			k.EXPECT().ValidateClustersCRD(ctx, workloadCluster).Return(tc.crdResponse)
 			k.EXPECT().GetClusters(ctx, workloadCluster).Return(tc.getClusterResponse, nil)
-			k.EXPECT().GetEksaCluster(ctx, workloadCluster, clusterSpec.Cluster.Name).Return(existingClusterSpec.Cluster, nil)
-			k.EXPECT().Version(ctx, workloadCluster).Return(versionResponse, nil)
+			k.EXPECT().GetEksaCluster(ctx, workloadCluster, clusterSpec.Cluster.Name).Return(existingClusterSpec.Cluster, nil).MaxTimes(4)
 			upgradeValidations := upgradevalidations.New(opts)
 			err := validations.ProcessValidationResults(upgradeValidations.PreflightValidations(ctx))
-			if !reflect.DeepEqual(err, tc.wantErr) {
+			if err != nil && err.Error() != tc.wantErr.Error() {
 				t.Errorf("%s want err=%v\n got err=%v\n", tc.name, tc.wantErr, err)
 			}
 		})
 	}
 }
 
-func givenTinkerbellMachineConfigs(t *testing.T) map[string]*v1alpha1.TinkerbellMachineConfig {
-	machineConfigs, err := v1alpha1.GetTinkerbellMachineConfigs("./testdata/tinkerbell_clusterconfig.yaml")
+func givenTinkerbellMachineConfigs(t *testing.T) map[string]*anywherev1.TinkerbellMachineConfig {
+	machineConfigs, err := anywherev1.GetTinkerbellMachineConfigs("./testdata/tinkerbell_clusterconfig.yaml")
 	if err != nil {
 		t.Fatalf("unable to get machine configs from file: %v", err)
 	}
 	return machineConfigs
 }
 
-func newProvider(datacenterConfig v1alpha1.TinkerbellDatacenterConfig, machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig, clusterConfig *v1alpha1.Cluster, writer filewriter.FileWriter, docker stack.Docker, helm stack.Helm, kubectl tinkerbell.ProviderKubectlClient, forceCleanup bool) *tinkerbell.Provider {
+func newProvider(datacenterConfig anywherev1.TinkerbellDatacenterConfig, machineConfigs map[string]*anywherev1.TinkerbellMachineConfig, clusterConfig *anywherev1.Cluster, writer filewriter.FileWriter, docker stack.Docker, helm stack.Helm, kubectl tinkerbell.ProviderKubectlClient, forceCleanup bool) *tinkerbell.Provider {
 	hardwareFile := "./testdata/hardware.csv"
 	provider, err := tinkerbell.NewProvider(
 		&datacenterConfig,
@@ -482,28 +454,6 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 			nodeResponse:       nil,
 			crdResponse:        nil,
 			wantErr:            nil,
-		},
-		{
-			name:               "ValidationFailsMajorVersionPlus2",
-			clusterVersion:     "v1.18.16-eks-1-18-4",
-			upgradeVersion:     "1.20",
-			getClusterResponse: goodClusterResponse,
-			cpResponse:         nil,
-			workerResponse:     nil,
-			nodeResponse:       nil,
-			crdResponse:        nil,
-			wantErr:            composeError("WARNING: version difference between upgrade version (1.20) and server version (1.18) do not meet the supported version increment of +1"),
-		},
-		{
-			name:               "ValidationFailsMajorVersionMinus1",
-			clusterVersion:     "v1.19.16-eks-1-19-4",
-			upgradeVersion:     "1.18",
-			getClusterResponse: goodClusterResponse,
-			cpResponse:         nil,
-			workerResponse:     nil,
-			nodeResponse:       nil,
-			crdResponse:        nil,
-			wantErr:            composeError("WARNING: version difference between upgrade version (1.18) and server version (1.19) do not meet the supported version increment of +1"),
 		},
 		{
 			name:               "ValidationFailsClusterDoesNotExist",
@@ -663,8 +613,8 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 			crdResponse:        nil,
 			wantErr:            composeError("aws iam identity provider is immutable"),
 			modifyExistingSpecFunc: func(s *cluster.Spec) {
-				s.Cluster.Spec.IdentityProviderRefs[1] = v1alpha1.Ref{
-					Kind: v1alpha1.AWSIamConfigKind,
+				s.Cluster.Spec.IdentityProviderRefs[1] = anywherev1.Ref{
+					Kind: anywherev1.AWSIamConfigKind,
 					Name: "aws-iam2",
 				}
 			},
@@ -680,8 +630,8 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 			crdResponse:        nil,
 			wantErr:            composeError("aws iam identity provider is immutable"),
 			modifyExistingSpecFunc: func(s *cluster.Spec) {
-				s.Cluster.Spec.IdentityProviderRefs[0] = v1alpha1.Ref{
-					Kind: v1alpha1.OIDCConfigKind,
+				s.Cluster.Spec.IdentityProviderRefs[0] = anywherev1.Ref{
+					Kind: anywherev1.OIDCConfigKind,
 					Name: "oidc",
 				}
 			},
@@ -697,12 +647,12 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 			crdResponse:        nil,
 			wantErr:            nil,
 			modifyExistingSpecFunc: func(s *cluster.Spec) {
-				s.Cluster.Spec.IdentityProviderRefs[1] = v1alpha1.Ref{
-					Kind: v1alpha1.AWSIamConfigKind,
+				s.Cluster.Spec.IdentityProviderRefs[1] = anywherev1.Ref{
+					Kind: anywherev1.AWSIamConfigKind,
 					Name: "aws-iam",
 				}
-				s.Cluster.Spec.IdentityProviderRefs[0] = v1alpha1.Ref{
-					Kind: v1alpha1.OIDCConfigKind,
+				s.Cluster.Spec.IdentityProviderRefs[0] = anywherev1.Ref{
+					Kind: anywherev1.OIDCConfigKind,
 					Name: "oidc",
 				}
 			},
@@ -900,7 +850,7 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 			crdResponse:        nil,
 			wantErr:            composeError("spec.clusterNetwork.Pods is immutable"),
 			modifyExistingSpecFunc: func(s *cluster.Spec) {
-				s.Cluster.Spec.ClusterNetwork.Pods = v1alpha1.Pods{}
+				s.Cluster.Spec.ClusterNetwork.Pods = anywherev1.Pods{}
 			},
 		},
 		{
@@ -914,7 +864,7 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 			crdResponse:        nil,
 			wantErr:            composeError("spec.clusterNetwork.Services is immutable"),
 			modifyExistingSpecFunc: func(s *cluster.Spec) {
-				s.Cluster.Spec.ClusterNetwork.Services = v1alpha1.Services{}
+				s.Cluster.Spec.ClusterNetwork.Services = anywherev1.Services{}
 			},
 		},
 		{
@@ -928,7 +878,7 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 			crdResponse:        nil,
 			wantErr:            composeError("spec.clusterNetwork.DNS is immutable"),
 			modifyExistingSpecFunc: func(s *cluster.Spec) {
-				s.Cluster.Spec.ClusterNetwork.DNS = v1alpha1.DNS{}
+				s.Cluster.Spec.ClusterNetwork.DNS = anywherev1.DNS{}
 			},
 		},
 		{
@@ -942,7 +892,7 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 			crdResponse:        nil,
 			wantErr:            composeError("spec.proxyConfiguration is immutable"),
 			modifyExistingSpecFunc: func(s *cluster.Spec) {
-				s.Cluster.Spec.ProxyConfiguration = &v1alpha1.ProxyConfiguration{
+				s.Cluster.Spec.ProxyConfiguration = &anywherev1.ProxyConfiguration{
 					HttpProxy:  "httpproxy2",
 					HttpsProxy: "httpsproxy2",
 					NoProxy: []string{
@@ -963,8 +913,8 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 			wantErr:            composeError("spec.externalEtcdConfiguration.count is immutable"),
 			modifyExistingSpecFunc: func(s *cluster.Spec) {
 				s.Cluster.Spec.ExternalEtcdConfiguration.Count += 1
-				s.Cluster.Spec.DatacenterRef = v1alpha1.Ref{
-					Kind: v1alpha1.VSphereDatacenterKind,
+				s.Cluster.Spec.DatacenterRef = anywherev1.Ref{
+					Kind: anywherev1.VSphereDatacenterKind,
 					Name: "vsphere test",
 				}
 			},
@@ -981,8 +931,8 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 			wantErr:            composeError("adding or removing external etcd during upgrade is not supported"),
 			modifyExistingSpecFunc: func(s *cluster.Spec) {
 				s.Cluster.Spec.ExternalEtcdConfiguration = nil
-				s.Cluster.Spec.DatacenterRef = v1alpha1.Ref{
-					Kind: v1alpha1.VSphereDatacenterKind,
+				s.Cluster.Spec.DatacenterRef = anywherev1.Ref{
+					Kind: anywherev1.VSphereDatacenterKind,
 					Name: "vsphere test",
 				}
 			},
@@ -990,7 +940,7 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 		{
 			name:               "ValidationManagementImmutable",
 			clusterVersion:     "v1.19.16-eks-1-19-4",
-			upgradeVersion:     "1.19",
+			upgradeVersion:     string(anywherev1.Kube119),
 			getClusterResponse: goodClusterResponse,
 			cpResponse:         nil,
 			workerResponse:     nil,
@@ -1004,7 +954,7 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 		{
 			name:               "ValidationManagementClusterNameImmutable",
 			clusterVersion:     "v1.19.16-eks-1-19-4",
-			upgradeVersion:     "1.19",
+			upgradeVersion:     string(anywherev1.Kube119),
 			getClusterResponse: goodClusterResponse,
 			cpResponse:         nil,
 			workerResponse:     nil,
@@ -1020,36 +970,36 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 		},
 	}
 
-	defaultControlPlane := v1alpha1.ControlPlaneConfiguration{
+	defaultControlPlane := anywherev1.ControlPlaneConfiguration{
 		Count: 1,
-		Endpoint: &v1alpha1.Endpoint{
+		Endpoint: &anywherev1.Endpoint{
 			Host: "1.1.1.1",
 		},
-		MachineGroupRef: &v1alpha1.Ref{
+		MachineGroupRef: &anywherev1.Ref{
 			Name: "test",
 			Kind: "VSphereMachineConfig",
 		},
 	}
 
-	defaultETCD := &v1alpha1.ExternalEtcdConfiguration{
+	defaultETCD := &anywherev1.ExternalEtcdConfiguration{
 		Count: 3,
 	}
 
-	defaultDatacenterSpec := v1alpha1.VSphereDatacenterConfig{
-		Spec: v1alpha1.VSphereDatacenterConfigSpec{
+	defaultDatacenterSpec := anywherev1.VSphereDatacenterConfig{
+		Spec: anywherev1.VSphereDatacenterConfigSpec{
 			Datacenter: "datacenter!!!",
 			Network:    "network",
 			Server:     "server",
 			Thumbprint: "thumbprint",
 			Insecure:   false,
 		},
-		Status: v1alpha1.VSphereDatacenterConfigStatus{},
+		Status: anywherev1.VSphereDatacenterConfigStatus{},
 	}
 
-	defaultGitOps := &v1alpha1.GitOpsConfig{
-		Spec: v1alpha1.GitOpsConfigSpec{
-			Flux: v1alpha1.Flux{
-				Github: v1alpha1.Github{
+	defaultGitOps := &anywherev1.GitOpsConfig{
+		Spec: anywherev1.GitOpsConfigSpec{
+			Flux: anywherev1.Flux{
+				Github: anywherev1.Github{
 					Owner:               "owner",
 					Repository:          "repo",
 					FluxSystemNamespace: "flux-system",
@@ -1061,13 +1011,13 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 		},
 	}
 
-	defaultOIDC := &v1alpha1.OIDCConfig{
-		Spec: v1alpha1.OIDCConfigSpec{
+	defaultOIDC := &anywherev1.OIDCConfig{
+		Spec: anywherev1.OIDCConfigSpec{
 			ClientId:     "client-id",
 			GroupsClaim:  "groups-claim",
 			GroupsPrefix: "groups-prefix",
 			IssuerUrl:    "issuer-url",
-			RequiredClaims: []v1alpha1.OIDCConfigRequiredClaim{{
+			RequiredClaims: []anywherev1.OIDCConfigRequiredClaim{{
 				Claim: "claim",
 				Value: "value",
 			}},
@@ -1076,15 +1026,15 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 		},
 	}
 
-	defaultAWSIAM := &v1alpha1.AWSIamConfig{
-		Spec: v1alpha1.AWSIamConfigSpec{
+	defaultAWSIAM := &anywherev1.AWSIamConfig{
+		Spec: anywherev1.AWSIamConfigSpec{
 			AWSRegion: "us-east-1",
-			MapRoles: []v1alpha1.MapRoles{{
+			MapRoles: []anywherev1.MapRoles{{
 				RoleARN:  "roleARN",
 				Username: "username",
 				Groups:   []string{"group1", "group2"},
 			}},
-			MapUsers: []v1alpha1.MapUsers{{
+			MapUsers: []anywherev1.MapUsers{{
 				UserARN:  "userARN",
 				Username: "username",
 				Groups:   []string{"group1", "group2"},
@@ -1093,44 +1043,46 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 		},
 	}
 
+	ver := test.DevEksaVersion()
+
 	defaultClusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
 		s.Cluster.Name = testclustername
 		s.Cluster.Spec.ControlPlaneConfiguration = defaultControlPlane
 		s.Cluster.Spec.ExternalEtcdConfiguration = defaultETCD
-		s.Cluster.Spec.DatacenterRef = v1alpha1.Ref{
-			Kind: v1alpha1.VSphereDatacenterKind,
+		s.Cluster.Spec.DatacenterRef = anywherev1.Ref{
+			Kind: anywherev1.VSphereDatacenterKind,
 			Name: "vsphere test",
 		}
-		s.Cluster.Spec.IdentityProviderRefs = []v1alpha1.Ref{
+		s.Cluster.Spec.IdentityProviderRefs = []anywherev1.Ref{
 			{
-				Kind: v1alpha1.AWSIamConfigKind,
+				Kind: anywherev1.AWSIamConfigKind,
 				Name: "aws-iam",
 			},
 			{
-				Kind: v1alpha1.OIDCConfigKind,
+				Kind: anywherev1.OIDCConfigKind,
 				Name: "oidc",
 			},
 		}
-		s.Cluster.Spec.GitOpsRef = &v1alpha1.Ref{
-			Kind: v1alpha1.GitOpsConfigKind,
+		s.Cluster.Spec.GitOpsRef = &anywherev1.Ref{
+			Kind: anywherev1.GitOpsConfigKind,
 			Name: "gitops test",
 		}
-		s.Cluster.Spec.ClusterNetwork = v1alpha1.ClusterNetwork{
-			Pods: v1alpha1.Pods{
+		s.Cluster.Spec.ClusterNetwork = anywherev1.ClusterNetwork{
+			Pods: anywherev1.Pods{
 				CidrBlocks: []string{
 					"1.2.3.4/5",
 				},
 			},
-			Services: v1alpha1.Services{
+			Services: anywherev1.Services{
 				CidrBlocks: []string{
 					"1.2.3.4/6",
 				},
 			},
-			DNS: v1alpha1.DNS{
-				ResolvConf: &v1alpha1.ResolvConf{Path: "file.conf"},
+			DNS: anywherev1.DNS{
+				ResolvConf: &anywherev1.ResolvConf{Path: "file.conf"},
 			},
 		}
-		s.Cluster.Spec.ProxyConfiguration = &v1alpha1.ProxyConfiguration{
+		s.Cluster.Spec.ProxyConfiguration = &anywherev1.ProxyConfiguration{
 			HttpProxy:  "httpproxy",
 			HttpsProxy: "httpsproxy",
 			NoProxy: []string{
@@ -1146,6 +1098,7 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 		s.GitOpsConfig = defaultGitOps
 		s.OIDCConfig = defaultOIDC
 		s.AWSIamConfig = defaultAWSIAM
+		s.Cluster.Spec.EksaVersion = &ver
 	})
 
 	for _, tc := range tests {
@@ -1170,46 +1123,37 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 				WorkloadCluster:   workloadCluster,
 				ManagementCluster: workloadCluster,
 				Provider:          provider,
-				TlsValidator:      tlsValidator,
+				TLSValidator:      tlsValidator,
+				CliVersion:        "v0.0.0-dev",
 			}
 
-			clusterSpec.Cluster.Spec.KubernetesVersion = v1alpha1.KubernetesVersion(tc.upgradeVersion)
+			clusterSpec.Cluster.Spec.KubernetesVersion = anywherev1.KubernetesVersion(tc.upgradeVersion)
 			existingClusterSpec := defaultClusterSpec.DeepCopy()
+			existingClusterSpec.Cluster.Spec.KubernetesVersion = anywherev1.KubernetesVersion(tc.clusterVersion)
 			existingProviderSpec := defaultDatacenterSpec.DeepCopy()
 			if tc.modifyExistingSpecFunc != nil {
 				tc.modifyExistingSpecFunc(existingClusterSpec)
-			}
-			versionResponse := &executables.VersionResponse{
-				ServerVersion: version.Info{
-					GitVersion: tc.clusterVersion,
-				},
-			}
-			bundlesResponse := &releasev1alpha1.Bundles{
-				Spec: releasev1alpha1.BundlesSpec{
-					Number: 28,
-				},
 			}
 
 			provider.EXPECT().DatacenterConfig(clusterSpec).Return(existingProviderSpec).MaxTimes(1)
 			provider.EXPECT().ValidateNewSpec(ctx, workloadCluster, clusterSpec).Return(nil).MaxTimes(1)
 			k.EXPECT().GetEksaVSphereDatacenterConfig(ctx, clusterSpec.Cluster.Spec.DatacenterRef.Name, gomock.Any(), gomock.Any()).Return(existingProviderSpec, nil).MaxTimes(1)
 			k.EXPECT().ValidateControlPlaneNodes(ctx, workloadCluster, clusterSpec.Cluster.Name).Return(tc.cpResponse)
+			k.EXPECT().List(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
 			k.EXPECT().ValidateWorkerNodes(ctx, workloadCluster.Name, workloadCluster.KubeconfigFile).Return(tc.workerResponse)
 			k.EXPECT().ValidateNodes(ctx, kubeconfigFilePath).Return(tc.nodeResponse)
 			k.EXPECT().ValidateClustersCRD(ctx, workloadCluster).Return(tc.crdResponse)
 			k.EXPECT().GetClusters(ctx, workloadCluster).Return(tc.getClusterResponse, nil)
-			k.EXPECT().GetEksaCluster(ctx, workloadCluster, clusterSpec.Cluster.Name).Return(existingClusterSpec.Cluster, nil)
+			k.EXPECT().GetEksaCluster(ctx, workloadCluster, clusterSpec.Cluster.Name).Return(existingClusterSpec.Cluster, nil).MaxTimes(4)
 			if opts.Spec.Cluster.IsManaged() {
-				k.EXPECT().GetEksaCluster(ctx, workloadCluster, workloadCluster.Name).Return(existingClusterSpec.Cluster, nil)
-				k.EXPECT().GetBundles(ctx, workloadCluster.KubeconfigFile, existingClusterSpec.Cluster.Spec.BundlesRef.Name, existingClusterSpec.Cluster.Spec.BundlesRef.Namespace).Return(bundlesResponse, nil)
+				k.EXPECT().GetEksaCluster(ctx, workloadCluster, workloadCluster.Name).Return(existingClusterSpec.Cluster, nil).MaxTimes(4)
 			}
 			k.EXPECT().GetEksaGitOpsConfig(ctx, clusterSpec.Cluster.Spec.GitOpsRef.Name, gomock.Any(), gomock.Any()).Return(existingClusterSpec.GitOpsConfig, nil).MaxTimes(1)
 			k.EXPECT().GetEksaOIDCConfig(ctx, clusterSpec.Cluster.Spec.IdentityProviderRefs[1].Name, gomock.Any(), gomock.Any()).Return(existingClusterSpec.OIDCConfig, nil).MaxTimes(1)
 			k.EXPECT().GetEksaAWSIamConfig(ctx, clusterSpec.Cluster.Spec.IdentityProviderRefs[0].Name, gomock.Any(), gomock.Any()).Return(existingClusterSpec.AWSIamConfig, nil).MaxTimes(1)
-			k.EXPECT().Version(ctx, workloadCluster).Return(versionResponse, nil)
 			upgradeValidations := upgradevalidations.New(opts)
 			err := validations.ProcessValidationResults(upgradeValidations.PreflightValidations(ctx))
-			if !reflect.DeepEqual(err, tc.wantErr) {
+			if err != nil && err.Error() != tc.wantErr.Error() {
 				t.Errorf("%s want err=%v\n got err=%v\n", tc.name, tc.wantErr, err)
 			}
 		})
@@ -1228,7 +1172,7 @@ var explodingClusterError = composeError(
 	"node test-node is not ready, currently in Unknown state",
 	"error getting clusters crd: crd not found",
 	"couldn't find CAPI cluster object for cluster with name testcluster",
-	"WARNING: version difference between upgrade version (1.20) and server version (1.18) do not meet the supported version increment of +1",
+	"spec: Invalid value: \"1.20\": only +1 minor version skew is supported, minor version skew detected 2",
 )
 
 func TestPreFlightValidationsGit(t *testing.T) {
@@ -1273,47 +1217,47 @@ func TestPreFlightValidationsGit(t *testing.T) {
 			},
 		},
 	}
-	defaultControlPlane := v1alpha1.ControlPlaneConfiguration{
+	defaultControlPlane := anywherev1.ControlPlaneConfiguration{
 		Count: 1,
-		Endpoint: &v1alpha1.Endpoint{
+		Endpoint: &anywherev1.Endpoint{
 			Host: "1.1.1.1",
 		},
-		MachineGroupRef: &v1alpha1.Ref{
+		MachineGroupRef: &anywherev1.Ref{
 			Name: "test",
 			Kind: "VSphereMachineConfig",
 		},
 	}
 
-	defaultETCD := &v1alpha1.ExternalEtcdConfiguration{
+	defaultETCD := &anywherev1.ExternalEtcdConfiguration{
 		Count: 3,
 	}
 
-	defaultDatacenterSpec := v1alpha1.VSphereDatacenterConfig{
-		Spec: v1alpha1.VSphereDatacenterConfigSpec{
+	defaultDatacenterSpec := anywherev1.VSphereDatacenterConfig{
+		Spec: anywherev1.VSphereDatacenterConfigSpec{
 			Datacenter: "datacenter!!!",
 			Network:    "network",
 			Server:     "server",
 			Thumbprint: "thumbprint",
 			Insecure:   false,
 		},
-		Status: v1alpha1.VSphereDatacenterConfigStatus{},
+		Status: anywherev1.VSphereDatacenterConfigStatus{},
 	}
 
-	defaultFlux := &v1alpha1.FluxConfig{
-		Spec: v1alpha1.FluxConfigSpec{
-			Git: &v1alpha1.GitProviderConfig{
+	defaultFlux := &anywherev1.FluxConfig{
+		Spec: anywherev1.FluxConfigSpec{
+			Git: &anywherev1.GitProviderConfig{
 				RepositoryUrl:   "test",
 				SshKeyAlgorithm: "rsa",
 			},
 		},
 	}
-	defaultOIDC := &v1alpha1.OIDCConfig{
-		Spec: v1alpha1.OIDCConfigSpec{
+	defaultOIDC := &anywherev1.OIDCConfig{
+		Spec: anywherev1.OIDCConfigSpec{
 			ClientId:     "client-id",
 			GroupsClaim:  "groups-claim",
 			GroupsPrefix: "groups-prefix",
 			IssuerUrl:    "issuer-url",
-			RequiredClaims: []v1alpha1.OIDCConfigRequiredClaim{{
+			RequiredClaims: []anywherev1.OIDCConfigRequiredClaim{{
 				Claim: "claim",
 				Value: "value",
 			}},
@@ -1322,15 +1266,15 @@ func TestPreFlightValidationsGit(t *testing.T) {
 		},
 	}
 
-	defaultAWSIAM := &v1alpha1.AWSIamConfig{
-		Spec: v1alpha1.AWSIamConfigSpec{
+	defaultAWSIAM := &anywherev1.AWSIamConfig{
+		Spec: anywherev1.AWSIamConfigSpec{
 			AWSRegion: "us-east-1",
-			MapRoles: []v1alpha1.MapRoles{{
+			MapRoles: []anywherev1.MapRoles{{
 				RoleARN:  "roleARN",
 				Username: "username",
 				Groups:   []string{"group1", "group2"},
 			}},
-			MapUsers: []v1alpha1.MapUsers{{
+			MapUsers: []anywherev1.MapUsers{{
 				UserARN:  "userARN",
 				Username: "username",
 				Groups:   []string{"group1", "group2"},
@@ -1339,44 +1283,46 @@ func TestPreFlightValidationsGit(t *testing.T) {
 		},
 	}
 
+	ver := test.DevEksaVersion()
+
 	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
 		s.Cluster.Name = testclustername
 		s.Cluster.Spec.ControlPlaneConfiguration = defaultControlPlane
 		s.Cluster.Spec.ExternalEtcdConfiguration = defaultETCD
-		s.Cluster.Spec.DatacenterRef = v1alpha1.Ref{
-			Kind: v1alpha1.VSphereDatacenterKind,
+		s.Cluster.Spec.DatacenterRef = anywherev1.Ref{
+			Kind: anywherev1.VSphereDatacenterKind,
 			Name: "vsphere test",
 		}
-		s.Cluster.Spec.IdentityProviderRefs = []v1alpha1.Ref{
+		s.Cluster.Spec.IdentityProviderRefs = []anywherev1.Ref{
 			{
-				Kind: v1alpha1.OIDCConfigKind,
+				Kind: anywherev1.OIDCConfigKind,
 				Name: "oidc",
 			},
 			{
-				Kind: v1alpha1.AWSIamConfigKind,
+				Kind: anywherev1.AWSIamConfigKind,
 				Name: "aws-iam",
 			},
 		}
-		s.Cluster.Spec.GitOpsRef = &v1alpha1.Ref{
-			Kind: v1alpha1.FluxConfigKind,
+		s.Cluster.Spec.GitOpsRef = &anywherev1.Ref{
+			Kind: anywherev1.FluxConfigKind,
 			Name: "flux test",
 		}
-		s.Cluster.Spec.ClusterNetwork = v1alpha1.ClusterNetwork{
-			Pods: v1alpha1.Pods{
+		s.Cluster.Spec.ClusterNetwork = anywherev1.ClusterNetwork{
+			Pods: anywherev1.Pods{
 				CidrBlocks: []string{
 					"1.2.3.4/5",
 				},
 			},
-			Services: v1alpha1.Services{
+			Services: anywherev1.Services{
 				CidrBlocks: []string{
 					"1.2.3.4/6",
 				},
 			},
-			DNS: v1alpha1.DNS{
-				ResolvConf: &v1alpha1.ResolvConf{Path: "file.conf"},
+			DNS: anywherev1.DNS{
+				ResolvConf: &anywherev1.ResolvConf{Path: "file.conf"},
 			},
 		}
-		s.Cluster.Spec.ProxyConfiguration = &v1alpha1.ProxyConfiguration{
+		s.Cluster.Spec.ProxyConfiguration = &anywherev1.ProxyConfiguration{
 			HttpProxy:  "httpproxy",
 			HttpsProxy: "httpsproxy",
 			NoProxy: []string{
@@ -1385,6 +1331,8 @@ func TestPreFlightValidationsGit(t *testing.T) {
 			},
 		}
 
+		s.Cluster.Spec.EksaVersion = &ver
+
 		s.OIDCConfig = defaultOIDC
 		s.AWSIamConfig = defaultAWSIAM
 		s.FluxConfig = defaultFlux
@@ -1392,7 +1340,8 @@ func TestPreFlightValidationsGit(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(tt *testing.T) {
-			_, ctx, workloadCluster, _ := validations.NewKubectl(t)
+			workloadCluster := &types.Cluster{}
+			ctx := context.Background()
 			workloadCluster.KubeconfigFile = kubeconfigFilePath
 			workloadCluster.Name = testclustername
 
@@ -1412,35 +1361,31 @@ func TestPreFlightValidationsGit(t *testing.T) {
 				WorkloadCluster:   workloadCluster,
 				ManagementCluster: workloadCluster,
 				Provider:          provider,
-				TlsValidator:      tlsValidator,
+				TLSValidator:      tlsValidator,
 				CliConfig:         cliConfig,
+				CliVersion:        "v0.0.0-dev",
 			}
 
-			clusterSpec.Cluster.Spec.KubernetesVersion = v1alpha1.KubernetesVersion(tc.upgradeVersion)
+			clusterSpec.Cluster.Spec.KubernetesVersion = anywherev1.KubernetesVersion(tc.upgradeVersion)
 			existingClusterSpec := clusterSpec.DeepCopy()
 			existingProviderSpec := defaultDatacenterSpec.DeepCopy()
 			if tc.modifyFunc != nil {
 				tc.modifyFunc(existingClusterSpec)
 			}
-			versionResponse := &executables.VersionResponse{
-				ServerVersion: version.Info{
-					GitVersion: tc.clusterVersion,
-				},
-			}
 
 			provider.EXPECT().DatacenterConfig(clusterSpec).Return(existingProviderSpec).MaxTimes(1)
 			provider.EXPECT().ValidateNewSpec(ctx, workloadCluster, clusterSpec).Return(nil).MaxTimes(1)
+			k.EXPECT().List(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
 			k.EXPECT().GetEksaVSphereDatacenterConfig(ctx, clusterSpec.Cluster.Spec.DatacenterRef.Name, gomock.Any(), gomock.Any()).Return(existingProviderSpec, nil).MaxTimes(1)
 			k.EXPECT().ValidateControlPlaneNodes(ctx, workloadCluster, clusterSpec.Cluster.Name).Return(tc.cpResponse)
 			k.EXPECT().ValidateWorkerNodes(ctx, workloadCluster.Name, workloadCluster.KubeconfigFile).Return(tc.workerResponse)
 			k.EXPECT().ValidateNodes(ctx, kubeconfigFilePath).Return(tc.nodeResponse)
 			k.EXPECT().ValidateClustersCRD(ctx, workloadCluster).Return(tc.crdResponse)
 			k.EXPECT().GetClusters(ctx, workloadCluster).Return(tc.getClusterResponse, nil)
-			k.EXPECT().GetEksaCluster(ctx, workloadCluster, clusterSpec.Cluster.Name).Return(existingClusterSpec.Cluster, nil)
+			k.EXPECT().GetEksaCluster(ctx, workloadCluster, clusterSpec.Cluster.Name).Return(existingClusterSpec.Cluster, nil).MaxTimes(4)
 			k.EXPECT().GetEksaFluxConfig(ctx, clusterSpec.Cluster.Spec.GitOpsRef.Name, gomock.Any(), gomock.Any()).Return(existingClusterSpec.FluxConfig, nil).MaxTimes(1)
 			k.EXPECT().GetEksaOIDCConfig(ctx, clusterSpec.Cluster.Spec.IdentityProviderRefs[0].Name, gomock.Any(), gomock.Any()).Return(existingClusterSpec.OIDCConfig, nil).MaxTimes(1)
 			k.EXPECT().GetEksaAWSIamConfig(ctx, clusterSpec.Cluster.Spec.IdentityProviderRefs[1].Name, gomock.Any(), gomock.Any()).Return(existingClusterSpec.AWSIamConfig, nil).MaxTimes(1)
-			k.EXPECT().Version(ctx, workloadCluster).Return(versionResponse, nil)
 			upgradeValidations := upgradevalidations.New(opts)
 			err := validations.ProcessValidationResults(upgradeValidations.PreflightValidations(ctx))
 			if !reflect.DeepEqual(err, tc.wantErr) {

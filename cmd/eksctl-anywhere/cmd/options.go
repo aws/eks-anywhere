@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"math"
 	"os"
 	"path/filepath"
 	"strings"
@@ -13,6 +14,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clustermanager"
 	"github.com/aws/eks-anywhere/pkg/config"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/files"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
@@ -21,6 +23,8 @@ import (
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/version"
 )
+
+const defaultTinkerbellNodeStartupTimeout = 20 * time.Minute
 
 const timeoutErrorTemplate = "failed to parse timeout %s: %v"
 
@@ -37,12 +41,14 @@ func applyTimeoutFlags(flagSet *pflag.FlagSet, t *timeoutOptions) {
 	flagSet.StringVar(&t.cpWaitTimeout, cpWaitTimeoutFlag, clustermanager.DefaultControlPlaneWait.String(), "Override the default control plane wait timeout")
 	flagSet.StringVar(&t.externalEtcdWaitTimeout, externalEtcdWaitTimeoutFlag, clustermanager.DefaultEtcdWait.String(), "Override the default external etcd wait timeout")
 	flagSet.StringVar(&t.perMachineWaitTimeout, perMachineWaitTimeoutFlag, clustermanager.DefaultMaxWaitPerMachine.String(), "Override the default machine wait timeout per machine")
-	flagSet.StringVar(&t.unhealthyMachineTimeout, unhealthyMachineTimeoutFlag, clustermanager.DefaultUnhealthyMachineTimeout.String(), "Override the default unhealthy machine timeout")
-	flagSet.StringVar(&t.nodeStartupTimeout, nodeStartupTimeoutFlag, clustermanager.DefaultNodeStartupTimeout.String(), "Override the default node startup timeout")
+	flagSet.StringVar(&t.unhealthyMachineTimeout, unhealthyMachineTimeoutFlag, constants.DefaultUnhealthyMachineTimeout.String(), "Override the default unhealthy machine timeout")
+	flagSet.StringVar(&t.nodeStartupTimeout, nodeStartupTimeoutFlag, constants.DefaultNodeStartupTimeout.String(), "Override the default node startup timeout (Defaults to 20m for Tinkerbell clusters)")
 	flagSet.BoolVar(&t.noTimeouts, noTimeoutsFlag, false, "Disable timeout for all wait operations")
 }
 
-func buildClusterManagerOpts(t timeoutOptions) (*dependencies.ClusterManagerTimeoutOptions, error) {
+// buildClusterManagerOpts builds options for constructing a ClusterManager from CLI flags.
+// datacenterKind is an API kind such as v1alpha1.TinkerbellDatacenterKind.
+func buildClusterManagerOpts(t timeoutOptions, datacenterKind string) (*dependencies.ClusterManagerTimeoutOptions, error) {
 	cpWaitTimeout, err := time.ParseDuration(t.cpWaitTimeout)
 	if err != nil {
 		return nil, fmt.Errorf(timeoutErrorTemplate, cpWaitTimeoutFlag, err)
@@ -61,6 +67,11 @@ func buildClusterManagerOpts(t timeoutOptions) (*dependencies.ClusterManagerTime
 	unhealthyMachineTimeout, err := time.ParseDuration(t.unhealthyMachineTimeout)
 	if err != nil {
 		return nil, fmt.Errorf(timeoutErrorTemplate, unhealthyMachineTimeoutFlag, err)
+	}
+
+	if t.nodeStartupTimeout == clustermanager.DefaultNodeStartupTimeout.String() &&
+		datacenterKind == v1alpha1.TinkerbellDatacenterKind {
+		t.nodeStartupTimeout = defaultTinkerbellNodeStartupTimeout.String()
 	}
 
 	nodeStartupTimeout, err := time.ParseDuration(t.nodeStartupTimeout)
@@ -94,7 +105,11 @@ func (c clusterOptions) mountDirs() []string {
 }
 
 func readClusterSpec(clusterConfigPath string, cliVersion version.Info, opts ...cluster.FileSpecBuilderOpt) (*cluster.Spec, error) {
-	b := cluster.NewFileSpecBuilder(files.NewReader(), cliVersion, opts...)
+	b := cluster.NewFileSpecBuilder(
+		files.NewReader(files.WithEKSAUserAgent("cli", cliVersion.GitVersion)),
+		cliVersion,
+		opts...,
+	)
 	return b.Build(clusterConfigPath)
 }
 
@@ -151,6 +166,59 @@ func buildCliConfig(clusterSpec *cluster.Spec) *config.CliConfig {
 	}
 
 	return cliConfig
+}
+
+func buildCreateCliConfig(clusterOptions *createClusterOptions) (*config.CreateClusterCLIConfig, error) {
+	createCliConfig := &config.CreateClusterCLIConfig{}
+	createCliConfig.SkipCPIPCheck = clusterOptions.skipIpCheck
+	if clusterOptions.noTimeouts {
+		maxTime := time.Duration(math.MaxInt64)
+		createCliConfig.NodeStartupTimeout = maxTime
+		createCliConfig.UnhealthyMachineTimeout = maxTime
+
+		return createCliConfig, nil
+	}
+
+	unhealthyMachineTimeout, err := time.ParseDuration(clusterOptions.unhealthyMachineTimeout)
+	if err != nil {
+		return nil, err
+	}
+
+	nodeStartupTimeout, err := time.ParseDuration(clusterOptions.nodeStartupTimeout)
+	if err != nil {
+		return nil, err
+	}
+
+	createCliConfig.NodeStartupTimeout = nodeStartupTimeout
+	createCliConfig.UnhealthyMachineTimeout = unhealthyMachineTimeout
+
+	return createCliConfig, nil
+}
+
+func buildUpgradeCliConfig(clusterOptions *upgradeClusterOptions) (*config.UpgradeClusterCLIConfig, error) {
+	upgradeCliConfig := config.UpgradeClusterCLIConfig{}
+	if clusterOptions.noTimeouts {
+		maxTime := time.Duration(math.MaxInt64)
+		upgradeCliConfig.NodeStartupTimeout = maxTime
+		upgradeCliConfig.UnhealthyMachineTimeout = maxTime
+
+		return &upgradeCliConfig, nil
+	}
+
+	unhealthyMachineTimeout, err := time.ParseDuration(clusterOptions.unhealthyMachineTimeout)
+	if err != nil {
+		return nil, err
+	}
+
+	nodeStartupTimeout, err := time.ParseDuration(clusterOptions.nodeStartupTimeout)
+	if err != nil {
+		return nil, err
+	}
+
+	upgradeCliConfig.NodeStartupTimeout = nodeStartupTimeout
+	upgradeCliConfig.UnhealthyMachineTimeout = unhealthyMachineTimeout
+
+	return &upgradeCliConfig, nil
 }
 
 func getManagementCluster(clusterSpec *cluster.Spec) *types.Cluster {

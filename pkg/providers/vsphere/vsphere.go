@@ -12,12 +12,15 @@ import (
 
 	"github.com/Masterminds/sprig"
 	etcdv1 "github.com/aws/etcdadm-controller/api/v1beta1"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
+	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/constants"
@@ -28,7 +31,9 @@ import (
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/providers/common"
 	"github.com/aws/eks-anywhere/pkg/retrier"
+	"github.com/aws/eks-anywhere/pkg/templater"
 	"github.com/aws/eks-anywhere/pkg/types"
+	"github.com/aws/eks-anywhere/pkg/validations"
 	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
@@ -47,6 +52,7 @@ const (
 	backOffPeriod            = 5 * time.Second
 	disk1                    = "Hard disk 1"
 	disk2                    = "Hard disk 2"
+	ethtoolDaemonSetName     = "vsphere-disable-udp-offload"
 )
 
 //go:embed config/template-cp.yaml
@@ -58,8 +64,8 @@ var defaultClusterConfigMD string
 //go:embed config/secret.yaml
 var defaultSecretObject string
 
-//go:embed config/defaultStorageClass.yaml
-var defaultStorageClass []byte
+//go:embed config/ethtool_daemonset.yaml
+var ethtoolDaemonSetObject string
 
 var (
 	eksaVSphereDatacenterResourceType = fmt.Sprintf("vspheredatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
@@ -75,11 +81,11 @@ type vsphereProvider struct {
 	writer                filewriter.FileWriter
 	templateBuilder       *VsphereTemplateBuilder
 	skipIPCheck           bool
-	csiEnabled            bool
 	Retrier               *retrier.Retrier
 	validator             *Validator
 	defaulter             *Defaulter
 	ipValidator           IPValidator
+	skippedValidations    map[string]bool
 }
 
 type ProviderGovcClient interface {
@@ -137,6 +143,8 @@ type ProviderKubectlClient interface {
 	DeleteEksaDatacenterConfig(ctx context.Context, vsphereDatacenterResourceType string, vsphereDatacenterConfigName string, kubeconfigFile string, namespace string) error
 	DeleteEksaMachineConfig(ctx context.Context, vsphereMachineResourceType string, vsphereMachineConfigName string, kubeconfigFile string, namespace string) error
 	ApplyTolerationsFromTaintsToDaemonSet(ctx context.Context, oldTaints []corev1.Taint, newTaints []corev1.Taint, dsName string, kubeconfigFile string) error
+	GetDaemonSet(ctx context.Context, name, namespace, kubeconfig string) (*appsv1.DaemonSet, error)
+	Delete(ctx context.Context, resourceType, kubeconfig string, opts ...kubernetes.KubectlDeleteOption) error
 }
 
 // IPValidator is an interface that defines methods to validate the control plane IP.
@@ -144,7 +152,18 @@ type IPValidator interface {
 	ValidateControlPlaneIPUniqueness(cluster *v1alpha1.Cluster) error
 }
 
-func NewProvider(datacenterConfig *v1alpha1.VSphereDatacenterConfig, clusterConfig *v1alpha1.Cluster, providerGovcClient ProviderGovcClient, providerKubectlClient ProviderKubectlClient, writer filewriter.FileWriter, ipValidator IPValidator, now types.NowFunc, skipIpCheck bool) *vsphereProvider { //nolint:revive
+// NewProvider initializes and returns a new vsphereProvider.
+func NewProvider(
+	datacenterConfig *v1alpha1.VSphereDatacenterConfig,
+	clusterConfig *v1alpha1.Cluster,
+	providerGovcClient ProviderGovcClient,
+	providerKubectlClient ProviderKubectlClient,
+	writer filewriter.FileWriter,
+	ipValidator IPValidator,
+	now types.NowFunc,
+	skipIPCheck bool,
+	skippedValidations map[string]bool,
+) *vsphereProvider { //nolint:revive
 	// TODO(g-gaston): ignoring linter error for exported function returning unexported member
 	// We should make it exported, but that would involve a bunch of changes, so will do it separately
 	vcb := govmomi.NewVMOMIClientBuilder()
@@ -161,12 +180,25 @@ func NewProvider(datacenterConfig *v1alpha1.VSphereDatacenterConfig, clusterConf
 		writer,
 		ipValidator,
 		now,
-		skipIpCheck,
+		skipIPCheck,
 		v,
+		skippedValidations,
 	)
 }
 
-func NewProviderCustomNet(datacenterConfig *v1alpha1.VSphereDatacenterConfig, clusterConfig *v1alpha1.Cluster, providerGovcClient ProviderGovcClient, providerKubectlClient ProviderKubectlClient, writer filewriter.FileWriter, ipValidator IPValidator, now types.NowFunc, skipIpCheck bool, v *Validator) *vsphereProvider { //nolint:revive
+// NewProviderCustomNet initializes and returns a new vsphereProvider.
+func NewProviderCustomNet(
+	datacenterConfig *v1alpha1.VSphereDatacenterConfig,
+	clusterConfig *v1alpha1.Cluster,
+	providerGovcClient ProviderGovcClient,
+	providerKubectlClient ProviderKubectlClient,
+	writer filewriter.FileWriter,
+	ipValidator IPValidator,
+	now types.NowFunc,
+	skipIPCheck bool,
+	v *Validator,
+	skippedValidations map[string]bool,
+) *vsphereProvider { //nolint:revive
 	// TODO(g-gaston): ignoring linter error for exported function returning unexported member
 	// We should make it exported, but that would involve a bunch of changes, so will do it separately
 	retrier := retrier.NewWithMaxRetries(maxRetries, backOffPeriod)
@@ -178,12 +210,12 @@ func NewProviderCustomNet(datacenterConfig *v1alpha1.VSphereDatacenterConfig, cl
 		templateBuilder: NewVsphereTemplateBuilder(
 			now,
 		),
-		skipIPCheck: skipIpCheck,
-		csiEnabled:  !datacenterConfig.Spec.DisableCSI,
-		Retrier:     retrier,
-		validator:   v,
-		defaulter:   NewDefaulter(providerGovcClient),
-		ipValidator: ipValidator,
+		skipIPCheck:        skipIPCheck,
+		Retrier:            retrier,
+		validator:          v,
+		defaulter:          NewDefaulter(providerGovcClient),
+		ipValidator:        ipValidator,
+		skippedValidations: skippedValidations,
 	}
 }
 
@@ -344,8 +376,10 @@ func (p *vsphereProvider) SetupAndValidateCreateCluster(ctx context.Context, clu
 		logger.Info("Skipping check for whether control plane ip is in use")
 	}
 
-	if err := p.validator.validateVsphereUserPrivs(ctx, vSphereClusterSpec); err != nil {
-		return fmt.Errorf("validating vsphere user privileges: %v", err)
+	if !p.skippedValidations[validations.VSphereUserPriv] {
+		if err := p.validator.validateVsphereUserPrivs(ctx, vSphereClusterSpec); err != nil {
+			return fmt.Errorf("validating vsphere user privileges: %v", err)
+		}
 	}
 
 	return nil
@@ -385,8 +419,10 @@ func (p *vsphereProvider) SetupAndValidateUpgradeCluster(ctx context.Context, cl
 		return fmt.Errorf("validating vsphere machine configs datastore usage: %v", err)
 	}
 
-	if err := p.validator.validateVsphereUserPrivs(ctx, vSphereClusterSpec); err != nil {
-		return fmt.Errorf("validating vsphere user privileges: %v", err)
+	if !p.skippedValidations[validations.VSphereUserPriv] {
+		if err := p.validator.validateVsphereUserPrivs(ctx, vSphereClusterSpec); err != nil {
+			return fmt.Errorf("validating vsphere user privileges: %v", err)
+		}
 	}
 
 	err := p.validateMachineConfigsNameUniqueness(ctx, cluster, clusterSpec)
@@ -591,15 +627,14 @@ func NeedsNewControlPlaneTemplate(oldSpec, newSpec *cluster.Spec, oldVdc, newVdc
 	return AnyImmutableFieldChanged(oldVdc, newVdc, oldVmc, newVmc)
 }
 
-func NeedsNewWorkloadTemplate(oldSpec, newSpec *cluster.Spec, oldVdc, newVdc *v1alpha1.VSphereDatacenterConfig, oldVmc, newVmc *v1alpha1.VSphereMachineConfig) bool {
-	if oldSpec.Cluster.Spec.KubernetesVersion != newSpec.Cluster.Spec.KubernetesVersion {
-		return true
-	}
+// NeedsNewWorkloadTemplate determines if a new workload template is needed.
+func NeedsNewWorkloadTemplate(oldSpec, newSpec *cluster.Spec, oldVdc, newVdc *v1alpha1.VSphereDatacenterConfig, oldVmc, newVmc *v1alpha1.VSphereMachineConfig, oldWorker, newWorker v1alpha1.WorkerNodeGroupConfiguration) bool {
 	if oldSpec.Bundles.Spec.Number != newSpec.Bundles.Spec.Number {
 		return true
 	}
 	if !v1alpha1.WorkerNodeGroupConfigurationSliceTaintsEqual(oldSpec.Cluster.Spec.WorkerNodeGroupConfigurations, newSpec.Cluster.Spec.WorkerNodeGroupConfigurations) ||
-		!v1alpha1.WorkerNodeGroupConfigurationsLabelsMapEqual(oldSpec.Cluster.Spec.WorkerNodeGroupConfigurations, newSpec.Cluster.Spec.WorkerNodeGroupConfigurations) {
+		!v1alpha1.WorkerNodeGroupConfigurationsLabelsMapEqual(oldSpec.Cluster.Spec.WorkerNodeGroupConfigurations, newSpec.Cluster.Spec.WorkerNodeGroupConfigurations) ||
+		!v1alpha1.WorkerNodeGroupConfigurationKubeVersionUnchanged(&oldWorker, &newWorker, oldSpec.Cluster, newSpec.Cluster) {
 		return true
 	}
 	return AnyImmutableFieldChanged(oldVdc, newVdc, oldVmc, newVmc)
@@ -814,14 +849,6 @@ func (p *vsphereProvider) GenerateCAPISpecForCreate(ctx context.Context, _ *type
 	return controlPlaneSpec, workersSpec, nil
 }
 
-func (p *vsphereProvider) InstallStorageClass(ctx context.Context, cluster *types.Cluster) error {
-	if !p.csiEnabled {
-		return nil
-	}
-
-	return p.providerKubectlClient.ApplyKubeSpecFromBytes(ctx, cluster, defaultStorageClass)
-}
-
 func (p *vsphereProvider) createSecret(ctx context.Context, cluster *types.Cluster, contents *bytes.Buffer) error {
 	t, err := template.New("tmpl").Funcs(sprig.TxtFuncMap()).Parse(defaultSecretObject)
 	if err != nil {
@@ -834,8 +861,6 @@ func (p *vsphereProvider) createSecret(ctx context.Context, cluster *types.Clust
 		"vsphereUsername":           os.Getenv(vSphereUsernameKey),
 		"eksaCloudProviderUsername": vuc.EksaVsphereCPUsername,
 		"eksaCloudProviderPassword": vuc.EksaVsphereCPPassword,
-		"eksaCSIUsername":           vuc.EksaVsphereCSIUsername,
-		"eksaCSIPassword":           vuc.EksaVsphereCSIPassword,
 		"eksaLicense":               os.Getenv(eksaLicense),
 		"eksaSystemNamespace":       constants.EksaSystemNamespace,
 		"vsphereCredentialsName":    constants.VSphereCredentialsName,
@@ -865,7 +890,8 @@ func (p *vsphereProvider) PostWorkloadInit(ctx context.Context, cluster *types.C
 }
 
 func (p *vsphereProvider) Version(clusterSpec *cluster.Spec) string {
-	return clusterSpec.VersionsBundle.VSphere.Version
+	versionsBundle := clusterSpec.ControlPlaneVersionsBundle()
+	return versionsBundle.VSphere.Version
 }
 
 func (p *vsphereProvider) EnvMap(_ *cluster.Spec) (map[string]string, error) {
@@ -887,15 +913,15 @@ func (p *vsphereProvider) GetDeployments() map[string][]string {
 }
 
 func (p *vsphereProvider) GetInfrastructureBundle(clusterSpec *cluster.Spec) *types.InfrastructureBundle {
-	bundle := clusterSpec.VersionsBundle
-	folderName := fmt.Sprintf("infrastructure-vsphere/%s/", bundle.VSphere.Version)
+	versionsBundle := clusterSpec.ControlPlaneVersionsBundle()
+	folderName := fmt.Sprintf("infrastructure-vsphere/%s/", versionsBundle.VSphere.Version)
 
 	infraBundle := types.InfrastructureBundle{
 		FolderName: folderName,
 		Manifests: []releasev1alpha1.Manifest{
-			bundle.VSphere.Components,
-			bundle.VSphere.Metadata,
-			bundle.VSphere.ClusterTemplate,
+			versionsBundle.VSphere.Components,
+			versionsBundle.VSphere.Metadata,
+			versionsBundle.VSphere.ClusterTemplate,
 		},
 	}
 	return &infraBundle
@@ -1022,8 +1048,8 @@ func (p *vsphereProvider) getWorkerNodeMachineConfigs(ctx context.Context, workl
 }
 
 func (p *vsphereProvider) needsNewMachineTemplate(currentSpec, newClusterSpec *cluster.Spec, workerNodeGroupConfiguration v1alpha1.WorkerNodeGroupConfiguration, vdc *v1alpha1.VSphereDatacenterConfig, prevWorkerNodeGroupConfigs map[string]v1alpha1.WorkerNodeGroupConfiguration, oldWorkerMachineConfig *v1alpha1.VSphereMachineConfig, newWorkerMachineConfig *v1alpha1.VSphereMachineConfig) (bool, error) {
-	if _, ok := prevWorkerNodeGroupConfigs[workerNodeGroupConfiguration.Name]; ok {
-		needsNewWorkloadTemplate := NeedsNewWorkloadTemplate(currentSpec, newClusterSpec, vdc, newClusterSpec.VSphereDatacenter, oldWorkerMachineConfig, newWorkerMachineConfig)
+	if prevWorkerNode, ok := prevWorkerNodeGroupConfigs[workerNodeGroupConfiguration.Name]; ok {
+		needsNewWorkloadTemplate := NeedsNewWorkloadTemplate(currentSpec, newClusterSpec, vdc, newClusterSpec.VSphereDatacenter, oldWorkerMachineConfig, newWorkerMachineConfig, prevWorkerNode, workerNodeGroupConfiguration)
 		return needsNewWorkloadTemplate, nil
 	}
 	return true, nil
@@ -1073,14 +1099,16 @@ func (p *vsphereProvider) secretContentsChanged(ctx context.Context, workloadClu
 }
 
 func (p *vsphereProvider) ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ComponentChangeDiff {
-	if currentSpec.VersionsBundle.VSphere.Version == newSpec.VersionsBundle.VSphere.Version {
+	currentVersionsBundle := currentSpec.ControlPlaneVersionsBundle()
+	newVersionsBundle := newSpec.ControlPlaneVersionsBundle()
+	if currentVersionsBundle.VSphere.Version == newVersionsBundle.VSphere.Version {
 		return nil
 	}
 
 	return &types.ComponentChangeDiff{
 		ComponentName: constants.VSphereProviderName,
-		NewVersion:    newSpec.VersionsBundle.VSphere.Version,
-		OldVersion:    currentSpec.VersionsBundle.VSphere.Version,
+		NewVersion:    newVersionsBundle.VSphere.Version,
+		OldVersion:    currentVersionsBundle.VSphere.Version,
 	}
 }
 
@@ -1092,21 +1120,17 @@ func cpiResourceSetName(clusterSpec *cluster.Spec) string {
 	return fmt.Sprintf("%s-cpi", clusterSpec.Cluster.Name)
 }
 
-func csiResourceSetName(clusterSpec *cluster.Spec) string {
-	return fmt.Sprintf("%s-csi", clusterSpec.Cluster.Name)
-}
+func (p *vsphereProvider) UpgradeNeeded(ctx context.Context, newSpec, currentSpec *cluster.Spec, c *types.Cluster) (bool, error) {
+	currentVersionsBundle := currentSpec.ControlPlaneVersionsBundle()
+	newVersionsBundle := newSpec.ControlPlaneVersionsBundle()
+	newV, oldV := newVersionsBundle.VSphere, currentVersionsBundle.VSphere
 
-func (p *vsphereProvider) UpgradeNeeded(ctx context.Context, newSpec, currentSpec *cluster.Spec, cluster *types.Cluster) (bool, error) {
-	newV, oldV := newSpec.VersionsBundle.VSphere, currentSpec.VersionsBundle.VSphere
-
-	if newV.Driver.ImageDigest != oldV.Driver.ImageDigest ||
-		newV.Syncer.ImageDigest != oldV.Syncer.ImageDigest ||
-		newV.Manager.ImageDigest != oldV.Manager.ImageDigest ||
+	if newV.Manager.ImageDigest != oldV.Manager.ImageDigest ||
 		newV.KubeVip.ImageDigest != oldV.KubeVip.ImageDigest {
 		return true, nil
 	}
 	cc := currentSpec.Cluster
-	existingVdc, err := p.providerKubectlClient.GetEksaVSphereDatacenterConfig(ctx, cc.Spec.DatacenterRef.Name, cluster.KubeconfigFile, newSpec.Cluster.Namespace)
+	existingVdc, err := p.providerKubectlClient.GetEksaVSphereDatacenterConfig(ctx, cc.Spec.DatacenterRef.Name, c.KubeconfigFile, newSpec.Cluster.Namespace)
 	if err != nil {
 		return false, err
 	}
@@ -1115,7 +1139,7 @@ func (p *vsphereProvider) UpgradeNeeded(ctx context.Context, newSpec, currentSpe
 		return true, nil
 	}
 
-	machineConfigsSpecChanged, err := p.machineConfigsSpecChanged(ctx, cc, cluster, newSpec)
+	machineConfigsSpecChanged, err := p.machineConfigsSpecChanged(ctx, cc, c, newSpec)
 	if err != nil {
 		return false, err
 	}
@@ -1138,22 +1162,72 @@ func (p *vsphereProvider) InstallCustomProviderComponents(ctx context.Context, k
 	return nil
 }
 
-func (p *vsphereProvider) PostBootstrapDeleteForUpgrade(ctx context.Context) error {
+// PostBootstrapDeleteForUpgrade runs any provider-specific operations after bootstrap cluster has been deleted.
+func (p *vsphereProvider) PostBootstrapDeleteForUpgrade(ctx context.Context, cluster *types.Cluster) error {
+	// Delete the daemonset that was used to disable udp offloading in ubuntu/redhat nodes.
+	logger.V(3).Info("Deleting vsphere-disable-udp-offload daemonset")
+	o := &kubernetes.KubectlDeleteOptions{
+		Name:      ethtoolDaemonSetName,
+		Namespace: constants.EksaSystemNamespace,
+	}
+	if err := p.providerKubectlClient.Delete(ctx, "daemonset", cluster.KubeconfigFile, o); err != nil && !apierrors.IsNotFound(err) {
+		return fmt.Errorf("deleting daemonset: %v", err)
+	}
 	return nil
 }
 
-// GetDefaultStorageClass returns a copy of default storage class.
-func GetDefaultStorageClass() []byte {
-	exportedStorageClass := make([]byte, len(defaultStorageClass))
-	copy(exportedStorageClass, defaultStorageClass)
-	return exportedStorageClass
-}
-
-// PreCoreComponentsUpgrade staisfies the Provider interface.
+// PreCoreComponentsUpgrade satisfies the Provider interface.
 func (p *vsphereProvider) PreCoreComponentsUpgrade(
 	ctx context.Context,
 	cluster *types.Cluster,
 	clusterSpec *cluster.Spec,
 ) error {
+	// This is only needed for EKS-A v0.17 because UDP offloading needs to be disabled for
+	// the new Cilium version to work with VSphere clusters with Redhat OS family. Since our templates that were shipped
+	// in v0.16 releases still have UDP offloading enabled in the nodes, we must apply the daemon set
+	// to disable UDP offloading in all the nodes before upgrading Cilium.
+	// We will remove this in EKS-A release v0.18.0.
+	return p.applyEthtoolDaemonSet(ctx, cluster, clusterSpec)
+}
+
+func (p *vsphereProvider) applyEthtoolDaemonSet(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
+	for _, mc := range clusterSpec.Config.VSphereMachineConfigs {
+		// This is only needed for Redhat OS.
+		// We only need to check one since the OS family has to be the same for all machine configs
+		if mc.Spec.OSFamily != v1alpha1.RedHat {
+			return nil
+		}
+	}
+	logger.V(4).Info("Applying vsphere-disable-udp-offload daemonset")
+	bundle := clusterSpec.ControlPlaneVersionsBundle()
+	values := map[string]interface{}{
+		"eksaSystemNamespace": constants.EksaSystemNamespace,
+		"kindNodeImage":       bundle.EksD.KindNode.VersionedImage(),
+	}
+	b, err := templater.Execute(ethtoolDaemonSetObject, values)
+	if err != nil {
+		return err
+	}
+
+	if err = p.providerKubectlClient.ApplyKubeSpecFromBytes(ctx, cluster, b); err != nil {
+		return err
+	}
+
+	return p.Retrier.Retry(
+		func() error {
+			return p.checkEthtoolDaemonSetReady(ctx, cluster)
+		},
+	)
+}
+
+func (p *vsphereProvider) checkEthtoolDaemonSetReady(ctx context.Context, cluster *types.Cluster) error {
+	ethtoolDaemonSet, err := p.providerKubectlClient.GetDaemonSet(ctx, ethtoolDaemonSetName, constants.EksaSystemNamespace, cluster.KubeconfigFile)
+	if err != nil {
+		return err
+	}
+
+	if ethtoolDaemonSet.Status.DesiredNumberScheduled != ethtoolDaemonSet.Status.NumberReady {
+		return fmt.Errorf("daemonSet %s is not ready: %d/%d ready", ethtoolDaemonSetName, ethtoolDaemonSet.Status.NumberReady, ethtoolDaemonSet.Status.DesiredNumberScheduled)
+	}
 	return nil
 }

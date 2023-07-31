@@ -8,7 +8,6 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
 
@@ -37,6 +36,16 @@ func nutanixMachineConfig() *v1alpha1.NutanixMachineConfig {
 			Project: &v1alpha1.NutanixResourceIdentifier{
 				Type: v1alpha1.NutanixIdentifierName,
 				Name: ptr.String("project-1"),
+			},
+			AdditionalCategories: []v1alpha1.NutanixCategoryIdentifier{
+				{
+					Key:   "category-1",
+					Value: "value-1",
+				},
+				{
+					Key:   "category-2",
+					Value: "value-2",
+				},
 			},
 			SystemDiskSize: resource.MustParse("100Gi"),
 			Users: []v1alpha1.UserConfiguration{
@@ -308,13 +317,6 @@ func TestValidateUpdate_OldObjectNotMachineConfig(t *testing.T) {
 	newConfig := nutanixMachineConfig()
 	err := newConfig.ValidateUpdate(oldConfig)
 	g.Expect(err).To(HaveOccurred())
-}
-
-func TestNutanixMachineConfigSetupWebhookWithManager(t *testing.T) {
-	t.Setenv(features.FullLifecycleAPIEnvVar, "true")
-	g := NewWithT(t)
-	conf := nutanixMachineConfig()
-	g.Expect(conf.SetupWebhookWithManager(env.Manager())).To(Succeed())
 }
 
 func TestNutanixMachineConfigWebhooksValidateDelete(t *testing.T) {

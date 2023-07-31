@@ -232,14 +232,14 @@ func TestClusterctlBackupManagement(t *testing.T) {
 				Name:           clusterName,
 				KubeconfigFile: "cluster.kubeconfig",
 			},
-			wantMoveArgs: []interface{}{"move", "--to-directory", fmt.Sprintf("%s/%s", clusterName, managementClusterState), "--kubeconfig", "cluster.kubeconfig", "--namespace", constants.EksaSystemNamespace},
+			wantMoveArgs: []interface{}{"move", "--to-directory", fmt.Sprintf("%s/%s", clusterName, managementClusterState), "--kubeconfig", "cluster.kubeconfig", "--namespace", constants.EksaSystemNamespace, "--filter-cluster", clusterName},
 		},
 		{
 			testName: "no kubeconfig file",
 			cluster: &types.Cluster{
 				Name: clusterName,
 			},
-			wantMoveArgs: []interface{}{"move", "--to-directory", fmt.Sprintf("%s/%s", clusterName, managementClusterState), "--kubeconfig", "", "--namespace", constants.EksaSystemNamespace},
+			wantMoveArgs: []interface{}{"move", "--to-directory", fmt.Sprintf("%s/%s", clusterName, managementClusterState), "--kubeconfig", "", "--namespace", constants.EksaSystemNamespace, "--filter-cluster", clusterName},
 		},
 	}
 
@@ -248,7 +248,7 @@ func TestClusterctlBackupManagement(t *testing.T) {
 			tc := newClusterctlTest(t)
 			tc.e.EXPECT().Execute(tc.ctx, tt.wantMoveArgs...)
 
-			if err := tc.clusterctl.BackupManagement(tc.ctx, tt.cluster, managementClusterState); err != nil {
+			if err := tc.clusterctl.BackupManagement(tc.ctx, tt.cluster, managementClusterState, clusterName); err != nil {
 				t.Fatalf("Clusterctl.BackupManagement() error = %v, want nil", err)
 			}
 		})
@@ -264,10 +264,10 @@ func TestClusterctlBackupManagementFailed(t *testing.T) {
 		KubeconfigFile: "cluster.kubeconfig",
 	}
 
-	wantMoveArgs := []interface{}{"move", "--to-directory", fmt.Sprintf("%s/%s", cluster.Name, managementClusterState), "--kubeconfig", "cluster.kubeconfig", "--namespace", constants.EksaSystemNamespace}
+	wantMoveArgs := []interface{}{"move", "--to-directory", fmt.Sprintf("%s/%s", cluster.Name, managementClusterState), "--kubeconfig", "cluster.kubeconfig", "--namespace", constants.EksaSystemNamespace, "--filter-cluster", cluster.Name}
 
 	tt.e.EXPECT().Execute(tt.ctx, wantMoveArgs...).Return(bytes.Buffer{}, fmt.Errorf("error backing up management cluster resources"))
-	if err := tt.clusterctl.BackupManagement(tt.ctx, cluster, managementClusterState); err == nil {
+	if err := tt.clusterctl.BackupManagement(tt.ctx, cluster, managementClusterState, cluster.Name); err == nil {
 		t.Fatalf("Clusterctl.BackupManagement() error = %v, want nil", err)
 	}
 }
@@ -277,13 +277,15 @@ func TestClusterctlMoveManagement(t *testing.T) {
 		testName     string
 		from         *types.Cluster
 		to           *types.Cluster
+		clusterName  string
 		wantMoveArgs []interface{}
 	}{
 		{
 			testName:     "no kubeconfig",
 			from:         &types.Cluster{},
 			to:           &types.Cluster{},
-			wantMoveArgs: []interface{}{"move", "--to-kubeconfig", "", "--namespace", constants.EksaSystemNamespace},
+			clusterName:  "",
+			wantMoveArgs: []interface{}{"move", "--to-kubeconfig", "", "--namespace", constants.EksaSystemNamespace, "--filter-cluster", ""},
 		},
 		{
 			testName: "no kubeconfig in 'from' cluster",
@@ -291,7 +293,8 @@ func TestClusterctlMoveManagement(t *testing.T) {
 			to: &types.Cluster{
 				KubeconfigFile: "to.kubeconfig",
 			},
-			wantMoveArgs: []interface{}{"move", "--to-kubeconfig", "to.kubeconfig", "--namespace", constants.EksaSystemNamespace},
+			clusterName:  "",
+			wantMoveArgs: []interface{}{"move", "--to-kubeconfig", "to.kubeconfig", "--namespace", constants.EksaSystemNamespace, "--filter-cluster", ""},
 		},
 		{
 			testName: "with both kubeconfigs",
@@ -301,7 +304,19 @@ func TestClusterctlMoveManagement(t *testing.T) {
 			to: &types.Cluster{
 				KubeconfigFile: "to.kubeconfig",
 			},
-			wantMoveArgs: []interface{}{"move", "--to-kubeconfig", "to.kubeconfig", "--namespace", constants.EksaSystemNamespace, "--kubeconfig", "from.kubeconfig"},
+			clusterName:  "",
+			wantMoveArgs: []interface{}{"move", "--to-kubeconfig", "to.kubeconfig", "--namespace", constants.EksaSystemNamespace, "--filter-cluster", "", "--kubeconfig", "from.kubeconfig"},
+		},
+		{
+			testName: "with filter cluster",
+			from: &types.Cluster{
+				KubeconfigFile: "from.kubeconfig",
+			},
+			to: &types.Cluster{
+				KubeconfigFile: "to.kubeconfig",
+			},
+			clusterName:  "test-cluster",
+			wantMoveArgs: []interface{}{"move", "--to-kubeconfig", "to.kubeconfig", "--namespace", constants.EksaSystemNamespace, "--filter-cluster", "test-cluster", "--kubeconfig", "from.kubeconfig"},
 		},
 	}
 
@@ -310,7 +325,7 @@ func TestClusterctlMoveManagement(t *testing.T) {
 			tc := newClusterctlTest(t)
 			tc.e.EXPECT().Execute(tc.ctx, tt.wantMoveArgs...)
 
-			if err := tc.clusterctl.MoveManagement(tc.ctx, tt.from, tt.to); err != nil {
+			if err := tc.clusterctl.MoveManagement(tc.ctx, tt.from, tt.to, tt.clusterName); err != nil {
 				t.Fatalf("Clusterctl.MoveManagement() error = %v, want nil", err)
 			}
 		})
@@ -411,7 +426,7 @@ func TestClusterctlUpgradeInfrastructureProvidersError(t *testing.T) {
 }
 
 var clusterSpec = test.NewClusterSpec(func(s *cluster.Spec) {
-	s.VersionsBundle = versionBundle
+	s.VersionsBundles["1.19"] = versionBundle
 })
 
 var versionBundle = &cluster.VersionsBundle{

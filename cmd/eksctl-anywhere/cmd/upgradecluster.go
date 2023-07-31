@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -23,6 +24,7 @@ type upgradeClusterOptions struct {
 	forceClean            bool
 	hardwareCSVPath       string
 	tinkerbellBootstrapIP string
+	skipValidations       []string
 }
 
 var uc = &upgradeClusterOptions{}
@@ -48,6 +50,7 @@ func init() {
 	applyTinkerbellHardwareFlag(upgradeClusterCmd.Flags(), &uc.hardwareCSVPath)
 	upgradeClusterCmd.Flags().StringVarP(&uc.wConfig, "w-config", "w", "", "Kubeconfig file to use when upgrading a workload cluster")
 	upgradeClusterCmd.Flags().BoolVar(&uc.forceClean, "force-cleanup", false, "Force deletion of previously created bootstrap cluster")
+	upgradeClusterCmd.Flags().StringArrayVar(&uc.skipValidations, "skip-validations", []string{}, fmt.Sprintf("Bypass upgrade validations by name. Valid arguments you can pass are --skip-validations=%s", strings.Join(upgradevalidations.SkippableValidations[:], ",")))
 
 	if err := upgradeClusterCmd.MarkFlagRequired("filename"); err != nil {
 		log.Fatalf("Error marking flag as required: %v", err)
@@ -91,23 +94,37 @@ func (uc *upgradeClusterOptions) upgradeCluster(cmd *cobra.Command) error {
 		return err
 	}
 
-	clusterManagerTimeoutOpts, err := buildClusterManagerOpts(uc.timeoutOptions)
+	upgradeCLIConfig, err := buildUpgradeCliConfig(uc)
+	if err != nil {
+		return err
+	}
+
+	clusterManagerTimeoutOpts, err := buildClusterManagerOpts(uc.timeoutOptions, clusterSpec.Cluster.Spec.DatacenterRef.Kind)
 	if err != nil {
 		return fmt.Errorf("failed to build cluster manager opts: %v", err)
+	}
+
+	var skippedValidations map[string]bool
+	if len(uc.skipValidations) != 0 {
+		skippedValidations, err = validations.ValidateSkippableValidation(uc.skipValidations, upgradevalidations.SkippableValidations)
+		if err != nil {
+			return err
+		}
 	}
 
 	factory := dependencies.ForSpec(ctx, clusterSpec).WithExecutableMountDirs(dirs...).
 		WithBootstrapper().
 		WithCliConfig(cliConfig).
 		WithClusterManager(clusterSpec.Cluster, clusterManagerTimeoutOpts).
-		WithKubeProxyCLIUpgrader().
-		WithProvider(uc.fileName, clusterSpec.Cluster, cc.skipIpCheck, uc.hardwareCSVPath, uc.forceClean, uc.tinkerbellBootstrapIP).
+		WithProvider(uc.fileName, clusterSpec.Cluster, cc.skipIpCheck, uc.hardwareCSVPath, uc.forceClean, uc.tinkerbellBootstrapIP, skippedValidations).
 		WithGitOpsFlux(clusterSpec.Cluster, clusterSpec.FluxConfig, cliConfig).
 		WithWriter().
 		WithCAPIManager().
 		WithEksdUpgrader().
 		WithEksdInstaller().
-		WithKubectl()
+		WithKubectl().
+		WithValidatorClients().
+		WithUpgradeClusterDefaulter(upgradeCLIConfig)
 
 	if uc.timeoutOptions.noTimeouts {
 		factory.WithNoTimeouts()
@@ -119,6 +136,11 @@ func (uc *upgradeClusterOptions) upgradeCluster(cmd *cobra.Command) error {
 	}
 	defer close(ctx, deps)
 
+	clusterSpec, err = deps.UpgradeClusterDefaulter.Run(ctx, clusterSpec)
+	if err != nil {
+		return err
+	}
+
 	upgradeCluster := workflows.NewUpgrade(
 		deps.Bootstrapper,
 		deps.Provider,
@@ -128,7 +150,6 @@ func (uc *upgradeClusterOptions) upgradeCluster(cmd *cobra.Command) error {
 		deps.Writer,
 		deps.EksdUpgrader,
 		deps.EksdInstaller,
-		deps.KubeProxyCLIUpgrader,
 	)
 
 	workloadCluster := &types.Cluster{
@@ -144,13 +165,15 @@ func (uc *upgradeClusterOptions) upgradeCluster(cmd *cobra.Command) error {
 	}
 
 	validationOpts := &validations.Opts{
-		Kubectl:           deps.Kubectl,
-		Spec:              clusterSpec,
-		WorkloadCluster:   workloadCluster,
-		ManagementCluster: managementCluster,
-		Provider:          deps.Provider,
-		CliConfig:         cliConfig,
+		Kubectl:            deps.UnAuthKubectlClient,
+		Spec:               clusterSpec,
+		WorkloadCluster:    workloadCluster,
+		ManagementCluster:  managementCluster,
+		Provider:           deps.Provider,
+		CliConfig:          cliConfig,
+		SkippedValidations: skippedValidations,
 	}
+
 	upgradeValidations := upgradevalidations.New(validationOpts)
 
 	err = upgradeCluster.Run(ctx, clusterSpec, managementCluster, workloadCluster, upgradeValidations, uc.forceClean)

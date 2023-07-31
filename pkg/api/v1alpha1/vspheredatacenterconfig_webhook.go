@@ -131,20 +131,6 @@ func validateImmutableFieldsVSphereCluster(new, old *VSphereDatacenterConfig) fi
 		)
 	}
 
-	if old.Spec.Insecure != new.Spec.Insecure {
-		allErrs = append(
-			allErrs,
-			field.Forbidden(specPath.Child("insecure"), "field is immutable"),
-		)
-	}
-
-	if old.Spec.Thumbprint != new.Spec.Thumbprint {
-		allErrs = append(
-			allErrs,
-			field.Forbidden(specPath.Child("thumbprint"), "field is immutable"),
-		)
-	}
-
 	return allErrs
 }
 

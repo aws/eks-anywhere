@@ -822,26 +822,6 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 			"projectPath",
 		},
 	},
-	// Vsphere-csi-driver artifacts
-	{
-		ProjectName: "vsphere-csi-driver",
-		ProjectPath: "projects/kubernetes-sigs/vsphere-csi-driver",
-		Images: []*assettypes.Image{
-			{
-				RepoName:  "driver",
-				AssetName: "vsphere-csi-driver",
-			},
-			{
-				RepoName:  "syncer",
-				AssetName: "vsphere-csi-syncer",
-			},
-		},
-		ImageRepoPrefix: "kubernetes-sigs/vsphere-csi-driver/csi",
-		ImageTagOptions: []string{
-			"gitTag",
-			"projectPath",
-		},
-	},
 }
 
 func GetBundleReleaseAssetsConfigMap() []assettypes.AssetConfig {

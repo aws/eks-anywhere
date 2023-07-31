@@ -24,6 +24,13 @@ const (
 	defaultTestBranch    = "main"
 )
 
+// GetLatestMinorReleaseFromTestBranch inspects the T_BRANCH_NAME environment variable for a
+// branch to retrieve the latest released CLI version. If T_BRANCH_NAME is main, it returns
+// the latest minor release.
+//
+// If T_BRANCH_NAME is not main, it expects it to be of the format release-<major>.<minor>
+// and will use the <major>.<minor> to retrieve the previous minor release. For example, if the
+// release branch is release-0.2 it will retrieve the latest 0.1 release.
 func GetLatestMinorReleaseFromTestBranch() (*releasev1alpha1.EksARelease, error) {
 	testBranch := testBranch()
 	if testBranch == "main" {
@@ -35,7 +42,7 @@ func GetLatestMinorReleaseFromTestBranch() (*releasev1alpha1.EksARelease, error)
 		return nil, err
 	}
 
-	return GetLatestMinorReleaseFromVersion(testBranchFirstSemver)
+	return GetPreviousMinorReleaseFromVersion(testBranchFirstSemver)
 }
 
 // EKSAVersionForTestBinary returns the "future" EKS-A version for the tested binary based on the TEST_BRANCH name.
@@ -79,7 +86,7 @@ func eksaVersionForReleaseBranch(branch string) (string, error) {
 
 	var latestReleaseSemVer *semver.Version
 
-	latestRelease := getLatestPatchReleaseForMinor(releases, semVer)
+	latestRelease := GetLatestPatchRelease(releases, semVer)
 	if latestRelease != nil {
 		latestReleaseSemVer, err = semver.New(latestRelease.Version)
 		if err != nil {
@@ -146,17 +153,16 @@ func latestRelease(releases *releasev1alpha1.Release) (*releasev1alpha1.EksARele
 	return latestRelease, nil
 }
 
-func GetLatestMinorReleaseBinaryFromVersion(releaseBranchVersion *semver.Version) (binaryPath string, err error) {
-	return getBinaryFromRelease(GetLatestMinorReleaseFromVersion(releaseBranchVersion))
-}
-
-func GetLatestMinorReleaseFromVersion(releaseBranchVersion *semver.Version) (*releasev1alpha1.EksARelease, error) {
+// GetPreviousMinorReleaseFromVersion calculates the previous minor release by decrementing the
+// version minor number, then retrieves the latest <major>.<minor>.<patch>  for the calculated
+// version.
+func GetPreviousMinorReleaseFromVersion(version *semver.Version) (*releasev1alpha1.EksARelease, error) {
 	releases, err := prodReleases()
 	if err != nil {
 		return nil, err
 	}
 
-	release, err := getLatestPrevMinorRelease(releases, releaseBranchVersion)
+	release, err := getLatestPrevMinorRelease(releases, version)
 	if err != nil {
 		return nil, err
 	}
@@ -300,28 +306,39 @@ func getLatestPrevMinorRelease(releases *releasev1alpha1.Release, releaseBranchV
 	return targetRelease, nil
 }
 
-// getLatestPatchReleaseForMinor return the latest patch version for the major-minor release branch version.
-// If no version has been released yet for the branch version, it returns nil.
-func getLatestPatchReleaseForMinor(releases *releasev1alpha1.Release, releaseBranchVersion *semver.Version) *releasev1alpha1.EksARelease {
-	targetRelease := &releasev1alpha1.EksARelease{
-		Version:           "",
-		BundleManifestUrl: "",
-	}
-	latestPrevMinorReleaseVersion := newVersion("0.0.0")
+// GetLatestPatchRelease return the latest patch version for the major.minor release version.
+// If releases doesn't contain a major.minor for version, it returns nil.
+func GetLatestPatchRelease(releases *releasev1alpha1.Release, version *semver.Version) *releasev1alpha1.EksARelease {
+	var release *releasev1alpha1.EksARelease
 
-	for _, release := range releases.Spec.Releases {
-		releaseVersion := newVersion(release.Version)
-		if releaseVersion.SameMinor(releaseBranchVersion) && releaseVersion.GreaterThan(latestPrevMinorReleaseVersion) {
-			*targetRelease = release
-			latestPrevMinorReleaseVersion = releaseVersion
+	current := newVersion("0.0.0")
+	for _, r := range releases.Spec.Releases {
+		r := r
+		rv := newVersion(r.Version)
+		if rv.SameMajor(version) && rv.SameMinor(version) && rv.GreaterThan(current) {
+			release = &r
+			current = version
 		}
 	}
 
-	if targetRelease.Version == "" {
-		return nil
+	return release
+}
+
+// GetLatestProductionPatchRelease retrieves the latest patch release for version from the
+// production release manifest. If the production release manifest does not contain a release for
+// the major.minor of version it errors.
+func GetLatestProductionPatchRelease(version *semver.Version) (*releasev1alpha1.EksARelease, error) {
+	releases, err := prodReleases()
+	if err != nil {
+		return nil, err
 	}
 
-	return targetRelease
+	release := GetLatestPatchRelease(releases, version)
+	if release == nil {
+		return nil, fmt.Errorf("no release found in the production release bundle for %v", version)
+	}
+
+	return release, nil
 }
 
 func getMajorMinorFromTestBranch(testBranch string) string {

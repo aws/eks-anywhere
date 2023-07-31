@@ -31,6 +31,8 @@ type factoryTest struct {
 	hardwareConfigFile    string
 	tinkerbellBootstrapIP string
 	cliConfig             config.CliConfig
+	createCLIConfig       config.CreateClusterCLIConfig
+	upgradeCLIConfig      config.UpgradeClusterCLIConfig
 }
 
 type provider string
@@ -57,11 +59,22 @@ func newTest(t *testing.T, p provider) *factoryTest {
 		t.Fatalf("Not a valid provider: %v", p)
 	}
 
+	createCLIConfig := config.CreateClusterCLIConfig{
+		SkipCPIPCheck: false,
+	}
+
+	upgradeCLIConfig := config.UpgradeClusterCLIConfig{
+		NodeStartupTimeout:      5 * time.Minute,
+		UnhealthyMachineTimeout: 5 * time.Minute,
+	}
+
 	return &factoryTest{
 		WithT:             NewGomegaWithT(t),
 		clusterConfigFile: clusterConfigFile,
 		clusterSpec:       test.NewFullClusterSpec(t, clusterConfigFile),
 		ctx:               context.Background(),
+		createCLIConfig:   createCLIConfig,
+		upgradeCLIConfig:  upgradeCLIConfig,
 	}
 }
 
@@ -69,7 +82,7 @@ func TestFactoryBuildWithProvidervSphere(t *testing.T) {
 	tt := newTest(t, vsphere)
 	deps, err := dependencies.NewFactory().
 		WithLocalExecutables().
-		WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, tt.hardwareConfigFile, false, tt.tinkerbellBootstrapIP).
+		WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, tt.hardwareConfigFile, false, tt.tinkerbellBootstrapIP, map[string]bool{}).
 		Build(context.Background())
 
 	tt.Expect(err).To(BeNil())
@@ -81,7 +94,7 @@ func TestFactoryBuildWithProviderTinkerbell(t *testing.T) {
 	tt := newTest(t, tinkerbell)
 	deps, err := dependencies.NewFactory().
 		WithLocalExecutables().
-		WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, tt.hardwareConfigFile, false, tt.tinkerbellBootstrapIP).
+		WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, tt.hardwareConfigFile, false, tt.tinkerbellBootstrapIP, map[string]bool{}).
 		Build(context.Background())
 
 	tt.Expect(err).To(BeNil())
@@ -97,7 +110,7 @@ func TestFactoryBuildWithProviderSnow(t *testing.T) {
 
 	deps, err := dependencies.NewFactory().
 		WithLocalExecutables().
-		WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, tt.hardwareConfigFile, false, tt.tinkerbellBootstrapIP).
+		WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, tt.hardwareConfigFile, false, tt.tinkerbellBootstrapIP, map[string]bool{}).
 		Build(context.Background())
 
 	tt.Expect(err).To(BeNil())
@@ -130,7 +143,7 @@ func TestFactoryBuildWithProviderNutanix(t *testing.T) {
 
 		deps, err := dependencies.NewFactory().
 			WithLocalExecutables().
-			WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, tt.hardwareConfigFile, false, tt.tinkerbellBootstrapIP).
+			WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, tt.hardwareConfigFile, false, tt.tinkerbellBootstrapIP, map[string]bool{}).
 			WithNutanixValidator().
 			Build(context.Background())
 
@@ -151,7 +164,7 @@ func TestFactoryBuildWithInvalidProvider(t *testing.T) {
 
 	deps, err := dependencies.NewFactory().
 		WithLocalExecutables().
-		WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, tt.hardwareConfigFile, false, tt.tinkerbellBootstrapIP).
+		WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, tt.hardwareConfigFile, false, tt.tinkerbellBootstrapIP, map[string]bool{}).
 		Build(context.Background())
 
 	tt.Expect(err).NotTo(BeNil())
@@ -196,7 +209,7 @@ func TestFactoryBuildWithMultipleDependencies(t *testing.T) {
 		WithBootstrapper().
 		WithCliConfig(&tt.cliConfig).
 		WithClusterManager(tt.clusterSpec.Cluster, timeoutOpts).
-		WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, tt.hardwareConfigFile, false, tt.tinkerbellBootstrapIP).
+		WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, tt.hardwareConfigFile, false, tt.tinkerbellBootstrapIP, map[string]bool{}).
 		WithGitOpsFlux(tt.clusterSpec.Cluster, tt.clusterSpec.FluxConfig, nil).
 		WithWriter().
 		WithEksdInstaller().
@@ -213,7 +226,9 @@ func TestFactoryBuildWithMultipleDependencies(t *testing.T) {
 		WithVSphereValidator().
 		WithCiliumTemplater().
 		WithIPValidator().
-		WithKubeProxyCLIUpgrader().
+		WithValidatorClients().
+		WithCreateClusterDefaulter(&tt.createCLIConfig).
+		WithUpgradeClusterDefaulter(&tt.upgradeCLIConfig).
 		Build(context.Background())
 
 	tt.Expect(err).To(BeNil())
@@ -234,7 +249,7 @@ func TestFactoryBuildWithMultipleDependencies(t *testing.T) {
 	tt.Expect(deps.VSphereValidator).NotTo(BeNil())
 	tt.Expect(deps.CiliumTemplater).NotTo(BeNil())
 	tt.Expect(deps.IPValidator).NotTo(BeNil())
-	tt.Expect(deps.KubeProxyCLIUpgrader).NotTo(BeNil())
+	tt.Expect(deps.UnAuthKubectlClient).NotTo(BeNil())
 }
 
 func TestFactoryBuildWithProxyConfiguration(t *testing.T) {
@@ -291,14 +306,19 @@ func TestFactoryBuildWithPackageInstaller(t *testing.T) {
 				ObjectMeta: v1.ObjectMeta{
 					Name: "test-cluster",
 				},
+				Spec: anywherev1.ClusterSpec{
+					KubernetesVersion: "1.19",
+				},
 			},
 		},
-		VersionsBundle: &cluster.VersionsBundle{
-			VersionsBundle: &v1alpha1.VersionsBundle{
-				PackageController: v1alpha1.PackageBundle{
-					HelmChart: v1alpha1.Image{
-						URI:  "test_registry/test/eks-anywhere-packages:v1",
-						Name: "test_chart",
+		VersionsBundles: map[anywherev1.KubernetesVersion]*cluster.VersionsBundle{
+			"1.19": {
+				VersionsBundle: &v1alpha1.VersionsBundle{
+					PackageController: v1alpha1.PackageBundle{
+						HelmChart: v1alpha1.Image{
+							URI:  "test_registry/test/eks-anywhere-packages:v1",
+							Name: "test_chart",
+						},
 					},
 				},
 			},
@@ -350,15 +370,18 @@ func TestFactoryBuildWithPackageControllerClientNoProxy(t *testing.T) {
 					ManagementCluster: anywherev1.ManagementCluster{
 						Name: "mgmt-1",
 					},
+					KubernetesVersion: "1.19",
 				},
 			},
 		},
-		VersionsBundle: &cluster.VersionsBundle{
-			VersionsBundle: &v1alpha1.VersionsBundle{
-				PackageController: v1alpha1.PackageBundle{
-					HelmChart: v1alpha1.Image{
-						URI:  "test_registry/test/eks-anywhere-packages:v1",
-						Name: "test_chart",
+		VersionsBundles: map[anywherev1.KubernetesVersion]*cluster.VersionsBundle{
+			"1.19": {
+				VersionsBundle: &v1alpha1.VersionsBundle{
+					PackageController: v1alpha1.PackageBundle{
+						HelmChart: v1alpha1.Image{
+							URI:  "test_registry/test/eks-anywhere-packages:v1",
+							Name: "test_chart",
+						},
 					},
 				},
 			},
@@ -390,15 +413,18 @@ func TestFactoryBuildWithPackageControllerClientProxy(t *testing.T) {
 						HttpsProxy: "1.1.1.1",
 						NoProxy:    []string{"1.1.1.1"},
 					},
+					KubernetesVersion: "1.19",
 				},
 			},
 		},
-		VersionsBundle: &cluster.VersionsBundle{
-			VersionsBundle: &v1alpha1.VersionsBundle{
-				PackageController: v1alpha1.PackageBundle{
-					HelmChart: v1alpha1.Image{
-						URI:  "test_registry/test/eks-anywhere-packages:v1",
-						Name: "test_chart",
+		VersionsBundles: map[anywherev1.KubernetesVersion]*cluster.VersionsBundle{
+			"1.19": {
+				VersionsBundle: &v1alpha1.VersionsBundle{
+					PackageController: v1alpha1.PackageBundle{
+						HelmChart: v1alpha1.Image{
+							URI:  "test_registry/test/eks-anywhere-packages:v1",
+							Name: "test_chart",
+						},
 					},
 				},
 			},
@@ -497,7 +523,7 @@ func TestFactoryBuildWithCNIInstallerCilium(t *testing.T) {
 	factory := dependencies.NewFactory()
 	deps, err := factory.
 		WithLocalExecutables().
-		WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, tt.hardwareConfigFile, false, tt.tinkerbellBootstrapIP).
+		WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, tt.hardwareConfigFile, false, tt.tinkerbellBootstrapIP, map[string]bool{}).
 		Build(tt.ctx)
 	tt.Expect(err).To(BeNil())
 
@@ -519,7 +545,7 @@ func TestFactoryBuildWithCNIInstallerKindnetd(t *testing.T) {
 	factory := dependencies.NewFactory()
 	deps, err := factory.
 		WithLocalExecutables().
-		WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, tt.hardwareConfigFile, false, tt.tinkerbellBootstrapIP).
+		WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, tt.hardwareConfigFile, false, tt.tinkerbellBootstrapIP, map[string]bool{}).
 		Build(tt.ctx)
 	tt.Expect(err).To(BeNil())
 
@@ -530,18 +556,6 @@ func TestFactoryBuildWithCNIInstallerKindnetd(t *testing.T) {
 
 	tt.Expect(err).To(BeNil())
 	tt.Expect(deps.CNIInstaller).NotTo(BeNil())
-}
-
-func TestFactoryBuildWithKubeProxyCLIUpgraderNoTimeout(t *testing.T) {
-	tt := newTest(t, vsphere)
-	deps, err := dependencies.NewFactory().
-		WithLocalExecutables().
-		WithNoTimeouts().
-		WithKubeProxyCLIUpgrader().
-		Build(context.Background())
-
-	tt.Expect(err).To(BeNil())
-	tt.Expect(deps.KubeProxyCLIUpgrader).NotTo(BeNil())
 }
 
 func TestFactoryBuildWithAwsIamAuthNoTimeout(t *testing.T) {

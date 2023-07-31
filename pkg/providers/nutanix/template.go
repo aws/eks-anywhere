@@ -150,7 +150,7 @@ func buildTemplateMapCP(
 	controlPlaneMachineSpec v1alpha1.NutanixMachineConfigSpec,
 	etcdMachineSpec v1alpha1.NutanixMachineConfigSpec,
 ) (map[string]interface{}, error) {
-	bundle := clusterSpec.VersionsBundle
+	versionsBundle := clusterSpec.ControlPlaneVersionsBundle()
 	format := "cloud-config"
 	apiServerExtraArgs := clusterapi.OIDCToExtraArgs(clusterSpec.OIDCConfig).
 		Append(clusterapi.AwsIamAuthExtraArgs(clusterSpec.AWSIamConfig)).
@@ -170,17 +170,17 @@ func buildTemplateMapCP(
 		"format":                       format,
 		"podCidrs":                     clusterSpec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks,
 		"serviceCidrs":                 clusterSpec.Cluster.Spec.ClusterNetwork.Services.CidrBlocks,
-		"kubernetesVersion":            bundle.KubeDistro.Kubernetes.Tag,
-		"kubernetesRepository":         bundle.KubeDistro.Kubernetes.Repository,
-		"corednsRepository":            bundle.KubeDistro.CoreDNS.Repository,
-		"corednsVersion":               bundle.KubeDistro.CoreDNS.Tag,
-		"etcdRepository":               bundle.KubeDistro.Etcd.Repository,
-		"etcdImageTag":                 bundle.KubeDistro.Etcd.Tag,
+		"kubernetesVersion":            versionsBundle.KubeDistro.Kubernetes.Tag,
+		"kubernetesRepository":         versionsBundle.KubeDistro.Kubernetes.Repository,
+		"corednsRepository":            versionsBundle.KubeDistro.CoreDNS.Repository,
+		"corednsVersion":               versionsBundle.KubeDistro.CoreDNS.Tag,
+		"etcdRepository":               versionsBundle.KubeDistro.Etcd.Repository,
+		"etcdImageTag":                 versionsBundle.KubeDistro.Etcd.Tag,
 		"kubeletExtraArgs":             kubeletExtraArgs.ToPartialYaml(),
-		"kubeVipImage":                 bundle.Nutanix.KubeVip.VersionedImage(),
+		"kubeVipImage":                 versionsBundle.Nutanix.KubeVip.VersionedImage(),
 		"kubeVipSvcEnable":             false,
 		"kubeVipLBEnable":              false,
-		"externalEtcdVersion":          bundle.KubeDistro.EtcdVersion,
+		"externalEtcdVersion":          versionsBundle.KubeDistro.EtcdVersion,
 		"etcdCipherSuites":             crypto.SecureCipherSuitesString(),
 		"nutanixEndpoint":              datacenterSpec.Endpoint,
 		"nutanixPort":                  datacenterSpec.Port,
@@ -246,11 +246,15 @@ func buildTemplateMapCP(
 		values["noProxy"] = generateNoProxyList(clusterSpec)
 	}
 
+	if len(controlPlaneMachineSpec.AdditionalCategories) > 0 {
+		values["additionalCategories"] = controlPlaneMachineSpec.AdditionalCategories
+	}
+
 	return values, nil
 }
 
 func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupMachineSpec v1alpha1.NutanixMachineConfigSpec, workerNodeGroupConfiguration v1alpha1.WorkerNodeGroupConfiguration) (map[string]interface{}, error) {
-	bundle := clusterSpec.VersionsBundle
+	versionsBundle := clusterSpec.WorkerNodeGroupVersionsBundle(workerNodeGroupConfiguration)
 	format := "cloud-config"
 
 	kubeletExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs().
@@ -260,7 +264,7 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupMachineSpec v1
 		"clusterName":            clusterSpec.Cluster.Name,
 		"eksaSystemNamespace":    constants.EksaSystemNamespace,
 		"format":                 format,
-		"kubernetesVersion":      bundle.KubeDistro.Kubernetes.Tag,
+		"kubernetesVersion":      versionsBundle.KubeDistro.Kubernetes.Tag,
 		"workerReplicas":         *workerNodeGroupConfiguration.Count,
 		"workerPoolName":         "md-0",
 		"workerSshAuthorizedKey": workerNodeGroupMachineSpec.Users[0].SshAuthorizedKeys[0],
@@ -316,6 +320,10 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupMachineSpec v1
 		values["httpProxy"] = clusterSpec.Cluster.Spec.ProxyConfiguration.HttpProxy
 		values["httpsProxy"] = clusterSpec.Cluster.Spec.ProxyConfiguration.HttpsProxy
 		values["noProxy"] = generateNoProxyList(clusterSpec)
+	}
+
+	if len(workerNodeGroupMachineSpec.AdditionalCategories) > 0 {
+		values["additionalCategories"] = workerNodeGroupMachineSpec.AdditionalCategories
 	}
 
 	return values, nil

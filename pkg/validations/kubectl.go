@@ -8,6 +8,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	mockexecutables "github.com/aws/eks-anywhere/pkg/executables/mocks"
 	"github.com/aws/eks-anywhere/pkg/types"
@@ -15,6 +16,7 @@ import (
 )
 
 type KubectlClient interface {
+	List(ctx context.Context, kubeconfig string, list kubernetes.ObjectList) error
 	ValidateControlPlaneNodes(ctx context.Context, cluster *types.Cluster, clusterName string) error
 	ValidateWorkerNodes(ctx context.Context, clusterName string, kubeconfig string) error
 	ValidateNodes(ctx context.Context, kubeconfig string) error

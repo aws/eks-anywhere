@@ -11,12 +11,19 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/validations"
 	"github.com/aws/eks-anywhere/pkg/validations/upgradevalidations"
 )
 
 const testclustername string = "testcluster"
+
+type UnAuthKubectlClient struct {
+	*executables.Kubectl
+	*kubernetes.UnAuthClient
+}
 
 func TestValidateClusterPresent(t *testing.T) {
 	tests := []struct {
@@ -43,12 +50,14 @@ func TestValidateClusterPresent(t *testing.T) {
 	}
 
 	k, ctx, cluster, e := validations.NewKubectl(t)
+	uk := kubernetes.NewUnAuthClient(k)
+
 	cluster.Name = testclustername
 	for _, tc := range tests {
 		t.Run(tc.name, func(tt *testing.T) {
 			fileContent := test.ReadFile(t, tc.getClusterResponse)
 			e.EXPECT().Execute(ctx, []string{"get", capiClustersResourceType, "-o", "json", "--kubeconfig", cluster.KubeconfigFile, "--namespace", constants.EksaSystemNamespace}).Return(*bytes.NewBufferString(fileContent), nil)
-			err := upgradevalidations.ValidateClusterObjectExists(ctx, k, cluster)
+			err := upgradevalidations.ValidateClusterObjectExists(ctx, UnAuthKubectlClient{k, uk}, cluster)
 			if !reflect.DeepEqual(err, tc.wantErr) {
 				t.Errorf("%v got = %v, \nwant %v", tc.name, err, tc.wantErr)
 			}

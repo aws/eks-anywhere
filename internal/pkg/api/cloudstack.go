@@ -124,6 +124,19 @@ func WithCloudStackAccount(value string) CloudStackFiller {
 	}
 }
 
+// WithCloudStackCredentialsRef returns a CloudStackFiller that updates the edentialsRef of all availability zones.
+func WithCloudStackCredentialsRef(value string) CloudStackFiller {
+	return func(config CloudStackConfig) {
+		zones := []anywherev1.CloudStackAvailabilityZone{}
+		for _, az := range config.datacenterConfig.Spec.AvailabilityZones {
+			az.CredentialsRef = value
+			zones = append(zones, az)
+		}
+
+		config.datacenterConfig.Spec.AvailabilityZones = zones
+	}
+}
+
 func WithCloudStackStringFromEnvVar(envVar string, opt func(string) CloudStackFiller) CloudStackFiller {
 	return opt(os.Getenv(envVar))
 }

@@ -18,11 +18,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	packagesv1 "github.com/aws/eks-anywhere-packages/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/registrymirror"
@@ -46,12 +46,13 @@ type PackageControllerClient struct {
 	// chartManager installs and deletes helm charts.
 	chartManager          ChartManager
 	clusterName           string
-	clusterSpec           *v1alpha1.ClusterSpec
+	clusterSpec           *anywherev1.ClusterSpec
 	managementClusterName string
 	kubectl               KubectlRunner
 	eksaAccessKeyID       string
 	eksaSecretAccessKey   string
 	eksaRegion            string
+	eksaAwsConfig         string
 	httpProxy             string
 	httpsProxy            string
 	noProxy               []string
@@ -297,6 +298,7 @@ func (pc *PackageControllerClient) generateHelmOverrideValues() ([]byte, error) 
 		"eksaAccessKeyId":     base64.StdEncoding.EncodeToString([]byte(pc.eksaAccessKeyID)),
 		"eksaSecretAccessKey": base64.StdEncoding.EncodeToString([]byte(pc.eksaSecretAccessKey)),
 		"eksaRegion":          base64.StdEncoding.EncodeToString([]byte(pc.eksaRegion)),
+		"eksaAwsConfig":       base64.StdEncoding.EncodeToString([]byte(pc.eksaAwsConfig)),
 		"mirrorEndpoint":      base64.StdEncoding.EncodeToString([]byte(endpoint)),
 		"mirrorUsername":      base64.StdEncoding.EncodeToString([]byte(username)),
 		"mirrorPassword":      base64.StdEncoding.EncodeToString([]byte(password)),
@@ -397,7 +399,7 @@ func formatYamlLine(space, key, value string) string {
 	return space + key + ": " + value + "\n"
 }
 
-func formatImageResource(resource *v1alpha1.ImageResource, name string) (result string) {
+func formatImageResource(resource *anywherev1.ImageResource, name string) (result string) {
 	if resource.CPU != "" || resource.Memory != "" {
 		result = "    " + name + ":\n"
 		result += formatYamlLine("      ", "cpu", resource.CPU)
@@ -406,7 +408,7 @@ func formatImageResource(resource *v1alpha1.ImageResource, name string) (result 
 	return result
 }
 
-func formatCronJob(cronJob *v1alpha1.PackageControllerCronJob) (result string) {
+func formatCronJob(cronJob *anywherev1.PackageControllerCronJob) (result string) {
 	if cronJob != nil {
 		result += "cronjob:\n"
 		result += formatYamlLine("  ", "digest", cronJob.Digest)
@@ -417,7 +419,7 @@ func formatCronJob(cronJob *v1alpha1.PackageControllerCronJob) (result string) {
 	return result
 }
 
-func formatResources(resources *v1alpha1.PackageControllerResources) (result string) {
+func formatResources(resources *anywherev1.PackageControllerResources) (result string) {
 	if resources.Limits.CPU != "" || resources.Limits.Memory != "" ||
 		resources.Requests.CPU != "" || resources.Requests.Memory != "" {
 		result += "  resources:\n"
@@ -480,16 +482,12 @@ func (pc *PackageControllerClient) Reconcile(ctx context.Context, logger logr.Lo
 
 // getBundleFromCluster based on the cluster's k8s version.
 func (pc *PackageControllerClient) getBundleFromCluster(ctx context.Context, client client.Client, clusterObj *anywherev1.Cluster) (*releasev1.Image, error) {
-	bundles := &releasev1.Bundles{}
-	nn := types.NamespacedName{
-		Name:      clusterObj.Spec.BundlesRef.Name,
-		Namespace: clusterObj.Spec.BundlesRef.Namespace,
-	}
-	if err := client.Get(ctx, nn, bundles); err != nil {
-		return nil, fmt.Errorf("retrieving bundle: %w", err)
+	bundles, err := cluster.BundlesForCluster(ctx, clientutil.NewKubeClient(client), clusterObj)
+	if err != nil {
+		return nil, err
 	}
 
-	verBundle, err := cluster.GetVersionsBundle(clusterObj, bundles)
+	verBundle, err := cluster.GetVersionsBundle(clusterObj.Spec.KubernetesVersion, bundles)
 	if err != nil {
 		return nil, err
 	}
@@ -549,6 +547,15 @@ func WithEksaRegion(eksaRegion string) func(client *PackageControllerClient) {
 	return func(config *PackageControllerClient) {
 		if eksaRegion != "" {
 			config.eksaRegion = eksaRegion
+		}
+	}
+}
+
+// WithEksaAwsConfig set the eksaAwsConfig field.
+func WithEksaAwsConfig(eksaAwsConfig string) func(client *PackageControllerClient) {
+	return func(config *PackageControllerClient) {
+		if eksaAwsConfig != "" {
+			config.eksaAwsConfig = eksaAwsConfig
 		}
 	}
 }

@@ -54,13 +54,13 @@ spec:
           name: test-md-0-template-1234567890000
       clusterName: test
       infrastructureRef:
-        apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
+        apiVersion: infrastructure.cluster.x-k8s.io/v1beta3
         kind: CloudStackMachineTemplate
         name: test-md-0-1234567890000
       version: v1.21.2-eks-1-21-4
 
 ---
-apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta3
 kind: CloudStackMachineTemplate
 metadata:
   creationTimestamp: null
@@ -68,8 +68,6 @@ metadata:
   namespace: eksa-system
 spec:
   template:
-    metadata:
-      creationTimestamp: null
     spec:
       affinity: anti
       details:

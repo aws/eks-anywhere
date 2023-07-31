@@ -5,7 +5,7 @@ import (
 
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/api/equality"
-	cloudstackv1 "sigs.k8s.io/cluster-api-provider-cloudstack/api/v1beta2"
+	cloudstackv1 "sigs.k8s.io/cluster-api-provider-cloudstack/api/v1beta3"
 
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 )
@@ -23,5 +23,9 @@ func GetMachineTemplate(ctx context.Context, client kubernetes.Client, name, nam
 
 // machineTemplateEqual returns a boolean indicating whether the provided CloudStackMachineTemplates are equal.
 func machineTemplateEqual(new, old *cloudstackv1.CloudStackMachineTemplate) bool {
-	return equality.Semantic.DeepDerivative(new.Spec, old.Spec)
+	// Compare new -> old and old -> new because DeepDerivative ignores fields in the first param
+	// that are default values. This is important for cases where an optional field is removed
+	// from the spec.
+	return equality.Semantic.DeepDerivative(new.Spec, old.Spec) &&
+		equality.Semantic.DeepDerivative(old.Spec, new.Spec)
 }

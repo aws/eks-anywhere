@@ -10,6 +10,7 @@ import (
 	"github.com/aws/eks-anywhere/internal/test"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/templater"
 	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
 
@@ -24,6 +25,7 @@ func TestConfigManagerParseSuccess(t *testing.T) {
 		c.DockerDatacenter = d.(*anywherev1.DockerDatacenterConfig)
 	})
 
+	kubeVersion := anywherev1.KubernetesVersion("1.20")
 	yamlManifest := []byte(test.ReadFile(t, "testdata/docker_cluster_oidc_awsiam_flux.yaml"))
 	wantCluster := &anywherev1.Cluster{
 		TypeMeta: metav1.TypeMeta{
@@ -43,8 +45,9 @@ func TestConfigManagerParseSuccess(t *testing.T) {
 			},
 			WorkerNodeGroupConfigurations: []anywherev1.WorkerNodeGroupConfiguration{
 				{
-					Name:  "workers-1",
-					Count: ptr.Int(1),
+					Name:              "workers-1",
+					Count:             ptr.Int(1),
+					KubernetesVersion: &kubeVersion,
 				},
 			},
 			DatacenterRef: anywherev1.Ref{
@@ -145,6 +148,84 @@ kind: MysteryCRD
 
 	c := cluster.NewConfigManager()
 	g.Expect(c.Parse([]byte(manifest))).To(Equal(wantConfig))
+}
+
+func TestConfigManagerMissingAPIVersion(t *testing.T) {
+	g := NewWithT(t)
+	c := cluster.NewConfigManager()
+	g.Expect(c.RegisterMapping(anywherev1.DockerDatacenterKind, func() cluster.APIObject {
+		return &anywherev1.DockerDatacenterConfig{}
+	})).To(Succeed())
+	c.RegisterProcessors(func(c *cluster.Config, ol cluster.ObjectLookup) {
+		d := ol.GetFromRef(c.Cluster.APIVersion, c.Cluster.Spec.DatacenterRef)
+		c.DockerDatacenter = d.(*anywherev1.DockerDatacenterConfig)
+	})
+
+	wantCluster := &anywherev1.Cluster{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       anywherev1.ClusterKind,
+			APIVersion: anywherev1.SchemeBuilder.GroupVersion.String(),
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "m-docker",
+		},
+		Spec: anywherev1.ClusterSpec{
+			KubernetesVersion: "1.21",
+			ManagementCluster: anywherev1.ManagementCluster{
+				Name: "m-docker",
+			},
+			ControlPlaneConfiguration: anywherev1.ControlPlaneConfiguration{
+				Count: 1,
+			},
+			WorkerNodeGroupConfigurations: []anywherev1.WorkerNodeGroupConfiguration{
+				{
+					Name:  "workers-1",
+					Count: ptr.Int(1),
+				},
+			},
+			DatacenterRef: anywherev1.Ref{
+				Kind: anywherev1.DockerDatacenterKind,
+				Name: "m-docker",
+			},
+			ClusterNetwork: anywherev1.ClusterNetwork{
+				Pods: anywherev1.Pods{
+					CidrBlocks: []string{"192.168.0.0/16"},
+				},
+				Services: anywherev1.Services{
+					CidrBlocks: []string{"10.96.0.0/12"},
+				},
+				CNI: "cilium",
+			},
+			IdentityProviderRefs: []anywherev1.Ref{
+				{
+					Kind: anywherev1.OIDCConfigKind,
+					Name: "eksa-unit-test",
+				},
+				{
+					Kind: anywherev1.AWSIamConfigKind,
+					Name: "eksa-unit-test",
+				},
+			},
+			GitOpsRef: &anywherev1.Ref{
+				Kind: anywherev1.FluxConfigKind,
+				Name: "eksa-unit-test",
+			},
+		},
+	}
+	wantDockerDatacenter := &anywherev1.DockerDatacenterConfig{
+		TypeMeta: metav1.TypeMeta{
+			Kind: anywherev1.DockerDatacenterKind,
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "m-docker",
+		},
+	}
+
+	yamlManifest, err := templater.ObjectsToYaml(wantCluster, wantDockerDatacenter)
+	g.Expect(err).To(BeNil())
+
+	_, err = c.Parse(yamlManifest)
+	g.Expect(err).To(MatchError(ContainSubstring("apiVersion not set for Kind")))
 }
 
 func TestConfigManagerSetDefaultsSuccess(t *testing.T) {

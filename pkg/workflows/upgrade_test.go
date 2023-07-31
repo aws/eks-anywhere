@@ -34,7 +34,6 @@ type upgradeTestSetup struct {
 	eksdInstaller       *mocks.MockEksdInstaller
 	eksdUpgrader        *mocks.MockEksdUpgrader
 	capiManager         *mocks.MockCAPIManager
-	clusterUpgrader     *mocks.MockClusterUpgrader
 	datacenterConfig    providers.DatacenterConfig
 	machineConfigs      []providers.MachineConfig
 	workflow            *workflows.Upgrade
@@ -62,7 +61,6 @@ func newUpgradeTest(t *testing.T) *upgradeTestSetup {
 	datacenterConfig := &v1alpha1.VSphereDatacenterConfig{}
 	capiUpgrader := mocks.NewMockCAPIManager(mockCtrl)
 	machineConfigs := []providers.MachineConfig{&v1alpha1.VSphereMachineConfig{}}
-	clusterUpgrader := mocks.NewMockClusterUpgrader(mockCtrl)
 	workflow := workflows.NewUpgrade(
 		bootstrapper,
 		provider,
@@ -72,7 +70,6 @@ func newUpgradeTest(t *testing.T) *upgradeTestSetup {
 		writer,
 		eksdUpgrader,
 		eksdInstaller,
-		clusterUpgrader,
 	)
 
 	for _, e := range featureEnvVars {
@@ -90,7 +87,6 @@ func newUpgradeTest(t *testing.T) *upgradeTestSetup {
 		eksdInstaller:       eksdInstaller,
 		eksdUpgrader:        eksdUpgrader,
 		capiManager:         capiUpgrader,
-		clusterUpgrader:     clusterUpgrader,
 		datacenterConfig:    datacenterConfig,
 		machineConfigs:      machineConfigs,
 		workflow:            workflow,
@@ -99,6 +95,11 @@ func newUpgradeTest(t *testing.T) *upgradeTestSetup {
 		workloadCluster:     &types.Cluster{Name: "workload"},
 		managementStatePath: fmt.Sprintf("cluster-state-backup-%s", time.Now().Format("2006-01-02T15_04_05")),
 	}
+}
+
+func (c *upgradeTestSetup) WithForceCleanup() *upgradeTestSetup {
+	c.forceCleanup = true
+	return c
 }
 
 func newUpgradeSelfManagedClusterTest(t *testing.T) *upgradeTestSetup {
@@ -186,6 +187,14 @@ func (c *upgradeTestSetup) expectUpgradeCoreComponents(managementCluster *types.
 	)
 }
 
+func (c *upgradeTestSetup) expectForceCleanupBootstrap() {
+	c.bootstrapper.EXPECT().DeleteBootstrapCluster(c.ctx, gomock.Not(gomock.Nil()), gomock.Not(gomock.Nil()), true).Return(nil)
+}
+
+func (c *upgradeTestSetup) expectForceCleanupBootstrapError() {
+	c.bootstrapper.EXPECT().DeleteBootstrapCluster(c.ctx, gomock.Not(gomock.Nil()), gomock.Not(gomock.Nil()), true).Return(errors.New("test error"))
+}
+
 func (c *upgradeTestSetup) expectCreateBootstrap() {
 	opts := []bootstrapper.BootstrapClusterOption{
 		bootstrapper.WithExtraDockerMounts(),
@@ -234,19 +243,19 @@ func (c *upgradeTestSetup) expectNotToDeleteBootstrap() {
 
 func (c *upgradeTestSetup) expectUpgradeWorkload(managementCluster *types.Cluster, workloadCluster *types.Cluster) {
 	calls := []*gomock.Call{
-		c.expectPrepareUpgradeWorkload(managementCluster, workloadCluster),
 		c.expectUpgradeWorkloadToReturn(managementCluster, workloadCluster, nil),
-		c.clusterUpgrader.EXPECT().CleanupAfterUpgrade(c.ctx,
-			c.newClusterSpec,
-			managementCluster.KubeconfigFile, //nolint
-			workloadCluster.KubeconfigFile,
-		),
 	}
 
 	if managementCluster != nil && managementCluster.ExistingManagement {
-		calls = append(calls, c.clusterManager.EXPECT().ApplyBundles(c.ctx, c.newClusterSpec, managementCluster))
+		calls = append(calls,
+			c.clusterManager.EXPECT().ApplyBundles(c.ctx, c.newClusterSpec, managementCluster),
+			c.clusterManager.EXPECT().ApplyReleases(c.ctx, c.newClusterSpec, managementCluster),
+		)
 	} else {
-		calls = append(calls, c.clusterManager.EXPECT().ApplyBundles(c.ctx, c.newClusterSpec, workloadCluster))
+		calls = append(calls,
+			c.clusterManager.EXPECT().ApplyBundles(c.ctx, c.newClusterSpec, workloadCluster),
+			c.clusterManager.EXPECT().ApplyReleases(c.ctx, c.newClusterSpec, workloadCluster),
+		)
 	}
 
 	gomock.InOrder(calls...)
@@ -258,17 +267,10 @@ func (c *upgradeTestSetup) expectUpgradeWorkloadToReturn(managementCluster *type
 	).Return(err)
 }
 
-func (c *upgradeTestSetup) expectPrepareUpgradeWorkload(managementCluster *types.Cluster, workloadCluster *types.Cluster) *gomock.Call {
-	return c.clusterUpgrader.EXPECT().PrepareUpgrade(c.ctx,
-		c.newClusterSpec,
-		managementCluster.KubeconfigFile,
-		workloadCluster.KubeconfigFile,
-	)
-}
-
 func (c *upgradeTestSetup) expectMoveManagementToBootstrap() {
 	gomock.InOrder(
-		c.clusterManager.EXPECT().BackupCAPI(c.ctx, c.managementCluster, c.managementStatePath),
+		c.clusterManager.EXPECT().BackupCAPI(c.ctx, c.managementCluster, c.managementStatePath, ""),
+		c.clusterManager.EXPECT().PauseCAPIWorkloadClusters(c.ctx, c.managementCluster),
 		c.clusterManager.EXPECT().MoveCAPI(
 			c.ctx, c.managementCluster, c.bootstrapCluster, gomock.Any(), c.newClusterSpec, gomock.Any(),
 		),
@@ -278,9 +280,22 @@ func (c *upgradeTestSetup) expectMoveManagementToBootstrap() {
 	)
 }
 
-func (c *upgradeTestSetup) expectBackupManagementToBootstrapFailed() {
+func (c *upgradeTestSetup) expectBackupManagementFromBootstrapCluster(cluster *types.Cluster) {
 	gomock.InOrder(
-		c.clusterManager.EXPECT().BackupCAPI(c.ctx, c.managementCluster, c.managementStatePath).Return(fmt.Errorf("backup management failed")),
+		c.clusterManager.EXPECT().BackupCAPIWaitForInfrastructure(c.ctx, cluster, gomock.Any(), gomock.Any()),
+	)
+}
+
+func (c *upgradeTestSetup) expectBackupManagementFromBootstrapClusterFailed(cluster *types.Cluster) {
+	gomock.InOrder(
+		c.clusterManager.EXPECT().BackupCAPIWaitForInfrastructure(c.ctx, cluster, gomock.Any(), gomock.Any()).Return(fmt.Errorf("backup management failed")),
+	)
+}
+
+func (c *upgradeTestSetup) expectBackupManagementFromClusterFailed(cluster *types.Cluster) {
+	gomock.InOrder(
+		c.clusterManager.EXPECT().BackupCAPI(c.ctx, cluster, gomock.Any(), gomock.Any()).Return(fmt.Errorf("backup management failed")),
+		c.clusterManager.EXPECT().BackupCAPIWaitForInfrastructure(c.ctx, cluster, gomock.Any(), gomock.Any()).Return(fmt.Errorf("backup management failed")),
 	)
 }
 
@@ -293,6 +308,7 @@ func (c *upgradeTestSetup) expectMoveManagementToWorkload() {
 		c.clusterManager.EXPECT().MoveCAPI(
 			c.ctx, c.bootstrapCluster, c.managementCluster, gomock.Any(), c.newClusterSpec, gomock.Any(),
 		),
+		c.clusterManager.EXPECT().ResumeCAPIWorkloadClusters(c.ctx, c.managementCluster),
 	)
 }
 
@@ -378,7 +394,7 @@ func (c *upgradeTestSetup) expectResumeGitOpsReconcile(expectedCluster *types.Cl
 
 func (c *upgradeTestSetup) expectPostBootstrapDeleteForUpgrade() {
 	gomock.InOrder(
-		c.provider.EXPECT().PostBootstrapDeleteForUpgrade(c.ctx),
+		c.provider.EXPECT().PostBootstrapDeleteForUpgrade(c.ctx, c.managementCluster),
 	)
 }
 
@@ -497,6 +513,42 @@ func TestUpgradeRunSuccess(t *testing.T) {
 	}
 }
 
+func TestUpgradeRunSuccessForceCleanup(t *testing.T) {
+	os.Unsetenv(features.CheckpointEnabledEnvVar)
+	test := newUpgradeSelfManagedClusterTest(t).WithForceCleanup()
+	test.expectSetup()
+	test.expectPreflightValidationsToPass()
+	test.expectUpdateSecrets(test.workloadCluster)
+	test.expectEnsureEtcdCAPIComponentsExistTask(test.workloadCluster)
+	test.expectUpgradeCoreComponents(test.workloadCluster, test.workloadCluster)
+	test.expectProviderNoUpgradeNeeded(test.workloadCluster)
+	test.expectVerifyClusterSpecChanged(test.workloadCluster)
+	test.expectPauseEKSAControllerReconcile(test.workloadCluster)
+	test.expectPauseGitOpsReconcile(test.workloadCluster)
+	test.expectForceCleanupBootstrap()
+	test.expectCreateBootstrap()
+	test.expectMoveManagementToBootstrap()
+	test.expectUpgradeWorkload(test.bootstrapCluster, test.workloadCluster)
+	test.expectMoveManagementToWorkload()
+	test.expectWriteClusterConfig()
+	test.expectDeleteBootstrap()
+	test.expectDatacenterConfig()
+	test.expectMachineConfigs()
+	test.expectCreateEKSAResources(test.workloadCluster)
+	test.expectInstallEksdManifest(test.workloadCluster)
+	test.expectResumeEKSAControllerReconcile(test.workloadCluster)
+	test.expectUpdateGitEksaSpec()
+	test.expectForceReconcileGitRepo(test.workloadCluster)
+	test.expectResumeGitOpsReconcile(test.workloadCluster)
+	test.expectPostBootstrapDeleteForUpgrade()
+	test.expectPreCoreComponentsUpgrade()
+
+	err := test.run()
+	if err != nil {
+		t.Fatalf("Upgrade.Run() err = %v, want err = nil", err)
+	}
+}
+
 func TestUpgradeRunProviderNeedsUpgradeSuccess(t *testing.T) {
 	os.Unsetenv(features.CheckpointEnabledEnvVar)
 	test := newUpgradeSelfManagedClusterTest(t)
@@ -531,6 +583,28 @@ func TestUpgradeRunProviderNeedsUpgradeSuccess(t *testing.T) {
 	}
 }
 
+func TestUpgradeWorkloadRunFailedForceCleanupBootstrap(t *testing.T) {
+	os.Unsetenv(features.CheckpointEnabledEnvVar)
+	test := newUpgradeSelfManagedClusterTest(t).WithForceCleanup()
+	test.expectSetup()
+	test.expectPreflightValidationsToPass()
+	test.expectUpdateSecrets(test.workloadCluster)
+	test.expectEnsureEtcdCAPIComponentsExistTask(test.workloadCluster)
+	test.expectUpgradeCoreComponents(test.workloadCluster, test.workloadCluster)
+	test.expectProviderNoUpgradeNeeded(test.workloadCluster)
+	test.expectVerifyClusterSpecChanged(test.workloadCluster)
+	test.expectPauseEKSAControllerReconcile(test.workloadCluster)
+	test.expectPauseGitOpsReconcile(test.workloadCluster)
+	test.expectForceCleanupBootstrapError()
+	test.expectPreCoreComponentsUpgrade()
+	test.expectWriteCheckpointFile()
+
+	err := test.run()
+	if err == nil {
+		t.Fatal("Upgrade.Run() err = nil, want err not nil")
+	}
+}
+
 func TestUpgradeRunFailedUpgrade(t *testing.T) {
 	os.Unsetenv(features.CheckpointEnabledEnvVar)
 	test := newUpgradeSelfManagedClusterTest(t)
@@ -545,8 +619,8 @@ func TestUpgradeRunFailedUpgrade(t *testing.T) {
 	test.expectPauseGitOpsReconcile(test.workloadCluster)
 	test.expectCreateBootstrap()
 	test.expectMoveManagementToBootstrap()
-	test.expectPrepareUpgradeWorkload(test.bootstrapCluster, test.workloadCluster)
 	test.expectUpgradeWorkloadToReturn(test.bootstrapCluster, test.workloadCluster, errors.New("failed upgrading"))
+	test.expectBackupManagementFromBootstrapClusterFailed(test.bootstrapCluster)
 	test.expectSaveLogs(test.workloadCluster)
 	test.expectWriteCheckpointFile()
 	test.expectPreCoreComponentsUpgrade()
@@ -570,7 +644,7 @@ func TestUpgradeRunFailedBackupManagementUpgrade(t *testing.T) {
 	test.expectPauseEKSAControllerReconcile(test.workloadCluster)
 	test.expectPauseGitOpsReconcile(test.workloadCluster)
 	test.expectCreateBootstrap()
-	test.expectBackupManagementToBootstrapFailed()
+	test.expectBackupManagementFromClusterFailed(test.managementCluster)
 	test.expectSaveLogs(test.workloadCluster)
 	test.expectWriteCheckpointFile()
 	test.expectPreCoreComponentsUpgrade()
@@ -647,8 +721,8 @@ func TestUpgradeWithCheckpointSecondRunSuccess(t *testing.T) {
 	test.expectPauseGitOpsReconcile(test.workloadCluster)
 	test.expectCreateBootstrap()
 	test.expectMoveManagementToBootstrap()
-	test.expectPrepareUpgradeWorkload(test.bootstrapCluster, test.workloadCluster)
 	test.expectUpgradeWorkloadToReturn(test.bootstrapCluster, test.workloadCluster, errors.New("failed upgrading"))
+	test.expectBackupManagementFromBootstrapCluster(test.bootstrapCluster)
 	test.expectSaveLogs(test.workloadCluster)
 	test.expectWriteCheckpointFile()
 	test.expectPreCoreComponentsUpgrade()

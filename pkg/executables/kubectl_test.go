@@ -17,7 +17,6 @@ import (
 	tinkv1alpha1 "github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	storagev1 "k8s.io/api/storage/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/version"
@@ -39,7 +38,7 @@ import (
 
 const (
 	secretObjectType = "addons.cluster.x-k8s.io/resource-set"
-	secretObjectName = "csi-vsphere-config"
+	secretObjectName = "cpi-vsphere-config"
 )
 
 //go:embed testdata/nutanix/machineConfig.yaml
@@ -1277,7 +1276,7 @@ func TestKubectlGetSecretFromNamespaceSuccess(t *testing.T) {
 	).andWant(
 		&corev1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      "vsphere-csi-controller",
+				Name:      "vsphere-cloud-controller-manager",
 				Namespace: "eksa-system",
 			},
 			TypeMeta: metav1.TypeMeta{
@@ -1288,7 +1287,7 @@ func TestKubectlGetSecretFromNamespaceSuccess(t *testing.T) {
 				"data": []byte(`apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: vsphere-csi-controller
+  name: cloud-controller-manager
   namespace: kube-system
 `),
 			},
@@ -1320,7 +1319,7 @@ func TestKubectlGetSecret(t *testing.T) {
 			responseFile: "testdata/kubectl_secret.json",
 			wantSecret: &corev1.Secret{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      "vsphere-csi-controller",
+					Name:      "vsphere-cloud-controller-manager",
 					Namespace: "eksa-system",
 				},
 				TypeMeta: metav1.TypeMeta{
@@ -1331,7 +1330,7 @@ func TestKubectlGetSecret(t *testing.T) {
 					"data": []byte(`apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: vsphere-csi-controller
+  name: cloud-controller-manager
   namespace: kube-system
 `),
 				},
@@ -2214,11 +2213,11 @@ func TestKubectlGetClusterResourceSet(t *testing.T) {
 			Resources: []addons.ResourceRef{
 				{
 					Kind: "Secret",
-					Name: "vsphere-csi-controller",
+					Name: "vsphere-cloud-controller-manager",
 				},
 				{
 					Kind: "ConfigMap",
-					Name: "vsphere-csi-controller-role",
+					Name: "vsphere-cloud-controller-manager-role",
 				},
 			},
 		},
@@ -2234,11 +2233,70 @@ func TestKubectlGetClusterResourceSet(t *testing.T) {
 	tt.Expect(gotResourceSet).To(Equal(wantResourceSet))
 }
 
+func TestKubectlPauseCAPICluster(t *testing.T) {
+	t.Parallel()
+	tt := newKubectlTest(t)
+	patch := "{\"spec\":{\"paused\":true}}"
+
+	tt.e.EXPECT().Execute(
+		tt.ctx,
+		"patch", capiClustersResourceType, "test-cluster", "--type=merge", "-p", patch,
+		"--kubeconfig", tt.cluster.KubeconfigFile, "--namespace", constants.EksaSystemNamespace,
+	).Return(bytes.Buffer{}, nil)
+
+	tt.Expect(tt.k.PauseCAPICluster(tt.ctx, "test-cluster", tt.cluster.KubeconfigFile)).To(Succeed())
+}
+
+func TestKubectlResumeCAPICluster(t *testing.T) {
+	t.Parallel()
+	tt := newKubectlTest(t)
+	patch := "{\"spec\":{\"paused\":null}}"
+
+	tt.e.EXPECT().Execute(
+		tt.ctx,
+		"patch", capiClustersResourceType, "test-cluster", "--type=merge", "-p", patch,
+		"--kubeconfig", tt.cluster.KubeconfigFile, "--namespace", constants.EksaSystemNamespace,
+	).Return(bytes.Buffer{}, nil)
+
+	tt.Expect(tt.k.ResumeCAPICluster(tt.ctx, "test-cluster", tt.cluster.KubeconfigFile)).To(Succeed())
+}
+
+func TestKubectlMergePatchResource(t *testing.T) {
+	t.Parallel()
+	tt := newKubectlTest(t)
+	patch := "{\"spec\":{\"paused\":false}}"
+
+	tt.e.EXPECT().Execute(
+		tt.ctx,
+		"patch", capiClustersResourceType, "test-cluster", "--type=merge", "-p", patch,
+		"--kubeconfig", tt.cluster.KubeconfigFile, "--namespace", tt.namespace,
+	).Return(bytes.Buffer{}, nil)
+
+	tt.Expect(tt.k.MergePatchResource(tt.ctx, capiClustersResourceType, "test-cluster", patch,
+		tt.cluster.KubeconfigFile, tt.namespace)).To(Succeed())
+}
+
+func TestKubectlMergePatchResourceError(t *testing.T) {
+	t.Parallel()
+	tt := newKubectlTest(t)
+	patch := "{\"spec\":{\"paused\":false}}"
+
+	tt.e.EXPECT().Execute(
+		tt.ctx,
+		"patch", capiClustersResourceType, "test-cluster", "--type=merge", "-p", patch,
+		"--kubeconfig", tt.cluster.KubeconfigFile, "--namespace", tt.namespace,
+	).Return(bytes.Buffer{}, errors.New("Error with kubectl merge patch"))
+
+	err := tt.k.MergePatchResource(tt.ctx, capiClustersResourceType, "test-cluster", patch,
+		tt.cluster.KubeconfigFile, tt.namespace)
+	tt.Expect(err).To(HaveOccurred())
+}
+
 func TestKubectlGetConfigMap(t *testing.T) {
 	t.Parallel()
 	tt := newKubectlTest(t)
 	configmapJson := test.ReadFile(t, "testdata/kubectl_configmap.json")
-	configmapName := "csi.vsphere.vmware.com"
+	configmapName := "foo"
 	wantConfigmap := &corev1.ConfigMap{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "v1",
@@ -2249,13 +2307,7 @@ func TestKubectlGetConfigMap(t *testing.T) {
 			Namespace: "eksa-system",
 		},
 		Data: map[string]string{
-			"data": `apiVersion: storage.k8s.io/v1
-kind: CSIDriver
-metadata:
-  name: csi.vsphere.vmware.com
-spec:
-  attachRequired: true
-`,
+			"data": "foo",
 		},
 	}
 
@@ -2397,47 +2449,6 @@ func TestKubectlGetDaemonSetError(t *testing.T) {
 		"daemonset",
 	).withGetter(func(tt *kubectlGetterTest) (client.Object, error) {
 		return tt.k.GetDaemonSet(tt.ctx, tt.name, tt.namespace, tt.kubeconfig)
-	}).testError()
-}
-
-func TestKubectlGetStorageClassSuccess(t *testing.T) {
-	t.Parallel()
-	deletePolicy := corev1.PersistentVolumeReclaimDelete
-	immediateBinding := storagev1.VolumeBindingImmediate
-	newKubectlGetterTest(t).withoutNamespace().withResourceType(
-		"storageclass",
-	).withGetter(func(tt *kubectlGetterTest) (client.Object, error) {
-		return tt.k.GetStorageClass(tt.ctx, tt.name, tt.kubeconfig)
-	}).withJsonFromFile(
-		"testdata/kubectl_storageclass.json",
-	).andWant(
-		&storagev1.StorageClass{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "standard",
-				Annotations: map[string]string{
-					"storageclass.kubernetes.io/is-default-class": "true",
-				},
-			},
-			TypeMeta: metav1.TypeMeta{
-				APIVersion: "storage.k8s.io/v1",
-				Kind:       "StorageClass",
-			},
-			Parameters: map[string]string{
-				"storagePolicyName": "vSAN Default Storage Policy",
-			},
-			Provisioner:       "csi.vsphere.vmware.com",
-			ReclaimPolicy:     &deletePolicy,
-			VolumeBindingMode: &immediateBinding,
-		},
-	).testSuccess()
-}
-
-func TestKubectlGetStorageClassError(t *testing.T) {
-	t.Parallel()
-	newKubectlGetterTest(t).withoutNamespace().withResourceType(
-		"storageclass",
-	).withGetter(func(tt *kubectlGetterTest) (client.Object, error) {
-		return tt.k.GetStorageClass(tt.ctx, tt.name, tt.kubeconfig)
 	}).testError()
 }
 
@@ -3589,14 +3600,14 @@ func TestGetPackageBundleList(t *testing.T) {
 	}
 }
 
-func TestRunBusyBoxPod(t *testing.T) {
+func TestRunCurlPod(t *testing.T) {
 	t.Parallel()
 	tt := newKubectlTest(t)
 	var b bytes.Buffer
-	expectedParam := []string{"run", "testpod-123", "--image=yauritux/busybox-curl", "-o", "json", "--kubeconfig", "c.kubeconfig", "--namespace", "eksa-packages", "--restart=Never", "pwd"}
+	expectedParam := []string{"run", "testpod-123", "--image=public.ecr.aws/eks-anywhere/diagnostic-collector:v0.16.2-eks-a-41", "-o", "json", "--kubeconfig", "c.kubeconfig", "--namespace", "eksa-packages", "--restart=Never", "pwd"}
 	tt.e.EXPECT().Execute(gomock.Any(), gomock.Eq(expectedParam)).Return(b, nil).AnyTimes()
-	if _, err := tt.k.RunBusyBoxPod(tt.ctx, "eksa-packages", "testpod-123", tt.cluster.KubeconfigFile, []string{"pwd"}); err != nil {
-		t.Errorf("Kubectl.RunBusyBoxPod() error = %v, want nil", err)
+	if _, err := tt.k.RunCurlPod(tt.ctx, "eksa-packages", "testpod-123", tt.cluster.KubeconfigFile, []string{"pwd"}); err != nil {
+		t.Errorf("Kubectl.RunCurlPod() error = %v, want nil", err)
 	}
 }
 

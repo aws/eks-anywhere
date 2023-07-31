@@ -11,7 +11,6 @@ import (
 
 	"gopkg.in/yaml.v2"
 
-	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/config"
@@ -137,9 +136,6 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, vsphereCl
 		if !v.sameOSFamily(vsphereClusterSpec.VSphereMachineConfigs) {
 			return errors.New("all VSphereMachineConfigs must have the same osFamily specified")
 		}
-		if !v.sameTemplate(vsphereClusterSpec.VSphereMachineConfigs) {
-			return errors.New("all VSphereMachineConfigs must have the same template specified")
-		}
 		if etcdMachineConfig.Spec.HostOSConfiguration != nil && etcdMachineConfig.Spec.HostOSConfiguration.BottlerocketConfiguration != nil && etcdMachineConfig.Spec.HostOSConfiguration.BottlerocketConfiguration.Kubernetes != nil {
 			logger.Info("Bottlerocket Kubernetes settings are not supported for etcd machines. Ignoring Kubernetes settings for etcd machines.", "etcdMachineConfig", etcdMachineConfig.Name)
 		}
@@ -158,8 +154,7 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, vsphereCl
 		}
 	}
 
-	if err := v.validateTemplate(ctx, vsphereClusterSpec, controlPlaneMachineConfig); err != nil {
-		logger.V(1).Info("Control plane template validation failed.")
+	if err := v.validateTemplates(ctx, vsphereClusterSpec); err != nil {
 		return err
 	}
 
@@ -170,7 +165,7 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, vsphereCl
 	logger.MarkPass("Control plane and Workload templates validated")
 
 	for _, mc := range vsphereClusterSpec.VSphereMachineConfigs {
-		if mc.OSFamily() == v1alpha1.Bottlerocket {
+		if mc.OSFamily() == anywherev1.Bottlerocket {
 			if err := v.validateBRHardDiskSize(ctx, vsphereClusterSpec, mc); err != nil {
 				return fmt.Errorf("failed validating BR Hard Disk size: %v", err)
 			}
@@ -189,42 +184,58 @@ func (v *Validator) validateControlPlaneIp(ip string) error {
 	return nil
 }
 
-func (v *Validator) validateTemplate(ctx context.Context, spec *Spec, machineConfig *anywherev1.VSphereMachineConfig) error {
-	if err := v.validateTemplatePresence(ctx, spec.VSphereDatacenter.Spec.Datacenter, machineConfig); err != nil {
-		return err
+func (v *Validator) validateTemplates(ctx context.Context, spec *Spec) error {
+	tagsForTemplates := make(map[string][]string)
+	for _, w := range spec.Cluster.Spec.WorkerNodeGroupConfigurations {
+		machineConfig := spec.VSphereMachineConfigs[w.MachineGroupRef.Name]
+		versionsBundle := spec.WorkerNodeGroupVersionsBundle(w)
+
+		currentTags := tagsForTemplates[machineConfig.Spec.Template]
+		tagsForTemplates[machineConfig.Spec.Template] = append(
+			currentTags,
+			requiredTemplateTags(machineConfig, versionsBundle)...,
+		)
 	}
 
-	if err := v.validateTemplateTags(ctx, spec, machineConfig); err != nil {
-		return err
+	for template, requiredTags := range tagsForTemplates {
+		datacenter := spec.VSphereDatacenter.Spec.Datacenter
+
+		if err := v.validateTemplatePresence(ctx, datacenter, template); err != nil {
+			return err
+		}
+
+		if err := v.validateTemplateTags(ctx, template, requiredTags); err != nil {
+			return err
+		}
 	}
 
 	return nil
 }
 
-func (v *Validator) validateTemplatePresence(ctx context.Context, datacenter string, machineConfig *anywherev1.VSphereMachineConfig) error {
-	templateFullPath, err := v.govc.SearchTemplate(ctx, datacenter, machineConfig.Spec.Template)
+func (v *Validator) validateTemplatePresence(ctx context.Context, datacenter, templatePath string) error {
+	templateFullPath, err := v.govc.SearchTemplate(ctx, datacenter, templatePath)
 	if err != nil {
 		return fmt.Errorf("validating template: %v", err)
 	}
 
 	if len(templateFullPath) <= 0 {
-		return fmt.Errorf("template <%s> not found. Has the template been imported?", machineConfig.Spec.Template)
+		return fmt.Errorf("template <%s> not found. Has the template been imported?", templatePath)
 	}
 
 	return nil
 }
 
-func (v *Validator) validateTemplateTags(ctx context.Context, spec *Spec, machineConfig *anywherev1.VSphereMachineConfig) error {
-	tags, err := v.govc.GetTags(ctx, machineConfig.Spec.Template)
+func (v *Validator) validateTemplateTags(ctx context.Context, templatePath string, requiredTags []string) error {
+	tags, err := v.govc.GetTags(ctx, templatePath)
 	if err != nil {
 		return fmt.Errorf("validating template tags: %v", err)
 	}
 
 	tagsLookup := types.SliceToLookup(tags)
-	for _, t := range requiredTemplateTags(spec.Spec, machineConfig) {
+	for _, t := range requiredTags {
 		if !tagsLookup.IsPresent(t) {
 			// TODO: maybe add help text about to how to tag a template?
-			return fmt.Errorf("template %s is missing tag %s", machineConfig.Spec.Template, t)
+			return fmt.Errorf("template %s is missing tag %s", templatePath, t)
 		}
 	}
 
@@ -340,12 +351,6 @@ func (v *Validator) validateVsphereUserPrivs(ctx context.Context, vSphereCluster
 		markPrivsValidationPass(passed, vuc.EksaVsphereCPUsername)
 	}
 
-	if len(vuc.EksaVsphereCSIUsername) > 0 && vuc.EksaVsphereCSIUsername != vuc.EksaVsphereUsername {
-		if passed, err = v.validateCSIUserPrivs(ctx, vSphereClusterSpec, vuc); err != nil {
-			return err
-		}
-		markPrivsValidationPass(passed, vuc.EksaVsphereCSIUsername)
-	}
 	return nil
 }
 
@@ -449,72 +454,6 @@ func (v *Validator) validateUserPrivs(ctx context.Context, spec *Spec, vuc *conf
 	return v.validatePrivs(ctx, requiredPrivAssociations, vsc)
 }
 
-func (v *Validator) validateCSIUserPrivs(ctx context.Context, spec *Spec, vuc *config.VSphereUserConfig) (bool, error) {
-	requiredPrivAssociations := []PrivAssociation{
-		{ // CNS-SEARCH-AND-SPBM role
-			objectType:   govmomi.VSphereTypeFolder,
-			privsContent: config.VSphereCnsSearchAndSpbmPrivsFile,
-			path:         vsphereRootPath,
-		},
-	}
-
-	machineConfigs, err := v.collectSpecMachineConfigs(ctx, spec)
-	if err != nil {
-		return false, err
-	}
-
-	var pas []PrivAssociation
-	seen := map[string]interface{}{}
-	for _, mc := range machineConfigs {
-		if _, ok := seen[mc.Spec.Datastore]; !ok {
-			requiredPrivAssociations = append(
-				requiredPrivAssociations,
-				// CNS-Datastore role
-				PrivAssociation{
-					objectType:   govmomi.VSphereTypeDatastore,
-					privsContent: config.VSphereCnsDatastorePrivsFile,
-					path:         mc.Spec.Datastore,
-				},
-				// CNS-HOST-CONFIG-STORAGE role
-				PrivAssociation{
-					objectType:   govmomi.VSphereTypeDatastore,
-					privsContent: config.VSphereCnsHostConfigStorageFile,
-					path:         mc.Spec.Datastore,
-				},
-			)
-			seen[mc.Spec.Datastore] = 1
-		}
-		if _, ok := seen[mc.Spec.Folder]; !ok {
-			// CNS-VM role
-			requiredPrivAssociations = append(requiredPrivAssociations, PrivAssociation{
-				objectType:   govmomi.VSphereTypeFolder,
-				privsContent: config.VSphereCnsVmPrivsFile,
-				path:         mc.Spec.Folder,
-			})
-			seen[mc.Spec.Folder] = 1
-		}
-
-		requiredPrivAssociations = append(requiredPrivAssociations, pas...)
-	}
-
-	host := spec.VSphereDatacenter.Spec.Server
-	datacenter := spec.VSphereDatacenter.Spec.Datacenter
-
-	vsc, err := v.vSphereClientBuilder.Build(
-		ctx,
-		host,
-		vuc.EksaVsphereCSIUsername,
-		vuc.EksaVsphereCSIPassword,
-		spec.VSphereDatacenter.Spec.Insecure,
-		datacenter,
-	)
-	if err != nil {
-		return false, err
-	}
-
-	return v.validatePrivs(ctx, requiredPrivAssociations, vsc)
-}
-
 func (v *Validator) validateCPUserPrivs(ctx context.Context, spec *Spec, vuc *config.VSphereUserConfig) (bool, error) {
 	// CP role just needs read only
 	privObjs := []PrivAssociation{
@@ -548,15 +487,15 @@ func (v *Validator) validatePrivs(ctx context.Context, privObjs []PrivAssociatio
 	var err error
 	missingPrivs := []missingPriv{}
 	passed := false
+	username := vsc.Username()
 
 	for _, obj := range privObjs {
 		path := obj.path
 		privsContent := obj.privsContent
 		t := obj.objectType
-		username := vsc.Username()
 		privs, err = v.getMissingPrivs(ctx, vsc, path, t, privsContent, username)
 		if err != nil {
-			return passed, err
+			return passed, fmt.Errorf("failed to get missing privileges: %v", err)
 		} else if len(privs) > 0 {
 			mp := missingPriv{
 				Username:    username,
@@ -565,22 +504,22 @@ func (v *Validator) validatePrivs(ctx context.Context, privObjs []PrivAssociatio
 				Permissions: privs,
 			}
 			missingPrivs = append(missingPrivs, mp)
-			content, err := yaml.Marshal(mp)
-			if err == nil {
-				s := fmt.Sprintf("  Warning: User %s missing %d vSphere permissions on %s, cluster creation may fail.\nRe-run create cluster with --verbosity=3 to see specific missing permissions.", username, len(privs), path)
-				logger.MarkWarning(s)
-				s = fmt.Sprintf("Missing Permissions:\n%s", string(content))
-				logger.V(3).Info(s)
-			} else {
-				s := fmt.Sprintf("  Warning: failed to list missing privs: %v", err)
-				logger.MarkWarning(s)
-			}
 		}
 	}
 
-	if len(missingPrivs) == 0 {
-		passed = true
+	if len(missingPrivs) != 0 {
+		content, err := yaml.Marshal(missingPrivs)
+		if err != nil {
+			return passed, fmt.Errorf("failed to marshal missing permissions: %v", err)
+		}
+
+		errMsg := fmt.Sprintf("user %s missing vSphere permissions", username)
+		logger.V(3).Info(errMsg, "Permissions", string(content))
+
+		return passed, fmt.Errorf("user %s missing vSphere permissions", username)
 	}
+
+	passed = true
 
 	return passed, nil
 }

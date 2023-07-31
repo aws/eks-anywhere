@@ -37,6 +37,10 @@ func NewIPValidator(opts ...IPValidatorOpt) *IPValidator {
 // ValidateControlPlaneIPUniqueness checks whether or not the control plane endpoint defined
 // in the cluster spec is available.
 func (v *IPValidator) ValidateControlPlaneIPUniqueness(cluster *v1alpha1.Cluster) error {
+	if cluster.ControlPlaneIPCheckDisabled() {
+		return nil
+	}
+
 	ip := cluster.Spec.ControlPlaneConfiguration.Endpoint.Host
 	if networkutils.IsIPInUse(v.netClient, ip) {
 		return errors.Errorf("cluster controlPlaneConfiguration.Endpoint.Host <%s> is already in use, control plane IP must be unique", ip)

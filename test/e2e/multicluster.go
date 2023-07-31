@@ -8,6 +8,7 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
@@ -19,6 +20,16 @@ func runWorkloadClusterFlow(test *framework.MulticlusterE2ETest) {
 		w.DeleteCluster()
 	})
 	time.Sleep(5 * time.Minute)
+	test.DeleteManagementCluster()
+}
+
+func runWorkloadClusterPrevVersionCreateFlow(test *framework.MulticlusterE2ETest, latestMinorRelease *releasev1.EksARelease) {
+	test.CreateManagementClusterWithConfig()
+	test.RunInWorkloadClusters(func(w *framework.WorkloadCluster) {
+		w.GenerateClusterConfigForVersion(latestMinorRelease.Version, framework.ExecuteWithEksaRelease(latestMinorRelease))
+		w.CreateCluster(framework.ExecuteWithEksaRelease(latestMinorRelease))
+		w.DeleteCluster()
+	})
 	test.DeleteManagementCluster()
 }
 

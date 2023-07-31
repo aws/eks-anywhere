@@ -73,8 +73,10 @@ func (valOpt *validateOptions) validateCreateCluster(cmd *cobra.Command, _ []str
 		WithWriterFolder(tmpPath).
 		WithDocker().
 		WithKubectl().
-		WithProvider(valOpt.fileName, clusterSpec.Cluster, false, valOpt.hardwareCSVPath, true, valOpt.tinkerbellBootstrapIP).
+		WithProvider(valOpt.fileName, clusterSpec.Cluster, false, valOpt.hardwareCSVPath, true, valOpt.tinkerbellBootstrapIP, map[string]bool{}).
 		WithGitOpsFlux(clusterSpec.Cluster, clusterSpec.FluxConfig, cliConfig).
+		WithUnAuthKubeClient().
+		WithValidatorClients().
 		Build(ctx)
 	if err != nil {
 		cleanupDirectory(tmpPath)
@@ -83,7 +85,7 @@ func (valOpt *validateOptions) validateCreateCluster(cmd *cobra.Command, _ []str
 	defer close(ctx, deps)
 
 	validationOpts := &validations.Opts{
-		Kubectl: deps.Kubectl,
+		Kubectl: deps.UnAuthKubectlClient,
 		Spec:    clusterSpec,
 		WorkloadCluster: &types.Cluster{
 			Name:           clusterSpec.Cluster.Name,

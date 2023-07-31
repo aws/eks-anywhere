@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere/internal/templates"
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
@@ -26,9 +27,17 @@ func NewDefaulter(govc ProviderGovcClient) *Defaulter {
 
 func (d *Defaulter) setDefaultsForMachineConfig(ctx context.Context, spec *Spec) error {
 	setDefaultsForEtcdMachineConfig(spec.etcdMachineConfig())
+
+	for _, w := range spec.Cluster.Spec.WorkerNodeGroupConfigurations {
+		if err := d.setWorkerDefaultTemplateIfMissing(ctx, spec, w); err != nil {
+			return err
+		}
+	}
+
 	for _, m := range spec.machineConfigs() {
 		m.SetDefaults()
 		m.SetUserDefaults()
+
 		if err := d.setDefaultTemplateIfMissing(ctx, spec, m); err != nil {
 			return err
 		}
@@ -64,10 +73,17 @@ func setDefaultsForEtcdMachineConfig(machineConfig *anywherev1.VSphereMachineCon
 	}
 }
 
-func (d *Defaulter) setDefaultTemplateIfMissing(ctx context.Context, spec *Spec, machineConfig *anywherev1.VSphereMachineConfig) error {
+func (d *Defaulter) setWorkerDefaultTemplateIfMissing(ctx context.Context, spec *Spec, workerNodeGroup anywherev1.WorkerNodeGroupConfiguration) error {
+	machineConfigName := workerNodeGroup.MachineGroupRef.Name
+	machineConfig := spec.VSphereMachineConfigs[machineConfigName]
+	if machineConfig == nil {
+		return fmt.Errorf("cannot find VSphereMachineConfig %v for worker nodes", machineConfigName)
+	}
 	if machineConfig.Spec.Template == "" {
-		logger.V(1).Info("Control plane VSphereMachineConfig template is not set. Using default template.")
-		if err := d.setupDefaultTemplate(ctx, spec, machineConfig); err != nil {
+		logger.V(1).Info("Worker node VSphereMachineConfig template is not set. Using default template.")
+
+		versionsBundle := spec.WorkerNodeGroupVersionsBundle(workerNodeGroup)
+		if err := d.setupDefaultTemplate(ctx, spec, machineConfig, versionsBundle); err != nil {
 			return err
 		}
 	}
@@ -75,9 +91,21 @@ func (d *Defaulter) setDefaultTemplateIfMissing(ctx context.Context, spec *Spec,
 	return nil
 }
 
-func (d *Defaulter) setupDefaultTemplate(ctx context.Context, spec *Spec, machineConfig *anywherev1.VSphereMachineConfig) error {
+func (d *Defaulter) setDefaultTemplateIfMissing(ctx context.Context, spec *Spec, m *anywherev1.VSphereMachineConfig) error {
+	if m.Spec.Template == "" {
+		logger.V(1).Info("VSphereMachineConfig template is not set. Using default template.")
+		versionsBundle := spec.ControlPlaneVersionsBundle()
+		if err := d.setupDefaultTemplate(ctx, spec, m, versionsBundle); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (d *Defaulter) setupDefaultTemplate(ctx context.Context, spec *Spec, machineConfig *anywherev1.VSphereMachineConfig, versionsBundle *cluster.VersionsBundle) error {
 	osFamily := machineConfig.Spec.OSFamily
-	eksd := spec.VersionsBundle.EksD
+	eksd := versionsBundle.EksD
 	var ova releasev1.Archive
 	switch osFamily {
 	case anywherev1.Bottlerocket:
@@ -89,7 +117,7 @@ func (d *Defaulter) setupDefaultTemplate(ctx context.Context, spec *Spec, machin
 	templateName := fmt.Sprintf("%s-%s-%s-%s-%s", osFamily, eksd.KubeVersion, eksd.Name, strings.Join(ova.Arch, "-"), ova.SHA256[:7])
 	machineConfig.Spec.Template = filepath.Join("/", spec.VSphereDatacenter.Spec.Datacenter, defaultTemplatesFolder, templateName)
 
-	tags := requiredTemplateTagsByCategory(spec.Spec, machineConfig)
+	tags := requiredTemplateTagsByCategory(machineConfig, versionsBundle)
 
 	// TODO: figure out if it's worth refactoring the factory to be able to reuse across machine configs.
 	templateFactory := templates.NewFactory(d.govc, spec.VSphereDatacenter.Spec.Datacenter, machineConfig.Spec.Datastore, spec.VSphereDatacenter.Spec.Network, machineConfig.Spec.ResourcePool, defaultTemplateLibrary)

@@ -20,14 +20,13 @@ import (
 	tinkv1alpha1 "github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	storagev1 "k8s.io/api/storage/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/version"
-	cloudstackv1 "sigs.k8s.io/cluster-api-provider-cloudstack/api/v1beta1"
+	cloudstackv1 "sigs.k8s.io/cluster-api-provider-cloudstack/api/v1beta3"
 	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/api/v1beta1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
@@ -990,9 +989,9 @@ func (k *Kubectl) ValidatePods(ctx context.Context, kubeconfig string) error {
 	return nil
 }
 
-// RunBusyBoxPod will run Kubectl run with a busybox curl image and the command you pass in.
-func (k *Kubectl) RunBusyBoxPod(ctx context.Context, namespace, name, kubeconfig string, command []string) (string, error) {
-	params := []string{"run", name, "--image=yauritux/busybox-curl", "-o", "json", "--kubeconfig", kubeconfig, "--namespace", namespace, "--restart=Never"}
+// RunCurlPod will run Kubectl with an image (with curl installed) and the command you pass in.
+func (k *Kubectl) RunCurlPod(ctx context.Context, namespace, name, kubeconfig string, command []string) (string, error) {
+	params := []string{"run", name, "--image=public.ecr.aws/eks-anywhere/diagnostic-collector:v0.16.2-eks-a-41", "-o", "json", "--kubeconfig", kubeconfig, "--namespace", namespace, "--restart=Never"}
 	params = append(params, command...)
 	_, err := k.Execute(ctx, params...)
 	if err != nil {
@@ -2008,6 +2007,34 @@ func (k *Kubectl) ApplyTolerationsFromTaints(ctx context.Context, oldTaints []co
 	return nil
 }
 
+// PauseCAPICluster adds a `spec.Paused: true` to the CAPI cluster resource. This will cause all
+// downstream CAPI + provider controllers to skip reconciling on the paused cluster's objects.
+func (k *Kubectl) PauseCAPICluster(ctx context.Context, cluster, kubeconfig string) error {
+	patch := fmt.Sprintf("{\"spec\":{\"paused\":%t}}", true)
+	return k.MergePatchResource(ctx, capiClustersResourceType, cluster, patch, kubeconfig, constants.EksaSystemNamespace)
+}
+
+// ResumeCAPICluster removes the `spec.Paused` on the CAPI cluster resource. This will cause all
+// downstream CAPI + provider controllers to resume reconciling on the paused cluster's objects
+// `spec.Paused` is set to `null` to drop the field instead of setting it to `false`.
+func (k *Kubectl) ResumeCAPICluster(ctx context.Context, cluster, kubeconfig string) error {
+	patch := "{\"spec\":{\"paused\":null}}"
+	return k.MergePatchResource(ctx, capiClustersResourceType, cluster, patch, kubeconfig, constants.EksaSystemNamespace)
+}
+
+// MergePatchResource patches named resource using merge patch.
+func (k *Kubectl) MergePatchResource(ctx context.Context, resource, name, patch, kubeconfig, namespace string) error {
+	params := []string{
+		"patch", resource, name, "--type=merge", "-p", patch, "--kubeconfig", kubeconfig, "--namespace", namespace,
+	}
+
+	_, err := k.Execute(ctx, params...)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (k *Kubectl) KubeconfigSecretAvailable(ctx context.Context, kubeconfig string, clusterName string, namespace string) (bool, error) {
 	return k.HasResource(ctx, "secret", fmt.Sprintf("%s-kubeconfig", clusterName), kubeconfig, namespace)
 }
@@ -2315,15 +2342,6 @@ func (k *Kubectl) GetDaemonSet(ctx context.Context, name, namespace, kubeconfig 
 		return nil, err
 	}
 
-	return obj, nil
-}
-
-// GetStorageClass returns the cluster-scoped storageclass on the cluster.
-func (k *Kubectl) GetStorageClass(ctx context.Context, name, kubeconfig string) (*storagev1.StorageClass, error) {
-	obj := &storagev1.StorageClass{}
-	if err := k.GetClusterObject(ctx, "storageclass", name, kubeconfig, obj); err != nil {
-		return nil, err
-	}
 	return obj, nil
 }
 

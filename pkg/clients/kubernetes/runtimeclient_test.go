@@ -3,6 +3,7 @@ package kubernetes_test
 import (
 	"context"
 	"errors"
+	"reflect"
 	"testing"
 
 	. "github.com/onsi/gomega"
@@ -10,6 +11,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/rest"
+	dockerv1 "sigs.k8s.io/cluster-api/test/infrastructure/docker/api/v1beta1"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
@@ -67,4 +69,33 @@ func TestClientFactoryBuildClientFromKubeconfigNoFile(t *testing.T) {
 	f := kubernetes.ClientFactory{}
 	_, err := f.BuildClientFromKubeconfig("file-does-not-exist.txt")
 	g.Expect(err).To(MatchError(ContainSubstring("open file-does-not-exist.txt: no such file or directory")))
+}
+
+func TestObjectsToRuntimeObjects(t *testing.T) {
+	tests := []struct {
+		name string
+		objs []kubernetes.Object
+		want []runtime.Object
+	}{
+		{
+			name: "kubernetes to runtime object",
+			objs: []kubernetes.Object{
+				dockerCluster(),
+			},
+			want: []runtime.Object{
+				dockerCluster(),
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := kubernetes.ObjectsToRuntimeObjects(tt.objs); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("ObjectsToRuntimeObjects() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func dockerCluster() *dockerv1.DockerCluster {
+	return &dockerv1.DockerCluster{}
 }

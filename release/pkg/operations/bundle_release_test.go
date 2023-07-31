@@ -76,13 +76,13 @@ func TestGenerateBundleManifest(t *testing.T) {
 			cliMinVersion:       "v0.16.0",
 			cliMaxVersion:       "v0.16.0",
 		},
-		// {
-		// 	testName:            "Dev-release from release-0.15",
-		// 	buildRepoBranchName: "release-0.15",
-		// 	cliRepoBranchName:   "release-0.15",
-		// 	cliMinVersion:       "v0.15.0",
-		// 	cliMaxVersion:       "v0.15.0",
-		// },
+		{
+			testName:            "Dev-release from release-0.16",
+			buildRepoBranchName: "release-0.16",
+			cliRepoBranchName:   "release-0.16",
+			cliMinVersion:       "v0.16.0",
+			cliMaxVersion:       "v0.16.0",
+		},
 	}
 
 	for _, tt := range testCases {
@@ -111,7 +111,7 @@ func TestGenerateBundleManifest(t *testing.T) {
 			releaseConfig.BuildRepoBranchName = tt.buildRepoBranchName
 			releaseConfig.CliRepoBranchName = tt.cliRepoBranchName
 
-			releaseVersion, err := filereader.GetCurrentEksADevReleaseVersion(releaseConfig.ReleaseVersion, releaseConfig)
+			releaseVersion, err := filereader.GetCurrentEksADevReleaseVersion(releaseConfig.ReleaseVersion, releaseConfig, 0)
 			if err != nil {
 				t.Fatalf("Error getting previous EKS-A dev release number: %v\n", err)
 			}

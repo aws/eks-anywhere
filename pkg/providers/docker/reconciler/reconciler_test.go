@@ -51,6 +51,7 @@ func TestReconcilerReconcileSuccess(t *testing.T) {
 
 	tt.Expect(tt.reconciler().Reconcile(tt.ctx, logger, tt.cluster)).To(Equal(controller.Result{}))
 	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
+	tt.Expect(tt.cluster.Status.FailureReason).To(BeZero())
 
 	tt.ShouldEventuallyExist(tt.ctx, capiCluster)
 	tt.ShouldEventuallyExist(tt.ctx,
@@ -139,6 +140,7 @@ func TestReconcilerReconcileWorkerNodesSuccess(t *testing.T) {
 
 	tt.Expect(err).NotTo(HaveOccurred())
 	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
+	tt.Expect(tt.cluster.Status.FailureReason).To(BeZero())
 	tt.Expect(result).To(Equal(controller.Result{}))
 
 	tt.ShouldEventuallyExist(tt.ctx,
@@ -186,6 +188,7 @@ func TestReconcileCNISuccess(t *testing.T) {
 
 	tt.Expect(err).NotTo(HaveOccurred())
 	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
+	tt.Expect(tt.cluster.Status.FailureReason).To(BeZero())
 	tt.Expect(result).To(Equal(controller.Result{}))
 }
 
@@ -204,6 +207,7 @@ func TestReconcileCNIErrorClientRegistry(t *testing.T) {
 
 	tt.Expect(err).To(MatchError(ContainSubstring("building client")))
 	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
+	tt.Expect(tt.cluster.Status.FailureReason).To(BeZero())
 	tt.Expect(result).To(Equal(controller.Result{}))
 }
 
@@ -219,6 +223,7 @@ func TestReconcilerReconcileWorkersSuccess(t *testing.T) {
 
 	tt.Expect(err).NotTo(HaveOccurred())
 	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
+	tt.Expect(tt.cluster.Status.FailureReason).To(BeZero())
 	tt.Expect(result).To(Equal(controller.Result{}))
 
 	tt.ShouldEventuallyExist(tt.ctx,
@@ -287,6 +292,7 @@ func TestReconcileControlPlaneStackedEtcdSuccess(t *testing.T) {
 
 	tt.Expect(err).NotTo(HaveOccurred())
 	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
+	tt.Expect(tt.cluster.Status.FailureReason).To(BeZero())
 	tt.Expect(result).To(Equal(controller.Result{}))
 
 	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
@@ -347,6 +353,7 @@ func TestReconcileControlPlaneUnstackedEtcdSuccess(t *testing.T) {
 
 	tt.Expect(err).NotTo(HaveOccurred())
 	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
+	tt.Expect(tt.cluster.Status.FailureReason).To(BeZero())
 	tt.Expect(result).To(Equal(controller.Result{}))
 
 	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
@@ -426,6 +433,7 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 	c := env.Client()
 
 	bundle := test.Bundle()
+	version := test.DevEksaVersion()
 
 	managementCluster := dockerCluster(func(c *anywherev1.Cluster) {
 		c.Name = "management-cluster"
@@ -437,6 +445,7 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 			Namespace:  bundle.Namespace,
 			APIVersion: bundle.APIVersion,
 		}
+		c.Spec.EksaVersion = &version
 	})
 
 	workloadClusterDatacenter := dataCenter()
@@ -464,6 +473,7 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 				Name:  "md-0",
 			},
 		)
+		c.Spec.EksaVersion = &version
 	})
 
 	tt := &reconcilerTest{
@@ -482,7 +492,8 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 			managementCluster,
 			workloadClusterDatacenter,
 			bundle,
-			test.EksdRelease(),
+			test.EksdRelease("1-22"),
+			test.EKSARelease(),
 		},
 		datacenterConfig: workloadClusterDatacenter,
 	}

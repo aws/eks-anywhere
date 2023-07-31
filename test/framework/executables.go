@@ -5,6 +5,7 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
+	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
 )
 
 func buildKubectl(t T) *executables.Kubectl {
@@ -21,7 +22,7 @@ func buildLocalKubectl() *executables.Kubectl {
 func executableBuilder(ctx context.Context, t T) *executables.ExecutablesBuilder {
 	executableBuilder, close, err := executables.InitInDockerExecutablesBuilder(ctx, executables.DefaultEksaImage())
 	if err != nil {
-		t.Fatalf("Unable initialize executable builder: %v", err)
+		t.Fatalf("Unable to initialize executable builder: %v", err)
 	}
 	t.Cleanup(func() {
 		if err := close(ctx); err != nil {
@@ -59,4 +60,27 @@ func buildHelm(t T) *executables.Helm {
 
 func buildSSH(t T) *executables.SSH {
 	return executables.NewLocalExecutablesBuilder().BuildSSHExecutable()
+}
+
+func buildCmk(t T) *executables.Cmk {
+	ctx := context.Background()
+	tmpWriter, err := filewriter.NewWriter("cmk")
+	if err != nil {
+		t.Fatalf("Error creating tmp writer")
+	}
+
+	execConfig, err := decoder.ParseCloudStackCredsFromEnv()
+	if err != nil {
+		t.Fatalf("parsing cloudstack credentials from environment: %v", err)
+	}
+
+	cmk, err := executableBuilder(ctx, t).BuildCmkExecutable(tmpWriter, execConfig)
+	if err != nil {
+		t.Fatalf("Error creating cmk client: %v", err)
+	}
+	t.Cleanup(func() {
+		cmk.Close(ctx)
+	})
+
+	return cmk
 }

@@ -2,5 +2,4 @@
 
 // Package snowballdevice provides the API client, operations, and parameter types
 // for AWS Snowball Device.
-//
 package snowballdevice

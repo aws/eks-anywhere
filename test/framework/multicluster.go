@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
+	"github.com/aws/eks-anywhere/pkg/retrier"
 )
 
 type MulticlusterE2ETest struct {
@@ -40,7 +42,7 @@ func (m *MulticlusterE2ETest) WithWorkloadClusters(workloadClusters ...*ClusterE
 	for _, c := range workloadClusters {
 		m.WorkloadClusters[c.ClusterName] = &WorkloadCluster{
 			ClusterE2ETest:                  c,
-			ManagementClusterKubeconfigFile: m.ManagementCluster.kubeconfigFilePath,
+			ManagementClusterKubeconfigFile: m.ManagementCluster.KubeconfigFilePath,
 		}
 	}
 }
@@ -139,10 +141,20 @@ func (m *MulticlusterE2ETest) DeleteTinkerbellManagementCluster() {
 
 // PushWorkloadClusterToGit builds the workload cluster config file for git and pushing changes to git.
 func (m *MulticlusterE2ETest) PushWorkloadClusterToGit(w *WorkloadCluster, opts ...api.ClusterConfigFiller) {
-	m.ManagementCluster.PushWorkloadClusterToGit(w, opts...)
+	err := retrier.Retry(10, 5*time.Second, func() error {
+		return m.ManagementCluster.pushWorkloadClusterToGit(w, opts...)
+	})
+	if err != nil {
+		w.T.Fatalf("Error pushing workload cluster changes to git: %v", err)
+	}
 }
 
 // DeleteWorkloadClusterFromGit deletes a workload cluster config file and pushes the changes to git.
 func (m *MulticlusterE2ETest) DeleteWorkloadClusterFromGit(w *WorkloadCluster) {
-	m.ManagementCluster.DeleteWorkloadClusterFromGit(w)
+	err := retrier.Retry(10, 5*time.Second, func() error {
+		return m.ManagementCluster.deleteWorkloadClusterFromGit(w)
+	})
+	if err != nil {
+		w.T.Fatalf("Error deleting workload cluster changes from git: %v", err)
+	}
 }

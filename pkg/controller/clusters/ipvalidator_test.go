@@ -29,6 +29,7 @@ func TestValidateControlPlaneIPSuccess(t *testing.T) {
 	ipValidator := clusters.NewIPValidator(ipUniquenessValidator, client)
 	tt.Expect(ipValidator.ValidateControlPlaneIP(context.Background(), tt.logger, tt.spec)).To(Equal(controller.Result{}))
 	tt.Expect(tt.spec.Cluster.Status.FailureMessage).To(BeNil())
+	tt.Expect(tt.spec.Cluster.Status.FailureReason).To(BeNil())
 }
 
 func TestValidateControlPlaneIPUnavailable(t *testing.T) {
@@ -39,6 +40,7 @@ func TestValidateControlPlaneIPUnavailable(t *testing.T) {
 	ipValidator := clusters.NewIPValidator(ipUniquenessValidator, client)
 	tt.Expect(ipValidator.ValidateControlPlaneIP(context.Background(), tt.logger, tt.spec)).To(Equal(controller.ResultWithReturn()))
 	tt.Expect(tt.spec.Cluster.Status.FailureMessage).To(HaveValue(ContainSubstring("already in use")))
+	tt.Expect(tt.spec.Cluster.Status.FailureReason).To(HaveValue(Equal(anywherev1.UnavailableControlPlaneIPReason)))
 }
 
 func TestValidateControlPlaneIPCapiClusterExists(t *testing.T) {
@@ -51,6 +53,7 @@ func TestValidateControlPlaneIPCapiClusterExists(t *testing.T) {
 	ipValidator := clusters.NewIPValidator(ipUniquenessValidator, client)
 	tt.Expect(ipValidator.ValidateControlPlaneIP(context.Background(), tt.logger, tt.spec)).To(Equal(controller.Result{}))
 	tt.Expect(tt.spec.Cluster.Status.FailureMessage).To(BeNil())
+	tt.Expect(tt.spec.Cluster.Status.FailureReason).To(BeNil())
 }
 
 type ipValidatorTest struct {

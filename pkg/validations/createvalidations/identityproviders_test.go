@@ -9,6 +9,7 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/validations"
 	"github.com/aws/eks-anywhere/pkg/validations/createvalidations"
@@ -62,6 +63,7 @@ func TestValidateIdendityProviderForWorkloadClusters(t *testing.T) {
 		s.OIDCConfig = defaultOIDC
 	})
 	k, ctx, cluster, e := validations.NewKubectl(t)
+	uk := kubernetes.NewUnAuthClient(k)
 	cluster.Name = testclustername
 	for _, tc := range tests {
 		t.Run(tc.name, func(tt *testing.T) {
@@ -73,7 +75,7 @@ func TestValidateIdendityProviderForWorkloadClusters(t *testing.T) {
 					"--field-selector=metadata.name=oidc-config-test",
 				}).Return(*bytes.NewBufferString(fileContent), nil)
 
-			err := createvalidations.ValidateIdentityProviderNameIsUnique(ctx, k, cluster, clusterSpec)
+			err := createvalidations.ValidateIdentityProviderNameIsUnique(ctx, UnAuthKubectlClient{k, uk}, cluster, clusterSpec)
 			if !reflect.DeepEqual(err, tc.wantErr) {
 				t.Errorf("%v got = %v, \nwant %v", tc.name, err, tc.wantErr)
 			}
@@ -123,6 +125,7 @@ func TestValidateIdentityProviderForSelfManagedCluster(t *testing.T) {
 		s.Cluster.SetSelfManaged()
 	})
 	k, ctx, cluster, e := validations.NewKubectl(t)
+	uk := kubernetes.NewUnAuthClient(k)
 	cluster.Name = testclustername
 	for _, tc := range tests {
 		t.Run(tc.name, func(tt *testing.T) {
@@ -133,7 +136,7 @@ func TestValidateIdentityProviderForSelfManagedCluster(t *testing.T) {
 					"--field-selector=metadata.name=oidc-config-test",
 				}).Times(0)
 
-			err := createvalidations.ValidateIdentityProviderNameIsUnique(ctx, k, cluster, clusterSpec)
+			err := createvalidations.ValidateIdentityProviderNameIsUnique(ctx, UnAuthKubectlClient{k, uk}, cluster, clusterSpec)
 			if !reflect.DeepEqual(err, tc.wantErr) {
 				t.Errorf("%v got = %v, \nwant %v", tc.name, err, tc.wantErr)
 			}

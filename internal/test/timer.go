@@ -2,8 +2,10 @@ package test
 
 import "time"
 
-var defaultNow = time.Unix(0, 1234567890000*int64(time.Millisecond))
-var newNow = time.Unix(0, 987654321000*int64(time.Millisecond))
+var (
+	defaultNow = time.Unix(0, 1234567890000*int64(time.Millisecond))
+	newNow     = time.Unix(0, 987654321000*int64(time.Millisecond))
+)
 
 func FakeNow() time.Time {
 	return defaultNow

@@ -28,9 +28,10 @@ anywhere create cluster -f <cluster-config-file> [flags]
       --install-packages string             Location of curated packages configuration files to install to the cluster
       --kubeconfig string                   Management cluster kubeconfig file
       --no-timeouts                         Disable timeout for all wait operations
-      --node-startup-timeout string         Override the default node startup timeout (default "10m0s")
+      --node-startup-timeout string         Override the default node startup timeout (Defaults to 20m for Tinkerbell clusters) (default "10m0s")
       --per-machine-wait-timeout string     Override the default machine wait timeout per machine (default "10m0s")
       --skip-ip-check                       Skip check for whether cluster control plane ip is in use
+      --skip-validations stringArray        Bypass create validations by name. Valid arguments you can pass are --skip-validations=vsphere-user-privilege
       --tinkerbell-bootstrap-ip string      Override the local tinkerbell IP in the bootstrap cluster
       --unhealthy-machine-timeout string    Override the default unhealthy machine timeout (default "5m0s")
 ```

@@ -9,6 +9,7 @@ import (
 	reflect "reflect"
 
 	v1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	kubernetes "github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	executables "github.com/aws/eks-anywhere/pkg/executables"
 	types "github.com/aws/eks-anywhere/pkg/types"
 	v1alpha10 "github.com/aws/eks-anywhere/release/api/v1alpha1"
@@ -201,6 +202,20 @@ func (m *MockKubectlClient) GetObject(ctx context.Context, resourceType, name, n
 func (mr *MockKubectlClientMockRecorder) GetObject(ctx, resourceType, name, namespace, kubeconfig, obj interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetObject", reflect.TypeOf((*MockKubectlClient)(nil).GetObject), ctx, resourceType, name, namespace, kubeconfig, obj)
+}
+
+// List mocks base method.
+func (m *MockKubectlClient) List(ctx context.Context, kubeconfig string, list kubernetes.ObjectList) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "List", ctx, kubeconfig, list)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// List indicates an expected call of List.
+func (mr *MockKubectlClientMockRecorder) List(ctx, kubeconfig, list interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "List", reflect.TypeOf((*MockKubectlClient)(nil).List), ctx, kubeconfig, list)
 }
 
 // SearchIdentityProviderConfig mocks base method.

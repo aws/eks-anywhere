@@ -364,29 +364,6 @@ func TestProviderSetupAndValidateCreateClusterFailureOnInvalidUrl(t *testing.T) 
 	tt.Expect(err.Error()).To(Equal("validating environment variables: CloudStack instance global's managementApiEndpoint xxx is invalid: CloudStack managementApiEndpoint is invalid: #{err}"))
 }
 
-func TestProviderCreateOrUpgradeClusterK8s124(t *testing.T) {
-	tt := NewWithT(t)
-	setupContext(t)
-	ctx := context.Background()
-	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
-	clusterSpec.Cluster.Spec.KubernetesVersion = "1.24"
-
-	provider := newProviderWithKubectl(t, nil, clusterSpec.Cluster, nil, nil)
-	if provider == nil {
-		t.Fatalf("provider object is nil")
-	}
-
-	t.Setenv(decoder.EksacloudStackCloudConfigB64SecretKey, validCloudStackCloudConfig)
-	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
-	tt.Expect(err.Error()).To(Equal("validating K8s version for provider: cloudstack provider does not support K8s version > 1.23"))
-	err = provider.SetupAndValidateUpgradeCluster(ctx, nil, clusterSpec, nil)
-	tt.Expect(err.Error()).To(Equal("validating K8s version for provider: cloudstack provider does not support K8s version > 1.23"))
-
-	clusterSpec.Cluster.Spec.KubernetesVersion = "abcd"
-	err = provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
-	tt.Expect(err.Error()).To(Equal("validating K8s version for provider: converting kubeVersion abcd to semver invalid major version in semver abcd.0: strconv.ParseUint: parsing \"\": invalid syntax"))
-}
-
 func TestProviderSetupAndValidateUpgradeClusterFailureOnInvalidUrl(t *testing.T) {
 	tt := NewWithT(t)
 	mockCtrl := gomock.NewController(t)
@@ -927,7 +904,7 @@ func TestVersion(t *testing.T) {
 	cloudStackProviderVersion := "v4.14.1"
 	provider := givenProvider(t)
 	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
-	clusterSpec.VersionsBundle.CloudStack.Version = cloudStackProviderVersion
+	clusterSpec.VersionsBundles["1.21"].CloudStack.Version = cloudStackProviderVersion
 	setupContext(t)
 
 	result := provider.Version(clusterSpec)
@@ -1072,7 +1049,7 @@ func TestGetInfrastructureBundleSuccess(t *testing.T) {
 		{
 			testName: "correct Overrides layer",
 			clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
-				s.VersionsBundle.CloudStack = releasev1alpha1.CloudStackBundle{
+				s.VersionsBundles["1.19"].CloudStack = releasev1alpha1.CloudStackBundle{
 					Version: "v0.1.0",
 					ClusterAPIController: releasev1alpha1.Image{
 						URI: "public.ecr.aws/l0g8r8j6/kubernetes-sigs/cluster-api-provider-cloudstack/release/manager:v0.1.0",
@@ -1104,9 +1081,10 @@ func TestGetInfrastructureBundleSuccess(t *testing.T) {
 			}
 			assert.Equal(t, "infrastructure-cloudstack/v0.1.0/", infraBundle.FolderName, "Incorrect folder name")
 			assert.Equal(t, len(infraBundle.Manifests), 2, "Wrong number of files in the infrastructure bundle")
+			bundle := tt.clusterSpec.ControlPlaneVersionsBundle()
 			wantManifests := []releasev1alpha1.Manifest{
-				tt.clusterSpec.VersionsBundle.CloudStack.Components,
-				tt.clusterSpec.VersionsBundle.CloudStack.Metadata,
+				bundle.CloudStack.Components,
+				bundle.CloudStack.Metadata,
 			}
 			assert.ElementsMatch(t, infraBundle.Manifests, wantManifests, "Incorrect manifests")
 		})
@@ -1158,10 +1136,10 @@ func TestChangeDiffNoChange(t *testing.T) {
 func TestChangeDiffWithChange(t *testing.T) {
 	provider := givenProvider(t)
 	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
-		s.VersionsBundle.CloudStack.Version = "v0.2.0"
+		s.VersionsBundles["1.19"].CloudStack.Version = "v0.2.0"
 	})
 	newClusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
-		s.VersionsBundle.CloudStack.Version = "v0.1.0"
+		s.VersionsBundles["1.19"].CloudStack.Version = "v0.1.0"
 	})
 
 	wantDiff := &types.ComponentChangeDiff{
@@ -1592,6 +1570,79 @@ func TestProviderGenerateCAPISpecForUpgradeMultipleWorkerNodeGroups(t *testing.T
 	}
 }
 
+func TestProviderGenerateCAPISpecForUpgradeWorkerNodeGroupsKubernetesVersion(t *testing.T) {
+	tests := []struct {
+		testName          string
+		clusterconfigFile string
+		wantMDFile        string
+		wantCPFile        string
+	}{
+		{
+			testName:          "adding a worker node group",
+			clusterconfigFile: "cluster_main_worker_node_group_kubernetes_version.yaml",
+			wantMDFile:        "testdata/expected_results_main_md_worker_kubernetes_version.yaml",
+			wantCPFile:        "testdata/expected_results_main_cp_kubernetes_version.yaml",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.testName, func(t *testing.T) {
+			mockCtrl := gomock.NewController(t)
+			setupContext(t)
+			ctx := context.Background()
+			kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+			cluster := &types.Cluster{
+				Name: "test",
+			}
+			bootstrapCluster := &types.Cluster{
+				Name: "bootstrap-test",
+			}
+			clusterSpec := givenClusterSpec(t, tt.clusterconfigFile)
+			cloudstackDatacenter := &v1alpha1.CloudStackDatacenterConfig{
+				Spec: v1alpha1.CloudStackDatacenterConfigSpec{},
+			}
+			cloudstackMachineConfig := &v1alpha1.CloudStackMachineConfig{
+				Spec: v1alpha1.CloudStackMachineConfigSpec{
+					Users: []v1alpha1.UserConfiguration{
+						{
+							Name:              "capv",
+							SshAuthorizedKeys: []string{"ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC1BK73XhIzjX+meUr7pIYh6RHbvI3tmHeQIXY5lv7aztN1UoX+bhPo3dwo2sfSQn5kuxgQdnxIZ/CTzy0p0GkEYVv3gwspCeurjmu0XmrdmaSGcGxCEWT/65NtvYrQtUE5ELxJ+N/aeZNlK2B7IWANnw/82913asXH4VksV1NYNduP0o1/G4XcwLLSyVFB078q/oEnmvdNIoS61j4/o36HVtENJgYr0idcBvwJdvcGxGnPaqOhx477t+kfJAa5n5dSA5wilIaoXH5i1Tf/HsTCM52L+iNCARvQzJYZhzbWI1MDQwzILtIBEQCJsl2XSqIupleY8CxqQ6jCXt2mhae+wPc3YmbO5rFvr2/EvC57kh3yDs1Nsuj8KOvD78KeeujbR8n8pScm3WDp62HFQ8lEKNdeRNj6kB8WnuaJvPnyZfvzOhwG65/9w13IBl7B1sWxbFnq2rMpm5uHVK7mAmjL0Tt8zoDhcE1YJEnp9xte3/pvmKPkST5Q/9ZtR9P5sI+02jY0fvPkPyC03j2gsPixG7rpOCwpOdbny4dcj0TDeeXJX8er+oVfJuLYz0pNWJcT2raDdFfcqvYA0B0IyNYlj5nWX4RuEcyT3qocLReWPnZojetvAG/H8XwOh7fEVGqHAKOVSnPXCSQJPl6s0H12jPJBDJMTydtYPEszl4/CeQ=="},
+						},
+					},
+				},
+			}
+
+			kubectl.EXPECT().GetMachineDeployment(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(workerNodeGroup1MachineDeployment(), nil)
+			kubectl.EXPECT().GetMachineDeployment(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(workerNodeGroup2MachineDeployment(), nil)
+			kubectl.EXPECT().GetEksaCluster(ctx, cluster, clusterSpec.Cluster.Name).Return(clusterSpec.Cluster, nil)
+			kubectl.EXPECT().GetEksaCloudStackDatacenterConfig(ctx, cluster.Name, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(cloudstackDatacenter, nil)
+			kubectl.EXPECT().GetEksaCloudStackMachineConfig(ctx, clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(cloudstackMachineConfig, nil)
+			kubectl.EXPECT().GetEksaCloudStackMachineConfig(ctx, clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(cloudstackMachineConfig, nil)
+			kubectl.EXPECT().GetEksaCloudStackMachineConfig(ctx, clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[1].MachineGroupRef.Name, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(cloudstackMachineConfig, nil)
+			kubectl.EXPECT().GetEksaCloudStackMachineConfig(ctx, clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(cloudstackMachineConfig, nil)
+			kubectl.EXPECT().UpdateAnnotation(ctx, "etcdadmcluster", fmt.Sprintf("%s-etcd", cluster.Name), map[string]string{etcdv1.UpgradeInProgressAnnotation: "true"}, gomock.AssignableToTypeOf(executables.WithCluster(bootstrapCluster)))
+			datacenterConfig := givenDatacenterConfig(t, tt.clusterconfigFile)
+			validator := givenWildcardValidator(mockCtrl, clusterSpec)
+			provider := newProviderWithKubectl(t, datacenterConfig, clusterSpec.Cluster, kubectl, validator)
+			if provider == nil {
+				t.Fatalf("provider object is nil")
+			}
+
+			err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
+			if err != nil {
+				t.Fatalf("failed to setup and validate: %v", err)
+			}
+
+			cp, md, err := provider.GenerateCAPISpecForUpgrade(context.Background(), bootstrapCluster, cluster, clusterSpec, clusterSpec.DeepCopy())
+			if err != nil {
+				t.Fatalf("failed to generate cluster api spec contents: %v", err)
+			}
+
+			test.AssertContentToFile(t, string(cp), tt.wantCPFile)
+			test.AssertContentToFile(t, string(md), tt.wantMDFile)
+		})
+	}
+}
+
 func TestSetupAndValidateUpgradeCluster(t *testing.T) {
 	ctx := context.Background()
 	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
@@ -1752,8 +1803,9 @@ func TestClusterNeedsNewWorkloadTemplateFalse(t *testing.T) {
 	fillClusterSpecWithClusterConfig(clusterSpec, cc)
 	dcConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
 	machineConfig := givenMachineConfigs(t, testClusterConfigMainFilename)[cc.MachineConfigRefs()[0].Name]
+	wng := &clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0]
 
-	assert.False(t, NeedsNewWorkloadTemplate(clusterSpec, clusterSpec, dcConfig, dcConfig, machineConfig, machineConfig, test.NewNullLogger()), "expected no spec change to be detected")
+	assert.False(t, NeedsNewWorkloadTemplate(clusterSpec, clusterSpec, dcConfig, dcConfig, machineConfig, machineConfig, wng, wng, test.NewNullLogger()), "expected no spec change to be detected")
 }
 
 func TestClusterUpgradeNeededDatacenterConfigChanged(t *testing.T) {
@@ -2101,7 +2153,7 @@ func TestNeedNewMachineTemplate(t *testing.T) {
 			Expect: true,
 		},
 		{
-			Name: "Machine_ComputeOffering_NameChanged",
+			Name: "Machine_DiskOffering_NameChanged",
 			ConfigureMachines: func(old, nw *v1alpha1.CloudStackMachineConfig) {
 				old.Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{
 					CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
@@ -2114,7 +2166,7 @@ func TestNeedNewMachineTemplate(t *testing.T) {
 			Expect: true,
 		},
 		{
-			Name: "Machine_ComputeOffering_IDChanged",
+			Name: "Machine_DiskOffering_IDChanged",
 			ConfigureMachines: func(old, nw *v1alpha1.CloudStackMachineConfig) {
 				old.Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{
 					CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
@@ -2127,7 +2179,7 @@ func TestNeedNewMachineTemplate(t *testing.T) {
 			Expect: true,
 		},
 		{
-			Name: "Machine_ComputeOffering_SizeChanged",
+			Name: "Machine_DiskOffering_SizeChanged",
 			ConfigureMachines: func(old, nw *v1alpha1.CloudStackMachineConfig) {
 				old.Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{
 					CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
@@ -2141,7 +2193,7 @@ func TestNeedNewMachineTemplate(t *testing.T) {
 			Expect: true,
 		},
 		{
-			Name: "Machine_ComputeOffering_MountPathChanged",
+			Name: "Machine_DiskOffering_MountPathChanged",
 			ConfigureMachines: func(old, nw *v1alpha1.CloudStackMachineConfig) {
 				old.Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{
 					CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
@@ -2155,7 +2207,7 @@ func TestNeedNewMachineTemplate(t *testing.T) {
 			Expect: true,
 		},
 		{
-			Name: "Machine_ComputeOffering_DeviceChanged",
+			Name: "Machine_DiskOffering_DeviceChanged",
 			ConfigureMachines: func(old, nw *v1alpha1.CloudStackMachineConfig) {
 				old.Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{
 					CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
@@ -2169,7 +2221,7 @@ func TestNeedNewMachineTemplate(t *testing.T) {
 			Expect: true,
 		},
 		{
-			Name: "Machine_ComputeOffering_FilesystemChanged",
+			Name: "Machine_DiskOffering_FilesystemChanged",
 			ConfigureMachines: func(old, nw *v1alpha1.CloudStackMachineConfig) {
 				old.Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{
 					CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
@@ -2183,7 +2235,7 @@ func TestNeedNewMachineTemplate(t *testing.T) {
 			Expect: true,
 		},
 		{
-			Name: "Machine_ComputeOffering_LabelChanged",
+			Name: "Machine_DiskOffering_LabelChanged",
 			ConfigureMachines: func(old, nw *v1alpha1.CloudStackMachineConfig) {
 				old.Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{
 					CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
@@ -2193,6 +2245,92 @@ func TestNeedNewMachineTemplate(t *testing.T) {
 				}
 				nw.Spec.DiskOffering = old.Spec.DiskOffering.DeepCopy()
 				nw.Spec.DiskOffering.Label = "new_label"
+			},
+			Expect: true,
+		},
+		{
+			Name: "Machine_DiskOffering_ToNil",
+			ConfigureMachines: func(old, nw *v1alpha1.CloudStackMachineConfig) {
+				old.Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{
+					MountPath:  "test",
+					Device:     "test",
+					Filesystem: "test",
+				}
+				nw.Spec.DiskOffering = nil
+			},
+			Expect: true,
+		},
+		{
+			Name: "Machine_DiskOffering_ToZeroValue",
+			ConfigureMachines: func(old, nw *v1alpha1.CloudStackMachineConfig) {
+				old.Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{
+					MountPath:  "test",
+					Device:     "test",
+					Filesystem: "test",
+				}
+				nw.Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{}
+			},
+			Expect: true,
+		},
+		{
+			Name: "Machine_DiskOffering_Nil",
+			ConfigureMachines: func(old, nw *v1alpha1.CloudStackMachineConfig) {
+				old.Spec.DiskOffering = nil
+				nw.Spec.DiskOffering = nil
+			},
+			Expect: false,
+		},
+		{
+			Name: "Machine_ComputeOffering_NewID",
+			ConfigureMachines: func(old, nw *v1alpha1.CloudStackMachineConfig) {
+				old.Spec.ComputeOffering = v1alpha1.CloudStackResourceIdentifier{}
+				nw.Spec.ComputeOffering = v1alpha1.CloudStackResourceIdentifier{
+					Id: "test",
+				}
+			},
+			Expect: true,
+		},
+		{
+			Name: "Machine_ComputeOffering_NewName",
+			ConfigureMachines: func(old, nw *v1alpha1.CloudStackMachineConfig) {
+				old.Spec.ComputeOffering = v1alpha1.CloudStackResourceIdentifier{}
+				nw.Spec.ComputeOffering = v1alpha1.CloudStackResourceIdentifier{
+					Name: "test",
+				}
+			},
+			Expect: true,
+		},
+		{
+			Name: "Machine_ComputeOffering_IDChanged",
+			ConfigureMachines: func(old, nw *v1alpha1.CloudStackMachineConfig) {
+				old.Spec.ComputeOffering = v1alpha1.CloudStackResourceIdentifier{
+					Id: "test",
+				}
+				nw.Spec.ComputeOffering = v1alpha1.CloudStackResourceIdentifier{
+					Id: "changed",
+				}
+			},
+			Expect: true,
+		},
+		{
+			Name: "Machine_ComputeOffering_NameChanged",
+			ConfigureMachines: func(old, nw *v1alpha1.CloudStackMachineConfig) {
+				old.Spec.ComputeOffering = v1alpha1.CloudStackResourceIdentifier{
+					Name: "test",
+				}
+				nw.Spec.ComputeOffering = v1alpha1.CloudStackResourceIdentifier{
+					Name: "changed",
+				}
+			},
+			Expect: true,
+		},
+		{
+			Name: "Machine_ComputeOffering_ToZeroValue",
+			ConfigureMachines: func(old, nw *v1alpha1.CloudStackMachineConfig) {
+				old.Spec.ComputeOffering = v1alpha1.CloudStackResourceIdentifier{
+					Id: "test",
+				}
+				nw.Spec.ComputeOffering = v1alpha1.CloudStackResourceIdentifier{}
 			},
 			Expect: true,
 		},
@@ -2219,6 +2357,17 @@ func TestNeedNewMachineTemplate(t *testing.T) {
 			Expect: true,
 		},
 		{
+			Name: "Machine_UserCustomDetails_ToNil",
+			ConfigureMachines: func(old, nw *v1alpha1.CloudStackMachineConfig) {
+				old.Spec.UserCustomDetails = map[string]string{
+					"foo": "bar",
+				}
+
+				nw.Spec.UserCustomDetails = nil
+			},
+			Expect: true,
+		},
+		{
 			Name: "Machine_UserCustomDetails_Replace",
 			ConfigureMachines: func(old, nw *v1alpha1.CloudStackMachineConfig) {
 				old.Spec.UserCustomDetails = map[string]string{
@@ -2226,6 +2375,21 @@ func TestNeedNewMachineTemplate(t *testing.T) {
 				}
 
 				nw.Spec.UserCustomDetails = map[string]string{
+					"qux": "baz",
+				}
+			},
+			Expect: true,
+		},
+		{
+			Name: "Machine_UserCustomDetails_ReplaceEmptyValue",
+			ConfigureMachines: func(old, nw *v1alpha1.CloudStackMachineConfig) {
+				old.Spec.UserCustomDetails = map[string]string{
+					"foo": "",
+					"qux": "baz",
+				}
+
+				nw.Spec.UserCustomDetails = map[string]string{
+					"bar": "",
 					"qux": "baz",
 				}
 			},
@@ -2301,14 +2465,15 @@ func TestNeedsNewWorkloadTemplateK8sVersion(t *testing.T) {
 	oldSpec := givenClusterSpec(t, testClusterConfigMainFilename)
 	newK8sSpec := oldSpec.DeepCopy()
 	newK8sSpec.Cluster.Spec.KubernetesVersion = "1.25"
-	assert.True(t, NeedsNewWorkloadTemplate(oldSpec, newK8sSpec, nil, nil, nil, nil, test.NewNullLogger()))
+	wng := &oldSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0]
+	assert.True(t, NeedsNewWorkloadTemplate(oldSpec, newK8sSpec, nil, nil, nil, nil, wng, wng, test.NewNullLogger()))
 }
 
 func TestNeedsNewWorkloadTemplateBundleNumber(t *testing.T) {
 	oldSpec := givenClusterSpec(t, testClusterConfigMainFilename)
 	newK8sSpec := oldSpec.DeepCopy()
 	newK8sSpec.Bundles.Spec.Number = 10000
-	assert.True(t, NeedsNewWorkloadTemplate(oldSpec, newK8sSpec, nil, nil, nil, nil, test.NewNullLogger()))
+	assert.True(t, NeedsNewWorkloadTemplate(oldSpec, newK8sSpec, nil, nil, nil, nil, nil, nil, test.NewNullLogger()))
 }
 
 func TestProviderUpdateSecrets(t *testing.T) {

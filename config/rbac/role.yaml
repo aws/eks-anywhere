@@ -7,6 +7,37 @@ metadata:
   name: manager-role
 rules:
 - apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+  - patch
+  - update
+- apiGroups:
+  - ""
+  resources:
+  - namespaces
+  verbs:
+  - create
+  - delete
+- apiGroups:
+  - ""
+  resources:
+  - nodes
+  verbs:
+  - list
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - watch
+- apiGroups:
   - addons.cluster.x-k8s.io
   resources:
   - clusterresourcesets
@@ -22,25 +53,16 @@ rules:
   - anywhere.eks.amazonaws.com
   resources:
   - awsiamconfigs
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - anywhere.eks.amazonaws.com
-  resources:
-  - awsiamconfigs
-  - bundles
   - cloudstackdatacenterconfigs
   - cloudstackmachineconfigs
   - clusters
   - dockerdatacenterconfigs
+  - fluxconfigs
+  - gitopsconfigs
   - nutanixdatacenterconfigs
   - nutanixmachineconfigs
+  - oidcconfigs
+  - snowdatacenterconfigs
   - snowippools
   - snowmachineconfigs
   - tinkerbelldatacenterconfigs
@@ -48,8 +70,6 @@ rules:
   - vspheredatacenterconfigs
   - vspheremachineconfigs
   verbs:
-  - create
-  - delete
   - get
   - list
   - patch
@@ -76,7 +96,6 @@ rules:
   - anywhere.eks.amazonaws.com
   resources:
   - awsiamconfigs/status
-  - bundles/status
   - cloudstackdatacenterconfigs/status
   - cloudstackmachineconfigs/status
   - clusters/status
@@ -94,76 +113,41 @@ rules:
 - apiGroups:
   - anywhere.eks.amazonaws.com
   resources:
-  - fluxconfigs
+  - bundles
   verbs:
-  - create
-  - delete
   - get
   - list
-  - patch
-  - update
   - watch
 - apiGroups:
   - anywhere.eks.amazonaws.com
   resources:
-  - gitopsconfigs
+  - eksareleases
   verbs:
-  - create
-  - delete
   - get
   - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - anywhere.eks.amazonaws.com
-  resources:
-  - oidcconfigs
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - anywhere.eks.amazonaws.com
-  resources:
-  - snowdatacenterconfigs
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - anywhere.eks.amazonaws.com
-  resources:
-  - snowmachineconfigs
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
   - watch
 - apiGroups:
   - bmc.tinkerbell.org
   resources:
   - machines
-  - machines/status
   verbs:
+  - list
+  - watch
+- apiGroups:
+  - bootstrap.cluster.x-k8s.io
+  resources:
+  - kubeadmconfigtemplates
+  verbs:
+  - create
   - get
   - list
+  - patch
+  - update
   - watch
 - apiGroups:
   - cluster.x-k8s.io
   resources:
-  - '*'
+  - clusters
   verbs:
   - create
   - delete
@@ -171,6 +155,28 @@ rules:
   - list
   - patch
   - update
+  - watch
+- apiGroups:
+  - cluster.x-k8s.io
+  resources:
+  - machinedeployments
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - cluster.x-k8s.io
+  resources:
+  - machinehealthchecks
+  verbs:
+  - create
+  - get
+  - list
+  - patch
   - watch
 - apiGroups:
   - clusterctl.cluster.x-k8s.io
@@ -181,12 +187,46 @@ rules:
   - list
   - watch
 - apiGroups:
+  - controlplane.cluster.x-k8s.io
+  resources:
+  - kubeadmcontrolplanes
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - coordination.k8s.io
+  resources:
+  - leases
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - update
+  - watch
+- apiGroups:
   - distro.eks.amazonaws.com
   resources:
   - releases
   verbs:
   - get
   - list
+  - watch
+- apiGroups:
+  - etcdcluster.cluster.x-k8s.io
+  resources:
+  - '*'
+  verbs:
+  - create
+  - get
+  - list
+  - patch
+  - update
   - watch
 - apiGroups:
   - infrastructure.cluster.x-k8s.io
@@ -198,6 +238,8 @@ rules:
   - cloudstackmachinetemplates
   - dockerclusters
   - dockermachinetemplates
+  - nutanixclusters
+  - nutanixmachinetemplates
   - tinkerbellclusters
   - tinkerbellmachinetemplates
   - vsphereclusters
@@ -226,12 +268,8 @@ rules:
   - tinkerbell.org
   resources:
   - hardware
-  - hardware/status
   verbs:
-  - get
   - list
-  - patch
-  - update
   - watch
 
 ---
@@ -246,5 +284,12 @@ rules:
   - ""
   resources:
   - secrets
+  verbs:
+  - patch
+  - update
+- apiGroups:
+  - packages.eks.amazonaws.com
+  resources:
+  - packagebundlecontrollers
   verbs:
   - delete

@@ -218,6 +218,194 @@ func TestValidateHostOSConfig(t *testing.T) {
 			osFamily: Bottlerocket,
 			wantErr:  "bootKernelParameters key cannot be empty",
 		},
+		{
+			name: "valid cert bundle",
+			hostOSConfig: &HostOSConfiguration{
+				CertBundles: []certBundle{
+					{
+						Name: "bundle1",
+						Data: `-----BEGIN CERTIFICATE-----
+MIIFrTCCA5WgAwIBAgIUFXtDg6MEuAA0Ns1Ah2pfVKDC/nIwDQYJKoZIhvcNAQEN
+BQAwZjELMAkGA1UEBhMCVVMxCzAJBgNVBAgMAldBMRAwDgYDVQQHDAdTZWF0dGxl
+MQ0wCwYDVQQKDARFa3NhMRIwEAYDVQQLDAlQZXJzb25hbGwxFTATBgNVBAMMDDEw
+LjgwLjE0OC41NjAeFw0yMzAyMTEwMDQ0MjRaFw0zMzAyMDgwMDQ0MjRaMGYxCzAJ
+BgNVBAYTAlVTMQswCQYDVQQIDAJXQTEQMA4GA1UEBwwHU2VhdHRsZTENMAsGA1UE
+CgwERWtzYTESMBAGA1UECwwJUGVyc29uYWxsMRUwEwYDVQQDDAwxMC44MC4xNDgu
+NTYwggIiMA0GCSqGSIb3DQEBAQUAA4ICDwAwggIKAoICAQDpVLHBdFr7fh+PRQnZ
+PlyXbIDfxdKCNZaNfxOl5I2eKW5m+zennt7N+nM1/5oDcVoIzVVCFkSmztl5GNr7
+zyKfqDb/q6wZSQTOreNALBEh6redLnzc6OkQYnlFFuLcTuWLqTHdMoEJozbW+9K+
+Z3lxKU92FvsTDaZKCT8NWwnKoTeXhEZtOF0KnJmzdQUztL7mNjSn53qUv/6WHwBG
+/8F7elkJYP98jhhYkpKgPSnpoDuay3zmQxsFXvh9+j9GztODoroZgkNBuooObsnE
+CQEFJLGZ03XAkyaumzfjSD5Ma4QQZPy0VwV2NHL3ngec+wxUH7u+FqupWbQZtJP6
++I3jSGGmhI2G/NIJZD0jiytlR1YmoUYM5qHl/VvrcqKoMEIGgF1ktYup9NAdGzLA
+AItBbjDY8Vl+TGMC0vDbrHtVReYOWfx7TBo5nPnBjC1yTtnoYIk8EkJaPY9AuI5V
+/WJ866PrPo5dPw/EVu3kuVzG5VoYb+iqY/qENnDnNeP0rCYF/tgna8c6sBkJG2y9
+vo8ZkLC22J1CTWNqpiLBg0B9Jn2WIGFKNlavj8RiLSjNMDDj0EzS8mxZqlE+gn+C
+MsASCpOAtIKPlr+x+Bfd0xaG1HyzaJV/cFHW8p6+8UvE9Nl0SeTWd8RtG36zXxif
+WBDWiUJ9clQSp0F4Yunxts3PFQIDAQABo1MwUTAdBgNVHQ4EFgQUT78n048MqxDw
+DdtI+841JN+OQpEwHwYDVR0jBBgwFoAUT78n048MqxDwDdtI+841JN+OQpEwDwYD
+VR0TAQH/BAUwAwEB/zANBgkqhkiG9w0BAQ0FAAOCAgEAI3TT8ykTsX4Ra8asa8gl
+DqVsz8t5HjOpA2nfAmO9GETg+StEW0j2FGglu+S4OhMx4TN4rYAPY0C78+5GHQwu
+UAKxAVXigLXG2TmgszJ1OIBXIRdMlyc3gVm9j5Odcrm0WSGmSe47K8IgEVwlGEoS
+CEUfKbMlVzEaPlP7YUOtiElzYi8D4ht9JfmRPi7PjUjVrWw0My+XPrFA4siU8dfh
+BbvN9ybHmgltFqeZEqEv2wA9l6EpY71sArWsw+k5OYb2tXiXBxXY9LJzNDdJsNW9
+8EP5rFIPvtoZMlE9qAHqy1kkqxcjvhcD3SD8zxJKCDLCJnVPG01k2siwlA46jcTT
+xFZhEttbFcASpURjxkvBndXCktN2myWwokNGlf1hosxk2lG5DcySwHAhjXLJV6r2
+l7X/CZpR38n/FXAKwiMQAPFZsLRU/EWBPTDlD1zjQSH8weGEj8+e9tQuTm+QsYrb
+aJW3puZ84fEgYu/QMjGTuJzd+ZswMcLLyyn4Sm9nvchE8SdEUiF6L0Lc8+qgwmJU
+idxqPeX4DMweDcskpZDPbfI6jnNorvGiWaLAYEJ4ntc3SP/lvbwXXOJLvhnRP+Ov
+zphcd/PRLS7VpAhWOVbulPjB8DkX0PmvgaCeiTDuajMxq6ve64v+dCwUcqqbamC2
+OelAabtJKd8B2BUsR7JRIN8=
+-----END CERTIFICATE-----`,
+					},
+				},
+			},
+			osFamily: Bottlerocket,
+			wantErr:  "",
+		},
+		{
+			name: "valid nil certBunldes",
+			hostOSConfig: &HostOSConfiguration{
+				CertBundles: nil,
+			},
+			osFamily: Bottlerocket,
+			wantErr:  "",
+		},
+		{
+			name: "invalid cert no data",
+			hostOSConfig: &HostOSConfiguration{
+				CertBundles: []certBundle{
+					{
+						Name: "bundle1",
+						Data: "",
+					},
+				},
+			},
+			osFamily: Bottlerocket,
+			wantErr:  "failed to parse certificate PEM",
+		},
+		{
+			name: "invalid cert bundle no name",
+			hostOSConfig: &HostOSConfiguration{
+				CertBundles: []certBundle{
+					{
+						Name: "",
+						Data: "ABCDEF",
+					},
+					{
+						Name: "bundle2",
+						Data: "123456",
+					},
+				},
+			},
+			osFamily: Bottlerocket,
+			wantErr:  "certBundles name cannot be empty",
+		},
+		{
+			name: "invalid cert bundle wrong data type",
+			hostOSConfig: &HostOSConfiguration{
+				CertBundles: []certBundle{
+					{
+						Name: "bundle1",
+						Data: "QUJDREVm",
+					},
+				},
+			},
+			osFamily: Bottlerocket,
+			wantErr:  "failed to parse certificate PEM",
+		},
+		{
+			name: "invalid cert bundle wrong data type",
+			hostOSConfig: &HostOSConfiguration{
+				CertBundles: []certBundle{
+					{
+						Name: "bundle1",
+						Data: "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUNJakFOQmdrcWhraUc5dzBCQVFFRkFBT0NBZzhBTUlJQ0NnS0NBZ0VBbFJ1Um5UaFVqVTgvcHJ3WXhidHkKV1BUOXBVUkkzbGJzS01pQjZGbi9WSE9LRTEzcDREOHhnT0NBRHBkUmFnZFQ2bjRldHI5YXR6REtVU3ZwTXRSMwpDUDVub05jOTdXaU5DZ2dCalZXaHM3c3pFZTh1Z3lxRjIzWHdwSFE2dVYxTEtINTBtOTJNYk9XZkN0alU5cC94CnFoTnBRUTFBWmhxTnk1R2V2YXA1azhYelJtalNsZE5BRlpNWTdZdjNHaStueUN3R3dwVnRCVXdodUx6Z05GSy8KeUR0dzJXY1dtVVU3TnVDOFE2TVd2UGVieFZ0Q2ZWcC9pUVU2cTYweXl0NmFHT0JraEFYMExwS0FFaEtpZGl4WQpuUDlQTlZCdnhndTNYWjRQMzZnWlY2K3VtbUtkQlZuYzNOcXdCTHU1K0NjZFJkdXNtSFBIZDVwSGY0LzM4WjMvCjZxVTJhL2ZQdld6Y2VWVEVnWjQ3UWpGTVRDVG1Dd050Mjljdmk3elplUXpqdHdRZ240aXBOOU5pYlJIL0F4L3EKVGJJekhmckoxeGEyUnRlV1NkRmp3dHhpOUMyMEhVa2pYU2VJNFlselFNSDBmUFg2S0NFN2FWZVBUT25CNjlJLwphOS9xOTZEaVhaYWp3bHBxM3dGY3RyczFvWHFCcDVEVnJDSWo4aFUyd05nQjdMdFExbUN0c1l6Ly9oZWFpMEs5ClBoRTRYNmhpRTBZbWVBWmpSMHVIbDhNLzVhVzl4Q29KNzIrMTJrS3BXQWEwU0ZSV0x5NkZlak5ZQ1lwa3VwVkoKeWVjTGsvNEwxVzBsNmpRUVpuV0VyWFpZZTBQTkZjbXdHWHkxUmVwODNrZkJSTktSeTV0dm9jYWxMbHdYTGRVawpBSVUrMkdLanlUM2lNdXpaeHhGeFBGTUNBd0VBQVE9PQotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg==",
+					},
+				},
+			},
+			osFamily: Bottlerocket,
+			wantErr:  "failed to parse certificate",
+		},
+		{
+			name: "more than one cert in one bundle",
+			hostOSConfig: &HostOSConfiguration{
+				CertBundles: []certBundle{
+					{
+						Name: "bundle1",
+						Data: `-----BEGIN CERTIFICATE-----
+MIIFrTCCA5WgAwIBAgIUFXtDg6MEuAA0Ns1Ah2pfVKDC/nIwDQYJKoZIhvcNAQEN
+BQAwZjELMAkGA1UEBhMCVVMxCzAJBgNVBAgMAldBMRAwDgYDVQQHDAdTZWF0dGxl
+MQ0wCwYDVQQKDARFa3NhMRIwEAYDVQQLDAlQZXJzb25hbGwxFTATBgNVBAMMDDEw
+LjgwLjE0OC41NjAeFw0yMzAyMTEwMDQ0MjRaFw0zMzAyMDgwMDQ0MjRaMGYxCzAJ
+BgNVBAYTAlVTMQswCQYDVQQIDAJXQTEQMA4GA1UEBwwHU2VhdHRsZTENMAsGA1UE
+CgwERWtzYTESMBAGA1UECwwJUGVyc29uYWxsMRUwEwYDVQQDDAwxMC44MC4xNDgu
+NTYwggIiMA0GCSqGSIb3DQEBAQUAA4ICDwAwggIKAoICAQDpVLHBdFr7fh+PRQnZ
+PlyXbIDfxdKCNZaNfxOl5I2eKW5m+zennt7N+nM1/5oDcVoIzVVCFkSmztl5GNr7
+zyKfqDb/q6wZSQTOreNALBEh6redLnzc6OkQYnlFFuLcTuWLqTHdMoEJozbW+9K+
+Z3lxKU92FvsTDaZKCT8NWwnKoTeXhEZtOF0KnJmzdQUztL7mNjSn53qUv/6WHwBG
+/8F7elkJYP98jhhYkpKgPSnpoDuay3zmQxsFXvh9+j9GztODoroZgkNBuooObsnE
+CQEFJLGZ03XAkyaumzfjSD5Ma4QQZPy0VwV2NHL3ngec+wxUH7u+FqupWbQZtJP6
++I3jSGGmhI2G/NIJZD0jiytlR1YmoUYM5qHl/VvrcqKoMEIGgF1ktYup9NAdGzLA
+AItBbjDY8Vl+TGMC0vDbrHtVReYOWfx7TBo5nPnBjC1yTtnoYIk8EkJaPY9AuI5V
+/WJ866PrPo5dPw/EVu3kuVzG5VoYb+iqY/qENnDnNeP0rCYF/tgna8c6sBkJG2y9
+vo8ZkLC22J1CTWNqpiLBg0B9Jn2WIGFKNlavj8RiLSjNMDDj0EzS8mxZqlE+gn+C
+MsASCpOAtIKPlr+x+Bfd0xaG1HyzaJV/cFHW8p6+8UvE9Nl0SeTWd8RtG36zXxif
+WBDWiUJ9clQSp0F4Yunxts3PFQIDAQABo1MwUTAdBgNVHQ4EFgQUT78n048MqxDw
+DdtI+841JN+OQpEwHwYDVR0jBBgwFoAUT78n048MqxDwDdtI+841JN+OQpEwDwYD
+VR0TAQH/BAUwAwEB/zANBgkqhkiG9w0BAQ0FAAOCAgEAI3TT8ykTsX4Ra8asa8gl
+DqVsz8t5HjOpA2nfAmO9GETg+StEW0j2FGglu+S4OhMx4TN4rYAPY0C78+5GHQwu
+UAKxAVXigLXG2TmgszJ1OIBXIRdMlyc3gVm9j5Odcrm0WSGmSe47K8IgEVwlGEoS
+CEUfKbMlVzEaPlP7YUOtiElzYi8D4ht9JfmRPi7PjUjVrWw0My+XPrFA4siU8dfh
+BbvN9ybHmgltFqeZEqEv2wA9l6EpY71sArWsw+k5OYb2tXiXBxXY9LJzNDdJsNW9
+8EP5rFIPvtoZMlE9qAHqy1kkqxcjvhcD3SD8zxJKCDLCJnVPG01k2siwlA46jcTT
+xFZhEttbFcASpURjxkvBndXCktN2myWwokNGlf1hosxk2lG5DcySwHAhjXLJV6r2
+l7X/CZpR38n/FXAKwiMQAPFZsLRU/EWBPTDlD1zjQSH8weGEj8+e9tQuTm+QsYrb
+aJW3puZ84fEgYu/QMjGTuJzd+ZswMcLLyyn4Sm9nvchE8SdEUiF6L0Lc8+qgwmJU
+idxqPeX4DMweDcskpZDPbfI6jnNorvGiWaLAYEJ4ntc3SP/lvbwXXOJLvhnRP+Ov
+zphcd/PRLS7VpAhWOVbulPjB8DkX0PmvgaCeiTDuajMxq6ve64v+dCwUcqqbamC2
+OelAabtJKd8B2BUsR7JRIN8=
+-----END CERTIFICATE-----
+
+-----BEGIN CERTIFICATE-----
+MIIFrTCCA5WgAwIBAgIUFXtDg6MEuAA0Ns1Ah2pfVKDC/nIwDQYJKoZIhvcNAQEN
+BQAwZjELMAkGA1UEBhMCVVMxCzAJBgNVBAgMAldBMRAwDgYDVQQHDAdTZWF0dGxl
+MQ0wCwYDVQQKDARFa3NhMRIwEAYDVQQLDAlQZXJzb25hbGwxFTATBgNVBAMMDDEw
+LjgwLjE0OC41NjAeFw0yMzAyMTEwMDQ0MjRaFw0zMzAyMDgwMDQ0MjRaMGYxCzAJ
+BgNVBAYTAlVTMQswCQYDVQQIDAJXQTEQMA4GA1UEBwwHU2VhdHRsZTENMAsGA1UE
+CgwERWtzYTESMBAGA1UECwwJUGVyc29uYWxsMRUwEwYDVQQDDAwxMC44MC4xNDgu
+NTYwggIiMA0GCSqGSIb3DQEBAQUAA4ICDwAwggIKAoICAQDpVLHBdFr7fh+PRQnZ
+PlyXbIDfxdKCNZaNfxOl5I2eKW5m+zennt7N+nM1/5oDcVoIzVVCFkSmztl5GNr7
+zyKfqDb/q6wZSQTOreNALBEh6redLnzc6OkQYnlFFuLcTuWLqTHdMoEJozbW+9K+
+Z3lxKU92FvsTDaZKCT8NWwnKoTeXhEZtOF0KnJmzdQUztL7mNjSn53qUv/6WHwBG
+/8F7elkJYP98jhhYkpKgPSnpoDuay3zmQxsFXvh9+j9GztODoroZgkNBuooObsnE
+CQEFJLGZ03XAkyaumzfjSD5Ma4QQZPy0VwV2NHL3ngec+wxUH7u+FqupWbQZtJP6
++I3jSGGmhI2G/NIJZD0jiytlR1YmoUYM5qHl/VvrcqKoMEIGgF1ktYup9NAdGzLA
+AItBbjDY8Vl+TGMC0vDbrHtVReYOWfx7TBo5nPnBjC1yTtnoYIk8EkJaPY9AuI5V
+/WJ866PrPo5dPw/EVu3kuVzG5VoYb+iqY/qENnDnNeP0rCYF/tgna8c6sBkJG2y9
+vo8ZkLC22J1CTWNqpiLBg0B9Jn2WIGFKNlavj8RiLSjNMDDj0EzS8mxZqlE+gn+C
+MsASCpOAtIKPlr+x+Bfd0xaG1HyzaJV/cFHW8p6+8UvE9Nl0SeTWd8RtG36zXxif
+WBDWiUJ9clQSp0F4Yunxts3PFQIDAQABo1MwUTAdBgNVHQ4EFgQUT78n048MqxDw
+DdtI+841JN+OQpEwHwYDVR0jBBgwFoAUT78n048MqxDwDdtI+841JN+OQpEwDwYD
+VR0TAQH/BAUwAwEB/zANBgkqhkiG9w0BAQ0FAAOCAgEAI3TT8ykTsX4Ra8asa8gl
+DqVsz8t5HjOpA2nfAmO9GETg+StEW0j2FGglu+S4OhMx4TN4rYAPY0C78+5GHQwu
+UAKxAVXigLXG2TmgszJ1OIBXIRdMlyc3gVm9j5Odcrm0WSGmSe47K8IgEVwlGEoS
+CEUfKbMlVzEaPlP7YUOtiElzYi8D4ht9JfmRPi7PjUjVrWw0My+XPrFA4siU8dfh
+BbvN9ybHmgltFqeZEqEv2wA9l6EpY71sArWsw+k5OYb2tXiXBxXY9LJzNDdJsNW9
+8EP5rFIPvtoZMlE9qAHqy1kkqxcjvhcD3SD8zxJKCDLCJnVPG01k2siwlA46jcTT
+xFZhEttbFcASpURjxkvBndXCktN2myWwokNGlf1hosxk2lG5DcySwHAhjXLJV6r2
+l7X/CZpR38n/FXAKwiMQAPFZsLRU/EWBPTDlD1zjQSH8weGEj8+e9tQuTm+QsYrb
+aJW3puZ84fEgYu/QMjGTuJzd+ZswMcLLyyn4Sm9nvchE8SdEUiF6L0Lc8+qgwmJU
+idxqPeX4DMweDcskpZDPbfI6jnNorvGiWaLAYEJ4ntc3SP/lvbwXXOJLvhnRP+Ov
+zphcd/PRLS7VpAhWOVbulPjB8DkX0PmvgaCeiTDuajMxq6ve64v+dCwUcqqbamC2
+OelAabtJKd8B2BUsR7JRIN8=
+-----END CERTIFICATE-----`,
+					},
+				},
+			},
+			osFamily: Bottlerocket,
+			wantErr:  "",
+		},
 	}
 
 	for _, tt := range tests {

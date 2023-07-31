@@ -8,7 +8,6 @@ import (
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/config"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
 )
@@ -33,7 +32,7 @@ func (u *UpgradeValidations) PreflightValidations(ctx context.Context) []validat
 			return &validations.ValidationResult{
 				Name:        "validate certificate for registry mirror",
 				Remediation: fmt.Sprintf("provide a valid certificate for you registry endpoint using %s env var", anywherev1.RegistryMirrorCAKey),
-				Err:         validations.ValidateCertForRegistryMirror(u.Opts.Spec, u.Opts.TlsValidator),
+				Err:         validations.ValidateCertForRegistryMirror(u.Opts.Spec, u.Opts.TLSValidator),
 			}
 		},
 		func() *validations.ValidationResult {
@@ -75,7 +74,14 @@ func (u *UpgradeValidations) PreflightValidations(ctx context.Context) []validat
 			return &validations.ValidationResult{
 				Name:        "upgrade cluster kubernetes version increment",
 				Remediation: "ensure that the cluster kubernetes version is incremented by one minor version exactly (e.g. 1.18 -> 1.19)",
-				Err:         ValidateServerVersionSkew(ctx, u.Opts.Spec.Cluster.Spec.KubernetesVersion, u.Opts.WorkloadCluster, k),
+				Err:         ValidateServerVersionSkew(ctx, u.Opts.Spec.Cluster, u.Opts.WorkloadCluster, u.Opts.ManagementCluster, k),
+			}
+		},
+		func() *validations.ValidationResult {
+			return &validations.ValidationResult{
+				Name:        "upgrade cluster worker node group kubernetes version increment",
+				Remediation: "ensure that the cluster worker node group kubernetes version is incremented by one minor version exactly (e.g. 1.18 -> 1.19) and cluster level kubernetes version does not exceed worker node group version by two minor versions",
+				Err:         ValidateWorkerServerVersionSkew(ctx, u.Opts.Spec.Cluster, u.Opts.WorkloadCluster, u.Opts.ManagementCluster, k),
 			}
 		},
 		func() *validations.ValidationResult {
@@ -94,10 +100,9 @@ func (u *UpgradeValidations) PreflightValidations(ctx context.Context) []validat
 		},
 		func() *validations.ValidationResult {
 			return &validations.ValidationResult{
-				Name:        "validate kubernetes version 1.27 support",
-				Remediation: fmt.Sprintf("ensure %v env variable is set", features.K8s127SupportEnvVar),
-				Err:         validations.ValidateK8s127Support(u.Opts.Spec),
-				Silent:      true,
+				Name:        "validate cluster's eksaVersion matches EKS-A Version",
+				Remediation: "ensure EksaVersion matches the EKS-A release or omit the value from the cluster config",
+				Err:         validations.ValidateEksaVersion(ctx, u.Opts.CliVersion, u.Opts.Spec),
 			}
 		},
 	}
@@ -107,9 +112,33 @@ func (u *UpgradeValidations) PreflightValidations(ctx context.Context) []validat
 			upgradeValidations,
 			func() *validations.ValidationResult {
 				return &validations.ValidationResult{
-					Name:        "validate management cluster bundle version compatibility",
+					Name:        "validate management cluster eksaVersion compatibility",
 					Remediation: fmt.Sprintf("upgrade management cluster %s before upgrading workload cluster %s", u.Opts.Spec.Cluster.ManagedBy(), u.Opts.WorkloadCluster.Name),
-					Err:         validations.ValidateManagementClusterBundlesVersion(ctx, k, u.Opts.ManagementCluster, u.Opts.Spec),
+					Err:         validations.ValidateManagementClusterEksaVersion(ctx, k, u.Opts.ManagementCluster, u.Opts.Spec),
+				}
+			},
+		)
+	}
+
+	if !u.Opts.SkippedValidations[validations.PDB] {
+		upgradeValidations = append(
+			upgradeValidations,
+			func() *validations.ValidationResult {
+				return &validations.ValidationResult{
+					Name:        "validate pod disruption budgets",
+					Remediation: "",
+					Err:         ValidatePodDisruptionBudgets(ctx, k, u.Opts.WorkloadCluster),
+				}
+			})
+	}
+	if !u.Opts.SkippedValidations[validations.EksaVersionSkew] {
+		upgradeValidations = append(
+			upgradeValidations,
+			func() *validations.ValidationResult {
+				return &validations.ValidationResult{
+					Name:        "validate eksaVersion skew is one minor version",
+					Remediation: "ensure eksaVersion upgrades are sequential by minor version",
+					Err:         validations.ValidateEksaVersionSkew(ctx, k, u.Opts.ManagementCluster, u.Opts.Spec),
 				}
 			})
 	}

@@ -118,34 +118,6 @@ func WithFluxGithub(opts ...api.FluxConfigOpt) ClusterE2ETestOpt {
 	}
 }
 
-func WithFluxLegacy(opts ...api.GitOpsConfigOpt) ClusterE2ETestOpt {
-	return func(e *ClusterE2ETest) {
-		gitOpsConfigName := fluxConfigName()
-		checkRequiredEnvVars(e.T, fluxGithubRequiredEnvVars)
-		e.ClusterConfig.GitOpsConfig = api.NewGitOpsConfig(gitOpsConfigName,
-			api.WithPersonalFluxRepository(true),
-			api.WithStringFromEnvVarGitOpsConfig(GitRepositoryVar, api.WithFluxRepository),
-			api.WithStringFromEnvVarGitOpsConfig(GithubUserVar, api.WithFluxOwner),
-			api.WithFluxNamespace("default"),
-			api.WithFluxConfigurationPath("path2"),
-			api.WithFluxBranch("main"),
-		)
-		e.clusterFillers = append(e.clusterFillers,
-			api.WithGitOpsRef(gitOpsConfigName, v1alpha1.GitOpsConfigKind),
-		)
-		// apply the rest of the opts passed into the function
-		for _, opt := range opts {
-			opt(e.ClusterConfig.GitOpsConfig)
-		}
-		// Adding Job ID suffix to repo name
-		// e2e test jobs have Job Id with a ":", replacing with "-"
-		jobID := strings.Replace(getJobIDFromEnv(), ":", "-", -1)
-		withFluxLegacyRepositorySuffix(jobID)(e.ClusterConfig.GitOpsConfig)
-		// Setting GitRepo cleanup since GitOps configured
-		e.T.Cleanup(e.CleanUpGithubRepo)
-	}
-}
-
 // WithFluxGithubConfig returns ClusterConfigFiller that adds FluxConfig using the Github provider to the cluster config.
 func WithFluxGithubConfig(opts ...api.FluxConfigOpt) api.ClusterConfigFiller {
 	fluxConfigName := fluxConfigName()
@@ -207,13 +179,6 @@ func WithClusterUpgradeGit(fillers ...api.ClusterFiller) ClusterE2ETestOpt {
 				}
 			},
 		)
-	}
-}
-
-func withFluxLegacyRepositorySuffix(suffix string) api.GitOpsConfigOpt {
-	return func(c *v1alpha1.GitOpsConfig) {
-		repository := c.Spec.Flux.Github.Repository
-		c.Spec.Flux.Github.Repository = fmt.Sprintf("%s-%s", repository, suffix)
 	}
 }
 
@@ -330,7 +295,7 @@ func (e *ClusterE2ETest) addWorkloadClusterConfigToGit(ctx context.Context, w *W
 }
 
 func (e *ClusterE2ETest) deleteWorkloadClusterConfigFromGit(ctx context.Context, w *WorkloadCluster) error {
-	p := e.workloadClusterConfigPath(w)
+	p := filepath.Dir(e.workloadClusterConfigPath(w))
 	g := e.GitClient
 	if err := g.Remove(p); err != nil {
 		return fmt.Errorf("removing cluster config at path %s: %v", p, err)
@@ -358,8 +323,7 @@ func (e *ClusterE2ETest) pushStagedChanges(ctx context.Context, commitMessage st
 	return nil
 }
 
-// PushWorkloadClusterToGit builds the workload cluster config file for git and pushing changes to git.
-func (e *ClusterE2ETest) PushWorkloadClusterToGit(w *WorkloadCluster, opts ...api.ClusterConfigFiller) {
+func (e *ClusterE2ETest) pushWorkloadClusterToGit(w *WorkloadCluster, opts ...api.ClusterConfigFiller) error {
 	ctx := context.Background()
 	e.initGit(ctx)
 	// Pull remote config using managment cluster
@@ -380,13 +344,15 @@ func (e *ClusterE2ETest) PushWorkloadClusterToGit(w *WorkloadCluster, opts ...ap
 	// Marshall w.ClusterConfig and write it to the repo path
 	e.buildWorkloadClusterConfigFileForGit(w)
 	if err := e.addWorkloadClusterConfigToGit(ctx, w); err != nil {
-		e.T.Fatalf("Error pushing local changes to remote git repo: %v", err)
+		return fmt.Errorf("failed to push local changes to remote git repo: %v", err)
 	}
+
 	e.T.Logf("Successfully pushed version controlled cluster configuration")
+
+	return nil
 }
 
-// DeleteWorkloadClusterFromGit deletes a workload cluster config file and pushes the changes to git.
-func (e *ClusterE2ETest) DeleteWorkloadClusterFromGit(w *WorkloadCluster) {
+func (e *ClusterE2ETest) deleteWorkloadClusterFromGit(w *WorkloadCluster) error {
 	ctx := context.Background()
 	e.initGit(ctx)
 
@@ -395,15 +361,12 @@ func (e *ClusterE2ETest) DeleteWorkloadClusterFromGit(w *WorkloadCluster) {
 		e.T.Errorf("Pulling remote configuration: %v", err)
 	}
 
-	e.T.Log("Deleting local cluster directory in git repo")
-	if err := os.Remove(e.workloadClusterConfigGitPath(w)); err != nil {
-		e.T.Fatalf("Error removing local cluster config: %v", err)
-	}
-
 	if err := e.deleteWorkloadClusterConfigFromGit(ctx, w); err != nil {
-		w.T.Fatalf("Error pushing local changes to remote git repo: %v", err)
+		return fmt.Errorf("failed to push local changes to remote git repo: %v", err)
 	}
 	w.T.Logf("Successfully deleted version controlled cluster")
+
+	return nil
 }
 
 func (e *ClusterE2ETest) parseClusterConfigFromLocalGitRepo() {
@@ -965,18 +928,18 @@ func (e *ClusterE2ETest) validateWorkerNodeMachineSpec(ctx context.Context, clus
 			if err != nil {
 				return err
 			}
-			if cloudstackWorkerConfig.Spec.Template.Name != csMachineTemplate.Spec.Spec.Spec.Template.Name {
-				err := fmt.Errorf("MachineSpec %s Template are not at desired value; target: %v, actual: %v", csMachineTemplate.Name, cloudstackWorkerConfig.Spec.Template, csMachineTemplate.Spec.Spec.Spec.Template)
+			if cloudstackWorkerConfig.Spec.Template.Name != csMachineTemplate.Spec.Template.Spec.Template.Name {
+				err := fmt.Errorf("MachineSpec %s Template are not at desired value; target: %v, actual: %v", csMachineTemplate.Name, cloudstackWorkerConfig.Spec.Template, csMachineTemplate.Spec.Template.Spec.Template)
 				e.T.Logf("Waiting for WorkerNode Specs to match - %s", err.Error())
 				return err
 			}
-			if cloudstackWorkerConfig.Spec.ComputeOffering.Name != csMachineTemplate.Spec.Spec.Spec.Offering.Name {
-				err := fmt.Errorf("MachineSpec %s Offering are not at desired value; target: %v, actual: %v", csMachineTemplate.Name, cloudstackWorkerConfig.Spec.ComputeOffering, csMachineTemplate.Spec.Spec.Spec.Offering)
+			if cloudstackWorkerConfig.Spec.ComputeOffering.Name != csMachineTemplate.Spec.Template.Spec.Offering.Name {
+				err := fmt.Errorf("MachineSpec %s Offering are not at desired value; target: %v, actual: %v", csMachineTemplate.Name, cloudstackWorkerConfig.Spec.ComputeOffering, csMachineTemplate.Spec.Template.Spec.Offering)
 				e.T.Logf("Waiting for WorkerNode Specs to match - %s", err.Error())
 				return err
 			}
-			if !reflect.DeepEqual(cloudstackWorkerConfig.Spec.UserCustomDetails, csMachineTemplate.Spec.Spec.Spec.Details) {
-				err := fmt.Errorf("MachineSpec %s Details are not at desired value; target: %v, actual: %v", csMachineTemplate.Name, cloudstackWorkerConfig.Spec.UserCustomDetails, csMachineTemplate.Spec.Spec.Spec.Details)
+			if !reflect.DeepEqual(cloudstackWorkerConfig.Spec.UserCustomDetails, csMachineTemplate.Spec.Template.Spec.Details) {
+				err := fmt.Errorf("MachineSpec %s Details are not at desired value; target: %v, actual: %v", csMachineTemplate.Name, cloudstackWorkerConfig.Spec.UserCustomDetails, csMachineTemplate.Spec.Template.Spec.Details)
 				e.T.Logf("Waiting for WorkerNode Specs to match - %s", err.Error())
 				return err
 			}
@@ -989,8 +952,8 @@ func (e *ClusterE2ETest) validateWorkerNodeMachineSpec(ctx context.Context, clus
 				e.T.Logf("Waiting for WorkerNode Specs to match - %s", err.Error())
 				return err
 			}
-			if !reflect.DeepEqual(cloudstackWorkerConfig.Spec.AffinityGroupIds, csMachineTemplate.Spec.Spec.Spec.AffinityGroupIDs) {
-				err := fmt.Errorf("MachineSpec %s AffinityGroupIds are not at desired value; target: %v, actual: %v", csMachineTemplate.Name, cloudstackWorkerConfig.Spec.AffinityGroupIds, csMachineTemplate.Spec.Spec.Spec.AffinityGroupIDs)
+			if !reflect.DeepEqual(cloudstackWorkerConfig.Spec.AffinityGroupIds, csMachineTemplate.Spec.Template.Spec.AffinityGroupIDs) {
+				err := fmt.Errorf("MachineSpec %s AffinityGroupIds are not at desired value; target: %v, actual: %v", csMachineTemplate.Name, cloudstackWorkerConfig.Spec.AffinityGroupIds, csMachineTemplate.Spec.Template.Spec.AffinityGroupIDs)
 				e.T.Logf("Waiting for WorkerNode Specs to match - %s", err.Error())
 				return err
 			}
