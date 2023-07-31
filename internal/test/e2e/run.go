@@ -29,7 +29,7 @@ const (
 	tinkerbellIPPoolSize = 2
 
 	// Default timeout for E2E test instance.
-	e2eTimeout           = 120 * time.Minute
+	e2eTimeout           = 150 * time.Minute
 	e2eSSMTimeoutPadding = 10 * time.Minute
 
 	// Default timeout used for all SSM commands besides running the actual E2E test.
