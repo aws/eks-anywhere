@@ -34,13 +34,13 @@ func TestTinkerbellDatacenterValidateUpdateSucceed(t *testing.T) {
 	g.Expect(tNew.ValidateUpdate(&tOld)).To(Succeed())
 }
 
-func TestTinkerbellDatacenterValidateUpdateSucceedOSImageURL(t *testing.T) {
+func TestTinkerbellDatacenterValidateUpdateFailOSImageURL(t *testing.T) {
 	tOld := tinkerbellDatacenterConfig()
 	tNew := tOld.DeepCopy()
 
-	tNew.Spec.OSImageURL = "https://os-image-url"
+	tNew.Spec.OSImageURL = "test"
 	g := NewWithT(t)
-	g.Expect(tNew.ValidateUpdate(&tOld)).To(Succeed())
+	g.Expect(tNew.ValidateUpdate(&tOld)).ToNot(Succeed())
 }
 
 func TestTinkerbellDatacenterValidateUpdateFailBadReq(t *testing.T) {
