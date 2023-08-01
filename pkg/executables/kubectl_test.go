@@ -453,6 +453,7 @@ func TestKubectlWaitRetryPolicy(t *testing.T) {
 	t.Parallel()
 	connectionRefusedError := fmt.Errorf("The connection to the server 127.0.0.1:56789 was refused")
 	ioTimeoutError := fmt.Errorf("Unable to connect to the server 127.0.0.1:56789, i/o timeout\n")
+	tlsHandshakeError := fmt.Errorf("Unable to connect to the server: net/http: TLS handshake timeout")
 	miscellaneousError := fmt.Errorf("Some other random miscellaneous error")
 
 	k := executables.NewKubectl(nil)
@@ -475,6 +476,11 @@ func TestKubectlWaitRetryPolicy(t *testing.T) {
 	_, wait = executables.KubectlWaitRetryPolicy(k, 1, ioTimeoutError)
 	if wait != 10*time.Second {
 		t.Errorf("kubectlWaitRetryPolicy didn't correctly calculate first retry wait for ioTimeout")
+	}
+
+	_, wait = executables.KubectlWaitRetryPolicy(k, 1, tlsHandshakeError)
+	if wait != 10*time.Second {
+		t.Errorf("kubectlWaitRetryPolicy didn't correctly calculate first retry wait for tls handshake error")
 	}
 
 	retry, _ := executables.KubectlWaitRetryPolicy(k, 1, miscellaneousError)
