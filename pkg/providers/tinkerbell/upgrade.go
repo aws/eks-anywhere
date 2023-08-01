@@ -146,7 +146,8 @@ func (p *Provider) validateAvailableHardwareForUpgrade(ctx context.Context, curr
 	)
 
 	rollingUpgrade := false
-	if currentSpec.Cluster.Spec.KubernetesVersion != newClusterSpec.Cluster.Spec.KubernetesVersion {
+	if currentSpec.Cluster.Spec.KubernetesVersion != newClusterSpec.Cluster.Spec.KubernetesVersion ||
+		currentSpec.Bundles.Spec.Number != newClusterSpec.Bundles.Spec.Number {
 		clusterSpecValidator.Register(ExtraHardwareAvailableAssertionForRollingUpgrade(p.catalogue))
 		rollingUpgrade = true
 	}
