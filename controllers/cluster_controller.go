@@ -404,16 +404,16 @@ func (r *ClusterReconciler) postClusterProviderReconcile(ctx context.Context, lo
 		}
 	}
 
+	if err := r.machineHealthCheck.Reconcile(ctx, log, cluster); err != nil {
+		return controller.Result{}, err
+	}
+
 	// Self-managed clusters can support curated packages, but that support
 	// comes from the CLI at this time.
 	if cluster.IsManaged() && cluster.IsPackagesEnabled() {
 		if err := r.packagesClient.Reconcile(ctx, log, r.client, cluster); err != nil {
 			return controller.Result{}, err
 		}
-	}
-
-	if err := r.machineHealthCheck.Reconcile(ctx, log, cluster); err != nil {
-		return controller.Result{}, err
 	}
 
 	return controller.Result{}, nil
