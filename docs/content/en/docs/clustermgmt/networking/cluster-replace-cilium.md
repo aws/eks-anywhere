@@ -16,7 +16,7 @@ When replacing EKS Anywhere Cilium with a custom CNI, it is your responsibility 
 ## Prerequisites
 
 * EKS Anywhere v0.15+.
-* [Cilium CLI](https://github.com/cilium/cilium-cli) v1.14.
+* [Cilium CLI](https://github.com/cilium/cilium-cli) v0.14.
 
 ## Add a custom CNI to a new cluster
 
