@@ -168,6 +168,14 @@ spec:
             path: /dev/disk/
       terminationGracePeriodSeconds: 60
       serviceAccountName: cloudwatch-agent
+      tolerations:
+      - key: node-role.kubernetes.io/master
+        operator: Exists
+        effect: NoSchedule
+      - operator: "Exists"
+        effect: "NoExecute"
+      - operator: "Exists"
+        effect: "NoSchedule"
 
 ---
 
@@ -545,4 +553,3 @@ spec:
         effect: "NoExecute"
       - operator: "Exists"
         effect: "NoSchedule"
-

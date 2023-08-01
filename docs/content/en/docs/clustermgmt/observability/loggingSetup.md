@@ -182,4 +182,4 @@ In the previous section, you have completed the basic setup for Observability in
 
      ![Observability Container Insights](/images/observability_container_insights.png)
 
-1. 
+For more details on CloudWatch logs please refer [here](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/WhatIsCloudWatchLogs.html)
