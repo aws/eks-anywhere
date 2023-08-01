@@ -138,3 +138,48 @@ serviceaccount/cloudwatch-agent created
 serviceaccount/fluent-bit created
 ```
 
+You can verify all the `DaemonSets` have been deployed by running the following command:
+
+```
+kubectl -n amazon-cloudwatch get daemonsets
+```
+
+- If you are running an [EKS connector](https://anywhere.eks.amazonaws.com/docs/clustermgmt/observability/cluster-connect/)
+, you can verify the status of `DaemonSets` by logging into AWS console and navigate to Amazon EKS -> Cluster -> Resources -> DaemonSets
+
+     ![Observability Verify DaemonSet](/images/observability_cluster_verify_Daemonset.png)
+
+### Deploy a test application
+
+We’ve created a simple [test application](https://anywhere.eks.amazonaws.com/docs/workloadmgmt/test-app/) for you to verify your cluster is working properly.
+
+## View Cluster Logs and Metrics
+
+In the previous section, you have completed the basic setup for Observability in EKS Anywhere, Now lets move to the fun part of seeing the logs and metrics for our deployed test application.
+
+### Cloudwatch Logs
+1. Open the [CloudWatch console](https://us-west-2.console.aws.amazon.com/cloudwatch/home?region=us-west-2#logsV2:log-groups). The link opens the console and displays your current available log groups.
+
+1. Choose the EKS Anywhere clustername that you want to view logs for. The log group name format is /aws/containerinsights/`my-EKS-Anywhere-cluster`/cluster.
+
+     ![Observability Container Insights](/images/observability_logGroups.png)
+
+    Log group name `/aws/containerinsights/my-EKS-Anywhere-cluster/application` have log source from /var/log/containers.
+
+    Log group name `/aws/containerinsights/my-EKS-Anywhere-cluster/dataplane` have log source for `kubelet.service`, `kubeproxy.service`, and `docker.service`
+
+1. To view the deployed [test application](#deploy-a-test-application) logs, click on the application LogGroup, and click on Search All
+
+     ![Observability Container Insights](/images/observability_search_logstream.png)
+
+1. Now, type `HTTP 1.1 200` in the search box and enter, you should see below logs
+
+     ![Observability Container Insights](/images/observability_logGroups_filterlog.png)
+
+### Cloudwatch Container Insights
+
+1. Open the [CloudWatch console](https://us-west-2.console.aws.amazon.com/cloudwatch/home?region=us-west-2#container-insights:performance). The link opens the Container Insights . performance Monitoring console and displays dropdown to select your `EKS Cluster`.
+
+     ![Observability Container Insights](/images/observability_container_insights.png)
+
+1. 
