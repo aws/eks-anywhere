@@ -232,14 +232,14 @@ func TestClusterctlBackupManagement(t *testing.T) {
 				Name:           clusterName,
 				KubeconfigFile: "cluster.kubeconfig",
 			},
-			wantMoveArgs: []interface{}{"move", "--to-directory", fmt.Sprintf("%s/%s", clusterName, managementClusterState), "--kubeconfig", "cluster.kubeconfig", "--namespace", constants.EksaSystemNamespace},
+			wantMoveArgs: []interface{}{"move", "--to-directory", fmt.Sprintf("%s/%s", clusterName, managementClusterState), "--kubeconfig", "cluster.kubeconfig", "--namespace", constants.EksaSystemNamespace, "--filter-cluster", clusterName},
 		},
 		{
 			testName: "no kubeconfig file",
 			cluster: &types.Cluster{
 				Name: clusterName,
 			},
-			wantMoveArgs: []interface{}{"move", "--to-directory", fmt.Sprintf("%s/%s", clusterName, managementClusterState), "--kubeconfig", "", "--namespace", constants.EksaSystemNamespace},
+			wantMoveArgs: []interface{}{"move", "--to-directory", fmt.Sprintf("%s/%s", clusterName, managementClusterState), "--kubeconfig", "", "--namespace", constants.EksaSystemNamespace, "--filter-cluster", clusterName},
 		},
 	}
 
@@ -248,7 +248,7 @@ func TestClusterctlBackupManagement(t *testing.T) {
 			tc := newClusterctlTest(t)
 			tc.e.EXPECT().Execute(tc.ctx, tt.wantMoveArgs...)
 
-			if err := tc.clusterctl.BackupManagement(tc.ctx, tt.cluster, managementClusterState); err != nil {
+			if err := tc.clusterctl.BackupManagement(tc.ctx, tt.cluster, managementClusterState, clusterName); err != nil {
 				t.Fatalf("Clusterctl.BackupManagement() error = %v, want nil", err)
 			}
 		})
@@ -264,10 +264,10 @@ func TestClusterctlBackupManagementFailed(t *testing.T) {
 		KubeconfigFile: "cluster.kubeconfig",
 	}
 
-	wantMoveArgs := []interface{}{"move", "--to-directory", fmt.Sprintf("%s/%s", cluster.Name, managementClusterState), "--kubeconfig", "cluster.kubeconfig", "--namespace", constants.EksaSystemNamespace}
+	wantMoveArgs := []interface{}{"move", "--to-directory", fmt.Sprintf("%s/%s", cluster.Name, managementClusterState), "--kubeconfig", "cluster.kubeconfig", "--namespace", constants.EksaSystemNamespace, "--filter-cluster", cluster.Name}
 
 	tt.e.EXPECT().Execute(tt.ctx, wantMoveArgs...).Return(bytes.Buffer{}, fmt.Errorf("error backing up management cluster resources"))
-	if err := tt.clusterctl.BackupManagement(tt.ctx, cluster, managementClusterState); err == nil {
+	if err := tt.clusterctl.BackupManagement(tt.ctx, cluster, managementClusterState, cluster.Name); err == nil {
 		t.Fatalf("Clusterctl.BackupManagement() error = %v, want nil", err)
 	}
 }

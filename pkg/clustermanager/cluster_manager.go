@@ -70,8 +70,9 @@ const (
 )
 
 var (
-	clusterctlNetworkErrorRegex = regexp.MustCompile(`.*failed to connect to the management cluster:.*`)
-	eksaClusterResourceType     = fmt.Sprintf("clusters.%s", v1alpha1.GroupVersion.Group)
+	clusterctlNetworkErrorRegex              = regexp.MustCompile(`.*failed to connect to the management cluster:.*`)
+	clusterctlMoveProvisionedInfraErrorRegex = regexp.MustCompile(`.*failed to check for provisioned infrastructure*`)
+	eksaClusterResourceType                  = fmt.Sprintf("clusters.%s", v1alpha1.GroupVersion.Group)
 )
 
 type ClusterManager struct {
@@ -98,7 +99,7 @@ type ClusterManager struct {
 
 type ClusterClient interface {
 	KubernetesClient
-	BackupManagement(ctx context.Context, cluster *types.Cluster, managementStatePath string) error
+	BackupManagement(ctx context.Context, cluster *types.Cluster, managementStatePath, clusterName string) error
 	MoveManagement(ctx context.Context, from, target *types.Cluster, clusterName string) error
 	WaitForClusterReady(ctx context.Context, cluster *types.Cluster, timeout string, clusterName string) error
 	WaitForControlPlaneAvailable(ctx context.Context, cluster *types.Cluster, timeout string, newClusterName string) error
@@ -270,8 +271,24 @@ func WithNoTimeouts() ClusterManagerOpt {
 	}
 }
 
+func clusterctlMoveWaitForInfrastructureRetryPolicy(totalRetries int, err error) (retry bool, wait time.Duration) {
+	// Retry both network and cluster move errors.
+	if match := (clusterctlNetworkErrorRegex.MatchString(err.Error()) || clusterctlMoveProvisionedInfraErrorRegex.MatchString(err.Error())); match {
+		return true, clusterctlMoveRetryWaitTime(totalRetries)
+	}
+	return false, 0
+}
+
 func clusterctlMoveRetryPolicy(totalRetries int, err error) (retry bool, wait time.Duration) {
-	// Exponential backoff on network errors.  Retrier built-in backoff is linear, so implementing here.
+	// Retry only network errors.
+	if match := clusterctlNetworkErrorRegex.MatchString(err.Error()); match {
+		return true, clusterctlMoveRetryWaitTime(totalRetries)
+	}
+	return false, 0
+}
+
+func clusterctlMoveRetryWaitTime(totalRetries int) time.Duration {
+	// Exponential backoff on errors.  Retrier built-in backoff is linear, so implementing here.
 
 	// Retrier first calls the policy before retry #1.  We want it zero-based for exponentiation.
 	if totalRetries < 1 {
@@ -280,16 +297,12 @@ func clusterctlMoveRetryPolicy(totalRetries int, err error) (retry bool, wait ti
 
 	const networkFaultBaseRetryTime = 10 * time.Second
 	const backoffFactor = 1.5
-	waitTime := time.Duration(float64(networkFaultBaseRetryTime) * math.Pow(backoffFactor, float64(totalRetries-1)))
 
-	if match := clusterctlNetworkErrorRegex.MatchString(err.Error()); match {
-		return true, waitTime
-	}
-	return false, 0
+	return time.Duration(float64(networkFaultBaseRetryTime) * math.Pow(backoffFactor, float64(totalRetries-1)))
 }
 
-// BackupCAPI takes backup of management cluster's resources during uograde process.
-func (c *ClusterManager) BackupCAPI(ctx context.Context, cluster *types.Cluster, managementStatePath string) error {
+// BackupCAPI takes backup of management cluster's resources during the upgrade process.
+func (c *ClusterManager) BackupCAPI(ctx context.Context, cluster *types.Cluster, managementStatePath, clusterName string) error {
 	// Network errors, most commonly connection refused or timeout, can occur if either source
 	// cluster becomes inaccessible during the move operation.  If this occurs without retries, clusterctl
 	// abandons the move operation, and fails cluster upgrade.
@@ -299,8 +312,19 @@ func (c *ClusterManager) BackupCAPI(ctx context.Context, cluster *types.Cluster,
 	// Keeping clusterctlMoveTimeout to the same as MoveManagement since both uses the same command with the differrent params.
 
 	r := retrier.New(c.clusterctlMoveTimeout, retrier.WithRetryPolicy(clusterctlMoveRetryPolicy))
-	err := r.Retry(func() error {
-		return c.clusterClient.BackupManagement(ctx, cluster, managementStatePath)
+	return c.backupCAPI(ctx, cluster, managementStatePath, clusterName, r)
+}
+
+// BackupCAPIWaitForInfrastructure takes backup of bootstrap cluster's resources during the upgrade process
+// like BackupCAPI but with a retry policy to wait for infrastructure provisioning in addition to network errors.
+func (c *ClusterManager) BackupCAPIWaitForInfrastructure(ctx context.Context, cluster *types.Cluster, managementStatePath, clusterName string) error {
+	r := retrier.New(c.clusterctlMoveTimeout, retrier.WithRetryPolicy(clusterctlMoveWaitForInfrastructureRetryPolicy))
+	return c.backupCAPI(ctx, cluster, managementStatePath, clusterName, r)
+}
+
+func (c *ClusterManager) backupCAPI(ctx context.Context, cluster *types.Cluster, managementStatePath, clusterName string, retrier *retrier.Retrier) error {
+	err := retrier.Retry(func() error {
+		return c.clusterClient.BackupManagement(ctx, cluster, managementStatePath, clusterName)
 	})
 	if err != nil {
 		return fmt.Errorf("backing up CAPI resources of management cluster before moving to bootstrap cluster: %v", err)

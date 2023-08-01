@@ -1457,9 +1457,9 @@ func TestClusterManagerBackupCAPISuccess(t *testing.T) {
 	ctx := context.Background()
 
 	c, m := newClusterManager(t)
-	m.client.EXPECT().BackupManagement(ctx, from, managementStatePath)
+	m.client.EXPECT().BackupManagement(ctx, from, managementStatePath, from.Name)
 
-	if err := c.BackupCAPI(ctx, from, managementStatePath); err != nil {
+	if err := c.BackupCAPI(ctx, from, managementStatePath, from.Name); err != nil {
 		t.Errorf("ClusterManager.BackupCAPI() error = %v, wantErr nil", err)
 	}
 }
@@ -1473,13 +1473,28 @@ func TestClusterManagerBackupCAPIRetrySuccess(t *testing.T) {
 
 	c, m := newClusterManager(t)
 	// m.client.EXPECT().BackupManagement(ctx, from, managementStatePath)
-	firstTry := m.client.EXPECT().BackupManagement(ctx, from, managementStatePath).Return(errors.New("Error: failed to connect to the management cluster: action failed after 9 attempts: Get \"https://127.0.0.1:61994/api?timeout=30s\": EOF"))
-	secondTry := m.client.EXPECT().BackupManagement(ctx, from, managementStatePath).Return(nil)
+	firstTry := m.client.EXPECT().BackupManagement(ctx, from, managementStatePath, from.Name).Return(errors.New("Error: failed to connect to the management cluster: action failed after 9 attempts: Get \"https://127.0.0.1:61994/api?timeout=30s\": EOF"))
+	secondTry := m.client.EXPECT().BackupManagement(ctx, from, managementStatePath, from.Name).Return(nil)
 	gomock.InOrder(
 		firstTry,
 		secondTry,
 	)
-	if err := c.BackupCAPI(ctx, from, managementStatePath); err != nil {
+	if err := c.BackupCAPI(ctx, from, managementStatePath, from.Name); err != nil {
+		t.Errorf("ClusterManager.BackupCAPI() error = %v, wantErr nil", err)
+	}
+}
+
+func TestClusterManagerBackupCAPIWaitForInfrastructureSuccess(t *testing.T) {
+	from := &types.Cluster{
+		Name: "from-cluster",
+	}
+
+	ctx := context.Background()
+
+	c, m := newClusterManager(t)
+	m.client.EXPECT().BackupManagement(ctx, from, managementStatePath, from.Name)
+
+	if err := c.BackupCAPIWaitForInfrastructure(ctx, from, managementStatePath, from.Name); err != nil {
 		t.Errorf("ClusterManager.BackupCAPI() error = %v, wantErr nil", err)
 	}
 }
@@ -1515,15 +1530,60 @@ func TestClusterctlWaitRetryPolicy(t *testing.T) {
 	}
 }
 
+func TestClusterctlWaitForInfrastructureRetryPolicy(t *testing.T) {
+	connectionRefusedError := fmt.Errorf("Error: failed to connect to the management cluster: action failed after 9 attempts: Get \"https://127.0.0.1:53733/api?timeout=30s\": dial tcp 127.0.0.1:53733: connect: connection refused")
+	ioTimeoutError := fmt.Errorf("Error: failed to connect to the management cluster: action failed after 9 attempts: Get \"https://127.0.0.1:61994/api?timeout=30s\": net/http: TLS handshake timeout")
+	infrastructureError := fmt.Errorf("Error: failed to get object graph: failed to check for provisioned infrastructure: cannot start the move operation while cluster is still provisioning the infrastructure")
+	nodeError := fmt.Errorf("Error: failed to get object graph: failed to check for provisioned infrastructure: cannot start the move operation while machine is still provisioning the node")
+	miscellaneousError := fmt.Errorf("Some other random miscellaneous error")
+
+	_, wait := clustermanager.ClusterctlMoveWaitForInfrastructureRetryPolicy(1, connectionRefusedError)
+	if wait != 10*time.Second {
+		t.Errorf("ClusterctlMoveRetryPolicy didn't correctly calculate first retry wait for connection refused")
+	}
+
+	_, wait = clustermanager.ClusterctlMoveWaitForInfrastructureRetryPolicy(-1, connectionRefusedError)
+	if wait != 10*time.Second {
+		t.Errorf("ClusterctlMoveRetryPolicy didn't correctly protect for total retries < 0")
+	}
+
+	_, wait = clustermanager.ClusterctlMoveWaitForInfrastructureRetryPolicy(2, connectionRefusedError)
+	if wait != 15*time.Second {
+		t.Errorf("ClusterctlMoveRetryPolicy didn't correctly protect for second retry wait")
+	}
+
+	_, wait = clustermanager.ClusterctlMoveWaitForInfrastructureRetryPolicy(1, ioTimeoutError)
+	if wait != 10*time.Second {
+		t.Errorf("ClusterctlMoveRetryPolicy didn't correctly calculate first retry wait for ioTimeout")
+	}
+
+	_, wait = clustermanager.ClusterctlMoveWaitForInfrastructureRetryPolicy(1, infrastructureError)
+	if wait != 10*time.Second {
+		t.Errorf("ClusterctlMoveRetryPolicy didn't correctly calculate first retry wait for infrastructureError")
+	}
+
+	_, wait = clustermanager.ClusterctlMoveWaitForInfrastructureRetryPolicy(1, nodeError)
+	if wait != 10*time.Second {
+		t.Errorf("ClusterctlMoveRetryPolicy didn't correctly calculate first retry wait for nodeError")
+	}
+
+	retry, _ := clustermanager.ClusterctlMoveWaitForInfrastructureRetryPolicy(1, miscellaneousError)
+	if retry != false {
+		t.Errorf("ClusterctlMoveRetryPolicy didn't not-retry on non-network error")
+	}
+}
+
 func TestClusterManagerBackupCAPIError(t *testing.T) {
-	from := &types.Cluster{}
+	from := &types.Cluster{
+		Name: "from-cluster",
+	}
 
 	ctx := context.Background()
 
 	c, m := newClusterManager(t)
-	m.client.EXPECT().BackupManagement(ctx, from, managementStatePath).Return(errors.New("backing up CAPI resources"))
+	m.client.EXPECT().BackupManagement(ctx, from, managementStatePath, from.Name).Return(errors.New("backing up CAPI resources"))
 
-	if err := c.BackupCAPI(ctx, from, managementStatePath); err == nil {
+	if err := c.BackupCAPI(ctx, from, managementStatePath, from.Name); err == nil {
 		t.Errorf("ClusterManager.BackupCAPI() error = %v, wantErr nil", err)
 	}
 }
