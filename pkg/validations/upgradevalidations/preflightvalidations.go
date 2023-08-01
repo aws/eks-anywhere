@@ -93,18 +93,6 @@ func (u *UpgradeValidations) PreflightValidations(ctx context.Context) []validat
 		},
 	}
 
-	if u.Opts.Spec.Cluster.IsManaged() {
-		upgradeValidations = append(
-			upgradeValidations,
-			func() *validations.ValidationResult {
-				return &validations.ValidationResult{
-					Name:        "validate management cluster bundle version compatibility",
-					Remediation: fmt.Sprintf("upgrade management cluster %s before upgrading workload cluster %s", u.Opts.Spec.Cluster.ManagedBy(), u.Opts.WorkloadCluster.Name),
-					Err:         validations.ValidateManagementClusterBundlesVersion(ctx, k, u.Opts.ManagementCluster, u.Opts.Spec),
-				}
-			})
-	}
-
 	if !u.Opts.SkippedValidations[PDB] {
 		upgradeValidations = append(
 			upgradeValidations,

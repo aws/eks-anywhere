@@ -13,13 +13,11 @@ import (
 	"github.com/aws/eks-anywhere/internal/test"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
-	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	providermocks "github.com/aws/eks-anywhere/pkg/providers/mocks"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
 	"github.com/aws/eks-anywhere/pkg/validations/mocks"
-	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
 type clusterTest struct {
@@ -310,107 +308,4 @@ func anywhereCluster(name string) *anywherev1.Cluster {
 			},
 		},
 	}
-}
-
-func TestValidateManagementClusterBundlesVersion(t *testing.T) {
-	type testParam struct {
-		mgmtBundlesName   string
-		mgmtBundlesNumber int
-		wkBundlesName     string
-		wkBundlesNumber   int
-		wantErr           string
-		errGetEksaCluster error
-		errGetBundles     error
-	}
-
-	testParams := []testParam{
-		{
-			mgmtBundlesName:   "bundles-28",
-			mgmtBundlesNumber: 28,
-			wkBundlesName:     "bundles-27",
-			wkBundlesNumber:   27,
-			wantErr:           "",
-		},
-		{
-			mgmtBundlesName:   "bundles-28",
-			mgmtBundlesNumber: 28,
-			wkBundlesName:     "bundles-29",
-			wkBundlesNumber:   29,
-			wantErr:           "cannot upgrade workload cluster with bundle spec.number 29 while management cluster management-cluster is on older bundle spec.number 28",
-		},
-		{
-			mgmtBundlesName:   "bundles-28",
-			mgmtBundlesNumber: 28,
-			wkBundlesName:     "bundles-27",
-			wkBundlesNumber:   27,
-			wantErr:           "failed to reach cluster",
-			errGetEksaCluster: errors.New("failed to reach cluster"),
-		},
-		{
-			mgmtBundlesName:   "bundles-28",
-			mgmtBundlesNumber: 28,
-			wkBundlesName:     "bundles-27",
-			wkBundlesNumber:   27,
-			wantErr:           "failed to reach cluster",
-			errGetBundles:     errors.New("failed to reach cluster"),
-		},
-	}
-
-	for _, p := range testParams {
-		tt := newTest(t, withKubectl())
-		mgmtName := "management-cluster"
-		mgmtCluster := managementCluster(mgmtName)
-		mgmtClusterObject := anywhereCluster(mgmtName)
-
-		mgmtClusterObject.Spec.BundlesRef = &anywherev1.BundlesRef{
-			Name:      p.mgmtBundlesName,
-			Namespace: constants.EksaSystemNamespace,
-		}
-
-		tt.clusterSpec.Config.Cluster.Spec.BundlesRef = &anywherev1.BundlesRef{
-			Name:      p.wkBundlesName,
-			Namespace: constants.EksaSystemNamespace,
-		}
-		wkBundle := &releasev1alpha1.Bundles{
-			Spec: releasev1alpha1.BundlesSpec{
-				Number: p.wkBundlesNumber,
-			},
-		}
-		tt.clusterSpec.Bundles = wkBundle
-
-		mgmtBundle := &releasev1alpha1.Bundles{
-			Spec: releasev1alpha1.BundlesSpec{
-				Number: p.mgmtBundlesNumber,
-			},
-		}
-
-		ctx := context.Background()
-		tt.kubectl.EXPECT().GetEksaCluster(ctx, mgmtCluster, mgmtCluster.Name).Return(mgmtClusterObject, p.errGetEksaCluster)
-		if p.errGetEksaCluster == nil {
-			tt.kubectl.EXPECT().GetBundles(ctx, mgmtCluster.KubeconfigFile, mgmtClusterObject.Spec.BundlesRef.Name, mgmtClusterObject.Spec.BundlesRef.Namespace).Return(mgmtBundle, p.errGetBundles)
-		}
-
-		if p.wantErr == "" {
-			err := validations.ValidateManagementClusterBundlesVersion(ctx, tt.kubectl, mgmtCluster, tt.clusterSpec)
-			tt.Expect(err).To(BeNil())
-		} else {
-			err := validations.ValidateManagementClusterBundlesVersion(ctx, tt.kubectl, mgmtCluster, tt.clusterSpec)
-			tt.Expect(err.Error()).To(Equal(p.wantErr))
-		}
-	}
-}
-
-func TestValidateManagementClusterBundlesVersionMissingBundlesRef(t *testing.T) {
-	tt := newTest(t, withKubectl())
-	wantErr := "management cluster bundlesRef cannot be nil"
-	mgmtName := "management-cluster"
-	mgmtCluster := managementCluster(mgmtName)
-	mgmtClusterObject := anywhereCluster(mgmtName)
-
-	mgmtClusterObject.Spec.BundlesRef = nil
-	ctx := context.Background()
-	tt.kubectl.EXPECT().GetEksaCluster(ctx, mgmtCluster, mgmtCluster.Name).Return(mgmtClusterObject, nil)
-
-	err := validations.ValidateManagementClusterBundlesVersion(ctx, tt.kubectl, mgmtCluster, tt.clusterSpec)
-	tt.Expect(err.Error()).To(Equal(wantErr))
 }
