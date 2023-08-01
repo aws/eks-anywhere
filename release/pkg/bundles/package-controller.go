@@ -33,8 +33,9 @@ import (
 
 func GetPackagesBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]string) (anywherev1alpha1.PackageBundle, error) {
 	artifacts := map[string][]releasetypes.Artifact{
-		"eks-anywhere-packages": r.BundleArtifactsTable["eks-anywhere-packages"],
-		"ecr-token-refresher":   r.BundleArtifactsTable["ecr-token-refresher"],
+		"eks-anywhere-packages":       r.BundleArtifactsTable["eks-anywhere-packages"],
+		"ecr-token-refresher":         r.BundleArtifactsTable["ecr-token-refresher"],
+		"credential-provider-package": r.BundleArtifactsTable["credential-provider-package"],
 	}
 	sortedComponentNames := bundleutils.SortArtifactsMap(artifacts)
 
@@ -173,10 +174,11 @@ func GetPackagesBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]st
 	}
 
 	bundle := anywherev1alpha1.PackageBundle{
-		Version:        version,
-		Controller:     bundleImageArtifacts["eks-anywhere-packages"],
-		TokenRefresher: bundleImageArtifacts["ecr-token-refresher"],
-		HelmChart:      bundleImageArtifacts["eks-anywhere-packages-helm"],
+		Version:                   version,
+		Controller:                bundleImageArtifacts["eks-anywhere-packages"],
+		TokenRefresher:            bundleImageArtifacts["ecr-token-refresher"],
+		CredentialProviderPackage: bundleImageArtifacts["credential-provider-package"],
+		HelmChart:                 bundleImageArtifacts["eks-anywhere-packages-helm"],
 	}
 	return bundle, nil
 }
