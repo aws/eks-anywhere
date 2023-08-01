@@ -70,9 +70,9 @@ const (
 )
 
 var (
-	clusterctlNetworkErrorRegex = regexp.MustCompile(`.*failed to connect to the management cluster:.*`)
-	clusterctlMoveErrorRegex    = regexp.MustCompile(`.*cannot start the move operation while.*`)
-	eksaClusterResourceType     = fmt.Sprintf("clusters.%s", v1alpha1.GroupVersion.Group)
+	clusterctlNetworkErrorRegex              = regexp.MustCompile(`.*failed to connect to the management cluster:.*`)
+	clusterctlMoveProvisionedInfraErrorRegex = regexp.MustCompile(`.*failed to check for provisioned infrastructure*`)
+	eksaClusterResourceType                  = fmt.Sprintf("clusters.%s", v1alpha1.GroupVersion.Group)
 )
 
 type ClusterManager struct {
@@ -279,7 +279,7 @@ func WithNoTimeouts() ClusterManagerOpt {
 
 func clusterctlMoveWaitForInfrastructureRetryPolicy(totalRetries int, err error) (retry bool, wait time.Duration) {
 	// Retry both network and cluster move errors.
-	if match := (clusterctlNetworkErrorRegex.MatchString(err.Error()) || clusterctlMoveErrorRegex.MatchString(err.Error())); match {
+	if match := (clusterctlNetworkErrorRegex.MatchString(err.Error()) || clusterctlMoveProvisionedInfraErrorRegex.MatchString(err.Error())); match {
 		return true, clusterctlMoveRetryWaitTime(totalRetries)
 	}
 	return false, 0
