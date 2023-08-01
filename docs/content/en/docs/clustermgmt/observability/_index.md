@@ -14,6 +14,3 @@ CloudWatch Logs, delivers enhanced log visibility, independent of the log source
 The flexibility of CloudWatch Logs enables users to perform queries and sorting based on various dimensions, affording a deep level of granularity in log analysis. Additionally, logs can be grouped using specific fields, allowing for more focused insights and targeted problem-solving.
 
 CloudWatch also facilitates the creation of intuitive, data-rich dashboards, enabling the visualization of log data for enhanced monitoring and decision-making.
-
-
-### EKS Anywhere Observability using CloudWatch
