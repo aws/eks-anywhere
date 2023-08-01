@@ -7,7 +7,7 @@ const (
 	UseNewWorkflowsEnvVar           = "USE_NEW_WORKFLOWS"
 
 	ExperimentalSelfManagedClusterUpgradeEnvVar = "EXP_SELF_MANAGED_API_UPGRADE"
-	experimentalSelfManagedClusterUpgradeGate   = "ExpSelfManagedAPIUpgrade"
+	ExperimentalSelfManagedClusterUpgradeGate   = "ExpSelfManagedAPIUpgrade"
 )
 
 func FeedGates(featureGates []string) {
@@ -34,7 +34,7 @@ func ExperimentalSelfManagedClusterUpgrade() Feature {
 		Name: "[EXPERIMENTAL] Upgrade self-managed clusters through the API",
 		IsActive: globalFeatures.isActiveForEnvVarOrGate(
 			ExperimentalSelfManagedClusterUpgradeEnvVar,
-			experimentalSelfManagedClusterUpgradeGate,
+			ExperimentalSelfManagedClusterUpgradeGate,
 		),
 	}
 }
