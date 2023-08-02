@@ -9,7 +9,8 @@ description: >
   How to verify an EKS Anywhere cluster is running properly
 ---
 
-**Verify an EKS Anywhere cluster**
+### Verify an EKS Anywhere cluster
+
 First, set the `KUBECONFIG` environment variable for your cluster:
 
 ```
