@@ -50,9 +50,6 @@ kube-system                         kube-scheduler-mgmt-clrt4                   
 kube-system                         kube-vip-mgmt-clrt4                                              1/1     Running   0             3d22h
 kube-system                         vsphere-cloud-controller-manager-7vzjx                           1/1     Running   0             3d22h
 kube-system                         vsphere-cloud-controller-manager-cqfs5                           1/1     Running   0             3d22h
-kube-system                         vsphere-csi-controller-79fb7fbb6b-9vvr7                          5/5     Running   0             3d22h
-kube-system                         vsphere-csi-node-bths4                                           3/3     Running   0             3d22h
-kube-system                         vsphere-csi-node-r8lwp                                           3/3     Running   0             3d22h
 ```
 
 To verify that the expected number of cluster nodes are up and running, use the `kubectl` command to show that nodes are `Ready`.

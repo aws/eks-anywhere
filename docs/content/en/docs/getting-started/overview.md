@@ -217,7 +217,7 @@ If all validations pass, you will see this message:
 ```
 
 Next, the process runs the [kind](https://kind.sigs.k8s.io/docs/user/quick-start/) command to build a single-node Kubernetes bootstrap cluster on the Administrative machine.
-This includes pulling the kind node image, preparing the node, writing the configuration, starting the control-plane, installing CNI, and installing the StorageClass. You will see:
+This includes pulling the kind node image, preparing the node, writing the configuration, starting the control-plane, and installing CNI. You will see:
 
 After this point the bootstrap cluster is installed, but not yet fully configured.
 
@@ -239,11 +239,7 @@ Configure the control plane and worker nodes.
 
 Add Cilium as the CNI plugin to use for networking between the cluster services and pods.
 
-#### 4. Add storage
-
-Add the default storage class to the cluster
-
-#### 5. Add CAPI to target cluster
+#### 4. Add CAPI to target cluster
 
 Add the CAPI service to the target cluster in preparation for it to take over management of the cluster after the cluster creation is completed and the bootstrap cluster is deleted.
 The bootstrap cluster can then begin moving the CAPI objects over to the target cluster, so it can take over the management of itself.
@@ -252,8 +248,6 @@ With the bootstrap cluster running and configured on the Administrative machine,
 It uses `kubectl` to apply a target cluster configuration as follows:
 
 * Once etcd, the control plane, and the worker nodes are ready, it applies the networking configuration to the target cluster.
-
-* The default storage class is installed on the target cluster.
 
 * CAPI providers are configured on the target cluster, in preparation for the target cluster to take over responsibilities for running the components needed to manage the itself.
 
@@ -267,12 +261,6 @@ Once etcd, the control plane, and the worker nodes are ready, it applies the net
 
 ```
 Installing networking on workload cluster
-```
-
-Next, the default storage class is installed on the workload cluster:
-
-```
-Installing storage class on workload cluster
 ```
 
 After that, the CAPI providers are configured on the workload cluster, in preparation for the workload cluster to take over responsibilities for running the components needed to manage the itself.
