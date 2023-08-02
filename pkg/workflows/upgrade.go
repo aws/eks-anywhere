@@ -456,11 +456,16 @@ func (s *installCAPITask) Restore(ctx context.Context, commandContext *task.Comm
 }
 
 func (s *moveManagementToBootstrapTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
+	// Take best effort CAPI backup of workload cluster without filter.
+	// If that errors, then take CAPI backup filtering on only workload cluster.
 	logger.Info("Backing up workload cluster's management resources before moving to bootstrap cluster")
-	err := commandContext.ClusterManager.BackupCAPI(ctx, commandContext.WorkloadCluster, commandContext.ManagementClusterStateDir, commandContext.WorkloadCluster.Name)
+	err := commandContext.ClusterManager.BackupCAPI(ctx, commandContext.WorkloadCluster, commandContext.ManagementClusterStateDir, "")
 	if err != nil {
-		commandContext.SetError(err)
-		return &CollectDiagnosticsTask{}
+		err = commandContext.ClusterManager.BackupCAPIWaitForInfrastructure(ctx, commandContext.WorkloadCluster, commandContext.ManagementClusterStateDir, commandContext.WorkloadCluster.Name)
+		if err != nil {
+			commandContext.SetError(err)
+			return &CollectDiagnosticsTask{}
+		}
 	}
 
 	logger.V(3).Info("Pausing workload clusters before moving management cluster resources to bootstrap cluster")
@@ -513,10 +518,13 @@ func (s *upgradeWorkloadClusterTask) Run(ctx context.Context, commandContext *ta
 	err := commandContext.ClusterManager.UpgradeCluster(ctx, commandContext.ManagementCluster, commandContext.WorkloadCluster, commandContext.ClusterSpec, commandContext.Provider)
 	if err != nil {
 		commandContext.SetError(err)
-		logger.Info("Backing up management components from bootstrap cluster")
-		err := commandContext.ClusterManager.BackupCAPI(ctx, commandContext.ManagementCluster, commandContext.ManagementClusterStateDir, commandContext.WorkloadCluster.Name)
-		if err != nil {
-			logger.Info("Bootstrap management component backup failed, use existing workload cluster backup", "error", err)
+		// Take backup of bootstrap cluster capi components
+		if commandContext.BootstrapCluster != nil {
+			logger.Info("Backing up management components from bootstrap cluster")
+			err := commandContext.ClusterManager.BackupCAPIWaitForInfrastructure(ctx, commandContext.BootstrapCluster, fmt.Sprintf("bootstrap-%s", commandContext.ManagementClusterStateDir), commandContext.WorkloadCluster.Name)
+			if err != nil {
+				logger.Info("Bootstrap management component backup failed, use existing workload cluster backup", "error", err)
+			}
 		}
 		return &CollectDiagnosticsTask{}
 	}

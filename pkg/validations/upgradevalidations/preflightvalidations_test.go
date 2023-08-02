@@ -207,7 +207,7 @@ func TestPreflightValidationsTinkerbell(t *testing.T) {
 			},
 		},
 		{
-			name:               "ValidationOSImageURLImmutable",
+			name:               "ValidationOSImageURLMutable",
 			clusterVersion:     "v1.19.16-eks-1-19-4",
 			upgradeVersion:     "1.19",
 			getClusterResponse: goodClusterResponse,
@@ -215,7 +215,7 @@ func TestPreflightValidationsTinkerbell(t *testing.T) {
 			workerResponse:     nil,
 			nodeResponse:       nil,
 			crdResponse:        nil,
-			wantErr:            composeError("spec.OSImageURL is immutable. Previous value http://old-os-image-url,   New value http://os-image-url"),
+			wantErr:            nil,
 			modifyDatacenterFunc: func(s *anywherev1.TinkerbellDatacenterConfig) {
 				s.Spec.OSImageURL = "http://old-os-image-url"
 			},

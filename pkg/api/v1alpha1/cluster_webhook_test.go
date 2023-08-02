@@ -2084,3 +2084,30 @@ func TestValidateWorkerVersionSkewAddNodeGroup(t *testing.T) {
 	g := NewWithT(t)
 	g.Expect(err).To(Succeed())
 }
+
+func TestValidateWorkerVersionBlockTinkerbell(t *testing.T) {
+	kube119 := v1alpha1.KubernetesVersion("1.19")
+
+	newCluster := baseCluster()
+	newCluster.Spec.KubernetesVersion = kube119
+	newCluster.Spec.WorkerNodeGroupConfigurations[0].KubernetesVersion = &kube119
+	newCluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Kind = v1alpha1.TinkerbellMachineConfigKind
+	newWorker := v1alpha1.WorkerNodeGroupConfiguration{
+		Name:  "md-1",
+		Count: ptr.Int(1),
+		MachineGroupRef: &v1alpha1.Ref{
+			Kind: v1alpha1.TinkerbellMachineConfigKind,
+			Name: "eksa-unit-test",
+		},
+		KubernetesVersion: &kube119,
+	}
+	newCluster.Spec.WorkerNodeGroupConfigurations = append(newCluster.Spec.WorkerNodeGroupConfigurations, newWorker)
+
+	oldCluster := baseCluster()
+	oldCluster.Spec.KubernetesVersion = kube119
+	oldCluster.Spec.WorkerNodeGroupConfigurations[0].KubernetesVersion = &kube119
+
+	err := newCluster.ValidateUpdate(oldCluster)
+	g := NewWithT(t)
+	g.Expect(err).ToNot(BeNil())
+}

@@ -146,7 +146,8 @@ func (p *Provider) validateAvailableHardwareForUpgrade(ctx context.Context, curr
 	)
 
 	rollingUpgrade := false
-	if currentSpec.Cluster.Spec.KubernetesVersion != newClusterSpec.Cluster.Spec.KubernetesVersion {
+	if currentSpec.Cluster.Spec.KubernetesVersion != newClusterSpec.Cluster.Spec.KubernetesVersion ||
+		currentSpec.Bundles.Spec.Number != newClusterSpec.Bundles.Spec.Number {
 		clusterSpecValidator.Register(ExtraHardwareAvailableAssertionForRollingUpgrade(p.catalogue))
 		rollingUpgrade = true
 	}
@@ -262,11 +263,8 @@ func (p *Provider) ValidateNewSpec(ctx context.Context, cluster *types.Cluster, 
 		return fmt.Errorf("spec.TinkerbellIP is immutable. Previous value %s,   New value %s", oSpec.TinkerbellIP, nSpec.TinkerbellIP)
 	}
 
-	// for any operation other than k8s version change, osImageURL and hookImageURL are immutable
+	// for any operation other than k8s version change, hookImageURL is immutable
 	if prevSpec.Spec.KubernetesVersion == clusterSpec.Cluster.Spec.KubernetesVersion {
-		if nSpec.OSImageURL != oSpec.OSImageURL {
-			return fmt.Errorf("spec.OSImageURL is immutable. Previous value %s,   New value %s", oSpec.OSImageURL, nSpec.OSImageURL)
-		}
 		if nSpec.HookImagesURLPath != oSpec.HookImagesURLPath {
 			return fmt.Errorf("spec.HookImagesURLPath is immutable. Previous value %s,   New value %s", oSpec.HookImagesURLPath, nSpec.HookImagesURLPath)
 		}

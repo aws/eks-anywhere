@@ -179,7 +179,7 @@ func TestTinkerbellKubernetes126To127Ubuntu2204Upgrade(t *testing.T) {
 		test,
 		v1alpha1.Kube127,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube127)),
-		provider.WithProviderUpgrade(framework.Ubuntu2204Kubernetes126Image()),
+		provider.WithProviderUpgrade(framework.Ubuntu2204Kubernetes127Image()),
 	)
 }
 
@@ -217,7 +217,7 @@ func TestTinkerbellKubernetes127Ubuntu2004To2204Upgrade(t *testing.T) {
 	)
 	runSimpleUpgradeFlowForBaremetalWithoutClusterConfigGeneration(
 		test,
-		v1alpha1.Kube126,
+		v1alpha1.Kube127,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube127)),
 		provider.WithProviderUpgrade(framework.Ubuntu2204Kubernetes127Image()),
 	)
@@ -1339,7 +1339,7 @@ func TestTinkerbellUpgrade127MulticlusterWorkloadClusterCPScaleup(t *testing.T) 
 			provider,
 			framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127)),
 			framework.WithControlPlaneHardware(4),
-			framework.WithWorkerHardware(1),
+			framework.WithWorkerHardware(2),
 		),
 		framework.NewClusterE2ETest(
 			t,
@@ -1377,7 +1377,7 @@ func TestTinkerbellUpgrade127MulticlusterWorkloadClusterWorkerScaleDown(t *testi
 	)
 	runSimpleWorkloadUpgradeFlowForBareMetal(
 		test,
-		v1alpha1.Kube126,
+		v1alpha1.Kube127,
 		framework.WithClusterUpgrade(
 			api.WithKubernetesVersion(v1alpha1.Kube127),
 			api.WithWorkerNodeCount(1),

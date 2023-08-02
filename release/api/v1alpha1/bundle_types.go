@@ -197,9 +197,9 @@ type VSphereBundle struct {
 	Metadata             Manifest `json:"metadata"`
 	ClusterTemplate      Manifest `json:"clusterTemplate"`
 	// This field has been deprecated
-	Driver               *Image    `json:"driver,omitempty"`
+	Driver *Image `json:"driver,omitempty"`
 	// This field has been deprecated
-	Syncer               *Image    `json:"syncer,omitempty"`
+	Syncer *Image `json:"syncer,omitempty"`
 }
 
 type DockerBundle struct {
@@ -242,10 +242,11 @@ type FluxBundle struct {
 }
 
 type PackageBundle struct {
-	Version        string `json:"version,omitempty"`
-	Controller     Image  `json:"packageController"`
-	TokenRefresher Image  `json:"tokenRefresher"`
-	HelmChart      Image  `json:"helmChart,omitempty"`
+	Version                   string `json:"version,omitempty"`
+	Controller                Image  `json:"packageController"`
+	TokenRefresher            Image  `json:"tokenRefresher"`
+	CredentialProviderPackage Image  `json:"credentialProviderPackage"`
+	HelmChart                 Image  `json:"helmChart,omitempty"`
 }
 
 type EksaBundle struct {

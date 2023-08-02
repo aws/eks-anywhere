@@ -9,6 +9,7 @@ import (
 )
 
 var ClusterctlMoveRetryPolicy = clusterctlMoveRetryPolicy
+var ClusterctlMoveWaitForInfrastructureRetryPolicy = clusterctlMoveWaitForInfrastructureRetryPolicy
 
 func TestClusterManager_totalTimeoutForMachinesReadyWait(t *testing.T) {
 	tests := []struct {

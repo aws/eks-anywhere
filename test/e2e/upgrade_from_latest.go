@@ -88,7 +88,7 @@ func runMulticlusterUpgradeFromReleaseFlowAPI(test *framework.MulticlusterE2ETes
 		wc.UpdateClusterConfig(
 			api.JoinClusterConfigFillers(upgradeChanges),
 			api.ClusterToConfigFiller(
-				api.WithBundlesRef(cluster.Spec.BundlesRef.Name, cluster.Spec.BundlesRef.Namespace, cluster.Spec.BundlesRef.APIVersion),
+				api.WithEksaVersion(cluster.Spec.EksaVersion),
 			),
 		)
 		wc.ApplyClusterManifest()
@@ -104,6 +104,7 @@ func runMulticlusterUpgradeFromReleaseFlowAPI(test *framework.MulticlusterE2ETes
 		wc.UpdateClusterConfig(
 			api.ClusterToConfigFiller(
 				api.WithBundlesRef(oldCluster.Spec.BundlesRef.Name, oldCluster.Spec.BundlesRef.Namespace, oldCluster.Spec.BundlesRef.APIVersion),
+				api.WithEksaVersion(nil),
 			),
 		)
 		wc.ApplyClusterManifest()
@@ -141,7 +142,7 @@ func runMulticlusterUpgradeFromReleaseFlowAPIWithFlux(test *framework.Multiclust
 		test.PushWorkloadClusterToGit(wc,
 			api.JoinClusterConfigFillers(upgradeChanges),
 			api.ClusterToConfigFiller(
-				api.WithBundlesRef(cluster.Spec.BundlesRef.Name, cluster.Spec.BundlesRef.Namespace, cluster.Spec.BundlesRef.APIVersion),
+				api.WithEksaVersion(cluster.Spec.EksaVersion),
 			),
 		)
 
@@ -155,6 +156,7 @@ func runMulticlusterUpgradeFromReleaseFlowAPIWithFlux(test *framework.Multiclust
 		test.PushWorkloadClusterToGit(wc,
 			api.ClusterToConfigFiller(
 				api.WithBundlesRef(oldCluster.Spec.BundlesRef.Name, oldCluster.Spec.BundlesRef.Namespace, oldCluster.Spec.BundlesRef.APIVersion),
+				api.WithEksaVersion(nil),
 			),
 		)
 		wc.WaitForKubeconfig()
