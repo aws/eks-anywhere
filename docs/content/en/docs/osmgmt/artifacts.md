@@ -41,7 +41,7 @@ OR
 
 Using a specific EKS Anywhere version
 ```bash
-EKSA_RELEASE_VERSION=v0.16.0
+EKSA_RELEASE_VERSION=v0.16.3
 ```
 
 ```bash
@@ -89,7 +89,7 @@ OR
 
 Using a specific EKS Anywhere version
 ```bash
-EKSA_RELEASE_VERSION=v0.16.0
+EKSA_RELEASE_VERSION=v0.16.3
 ```
 
 ```bash
@@ -378,7 +378,7 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
 
    Using a specific EKS Anywhere version
    ```bash
-   EKSA_RELEASE_VERSION=v0.16.0
+   EKSA_RELEASE_VERSION=v0.16.3
    ```
 
    ```bash
@@ -647,7 +647,7 @@ These steps use `image-builder` to create a RHEL-based image for CloudStack. Bef
 
    Using a specific EKS Anywhere version
    ```bash
-   EKSA_RELEASE_VERSION=v0.16.0
+   EKSA_RELEASE_VERSION=v0.16.3
    ```
 
    ```bash
@@ -891,7 +891,7 @@ These steps use `image-builder` to create a Ubuntu-based image for Nutanix AHV a
 
    Using a specific EKS Anywhere version
    ```bash
-   EKSA_RELEASE_VERSION=v0.16.0
+   EKSA_RELEASE_VERSION=v0.16.3
    ```
 
    ```bash

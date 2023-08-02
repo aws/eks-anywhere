@@ -15,6 +15,17 @@ Please upgrade to `v0.15.3` if you are using Tinkerbell (Bare Metal) provider.
 [documentation]({{< relref "/docs/getting-started/vsphere/vsphere-spec#disablecsi-optional-deprecated" >}}) for more information.
 {{% /alert %}}
 
+## [v0.16.3](https://github.com/aws/eks-anywhere/releases/tag/v0.16.3)
+
+### Changed
+
+- During management cluster upgrade, if the backup of CAPI objects of all workload clusters attached to the management cluster fails before upgrade starts, EKS Anywhere will only backup the management cluster [#6360](https://github.com/aws/eks-anywhere/pull/6360)
+- Update kubectl wait retry policy to retry on TLS handshake errors [#6373](https://github.com/aws/eks-anywhere/pull/6373)
+
+### Removed
+
+- Removed the validation for checking management cluster bundle compatibility on create/upgrade workload cluster [#6365](https://github.com/aws/eks-anywhere/pull/6365)
+
 ## [v0.16.2](https://github.com/aws/eks-anywhere/releases/tag/v0.16.2)
 
 ### Fixes
