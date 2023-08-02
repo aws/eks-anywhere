@@ -91,7 +91,7 @@ var (
 	eksaPackagesBundleControllerType     = fmt.Sprintf("packagebundlecontroller.%s", packagesv1.GroupVersion.Group)
 	eksaPackageBundlesType               = fmt.Sprintf("packagebundles.%s", packagesv1.GroupVersion.Group)
 	kubectlConnectionRefusedRegex        = regexp.MustCompile("The connection to the server .* was refused")
-	kubectlIoTimeoutRegex                = regexp.MustCompile("Unable to connect to the server.*i/o timeout.*")
+	kubectlConnectionTimeoutRegex        = regexp.MustCompile("Unable to connect to the server.*timeout.*")
 )
 
 type Kubectl struct {
@@ -568,7 +568,7 @@ func (k *Kubectl) kubectlWaitRetryPolicy(totalRetries int, err error) (retry boo
 	if match := kubectlConnectionRefusedRegex.MatchString(err.Error()); match {
 		return true, waitTime
 	}
-	if match := kubectlIoTimeoutRegex.MatchString(err.Error()); match {
+	if match := kubectlConnectionTimeoutRegex.MatchString(err.Error()); match {
 		return true, waitTime
 	}
 	return false, 0
