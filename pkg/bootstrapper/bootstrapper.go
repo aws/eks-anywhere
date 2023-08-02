@@ -44,7 +44,7 @@ func New(clusterClient ClusterClient) *Bootstrapper {
 func (b *Bootstrapper) CreateBootstrapCluster(ctx context.Context, clusterSpec *cluster.Spec, opts ...BootstrapClusterOption) (*types.Cluster, error) {
 	kubeconfigFile, err := b.clusterClient.CreateBootstrapCluster(ctx, clusterSpec, b.getClientOptions(opts)...)
 	if err != nil {
-		return nil, fmt.Errorf("creating bootstrap cluster: %v, try rerunning with --force-cleanup to force delete previously created bootstrap cluster", err)
+		return nil, fmt.Errorf("creating bootstrap cluster: %v", err)
 	}
 
 	c := &types.Cluster{
