@@ -1,7 +1,7 @@
 ---
 title: "Packages"
 linkTitle: "Curated packages list"
-weight: 80
+weight: 6
 description: >
   List of EKS Anywhere curated packages
 ---
