@@ -49,7 +49,7 @@ eksa-packages   v1-27-126   available
 
 There are multiple `packagebundlecontrollers` resources in the management cluster which allows for each cluster to activate different package bundle versions. The active package bundle determines the versions of the packages that are installed on that cluster.
 
-To view which package bundles are active for each cluster, use the `kubectl` command to show the `packagebundlecontrollers` in the management cluster.
+To view which package bundles is active for each cluster, use the `kubectl` command to list the `packagebundlecontrollers` objects in the management cluster.
 ```
 kubectl get packagebundlecontrollers -A
 NAMESPACE       NAME   ACTIVEBUNDLE   STATE    DETAIL
