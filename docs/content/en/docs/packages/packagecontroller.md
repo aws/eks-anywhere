@@ -9,7 +9,7 @@ aliases:
 ### Installing the package controller
 
 {{% alert title="Important" color="warning" %}}
-The package controller installation creates a package bundle controller resource for each cluster, thus allowing each to activate different package bundle version. Ideally, you should never delete this resource because it would mean losing that information and upon re-installing, the latest bundle will be selected. However, you can always go back to the previous bundle version. For more information, see [Managing package bundles.]({{< relref "./packagebundles" >}})
+The package controller installation creates a package bundle controller resource for each cluster, thus allowing each to activate a different package bundle version. Ideally, you should never delete this resource because it would mean losing that information and upon re-installing, the latest bundle would be selected. However, you can always go back to the previous bundle version. For more information, see [Managing package bundles.]({{< relref "./packagebundles" >}})
 {{% /alert %}}
 
 The package controller is typically installed during cluster creation, but may be disabled intentionally in your `cluster.yaml` by setting `spec.packages.disable` to `true`.
@@ -41,7 +41,7 @@ If you created a cluster without the package controller or if the package contro
     aws sts get-caller-identity
     ```
 
-4. Authenticate docker to the private AWS ECR registry on account `783794618700` with your AWS credentials. It houses the EKS Anywhere packages artifacts and authentication is required to pull imagaes from it.
+4. Authenticate docker to the private AWS ECR registry on account `783794618700` with your AWS credentials. It houses the EKS Anywhere packages artifacts. Authentication is required to pull images from it.
     ```bash
     aws ecr get-login-password | docker login --username AWS --password-stdin 783794618700.dkr.ecr.us-west-2.amazonaws.com
     ```
@@ -52,14 +52,14 @@ If you created a cluster without the package controller or if the package contro
     ```
     If the image downloads successfully, it worked!
 
-6. Now, install the package controller using the eks anywhere package CLI:
+6. Now, install the package controller using the EKS Anywhere Packages CLI:
     ```shell
     eksctl anywhere install packagecontroller -f cluster.yaml
     ```
 
     The package controller should now be installed!
 
-7. Verify, use kubectl to check the eks-anywhere-packages pod is running in your management cluster:
+7. Use kubectl to check the eks-anywhere-packages pod is running in your management cluster:
     ```
     kubectl get pods -n eksa-packages 
     NAME                                     READY   STATUS    RESTARTS   AGE
@@ -84,7 +84,7 @@ EKS Anywhere v0.15.0 (packages controller v0.3.9+) and onwards includes support 
 For any version prior to v0.3.X, manual steps must be executed to upgrade.
 
 {{% alert title="Important" color="warning" %}}
-This operation may change your cluster's selected package bundle to the latest, however, you can always go back to the previous bundle version. For more information, see [Managing package bundles.]({{< relref "./packagebundles" >}})
+This operation may change your cluster's selected package bundle to the latest version. However, you can always go back to the previous bundle version. For more information, see [Managing package bundles.]({{< relref "./packagebundles" >}})
 {{% /alert %}}
 
 To manually upgrade the package controller, do the following:
