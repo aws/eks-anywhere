@@ -24,4 +24,4 @@ This tutorial walks through the following procedures:
 {{% /alert %}}
 
 ## Create a cluster with IRSA
-IAM role can be associated with a Kubernetes service account. This service account can then provide AWS permissions to the containers in any pod that uses that service account. With this feature, there will be no need to hardcode AWS Environment variable on your machine. [EKS Anywhere cluster spec for Pod IAM]({{< relref "../../getting-started/optional/irsa/" >}}) gives step-by-step guidance on how to do so.
+IAM role can be associated with a Kubernetes service account. This service account can then provide AWS permissions to the containers in any pod that uses that service account. With this feature, there will be no need to hardcode AWS security credentials as environment variables on your machine. [EKS Anywhere cluster spec for Pod IAM]({{< relref "../../getting-started/optional/irsa/" >}}) gives step-by-step guidance on how to do so.

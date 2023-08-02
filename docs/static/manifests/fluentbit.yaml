@@ -1,11 +1,3 @@
-# create amazon-cloudwatch namespace
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: amazon-cloudwatch
-  labels:
-    name: amazon-cloudwatch
-
 ---
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
