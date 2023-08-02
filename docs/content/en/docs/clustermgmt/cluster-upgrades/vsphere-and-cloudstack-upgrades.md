@@ -212,28 +212,7 @@ After finishing the task, make sure you resume the cluster reconciliation by rem
 kubectl annotate clusters.anywhere.eks.amazonaws.com ${CLUSTER_NAME} -n ${CLUSTER_NAMESPACE} anywhere.eks.amazonaws.com/paused-
 ```
 
->**_NOTE (vSphere only):_** Installing and managing CSI as part of vSphere cluster operations was deprecated in EKS Anywhere version `v0.16.0` and has been removed in `v0.17.0`. If you are using EKS-A version v0.16.0 and above to upgrade a cluster that has the vSphere CSI Driver installed in it,
-> you will need to remove the CSI resources manually from the cluster. Delete the `DaemonSet` and `Deployment` first, as they 
-> rely on the other resources.
-> 
-> These are the resources you would need to delete:
-> * `vsphere-csi-controller-role` (kind: ClusterRole)
-> * `vsphere-csi-controller-binding` (kind: ClusterRoleBinding)
-> * `csi.vsphere.vmware.com` (kind: CSIDriver)
-> 
-> These are the resources you would need to delete
-> in the `kube-system` namespace:
-> * `vsphere-csi-controller` (kind: ServiceAccount)
-> * `csi-vsphere-config` (kind: Secret)
-> * `vsphere-csi-node` (kind: DaemonSet)
-> * `vsphere-csi-controller` (kind: Deployment)
-> 
-> These are the resources you would need to delete
-> in the `eksa-system` namespace from the management cluster.
-> * `<cluster-name>-csi` (kind: ClusterResourceSet)
-> 
-> **_Note:_** If your cluster is self-managed, you would delete `<cluster-name>-csi` (kind: ClusterResourceSet) from the same cluster.
-
+>**_NOTE (vSphere only):_** If you are upgrading a vSphere cluster created using EKS Anywhere version prior to `v0.16.0` that has the vSphere CSI Driver installed in it, please refer to the additional steps listed [here]({{< relref "../storage/vsphere-storage#csi-driver-cleanup-for-upgrades" >}}) before attempting an upgrade.
 
 ### Upgradeable Cluster Attributes
 EKS Anywhere `upgrade` supports upgrading more than just the `kubernetesVersion`, 

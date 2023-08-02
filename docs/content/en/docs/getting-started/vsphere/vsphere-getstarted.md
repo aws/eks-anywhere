@@ -242,11 +242,3 @@ Follow these steps if you want to use your initial cluster to create and manage 
 * See the [Cluster management]({{< relref "../../clustermgmt" >}}) section for more information on common operational tasks like scaling and deleting the cluster.
 
 * See the [Package management]({{< relref "../../packages" >}}) section for more information on post-creation curated packages installation.
-
-## vSphere CSI Driver Deprecation
-
-EKS Anywhere versions prior to `v0.16.0` supported the installation and management of the vSphere CSI Driver in EKS-A clusters. The vSphere CSI Driver integrates with the Cloud Native Storage (CNS) component in vCenter for the purpose of volume provisioning via vSAN, attaching and detaching the volume to VMs, mounting, formatting, and unmounting volumes from the pod within the node VM, etc. The CSI management components in EKS-A included a Kubernetes CSI controller Deployment, a node-driver-registrar DaemonSet, a default Storage Class, and a number of related Secrets and RBAC entities.
-
-In EKS-A version `v0.16.0`, the CSI driver feature was deprecated and has been completely removed in version `v0.17.0`. However, customers can self-manage this deployment to leverage the storage options provided by vSphere in a Kubernetes-native way.
-
-If you have created a cluster using an EKS-A version prior to `v0.16.0` and are now upgrading it using EKS-A version `v0.16.0` and above, follow the additional steps mentioned in the [vSphere upgrade steps]({{< relref "../../clustermgmt/cluster-upgrades/vsphere-and-cloudstack-upgrades#performing-a-cluster-upgrade" >}}) for proper cleanup of unmanaged vSphere CSI resources.
