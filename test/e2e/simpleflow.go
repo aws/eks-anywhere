@@ -25,7 +25,7 @@ func runTinkerbellSimpleFlow(test *framework.ClusterE2ETest) {
 	test.GenerateClusterConfig()
 	test.GenerateHardwareConfig()
 	test.PowerOffHardware()
-	test.CreateCluster(framework.WithForce(), framework.WithControlPlaneWaitTimeout("20m"))
+	test.CreateCluster(framework.WithControlPlaneWaitTimeout("20m"))
 	test.DeleteCluster()
 	test.ValidateHardwareDecommissioned()
 }
@@ -36,7 +36,7 @@ func runTinkerbellSimpleFlow(test *framework.ClusterE2ETest) {
 func runTinkerbellSimpleFlowWithoutClusterConfigGeneration(test *framework.ClusterE2ETest) {
 	test.GenerateHardwareConfig()
 	test.PowerOffHardware()
-	test.CreateCluster(framework.WithForce(), framework.WithControlPlaneWaitTimeout("20m"))
+	test.CreateCluster(framework.WithControlPlaneWaitTimeout("20m"))
 	test.DeleteCluster()
 	test.ValidateHardwareDecommissioned()
 }

@@ -325,7 +325,7 @@ func TestTinkerbellStackCheckLocalBootsExistenceDoesExist(t *testing.T) {
 	ctx := context.Background()
 
 	s := stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace, "192.168.0.0/16", nil, nil)
-	expectedErrorMsg := "boots container already exists, delete the container manually or re-run the command with --force-cleanup"
+	expectedErrorMsg := "boots container already exists, delete the container manually"
 
 	docker.EXPECT().CheckContainerExistence(ctx, "boots").Return(true, nil)
 

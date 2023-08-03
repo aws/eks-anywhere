@@ -188,18 +188,19 @@ It is also useful to start a shell session on the Docker container running the b
 
 ### Bootstrap cluster fails to come up: node(s) already exist for a cluster with the name
 
+During `create` and `delete` CLI, EKS Anywhere tries to create a temporary KinD bootstrap cluster with the name `${CLUSTER_NAME}-eks-a-cluster` on the Admin machine. This operation can fail with below error:
+
 ```
-Error: creating bootstrap cluster: executing create cluster: ERROR: failed to create cluster: node(s) already exist for a cluster with the name \"cluster-name\"
-, try rerunning with —force-cleanup to force delete previously created bootstrap cluster
+Error: creating bootstrap cluster: executing create/delete cluster: ERROR: failed to create/delete cluster: node(s) already exist for a cluster with the name \"cluster-name\"
 ```
 
-Cluster creation fails because a cluster of the same name already exists. If you are sure the cluster is not being used, try running the `eksctl anywhere create cluster` again, adding the `--force-cleanup` option.
-
-If that doesn't work, you can manually delete the old cluster:
+This indicates that the cluster creation or deletion fails because a bootstrap cluster of the same name already exists. If you are sure the cluster is not being used, you can manually delete the old cluster:
 
 ```bash
-kind delete cluster --name cluster-name
+docker ps | grep "${CLUSTER_NAME}-eks-a-cluster-control-plane" | awk '{ print $1 }' | xargs docker rm -f
 ```
+
+Once the old KinD bootstrap cluster is deleted, you can rerun the `eksctl anywhere create` or `eksctl anywhere delete` command again.
 
 ### Cluster upgrade fails with management components on bootstrap cluster
 

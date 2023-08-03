@@ -21,10 +21,6 @@ func withKubeconfig(kubeconfigFile string) CommandOpt {
 	return appendOpt("--kubeconfig", kubeconfigFile)
 }
 
-func WithForce() CommandOpt {
-	return appendOpt("--force-cleanup")
-}
-
 func WithControlPlaneWaitTimeout(timeout string) CommandOpt {
 	return appendOpt("--control-plane-wait-timeout", timeout)
 }
