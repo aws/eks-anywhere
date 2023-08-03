@@ -7,9 +7,9 @@ description: >
   Observability
 ---
 
-Amazon Web Services (AWS) offers comprehensive monitoring, logging, alarming, and dashboard capabilities through Amazon CloudWatch. This powerful tool allows for centralized logging for EKS Anywhere, an extension of AWS's managed Kubernetes service. With CloudWatch, organizations can take advantage of a highly scalable, native AWS logging and monitoring solution.
+Amazon Web Services (AWS) offers comprehensive monitoring, logging, alarming, and dashboard capabilities through Amazon CloudWatch. This powerful tool allows for centralized logging for EKS Anywhere, an on-premises version of AWS's managed Kubernetes. With CloudWatch, organizations can take advantage of a highly scalable, native AWS logging and monitoring solution.
 
-CloudWatch Logs, delivers enhanced log visibility, independent of the log source, encompassing vSphere, Bare Metal, Snow, CloudStack, Nutanix, or EKS environments. This unified solution ensures a consistent flow of events, seamlessly ordered by time, facilitating ease of analysis and troubleshooting.
+CloudWatch Logs, delivers enhanced log visibility, independent of the log source. CloudWatch Logs is available for EKS environments, as well as for EKS Anywhere providers such as vSphere, Bare Metal, Snow, CloudStack, and Nutanix. This unified solution ensures a consistent flow of events, seamlessly ordered by time, facilitating ease of analysis and troubleshooting.
 
 The flexibility of CloudWatch Logs enables users to perform queries and sorting based on various dimensions, providing a deep level of granularity in log analysis. Additionally, logs can be grouped using specific fields, allowing for more focused insights and targeted problem-solving.
 

@@ -12,8 +12,8 @@ This tutorial demonstrates how to configure EKS Anywhere Cluster to scrape metri
 
 This tutorial walks through the following procedures:
 - [Create a cluster with IAM Roles for Service Account (IRSA)](#create-a-cluster-with-irsa).
-- [Verify Cluster](./cluster-verify.md).
-- [Install Fluentbit and Configure an EKS service account to assume an IAM role](./loggingSetup.md).
+- [Verify Cluster]({{< relref "./cluster-verify" >}}).
+- [Install Fluentbit and Configure an EKS service account to assume an IAM role]({{< relref "./loggingSetup" >}}).
 - [Deploy Test Application](https://anywhere.eks.amazonaws.com/docs/workloadmgmt/test-app/)
 
 {{% alert title="Note" color="primary" %}}
