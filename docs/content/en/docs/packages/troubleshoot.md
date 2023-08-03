@@ -1,7 +1,7 @@
 ---
 title: "Curated packages troubleshooting"
 linkTitle: "Packages troubleshooting"
-weight: 70
+weight: 7
 description: >
   Troubleshooting specific to curated packages
 aliases:
