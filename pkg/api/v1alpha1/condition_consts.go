@@ -27,9 +27,9 @@ const (
 	// ControlPlaneNotInitializedReason reports that the control plane is not initialized.
 	ControlPlaneNotInitializedReason = "ControlPlaneNotInitialized"
 
-	// WorkersReadyConditon reports the status on the worker nodes, indicating all those worker nodes
+	// WorkersReadyCondition reports the status on the worker nodes, indicating all those worker nodes
 	// are the right version and are ready, not including the old nodes.
-	WorkersReadyConditon ConditionType = "WorkersReady"
+	WorkersReadyCondition ConditionType = "WorkersReady"
 )
 
 const (

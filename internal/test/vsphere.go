@@ -65,6 +65,9 @@ func VSphereClusterSpec(tb testing.TB, namespace string, opts ...ClusterSpecOpt)
 			},
 		)
 
+		c.Spec.ClusterNetwork.CNIConfig = &anywherev1.CNIConfig{
+			Cilium: &anywherev1.CiliumConfig{},
+		}
 		c.Spec.EksaVersion = &version
 	})
 
@@ -77,7 +80,15 @@ func VSphereClusterSpec(tb testing.TB, namespace string, opts ...ClusterSpecOpt)
 		VSphereDatacenter: workloadClusterDatacenter,
 	}
 
-	spec := NewClusterSpecForConfig(tb, config)
+	spec, err := cluster.NewSpec(
+		config,
+		bundle,
+		EksdReleases(),
+		EKSARelease(),
+	)
+	if err != nil {
+		tb.Fatalf("Failed to build cluster spec: %s", err)
+	}
 
 	for _, opt := range opts {
 		opt(spec)

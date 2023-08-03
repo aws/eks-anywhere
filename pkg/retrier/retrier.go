@@ -121,6 +121,14 @@ func Retry(maxRetries int, backOffPeriod time.Duration, fn func() error) error {
 	return r.Retry(fn)
 }
 
+// BackOffPolicy retries until top level timeout is reached, waiting a
+// backoff period in between retries.
+func BackOffPolicy(backoff time.Duration) RetryPolicy {
+	return func(totalRetries int, _ error) (retry bool, wait time.Duration) {
+		return true, backoff
+	}
+}
+
 func zeroWaitPolicy(_ int, _ error) (retry bool, wait time.Duration) {
 	return true, 0
 }
