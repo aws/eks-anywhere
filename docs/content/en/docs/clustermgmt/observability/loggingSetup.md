@@ -1,7 +1,7 @@
 ---
 title: "Install Fluentbit and Configuring Kubernetes Service Account to assume an IAM Role"
 linkTitle: "Fluentbit and Configure Kubernetes Service Account to assume IAM Role"
-weight: 3
+weight: 4
 #aliases:
 #    /docs/clustermgmt/oservability/
 date: 2023-07-28
