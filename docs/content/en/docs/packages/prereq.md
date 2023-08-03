@@ -107,7 +107,7 @@ aws sts get-caller-identity
 Login to docker
 
 ```bash
-aws ecr get-login-password --region us-west-2 |docker login --username AWS --password-stdin 783794618700.dkr.ecr.us-west-2.amazonaws.com
+aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin 783794618700.dkr.ecr.us-west-2.amazonaws.com
 ```
 
 Verify you can pull an image
@@ -115,6 +115,21 @@ Verify you can pull an image
 docker pull 783794618700.dkr.ecr.us-west-2.amazonaws.com/emissary-ingress/emissary:v3.5.1-bf70150bcdfe3a5383ec8ad9cd7eea801a0cb074
 ```
 If the image downloads successfully, it worked!
+
+### Prepare curated packages for airapped clusters 
+
+When your cluster is airgapped and you have setup a registry mirror, copy the latest packages from curated packages private ECR to your registry mirror
+
+```bash
+eksctl anywhere copy packages --bundle ${BUNDLE_RELEASE_YAML_PATH} --dst-cert ${REGISTRY_MIRROR_CERT} ${REGISTRY_MIRROR_URL}
+```
+
+And make sure your PackageBundleController.spec is configured to download curated package images from your registry mirror. [DefaultRegistry and defaultImageRegistry]({{< relref "./packages/#packagebundlecontrollerspec" >}}) should have values similar to the following:
+
+```yaml
+defaultImageRegistry: ${REGISTRY_MIRROR_URL}/curated-packages
+defaultRegistry: ${REGISTRY_MIRROR_URL}/eks-anywhere
+```
 
 ### Discover curated packages
 
