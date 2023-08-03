@@ -22,7 +22,6 @@ anywhere upgrade cluster [flags]
       --control-plane-wait-timeout string   Override the default control plane wait timeout (default "1h0m0s")
       --external-etcd-wait-timeout string   Override the default external etcd wait timeout (default "1h0m0s")
   -f, --filename string                     Filename that contains EKS-A cluster configuration
-      --force-cleanup                       Force deletion of previously created bootstrap cluster
   -z, --hardware-csv string                 Path to a CSV file containing hardware data.
   -h, --help                                help for cluster
       --kubeconfig string                   Management cluster kubeconfig file
