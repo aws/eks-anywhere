@@ -34,10 +34,10 @@ func (c *RetrierClient) ApplyKubeSpecFromBytes(ctx context.Context, cluster *typ
 }
 
 // Apply creates/updates an object against the api server following a client side apply mechanism.
-func (c *RetrierClient) Apply(ctx context.Context, kubeconfigPath string, obj runtime.Object) error {
+func (c *RetrierClient) Apply(ctx context.Context, kubeconfigPath string, obj runtime.Object, opts ...kubernetes.KubectlApplyOption) error {
 	return c.retrier.Retry(
 		func() error {
-			return c.ClusterClient.Apply(ctx, kubeconfigPath, obj)
+			return c.ClusterClient.Apply(ctx, kubeconfigPath, obj, opts...)
 		},
 	)
 }

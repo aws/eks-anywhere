@@ -11,7 +11,7 @@ type Kubectl interface {
 	Get(ctx context.Context, resourceType, kubeconfig string, obj runtime.Object, opts ...KubectlGetOption) error
 	Create(ctx context.Context, kubeconfig string, obj runtime.Object) error
 	Replace(ctx context.Context, kubeconfig string, obj runtime.Object) error
-	Apply(ctx context.Context, kubeconfig string, obj runtime.Object) error
+	Apply(ctx context.Context, kubeconfig string, obj runtime.Object, opts ...KubectlApplyOption) error
 	Delete(ctx context.Context, resourceType, kubeconfig string, opts ...KubectlDeleteOption) error
 }
 
@@ -51,7 +51,43 @@ func (o *KubectlGetOptions) ApplyToGet(kgo *KubectlGetOptions) {
 	}
 }
 
-// KubectlDeleteOption is some configuration that modifies options for a get request.
+// KubectlApplyOption is some configuration that modifies options for an apply command.
+type KubectlApplyOption interface {
+	// ApplyToApply applies this configuration to the given apply options.
+	ApplyToApply(*KubectlApplyOptions)
+}
+
+// KubectlApplyOptions contains options for apply command.
+type KubectlApplyOptions struct {
+	// ServerSide configures kubectl so apply runs in the server instead of the client.
+	ServerSide bool
+
+	// ForceOwnership indicates that in case of conflicts with server-side apply,
+	// kubectl should acquire ownership of the conflicting field.
+	ForceOwnership bool
+
+	// FieldManager sets the field owner name for the given server-side apply.
+	FieldManager string
+}
+
+var _ KubectlApplyOption = KubectlApplyOptions{}
+
+// ApplyToApply applies this configuration to the given apply options.
+func (o KubectlApplyOptions) ApplyToApply(kao *KubectlApplyOptions) {
+	if o.ServerSide {
+		kao.ServerSide = true
+	}
+
+	if o.ForceOwnership {
+		kao.ForceOwnership = true
+	}
+
+	if o.FieldManager != "" {
+		kao.FieldManager = o.FieldManager
+	}
+}
+
+// KubectlDeleteOption is some configuration that modifies options for a delete command.
 type KubectlDeleteOption interface {
 	// ApplyToDelete applies this configuration to the given delete options.
 	ApplyToDelete(*KubectlDeleteOptions)

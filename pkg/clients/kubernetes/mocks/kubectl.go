@@ -37,17 +37,22 @@ func (m *MockKubectl) EXPECT() *MockKubectlMockRecorder {
 }
 
 // Apply mocks base method.
-func (m *MockKubectl) Apply(ctx context.Context, kubeconfig string, obj runtime.Object) error {
+func (m *MockKubectl) Apply(ctx context.Context, kubeconfig string, obj runtime.Object, opts ...kubernetes.KubectlApplyOption) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Apply", ctx, kubeconfig, obj)
+	varargs := []interface{}{ctx, kubeconfig, obj}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "Apply", varargs...)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Apply indicates an expected call of Apply.
-func (mr *MockKubectlMockRecorder) Apply(ctx, kubeconfig, obj interface{}) *gomock.Call {
+func (mr *MockKubectlMockRecorder) Apply(ctx, kubeconfig, obj interface{}, opts ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Apply", reflect.TypeOf((*MockKubectl)(nil).Apply), ctx, kubeconfig, obj)
+	varargs := append([]interface{}{ctx, kubeconfig, obj}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Apply", reflect.TypeOf((*MockKubectl)(nil).Apply), varargs...)
 }
 
 // Create mocks base method.
@@ -149,6 +154,41 @@ func (m *MockKubectlGetOption) ApplyToGet(arg0 *kubernetes.KubectlGetOptions) {
 func (mr *MockKubectlGetOptionMockRecorder) ApplyToGet(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ApplyToGet", reflect.TypeOf((*MockKubectlGetOption)(nil).ApplyToGet), arg0)
+}
+
+// MockKubectlApplyOption is a mock of KubectlApplyOption interface.
+type MockKubectlApplyOption struct {
+	ctrl     *gomock.Controller
+	recorder *MockKubectlApplyOptionMockRecorder
+}
+
+// MockKubectlApplyOptionMockRecorder is the mock recorder for MockKubectlApplyOption.
+type MockKubectlApplyOptionMockRecorder struct {
+	mock *MockKubectlApplyOption
+}
+
+// NewMockKubectlApplyOption creates a new mock instance.
+func NewMockKubectlApplyOption(ctrl *gomock.Controller) *MockKubectlApplyOption {
+	mock := &MockKubectlApplyOption{ctrl: ctrl}
+	mock.recorder = &MockKubectlApplyOptionMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockKubectlApplyOption) EXPECT() *MockKubectlApplyOptionMockRecorder {
+	return m.recorder
+}
+
+// ApplyToApply mocks base method.
+func (m *MockKubectlApplyOption) ApplyToApply(arg0 *kubernetes.KubectlApplyOptions) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "ApplyToApply", arg0)
+}
+
+// ApplyToApply indicates an expected call of ApplyToApply.
+func (mr *MockKubectlApplyOptionMockRecorder) ApplyToApply(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ApplyToApply", reflect.TypeOf((*MockKubectlApplyOption)(nil).ApplyToApply), arg0)
 }
 
 // MockKubectlDeleteOption is a mock of KubectlDeleteOption interface.
