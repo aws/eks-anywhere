@@ -43,9 +43,17 @@ EKS Anywhere documentation uses the [Hugo](https://gohugo.io/categories/fundamen
 
 * **General style issues**: Unless otherwise instructed, follow the [Kubernetes Documentation Style Guide](https://kubernetes.io/docs/contribute/style/style-guide/) for formatting and presentation guidance.
 
+* **Creating images**: Screen shots and other images should be published in PNG format.
+  For complex diagrams, create them in SVG format, then export the image to PNG and store both in the EKS Anywhere GitHub site’s [docs/static/images](https://github.com/aws/eks-anywhere/tree/main/docs/static/images) directory.
+  To include an image in a docs page, use the following format:
+
+  <b><tt>\!\[Create workload clusters\]\(/images/eks-a_cluster_management.png\)</b></tt>
+
+You can use tools such as [draw.io](https://diagrams.net) or image creation programs, such as inkscape, to create SVG diagrams.
+Use a white background for images and have cropping focus on the content you are highlighing (in other words, don't show a whole web page if you are only interested in one field).
+
 ## Where to put content
 
-* **Images**: Put all images into the EKS Anywhere GitHub site’s [docs/static/images](https://github.com/aws/eks-anywhere/tree/main/docs/static/images) directory.
 * **Yaml examples**: Put full yaml file examples into the EKS Anywhere GitHub site’s [docs/static/manifests](https://github.com/aws/eks-anywhere/tree/main/docs/static/manifests) directory.
   In kubectl examples, you can point to those files using: `https://anywhere.eks.amazonaws.com/manifests/whatever.yaml`
 * **Generic instructions for creating a cluster** should go into the [getting started]({{< relref "/docs/getting-started/chooseprovider" >}}) documentation for the appropriate provider.
