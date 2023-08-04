@@ -5,7 +5,7 @@ weight: 16
 aliases:
     /docs/reference/ports/
 description: >
-  Ports used with an EKS Anywhere cluster
+  Ports and protocols used with an EKS Anywhere cluster
 ---
 
 EKS Anywhere requires that various ports on control plane and worker nodes be open.

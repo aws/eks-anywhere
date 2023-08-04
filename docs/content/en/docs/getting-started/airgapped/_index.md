@@ -1,6 +1,8 @@
 ---
 title: 2. Airgapped (optional)
 weight: 15
+description: >
+  Configuring EKS Anywhere for airgapped environments
 ---
 
 When creating an EKS Anywhere cluster, there may be times where you need to do so in an airgapped
