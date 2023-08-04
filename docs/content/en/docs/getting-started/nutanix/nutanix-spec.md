@@ -169,6 +169,8 @@ This takes in a list of node groups that you can define for your workers. You ma
 ### workerNodeGroupConfigurations.count
 Number of worker nodes. Optional if `autoscalingConfiguration` is used, in which case count will default to `autoscalingConfiguration.minCount`.
 
+Refers to [troubleshooting machine health check remediation not allowed]({{< relref "../../troubleshooting/troubleshooting/#machine-health-check-shows-remediation-is-not-allowed" >}}) and choose a sufficient number to allow machine health check remediation.
+
 ### workerNodeGroupConfigurations.machineGroupRef (required)
 Refers to the Kubernetes object with Nutanix specific configuration for your nodes. See `NutanixMachineConfig` fields below.
 
