@@ -1,6 +1,6 @@
 ---
-title: "Install Fluentbit and Configuring Kubernetes Service Account to assume an IAM Role"
-linkTitle: "Fluentbit and Configure Kubernetes Service Account to assume IAM Role"
+title: "Configure Fluent Bit for CloudWatch"
+linkTitle: "Fluent Bit for CloudWatch"
 weight: 4
 #aliases:
 #    /docs/clustermgmt/oservability/
@@ -8,18 +8,18 @@ date: 2023-07-28
 description: >  
 ---
 
-Fluentbit is an open source and multi-platform Log Processor and Forwarder which allows you to collect data/logs from different sources, unify and send them to multiple destinations. It’s fully compatible with Docker and Kubernetes environments. Due to its lightweight nature, using Fluent Bit as the default log forwarder for EKS Anywhere nodes will allow you to stream application logs into CloudWatch Logs efficiently and reliably.
+Fluent Bit is an open source, multi-platform log processor and forwarder which allows you to collect data/logs from different sources, then unify and send them to multiple destinations. It’s fully compatible with Docker and Kubernetes environments. Due to its lightweight nature, using Fluent Bit as the default log forwarder for EKS Anywhere nodes will allow you to stream application logs into CloudWatch Logs efficiently and reliably.
 
-Before setting up fluentbit, first create right IAM Policy and Role to send logs to CloudWatch.
+Before setting up Fluent Bit, first create an IAM Policy and Role to send logs to CloudWatch.
 
 ### Create IAM Policy
 
-1. Click on [IAM Policy](https://us-east-1.console.aws.amazon.com/iamv2/home?region=us-west-2#/policies/create?step=addPermissions);
+1. Go to [IAM Policy](https://us-east-1.console.aws.amazon.com/iamv2/home?region=us-west-2#/policies/create?step=addPermissions) in the AWS console.
 1. Click on JSON as shown below:
 
      ![Observability Create Policy](/images/observability_create_policy.png)
      
-1. Create policy on the IAM Console as shown below:
+1. Create a policy on the IAM Console as shown below:
 
      ![Observability Policy JSON](/images/observability_policy_json.png)
 
@@ -40,21 +40,21 @@ Before setting up fluentbit, first create right IAM Policy and Role to send logs
 
      ![Observability Policy Name](/images/observability_policy_name.png)
 
-After performing these steps, lets create IAM Role.
+Next, create an IAM Role.
 
 ### Create IAM Role
 
-1. Click on [IAM Role](https://us-east-1.console.aws.amazon.com/iamv2/home?region=us-west-2#/roles/create?step=selectEntities)
+1. Go to [IAM Role](https://us-east-1.console.aws.amazon.com/iamv2/home?region=us-west-2#/roles/create?step=selectEntities) in the AWS console.
 
 2. Please follow the steps as shown below:
 
      ![Observability Role Creation](/images/observability_role_creation.png)
 
-     In **Identity Provider**, mention your OIDC provider which you have created as a part of IRSA configuration.
+     In **Identity Provider**, enter the OIDC provider you created as a part of IRSA configuration.
 
      In **Audience**, select sts.amazonaws.com. Click on Next.
 
-3. Select permission name which we have created in this [Section](#Create IAM Policy)
+3. Select the permission name which you created in this [Section](#Create IAM Policy)
 
      ![Observability Select Permission](/images/observability_select_permission.png)
 
@@ -62,19 +62,19 @@ After performing these steps, lets create IAM Role.
 
      ![Observability Review Role](/images/observability_review_role.png)
 
-5. Copy the ARN as shown below as save it locally for next step
+5. Copy the ARN as shown below and save it locally for the next step.
 
      ![Observability Copy ARN](/images/observability_arn_copy.png)
 
-### Install Fluentbit
+### Install Fluent Bit
 
-1. Create the `amazon-cloudwatch` namespace using the below command
+1. Create the `amazon-cloudwatch` namespace using this command:
 
     ```bash 
     kubectl create namespace amazon-cloudwatch
     ```
 
-2. Create the Service Account for `cloudwatch-agent` and `fluent-bit` under namespace `amazon-cloudwatch`. In this section, we will use Role ARN which we saved [earlier](#create-iam-role). Please replace `$RoleARN` with the actual value.
+2. Create the Service Account for `cloudwatch-agent` and `fluent-bit` under the `amazon-cloudwatch` namespace. In this section, we will use Role ARN which we saved [earlier](#create-iam-role). Please replace `$RoleARN` with the actual value.
 
      ```
      cat << EOF | kubectl apply -f -
@@ -117,20 +117,20 @@ After performing these steps, lets create IAM Role.
      EOF
      ```
 
-     The above command will create two service account with below output:
+     The above command will create two service account, as shown in the following output:
 
      ```
      serviceaccount/cloudwatch-agent created
      serviceaccount/fluent-bit created
      ```
 
-3. Now deploy fluentbit in EKS Anywhere cluster to scrape metrics and send it to CloudWatch:
+3. Now deploy Fluent Bit in EKS Anywhere cluster to scrape metrics and send it to CloudWatch:
 
      ```bash
-     kubectl apply -f "https://anywhere.eks.amazonaws.com/manifests/fluentbit.yaml"
+     kubectl apply -f "https://anywhere.eks.amazonaws.com/manifests/Fluent Bit.yaml"
      ```
 
-     You should see below output:
+     You should see the following output:
 
      ```
      clusterrole.rbac.authorization.k8s.io/cloudwatch-agent-role changed
@@ -144,22 +144,22 @@ After performing these steps, lets create IAM Role.
      daemonset.apps/fluent-bit changed
      ```
 
-4. You can verify all the `DaemonSets` have been deployed by running the following command:
+4. You can verify that all of the `DaemonSets` have been deployed by running the following command:
 
      ```bash
      kubectl -n amazon-cloudwatch get daemonsets
      ```
 
-- If you are running an [EKS connector](https://anywhere.eks.amazonaws.com/docs/clustermgmt/observability/cluster-connect/)
+- If you are running an [EKS connector]({{< relref "./cluster-connect" >}})
 , you can verify the status of `DaemonSets` by logging into AWS console and navigate to Amazon EKS -> Cluster -> Resources -> DaemonSets
 
      ![Observability Verify DaemonSet](/images/observability_cluster_verify_Daemonset.png)
 
 ### Deploy a test application
 
-We’ve created a simple [test application](https://anywhere.eks.amazonaws.com/docs/workloadmgmt/test-app/) for you to verify your cluster is working properly.
+We’ve created a simple [test application]({{< relref "../../workloadmgmt/test-app/" >}}) for you to verify your cluster is working properly.
 
-## View Cluster Logs and Metrics
+## View cluster logs and metrics
 
 In the previous section, you have completed the basic setup for Observability in EKS Anywhere. Now lets move to the fun part of seeing the logs and metrics for our deployed test application.
 
@@ -170,22 +170,22 @@ In the previous section, you have completed the basic setup for Observability in
 
      ![Observability Container Insights](/images/observability_logGroups.png)
 
-    Log group name `/aws/containerinsights/my-EKS-Anywhere-cluster/application` have log source from /var/log/containers.
+    Log group name `/aws/containerinsights/my-EKS-Anywhere-cluster/application` has log source from /var/log/containers.
 
-    Log group name `/aws/containerinsights/my-EKS-Anywhere-cluster/dataplane` have log source for `kubelet.service`, `kubeproxy.service`, and `docker.service`
+    Log group name `/aws/containerinsights/my-EKS-Anywhere-cluster/dataplane` has log source for `kubelet.service`, `kubeproxy.service`, and `docker.service`
 
 3. To view the deployed [test application](#deploy-a-test-application) logs, click on the application LogGroup, and click on Search All
 
      ![Observability Container Insights](/images/observability_search_logstream.png)
 
-4. Now, type `HTTP 1.1 200` in the search box and enter, you should see below logs
+4. Type `HTTP 1.1 200` in the search box and press enter. You should see logs as shown below:
 
      ![Observability Container Insights](/images/observability_logGroups_filterlog.png)
 
 ### Cloudwatch Container Insights
 
-1. Open the [CloudWatch console](https://us-west-2.console.aws.amazon.com/cloudwatch/home?region=us-west-2#container-insights:performance). The link opens the Container Insights performance Monitoring console and displays dropdown to select your `EKS Cluster`.
+1. Open the [CloudWatch console](https://us-west-2.console.aws.amazon.com/cloudwatch/home?region=us-west-2#container-insights:performance). The link opens the Container Insights performance Monitoring console and displays a dropdown to select your `EKS Clusters`.
 
      ![Observability Container Insights](/images/observability_container_insights.png)
 
-For more details on CloudWatch logs please refer [here](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/WhatIsCloudWatchLogs.html)
+For more details on CloudWatch logs, please refer [What is Amazon CloudWatch Logs?](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/WhatIsCloudWatchLogs.html)
