@@ -5,5 +5,5 @@ weight: 30
 aliases:
     /docs/getting-started/production-environment/snow-getstarted/
 description: >
-  Create a cluster on AWS Snow
+    Create an EKS Anywhere cluster on Snow
 ---
