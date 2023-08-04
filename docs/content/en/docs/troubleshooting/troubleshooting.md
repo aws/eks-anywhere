@@ -356,6 +356,18 @@ This can cause nodes to become `NotReady` with the following sympotoms:
 
 If more nodes need to be provisioned, either the `clusterNetwork.pods.cidrBlocks` must be expanded or the `node-cidr-mask-size` [should be reduced.]({{< relref "../getting-started/optional/cni/#node-ips-configuration-option" >}}).
 
+### Machine health check shows "Remediation is not allowed"
+
+Sometimes a cluster node is crashed but machine health check does not start the proper remediation process to recreate the failed machine. For example, if a worker node is crashed, and running `kubectl get mhc ${CLUSTER_NAME}-md-0-worker-unhealthy -n eksa-system -oyaml` shows status message below:
+
+```
+Remediation is not allowed, the number of not started or unhealthy machines exceeds maxUnhealthy
+```
+
+EKS Anywhere sets the machine health check's `MaxUnhealthy` of the workers in a worker node group to 40%. This means any further remediation is only allowed if at most 40% of the worker machines selected by "selector" are not healthy. If more than 40% of the worker machines are in unhealthy state, the remediation will not be triggered.
+
+For example, if you create an EKS Anywhere cluster with 2 worker nodes in the same worker node group, and one of the worker node is down. The machine health check will not remediate the failed machine because the actual unhealthy machines (50%) in the worker node group already exceeds the maximum percentage of the unhealthy machine (40%) allowed. As a result, the failed machine will not be replaced with new healthy machine and your cluster will be left with single worker node. In this case, we recommend you to scale up the number of worker nodes, for example, to 4. Once the 2 more worker nodes are up and running, it brings the total unhealthy worker machines to 25% which is below the 40% limit. This will trigger the machine health check remediation which replace the unhealthy machine with new one.
+
 ## Bare Metal troubleshooting
 
 ### Creating new workload cluster hangs or fails
