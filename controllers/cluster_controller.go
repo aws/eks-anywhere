@@ -367,6 +367,7 @@ func (r *ClusterReconciler) preClusterProviderReconcile(ctx context.Context, log
 	}
 	if cluster.IsManaged() {
 		if err := r.clusterValidator.ValidateManagementClusterName(ctx, log, cluster); err != nil {
+			log.Error(err, "Invalid cluster configuration")
 			cluster.SetFailure(anywherev1.ManagementClusterRefInvalidReason, err.Error())
 			return controller.Result{}, err
 		}
@@ -570,12 +571,14 @@ func aggregatedGeneration(config *c.Config) int64 {
 }
 
 func getManagementCluster(ctx context.Context, clus *anywherev1.Cluster, client client.Client) (*anywherev1.Cluster, error) {
-	mgmtCluster := &anywherev1.Cluster{}
-	if err := client.Get(ctx, types.NamespacedName{Name: clus.ManagedBy(), Namespace: clus.Namespace}, mgmtCluster); err != nil {
-		if apierrors.IsNotFound(err) {
-			failureMessage := fmt.Sprintf("Management cluster %s does not exist", clus.Spec.ManagementCluster.Name)
-			clus.SetFailure(anywherev1.ManagementClusterRefInvalidReason, failureMessage)
-		}
+	mgmtCluster, err := clusters.FetchManagementEksaCluster(ctx, client, clus)
+	if apierrors.IsNotFound(err) {
+		clus.SetFailure(
+			anywherev1.ManagementClusterRefInvalidReason,
+			fmt.Sprintf("Management cluster %s does not exist", clus.Spec.ManagementCluster.Name),
+		)
+	}
+	if err != nil {
 		return nil, err
 	}
 

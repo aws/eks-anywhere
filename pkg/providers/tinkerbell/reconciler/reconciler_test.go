@@ -747,7 +747,10 @@ func TestReconcilerDetectOperationFail(t *testing.T) {
 }
 
 func (tt *reconcilerTest) withFakeClient() {
-	tt.client = fake.NewClientBuilder().WithObjects(clientutil.ObjectsToClientObjects(tt.allObjs())...).Build()
+	tt.client = fake.NewClientBuilder().
+		WithIndex(&anywherev1.Cluster{}, "metadata.name", clientutil.ClusterNameIndexer).
+		WithObjects(clientutil.ObjectsToClientObjects(tt.allObjs())...).
+		Build()
 }
 
 func (tt *reconcilerTest) reconciler() *reconciler.Reconciler {

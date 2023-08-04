@@ -25,6 +25,7 @@ import (
 	c "github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/controller"
+	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
 	"github.com/aws/eks-anywhere/pkg/controller/clusters"
 	"github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
@@ -226,10 +227,11 @@ func TestClusterReconcilerManagementClusterNotFound(t *testing.T) {
 			Namespace: "my-namespace",
 		},
 	}
-	cluster.SetManagedBy("my-management-cluster")
+	cluster.SetManagedBy("my-management-cluster-2")
 
 	objs := []runtime.Object{cluster, managementCluster}
 	cb := fake.NewClientBuilder()
+	cb.WithIndex(&anywherev1.Cluster{}, "metadata.name", clientutil.ClusterNameIndexer)
 	cl := cb.WithRuntimeObjects(objs...).Build()
 	api := envtest.NewAPIExpecter(t, cl)
 
@@ -238,7 +240,7 @@ func TestClusterReconcilerManagementClusterNotFound(t *testing.T) {
 
 	c := envtest.CloneNameNamespace(cluster)
 	api.ShouldEventuallyMatch(ctx, c, func(g Gomega) {
-		g.Expect(c.Status.FailureMessage).To(HaveValue(Equal("Management cluster my-management-cluster does not exist")))
+		g.Expect(c.Status.FailureMessage).To(HaveValue(Equal("Management cluster my-management-cluster-2 does not exist")))
 		g.Expect(c.Status.FailureReason).To(HaveValue(Equal(anywherev1.ManagementClusterRefInvalidReason)))
 	})
 }
