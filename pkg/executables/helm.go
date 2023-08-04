@@ -1,6 +1,7 @@
 package executables
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"strings"
@@ -89,6 +90,14 @@ func (h *Helm) PullChart(ctx context.Context, ociURI, version string) error {
 	_, err := h.executable.Command(ctx, params...).
 		WithEnvVars(h.env).Run()
 	return err
+}
+
+// ShowValues get the values of a chart.
+func (h *Helm) ShowValues(ctx context.Context, ociURI, version string) (bytes.Buffer, error) {
+	params := []string{"show", "values", h.url(ociURI), "--version", version}
+	out, err := h.executable.Command(ctx, params...).
+		WithEnvVars(h.env).Run()
+	return out, err
 }
 
 func (h *Helm) PushChart(ctx context.Context, chart, registry string) error {

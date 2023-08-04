@@ -11,8 +11,19 @@ description: >
 {{% alert title="Warnings" color="warning" %}}
 * EKS Anywhere releases `v0.15.0` - `v0.15.2` have an issue with Tinkerbell provider where BMC/IPMI calls time out for certain hardware.<br>
 Please upgrade to `v0.15.3` if you are using Tinkerbell (Bare Metal) provider.
-* Installing CSI as part of VSphere cluster creation was deprecated in version `v0.16.0` and has been removed in `v0.17.0`. Please refer to the [deprecation section]({{< relref "../getting-started/vsphere/vsphere-getstarted/#vsphere-csi-driver-deprecation" >}}) in the vSphere provider documentation for more information.
+* Installing CSI as part of VSphere cluster creation was deprecated in version `v0.16.0` and has been removed in `v0.17.0`. Please refer to the [deprecation section]({{< relref "../clustermgmt/storage/vsphere-storage/#vsphere-csi-driver-deprecation" >}}) in the vSphere provider documentation for more information.
 {{% /alert %}}
+
+## [v0.16.3](https://github.com/aws/eks-anywhere/releases/tag/v0.16.3)
+
+### Changed
+
+- During management cluster upgrade, if the backup of CAPI objects of all workload clusters attached to the management cluster fails before upgrade starts, EKS Anywhere will only backup the management cluster [#6360](https://github.com/aws/eks-anywhere/pull/6360)
+- Update kubectl wait retry policy to retry on TLS handshake errors [#6373](https://github.com/aws/eks-anywhere/pull/6373)
+
+### Removed
+
+- Removed the validation for checking management cluster bundle compatibility on create/upgrade workload cluster [#6365](https://github.com/aws/eks-anywhere/pull/6365)
 
 ## [v0.16.2](https://github.com/aws/eks-anywhere/releases/tag/v0.16.2)
 
@@ -56,7 +67,7 @@ Please upgrade to `v0.15.3` if you are using Tinkerbell (Bare Metal) provider.
 - CloudStack control plane host port is only defaulted in CAPI objects if not provided. ([#5792](https://github.com/aws/eks-anywhere/pull/5792)) ([#5736](https://github.com/aws/eks-anywhere/pull/5736))
 
 ### Deprecated
-- Add warning to deprecate disableCSI through CLI ([#5918](https://github.com/aws/eks-anywhere/pull/5918)). Refer to the [deprecation section]({{< relref "../getting-started/vsphere/vsphere-getstarted/#vsphere-csi-driver-deprecation" >}}) in the vSphere provider documentation for more information.
+- Add warning to deprecate disableCSI through CLI ([#5918](https://github.com/aws/eks-anywhere/pull/5918)). Refer to the [deprecation section]({{< relref "../clustermgmt/storage/vsphere-storage/#vsphere-csi-driver-deprecation" >}}) in the vSphere provider documentation for more information.
 
 ### Removed
 - Kubernetes 1.22 support

@@ -329,3 +329,51 @@ func TestUnauthClientDeleteAllOf(t *testing.T) {
 		})
 	}
 }
+
+func TestUnauthClientApplyServerSide(t *testing.T) {
+	fieldManager := "my-manager"
+	tests := []struct {
+		name           string
+		opts           []kubernetes.ApplyServerSideOption
+		wantKubectlOpt kubernetes.KubectlApplyOptions
+	}{
+		{
+			name: "no options",
+			wantKubectlOpt: kubernetes.KubectlApplyOptions{
+				ServerSide:   true,
+				FieldManager: fieldManager,
+			},
+		},
+		{
+			name: "force ownership",
+			opts: []kubernetes.ApplyServerSideOption{
+				&kubernetes.ApplyServerSideOptions{
+					ForceOwnership: true,
+				},
+			},
+			wantKubectlOpt: kubernetes.KubectlApplyOptions{
+				ServerSide:     true,
+				FieldManager:   fieldManager,
+				ForceOwnership: true,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			ctx := context.Background()
+			ctrl := gomock.NewController(t)
+			kubectl := mocks.NewMockKubectl(ctrl)
+			kubeconfig := "k.kubeconfig"
+			obj := &corev1.Pod{}
+
+			kubectl.EXPECT().Apply(ctx, kubeconfig, obj, tt.wantKubectlOpt)
+
+			c := kubernetes.NewUnAuthClient(kubectl)
+			g.Expect(c.Init()).To(Succeed())
+
+			g.Expect(c.ApplyServerSide(ctx, kubeconfig, fieldManager, obj, tt.opts...)).To(Succeed())
+		})
+	}
+}

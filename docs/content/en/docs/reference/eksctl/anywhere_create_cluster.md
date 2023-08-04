@@ -22,7 +22,6 @@ anywhere create cluster -f <cluster-config-file> [flags]
       --control-plane-wait-timeout string   Override the default control plane wait timeout (default "1h0m0s")
       --external-etcd-wait-timeout string   Override the default external etcd wait timeout (default "1h0m0s")
   -f, --filename string                     Filename that contains EKS-A cluster configuration
-      --force-cleanup                       Force deletion of previously created bootstrap cluster
   -z, --hardware-csv string                 Path to a CSV file containing hardware data.
   -h, --help                                help for cluster
       --install-packages string             Location of curated packages configuration files to install to the cluster

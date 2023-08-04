@@ -93,6 +93,29 @@ func TestKubeconfigClientUpdate(t *testing.T) {
 	g.Expect(kc.Update(ctx, obj)).To(Succeed())
 }
 
+func TestKubeconfigClientApplyServerSide(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+	ctrl := gomock.NewController(t)
+	kubectl := mocks.NewMockKubectl(ctrl)
+	fieldManager := "my-manager"
+	kubeconfig := "k.kubeconfig"
+	obj := &corev1.Pod{}
+
+	opts := kubernetes.KubectlApplyOptions{
+		ServerSide:   true,
+		FieldManager: fieldManager,
+	}
+	kubectl.EXPECT().Apply(ctx, kubeconfig, obj, opts)
+
+	c := kubernetes.NewUnAuthClient(kubectl)
+	g.Expect(c.Init()).To(Succeed())
+	kc, err := c.BuildClientFromKubeconfig(kubeconfig)
+	g.Expect(err).NotTo(HaveOccurred())
+
+	g.Expect(kc.ApplyServerSide(ctx, fieldManager, obj)).To(Succeed())
+}
+
 func TestKubeconfigClientDelete(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()

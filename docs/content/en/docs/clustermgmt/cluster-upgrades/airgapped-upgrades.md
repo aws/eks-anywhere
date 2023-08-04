@@ -33,4 +33,11 @@ If you want to upgrade EKS Anywhere version, or your cluster upgrade requires EK
    eksctl anywhere import images -i images.tar -r <registryUrl> \
       --bundles ./eks-anywhere-downloads/bundle-release.yaml
    ```
-1. You are now ready to [upgrade your cluster based on the cluster provider]({{< relref "../cluster-upgrades/" >}})
+
+1. If you want to upgrade your curated packages, you can import the newest curated package artifacts by
+   ```
+   eksctl anywhere copy packages --bundle ${BUNDLE_RELEASE_YAML_PATH} --dst-cert ${REGISTRY_MIRROR_CERT} ${REGISTRY_MIRROR_URL}
+   ```
+   then [activate the new package bundles]({{< relref "../../packages/packagebundles/#activating-a-package-bundle" >}}).
+
+1. You are now ready to [upgrade your cluster based on the cluster provider]({{< relref "../cluster-upgrades/" >}}).

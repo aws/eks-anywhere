@@ -695,7 +695,7 @@ func (e *ClusterE2ETest) createCluster(opts ...CommandOpt) {
 	}
 
 	e.T.Logf("Creating cluster %s", e.ClusterName)
-	createClusterArgs := []string{"create", "cluster", "-f", e.ClusterConfigLocation, "-v", "12", "--force-cleanup"}
+	createClusterArgs := []string{"create", "cluster", "-f", e.ClusterConfigLocation, "-v", "12"}
 
 	dumpFile("Create cluster from file:", e.ClusterConfigLocation, e.T)
 

@@ -91,7 +91,7 @@ var (
 	eksaPackagesBundleControllerType     = fmt.Sprintf("packagebundlecontroller.%s", packagesv1.GroupVersion.Group)
 	eksaPackageBundlesType               = fmt.Sprintf("packagebundles.%s", packagesv1.GroupVersion.Group)
 	kubectlConnectionRefusedRegex        = regexp.MustCompile("The connection to the server .* was refused")
-	kubectlIoTimeoutRegex                = regexp.MustCompile("Unable to connect to the server.*i/o timeout.*")
+	kubectlConnectionTimeoutRegex        = regexp.MustCompile("Unable to connect to the server.*timeout.*")
 )
 
 type Kubectl struct {
@@ -568,7 +568,7 @@ func (k *Kubectl) kubectlWaitRetryPolicy(totalRetries int, err error) (retry boo
 	if match := kubectlConnectionRefusedRegex.MatchString(err.Error()); match {
 		return true, waitTime
 	}
-	if match := kubectlIoTimeoutRegex.MatchString(err.Error()); match {
+	if match := kubectlConnectionTimeoutRegex.MatchString(err.Error()); match {
 		return true, waitTime
 	}
 	return false, 0
@@ -2307,12 +2307,30 @@ func deleteParams(resourceType, kubeconfig string, o *kubernetes.KubectlDeleteOp
 	return params
 }
 
-func (k *Kubectl) Apply(ctx context.Context, kubeconfig string, obj runtime.Object) error {
+// Apply creates the resource or it updates if it already exists.
+func (k *Kubectl) Apply(ctx context.Context, kubeconfig string, obj runtime.Object, opts ...kubernetes.KubectlApplyOption) error {
+	o := &kubernetes.KubectlApplyOptions{}
+	for _, opt := range opts {
+		opt.ApplyToApply(o)
+	}
+
 	b, err := yaml.Marshal(obj)
 	if err != nil {
 		return fmt.Errorf("marshalling object: %v", err)
 	}
-	if _, err := k.ExecuteWithStdin(ctx, b, "apply", "-f", "-", "--kubeconfig", kubeconfig); err != nil {
+
+	params := []string{"apply", "-f", "-", "--kubeconfig", kubeconfig}
+	if o.FieldManager != "" {
+		params = append(params, "--field-manager", o.FieldManager)
+	}
+	if o.ServerSide {
+		params = append(params, "--server-side")
+	}
+	if o.ForceOwnership {
+		params = append(params, "--force-conflicts")
+	}
+
+	if _, err := k.ExecuteWithStdin(ctx, b, params...); err != nil {
 		return fmt.Errorf("applying object with kubectl: %v", err)
 	}
 	return nil

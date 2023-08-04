@@ -367,8 +367,9 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 	bundle := test.Bundle()
 	version := test.DevEksaVersion()
 
-	managementCluster := vsphereCluster(func(c *anywherev1.Cluster) {
+	managementCluster := test.Cluster(func(c *anywherev1.Cluster) {
 		c.Name = "management-cluster"
+		c.Namespace = clusterNamespace
 		c.Spec.ManagementCluster = anywherev1.ManagementCluster{
 			Name: c.Name,
 		}
@@ -380,20 +381,24 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 		c.Spec.EksaVersion = &version
 	})
 
-	machineConfigCP := machineConfig(func(m *anywherev1.VSphereMachineConfig) {
+	machineConfigCP := test.VSphereMachineConfig(func(m *anywherev1.VSphereMachineConfig) {
 		m.Name = "cp-machine-config"
+		m.Namespace = clusterNamespace
 	})
-	machineConfigWN := machineConfig(func(m *anywherev1.VSphereMachineConfig) {
+	machineConfigWN := test.VSphereMachineConfig(func(m *anywherev1.VSphereMachineConfig) {
 		m.Name = "worker-machine-config"
+		m.Namespace = clusterNamespace
 	})
 
-	credentialsSecret := createSecret()
-	workloadClusterDatacenter := dataCenter(func(d *anywherev1.VSphereDatacenterConfig) {
+	credentialsSecret := test.VSphereCredentialsSecret()
+	workloadClusterDatacenter := test.VSphereDatacenter(func(d *anywherev1.VSphereDatacenterConfig) {
 		d.Status.SpecValid = true
+		d.Namespace = clusterNamespace
 	})
 
-	cluster := vsphereCluster(func(c *anywherev1.Cluster) {
+	cluster := test.Cluster(func(c *anywherev1.Cluster) {
 		c.Name = "workload-cluster"
+		c.Namespace = clusterNamespace
 		c.Spec.ManagementCluster = anywherev1.ManagementCluster{
 			Name: managementCluster.Name,
 		}
@@ -451,7 +456,7 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 			managementCluster,
 			workloadClusterDatacenter,
 			bundle,
-			test.EksdRelease("1-22"),
+			test.EksdRelease("1.22"),
 			credentialsSecret,
 			test.EKSARelease(),
 		},
@@ -501,112 +506,4 @@ func (tt *reconcilerTest) allObjs() []client.Object {
 	objs = append(objs, tt.cluster, tt.machineConfigControlPlane, tt.machineConfigWorker)
 
 	return objs
-}
-
-type clusterOpt func(*anywherev1.Cluster)
-
-func vsphereCluster(opts ...clusterOpt) *anywherev1.Cluster {
-	c := &anywherev1.Cluster{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       anywherev1.ClusterKind,
-			APIVersion: anywherev1.GroupVersion.String(),
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: clusterNamespace,
-		},
-		Spec: anywherev1.ClusterSpec{
-			KubernetesVersion: "1.22",
-			ClusterNetwork: anywherev1.ClusterNetwork{
-				Pods: anywherev1.Pods{
-					CidrBlocks: []string{"0.0.0.0"},
-				},
-				Services: anywherev1.Services{
-					CidrBlocks: []string{"0.0.0.0"},
-				},
-			},
-		},
-	}
-
-	for _, opt := range opts {
-		opt(c)
-	}
-
-	return c
-}
-
-type datacenterOpt func(config *anywherev1.VSphereDatacenterConfig)
-
-func dataCenter(opts ...datacenterOpt) *anywherev1.VSphereDatacenterConfig {
-	d := &anywherev1.VSphereDatacenterConfig{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       anywherev1.VSphereDatacenterKind,
-			APIVersion: anywherev1.GroupVersion.String(),
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "datacenter",
-			Namespace: clusterNamespace,
-		},
-	}
-
-	for _, opt := range opts {
-		opt(d)
-	}
-
-	return d
-}
-
-type vsphereMachineOpt func(config *anywherev1.VSphereMachineConfig)
-
-func machineConfig(opts ...vsphereMachineOpt) *anywherev1.VSphereMachineConfig {
-	m := &anywherev1.VSphereMachineConfig{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       anywherev1.VSphereMachineConfigKind,
-			APIVersion: anywherev1.GroupVersion.String(),
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: clusterNamespace,
-		},
-		Spec: anywherev1.VSphereMachineConfigSpec{
-			DiskGiB:           40,
-			Datastore:         "test",
-			Folder:            "test",
-			NumCPUs:           2,
-			MemoryMiB:         16,
-			OSFamily:          "ubuntu",
-			ResourcePool:      "test",
-			StoragePolicyName: "test",
-			Template:          "test",
-			Users: []anywherev1.UserConfiguration{
-				{
-					Name:              "user",
-					SshAuthorizedKeys: []string{"ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC8ZEibIrz1AUBKDvmDiWLs9f5DnOerC4qPITiDtSOuPAsxgZbRMavBfVTxodMdAkYRYlXxK6PqNo0ve0qcOV2yvpxH1OogasMMetck6BlM/dIoo3vEY4ZoG9DuVRIf9Iry5gJKbpMDYWpx1IGZrDMOFcIM20ii2qLQQk5hfq9OqdqhToEJFixdgJt/y/zt6Koy3kix+XsnrVdAHgWAq4CZuwt1G6JUAqrpob3H8vPmL7aS+35ktf0pHBm6nYoxRhslnWMUb/7vpzWiq+fUBIm2LYqvrnm7t3fRqFx7p2sZqAm2jDNivyYXwRXkoQPR96zvGeMtuQ5BVGPpsDfVudSW21+pEXHI0GINtTbua7Ogz7wtpVywSvHraRgdFOeY9mkXPzvm2IhoqNrteck2GErwqSqb19mPz6LnHueK0u7i6WuQWJn0CUoCtyMGIrowXSviK8qgHXKrmfTWATmCkbtosnLskNdYuOw8bKxq5S4WgdQVhPps2TiMSZndjX5NTr8= ubuntu@ip-10-2-0-6"},
-				},
-			},
-		},
-	}
-
-	for _, opt := range opts {
-		opt(m)
-	}
-
-	return m
-}
-
-func createSecret() *corev1.Secret {
-	return &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: "eksa-system",
-			Name:      vsphere.CredentialsObjectName,
-		},
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Secret",
-			APIVersion: "v1",
-		},
-		Data: map[string][]byte{
-			"username":   []byte("user"),
-			"password":   []byte("pass"),
-			"usernameCP": []byte("userCP"),
-			"passwordCP": []byte("passCP"),
-		},
-	}
 }
