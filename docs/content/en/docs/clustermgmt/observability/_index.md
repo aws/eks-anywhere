@@ -1,10 +1,10 @@
 ---
-title: "Observability"
-linkTitle: "Observability"
+title: "Observability in EKS Anywhere"
+linkTitle: "Observability in EKS Anywhere"
 date: 2017-01-05
 weight: 40
 description: >
-  Observability
+  Observability in EKS Anywhere
 ---
 
 Amazon Web Services (AWS) offers comprehensive monitoring, logging, alarming, and dashboard capabilities through Amazon CloudWatch. This powerful tool allows for centralized logging for EKS Anywhere, an on-premises version of AWS's managed Kubernetes. With CloudWatch, organizations can take advantage of a highly scalable, native AWS logging and monitoring solution.
@@ -14,3 +14,22 @@ CloudWatch Logs, delivers enhanced log visibility, independent of the log source
 The flexibility of CloudWatch Logs enables users to perform queries and sorting based on various dimensions, providing a deep level of granularity in log analysis. Additionally, logs can be grouped using specific fields, allowing for more focused insights and targeted problem-solving.
 
 Amazon CloudWatch also facilitates the creation of intuitive, data-rich dashboards, enabling log data visualization for enhanced monitoring and decision-making.
+
+## Observability in EKS Anywhere
+This tutorial demonstrates how to configure EKS Anywhere Cluster to scrape metrics and send them to [Amazon CloudWatch](https://aws.amazon.com/cloudwatch/) (CloudWatch).
+
+This tutorial walks through the following procedures:
+- [Create a cluster with IAM Roles for Service Account (IRSA)](#create-a-cluster-with-irsa).
+- [Verify Cluster]({{< relref "./cluster-verify" >}}).
+- [Install Fluentbit and Configure an EKS service account to assume an IAM role]({{< relref "./loggingSetup" >}}).
+- [Deploy Test Application]({{< relref "../../workloadmgmt/test-app" >}})
+
+{{% alert title="Note" color="primary" %}}
+
+- We included `Test` sections for critical steps to help users to validate they have completed such procedure properly. We recommend going through them in sequence as checkpoints of the progress.
+- We recommend creating all resources in the `us-west-2` region.
+
+{{% /alert %}}
+
+## Create a cluster with IRSA
+An IAM role can be associated with a Kubernetes service account. This service account can then provide AWS permissions to the containers in any pod that uses that service account. With this feature, there will be no need to hardcode AWS security credentials as environment variables on your machine. [EKS Anywhere cluster spec for Pod IAM]({{< relref "../../getting-started/optional/irsa/" >}}) gives step-by-step guidance on how to do so.
