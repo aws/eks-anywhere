@@ -3126,3 +3126,46 @@ func TestCluster_ConvertConfigToConfigGenerateStruct(t *testing.T) {
 	got := testCluster.ConvertConfigToConfigGenerateStruct()
 	g.Expect(got).To(Equal(wantClusterGenerate))
 }
+
+func TestCNIConfigIsManaged(t *testing.T) {
+	testCases := []struct {
+		name      string
+		cniConfig *v1alpha1.CNIConfig
+		want      bool
+	}{
+		{
+			name: "nil receiver",
+			want: false,
+		},
+		{
+			name: "kindnetd",
+			cniConfig: &v1alpha1.CNIConfig{
+				Kindnetd: &v1alpha1.KindnetdConfig{},
+			},
+			want: true,
+		},
+		{
+			name: "managed Cilium",
+			cniConfig: &v1alpha1.CNIConfig{
+				Cilium: &v1alpha1.CiliumConfig{},
+			},
+			want: true,
+		},
+		{
+			name: "not managed Cilium",
+			cniConfig: &v1alpha1.CNIConfig{
+				Cilium: &v1alpha1.CiliumConfig{
+					SkipUpgrade: ptr.Bool(true),
+				},
+			},
+			want: false,
+		},
+	}
+
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			g.Expect(tt.cniConfig.IsManaged()).To(Equal(tt.want))
+		})
+	}
+}

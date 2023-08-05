@@ -395,7 +395,7 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 	}
 }
 
-func TesUpdateClusterStatusForWorkers(t *testing.T) {
+func TestUpdateClusterStatusForWorkers(t *testing.T) {
 	cluster := test.NewClusterSpec().Cluster
 	clusterName := "test-cluster"
 	g := NewWithT(t)
@@ -422,7 +422,7 @@ func TesUpdateClusterStatusForWorkers(t *testing.T) {
 				},
 			},
 			wantCondition: &anywherev1.Condition{
-				Type:     anywherev1.WorkersReadyConditon,
+				Type:     anywherev1.WorkersReadyCondition,
 				Status:   "False",
 				Reason:   anywherev1.ControlPlaneNotInitializedReason,
 				Severity: clusterv1.ConditionSeverityInfo,
@@ -452,7 +452,7 @@ func TesUpdateClusterStatusForWorkers(t *testing.T) {
 				},
 			},
 			wantCondition: &anywherev1.Condition{
-				Type:     anywherev1.WorkersReadyConditon,
+				Type:     anywherev1.WorkersReadyCondition,
 				Status:   "False",
 				Reason:   anywherev1.OutdatedInformationReason,
 				Severity: clusterv1.ConditionSeverityInfo,
@@ -490,7 +490,7 @@ func TesUpdateClusterStatusForWorkers(t *testing.T) {
 				},
 			},
 			wantCondition: &anywherev1.Condition{
-				Type:     anywherev1.WorkersReadyConditon,
+				Type:     anywherev1.WorkersReadyCondition,
 				Status:   "False",
 				Reason:   anywherev1.OutdatedInformationReason,
 				Severity: clusterv1.ConditionSeverityInfo,
@@ -533,7 +533,7 @@ func TesUpdateClusterStatusForWorkers(t *testing.T) {
 				},
 			},
 			wantCondition: &anywherev1.Condition{
-				Type:     anywherev1.WorkersReadyConditon,
+				Type:     anywherev1.WorkersReadyCondition,
 				Status:   "False",
 				Reason:   anywherev1.RollingUpgradeInProgress,
 				Severity: clusterv1.ConditionSeverityInfo,
@@ -577,7 +577,7 @@ func TesUpdateClusterStatusForWorkers(t *testing.T) {
 				},
 			},
 			wantCondition: &anywherev1.Condition{
-				Type:     anywherev1.WorkersReadyConditon,
+				Type:     anywherev1.WorkersReadyCondition,
 				Status:   "False",
 				Reason:   anywherev1.ScalingUpReason,
 				Severity: clusterv1.ConditionSeverityInfo,
@@ -621,7 +621,7 @@ func TesUpdateClusterStatusForWorkers(t *testing.T) {
 				},
 			},
 			wantCondition: &anywherev1.Condition{
-				Type:     anywherev1.WorkersReadyConditon,
+				Type:     anywherev1.WorkersReadyCondition,
 				Status:   "False",
 				Reason:   anywherev1.ScalingDownReason,
 				Severity: clusterv1.ConditionSeverityInfo,
@@ -665,7 +665,7 @@ func TesUpdateClusterStatusForWorkers(t *testing.T) {
 				},
 			},
 			wantCondition: &anywherev1.Condition{
-				Type:     anywherev1.WorkersReadyConditon,
+				Type:     anywherev1.WorkersReadyCondition,
 				Status:   "False",
 				Reason:   anywherev1.NodesNotReadyReason,
 				Severity: clusterv1.ConditionSeverityInfo,
@@ -710,7 +710,7 @@ func TesUpdateClusterStatusForWorkers(t *testing.T) {
 				},
 			},
 			wantCondition: &anywherev1.Condition{
-				Type:   anywherev1.WorkersReadyConditon,
+				Type:   anywherev1.WorkersReadyCondition,
 				Status: "True",
 			},
 		},

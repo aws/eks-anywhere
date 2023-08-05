@@ -444,7 +444,7 @@ func (r *ClusterReconciler) updateStatus(ctx context.Context, log logr.Logger, c
 		conditions.WithConditions(
 			anywherev1.ControlPlaneInitializedCondition,
 			anywherev1.ControlPlaneReadyCondition,
-			anywherev1.WorkersReadyConditon,
+			anywherev1.WorkersReadyCondition,
 		),
 	)
 
@@ -548,7 +548,7 @@ func patchCluster(ctx context.Context, patchHelper *patch.Helper, cluster *anywh
 			anywherev1.ReadyCondition,
 			anywherev1.ControlPlaneInitializedCondition,
 			anywherev1.ControlPlaneReadyCondition,
-			anywherev1.WorkersReadyConditon,
+			anywherev1.WorkersReadyCondition,
 			anywherev1.DefaultCNIConfiguredCondition,
 		}},
 	}, patchOpts...)

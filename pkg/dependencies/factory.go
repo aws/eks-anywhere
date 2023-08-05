@@ -84,6 +84,7 @@ type Dependencies struct {
 	Git                         *gitfactory.GitTools
 	EksdInstaller               *eksd.Installer
 	EksdUpgrader                *eksd.Upgrader
+	ClusterApplier              clustermanager.Applier
 	AnalyzerFactory             diagnostics.AnalyzerFactory
 	CollectorFactory            diagnostics.CollectorFactory
 	DignosticCollectorFactory   diagnostics.DiagnosticBundleFactory
@@ -1095,6 +1096,27 @@ func (f *Factory) WithEksdUpgrader() *Factory {
 		return nil
 	})
 
+	return f
+}
+
+// WithClusterApplier builds a cluster applier.
+func (f *Factory) WithClusterApplier() *Factory {
+	f.WithLogger().WithUnAuthKubeClient().WithLogger()
+
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		var opts []clustermanager.ApplierOpt
+		if f.config.noTimeouts {
+			// opts = append(opts, clustermanager.ManagementUpgraderRetrier(*retrier.NewWithNoTimeout()))
+			opts = append(opts, clustermanager.WithApplierNoTimeouts())
+		}
+
+		f.dependencies.ClusterApplier = clustermanager.NewApplier(
+			f.dependencies.Logger,
+			f.dependencies.UnAuthKubeClient,
+			opts...,
+		)
+		return nil
+	})
 	return f
 }
 

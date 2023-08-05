@@ -865,6 +865,11 @@ type CNIConfig struct {
 	Kindnetd *KindnetdConfig `json:"kindnetd,omitempty"`
 }
 
+// IsManaged indicates if EKS-A is responsible for the CNI installation.
+func (n *CNIConfig) IsManaged() bool {
+	return n != nil && (n.Kindnetd != nil || n.Cilium != nil && n.Cilium.IsManaged())
+}
+
 type CiliumConfig struct {
 	// PolicyEnforcementMode determines communication allowed between pods. Accepted values are default, always, never.
 	PolicyEnforcementMode CiliumPolicyEnforcementMode `json:"policyEnforcementMode,omitempty"`

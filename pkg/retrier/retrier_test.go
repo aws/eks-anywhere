@@ -5,6 +5,8 @@ import (
 	"testing"
 	"time"
 
+	. "github.com/onsi/gomega"
+
 	"github.com/aws/eks-anywhere/pkg/retrier"
 )
 
@@ -196,4 +198,14 @@ func TestRetrierWithNilReceiver(t *testing.T) {
 	if err == nil || err.Error() != expectedError.Error() {
 		t.Errorf("Retrier didn't correctly handle nil receiver")
 	}
+}
+
+func TestBackOffPolicy(t *testing.T) {
+	g := NewWithT(t)
+	backOff := time.Second
+	p := retrier.BackOffPolicy(backOff)
+
+	retry, gotBackOff := p(10, errors.New(""))
+	g.Expect(retry).To(BeTrue())
+	g.Expect(gotBackOff).To(Equal(backOff))
 }
