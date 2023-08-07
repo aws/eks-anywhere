@@ -100,7 +100,7 @@ func (cs *TemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, wo
 // nolint:gocyclo
 func buildTemplateMapCP(clusterSpec *cluster.Spec) (map[string]interface{}, error) {
 	datacenterConfigSpec := clusterSpec.CloudStackDatacenter.Spec
-	versionsBundle := clusterSpec.ControlPlaneVersionsBundle()
+	versionsBundle := clusterSpec.RootVersionsBundle()
 
 	format := "cloud-config"
 	host, port, err := getValidControlPlaneHostPort(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host)

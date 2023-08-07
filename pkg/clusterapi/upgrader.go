@@ -75,8 +75,8 @@ func capiChangeDiff(currentSpec, newSpec *cluster.Spec, provider providers.Provi
 	changeDiff := &CAPIChangeDiff{}
 	componentChanged := false
 
-	currentVersionsBundle := currentSpec.ControlPlaneVersionsBundle()
-	newVersionsBundle := newSpec.ControlPlaneVersionsBundle()
+	currentVersionsBundle := currentSpec.RootVersionsBundle()
+	newVersionsBundle := newSpec.RootVersionsBundle()
 
 	if currentVersionsBundle.CertManager.Version != newVersionsBundle.CertManager.Version {
 		changeDiff.CertManager = &types.ComponentChangeDiff{

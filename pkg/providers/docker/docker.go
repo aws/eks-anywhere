@@ -232,7 +232,7 @@ func kubeletCgroupDriverExtraArgs(kubeVersion v1alpha1.KubernetesVersion) (clust
 }
 
 func buildTemplateMapCP(clusterSpec *cluster.Spec) (map[string]interface{}, error) {
-	versionsBundle := clusterSpec.ControlPlaneVersionsBundle()
+	versionsBundle := clusterSpec.RootVersionsBundle()
 	etcdExtraArgs := clusterapi.SecureEtcdTlsCipherSuitesExtraArgs()
 	sharedExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs()
 	kubeletExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs().
@@ -541,7 +541,7 @@ func getUpdatedKubeConfigContent(content *[]byte, dockerLbPort string) {
 }
 
 func (p *provider) Version(clusterSpec *cluster.Spec) string {
-	versionsBundle := clusterSpec.ControlPlaneVersionsBundle()
+	versionsBundle := clusterSpec.RootVersionsBundle()
 	return versionsBundle.Docker.Version
 }
 
@@ -560,7 +560,7 @@ func (p *provider) GetDeployments() map[string][]string {
 }
 
 func (p *provider) GetInfrastructureBundle(clusterSpec *cluster.Spec) *types.InfrastructureBundle {
-	versionsBundle := clusterSpec.ControlPlaneVersionsBundle()
+	versionsBundle := clusterSpec.RootVersionsBundle()
 	folderName := fmt.Sprintf("infrastructure-docker/%s/", versionsBundle.Docker.Version)
 
 	infraBundle := types.InfrastructureBundle{
@@ -588,8 +588,8 @@ func (p *provider) ValidateNewSpec(_ context.Context, _ *types.Cluster, _ *clust
 }
 
 func (p *provider) ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ComponentChangeDiff {
-	currentVersionsBundle := currentSpec.ControlPlaneVersionsBundle()
-	newVersionsBundle := newSpec.ControlPlaneVersionsBundle()
+	currentVersionsBundle := currentSpec.RootVersionsBundle()
+	newVersionsBundle := newSpec.RootVersionsBundle()
 	if currentVersionsBundle.Docker.Version == newVersionsBundle.Docker.Version {
 		return nil
 	}

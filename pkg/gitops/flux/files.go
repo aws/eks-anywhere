@@ -150,7 +150,7 @@ func (g *FileGenerator) WriteFluxSync() error {
 }
 
 func (g *FileGenerator) WriteFluxPatch(clusterSpec *cluster.Spec) error {
-	versionsBundle := clusterSpec.ControlPlaneVersionsBundle()
+	versionsBundle := clusterSpec.RootVersionsBundle()
 	values := map[string]string{
 		"Namespace":                   clusterSpec.FluxConfig.Spec.SystemNamespace,
 		"SourceControllerImage":       versionsBundle.Flux.SourceController.VersionedImage(),

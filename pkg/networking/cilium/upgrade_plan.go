@@ -142,7 +142,7 @@ func BuildUpgradePlan(installation *Installation, clusterSpec *cluster.Spec) Upg
 }
 
 func daemonSetUpgradePlan(ds *appsv1.DaemonSet, clusterSpec *cluster.Spec) VersionedComponentUpgradePlan {
-	versionsBundle := clusterSpec.ControlPlaneVersionsBundle()
+	versionsBundle := clusterSpec.RootVersionsBundle()
 	dsImage := versionsBundle.Cilium.Cilium.VersionedImage()
 	info := VersionedComponentUpgradePlan{
 		NewImage: dsImage,
@@ -171,7 +171,7 @@ func daemonSetUpgradePlan(ds *appsv1.DaemonSet, clusterSpec *cluster.Spec) Versi
 }
 
 func operatorUpgradePlan(operator *appsv1.Deployment, clusterSpec *cluster.Spec) VersionedComponentUpgradePlan {
-	versionsBundle := clusterSpec.ControlPlaneVersionsBundle()
+	versionsBundle := clusterSpec.RootVersionsBundle()
 	newImage := versionsBundle.Cilium.Operator.VersionedImage()
 	info := VersionedComponentUpgradePlan{
 		NewImage: newImage,

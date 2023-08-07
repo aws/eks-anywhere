@@ -126,7 +126,7 @@ func Cluster(clusterSpec *cluster.Spec, infrastructureObject, controlPlaneObject
 
 func KubeadmControlPlane(clusterSpec *cluster.Spec, infrastructureObject APIObject) (*controlplanev1.KubeadmControlPlane, error) {
 	replicas := int32(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Count)
-	bundle := clusterSpec.ControlPlaneVersionsBundle()
+	bundle := clusterSpec.RootVersionsBundle()
 
 	kcp := &controlplanev1.KubeadmControlPlane{
 		TypeMeta: metav1.TypeMeta{

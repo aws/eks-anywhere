@@ -374,7 +374,7 @@ func (p *Provider) PreCoreComponentsUpgrade(
 		return errors.New("cluster spec is nil")
 	}
 
-	versionsBundle := clusterSpec.ControlPlaneVersionsBundle()
+	versionsBundle := clusterSpec.RootVersionsBundle()
 
 	// Attempt the upgrade. This should upgrade the stack in the mangement cluster by updating
 	// images, installing new CRDs and possibly removing old ones.

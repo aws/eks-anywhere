@@ -98,8 +98,8 @@ func (i *EKSAInstaller) Upgrade(ctx context.Context, log logr.Logger, c *types.C
 		return nil, nil
 	}
 	log.V(1).Info("Starting EKS-A components upgrade")
-	oldVersionsBundle := currentSpec.ControlPlaneVersionsBundle()
-	newVersionsBundle := newSpec.ControlPlaneVersionsBundle()
+	oldVersionsBundle := currentSpec.RootVersionsBundle()
+	newVersionsBundle := newSpec.RootVersionsBundle()
 	oldVersion := oldVersionsBundle.Eksa.Version
 	newVersion := newVersionsBundle.Eksa.Version
 	if err := i.Install(ctx, log, c, newSpec); err != nil {
@@ -185,7 +185,7 @@ func fullLifeCycleControllerForProvider(cluster *anywherev1.Cluster) bool {
 }
 
 func (g *EKSAComponentGenerator) parseEKSAComponentsSpec(spec *cluster.Spec) (*eksaComponents, error) {
-	bundle := spec.ControlPlaneVersionsBundle()
+	bundle := spec.RootVersionsBundle()
 	componentsManifest, err := bundles.ReadManifest(g.reader, bundle.Eksa.Components)
 	if err != nil {
 		return nil, fmt.Errorf("loading manifest for eksa components: %v", err)
@@ -233,8 +233,8 @@ func (c *eksaComponents) BuildFromParsed(lookup yamlutil.ObjectLookup) error {
 
 // EksaChangeDiff computes the version diff in eksa components between two specs.
 func EksaChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ChangeDiff {
-	oldVersionsBundle := currentSpec.ControlPlaneVersionsBundle()
-	newVersionsBundle := newSpec.ControlPlaneVersionsBundle()
+	oldVersionsBundle := currentSpec.RootVersionsBundle()
+	newVersionsBundle := newSpec.RootVersionsBundle()
 
 	if oldVersionsBundle.Eksa.Version != newVersionsBundle.Eksa.Version {
 		return &types.ChangeDiff{

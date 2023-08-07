@@ -318,7 +318,7 @@ func TestTemplaterGenerateManifestUpgradeSameKubernetesVersionSuccess(t *testing
 	tt := newtemplaterTest(t)
 	tt.expectHelmTemplateWith(eqMap(wantUpgradeValues()), "1.22").Return(tt.manifest, nil)
 
-	vb := tt.currentSpec.ControlPlaneVersionsBundle()
+	vb := tt.currentSpec.RootVersionsBundle()
 
 	oldCiliumVersion, err := semver.New(vb.Cilium.Version)
 	tt.Expect(err).NotTo(HaveOccurred())
@@ -334,7 +334,7 @@ func TestTemplaterGenerateManifestUpgradeNewKubernetesVersionSuccess(t *testing.
 	tt := newtemplaterTest(t)
 	tt.expectHelmTemplateWith(eqMap(wantUpgradeValues()), "1.21").Return(tt.manifest, nil)
 
-	vb := tt.currentSpec.ControlPlaneVersionsBundle()
+	vb := tt.currentSpec.RootVersionsBundle()
 	oldCiliumVersion, err := semver.New(vb.Cilium.Version)
 	tt.Expect(err).NotTo(HaveOccurred())
 

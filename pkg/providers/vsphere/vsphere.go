@@ -890,7 +890,7 @@ func (p *vsphereProvider) PostWorkloadInit(ctx context.Context, cluster *types.C
 }
 
 func (p *vsphereProvider) Version(clusterSpec *cluster.Spec) string {
-	versionsBundle := clusterSpec.ControlPlaneVersionsBundle()
+	versionsBundle := clusterSpec.RootVersionsBundle()
 	return versionsBundle.VSphere.Version
 }
 
@@ -913,7 +913,7 @@ func (p *vsphereProvider) GetDeployments() map[string][]string {
 }
 
 func (p *vsphereProvider) GetInfrastructureBundle(clusterSpec *cluster.Spec) *types.InfrastructureBundle {
-	versionsBundle := clusterSpec.ControlPlaneVersionsBundle()
+	versionsBundle := clusterSpec.RootVersionsBundle()
 	folderName := fmt.Sprintf("infrastructure-vsphere/%s/", versionsBundle.VSphere.Version)
 
 	infraBundle := types.InfrastructureBundle{
@@ -1099,8 +1099,8 @@ func (p *vsphereProvider) secretContentsChanged(ctx context.Context, workloadClu
 }
 
 func (p *vsphereProvider) ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ComponentChangeDiff {
-	currentVersionsBundle := currentSpec.ControlPlaneVersionsBundle()
-	newVersionsBundle := newSpec.ControlPlaneVersionsBundle()
+	currentVersionsBundle := currentSpec.RootVersionsBundle()
+	newVersionsBundle := newSpec.RootVersionsBundle()
 	if currentVersionsBundle.VSphere.Version == newVersionsBundle.VSphere.Version {
 		return nil
 	}
@@ -1121,8 +1121,8 @@ func cpiResourceSetName(clusterSpec *cluster.Spec) string {
 }
 
 func (p *vsphereProvider) UpgradeNeeded(ctx context.Context, newSpec, currentSpec *cluster.Spec, c *types.Cluster) (bool, error) {
-	currentVersionsBundle := currentSpec.ControlPlaneVersionsBundle()
-	newVersionsBundle := newSpec.ControlPlaneVersionsBundle()
+	currentVersionsBundle := currentSpec.RootVersionsBundle()
+	newVersionsBundle := newSpec.RootVersionsBundle()
 	newV, oldV := newVersionsBundle.VSphere, currentVersionsBundle.VSphere
 
 	if newV.Manager.ImageDigest != oldV.Manager.ImageDigest ||
@@ -1199,7 +1199,7 @@ func (p *vsphereProvider) applyEthtoolDaemonSet(ctx context.Context, cluster *ty
 		}
 	}
 	logger.V(4).Info("Applying vsphere-disable-udp-offload daemonset")
-	bundle := clusterSpec.ControlPlaneVersionsBundle()
+	bundle := clusterSpec.RootVersionsBundle()
 	values := map[string]interface{}{
 		"eksaSystemNamespace": constants.EksaSystemNamespace,
 		"kindNodeImage":       bundle.EksD.KindNode.VersionedImage(),

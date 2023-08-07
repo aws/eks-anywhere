@@ -38,7 +38,7 @@ func (t *TemplateBuilder) GenerateManifest(clusterSpec *cluster.Spec, clusterID 
 		clusterIDValue = clusterID.String()
 	}
 
-	bundle := clusterSpec.ControlPlaneVersionsBundle()
+	bundle := clusterSpec.RootVersionsBundle()
 
 	data := map[string]interface{}{
 		"image":              bundle.KubeDistro.AwsIamAuthImage.VersionedImage(),

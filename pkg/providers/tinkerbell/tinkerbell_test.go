@@ -416,7 +416,7 @@ func TestPreCAPIInstallOnBootstrapSuccess(t *testing.T) {
 	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
 	provider.stackInstaller = stackInstaller
 
-	bundle := clusterSpec.ControlPlaneVersionsBundle()
+	bundle := clusterSpec.RootVersionsBundle()
 
 	stackInstaller.EXPECT().Install(
 		ctx,
@@ -453,7 +453,7 @@ func TestPostWorkloadInitSuccess(t *testing.T) {
 	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
 	provider.stackInstaller = stackInstaller
 
-	bundle := clusterSpec.ControlPlaneVersionsBundle()
+	bundle := clusterSpec.RootVersionsBundle()
 
 	stackInstaller.EXPECT().Install(
 		ctx,

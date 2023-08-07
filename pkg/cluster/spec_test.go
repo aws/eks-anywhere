@@ -205,7 +205,7 @@ func TestBundlesRefDefaulter(t *testing.T) {
 }
 
 func validateSpecFromSimpleBundle(t *testing.T, gotSpec *cluster.Spec) {
-	VersionsBundle := gotSpec.ControlPlaneVersionsBundle()
+	VersionsBundle := gotSpec.RootVersionsBundle()
 	validateVersionedRepo(t, VersionsBundle.KubeDistro.Kubernetes, "public.ecr.aws/eks-distro/kubernetes", "v1.19.8-eks-1-19-4")
 	validateVersionedRepo(t, VersionsBundle.KubeDistro.CoreDNS, "public.ecr.aws/eks-distro/coredns", "v1.8.0-eks-1-19-4")
 	validateVersionedRepo(t, VersionsBundle.KubeDistro.Etcd, "public.ecr.aws/eks-distro/etcd-io", "v3.4.14-eks-1-19-4")
