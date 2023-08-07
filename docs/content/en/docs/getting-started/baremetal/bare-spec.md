@@ -260,7 +260,8 @@ spec:
     node: "cp-machine"
 ```
 ### osFamily (required)
-Operating system on the machine. For example, `bottlerocket` or `ubuntu`.
+Operating system on the machine. Permitted values: `bottlerocket`, `ubuntu`, `redhat` (Default: `bottlerocket`).
+
 ### templateRef (optional)
 Identifies the template that defines the actions that will be applied to the TinkerbellMachineConfig.
 See TinkerbellTemplateConfig fields below.
