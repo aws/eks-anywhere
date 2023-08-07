@@ -483,7 +483,7 @@ spec:
         name: write-netconfig
         timeout: 90
       - environment:
-          HEGEL_URL: http://<hegel-ip>:50061
+          HEGEL_URLS: http://<hegel-ip>:50061
           DEST_DISK: /dev/sda12
           DEST_PATH: /user-data.toml
           DIRMODE: "0700"
@@ -641,7 +641,7 @@ The write-netconfig action configures networking for the system.
 ### template.tasks.actions.write-user-data (Bottlerocket)
 The write-user-data action configures the Tinkerbell Hegel service, which provides the metadata store for Tinkerbell.
 
-* environment.HEGEL_URL: The IP address and port number of the Tinkerbell [Hegel](https://docs.tinkerbell.org/services/hegel/) service.
+* environment.HEGEL_URLS: The IP address and port number of the Tinkerbell [Hegel](https://docs.tinkerbell.org/services/hegel/) service.
 * environment.DEST_DISK: Identifies the block storage device that holds the network configuration information.
 * environment.DEST_PATH: Identifies the file holding network configuration data (`/net.toml` in this example).
 * environment.DIRMODE: The Linux permissions assigned to the directory holding network configuration settings.
