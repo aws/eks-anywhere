@@ -80,3 +80,8 @@ type EksdUpgrader interface {
 type PackageInstaller interface {
 	InstallCuratedPackages(ctx context.Context)
 }
+
+// ClusterUpgrader upgrades the cluster and waits until it's ready.
+type ClusterUpgrader interface {
+	Run(ctx context.Context, spec *cluster.Spec, managementCluster types.Cluster) error
+}
