@@ -19,9 +19,7 @@ Before setting up Fluent Bit, first create an IAM Policy and Role to send logs t
 
      ![Observability Create Policy](/images/observability_create_policy.png)
      
-1. Create a policy on the IAM Console as shown below:
-
-     ![Observability Policy JSON](/images/observability_policy_json.png)
+1. Create below policy on the IAM Console. Click on Create Policy as shown:
 
 ```
         {
@@ -36,9 +34,6 @@ Before setting up Fluent Bit, first create an IAM Policy and Role to send logs t
             ]
         }
 ```
-4.  Click on Create Policy as shown:
-
-     ![Observability Policy Name](/images/observability_policy_name.png)
 
 Next, create an IAM Role.
 
@@ -54,13 +49,11 @@ Next, create an IAM Role.
 
      In **Audience**, select sts.amazonaws.com. Click on Next.
 
-3. Select the permission name which you created in this [Section](#Create IAM Policy)
+3. Select permission name which we have created in [Create IAM Policy](#create-iam-policy)
 
      ![Observability Select Permission](/images/observability_select_permission.png)
 
-4. Provide Role name as shown below and click Next
-
-     ![Observability Review Role](/images/observability_review_role.png)
+4. Provide a Role name `EKSAnywhereLogging` and click Next.
 
 5. Copy the ARN as shown below and save it locally for the next step.
 
