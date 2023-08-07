@@ -2683,7 +2683,7 @@ func TestVSphereKubernetes123to124UpgradeFromLatestMinorReleaseBottleRocketAPI(t
 		api.VSphereToConfigFiller(
 			api.WithOsFamilyForAllMachines(v1alpha1.Bottlerocket),
 		),
-		provider.WithKubeVersionAndOSForRelease(v1alpha1.Kube124, framework.Bottlerocket1, release),
+		provider.WithKubeVersionAndOSForRelease(v1alpha1.Kube123, framework.Bottlerocket1, release),
 	)
 
 	test.WithWorkloadClusters(wc)
