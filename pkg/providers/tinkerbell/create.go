@@ -28,7 +28,7 @@ func (p *Provider) BootstrapClusterOpts(_ *cluster.Spec) ([]bootstrapper.Bootstr
 func (p *Provider) PreCAPIInstallOnBootstrap(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
 	logger.V(4).Info("Installing Tinkerbell stack on bootstrap cluster")
 
-	versionsBundle := clusterSpec.ControlPlaneVersionsBundle()
+	versionsBundle := clusterSpec.RootVersionsBundle()
 
 	err := p.stackInstaller.Install(
 		ctx,
@@ -76,7 +76,7 @@ func (p *Provider) PostWorkloadInit(ctx context.Context, cluster *types.Cluster,
 		logger.Info("Warning: Skipping load balancer deployment. Please install and configure a load balancer once the cluster is created.")
 	}
 
-	versionsBundle := clusterSpec.ControlPlaneVersionsBundle()
+	versionsBundle := clusterSpec.RootVersionsBundle()
 
 	err := p.stackInstaller.Install(
 		ctx,

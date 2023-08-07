@@ -180,7 +180,7 @@ func (k *Kind) DeleteBootstrapCluster(ctx context.Context, cluster *types.Cluste
 }
 
 func (k *Kind) setupExecConfig(clusterSpec *cluster.Spec) error {
-	versionsBundle := clusterSpec.ControlPlaneVersionsBundle()
+	versionsBundle := clusterSpec.RootVersionsBundle()
 	registryMirror := registrymirror.FromCluster(clusterSpec.Cluster)
 	k.execConfig = &kindExecConfig{
 		KindImage:            registryMirror.ReplaceRegistry(versionsBundle.EksD.KindNode.VersionedImage()),

@@ -128,7 +128,7 @@ func (d *Dependencies) Close(ctx context.Context) error {
 }
 
 func ForSpec(ctx context.Context, clusterSpec *cluster.Spec) *Factory {
-	versionsBundle := clusterSpec.ControlPlaneVersionsBundle()
+	versionsBundle := clusterSpec.RootVersionsBundle()
 	eksaToolsImage := versionsBundle.Eksa.CliTools
 	return NewFactory().
 		UseExecutableImage(eksaToolsImage.VersionedImage()).
@@ -1247,7 +1247,7 @@ func (f *Factory) WithPackageControllerClient(spec *cluster.Spec, kubeConfig str
 		if err != nil {
 			return err
 		}
-		bundle := spec.ControlPlaneVersionsBundle()
+		bundle := spec.RootVersionsBundle()
 		if bundle == nil {
 			return fmt.Errorf("could not find VersionsBundle")
 		}

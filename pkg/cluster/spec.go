@@ -168,8 +168,8 @@ func (s *Spec) VersionsBundle(version eksav1alpha1.KubernetesVersion) *VersionsB
 	return vb
 }
 
-// ControlPlaneVersionsBundle returns a VersionsBundle for the top level kubernetes version.
-func (s *Spec) ControlPlaneVersionsBundle() *VersionsBundle {
+// RootVersionsBundle returns a VersionsBundle for the Cluster objects root Kubernetes versions.
+func (s *Spec) RootVersionsBundle() *VersionsBundle {
 	return s.VersionsBundle(s.Cluster.Spec.KubernetesVersion)
 }
 
@@ -178,7 +178,7 @@ func (s *Spec) WorkerNodeGroupVersionsBundle(w eksav1alpha1.WorkerNodeGroupConfi
 	if w.KubernetesVersion != nil {
 		return s.VersionsBundle(*w.KubernetesVersion)
 	}
-	return s.ControlPlaneVersionsBundle()
+	return s.RootVersionsBundle()
 }
 
 func buildKubeDistro(eksd *eksdv1alpha1.Release) (*KubeDistro, error) {

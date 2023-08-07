@@ -41,7 +41,7 @@ func KubeadmControlPlane(log logr.Logger, clusterSpec *cluster.Spec, snowMachine
 		return nil, fmt.Errorf("generating KubeadmControlPlane: %v", err)
 	}
 
-	versionsBundle := clusterSpec.ControlPlaneVersionsBundle()
+	versionsBundle := clusterSpec.RootVersionsBundle()
 
 	if err := clusterapi.SetKubeVipInKubeadmControlPlane(kcp, clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host, versionsBundle.Snow.KubeVip.VersionedImage()); err != nil {
 		return nil, fmt.Errorf("setting kube-vip: %v", err)
@@ -102,7 +102,7 @@ func KubeadmConfigTemplate(log logr.Logger, clusterSpec *cluster.Spec, workerNod
 		return nil, fmt.Errorf("generating KubeadmConfigTemplate: %v", err)
 	}
 
-	versionsBundle := clusterSpec.ControlPlaneVersionsBundle()
+	versionsBundle := clusterSpec.RootVersionsBundle()
 
 	joinConfigKubeletExtraArg := kct.Spec.Template.Spec.JoinConfiguration.NodeRegistration.KubeletExtraArgs
 	joinConfigKubeletExtraArg["provider-id"] = "aws-snow:////'{{ ds.meta_data.instance_id }}'"
@@ -148,7 +148,7 @@ func machineDeployment(clusterSpec *cluster.Spec, workerNodeGroupConfig v1alpha1
 func EtcdadmCluster(log logr.Logger, clusterSpec *cluster.Spec, snowMachineTemplate *snowv1.AWSSnowMachineTemplate) *etcdv1.EtcdadmCluster {
 	etcd := clusterapi.EtcdadmCluster(clusterSpec, snowMachineTemplate)
 
-	versionsBundle := clusterSpec.ControlPlaneVersionsBundle()
+	versionsBundle := clusterSpec.RootVersionsBundle()
 
 	machineConfig := clusterSpec.SnowMachineConfig(clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name)
 	osFamily := machineConfig.OSFamily()

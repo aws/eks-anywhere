@@ -94,7 +94,7 @@ func (d *Defaulter) setWorkerDefaultTemplateIfMissing(ctx context.Context, spec 
 func (d *Defaulter) setDefaultTemplateIfMissing(ctx context.Context, spec *Spec, m *anywherev1.VSphereMachineConfig) error {
 	if m.Spec.Template == "" {
 		logger.V(1).Info("VSphereMachineConfig template is not set. Using default template.")
-		versionsBundle := spec.ControlPlaneVersionsBundle()
+		versionsBundle := spec.RootVersionsBundle()
 		if err := d.setupDefaultTemplate(ctx, spec, m, versionsBundle); err != nil {
 			return err
 		}

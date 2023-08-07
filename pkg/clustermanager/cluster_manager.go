@@ -746,8 +746,8 @@ func (c *ClusterManager) EKSAClusterSpecChanged(ctx context.Context, clus *types
 }
 
 func compareEKSAClusterSpec(ctx context.Context, currentClusterSpec, newClusterSpec *cluster.Spec) (bool, error) {
-	newVersionsBundle := newClusterSpec.ControlPlaneVersionsBundle()
-	oldVersionsBundle := currentClusterSpec.ControlPlaneVersionsBundle()
+	newVersionsBundle := newClusterSpec.RootVersionsBundle()
+	oldVersionsBundle := currentClusterSpec.RootVersionsBundle()
 
 	if oldVersionsBundle.EksD.Name != newVersionsBundle.EksD.Name {
 		logger.V(3).Info("New eks-d release detected")

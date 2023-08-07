@@ -72,7 +72,7 @@ func TestProviderPreCoreComponentsUpgrade_StackUpgradeError(t *testing.T) {
 	tconfig := NewPreCoreComponentsUpgradeTestConfig(t)
 
 	expect := "foobar"
-	bundle := tconfig.ClusterSpec.ControlPlaneVersionsBundle()
+	bundle := tconfig.ClusterSpec.RootVersionsBundle()
 	tconfig.Installer.EXPECT().
 		Upgrade(
 			gomock.Any(),
@@ -97,7 +97,7 @@ func TestProviderPreCoreComponentsUpgrade_StackUpgradeError(t *testing.T) {
 func TestProviderPreCoreComponentsUpgrade_HasBaseboardManagementCRDError(t *testing.T) {
 	tconfig := NewPreCoreComponentsUpgradeTestConfig(t)
 
-	bundle := tconfig.ClusterSpec.ControlPlaneVersionsBundle()
+	bundle := tconfig.ClusterSpec.RootVersionsBundle()
 
 	tconfig.Installer.EXPECT().
 		Upgrade(
@@ -132,7 +132,7 @@ func TestProviderPreCoreComponentsUpgrade_HasBaseboardManagementCRDError(t *test
 func TestProviderPreCoreComponentsUpgrade_NoBaseboardManagementCRD(t *testing.T) {
 	tconfig := NewPreCoreComponentsUpgradeTestConfig(t)
 
-	bundle := tconfig.ClusterSpec.ControlPlaneVersionsBundle()
+	bundle := tconfig.ClusterSpec.RootVersionsBundle()
 
 	tconfig.Installer.EXPECT().
 		Upgrade(
@@ -441,7 +441,7 @@ func TestProviderPreCoreComponentsUpgrade_RufioConversions(t *testing.T) {
 		t.Run(tc.Name, func(t *testing.T) {
 			tconfig := NewPreCoreComponentsUpgradeTestConfig(t)
 
-			bundle := tconfig.ClusterSpec.ControlPlaneVersionsBundle()
+			bundle := tconfig.ClusterSpec.RootVersionsBundle()
 
 			// Configure the mocks to successfully upgrade the Tinkerbell stack using the installer
 			// and identify the need to convert deprecated Rufio custom resources.
@@ -613,7 +613,7 @@ func (t *PreCoreComponentsUpgradeTestConfig) GetProvider() (*Provider, error) {
 
 // WithStackUpgrade configures t mocks to get successfully reach Rufio CRD conversion.
 func (t *PreCoreComponentsUpgradeTestConfig) WithStackUpgrade() *PreCoreComponentsUpgradeTestConfig {
-	bundle := t.ClusterSpec.ControlPlaneVersionsBundle()
+	bundle := t.ClusterSpec.RootVersionsBundle()
 
 	t.Installer.EXPECT().
 		Upgrade(

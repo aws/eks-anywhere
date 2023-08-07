@@ -1081,7 +1081,7 @@ func TestGetInfrastructureBundleSuccess(t *testing.T) {
 			}
 			assert.Equal(t, "infrastructure-cloudstack/v0.1.0/", infraBundle.FolderName, "Incorrect folder name")
 			assert.Equal(t, len(infraBundle.Manifests), 2, "Wrong number of files in the infrastructure bundle")
-			bundle := tt.clusterSpec.ControlPlaneVersionsBundle()
+			bundle := tt.clusterSpec.RootVersionsBundle()
 			wantManifests := []releasev1alpha1.Manifest{
 				bundle.CloudStack.Components,
 				bundle.CloudStack.Metadata,

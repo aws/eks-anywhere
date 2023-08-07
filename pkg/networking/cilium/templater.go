@@ -40,7 +40,7 @@ func NewTemplater(helm Helm) *Templater {
 }
 
 func (t *Templater) GenerateUpgradePreflightManifest(ctx context.Context, spec *cluster.Spec) ([]byte, error) {
-	versionsBundle := spec.ControlPlaneVersionsBundle()
+	versionsBundle := spec.RootVersionsBundle()
 	v := templateValues(spec, versionsBundle)
 	v.set(true, "preflight", "enabled")
 	v.set(versionsBundle.Cilium.Cilium.Image(), "preflight", "image", "repository")
@@ -131,7 +131,7 @@ func WithPolicyAllowedNamespaces(namespaces []string) ManifestOpt {
 }
 
 func (t *Templater) GenerateManifest(ctx context.Context, spec *cluster.Spec, opts ...ManifestOpt) ([]byte, error) {
-	versionsBundle := spec.ControlPlaneVersionsBundle()
+	versionsBundle := spec.RootVersionsBundle()
 	kubeVersion, err := getKubeVersionString(spec, versionsBundle)
 	if err != nil {
 		return nil, err
