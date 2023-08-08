@@ -34,6 +34,7 @@ import (
 	"github.com/aws/eks-anywhere/controllers"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
+	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
 	"github.com/aws/eks-anywhere/pkg/features"
 	snowv1 "github.com/aws/eks-anywhere/pkg/providers/snow/api/v1beta1"
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
@@ -142,6 +143,12 @@ func main() {
 	setupChecks(setupLog, mgr)
 	//+kubebuilder:scaffold:builder
 
+	// Adding this indexer to allow for listing Cluster objects by name if they are in different namespaces.
+	if err := mgr.GetFieldIndexer().
+		IndexField(ctx, &anywherev1.Cluster{}, "metadata.name", clientutil.ClusterNameIndexer); err != nil {
+		setupLog.Error(err, "unable to create index for Cluster name")
+		os.Exit(1)
+	}
 	setupLog.Info("Starting manager")
 	if err := mgr.Start(ctx); err != nil {
 		setupLog.Error(err, "problem running manager")

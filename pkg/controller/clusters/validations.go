@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/go-logr/logr"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -34,21 +33,12 @@ func NewClusterValidator(client client.Client) *ClusterValidator {
 
 // ValidateManagementClusterName checks if the management cluster specified in the workload cluster spec is valid.
 func (v *ClusterValidator) ValidateManagementClusterName(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) error {
-	mgmtCluster := &anywherev1.Cluster{}
-	mgmtClusterKey := client.ObjectKey{
-		Namespace: cluster.Namespace,
-		Name:      cluster.Spec.ManagementCluster.Name,
-	}
-	if err := v.client.Get(ctx, mgmtClusterKey, mgmtCluster); err != nil {
-		if apierrors.IsNotFound(err) {
-			err := fmt.Errorf("unable to retrieve management cluster %v: %v", cluster.Spec.ManagementCluster.Name, err)
-			log.Error(err, "Invalid cluster configuration")
-			return err
-		}
+	mgmtCluster, err := FetchManagementEksaCluster(ctx, v.client, cluster)
+	if err != nil {
+		return err
 	}
 	if mgmtCluster.IsManaged() {
 		err := fmt.Errorf("%s is not a valid management cluster", mgmtCluster.Name)
-		log.Error(err, "Invalid cluster configuration")
 		return err
 	}
 

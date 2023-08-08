@@ -458,8 +458,8 @@ func aggregatedGeneration(config *cluster.Config) int64 {
 }
 
 func (r *ClusterReconciler) setBundlesRef(ctx context.Context, clus *anywherev1.Cluster) error {
-	mgmtCluster := &anywherev1.Cluster{}
-	if err := r.client.Get(ctx, types.NamespacedName{Name: clus.ManagedBy(), Namespace: clus.Namespace}, mgmtCluster); err != nil {
+	mgmtCluster, err := getManagementCluster(ctx, clus, r.client)
+	if err != nil {
 		if apierrors.IsNotFound(err) {
 			clus.Status.FailureMessage = ptr.String(fmt.Sprintf("Management cluster %s does not exist", clus.Spec.ManagementCluster.Name))
 		}
@@ -467,4 +467,13 @@ func (r *ClusterReconciler) setBundlesRef(ctx context.Context, clus *anywherev1.
 	}
 	clus.Spec.BundlesRef = mgmtCluster.Spec.BundlesRef
 	return nil
+}
+
+func getManagementCluster(ctx context.Context, clus *anywherev1.Cluster, client client.Client) (*anywherev1.Cluster, error) {
+	mgmtCluster, err := clusters.FetchManagementEksaCluster(ctx, client, clus)
+	if err != nil {
+		return nil, err
+	}
+
+	return mgmtCluster, nil
 }
