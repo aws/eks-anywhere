@@ -46,13 +46,13 @@ func validateGitOpsConfig(ctx context.Context, k validations.KubectlClient, clus
 		return fmt.Errorf("fetching gitOpsConfig in cluster: %v", err)
 	}
 
-	mgmtCluster := &v1alpha1.Cluster{}
-	if err := k.GetObject(ctx, clusterResourceType, clusterSpec.Cluster.ManagedBy(), clusterSpec.Cluster.Namespace, cluster.KubeconfigFile, mgmtCluster); err != nil {
+	mgmtCluster, err := k.GetEksaCluster(ctx, clusterSpec.ManagementCluster, clusterSpec.Cluster.ManagedBy())
+	if err != nil {
 		return err
 	}
 
 	mgmtGitOpsConfig := &v1alpha1.GitOpsConfig{}
-	if err := k.GetObject(ctx, gitOpsConfigResourceType, mgmtCluster.Spec.GitOpsRef.Name, clusterSpec.Cluster.Namespace, cluster.KubeconfigFile, mgmtGitOpsConfig); err != nil {
+	if err := k.GetObject(ctx, gitOpsConfigResourceType, mgmtCluster.Spec.GitOpsRef.Name, mgmtCluster.Namespace, cluster.KubeconfigFile, mgmtGitOpsConfig); err != nil {
 		return err
 	}
 
@@ -83,8 +83,8 @@ func validateFluxConfig(ctx context.Context, k validations.KubectlClient, cluste
 		return fmt.Errorf("fetching fluxConfig in cluster: %v", err)
 	}
 
-	mgmtCluster := &v1alpha1.Cluster{}
-	if err := k.GetObject(ctx, clusterResourceType, clusterSpec.Cluster.ManagedBy(), clusterSpec.Cluster.Namespace, cluster.KubeconfigFile, mgmtCluster); err != nil {
+	mgmtCluster, err := k.GetEksaCluster(ctx, clusterSpec.ManagementCluster, clusterSpec.Cluster.ManagedBy())
+	if err != nil {
 		return err
 	}
 
