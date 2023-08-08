@@ -200,11 +200,12 @@ func (v *Validator) validateTemplates(ctx context.Context, spec *Spec) error {
 	for template, requiredTags := range tagsForTemplates {
 		datacenter := spec.VSphereDatacenter.Spec.Datacenter
 
-		if err := v.validateTemplatePresence(ctx, datacenter, template); err != nil {
+		templatePath, err := v.getTemplatePath(ctx, datacenter, template)
+		if err != nil {
 			return err
 		}
 
-		if err := v.validateTemplateTags(ctx, template, requiredTags); err != nil {
+		if err := v.validateTemplateTags(ctx, templatePath, requiredTags); err != nil {
 			return err
 		}
 	}
@@ -212,17 +213,17 @@ func (v *Validator) validateTemplates(ctx context.Context, spec *Spec) error {
 	return nil
 }
 
-func (v *Validator) validateTemplatePresence(ctx context.Context, datacenter, templatePath string) error {
+func (v *Validator) getTemplatePath(ctx context.Context, datacenter, templatePath string) (string, error) {
 	templateFullPath, err := v.govc.SearchTemplate(ctx, datacenter, templatePath)
 	if err != nil {
-		return fmt.Errorf("validating template: %v", err)
+		return "", fmt.Errorf("validating template: %v", err)
 	}
 
 	if len(templateFullPath) <= 0 {
-		return fmt.Errorf("template <%s> not found. Has the template been imported?", templatePath)
+		return "", fmt.Errorf("template <%s> not found. Has the template been imported?", templatePath)
 	}
 
-	return nil
+	return templateFullPath, nil
 }
 
 func (v *Validator) validateTemplateTags(ctx context.Context, templatePath string, requiredTags []string) error {

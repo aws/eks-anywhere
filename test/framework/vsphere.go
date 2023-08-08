@@ -416,7 +416,7 @@ func (v *VSphere) WithBottleRocket123() api.ClusterConfigFiller {
 // WithBottleRocket124 returns a cluster config filler that sets the kubernetes version of the cluster to 1.24
 // as well as the right botllerocket template and osFamily for all VSphereMachineConfigs.
 func (v *VSphere) WithBottleRocket124() api.ClusterConfigFiller {
-	return v.WithKubeVersionAndOS(anywherev1.Kube123, Bottlerocket1, nil)
+	return v.WithKubeVersionAndOS(anywherev1.Kube124, Bottlerocket1, nil)
 }
 
 // CleanupVMs deletes all the VMs owned by the test EKS-A cluster. It satisfies the test framework Provider.
