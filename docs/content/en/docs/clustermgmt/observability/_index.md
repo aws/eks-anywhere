@@ -28,6 +28,3 @@ Step through the following content to configure EKS Anywhere Cluster to scrape m
 - We included `Test` sections for critical steps to help users to validate they have completed such procedure properly. We recommend going through them in sequence as checkpoints of the progress.
 - We recommend creating all resources in the `us-west-2` region.
 {{% /alert %}}
-
-## Create a cluster with IRSA
-An IAM role can be associated with a Kubernetes service account. This service account can then provide AWS permissions to the containers in any pod that uses that service account. With this feature, there will be no need to hardcode AWS security credentials as environment variables on your machine. [EKS Anywhere cluster spec for Pod IAM]({{< relref "../../getting-started/optional/irsa/" >}}) gives step-by-step guidance on how to do so.
