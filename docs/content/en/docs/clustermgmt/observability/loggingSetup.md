@@ -120,7 +120,7 @@ Next, create an IAM Role.
 3. Now deploy Fluent Bit in EKS Anywhere cluster to scrape metrics and send it to CloudWatch:
 
      ```bash
-     kubectl apply -f "https://anywhere.eks.amazonaws.com/manifests/Fluent Bit.yaml"
+     kubectl apply -f "https://anywhere.eks.amazonaws.com/manifests/fluentbit.yaml"
      ```
 
      You should see the following output:
