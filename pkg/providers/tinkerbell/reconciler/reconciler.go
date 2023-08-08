@@ -303,12 +303,7 @@ func (r *Reconciler) validateTinkerbellIPMatch(ctx context.Context, clusterSpec 
 	if clusterSpec.Cluster.IsManaged() {
 
 		// for workload cluster tinkerbell IP must match management cluster tinkerbell IP
-		managementClusterSpec := &anywherev1.Cluster{}
-
-		err := r.client.Get(ctx, client.ObjectKey{
-			Namespace: clusterSpec.Cluster.Namespace,
-			Name:      clusterSpec.Cluster.Spec.ManagementCluster.Name,
-		}, managementClusterSpec)
+		managementClusterSpec, err := clusters.FetchManagementEksaCluster(ctx, r.client, clusterSpec.Cluster)
 		if err != nil {
 			return err
 		}
@@ -316,7 +311,7 @@ func (r *Reconciler) validateTinkerbellIPMatch(ctx context.Context, clusterSpec 
 		managementDatacenterConfig := &anywherev1.TinkerbellDatacenterConfig{}
 
 		err = r.client.Get(ctx, client.ObjectKey{
-			Namespace: clusterSpec.Cluster.Namespace,
+			Namespace: managementClusterSpec.Namespace,
 			Name:      managementClusterSpec.Spec.DatacenterRef.Name,
 		}, managementDatacenterConfig)
 		if err != nil {
