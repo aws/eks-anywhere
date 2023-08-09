@@ -165,7 +165,6 @@ type BaseboardManagementRef struct {
 	Namespace string `json:"namespace"`
 }
 
-//+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 //+kubebuilder:resource:path=baseboardmanagements,scope=Namespaced,categories=tinkerbell,singular=baseboardmanagement,shortName=bm
 
@@ -177,8 +176,6 @@ type BaseboardManagement struct {
 	Spec   BaseboardManagementSpec   `json:"spec,omitempty"`
 	Status BaseboardManagementStatus `json:"status,omitempty"`
 }
-
-//+kubebuilder:object:root=true
 
 // BaseboardManagementList contains a list of BaseboardManagement.
 type BaseboardManagementList struct {
