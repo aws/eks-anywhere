@@ -2,6 +2,7 @@ package api
 
 import (
 	"os"
+	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -132,6 +133,17 @@ func WithResourcePoolForAllMachines(value string) VSphereFiller {
 	return func(config VSphereConfig) {
 		for _, m := range config.machineConfigs {
 			m.Spec.ResourcePool = value
+		}
+	}
+}
+
+// WithResourcePoolforCPMachines sets the resource pool for control plane machines to the specified value.
+func WithResourcePoolforCPMachines(value string) VSphereFiller {
+	return func(config VSphereConfig) {
+		for _, m := range config.machineConfigs {
+			if strings.HasSuffix(m.Name, "-cp") {
+				m.Spec.ResourcePool = value
+			}
 		}
 	}
 }
