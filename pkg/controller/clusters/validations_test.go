@@ -7,15 +7,12 @@ import (
 
 	"github.com/go-logr/logr"
 	. "github.com/onsi/gomega"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/controller"
-	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
 	"github.com/aws/eks-anywhere/pkg/controller/clusters"
 	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
@@ -106,28 +103,11 @@ type clusterValidatorTest struct {
 
 func newClusterValidatorTest(t *testing.T) *clusterValidatorTest {
 	logger := test.NewNullLogger()
-	managementCluster := &anywherev1.Cluster{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "my-management-cluster",
-			Namespace: "my-namespace",
-		},
-	}
-
-	cluster := &anywherev1.Cluster{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "my-cluster",
-			Namespace: "my-namespace",
-		},
-	}
-	cluster.SetManagedBy("my-management-cluster")
+	managementCluster, cluster := createClustersForTest()
 	return &clusterValidatorTest{
 		WithT:             NewWithT(t),
 		logger:            logger,
 		cluster:           cluster,
 		managementCluster: managementCluster,
 	}
-}
-
-func fakeClientBuilder() *fake.ClientBuilder {
-	return fake.NewClientBuilder().WithIndex(&anywherev1.Cluster{}, "metadata.name", clientutil.ClusterNameIndexer)
 }
