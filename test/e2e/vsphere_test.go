@@ -14,6 +14,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/features"
+	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
@@ -984,6 +985,29 @@ func TestVSphereKubernetes127UbuntuWorkloadClusterCuratedPackagesSimpleFlow(t *t
 	provider := framework.NewVSphere(t, framework.WithUbuntu127())
 	test := SetupSimpleMultiCluster(t, provider, v1alpha1.Kube127)
 	runCuratedPackageRemoteClusterInstallSimpleFlow(test)
+}
+
+func TestVSphereMultipleTemplatesUbuntu127(t *testing.T) {
+	framework.CheckVsphereMultiTemplateUbuntu127EnvVars(t)
+	provider := framework.NewVSphere(
+		t,
+		framework.WithUbuntu127(),
+	)
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+	).WithClusterConfig(
+		api.ClusterToConfigFiller(
+			api.WithExternalEtcdMachineRef(v1alpha1.VSphereMachineConfigKind),
+			api.WithControlPlaneCount(1),
+		),
+	)
+
+	test.WithClusterConfig(
+		provider.WithMachineTemplate(providers.GetControlPlaneNodeName(test.ClusterName), os.Getenv(framework.VSphereMultiTemplateUbuntu127)),
+		provider.WithMachineTemplate(providers.GetEtcdNodeName(test.ClusterName), os.Getenv(framework.VSphereMultiTemplateUbuntu127)),
+	)
+	runMultiTemplatesSimpleFlow(test)
 }
 
 func TestVSphereKubernetes123BottleRocketWorkloadClusterCuratedPackagesSimpleFlow(t *testing.T) {

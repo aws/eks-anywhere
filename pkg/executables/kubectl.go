@@ -820,6 +820,19 @@ func (k *Kubectl) GetControlPlaneNodes(ctx context.Context, kubeconfig string) (
 	return response.Items, err
 }
 
+// GetVsphereMachine will return list of vSphere machines.
+func (k *Kubectl) GetVsphereMachine(ctx context.Context, kubeconfig string, selector string) ([]vspherev1.VSphereMachine, error) {
+	params := []string{"get", "vspheremachines", "-o", "json", "--namespace", constants.EksaSystemNamespace, "--kubeconfig", kubeconfig, "--selector=" + selector}
+	stdOut, err := k.Execute(ctx, params...)
+	if err != nil {
+		return nil, fmt.Errorf("getting VSphere machine: %v", err)
+	}
+	response := &vspherev1.VSphereMachineList{}
+	err = json.Unmarshal(stdOut.Bytes(), response)
+
+	return response.Items, err
+}
+
 func (k *Kubectl) ValidateNodes(ctx context.Context, kubeconfig string) error {
 	template := "{{range .items}}{{.metadata.name}}\n{{end}}"
 	params := []string{"get", "nodes", "-o", "go-template", "--template", template, "--kubeconfig", kubeconfig}
