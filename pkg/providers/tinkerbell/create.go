@@ -148,7 +148,7 @@ func (p *Provider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpe
 			return err
 		}
 
-		managementDatacenterConfig, err := p.providerKubectlClient.GetEksaTinkerbellDatacenterConfig(ctx, managementClusterSpec.Spec.DatacenterRef.Name, clusterSpec.ManagementCluster.KubeconfigFile, clusterSpec.Cluster.Namespace)
+		managementDatacenterConfig, err := p.providerKubectlClient.GetEksaTinkerbellDatacenterConfig(ctx, managementClusterSpec.Spec.DatacenterRef.Name, clusterSpec.ManagementCluster.KubeconfigFile, managementClusterSpec.Namespace)
 		if err != nil {
 			return fmt.Errorf("getting TinkerbellIP of management cluster: %s", err)
 		}
