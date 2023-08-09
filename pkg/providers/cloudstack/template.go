@@ -186,6 +186,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec) (map[string]interface{}, erro
 		"schedulerExtraArgs":                         sharedExtraArgs.ToPartialYaml(),
 		"format":                                     format,
 		"externalEtcdVersion":                        versionsBundle.KubeDistro.EtcdVersion,
+		"externalEtcdReleaseUrl":                     versionsBundle.KubeDistro.EtcdURL,
 		"etcdImage":                                  versionsBundle.KubeDistro.EtcdImage.VersionedImage(),
 		"eksaSystemNamespace":                        constants.EksaSystemNamespace,
 	}

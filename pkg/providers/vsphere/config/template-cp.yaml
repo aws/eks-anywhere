@@ -521,6 +521,7 @@ spec:
     cloudInitConfig:
       version: {{.externalEtcdVersion}}
       installDir: "/usr/bin"
+      etcdReleaseURL: {{.externalEtcdReleaseUrl}}
     preEtcdadmCommands:
       - hostname "{{`{{ ds.meta_data.hostname }}`}}"
       - echo "::1         ipv6-localhost ipv6-loopback" >/etc/hosts

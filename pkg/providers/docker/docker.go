@@ -261,6 +261,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec) (map[string]interface{}, erro
 		"kubernetesVersion":             versionsBundle.KubeDistro.Kubernetes.Tag,
 		"etcdRepository":                versionsBundle.KubeDistro.Etcd.Repository,
 		"etcdVersion":                   versionsBundle.KubeDistro.Etcd.Tag,
+		"externalEtcdReleaseUrl":        versionsBundle.KubeDistro.EtcdURL,
 		"corednsRepository":             versionsBundle.KubeDistro.CoreDNS.Repository,
 		"corednsVersion":                versionsBundle.KubeDistro.CoreDNS.Tag,
 		"kindNodeImage":                 versionsBundle.EksD.KindNode.VersionedImage(),
