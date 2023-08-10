@@ -15,6 +15,12 @@ Please upgrade to `v0.15.3` if you are using Tinkerbell (Bare Metal) provider.
 [documentation]({{< relref "/docs/getting-started/vsphere/vsphere-spec#disablecsi-optional-deprecated" >}}) for more information.
 {{% /alert %}}
 
+## [v0.16.4](https://github.com/aws/eks-anywhere/releases/tag/v0.16.4)
+
+### Fixed
+
+- Fix support for having management cluster and workload cluster in different namespaces [#6414](https://github.com/aws/eks-anywhere/pull/6414)
+
 ## [v0.16.3](https://github.com/aws/eks-anywhere/releases/tag/v0.16.3)
 
 ### Changed
