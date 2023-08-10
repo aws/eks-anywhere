@@ -14,6 +14,12 @@ Please upgrade to `v0.15.3` if you are using Tinkerbell (Bare Metal) provider.
 * Installing CSI as part of VSphere cluster creation was deprecated in version `v0.16.0` and has been removed in `v0.17.0`. Please refer to the [deprecation section]({{< relref "../clustermgmt/storage/vsphere-storage/#vsphere-csi-driver-deprecation" >}}) in the vSphere provider documentation for more information.
 {{% /alert %}}
 
+## [v0.16.4](https://github.com/aws/eks-anywhere/releases/tag/v0.16.4)
+
+### Fixed
+
+- Fix support for having management cluster and workload cluster in different namespaces [#6414](https://github.com/aws/eks-anywhere/pull/6414)
+
 ## [v0.16.3](https://github.com/aws/eks-anywhere/releases/tag/v0.16.3)
 
 ### Changed
