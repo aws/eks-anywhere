@@ -216,6 +216,42 @@ spec:
                 description: EksaVersion is the semver identifying the release of
                   eks-a used to populate the cluster components.
                 type: string
+              etcdEncryption:
+                items:
+                  description: EtcdEncryption defines the configuration for ETCD encryption.
+                  properties:
+                    providers:
+                      items:
+                        description: EtcdEncryptionProvider defines the configuration
+                          for ETCD encryption providers. Currently only KMS provider
+                          is supported.
+                        properties:
+                          kms:
+                            description: KMS defines the configuration for KMS Encryption
+                              provider.
+                            properties:
+                              socketListenAddress:
+                                description: SocketListenAddress defines a UNIX socket
+                                  address that the KMS provider listens on.
+                                type: string
+                            required:
+                            - socketListenAddress
+                            type: object
+                        required:
+                        - kms
+                        type: object
+                      type: array
+                    resources:
+                      description: Resources defines a list of objects and custom
+                        resources definitions that should be encrypted.
+                      items:
+                        type: string
+                      type: array
+                  required:
+                  - providers
+                  - resources
+                  type: object
+                type: array
               externalEtcdConfiguration:
                 description: ExternalEtcdConfiguration defines the configuration options
                   for using unstacked etcd topology.
