@@ -4,7 +4,7 @@ linkTitle: "Overview"
 weight: 1
 date: 2017-01-05
 description: >
-  Explanation of the process of creating an EKS Anywhere cluster on Nutanix
+  Overview of EKS Anywhere cluster creation on Nutanix
 ---
 
 ## Creating a Nutanix cluster

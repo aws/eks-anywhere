@@ -1,6 +1,5 @@
 ---
-aliases:
-    /docs/reference/nutanix/domains/
+toc_hide: true
 ---
 * Prism Central endpoint (must be accessible to EKS Anywhere clusters)
 * Prism Element Data Services IP and CVM endpoints (for CSI storage connections)

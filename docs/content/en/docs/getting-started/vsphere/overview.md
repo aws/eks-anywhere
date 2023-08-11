@@ -4,7 +4,7 @@ linkTitle: "Overview"
 weight: 1
 date: 2017-01-05
 description: >
-  Explanation of the process of creating an EKS Anywhere cluster on vSphere
+  Overview of EKS Anywhere cluster creation on vSphere
 ---
 
 ## Creating a vSphere cluster

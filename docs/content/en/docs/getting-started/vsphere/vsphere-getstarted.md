@@ -3,7 +3,7 @@ title: "Create vSphere cluster"
 linkTitle: "3. Create cluster" 
 weight: 20
 description: >
-  Create a cluster on VMware vSphere
+  Create an EKS Anywhere cluster on VMware vSphere
 ---
 
 EKS Anywhere supports a VMware vSphere provider for production grade EKS Anywhere deployments.
