@@ -77,7 +77,7 @@ Follow these steps to create an EKS Anywhere cluster that can be used either as 
    ```bash
    eksctl anywhere create cluster \
       --hardware-csv hardware.csv \
-      -f eksa-mgmt-cluster.yaml
+      -f eksa-mgmt-cluster.yaml \
       # --install-packages packages.yaml \ # uncomment to install curated packages at cluster creation
    ```
    
@@ -87,7 +87,7 @@ Follow these steps to create an EKS Anywhere cluster that can be used either as 
    eksctl anywhere create cluster
       --hardware-csv hardware.csv \
       -f $CLUSTER_NAME.yaml \
-      --bundles-override ./eks-anywhere-downloads/bundle-release.yaml
+      --bundles-override ./eks-anywhere-downloads/bundle-release.yaml \
       # --install-packages packages.yaml \ # uncomment to install curated packages at cluster creation
    ```
 
@@ -175,10 +175,10 @@ Follow these steps if you want to use your initial cluster to create and manage 
      ```bash
      eksctl anywhere create cluster \
          -f eksa-w01-cluster.yaml  \
+         --kubeconfig mgmt/mgmt-eks-a-cluster.kubeconfig \
          # --install-packages packages.yaml \ # uncomment to install curated packages at cluster creation
          # --hardware-csv <hardware.csv> \ # uncomment to add more hardware
          # --bundles-override ./eks-anywhere-downloads/bundle-release.yaml \ # uncomment for airgapped install
-         --kubeconfig mgmt/mgmt-eks-a-cluster.kubeconfig
      ```
      As noted earlier, adding the `--kubeconfig` option tells `eksctl` to use the management cluster identified by that kubeconfig file to create a different workload cluster.
 
