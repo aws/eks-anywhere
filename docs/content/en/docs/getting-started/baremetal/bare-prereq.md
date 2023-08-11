@@ -72,7 +72,7 @@ Here are other network requirements:
 
 ## Validated hardware
 
-Through extensive testing in a variety of on premises environments, we expect Amazon EKS Anywhere on bare metal to run on most generic hardware that meets the above requirements.
+Through extensive testing in a variety of on-premises environments, we expect Amazon EKS Anywhere on bare metal to run on most generic hardware that meets the above requirements.
 In addition, we have collaborated with our hardware original equipment manufacturer (OEM) partners to provide you a list of validated hardware:
 
 | Bare metal servers  | BMC   | NIC     | 
