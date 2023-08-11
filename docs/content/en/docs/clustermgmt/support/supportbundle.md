@@ -11,15 +11,14 @@ aliases:
 This guide covers the use of the EKS Anywhere Support Bundle for troubleshooting and support.
 This allows you to gather cluster information, save it to your administrative machine, and perform analysis of the results.
 
-EKS Anywhere leverages [troubleshoot.sh](https://troubleshoot.sh/) to [collect](https://troubleshoot.sh/docs/collect/) and [analyze](https://troubleshoot.sh/docs/analyze/) kubernetes cluster logs, 
-cluster resource information, and other relevant debugging information. 
+EKS Anywhere leverages [troubleshoot.sh](https://troubleshoot.sh/) to [collect](https://troubleshoot.sh/docs/collect/) and [analyze](https://troubleshoot.sh/docs/analyze/) Kubernetes cluster logs, cluster resource information, and other relevant debugging information.
 
 EKS Anywhere has two Support Bundle commands:
 
-`eksctl anywhere generate support-bundle` will execute a support bundle on your cluster, 
+`eksctl anywhere generate support-bundle` will generate a support bundle for your cluster,
 collecting relevant information, archiving it locally, and performing analysis of the results.
 
-`eksctl anywhere generate support-bundle-config` will generate a Support Bundle config yaml file for you to customize.
+`eksctl anywhere generate support-bundle-config` will generate a support bundle config yaml file for you to customize.
 
 Do not add personally identifiable information (PII) or other confidential or sensitive information to your support bundle.
 If you provide the support bundle to get support from AWS, it will be accessible to other AWS services, including AWS Support.
@@ -44,7 +43,7 @@ for example one generated with `generate support-bundle-config`,
 Flags:
       --bundle-config string   Bundle Config file to use when generating support bundle
   -f, --filename string        Filename that contains EKS-A cluster configuration
-  -h, --help                   help for support-bundle
+  -h, --help                   Help for support-bundle
       --since string           Collect pod logs in the latest duration like 5s, 2m, or 3h.
       --since-time string      Collect pod logs after a specific datetime(RFC3339) like 2021-06-28T15:04:05Z
   -w, --w-config string        Kubeconfig file to use when creating support bundle for a workload cluster
@@ -52,7 +51,7 @@ Flags:
 
 ### Collecting and analyzing a bundle
 You only need to run a single command to generate a support bundle, collect information and analyze the output:
-`eksctl anywhere generate support-bundle -f myCluster.yaml`
+`eksctl anywhere generate support-bundle -f my-cluster.yaml`
 
 This command will collect the information from your cluster
 and run an analysis of the collected information.
@@ -65,112 +64,125 @@ The analysis will be printed to your console.
 #### Collect phase:
 ```
 $ ./bin/eksctl anywhere generate support-bundle -f ./testcluster100.yaml
- Collecting support bundle cluster-info
- Collecting support bundle cluster-resources
- Collecting support bundle secret
- Collecting support bundle logs
- Analyzing support bundle
+ ⏳ Collecting support bundle from cluster, this can take a while...
+ 
 ```
 
 #### Analysis phase:
 ```
- Analyze Results
-------------
-Check PASS
-Title: gitopsconfigs.anywhere.eks.amazonaws.com
-Message: gitopsconfigs.anywhere.eks.amazonaws.com is present on the cluster
-
-------------
-Check PASS
-Title: vspheredatacenterconfigs.anywhere.eks.amazonaws.com
-Message: vspheredatacenterconfigs.anywhere.eks.amazonaws.com is present on the cluster
-
-------------
-Check PASS
-Title: vspheremachineconfigs.anywhere.eks.amazonaws.com
-Message: vspheremachineconfigs.anywhere.eks.amazonaws.com is present on the cluster
-
-------------
-Check PASS
-Title: capv-controller-manager Status
-Message: capv-controller-manager is running.
-
-------------
-Check PASS
-Title: capv-controller-manager Status
-Message: capv-controller-manager is running.
-
-------------
-Check PASS
-Title: coredns Status
-Message: coredns is running.
-
-------------
-Check PASS
-Title: cert-manager-webhook Status
-Message: cert-manager-webhook is running.
-
-------------
-Check PASS
-Title: cert-manager-cainjector Status
-Message: cert-manager-cainjector is running.
-
-------------
-Check PASS
-Title: cert-manager Status
-Message: cert-manager is running.
-
-------------
-Check PASS
-Title: capi-kubeadm-control-plane-controller-manager Status
-Message: capi-kubeadm-control-plane-controller-manager is running.
-
-------------
-Check PASS
-Title: capi-kubeadm-bootstrap-controller-manager Status
-Message: capi-kubeadm-bootstrap-controller-manager is running.
-
-------------
-Check PASS
-Title: capi-controller-manager Status
-Message: capi-controller-manager is running.
-
-------------
-Check PASS
-Title: capi-controller-manager Status
-Message: capi-controller-manager is running.
-
-------------
-Check PASS
-Title: capi-kubeadm-control-plane-controller-manager Status
-Message: capi-kubeadm-control-plane-controller-manager is running.
-
-------------
-Check PASS
-Title: capi-kubeadm-control-plane-controller-manager Status
-Message: capi-kubeadm-control-plane-controller-manager is running.
-
-------------
-Check PASS
-Title: capi-kubeadm-bootstrap-controller-manager Status
-Message: capi-kubeadm-bootstrap-controller-manager is running.
-
-------------
-Check PASS
-Title: clusters.anywhere.eks.amazonaws.com
-Message: clusters.anywhere.eks.amazonaws.com is present on the cluster
-
-------------
-Check PASS
-Title: bundles.anywhere.eks.amazonaws.com
-Message: bundles.anywhere.eks.amazonaws.com is present on the cluster
-
-------------
+- URI: ""
+  isFail: false
+  isPass: true
+  isWarn: false
+  title: gitopsconfigs.anywhere.eks.amazonaws.com
+  message: gitopsconfigs.anywhere.eks.amazonaws.com is present on the cluster
+- URI: ""
+  isFail: false
+  isPass: true
+  isWarn: false
+  title: vspheredatacenterconfigs.anywhere.eks.amazonaws.com
+  message: vspheredatacenterconfigs.anywhere.eks.amazonaws.com is present on the cluster
+- URI: ""
+  isFail: false
+  isPass: true
+  isWarn: false
+  title: vspheremachineconfigs.anywhere.eks.amazonaws.com
+  message: vspheremachineconfigs.anywhere.eks.amazonaws.com is present on the cluster
+- URI: ""
+  isFail: false
+  isPass: true
+  isWarn: false
+  title: capv-controller-manager Status
+  message: capv-controller-manager is running.
+- URI: ""
+  isFail: false
+  isPass: true
+  isWarn: false
+  title: capv-controller-manager Status
+  message: capv-controller-manager is running.
+- URI: ""
+  isFail: false
+  isPass: true
+  isWarn: false
+  title: coredns Status
+  message: coredns is running.
+- URI: ""
+  isFail: false
+  isPass: true
+  isWarn: false
+  title: cert-manager-webhook Status
+  message: cert-manager-webhook is running.
+- URI: ""
+  isFail: false
+  isPass: true
+  isWarn: false
+  title: cert-manager-cainjector Status
+  message: cert-manager-cainjector is running.
+- URI: ""
+  isFail: false
+  isPass: true
+  isWarn: false
+  title: cert-manager Status
+  message: cert-manager is running.
+- URI: ""
+  isFail: false
+  isPass: true
+  isWarn: false
+  title: capi-kubeadm-control-plane-controller-manager Status
+  message: capi-kubeadm-control-plane-controller-manager is running.
+- URI: ""
+  isFail: false
+  isPass: true
+  isWarn: false
+  title: capi-kubeadm-bootstrap-controller-manager Status
+  message: capi-kubeadm-bootstrap-controller-manager is running.
+- URI: ""
+  isFail: false
+  isPass: true
+  isWarn: false
+  title: capi-controller-manager Status
+  message: capi-controller-manager is running.
+- URI: ""
+  isFail: false
+  isPass: true
+  isWarn: false
+  title: capi-controller-manager Status
+  message: capi-controller-manager is running.
+- URI: ""
+  isFail: false
+  isPass: true
+  isWarn: false
+  title: capi-kubeadm-control-plane-controller-manager Status
+  message: capi-kubeadm-control-plane-controller-manager is running.
+- URI: ""
+  isFail: false
+  isPass: true
+  isWarn: false
+  title: capi-kubeadm-control-plane-controller-manager Status
+  message: capi-kubeadm-control-plane-controller-manager is running.
+- URI: ""
+  isFail: false
+  isPass: true
+  isWarn: false
+  title: capi-kubeadm-bootstrap-controller-manager Status
+  message: capi-kubeadm-bootstrap-controller-manager is running.
+- URI: ""
+  isFail: false
+  isPass: true
+  isWarn: false
+  title: clusters.anywhere.eks.amazonaws.com
+  message: clusters.anywhere.eks.amazonaws.com is present on the cluster
+- URI: ""
+  isFail: false
+  isPass: true
+  isWarn: false
+  title: bundles.anywhere.eks.amazonaws.com
+  message: bundles.anywhere.eks.amazonaws.com is present on the cluster
 ```
 
 #### Archive phase:
 ``` 
-a support bundle has been created in the current directory:	{"path": "support-bundle-2021-09-02T19_29_41.tar.gz"}
+Support bundle archive created  {"path": "support-bundle-2023-08-11T18_17_29.tar.gz"}
 ```
 
 ### Generating a custom Support Bundle configuration for your EKS Anywhere Cluster
@@ -189,5 +201,5 @@ save this output to a file and run the command `eksctl anywhere generate support
 eksctl anywhere generate support-bundle-config
 Flags:
   -f, --filename string   Filename that contains EKS-A cluster configuration
-  -h, --help              help for support-bundle-config
+  -h, --help              Help for support-bundle-config
 ```
