@@ -1,9 +1,9 @@
 ---
-title: "Connect EKS Anywhere cluster to console"
+title: "Connect EKS Anywhere clusters to the EKS console"
 linkTitle: "Connect to console"
 weight: 80
 aliases:
-    /docs/reference/baremetal/bare-custom-hookos/
+    /docs/tasks/cluster/cluster-connect/
 date: 2017-01-05
 description: >
   Connect an EKS Anywhere cluster to the EKS console
