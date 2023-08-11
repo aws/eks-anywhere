@@ -1,9 +1,9 @@
 ---
 title: "Create Snow cluster" 
-linkTitle: "Install on Snow" 
+linkTitle: "Create cluster" 
 weight: 30
 description: >
-  Create a cluster on AWS Snow
+  Create an EKS Anywhere cluster on AWS Snowball Edge
 ---
 
 EKS Anywhere supports an AWS Snow provider for production grade EKS Anywhere deployments.

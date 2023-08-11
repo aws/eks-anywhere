@@ -6,5 +6,5 @@ aliases:
     /docs/reference/cloudstack/
 weight: 50
 description: >
-    Create an EKS Anywhere cluster with CloudStack
+    Create an EKS Anywhere cluster on Apache CloudStack
 ---

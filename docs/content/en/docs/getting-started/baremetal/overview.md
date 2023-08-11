@@ -6,20 +6,11 @@ aliases:
     /docs/getting-started/production-environment/baremetal-getstarted
     /docs/reference/baremetal/netbooting-and-tinkerbell/
 description: >
-  Overview of Tinkerbell and network booting for EKS Anywhere on Bare Metal
+  Overview of EKS Anywhere cluster creation on bare metal
 ---
 
-
-EKS Anywhere uses [Tinkerbell](https://docs.tinkerbell.org/) to provision machines for a Bare Metal cluster.
-Understanding what Tinkerbell is and how it works with EKS Anywhere can help you take advantage of advanced provisioning features or overcome provisioning problems you encounter.
-
-As someone deploying an EKS Anywhere cluster on Bare Metal, you have several opportunities to interact with Tinkerbell:
-
-* **Create a hardware CSV file**: You are required to create a [hardware CSV file]({{< relref "bare-preparation/#prepare-hardware-inventory" >}}) that contains an entry for every physical machine you want to add at cluster creation time. 
-* **Create an EKS Anywhere cluster**: By modifying the Bare Metal configuration file used to create a cluster, you can change some Tinkerbell settings or add actions to define how the operating system on each machine is configured.
-* **Monitor provisioning**: You can follow along with the [Tinkerbell Overview]({{< relref "./tinkerbell-overview/#overview-of-tinkerbell-in-eks-anywhere" >}}) in this page to monitor the progress of your hardware provisioning, as Tinkerbell finds machines and attempts to network boot, configure, and restart them.
 ## Creating a Bare Metal cluster
-The following diagram illustrates what happens when you start the cluster creation process for a Bare Metal provider.
+The following diagram illustrates what happens when you start the cluster creation process for a Bare Metal provider. You can run EKS Anywhere on bare metal as a single node cluster with the Kubernetes control plane and worker nodes co-located on a single server, as a multi-node cluster with the Kubernetes control plane and worker nodes co-located on the same servers, and as a multi-node cluster with the Kubernetes control plane and worker nodes on different, dedicated servers.
 
 ### Start creating a Bare Metal cluster
 
