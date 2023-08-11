@@ -25,7 +25,7 @@ On this page, we show how to set up Fluent Bit and Container Insights to send lo
 
 Before setting up Fluent Bit, first create an IAM Policy and Role to send logs to CloudWatch.
 
-#### Step 1: Create IAM Policy
+## Step 1: Create IAM Policy
 
 1. Go to [IAM Policy](https://us-east-1.console.aws.amazon.com/iamv2/home?region=us-west-2#/policies/create?step=addPermissions) in the AWS console.
 1. Click on JSON as shown below:
@@ -48,7 +48,7 @@ Before setting up Fluent Bit, first create an IAM Policy and Role to send logs t
         }
 ```
 
-#### Step 2: Create IAM Role
+## Step 2: Create IAM Role
 
 1. Go to [IAM Role](https://us-east-1.console.aws.amazon.com/iamv2/home?region=us-west-2#/roles/create?step=selectEntities) in the AWS console.
 
@@ -60,7 +60,7 @@ Before setting up Fluent Bit, first create an IAM Policy and Role to send logs t
 
      In **Audience**, select sts.amazonaws.com. Click on Next.
 
-3. Select permission name which we have created in [Create IAM Policy](#create-iam-policy)
+3. Select permission name which we have created in [Create IAM Policy](#step-1-create-iam-policy)
 
      ![Observability Select Permission](/images/observability_select_permission.png)
 
@@ -159,7 +159,7 @@ Before setting up Fluent Bit, first create an IAM Policy and Role to send logs t
 
      ![Observability Verify DaemonSet](/images/observability_cluster_verify_Daemonset.png)
 
-#### Step 4: Deploy a test application
+## Step 4: Deploy a test application
 
 Deploy a simple [test application]({{< relref "../../workloadmgmt/test-app/" >}}) to verify your setup is working properly.
 
@@ -176,7 +176,7 @@ Deploy a simple [test application]({{< relref "../../workloadmgmt/test-app/" >}}
 
     Log group name `/aws/containerinsights/my-EKS-Anywhere-cluster/dataplane` has log source for `kubelet.service`, `kubeproxy.service`, and `docker.service`
 
-3. To view the deployed [test application](#deploy-a-test-application) logs, click on the application LogGroup, and click on Search All
+3. To view the deployed [test application](#step-4-deploy-a-test-application) logs, click on the application LogGroup, and click on Search All
 
      ![Observability Container Insights](/images/observability_search_logstream.png)
 
