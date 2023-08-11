@@ -126,7 +126,7 @@ Follow these steps to create an EKS Anywhere cluster that can be used either as 
 
    ```bash
    eksctl anywhere create cluster \
-      -f eksa-mgmt-cluster.yaml
+      -f eksa-mgmt-cluster.yaml \
       # --install-packages packages.yaml \ # uncomment to install curated packages at cluster creation
    ```
 
