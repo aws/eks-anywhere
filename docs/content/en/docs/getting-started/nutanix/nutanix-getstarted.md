@@ -107,7 +107,7 @@ Make sure you use single quotes around the values so that your shell does not in
 
    ```bash
    eksctl anywhere create cluster \
-      -f eksa-mgmt-cluster.yaml
+      -f eksa-mgmt-cluster.yaml \
       # --install-packages packages.yaml \ # uncomment to install curated packages at cluster creation
    ```
 
@@ -205,7 +205,7 @@ Follow these steps if you want to use your initial cluster to create and manage 
    ```bash
    eksctl anywhere create cluster \
       -f eksa-w01-cluster.yaml  \
-      --kubeconfig mgmt/mgmt-eks-a-cluster.kubeconfig
+      --kubeconfig mgmt/mgmt-eks-a-cluster.kubeconfig \
       # --install-packages packages.yaml \ # uncomment to install curated packages at cluster creation
    ```
 
