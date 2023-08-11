@@ -8,9 +8,13 @@ date: 2023-07-28
 description: >  
 ---
 
-Fluent Bit is an open source, multi-platform log processor and forwarder which allows you to collect data/logs from different sources, then unify and send them to multiple destinations. It’s fully compatible with Docker and Kubernetes environments. Due to its lightweight nature, using Fluent Bit as the default log forwarder for EKS Anywhere nodes will allow you to stream application logs into CloudWatch Logs efficiently and reliably.
+Fluent Bit is an open source, multi-platform log processor and forwarder which allows you to collect data/logs from different sources, then unify and send them to multiple destinations. It’s fully compatible with Docker and Kubernetes environments. Due to its lightweight nature, using Fluent Bit as the log forwarder for EKS Anywhere clusters will allow you to stream application logs into CloudWatch Logs efficiently and reliably.
 
 Before setting up Fluent Bit, first create an IAM Policy and Role to send logs to CloudWatch.
+
+{{% alert title="Note" color="primary" %}}
+- Shared reference links will re-direct you to `us-west-2` region.
+{{% /alert %}}
 
 ### Create IAM Policy
 
