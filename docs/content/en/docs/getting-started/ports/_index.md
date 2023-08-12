@@ -5,7 +5,7 @@ weight: 16
 aliases:
     /docs/reference/ports/
 description: >
-  EKS Anywhere cluster cluster networking
+  EKS Anywhere cluster networking
 ---
 
 #### Cluster Networking
