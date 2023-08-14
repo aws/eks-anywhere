@@ -39,7 +39,7 @@ kubectl get etcdadmcluster -A
 ```
 {{% /alert %}}
 
-1. SSH into each etcd node and run the following commands. Etcd automatically detects the new certificates after the `etcdadm join` command completes.
+1. SSH into each etcd node and run the following commands. Etcd automatically detects the new certificates and deprecates its old certificates.
 
 {{< tabpane >}}
 {{< tab header="Ubuntu or RHEL" lang="bash" >}}
