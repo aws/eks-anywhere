@@ -14,6 +14,18 @@ Please upgrade to `v0.15.3` if you are using Tinkerbell (Bare Metal) provider.
 * Installing CSI as part of VSphere cluster creation was deprecated in version `v0.16.0` and has been removed in `v0.17.0`. Please refer to the [deprecation section]({{< relref "../clustermgmt/storage/vsphere-storage/#vsphere-csi-driver-deprecation" >}}) in the vSphere provider documentation for more information.
 {{% /alert %}}
 
+## [v0.16.5](https://github.com/aws/eks-anywhere/releases/tag/v0.16.5)
+
+### Changed
+
+- Bump up the worker count for etcdadm-controller from 1 to 10 [#34](https://github.com/aws/etcdadm-controller/pull/34)
+- Add 2X replicas hard limit for rolling out new etcd machines [#37](https://github.com/aws/etcdadm-controller/pull/37)
+
+### Fixed
+
+- Fix code panic in healthcheck loop in etcdadm-controller [#41](https://github.com/aws/etcdadm-controller/pull/41)
+- Fix deleting out of date machines in etcdadm-controller [#40](https://github.com/aws/etcdadm-controller/pull/40)
+
 ## [v0.16.4](https://github.com/aws/eks-anywhere/releases/tag/v0.16.4)
 
 ### Fixed
