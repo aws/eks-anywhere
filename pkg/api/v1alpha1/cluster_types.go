@@ -506,48 +506,6 @@ func WorkerNodeGroupConfigurationsSliceEqual(a, b []WorkerNodeGroupConfiguration
 	return true
 }
 
-func WorkerNodeGroupConfigurationSliceTaintsEqual(a, b []WorkerNodeGroupConfiguration) bool {
-	m := make(map[string][]corev1.Taint, len(a))
-	for _, nodeGroup := range a {
-		m[nodeGroup.Name] = nodeGroup.Taints
-	}
-
-	for _, nodeGroup := range b {
-		if _, ok := m[nodeGroup.Name]; !ok {
-			// this method is not concerned with added/removed node groups,
-			// only with the comparison of taints on existing node groups
-			// if a node group is present in a but not b, or vise versa, it's immaterial
-			continue
-		} else {
-			if !TaintsSliceEqual(m[nodeGroup.Name], nodeGroup.Taints) {
-				return false
-			}
-		}
-	}
-	return true
-}
-
-func WorkerNodeGroupConfigurationsLabelsMapEqual(a, b []WorkerNodeGroupConfiguration) bool {
-	m := make(map[string]map[string]string, len(a))
-	for _, nodeGroup := range a {
-		m[nodeGroup.Name] = nodeGroup.Labels
-	}
-
-	for _, nodeGroup := range b {
-		if _, ok := m[nodeGroup.Name]; !ok {
-			// this method is not concerned with added/removed node groups,
-			// only with the comparison of labels on existing node groups
-			// if a node group is present in a but not b, or vise versa, it's immaterial
-			continue
-		} else {
-			if !MapEqual(m[nodeGroup.Name], nodeGroup.Labels) {
-				return false
-			}
-		}
-	}
-	return true
-}
-
 // WorkerNodeGroupConfigurationKubeVersionUnchanged checks if a worker node group's k8s version has not changed. The ClusterVersions are the top level kubernetes version of a cluster.
 func WorkerNodeGroupConfigurationKubeVersionUnchanged(o, n *WorkerNodeGroupConfiguration, oldCluster, newCluster *Cluster) bool {
 	oldVersion := o.KubernetesVersion
