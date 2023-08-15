@@ -3,6 +3,7 @@ package clusters_test
 import (
 	"context"
 	"testing"
+	"time"
 
 	etcdv1 "github.com/aws/etcdadm-controller/api/v1beta1"
 	. "github.com/onsi/gomega"
@@ -12,10 +13,14 @@ import (
 	"sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 	dockerv1 "sigs.k8s.io/cluster-api/test/infrastructure/docker/api/v1beta1"
+	"sigs.k8s.io/cluster-api/util/annotations"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
+	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/internal/test/envtest"
 	"github.com/aws/eks-anywhere/pkg/controller"
+	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
 	"github.com/aws/eks-anywhere/pkg/controller/clusters"
 	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
@@ -26,9 +31,10 @@ func TestReconcileControlPlaneStackedEtcd(t *testing.T) {
 	api := envtest.NewAPIExpecter(t, c)
 	ctx := context.Background()
 	ns := env.CreateNamespaceForTest(ctx, t)
+	log := test.NewNullLogger()
 	cp := controlPlaneStackedEtcd(ns)
 
-	g.Expect(clusters.ReconcileControlPlane(ctx, c, cp)).To(Equal(controller.Result{}))
+	g.Expect(clusters.ReconcileControlPlane(ctx, log, c, cp)).To(Equal(controller.Result{}))
 	api.ShouldEventuallyExist(ctx, cp.Cluster)
 	api.ShouldEventuallyExist(ctx, cp.KubeadmControlPlane)
 	api.ShouldEventuallyExist(ctx, cp.ControlPlaneMachineTemplate)
@@ -41,15 +47,28 @@ func TestReconcileControlPlaneExternalEtcdNewCluster(t *testing.T) {
 	api := envtest.NewAPIExpecter(t, c)
 	ctx := context.Background()
 	ns := env.CreateNamespaceForTest(ctx, t)
+	log := test.NewNullLogger()
 	cp := controlPlaneExternalEtcd(ns)
 
-	g.Expect(clusters.ReconcileControlPlane(ctx, c, cp)).To(Equal(controller.Result{}))
+	g.Expect(clusters.ReconcileControlPlane(ctx, log, c, cp)).To(Equal(controller.Result{}))
 	api.ShouldEventuallyExist(ctx, cp.Cluster)
 	api.ShouldEventuallyExist(ctx, cp.KubeadmControlPlane)
 	api.ShouldEventuallyExist(ctx, cp.ControlPlaneMachineTemplate)
 	api.ShouldEventuallyExist(ctx, cp.ProviderCluster)
 	api.ShouldEventuallyExist(ctx, cp.EtcdCluster)
 	api.ShouldEventuallyExist(ctx, cp.EtcdMachineTemplate)
+
+	kcp := envtest.CloneNameNamespace(cp.KubeadmControlPlane)
+	api.ShouldEventuallyMatch(
+		ctx,
+		kcp,
+		func(g Gomega) {
+			g.Expect(kcp.Annotations).To(
+				HaveKey("cluster.x-k8s.io/skip-pause-cp-managed-etcd"),
+				"kcp should have skip pause annotation after being created",
+			)
+		},
+	)
 }
 
 func TestReconcileControlPlaneExternalEtcdUpgradeWithDiff(t *testing.T) {
@@ -58,12 +77,21 @@ func TestReconcileControlPlaneExternalEtcdUpgradeWithDiff(t *testing.T) {
 	api := envtest.NewAPIExpecter(t, c)
 	ctx := context.Background()
 	ns := env.CreateNamespaceForTest(ctx, t)
+	log := test.NewNullLogger()
 	cp := controlPlaneExternalEtcd(ns)
+
+	var oldCPReplicas int32 = 3
+	var newCPReplicas int32 = 4
+	cp.KubeadmControlPlane.Spec.Replicas = ptr.Int32(oldCPReplicas)
+
 	envtest.CreateObjs(ctx, t, c, cp.AllObjects()...)
 
 	cp.EtcdCluster.Spec.Replicas = ptr.Int32(5)
+	cp.KubeadmControlPlane.Spec.Replicas = ptr.Int32(newCPReplicas)
 
-	g.Expect(clusters.ReconcileControlPlane(ctx, c, cp)).To(Equal(controller.Result{}))
+	g.Expect(clusters.ReconcileControlPlane(ctx, log, c, cp)).To(
+		Equal(controller.Result{Result: &reconcile.Result{RequeueAfter: 10 * time.Second}}),
+	)
 	api.ShouldEventuallyExist(ctx, cp.Cluster)
 	api.ShouldEventuallyExist(ctx, cp.KubeadmControlPlane)
 	api.ShouldEventuallyExist(ctx, cp.ControlPlaneMachineTemplate)
@@ -71,7 +99,7 @@ func TestReconcileControlPlaneExternalEtcdUpgradeWithDiff(t *testing.T) {
 	api.ShouldEventuallyExist(ctx, cp.EtcdCluster)
 	api.ShouldEventuallyExist(ctx, cp.EtcdMachineTemplate)
 
-	etcdadmCluster := &etcdv1.EtcdadmCluster{ObjectMeta: cp.EtcdCluster.ObjectMeta}
+	etcdadmCluster := envtest.CloneNameNamespace(cp.EtcdCluster)
 	api.ShouldEventuallyMatch(
 		ctx,
 		etcdadmCluster,
@@ -83,68 +111,40 @@ func TestReconcileControlPlaneExternalEtcdUpgradeWithDiff(t *testing.T) {
 			)
 		},
 	)
-	kcp := &etcdv1.EtcdadmCluster{ObjectMeta: cp.KubeadmControlPlane.ObjectMeta}
+	kcp := envtest.CloneNameNamespace(cp.KubeadmControlPlane)
 	api.ShouldEventuallyMatch(
 		ctx,
-		etcdadmCluster,
+		kcp,
 		func(g Gomega) {
 			g.Expect(kcp.Annotations).To(
 				HaveKeyWithValue(clusterv1.PausedAnnotation, "true"),
 				"kcp paused annotation should have been added",
 			)
+			g.Expect(kcp.Spec.Replicas).To(
+				HaveValue(Equal(oldCPReplicas)),
+				"kcp replicas should not have changed",
+			)
 		},
 	)
 }
 
-func TestReconcileControlPlaneExternalEtcdUpgradeWithNoDiff(t *testing.T) {
+func TestReconcileControlPlaneExternalEtcdNotReady(t *testing.T) {
 	g := NewWithT(t)
 	c := env.Client()
 	api := envtest.NewAPIExpecter(t, c)
 	ctx := context.Background()
 	ns := env.CreateNamespaceForTest(ctx, t)
+	log := test.NewNullLogger()
 	cp := controlPlaneExternalEtcd(ns)
+	var oldCPReplicas int32 = 3
+	cp.KubeadmControlPlane.Spec.Replicas = ptr.Int32(oldCPReplicas)
 	envtest.CreateObjs(ctx, t, c, cp.AllObjects()...)
 
-	g.Expect(clusters.ReconcileControlPlane(ctx, c, cp)).To(Equal(controller.Result{}))
-	api.ShouldEventuallyExist(ctx, cp.Cluster)
-	api.ShouldEventuallyExist(ctx, cp.KubeadmControlPlane)
-	api.ShouldEventuallyExist(ctx, cp.ControlPlaneMachineTemplate)
-	api.ShouldEventuallyExist(ctx, cp.ProviderCluster)
-	api.ShouldEventuallyExist(ctx, cp.EtcdCluster)
-	api.ShouldEventuallyExist(ctx, cp.EtcdMachineTemplate)
-}
+	cp.KubeadmControlPlane.Spec.Replicas = ptr.Int32(4)
 
-func TestReconcileControlPlaneExternalEtcdUpgradeWithNoNamespace(t *testing.T) {
-	g := NewWithT(t)
-	c := env.Client()
-	api := envtest.NewAPIExpecter(t, c)
-	ctx := context.Background()
-	ns := env.CreateNamespaceForTest(ctx, t)
-	cp := controlPlaneExternalEtcd(ns)
-	cp.Cluster.Spec.ManagedExternalEtcdRef.Namespace = ""
-	envtest.CreateObjs(ctx, t, c, cp.AllObjects()...)
-
-	g.Expect(clusters.ReconcileControlPlane(ctx, c, cp)).To(Equal(controller.Result{}))
-	api.ShouldEventuallyExist(ctx, cp.Cluster)
-	api.ShouldEventuallyExist(ctx, cp.KubeadmControlPlane)
-	api.ShouldEventuallyExist(ctx, cp.ControlPlaneMachineTemplate)
-	api.ShouldEventuallyExist(ctx, cp.ProviderCluster)
-	api.ShouldEventuallyExist(ctx, cp.EtcdCluster)
-	api.ShouldEventuallyExist(ctx, cp.EtcdMachineTemplate)
-}
-
-func TestReconcileControlPlaneExternalEtcdWithExistingEndpoints(t *testing.T) {
-	g := NewWithT(t)
-	c := env.Client()
-	api := envtest.NewAPIExpecter(t, c)
-	ctx := context.Background()
-	ns := env.CreateNamespaceForTest(ctx, t)
-	cp := controlPlaneExternalEtcd(ns)
-	cp.KubeadmControlPlane.Spec.KubeadmConfigSpec.ClusterConfiguration.Etcd.External.Endpoints = []string{"https://1.1.1.1:2379"}
-	envtest.CreateObjs(ctx, t, c, cp.AllObjects()...)
-
-	cp.KubeadmControlPlane.Spec.KubeadmConfigSpec.ClusterConfiguration.Etcd.External.Endpoints = []string{}
-	g.Expect(clusters.ReconcileControlPlane(ctx, c, cp)).To(Equal(controller.Result{}))
+	g.Expect(clusters.ReconcileControlPlane(ctx, log, c, cp)).To(
+		Equal(controller.Result{Result: &reconcile.Result{RequeueAfter: 30 * time.Second}}),
+	)
 	api.ShouldEventuallyExist(ctx, cp.Cluster)
 	api.ShouldEventuallyExist(ctx, cp.KubeadmControlPlane)
 	api.ShouldEventuallyExist(ctx, cp.ControlPlaneMachineTemplate)
@@ -153,10 +153,95 @@ func TestReconcileControlPlaneExternalEtcdWithExistingEndpoints(t *testing.T) {
 	api.ShouldEventuallyExist(ctx, cp.EtcdMachineTemplate)
 
 	kcp := envtest.CloneNameNamespace(cp.KubeadmControlPlane)
-	api.ShouldEventuallyMatch(ctx, kcp, func(g Gomega) {
-		endpoints := kcp.Spec.KubeadmConfigSpec.ClusterConfiguration.Etcd.External.Endpoints
-		g.Expect(endpoints).To(ContainElement("https://1.1.1.1:2379"))
-	})
+	api.ShouldEventuallyMatch(
+		ctx,
+		kcp,
+		func(g Gomega) {
+			g.Expect(kcp.Spec.Replicas).To(
+				HaveValue(Equal(oldCPReplicas)),
+				"kcp replicas should not have changed",
+			)
+		},
+	)
+}
+
+func TestReconcileControlPlaneExternalEtcdReadyControlPlaneUpgrade(t *testing.T) {
+	g := NewWithT(t)
+	c := env.Client()
+	api := envtest.NewAPIExpecter(t, c)
+	ctx := context.Background()
+	ns := env.CreateNamespaceForTest(ctx, t)
+	log := test.NewNullLogger()
+	cp := controlPlaneExternalEtcd(ns)
+	cp.EtcdCluster.Status.Ready = true
+	cp.EtcdCluster.Status.ObservedGeneration = 1
+
+	var oldCPReplicas int32 = 3
+	var newCPReplicas int32 = 4
+	cp.KubeadmControlPlane.Spec.Replicas = ptr.Int32(oldCPReplicas)
+	clientutil.AddAnnotation(cp.KubeadmControlPlane, clusterv1.PausedAnnotation, "true")
+	// an existing kcp should already have etcd endpoints
+	cp.KubeadmControlPlane.Spec.KubeadmConfigSpec.ClusterConfiguration.Etcd.External.Endpoints = []string{"https://1.1.1.1:2379"}
+	envtest.CreateObjs(ctx, t, c, cp.AllObjects()...)
+
+	cp.KubeadmControlPlane.Spec.Replicas = ptr.Int32(newCPReplicas)
+	// by default providers code will generate kcp with empty endpoints, so we imitate that here
+	cp.KubeadmControlPlane.Spec.KubeadmConfigSpec.ClusterConfiguration.Etcd.External.Endpoints = []string{}
+
+	g.Expect(clusters.ReconcileControlPlane(ctx, log, c, cp)).To(
+		Equal(controller.Result{}),
+	)
+	api.ShouldEventuallyExist(ctx, cp.Cluster)
+	api.ShouldEventuallyExist(ctx, cp.KubeadmControlPlane)
+	api.ShouldEventuallyExist(ctx, cp.ControlPlaneMachineTemplate)
+	api.ShouldEventuallyExist(ctx, cp.ProviderCluster)
+	api.ShouldEventuallyExist(ctx, cp.EtcdCluster)
+	api.ShouldEventuallyExist(ctx, cp.EtcdMachineTemplate)
+
+	kcp := envtest.CloneNameNamespace(cp.KubeadmControlPlane)
+	api.ShouldEventuallyMatch(
+		ctx,
+		kcp,
+		func(g Gomega) {
+			g.Expect(kcp.Annotations).To(
+				HaveKey("cluster.x-k8s.io/skip-pause-cp-managed-etcd"),
+				"kcp should have skip pause annotation",
+			)
+			g.Expect(annotations.HasPaused(kcp)).To(
+				BeFalse(), "kcp should not be paused",
+			)
+			g.Expect(kcp.Spec.Replicas).To(
+				HaveValue(Equal(newCPReplicas)),
+				"kcp replicas should have been updated",
+			)
+			g.Expect(kcp.Spec.KubeadmConfigSpec.ClusterConfiguration.Etcd.External.Endpoints).To(
+				HaveExactElements("https://1.1.1.1:2379"),
+				"Etcd endpoints should remain the same and not be emptied",
+			)
+		},
+	)
+}
+
+func TestReconcileControlPlaneExternalEtcdUpgradeWithNoNamespace(t *testing.T) {
+	g := NewWithT(t)
+	c := env.Client()
+	api := envtest.NewAPIExpecter(t, c)
+	ctx := context.Background()
+	ns := env.CreateNamespaceForTest(ctx, t)
+	log := test.NewNullLogger()
+	cp := controlPlaneExternalEtcd(ns)
+	cp.Cluster.Spec.ManagedExternalEtcdRef.Namespace = ""
+	cp.EtcdCluster.Status.Ready = true
+	cp.EtcdCluster.Status.ObservedGeneration = 1
+	envtest.CreateObjs(ctx, t, c, cp.AllObjects()...)
+
+	g.Expect(clusters.ReconcileControlPlane(ctx, log, c, cp)).To(Equal(controller.Result{}))
+	api.ShouldEventuallyExist(ctx, cp.Cluster)
+	api.ShouldEventuallyExist(ctx, cp.KubeadmControlPlane)
+	api.ShouldEventuallyExist(ctx, cp.ControlPlaneMachineTemplate)
+	api.ShouldEventuallyExist(ctx, cp.ProviderCluster)
+	api.ShouldEventuallyExist(ctx, cp.EtcdCluster)
+	api.ShouldEventuallyExist(ctx, cp.EtcdMachineTemplate)
 }
 
 func controlPlaneStackedEtcd(namespace string) *clusters.ControlPlane {

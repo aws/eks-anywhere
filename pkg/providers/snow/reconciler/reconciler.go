@@ -111,7 +111,7 @@ func (s *Reconciler) ReconcileControlPlane(ctx context.Context, log logr.Logger,
 		return controller.Result{}, err
 	}
 
-	return clusters.ReconcileControlPlane(ctx, s.client, toClientControlPlane(cp))
+	return clusters.ReconcileControlPlane(ctx, log, s.client, toClientControlPlane(cp))
 }
 
 func (r *Reconciler) CheckControlPlaneReady(ctx context.Context, log logr.Logger, clusterSpec *cluster.Spec) (controller.Result, error) {
