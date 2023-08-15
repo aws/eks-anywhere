@@ -194,6 +194,9 @@ EKS Anywhere will add by default.
 Modifying the labels associated with a worker node group configuration will cause new nodes to be rolled out, replacing
 the existing nodes associated with the configuration.
 
+### workerNodeGroupConfigurations.kubernetesVersion
+The Kubernetes version you want to use for this worker node group. Supported values: 1.27, 1.26, 1.25, 1.24, 1.23
+
 ### externalEtcdConfiguration.count
 Number of etcd members.
 
