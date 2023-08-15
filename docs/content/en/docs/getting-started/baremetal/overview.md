@@ -10,7 +10,7 @@ description: >
 ---
 
 ## Creating a Bare Metal cluster
-The following diagram illustrates what happens when you start the cluster creation process for a Bare Metal provider. You can run EKS Anywhere on bare metal as a single node cluster with the Kubernetes control plane and worker nodes co-located on a single server, as a multi-node cluster with the Kubernetes control plane and worker nodes co-located on the same servers, and as a multi-node cluster with the Kubernetes control plane and worker nodes on different, dedicated servers.
+The following diagram illustrates what happens when you create an EKS Anywhere cluster on bare metal. You can run EKS Anywhere on bare metal as a single node cluster with the Kubernetes control plane and workloads co-located on a single server, as a multi-node cluster with the Kubernetes control plane and workloads co-located on the same servers, and as a multi-node cluster with the Kubernetes control plane and worker nodes on different, dedicated servers. 
 
 ### Start creating a Bare Metal cluster
 
