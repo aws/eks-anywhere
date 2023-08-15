@@ -4,11 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/spf13/cobra"
 
+	"github.com/aws/eks-anywhere/cmd/eksctl-anywhere/cmd/flags"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
@@ -60,9 +60,7 @@ func init() {
 	hideForceCleanup(upgradeClusterCmd.Flags())
 	upgradeClusterCmd.Flags().StringArrayVar(&uc.skipValidations, "skip-validations", []string{}, fmt.Sprintf("Bypass upgrade validations by name. Valid arguments you can pass are --skip-validations=%s", strings.Join(upgradevalidations.SkippableValidations[:], ",")))
 
-	if err := upgradeClusterCmd.MarkFlagRequired("filename"); err != nil {
-		log.Fatalf("Error marking flag as required: %v", err)
-	}
+	flags.MarkRequired(createClusterCmd.Flags(), flags.ClusterConfig.Name)
 }
 
 func (uc *upgradeClusterOptions) upgradeCluster(cmd *cobra.Command) error {

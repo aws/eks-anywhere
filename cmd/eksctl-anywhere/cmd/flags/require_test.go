@@ -77,7 +77,7 @@ func TestMarkRequired(t *testing.T) {
 			// so we need to parse the args using the flag set before calling it.
 			_ = cmd.Flags().Parse(tc.Args)
 
-			flags.MarkRequired(cmd.Flags(), required)
+			flags.MarkRequired(cmd.Flags(), required...)
 
 			err := cmd.ValidateRequiredFlags()
 
@@ -109,7 +109,7 @@ func TestMarkRequired_FlagDoesNotExist(t *testing.T) {
 	}()
 
 	flgs := pflag.NewFlagSet("", pflag.ContinueOnError)
-	flags.MarkRequired(flgs, []string{"does-not-exist"})
+	flags.MarkRequired(flgs, "does-not-exist")
 }
 
 func nopPflag(name string) pflag.Flag {

@@ -3,11 +3,11 @@ package cmd
 import (
 	"errors"
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/spf13/cobra"
 
+	"github.com/aws/eks-anywhere/cmd/eksctl-anywhere/cmd/flags"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/awsiamauth"
 	"github.com/aws/eks-anywhere/pkg/clustermanager"
@@ -50,16 +50,14 @@ func init() {
 	applyClusterOptionFlags(createClusterCmd.Flags(), &cc.clusterOptions)
 	applyTimeoutFlags(createClusterCmd.Flags(), &cc.timeoutOptions)
 	applyTinkerbellHardwareFlag(createClusterCmd.Flags(), &cc.hardwareCSVPath)
-	createClusterCmd.Flags().StringVar(&cc.tinkerbellBootstrapIP, "tinkerbell-bootstrap-ip", "", "Override the local tinkerbell IP in the bootstrap cluster")
+	flags.String(flags.TinkerbellBootstrapIP, &cc.tinkerbellBootstrapIP, createClusterCmd.Flags())
 	createClusterCmd.Flags().BoolVar(&cc.forceClean, "force-cleanup", false, "Force deletion of previously created bootstrap cluster")
 	hideForceCleanup(createClusterCmd.Flags())
 	createClusterCmd.Flags().BoolVar(&cc.skipIpCheck, "skip-ip-check", false, "Skip check for whether cluster control plane ip is in use")
 	createClusterCmd.Flags().StringVar(&cc.installPackages, "install-packages", "", "Location of curated packages configuration files to install to the cluster")
 	createClusterCmd.Flags().StringArrayVar(&cc.skipValidations, "skip-validations", []string{}, fmt.Sprintf("Bypass create validations by name. Valid arguments you can pass are --skip-validations=%s", strings.Join(createvalidations.SkippableValidations[:], ",")))
 
-	if err := createClusterCmd.MarkFlagRequired("filename"); err != nil {
-		log.Fatalf("Error marking flag as required: %v", err)
-	}
+	flags.MarkRequired(createClusterCmd.Flags(), flags.ClusterConfig.Name)
 }
 
 func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) error {

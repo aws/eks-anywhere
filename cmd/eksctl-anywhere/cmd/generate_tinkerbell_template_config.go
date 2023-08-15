@@ -41,13 +41,10 @@ func NewGenerateTinkerbellTemplateConfig() *cobra.Command {
 
 	// Configure the flagset. Some of these flags are duplicated from other parts of the cmd code
 	// for consistency but their descriptions may vary because of the commands use-case.
-	flgs := pflag.NewFlagSet("tinkerbelltemplateconfig", pflag.ExitOnError)
-	flgs.StringVarP(&opts.fileName, "filename", "f", "",
-		"A path to the EKS Anywhere cluster specification")
-	flgs.StringVar(&opts.bundlesOverride, "bundles-override", "",
-		"A path to a custom bundles manifest")
-	flgs.StringVar(&opts.BootstrapTinkerbellIP, "tinkerbell-bootstrap-ip", "",
-		"The IP used to expose the Tinkerbell stack from the bootstrap cluster")
+	flgs := pflag.NewFlagSet("", pflag.ContinueOnError)
+	flags.String(flags.ClusterConfig, &opts.fileName, flgs)
+	flags.String(flags.BundleOverride, &opts.bundlesOverride, flgs)
+	flags.String(flags.TinkerbellBootstrapIP, &opts.BootstrapTinkerbellIP, flgs)
 
 	cmd := &cobra.Command{
 		Use:     "tinkerbelltemplateconfig",
@@ -57,7 +54,7 @@ func NewGenerateTinkerbellTemplateConfig() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// When the bootstrap IP is unspecified attempt to derive it from IPs assigned to the
 			// primary interface.
-			if f := flgs.Lookup("tinkerbell-bootstrap-ip"); !f.Changed {
+			if f := flgs.Lookup(flags.TinkerbellBootstrapIP.Name); !f.Changed {
 				bootstrapIP, err := networkutils.GetLocalIP()
 				if err != nil {
 					return fmt.Errorf("tinkerbell bootstrap ip: %v", err)
@@ -115,7 +112,6 @@ func NewGenerateTinkerbellTemplateConfig() *cobra.Command {
 
 	// Configure the commands flags.
 	cmd.Flags().AddFlagSet(flgs)
-	flags.MarkRequired(cmd.Flags(), []string{"filename", "tinkerbell-bootstrap-ip"})
 
 	return cmd
 }
