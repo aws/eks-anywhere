@@ -40,7 +40,7 @@ func needsNewWorkloadTemplate(oldSpec, newSpec *cluster.Spec, oldWorker, newWork
 		return true
 	}
 
-	if !v1alpha1.WorkerNodeGroupConfigurationSliceTaintsEqual(oldSpec.Cluster.Spec.WorkerNodeGroupConfigurations, newSpec.Cluster.Spec.WorkerNodeGroupConfigurations) ||
+	if !v1alpha1.TaintsSliceEqual(oldWorker.Taints, newWorker.Taints) ||
 		!v1alpha1.MapEqual(oldWorker.Labels, newWorker.Labels) ||
 		!v1alpha1.WorkerNodeGroupConfigurationKubeVersionUnchanged(&oldWorker, &newWorker, oldSpec.Cluster, newSpec.Cluster) {
 		return true
