@@ -72,18 +72,18 @@ Here are other network requirements:
 
 ## Validated hardware
 
-Through extensive testing in a variety of on premises customer environments during our beta phase, we expect Amazon EKS Anywhere on bare metal to run on most generic hardware that meets the above requirements.
+Through extensive testing in a variety of on-premises environments, we expect Amazon EKS Anywhere on bare metal to run on most generic hardware that meets the above requirements.
 In addition, we have collaborated with our hardware original equipment manufacturer (OEM) partners to provide you a list of validated hardware:
 
-| Bare metal servers  | BMC   | NIC     | OS      |
-|---------------------|-------|---------|---------|
-| Dell PowerEdge R740 | iDRAC9 |  Mellanox ConnectX-4 LX 25GbE  | Validated with Ubuntu v20.04.1 |
-| Dell PowerEdge R7525 (NVIDIA Tesla™ T4 GPU's) | iDRAC9 |  Mellanox ConnectX-4 LX 25GbE & Intel Ethernet 10G 4P X710 OCP | Validated with Ubuntu v20.04.1 |
-| Dell PowerFlex (R640) | iDRAC9 | Mellanox ConnectX-4 LX 25GbE | Validated with Ubuntu v20.04.1 |
-| Supermicro SYS-210P | IPMI2.0/Redfish API | Intel® Ethernet Controller i350 2x 1GbE | Validated with Ubuntu v20.04.1 and Bottlerocket v1.8.0 |
-| Dell PowerEdge R240 | iDRAC9 | Broadcom 57414 Dual Port 10/25GbE | Validated with Ubuntu v20.04 and Bottlerocket v1.8.0 |
-| HPE ProLiant DL20 | iLO5 | HPE 361i 1G | Validated with Ubuntu v20.04 and Bottlerocket v1.8.0 |
-| HPE ProLiant DL160 Gen10 | iLO5 | HPE Eth 10/25Gb 2P 640SFP28 A | Validated with Ubuntu v20.04.1 |
-| Dell PowerEdge R340 | iDRAC9 | Broadcom 57416 Dual Port 10GbE | Validated with Ubuntu v20.04.1 and Bottlerocket v1.8.0 |
-| HPE ProLiant DL360 | iLO5 | HPE Ethernet 1Gb 4-port 331i | Validated with Ubuntu v20.04.1 |
-| Lenovo ThinkSystem SR650 V2 | XClarity Controller Enterprise v7.92 |<ul><li>Intel I350 1GbE RJ45 4-port OCP</li><li>Marvell QL41232 10/25GbE SFP28<br>2-Port PCIe Ethernet Adapter</li></ul>| Validated with Ubuntu v20.04.1 |
+| Bare metal servers  | BMC   | NIC     | 
+|---------------------|-------|---------|
+| Dell PowerEdge R740 | iDRAC9 |  Mellanox ConnectX-4 LX 25GbE  |
+| Dell PowerEdge R7525 (NVIDIA Tesla™ T4 GPU's) | iDRAC9 |  Mellanox ConnectX-4 LX 25GbE & Intel Ethernet 10G 4P X710 OCP | 
+| Dell PowerFlex (R640) | iDRAC9 | Mellanox ConnectX-4 LX 25GbE | 
+| SuperServer SYS-510P-M | IPMI2.0/Redfish API | Intel® Ethernet Controller i350 2x 1GbE | 
+| Dell PowerEdge R240 | iDRAC9 | Broadcom 57414 Dual Port 10/25GbE | 
+| HPE ProLiant DL20 | iLO5 | HPE 361i 1G | 
+| HPE ProLiant DL160 Gen10 | iLO5 | HPE Eth 10/25Gb 2P 640SFP28 A | 
+| Dell PowerEdge R340 | iDRAC9 | Broadcom 57416 Dual Port 10GbE | 
+| HPE ProLiant DL360 | iLO5 | HPE Ethernet 1Gb 4-port 331i | 
+| Lenovo ThinkSystem SR650 V2 | XClarity Controller Enterprise v7.92 | Intel I350 1GbE RJ45 4-port OCP & Marvell QL41232 10/25GbE SFP28<br>2-Port PCIe Ethernet Adapter | 
