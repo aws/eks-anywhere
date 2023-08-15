@@ -183,6 +183,9 @@ Minimum number of nodes for this node group’s autoscaling configuration.
 ### workerNodeGroupConfigurations.autoscalingConfiguration.maxCount
 Maximum number of nodes for this node group’s autoscaling configuration.
 
+### workerNodeGroupConfigurations.kubernetesVersion
+The Kubernetes version you want to use for this worker node group. Supported values: 1.27, 1.26, 1.25, 1.24, 1.23
+
 ### datacenterRef
 Refers to the Kubernetes object with Nutanix environment specific configuration. See `NutanixDatacenterConfig` fields below.
 
