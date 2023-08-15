@@ -61,7 +61,7 @@ At this point, Tinkerbell will try to boot up the machines in the target cluster
 ### Continuing cluster creation
 
 Tinkerbell takes over the activities for creating provisioning the Bare Metal machines to become the new target cluster.
-See [Overview of Tinkerbell in EKS Anywhere]({{< relref "./#overview-of-tinkerbell-in-eks-anywhere" >}}) for examples of commands you can run to watch over this process.
+See [Overview of Tinkerbell in EKS Anywhere]({{< relref "./tinkerbell-overview" >}}) for examples of commands you can run to watch over this process.
 
 ![Continue creating EKS Anywhere Bare Metal cluster](/images/eksa-baremetal-continue.png)
 

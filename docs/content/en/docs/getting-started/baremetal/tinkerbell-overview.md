@@ -13,7 +13,7 @@ As someone deploying an EKS Anywhere cluster on Bare Metal, you have several opp
 
 * **Create a hardware CSV file**: You are required to create a [hardware CSV file]({{< relref "bare-preparation/#prepare-hardware-inventory" >}}) that contains an entry for every physical machine you want to add at cluster creation time. 
 * **Create an EKS Anywhere cluster**: By modifying the [Bare Metal configuration file]({{< relref "./bare-spec" >}}) used to create a cluster, you can change some Tinkerbell settings or add actions to define how the operating system on each machine is configured.
-* **Monitor provisioning**: You can follow along with the [Tinkerbell Overview]({{< relref "./tinkerbell-overview/#overview-of-tinkerbell-in-eks-anywhere" >}}) in this page to monitor the progress of your hardware provisioning, as Tinkerbell finds machines and attempts to network boot, configure, and restart them.
+* **Monitor provisioning**: You can follow along with the Tinkerbell Overview in this page to monitor the progress of your hardware provisioning, as Tinkerbell finds machines and attempts to network boot, configure, and restart them.
 
 When you run the command to create an EKS Anywhere Bare Metal cluster, a set of Tinkerbell components start up on the Admin machine. One of these components runs in a container on Docker (Boots), while other components run as either controllers or services in pods on the Kubernetes [kind](https://kind.sigs.k8s.io/) cluster that is started up on the Admin machine. Tinkerbell components include Boots, Hegel, Rufio, and Tink.
 

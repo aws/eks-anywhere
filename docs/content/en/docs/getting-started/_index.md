@@ -3,7 +3,6 @@ title: Installation
 linkTitle: Installation
 aliases:
     /docs/getting-started/production-environment/
-    /docs/getting-started
 main_menu: true
 weight: 20
 card:
