@@ -6,7 +6,7 @@ aliases:
     /docs/reference/clusterspec/
     /docs/reference/clusterspec/optional/
 description: >
-  Optional Config reference for EKS Anywhere clusters
+  Optional Config references for EKS Anywhere clusters such as etcd, OS, CNI, IRSA, proxy, and registry mirror
 ---
 Configuration pages here describe optional features you can add to your EKS Anywhere provider's clusterspec file.
 See each provider's installation section for details on which optional features are supported.
