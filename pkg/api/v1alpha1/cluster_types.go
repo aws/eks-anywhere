@@ -79,6 +79,7 @@ type ClusterSpec struct {
 // and the bundlesRef should were both populated in submission to the kubeapi server, though bundlesRef was nil
 // in the initially applied Cluster spec. After addressing that issue, we should clean this up
 // https://github.com/aws/eks-anywhere-internal/issues/1611
+// +kubebuilder:object:generate=false
 type ClusterSpecGenerate struct {
 	KubernetesVersion             KubernetesVersion              `json:"kubernetesVersion,omitempty"`
 	ControlPlaneConfiguration     ControlPlaneConfiguration      `json:"controlPlaneConfiguration,omitempty"`
