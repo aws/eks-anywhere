@@ -70,6 +70,10 @@ func (r *Cluster) ValidateCreate() error {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("spec"), r.Spec, err.Error()))
 	}
 
+	if r.Spec.EtcdEncryption != nil {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("spec"), r.Spec, "etcdEncryption is not supported during cluster creation"))
+	}
+
 	if len(allErrs) != 0 {
 		return apierrors.NewInvalid(GroupVersion.WithKind(ClusterKind).GroupKind(), r.Name, allErrs)
 	}
@@ -102,6 +106,10 @@ func (r *Cluster) ValidateUpdate(old runtime.Object) error {
 	allErrs = append(allErrs, ValidateEksaVersionSkew(r, oldCluster)...)
 
 	allErrs = append(allErrs, ValidateWorkerKubernetesVersionSkew(r, oldCluster)...)
+
+	if err := validateEtcdEncryptionConfig(r.Spec.EtcdEncryption); err != nil {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("spec"), r.Spec, err.Error()))
+	}
 
 	if len(allErrs) != 0 {
 		return apierrors.NewInvalid(GroupVersion.WithKind(ClusterKind).GroupKind(), r.Name, allErrs)

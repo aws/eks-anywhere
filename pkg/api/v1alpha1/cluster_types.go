@@ -70,6 +70,7 @@ type ClusterSpec struct {
 	BundlesRef         *BundlesRef         `json:"bundlesRef,omitempty"`
 	EksaVersion        *EksaVersion        `json:"eksaVersion,omitempty"`
 	MachineHealthCheck *MachineHealthCheck `json:"machineHealthCheck,omitempty"`
+	EtcdEncryption     *[]EtcdEncryption   `json:"etcdEncryption,omitempty"`
 }
 
 // ClusterSpecGenerate is the same as ClusterSpec except for removing the omitempty tag from BundlesRef.

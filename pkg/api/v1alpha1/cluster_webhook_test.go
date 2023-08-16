@@ -1162,6 +1162,87 @@ func TestClusterCreateManagementCluster(t *testing.T) {
 	g.Expect(cluster.ValidateCreate()).To(MatchError(ContainSubstring("creating new cluster on existing cluster is not supported for self managed clusters")))
 }
 
+func TestClusterCreateEtcdEncryption(t *testing.T) {
+	features.ClearCache()
+	workerConfiguration := append([]v1alpha1.WorkerNodeGroupConfiguration{}, v1alpha1.WorkerNodeGroupConfiguration{Count: ptr.Int(5)})
+	cluster := &v1alpha1.Cluster{
+		Spec: v1alpha1.ClusterSpec{
+			WorkerNodeGroupConfigurations: workerConfiguration,
+			KubernetesVersion:             v1alpha1.Kube119,
+			ControlPlaneConfiguration: v1alpha1.ControlPlaneConfiguration{
+				Count: 3, Endpoint: &v1alpha1.Endpoint{Host: "1.1.1.1/1"},
+			},
+			ExternalEtcdConfiguration: &v1alpha1.ExternalEtcdConfiguration{Count: 3},
+			EtcdEncryption: &[]v1alpha1.EtcdEncryption{
+				{},
+			},
+			ManagementCluster: v1alpha1.ManagementCluster{
+				Name: "management-cluster",
+			},
+		},
+	}
+
+	g := NewWithT(t)
+	g.Expect(cluster.ValidateCreate()).To(MatchError(ContainSubstring("etcdEncryption is not supported during cluster creation")))
+}
+
+func TestClusterUpdateEtcdEncryption(t *testing.T) {
+	features.ClearCache()
+	workerConfiguration := append([]v1alpha1.WorkerNodeGroupConfiguration{}, v1alpha1.WorkerNodeGroupConfiguration{Count: ptr.Int(5)})
+	baseCluster := &v1alpha1.Cluster{
+		Spec: v1alpha1.ClusterSpec{
+			WorkerNodeGroupConfigurations: workerConfiguration,
+			KubernetesVersion:             v1alpha1.Kube119,
+			ControlPlaneConfiguration: v1alpha1.ControlPlaneConfiguration{
+				Count: 3, Endpoint: &v1alpha1.Endpoint{Host: "1.1.1.1/1"},
+			},
+			ExternalEtcdConfiguration: &v1alpha1.ExternalEtcdConfiguration{Count: 3},
+
+			ManagementCluster: v1alpha1.ManagementCluster{
+				Name: "management-cluster",
+			},
+		},
+	}
+
+	tests := []struct {
+		testName         string
+		expectedErr      string
+		encryptionConfig *[]v1alpha1.EtcdEncryption
+	}{
+		{
+			testName:         "zero_encryption_configs",
+			encryptionConfig: &[]v1alpha1.EtcdEncryption{},
+			expectedErr:      "invalid number of encryption providers, currently only 1 encryption provider is supported",
+		},
+		{
+			testName: "two_encryption_configs",
+			encryptionConfig: &[]v1alpha1.EtcdEncryption{
+				{
+					Providers: []v1alpha1.EtcdEncryptionProvider{},
+					Resources: []string{},
+				},
+				{
+					Providers: []v1alpha1.EtcdEncryptionProvider{},
+					Resources: []string{},
+				},
+			},
+			expectedErr: "invalid number of encryption providers, currently only 1 encryption provider is supported",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.testName, func(t *testing.T) {
+			newCluster := baseCluster.DeepCopy()
+			newCluster.Spec.EtcdEncryption = tt.encryptionConfig
+
+			g := NewWithT(t)
+			err := newCluster.ValidateUpdate(baseCluster)
+			t.Log(err.Error())
+			g.Expect(err).To(MatchError(ContainSubstring(tt.expectedErr)))
+		})
+	}
+}
+
 func TestClusterCreateCloudStackMultipleWorkerNodeGroupsValidation(t *testing.T) {
 	features.ClearCache()
 	cluster := baseCluster()
