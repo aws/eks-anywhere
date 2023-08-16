@@ -172,29 +172,9 @@ Follow these steps if you want to use your initial cluster to create and manage 
 
    ```
    kubectl get clusters w01 -o yaml
-   ...
-   status:
-      conditions:
-      - lastTransitionTime: "2023-08-15T20:35:15Z"
-      status: "True"
-      type: Ready
-      - lastTransitionTime: "2023-08-15T20:35:15Z"
-      status: "True"
-      type: ControlPlaneInitialized
-      - lastTransitionTime: "2023-08-15T20:35:15Z"
-      status: "True"
-      type: ControlPlaneReady
-      - lastTransitionTime: "2023-08-15T20:35:15Z"
-      status: "True"
-      type: DefaultCNIConfigured
-      - lastTransitionTime: "2023-08-15T20:35:15Z"
-      status: "True"
-      type: WorkersReady
-      observedGeneration: 2
    ```
 
    The cluster has been fully upgraded once the status of the `Ready` condition is marked `True`.
-
    See the [cluster status]({{< relref "./cluster-status" >}}) guide for more information.
    
 7. The kubeconfig for your new cluster is stored as a secret on the management cluster.
