@@ -71,7 +71,7 @@ Control plane components will be upgraded before worker nodes.
 A new VM is created with the new version and then an old VM is removed.
 This happens one at a time until all the control plane components have been upgraded.
 
-Worker node groups can optionally be upgraded separately from the control plane by setting `workerNodeGroupConfiguration.kubernetesVersion`. There can only be a skew of two minor versions between the control plane and each worker node. Removing workerNodeGroupConfiguration.kubernetesVersion will trigger an upgrade to that node group to upgrade to the root level `kubernetesVersion`.
+Worker node groups can optionally be upgraded separately from the control plane by setting `workerNodeGroupConfiguration.kubernetesVersion`. There can only be a skew of two minor versions between the control plane and each worker node. Removing `workerNodeGroupConfiguration.kubernetesVersion` will trigger an upgrade to that node group to upgrade to the root level `kubernetesVersion`.
 
 ### Core component upgrades
 
