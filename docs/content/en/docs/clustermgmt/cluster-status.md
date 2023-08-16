@@ -72,12 +72,12 @@ Conditions provide a high-level status report representing an assessment of clus
 
   * `ControlPlaneInitialized` - reports the first control plane has been initialized and the cluster is contactable with the kubeconfig. Once this condition is marked `True`, its value never changes.
 
-  * `ControlPlaneReady` -  reports that the condition of the current state of the control plane with respect to the desired state specified in the Cluster specification. This condition is marked `True` once the number of control plane nodes in the cluster match the expected number of worker nodes as defined in the cluster specifications and all the control plane nodes are up to date and ready.
+  * `ControlPlaneReady` -  reports that the condition of the current state of the control plane with respect to the desired state specified in the Cluster specification. This condition is marked `True` once the number of control plane nodes in the cluster match the expected number of control plane nodes as defined in the cluster specifications and all the control plane nodes are up to date and ready.
 
   * `DefaultCNIConfigured` - reports the configuration state of the default CNI specified in the cluster specifications. It will be marked as `True` once the default CNI has been successfully configured on the cluster. 
-  However, if the EKS Anywhere default cilium CNI has been [configured to skip upgrades]({{< relref "../getting-started/optional/cni/#use-a-custom-cni" >}}) in cluster specification, then this condition will be marked as `False` with the reason `SkipUpgradesForDefaultCNIConfigured`.
+  However, if the EKS Anywhere default cilium CNI has been [configured to skip upgrades]({{< relref "../getting-started/optional/cni/#use-a-custom-cni" >}}) in the cluster specification, then this condition will be marked as `False` with the reason `SkipUpgradesForDefaultCNIConfigured`.
 
-  * `WorkersReady` - reports that the condition of the current state of worker machines vs the desired state specified in the Cluster specification. This condition is marked `True` once the number of worker nodes in the cluster match the expected number of worker nodes as defined in the cluster specifications and all the worker plane nodes are up to date and ready.
+  * `WorkersReady` - reports that the condition of the current state of worker machines versus the desired state specified in the Cluster specification. This condition is marked `True` once the number of worker nodes in the cluster match the expected number of worker nodes as defined in the cluster specifications and all the worker nodes are up to date and ready.
 
   * `Ready` - reports a summary of the following conditions: `ControlPlaneInitialized`, `ControlPlaneReady`, and `WorkersReady`. It indicates an overall operational state of the EKS Anywhere cluster. It will be marked `True` once the current state of the cluster has fully reached the desired state specified in the Cluster spec.
 
