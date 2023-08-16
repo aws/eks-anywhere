@@ -11,7 +11,7 @@ type EtcdEncryption struct {
 // Currently only KMS provider is supported.
 type EtcdEncryptionProvider struct {
 	// KMS defines the configuration for KMS Encryption provider.
-	KMS KMS `json:"kms"`
+	KMS *KMS `json:"kms"`
 }
 
 // KMS defines the configuration for KMS Encryption provider.
