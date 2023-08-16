@@ -73,15 +73,15 @@ func TestGenerateBundleManifest(t *testing.T) {
 			testName:            "Dev-release from main",
 			buildRepoBranchName: "main",
 			cliRepoBranchName:   "main",
-			cliMinVersion:       "v0.16.0",
-			cliMaxVersion:       "v0.16.0",
+			cliMinVersion:       "v0.17.0",
+			cliMaxVersion:       "v0.17.0",
 		},
 		{
-			testName:            "Dev-release from release-0.16",
-			buildRepoBranchName: "release-0.16",
-			cliRepoBranchName:   "release-0.16",
-			cliMinVersion:       "v0.16.0",
-			cliMaxVersion:       "v0.16.0",
+			testName:            "Dev-release from release-0.17",
+			buildRepoBranchName: "release-0.17",
+			cliRepoBranchName:   "release-0.17",
+			cliMinVersion:       "v0.17.0",
+			cliMaxVersion:       "v0.17.0",
 		},
 	}
 
