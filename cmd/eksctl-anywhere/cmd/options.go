@@ -138,8 +138,9 @@ func newClusterSpec(options clusterOptions) (*cluster.Spec, error) {
 	}
 
 	if clusterSpec.Cluster.IsManaged() && options.managementKubeconfig == "" {
-		if kubeconfig.FromEnvironment() != "" {
-			options.managementKubeconfig = kubeconfig.FromEnvironment()
+		envKubeconfig := kubeconfig.FromEnvironment()
+		if envKubeconfig != "" {
+			options.managementKubeconfig = envKubeconfig
 		} else {
 			// check if kubeconfig for management cluster exists locally
 			managementKubeconfigPath := kubeconfig.FromClusterName(clusterSpec.Cluster.Spec.ManagementCluster.Name)
