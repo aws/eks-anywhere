@@ -71,6 +71,8 @@ Control plane components will be upgraded before worker nodes.
 A new VM is created with the new version and then an old VM is removed.
 This happens one at a time until all the control plane components have been upgraded.
 
+Worker node groups can optionally be upgraded separately from the control plane by setting `workerNodeGroupConfiguration.kubernetesVersion`. There can only be a skew of two minor versions between the control plane and each worker node. Removing `workerNodeGroupConfiguration.kubernetesVersion` will trigger an upgrade to that node group to upgrade to the root level `kubernetesVersion`.
+
 ### Core component upgrades
 
 EKS Anywhere `upgrade` also supports upgrading the following core components:
@@ -226,6 +228,7 @@ allowing you to upgrade a number of fields simultaneously with the same procedur
 - `controlPlaneConfigurations.machineGroupRef.name`
 - `workerNodeGroupConfigurations.count`
 - `workerNodeGroupConfigurations.machineGroupRef.name`
+- `workerNodeGroupConfigurations.kubernetesVersion`
 - `etcdConfiguration.externalConfiguration.machineGroupRef.name`
 - `identityProviderRefs` (Only for `kind:OIDCConfig`, `kind:AWSIamConfig` is immutable)
 - `gitOpsRef` (Once set, you can't change or delete the field's content later)
