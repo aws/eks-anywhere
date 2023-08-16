@@ -43,6 +43,7 @@ Please upgrade to `v0.15.3` if you are using Tinkerbell (Bare Metal) provider.
 - Add support for upgrading control plane nodes separately from worker nodes for vSphere, Nutanix, Snow, and Cloudstack providers [#6180](https://github.com/aws/eks-anywhere/pull/6180)
 - Add preflight validation to prevent skip eks-a minor version upgrades [#5688](https://github.com/aws/eks-anywhere/issues/5688)
 - Add preflight check to block using kindnetd CNI in all providers except Docker [#6097]https://github.com/aws/eks-anywhere/issues/6097
+- Added feature to configure machine health checks for API managed clusters and a new way to configure health check timeouts via the EKKSA spec. [#6176]https://github.com/aws/eks-anywhere/pull/6176
 
 ### Upgraded
 - Cluster API Provider vSphere: `v1.6.1` to `v1.7.0`
