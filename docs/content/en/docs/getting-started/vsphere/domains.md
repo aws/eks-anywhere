@@ -1,4 +1,6 @@
-
+---
+toc_hide: true
+---
 * vCenter endpoint (must be accessible to EKS Anywhere clusters)
 * public.ecr.aws
 * anywhere-assets.eks.amazonaws.com (to download the EKS Anywhere binaries, manifests and OVAs)

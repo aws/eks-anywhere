@@ -6,6 +6,6 @@ aliases:
     /docs/getting-started/production-environment/vsphere-getstarted/
     /docs/reference/vsphere/
 description: >
-  Install on vSphere
+    Create an EKS Anywhere cluster on vSphere
 ---
 

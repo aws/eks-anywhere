@@ -1,6 +1,8 @@
 ---
 title: 1. Admin Machine
 weight: 10
+description: >
+  Steps for setting up the Admin Machine
 ---
 
 EKS Anywhere will create and manage Kubernetes clusters on multiple providers.
