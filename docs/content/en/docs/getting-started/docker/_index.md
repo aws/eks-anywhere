@@ -1,5 +1,5 @@
 ---
-title: Install on Docker (dev only)
+title: Create Docker Cluster (dev only)
 linkTitle: Install on Docker (dev only)
 aliases:
     /docs/getting-started/local-environment/

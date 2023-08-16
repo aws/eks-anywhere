@@ -5,5 +5,5 @@ weight: 30
 aliases:
     /docs/reference/baremetal/
 description: >
-  Install on Bare Metal 
+    Create an EKS Anywhere cluster on Bare Metal
 ---

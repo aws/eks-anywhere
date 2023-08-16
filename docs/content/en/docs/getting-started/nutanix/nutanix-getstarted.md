@@ -1,9 +1,9 @@
 ---
 title: "Create Nutanix cluster" 
-linkTitle: "3. Install on Nutanix" 
+linkTitle: "3. Create cluster" 
 weight: 30
 description: >
-  Create a cluster on Nutanix Cloud Infrastructure with AHV
+  Create an EKS Anywhere cluster on Nutanix Cloud Infrastructure with AHV
 ---
 
 EKS Anywhere supports a Nutanix Cloud Infrastructure (NCI) provider for EKS Anywhere deployments.

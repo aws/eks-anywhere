@@ -47,7 +47,7 @@ Supported workload cluster creation, upgrade and deletion tools include:
 ## What’s the difference between a management cluster and a bootstrap cluster for EKS Anywhere?
 
 A management cluster is a long-lived entity you have to actively operate.
-The _bootstrap_ cluster is a temporary, short-lived kind cluster that is created on a separate [Administrative machine]({{< relref "../getting-started/overview/#administrative-machine" >}}) to facilitate the creation of an initial standalone or management cluster.
+The _bootstrap_ cluster is a temporary, short-lived kind cluster that is created on a separate [Administrative machine]({{< relref "../getting-started/install" >}}) to facilitate the creation of an initial standalone or management cluster.
 
 The `kind` cluster is automatically deleted by the end of the initial cluster creation.
 
