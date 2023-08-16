@@ -70,7 +70,7 @@ Before setting up Fluent Bit, first create an IAM Policy and Role to send logs t
 
      ![Observability Copy ARN](/images/observability_arn_copy.png)
 
-#### Step 3: Install Fluent Bit
+## Step 3: Install Fluent Bit
 
 1. Create the `amazon-cloudwatch` namespace using this command:
 
@@ -163,9 +163,9 @@ Before setting up Fluent Bit, first create an IAM Policy and Role to send logs t
 
 Deploy a simple [test application]({{< relref "../../workloadmgmt/test-app/" >}}) to verify your setup is working properly.
 
-#### Step 5: View cluster logs and metrics
+## Step 5: View cluster logs and metrics
 
-##### Cloudwatch Logs
+### Cloudwatch Logs
 1. Open the [CloudWatch console](https://us-west-2.console.aws.amazon.com/cloudwatch/home?region=us-west-2#logsV2:log-groups). The link opens the console and displays your current available log groups.
 
 2. Choose the EKS Anywhere clustername that you want to view logs for. The log group name format is /aws/containerinsights/`my-EKS-Anywhere-cluster`/cluster.
@@ -184,7 +184,7 @@ Deploy a simple [test application]({{< relref "../../workloadmgmt/test-app/" >}}
 
      ![Observability Container Insights](/images/observability_logGroups_filterlog.png)
 
-##### Cloudwatch Container Insights
+### Cloudwatch Container Insights
 
 1. Open the [CloudWatch console](https://us-west-2.console.aws.amazon.com/cloudwatch/home?region=us-west-2#container-insights:performance). The link opens the Container Insights performance Monitoring console and displays a dropdown to select your `EKS Clusters`.
 
