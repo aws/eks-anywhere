@@ -2,20 +2,19 @@
 title: "Cluster Autoscaler"
 linkTitle: "Add Cluster Autoscaler"
 weight: 13
-date: 2022-10-20
+date: 2023-08-16
 description: >
   Install/upgrade/uninstall Cluster Autoscaler
 ---
 
-If you have not already done so, make sure your cluster meets the [package prerequisites.]({{< relref "../prereq" >}})
-Be sure to refer to the [troubleshooting guide]({{< relref "../troubleshoot" >}}) in the event of a problem.
+If you have not already done so, make sure your EKS Anywhere cluster meets the [package prerequisites.]({{< relref "../prereq" >}}) 
 
-## Autoscale A Cluster
+Refer to the [troubleshooting guide]({{< relref "../troubleshoot" >}}) in the event of a problem.
+
+## Enable Cluster Autoscaling
 
 <!-- this content needs to be indented so the numbers are automatically incremented -->
-1. Ensure you have configured at least one WorkerNodeGroup in your cluster to support autoscaling as outlined [Autoscaling configuration]({{< relref "../../getting-started/optional/autoscaling/" >}})
-
-    Cluster Autoscaler only works on node groups with an autoscalingConfiguration set:
+1. Ensure you have configured at least one worker node group in your cluster specification to enable autoscaling as outlined in [Autoscaling configuration.]({{< relref "../../getting-started/optional/autoscaling/" >}}) Cluster Autoscaler only works on node groups with an `autoscalingConfiguration` set:
 
     ```yaml
     apiVersion: anywhere.eks.amazonaws.com/v1alpha1
@@ -34,18 +33,13 @@ Be sure to refer to the [troubleshooting guide]({{< relref "../troubleshoot" >}}
           count: 1
           name: md-0
     ```
-    See [Autoscaling configuration]({{< relref "../../getting-started/optional/autoscaling/" >}}) for details.
 
-1. Generate the package configuration
+1. Generate the package configuration.
    ```bash
    eksctl anywhere generate package cluster-autoscaler --cluster <cluster-name> > cluster-autoscaler.yaml
    ```
 
-1. Add the desired configuration to `cluster-autoscaler.yaml`
-
-   Please see [complete configuration options]({{< relref "../cluster-autoscaler" >}}) for all configuration options and their default values.
-
-    Example package file configuring a cluster autoscaler package to scale cluster with <cluster-name>.
+1. Add the desired configuration to `cluster-autoscaler.yaml`. See [configuration options]({{< relref "../cluster-autoscaler" >}}) for all configuration options and their default values. See below for an example package file configuring a Cluster Autoscaler package.
 
     ```yaml
     apiVersion: packages.eks.amazonaws.com/v1alpha1
@@ -73,30 +67,27 @@ Be sure to refer to the [troubleshooting guide]({{< relref "../troubleshoot" >}}
    ```bash
    eksctl anywhere get packages --cluster <cluster-name>
    ```
-
-   Example command output
-   ```
+   ```stdout
    NAMESPACE                  NAME                          PACKAGE              AGE   STATE       CURRENTVERSION                                               TARGETVERSION                                                         DETAIL
    eksa-packages-mgmt-v-vmc   cluster-autoscaler            cluster-autoscaler   18h   installed   9.21.0-1.21-147e2a701f6ab625452fe311d5c94a167270f365         9.21.0-1.21-147e2a701f6ab625452fe311d5c94a167270f365 (latest)
    ```
 
    To verify that autoscaling works, apply the deployment below. You must continue scaling pods until the deployment has pods in a pending state.
-   This is when cluster autoscaler will begin to autoscale your machine deployment.
+   This is when Cluster Autoscaler will begin to autoscale your machine deployment.
    This process may take a few minutes.
    ```bash
    kubectl apply -f https://raw.githubusercontent.com/aws/eks-anywhere/d8575bbd2a85a6c6bbcb1a54868cf7790df56a63/test/framework/testdata/hpa_busybox.yaml
    kubectl scale deployment hpa-busybox-test --replicas 100
    ```
 
-
 ## Update
-To update package configuration, update cluster-autoscaler.yaml file, and run the following command:
+To update package configuration, update the `cluster-autoscaler.yaml` file and run the following command:
 ```bash
 eksctl anywhere apply package -f cluster-autoscaler.yaml
 ```
 
 ## Update Worker Node Group Autoscaling Configuration
-It is possible to change the autoscaling configuration of a worker node group by updating the WorkerNodeGroup.autoscalingConfiguration in your cluster specification and running a cluster upgrade.
+It is possible to change the autoscaling configuration of a worker node group by updating the `autoscalingConfiguration` in your cluster specification and running a cluster upgrade.
 
 ## Upgrade
 
@@ -108,7 +99,7 @@ The curated packages controller automatically polls for the latest bundle, but r
 
 ## Uninstall
 
-To uninstall Cluster Autoscaler, simply delete the package
+To uninstall Cluster Autoscaler, delete the package
 
 ```bash
 eksctl anywhere delete package --cluster <cluster-name> cluster-autoscaler
