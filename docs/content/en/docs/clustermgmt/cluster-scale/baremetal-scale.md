@@ -76,29 +76,9 @@ If you don't have any available hardware that match this requirement in the clus
 
     ```
     kubectl get clusters w01 -o yaml
-    ...
-    status:
-      conditions:
-      - lastTransitionTime: "2023-08-15T20:35:15Z"
-        status: "True"
-        type: Ready
-      - lastTransitionTime: "2023-08-15T20:35:15Z"
-        status: "True"
-        type: ControlPlaneInitialized
-      - lastTransitionTime: "2023-08-15T20:35:15Z"
-        status: "True"
-        type: ControlPlaneReady
-      - lastTransitionTime: "2023-08-15T20:35:15Z"
-        status: "True"
-        type: DefaultCNIConfigured
-      - lastTransitionTime: "2023-08-15T20:35:15Z"
-        status: "True"
-        type: WorkersReady
-      observedGeneration: 2
     ```
 
     The cluster has been fully upgraded once the status of the `Ready` condition is marked `True`.
-
     See the [cluster status]({{< relref "../cluster-status" >}}) guide for more information.
 
 3. **GitOps**: See [Manage separate workload clusters with GitOps]({{< relref "../cluster-flux.md#manage-separate-workload-clusters-using-gitops" >}})

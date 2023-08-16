@@ -21,7 +21,7 @@ export KUBECONFIG=${CLUSTER_NAME}/${CLUSTER_NAME}-eks-a-cluster.kubeconfig
 ```
 
 To view an EKS Anywhere cluster status, use `kubectl` command show the status of the cluster object.
-The output should show the `yaml` definition of the EKS Anywhere `Cluster` object which has a `status` field
+The output should show the `yaml` definition of the EKS Anywhere `Cluster` object which has a `status` field.
 
 ```
 kubectl get clusters $CLUSTER_NAME -o yaml
@@ -64,7 +64,7 @@ Provides a collection of condition objects that report a high-level assessment o
 
 **`status.observedGeneration`**
 
-This is the latest generation observed, set everytime the status is updated. If this is not the same as the cluster object's `metadata.generation`, it means that the status being view represents an old generation of the cluster specification and is not up-to-date yet. 
+This is the latest generation observed, set everytime the status is updated. If this is not the same as the cluster object's `metadata.generation`, it means that the status being viewed represents an old generation of the cluster specification and is not up-to-date yet. 
 
 ### Cluster status conditions
 
