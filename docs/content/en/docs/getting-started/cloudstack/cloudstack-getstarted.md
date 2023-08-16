@@ -233,6 +233,18 @@ Follow these steps if you want to use your initial cluster to create and manage 
       ```bash
       kubectl apply -f eksa-w01-cluster.yaml 
       ```
+
+       To check the state of a cluster managed with the cluster lifecyle feature, use `kubectl` to show the cluster object with its status.
+      
+      The `status` field on the cluster object field holds information about the current state of the cluster.
+
+      ```
+      kubectl get clusters w01 -o yaml
+      ```
+
+      The cluster has been fully upgraded once the status of the `Ready` condition is marked `True`.
+      See the [cluster status]({{< relref "../../clustermgmt/cluster-status" >}}) guide for more information.
+
      
 1. To check the workload cluster, get the workload cluster credentials and run a [test workload:]({{< relref "../../workloadmgmt/test-app" >}})
 
