@@ -1,8 +1,8 @@
 ---
-title: "Observability"
+title: "Observability in EKS Anywhere"
 linkTitle: "Observability"
-date: 2017-01-05
-weight: 40
+date: 2023-08-11
+weight: 50
 description: >
-  Observability
+  Monitoring, Logging, and Tracing for EKS Anywhere Clusters.
 ---
