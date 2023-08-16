@@ -21,6 +21,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
 	"github.com/aws/eks-anywhere/pkg/types"
+	"github.com/aws/eks-anywhere/pkg/validations"
 	"github.com/aws/eks-anywhere/pkg/version"
 )
 
@@ -137,7 +138,17 @@ func newClusterSpec(options clusterOptions) (*cluster.Spec, error) {
 	}
 
 	if clusterSpec.Cluster.IsManaged() && options.managementKubeconfig == "" {
-		options.managementKubeconfig = kubeconfig.FromEnvironment()
+		if kubeconfig.FromEnvironment() != "" {
+			options.managementKubeconfig = kubeconfig.FromEnvironment()
+		} else {
+			// check if kubeconfig for management cluster exists locally
+			managementKubeconfigPath := kubeconfig.FromClusterName(clusterSpec.Cluster.Spec.ManagementCluster.Name)
+			if validations.FileExistsAndIsNotEmpty(managementKubeconfigPath) {
+				options.managementKubeconfig = managementKubeconfigPath
+			} else {
+				return nil, fmt.Errorf("management kubeconfig file not found, must be present for workload cluster operations")
+			}
+		}
 	}
 
 	if options.managementKubeconfig != "" {
