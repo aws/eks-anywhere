@@ -119,6 +119,14 @@ rules:
   - list
   - watch
 - apiGroups:
+  - anywhere.eks.amazonaws.com
+  resources:
+  - eksareleases
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
   - bmc.tinkerbell.org
   resources:
   - machines
@@ -159,6 +167,16 @@ rules:
   - list
   - patch
   - update
+  - watch
+- apiGroups:
+  - cluster.x-k8s.io
+  resources:
+  - machinehealthchecks
+  verbs:
+  - create
+  - get
+  - list
+  - patch
   - watch
 - apiGroups:
   - clusterctl.cluster.x-k8s.io
@@ -269,14 +287,6 @@ rules:
   verbs:
   - patch
   - update
-- apiGroups:
-  - anywhere.eks.amazonaws.com
-  resources:
-  - eksareleases
-  verbs:
-  - get
-  - list
-  - watch
 - apiGroups:
   - packages.eks.amazonaws.com
   resources:

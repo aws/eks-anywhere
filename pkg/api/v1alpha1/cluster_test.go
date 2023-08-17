@@ -351,11 +351,6 @@ func TestGetAndValidateClusterConfig(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			testName: "Invalid CloudStack 1.25",
-			fileName: "testdata/cluster_1_25_cloudstack.yaml",
-			wantErr:  true,
-		},
-		{
 			testName: "namespace mismatch between cluster and datacenter",
 			fileName: "cluster_1_20_namespace_mismatch_between_cluster_and_datacenter.yaml",
 			wantErr:  true,
@@ -3419,6 +3414,51 @@ func TestValidateMDUpgradeRolloutStrategy(t *testing.T) {
 	}
 }
 
+func TestValidateEksaVersion(t *testing.T) {
+	tests := []struct {
+		name       string
+		wantErr    string
+		version    string
+		bundlesRef *BundlesRef
+	}{
+		{
+			name:       "both bundlesref and version",
+			wantErr:    "cannot pass both bundlesRef and eksaVersion",
+			version:    "v0.0.0",
+			bundlesRef: &BundlesRef{},
+		},
+		{
+			name:       "eksaversion success",
+			wantErr:    "",
+			version:    "v0.0.0",
+			bundlesRef: nil,
+		},
+		{
+			name:       "eksaversion fail",
+			wantErr:    "eksaVersion is not a valid semver",
+			version:    "invalid",
+			bundlesRef: nil,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			config := &Cluster{
+				Spec: ClusterSpec{
+					EksaVersion: (*EksaVersion)(&tt.version),
+					BundlesRef:  tt.bundlesRef,
+				},
+			}
+			err := validateEksaVersion(config)
+			if tt.wantErr == "" {
+				g.Expect(err).To(BeNil())
+			} else {
+				g.Expect(err).To(MatchError(ContainSubstring(tt.wantErr)))
+			}
+		})
+	}
+}
+
 func TestGetClusterDefaultKubernetesVersion(t *testing.T) {
 	g := NewWithT(t)
 	g.Expect(GetClusterDefaultKubernetesVersion()).To(Equal(Kube127))
@@ -3573,53 +3613,6 @@ func TestClusterMDUpgradeRolloutStrategyNotNil(t *testing.T) {
 			cg := NewClusterGenerate("test-cluster", WorkerNodeConfigCount(1), WithWorkerMachineUpgradeRolloutStrategy(5, 2))
 			g := NewWithT(t)
 			g.Expect(cg.Spec.WorkerNodeGroupConfigurations).To(Equal(tt.want))
-		})
-	}
-}
-
-func TestCloudstackK8sVersion(t *testing.T) {
-	tests := []struct {
-		testName   string
-		k8sVersion KubernetesVersion
-		wantErr    error
-	}{
-		{
-			testName:   "SuccessK8sVersion",
-			k8sVersion: Kube122,
-			wantErr:    nil,
-		},
-		{
-			testName:   "SuccessK8sVersion",
-			k8sVersion: Kube123,
-			wantErr:    nil,
-		},
-		{
-			testName:   "SuccessK8sVersion",
-			k8sVersion: Kube124,
-			wantErr:    nil,
-		},
-		{
-			testName:   "FailureK8sVersion",
-			k8sVersion: Kube125,
-			wantErr:    errors.New("cloudstack provider does not support K8s version > 1.24"),
-		},
-		{
-			testName:   "FailureK8sVersion",
-			k8sVersion: Kube126,
-			wantErr:    errors.New("cloudstack provider does not support K8s version > 1.24"),
-		},
-		{
-			testName:   "InvalidK8sVersion",
-			k8sVersion: "1",
-			wantErr:    errors.New("converting kubeVersion 1 to semver invalid major version in semver 1.0: strconv.ParseUint: parsing \"\": invalid syntax"),
-		},
-	}
-	for _, tc := range tests {
-		t.Run(tc.testName, func(tt *testing.T) {
-			got := ValidateCloudStackK8sVersion(tc.k8sVersion)
-			if !reflect.DeepEqual(tc.wantErr, got) {
-				t.Errorf("%v got = %v, want %v", tc.testName, got, tc.wantErr)
-			}
 		})
 	}
 }

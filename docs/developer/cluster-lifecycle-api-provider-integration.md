@@ -52,13 +52,6 @@ When used in combination with API structs, the comparison step becomes trivial m
 
 ## Development
 
-### Enabling full cluster lifecycle API support
-
-Right now, there are two different implementations of the cluster controller: the legacy one, with limited operations support, and the new one, under development. This is gated by a feature gate. In order to enable it you have several alternatives:
-* Set `FULL_LIFECYCLE_API` to true before creating the management cluster. (`export FULL_LIFECYCLE_API=true`)
-* Set `FULL_LIFECYCLE_API` to true before running `tilt`
-* Manually add a flag arg to the `manager` command in the `eksa-controller-manager` deployment: `--feature-gates FullLifecycleAPI=true`
-
 ### Tooling
 
 The are some packages that can be useful when implementing a `ProviderClusterReconciler`. Their use is encouraged but not enforced.

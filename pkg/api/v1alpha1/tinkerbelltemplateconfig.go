@@ -1,16 +1,10 @@
 package v1alpha1
 
 import (
-	"fmt"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	yamlutil "k8s.io/apimachinery/pkg/util/yaml"
-	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1/thirdparty/tinkerbell"
 	"github.com/aws/eks-anywhere/release/api/v1alpha1"
-
-	yamlutilpkg "github.com/aws/eks-anywhere/pkg/yamlutil"
 )
 
 const TinkerbellTemplateConfigKind = "TinkerbellTemplateConfig"
@@ -65,28 +59,4 @@ func (c *TinkerbellTemplateConfigGenerate) Kind() string {
 
 func (c *TinkerbellTemplateConfigGenerate) Name() string {
 	return c.ObjectMeta.Name
-}
-
-func GetTinkerbellTemplateConfig(fileName string) (map[string]*TinkerbellTemplateConfig, error) {
-	templates := make(map[string]*TinkerbellTemplateConfig)
-	resources, err := yamlutilpkg.ParseMultiYamlFile(fileName)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, d := range resources {
-		var template TinkerbellTemplateConfig
-		if err := yaml.Unmarshal(d, &template); err != nil {
-			return nil, fmt.Errorf("unable to unmarshall content from file due to: %v", err)
-		}
-
-		if template.Kind() == template.ExpectedKind() {
-			if err := yamlutil.UnmarshalStrict(d, &template); err != nil {
-				return nil, fmt.Errorf("invalid template config content: %v", err)
-			}
-			templates[template.Name] = &template
-		}
-
-	}
-	return templates, nil
 }

@@ -27,14 +27,17 @@ const (
 	// ControlPlaneNotInitializedReason reports that the control plane is not initialized.
 	ControlPlaneNotInitializedReason = "ControlPlaneNotInitialized"
 
-	// WorkersReadyConditon reports the status on the worker nodes, indicating all those worker nodes
+	// WorkersReadyCondition reports the status on the worker nodes, indicating all those worker nodes
 	// are the right version and are ready, not including the old nodes.
-	WorkersReadyConditon ConditionType = "WorkersReady"
+	WorkersReadyCondition ConditionType = "WorkersReady"
 )
 
 const (
 	// NodesNotReadyReason reports the Cluster has some nodes that are not ready.
 	NodesNotReadyReason = "NodesNotReady"
+
+	// ControlPlaneComponentsUnhealthyReason reports that the Cluster control plane components are unhealthy.
+	ControlPlaneComponentsUnhealthyReason = "ControlPlaneComponentsUnhealthy"
 
 	// ScalingUpReason reports the Cluster is increasing the number of replicas for a set of nodes.
 	ScalingUpReason = "ScalingUp"

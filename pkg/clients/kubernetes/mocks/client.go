@@ -35,6 +35,25 @@ func (m *MockClient) EXPECT() *MockClientMockRecorder {
 	return m.recorder
 }
 
+// ApplyServerSide mocks base method.
+func (m *MockClient) ApplyServerSide(ctx context.Context, fieldManager string, obj kubernetes.Object, opts ...kubernetes.ApplyServerSideOption) error {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, fieldManager, obj}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "ApplyServerSide", varargs...)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ApplyServerSide indicates an expected call of ApplyServerSide.
+func (mr *MockClientMockRecorder) ApplyServerSide(ctx, fieldManager, obj interface{}, opts ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, fieldManager, obj}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ApplyServerSide", reflect.TypeOf((*MockClient)(nil).ApplyServerSide), varargs...)
+}
+
 // Create mocks base method.
 func (m *MockClient) Create(ctx context.Context, obj kubernetes.Object) error {
 	m.ctrl.T.Helper()
@@ -198,6 +217,25 @@ func (m *MockWriter) EXPECT() *MockWriterMockRecorder {
 	return m.recorder
 }
 
+// ApplyServerSide mocks base method.
+func (m *MockWriter) ApplyServerSide(ctx context.Context, fieldManager string, obj kubernetes.Object, opts ...kubernetes.ApplyServerSideOption) error {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, fieldManager, obj}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "ApplyServerSide", varargs...)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ApplyServerSide indicates an expected call of ApplyServerSide.
+func (mr *MockWriterMockRecorder) ApplyServerSide(ctx, fieldManager, obj interface{}, opts ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, fieldManager, obj}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ApplyServerSide", reflect.TypeOf((*MockWriter)(nil).ApplyServerSide), varargs...)
+}
+
 // Create mocks base method.
 func (m *MockWriter) Create(ctx context.Context, obj kubernetes.Object) error {
 	m.ctrl.T.Helper()
@@ -292,4 +330,39 @@ func (m *MockDeleteAllOfOption) ApplyToDeleteAllOf(arg0 *kubernetes.DeleteAllOfO
 func (mr *MockDeleteAllOfOptionMockRecorder) ApplyToDeleteAllOf(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ApplyToDeleteAllOf", reflect.TypeOf((*MockDeleteAllOfOption)(nil).ApplyToDeleteAllOf), arg0)
+}
+
+// MockApplyServerSideOption is a mock of ApplyServerSideOption interface.
+type MockApplyServerSideOption struct {
+	ctrl     *gomock.Controller
+	recorder *MockApplyServerSideOptionMockRecorder
+}
+
+// MockApplyServerSideOptionMockRecorder is the mock recorder for MockApplyServerSideOption.
+type MockApplyServerSideOptionMockRecorder struct {
+	mock *MockApplyServerSideOption
+}
+
+// NewMockApplyServerSideOption creates a new mock instance.
+func NewMockApplyServerSideOption(ctrl *gomock.Controller) *MockApplyServerSideOption {
+	mock := &MockApplyServerSideOption{ctrl: ctrl}
+	mock.recorder = &MockApplyServerSideOptionMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockApplyServerSideOption) EXPECT() *MockApplyServerSideOptionMockRecorder {
+	return m.recorder
+}
+
+// ApplyToApplyServerSide mocks base method.
+func (m *MockApplyServerSideOption) ApplyToApplyServerSide(arg0 *kubernetes.ApplyServerSideOptions) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "ApplyToApplyServerSide", arg0)
+}
+
+// ApplyToApplyServerSide indicates an expected call of ApplyToApplyServerSide.
+func (mr *MockApplyServerSideOptionMockRecorder) ApplyToApplyServerSide(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ApplyToApplyServerSide", reflect.TypeOf((*MockApplyServerSideOption)(nil).ApplyToApplyServerSide), arg0)
 }

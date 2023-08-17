@@ -17,7 +17,8 @@ type Bootstrapper interface {
 }
 
 type ClusterManager interface {
-	BackupCAPI(ctx context.Context, cluster *types.Cluster, managementStatePath string) error
+	BackupCAPI(ctx context.Context, cluster *types.Cluster, managementStatePath, clusterName string) error
+	BackupCAPIWaitForInfrastructure(ctx context.Context, cluster *types.Cluster, managementStatePath, clusterName string) error
 	MoveCAPI(ctx context.Context, from, to *types.Cluster, clusterName string, clusterSpec *cluster.Spec, checkers ...types.NodeReadyChecker) error
 	CreateWorkloadCluster(ctx context.Context, managementCluster *types.Cluster, clusterSpec *cluster.Spec, provider providers.Provider) (*types.Cluster, error)
 	PauseCAPIWorkloadClusters(ctx context.Context, managementCluster *types.Cluster) error
@@ -34,6 +35,7 @@ type ClusterManager interface {
 	CreateEKSANamespace(ctx context.Context, cluster *types.Cluster) error
 	CreateEKSAResources(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, datacenterConfig providers.DatacenterConfig, machineConfigs []providers.MachineConfig) error
 	ApplyBundles(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error
+	ApplyReleases(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error
 	PauseEKSAControllerReconcile(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, provider providers.Provider) error
 	ResumeEKSAControllerReconcile(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, provider providers.Provider) error
 	EKSAClusterSpecChanged(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) (bool, error)
@@ -77,10 +79,4 @@ type EksdUpgrader interface {
 
 type PackageInstaller interface {
 	InstallCuratedPackages(ctx context.Context)
-}
-
-// ClusterUpgrader prepares the cluster for an upgrade.
-type ClusterUpgrader interface {
-	PrepareUpgrade(ctx context.Context, spec *cluster.Spec, managementClusterKubeconfigPath, workloadClusterKubeconfigPath string) error
-	CleanupAfterUpgrade(ctx context.Context, spec *cluster.Spec, managementClusterKubeconfigPath, workloadClusterKubeconfigPath string) error
 }

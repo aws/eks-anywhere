@@ -39,3 +39,13 @@ func ReconcileObject(ctx context.Context, c client.Client, obj client.Object) er
 
 	return nil
 }
+
+// UpdateObject updates the existing object during reconciliation.
+// This is intended for special use cases only as the preferred method to reconcile objects is server-side apply.
+func UpdateObject(ctx context.Context, c client.Client, obj client.Object) error {
+	if err := c.Update(ctx, obj, client.FieldOwner(fieldManager)); err != nil {
+		return errors.Wrapf(err, "failed to reconcile object %s, %s/%s", obj.GetObjectKind().GroupVersionKind(), obj.GetNamespace(), obj.GetName())
+	}
+
+	return nil
+}

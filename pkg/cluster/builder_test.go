@@ -41,6 +41,12 @@ func TestFileSpecBuilderBuildError(t *testing.T) {
 			releaseURL:        "testdata/release_bundle_missing_eksd.yaml",
 			cliVersion:        "v0.0.1",
 		},
+		{
+			testName:          "Worker EkdD Release",
+			clusterConfigFile: "testdata/cluster_worker_k8s.yaml",
+			releaseURL:        "testdata/simple_release.yaml",
+			cliVersion:        "v0.0.1",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.testName, func(t *testing.T) {
@@ -74,7 +80,7 @@ func TestNewSpecWithBundlesOverrideValid(t *testing.T) {
 	v := version.Info{GitVersion: "v0.0.1"}
 	reader := files.NewReader()
 	b := cluster.NewFileSpecBuilder(reader, v,
-		cluster.WithReleasesManifest("testdata/invalid_release_version.yaml"),
+		cluster.WithReleasesManifest("testdata/simple_release.yaml"),
 		cluster.WithOverrideBundlesManifest("testdata/simple_bundle.yaml"),
 	)
 

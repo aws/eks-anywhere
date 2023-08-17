@@ -7,6 +7,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
+	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
 
 // Kubeclient implements kubernetes.Client interface using a
@@ -40,6 +41,22 @@ func (c *KubeClient) Create(ctx context.Context, obj kubernetes.Object) error {
 // Update updates the given obj in the Kubernetes cluster.
 func (c *KubeClient) Update(ctx context.Context, obj kubernetes.Object) error {
 	return c.client.Update(ctx, obj)
+}
+
+// ApplyServerSide creates or patches and object using server side logic.
+func (c *KubeClient) ApplyServerSide(ctx context.Context, fieldManager string, obj kubernetes.Object, opts ...kubernetes.ApplyServerSideOption) error {
+	o := &kubernetes.ApplyServerSideOptions{}
+	for _, opt := range opts {
+		opt.ApplyToApplyServerSide(o)
+	}
+
+	patchOpts := &client.PatchOptions{
+		FieldManager: fieldManager,
+	}
+	if o.ForceOwnership {
+		patchOpts.Force = ptr.Bool(true)
+	}
+	return c.client.Patch(ctx, obj, client.Apply, patchOpts)
 }
 
 // Delete deletes the given obj from Kubernetes cluster.

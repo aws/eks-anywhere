@@ -76,6 +76,48 @@ Error: old cluster config file exists under my-cluster, please use a different c
 The `my-cluster` directory already exists in the current directory.
 Either use a different cluster name or move the directory.
 
+### At least one WorkerNodeGroupConfiguration must not have NoExecute and/or NoSchedule taints
+
+```
+Error: the cluster config file provided is invalid: at least one WorkerNodeGroupConfiguration must not have NoExecute and/or NoSchedule taints
+```
+At least one schedulable worker node group is required to run cluster administration components. Both `NoExecute` and `NoSchedule` taints must be absent from the workerNodeGroup for it to be considered schedulable.
+
+To remedy, remove `NoExecute` and `NoSchedule` taints from at least one WorkerNodeGroupConfiguration.
+
+Invalid configuration example:
+```
+# Invalid workerNodeGroupConfiguration
+workerNodeGroupConfigurations:    # List of node groups you can define for workers 
+  - count: 1                        
+    name: md-0                      
+    taints:                       # NoSchedule taint applied to md-0, not schedulable
+    - key: "key1"                       
+      value: "value1"
+      effect: "NoSchedule"
+  - count: 1                        
+    name: md-1                      
+    taints:                       # NoExecute taint applied to md-1, not schedulable
+    - key: "key2"                       
+      value: "value2"
+      effect: "NoExecute"
+```
+
+Valid configuration example:
+```
+# Valid workerNodeGroupConfiguration
+workerNodeGroupConfigurations:    # List of node groups you can define for workers 
+- count: 1                        
+  name: md-0                      
+  taints:                         # NoSchedule taint applied to md-0, not schedulable
+  - key: "key1"                       
+    value: "value1"
+    effect: "NoSchedule"
+- count: 1                        
+  name: md-1                      # md-1 has no NoSchedule/NoExecute taints applied, is schedulable
+```
+
+
 ### Memory or disk resource problem
 
 There are various disk and memory issues on the Admin machine that can cause problems. Make sure:
@@ -146,18 +188,19 @@ It is also useful to start a shell session on the Docker container running the b
 
 ### Bootstrap cluster fails to come up: node(s) already exist for a cluster with the name
 
+During `create` and `delete` CLI, EKS Anywhere tries to create a temporary KinD bootstrap cluster with the name `${CLUSTER_NAME}-eks-a-cluster` on the Admin machine. This operation can fail with below error:
+
 ```
-Error: creating bootstrap cluster: executing create cluster: ERROR: failed to create cluster: node(s) already exist for a cluster with the name \"cluster-name\"
-, try rerunning with —force-cleanup to force delete previously created bootstrap cluster
+Error: creating bootstrap cluster: executing create/delete cluster: ERROR: failed to create/delete cluster: node(s) already exist for a cluster with the name \"cluster-name\"
 ```
 
-Cluster creation fails because a cluster of the same name already exists. If you are sure the cluster is not being used, try running the `eksctl anywhere create cluster` again, adding the `--force-cleanup` option.
-
-If that doesn't work, you can manually delete the old cluster:
+This indicates that the cluster creation or deletion fails because a bootstrap cluster of the same name already exists. If you are sure the cluster is not being used, you can manually delete the old cluster:
 
 ```bash
-kind delete cluster --name cluster-name
+docker ps | grep "${CLUSTER_NAME}-eks-a-cluster-control-plane" | awk '{ print $1 }' | xargs docker rm -f
 ```
+
+Once the old KinD bootstrap cluster is deleted, you can rerun the `eksctl anywhere create` or `eksctl anywhere delete` command again.
 
 ### Cluster upgrade fails with management components on bootstrap cluster
 
@@ -295,6 +338,66 @@ ctr -n k8s.io t exec -t --exec-id etcd ${ETCD_CONTAINER_ID} etcdctl \
 
 Follow the VM restore process in provider-specific section.
 * [Restore VM for machine in vSphere]({{< relref "#restore-vm-for-machine-in-vsphere" >}})
+
+#### Nodes cycling due to insufficient pod CIDRs
+
+Kubernetes controller manager allocates a dedicated CIDR block per node for pod IPs from within `clusterNetwork.pods.cidrBlocks`. The size of this node CIDR block defaults to /24 and can be adjusted at cluster creation using the [optional cidrMaskSize field]({{< relref "../getting-started/optional/cni/#node-ips-configuration-option" >}}).
+
+Since each node requires a CIDR block, the maximum number of nodes in a cluster is limited to the number of non-overlapping subnets of `cidrMaskSize` that fit in the pods CIDR block. For example, for a pod CIDR block mask of `/18` and a node CIDR mask size of `/22`, a maximum of 16 nodes can be proivisioned since there are 16 subnets of size `/22` in the overall `/18` block. If more nodes are created than the `clusterNetwork.pods.cidrBlocks` can accomodate, `kube-controller-manager` will not be able to allocate a CIDR block to the extra nodes. 
+
+This can cause nodes to become `NotReady` with the following sympotoms:
+
+- `kubectl describe node <unhealthy node>` indicates `CIDRNotAvailable` events.
+- kube-controller-manager log displays:
+    ```
+    Error while processing Node Add/Delete: failed to allocate cidr from cluster cidr at idx:0: CIDR allocation failed; there are no remaining CIDRs left to allocate in the accepted range
+    ```
+- Kubelet log on unhealthy node contains `NetworkPluginNotReady message:Network plugin returns error: cni plugin not initialized`
+
+If more nodes need to be provisioned, either the `clusterNetwork.pods.cidrBlocks` must be expanded or the `node-cidr-mask-size` [should be reduced.]({{< relref "../getting-started/optional/cni/#node-ips-configuration-option" >}}).
+
+### Machine health check shows "Remediation is not allowed"
+
+Sometimes a cluster node is crashed but machine health check does not start the proper remediation process to recreate the failed machine. For example, if a worker node is crashed, and running `kubectl get mhc ${CLUSTER_NAME}-md-0-worker-unhealthy -n eksa-system -oyaml` shows status message below:
+
+```
+Remediation is not allowed, the number of not started or unhealthy machines exceeds maxUnhealthy
+```
+
+EKS Anywhere sets the machine health check's `MaxUnhealthy` of the workers in a worker node group to 40%. This means any further remediation is only allowed if at most 40% of the worker machines selected by "selector" are not healthy. If more than 40% of the worker machines are in unhealthy state, the remediation will not be triggered.
+
+For example, if you create an EKS Anywhere cluster with 2 worker nodes in the same worker node group, and one of the worker node is down. The machine health check will not remediate the failed machine because the actual unhealthy machines (50%) in the worker node group already exceeds the maximum percentage of the unhealthy machine (40%) allowed. As a result, the failed machine will not be replaced with new healthy machine and your cluster will be left with single worker node. In this case, we recommend you to scale up the number of worker nodes, for example, to 4. Once the 2 more worker nodes are up and running, it brings the total unhealthy worker machines to 25% which is below the 40% limit. This will trigger the machine health check remediation which replace the unhealthy machine with new one.
+
+### Etcd machines with false `NodeHealthy` condition due to `WaitingForNodeRef`
+
+When inspecting the `Machine` CRs, etcd machines might appear as `Running` but containing a false `NodeHealthy` condition, with a `WaitingForNodeRef` reason. This is a purely cosmetic issue that has no impact in the health of your cluster. This has been fixed in more recent versions of EKS-A, so this condition won't be displayed anymore in etcd machines.
+
+```yaml
+Status:
+  Addresses:
+    Address:        144.47.85.93
+    Type:           ExternalIP
+  Bootstrap Ready:  true
+  Conditions:
+    Last Transition Time:  2023-05-15T23:13:01Z
+    Status:                True
+    Type:                  Ready
+    Last Transition Time:  2023-05-15T23:12:09Z
+    Status:                True
+    Type:                  BootstrapReady
+    Last Transition Time:  2023-05-15T23:13:01Z
+    Status:                True
+    Type:                  InfrastructureReady
+    Last Transition Time:  2023-05-15T23:12:09Z
+    Reason:                WaitingForNodeRef
+    Severity:              Info
+    Status:                False
+    Type:                  NodeHealthy
+  Infrastructure Ready:    true
+  Last Updated:            2023-05-15T23:13:01Z
+  Observed Generation:     3
+  Phase:                   Running
+```
 
 ## Bare Metal troubleshooting
 
@@ -477,9 +580,11 @@ If no VMs are created, check the `capi-controller-manager`, `capv-controller-man
 
 #### No IP assigned to a VM
 
-If any VMs are created, check to see if they have any IPv4 IPs assigned to them.
+If a VM is created, check to see if it has an IPv4 IP assigned. For example, in BottleRocket machine boot logs, you might see `Failed to read current IP data`.
 
 If there are no IPv4 IPs assigned to VMs, this is most likely because you don't have a DHCP server configured for the `network` configured in the cluster config yaml, OR there are not enough IP addresses available in the DHCP pool to assign to the VMs. Ensure that you either have a DHCP running with [enough IP addresses to create a cluster]({{< relref "../clustermgmt/cluster-upgrades/vsphere-and-cloudstack-upgrades/#prepare-dhcp-ip-addresses-pool" >}}), or [create your own DHCP server]({{< relref "../getting-started/vsphere/customize/vsphere-dhcp" >}}), before running the create or upgrade command again.
+
+To confirm this is a DHCP issue, you could create a new VM in the same network to validate if an IPv4 IP is assigned correctly.
 
 #### Control Plane IP in clusterconfig is not present on any Control Plane VM
 

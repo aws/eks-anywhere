@@ -39,7 +39,14 @@ We encourage that you stay up to date with the latest EKS Anywhere version, as n
 
 Download the [latest or target EKS Anywhere release](https://github.com/aws/eks-anywhere/releases/) and run `eksctl anywhere upgrade cluster` command to upgrade a cluster to a specific EKS Anywhere version.
 
+Workload clusters can also be upgraded via the API (`kubectl apply` or GitOps) by changing `bundlesRef` for EKS Anywhere version 0.16.5 or below. Starting from v0.17.0, `bundlesRef` can be set to null and `eksaVersion` can be used instead.
+
+`bundlesRef` is a reference to a bundles resource (collection of dependencies needed by an EKS Anywhere cluster) on the cluster whereas `eksaVersion` must be a valid SemVer value that maps to an EKSARelease resource on the cluster via the EKSARelease name. Both of these fields are automatically updated by EKS Anywhere and only need to be manually changed when upgrading via the API. The supported values for `eksaVersion` can be obtained by running `kubectl get eksareleases -n eksa-system`. For an EKSARelease with the name eksa-vX-X-X-prereleaseMetadata-plus-buildMetadata, `eksaVersion` can be set to vX-X-X-preleaseMetadata+buildMetadata.
+The workload's version may not exceed the management cluster. Any upgrades to `eksaVersion` must also be sequential relative to minor version. However, you can choose to skip patch versions.
+
 **Skipping Amazon EKS Anywhere minor versions during cluster upgrade (such as going from v0.14 directly to v0.16) is NOT allowed.** EKS Anywhere team performs regular upgrade reliability testing for sequential version upgrade (e.g. going from version 0.14 to 0.15, then from version 0.15 to 0.16), but we do not perform testing on non-sequential upgrade path (e.g. going from version 0.14 directly to 0.16). You should not skip minor versions during cluster upgrade. However, you can choose to skip patch versions.
+
+To upgrade EKS Anywhere version for an airgapped cluster, you need to [download new artifacts and images]({{< relref "./airgapped-upgrades" >}}).
 
 {{% alert title="Important" color="warning" %}}
 
@@ -175,6 +182,17 @@ and then you will run the [upgrade cluster command]({{< relref "baremetal-upgrad
    kubectl apply -f eksa-w01-cluster.yaml 
   --kubeconfig mgmt/mgmt-eks-a-cluster.kubeconfig
    ```
+ 
+    To check the state of a cluster managed with the cluster lifecyle feature, use `kubectl` to show the cluster object with its status.
+    
+    The `status` field on the cluster object field holds information about the current state of the cluster.
+
+    ```
+    kubectl get clusters w01 -o yaml
+    ```
+
+    The cluster has been fully upgraded once the status of the `Ready` condition is marked `True`.
+    See the [cluster status]({{< relref "../cluster-status" >}}) guide for more information.
   
 * **GitOps**: See [Manage separate workload clusters with GitOps]({{< relref "../cluster-flux.md#manage-separate-workload-clusters-using-gitops" >}})
 

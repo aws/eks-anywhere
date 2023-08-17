@@ -1,9 +1,17 @@
 DOCS_FOLDER=$(shell git rev-parse --show-toplevel)/docs
 IMAGE_REGISTRY ?= public.ecr.aws/eks-distro-build-tooling
 CONTAINER_IMAGE   = $(IMAGE_REGISTRY)/eks-a-hugo
-CONTAINER_RUN     = docker run --rm --interactive --tty --volume $(CURDIR)/../:/src
 DOCS_ARCHIVE      = public.zip
 HTMLTEST_VERSION?=v0.16.0
+
+# Detach can be used with the container-serve command to run the container in the background.
+DETACH ?= false
+
+# _FOCUS_OPTS describes the options for focusing the serve container (background vs foreground).
+_FOCUS_OPTS := --interactive --tty
+ifeq ($(DETACH),true)
+	_FOCUS_OPTS := --detach
+endif
 
 .PHONY: help build release submodule zip deploy serve server container-build container-serve container-server clean
 
@@ -20,18 +28,18 @@ release: build
 
 submodule: ## initialize the docsy theme submodule
 	git submodule update --init --recursive
+
+submodule-apply-patches: submodule ## apply submodule patches
 	cd themes/docsy; git am ../../patches/0001-Make-docsy-js-files-static.patch; cd ../..
+
+submodule-reset: ## reset submodules to tracked commit
+	git submodule update --init --recursive --force
 
 htmltest: install-htmltest
 	bin/htmltest -c $(DOCS_FOLDER)/.htmltest.yml -s $(DOCS_FOLDER)/public
 
 install-htmltest:
 	curl https://htmltest.wjdp.uk | bash -s $(HTMLTEST_VERSION)
-
-submodule-reset: ## reset submodules to tracked commit
-	rm -rf themes/docsy
-	git submodule update --init --recursive
-	git submodule foreach --recursive git reset --hard
 
 zip: clean build ## Create zip file of assets to upload
 	# move into public folder so zip file doesn't have a public folder
@@ -46,11 +54,15 @@ serve: submodule build ## Boot the development server.
 
 server: serve
 
-container-build: submodule ## Build a container image for the preview of the website
+container-build: submodule-apply-patches ## Build a container image for the preview of the website
 	docker build -t $(CONTAINER_IMAGE) .
+	$(MAKE) submodule-reset
 
 container-serve: ## Boot the development server using container. Run `make container-build` before this.
-	$(CONTAINER_RUN) --mount type=tmpfs,destination=/tmp,tmpfs-mode=01777 \
+	docker run \
+		--rm $(_FOCUS_OPTS) \
+		--volume $(CURDIR)/../:/src \
+		--mount type=tmpfs,destination=/tmp,tmpfs-mode=01777 \
 		--workdir /src/docs \
 		-p 1313:1313 $(CONTAINER_IMAGE) server \
 		--buildFuture \

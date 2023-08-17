@@ -46,6 +46,13 @@ func WithBundlesRef(name string, namespace string, apiVersion string) ClusterFil
 	}
 }
 
+// WithEksaVersion sets EksaVersion with the provided name to use.
+func WithEksaVersion(eksaVersion *anywherev1.EksaVersion) ClusterFiller {
+	return func(c *anywherev1.Cluster) {
+		c.Spec.EksaVersion = eksaVersion
+	}
+}
+
 func WithCiliumPolicyEnforcementMode(mode anywherev1.CiliumPolicyEnforcementMode) ClusterFiller {
 	return func(c *anywherev1.Cluster) {
 		if c.Spec.ClusterNetwork.CNIConfig == nil {
@@ -72,6 +79,15 @@ func WithCiliumSkipUpgrade() ClusterFiller {
 		if network.CNIConfig != nil && network.CNIConfig.Cilium != nil {
 			fmt.Println("Enable ciliun skip upgrade")
 			network.CNIConfig.Cilium.SkipUpgrade = ptr.Bool(true)
+		}
+	}
+}
+
+// WithKindnetd configures the cluster to use the Kindnetd cni.
+func WithKindnetd() ClusterFiller {
+	return func(cluster *anywherev1.Cluster) {
+		cluster.Spec.ClusterNetwork.CNIConfig = &anywherev1.CNIConfig{
+			Kindnetd: &anywherev1.KindnetdConfig{},
 		}
 	}
 }

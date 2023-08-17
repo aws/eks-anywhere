@@ -11,8 +11,126 @@ description: >
 {{% alert title="Warnings" color="warning" %}}
 * EKS Anywhere releases `v0.15.0` - `v0.15.2` have an issue with Tinkerbell provider where BMC/IPMI calls time out for certain hardware.<br>
 Please upgrade to `v0.15.3` if you are using Tinkerbell (Bare Metal) provider.
-* Installing CSI as part of VSphere cluster creation was deprecated in version `v0.16.0` and has been removed in `v0.17.0`. Please refer to the [deprecation section]({{< relref "../getting-started/vsphere/vsphere-getstarted/#vsphere-csi-driver-deprecation" >}}) in the vSphere provider documentation for more information.
+* Installing CSI as part of VSphere cluster creation was deprecated in version `v0.16.0` and has been removed in `v0.17.0`. Please refer to the [deprecation section]({{< relref "../clustermgmt/storage/vsphere-storage/#vsphere-csi-driver-deprecation" >}}) in the vSphere provider documentation for more information.
+* When upgrading to a new minor version, a new OS image must be created using the new image-builder cli.
 {{% /alert %}}
+
+## [v0.17.0](https://github.com/aws/eks-anywhere/releases/tag/v0.17.0)
+
+### Supported OS version details
+|              | vSphere | Bare Metal |  Nutanix | CloudStack | Snow  |
+|    :---:     |  :---:  |   :---:   |   :---:  |    :---:   | :---: |
+| Ubuntu       | 20.04	 | 20.04     |	20.04             | Not supported	     | 20.04 |  
+|              | 22.04   | 22.04     |  22.04             | Not supported      | Not supported   |
+| Bottlerocket | 1.13.1  | 1.13.1    |  Not supported     | Not supported	     | Not supported   |
+| RHEL         | 8.7	   | 8.7	     |  Not supported     | 8.7	               | Not supported   |
+
+**Note:** We have updated the image-builder docs to include the latest enhancements. Please refer to the [image-builder docs](https://anywhere.eks.amazonaws.com/docs/osmgmt/artifacts/) for more details.
+
+### Added
+- Add support for AWS CodeCommit repositories in FluxConfig with git configuration [#4290](https://github.com/aws/eks-anywhere/issues/4290)
+- Add new information to the EKS Anywhere Cluster status [#5628](https://github.com/aws/eks-anywhere/issues/5628):
+  - Add the `ControlPlaneInitialized`, `ControlPlaneReady`, `DefaultCNIConfigured`, `WorkersReady`, and `Ready` conditions.
+  - Add the `observedGeneration` field.
+  - Add the `failureReason` field.
+- Add support for different machine templates for control plane, etcd, and worker node in vSphere provider [#4255](https://github.com/aws/eks-anywhere/issues/4255)
+- Add support for different machine templates for control plane, etcd, and worker node in Cloudstack provider [#6291](https://github.com/aws/eks-anywhere/pull/6291)
+- Add support for Kubernetes version 1.25, 1.26, and 1.27 to CloudStack provider [#6167](https://github.com/aws/eks-anywhere/pull/6167)
+- Add bootstrap cluster backup in the event of cluster upgrade error [#6086](https://github.com/aws/eks-anywhere/pull/6086)
+- Add support for organizing virtual machines into categories with the Nutanix provider [#6014](https://github.com/aws/eks-anywhere/pull/6014)
+- Add support for configuring `egressMasqueradeInterfaces` option in Cilium CNI via EKS Anywhere cluster spec [#6018](https://github.com/aws/eks-anywhere/pull/6018)
+- Add support for a flag for create and upgrade cluster to skip the validation `--skip-validations=vsphere-user-privilege`
+- Add support for upgrading control plane nodes separately from worker nodes for vSphere, Nutanix, Snow, and Cloudstack providers [#6180](https://github.com/aws/eks-anywhere/pull/6180)
+- Add preflight validation to prevent skip eks-a minor version upgrades [#5688](https://github.com/aws/eks-anywhere/issues/5688)
+- Add preflight check to block using kindnetd CNI in all providers except Docker [#6097]https://github.com/aws/eks-anywhere/issues/6097
+- Added feature to configure machine health checks for API managed clusters and a new way to configure health check timeouts via the EKKSA spec. [#6176]https://github.com/aws/eks-anywhere/pull/6176
+
+### Upgraded
+- Cluster API Provider vSphere: `v1.6.1` to `v1.7.0`
+- Cluster API Provider Cloudstack: `v0.4.9-rc5` to `v0.4.9-rc6`
+- Cluster API Provider Nutanix: `v1.2.1` to `v1.2.3`
+
+### Cilium Upgrades
+- Cilium: `v1.11.15` to `v1.12.11`
+  - [Changelog](https://github.com/cilium/cilium/releases/tag/v1.12.11)
+
+
+  **Note:** If you are using the vSphere provider with the Redhat OS family, there is a known issue with VMWare and the new Cilium version that only affects our Redhat variants. To prevent this from affecting your upgrade from EKS Anywhere v0.16 to v0.17, we are adding a temporary daemonset to disable UDP offloading on the nodes before upgrading Cilium. After your cluster is upgraded, the daemonset will be deleted. This note is strictly informational as this change requires no additional effort from the user.
+
+### Changed
+- Change the default node startup timeout from 10m to 20m in Bare Metal provider [#5942](https://github.com/aws/eks-anywhere/issues/5942)
+- EKS Anywhere now fails on pre-flights if a user does not have required permissions. [#5865](https://github.com/aws/eks-anywhere/issues/5865)
+- `eksaVersion` field in the cluster spec is added for better representing CLI version and dependencies in EKS-A cluster [#5847](https://github.com/aws/eks-anywhere/issues/5847)
+- vSphere datacenter insecure and thumbprint is now mutable for upgrades when using full lifecycle API [6143]https://github.com/aws/eks-anywhere/issues/6143
+
+### Fixed
+- Fix cluster creation failure when the `<Provider>DatacenterConfig` is missing apiVersion field [#6096](https://github.com/aws/eks-anywhere/issues/6096)
+- Allow registry mirror configurations to be mutable for Bottlerocket OS [#2336](https://github.com/aws/eks-anywhere-build-tooling/pull/2336)
+- Patch an issue where mutable fields in the EKS Anywhere CloudStack API failed to trigger upgrades [#5910](https://github.com/aws/eks-anywhere/issues/5910)
+- image builder: Fix runtime issue with git in image-builder v0.16.2 binary [#2360](https://github.com/aws/eks-anywhere-build-tooling/pull/2360)
+- Bare Metal: Fix issue where metadata requests that return non-200 responses were incorrectly treated as OK [#2256](https://github.com/aws/eks-anywhere-build-tooling/pull/2256)
+
+### Known Issues:
+- Upgrading Docker clusters from previous versions of EKS Anywhere may not work on Linux hosts due to an issue in the Cilium 1.11 to 1.12 upgrade.  Docker clusters is meant solely for testing and not recommended or support for production use cases.  There is currently no fixed planned.
+- If you are installing EKS Anywhere Packages, Kubernetes versions 1.23-1.25 are incompatible with Kubernetes versions 1.26-1.27 due to an API difference. This means that you may not have worker nodes on Kubernetes version <= 1.25 when the control plane nodes are on Kubernetes version >= 1.26. Therefore, if you are upgrading your control plane nodes to 1.26, you must upgrade all nodes to 1.26 to avoid failures.
+- There is a known [bug](https://github.com/cilium/cilium/issues/18706) with systemd >= 249 and all versions of Cilium. This is currently known to only affect Ubuntu 22.04. This will be fixed in future versions of EKS Anywhere. To work around this issue, run one of the follow options on all nodes.
+
+Option A
+
+```bash
+# Does not persist across reboots.
+sudo ip rule add from all fwmark 0x200/0xf00 lookup 2004 pref 9  
+sudo ip rule add from all fwmark 0xa00/0xf00 lookup 2005 pref 10  
+sudo ip rule add from all lookup local pref 100  
+```
+
+Option B
+
+```bash
+# Does persist across reboots.
+# Add these values /etc/systemd/networkd.conf
+[Network]
+ManageForeignRoutes=no
+ManageForeignRoutingPolicyRules=no
+```
+
+### Deprecated
+- The bundlesRef field in the cluster spec is now deprecated in favor of the new `eksaVersion` field. This field will be deprecated in three versions.
+
+### Removed
+- Installing vSphere CSI Driver as part of vSphere cluster creation. For more information on how to self-install the driver refer to the documentation [here](https://anywhere.eks.amazonaws.com/docs/clustermgmt/storage/vsphere-storage.md)
+
+### ⚠️ Breaking changes
+- CLI: `--force-cleanup` has been removed from `create cluster`, `upgrade cluster` and `delete cluster` commands. For more information on how to troubleshoot issues with the bootstrap cluster refer to the troubleshooting guide ([1](https://anywhere.eks.amazonaws.com/docs/troubleshooting/troubleshooting/#cluster-upgrade-fails-with-management-components-on-bootstrap-cluster) and [2](https://anywhere.eks.amazonaws.com/docs/troubleshooting/troubleshooting/#bootstrap-cluster-fails-to-come-up-nodes-already-exist-for-a-cluster-with-the-name)). [#6384](https://github.com/aws/eks-anywhere/pull/6384)
+
+## [v0.16.5](https://github.com/aws/eks-anywhere/releases/tag/v0.16.5)
+
+### Changed
+
+- Bump up the worker count for etcdadm-controller from 1 to 10 [#34](https://github.com/aws/etcdadm-controller/pull/34)
+- Add 2X replicas hard limit for rolling out new etcd machines [#37](https://github.com/aws/etcdadm-controller/pull/37)
+
+### Fixed
+
+- Fix code panic in healthcheck loop in etcdadm-controller [#41](https://github.com/aws/etcdadm-controller/pull/41)
+- Fix deleting out of date machines in etcdadm-controller [#40](https://github.com/aws/etcdadm-controller/pull/40)
+
+## [v0.16.4](https://github.com/aws/eks-anywhere/releases/tag/v0.16.4)
+
+### Fixed
+
+- Fix support for having management cluster and workload cluster in different namespaces [#6414](https://github.com/aws/eks-anywhere/pull/6414)
+
+## [v0.16.3](https://github.com/aws/eks-anywhere/releases/tag/v0.16.3)
+
+### Changed
+
+- During management cluster upgrade, if the backup of CAPI objects of all workload clusters attached to the management cluster fails before upgrade starts, EKS Anywhere will only backup the management cluster [#6360](https://github.com/aws/eks-anywhere/pull/6360)
+- Update kubectl wait retry policy to retry on TLS handshake errors [#6373](https://github.com/aws/eks-anywhere/pull/6373)
+
+### Removed
+
+- Removed the validation for checking management cluster bundle compatibility on create/upgrade workload cluster [#6365](https://github.com/aws/eks-anywhere/pull/6365)
 
 ## [v0.16.2](https://github.com/aws/eks-anywhere/releases/tag/v0.16.2)
 
@@ -56,7 +174,7 @@ Please upgrade to `v0.15.3` if you are using Tinkerbell (Bare Metal) provider.
 - CloudStack control plane host port is only defaulted in CAPI objects if not provided. ([#5792](https://github.com/aws/eks-anywhere/pull/5792)) ([#5736](https://github.com/aws/eks-anywhere/pull/5736))
 
 ### Deprecated
-- Add warning to deprecate disableCSI through CLI ([#5918](https://github.com/aws/eks-anywhere/pull/5918)). Refer to the [deprecation section]({{< relref "../getting-started/vsphere/vsphere-getstarted/#vsphere-csi-driver-deprecation" >}}) in the vSphere provider documentation for more information.
+- Add warning to deprecate disableCSI through CLI ([#5918](https://github.com/aws/eks-anywhere/pull/5918)). Refer to the [deprecation section]({{< relref "../clustermgmt/storage/vsphere-storage/#vsphere-csi-driver-deprecation" >}}) in the vSphere provider documentation for more information.
 
 ### Removed
 - Kubernetes 1.22 support

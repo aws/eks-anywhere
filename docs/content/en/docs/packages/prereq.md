@@ -1,7 +1,7 @@
 ---
 title: "Prerequisites"
 linkTitle: "Prerequisites"
-weight: 5
+weight: 2
 aliases:
     /docs/tasks/packages/prereq/
 description: >
@@ -107,7 +107,7 @@ aws sts get-caller-identity
 Login to docker
 
 ```bash
-aws ecr get-login-password --region us-west-2 |docker login --username AWS --password-stdin 783794618700.dkr.ecr.us-west-2.amazonaws.com
+aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin 783794618700.dkr.ecr.us-west-2.amazonaws.com
 ```
 
 Verify you can pull an image
@@ -115,6 +115,21 @@ Verify you can pull an image
 docker pull 783794618700.dkr.ecr.us-west-2.amazonaws.com/emissary-ingress/emissary:v3.5.1-bf70150bcdfe3a5383ec8ad9cd7eea801a0cb074
 ```
 If the image downloads successfully, it worked!
+
+### Prepare curated packages for airapped clusters 
+
+When your cluster is airgapped and you have setup a registry mirror, copy the latest packages from curated packages private ECR to your registry mirror
+
+```bash
+eksctl anywhere copy packages --bundle ${BUNDLE_RELEASE_YAML_PATH} --dst-cert ${REGISTRY_MIRROR_CERT} ${REGISTRY_MIRROR_URL}
+```
+
+And make sure your PackageBundleController.spec is configured to download curated package images from your registry mirror. [DefaultRegistry and defaultImageRegistry]({{< relref "./packages/#packagebundlecontrollerspec" >}}) should have values similar to the following:
+
+```yaml
+defaultImageRegistry: ${REGISTRY_MIRROR_URL}/curated-packages
+defaultRegistry: ${REGISTRY_MIRROR_URL}/eks-anywhere
+```
 
 ### Discover curated packages
 
@@ -152,80 +167,3 @@ eksctl anywhere generate package harbor --cluster ${CLUSTER_NAME} --kube-version
 ```
 
 Available curated packages and troubleshooting guides are listed below.
-
-### Install package controller after installation
-
-If you created a cluster without the package controller or if the package controller was not properly configured, you may need to do some things to enable it.
-
-Make sure you are authenticated with the AWS CLI. Use the credentials you set up for packages. These credentials should have [limited capabilities]({{< relref "#setup-authentication-to-use-curated-packages" >}}):
-
-```bash
-export AWS_ACCESS_KEY_ID="your*access*id"
-export AWS_SECRET_ACCESS_KEY="your*secret*key"
-export EKSA_AWS_ACCESS_KEY_ID="your*access*id"
-export EKSA_AWS_SECRET_ACCESS_KEY="your*secret*key"
-```
-
-Verify your credentials are working:
-```shell
-aws sts get-caller-identity
-```
-Login to docker
-```bash
-aws ecr get-login-password |docker login --username AWS --password-stdin 783794618700.dkr.ecr.us-west-2.amazonaws.com
-```
-
-Verify you can pull an image
-```bash
-docker pull 783794618700.dkr.ecr.us-west-2.amazonaws.com/emissary-ingress/emissary:v3.5.1-bf70150bcdfe3a5383ec8ad9cd7eea801a0cb074
-```
-If the image downloads successfully, it worked!
-
-If you do not have the package controller installed (it is installed by default), install it now:
-```shell
-eksctl anywhere install packagecontroller -f cluster.yaml
-```
-If you had the package controller disabled, you may need to modify your `cluster.yaml` to enable it.
-```yaml
-apiVersion: anywhere.eks.amazonaws.com/v1alpha1
-kind: Cluster
-metadata:
-  name: billy
-spec:
-  packages:
-    disable: false
-```
-
-You may need to create or update your credentials which you can do with a command like this. Set the environment variables to the proper values before running the command.
-```bash
-kubectl delete secret -n eksa-packages aws-secret
-kubectl create secret -n eksa-packages generic aws-secret \
-   --from-literal=AWS_ACCESS_KEY_ID=${EKSA_AWS_ACCESS_KEY_ID} \
-   --from-literal=AWS_SECRET_ACCESS_KEY=${EKSA_AWS_SECRET_ACCESS_KEY}  \
-   --from-literal=REGION=${EKSA_AWS_REGION}
-```
-
-### Upgrade the packages controller
-
-Starting with EKS Anywhere v0.15.0 (packages controller v0.3.9+) the package controller will upgrade automatically according to the selected bundle. For any version prior to v0.3.X,
-manual steps must be executed to upgrade.
-
-1. Ensure the namespace will be kept
-```
-kubectl annotate namespaces eksa-packages helm.sh/resource-policy=keep
-```
-
-2. Uninstall the eks-anywhere-package helm release
-```
-helm uninstall eks-anywhere-packages
-```
-
-3. Remove the secret called aws-secret (we will need credentials when installing the new version)
-```
-kubectl delete secret -n eksa-package aws-secret
-```
-
-4. Install the new version using the latest eksctl-anywhere binary
-```
-eksctl anywhere install packagecontroller -f ${CLUSTER_NAME}.yaml
-```

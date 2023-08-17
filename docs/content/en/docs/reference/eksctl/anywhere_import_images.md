@@ -23,7 +23,7 @@ anywhere import images [flags]
   -h, --help               help for images
       --include-packages   Flag to indicate inclusion of curated packages in imported images (DEPRECATED: use copy packages command)
   -i, --input string       Input tarball containing all images and charts to import
-      --insecure           Flag to indicate skipping TLS verification while pushing helm charts
+      --insecure           Flag to indicate skipping TLS verification while pushing helm charts and bundles
   -r, --registry string    Registry where to import images and charts
 ```
 

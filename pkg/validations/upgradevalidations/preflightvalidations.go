@@ -79,6 +79,13 @@ func (u *UpgradeValidations) PreflightValidations(ctx context.Context) []validat
 		},
 		func() *validations.ValidationResult {
 			return &validations.ValidationResult{
+				Name:        "upgrade cluster worker node group kubernetes version increment",
+				Remediation: "ensure that the cluster worker node group kubernetes version is incremented by one minor version exactly (e.g. 1.18 -> 1.19) and cluster level kubernetes version does not exceed worker node group version by two minor versions",
+				Err:         ValidateWorkerServerVersionSkew(ctx, u.Opts.Spec.Cluster, u.Opts.WorkloadCluster, u.Opts.ManagementCluster, k),
+			}
+		},
+		func() *validations.ValidationResult {
+			return &validations.ValidationResult{
 				Name:        "validate authentication for git provider",
 				Remediation: fmt.Sprintf("ensure %s, %s env variable are set and valid", config.EksaGitPrivateKeyTokenEnv, config.EksaGitKnownHostsFileEnv),
 				Err:         validations.ValidateAuthenticationForGitProvider(u.Opts.Spec, u.Opts.CliConfig),
@@ -91,6 +98,13 @@ func (u *UpgradeValidations) PreflightValidations(ctx context.Context) []validat
 				Err:         ValidateImmutableFields(ctx, k, targetCluster, u.Opts.Spec, u.Opts.Provider),
 			}
 		},
+		func() *validations.ValidationResult {
+			return &validations.ValidationResult{
+				Name:        "validate cluster's eksaVersion matches EKS-A Version",
+				Remediation: "ensure EksaVersion matches the EKS-A release or omit the value from the cluster config",
+				Err:         validations.ValidateEksaVersion(ctx, u.Opts.CliVersion, u.Opts.Spec),
+			}
+		},
 	}
 
 	if u.Opts.Spec.Cluster.IsManaged() {
@@ -98,14 +112,15 @@ func (u *UpgradeValidations) PreflightValidations(ctx context.Context) []validat
 			upgradeValidations,
 			func() *validations.ValidationResult {
 				return &validations.ValidationResult{
-					Name:        "validate management cluster bundle version compatibility",
+					Name:        "validate management cluster eksaVersion compatibility",
 					Remediation: fmt.Sprintf("upgrade management cluster %s before upgrading workload cluster %s", u.Opts.Spec.Cluster.ManagedBy(), u.Opts.WorkloadCluster.Name),
-					Err:         validations.ValidateManagementClusterBundlesVersion(ctx, k, u.Opts.ManagementCluster, u.Opts.Spec),
+					Err:         validations.ValidateManagementClusterEksaVersion(ctx, k, u.Opts.ManagementCluster, u.Opts.Spec),
 				}
-			})
+			},
+		)
 	}
 
-	if !u.Opts.SkippedValidations[PDB] {
+	if !u.Opts.SkippedValidations[validations.PDB] {
 		upgradeValidations = append(
 			upgradeValidations,
 			func() *validations.ValidationResult {
@@ -113,6 +128,17 @@ func (u *UpgradeValidations) PreflightValidations(ctx context.Context) []validat
 					Name:        "validate pod disruption budgets",
 					Remediation: "",
 					Err:         ValidatePodDisruptionBudgets(ctx, k, u.Opts.WorkloadCluster),
+				}
+			})
+	}
+	if !u.Opts.SkippedValidations[validations.EksaVersionSkew] {
+		upgradeValidations = append(
+			upgradeValidations,
+			func() *validations.ValidationResult {
+				return &validations.ValidationResult{
+					Name:        "validate eksaVersion skew is one minor version",
+					Remediation: "ensure eksaVersion upgrades are sequential by minor version",
+					Err:         validations.ValidateEksaVersionSkew(ctx, k, u.Opts.ManagementCluster, u.Opts.Spec),
 				}
 			})
 	}

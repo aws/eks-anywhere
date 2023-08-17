@@ -61,6 +61,24 @@ func (c *UnAuthClient) Apply(ctx context.Context, kubeconfig string, obj runtime
 	return c.kubectl.Apply(ctx, kubeconfig, obj)
 }
 
+// ApplyServerSide creates or patches and object using server side logic.
+func (c *UnAuthClient) ApplyServerSide(ctx context.Context, kubeconfig, fieldManager string, obj Object, opts ...ApplyServerSideOption) error {
+	o := &ApplyServerSideOptions{}
+	for _, opt := range opts {
+		opt.ApplyToApplyServerSide(o)
+	}
+
+	ko := KubectlApplyOptions{
+		ServerSide:   true,
+		FieldManager: fieldManager,
+	}
+	if o.ForceOwnership {
+		ko.ForceOwnership = o.ForceOwnership
+	}
+
+	return c.kubectl.Apply(ctx, kubeconfig, obj, ko)
+}
+
 // List retrieves list of objects. On a successful call, Items field
 // in the list will be populated with the result returned from the server.
 func (c *UnAuthClient) List(ctx context.Context, kubeconfig string, list ObjectList) error {

@@ -334,7 +334,18 @@ Follow these steps if you want to use your initial cluster to create and manage 
       kubectl get clusters
       ```
 
-   4. The kubeconfig for your new cluster is stored as a secret on the management cluster.
+   4. Check the state of a cluster using `kubectl` to show the cluster object with its status.
+      
+      The `status` field on the cluster object field holds information about the current state of the cluster.
+
+      ```
+      kubectl get clusters w01 -o yaml
+      ```
+
+      The cluster has been fully upgraded once the status of the `Ready` condition is marked `True`.
+      See the [cluster status]({{< relref "./cluster-status" >}}) guide for more information.
+
+   5. The kubeconfig for your new cluster is stored as a secret on the management cluster.
       You can get credentials and run the test application on your new workload cluster as follows:
       ```bash
       kubectl get secret -n eksa-system w01-kubeconfig -o jsonpath='{.data.value}' | base64 —decode > w01.kubeconfig

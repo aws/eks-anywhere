@@ -1,5 +1,5 @@
 ---
-title: Install on Docker (dev only)
+title: Create Docker Cluster (dev only)
 linkTitle: Install on Docker (dev only)
 aliases:
     /docs/getting-started/local-environment/
@@ -41,7 +41,7 @@ brew install aws/tap/eks-anywhere
 
 #### Manual
 
-Install eksctl
+Install `eksctl`
 
 ```bash
 curl "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" \
@@ -50,10 +50,7 @@ curl "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(una
 sudo mv /tmp/eksctl /usr/local/bin/
 ```
 
-Install eksctl-anywhere plugin
-
-* Note the following command uses `curl` and `yq`.
-See the respective documentation for those packages to install them (`curl` docs, `yq` docs)
+Install the `eksctl-anywhere` plugin
 
 ```bash
 RELEASE_VERSION=$(curl https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml --silent --location | yq ".spec.latestVersion")

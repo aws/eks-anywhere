@@ -36,6 +36,9 @@ type Writer interface {
 	// Update updates the given obj in the Kubernetes cluster.
 	Update(ctx context.Context, obj Object) error
 
+	// ApplyServerSide creates or patches and object using server side logic.
+	ApplyServerSide(ctx context.Context, fieldManager string, obj Object, opts ...ApplyServerSideOption) error
+
 	// Delete deletes the given obj from Kubernetes cluster.
 	Delete(ctx context.Context, obj Object) error
 
@@ -69,5 +72,26 @@ func (o *DeleteAllOfOptions) ApplyToDeleteAllOf(do *DeleteAllOfOptions) {
 	}
 	if o.Namespace != "" {
 		do.Namespace = o.Namespace
+	}
+}
+
+// ApplyServerSideOption is some configuration that modifies options for an apply request.
+type ApplyServerSideOption interface {
+	ApplyToApplyServerSide(*ApplyServerSideOptions)
+}
+
+// ApplyServerSideOptions contains options for server side apply requests.
+type ApplyServerSideOptions struct {
+	// ForceOwnership indicates that in case of conflicts with server-side apply,
+	// the client should acquire ownership of the conflicting field.
+	ForceOwnership bool
+}
+
+var _ ApplyServerSideOption = ApplyServerSideOptions{}
+
+// ApplyToApplyServerSide implements ApplyServerSideOption.
+func (o ApplyServerSideOptions) ApplyToApplyServerSide(do *ApplyServerSideOptions) {
+	if o.ForceOwnership {
+		do.ForceOwnership = true
 	}
 }

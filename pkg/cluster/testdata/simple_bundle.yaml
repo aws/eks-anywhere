@@ -18,3 +18,14 @@ spec:
           uri: public.ecr.aws/l0g8r8j6/kubernetes-sigs/kind/node:v1.19.8-eks-d-1-19-4-eks-a-0.0.1.build.38
         kubeVersion: v1.19.8
         manifestUrl: "testdata/eksd_valid.yaml"
+    - kubeVersion: "1.20"
+      eksD:
+        channel: 1-20
+        gitCommit: 3e8cd38b0e561c0d6484bc7cd5b4590db6152d88
+        kindNode:
+          extraField: "fake field to test non strict unmarshalling"
+          description: kind/node container image
+          name: kind/node
+          uri: public.ecr.aws/l0g8r8j6/kubernetes-sigs/kind/node:v1.20.8-eks-d-1-19-4-eks-a-0.0.1.build.38
+        kubeVersion: v1.20.8
+        manifestUrl: "testdata/eksd_valid.yaml"

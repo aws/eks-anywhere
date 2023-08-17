@@ -191,3 +191,37 @@ func TestKubeClientDeleteAllOf(t *testing.T) {
 	api.ShouldEventuallyNotExist(ctx, cluster1)
 	api.ShouldEventuallyNotExist(ctx, cluster2)
 }
+
+func TestKubeClientApplyServerSide(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+	fieldManager := "my-manager"
+	cluster1 := &anywherev1.Cluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "my-cluster",
+			Namespace: "default",
+		},
+		TypeMeta: metav1.TypeMeta{
+			Kind:       anywherev1.ClusterKind,
+			APIVersion: anywherev1.GroupVersion.String(),
+		},
+	}
+
+	cb := fake.NewClientBuilder()
+	cl := cb.WithRuntimeObjects(cluster1).Build()
+
+	v := anywherev1.EksaVersion("v0.15.0")
+	cluster1.Spec.EksaVersion = &v
+
+	client := clientutil.NewKubeClient(cl)
+	opts := kubernetes.ApplyServerSideOptions{
+		ForceOwnership: true,
+	}
+	g.Expect(client.ApplyServerSide(ctx, fieldManager, cluster1, opts)).To(Succeed())
+
+	c := envtest.CloneNameNamespace(cluster1)
+	api := envtest.NewAPIExpecter(t, cl)
+	api.ShouldEventuallyMatch(ctx, c, func(g Gomega) {
+		g.Expect(c.Spec.EksaVersion).To(Equal(cluster1.Spec.EksaVersion))
+	})
+}

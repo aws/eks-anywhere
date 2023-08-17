@@ -17,7 +17,8 @@ import (
 )
 
 func generateManifest(reader manifests.FileReader, clusterSpec *cluster.Spec) ([]byte, error) {
-	kindnetdManifest, err := bundles.ReadManifest(reader, clusterSpec.VersionsBundle.Kindnetd.Manifest)
+	versionsBundle := clusterSpec.RootVersionsBundle()
+	kindnetdManifest, err := bundles.ReadManifest(reader, versionsBundle.Kindnetd.Manifest)
 	if err != nil {
 		return nil, fmt.Errorf("can't load kindnetd manifest: %v", err)
 	}

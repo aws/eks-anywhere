@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -15,6 +16,11 @@ const (
 	TinkerbellHardwareCSVFlagAlias       = "z"
 	TinkerbellHardwareCSVFlagDescription = "Path to a CSV file containing hardware data."
 	KubeconfigFile                       = "kubeconfig"
+
+	forceCleanupDeprecationMessageForUpgrade = `The flag --force-cleanup has been removed. For more information on how to troubleshoot existing bootstrap clusters, please refer to the documentation:
+https://anywhere.eks.amazonaws.com/docs/troubleshooting/troubleshooting/#cluster-upgrade-fails-with-management-components-on-bootstrap-cluster`
+	forceCleanupDeprecationMessageForCreateDelete = `The flag --force-cleanup has been removed. For more information on how to troubleshoot existing bootstrap clusters, please refer to the documentation:
+https://anywhere.eks.amazonaws.com/docs/troubleshooting/troubleshooting/#bootstrap-cluster-fails-to-come-up-nodes-already-exist-for-a-cluster-with-the-name`
 )
 
 func bindFlagsToViper(cmd *cobra.Command, args []string) error {
@@ -65,4 +71,10 @@ func checkTinkerbellFlags(flagSet *pflag.FlagSet, hardwareCSVPath string, operat
 	}
 
 	return nil
+}
+
+func hideForceCleanup(flags *pflag.FlagSet) {
+	if err := flags.MarkHidden("force-cleanup"); err != nil {
+		log.Fatalf("Failed hiding flag: %v", err)
+	}
 }

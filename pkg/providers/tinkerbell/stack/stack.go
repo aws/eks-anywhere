@@ -353,7 +353,7 @@ func (s *Installer) CleanupLocalBoots(ctx context.Context, remove bool) error {
 	}
 
 	// finally, return an "already exists" error if boots exists and forceCleanup is not set
-	return errors.New("boots container already exists, delete the container manually or re-run the command with --force-cleanup")
+	return errors.New("boots container already exists, delete the container manually")
 }
 
 func (s *Installer) localRegistryURL(originalURL string) string {

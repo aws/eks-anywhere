@@ -114,7 +114,7 @@ func TestWorkersSpecUpgradeCluster(t *testing.T) {
 	expectedGroup1.MachineDeployment.Spec.Template.Spec.Bootstrap.ConfigRef.Name = "test-md-0-2"
 
 	// This will cause a change in the docker machine templates, which are immutable
-	spec.VersionsBundle.EksD.KindNode = releasev1.Image{
+	spec.VersionsBundles["1.23"].EksD.KindNode = releasev1.Image{
 		URI: "my-new-kind-image:tag",
 	}
 	expectedGroup1.ProviderMachineTemplate.Spec.Template.Spec.CustomImage = "my-new-kind-image:tag"

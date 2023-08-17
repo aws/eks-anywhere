@@ -1251,7 +1251,9 @@ func TestReconcile(s *testing.T) {
 				Name:      cluster.Name + "-kubeconfig",
 			},
 		}
-		objs := []runtime.Object{cluster, bundles, secret}
+		eksaRelease := createEKSARelease(cluster, bundles)
+		cluster.Spec.BundlesRef = nil
+		objs := []runtime.Object{cluster, bundles, secret, eksaRelease}
 		fakeClient := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
 		cm.EXPECT().InstallChart(ctx, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
 
@@ -1263,6 +1265,26 @@ func TestReconcile(s *testing.T) {
 	})
 
 	s.Run("errors when bundles aren't found", func(t *testing.T) {
+		ctx := context.Background()
+		log := testr.New(t)
+		cluster := newReconcileTestCluster()
+		ctrl := gomock.NewController(t)
+		k := mocks.NewMockKubectlRunner(ctrl)
+		cm := mocks.NewMockChartManager(ctrl)
+
+		bundles := createBundle(cluster)
+		eksaRelease := createEKSARelease(cluster, bundles)
+		objs := []runtime.Object{cluster, eksaRelease}
+		fakeClient := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
+
+		pcc := curatedpackages.NewPackageControllerClientFullLifecycle(log, cm, k, nil)
+		err := pcc.Reconcile(ctx, log, fakeClient, cluster)
+		if err == nil || !apierrors.IsNotFound(err) {
+			t.Errorf("expected not found err getting cluster resource, got %s", err)
+		}
+	})
+
+	s.Run("errors when eksarelease isn't found", func(t *testing.T) {
 		ctx := context.Background()
 		log := testr.New(t)
 		cluster := newReconcileTestCluster()
@@ -1291,7 +1313,8 @@ func TestReconcile(s *testing.T) {
 		bundles := createBundle(cluster)
 		bundles.ObjectMeta.Name = cluster.Spec.BundlesRef.Name
 		bundles.ObjectMeta.Namespace = cluster.Spec.BundlesRef.Namespace
-		objs := []runtime.Object{cluster, bundles}
+		eksaRelease := createEKSARelease(cluster, bundles)
+		objs := []runtime.Object{cluster, bundles, eksaRelease}
 		fakeClient := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
 
 		pcc := curatedpackages.NewPackageControllerClientFullLifecycle(log, cm, k, nil)
@@ -1312,13 +1335,14 @@ func TestReconcile(s *testing.T) {
 		bundles.Spec.VersionsBundles[0].KubeVersion = string(cluster.Spec.KubernetesVersion)
 		bundles.ObjectMeta.Name = cluster.Spec.BundlesRef.Name
 		bundles.ObjectMeta.Namespace = cluster.Spec.BundlesRef.Namespace
+		eksaRelease := createEKSARelease(cluster, bundles)
 		secret := &corev1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: constants.EksaSystemNamespace,
 				Name:      cluster.Name + "-kubeconfig",
 			},
 		}
-		objs := []runtime.Object{cluster, bundles, secret}
+		objs := []runtime.Object{cluster, bundles, secret, eksaRelease}
 		fakeClient := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
 		cm.EXPECT().InstallChart(ctx, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(fmt.Errorf("test error"))
 
@@ -1331,6 +1355,7 @@ func TestReconcile(s *testing.T) {
 }
 
 func newReconcileTestCluster() *anywherev1.Cluster {
+	version := test.DevEksaVersion()
 	return &anywherev1.Cluster{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "my-workload-cluster",
@@ -1345,6 +1370,7 @@ func newReconcileTestCluster() *anywherev1.Cluster {
 			ManagementCluster: anywherev1.ManagementCluster{
 				Name: "my-management-cluster",
 			},
+			EksaVersion: &version,
 		},
 	}
 }
@@ -1379,6 +1405,21 @@ func createBundle(cluster *anywherev1.Cluster) *artifactsv1.Bundles {
 					ExternalEtcdController:     artifactsv1.EtcdadmControllerBundle{},
 					Tinkerbell:                 artifactsv1.TinkerbellBundle{},
 				},
+			},
+		},
+	}
+}
+
+func createEKSARelease(cluster *anywherev1.Cluster, bundle *artifactsv1.Bundles) *artifactsv1.EKSARelease {
+	return &artifactsv1.EKSARelease{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "eksa-v0-0-0-dev",
+			Namespace: constants.EksaSystemNamespace,
+		},
+		Spec: artifactsv1.EKSAReleaseSpec{
+			BundlesRef: artifactsv1.BundlesRef{
+				Name:      bundle.Name,
+				Namespace: bundle.Namespace,
 			},
 		},
 	}

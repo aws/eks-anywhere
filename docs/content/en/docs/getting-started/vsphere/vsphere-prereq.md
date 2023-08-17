@@ -41,7 +41,7 @@ Each VM will require:
 * 8GB RAM
 * 25GB Disk
 
-The administrative machine and the target workload environment will need network access to:
+The administrative machine and the target workload environment will need network access (TCP/443) to:
 
 {{% content "./domains.md" %}}
 

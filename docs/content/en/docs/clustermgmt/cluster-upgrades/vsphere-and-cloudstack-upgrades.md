@@ -44,7 +44,14 @@ We encourage that you stay up to date with the latest EKS Anywhere version, as n
 
 Download the [latest or target EKS Anywhere release](https://github.com/aws/eks-anywhere/releases/) and run `eksctl anywhere upgrade cluster` command to upgrade a cluster to a specific EKS Anywhere version.
 
+Workload clusters can also be upgraded via the API (`kubectl apply` or GitOps) by changing `bundlesRef` for EKS Anywhere version 0.16.5 or below. Starting from v0.17.0, `bundlesRef` can be set to null and `eksaVersion` can be used instead.
+
+`bundlesRef` is a reference to a bundles resource (collection of dependencies needed by an EKS Anywhere cluster) on the cluster whereas `eksaVersion` must be a valid SemVer value that maps to an EKSARelease resource on the cluster via the EKSARelease name. Both of these fields are automatically updated by EKS Anywhere and only need to be manually changed when upgrading via the API. The supported values for `eksaVersion` can be obtained by running `kubectl get eksareleases -n eksa-system`. For an EKSARelease with the name eksa-vX-X-X-prereleaseMetadata-plus-buildMetadata, `eksaVersion` can be set to vX-X-X-preleaseMetadata+buildMetadata.
+The workload's version may not exceed the management cluster. Any upgrades to `eksaVersion` must also be sequential relative to minor version. However, you can choose to skip patch versions.
+
 **Skipping Amazon EKS Anywhere minor versions during cluster upgrade (such as going from v0.14 directly to v0.16) is NOT allowed.** EKS Anywhere team performs regular upgrade reliability testing for sequential version upgrade (e.g. going from version 0.14 to 0.15, then from version 0.15 to 0.16), but we do not perform testing on non-sequential upgrade path (e.g. going from version 0.14 directly to 0.16). You should not skip minor versions during cluster upgrade. However, you can choose to skip patch versions.
+
+To upgrade EKS Anywhere version for an airgapped cluster, you need to [download new artifacts and images]({{< relref "./airgapped-upgrades" >}}).
 
 {{% alert title="Important" color="warning" %}}
 
@@ -68,6 +75,8 @@ Control plane components will be upgraded before worker nodes.
 
 A new VM is created with the new version and then an old VM is removed.
 This happens one at a time until all the control plane components have been upgraded.
+
+Worker node groups can optionally be upgraded separately from the control plane by setting `workerNodeGroupConfiguration.kubernetesVersion`. There can only be a skew of two minor versions between the control plane and each worker node. Removing `workerNodeGroupConfiguration.kubernetesVersion` will trigger an upgrade to that node group to upgrade to the root level `kubernetesVersion`.
 
 ### Core component upgrades
 
@@ -210,28 +219,7 @@ After finishing the task, make sure you resume the cluster reconciliation by rem
 kubectl annotate clusters.anywhere.eks.amazonaws.com ${CLUSTER_NAME} -n ${CLUSTER_NAMESPACE} anywhere.eks.amazonaws.com/paused-
 ```
 
->**_NOTE (vSphere only):_** Installing and managing CSI as part of vSphere cluster operations was deprecated in EKS Anywhere version `v0.16.0` and has been removed in `v0.17.0`. If you are using EKS-A version v0.16.0 and above to upgrade a cluster that has the vSphere CSI Driver installed in it,
-> you will need to remove the CSI resources manually from the cluster. Delete the `DaemonSet` and `Deployment` first, as they 
-> rely on the other resources.
-> 
-> These are the resources you would need to delete:
-> * `vsphere-csi-controller-role` (kind: ClusterRole)
-> * `vsphere-csi-controller-binding` (kind: ClusterRoleBinding)
-> * `csi.vsphere.vmware.com` (kind: CSIDriver)
-> 
-> These are the resources you would need to delete
-> in the `kube-system` namespace:
-> * `vsphere-csi-controller` (kind: ServiceAccount)
-> * `csi-vsphere-config` (kind: Secret)
-> * `vsphere-csi-node` (kind: DaemonSet)
-> * `vsphere-csi-controller` (kind: Deployment)
-> 
-> These are the resources you would need to delete
-> in the `eksa-system` namespace from the management cluster.
-> * `<cluster-name>-csi` (kind: ClusterResourceSet)
-> 
-> **_Note:_** If your cluster is self-managed, you would delete `<cluster-name>-csi` (kind: ClusterResourceSet) from the same cluster.
-
+>**_NOTE (vSphere only):_** If you are upgrading a vSphere cluster created using EKS Anywhere version prior to `v0.16.0` that has the vSphere CSI Driver installed in it, please refer to the additional steps listed [here]({{< relref "../storage/vsphere-storage#csi-driver-cleanup-for-upgrades" >}}) before attempting an upgrade.
 
 ### Upgradeable Cluster Attributes
 EKS Anywhere `upgrade` supports upgrading more than just the `kubernetesVersion`, 
@@ -245,9 +233,15 @@ allowing you to upgrade a number of fields simultaneously with the same procedur
 - `controlPlaneConfigurations.machineGroupRef.name`
 - `workerNodeGroupConfigurations.count`
 - `workerNodeGroupConfigurations.machineGroupRef.name`
+- `workerNodeGroupConfigurations.kubernetesVersion`
 - `etcdConfiguration.externalConfiguration.machineGroupRef.name`
 - `identityProviderRefs` (Only for `kind:OIDCConfig`, `kind:AWSIamConfig` is immutable)
 - `gitOpsRef` (Once set, you can't change or delete the field's content later)
+- `registryMirrorConfiguration` (for non-authenticated registry mirror)
+  - `endpoint`
+  - `port` 
+  - `caCertContent`
+  - `insecureSkipVerify` 
 
 `VSphereMachineConfig`:
 - `datastore`

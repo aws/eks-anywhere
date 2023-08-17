@@ -10,7 +10,9 @@ import (
 	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers"
+	"github.com/aws/eks-anywhere/pkg/semver"
 	"github.com/aws/eks-anywhere/pkg/types"
+	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
 
 // ValidateOSForRegistryMirror checks if the OS is valid for the provided registry mirror configuration.
@@ -91,26 +93,109 @@ func ValidateManagementClusterName(ctx context.Context, k KubectlClient, mgmtClu
 	return nil
 }
 
-// ValidateManagementClusterBundlesVersion checks if management cluster's bundle version
-// is greater than or equal to the bundle version used to upgrade a workload cluster.
-func ValidateManagementClusterBundlesVersion(ctx context.Context, k KubectlClient, mgmtCluster *types.Cluster, workload *cluster.Spec) error {
-	cluster, err := k.GetEksaCluster(ctx, mgmtCluster, mgmtCluster.Name)
+// ValidateEksaVersion ensures that the version matches EKS-A CLI.
+func ValidateEksaVersion(ctx context.Context, cliVersion string, workload *cluster.Spec) error {
+	v := workload.Cluster.Spec.EksaVersion
+
+	if v == nil {
+		return nil
+	}
+
+	parsedVersion, err := semver.New(string(*v))
 	if err != nil {
-		return err
+		return fmt.Errorf("parsing cluster eksa version: %v", err)
 	}
 
-	if cluster.Spec.BundlesRef == nil {
-		return fmt.Errorf("management cluster bundlesRef cannot be nil")
-	}
-
-	mgmtBundles, err := k.GetBundles(ctx, mgmtCluster.KubeconfigFile, cluster.Spec.BundlesRef.Name, cluster.Spec.BundlesRef.Namespace)
+	parsedCLIVersion, err := semver.New(cliVersion)
 	if err != nil {
-		return err
+		return fmt.Errorf("parsing eksa cli version: %v", err)
 	}
 
-	if mgmtBundles.Spec.Number < workload.Bundles.Spec.Number {
-		return fmt.Errorf("cannot upgrade workload cluster with bundle spec.number %d while management cluster %s is on older bundle spec.number %d", workload.Bundles.Spec.Number, mgmtCluster.Name, mgmtBundles.Spec.Number)
+	if !parsedVersion.SamePatch(parsedCLIVersion) {
+		return fmt.Errorf("cluster's eksaVersion does not match EKS-A CLI's version")
 	}
 
 	return nil
+}
+
+// ValidateEksaVersionSkew ensures that upgrades are sequential by CLI minor versions.
+func ValidateEksaVersionSkew(ctx context.Context, k KubectlClient, mgmtCluster *types.Cluster, spec *cluster.Spec) error {
+	currentCluster, err := k.GetEksaCluster(ctx, mgmtCluster, spec.Cluster.Name)
+	if err != nil {
+		return err
+	}
+
+	return v1alpha1.ValidateEksaVersionSkew(spec.Cluster, currentCluster).ToAggregate()
+}
+
+// ValidateManagementClusterEksaVersion ensures workload cluster isn't created by a newer version than management cluster.
+func ValidateManagementClusterEksaVersion(ctx context.Context, k KubectlClient, mgmtCluster *types.Cluster, workload *cluster.Spec) error {
+	mgmt, err := k.GetEksaCluster(ctx, mgmtCluster, mgmtCluster.Name)
+	if err != nil {
+		return err
+	}
+
+	return ValidateManagementEksaVersion(mgmt, workload.Cluster)
+}
+
+// ValidateManagementEksaVersion ensures a workload cluster's EksaVersion is not greater than a management cluster's version.
+func ValidateManagementEksaVersion(mgmtCluster, cluster *v1alpha1.Cluster) error {
+	if !clustersHaveEksaVersion(mgmtCluster, cluster) {
+		return nil
+	}
+
+	mVersion, wVersion, err := parseClusterEksaVersion(mgmtCluster, cluster)
+	if err != nil {
+		return err
+	}
+
+	if wVersion.GreaterThan(mVersion) {
+		errMsg := fmt.Sprintf("cannot upgrade workload cluster to %v while management cluster is an older version: %v", wVersion, mVersion)
+		reason := v1alpha1.EksaVersionInvalidReason
+		cluster.Status.FailureMessage = ptr.String(errMsg)
+		cluster.Status.FailureReason = &reason
+		return fmt.Errorf(errMsg)
+	}
+
+	// reset failure message if old matches this validation
+	oldFailure := cluster.Status.FailureReason
+	if oldFailure != nil && *oldFailure == v1alpha1.EksaVersionInvalidReason {
+		cluster.Status.FailureMessage = nil
+		cluster.Status.FailureReason = nil
+	}
+	return nil
+}
+
+func clustersHaveEksaVersion(mgmtCluster, cluster *v1alpha1.Cluster) bool {
+	if cluster.Spec.BundlesRef != nil {
+		return false
+	}
+
+	if cluster.Spec.EksaVersion == nil && mgmtCluster.Spec.EksaVersion == nil {
+		return false
+	}
+
+	return true
+}
+
+func parseClusterEksaVersion(mgmtCluster, cluster *v1alpha1.Cluster) (*semver.Version, *semver.Version, error) {
+	if cluster.Spec.EksaVersion == nil {
+		return nil, nil, fmt.Errorf("cluster has nil EksaVersion")
+	}
+
+	if mgmtCluster.Spec.EksaVersion == nil {
+		return nil, nil, fmt.Errorf("management cluster has nil EksaVersion")
+	}
+
+	mVersion, err := semver.New(string(*mgmtCluster.Spec.EksaVersion))
+	if err != nil {
+		return nil, nil, fmt.Errorf("parsing management EksaVersion: %v", err)
+	}
+
+	wVersion, err := semver.New(string(*cluster.Spec.EksaVersion))
+	if err != nil {
+		return nil, nil, fmt.Errorf("parsing workload EksaVersion: %v", err)
+	}
+
+	return mVersion, wVersion, nil
 }

@@ -1,6 +1,8 @@
 ---
 title: 1. Admin Machine
 weight: 10
+description: >
+  Steps for setting up the Admin Machine
 ---
 
 EKS Anywhere will create and manage Kubernetes clusters on multiple providers.
@@ -17,12 +19,18 @@ This will let you create a cluster in multiple providers for local development o
 
 ### Administrative machine prerequisites
 
-- Docker 20.x.x
+#### System and network requirements
 - Mac OS 10.15 / Ubuntu 20.04.2 LTS
 - 4 CPU cores
 - 16GB memory
 - 30GB free disk space
 - Administrative machine must be on the same Layer 2 network as the cluster machines (Bare Metal provider only).
+
+#### Tools
+- Docker 20.x.x ([Install](https://docs.docker.com/engine/install/))
+- `curl` ([Install](https://everything.curl.dev/get))
+- `yq` ([Install](https://github.com/mikefarah/yq/#install))
+
 
 If you are using Ubuntu, use the Docker CE installation instructions to install Docker and not the Snap installation, as described [here.](https://docs.docker.com/engine/install/ubuntu/)
 

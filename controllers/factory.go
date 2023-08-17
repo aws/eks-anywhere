@@ -11,6 +11,9 @@ import (
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	awsiamconfigreconciler "github.com/aws/eks-anywhere/pkg/awsiamauth/reconciler"
+	anywhereCluster "github.com/aws/eks-anywhere/pkg/cluster"
+	mhcreconciler "github.com/aws/eks-anywhere/pkg/clusterapi/machinehealthcheck/reconciler"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/controller/clusters"
 	"github.com/aws/eks-anywhere/pkg/crypto"
 	"github.com/aws/eks-anywhere/pkg/curatedpackages"
@@ -32,26 +35,27 @@ import (
 type Manager = manager.Manager
 
 type Factory struct {
-	buildSteps                  []buildStep
-	dependencyFactory           *dependencies.Factory
-	manager                     Manager
-	registryBuilder             *clusters.ProviderClusterReconcilerRegistryBuilder
-	reconcilers                 Reconcilers
-	tracker                     *remote.ClusterCacheTracker
-	registry                    *clusters.ProviderClusterReconcilerRegistry
-	dockerClusterReconciler     *dockerreconciler.Reconciler
-	vsphereClusterReconciler    *vspherereconciler.Reconciler
-	tinkerbellClusterReconciler *tinkerbellreconciler.Reconciler
-	snowClusterReconciler       *snowreconciler.Reconciler
-	cloudstackClusterReconciler *cloudstackreconciler.Reconciler
-	nutanixClusterReconciler    *nutanixreconciler.Reconciler
-	cniReconciler               *cnireconciler.Reconciler
-	ipValidator                 *clusters.IPValidator
-	awsIamConfigReconciler      *awsiamconfigreconciler.Reconciler
-	logger                      logr.Logger
-	deps                        *dependencies.Dependencies
-	packageControllerClient     *curatedpackages.PackageControllerClient
-	cloudStackValidatorRegistry cloudstack.ValidatorRegistry
+	buildSteps                   []buildStep
+	dependencyFactory            *dependencies.Factory
+	manager                      Manager
+	registryBuilder              *clusters.ProviderClusterReconcilerRegistryBuilder
+	reconcilers                  Reconcilers
+	tracker                      *remote.ClusterCacheTracker
+	registry                     *clusters.ProviderClusterReconcilerRegistry
+	dockerClusterReconciler      *dockerreconciler.Reconciler
+	vsphereClusterReconciler     *vspherereconciler.Reconciler
+	tinkerbellClusterReconciler  *tinkerbellreconciler.Reconciler
+	snowClusterReconciler        *snowreconciler.Reconciler
+	cloudstackClusterReconciler  *cloudstackreconciler.Reconciler
+	nutanixClusterReconciler     *nutanixreconciler.Reconciler
+	cniReconciler                *cnireconciler.Reconciler
+	ipValidator                  *clusters.IPValidator
+	awsIamConfigReconciler       *awsiamconfigreconciler.Reconciler
+	machineHealthCheckReconciler *mhcreconciler.Reconciler
+	logger                       logr.Logger
+	deps                         *dependencies.Dependencies
+	packageControllerClient      *curatedpackages.PackageControllerClient
+	cloudStackValidatorRegistry  cloudstack.ValidatorRegistry
 }
 
 type Reconcilers struct {
@@ -105,7 +109,8 @@ func (f *Factory) WithClusterReconciler(capiProviders []clusterctlv1.Provider, o
 	f.withTracker().
 		WithProviderClusterReconcilerRegistry(capiProviders).
 		withAWSIamConfigReconciler().
-		withPackageControllerClient()
+		withPackageControllerClient().
+		withMachineHealthCheckReconciler()
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.reconcilers.ClusterReconciler != nil {
@@ -118,6 +123,7 @@ func (f *Factory) WithClusterReconciler(capiProviders []clusterctlv1.Provider, o
 			f.awsIamConfigReconciler,
 			clusters.NewClusterValidator(f.manager.GetClient()),
 			f.packageControllerClient,
+			f.machineHealthCheckReconciler,
 			opts...,
 		)
 
@@ -520,6 +526,25 @@ func (f *Factory) withPackageControllerClient() *Factory {
 			return nil
 		}
 		f.packageControllerClient = curatedpackages.NewPackageControllerClientFullLifecycle(f.logger, f.deps.Helm, f.deps.Kubectl, f.tracker)
+		return nil
+	})
+
+	return f
+}
+
+func (f *Factory) withMachineHealthCheckReconciler() *Factory {
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.machineHealthCheckReconciler != nil {
+			return nil
+		}
+
+		machineHealthCheckDefaulter := anywhereCluster.NewMachineHealthCheckDefaulter(constants.DefaultNodeStartupTimeout, constants.DefaultUnhealthyMachineTimeout)
+
+		f.machineHealthCheckReconciler = mhcreconciler.New(
+			f.manager.GetClient(),
+			machineHealthCheckDefaulter,
+		)
+
 		return nil
 	})
 

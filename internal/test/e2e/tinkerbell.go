@@ -25,6 +25,12 @@ const (
 	tinkerbellBootstrapInterfaceEnvVar         = "T_TINKERBELL_BOOTSTRAP_INTERFACE"
 )
 
+// TinkerbellTest maps each Tinkbell test with the hardware count needed for the test.
+type TinkerbellTest struct {
+	Name  string `yaml:"name"`
+	Count int    `yaml:"count"`
+}
+
 func (e *E2ESession) setupTinkerbellEnv(testRegex string) error {
 	re := regexp.MustCompile(tinkerbellTestsRe)
 	if !re.MatchString(testRegex) {

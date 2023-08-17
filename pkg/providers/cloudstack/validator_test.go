@@ -254,24 +254,6 @@ func TestSetupAndValidateCreateClusterEtcdMachineGroupRefNonexistent(t *testing.
 	thenErrorExpected(t, "cannot find CloudStackMachineConfig nonexistent for etcd machines", err)
 }
 
-func TestSetupAndValidateCreateClusterTemplateDifferent(t *testing.T) {
-	ctx := context.Background()
-	cmk := mocks.NewMockProviderCmkClient(gomock.NewController(t))
-	clusterSpec := test.NewFullClusterSpec(t, path.Join(testDataDir, testClusterConfigMainFilename))
-	validator := NewValidator(cmk, &DummyNetClient{}, true)
-	datacenterConfig, err := v1alpha1.GetCloudStackDatacenterConfig(path.Join(testDataDir, testClusterConfigMainFilename))
-	if err != nil {
-		t.Fatalf("unable to get datacenter config from file")
-	}
-	controlPlaneMachineConfigName := clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
-	clusterSpec.CloudStackMachineConfigs[controlPlaneMachineConfigName].Spec.Template = v1alpha1.CloudStackResourceIdentifier{Name: "different"}
-
-	setupMockForAvailabilityZonesValidation(cmk, ctx, datacenterConfig.Spec.AvailabilityZones)
-
-	err = validator.ValidateClusterMachineConfigs(ctx, clusterSpec)
-	thenErrorExpected(t, "control plane and etcd machines must have the same template specified", err)
-}
-
 func TestValidateMachineConfigsHappyCase(t *testing.T) {
 	ctx := context.Background()
 	cmk := mocks.NewMockProviderCmkClient(gomock.NewController(t))

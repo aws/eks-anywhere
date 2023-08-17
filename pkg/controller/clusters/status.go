@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/pkg/errors"
+	v1 "k8s.io/api/core/v1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 	"sigs.k8s.io/cluster-api/util/conditions"
@@ -42,7 +43,11 @@ func UpdateClusterStatusForWorkers(ctx context.Context, client client.Client, cl
 // UpdateClusterStatusForCNI updates the Cluster status for the default cni before the control plane is ready. The CNI reconciler
 // handles the rest of the logic for determining the condition and updating the status based on the current state of the cluster.
 func UpdateClusterStatusForCNI(ctx context.Context, cluster *anywherev1.Cluster) {
-	if !conditions.IsTrue(cluster, anywherev1.ControlPlaneReadyCondition) {
+	// Here, we want to initialize the DefaultCNIConfigured condition only when the condition does not exist,
+	// such as in the event of cluster creation. In this case, when the control plane is not ready, we can assume
+	// the CNI is not ready yet.
+	if !conditions.IsTrue(cluster, anywherev1.ControlPlaneReadyCondition) &&
+		conditions.Get(cluster, anywherev1.DefaultCNIConfiguredCondition) == nil {
 		conditions.MarkFalse(cluster, anywherev1.DefaultCNIConfiguredCondition, anywherev1.ControlPlaneNotReadyReason, clusterv1.ConditionSeverityInfo, "")
 		return
 	}
@@ -53,7 +58,7 @@ func UpdateClusterStatusForCNI(ctx context.Context, cluster *anywherev1.Cluster)
 		ciliumCfg := cluster.Spec.ClusterNetwork.CNIConfig.Cilium
 		// Though it may be installed initially to successfully create the cluster,
 		// if the CNI is configured to skip upgrades, we mark the condition as "False"
-		if !ciliumCfg.IsManaged() {
+		if ciliumCfg != nil && !ciliumCfg.IsManaged() {
 			conditions.MarkFalse(cluster, anywherev1.DefaultCNIConfiguredCondition, anywherev1.SkipUpgradesForDefaultCNIConfiguredReason, clusterv1.ConditionSeverityWarning, "Configured to skip default Cilium CNI upgrades")
 			return
 		}
@@ -69,6 +74,10 @@ func updateControlPlaneReadyCondition(cluster *anywherev1.Cluster, kcp *controlp
 	initializedCondition := conditions.Get(cluster, anywherev1.ControlPlaneInitializedCondition)
 	if initializedCondition.Status != "True" {
 		conditions.MarkFalse(cluster, anywherev1.ControlPlaneReadyCondition, initializedCondition.Reason, initializedCondition.Severity, initializedCondition.Message)
+		return
+	}
+
+	if kcp == nil {
 		return
 	}
 
@@ -113,6 +122,14 @@ func updateControlPlaneReadyCondition(cluster *anywherev1.Cluster, kcp *controlp
 		return
 	}
 
+	// We check the condition signifying the overall health of the control plane components. Usually, the control plane should be healthy
+	// at this point but if that is not the case, we report it as an error.
+	kcpControlPlaneHealthyCondition := conditions.Get(kcp, controlplanev1.ControlPlaneComponentsHealthyCondition)
+	if kcpControlPlaneHealthyCondition != nil && kcpControlPlaneHealthyCondition.Status == v1.ConditionFalse {
+		conditions.MarkFalse(cluster, anywherev1.ControlPlaneReadyCondition, anywherev1.ControlPlaneComponentsUnhealthyReason, clusterv1.ConditionSeverityError, kcpControlPlaneHealthyCondition.Message)
+		return
+	}
+
 	conditions.MarkTrue(cluster, anywherev1.ControlPlaneReadyCondition)
 }
 
@@ -146,12 +163,12 @@ func updateControlPlaneInitializedCondition(cluster *anywherev1.Cluster, kcp *co
 	conditions.MarkTrue(cluster, anywherev1.ControlPlaneInitializedCondition)
 }
 
-// updateWorkersReadyCondition updates the WorkersReadyConditon condition after checking the state of the worker node groups
+// updateWorkersReadyCondition updates the WorkersReadyCondition condition after checking the state of the worker node groups
 // in the cluster.
 func updateWorkersReadyCondition(cluster *anywherev1.Cluster, machineDeployments []clusterv1.MachineDeployment) {
 	initializedCondition := conditions.Get(cluster, anywherev1.ControlPlaneInitializedCondition)
 	if initializedCondition.Status != "True" {
-		conditions.MarkFalse(cluster, anywherev1.WorkersReadyConditon, anywherev1.ControlPlaneNotInitializedReason, clusterv1.ConditionSeverityInfo, "")
+		conditions.MarkFalse(cluster, anywherev1.WorkersReadyCondition, anywherev1.ControlPlaneNotInitializedReason, clusterv1.ConditionSeverityInfo, "")
 		return
 	}
 
@@ -169,7 +186,7 @@ func updateWorkersReadyCondition(cluster *anywherev1.Cluster, machineDeployments
 	for _, md := range machineDeployments {
 		// We make sure to check that the status is up to date before using the information from the machine deployment status.
 		if md.Status.ObservedGeneration != md.ObjectMeta.Generation {
-			conditions.MarkFalse(cluster, anywherev1.WorkersReadyConditon, anywherev1.OutdatedInformationReason, clusterv1.ConditionSeverityInfo, "Worker node group %s status not up to date yet", md.Name)
+			conditions.MarkFalse(cluster, anywherev1.WorkersReadyCondition, anywherev1.OutdatedInformationReason, clusterv1.ConditionSeverityInfo, "Worker node group %s status not up to date yet", md.Name)
 			return
 		}
 
@@ -182,28 +199,28 @@ func updateWorkersReadyCondition(cluster *anywherev1.Cluster, machineDeployments
 	// so reflect that on the conditon with an appropriate message.
 	totalOutdated := totalReplicas - totalUpdatedReplicas
 	if totalOutdated > 0 {
-		conditions.MarkFalse(cluster, anywherev1.WorkersReadyConditon, anywherev1.RollingUpgradeInProgress, clusterv1.ConditionSeverityInfo, "Worker nodes not up-to-date yet, %d rolling (%d up to date)", totalReplicas, totalUpdatedReplicas)
+		conditions.MarkFalse(cluster, anywherev1.WorkersReadyCondition, anywherev1.RollingUpgradeInProgress, clusterv1.ConditionSeverityInfo, "Worker nodes not up-to-date yet, %d rolling (%d up to date)", totalReplicas, totalUpdatedReplicas)
 		return
 	}
 
 	// If the number of worker nodes replicas need to be scaled up.
 	if totalReplicas < totalExpected {
-		conditions.MarkFalse(cluster, anywherev1.WorkersReadyConditon, anywherev1.ScalingUpReason, clusterv1.ConditionSeverityInfo, "Scaling up worker nodes, %d expected (%d actual)", totalExpected, totalReplicas)
+		conditions.MarkFalse(cluster, anywherev1.WorkersReadyCondition, anywherev1.ScalingUpReason, clusterv1.ConditionSeverityInfo, "Scaling up worker nodes, %d expected (%d actual)", totalExpected, totalReplicas)
 		return
 	}
 
 	// If the number of worker nodes replicas need to be scaled down.
 	if totalReplicas > totalExpected {
-		conditions.MarkFalse(cluster, anywherev1.WorkersReadyConditon, anywherev1.ScalingDownReason, clusterv1.ConditionSeverityInfo, "Scaling down worker nodes, %d expected (%d actual)", totalExpected, totalReplicas)
+		conditions.MarkFalse(cluster, anywherev1.WorkersReadyCondition, anywherev1.ScalingDownReason, clusterv1.ConditionSeverityInfo, "Scaling down worker nodes, %d expected (%d actual)", totalExpected, totalReplicas)
 		return
 	}
 
 	if totalReadyReplicas != totalExpected {
-		conditions.MarkFalse(cluster, anywherev1.WorkersReadyConditon, anywherev1.NodesNotReadyReason, clusterv1.ConditionSeverityInfo, "Worker nodes not ready yet, %d expected (%d ready)", totalExpected, totalReadyReplicas)
+		conditions.MarkFalse(cluster, anywherev1.WorkersReadyCondition, anywherev1.NodesNotReadyReason, clusterv1.ConditionSeverityInfo, "Worker nodes not ready yet, %d expected (%d ready)", totalExpected, totalReadyReplicas)
 		return
 	}
 
-	conditions.MarkTrue(cluster, anywherev1.WorkersReadyConditon)
+	conditions.MarkTrue(cluster, anywherev1.WorkersReadyCondition)
 }
 
 // controlPlaneInitializationInProgressCondition returns a new "False" condition for the ControlPlaneInitializationInProgress reason.

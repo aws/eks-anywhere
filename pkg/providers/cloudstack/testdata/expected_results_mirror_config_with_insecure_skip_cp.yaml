@@ -19,7 +19,7 @@ spec:
     kind: KubeadmControlPlane
     name: test
   infrastructureRef:
-    apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
+    apiVersion: infrastructure.cluster.x-k8s.io/v1beta3
     kind: CloudStackCluster
     name: test
   managedExternalEtcdRef:
@@ -27,7 +27,7 @@ spec:
     kind: EtcdadmCluster
     name: test-etcd
 ---
-apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta3
 kind: CloudStackCluster
 metadata:
   name: test
@@ -58,7 +58,7 @@ metadata:
 spec:
   machineTemplate:
     infrastructureRef:
-      apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
+      apiVersion: infrastructure.cluster.x-k8s.io/v1beta3
       kind: CloudStackMachineTemplate
       name: test-control-plane-template-1234567890000
   kubeadmConfigSpec:
@@ -375,6 +375,7 @@ spec:
     cloudInitConfig:
       version: 3.4.16
       installDir: "/usr/bin"
+      etcdReleaseURL: https://distro.eks.amazonaws.com/kubernetes-1-21/releases/4/artifacts/etcd/v3.4.16/etcd-linux-amd64-v3.4.16.tar.gz
     etcdadmInstallCommands:
       - echo this line exists so that etcdadmInstallCommands is not empty
       - echo etcdadmInstallCommands can be removed once etcdadm bootstrap and controller fix the bug
@@ -396,11 +397,11 @@ spec:
     registryMirror:
       endpoint: 0.0.0.0:5000
   infrastructureTemplate:
-    apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
+    apiVersion: infrastructure.cluster.x-k8s.io/v1beta3
     kind: CloudStackMachineTemplate
     name: test-etcd-template-1234567890000
 ---
-apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta3
 kind: CloudStackMachineTemplate
 metadata:
   creationTimestamp: null
@@ -408,8 +409,6 @@ metadata:
   namespace: eksa-system
 spec:
   template:
-    metadata:
-      creationTimestamp: null
     spec:
       diskOffering:
         customSizeInGB: 0
@@ -424,7 +423,7 @@ spec:
         name: centos7-k8s-118
 
 ---
-apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta3
 kind: CloudStackMachineTemplate
 metadata:
   creationTimestamp: null
@@ -432,8 +431,6 @@ metadata:
   namespace: eksa-system
 spec:
   template:
-    metadata:
-      creationTimestamp: null
     spec:
       diskOffering:
         customSizeInGB: 0

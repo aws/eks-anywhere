@@ -9,6 +9,7 @@ import (
 )
 
 var ClusterctlMoveRetryPolicy = clusterctlMoveRetryPolicy
+var ClusterctlMoveWaitForInfrastructureRetryPolicy = clusterctlMoveWaitForInfrastructureRetryPolicy
 
 func TestClusterManager_totalTimeoutForMachinesReadyWait(t *testing.T) {
 	tests := []struct {
@@ -59,7 +60,7 @@ func TestClusterManager_totalTimeoutForMachinesReadyWait(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			c := New(nil, nil, nil, nil, nil, nil, tt.opts...)
+			c := New(nil, nil, nil, nil, nil, nil, nil, tt.opts...)
 			g := NewWithT(t)
 			g.Expect(c.totalTimeoutForMachinesReadyWait(tt.replicas)).To(Equal(tt.want))
 		})
