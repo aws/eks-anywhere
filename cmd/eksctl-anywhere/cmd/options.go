@@ -137,22 +137,14 @@ func newClusterSpec(options clusterOptions) (*cluster.Spec, error) {
 		return nil, fmt.Errorf("unable to get cluster config from file: %v", err)
 	}
 
-	if clusterSpec.Cluster.IsManaged() && options.managementKubeconfig == "" {
-		envKubeconfig := kubeconfig.FromEnvironment()
-		if envKubeconfig != "" {
-			options.managementKubeconfig = envKubeconfig
-		} else {
-			// check if kubeconfig for management cluster exists locally
-			managementKubeconfigPath := kubeconfig.FromClusterName(clusterSpec.Cluster.Spec.ManagementCluster.Name)
-			if validations.FileExistsAndIsNotEmpty(managementKubeconfigPath) {
-				options.managementKubeconfig = managementKubeconfigPath
-			} else {
-				return nil, fmt.Errorf("management kubeconfig file not found, must be present for workload cluster operations")
+	if clusterSpec.Cluster.IsManaged() {
+		if options.managementKubeconfig == "" {
+			managementKubeconfig, err := getManagementClusterKubeconfig(clusterSpec.Cluster.Spec.ManagementCluster.Name)
+			if err != nil {
+				return nil, err
 			}
+			options.managementKubeconfig = managementKubeconfig
 		}
-	}
-
-	if options.managementKubeconfig != "" {
 		managementCluster, err := cluster.LoadManagement(options.managementKubeconfig)
 		if err != nil {
 			return nil, fmt.Errorf("unable to get management cluster from kubeconfig: %v", err)
@@ -231,6 +223,19 @@ func buildUpgradeCliConfig(clusterOptions *upgradeClusterOptions) (*config.Upgra
 	upgradeCliConfig.UnhealthyMachineTimeout = unhealthyMachineTimeout
 
 	return &upgradeCliConfig, nil
+}
+
+func getManagementClusterKubeconfig(clusterName string) (string, error) {
+	envKubeconfig := kubeconfig.FromEnvironment()
+	if envKubeconfig != "" {
+		return envKubeconfig, nil
+	}
+	// check if kubeconfig for management cluster exists locally
+	managementKubeconfigPath := kubeconfig.FromClusterName(clusterName)
+	if validations.FileExistsAndIsNotEmpty(managementKubeconfigPath) {
+		return managementKubeconfigPath, nil
+	}
+	return "", fmt.Errorf("management kubeconfig file not found, must be present for workload cluster operations")
 }
 
 func getManagementCluster(clusterSpec *cluster.Spec) *types.Cluster {
