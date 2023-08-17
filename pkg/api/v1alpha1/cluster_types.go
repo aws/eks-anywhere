@@ -97,8 +97,9 @@ type ClusterSpecGenerate struct {
 	Packages                    *PackageConfiguration        `json:"packages,omitempty"`
 	// BundlesRef contains a reference to the Bundles containing the desired dependencies for the cluster.
 	// DEPRECATED: Use EksaVersion instead.
-	BundlesRef  *BundlesRef  `json:"bundlesRef"`
-	EksaVersion *EksaVersion `json:"eksaVersion,omitempty"`
+	BundlesRef         *BundlesRef         `json:"bundlesRef"`
+	EksaVersion        *EksaVersion        `json:"eksaVersion,omitempty"`
+	MachineHealthCheck *MachineHealthCheck `json:"machineHealthCheck,omitempty"`
 }
 
 // EksaVersion is the semver identifying the release of eks-a used to populate the cluster components.
@@ -1462,6 +1463,7 @@ func (c *Cluster) ConvertConfigToConfigGenerateStruct() *ClusterGenerate {
 			Packages:                      c.Spec.Packages,
 			BundlesRef:                    c.Spec.BundlesRef,
 			EksaVersion:                   c.Spec.EksaVersion,
+			MachineHealthCheck:            c.Spec.MachineHealthCheck,
 		},
 	}
 
