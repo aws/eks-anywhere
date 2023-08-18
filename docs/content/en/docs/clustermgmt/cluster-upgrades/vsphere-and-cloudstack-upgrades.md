@@ -278,7 +278,7 @@ allowing you to upgrade a number of fields simultaneously with the same procedur
 - `workerNodeGroupConfigurations.count`
 - `workerNodeGroupConfigurations.machineGroupRef.name`
 - `workerNodeGroupConfigurations.kubernetesVersion`
-- `etcdConfiguration.externalConfiguration.machineGroupRef.name`
+- `externalEtcdConfiguration.machineGroupRef.name`
 - `identityProviderRefs` (Only for `kind:OIDCConfig`, `kind:AWSIamConfig` is immutable)
 - `gitOpsRef` (Once set, you can't change or delete the field's content later)
 - `registryMirrorConfiguration` (for non-authenticated registry mirror)

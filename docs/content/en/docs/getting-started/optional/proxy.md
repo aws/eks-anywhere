@@ -9,6 +9,12 @@ description: >
 ---
 
 ## Proxy support (optional)
+
+#### Provider support details
+|                | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:--------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+| **Supported?** |   ✓	    |     ✓      |   	 ✓   |     ✓      |  ✓   |
+
 You can configure EKS Anywhere to use a proxy to connect to the Internet. This is the
 generic template with proxy configuration for your reference:
 ```yaml
