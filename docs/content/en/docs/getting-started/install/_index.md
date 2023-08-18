@@ -30,8 +30,8 @@ See [Create cluster workflow]({{< relref "../overview" >}}) for an overview of t
 
 #### Tools
 - [Docker 20.x.x](https://docs.docker.com/engine/install/)
-- [curl](https://everything.curl.dev/get)
-- [yq](https://github.com/mikefarah/yq/#install)
+- [`curl`](https://everything.curl.dev/get)
+- [`yq`](https://github.com/mikefarah/yq/#install)
 
 {{% alert title="Note" color="primary" %}}
 - If you are using Ubuntu, use the Docker CE installation instructions to install Docker as described [here.](https://docs.docker.com/engine/install/ubuntu/) 
@@ -108,7 +108,7 @@ eksctl anywhere version
 
 ## Prepare for airgapped deployments (optional)
 
-For more information on how to prepare the Administrative machine for airgapped environments, go to the [Airgrapped](/docs/getting-started/airgapped/) page. 
+For more information on how to prepare the Administrative machine for airgapped environments, go to the [Airgapped](/docs/getting-started/airgapped/) page. 
 
 ## Deploy a cluster
 
