@@ -8,6 +8,7 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 
+	"github.com/aws/eks-anywhere/cmd/eksctl-anywhere/cmd/flags"
 	"github.com/aws/eks-anywhere/pkg/validations"
 )
 
@@ -35,8 +36,8 @@ func bindFlagsToViper(cmd *cobra.Command, args []string) error {
 }
 
 func applyClusterOptionFlags(flagSet *pflag.FlagSet, clusterOpt *clusterOptions) {
-	flagSet.StringVarP(&clusterOpt.fileName, "filename", "f", "", "Filename that contains EKS-A cluster configuration")
-	flagSet.StringVar(&clusterOpt.bundlesOverride, "bundles-override", "", "Override default Bundles manifest (not recommended)")
+	flags.String(flags.ClusterConfig, &clusterOpt.fileName, flagSet)
+	flags.String(flags.BundleOverride, &clusterOpt.bundlesOverride, flagSet)
 	flagSet.StringVar(&clusterOpt.managementKubeconfig, "kubeconfig", "", "Management cluster kubeconfig file")
 }
 
