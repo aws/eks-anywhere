@@ -5,34 +5,37 @@ description: >
   Steps for setting up the Admin Machine
 ---
 
+{{% alert title="Warning" color="warning" %}}
+The Administrative machine should not be ephemeral. Artifacts created during cluster operations will be stored on the Administrative machine. Losing this machine could result in loss of cluster information.
+{{% /alert %}}
+
 EKS Anywhere will create and manage Kubernetes clusters on multiple providers.
 Currently we support creating development clusters locally using Docker and production clusters from providers listed on the [providers]({{< relref "/docs/getting-started/chooseprovider/" >}}) page.
 
-Creating an EKS Anywhere cluster begins with setting up an Administrative machine where you will run Docker and add prerequisite utilities. From here you will need to install [`eksctl`](https://eksctl.io) and the [`eksctl-anywhere`](/docs/reference/eksctl/anywhere/) plugin on your Administrative machine.
+Creating an EKS Anywhere cluster begins with setting up an Administrative machine where you will run all EKS Anywhere lifecycle operations as well as Docker, `kubectl` and the prerequisite utilites.
+From here you will need to install [`eksctl`](https://eksctl.io), a CLI tool for creating and managing clusters on EKS, and the [`eksctl-anywhere`](/docs/reference/eksctl/anywhere/) plugin, an extension to create and manage EKS Anywhere clusters on-premises, on your Administrative machine.
 You can then create a cluster for your chosen provider. 
 See [Create cluster workflow]({{< relref "../overview" >}}) for an overview of the cluster creation process.
 
->**_NOTE:_** For Snow provider, the Snow devices will come with a pre-configured Admin AMI which can be used to create an Admin instance with all the necessary binaries, dependencies and artifacts to create an EKS Anywhere cluster. Skip the below steps and see [Create Snow production cluster]({{< relref "../snow" >}}) to get started with EKS Anywhere on Snow.
+>**_NOTE:_** For Snow provider, the Snow devices will come with a pre-configured Admin AMI which can be used to create an Admin instance with all the necessary binaries, dependencies and artifacts to create an EKS Anywhere cluster. Skip to the steps on [Create Snow production cluster]({{< relref "../snow/snow-getstarted" >}})to get started with EKS Anywhere on Snow.
 
 ### Administrative machine prerequisites
 
 #### System and network requirements
-- Mac OS 10.15 / Ubuntu 20.04.2 LTS
+- Mac OS 10.15+ / Ubuntu 20.04.2 LTS or 22.04 LTS
 - 4 CPU cores
 - 16GB memory
 - 30GB free disk space
 - Administrative machine must be on the same Layer 2 network as the cluster machines (Bare Metal provider only).
 
 #### Tools
-- Docker 20.x.x ([Install](https://docs.docker.com/engine/install/))
-- `curl` ([Install](https://everything.curl.dev/get))
-- `yq` ([Install](https://github.com/mikefarah/yq/#install))
+- [Docker 20.x.x](https://docs.docker.com/engine/install/)
+- [curl](https://everything.curl.dev/get)
+- [yq](https://github.com/mikefarah/yq/#install)
 
-
-If you are using Ubuntu, use the Docker CE installation instructions to install Docker as described [here.](https://docs.docker.com/engine/install/ubuntu/)
-
-{{% alert title="Warning" color="warning" %}}
-For EKS Anywhere Bare Metal, Docker Desktop is not supported
+{{% alert title="Note" color="primary" %}}
+- If you are using Ubuntu, use the Docker CE installation instructions to install Docker as described [here.](https://docs.docker.com/engine/install/ubuntu/) 
+- For EKS Anywhere Bare Metal, Docker Desktop is not supported.
 {{% /alert %}}
 
 ### Install EKS Anywhere CLI tools
