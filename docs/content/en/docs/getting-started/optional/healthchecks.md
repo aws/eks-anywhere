@@ -33,7 +33,7 @@ spec:
 
 ### __nodeStartupTimeout__ (optional)
 * __Description__: determines how long a Machine Health Check should wait for a Node to join the cluster, before considering a Machine unhealthy.
-* __Default__: ```10m0s```
+* __Default__: ```20m0s``` for Tinkerbell provider, ```10m0s``` for all other providers.
 * __Minimum Value (If configured)__: ```30s```
 * __Type__: string
 
