@@ -16,9 +16,9 @@ The following cluster spec shows an example of how to configure registry mirror:
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: Cluster
 metadata:
-   name: my-cluster-name
+  name: my-cluster-name
 spec:
-   ...
+  ...
   registryMirrorConfiguration:
     endpoint: <private registry IP or hostname>
     port: <private registry port>
@@ -34,7 +34,7 @@ spec:
       -----END CERTIFICATE-----  
 ```
 ## Registry Mirror Configuration Spec Details
-### __registryMirrorConfiguration__ (required)
+### __registryMirrorConfiguration__ (optional)
 * __Description__: top level key; required to use a private registry.
 * __Type__: object
 
@@ -50,7 +50,7 @@ spec:
 * __Example__: ```port: 443```
 
 ### __ociNamespaces__ (optional)
-* __Description__: mapping from upstream registries to the locations of the private registry. When specified, the artifacts pulled from an upstream registry will be put in its corresponding location/namespace in the private registry. The target location/namespace must be already existing.
+* __Description__: when you need to mirror multiple registries, you can map the upstream registries to "namespaces" of the mirror.
 * __Type__: array
 * __Example__: <br/>
   ```yaml
@@ -83,9 +83,8 @@ spec:
 * __Description__: optional field to authenticate with a private registry. When using private registries that 
   require authentication, it is necessary to set this parameter to ```true``` in the cluster spec.
 * __Type__: boolean
-* __Example__: ```authenticate: true```
 
-To use an authenticated private registry, please also set the following environment variables:
+When this value is set to true, the following environment variables need to be set:
 ```bash
 export REGISTRY_USERNAME=<username>
 export REGISTRY_PASSWORD=<password>
@@ -101,7 +100,6 @@ private registry.
 The `copy packages` must be used if you want to copy EKS Anywhere Curated Packages to your registry mirror.
 The `download images` command also pulls the cilium chart from `public.ecr.aws` and pushes it to the registry mirror. It requires the registry credentials for performing a login. Set the following environment variables for the login:
 ```bash
-export REGISTRY_ENDPOINT=<registry_endpoint>
 export REGISTRY_USERNAME=<username>
 export REGISTRY_PASSWORD=<password>
 ```
@@ -118,6 +116,7 @@ tar -xzf eks-anywhere-downloads.tar.gz
 
 Download and import EKS Anywhere images:
 ```bash
+REGISTRY_ENDPOINT=<registry_endpoint>
 eksctl anywhere download images -o eks-anywhere-images.tar
 docker login https://${REGISTRY_ENDPOINT}
 ...
@@ -140,25 +139,3 @@ For [Mac](https://docs.docker.com/desktop/mac/#add-tls-certificates), you can fo
 {{% alert title="Note" color="primary" %}}
   You may need to restart Docker after adding the certificates.
 {{% /alert %}}
-
-## Registry configurations
-Depending on what registry you decide to use, you will need to create the following projects:
-
-```
-bottlerocket
-eks-anywhere
-eks-distro
-isovalent
-cilium-chart
-```
-
-For example, if a registry is available at `private-registry.local`, then the following 
-projects will have to be created:
-
-```
-https://private-registry.local/bottlerocket
-https://private-registry.local/eks-anywhere
-https://private-registry.local/eks-distro
-https://private-registry.local/isovalent
-https://private-registry.local/cilium-chart
-```
