@@ -9,7 +9,7 @@ description: >
 ---
 
 ## Machine Health Checks Support 
-You can configure EKS Anywhere to configure timeouts for machine health checks.
+You can configure EKS Anywhere to specify timeouts for machine health checks.
 A Machine Health Check is a resource which allows users to define conditions under which Machines within a Cluster should be considered unhealthy. A Machine Health Check is defined on a management cluster and scoped to a particular workload cluster. If not configured in the spec, the default values are used to configure the machine health checks. 
 
 Note: Even though the configuration on machine health check timeouts in the EKSA spec is optional, machine health checks are still installed for all clusters using the default timeout values mentioned below.
