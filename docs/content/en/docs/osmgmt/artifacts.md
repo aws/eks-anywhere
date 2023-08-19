@@ -153,7 +153,7 @@ sha512sum -c <<<"b81af4d8eb86743539fbc4709d33ada7b118d9f929f0c2f6c04e1d41f46241e
 export KUBEVERSION="1.27"
 ```
 5. Programmatically retrieve the Bottlerocket version corresponding to this release of EKS-A and Kubernetes version and export it.
-   
+
    Using the latest EKS Anywhere version
    ```bash
    EKSA_RELEASE_VERSION=$(curl -sL https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml | yq ".spec.latestVersion")
@@ -449,7 +449,6 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
       * `--hypervisor`: For vSphere use `vsphere`
       * `--release-channel`: Supported EKS Distro releases include 1-23, 1-24, 1-25, 1-26 and 1-27.
       * `--vsphere-config`: vSphere configuration file (`vsphere-connection.json` in this example)
-      * `--firmware`: `bios` (default) or `efi`. To build an EFI image, set this parameter to `efi`. This is only supported for vSphere Ubuntu images
 
       ```bash
       image-builder build --os ubuntu --hypervisor vsphere --release-channel 1-27 --vsphere-config vsphere-connection.json
@@ -966,7 +965,7 @@ These steps use `image-builder` to create a Ubuntu-based image for Nutanix AHV a
             <td rowspan=2>2004</td>
         </tr>
         <tr>
-            <td>22.04.2</td>
+            <td>22.04.3</td>
             <td>2204</td>
         </tr>
         <tr>
@@ -979,6 +978,40 @@ These steps use `image-builder` to create a Ubuntu-based image for Nutanix AHV a
 </table>
 
 Currently, Ubuntu is the only operating system that supports multiple `os-version` values.
+
+### Building images for a specific EKS Anywhere version
+
+This section provides information about the relationship between `image-builder` and EKS Anywhere CLI version, and provides instructions on building images pertaining to a specific EKS Anywhere version.
+
+Every release of EKS Anywhere includes a new version of `image-builder` CLI. For EKS-A releases prior to `v0.16.3`, the corresponding `image-builder` CLI builds images for the latest version of EKS-A released thus far. The EKS-A version determines what artifacts will be bundled into the final OS image, i.e., the core Kubernetes components vended by EKS Distro as well as several binaries vended by EKS Anywhere, such as `crictl`, `etcdadm`, etc, and users may not always want the latest versions of these, and rather wish to bake in certain specific component versions into the image.
+
+This was improved in `image-builder` released with EKS-A `v0.16.3` to `v0.16.5`. Now you can override the default latest build behavior to build images corresponding to a specific EKS-A release, including previous releases. This can be achieved by setting the `EKSA_RELEASE_VERSION` environment variable to the desired EKS-A release (`v0.16.0` and above).  
+For example, if you want to build an image for EKS-A version `v0.16.5`, you can run the following command.
+   ```bash
+   export EKSA_RELEASE_VERSION=v0.16.5
+   image-builder build --os <OS> --hypervisor <hypervisor> --release-channel <release channel> --<hypervisor>-config config.json
+   ```
+
+With `image-builder` versions `v0.2.1` and above (released with EKS-A version `v0.17.0`), the `image-builder` CLI has the EKS-A version baked into it, so it will build images pertaining to that release of EKS Anywhere by default. You can override the default version using the `eksa-release` option.
+   ```bash
+   image-builder build --os <OS> --hypervisor <hypervisor> --release-channel <release channel> --<hypervisor>-config config.json --eksa-release v0.16.5
+   ```
+
+### UEFI support
+
+`image-builder` supports UEFI-enabled images for Ubuntu OVA and Raw images. UEFI is turned on by default for Ubuntu Raw image builds, but the default firmware for Ubuntu OVAs is BIOS. This can be toggled with the `firmware` option.
+
+For example, to build a Kubernetes v1.27 Ubuntu 22.04 OVA with UEFI enabled, you can run the following command.
+   ```bash
+   image-builder build --os ubuntu --hypervisor vsphere --os-version 2204 --release-channel 1.27 --vsphere-config config.json --firmware efi
+   ```
+
+The table below shows the possible firmware options for the hypervisor and OS combinations that `image-builder` supports.
+
+|            |       vSphere       |      Baremetal      | CloudStack | Nutanix | Snow |
+|:----------:|:-------------------:|:-------------------:|:----------:|:-------:|:----:|
+| **Ubuntu** | bios (default), efi | bios, efi (default) |    bios    |   bios  | bios |
+|  **RHEL**  |         bios        |         bios        |    bios    |   bios  | bios |
 
 ### Mounting additional files
 
