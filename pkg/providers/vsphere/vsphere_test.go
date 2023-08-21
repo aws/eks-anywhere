@@ -36,6 +36,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/govmomi"
 	govmomi_mocks "github.com/aws/eks-anywhere/pkg/govmomi/mocks"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere/mocks"
+	"github.com/aws/eks-anywhere/pkg/retrier"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
@@ -3948,6 +3949,7 @@ func TestPreCoreComponentsUpgradeDSNotReadyError(t *testing.T) {
 	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
 	ipValidator := mocks.NewMockIPValidator(mockCtrl)
 	provider := newProviderWithKubectl(t, datacenterConfig, clusterConfig, kubectl, ipValidator)
+	provider.Retrier = retrier.NewWithMaxRetries(2, 0)
 	cluster := &types.Cluster{
 		Name:           "test",
 		KubeconfigFile: "",
@@ -3969,7 +3971,7 @@ func TestPreCoreComponentsUpgradeDSNotReadyError(t *testing.T) {
 	setupContext(t)
 
 	kubectl.EXPECT().ApplyKubeSpecFromBytes(ctx, cluster, gomock.Any())
-	kubectl.EXPECT().GetDaemonSet(ctx, ethtoolDaemonSetName, constants.EksaSystemNamespace, gomock.Any()).AnyTimes().Return(daemonSet, nil)
+	kubectl.EXPECT().GetDaemonSet(ctx, ethtoolDaemonSetName, constants.EksaSystemNamespace, gomock.Any()).Times(2).Return(daemonSet, nil)
 
 	template, err := template.New("test").Funcs(sprig.TxtFuncMap()).Parse(ethtoolDaemonSetObject)
 	if err != nil {
