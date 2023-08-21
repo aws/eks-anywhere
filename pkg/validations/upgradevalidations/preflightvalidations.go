@@ -8,7 +8,9 @@ import (
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/config"
+	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/types"
+	"github.com/aws/eks-anywhere/pkg/validation"
 	"github.com/aws/eks-anywhere/pkg/validations"
 )
 
@@ -21,6 +23,12 @@ func (u *UpgradeValidations) PreflightValidations(ctx context.Context) []validat
 		KubeconfigFile: u.Opts.ManagementCluster.KubeconfigFile,
 	}
 	upgradeValidations := []validations.Validation{
+		func() *validations.ValidationResult {
+			return resultForRemediableValidation(
+				"SSH Keys present",
+				providers.ValidateSSHKeyPresentForUpgrade(ctx, u.Opts.Spec),
+			)
+		},
 		func() *validations.ValidationResult {
 			return &validations.ValidationResult{
 				Name:        "validate OS is compatible with registry mirror configuration",
@@ -143,4 +151,21 @@ func (u *UpgradeValidations) PreflightValidations(ctx context.Context) []validat
 			})
 	}
 	return upgradeValidations
+}
+
+func resultForRemediableValidation(name string, err error) *validations.ValidationResult {
+	r := &validations.ValidationResult{
+		Name: name,
+		Err:  err,
+	}
+
+	if r.Err == nil {
+		return r
+	}
+
+	if validation.IsRemediable(r.Err) {
+		r.Remediation = validation.Remediation(r.Err)
+	}
+
+	return r
 }
