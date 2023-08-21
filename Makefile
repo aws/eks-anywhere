@@ -414,6 +414,15 @@ endif
 generate: $(CONTROLLER_GEN)  ## Generate zz_generated.deepcopy.go
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
 
+.PHONY: verify-generate
+verify-generate: generate ## Verify if generated zz_generated.deepcopy.go files need to be updated
+	$(eval DIFF=$(shell git diff --raw -- '*.go' | wc -c))
+	if [[ $(DIFF) != 0 ]]; then \
+		echo "Detected out of date deepcopy files. please run 'make generate'"; \
+		exit 1;\
+	fi
+
+
 .PHONY: test
 test: unit-test capd-test  ## Run unit and capd tests
 
@@ -691,6 +700,20 @@ generate-core-manifests: $(CONTROLLER_GEN) ## Generate manifests for the core pr
 		output:crd:dir=./config/crd/bases \
 		output:webhook:dir=./config/webhook \
 		webhook
+
+.PHONY: verify-generate-manifests
+verify-generate-manifests: generate-manifests ## Verify if generated manifests files e.g. CRD, RBAC etc. need to be updated
+	$(eval DIFF=$(shell git diff --raw -- '*.go' | wc -c))
+	if [[ $(DIFF) != 0 ]]; then \
+		echo "Detected out of date manifest files. please run 'make generate-manifests'"; \
+		exit 1;\
+	fi
+
+.PHONY: verify-generate-files
+verify-generate-files: 
+	$(MAKE) verify-generate-manifests
+	$(MAKE) verify-generate
+	$(MAKE) verify-mocks
 
 LDFLAGS := $(shell hack/version.sh)
 
