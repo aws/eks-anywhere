@@ -6,18 +6,18 @@ description: >
 ---
 
 {{% alert title="Warning" color="warning" %}}
-The Administrative machine should not be ephemeral. Artifacts created during cluster operations will be stored on the Administrative machine. Losing this machine could result in loss of cluster information.
+The Administrative machine (Admin machine) is required to run cluster lifecycle operations, but EKS Anywhere clusters do not require a continuously running Admin machine to function. During cluster creation, critical cluster artifacts including the kubeconfig file, SSH keys, and the full cluster specification yaml are saved to the Admin machine. These files are required when running any subsequent cluster lifecycle operations. For this reason, it is recommended to save a backup of these files and to use the same Admin machine for all subsequent cluster lifecycle operations.
 {{% /alert %}}
 
 EKS Anywhere will create and manage Kubernetes clusters on multiple providers.
 Currently we support creating development clusters locally using Docker and production clusters from providers listed on the [providers]({{< relref "/docs/getting-started/chooseprovider/" >}}) page.
 
-Creating an EKS Anywhere cluster begins with setting up an Administrative machine where you will run all EKS Anywhere lifecycle operations as well as Docker, `kubectl` and the prerequisite utilites.
+Creating an EKS Anywhere cluster begins with setting up an Administrative machine where you run all EKS Anywhere lifecycle operations as well as Docker, `kubectl` and prerequisite utilites.
 From here you will need to install [`eksctl`](https://eksctl.io), a CLI tool for creating and managing clusters on EKS, and the [`eksctl-anywhere`](/docs/reference/eksctl/anywhere/) plugin, an extension to create and manage EKS Anywhere clusters on-premises, on your Administrative machine.
-You can then create a cluster for your chosen provider. 
+You can then proceed to the [cluster networking]({{< relref "../ports" >}}) and [provider specific steps]({{< relref "../chooseprovider" >}}). 
 See [Create cluster workflow]({{< relref "../overview" >}}) for an overview of the cluster creation process.
 
->**_NOTE:_** For Snow provider, the Snow devices will come with a pre-configured Admin AMI which can be used to create an Admin instance with all the necessary binaries, dependencies and artifacts to create an EKS Anywhere cluster. Skip to the steps on [Create Snow production cluster]({{< relref "../snow/snow-getstarted" >}})to get started with EKS Anywhere on Snow.
+>**_NOTE:_** For Snow provider, if you ordered a Snowball Edge device with EKS Anywhere enabled, it is preconfigured with an Admin AMI which contains the necessary binaries, dependencies, and artifacts to create an EKS Anywhere cluster. Skip to the steps on [Create Snow production cluster]({{< relref "../snow/snow-getstarted" >}})to get started with EKS Anywhere on Snow.
 
 ### Administrative machine prerequisites
 
