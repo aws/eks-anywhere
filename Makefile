@@ -710,8 +710,8 @@ verify-generate-manifests: generate-manifests ## Verify if generated manifests f
 		exit 1;\
 	fi
 
-.PHONY: verify-auto-gen-files
-verify-auto-gen-files: 
+.PHONY: verify-generate-files
+verify-generate-files: 
 	$(MAKE) verify-generate-manifests
 	$(MAKE) verify-generate
 	$(MAKE) verify-mocks
