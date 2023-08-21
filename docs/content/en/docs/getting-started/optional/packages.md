@@ -11,7 +11,7 @@ description: >
 ## Package Controller Configuration (optional)
 You can configure EKS Anywhere controller configuration.
 
-The following cluster spec shows an example of how to configure registry mirror:
+The following cluster spec shows an example of how to configure package controller:
 ```yaml
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: Cluster
