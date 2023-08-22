@@ -239,7 +239,7 @@ func NewBuildNumberFromLastVersion(latestEksaBuildVersion, releaseVersion, branc
 	return newBuildNumber, nil
 }
 
-func GetCurrentEksADevReleaseVersion(releaseVersion string, r *releasetypes.ReleaseConfig, buildNumber int) (string, error) {
+func GetCurrentEksADevReleaseVersion(releaseVersion, latestVersion string, r *releasetypes.ReleaseConfig, buildNumber int) (string, error) {
 	fmt.Println("\n==========================================================")
 	fmt.Println("              Dev Release Version Computation")
 	fmt.Println("==========================================================")
@@ -259,6 +259,11 @@ func GetCurrentEksADevReleaseVersion(releaseVersion string, r *releasetypes.Rele
 	} else {
 		newDevReleaseVersion = fmt.Sprintf("v0.0.0-%s.%d", releaseVersionIdentifier, buildNumber)
 	}
+
+	if latestVersion != "vDev" {
+		newDevReleaseVersion = fmt.Sprintf("%s-%s", latestVersion, newDevReleaseVersion)
+	}
+
 	fmt.Printf("New dev release release version: %s\n", newDevReleaseVersion)
 	fmt.Printf("%s Successfully computed current dev release version\n", constants.SuccessIcon)
 

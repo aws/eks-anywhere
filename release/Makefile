@@ -3,6 +3,8 @@ REPO_ROOT=$(shell git rev-parse --show-toplevel)
 AWS_ACCOUNT_ID?=$(shell aws sts get-caller-identity --query Account --output text)
 AWS_REGION?=us-west-2
 
+EKSA_RELEASE_MANIFEST_URL=https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml
+LATEST_EKSA_VERSION?=$(shell curl $(EKSA_RELEASE_MANIFEST_URL) | yq e '.spec.latestVersion')
 RELEASE_ENVIRONMENT?=development
 RELEASE_VERSION?=$(shell cat triggers/eks-a-release/$(RELEASE_ENVIRONMENT)/RELEASE_VERSION)
 BUNDLE_NUMBER?=$(shell cat triggers/bundle-release/$(RELEASE_ENVIRONMENT)/BUNDLE_NUMBER)
@@ -134,7 +136,7 @@ run: manifests generate fmt vet ## Run a controller from your host.
 ##@ Release
 
 dev-release: build ## Perform a dev release of EKS-A bundles and CLI manifests
-	scripts/release.sh $(REPO_ROOT)/release/downloaded-artifacts $(SOURCE_BUCKET) $(RELEASE_BUCKET) $(CDN) $(SOURCE_CONTAINER_REGISTRY) $(RELEASE_CONTAINER_REGISTRY) $(BUILD_REPO_URL) $(CLI_REPO_URL) $(BUILD_REPO_BRANCH_NAME) $(CLI_REPO_BRANCH_NAME) $(DRY_RUN) $(WEEKLY)
+	scripts/release.sh $(REPO_ROOT)/release/downloaded-artifacts $(SOURCE_BUCKET) $(RELEASE_BUCKET) $(CDN) $(SOURCE_CONTAINER_REGISTRY) $(RELEASE_CONTAINER_REGISTRY) $(BUILD_REPO_URL) $(CLI_REPO_URL) $(BUILD_REPO_BRANCH_NAME) $(CLI_REPO_BRANCH_NAME) $(DRY_RUN) $(WEEKLY) $(LATEST_EKSA_VERSION)
 
 bundle-release: build ## Perform EKS-A versioned bundles release
 	scripts/bundle-release.sh $(REPO_ROOT)/release/downloaded-artifacts $(SOURCE_BUCKET) $(RELEASE_BUCKET) $(CDN) $(BUNDLE_NUMBER) $(CLI_MIN_VERSION) $(CLI_MAX_VERSION) $(SOURCE_CONTAINER_REGISTRY) $(RELEASE_CONTAINER_REGISTRY) $(RELEASE_ENVIRONMENT) $(BUILD_REPO_BRANCH_NAME) $(CLI_REPO_BRANCH_NAME) $(BUILD_REPO_URL) $(CLI_REPO_URL)

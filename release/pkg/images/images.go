@@ -262,7 +262,7 @@ func GetReleaseImageURI(r *releasetypes.ReleaseConfig, name, repoName string, ta
 					if err != nil {
 						return "", err
 					}
-					newSemver, err := filereader.GetCurrentEksADevReleaseVersion("vDev", r, buildNumber)
+					newSemver, err := filereader.GetCurrentEksADevReleaseVersion("vDev", "vDev", r, buildNumber)
 					if err != nil {
 						return "", err
 					}

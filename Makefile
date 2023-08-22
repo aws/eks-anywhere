@@ -8,7 +8,7 @@ export JOB_ID?=${PROW_JOB_ID}
 
 LOCAL_ENV=.env
 EKSA_RELEASE_MANIFEST_URL=https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml
-LATEST_EKSA_VERSION=$(shell curl $(EKSA_RELEASE_MANIFEST_URL) | yq e '.spec.latestVersion')
+LATEST_EKSA_VERSION?=$(shell curl $(EKSA_RELEASE_MANIFEST_URL) | yq e '.spec.latestVersion')
 
 # Include local .env file for exporting e2e test env vars locally
 # FYI, This file is git ignored

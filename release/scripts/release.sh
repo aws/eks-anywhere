@@ -34,6 +34,7 @@ BUILD_REPO_BRANCH_NAME="${9?Specify ninth argument - Build repo branch name}"
 CLI_REPO_BRANCH_NAME="${10?Specify tenth argument - CLI repo branch name}"
 DRY_RUN="${11?Specify eleventh argument - Dry run}"
 WEEKLY="${12?Specify twelfth argument - Weekly release}"
+LATEST_EKSA_VERSION="${13?Specify thirteenth argument - Latest EKS-A version}"
 
 mkdir -p "${ARTIFACTS_DIR}"
 
@@ -51,3 +52,4 @@ ${BASE_DIRECTORY}/release/bin/eks-anywhere-release release \
     --dev-release=true \
     --dry-run=${DRY_RUN} \
     --weekly=${WEEKLY}
+    --latest-version=${LATEST_EKSA_VERSION}

@@ -75,6 +75,7 @@ var releaseCmd = &cobra.Command{
 		devRelease := viper.GetBool("dev-release")
 		dryRun := viper.GetBool("dry-run")
 		weekly := viper.GetBool("weekly")
+		latestVersion := viper.GetString("latest-version")
 		releaseTime := time.Now().UTC()
 		releaseDate := releaseTime.Format(constants.YYYYMMDD)
 
@@ -156,7 +157,7 @@ var releaseCmd = &cobra.Command{
 				fmt.Printf("Error getting previous EKS-A dev release number: %v\n", err)
 				os.Exit(1)
 			}
-			releaseVersion, err = filereader.GetCurrentEksADevReleaseVersion(releaseVersion, releaseConfig, buildNumber)
+			releaseVersion, err = filereader.GetCurrentEksADevReleaseVersion(releaseVersion, latestVersion, releaseConfig, buildNumber)
 			if err != nil {
 				fmt.Printf("Error getting previous EKS-A dev release number: %v\n", err)
 				os.Exit(1)
