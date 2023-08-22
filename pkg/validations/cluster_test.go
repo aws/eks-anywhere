@@ -356,8 +356,9 @@ func TestValidateEksaVersion(t *testing.T) {
 }
 
 func TestValidateEksaVersionSkew(t *testing.T) {
-	v := test.DevEksaVersion()
-	uv := anywherev1.EksaVersion("v0.1.0")
+	v := anywherev1.EksaVersion("v0.1.0")
+	uv := anywherev1.EksaVersion("v0.2.0")
+	devVersion := test.DevEksaVersion()
 	badVersion := anywherev1.EksaVersion("invalid")
 	tests := []struct {
 		name           string
@@ -385,7 +386,7 @@ func TestValidateEksaVersionSkew(t *testing.T) {
 		},
 		{
 			name:           "Fail",
-			wantErr:        fmt.Errorf("spec.EksaVersion: Invalid value: \"v0.0.0-dev\": cannot downgrade from v0.1.0 to v0.0.0: EksaVersion upgrades must be incremental"),
+			wantErr:        fmt.Errorf("spec.EksaVersion: Invalid value: \"v0.1.0\": cannot downgrade from v0.2.0 to v0.1.0: EksaVersion upgrades must be incremental"),
 			version:        &uv,
 			upgradeVersion: &v,
 		},
@@ -400,6 +401,12 @@ func TestValidateEksaVersionSkew(t *testing.T) {
 			wantErr:        nil,
 			version:        &uv,
 			upgradeVersion: nil,
+		},
+		{
+			name:           "Upgrade to dev build success",
+			wantErr:        nil,
+			version:        &uv,
+			upgradeVersion: &devVersion,
 		},
 	}
 
