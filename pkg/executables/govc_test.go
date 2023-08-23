@@ -1643,3 +1643,82 @@ func TestGovcGetHardDiskSizeError(t *testing.T) {
 		})
 	}
 }
+
+func TestGovcGetResourcePoolInfo(t *testing.T) {
+	datacenter := "SDDC-Datacenter"
+	resourcePool := "*/Resources/Test-ResourcePool"
+	govcErr := errors.New("error PoolInfo()")
+	ctx := context.Background()
+	_, g, executable, env := setup(t)
+
+	tests := []struct {
+		testName    string
+		response    string
+		govcErr     error
+		wantErr     error
+		wantMemInfo map[string]int
+	}{
+		{
+			testName: "pool_info_memory_limit_set",
+			response: `Name: Test-ResourcePool
+					Path: /SDDC-Datacenter/host/Cluster-1/Resources/Test-ResourcePool
+					Mem Usage: 100MB (11.3%)
+					Mem Shares: normal
+					Mem Reservation: 0MB (expandable=true)
+					Mem Limit: 1000MB`,
+			govcErr:     nil,
+			wantErr:     nil,
+			wantMemInfo: map[string]int{executables.MemoryAvailable: 900},
+		},
+		{
+			testName: "pool_info_memory_limit_unset",
+			response: `Name: Test-ResourcePool
+					Path: /SDDC-Datacenter/host/Cluster-1/Resources/Test-ResourcePool
+					Mem Usage: 100MB (11.3%)
+					Mem Shares: normal
+					Mem Reservation: 0MB (expandable=true)
+					Mem Limit: -1MB`,
+			govcErr:     nil,
+			wantErr:     nil,
+			wantMemInfo: map[string]int{executables.MemoryAvailable: -1},
+		},
+		{
+			testName: "pool_info_memory_usage_corrupt",
+			response: `Name: Test-ResourcePool
+					Mem Usage:corrupt-val
+					Mem Limit:-1MB`,
+			govcErr:     nil,
+			wantErr:     fmt.Errorf("unable to obtain memory usage for resource pool corrupt-val: strconv.Atoi: parsing \"-\": invalid syntax"),
+			wantMemInfo: nil,
+		},
+		{
+			testName: "pool_info_memory_limit_corrupt",
+			response: `Name: Test-ResourcePool
+					Mem Usage:100
+					Mem Limit:corrupt-val`,
+			govcErr:     nil,
+			wantErr:     fmt.Errorf("unable to obtain memory limit for resource pool corrupt-val: strconv.Atoi: parsing \"-\": invalid syntax"),
+			wantMemInfo: nil,
+		},
+		{
+			testName:    "pool_info_error",
+			response:    "",
+			govcErr:     govcErr,
+			wantErr:     fmt.Errorf("getting resource pool information: %v", govcErr),
+			wantMemInfo: nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.testName, func(t *testing.T) {
+			gt := NewWithT(t)
+			responseBytes := bytes.NewBuffer([]byte(tt.response))
+			executable.EXPECT().ExecuteWithEnv(ctx, env, "pool.info", "-dc", datacenter, resourcePool).Return(*responseBytes, tt.govcErr)
+			poolMemInfo, err := g.GetResourcePoolInfo(ctx, datacenter, resourcePool)
+			if tt.wantErr != nil {
+				gt.Expect(err.Error()).To(Equal(tt.wantErr.Error()))
+			}
+			gt.Expect(poolMemInfo).To(Equal(tt.wantMemInfo))
+		})
+	}
+}
