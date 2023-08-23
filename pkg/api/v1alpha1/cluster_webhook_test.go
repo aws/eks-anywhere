@@ -880,21 +880,35 @@ func TestClusterValidateUpdateEksaVersionSkew(t *testing.T) {
 		{
 			name:           "allow downgrade",
 			wantErr:        "",
-			upgradeVersion: v1alpha1.EksaVersion("v0.0.0"),
-			oldVersion:     v1alpha1.EksaVersion("v0.1.0"),
+			upgradeVersion: v1alpha1.EksaVersion("v0.1.0"),
+			oldVersion:     v1alpha1.EksaVersion("v0.2.0"),
 			allow:          true,
 		},
 		{
 			name:           "forbid downgrade",
 			wantErr:        "cannot downgrade",
+			upgradeVersion: v1alpha1.EksaVersion("v0.1.0"),
+			oldVersion:     v1alpha1.EksaVersion("v0.2.0"),
+		},
+		{
+			name:           "allow upgrade from release to dev",
+			wantErr:        "",
 			upgradeVersion: v1alpha1.EksaVersion("v0.0.0"),
-			oldVersion:     v1alpha1.EksaVersion("v0.1.0"),
+			oldVersion:     v1alpha1.EksaVersion("v0.17.0"),
+			allow:          true,
+		},
+		{
+			name:           "allow upgrade from release to dev with prerelease metadata",
+			wantErr:        "",
+			upgradeVersion: v1alpha1.EksaVersion("v0.0.0-dev-release-0.17"),
+			oldVersion:     v1alpha1.EksaVersion("v0.17.0"),
+			allow:          true,
 		},
 		{
 			name:           "success",
 			wantErr:        "",
-			upgradeVersion: v1alpha1.EksaVersion("v0.1.0"),
-			oldVersion:     v1alpha1.EksaVersion("v0.0.0"),
+			upgradeVersion: v1alpha1.EksaVersion("v0.2.0"),
+			oldVersion:     v1alpha1.EksaVersion("v0.1.0"),
 		},
 	}
 	for _, tt := range tests {

@@ -32,6 +32,8 @@ import (
 
 const supportedMinorVersionIncrement int64 = 1
 
+var devBuild, _ = semver.New("v0.0.0-dev")
+
 // log is for logging in this package.
 var clusterlog = logf.Log.WithName("cluster-resource")
 
@@ -143,6 +145,10 @@ func ValidateEksaVersionSkew(new, old *Cluster) field.ErrorList {
 			allErrs,
 			field.Invalid(eksaVersionPath, new.Spec.EksaVersion, "EksaVersion is not a valid semver"))
 		return allErrs
+	}
+
+	if newEksaVersion.SamePatch(devBuild) {
+		return nil
 	}
 
 	majorVersionDifference := int64(newEksaVersion.Major) - int64(oldEksaVersion.Major)
