@@ -47,6 +47,7 @@ func TestParseConfigFromFileTinkerbellCluster(t *testing.T) {
 				WorkerNodeGroupConfigurations: []anywherev1.WorkerNodeGroupConfiguration{
 					{
 						Count: ptr.Int(1),
+						Name:  "md-0",
 						MachineGroupRef: &anywherev1.Ref{
 							Kind: "TinkerbellMachineConfig",
 							Name: "test-md",
@@ -67,13 +68,6 @@ func TestParseConfigFromFileTinkerbellCluster(t *testing.T) {
 						CidrBlocks: []string{"10.96.0.0/12"},
 					},
 					CNI: "cilium",
-				},
-				ExternalEtcdConfiguration: &anywherev1.ExternalEtcdConfiguration{
-					Count: 1,
-					MachineGroupRef: &anywherev1.Ref{
-						Kind: "TinkerbellMachineConfig",
-						Name: "test-cp",
-					},
 				},
 				ManagementCluster: anywherev1.ManagementCluster{Name: "test"},
 			},
