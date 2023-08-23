@@ -1143,3 +1143,33 @@ func (g *Govc) SetGroupRoleOnObject(ctx context.Context, principal string, role 
 
 	return nil
 }
+
+type resourcePoolInfo struct {
+	resourcePoolIdentifier resourcePool
+}
+
+type resourcePool struct {
+	CPUUsage    string
+	CPULimit    string
+	MemoryUsage string
+	MemoryLimit string
+}
+
+// ResourcePoolInfo returns the pool info for the provided resource pool.
+func (g *Govc) ResourcePoolInfo(ctx context.Context, datacenter, resourcepool string, args ...string) (resourcePool, error) {
+	params := []string{"pool.info", "-dc", datacenter, "-vm", resourcepool, "-json"}
+	params = append(params, args...)
+	response, err := g.exec(ctx, params...)
+	if err != nil {
+		return resourcePool{}, fmt.Errorf("getting resource pool information: %v", err)
+	}
+	var resourcePoolInfoResponse resourcePoolInfo
+	err = yaml.Unmarshal(response.Bytes(), &resourcePoolInfoResponse)
+	if err != nil {
+		return resourcePool{}, fmt.Errorf("unmarshalling devices info: %v", err)
+	}
+
+	return resourcePoolInfoResponse.resourcePoolIdentifier, nil
+}
+
+func validateMemoryAnd
