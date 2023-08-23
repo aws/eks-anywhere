@@ -2186,14 +2186,10 @@ func TestValidateWorkerVersionBlockTinkerbell(t *testing.T) {
 	newCluster := baseCluster()
 	newCluster.Spec.KubernetesVersion = kube119
 	newCluster.Spec.WorkerNodeGroupConfigurations[0].KubernetesVersion = &kube119
-	newCluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Kind = v1alpha1.TinkerbellMachineConfigKind
+	newCluster.Spec.DatacenterRef.Kind = v1alpha1.TinkerbellDatacenterKind
 	newWorker := v1alpha1.WorkerNodeGroupConfiguration{
-		Name:  "md-1",
-		Count: ptr.Int(1),
-		MachineGroupRef: &v1alpha1.Ref{
-			Kind: v1alpha1.TinkerbellMachineConfigKind,
-			Name: "eksa-unit-test",
-		},
+		Name:              "md-1",
+		Count:             ptr.Int(1),
 		KubernetesVersion: &kube119,
 	}
 	newCluster.Spec.WorkerNodeGroupConfigurations = append(newCluster.Spec.WorkerNodeGroupConfigurations, newWorker)
