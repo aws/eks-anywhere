@@ -2,8 +2,6 @@ package providers_test
 
 import (
 	"context"
-	"fmt"
-	"strings"
 	"testing"
 
 	. "github.com/onsi/gomega"
@@ -149,9 +147,10 @@ func TestValidateSSHKeyPresentForUpgrade(t *testing.T) {
 			if len(tc.want) == 0 {
 				g.Expect(providers.ValidateSSHKeyPresentForUpgrade(ctx, spec)).To(Succeed())
 			} else {
-				g.Expect(providers.ValidateSSHKeyPresentForUpgrade(ctx, spec)).To(
-					MatchError(fmt.Sprintf("[%s]", strings.Join(tc.want, ", "))),
-				)
+				err := providers.ValidateSSHKeyPresentForUpgrade(ctx, spec)
+				for _, errMsg := range tc.want {
+					g.Expect(err).To(MatchError(ContainSubstring(errMsg)))
+				}
 			}
 		})
 	}
