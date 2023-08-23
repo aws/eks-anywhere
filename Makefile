@@ -397,9 +397,9 @@ clean: ## Clean up resources created by make targets
 	rm -rf ./pkg/providers/vsphere/Test*
 	rm -rf ./pkg/providers/tinkerbell/stack/TestTinkerbellStackInstall*
 ifeq ($(UNAME), Darwin)
-	  find -E . -depth -type d -regex '.*\/Test.*-[0-9]{9}\/.*' -exec rm -rf {} \;
+	  find -E . -depth -type d -regex '.*\/Test.*-[0-9]{10}[\/]?.*' -exec rm -rf {} \;
 else
-	  find . -depth -type d -regextype posix-egrep -regex '.*\/Test.*-[0-9]{9}\/.*' -exec rm -rf {} \;
+	  find . -depth -type d -regextype posix-egrep -regex '.*\/Test.*-[0-9]{10}[\/]?.*' -exec rm -rf {} \;
 endif
 	rm -rf ./manager/bin/*
 	rm -rf ./hack/tools/bin
