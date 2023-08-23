@@ -519,6 +519,109 @@ func TestNodeCIDRMaskExtraArgs(t *testing.T) {
 	}
 }
 
+func TestEtcdEncryptionExtraArgs(t *testing.T) {
+	tests := []struct {
+		name           string
+		etcdEncryption *[]v1alpha1.EtcdEncryption
+		want           clusterapi.ExtraArgs
+	}{
+		{
+			name:           "nil config",
+			etcdEncryption: nil,
+			want:           clusterapi.ExtraArgs{},
+		},
+		{
+			name:           "empty config",
+			etcdEncryption: &[]v1alpha1.EtcdEncryption{},
+			want:           clusterapi.ExtraArgs{},
+		},
+		{
+			name: "one config",
+			etcdEncryption: &[]v1alpha1.EtcdEncryption{
+				{
+					Providers: []v1alpha1.EtcdEncryptionProvider{
+						{
+							KMS: &v1alpha1.KMS{
+								Name:                "config1",
+								SocketListenAddress: "unix:///var/run/kmsplugin/socket1-new.sock",
+							},
+						},
+						{
+							KMS: &v1alpha1.KMS{
+								Name:                "config2",
+								SocketListenAddress: "unix:///var/run/kmsplugin/socket1-old.sock",
+							},
+						},
+					},
+					Resources: []string{
+						"secrets",
+						"crd1.anywhere.eks.amazonsaws.com",
+					},
+				},
+			},
+			want: clusterapi.ExtraArgs{
+				"encryption-provider-config": "/etc/kubernetes/enc/encryption-config.yaml",
+			},
+		},
+		{
+			name: "multiple configs",
+			etcdEncryption: &[]v1alpha1.EtcdEncryption{
+				{
+					Providers: []v1alpha1.EtcdEncryptionProvider{
+						{
+							KMS: &v1alpha1.KMS{
+								Name:                "config1",
+								SocketListenAddress: "unix:///var/run/kmsplugin/socket1-new.sock",
+							},
+						},
+						{
+							KMS: &v1alpha1.KMS{
+								Name:                "config2",
+								SocketListenAddress: "unix:///var/run/kmsplugin/socket1-old.sock",
+							},
+						},
+					},
+					Resources: []string{
+						"secrets",
+						"crd1.anywhere.eks.amazonsaws.com",
+					},
+				},
+				{
+					Providers: []v1alpha1.EtcdEncryptionProvider{
+						{
+							KMS: &v1alpha1.KMS{
+								Name:                "config3",
+								SocketListenAddress: "unix:///var/run/kmsplugin/socket2-new.sock",
+							},
+						},
+						{
+							KMS: &v1alpha1.KMS{
+								Name:                "config4",
+								SocketListenAddress: "unix:///var/run/kmsplugin/socket2-old.sock",
+							},
+						},
+					},
+					Resources: []string{
+						"configmaps",
+						"crd2.anywhere.eks.amazonsaws.com",
+					},
+				},
+			},
+			want: clusterapi.ExtraArgs{
+				"encryption-provider-config": "/etc/kubernetes/enc/encryption-config.yaml",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(*testing.T) {
+			if got := clusterapi.EtcdEncryptionExtraArgs(tt.etcdEncryption); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("EtcdEncryptionExtraArgs() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestFeatureGatesExtraArgs(t *testing.T) {
 	tests := []struct {
 		testName string

@@ -1,0 +1,37 @@
+apiVersion: apiserver.config.k8s.io/v1
+kind: EncryptionConfiguration
+resources:
+- providers:
+  - kms:
+      apiVersion: v1
+      cachesize: 1000
+      endpoint: unix:///var/run/kmsplugin/socket1-new.sock
+      name: config1
+      timeout: 3s
+  - kms:
+      apiVersion: v1
+      cachesize: 1000
+      endpoint: unix:///var/run/kmsplugin/socket1-old.sock
+      name: config2
+      timeout: 3s
+  - identity: {}
+  resources:
+  - secrets
+  - crd1.anywhere.eks.amazonsaws.com
+- providers:
+  - kms:
+      apiVersion: v1
+      cachesize: 1000
+      endpoint: unix:///var/run/kmsplugin/socket2-new.sock
+      name: config3
+      timeout: 3s
+  - kms:
+      apiVersion: v1
+      cachesize: 1000
+      endpoint: unix:///var/run/kmsplugin/socket2-old.sock
+      name: config4
+      timeout: 3s
+  - identity: {}
+  resources:
+  - configmaps
+  - crd2.anywhere.eks.amazonsaws.com

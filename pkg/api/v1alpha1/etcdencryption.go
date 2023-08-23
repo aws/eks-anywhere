@@ -11,8 +11,10 @@ import (
 )
 
 var (
-	defaultKMSCacheSize = ptr.Int32(1000)
-	defaultKMSTimeout   = metav1.Duration{Duration: time.Second * 3}
+	// DefaultKMSCacheSize is the default cache size for KMS provider (1000).
+	DefaultKMSCacheSize = ptr.Int32(1000)
+	// DefaultKMSTimeout is the default timeout for KMS provider (3s).
+	DefaultKMSTimeout = metav1.Duration{Duration: time.Second * 3}
 )
 
 // ValidateEtcdEncryptionConfig validates the etcd encryption configuration.
@@ -85,10 +87,10 @@ func setEtcdEncryptionConfigDefaults(cluster *Cluster) error {
 func setKMSConfigDefauts(kms *KMS) {
 	if kms != nil {
 		if kms.CacheSize == nil {
-			kms.CacheSize = defaultKMSCacheSize
+			kms.CacheSize = DefaultKMSCacheSize
 		}
 		if kms.Timeout == nil {
-			kms.Timeout = &defaultKMSTimeout
+			kms.Timeout = &DefaultKMSTimeout
 		}
 	}
 }
