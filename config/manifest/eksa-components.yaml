@@ -2069,7 +2069,6 @@ spec:
                         version:
                           type: string
                       required:
-                      - credentialProviderPackage
                       - packageController
                       - tokenRefresher
                       type: object

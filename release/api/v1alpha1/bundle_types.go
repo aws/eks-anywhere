@@ -245,7 +245,7 @@ type PackageBundle struct {
 	Version                   string `json:"version,omitempty"`
 	Controller                Image  `json:"packageController"`
 	TokenRefresher            Image  `json:"tokenRefresher"`
-	CredentialProviderPackage Image  `json:"credentialProviderPackage"`
+	CredentialProviderPackage Image  `json:"credentialProviderPackage,omitempty"`
 	HelmChart                 Image  `json:"helmChart,omitempty"`
 }
 
