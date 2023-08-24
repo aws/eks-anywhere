@@ -54,7 +54,7 @@ sysdig           sysdig-agent
 hashicorp        vault
 ```
 
-## Snow provider validated partners
+## AWS Snow provider validated partners
 
 ```
 Kubernetes Version :  1.24 
