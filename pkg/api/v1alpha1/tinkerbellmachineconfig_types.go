@@ -84,6 +84,11 @@ func (c *TinkerbellMachineConfig) OSFamily() OSFamily {
 	return c.Spec.OSFamily
 }
 
+// Users returns a list of configuration for OS users.
+func (c *TinkerbellMachineConfig) Users() []UserConfiguration {
+	return c.Spec.Users
+}
+
 func (c *TinkerbellMachineConfig) GetNamespace() string {
 	return c.Namespace
 }

@@ -80,6 +80,11 @@ func (c *VSphereMachineConfig) OSFamily() OSFamily {
 	return c.Spec.OSFamily
 }
 
+// Users returns a list of configuration for OS users.
+func (c *VSphereMachineConfig) Users() []UserConfiguration {
+	return c.Spec.Users
+}
+
 func (c *VSphereMachineConfig) GetNamespace() string {
 	return c.Namespace
 }
