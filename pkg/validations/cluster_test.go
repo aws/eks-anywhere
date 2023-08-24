@@ -507,7 +507,7 @@ func TestValidateK8s128Support(t *testing.T) {
 	tt := newTest(t)
 	tt.clusterSpec.Cluster.Spec.KubernetesVersion = anywherev1.Kube128
 	tt.Expect(validations.ValidateK8s128Support(tt.clusterSpec)).To(
-		MatchError(ContainSubstring("kubernetes version 1.27 is not enabled. Please set the env variable K8S_1_27_SUPPORT")))
+		MatchError(ContainSubstring("kubernetes version 1.28 is not enabled. Please set the env variable K8S_1_28_SUPPORT")))
 }
 
 func TestValidateK8s128SupportActive(t *testing.T) {
