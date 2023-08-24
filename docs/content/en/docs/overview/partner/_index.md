@@ -16,7 +16,7 @@ The following shows validated EKS Anywhere partners whose products have passed c
 
 ```
 Kubernetes Version :  1.23 
-Date of Conformance Test : 2023-08-14
+Date of Conformance Test : 2023-08-24
  
 Following ISV Partners have Validated their Conformance : 
  
@@ -25,6 +25,7 @@ dynatrace        dynatrace
 komodor          k8s-watcher
 accuknox         kubearmor
 kubecost         cost-analyzer
+nirmata          enterprise-kyverno
 lacework         polygraph
 suse             neuvector
 newrelic         newrelic-bundle
@@ -37,7 +38,7 @@ hashicorp        vault
 
 ```
 Kubernetes Version :  1.27 
-Date of Conformance Test : 2023-08-14
+Date of Conformance Test : 2023-08-24
  
 Following ISV Partners have Validated their Conformance : 
  
@@ -46,6 +47,7 @@ dynatrace        dynatrace
 komodor          k8s-watcher
 accuknox         kubearmor
 kubecost         cost-analyzer
+nirmata          enterprise-kyverno
 lacework         polygraph
 suse             neuvector
 newrelic         newrelic-bundle
@@ -58,7 +60,7 @@ hashicorp        vault
 
 ```
 Kubernetes Version :  1.24 
-Date of Conformance Test : 2023-08-14
+Date of Conformance Test : 2023-08-24
  
 Following ISV Partners have Validated their Conformance : 
  
@@ -67,6 +69,7 @@ dynatrace        dynatrace
 komodor          k8s-watcher
 accuknox         kubearmor
 kubecost         cost-analyzer
+nirmata          enterprise-kyverno
 lacework         polygraph
 suse             neuvector
 newrelic         newrelic-bundle
