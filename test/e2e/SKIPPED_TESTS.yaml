@@ -140,7 +140,3 @@ skipped_tests:
 - TestTinkerbellKubernetes123BottleRocketCuratedPackagesPrometheusSimpleFlow
 # Conformance
 - TestSnowKubernetes123ThreeWorkersConformanceFlow
-
-#Docker
-#Skipping because upgrade from latest minor release with cilium is currently broken for docker and the controller does not support kindnet.
-- TestDockerKubernetes123to124UpgradeFromLatestMinorReleaseAPI
