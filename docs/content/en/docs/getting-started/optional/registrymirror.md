@@ -139,3 +139,24 @@ For [Mac](https://docs.docker.com/desktop/mac/#add-tls-certificates), you can fo
 {{% alert title="Note" color="primary" %}}
   You may need to restart Docker after adding the certificates.
 {{% /alert %}}
+
+## Registry configurations
+Depending on what registry you decide to use, you will need to create the following projects:
+
+```
+bottlerocket
+eks-anywhere
+eks-distro
+isovalent
+cilium-chart
+```
+
+For example, if a registry is available at `private-registry.local`, then the following projects will have to be created:
+
+```
+https://private-registry.local/bottlerocket
+https://private-registry.local/eks-anywhere
+https://private-registry.local/eks-distro
+https://private-registry.local/isovalent
+https://private-registry.local/cilium-chart
+```
