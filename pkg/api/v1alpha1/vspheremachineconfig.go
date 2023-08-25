@@ -8,7 +8,8 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/logger"
 
-	"github.com/aws/eks-anywhere/pkg/yamlutil"
+	"github.com/aws/eks-anywhere/pkg/utils/file"
+	yamlutil "github.com/aws/eks-anywhere/pkg/utils/yaml"
 )
 
 const (
@@ -56,7 +57,13 @@ func (c *VSphereMachineConfigGenerate) Name() string {
 
 func GetVSphereMachineConfigs(fileName string) (map[string]*VSphereMachineConfig, error) {
 	configs := make(map[string]*VSphereMachineConfig)
-	resources, err := yamlutil.ParseMultiYamlFile(fileName)
+
+	r, err := file.ReadFile(fileName)
+	if err != nil {
+		return nil, err
+	}
+
+	resources, err := yamlutil.SplitDocuments(r)
 	if err != nil {
 		return nil, err
 	}

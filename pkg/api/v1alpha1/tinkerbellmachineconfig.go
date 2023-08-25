@@ -3,9 +3,10 @@ package v1alpha1
 import (
 	"fmt"
 
-	yamlutilpkg "github.com/aws/eks-anywhere/pkg/yamlutil"
+	"github.com/aws/eks-anywhere/pkg/utils/file"
+	yamlutil "github.com/aws/eks-anywhere/pkg/utils/yaml"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	yamlutil "k8s.io/apimachinery/pkg/util/yaml"
+	apimachineryyaml "k8s.io/apimachinery/pkg/util/yaml"
 	"sigs.k8s.io/yaml"
 )
 
@@ -57,14 +58,20 @@ func (c *TinkerbellMachineConfigGenerate) Name() string {
 
 func GetTinkerbellMachineConfigs(fileName string) (map[string]*TinkerbellMachineConfig, error) {
 	configs := make(map[string]*TinkerbellMachineConfig)
-	resources, err := yamlutilpkg.ParseMultiYamlFile(fileName)
+
+	r, err := file.ReadFile(fileName)
+	if err != nil {
+		return nil, err
+	}
+
+	resources, err := yamlutil.SplitDocuments(r)
 	if err != nil {
 		return nil, err
 	}
 
 	for _, d := range resources {
 		var config TinkerbellMachineConfig
-		if err := yamlutil.UnmarshalStrict(d, &config); err == nil {
+		if err := apimachineryyaml.UnmarshalStrict(d, &config); err == nil {
 			if config.Kind == TinkerbellMachineConfigKind {
 				configs[config.Name] = &config
 				continue

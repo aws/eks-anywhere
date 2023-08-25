@@ -6,7 +6,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
 
-	"github.com/aws/eks-anywhere/pkg/yamlutil"
+	"github.com/aws/eks-anywhere/pkg/utils/file"
+	yamlutil "github.com/aws/eks-anywhere/pkg/utils/yaml"
 )
 
 // DefaultCloudStackUser is the default CloudStackMachingConfig username.
@@ -66,7 +67,13 @@ func (c *CloudStackMachineConfigGenerate) Name() string {
 
 func GetCloudStackMachineConfigs(fileName string) (map[string]*CloudStackMachineConfig, error) {
 	configs := make(map[string]*CloudStackMachineConfig)
-	resources, err := yamlutil.ParseMultiYamlFile(fileName)
+
+	r, err := file.ReadFile(fileName)
+	if err != nil {
+		return nil, err
+	}
+
+	resources, err := yamlutil.SplitDocuments(r)
 	if err != nil {
 		return nil, err
 	}

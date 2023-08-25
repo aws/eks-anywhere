@@ -7,7 +7,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
 
-	"github.com/aws/eks-anywhere/pkg/yamlutil"
+	"github.com/aws/eks-anywhere/pkg/utils/file"
+	yamlutil "github.com/aws/eks-anywhere/pkg/utils/yaml"
 )
 
 // NutanixIdentifierType is an enumeration of different resource identifier types.
@@ -122,7 +123,13 @@ func (c *NutanixMachineConfigGenerate) Name() string {
 
 func GetNutanixMachineConfigs(fileName string) (map[string]*NutanixMachineConfig, error) {
 	configs := make(map[string]*NutanixMachineConfig)
-	resources, err := yamlutil.ParseMultiYamlFile(fileName)
+
+	r, err := file.ReadFile(fileName)
+	if err != nil {
+		return nil, err
+	}
+
+	resources, err := yamlutil.SplitDocuments(r)
 	if err != nil {
 		return nil, err
 	}
