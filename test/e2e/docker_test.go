@@ -740,7 +740,6 @@ func TestDockerKubernetes124UpgradeFromLatestMinorRelease(t *testing.T) {
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithClusterFiller(api.WithKindnetd()),
 	)
 	runUpgradeFromReleaseFlow(
 		test,
@@ -759,7 +758,6 @@ func TestDockerKubernetes123to124UpgradeFromLatestMinorRelease(t *testing.T) {
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithClusterFiller(api.WithKindnetd()),
 	)
 	runUpgradeFromReleaseFlow(
 		test,
@@ -779,7 +777,6 @@ func TestDockerKubernetes124to125UpgradeFromLatestMinorRelease(t *testing.T) {
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithClusterFiller(api.WithKindnetd()),
 	)
 	runUpgradeFromReleaseFlow(
 		test,
@@ -799,7 +796,6 @@ func TestDockerKubernetes125to126UpgradeFromLatestMinorRelease(t *testing.T) {
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithClusterFiller(api.WithKindnetd()),
 	)
 	runUpgradeFromReleaseFlow(
 		test,
@@ -819,7 +815,6 @@ func TestDockerKubernetes126to127UpgradeFromLatestMinorRelease(t *testing.T) {
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithClusterFiller(api.WithKindnetd()),
 	)
 	runUpgradeFromReleaseFlow(
 		test,
@@ -839,7 +834,6 @@ func TestDockerKubernetes126to127GithubFluxEnabledUpgradeFromLatestMinorRelease(
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithClusterFiller(api.WithKindnetd()),
 	)
 	runUpgradeWithFluxFromReleaseFlow(
 		test,
@@ -851,9 +845,7 @@ func TestDockerKubernetes126to127GithubFluxEnabledUpgradeFromLatestMinorRelease(
 
 func TestDockerKubernetes126WithOIDCManagementClusterUpgradeFromLatestSideEffects(t *testing.T) {
 	provider := framework.NewDocker(t)
-	runTestManagementClusterUpgradeSideEffects(t, provider, framework.DockerOS, v1alpha1.Kube126, api.ClusterToConfigFiller(
-		api.WithKindnetd(),
-	))
+	runTestManagementClusterUpgradeSideEffects(t, provider, framework.DockerOS, v1alpha1.Kube126)
 }
 
 func TestDockerKubernetes124UpgradeAndRemoveWorkerNodeGroupsAPI(t *testing.T) {
