@@ -23,9 +23,6 @@ See [Create cluster workflow]({{< relref "../overview" >}}) for an overview of t
 
 #### System and network requirements
 - Mac OS 10.15+ / Ubuntu 20.04.2 LTS or 22.04 LTS / RHEL or Rocky Linux 8.8+
-- [Docker 20.x.x](https://docs.docker.com/engine/install/)
-- [`curl`](https://everything.curl.dev/get)
-- [`yq`](https://github.com/mikefarah/yq/#install)
 - 4 CPU cores
 - 16GB memory
 - 30GB free disk space
@@ -41,6 +38,11 @@ Here are a few other things to keep in mind:
 
   * For EKS Anywhere Bare Metal, Docker Desktop is not supported
   * For EKS Anywhere vSphere, if you are using EKS Anywhere v0.15 or earlier and Mac OS Docker Desktop 4.4.2 or newer `"deprecatedCgroupv1": true` must be set in `~/Library/Group\ Containers/group.com.docker/settings.json`.
+
+#### Tools
+- [Docker 20.x.x](https://docs.docker.com/engine/install/)
+- [`curl`](https://everything.curl.dev/get)
+- [`yq`](https://github.com/mikefarah/yq/#install)
 
 ### Install EKS Anywhere CLI tools
 
