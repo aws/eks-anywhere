@@ -27,6 +27,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/registrymirror"
 	"github.com/aws/eks-anywhere/pkg/templater"
+	"github.com/aws/eks-anywhere/pkg/validations"
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
@@ -599,4 +600,24 @@ func WithClusterSpec(clusterSpec *cluster.Spec) func(client *PackageControllerCl
 	return func(config *PackageControllerClient) {
 		config.clusterSpec = &clusterSpec.Cluster.Spec
 	}
+}
+
+// Validations returns validations that the package controller can do.
+func (pc *PackageControllerClient) Validations() []validations.Validation {
+	if pc.eksaAccessKeyID != "" || pc.eksaSecretAccessKey != "" {
+		_, _, registryURL := pc.GetCuratedPackagesRegistries()
+		registryURL = "https://" + registryURL
+
+		return []validations.Validation{
+			func() *validations.ValidationResult {
+				return &validations.ValidationResult{
+					Name:        "Validate AWS Credentials for curated packages",
+					Remediation: "Please check if you have provided a valid AWS credential that has access to curated packages",
+					Err:         ValidateAWSCreds(pc.eksaAccessKeyID, pc.eksaSecretAccessKey, registryURL),
+				}
+			},
+		}
+	}
+
+	return nil
 }

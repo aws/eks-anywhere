@@ -173,6 +173,7 @@ func (s *SetAndValidateTask) Run(ctx context.Context, commandContext *task.Comma
 	runner.Register(s.providerValidation(ctx, commandContext)...)
 	runner.Register(commandContext.GitOpsManager.Validations(ctx, commandContext.ClusterSpec)...)
 	runner.Register(commandContext.Validations.PreflightValidations(ctx)...)
+	runner.Register(commandContext.PackageInstaller.Validations(ctx, commandContext.ClusterSpec)...)
 
 	err := runner.Run()
 	if err != nil {

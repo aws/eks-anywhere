@@ -8,6 +8,7 @@ import (
 	context "context"
 	reflect "reflect"
 
+	validations "github.com/aws/eks-anywhere/pkg/validations"
 	gomock "github.com/golang/mock/gomock"
 )
 
@@ -60,6 +61,20 @@ func (m *MockPackageController) IsInstalled(ctx context.Context) bool {
 func (mr *MockPackageControllerMockRecorder) IsInstalled(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsInstalled", reflect.TypeOf((*MockPackageController)(nil).IsInstalled), ctx)
+}
+
+// Validations mocks base method.
+func (m *MockPackageController) Validations() []validations.Validation {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Validations")
+	ret0, _ := ret[0].([]validations.Validation)
+	return ret0
+}
+
+// Validations indicates an expected call of Validations.
+func (mr *MockPackageControllerMockRecorder) Validations() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Validations", reflect.TypeOf((*MockPackageController)(nil).Validations))
 }
 
 // MockPackageHandler is a mock of PackageHandler interface.

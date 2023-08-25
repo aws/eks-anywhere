@@ -6,12 +6,14 @@ import (
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/logger"
+	"github.com/aws/eks-anywhere/pkg/validations"
 )
 
 type PackageController interface {
 	// Enable curated packages support.
 	Enable(ctx context.Context) error
 	IsInstalled(ctx context.Context) bool
+	Validations() []validations.Validation
 }
 
 type PackageHandler interface {
@@ -85,4 +87,13 @@ func (pi *Installer) installPackages(ctx context.Context) error {
 		return err
 	}
 	return nil
+}
+
+// Validations returns validations that the package installer can do.
+func (pi *Installer) Validations(ctx context.Context, clusterSpec *cluster.Spec) []validations.Validation {
+	if IsPackageControllerDisabled(pi.spec.Cluster) {
+		return nil
+	}
+
+	return pi.packageController.Validations()
 }

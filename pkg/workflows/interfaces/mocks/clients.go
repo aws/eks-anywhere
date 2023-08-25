@@ -861,3 +861,17 @@ func (mr *MockPackageInstallerMockRecorder) InstallCuratedPackages(arg0 interfac
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InstallCuratedPackages", reflect.TypeOf((*MockPackageInstaller)(nil).InstallCuratedPackages), arg0)
 }
+
+// Validations mocks base method.
+func (m *MockPackageInstaller) Validations(arg0 context.Context, arg1 *cluster.Spec) []validations.Validation {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Validations", arg0, arg1)
+	ret0, _ := ret[0].([]validations.Validation)
+	return ret0
+}
+
+// Validations indicates an expected call of Validations.
+func (mr *MockPackageInstallerMockRecorder) Validations(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Validations", reflect.TypeOf((*MockPackageInstaller)(nil).Validations), arg0, arg1)
+}

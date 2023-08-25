@@ -79,4 +79,5 @@ type EksdUpgrader interface {
 
 type PackageInstaller interface {
 	InstallCuratedPackages(ctx context.Context)
+	Validations(ctx context.Context, clusterSpec *cluster.Spec) []validations.Validation
 }

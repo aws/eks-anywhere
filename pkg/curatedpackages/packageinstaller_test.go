@@ -14,6 +14,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/curatedpackages"
 	"github.com/aws/eks-anywhere/pkg/curatedpackages/mocks"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
+	"github.com/aws/eks-anywhere/pkg/validations"
 )
 
 type packageInstallerTest struct {
@@ -115,5 +116,34 @@ func TestIsPackageControllerDisabled(t *testing.T) {
 	}
 	if !curatedpackages.IsPackageControllerDisabled(tt.spec.Cluster) {
 		t.Errorf("package controller should be disabled")
+	}
+}
+
+func TestInstallerValidations(t *testing.T) {
+	tt := newPackageInstallerTest(t)
+
+	// Test when package controller is disabled
+	tt.spec.Cluster.Spec.Packages = &anywherev1.PackageConfiguration{
+		Disable: true,
+	}
+
+	vs := tt.command.Validations(tt.ctx, nil)
+	if vs != nil {
+		t.Errorf("expected nil validations")
+	}
+
+	// Test when package controller is enabled
+	tt.spec.Cluster.Spec.Packages = &anywherev1.PackageConfiguration{
+		Disable: false,
+	}
+
+	tt.packageControllerClient.EXPECT().Validations().Return([]validations.Validation{
+		func() *validations.ValidationResult {
+			return &validations.ValidationResult{}
+		},
+	})
+	vs = tt.command.Validations(tt.ctx, nil)
+	if vs == nil {
+		t.Errorf("expected validations")
 	}
 }

@@ -209,6 +209,7 @@ func (c *createTestSetup) skipInstallEksaComponents() {
 }
 
 func (c *createTestSetup) expectCuratedPackagesInstallation() {
+	c.packageInstaller.EXPECT().Validations(c.ctx, gomock.Any()).Times(1)
 	c.packageInstaller.EXPECT().InstallCuratedPackages(c.ctx).Times(1)
 }
 
@@ -288,6 +289,7 @@ func TestCreateRunAWSIamConfigFail(t *testing.T) {
 	test.clusterManager.EXPECT().CreateAwsIamAuthCaSecret(test.ctx, test.bootstrapCluster, test.clusterSpec.Cluster.Name).Return(wantError)
 	test.clusterManager.EXPECT().SaveLogsManagementCluster(test.ctx, test.clusterSpec, test.bootstrapCluster)
 	test.writer.EXPECT().Write(fmt.Sprintf("%s-checkpoint.yaml", test.clusterSpec.Cluster.Name), gomock.Any())
+	test.packageInstaller.EXPECT().Validations(test.ctx, gomock.Any()).Times(1)
 
 	if err := test.run(); err == nil {
 		t.Fatalf("Create.Run() err = %v, want err = %v", err, wantError)
@@ -428,6 +430,7 @@ func TestCreateWorkloadClusterRunAWSIamConfigFail(t *testing.T) {
 	test.clusterManager.EXPECT().CreateAwsIamAuthCaSecret(test.ctx, test.bootstrapCluster, test.clusterSpec.Cluster.Name).Return(wantError)
 	test.clusterManager.EXPECT().SaveLogsManagementCluster(test.ctx, test.clusterSpec, test.bootstrapCluster)
 	test.writer.EXPECT().Write(fmt.Sprintf("%s-checkpoint.yaml", test.clusterSpec.Cluster.Name), gomock.Any())
+	test.packageInstaller.EXPECT().Validations(test.ctx, gomock.Any()).Times(1)
 
 	if err := test.run(); err == nil {
 		t.Fatalf("Create.Run() err = %v, want err = %v", err, wantError)

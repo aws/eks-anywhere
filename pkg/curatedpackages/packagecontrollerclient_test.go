@@ -1424,3 +1424,46 @@ func createEKSARelease(cluster *anywherev1.Cluster, bundle *artifactsv1.Bundles)
 		},
 	}
 }
+
+func TestPackageControllerClientValidations(t *testing.T) {
+	tests := []struct {
+		pccOpts       []curatedpackages.PackageControllerClientOpt
+		hasValidation bool
+	}{
+		{
+			pccOpts: []curatedpackages.PackageControllerClientOpt{
+				curatedpackages.WithEksaAccessKeyId("noexist"),
+			},
+			hasValidation: true,
+		},
+		{
+			pccOpts: []curatedpackages.PackageControllerClientOpt{
+				curatedpackages.WithEksaAccessKeyId(""),
+			},
+			hasValidation: false,
+		},
+	}
+
+	for _, test := range tests {
+		chart := &artifactsv1.Image{
+			Name: "test_controller",
+			URI:  "test_registry/eks-anywhere/eks-anywhere-packages:v1",
+		}
+
+		pcc := curatedpackages.NewPackageControllerClient(
+			nil, nil, "", "", chart, nil,
+		)
+
+		for _, o := range test.pccOpts {
+			o(pcc)
+		}
+
+		vs := pcc.Validations()
+		if test.hasValidation && vs == nil {
+			t.Errorf("expected validations to be non-nil")
+		}
+		if !test.hasValidation && vs != nil {
+			t.Errorf("expected validations to be nil")
+		}
+	}
+}
