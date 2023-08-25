@@ -22,7 +22,6 @@ import (
 type upgradeClusterOptions struct {
 	clusterOptions
 	timeoutOptions
-	wConfig               string
 	forceClean            bool
 	hardwareCSVPath       string
 	tinkerbellBootstrapIP string
@@ -55,7 +54,6 @@ func init() {
 	applyClusterOptionFlags(upgradeClusterCmd.Flags(), &uc.clusterOptions)
 	applyTimeoutFlags(upgradeClusterCmd.Flags(), &uc.timeoutOptions)
 	applyTinkerbellHardwareFlag(upgradeClusterCmd.Flags(), &uc.hardwareCSVPath)
-	upgradeClusterCmd.Flags().StringVarP(&uc.wConfig, "w-config", "w", "", "Kubeconfig file to use when upgrading a workload cluster")
 	upgradeClusterCmd.Flags().BoolVar(&uc.forceClean, "force-cleanup", false, "Force deletion of previously created bootstrap cluster")
 	hideForceCleanup(upgradeClusterCmd.Flags())
 	upgradeClusterCmd.Flags().StringArrayVar(&uc.skipValidations, "skip-validations", []string{}, fmt.Sprintf("Bypass upgrade validations by name. Valid arguments you can pass are --skip-validations=%s", strings.Join(upgradevalidations.SkippableValidations[:], ",")))
@@ -160,7 +158,7 @@ func (uc *upgradeClusterOptions) upgradeCluster(cmd *cobra.Command) error {
 
 	workloadCluster := &types.Cluster{
 		Name:           clusterSpec.Cluster.Name,
-		KubeconfigFile: getKubeconfigPath(clusterSpec.Cluster.Name, uc.wConfig),
+		KubeconfigFile: getKubeconfigPath(clusterSpec.Cluster.Name, uc.managementKubeconfig),
 	}
 
 	var managementCluster *types.Cluster
@@ -193,7 +191,7 @@ func (uc *upgradeClusterOptions) commonValidations(ctx context.Context) (cluster
 		return nil, err
 	}
 
-	kubeconfigPath := getKubeconfigPath(clusterConfig.Name, uc.wConfig)
+	kubeconfigPath := getKubeconfigPath(clusterConfig.Name, uc.managementKubeconfig)
 	if err := kubeconfig.ValidateFilename(kubeconfigPath); err != nil {
 		return nil, err
 	}

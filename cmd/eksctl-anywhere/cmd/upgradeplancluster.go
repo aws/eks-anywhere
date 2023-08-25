@@ -88,7 +88,7 @@ func (uc *upgradeClusterOptions) upgradePlanCluster(ctx context.Context) error {
 
 	managementCluster := &types.Cluster{
 		Name:           newClusterSpec.Cluster.Name,
-		KubeconfigFile: getKubeconfigPath(newClusterSpec.Cluster.Name, uc.wConfig),
+		KubeconfigFile: getKubeconfigPath(newClusterSpec.Cluster.Name, uc.managementKubeconfig),
 	}
 
 	if newClusterSpec.ManagementCluster != nil {
