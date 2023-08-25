@@ -438,6 +438,7 @@ func TestValidateManagementClusterEksaVersion(t *testing.T) {
 	v := test.DevEksaVersion()
 	uv := anywherev1.EksaVersion("v0.1.0")
 	badVersion := anywherev1.EksaVersion("invalid")
+
 	tests := []struct {
 		name              string
 		wantErr           error
@@ -448,6 +449,12 @@ func TestValidateManagementClusterEksaVersion(t *testing.T) {
 			name:              "Success",
 			wantErr:           nil,
 			version:           &v,
+			managementVersion: &v,
+		},
+		{
+			name:              "Management with dev build version and workload with release version",
+			wantErr:           nil,
+			version:           &uv,
 			managementVersion: &v,
 		},
 		{
