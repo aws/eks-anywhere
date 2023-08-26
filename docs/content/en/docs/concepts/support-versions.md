@@ -52,29 +52,37 @@ The following table notes which EKS Anywhere and related Kubernetes versions are
 
 * [Amazon EKS Anywhere Enterprise subscription](https://aws.amazon.com/eks/eks-anywhere/pricing/) is required to receive AWS support on any Amazon EKS Anywhere clusters.
 
-## EKS Anywhere version bundles
+## EKS Anywhere versions and bundles
 
 Each EKS Anywhere version installs a suite of componenets when provisioning your clusters. The versions of these components are specified in an EKS Anywhere versions bundle.
 
-You may find a map of EKS Anywhere releases in the manifest [here](https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml) that contain references to their corresponding bundle manifest. 
-
-For example, see the EKS Anywhere v0.17.0's bundle manifest [here](https://anywhere-assets.eks.amazonaws.com/releases/bundles/45/manifest.yaml).
+You may find a map of EKS Anywhere releases in the release manifest located [here](https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml). It contains references to the corresponding bundle manifest for each EKS Anywhere version.
 
 Within the bundle manifest files, you will find the components that will be used to provision your cluster along with their versions. The images running in your cluster would use the same uri values specified in this bundles for that component.
 
-### Supported OS version details
+For example, see the corresponding [bundle manifest](https://anywhere-assets.eks.amazonaws.com/releases/bundles/45/manifest.yaml) for EKS Anywhere v0.17.0.
 
-| OS | OS Versions | EKS Anywhere version |
-| :---: | :---: | :---: |
+## EKS Anywhere supported OS version
+
+These are supported operating system versions that EKS Anywhere may use to provision control plane and worker nodes. For specifics on support OS for each provider, see the [configuration guide]({{< relref "../getting-started/" >}}) for your chosen provider.
+
+
+| OS         | OS Versions                  | Supported EKS Anywhere version  |
+|------------|------------------------------|---------------------------------|
 | Ubuntu        | 22.04     | 0.17
 |               | 20.04     | 0.17, 0.16, 0.15, 0.14, 0.13, 0.12, 0.11, 0.10, 0.9, 0.8, 0.7, 0.6, 0.5
 | Bottlerocket  | 1.13.1    | 0.17, 0.16, 0.15
-|               | 1.12.0    | 0.14, 
-|               | 1.10.1    |
-| RHEL          | 8.7	      | 0.17, 0.16, 0.15
+|               | 1.12.0    | 0.14
+|               | 1.10.1    | 0.12
+|               | 1.9.2     | 0.11
+|               | 1.8.0     | 0.10
+|               | 1.7.2     | 0.9
+|               | 1.6.2     | 0.8
+|               | 1.6.0     | 0.7
+|               | 1.3.0     | 0.6
+| RHEL          | 8.7	      | 0.17, 0.16, 0.15, 0.13, 0.14, 0.13, 0.12
 
-
-These are supported operated systems for control plane and worker nodes. For Admin machines, [see the install guide for supported OS verions](https://anywhere.eks.amazonaws.com/docs/getting-started/install/).
+For details on supported operating systems for Admin machines, [see the install guide]({{< relref "../getting-started/install/" >}})
 
 ## EKS Anywhere version support FAQs
 
