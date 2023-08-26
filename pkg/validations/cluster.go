@@ -150,6 +150,11 @@ func ValidateManagementEksaVersion(mgmtCluster, cluster *v1alpha1.Cluster) error
 		return err
 	}
 
+	devBuildVersion, _ := semver.New(v1alpha1.DevBuildVersion)
+	if mVersion.SamePatch(devBuildVersion) {
+		return nil
+	}
+
 	if wVersion.GreaterThan(mVersion) {
 		errMsg := fmt.Sprintf("cannot upgrade workload cluster to %v while management cluster is an older version: %v", wVersion, mVersion)
 		reason := v1alpha1.EksaVersionInvalidReason
