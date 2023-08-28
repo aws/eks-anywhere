@@ -38,7 +38,7 @@ To learn more about Amazon EKS, see [Amazon Elastic Kubernetes Service](https://
 | Command line interface (CLI)  | `eksctl` (OSS command line tool)        | `eksctl` (OSS command line tool) |
 | Console view for Kubernetes objects | Optional EKS console connection using EKS Connector (public preview) | Native EKS console connection|
 | Infrastructure-as-code        | Cluster manifest, Kubernetes controllers, [3rd-party solutions](https://aws.amazon.com/eks/eks-anywhere/partners/)            | AWS CloudFormation, [3rd-party solutions](https://aws.amazon.com/eks/partners/) |
-| Logging and monitoring        | [CloudWatch]({{< relref "../clustermgmt/observability/" >}}), [3rd-party solutions](https://aws.amazon.com/eks/eks-anywhere/partners/)            | CloudWatch, CloudTrail, [3rd-party solutions](https://aws.amazon.com/eks/partners/) |
+| Logging and monitoring        | CloudWatch, [3rd-party solutions](https://aws.amazon.com/eks/eks-anywhere/partners/)            | CloudWatch, CloudTrail, [3rd-party solutions](https://aws.amazon.com/eks/partners/) |
 | GitOps                        | Flux controller | Flux controller                 |
 ||||
 | **Functions and tooling** | | |
