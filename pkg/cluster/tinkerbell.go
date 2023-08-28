@@ -2,7 +2,6 @@ package cluster
 
 import (
 	"context"
-
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 )
 
@@ -25,6 +24,24 @@ func tinkerbellEntry() *ConfigManagerEntry {
 			processTinkerbellDatacenter,
 			machineConfigsProcessor(processTinkerbellMachineConfig),
 			processTinkerbellTemplateConfigs,
+		},
+		Validations: []Validation{
+			func(c *Config) error {
+				if c.TinkerbellDatacenter != nil {
+					if err := validateSameNamespace(c, c.TinkerbellDatacenter); err != nil {
+						return err
+					}
+				}
+				return nil
+			},
+			func(c *Config) error {
+				for _, t := range c.TinkerbellMachineConfigs {
+					if err := validateSameNamespace(c, t); err != nil {
+						return err
+					}
+				}
+				return nil
+			},
 		},
 	}
 }
