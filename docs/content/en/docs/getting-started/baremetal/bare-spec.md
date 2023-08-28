@@ -172,6 +172,8 @@ You can omit workerNodeGroupConfigurations when creating Bare Metal clusters. In
 ### workerNodeGroupConfigurations.count
 Number of worker nodes. Optional if autoscalingConfiguration is used, in which case count will default to `autoscalingConfiguration.minCount`.
 
+Refers to [troubleshooting machine health check remediation not allowed]({{< relref "../../troubleshooting/troubleshooting/#machine-health-check-shows-remediation-is-not-allowed" >}}) and choose a sufficient number to allow machine health check remediation.
+
 ### workerNodeGroupConfigurations.machineGroupRef (required)
 Refers to the Kubernetes object with Tinkerbell-specific configuration for your nodes. See `TinkerbellMachineConfig Fields` below.
 
@@ -258,7 +260,8 @@ spec:
     node: "cp-machine"
 ```
 ### osFamily (required)
-Operating system on the machine. For example, `bottlerocket` or `ubuntu`.
+Operating system on the machine. Permitted values: `bottlerocket`, `ubuntu`, `redhat` (Default: `bottlerocket`).
+
 ### templateRef (optional)
 Identifies the template that defines the actions that will be applied to the TinkerbellMachineConfig.
 See TinkerbellTemplateConfig fields below.
@@ -483,7 +486,7 @@ spec:
         name: write-netconfig
         timeout: 90
       - environment:
-          HEGEL_URL: http://<hegel-ip>:50061
+          HEGEL_URLS: http://<hegel-ip>:50061
           DEST_DISK: /dev/sda12
           DEST_PATH: /user-data.toml
           DIRMODE: "0700"
@@ -641,7 +644,7 @@ The write-netconfig action configures networking for the system.
 ### template.tasks.actions.write-user-data (Bottlerocket)
 The write-user-data action configures the Tinkerbell Hegel service, which provides the metadata store for Tinkerbell.
 
-* environment.HEGEL_URL: The IP address and port number of the Tinkerbell [Hegel](https://docs.tinkerbell.org/services/hegel/) service.
+* environment.HEGEL_URLS: The IP address and port number of the Tinkerbell [Hegel](https://docs.tinkerbell.org/services/hegel/) service.
 * environment.DEST_DISK: Identifies the block storage device that holds the network configuration information.
 * environment.DEST_PATH: Identifies the file holding network configuration data (`/net.toml` in this example).
 * environment.DIRMODE: The Linux permissions assigned to the directory holding network configuration settings.

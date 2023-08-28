@@ -83,7 +83,8 @@ func (r *Reconciler) ValidateDatacenterConfig(ctx context.Context, log logr.Logg
 	}
 	if dataCenterConfig.Status.FailureMessage != nil {
 		failureMessage := fmt.Sprintf("Invalid %s CloudStackDatacenterConfig: %s", dataCenterConfig.Name, *dataCenterConfig.Status.FailureMessage)
-		spec.Cluster.Status.FailureMessage = &failureMessage
+		spec.Cluster.SetFailure(anywherev1.DatacenterConfigInvalidReason, failureMessage)
+
 		log.Error(errors.New(*dataCenterConfig.Status.FailureMessage), "Invalid CloudStackDatacenterConfig", "datacenterConfig", klog.KObj(dataCenterConfig))
 	} else {
 		log.Info("CloudStackDatacenterConfig hasn't been validated yet", klog.KObj(dataCenterConfig))
@@ -108,7 +109,8 @@ func (r *Reconciler) ValidateMachineConfig(ctx context.Context, log logr.Logger,
 	if err = validator.ValidateClusterMachineConfigs(ctx, spec); err != nil {
 		log.Error(err, "Invalid CloudStackMachineConfig")
 		failureMessage := err.Error()
-		spec.Cluster.Status.FailureMessage = &failureMessage
+		spec.Cluster.SetFailure(anywherev1.MachineConfigInvalidReason, failureMessage)
+
 		return controller.ResultWithReturn(), nil
 	}
 	return controller.Result{}, nil

@@ -43,7 +43,7 @@ func newKindnetdTest(t *testing.T) *kindnetdTest {
 		k:      kindnetd.NewKindnetd(client, reader),
 		spec: test.NewClusterSpec(func(s *cluster.Spec) {
 			s.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks = []string{"192.168.1.0/24"}
-			s.VersionsBundle.Kindnetd = kindnetdBundle
+			s.VersionsBundles["1.19"].Kindnetd = kindnetdBundle
 		}),
 	}
 }

@@ -70,12 +70,14 @@ const (
 )
 
 var (
-	clusterctlNetworkErrorRegex = regexp.MustCompile(`.*failed to connect to the management cluster:.*`)
-	eksaClusterResourceType     = fmt.Sprintf("clusters.%s", v1alpha1.GroupVersion.Group)
+	clusterctlNetworkErrorRegex              = regexp.MustCompile(`.*failed to connect to the management cluster:.*`)
+	clusterctlMoveProvisionedInfraErrorRegex = regexp.MustCompile(`.*failed to check for provisioned infrastructure*`)
+	eksaClusterResourceType                  = fmt.Sprintf("clusters.%s", v1alpha1.GroupVersion.Group)
 )
 
 type ClusterManager struct {
 	eksaComponents     EKSAComponents
+	ClientFactory      ClientFactory
 	clusterClient      *RetrierClient
 	retrier            *retrier.Retrier
 	writer             filewriter.FileWriter
@@ -96,9 +98,15 @@ type ClusterManager struct {
 	clusterctlMoveTimeout            time.Duration
 }
 
+// ClientFactory builds Kubernetes clients.
+type ClientFactory interface {
+	// BuildClientFromKubeconfig builds a Kubernetes client from a kubeconfig file.
+	BuildClientFromKubeconfig(kubeconfigPath string) (kubernetes.Client, error)
+}
+
 type ClusterClient interface {
 	KubernetesClient
-	BackupManagement(ctx context.Context, cluster *types.Cluster, managementStatePath string) error
+	BackupManagement(ctx context.Context, cluster *types.Cluster, managementStatePath, clusterName string) error
 	MoveManagement(ctx context.Context, from, target *types.Cluster, clusterName string) error
 	WaitForClusterReady(ctx context.Context, cluster *types.Cluster, timeout string, clusterName string) error
 	WaitForControlPlaneAvailable(ctx context.Context, cluster *types.Cluster, timeout string, newClusterName string) error
@@ -171,9 +179,10 @@ func DefaultRetrier() *retrier.Retrier {
 }
 
 // New constructs a new ClusterManager.
-func New(clusterClient *RetrierClient, networking Networking, writer filewriter.FileWriter, diagnosticBundleFactory diagnostics.DiagnosticBundleFactory, awsIamAuth AwsIamAuth, eksaComponents EKSAComponents, opts ...ClusterManagerOpt) *ClusterManager {
+func New(client ClientFactory, clusterClient *RetrierClient, networking Networking, writer filewriter.FileWriter, diagnosticBundleFactory diagnostics.DiagnosticBundleFactory, awsIamAuth AwsIamAuth, eksaComponents EKSAComponents, opts ...ClusterManagerOpt) *ClusterManager {
 	c := &ClusterManager{
 		eksaComponents:                   eksaComponents,
+		ClientFactory:                    client,
 		clusterClient:                    clusterClient,
 		writer:                           writer,
 		networking:                       networking,
@@ -262,16 +271,30 @@ func WithNoTimeouts() ClusterManagerOpt {
 		c.controlPlaneWaitTimeout = maxTime
 		c.controlPlaneWaitAfterMoveTimeout = maxTime
 		c.externalEtcdWaitTimeout = maxTime
-		c.unhealthyMachineTimeout = maxTime
-		c.nodeStartupTimeout = maxTime
 		c.clusterWaitTimeout = maxTime
 		c.deploymentWaitTimeout = maxTime
 		c.clusterctlMoveTimeout = maxTime
 	}
 }
 
+func clusterctlMoveWaitForInfrastructureRetryPolicy(totalRetries int, err error) (retry bool, wait time.Duration) {
+	// Retry both network and cluster move errors.
+	if match := (clusterctlNetworkErrorRegex.MatchString(err.Error()) || clusterctlMoveProvisionedInfraErrorRegex.MatchString(err.Error())); match {
+		return true, clusterctlMoveRetryWaitTime(totalRetries)
+	}
+	return false, 0
+}
+
 func clusterctlMoveRetryPolicy(totalRetries int, err error) (retry bool, wait time.Duration) {
-	// Exponential backoff on network errors.  Retrier built-in backoff is linear, so implementing here.
+	// Retry only network errors.
+	if match := clusterctlNetworkErrorRegex.MatchString(err.Error()); match {
+		return true, clusterctlMoveRetryWaitTime(totalRetries)
+	}
+	return false, 0
+}
+
+func clusterctlMoveRetryWaitTime(totalRetries int) time.Duration {
+	// Exponential backoff on errors.  Retrier built-in backoff is linear, so implementing here.
 
 	// Retrier first calls the policy before retry #1.  We want it zero-based for exponentiation.
 	if totalRetries < 1 {
@@ -280,16 +303,12 @@ func clusterctlMoveRetryPolicy(totalRetries int, err error) (retry bool, wait ti
 
 	const networkFaultBaseRetryTime = 10 * time.Second
 	const backoffFactor = 1.5
-	waitTime := time.Duration(float64(networkFaultBaseRetryTime) * math.Pow(backoffFactor, float64(totalRetries-1)))
 
-	if match := clusterctlNetworkErrorRegex.MatchString(err.Error()); match {
-		return true, waitTime
-	}
-	return false, 0
+	return time.Duration(float64(networkFaultBaseRetryTime) * math.Pow(backoffFactor, float64(totalRetries-1)))
 }
 
-// BackupCAPI takes backup of management cluster's resources during uograde process.
-func (c *ClusterManager) BackupCAPI(ctx context.Context, cluster *types.Cluster, managementStatePath string) error {
+// BackupCAPI takes backup of management cluster's resources during the upgrade process.
+func (c *ClusterManager) BackupCAPI(ctx context.Context, cluster *types.Cluster, managementStatePath, clusterName string) error {
 	// Network errors, most commonly connection refused or timeout, can occur if either source
 	// cluster becomes inaccessible during the move operation.  If this occurs without retries, clusterctl
 	// abandons the move operation, and fails cluster upgrade.
@@ -299,8 +318,19 @@ func (c *ClusterManager) BackupCAPI(ctx context.Context, cluster *types.Cluster,
 	// Keeping clusterctlMoveTimeout to the same as MoveManagement since both uses the same command with the differrent params.
 
 	r := retrier.New(c.clusterctlMoveTimeout, retrier.WithRetryPolicy(clusterctlMoveRetryPolicy))
-	err := r.Retry(func() error {
-		return c.clusterClient.BackupManagement(ctx, cluster, managementStatePath)
+	return c.backupCAPI(ctx, cluster, managementStatePath, clusterName, r)
+}
+
+// BackupCAPIWaitForInfrastructure takes backup of bootstrap cluster's resources during the upgrade process
+// like BackupCAPI but with a retry policy to wait for infrastructure provisioning in addition to network errors.
+func (c *ClusterManager) BackupCAPIWaitForInfrastructure(ctx context.Context, cluster *types.Cluster, managementStatePath, clusterName string) error {
+	r := retrier.New(c.clusterctlMoveTimeout, retrier.WithRetryPolicy(clusterctlMoveWaitForInfrastructureRetryPolicy))
+	return c.backupCAPI(ctx, cluster, managementStatePath, clusterName, r)
+}
+
+func (c *ClusterManager) backupCAPI(ctx context.Context, cluster *types.Cluster, managementStatePath, clusterName string, retrier *retrier.Retrier) error {
+	err := retrier.Retry(func() error {
+		return c.clusterClient.BackupManagement(ctx, cluster, managementStatePath, clusterName)
 	})
 	if err != nil {
 		return fmt.Errorf("backing up CAPI resources of management cluster before moving to bootstrap cluster: %v", err)
@@ -687,8 +717,9 @@ func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, 
 	return nil
 }
 
-func (c *ClusterManager) EKSAClusterSpecChanged(ctx context.Context, cluster *types.Cluster, newClusterSpec *cluster.Spec) (bool, error) {
-	cc, err := c.clusterClient.GetEksaCluster(ctx, cluster, newClusterSpec.Cluster.Name)
+// EKSAClusterSpecChanged checks if a cluster's new Spec is different from the current Spec.
+func (c *ClusterManager) EKSAClusterSpecChanged(ctx context.Context, clus *types.Cluster, newClusterSpec *cluster.Spec) (bool, error) {
+	cc, err := c.clusterClient.GetEksaCluster(ctx, clus, newClusterSpec.Cluster.Name)
 	if err != nil {
 		return false, err
 	}
@@ -698,14 +729,39 @@ func (c *ClusterManager) EKSAClusterSpecChanged(ctx context.Context, cluster *ty
 		return true, nil
 	}
 
-	currentClusterSpec, err := c.buildSpecForCluster(ctx, cluster, cc)
+	currentClusterSpec, err := c.buildSpecForCluster(ctx, clus, cc)
 	if err != nil {
 		return false, err
 	}
 
-	if currentClusterSpec.VersionsBundle.EksD.Name != newClusterSpec.VersionsBundle.EksD.Name {
+	changed, err := compareEKSAClusterSpec(ctx, currentClusterSpec, newClusterSpec)
+	if err != nil {
+		return false, err
+	}
+
+	if !changed {
+		logger.V(3).Info("Clusters are the same")
+	}
+	return changed, nil
+}
+
+func compareEKSAClusterSpec(ctx context.Context, currentClusterSpec, newClusterSpec *cluster.Spec) (bool, error) {
+	newVersionsBundle := newClusterSpec.RootVersionsBundle()
+	oldVersionsBundle := currentClusterSpec.RootVersionsBundle()
+
+	if oldVersionsBundle.EksD.Name != newVersionsBundle.EksD.Name {
 		logger.V(3).Info("New eks-d release detected")
 		return true, nil
+	}
+
+	for _, workerNode := range newClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
+		newVersionsBundle = newClusterSpec.WorkerNodeGroupVersionsBundle(workerNode)
+		oldVersionsBundle = currentClusterSpec.WorkerNodeGroupVersionsBundle(workerNode)
+
+		if oldVersionsBundle.EksD.Name != newVersionsBundle.EksD.Name {
+			logger.V(3).Info("New eks-d release detected")
+			return true, nil
+		}
 	}
 
 	if newClusterSpec.OIDCConfig != nil && currentClusterSpec.OIDCConfig != nil {
@@ -723,7 +779,6 @@ func (c *ClusterManager) EKSAClusterSpecChanged(ctx context.Context, cluster *ty
 		}
 	}
 
-	logger.V(3).Info("Clusters are the same")
 	return false, nil
 }
 
@@ -774,8 +829,9 @@ func getProviderNamespaces(providerDeployments map[string][]string) []string {
 	return namespaces
 }
 
+// InstallMachineHealthChecks installs machine health checks for a given eksa cluster.
 func (c *ClusterManager) InstallMachineHealthChecks(ctx context.Context, clusterSpec *cluster.Spec, workloadCluster *types.Cluster) error {
-	mhc, err := templater.ObjectsToYaml(clusterapi.MachineHealthCheckObjects(clusterSpec, c.unhealthyMachineTimeout, c.nodeStartupTimeout)...)
+	mhc, err := templater.ObjectsToYaml(kubernetes.ObjectsToRuntimeObjects(clusterapi.MachineHealthCheckObjects(clusterSpec.Cluster))...)
 	if err != nil {
 		return err
 	}
@@ -1105,7 +1161,10 @@ func (c *ClusterManager) CreateEKSAResources(ctx context.Context, cluster *types
 	if err = c.applyResource(ctx, cluster, resourcesSpec); err != nil {
 		return err
 	}
-	return c.ApplyBundles(ctx, clusterSpec, cluster)
+	if err = c.ApplyBundles(ctx, clusterSpec, cluster); err != nil {
+		return err
+	}
+	return c.ApplyReleases(ctx, clusterSpec, cluster)
 }
 
 func (c *ClusterManager) ApplyBundles(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error {
@@ -1117,6 +1176,20 @@ func (c *ClusterManager) ApplyBundles(ctx context.Context, clusterSpec *cluster.
 	err = c.clusterClient.ApplyKubeSpecFromBytes(ctx, cluster, bundleObj)
 	if err != nil {
 		return fmt.Errorf("applying bundle spec: %v", err)
+	}
+	return nil
+}
+
+// ApplyReleases applies the EKSARelease manifest.
+func (c *ClusterManager) ApplyReleases(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error {
+	releaseObj, err := yaml.Marshal(clusterSpec.EKSARelease)
+	if err != nil {
+		return fmt.Errorf("outputting release yaml: %v", err)
+	}
+	logger.V(1).Info("Applying EKSARelease to cluster")
+	err = c.clusterClient.ApplyKubeSpecFromBytes(ctx, cluster, releaseObj)
+	if err != nil {
+		return fmt.Errorf("applying release spec: %v", err)
 	}
 	return nil
 }
@@ -1303,43 +1376,11 @@ func (c *ClusterManager) GetCurrentClusterSpec(ctx context.Context, clus *types.
 }
 
 func (c *ClusterManager) buildSpecForCluster(ctx context.Context, clus *types.Cluster, eksaCluster *v1alpha1.Cluster) (*cluster.Spec, error) {
-	return cluster.BuildSpecForCluster(ctx, eksaCluster, c.bundlesFetcher(clus), c.eksdReleaseFetcher(clus), c.gitOpsFetcher(clus), c.fluxConfigFetcher(clus), c.oidcFetcher(clus), c.awsIamConfigFetcher(clus))
-}
-
-func (c *ClusterManager) bundlesFetcher(cluster *types.Cluster) cluster.BundlesFetch {
-	return func(ctx context.Context, name, namespace string) (*releasev1alpha1.Bundles, error) {
-		return c.clusterClient.GetBundles(ctx, cluster.KubeconfigFile, name, namespace)
+	client, err := c.ClientFactory.BuildClientFromKubeconfig(clus.KubeconfigFile)
+	if err != nil {
+		return nil, err
 	}
-}
-
-func (c *ClusterManager) eksdReleaseFetcher(cluster *types.Cluster) cluster.EksdReleaseFetch {
-	return func(ctx context.Context, name, namespace string) (*eksdv1alpha1.Release, error) {
-		return c.clusterClient.GetEksdRelease(ctx, name, namespace, cluster.KubeconfigFile)
-	}
-}
-
-func (c *ClusterManager) gitOpsFetcher(cluster *types.Cluster) cluster.GitOpsFetch {
-	return func(ctx context.Context, name, namespace string) (*v1alpha1.GitOpsConfig, error) {
-		return c.clusterClient.GetEksaGitOpsConfig(ctx, name, cluster.KubeconfigFile, namespace)
-	}
-}
-
-func (c *ClusterManager) fluxConfigFetcher(cluster *types.Cluster) cluster.FluxConfigFetch {
-	return func(ctx context.Context, name, namespace string) (*v1alpha1.FluxConfig, error) {
-		return c.clusterClient.GetEksaFluxConfig(ctx, name, cluster.KubeconfigFile, namespace)
-	}
-}
-
-func (c *ClusterManager) oidcFetcher(cluster *types.Cluster) cluster.OIDCFetch {
-	return func(ctx context.Context, name, namespace string) (*v1alpha1.OIDCConfig, error) {
-		return c.clusterClient.GetEksaOIDCConfig(ctx, name, cluster.KubeconfigFile, namespace)
-	}
-}
-
-func (c *ClusterManager) awsIamConfigFetcher(cluster *types.Cluster) cluster.AWSIamConfigFetch {
-	return func(ctx context.Context, name, namespace string) (*v1alpha1.AWSIamConfig, error) {
-		return c.clusterClient.GetEksaAWSIamConfig(ctx, name, cluster.KubeconfigFile, namespace)
-	}
+	return cluster.BuildSpec(ctx, client, eksaCluster)
 }
 
 func (c *ClusterManager) DeletePackageResources(ctx context.Context, managementCluster *types.Cluster, clusterName string) error {

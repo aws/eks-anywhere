@@ -4,17 +4,35 @@ linkTitle: "Overview"
 weight: 10
 aliases:
     /docs/tasks/cluster-overview/
-date: 2017-01-05
-description: >
-  Overview of tools and interfaces for managing EKS Anywhere clusters
+description: Overview of EKS Anywhere cluster management
 ---
 
-The content in this page will describe the tools and interfaces available to an administrator after an EKS Anywhere cluster is up and running.
-It will also describe which administrative actions done:
+Once you have an EKS Anywhere cluster up and running, there are a number of operational tasks you may need to perform, such as changing cluster configuration, upgrading the cluster Kubernetes version, scaling the cluster, and setting up additional operational software such as ingress/load balancing tools, observability tools, and storage drivers.
 
-* Directly in Kubernetes itself (such as adding nodes with `kubectl`)
-* Through the EKS Anywhere API (such as deleting a cluster with `eksctl`).
-* Through tools which interface with the Kubernetes API (such as [managing a cluster with `terraform`]({{< relref "./cluster-terraform" >}}))
+### Cluster Lifecycle Operations
 
-Note that direct changes to OVAs before nodes are deployed is not yet supported.
-However, we are working on a solution for that issue.
+The tools available for cluster lifecycle operations (create, update, upgrade, scale, delete) vary based on the EKS Anywhere architecture you run. You must use the `eksctl` CLI for cluster lifecycle operations with standalone clusters and management clusters. If you are running a management / workload cluster architecture, you can use the management cluster to manage one-to-many downstream workload clusters. With the management cluster architecture, you can use the `eksctl` CLI, any Kubernetes API-compatible client, or Infrastructure as Code (IAC) tooling such as Terraform and GitOps to manage the lifecycle of workload clusters. For details on the differences between the architecture options, reference the [Architecture page]({{< relref "../concepts/architecture/" >}}).
+
+To perform cluster lifecycle operations for standalone, management, or workload clusters, you modify the EKS Anywhere Cluster specification, which is a Kubernetes Custom Resource for EKS Anywhere clusters. When you modify a field in an existing Cluster specification, EKS Anywhere reconciles the infrastructure and Kubernetes components until they match the new desired state you defined. These operations are asynchronous and you can validate the state of your cluster following the guidance on the [Verify Cluster page]({{< relref "observability/cluster-verify/" >}}). To change a cluster configuration, update the field(s) in the Cluster specification and apply it to your standalone or management cluster. To upgrade the Kubernetes version, update the `kubernetesVersion` field in the Cluster specification and apply it to your standalone or management cluster. To scale the cluster, update the control plane or worker node `count` in the Cluster specification and apply it to the standalone or management cluster, or alternatively use Cluster Autoscaler to automate the scaling process. This operational model facilitates a declarative, intent-based pattern for defining and managing Kubernetes clusters that aligns with modern IAC and GitOps practices.
+
+### Networking
+
+With EKS Anywhere, each virtual machine or bare metal server in the cluster gets an IP address via DHCP. The mechanics of this process vary for each provider (vSphere, bare metal, etc.) and it is handled automatically by EKS Anywhere during machine provisioning. During cluster creation, you must configure an IP address for the cluster's control plane endpoint that is not in your DHCP address range but is reachable from your cluster's subnet. This may require changes to your DHCP server to create an IP reservation. The IP address you specify for your cluster control plane endpoint is used as the virtual IP address for [kube-vip](https://kube-vip.io/), which EKS Anywhere uses to load balance traffic across the control plane nodes. You cannot change this IP address after cluster creation.
+
+You additionally must configure CIDR blocks for Pods and Services in the Cluster specification during cluster creation. Each node in EKS Anywhere clusters receives an IP range subset from the Pod CIDR block, see [Node IPs configuration]({{< relref "../getting-started/optional/cni/#node-ips-configuration-option" >}}) for details. EKS Anywhere uses Cilium as the Container Networking Interface (CNI). The Cilium version in EKS Anywhere, "EKS Anywhere Cilium", contains a subset of the open source Cilium capabilities. EKS Anywhere configures Cilium in [Kubernetes host-scope IPAM mode](https://docs.cilium.io/en/v1.12/concepts/networking/ipam/kubernetes/), which delegates the address allocation to each individual node in the cluster. You can optionally replace the EKS Anywhere Cilium installation with a different CNI after cluster creation. Reference the [Custom CNI page]({{< relref "networking/cluster-replace-cilium" >}}) for details. 
+
+### Security
+The Shared Responsibility Model for EKS Anywhere is different than other AWS services that run in AWS Cloud, and it is your responsibility for the ongoing security of EKS Anywhere clusters you operate. Be sure to review and follow the EKS Anywhere [Security Best Practices]({{< relref "security/best-practices/" >}}).
+
+### Support
+EKS Anywhere is open source and free to use at no cost. To receive support for your EKS Anywhere clusters, you can optionally purchase [EKS Anywhere Enterprise Subscriptions]({{< relref "../concepts/support-scope/">}}) to get 24/7 support from AWS subject matter experts and access to [EKS Anywhere Curated Packages]({{< relref "../concepts/packages/">}}). See the [License cluster page]({{< relref "support/cluster-license/">}}) for information on how to apply a license to your EKS Anywhere clusters, and the [Generate Support Bundle page]({{< relref "support/supportbundle/">}}) for details on how to create a support bundle that contains diagnostics that AWS uses to troubleshoot and resolve issues.
+
+### Ingress & Load Balancing
+Most Kubernetes-conformant Ingress and Load Balancing options can be used with EKS Anywhere. EKS Anywhere includes [Emissary Ingress]({{< relref "../packages/emissary/addemissary" >}}) and [MetalLB]({{< relref "../packages/metallb/addmetallb" >}}) as EKS Anywhere Curated Packages. For more information on EKS Anywhere Curated Packages, reference the [Package Management Overview]({{< relref "../packages/overview" >}}).
+
+### Observability
+Most Kubernetes-conformant observability tools can be used with EKS Anywhere. You can optionally use the EKS Connector to view your EKS Anywhere cluster resources in the Amazon EKS console, reference the [Connect to console page]({{< relref "observability/cluster-connect/" >}}) for details. EKS Anywhere includes the [AWS Distro for Open Telemetry (ADOT)]({{< relref "../packages/adot/addadot" >}}) and [Prometheus]({{< relref "../packages/prometheus/addpro" >}}) for metrics and tracing as EKS Anywhere Curated Packages. You can use popular tooling such as Fluent Bit for logging, and can track the progress of logging for ADOT on the [AWS Observability roadmap](https://github.com/aws-observability/aws-otel-community/issues/11). For more information on EKS Anywhere Curated Packages, reference the [Package Management Overview]({{< relref "../packages/overview" >}}).
+
+### Storage
+Most Kubernetes-conformant storage options can be used with EKS Anywhere. For example, you can use the [vSphere CSI driver](https://github.com/kubernetes-sigs/vsphere-csi-driver) with EKS Anywhere clusters on vSphere. As of the `v0.17.0` EKS Anywhere release, EKS Anywhere no longer installs or manages the vSphere CSI driver automatically, and you must self-manage this add-on. Other popular storage options include [Rook/Ceph](https://rook.io/), [OpenEBS,](https://openebs.io/), [Portworx](https://docs.portworx.com/install-portworx/kubernetes/aws/aws-vsphere-eks-anywhere/), and [Netapp Trident](https://bluexp.netapp.com/blog/astra-blg-netapp-astra-supports-kubernetes-workloads-eks-anywhere). Please note, if you are using Bottlerocket with EKS Anywhere, Bottlerocket does not currently support iSCSI, see the [Bottlerocket GitHub](https://github.com/bottlerocket-os/bottlerocket/issues/2570) for details.
+

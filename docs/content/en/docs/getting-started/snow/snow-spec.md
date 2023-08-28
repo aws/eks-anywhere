@@ -166,6 +166,8 @@ You may define one or more worker node groups.
 ### workerNodeGroupConfigurations.count
 Number of worker nodes. Optional if autoscalingConfiguration is used, in which case count will default to `autoscalingConfiguration.minCount`.
 
+Refers to [troubleshooting machine health check remediation not allowed]({{< relref "../../troubleshooting/troubleshooting/#machine-health-check-shows-remediation-is-not-allowed" >}}) and choose a sufficient number to allow machine health check remediation.
+
 ### workerNodeGroupConfigurations.machineGroupRef (required)
 Refers to the Kubernetes object with Snow specific configuration for your nodes. See `SnowMachineConfig Fields` below.
 
@@ -191,6 +193,9 @@ EKS Anywhere will add by default.
 
 Modifying the labels associated with a worker node group configuration will cause new nodes to be rolled out, replacing
 the existing nodes associated with the configuration.
+
+### workerNodeGroupConfigurations.kubernetesVersion
+The Kubernetes version you want to use for this worker node group. Supported values: 1.27, 1.26, 1.25, 1.24, 1.23
 
 ### externalEtcdConfiguration.count
 Number of etcd members.

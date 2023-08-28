@@ -14,11 +14,12 @@ import (
 )
 
 // SetUbuntuConfigInEtcdCluster sets up the etcd config in EtcdadmCluster.
-func SetUbuntuConfigInEtcdCluster(etcd *etcdv1.EtcdadmCluster, version string) {
+func SetUbuntuConfigInEtcdCluster(etcd *etcdv1.EtcdadmCluster, versionsBundle *cluster.VersionsBundle) {
 	etcd.Spec.EtcdadmConfigSpec.Format = etcdbootstrapv1.Format("cloud-config")
 	etcd.Spec.EtcdadmConfigSpec.CloudInitConfig = &etcdbootstrapv1.CloudInitConfig{
-		Version:    version,
-		InstallDir: "/usr/bin",
+		Version:        versionsBundle.KubeDistro.EtcdVersion,
+		InstallDir:     "/usr/bin",
+		EtcdReleaseURL: versionsBundle.KubeDistro.EtcdURL,
 	}
 }
 

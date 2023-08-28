@@ -8,5 +8,6 @@ type (
 	// ConditionType is an alias for clusterv1.ConditionType.
 	ConditionType = clusterv1.ConditionType
 	// Condition is an alias for clusterv1.Condition.
+	// +kubebuilder:object:generate=false
 	Condition = clusterv1.Condition
 )

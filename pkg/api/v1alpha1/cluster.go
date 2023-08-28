@@ -23,6 +23,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/semver"
 )
 
+// constants defined for cluster.go.
 const (
 	ClusterKind              = "Cluster"
 	YamlSeparator            = "\n---\n"
@@ -45,7 +46,7 @@ func NewClusterGenerate(clusterName string, opts ...ClusterGenerateOpt) *Cluster
 		ObjectMeta: ObjectMeta{
 			Name: clusterName,
 		},
-		Spec: ClusterSpec{
+		Spec: ClusterSpecGenerate{
 			KubernetesVersion: GetClusterDefaultKubernetesVersion(),
 			ClusterNetwork: ClusterNetwork{
 				Pods: Pods{
@@ -166,25 +167,6 @@ func WithEtcdMachineGroupRef(ref ProviderRefAccessor) ClusterGenerateOpt {
 	}
 }
 
-func NewCluster(clusterName string) *Cluster {
-	c := &Cluster{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       ClusterKind,
-			APIVersion: SchemeBuilder.GroupVersion.String(),
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name: clusterName,
-		},
-		Spec: ClusterSpec{
-			KubernetesVersion: Kube119,
-		},
-		Status: ClusterStatus{},
-	}
-	c.SetSelfManaged()
-
-	return c
-}
-
 var clusterConfigValidations = []func(*Cluster) error{
 	validateClusterConfigName,
 	validateControlPlaneEndpoint,
@@ -202,7 +184,7 @@ var clusterConfigValidations = []func(*Cluster) error{
 	validateCPUpgradeRolloutStrategy,
 	validateControlPlaneLabels,
 	validatePackageControllerConfiguration,
-	validateCloudStackK8sVersion,
+	validateEksaVersion,
 }
 
 // GetClusterConfig parses a Cluster object from a multiobject yaml file in disk
@@ -863,24 +845,17 @@ func validatePackageControllerConfiguration(clusterConfig *Cluster) error {
 	return nil
 }
 
-func validateCloudStackK8sVersion(cluster *Cluster) error {
-	if cluster.Spec.DatacenterRef.Kind == CloudStackDatacenterKind {
-		return ValidateCloudStackK8sVersion(cluster.Spec.KubernetesVersion)
-	}
-	return nil
-}
-
-// ValidateCloudStackK8sVersion validates version is supported by CAPC.
-func ValidateCloudStackK8sVersion(version KubernetesVersion) error {
-	kubeVersionSemver, err := semver.New(string(version) + ".0")
-	if err != nil {
-		return fmt.Errorf("converting kubeVersion %v to semver %v", version, err)
+func validateEksaVersion(clusterConfig *Cluster) error {
+	if clusterConfig.Spec.BundlesRef != nil && clusterConfig.Spec.EksaVersion != nil {
+		return fmt.Errorf("cannot pass both bundlesRef and eksaVersion. New clusters should use eksaVersion instead of bundlesRef")
 	}
 
-	kube125Semver, _ := semver.New(string(Kube125) + ".0")
-
-	if kubeVersionSemver.Compare(kube125Semver) != -1 {
-		return errors.New("cloudstack provider does not support K8s version > 1.24")
+	if clusterConfig.Spec.EksaVersion != nil {
+		_, err := semver.New(string(*clusterConfig.Spec.EksaVersion))
+		if err != nil {
+			return fmt.Errorf("eksaVersion is not a valid semver")
+		}
 	}
+
 	return nil
 }

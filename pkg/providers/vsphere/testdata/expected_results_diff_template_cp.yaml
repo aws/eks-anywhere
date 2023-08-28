@@ -1,0 +1,693 @@
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: Cluster
+metadata:
+  labels:
+    cluster.x-k8s.io/cluster-name: test
+  name: test
+  namespace: eksa-system
+spec:
+  clusterNetwork:
+    pods:
+      cidrBlocks: [192.168.0.0/16]
+    services:
+      cidrBlocks: [10.96.0.0/12]
+  controlPlaneRef:
+    apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+    kind: KubeadmControlPlane
+    name: test
+  infrastructureRef:
+    apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+    kind: VSphereCluster
+    name: test
+  managedExternalEtcdRef:
+    apiVersion: etcdcluster.cluster.x-k8s.io/v1beta1
+    kind: EtcdadmCluster
+    name: test-etcd
+    namespace: eksa-system
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: VSphereCluster
+metadata:
+  name: test
+  namespace: eksa-system
+spec:
+  controlPlaneEndpoint:
+    host: 1.2.3.4
+    port: 6443
+  identityRef:
+    kind: Secret
+    name: test-vsphere-credentials
+  server: vsphere_server
+  thumbprint: 'ABCDEFG'
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: VSphereMachineTemplate
+metadata:
+  name: test-control-plane-template-1234567890000
+  namespace: eksa-system
+spec:
+  template:
+    spec:
+      cloneMode: linkedClone
+      datacenter: 'SDDC-Datacenter'
+      datastore: /SDDC-Datacenter/datastore/WorkloadDatastore
+      diskGiB: 25
+      folder: '/SDDC-Datacenter/vm'
+      memoryMiB: 8192
+      network:
+        devices:
+        - dhcp4: true
+          networkName: /SDDC-Datacenter/network/sddc-cgw-network-1
+      numCPUs: 2
+      resourcePool: '*/Resources'
+      server: vsphere_server
+      storagePolicyName: "vSAN Default Storage Policy"
+      template: /SDDC-Datacenter/vm/Templates/ubuntu-2004-kube-v1.19.6
+      thumbprint: 'ABCDEFG'
+---
+apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+kind: KubeadmControlPlane
+metadata:
+  name: test
+  namespace: eksa-system
+spec:
+  machineTemplate:
+    infrastructureRef:
+      apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+      kind: VSphereMachineTemplate
+      name: test-control-plane-template-1234567890000
+  kubeadmConfigSpec:
+    clusterConfiguration:
+      imageRepository: public.ecr.aws/eks-distro/kubernetes
+      etcd:
+        external:
+          endpoints: []
+          caFile: "/etc/kubernetes/pki/etcd/ca.crt"
+          certFile: "/etc/kubernetes/pki/apiserver-etcd-client.crt"
+          keyFile: "/etc/kubernetes/pki/apiserver-etcd-client.key"
+      dns:
+        imageRepository: public.ecr.aws/eks-distro/coredns
+        imageTag: v1.8.0-eks-1-19-4
+      apiServer:
+        extraArgs:
+          cloud-provider: external
+          audit-policy-file: /etc/kubernetes/audit-policy.yaml
+          audit-log-path: /var/log/kubernetes/api-audit.log
+          audit-log-maxage: "30"
+          audit-log-maxbackup: "10"
+          audit-log-maxsize: "512"
+          profiling: "false"
+          tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+        extraVolumes:
+        - hostPath: /etc/kubernetes/audit-policy.yaml
+          mountPath: /etc/kubernetes/audit-policy.yaml
+          name: audit-policy
+          pathType: File
+          readOnly: true
+        - hostPath: /var/log/kubernetes
+          mountPath: /var/log/kubernetes
+          name: audit-log-dir
+          pathType: DirectoryOrCreate
+          readOnly: false
+      controllerManager:
+        extraArgs:
+          cloud-provider: external
+          profiling: "false"
+          tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+      scheduler:
+        extraArgs:
+          profiling: "false"
+          tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+    files:
+    - content: |
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          creationTimestamp: null
+          name: kube-vip
+          namespace: kube-system
+        spec:
+          containers:
+          - args:
+            - manager
+            env:
+            - name: vip_arp
+              value: "true"
+            - name: port
+              value: "6443"
+            - name: vip_cidr
+              value: "32"
+            - name: cp_enable
+              value: "true"
+            - name: cp_namespace
+              value: kube-system
+            - name: vip_ddns
+              value: "false"
+            - name: vip_leaderelection
+              value: "true"
+            - name: vip_leaseduration
+              value: "15"
+            - name: vip_renewdeadline
+              value: "10"
+            - name: vip_retryperiod
+              value: "2"
+            - name: address
+              value: 1.2.3.4
+            image: public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.3.2-2093eaeda5a4567f0e516d652e0b25b1d7abc774
+            imagePullPolicy: IfNotPresent
+            name: kube-vip
+            resources: {}
+            securityContext:
+              capabilities:
+                add:
+                - NET_ADMIN
+                - NET_RAW
+            volumeMounts:
+            - mountPath: /etc/kubernetes/admin.conf
+              name: kubeconfig
+          hostNetwork: true
+          volumes:
+          - hostPath:
+              path: /etc/kubernetes/admin.conf
+            name: kubeconfig
+        status: {}
+      owner: root:root
+      path: /etc/kubernetes/manifests/kube-vip.yaml
+    - content: |
+        apiVersion: audit.k8s.io/v1beta1
+        kind: Policy
+        rules:
+        # Log aws-auth configmap changes
+        - level: RequestResponse
+          namespaces: ["kube-system"]
+          verbs: ["update", "patch", "delete"]
+          resources:
+          - group: "" # core
+            resources: ["configmaps"]
+            resourceNames: ["aws-auth"]
+          omitStages:
+          - "RequestReceived"
+        # The following requests were manually identified as high-volume and low-risk,
+        # so drop them.
+        - level: None
+          users: ["system:kube-proxy"]
+          verbs: ["watch"]
+          resources:
+          - group: "" # core
+            resources: ["endpoints", "services", "services/status"]
+        - level: None
+          users: ["kubelet"] # legacy kubelet identity
+          verbs: ["get"]
+          resources:
+          - group: "" # core
+            resources: ["nodes", "nodes/status"]
+        - level: None
+          userGroups: ["system:nodes"]
+          verbs: ["get"]
+          resources:
+          - group: "" # core
+            resources: ["nodes", "nodes/status"]
+        - level: None
+          users:
+          - system:kube-controller-manager
+          - system:kube-scheduler
+          - system:serviceaccount:kube-system:endpoint-controller
+          verbs: ["get", "update"]
+          namespaces: ["kube-system"]
+          resources:
+          - group: "" # core
+            resources: ["endpoints"]
+        - level: None
+          users: ["system:apiserver"]
+          verbs: ["get"]
+          resources:
+          - group: "" # core
+            resources: ["namespaces", "namespaces/status", "namespaces/finalize"]
+        # Don't log HPA fetching metrics.
+        - level: None
+          users:
+          - system:kube-controller-manager
+          verbs: ["get", "list"]
+          resources:
+          - group: "metrics.k8s.io"
+        # Don't log these read-only URLs.
+        - level: None
+          nonResourceURLs:
+          - /healthz*
+          - /version
+          - /swagger*
+        # Don't log events requests.
+        - level: None
+          resources:
+          - group: "" # core
+            resources: ["events"]
+        # node and pod status calls from nodes are high-volume and can be large, don't log responses for expected updates from nodes
+        - level: Request
+          users: ["kubelet", "system:node-problem-detector", "system:serviceaccount:kube-system:node-problem-detector"]
+          verbs: ["update","patch"]
+          resources:
+          - group: "" # core
+            resources: ["nodes/status", "pods/status"]
+          omitStages:
+          - "RequestReceived"
+        - level: Request
+          userGroups: ["system:nodes"]
+          verbs: ["update","patch"]
+          resources:
+          - group: "" # core
+            resources: ["nodes/status", "pods/status"]
+          omitStages:
+          - "RequestReceived"
+        # deletecollection calls can be large, don't log responses for expected namespace deletions
+        - level: Request
+          users: ["system:serviceaccount:kube-system:namespace-controller"]
+          verbs: ["deletecollection"]
+          omitStages:
+          - "RequestReceived"
+        # Secrets, ConfigMaps, and TokenReviews can contain sensitive & binary data,
+        # so only log at the Metadata level.
+        - level: Metadata
+          resources:
+          - group: "" # core
+            resources: ["secrets", "configmaps"]
+          - group: authentication.k8s.io
+            resources: ["tokenreviews"]
+          omitStages:
+            - "RequestReceived"
+        - level: Request
+          resources:
+          - group: ""
+            resources: ["serviceaccounts/token"]
+        # Get repsonses can be large; skip them.
+        - level: Request
+          verbs: ["get", "list", "watch"]
+          resources:
+          - group: "" # core
+          - group: "admissionregistration.k8s.io"
+          - group: "apiextensions.k8s.io"
+          - group: "apiregistration.k8s.io"
+          - group: "apps"
+          - group: "authentication.k8s.io"
+          - group: "authorization.k8s.io"
+          - group: "autoscaling"
+          - group: "batch"
+          - group: "certificates.k8s.io"
+          - group: "extensions"
+          - group: "metrics.k8s.io"
+          - group: "networking.k8s.io"
+          - group: "policy"
+          - group: "rbac.authorization.k8s.io"
+          - group: "scheduling.k8s.io"
+          - group: "settings.k8s.io"
+          - group: "storage.k8s.io"
+          omitStages:
+          - "RequestReceived"
+        # Default level for known APIs
+        - level: RequestResponse
+          resources:
+          - group: "" # core
+          - group: "admissionregistration.k8s.io"
+          - group: "apiextensions.k8s.io"
+          - group: "apiregistration.k8s.io"
+          - group: "apps"
+          - group: "authentication.k8s.io"
+          - group: "authorization.k8s.io"
+          - group: "autoscaling"
+          - group: "batch"
+          - group: "certificates.k8s.io"
+          - group: "extensions"
+          - group: "metrics.k8s.io"
+          - group: "networking.k8s.io"
+          - group: "policy"
+          - group: "rbac.authorization.k8s.io"
+          - group: "scheduling.k8s.io"
+          - group: "settings.k8s.io"
+          - group: "storage.k8s.io"
+          omitStages:
+          - "RequestReceived"
+        # Default level for all other requests.
+        - level: Metadata
+          omitStages:
+          - "RequestReceived"
+      owner: root:root
+      path: /etc/kubernetes/audit-policy.yaml
+    initConfiguration:
+      nodeRegistration:
+        criSocket: /var/run/containerd/containerd.sock
+        kubeletExtraArgs:
+          cloud-provider: external
+          read-only-port: "0"
+          anonymous-auth: "false"
+          tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+        name: '{{ ds.meta_data.hostname }}'
+    joinConfiguration:
+      nodeRegistration:
+        criSocket: /var/run/containerd/containerd.sock
+        kubeletExtraArgs:
+          cloud-provider: external
+          read-only-port: "0"
+          anonymous-auth: "false"
+          tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+        name: '{{ ds.meta_data.hostname }}'
+    preKubeadmCommands:
+    - hostname "{{ ds.meta_data.hostname }}"
+    - echo "::1         ipv6-localhost ipv6-loopback" >/etc/hosts
+    - echo "127.0.0.1   localhost" >>/etc/hosts
+    - echo "127.0.0.1   {{ ds.meta_data.hostname }}" >>/etc/hosts
+    - echo "{{ ds.meta_data.hostname }}" >/etc/hostname
+    useExperimentalRetryJoin: true
+    users:
+    - name: capv
+      sshAuthorizedKeys:
+      - 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC1BK73XhIzjX+meUr7pIYh6RHbvI3tmHeQIXY5lv7aztN1UoX+bhPo3dwo2sfSQn5kuxgQdnxIZ/CTzy0p0GkEYVv3gwspCeurjmu0XmrdmaSGcGxCEWT/65NtvYrQtUE5ELxJ+N/aeZNlK2B7IWANnw/82913asXH4VksV1NYNduP0o1/G4XcwLLSyVFB078q/oEnmvdNIoS61j4/o36HVtENJgYr0idcBvwJdvcGxGnPaqOhx477t+kfJAa5n5dSA5wilIaoXH5i1Tf/HsTCM52L+iNCARvQzJYZhzbWI1MDQwzILtIBEQCJsl2XSqIupleY8CxqQ6jCXt2mhae+wPc3YmbO5rFvr2/EvC57kh3yDs1Nsuj8KOvD78KeeujbR8n8pScm3WDp62HFQ8lEKNdeRNj6kB8WnuaJvPnyZfvzOhwG65/9w13IBl7B1sWxbFnq2rMpm5uHVK7mAmjL0Tt8zoDhcE1YJEnp9xte3/pvmKPkST5Q/9ZtR9P5sI+02jY0fvPkPyC03j2gsPixG7rpOCwpOdbny4dcj0TDeeXJX8er+oVfJuLYz0pNWJcT2raDdFfcqvYA0B0IyNYlj5nWX4RuEcyT3qocLReWPnZojetvAG/H8XwOh7fEVGqHAKOVSnPXCSQJPl6s0H12jPJBDJMTydtYPEszl4/CeQ=='
+      sudo: ALL=(ALL) NOPASSWD:ALL
+    format: cloud-config
+  replicas: 3
+  version: v1.19.8-eks-1-19-4
+---
+apiVersion: addons.cluster.x-k8s.io/v1beta1
+kind: ClusterResourceSet
+metadata:
+  labels:
+    cluster.x-k8s.io/cluster-name: test
+  name: test-cpi
+  namespace: eksa-system
+spec:
+  strategy: Reconcile
+  clusterSelector:
+    matchLabels:
+      cluster.x-k8s.io/cluster-name: test
+  resources:
+  - kind: Secret
+    name: test-cloud-controller-manager
+  - kind: Secret
+    name: test-cloud-provider-vsphere-credentials
+  - kind: ConfigMap
+    name: test-cpi-manifests
+---
+kind: EtcdadmCluster
+apiVersion: etcdcluster.cluster.x-k8s.io/v1beta1
+metadata:
+  name: test-etcd
+  namespace: eksa-system
+spec:
+  replicas: 3
+  etcdadmConfigSpec:
+    etcdadmBuiltin: true
+    format: cloud-config
+    cloudInitConfig:
+      version: 3.4.14
+      installDir: "/usr/bin"
+      etcdReleaseURL: https://distro.eks.amazonaws.com/kubernetes-1-19/releases/4/artifacts/etcd/v3.4.14/etcd-linux-amd64-v3.4.14.tar.gz
+    preEtcdadmCommands:
+      - hostname "{{ ds.meta_data.hostname }}"
+      - echo "::1         ipv6-localhost ipv6-loopback" >/etc/hosts
+      - echo "127.0.0.1   localhost" >>/etc/hosts
+      - echo "127.0.0.1   {{ ds.meta_data.hostname }}" >>/etc/hosts
+      - echo "{{ ds.meta_data.hostname }}" >/etc/hostname
+    cipherSuites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+    users:
+      - name: capv
+        sshAuthorizedKeys:
+          - 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC1BK73XhIzjX+meUr7pIYh6RHbvI3tmHeQIXY5lv7aztN1UoX+bhPo3dwo2sfSQn5kuxgQdnxIZ/CTzy0p0GkEYVv3gwspCeurjmu0XmrdmaSGcGxCEWT/65NtvYrQtUE5ELxJ+N/aeZNlK2B7IWANnw/82913asXH4VksV1NYNduP0o1/G4XcwLLSyVFB078q/oEnmvdNIoS61j4/o36HVtENJgYr0idcBvwJdvcGxGnPaqOhx477t+kfJAa5n5dSA5wilIaoXH5i1Tf/HsTCM52L+iNCARvQzJYZhzbWI1MDQwzILtIBEQCJsl2XSqIupleY8CxqQ6jCXt2mhae+wPc3YmbO5rFvr2/EvC57kh3yDs1Nsuj8KOvD78KeeujbR8n8pScm3WDp62HFQ8lEKNdeRNj6kB8WnuaJvPnyZfvzOhwG65/9w13IBl7B1sWxbFnq2rMpm5uHVK7mAmjL0Tt8zoDhcE1YJEnp9xte3/pvmKPkST5Q/9ZtR9P5sI+02jY0fvPkPyC03j2gsPixG7rpOCwpOdbny4dcj0TDeeXJX8er+oVfJuLYz0pNWJcT2raDdFfcqvYA0B0IyNYlj5nWX4RuEcyT3qocLReWPnZojetvAG/H8XwOh7fEVGqHAKOVSnPXCSQJPl6s0H12jPJBDJMTydtYPEszl4/CeQ=='
+        sudo: ALL=(ALL) NOPASSWD:ALL
+  infrastructureTemplate:
+    apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+    kind: VSphereMachineTemplate
+    name: test-etcd-template-1234567890000
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: VSphereMachineTemplate
+metadata:
+  name: test-etcd-template-1234567890000
+  namespace: 'eksa-system'
+spec:
+  template:
+    spec:
+      cloneMode: linkedClone
+      datacenter: 'SDDC-Datacenter'
+      datastore: /SDDC-Datacenter/datastore/WorkloadDatastore
+      diskGiB: 25
+      folder: '/SDDC-Datacenter/vm'
+      memoryMiB: 8192
+      network:
+        devices:
+          - dhcp4: true
+            networkName: /SDDC-Datacenter/network/sddc-cgw-network-1
+      numCPUs: 3
+      resourcePool: '*/Resources'
+      server: vsphere_server
+      storagePolicyName: "vSAN Default Storage Policy"
+      template: /SDDC-Datacenter/vm/Templates/ubuntu-1804-kube-v1.19.6
+      thumbprint: 'ABCDEFG'
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: test-vsphere-credentials
+  namespace: eksa-system
+  labels:
+    clusterctl.cluster.x-k8s.io/move: "true"
+stringData:
+  username: "vsphere_username"
+  password: "vsphere_password"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: test-cloud-controller-manager
+  namespace: eksa-system
+stringData:
+  data: |
+    apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      name: cloud-controller-manager
+      namespace: kube-system
+type: addons.cluster.x-k8s.io/resource-set
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: test-cloud-provider-vsphere-credentials
+  namespace: eksa-system
+stringData:
+  data: |
+    apiVersion: v1
+    kind: Secret
+    metadata:
+      name: cloud-provider-vsphere-credentials
+      namespace: kube-system
+    stringData:
+      vsphere_server.password: "vsphere_password"
+      vsphere_server.username: "vsphere_username"
+    type: Opaque
+type: addons.cluster.x-k8s.io/resource-set
+---
+apiVersion: v1
+data:
+  data: |
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRole
+    metadata:
+      name: system:cloud-controller-manager
+    rules:
+    - apiGroups:
+      - ""
+      resources:
+      - events
+      verbs:
+      - create
+      - patch
+      - update
+    - apiGroups:
+      - ""
+      resources:
+      - nodes
+      verbs:
+      - '*'
+    - apiGroups:
+      - ""
+      resources:
+      - nodes/status
+      verbs:
+      - patch
+    - apiGroups:
+      - ""
+      resources:
+      - services
+      verbs:
+      - list
+      - patch
+      - update
+      - watch
+    - apiGroups:
+      - ""
+      resources:
+      - serviceaccounts
+      verbs:
+      - create
+      - get
+      - list
+      - watch
+      - update
+    - apiGroups:
+      - ""
+      resources:
+      - persistentvolumes
+      verbs:
+      - get
+      - list
+      - watch
+      - update
+    - apiGroups:
+      - ""
+      resources:
+      - endpoints
+      verbs:
+      - create
+      - get
+      - list
+      - watch
+      - update
+    - apiGroups:
+      - ""
+      resources:
+      - secrets
+      verbs:
+      - get
+      - list
+      - watch
+    - apiGroups:
+      - coordination.k8s.io
+      resources:
+      - leases
+      verbs:
+      - get
+      - watch
+      - list
+      - delete
+      - update
+      - create
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRoleBinding
+    metadata:
+      name: system:cloud-controller-manager
+    roleRef:
+      apiGroup: rbac.authorization.k8s.io
+      kind: ClusterRole
+      name: system:cloud-controller-manager
+    subjects:
+    - kind: ServiceAccount
+      name: cloud-controller-manager
+      namespace: kube-system
+    - kind: User
+      name: cloud-controller-manager
+    ---
+    apiVersion: v1
+    data:
+      vsphere.conf: |
+        global:
+          secretName: cloud-provider-vsphere-credentials
+          secretNamespace: kube-system
+          thumbprint: "ABCDEFG"
+          insecureFlag: false
+        vcenter:
+          vsphere_server:
+            datacenters:
+            - 'SDDC-Datacenter'
+            secretName: cloud-provider-vsphere-credentials
+            secretNamespace: kube-system
+            server: 'vsphere_server'
+            thumbprint: 'ABCDEFG'
+    kind: ConfigMap
+    metadata:
+      name: vsphere-cloud-config
+      namespace: kube-system
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: RoleBinding
+    metadata:
+      name: servicecatalog.k8s.io:apiserver-authentication-reader
+      namespace: kube-system
+    roleRef:
+      apiGroup: rbac.authorization.k8s.io
+      kind: Role
+      name: extension-apiserver-authentication-reader
+    subjects:
+    - kind: ServiceAccount
+      name: cloud-controller-manager
+      namespace: kube-system
+    - kind: User
+      name: cloud-controller-manager
+    ---
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        component: cloud-controller-manager
+      name: cloud-controller-manager
+      namespace: kube-system
+    spec:
+      ports:
+      - port: 443
+        protocol: TCP
+        targetPort: 43001
+      selector:
+        component: cloud-controller-manager
+      type: NodePort
+    ---
+    apiVersion: apps/v1
+    kind: DaemonSet
+    metadata:
+      labels:
+        k8s-app: vsphere-cloud-controller-manager
+      name: vsphere-cloud-controller-manager
+      namespace: kube-system
+    spec:
+      selector:
+        matchLabels:
+          k8s-app: vsphere-cloud-controller-manager
+      template:
+        metadata:
+          labels:
+            k8s-app: vsphere-cloud-controller-manager
+        spec:
+          containers:
+          - args:
+            - --v=2
+            - --cloud-provider=vsphere
+            - --cloud-config=/etc/cloud/vsphere.conf
+            image: public.ecr.aws/l0g8r8j6/kubernetes/cloud-provider-vsphere/cpi/manager:v1.18.1-2093eaeda5a4567f0e516d652e0b25b1d7abc774
+            name: vsphere-cloud-controller-manager
+            resources:
+              requests:
+                cpu: 200m
+            volumeMounts:
+            - mountPath: /etc/cloud
+              name: vsphere-config-volume
+              readOnly: true
+          hostNetwork: true
+          serviceAccountName: cloud-controller-manager
+          tolerations:
+          - effect: NoSchedule
+            key: node.cloudprovider.kubernetes.io/uninitialized
+            value: "true"
+          - effect: NoSchedule
+            key: node-role.kubernetes.io/master
+          - effect: NoSchedule
+            key: node-role.kubernetes.io/control-plane
+          - effect: NoSchedule
+            key: node.kubernetes.io/not-ready
+          volumes:
+          - configMap:
+              name: vsphere-cloud-config
+            name: vsphere-config-volume
+      updateStrategy:
+        type: RollingUpdate
+kind: ConfigMap
+metadata:
+  name: test-cpi-manifests
+  namespace: eksa-system

@@ -7,35 +7,45 @@ import (
 
 	"github.com/go-logr/logr"
 	. "github.com/onsi/gomega"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/controller"
 	"github.com/aws/eks-anywhere/pkg/controller/clusters"
-	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
 
 func TestCleanupStatusAfterValidate(t *testing.T) {
 	g := NewWithT(t)
 	spec := test.NewClusterSpec(func(s *cluster.Spec) {
-		s.Cluster.Status.FailureMessage = ptr.String("invalid cluster")
+		s.Cluster.SetFailure(anywherev1.FailureReasonType("InvalidCluster"), "invalid cluster")
 	})
 
 	g.Expect(
 		clusters.CleanupStatusAfterValidate(context.Background(), test.NewNullLogger(), spec),
 	).To(Equal(controller.Result{}))
 	g.Expect(spec.Cluster.Status.FailureMessage).To(BeNil())
+	g.Expect(spec.Cluster.Status.FailureReason).To(BeNil())
 }
 
 func TestValidateManagementClusterNameSuccess(t *testing.T) {
 	tt := newClusterValidatorTest(t)
 
 	objs := []runtime.Object{tt.cluster, tt.managementCluster}
-	cb := fake.NewClientBuilder()
+	cb := fakeClientBuilder()
+	cl := cb.WithRuntimeObjects(objs...).Build()
+
+	validator := clusters.NewClusterValidator(cl)
+	tt.Expect(validator.ValidateManagementClusterName(context.Background(), tt.logger, tt.cluster)).To(BeNil())
+}
+
+func TestValidateManagementClusterNameDifferentNamespaceSuccess(t *testing.T) {
+	tt := newClusterValidatorTest(t)
+	tt.managementCluster.Namespace = "different-namespace"
+
+	objs := []runtime.Object{tt.cluster, tt.managementCluster}
+	cb := fakeClientBuilder()
 	cl := cb.WithRuntimeObjects(objs...).Build()
 
 	validator := clusters.NewClusterValidator(cl)
@@ -47,12 +57,28 @@ func TestValidateManagementClusterNameMissing(t *testing.T) {
 
 	tt.cluster.Spec.ManagementCluster.Name = "missing"
 	objs := []runtime.Object{tt.cluster, tt.managementCluster}
-	cb := fake.NewClientBuilder()
+	cb := fakeClientBuilder()
 	cl := cb.WithRuntimeObjects(objs...).Build()
 
 	validator := clusters.NewClusterValidator(cl)
-	tt.Expect(validator.ValidateManagementClusterName(context.Background(), tt.logger, tt.cluster)).
-		To(MatchError(errors.New("unable to retrieve management cluster missing: clusters.anywhere.eks.amazonaws.com \"missing\" not found")))
+	err := validator.ValidateManagementClusterName(context.Background(), tt.logger, tt.cluster)
+	tt.Expect(err.Error()).
+		To(Equal("unable to retrieve management cluster missing: clusters.anywhere.eks.amazonaws.com \"missing\" not found"))
+}
+
+func TestValidateManagementClusterNameMultiple(t *testing.T) {
+	tt := newClusterValidatorTest(t)
+
+	tt.managementCluster.Namespace = "different-namespace-1"
+	managementCluster2 := tt.managementCluster.DeepCopy()
+	managementCluster2.Namespace = "different-namespace-2"
+	objs := []runtime.Object{tt.cluster, tt.managementCluster, managementCluster2}
+	cb := fakeClientBuilder()
+	cl := cb.WithRuntimeObjects(objs...).Build()
+
+	validator := clusters.NewClusterValidator(cl)
+	err := validator.ValidateManagementClusterName(context.Background(), tt.logger, tt.cluster)
+	tt.Expect(err.Error()).To(Equal("found multiple clusters with the name my-management-cluster"))
 }
 
 func TestValidateManagementClusterNameInvalid(t *testing.T) {
@@ -60,7 +86,7 @@ func TestValidateManagementClusterNameInvalid(t *testing.T) {
 
 	tt.managementCluster.SetManagedBy("differentCluster")
 	objs := []runtime.Object{tt.cluster, tt.managementCluster}
-	cb := fake.NewClientBuilder()
+	cb := fakeClientBuilder()
 	cl := cb.WithRuntimeObjects(objs...).Build()
 
 	validator := clusters.NewClusterValidator(cl)
@@ -77,20 +103,7 @@ type clusterValidatorTest struct {
 
 func newClusterValidatorTest(t *testing.T) *clusterValidatorTest {
 	logger := test.NewNullLogger()
-	managementCluster := &anywherev1.Cluster{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "my-management-cluster",
-			Namespace: "my-namespace",
-		},
-	}
-
-	cluster := &anywherev1.Cluster{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "my-cluster",
-			Namespace: "my-namespace",
-		},
-	}
-	cluster.SetManagedBy("my-management-cluster")
+	managementCluster, cluster := createClustersForTest()
 	return &clusterValidatorTest{
 		WithT:             NewWithT(t),
 		logger:            logger,

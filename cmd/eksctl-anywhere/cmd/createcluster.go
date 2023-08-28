@@ -1,11 +1,13 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
-	"log"
+	"strings"
 
 	"github.com/spf13/cobra"
 
+	"github.com/aws/eks-anywhere/cmd/eksctl-anywhere/cmd/flags"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/awsiamauth"
 	"github.com/aws/eks-anywhere/pkg/clustermanager"
@@ -13,6 +15,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
+	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
 	"github.com/aws/eks-anywhere/pkg/validations/createvalidations"
@@ -28,6 +31,7 @@ type createClusterOptions struct {
 	hardwareCSVPath       string
 	tinkerbellBootstrapIP string
 	installPackages       string
+	skipValidations       []string
 }
 
 var cc = &createClusterOptions{}
@@ -46,17 +50,22 @@ func init() {
 	applyClusterOptionFlags(createClusterCmd.Flags(), &cc.clusterOptions)
 	applyTimeoutFlags(createClusterCmd.Flags(), &cc.timeoutOptions)
 	applyTinkerbellHardwareFlag(createClusterCmd.Flags(), &cc.hardwareCSVPath)
-	createClusterCmd.Flags().StringVar(&cc.tinkerbellBootstrapIP, "tinkerbell-bootstrap-ip", "", "Override the local tinkerbell IP in the bootstrap cluster")
+	flags.String(flags.TinkerbellBootstrapIP, &cc.tinkerbellBootstrapIP, createClusterCmd.Flags())
 	createClusterCmd.Flags().BoolVar(&cc.forceClean, "force-cleanup", false, "Force deletion of previously created bootstrap cluster")
+	hideForceCleanup(createClusterCmd.Flags())
 	createClusterCmd.Flags().BoolVar(&cc.skipIpCheck, "skip-ip-check", false, "Skip check for whether cluster control plane ip is in use")
 	createClusterCmd.Flags().StringVar(&cc.installPackages, "install-packages", "", "Location of curated packages configuration files to install to the cluster")
+	createClusterCmd.Flags().StringArrayVar(&cc.skipValidations, "skip-validations", []string{}, fmt.Sprintf("Bypass create validations by name. Valid arguments you can pass are --skip-validations=%s", strings.Join(createvalidations.SkippableValidations[:], ",")))
 
-	if err := createClusterCmd.MarkFlagRequired("filename"); err != nil {
-		log.Fatalf("Error marking flag as required: %v", err)
-	}
+	flags.MarkRequired(createClusterCmd.Flags(), flags.ClusterConfig.Name)
 }
 
 func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) error {
+	if cc.forceClean {
+		logger.MarkFail(forceCleanupDeprecationMessageForCreateDelete)
+		return errors.New("please remove the --force-cleanup flag")
+	}
+
 	ctx := cmd.Context()
 
 	clusterConfigFileExist := validations.FileExists(cc.fileName)
@@ -106,21 +115,35 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 		return err
 	}
 
+	createCLIConfig, err := buildCreateCliConfig(cc)
+	if err != nil {
+		return err
+	}
+
 	clusterManagerTimeoutOpts, err := buildClusterManagerOpts(cc.timeoutOptions, clusterSpec.Cluster.Spec.DatacenterRef.Kind)
 	if err != nil {
 		return fmt.Errorf("failed to build cluster manager opts: %v", err)
+	}
+
+	var skippedValidations map[string]bool
+	if len(cc.skipValidations) != 0 {
+		skippedValidations, err = validations.ValidateSkippableValidation(cc.skipValidations, createvalidations.SkippableValidations)
+		if err != nil {
+			return err
+		}
 	}
 
 	factory := dependencies.ForSpec(ctx, clusterSpec).WithExecutableMountDirs(dirs...).
 		WithBootstrapper().
 		WithCliConfig(cliConfig).
 		WithClusterManager(clusterSpec.Cluster, clusterManagerTimeoutOpts).
-		WithProvider(cc.fileName, clusterSpec.Cluster, cc.skipIpCheck, cc.hardwareCSVPath, cc.forceClean, cc.tinkerbellBootstrapIP).
+		WithProvider(cc.fileName, clusterSpec.Cluster, cc.skipIpCheck, cc.hardwareCSVPath, cc.forceClean, cc.tinkerbellBootstrapIP, skippedValidations).
 		WithGitOpsFlux(clusterSpec.Cluster, clusterSpec.FluxConfig, cliConfig).
 		WithWriter().
 		WithEksdInstaller().
 		WithPackageInstaller(clusterSpec, cc.installPackages, cc.managementKubeconfig).
-		WithValidatorClients()
+		WithValidatorClients().
+		WithCreateClusterDefaulter(createCLIConfig)
 
 	if cc.timeoutOptions.noTimeouts {
 		factory.WithNoTimeouts()
@@ -131,6 +154,11 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 		return err
 	}
 	defer close(ctx, deps)
+
+	clusterSpec, err = deps.CreateClusterDefaulter.Run(ctx, clusterSpec)
+	if err != nil {
+		return err
+	}
 
 	createCluster := workflows.NewCreate(
 		deps.Bootstrapper,
@@ -149,9 +177,10 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 			Name:           clusterSpec.Cluster.Name,
 			KubeconfigFile: kubeconfig.FromClusterName(clusterSpec.Cluster.Name),
 		},
-		ManagementCluster: getManagementCluster(clusterSpec),
-		Provider:          deps.Provider,
-		CliConfig:         cliConfig,
+		ManagementCluster:  getManagementCluster(clusterSpec),
+		Provider:           deps.Provider,
+		CliConfig:          cliConfig,
+		SkippedValidations: skippedValidations,
 	}
 	createValidations := createvalidations.New(validationOpts)
 

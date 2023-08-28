@@ -208,7 +208,8 @@ func (p *Provider) UpdateKubeConfig(content *[]byte, clusterName string) error {
 }
 
 func (p *Provider) Version(clusterSpec *cluster.Spec) string {
-	return clusterSpec.VersionsBundle.Tinkerbell.Version
+	versionsBundle := clusterSpec.RootVersionsBundle()
+	return versionsBundle.Tinkerbell.Version
 }
 
 func (p *Provider) EnvMap(spec *cluster.Spec) (map[string]string, error) {
@@ -242,15 +243,15 @@ func (p *Provider) GetDeployments() map[string][]string {
 }
 
 func (p *Provider) GetInfrastructureBundle(clusterSpec *cluster.Spec) *types.InfrastructureBundle {
-	bundle := clusterSpec.VersionsBundle
-	folderName := fmt.Sprintf("infrastructure-tinkerbell/%s/", bundle.Tinkerbell.Version)
+	versionsBundle := clusterSpec.RootVersionsBundle()
+	folderName := fmt.Sprintf("infrastructure-tinkerbell/%s/", versionsBundle.Tinkerbell.Version)
 
 	infraBundle := types.InfrastructureBundle{
 		FolderName: folderName,
 		Manifests: []releasev1alpha1.Manifest{
-			bundle.Tinkerbell.Components,
-			bundle.Tinkerbell.Metadata,
-			bundle.Tinkerbell.ClusterTemplate,
+			versionsBundle.Tinkerbell.Components,
+			versionsBundle.Tinkerbell.Metadata,
+			versionsBundle.Tinkerbell.ClusterTemplate,
 		},
 	}
 	return &infraBundle
@@ -294,14 +295,16 @@ func (p *Provider) MachineConfigs(_ *cluster.Spec) []providers.MachineConfig {
 }
 
 func (p *Provider) ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ComponentChangeDiff {
-	if currentSpec.VersionsBundle.Tinkerbell.Version == newSpec.VersionsBundle.Tinkerbell.Version {
+	currentVersionsBundle := currentSpec.RootVersionsBundle()
+	newVersionsBundle := newSpec.RootVersionsBundle()
+	if currentVersionsBundle.Tinkerbell.Version == newVersionsBundle.Tinkerbell.Version {
 		return nil
 	}
 
 	return &types.ComponentChangeDiff{
 		ComponentName: constants.TinkerbellProviderName,
-		NewVersion:    newSpec.VersionsBundle.Tinkerbell.Version,
-		OldVersion:    currentSpec.VersionsBundle.Tinkerbell.Version,
+		NewVersion:    newVersionsBundle.Tinkerbell.Version,
+		OldVersion:    currentVersionsBundle.Tinkerbell.Version,
 	}
 }
 

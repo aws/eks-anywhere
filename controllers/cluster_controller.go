@@ -22,7 +22,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/cluster"
+	c "github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/controller"
@@ -32,6 +32,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/curatedpackages"
 	"github.com/aws/eks-anywhere/pkg/registrymirror"
 	"github.com/aws/eks-anywhere/pkg/utils/ptr"
+	"github.com/aws/eks-anywhere/pkg/validations"
 	"github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
@@ -48,6 +49,7 @@ type ClusterReconciler struct {
 	awsIamAuth                 AWSIamConfigReconciler
 	clusterValidator           ClusterValidator
 	packagesClient             PackagesClient
+	machineHealthCheck         MachineHealthCheckReconciler
 
 	// experimentalSelfManagedUpgrade enables management cluster full upgrades.
 	// The default behavior for management cluster only reconciles the worker nodes.
@@ -76,6 +78,11 @@ type AWSIamConfigReconciler interface {
 	ReconcileDelete(ctx context.Context, logger logr.Logger, cluster *anywherev1.Cluster) error
 }
 
+// MachineHealthCheckReconciler manages machine health checks for an eks-a cluster.
+type MachineHealthCheckReconciler interface {
+	Reconcile(ctx context.Context, logger logr.Logger, cluster *anywherev1.Cluster) error
+}
+
 // ClusterValidator runs cluster level preflight validations before it goes to provider reconciler.
 type ClusterValidator interface {
 	ValidateManagementClusterName(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) error
@@ -85,13 +92,14 @@ type ClusterValidator interface {
 type ClusterReconcilerOption func(*ClusterReconciler)
 
 // NewClusterReconciler constructs a new ClusterReconciler.
-func NewClusterReconciler(client client.Client, registry ProviderClusterReconcilerRegistry, awsIamAuth AWSIamConfigReconciler, clusterValidator ClusterValidator, pkgs PackagesClient, opts ...ClusterReconcilerOption) *ClusterReconciler {
+func NewClusterReconciler(client client.Client, registry ProviderClusterReconcilerRegistry, awsIamAuth AWSIamConfigReconciler, clusterValidator ClusterValidator, pkgs PackagesClient, machineHealthCheck MachineHealthCheckReconciler, opts ...ClusterReconcilerOption) *ClusterReconciler {
 	c := &ClusterReconciler{
 		client:                     client,
 		providerReconcilerRegistry: registry,
 		awsIamAuth:                 awsIamAuth,
 		clusterValidator:           clusterValidator,
 		packagesClient:             pkgs,
+		machineHealthCheck:         machineHealthCheck,
 	}
 
 	for _, opt := range opts {
@@ -191,6 +199,7 @@ func (r *ClusterReconciler) SetupWithManager(mgr ctrl.Manager, log logr.Logger) 
 // +kubebuilder:rbac:groups=bootstrap.cluster.x-k8s.io,resources=kubeadmconfigtemplates,verbs=create;get;list;patch;update;watch
 // +kubebuilder:rbac:groups="cluster.x-k8s.io",resources=machinedeployments,verbs=list;watch;get;patch;update;create;delete
 // +kubebuilder:rbac:groups="cluster.x-k8s.io",resources=clusters,verbs=list;watch;get;patch;update;create;delete
+// +kubebuilder:rbac:groups="cluster.x-k8s.io",resources=machinehealthchecks,verbs=list;watch;get;patch;create
 // +kubebuilder:rbac:groups=clusterctl.cluster.x-k8s.io,resources=providers,verbs=get;list;watch
 // +kubebuilder:rbac:groups=controlplane.cluster.x-k8s.io,resources=kubeadmcontrolplanes,verbs=list;get;watch;patch;update;create;delete
 // +kubebuilder:rbac:groups=coordination.k8s.io,resources=leases,verbs=create;get;list;update;watch;delete
@@ -201,7 +210,10 @@ func (r *ClusterReconciler) SetupWithManager(mgr ctrl.Manager, log logr.Logger) 
 // +kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=awssnowclusters;awssnowmachinetemplates;awssnowippools;vsphereclusters;vspheremachinetemplates;dockerclusters;dockermachinetemplates;tinkerbellclusters;tinkerbellmachinetemplates;cloudstackclusters;cloudstackmachinetemplates;nutanixclusters;nutanixmachinetemplates,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=packages.eks.amazonaws.com,resources=packages,verbs=create;delete;get;list;patch;update;watch
 // +kubebuilder:rbac:groups=packages.eks.amazonaws.com,namespace=eksa-system,resources=packagebundlecontrollers,verbs=delete
-// +kubebuilder:rbac:groups=anywhere.eks.amazonaws.com,namespace=eksa-system,resources=eksareleases,verbs=get;list;watch
+// +kubebuilder:rbac:groups=anywhere.eks.amazonaws.com,resources=eksareleases,verbs=get;list;watch
+// The eksareleases permissions are being moved to the ClusterRole due to client trying to list this resource from cache.
+// When trying to list resources not already in cache, it starts an informer for that type using the scope of the cache.
+// So if the manager is cluster-scoped, the new informers created by the cache will be cluster-scoped
 
 // Reconcile reconciles a cluster object.
 // nolint:gocyclo
@@ -267,9 +279,9 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (re
 	// AddFinalizer	is idempotent
 	controllerutil.AddFinalizer(cluster, ClusterFinalizerName)
 
-	if cluster.Spec.BundlesRef == nil {
-		if err = r.setBundlesRef(ctx, cluster); err != nil {
-			return ctrl.Result{}, err
+	if !cluster.IsSelfManaged() && cluster.Spec.BundlesRef == nil && cluster.Spec.EksaVersion == nil {
+		if err = r.setDefaultBundlesRefOrEksaVersion(ctx, cluster); err != nil {
+			return ctrl.Result{}, nil
 		}
 	}
 
@@ -355,7 +367,17 @@ func (r *ClusterReconciler) preClusterProviderReconcile(ctx context.Context, log
 	}
 	if cluster.IsManaged() {
 		if err := r.clusterValidator.ValidateManagementClusterName(ctx, log, cluster); err != nil {
-			cluster.Status.FailureMessage = ptr.String(err.Error())
+			log.Error(err, "Invalid cluster configuration")
+			cluster.SetFailure(anywherev1.ManagementClusterRefInvalidReason, err.Error())
+			return controller.Result{}, err
+		}
+
+		mgmt, err := getManagementCluster(ctx, cluster, r.client)
+		if err != nil {
+			return controller.Result{}, err
+		}
+
+		if err := validations.ValidateManagementEksaVersion(mgmt, cluster); err != nil {
 			return controller.Result{}, err
 		}
 	}
@@ -381,6 +403,10 @@ func (r *ClusterReconciler) postClusterProviderReconcile(ctx context.Context, lo
 		} else if result.Return() {
 			return result, nil
 		}
+	}
+
+	if err := r.machineHealthCheck.Reconcile(ctx, log, cluster); err != nil {
+		return controller.Result{}, err
 	}
 
 	// Self-managed clusters can support curated packages, but that support
@@ -419,7 +445,7 @@ func (r *ClusterReconciler) updateStatus(ctx context.Context, log logr.Logger, c
 		conditions.WithConditions(
 			anywherev1.ControlPlaneInitializedCondition,
 			anywherev1.ControlPlaneReadyCondition,
-			anywherev1.WorkersReadyConditon,
+			anywherev1.WorkersReadyCondition,
 		),
 	)
 
@@ -480,13 +506,14 @@ func (r *ClusterReconciler) reconcileDelete(ctx context.Context, log logr.Logger
 	return ctrl.Result{}, nil
 }
 
-func (r *ClusterReconciler) buildClusterConfig(ctx context.Context, clus *anywherev1.Cluster) (*cluster.Config, error) {
-	builder := cluster.NewDefaultConfigClientBuilder()
+func (r *ClusterReconciler) buildClusterConfig(ctx context.Context, clus *anywherev1.Cluster) (*c.Config, error) {
+	builder := c.NewDefaultConfigClientBuilder()
 	config, err := builder.Build(ctx, clientutil.NewKubeClient(r.client), clus)
 	if err != nil {
 		var notFound apierrors.APIStatus
 		if apierrors.IsNotFound(err) && errors.As(err, &notFound) {
-			clus.Status.FailureMessage = ptr.String(fmt.Sprintf("Dependent cluster objects don't exist: %s", notFound))
+			failureMessage := fmt.Sprintf("Dependent cluster objects don't exist: %s", notFound)
+			clus.SetFailure(anywherev1.MissingDependentObjectsReason, failureMessage)
 		}
 		return nil, err
 	}
@@ -494,7 +521,7 @@ func (r *ClusterReconciler) buildClusterConfig(ctx context.Context, clus *anywhe
 	return config, nil
 }
 
-func (r *ClusterReconciler) ensureClusterOwnerReferences(ctx context.Context, clus *anywherev1.Cluster, config *cluster.Config) error {
+func (r *ClusterReconciler) ensureClusterOwnerReferences(ctx context.Context, clus *anywherev1.Cluster, config *c.Config) error {
 	for _, obj := range config.ChildObjects() {
 		numberOfOwnerReferences := len(obj.GetOwnerReferences())
 		if err := controllerutil.SetOwnerReference(clus, obj, r.client.Scheme()); err != nil {
@@ -522,7 +549,7 @@ func patchCluster(ctx context.Context, patchHelper *patch.Helper, cluster *anywh
 			anywherev1.ReadyCondition,
 			anywherev1.ControlPlaneInitializedCondition,
 			anywherev1.ControlPlaneReadyCondition,
-			anywherev1.WorkersReadyConditon,
+			anywherev1.WorkersReadyCondition,
 			anywherev1.DefaultCNIConfiguredCondition,
 		}},
 	}, patchOpts...)
@@ -534,7 +561,7 @@ func patchCluster(ctx context.Context, patchHelper *patch.Helper, cluster *anywh
 // aggregatedGeneration computes the combined generation of the resources linked
 // by the cluster by summing up the .metadata.generation value for all the child
 // objects of this cluster.
-func aggregatedGeneration(config *cluster.Config) int64 {
+func aggregatedGeneration(config *c.Config) int64 {
 	var aggregatedGeneration int64
 	for _, obj := range config.ChildObjects() {
 		aggregatedGeneration += obj.GetGeneration()
@@ -543,14 +570,37 @@ func aggregatedGeneration(config *cluster.Config) int64 {
 	return aggregatedGeneration
 }
 
-func (r *ClusterReconciler) setBundlesRef(ctx context.Context, clus *anywherev1.Cluster) error {
-	mgmtCluster := &anywherev1.Cluster{}
-	if err := r.client.Get(ctx, types.NamespacedName{Name: clus.ManagedBy(), Namespace: clus.Namespace}, mgmtCluster); err != nil {
-		if apierrors.IsNotFound(err) {
-			clus.Status.FailureMessage = ptr.String(fmt.Sprintf("Management cluster %s does not exist", clus.Spec.ManagementCluster.Name))
-		}
+func getManagementCluster(ctx context.Context, clus *anywherev1.Cluster, client client.Client) (*anywherev1.Cluster, error) {
+	mgmtCluster, err := clusters.FetchManagementEksaCluster(ctx, client, clus)
+	if apierrors.IsNotFound(err) {
+		clus.SetFailure(
+			anywherev1.ManagementClusterRefInvalidReason,
+			fmt.Sprintf("Management cluster %s does not exist", clus.Spec.ManagementCluster.Name),
+		)
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	return mgmtCluster, nil
+}
+
+func (r *ClusterReconciler) setDefaultBundlesRefOrEksaVersion(ctx context.Context, clus *anywherev1.Cluster) error {
+	mgmtCluster, err := getManagementCluster(ctx, clus, r.client)
+	if err != nil {
 		return err
 	}
-	clus.Spec.BundlesRef = mgmtCluster.Spec.BundlesRef
-	return nil
+
+	if mgmtCluster.Spec.EksaVersion != nil {
+		clus.Spec.EksaVersion = mgmtCluster.Spec.EksaVersion
+		return nil
+	}
+
+	if mgmtCluster.Spec.BundlesRef != nil {
+		clus.Spec.BundlesRef = mgmtCluster.Spec.BundlesRef
+		return nil
+	}
+
+	clus.Status.FailureMessage = ptr.String("Management cluster must have either EksaVersion or BundlesRef")
+	return fmt.Errorf("could not set default values")
 }

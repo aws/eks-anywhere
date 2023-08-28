@@ -73,7 +73,7 @@ func (valOpt *validateOptions) validateCreateCluster(cmd *cobra.Command, _ []str
 		WithWriterFolder(tmpPath).
 		WithDocker().
 		WithKubectl().
-		WithProvider(valOpt.fileName, clusterSpec.Cluster, false, valOpt.hardwareCSVPath, true, valOpt.tinkerbellBootstrapIP).
+		WithProvider(valOpt.fileName, clusterSpec.Cluster, false, valOpt.hardwareCSVPath, true, valOpt.tinkerbellBootstrapIP, map[string]bool{}).
 		WithGitOpsFlux(clusterSpec.Cluster, clusterSpec.FluxConfig, cliConfig).
 		WithUnAuthKubeClient().
 		WithValidatorClients().

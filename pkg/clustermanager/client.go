@@ -6,12 +6,13 @@ import (
 
 	"k8s.io/apimachinery/pkg/runtime"
 
+	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/types"
 )
 
 // KubernetesClient allows to interact with the k8s api server.
 type KubernetesClient interface {
-	Apply(ctx context.Context, kubeconfigPath string, obj runtime.Object) error
+	Apply(ctx context.Context, kubeconfigPath string, obj runtime.Object, opts ...kubernetes.KubectlApplyOption) error
 	ApplyKubeSpecFromBytes(ctx context.Context, cluster *types.Cluster, data []byte) error
 	ApplyKubeSpecFromBytesWithNamespace(ctx context.Context, cluster *types.Cluster, data []byte, namespace string) error
 	ApplyKubeSpecFromBytesForce(ctx context.Context, cluster *types.Cluster, data []byte) error

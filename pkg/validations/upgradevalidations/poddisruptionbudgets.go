@@ -22,7 +22,7 @@ func ValidatePodDisruptionBudgets(ctx context.Context, k validations.KubectlClie
 	}
 
 	if len(podDisruptionBudgets.Items) != 0 {
-		return fmt.Errorf("one or more pod disruption budgets were detected on the cluster. Use the --skip-validations=%s flag if you wish to skip the validations for pod disruption budgets and proceed with the upgrade operation", PDB)
+		return fmt.Errorf("one or more pod disruption budgets were detected on the cluster. Use the --skip-validations=%s flag if you wish to skip the validations for pod disruption budgets and proceed with the upgrade operation", validations.PDB)
 	}
 
 	return nil

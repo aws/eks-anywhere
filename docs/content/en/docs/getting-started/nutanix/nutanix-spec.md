@@ -85,6 +85,9 @@ spec:
        - ssh-rsa AAAA…
  vcpuSockets: 2
  vcpusPerSocket: 1
+ additionalCategories:
+   - key: my-category
+     value: my-category-value 
 ---
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: NutanixMachineConfig
@@ -166,6 +169,8 @@ This takes in a list of node groups that you can define for your workers. You ma
 ### workerNodeGroupConfigurations.count
 Number of worker nodes. Optional if `autoscalingConfiguration` is used, in which case count will default to `autoscalingConfiguration.minCount`.
 
+Refers to [troubleshooting machine health check remediation not allowed]({{< relref "../../troubleshooting/troubleshooting/#machine-health-check-shows-remediation-is-not-allowed" >}}) and choose a sufficient number to allow machine health check remediation.
+
 ### workerNodeGroupConfigurations.machineGroupRef (required)
 Refers to the Kubernetes object with Nutanix specific configuration for your nodes. See `NutanixMachineConfig` fields below.
 
@@ -177,6 +182,9 @@ Minimum number of nodes for this node group’s autoscaling configuration.
 
 ### workerNodeGroupConfigurations.autoscalingConfiguration.maxCount
 Maximum number of nodes for this node group’s autoscaling configuration.
+
+### workerNodeGroupConfigurations.kubernetesVersion
+The Kubernetes version you want to use for this worker node group. Supported values: 1.27, 1.26, 1.25, 1.24, 1.23
 
 ### datacenterRef
 Refers to the Kubernetes object with Nutanix environment specific configuration. See `NutanixDatacenterConfig` fields below.
@@ -278,7 +286,15 @@ Name of the project
  
 ### project.uuid (`name` or `UUID` required)
 UUID of the project
+
+### additionalCategories (optional)
+Reference to a list of existing [Nutanix Categories](https://portal.nutanix.com/page/documents/details?targetId=Prism-Central-Guide:ssp-ssp-categories-manage-pc-c.html) to be assigned to virtual machines. 
  
+### additionalCategories[0].key
+Nutanix Category to add to the virtual machine. 
+ 
+### additionalCategories[0].value
+Value of the Nutanix Category to add to the virtual machine
 
 ### users (optional)
 The users you want to configure to access your virtual machines. Only one is permitted at this time.

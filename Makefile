@@ -380,9 +380,9 @@ update-golden-files:
 	make -C release update-bundle-golden-files
 	scripts/golden_create_pr.sh
 
-.PHONY: generate-checksums
-generate-checksums:
-	scripts/generate_checksum.sh
+.PHONY: prepare-release-artifacts
+prepare-release-artifacts:
+	scripts/prepare_release_artifacts.sh
 
 .PHONY: update-brew-formula
 update-brew-formula:
@@ -397,9 +397,9 @@ clean: ## Clean up resources created by make targets
 	rm -rf ./pkg/providers/vsphere/Test*
 	rm -rf ./pkg/providers/tinkerbell/stack/TestTinkerbellStackInstall*
 ifeq ($(UNAME), Darwin)
-	  find -E . -depth -type d -regex '.*\/Test.*-[0-9]{9}\/.*' -exec rm -rf {} \;
+	  find -E . -depth -type d -regex '.*\/Test.*-[0-9]{10}[\/]?.*' -exec rm -rf {} \;
 else
-	  find . -depth -type d -regextype posix-egrep -regex '.*\/Test.*-[0-9]{9}\/.*' -exec rm -rf {} \;
+	  find . -depth -type d -regextype posix-egrep -regex '.*\/Test.*-[0-9]{10}[\/]?.*' -exec rm -rf {} \;
 endif
 	rm -rf ./manager/bin/*
 	rm -rf ./hack/tools/bin
@@ -413,6 +413,15 @@ endif
 #
 generate: $(CONTROLLER_GEN)  ## Generate zz_generated.deepcopy.go
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
+
+.PHONY: verify-generate
+verify-generate: generate ## Verify if generated zz_generated.deepcopy.go files need to be updated
+	$(eval DIFF=$(shell git diff --raw -- '*.go' | wc -c))
+	if [[ $(DIFF) != 0 ]]; then \
+		echo "Detected out of date deepcopy files. please run 'make generate'"; \
+		exit 1;\
+	fi
+
 
 .PHONY: test
 test: unit-test capd-test  ## Run unit and capd tests
@@ -528,14 +537,14 @@ mocks: ## Generate mocks
 	${MOCKGEN} -destination=pkg/providers/vsphere/setupuser/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/providers/vsphere/setupuser" GovcClient
 	${MOCKGEN} -destination=pkg/govmomi/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/govmomi" VSphereClient,VMOMIAuthorizationManager,VMOMIFinder,VMOMISessionBuilder,VMOMIFinderBuilder,VMOMIAuthorizationManagerBuilder
 	${MOCKGEN} -destination=pkg/filewriter/mocks/filewriter.go -package=mocks "github.com/aws/eks-anywhere/pkg/filewriter" FileWriter
-	${MOCKGEN} -destination=pkg/clustermanager/mocks/client_and_networking.go -package=mocks "github.com/aws/eks-anywhere/pkg/clustermanager" ClusterClient,Networking,AwsIamAuth,EKSAComponents,KubernetesClient
+	${MOCKGEN} -destination=pkg/clustermanager/mocks/client_and_networking.go -package=mocks "github.com/aws/eks-anywhere/pkg/clustermanager" ClusterClient,Networking,AwsIamAuth,EKSAComponents,KubernetesClient,ClientFactory
 	${MOCKGEN} -destination=pkg/gitops/flux/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/gitops/flux" FluxClient,KubeClient,GitOpsFluxClient,GitClient,Templater
 	${MOCKGEN} -destination=pkg/task/mocks/task.go -package=mocks "github.com/aws/eks-anywhere/pkg/task" Task
 	${MOCKGEN} -destination=pkg/bootstrapper/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/bootstrapper" KindClient,KubernetesClient
 	${MOCKGEN} -destination=pkg/bootstrapper/mocks/bootstrapper.go -package=mocks "github.com/aws/eks-anywhere/pkg/bootstrapper" ClusterClient
 	${MOCKGEN} -destination=pkg/git/providers/github/mocks/github.go -package=mocks "github.com/aws/eks-anywhere/pkg/git/providers/github" GithubClient
 	${MOCKGEN} -destination=pkg/git/mocks/git.go -package=mocks "github.com/aws/eks-anywhere/pkg/git" Client,ProviderClient
-	${MOCKGEN} -destination=pkg/workflows/interfaces/mocks/clients.go -package=mocks "github.com/aws/eks-anywhere/pkg/workflows/interfaces" Bootstrapper,ClusterManager,GitOpsManager,Validator,CAPIManager,EksdInstaller,EksdUpgrader,PackageInstaller,ClusterUpgrader
+	${MOCKGEN} -destination=pkg/workflows/interfaces/mocks/clients.go -package=mocks "github.com/aws/eks-anywhere/pkg/workflows/interfaces" Bootstrapper,ClusterManager,GitOpsManager,Validator,CAPIManager,EksdInstaller,EksdUpgrader,PackageInstaller
 	${MOCKGEN} -destination=pkg/git/gogithub/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/git/gogithub" Client
 	${MOCKGEN} -destination=pkg/git/gitclient/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/git/gitclient" GoGit
 	${MOCKGEN} -destination=pkg/validations/mocks/docker.go -package=mocks "github.com/aws/eks-anywhere/pkg/validations" DockerExecutable
@@ -592,6 +601,7 @@ mocks: ## Generate mocks
 	${MOCKGEN} -destination=pkg/providers/tinkerbell/reconciler/mocks/reconciler.go -package=mocks -source "pkg/providers/tinkerbell/reconciler/reconciler.go"
 	${MOCKGEN} -destination=pkg/providers/cloudstack/reconciler/mocks/reconciler.go -package=mocks -source "pkg/providers/cloudstack/reconciler/reconciler.go"
 	${MOCKGEN} -destination=pkg/awsiamauth/reconciler/mocks/reconciler.go -package=mocks -source "pkg/awsiamauth/reconciler/reconciler.go"
+	${MOCKGEN} -destination=pkg/clusterapi/machinehealthcheck/mocks/reconciler.go -package=mocks -source "pkg/clusterapi/machinehealthcheck/reconciler/reconciler.go"
 	${MOCKGEN} -destination=controllers/mocks/cluster_controller.go -package=mocks -source "controllers/cluster_controller.go" AWSIamConfigReconciler ClusterValidator PackageControllerClient
 	${MOCKGEN} -destination=pkg/workflow/task_mock_test.go -package=workflow_test -source "pkg/workflow/task.go"
 	${MOCKGEN} -destination=pkg/validations/createcluster/mocks/createcluster.go -package=mocks -source "pkg/validations/createcluster/createcluster.go"
@@ -601,7 +611,6 @@ mocks: ## Generate mocks
 	${MOCKGEN} -destination=pkg/controller/clusters/mocks/ipvalidator.go -package=mocks -source "pkg/controller/clusters/ipvalidator.go" IPUniquenessValidator
 	${MOCKGEN} -destination=pkg/registry/mocks/storage.go -package=mocks -source "pkg/registry/storage.go" StorageClient
 	${MOCKGEN} -destination=pkg/registry/mocks/repository.go -package=mocks oras.land/oras-go/v2/registry Repository
-	${MOCKGEN} -destination=pkg/clustermanager/mocks/kube_proxy.go -package=mocks -source "pkg/clustermanager/kube_proxy.go"
 
 .PHONY: verify-mocks
 verify-mocks: mocks ## Verify if mocks need to be updated
@@ -692,6 +701,20 @@ generate-core-manifests: $(CONTROLLER_GEN) ## Generate manifests for the core pr
 		output:webhook:dir=./config/webhook \
 		webhook
 
+.PHONY: verify-generate-manifests
+verify-generate-manifests: generate-manifests ## Verify if generated manifests files e.g. CRD, RBAC etc. need to be updated
+	$(eval DIFF=$(shell git diff --raw -- '*.go' | wc -c))
+	if [[ $(DIFF) != 0 ]]; then \
+		echo "Detected out of date manifest files. please run 'make generate-manifests'"; \
+		exit 1;\
+	fi
+
+.PHONY: verify-generate-files
+verify-generate-files: 
+	$(MAKE) verify-generate-manifests
+	$(MAKE) verify-generate
+	$(MAKE) verify-mocks
+
 LDFLAGS := $(shell hack/version.sh)
 
 .PHONY: docker-build
@@ -766,3 +789,11 @@ $(BINARY_DEPS_DIR)/linux-%:
 ifneq ($(FETCH_BINARIES_TARGETS),)
 .SECONDARY: $(call FULL_FETCH_BINARIES_TARGETS, $(FETCH_BINARIES_TARGETS))
 endif
+
+E2E_BINARY?=bin/e2e.test
+TINKERBELL_HARDWARE_REQUIREMENTS?=test/e2e/TINKERBELL_HARDWARE_COUNT.yaml
+
+# validate-tinkerbell-hardware-requirements checks the tinkerbell hardware requirement file with pre-defined validations
+.PHONY: validate-tinkerbell-hardware-requirements
+validate-tinkerbell-hardware-requirements: build-e2e-test-binary
+	scripts/validate_tinkerbell_hardware_file.sh $(E2E_BINARY) $(TINKERBELL_HARDWARE_REQUIREMENTS)

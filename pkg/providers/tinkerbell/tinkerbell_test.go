@@ -295,6 +295,40 @@ func TestTinkerbellProviderGenerateDeploymentFileWithNodeLabels(t *testing.T) {
 	test.AssertContentToFile(t, string(md), "testdata/expected_results_cluster_tinkerbell_md_node_labels.yaml")
 }
 
+func TestTinkerbellProviderGenerateDeploymentFileWithWorkerVersion(t *testing.T) {
+	clusterSpecManifest := "cluster_tinkerbell_worker_version.yaml"
+	mockCtrl := gomock.NewController(t)
+	docker := stackmocks.NewMockDocker(mockCtrl)
+	helm := stackmocks.NewMockHelm(mockCtrl)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	stackInstaller := stackmocks.NewMockStackInstaller(mockCtrl)
+	writer := filewritermocks.NewMockFileWriter(mockCtrl)
+	cluster := &types.Cluster{Name: "test"}
+	forceCleanup := false
+
+	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
+	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
+	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
+	ctx := context.Background()
+
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+	provider.stackInstaller = stackInstaller
+
+	stackInstaller.EXPECT().CleanupLocalBoots(ctx, forceCleanup)
+
+	if err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec); err != nil {
+		t.Fatalf("failed to setup and validate: %v", err)
+	}
+
+	cp, md, err := provider.GenerateCAPISpecForCreate(context.Background(), cluster, clusterSpec)
+	if err != nil {
+		t.Fatalf("failed to generate cluster api spec contents: %v", err)
+	}
+
+	test.AssertContentToFile(t, string(cp), "testdata/expected_results_cluster_tinkerbell_cp_node_labels.yaml")
+	test.AssertContentToFile(t, string(md), "testdata/expected_results_cluster_tinkerbell_md_node_worker_version.yaml")
+}
+
 func TestTinkerbellProviderGenerateDeploymentFileWithNodeTaints(t *testing.T) {
 	clusterSpecManifest := "cluster_tinkerbell_node_taints.yaml"
 	mockCtrl := gomock.NewController(t)
@@ -382,9 +416,11 @@ func TestPreCAPIInstallOnBootstrapSuccess(t *testing.T) {
 	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
 	provider.stackInstaller = stackInstaller
 
+	bundle := clusterSpec.RootVersionsBundle()
+
 	stackInstaller.EXPECT().Install(
 		ctx,
-		clusterSpec.VersionsBundle.Tinkerbell,
+		bundle.Tinkerbell,
 		testIP,
 		"test.kubeconfig",
 		"",
@@ -417,9 +453,11 @@ func TestPostWorkloadInitSuccess(t *testing.T) {
 	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
 	provider.stackInstaller = stackInstaller
 
+	bundle := clusterSpec.RootVersionsBundle()
+
 	stackInstaller.EXPECT().Install(
 		ctx,
-		clusterSpec.VersionsBundle.Tinkerbell,
+		bundle.Tinkerbell,
 		testIP,
 		"test.kubeconfig",
 		"",
@@ -1010,6 +1048,55 @@ func TestSetupAndValidateCreateWorkloadClusterSuccess(t *testing.T) {
 	kubectl.EXPECT().GetProvisionedTinkerbellHardware(ctx, clusterSpec.ManagementCluster.KubeconfigFile, constants.EksaSystemNamespace).Return([]tinkv1alpha1.Hardware{}, nil)
 	kubectl.EXPECT().GetEksaCluster(ctx, clusterSpec.ManagementCluster, clusterSpec.ManagementCluster.Name).Return(clusterSpec.Cluster, nil)
 	kubectl.EXPECT().GetEksaTinkerbellDatacenterConfig(ctx, datacenterConfig.Name, clusterSpec.ManagementCluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(datacenterConfig, nil)
+	kubectl.EXPECT().ApplyKubeSpecFromBytesForce(ctx, clusterSpec.ManagementCluster, gomock.Any())
+	kubectl.EXPECT().WaitForRufioMachines(ctx, clusterSpec.ManagementCluster, "5m", "Contactable", constants.EksaSystemNamespace)
+
+	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
+	if err != nil {
+		t.Fatalf("unexpected failure %v", err)
+	}
+	assert.NoError(t, err, "No error should be returned")
+}
+
+func TestSetupAndValidateCreateWorkloadClusterDifferentNamespaceSuccess(t *testing.T) {
+	clusterSpecManifest := "cluster_tinkerbell_stacked_etcd.yaml"
+	mockCtrl := gomock.NewController(t)
+	docker := stackmocks.NewMockDocker(mockCtrl)
+	helm := stackmocks.NewMockHelm(mockCtrl)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	stackInstaller := stackmocks.NewMockStackInstaller(mockCtrl)
+	writer := filewritermocks.NewMockFileWriter(mockCtrl)
+
+	forceCleanup := false
+
+	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
+	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
+	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
+	managementCluster := clusterSpec.Cluster.DeepCopy()
+	managementCluster.Namespace = "different-namespace"
+	ctx := context.Background()
+
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+	provider.stackInstaller = stackInstaller
+
+	stackInstaller.EXPECT().CleanupLocalBoots(ctx, forceCleanup)
+	provider.providerKubectlClient = kubectl
+
+	clusterSpec.Cluster.SetManagedBy("management-cluster")
+	clusterSpec.ManagementCluster = &types.Cluster{
+		Name:               "management-cluster",
+		KubeconfigFile:     "kc.kubeconfig",
+		ExistingManagement: true,
+	}
+	for _, config := range machineConfigs {
+		kubectl.EXPECT().SearchTinkerbellMachineConfig(ctx, config.Name, clusterSpec.ManagementCluster.KubeconfigFile, config.Namespace).Return([]*v1alpha1.TinkerbellMachineConfig{}, nil)
+	}
+	kubectl.EXPECT().SearchTinkerbellDatacenterConfig(ctx, datacenterConfig.Name, clusterSpec.ManagementCluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return([]*v1alpha1.TinkerbellDatacenterConfig{}, nil)
+
+	kubectl.EXPECT().GetUnprovisionedTinkerbellHardware(ctx, clusterSpec.ManagementCluster.KubeconfigFile, constants.EksaSystemNamespace).Return([]tinkv1alpha1.Hardware{}, nil)
+	kubectl.EXPECT().GetProvisionedTinkerbellHardware(ctx, clusterSpec.ManagementCluster.KubeconfigFile, constants.EksaSystemNamespace).Return([]tinkv1alpha1.Hardware{}, nil)
+	kubectl.EXPECT().GetEksaCluster(ctx, clusterSpec.ManagementCluster, clusterSpec.ManagementCluster.Name).Return(managementCluster, nil)
+	kubectl.EXPECT().GetEksaTinkerbellDatacenterConfig(ctx, datacenterConfig.Name, clusterSpec.ManagementCluster.KubeconfigFile, managementCluster.Namespace).Return(datacenterConfig, nil)
 	kubectl.EXPECT().ApplyKubeSpecFromBytesForce(ctx, clusterSpec.ManagementCluster, gomock.Any())
 	kubectl.EXPECT().WaitForRufioMachines(ctx, clusterSpec.ManagementCluster, "5m", "Contactable", constants.EksaSystemNamespace)
 
@@ -1857,4 +1944,84 @@ func TestTinkerbellProvider_GenerateCAPISpecForUpgrade_RegistryMirror(t *testing
 	}
 
 	test.AssertContentToFile(t, string(cp), "testdata/expected_results_cluster_tinkerbell_upgrade_registry_mirror.yaml")
+}
+
+func TestTinkerbellProvider_GenerateCAPISpecForUpgrade_CertBundles(t *testing.T) {
+	clusterSpecManifest := "cluster_bottlerocket_cert_bundles_config.yaml"
+	mockCtrl := gomock.NewController(t)
+	docker := stackmocks.NewMockDocker(mockCtrl)
+	helm := stackmocks.NewMockHelm(mockCtrl)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	stackInstaller := stackmocks.NewMockStackInstaller(mockCtrl)
+	writer := filewritermocks.NewMockFileWriter(mockCtrl)
+	cluster := &types.Cluster{Name: "test"}
+	kubeadmControlPlane := &controlplanev1.KubeadmControlPlane{
+		Spec: controlplanev1.KubeadmControlPlaneSpec{
+			MachineTemplate: controlplanev1.KubeadmControlPlaneMachineTemplate{
+				InfrastructureRef: v1.ObjectReference{
+					Name: "test-control-plane-template-1234567890000",
+				},
+			},
+		},
+	}
+	machineDeployment := &clusterv1.MachineDeployment{
+		Spec: clusterv1.MachineDeploymentSpec{
+			Template: clusterv1.MachineTemplateSpec{
+				Spec: clusterv1.MachineSpec{
+					Bootstrap: clusterv1.Bootstrap{
+						ConfigRef: &v1.ObjectReference{
+							Name: "test-md-0-template-1234567890000",
+						},
+					},
+					InfrastructureRef: v1.ObjectReference{
+						Name: "test-md-0-1234567890000",
+					},
+				},
+			},
+		},
+	}
+	ctx := context.Background()
+	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
+	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
+	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
+
+	updatedClusterSpec := clusterSpec.DeepCopy()
+	*clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].Count++
+
+	kubectl.EXPECT().
+		GetUnprovisionedTinkerbellHardware(gomock.Any(), gomock.Any(), gomock.Any()).
+		Return([]tinkv1alpha1.Hardware{}, nil)
+	kubectl.EXPECT().
+		GetProvisionedTinkerbellHardware(gomock.Any(), gomock.Any(), gomock.Any()).
+		Return([]tinkv1alpha1.Hardware{}, nil)
+	kubectl.EXPECT().
+		GetEksaCluster(gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(clusterSpec.Cluster, nil)
+	kubectl.EXPECT().
+		GetEksaTinkerbellDatacenterConfig(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(datacenterConfig, nil)
+	kubectl.EXPECT().
+		GetKubeadmControlPlane(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(kubeadmControlPlane, nil)
+	kubectl.EXPECT().
+		GetMachineDeployment(gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(machineDeployment, nil)
+	kubectl.EXPECT().
+		GetMachineDeployment(gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(machineDeployment, nil)
+
+	provider := newProvider(datacenterConfig, machineConfigs, updatedClusterSpec.Cluster, writer, docker, helm, kubectl, false)
+	provider.stackInstaller = stackInstaller
+
+	if err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, updatedClusterSpec, clusterSpec); err != nil {
+		t.Fatalf("failed to setup and validate: %v", err)
+	}
+
+	cp, md, err := provider.GenerateCAPISpecForUpgrade(context.Background(), cluster, cluster, clusterSpec, updatedClusterSpec)
+	if err != nil {
+		t.Fatalf("failed to generate cluster api spec contents: %v", err)
+	}
+
+	test.AssertContentToFile(t, string(cp), "testdata/expected_results_bottlerocket_upgrade_cert_bundles_config_cp.yaml")
+	test.AssertContentToFile(t, string(md), "testdata/expected_results_bottlerocket_upgrade_cert_bundles_config_md.yaml")
 }

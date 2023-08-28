@@ -10,6 +10,7 @@ import (
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
@@ -28,8 +29,73 @@ func Namespace(name string) *corev1.Namespace {
 	}
 }
 
+// EKSARelease returns a test eksaRelease struct for unit testing.
+func EKSARelease() *releasev1.EKSARelease {
+	return &releasev1.EKSARelease{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       releasev1.EKSAReleaseKind,
+			APIVersion: releasev1.GroupVersion.String(),
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "eksa-v0-0-0-dev",
+			Namespace: constants.EksaSystemNamespace,
+		},
+		Spec: releasev1.EKSAReleaseSpec{
+			ReleaseDate:       "",
+			Version:           "",
+			GitCommit:         "",
+			BundleManifestURL: "",
+			BundlesRef: releasev1.BundlesRef{
+				Name:       "bundles-1",
+				Namespace:  "default",
+				APIVersion: releasev1.GroupVersion.String(),
+			},
+		},
+	}
+}
+
+// EksdReleases returns a test release slice for unit testing.
+func EksdReleases() []eksdv1.Release {
+	return []eksdv1.Release{
+		*EksdRelease("1-19"),
+		*EksdRelease("1-22"),
+		*EksdRelease("1-24"),
+	}
+}
+
+// VersionsBundlesMap returns a test VersionsBundle map for unit testing.
+func VersionsBundlesMap() map[anywherev1.KubernetesVersion]*cluster.VersionsBundle {
+	return map[anywherev1.KubernetesVersion]*cluster.VersionsBundle{
+		anywherev1.Kube118: VersionBundle(),
+		anywherev1.Kube119: VersionBundle(),
+		anywherev1.Kube120: VersionBundle(),
+		anywherev1.Kube121: VersionBundle(),
+		anywherev1.Kube122: VersionBundle(),
+		anywherev1.Kube123: VersionBundle(),
+		anywherev1.Kube124: VersionBundle(),
+	}
+}
+
+// VersionBundle returns a test VersionsBundle struct for unit testing.
+func VersionBundle() *cluster.VersionsBundle {
+	return &cluster.VersionsBundle{
+		VersionsBundle: &releasev1.VersionsBundle{
+			Eksa: releasev1.EksaBundle{
+				DiagnosticCollector: releasev1.Image{
+					URI: "public.ecr.aws/eks-anywhere/diagnostic-collector:v0.9.1-eks-a-10",
+				},
+			},
+		},
+		KubeDistro: &cluster.KubeDistro{
+			AwsIamAuthImage: releasev1.Image{
+				URI: "public.ecr.aws/eks-distro/kubernetes-sigs/aws-iam-authenticator:v0.5.2-eks-1-18-11",
+			},
+		},
+	}
+}
+
 // EksdRelease returns a test release struct for unit testing.
-func EksdRelease() *eksdv1.Release {
+func EksdRelease(channel string) *eksdv1.Release {
 	return &eksdv1.Release{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Release",
@@ -40,7 +106,8 @@ func EksdRelease() *eksdv1.Release {
 			Namespace: "eksa-system",
 		},
 		Spec: eksdv1.ReleaseSpec{
-			Number: 1,
+			Number:  1,
+			Channel: channel,
 		},
 		Status: eksdv1.ReleaseStatus{
 			Components: []eksdv1.Component{
@@ -111,10 +178,32 @@ func Bundle() *releasev1.Bundles {
 		Spec: releasev1.BundlesSpec{
 			VersionsBundles: []releasev1.VersionsBundle{
 				{
+					KubeVersion: "1.19",
+					EksD: releasev1.EksDRelease{
+						Name:           "test",
+						EksDReleaseUrl: "embed:///testdata/release.yaml",
+						KubeVersion:    "1.19",
+					},
+					CertManager:                releasev1.CertManagerBundle{},
+					ClusterAPI:                 releasev1.CoreClusterAPI{},
+					Bootstrap:                  releasev1.KubeadmBootstrapBundle{},
+					ControlPlane:               releasev1.KubeadmControlPlaneBundle{},
+					VSphere:                    releasev1.VSphereBundle{},
+					Docker:                     releasev1.DockerBundle{},
+					Eksa:                       releasev1.EksaBundle{},
+					Cilium:                     releasev1.CiliumBundle{},
+					Kindnetd:                   releasev1.KindnetdBundle{},
+					Flux:                       releasev1.FluxBundle{},
+					BottleRocketHostContainers: releasev1.BottlerocketHostContainersBundle{},
+					ExternalEtcdBootstrap:      releasev1.EtcdadmBootstrapBundle{},
+					ExternalEtcdController:     releasev1.EtcdadmControllerBundle{},
+					Tinkerbell:                 releasev1.TinkerbellBundle{},
+				},
+				{
 					KubeVersion: "1.22",
 					EksD: releasev1.EksDRelease{
 						Name:           "test",
-						EksDReleaseUrl: "testdata/release.yaml",
+						EksDReleaseUrl: "embed:///testdata/release.yaml",
 						KubeVersion:    "1.22",
 					},
 					CertManager:                releasev1.CertManagerBundle{},
@@ -124,6 +213,32 @@ func Bundle() *releasev1.Bundles {
 					VSphere:                    releasev1.VSphereBundle{},
 					Docker:                     releasev1.DockerBundle{},
 					Eksa:                       releasev1.EksaBundle{},
+					Cilium:                     releasev1.CiliumBundle{},
+					Kindnetd:                   releasev1.KindnetdBundle{},
+					Flux:                       releasev1.FluxBundle{},
+					BottleRocketHostContainers: releasev1.BottlerocketHostContainersBundle{},
+					ExternalEtcdBootstrap:      releasev1.EtcdadmBootstrapBundle{},
+					ExternalEtcdController:     releasev1.EtcdadmControllerBundle{},
+					Tinkerbell:                 releasev1.TinkerbellBundle{},
+				},
+				{
+					KubeVersion: "1.24",
+					EksD: releasev1.EksDRelease{
+						Name:           "test",
+						EksDReleaseUrl: "embed:///testdata/release.yaml",
+						KubeVersion:    "1.22",
+					},
+					CertManager:  releasev1.CertManagerBundle{},
+					ClusterAPI:   releasev1.CoreClusterAPI{},
+					Bootstrap:    releasev1.KubeadmBootstrapBundle{},
+					ControlPlane: releasev1.KubeadmControlPlaneBundle{},
+					VSphere:      releasev1.VSphereBundle{},
+					Docker:       releasev1.DockerBundle{},
+					Eksa: releasev1.EksaBundle{
+						DiagnosticCollector: releasev1.Image{
+							URI: "public.ecr.aws/eks-anywhere/diagnostic-collector:v0.9.1-eks-a-10",
+						},
+					},
 					Cilium:                     releasev1.CiliumBundle{},
 					Kindnetd:                   releasev1.KindnetdBundle{},
 					Flux:                       releasev1.FluxBundle{},

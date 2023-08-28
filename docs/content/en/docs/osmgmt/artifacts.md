@@ -17,9 +17,13 @@ EKS Anywhere supports three different node operating systems:
 Bottlerocket OVAs and images are distributed by the EKS Anywhere project.
 To build your own Ubuntu-based or RHEL-based EKS Anywhere node, see [Building node images]({{< relref "#building-node-images">}}).
 
+## Prerequisites
+
+Several code snippets on this page use `curl` and `yq` commands. Refer to the [Tools section]({{< relref "../getting-started/install/#tools" >}}) to learn how to install them.
+
 ## Bare Metal artifacts
 
-Artifacts for EKS Anyware Bare Metal clusters are listed below.
+Artifacts for EKS Anywhere Bare Metal clusters are listed below.
 If you like, you can download these images and serve them locally to speed up cluster creation.
 See descriptions of the [osImageURL]({{< relref "../getting-started/baremetal/bare-spec/#osimageurl" >}}) and [`hookImagesURLPath`]({{< relref "../getting-started/baremetal/bare-spec#hookimagesurlpath" >}}) fields for details.
 
@@ -41,7 +45,7 @@ OR
 
 Using a specific EKS Anywhere version
 ```bash
-EKSA_RELEASE_VERSION=v0.16.0
+EKSA_RELEASE_VERSION=v0.17.0
 ```
 
 ```bash
@@ -59,7 +63,7 @@ OR
 
 Using a specific EKS Anywhere version
 ```bash
-EKSA_RELEASE_VERSION=v0.16.0
+EKSA_RELEASE_VERSION=v0.17.0
 ```
 
 kernel:
@@ -89,7 +93,7 @@ OR
 
 Using a specific EKS Anywhere version
 ```bash
-EKSA_RELEASE_VERSION=v0.16.0
+EKSA_RELEASE_VERSION=v0.17.0
 ```
 
 ```bash
@@ -99,20 +103,30 @@ curl -s $BUNDLE_MANIFEST_URL | yq ".spec.versionsBundles[].eksD.ova.bottlerocket
 
 #### Bottlerocket Template Tags
 
-OS Family - `os:bottlerocket`
+There are two categories of tags to be attached to the Bottlerocket templates in vCenter.
 
-EKS Distro Release
+**os:** This category represents the OS corresponding to this template. The value for this tag must be `os:bottlerocket`.
 
-1.27 - `eksdRelease:kubernetes-1-27-eks-4`
+**eksdRelease:** This category represents the EKS Distro release corresponding to this template. The value for this tag can be obtained programmatically as follows.
 
-1.26 - `eksdRelease:kubernetes-1-26-eks-5`
+Using the latest EKS Anywhere version
+```bash
+EKSA_RELEASE_VERSION=$(curl -sL https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml | yq ".spec.latestVersion")
+```
 
-1.25 - `eksdRelease:kubernetes-1-25-eks-10`
+OR
 
-1.24 - `eksdRelease:kubernetes-1-24-eks-14`
+Using a specific EKS Anywhere version
+```bash
+EKSA_RELEASE_VERSION=v0.17.0
+```
 
-1.23 - `eksdRelease:kubernetes-1-23-eks-19`
+```bash
+KUBEVERSION=1.27 # Replace this with the Kubernetes version you wish to use
 
+BUNDLE_MANIFEST_URL=$(curl -sL https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml | yq ".spec.releases[] | select(.version==\"$EKSA_RELEASE_VERSION\").bundleManifestUrl")
+curl -sL $BUNDLE_MANIFEST_URL | yq ".spec.versionsBundles[] | select(.kubeVersion==\"$KUBEVERSION\").eksD.name"
+```
 
 ### Ubuntu OVAs
 EKS Anywhere no longer distributes Ubuntu OVAs for use with EKS Anywhere clusters.
@@ -139,7 +153,7 @@ sha512sum -c <<<"b81af4d8eb86743539fbc4709d33ada7b118d9f929f0c2f6c04e1d41f46241e
 export KUBEVERSION="1.27"
 ```
 5. Programmatically retrieve the Bottlerocket version corresponding to this release of EKS-A and Kubernetes version and export it.
-   
+
    Using the latest EKS Anywhere version
    ```bash
    EKSA_RELEASE_VERSION=$(curl -sL https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml | yq ".spec.latestVersion")
@@ -149,7 +163,7 @@ export KUBEVERSION="1.27"
 
    Using a specific EKS Anywhere version
    ```bash
-   EKSA_RELEASE_VERSION=v0.16.0
+   EKSA_RELEASE_VERSION=v0.17.0
    ```
 
    Set the Bottlerocket image format to the desired value (`ova` for the VMware variant or `raw` for the Baremetal variant)
@@ -196,7 +210,7 @@ The `image-builder` CLI lets you build your own Ubuntu-based vSphere OVAs, Nutan
 When you run `image-builder`, it will pull in all components needed to build images to be used as Kubernetes nodes in an EKS Anywhere cluster, including the latest operating system, Kubernetes control plane components, and EKS Distro security updates, bug fixes, and patches.
 When building an image using this tool, you get to choose:
 
-* Operating system type (for example, ubuntu, redhat)
+* Operating system type (for example, ubuntu, redhat) and version (Ubuntu only)
 * Provider (vsphere, cloudstack, baremetal, ami, nutanix)
 * Release channel for EKS Distro (generally aligning with Kubernetes releases)
 * **vSphere only:** configuration file providing information needed to access your vSphere setup
@@ -378,7 +392,7 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
 
    Using a specific EKS Anywhere version
    ```bash
-   EKSA_RELEASE_VERSION=v0.16.0
+   EKSA_RELEASE_VERSION=v0.17.0
    ```
 
    ```bash
@@ -433,21 +447,21 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
 
       * `--os`: `ubuntu`
       * `--hypervisor`: For vSphere use `vsphere`
-      * `--release-channel`: Supported EKS Distro releases include 1-21, 1-22, 1-23, 1-24 and 1-25.
+      * `--release-channel`: Supported EKS Distro releases include 1-23, 1-24, 1-25, 1-26 and 1-27.
       * `--vsphere-config`: vSphere configuration file (`vsphere-connection.json` in this example)
 
       ```bash
-      image-builder build --os ubuntu --hypervisor vsphere --release-channel 1-25 --vsphere-config vsphere-connection.json
+      image-builder build --os ubuntu --hypervisor vsphere --release-channel 1-27 --vsphere-config vsphere-connection.json
       ```
    * To create a RHEL-based image, run `image-builder` with the following options:
 
       * `--os`: `redhat`
       * `--hypervisor`: For vSphere use `vsphere`
-      * `--release-channel`: Supported EKS Distro releases include 1-21, 1-22, 1-23, 1-24 and 1-25.
+      * `--release-channel`: Supported EKS Distro releases include 1-23, 1-24, 1-25, 1-26 and 1-27.
       * `--vsphere-config`: vSphere configuration file (`vsphere-connection.json` in this example)
 
       ```bash
-      image-builder build --os redhat --hypervisor vsphere --release-channel 1-25 --vsphere-config vsphere-connection.json
+      image-builder build --os redhat --hypervisor vsphere --release-channel 1-27 --vsphere-config vsphere-connection.json
       ```
 ### Build Bare Metal node images
 These steps use `image-builder` to create an Ubuntu-based or RHEL-based image for Bare Metal. Before proceeding, ensure that the above system-level, network-level and baremetal-specific [prerequisites]({{< relref "#prerequisites">}}) have been met.
@@ -515,7 +529,7 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
 
    Using a specific EKS Anywhere version
    ```bash
-   EKSA_RELEASE_VERSION=v0.16.0
+   EKSA_RELEASE_VERSION=v0.17.0
    ```
 
    ```bash
@@ -536,10 +550,10 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
       * `--os`: `ubuntu`
       * `--hypervisor`: `baremetal`
       * `--release-channel`: A [supported EKS Distro release](https://anywhere.eks.amazonaws.com/docs/reference/support/support-versions/) 
-      formatted as "[major]-[minor]"; for example "1-25"
+      formatted as "[major]-[minor]"; for example "1-27"
 
       ```bash
-      image-builder build --os ubuntu --hypervisor baremetal --release-channel 1-25
+      image-builder build --os ubuntu --hypervisor baremetal --release-channel 1-27
       ```
 
    **Red Hat Enterprise Linux (RHEL)**
@@ -564,11 +578,11 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
       * `--os`: `redhat`
       * `--hypervisor`: `baremetal`
       * `--release-channel`: A [supported EKS Distro release](https://anywhere.eks.amazonaws.com/docs/reference/support/support-versions/) 
-      formatted as "[major]-[minor]"; for example "1-25"
+      formatted as "[major]-[minor]"; for example "1-27"
       * `--baremetal-config`: Bare metal config file
 
       ```bash
-      image-builder build --os redhat --hypervisor baremetal --release-channel 1-25 --baremetal-config baremetal.json
+      image-builder build --os redhat --hypervisor baremetal --release-channel 1-27 --baremetal-config baremetal.json
       ```
 
 1. To consume the image, serve it from an accessible web server, then create the [bare metal cluster spec]({{< relref "../getting-started/baremetal/bare-spec/" >}}) 
@@ -647,7 +661,7 @@ These steps use `image-builder` to create a RHEL-based image for CloudStack. Bef
 
    Using a specific EKS Anywhere version
    ```bash
-   EKSA_RELEASE_VERSION=v0.16.0
+   EKSA_RELEASE_VERSION=v0.17.0
    ```
 
    ```bash
@@ -674,11 +688,11 @@ These steps use `image-builder` to create a RHEL-based image for CloudStack. Bef
 
       * `--os`: `redhat`
       * `--hypervisor`: For CloudStack use `cloudstack`
-      * `--release-channel`: Supported EKS Distro releases include 1-21, 1-22, 1-23, 1-24 and 1-25.
+      * `--release-channel`: Supported EKS Distro releases include 1-23, 1-24, 1-25, 1-26 and 1-27.
       * `--cloudstack-config`: CloudStack configuration file (`cloudstack.json` in this example)
 
       ```bash
-      image-builder build --os redhat --hypervisor cloudstack --release-channel 1-25 --cloudstack-config cloudstack.json
+      image-builder build --os redhat --hypervisor cloudstack --release-channel 1-27 --cloudstack-config cloudstack.json
       ```
 
 1. To consume the resulting RHEL-based image, add it as a template to your CloudStack setup as described in [Preparing CloudStack]({{< relref "../getting-started/cloudstack/cloudstack-preparation" >}}).
@@ -741,7 +755,7 @@ These steps use `image-builder` to create an Ubuntu-based Amazon Machine Image (
 
    Using a specific EKS Anywhere version
    ```bash
-   EKSA_RELEASE_VERSION=v0.16.0
+   EKSA_RELEASE_VERSION=v0.17.0
    ```
 
    ```bash
@@ -813,11 +827,11 @@ These steps use `image-builder` to create an Ubuntu-based Amazon Machine Image (
 
    * `--os`: `ubuntu`
    * `--hypervisor`: For AMI, use `ami`
-   * `--release-channel`: Supported EKS Distro releases include 1-21, 1-22, 1-23 and 1-24.
+   * `--release-channel`: Supported EKS Distro releases include 1-23, 1-24, 1-25, 1-26 and 1-27.
    * `--ami-config`: AMI configuration file (`ami.json` in this example)
 
    ```bash
-   image-builder build --os ubuntu --hypervisor ami --release-channel 1-24 --ami-config ami.json
+   image-builder build --os ubuntu --hypervisor ami --release-channel 1-27 --ami-config ami.json
    ```
 1. After the build, the Ubuntu AMI will be available in your AWS account in the AWS region specified in your AMI configuration file. If you wish to export it as a Raw image, you can achieve this using the AWS CLI.
    ```
@@ -891,7 +905,7 @@ These steps use `image-builder` to create a Ubuntu-based image for Nutanix AHV a
 
    Using a specific EKS Anywhere version
    ```bash
-   EKSA_RELEASE_VERSION=v0.16.0
+   EKSA_RELEASE_VERSION=v0.17.0
    ```
 
    ```bash
@@ -921,13 +935,108 @@ These steps use `image-builder` to create a Ubuntu-based image for Nutanix AHV a
 
       * `--os`: `ubuntu`
       * `--hypervisor`: For Nutanix use `nutanix`
-      * `--release-channel`: Supported EKS Distro releases include 1-21, 1-22, 1-23, 1-24 and 1-25.
+      * `--release-channel`: Supported EKS Distro releases include 1-23, 1-24, 1-25, 1-26 and 1-27.
       * `--nutanix-config`: Nutanix configuration file (`nutanix-connection.json` in this example)
 
       ```bash
       cd /home/$USER
-      image-builder build --os ubuntu --hypervisor nutanix --release-channel 1-25 --nutanix-config nutanix-connection.json
+      image-builder build --os ubuntu --hypervisor nutanix --release-channel 1-27 --nutanix-config nutanix-connection.json
       ```
+
+
+### Configuring OS version
+
+`image-builder` supports an `os-version` flag that allows you to configure which version of the OS you wish to build. If no OS version is supplied, it will build the default for that OS, according to the table below.
+
+<table style>
+    <thead align="center">
+        <tr>
+            <th><center>Operating system</th>
+            <th><center>Supported versions</th>
+            <th><center>Corresponding <code>os-version</code> value</th>
+            <th><center>Default <code>os-version</code> value</th>
+        </tr>
+    </thead>
+    <tbody align="center">
+        <tr >
+            <td rowspan=2><b>Ubuntu</b></td>
+            <td>20.04.6</td>
+            <td>2004</td>
+            <td rowspan=2>2004</td>
+        </tr>
+        <tr>
+            <td>22.04.3</td>
+            <td>2204</td>
+        </tr>
+        <tr>
+            <td><b>RHEL</b></td>
+            <td>8.8</td>
+            <td>8</td>
+            <td rowspan=2>8</td>
+        </tr>
+    </tbody>
+</table>
+
+Currently, Ubuntu is the only operating system that supports multiple `os-version` values.
+
+### Building images for a specific EKS Anywhere version
+
+This section provides information about the relationship between `image-builder` and EKS Anywhere CLI version, and provides instructions on building images pertaining to a specific EKS Anywhere version.
+
+Every release of EKS Anywhere includes a new version of `image-builder` CLI. For EKS-A releases prior to `v0.16.3`, the corresponding `image-builder` CLI builds images for the latest version of EKS-A released thus far. The EKS-A version determines what artifacts will be bundled into the final OS image, i.e., the core Kubernetes components vended by EKS Distro as well as several binaries vended by EKS Anywhere, such as `crictl`, `etcdadm`, etc, and users may not always want the latest versions of these, and rather wish to bake in certain specific component versions into the image.
+
+This was improved in `image-builder` released with EKS-A `v0.16.3` to `v0.16.5`. Now you can override the default latest build behavior to build images corresponding to a specific EKS-A release, including previous releases. This can be achieved by setting the `EKSA_RELEASE_VERSION` environment variable to the desired EKS-A release (`v0.16.0` and above).  
+For example, if you want to build an image for EKS-A version `v0.16.5`, you can run the following command.
+   ```bash
+   export EKSA_RELEASE_VERSION=v0.16.5
+   image-builder build --os <OS> --hypervisor <hypervisor> --release-channel <release channel> --<hypervisor>-config config.json
+   ```
+
+With `image-builder` versions `v0.2.1` and above (released with EKS-A version `v0.17.0`), the `image-builder` CLI has the EKS-A version baked into it, so it will build images pertaining to that release of EKS Anywhere by default. You can override the default version using the `eksa-release` option.
+   ```bash
+   image-builder build --os <OS> --hypervisor <hypervisor> --release-channel <release channel> --<hypervisor>-config config.json --eksa-release v0.16.5
+   ```
+
+### UEFI support
+
+`image-builder` supports UEFI-enabled images for Ubuntu OVA and Raw images. UEFI is turned on by default for Ubuntu Raw image builds, but the default firmware for Ubuntu OVAs is BIOS. This can be toggled with the `firmware` option.
+
+For example, to build a Kubernetes v1.27 Ubuntu 22.04 OVA with UEFI enabled, you can run the following command.
+   ```bash
+   image-builder build --os ubuntu --hypervisor vsphere --os-version 2204 --release-channel 1.27 --vsphere-config config.json --firmware efi
+   ```
+
+The table below shows the possible firmware options for the hypervisor and OS combinations that `image-builder` supports.
+
+|            |       vSphere       |      Baremetal      | CloudStack | Nutanix | Snow |
+|:----------:|:-------------------:|:-------------------:|:----------:|:-------:|:----:|
+| **Ubuntu** | bios (default), efi | bios, efi (default) |    bios    |   bios  | bios |
+|  **RHEL**  |         bios        |         bios        |    bios    |   bios  | bios |
+
+### Mounting additional files
+
+`image-builder` allows you to customize your image by adding files located on your host onto the image at build time. This is helpful when you want your image to have a custom DNS resolver configuration, systemd service unit-files, custom scripts and executables, etc. This option is suppported for all OS and Hypervisor combinations.
+
+To do this, create a configuration file (say, `files.json`) containing the list of files you want to copy:
+   ```json
+   {
+      "additional_files_list": [
+         {
+            "src": "<Absolute path of the file on the host machine>",
+            "dest": "<Absolute path of the location you want to copy the file to on the image",
+            "owner": "<Name of the user that should own the file>",
+            "group": "<Name of the group that should own the file>",
+            "mode": "<The permissions to apply to the file on the image>"
+         },
+         ...
+      ]
+   }
+   ```
+
+You can now run the `image-builder` CLI with the `files-config` option, with this configuration file as input.
+   ```bash
+   image-builder build --os <OS> --hypervisor <hypervisor> --release-channel <release channel> --<hypervisor>-config config.json --files-config files.json
+   ```
 
 ## Images
 

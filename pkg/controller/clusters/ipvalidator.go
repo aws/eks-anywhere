@@ -10,7 +10,6 @@ import (
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/controller"
-	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
 
 // IPUniquenessValidator defines an interface for the methods to validate the control plane IP.
@@ -45,7 +44,7 @@ func (i *IPValidator) ValidateControlPlaneIP(ctx context.Context, log logr.Logge
 		return controller.Result{}, nil
 	}
 	if err := i.ipUniquenessValidator.ValidateControlPlaneIPUniqueness(spec.Cluster); err != nil {
-		spec.Cluster.Status.FailureMessage = ptr.String(err.Error())
+		spec.Cluster.SetFailure(anywherev1.UnavailableControlPlaneIPReason, err.Error())
 		log.Error(err, "Unavailable control plane IP")
 		return controller.ResultWithReturn(), nil
 	}

@@ -110,7 +110,7 @@ func TestValidatorValidatePrivsMissing(t *testing.T) {
 	passed, err := v.validatePrivs(ctx, objects, vsc)
 
 	g.Expect(passed).To(BeEquivalentTo(false))
-	g.Expect(err).To(BeNil())
+	g.Expect(err).NotTo(BeNil())
 }
 
 func TestValidatorValidatePrivsBadJson(t *testing.T) {
@@ -217,7 +217,7 @@ func TestValidatorValidateVsphereCPUserPrivsError(t *testing.T) {
 	}
 
 	var privs []string
-	err := json.Unmarshal([]byte(config.VSphereUserPrivsFile), &privs)
+	err := json.Unmarshal([]byte(config.VSphereAdminPrivsFile), &privs)
 	if err != nil {
 		t.Fatalf("failed to validate privs: %v", err)
 	}

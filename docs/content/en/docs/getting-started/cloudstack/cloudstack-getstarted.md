@@ -6,7 +6,7 @@ description: >
   Create a cluster on CloudStack
 ---
 
-EKS Anywhere supports a CloudStack provider for production grade EKS Anywhere deployments.
+EKS Anywhere supports a CloudStack provider for EKS Anywhere deployments.
 This document walks you through setting up EKS Anywhere on CloudStack in a way that:
 
 * Deploys an initial cluster on your CloudStack environment. That cluster can be used as a standalone cluster (to run workloads) or a management cluster (to create and manage other clusters)
@@ -50,6 +50,30 @@ The following steps are divided into two sections:
 Follow these steps to create an EKS Anywhere cluster that can be used either as a management cluster or as a standalone cluster (for running workloads itself).
 
 <!-- this content needs to be indented so the numbers are automatically incremented -->
+
+0. Optional Configuration
+
+   **Set License Environment Variable**
+
+      Add a license to any cluster for which you want to receive paid support. If you are creating a licensed cluster, set and export the license variable (see [License cluster]({{< relref "/docs/clustermgmt/support/cluster-license" >}}) if you are licensing an existing cluster):
+
+      ```bash
+      export EKSA_LICENSE='my-license-here'
+      ```
+
+      After you have created your `eksa-mgmt-cluster.yaml` and set your credential environment variables, you will be ready to create the cluster.
+
+   **Configure Curated Packages**
+
+      The Amazon EKS Anywhere Curated Packages are only available to customers with the Amazon EKS Anywhere Enterprise Subscription. To request a free trial, talk to your Amazon representative or connect with one [here](https://aws.amazon.com/contact-us/sales-support-eks/). Cluster creation will succeed if authentication is not set up, but some warnings may be genered.  Detailed package configurations can be found [here]({{< relref "../../packages" >}}).
+
+      If you are going to use packages, set up authentication. These credentials should have [limited capabilities]({{< relref "../../packages/prereq#setup-authentication-to-use-curated-packages" >}}):
+      ```bash
+      export EKSA_AWS_ACCESS_KEY_ID="your*access*id"
+      export EKSA_AWS_SECRET_ACCESS_KEY="your*secret*key"
+      export EKSA_AWS_REGION="us-west-2"  
+      ```
+
 1. Generate an initial cluster config (named `mgmt` for this example):
    ```bash
    export CLUSTER_NAME=mgmt
@@ -80,7 +104,7 @@ Follow these steps to create an EKS Anywhere cluster that can be used either as 
 
    * Refer to [Cloudstack configuration]({{< relref "./cloud-spec/" >}}) for information on configuring this cluster config for a CloudStack provider.
    * Add [Optional]({{< relref "../optional/" >}}) configuration settings as needed.
-   * Create at least two control plane nodes, three worker nodes, and three etcd nodes for a production cluster, to provide high availability and rolling upgrades.
+   * Create at least two control plane nodes, three worker nodes, and three etcd nodes, to provide high availability and rolling upgrades.
 
 
 1. Set Environment Variables
@@ -89,26 +113,6 @@ Follow these steps to create an EKS Anywhere cluster that can be used either as 
    
    ```bash
    export EKSA_CLOUDSTACK_B64ENCODED_SECRET=$(base64 -i cloud-config)
-   ```
-
-1. Set License Environment Variable
-
-   Add a license to any cluster for which you want to receive paid support. If you are creating a licensed cluster, set and export the license variable (see [License cluster]({{< relref "/docs/clustermgmt/support/cluster-license" >}}) if you are licensing an existing cluster):
-
-   ```bash
-   export EKSA_LICENSE='my-license-here'
-   ```
-
-1. Configure Curated Packages
-
-   The Amazon EKS Anywhere Curated Packages are only available to customers with the Amazon EKS Anywhere Enterprise Subscription. To request a free trial, talk to your Amazon representative or connect with one [here](https://aws.amazon.com/contact-us/sales-support-eks/). Cluster creation will succeed if authentication is not set up, but some warnings may be generated.  Detailed package configurations can be found [here]({{< relref "../../packages" >}}).
-
-   If you are going to use packages, set up authentication. These credentials should have [limited capabilities]({{< relref "../../packages/prereq#setup-authentication-to-use-curated-packages" >}}):
-
-   ```bash
-   export EKSA_AWS_ACCESS_KEY_ID="your*access*id"
-   export EKSA_AWS_SECRET_ACCESS_KEY="your*secret*key"
-   export EKSA_AWS_REGION="us-west-2"  
    ```
      
 1. Disable Kubevip load balancer
@@ -122,8 +126,8 @@ Follow these steps to create an EKS Anywhere cluster that can be used either as 
 
    ```bash
    eksctl anywhere create cluster \
+      -f eksa-mgmt-cluster.yaml \
       # --install-packages packages.yaml \ # uncomment to install curated packages at cluster creation
-      -f eksa-mgmt-cluster.yaml
    ```
 
 1. Once the cluster is created you can use it with the generated `KUBECONFIG` file in your local directory:
@@ -178,6 +182,14 @@ Follow these steps to create an EKS Anywhere cluster that can be used either as 
 
 Follow these steps if you want to use your initial cluster to create and manage separate workload clusters.
 
+0. Set License Environment Variable (Optional)
+
+   Add a license to any cluster for which you want to receive paid support. If you are creating a licensed cluster, set and export the license variable (see [License cluster]({{< relref "/docs/clustermgmt/support/cluster-license" >}}) if you are licensing an existing cluster):
+
+   ```bash
+   export EKSA_LICENSE='my-license-here'
+   ```
+
 1. Generate a workload cluster config:
    ```bash
    CLUSTER_NAME=w01
@@ -204,14 +216,6 @@ Follow these steps if you want to use your initial cluster to create and manage 
        name: mgmt
    ```
 
-1. Set License Environment Variable
-
-   Add a license to any cluster for which you want to receive paid support. If you are creating a licensed cluster, set and export the license variable (see [License cluster]({{< relref "/docs/clustermgmt/support/cluster-license" >}}) if you are licensing an existing cluster):
-
-   ```bash
-   export EKSA_LICENSE='my-license-here'
-   ```
-
 1. Create a workload cluster in one of the following ways:
 
    * **GitOps**: See [Manage separate workload clusters with GitOps]({{< relref "../../clustermgmt/cluster-flux.md#manage-separate-workload-clusters-using-gitops" >}})
@@ -233,6 +237,18 @@ Follow these steps if you want to use your initial cluster to create and manage 
       ```bash
       kubectl apply -f eksa-w01-cluster.yaml 
       ```
+
+       To check the state of a cluster managed with the cluster lifecyle feature, use `kubectl` to show the cluster object with its status.
+      
+      The `status` field on the cluster object field holds information about the current state of the cluster.
+
+      ```
+      kubectl get clusters w01 -o yaml
+      ```
+
+      The cluster has been fully upgraded once the status of the `Ready` condition is marked `True`.
+      See the [cluster status]({{< relref "../../clustermgmt/cluster-status" >}}) guide for more information.
+
      
 1. To check the workload cluster, get the workload cluster credentials and run a [test workload:]({{< relref "../../workloadmgmt/test-app" >}})
 

@@ -7,7 +7,7 @@ import (
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	cloudstackv1 "sigs.k8s.io/cluster-api-provider-cloudstack/api/v1beta2"
+	cloudstackv1 "sigs.k8s.io/cluster-api-provider-cloudstack/api/v1beta3"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/aws/eks-anywhere/internal/test"
@@ -49,7 +49,7 @@ func TestValidateAvailabilityZones(t *testing.T) {
 				&cloudstackv1.CloudStackFailureDomain{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       "CloudStackFailureDomain",
-						APIVersion: "infrastructure.cluster.x-k8s.io/v1beta2",
+						APIVersion: "infrastructure.cluster.x-k8s.io/v1beta3",
 					},
 					ObjectMeta: metav1.ObjectMeta{
 						Namespace: constants.EksaSystemNamespace,

@@ -36,7 +36,7 @@ const (
 func TestReconcilerReconcileSuccess(t *testing.T) {
 	tt := newReconcilerTest(t)
 	// We want to check that the cluster status is cleaned up if validations are passed
-	tt.cluster.Status.FailureMessage = ptr.String("invalid cluster")
+	tt.cluster.SetFailure(anywherev1.FailureReasonType("InvalidCluster"), "invalid cluster")
 	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
 		c.Name = tt.cluster.Name
 	})
@@ -57,9 +57,11 @@ func TestReconcilerReconcileSuccess(t *testing.T) {
 
 	tt.Expect(err).NotTo(HaveOccurred())
 	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
+	tt.Expect(tt.cluster.Status.FailureReason).To(BeZero())
 	tt.Expect(result).To(Equal(controller.Result{}))
 
 	tt.Expect(tt.cluster.Status.FailureMessage).To(BeNil())
+	tt.Expect(tt.cluster.Status.FailureReason).To(BeNil())
 }
 
 func TestReconcilerReconcileWorkerNodesSuccess(t *testing.T) {
@@ -77,6 +79,7 @@ func TestReconcilerReconcileWorkerNodesSuccess(t *testing.T) {
 
 	tt.Expect(err).NotTo(HaveOccurred())
 	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
+	tt.Expect(tt.cluster.Status.FailureReason).To(BeZero())
 	tt.Expect(result).To(Equal(controller.Result{}))
 
 	tt.ShouldEventuallyExist(tt.ctx,
@@ -130,6 +133,8 @@ func TestReconcilerValidateMachineConfigsInvalidWorkerMachineConfig(t *testing.T
 	tt.Expect(tt.cluster.Status.FailureMessage).ToNot(BeZero())
 	tt.Expect(*tt.cluster.Status.FailureMessage).To(ContainSubstring("Invalid worker-machine-config SnowMachineConfig"))
 	tt.Expect(*tt.cluster.Status.FailureMessage).To(ContainSubstring("Something wrong"))
+	tt.Expect(tt.cluster.Status.FailureReason).ToNot(BeZero())
+	tt.Expect(*tt.cluster.Status.FailureReason).To(HaveValue(Equal(anywherev1.MachineConfigInvalidReason)))
 }
 
 func TestReconcilerValidateMachineConfigsInvalidControlPlaneMachineConfig(t *testing.T) {
@@ -146,6 +151,8 @@ func TestReconcilerValidateMachineConfigsInvalidControlPlaneMachineConfig(t *tes
 	tt.Expect(tt.cluster.Status.FailureMessage).ToNot(BeZero())
 	tt.Expect(*tt.cluster.Status.FailureMessage).To(ContainSubstring("Invalid cp-machine-config SnowMachineConfig"))
 	tt.Expect(*tt.cluster.Status.FailureMessage).To(ContainSubstring("Something wrong"))
+	tt.Expect(tt.cluster.Status.FailureReason).ToNot(BeZero())
+	tt.Expect(tt.cluster.Status.FailureReason).To(HaveValue(Equal(anywherev1.MachineConfigInvalidReason)))
 }
 
 func TestReconcilerValidateMachineConfigsMachineConfigNotValidated(t *testing.T) {
@@ -158,6 +165,7 @@ func TestReconcilerValidateMachineConfigsMachineConfigNotValidated(t *testing.T)
 	tt.Expect(err).To(BeNil(), "error should be nil to prevent requeue")
 	tt.Expect(result).To(Equal(controller.Result{Result: &reconcile.Result{}}), "result should stop reconciliation")
 	tt.Expect(tt.cluster.Status.FailureMessage).To(BeNil())
+	tt.Expect(tt.cluster.Status.FailureReason).To(BeNil())
 }
 
 func TestReconcilerReconcileWorkers(t *testing.T) {
@@ -172,6 +180,7 @@ func TestReconcilerReconcileWorkers(t *testing.T) {
 
 	tt.Expect(err).NotTo(HaveOccurred())
 	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
+	tt.Expect(tt.cluster.Status.FailureReason).To(BeZero())
 	tt.Expect(result).To(Equal(controller.Result{}))
 }
 
@@ -183,6 +192,7 @@ func TestReconcilerReconcileControlPlane(t *testing.T) {
 
 	tt.Expect(err).NotTo(HaveOccurred())
 	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
+	tt.Expect(tt.cluster.Status.FailureReason).To(BeZero())
 	tt.Expect(result).To(Equal(controller.Result{}))
 
 	tt.ShouldEventuallyExist(tt.ctx,
@@ -223,6 +233,7 @@ func TestReconcilerCheckControlPlaneReadyItIsReady(t *testing.T) {
 
 	tt.Expect(err).NotTo(HaveOccurred())
 	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
+	tt.Expect(tt.cluster.Status.FailureReason).To(BeZero())
 	tt.Expect(result).To(Equal(controller.Result{}))
 }
 
@@ -243,6 +254,7 @@ func TestReconcilerReconcileCNISuccess(t *testing.T) {
 
 	tt.Expect(err).NotTo(HaveOccurred())
 	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
+	tt.Expect(tt.cluster.Status.FailureReason).To(BeZero())
 	tt.Expect(result).To(Equal(controller.Result{}))
 }
 
@@ -261,6 +273,7 @@ func TestReconcilerReconcileCNIErrorClientRegistry(t *testing.T) {
 
 	tt.Expect(err).To(MatchError(ContainSubstring("building client")))
 	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
+	tt.Expect(tt.cluster.Status.FailureReason).To(BeZero())
 	tt.Expect(result).To(Equal(controller.Result{}))
 }
 
@@ -288,6 +301,7 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 	c := env.Client()
 
 	bundle := test.Bundle()
+	version := test.DevEksaVersion()
 
 	managementCluster := snowCluster(func(c *anywherev1.Cluster) {
 		c.Name = "management-cluster"
@@ -299,6 +313,7 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 			Namespace:  bundle.Namespace,
 			APIVersion: bundle.APIVersion,
 		}
+		c.Spec.EksaVersion = &version
 	})
 
 	machineConfigCP := snowMachineConfig(func(m *anywherev1.SnowMachineConfig) {
@@ -361,6 +376,8 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 				Labels: nil,
 			},
 		)
+
+		c.Spec.EksaVersion = &version
 	})
 
 	tt := &reconcilerTest{
@@ -379,9 +396,10 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 			managementCluster,
 			workloadClusterDatacenter,
 			bundle,
-			test.EksdRelease(),
+			test.EksdRelease("1-22"),
 			credentialsSecret,
 			ipPool,
+			test.EKSARelease(),
 		},
 		cluster:                   cluster,
 		machineConfigControlPlane: machineConfigCP,

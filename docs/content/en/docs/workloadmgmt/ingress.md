@@ -11,7 +11,7 @@ description: >
 
 While you are free to use any Ingress Controller you like with your EKS Anywhere cluster, AWS currently only supports Emissary Ingress.
 For information on how to configure a Emissary Ingress curated package for EKS Anywhere, see the [Add Emissary Ingress]({{< relref "../packages/emissary" >}}) page.
-You may also reference the official [emissary documentation](https://www.getambassador.io/docs/emissary) for further configuration details.
+You may also reference the official [emissary documentation](https://www.getambassador.io/docs/emissary) for further configuration details. Operators can also leverage the CNI chaining feature from Isovalent where in both Cilium as the CNI and another CNI can work in a [chain mode]({{< cilium "gettingstarted/cni-chaining" >}}).
 
 ## Setting up Emissary-ingress for Ingress Controller
 

@@ -14,6 +14,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/features"
+	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
@@ -986,6 +987,29 @@ func TestVSphereKubernetes127UbuntuWorkloadClusterCuratedPackagesSimpleFlow(t *t
 	runCuratedPackageRemoteClusterInstallSimpleFlow(test)
 }
 
+func TestVSphereMultipleTemplatesUbuntu127(t *testing.T) {
+	framework.CheckVsphereMultiTemplateUbuntu127EnvVars(t)
+	provider := framework.NewVSphere(
+		t,
+		framework.WithUbuntu127(),
+	)
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+	).WithClusterConfig(
+		api.ClusterToConfigFiller(
+			api.WithExternalEtcdMachineRef(v1alpha1.VSphereMachineConfigKind),
+			api.WithControlPlaneCount(1),
+		),
+	)
+
+	test.WithClusterConfig(
+		provider.WithMachineTemplate(providers.GetControlPlaneNodeName(test.ClusterName), os.Getenv(framework.VSphereMultiTemplateUbuntu127)),
+		provider.WithMachineTemplate(providers.GetEtcdNodeName(test.ClusterName), os.Getenv(framework.VSphereMultiTemplateUbuntu127)),
+	)
+	runMultiTemplatesSimpleFlow(test)
+}
+
 func TestVSphereKubernetes123BottleRocketWorkloadClusterCuratedPackagesSimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	provider := framework.NewVSphere(t, framework.WithBottleRocket123())
@@ -1648,7 +1672,7 @@ func TestVSphereKubernetes127BottlerocketLinkedClone(t *testing.T) {
 }
 
 // Simpleflow
-func TestVSphereKubernetes123SimpleFlow(t *testing.T) {
+func TestVSphereKubernetes123Ubuntu2004SimpleFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewVSphere(t, framework.WithUbuntu123()),
@@ -1657,7 +1681,7 @@ func TestVSphereKubernetes123SimpleFlow(t *testing.T) {
 	runSimpleFlow(test)
 }
 
-func TestVSphereKubernetes124SimpleFlow(t *testing.T) {
+func TestVSphereKubernetes124Ubuntu2004SimpleFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewVSphere(t, framework.WithUbuntu124()),
@@ -1666,7 +1690,7 @@ func TestVSphereKubernetes124SimpleFlow(t *testing.T) {
 	runSimpleFlow(test)
 }
 
-func TestVSphereKubernetes125SimpleFlow(t *testing.T) {
+func TestVSphereKubernetes125Ubuntu2004SimpleFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewVSphere(t, framework.WithUbuntu125()),
@@ -1675,7 +1699,7 @@ func TestVSphereKubernetes125SimpleFlow(t *testing.T) {
 	runSimpleFlow(test)
 }
 
-func TestVSphereKubernetes126SimpleFlow(t *testing.T) {
+func TestVSphereKubernetes126Ubuntu2004SimpleFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewVSphere(t, framework.WithUbuntu126()),
@@ -1684,13 +1708,68 @@ func TestVSphereKubernetes126SimpleFlow(t *testing.T) {
 	runSimpleFlow(test)
 }
 
-func TestVSphereKubernetes127SimpleFlow(t *testing.T) {
+func TestVSphereKubernetes127Ubuntu2004SimpleFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewVSphere(t, framework.WithUbuntu127()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127)),
 	)
 	runSimpleFlow(test)
+}
+
+func TestVSphereKubernetes123Ubuntu2204SimpleFlow(t *testing.T) {
+	provider := framework.NewVSphere(t)
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+	).WithClusterConfig(
+		provider.WithKubeVersionAndOS(v1alpha1.Kube123, framework.Ubuntu2204, nil),
+	)
+	runSimpleFlowWithoutClusterConfigGeneration(test)
+}
+
+func TestVSphereKubernetes124Ubuntu2204SimpleFlow(t *testing.T) {
+	provider := framework.NewVSphere(t)
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+	).WithClusterConfig(
+		provider.WithKubeVersionAndOS(v1alpha1.Kube124, framework.Ubuntu2204, nil),
+	)
+	runSimpleFlowWithoutClusterConfigGeneration(test)
+}
+
+func TestVSphereKubernetes125Ubuntu2204SimpleFlow(t *testing.T) {
+	provider := framework.NewVSphere(t)
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+	).WithClusterConfig(
+		provider.WithKubeVersionAndOS(v1alpha1.Kube125, framework.Ubuntu2204, nil),
+	)
+	runSimpleFlowWithoutClusterConfigGeneration(test)
+}
+
+func TestVSphereKubernetes126Ubuntu2204SimpleFlow(t *testing.T) {
+	provider := framework.NewVSphere(t)
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+	).WithClusterConfig(
+		provider.WithKubeVersionAndOS(v1alpha1.Kube126, framework.Ubuntu2204, nil),
+	)
+	runSimpleFlowWithoutClusterConfigGeneration(test)
+}
+
+func TestVSphereKubernetes127Ubuntu2204SimpleFlow(t *testing.T) {
+	provider := framework.NewVSphere(t)
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+	).WithClusterConfig(
+		provider.WithKubeVersionAndOS(v1alpha1.Kube127, framework.Ubuntu2204, nil),
+	)
+	runSimpleFlowWithoutClusterConfigGeneration(test)
 }
 
 func TestVSphereKubernetes123RedHatSimpleFlow(t *testing.T) {
@@ -2001,6 +2080,70 @@ func TestVSphereKubernetes126UbuntuTo127Upgrade(t *testing.T) {
 	)
 }
 
+func TestVSphereKubernetes125To126Ubuntu2204Upgrade(t *testing.T) {
+	provider := framework.NewVSphere(t)
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+	).WithClusterConfig(
+		provider.WithKubeVersionAndOS(v1alpha1.Kube125, framework.Ubuntu2204, nil),
+	)
+	runSimpleUpgradeFlowWithoutClusterConfigGeneration(
+		test,
+		v1alpha1.Kube126,
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube126)),
+		provider.WithProviderUpgrade(provider.Ubuntu2204Kubernetes126Template()),
+	)
+}
+
+func TestVSphereKubernetes126To127Ubuntu2204Upgrade(t *testing.T) {
+	provider := framework.NewVSphere(t)
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+	).WithClusterConfig(
+		provider.WithKubeVersionAndOS(v1alpha1.Kube126, framework.Ubuntu2204, nil),
+	)
+	runSimpleUpgradeFlowWithoutClusterConfigGeneration(
+		test,
+		v1alpha1.Kube127,
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube127)),
+		provider.WithProviderUpgrade(provider.Ubuntu2204Kubernetes127Template()),
+	)
+}
+
+func TestVSphereKubernetes126Ubuntu2004To2204Upgrade(t *testing.T) {
+	provider := framework.NewVSphere(t)
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+	).WithClusterConfig(
+		provider.WithKubeVersionAndOS(v1alpha1.Kube126, framework.Ubuntu2204, nil),
+	)
+	runSimpleUpgradeFlowWithoutClusterConfigGeneration(
+		test,
+		v1alpha1.Kube126,
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube126)),
+		provider.WithProviderUpgrade(provider.Ubuntu2204Kubernetes126Template()),
+	)
+}
+
+func TestVSphereKubernetes127Ubuntu2004To2204Upgrade(t *testing.T) {
+	provider := framework.NewVSphere(t)
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+	).WithClusterConfig(
+		provider.WithKubeVersionAndOS(v1alpha1.Kube127, framework.Ubuntu2204, nil),
+	)
+	runSimpleUpgradeFlowWithoutClusterConfigGeneration(
+		test,
+		v1alpha1.Kube127,
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube127)),
+		provider.WithProviderUpgrade(provider.Ubuntu2204Kubernetes127Template()),
+	)
+}
+
 func TestVSphereKubernetes126UbuntuTo127UpgradeCiliumPolicyEnforcementMode(t *testing.T) {
 	provider := framework.NewVSphere(t, framework.WithUbuntu126())
 	test := framework.NewClusterE2ETest(
@@ -2203,9 +2346,9 @@ func TestVSphereKubernetes126UbuntuTo127UpgradeWithCheckpoint(t *testing.T) {
 	)
 
 	clusterOpts = append(clusterOpts, framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube127)), framework.ExpectFailure(true),
-		provider.WithProviderUpgrade(provider.Ubuntu127Template(), api.WithResourcePoolForAllMachines(vsphereInvalidResourcePoolUpdateVar)), framework.WithEnvVar(features.CheckpointEnabledEnvVar, "true"), framework.WithEnvVar(framework.CleanupVmsVar, "false"))
+		provider.WithProviderUpgrade(provider.Ubuntu127Template(), api.WithResourcePoolforCPMachines(vsphereInvalidResourcePoolUpdateVar)), framework.WithEnvVar(features.CheckpointEnabledEnvVar, "true"), framework.WithEnvVar(framework.CleanupVmsVar, "false"))
 
-	commandOpts := []framework.CommandOpt{framework.WithExternalEtcdWaitTimeout("10m")}
+	commandOpts := []framework.CommandOpt{framework.WithControlPlaneWaitTimeout("10m")}
 
 	clusterOpts2 = append(clusterOpts, framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube127)), framework.ExpectFailure(false),
 		provider.WithProviderUpgrade(provider.Ubuntu127Template(), api.WithResourcePoolForAllMachines(os.Getenv(vsphereResourcePoolVar))), framework.WithEnvVar(features.CheckpointEnabledEnvVar, "true"), framework.WithEnvVar(framework.CleanupVmsVar, "true"))
@@ -2225,7 +2368,7 @@ func TestVSphereKubernetes124BottlerocketUpgradeFromLatestMinorRelease(t *testin
 		framework.WithVSphereFillers(
 			api.WithOsFamilyForAllMachines(v1alpha1.Bottlerocket),
 		),
-		framework.WithBottlerocketFromRelease(release, v1alpha1.Kube124),
+		framework.WithKubeVersionAndOSForRelease(v1alpha1.Kube124, framework.Bottlerocket1, release),
 	)
 	test := framework.NewClusterE2ETest(
 		t,
@@ -2251,7 +2394,7 @@ func TestVSphereKubernetes124UbuntuUpgradeFromLatestMinorRelease(t *testing.T) {
 		framework.WithVSphereFillers(
 			api.WithOsFamilyForAllMachines(v1alpha1.Ubuntu),
 		),
-		framework.WithUbuntuForRelease(release, v1alpha1.Kube124),
+		framework.WithKubeVersionAndOSForRelease(v1alpha1.Kube124, framework.Ubuntu2004, release),
 	)
 	test := framework.NewClusterE2ETest(
 		t,
@@ -2271,9 +2414,35 @@ func TestVSphereKubernetes124UbuntuUpgradeFromLatestMinorRelease(t *testing.T) {
 	)
 }
 
-func TestVSphereKubernetes126ManagementClusterUpgradeFromLatestSideEffects(t *testing.T) {
+func TestVSphereKubernetes127RedhatUpgradeFromLatestMinorRelease(t *testing.T) {
+	release := latestMinorRelease(t)
+	provider := framework.NewVSphere(t,
+		framework.WithVSphereFillers(
+			api.WithOsFamilyForAllMachines(v1alpha1.RedHat),
+		),
+		framework.WithKubeVersionAndOSForRelease(v1alpha1.Kube127, framework.RedHat8, release),
+	)
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127)),
+		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
+	)
+	runUpgradeFromReleaseFlow(
+		test,
+		release,
+		v1alpha1.Kube127,
+		provider.WithProviderUpgrade(
+			provider.Redhat127Template(), // Set the template so it doesn't get autoimported
+		),
+	)
+}
+
+func TestVSphereKubernetes126WithOIDCManagementClusterUpgradeFromLatestSideEffects(t *testing.T) {
 	provider := framework.NewVSphere(t)
-	runTestManagementClusterUpgradeSideEffects(t, provider, v1alpha1.Ubuntu, v1alpha1.Kube126)
+	runTestManagementClusterUpgradeSideEffects(t, provider, framework.Ubuntu2004, v1alpha1.Kube126)
 }
 
 func TestVSphereKubernetes124UbuntuUpgradeFromLatestMinorReleaseAlwaysNetworkPolicy(t *testing.T) {
@@ -2282,7 +2451,7 @@ func TestVSphereKubernetes124UbuntuUpgradeFromLatestMinorReleaseAlwaysNetworkPol
 		framework.WithVSphereFillers(
 			api.WithOsFamilyForAllMachines(v1alpha1.Ubuntu),
 		),
-		framework.WithUbuntuForRelease(release, v1alpha1.Kube124),
+		framework.WithKubeVersionAndOSForRelease(v1alpha1.Kube124, framework.Ubuntu2004, release),
 	)
 	test := framework.NewClusterE2ETest(
 		t,
@@ -2309,7 +2478,7 @@ func TestVSphereKubernetes123To124UbuntuUpgradeFromLatestMinorRelease(t *testing
 		framework.WithVSphereFillers(
 			api.WithOsFamilyForAllMachines(v1alpha1.Ubuntu),
 		),
-		framework.WithUbuntuForRelease(release, v1alpha1.Kube123),
+		framework.WithKubeVersionAndOSForRelease(v1alpha1.Kube123, framework.Ubuntu2004, release),
 	)
 	test := framework.NewClusterE2ETest(
 		t,
@@ -2336,7 +2505,7 @@ func TestVSphereKubernetes124To125UbuntuUpgradeFromLatestMinorRelease(t *testing
 		framework.WithVSphereFillers(
 			api.WithOsFamilyForAllMachines(v1alpha1.Ubuntu),
 		),
-		framework.WithUbuntuForRelease(release, v1alpha1.Kube124),
+		framework.WithKubeVersionAndOSForRelease(v1alpha1.Kube124, framework.Ubuntu2004, release),
 	)
 	test := framework.NewClusterE2ETest(
 		t,
@@ -2363,7 +2532,7 @@ func TestVSphereKubernetes125To126UbuntuUpgradeFromLatestMinorRelease(t *testing
 		framework.WithVSphereFillers(
 			api.WithOsFamilyForAllMachines(v1alpha1.Ubuntu),
 		),
-		framework.WithUbuntuForRelease(release, v1alpha1.Kube125),
+		framework.WithKubeVersionAndOSForRelease(v1alpha1.Kube125, framework.Ubuntu2004, release),
 	)
 	test := framework.NewClusterE2ETest(
 		t,
@@ -2390,7 +2559,7 @@ func TestVSphereKubernetes126To127UbuntuUpgradeFromLatestMinorRelease(t *testing
 		framework.WithVSphereFillers(
 			api.WithOsFamilyForAllMachines(v1alpha1.Ubuntu),
 		),
-		framework.WithUbuntuForRelease(release, v1alpha1.Kube126),
+		framework.WithKubeVersionAndOSForRelease(v1alpha1.Kube126, framework.Ubuntu2004, release),
 	)
 	test := framework.NewClusterE2ETest(
 		t,
@@ -2451,6 +2620,33 @@ func TestVSphereKubernetes127BottlerocketAndRemoveWorkerNodeGroups(t *testing.T)
 	)
 }
 
+func TestVSphereKubernetes126To127RedhatUpgradeFromLatestMinorRelease(t *testing.T) {
+	release := latestMinorRelease(t)
+	provider := framework.NewVSphere(t,
+		framework.WithVSphereFillers(
+			api.WithOsFamilyForAllMachines(v1alpha1.RedHat),
+		),
+		framework.WithKubeVersionAndOSForRelease(v1alpha1.Kube126, framework.RedHat8, release),
+	)
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube126)),
+		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
+	)
+	runUpgradeFromReleaseFlow(
+		test,
+		release,
+		v1alpha1.Kube127,
+		provider.WithProviderUpgrade(
+			provider.Redhat127Template(), // Set the template so it doesn't get auto-imported
+		),
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube127)),
+	)
+}
+
 func TestVSphereKubernetes124UbuntuUpgradeAndRemoveWorkerNodeGroupsAPI(t *testing.T) {
 	provider := framework.NewVSphere(t)
 	test := framework.NewClusterE2ETest(
@@ -2495,7 +2691,7 @@ func TestVSphereKubernetes123to124UpgradeFromLatestMinorReleaseBottleRocketAPI(t
 		api.VSphereToConfigFiller(
 			api.WithOsFamilyForAllMachines(v1alpha1.Bottlerocket),
 		),
-		provider.WithBottleRocketForRelease(release, v1alpha1.Kube123),
+		provider.WithKubeVersionAndOSForRelease(v1alpha1.Kube123, framework.Bottlerocket1, release),
 	)
 
 	test := framework.NewMulticlusterE2ETest(t, managementCluster)
@@ -2511,7 +2707,7 @@ func TestVSphereKubernetes123to124UpgradeFromLatestMinorReleaseBottleRocketAPI(t
 		api.VSphereToConfigFiller(
 			api.WithOsFamilyForAllMachines(v1alpha1.Bottlerocket),
 		),
-		provider.WithBottleRocketForRelease(release, v1alpha1.Kube123),
+		provider.WithKubeVersionAndOSForRelease(v1alpha1.Kube123, framework.Bottlerocket1, release),
 	)
 
 	test.WithWorkloadClusters(wc)

@@ -35,17 +35,14 @@ func needsNewControlPlaneTemplate(oldSpec, newSpec *cluster.Spec) bool {
 	return false
 }
 
-func needsNewWorkloadTemplate(oldSpec, newSpec *cluster.Spec) bool {
-	if oldSpec.Cluster.Spec.KubernetesVersion != newSpec.Cluster.Spec.KubernetesVersion {
-		return true
-	}
-
+func needsNewWorkloadTemplate(oldSpec, newSpec *cluster.Spec, oldWorker, newWorker v1alpha1.WorkerNodeGroupConfiguration) bool {
 	if oldSpec.Bundles.Spec.Number != newSpec.Bundles.Spec.Number {
 		return true
 	}
 
-	if !v1alpha1.WorkerNodeGroupConfigurationSliceTaintsEqual(oldSpec.Cluster.Spec.WorkerNodeGroupConfigurations, newSpec.Cluster.Spec.WorkerNodeGroupConfigurations) ||
-		!v1alpha1.WorkerNodeGroupConfigurationsLabelsMapEqual(oldSpec.Cluster.Spec.WorkerNodeGroupConfigurations, newSpec.Cluster.Spec.WorkerNodeGroupConfigurations) {
+	if !v1alpha1.TaintsSliceEqual(oldWorker.Taints, newWorker.Taints) ||
+		!v1alpha1.MapEqual(oldWorker.Labels, newWorker.Labels) ||
+		!v1alpha1.WorkerNodeGroupConfigurationKubeVersionUnchanged(&oldWorker, &newWorker, oldSpec.Cluster, newSpec.Cluster) {
 		return true
 	}
 
@@ -149,7 +146,8 @@ func (p *Provider) validateAvailableHardwareForUpgrade(ctx context.Context, curr
 	)
 
 	rollingUpgrade := false
-	if currentSpec.Cluster.Spec.KubernetesVersion != newClusterSpec.Cluster.Spec.KubernetesVersion {
+	if currentSpec.Cluster.Spec.KubernetesVersion != newClusterSpec.Cluster.Spec.KubernetesVersion ||
+		currentSpec.Bundles.Spec.Number != newClusterSpec.Bundles.Spec.Number {
 		clusterSpecValidator.Register(ExtraHardwareAvailableAssertionForRollingUpgrade(p.catalogue))
 		rollingUpgrade = true
 	}
@@ -166,7 +164,8 @@ func (p *Provider) validateAvailableHardwareForUpgrade(ctx context.Context, curr
 	return nil
 }
 
-func (p *Provider) PostBootstrapDeleteForUpgrade(ctx context.Context) error {
+// PostBootstrapDeleteForUpgrade runs any provider-specific operations after bootstrap cluster has been deleted.
+func (p *Provider) PostBootstrapDeleteForUpgrade(ctx context.Context, cluster *types.Cluster) error {
 	if err := p.stackInstaller.UninstallLocal(ctx); err != nil {
 		return err
 	}
@@ -264,11 +263,8 @@ func (p *Provider) ValidateNewSpec(ctx context.Context, cluster *types.Cluster, 
 		return fmt.Errorf("spec.TinkerbellIP is immutable. Previous value %s,   New value %s", oSpec.TinkerbellIP, nSpec.TinkerbellIP)
 	}
 
-	// for any operation other than k8s version change, osImageURL and hookImageURL are immutable
+	// for any operation other than k8s version change, hookImageURL is immutable
 	if prevSpec.Spec.KubernetesVersion == clusterSpec.Cluster.Spec.KubernetesVersion {
-		if nSpec.OSImageURL != oSpec.OSImageURL {
-			return fmt.Errorf("spec.OSImageURL is immutable. Previous value %s,   New value %s", oSpec.OSImageURL, nSpec.OSImageURL)
-		}
 		if nSpec.HookImagesURLPath != oSpec.HookImagesURLPath {
 			return fmt.Errorf("spec.HookImagesURLPath is immutable. Previous value %s,   New value %s", oSpec.HookImagesURLPath, nSpec.HookImagesURLPath)
 		}
@@ -378,11 +374,13 @@ func (p *Provider) PreCoreComponentsUpgrade(
 		return errors.New("cluster spec is nil")
 	}
 
+	versionsBundle := clusterSpec.RootVersionsBundle()
+
 	// Attempt the upgrade. This should upgrade the stack in the mangement cluster by updating
 	// images, installing new CRDs and possibly removing old ones.
 	err := p.stackInstaller.Upgrade(
 		ctx,
-		clusterSpec.VersionsBundle.Tinkerbell,
+		versionsBundle.Tinkerbell,
 		p.datacenterConfig.Spec.TinkerbellIP,
 		cluster.KubeconfigFile,
 		p.datacenterConfig.Spec.HookImagesURLPath,

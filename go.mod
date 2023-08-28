@@ -60,7 +60,7 @@ require (
 	oras.land/oras-go v1.2.3
 	oras.land/oras-go/v2 v2.0.0
 	sigs.k8s.io/cluster-api v1.4.2
-	sigs.k8s.io/cluster-api-provider-cloudstack v0.4.8-rc1
+	sigs.k8s.io/cluster-api-provider-cloudstack v0.4.9-rc5.0.20230717222509-0d26a04b661f
 	sigs.k8s.io/cluster-api-provider-vsphere v1.0.1
 	sigs.k8s.io/cluster-api/test v1.4.2
 	sigs.k8s.io/controller-runtime v0.14.6
@@ -77,11 +77,9 @@ require (
 	github.com/PaesslerAG/gval v1.0.0 // indirect
 	github.com/PaesslerAG/jsonpath v0.1.1 // indirect
 	github.com/ProtonMail/go-crypto v0.0.0-20230619160724-3fbb1f12458c // indirect
-	github.com/ReneKroon/ttlcache v1.7.0 // indirect
 	github.com/VictorLowther/simplexml v0.0.0-20180716164440-0bff93621230 // indirect
 	github.com/VictorLowther/soap v0.0.0-20150314151524-8e36fca84b22 // indirect
 	github.com/acomagu/bufpipe v1.0.3 // indirect
-	github.com/apache/cloudstack-go/v2 v2.13.0 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.9 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.4.3 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/ini v1.3.10 // indirect
@@ -98,13 +96,13 @@ require (
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/cloudflare/circl v1.3.3 // indirect
 	github.com/containerd/containerd v1.7.0 // indirect
-	github.com/coredns/caddy v1.1.0 // indirect
+	github.com/coredns/caddy v1.1.1 // indirect
 	github.com/coredns/corefile-migration v1.0.20 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
 	github.com/cyphar/filepath-securejoin v0.2.3 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/docker/distribution v2.8.2+incompatible // indirect
-	github.com/docker/docker v23.0.2+incompatible // indirect
+	github.com/docker/docker v23.0.3+incompatible // indirect
 	github.com/docker/docker-credential-helpers v0.7.0 // indirect
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-metrics v0.0.1 // indirect
@@ -195,8 +193,8 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	k8s.io/apiextensions-apiserver v0.26.1 // indirect
-	k8s.io/cluster-bootstrap v0.25.0 // indirect
-	k8s.io/kube-openapi v0.0.0-20221012153701-172d655c2280 // indirect
+	k8s.io/cluster-bootstrap v0.25.3 // indirect
+	k8s.io/kube-openapi v0.0.0-20221106113015-f73e7dbcfe29 // indirect
 	sigs.k8s.io/json v0.0.0-20220713155537-f223a00ba0e2 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.3 // indirect
 )
@@ -206,11 +204,6 @@ replace (
 	github.com/aws/eks-anywhere/internal/aws-sdk-go-v2/internal/endpoints/v2 => ./internal/aws-sdk-go-v2/internal/endpoints/v2
 	github.com/aws/eks-anywhere/internal/aws-sdk-go-v2/service/snowballdevice => ./internal/aws-sdk-go-v2/service/snowballdevice
 	github.com/aws/eks-anywhere/release => ./release
-
-	// opencontainers/runc patched a CVE in v1.1.5.
-	// Various dependencies both direct and indirect are yet to upgrade runc. All seem to work
-	// with v1.1.5 so we're forcing it with replace.
-	github.com/opencontainers/runc => github.com/opencontainers/runc v1.1.5
 
 	// need the modifications eksa made to the capi api structs
 	sigs.k8s.io/cluster-api => github.com/abhay-krishna/cluster-api v1.4.2-eksa.1

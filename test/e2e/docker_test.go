@@ -843,9 +843,9 @@ func TestDockerKubernetes126to127GithubFluxEnabledUpgradeFromLatestMinorRelease(
 	)
 }
 
-func TestDockerKubernetes126ManagementClusterUpgradeFromLatestSideEffects(t *testing.T) {
+func TestDockerKubernetes126WithOIDCManagementClusterUpgradeFromLatestSideEffects(t *testing.T) {
 	provider := framework.NewDocker(t)
-	runTestManagementClusterUpgradeSideEffects(t, provider, "", v1alpha1.Kube126)
+	runTestManagementClusterUpgradeSideEffects(t, provider, framework.DockerOS, v1alpha1.Kube126)
 }
 
 func TestDockerKubernetes124UpgradeAndRemoveWorkerNodeGroupsAPI(t *testing.T) {

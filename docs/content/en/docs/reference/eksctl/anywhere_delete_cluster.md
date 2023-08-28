@@ -20,7 +20,6 @@ anywhere delete cluster (<cluster-name>|-f <config-file>) [flags]
 ```
       --bundles-override string   Override default Bundles manifest (not recommended)
   -f, --filename string           Filename that contains EKS-A cluster configuration, required if <cluster-name> is not provided
-      --force-cleanup             Force deletion of previously created bootstrap cluster
   -h, --help                      help for cluster
       --kubeconfig string         kubeconfig file pointing to a management cluster
   -w, --w-config string           Kubeconfig file to use when deleting a workload cluster

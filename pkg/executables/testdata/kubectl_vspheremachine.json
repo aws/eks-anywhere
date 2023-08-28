@@ -1,0 +1,19 @@
+{
+    "apiVersion": "v1",
+    "items": [
+        {
+            "apiVersion": "infrastructure.cluster.x-k8s.io/v1beta1",
+            "kind": "VSphereMachine",
+            "metadata": {
+                "labels": {
+                    "cluster.x-k8s.io/control-plane": ""
+                },
+                "name": "testcluster-control-plane-template-1234-1234",
+                "namespace": "eksa-system"
+            },
+            "spec": {
+                "template": "test-template"
+            }
+        }
+    ]
+}

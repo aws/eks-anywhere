@@ -2,11 +2,13 @@ package cmd
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 
+	"github.com/aws/eks-anywhere/cmd/eksctl-anywhere/cmd/flags"
 	"github.com/aws/eks-anywhere/pkg/validations"
 )
 
@@ -15,6 +17,11 @@ const (
 	TinkerbellHardwareCSVFlagAlias       = "z"
 	TinkerbellHardwareCSVFlagDescription = "Path to a CSV file containing hardware data."
 	KubeconfigFile                       = "kubeconfig"
+
+	forceCleanupDeprecationMessageForUpgrade = `The flag --force-cleanup has been removed. For more information on how to troubleshoot existing bootstrap clusters, please refer to the documentation:
+https://anywhere.eks.amazonaws.com/docs/troubleshooting/troubleshooting/#cluster-upgrade-fails-with-management-components-on-bootstrap-cluster`
+	forceCleanupDeprecationMessageForCreateDelete = `The flag --force-cleanup has been removed. For more information on how to troubleshoot existing bootstrap clusters, please refer to the documentation:
+https://anywhere.eks.amazonaws.com/docs/troubleshooting/troubleshooting/#bootstrap-cluster-fails-to-come-up-nodes-already-exist-for-a-cluster-with-the-name`
 )
 
 func bindFlagsToViper(cmd *cobra.Command, args []string) error {
@@ -29,8 +36,8 @@ func bindFlagsToViper(cmd *cobra.Command, args []string) error {
 }
 
 func applyClusterOptionFlags(flagSet *pflag.FlagSet, clusterOpt *clusterOptions) {
-	flagSet.StringVarP(&clusterOpt.fileName, "filename", "f", "", "Filename that contains EKS-A cluster configuration")
-	flagSet.StringVar(&clusterOpt.bundlesOverride, "bundles-override", "", "Override default Bundles manifest (not recommended)")
+	flags.String(flags.ClusterConfig, &clusterOpt.fileName, flagSet)
+	flags.String(flags.BundleOverride, &clusterOpt.bundlesOverride, flagSet)
 	flagSet.StringVar(&clusterOpt.managementKubeconfig, "kubeconfig", "", "Management cluster kubeconfig file")
 }
 
@@ -65,4 +72,10 @@ func checkTinkerbellFlags(flagSet *pflag.FlagSet, hardwareCSVPath string, operat
 	}
 
 	return nil
+}
+
+func hideForceCleanup(flags *pflag.FlagSet) {
+	if err := flags.MarkHidden("force-cleanup"); err != nil {
+		log.Fatalf("Failed hiding flag: %v", err)
+	}
 }

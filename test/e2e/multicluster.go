@@ -84,7 +84,7 @@ func runTinkerbellWorkloadClusterFlow(test *framework.MulticlusterE2ETest) {
 	test.RunInWorkloadClusters(func(w *framework.WorkloadCluster) {
 		w.GenerateClusterConfig()
 		w.PowerOffHardware()
-		w.CreateCluster(framework.WithForce(), framework.WithControlPlaneWaitTimeout("20m"))
+		w.CreateCluster(framework.WithControlPlaneWaitTimeout("20m"))
 		w.StopIfFailed()
 		w.DeleteCluster()
 		w.ValidateHardwareDecommissioned()
@@ -113,7 +113,7 @@ func runSimpleWorkloadUpgradeFlowForBareMetal(test *framework.MulticlusterE2ETes
 	test.RunInWorkloadClusters(func(w *framework.WorkloadCluster) {
 		w.GenerateClusterConfig()
 		w.PowerOffHardware()
-		w.CreateCluster(framework.WithForce(), framework.WithControlPlaneWaitTimeout("20m"))
+		w.CreateCluster(framework.WithControlPlaneWaitTimeout("20m"))
 		time.Sleep(2 * time.Minute)
 		w.UpgradeCluster(clusterOpts)
 		time.Sleep(2 * time.Minute)
@@ -152,7 +152,7 @@ func runTinkerbellWorkloadClusterFlowSkipPowerActions(test *framework.Multiclust
 		w.PowerOffHardware()
 		w.PXEBootHardware()
 		w.PowerOnHardware()
-		w.CreateCluster(framework.WithForce(), framework.WithControlPlaneWaitTimeout("20m"))
+		w.CreateCluster(framework.WithControlPlaneWaitTimeout("20m"))
 		w.StopIfFailed()
 		w.DeleteCluster()
 		w.PowerOffHardware()

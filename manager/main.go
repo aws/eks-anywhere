@@ -20,7 +20,7 @@ import (
 	logsv1 "k8s.io/component-base/logs/api/v1"
 	_ "k8s.io/component-base/logs/json/register"
 	"k8s.io/klog/v2"
-	cloudstackv1 "sigs.k8s.io/cluster-api-provider-cloudstack/api/v1beta2"
+	cloudstackv1 "sigs.k8s.io/cluster-api-provider-cloudstack/api/v1beta3"
 	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/api/v1beta1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	kubeadmv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
@@ -34,6 +34,7 @@ import (
 	"github.com/aws/eks-anywhere/controllers"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
+	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
 	"github.com/aws/eks-anywhere/pkg/features"
 	snowv1 "github.com/aws/eks-anywhere/pkg/providers/snow/api/v1beta1"
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
@@ -142,6 +143,12 @@ func main() {
 	setupChecks(setupLog, mgr)
 	//+kubebuilder:scaffold:builder
 
+	// Adding this indexer to allow for listing Cluster objects by name if they are in different namespaces.
+	if err := mgr.GetFieldIndexer().
+		IndexField(ctx, &anywherev1.Cluster{}, "metadata.name", clientutil.ClusterNameIndexer); err != nil {
+		setupLog.Error(err, "unable to create index for Cluster name")
+		os.Exit(1)
+	}
 	setupLog.Info("Starting manager")
 	if err := mgr.Start(ctx); err != nil {
 		setupLog.Error(err, "problem running manager")

@@ -241,7 +241,7 @@ func TestControlPlaneMachineHealthCheckName(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			g := newApiBuilerTest(t)
-			g.Expect(clusterapi.ControlPlaneMachineHealthCheckName(g.clusterSpec)).To(Equal(tt.want))
+			g.Expect(clusterapi.ControlPlaneMachineHealthCheckName(g.clusterSpec.Cluster)).To(Equal(tt.want))
 		})
 	}
 }
@@ -259,7 +259,7 @@ func TestWorkerMachineHealthCheckName(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			g := newApiBuilerTest(t)
-			g.Expect(clusterapi.WorkerMachineHealthCheckName(g.clusterSpec, *g.workerNodeGroupConfig)).To(Equal(tt.want))
+			g.Expect(clusterapi.WorkerMachineHealthCheckName(g.clusterSpec.Cluster, *g.workerNodeGroupConfig)).To(Equal(tt.want))
 		})
 	}
 }

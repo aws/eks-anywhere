@@ -111,12 +111,14 @@ func WorkerMachineTemplateName(clusterSpec *cluster.Spec, workerNodeGroupConfig 
 	return DefaultObjectName(fmt.Sprintf("%s-%s", clusterSpec.Cluster.Name, workerNodeGroupConfig.Name))
 }
 
-func ControlPlaneMachineHealthCheckName(clusterSpec *cluster.Spec) string {
-	return fmt.Sprintf("%s-kcp-unhealthy", KubeadmControlPlaneName(clusterSpec.Cluster))
+// ControlPlaneMachineHealthCheckName returns a name for a kcp machine health check.
+func ControlPlaneMachineHealthCheckName(cluster *v1alpha1.Cluster) string {
+	return fmt.Sprintf("%s-kcp-unhealthy", KubeadmControlPlaneName(cluster))
 }
 
-func WorkerMachineHealthCheckName(clusterSpec *cluster.Spec, workerNodeGroupConfig v1alpha1.WorkerNodeGroupConfiguration) string {
-	return fmt.Sprintf("%s-worker-unhealthy", MachineDeploymentName(clusterSpec.Cluster, workerNodeGroupConfig))
+// WorkerMachineHealthCheckName returns a name for a worker machine health check.
+func WorkerMachineHealthCheckName(cluster *v1alpha1.Cluster, workerNodeGroupConfig v1alpha1.WorkerNodeGroupConfiguration) string {
+	return fmt.Sprintf("%s-worker-unhealthy", MachineDeploymentName(cluster, workerNodeGroupConfig))
 }
 
 // InitialTemplateNamesForWorkers returns the default initial names for workers machine templates and kubeadm config templates.

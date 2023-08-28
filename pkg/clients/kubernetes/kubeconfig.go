@@ -40,6 +40,11 @@ func (c *KubeconfigClient) Update(ctx context.Context, obj Object) error {
 	return c.client.Update(ctx, c.kubeconfig, obj)
 }
 
+// ApplyServerSide creates or patches and object using server side logic.
+func (c *KubeconfigClient) ApplyServerSide(ctx context.Context, fieldManager string, obj Object, opts ...ApplyServerSideOption) error {
+	return c.client.ApplyServerSide(ctx, c.kubeconfig, fieldManager, obj, opts...)
+}
+
 // Delete deletes the given obj from Kubernetes cluster.
 func (c *KubeconfigClient) Delete(ctx context.Context, obj Object) error {
 	return c.client.Delete(ctx, c.kubeconfig, obj)

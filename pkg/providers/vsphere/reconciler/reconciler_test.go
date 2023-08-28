@@ -47,7 +47,8 @@ const (
 func TestReconcilerReconcileSuccess(t *testing.T) {
 	tt := newReconcilerTest(t)
 	// We want to check that the cluster status is cleaned up if validations are passed
-	tt.cluster.Status.FailureMessage = ptr.String("invalid cluster")
+	tt.cluster.SetFailure(anywherev1.FailureReasonType("InvalidCluster"), "invalid cluster")
+
 	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
 		c.Name = tt.cluster.Name
 	})
@@ -73,9 +74,11 @@ func TestReconcilerReconcileSuccess(t *testing.T) {
 
 	tt.Expect(err).NotTo(HaveOccurred())
 	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
+	tt.Expect(tt.cluster.Status.FailureReason).To(BeZero())
 	tt.Expect(result).To(Equal(controller.Result{}))
 
 	tt.Expect(tt.cluster.Status.FailureMessage).To(BeNil())
+	tt.Expect(tt.cluster.Status.FailureReason).To(BeNil())
 }
 
 func TestReconcilerReconcileWorkerNodesSuccess(t *testing.T) {
@@ -100,6 +103,7 @@ func TestReconcilerReconcileWorkerNodesSuccess(t *testing.T) {
 
 	tt.Expect(err).NotTo(HaveOccurred())
 	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
+	tt.Expect(tt.cluster.Status.FailureReason).To(BeZero())
 	tt.Expect(result).To(Equal(controller.Result{}))
 
 	tt.ShouldEventuallyExist(tt.ctx,
@@ -144,6 +148,7 @@ func TestReconcilerFailToSetUpMachineConfigCP(t *testing.T) {
 	tt.Expect(err).To(BeNil(), "error should be nil to prevent requeue")
 	tt.Expect(result).To(Equal(controller.Result{Result: &reconcile.Result{}}), "result should stop reconciliation")
 	tt.Expect(tt.cluster.Status.FailureMessage).To(HaveValue(ContainSubstring("validating vCenter setup for VSphereMachineConfig")))
+	tt.Expect(tt.cluster.Status.FailureReason).To(HaveValue(Equal(anywherev1.MachineConfigInvalidReason)))
 }
 
 func TestSetupEnvVars(t *testing.T) {
@@ -188,6 +193,7 @@ func TestReconcilerControlPlaneIsNotReady(t *testing.T) {
 
 	tt.Expect(err).NotTo(HaveOccurred())
 	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
+	tt.Expect(tt.cluster.Status.FailureReason).To(BeZero())
 	tt.Expect(result).To(Equal(controller.ResultWithRequeue(30 * time.Second)))
 }
 
@@ -203,6 +209,7 @@ func TestReconcilerReconcileWorkersSuccess(t *testing.T) {
 
 	tt.Expect(err).NotTo(HaveOccurred())
 	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
+	tt.Expect(tt.cluster.Status.FailureReason).To(BeZero())
 	tt.Expect(result).To(Equal(controller.Result{}))
 }
 
@@ -219,6 +226,7 @@ func TestReconcilerReconcileInvalidDatacenterConfig(t *testing.T) {
 	tt.Expect(err).To(BeNil(), "error should be nil to prevent requeue")
 	tt.Expect(result).To(Equal(controller.Result{Result: &reconcile.Result{}}), "result should stop reconciliation")
 	tt.Expect(tt.cluster.Status.FailureMessage).To(HaveValue(ContainSubstring("Something wrong")))
+	tt.Expect(tt.cluster.Status.FailureReason).To(HaveValue(Equal(anywherev1.DatacenterConfigInvalidReason)))
 }
 
 func TestReconcilerDatacenterConfigNotValidated(t *testing.T) {
@@ -232,6 +240,7 @@ func TestReconcilerDatacenterConfigNotValidated(t *testing.T) {
 	tt.Expect(err).To(BeNil(), "error should be nil to prevent requeue")
 	tt.Expect(result).To(Equal(controller.Result{Result: &reconcile.Result{}}), "result should stop reconciliation")
 	tt.Expect(tt.cluster.Status.FailureMessage).To(BeNil())
+	tt.Expect(tt.cluster.Status.FailureReason).To(BeNil())
 }
 
 func TestReconcileCNISuccess(t *testing.T) {
@@ -251,6 +260,7 @@ func TestReconcileCNISuccess(t *testing.T) {
 
 	tt.Expect(err).NotTo(HaveOccurred())
 	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
+	tt.Expect(tt.cluster.Status.FailureReason).To(BeZero())
 	tt.Expect(result).To(Equal(controller.Result{}))
 }
 
@@ -269,6 +279,7 @@ func TestReconcileCNIErrorClientRegistry(t *testing.T) {
 
 	tt.Expect(err).To(MatchError(ContainSubstring("building client")))
 	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
+	tt.Expect(tt.cluster.Status.FailureReason).To(BeZero())
 	tt.Expect(result).To(Equal(controller.Result{}))
 }
 
@@ -280,6 +291,7 @@ func TestReconcilerReconcileControlPlaneSuccess(t *testing.T) {
 
 	tt.Expect(err).NotTo(HaveOccurred())
 	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
+	tt.Expect(tt.cluster.Status.FailureReason).To(BeZero())
 	tt.Expect(result).To(Equal(controller.Result{}))
 
 	tt.ShouldEventuallyExist(tt.ctx,
@@ -319,17 +331,6 @@ func TestReconcilerReconcileControlPlaneSuccess(t *testing.T) {
 	tt.ShouldEventuallyExist(tt.ctx, &corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: "workload-cluster-cpi-manifests", Namespace: "eksa-system"}})
 }
 
-func TestReconcilerReconcileControlPlaneFailure(t *testing.T) {
-	tt := newReconcilerTest(t)
-	tt.createAllObjs()
-	spec := tt.buildSpec()
-	spec.Cluster.Spec.KubernetesVersion = ""
-
-	_, err := tt.reconciler().ReconcileControlPlane(tt.ctx, test.NewNullLogger(), spec)
-
-	tt.Expect(err).To(HaveOccurred())
-}
-
 type reconcilerTest struct {
 	t testing.TB
 	*WithT
@@ -364,9 +365,11 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 	ipValidator := vspherereconcilermocks.NewMockIPValidator(ctrl)
 
 	bundle := test.Bundle()
+	version := test.DevEksaVersion()
 
-	managementCluster := vsphereCluster(func(c *anywherev1.Cluster) {
+	managementCluster := test.Cluster(func(c *anywherev1.Cluster) {
 		c.Name = "management-cluster"
+		c.Namespace = clusterNamespace
 		c.Spec.ManagementCluster = anywherev1.ManagementCluster{
 			Name: c.Name,
 		}
@@ -375,22 +378,27 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 			Namespace:  bundle.Namespace,
 			APIVersion: bundle.APIVersion,
 		}
+		c.Spec.EksaVersion = &version
 	})
 
-	machineConfigCP := machineConfig(func(m *anywherev1.VSphereMachineConfig) {
+	machineConfigCP := test.VSphereMachineConfig(func(m *anywherev1.VSphereMachineConfig) {
 		m.Name = "cp-machine-config"
+		m.Namespace = clusterNamespace
 	})
-	machineConfigWN := machineConfig(func(m *anywherev1.VSphereMachineConfig) {
+	machineConfigWN := test.VSphereMachineConfig(func(m *anywherev1.VSphereMachineConfig) {
 		m.Name = "worker-machine-config"
+		m.Namespace = clusterNamespace
 	})
 
-	credentialsSecret := createSecret()
-	workloadClusterDatacenter := dataCenter(func(d *anywherev1.VSphereDatacenterConfig) {
+	credentialsSecret := test.VSphereCredentialsSecret()
+	workloadClusterDatacenter := test.VSphereDatacenter(func(d *anywherev1.VSphereDatacenterConfig) {
 		d.Status.SpecValid = true
+		d.Namespace = clusterNamespace
 	})
 
-	cluster := vsphereCluster(func(c *anywherev1.Cluster) {
+	cluster := test.Cluster(func(c *anywherev1.Cluster) {
 		c.Name = "workload-cluster"
+		c.Namespace = clusterNamespace
 		c.Spec.ManagementCluster = anywherev1.ManagementCluster{
 			Name: managementCluster.Name,
 		}
@@ -425,6 +433,8 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 				Labels: nil,
 			},
 		)
+
+		c.Spec.EksaVersion = &version
 	})
 
 	tt := &reconcilerTest{
@@ -446,8 +456,9 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 			managementCluster,
 			workloadClusterDatacenter,
 			bundle,
-			test.EksdRelease(),
+			test.EksdRelease("1.22"),
 			credentialsSecret,
+			test.EKSARelease(),
 		},
 		bundle:                    bundle,
 		cluster:                   cluster,
@@ -495,112 +506,4 @@ func (tt *reconcilerTest) allObjs() []client.Object {
 	objs = append(objs, tt.cluster, tt.machineConfigControlPlane, tt.machineConfigWorker)
 
 	return objs
-}
-
-type clusterOpt func(*anywherev1.Cluster)
-
-func vsphereCluster(opts ...clusterOpt) *anywherev1.Cluster {
-	c := &anywherev1.Cluster{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       anywherev1.ClusterKind,
-			APIVersion: anywherev1.GroupVersion.String(),
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: clusterNamespace,
-		},
-		Spec: anywherev1.ClusterSpec{
-			KubernetesVersion: "1.22",
-			ClusterNetwork: anywherev1.ClusterNetwork{
-				Pods: anywherev1.Pods{
-					CidrBlocks: []string{"0.0.0.0"},
-				},
-				Services: anywherev1.Services{
-					CidrBlocks: []string{"0.0.0.0"},
-				},
-			},
-		},
-	}
-
-	for _, opt := range opts {
-		opt(c)
-	}
-
-	return c
-}
-
-type datacenterOpt func(config *anywherev1.VSphereDatacenterConfig)
-
-func dataCenter(opts ...datacenterOpt) *anywherev1.VSphereDatacenterConfig {
-	d := &anywherev1.VSphereDatacenterConfig{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       anywherev1.VSphereDatacenterKind,
-			APIVersion: anywherev1.GroupVersion.String(),
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "datacenter",
-			Namespace: clusterNamespace,
-		},
-	}
-
-	for _, opt := range opts {
-		opt(d)
-	}
-
-	return d
-}
-
-type vsphereMachineOpt func(config *anywherev1.VSphereMachineConfig)
-
-func machineConfig(opts ...vsphereMachineOpt) *anywherev1.VSphereMachineConfig {
-	m := &anywherev1.VSphereMachineConfig{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       anywherev1.VSphereMachineConfigKind,
-			APIVersion: anywherev1.GroupVersion.String(),
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: clusterNamespace,
-		},
-		Spec: anywherev1.VSphereMachineConfigSpec{
-			DiskGiB:           40,
-			Datastore:         "test",
-			Folder:            "test",
-			NumCPUs:           2,
-			MemoryMiB:         16,
-			OSFamily:          "ubuntu",
-			ResourcePool:      "test",
-			StoragePolicyName: "test",
-			Template:          "test",
-			Users: []anywherev1.UserConfiguration{
-				{
-					Name:              "user",
-					SshAuthorizedKeys: []string{"ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC8ZEibIrz1AUBKDvmDiWLs9f5DnOerC4qPITiDtSOuPAsxgZbRMavBfVTxodMdAkYRYlXxK6PqNo0ve0qcOV2yvpxH1OogasMMetck6BlM/dIoo3vEY4ZoG9DuVRIf9Iry5gJKbpMDYWpx1IGZrDMOFcIM20ii2qLQQk5hfq9OqdqhToEJFixdgJt/y/zt6Koy3kix+XsnrVdAHgWAq4CZuwt1G6JUAqrpob3H8vPmL7aS+35ktf0pHBm6nYoxRhslnWMUb/7vpzWiq+fUBIm2LYqvrnm7t3fRqFx7p2sZqAm2jDNivyYXwRXkoQPR96zvGeMtuQ5BVGPpsDfVudSW21+pEXHI0GINtTbua7Ogz7wtpVywSvHraRgdFOeY9mkXPzvm2IhoqNrteck2GErwqSqb19mPz6LnHueK0u7i6WuQWJn0CUoCtyMGIrowXSviK8qgHXKrmfTWATmCkbtosnLskNdYuOw8bKxq5S4WgdQVhPps2TiMSZndjX5NTr8= ubuntu@ip-10-2-0-6"},
-				},
-			},
-		},
-	}
-
-	for _, opt := range opts {
-		opt(m)
-	}
-
-	return m
-}
-
-func createSecret() *corev1.Secret {
-	return &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: "eksa-system",
-			Name:      vsphere.CredentialsObjectName,
-		},
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Secret",
-			APIVersion: "v1",
-		},
-		Data: map[string][]byte{
-			"username":   []byte("user"),
-			"password":   []byte("pass"),
-			"usernameCP": []byte("userCP"),
-			"passwordCP": []byte("passCP"),
-		},
-	}
 }

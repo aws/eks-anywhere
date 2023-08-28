@@ -3,6 +3,8 @@ skipped_tests:
 #Airgapped tests
 - TestCloudStackKubernetes123RedhatAirgappedRegistryMirror
 - TestCloudStackKubernetes124RedhatAirgappedRegistryMirror
+- TestCloudStackKubernetes125RedhatAirgappedRegistryMirror
+- TestCloudStackKubernetes126RedhatAirgappedRegistryMirror
 # This test will fail until we the latest minor release version is 15.x as there is a preflight for 1.24
 - TestCloudStackKubernetes124RedhatUpgradeFromLatestMinorReleaseAlwaysNetworkPolicy
 - TestCloudStackKubernetes124ManagementClusterUpgradeFromLatest
@@ -15,9 +17,22 @@ skipped_tests:
 - TestCloudStackKubernetes124AddRemoveAz
 - TestCloudStackKubernetes123MultiEndpointSimpleFlow
 - TestCloudStackKubernetes124MultiEndpointSimpleFlow
+- TestCloudStackKubernetes125MultiEndpointSimpleFlow
+- TestCloudStackKubernetes126MultiEndpointSimpleFlow
+- TestCloudStackKubernetes127MultiEndpointSimpleFlow
 
-# CloudStack Registry Mirror endpoint was not set up
-- TestCloudStackKubernetes123UbuntuAirgappedRegistryMirror
+# These tests will fail until there is a new latest minor release version as 16.2 has a preflight check to prevent k8s version > 1.24
+- TestCloudStackKubernetes125WithOIDCManagementClusterUpgradeFromLatestSideEffects
+- TestCloudStackKubernetes126WithOIDCManagementClusterUpgradeFromLatestSideEffects
+- TestCloudStackKubernetes127WithOIDCManagementClusterUpgradeFromLatestSideEffects
+
+# Proxy tests
+- TestCloudStackKubernetes123RedhatProxyConfigAPI
+- TestCloudStackKubernetes124RedhatProxyConfigAPI
+- TestCloudStackKubernetes125RedhatProxyConfigAPI
+- TestCloudStackKubernetes126RedhatProxyConfigAPI
+- TestCloudStackKubernetes127RedhatProxyConfigAPI
+
 # Nutanix
 
 # Snow
@@ -50,16 +65,12 @@ skipped_tests:
 # Skipping Workload upgrade tests due to hardware limitation
 - TestTinkerbellUpgradeMulticlusterWorkloadClusterK8sUpgrade
 - TestTinkerbellUpgradeMulticlusterWorkloadClusterK8sUpgrade125To126
-- TestTinkerbellUpgradeMulticlusterWorkloadClusterK8sUpgrade126To127
 - TestTinkerbellUpgrade126MulticlusterWorkloadClusterWorkerScaleup
 - TestTinkerbellUpgrade126MulticlusterWorkloadClusterCPScaleup
-- TestTinkerbellUpgrade127MulticlusterWorkloadClusterCPScaleup
 - TestTinkerbellUpgrade126MulticlusterWorkloadClusterWorkerScaleDown
 - TestTinkerbellUpgrade125MulticlusterWorkloadClusterWorkerScaleupWithAPI
 - TestTinkerbellUpgrade126MulticlusterWorkloadClusterWorkerScaleupWithFluxAPI
 - TestTinkerbellUpgrade127MulticlusterWorkloadClusterWorkerScaleupGitFluxWithAPI
-- TestTinkerbellUpgrade127MulticlusterWorkloadClusterWorkerScaleDown
-- TestTinkerbellUpgrade127MulticlusterWorkloadClusterWorkerScaleup
 # Skipping ETCD tests
 - TestTinkerbellKubernetes126UbuntuExternalEtcdSimpleFlow
 # Skipping skip power action tests - Not going to work because e2e test powers on CP and worker node at the same time and worker node times out early waiting for ipxe
@@ -75,10 +86,16 @@ skipped_tests:
 - TestTinkerbellKubernetes123UbuntuSimpleFlow
 - TestTinkerbellKubernetes124UbuntuSimpleFlow
 - TestTinkerbellKubernetes125UbuntuSimpleFlow
-- TestTinkerbellKubernetes126SimpleFlow
+- TestTinkerbellKubernetes126UbuntuSimpleFlow
+- TestTinkerbellKubernetes123Ubuntu2204SimpleFlow
+- TestTinkerbellKubernetes124Ubuntu2204SimpleFlow
+- TestTinkerbellKubernetes125Ubuntu2204SimpleFlow
+- TestTinkerbellKubernetes126Ubuntu2204SimpleFlow
 - TestTinkerbellKubernetes123BottleRocketSimpleFlow
 - TestTinkerbellKubernetes124BottleRocketSimpleFlow
 - TestTinkerbellKubernetes123UbuntuTo124Upgrade
+- TestTinkerbellKubernetes125To126Ubuntu2204Upgrade
+- TestTinkerbellKubernetes126Ubuntu2004To2204Upgrade
 - TestTinkerbellKubernetes126UbuntuThreeWorkersSimpleFlow
 - TestTinkerbellAirgappedKubernetes126BottleRocketRegistryMirror
 - TestTinkerbellKubernetes124UbuntuTo125Upgrade

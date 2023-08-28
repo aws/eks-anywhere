@@ -3,8 +3,8 @@ version: 0.2
 env:
   variables:
     INTEGRATION_TEST_MAX_EC2_COUNT: 180
-    INTEGRATION_TEST_MAX_CONCURRENT_TEST_COUNT: 50
-    T_CLOUDSTACK_CIDR: "10.80.191.0/24"
+    INTEGRATION_TEST_MAX_CONCURRENT_TEST_COUNT: 70
+    T_CLOUDSTACK_CIDR: "10.80.214.0/23"
     CLOUDSTACK_PROVIDER: true
     EKSA_GIT_KNOWN_HOSTS: "/tmp/known_hosts"
     EKSA_GIT_PRIVATE_KEY: "/tmp/private-key"
@@ -51,9 +51,6 @@ env:
     T_CLOUDSTACK_MANAGEMENT_SERVER: "cloudstack_ci_beta_connection:management_server"
     T_CLOUDSTACK_MANAGEMENT_SERVER_2: "cloudstack_ci_beta_connection:management_server_2"
     T_CLOUDSTACK_MANAGEMENT_SERVER_3: "cloudstack_ci_beta_connection:management_server_3"
-    T_CLOUDSTACK_TEMPLATE_REDHAT_1_22: "cloudstack_ci_beta_connection:template_redhat_1_22"
-    T_CLOUDSTACK_TEMPLATE_REDHAT_1_23: "cloudstack_ci_beta_connection:template_redhat_1_23"
-    T_CLOUDSTACK_TEMPLATE_REDHAT_1_24: "cloudstack_ci_beta_connection:template_redhat_1_24"
     T_CLOUDSTACK_COMPUTE_OFFERING_LARGE: "cloudstack_ci_beta_connection:compute_offering_large"
     T_CLOUDSTACK_COMPUTE_OFFERING_LARGER: "cloudstack_ci_beta_connection:compute_offering_larger"
     T_CLOUDSTACK_TLS_INSECURE: "cloudstack_ci_beta_connection:tls_insecure"

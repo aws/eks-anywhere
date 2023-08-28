@@ -1,6 +1,8 @@
 ---
 title: 2. Airgapped (optional)
 weight: 15
+description: >
+  Configuring EKS Anywhere for airgapped environments
 ---
 
 When creating an EKS Anywhere cluster, there may be times where you need to do so in an airgapped
@@ -37,6 +39,12 @@ To create a cluster in an airgapped environment, perform the following:
    eksctl anywhere download images -o images.tar
    ```
 
+1. If you want to use curated packages, refer to [Curated Packages]({{< relref "../../packages/prereq#prepare-curated-packages-for-airapped-clusters" >}}) to copy curated packages to your registry mirror.
+
+{{% alert title="Warning" color="warning" %}}
+`eksctl anywhere download images` and `eksctl anywhere import images` command need to be run on an amd64 machine to import amd64 images to the registry mirror.
+{{% /alert %}}
+
    **For the remaining steps, the Admin machine no longer needs to be connected to the internet or the bastion host.**
 
 1. Next, you will need to set up a local registry mirror to host the downloaded EKS Anywhere images. In order to set one up, refer to [Registry Mirror configuration.]({{< relref "../../getting-started/optional/registrymirror.md" >}})
@@ -60,3 +68,7 @@ If you are using the vSphere provider, be sure that the requirements in the
 ## Deploy a cluster
 
 Once you have the tools installed you can deploy a cluster by [choosing a provider]({{< relref "/docs/getting-started/chooseprovider/" >}})
+
+## Upgrade an airgapped cluster
+
+To upgrade an airgapped cluster, see [upgrade airgapped cluster]({{< relref "../../clustermgmt/cluster-upgrades/airgapped-upgrades.md" >}})

@@ -199,6 +199,13 @@ func (c *Config) ChildObjects() []kubernetes.Object {
 	return objs
 }
 
+// ClusterAndChildren returns all kubernetes objects in the cluster Config.
+// It's equivalent to appending the Cluster to the result of ChildObjects.
+func (c *Config) ClusterAndChildren() []kubernetes.Object {
+	objs := c.ChildObjects()
+	return append(objs, c.Cluster)
+}
+
 func appendIfNotNil(objs []kubernetes.Object, elems ...kubernetes.Object) []kubernetes.Object {
 	for _, e := range elems {
 		// Since we receive interfaces, these will never be nil since they contain

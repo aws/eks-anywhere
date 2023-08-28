@@ -31,7 +31,7 @@ func runTinkerbellAWSIamAuthFlow(test *framework.ClusterE2ETest) {
 	test.GenerateClusterConfig()
 	test.GenerateHardwareConfig()
 	test.PowerOffHardware()
-	test.CreateCluster(framework.WithForce(), framework.WithControlPlaneWaitTimeout("20m"))
+	test.CreateCluster(framework.WithControlPlaneWaitTimeout("20m"))
 	test.ValidateAWSIamAuth()
 	test.StopIfFailed()
 	test.DeleteCluster()

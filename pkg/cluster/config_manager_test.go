@@ -25,6 +25,7 @@ func TestConfigManagerParseSuccess(t *testing.T) {
 		c.DockerDatacenter = d.(*anywherev1.DockerDatacenterConfig)
 	})
 
+	kubeVersion := anywherev1.KubernetesVersion("1.20")
 	yamlManifest := []byte(test.ReadFile(t, "testdata/docker_cluster_oidc_awsiam_flux.yaml"))
 	wantCluster := &anywherev1.Cluster{
 		TypeMeta: metav1.TypeMeta{
@@ -44,8 +45,9 @@ func TestConfigManagerParseSuccess(t *testing.T) {
 			},
 			WorkerNodeGroupConfigurations: []anywherev1.WorkerNodeGroupConfiguration{
 				{
-					Name:  "workers-1",
-					Count: ptr.Int(1),
+					Name:              "workers-1",
+					Count:             ptr.Int(1),
+					KubernetesVersion: &kubeVersion,
 				},
 			},
 			DatacenterRef: anywherev1.Ref{

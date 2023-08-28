@@ -25,25 +25,33 @@ type ClusterSpecOpt func(*cluster.Spec)
 var configFS embed.FS
 
 // DevEksaVersion can be used in tests.
-var DevEksaVersion v1alpha1.EksaVersion = "v0.0.0-dev"
+func DevEksaVersion() v1alpha1.EksaVersion {
+	return v1alpha1.EksaVersion("v0.0.0-dev")
+}
 
 func NewClusterSpec(opts ...ClusterSpecOpt) *cluster.Spec {
 	s := &cluster.Spec{}
+	version := DevEksaVersion()
 	s.Config = &cluster.Config{
 		Cluster: &v1alpha1.Cluster{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "fluxTestCluster",
 			},
 			Spec: v1alpha1.ClusterSpec{
+				KubernetesVersion:             "1.19",
 				WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{}},
+				EksaVersion:                   &version,
 			},
 		},
 	}
-	s.VersionsBundle = &cluster.VersionsBundle{
-		VersionsBundle: &releasev1alpha1.VersionsBundle{},
-		KubeDistro:     &cluster.KubeDistro{},
+	s.VersionsBundles = map[v1alpha1.KubernetesVersion]*cluster.VersionsBundle{
+		v1alpha1.Kube119: {
+			VersionsBundle: &releasev1alpha1.VersionsBundle{},
+			KubeDistro:     &cluster.KubeDistro{},
+		},
 	}
 	s.Bundles = &releasev1alpha1.Bundles{}
+	s.EKSARelease = EKSARelease()
 
 	for _, opt := range opts {
 		opt(s)
@@ -78,7 +86,8 @@ func NewClusterSpecForConfig(tb testing.TB, config *cluster.Config) *cluster.Spe
 	spec, err := cluster.NewSpec(
 		config,
 		Bundles(tb),
-		EksdRelease(),
+		EksdReleases(),
+		EKSARelease(),
 	)
 	if err != nil {
 		tb.Fatalf("Failed to build cluster spec: %s", err)

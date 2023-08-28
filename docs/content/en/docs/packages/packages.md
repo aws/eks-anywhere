@@ -1,7 +1,7 @@
 ---
 title: "Packages configuration"
 linkTitle: "Packages configuration"
-weight: 14
+weight: 3
 description: >
   Full EKS Anywhere configuration reference for curated packages
 ---

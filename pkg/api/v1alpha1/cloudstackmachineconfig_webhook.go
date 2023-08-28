@@ -58,11 +58,6 @@ func (r *CloudStackMachineConfig) ValidateUpdate(old runtime.Object) error {
 		return nil
 	}
 
-	if oldCloudStackMachineConfig.IsManagement() {
-		cloudstackmachineconfiglog.Info("Machine config is associated with workload cluster", "name", oldCloudStackMachineConfig.Name)
-		return nil
-	}
-
 	// This is only needed for the webhook, which is why it is separate from the Validate method
 	if err := r.ValidateUsers(); err != nil {
 		return apierrors.NewInvalid(GroupVersion.WithKind(CloudStackMachineConfigKind).GroupKind(),
