@@ -8,6 +8,7 @@ import (
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/constants"
 )
 
 func TestValidateConfig(t *testing.T) {
@@ -74,4 +75,53 @@ func TestValidateConfigDifferentNamespace(t *testing.T) {
 	g.Expect(cluster.ValidateConfig(c)).To(
 		MatchError(ContainSubstring("VSphereDatacenterConfig and Cluster objects must have the same namespace specified")),
 	)
+}
+
+func TestValidateTinkerbellConfigDifferentNamespace(t *testing.T) {
+	g := NewWithT(t)
+	tests := []struct {
+		name      string
+		clusterNS string
+		dcNS      string
+		mcNS      string
+		wantErr   string
+	}{
+		{
+			name:      "cluster, datacenter config, machine config in the same namespace",
+			clusterNS: constants.EksaSystemNamespace,
+			dcNS:      constants.EksaSystemNamespace,
+			mcNS:      constants.EksaSystemNamespace,
+			wantErr:   "",
+		},
+		{
+			name:      "datacenter config not at the same namespace",
+			clusterNS: constants.EksaSystemNamespace,
+			dcNS:      "dc-ns",
+			mcNS:      constants.EksaSystemNamespace,
+			wantErr:   "TinkerbellDatacenterConfig and Cluster objects must have the same namespace specified",
+		},
+		{
+			name:      "machine config not at the same namespace",
+			clusterNS: constants.EksaSystemNamespace,
+			dcNS:      constants.EksaSystemNamespace,
+			mcNS:      "mc-ns",
+			wantErr:   "TinkerbellMachineConfig and Cluster objects must have the same namespace specified",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			config := clusterConfigFromFile(t, "testdata/cluster_tinkerbell_1_19.yaml")
+			config.Cluster.Namespace = tt.clusterNS
+			config.TinkerbellDatacenter.Namespace = tt.dcNS
+			for _, mc := range config.TinkerbellMachineConfigs {
+				mc.Namespace = tt.mcNS
+			}
+			if tt.wantErr != "" {
+				g.Expect(cluster.ValidateConfig(config)).To(MatchError(ContainSubstring(tt.wantErr)))
+			} else {
+				g.Expect(cluster.ValidateConfig(config)).To(BeNil())
+			}
+		})
+	}
 }
