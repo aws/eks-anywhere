@@ -405,6 +405,12 @@ func (s *Installer) Upgrade(ctx context.Context, bundle releasev1alpha1.Tinkerbe
 		},
 		hegel: map[string]interface{}{
 			image: bundle.TinkerbellStack.Hegel.URI,
+			env: []map[string]string{
+				{
+					"name":  "HEGEL_TRUSTED_PROXIES",
+					"value": s.podCidrRange,
+				},
+			},
 		},
 		boots: map[string]interface{}{
 			image: bundle.TinkerbellStack.Boots.URI,
