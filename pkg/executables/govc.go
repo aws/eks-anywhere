@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -39,6 +40,8 @@ const (
 	DeployOptsFile       = "deploy-opts.json"
 	disk1                = "Hard disk 1"
 	disk2                = "Hard disk 2"
+	cpuAvailable         = "CPU_Available"
+	memoryAvailable      = "Memory_Available"
 )
 
 var requiredEnvs = []string{govcUsernameKey, govcPasswordKey, govcURLKey, govcInsecure, govcDatacenterKey}
@@ -1145,31 +1148,75 @@ func (g *Govc) SetGroupRoleOnObject(ctx context.Context, principal string, role 
 }
 
 type resourcePoolInfo struct {
-	resourcePoolIdentifier resourcePool
+	resourcePoolIdentifier *resourcePool
 }
 
 type resourcePool struct {
 	CPUUsage    string
 	CPULimit    string
-	MemoryUsage string
-	MemoryLimit string
+	memoryUsage string
+	memoryLimit string
 }
 
 // ResourcePoolInfo returns the pool info for the provided resource pool.
-func (g *Govc) ResourcePoolInfo(ctx context.Context, datacenter, resourcepool string, args ...string) (resourcePool, error) {
-	params := []string{"pool.info", "-dc", datacenter, "-vm", resourcepool, "-json"}
+func (g *Govc) ResourcePoolInfo(ctx context.Context, datacenter, resourcepool string, args ...string) (map[string]int, error) {
+	params := []string{"pool.info", "-dc", datacenter, resourcepool}
 	params = append(params, args...)
 	response, err := g.exec(ctx, params...)
 	if err != nil {
-		return resourcePool{}, fmt.Errorf("getting resource pool information: %v", err)
+		return nil, fmt.Errorf("getting resource pool information: %v", err)
 	}
 	var resourcePoolInfoResponse resourcePoolInfo
 	err = yaml.Unmarshal(response.Bytes(), &resourcePoolInfoResponse)
 	if err != nil {
-		return resourcePool{}, fmt.Errorf("unmarshalling devices info: %v", err)
+		return nil, fmt.Errorf("unmarshalling devices info: %v", err)
 	}
-
-	return resourcePoolInfoResponse.resourcePoolIdentifier, nil
+	poolInfo, err := getPoolInfo(resourcePoolInfoResponse.resourcePoolIdentifier)
+	if err != nil {
+	
+	}
+	return poolInfo, nil
 }
 
-func validateMemoryAnd
+// func validateMemoryAnd
+func getPoolInfo(rp *resourcePool) (map[string]int, error) {
+	CPUUsed, err := getValueFromString(rp.CPUUsage)
+	if err != nil {
+		return nil, fmt.Errorf("Unable to obtain CPU usage for resource pool %s: %v", rp.CPUUsage, err)
+	}
+	CPULimit, err := getValueFromString(rp.CPULimit)
+	if err != nil {
+		return nil, fmt.Errorf("Unable to obtain CPU limit for resource pool %s: %v", rp.CPULimit, err)
+	}
+	memoryUsed, err := getValueFromString(rp.memoryUsage)
+	if err != nil {
+		return nil, fmt.Errorf("Unable to obtain memory usage for resource pool %s: %v", rp.CPULimit, err)
+	}
+	memoryLimit, err := getValueFromString(rp.memoryLimit)
+	if err != nil {
+		return nil, fmt.Errorf("Unable to obtain memory limit for resource pool %s: %v", rp.CPULimit, err)
+	}
+	poolInfo := make(map[string]int)
+	if memoryLimit != -1 {
+		poolInfo[memoryAvailable] = memoryLimit - memoryUsed
+	} else {
+		poolInfo[memoryAvailable] = -1
+	}
+	if CPULimit != -1 {
+		poolInfo[cpuAvailable] = CPULimit - CPUUsed
+	} else {
+		poolInfo[cpuAvailable] = -1
+	}
+	return poolInfo, nil
+}
+
+func getValueFromString(str string) (int, error) {
+	splitResponse := strings.Split(str, " ")
+	nonNumericRegex := regexp.MustCompile(`[^0-9- ]+`)
+	cleanedString := nonNumericRegex.ReplaceAllString(splitResponse[0], "")
+	numValue, err := strconv.Atoi(cleanedString)
+	if err != nil {
+		return 0, err
+	}
+	return numValue, nil
+}
