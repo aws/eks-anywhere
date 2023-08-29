@@ -173,7 +173,7 @@ Set the remaining fields in cluster spec as required and create the cluster usin
     kubectl apply -f my-service-account.yaml
     ```
 
-1. You can validate IRSA by using test steps mentioned [here](https://anywhere.eks.amazonaws.com/docs/workshops/packages/adot/adot_amp_amg/#irsa-set-up-test). Ensure awscli pod is deployed in same namespace of ServiceAccount `pod-identity-webhook.``
+1. You can validate IRSA by using test steps mentioned [here](https://anywhere.eks.amazonaws.com/docs/workshops/packages/adot/adot_amp_amg/#irsa-set-up-test). Ensure awscli pod is deployed in same namespace of ServiceAccount `pod-identity-webhook`.
 
 
 ### Configure the trust relationship for the OIDC provider's IAM Role
