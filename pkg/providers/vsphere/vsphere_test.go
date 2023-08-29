@@ -2332,7 +2332,8 @@ func TestSetupAndValidateCreateClusterFullCloneDiskGiBLessThan20TemplateDiskSize
 
 	tt.govc.EXPECT().GetVMDiskSizeInGB(tt.ctx, template, tt.clusterSpec.VSphereDatacenter.Spec.Datacenter)
 	tt.govc.EXPECT().TemplateHasSnapshot(tt.ctx, template).Return(false, nil)
-	tt.govc.EXPECT().SearchTemplate(tt.ctx, tt.datacenterConfig.Spec.Datacenter, template).Return(template, nil)
+	tt.govc.EXPECT().SearchTemplate(tt.ctx, tt.datacenterConfig.Spec.Datacenter, template).Return(template, nil).Times(2) // One for defaults and another time for template validation
+	tt.govc.EXPECT().GetTags(tt.ctx, template).Return([]string{"eksdRelease:kubernetes-1-21-eks-4", "os:ubuntu"}, nil)
 	tt.govc.EXPECT().ListTags(tt.ctx)
 	tt.govc.EXPECT().GetWorkloadAvailableSpace(tt.ctx, tt.clusterSpec.VSphereMachineConfigs[controlPlaneMachineConfigName].Spec.Datastore).Return(100.0, nil)
 	tt.ipValidator.EXPECT().ValidateControlPlaneIPUniqueness(tt.cluster)
