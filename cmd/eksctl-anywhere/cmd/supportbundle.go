@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"time"
@@ -13,12 +14,14 @@ import (
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/diagnostics"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
+	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/version"
 )
 
 type createSupportBundleOptions struct {
 	fileName              string
 	wConfig               string
+	clusterKubeconfig     string
 	since                 string
 	sinceTime             string
 	bundleConfig          string
@@ -41,6 +44,10 @@ var supportbundleCmd = &cobra.Command{
 		if err := csbo.createBundle(cmd.Context(), csbo.since, csbo.sinceTime, csbo.bundleConfig); err != nil {
 			return fmt.Errorf("failed to create support bundle: %v", err)
 		}
+		if uc.wConfig != "" {
+			logger.MarkFail(wConfigDeprecationMessage)
+			return errors.New("please remove the --w-config flag and use --kubeconfig instead")
+		}
 		return nil
 	},
 }
@@ -51,8 +58,13 @@ func init() {
 	supportbundleCmd.Flags().StringVarP(&csbo.since, "since", "", "", "Collect pod logs in the latest duration like 5s, 2m, or 3h.")
 	supportbundleCmd.Flags().StringVarP(&csbo.bundleConfig, "bundle-config", "", "", "Bundle Config file to use when generating support bundle")
 	supportbundleCmd.Flags().StringVarP(&csbo.fileName, "filename", "f", "", "Filename that contains EKS-A cluster configuration")
-	supportbundleCmd.Flags().StringVarP(&csbo.wConfig, "w-config", "w", "", "Kubeconfig file to use when creating support bundle for a workload cluster")
-	err := supportbundleCmd.MarkFlagRequired("filename")
+	supportbundleCmd.Flags().StringVarP(&csbo.wConfig, "w-config", "w", "", "Kubeconfig file pointing to a cluster")
+	err := supportbundleCmd.Flags().MarkDeprecated("w-config", "please use flag --kubeconfig.")
+	if err != nil {
+		log.Fatalf("Error deprecating flag as required: %v", err)
+	}
+	supportbundleCmd.Flags().StringVarP(&csbo.clusterKubeconfig, "kubeconfig", "", "", "Cluster kubeconfig file")
+	err = supportbundleCmd.MarkFlagRequired("filename")
 	if err != nil {
 		log.Fatalf("Error marking flag as required: %v", err)
 	}
@@ -97,7 +109,7 @@ func (csbo *createSupportBundleOptions) createBundle(ctx context.Context, since,
 	}
 	defer close(ctx, deps)
 
-	supportBundle, err := deps.DignosticCollectorFactory.DiagnosticBundle(clusterSpec, deps.Provider, getKubeconfigPath(clusterSpec.Cluster.Name, csbo.wConfig), bundleConfig)
+	supportBundle, err := deps.DignosticCollectorFactory.DiagnosticBundle(clusterSpec, deps.Provider, getKubeconfigPath(clusterSpec.Cluster.Name, csbo.clusterKubeconfig), bundleConfig)
 	if err != nil {
 		return fmt.Errorf("failed to parse collector: %v", err)
 	}
