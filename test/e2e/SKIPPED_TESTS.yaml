@@ -140,3 +140,14 @@ skipped_tests:
 - TestTinkerbellKubernetes123BottleRocketCuratedPackagesPrometheusSimpleFlow
 # Conformance
 - TestSnowKubernetes123ThreeWorkersConformanceFlow
+
+# Docker Upgrade from latest minor release tests
+# Skipped because upgrading from 0.16 to 0.17 is broken for docker due to a bug upgrading cilium
+- TestDockerKubernetes124UpgradeFromLatestMinorRelease
+- TestDockerKubernetes126to127UpgradeFromLatestMinorRelease
+- TestDockerKubernetes126to127GithubFluxEnabledUpgradeFromLatestMinorRelease
+- TestDockerKubernetes123to124UpgradeFromLatestMinorRelease
+- TestDockerKubernetes124to125UpgradeFromLatestMinorRelease
+- TestDockerKubernetes125to126UpgradeFromLatestMinorRelease
+- TestDockerKubernetes126WithOIDCManagementClusterUpgradeFromLatestSideEffects
+- TestDockerKubernetes123to124UpgradeFromLatestMinorReleaseAPI
