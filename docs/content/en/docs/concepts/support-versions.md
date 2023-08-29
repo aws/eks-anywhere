@@ -56,7 +56,7 @@ The following table notes which EKS Anywhere and related Kubernetes versions are
 
 Each EKS Anywhere version installs a suite of componenets when provisioning your clusters. The versions of these components are specified in an EKS Anywhere versions bundle.
 
-You may find a map of EKS Anywhere releases in the release manifest located [here](https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml). It contains references to the corresponding bundle manifest for each EKS Anywhere version.
+You may find a map of EKS Anywhere releases in the release manifest located in the [manifest.yaml](https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml) file. It contains references to the corresponding bundle manifest for each EKS Anywhere version.
 
 Within the bundle manifest files, you will find the components that will be used to provision your cluster along with their versions. The images running in your cluster would use the same uri values specified in this bundles for that component.
 
@@ -82,7 +82,7 @@ These are supported operating system versions that EKS Anywhere may use to provi
 |               | 1.3.0     | 0.6
 | RHEL          | 8.7	      | 0.17, 0.16, 0.15, 0.13, 0.14, 0.13, 0.12
 
-For details on supported operating systems for Admin machines, [see the install guide]({{< relref "../getting-started/install/" >}})
+For details on supported operating systems for Admin machines, [see the install guide.]({{< relref "../getting-started/install/" >}})
 
 ## EKS Anywhere version support FAQs
 
