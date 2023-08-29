@@ -186,6 +186,15 @@ func (v *Validator) validateControlPlaneIp(ip string) error {
 
 func (v *Validator) validateTemplates(ctx context.Context, spec *Spec) error {
 	tagsForTemplates := make(map[string][]string)
+	rootVersionsBundle := spec.RootVersionsBundle()
+	for _, m := range sliceIfNotNil(spec.controlPlaneMachineConfig(), spec.etcdMachineConfig()) {
+		currentTags := tagsForTemplates[m.Spec.Template]
+		tagsForTemplates[m.Spec.Template] = append(
+			currentTags,
+			requiredTemplateTags(m, rootVersionsBundle)...,
+		)
+	}
+
 	for _, w := range spec.Cluster.Spec.WorkerNodeGroupConfigurations {
 		machineConfig := spec.VSphereMachineConfigs[w.MachineGroupRef.Name]
 		versionsBundle := spec.WorkerNodeGroupVersionsBundle(w)
@@ -600,4 +609,15 @@ func (v *Validator) validateUpgradeRolloutStrategy(clusterSpec *cluster.Spec) er
 		}
 	}
 	return nil
+}
+
+func sliceIfNotNil(machines ...*anywherev1.VSphereMachineConfig) []*anywherev1.VSphereMachineConfig {
+	var notNil []*anywherev1.VSphereMachineConfig
+	for _, m := range machines {
+		if m != nil {
+			notNil = append(notNil, m)
+		}
+	}
+
+	return notNil
 }
