@@ -5,7 +5,7 @@ weight: 20
 aliases:
     /docs/reference/clusterspec/optional/irsa/
 description: >
-  EKS Anywhere cluster spec for Pod IAM (IRSA)
+  EKS Anywhere cluster spec for IAM Roles for Service Accounts (IRSA)
 ---
 
 ### IAM Role for Service Account on EKS Anywhere clusters with self-hosted signing keys
@@ -16,7 +16,9 @@ The steps below are based on the [guide for configuring IRSA for DIY Kubernetes,
 
 ### Create an OIDC provider and make its discovery document publicly accessible
 
-1. Create an s3 bucket to host the public signing keys and OIDC discovery document for your cluster as per [this section.](https://github.com/aws/amazon-eks-pod-identity-webhook/blob/master/SELF_HOSTED_SETUP.md#create-an-s3-bucket) Ensure you follow all the steps and save the `$HOSTNAME` and `$ISSUER_HOSTPATH`.
+You must use a single OIDC provider per EKS Anywhere cluster, which is the best practice to prevent a token from one cluster being useable with the API server of another cluster. These steps describe the process of using an S3 bucket to host the OIDC discovery and keys JSON documents. You do not have to use S3, as the primary requirement is that AWS STS can access the OIDC documents. If you do use S3, you can have a single bucket or multiple buckets to host the OIDC documents. If you use a single bucket, you can host the OIDC documents in separate paths within the bucket, which can then be used for the `ISSUER_HOSTPATH` in the discovery document for each OIDC provider.
+
+1. Create an S3 bucket to host the public signing keys and OIDC discovery document for your cluster as per [this section.](https://github.com/aws/amazon-eks-pod-identity-webhook/blob/master/SELF_HOSTED_SETUP.md#create-an-s3-bucket) Ensure you follow all the steps and save the `$HOSTNAME` and `$ISSUER_HOSTPATH`.
 
 1. Create the OIDC discovery document as follows:
 
@@ -159,7 +161,7 @@ Set the remaining fields in cluster spec as required and create the cluster usin
         eks.amazonaws.com/token-expiration: "86400"
     ```
 
-1. Run the following command to apply the manifests for the amazon-eks-pod-identity-webhook. The image used here will be pulled from docker.io. Optionally, the image can be imported into (or proxied through) your private registry. Change the IMAGE= argument here to your private registry if needed.
+1. Run the following command to apply the manifests for the `amazon-eks-pod-identity-webhook`. The image used here will be pulled from docker.io. Optionally, the image can be imported into (or proxied through) your private registry. Change the `IMAGE` argument here to your private registry if needed.
 
     ```bash
     make cluster-up IMAGE=amazon/amazon-eks-pod-identity-webhook:latest
@@ -171,7 +173,7 @@ Set the remaining fields in cluster spec as required and create the cluster usin
     kubectl apply -f my-service-account.yaml
     ```
 
-1. You can validate IRSA by using test steps mentioned [here](https://anywhere.eks.amazonaws.com/docs/workshops/packages/adot/adot_amp_amg/#irsa-set-up-test). Ensure awscli pod is deployed in same namespace of ServiceAccount pod-identity-webhook.
+1. You can validate IRSA by using test steps mentioned [here](https://anywhere.eks.amazonaws.com/docs/workshops/packages/adot/adot_amp_amg/#irsa-set-up-test). Ensure awscli pod is deployed in same namespace of ServiceAccount `pod-identity-webhook.``
 
 
 ### Configure the trust relationship for the OIDC provider's IAM Role
