@@ -1378,7 +1378,7 @@ func TestClusterReconcilerPackagesInstall(s *testing.T) {
 }
 
 func TestClusterReconcilerValidateManagementEksaVersionFail(t *testing.T) {
-	lower := anywherev1.EksaVersion("v0.1.0")
+	lower := anywherev1.EksaVersion("v0.0.0")
 	higher := anywherev1.EksaVersion("v0.5.0")
 	config, _ := baseTestVsphereCluster()
 	config.Cluster.Name = "test-cluster"

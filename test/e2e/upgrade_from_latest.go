@@ -103,7 +103,8 @@ func runMulticlusterUpgradeFromReleaseFlowAPI(test *framework.MulticlusterE2ETes
 	test.RunConcurrentlyInWorkloadClusters(func(wc *framework.WorkloadCluster) {
 		wc.UpdateClusterConfig(
 			api.ClusterToConfigFiller(
-				api.WithEksaVersion(oldCluster.Spec.EksaVersion),
+				api.WithBundlesRef(oldCluster.Spec.BundlesRef.Name, oldCluster.Spec.BundlesRef.Namespace, oldCluster.Spec.BundlesRef.APIVersion),
+				api.WithEksaVersion(nil),
 			),
 		)
 		wc.ApplyClusterManifest()
@@ -154,7 +155,7 @@ func runMulticlusterUpgradeFromReleaseFlowAPIWithFlux(test *framework.Multiclust
 	test.RunConcurrentlyInWorkloadClusters(func(wc *framework.WorkloadCluster) {
 		test.PushWorkloadClusterToGit(wc,
 			api.ClusterToConfigFiller(
-				api.WithEksaVersion(oldCluster.Spec.EksaVersion),
+				api.WithBundlesRef(oldCluster.Spec.BundlesRef.Name, oldCluster.Spec.BundlesRef.Namespace, oldCluster.Spec.BundlesRef.APIVersion),
 				api.WithEksaVersion(nil),
 			),
 		)
