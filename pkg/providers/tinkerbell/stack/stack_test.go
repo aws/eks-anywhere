@@ -83,7 +83,7 @@ func assertYamlFilesEqual(t *testing.T, wantYamlPath, gotYamlPath string) {
 func unmarshalYamlToObject(t *testing.T, filepath string) map[string]interface{} {
 	unmarshaledObject := make(map[string]interface{})
 	bytes := test.ReadFileAsBytes(t, filepath)
-	if err := yaml.Unmarshal(bytes, unmarshaledObject); err != nil {
+	if err := yaml.Unmarshal(bytes, &unmarshaledObject); err != nil {
 		t.Fatalf("failed to unmarshal %s: %v", filepath, err)
 	}
 
@@ -349,19 +349,18 @@ func TestTinkerbellStackCheckLocalBootsExistenceDockerError(t *testing.T) {
 }
 
 func TestUpgrade(t *testing.T) {
-	var (
-		mockCtrl       = gomock.NewController(t)
-		docker         = mocks.NewMockDocker(mockCtrl)
-		helm           = mocks.NewMockHelm(mockCtrl)
-		folder, writer = test.NewWriter(t)
+	mockCtrl := gomock.NewController(t)
+	docker := mocks.NewMockDocker(mockCtrl)
+	helm := mocks.NewMockHelm(mockCtrl)
 
-		valuesFile = filepath.Join(folder, "generated", overridesFileName)
-		cluster    = &types.Cluster{Name: "test"}
-		ctx        = context.Background()
-	)
+	folder, writer := test.NewWriter(t)
+	valuesFile := filepath.Join(folder, "generated", overridesFileName)
+	cluster := &types.Cluster{Name: "test"}
+	ctx := context.Background()
 
-	helm.EXPECT().UpgradeChartWithValuesFile(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any())
-
+	helm.EXPECT().
+		UpgradeChartWithValuesFile(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+			gomock.Any(), gomock.Any(), gomock.Any())
 	s := stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace, "192.168.0.0/16", nil, nil)
 
 	err := s.Upgrade(ctx, getTinkBundle(), testIP, cluster.KubeconfigFile, "")
@@ -451,5 +450,5 @@ func TestUpgradeWithProxy(t *testing.T) {
 	err := s.Upgrade(ctx, getTinkBundle(), testIP, cluster.KubeconfigFile, "https://my-local-web-server/hook")
 	assert.NoError(t, err)
 
-	assertYamlFilesEqual(t, "testdata/expected_upgrade.yaml", valuesFile)
+	assertYamlFilesEqual(t, "testdata/expected_upgrade_with_proxy.yaml", valuesFile)
 }

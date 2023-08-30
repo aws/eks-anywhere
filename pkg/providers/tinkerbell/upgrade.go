@@ -13,7 +13,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
-	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/rufiounreleased"
 	"github.com/aws/eks-anywhere/pkg/types"
@@ -368,13 +367,17 @@ func (p *Provider) PreCoreComponentsUpgrade(
 ) error {
 	// When a workload cluster the cluster object could be nil. Noop if it is.
 	if cluster == nil {
-		logger.V(4).Info("Cluster object is nil, assuming it is a workload cluster with no " +
-			"Tinkerbell stack to upgrade")
 		return nil
 	}
 
 	if clusterSpec == nil {
 		return errors.New("cluster spec is nil")
+	}
+
+	// PreCoreComponentsUpgrade can be called for workload clusters. Ensure we only attempt to
+	// upgrade the stack if we're upgrading a management cluster.
+	if clusterSpec.Cluster.IsManaged() {
+		return nil
 	}
 
 	versionsBundle := clusterSpec.ControlPlaneVersionsBundle()

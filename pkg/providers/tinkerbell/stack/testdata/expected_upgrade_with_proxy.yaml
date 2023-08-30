@@ -1,8 +1,7 @@
 boots:
   args:
   - -dhcp-addr=0.0.0.0:67
-  - -osie-path-override=https://anywhere-assests.eks.amazonaws.com/tinkerbell/hook
-  deploy: true
+  - -osie-path-override=https://my-local-web-server/hook
   env:
   - name: DATA_MODEL_VERSION
     value: kubernetes
@@ -11,22 +10,18 @@ boots:
   - name: TINKERBELL_GRPC_AUTHORITY
     value: 1.2.3.4:42113
   - name: BOOTS_EXTRA_KERNEL_ARGS
-    value: tink_worker_image=public.ecr.aws/eks-anywhere/tink-worker:latest
+    value: tink_worker_image=public.ecr.aws/eks-anywhere/tink-worker:latest HTTP_PROXY=1.2.3.4
+      HTTPS_PROXY=1.2.3.4 NO_PROXY=localhost,.svc
   image: public.ecr.aws/eks-anywhere/boots:latest
-createNamespace: true
+createNamespace: false
 envoy:
-  deploy: false
-  externalIp: 1.2.3.4
   image: public.ecr.aws/eks-anywhere/envoy:latest
 hegel:
   env:
   - name: HEGEL_TRUSTED_PROXIES
     value: 192.168.0.0/16
   image: public.ecr.aws/eks-anywhere/hegel:latest
-  port:
-    hostPortEnabled: false
 kubevip:
-  deploy: false
   image: public.ecr.aws/eks-anywhere/kube-vip:latest
 namespace: eksa-system
 rufio:
@@ -36,5 +31,3 @@ tinkController:
 tinkServer:
   args: []
   image: public.ecr.aws/eks-anywhere/tink-server:latest
-  port:
-    hostPortEnabled: false
