@@ -59,7 +59,7 @@ https://github.com/docker/cli
 ** github.com/docker/distribution; version v2.8.2+incompatible --
 https://github.com/distribution/distribution
 
-** github.com/docker/docker; version v23.0.2+incompatible --
+** github.com/docker/docker; version v23.0.3+incompatible --
 https://github.com/moby/moby
 
 ** github.com/docker/go-connections; version v0.4.0 --
