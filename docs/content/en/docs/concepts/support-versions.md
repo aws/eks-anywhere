@@ -10,7 +10,6 @@ description: >
 
 To see supported versions of Kubernetes for each release of EKS Anywhere, and information about that support, refer to the content below.
 
-
 ## Kubernetes support
 
 Each EKS Anywhere version generally includes support for multiple Kubernetes versions, with the exception of the initial few releases.
@@ -52,6 +51,38 @@ The following table notes which EKS Anywhere and related Kubernetes versions are
 | 0.5 | 1.21, 1.20                   | September 8, 2021 | No | 
 
 * [Amazon EKS Anywhere Enterprise subscription](https://aws.amazon.com/eks/eks-anywhere/pricing/) is required to receive AWS support on any Amazon EKS Anywhere clusters.
+
+## EKS Anywhere versions and bundles
+
+Each EKS Anywhere version installs a suite of componenets when provisioning your clusters. The versions of these components are specified in an EKS Anywhere versions bundle.
+
+You may find a map of EKS Anywhere releases in the release manifest located in the [manifest.yaml](https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml) file. It contains references to the corresponding bundle manifest for each EKS Anywhere version.
+
+Within the bundle manifest files, you will find the components that will be used to provision your cluster along with their versions. The images running in your cluster would use the same uri values specified in this bundles for that component.
+
+For example, see the corresponding [bundle manifest](https://anywhere-assets.eks.amazonaws.com/releases/bundles/45/manifest.yaml) for EKS Anywhere v0.17.0.
+
+## EKS Anywhere supported OS version
+
+These are supported operating system versions that EKS Anywhere may use to provision control plane and worker nodes. For specifics on support OS for each provider, see the [configuration guide]({{< relref "../getting-started/" >}}) for your chosen provider.
+
+
+| OS         | OS Versions                  | Supported EKS Anywhere version  |
+|------------|------------------------------|---------------------------------|
+| Ubuntu        | 22.04     | 0.17
+|               | 20.04     | 0.17, 0.16, 0.15, 0.14, 0.13, 0.12, 0.11, 0.10, 0.9, 0.8, 0.7, 0.6, 0.5
+| Bottlerocket  | 1.13.1    | 0.17, 0.16, 0.15
+|               | 1.12.0    | 0.14
+|               | 1.10.1    | 0.12
+|               | 1.9.2     | 0.11
+|               | 1.8.0     | 0.10
+|               | 1.7.2     | 0.9
+|               | 1.6.2     | 0.8
+|               | 1.6.0     | 0.7
+|               | 1.3.0     | 0.6
+| RHEL          | 8.7	      | 0.17, 0.16, 0.15, 0.13, 0.14, 0.13, 0.12
+
+For details on supported operating systems for Admin machines, [see the install guide.]({{< relref "../getting-started/install/" >}})
 
 ## EKS Anywhere version support FAQs
 
