@@ -4,6 +4,8 @@ boots:
   - -osie-path-override=https://anywhere-assests.eks.amazonaws.com/tinkerbell/hook
   deploy: true
   env:
+  - name: DATA_MODEL_VERSION
+    value: kubernetes
   - name: TINKERBELL_TLS
     value: "false"
   - name: TINKERBELL_GRPC_AUTHORITY
@@ -14,8 +16,6 @@ boots:
     value: password
   - name: BOOTS_EXTRA_KERNEL_ARGS
     value: tink_worker_image=1.2.3.4:443/custom/eks-anywhere/tink-worker:latest insecure_registries=1.2.3.4:443
-  - name: DATA_MODEL_VERSION
-    value: kubernetes
   image: public.ecr.aws/eks-anywhere/boots:latest
 createNamespace: false
 envoy:
@@ -38,8 +38,7 @@ rufio:
 tinkController:
   image: public.ecr.aws/eks-anywhere/tink-controller:latest
 tinkServer:
-  args:
-  - --tls=false
+  args: []
   image: public.ecr.aws/eks-anywhere/tink-server:latest
   port:
     hostPortEnabled: false
