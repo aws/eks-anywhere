@@ -99,6 +99,8 @@ spec:
                 # When there is no worker node, make kube-vip in control-plane nodes watch
               - name: svc_enable
                 value: "true"
+              - name: svc_election
+                value: "true"
               image: public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.581
               imagePullPolicy: IfNotPresent
               name: kube-vip
