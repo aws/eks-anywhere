@@ -12,6 +12,7 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/collection"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/rufiounreleased"
@@ -227,13 +228,15 @@ func (p *Provider) RunPostControlPlaneUpgrade(ctx context.Context, oldClusterSpe
 	return nil
 }
 
+// ValidateNewSpec satisfies the Provider interface.
 func (p *Provider) ValidateNewSpec(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
 	prevSpec, err := p.providerKubectlClient.GetEksaCluster(ctx, cluster, clusterSpec.Cluster.Name)
 	if err != nil {
 		return err
 	}
 
-	prevDatacenterConfig, err := p.providerKubectlClient.GetEksaTinkerbellDatacenterConfig(ctx, prevSpec.Spec.DatacenterRef.Name, cluster.KubeconfigFile, prevSpec.Namespace)
+	prevDatacenterConfig, err := p.providerKubectlClient.GetEksaTinkerbellDatacenterConfig(ctx,
+		prevSpec.Spec.DatacenterRef.Name, cluster.KubeconfigFile, prevSpec.Namespace)
 	if err != nil {
 		return err
 	}
@@ -243,18 +246,35 @@ func (p *Provider) ValidateNewSpec(ctx context.Context, cluster *types.Cluster, 
 
 	prevMachineConfigRefs := machineRefSliceToMap(prevSpec.MachineConfigRefs())
 
+	desiredWorkerNodeGroups := clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations
+	currentWorkerNodeGroups := collection.ToMap(prevSpec.Spec.WorkerNodeGroupConfigurations,
+		func(v v1alpha1.WorkerNodeGroupConfiguration) string { return v.Name })
+
+	// Gather machine config references for new worker node groups so we can avoid immutability
+	// checks.
+	newWorkerNodeGroupsRefs := collection.NewSet[string]()
+	for _, wng := range desiredWorkerNodeGroups {
+		if _, exists := currentWorkerNodeGroups[wng.Name]; !exists {
+			newWorkerNodeGroupsRefs.Add(wng.MachineGroupRef.Name)
+		}
+	}
+
 	for _, machineConfigRef := range clusterSpec.Cluster.MachineConfigRefs() {
 		machineConfig, ok := p.machineConfigs[machineConfigRef.Name]
 		if !ok {
 			return fmt.Errorf("cannot find machine config %s in tinkerbell provider machine configs", machineConfigRef.Name)
 		}
 
-		if _, ok = prevMachineConfigRefs[machineConfig.Name]; !ok {
-			return fmt.Errorf("cannot add or remove MachineConfigs as part of upgrade")
-		}
-		err = p.validateMachineConfigImmutability(ctx, cluster, machineConfig, clusterSpec)
-		if err != nil {
-			return err
+		// If the machien config reference is for a new worker node group don't bother with
+		// immutability checks as we want users to be able to add worker node groups.
+		if !newWorkerNodeGroupsRefs.Contains(machineConfigRef.Name) {
+			if _, ok = prevMachineConfigRefs[machineConfig.Name]; !ok {
+				return fmt.Errorf("cannot add or remove MachineConfigs as part of upgrade")
+			}
+			err = p.validateMachineConfigImmutability(ctx, cluster, machineConfig, clusterSpec)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
