@@ -45,7 +45,7 @@ var upgradeClusterCmd = &cobra.Command{
 		}
 		if uc.wConfig != "" {
 			logger.MarkFail(wConfigDeprecationMessage)
-			return errors.New("please remove the --w-config flag and use --kubeconfig instead")
+			return errors.New("--w-config is deprecated. Use --kubeconfig instead")
 		}
 
 		if err := uc.upgradeCluster(cmd); err != nil {
@@ -61,7 +61,7 @@ func init() {
 	applyTimeoutFlags(upgradeClusterCmd.Flags(), &uc.timeoutOptions)
 	applyTinkerbellHardwareFlag(upgradeClusterCmd.Flags(), &uc.hardwareCSVPath)
 	upgradeClusterCmd.Flags().StringVarP(&uc.wConfig, "w-config", "w", "", "Kubeconfig file to use when upgrading a workload cluster")
-	err := upgradeClusterCmd.Flags().MarkDeprecated("w-config", "please use flag --kubeconfig instead. This operation is not ")
+	err := upgradeClusterCmd.Flags().MarkDeprecated("w-config", "please use flag --kubeconfig instead.")
 	if err != nil {
 		log.Fatalf("Error deprecating flag as required: %v", err)
 	}

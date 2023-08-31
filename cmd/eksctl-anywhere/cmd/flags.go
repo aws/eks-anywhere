@@ -22,7 +22,7 @@ const (
 https://anywhere.eks.amazonaws.com/docs/troubleshooting/troubleshooting/#cluster-upgrade-fails-with-management-components-on-bootstrap-cluster`
 	forceCleanupDeprecationMessageForCreateDelete = `The flag --force-cleanup has been removed. For more information on how to troubleshoot existing bootstrap clusters, please refer to the documentation:
 https://anywhere.eks.amazonaws.com/docs/troubleshooting/troubleshooting/#bootstrap-cluster-fails-to-come-up-nodes-already-exist-for-a-cluster-with-the-name`
-	wConfigDeprecationMessage = `The flag --w-config has been deprecated. Please flag --kubeconfig instead.`
+	wConfigDeprecationMessage = `The flag --w-config has been deprecated. Please use flag --kubeconfig instead.`
 )
 
 func bindFlagsToViper(cmd *cobra.Command, args []string) error {

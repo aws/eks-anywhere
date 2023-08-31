@@ -41,7 +41,7 @@ var deleteClusterCmd = &cobra.Command{
 		}
 		if uc.wConfig != "" {
 			logger.MarkFail(wConfigDeprecationMessage)
-			return errors.New("please remove the --w-config flag and use --kubeconfig instead")
+			return errors.New("--w-config is deprecated. Use --kubeconfig instead")
 		}
 		return nil
 	},
