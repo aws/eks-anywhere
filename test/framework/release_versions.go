@@ -62,16 +62,16 @@ func GetPreviousMinorReleaseFromTestBranch() (*releasev1alpha1.EksARelease, erro
 	// For release branch just return the latest minor release
 	if testBranch != "main" {
 		return latestMinorRelease, nil
-	} else {
-		semLatestMinorRelease, err := semver.New(latestMinorRelease.Version)
-		if err != nil {
-			return nil, err
-		}
-		prevLatestMinorRelease, err = GetPreviousMinorReleaseFromVersion(semLatestMinorRelease)
-		if err != nil {
-			return nil, err
-		}
 	}
+	semLatestMinorRelease, err := semver.New(latestMinorRelease.Version)
+	if err != nil {
+		return nil, err
+	}
+	prevLatestMinorRelease, err = GetPreviousMinorReleaseFromVersion(semLatestMinorRelease)
+	if err != nil {
+		return nil, err
+	}
+
 	return prevLatestMinorRelease, nil
 }
 
