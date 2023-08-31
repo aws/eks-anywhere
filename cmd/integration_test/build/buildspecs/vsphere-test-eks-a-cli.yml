@@ -13,6 +13,7 @@ env:
     T_VSPHERE_TEMPLATE_UBUNTU_1_25: "/SDDC-Datacenter/vm/Templates/ubuntu-kube-v1-25"
     T_VSPHERE_TEMPLATE_UBUNTU_1_26: "/SDDC-Datacenter/vm/Templates/ubuntu-kube-v1-26"
     T_VSPHERE_TEMPLATE_UBUNTU_1_27: "/SDDC-Datacenter/vm/Templates/ubuntu-kube-v1-27"
+    T_VSPHERE_TEMPLATE_UBUNTU_1_28: "/SDDC-Datacenter/vm/Templates/ubuntu-kube-v1-28"
     T_VSPHERE_TEMPLATE_UBUNTU_2204_1_23: "/SDDC-Datacenter/vm/Templates/ubuntu-2204-kube-v1-23"
     T_VSPHERE_TEMPLATE_UBUNTU_2204_1_24: "/SDDC-Datacenter/vm/Templates/ubuntu-2204-kube-v1-24"
     T_VSPHERE_TEMPLATE_UBUNTU_2204_1_25: "/SDDC-Datacenter/vm/Templates/ubuntu-2204-kube-v1-25"
