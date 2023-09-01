@@ -15,6 +15,23 @@ Please upgrade to `v0.15.3` if you are using Tinkerbell (Bare Metal) provider.
 * When upgrading to a new minor version, a new OS image must be created using the new image-builder cli.
 {{% /alert %}}
 
+## [v0.17.1](https://github.com/aws/eks-anywhere/releases/tag/v0.17.1)
+
+### Supported OS version details
+|              | vSphere | Bare Metal |  Nutanix | CloudStack | Snow  |
+|    :---:     |  :---:  |   :---:   |   :---:  |    :---:   | :---: |
+| Ubuntu       | 20.04	 | 20.04     |	20.04             | Not supported	     | 20.04 |  
+|              | 22.04   | 22.04     |  22.04             | Not supported      | Not supported   |
+| Bottlerocket | 1.13.1  | 1.13.1    |  Not supported     | Not supported	     | Not supported   |
+| RHEL         | 8.7	   | 8.7	     |  Not supported     | 8.7	               | Not supported   |
+
+
+### Fixed
+- Fix worker node groups being rolled when labels adjusted [#6330](https://github.com/aws/eks-anywhere/issues/6330)
+- Fix worker node groups being rolled out when taints are changes [#6482](https://github.com/aws/eks-anywhere/issues/6481)
+- Fix vSphere template tags validation to run on the control plane and etcd `VSpherMachinesConfig` [#6591](https://github.com/aws/eks-anywhere/pull/6591)
+- Fix Bare Metal upgrade with custom pod CIDR [#6442](https://github.com/aws/eks-anywhere/issues/6442)
+
 ## [v0.17.0](https://github.com/aws/eks-anywhere/releases/tag/v0.17.0)
 
 ### Supported OS version details
