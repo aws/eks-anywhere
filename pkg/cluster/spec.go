@@ -22,7 +22,7 @@ type Spec struct {
 }
 
 func (s *Spec) DeepCopy() *Spec {
-	return &Spec{
+	ns := &Spec{
 		Config:          s.Config.DeepCopy(),
 		OIDCConfig:      s.OIDCConfig.DeepCopy(),
 		AWSIamConfig:    s.AWSIamConfig.DeepCopy(),
@@ -30,6 +30,12 @@ func (s *Spec) DeepCopy() *Spec {
 		VersionsBundles: deepCopyVersionsBundles(s.VersionsBundles),
 		EKSARelease:     s.EKSARelease.DeepCopy(),
 	}
+
+	if s.ManagementCluster != nil {
+		ns.ManagementCluster = s.ManagementCluster.DeepCopy()
+	}
+
+	return ns
 }
 
 type VersionsBundle struct {
