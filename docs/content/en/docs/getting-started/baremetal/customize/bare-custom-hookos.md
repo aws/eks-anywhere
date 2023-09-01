@@ -178,7 +178,7 @@ For more information on Tinkerbell’s Hook Installation Environment, see the [T
 1. Start a local registry:
 
     ```bash
-    docker run -d -p 5000:5000 -—name registry registry:2
+    docker run -d -p 5000:5000 --name registry registry:2
     ```
 
 1. Compile by running the following in the root of the repo:
