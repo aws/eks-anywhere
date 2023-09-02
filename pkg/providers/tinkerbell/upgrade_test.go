@@ -26,6 +26,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/stack"
 	stackmocks "github.com/aws/eks-anywhere/pkg/providers/tinkerbell/stack/mocks"
 	"github.com/aws/eks-anywhere/pkg/types"
+	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 	"github.com/aws/eks-anywhere/pkg/utils/yaml"
 )
 
@@ -725,4 +726,166 @@ func TestProviderSetupAndValidateManagementProxyError(t *testing.T) {
 
 	err := provider.SetupAndValidateUpgradeCluster(ctx, clusterSpec.ManagementCluster, clusterSpec, clusterSpec)
 	assertError(t, "error getting management cluster data", err)
+}
+
+func TestProvider_ValidateNewSpec_NoChanges(t *testing.T) {
+	clusterSpecManifest := "cluster_tinkerbell_stacked_etcd.yaml"
+	mockCtrl := gomock.NewController(t)
+	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
+	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
+	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
+	docker := stackmocks.NewMockDocker(mockCtrl)
+	helm := stackmocks.NewMockHelm(mockCtrl)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	stackInstaller := stackmocks.NewMockStackInstaller(mockCtrl)
+	writer := filewritermocks.NewMockFileWriter(mockCtrl)
+	ctx := context.Background()
+
+	cluster := &types.Cluster{Name: "test", KubeconfigFile: "kubeconfig-file"}
+	clusterSpec.ManagementCluster = cluster
+
+	provider := newTinkerbellProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer,
+		docker, helm, kubectl)
+	provider.stackInstaller = stackInstaller
+
+	kubectl.EXPECT().
+		GetEksaCluster(ctx, clusterSpec.ManagementCluster, clusterSpec.Cluster.Spec.ManagementCluster.Name).
+		Return(clusterSpec.Cluster, nil)
+	kubectl.EXPECT().
+		GetEksaTinkerbellDatacenterConfig(ctx, clusterSpec.Cluster.Spec.DatacenterRef.Name,
+			cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).
+		Return(datacenterConfig, nil)
+
+	for _, v := range machineConfigs {
+		kubectl.EXPECT().
+			GetEksaTinkerbellMachineConfig(ctx, v.Name, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).
+			Return(v, nil)
+	}
+
+	err := provider.ValidateNewSpec(ctx, clusterSpec.ManagementCluster, clusterSpec)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestProvider_ValidateNewSpec_ChangeWorkerNodeGroupMachineRef(t *testing.T) {
+	clusterSpecManifest := "cluster_tinkerbell_stacked_etcd.yaml"
+	mockCtrl := gomock.NewController(t)
+	currentClusterSpec := givenClusterSpec(t, clusterSpecManifest)
+	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
+	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
+	docker := stackmocks.NewMockDocker(mockCtrl)
+	helm := stackmocks.NewMockHelm(mockCtrl)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	stackInstaller := stackmocks.NewMockStackInstaller(mockCtrl)
+	writer := filewritermocks.NewMockFileWriter(mockCtrl)
+	ctx := context.Background()
+
+	cluster := &types.Cluster{Name: "test", KubeconfigFile: "kubeconfig-file"}
+	currentClusterSpec.ManagementCluster = cluster
+
+	desiredClusterSpec := currentClusterSpec.DeepCopy()
+
+	// Change an existing worker node groups machine config reference in the desired spec.
+	newMachineCfgName := "additiona-machine-config"
+	machineConfigs[newMachineCfgName] = &v1alpha1.TinkerbellMachineConfig{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: newMachineCfgName,
+		},
+	}
+	desiredClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name = newMachineCfgName
+
+	provider := newTinkerbellProvider(datacenterConfig, machineConfigs, currentClusterSpec.Cluster, writer,
+		docker, helm, kubectl)
+	provider.stackInstaller = stackInstaller
+
+	kubectl.EXPECT().
+		GetEksaCluster(ctx, desiredClusterSpec.ManagementCluster,
+			desiredClusterSpec.Cluster.Spec.ManagementCluster.Name).
+		Return(currentClusterSpec.Cluster, nil)
+	kubectl.EXPECT().
+		GetEksaTinkerbellDatacenterConfig(ctx, currentClusterSpec.Cluster.Spec.DatacenterRef.Name,
+			cluster.KubeconfigFile, currentClusterSpec.Cluster.Namespace).
+		Return(datacenterConfig, nil)
+
+	controlPlaneMachineCfgName := currentClusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
+	kubectl.EXPECT().
+		GetEksaTinkerbellMachineConfig(ctx, controlPlaneMachineCfgName, cluster.KubeconfigFile,
+			desiredClusterSpec.Cluster.Namespace).
+		Return(machineConfigs[controlPlaneMachineCfgName], nil).
+		// The implementation of ValidateNewSpec iterates over machine references in a non-deterministic
+		// order. This means sometimes we inspect the control plane machine config ref first and
+		// sometimes we inspect the worker node group machine config ref first. AnyTimes() accounts
+		// for the latter ensuring we tolerate 0 attempts to look at the control plane group.
+		AnyTimes()
+
+	err := provider.ValidateNewSpec(ctx, desiredClusterSpec.ManagementCluster, desiredClusterSpec)
+	if err == nil || !strings.Contains(err.Error(), "cannot add or remove MachineConfigs") {
+		t.Fatalf("Expected error containing 'cannot add or remove MachineConfigs' but received: %v", err)
+	}
+}
+
+func TestProvider_ValidateNewSpec_NewWorkerNodeGroup(t *testing.T) {
+	clusterSpecManifest := "cluster_tinkerbell_stacked_etcd.yaml"
+	mockCtrl := gomock.NewController(t)
+	currentClusterSpec := givenClusterSpec(t, clusterSpecManifest)
+	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
+	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
+	docker := stackmocks.NewMockDocker(mockCtrl)
+	helm := stackmocks.NewMockHelm(mockCtrl)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	stackInstaller := stackmocks.NewMockStackInstaller(mockCtrl)
+	writer := filewritermocks.NewMockFileWriter(mockCtrl)
+	ctx := context.Background()
+
+	cluster := &types.Cluster{Name: "test", KubeconfigFile: "kubeconfig-file"}
+	currentClusterSpec.ManagementCluster = cluster
+
+	desiredClusterSpec := currentClusterSpec.DeepCopy()
+
+	// Add an extra worker node group to the desired configuration with its associated machine
+	// config. The machine configs are plumbed in via the Tinkerbell provider constructor func.
+	newMachineCfgName := "additiona-machine-config"
+	newWorkerNodeGroupName := "additional-worker-node-group"
+	desiredWorkerNodeGroups := &desiredClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations
+	*desiredWorkerNodeGroups = append(*desiredWorkerNodeGroups, v1alpha1.WorkerNodeGroupConfiguration{
+		Name:  newWorkerNodeGroupName,
+		Count: ptr.Int(1),
+		MachineGroupRef: &v1alpha1.Ref{
+			Name: newMachineCfgName,
+		},
+	})
+	machineConfigs[newMachineCfgName] = &v1alpha1.TinkerbellMachineConfig{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: newMachineCfgName,
+		},
+	}
+
+	provider := newTinkerbellProvider(datacenterConfig, machineConfigs, currentClusterSpec.Cluster, writer,
+		docker, helm, kubectl)
+	provider.stackInstaller = stackInstaller
+
+	kubectl.EXPECT().
+		GetEksaCluster(ctx, desiredClusterSpec.ManagementCluster, desiredClusterSpec.Cluster.Spec.ManagementCluster.Name).
+		Return(currentClusterSpec.Cluster, nil)
+	kubectl.EXPECT().
+		GetEksaTinkerbellDatacenterConfig(ctx, currentClusterSpec.Cluster.Spec.DatacenterRef.Name,
+			cluster.KubeconfigFile, currentClusterSpec.Cluster.Namespace).
+		Return(datacenterConfig, nil)
+
+	for name, v := range machineConfigs {
+		// Don't expect a request when its a new machine config.
+		if name == newMachineCfgName {
+			continue
+		}
+
+		kubectl.EXPECT().
+			GetEksaTinkerbellMachineConfig(ctx, v.Name, cluster.KubeconfigFile, desiredClusterSpec.Cluster.Namespace).
+			Return(v, nil)
+	}
+
+	err := provider.ValidateNewSpec(ctx, desiredClusterSpec.ManagementCluster, desiredClusterSpec)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
