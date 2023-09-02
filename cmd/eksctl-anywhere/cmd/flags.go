@@ -8,6 +8,7 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 
+	"github.com/aws/eks-anywhere/cmd/eksctl-anywhere/cmd/flags"
 	"github.com/aws/eks-anywhere/pkg/validations"
 )
 
@@ -21,6 +22,7 @@ const (
 https://anywhere.eks.amazonaws.com/docs/troubleshooting/troubleshooting/#cluster-upgrade-fails-with-management-components-on-bootstrap-cluster`
 	forceCleanupDeprecationMessageForCreateDelete = `The flag --force-cleanup has been removed. For more information on how to troubleshoot existing bootstrap clusters, please refer to the documentation:
 https://anywhere.eks.amazonaws.com/docs/troubleshooting/troubleshooting/#bootstrap-cluster-fails-to-come-up-nodes-already-exist-for-a-cluster-with-the-name`
+	wConfigDeprecationMessage = `The flag --w-config has been deprecated. Please use flag --kubeconfig instead.`
 )
 
 func bindFlagsToViper(cmd *cobra.Command, args []string) error {
@@ -35,9 +37,9 @@ func bindFlagsToViper(cmd *cobra.Command, args []string) error {
 }
 
 func applyClusterOptionFlags(flagSet *pflag.FlagSet, clusterOpt *clusterOptions) {
-	flagSet.StringVarP(&clusterOpt.fileName, "filename", "f", "", "Filename that contains EKS-A cluster configuration")
-	flagSet.StringVar(&clusterOpt.bundlesOverride, "bundles-override", "", "Override default Bundles manifest (not recommended)")
-	flagSet.StringVar(&clusterOpt.managementKubeconfig, "kubeconfig", "", "Management cluster kubeconfig file")
+	flags.String(flags.ClusterConfig, &clusterOpt.fileName, flagSet)
+	flags.String(flags.BundleOverride, &clusterOpt.bundlesOverride, flagSet)
+	flagSet.StringVar(&clusterOpt.clusterKubeconfig, "kubeconfig", "", "Cluster kubeconfig file")
 }
 
 func applyTinkerbellHardwareFlag(flagSet *pflag.FlagSet, pathOut *string) {

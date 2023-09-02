@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 
 	"github.com/spf13/cobra"
 
@@ -38,6 +39,10 @@ var deleteClusterCmd = &cobra.Command{
 		if err := dc.deleteCluster(cmd.Context()); err != nil {
 			return fmt.Errorf("failed to delete cluster: %v", err)
 		}
+		if uc.wConfig != "" {
+			logger.MarkFail(wConfigDeprecationMessage)
+			return errors.New("--w-config is deprecated. Use --kubeconfig instead")
+		}
 		return nil
 	},
 }
@@ -46,9 +51,13 @@ func init() {
 	deleteCmd.AddCommand(deleteClusterCmd)
 	deleteClusterCmd.Flags().StringVarP(&dc.fileName, "filename", "f", "", "Filename that contains EKS-A cluster configuration, required if <cluster-name> is not provided")
 	deleteClusterCmd.Flags().StringVarP(&dc.wConfig, "w-config", "w", "", "Kubeconfig file to use when deleting a workload cluster")
+	err := deleteClusterCmd.Flags().MarkDeprecated("w-config", "please use flag --kubeconfig.")
+	if err != nil {
+		log.Fatalf("Error deprecating flag as required: %v", err)
+	}
 	deleteClusterCmd.Flags().BoolVar(&dc.forceCleanup, "force-cleanup", false, "Force deletion of previously created bootstrap cluster")
 	hideForceCleanup(deleteClusterCmd.Flags())
-	deleteClusterCmd.Flags().StringVar(&dc.managementKubeconfig, "kubeconfig", "", "kubeconfig file pointing to a management cluster")
+	deleteClusterCmd.Flags().StringVar(&dc.clusterKubeconfig, "kubeconfig", "", "kubeconfig file pointing to a management cluster")
 	deleteClusterCmd.Flags().StringVar(&dc.bundlesOverride, "bundles-override", "", "Override default Bundles manifest (not recommended)")
 }
 
@@ -73,7 +82,7 @@ func (dc *deleteClusterOptions) validate(ctx context.Context, args []string) err
 		return err
 	}
 
-	kubeconfigPath := getKubeconfigPath(clusterConfig.Name, dc.wConfig)
+	kubeconfigPath := getKubeconfigPath(clusterConfig.Name, dc.clusterKubeconfig)
 	if err := kubeconfig.ValidateFilename(kubeconfigPath); err != nil {
 		return err
 	}
@@ -119,21 +128,30 @@ func (dc *deleteClusterOptions) deleteCluster(ctx context.Context) error {
 	)
 
 	var cluster *types.Cluster
+	var kubeconfigFile string
 	if clusterSpec.ManagementCluster == nil {
+		kubeconfigFile = kubeconfig.FromClusterName(clusterSpec.Cluster.Name)
+		if dc.clusterKubeconfig != "" {
+			kubeconfigFile = dc.clusterKubeconfig
+		}
 		cluster = &types.Cluster{
 			Name:               clusterSpec.Cluster.Name,
-			KubeconfigFile:     kubeconfig.FromClusterName(clusterSpec.Cluster.Name),
+			KubeconfigFile:     kubeconfigFile,
 			ExistingManagement: false,
 		}
 	} else {
+		kubeconfigFile = clusterSpec.ManagementCluster.KubeconfigFile
+		if dc.clusterKubeconfig != "" {
+			kubeconfigFile = dc.clusterKubeconfig
+		}
 		cluster = &types.Cluster{
 			Name:               clusterSpec.Cluster.Name,
-			KubeconfigFile:     clusterSpec.ManagementCluster.KubeconfigFile,
+			KubeconfigFile:     kubeconfigFile,
 			ExistingManagement: true,
 		}
 	}
 
-	err = deleteCluster.Run(ctx, cluster, clusterSpec, dc.forceCleanup, dc.managementKubeconfig)
+	err = deleteCluster.Run(ctx, cluster, clusterSpec, dc.forceCleanup, dc.clusterKubeconfig)
 	cleanup(deps, &err)
 	return err
 }
