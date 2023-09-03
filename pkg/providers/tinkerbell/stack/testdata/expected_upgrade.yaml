@@ -16,6 +16,9 @@ createNamespace: false
 envoy:
   image: public.ecr.aws/eks-anywhere/envoy:latest
 hegel:
+  env:
+  - name: HEGEL_TRUSTED_PROXIES
+    value: 192.168.0.0/16
   image: public.ecr.aws/eks-anywhere/hegel:latest
 kubevip:
   image: public.ecr.aws/eks-anywhere/kube-vip:latest
@@ -25,4 +28,5 @@ rufio:
 tinkController:
   image: public.ecr.aws/eks-anywhere/tink-controller:latest
 tinkServer:
+  args: []
   image: public.ecr.aws/eks-anywhere/tink-server:latest

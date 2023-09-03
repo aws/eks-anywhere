@@ -6,11 +6,14 @@ aliases:
     /docs/tasks/cluster/manually-renew-certs/
 date: 2021-11-04
 description: >
-  How to renew certificates in etcd and control plane machines
+  How to rotate certificates for etcd and control plane nodes
 ---
 
-Certificates in external etcd and control plane nodes expire after 1 year. The following table shows all the certificate files:
+Certificates for external etcd and control plane nodes expire after 1 year in EKS Anywhere. EKS Anywhere automatically rotates these certificates when new machines are rolled out in the cluster. New machines are rolled out during cluster lifecycle operations such as `upgrade`. If you upgrade your cluster at least once a year, you do not have to manually rotate the cluster certificates. 
 
+This page shows the process for manually rotating certificates if you have not upgraded your cluster in 1 year.
+
+The following table lists the cluster certificate files:
 
 | etcd node             | control plane node       |
 |-----------------------|--------------------------|
@@ -23,20 +26,20 @@ Certificates in external etcd and control plane nodes expire after 1 year. The f
 |                       | apiserver                |
 |                       | front-proxy-client       |
 
-You can renew all certificates in the table except `ca` by following the steps given below. Note that the commands used in Bottlerocket nodes are more sophisticated.
+You can rotate certificates by following the steps given below. You cannot rotate the `ca` certificate because it is the root certificate. Note that the commands used for Bottlerocket nodes are different than those for Ubuntu and RHEL nodes.
 
-### External etcd node
+#### External etcd nodes
 
-If the cluster has external etcd, you need to renew the certificates in etcd nodes first.
+If your cluster is using external etcd nodes, you need to renew the etcd node certificates first. 
 
 {{% alert title="Note" color="primary" %}}
-You can find out whether any external etcd node exists by running the following command:
-```
+You can check for external etcd nodes by running the following command:
+```bash
 kubectl get etcdadmcluster -A
 ```
 {{% /alert %}}
 
-1. ssh into the etcd node and run the following commands:
+1. SSH into each etcd node and run the following commands. Etcd automatically detects the new certificates and deprecates its old certificates.
 
 {{< tabpane >}}
 {{< tab header="Ubuntu or RHEL" lang="bash" >}}
@@ -48,8 +51,6 @@ sudo cp pki.bak/ca.* pki
 
 # run certificates join phase to regenerate the deleted certificates
 sudo etcdadm join phase certificates http://eks-a-etcd-dumb-url
-
-# etcd will auto pick the new certificates
 {{< /tab >}}
 
 {{< tab header="Bottlerocket" lang="bash" >}}
@@ -74,8 +75,6 @@ ctr run \
 --rm \
 ${IMAGE_ID} tmp-cert-renew \
 /opt/bin/etcdadm join phase certificates http://eks-a-etcd-dumb-url --init-system kubelet
-
-# etcd will auto pick the new certificates
 {{< /tab >}}
 {{< /tabpane >}}
 
@@ -97,20 +96,19 @@ ctr -n k8s.io t exec -t --exec-id etcd ${ETCD_CONTAINER_ID} etcdctl \
 
 3. Repeat the above steps for all etcd nodes.
 
-3. Save api-server-etcd-client crt and key file as secret from one of the etcd nodes, so the key can be picked up by new control plane node. You will also need them when renewing certs in CP node.
-```
-# refer https://kubernetes.io/docs/tasks/configmap-secret/managing-secret-using-config-file/#edit-secret
+4. Save the `api-server-etcd-client` `crt` and `key` file as a Secret from one of the etcd nodes, so the `key` can be picked up by new control plane nodes. You will also need them when renewing the certificates on control plane nodes. See the [Kubernetes documentation](https://kubernetes.io/docs/tasks/configmap-secret/managing-secret-using-config-file/#edit-secret) for details on editing Secrets.
+```bash
 kubectl edit secret ${cluster-name}-api-server-etcd-client -n eksa-system
 ```
 
 {{% alert title="Note" color="primary" %}}
-In bottlerocket, the key of api-server-etcd-client is "server-etcd.client.crt" instead of "api-server-etcd-client.crt".
+For Bottlerocket nodes, the `key` of `api-server-etcd-client` is `server-etcd.client.crt` instead of `api-server-etcd-client.crt`.
 {{% /alert %}}
 
-### Control plane node
-When there is no external etcd nodes, you only need to renew the certificates in control plane nodes, as etcd certificates are managed by kubeadm. 
+#### Control plane nodes
+When there are no external etcd nodes, you only need to rotate the certificates for control plane nodes, as etcd certificates are managed by `kubeadm` when there are no external etcd nodes. 
 
-1. ssh into the control plane node and run the following commands:
+1. SSH into each control plane node and run the following commands.
 
 {{< tabpane >}}
 {{< tab header="Ubuntu or RHEL" lang="bash" >}}
@@ -136,7 +134,7 @@ ${IMAGE_ID} tmp-cert-renew \
 {{< /tab >}}
 {{< /tabpane >}}
 
-2. Verify your certs have been renewed.
+2. Verify the certificates have been rotated.
 
 {{< tabpane >}}
 {{< tab header="Ubuntu or RHEL" lang="bash" >}}
@@ -153,20 +151,20 @@ ${IMAGE_ID} tmp-cert-renew \
 {{< /tab >}}
 {{< /tabpane >}}
 
-3. If you have external etcd node, manually replace the api-server-etcd-client.crt and api-server-etcd-client.key file in /etc/kubernetes/pki (or /var/lib/kubeadm/pki in Bottlerocket) folder with the one you saved from any etcd node.
+3. If you have external etcd nodes, manually replace the `api-server-etcd-client.crt` and `api-server-etcd-client.key` file in `/etc/kubernetes/pki` (or `/var/lib/kubeadm/pki` in Bottlerocket) folder with the files you saved from any etcd node.
 
 4. Restart static control plane pods.
 
-   - For non-bottlerocket OS: temporarily move out all manifest files from /etc/kubernetes/manifests/ and wait for 20 second. Then move back Move all manifests back.
+   - **For Ubuntu and RHEL**: temporarily move all manifest files from `/etc/kubernetes/manifests/` and wait for 20 seconds, then move the manifests back to this file location.
 
-   - For Bottlerocket: re-enable the static pods:
+   - **For Bottlerocket**: re-enable the static pods:
    ```
    apiclient get | jq -r '.settings.kubernetes["static-pods"] | keys[]' | xargs -n 1 -I {} apiclient set settings.kubernetes.static-pods.{}.enabled=false 
    apiclient get | jq -r '.settings.kubernetes["static-pods"] | keys[]' | xargs -n 1 -I {} apiclient set settings.kubernetes.static-pods.{}.enabled=true`
    ```
 
-   You can verify pods restarting by running kubectl in your admin machine.
+   You can verify Pods restarting by running `kubectl` from your Admin machine.
 
 5. Repeat the above steps for all control plane nodes.
 
-It's worth noting that you can use the above steps to renew a single certificate with small modification.
+You can similarly use the above steps to rotate a single certificate instead of all certificates.

@@ -6,6 +6,7 @@ import (
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/config"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
 )
@@ -39,6 +40,21 @@ func (v *CreateValidations) PreflightValidations(ctx context.Context) []validati
 				Name:        "validate authentication for git provider",
 				Remediation: fmt.Sprintf("ensure %s, %s env variable are set and valid", config.EksaGitPrivateKeyTokenEnv, config.EksaGitKnownHostsFileEnv),
 				Err:         validations.ValidateAuthenticationForGitProvider(v.Opts.Spec, v.Opts.CliConfig),
+			}
+		},
+		func() *validations.ValidationResult {
+			return &validations.ValidationResult{
+				Name:        "validate cluster's eksaVersion matches EKS-A version",
+				Remediation: "ensure EksaVersion matches the EKS-A release or omit the value from the cluster config",
+				Err:         validations.ValidateEksaVersion(ctx, v.Opts.CliVersion, v.Opts.Spec),
+			}
+		},
+		func() *validations.ValidationResult {
+			return &validations.ValidationResult{
+				Name:        "validate kubernetes version 1.28 support",
+				Remediation: fmt.Sprintf("ensure %v env variable is set", features.K8s128SupportEnvVar),
+				Err:         validations.ValidateK8s128Support(v.Opts.Spec),
+				Silent:      true,
 			}
 		},
 	}
@@ -84,9 +100,9 @@ func (v *CreateValidations) PreflightValidations(ctx context.Context) []validati
 			},
 			func() *validations.ValidationResult {
 				return &validations.ValidationResult{
-					Name:        "validate management cluster bundle version compatibility",
+					Name:        "validate management cluster eksaVersion compatibility",
 					Remediation: fmt.Sprintf("upgrade management cluster %s before creating workload cluster %s", v.Opts.Spec.Cluster.ManagedBy(), v.Opts.WorkloadCluster.Name),
-					Err:         validations.ValidateManagementClusterBundlesVersion(ctx, k, v.Opts.ManagementCluster, v.Opts.Spec),
+					Err:         validations.ValidateManagementClusterEksaVersion(ctx, k, v.Opts.ManagementCluster, v.Opts.Spec),
 				}
 			},
 		)

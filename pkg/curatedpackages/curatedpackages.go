@@ -47,7 +47,7 @@ func GetVersionBundle(reader Reader, eksaVersion string, spec *v1alpha1.Cluster)
 	if err != nil {
 		return nil, err
 	}
-	versionsBundle, err := cluster.GetVersionsBundle(spec, b)
+	versionsBundle, err := cluster.GetVersionsBundle(spec.Spec.KubernetesVersion, b)
 	if err != nil {
 		return nil, err
 	}

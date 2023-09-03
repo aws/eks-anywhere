@@ -45,6 +45,36 @@ func GetLatestMinorReleaseFromTestBranch() (*releasev1alpha1.EksARelease, error)
 	return GetPreviousMinorReleaseFromVersion(testBranchFirstSemver)
 }
 
+// GetPreviousMinorReleaseFromTestBranch inspects the T_BRANCH_NAME environment variable for a
+// branch to retrieve the previous latest minor released CLI version. If T_BRANCH_NAME is main, it returns
+// the previous minor version which is one minor version below the latest minor version that is released.
+//
+// If T_BRANCH_NAME is not main, it expects it to be of the format release-<major>.<minor>
+// and will use the <major>.<minor> to retrieve the previous minor release. For example, if the
+// release branch is release-0.2 it will retrieve the latest 0.1 release.
+func GetPreviousMinorReleaseFromTestBranch() (*releasev1alpha1.EksARelease, error) {
+	testBranch := testBranch()
+	var prevLatestMinorRelease *releasev1alpha1.EksARelease
+	latestMinorRelease, err := GetLatestMinorReleaseFromTestBranch()
+	if err != nil {
+		return nil, fmt.Errorf("getting latest minor release: %v", err)
+	}
+	// For release branch just return the latest minor release
+	if testBranch != "main" {
+		return latestMinorRelease, nil
+	}
+	semLatestMinorRelease, err := semver.New(latestMinorRelease.Version)
+	if err != nil {
+		return nil, err
+	}
+	prevLatestMinorRelease, err = GetPreviousMinorReleaseFromVersion(semLatestMinorRelease)
+	if err != nil {
+		return nil, err
+	}
+
+	return prevLatestMinorRelease, nil
+}
+
 // EKSAVersionForTestBinary returns the "future" EKS-A version for the tested binary based on the TEST_BRANCH name.
 // For main, it returns the next minor version.
 // For a release branch, it returns the next path version for that release minor version.

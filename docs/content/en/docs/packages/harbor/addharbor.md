@@ -18,6 +18,13 @@ Be sure to refer to the [troubleshooting guide]({{< relref "../troubleshoot" >}}
 ## Install
 
 <!-- this content needs to be indented so the numbers are automatically incremented -->
+
+1. Set the `KUBECONFIG` environment variable to use the config of the management cluster
+
+   ```bash
+   export KUBECONFIG=<path to management cluster kubeconfig>
+   ```
+
 1. Generate the package configuration
    ```bash
    eksctl anywhere generate package harbor --cluster <cluster-name> > harbor.yaml

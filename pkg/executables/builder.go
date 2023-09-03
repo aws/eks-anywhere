@@ -12,7 +12,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
 )
 
-const defaultEksaImage = "public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:v0.7.2-eks-a-v0.0.0-dev-build.1864"
+const defaultEksaImage = "public.ecr.aws/eks-anywhere/cli-tools:v0.17.0-eks-a-45"
 
 type ExecutableBuilder interface {
 	Init(ctx context.Context) (Closer, error)

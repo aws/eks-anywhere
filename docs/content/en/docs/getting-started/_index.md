@@ -5,18 +5,16 @@ aliases:
     /docs/getting-started/production-environment/
 main_menu: true
 weight: 20
-no_list: true
 card:
   name: setup
   weight: 20
 description: >
-  The Getting started section includes information on starting to set up your own EKS Anywhere cluster.
+  How to install the EKS Anywhere CLI, set up prerequisites, and create EKS Anywhere clusters
 ---
 
 <!-- overview -->
 
-This section lists the different ways to set up and run EKS Anywhere.
-Select the provider on which you want to deploy EKS Anywhere and step through the instructions in this Getting Started section.
+This section explains how to set up and run EKS Anywhere. The pages in this section are purposefully ordered, and we recommend stepping through the pages one-by-one until you are ready to choose an infrastructure provider for your EKS Anywhere cluster.
 
 <!-- body -->
 

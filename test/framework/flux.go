@@ -928,18 +928,18 @@ func (e *ClusterE2ETest) validateWorkerNodeMachineSpec(ctx context.Context, clus
 			if err != nil {
 				return err
 			}
-			if cloudstackWorkerConfig.Spec.Template.Name != csMachineTemplate.Spec.Spec.Spec.Template.Name {
-				err := fmt.Errorf("MachineSpec %s Template are not at desired value; target: %v, actual: %v", csMachineTemplate.Name, cloudstackWorkerConfig.Spec.Template, csMachineTemplate.Spec.Spec.Spec.Template)
+			if cloudstackWorkerConfig.Spec.Template.Name != csMachineTemplate.Spec.Template.Spec.Template.Name {
+				err := fmt.Errorf("MachineSpec %s Template are not at desired value; target: %v, actual: %v", csMachineTemplate.Name, cloudstackWorkerConfig.Spec.Template, csMachineTemplate.Spec.Template.Spec.Template)
 				e.T.Logf("Waiting for WorkerNode Specs to match - %s", err.Error())
 				return err
 			}
-			if cloudstackWorkerConfig.Spec.ComputeOffering.Name != csMachineTemplate.Spec.Spec.Spec.Offering.Name {
-				err := fmt.Errorf("MachineSpec %s Offering are not at desired value; target: %v, actual: %v", csMachineTemplate.Name, cloudstackWorkerConfig.Spec.ComputeOffering, csMachineTemplate.Spec.Spec.Spec.Offering)
+			if cloudstackWorkerConfig.Spec.ComputeOffering.Name != csMachineTemplate.Spec.Template.Spec.Offering.Name {
+				err := fmt.Errorf("MachineSpec %s Offering are not at desired value; target: %v, actual: %v", csMachineTemplate.Name, cloudstackWorkerConfig.Spec.ComputeOffering, csMachineTemplate.Spec.Template.Spec.Offering)
 				e.T.Logf("Waiting for WorkerNode Specs to match - %s", err.Error())
 				return err
 			}
-			if !reflect.DeepEqual(cloudstackWorkerConfig.Spec.UserCustomDetails, csMachineTemplate.Spec.Spec.Spec.Details) {
-				err := fmt.Errorf("MachineSpec %s Details are not at desired value; target: %v, actual: %v", csMachineTemplate.Name, cloudstackWorkerConfig.Spec.UserCustomDetails, csMachineTemplate.Spec.Spec.Spec.Details)
+			if !reflect.DeepEqual(cloudstackWorkerConfig.Spec.UserCustomDetails, csMachineTemplate.Spec.Template.Spec.Details) {
+				err := fmt.Errorf("MachineSpec %s Details are not at desired value; target: %v, actual: %v", csMachineTemplate.Name, cloudstackWorkerConfig.Spec.UserCustomDetails, csMachineTemplate.Spec.Template.Spec.Details)
 				e.T.Logf("Waiting for WorkerNode Specs to match - %s", err.Error())
 				return err
 			}
@@ -952,8 +952,8 @@ func (e *ClusterE2ETest) validateWorkerNodeMachineSpec(ctx context.Context, clus
 				e.T.Logf("Waiting for WorkerNode Specs to match - %s", err.Error())
 				return err
 			}
-			if !reflect.DeepEqual(cloudstackWorkerConfig.Spec.AffinityGroupIds, csMachineTemplate.Spec.Spec.Spec.AffinityGroupIDs) {
-				err := fmt.Errorf("MachineSpec %s AffinityGroupIds are not at desired value; target: %v, actual: %v", csMachineTemplate.Name, cloudstackWorkerConfig.Spec.AffinityGroupIds, csMachineTemplate.Spec.Spec.Spec.AffinityGroupIDs)
+			if !reflect.DeepEqual(cloudstackWorkerConfig.Spec.AffinityGroupIds, csMachineTemplate.Spec.Template.Spec.AffinityGroupIDs) {
+				err := fmt.Errorf("MachineSpec %s AffinityGroupIds are not at desired value; target: %v, actual: %v", csMachineTemplate.Name, cloudstackWorkerConfig.Spec.AffinityGroupIds, csMachineTemplate.Spec.Template.Spec.AffinityGroupIDs)
 				e.T.Logf("Waiting for WorkerNode Specs to match - %s", err.Error())
 				return err
 			}

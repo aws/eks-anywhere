@@ -195,7 +195,7 @@ spec:
 {{- if (ne .workerVsphereStoragePolicyName "") }}
       storagePolicyName: "{{.workerVsphereStoragePolicyName}}"
 {{- end }}
-      template: {{.vsphereTemplate}}
+      template: {{.workerTemplate}}
       thumbprint: '{{.thumbprint}}'
 {{- if .workerTagIDs }}
       tagIDs: {{.workerTagIDs}}

@@ -543,7 +543,7 @@ func TestReconcilerValidateHardwareCountRollingUpdateFail(t *testing.T) {
 
 	logger := test.NewNullLogger()
 	scope := tt.buildScope()
-	scope.ClusterSpec.VersionsBundle.KubeDistro.Kubernetes.Tag = "1.23"
+	scope.ClusterSpec.VersionsBundles["1.22"].KubeDistro.Kubernetes.Tag = "1.23"
 	_, err := tt.reconciler().GenerateSpec(tt.ctx, logger, scope)
 	tt.Expect(err).NotTo(HaveOccurred())
 	_, err = tt.reconciler().DetectOperation(tt.ctx, logger, scope)
@@ -662,7 +662,7 @@ func TestReconcilerDetectOperationK8sVersionUpgrade(t *testing.T) {
 
 	logger := test.NewNullLogger()
 	scope := tt.buildScope()
-	scope.ClusterSpec.VersionsBundle.KubeDistro.Kubernetes.Tag = "1.23"
+	scope.ClusterSpec.VersionsBundles["1.22"].KubeDistro.Kubernetes.Tag = "1.23"
 	_, err := tt.reconciler().GenerateSpec(tt.ctx, logger, scope)
 	tt.Expect(err).NotTo(HaveOccurred())
 	op, err := tt.reconciler().DetectOperation(tt.ctx, logger, scope)
@@ -747,7 +747,10 @@ func TestReconcilerDetectOperationFail(t *testing.T) {
 }
 
 func (tt *reconcilerTest) withFakeClient() {
-	tt.client = fake.NewClientBuilder().WithObjects(clientutil.ObjectsToClientObjects(tt.allObjs())...).Build()
+	tt.client = fake.NewClientBuilder().
+		WithIndex(&anywherev1.Cluster{}, "metadata.name", clientutil.ClusterNameIndexer).
+		WithObjects(clientutil.ObjectsToClientObjects(tt.allObjs())...).
+		Build()
 }
 
 func (tt *reconcilerTest) reconciler() *reconciler.Reconciler {
@@ -809,6 +812,7 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 	ipValidator := tinkerbellreconcilermocks.NewMockIPValidator(ctrl)
 
 	bundle := test.Bundle()
+	version := test.DevEksaVersion()
 
 	managementClusterDatacenter := dataCenter(func(d *anywherev1.TinkerbellDatacenterConfig) {
 		d.Name = "management-datacenter"
@@ -828,6 +832,7 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 			Kind: anywherev1.TinkerbellDatacenterKind,
 			Name: managementClusterDatacenter.Name,
 		}
+		c.Spec.EksaVersion = &version
 	})
 
 	machineConfigCP := machineConfig(func(m *anywherev1.TinkerbellMachineConfig) {
@@ -877,6 +882,8 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 				Labels: nil,
 			},
 		)
+
+		c.Spec.EksaVersion = &version
 	})
 
 	tt := &reconcilerTest{
@@ -894,7 +901,8 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 			workloadClusterDatacenter,
 			managementClusterDatacenter,
 			bundle,
-			test.EksdRelease(),
+			test.EksdRelease("1-22"),
+			test.EKSARelease(),
 		},
 		cluster:                   cluster,
 		managementCluster:         managementCluster,

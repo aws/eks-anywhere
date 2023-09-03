@@ -12,8 +12,8 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/collection"
 	"github.com/aws/eks-anywhere/pkg/constants"
-	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/rufiounreleased"
 	"github.com/aws/eks-anywhere/pkg/types"
@@ -35,17 +35,14 @@ func needsNewControlPlaneTemplate(oldSpec, newSpec *cluster.Spec) bool {
 	return false
 }
 
-func needsNewWorkloadTemplate(oldSpec, newSpec *cluster.Spec) bool {
-	if oldSpec.Cluster.Spec.KubernetesVersion != newSpec.Cluster.Spec.KubernetesVersion {
-		return true
-	}
-
+func needsNewWorkloadTemplate(oldSpec, newSpec *cluster.Spec, oldWorker, newWorker v1alpha1.WorkerNodeGroupConfiguration) bool {
 	if oldSpec.Bundles.Spec.Number != newSpec.Bundles.Spec.Number {
 		return true
 	}
 
-	if !v1alpha1.WorkerNodeGroupConfigurationSliceTaintsEqual(oldSpec.Cluster.Spec.WorkerNodeGroupConfigurations, newSpec.Cluster.Spec.WorkerNodeGroupConfigurations) ||
-		!v1alpha1.WorkerNodeGroupConfigurationsLabelsMapEqual(oldSpec.Cluster.Spec.WorkerNodeGroupConfigurations, newSpec.Cluster.Spec.WorkerNodeGroupConfigurations) {
+	if !v1alpha1.TaintsSliceEqual(oldWorker.Taints, newWorker.Taints) ||
+		!v1alpha1.MapEqual(oldWorker.Labels, newWorker.Labels) ||
+		!v1alpha1.WorkerNodeGroupConfigurationKubeVersionUnchanged(&oldWorker, &newWorker, oldSpec.Cluster, newSpec.Cluster) {
 		return true
 	}
 
@@ -149,7 +146,8 @@ func (p *Provider) validateAvailableHardwareForUpgrade(ctx context.Context, curr
 	)
 
 	rollingUpgrade := false
-	if currentSpec.Cluster.Spec.KubernetesVersion != newClusterSpec.Cluster.Spec.KubernetesVersion {
+	if currentSpec.Cluster.Spec.KubernetesVersion != newClusterSpec.Cluster.Spec.KubernetesVersion ||
+		currentSpec.Bundles.Spec.Number != newClusterSpec.Bundles.Spec.Number {
 		clusterSpecValidator.Register(ExtraHardwareAvailableAssertionForRollingUpgrade(p.catalogue))
 		rollingUpgrade = true
 	}
@@ -166,7 +164,8 @@ func (p *Provider) validateAvailableHardwareForUpgrade(ctx context.Context, curr
 	return nil
 }
 
-func (p *Provider) PostBootstrapDeleteForUpgrade(ctx context.Context) error {
+// PostBootstrapDeleteForUpgrade runs any provider-specific operations after bootstrap cluster has been deleted.
+func (p *Provider) PostBootstrapDeleteForUpgrade(ctx context.Context, cluster *types.Cluster) error {
 	if err := p.stackInstaller.UninstallLocal(ctx); err != nil {
 		return err
 	}
@@ -229,13 +228,15 @@ func (p *Provider) RunPostControlPlaneUpgrade(ctx context.Context, oldClusterSpe
 	return nil
 }
 
+// ValidateNewSpec satisfies the Provider interface.
 func (p *Provider) ValidateNewSpec(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
 	prevSpec, err := p.providerKubectlClient.GetEksaCluster(ctx, cluster, clusterSpec.Cluster.Name)
 	if err != nil {
 		return err
 	}
 
-	prevDatacenterConfig, err := p.providerKubectlClient.GetEksaTinkerbellDatacenterConfig(ctx, prevSpec.Spec.DatacenterRef.Name, cluster.KubeconfigFile, prevSpec.Namespace)
+	prevDatacenterConfig, err := p.providerKubectlClient.GetEksaTinkerbellDatacenterConfig(ctx,
+		prevSpec.Spec.DatacenterRef.Name, cluster.KubeconfigFile, prevSpec.Namespace)
 	if err != nil {
 		return err
 	}
@@ -245,18 +246,35 @@ func (p *Provider) ValidateNewSpec(ctx context.Context, cluster *types.Cluster, 
 
 	prevMachineConfigRefs := machineRefSliceToMap(prevSpec.MachineConfigRefs())
 
+	desiredWorkerNodeGroups := clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations
+	currentWorkerNodeGroups := collection.ToMap(prevSpec.Spec.WorkerNodeGroupConfigurations,
+		func(v v1alpha1.WorkerNodeGroupConfiguration) string { return v.Name })
+
+	// Gather machine config references for new worker node groups so we can avoid immutability
+	// checks.
+	newWorkerNodeGroupsRefs := collection.NewSet[string]()
+	for _, wng := range desiredWorkerNodeGroups {
+		if _, exists := currentWorkerNodeGroups[wng.Name]; !exists {
+			newWorkerNodeGroupsRefs.Add(wng.MachineGroupRef.Name)
+		}
+	}
+
 	for _, machineConfigRef := range clusterSpec.Cluster.MachineConfigRefs() {
 		machineConfig, ok := p.machineConfigs[machineConfigRef.Name]
 		if !ok {
 			return fmt.Errorf("cannot find machine config %s in tinkerbell provider machine configs", machineConfigRef.Name)
 		}
 
-		if _, ok = prevMachineConfigRefs[machineConfig.Name]; !ok {
-			return fmt.Errorf("cannot add or remove MachineConfigs as part of upgrade")
-		}
-		err = p.validateMachineConfigImmutability(ctx, cluster, machineConfig, clusterSpec)
-		if err != nil {
-			return err
+		// If the machien config reference is for a new worker node group don't bother with
+		// immutability checks as we want users to be able to add worker node groups.
+		if !newWorkerNodeGroupsRefs.Contains(machineConfigRef.Name) {
+			if _, ok = prevMachineConfigRefs[machineConfig.Name]; !ok {
+				return fmt.Errorf("cannot add or remove MachineConfigs as part of upgrade")
+			}
+			err = p.validateMachineConfigImmutability(ctx, cluster, machineConfig, clusterSpec)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
@@ -264,11 +282,8 @@ func (p *Provider) ValidateNewSpec(ctx context.Context, cluster *types.Cluster, 
 		return fmt.Errorf("spec.TinkerbellIP is immutable. Previous value %s,   New value %s", oSpec.TinkerbellIP, nSpec.TinkerbellIP)
 	}
 
-	// for any operation other than k8s version change, osImageURL and hookImageURL are immutable
+	// for any operation other than k8s version change, hookImageURL is immutable
 	if prevSpec.Spec.KubernetesVersion == clusterSpec.Cluster.Spec.KubernetesVersion {
-		if nSpec.OSImageURL != oSpec.OSImageURL {
-			return fmt.Errorf("spec.OSImageURL is immutable. Previous value %s,   New value %s", oSpec.OSImageURL, nSpec.OSImageURL)
-		}
 		if nSpec.HookImagesURLPath != oSpec.HookImagesURLPath {
 			return fmt.Errorf("spec.HookImagesURLPath is immutable. Previous value %s,   New value %s", oSpec.HookImagesURLPath, nSpec.HookImagesURLPath)
 		}
@@ -369,8 +384,6 @@ func (p *Provider) PreCoreComponentsUpgrade(
 ) error {
 	// When a workload cluster the cluster object could be nil. Noop if it is.
 	if cluster == nil {
-		logger.V(4).Info("Cluster object is nil, assuming it is a workload cluster with no " +
-			"Tinkerbell stack to upgrade")
 		return nil
 	}
 
@@ -378,11 +391,19 @@ func (p *Provider) PreCoreComponentsUpgrade(
 		return errors.New("cluster spec is nil")
 	}
 
+	// PreCoreComponentsUpgrade can be called for workload clusters. Ensure we only attempt to
+	// upgrade the stack if we're upgrading a management cluster.
+	if clusterSpec.Cluster.IsManaged() {
+		return nil
+	}
+
+	versionsBundle := clusterSpec.RootVersionsBundle()
+
 	// Attempt the upgrade. This should upgrade the stack in the mangement cluster by updating
 	// images, installing new CRDs and possibly removing old ones.
 	err := p.stackInstaller.Upgrade(
 		ctx,
-		clusterSpec.VersionsBundle.Tinkerbell,
+		versionsBundle.Tinkerbell,
 		p.datacenterConfig.Spec.TinkerbellIP,
 		cluster.KubeconfigFile,
 		p.datacenterConfig.Spec.HookImagesURLPath,

@@ -130,6 +130,11 @@ func (in *NutanixMachineConfig) OSFamily() OSFamily {
 	return in.Spec.OSFamily
 }
 
+// Users returns a list of configuration for OS users.
+func (in *NutanixMachineConfig) Users() []UserConfiguration {
+	return in.Spec.Users
+}
+
 // GetNamespace returns the namespace of the NutanixMachineConfig.
 func (in *NutanixMachineConfig) GetNamespace() string {
 	return in.Namespace

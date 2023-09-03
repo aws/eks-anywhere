@@ -454,18 +454,6 @@ func TestWorkloadCloudStackMachineValidateUpdateSshAuthorizedKeyMutable(t *testi
 	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
 }
 
-func TestManagementCloudStackMachineValidateUpdateSshUsernameMutable(t *testing.T) {
-	vOld := cloudstackMachineConfig()
-	vOld.SetControlPlane()
-	vOld.SetManagement("test-cluster")
-	vOld.Spec.Users = []v1alpha1.UserConfiguration{{Name: "Jeff"}}
-	c := vOld.DeepCopy()
-
-	c.Spec.Users[0].Name = "Andy"
-	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
-}
-
 func TestWorkloadCloudStackMachineValidateUpdateSshUsernameMutable(t *testing.T) {
 	vOld := cloudstackMachineConfig()
 	vOld.SetControlPlane()

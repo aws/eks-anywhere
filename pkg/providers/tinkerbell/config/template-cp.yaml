@@ -255,6 +255,8 @@ spec:
                 # When there is no worker node, make kube-vip in control-plane nodes watch
               - name: svc_enable
                 value: "true"
+              - name: svc_election
+                value: "true"
 {{- end }}
               image: {{ .kubeVipImage }}
               imagePullPolicy: IfNotPresent
@@ -409,6 +411,7 @@ spec:
     cloudInitConfig:
       version: {{.externalEtcdVersion}}
       installDir: "/usr/bin"
+      etcdReleaseURL: {{.externalEtcdReleaseUrl}}
     preEtcdadmCommands:
       - hostname "{{`{{ ds.meta_data.hostname }}`}}"
       - echo "::1         ipv6-localhost ipv6-loopback" >/etc/hosts

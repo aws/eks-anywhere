@@ -84,7 +84,7 @@ type Dependencies struct {
 	Git                         *gitfactory.GitTools
 	EksdInstaller               *eksd.Installer
 	EksdUpgrader                *eksd.Upgrader
-	KubeProxyCLIUpgrader        clustermanager.KubeProxyCLIUpgrader
+	ClusterApplier              clustermanager.Applier
 	AnalyzerFactory             diagnostics.AnalyzerFactory
 	CollectorFactory            diagnostics.CollectorFactory
 	DignosticCollectorFactory   diagnostics.DiagnosticBundleFactory
@@ -107,6 +107,7 @@ type Dependencies struct {
 	IPValidator                 *validator.IPValidator
 	UnAuthKubectlClient         KubeClients
 	CreateClusterDefaulter      cli.CreateClusterDefaulter
+	UpgradeClusterDefaulter     cli.UpgradeClusterDefaulter
 }
 
 // KubeClients defines super struct that exposes all behavior.
@@ -127,13 +128,14 @@ func (d *Dependencies) Close(ctx context.Context) error {
 }
 
 func ForSpec(ctx context.Context, clusterSpec *cluster.Spec) *Factory {
-	eksaToolsImage := clusterSpec.VersionsBundle.Eksa.CliTools
+	versionsBundle := clusterSpec.RootVersionsBundle()
+	eksaToolsImage := versionsBundle.Eksa.CliTools
 	return NewFactory().
 		UseExecutableImage(eksaToolsImage.VersionedImage()).
 		WithRegistryMirror(registrymirror.FromCluster(clusterSpec.Cluster)).
 		UseProxyConfiguration(clusterSpec.Cluster.ProxyConfiguration()).
 		WithWriterFolder(clusterSpec.Cluster.Name).
-		WithDiagnosticCollectorImage(clusterSpec.VersionsBundle.Eksa.DiagnosticCollector.VersionedImage())
+		WithDiagnosticCollectorImage(versionsBundle.Eksa.DiagnosticCollector.VersionedImage())
 }
 
 // Factory helps initialization.
@@ -379,12 +381,13 @@ func (f *Factory) WithExecutableBuilder() *Factory {
 	return f
 }
 
-func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1.Cluster, skipIpCheck bool, hardwareCSVPath string, force bool, tinkerbellBootstrapIp string) *Factory {
+// WithProvider initializes the provider dependency and adds to the build steps.
+func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1.Cluster, skipIPCheck bool, hardwareCSVPath string, force bool, tinkerbellBootstrapIP string, skippedValidations map[string]bool) *Factory { // nolint:gocyclo
 	switch clusterConfig.Spec.DatacenterRef.Kind {
 	case v1alpha1.VSphereDatacenterKind:
 		f.WithKubectl().WithGovc().WithWriter().WithIPValidator()
 	case v1alpha1.CloudStackDatacenterKind:
-		f.WithKubectl().WithCloudStackValidatorRegistry(skipIpCheck).WithWriter()
+		f.WithKubectl().WithCloudStackValidatorRegistry(skipIPCheck).WithWriter()
 	case v1alpha1.DockerDatacenterKind:
 		f.WithDocker().WithKubectl()
 	case v1alpha1.TinkerbellDatacenterKind:
@@ -419,7 +422,8 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 				f.dependencies.Writer,
 				f.dependencies.IPValidator,
 				time.Now,
-				skipIpCheck,
+				skipIPCheck,
+				skippedValidations,
 			)
 
 		case v1alpha1.CloudStackDatacenterKind:
@@ -442,7 +446,7 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 			f.dependencies.Provider = snow.NewProvider(
 				f.dependencies.UnAuthKubeClient,
 				f.dependencies.SnowConfigManager,
-				skipIpCheck,
+				skipIPCheck,
 			)
 
 		case v1alpha1.TinkerbellDatacenterKind:
@@ -456,16 +460,16 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 				return fmt.Errorf("unable to get machine config from file %s: %v", clusterConfigFile, err)
 			}
 
-			tinkerbellIp := tinkerbellBootstrapIp
-			if tinkerbellIp == "" {
+			tinkerbellIP := tinkerbellBootstrapIP
+			if tinkerbellIP == "" {
 				logger.V(4).Info("Inferring local Tinkerbell Bootstrap IP from environment")
 				localIp, err := networkutils.GetLocalIP()
 				if err != nil {
 					return err
 				}
-				tinkerbellIp = localIp.String()
+				tinkerbellIP = localIp.String()
 			}
-			logger.V(4).Info("Tinkerbell IP", "tinkerbell-ip", tinkerbellIp)
+			logger.V(4).Info("Tinkerbell IP", "tinkerbell-ip", tinkerbellIP)
 
 			provider, err := tinkerbell.NewProvider(
 				datacenterConfig,
@@ -476,10 +480,10 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 				f.dependencies.DockerClient,
 				f.dependencies.Helm,
 				f.dependencies.Kubectl,
-				tinkerbellIp,
+				tinkerbellIP,
 				time.Now,
 				force,
-				skipIpCheck,
+				skipIPCheck,
 			)
 			if err != nil {
 				return err
@@ -524,7 +528,7 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 				crypto.NewTlsValidator(),
 				httpClient,
 				time.Now,
-				skipIpCheck,
+				skipIPCheck,
 			)
 			f.dependencies.Provider = provider
 		default:
@@ -1009,13 +1013,29 @@ func (f *Factory) WithCliConfig(cliConfig *cliconfig.CliConfig) *Factory {
 }
 
 // WithCreateClusterDefaulter builds a create cluster defaulter that builds defaulter dependencies specific to the create cluster command. The defaulter is then run once the factory is built in the create cluster command.
-func (f *Factory) WithCreateClusterDefaulter(createCliConfig cliconfig.CreateClusterCLIConfig) *Factory {
+func (f *Factory) WithCreateClusterDefaulter(createCliConfig *cliconfig.CreateClusterCLIConfig) *Factory {
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		controlPlaneIPCheckAnnotationDefaulter := cluster.NewControlPlaneIPCheckAnnotationDefaulter(createCliConfig.SkipCPIPCheck)
+		machineHealthCheckDefaulter := cluster.NewMachineHealthCheckDefaulter(createCliConfig.NodeStartupTimeout, createCliConfig.UnhealthyMachineTimeout)
 
-		createClusterDefaulter := cli.NewCreateClusterDefaulter(controlPlaneIPCheckAnnotationDefaulter)
+		createClusterDefaulter := cli.NewCreateClusterDefaulter(controlPlaneIPCheckAnnotationDefaulter, machineHealthCheckDefaulter)
 
 		f.dependencies.CreateClusterDefaulter = createClusterDefaulter
+
+		return nil
+	})
+
+	return f
+}
+
+// WithUpgradeClusterDefaulter builds a create cluster defaulter that builds defaulter dependencies specific to the create cluster command. The defaulter is then run once the factory is built in the create cluster command.
+func (f *Factory) WithUpgradeClusterDefaulter(upgradeCliConfig *cliconfig.UpgradeClusterCLIConfig) *Factory {
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		machineHealthCheckDefaulter := cluster.NewMachineHealthCheckDefaulter(upgradeCliConfig.NodeStartupTimeout, upgradeCliConfig.UnhealthyMachineTimeout)
+
+		upgradeClusterDefaulter := cli.NewUpgradeClusterDefaulter(machineHealthCheckDefaulter)
+
+		f.dependencies.UpgradeClusterDefaulter = upgradeClusterDefaulter
 
 		return nil
 	})
@@ -1079,17 +1099,18 @@ func (f *Factory) WithEksdUpgrader() *Factory {
 	return f
 }
 
-// WithKubeProxyCLIUpgrader builds a KubeProxyCLIUpgrader.
-func (f *Factory) WithKubeProxyCLIUpgrader() *Factory {
-	f.WithLogger().WithUnAuthKubeClient()
+// WithClusterApplier builds a cluster applier.
+func (f *Factory) WithClusterApplier() *Factory {
+	f.WithLogger().WithUnAuthKubeClient().WithLogger()
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
-		var opts []clustermanager.KubeProxyCLIUpgraderOpt
+		var opts []clustermanager.ApplierOpt
 		if f.config.noTimeouts {
-			opts = append(opts, clustermanager.KubeProxyCLIUpgraderRetrier(*retrier.NewWithNoTimeout()))
+			// opts = append(opts, clustermanager.ManagementUpgraderRetrier(*retrier.NewWithNoTimeout()))
+			opts = append(opts, clustermanager.WithApplierNoTimeouts())
 		}
 
-		f.dependencies.KubeProxyCLIUpgrader = clustermanager.NewKubeProxyCLIUpgrader(
+		f.dependencies.ClusterApplier = clustermanager.NewApplier(
 			f.dependencies.Logger,
 			f.dependencies.UnAuthKubeClient,
 			opts...,
@@ -1226,12 +1247,16 @@ func (f *Factory) WithPackageControllerClient(spec *cluster.Spec, kubeConfig str
 		if err != nil {
 			return err
 		}
+		bundle := spec.RootVersionsBundle()
+		if bundle == nil {
+			return fmt.Errorf("could not find VersionsBundle")
+		}
 		f.dependencies.PackageControllerClient = curatedpackages.NewPackageControllerClient(
 			f.dependencies.Helm,
 			f.dependencies.Kubectl,
 			spec.Cluster.Name,
 			mgmtKubeConfig,
-			&spec.VersionsBundle.PackageController.HelmChart,
+			&bundle.PackageController.HelmChart,
 			f.registryMirror,
 			curatedpackages.WithEksaAccessKeyId(eksaAccessKeyID),
 			curatedpackages.WithEksaSecretAccessKey(eksaSecretKey),

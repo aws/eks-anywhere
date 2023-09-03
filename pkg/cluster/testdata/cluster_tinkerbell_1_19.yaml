@@ -22,16 +22,12 @@ spec:
   datacenterRef:
     kind: TinkerbellDatacenterConfig
     name: test
-  externalEtcdConfiguration:
-    count: 1
-    machineGroupRef:
-      name: test-cp
-      kind: TinkerbellMachineConfig
   kubernetesVersion: "1.19"
   managementCluster:
     name: test
   workerNodeGroupConfigurations:
     - count: 1
+      name: md-0
       machineGroupRef:
         name: test-md
         kind: TinkerbellMachineConfig

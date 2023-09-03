@@ -173,14 +173,16 @@ func TestReconcileCAPIClusterNotFound(t *testing.T) {
 	remoteClientRegistry := reconcilermocks.NewMockRemoteClientRegistry(ctrl)
 
 	bundle := test.Bundle()
-	eksdRelease := test.EksdRelease()
-	objs := []runtime.Object{bundle, eksdRelease}
+	eksdRelease := test.EksdRelease("1-22")
+	eksaRelease := test.EKSARelease()
+	objs := []runtime.Object{bundle, eksaRelease, eksdRelease}
 	cb := fake.NewClientBuilder()
 	scheme := runtime.NewScheme()
 	_ = releasev1.AddToScheme(scheme)
 	_ = eksdv1.AddToScheme(scheme)
 	_ = clusterv1.AddToScheme(scheme)
 	cl := cb.WithScheme(scheme).WithRuntimeObjects(objs...).Build()
+	version := test.DevEksaVersion()
 
 	cluster := &anywherev1.Cluster{
 		ObjectMeta: metav1.ObjectMeta{
@@ -194,6 +196,7 @@ func TestReconcileCAPIClusterNotFound(t *testing.T) {
 				Namespace:  bundle.Namespace,
 				APIVersion: bundle.APIVersion,
 			},
+			EksaVersion: &version,
 		},
 	}
 
@@ -212,7 +215,9 @@ func TestReconcileRemoteGetClientError(t *testing.T) {
 	remoteClientRegistry := reconcilermocks.NewMockRemoteClientRegistry(ctrl)
 
 	bundle := test.Bundle()
-	eksdRelease := test.EksdRelease()
+	eksdRelease := test.EksdRelease("1-22")
+	eksaRelease := test.EKSARelease()
+	version := test.DevEksaVersion()
 	cluster := &anywherev1.Cluster{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "my-cluster",
@@ -225,6 +230,7 @@ func TestReconcileRemoteGetClientError(t *testing.T) {
 				Namespace:  bundle.Namespace,
 				APIVersion: bundle.APIVersion,
 			},
+			EksaVersion: &version,
 		},
 	}
 	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
@@ -236,7 +242,7 @@ func TestReconcileRemoteGetClientError(t *testing.T) {
 			Namespace: constants.EksaSystemNamespace,
 		},
 	}
-	objs := []runtime.Object{bundle, eksdRelease, capiCluster, sec}
+	objs := []runtime.Object{bundle, eksdRelease, capiCluster, sec, eksaRelease}
 	cb := fake.NewClientBuilder()
 	scheme := runtime.NewScheme()
 	_ = releasev1.AddToScheme(scheme)
@@ -262,7 +268,9 @@ func TestReconcileConfigMapNotFoundApplyError(t *testing.T) {
 	remoteClientRegistry := reconcilermocks.NewMockRemoteClientRegistry(ctrl)
 
 	bundle := test.Bundle()
-	eksdRelease := test.EksdRelease()
+	eksaRelease := test.EKSARelease()
+	eksdRelease := test.EksdRelease("1-22")
+	version := test.DevEksaVersion()
 	cluster := &anywherev1.Cluster{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "my-cluster",
@@ -286,6 +294,7 @@ func TestReconcileConfigMapNotFoundApplyError(t *testing.T) {
 					Kind: "AWSIamConfig",
 				},
 			},
+			EksaVersion: &version,
 		},
 	}
 	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
@@ -312,7 +321,7 @@ func TestReconcileConfigMapNotFoundApplyError(t *testing.T) {
 			Namespace: "eksa-system",
 		},
 	}
-	objs := []runtime.Object{bundle, eksdRelease, capiCluster, sec, awsiamconfig, caSec}
+	objs := []runtime.Object{bundle, eksdRelease, capiCluster, sec, awsiamconfig, caSec, eksaRelease}
 	cb := fake.NewClientBuilder()
 	scheme := runtime.NewScheme()
 	_ = anywherev1.AddToScheme(scheme)

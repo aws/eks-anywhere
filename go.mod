@@ -60,7 +60,7 @@ require (
 	oras.land/oras-go v1.2.3
 	oras.land/oras-go/v2 v2.0.0
 	sigs.k8s.io/cluster-api v1.4.2
-	sigs.k8s.io/cluster-api-provider-cloudstack v0.4.8-rc1
+	sigs.k8s.io/cluster-api-provider-cloudstack v0.4.9-rc5.0.20230717222509-0d26a04b661f
 	sigs.k8s.io/cluster-api-provider-vsphere v1.0.1
 	sigs.k8s.io/cluster-api/test v1.4.2
 	sigs.k8s.io/controller-runtime v0.14.6
@@ -77,11 +77,9 @@ require (
 	github.com/PaesslerAG/gval v1.0.0 // indirect
 	github.com/PaesslerAG/jsonpath v0.1.1 // indirect
 	github.com/ProtonMail/go-crypto v0.0.0-20230619160724-3fbb1f12458c // indirect
-	github.com/ReneKroon/ttlcache v1.7.0 // indirect
 	github.com/VictorLowther/simplexml v0.0.0-20180716164440-0bff93621230 // indirect
 	github.com/VictorLowther/soap v0.0.0-20150314151524-8e36fca84b22 // indirect
 	github.com/acomagu/bufpipe v1.0.3 // indirect
-	github.com/apache/cloudstack-go/v2 v2.13.0 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.9 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.4.3 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/ini v1.3.10 // indirect
@@ -96,19 +94,15 @@ require (
 	github.com/bmc-toolbox/bmclib/v2 v2.0.1-0.20230212165211-bac64498b8ba // indirect
 	github.com/bmc-toolbox/common v0.0.0-20221115135648-0b584f504396 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
-	github.com/checkpoint-restore/go-criu/v5 v5.3.0 // indirect
-	github.com/cilium/ebpf v0.9.1 // indirect
 	github.com/cloudflare/circl v1.3.3 // indirect
-	github.com/containerd/console v1.0.3 // indirect
 	github.com/containerd/containerd v1.7.0 // indirect
-	github.com/coredns/caddy v1.1.0 // indirect
+	github.com/coredns/caddy v1.1.1 // indirect
 	github.com/coredns/corefile-migration v1.0.20 // indirect
-	github.com/coreos/go-systemd/v22 v22.5.0 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
 	github.com/cyphar/filepath-securejoin v0.2.3 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/docker/distribution v2.8.2+incompatible // indirect
-	github.com/docker/docker v23.0.2+incompatible // indirect
+	github.com/docker/docker v23.0.3+incompatible // indirect
 	github.com/docker/docker-credential-helpers v0.7.0 // indirect
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-metrics v0.0.1 // indirect
@@ -125,7 +119,6 @@ require (
 	github.com/go-openapi/jsonreference v0.20.0 // indirect
 	github.com/go-openapi/swag v0.22.3 // indirect
 	github.com/gobuffalo/flect v1.0.2 // indirect
-	github.com/godbus/dbus/v5 v5.1.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
@@ -159,17 +152,12 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
 	github.com/moby/locker v1.0.1 // indirect
-	github.com/moby/sys/mountinfo v0.6.2 // indirect
 	github.com/moby/term v0.0.0-20221205130635-1aeaba878587 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/morikuni/aec v1.0.0 // indirect
-	github.com/mrunalp/fileutils v0.5.0 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
-	github.com/opencontainers/runc v1.1.5 // indirect
-	github.com/opencontainers/runtime-spec v1.1.0-rc.1 // indirect
-	github.com/opencontainers/selinux v1.11.0 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.6 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/prometheus/client_golang v1.14.0 // indirect
@@ -178,7 +166,6 @@ require (
 	github.com/prometheus/procfs v0.8.0 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/satori/go.uuid v1.2.0 // indirect
-	github.com/seccomp/libseccomp-golang v0.9.2-0.20220502022130-f33da4d89646 // indirect
 	github.com/sergi/go-diff v1.2.0 // indirect
 	github.com/sirupsen/logrus v1.9.0 // indirect
 	github.com/spf13/afero v1.9.3 // indirect
@@ -186,11 +173,7 @@ require (
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/stmcginnis/gofish v0.13.1-0.20221107140645-5cc43fad050f // indirect
 	github.com/subosito/gotenv v1.4.2 // indirect
-	github.com/syndtr/gocapability v0.0.0-20200815063812-42c35b437635 // indirect
-	github.com/urfave/cli v1.22.12 // indirect
 	github.com/vektah/gqlparser/v2 v2.4.5 // indirect
-	github.com/vishvananda/netlink v1.2.1-beta.2 // indirect
-	github.com/vishvananda/netns v0.0.0-20210104183010-2eb08e3e575f // indirect
 	github.com/xanzy/ssh-agent v0.3.0 // indirect
 	go.opentelemetry.io/otel v1.14.0 // indirect
 	go.opentelemetry.io/otel/trace v1.14.0 // indirect
@@ -210,8 +193,8 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	k8s.io/apiextensions-apiserver v0.26.1 // indirect
-	k8s.io/cluster-bootstrap v0.25.0 // indirect
-	k8s.io/kube-openapi v0.0.0-20221012153701-172d655c2280 // indirect
+	k8s.io/cluster-bootstrap v0.25.3 // indirect
+	k8s.io/kube-openapi v0.0.0-20221106113015-f73e7dbcfe29 // indirect
 	sigs.k8s.io/json v0.0.0-20220713155537-f223a00ba0e2 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.3 // indirect
 )

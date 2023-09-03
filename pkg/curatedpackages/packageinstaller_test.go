@@ -14,7 +14,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/curatedpackages"
 	"github.com/aws/eks-anywhere/pkg/curatedpackages/mocks"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
-	"github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
 type packageInstallerTest struct {
@@ -40,16 +39,6 @@ func newPackageInstallerTest(t *testing.T) *packageInstallerTest {
 			Cluster: &anywherev1.Cluster{
 				ObjectMeta: v1.ObjectMeta{
 					Name: "test-cluster",
-				},
-			},
-		},
-		VersionsBundle: &cluster.VersionsBundle{
-			VersionsBundle: &v1alpha1.VersionsBundle{
-				PackageController: v1alpha1.PackageBundle{
-					HelmChart: v1alpha1.Image{
-						URI:  "test_registry/test/eks-anywhere-packages:v1",
-						Name: "test_chart",
-					},
 				},
 			},
 		},

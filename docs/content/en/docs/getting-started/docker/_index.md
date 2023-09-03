@@ -1,5 +1,5 @@
 ---
-title: Install on Docker (dev only)
+title: Create Docker Cluster (dev only)
 linkTitle: Install on Docker (dev only)
 aliases:
     /docs/getting-started/local-environment/
@@ -16,14 +16,16 @@ This allows you to try EKS Anywhere on your local machine or laptop before deplo
 
 ### Prerequisites
 
-* Docker 20.x.x
 * Mac OS 10.15+ or Ubuntu 20.04.2+ LTS
+* [Docker 20.x.x](https://docs.docker.com/engine/install/)
+* [`curl`](https://everything.curl.dev/get)
+* [`yq`](https://github.com/mikefarah/yq/#install)
 * Internet access
 * 4 CPU cores
 * 16GB memory
 * 30GB free disk space
 * If you are using Ubuntu, use the Docker CE installation instructions to install Docker and not the Snap installation, as described here.
-* If you are using Ubuntu 21.10 or 22.04, you will need to switch from cgroups v2 to cgroups v1. For details, see Troubleshooting Guide.
+* For EKS Anywhere v0.15 and earlier, if you are using Ubuntu 21.10 or 22.04, you will need to switch from cgroups v2 to cgroups v1. For details, see [Troubleshooting Guide.]({{< relref "../../troubleshooting/troubleshooting.md#for-eks-anywhere-v015-and-earlier-cgroups-v2-is-not-supported-in-ubuntu-2110-and-2204" >}})
 * EKS Anywhere works with x86 and amd64 architectures. It currently will not work on computers with Apple Silicon or Arm based processors.
 
 ### Install EKS Anywhere CLI tools
@@ -41,7 +43,7 @@ brew install aws/tap/eks-anywhere
 
 #### Manual
 
-Install eksctl
+Install `eksctl`
 
 ```bash
 curl "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" \
@@ -50,10 +52,7 @@ curl "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(una
 sudo mv /tmp/eksctl /usr/local/bin/
 ```
 
-Install eksctl-anywhere plugin
-
-* Note the following command uses `curl` and `yq`.
-See the respective documentation for those packages to install them (`curl` docs, `yq` docs)
+Install the `eksctl-anywhere` plugin
 
 ```bash
 RELEASE_VERSION=$(curl https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml --silent --location | yq ".spec.latestVersion")

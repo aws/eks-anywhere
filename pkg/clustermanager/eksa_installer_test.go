@@ -39,7 +39,7 @@ func newInstallerTest(t *testing.T, opts ...clustermanager.EKSAInstallerOpt) *in
 	ctrl := gomock.NewController(t)
 	client := mocks.NewMockKubernetesClient(ctrl)
 	currentSpec := test.NewClusterSpec(func(s *cluster.Spec) {
-		s.VersionsBundle.Eksa.Version = "v0.1.0"
+		s.VersionsBundles["1.19"].Eksa.Version = "v0.1.0"
 		s.Cluster = &anywherev1.Cluster{
 			Spec: anywherev1.ClusterSpec{
 				ControlPlaneConfiguration: anywherev1.ControlPlaneConfiguration{
@@ -47,6 +47,7 @@ func newInstallerTest(t *testing.T, opts ...clustermanager.EKSAInstallerOpt) *in
 						Host: "1.2.3.4",
 					},
 				},
+				KubernetesVersion: "1.19",
 			},
 		}
 	})
@@ -68,7 +69,7 @@ func newInstallerTest(t *testing.T, opts ...clustermanager.EKSAInstallerOpt) *in
 
 func TestEKSAInstallerInstallSuccessWithRealManifest(t *testing.T) {
 	tt := newInstallerTest(t)
-	tt.newSpec.VersionsBundle.Eksa.Components.URI = "../../config/manifest/eksa-components.yaml"
+	tt.newSpec.VersionsBundles["1.19"].Eksa.Components.URI = "../../config/manifest/eksa-components.yaml"
 	tt.client.EXPECT().Apply(tt.ctx, tt.cluster.KubeconfigFile, gomock.AssignableToTypeOf(&appsv1.Deployment{}))
 	tt.client.EXPECT().Apply(tt.ctx, tt.cluster.KubeconfigFile, gomock.Any()).Times(34) // there are 34 objects in the manifest
 	tt.client.EXPECT().WaitForDeployment(tt.ctx, tt.cluster, "30m0s", "Available", "eksa-controller-manager", "eksa-system")
@@ -78,7 +79,7 @@ func TestEKSAInstallerInstallSuccessWithRealManifest(t *testing.T) {
 
 func TestEKSAInstallerInstallSuccessWithTestManifest(t *testing.T) {
 	tt := newInstallerTest(t)
-	tt.newSpec.VersionsBundle.Eksa.Components.URI = "testdata/eksa_components.yaml"
+	tt.newSpec.VersionsBundles["1.19"].Eksa.Components.URI = "testdata/eksa_components.yaml"
 	tt.newSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host = "1.2.3.4"
 	tt.newSpec.Cluster.Spec.DatacenterRef.Kind = anywherev1.VSphereDatacenterKind
 	tt.newSpec.Cluster.Spec.ProxyConfiguration = &anywherev1.ProxyConfiguration{
@@ -103,7 +104,6 @@ func TestEKSAInstallerInstallSuccessWithTestManifest(t *testing.T) {
 						{
 							Args: []string{
 								"--leader-elect",
-								"--feature-gates=FullLifecycleAPI=true",
 							},
 							Env: []corev1.EnvVar{
 								{
@@ -145,7 +145,7 @@ func TestEKSAInstallerInstallSuccessWithTestManifest(t *testing.T) {
 
 func TestEKSAInstallerInstallSuccessWithNoTimeout(t *testing.T) {
 	tt := newInstallerTest(t, clustermanager.WithEKSAInstallerNoTimeouts())
-	tt.newSpec.VersionsBundle.Eksa.Components.URI = "../../config/manifest/eksa-components.yaml"
+	tt.newSpec.VersionsBundles["1.19"].Eksa.Components.URI = "../../config/manifest/eksa-components.yaml"
 	tt.client.EXPECT().Apply(tt.ctx, tt.cluster.KubeconfigFile, gomock.AssignableToTypeOf(&appsv1.Deployment{}))
 	tt.client.EXPECT().Apply(tt.ctx, tt.cluster.KubeconfigFile, gomock.Any()).Times(34) // there are 34 objects in the manifest
 	tt.client.EXPECT().WaitForDeployment(tt.ctx, tt.cluster, maxTime.String(), "Available", "eksa-controller-manager", "eksa-system")
@@ -169,8 +169,8 @@ func TestInstallerUpgradeNoChanges(t *testing.T) {
 func TestInstallerUpgradeSuccess(t *testing.T) {
 	tt := newInstallerTest(t)
 
-	tt.newSpec.VersionsBundle.Eksa.Version = "v0.2.0"
-	tt.newSpec.VersionsBundle.Eksa.Components = v1alpha1.Manifest{
+	tt.newSpec.VersionsBundles["1.19"].Eksa.Version = "v0.2.0"
+	tt.newSpec.VersionsBundles["1.19"].Eksa.Components = v1alpha1.Manifest{
 		URI: "testdata/eksa_components.yaml",
 	}
 
@@ -193,7 +193,7 @@ func TestInstallerUpgradeSuccess(t *testing.T) {
 func TestInstallerUpgradeInstallError(t *testing.T) {
 	tt := newInstallerTest(t)
 
-	tt.newSpec.VersionsBundle.Eksa.Version = "v0.2.0"
+	tt.newSpec.VersionsBundles["1.19"].Eksa.Version = "v0.2.0"
 
 	// components file not set so this should return an error in failing to load manifest
 	_, err := tt.installer.Upgrade(tt.ctx, tt.log, tt.cluster, tt.currentSpec, tt.newSpec)
@@ -215,92 +215,20 @@ func TestSetManagerFlags(t *testing.T) {
 			want:       deployment(),
 		},
 		{
-			name:       "full lifecycle, vsphere",
-			deployment: deployment(),
-			spec: test.NewClusterSpec(func(s *cluster.Spec) {
-				s.Cluster.Spec.DatacenterRef.Kind = anywherev1.VSphereDatacenterKind
-			}),
-			want: deployment(func(d *appsv1.Deployment) {
-				d.Spec.Template.Spec.Containers[0].Args = []string{
-					"--feature-gates=FullLifecycleAPI=true",
-				}
-			}),
-		},
-		{
-			name:       "full lifecycle, docker",
-			deployment: deployment(),
-			spec: test.NewClusterSpec(func(s *cluster.Spec) {
-				s.Cluster.Spec.DatacenterRef.Kind = anywherev1.DockerDatacenterKind
-			}),
-			want: deployment(func(d *appsv1.Deployment) {
-				d.Spec.Template.Spec.Containers[0].Args = []string{
-					"--feature-gates=FullLifecycleAPI=true",
-				}
-			}),
-		},
-		{
-			name:       "full lifecycle, snow",
-			deployment: deployment(),
-			spec: test.NewClusterSpec(func(s *cluster.Spec) {
-				s.Cluster.Spec.DatacenterRef.Kind = anywherev1.SnowDatacenterKind
-			}),
-			want: deployment(func(d *appsv1.Deployment) {
-				d.Spec.Template.Spec.Containers[0].Args = []string{
-					"--feature-gates=FullLifecycleAPI=true",
-				}
-			}),
-		},
-		{
-			name:       "full lifecycle, nutanix",
-			deployment: deployment(),
-			spec: test.NewClusterSpec(func(s *cluster.Spec) {
-				s.Cluster.Spec.DatacenterRef.Kind = anywherev1.NutanixDatacenterKind
-			}),
-			want: deployment(func(d *appsv1.Deployment) {
-				d.Spec.Template.Spec.Containers[0].Args = []string{
-					"--feature-gates=FullLifecycleAPI=true",
-				}
-			}),
-		},
-		{
-			name:       "full lifecycle, tinkerbell",
-			deployment: deployment(),
-			spec: test.NewClusterSpec(func(s *cluster.Spec) {
-				s.Cluster.Spec.DatacenterRef.Kind = anywherev1.TinkerbellDatacenterKind
-			}),
-			want: deployment(func(d *appsv1.Deployment) {
-				d.Spec.Template.Spec.Containers[0].Args = []string{
-					"--feature-gates=FullLifecycleAPI=true",
-				}
-			}),
-		},
-		{
-			name:       "full lifecycle, cloudstack",
-			deployment: deployment(),
-			spec: test.NewClusterSpec(func(s *cluster.Spec) {
-				s.Cluster.Spec.DatacenterRef.Kind = anywherev1.CloudStackDatacenterKind
-			}),
-			want: deployment(func(d *appsv1.Deployment) {
-				d.Spec.Template.Spec.Containers[0].Args = []string{
-					"--feature-gates=FullLifecycleAPI=true",
-				}
-			}),
-		},
-		{
-			name:           "full lifecycle, feature flag enabled",
+			name:           "kindless upgrades, feature flag enabled",
 			deployment:     deployment(),
 			spec:           test.NewClusterSpec(),
-			featureEnvVars: []string{features.FullLifecycleAPIEnvVar},
+			featureEnvVars: []string{features.ExperimentalSelfManagedClusterUpgradeEnvVar},
 			want: deployment(func(d *appsv1.Deployment) {
 				d.Spec.Template.Spec.Containers[0].Args = []string{
-					"--feature-gates=FullLifecycleAPI=true",
+					"--feature-gates=ExpSelfManagedAPIUpgrade=true",
 				}
 			}),
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			os.Unsetenv(features.FullLifecycleAPIEnvVar)
+			os.Unsetenv(features.ExperimentalSelfManagedClusterUpgradeEnvVar)
 			features.ClearCache()
 			for _, e := range tt.featureEnvVars {
 				t.Setenv(e, "true")

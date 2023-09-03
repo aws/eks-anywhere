@@ -41,24 +41,24 @@ func TestVSphereDatacenterValidateUpdateNetworkImmutable(t *testing.T) {
 	g.Expect(c.ValidateUpdate(&vOld)).To(MatchError(ContainSubstring("spec.network: Forbidden: field is immutable")))
 }
 
-func TestVSphereDatacenterValidateUpdateTLSInsecureImmutable(t *testing.T) {
+func TestVSphereDatacenterValidateUpdateTLSInsecureMutable(t *testing.T) {
 	vOld := vsphereDatacenterConfig()
 	vOld.Spec.Insecure = true
 	c := vOld.DeepCopy()
 
 	c.Spec.Insecure = false
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).To(MatchError(ContainSubstring("spec.insecure: Forbidden: field is immutable")))
+	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
 }
 
-func TestVSphereDatacenterValidateUpdateTlsThumbprintImmutable(t *testing.T) {
+func TestVSphereDatacenterValidateUpdateTlsThumbprintMutable(t *testing.T) {
 	vOld := vsphereDatacenterConfig()
 	vOld.Spec.Thumbprint = "5334E1D85B267B78F99BAF553FEB2F94E72EFDFD"
 	c := vOld.DeepCopy()
 
 	c.Spec.Thumbprint = "B3D1C464976E725E599D3548180CB56311818F224E701F9D56F22E8079A7B396"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).To(MatchError(ContainSubstring("spec.thumbprint: Forbidden: field is immutable")))
+	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
 }
 
 func TestVSphereDatacenterValidateUpdateWithPausedAnnotation(t *testing.T) {
@@ -138,7 +138,6 @@ func vsphereDatacenterConfig() v1alpha1.VSphereDatacenterConfig {
 }
 
 func TestVSphereDatacenterValidateCreateFullManagementCycleOn(t *testing.T) {
-	t.Setenv("FULL_LIFECYCLE_API", "true")
 	dataCenterConfig := vsphereDatacenterConfig()
 
 	g := NewWithT(t)

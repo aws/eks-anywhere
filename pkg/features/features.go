@@ -3,13 +3,12 @@ package features
 // These are environment variables used as flags to enable/disable features.
 const (
 	CloudStackKubeVipDisabledEnvVar = "CLOUDSTACK_KUBE_VIP_DISABLED"
-	FullLifecycleAPIEnvVar          = "FULL_LIFECYCLE_API"
-	FullLifecycleGate               = "FullLifecycleAPI"
 	CheckpointEnabledEnvVar         = "CHECKPOINT_ENABLED"
 	UseNewWorkflowsEnvVar           = "USE_NEW_WORKFLOWS"
 
 	ExperimentalSelfManagedClusterUpgradeEnvVar = "EXP_SELF_MANAGED_API_UPGRADE"
-	experimentalSelfManagedClusterUpgradeGate   = "ExpSelfManagedAPIUpgrade"
+	ExperimentalSelfManagedClusterUpgradeGate   = "ExpSelfManagedAPIUpgrade"
+	K8s128SupportEnvVar                         = "K8S_1_28_SUPPORT"
 )
 
 func FeedGates(featureGates []string) {
@@ -30,20 +29,13 @@ func ClearCache() {
 	globalFeatures.clearCache()
 }
 
-func FullLifecycleAPI() Feature {
-	return Feature{
-		Name:     "Full lifecycle API support through the EKS-A controller",
-		IsActive: globalFeatures.isActiveForEnvVarOrGate(FullLifecycleAPIEnvVar, FullLifecycleGate),
-	}
-}
-
 // ExperimentalSelfManagedClusterUpgrade allows self managed cluster upgrades through the API.
 func ExperimentalSelfManagedClusterUpgrade() Feature {
 	return Feature{
 		Name: "[EXPERIMENTAL] Upgrade self-managed clusters through the API",
 		IsActive: globalFeatures.isActiveForEnvVarOrGate(
 			ExperimentalSelfManagedClusterUpgradeEnvVar,
-			experimentalSelfManagedClusterUpgradeGate,
+			ExperimentalSelfManagedClusterUpgradeGate,
 		),
 	}
 }
@@ -66,5 +58,13 @@ func UseNewWorkflows() Feature {
 	return Feature{
 		Name:     "Use new workflow logic for cluster management operations",
 		IsActive: globalFeatures.isActiveForEnvVar(UseNewWorkflowsEnvVar),
+	}
+}
+
+// K8s128Support is the feature flag for Kubernetes 1.27 support.
+func K8s128Support() Feature {
+	return Feature{
+		Name:     "Kubernetes version 1.28 support",
+		IsActive: globalFeatures.isActiveForEnvVar(K8s128SupportEnvVar),
 	}
 }

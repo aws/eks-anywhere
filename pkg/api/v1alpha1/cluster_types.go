@@ -67,12 +67,47 @@ type ClusterSpec struct {
 	Packages                    *PackageConfiguration        `json:"packages,omitempty"`
 	// BundlesRef contains a reference to the Bundles containing the desired dependencies for the cluster.
 	// DEPRECATED: Use EksaVersion instead.
-	BundlesRef  *BundlesRef  `json:"bundlesRef,omitempty"`
-	EksaVersion *EksaVersion `json:"eksaVersion,omitempty"`
+	BundlesRef         *BundlesRef         `json:"bundlesRef,omitempty"`
+	EksaVersion        *EksaVersion        `json:"eksaVersion,omitempty"`
+	MachineHealthCheck *MachineHealthCheck `json:"machineHealthCheck,omitempty"`
+	EtcdEncryption     *[]EtcdEncryption   `json:"etcdEncryption,omitempty"`
+}
+
+// ClusterSpecGenerate is the same as ClusterSpec except for removing the omitempty tag from BundlesRef.
+// TODO: We needed this specifically such that we could generate a yaml with bundlesRef null so that it would
+// not be omitted from the kubeapi-server. There was an issue where the apply ekas yaml resources step when
+// upgrading from the latest minor release with gitps v0.16.2 to v0.17, where the newly added eksaVersion field
+// and the bundlesRef should were both populated in submission to the kubeapi server, though bundlesRef was nil
+// in the initially applied Cluster spec. After addressing that issue, we should clean this up
+// https://github.com/aws/eks-anywhere-internal/issues/1611
+// +kubebuilder:object:generate=false
+type ClusterSpecGenerate struct {
+	KubernetesVersion             KubernetesVersion              `json:"kubernetesVersion,omitempty"`
+	ControlPlaneConfiguration     ControlPlaneConfiguration      `json:"controlPlaneConfiguration,omitempty"`
+	WorkerNodeGroupConfigurations []WorkerNodeGroupConfiguration `json:"workerNodeGroupConfigurations,omitempty"`
+	DatacenterRef                 Ref                            `json:"datacenterRef,omitempty"`
+	IdentityProviderRefs          []Ref                          `json:"identityProviderRefs,omitempty"`
+	GitOpsRef                     *Ref                           `json:"gitOpsRef,omitempty"`
+	ClusterNetwork                ClusterNetwork                 `json:"clusterNetwork,omitempty"`
+	// +kubebuilder:validation:Optional
+	ExternalEtcdConfiguration   *ExternalEtcdConfiguration   `json:"externalEtcdConfiguration,omitempty"`
+	ProxyConfiguration          *ProxyConfiguration          `json:"proxyConfiguration,omitempty"`
+	RegistryMirrorConfiguration *RegistryMirrorConfiguration `json:"registryMirrorConfiguration,omitempty"`
+	ManagementCluster           ManagementCluster            `json:"managementCluster,omitempty"`
+	PodIAMConfig                *PodIAMConfig                `json:"podIamConfig,omitempty"`
+	Packages                    *PackageConfiguration        `json:"packages,omitempty"`
+	// BundlesRef contains a reference to the Bundles containing the desired dependencies for the cluster.
+	// DEPRECATED: Use EksaVersion instead.
+	BundlesRef         *BundlesRef         `json:"bundlesRef"`
+	EksaVersion        *EksaVersion        `json:"eksaVersion,omitempty"`
+	MachineHealthCheck *MachineHealthCheck `json:"machineHealthCheck,omitempty"`
 }
 
 // EksaVersion is the semver identifying the release of eks-a used to populate the cluster components.
 type EksaVersion string
+
+// DevBuildVersion is the version string for the dev build of EKS-A.
+const DevBuildVersion = "v0.0.0-dev"
 
 // Equal checks if two EksaVersions are equal.
 func (n *EksaVersion) Equal(o *EksaVersion) bool {
@@ -275,6 +310,15 @@ type ControlPlaneConfiguration struct {
 	SkipLoadBalancerDeployment bool `json:"skipLoadBalancerDeployment,omitempty"`
 }
 
+// MachineHealthCheck allows to configure timeouts for machine health checks. Machine Health Checks are responsible for remediating unhealthy Machines.
+// Configuring these values will decide how long to wait to remediate unhealthy machine or determine health of nodes' machines.
+type MachineHealthCheck struct {
+	// NodeStartupTimeout is used to configure the node startup timeout in machine health checks. It determines how long a MachineHealthCheck should wait for a Node to join the cluster, before considering a Machine unhealthy. If not configured, the default value is set to "10m0s" (10 minutes) for all providers. For Tinkerbell provider the default is "20m0s".
+	NodeStartupTimeout *metav1.Duration `json:"nodeStartupTimeout,omitempty"`
+	// UnhealthyMachineTimeout is used to configure the unhealthy machine timeout in machine health checks. If any unhealthy conditions are met for the amount of time specified as the timeout, the machines are considered unhealthy. If not configured, the default value is set to "5m0s" (5 minutes).
+	UnhealthyMachineTimeout *metav1.Duration `json:"unhealthyMachineTimeout,omitempty"`
+}
+
 func TaintsSliceEqual(s1, s2 []corev1.Taint) bool {
 	if len(s1) != len(s2) {
 		return false
@@ -468,46 +512,19 @@ func WorkerNodeGroupConfigurationsSliceEqual(a, b []WorkerNodeGroupConfiguration
 	return true
 }
 
-func WorkerNodeGroupConfigurationSliceTaintsEqual(a, b []WorkerNodeGroupConfiguration) bool {
-	m := make(map[string][]corev1.Taint, len(a))
-	for _, nodeGroup := range a {
-		m[nodeGroup.Name] = nodeGroup.Taints
+// WorkerNodeGroupConfigurationKubeVersionUnchanged checks if a worker node group's k8s version has not changed. The ClusterVersions are the top level kubernetes version of a cluster.
+func WorkerNodeGroupConfigurationKubeVersionUnchanged(o, n *WorkerNodeGroupConfiguration, oldCluster, newCluster *Cluster) bool {
+	oldVersion := o.KubernetesVersion
+	newVersion := n.KubernetesVersion
+
+	if oldVersion == nil {
+		oldVersion = &oldCluster.Spec.KubernetesVersion
+	}
+	if newVersion == nil {
+		newVersion = &newCluster.Spec.KubernetesVersion
 	}
 
-	for _, nodeGroup := range b {
-		if _, ok := m[nodeGroup.Name]; !ok {
-			// this method is not concerned with added/removed node groups,
-			// only with the comparison of taints on existing node groups
-			// if a node group is present in a but not b, or vise versa, it's immaterial
-			continue
-		} else {
-			if !TaintsSliceEqual(m[nodeGroup.Name], nodeGroup.Taints) {
-				return false
-			}
-		}
-	}
-	return true
-}
-
-func WorkerNodeGroupConfigurationsLabelsMapEqual(a, b []WorkerNodeGroupConfiguration) bool {
-	m := make(map[string]map[string]string, len(a))
-	for _, nodeGroup := range a {
-		m[nodeGroup.Name] = nodeGroup.Labels
-	}
-
-	for _, nodeGroup := range b {
-		if _, ok := m[nodeGroup.Name]; !ok {
-			// this method is not concerned with added/removed node groups,
-			// only with the comparison of labels on existing node groups
-			// if a node group is present in a but not b, or vise versa, it's immaterial
-			continue
-		} else {
-			if !MapEqual(m[nodeGroup.Name], nodeGroup.Labels) {
-				return false
-			}
-		}
-	}
-	return true
+	return newVersion.Equal(oldVersion)
 }
 
 type ClusterNetwork struct {
@@ -795,6 +812,7 @@ const (
 	Kube125 KubernetesVersion = "1.25"
 	Kube126 KubernetesVersion = "1.26"
 	Kube127 KubernetesVersion = "1.27"
+	Kube128 KubernetesVersion = "1.28"
 )
 
 // KubeVersionToSemver converts kube version to semver for comparisons.
@@ -810,6 +828,11 @@ type CiliumPolicyEnforcementMode string
 type CNIConfig struct {
 	Cilium   *CiliumConfig   `json:"cilium,omitempty"`
 	Kindnetd *KindnetdConfig `json:"kindnetd,omitempty"`
+}
+
+// IsManaged indicates if EKS-A is responsible for the CNI installation.
+func (n *CNIConfig) IsManaged() bool {
+	return n != nil && (n.Kindnetd != nil || n.Cilium != nil && n.Cilium.IsManaged())
 }
 
 type CiliumConfig struct {
@@ -880,6 +903,9 @@ const (
 
 	// UnavailableControlPlaneIPReason reports that the Cluster controlPlaneIP is already in use.
 	UnavailableControlPlaneIPReason FailureReasonType = "UnavailableControlPlaneIP"
+
+	// EksaVersionInvalidReason reports that the Cluster eksaVersion validation has failed.
+	EksaVersionInvalidReason FailureReasonType = "EksaVersionInvalid"
 )
 
 // Reasons for the terminal failures while reconciling the Cluster object specific for Tinkerbell.
@@ -1228,7 +1254,7 @@ type ClusterGenerate struct {
 	metav1.TypeMeta `json:",inline"`
 	ObjectMeta      `json:"metadata,omitempty"`
 
-	Spec ClusterSpec `json:"spec,omitempty"`
+	Spec ClusterSpecGenerate `json:"spec,omitempty"`
 }
 
 func (c *Cluster) Kind() string {
@@ -1330,6 +1356,25 @@ func (c *Cluster) ClearFailure() {
 	c.Status.FailureReason = nil
 }
 
+// KubernetesVersions returns a set of all unique k8s versions specified in the cluster
+// for both CP and workers.
+func (c *Cluster) KubernetesVersions() []KubernetesVersion {
+	versionsSet := map[string]struct{}{}
+	versions := make([]KubernetesVersion, 0, 1)
+
+	versionsSet[string(c.Spec.KubernetesVersion)] = struct{}{}
+	versions = append(versions, c.Spec.KubernetesVersion)
+	for _, w := range c.Spec.WorkerNodeGroupConfigurations {
+		if w.KubernetesVersion != nil {
+			if _, ok := versionsSet[string(*w.KubernetesVersion)]; !ok {
+				versions = append(versions, *w.KubernetesVersion)
+			}
+		}
+	}
+
+	return versions
+}
+
 type refSet map[Ref]struct{}
 
 func (r refSet) addIfNotNil(ref *Ref) bool {
@@ -1370,7 +1415,24 @@ func (c *Cluster) ConvertConfigToConfigGenerateStruct() *ClusterGenerate {
 			Annotations: c.Annotations,
 			Namespace:   namespace,
 		},
-		Spec: c.Spec,
+		Spec: ClusterSpecGenerate{
+			KubernetesVersion:             c.Spec.KubernetesVersion,
+			ControlPlaneConfiguration:     c.Spec.ControlPlaneConfiguration,
+			WorkerNodeGroupConfigurations: c.Spec.WorkerNodeGroupConfigurations,
+			DatacenterRef:                 c.Spec.DatacenterRef,
+			IdentityProviderRefs:          c.Spec.IdentityProviderRefs,
+			GitOpsRef:                     c.Spec.GitOpsRef,
+			ClusterNetwork:                c.Spec.ClusterNetwork,
+			ExternalEtcdConfiguration:     c.Spec.ExternalEtcdConfiguration,
+			ProxyConfiguration:            c.Spec.ProxyConfiguration,
+			RegistryMirrorConfiguration:   c.Spec.RegistryMirrorConfiguration,
+			ManagementCluster:             c.Spec.ManagementCluster,
+			PodIAMConfig:                  c.Spec.PodIAMConfig,
+			Packages:                      c.Spec.Packages,
+			BundlesRef:                    c.Spec.BundlesRef,
+			EksaVersion:                   c.Spec.EksaVersion,
+			MachineHealthCheck:            c.Spec.MachineHealthCheck,
+		},
 	}
 
 	return config

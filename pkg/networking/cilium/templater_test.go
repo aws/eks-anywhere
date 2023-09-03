@@ -44,19 +44,23 @@ func newtemplaterTest(t *testing.T) *templaterTest {
 		version:   "1.9.11-eksa.1",
 		namespace: "kube-system",
 		currentSpec: test.NewClusterSpec(func(s *cluster.Spec) {
-			s.VersionsBundle.Cilium.Version = "v1.9.10-eksa.1"
-			s.VersionsBundle.Cilium.Cilium.URI = "public.ecr.aws/isovalent/cilium:v1.9.10-eksa.1"
-			s.VersionsBundle.Cilium.Operator.URI = "public.ecr.aws/isovalent/operator-generic:v1.9.10-eksa.1"
-			s.VersionsBundle.Cilium.HelmChart.URI = "public.ecr.aws/isovalent/cilium:1.9.10-eksa.1"
-			s.VersionsBundle.KubeDistro.Kubernetes.Tag = "v1.22.5-eks-1-22-9"
+			s.Cluster.Spec.KubernetesVersion = "1.22"
+			s.VersionsBundles["1.22"] = test.VersionBundle()
+			s.VersionsBundles["1.22"].Cilium.Version = "v1.9.10-eksa.1"
+			s.VersionsBundles["1.22"].Cilium.Cilium.URI = "public.ecr.aws/isovalent/cilium:v1.9.10-eksa.1"
+			s.VersionsBundles["1.22"].Cilium.Operator.URI = "public.ecr.aws/isovalent/operator-generic:v1.9.10-eksa.1"
+			s.VersionsBundles["1.22"].Cilium.HelmChart.URI = "public.ecr.aws/isovalent/cilium:1.9.10-eksa.1"
+			s.VersionsBundles["1.22"].KubeDistro.Kubernetes.Tag = "v1.22.5-eks-1-22-9"
 			s.Cluster.Spec.ClusterNetwork.CNIConfig = &v1alpha1.CNIConfig{Cilium: &v1alpha1.CiliumConfig{}}
 		}),
 		spec: test.NewClusterSpec(func(s *cluster.Spec) {
-			s.VersionsBundle.Cilium.Version = "v1.9.11-eksa.1"
-			s.VersionsBundle.Cilium.Cilium.URI = "public.ecr.aws/isovalent/cilium:v1.9.11-eksa.1"
-			s.VersionsBundle.Cilium.Operator.URI = "public.ecr.aws/isovalent/operator-generic:v1.9.11-eksa.1"
-			s.VersionsBundle.Cilium.HelmChart.URI = "public.ecr.aws/isovalent/cilium:1.9.11-eksa.1"
-			s.VersionsBundle.KubeDistro.Kubernetes.Tag = "v1.22.5-eks-1-22-9"
+			s.Cluster.Spec.KubernetesVersion = "1.22"
+			s.VersionsBundles["1.22"] = test.VersionBundle()
+			s.VersionsBundles["1.22"].Cilium.Version = "v1.9.11-eksa.1"
+			s.VersionsBundles["1.22"].Cilium.Cilium.URI = "public.ecr.aws/isovalent/cilium:v1.9.11-eksa.1"
+			s.VersionsBundles["1.22"].Cilium.Operator.URI = "public.ecr.aws/isovalent/operator-generic:v1.9.11-eksa.1"
+			s.VersionsBundles["1.22"].Cilium.HelmChart.URI = "public.ecr.aws/isovalent/cilium:1.9.11-eksa.1"
+			s.VersionsBundles["1.22"].KubeDistro.Kubernetes.Tag = "v1.22.5-eks-1-22-9"
 			s.Cluster.Spec.ClusterNetwork.CNIConfig = &v1alpha1.CNIConfig{Cilium: &v1alpha1.CiliumConfig{}}
 		}),
 	}
@@ -173,7 +177,7 @@ func TestTemplaterGenerateUpgradePreflightManifestError(t *testing.T) {
 
 func TestTemplaterGenerateUpgradePreflightManifestInvalidKubeVersion(t *testing.T) {
 	tt := newtemplaterTest(t)
-	tt.spec.VersionsBundle.KubeDistro.Kubernetes.Tag = "v1-invalid"
+	tt.spec.VersionsBundles["1.22"].KubeDistro.Kubernetes.Tag = "v1-invalid"
 	_, err := tt.t.GenerateUpgradePreflightManifest(tt.ctx, tt.spec)
 	tt.Expect(err).To(HaveOccurred(), "templater.GenerateUpgradePreflightManifest() should fail")
 	tt.Expect(err).To(MatchError(ContainSubstring("invalid major version in semver")))
@@ -304,7 +308,7 @@ func TestTemplaterGenerateManifestError(t *testing.T) {
 
 func TestTemplaterGenerateManifestInvalidKubeVersion(t *testing.T) {
 	tt := newtemplaterTest(t)
-	tt.spec.VersionsBundle.KubeDistro.Kubernetes.Tag = "v1-invalid"
+	tt.spec.VersionsBundles["1.22"].KubeDistro.Kubernetes.Tag = "v1-invalid"
 	_, err := tt.t.GenerateManifest(tt.ctx, tt.spec)
 	tt.Expect(err).To(HaveOccurred(), "templater.GenerateManifest() should fail")
 	tt.Expect(err).To(MatchError(ContainSubstring("invalid major version in semver")))
@@ -314,7 +318,9 @@ func TestTemplaterGenerateManifestUpgradeSameKubernetesVersionSuccess(t *testing
 	tt := newtemplaterTest(t)
 	tt.expectHelmTemplateWith(eqMap(wantUpgradeValues()), "1.22").Return(tt.manifest, nil)
 
-	oldCiliumVersion, err := semver.New(tt.currentSpec.VersionsBundle.Cilium.Version)
+	vb := tt.currentSpec.RootVersionsBundle()
+
+	oldCiliumVersion, err := semver.New(vb.Cilium.Version)
 	tt.Expect(err).NotTo(HaveOccurred())
 
 	tt.Expect(
@@ -328,7 +334,8 @@ func TestTemplaterGenerateManifestUpgradeNewKubernetesVersionSuccess(t *testing.
 	tt := newtemplaterTest(t)
 	tt.expectHelmTemplateWith(eqMap(wantUpgradeValues()), "1.21").Return(tt.manifest, nil)
 
-	oldCiliumVersion, err := semver.New(tt.currentSpec.VersionsBundle.Cilium.Version)
+	vb := tt.currentSpec.RootVersionsBundle()
+	oldCiliumVersion, err := semver.New(vb.Cilium.Version)
 	tt.Expect(err).NotTo(HaveOccurred())
 
 	tt.Expect(
@@ -408,7 +415,6 @@ func TestTemplaterGenerateNetworkPolicy(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			temp := newtemplaterTest(t)
-			temp.spec.VersionsBundle.KubeDistro.Kubernetes.Tag = tt.k8sVersion
 			if !tt.selfManaged {
 				temp.spec.Cluster.Spec.ManagementCluster.Name = "managed"
 			}

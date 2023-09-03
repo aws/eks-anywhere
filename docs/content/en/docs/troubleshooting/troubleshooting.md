@@ -48,6 +48,46 @@ Ensure you are running Docker 20.x.x for example:
 % docker --version
 Docker version 20.10.6, build 370c289
 ```
+### Minimum requirements for Docker version have not been met on macOS
+```
+Error: EKS Anywhere does not support Docker Desktop versions between 4.3.0 and 4.4.1 on macOS
+```
+```
+Error: EKS Anywhere requires Docker Desktop to be configured to use CGroups v1. Please  set `deprecatedCgroupv1:true` in your `~/Library/Group\\ Containers/group.com.docker/settings.json` file
+```
+Ensure you are running Docker Desktop 4.4.2 or newer and, if you are running EKS Anywhere v0.15 or earlier, have set `"deprecatedCgroupv1": true` in your settings.json file
+```
+% defaults read /Applications/Docker.app/Contents/Info.plist CFBundleShortVersionString
+4.42
+% docker info --format '{{json .CgroupVersion}}' 
+"1"
+```
+
+### For EKS Anywhere v0.15 and earlier, cgroups v2 is not supported in Ubuntu 21.10+ and 22.04
+```
+ERROR: failed to create cluster: could not find a log line that matches "Reached target .*Multi-User System.*|detected cgroup v1"
+```
+For EKS Anywhere v0.15 and earlier, if you are using Ubuntu it is recommended to use Ubuntu 20.04 for the Administrative Machine. This is because the EKS Anywhere Bootstrap cluster for those versions requires _cgroups v1_. Since Ubuntu 21.10 _cgroups v2_ is enabled by default. You can use Ubuntu 21.10 and 22.04 for the Administrative machine if you configure Ubuntu to use _cgroups v1_ instead. This is not an issue if you are using macOS for your Administrative machine.
+
+To verify cgroups version
+```
+% docker info | grep Cgroup
+ Cgroup Driver: cgroupfs
+ Cgroup Version: 2
+```
+To use _cgroups v1_ you need to _sudo_ and edit _/etc/default/grub_ to set _GRUB_CMDLINE_LINUX_ to "systemd.unified_cgroup_hierarchy=0" and reboot.
+```
+%sudo <editor> /etc/default/grub
+GRUB_CMDLINE_LINUX="systemd.unified_cgroup_hierarchy=0"
+sudo update-grub
+sudo reboot now
+```
+Then verify you are using _cgroups v1_.
+```
+% docker info | grep Cgroup
+ Cgroup Driver: cgroupfs
+ Cgroup Version: 1
+```
 
 ### ECR access denied
 
@@ -188,18 +228,19 @@ It is also useful to start a shell session on the Docker container running the b
 
 ### Bootstrap cluster fails to come up: node(s) already exist for a cluster with the name
 
+During `create` and `delete` CLI, EKS Anywhere tries to create a temporary KinD bootstrap cluster with the name `${CLUSTER_NAME}-eks-a-cluster` on the Admin machine. This operation can fail with below error:
+
 ```
-Error: creating bootstrap cluster: executing create cluster: ERROR: failed to create cluster: node(s) already exist for a cluster with the name \"cluster-name\"
-, try rerunning with —force-cleanup to force delete previously created bootstrap cluster
+Error: creating bootstrap cluster: executing create/delete cluster: ERROR: failed to create/delete cluster: node(s) already exist for a cluster with the name \"cluster-name\"
 ```
 
-Cluster creation fails because a cluster of the same name already exists. If you are sure the cluster is not being used, try running the `eksctl anywhere create cluster` again, adding the `--force-cleanup` option.
-
-If that doesn't work, you can manually delete the old cluster:
+This indicates that the cluster creation or deletion fails because a bootstrap cluster of the same name already exists. If you are sure the cluster is not being used, you can manually delete the old cluster:
 
 ```bash
-kind delete cluster --name cluster-name
+docker ps | grep "${CLUSTER_NAME}-eks-a-cluster-control-plane" | awk '{ print $1 }' | xargs docker rm -f
 ```
+
+Once the old KinD bootstrap cluster is deleted, you can rerun the `eksctl anywhere create` or `eksctl anywhere delete` command again.
 
 ### Cluster upgrade fails with management components on bootstrap cluster
 
@@ -337,6 +378,66 @@ ctr -n k8s.io t exec -t --exec-id etcd ${ETCD_CONTAINER_ID} etcdctl \
 
 Follow the VM restore process in provider-specific section.
 * [Restore VM for machine in vSphere]({{< relref "#restore-vm-for-machine-in-vsphere" >}})
+
+#### Nodes cycling due to insufficient pod CIDRs
+
+Kubernetes controller manager allocates a dedicated CIDR block per node for pod IPs from within `clusterNetwork.pods.cidrBlocks`. The size of this node CIDR block defaults to /24 and can be adjusted at cluster creation using the [optional cidrMaskSize field]({{< relref "../getting-started/optional/cni/#node-ips-configuration-option" >}}).
+
+Since each node requires a CIDR block, the maximum number of nodes in a cluster is limited to the number of non-overlapping subnets of `cidrMaskSize` that fit in the pods CIDR block. For example, for a pod CIDR block mask of `/18` and a node CIDR mask size of `/22`, a maximum of 16 nodes can be proivisioned since there are 16 subnets of size `/22` in the overall `/18` block. If more nodes are created than the `clusterNetwork.pods.cidrBlocks` can accomodate, `kube-controller-manager` will not be able to allocate a CIDR block to the extra nodes. 
+
+This can cause nodes to become `NotReady` with the following sympotoms:
+
+- `kubectl describe node <unhealthy node>` indicates `CIDRNotAvailable` events.
+- kube-controller-manager log displays:
+    ```
+    Error while processing Node Add/Delete: failed to allocate cidr from cluster cidr at idx:0: CIDR allocation failed; there are no remaining CIDRs left to allocate in the accepted range
+    ```
+- Kubelet log on unhealthy node contains `NetworkPluginNotReady message:Network plugin returns error: cni plugin not initialized`
+
+If more nodes need to be provisioned, either the `clusterNetwork.pods.cidrBlocks` must be expanded or the `node-cidr-mask-size` [should be reduced.]({{< relref "../getting-started/optional/cni/#node-ips-configuration-option" >}}).
+
+### Machine health check shows "Remediation is not allowed"
+
+Sometimes a cluster node is crashed but machine health check does not start the proper remediation process to recreate the failed machine. For example, if a worker node is crashed, and running `kubectl get mhc ${CLUSTER_NAME}-md-0-worker-unhealthy -n eksa-system -oyaml` shows status message below:
+
+```
+Remediation is not allowed, the number of not started or unhealthy machines exceeds maxUnhealthy
+```
+
+EKS Anywhere sets the machine health check's `MaxUnhealthy` of the workers in a worker node group to 40%. This means any further remediation is only allowed if at most 40% of the worker machines selected by "selector" are not healthy. If more than 40% of the worker machines are in unhealthy state, the remediation will not be triggered.
+
+For example, if you create an EKS Anywhere cluster with 2 worker nodes in the same worker node group, and one of the worker node is down. The machine health check will not remediate the failed machine because the actual unhealthy machines (50%) in the worker node group already exceeds the maximum percentage of the unhealthy machine (40%) allowed. As a result, the failed machine will not be replaced with new healthy machine and your cluster will be left with single worker node. In this case, we recommend you to scale up the number of worker nodes, for example, to 4. Once the 2 more worker nodes are up and running, it brings the total unhealthy worker machines to 25% which is below the 40% limit. This will trigger the machine health check remediation which replace the unhealthy machine with new one.
+
+### Etcd machines with false `NodeHealthy` condition due to `WaitingForNodeRef`
+
+When inspecting the `Machine` CRs, etcd machines might appear as `Running` but containing a false `NodeHealthy` condition, with a `WaitingForNodeRef` reason. This is a purely cosmetic issue that has no impact in the health of your cluster. This has been fixed in more recent versions of EKS-A, so this condition won't be displayed anymore in etcd machines.
+
+```yaml
+Status:
+  Addresses:
+    Address:        144.47.85.93
+    Type:           ExternalIP
+  Bootstrap Ready:  true
+  Conditions:
+    Last Transition Time:  2023-05-15T23:13:01Z
+    Status:                True
+    Type:                  Ready
+    Last Transition Time:  2023-05-15T23:12:09Z
+    Status:                True
+    Type:                  BootstrapReady
+    Last Transition Time:  2023-05-15T23:13:01Z
+    Status:                True
+    Type:                  InfrastructureReady
+    Last Transition Time:  2023-05-15T23:12:09Z
+    Reason:                WaitingForNodeRef
+    Severity:              Info
+    Status:                False
+    Type:                  NodeHealthy
+  Infrastructure Ready:    true
+  Last Updated:            2023-05-15T23:13:01Z
+  Observed Generation:     3
+  Phase:                   Running
+```
 
 ## Bare Metal troubleshooting
 
@@ -519,9 +620,11 @@ If no VMs are created, check the `capi-controller-manager`, `capv-controller-man
 
 #### No IP assigned to a VM
 
-If any VMs are created, check to see if they have any IPv4 IPs assigned to them.
+If a VM is created, check to see if it has an IPv4 IP assigned. For example, in BottleRocket machine boot logs, you might see `Failed to read current IP data`.
 
 If there are no IPv4 IPs assigned to VMs, this is most likely because you don't have a DHCP server configured for the `network` configured in the cluster config yaml, OR there are not enough IP addresses available in the DHCP pool to assign to the VMs. Ensure that you either have a DHCP running with [enough IP addresses to create a cluster]({{< relref "../clustermgmt/cluster-upgrades/vsphere-and-cloudstack-upgrades/#prepare-dhcp-ip-addresses-pool" >}}), or [create your own DHCP server]({{< relref "../getting-started/vsphere/customize/vsphere-dhcp" >}}), before running the create or upgrade command again.
+
+To confirm this is a DHCP issue, you could create a new VM in the same network to validate if an IPv4 IP is assigned correctly.
 
 #### Control Plane IP in clusterconfig is not present on any Control Plane VM
 

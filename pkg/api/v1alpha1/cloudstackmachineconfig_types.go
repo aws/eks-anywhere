@@ -259,6 +259,11 @@ func (c *CloudStackMachineConfig) OSFamily() OSFamily {
 	return ""
 }
 
+// Users returns a list of configuration for OS users.
+func (c *CloudStackMachineConfig) Users() []UserConfiguration {
+	return c.Spec.Users
+}
+
 func (c *CloudStackMachineConfigSpec) Equal(o *CloudStackMachineConfigSpec) bool {
 	if c == o {
 		return true

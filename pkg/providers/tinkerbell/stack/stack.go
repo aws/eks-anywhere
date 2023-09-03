@@ -148,13 +148,7 @@ func (s *Installer) Install(ctx context.Context, bundle releasev1alpha1.Tinkerbe
 		option(s)
 	}
 
-	bootEnv := []map[string]string{}
-	for k, v := range s.getBootsEnv(bundle.TinkerbellStack, tinkerbellIP) {
-		bootEnv = append(bootEnv, map[string]string{
-			"name":  k,
-			"value": v,
-		})
-	}
+	bootEnv := s.getBootsEnv(bundle.TinkerbellStack, tinkerbellIP)
 
 	osiePath, err := getURIDir(bundle.TinkerbellStack.Hook.Initramfs.Amd.URI)
 	if err != nil {
@@ -260,8 +254,8 @@ func (s *Installer) installBootsOnDocker(ctx context.Context, bundle releasev1al
 		"-e", fmt.Sprintf("BOOTS_KUBE_NAMESPACE=%v", s.namespace),
 	}
 
-	for name, value := range s.getBootsEnv(bundle, tinkServerIP) {
-		flags = append(flags, "-e", fmt.Sprintf("%s=%s", name, value))
+	for _, e := range s.getBootsEnv(bundle, tinkServerIP) {
+		flags = append(flags, "-e", fmt.Sprintf("%s=%s", e["name"], e["value"]))
 	}
 
 	osiePath, err := getURIDir(bundle.Hook.Initramfs.Amd.URI)
@@ -285,30 +279,39 @@ func (s *Installer) installBootsOnDocker(ctx context.Context, bundle releasev1al
 	return nil
 }
 
-func (s *Installer) getBootsEnv(bundle releasev1alpha1.TinkerbellStackBundle, tinkServerIP string) map[string]string {
-	bootsEnv := map[string]string{
-		"DATA_MODEL_VERSION":        "kubernetes",
-		"TINKERBELL_TLS":            "false",
-		"TINKERBELL_GRPC_AUTHORITY": fmt.Sprintf("%s:%s", tinkServerIP, grpcPort),
+func (s *Installer) getBootsEnv(bundle releasev1alpha1.TinkerbellStackBundle, tinkServerIP string) []map[string]string {
+	env := []map[string]string{
+		toEnvEntry("DATA_MODEL_VERSION", "kubernetes"),
+		toEnvEntry("TINKERBELL_TLS", "false"),
+		toEnvEntry("TINKERBELL_GRPC_AUTHORITY", fmt.Sprintf("%s:%s", tinkServerIP, grpcPort)),
 	}
 
 	extraKernelArgs := fmt.Sprintf("tink_worker_image=%s", s.localRegistryURL(bundle.Tink.TinkWorker.URI))
+
 	if s.registryMirror != nil {
 		localRegistry := s.registryMirror.BaseRegistry
 		extraKernelArgs = fmt.Sprintf("%s insecure_registries=%s", extraKernelArgs, localRegistry)
 		if s.registryMirror.Auth {
 			username, password, _ := config.ReadCredentials()
-			bootsEnv["REGISTRY_USERNAME"] = username
-			bootsEnv["REGISTRY_PASSWORD"] = password
+			env = append(env,
+				toEnvEntry("REGISTRY_USERNAME", username),
+				toEnvEntry("REGISTRY_PASSWORD", password))
 		}
 	}
+
 	if s.proxyConfig != nil {
 		noProxy := strings.Join(s.proxyConfig.NoProxy, ",")
 		extraKernelArgs = fmt.Sprintf("%s HTTP_PROXY=%s HTTPS_PROXY=%s NO_PROXY=%s", extraKernelArgs, s.proxyConfig.HttpProxy, s.proxyConfig.HttpsProxy, noProxy)
 	}
-	bootsEnv["BOOTS_EXTRA_KERNEL_ARGS"] = extraKernelArgs
 
-	return bootsEnv
+	return append(env, toEnvEntry("BOOTS_EXTRA_KERNEL_ARGS", extraKernelArgs))
+}
+
+func toEnvEntry(k, v string) map[string]string {
+	return map[string]string{
+		"name":  k,
+		"value": v,
+	}
 }
 
 // UninstallLocal currently removes local docker container running Boots.
@@ -353,7 +356,7 @@ func (s *Installer) CleanupLocalBoots(ctx context.Context, remove bool) error {
 	}
 
 	// finally, return an "already exists" error if boots exists and forceCleanup is not set
-	return errors.New("boots container already exists, delete the container manually or re-run the command with --force-cleanup")
+	return errors.New("boots container already exists, delete the container manually")
 }
 
 func (s *Installer) localRegistryURL(originalURL string) string {
@@ -378,13 +381,7 @@ func (s *Installer) authenticateHelmRegistry(ctx context.Context) error {
 func (s *Installer) Upgrade(ctx context.Context, bundle releasev1alpha1.TinkerbellBundle, tinkerbellIP, kubeconfig string, hookOverride string) error {
 	logger.V(6).Info("Upgrading Tinkerbell helm chart")
 
-	bootEnv := []map[string]string{}
-	for k, v := range s.getBootsEnv(bundle.TinkerbellStack, tinkerbellIP) {
-		bootEnv = append(bootEnv, map[string]string{
-			"name":  k,
-			"value": v,
-		})
-	}
+	bootEnv := s.getBootsEnv(bundle.TinkerbellStack, tinkerbellIP)
 
 	osiePath, err := getURIDir(bundle.TinkerbellStack.Hook.Initramfs.Amd.URI)
 	if err != nil {
@@ -405,6 +402,12 @@ func (s *Installer) Upgrade(ctx context.Context, bundle releasev1alpha1.Tinkerbe
 		},
 		hegel: map[string]interface{}{
 			image: bundle.TinkerbellStack.Hegel.URI,
+			env: []map[string]string{
+				{
+					"name":  "HEGEL_TRUSTED_PROXIES",
+					"value": s.podCidrRange,
+				},
+			},
 		},
 		boots: map[string]interface{}{
 			image: bundle.TinkerbellStack.Boots.URI,

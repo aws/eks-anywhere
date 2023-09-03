@@ -12,7 +12,7 @@ import (
 
 func TestInstallerInstallErrorGeneratingManifest(t *testing.T) {
 	tt := newKindnetdTest(t)
-	tt.spec.VersionsBundle.Kindnetd.Manifest.URI = "testdata/missing_manifest.yaml"
+	tt.spec.VersionsBundles["1.19"].Kindnetd.Manifest.URI = "testdata/missing_manifest.yaml"
 
 	tt.Expect(
 		tt.k.Installer.Install(tt.ctx, tt.cluster, tt.spec),

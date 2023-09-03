@@ -28,7 +28,6 @@ type Upgrade struct {
 	capiManager       interfaces.CAPIManager
 	eksdInstaller     interfaces.EksdInstaller
 	eksdUpgrader      interfaces.EksdUpgrader
-	clusterUpgrader   interfaces.ClusterUpgrader
 	upgradeChangeDiff *types.ChangeDiff
 }
 
@@ -39,7 +38,6 @@ func NewUpgrade(bootstrapper interfaces.Bootstrapper, provider providers.Provide
 	writer filewriter.FileWriter,
 	eksdUpgrader interfaces.EksdUpgrader,
 	eksdInstaller interfaces.EksdInstaller,
-	clusterUpgrader interfaces.ClusterUpgrader,
 ) *Upgrade {
 	upgradeChangeDiff := types.NewChangeDiff()
 	return &Upgrade{
@@ -51,7 +49,6 @@ func NewUpgrade(bootstrapper interfaces.Bootstrapper, provider providers.Provide
 		capiManager:       capiManager,
 		eksdUpgrader:      eksdUpgrader,
 		eksdInstaller:     eksdInstaller,
-		clusterUpgrader:   clusterUpgrader,
 		upgradeChangeDiff: upgradeChangeDiff,
 	}
 }
@@ -70,7 +67,6 @@ func (c *Upgrade) Run(ctx context.Context, clusterSpec *cluster.Spec, management
 		CAPIManager:       c.capiManager,
 		EksdInstaller:     c.eksdInstaller,
 		EksdUpgrader:      c.eksdUpgrader,
-		ClusterUpgrader:   c.clusterUpgrader,
 		UpgradeChangeDiff: c.upgradeChangeDiff,
 		ForceCleanup:      forceCleanup,
 	}
@@ -460,11 +456,16 @@ func (s *installCAPITask) Restore(ctx context.Context, commandContext *task.Comm
 }
 
 func (s *moveManagementToBootstrapTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
+	// Take best effort CAPI backup of workload cluster without filter.
+	// If that errors, then take CAPI backup filtering on only workload cluster.
 	logger.Info("Backing up workload cluster's management resources before moving to bootstrap cluster")
-	err := commandContext.ClusterManager.BackupCAPI(ctx, commandContext.WorkloadCluster, commandContext.ManagementClusterStateDir)
+	err := commandContext.ClusterManager.BackupCAPI(ctx, commandContext.WorkloadCluster, commandContext.ManagementClusterStateDir, "")
 	if err != nil {
-		commandContext.SetError(err)
-		return &CollectDiagnosticsTask{}
+		err = commandContext.ClusterManager.BackupCAPIWaitForInfrastructure(ctx, commandContext.WorkloadCluster, commandContext.ManagementClusterStateDir, commandContext.WorkloadCluster.Name)
+		if err != nil {
+			commandContext.SetError(err)
+			return &CollectDiagnosticsTask{}
+		}
 	}
 
 	logger.V(3).Info("Pausing workload clusters before moving management cluster resources to bootstrap cluster")
@@ -513,40 +514,28 @@ func (s *upgradeWorkloadClusterTask) Run(ctx context.Context, commandContext *ta
 		eksaManagementCluster = commandContext.ManagementCluster
 	}
 
-	if err := commandContext.ClusterUpgrader.PrepareUpgrade(
-		ctx,
-		commandContext.ClusterSpec,
-		commandContext.ManagementCluster.KubeconfigFile,
-		commandContext.WorkloadCluster.KubeconfigFile,
-	); err != nil {
-		commandContext.SetError(err)
-		return &CollectDiagnosticsTask{}
-	}
-
 	logger.Info("Upgrading workload cluster")
 	err := commandContext.ClusterManager.UpgradeCluster(ctx, commandContext.ManagementCluster, commandContext.WorkloadCluster, commandContext.ClusterSpec, commandContext.Provider)
 	if err != nil {
 		commandContext.SetError(err)
-		logger.Info("Backing up management components from bootstrap cluster")
-		err := commandContext.ClusterManager.BackupCAPI(ctx, commandContext.BootstrapCluster, commandContext.ManagementClusterStateDir)
-		if err != nil {
-			logger.Info("Bootstrap management component backup failed, use existing workload cluster backup", "error", err)
+		// Take backup of bootstrap cluster capi components
+		if commandContext.BootstrapCluster != nil {
+			logger.Info("Backing up management components from bootstrap cluster")
+			err := commandContext.ClusterManager.BackupCAPIWaitForInfrastructure(ctx, commandContext.BootstrapCluster, fmt.Sprintf("bootstrap-%s", commandContext.ManagementClusterStateDir), commandContext.WorkloadCluster.Name)
+			if err != nil {
+				logger.Info("Bootstrap management component backup failed, use existing workload cluster backup", "error", err)
+			}
 		}
-		return &CollectDiagnosticsTask{}
-	}
-
-	if err := commandContext.ClusterUpgrader.CleanupAfterUpgrade(
-		ctx,
-		commandContext.ClusterSpec,
-		commandContext.ManagementCluster.KubeconfigFile,
-		commandContext.WorkloadCluster.KubeconfigFile,
-	); err != nil {
-		commandContext.SetError(err)
 		return &CollectDiagnosticsTask{}
 	}
 
 	if commandContext.UpgradeChangeDiff.Changed() {
 		if err = commandContext.ClusterManager.ApplyBundles(ctx, commandContext.ClusterSpec, eksaManagementCluster); err != nil {
+			commandContext.SetError(err)
+			return &CollectDiagnosticsTask{}
+		}
+
+		if err = commandContext.ClusterManager.ApplyReleases(ctx, commandContext.ClusterSpec, eksaManagementCluster); err != nil {
 			commandContext.SetError(err)
 			return &CollectDiagnosticsTask{}
 		}
@@ -706,8 +695,8 @@ func (s *deleteBootstrapClusterTask) Run(ctx context.Context, commandContext *ta
 		if commandContext.OriginalError == nil {
 			logger.MarkSuccess("Cluster upgraded!")
 		}
-		if err := commandContext.Provider.PostBootstrapDeleteForUpgrade(ctx); err != nil {
-			// Cluster has been succesfully upgraded, bootstrap cluster successfully deleted
+		if err := commandContext.Provider.PostBootstrapDeleteForUpgrade(ctx, commandContext.ManagementCluster); err != nil {
+			// Cluster has been successfully upgraded, bootstrap cluster successfully deleted
 			// We don't necessarily need to return with an error here and abort
 			logger.Info(fmt.Sprintf("%v", err))
 		}

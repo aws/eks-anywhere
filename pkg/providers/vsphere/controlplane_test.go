@@ -116,18 +116,6 @@ func TestControlPlaneSpecNewCluster(t *testing.T) {
 	g.Expect(cp.EtcdMachineTemplate.Name).To(Equal("test-etcd-1"))
 }
 
-func TestControlPlaneSpecNoKubeVersion(t *testing.T) {
-	g := NewWithT(t)
-	logger := test.NewNullLogger()
-	ctx := context.Background()
-	client := test.NewFakeKubeClient()
-	spec := test.NewFullClusterSpec(t, testClusterConfigMainFilename)
-	spec.Cluster.Spec.KubernetesVersion = ""
-
-	_, err := vsphere.ControlPlaneSpec(ctx, logger, client, spec)
-	g.Expect(err).To(MatchError(ContainSubstring("generating vsphere control plane yaml spec")))
-}
-
 func TestControlPlaneSpecUpdateMachineTemplates(t *testing.T) {
 	g := NewWithT(t)
 	logger := test.NewNullLogger()
@@ -769,6 +757,7 @@ spec:
     cloudInitConfig:
       version: 3.4.14
       installDir: "/usr/bin"
+      etcdReleaseURL: https://distro.eks.amazonaws.com/kubernetes-1-19/releases/4/artifacts/etcd/v3.4.14/etcd-linux-amd64-v3.4.14.tar.gz
     preEtcdadmCommands:
       - hostname "{{ ds.meta_data.hostname }}"
       - echo "::1         ipv6-localhost ipv6-loopback" >/etc/hosts

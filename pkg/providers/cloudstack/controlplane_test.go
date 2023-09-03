@@ -7,7 +7,7 @@ import (
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	cloudstackv1 "sigs.k8s.io/cluster-api-provider-cloudstack/api/v1beta2"
+	cloudstackv1 "sigs.k8s.io/cluster-api-provider-cloudstack/api/v1beta3"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
@@ -68,18 +68,6 @@ func TestControlPlaneSpecNewCluster(t *testing.T) {
 	g.Expect(cp.KubeadmControlPlane).To(Equal(kubeadmControlPlane()))
 	g.Expect(cp.ProviderCluster).To(Equal(cloudstackCluster()))
 	g.Expect(cp.ControlPlaneMachineTemplate.Name).To(Equal("test-control-plane-1"))
-}
-
-func TestControlPlaneSpecNoKubeVersion(t *testing.T) {
-	g := NewWithT(t)
-	logger := test.NewNullLogger()
-	ctx := context.Background()
-	client := test.NewFakeKubeClient()
-	spec := test.NewFullClusterSpec(t, testClusterConfigFilename)
-	spec.Cluster.Spec.KubernetesVersion = ""
-
-	_, err := ControlPlaneSpec(ctx, logger, client, spec)
-	g.Expect(err).To(MatchError(ContainSubstring("generating cloudstack control plane yaml spec")))
 }
 
 func TestControlPlaneSpecNoChangesMachineTemplates(t *testing.T) {
@@ -232,7 +220,7 @@ func capiCluster() *clusterv1.Cluster {
 			InfrastructureRef: &corev1.ObjectReference{
 				Kind:       "CloudStackCluster",
 				Name:       "test",
-				APIVersion: "infrastructure.cluster.x-k8s.io/v1beta2",
+				APIVersion: "infrastructure.cluster.x-k8s.io/v1beta3",
 			},
 		},
 	}
@@ -242,7 +230,7 @@ func cloudstackCluster() *cloudstackv1.CloudStackCluster {
 	return &cloudstackv1.CloudStackCluster{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "CloudStackCluster",
-			APIVersion: "infrastructure.cluster.x-k8s.io/v1beta2",
+			APIVersion: "infrastructure.cluster.x-k8s.io/v1beta3",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test",
@@ -286,7 +274,7 @@ func kubeadmControlPlane(opts ...func(*controlplanev1.KubeadmControlPlane)) *con
 		Spec: controlplanev1.KubeadmControlPlaneSpec{
 			MachineTemplate: controlplanev1.KubeadmControlPlaneMachineTemplate{
 				InfrastructureRef: corev1.ObjectReference{
-					APIVersion: "infrastructure.cluster.x-k8s.io/v1beta2",
+					APIVersion: "infrastructure.cluster.x-k8s.io/v1beta3",
 					Kind:       "CloudStackMachineTemplate",
 					Name:       "test-control-plane-1",
 				},
@@ -602,7 +590,7 @@ func cloudstackMachineTemplate(name string) *cloudstackv1.CloudStackMachineTempl
 	return &cloudstackv1.CloudStackMachineTemplate{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "CloudStackMachineTemplate",
-			APIVersion: "infrastructure.cluster.x-k8s.io/v1beta2",
+			APIVersion: "infrastructure.cluster.x-k8s.io/v1beta3",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
@@ -616,7 +604,7 @@ func cloudstackMachineTemplate(name string) *cloudstackv1.CloudStackMachineTempl
 			},
 		},
 		Spec: cloudstackv1.CloudStackMachineTemplateSpec{
-			Spec: cloudstackv1.CloudStackMachineTemplateResource{
+			Template: cloudstackv1.CloudStackMachineTemplateResource{
 				Spec: cloudstackv1.CloudStackMachineSpec{
 					Template: cloudstackv1.CloudStackResourceIdentifier{
 						Name: "centos7-k8s-118",

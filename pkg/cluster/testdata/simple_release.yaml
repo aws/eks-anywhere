@@ -13,4 +13,12 @@ spec:
       number: 0
       version: v0.0.1
       extraField: "fake field to test non strict unmarshalling"
+    - bundleManifestUrl: "testdata/simple_bundle.yaml"
+      date: ""
+      eksABinary: {}
+      gitCommit: ""
+      gitTag: ""
+      number: 0
+      version: v0.0.0-dev
+      extraField: "fake field to test non strict unmarshalling"
 status: {}

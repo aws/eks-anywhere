@@ -42,6 +42,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/semver"
 	"github.com/aws/eks-anywhere/pkg/templater"
 	"github.com/aws/eks-anywhere/pkg/types"
+	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 	clusterf "github.com/aws/eks-anywhere/test/framework/cluster"
 )
 
@@ -142,7 +143,7 @@ func NewClusterE2ETest(t T, provider Provider, opts ...ClusterE2ETestOpt) *Clust
 		e.CleanupVms()
 
 		tinkerbellCIEnvironment := os.Getenv(TinkerbellCIEnvironment)
-		if e.Provider.Name() == TinkerbellProviderName && tinkerbellCIEnvironment == "true" {
+		if e.Provider.Name() == tinkerbellProviderName && tinkerbellCIEnvironment == "true" {
 			e.CleanupDockerEnvironment()
 		}
 	})
@@ -318,7 +319,7 @@ type Provider interface {
 	CleanupVMs(clusterName string) error
 	UpdateKubeConfig(content *[]byte, clusterName string) error
 	ClusterStateValidations() []clusterf.StateValidation
-	WithKubeVersionAndOS(osFamily v1alpha1.OSFamily, kubeVersion v1alpha1.KubernetesVersion) api.ClusterConfigFiller
+	WithKubeVersionAndOS(kubeVersion v1alpha1.KubernetesVersion, os OS, release *releasev1.EksARelease) api.ClusterConfigFiller
 	WithNewWorkerNodeGroup(name string, workerNodeGroup *WorkerNodeGroup) api.ClusterConfigFiller
 }
 
@@ -694,7 +695,7 @@ func (e *ClusterE2ETest) createCluster(opts ...CommandOpt) {
 	}
 
 	e.T.Logf("Creating cluster %s", e.ClusterName)
-	createClusterArgs := []string{"create", "cluster", "-f", e.ClusterConfigLocation, "-v", "12", "--force-cleanup"}
+	createClusterArgs := []string{"create", "cluster", "-f", e.ClusterConfigLocation, "-v", "12"}
 
 	dumpFile("Create cluster from file:", e.ClusterConfigLocation, e.T)
 
@@ -702,7 +703,7 @@ func (e *ClusterE2ETest) createCluster(opts ...CommandOpt) {
 		createClusterArgs = append(createClusterArgs, "--bundles-override", defaultBundleReleaseManifestFile)
 	}
 
-	if e.Provider.Name() == TinkerbellProviderName {
+	if e.Provider.Name() == tinkerbellProviderName {
 		createClusterArgs = append(createClusterArgs, "-z", e.HardwareCsvLocation)
 		dumpFile("Hardware csv file:", e.HardwareCsvLocation, e.T)
 		tinkBootstrapIP := os.Getenv(tinkerbellBootstrapIPEnvVar)
@@ -800,6 +801,14 @@ func (e *ClusterE2ETest) applyClusterManifest(ctx context.Context) {
 func WithClusterUpgrade(fillers ...api.ClusterFiller) ClusterE2ETestOpt {
 	return func(e *ClusterE2ETest) {
 		e.UpdateClusterConfig(api.ClusterToConfigFiller(fillers...))
+	}
+}
+
+// WithUpgradeClusterConfig adds a cluster upgrade.
+// When we migrate usages of ClusterFiller to ClusterConfigFiller we can rename this to WithClusterUpgrade.
+func WithUpgradeClusterConfig(fillers ...api.ClusterConfigFiller) ClusterE2ETestOpt {
+	return func(e *ClusterE2ETest) {
+		e.UpdateClusterConfig(fillers...)
 	}
 }
 
@@ -1293,7 +1302,7 @@ func (e *ClusterE2ETest) WithPersistentCluster(f func(e *ClusterE2ETest)) {
 }
 
 // VerifyHarborPackageInstalled is checking if the harbor package gets installed correctly.
-func (e *ClusterE2ETest) VerifyHarborPackageInstalled(prefix string, namespace string) {
+func (e *ClusterE2ETest) VerifyHarborPackageInstalled(prefix, namespace string) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -1396,7 +1405,7 @@ func (e *ClusterE2ETest) VerifyHelloPackageInstalled(packageName string, mgmtClu
 }
 
 // VerifyAdotPackageInstalled is checking if the ADOT package gets installed correctly.
-func (e *ClusterE2ETest) VerifyAdotPackageInstalled(packageName string, targetNamespace string) {
+func (e *ClusterE2ETest) VerifyAdotPackageInstalled(packageName, targetNamespace string) {
 	ctx := context.Background()
 	packageMetadatNamespace := fmt.Sprintf("%s-%s", constants.EksaPackagesName, e.ClusterName)
 	e.GenerateSupportBundleOnCleanupIfTestFailed()
@@ -1447,7 +1456,7 @@ var adotPackageDeployment []byte
 var adotPackageDaemonset []byte
 
 // VerifyAdotPackageDeploymentUpdated is checking if deployment config changes trigger resource reloads correctly.
-func (e *ClusterE2ETest) VerifyAdotPackageDeploymentUpdated(packageName string, targetNamespace string) {
+func (e *ClusterE2ETest) VerifyAdotPackageDeploymentUpdated(packageName, targetNamespace string) {
 	ctx := context.Background()
 	packageMetadatNamespace := fmt.Sprintf("%s-%s", constants.EksaPackagesName, e.ClusterName)
 
@@ -1500,7 +1509,7 @@ func (e *ClusterE2ETest) VerifyAdotPackageDeploymentUpdated(packageName string, 
 }
 
 // VerifyAdotPackageDaemonSetUpdated is checking if daemonset config changes trigger resource reloads correctly.
-func (e *ClusterE2ETest) VerifyAdotPackageDaemonSetUpdated(packageName string, targetNamespace string) {
+func (e *ClusterE2ETest) VerifyAdotPackageDaemonSetUpdated(packageName, targetNamespace string) {
 	ctx := context.Background()
 	packageMetadatNamespace := fmt.Sprintf("%s-%s", constants.EksaPackagesName, e.ClusterName)
 
@@ -1598,7 +1607,7 @@ func (e *ClusterE2ETest) VerifyEmissaryPackageInstalled(packageName string, mgmt
 }
 
 // TestEmissaryPackageRouting is checking if emissary is able to create Ingress, host, and mapping that function correctly.
-func (e *ClusterE2ETest) TestEmissaryPackageRouting(packageName string, mgmtCluster *types.Cluster) {
+func (e *ClusterE2ETest) TestEmissaryPackageRouting(packageName, checkName string, mgmtCluster *types.Cluster) {
 	ctx := context.Background()
 	packageMetadatNamespace := fmt.Sprintf("%s-%s", constants.EksaPackagesName, e.ClusterName)
 
@@ -1628,14 +1637,14 @@ func (e *ClusterE2ETest) TestEmissaryPackageRouting(packageName string, mgmtClus
 	}
 
 	// Functional testing of Emissary Ingress
-	ingresssvcAddress := packageName + "." + constants.EksaPackagesName + ".svc.cluster.local" + "/backend/"
+	ingresssvcAddress := checkName + "." + constants.EksaPackagesName + ".svc.cluster.local"
 	e.T.Log("Validate content at endpoint", ingresssvcAddress)
-	expectedLogs := "quote"
+	expectedLogs := "Thank you for using"
 	e.ValidateEndpointContent(ingresssvcAddress, constants.EksaPackagesName, expectedLogs)
 }
 
 // VerifyPrometheusPackageInstalled is checking if the Prometheus package gets installed correctly.
-func (e *ClusterE2ETest) VerifyPrometheusPackageInstalled(packageName string, targetNamespace string) {
+func (e *ClusterE2ETest) VerifyPrometheusPackageInstalled(packageName, targetNamespace string) {
 	ctx := context.Background()
 	packageMetadatNamespace := fmt.Sprintf("%s-%s", constants.EksaPackagesName, e.ClusterName)
 
@@ -1648,7 +1657,7 @@ func (e *ClusterE2ETest) VerifyPrometheusPackageInstalled(packageName string, ta
 }
 
 // VerifyCertManagerPackageInstalled is checking if the cert manager package gets installed correctly.
-func (e *ClusterE2ETest) VerifyCertManagerPackageInstalled(prefix string, namespace string, packageName string, mgmtCluster *types.Cluster) {
+func (e *ClusterE2ETest) VerifyCertManagerPackageInstalled(prefix, namespace, packageName string, mgmtCluster *types.Cluster) {
 	ctx, cancel := context.WithCancel(context.Background())
 	packageMetadatNamespace := fmt.Sprintf("%s-%s", constants.EksaPackagesName, e.ClusterName)
 	defer cancel()
@@ -1798,7 +1807,7 @@ func (e *ClusterE2ETest) verifyLetsEncryptCert(mgmtCluster *types.Cluster) error
 }
 
 // VerifyPrometheusPrometheusServerStates is checking if the Prometheus package prometheus-server component is functioning properly.
-func (e *ClusterE2ETest) VerifyPrometheusPrometheusServerStates(packageName string, targetNamespace string, mode string) {
+func (e *ClusterE2ETest) VerifyPrometheusPrometheusServerStates(packageName, targetNamespace, mode string) {
 	ctx := context.Background()
 
 	e.T.Log("Waiting for package", packageName, mode, "prometheus-server to be rolled out")
@@ -1821,7 +1830,7 @@ func (e *ClusterE2ETest) VerifyPrometheusPrometheusServerStates(packageName stri
 }
 
 // VerifyPrometheusNodeExporterStates is checking if the Prometheus package node-exporter component is functioning properly.
-func (e *ClusterE2ETest) VerifyPrometheusNodeExporterStates(packageName string, targetNamespace string) {
+func (e *ClusterE2ETest) VerifyPrometheusNodeExporterStates(packageName, targetNamespace string) {
 	ctx := context.Background()
 
 	e.T.Log("Waiting for package", packageName, "daemonset node-exporter to be rolled out")
@@ -1846,13 +1855,13 @@ var prometheusPackageDeployment []byte
 var prometheusPackageStatefulSet []byte
 
 // ApplyPrometheusPackageServerDeploymentFile is checking if deployment config changes trigger resource reloads correctly.
-func (e *ClusterE2ETest) ApplyPrometheusPackageServerDeploymentFile(packageName string, targetNamespace string) {
+func (e *ClusterE2ETest) ApplyPrometheusPackageServerDeploymentFile(packageName, targetNamespace string) {
 	e.T.Log("Update", packageName, "to be a deployment, and scrape the api-servers")
 	e.ApplyPackageFile(packageName, targetNamespace, prometheusPackageDeployment)
 }
 
 // ApplyPrometheusPackageServerStatefulSetFile is checking if statefulset config changes trigger resource reloads correctly.
-func (e *ClusterE2ETest) ApplyPrometheusPackageServerStatefulSetFile(packageName string, targetNamespace string) {
+func (e *ClusterE2ETest) ApplyPrometheusPackageServerStatefulSetFile(packageName, targetNamespace string) {
 	e.T.Log("Update", packageName, "to be a statefulset, and scrape the api-servers")
 	e.ApplyPackageFile(packageName, targetNamespace, prometheusPackageStatefulSet)
 }
@@ -1870,7 +1879,7 @@ func (e *ClusterE2ETest) VerifyPackageControllerNotInstalled() {
 }
 
 // VerifyAutoScalerPackageInstalled is verifying that the autoscaler package is installed and deployed.
-func (e *ClusterE2ETest) VerifyAutoScalerPackageInstalled(packageName string, targetNamespace string, mgmtCluster *types.Cluster) {
+func (e *ClusterE2ETest) VerifyAutoScalerPackageInstalled(packageName, targetNamespace string, mgmtCluster *types.Cluster) {
 	ctx := context.Background()
 	deploymentName := "cluster-autoscaler-clusterapi-cluster-autoscaler"
 	packageMetadatNamespace := fmt.Sprintf("%s-%s", constants.EksaPackagesName, e.ClusterName)
@@ -1899,7 +1908,7 @@ func (e *ClusterE2ETest) VerifyAutoScalerPackageInstalled(packageName string, ta
 }
 
 // VerifyMetricServerPackageInstalled is verifying that metrics-server is installed and deployed.
-func (e *ClusterE2ETest) VerifyMetricServerPackageInstalled(packageName string, targetNamespace string, mgmtCluster *types.Cluster) {
+func (e *ClusterE2ETest) VerifyMetricServerPackageInstalled(packageName, targetNamespace string, mgmtCluster *types.Cluster) {
 	ctx := context.Background()
 	deploymentName := "metrics-server"
 	packageMetadatNamespace := fmt.Sprintf("%s-%s", constants.EksaPackagesName, e.ClusterName)
@@ -1966,7 +1975,7 @@ func (e *ClusterE2ETest) InstallAutoScalerWithMetricServer(targetNamespace strin
 }
 
 // CombinedAutoScalerMetricServerTest verifies that new nodes are spun up after using a HPA to scale a deployment.
-func (e *ClusterE2ETest) CombinedAutoScalerMetricServerTest(autoscalerName string, metricServerName string, targetNamespace string, mgmtCluster *types.Cluster) {
+func (e *ClusterE2ETest) CombinedAutoScalerMetricServerTest(autoscalerName, metricServerName, targetNamespace string, mgmtCluster *types.Cluster) {
 	ctx := context.Background()
 	ns := "default"
 	name := "hpa-busybox-test"
@@ -2042,7 +2051,7 @@ func validateClusterState(t *testing.T, e *ClusterE2ETest) {
 }
 
 // ApplyPackageFile is applying a package file in the cluster.
-func (e *ClusterE2ETest) ApplyPackageFile(packageName string, targetNamespace string, PackageFile []byte) {
+func (e *ClusterE2ETest) ApplyPackageFile(packageName, targetNamespace string, PackageFile []byte) {
 	ctx := context.Background()
 	packageMetadatNamespace := fmt.Sprintf("%s-%s", "eksa-packages", e.ClusterName)
 
@@ -2055,33 +2064,33 @@ func (e *ClusterE2ETest) ApplyPackageFile(packageName string, targetNamespace st
 	time.Sleep(30 * time.Second) // Add sleep to allow package to change state
 }
 
-// CurlEndpointByBusyBox creates a busybox pod with command to curl the target endpoint,
-// and returns the created busybox pod name.
-func (e *ClusterE2ETest) CurlEndpointByBusyBox(endpoint string, namespace string) string {
+// CurlEndpoint creates a pod with command to curl the target endpoint,
+// and returns the created pod name.
+func (e *ClusterE2ETest) CurlEndpoint(endpoint, namespace string) string {
 	ctx := context.Background()
 
-	e.T.Log("Launching Busybox pod to curl endpoint", endpoint)
-	randomname := fmt.Sprintf("%s-%s", "busybox-test", utilrand.String(7))
-	busyBoxPodName, err := e.KubectlClient.RunBusyBoxPod(context.TODO(),
+	e.T.Log("Launching pod to curl endpoint", endpoint)
+	randomname := fmt.Sprintf("%s-%s", "curl-test", utilrand.String(7))
+	curlPodName, err := e.KubectlClient.RunCurlPod(context.TODO(),
 		namespace, randomname, e.KubeconfigFilePath(), []string{"curl", endpoint})
 	if err != nil {
-		e.T.Fatalf("error launching busybox pod: %s", err)
+		e.T.Fatalf("error launching pod: %s", err)
 	}
 
 	err = e.KubectlClient.WaitForPodCompleted(ctx,
-		e.Cluster(), busyBoxPodName, "5m", namespace)
+		e.Cluster(), curlPodName, "5m", namespace)
 	if err != nil {
-		e.T.Fatalf("waiting for busybox pod %s timed out: %s", busyBoxPodName, err)
+		e.T.Fatalf("waiting for pod %s timed out: %s", curlPodName, err)
 	}
 
-	return busyBoxPodName
+	return curlPodName
 }
 
 // MatchLogs matches the log from a container to the expected content. Given it
 // takes time for logs to be populated, a retrier with configurable timeout duration
 // is added.
-func (e *ClusterE2ETest) MatchLogs(targetNamespace string, targetPodName string,
-	targetContainerName string, expectedLogs string, timeout time.Duration,
+func (e *ClusterE2ETest) MatchLogs(targetNamespace, targetPodName string,
+	targetContainerName, expectedLogs string, timeout time.Duration,
 ) {
 	e.T.Logf("Match logs for pod %s, container %s in namespace %s", targetPodName,
 		targetContainerName, targetNamespace)
@@ -2106,9 +2115,9 @@ func (e *ClusterE2ETest) MatchLogs(targetNamespace string, targetPodName string,
 }
 
 // ValidateEndpointContent validates the contents at the target endpoint.
-func (e *ClusterE2ETest) ValidateEndpointContent(endpoint string, namespace string, expectedContent string) {
-	busyBoxPodName := e.CurlEndpointByBusyBox(endpoint, namespace)
-	e.MatchLogs(namespace, busyBoxPodName, busyBoxPodName, expectedContent, 5*time.Minute)
+func (e *ClusterE2ETest) ValidateEndpointContent(endpoint, namespace, expectedContent string) {
+	curlPodName := e.CurlEndpoint(endpoint, namespace)
+	e.MatchLogs(namespace, curlPodName, curlPodName, expectedContent, 5*time.Minute)
 }
 
 // AirgapDockerContainers airgap docker containers. Outside network should not be reached during airgapped deployment.
@@ -2144,7 +2153,7 @@ func (e *ClusterE2ETest) AssertAirgappedNetwork() {
 	}
 }
 
-func dumpFile(description string, path string, t T) {
+func dumpFile(description, path string, t T) {
 	b, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatal(err)
@@ -2165,7 +2174,7 @@ func (e *ClusterE2ETest) setFeatureFlagForUnreleasedKubernetesVersion(version v1
 
 // CreateCloudStackCredentialsSecretFromEnvVar parses the cloudstack credentials from an environment variable,
 // builds a new secret object from the credentials in the provided profile and creates it in the cluster.
-func (e *ClusterE2ETest) CreateCloudStackCredentialsSecretFromEnvVar(name string, profileName string) {
+func (e *ClusterE2ETest) CreateCloudStackCredentialsSecretFromEnvVar(name, profileName string) {
 	ctx := context.Background()
 
 	execConfig, err := decoder.ParseCloudStackCredsFromEnv()

@@ -1,31 +1,39 @@
 package framework
 
 import (
+	"fmt"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 	clusterf "github.com/aws/eks-anywhere/test/framework/cluster"
 )
 
 const (
-	TinkerbellProviderName                  = "tinkerbell"
-	tinkerbellBootstrapIPEnvVar             = "T_TINKERBELL_BOOTSTRAP_IP"
-	tinkerbellControlPlaneNetworkCidrEnvVar = "T_TINKERBELL_CP_NETWORK_CIDR"
-	tinkerbellImageUbuntu123EnvVar          = "T_TINKERBELL_IMAGE_UBUNTU_1_23"
-	tinkerbellImageUbuntu124EnvVar          = "T_TINKERBELL_IMAGE_UBUNTU_1_24"
-	tinkerbellImageUbuntu125EnvVar          = "T_TINKERBELL_IMAGE_UBUNTU_1_25"
-	tinkerbellImageUbuntu126EnvVar          = "T_TINKERBELL_IMAGE_UBUNTU_1_26"
-	tinkerbellImageUbuntu127EnvVar          = "T_TINKERBELL_IMAGE_UBUNTU_1_27"
-	tinkerbellImageRedHat123EnvVar          = "T_TINKERBELL_IMAGE_REDHAT_1_23"
-	tinkerbellImageRedHat124EnvVar          = "T_TINKERBELL_IMAGE_REDHAT_1_24"
-	tinkerbellImageRedHat125EnvVar          = "T_TINKERBELL_IMAGE_REDHAT_1_25"
-	tinkerbellImageRedHat126EnvVar          = "T_TINKERBELL_IMAGE_REDHAT_1_26"
-	tinkerbellImageRedHat127EnvVar          = "T_TINKERBELL_IMAGE_REDHAT_1_27"
-	tinkerbellInventoryCsvFilePathEnvVar    = "T_TINKERBELL_INVENTORY_CSV"
-	tinkerbellSSHAuthorizedKey              = "T_TINKERBELL_SSH_AUTHORIZED_KEY"
-	TinkerbellCIEnvironment                 = "T_TINKERBELL_CI_ENVIRONMENT"
+	tinkerbellProviderName                       = "tinkerbell"
+	tinkerbellBootstrapIPEnvVar                  = "T_TINKERBELL_BOOTSTRAP_IP"
+	tinkerbellControlPlaneNetworkCidrEnvVar      = "T_TINKERBELL_CP_NETWORK_CIDR"
+	tinkerbellImageUbuntu123EnvVar               = "T_TINKERBELL_IMAGE_UBUNTU_1_23"
+	tinkerbellImageUbuntu124EnvVar               = "T_TINKERBELL_IMAGE_UBUNTU_1_24"
+	tinkerbellImageUbuntu125EnvVar               = "T_TINKERBELL_IMAGE_UBUNTU_1_25"
+	tinkerbellImageUbuntu126EnvVar               = "T_TINKERBELL_IMAGE_UBUNTU_1_26"
+	tinkerbellImageUbuntu127EnvVar               = "T_TINKERBELL_IMAGE_UBUNTU_1_27"
+	tinkerbellImageUbuntu2204Kubernetes123EnvVar = "T_TINKERBELL_IMAGE_UBUNTU_2204_1_23"
+	tinkerbellImageUbuntu2204Kubernetes124EnvVar = "T_TINKERBELL_IMAGE_UBUNTU_2204_1_24"
+	tinkerbellImageUbuntu2204Kubernetes125EnvVar = "T_TINKERBELL_IMAGE_UBUNTU_2204_1_25"
+	tinkerbellImageUbuntu2204Kubernetes126EnvVar = "T_TINKERBELL_IMAGE_UBUNTU_2204_1_26"
+	tinkerbellImageUbuntu2204Kubernetes127EnvVar = "T_TINKERBELL_IMAGE_UBUNTU_2204_1_27"
+	tinkerbellImageRedHat123EnvVar               = "T_TINKERBELL_IMAGE_REDHAT_1_23"
+	tinkerbellImageRedHat124EnvVar               = "T_TINKERBELL_IMAGE_REDHAT_1_24"
+	tinkerbellImageRedHat125EnvVar               = "T_TINKERBELL_IMAGE_REDHAT_1_25"
+	tinkerbellImageRedHat126EnvVar               = "T_TINKERBELL_IMAGE_REDHAT_1_26"
+	tinkerbellImageRedHat127EnvVar               = "T_TINKERBELL_IMAGE_REDHAT_1_27"
+	tinkerbellInventoryCsvFilePathEnvVar         = "T_TINKERBELL_INVENTORY_CSV"
+	tinkerbellSSHAuthorizedKey                   = "T_TINKERBELL_SSH_AUTHORIZED_KEY"
+	TinkerbellCIEnvironment                      = "T_TINKERBELL_CI_ENVIRONMENT"
 )
 
 var requiredTinkerbellEnvVars = []string{
@@ -35,6 +43,11 @@ var requiredTinkerbellEnvVars = []string{
 	tinkerbellImageUbuntu125EnvVar,
 	tinkerbellImageUbuntu126EnvVar,
 	tinkerbellImageUbuntu127EnvVar,
+	tinkerbellImageUbuntu2204Kubernetes123EnvVar,
+	tinkerbellImageUbuntu2204Kubernetes124EnvVar,
+	tinkerbellImageUbuntu2204Kubernetes125EnvVar,
+	tinkerbellImageUbuntu2204Kubernetes126EnvVar,
+	tinkerbellImageUbuntu2204Kubernetes127EnvVar,
 	tinkerbellImageRedHat123EnvVar,
 	tinkerbellImageRedHat124EnvVar,
 	tinkerbellImageRedHat125EnvVar,
@@ -57,30 +70,6 @@ type Tinkerbell struct {
 	serverIP             string
 	cidr                 string
 	inventoryCsvFilePath string
-}
-
-func UpdateTinkerbellUbuntuTemplate123Var() api.TinkerbellFiller {
-	return api.WithStringFromEnvVarTinkerbell(tinkerbellImageUbuntu123EnvVar, api.WithTinkerbellOSImageURL)
-}
-
-// UpdateTinkerbellUbuntuTemplate124Var updates the tinkerbell template.
-func UpdateTinkerbellUbuntuTemplate124Var() api.TinkerbellFiller {
-	return api.WithStringFromEnvVarTinkerbell(tinkerbellImageUbuntu124EnvVar, api.WithTinkerbellOSImageURL)
-}
-
-// UpdateTinkerbellUbuntuTemplate125Var updates the tinkerbell template.
-func UpdateTinkerbellUbuntuTemplate125Var() api.TinkerbellFiller {
-	return api.WithStringFromEnvVarTinkerbell(tinkerbellImageUbuntu125EnvVar, api.WithTinkerbellOSImageURL)
-}
-
-// UpdateTinkerbellUbuntuTemplate126Var updates the tinkerbell template.
-func UpdateTinkerbellUbuntuTemplate126Var() api.TinkerbellFiller {
-	return api.WithStringFromEnvVarTinkerbell(tinkerbellImageUbuntu126EnvVar, api.WithTinkerbellOSImageURL)
-}
-
-// UpdateTinkerbellUbuntuTemplate127Var updates the tinkerbell template.
-func UpdateTinkerbellUbuntuTemplate127Var() api.TinkerbellFiller {
-	return api.WithStringFromEnvVarTinkerbell(tinkerbellImageUbuntu127EnvVar, api.WithTinkerbellOSImageURL)
 }
 
 // UpdateTinkerbellMachineSSHAuthorizedKey updates a tinkerbell machine configs SSHAuthorizedKey.
@@ -119,7 +108,7 @@ func NewTinkerbell(t *testing.T, opts ...TinkerbellOpt) *Tinkerbell {
 }
 
 func (t *Tinkerbell) Name() string {
-	return TinkerbellProviderName
+	return tinkerbellProviderName
 }
 
 func (t *Tinkerbell) Setup() {}
@@ -153,11 +142,16 @@ func (t *Tinkerbell) CleanupVMs(_ string) error {
 	return nil
 }
 
-// WithKubeVersionAndOS returns a cluster config filler that sets the cluster kube version and the right template for all
+// WithKubeVersionAndOS returns a cluster config filler that sets the cluster kube version and the right image for all
 // tinkerbell machine configs.
-func (t *Tinkerbell) WithKubeVersionAndOS(osFamily anywherev1.OSFamily, kubeVersion anywherev1.KubernetesVersion) api.ClusterConfigFiller {
-	// TODO: Update tests to use this
-	panic("Not implemented for Tinkerbell yet")
+func (t *Tinkerbell) WithKubeVersionAndOS(kubeVersion anywherev1.KubernetesVersion, os OS, release *releasev1.EksARelease) api.ClusterConfigFiller {
+	return api.JoinClusterConfigFillers(
+		api.ClusterToConfigFiller(api.WithKubernetesVersion(kubeVersion)),
+		api.TinkerbellToConfigFiller(
+			imageForKubeVersionAndOS(kubeVersion, os),
+			api.WithOsFamilyForAllTinkerbellMachines(osFamiliesForOS[os]),
+		),
+	)
 }
 
 // WithNewWorkerNodeGroup returns an api.ClusterFiller that adds a new workerNodeGroupConfiguration and
@@ -167,103 +161,70 @@ func (t *Tinkerbell) WithNewWorkerNodeGroup(name string, workerNodeGroup *Worker
 	panic("Not implemented for Tinkerbell yet")
 }
 
-func WithUbuntu123Tinkerbell() TinkerbellOpt {
+func envVarForImage(os OS, kubeVersion anywherev1.KubernetesVersion) string {
+	imageEnvVar := fmt.Sprintf("T_TINKERBELL_IMAGE_%s_%s", strings.ToUpper(strings.ReplaceAll(string(os), "-", "_")), strings.ReplaceAll(string(kubeVersion), ".", "_"))
+	return imageEnvVar
+}
+
+// withKubeVersionAndOS returns a cluster config filler that sets the cluster kube version and the right image for all
+// tinkerbell machine configs.
+func withKubeVersionAndOS(kubeVersion anywherev1.KubernetesVersion, os OS, release *releasev1.EksARelease) TinkerbellOpt {
 	return func(t *Tinkerbell) {
 		t.fillers = append(t.fillers,
-			api.WithStringFromEnvVarTinkerbell(tinkerbellImageUbuntu123EnvVar, api.WithTinkerbellOSImageURL),
-			api.WithOsFamilyForAllTinkerbellMachines(anywherev1.Ubuntu),
+			imageForKubeVersionAndOS(kubeVersion, os),
+			api.WithOsFamilyForAllTinkerbellMachines(osFamiliesForOS[os]),
 		)
 	}
+}
+
+// WithUbuntu123Tinkerbell tink test with ubuntu 1.23.
+func WithUbuntu123Tinkerbell() TinkerbellOpt {
+	return withKubeVersionAndOS(anywherev1.Kube123, Ubuntu2004, nil)
 }
 
 // WithUbuntu124Tinkerbell tink test with ubuntu 1.24.
 func WithUbuntu124Tinkerbell() TinkerbellOpt {
-	return func(t *Tinkerbell) {
-		t.fillers = append(t.fillers,
-			api.WithStringFromEnvVarTinkerbell(tinkerbellImageUbuntu124EnvVar, api.WithTinkerbellOSImageURL),
-			api.WithOsFamilyForAllTinkerbellMachines(anywherev1.Ubuntu),
-		)
-	}
+	return withKubeVersionAndOS(anywherev1.Kube124, Ubuntu2004, nil)
 }
 
 // WithUbuntu125Tinkerbell tink test with ubuntu 1.25.
 func WithUbuntu125Tinkerbell() TinkerbellOpt {
-	return func(t *Tinkerbell) {
-		t.fillers = append(t.fillers,
-			api.WithStringFromEnvVarTinkerbell(tinkerbellImageUbuntu125EnvVar, api.WithTinkerbellOSImageURL),
-			api.WithOsFamilyForAllTinkerbellMachines(anywherev1.Ubuntu),
-		)
-	}
+	return withKubeVersionAndOS(anywherev1.Kube125, Ubuntu2004, nil)
 }
 
 // WithUbuntu126Tinkerbell tink test with ubuntu 1.26.
 func WithUbuntu126Tinkerbell() TinkerbellOpt {
-	return func(t *Tinkerbell) {
-		t.fillers = append(t.fillers,
-			api.WithStringFromEnvVarTinkerbell(tinkerbellImageUbuntu126EnvVar, api.WithTinkerbellOSImageURL),
-			api.WithOsFamilyForAllTinkerbellMachines(anywherev1.Ubuntu),
-		)
-	}
+	return withKubeVersionAndOS(anywherev1.Kube126, Ubuntu2004, nil)
 }
 
 // WithUbuntu127Tinkerbell tink test with ubuntu 1.27.
 func WithUbuntu127Tinkerbell() TinkerbellOpt {
-	return func(t *Tinkerbell) {
-		t.fillers = append(t.fillers,
-			api.WithStringFromEnvVarTinkerbell(tinkerbellImageUbuntu127EnvVar, api.WithTinkerbellOSImageURL),
-			api.WithOsFamilyForAllTinkerbellMachines(anywherev1.Ubuntu),
-		)
-	}
+	return withKubeVersionAndOS(anywherev1.Kube127, Ubuntu2004, nil)
 }
 
 // WithRedHat123Tinkerbell tink test with redhat 1.23.
 func WithRedHat123Tinkerbell() TinkerbellOpt {
-	return func(t *Tinkerbell) {
-		t.fillers = append(t.fillers,
-			api.WithStringFromEnvVarTinkerbell(tinkerbellImageRedHat123EnvVar, api.WithTinkerbellOSImageURL),
-			api.WithOsFamilyForAllTinkerbellMachines(anywherev1.RedHat),
-		)
-	}
+	return withKubeVersionAndOS(anywherev1.Kube123, RedHat8, nil)
 }
 
 // WithRedHat124Tinkerbell tink test with redhat 1.24.
 func WithRedHat124Tinkerbell() TinkerbellOpt {
-	return func(t *Tinkerbell) {
-		t.fillers = append(t.fillers,
-			api.WithStringFromEnvVarTinkerbell(tinkerbellImageRedHat124EnvVar, api.WithTinkerbellOSImageURL),
-			api.WithOsFamilyForAllTinkerbellMachines(anywherev1.RedHat),
-		)
-	}
+	return withKubeVersionAndOS(anywherev1.Kube124, RedHat8, nil)
 }
 
 // WithRedHat125Tinkerbell tink test with redhat 1.25.
 func WithRedHat125Tinkerbell() TinkerbellOpt {
-	return func(t *Tinkerbell) {
-		t.fillers = append(t.fillers,
-			api.WithStringFromEnvVarTinkerbell(tinkerbellImageRedHat125EnvVar, api.WithTinkerbellOSImageURL),
-			api.WithOsFamilyForAllTinkerbellMachines(anywherev1.RedHat),
-		)
-	}
+	return withKubeVersionAndOS(anywherev1.Kube125, RedHat8, nil)
 }
 
 // WithRedHat126Tinkerbell tink test with redhat 1.26.
 func WithRedHat126Tinkerbell() TinkerbellOpt {
-	return func(t *Tinkerbell) {
-		t.fillers = append(t.fillers,
-			api.WithStringFromEnvVarTinkerbell(tinkerbellImageRedHat126EnvVar, api.WithTinkerbellOSImageURL),
-			api.WithOsFamilyForAllTinkerbellMachines(anywherev1.RedHat),
-		)
-	}
+	return withKubeVersionAndOS(anywherev1.Kube126, RedHat8, nil)
 }
 
 // WithRedHat127Tinkerbell tink test with redhat 1.27.
 func WithRedHat127Tinkerbell() TinkerbellOpt {
-	return func(t *Tinkerbell) {
-		t.fillers = append(t.fillers,
-			api.WithStringFromEnvVarTinkerbell(tinkerbellImageRedHat127EnvVar, api.WithTinkerbellOSImageURL),
-			api.WithOsFamilyForAllTinkerbellMachines(anywherev1.RedHat),
-		)
-	}
+	return withKubeVersionAndOS(anywherev1.Kube127, RedHat8, nil)
 }
 
 func WithBottleRocketTinkerbell() TinkerbellOpt {
@@ -308,4 +269,43 @@ func WithHookImagesURLPath(url string) TinkerbellOpt {
 			api.WithHookImagesURLPath(url),
 		)
 	}
+}
+
+func imageForKubeVersionAndOS(kubeVersion anywherev1.KubernetesVersion, operatingSystem OS) api.TinkerbellFiller {
+	return api.WithTinkerbellOSImageURL(os.Getenv(envVarForImage(operatingSystem, kubeVersion)))
+}
+
+// Ubuntu123Image represents an Ubuntu raw image corresponding to Kubernetes 1.23.
+func Ubuntu123Image() api.TinkerbellFiller {
+	return imageForKubeVersionAndOS(anywherev1.Kube123, Ubuntu2004)
+}
+
+// Ubuntu124Image represents an Ubuntu raw image corresponding to Kubernetes 1.24.
+func Ubuntu124Image() api.TinkerbellFiller {
+	return imageForKubeVersionAndOS(anywherev1.Kube124, Ubuntu2004)
+}
+
+// Ubuntu125Image represents an Ubuntu raw image corresponding to Kubernetes 1.25.
+func Ubuntu125Image() api.TinkerbellFiller {
+	return imageForKubeVersionAndOS(anywherev1.Kube125, Ubuntu2004)
+}
+
+// Ubuntu126Image represents an Ubuntu raw image corresponding to Kubernetes 1.26.
+func Ubuntu126Image() api.TinkerbellFiller {
+	return imageForKubeVersionAndOS(anywherev1.Kube126, Ubuntu2004)
+}
+
+// Ubuntu127Image represents an Ubuntu raw image corresponding to Kubernetes 1.27.
+func Ubuntu127Image() api.TinkerbellFiller {
+	return imageForKubeVersionAndOS(anywherev1.Kube127, Ubuntu2004)
+}
+
+// Ubuntu2204Kubernetes126Image represents an Ubuntu 22.04 raw image corresponding to Kubernetes 1.26.
+func Ubuntu2204Kubernetes126Image() api.TinkerbellFiller {
+	return imageForKubeVersionAndOS(anywherev1.Kube126, Ubuntu2204)
+}
+
+// Ubuntu2204Kubernetes127Image represents an Ubuntu 22.04 raw image corresponding to Kubernetes 1.27.
+func Ubuntu2204Kubernetes127Image() api.TinkerbellFiller {
+	return imageForKubeVersionAndOS(anywherev1.Kube127, Ubuntu2204)
 }

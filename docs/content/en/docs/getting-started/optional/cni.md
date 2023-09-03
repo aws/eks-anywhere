@@ -59,7 +59,7 @@ after the cluster is created.
 
 Cilium accepts policy enforcement modes from the users to determine the allowed traffic between pods.
 The allowed values for this mode are: `default`, `always` and `never`.
-Please refer the official [Cilium documentation](https://docs.cilium.io/en/stable/policy/intro/) for more details on how each mode affects
+Please refer the official [Cilium documentation]({{< cilium "policy/intro/" >}}) for more details on how each mode affects
 the communication within the cluster and choose a mode accordingly.
 You can choose to not set this field so that cilium will be launched with the `default` mode.
 Starting release 0.8, Cilium's policy enforcement mode can be set through the cluster spec
@@ -136,6 +136,33 @@ EKS Anywhere will create the required NetworkPolicy objects for its core compone
 2. Switching from `always` mode: When switching from `always` to `default` mode, EKS Anywhere
 will not delete any of the existing NetworkPolicy objects, including the ones required
    for EKS Anywhere components (listed above). The user must delete NetworkPolicy objects as needed.
+
+### EgressMasqueradeInterfaces option for Cilium plugin
+
+Cilium accepts the `EgressMasqueradeInterfaces` option from users to limit which interfaces masquerading is performed on.
+The allowed values for this mode are an `interface name` such as `eth0` or an `interface prefix` such as `eth+`.
+Please refer to the official [Cilium documentation](https://docs.cilium.io/en/v1.13/network/concepts/masquerading/#iptables-based) for more details on how this option affects masquerading traffic.
+
+By default, masquerading will be performed on all traffic leaving on a non-Cilium network device. This only has an effect on traffic egressing from a node to an external destination not part of the cluster and does not affect routing decisions.
+
+This field can be set as follows:
+```yaml
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: Cluster
+metadata:
+  name: my-cluster-name
+spec:
+  clusterNetwork:
+    pods:
+      cidrBlocks:
+      - 192.168.0.0/16
+    services:
+      cidrBlocks:
+      - 10.96.0.0/12
+    cniConfig:
+      cilium: 
+        egressMasqueradeInterfaces: "eth0"
+```
 
 ### Use a custom CNI
 

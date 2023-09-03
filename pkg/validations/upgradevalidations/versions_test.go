@@ -74,6 +74,53 @@ func TestValidateVersionSkew(t *testing.T) {
 	}
 }
 
+func TestValidateWorkerVersionSkew(t *testing.T) {
+	kube119 := anywherev1.KubernetesVersion("1.19")
+	kube121 := anywherev1.KubernetesVersion("1.21")
+	tests := []struct {
+		name                 string
+		wantErr              error
+		upgradeVersion       anywherev1.KubernetesVersion
+		oldVersion           anywherev1.KubernetesVersion
+		upgradeWorkerVersion *anywherev1.KubernetesVersion
+		oldWorkerVersion     *anywherev1.KubernetesVersion
+	}{
+		{
+			name:                 "FailureTwoMinorVersions",
+			wantErr:              fmt.Errorf("only +1 minor version skew is supported"),
+			upgradeVersion:       anywherev1.Kube121,
+			oldVersion:           anywherev1.Kube121,
+			upgradeWorkerVersion: &kube121,
+			oldWorkerVersion:     &kube119,
+		},
+	}
+
+	mockCtrl := gomock.NewController(t)
+	k := mocks.NewMockKubectlClient(mockCtrl)
+	ctx := context.Background()
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(tt *testing.T) {
+			newCluster := baseCluster()
+			newCluster.Spec.KubernetesVersion = tc.upgradeVersion
+			newCluster.Spec.WorkerNodeGroupConfigurations[0].KubernetesVersion = tc.upgradeWorkerVersion
+
+			oldCluster := baseCluster()
+			oldCluster.Spec.KubernetesVersion = tc.oldVersion
+			oldCluster.Spec.WorkerNodeGroupConfigurations[0].KubernetesVersion = tc.oldWorkerVersion
+
+			cluster := &types.Cluster{KubeconfigFile: "test.kubeconfig"}
+
+			k.EXPECT().GetEksaCluster(ctx, cluster, newCluster.Name).Return(oldCluster, nil)
+
+			err := upgradevalidations.ValidateWorkerServerVersionSkew(ctx, newCluster, cluster, cluster, k)
+			if err != nil && !strings.Contains(err.Error(), tc.wantErr.Error()) {
+				t.Errorf("%v got = %v, \nwant %v", tc.name, err, tc.wantErr)
+			}
+		})
+	}
+}
+
 func baseCluster() *anywherev1.Cluster {
 	c := &anywherev1.Cluster{
 		TypeMeta: metav1.TypeMeta{

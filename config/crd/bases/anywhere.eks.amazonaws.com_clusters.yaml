@@ -216,6 +216,42 @@ spec:
                 description: EksaVersion is the semver identifying the release of
                   eks-a used to populate the cluster components.
                 type: string
+              etcdEncryption:
+                items:
+                  description: EtcdEncryption defines the configuration for ETCD encryption.
+                  properties:
+                    providers:
+                      items:
+                        description: EtcdEncryptionProvider defines the configuration
+                          for ETCD encryption providers. Currently only KMS provider
+                          is supported.
+                        properties:
+                          kms:
+                            description: KMS defines the configuration for KMS Encryption
+                              provider.
+                            properties:
+                              socketListenAddress:
+                                description: SocketListenAddress defines a UNIX socket
+                                  address that the KMS provider listens on.
+                                type: string
+                            required:
+                            - socketListenAddress
+                            type: object
+                        required:
+                        - kms
+                        type: object
+                      type: array
+                    resources:
+                      description: Resources defines a list of objects and custom
+                        resources definitions that should be encrypted.
+                      items:
+                        type: string
+                      type: array
+                  required:
+                  - providers
+                  - resources
+                  type: object
+                type: array
               externalEtcdConfiguration:
                 description: ExternalEtcdConfiguration defines the configuration options
                   for using unstacked etcd topology.
@@ -250,6 +286,29 @@ spec:
                 type: array
               kubernetesVersion:
                 type: string
+              machineHealthCheck:
+                description: MachineHealthCheck allows to configure timeouts for machine
+                  health checks. Machine Health Checks are responsible for remediating
+                  unhealthy Machines. Configuring these values will decide how long
+                  to wait to remediate unhealthy machine or determine health of nodes'
+                  machines.
+                properties:
+                  nodeStartupTimeout:
+                    description: NodeStartupTimeout is used to configure the node
+                      startup timeout in machine health checks. It determines how
+                      long a MachineHealthCheck should wait for a Node to join the
+                      cluster, before considering a Machine unhealthy. If not configured,
+                      the default value is set to "10m0s" (10 minutes) for all providers.
+                      For Tinkerbell provider the default is "20m0s".
+                    type: string
+                  unhealthyMachineTimeout:
+                    description: UnhealthyMachineTimeout is used to configure the
+                      unhealthy machine timeout in machine health checks. If any unhealthy
+                      conditions are met for the amount of time specified as the timeout,
+                      the machines are considered unhealthy. If not configured, the
+                      default value is set to "5m0s" (5 minutes).
+                    type: string
+                type: object
               managementCluster:
                 properties:
                   name:

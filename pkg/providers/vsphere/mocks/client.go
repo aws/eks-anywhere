@@ -9,12 +9,14 @@ import (
 	reflect "reflect"
 
 	v1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	kubernetes "github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	executables "github.com/aws/eks-anywhere/pkg/executables"
 	govmomi "github.com/aws/eks-anywhere/pkg/govmomi"
 	types "github.com/aws/eks-anywhere/pkg/types"
 	v1beta1 "github.com/aws/etcdadm-controller/api/v1beta1"
 	gomock "github.com/golang/mock/gomock"
-	v1 "k8s.io/api/core/v1"
+	v1 "k8s.io/api/apps/v1"
+	v10 "k8s.io/api/core/v1"
 	v1beta10 "sigs.k8s.io/cluster-api/api/v1beta1"
 	v1beta11 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 )
@@ -558,7 +560,7 @@ func (mr *MockProviderKubectlClientMockRecorder) ApplyKubeSpecFromBytes(arg0, ar
 }
 
 // ApplyTolerationsFromTaintsToDaemonSet mocks base method.
-func (m *MockProviderKubectlClient) ApplyTolerationsFromTaintsToDaemonSet(arg0 context.Context, arg1, arg2 []v1.Taint, arg3, arg4 string) error {
+func (m *MockProviderKubectlClient) ApplyTolerationsFromTaintsToDaemonSet(arg0 context.Context, arg1, arg2 []v10.Taint, arg3, arg4 string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ApplyTolerationsFromTaintsToDaemonSet", arg0, arg1, arg2, arg3, arg4)
 	ret0, _ := ret[0].(error)
@@ -583,6 +585,25 @@ func (m *MockProviderKubectlClient) CreateNamespaceIfNotPresent(arg0 context.Con
 func (mr *MockProviderKubectlClientMockRecorder) CreateNamespaceIfNotPresent(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateNamespaceIfNotPresent", reflect.TypeOf((*MockProviderKubectlClient)(nil).CreateNamespaceIfNotPresent), arg0, arg1, arg2)
+}
+
+// Delete mocks base method.
+func (m *MockProviderKubectlClient) Delete(arg0 context.Context, arg1, arg2 string, arg3 ...kubernetes.KubectlDeleteOption) error {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{arg0, arg1, arg2}
+	for _, a := range arg3 {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "Delete", varargs...)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Delete indicates an expected call of Delete.
+func (mr *MockProviderKubectlClientMockRecorder) Delete(arg0, arg1, arg2 interface{}, arg3 ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{arg0, arg1, arg2}, arg3...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockProviderKubectlClient)(nil).Delete), varargs...)
 }
 
 // DeleteEksaDatacenterConfig mocks base method.
@@ -611,6 +632,21 @@ func (m *MockProviderKubectlClient) DeleteEksaMachineConfig(arg0 context.Context
 func (mr *MockProviderKubectlClientMockRecorder) DeleteEksaMachineConfig(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteEksaMachineConfig", reflect.TypeOf((*MockProviderKubectlClient)(nil).DeleteEksaMachineConfig), arg0, arg1, arg2, arg3, arg4)
+}
+
+// GetDaemonSet mocks base method.
+func (m *MockProviderKubectlClient) GetDaemonSet(arg0 context.Context, arg1, arg2, arg3 string) (*v1.DaemonSet, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetDaemonSet", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(*v1.DaemonSet)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetDaemonSet indicates an expected call of GetDaemonSet.
+func (mr *MockProviderKubectlClientMockRecorder) GetDaemonSet(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDaemonSet", reflect.TypeOf((*MockProviderKubectlClient)(nil).GetDaemonSet), arg0, arg1, arg2, arg3)
 }
 
 // GetEksaCluster mocks base method.
@@ -719,10 +755,10 @@ func (mr *MockProviderKubectlClientMockRecorder) GetMachineDeployment(arg0, arg1
 }
 
 // GetSecretFromNamespace mocks base method.
-func (m *MockProviderKubectlClient) GetSecretFromNamespace(arg0 context.Context, arg1, arg2, arg3 string) (*v1.Secret, error) {
+func (m *MockProviderKubectlClient) GetSecretFromNamespace(arg0 context.Context, arg1, arg2, arg3 string) (*v10.Secret, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetSecretFromNamespace", arg0, arg1, arg2, arg3)
-	ret0, _ := ret[0].(*v1.Secret)
+	ret0, _ := ret[0].(*v10.Secret)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

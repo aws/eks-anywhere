@@ -3,11 +3,13 @@ package files_test
 import (
 	"crypto/x509"
 	"embed"
+	"fmt"
 	"io"
 	"net"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"os"
 	"sync"
 	"testing"
 	"time"
@@ -94,19 +96,6 @@ func TestReaderReadFileHTTPSSuccess(t *testing.T) {
 }
 
 func TestReaderReadFileHTTPSProxySuccess(t *testing.T) {
-	t.Run("prepapre", func(t *testing.T) {
-		g := NewWithT(t)
-		filePath := "testdata/file.yaml"
-
-		server := test.NewHTTPSServerForFile(t, filePath)
-		uri := server.URL + "/" + filePath
-
-		r := files.NewReader(files.WithRootCACerts(serverCerts(g, server)))
-		got, err := r.ReadFile(uri)
-		g.Expect(err).To(BeNil())
-		test.AssertContentToFile(t, string(got), filePath)
-	})
-
 	g := NewWithT(t)
 	filePath := "testdata/file.yaml"
 	// It's important to use example.com because the certificate created for
@@ -125,10 +114,11 @@ func TestReaderReadFileHTTPSProxySuccess(t *testing.T) {
 	// Which means that it will never honor the HTTPS_PROXY env var since our
 	// request will be pointing to a loopback address.
 	// In order to make it work, we pass example.com in our request and use the
-	// roxy to map this domain to 127.0.0.1, where our file server is listening.
+	// proxy to map this domain to 127.0.0.1, where our file server is listening.
 	hostMappings := map[string]string{fakeServerHost: serverHost}
 	proxy := newProxyServer(t, hostMappings)
 
+	os.Unsetenv("HTTP_PROXY")
 	t.Setenv("HTTPS_PROXY", proxy.URL)
 
 	r := files.NewReader(
@@ -169,7 +159,7 @@ type proxyServer struct {
 
 func newProxyServer(tb testing.TB, hostMappings map[string]string) *proxyServer {
 	proxyServer := &proxyServer{
-		proxy: newProxy(hostMappings),
+		proxy: newProxy(hostMappings, tb),
 	}
 	proxyServer.Server = httptest.NewServer(http.HandlerFunc(proxyServer.handleProxy))
 
@@ -182,18 +172,20 @@ func newProxyServer(tb testing.TB, hostMappings map[string]string) *proxyServer 
 
 type proxy struct {
 	sync.Mutex
-	// proxied maitains a count of how many proxied requests\
+	// proxied maintains a count of how many proxied requests
 	// have been completed per host.
 	proxied map[string]int
 	// hostMappings allows to map the dst host in the CONNECT
 	// request to a different host.
 	hostMappings map[string]string
+	tb           testing.TB
 }
 
-func newProxy(hostMappings map[string]string) *proxy {
+func newProxy(hostMappings map[string]string, tb testing.TB) *proxy {
 	return &proxy{
 		proxied:      map[string]int{},
 		hostMappings: hostMappings,
+		tb:           tb,
 	}
 }
 
@@ -212,10 +204,10 @@ func (p *proxy) tunnelConnection(w http.ResponseWriter, r *http.Request) {
 	}
 	destConn, err := net.DialTimeout("tcp", host, 2*time.Second)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusServiceUnavailable)
+		http.Error(w, fmt.Sprintf("opening TCP connection to proxied host %s: %s", host, err), http.StatusServiceUnavailable)
 		return
 	}
-	w.WriteHeader(http.StatusOK)
+	defer destConn.Close()
 
 	h, ok := w.(http.Hijacker)
 	if !ok {
@@ -223,15 +215,47 @@ func (p *proxy) tunnelConnection(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	clientConn, _, err := h.Hijack()
+	// This might be too early if we can't hijack the connection
+	// But we can't use ResponseWriter after the hijack
+	// and doing it manually is too difficult
+	w.WriteHeader(http.StatusOK)
+
+	clientConn, hijackedConnData, err := h.Hijack()
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusServiceUnavailable)
+		http.Error(w, fmt.Sprintf("hijacking the connection in proxy: %s", err), http.StatusServiceUnavailable)
+		return
+	}
+	defer clientConn.Close()
+
+	// Read more from the client. Include the connection buffer if
+	// it contains data.
+	orgReader := io.Reader(clientConn)
+	if hijackedConnData.Reader.Buffered() > 0 {
+		p.tb.Logf("Looks like there is unread data in the buffer: %d bytes", hijackedConnData.Reader.Buffered())
+		orgReader = io.MultiReader(hijackedConnData, clientConn)
+	}
+
+	if hijackedConnData.Reader.Buffered() > 0 {
+		if _, err := io.Copy(destConn, hijackedConnData); err != nil {
+			p.tb.Errorf("Error writing client unprocessed data: %s", err)
+			return
+		}
 	}
 
 	p.countRequest(host)
 
-	go pipe(w, destConn, clientConn)
-	go pipe(w, clientConn, destConn)
+	wg := sync.WaitGroup{}
+	wg.Add(2)
+	go func() {
+		p.pipe(destConn, orgReader)
+		wg.Done()
+	}()
+	go func() {
+		p.pipe(clientConn, destConn)
+		wg.Done()
+	}()
+
+	wg.Wait()
 }
 
 // countRequest increases the proxied counter for the given host.
@@ -250,10 +274,8 @@ func (p *proxy) countForHost(host string) int {
 	return p.proxied[host]
 }
 
-func pipe(w http.ResponseWriter, destination io.WriteCloser, source io.ReadCloser) {
-	defer destination.Close()
-	defer source.Close()
+func (p *proxy) pipe(destination io.Writer, source io.Reader) {
 	if _, err := io.Copy(destination, source); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		p.tb.Errorf("Error piping: %s", err)
 	}
 }

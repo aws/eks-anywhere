@@ -20,6 +20,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/version"
+	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/api/v1beta1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	addons "sigs.k8s.io/cluster-api/exp/addons/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -34,6 +35,7 @@ import (
 	mockexecutables "github.com/aws/eks-anywhere/pkg/executables/mocks"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/utils/ptr"
+	"github.com/aws/eks-anywhere/test/framework"
 )
 
 const (
@@ -453,6 +455,7 @@ func TestKubectlWaitRetryPolicy(t *testing.T) {
 	t.Parallel()
 	connectionRefusedError := fmt.Errorf("The connection to the server 127.0.0.1:56789 was refused")
 	ioTimeoutError := fmt.Errorf("Unable to connect to the server 127.0.0.1:56789, i/o timeout\n")
+	tlsHandshakeError := fmt.Errorf("Unable to connect to the server: net/http: TLS handshake timeout")
 	miscellaneousError := fmt.Errorf("Some other random miscellaneous error")
 
 	k := executables.NewKubectl(nil)
@@ -475,6 +478,11 @@ func TestKubectlWaitRetryPolicy(t *testing.T) {
 	_, wait = executables.KubectlWaitRetryPolicy(k, 1, ioTimeoutError)
 	if wait != 10*time.Second {
 		t.Errorf("kubectlWaitRetryPolicy didn't correctly calculate first retry wait for ioTimeout")
+	}
+
+	_, wait = executables.KubectlWaitRetryPolicy(k, 1, tlsHandshakeError)
+	if wait != 10*time.Second {
+		t.Errorf("kubectlWaitRetryPolicy didn't correctly calculate first retry wait for tls handshake error")
 	}
 
 	retry, _ := executables.KubectlWaitRetryPolicy(k, 1, miscellaneousError)
@@ -2903,6 +2911,52 @@ func TestGetUnprovisionedTinkerbellHardware_MarshallingError(t *testing.T) {
 	tt.Expect(err).NotTo(BeNil())
 }
 
+func TestGetVsphereMachine(t *testing.T) {
+	t.Parallel()
+	tt := newKubectlTest(t)
+	vsphereMachineJSON := test.ReadFile(t, "testdata/kubectl_vspheremachine.json")
+	expect := []vspherev1.VSphereMachine{
+		{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "VSphereMachine",
+				APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "testcluster-control-plane-template-1234-1234",
+				Namespace: constants.EksaSystemNamespace,
+				Labels: map[string]string{
+					"cluster.x-k8s.io/control-plane": "",
+				},
+			},
+			Spec: vspherev1.VSphereMachineSpec{
+				VirtualMachineCloneSpec: vspherev1.VirtualMachineCloneSpec{
+					Template: "test-template",
+				},
+			},
+		},
+	}
+
+	selector := framework.ControlPlaneMachineLabel
+	params := []string{"get", "vspheremachines", "-o", "json", "--namespace", constants.EksaSystemNamespace, "--kubeconfig", tt.cluster.KubeconfigFile, "--selector=" + selector}
+	tt.e.EXPECT().Execute(tt.ctx, gomock.Eq(params)).Return(*bytes.NewBufferString(vsphereMachineJSON), nil)
+
+	got, err := tt.k.GetVsphereMachine(tt.ctx, tt.cluster.KubeconfigFile, selector)
+	tt.Expect(err).To(Succeed())
+	tt.Expect(got).To(Equal(expect))
+}
+
+func TestGetVsphereMachineFail(t *testing.T) {
+	t.Parallel()
+	tt := newKubectlTest(t)
+
+	selector := framework.ControlPlaneMachineLabel
+	params := []string{"get", "vspheremachines", "-o", "json", "--namespace", constants.EksaSystemNamespace, "--kubeconfig", tt.cluster.KubeconfigFile, "--selector=" + selector}
+	tt.e.EXPECT().Execute(tt.ctx, gomock.Eq(params)).Return(bytes.Buffer{}, errors.New("error"))
+
+	_, err := tt.k.GetVsphereMachine(tt.ctx, tt.cluster.KubeconfigFile, selector)
+	tt.Expect(err).To(MatchError(ContainSubstring("getting VSphere machine: error")))
+}
+
 func TestGetUnprovisionedTinkerbellHardware_ExecutableErrors(t *testing.T) {
 	t.Parallel()
 	tt := newKubectlTest(t)
@@ -3132,19 +3186,65 @@ func TestWaitForRufioMachines(t *testing.T) {
 }
 
 func TestKubectlApply(t *testing.T) {
-	t.Parallel()
-	tt := newKubectlTest(t)
-	secret := &corev1.Secret{}
-	b, err := yaml.Marshal(secret)
-	tt.Expect(err).To(Succeed())
+	kubeconfig := "myconfig.kubeconfig"
+	testCases := []struct {
+		name                  string
+		opts                  []kubernetes.KubectlApplyOption
+		expectedCommandParams []string
+	}{
+		{
+			name:                  "no opts",
+			expectedCommandParams: []string{"apply", "-f", "-", "--kubeconfig", kubeconfig},
+		},
+		{
+			name: "with field manager",
+			opts: []kubernetes.KubectlApplyOption{
+				kubernetes.KubectlApplyOptions{
+					FieldManager: "my-manager",
+				},
+			},
+			expectedCommandParams: []string{"apply", "-f", "-", "--kubeconfig", kubeconfig, "--field-manager", "my-manager"},
+		},
+		{
+			name: "with server side and force ownership",
+			opts: []kubernetes.KubectlApplyOption{
+				kubernetes.KubectlApplyOptions{
+					ServerSide:     true,
+					ForceOwnership: true,
+				},
+			},
+			expectedCommandParams: []string{"apply", "-f", "-", "--kubeconfig", kubeconfig, "--server-side", "--force-conflicts"},
+		},
+		{
+			name: "with server side and field manager",
+			opts: []kubernetes.KubectlApplyOption{
+				kubernetes.KubectlApplyOptions{
+					ServerSide:   true,
+					FieldManager: "my-manager",
+				},
+			},
+			expectedCommandParams: []string{"apply", "-f", "-", "--kubeconfig", kubeconfig, "--field-manager", "my-manager", "--server-side"},
+		},
+	}
+	for _, tCase := range testCases {
+		tc := tCase
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			tt := newKubectlTest(t)
+			tt.kubeconfig = kubeconfig
+			secret := &corev1.Secret{}
+			b, err := yaml.Marshal(secret)
+			tt.Expect(err).To(Succeed())
 
-	tt.e.EXPECT().ExecuteWithStdin(
-		tt.ctx,
-		b,
-		"apply", "-f", "-", "--kubeconfig", tt.kubeconfig,
-	).Return(bytes.Buffer{}, nil)
+			tt.e.EXPECT().ExecuteWithStdin(
+				tt.ctx,
+				b,
+				tc.expectedCommandParams,
+			).Return(bytes.Buffer{}, nil)
 
-	tt.Expect(tt.k.Apply(tt.ctx, tt.kubeconfig, secret)).To(Succeed())
+			tt.Expect(tt.k.Apply(tt.ctx, tt.kubeconfig, secret, tc.opts...)).To(Succeed())
+		})
+	}
 }
 
 func TestKubectlListObjects(t *testing.T) {
@@ -3600,14 +3700,14 @@ func TestGetPackageBundleList(t *testing.T) {
 	}
 }
 
-func TestRunBusyBoxPod(t *testing.T) {
+func TestRunCurlPod(t *testing.T) {
 	t.Parallel()
 	tt := newKubectlTest(t)
 	var b bytes.Buffer
-	expectedParam := []string{"run", "testpod-123", "--image=yauritux/busybox-curl", "-o", "json", "--kubeconfig", "c.kubeconfig", "--namespace", "eksa-packages", "--restart=Never", "pwd"}
+	expectedParam := []string{"run", "testpod-123", "--image=public.ecr.aws/eks-anywhere/diagnostic-collector:v0.16.2-eks-a-41", "-o", "json", "--kubeconfig", "c.kubeconfig", "--namespace", "eksa-packages", "--restart=Never", "pwd"}
 	tt.e.EXPECT().Execute(gomock.Any(), gomock.Eq(expectedParam)).Return(b, nil).AnyTimes()
-	if _, err := tt.k.RunBusyBoxPod(tt.ctx, "eksa-packages", "testpod-123", tt.cluster.KubeconfigFile, []string{"pwd"}); err != nil {
-		t.Errorf("Kubectl.RunBusyBoxPod() error = %v, want nil", err)
+	if _, err := tt.k.RunCurlPod(tt.ctx, "eksa-packages", "testpod-123", tt.cluster.KubeconfigFile, []string{"pwd"}); err != nil {
+		t.Errorf("Kubectl.RunCurlPod() error = %v, want nil", err)
 	}
 }
 

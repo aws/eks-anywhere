@@ -46,6 +46,13 @@ func WithBundlesRef(name string, namespace string, apiVersion string) ClusterFil
 	}
 }
 
+// WithEksaVersion sets EksaVersion with the provided name to use.
+func WithEksaVersion(eksaVersion *anywherev1.EksaVersion) ClusterFiller {
+	return func(c *anywherev1.Cluster) {
+		c.Spec.EksaVersion = eksaVersion
+	}
+}
+
 func WithCiliumPolicyEnforcementMode(mode anywherev1.CiliumPolicyEnforcementMode) ClusterFiller {
 	return func(c *anywherev1.Cluster) {
 		if c.Spec.ClusterNetwork.CNIConfig == nil {

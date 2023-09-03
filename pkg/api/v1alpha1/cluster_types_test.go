@@ -10,6 +10,7 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/semver"
 	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
@@ -1368,7 +1369,8 @@ func TestClusterEqualManagement(t *testing.T) {
 }
 
 func TestClusterEqualEksaVersion(t *testing.T) {
-	ver := v1alpha1.EksaVersion("v1.0.0")
+	version := test.DevEksaVersion()
+	version2 := v1alpha1.EksaVersion("v1.0.0")
 	testCases := []struct {
 		testName           string
 		version1, version2 *v1alpha1.EksaVersion
@@ -1382,20 +1384,20 @@ func TestClusterEqualEksaVersion(t *testing.T) {
 		},
 		{
 			testName: "one nil, one exists",
-			version1: &test.DevEksaVersion,
+			version1: &version,
 			version2: nil,
 			want:     false,
 		},
 		{
 			testName: "both exist, same",
-			version1: &test.DevEksaVersion,
-			version2: &test.DevEksaVersion,
+			version1: &version,
+			version2: &version,
 			want:     true,
 		},
 		{
 			testName: "both exist, diff",
-			version1: &test.DevEksaVersion,
-			version2: &ver,
+			version1: &version,
+			version2: &version2,
 			want:     false,
 		},
 	}
@@ -2998,6 +3000,172 @@ func TestWorkerNodesUpgradeRolloutStrategyEqual(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			g := NewWithT(t)
 			g.Expect(tt.a.Equal(tt.b)).To(Equal(tt.want))
+		})
+	}
+}
+
+func TestWorkerNodeGroupConfigurationKubeVersionUnchanged(t *testing.T) {
+	g := NewWithT(t)
+
+	kube119 := v1alpha1.KubernetesVersion("1.19")
+	kube122 := v1alpha1.KubernetesVersion("1.22")
+	tests := []struct {
+		name              string
+		want              bool
+		oldVersion        *v1alpha1.KubernetesVersion
+		newVersion        *v1alpha1.KubernetesVersion
+		oldClusterVersion v1alpha1.KubernetesVersion
+		newClusterVersion v1alpha1.KubernetesVersion
+	}{
+		{
+			name:              "both nil unchanged",
+			want:              true,
+			oldVersion:        nil,
+			newVersion:        nil,
+			oldClusterVersion: v1alpha1.Kube119,
+			newClusterVersion: v1alpha1.Kube119,
+		},
+		{
+			name:       "worker level changed",
+			want:       false,
+			oldVersion: &kube119,
+			newVersion: &kube122,
+		},
+		{
+			name:              "cluster level changed",
+			want:              false,
+			oldVersion:        nil,
+			newVersion:        nil,
+			oldClusterVersion: v1alpha1.Kube119,
+			newClusterVersion: v1alpha1.Kube118,
+		},
+		{
+			name:              "one worker level nil unchanged",
+			want:              true,
+			oldVersion:        nil,
+			newVersion:        &kube119,
+			oldClusterVersion: v1alpha1.Kube119,
+			newClusterVersion: v1alpha1.Kube120,
+		},
+		{
+			name:              "one worker level nil changed",
+			want:              false,
+			oldVersion:        &kube119,
+			newVersion:        nil,
+			oldClusterVersion: v1alpha1.Kube119,
+			newClusterVersion: v1alpha1.Kube120,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			old := &v1alpha1.WorkerNodeGroupConfiguration{
+				KubernetesVersion: tt.oldVersion,
+			}
+			new := &v1alpha1.WorkerNodeGroupConfiguration{
+				KubernetesVersion: tt.newVersion,
+			}
+			oldCluster := &v1alpha1.Cluster{
+				Spec: v1alpha1.ClusterSpec{
+					KubernetesVersion: tt.oldClusterVersion,
+				},
+			}
+			newCluster := &v1alpha1.Cluster{
+				Spec: v1alpha1.ClusterSpec{
+					KubernetesVersion: tt.newClusterVersion,
+				},
+			}
+
+			changed := v1alpha1.WorkerNodeGroupConfigurationKubeVersionUnchanged(old, new, oldCluster, newCluster)
+			g.Expect(changed).To(Equal(tt.want))
+		})
+	}
+}
+
+func TestKubernetesVersions(t *testing.T) {
+	g := NewWithT(t)
+	cluster := baseCluster()
+	kube120 := v1alpha1.KubernetesVersion("1.20")
+	wng := cluster.Spec.WorkerNodeGroupConfigurations[0].DeepCopy()
+	cluster.Spec.WorkerNodeGroupConfigurations[0].KubernetesVersion = &kube120
+	cluster.Spec.WorkerNodeGroupConfigurations = append(cluster.Spec.WorkerNodeGroupConfigurations, *wng)
+	expected := []v1alpha1.KubernetesVersion{v1alpha1.Kube121, v1alpha1.Kube120}
+	g.Expect(cluster.KubernetesVersions()).To(Equal(expected))
+}
+
+func TestCluster_ConvertConfigToConfigGenerateStruct(t *testing.T) {
+	g := NewWithT(t)
+	testCluster := newCluster(func(c *v1alpha1.Cluster) {
+		c.Namespace = constants.EksaSystemNamespace
+	})
+	wantClusterGenerate := &v1alpha1.ClusterGenerate{
+		TypeMeta: testCluster.TypeMeta,
+		ObjectMeta: v1alpha1.ObjectMeta{
+			Name:        testCluster.Name,
+			Annotations: testCluster.Annotations,
+			Namespace:   testCluster.Namespace,
+		},
+		Spec: v1alpha1.ClusterSpecGenerate{
+			KubernetesVersion:             testCluster.Spec.KubernetesVersion,
+			ControlPlaneConfiguration:     testCluster.Spec.ControlPlaneConfiguration,
+			WorkerNodeGroupConfigurations: testCluster.Spec.WorkerNodeGroupConfigurations,
+			DatacenterRef:                 testCluster.Spec.DatacenterRef,
+			IdentityProviderRefs:          testCluster.Spec.IdentityProviderRefs,
+			GitOpsRef:                     testCluster.Spec.GitOpsRef,
+			ClusterNetwork:                testCluster.Spec.ClusterNetwork,
+			ExternalEtcdConfiguration:     testCluster.Spec.ExternalEtcdConfiguration,
+			ProxyConfiguration:            testCluster.Spec.ProxyConfiguration,
+			RegistryMirrorConfiguration:   testCluster.Spec.RegistryMirrorConfiguration,
+			ManagementCluster:             testCluster.Spec.ManagementCluster,
+			PodIAMConfig:                  testCluster.Spec.PodIAMConfig,
+			Packages:                      testCluster.Spec.Packages,
+			BundlesRef:                    testCluster.Spec.BundlesRef,
+			EksaVersion:                   testCluster.Spec.EksaVersion,
+		},
+	}
+
+	got := testCluster.ConvertConfigToConfigGenerateStruct()
+	g.Expect(got).To(Equal(wantClusterGenerate))
+}
+
+func TestCNIConfigIsManaged(t *testing.T) {
+	testCases := []struct {
+		name      string
+		cniConfig *v1alpha1.CNIConfig
+		want      bool
+	}{
+		{
+			name: "nil receiver",
+			want: false,
+		},
+		{
+			name: "kindnetd",
+			cniConfig: &v1alpha1.CNIConfig{
+				Kindnetd: &v1alpha1.KindnetdConfig{},
+			},
+			want: true,
+		},
+		{
+			name: "managed Cilium",
+			cniConfig: &v1alpha1.CNIConfig{
+				Cilium: &v1alpha1.CiliumConfig{},
+			},
+			want: true,
+		},
+		{
+			name: "not managed Cilium",
+			cniConfig: &v1alpha1.CNIConfig{
+				Cilium: &v1alpha1.CiliumConfig{
+					SkipUpgrade: ptr.Bool(true),
+				},
+			},
+			want: false,
+		},
+	}
+
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			g.Expect(tt.cniConfig.IsManaged()).To(Equal(tt.want))
 		})
 	}
 }

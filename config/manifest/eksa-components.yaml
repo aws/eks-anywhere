@@ -1950,6 +1950,35 @@ spec:
                       type: object
                     packageController:
                       properties:
+                        credentialProviderPackage:
+                          properties:
+                            arch:
+                              description: Architectures of the asset
+                              items:
+                                type: string
+                              type: array
+                            description:
+                              type: string
+                            imageDigest:
+                              description: The SHA256 digest of the image manifest
+                              type: string
+                            name:
+                              description: The asset name
+                              type: string
+                            os:
+                              description: Operating system of the asset
+                              enum:
+                              - linux
+                              - darwin
+                              - windows
+                              type: string
+                            osName:
+                              description: Name of the OS like ubuntu, bottlerocket
+                              type: string
+                            uri:
+                              description: The image repository, name, and tag
+                              type: string
+                          type: object
                         helmChart:
                           properties:
                             arch:
@@ -3823,6 +3852,42 @@ spec:
                 description: EksaVersion is the semver identifying the release of
                   eks-a used to populate the cluster components.
                 type: string
+              etcdEncryption:
+                items:
+                  description: EtcdEncryption defines the configuration for ETCD encryption.
+                  properties:
+                    providers:
+                      items:
+                        description: EtcdEncryptionProvider defines the configuration
+                          for ETCD encryption providers. Currently only KMS provider
+                          is supported.
+                        properties:
+                          kms:
+                            description: KMS defines the configuration for KMS Encryption
+                              provider.
+                            properties:
+                              socketListenAddress:
+                                description: SocketListenAddress defines a UNIX socket
+                                  address that the KMS provider listens on.
+                                type: string
+                            required:
+                            - socketListenAddress
+                            type: object
+                        required:
+                        - kms
+                        type: object
+                      type: array
+                    resources:
+                      description: Resources defines a list of objects and custom
+                        resources definitions that should be encrypted.
+                      items:
+                        type: string
+                      type: array
+                  required:
+                  - providers
+                  - resources
+                  type: object
+                type: array
               externalEtcdConfiguration:
                 description: ExternalEtcdConfiguration defines the configuration options
                   for using unstacked etcd topology.
@@ -3857,6 +3922,29 @@ spec:
                 type: array
               kubernetesVersion:
                 type: string
+              machineHealthCheck:
+                description: MachineHealthCheck allows to configure timeouts for machine
+                  health checks. Machine Health Checks are responsible for remediating
+                  unhealthy Machines. Configuring these values will decide how long
+                  to wait to remediate unhealthy machine or determine health of nodes'
+                  machines.
+                properties:
+                  nodeStartupTimeout:
+                    description: NodeStartupTimeout is used to configure the node
+                      startup timeout in machine health checks. It determines how
+                      long a MachineHealthCheck should wait for a Node to join the
+                      cluster, before considering a Machine unhealthy. If not configured,
+                      the default value is set to "10m0s" (10 minutes) for all providers.
+                      For Tinkerbell provider the default is "20m0s".
+                    type: string
+                  unhealthyMachineTimeout:
+                    description: UnhealthyMachineTimeout is used to configure the
+                      unhealthy machine timeout in machine health checks. If any unhealthy
+                      conditions are met for the amount of time specified as the timeout,
+                      the machines are considered unhealthy. If not configured, the
+                      default value is set to "5m0s" (5 minutes).
+                    type: string
+                type: object
               managementCluster:
                 properties:
                   name:
@@ -4171,6 +4259,10 @@ spec:
               failureMessage:
                 description: Descriptive message about a fatal problem while reconciling
                   a cluster
+                type: string
+              failureReason:
+                description: Machine readable value about a terminal problem while
+                  reconciling the cluster set at the same time as failureMessage
                 type: string
               observedGeneration:
                 description: ObservedGeneration is the latest generation observed
@@ -6150,14 +6242,6 @@ rules:
   - patch
   - update
 - apiGroups:
-  - anywhere.eks.amazonaws.com
-  resources:
-  - eksareleases
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
   - packages.eks.amazonaws.com
   resources:
   - packagebundlecontrollers
@@ -6283,6 +6367,14 @@ rules:
   - list
   - watch
 - apiGroups:
+  - anywhere.eks.amazonaws.com
+  resources:
+  - eksareleases
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
   - bmc.tinkerbell.org
   resources:
   - machines
@@ -6323,6 +6415,16 @@ rules:
   - list
   - patch
   - update
+  - watch
+- apiGroups:
+  - cluster.x-k8s.io
+  resources:
+  - machinehealthchecks
+  verbs:
+  - create
+  - get
+  - list
+  - patch
   - watch
 - apiGroups:
   - clusterctl.cluster.x-k8s.io

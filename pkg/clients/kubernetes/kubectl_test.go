@@ -179,3 +179,66 @@ func TestKubectlDeleteOptionsApplyToDelete(t *testing.T) {
 		})
 	}
 }
+
+func TestKubectlApplyOptionsApplyToApply(t *testing.T) {
+	tests := []struct {
+		name             string
+		option, in, want *kubernetes.KubectlApplyOptions
+	}{
+		{
+			name:   "empty",
+			option: &kubernetes.KubectlApplyOptions{},
+			in:     &kubernetes.KubectlApplyOptions{},
+			want:   &kubernetes.KubectlApplyOptions{},
+		},
+		{
+			name: "serverside",
+			option: &kubernetes.KubectlApplyOptions{
+				ServerSide: true,
+			},
+			in: &kubernetes.KubectlApplyOptions{
+				FieldManager: "a",
+			},
+			want: &kubernetes.KubectlApplyOptions{
+				ServerSide:   true,
+				FieldManager: "a",
+			},
+		},
+		{
+			name: "force ownership",
+			option: &kubernetes.KubectlApplyOptions{
+				ForceOwnership: true,
+			},
+			in: &kubernetes.KubectlApplyOptions{
+				FieldManager: "a",
+			},
+			want: &kubernetes.KubectlApplyOptions{
+				ForceOwnership: true,
+				FieldManager:   "a",
+			},
+		},
+		{
+			name: "field manager",
+			option: &kubernetes.KubectlApplyOptions{
+				FieldManager: "a",
+			},
+			in: &kubernetes.KubectlApplyOptions{
+				FieldManager:   "b",
+				ServerSide:     true,
+				ForceOwnership: true,
+			},
+			want: &kubernetes.KubectlApplyOptions{
+				FieldManager:   "a",
+				ServerSide:     true,
+				ForceOwnership: true,
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			tt.option.ApplyToApply(tt.in)
+			g.Expect(tt.in).To(BeComparableTo(tt.want))
+		})
+	}
+}
