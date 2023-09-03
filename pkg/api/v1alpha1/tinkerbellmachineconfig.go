@@ -3,11 +3,12 @@ package v1alpha1
 import (
 	"fmt"
 
-	"github.com/aws/eks-anywhere/pkg/utils/file"
-	yamlutil "github.com/aws/eks-anywhere/pkg/utils/yaml"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	apimachineryyaml "k8s.io/apimachinery/pkg/util/yaml"
 	"sigs.k8s.io/yaml"
+
+	"github.com/aws/eks-anywhere/pkg/utils/file"
+	yamlutil "github.com/aws/eks-anywhere/pkg/utils/yaml"
 )
 
 const TinkerbellMachineConfigKind = "TinkerbellMachineConfig"

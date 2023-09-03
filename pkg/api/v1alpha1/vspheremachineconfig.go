@@ -7,7 +7,6 @@ import (
 	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/pkg/logger"
-
 	"github.com/aws/eks-anywhere/pkg/utils/file"
 	yamlutil "github.com/aws/eks-anywhere/pkg/utils/yaml"
 )

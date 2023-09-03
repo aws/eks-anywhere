@@ -3,22 +3,13 @@ package yaml_test
 import (
 	"testing"
 
-	yamlutil "github.com/aws/eks-anywhere/pkg/utils/yaml"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v2"
+
+	"github.com/aws/eks-anywhere/pkg/utils/file"
+	yamlutil "github.com/aws/eks-anywhere/pkg/utils/yaml"
 )
-
-type TestGenericYaml struct {
-	ApiVersion string       `yaml:"apiVersion"`
-	Kind       string       `yaml:"kind"`
-	MetaData   TestMetaData `yaml:"metadata"`
-	Spec       interface{}  `yaml:"spec"`
-}
-
-type TestMetaData struct {
-	Name string `yaml:"name"`
-}
 
 func TestParseMultiYamlFile(t *testing.T) {
 	fileName := "testdata/multi_resource_manifests.yaml"
@@ -58,7 +49,10 @@ func TestParseMultiYamlFile(t *testing.T) {
 	var actualData interface{}
 
 	t.Run("split yaml resources", func(t *testing.T) {
-		got, err := yamlutil.ParseMultiYamlFile(fileName)
+		r, err := file.ReadFile(fileName)
+		require.NoError(t, err)
+
+		got, err := yamlutil.SplitDocuments(r)
 		require.NoError(t, err)
 		require.Equal(t, len(expectedYamls), len(got))
 
