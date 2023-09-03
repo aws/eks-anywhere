@@ -29,16 +29,9 @@ func Serialize[T any](objs ...T) ([][]byte, error) {
 	return r, nil
 }
 
+// SplitDocuments function splits content into individual document parts represented as byte slices.
 func SplitDocuments(r io.Reader) ([][]byte, error) {
-
 	resources := make([][]byte, 0)
-
-	// content, err := os.ReadFile(fileName)
-	// if err != nil {
-	// 	return nil, fmt.Errorf("unable to read file due to: %v", err)
-	// }
-
-	// r := bytes.NewReader(content)
 
 	yr := apiyaml.NewYAMLReader(bufio.NewReader(r))
 	for {
