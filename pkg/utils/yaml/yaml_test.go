@@ -1,69 +1,100 @@
 package yaml_test
 
 import (
+	"bufio"
+	"errors"
+	"strings"
 	"testing"
 
+	yamlutil "github.com/aws/eks-anywhere/pkg/utils/yaml"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gopkg.in/yaml.v2"
-
-	"github.com/aws/eks-anywhere/pkg/utils/file"
-	yamlutil "github.com/aws/eks-anywhere/pkg/utils/yaml"
 )
 
-func TestParseMultiYamlFile(t *testing.T) {
-	fileName := "testdata/multi_resource_manifests.yaml"
-
-	expectedYamls := []string{
-		`
-    apiVersion: v1
-    kind: Cluster
-    metadata:
-      name: cluster-1
-    spec:
-      machineConfigRef:
-        name: test-machine-config
-      templateConfigRef:
-        name: test-template-config`,
-
-		`
-    apiVersion: v1
-    kind: MachineConfigRef
-    metadata:
-      name: test-machine-config
-    spec:
-      machine:
-        count: 1`,
-
-		`
-    apiVersion: v1
-    kind: TemplateConfigRef
-    metadata:
-      name: test-template-config
-    spec:
-      template:
-        name: test-template`,
+func TestSplitDocuments(t *testing.T) {
+	tests := []struct {
+		name         string
+		input        string
+		expectedDocs [][]byte
+		expectedErr  error
+	}{
+		{
+			name:         "Empty input",
+			input:        "",
+			expectedDocs: [][]byte{},
+			expectedErr:  nil,
+		},
+		{
+			name: "Single document",
+			input: `apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-1
+`,
+			expectedDocs: [][]byte{
+				[]byte(`apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-1
+`),
+			},
+			expectedErr: nil,
+		},
+		{
+			name: "Multiple documents",
+			input: `apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-1
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: service-1
+`,
+			expectedDocs: [][]byte{
+				[]byte(`apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-1
+`),
+				[]byte(`apiVersion: v1
+kind: Service
+metadata:
+  name: service-1
+`),
+			},
+			expectedErr: nil,
+		},
+		{
+			name:         "Error reading input 2",
+			input:        `---\nkey: value\ninvalid_separator\n`,
+			expectedDocs: nil,
+			expectedErr:  errors.New("invalid Yaml document separator: \\nkey: value\\ninvalid_separator\\n"),
+		},
 	}
 
-	var expectedData interface{}
-	var actualData interface{}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			r := strings.NewReader(test.input)
 
-	t.Run("split yaml resources", func(t *testing.T) {
-		r, err := file.ReadFile(fileName)
-		require.NoError(t, err)
+			docs, err := yamlutil.SplitDocuments(bufio.NewReader(r))
+			if test.expectedErr != nil {
+				assert.Equal(t, test.expectedErr.Error(), err.Error())
+				assert.Equal(t, len(test.expectedDocs), len(docs))
+			} else {
+				require.NoError(t, err)
+				if len(docs) != len(test.expectedDocs) {
+					t.Errorf("Expected %d documents, but got %d", len(test.expectedDocs), len(docs))
+				}
 
-		got, err := yamlutil.SplitDocuments(r)
-		require.NoError(t, err)
-		require.Equal(t, len(expectedYamls), len(got))
+				for i, doc := range docs {
+					if string(doc) != string(test.expectedDocs[i]) {
+						t.Errorf("Document %d mismatch.\nExpected:\n%s\nGot:\n%s", i+1, string(test.expectedDocs[i]), string(doc))
+					}
+				}
+			}
 
-		for i := 0; i < len(expectedYamls); i++ {
-			err = yaml.Unmarshal([]byte(expectedYamls[i]), &expectedData)
-			require.NoError(t, err)
-
-			err = yaml.Unmarshal(got[i], &actualData)
-			require.NoError(t, err)
-
-			assert.Equal(t, expectedData, actualData)
-		}
-	})
+		})
+	}
 }

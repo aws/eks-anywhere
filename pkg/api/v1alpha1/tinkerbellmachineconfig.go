@@ -72,16 +72,17 @@ func GetTinkerbellMachineConfigs(fileName string) (map[string]*TinkerbellMachine
 
 	for _, d := range resources {
 		var config TinkerbellMachineConfig
-		if err := apimachineryyaml.UnmarshalStrict(d, &config); err == nil {
+		var strictUnmarshallErr error
+		if strictUnmarshallErr = apimachineryyaml.UnmarshalStrict(d, &config); strictUnmarshallErr == nil {
 			if config.Kind == TinkerbellMachineConfigKind {
 				configs[config.Name] = &config
 				continue
 			}
 		}
 
-		err := yaml.Unmarshal(d, &config)
-		if config.Kind == TinkerbellMachineConfigKind {
-			return nil, fmt.Errorf("unable to unmarshall content from file due to: %v", err)
+		_ = yaml.Unmarshal(d, &config)
+		if config.Kind == TinkerbellMachineConfigKind && strictUnmarshallErr != nil {
+			return nil, fmt.Errorf("unable to unmarshall content from file due to: %v", strictUnmarshallErr)
 		}
 	}
 
