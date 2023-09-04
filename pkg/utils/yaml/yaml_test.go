@@ -6,9 +6,10 @@ import (
 	"strings"
 	"testing"
 
-	yamlutil "github.com/aws/eks-anywhere/pkg/utils/yaml"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	yamlutil "github.com/aws/eks-anywhere/pkg/utils/yaml"
 )
 
 func TestSplitDocuments(t *testing.T) {
@@ -94,7 +95,6 @@ metadata:
 					}
 				}
 			}
-
 		})
 	}
 }
