@@ -3,6 +3,7 @@ package v1alpha1
 import (
 	"errors"
 	"fmt"
+	//nolint: staticcheck
 	"io/ioutil"
 	"reflect"
 	"strings"
@@ -1438,7 +1439,6 @@ func Test_ParseClusterConfigFromContent(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 			}
-
 		})
 	}
 }

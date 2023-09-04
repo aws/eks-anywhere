@@ -4,9 +4,10 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 )
 
 // MockReaderWithError is a mock implementation of the Reader interface that returns an error.
@@ -52,7 +53,6 @@ func TestGetTinkerbellMachineConfigs(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-
 			configs, err := v1alpha1.GetTinkerbellMachineConfigs(test.fileName)
 
 			if test.expectedError != nil {

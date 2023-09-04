@@ -178,7 +178,6 @@ func TestGetNutanixMachineConfigsValidConfig(t *testing.T) {
 			} else {
 				assert.Error(t, err)
 			}
-
 		})
 	}
 }
