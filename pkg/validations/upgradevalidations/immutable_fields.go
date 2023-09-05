@@ -43,6 +43,10 @@ func ValidateImmutableFields(ctx context.Context, k validations.KubectlClient, c
 		return fmt.Errorf("spec.controlPlaneConfiguration.endpoint is immutable")
 	}
 
+	if nSpec.ControlPlaneConfiguration.Count != oSpec.ControlPlaneConfiguration.Count {
+		return fmt.Errorf("spec.controlPlaneConfiguration.count is immutable")
+	}
+
 	/* compare all clusterNetwork fields individually, since we do allow updating updating fields for configuring plugins such as CiliumConfig through the cli*/
 	if !nSpec.ClusterNetwork.Pods.Equal(&oSpec.ClusterNetwork.Pods) {
 		return fmt.Errorf("spec.clusterNetwork.Pods is immutable")
