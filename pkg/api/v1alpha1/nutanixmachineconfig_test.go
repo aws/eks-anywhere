@@ -153,15 +153,31 @@ func TestGetNutanixMachineConfigsValidConfig(t *testing.T) {
 				assert.NotNil(t, y)
 			},
 		},
+		{
+			name:        "invalid-manifest",
+			fileName:    "testdata/invalid_manifest.yaml",
+			machineConf: nil,
+			assertions: func(t *testing.T, machineConf *NutanixMachineConfig) {
+				m := machineConf.Marshallable()
+				require.NotNil(t, m)
+				y, err := yaml.Marshal(m)
+				assert.NoError(t, err)
+				assert.NotNil(t, y)
+			},
+		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			conf, err := GetNutanixMachineConfigs(test.fileName)
-			assert.NoError(t, err)
-			require.NotNil(t, conf)
-			assert.True(t, reflect.DeepEqual(test.machineConf, conf))
-			test.assertions(t, conf[machineConfName])
+			if test.machineConf != nil {
+				require.NoError(t, err)
+				require.NotNil(t, conf)
+				assert.True(t, reflect.DeepEqual(test.machineConf, conf))
+				test.assertions(t, conf[machineConfName])
+			} else {
+				assert.Error(t, err)
+			}
 		})
 	}
 }

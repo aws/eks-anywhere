@@ -22,6 +22,12 @@ func TestGetVSphereMachineConfigs(t *testing.T) {
 			wantErr:                   true,
 		},
 		{
+			testName:                  "non-splitable manifest",
+			fileName:                  "testdata/invalid_manifest.yaml",
+			wantVSphereMachineConfigs: nil,
+			wantErr:                   true,
+		},
+		{
 			testName:                  "not parseable file",
 			fileName:                  "testdata/not_parseable_cluster.yaml",
 			wantVSphereMachineConfigs: nil,
