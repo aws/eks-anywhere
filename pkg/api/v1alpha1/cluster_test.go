@@ -3,11 +3,15 @@ package v1alpha1
 import (
 	"errors"
 	"fmt"
+	//nolint: staticcheck
+	"io/ioutil"
 	"reflect"
 	"strings"
 	"testing"
 
 	. "github.com/onsi/gomega"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -1397,6 +1401,43 @@ func TestParseClusterConfig(t *testing.T) {
 			}
 			if tt.wantErr && !strings.Contains(err.Error(), tt.matchError.Error()) {
 				t.Errorf("ParseClusterConfig() error = %v, wantErr %v err %v", err, tt.wantErr, tt.matchError)
+			}
+		})
+	}
+}
+
+func Test_ParseClusterConfigFromContent(t *testing.T) {
+	tests := []struct {
+		name          string
+		fileName      string
+		clusterConfig KindAccessor
+		expectedError error
+	}{
+		{
+			name:          "Good cluster config parse",
+			fileName:      "testdata/cluster_vsphere.yaml",
+			clusterConfig: &Cluster{},
+			expectedError: nil,
+		},
+		{
+			name:          "non-splitable manifest",
+			fileName:      "testdata/invalid_manifest.yaml",
+			clusterConfig: &Cluster{},
+			expectedError: errors.New("invalid Yaml document separator: \\nkey: value\\ninvalid_separator\\n"),
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			content, err := ioutil.ReadFile(test.fileName)
+			require.NoError(t, err)
+
+			err = ParseClusterConfigFromContent(content, test.clusterConfig)
+
+			if test.expectedError != nil {
+				assert.Equal(t, test.expectedError.Error(), err.Error())
+			} else {
+				require.NoError(t, err)
 			}
 		})
 	}
