@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -43,10 +42,6 @@ var upgradeClusterCmd = &cobra.Command{
 			logger.MarkFail(forceCleanupDeprecationMessageForUpgrade)
 			return errors.New("please remove the --force-cleanup flag")
 		}
-		if uc.wConfig != "" {
-			logger.MarkFail(wConfigDeprecationMessage)
-			return errors.New("--w-config is deprecated. Use --kubeconfig instead")
-		}
 
 		if err := uc.upgradeCluster(cmd); err != nil {
 			return fmt.Errorf("failed to upgrade cluster: %v", err)
@@ -61,10 +56,6 @@ func init() {
 	applyTimeoutFlags(upgradeClusterCmd.Flags(), &uc.timeoutOptions)
 	applyTinkerbellHardwareFlag(upgradeClusterCmd.Flags(), &uc.hardwareCSVPath)
 	upgradeClusterCmd.Flags().StringVarP(&uc.wConfig, "w-config", "w", "", "Kubeconfig file to use when upgrading a workload cluster")
-	err := upgradeClusterCmd.Flags().MarkDeprecated("w-config", "please use flag --kubeconfig instead.")
-	if err != nil {
-		log.Fatalf("Error deprecating flag as required: %v", err)
-	}
 	upgradeClusterCmd.Flags().BoolVar(&uc.forceClean, "force-cleanup", false, "Force deletion of previously created bootstrap cluster")
 	hideForceCleanup(upgradeClusterCmd.Flags())
 	upgradeClusterCmd.Flags().StringArrayVar(&uc.skipValidations, "skip-validations", []string{}, fmt.Sprintf("Bypass upgrade validations by name. Valid arguments you can pass are --skip-validations=%s", strings.Join(upgradevalidations.SkippableValidations[:], ",")))
@@ -169,7 +160,7 @@ func (uc *upgradeClusterOptions) upgradeCluster(cmd *cobra.Command) error {
 
 	workloadCluster := &types.Cluster{
 		Name:           clusterSpec.Cluster.Name,
-		KubeconfigFile: getKubeconfigPath(clusterSpec.Cluster.Name, uc.clusterKubeconfig),
+		KubeconfigFile: getKubeconfigPath(clusterSpec.Cluster.Name, uc.wConfig),
 	}
 
 	var managementCluster *types.Cluster
@@ -202,7 +193,7 @@ func (uc *upgradeClusterOptions) commonValidations(ctx context.Context) (cluster
 		return nil, err
 	}
 
-	kubeconfigPath := getKubeconfigPath(clusterConfig.Name, uc.clusterKubeconfig)
+	kubeconfigPath := getKubeconfigPath(clusterConfig.Name, uc.wConfig)
 	if err := kubeconfig.ValidateFilename(kubeconfigPath); err != nil {
 		return nil, err
 	}

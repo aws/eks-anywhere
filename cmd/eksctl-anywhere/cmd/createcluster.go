@@ -141,7 +141,7 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 		WithGitOpsFlux(clusterSpec.Cluster, clusterSpec.FluxConfig, cliConfig).
 		WithWriter().
 		WithEksdInstaller().
-		WithPackageInstaller(clusterSpec, cc.installPackages, cc.clusterKubeconfig).
+		WithPackageInstaller(clusterSpec, cc.installPackages, cc.managementKubeconfig).
 		WithValidatorClients().
 		WithCreateClusterDefaulter(createCLIConfig)
 

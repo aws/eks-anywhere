@@ -92,14 +92,14 @@ func buildClusterManagerOpts(t timeoutOptions, datacenterKind string) (*dependen
 
 type clusterOptions struct {
 	fileName             string
-	bundlesOverride   string
-	clusterKubeconfig string
+	bundlesOverride      string
+	managementKubeconfig string
 }
 
 func (c clusterOptions) mountDirs() []string {
 	var dirs []string
-	if c.clusterKubeconfig != "" {
-		dirs = append(dirs, filepath.Dir(c.clusterKubeconfig))
+	if c.managementKubeconfig != "" {
+		dirs = append(dirs, filepath.Dir(c.managementKubeconfig))
 	}
 
 	return dirs
@@ -138,14 +138,14 @@ func newClusterSpec(options clusterOptions) (*cluster.Spec, error) {
 	}
 
 	if clusterSpec.Cluster.IsManaged() {
-		if options.clusterKubeconfig == "" {
+		if options.managementKubeconfig == "" {
 			managementKubeconfig, err := getManagementClusterKubeconfig(clusterSpec.Cluster.Spec.ManagementCluster.Name)
 			if err != nil {
 				return nil, err
 			}
-			options.clusterKubeconfig = managementKubeconfig
+			options.managementKubeconfig = managementKubeconfig
 		}
-		managementCluster, err := cluster.LoadManagement(options.clusterKubeconfig)
+		managementCluster, err := cluster.LoadManagement(options.managementKubeconfig)
 		if err != nil {
 			return nil, fmt.Errorf("unable to get management cluster from kubeconfig: %v", err)
 		}

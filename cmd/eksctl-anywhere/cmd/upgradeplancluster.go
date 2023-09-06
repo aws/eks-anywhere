@@ -59,7 +59,7 @@ func init() {
 	upgradePlanClusterCmd.Flags().StringVarP(&uc.fileName, "filename", "f", "", "Filename that contains EKS-A cluster configuration")
 	upgradePlanClusterCmd.Flags().StringVar(&uc.bundlesOverride, "bundles-override", "", "Override default Bundles manifest (not recommended)")
 	upgradePlanClusterCmd.Flags().StringVarP(&output, outputFlagName, "o", outputDefault, "Output format: text|json")
-	upgradePlanClusterCmd.Flags().StringVar(&uc.clusterKubeconfig, "kubeconfig", "", "Management cluster kubeconfig file")
+	upgradePlanClusterCmd.Flags().StringVar(&uc.managementKubeconfig, "kubeconfig", "", "Management cluster kubeconfig file")
 	err := upgradePlanClusterCmd.MarkFlagRequired("filename")
 	if err != nil {
 		log.Fatalf("Error marking flag as required: %v", err)
@@ -88,7 +88,7 @@ func (uc *upgradeClusterOptions) upgradePlanCluster(ctx context.Context) error {
 
 	managementCluster := &types.Cluster{
 		Name:           newClusterSpec.Cluster.Name,
-		KubeconfigFile: getKubeconfigPath(newClusterSpec.Cluster.Name, uc.clusterKubeconfig),
+		KubeconfigFile: getKubeconfigPath(newClusterSpec.Cluster.Name, uc.wConfig),
 	}
 
 	if newClusterSpec.ManagementCluster != nil {
