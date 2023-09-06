@@ -43,6 +43,8 @@ var (
 	// errExternalEtcdUnsupported is returned from create or update when the user attempts to create
 	// or upgrade a cluster with an external etcd configuration.
 	errExternalEtcdUnsupported = errors.New("external etcd configuration is unsupported")
+
+	referrencedMachineConfigsAvailabilityErrMsg = "some machine configs (%s) referenced in cluster config are not provided"
 )
 
 type Provider struct {
@@ -114,6 +116,11 @@ func NewProvider(
 	skipIpCheck bool,
 ) (*Provider, error) {
 	var controlPlaneMachineSpec, workerNodeGroupMachineSpec, etcdMachineSpec *v1alpha1.TinkerbellMachineConfigSpec
+
+	if err := validateRefrencedMachineConfigsAvailability(machineConfigs, clusterConfig); err != nil {
+		return nil, err
+	}
+
 	if clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef != nil && machineConfigs[clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name] != nil {
 		controlPlaneMachineSpec = &machineConfigs[clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec
 	}
@@ -309,5 +316,38 @@ func (p *Provider) ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.Compone
 }
 
 func (p *Provider) InstallCustomProviderComponents(ctx context.Context, kubeconfigFile string) error {
+	return nil
+}
+
+func validateRefrencedMachineConfigsAvailability(machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig, clusterConfig *v1alpha1.Cluster) error {
+	unavailableMachineConfigNames := ""
+
+	controlPlaneMachineName := clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
+	if _, ok := machineConfigs[controlPlaneMachineName]; !ok {
+		unavailableMachineConfigNames = fmt.Sprintf("%s, %s", unavailableMachineConfigNames, controlPlaneMachineName)
+	}
+
+	for _, workerNodeGroupConfiguration := range clusterConfig.Spec.WorkerNodeGroupConfigurations {
+		if workerNodeGroupConfiguration.MachineGroupRef == nil {
+			continue
+		}
+		workerMachineName := workerNodeGroupConfiguration.MachineGroupRef.Name
+		if _, ok := machineConfigs[workerMachineName]; !ok {
+			unavailableMachineConfigNames = fmt.Sprintf("%s, %s", unavailableMachineConfigNames, workerMachineName)
+		}
+	}
+
+	if clusterConfig.Spec.ExternalEtcdConfiguration != nil {
+		etcdMachineName := clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
+		if _, ok := machineConfigs[etcdMachineName]; !ok {
+			unavailableMachineConfigNames = fmt.Sprintf("%s, %s", unavailableMachineConfigNames, etcdMachineName)
+		}
+	}
+
+	if len(unavailableMachineConfigNames) > 2 {
+		unavailableMachineConfigNames = unavailableMachineConfigNames[2:]
+		return fmt.Errorf(referrencedMachineConfigsAvailabilityErrMsg, unavailableMachineConfigNames)
+	}
+
 	return nil
 }
