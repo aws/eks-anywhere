@@ -2691,12 +2691,8 @@ func TestVSphereKubernetes123to124UpgradeFromLatestMinorReleaseBottleRocketAPI(t
 	runMulticlusterUpgradeFromReleaseFlowAPI(
 		test,
 		release,
-		api.JoinClusterConfigFillers(
-			provider.WithBottleRocket124(),
-			api.VSphereToConfigFiller(
-				provider.Bottlerocket124Template(), // Set the template so it doesn't get autoimported
-			),
-		),
+		v1alpha1.Kube124,
+		framework.Bottlerocket1,
 	)
 }
 
