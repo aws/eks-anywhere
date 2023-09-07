@@ -30,6 +30,7 @@ import (
 // constants defined for cluster.go.
 const (
 	ClusterKind              = "Cluster"
+	YamlSeparator            = "\n---\n"
 	RegistryMirrorCAKey      = "EKSA_REGISTRY_MIRROR_CA"
 	podSubnetNodeMaskMaxDiff = 16
 )
