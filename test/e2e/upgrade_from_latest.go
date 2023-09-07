@@ -58,7 +58,8 @@ func runUpgradeWithFluxFromReleaseFlow(test *framework.ClusterE2ETest, latestRel
 	test.DeleteCluster()
 }
 
-func runMulticlusterUpgradeFromReleaseFlowAPI(test *framework.MulticlusterE2ETest, release *releasev1.EksARelease, upgradeChanges api.ClusterConfigFiller) {
+func runMulticlusterUpgradeFromReleaseFlowAPI(test *framework.MulticlusterE2ETest, release *releasev1.EksARelease, kubeVersion anywherev1.KubernetesVersion, os framework.OS) {
+	provider := test.ManagementCluster.Provider
 	test.CreateManagementCluster(framework.ExecuteWithEksaRelease(release))
 
 	test.RunConcurrentlyInWorkloadClusters(func(wc *framework.WorkloadCluster) {
@@ -69,7 +70,9 @@ func runMulticlusterUpgradeFromReleaseFlowAPI(test *framework.MulticlusterE2ETes
 
 	oldCluster := test.ManagementCluster.GetEKSACluster()
 
-	test.ManagementCluster.UpdateClusterConfig(upgradeChanges)
+	test.ManagementCluster.UpdateClusterConfig(
+		provider.WithKubeVersionAndOS(kubeVersion, os, nil),
+	)
 	test.ManagementCluster.UpgradeCluster()
 	test.ManagementCluster.ValidateCluster(test.ManagementCluster.ClusterConfig.Cluster.Spec.KubernetesVersion)
 	test.ManagementCluster.StopIfFailed()
@@ -79,7 +82,7 @@ func runMulticlusterUpgradeFromReleaseFlowAPI(test *framework.MulticlusterE2ETes
 	// Upgrade bundle workload clusters now because they still have the old versions of the bundle.
 	test.RunConcurrentlyInWorkloadClusters(func(wc *framework.WorkloadCluster) {
 		wc.UpdateClusterConfig(
-			api.JoinClusterConfigFillers(upgradeChanges),
+			provider.WithKubeVersionAndOS(kubeVersion, os, nil),
 			api.ClusterToConfigFiller(
 				api.WithEksaVersion(cluster.Spec.EksaVersion),
 			),
@@ -95,6 +98,7 @@ func runMulticlusterUpgradeFromReleaseFlowAPI(test *framework.MulticlusterE2ETes
 	// Create workload cluster with old bundle
 	test.RunConcurrentlyInWorkloadClusters(func(wc *framework.WorkloadCluster) {
 		wc.UpdateClusterConfig(
+			provider.WithKubeVersionAndOS(kubeVersion, os, release),
 			api.ClusterToConfigFiller(
 				api.WithEksaVersion(oldCluster.Spec.EksaVersion),
 			),
@@ -111,7 +115,8 @@ func runMulticlusterUpgradeFromReleaseFlowAPI(test *framework.MulticlusterE2ETes
 	test.DeleteManagementCluster()
 }
 
-func runMulticlusterUpgradeFromReleaseFlowAPIWithFlux(test *framework.MulticlusterE2ETest, release *releasev1.EksARelease, upgradeChanges api.ClusterConfigFiller) {
+func runMulticlusterUpgradeFromReleaseFlowAPIWithFlux(test *framework.MulticlusterE2ETest, release *releasev1.EksARelease, kubeVersion anywherev1.KubernetesVersion, os framework.OS) {
+	provider := test.ManagementCluster.Provider
 	test.CreateManagementCluster(framework.ExecuteWithEksaRelease(release))
 
 	test.RunConcurrentlyInWorkloadClusters(func(wc *framework.WorkloadCluster) {
@@ -122,17 +127,19 @@ func runMulticlusterUpgradeFromReleaseFlowAPIWithFlux(test *framework.Multiclust
 
 	oldCluster := test.ManagementCluster.GetEKSACluster()
 
-	test.ManagementCluster.UpdateClusterConfig(upgradeChanges)
+	test.ManagementCluster.UpdateClusterConfig(
+		provider.WithKubeVersionAndOS(kubeVersion, os, nil),
+	)
 	test.ManagementCluster.UpgradeCluster()
 	test.ManagementCluster.ValidateCluster(test.ManagementCluster.ClusterConfig.Cluster.Spec.KubernetesVersion)
 	test.ManagementCluster.StopIfFailed()
 
 	cluster := test.ManagementCluster.GetEKSACluster()
 
-	// Upgrade bundle workload clusters now because they still have the old versions of the bundle.
+	// Upgrade bundle workload clusters now using the new EksaVersion
 	test.RunConcurrentlyInWorkloadClusters(func(wc *framework.WorkloadCluster) {
 		test.PushWorkloadClusterToGit(wc,
-			api.JoinClusterConfigFillers(upgradeChanges),
+			provider.WithKubeVersionAndOS(kubeVersion, os, nil),
 			api.ClusterToConfigFiller(
 				api.WithEksaVersion(cluster.Spec.EksaVersion),
 			),
@@ -143,12 +150,12 @@ func runMulticlusterUpgradeFromReleaseFlowAPIWithFlux(test *framework.Multiclust
 		wc.ValidateClusterDelete()
 	})
 
-	// Create workload cluster with old bundle
+	// Create workload cluster with the old EksaVersion
 	test.RunConcurrentlyInWorkloadClusters(func(wc *framework.WorkloadCluster) {
 		test.PushWorkloadClusterToGit(wc,
+			provider.WithKubeVersionAndOS(kubeVersion, os, release),
 			api.ClusterToConfigFiller(
 				api.WithEksaVersion(oldCluster.Spec.EksaVersion),
-				api.WithEksaVersion(nil),
 			),
 		)
 		wc.WaitForKubeconfig()
