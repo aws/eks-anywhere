@@ -7,6 +7,7 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/manifests"
 	"github.com/aws/eks-anywhere/pkg/manifests/bundles"
 	"github.com/aws/eks-anywhere/pkg/version"
@@ -69,7 +70,37 @@ func (b FileSpecBuilder) Build(clusterConfigURL string) (*Spec, error) {
 	if err != nil {
 		return nil, errors.Wrapf(err, "getting Bundles file")
 	}
-
+	bundle := bundlesManifest.Spec.VersionsBundles[0]
+	var infraProviderName, infraProviderVersion string
+	switch config.Cluster.Spec.DatacenterRef.Kind {
+	case v1alpha1.CloudStackDatacenterKind:
+		infraProviderName = "Cluster API Provider CloudStack"
+		infraProviderVersion = bundle.CloudStack.Version
+	case v1alpha1.DockerDatacenterKind:
+		infraProviderName = "Cluster API Provider Docker"
+		infraProviderVersion = bundle.Docker.Version
+	case v1alpha1.NutanixDatacenterKind:
+		infraProviderName = "Cluster API Provider Nutanix"
+		infraProviderVersion = bundle.Nutanix.Version
+	case v1alpha1.SnowDatacenterKind:
+		infraProviderName = "Cluster API Provider AWS Snow"
+		infraProviderVersion = bundle.Snow.Version
+	case v1alpha1.TinkerbellDatacenterKind:
+		infraProviderName = "Cluster API Provider Tinkerbell"
+		infraProviderVersion = bundle.Tinkerbell.Version
+	case v1alpha1.VSphereDatacenterKind:
+		infraProviderName = "Cluster API Provider VSphere"
+		infraProviderVersion = bundle.VSphere.Version
+	}
+	logger.V(4).Info(
+		"Using CAPI provider versions",
+		"Core Cluster API", bundle.ClusterAPI.Version,
+		"Kubeadm Bootstrap", bundle.Bootstrap.Version,
+		"Kubeadm Control Plane", bundle.ControlPlane.Version,
+		"External etcd Bootstrap", bundle.ExternalEtcdBootstrap.Version,
+		"External etcd Controller", bundle.ExternalEtcdController.Version,
+		infraProviderName, infraProviderVersion,
+	)
 	bundlesManifest.Namespace = constants.EksaSystemNamespace
 
 	configManager, err := NewDefaultConfigManager()
