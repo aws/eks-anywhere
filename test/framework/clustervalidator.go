@@ -18,14 +18,15 @@ import (
 )
 
 func validationsForExpectedObjects() []clusterf.StateValidation {
-	mediumRetier := retrier.NewWithMaxRetries(120, 5*time.Second)
-	longRetier := retrier.NewWithMaxRetries(120, 10*time.Second)
+	mediumRetier := retrier.New(10 * time.Minute)
+	longRetier := retrier.New(30 * time.Minute)
 	return []clusterf.StateValidation{
-		clusterf.RetriableStateValidation(mediumRetier, validations.ValidateClusterReady),
 		clusterf.RetriableStateValidation(mediumRetier, validations.ValidateEKSAObjects),
 		clusterf.RetriableStateValidation(longRetier, validations.ValidateControlPlaneNodes),
 		clusterf.RetriableStateValidation(longRetier, validations.ValidateWorkerNodes),
 		clusterf.RetriableStateValidation(mediumRetier, validations.ValidateCilium),
+		// This should be checked last as the Cluster should only be ready after all the other validations pass.
+		clusterf.RetriableStateValidation(mediumRetier, validations.ValidateClusterReady),
 	}
 }
 

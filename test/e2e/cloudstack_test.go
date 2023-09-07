@@ -4112,10 +4112,7 @@ func TestCloudStackKubernetesRedHat123To124UpgradeFromLatestMinorReleaseAPI(t *t
 	)
 	managementCluster.GenerateClusterConfigForVersion(release.Version, framework.ExecuteWithEksaRelease(release))
 	managementCluster.UpdateClusterConfig(
-		api.ClusterToConfigFiller(
-			api.WithKubernetesVersion(v1alpha1.Kube123),
-		),
-		cloudstack.WithRedhat123(),
+		cloudstack.WithKubeVersionAndOS(v1alpha1.Kube123, framework.RedHat8, release),
 	)
 	test := framework.NewMulticlusterE2ETest(t, managementCluster)
 	wc := framework.NewClusterE2ETest(
@@ -4129,14 +4126,15 @@ func TestCloudStackKubernetesRedHat123To124UpgradeFromLatestMinorReleaseAPI(t *t
 		api.ClusterToConfigFiller(
 			api.WithManagementCluster(managementCluster.ClusterName),
 		),
-		cloudstack.WithRedhat123(),
+		cloudstack.WithKubeVersionAndOS(v1alpha1.Kube123, framework.RedHat8, release),
 	)
 	test.WithWorkloadClusters(wc)
 
 	runMulticlusterUpgradeFromReleaseFlowAPI(
 		test,
 		release,
-		cloudstack.WithRedhat124(),
+		v1alpha1.Kube124,
+		framework.RedHat8,
 	)
 }
 
@@ -4153,11 +4151,7 @@ func TestCloudStackKubernetesRedHat123to124UpgradeFromLatestMinorReleaseGitHubFl
 	)
 	managementCluster.GenerateClusterConfigForVersion(release.Version, framework.ExecuteWithEksaRelease(release))
 	managementCluster.UpdateClusterConfig(
-		api.ClusterToConfigFiller(
-			api.WithKubernetesVersion(v1alpha1.Kube123),
-		),
-
-		cloudstack.WithRedhat123(),
+		cloudstack.WithKubeVersionAndOS(v1alpha1.Kube123, framework.RedHat8, release),
 		framework.WithFluxGithubConfig(),
 	)
 	test := framework.NewMulticlusterE2ETest(t, managementCluster)
@@ -4174,7 +4168,7 @@ func TestCloudStackKubernetesRedHat123to124UpgradeFromLatestMinorReleaseGitHubFl
 		api.ClusterToConfigFiller(
 			api.WithManagementCluster(managementCluster.ClusterName),
 		),
-		cloudstack.WithRedhat123(),
+		cloudstack.WithKubeVersionAndOS(v1alpha1.Kube123, framework.RedHat8, release),
 		framework.WithFluxGithubConfig(),
 	)
 	test.WithWorkloadClusters(wc)
@@ -4182,7 +4176,8 @@ func TestCloudStackKubernetesRedHat123to124UpgradeFromLatestMinorReleaseGitHubFl
 	runMulticlusterUpgradeFromReleaseFlowAPIWithFlux(
 		test,
 		release,
-		cloudstack.WithRedhat124(),
+		v1alpha1.Kube124,
+		framework.RedHat8,
 	)
 }
 

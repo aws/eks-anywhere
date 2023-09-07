@@ -40,9 +40,9 @@ func WithKubernetesVersion(v anywherev1.KubernetesVersion) ClusterFiller {
 }
 
 // WithBundlesRef sets BundlesRef with the provided name to use.
-func WithBundlesRef(name string, namespace string, apiVersion string) ClusterFiller {
+func WithBundlesRef(bundlesRef *anywherev1.BundlesRef) ClusterFiller {
 	return func(c *anywherev1.Cluster) {
-		c.Spec.BundlesRef = &anywherev1.BundlesRef{Name: name, Namespace: namespace, APIVersion: apiVersion}
+		c.Spec.BundlesRef = bundlesRef
 	}
 }
 
