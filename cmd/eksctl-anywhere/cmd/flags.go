@@ -22,7 +22,6 @@ const (
 https://anywhere.eks.amazonaws.com/docs/troubleshooting/troubleshooting/#cluster-upgrade-fails-with-management-components-on-bootstrap-cluster`
 	forceCleanupDeprecationMessageForCreateDelete = `The flag --force-cleanup has been removed. For more information on how to troubleshoot existing bootstrap clusters, please refer to the documentation:
 https://anywhere.eks.amazonaws.com/docs/troubleshooting/troubleshooting/#bootstrap-cluster-fails-to-come-up-nodes-already-exist-for-a-cluster-with-the-name`
-	wConfigDeprecationMessage = `The flag --w-config has been deprecated. Please use flag --kubeconfig instead.`
 )
 
 func bindFlagsToViper(cmd *cobra.Command, args []string) error {
@@ -39,7 +38,7 @@ func bindFlagsToViper(cmd *cobra.Command, args []string) error {
 func applyClusterOptionFlags(flagSet *pflag.FlagSet, clusterOpt *clusterOptions) {
 	flags.String(flags.ClusterConfig, &clusterOpt.fileName, flagSet)
 	flags.String(flags.BundleOverride, &clusterOpt.bundlesOverride, flagSet)
-	flagSet.StringVar(&clusterOpt.clusterKubeconfig, "kubeconfig", "", "Cluster kubeconfig file")
+	flagSet.StringVar(&clusterOpt.managementKubeconfig, "kubeconfig", "", "Management cluster kubeconfig file")
 }
 
 func applyTinkerbellHardwareFlag(flagSet *pflag.FlagSet, pathOut *string) {
