@@ -114,14 +114,13 @@ func TestWaitForCondition(t *testing.T) {
 			name: "condition is True",
 			clusterInput: &anywherev1.Cluster{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      "my-c",
-					Namespace: "my-n",
+					Name: "my-c",
 				},
 			},
 			currentCluster: &anywherev1.Cluster{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:       "my-c",
-					Namespace:  "my-n",
+					Namespace:  "default",
 					Generation: 5,
 				},
 				Status: anywherev1.ClusterStatus{

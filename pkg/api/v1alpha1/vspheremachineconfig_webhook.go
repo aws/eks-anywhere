@@ -10,6 +10,8 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
+
+	"github.com/aws/eks-anywhere/pkg/features"
 )
 
 // log is for logging in this package.
@@ -126,6 +128,10 @@ func validateImmutableFieldsVSphereMachineConfig(new, old *VSphereMachineConfig)
 
 	if !old.IsEtcd() && !old.IsControlPlane() {
 		vspheremachineconfiglog.Info("Machine config is associated with management cluster's worker nodes", "name", old.Name)
+		return allErrs
+	}
+
+	if features.IsActive(features.ExperimentalSelfManagedClusterUpgrade()) {
 		return allErrs
 	}
 

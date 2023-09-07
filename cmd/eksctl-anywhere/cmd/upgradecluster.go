@@ -12,12 +12,14 @@ import (
 	"github.com/aws/eks-anywhere/cmd/eksctl-anywhere/cmd/flags"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
 	"github.com/aws/eks-anywhere/pkg/validations/upgradevalidations"
 	"github.com/aws/eks-anywhere/pkg/workflows"
+	"github.com/aws/eks-anywhere/pkg/workflows/management"
 )
 
 type upgradeClusterOptions struct {
@@ -131,6 +133,7 @@ func (uc *upgradeClusterOptions) upgradeCluster(cmd *cobra.Command) error {
 		WithBootstrapper().
 		WithCliConfig(cliConfig).
 		WithClusterManager(clusterSpec.Cluster, clusterManagerTimeoutOpts).
+		WithClusterApplier().
 		WithProvider(uc.fileName, clusterSpec.Cluster, cc.skipIpCheck, uc.hardwareCSVPath, uc.forceClean, uc.tinkerbellBootstrapIP, skippedValidations).
 		WithGitOpsFlux(clusterSpec.Cluster, clusterSpec.FluxConfig, cliConfig).
 		WithWriter().
@@ -156,17 +159,6 @@ func (uc *upgradeClusterOptions) upgradeCluster(cmd *cobra.Command) error {
 		return err
 	}
 
-	upgradeCluster := workflows.NewUpgrade(
-		deps.Bootstrapper,
-		deps.Provider,
-		deps.CAPIManager,
-		deps.ClusterManager,
-		deps.GitOpsFlux,
-		deps.Writer,
-		deps.EksdUpgrader,
-		deps.EksdInstaller,
-	)
-
 	workloadCluster := &types.Cluster{
 		Name:           clusterSpec.Cluster.Name,
 		KubeconfigFile: getKubeconfigPath(clusterSpec.Cluster.Name, uc.clusterKubeconfig),
@@ -191,7 +183,36 @@ func (uc *upgradeClusterOptions) upgradeCluster(cmd *cobra.Command) error {
 
 	upgradeValidations := upgradevalidations.New(validationOpts)
 
-	err = upgradeCluster.Run(ctx, clusterSpec, managementCluster, workloadCluster, upgradeValidations, uc.forceClean)
+	if features.ExperimentalSelfManagedClusterUpgrade().IsActive() && clusterConfig.IsSelfManaged() {
+		logger.Info("Management kindless upgrade")
+		upgrade := management.NewUpgrade(
+			deps.Provider,
+			deps.CAPIManager,
+			deps.ClusterManager,
+			deps.GitOpsFlux,
+			deps.Writer,
+			deps.EksdUpgrader,
+			deps.EksdInstaller,
+			deps.ClusterApplier,
+		)
+
+		err = upgrade.Run(ctx, clusterSpec, managementCluster, upgradeValidations)
+
+	} else {
+		upgrade := workflows.NewUpgrade(
+			deps.Bootstrapper,
+			deps.Provider,
+			deps.CAPIManager,
+			deps.ClusterManager,
+			deps.GitOpsFlux,
+			deps.Writer,
+			deps.EksdUpgrader,
+			deps.EksdInstaller,
+		)
+
+		err = upgrade.Run(ctx, clusterSpec, managementCluster, workloadCluster, upgradeValidations, uc.forceClean)
+	}
+
 	cleanup(deps, &err)
 	return err
 }
