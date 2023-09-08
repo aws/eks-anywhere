@@ -353,6 +353,19 @@ func (r *ClusterReconciler) reconcile(ctx context.Context, log logr.Logger, clus
 	cluster.Status.ReconciledGeneration = cluster.Generation
 	cluster.Status.ChildrenReconciledGeneration = aggregatedGeneration
 
+	// TODO(eksa-controller-SME): properly handle packages reconcile error and not triggering machine upgrade when
+	// packages reconcile is still in progress.
+	// Moving the packages reconcile after the above two generation fields are set, so that packages reconcile error
+	// does not cause side effect of rolling out of workload cluster machines during management cluster upgrade.
+	reconcileResult, err = r.packagesReconcile(ctx, log, cluster)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	if reconcileResult.Return() {
+		return reconcileResult.ToCtrlResult(), nil
+	}
+
 	return ctrl.Result{}, nil
 }
 
@@ -409,6 +422,10 @@ func (r *ClusterReconciler) postClusterProviderReconcile(ctx context.Context, lo
 		return controller.Result{}, err
 	}
 
+	return controller.Result{}, nil
+}
+
+func (r *ClusterReconciler) packagesReconcile(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) (controller.Result, error) {
 	// Self-managed clusters can support curated packages, but that support
 	// comes from the CLI at this time.
 	if cluster.IsManaged() && cluster.IsPackagesEnabled() {
