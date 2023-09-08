@@ -10,7 +10,7 @@ description: >
 
 If you want to specify an OVA template, you will need to import OVA files into vSphere before you can use it in your EKS Anywhere cluster.
 This guide was written using VMware Cloud on AWS,
-but the [VMware OVA import guide can be found here](https://docs.vmware.com/en/VMware-vSphere/7.0/com.vmware.vsphere.vm_admin.doc/GUID-17BEDA21-43F6-41F4-8FB2-E01D275FE9B4.html).
+but the [VMware OVA import guide can be found here.](https://docs.vmware.com/en/VMware-vSphere/7.0/com.vmware.vsphere.vm_admin.doc/GUID-17BEDA21-43F6-41F4-8FB2-E01D275FE9B4.html)
 
 {{% alert title="Note" color="primary" %}}
 If you don't specify a template in the cluster spec file, EKS Anywhere will use the proper default one for the Kubernetes minor version and OS family you specified in the spec file.
@@ -29,7 +29,7 @@ EKS Anywhere supports the following operating system families
 * Ubuntu
 * RHEL
 
-A list of OVAs for this release can be found on the [artifacts page]({{< relref "../../../osmgmt/artifacts" >}}).
+A list of OVAs for this release can be found on the [artifacts page.]({{< relref "../../../osmgmt/artifacts" >}})
 
 ## Using vCenter Web User Interface
 
