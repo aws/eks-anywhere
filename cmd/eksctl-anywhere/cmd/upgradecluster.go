@@ -214,6 +214,11 @@ func (uc *upgradeClusterOptions) commonValidations(ctx context.Context) (cluster
 		return nil, err
 	}
 
+	if uc.wConfig == "" && uc.managementKubeconfig != "" && clusterConfig.IsSelfManaged() {
+		uc.wConfig = uc.managementKubeconfig
+		uc.managementKubeconfig = ""
+	}
+
 	kubeconfigPath := getKubeconfigPath(clusterConfig.Name, uc.wConfig)
 	if err := kubeconfig.ValidateFilename(kubeconfigPath); err != nil {
 		return nil, err
