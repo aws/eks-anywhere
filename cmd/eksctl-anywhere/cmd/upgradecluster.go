@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -35,21 +34,10 @@ type upgradeClusterOptions struct {
 var uc = &upgradeClusterOptions{}
 
 var upgradeClusterCmd = &cobra.Command{
-	Use:   "cluster",
-	Short: "Upgrade workload cluster",
-	Long:  "This command is used to upgrade workload clusters",
-	PreRunE: func(cmd *cobra.Command, args []string) error {
-		if err := bindFlagsToViper(cmd, args); err != nil {
-			log.Fatal(err)
-		}
-
-		if uc.wConfig == "" && uc.managementKubeconfig != "" {
-			uc.wConfig = uc.managementKubeconfig
-			uc.managementKubeconfig = ""
-		}
-
-		return nil
-	},
+	Use:          "cluster",
+	Short:        "Upgrade workload cluster",
+	Long:         "This command is used to upgrade workload clusters",
+	PreRunE:      bindFlagsToViper,
 	SilenceUsage: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if uc.forceClean {
@@ -224,6 +212,11 @@ func (uc *upgradeClusterOptions) commonValidations(ctx context.Context) (cluster
 	clusterConfig, err := commonValidation(ctx, uc.fileName)
 	if err != nil {
 		return nil, err
+	}
+
+	if uc.wConfig == "" && uc.managementKubeconfig != "" && clusterConfig.IsSelfManaged() {
+		uc.wConfig = uc.managementKubeconfig
+		uc.managementKubeconfig = ""
 	}
 
 	kubeconfigPath := getKubeconfigPath(clusterConfig.Name, uc.wConfig)
