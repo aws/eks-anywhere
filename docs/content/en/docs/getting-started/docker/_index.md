@@ -93,37 +93,38 @@ sudo chmod +x /usr/local/bin/kubectl
    apiVersion: anywhere.eks.amazonaws.com/v1alpha1
    kind: Cluster
    metadata:
-      name: mgmt
+     name: mgmt
    spec:
-      clusterNetwork:
-         cniConfig:
-            cilium: {}
-         pods:
-            cidrBlocks:
-               - 192.168.0.0/16
-         services:
-            cidrBlocks:
-               - 10.96.0.0/12
-      controlPlaneConfiguration:
-         count: 1
-      datacenterRef:
-         kind: DockerDatacenterConfig
-         name: mgmt
-      externalEtcdConfiguration:
-         count: 1
-      kubernetesVersion: "1.27"
-      managementCluster:
-         name: mgmt
-      workerNodeGroupConfigurations:
-         - count: 1
-           name: md-0
+     bundlesRef: null
+     clusterNetwork:
+       cniConfig:
+         cilium: {}
+       pods:
+         cidrBlocks:
+         - 192.168.0.0/16
+       services:
+         cidrBlocks:
+         - 10.96.0.0/12
+     controlPlaneConfiguration:
+       count: 1
+     datacenterRef:
+       kind: DockerDatacenterConfig
+       name: mgmt
+     externalEtcdConfiguration:
+       count: 1
+     kubernetesVersion: "1.27"
+     managementCluster:
+       name: mgmt
+     workerNodeGroupConfigurations:
+     - count: 1
+       name: md-0
+
    ---
    apiVersion: anywhere.eks.amazonaws.com/v1alpha1
    kind: DockerDatacenterConfig
    metadata:
-      name: mgmt
-   spec: {}
-
+     name: mgmt
+   spec: {}:
    ```
 
 1. Create Docker Cluster. Note the following command may take several minutes to complete. You can run the command with -v 6 to increase logging verbosity to see the progress of the command. 
