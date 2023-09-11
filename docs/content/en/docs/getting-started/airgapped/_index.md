@@ -2,73 +2,39 @@
 title: 2. Airgapped (optional)
 weight: 15
 description: >
-  Configuring EKS Anywhere for airgapped environments
+  Configure EKS Anywhere for airgapped environments
 ---
 
-When creating an EKS Anywhere cluster, there may be times where you need to do so in an airgapped
-environment.
-In this type of environment, cluster nodes are connected to the Admin Machine, but not to the
-internet.
-In order to download images and artifacts, however, the Admin machine needs to be temporarily
-connected to the internet.
+EKS Anywhere can be used in airgapped environments that are not connected to the internet or external networks.
 
-An airgapped environment is especially important if you require the most secure networks.
-EKS Anywhere supports airgapped installation for creating clusters using a registry mirror.
-For airgapped installation to work, the Admin machine must have:
+If you are planning to run EKS Anywhere in an airgapped environments, before you create a cluster, you must temporarily connect your Admin machine to the internet to install the `eksctl` CLI and pull the required EKS Anywhere dependencies. Once these dependencies are downloaded and imported in a local registry, you no longer need internet access. You can configure EKS Anywhere to use your local registry mirror in the EKS Anywhere cluster specification. When the registry mirror configuration is set in the EKS Anywhere cluster specification, EKS Anywhere configures containerd to pull from that registry instead of Amazon ECR during cluster creation and lifecycle operations. For more information, reference the [Registry Mirror Configuration documentation.]({{< relref "../optional/registrymirror" >}})
 
-* Temporary access to the internet to download images and artifacts
-* Ample space (80 GB or more) to store artifacts locally
+If you are using Ubuntu or RHEL as the operating system for nodes in your EKS Anywhere cluster, you must connect to the internet while building the images with the EKS Anywhere image-builder tool. After building the operating system images, you can configure EKS Anywhere to pull the operating system images from a location of your chosing in the EKS Anywhere cluster specification. For more information on the image building process and operating system cluster specification, reference the [Operating System Management documentation.]({{< relref "../../osmgmt/overview" >}})
 
+### Overview
 
-To create a cluster in an airgapped environment, perform the following:
+The process for preparing your airgapped environment for EKS Anywhere is summarized by the following steps:
+1. Use the `eksctl anywhere` CLI to download EKS Anywhere artifacts. These artifacts are `yaml` files that contain the list and locations of the EKS Anywhere dependencies.
+1. Use the `eksctl anywhere` CLI to download EKS Anywhere images. These images include EKS Anywhere dependencies including EKS Distro components, Cluster API provider components, and EKS Anywhere components such as the EKS Anywhere controllers, Cilium CNI, kube-vip, and cert-manager.
+1. Set up your local registry following the steps in the [Registry Mirror Configuration documentation.]({{< relref "../optional/registrymirror" >}})
+1. Use the `eksctl anywhere` CLI to import the EKS Anywhere images to your local registry.
+1. Optionally use the `eksctl anywhere` CLI to copy EKS Anywhere Curated Packages images to your local registry.
 
-1. Download the artifacts and images that will be used by the cluster nodes to the Admin machine using the following command:
-   ```bash
-   eksctl anywhere download artifacts
-   ```
-   A compressed file `eks-anywhere-downloads.tar.gz` will be downloaded.
+### Prerequisites
+- An existing [Admin machine]({{< relref "../install" >}})
+- Docker running on the Admin machine
+- At least 80GB in storage space on the Admin machine to temporarily store the EKS Anywhere images locally before importing them to your local registry. Currently, when downloading images, EKS Anywhere pulls all dependencies for all infrastructure providers and supported Kubernetes versions.
+- The download and import images commands must be run on an amd64 machine to import amd64 images to the registry mirror.
 
-1. To decompress this file, use the following command:
-   ```bash
-   tar -xvf eks-anywhere-downloads.tar.gz
-   ```
-   This will create an eks-anywhere-downloads folder that we’ll be using later.
+### Procedure
 
-1. In order for the next command to run smoothly, ensure that Docker has been pre-installed and is running. Then run the following:
-   ```bash
-   eksctl anywhere download images -o images.tar
-   ```
+{{% content "./airgap-steps.md" %}}
 
-1. If you want to use curated packages, refer to [Curated Packages]({{< relref "../../packages/prereq#prepare-curated-packages-for-airapped-clusters" >}}) to copy curated packages to your registry mirror.
+If the previous steps succeeded, all of the required EKS Anywhere dependencies are now present in your local registry. Before you create your EKS Anywhere cluster, configure `registryMirrorConfiguration` in your EKS Anywhere cluster specification with the information for your local registry. For details see the [Registry Mirror Configuration documentation.]({{< relref "../../getting-started/optional/registrymirror/#registry-mirror-cluster-spec" >}})
 
-{{% alert title="Warning" color="warning" %}}
-`eksctl anywhere download images` and `eksctl anywhere import images` command need to be run on an amd64 machine to import amd64 images to the registry mirror.
-{{% /alert %}}
+>**_NOTE:_** If you are running EKS Anywhere on bare metal, you must configure `osImageURL` and `hookImagesURLPath` in your EKS Anywhere cluster specification with the location of your node operating system image and the hook OS image. For details, reference the [bare metal configuration documentation.]({{< relref "../baremetal/bare-spec/#osimageurl" >}})
 
-   **For the remaining steps, the Admin machine no longer needs to be connected to the internet or the bastion host.**
-
-1. Next, you will need to set up a local registry mirror to host the downloaded EKS Anywhere images. In order to set one up, refer to [Registry Mirror configuration.]({{< relref "../../getting-started/optional/registrymirror.md" >}})
-
-1. Now that you’ve configured your local registry mirror, you will need to import images to the local registry mirror using the following command (be sure to replace <registryUrl> with the url of the local registry mirror you created in step 4):
-   ```bash
-   eksctl anywhere import images -i images.tar -r <registryUrl> \
-      --bundles ./eks-anywhere-downloads/bundle-release.yaml
-   ```
-You are now ready to deploy a cluster by selecting your provider from the [EKS Anywhere providers]({{< relref "/docs/getting-started/chooseprovider" >}}) page and following those instructions.
-
-### For Bare Metal (Tinkerbell)
-You will need to have hookOS and its OS artifacts downloaded and served locally from an HTTP file server.
-You will also need to modify the [hookImagesURLPath]({{< relref "../baremetal/bare-spec/#hookimagesurlpath" >}}) and the [osImageURL]({{< relref "../baremetal/bare-spec/#osimageurl" >}}) in the cluster configuration files.
-Ensure that structure of the files is set up as described in [hookImagesURLPath.]({{< relref "../baremetal/bare-spec/#hookimagesurlpath" >}})
-
-### For vSphere
-If you are using the vSphere provider, be sure that the requirements in the
-[Prerequisite checklist]({{< relref "../vsphere/vsphere-prereq/" >}}) have been met.
-
-## Deploy a cluster
-
-Once you have the tools installed you can deploy a cluster by [choosing a provider]({{< relref "/docs/getting-started/chooseprovider/" >}})
-
-## Upgrade an airgapped cluster
-
-To upgrade an airgapped cluster, see [upgrade airgapped cluster]({{< relref "../../clustermgmt/cluster-upgrades/airgapped-upgrades.md" >}})
+### Next Steps
+- Review EKS Anywhere [cluster networking requirements]({{< relref "../ports" >}})
+- Review EKS Anywhere [infrastructure providers and their prerequisites]({{< relref "../chooseprovider" >}})
+- Review the [upgrade procedure]({{< relref "../../clustermgmt/cluster-upgrades/airgapped-upgrades.md" >}}) for EKS Anywhere in airgapped environments
