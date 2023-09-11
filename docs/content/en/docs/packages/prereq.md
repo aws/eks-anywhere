@@ -120,7 +120,7 @@ If the image downloads successfully, it worked!
 
 {{% content "../getting-started/airgapped/airgap-packages.md" %}}
 
-Once the curated packages images are in your local registry mirror, you must configure the curated packages controller to use your local registry mirror post-cluster creation. Configure the `defaultImageRegistry` and `defaultRegistry` settings for the `PackageBundleController` to point to your local registry mirror by applying a similar `yaml` definition as the one below to your standalone or management cluster. See the [Packages configuration documenation]({{< relref "./packages/#packagebundlecontrollerspec" >}}) for more information.
+Once the curated packages images are in your local registry mirror, you must configure the curated packages controller to use your local registry mirror post-cluster creation. Configure the `defaultImageRegistry` and `defaultRegistry` settings for the `PackageBundleController` to point to your local registry mirror by applying a similar `yaml` definition as the one below to your standalone or management cluster. See the [Packages configuration documentation]({{< relref "./packages/#packagebundlecontrollerspec" >}}) for more information.
 
 ```yaml
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
