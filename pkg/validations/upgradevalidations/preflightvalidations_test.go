@@ -201,7 +201,7 @@ func TestPreflightValidationsTinkerbell(t *testing.T) {
 			workerResponse:     nil,
 			nodeResponse:       nil,
 			crdResponse:        nil,
-			wantErr:            composeError("spec.TinkerbellIP is immutable. Previous value 4.5.6.7,   New value 1.2.3.4"),
+			wantErr:            composeError("spec.tinkerbellIP is immutable; previous = 4.5.6.7, new = 1.2.3.4"),
 			modifyDatacenterFunc: func(s *anywherev1.TinkerbellDatacenterConfig) {
 				s.Spec.TinkerbellIP = "4.5.6.7"
 			},

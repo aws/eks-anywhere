@@ -808,6 +808,86 @@ func TestProvider_ValidateNewSpec_ChangeWorkerNodeGroupMachineRef(t *testing.T) 
 			cluster.KubeconfigFile, currentClusterSpec.Cluster.Namespace).
 		Return(datacenterConfig, nil)
 
+	err := provider.ValidateNewSpec(ctx, desiredClusterSpec.ManagementCluster, desiredClusterSpec)
+	if err == nil || !strings.Contains(err.Error(), "worker node group machine config reference is immutable") {
+		t.Fatalf("Expected error containing 'worker node group machine config reference is immutable' but received: %v", err)
+	}
+}
+
+func TestProvider_ValidateNewSpec_ChangeControlPlaneMachineRefToExisting(t *testing.T) {
+	clusterSpecManifest := "cluster_tinkerbell_stacked_etcd.yaml"
+	mockCtrl := gomock.NewController(t)
+	currentClusterSpec := givenClusterSpec(t, clusterSpecManifest)
+	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
+	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
+	docker := stackmocks.NewMockDocker(mockCtrl)
+	helm := stackmocks.NewMockHelm(mockCtrl)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	stackInstaller := stackmocks.NewMockStackInstaller(mockCtrl)
+	writer := filewritermocks.NewMockFileWriter(mockCtrl)
+	ctx := context.Background()
+
+	cluster := &types.Cluster{Name: "test", KubeconfigFile: "kubeconfig-file"}
+	currentClusterSpec.ManagementCluster = cluster
+
+	desiredClusterSpec := currentClusterSpec.DeepCopy()
+
+	// Change an existing worker node groups machine config reference to an existing machine config.
+	desiredClusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name = "test-md"
+
+	provider := newTinkerbellProvider(datacenterConfig, machineConfigs, currentClusterSpec.Cluster, writer,
+		docker, helm, kubectl)
+	provider.stackInstaller = stackInstaller
+
+	kubectl.EXPECT().
+		GetEksaCluster(ctx, desiredClusterSpec.ManagementCluster,
+			desiredClusterSpec.Cluster.Spec.ManagementCluster.Name).
+		Return(currentClusterSpec.Cluster, nil)
+	kubectl.EXPECT().
+		GetEksaTinkerbellDatacenterConfig(ctx, currentClusterSpec.Cluster.Spec.DatacenterRef.Name,
+			cluster.KubeconfigFile, currentClusterSpec.Cluster.Namespace).
+		Return(datacenterConfig, nil)
+
+	err := provider.ValidateNewSpec(ctx, desiredClusterSpec.ManagementCluster, desiredClusterSpec)
+	if err == nil || !strings.Contains(err.Error(), "control plane machine config reference is immutable") {
+		t.Fatalf("Expected error containing 'control plane machine config reference is immutable' but received: %v", err)
+	}
+}
+
+func TestProvider_ValidateNewSpec_ChangeWorkerNodeGroupMachineRefToExisting(t *testing.T) {
+	clusterSpecManifest := "cluster_tinkerbell_stacked_etcd.yaml"
+	mockCtrl := gomock.NewController(t)
+	currentClusterSpec := givenClusterSpec(t, clusterSpecManifest)
+	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
+	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
+	docker := stackmocks.NewMockDocker(mockCtrl)
+	helm := stackmocks.NewMockHelm(mockCtrl)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	stackInstaller := stackmocks.NewMockStackInstaller(mockCtrl)
+	writer := filewritermocks.NewMockFileWriter(mockCtrl)
+	ctx := context.Background()
+
+	cluster := &types.Cluster{Name: "test", KubeconfigFile: "kubeconfig-file"}
+	currentClusterSpec.ManagementCluster = cluster
+
+	desiredClusterSpec := currentClusterSpec.DeepCopy()
+
+	// Change an existing worker node groups machine config reference to an existing machine config.
+	desiredClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name = "test-cp"
+
+	provider := newTinkerbellProvider(datacenterConfig, machineConfigs, currentClusterSpec.Cluster, writer,
+		docker, helm, kubectl)
+	provider.stackInstaller = stackInstaller
+
+	kubectl.EXPECT().
+		GetEksaCluster(ctx, desiredClusterSpec.ManagementCluster,
+			desiredClusterSpec.Cluster.Spec.ManagementCluster.Name).
+		Return(currentClusterSpec.Cluster, nil)
+	kubectl.EXPECT().
+		GetEksaTinkerbellDatacenterConfig(ctx, currentClusterSpec.Cluster.Spec.DatacenterRef.Name,
+			cluster.KubeconfigFile, currentClusterSpec.Cluster.Namespace).
+		Return(datacenterConfig, nil)
+
 	controlPlaneMachineCfgName := currentClusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
 	kubectl.EXPECT().
 		GetEksaTinkerbellMachineConfig(ctx, controlPlaneMachineCfgName, cluster.KubeconfigFile,
@@ -820,8 +900,8 @@ func TestProvider_ValidateNewSpec_ChangeWorkerNodeGroupMachineRef(t *testing.T) 
 		AnyTimes()
 
 	err := provider.ValidateNewSpec(ctx, desiredClusterSpec.ManagementCluster, desiredClusterSpec)
-	if err == nil || !strings.Contains(err.Error(), "cannot add or remove MachineConfigs") {
-		t.Fatalf("Expected error containing 'cannot add or remove MachineConfigs' but received: %v", err)
+	if err == nil || !strings.Contains(err.Error(), "worker node group machine config reference is immutable") {
+		t.Fatalf("Expected error containing 'worker node group machine config reference is immutable' but received: %v", err)
 	}
 }
 

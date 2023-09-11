@@ -9,6 +9,7 @@ import (
 	rufiov1 "github.com/tinkerbell/rufio/api/v1alpha1"
 	tinkv1alpha1 "github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	kerrors "k8s.io/apimachinery/pkg/util/errors"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
@@ -244,7 +245,22 @@ func (p *Provider) ValidateNewSpec(ctx context.Context, cluster *types.Cluster, 
 	oSpec := prevDatacenterConfig.Spec
 	nSpec := p.datacenterConfig.Spec
 
-	prevMachineConfigRefs := machineRefSliceToMap(prevSpec.MachineConfigRefs())
+	currCPMachineRef := prevSpec.Spec.ControlPlaneConfiguration.MachineGroupRef
+	desiCPMachineRef := clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef
+	if !currCPMachineRef.Equal(desiCPMachineRef) {
+		return errors.New("control plane machine config reference is immutable")
+	}
+
+	err = validateWorkerNodeGroupMachineConfigRefsUnchanged(prevSpec.Spec.WorkerNodeGroupConfigurations,
+		clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations)
+	if err != nil {
+		return err
+	}
+
+	// Validate worker node group machine configs are the same.
+	prevMachineConfigRefs := collection.ToMap(prevSpec.MachineConfigRefs(), func(v v1alpha1.Ref) string {
+		return v.Name
+	})
 
 	desiredWorkerNodeGroups := clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations
 	currentWorkerNodeGroups := collection.ToMap(prevSpec.Spec.WorkerNodeGroupConfigurations,
@@ -279,7 +295,7 @@ func (p *Provider) ValidateNewSpec(ctx context.Context, cluster *types.Cluster, 
 	}
 
 	if nSpec.TinkerbellIP != oSpec.TinkerbellIP {
-		return fmt.Errorf("spec.TinkerbellIP is immutable. Previous value %s,   New value %s", oSpec.TinkerbellIP, nSpec.TinkerbellIP)
+		return fmt.Errorf("spec.tinkerbellIP is immutable; previous = %s, new = %s", oSpec.TinkerbellIP, nSpec.TinkerbellIP)
 	}
 
 	// for any operation other than k8s version change, hookImageURL is immutable
@@ -290,6 +306,30 @@ func (p *Provider) ValidateNewSpec(ctx context.Context, cluster *types.Cluster, 
 	}
 
 	return nil
+}
+
+func validateWorkerNodeGroupMachineConfigRefsUnchanged(current, desired []v1alpha1.WorkerNodeGroupConfiguration) error {
+	lookup := collection.ToMap(desired, func(v v1alpha1.WorkerNodeGroupConfiguration) string {
+		return v.Name
+	})
+
+	var errs []error
+
+	// For every current worker node group that still exists in the desired config, ensure the
+	// machine config is still the same.
+	for _, curr := range current {
+		desi, exists := lookup[curr.Name]
+		if !exists {
+			continue
+		}
+
+		if !curr.MachineGroupRef.Equal(desi.MachineGroupRef) {
+			errs = append(errs,
+				fmt.Errorf("%v: worker node group machine config reference is immutable", curr.Name))
+		}
+	}
+
+	return kerrors.NewAggregate(errs)
 }
 
 func (p *Provider) UpgradeNeeded(_ context.Context, _, _ *cluster.Spec, _ *types.Cluster) (bool, error) {
@@ -366,14 +406,6 @@ func (p *Provider) validateMachineConfigImmutability(ctx context.Context, cluste
 	}
 
 	return nil
-}
-
-func machineRefSliceToMap(machineRefs []v1alpha1.Ref) map[string]v1alpha1.Ref {
-	refMap := make(map[string]v1alpha1.Ref, len(machineRefs))
-	for _, ref := range machineRefs {
-		refMap[ref.Name] = ref
-	}
-	return refMap
 }
 
 // PreCoreComponentsUpgrade staisfies the Provider interface.
