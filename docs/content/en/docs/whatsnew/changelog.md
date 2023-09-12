@@ -15,6 +15,28 @@ Please upgrade to `v0.15.3` if you are using Tinkerbell (Bare Metal) provider.
 * When upgrading to a new minor version, a new OS image must be created using the new image-builder cli.
 {{% /alert %}}
 
+## [v0.17.2](https://github.com/aws/eks-anywhere/releases/tag/v0.17.2)
+
+### Supported OS version details
+|              | vSphere | Bare Metal |  Nutanix | CloudStack | Snow  |
+|    :---:     |  :---:  |   :---:   |   :---:  |    :---:   | :---: |
+| Ubuntu       | 20.04	 | 20.04     |	20.04             | Not supported	     | 20.04 |  
+|              | 22.04   | 22.04     |  22.04             | Not supported      | Not supported   |
+| Bottlerocket | 1.13.1  | 1.13.1    |  Not supported     | Not supported	     | Not supported   |
+| RHEL         | 8.7	   | 8.7	     |  Not supported     | 8.7	               | Not supported   |
+
+
+### Fixed
+- Bare Metal: Ensure new worker node groups can reference new machine configs ([#6615](https://github.com/aws/eks-anywhere/issues/6615))
+- Bare Metal: Fix `writefile` action to ensure Bottlerocket configs write content or error ([#2441](https://github.com/aws/eks-anywhere-build-tooling/pull/2441))
+
+### Added
+- Added support for configuring healthchecks on EtcdadmClusters using `etcdcluster.cluster.x-k8s.io/healthcheck-retries` annotation ([aws/etcdadm-controller#44](https://github.com/aws/etcdadm-controller/pull/44))
+- Add check for making sure quorum is maintained before deleting etcd machines ([aws/etcdadm-controller#46](https://github.com/aws/etcdadm-controller/pull/46))
+
+### Changed
+- Only delete one etcd machine at a time when multiple are failing healthchecks ([aws/etcdadm-controller#46](https://github.com/aws/etcdadm-controller/pull/46))
+
 ## [v0.17.1](https://github.com/aws/eks-anywhere/releases/tag/v0.17.1)
 
 ### Supported OS version details
