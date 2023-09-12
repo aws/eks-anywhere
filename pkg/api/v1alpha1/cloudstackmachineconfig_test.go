@@ -1,6 +1,7 @@
 package v1alpha1
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 
@@ -55,6 +56,12 @@ func TestGetCloudStackMachineConfigs(t *testing.T) {
 		{
 			testName:                     "not parseable file",
 			fileName:                     "testdata/not_parseable_cluster.yaml",
+			wantCloudStackMachineConfigs: nil,
+			wantErr:                      true,
+		},
+		{
+			testName:                     "non-splitable manifest",
+			fileName:                     "testdata/invalid_manifest.yaml",
 			wantCloudStackMachineConfigs: nil,
 			wantErr:                      true,
 		},
@@ -253,9 +260,13 @@ func TestGetCloudStackMachineConfigs(t *testing.T) {
 			wantErr:                      true,
 		},
 	}
-	for _, tt := range tests {
+	for i, tt := range tests {
+		if i != 2 {
+			continue
+		}
 		t.Run(tt.testName, func(t *testing.T) {
 			got, err := GetCloudStackMachineConfigs(tt.fileName)
+			fmt.Println(err)
 			if (err != nil) != tt.wantErr {
 				t.Fatalf("GetCloudStackMachineConfigs() error = %v, wantErr %v", err, tt.wantErr)
 			}

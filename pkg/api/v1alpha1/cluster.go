@@ -1,9 +1,12 @@
 package v1alpha1
 
 import (
+	"bufio"
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"net/url"
 	"os"
@@ -15,6 +18,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/validation"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	yamlutil "k8s.io/apimachinery/pkg/util/yaml"
 	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/pkg/constants"
@@ -264,14 +268,24 @@ type kindObject struct {
 // ParseClusterConfigFromContent unmarshalls an API object implementing the KindAccessor interface
 // from a multiobject yaml content. It doesn't set defaults nor validates the object.
 func ParseClusterConfigFromContent(content []byte, clusterConfig KindAccessor) error {
-	for _, c := range strings.Split(string(content), YamlSeparator) {
+	r := yamlutil.NewYAMLReader(bufio.NewReader(bytes.NewReader(content)))
+	for {
+		d, err := r.Read()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return err
+		}
+
 		k := &kindObject{}
-		if err := yaml.Unmarshal([]byte(c), k); err != nil {
+
+		if err := yaml.Unmarshal(d, k); err != nil {
 			return err
 		}
 
 		if k.Kind == clusterConfig.ExpectedKind() {
-			return yaml.UnmarshalStrict([]byte(c), clusterConfig)
+			return yaml.UnmarshalStrict(d, clusterConfig)
 		}
 	}
 
