@@ -1573,9 +1573,9 @@ func TestSetupAndValidateCreateWorkloadClusterSuccess(t *testing.T) {
 		ExistingManagement: true,
 	}
 	for _, config := range clusterSpec.VSphereMachineConfigs {
-		kubectl.EXPECT().SearchVsphereMachineConfig(context.TODO(), config.Name, clusterSpec.ManagementCluster.KubeconfigFile, config.Namespace).Return([]*v1alpha1.VSphereMachineConfig{}, nil)
+		kubectl.EXPECT().SearchVsphereMachineConfig(ctx, config.Name, clusterSpec.ManagementCluster.KubeconfigFile, config.Namespace).Return([]*v1alpha1.VSphereMachineConfig{}, nil)
 	}
-	kubectl.EXPECT().SearchVsphereDatacenterConfig(context.TODO(), datacenterConfig.Name, clusterSpec.ManagementCluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return([]*v1alpha1.VSphereDatacenterConfig{}, nil)
+	kubectl.EXPECT().SearchVsphereDatacenterConfig(ctx, datacenterConfig.Name, clusterSpec.ManagementCluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return([]*v1alpha1.VSphereDatacenterConfig{}, nil)
 	ipValidator.EXPECT().ValidateControlPlaneIPUniqueness(clusterSpec.Cluster).Return(nil)
 
 	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
@@ -1608,10 +1608,10 @@ func TestSetupAndValidateCreateWorkloadClusterFailsIfMachineExists(t *testing.T)
 	var existingMachine string
 	for _, config := range clusterSpec.VSphereMachineConfigs {
 		if idx == 0 {
-			kubectl.EXPECT().SearchVsphereMachineConfig(context.TODO(), config.Name, clusterSpec.ManagementCluster.KubeconfigFile, config.Namespace).Return([]*v1alpha1.VSphereMachineConfig{config}, nil)
+			kubectl.EXPECT().SearchVsphereMachineConfig(ctx, config.Name, clusterSpec.ManagementCluster.KubeconfigFile, config.Namespace).Return([]*v1alpha1.VSphereMachineConfig{config}, nil)
 			existingMachine = config.Name
 		} else {
-			kubectl.EXPECT().SearchVsphereMachineConfig(context.TODO(), config.Name, clusterSpec.ManagementCluster.KubeconfigFile, config.Namespace).Return([]*v1alpha1.VSphereMachineConfig{}, nil).MaxTimes(1)
+			kubectl.EXPECT().SearchVsphereMachineConfig(ctx, config.Name, clusterSpec.ManagementCluster.KubeconfigFile, config.Namespace).Return([]*v1alpha1.VSphereMachineConfig{}, nil).MaxTimes(1)
 		}
 		idx++
 	}
@@ -1671,9 +1671,9 @@ func TestSetupAndValidateCreateWorkloadClusterFailsIfDatacenterExists(t *testing
 	}
 
 	for _, config := range clusterSpec.VSphereMachineConfigs {
-		kubectl.EXPECT().SearchVsphereMachineConfig(context.TODO(), config.Name, clusterSpec.ManagementCluster.KubeconfigFile, config.Namespace).Return([]*v1alpha1.VSphereMachineConfig{}, nil)
+		kubectl.EXPECT().SearchVsphereMachineConfig(ctx, config.Name, clusterSpec.ManagementCluster.KubeconfigFile, config.Namespace).Return([]*v1alpha1.VSphereMachineConfig{}, nil)
 	}
-	kubectl.EXPECT().SearchVsphereDatacenterConfig(context.TODO(), datacenterConfig.Name, clusterSpec.ManagementCluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return([]*v1alpha1.VSphereDatacenterConfig{datacenterConfig}, nil)
+	kubectl.EXPECT().SearchVsphereDatacenterConfig(ctx, datacenterConfig.Name, clusterSpec.ManagementCluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return([]*v1alpha1.VSphereDatacenterConfig{datacenterConfig}, nil)
 
 	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
 
@@ -1698,8 +1698,8 @@ func TestSetupAndValidateSelfManagedClusterSkipDatacenterNameValidateSuccess(t *
 		ExistingManagement: true,
 	}
 
-	kubectl.EXPECT().SearchVsphereMachineConfig(context.TODO(), gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
-	kubectl.EXPECT().SearchVsphereDatacenterConfig(context.TODO(), gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
+	kubectl.EXPECT().SearchVsphereMachineConfig(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
+	kubectl.EXPECT().SearchVsphereDatacenterConfig(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
 	ipValidator.EXPECT().ValidateControlPlaneIPUniqueness(clusterSpec.Cluster).Return(nil)
 
 	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)

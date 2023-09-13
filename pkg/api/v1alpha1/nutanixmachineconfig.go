@@ -5,10 +5,6 @@ import (
 
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"sigs.k8s.io/yaml"
-
-	"github.com/aws/eks-anywhere/pkg/utils/file"
-	yamlutil "github.com/aws/eks-anywhere/pkg/utils/yaml"
 )
 
 // NutanixIdentifierType is an enumeration of different resource identifier types.
@@ -119,47 +115,6 @@ func (c *NutanixMachineConfigGenerate) Kind() string {
 
 func (c *NutanixMachineConfigGenerate) Name() string {
 	return c.ObjectMeta.Name
-}
-
-func GetNutanixMachineConfigs(fileName string) (map[string]*NutanixMachineConfig, error) {
-	configs := make(map[string]*NutanixMachineConfig)
-
-	r, err := file.ReadFile(fileName)
-	if err != nil {
-		return nil, err
-	}
-
-	resources, err := yamlutil.SplitDocuments(r)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, d := range resources {
-		config := NutanixMachineConfig{
-			TypeMeta: metav1.TypeMeta{},
-			ObjectMeta: metav1.ObjectMeta{
-				Annotations: map[string]string{},
-			},
-		}
-
-		if err = yaml.UnmarshalStrict(d, &config); err == nil {
-			if config.Kind == NutanixMachineConfigKind {
-				configs[config.Name] = &config
-				continue
-			}
-		}
-
-		_ = yaml.Unmarshal(d, &config) // this is to check if there is a bad spec in the file
-		if config.Kind == NutanixMachineConfigKind {
-			return nil, fmt.Errorf("unable to unmarshall content from file due to: %v", err)
-		}
-
-	}
-
-	if len(configs) == 0 {
-		return nil, fmt.Errorf("unable to find kind %v in file", NutanixMachineConfigKind)
-	}
-	return configs, nil
 }
 
 func setNutanixMachineConfigDefaults(machineConfig *NutanixMachineConfig) {

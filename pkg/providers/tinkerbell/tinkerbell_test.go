@@ -46,11 +46,12 @@ func givenDatacenterConfig(t *testing.T, fileName string) *v1alpha1.TinkerbellDa
 }
 
 func givenMachineConfigs(t *testing.T, fileName string) map[string]*v1alpha1.TinkerbellMachineConfig {
-	machineConfigs, err := v1alpha1.GetTinkerbellMachineConfigs(path.Join(testDataDir, fileName))
+	config, err := cluster.ParseConfigFromFile(path.Join(testDataDir, fileName))
 	if err != nil {
 		t.Fatalf("unable to get machine configs from file: %v", err)
 	}
-	return machineConfigs
+
+	return config.TinkerbellMachineConfigs
 }
 
 func assertError(t *testing.T, expected string, err error) {

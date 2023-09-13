@@ -12,7 +12,7 @@ spec:
       kind: VSphereMachineConfig
   kubernetesVersion: "1.16"
   workerNodeGroupConfigurations:
-    - count: four
+    - count: 4
       machineGroupRef:
         name: eksa-unit-test
         kind: VSphereMachineConfig

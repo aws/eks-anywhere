@@ -399,11 +399,12 @@ func TestPreflightValidationsTinkerbell(t *testing.T) {
 }
 
 func givenTinkerbellMachineConfigs(t *testing.T) map[string]*anywherev1.TinkerbellMachineConfig {
-	machineConfigs, err := anywherev1.GetTinkerbellMachineConfigs("./testdata/tinkerbell_clusterconfig.yaml")
+	config, err := cluster.ParseConfigFromFile("./testdata/tinkerbell_clusterconfig.yaml")
 	if err != nil {
 		t.Fatalf("unable to get machine configs from file: %v", err)
 	}
-	return machineConfigs
+
+	return config.TinkerbellMachineConfigs
 }
 
 func newProvider(datacenterConfig anywherev1.TinkerbellDatacenterConfig, machineConfigs map[string]*anywherev1.TinkerbellMachineConfig, clusterConfig *anywherev1.Cluster, writer filewriter.FileWriter, docker stack.Docker, helm stack.Helm, kubectl tinkerbell.ProviderKubectlClient, forceCleanup bool) *tinkerbell.Provider {

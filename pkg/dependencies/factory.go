@@ -455,11 +455,12 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 				return fmt.Errorf("unable to get datacenter config from file %s: %v", clusterConfigFile, err)
 			}
 
-			machineConfigs, err := v1alpha1.GetTinkerbellMachineConfigs(clusterConfigFile)
+			config, err := cluster.ParseConfigFromFile(clusterConfigFile)
 			if err != nil {
 				return fmt.Errorf("unable to get machine config from file %s: %v", clusterConfigFile, err)
 			}
 
+			machineConfigs := config.TinkerbellMachineConfigs
 			tinkerbellIP := tinkerbellBootstrapIP
 			if tinkerbellIP == "" {
 				logger.V(4).Info("Inferring local Tinkerbell Bootstrap IP from environment")
@@ -509,11 +510,12 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 				return fmt.Errorf("unable to get datacenter config from file %s: %v", clusterConfigFile, err)
 			}
 
-			machineConfigs, err := v1alpha1.GetNutanixMachineConfigs(clusterConfigFile)
+			config, err := cluster.ParseConfigFromFile(clusterConfigFile)
 			if err != nil {
 				return fmt.Errorf("unable to get machine config from file %s: %v", clusterConfigFile, err)
 			}
 
+			machineConfigs := config.NutanixMachineConfigs
 			skipVerifyTransport := http.DefaultTransport.(*http.Transport).Clone()
 			skipVerifyTransport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 			httpClient := &http.Client{Transport: skipVerifyTransport}

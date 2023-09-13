@@ -536,11 +536,13 @@ func (e *ClusterE2ETest) validateWorkerNodeMultiConfigUpdates(ctx context.Contex
 		if err != nil {
 			return err
 		}
-		// update workernode specs
-		vsphereMachineConfigs, err := v1alpha1.GetVSphereMachineConfigs(clusterConfGitPath)
+		config, err := cluster.ParseConfigFromFile(clusterConfGitPath)
 		if err != nil {
 			return err
 		}
+		vsphereMachineConfigs := config.VSphereMachineConfigs
+
+		// update workernode specs
 		cpName := e.ClusterConfig.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
 		workerName := e.ClusterConfig.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
 		etcdName := ""
@@ -770,6 +772,11 @@ func (e *ClusterE2ETest) updateWorkerNodeCountValue(ctx context.Context, newValu
 }
 
 func (e *ClusterE2ETest) providerConfig(clusterConfGitPath string) (*providerConfig, error) {
+	config, err := cluster.ParseConfigFromFile(clusterConfGitPath)
+	if err != nil {
+		return nil, err
+	}
+
 	var providerConfig providerConfig
 	switch e.ClusterConfig.Cluster.Spec.DatacenterRef.Kind {
 	case v1alpha1.VSphereDatacenterKind:
@@ -777,10 +784,7 @@ func (e *ClusterE2ETest) providerConfig(clusterConfGitPath string) (*providerCon
 		if err != nil {
 			return nil, err
 		}
-		machineConfigs, err := v1alpha1.GetVSphereMachineConfigs(clusterConfGitPath)
-		if err != nil {
-			return nil, err
-		}
+		machineConfigs := config.VSphereMachineConfigs
 		providerConfig.datacenterConfig = datacenterConfig
 		etcdName := ""
 		if e.ClusterConfig.Cluster.Spec.ExternalEtcdConfiguration != nil {
@@ -803,10 +807,7 @@ func (e *ClusterE2ETest) providerConfig(clusterConfGitPath string) (*providerCon
 			return nil, err
 		}
 		providerConfig.datacenterConfig = datacenterConfig
-		machineConfigs, err := v1alpha1.GetCloudStackMachineConfigs(clusterConfGitPath)
-		if err != nil {
-			return nil, err
-		}
+		machineConfigs := config.CloudStackMachineConfigs
 		etcdName := ""
 		if e.ClusterConfig.Cluster.Spec.ExternalEtcdConfiguration != nil {
 			etcdName = e.ClusterConfig.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
@@ -835,6 +836,11 @@ func (e *ClusterE2ETest) waitForWorkerNodeValidation() error {
 }
 
 func (e *ClusterE2ETest) validateWorkerNodeMachineSpec(ctx context.Context, clusterConfGitPath string) error {
+	config, err := cluster.ParseConfigFromFile(clusterConfGitPath)
+	if err != nil {
+		return err
+	}
+
 	switch e.ClusterConfig.Cluster.Spec.DatacenterRef.Kind {
 	case v1alpha1.VSphereDatacenterKind:
 		clusterConfig, err := v1alpha1.GetClusterConfig(clusterConfGitPath)
@@ -845,10 +851,7 @@ func (e *ClusterE2ETest) validateWorkerNodeMachineSpec(ctx context.Context, clus
 		if err != nil {
 			return err
 		}
-		vsphereMachineConfigs, err := v1alpha1.GetVSphereMachineConfigs(clusterConfGitPath)
-		if err != nil {
-			return err
-		}
+		vsphereMachineConfigs := config.VSphereMachineConfigs
 		vsphereWorkerConfig := vsphereMachineConfigs[clusterConfig.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name]
 		return retrier.Retry(120, time.Second*10, func() error {
 			vsMachineTemplate, err := e.KubectlClient.VsphereWorkerNodesMachineTemplate(ctx, clusterConfig.Name, e.managementKubeconfigFilePath(), constants.EksaSystemNamespace)
@@ -918,10 +921,7 @@ func (e *ClusterE2ETest) validateWorkerNodeMachineSpec(ctx context.Context, clus
 		if err != nil {
 			return err
 		}
-		cloudstackMachineConfigs, err := v1alpha1.GetCloudStackMachineConfigs(clusterConfGitPath)
-		if err != nil {
-			return err
-		}
+		cloudstackMachineConfigs := config.CloudStackMachineConfigs
 		cloudstackWorkerConfig := cloudstackMachineConfigs[clusterConfig.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name]
 		return retrier.Retry(120, time.Second*10, func() error {
 			csMachineTemplate, err := e.KubectlClient.CloudstackWorkerNodesMachineTemplate(ctx, clusterConfig.Name, e.managementKubeconfigFilePath(), constants.EksaSystemNamespace)

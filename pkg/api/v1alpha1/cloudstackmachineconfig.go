@@ -4,10 +4,6 @@ import (
 	"fmt"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"sigs.k8s.io/yaml"
-
-	"github.com/aws/eks-anywhere/pkg/utils/file"
-	yamlutil "github.com/aws/eks-anywhere/pkg/utils/yaml"
 )
 
 // DefaultCloudStackUser is the default CloudStackMachingConfig username.
@@ -63,40 +59,6 @@ func (c *CloudStackMachineConfigGenerate) Kind() string {
 
 func (c *CloudStackMachineConfigGenerate) Name() string {
 	return c.ObjectMeta.Name
-}
-
-func GetCloudStackMachineConfigs(fileName string) (map[string]*CloudStackMachineConfig, error) {
-	configs := make(map[string]*CloudStackMachineConfig)
-
-	r, err := file.ReadFile(fileName)
-	if err != nil {
-		return nil, err
-	}
-
-	resources, err := yamlutil.SplitDocuments(r)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, d := range resources {
-		var config CloudStackMachineConfig
-		if err = yaml.UnmarshalStrict(d, &config); err == nil {
-			if config.Kind == CloudStackMachineConfigKind {
-				configs[config.Name] = &config
-				continue
-			}
-		}
-
-		_ = yaml.Unmarshal(d, &config) // this is to check if there is a bad spec in the file
-		if config.Kind == CloudStackMachineConfigKind {
-			return nil, fmt.Errorf("unable to unmarshall content from file due to: %v", err)
-		}
-	}
-
-	if len(configs) == 0 {
-		return nil, fmt.Errorf("unable to find kind %v in file", CloudStackMachineConfigKind)
-	}
-	return configs, nil
 }
 
 func validateCloudStackMachineConfig(machineConfig *CloudStackMachineConfig) error {

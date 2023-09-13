@@ -204,16 +204,6 @@ func GetClusterConfig(fileName string) (*Cluster, error) {
 	return clusterConfig, nil
 }
 
-// GetClusterConfigFromContent parses a Cluster object from a multiobject yaml content.
-func GetClusterConfigFromContent(content []byte) (*Cluster, error) {
-	clusterConfig := &Cluster{}
-	err := ParseClusterConfigFromContent(content, clusterConfig)
-	if err != nil {
-		return clusterConfig, err
-	}
-	return clusterConfig, nil
-}
-
 // GetClusterConfig parses a Cluster object from a multiobject yaml file in disk
 // sets defaults if necessary and validates the Cluster.
 func GetAndValidateClusterConfig(fileName string) (*Cluster, error) {

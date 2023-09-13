@@ -1,8 +1,7 @@
-package v1alpha1
+package v1alpha1_test
 
 import (
 	"fmt"
-	"reflect"
 	"testing"
 
 	"github.com/aws/smithy-go/ptr"
@@ -11,76 +10,40 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
+
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/cluster"
 )
 
-func TestGetNutanixMachineConfigsInvalidConfig(t *testing.T) {
-	tests := []struct {
-		name        string
-		fileName    string
-		expectedErr string
-	}{
-		{
-			name:        "non-existent-file",
-			fileName:    "testdata/nutanix/non-existent-file.yaml",
-			expectedErr: "open testdata/nutanix/non-existent-file.yaml: no such file or directory",
-		},
-		{
-			name:        "invalid-file",
-			fileName:    "testdata/invalid_format.yaml",
-			expectedErr: "unable to find kind NutanixMachineConfig in file",
-		},
-		{
-			name:        "invalid-cluster-extraneuous-field",
-			fileName:    "testdata/nutanix/invalid-cluster.yaml",
-			expectedErr: "unknown field \"idont\"",
-		},
-		{
-			name:        "invalid kind",
-			fileName:    "testdata/nutanix/invalid-kind.yaml",
-			expectedErr: "unable to find kind NutanixMachineConfig in file",
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			conf, err := GetNutanixMachineConfigs(test.fileName)
-			assert.Error(t, err)
-			assert.Nil(t, conf)
-			assert.Contains(t, err.Error(), test.expectedErr, "expected error", test.expectedErr, "got error", err)
-		})
-	}
-}
-
 func TestGetNutanixMachineConfigsValidConfig(t *testing.T) {
-	expectedMachineConfig := &NutanixMachineConfig{
+	expectedMachineConfig := &v1alpha1.NutanixMachineConfig{
 		TypeMeta: metav1.TypeMeta{
-			Kind:       NutanixMachineConfigKind,
-			APIVersion: SchemeBuilder.GroupVersion.String(),
+			Kind:       v1alpha1.NutanixMachineConfigKind,
+			APIVersion: v1alpha1.SchemeBuilder.GroupVersion.String(),
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:        "eksa-unit-test",
-			Annotations: map[string]string{},
-			Namespace:   defaultEksaNamespace,
+			Name:      "eksa-unit-test",
+			Namespace: "default",
 		},
-		Spec: NutanixMachineConfigSpec{
+		Spec: v1alpha1.NutanixMachineConfigSpec{
 			SystemDiskSize: resource.MustParse("40Gi"),
 			MemorySize:     resource.MustParse("8Gi"),
 			VCPUSockets:    4,
 			VCPUsPerSocket: 1,
-			OSFamily:       Ubuntu,
-			Image: NutanixResourceIdentifier{
-				Type: NutanixIdentifierName,
+			OSFamily:       v1alpha1.Ubuntu,
+			Image: v1alpha1.NutanixResourceIdentifier{
+				Type: v1alpha1.NutanixIdentifierName,
 				Name: ptr.String("prism-image"),
 			},
-			Cluster: NutanixResourceIdentifier{
-				Type: NutanixIdentifierName,
+			Cluster: v1alpha1.NutanixResourceIdentifier{
+				Type: v1alpha1.NutanixIdentifierName,
 				Name: ptr.String("prism-element"),
 			},
-			Subnet: NutanixResourceIdentifier{
-				Type: NutanixIdentifierName,
+			Subnet: v1alpha1.NutanixResourceIdentifier{
+				Type: v1alpha1.NutanixIdentifierName,
 				Name: ptr.String("prism-subnet"),
 			},
-			Users: []UserConfiguration{{
+			Users: []v1alpha1.UserConfiguration{{
 				Name:              "mySshUsername",
 				SshAuthorizedKeys: []string{"mySshAuthorizedKey"},
 			}},
@@ -91,32 +54,16 @@ func TestGetNutanixMachineConfigsValidConfig(t *testing.T) {
 	tests := []struct {
 		name        string
 		fileName    string
-		machineConf map[string]*NutanixMachineConfig
-		assertions  func(t *testing.T, machineConf *NutanixMachineConfig)
+		machineConf map[string]*v1alpha1.NutanixMachineConfig
+		assertions  func(t *testing.T, machineConf *v1alpha1.NutanixMachineConfig)
 	}{
-		{
-			name:     "valid-cluster",
-			fileName: "testdata/nutanix/valid-cluster.yaml",
-			machineConf: map[string]*NutanixMachineConfig{
-				machineConfName: expectedMachineConfig,
-			},
-			assertions: func(t *testing.T, machineConf *NutanixMachineConfig) {},
-		},
-		{
-			name:     "valid-cluster-extra-delimiter",
-			fileName: "testdata/nutanix/valid-cluster-extra-delimiter.yaml",
-			machineConf: map[string]*NutanixMachineConfig{
-				machineConfName: expectedMachineConfig,
-			},
-			assertions: func(t *testing.T, machineConf *NutanixMachineConfig) {},
-		},
 		{
 			name:     "valid-cluster-setters-getters",
 			fileName: "testdata/nutanix/valid-cluster.yaml",
-			machineConf: map[string]*NutanixMachineConfig{
+			machineConf: map[string]*v1alpha1.NutanixMachineConfig{
 				machineConfName: expectedMachineConfig,
 			},
-			assertions: func(t *testing.T, machineConf *NutanixMachineConfig) {
+			assertions: func(t *testing.T, machineConf *v1alpha1.NutanixMachineConfig) {
 				assert.False(t, machineConf.IsReconcilePaused())
 				machineConf.PauseReconcile()
 				assert.True(t, machineConf.IsReconcilePaused())
@@ -134,30 +81,18 @@ func TestGetNutanixMachineConfigsValidConfig(t *testing.T) {
 				machineConf.SetControlPlane()
 				assert.True(t, machineConf.IsControlPlane())
 
-				assert.Equal(t, Ubuntu, machineConf.OSFamily())
-				assert.Equal(t, defaultEksaNamespace, machineConf.GetNamespace())
+				assert.Equal(t, v1alpha1.Ubuntu, machineConf.OSFamily())
+				assert.Equal(t, "default", machineConf.GetNamespace())
 				assert.Equal(t, machineConfName, machineConf.GetName())
 			},
 		},
 		{
 			name:     "valid-cluster-marshal",
 			fileName: "testdata/nutanix/valid-cluster.yaml",
-			machineConf: map[string]*NutanixMachineConfig{
+			machineConf: map[string]*v1alpha1.NutanixMachineConfig{
 				machineConfName: expectedMachineConfig,
 			},
-			assertions: func(t *testing.T, machineConf *NutanixMachineConfig) {
-				m := machineConf.Marshallable()
-				require.NotNil(t, m)
-				y, err := yaml.Marshal(m)
-				assert.NoError(t, err)
-				assert.NotNil(t, y)
-			},
-		},
-		{
-			name:        "invalid-manifest",
-			fileName:    "testdata/invalid_manifest.yaml",
-			machineConf: nil,
-			assertions: func(t *testing.T, machineConf *NutanixMachineConfig) {
+			assertions: func(t *testing.T, machineConf *v1alpha1.NutanixMachineConfig) {
 				m := machineConf.Marshallable()
 				require.NotNil(t, m)
 				y, err := yaml.Marshal(m)
@@ -169,12 +104,17 @@ func TestGetNutanixMachineConfigsValidConfig(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			conf, err := GetNutanixMachineConfigs(test.fileName)
+			config, err := cluster.ParseConfigFromFile(test.fileName)
+			if err != nil {
+				t.Fatal(err)
+			}
+			machineConfigs := config.NutanixMachineConfigs
+
 			if test.machineConf != nil {
 				require.NoError(t, err)
-				require.NotNil(t, conf)
-				assert.True(t, reflect.DeepEqual(test.machineConf, conf))
-				test.assertions(t, conf[machineConfName])
+				require.NotNil(t, machineConfigs)
+				assert.Equal(t, test.machineConf, machineConfigs)
+				test.assertions(t, machineConfigs[machineConfName])
 			} else {
 				assert.Error(t, err)
 			}
@@ -183,13 +123,13 @@ func TestGetNutanixMachineConfigsValidConfig(t *testing.T) {
 }
 
 func TestNewNutanixMachineConfigGenerate(t *testing.T) {
-	machineConf := NewNutanixMachineConfigGenerate("eksa-unit-test", func(config *NutanixMachineConfigGenerate) {
+	machineConf := v1alpha1.NewNutanixMachineConfigGenerate("eksa-unit-test", func(config *v1alpha1.NutanixMachineConfigGenerate) {
 		config.Spec.MemorySize = resource.MustParse("16Gi")
 	})
 	require.NotNil(t, machineConf)
 	assert.Equal(t, "eksa-unit-test", machineConf.Name())
-	assert.Equal(t, NutanixMachineConfigKind, machineConf.Kind())
-	assert.Equal(t, SchemeBuilder.GroupVersion.String(), machineConf.APIVersion())
+	assert.Equal(t, v1alpha1.NutanixMachineConfigKind, machineConf.Kind())
+	assert.Equal(t, v1alpha1.SchemeBuilder.GroupVersion.String(), machineConf.APIVersion())
 	assert.Equal(t, resource.MustParse("16Gi"), machineConf.Spec.MemorySize)
 }
 
@@ -197,12 +137,12 @@ func TestNutanixMachineConfigDefaults(t *testing.T) {
 	tests := []struct {
 		name     string
 		fileName string
-		validate func(t *testing.T, nutanixMachineConfig *NutanixMachineConfig) error
+		validate func(t *testing.T, nutanixMachineConfig *v1alpha1.NutanixMachineConfig) error
 	}{
 		{
 			name:     "machineconfig-with-no-users",
 			fileName: "testdata/nutanix/machineconfig-with-no-users.yaml",
-			validate: func(t *testing.T, nutanixMachineConfig *NutanixMachineConfig) error {
+			validate: func(t *testing.T, nutanixMachineConfig *v1alpha1.NutanixMachineConfig) error {
 				if len(nutanixMachineConfig.Spec.Users) <= 0 {
 					return fmt.Errorf("default user was not added")
 				}
@@ -212,7 +152,7 @@ func TestNutanixMachineConfigDefaults(t *testing.T) {
 		{
 			name:     "machineconfig-with-no-user-name",
 			fileName: "testdata/nutanix/machineconfig-with-no-user-name.yaml",
-			validate: func(t *testing.T, nutanixMachineConfig *NutanixMachineConfig) error {
+			validate: func(t *testing.T, nutanixMachineConfig *v1alpha1.NutanixMachineConfig) error {
 				if len(nutanixMachineConfig.Spec.Users[0].Name) <= 0 {
 					return fmt.Errorf("default user name was not added")
 				}
@@ -222,9 +162,9 @@ func TestNutanixMachineConfigDefaults(t *testing.T) {
 		{
 			name:     "machineconfig-with-no-osfamily",
 			fileName: "testdata/nutanix/machineconfig-with-no-osfamily.yaml",
-			validate: func(t *testing.T, nutanixMachineConfig *NutanixMachineConfig) error {
-				if nutanixMachineConfig.Spec.OSFamily != defaultNutanixOSFamily {
-					return fmt.Errorf("ubuntu OS family was not set")
+			validate: func(t *testing.T, nutanixMachineConfig *v1alpha1.NutanixMachineConfig) error {
+				if nutanixMachineConfig.Spec.OSFamily != v1alpha1.DefaultOSFamily {
+					return fmt.Errorf("v1alpha1.Ubuntu OS family was not set")
 				}
 				return nil
 			},
@@ -232,7 +172,7 @@ func TestNutanixMachineConfigDefaults(t *testing.T) {
 		{
 			name:     "machineconfig-with-no-ssh-key",
 			fileName: "testdata/nutanix/machineconfig-with-no-ssh-key.yaml",
-			validate: func(t *testing.T, nutanixMachineConfig *NutanixMachineConfig) error {
+			validate: func(t *testing.T, nutanixMachineConfig *v1alpha1.NutanixMachineConfig) error {
 				if len(nutanixMachineConfig.Spec.Users[0].SshAuthorizedKeys) <= 0 {
 					return fmt.Errorf("default ssh key was not added")
 				}
@@ -246,15 +186,12 @@ func TestNutanixMachineConfigDefaults(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			conf, err := GetNutanixMachineConfigs(test.fileName)
+			config, err := cluster.ParseConfigFromFile(test.fileName)
 			if err != nil {
-				t.Fatalf("GetNutanixMachineConfigs returned error")
+				t.Fatal(err)
 			}
-			if conf == nil {
-				t.Fatalf("GetNutanixMachineConfigs returned conf without defaults")
-			}
-
-			nutanixMachineConfig := conf["eksa-unit-test"]
+			machineConfigs := config.NutanixMachineConfigs
+			nutanixMachineConfig := machineConfigs["eksa-unit-test"]
 			if nutanixMachineConfig == nil {
 				t.Fatalf("Invalid yaml found")
 			}
@@ -287,15 +224,13 @@ func TestValidateNutanixMachineConfig(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			conf, err := GetNutanixMachineConfigs(test.fileName)
+			config, err := cluster.ParseConfigFromFile(test.fileName)
 			if err != nil {
-				t.Fatalf("GetNutanixMachineConfigs returned error")
+				t.Fatal(err)
 			}
-			if conf == nil {
-				t.Fatalf("GetNutanixMachineConfigs returned conf without defaults")
-			}
+			machineConfigs := config.NutanixMachineConfigs
 
-			nutanixMachineConfig := conf["eksa-unit-test"]
+			nutanixMachineConfig := machineConfigs["eksa-unit-test"]
 			if nutanixMachineConfig == nil {
 				t.Fatalf("Invalid yaml found")
 			}

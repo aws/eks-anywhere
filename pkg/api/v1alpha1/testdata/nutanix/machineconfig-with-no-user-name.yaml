@@ -13,7 +13,7 @@ spec:
       kind: NutanixMachineConfig
   kubernetesVersion: "1.16"
   workerNodeGroupConfigurations:
-    - count: four
+    - count: 4
       machineGroupRef:
         name: eksa-unit-test
         kind: NutanixMachineConfig

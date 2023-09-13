@@ -15,6 +15,7 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/mocks"
 	"github.com/aws/eks-anywhere/pkg/types"
@@ -275,7 +276,11 @@ func TestValidateMachineConfigsHappyCase(t *testing.T) {
 func TestValidateCloudStackMachineConfig(t *testing.T) {
 	ctx := context.Background()
 	cmk := mocks.NewMockProviderCmkClient(gomock.NewController(t))
-	machineConfigs, err := v1alpha1.GetCloudStackMachineConfigs(path.Join(testDataDir, testClusterConfigMainFilename))
+	config, err := cluster.ParseConfigFromFile(path.Join(testDataDir, testClusterConfigMainFilename))
+	if err != nil {
+		t.Fatalf("unable to get machine configs from file: %v", err)
+	}
+	machineConfigs := config.CloudStackMachineConfigs
 	if err != nil {
 		t.Fatalf("unable to get machine configs from file %s", testClusterConfigMainFilename)
 	}

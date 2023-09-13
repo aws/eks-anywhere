@@ -4,11 +4,8 @@ import (
 	"fmt"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/pkg/logger"
-	"github.com/aws/eks-anywhere/pkg/utils/file"
-	yamlutil "github.com/aws/eks-anywhere/pkg/utils/yaml"
 )
 
 const (
@@ -52,41 +49,6 @@ func (c *VSphereMachineConfigGenerate) Kind() string {
 
 func (c *VSphereMachineConfigGenerate) Name() string {
 	return c.ObjectMeta.Name
-}
-
-func GetVSphereMachineConfigs(fileName string) (map[string]*VSphereMachineConfig, error) {
-	configs := make(map[string]*VSphereMachineConfig)
-
-	r, err := file.ReadFile(fileName)
-	if err != nil {
-		return nil, err
-	}
-
-	resources, err := yamlutil.SplitDocuments(r)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, d := range resources {
-		var config VSphereMachineConfig
-
-		if err = yaml.UnmarshalStrict(d, &config); err == nil {
-			if config.Kind == VSphereMachineConfigKind {
-				configs[config.Name] = &config
-				continue
-			}
-		}
-
-		_ = yaml.Unmarshal(d, &config) // this is to check if there is a bad spec in the file
-		if config.Kind == VSphereMachineConfigKind {
-			return nil, fmt.Errorf("unable to unmarshall content from file due to: %v", err)
-		}
-	}
-
-	if len(configs) == 0 {
-		return nil, fmt.Errorf("unable to find kind %v in file", VSphereMachineConfigKind)
-	}
-	return configs, nil
 }
 
 func setVSphereMachineConfigDefaults(machineConfig *VSphereMachineConfig) {
