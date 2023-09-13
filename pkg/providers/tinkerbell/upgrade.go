@@ -9,6 +9,7 @@ import (
 	rufiov1 "github.com/tinkerbell/rufio/api/v1alpha1"
 	tinkv1alpha1 "github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	kerrors "k8s.io/apimachinery/pkg/util/errors"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
@@ -230,66 +231,114 @@ func (p *Provider) RunPostControlPlaneUpgrade(ctx context.Context, oldClusterSpe
 
 // ValidateNewSpec satisfies the Provider interface.
 func (p *Provider) ValidateNewSpec(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
-	prevSpec, err := p.providerKubectlClient.GetEksaCluster(ctx, cluster, clusterSpec.Cluster.Name)
+	desiredClstrSpec := clusterSpec
+
+	currentClstr, err := p.providerKubectlClient.GetEksaCluster(ctx, cluster, desiredClstrSpec.Cluster.Name)
 	if err != nil {
 		return err
 	}
 
-	prevDatacenterConfig, err := p.providerKubectlClient.GetEksaTinkerbellDatacenterConfig(ctx,
-		prevSpec.Spec.DatacenterRef.Name, cluster.KubeconfigFile, prevSpec.Namespace)
+	currentDCName := currentClstr.Spec.DatacenterRef.Name
+	currentDCCfg, err := p.providerKubectlClient.GetEksaTinkerbellDatacenterConfig(ctx, currentDCName, cluster.KubeconfigFile, currentClstr.Namespace)
 	if err != nil {
 		return err
 	}
 
-	oSpec := prevDatacenterConfig.Spec
-	nSpec := p.datacenterConfig.Spec
+	currentWNGs := currentClstr.Spec.WorkerNodeGroupConfigurations
+	desiredWNGs := desiredClstrSpec.Cluster.Spec.WorkerNodeGroupConfigurations
 
-	prevMachineConfigRefs := machineRefSliceToMap(prevSpec.MachineConfigRefs())
+	err = p.validateMachineCfgsImmutability(ctx, cluster, currentClstr, desiredClstrSpec, currentWNGs, desiredWNGs)
+	if err != nil {
+		return err
+	}
 
-	desiredWorkerNodeGroups := clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations
-	currentWorkerNodeGroups := collection.ToMap(prevSpec.Spec.WorkerNodeGroupConfigurations,
-		func(v v1alpha1.WorkerNodeGroupConfiguration) string { return v.Name })
+	desiredDCCfgSpec := p.datacenterConfig.Spec
 
-	// Gather machine config references for new worker node groups so we can avoid immutability
-	// checks.
-	newWorkerNodeGroupsRefs := collection.NewSet[string]()
-	for _, wng := range desiredWorkerNodeGroups {
-		if _, exists := currentWorkerNodeGroups[wng.Name]; !exists {
-			newWorkerNodeGroupsRefs.Add(wng.MachineGroupRef.Name)
+	if desiredDCCfgSpec.TinkerbellIP != currentDCCfg.Spec.TinkerbellIP {
+		return fmt.Errorf("spec.tinkerbellIP is immutable; previous = %s, new = %s",
+			currentDCCfg.Spec.TinkerbellIP, desiredDCCfgSpec.TinkerbellIP)
+	}
+
+	// for any operation other than k8s version change, hookImageURL is immutable
+	if currentClstr.Spec.KubernetesVersion == desiredClstrSpec.Cluster.Spec.KubernetesVersion {
+		if desiredDCCfgSpec.HookImagesURLPath != currentDCCfg.Spec.HookImagesURLPath {
+			return fmt.Errorf("spec.hookImagesURLPath is immutable. previoius = %s, new = %s",
+				currentDCCfg.Spec.HookImagesURLPath, desiredDCCfgSpec.HookImagesURLPath)
 		}
 	}
 
-	for _, machineConfigRef := range clusterSpec.Cluster.MachineConfigRefs() {
-		machineConfig, ok := p.machineConfigs[machineConfigRef.Name]
+	return nil
+}
+
+func (p *Provider) validateMachineCfgsImmutability(ctx context.Context, clstr *types.Cluster, currentClstr *v1alpha1.Cluster, desiredClstrSpec *cluster.Spec, currentWNGs, desiredWNGs []v1alpha1.WorkerNodeGroupConfiguration) error {
+	currentCPMachineRef := currentClstr.Spec.ControlPlaneConfiguration.MachineGroupRef
+	desiredCPMachineRef := desiredClstrSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef
+	if !currentCPMachineRef.Equal(desiredCPMachineRef) {
+		return errors.New("control plane machine config reference is immutable")
+	}
+
+	err := validateRefsUnchanged(currentWNGs, desiredWNGs)
+	if err != nil {
+		return err
+	}
+
+	currentMachineCfgRefsMap := p.machineConfigs
+
+	currentWNGsSet := collection.MapSet(currentWNGs, func(v v1alpha1.WorkerNodeGroupConfiguration) string {
+		return v.Name
+	})
+
+	// newWNGs contains the set of worker node group names specified in the desired spec that are new.
+	newWNGs := collection.NewSet[string]()
+	for _, wng := range desiredWNGs {
+		if !currentWNGsSet.Contains(wng.Name) {
+			newWNGs.Add(wng.MachineGroupRef.Name)
+		}
+	}
+
+	for _, machineCfgRef := range desiredClstrSpec.Cluster.MachineConfigRefs() {
+		machineCfg, ok := currentMachineCfgRefsMap[machineCfgRef.Name]
 		if !ok {
-			return fmt.Errorf("cannot find machine config %s in tinkerbell provider machine configs", machineConfigRef.Name)
+			return fmt.Errorf("cannot find machine config %s in tinkerbell provider machine configs", machineCfgRef.Name)
 		}
 
-		// If the machien config reference is for a new worker node group don't bother with
+		// If the machine config reference is for a new worker node group don't bother with
 		// immutability checks as we want users to be able to add worker node groups.
-		if !newWorkerNodeGroupsRefs.Contains(machineConfigRef.Name) {
-			if _, ok = prevMachineConfigRefs[machineConfig.Name]; !ok {
-				return fmt.Errorf("cannot add or remove MachineConfigs as part of upgrade")
+		if !newWNGs.Contains(machineCfgRef.Name) {
+			if _, has := currentMachineCfgRefsMap[machineCfg.Name]; !has {
+				return fmt.Errorf("cannot change machine config references")
 			}
-			err = p.validateMachineConfigImmutability(ctx, cluster, machineConfig, clusterSpec)
+			err := p.validateMachineCfg(ctx, clstr, machineCfg, desiredClstrSpec)
 			if err != nil {
 				return err
 			}
 		}
 	}
 
-	if nSpec.TinkerbellIP != oSpec.TinkerbellIP {
-		return fmt.Errorf("spec.TinkerbellIP is immutable. Previous value %s,   New value %s", oSpec.TinkerbellIP, nSpec.TinkerbellIP)
-	}
+	return nil
+}
 
-	// for any operation other than k8s version change, hookImageURL is immutable
-	if prevSpec.Spec.KubernetesVersion == clusterSpec.Cluster.Spec.KubernetesVersion {
-		if nSpec.HookImagesURLPath != oSpec.HookImagesURLPath {
-			return fmt.Errorf("spec.HookImagesURLPath is immutable. Previous value %s,   New value %s", oSpec.HookImagesURLPath, nSpec.HookImagesURLPath)
+func validateRefsUnchanged(current, desired []v1alpha1.WorkerNodeGroupConfiguration) error {
+	lookup := collection.ToMap(desired, func(v v1alpha1.WorkerNodeGroupConfiguration) string {
+		return v.Name
+	})
+
+	var errs []error
+
+	// For every current worker node group that still exists in the desired config, ensure the
+	// machine config is still the same.
+	for _, curr := range current {
+		desi, exists := lookup[curr.Name]
+		if !exists {
+			continue
+		}
+
+		if !curr.MachineGroupRef.Equal(desi.MachineGroupRef) {
+			errs = append(errs, fmt.Errorf("%v: worker node group machine config reference is immutable", curr.Name))
 		}
 	}
 
-	return nil
+	return kerrors.NewAggregate(errs)
 }
 
 func (p *Provider) UpgradeNeeded(_ context.Context, _, _ *cluster.Spec, _ *types.Cluster) (bool, error) {
@@ -322,28 +371,7 @@ func (p *Provider) isScaleUpDown(oldCluster *v1alpha1.Cluster, newCluster *v1alp
 	return false
 }
 
-/* func (p *Provider) isScaleUpDown(currentSpec *cluster.Spec, newSpec *cluster.Spec) bool {
-	if currentSpec.Cluster.Spec.ControlPlaneConfiguration.Count != newSpec.Cluster.Spec.ControlPlaneConfiguration.Count {
-		return true
-	}
-
-	workerNodeGroupMap := make(map[string]*v1alpha1.WorkerNodeGroupConfiguration)
-	for _, workerNodeGroupConfiguration := range currentSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
-		workerNodeGroupMap[workerNodeGroupConfiguration.Name] = &workerNodeGroupConfiguration
-	}
-
-	for _, nodeGroupNewSpec := range newSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
-		if workerNodeGrpOldSpec, ok := workerNodeGroupMap[nodeGroupNewSpec.Name]; ok {
-			if *nodeGroupNewSpec.Count != *workerNodeGrpOldSpec.Count {
-				return true
-			}
-		}
-	}
-
-	return false
-} */
-
-func (p *Provider) validateMachineConfigImmutability(ctx context.Context, cluster *types.Cluster, newConfig *v1alpha1.TinkerbellMachineConfig, clusterSpec *cluster.Spec) error {
+func (p *Provider) validateMachineCfg(ctx context.Context, cluster *types.Cluster, newConfig *v1alpha1.TinkerbellMachineConfig, clusterSpec *cluster.Spec) error {
 	prevMachineConfig, err := p.providerKubectlClient.GetEksaTinkerbellMachineConfig(ctx, newConfig.Name, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace)
 	if err != nil {
 		return err
@@ -366,14 +394,6 @@ func (p *Provider) validateMachineConfigImmutability(ctx context.Context, cluste
 	}
 
 	return nil
-}
-
-func machineRefSliceToMap(machineRefs []v1alpha1.Ref) map[string]v1alpha1.Ref {
-	refMap := make(map[string]v1alpha1.Ref, len(machineRefs))
-	for _, ref := range machineRefs {
-		refMap[ref.Name] = ref
-	}
-	return refMap
 }
 
 // PreCoreComponentsUpgrade staisfies the Provider interface.
