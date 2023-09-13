@@ -26,7 +26,8 @@ See [Create cluster workflow]({{< relref "../overview" >}}) for an overview of t
 - 4 CPU cores
 - 16GB memory
 - 30GB free disk space
-- Administrative machine must be on the same Layer 2 network as the cluster machines (Bare Metal provider only).
+- If you are running in an airgapped environment, the Admin machine must be amd64.
+- If you are running EKS Anywhere on bare metal, the Admin machine must be on the same Layer 2 network as the cluster machines.
 
 Here are a few other things to keep in mind:
 
