@@ -274,7 +274,7 @@ func TestEnableSuccess(t *testing.T) {
 		clusterName := fmt.Sprintf("clusterName=%s", "billy")
 		valueFilePath := filepath.Join("billy", filewriter.DefaultTmpFolder, valueFileName)
 		ociURI := fmt.Sprintf("%s%s", "oci://", tt.registryMirror.ReplaceRegistry(tt.chart.Image()))
-		sourceRegistry, defaultRegistry, defaultImageRegistry := tt.command.GetCuratedPackagesRegistries()
+		sourceRegistry, defaultRegistry, defaultImageRegistry := tt.command.GetCuratedPackagesRegistries(context.Background())
 		sourceRegistry = fmt.Sprintf("sourceRegistry=%s", sourceRegistry)
 		defaultRegistry = fmt.Sprintf("defaultRegistry=%s", defaultRegistry)
 		defaultImageRegistry = fmt.Sprintf("defaultImageRegistry=%s", defaultImageRegistry)
@@ -317,7 +317,7 @@ func TestEnableSucceedInWorkloadCluster(t *testing.T) {
 		clusterName := fmt.Sprintf("clusterName=%s", "billy")
 		valueFilePath := filepath.Join("billy", filewriter.DefaultTmpFolder, valueFileName)
 		ociURI := fmt.Sprintf("%s%s", "oci://", tt.registryMirror.ReplaceRegistry(tt.chart.Image()))
-		sourceRegistry, defaultRegistry, defaultImageRegistry := tt.command.GetCuratedPackagesRegistries()
+		sourceRegistry, defaultRegistry, defaultImageRegistry := tt.command.GetCuratedPackagesRegistries(context.Background())
 		sourceRegistry = fmt.Sprintf("sourceRegistry=%s", sourceRegistry)
 		defaultRegistry = fmt.Sprintf("defaultRegistry=%s", defaultRegistry)
 		defaultImageRegistry = fmt.Sprintf("defaultImageRegistry=%s", defaultImageRegistry)
@@ -360,7 +360,7 @@ func TestEnableSucceedInWorkloadClusterWhenPackageBundleControllerNotExist(t *te
 		clusterName := fmt.Sprintf("clusterName=%s", "billy")
 		valueFilePath := filepath.Join("billy", filewriter.DefaultTmpFolder, valueFileName)
 		ociURI := fmt.Sprintf("%s%s", "oci://", tt.registryMirror.ReplaceRegistry(tt.chart.Image()))
-		sourceRegistry, defaultRegistry, defaultImageRegistry := tt.command.GetCuratedPackagesRegistries()
+		sourceRegistry, defaultRegistry, defaultImageRegistry := tt.command.GetCuratedPackagesRegistries(context.Background())
 		sourceRegistry = fmt.Sprintf("sourceRegistry=%s", sourceRegistry)
 		defaultRegistry = fmt.Sprintf("defaultRegistry=%s", defaultRegistry)
 		defaultImageRegistry = fmt.Sprintf("defaultImageRegistry=%s", defaultImageRegistry)
@@ -439,7 +439,7 @@ func TestEnableWithProxy(t *testing.T) {
 		httpsProxy := fmt.Sprintf("proxy.HTTPS_PROXY=%s", tt.httpsProxy)
 		noProxy := fmt.Sprintf("proxy.NO_PROXY=%s", strings.Join(tt.noProxy, "\\,"))
 		ociURI := fmt.Sprintf("%s%s", "oci://", tt.registryMirror.ReplaceRegistry(tt.chart.Image()))
-		sourceRegistry, defaultRegistry, defaultImageRegistry := tt.command.GetCuratedPackagesRegistries()
+		sourceRegistry, defaultRegistry, defaultImageRegistry := tt.command.GetCuratedPackagesRegistries(context.Background())
 		sourceRegistry = fmt.Sprintf("sourceRegistry=%s", sourceRegistry)
 		defaultRegistry = fmt.Sprintf("defaultRegistry=%s", defaultRegistry)
 		defaultImageRegistry = fmt.Sprintf("defaultImageRegistry=%s", defaultImageRegistry)
@@ -490,7 +490,7 @@ func TestEnableWithEmptyProxy(t *testing.T) {
 		clusterName := fmt.Sprintf("clusterName=%s", "billy")
 		valueFilePath := filepath.Join("billy", filewriter.DefaultTmpFolder, valueFileName)
 		ociURI := fmt.Sprintf("%s%s", "oci://", tt.registryMirror.ReplaceRegistry(tt.chart.Image()))
-		sourceRegistry, defaultRegistry, defaultImageRegistry := tt.command.GetCuratedPackagesRegistries()
+		sourceRegistry, defaultRegistry, defaultImageRegistry := tt.command.GetCuratedPackagesRegistries(context.Background())
 		sourceRegistry = fmt.Sprintf("sourceRegistry=%s", sourceRegistry)
 		defaultRegistry = fmt.Sprintf("defaultRegistry=%s", defaultRegistry)
 		defaultImageRegistry = fmt.Sprintf("defaultImageRegistry=%s", defaultImageRegistry)
@@ -529,7 +529,7 @@ func TestEnableFail(t *testing.T) {
 		clusterName := fmt.Sprintf("clusterName=%s", "billy")
 		valueFilePath := filepath.Join("billy", filewriter.DefaultTmpFolder, valueFileName)
 		ociURI := fmt.Sprintf("%s%s", "oci://", tt.registryMirror.ReplaceRegistry(tt.chart.Image()))
-		sourceRegistry, defaultRegistry, defaultImageRegistry := tt.command.GetCuratedPackagesRegistries()
+		sourceRegistry, defaultRegistry, defaultImageRegistry := tt.command.GetCuratedPackagesRegistries(context.Background())
 		sourceRegistry = fmt.Sprintf("sourceRegistry=%s", sourceRegistry)
 		defaultRegistry = fmt.Sprintf("defaultRegistry=%s", defaultRegistry)
 		defaultImageRegistry = fmt.Sprintf("defaultImageRegistry=%s", defaultImageRegistry)
@@ -559,7 +559,7 @@ func TestEnableFailNoActiveBundle(t *testing.T) {
 		clusterName := fmt.Sprintf("clusterName=%s", "billy")
 		valueFilePath := filepath.Join("billy", filewriter.DefaultTmpFolder, valueFileName)
 		ociURI := fmt.Sprintf("%s%s", "oci://", tt.registryMirror.ReplaceRegistry(tt.chart.Image()))
-		sourceRegistry, defaultRegistry, defaultImageRegistry := tt.command.GetCuratedPackagesRegistries()
+		sourceRegistry, defaultRegistry, defaultImageRegistry := tt.command.GetCuratedPackagesRegistries(context.Background())
 		sourceRegistry = fmt.Sprintf("sourceRegistry=%s", sourceRegistry)
 		defaultRegistry = fmt.Sprintf("defaultRegistry=%s", defaultRegistry)
 		defaultImageRegistry = fmt.Sprintf("defaultImageRegistry=%s", defaultImageRegistry)
@@ -589,7 +589,7 @@ func TestEnableSuccessWhenCronJobFails(t *testing.T) {
 		clusterName := fmt.Sprintf("clusterName=%s", "billy")
 		valueFilePath := filepath.Join("billy", filewriter.DefaultTmpFolder, valueFileName)
 		ociURI := fmt.Sprintf("%s%s", "oci://", tt.registryMirror.ReplaceRegistry(tt.chart.Image()))
-		sourceRegistry, defaultRegistry, defaultImageRegistry := tt.command.GetCuratedPackagesRegistries()
+		sourceRegistry, defaultRegistry, defaultImageRegistry := tt.command.GetCuratedPackagesRegistries(context.Background())
 		sourceRegistry = fmt.Sprintf("sourceRegistry=%s", sourceRegistry)
 		defaultRegistry = fmt.Sprintf("defaultRegistry=%s", defaultRegistry)
 		defaultImageRegistry = fmt.Sprintf("defaultImageRegistry=%s", defaultImageRegistry)
@@ -657,7 +657,7 @@ func TestEnableActiveBundleCustomTimeout(t *testing.T) {
 		clusterName := fmt.Sprintf("clusterName=%s", "billy")
 		valueFilePath := filepath.Join("billy", filewriter.DefaultTmpFolder, valueFileName)
 		ociURI := fmt.Sprintf("%s%s", "oci://", tt.registryMirror.ReplaceRegistry(tt.chart.Image()))
-		sourceRegistry, defaultRegistry, defaultImageRegistry := tt.command.GetCuratedPackagesRegistries()
+		sourceRegistry, defaultRegistry, defaultImageRegistry := tt.command.GetCuratedPackagesRegistries(context.Background())
 		sourceRegistry = fmt.Sprintf("sourceRegistry=%s", sourceRegistry)
 		defaultRegistry = fmt.Sprintf("defaultRegistry=%s", defaultRegistry)
 		defaultImageRegistry = fmt.Sprintf("defaultImageRegistry=%s", defaultImageRegistry)
@@ -696,7 +696,7 @@ func TestEnableActiveBundleWaitLoops(t *testing.T) {
 		clusterName := fmt.Sprintf("clusterName=%s", "billy")
 		valueFilePath := filepath.Join("billy", filewriter.DefaultTmpFolder, valueFileName)
 		ociURI := fmt.Sprintf("%s%s", "oci://", tt.registryMirror.ReplaceRegistry(tt.chart.Image()))
-		sourceRegistry, defaultRegistry, defaultImageRegistry := tt.command.GetCuratedPackagesRegistries()
+		sourceRegistry, defaultRegistry, defaultImageRegistry := tt.command.GetCuratedPackagesRegistries(context.Background())
 		sourceRegistry = fmt.Sprintf("sourceRegistry=%s", sourceRegistry)
 		defaultRegistry = fmt.Sprintf("defaultRegistry=%s", defaultRegistry)
 		defaultImageRegistry = fmt.Sprintf("defaultImageRegistry=%s", defaultImageRegistry)
@@ -756,7 +756,7 @@ func TestEnableActiveBundleTimesOut(t *testing.T) {
 		clusterName := fmt.Sprintf("clusterName=%s", "billy")
 		valueFilePath := filepath.Join("billy", filewriter.DefaultTmpFolder, valueFileName)
 		ociURI := fmt.Sprintf("%s%s", "oci://", tt.registryMirror.ReplaceRegistry(tt.chart.Image()))
-		sourceRegistry, defaultRegistry, defaultImageRegistry := tt.command.GetCuratedPackagesRegistries()
+		sourceRegistry, defaultRegistry, defaultImageRegistry := tt.command.GetCuratedPackagesRegistries(context.Background())
 		sourceRegistry = fmt.Sprintf("sourceRegistry=%s", sourceRegistry)
 		defaultRegistry = fmt.Sprintf("defaultRegistry=%s", defaultRegistry)
 		defaultImageRegistry = fmt.Sprintf("defaultImageRegistry=%s", defaultImageRegistry)
@@ -802,7 +802,7 @@ func TestEnableActiveBundleNamespaceTimesOut(t *testing.T) {
 		clusterName := fmt.Sprintf("clusterName=%s", "billy")
 		valueFilePath := filepath.Join("billy", filewriter.DefaultTmpFolder, valueFileName)
 		ociURI := fmt.Sprintf("%s%s", "oci://", tt.registryMirror.ReplaceRegistry(tt.chart.Image()))
-		sourceRegistry, defaultRegistry, defaultImageRegistry := tt.command.GetCuratedPackagesRegistries()
+		sourceRegistry, defaultRegistry, defaultImageRegistry := tt.command.GetCuratedPackagesRegistries(context.Background())
 		sourceRegistry = fmt.Sprintf("sourceRegistry=%s", sourceRegistry)
 		defaultRegistry = fmt.Sprintf("defaultRegistry=%s", defaultRegistry)
 		defaultImageRegistry = fmt.Sprintf("defaultImageRegistry=%s", defaultImageRegistry)
@@ -991,7 +991,7 @@ func TestGetCuratedPackagesRegistriesDefaultRegion(t *testing.T) {
 	g := NewWithT(t)
 	cluster := cluster.Spec{Config: &cluster.Config{Cluster: &v1alpha1.Cluster{Spec: clusterSpec}}}
 	sut := curatedpackages.NewPackageControllerClient(nil, nil, "billy", "", chart, nil, curatedpackages.WithClusterSpec(&cluster))
-	_, _, img := sut.GetCuratedPackagesRegistries()
+	_, _, img := sut.GetCuratedPackagesRegistries(context.Background())
 	g.Expect(img).To(Equal("783794618700.dkr.ecr.us-west-2.amazonaws.com"))
 }
 
@@ -1008,7 +1008,7 @@ func TestGetCuratedPackagesRegistriesCustomRegion(t *testing.T) {
 	g := NewWithT(t)
 	cluster := cluster.Spec{Config: &cluster.Config{Cluster: &v1alpha1.Cluster{Spec: clusterSpec}}}
 	sut := curatedpackages.NewPackageControllerClient(nil, nil, "billy", "", chart, nil, curatedpackages.WithClusterSpec(&cluster), curatedpackages.WithEksaRegion("test"))
-	_, _, img := sut.GetCuratedPackagesRegistries()
+	_, _, img := sut.GetCuratedPackagesRegistries(context.Background())
 	g.Expect(img).To(Equal("783794618700.dkr.ecr.test.amazonaws.com"))
 }
 
@@ -1199,7 +1199,7 @@ func TestGetCuratedPackagesRegistries(s *testing.T) {
 		)
 
 		expected := "783794618700.dkr.ecr.testing.amazonaws.com"
-		_, _, got := client.GetCuratedPackagesRegistries()
+		_, _, got := client.GetCuratedPackagesRegistries(context.Background())
 
 		if got != expected {
 			t.Errorf("expected %q, got %q", expected, got)
@@ -1225,10 +1225,42 @@ func TestGetCuratedPackagesRegistries(s *testing.T) {
 		)
 
 		expected := "783794618700.dkr.ecr.us-west-2.amazonaws.com"
-		_, _, got := client.GetCuratedPackagesRegistries()
+		_, _, got := client.GetCuratedPackagesRegistries(context.Background())
 
 		if got != expected {
 			t.Errorf("expected %q, got %q", expected, got)
+		}
+	})
+
+	s.Run("get regional registries", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		k := mocks.NewMockKubectlRunner(ctrl)
+		cm := mocks.NewMockChartManager(ctrl)
+		kubeConfig := "kubeconfig.kubeconfig"
+		chart := &artifactsv1.Image{
+			Name: "test_controller",
+			URI:  "test_registry/eks-anywhere/eks-anywhere-packages:v1",
+		}
+		// eksaRegion := "test-region"
+		clusterName := "billy"
+		writer, _ := filewriter.NewWriter(clusterName)
+		client := curatedpackages.NewPackageControllerClient(
+			cm, k, clusterName, kubeConfig, chart, nil,
+			curatedpackages.WithManagementClusterName(clusterName),
+			curatedpackages.WithValuesFileWriter(writer),
+			curatedpackages.WithRegistryAccessTester(func(ctx context.Context, accessKey, secret, registry, region string) error {
+				return nil
+			}),
+		)
+
+		expected := "TODO.dkr.ecr.us-west-2.amazonaws.com"
+		_, actualDefaultRegistry, actualImageRegistry := client.GetCuratedPackagesRegistries(context.Background())
+
+		if actualDefaultRegistry != expected {
+			t.Errorf("expected %q, got %q", expected, actualDefaultRegistry)
+		}
+		if actualImageRegistry != expected {
+			t.Errorf("expected %q, got %q", expected, actualImageRegistry)
 		}
 	})
 }
