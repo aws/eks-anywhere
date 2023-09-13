@@ -925,7 +925,7 @@ func TestProvider_ValidateNewSpec_NewWorkerNodeGroup(t *testing.T) {
 
 	// Add an extra worker node group to the desired configuration with its associated machine
 	// config. The machine configs are plumbed in via the Tinkerbell provider constructor func.
-	newMachineCfgName := "additiona-machine-config"
+	newMachineCfgName := "additional-machine-config"
 	newWorkerNodeGroupName := "additional-worker-node-group"
 	desiredWorkerNodeGroups := &desiredClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations
 	*desiredWorkerNodeGroups = append(*desiredWorkerNodeGroups, v1alpha1.WorkerNodeGroupConfiguration{
