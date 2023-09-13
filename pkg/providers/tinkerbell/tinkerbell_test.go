@@ -1946,6 +1946,104 @@ func TestTinkerbellProvider_GenerateCAPISpecForUpgrade_RegistryMirror(t *testing
 	test.AssertContentToFile(t, string(cp), "testdata/expected_results_cluster_tinkerbell_upgrade_registry_mirror.yaml")
 }
 
+func TestTinkerbellProviderGetMachineConfigsWithMismatchedAndExternalEtcd(t *testing.T) {
+	clusterSpecManifest := "cluster_tinkerbell_mismatched_external_etcd.yaml"
+	mockCtrl := gomock.NewController(t)
+	docker := stackmocks.NewMockDocker(mockCtrl)
+	helm := stackmocks.NewMockHelm(mockCtrl)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	writer := filewritermocks.NewMockFileWriter(mockCtrl)
+	forceCleanup := false
+
+	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
+	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
+	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
+
+	hardwareFile := "./testdata/hardware.csv"
+	_, err := NewProvider(
+		datacenterConfig,
+		machineConfigs,
+		clusterSpec.Cluster,
+		hardwareFile,
+		writer,
+		docker,
+		helm,
+		kubectl,
+		testIP,
+		test.FakeNow,
+		forceCleanup,
+		false,
+	)
+
+	expectedErrorMessage := fmt.Sprintf(referrencedMachineConfigsAvailabilityErrMsg, "test-etcd")
+
+	assertError(t, expectedErrorMessage, err)
+}
+
+func TestTinkerbellProviderGetMachineConfigsWithMatchedAndExternalEtcd(t *testing.T) {
+	clusterSpecManifest := "cluster_tinkerbell_external_etcd.yaml"
+	mockCtrl := gomock.NewController(t)
+	docker := stackmocks.NewMockDocker(mockCtrl)
+	helm := stackmocks.NewMockHelm(mockCtrl)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	stackInstaller := stackmocks.NewMockStackInstaller(mockCtrl)
+	writer := filewritermocks.NewMockFileWriter(mockCtrl)
+	forceCleanup := false
+
+	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
+	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
+	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
+
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+	provider.stackInstaller = stackInstaller
+
+	numberOfMatchingMachineConfigs := 3
+
+	got := provider.MachineConfigs(clusterSpec)
+	assert.Equal(t, numberOfMatchingMachineConfigs, len(got))
+
+	gotMachineConfigNames := make([]string, 0)
+	for _, mc := range got {
+		gotMachineConfigNames = append(gotMachineConfigNames, mc.GetName())
+	}
+
+	assert.Equal(t, numberOfMatchingMachineConfigs, len(gotMachineConfigNames))
+}
+
+func TestTinkerbellProviderGetMachineConfigsWithMismatchedMachineConfig(t *testing.T) {
+	clusterSpecManifest := "cluster_tinkerbell_mismatched_machine_config.yaml"
+	mockCtrl := gomock.NewController(t)
+	docker := stackmocks.NewMockDocker(mockCtrl)
+	helm := stackmocks.NewMockHelm(mockCtrl)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	writer := filewritermocks.NewMockFileWriter(mockCtrl)
+	forceCleanup := false
+
+	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
+	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
+	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
+
+	hardwareFile := "./testdata/hardware.csv"
+	_, err := NewProvider(
+		datacenterConfig,
+		machineConfigs,
+		clusterSpec.Cluster,
+		hardwareFile,
+		writer,
+		docker,
+		helm,
+		kubectl,
+		testIP,
+		test.FakeNow,
+		forceCleanup,
+		false,
+	)
+
+	expectedErrorMessage := fmt.Sprintf(referrencedMachineConfigsAvailabilityErrMsg, "single-node-cp")
+
+	assertError(t, expectedErrorMessage, err)
+}
+
 func TestTinkerbellProvider_GenerateCAPISpecForUpgrade_CertBundles(t *testing.T) {
 	clusterSpecManifest := "cluster_bottlerocket_cert_bundles_config.yaml"
 	mockCtrl := gomock.NewController(t)
