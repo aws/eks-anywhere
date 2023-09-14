@@ -4,11 +4,6 @@ import (
 	"fmt"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	apimachineryyaml "k8s.io/apimachinery/pkg/util/yaml"
-	"sigs.k8s.io/yaml"
-
-	"github.com/aws/eks-anywhere/pkg/utils/file"
-	yamlutil "github.com/aws/eks-anywhere/pkg/utils/yaml"
 )
 
 const TinkerbellMachineConfigKind = "TinkerbellMachineConfig"
@@ -55,41 +50,6 @@ func (c *TinkerbellMachineConfigGenerate) Kind() string {
 
 func (c *TinkerbellMachineConfigGenerate) Name() string {
 	return c.ObjectMeta.Name
-}
-
-func GetTinkerbellMachineConfigs(fileName string) (map[string]*TinkerbellMachineConfig, error) {
-	configs := make(map[string]*TinkerbellMachineConfig)
-
-	r, err := file.ReadFile(fileName)
-	if err != nil {
-		return nil, err
-	}
-
-	resources, err := yamlutil.SplitDocuments(r)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, d := range resources {
-		var config TinkerbellMachineConfig
-		var strictUnmarshallErr error
-		if strictUnmarshallErr = apimachineryyaml.UnmarshalStrict(d, &config); strictUnmarshallErr == nil {
-			if config.Kind == TinkerbellMachineConfigKind {
-				configs[config.Name] = &config
-				continue
-			}
-		}
-
-		_ = yaml.Unmarshal(d, &config)
-		if config.Kind == TinkerbellMachineConfigKind && strictUnmarshallErr != nil {
-			return nil, fmt.Errorf("unable to unmarshall content from file due to: %v", strictUnmarshallErr)
-		}
-	}
-
-	if len(configs) == 0 {
-		return nil, fmt.Errorf("unable to find kind %v in file", TinkerbellMachineConfigKind)
-	}
-	return configs, nil
 }
 
 func WithTemplateRef(ref ProviderRefAccessor) TinkerbellMachineConfigGenerateOpt {

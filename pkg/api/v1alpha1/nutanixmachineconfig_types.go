@@ -66,6 +66,9 @@ func (in *NutanixMachineConfig) SetDefaults() {
 
 // PauseReconcile pauses the reconciliation of the NutanixMachineConfig.
 func (in *NutanixMachineConfig) PauseReconcile() {
+	if in.Annotations == nil {
+		in.Annotations = map[string]string{}
+	}
 	in.Annotations[pausedAnnotation] = "true"
 }
 

@@ -15,6 +15,7 @@ import (
 	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/validations"
 )
@@ -65,10 +66,11 @@ func autofill(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("unable to get datacenter config from file: %v", err)
 	}
-	machineConfig, err := v1alpha1.GetVSphereMachineConfigs(clusterConfigFileName)
+	config, err := cluster.ParseConfigFromFile(clusterConfigFileName)
 	if err != nil {
-		return fmt.Errorf("unable to get machine config from file: %v", err)
+		return err
 	}
+	machineConfig := config.VSphereMachineConfigs
 	controlPlaneMachineConfig := machineConfig[clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name]
 	workerMachineConfig := machineConfig[clusterConfig.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name]
 	var updatedFields []string

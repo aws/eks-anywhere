@@ -96,11 +96,12 @@ func givenDatacenterConfig(t *testing.T, fileName string) *v1alpha1.CloudStackDa
 }
 
 func givenMachineConfigs(t *testing.T, fileName string) map[string]*v1alpha1.CloudStackMachineConfig {
-	machineConfigs, err := v1alpha1.GetCloudStackMachineConfigs(path.Join(testDataDir, fileName))
+	config, err := cluster.ParseConfigFromFile(path.Join(testDataDir, fileName))
 	if err != nil {
 		t.Fatalf("unable to get machine configs from file: %v", err)
 	}
-	return machineConfigs
+
+	return config.CloudStackMachineConfigs
 }
 
 func givenProvider(t *testing.T) *cloudstackProvider {
@@ -747,9 +748,9 @@ func TestSetupAndValidateCreateWorkloadClusterSuccess(t *testing.T) {
 	provider.validator = givenWildcardValidator(mockCtrl, clusterSpec)
 
 	for _, config := range newMachineConfigs {
-		kubectl.EXPECT().SearchCloudStackMachineConfig(context.TODO(), config.Name, clusterSpec.ManagementCluster.KubeconfigFile, config.Namespace).Return([]*v1alpha1.CloudStackMachineConfig{}, nil)
+		kubectl.EXPECT().SearchCloudStackMachineConfig(ctx, config.Name, clusterSpec.ManagementCluster.KubeconfigFile, config.Namespace).Return([]*v1alpha1.CloudStackMachineConfig{}, nil)
 	}
-	kubectl.EXPECT().SearchCloudStackDatacenterConfig(context.TODO(), datacenterConfig.Name, clusterSpec.ManagementCluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return([]*v1alpha1.CloudStackDatacenterConfig{}, nil)
+	kubectl.EXPECT().SearchCloudStackDatacenterConfig(ctx, datacenterConfig.Name, clusterSpec.ManagementCluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return([]*v1alpha1.CloudStackDatacenterConfig{}, nil)
 
 	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
 	if err != nil {
@@ -783,10 +784,10 @@ func TestSetupAndValidateCreateWorkloadClusterFailsIfMachineExists(t *testing.T)
 	var existingMachine string
 	for _, config := range newMachineConfigs {
 		if idx == 0 {
-			kubectl.EXPECT().SearchCloudStackMachineConfig(context.TODO(), config.Name, clusterSpec.ManagementCluster.KubeconfigFile, config.Namespace).Return([]*v1alpha1.CloudStackMachineConfig{config}, nil)
+			kubectl.EXPECT().SearchCloudStackMachineConfig(ctx, config.Name, clusterSpec.ManagementCluster.KubeconfigFile, config.Namespace).Return([]*v1alpha1.CloudStackMachineConfig{config}, nil)
 			existingMachine = config.Name
 		} else {
-			kubectl.EXPECT().SearchCloudStackMachineConfig(context.TODO(), config.Name, clusterSpec.ManagementCluster.KubeconfigFile, config.Namespace).Return([]*v1alpha1.CloudStackMachineConfig{}, nil).MaxTimes(1)
+			kubectl.EXPECT().SearchCloudStackMachineConfig(ctx, config.Name, clusterSpec.ManagementCluster.KubeconfigFile, config.Namespace).Return([]*v1alpha1.CloudStackMachineConfig{}, nil).MaxTimes(1)
 		}
 		idx++
 	}
@@ -843,9 +844,9 @@ func TestSetupAndValidateCreateWorkloadClusterFailsIfDatacenterExists(t *testing
 	provider.validator = givenWildcardValidator(mockCtrl, clusterSpec)
 
 	for _, config := range newMachineConfigs {
-		kubectl.EXPECT().SearchCloudStackMachineConfig(context.TODO(), config.Name, clusterSpec.ManagementCluster.KubeconfigFile, config.Namespace).Return([]*v1alpha1.CloudStackMachineConfig{}, nil)
+		kubectl.EXPECT().SearchCloudStackMachineConfig(ctx, config.Name, clusterSpec.ManagementCluster.KubeconfigFile, config.Namespace).Return([]*v1alpha1.CloudStackMachineConfig{}, nil)
 	}
-	kubectl.EXPECT().SearchCloudStackDatacenterConfig(context.TODO(), datacenterConfig.Name, clusterSpec.ManagementCluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return([]*v1alpha1.CloudStackDatacenterConfig{datacenterConfig}, nil)
+	kubectl.EXPECT().SearchCloudStackDatacenterConfig(ctx, datacenterConfig.Name, clusterSpec.ManagementCluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return([]*v1alpha1.CloudStackDatacenterConfig{datacenterConfig}, nil)
 
 	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
 
