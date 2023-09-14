@@ -40,6 +40,8 @@ const (
 
 type PackageControllerClientOpt func(client *PackageControllerClient)
 
+type registryAccessTester func(ctx context.Context, accessKey, secret, registry, region string) error
+
 type PackageControllerClient struct {
 	kubeConfig string
 	chart      *releasev1.Image
@@ -72,6 +74,9 @@ type PackageControllerClient struct {
 
 	// mu provides some thread-safety.
 	mu sync.Mutex
+
+	// registryAccessTester test if the aws credential has access to registry
+	registryAccessTester registryAccessTester
 }
 
 // ClientBuilder returns a k8s client for the specified cluster.
@@ -107,6 +112,7 @@ func NewPackageControllerClientFullLifecycle(logger logr.Logger, chartManager Ch
 		skipWaitForPackageBundle: true,
 		eksaRegion:               eksaDefaultRegion,
 		clientBuilder:            clientBuilder,
+		registryAccessTester:     TestRegistryAccess,
 	}
 }
 
@@ -158,13 +164,14 @@ func (pc *PackageControllerClient) EnableFullLifecycle(ctx context.Context, log 
 // NewPackageControllerClient instantiates a new instance of PackageControllerClient.
 func NewPackageControllerClient(chartManager ChartManager, kubectl KubectlRunner, clusterName, kubeConfig string, chart *releasev1.Image, registryMirror *registrymirror.RegistryMirror, options ...PackageControllerClientOpt) *PackageControllerClient {
 	pcc := &PackageControllerClient{
-		kubeConfig:     kubeConfig,
-		clusterName:    clusterName,
-		chart:          chart,
-		chartManager:   chartManager,
-		kubectl:        kubectl,
-		registryMirror: registryMirror,
-		eksaRegion:     eksaDefaultRegion,
+		kubeConfig:           kubeConfig,
+		clusterName:          clusterName,
+		chart:                chart,
+		chartManager:         chartManager,
+		kubectl:              kubectl,
+		registryMirror:       registryMirror,
+		eksaRegion:           eksaDefaultRegion,
+		registryAccessTester: TestRegistryAccess,
 	}
 
 	for _, o := range options {
@@ -186,7 +193,7 @@ func NewPackageControllerClient(chartManager ChartManager, kubectl KubectlRunner
 func (pc *PackageControllerClient) Enable(ctx context.Context) error {
 	ociURI := fmt.Sprintf("%s%s", "oci://", pc.registryMirror.ReplaceRegistry(pc.chart.Image()))
 	clusterName := fmt.Sprintf("clusterName=%s", pc.clusterName)
-	sourceRegistry, defaultRegistry, defaultImageRegistry := pc.GetCuratedPackagesRegistries()
+	sourceRegistry, defaultRegistry, defaultImageRegistry := pc.GetCuratedPackagesRegistries(ctx)
 	sourceRegistry = fmt.Sprintf("sourceRegistry=%s", sourceRegistry)
 	defaultRegistry = fmt.Sprintf("defaultRegistry=%s", defaultRegistry)
 	defaultImageRegistry = fmt.Sprintf("defaultImageRegistry=%s", defaultImageRegistry)
@@ -232,7 +239,7 @@ func (pc *PackageControllerClient) Enable(ctx context.Context) error {
 }
 
 // GetCuratedPackagesRegistries gets value for configurable registries from PBC.
-func (pc *PackageControllerClient) GetCuratedPackagesRegistries() (sourceRegistry, defaultRegistry, defaultImageRegistry string) {
+func (pc *PackageControllerClient) GetCuratedPackagesRegistries(ctx context.Context) (sourceRegistry, defaultRegistry, defaultImageRegistry string) {
 	sourceRegistry = publicProdECR
 	defaultImageRegistry = packageProdDomain
 	accountName := prodAccount
@@ -259,6 +266,16 @@ func (pc *PackageControllerClient) GetCuratedPackagesRegistries() (sourceRegistr
 	} else {
 		if pc.eksaRegion != eksaDefaultRegion {
 			defaultImageRegistry = strings.ReplaceAll(defaultImageRegistry, eksaDefaultRegion, pc.eksaRegion)
+		}
+
+		regionalRegistry := GetRegionalRegistry(defaultRegistry, pc.eksaRegion)
+		if err := pc.registryAccessTester(ctx, pc.eksaAccessKeyID, pc.eksaSecretAccessKey, regionalRegistry, pc.eksaRegion); err == nil {
+			// use regional registry when the above credential is good
+			logger.V(6).Info("Using regional registry")
+			defaultRegistry = regionalRegistry
+			defaultImageRegistry = regionalRegistry
+		} else {
+			logger.V(6).Info("Using fallback registry", "Registry", defaultRegistry, "RegionalRegistryAccessIssue", err)
 		}
 	}
 	return sourceRegistry, defaultRegistry, defaultImageRegistry
@@ -598,5 +615,12 @@ func WithValuesFileWriter(writer filewriter.FileWriter) func(client *PackageCont
 func WithClusterSpec(clusterSpec *cluster.Spec) func(client *PackageControllerClient) {
 	return func(config *PackageControllerClient) {
 		config.clusterSpec = &clusterSpec.Cluster.Spec
+	}
+}
+
+// WithRegistryAccessTester sets the registryTester.
+func WithRegistryAccessTester(registryTester registryAccessTester) func(client *PackageControllerClient) {
+	return func(config *PackageControllerClient) {
+		config.registryAccessTester = registryTester
 	}
 }
