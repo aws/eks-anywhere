@@ -5,11 +5,14 @@ weight: 40
 aliases:
     /docs/reference/clusterspec/optional/registrymirror/
 description: >
-  EKS Anywhere cluster yaml specification for registry mirror configuration
+  EKS Anywhere cluster specification for registry mirror configuration
 ---
 
-## Registry Mirror Support (optional)
-You can configure EKS Anywhere to use a private registry as a mirror for pulling the required images.
+You can configure EKS Anywhere to use a local registry mirror for its dependencies. When a registry mirror is configured in the EKS Anywhere cluster specification, EKS Anywhere will use it instead of defaulting to Amazon ECR for its dependencies. For details on how to configure your local registry mirror for EKS Anywhere, see the [Configure local registry mirror]({{< relref "./registrymirror/#configure-local-registry-mirror" >}}) section.
+
+See the [airgapped documentation page]({{<relref "../airgapped" >}}) for instructions on downloading and importing EKS Anywhere dependencies to a local registry mirror.
+
+## Registry Mirror Cluster Spec
 
 The following cluster spec shows an example of how to configure registry mirror:
 ```yaml
@@ -33,7 +36,7 @@ spec:
       es6RXmsCj...
       -----END CERTIFICATE-----  
 ```
-## Registry Mirror Configuration Spec Details
+## Registry Mirror Cluster Spec Details
 ### __registryMirrorConfiguration__ (optional)
 * __Description__: top level key; required to use a private registry.
 * __Type__: object
@@ -94,54 +97,10 @@ export REGISTRY_PASSWORD=<password>
 * __Description__: optional field to skip the registry certificate verification. Only use this solution for isolated testing or in a tightly controlled, air-gapped environment. Currently only supported for Ubuntu and RHEL OS.
 * __Type__: boolean
 
-## Import images into a private registry
-You can use the `download images` and `import images` commands to pull images from `public.ecr.aws` and push them to your
-private registry.
-The `copy packages` must be used if you want to copy EKS Anywhere Curated Packages to your registry mirror.
-The `download images` command also pulls the Cilium chart from `public.ecr.aws` and pushes it to the registry mirror. It requires the registry credentials for performing a login. Set the following environment variables for the login:
-```bash
-export REGISTRY_USERNAME=<username>
-export REGISTRY_PASSWORD=<password>
-```
+## Configure local registry mirror
 
-{{% alert title="Warning" color="warning" %}}
-`eksctl anywhere download images` and `eksctl anywhere import images` command need to be run on an amd64 machine to import amd64 images to the registry mirror.
-{{% /alert %}}
-
-Download the EKS Anywhere artifacts to get the EKS Anywhere bundle:
-```bash
-eksctl anywhere download artifacts
-tar -xzf eks-anywhere-downloads.tar.gz
-```
-
-Download and import EKS Anywhere images:
-```bash
-REGISTRY_ENDPOINT=<registry_endpoint>
-eksctl anywhere download images -o eks-anywhere-images.tar
-docker login https://${REGISTRY_ENDPOINT}
-...
-eksctl anywhere import images -i eks-anywhere-images.tar --bundles eks-anywhere-downloads/bundle-release.yaml --registry ${REGISTRY_ENDPOINT}
-```
-
-Use the EKS Anywhere bundle to copy packages:
-```bash
-eksctl anywhere copy packages --bundle ./eks-anywhere-downloads/bundle-release.yaml --dst-cert rootCA.pem ${REGISTRY_ENDPOINT}
-```
-
-## Docker configurations
-It is necessary to add the private registry's CA Certificate
-to the list of CA certificates on the admin machine if your registry uses self-signed certificates.
-
-For [Linux](https://docs.docker.com/engine/security/certificates/), you can place your certificate here: `/etc/docker/certs.d/<private-registry-endpoint>/ca.crt`
-
-For [Mac](https://docs.docker.com/desktop/mac/#add-tls-certificates), you can follow this guide to add the certificate to your keychain: https://docs.docker.com/desktop/mac/#add-tls-certificates
-
-{{% alert title="Note" color="primary" %}}
-  You may need to restart Docker after adding the certificates.
-{{% /alert %}}
-
-## Registry configurations
-Depending on what registry you decide to use, you will need to create the following projects:
+### Project configuration
+The following projects must be created in your registry before importing the EKS Anywhere images:
 
 ```
 bottlerocket
@@ -151,7 +110,7 @@ isovalent
 cilium-chart
 ```
 
-For example, if a registry is available at `private-registry.local`, then the following projects will have to be created:
+For example, if a registry is available at `private-registry.local`, then the following projects must be created.
 
 ```
 https://private-registry.local/bottlerocket
@@ -160,3 +119,19 @@ https://private-registry.local/eks-distro
 https://private-registry.local/isovalent
 https://private-registry.local/cilium-chart
 ```
+
+### Admin machine configuration
+You must configure the Admin machine with the information it needs to communicate with your registry.
+
+Add the registry's CA certificate to the list of CA certificates on the Admin machine if your registry uses self-signed certificates.
+
+- For [Linux](https://docs.docker.com/engine/security/certificates/), you can place your certificate here: `/etc/docker/certs.d/<private-registry-endpoint>/ca.crt`
+- For [Mac](https://docs.docker.com/desktop/mac/#add-tls-certificates), you can follow this guide to add the certificate to your keychain: https://docs.docker.com/desktop/mac/#add-tls-certificates
+
+If your registry uses authentication, the following environment variables must be set on the Admin machine before running the `eksctl anywhere import images` command.
+```bash
+export REGISTRY_USERNAME=<username>
+export REGISTRY_PASSWORD=<password>
+```
+
+
