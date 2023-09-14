@@ -116,19 +116,21 @@ docker pull 783794618700.dkr.ecr.us-west-2.amazonaws.com/emissary-ingress/emissa
 ```
 If the image downloads successfully, it worked!
 
-### Prepare curated packages for airapped clusters 
+### Prepare for using curated packages for airgapped environments
 
-When your cluster is airgapped and you have setup a registry mirror, copy the latest packages from curated packages private ECR to your registry mirror
+{{% content "../getting-started/airgapped/airgap-packages.md" %}}
 
-```bash
-eksctl anywhere copy packages --bundle ${BUNDLE_RELEASE_YAML_PATH} --dst-cert ${REGISTRY_MIRROR_CERT} ${REGISTRY_MIRROR_URL}
-```
-
-And make sure your PackageBundleController.spec is configured to download curated package images from your registry mirror. [DefaultRegistry and defaultImageRegistry]({{< relref "./packages/#packagebundlecontrollerspec" >}}) should have values similar to the following:
+Once the curated packages images are in your local registry mirror, you must configure the curated packages controller to use your local registry mirror post-cluster creation. Configure the `defaultImageRegistry` and `defaultRegistry` settings for the `PackageBundleController` to point to your local registry mirror by applying a similar `yaml` definition as the one below to your standalone or management cluster. Existing `PackageBundleController` can be changed, and you do not need to deploy a new `PackageBundleController`. See the [Packages configuration documentation]({{< relref "./packages/#packagebundlecontrollerspec" >}}) for more information.
 
 ```yaml
-defaultImageRegistry: ${REGISTRY_MIRROR_URL}/curated-packages
-defaultRegistry: ${REGISTRY_MIRROR_URL}/eks-anywhere
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: PackageBundleController
+metadata:
+  name: eksa-packages-bundle-controller
+  namespace: eksa-packages
+spec:
+  defaultImageRegistry: ${REGISTRY_MIRROR_URL}/curated-packages
+  defaultRegistry: ${REGISTRY_MIRROR_URL}/eks-anywhere
 ```
 
 ### Discover curated packages
@@ -136,9 +138,9 @@ defaultRegistry: ${REGISTRY_MIRROR_URL}/eks-anywhere
 You can get a list of the available packages from the command line:
 
 ```bash
-export CLUSTER_NAME=nameofyourcluster
+export CLUSTER_NAME=<your-cluster-name>
 export KUBECONFIG=${PWD}/${CLUSTER_NAME}/${CLUSTER_NAME}-eks-a-cluster.kubeconfig
-eksctl anywhere list packages --kube-version 1.23
+eksctl anywhere list packages --kube-version 1.27
 ```
 
 Example command output:
@@ -158,12 +160,11 @@ emissary-crds           3.3.0-cbf71de34d8bb5a72083f497d599da63e8b3837b
 prometheus              2.41.0-b53c8be243a6cc3ac2553de24ab9f726d9b851ca
 ```
 
-### Generate a curated-packages config
+### Generate curated packages configuration
 
 The example shows how to install the `harbor` package from the [curated package list]({{< relref "./packagelist/" >}}).
-```bash
-export CLUSTER_NAME=nameofyourcluster
-eksctl anywhere generate package harbor --cluster ${CLUSTER_NAME} --kube-version 1.23 > packages.yaml
-```
 
-Available curated packages and troubleshooting guides are listed below.
+```bash
+export CLUSTER_NAME=<your-cluster-name>
+eksctl anywhere generate package harbor --cluster ${CLUSTER_NAME} --kube-version 1.27 > harbor-spec.yaml
+```
