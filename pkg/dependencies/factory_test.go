@@ -18,6 +18,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
+	tink "github.com/aws/eks-anywhere/pkg/providers/tinkerbell"
 	"github.com/aws/eks-anywhere/pkg/registrymirror"
 	"github.com/aws/eks-anywhere/pkg/version"
 	"github.com/aws/eks-anywhere/release/api/v1alpha1"
@@ -82,7 +83,7 @@ func TestFactoryBuildWithProvidervSphere(t *testing.T) {
 	tt := newTest(t, vsphere)
 	deps, err := dependencies.NewFactory().
 		WithLocalExecutables().
-		WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, tt.hardwareConfigFile, false, tt.tinkerbellBootstrapIP, map[string]bool{}).
+		WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, false, map[string]bool{}).
 		Build(context.Background())
 
 	tt.Expect(err).To(BeNil())
@@ -94,7 +95,8 @@ func TestFactoryBuildWithProviderTinkerbell(t *testing.T) {
 	tt := newTest(t, tinkerbell)
 	deps, err := dependencies.NewFactory().
 		WithLocalExecutables().
-		WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, tt.hardwareConfigFile, false, tt.tinkerbellBootstrapIP, map[string]bool{}).
+		WithTinkerbellConfig(tink.Config{HardwareFile: tt.hardwareConfigFile, IP: tt.tinkerbellBootstrapIP}).
+		WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, false, map[string]bool{}).
 		Build(context.Background())
 
 	tt.Expect(err).To(BeNil())
@@ -110,7 +112,7 @@ func TestFactoryBuildWithProviderSnow(t *testing.T) {
 
 	deps, err := dependencies.NewFactory().
 		WithLocalExecutables().
-		WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, tt.hardwareConfigFile, false, tt.tinkerbellBootstrapIP, map[string]bool{}).
+		WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, false, map[string]bool{}).
 		Build(context.Background())
 
 	tt.Expect(err).To(BeNil())
@@ -143,7 +145,7 @@ func TestFactoryBuildWithProviderNutanix(t *testing.T) {
 
 		deps, err := dependencies.NewFactory().
 			WithLocalExecutables().
-			WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, tt.hardwareConfigFile, false, tt.tinkerbellBootstrapIP, map[string]bool{}).
+			WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, false, map[string]bool{}).
 			WithNutanixValidator().
 			Build(context.Background())
 
@@ -164,7 +166,7 @@ func TestFactoryBuildWithInvalidProvider(t *testing.T) {
 
 	deps, err := dependencies.NewFactory().
 		WithLocalExecutables().
-		WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, tt.hardwareConfigFile, false, tt.tinkerbellBootstrapIP, map[string]bool{}).
+		WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, false, map[string]bool{}).
 		Build(context.Background())
 
 	tt.Expect(err).NotTo(BeNil())
@@ -209,7 +211,7 @@ func TestFactoryBuildWithMultipleDependencies(t *testing.T) {
 		WithBootstrapper().
 		WithCliConfig(&tt.cliConfig).
 		WithClusterManager(tt.clusterSpec.Cluster, timeoutOpts).
-		WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, tt.hardwareConfigFile, false, tt.tinkerbellBootstrapIP, map[string]bool{}).
+		WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, false, map[string]bool{}).
 		WithGitOpsFlux(tt.clusterSpec.Cluster, tt.clusterSpec.FluxConfig, nil).
 		WithWriter().
 		WithEksdInstaller().
@@ -525,7 +527,7 @@ func TestFactoryBuildWithCNIInstallerCilium(t *testing.T) {
 	factory := dependencies.NewFactory()
 	deps, err := factory.
 		WithLocalExecutables().
-		WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, tt.hardwareConfigFile, false, tt.tinkerbellBootstrapIP, map[string]bool{}).
+		WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, false, map[string]bool{}).
 		Build(tt.ctx)
 	tt.Expect(err).To(BeNil())
 
@@ -547,7 +549,7 @@ func TestFactoryBuildWithCNIInstallerKindnetd(t *testing.T) {
 	factory := dependencies.NewFactory()
 	deps, err := factory.
 		WithLocalExecutables().
-		WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, tt.hardwareConfigFile, false, tt.tinkerbellBootstrapIP, map[string]bool{}).
+		WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, false, map[string]bool{}).
 		Build(tt.ctx)
 	tt.Expect(err).To(BeNil())
 

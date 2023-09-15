@@ -47,6 +47,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/providers/nutanix"
 	"github.com/aws/eks-anywhere/pkg/providers/snow"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell"
+	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/rufio"
 	"github.com/aws/eks-anywhere/pkg/providers/validator"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
 	"github.com/aws/eks-anywhere/pkg/registrymirror"
@@ -148,6 +149,7 @@ type Factory struct {
 	diagnosticCollectorImage string
 	buildSteps               []buildStep
 	dependencies             Dependencies
+	tinkerbellConfig         tinkerbell.Config
 }
 
 type executablesConfig struct {
@@ -381,8 +383,14 @@ func (f *Factory) WithExecutableBuilder() *Factory {
 	return f
 }
 
+// WithTinkerbellConfig initalizes the tinkerbell dependency and adds to the build steps.
+func (f *Factory) WithTinkerbellConfig(t tinkerbell.Config) *Factory {
+	f.tinkerbellConfig = t
+	return f
+}
+
 // WithProvider initializes the provider dependency and adds to the build steps.
-func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1.Cluster, skipIPCheck bool, hardwareCSVPath string, force bool, tinkerbellBootstrapIP string, skippedValidations map[string]bool) *Factory { // nolint:gocyclo
+func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1.Cluster, skipIPCheck bool, force bool, skippedValidations map[string]bool) *Factory {
 	switch clusterConfig.Spec.DatacenterRef.Kind {
 	case v1alpha1.VSphereDatacenterKind:
 		f.WithKubectl().WithGovc().WithWriter().WithIPValidator()
@@ -461,7 +469,7 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 			}
 
 			machineConfigs := config.TinkerbellMachineConfigs
-			tinkerbellIP := tinkerbellBootstrapIP
+			tinkerbellIP := f.tinkerbellConfig.IP
 			if tinkerbellIP == "" {
 				logger.V(4).Info("Inferring local Tinkerbell Bootstrap IP from environment")
 				localIp, err := networkutils.GetLocalIP()
@@ -472,19 +480,29 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 			}
 			logger.V(4).Info("Tinkerbell IP", "tinkerbell-ip", tinkerbellIP)
 
+			cfg := tinkerbell.Config{
+				HardwareFile: f.tinkerbellConfig.HardwareFile,
+				IP:           tinkerbellIP,
+				Rufio: rufio.Config{
+					WebhookSecret: f.tinkerbellConfig.Rufio.WebhookSecret,
+					ConsumerURL:   f.tinkerbellConfig.Rufio.ConsumerURL,
+				},
+			}
+
+			logger.V(4).Info("Tinkerbell IP", "tinkerbell-ip", tinkerbellIP)
+
 			provider, err := tinkerbell.NewProvider(
 				datacenterConfig,
 				machineConfigs,
 				clusterConfig,
-				hardwareCSVPath,
 				f.dependencies.Writer,
 				f.dependencies.DockerClient,
 				f.dependencies.Helm,
 				f.dependencies.Kubectl,
-				tinkerbellIP,
 				time.Now,
 				force,
 				skipIPCheck,
+				cfg,
 			)
 			if err != nil {
 				return err

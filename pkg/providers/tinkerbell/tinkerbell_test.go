@@ -70,15 +70,17 @@ func newProvider(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineC
 		datacenterConfig,
 		machineConfigs,
 		clusterConfig,
-		hardwareFile,
 		writer,
 		docker,
 		helm,
 		kubectl,
-		testIP,
 		test.FakeNow,
 		forceCleanup,
 		false,
+		Config{
+			HardwareFile: hardwareFile,
+			IP:           testIP,
+		},
 	)
 	if err != nil {
 		panic(err)
@@ -566,7 +568,7 @@ func TestPostMoveManagementToBootstrapSuccess(t *testing.T) {
 	for _, test := range tt {
 		t.Run(test.name, func(t *testing.T) {
 			provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
-			provider.hardwareCSVFile = test.hardwareCSVFile
+			provider.config.HardwareFile = test.hardwareCSVFile
 			if err := provider.readCSVToCatalogue(); err != nil {
 				t.Fatalf("failed to read hardware csv: %v", err)
 			}
@@ -1400,7 +1402,7 @@ func TestSetupAndValidateUpgradeWorkloadClusterErrorBMC(t *testing.T) {
 	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
 	provider.stackInstaller = stackInstaller
 	provider.providerKubectlClient = kubectl
-	provider.hardwareCSVFile = "testdata/hardware.csv"
+	provider.config.HardwareFile = "testdata/hardware.csv"
 
 	clusterSpec.Cluster.SetManagedBy("management-cluster")
 	clusterSpec.ManagementCluster = &types.Cluster{
@@ -1965,15 +1967,17 @@ func TestTinkerbellProviderGetMachineConfigsWithMismatchedAndExternalEtcd(t *tes
 		datacenterConfig,
 		machineConfigs,
 		clusterSpec.Cluster,
-		hardwareFile,
 		writer,
 		docker,
 		helm,
 		kubectl,
-		testIP,
 		test.FakeNow,
 		forceCleanup,
 		false,
+		Config{
+			HardwareFile: hardwareFile,
+			IP:           testIP,
+		},
 	)
 
 	expectedErrorMessage := fmt.Sprintf(referrencedMachineConfigsAvailabilityErrMsg, "test-etcd")
@@ -2029,15 +2033,17 @@ func TestTinkerbellProviderGetMachineConfigsWithMismatchedMachineConfig(t *testi
 		datacenterConfig,
 		machineConfigs,
 		clusterSpec.Cluster,
-		hardwareFile,
 		writer,
 		docker,
 		helm,
 		kubectl,
-		testIP,
 		test.FakeNow,
 		forceCleanup,
 		false,
+		Config{
+			HardwareFile: hardwareFile,
+			IP:           testIP,
+		},
 	)
 
 	expectedErrorMessage := fmt.Sprintf(referrencedMachineConfigsAvailabilityErrMsg, "single-node-cp")

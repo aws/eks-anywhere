@@ -9,6 +9,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
+	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
 	"github.com/aws/eks-anywhere/pkg/validations/createcluster"
@@ -18,8 +19,7 @@ import (
 
 type validateOptions struct {
 	clusterOptions
-	hardwareCSVPath       string
-	tinkerbellBootstrapIP string
+	tinkerbell tinkerbell.Config
 }
 
 var valOpt = &validateOptions{}
@@ -35,13 +35,18 @@ var validateCreateClusterCmd = &cobra.Command{
 
 func init() {
 	validateCreateCmd.AddCommand(validateCreateClusterCmd)
-	applyTinkerbellHardwareFlag(validateCreateClusterCmd.Flags(), &valOpt.hardwareCSVPath)
+	applyTinkerbellHardwareFlag(validateCreateClusterCmd.Flags(), &valOpt.tinkerbell.HardwareFile)
 	validateCreateClusterCmd.Flags().StringVarP(&valOpt.fileName, "filename", "f", "", "Filename that contains EKS-A cluster configuration")
-	validateCreateClusterCmd.Flags().StringVar(&valOpt.tinkerbellBootstrapIP, "tinkerbell-bootstrap-ip", "", "Override the local tinkerbell IP in the bootstrap cluster")
+	validateCreateClusterCmd.Flags().StringVar(&valOpt.tinkerbell.IP, "tinkerbell-bootstrap-ip", "", "Override the local tinkerbell IP in the bootstrap cluster")
 
 	if err := validateCreateClusterCmd.MarkFlagRequired("filename"); err != nil {
 		log.Fatalf("Error marking flag as required: %v", err)
 	}
+
+	validateCreateCmd.Flags().StringVar(&cc.tinkerbellConfig.Rufio.WebhookSecret, "webhook-secrets", "", "Comma separated list of secrets for use with the bare metal webhook provider")
+	markFlagHidden(validateCreateCmd.Flags(), "webhook-secrets")
+	validateCreateCmd.Flags().StringVar(&cc.tinkerbellConfig.Rufio.ConsumerURL, "consumer-url", "", "URL for the bare metal webhook consumer")
+	markFlagHidden(validateCreateCmd.Flags(), "webhook-url")
 }
 
 func (valOpt *validateOptions) validateCreateCluster(cmd *cobra.Command, _ []string) error {
@@ -53,7 +58,7 @@ func (valOpt *validateOptions) validateCreateCluster(cmd *cobra.Command, _ []str
 	}
 
 	if clusterSpec.Config.Cluster.Spec.DatacenterRef.Kind == v1alpha1.TinkerbellDatacenterKind {
-		if err := checkTinkerbellFlags(cmd.Flags(), valOpt.hardwareCSVPath, 0); err != nil {
+		if err := checkTinkerbellFlags(cmd.Flags(), valOpt.tinkerbell.HardwareFile, 0); err != nil {
 			return err
 		}
 	}
@@ -73,7 +78,8 @@ func (valOpt *validateOptions) validateCreateCluster(cmd *cobra.Command, _ []str
 		WithWriterFolder(tmpPath).
 		WithDocker().
 		WithKubectl().
-		WithProvider(valOpt.fileName, clusterSpec.Cluster, false, valOpt.hardwareCSVPath, true, valOpt.tinkerbellBootstrapIP, map[string]bool{}).
+		WithTinkerbellConfig(valOpt.tinkerbell).
+		WithProvider(valOpt.fileName, clusterSpec.Cluster, false, true, map[string]bool{}).
 		WithGitOpsFlux(clusterSpec.Cluster, clusterSpec.FluxConfig, cliConfig).
 		WithUnAuthKubeClient().
 		WithValidatorClients().

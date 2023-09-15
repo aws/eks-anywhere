@@ -174,7 +174,7 @@ func buildCliConfig(clusterSpec *cluster.Spec) *config.CliConfig {
 
 func buildCreateCliConfig(clusterOptions *createClusterOptions) (*config.CreateClusterCLIConfig, error) {
 	createCliConfig := &config.CreateClusterCLIConfig{}
-	createCliConfig.SkipCPIPCheck = clusterOptions.skipIpCheck
+	createCliConfig.SkipCPIPCheck = clusterOptions.skipIPCheck
 	if clusterOptions.noTimeouts {
 		maxTime := time.Duration(math.MaxInt64)
 		createCliConfig.NodeStartupTimeout = maxTime

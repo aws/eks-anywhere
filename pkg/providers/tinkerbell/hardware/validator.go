@@ -127,12 +127,23 @@ func StaticMachineAssertions() MachineAssertion {
 				return fmt.Errorf("BMCIPAddress: %v", err)
 			}
 
-			if m.BMCUsername == "" {
-				return newEmptyFieldError("BMCUsername")
-			}
+			// Only check if BMC username and password are set if webhook secret has not been defined
+			// We don't need to check for username and password if webhook secrets have been defined.
+			if m.WebhookSecret == "" {
+				if m.BMCUsername == "" {
+					return newEmptyFieldError("BMCUsername")
+				}
 
-			if m.BMCPassword == "" {
-				return newEmptyFieldError("BMCPassword")
+				if m.BMCPassword == "" {
+					return newEmptyFieldError("BMCPassword")
+				}
+			} else {
+				webhookSecrets := strings.Split(m.WebhookSecret, ",")
+				for _, secret := range webhookSecrets {
+					if !strings.Contains(secret, "sha256") && !strings.Contains(secret, "sha512") {
+						return fmt.Errorf("Invalid webhook secrets: %s", secret)
+					}
+				}
 			}
 		}
 

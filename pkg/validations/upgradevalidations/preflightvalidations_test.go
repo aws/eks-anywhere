@@ -413,15 +413,17 @@ func newProvider(datacenterConfig anywherev1.TinkerbellDatacenterConfig, machine
 		&datacenterConfig,
 		machineConfigs,
 		clusterConfig,
-		hardwareFile,
 		writer,
 		docker,
 		helm,
 		kubectl,
-		"1.2.3.4",
 		test.FakeNow,
 		forceCleanup,
 		false,
+		tinkerbell.Config{
+			HardwareFile: hardwareFile,
+			IP:           "1.2.3.4",
+		},
 	)
 	if err != nil {
 		panic(err)

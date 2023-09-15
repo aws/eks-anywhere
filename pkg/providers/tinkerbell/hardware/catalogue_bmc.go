@@ -87,7 +87,7 @@ func toRufioMachine(m Machine) *v1alpha1.Machine {
 	// TODO(chrisdoherty4)
 	// 	- Set the namespace to the CAPT namespace.
 	// 	- Patch through insecure TLS.
-	return &v1alpha1.Machine{
+	rufioMachine := &v1alpha1.Machine{
 		TypeMeta: newMachineTypeMeta(),
 		ObjectMeta: v1.ObjectMeta{
 			Name:      formatBMCRef(m),
@@ -104,4 +104,14 @@ func toRufioMachine(m Machine) *v1alpha1.Machine {
 			},
 		},
 	}
+	// if m.ConsumerURL != "" {
+	// 	// TODO: remove comment once reufio PR is merged
+	// 	// Set consumerURL in rufio machinespec
+	// 	rufioMachine.ProviderOptions = &v1alpha1.ProviderOptions{
+	// 		RPC: v1alpha1.RPC{
+	// 			ConsumerURL: m.Rufio.ConsumerURL,
+	// 		},
+	// 	},
+	// }
+	return rufioMachine
 }

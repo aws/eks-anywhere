@@ -198,3 +198,55 @@ func TestTranslateAllWithValidationError(t *testing.T) {
 
 	g.Expect(err.Error()).To(gomega.ContainSubstring(expect.Error()))
 }
+
+func TestTranslateReadsAndWritesWithModifier(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	g := gomega.NewWithT(t)
+
+	reader := mocks.NewMockMachineReader(ctrl)
+	writer := mocks.NewMockMachineWriter(ctrl)
+	validator := mocks.NewMockMachineValidator(ctrl)
+
+	machine := hardware.Machine{
+		Hostname: "foot-bar",
+	}
+
+	validateMachine := hardware.Machine{
+		Hostname:    "foot-bar",
+		BMCUsername: "rufio",
+		BMCPassword: "secret",
+		ConsumerURL: "consumerURL",
+	}
+
+	mods := []func(hardware.Machine) hardware.Machine{}
+	mods = append(mods, func(m hardware.Machine) hardware.Machine {
+		m.BMCPassword = "secret"
+		if m.BMCUsername == "" {
+			// We update the BMCUsername so that validations pass.
+			// When the secret != "" the webhook functionality will be used.
+			// With this the BMCUsername is not relevant for any BMC machines,
+			// hence the statically define name.
+			m.BMCUsername = "rufio"
+		}
+		return m
+	})
+	mods = append(mods, func(m hardware.Machine) hardware.Machine {
+		m.ConsumerURL = "consumerURL"
+		return m
+	})
+
+	var receivedMachine hardware.Machine
+	reader.EXPECT().Read().Return(machine, (error)(nil))
+	validator.EXPECT().Validate(validateMachine).Return((error)(nil))
+	writer.EXPECT().
+		Write(validateMachine).
+		Do(func(machine hardware.Machine) {
+			receivedMachine = validateMachine
+		}).
+		Return((error)(nil))
+
+	err := hardware.Translate(reader, writer, validator, mods...)
+
+	g.Expect(err).ToNot(gomega.HaveOccurred())
+	g.Expect(receivedMachine).To(gomega.BeEquivalentTo(validateMachine))
+}

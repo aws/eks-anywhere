@@ -595,15 +595,17 @@ func (t *PreCoreComponentsUpgradeTestConfig) GetProvider() (*Provider, error) {
 		t.DatacenterConfig,
 		t.MachineConfigs,
 		t.ClusterSpec.Cluster,
-		"",
 		t.Writer,
 		t.Docker,
 		t.Helm,
 		t.KubeClient,
-		testIP,
 		test.FakeNow,
 		false,
 		false,
+		Config{
+			HardwareFile: "",
+			IP:           testIP,
+		},
 	)
 	if err != nil {
 		return nil, err
@@ -643,15 +645,17 @@ func newTinkerbellProvider(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig
 		datacenterConfig,
 		machineConfigs,
 		clusterConfig,
-		hardwareFile,
 		writer,
 		docker,
 		helm,
 		kubectl,
-		testIP,
 		test.FakeNow,
 		forceCleanup,
 		false,
+		Config{
+			HardwareFile: hardwareFile,
+			IP:           testIP,
+		},
 	)
 	if err != nil {
 		panic(err)

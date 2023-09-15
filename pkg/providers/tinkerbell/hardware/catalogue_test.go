@@ -58,7 +58,7 @@ func TestParseYAMLCatalogueWithData(t *testing.T) {
 	buffer := bufio.NewReader(bytes.NewBufferString(hardwareManifestsYAML))
 	catalogue := hardware.NewCatalogue()
 
-	err := hardware.ParseYAMLCatalogue(catalogue, buffer)
+	err := hardware.ParseYAMLCatalogue(catalogue, buffer, "")
 	g.Expect(err).ToNot(gomega.HaveOccurred())
 
 	g.Expect(catalogue.TotalHardware()).To(gomega.Equal(1))
@@ -73,10 +73,25 @@ func TestParseYAMLCatalogueWithoutData(t *testing.T) {
 	buffer := bufio.NewReader(&buf)
 	catalogue := hardware.NewCatalogue()
 
-	err := hardware.ParseYAMLCatalogue(catalogue, buffer)
+	err := hardware.ParseYAMLCatalogue(catalogue, buffer, "")
 	g.Expect(err).ToNot(gomega.HaveOccurred())
 
 	g.Expect(catalogue.TotalHardware()).To(gomega.Equal(0))
 	g.Expect(catalogue.TotalBMCs()).To(gomega.Equal(0))
 	g.Expect(catalogue.TotalSecrets()).To(gomega.Equal(0))
+}
+
+func TestParseYAMLCatalogueWithConsumerURL(t *testing.T) {
+	g := gomega.NewWithT(t)
+
+	buffer := bufio.NewReader(bytes.NewBufferString(hardwareManifestsYAML))
+	catalogue := hardware.NewCatalogue()
+	consumerURL := "test"
+
+	err := hardware.ParseYAMLCatalogue(catalogue, buffer, consumerURL)
+	g.Expect(err).ToNot(gomega.HaveOccurred())
+
+	g.Expect(catalogue.TotalHardware()).To(gomega.Equal(1))
+	g.Expect(catalogue.TotalBMCs()).To(gomega.Equal(1))
+	g.Expect(catalogue.TotalSecrets()).To(gomega.Equal(1))
 }

@@ -33,7 +33,7 @@ func (p *Provider) PreCAPIInstallOnBootstrap(ctx context.Context, cluster *types
 	err := p.stackInstaller.Install(
 		ctx,
 		versionsBundle.Tinkerbell,
-		p.tinkerbellIP,
+		p.config.IP,
 		cluster.KubeconfigFile,
 		p.datacenterConfig.Spec.HookImagesURLPath,
 		stack.WithBootsOnDocker(),
@@ -233,10 +233,31 @@ func (p *Provider) readCSVToCatalogue() error {
 	// Translate all Machine instances from the p.machines source into Kubernetes object types.
 	// The PostBootstrapSetup() call invoked elsewhere in the program serializes the catalogue
 	// and submits it to the clsuter.
-	machines, err := hardware.NewNormalizedCSVReaderFromFile(p.hardwareCSVFile)
+	machines, err := hardware.NewNormalizedCSVReaderFromFile(p.config.HardwareFile)
 	if err != nil {
 		return err
 	}
 
-	return hardware.TranslateAll(machines, catalogueWriter, machineValidator)
+	mods := []func(hardware.Machine) hardware.Machine{}
+	// If webhook secrets have been defined, we create a modifier that will update all
+	// machine.BMCPassword values. This modifier will run as a part of hardware.TranslateAll().
+	if p.config.Rufio.WebhookSecret != "" {
+		mods = append(mods, func(m hardware.Machine) hardware.Machine {
+			m.BMCPassword = p.config.Rufio.WebhookSecret
+			m.WebhookSecret = p.config.Rufio.WebhookSecret
+			return m
+		})
+	}
+
+	// If consumerURL has been defined, we create a modifier that will update all machine.Rufio.ConsumerURL values.
+	// machine.BMCPassword values. This modifier will run as a part of hardware.TranslateAll().
+	if p.config.Rufio.ConsumerURL != "" {
+		mods = append(mods, func(m hardware.Machine) hardware.Machine {
+			m.ConsumerURL = p.config.Rufio.ConsumerURL
+			return m
+		})
+	}
+
+	return hardware.TranslateAll(machines, catalogueWriter, machineValidator, mods...)
+	// return hardware.TranslateAll(machines, catalogueWriter, machineValidator)
 }

@@ -16,6 +16,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 	"github.com/aws/eks-anywhere/pkg/logger"
+	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
 	"github.com/aws/eks-anywhere/pkg/validations/createvalidations"
@@ -26,12 +27,11 @@ import (
 type createClusterOptions struct {
 	clusterOptions
 	timeoutOptions
-	forceClean            bool
-	skipIpCheck           bool
-	hardwareCSVPath       string
-	tinkerbellBootstrapIP string
-	installPackages       string
-	skipValidations       []string
+	forceClean       bool
+	skipIPCheck      bool
+	tinkerbellConfig tinkerbell.Config
+	installPackages  string
+	skipValidations  []string
 }
 
 var cc = &createClusterOptions{}
@@ -49,15 +49,20 @@ func init() {
 	createCmd.AddCommand(createClusterCmd)
 	applyClusterOptionFlags(createClusterCmd.Flags(), &cc.clusterOptions)
 	applyTimeoutFlags(createClusterCmd.Flags(), &cc.timeoutOptions)
-	applyTinkerbellHardwareFlag(createClusterCmd.Flags(), &cc.hardwareCSVPath)
-	flags.String(flags.TinkerbellBootstrapIP, &cc.tinkerbellBootstrapIP, createClusterCmd.Flags())
+	applyTinkerbellHardwareFlag(createClusterCmd.Flags(), &cc.tinkerbellConfig.HardwareFile)
+	flags.String(flags.TinkerbellBootstrapIP, &cc.tinkerbellConfig.IP, createClusterCmd.Flags())
 	createClusterCmd.Flags().BoolVar(&cc.forceClean, "force-cleanup", false, "Force deletion of previously created bootstrap cluster")
 	hideForceCleanup(createClusterCmd.Flags())
-	createClusterCmd.Flags().BoolVar(&cc.skipIpCheck, "skip-ip-check", false, "Skip check for whether cluster control plane ip is in use")
+	createClusterCmd.Flags().BoolVar(&cc.skipIPCheck, "skip-ip-check", false, "Skip check for whether cluster control plane ip is in use")
 	createClusterCmd.Flags().StringVar(&cc.installPackages, "install-packages", "", "Location of curated packages configuration files to install to the cluster")
 	createClusterCmd.Flags().StringArrayVar(&cc.skipValidations, "skip-validations", []string{}, fmt.Sprintf("Bypass create validations by name. Valid arguments you can pass are --skip-validations=%s", strings.Join(createvalidations.SkippableValidations[:], ",")))
 
 	flags.MarkRequired(createClusterCmd.Flags(), flags.ClusterConfig.Name)
+
+	createClusterCmd.Flags().StringVar(&cc.tinkerbellConfig.Rufio.WebhookSecret, "webhook-secrets", "", "Comma separated list of secrets for use with the bare metal webhook provider")
+	markFlagHidden(createClusterCmd.Flags(), "webhook-secrets")
+	createClusterCmd.Flags().StringVar(&cc.tinkerbellConfig.Rufio.ConsumerURL, "consumer-url", "", "URL for the bare metal webhook consumer")
+	markFlagHidden(createClusterCmd.Flags(), "webhook-url")
 }
 
 func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) error {
@@ -79,7 +84,7 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 	}
 
 	if clusterConfig.Spec.DatacenterRef.Kind == v1alpha1.TinkerbellDatacenterKind {
-		if err := checkTinkerbellFlags(cmd.Flags(), cc.hardwareCSVPath, Create); err != nil {
+		if err := checkTinkerbellFlags(cmd.Flags(), cc.tinkerbellConfig.HardwareFile, Create); err != nil {
 			return err
 		}
 	}
@@ -137,7 +142,8 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 		WithBootstrapper().
 		WithCliConfig(cliConfig).
 		WithClusterManager(clusterSpec.Cluster, clusterManagerTimeoutOpts).
-		WithProvider(cc.fileName, clusterSpec.Cluster, cc.skipIpCheck, cc.hardwareCSVPath, cc.forceClean, cc.tinkerbellBootstrapIP, skippedValidations).
+		WithTinkerbellConfig(cc.tinkerbellConfig).
+		WithProvider(cc.fileName, clusterSpec.Cluster, cc.skipIPCheck, cc.forceClean, map[string]bool{}).
 		WithGitOpsFlux(clusterSpec.Cluster, clusterSpec.FluxConfig, cliConfig).
 		WithWriter().
 		WithEksdInstaller().

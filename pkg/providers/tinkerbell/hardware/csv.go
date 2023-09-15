@@ -92,7 +92,7 @@ func ensureRequiredColumnsInCSV(unmatched []string) error {
 }
 
 // BuildHardwareYAML builds a hardware yaml from the csv at the provided path.
-func BuildHardwareYAML(path string) ([]byte, error) {
+func BuildHardwareYAML(path string, webhookSecret string) ([]byte, error) {
 	reader, err := NewNormalizedCSVReaderFromFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("reading csv: %v", err)
@@ -103,7 +103,21 @@ func BuildHardwareYAML(path string) ([]byte, error) {
 
 	validator := NewDefaultMachineValidator()
 
-	err = TranslateAll(reader, writer, validator)
+	// If webhook secrets have been defined, update all machine bmc_passwords to use the webhook secret
+	// Have to do it here since the hardware.TranslateAll call below does a validation before writing to the catalogue,
+	// so updating the catalogueWriter is not an option.
+	mods := []func(Machine) Machine{}
+	if webhookSecret != "" {
+		mods = append(mods, func(m Machine) Machine {
+			m.BMCPassword = webhookSecret
+			m.WebhookSecret = webhookSecret
+			return m
+		})
+	}
+
+	err = TranslateAll(reader, writer, validator, mods...)
+
+	// err = TranslateAll(reader, writer, validator)
 	if err != nil {
 		return nil, fmt.Errorf("generating hardware yaml: %v", err)
 	}

@@ -13,6 +13,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/diagnostics"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
+	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell"
 	"github.com/aws/eks-anywhere/pkg/validations"
 	"github.com/aws/eks-anywhere/pkg/version"
 )
@@ -89,7 +90,8 @@ func (gsbo *generateSupportBundleOptions) generateBundleConfig(ctx context.Conte
 	}
 
 	deps, err := dependencies.ForSpec(ctx, clusterSpec).
-		WithProvider(clusterConfigPath, clusterSpec.Cluster, cc.skipIpCheck, gsbo.hardwareFileName, false, gsbo.tinkerbellBootstrapIP, map[string]bool{}).
+		WithTinkerbellConfig(tinkerbell.Config{HardwareFile: gsbo.hardwareFileName, IP: gsbo.tinkerbellBootstrapIP}).
+		WithProvider(clusterConfigPath, clusterSpec.Cluster, cc.skipIPCheck, false, map[string]bool{}).
 		WithDiagnosticBundleFactory().
 		Build(ctx)
 	if err != nil {

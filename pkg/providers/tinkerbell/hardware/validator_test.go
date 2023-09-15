@@ -214,6 +214,9 @@ func TestStaticMachineAssertions_InvalidMachines(t *testing.T) {
 		"NonIntVLAN": func(h *hardware.Machine) {
 			h.VLANID = "im not an int"
 		},
+		"InvalidWebhookSecret": func(h *hardware.Machine) {
+			h.WebhookSecret = "blah"
+		},
 	}
 
 	validate := hardware.StaticMachineAssertions()
@@ -224,6 +227,24 @@ func TestStaticMachineAssertions_InvalidMachines(t *testing.T) {
 			g.Expect(validate(machine)).To(gomega.HaveOccurred())
 		})
 	}
+}
+
+func TestStaticMachineAssertions_validWebhookSecrets(t *testing.T) {
+	g := gomega.NewWithT(t)
+
+	machine := NewValidMachine()
+	machine.WebhookSecret = "sha256, sha512"
+	validate := hardware.StaticMachineAssertions()
+	g.Expect(validate(machine)).ToNot(gomega.HaveOccurred())
+}
+
+func TestStaticMachineAssertions_invalidWebhookSecrets(t *testing.T) {
+	g := gomega.NewWithT(t)
+
+	machine := NewValidMachine()
+	machine.WebhookSecret = "blah"
+	validate := hardware.StaticMachineAssertions()
+	g.Expect(validate(machine)).To(gomega.HaveOccurred())
 }
 
 func NewValidMachine() hardware.Machine {

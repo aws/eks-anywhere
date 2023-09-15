@@ -14,6 +14,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 	"github.com/aws/eks-anywhere/pkg/logger"
+	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
 	"github.com/aws/eks-anywhere/pkg/validations/upgradevalidations"
@@ -63,6 +64,11 @@ func init() {
 	upgradeClusterCmd.Flags().StringArrayVar(&uc.skipValidations, "skip-validations", []string{}, fmt.Sprintf("Bypass upgrade validations by name. Valid arguments you can pass are --skip-validations=%s", strings.Join(upgradevalidations.SkippableValidations[:], ",")))
 
 	flags.MarkRequired(createClusterCmd.Flags(), flags.ClusterConfig.Name)
+
+	upgradeClusterCmd.Flags().StringVar(&cc.tinkerbellConfig.Rufio.WebhookSecret, "webhook-secrets", "", "Comma separated list of secrets for use with the bare metal webhook provider")
+	markFlagHidden(upgradeClusterCmd.Flags(), "webhook-secrets")
+	upgradeClusterCmd.Flags().StringVar(&cc.tinkerbellConfig.Rufio.ConsumerURL, "consumer-url", "", "URL for the bare metal webhook consumer")
+	markFlagHidden(upgradeClusterCmd.Flags(), "webhook-url")
 }
 
 func (uc *upgradeClusterOptions) upgradeCluster(cmd *cobra.Command) error {
@@ -125,7 +131,8 @@ func (uc *upgradeClusterOptions) upgradeCluster(cmd *cobra.Command) error {
 		WithCliConfig(cliConfig).
 		WithClusterManager(clusterSpec.Cluster, clusterManagerTimeoutOpts).
 		WithClusterApplier().
-		WithProvider(uc.fileName, clusterSpec.Cluster, cc.skipIpCheck, uc.hardwareCSVPath, uc.forceClean, uc.tinkerbellBootstrapIP, skippedValidations).
+		WithTinkerbellConfig(tinkerbell.Config{HardwareFile: uc.hardwareCSVPath, IP: uc.tinkerbellBootstrapIP}).
+		WithProvider(uc.fileName, clusterSpec.Cluster, cc.skipIPCheck, uc.forceClean, map[string]bool{}).
 		WithGitOpsFlux(clusterSpec.Cluster, clusterSpec.FluxConfig, cliConfig).
 		WithWriter().
 		WithCAPIManager().

@@ -62,18 +62,18 @@ func NewCatalogue(opts ...CatalogueOption) *Catalogue {
 }
 
 // ParseYAMLCatalogueFromFile parses filename, a YAML document, using ParseYamlCatalogue.
-func ParseYAMLCatalogueFromFile(catalogue *Catalogue, filename string) error {
+func ParseYAMLCatalogueFromFile(catalogue *Catalogue, filename string, consumerURL string) error {
 	fh, err := os.Open(filename)
 	if err != nil {
 		return err
 	}
 
-	return ParseYAMLCatalogue(catalogue, fh)
+	return ParseYAMLCatalogue(catalogue, fh, consumerURL)
 }
 
 // ParseYAMLCatalogue parses a YAML document, r, that represents a set of Kubernetes manifests.
 // Manifests parsed include CAPT Hardware, PBnJ BMCs and associated Core API Secret.
-func ParseYAMLCatalogue(catalogue *Catalogue, r io.Reader) error {
+func ParseYAMLCatalogue(catalogue *Catalogue, r io.Reader, consumerURL string) error {
 	document := yamlutil.NewYAMLReader(bufio.NewReader(r))
 	for {
 		manifest, err := document.Read()
@@ -95,7 +95,7 @@ func ParseYAMLCatalogue(catalogue *Catalogue, r io.Reader) error {
 				return err
 			}
 		case "Machine":
-			if err := catalogueSerializedBMC(catalogue, manifest); err != nil {
+			if err := catalogueSerializedBMC(catalogue, manifest, consumerURL); err != nil {
 				return err
 			}
 		case "Secret":
@@ -117,11 +117,16 @@ func catalogueSerializedHardware(catalogue *Catalogue, manifest []byte) error {
 	return nil
 }
 
-func catalogueSerializedBMC(catalogue *Catalogue, manifest []byte) error {
+func catalogueSerializedBMC(catalogue *Catalogue, manifest []byte, consumerURL string) error {
 	var bmc rufiov1alpha1.Machine
 	if err := yaml.UnmarshalStrict(manifest, &bmc); err != nil {
 		return fmt.Errorf("unable to parse bmc manifest: %v", err)
 	}
+	// TODO: Uncomment this once rufio crds become available
+	// parse consumerURL here if set as env var
+	// if consumerURL != "" {
+	// 	bmc.Spec.ProviderOptions.RPC.ConsumerURL = consumerURL
+	// }
 	if err := catalogue.InsertBMC(&bmc); err != nil {
 		return err
 	}

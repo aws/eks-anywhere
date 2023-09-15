@@ -27,6 +27,11 @@ type Machine struct {
 	BMCUsername  string `csv:"bmc_username, omitempty"`
 	BMCPassword  string `csv:"bmc_password, omitempty"`
 	VLANID       string `csv:"vlan_id, omitempty"`
+
+	// Rufio configurations
+	// Rufio rufio.Config `csv:"rufio, omitempty"`
+	ConsumerURL   string `csv:"consumerURL, omitempty"`
+	WebhookSecret string `csv:"webhookSecret, omitempty"`
 }
 
 // HasBMC determines if m has a BMC configuration. A BMC configuration is present if any of the BMC fields

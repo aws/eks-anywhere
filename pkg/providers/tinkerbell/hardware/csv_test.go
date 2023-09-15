@@ -147,7 +147,7 @@ func TestCSVReaderWithMissingRequiredColumns(t *testing.T) {
 func TestCSVBuildHardwareYamlFromCSV(t *testing.T) {
 	g := gomega.NewWithT(t)
 
-	hardwareYaml, err := hardware.BuildHardwareYAML("./testdata/hardware.csv")
+	hardwareYaml, err := hardware.BuildHardwareYAML("./testdata/hardware.csv", "")
 	g.Expect(err).ToNot(gomega.HaveOccurred())
 	g.Expect(hardwareYaml).To(gomega.Equal([]byte(`apiVersion: tinkerbell.org/v1alpha1
 kind: Hardware
@@ -223,6 +223,14 @@ metadata:
   name: bmc-worker1-auth
   namespace: eksa-system
 type: kubernetes.io/basic-auth`)))
+}
+
+func TestBuildHardwareYAML(t *testing.T) {
+	g := gomega.NewWithT(t)
+	webhookSecret := "sha256"
+	_, err := hardware.BuildHardwareYAML("./testdata/hardware.csv", webhookSecret)
+	g.Expect(err).ToNot(gomega.HaveOccurred())
+
 }
 
 // BufferedCSV is an in-memory CSV that satisfies io.Reader and io.Writer.
