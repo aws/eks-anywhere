@@ -192,7 +192,7 @@ func (r *Reconciler) ReconcileControlPlane(ctx context.Context, log logr.Logger,
 		return controller.Result{}, err
 	}
 
-	return clusters.ReconcileControlPlane(ctx, r.client, toClientControlPlane(cp))
+	return clusters.ReconcileControlPlane(ctx, log, r.client, toClientControlPlane(cp))
 }
 
 // CheckControlPlaneReady checks whether the control plane for an eks-a cluster is ready or not.

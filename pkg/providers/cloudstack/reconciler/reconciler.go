@@ -125,7 +125,7 @@ func (r *Reconciler) ReconcileControlPlane(ctx context.Context, log logr.Logger,
 		return controller.Result{}, err
 	}
 
-	return clusters.ReconcileControlPlane(ctx, r.client, &clusters.ControlPlane{
+	return clusters.ReconcileControlPlane(ctx, log, r.client, &clusters.ControlPlane{
 		Cluster:                     cp.Cluster,
 		ProviderCluster:             cp.ProviderCluster,
 		KubeadmControlPlane:         cp.KubeadmControlPlane,

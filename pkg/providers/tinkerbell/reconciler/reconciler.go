@@ -235,7 +235,7 @@ func (r *Reconciler) ReconcileControlPlane(ctx context.Context, log logr.Logger,
 	log = log.WithValues("phase", "reconcileControlPlane")
 	log.Info("Applying control plane CAPI objects")
 
-	return clusters.ReconcileControlPlane(ctx, r.client, toClientControlPlane(tinkerbellScope.ControlPlane))
+	return clusters.ReconcileControlPlane(ctx, log, r.client, toClientControlPlane(tinkerbellScope.ControlPlane))
 }
 
 // CheckControlPlaneReady checks whether the control plane for an eks-a cluster is ready or not.
