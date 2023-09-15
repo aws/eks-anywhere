@@ -28,15 +28,21 @@ See [Create cluster workflow]({{< relref "../overview" >}}) for an overview of t
 - 30GB free disk space
 - Administrative machine must be on the same Layer 2 network as the cluster machines (Bare Metal provider only).
 
+Here are a few other things to keep in mind:
+
+* If you are using Ubuntu, use the Docker CE installation instructions to install Docker and not the Snap installation, as described [here.](https://docs.docker.com/engine/install/ubuntu/)
+
+* If you are using EKS Anywhere v0.15 or earlier and Ubuntu 21.10 or 22.04, you will need to switch from _cgroups v2_ to _cgroups v1_. For details, see [Troubleshooting Guide.]({{< relref "../../troubleshooting/troubleshooting.md#for-eks-anywhere-v015-and-earlier-cgroups-v2-is-not-supported-in-ubuntu-2110-and-2204" >}})
+
+* If you are using Docker Desktop, you need to know that:
+
+  * For EKS Anywhere Bare Metal, Docker Desktop is not supported
+  * For EKS Anywhere vSphere, if you are using EKS Anywhere v0.15 or earlier and Mac OS Docker Desktop 4.4.2 or newer `"deprecatedCgroupv1": true` must be set in `~/Library/Group\ Containers/group.com.docker/settings.json`.
+
 #### Tools
 - [Docker 20.x.x](https://docs.docker.com/engine/install/)
 - [`curl`](https://everything.curl.dev/get)
 - [`yq`](https://github.com/mikefarah/yq/#install)
-
-{{% alert title="Note" color="primary" %}}
-- If you are using Ubuntu, use the Docker CE installation instructions to install Docker as described [here.](https://docs.docker.com/engine/install/ubuntu/) 
-- For EKS Anywhere Bare Metal, Docker Desktop is not supported.
-{{% /alert %}}
 
 ### Install EKS Anywhere CLI tools
 
@@ -78,7 +84,7 @@ sudo install -m 0755 ./eksctl-anywhere /usr/local/bin/eksctl-anywhere
 ```
 
 Install the `kubectl` Kubernetes command line tool.
-This can be done by following the instructions [here](https://kubernetes.io/docs/tasks/tools/).
+This can be done by following the instructions [here](https://kubernetes.io/docs/tasks/tools/#kubectl).
 
 Or you can install the latest kubectl directly with the following.
 
