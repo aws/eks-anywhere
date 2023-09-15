@@ -98,7 +98,7 @@ type ClusterSpecGenerate struct {
 	Packages                    *PackageConfiguration        `json:"packages,omitempty"`
 	// BundlesRef contains a reference to the Bundles containing the desired dependencies for the cluster.
 	// DEPRECATED: Use EksaVersion instead.
-	BundlesRef         *BundlesRef         `json:"bundlesRef"`
+	BundlesRef         *BundlesRef         `json:"bundlesRef,omitempty"`
 	EksaVersion        *EksaVersion        `json:"eksaVersion,omitempty"`
 	MachineHealthCheck *MachineHealthCheck `json:"machineHealthCheck,omitempty"`
 }
