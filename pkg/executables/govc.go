@@ -1188,7 +1188,7 @@ func (g *Govc) GetResourcePoolInfo(ctx context.Context, datacenter, resourcepool
 	return poolInfo, nil
 }
 
-// helper function that parses the resource pool response and returns memory requirements.
+// getPoolInfo parses resource pool response and returns memory requirements.
 func getPoolInfo(rp *resourcePool) (map[string]int, error) {
 	memoryUsed, err := getValueFromString(rp.memoryUsage)
 	if err != nil {
@@ -1207,6 +1207,7 @@ func getPoolInfo(rp *resourcePool) (map[string]int, error) {
 	return poolInfo, nil
 }
 
+// getValueFromString cleans the input string and returns the extracted numerical value.
 func getValueFromString(str string) (int, error) {
 	splitResponse := strings.Split(strings.TrimSpace(str), " ")
 	nonNumericRegex := regexp.MustCompile(`[^0-9- ]+`)

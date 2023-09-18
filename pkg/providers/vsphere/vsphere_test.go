@@ -1871,10 +1871,6 @@ func TestSetupAndValidateUpgradeClusterSameMachineConfigforCPandEtcd(t *testing.
 	for _, mc := range clusterSpec.VSphereMachineConfigs {
 		kubectl.EXPECT().GetEksaVSphereMachineConfig(ctx, gomock.Any(), cluster.KubeconfigFile, clusterSpec.Cluster.GetNamespace()).Return(mc, nil).AnyTimes()
 	}
-	// resourcePoolResponse := map[string]int{
-	// 	"Memory_Available": -1,
-	// }
-	// provider.govc.EXPECT().GetResourcePoolInfo(tt.ctx, tt.clusterSpec.VSphereDatacenter.Spec.Datacenter, tt.clusterSpec.VSphereMachineConfigs[controlPlaneMachineConfigName].Spec.ResourcePool).Return(resourcePoolResponse, nil)
 	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec, clusterSpec)
 	if err != nil {
 		t.Fatalf("unexpected failure %v", err)
