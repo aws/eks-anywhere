@@ -48,8 +48,8 @@ func (s Set[T]) ToSlice() []T {
 	return keys
 }
 
-// MapSet allows to map a collection to a Set using a closure to extract
-// the values of type T.
+// MapSet converts c to a new set. f is used to extract the value for representing each element
+// of c.
 func MapSet[G any, T comparable](c []G, f func(G) T) Set[T] {
 	s := NewSet[T]()
 	for _, element := range c {
