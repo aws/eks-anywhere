@@ -50,24 +50,6 @@ func (t *Templater) GenerateUpgradePreflightManifest(ctx context.Context, spec *
 
 	tolerationsList := []map[string]string{
 		{
-			"key":    "node.kubernetes.io/not-ready",
-			"effect": "NoSchedule",
-		},
-		{
-			"key":    "node-role.kubernetes.io/master",
-			"effect": "NoSchedule",
-		},
-		{
-			"key":    "node-role.kubernetes.io/control-plane",
-			"effect": "NoSchedule",
-		},
-		{
-			"key":    "node.cloudprovider.kubernetes.io/uninitialized",
-			"effect": "NoSchedule",
-			"value":  "true",
-		},
-		{
-			"key":      "CriticalAddonsOnly",
 			"operator": "Exists",
 		},
 	}
