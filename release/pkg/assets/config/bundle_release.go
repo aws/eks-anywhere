@@ -599,18 +599,21 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 			{
 				Name:                "eks-distro",
 				OSName:              "bottlerocket",
+				OSVersion:           "1",
 				Format:              "ami",
 				ArchiveS3PathGetter: archives.EksDistroArtifactPathGetter,
 			},
 			{
 				Name:                "eks-distro",
 				OSName:              "bottlerocket",
+				OSVersion:           "1",
 				Format:              "ova",
 				ArchiveS3PathGetter: archives.EksDistroArtifactPathGetter,
 			},
 			{
 				Name:                "eks-distro",
 				OSName:              "bottlerocket",
+				OSVersion:           "1",
 				Format:              "raw",
 				ArchiveS3PathGetter: archives.EksDistroArtifactPathGetter,
 			},

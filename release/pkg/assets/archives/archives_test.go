@@ -125,12 +125,13 @@ func TestGenerateArchiveAssets(t *testing.T) {
 			archive: &assettypes.Archive{
 				Name:                "baz",
 				OSName:              "lorem",
+				OSVersion:           "v1.2.3",
 				Format:              "ova",
 				ArchiveS3PathGetter: EksDistroArtifactPathGetter,
 			},
 			wantArchiveArtifact: &releasetypes.ArchiveArtifact{
 				SourceS3Key:       "lorem.ova",
-				SourceS3Prefix:    "projects/foo/bar/1-21/ova/lorem/latest",
+				SourceS3Prefix:    "projects/foo/bar/1-21/ova/lorem/v1.2.3/latest",
 				ArtifactPath:      "artifacts/baz-ova/1-21",
 				ReleaseName:       "lorem-1.21.9-eks-d-1-21-8-eks-a-v0.0.0-dev-build.0-amd64.ova",
 				ReleaseS3Path:     "artifacts/v0.0.0-dev-build.0/eks-distro/ova/1-21/1-21-8",

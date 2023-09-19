@@ -53,7 +53,7 @@ func EksDistroArtifactPathGetter(rc *releasetypes.ReleaseConfig, archive *assett
 
 	if rc.DevRelease || rc.ReleaseEnvironment == "development" {
 		sourceS3Key = fmt.Sprintf("%s.%s", archive.OSName, imageExtension)
-		sourceS3Prefix = fmt.Sprintf("%s/%s/%s/%s/%s", projectPath, eksDReleaseChannel, archive.Format, archive.OSName, latestPath)
+		sourceS3Prefix = fmt.Sprintf("%s/%s/%s/%s/%s/%s", projectPath, eksDReleaseChannel, archive.Format, archive.OSName, archive.OSVersion, latestPath)
 	} else {
 		sourceS3Key = fmt.Sprintf("%s-%s-eks-d-%s-%s-eks-a-%d-%s.%s",
 			archive.OSName,
