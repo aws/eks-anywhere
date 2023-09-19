@@ -135,24 +135,6 @@ func TestTemplaterGenerateUpgradePreflightManifestSuccess(t *testing.T) {
 			},
 			"tolerations": []map[string]string{
 				{
-					"key":    "node.kubernetes.io/not-ready",
-					"effect": "NoSchedule",
-				},
-				{
-					"key":    "node-role.kubernetes.io/master",
-					"effect": "NoSchedule",
-				},
-				{
-					"key":    "node-role.kubernetes.io/control-plane",
-					"effect": "NoSchedule",
-				},
-				{
-					"key":    "node.cloudprovider.kubernetes.io/uninitialized",
-					"effect": "NoSchedule",
-					"value":  "true",
-				},
-				{
-					"key":      "CriticalAddonsOnly",
 					"operator": "Exists",
 				},
 			},
@@ -445,7 +427,7 @@ func TestTemplaterGenerateManifestForSingleNodeCluster(t *testing.T) {
 
 	tt.h.EXPECT().
 		Template(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-		DoAndReturn(func(_ interface{}, _ interface{}, _ interface{}, _ interface{}, values map[string]interface{}, _ interface{}) ([]byte, error) {
+		DoAndReturn(func(_, _, _, _ interface{}, values map[string]interface{}, _ interface{}) ([]byte, error) {
 			tt.Expect(reflect.ValueOf(values["operator"]).MapIndex(reflect.ValueOf("replicas")).Interface().(int)).To(Equal(1))
 			return tt.manifest, nil
 		})
