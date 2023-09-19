@@ -471,12 +471,14 @@ type datastoreUsage struct {
 }
 
 func (p *vsphereProvider) getPrevMachineConfigDatastoreUsage(ctx context.Context, machineConfig *v1alpha1.VSphereMachineConfig, cluster *types.Cluster, count int) (diskGiB float64, err error) {
-	em, err := p.providerKubectlClient.GetEksaVSphereMachineConfig(ctx, machineConfig.Name, cluster.KubeconfigFile, machineConfig.GetNamespace())
-	if err != nil {
-		return 0, err
-	}
-	if em != nil {
-		return float64(em.Spec.DiskGiB * count), nil
+	if count > 0 {
+		em, err := p.providerKubectlClient.GetEksaVSphereMachineConfig(ctx, machineConfig.Name, cluster.KubeconfigFile, machineConfig.GetNamespace())
+		if err != nil {
+			return 0, err
+		}
+		if em != nil {
+			return float64(em.Spec.DiskGiB * count), nil
+		}
 	}
 	return 0, nil
 }
