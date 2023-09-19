@@ -37,18 +37,18 @@ spec:
         arch:
         - amd64
         description: Container image for bottlerocket-admin image
-        imageDigest: sha256:a1b07272379f62ed857c3dd29e0624773a634eec24716c249e7d2fc8b6ef98ec
+        imageDigest: sha256:2a81ceb8d2f40c1573d2358398da97c12d516888a702e710ea46d0ef5380e5a3
         name: bottlerocket-admin
         os: linux
-        uri: public.ecr.aws/bottlerocket/bottlerocket-admin:v0.10.2
+        uri: public.ecr.aws/bottlerocket/bottlerocket-admin:v0.11.0
       control:
         arch:
         - amd64
         description: Container image for bottlerocket-control image
-        imageDigest: sha256:104b9e8def8f9cb07b77d407f774a1d731ef785dd880007cec68d0003d7f1900
+        imageDigest: sha256:551be0f7ec17780e766e2ed9d8162b9a65c9f455d32f32aa095f1c5ba5c32118
         name: bottlerocket-control
         os: linux
-        uri: public.ecr.aws/bottlerocket/bottlerocket-control:v0.7.3
+        uri: public.ecr.aws/bottlerocket/bottlerocket-control:v0.7.4
       kubeadmBootstrap:
         arch:
         - amd64
@@ -823,18 +823,18 @@ spec:
         arch:
         - amd64
         description: Container image for bottlerocket-admin image
-        imageDigest: sha256:a1b07272379f62ed857c3dd29e0624773a634eec24716c249e7d2fc8b6ef98ec
+        imageDigest: sha256:2a81ceb8d2f40c1573d2358398da97c12d516888a702e710ea46d0ef5380e5a3
         name: bottlerocket-admin
         os: linux
-        uri: public.ecr.aws/bottlerocket/bottlerocket-admin:v0.10.2
+        uri: public.ecr.aws/bottlerocket/bottlerocket-admin:v0.11.0
       control:
         arch:
         - amd64
         description: Container image for bottlerocket-control image
-        imageDigest: sha256:104b9e8def8f9cb07b77d407f774a1d731ef785dd880007cec68d0003d7f1900
+        imageDigest: sha256:551be0f7ec17780e766e2ed9d8162b9a65c9f455d32f32aa095f1c5ba5c32118
         name: bottlerocket-control
         os: linux
-        uri: public.ecr.aws/bottlerocket/bottlerocket-control:v0.7.3
+        uri: public.ecr.aws/bottlerocket/bottlerocket-control:v0.7.4
       kubeadmBootstrap:
         arch:
         - amd64
@@ -1609,18 +1609,18 @@ spec:
         arch:
         - amd64
         description: Container image for bottlerocket-admin image
-        imageDigest: sha256:a1b07272379f62ed857c3dd29e0624773a634eec24716c249e7d2fc8b6ef98ec
+        imageDigest: sha256:2a81ceb8d2f40c1573d2358398da97c12d516888a702e710ea46d0ef5380e5a3
         name: bottlerocket-admin
         os: linux
-        uri: public.ecr.aws/bottlerocket/bottlerocket-admin:v0.10.2
+        uri: public.ecr.aws/bottlerocket/bottlerocket-admin:v0.11.0
       control:
         arch:
         - amd64
         description: Container image for bottlerocket-control image
-        imageDigest: sha256:104b9e8def8f9cb07b77d407f774a1d731ef785dd880007cec68d0003d7f1900
+        imageDigest: sha256:551be0f7ec17780e766e2ed9d8162b9a65c9f455d32f32aa095f1c5ba5c32118
         name: bottlerocket-control
         os: linux
-        uri: public.ecr.aws/bottlerocket/bottlerocket-control:v0.7.3
+        uri: public.ecr.aws/bottlerocket/bottlerocket-control:v0.7.4
       kubeadmBootstrap:
         arch:
         - amd64
@@ -2368,18 +2368,18 @@ spec:
         arch:
         - amd64
         description: Container image for bottlerocket-admin image
-        imageDigest: sha256:a1b07272379f62ed857c3dd29e0624773a634eec24716c249e7d2fc8b6ef98ec
+        imageDigest: sha256:2a81ceb8d2f40c1573d2358398da97c12d516888a702e710ea46d0ef5380e5a3
         name: bottlerocket-admin
         os: linux
-        uri: public.ecr.aws/bottlerocket/bottlerocket-admin:v0.10.2
+        uri: public.ecr.aws/bottlerocket/bottlerocket-admin:v0.11.0
       control:
         arch:
         - amd64
         description: Container image for bottlerocket-control image
-        imageDigest: sha256:104b9e8def8f9cb07b77d407f774a1d731ef785dd880007cec68d0003d7f1900
+        imageDigest: sha256:551be0f7ec17780e766e2ed9d8162b9a65c9f455d32f32aa095f1c5ba5c32118
         name: bottlerocket-control
         os: linux
-        uri: public.ecr.aws/bottlerocket/bottlerocket-control:v0.7.3
+        uri: public.ecr.aws/bottlerocket/bottlerocket-control:v0.7.4
       kubeadmBootstrap:
         arch:
         - amd64
@@ -3127,18 +3127,18 @@ spec:
         arch:
         - amd64
         description: Container image for bottlerocket-admin image
-        imageDigest: sha256:a1b07272379f62ed857c3dd29e0624773a634eec24716c249e7d2fc8b6ef98ec
+        imageDigest: sha256:2a81ceb8d2f40c1573d2358398da97c12d516888a702e710ea46d0ef5380e5a3
         name: bottlerocket-admin
         os: linux
-        uri: public.ecr.aws/bottlerocket/bottlerocket-admin:v0.10.2
+        uri: public.ecr.aws/bottlerocket/bottlerocket-admin:v0.11.0
       control:
         arch:
         - amd64
         description: Container image for bottlerocket-control image
-        imageDigest: sha256:104b9e8def8f9cb07b77d407f774a1d731ef785dd880007cec68d0003d7f1900
+        imageDigest: sha256:551be0f7ec17780e766e2ed9d8162b9a65c9f455d32f32aa095f1c5ba5c32118
         name: bottlerocket-control
         os: linux
-        uri: public.ecr.aws/bottlerocket/bottlerocket-control:v0.7.3
+        uri: public.ecr.aws/bottlerocket/bottlerocket-control:v0.7.4
       kubeadmBootstrap:
         arch:
         - amd64
@@ -3886,18 +3886,18 @@ spec:
         arch:
         - amd64
         description: Container image for bottlerocket-admin image
-        imageDigest: sha256:a1b07272379f62ed857c3dd29e0624773a634eec24716c249e7d2fc8b6ef98ec
+        imageDigest: sha256:2a81ceb8d2f40c1573d2358398da97c12d516888a702e710ea46d0ef5380e5a3
         name: bottlerocket-admin
         os: linux
-        uri: public.ecr.aws/bottlerocket/bottlerocket-admin:v0.10.2
+        uri: public.ecr.aws/bottlerocket/bottlerocket-admin:v0.11.0
       control:
         arch:
         - amd64
         description: Container image for bottlerocket-control image
-        imageDigest: sha256:104b9e8def8f9cb07b77d407f774a1d731ef785dd880007cec68d0003d7f1900
+        imageDigest: sha256:551be0f7ec17780e766e2ed9d8162b9a65c9f455d32f32aa095f1c5ba5c32118
         name: bottlerocket-control
         os: linux
-        uri: public.ecr.aws/bottlerocket/bottlerocket-control:v0.7.3
+        uri: public.ecr.aws/bottlerocket/bottlerocket-control:v0.7.4
       kubeadmBootstrap:
         arch:
         - amd64

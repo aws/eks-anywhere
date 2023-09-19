@@ -44,6 +44,7 @@ type Archive struct {
 	Name                 string
 	Format               string
 	OSName               string
+	OSVersion            string
 	ArchitectureOverride string
 	ArchiveS3PathGetter  ArchiveS3PathGenerator
 }
