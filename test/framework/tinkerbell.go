@@ -313,7 +313,7 @@ func Ubuntu127Image() api.TinkerbellFiller {
 	return imageForKubeVersionAndOS(anywherev1.Kube127, Ubuntu2004)
 }
 
-// Ubuntu127Image represents an Ubuntu raw image corresponding to Kubernetes 1.27.
+// Ubuntu128Image represents an Ubuntu raw image corresponding to Kubernetes 1.28.
 func Ubuntu128Image() api.TinkerbellFiller {
 	return imageForKubeVersionAndOS(anywherev1.Kube128, Ubuntu2004)
 }

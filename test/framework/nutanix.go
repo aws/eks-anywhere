@@ -38,6 +38,7 @@ const (
 	nutanixTemplateNameUbuntu125Var = "T_NUTANIX_TEMPLATE_NAME_UBUNTU_1_25"
 	nutanixTemplateNameUbuntu126Var = "T_NUTANIX_TEMPLATE_NAME_UBUNTU_1_26"
 	nutanixTemplateNameUbuntu127Var = "T_NUTANIX_TEMPLATE_NAME_UBUNTU_1_27"
+	nutanixTemplateNameUbuntu128Var = "T_NUTANIX_TEMPLATE_NAME_UBUNTU_1_28"
 )
 
 var requiredNutanixEnvVars = []string{
@@ -231,6 +232,12 @@ func WithUbuntu127Nutanix() NutanixOpt {
 	return withNutanixKubeVersionAndOS(anywherev1.Kube127, Ubuntu2004, nil)
 }
 
+// WithUbuntu128Nutanix returns a NutanixOpt that adds API fillers to use a Ubuntu Nutanix template for k8s 1.28
+// and the "ubuntu" osFamily in all machine configs.
+func WithUbuntu128Nutanix() NutanixOpt {
+	return withNutanixKubeVersionAndOS(anywherev1.Kube128, Ubuntu2004, nil)
+}
+
 // withNutanixKubeVersionAndOSForUUID returns a NutanixOpt that adds API fillers to use a Nutanix template UUID
 // corresponding to the provided OS family and Kubernetes version, in addition to configuring all machine configs
 // to use this OS family.
@@ -269,6 +276,12 @@ func WithUbuntu126NutanixUUID() NutanixOpt {
 // and the "ubuntu" osFamily in all machine configs.
 func WithUbuntu127NutanixUUID() NutanixOpt {
 	return withNutanixKubeVersionAndOSForUUID(anywherev1.Kube127, Ubuntu2004, nil)
+}
+
+// WithUbuntu128NutanixUUID returns a NutanixOpt that adds API fillers to use a Ubuntu Nutanix template UUID for k8s 1.28
+// and the "ubuntu" osFamily in all machine configs.
+func WithUbuntu128NutanixUUID() NutanixOpt {
+	return withNutanixKubeVersionAndOSForUUID(anywherev1.Kube128, Ubuntu2004, nil)
 }
 
 func (n *Nutanix) withNutanixUUID(name string, osFamily anywherev1.OSFamily) []api.NutanixFiller {
@@ -344,6 +357,12 @@ func (n *Nutanix) Ubuntu126Template() api.NutanixFiller {
 // image name parameter in the spec.
 func (n *Nutanix) Ubuntu127Template() api.NutanixFiller {
 	return n.templateForKubeVersionAndOS(anywherev1.Kube127, Ubuntu2004, nil)
+}
+
+// Ubuntu128Template returns NutanixFiller by reading the env var and setting machine config's
+// image name parameter in the spec.
+func (n *Nutanix) Ubuntu128Template() api.NutanixFiller {
+	return n.templateForKubeVersionAndOS(anywherev1.Kube128, Ubuntu2004, nil)
 }
 
 // ClusterStateValidations returns a list of provider specific ClusterStateValidations.
