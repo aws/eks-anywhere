@@ -13,6 +13,7 @@ var clusterDefaults = []func(*Cluster) error{
 	setRegistryMirrorConfigDefaults,
 	setWorkerNodeGroupDefaults,
 	setCNIConfigDefault,
+	setEtcdEncryptionConfigDefaults,
 }
 
 func setClusterDefaults(cluster *Cluster) error {

@@ -3866,11 +3866,28 @@ spec:
                             description: KMS defines the configuration for KMS Encryption
                               provider.
                             properties:
+                              cachesize:
+                                description: CacheSize defines the maximum number
+                                  of encrypted objects to be cached in memory. The
+                                  default value is 1000. You can set this to a negative
+                                  value to disable caching.
+                                format: int32
+                                type: integer
+                              name:
+                                description: Name defines the name of KMS plugin to
+                                  be used.
+                                type: string
                               socketListenAddress:
                                 description: SocketListenAddress defines a UNIX socket
                                   address that the KMS provider listens on.
                                 type: string
+                              timeout:
+                                description: Timeout for kube-apiserver to wait for
+                                  KMS plugin. Default is 3s.
+                                format: int64
+                                type: integer
                             required:
+                            - name
                             - socketListenAddress
                             type: object
                         required:

@@ -84,6 +84,10 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 		}
 	}
 
+	if clusterConfig.Spec.EtcdEncryption != nil {
+		return errors.New("etcdEncryption is not supported during cluster creation")
+	}
+
 	docker := executables.BuildDockerExecutable()
 
 	if err := validations.CheckMinimumDockerVersion(ctx, docker); err != nil {

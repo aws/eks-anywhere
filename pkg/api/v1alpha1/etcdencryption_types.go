@@ -1,5 +1,9 @@
 package v1alpha1
 
+import (
+	"time"
+)
+
 // EtcdEncryption defines the configuration for ETCD encryption.
 type EtcdEncryption struct {
 	Providers []EtcdEncryptionProvider `json:"providers"`
@@ -16,6 +20,13 @@ type EtcdEncryptionProvider struct {
 
 // KMS defines the configuration for KMS Encryption provider.
 type KMS struct {
+	// CacheSize defines the maximum number of encrypted objects to be cached in memory. The default value is 1000.
+	// You can set this to a negative value to disable caching.
+	CacheSize *int32 `json:"cachesize,omitempty"`
+	// Name defines the name of KMS plugin to be used.
+	Name string `json:"name"`
 	// SocketListenAddress defines a UNIX socket address that the KMS provider listens on.
 	SocketListenAddress string `json:"socketListenAddress"`
+	// Timeout for kube-apiserver to wait for KMS plugin. Default is 3s.
+	Timeout *time.Duration `json:"timeout,omitempty"`
 }
