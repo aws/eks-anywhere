@@ -3487,7 +3487,7 @@ func TestValidateMachineConfigsMemoryUsageCreateSuccess(t *testing.T) {
 		tt.govc.EXPECT().GetResourcePoolInfo(tt.ctx, datacenter, config.Spec.ResourcePool).Return(map[string]int{MemoryAvailable: -1}, nil)
 	}
 	vSpec := NewSpec(tt.clusterSpec)
-	err := tt.provider.validateMemoryUsageForCreate(tt.ctx, vSpec)
+	err := tt.provider.validateMemoryUsage(tt.ctx, vSpec, nil)
 	if err != nil {
 		t.Fatalf("unexpected failure %v", err)
 	}
@@ -3498,10 +3498,10 @@ func TestValidateMachineConfigsMemoryUsageCreateError(t *testing.T) {
 	machineConfigs := tt.clusterSpec.VSphereMachineConfigs
 	datacenter := tt.clusterSpec.VSphereDatacenter.Spec.Datacenter
 	for _, config := range machineConfigs {
-		tt.govc.EXPECT().GetResourcePoolInfo(tt.ctx, datacenter, config.Spec.ResourcePool).Return(map[string]int{MemoryAvailable: 100000}, nil)
+		tt.govc.EXPECT().GetResourcePoolInfo(tt.ctx, datacenter, config.Spec.ResourcePool).Return(map[string]int{MemoryAvailable: 10000}, nil)
 	}
 	vSpec := NewSpec(tt.clusterSpec)
-	err := tt.provider.validateMemoryUsageForCreate(tt.ctx, vSpec)
+	err := tt.provider.validateMemoryUsage(tt.ctx, vSpec, nil)
 	resourcePool := machineConfigs[tt.clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name].Spec.ResourcePool
 	thenErrorExpected(t, fmt.Sprintf("not enough memory avaialable in resource pool %v for given memoryMiB and count for respective machine groups", resourcePool), err)
 }
@@ -3522,7 +3522,7 @@ func TestSetupAndValidateCreateClusterMemoryUsageError(t *testing.T) {
 	tt.govc.EXPECT().GetWorkloadAvailableSpace(tt.ctx, cpMachineConfig.Spec.Datastore).Return(1000.0, nil).AnyTimes()
 	tt.govc.EXPECT().GetResourcePoolInfo(tt.ctx, datacenter, cpMachineConfig.Spec.ResourcePool).Return(nil, fmt.Errorf("error"))
 	err := tt.provider.SetupAndValidateCreateCluster(tt.ctx, tt.clusterSpec)
-	thenErrorExpected(t, "validating vsphere machine configs resource pool memory usage: calculating memory usage for control plane: error", err)
+	thenErrorExpected(t, "validating vsphere machine configs resource pool memory usage: calculating memory usage for machine config test-cp: error", err)
 }
 
 func TestValidateMachineConfigsMemoryUsageUpgradeSuccess(t *testing.T) {
@@ -3546,7 +3546,7 @@ func TestValidateMachineConfigsMemoryUsageUpgradeSuccess(t *testing.T) {
 		tt.kubectl.EXPECT().GetEksaVSphereMachineConfig(tt.ctx, config.Name, cluster.KubeconfigFile, config.Namespace).Return(config, nil).AnyTimes()
 		tt.govc.EXPECT().GetResourcePoolInfo(tt.ctx, datacenter, config.Spec.ResourcePool).Return(map[string]int{MemoryAvailable: -1}, nil).AnyTimes()
 	}
-	err := tt.provider.validateMemoryUsageForUpgrade(tt.ctx, vSpec, cluster)
+	err := tt.provider.validateMemoryUsage(tt.ctx, vSpec, cluster)
 	if err != nil {
 		t.Fatalf("unexpected failure %v", err)
 	}
@@ -3566,7 +3566,7 @@ func TestValidateMachineConfigsMemoryUsageUpgradeError(t *testing.T) {
 	}
 	vSpec := NewSpec(tt.clusterSpec)
 	vSpec.Cluster.Spec.ControlPlaneConfiguration.Count += 2
-	err := tt.provider.validateMemoryUsageForUpgrade(tt.ctx, vSpec, cluster)
+	err := tt.provider.validateMemoryUsage(tt.ctx, vSpec, cluster)
 	resourcePool := machineConfigs[tt.clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name].Spec.ResourcePool
 	thenErrorExpected(t, fmt.Sprintf("not enough memory avaialable in resource pool %v for given memoryMiB and count for respective machine groups", resourcePool), err)
 }
@@ -3580,7 +3580,7 @@ func TestSetupAndValidateUpgradeClusterMemoryUsageError(t *testing.T) {
 	tt.setExpectationForVCenterValidation()
 	tt.setExpectationsForDefaultDiskAndCloneModeGovcCalls()
 	tt.setExpectationsForMachineConfigsVCenterValidation()
-	tt.kubectl.EXPECT().GetEksaCluster(tt.ctx, cluster, tt.clusterSpec.Cluster.GetName()).Return(tt.clusterSpec.Cluster.DeepCopy(), nil).Times(2)
+	tt.kubectl.EXPECT().GetEksaCluster(tt.ctx, cluster, tt.clusterSpec.Cluster.GetName()).Return(tt.clusterSpec.Cluster.DeepCopy(), nil).Times(1)
 	tt.kubectl.EXPECT().GetEksaVSphereMachineConfig(tt.ctx, gomock.Any(), cluster.KubeconfigFile, tt.clusterSpec.Cluster.GetNamespace()).AnyTimes()
 	cpMachineConfig := tt.machineConfigs[tt.clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name]
 	tt.govc.EXPECT().SearchTemplate(tt.ctx, tt.datacenterConfig.Spec.Datacenter, cpMachineConfig.Spec.Template).Return(cpMachineConfig.Spec.Template, nil).AnyTimes()
@@ -3590,7 +3590,7 @@ func TestSetupAndValidateUpgradeClusterMemoryUsageError(t *testing.T) {
 	datacenter := tt.clusterSpec.VSphereDatacenter.Spec.Datacenter
 	tt.govc.EXPECT().GetResourcePoolInfo(tt.ctx, datacenter, cpMachineConfig.Spec.ResourcePool).Return(nil, fmt.Errorf("error"))
 	err := tt.provider.SetupAndValidateUpgradeCluster(tt.ctx, cluster, tt.clusterSpec, tt.clusterSpec)
-	thenErrorExpected(t, "validating vsphere machine configs resource pool memory usage: calculating memory usage for control plane: error", err)
+	thenErrorExpected(t, "validating vsphere machine configs resource pool memory usage: calculating memory usage for machine config test-cp: error", err)
 }
 
 func TestValidateMachineConfigsNameUniquenessSuccess(t *testing.T) {
