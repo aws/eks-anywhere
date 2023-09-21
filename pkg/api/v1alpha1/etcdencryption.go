@@ -5,13 +5,14 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
 
 var (
 	defaultKMSCacheSize = ptr.Int32(1000)
-	defaultKMSTimeout   = time.Second * 3
+	defaultKMSTimeout   = metav1.Duration{Duration: time.Second * 3}
 )
 
 // ValidateEtcdEncryptionConfig validates the etcd encryption configuration.
