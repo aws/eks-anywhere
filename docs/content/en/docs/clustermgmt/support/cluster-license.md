@@ -2,14 +2,12 @@
 title: "License EKS Anywhere cluster"
 linkTitle: "License cluster"
 weight: 20
-date: 2023-08-11
+date: 2023-09-21
 aliases:
     /docs/tasks/cluster/cluster-license/
 description: >
-  Apply an EKS Anywhere Enterprise Subscription license to your EKS Anywhere cluster.
+  Apply an EKS Anywhere Enterprise Subscription license to your EKS Anywhere cluster
 ---
-
-EKS Anywhere is open source and free to use at no cost. To receive support for your EKS Anywhere clusters, you can optionally purchase [EKS Anywhere Enterprise Subscriptions]({{< relref "../../concepts/support-scope/">}}) for 24/7 support from AWS subject matter experts and access to [EKS Anywhere Curated Packages]({{< relref "../../concepts/packages/">}}).
 
 When you purchase an EKS Anywhere Enterprise Subscription, licenses for your clusters are provisioned in [AWS License Manager](https://docs.aws.amazon.com/license-manager/latest/userguide/license-manager.html) in the AWS account you used to purchase the subscription. After purchasing your subscription, navigate to the AWS License Manager console and accept the license grants following the steps in the [AWS License Manager documentation](https://docs.aws.amazon.com/license-manager/latest/userguide/granted-licenses.html). Save the License ID strings for your licenses, as you will need them to license your clusters.
 
