@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	. "github.com/onsi/gomega"
+	"github.com/pkg/errors"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	_ "k8s.io/apimachinery/pkg/runtime"
@@ -1187,9 +1188,7 @@ func TestClusterCreateEtcdEncryption(t *testing.T) {
 				Count: 3, Endpoint: &v1alpha1.Endpoint{Host: "1.1.1.1/1"},
 			},
 			ExternalEtcdConfiguration: &v1alpha1.ExternalEtcdConfiguration{Count: 3},
-			EtcdEncryption: &[]v1alpha1.EtcdEncryption{
-				{},
-			},
+			EtcdEncryption:            &[]v1alpha1.EtcdEncryption{},
 			ManagementCluster: v1alpha1.ManagementCluster{
 				Name: "management-cluster",
 			},
@@ -1202,34 +1201,129 @@ func TestClusterCreateEtcdEncryption(t *testing.T) {
 
 func TestClusterUpdateEtcdEncryption(t *testing.T) {
 	features.ClearCache()
-	workerConfiguration := append([]v1alpha1.WorkerNodeGroupConfiguration{}, v1alpha1.WorkerNodeGroupConfiguration{Count: ptr.Int(5)})
-	baseCluster := &v1alpha1.Cluster{
-		Spec: v1alpha1.ClusterSpec{
-			WorkerNodeGroupConfigurations: workerConfiguration,
-			KubernetesVersion:             v1alpha1.Kube119,
-			ControlPlaneConfiguration: v1alpha1.ControlPlaneConfiguration{
-				Count: 3, Endpoint: &v1alpha1.Endpoint{Host: "1.1.1.1/1"},
-			},
-			ExternalEtcdConfiguration: &v1alpha1.ExternalEtcdConfiguration{Count: 3},
-
-			ManagementCluster: v1alpha1.ManagementCluster{
-				Name: "management-cluster",
-			},
-		},
-	}
+	resources := []string{"secrets"}
 
 	tests := []struct {
 		testName         string
-		expectedErr      string
+		expectedErr      error
 		encryptionConfig *[]v1alpha1.EtcdEncryption
 	}{
 		{
-			testName:         "zero_encryption_configs",
+			testName:         "empty_encryption_configs",
+			expectedErr:      errors.New("etcdEncryption cannot be empty"),
 			encryptionConfig: &[]v1alpha1.EtcdEncryption{},
-			expectedErr:      "invalid number of encryption providers, currently only 1 encryption provider is supported",
 		},
 		{
-			testName: "two_encryption_configs",
+			testName:    "invalid_encryption_config_empty_provider",
+			expectedErr: errors.New("etcdEncryption[0].providers cannot be empty"),
+			encryptionConfig: &[]v1alpha1.EtcdEncryption{
+				{
+					Providers: []v1alpha1.EtcdEncryptionProvider{},
+					Resources: resources,
+				},
+			},
+		},
+		{
+			testName:    "invalid_kms_empty_config",
+			expectedErr: errors.New("etcdEncryption[0].providers[0] is invalid: kms cannot be nil"),
+			encryptionConfig: &[]v1alpha1.EtcdEncryption{
+				{
+					Providers: []v1alpha1.EtcdEncryptionProvider{
+						{
+							KMS: nil,
+						},
+					},
+					Resources: resources,
+				},
+			},
+		},
+		{
+			testName:    "invalid_kms_config_empty_name",
+			expectedErr: errors.New("etcdEncryption[0].providers[0] is invalid: kms.name cannot be empty"),
+			encryptionConfig: &[]v1alpha1.EtcdEncryption{
+				{
+					Providers: []v1alpha1.EtcdEncryptionProvider{
+						{
+							KMS: &v1alpha1.KMS{
+								Name:                "",
+								SocketListenAddress: "unix:///abc",
+							},
+						},
+					},
+					Resources: resources,
+				},
+			},
+		},
+		{
+			testName:    "invalid_kms_config_empty_socket_address",
+			expectedErr: errors.New("etcdEncryption[0].providers[0] is invalid: kms.socketListenAddress cannot be empty"),
+			encryptionConfig: &[]v1alpha1.EtcdEncryption{
+				{
+					Providers: []v1alpha1.EtcdEncryptionProvider{
+						{
+							KMS: &v1alpha1.KMS{
+								Name:                "test-kms-config",
+								SocketListenAddress: "",
+							},
+						},
+					},
+					Resources: resources,
+				},
+			},
+		},
+		{
+			testName:    "invalid_kms_config_invalid_socket_address_path",
+			expectedErr: errors.New("etcdEncryption[0].providers[0] is invalid: kms.socketListenAddress is malformed"),
+			encryptionConfig: &[]v1alpha1.EtcdEncryption{
+				{
+					Providers: []v1alpha1.EtcdEncryptionProvider{
+						{
+							KMS: &v1alpha1.KMS{
+								Name:                "test-kms-config",
+								SocketListenAddress: "unix:// invalid",
+							},
+						},
+					},
+					Resources: resources,
+				},
+			},
+		},
+		{
+			testName:    "invalid_kms_config_invalid_socket_address_scheme",
+			expectedErr: errors.New("etcdEncryption[0].providers[0] is invalid: kms.socketListenAddress has unsupported scheme: linux"),
+			encryptionConfig: &[]v1alpha1.EtcdEncryption{
+				{
+					Providers: []v1alpha1.EtcdEncryptionProvider{
+						{
+							KMS: &v1alpha1.KMS{
+								Name:                "test-kms-config",
+								SocketListenAddress: "linux:///invalid/path",
+							},
+						},
+					},
+					Resources: resources,
+				},
+			},
+		},
+		{
+			testName:    "invalid_config_empty_resources",
+			expectedErr: errors.New("etcdEncryption[0].resources cannot be empty"),
+			encryptionConfig: &[]v1alpha1.EtcdEncryption{
+				{
+					Providers: []v1alpha1.EtcdEncryptionProvider{
+						{
+							KMS: &v1alpha1.KMS{
+								Name:                "test_config",
+								SocketListenAddress: "unix:///abc",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			testName:    "two_encryption_configs",
+			expectedErr: errors.New("etcdEncryption config is invalid, only 1 encryption config is supported currently"),
 			encryptionConfig: &[]v1alpha1.EtcdEncryption{
 				{
 					Providers: []v1alpha1.EtcdEncryptionProvider{},
@@ -1240,19 +1334,62 @@ func TestClusterUpdateEtcdEncryption(t *testing.T) {
 					Resources: []string{},
 				},
 			},
-			expectedErr: "invalid number of encryption providers, currently only 1 encryption provider is supported",
+		},
+		{
+			testName:    "two_encryption_providers",
+			expectedErr: errors.New("etcdEncryption[0].providers in invalid, only 1 encryption provider is currently supported"),
+			encryptionConfig: &[]v1alpha1.EtcdEncryption{
+				{
+					Providers: []v1alpha1.EtcdEncryptionProvider{
+						{
+							KMS: &v1alpha1.KMS{
+								Name:                "test_config1",
+								SocketListenAddress: "unix:///abc",
+							},
+						},
+						{
+							KMS: &v1alpha1.KMS{
+								Name:                "test_config2",
+								SocketListenAddress: "unix:///abc",
+							},
+						},
+					},
+					Resources: resources,
+				},
+			},
+		},
+		{
+			testName:    "valid_config",
+			expectedErr: nil,
+			encryptionConfig: &[]v1alpha1.EtcdEncryption{
+				{
+					Providers: []v1alpha1.EtcdEncryptionProvider{
+						{
+							KMS: &v1alpha1.KMS{
+								Name:                "test_config",
+								SocketListenAddress: "unix:///abc",
+							},
+						},
+					},
+					Resources: resources,
+				},
+			},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.testName, func(t *testing.T) {
+			baseCluster := baseCluster()
 			newCluster := baseCluster.DeepCopy()
 			newCluster.Spec.EtcdEncryption = tt.encryptionConfig
 
 			g := NewWithT(t)
 			err := newCluster.ValidateUpdate(baseCluster)
-			t.Log(err.Error())
-			g.Expect(err).To(MatchError(ContainSubstring(tt.expectedErr)))
+			if tt.expectedErr == nil {
+				g.Expect(err).ToNot(HaveOccurred())
+			} else {
+				g.Expect(err).To(MatchError(ContainSubstring(tt.expectedErr.Error())))
+			}
 		})
 	}
 }

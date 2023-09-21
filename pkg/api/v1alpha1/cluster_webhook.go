@@ -66,12 +66,12 @@ func (r *Cluster) ValidateCreate() error {
 		return apierrors.NewBadRequest("creating new cluster on existing cluster is not supported for self managed clusters")
 	}
 
-	if err := r.Validate(); err != nil {
-		allErrs = append(allErrs, field.Invalid(field.NewPath("spec"), r.Spec, err.Error()))
+	if r.Spec.EtcdEncryption != nil {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("spec.etcdEncryption"), r.Spec.EtcdEncryption, "etcdEncryption is not supported during cluster creation"))
 	}
 
-	if r.Spec.EtcdEncryption != nil {
-		allErrs = append(allErrs, field.Invalid(field.NewPath("spec"), r.Spec, "etcdEncryption is not supported during cluster creation"))
+	if err := r.Validate(); err != nil {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("spec"), r.Spec, err.Error()))
 	}
 
 	if len(allErrs) != 0 {
@@ -107,8 +107,8 @@ func (r *Cluster) ValidateUpdate(old runtime.Object) error {
 
 	allErrs = append(allErrs, ValidateWorkerKubernetesVersionSkew(r, oldCluster)...)
 
-	if err := validateEtcdEncryptionConfig(r.Spec.EtcdEncryption); err != nil {
-		allErrs = append(allErrs, field.Invalid(field.NewPath("spec"), r.Spec, err.Error()))
+	if err := ValidateEtcdEncryptionConfig(r.Spec.EtcdEncryption); err != nil {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("spec.etcdEncryption"), r.Spec.EtcdEncryption, err.Error()))
 	}
 
 	if len(allErrs) != 0 {

@@ -84,6 +84,10 @@ func (uc *upgradeClusterOptions) upgradeCluster(cmd *cobra.Command) error {
 		}
 	}
 
+	if err := v1alpha1.ValidateEtcdEncryptionConfig(clusterConfig.Spec.EtcdEncryption); err != nil {
+		return err
+	}
+
 	if _, err := uc.commonValidations(ctx); err != nil {
 		return fmt.Errorf("common validations failed due to: %v", err)
 	}
