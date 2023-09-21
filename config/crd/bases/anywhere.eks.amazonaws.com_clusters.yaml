@@ -248,8 +248,7 @@ spec:
                               timeout:
                                 description: Timeout for kube-apiserver to wait for
                                   KMS plugin. Default is 3s.
-                                format: int64
-                                type: integer
+                                type: string
                             required:
                             - name
                             - socketListenAddress

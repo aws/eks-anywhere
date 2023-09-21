@@ -1,8 +1,6 @@
 package v1alpha1
 
-import (
-	"time"
-)
+import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 // EtcdEncryption defines the configuration for ETCD encryption.
 type EtcdEncryption struct {
@@ -28,5 +26,5 @@ type KMS struct {
 	// SocketListenAddress defines a UNIX socket address that the KMS provider listens on.
 	SocketListenAddress string `json:"socketListenAddress"`
 	// Timeout for kube-apiserver to wait for KMS plugin. Default is 3s.
-	Timeout *time.Duration `json:"timeout,omitempty"`
+	Timeout *metav1.Duration `json:"timeout,omitempty"`
 }
