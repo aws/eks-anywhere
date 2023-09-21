@@ -1,9 +1,9 @@
 ---
-title: "Generating a Support Bundle"
-linkTitle: "Generating a Support Bundle"
+title: "Generate an EKS Anywhere support bundle"
+linkTitle: "Generate support bundle"
 weight: 30
 description: >
-    Using the Support Bundle with your EKS Anywhere Cluster
+    Using the EKS Anywhere diagnostics support bundle
 aliases:
    - /docs/tasks/troubleshoot/supportbundle
 ---
