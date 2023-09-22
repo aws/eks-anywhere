@@ -31,4 +31,5 @@ Use eksctl anywhere generate to generate resources, such as clusterconfig yaml
 * [anywhere generate packages](../anywhere_generate_packages/)	 - Generate package(s) configuration
 * [anywhere generate support-bundle](../anywhere_generate_support-bundle/)	 - Generate a support bundle
 * [anywhere generate support-bundle-config](../anywhere_generate_support-bundle-config/)	 - Generate support bundle config
+* [anywhere generate tinkerbelltemplateconfig](../anywhere_generate_tinkerbelltemplateconfig/)	 - Generate TinkerbellTemplateConfig objects
 
