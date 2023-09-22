@@ -41,10 +41,14 @@ var (
 type PowerState string
 
 const (
-	On      PowerState = "on"
-	Off     PowerState = "off"
+	// On represents that a Machine is powered on.
+	On PowerState = "on"
+	// Off represents that a Machine is powered off.
+	Off PowerState = "off"
+	// Unknown represents that a Machine's power state is unknown.
 	Unknown PowerState = "unknown"
-	PXE     string     = "pxe"
+	// PXE is the boot device name for PXE booting a machine.
+	PXE string = "pxe"
 )
 
 // MachineConditionType represents the condition of the Machine.
@@ -59,7 +63,9 @@ const (
 type ConditionStatus string
 
 const (
-	ConditionTrue  ConditionStatus = "True"
+	// ConditionTrue represents that a Machine is contactable.
+	ConditionTrue ConditionStatus = "True"
+	// ConditionFalse represents that a Machine is not contactable.
 	ConditionFalse ConditionStatus = "False"
 )
 
@@ -69,6 +75,7 @@ type MachineSpec struct {
 	Connection Connection `json:"connection"`
 }
 
+// ProviderOptions contains all the provider specific options.
 type ProviderOptions struct {
 	// IntelAMT contains the options to customize the IntelAMT provider.
 	// +optional
@@ -140,6 +147,7 @@ type MachineCondition struct {
 	Message string `json:"message,omitempty"`
 }
 
+// MachineSetConditionOption is a function that manipulates a MachineCondition.
 // +kubebuilder:object:generate=false
 type MachineSetConditionOption func(*MachineCondition)
 

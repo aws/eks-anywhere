@@ -5,7 +5,6 @@ import (
 	"flag"
 	"os"
 
-	rufiov1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1/thirdparty/tinkerbell/rufio"
 	eksdv1alpha1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
 	etcdv1 "github.com/aws/etcdadm-controller/api/v1beta1"
 	"github.com/go-logr/logr"
@@ -33,6 +32,7 @@ import (
 
 	"github.com/aws/eks-anywhere/controllers"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	rufiov1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1/thirdparty/tinkerbell/rufio"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
 	"github.com/aws/eks-anywhere/pkg/features"
