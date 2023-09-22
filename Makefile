@@ -422,17 +422,19 @@ verify-generate: generate ## Verify if generated zz_generated.deepcopy.go files 
 		exit 1;\
 	fi
 
-
 .PHONY: test
 test: unit-test capd-test  ## Run unit and capd tests
 
+ifneq "$(INTEGRATION_TESTS_ENABLED)" "false"
+export INTEGRATION_TESTS_ENABLED = true
+endif
+
 .PHONY: unit-test
 unit-test: ## Run unit tests
-unit-test: $(SETUP_ENVTEST) 
+unit-test: $(SETUP_ENVTEST)
 unit-test: KUBEBUILDER_ASSETS ?= $(shell $(SETUP_ENVTEST) use --use-env -p path --arch $(GO_ARCH) $(KUBEBUILDER_ENVTEST_KUBERNETES_VERSION))
 unit-test:
 	KUBEBUILDER_ASSETS="$(KUBEBUILDER_ASSETS)" $(GO_TEST) $(UNIT_TEST_PACKAGES) -cover -tags "$(BUILD_TAGS)" $(GO_TEST_FLAGS)
-
 
 # unit-test-patch is a convenience target that restricts test runs to modified
 # packages' tests. This is not a replacement for running the unit-test target,

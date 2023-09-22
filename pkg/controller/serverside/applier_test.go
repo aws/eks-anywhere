@@ -3,6 +3,7 @@ package serverside_test
 import (
 	"context"
 	"errors"
+	"os"
 	"testing"
 
 	. "github.com/onsi/gomega"
@@ -15,6 +16,9 @@ import (
 )
 
 func TestObjectApplierApplySuccess(t *testing.T) {
+	if os.Getenv(integrationTestEnvVar) != "true" {
+		t.Skipf("set env var '%v=true' to run this test", integrationTestEnvVar)
+	}
 	g := NewWithT(t)
 	ctx := context.Background()
 	namespace := env.CreateNamespaceForTest(ctx, t)
@@ -27,6 +31,9 @@ func TestObjectApplierApplySuccess(t *testing.T) {
 }
 
 func TestObjectApplierApplyErrorFromGenerator(t *testing.T) {
+	if os.Getenv(integrationTestEnvVar) != "true" {
+		t.Skipf("set env var '%v=true' to run this test", integrationTestEnvVar)
+	}
 	g := NewWithT(t)
 	ctx := context.Background()
 
@@ -38,6 +45,9 @@ func TestObjectApplierApplyErrorFromGenerator(t *testing.T) {
 }
 
 func TestObjectApplierApplyErrorApplying(t *testing.T) {
+	if os.Getenv(integrationTestEnvVar) != "true" {
+		t.Skipf("set env var '%v=true' to run this test", integrationTestEnvVar)
+	}
 	g := NewWithT(t)
 	ctx := context.Background()
 

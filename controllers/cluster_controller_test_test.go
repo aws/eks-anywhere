@@ -3,6 +3,7 @@ package controllers_test
 import (
 	"context"
 	"errors"
+	"os"
 	"testing"
 
 	"github.com/go-logr/logr"
@@ -31,6 +32,9 @@ import (
 )
 
 func TestClusterReconcilerEnsureOwnerReferences(t *testing.T) {
+	if os.Getenv(integrationTestEnvVar) != "true" {
+		t.Skipf("set env var '%v=true' to run this test", integrationTestEnvVar)
+	}
 	g := NewWithT(t)
 	ctx := context.Background()
 

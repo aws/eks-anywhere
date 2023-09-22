@@ -3,6 +3,7 @@ package controllers_test
 import (
 	"context"
 	"errors"
+	"os"
 	"testing"
 	"time"
 
@@ -23,6 +24,9 @@ import (
 )
 
 func TestCloudStackDatacenterReconcilerSetupWithManager(t *testing.T) {
+	if os.Getenv(integrationTestEnvVar) != "true" {
+		t.Skipf("set env var '%v=true' to run this test", integrationTestEnvVar)
+	}
 	client := env.Client()
 	r := controllers.NewCloudStackDatacenterReconciler(client, nil)
 
@@ -31,6 +35,9 @@ func TestCloudStackDatacenterReconcilerSetupWithManager(t *testing.T) {
 }
 
 func TestCloudStackDatacenterReconcilerSuccess(t *testing.T) {
+	if os.Getenv(integrationTestEnvVar) != "true" {
+		t.Skipf("set env var '%v=true' to run this test", integrationTestEnvVar)
+	}
 	g := NewWithT(t)
 	ctx := context.Background()
 
@@ -79,6 +86,9 @@ func TestCloudStackDatacenterReconcilerSuccess(t *testing.T) {
 }
 
 func TestCloudStackDatacenterReconcilerSetDefaultSuccess(t *testing.T) {
+	if os.Getenv(integrationTestEnvVar) != "true" {
+		t.Skipf("set env var '%v=true' to run this test", integrationTestEnvVar)
+	}
 	g := NewWithT(t)
 	ctx := context.Background()
 
@@ -146,6 +156,9 @@ func TestCloudStackDatacenterReconcilerSetDefaultSuccess(t *testing.T) {
 }
 
 func TestCloudstackDatacenterConfigReconcilerDelete(t *testing.T) {
+	if os.Getenv(integrationTestEnvVar) != "true" {
+		t.Skipf("set env var '%v=true' to run this test", integrationTestEnvVar)
+	}
 	g := NewWithT(t)
 	ctx := context.Background()
 
@@ -170,6 +183,9 @@ func TestCloudstackDatacenterConfigReconcilerDelete(t *testing.T) {
 }
 
 func TestCloudstackDatacenterConfigGetValidatorFailure(t *testing.T) {
+	if os.Getenv(integrationTestEnvVar) != "true" {
+		t.Skipf("set env var '%v=true' to run this test", integrationTestEnvVar)
+	}
 	g := NewWithT(t)
 	ctx := context.Background()
 
@@ -198,6 +214,9 @@ func TestCloudstackDatacenterConfigGetValidatorFailure(t *testing.T) {
 }
 
 func TestCloudstackDatacenterConfigGetDatacenterFailure(t *testing.T) {
+	if os.Getenv(integrationTestEnvVar) != "true" {
+		t.Skipf("set env var '%v=true' to run this test", integrationTestEnvVar)
+	}
 	g := NewWithT(t)
 	ctx := context.Background()
 	client := fake.NewClientBuilder().WithScheme(runtime.NewScheme()).Build()
@@ -217,6 +236,9 @@ func TestCloudstackDatacenterConfigGetDatacenterFailure(t *testing.T) {
 }
 
 func TestCloudstackDatacenterConfigGetExecConfigFailure(t *testing.T) {
+	if os.Getenv(integrationTestEnvVar) != "true" {
+		t.Skipf("set env var '%v=true' to run this test", integrationTestEnvVar)
+	}
 	g := NewWithT(t)
 	ctx := context.Background()
 
@@ -243,6 +265,9 @@ func TestCloudstackDatacenterConfigGetExecConfigFailure(t *testing.T) {
 }
 
 func TestCloudstackDatacenterConfigAccountNotPresentFailure(t *testing.T) {
+	if os.Getenv(integrationTestEnvVar) != "true" {
+		t.Skipf("set env var '%v=true' to run this test", integrationTestEnvVar)
+	}
 	g := NewWithT(t)
 	ctx := context.Background()
 	dcConfig := createCloudstackDatacenterConfig()

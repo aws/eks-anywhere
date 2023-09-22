@@ -35,7 +35,10 @@ import (
 	artifactsv1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
-const valueFileName = "values.yaml"
+const (
+	valueFileName         = "values.yaml"
+	integrationTestEnvVar = "INTEGRATION_TESTS_ENABLED"
+)
 
 //go:embed testdata/expected_all_values.yaml
 var expectedAllValues string
@@ -270,6 +273,10 @@ func newPackageControllerTests(t *testing.T) []*packageControllerTest {
 }
 
 func TestEnableSuccess(t *testing.T) {
+	if os.Getenv(integrationTestEnvVar) != "true" {
+		t.Skipf("set env var '%v=true' to run this test", integrationTestEnvVar)
+	}
+
 	for _, tt := range newPackageControllerTests(t) {
 		clusterName := fmt.Sprintf("clusterName=%s", "billy")
 		valueFilePath := filepath.Join("billy", filewriter.DefaultTmpFolder, valueFileName)
@@ -304,6 +311,9 @@ func TestEnableSuccess(t *testing.T) {
 }
 
 func TestEnableSucceedInWorkloadCluster(t *testing.T) {
+	if os.Getenv(integrationTestEnvVar) != "true" {
+		t.Skipf("set env var '%v=true' to run this test", integrationTestEnvVar)
+	}
 	for _, tt := range newPackageControllerTests(t) {
 		tt.command = curatedpackages.NewPackageControllerClient(
 			tt.chartManager, tt.kubectl, tt.clusterName, tt.kubeConfig, tt.chart,
@@ -347,6 +357,9 @@ func TestEnableSucceedInWorkloadCluster(t *testing.T) {
 }
 
 func TestEnableSucceedInWorkloadClusterWhenPackageBundleControllerNotExist(t *testing.T) {
+	if os.Getenv(integrationTestEnvVar) != "true" {
+		t.Skipf("set env var '%v=true' to run this test", integrationTestEnvVar)
+	}
 	for _, tt := range newPackageControllerTests(t) {
 		tt.command = curatedpackages.NewPackageControllerClient(
 			tt.chartManager, tt.kubectl, tt.clusterName, tt.kubeConfig, tt.chart,
@@ -420,6 +433,9 @@ func getPBCFail(t *testing.T) func(context.Context, string, string, string, stri
 }
 
 func TestEnableWithProxy(t *testing.T) {
+	if os.Getenv(integrationTestEnvVar) != "true" {
+		t.Skipf("set env var '%v=true' to run this test", integrationTestEnvVar)
+	}
 	for _, tt := range newPackageControllerTests(t) {
 		tt.command = curatedpackages.NewPackageControllerClient(
 			tt.chartManager, tt.kubectl, "billy", tt.kubeConfig, tt.chart,
@@ -474,6 +490,9 @@ func TestEnableWithProxy(t *testing.T) {
 }
 
 func TestEnableWithEmptyProxy(t *testing.T) {
+	if os.Getenv(integrationTestEnvVar) != "true" {
+		t.Skipf("set env var '%v=true' to run this test", integrationTestEnvVar)
+	}
 	for _, tt := range newPackageControllerTests(t) {
 		tt.command = curatedpackages.NewPackageControllerClient(
 			tt.chartManager, tt.kubectl, "billy", tt.kubeConfig, tt.chart,
@@ -525,6 +544,9 @@ func TestEnableWithEmptyProxy(t *testing.T) {
 }
 
 func TestEnableFail(t *testing.T) {
+	if os.Getenv(integrationTestEnvVar) != "true" {
+		t.Skipf("set env var '%v=true' to run this test", integrationTestEnvVar)
+	}
 	for _, tt := range newPackageControllerTests(t) {
 		clusterName := fmt.Sprintf("clusterName=%s", "billy")
 		valueFilePath := filepath.Join("billy", filewriter.DefaultTmpFolder, valueFileName)
@@ -555,6 +577,9 @@ func TestEnableFail(t *testing.T) {
 }
 
 func TestEnableFailNoActiveBundle(t *testing.T) {
+	if os.Getenv(integrationTestEnvVar) != "true" {
+		t.Skipf("set env var '%v=true' to run this test", integrationTestEnvVar)
+	}
 	for _, tt := range newPackageControllerTests(t) {
 		clusterName := fmt.Sprintf("clusterName=%s", "billy")
 		valueFilePath := filepath.Join("billy", filewriter.DefaultTmpFolder, valueFileName)
@@ -585,6 +610,9 @@ func TestEnableFailNoActiveBundle(t *testing.T) {
 }
 
 func TestEnableSuccessWhenCronJobFails(t *testing.T) {
+	if os.Getenv(integrationTestEnvVar) != "true" {
+		t.Skipf("set env var '%v=true' to run this test", integrationTestEnvVar)
+	}
 	for _, tt := range newPackageControllerTests(t) {
 		clusterName := fmt.Sprintf("clusterName=%s", "billy")
 		valueFilePath := filepath.Join("billy", filewriter.DefaultTmpFolder, valueFileName)
@@ -619,6 +647,9 @@ func TestEnableSuccessWhenCronJobFails(t *testing.T) {
 }
 
 func TestIsInstalledTrue(t *testing.T) {
+	if os.Getenv(integrationTestEnvVar) != "true" {
+		t.Skipf("set env var '%v=true' to run this test", integrationTestEnvVar)
+	}
 	for _, tt := range newPackageControllerTests(t) {
 		tt.kubectl.EXPECT().HasResource(tt.ctx, "packageBundleController", tt.clusterName, tt.kubeConfig, constants.EksaPackagesName).Return(false, nil)
 
@@ -630,6 +661,9 @@ func TestIsInstalledTrue(t *testing.T) {
 }
 
 func TestIsInstalledFalse(t *testing.T) {
+	if os.Getenv(integrationTestEnvVar) != "true" {
+		t.Skipf("set env var '%v=true' to run this test", integrationTestEnvVar)
+	}
 	for _, tt := range newPackageControllerTests(t) {
 
 		tt.kubectl.EXPECT().HasResource(tt.ctx, "packageBundleController", tt.clusterName, tt.kubeConfig, constants.EksaPackagesName).
@@ -643,6 +677,9 @@ func TestIsInstalledFalse(t *testing.T) {
 }
 
 func TestEnableActiveBundleCustomTimeout(t *testing.T) {
+	if os.Getenv(integrationTestEnvVar) != "true" {
+		t.Skipf("set env var '%v=true' to run this test", integrationTestEnvVar)
+	}
 	for _, tt := range newPackageControllerTests(t) {
 		tt.command = curatedpackages.NewPackageControllerClient(
 			tt.chartManager, tt.kubectl, "billy", tt.kubeConfig, tt.chart,
@@ -692,6 +729,9 @@ func TestEnableActiveBundleCustomTimeout(t *testing.T) {
 }
 
 func TestEnableActiveBundleWaitLoops(t *testing.T) {
+	if os.Getenv(integrationTestEnvVar) != "true" {
+		t.Skipf("set env var '%v=true' to run this test", integrationTestEnvVar)
+	}
 	for _, tt := range newPackageControllerTests(t) {
 		clusterName := fmt.Sprintf("clusterName=%s", "billy")
 		valueFilePath := filepath.Join("billy", filewriter.DefaultTmpFolder, valueFileName)
@@ -742,6 +782,9 @@ func getPBCLoops(t *testing.T, loops int) func(context.Context, string, string, 
 }
 
 func TestEnableActiveBundleTimesOut(t *testing.T) {
+	if os.Getenv(integrationTestEnvVar) != "true" {
+		t.Skipf("set env var '%v=true' to run this test", integrationTestEnvVar)
+	}
 	for _, tt := range newPackageControllerTests(t) {
 		tt.command = curatedpackages.NewPackageControllerClient(
 			tt.chartManager, tt.kubectl, "billy", tt.kubeConfig, tt.chart,
@@ -788,6 +831,9 @@ func TestEnableActiveBundleTimesOut(t *testing.T) {
 }
 
 func TestEnableActiveBundleNamespaceTimesOut(t *testing.T) {
+	if os.Getenv(integrationTestEnvVar) != "true" {
+		t.Skipf("set env var '%v=true' to run this test", integrationTestEnvVar)
+	}
 	for _, tt := range newPackageControllerTests(t) {
 		tt.command = curatedpackages.NewPackageControllerClient(
 			tt.chartManager, tt.kubectl, "billy", tt.kubeConfig, tt.chart,
@@ -845,6 +891,9 @@ func getPBCDelay(t *testing.T, delay time.Duration) func(context.Context, string
 }
 
 func TestCreateHelmOverrideValuesYaml(t *testing.T) {
+	if os.Getenv(integrationTestEnvVar) != "true" {
+		t.Skipf("set env var '%v=true' to run this test", integrationTestEnvVar)
+	}
 	for _, tt := range newPackageControllerTests(t) {
 		if tt.registryMirror != nil {
 			t.Setenv("REGISTRY_USERNAME", "username")
@@ -858,6 +907,9 @@ func TestCreateHelmOverrideValuesYaml(t *testing.T) {
 }
 
 func TestCreateHelmOverrideValuesYamlFail(t *testing.T) {
+	if os.Getenv(integrationTestEnvVar) != "true" {
+		t.Skipf("set env var '%v=true' to run this test", integrationTestEnvVar)
+	}
 	_ = os.Unsetenv("REGISTRY_USERNAME")
 	_ = os.Unsetenv("REGISTRY_PASSWORD")
 	for _, tt := range newPackageControllerTests(t) {
@@ -874,6 +926,9 @@ func TestCreateHelmOverrideValuesYamlFail(t *testing.T) {
 }
 
 func TestCreateHelmOverrideValuesYamlFailWithNoWriter(t *testing.T) {
+	if os.Getenv(integrationTestEnvVar) != "true" {
+		t.Skipf("set env var '%v=true' to run this test", integrationTestEnvVar)
+	}
 	for _, tt := range newPackageControllerTests(t) {
 		tt.command = curatedpackages.NewPackageControllerClient(
 			tt.chartManager, tt.kubectl, "billy", tt.kubeConfig, tt.chart,
@@ -898,6 +953,9 @@ func TestCreateHelmOverrideValuesYamlFailWithNoWriter(t *testing.T) {
 }
 
 func TestCreateHelmOverrideValuesYamlFailWithWriteError(t *testing.T) {
+	if os.Getenv(integrationTestEnvVar) != "true" {
+		t.Skipf("set env var '%v=true' to run this test", integrationTestEnvVar)
+	}
 	ctrl := gomock.NewController(t)
 	writer := writermocks.NewMockFileWriter(ctrl)
 	for _, tt := range newPackageControllerTests(t) {
@@ -920,6 +978,9 @@ func TestCreateHelmOverrideValuesYamlFailWithWriteError(t *testing.T) {
 }
 
 func TestGetPackageControllerConfigurationNil(t *testing.T) {
+	if os.Getenv(integrationTestEnvVar) != "true" {
+		t.Skipf("set env var '%v=true' to run this test", integrationTestEnvVar)
+	}
 	g := NewWithT(t)
 	sut := curatedpackages.NewPackageControllerClient(nil, nil, "billy", "", nil, nil)
 	result, err := sut.GetPackageControllerConfiguration()
@@ -928,6 +989,9 @@ func TestGetPackageControllerConfigurationNil(t *testing.T) {
 }
 
 func TestGetPackageControllerConfigurationAll(t *testing.T) {
+	if os.Getenv(integrationTestEnvVar) != "true" {
+		t.Skipf("set env var '%v=true' to run this test", integrationTestEnvVar)
+	}
 	clusterSpec := v1alpha1.ClusterSpec{
 		Packages: &v1alpha1.PackageConfiguration{
 			Disable: false,
@@ -965,6 +1029,9 @@ func TestGetPackageControllerConfigurationAll(t *testing.T) {
 }
 
 func TestGetPackageControllerConfigurationNothing(t *testing.T) {
+	if os.Getenv(integrationTestEnvVar) != "true" {
+		t.Skipf("set env var '%v=true' to run this test", integrationTestEnvVar)
+	}
 	clusterSpec := v1alpha1.ClusterSpec{
 		Packages: &v1alpha1.PackageConfiguration{
 			Disable: true,
@@ -979,6 +1046,9 @@ func TestGetPackageControllerConfigurationNothing(t *testing.T) {
 }
 
 func TestGetCuratedPackagesRegistriesDefaultRegion(t *testing.T) {
+	if os.Getenv(integrationTestEnvVar) != "true" {
+		t.Skipf("set env var '%v=true' to run this test", integrationTestEnvVar)
+	}
 	clusterSpec := v1alpha1.ClusterSpec{
 		Packages: &v1alpha1.PackageConfiguration{
 			Disable: true,
@@ -996,6 +1066,9 @@ func TestGetCuratedPackagesRegistriesDefaultRegion(t *testing.T) {
 }
 
 func TestGetCuratedPackagesRegistriesCustomRegion(t *testing.T) {
+	if os.Getenv(integrationTestEnvVar) != "true" {
+		t.Skipf("set env var '%v=true' to run this test", integrationTestEnvVar)
+	}
 	clusterSpec := v1alpha1.ClusterSpec{
 		Packages: &v1alpha1.PackageConfiguration{
 			Disable: true,
@@ -1013,6 +1086,9 @@ func TestGetCuratedPackagesRegistriesCustomRegion(t *testing.T) {
 }
 
 func TestGetPackageControllerConfigurationError(t *testing.T) {
+	if os.Getenv(integrationTestEnvVar) != "true" {
+		t.Skipf("set env var '%v=true' to run this test", integrationTestEnvVar)
+	}
 	clusterSpec := v1alpha1.ClusterSpec{
 		Packages: &v1alpha1.PackageConfiguration{
 			Disable: false,
@@ -1030,6 +1106,9 @@ func TestGetPackageControllerConfigurationError(t *testing.T) {
 }
 
 func TestReconcileDeleteGoldenPath(t *testing.T) {
+	if os.Getenv(integrationTestEnvVar) != "true" {
+		t.Skipf("set env var '%v=true' to run this test", integrationTestEnvVar)
+	}
 	g := NewWithT(t)
 	ctx := context.Background()
 	log := testr.New(t)
@@ -1050,6 +1129,9 @@ func TestReconcileDeleteGoldenPath(t *testing.T) {
 }
 
 func TestReconcileDeleteNamespaceErrorHandling(s *testing.T) {
+	if os.Getenv(integrationTestEnvVar) != "true" {
+		s.Skipf("set env var '%v=true' to run this test", integrationTestEnvVar)
+	}
 	s.Run("ignores not found errors", func(t *testing.T) {
 		g := NewWithT(t)
 		ctx := context.Background()
@@ -1090,6 +1172,9 @@ func TestReconcileDeleteNamespaceErrorHandling(s *testing.T) {
 }
 
 func TestReconcileDeleteHelmErrorsHandling(t *testing.T) {
+	if os.Getenv(integrationTestEnvVar) != "true" {
+		t.Skipf("set env var '%v=true' to run this test", integrationTestEnvVar)
+	}
 	g := NewWithT(t)
 	ctx := context.Background()
 	log := testr.New(t)
@@ -1115,6 +1200,9 @@ func TestReconcileDeleteHelmErrorsHandling(t *testing.T) {
 }
 
 func TestEnableFullLifecyclePath(t *testing.T) {
+	if os.Getenv(integrationTestEnvVar) != "true" {
+		t.Skipf("set env var '%v=true' to run this test", integrationTestEnvVar)
+	}
 	log := testr.New(t)
 	ctrl := gomock.NewController(t)
 	k := mocks.NewMockKubectlRunner(ctrl)
@@ -1179,6 +1267,9 @@ func TestEnableFullLifecyclePath(t *testing.T) {
 }
 
 func TestGetCuratedPackagesRegistries(s *testing.T) {
+	if os.Getenv(integrationTestEnvVar) != "true" {
+		s.Skipf("set env var '%v=true' to run this test", integrationTestEnvVar)
+	}
 	s.Run("substitutes a region if set", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		k := mocks.NewMockKubectlRunner(ctrl)
@@ -1266,6 +1357,9 @@ func TestGetCuratedPackagesRegistries(s *testing.T) {
 }
 
 func TestReconcile(s *testing.T) {
+	if os.Getenv(integrationTestEnvVar) != "true" {
+		s.Skipf("set env var '%v=true' to run this test", integrationTestEnvVar)
+	}
 	s.Run("golden path", func(t *testing.T) {
 		ctx := context.Background()
 		log := testr.New(t)

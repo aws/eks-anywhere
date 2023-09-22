@@ -2,6 +2,7 @@ package serverside_test
 
 import (
 	"context"
+	"os"
 	"strings"
 	"testing"
 
@@ -16,6 +17,9 @@ import (
 )
 
 func TestReconcileYaml(t *testing.T) {
+	if os.Getenv(integrationTestEnvVar) != "true" {
+		t.Skipf("set env var '%v=true' to run this test", integrationTestEnvVar)
+	}
 	cluster1 := newCluster("cluster-1")
 	cluster2 := newCluster("cluster-2")
 	tests := []struct {
@@ -124,6 +128,9 @@ spec:
 }
 
 func TestReconcileUpdateObject(t *testing.T) {
+	if os.Getenv(integrationTestEnvVar) != "true" {
+		t.Skipf("set env var '%v=true' to run this test", integrationTestEnvVar)
+	}
 	cluster1 := newCluster("cluster-1")
 
 	yaml := []byte(`apiVersion: cluster.x-k8s.io/v1beta1
@@ -193,6 +200,9 @@ spec:
 }
 
 func TestReconcileUpdateObjectError(t *testing.T) {
+	if os.Getenv(integrationTestEnvVar) != "true" {
+		t.Skipf("set env var '%v=true' to run this test", integrationTestEnvVar)
+	}
 	cluster1 := newCluster("cluster-1")
 
 	yaml := []byte(`apiVersion: cluster.x-k8s.io/v1beta1

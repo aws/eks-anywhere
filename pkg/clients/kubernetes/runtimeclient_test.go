@@ -3,6 +3,7 @@ package kubernetes_test
 import (
 	"context"
 	"errors"
+	"os"
 	"reflect"
 	"testing"
 
@@ -17,7 +18,12 @@ import (
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 )
 
+const integrationTestEnvVar = "INTEGRATION_TESTS_ENABLED"
+
 func TestNewRuntimeClient(t *testing.T) {
+	if os.Getenv(integrationTestEnvVar) != "true" {
+		t.Skipf("set env var '%v=true' to run this test", integrationTestEnvVar)
+	}
 	g := NewWithT(t)
 	cfg := test.UseEnvTest(t)
 	rc := kubernetes.RestConfigurator(func(_ []byte) (*rest.Config, error) { return cfg, nil })
@@ -51,6 +57,9 @@ func TestNewRuntimeClientInvalidRestConfig(t *testing.T) {
 }
 
 func TestNewRuntimeClientInvalidScheme(t *testing.T) {
+	if os.Getenv(integrationTestEnvVar) != "true" {
+		t.Skipf("set env var '%v=true' to run this test", integrationTestEnvVar)
+	}
 	g := NewWithT(t)
 	cfg := test.UseEnvTest(t)
 	rc := kubernetes.RestConfigurator(func(_ []byte) (*rest.Config, error) { return cfg, nil })

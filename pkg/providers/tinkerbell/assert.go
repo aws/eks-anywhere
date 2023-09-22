@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"time"
 
 	tinkerbellv1 "github.com/tinkerbell/cluster-api-provider-tinkerbell/api/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
@@ -141,6 +142,7 @@ func AssertHookRetrievableWithoutProxy(spec *ClusterSpec) error {
 	transport.Proxy = nil
 	client := &http.Client{
 		Transport: transport,
+		Timeout:   time.Second * 5,
 	}
 
 	resp, err := client.Get(spec.DatacenterConfig.Spec.HookImagesURLPath)
