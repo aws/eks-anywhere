@@ -2600,3 +2600,72 @@ func TestValidateNewSpecMachineConfigNotFound(t *testing.T) {
 	err := provider.ValidateNewSpec(context.TODO(), &types.Cluster{}, newClusterSpec)
 	assert.ErrorContains(t, err, "not found")
 }
+
+func TestProviderGenerateCAPISpecForUpgradeEtcdEncryption(t *testing.T) {
+	tests := []struct {
+		testName          string
+		clusterconfigFile string
+		wantCPFile        string
+		wantMDFile        string
+	}{
+		{
+			testName:          "etcd-encryption",
+			clusterconfigFile: "cluster_etcd_encryption.yaml",
+			wantCPFile:        "testdata/expected_results_encryption_config_cp.yaml",
+			wantMDFile:        "testdata/expected_results_minimal_md.yaml",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.testName, func(t *testing.T) {
+			mockCtrl := gomock.NewController(t)
+			setupContext(t)
+			ctx := context.Background()
+			kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+			cluster := &types.Cluster{
+				Name: "test",
+			}
+			bootstrapCluster := &types.Cluster{
+				Name: "bootstrap-test",
+			}
+			clusterSpec := givenClusterSpec(t, tt.clusterconfigFile)
+			cloudstackDatacenter := &v1alpha1.CloudStackDatacenterConfig{
+				Spec: v1alpha1.CloudStackDatacenterConfigSpec{},
+			}
+			cloudstackMachineConfig := &v1alpha1.CloudStackMachineConfig{
+				Spec: v1alpha1.CloudStackMachineConfigSpec{
+					Users: []v1alpha1.UserConfiguration{
+						{
+							Name:              "capv",
+							SshAuthorizedKeys: []string{"ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC1BK73XhIzjX+meUr7pIYh6RHbvI3tmHeQIXY5lv7aztN1UoX+bhPo3dwo2sfSQn5kuxgQdnxIZ/CTzy0p0GkEYVv3gwspCeurjmu0XmrdmaSGcGxCEWT/65NtvYrQtUE5ELxJ+N/aeZNlK2B7IWANnw/82913asXH4VksV1NYNduP0o1/G4XcwLLSyVFB078q/oEnmvdNIoS61j4/o36HVtENJgYr0idcBvwJdvcGxGnPaqOhx477t+kfJAa5n5dSA5wilIaoXH5i1Tf/HsTCM52L+iNCARvQzJYZhzbWI1MDQwzILtIBEQCJsl2XSqIupleY8CxqQ6jCXt2mhae+wPc3YmbO5rFvr2/EvC57kh3yDs1Nsuj8KOvD78KeeujbR8n8pScm3WDp62HFQ8lEKNdeRNj6kB8WnuaJvPnyZfvzOhwG65/9w13IBl7B1sWxbFnq2rMpm5uHVK7mAmjL0Tt8zoDhcE1YJEnp9xte3/pvmKPkST5Q/9ZtR9P5sI+02jY0fvPkPyC03j2gsPixG7rpOCwpOdbny4dcj0TDeeXJX8er+oVfJuLYz0pNWJcT2raDdFfcqvYA0B0IyNYlj5nWX4RuEcyT3qocLReWPnZojetvAG/H8XwOh7fEVGqHAKOVSnPXCSQJPl6s0H12jPJBDJMTydtYPEszl4/CeQ=="},
+						},
+					},
+				},
+			}
+
+			kubectl.EXPECT().GetMachineDeployment(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(workerNodeGroup1MachineDeployment(), nil)
+			kubectl.EXPECT().GetEksaCluster(ctx, cluster, clusterSpec.Cluster.Name).Return(clusterSpec.Cluster, nil)
+			kubectl.EXPECT().GetEksaCloudStackDatacenterConfig(ctx, cluster.Name, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(cloudstackDatacenter, nil)
+			kubectl.EXPECT().GetEksaCloudStackMachineConfig(ctx, clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(cloudstackMachineConfig, nil)
+			kubectl.EXPECT().GetEksaCloudStackMachineConfig(ctx, clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(cloudstackMachineConfig, nil)
+			datacenterConfig := givenDatacenterConfig(t, tt.clusterconfigFile)
+			validator := givenWildcardValidator(mockCtrl, clusterSpec)
+			provider := newProviderWithKubectl(t, datacenterConfig, clusterSpec.Cluster, kubectl, validator)
+			if provider == nil {
+				t.Fatalf("provider object is nil")
+			}
+
+			err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
+			if err != nil {
+				t.Fatalf("failed to setup and validate: %v", err)
+			}
+
+			cp, md, err := provider.GenerateCAPISpecForUpgrade(context.Background(), bootstrapCluster, cluster, clusterSpec, clusterSpec.DeepCopy())
+			if err != nil {
+				t.Fatalf("failed to generate cluster api spec contents: %v", err)
+			}
+
+			test.AssertContentToFile(t, string(cp), tt.wantCPFile)
+			test.AssertContentToFile(t, string(md), tt.wantMDFile)
+		})
+	}
+}

@@ -119,6 +119,16 @@ spec:
           name: awsiamcert
           readOnly: false
 {{- end}}
+{{- if .encryptionProviderConfig }}
+        - hostPath: /etc/kubernetes/enc
+          mountPath: /etc/kubernetes/enc
+          name: encryption-config
+          readOnly: false
+        - hostPath: /var/run/kmsplugin/
+          mountPath: /var/run/kmsplugin/
+          name: kms-plugin
+          readOnly: false
+{{- end }}
       controllerManager:
         extraArgs:
           cloud-provider: external
@@ -133,6 +143,12 @@ spec:
 {{ .schedulerExtraArgs.ToYaml | indent 10 }}
 {{- end }}
     files:
+{{- if .encryptionProviderConfig }}
+    - content: |
+{{ .encryptionProviderConfig | indent 8}}
+      owner: root:root
+      path: /etc/kubernetes/enc/encryption-config.yaml
+{{- end }}
 {{- if .cloudstackKubeVip}}
     - content: |
         apiVersion: v1

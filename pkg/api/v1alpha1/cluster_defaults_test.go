@@ -301,8 +301,8 @@ func TestSetClusterDefaults(t *testing.T) {
 									KMS: &KMS{
 										Name:                "test-config",
 										SocketListenAddress: "unix:///kms/socket/path",
-										CacheSize:           defaultKMSCacheSize,
-										Timeout:             &defaultKMSTimeout,
+										CacheSize:           DefaultKMSCacheSize,
+										Timeout:             &DefaultKMSTimeout,
 									},
 								},
 							},

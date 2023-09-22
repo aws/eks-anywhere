@@ -43,6 +43,16 @@ func AwsIamAuthExtraArgs(awsiam *v1alpha1.AWSIamConfig) ExtraArgs {
 	return args
 }
 
+// EtcdEncryptionExtraArgs takes a list of EtcdEncryption configs and returns the relevant API server extra args if it's not nil or empty.
+func EtcdEncryptionExtraArgs(config *[]v1alpha1.EtcdEncryption) ExtraArgs {
+	args := ExtraArgs{}
+	if config == nil || len(*config) == 0 {
+		return args
+	}
+	args.AddIfNotEmpty("encryption-provider-config", "/etc/kubernetes/enc/encryption-config.yaml")
+	return args
+}
+
 // FeatureGatesExtraArgs takes a list of features with the value and returns it in the proper format
 // Example FeatureGatesExtraArgs("ServiceLoadBalancerClass=true").
 func FeatureGatesExtraArgs(features ...string) ExtraArgs {
