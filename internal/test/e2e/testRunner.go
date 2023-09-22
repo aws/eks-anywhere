@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
 	aws_ssm "github.com/aws/aws-sdk-go/service/ssm"
 	"github.com/go-logr/logr"
 	"gopkg.in/yaml.v2"
@@ -229,7 +230,13 @@ func (v *VSphereTestRunner) decommInstance(c instanceRunConf) error {
 	return nil
 }
 
-func (v *Ec2TestRunner) decommInstance(c instanceRunConf) error {
+func (e *Ec2TestRunner) decommInstance(c instanceRunConf) error {
+	runnerName := getTestRunnerName(e.logger, c.jobId)
+	e.logger.V(1).Info("Terminating ec2 Test Runner instance", "instanceID", e.InstanceID, "runner", runnerName)
+	if err := ec2.TerminateEc2Instances(c.session, aws.StringSlice([]string{e.InstanceID})); err != nil {
+		return fmt.Errorf("terminating instance %s for runner %s: %w", e.InstanceID, runnerName, err)
+	}
+
 	return nil
 }
 
