@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"reflect"
 
-	rufiov1 "github.com/tinkerbell/rufio/api/v1alpha1"
+	rufiov1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1/thirdparty/tinkerbell/rufio"
 	tinkv1alpha1 "github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kerrors "k8s.io/apimachinery/pkg/util/errors"

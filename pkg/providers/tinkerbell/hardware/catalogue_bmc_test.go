@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/onsi/gomega"
-	"github.com/tinkerbell/rufio/api/v1alpha1"
+	v1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1/thirdparty/tinkerbell/rufio"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"

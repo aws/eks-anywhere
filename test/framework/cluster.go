@@ -19,7 +19,7 @@ import (
 	"testing"
 	"time"
 
-	rapi "github.com/tinkerbell/rufio/api/v1alpha1"
+	rapi "github.com/aws/eks-anywhere/pkg/api/v1alpha1/thirdparty/tinkerbell/rufio"
 	rctrl "github.com/tinkerbell/rufio/controllers"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"

@@ -1,6 +1,9 @@
-// Package represents https://pkg.go.dev/github.com/tinkerbell/tink@v0.6.0/workflow#pkg-types with json tags.
+// Package tinkerbell represents APIs and types copied from the tinkerbell/tink repo.
 // +kubebuilder:object:generate=true
 package tinkerbell
+
+// Workflow, Task, and Action are copied from https://pkg.go.dev/github.com/tinkerbell/tink@v0.8.0/workflow#pkg-types.
+// json tags have been added.
 
 // Workflow represents a workflow to be executed.
 type Workflow struct {
