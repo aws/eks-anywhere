@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -135,6 +136,9 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, clusterSp
 		if err := v.validateMachineConfig(ctx, clusterSpec.CloudStackDatacenter, machineConfig); err != nil {
 			return fmt.Errorf("machine config %s validation failed: %v", machineConfig.Name, err)
 		}
+		if err := v.validateTemplateMatchesKubernetesVersion(ctx, machineConfig, clusterSpec); err != nil {
+			return fmt.Errorf("machine config %s validation failed: %v", machineConfig.Name, err)
+		}
 	}
 
 	logger.MarkPass("Validated cluster Machine Configs")
@@ -187,6 +191,22 @@ func (v *Validator) validateMachineConfig(ctx context.Context, datacenterConfig 
 		}
 	}
 
+	return nil
+}
+
+func (v *Validator) validateTemplateMatchesKubernetesVersion(ctx context.Context, machineConfig *anywherev1.CloudStackMachineConfig, spec *cluster.Spec) error {
+	// Replace 1.23, 1-23, 1_23 to 123 in the template name string.
+	templateReplacer := strings.NewReplacer("-", "", ".", "", "_", "")
+	templateName := templateReplacer.Replace(machineConfig.Spec.Template.Name)
+	// Replace 1-23 to 123 in the kubernetesversion string.
+	replacer := strings.NewReplacer(".", "")
+	kubernetesVersion := replacer.Replace(string(spec.Cluster.Spec.KubernetesVersion))
+	// This will return an error if the template name does not contain specified kubernetes version.
+	// For ex if the kubernetes version is 1.23,
+	// the template name should include 1.23 or 1-23, 1_23 or 123 i.e. kubernetes-1-23-eks in the string.
+	if !strings.Contains(templateName, kubernetesVersion) {
+		return fmt.Errorf("invalid template: cluster kubernetes version is %s but template for machineconfig %s is %s. If the kubernetes version is 1.23, the template name should include 1.23, 1_23, 1-23 or 123", string(spec.Cluster.Spec.KubernetesVersion), machineConfig.Name, machineConfig.Spec.Template.Name)
+	}
 	return nil
 }
 

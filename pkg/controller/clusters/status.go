@@ -3,6 +3,7 @@ package clusters
 import (
 	"context"
 
+	etcdv1 "github.com/aws/etcdadm-controller/api/v1beta1"
 	"github.com/pkg/errors"
 	v1 "k8s.io/api/core/v1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
@@ -22,8 +23,21 @@ func UpdateClusterStatusForControlPlane(ctx context.Context, client client.Clien
 		return errors.Wrapf(err, "getting kubeadmcontrolplane")
 	}
 
+	var etcdadmCluster *etcdv1.EtcdadmCluster
+	if cluster.Spec.ExternalEtcdConfiguration != nil {
+		capiCluster, err := controller.GetCAPICluster(ctx, client, cluster)
+		if err != nil {
+			return errors.Wrap(err, "getting capi cluster")
+		}
+
+		etcdadmCluster, err = getEtcdadmCluster(ctx, client, capiCluster)
+		if err != nil {
+			return errors.Wrap(err, "reading etcdadm cluster")
+		}
+	}
+
 	updateControlPlaneInitializedCondition(cluster, kcp)
-	updateControlPlaneReadyCondition(cluster, kcp)
+	updateConditionsForEtcdAndControlPlane(cluster, kcp, etcdadmCluster)
 
 	return nil
 }
@@ -66,6 +80,16 @@ func UpdateClusterStatusForCNI(ctx context.Context, cluster *anywherev1.Cluster)
 		// Otherwise, since the control plane is fully ready we can assume the CNI has been configured.
 		conditions.MarkTrue(cluster, anywherev1.DefaultCNIConfiguredCondition)
 	}
+}
+
+// updateConditionsForEtcdAndControlPlane updates the ControlPlaneReady condition if etcdadm cluster is not ready.
+func updateConditionsForEtcdAndControlPlane(cluster *anywherev1.Cluster, kcp *controlplanev1.KubeadmControlPlane, etcdadmCluster *etcdv1.EtcdadmCluster) {
+	// Make sure etcd cluster is ready before marking ControlPlaneReady status to true
+	if cluster.Spec.ExternalEtcdConfiguration != nil && !etcdadmClusterReady(etcdadmCluster) {
+		conditions.MarkFalse(cluster, anywherev1.ControlPlaneReadyCondition, anywherev1.RollingUpgradeInProgress, clusterv1.ConditionSeverityInfo, "Etcd is not ready")
+		return
+	}
+	updateControlPlaneReadyCondition(cluster, kcp)
 }
 
 // updateControlPlaneReadyCondition updates the ControlPlaneReady condition, after checking the state of the control plane

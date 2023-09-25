@@ -202,8 +202,8 @@ func (c *Config) ChildObjects() []kubernetes.Object {
 // ClusterAndChildren returns all kubernetes objects in the cluster Config.
 // It's equivalent to appending the Cluster to the result of ChildObjects.
 func (c *Config) ClusterAndChildren() []kubernetes.Object {
-	objs := c.ChildObjects()
-	return append(objs, c.Cluster)
+	objs := []kubernetes.Object{c.Cluster}
+	return append(objs, c.ChildObjects()...)
 }
 
 func appendIfNotNil(objs []kubernetes.Object, elems ...kubernetes.Object) []kubernetes.Object {

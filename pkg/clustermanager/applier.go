@@ -2,6 +2,7 @@ package clustermanager
 
 import (
 	"context"
+	"fmt"
 	"math"
 	"time"
 
@@ -128,6 +129,15 @@ func (a Applier) Run(ctx context.Context, spec *cluster.Spec, managementCluster 
 	// We use this start time to compute the leftover time on each condition wait
 	waitStartTime := time.Now()
 	retry := a.retrierForWait(waitStartTime)
+
+	if err := cluster.WaitFor(ctx, client, spec.Cluster, retrier.New(5*time.Second), func(c *anywherev1.Cluster) error {
+		if c.Status.FailureMessage != nil && *c.Status.FailureMessage != "" {
+			return fmt.Errorf("cluster has an error: %s", *c.Status.FailureMessage)
+		}
+		return nil
+	}); err != nil {
+		return fmt.Errorf("cluster has a validation error that doesn't seem transient: %s", err)
+	}
 
 	a.log.V(3).Info("Waiting for control plane to be ready")
 	if err := cluster.WaitForCondition(ctx, client, spec.Cluster, retry, anywherev1.ControlPlaneReadyCondition); err != nil {

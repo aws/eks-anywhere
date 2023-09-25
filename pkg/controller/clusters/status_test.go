@@ -2,9 +2,13 @@ package clusters_test
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
+	etcdv1 "github.com/aws/etcdadm-controller/api/v1beta1"
 	. "github.com/onsi/gomega"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
@@ -27,17 +31,21 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 	g := NewWithT(t)
 
 	tests := []struct {
-		name              string
-		kcp               *controlplanev1.KubeadmControlPlane
-		controlPlaneCount int
-		conditions        []anywherev1.Condition
-		wantCondition     *anywherev1.Condition
+		name                string
+		kcp                 *controlplanev1.KubeadmControlPlane
+		controlPlaneCount   int
+		conditions          []anywherev1.Condition
+		wantCondition       *anywherev1.Condition
+		externalEtcdCount   int
+		externalEtcdCluster *etcdv1.EtcdadmCluster
 	}{
 		{
-			name:              "kcp is nil",
-			kcp:               nil,
-			controlPlaneCount: 1,
-			conditions:        []anywherev1.Condition{},
+			name:                "kcp is nil",
+			kcp:                 nil,
+			controlPlaneCount:   1,
+			conditions:          []anywherev1.Condition{},
+			externalEtcdCount:   0,
+			externalEtcdCluster: nil,
 			wantCondition: &anywherev1.Condition{
 				Type:     "ControlPlaneInitialized",
 				Status:   "False",
@@ -63,6 +71,8 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 					Status: "True",
 				},
 			},
+			externalEtcdCount:   0,
+			externalEtcdCluster: nil,
 			wantCondition: &anywherev1.Condition{
 				Type:   anywherev1.ControlPlaneInitializedCondition,
 				Status: "True",
@@ -74,7 +84,9 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 				kcp.ObjectMeta.Generation = 1
 				kcp.Status.ObservedGeneration = 0
 			}),
-			controlPlaneCount: 1,
+			controlPlaneCount:   1,
+			externalEtcdCount:   0,
+			externalEtcdCluster: nil,
 			wantCondition: &anywherev1.Condition{
 				Type:     anywherev1.ControlPlaneInitializedCondition,
 				Status:   "False",
@@ -93,8 +105,10 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 					},
 				}
 			}),
-			controlPlaneCount: 1,
-			conditions:        []anywherev1.Condition{},
+			controlPlaneCount:   1,
+			conditions:          []anywherev1.Condition{},
+			externalEtcdCluster: nil,
+			externalEtcdCount:   0,
 			wantCondition: &anywherev1.Condition{
 				Type:     anywherev1.ControlPlaneInitializedCondition,
 				Status:   "False",
@@ -113,8 +127,10 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 					},
 				}
 			}),
-			controlPlaneCount: 1,
-			conditions:        []anywherev1.Condition{},
+			controlPlaneCount:   1,
+			conditions:          []anywherev1.Condition{},
+			externalEtcdCount:   0,
+			externalEtcdCluster: nil,
 			wantCondition: &anywherev1.Condition{
 				Type:   anywherev1.ControlPlaneInitializedCondition,
 				Status: "True",
@@ -133,6 +149,8 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 					Message:  controlPlaneInitalizationInProgressReason,
 				},
 			},
+			externalEtcdCount:   0,
+			externalEtcdCluster: nil,
 			wantCondition: &anywherev1.Condition{
 				Type:     anywherev1.ControlPlaneReadyCondition,
 				Status:   "False",
@@ -155,6 +173,8 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 					Status: "True",
 				},
 			},
+			externalEtcdCount:   0,
+			externalEtcdCluster: nil,
 			wantCondition: &anywherev1.Condition{
 				Type:   anywherev1.ControlPlaneReadyCondition,
 				Status: "True",
@@ -173,6 +193,8 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 					Status: "True",
 				},
 			},
+			externalEtcdCount:   0,
+			externalEtcdCluster: nil,
 			wantCondition: &anywherev1.Condition{
 				Type:     anywherev1.ControlPlaneReadyCondition,
 				Status:   "False",
@@ -194,12 +216,14 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 				}
 			}),
 			controlPlaneCount: 3,
+			externalEtcdCount: 0,
 			conditions: []anywherev1.Condition{
 				{
 					Type:   anywherev1.ControlPlaneInitializedCondition,
 					Status: "True",
 				},
 			},
+			externalEtcdCluster: nil,
 			wantCondition: &anywherev1.Condition{
 				Type:     anywherev1.ControlPlaneReadyCondition,
 				Status:   "False",
@@ -223,12 +247,14 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 				}
 			}),
 			controlPlaneCount: 1,
+			externalEtcdCount: 0,
 			conditions: []anywherev1.Condition{
 				{
 					Type:   anywherev1.ControlPlaneInitializedCondition,
 					Status: "True",
 				},
 			},
+			externalEtcdCluster: nil,
 			wantCondition: &anywherev1.Condition{
 				Type:     anywherev1.ControlPlaneReadyCondition,
 				Status:   "False",
@@ -253,12 +279,14 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 				}
 			}),
 			controlPlaneCount: 3,
+			externalEtcdCount: 0,
 			conditions: []anywherev1.Condition{
 				{
 					Type:   anywherev1.ControlPlaneInitializedCondition,
 					Status: "True",
 				},
 			},
+			externalEtcdCluster: nil,
 			wantCondition: &anywherev1.Condition{
 				Type:     anywherev1.ControlPlaneReadyCondition,
 				Status:   "False",
@@ -288,6 +316,8 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 					Status: "True",
 				},
 			},
+			externalEtcdCount:   0,
+			externalEtcdCluster: nil,
 			wantCondition: &anywherev1.Condition{
 				Type:     anywherev1.ControlPlaneReadyCondition,
 				Status:   "False",
@@ -324,6 +354,8 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 					Status: "True",
 				},
 			},
+			externalEtcdCount:   0,
+			externalEtcdCluster: nil,
 			wantCondition: &anywherev1.Condition{
 				Type:     anywherev1.ControlPlaneReadyCondition,
 				Reason:   anywherev1.ControlPlaneComponentsUnhealthyReason,
@@ -353,9 +385,89 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 					Status: "True",
 				},
 			},
+			externalEtcdCount:   0,
+			externalEtcdCluster: nil,
 			wantCondition: &anywherev1.Condition{
 				Type:   anywherev1.ControlPlaneReadyCondition,
 				Status: "True",
+			},
+		},
+		{
+			name: "with external etcd ready",
+			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
+				kcp.Status.Replicas = 3
+				kcp.Status.ReadyReplicas = 3
+				kcp.Status.UpdatedReplicas = 3
+
+				kcp.Status.Conditions = []clusterv1.Condition{
+					{
+						Type:   clusterv1.ReadyCondition,
+						Status: "True",
+					},
+				}
+			}),
+			controlPlaneCount: 3,
+			conditions: []anywherev1.Condition{
+				{
+					Type:   anywherev1.ControlPlaneInitializedCondition,
+					Status: "True",
+				},
+			},
+			externalEtcdCount: 1,
+			externalEtcdCluster: &etcdv1.EtcdadmCluster{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:       "test-cluster-etcd",
+					Namespace:  constants.EksaSystemNamespace,
+					Generation: 2,
+				},
+				Status: etcdv1.EtcdadmClusterStatus{
+					Ready:              true,
+					ObservedGeneration: 2,
+				},
+			},
+			wantCondition: &anywherev1.Condition{
+				Type:   anywherev1.ControlPlaneReadyCondition,
+				Status: "True",
+			},
+		},
+		{
+			name: "with external etcd not ready",
+			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
+				kcp.Status.Replicas = 3
+				kcp.Status.ReadyReplicas = 3
+				kcp.Status.UpdatedReplicas = 3
+
+				kcp.Status.Conditions = []clusterv1.Condition{
+					{
+						Type:   clusterv1.ReadyCondition,
+						Status: "True",
+					},
+				}
+			}),
+			controlPlaneCount: 3,
+			conditions: []anywherev1.Condition{
+				{
+					Type:   anywherev1.ControlPlaneInitializedCondition,
+					Status: "True",
+				},
+			},
+			externalEtcdCount: 1,
+			externalEtcdCluster: &etcdv1.EtcdadmCluster{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:       "test-cluster-etcd",
+					Namespace:  constants.EksaSystemNamespace,
+					Generation: 2,
+				},
+				Status: etcdv1.EtcdadmClusterStatus{
+					ObservedGeneration: 2,
+				},
+			},
+			wantCondition: &anywherev1.Condition{
+				Type:     anywherev1.ControlPlaneReadyCondition,
+				Reason:   anywherev1.RollingUpgradeInProgress,
+				Severity: clusterv1.ConditionSeverityInfo,
+				Message:  "Etcd is not ready",
+				Status:   "False",
 			},
 		},
 	}
@@ -367,6 +479,7 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 			cluster.Name = "test-cluster"
 			cluster.Namespace = constants.EksaSystemNamespace
 			cluster.Spec.ControlPlaneConfiguration.Count = tt.controlPlaneCount
+
 			cluster.Status.Conditions = tt.conditions
 
 			objs := []runtime.Object{}
@@ -377,6 +490,31 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 				tt.kcp.Namespace = cluster.Namespace
 				objs = append(objs, tt.kcp)
 			}
+			if tt.externalEtcdCount > 0 {
+				cluster.Spec.ExternalEtcdConfiguration = &anywherev1.ExternalEtcdConfiguration{
+					Count: tt.externalEtcdCount,
+					MachineGroupRef: &anywherev1.Ref{
+						Name: fmt.Sprintf("%s-etcd", cluster.Name),
+					},
+				}
+				capiCluster := &clusterv1.Cluster{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      cluster.Name,
+						Namespace: constants.EksaSystemNamespace,
+					},
+					Spec: clusterv1.ClusterSpec{
+						ManagedExternalEtcdRef: &corev1.ObjectReference{
+							Kind: "EtcdadmCluster",
+							Name: fmt.Sprintf("%s-etcd", cluster.Name),
+						},
+					},
+				}
+				tt.externalEtcdCluster.Name = fmt.Sprintf("%s-etcd", cluster.Name)
+				tt.externalEtcdCluster.Namespace = cluster.Namespace
+
+				objs = append(objs, capiCluster)
+				objs = append(objs, tt.externalEtcdCluster)
+			}
 
 			client = fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
 
@@ -385,7 +523,6 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 
 			condition := conditions.Get(cluster, tt.wantCondition.Type)
 			g.Expect(condition).ToNot(BeNil())
-
 			g.Expect(condition.Type).To(Equal(tt.wantCondition.Type))
 			g.Expect(condition.Severity).To(Equal(tt.wantCondition.Severity))
 			g.Expect(condition.Status).To(Equal(tt.wantCondition.Status))

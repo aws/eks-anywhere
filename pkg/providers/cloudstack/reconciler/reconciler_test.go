@@ -54,11 +54,12 @@ func TestReconcilerReconcileSuccess(t *testing.T) {
 	remoteClient := env.Client()
 
 	spec := tt.buildSpec()
-	tt.ipValidator.EXPECT().ValidateControlPlaneIP(tt.ctx, logger, spec).Return(controller.Result{}, nil)
+	tt.ipValidator.EXPECT().ValidateControlPlaneIP(tt.ctx, logger, tt.buildSpec()).Return(controller.Result{}, nil)
 	tt.remoteClientRegistry.EXPECT().GetClient(
 		tt.ctx, client.ObjectKey{Name: "workload-cluster", Namespace: constants.EksaSystemNamespace},
 	).Return(remoteClient, nil).Times(1)
-	tt.cniReconciler.EXPECT().Reconcile(tt.ctx, logger, remoteClient, tt.buildSpec())
+
+	tt.cniReconciler.EXPECT().Reconcile(tt.ctx, logger, remoteClient, spec)
 	ctrl := gomock.NewController(t)
 	validator := cloudstack.NewMockProviderValidator(ctrl)
 	tt.validatorRegistry.EXPECT().Get(tt.execConfig).Return(validator, nil).Times(1)
@@ -587,6 +588,7 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 
 	machineConfigCP := machineConfig(func(m *anywherev1.CloudStackMachineConfig) {
 		m.Name = "cp-machine-config"
+		m.Spec.Template.Name = "kubernetes-1-22"
 		m.Spec.Users = append(m.Spec.Users,
 			anywherev1.UserConfiguration{
 				Name:              "user",
@@ -595,6 +597,7 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 	})
 	machineConfigWN := machineConfig(func(m *anywherev1.CloudStackMachineConfig) {
 		m.Name = "worker-machine-config"
+		m.Spec.Template.Name = "kubernetes-1-22"
 		m.Spec.Users = append(m.Spec.Users,
 			anywherev1.UserConfiguration{
 				Name:              "user",
