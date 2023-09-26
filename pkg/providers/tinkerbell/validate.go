@@ -29,9 +29,30 @@ func validateOsFamily(spec *ClusterSpec) error {
 		}
 	}
 
-	if controlPlaneOsFamily != v1alpha1.Bottlerocket && spec.DatacenterConfig.Spec.OSImageURL == "" {
+	if controlPlaneOsFamily != v1alpha1.Bottlerocket && spec.DatacenterConfig.Spec.OSImageURL == "" && spec.ControlPlaneMachineConfig().Spec.OSImageURL == "" {
 		return fmt.Errorf("please use bottlerocket as osFamily for auto-importing or provide a valid osImageURL")
 	}
+	return nil
+}
+
+func validateOSImageURLDontOverlap(spec *ClusterSpec) error {
+	var dcOSImageURLfound bool
+	if spec.TinkerbellDatacenter.Spec.OSImageURL != "" {
+		dcOSImageURLfound = true
+	}
+	return validateMachineCfgOSImageURL(spec.TinkerbellMachineConfigs, dcOSImageURLfound)
+}
+
+func validateMachineCfgOSImageURL(machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig, dataCenterOSImageURLfound bool) error {
+	for _, mc := range machineConfigs {
+		if mc.Spec.OSImageURL != "" && dataCenterOSImageURLfound {
+			return fmt.Errorf("overlapping OSImageURL found, OSImageURL can either be set at datacenter config or for each machine config not both")
+		}
+		if mc.Spec.OSImageURL == "" && !dataCenterOSImageURLfound && mc.Spec.OSFamily != v1alpha1.Bottlerocket {
+			return fmt.Errorf("OSImageURL should be set for each machine config not found for: %s", mc.ObjectMeta.Name)
+		}
+	}
+
 	return nil
 }
 
