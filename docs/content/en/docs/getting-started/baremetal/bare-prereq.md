@@ -54,7 +54,7 @@ Here are other network requirements:
 
 >**_NOTE:_**: If you have another DHCP service running on the network, you need to prevent it from interfering with the EKS Anywhere DHCP service. You can do that by configuring the other DHCP service to explicitly block all MAC addresses and exclude all IP addresses that you plan to use with your EKS Anywhere clusters.
 
-* The administrative machine and the target workload environment will need network access to:
+* If you have not followed the [steps for airgapped environments]({{< relref "../airgapped" >}}), then the administrative machine and the target workload environment need network access (TCP/443) to:
 
   * public.ecr.aws
   * anywhere-assets.eks.amazonaws.com: To download the EKS Anywhere binaries, manifests and OVAs
@@ -68,7 +68,7 @@ Here are other network requirements:
 
 >**_NOTE:_** When you set up your cluster configuration YAML file, the endpoint and Tinkerbell addresses are set in the `ControlPlaneConfiguration.endpoint.host` and `tinkerbellIP` fields, respectively.
 
-* Ports must be open to the Admin machine and cluster machines as described in Ports and protocols.
+* Ports must be open to the Admin machine and cluster machines as described in the [Cluster Networking documentation]({{< relref "../ports" >}}).
 
 ## Validated hardware
 
