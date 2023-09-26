@@ -148,6 +148,15 @@ func TestSnowKubernetes127SimpleFlow(t *testing.T) {
 	runSimpleFlow(test)
 }
 
+func TestSnowKubernetes128SimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewSnow(t, framework.WithSnowUbuntu128()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube128)),
+	)
+	runSimpleFlow(test)
+}
+
 // Taints
 func TestSnowKubernetes127UbuntuTaintsUpgradeFlow(t *testing.T) {
 	provider := framework.NewSnow(t,

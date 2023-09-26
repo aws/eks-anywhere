@@ -1596,6 +1596,17 @@ func TestTinkerbellKubernetes127UbuntuSimpleFlow(t *testing.T) {
 	runTinkerbellSimpleFlow(test)
 }
 
+func TestTinkerbellKubernetes128UbuntuSimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewTinkerbell(t, framework.WithUbuntu128Tinkerbell()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube128)),
+		framework.WithControlPlaneHardware(1),
+		framework.WithWorkerHardware(1),
+	)
+	runTinkerbellSimpleFlow(test)
+}
+
 func TestTinkerbellKubernetes123Ubuntu2204SimpleFlow(t *testing.T) {
 	provider := framework.NewTinkerbell(t)
 	test := framework.NewClusterE2ETest(
@@ -1661,6 +1672,19 @@ func TestTinkerbellKubernetes127Ubuntu2204SimpleFlow(t *testing.T) {
 	runTinkerbellSimpleFlowWithoutClusterConfigGeneration(test)
 }
 
+func TestTinkerbellKubernetes128Ubuntu2204SimpleFlow(t *testing.T) {
+	provider := framework.NewTinkerbell(t)
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithControlPlaneHardware(1),
+		framework.WithWorkerHardware(1),
+	).WithClusterConfig(
+		provider.WithKubeVersionAndOS(v1alpha1.Kube128, framework.Ubuntu2204, nil),
+	)
+	runTinkerbellSimpleFlowWithoutClusterConfigGeneration(test)
+}
+
 func TestTinkerbellKubernetes123RedHatSimpleFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
@@ -1716,6 +1740,17 @@ func TestTinkerbellKubernetes127RedHatSimpleFlow(t *testing.T) {
 	runTinkerbellSimpleFlow(test)
 }
 
+func TestTinkerbellKubernetes128RedHatSimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewTinkerbell(t, framework.WithRedHat128Tinkerbell()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube128)),
+		framework.WithControlPlaneHardware(1),
+		framework.WithWorkerHardware(1),
+	)
+	runTinkerbellSimpleFlow(test)
+}
+
 func TestTinkerbellKubernetes123BottleRocketSimpleFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
@@ -1765,6 +1800,17 @@ func TestTinkerbellKubernetes127BottleRocketSimpleFlow(t *testing.T) {
 		t,
 		framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127)),
+		framework.WithControlPlaneHardware(1),
+		framework.WithWorkerHardware(1),
+	)
+	runTinkerbellSimpleFlow(test)
+}
+
+func TestTinkerbellKubernetes128BottleRocketSimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube128)),
 		framework.WithControlPlaneHardware(1),
 		framework.WithWorkerHardware(1),
 	)

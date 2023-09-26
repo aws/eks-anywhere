@@ -183,6 +183,11 @@ func WithCloudStackRedhat127() CloudStackOpt {
 	return withCloudStackKubeVersionAndOS(anywherev1.Kube127, RedHat8, nil)
 }
 
+// WithCloudStackRedhat128 returns a function which can be invoked to configure the Cloudstack object to be compatible with K8s 1.28.
+func WithCloudStackRedhat128() CloudStackOpt {
+	return withCloudStackKubeVersionAndOS(anywherev1.Kube128, RedHat8, nil)
+}
+
 func WithCloudStackFillers(fillers ...api.CloudStackFiller) CloudStackOpt {
 	return func(c *CloudStack) {
 		c.fillers = append(c.fillers, fillers...)
@@ -328,6 +333,11 @@ func (c *CloudStack) Redhat127Template() api.CloudStackFiller {
 	return c.templateForKubeVersionAndOS(anywherev1.Kube127, RedHat8, nil)
 }
 
+// Redhat128Template returns cloudstack filler for 1.28 RedHat.
+func (c *CloudStack) Redhat128Template() api.CloudStackFiller {
+	return c.templateForKubeVersionAndOS(anywherev1.Kube128, RedHat8, nil)
+}
+
 func buildCloudStackWorkerNodeGroupClusterFiller(machineConfigName string, workerNodeGroup *WorkerNodeGroup) api.ClusterFiller {
 	// Set worker node group ref to cloudstack machine config
 	workerNodeGroup.MachineConfigKind = anywherev1.CloudStackMachineConfigKind
@@ -386,6 +396,12 @@ func (c *CloudStack) WithRedhat127() api.ClusterConfigFiller {
 	return c.WithKubeVersionAndOS(anywherev1.Kube127, RedHat8, nil)
 }
 
+// WithRedhat128 returns a cluster config filler that sets the kubernetes version of the cluster to 1.28
+// as well as the right redhat template for all CloudStackMachineConfigs.
+func (c *CloudStack) WithRedhat128() api.ClusterConfigFiller {
+	return c.WithKubeVersionAndOS(anywherev1.Kube128, RedHat8, nil)
+}
+
 // WithRedhatVersion returns a cluster config filler that sets the kubernetes version of the cluster to the k8s
 // version provider, as well as the right redhat template for all CloudStackMachineConfigs.
 func (c *CloudStack) WithRedhatVersion(version anywherev1.KubernetesVersion) api.ClusterConfigFiller {
@@ -400,6 +416,8 @@ func (c *CloudStack) WithRedhatVersion(version anywherev1.KubernetesVersion) api
 		return c.WithRedhat126()
 	case anywherev1.Kube127:
 		return c.WithRedhat127()
+	case anywherev1.Kube128:
+		return c.WithRedhat128()
 	default:
 		return nil
 	}

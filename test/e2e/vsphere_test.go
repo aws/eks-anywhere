@@ -1717,6 +1717,15 @@ func TestVSphereKubernetes127Ubuntu2004SimpleFlow(t *testing.T) {
 	runSimpleFlow(test)
 }
 
+func TestVSphereKubernetes128Ubuntu2004SimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewVSphere(t, framework.WithUbuntu128()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube128)),
+	)
+	runSimpleFlow(test)
+}
+
 func TestVSphereKubernetes123Ubuntu2204SimpleFlow(t *testing.T) {
 	provider := framework.NewVSphere(t)
 	test := framework.NewClusterE2ETest(
@@ -1772,6 +1781,17 @@ func TestVSphereKubernetes127Ubuntu2204SimpleFlow(t *testing.T) {
 	runSimpleFlowWithoutClusterConfigGeneration(test)
 }
 
+func TestVSphereKubernetes128Ubuntu2204SimpleFlow(t *testing.T) {
+	provider := framework.NewVSphere(t)
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+	).WithClusterConfig(
+		provider.WithKubeVersionAndOS(v1alpha1.Kube128, framework.Ubuntu2204, nil),
+	)
+	runSimpleFlowWithoutClusterConfigGeneration(test)
+}
+
 func TestVSphereKubernetes123RedHatSimpleFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
@@ -1817,6 +1837,15 @@ func TestVSphereKubernetes127RedHatSimpleFlow(t *testing.T) {
 	runSimpleFlow(test)
 }
 
+func TestVSphereKubernetes128RedHatSimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewVSphere(t, framework.WithRedHat128VSphere()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube128)),
+	)
+	runSimpleFlow(test)
+}
+
 func TestVSphereKubernetes123ThreeReplicasFiveWorkersSimpleFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
@@ -1843,6 +1872,15 @@ func TestVSphereKubernetes127BottleRocketSimpleFlow(t *testing.T) {
 		t,
 		framework.NewVSphere(t, framework.WithBottleRocket127()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127)),
+	)
+	runSimpleFlow(test)
+}
+
+func TestVSphereKubernetes128BottleRocketSimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewVSphere(t, framework.WithBottleRocket128()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube128)),
 	)
 	runSimpleFlow(test)
 }

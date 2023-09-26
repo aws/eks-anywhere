@@ -2356,6 +2356,15 @@ func TestCloudStackKubernetes127SimpleFlow(t *testing.T) {
 	runSimpleFlow(test)
 }
 
+func TestCloudStackKubernetes128SimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewCloudStack(t, framework.WithCloudStackRedhat128()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube128)),
+	)
+	runSimpleFlow(test)
+}
+
 func TestCloudStackKubernetes123ThreeReplicasFiveWorkersSimpleFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
