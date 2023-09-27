@@ -47,7 +47,9 @@ func TestCloudStackDatacenterReconcilerSuccess(t *testing.T) {
 		},
 	}
 	objs := []runtime.Object{dcConfig, secrets}
-	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
+	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).
+		WithStatusSubresource(dcConfig).
+		Build()
 
 	ctrl := gomock.NewController(t)
 	validatorRegistry := cloudstack.NewMockValidatorRegistry(ctrl)
@@ -103,7 +105,9 @@ func TestCloudStackDatacenterReconcilerSetDefaultSuccess(t *testing.T) {
 		},
 	}
 	objs := []runtime.Object{dcConfig, secrets}
-	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
+	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).
+		WithStatusSubresource(dcConfig).
+		Build()
 
 	ctrl := gomock.NewController(t)
 	validatorRegistry := cloudstack.NewMockValidatorRegistry(ctrl)
@@ -151,6 +155,7 @@ func TestCloudstackDatacenterConfigReconcilerDelete(t *testing.T) {
 
 	dcConfig := createCloudstackDatacenterConfig()
 	dcConfig.DeletionTimestamp = &metav1.Time{Time: time.Now()}
+	dcConfig.Finalizers = []string{"my-finalizer"}
 	objs := []runtime.Object{dcConfig}
 	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
 	ctrl := gomock.NewController(t)

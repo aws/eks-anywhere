@@ -1,0 +1,178 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.8.0
+  creationTimestamp: null
+  name: cloudstackaffinitygroups.infrastructure.cluster.x-k8s.io
+spec:
+  group: infrastructure.cluster.x-k8s.io
+  names:
+    kind: CloudStackAffinityGroup
+    listKind: CloudStackAffinityGroupList
+    plural: cloudstackaffinitygroups
+    singular: cloudstackaffinitygroup
+  scope: Namespaced
+  versions:
+  - name: v1beta1
+    schema:
+      openAPIV3Schema:
+        description: CloudStackAffinityGroup is the Schema for the cloudstackaffinitygroups
+          API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: CloudStackAffinityGroupSpec defines the desired state of
+              CloudStackAffinityGroup
+            properties:
+              id:
+                description: ID.
+                type: string
+              name:
+                description: Name.
+                type: string
+              type:
+                description: Mutually exclusive parameter with AffinityGroupIDs. Can
+                  be "host affinity" or "host anti-affinity". Will create an affinity
+                  group per machine set.
+                type: string
+            type: object
+          status:
+            description: CloudStackAffinityGroupStatus defines the observed state
+              of CloudStackAffinityGroup
+            properties:
+              ready:
+                description: Reflects the readiness of the CS Affinity Group.
+                type: boolean
+            required:
+            - ready
+            type: object
+        type: object
+    served: true
+    storage: false
+    subresources:
+      status: {}
+  - name: v1beta2
+    schema:
+      openAPIV3Schema:
+        description: CloudStackAffinityGroup is the Schema for the cloudstackaffinitygroups
+          API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: CloudStackAffinityGroupSpec defines the desired state of
+              CloudStackAffinityGroup
+            properties:
+              failureDomainName:
+                description: FailureDomainName -- the name of the FailureDomain the
+                  machine is placed in.
+                type: string
+              id:
+                description: ID.
+                type: string
+              name:
+                description: Name.
+                type: string
+              type:
+                description: Mutually exclusive parameter with AffinityGroupIDs. Can
+                  be "host affinity" or "host anti-affinity". Will create an affinity
+                  group per machine set.
+                type: string
+            type: object
+          status:
+            description: CloudStackAffinityGroupStatus defines the observed state
+              of CloudStackAffinityGroup
+            properties:
+              ready:
+                description: Reflects the readiness of the CS Affinity Group.
+                type: boolean
+            required:
+            - ready
+            type: object
+        type: object
+    served: true
+    storage: false
+    subresources:
+      status: {}
+  - name: v1beta3
+    schema:
+      openAPIV3Schema:
+        description: CloudStackAffinityGroup is the Schema for the cloudstackaffinitygroups
+          API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: CloudStackAffinityGroupSpec defines the desired state of
+              CloudStackAffinityGroup
+            properties:
+              failureDomainName:
+                description: FailureDomainName -- the name of the FailureDomain the
+                  machine is placed in.
+                type: string
+              id:
+                description: ID.
+                type: string
+              name:
+                description: Name.
+                type: string
+              type:
+                description: Mutually exclusive parameter with AffinityGroupIDs. Can
+                  be "host affinity" or "host anti-affinity". Will create an affinity
+                  group per machine set.
+                type: string
+            type: object
+          status:
+            description: CloudStackAffinityGroupStatus defines the observed state
+              of CloudStackAffinityGroup
+            properties:
+              ready:
+                description: Reflects the readiness of the CS Affinity Group.
+                type: boolean
+            required:
+            - ready
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []

@@ -9,6 +9,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
+	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // log is for logging in this package.
@@ -36,19 +37,19 @@ func (r *AWSIamConfig) Default() {
 var _ webhook.Validator = &AWSIamConfig{}
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
-func (r *AWSIamConfig) ValidateCreate() error {
+func (r *AWSIamConfig) ValidateCreate() (admission.Warnings, error) {
 	awsiamconfiglog.Info("validate create", "name", r.Name)
 
-	return r.Validate()
+	return nil, r.Validate()
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
-func (r *AWSIamConfig) ValidateUpdate(old runtime.Object) error {
+func (r *AWSIamConfig) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
 	awsiamconfiglog.Info("validate update", "name", r.Name)
 
 	oldAWSIamConfig, ok := old.(*AWSIamConfig)
 	if !ok {
-		return apierrors.NewBadRequest(fmt.Sprintf("expected a AWSIamConfig but got a %T", old))
+		return nil, apierrors.NewBadRequest(fmt.Sprintf("expected a AWSIamConfig but got a %T", old))
 	}
 
 	var allErrs field.ErrorList
@@ -59,17 +60,17 @@ func (r *AWSIamConfig) ValidateUpdate(old runtime.Object) error {
 	}
 
 	if len(allErrs) == 0 {
-		return nil
+		return nil, nil
 	}
 
-	return apierrors.NewInvalid(GroupVersion.WithKind(AWSIamConfigKind).GroupKind(), r.Name, allErrs)
+	return nil, apierrors.NewInvalid(GroupVersion.WithKind(AWSIamConfigKind).GroupKind(), r.Name, allErrs)
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type.
-func (r *AWSIamConfig) ValidateDelete() error {
+func (r *AWSIamConfig) ValidateDelete() (admission.Warnings, error) {
 	awsiamconfiglog.Info("validate delete", "name", r.Name)
 
-	return nil
+	return nil, nil
 }
 
 func validateImmutableAWSIamFields(new, old *AWSIamConfig) field.ErrorList {

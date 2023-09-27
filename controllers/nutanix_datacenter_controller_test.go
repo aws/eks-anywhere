@@ -32,7 +32,9 @@ func TestNutanixDatacenterConfigReconcilerSuccess(t *testing.T) {
 	objs := []runtime.Object{config}
 
 	cb := fake.NewClientBuilder()
-	cl := cb.WithRuntimeObjects(objs...).Build()
+	cl := cb.WithRuntimeObjects(objs...).
+		WithStatusSubresource(config).
+		Build()
 
 	r := controllers.NewNutanixDatacenterReconciler(cl, nutanix.NewDefaulter())
 
@@ -56,10 +58,13 @@ func TestNutanixDatacenterConfigReconcileDelete(t *testing.T) {
 	config := nutanixDatacenterConfig()
 	now := metav1.Now()
 	config.DeletionTimestamp = &now
+	config.Finalizers = []string{"test-finalizer"}
 	objs := []runtime.Object{config}
 
 	cb := fake.NewClientBuilder()
-	cl := cb.WithRuntimeObjects(objs...).Build()
+	cl := cb.WithRuntimeObjects(objs...).
+		WithStatusSubresource(config).
+		Build()
 
 	r := controllers.NewNutanixDatacenterReconciler(cl, nutanix.NewDefaulter())
 
