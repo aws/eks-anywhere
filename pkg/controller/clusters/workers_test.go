@@ -24,6 +24,7 @@ import (
 )
 
 func TestReconcileWorkersSuccess(t *testing.T) {
+	test.MarkIntegration(t)
 	g := NewWithT(t)
 	c := env.Client()
 	api := envtest.NewAPIExpecter(t, c)
@@ -66,6 +67,7 @@ func TestReconcileWorkersSuccess(t *testing.T) {
 }
 
 func TestReconcileWorkersErrorApplyingObjects(t *testing.T) {
+	test.MarkIntegration(t)
 	g := NewWithT(t)
 	c := env.Client()
 	ctx := context.Background()
@@ -192,6 +194,7 @@ func dockerMachineTemplate(name, namespace string) *dockerv1.DockerMachineTempla
 }
 
 func TestReconcileWorkersForEKSAErrorGettingCAPICluster(t *testing.T) {
+	test.MarkIntegration(t)
 	g := NewWithT(t)
 	c := fake.NewClientBuilder().WithScheme(runtime.NewScheme()).Build()
 	ctx := context.Background()
@@ -210,6 +213,7 @@ func TestReconcileWorkersForEKSAErrorGettingCAPICluster(t *testing.T) {
 }
 
 func TestReconcileWorkersForEKSANoCAPICluster(t *testing.T) {
+	test.MarkIntegration(t)
 	g := NewWithT(t)
 	c := env.Client()
 	ctx := context.Background()
@@ -228,6 +232,7 @@ func TestReconcileWorkersForEKSANoCAPICluster(t *testing.T) {
 }
 
 func TestReconcileWorkersForEKSASuccess(t *testing.T) {
+	test.MarkIntegration(t)
 	g := NewWithT(t)
 	c := env.Client()
 	api := envtest.NewAPIExpecter(t, c)

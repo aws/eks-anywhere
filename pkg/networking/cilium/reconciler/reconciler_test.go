@@ -34,6 +34,7 @@ import (
 )
 
 func TestReconcilerReconcileInstall(t *testing.T) {
+	test.MarkIntegration(t)
 	tt := newReconcileTest(t)
 	ds := ciliumDaemonSet()
 	operator := ciliumOperator()
@@ -50,6 +51,7 @@ func TestReconcilerReconcileInstall(t *testing.T) {
 }
 
 func TestReconcilerReconcileInstallErrorGeneratingManifest(t *testing.T) {
+	test.MarkIntegration(t)
 	tt := newReconcileTest(t)
 	tt.templater.EXPECT().GenerateManifest(tt.ctx, tt.spec).Return(nil, errors.New("generating manifest"))
 
@@ -59,6 +61,7 @@ func TestReconcilerReconcileInstallErrorGeneratingManifest(t *testing.T) {
 }
 
 func TestReconcilerReconcileErrorYamlReconcile(t *testing.T) {
+	test.MarkIntegration(t)
 	tt := newReconcileTest(t)
 	tt.templater.EXPECT().GenerateManifest(tt.ctx, tt.spec).Return([]byte("invalid yaml"), nil)
 
@@ -68,6 +71,7 @@ func TestReconcilerReconcileErrorYamlReconcile(t *testing.T) {
 }
 
 func TestReconcilerReconcileAlreadyUpToDate(t *testing.T) {
+	test.MarkIntegration(t)
 	ds := ciliumDaemonSet()
 	operator := ciliumOperator()
 	cm := ciliumConfigMap()
@@ -83,6 +87,7 @@ func TestReconcilerReconcileAlreadyUpToDate(t *testing.T) {
 }
 
 func TestReconcilerReconcileAlreadyInDesiredVersionWithPreflight(t *testing.T) {
+	test.MarkIntegration(t)
 	ds := ciliumDaemonSet()
 	operator := ciliumOperator()
 	preflightDS := ciliumPreflightDaemonSet()
@@ -108,6 +113,7 @@ func TestReconcilerReconcileAlreadyInDesiredVersionWithPreflight(t *testing.T) {
 }
 
 func TestReconcilerReconcileAlreadyInDesiredVersionWithPreflightErrorFromTemplater(t *testing.T) {
+	test.MarkIntegration(t)
 	ds := ciliumDaemonSet()
 	operator := ciliumOperator()
 	cm := ciliumConfigMap()
@@ -126,6 +132,7 @@ func TestReconcilerReconcileAlreadyInDesiredVersionWithPreflightErrorFromTemplat
 }
 
 func TestReconcilerReconcileAlreadyInDesiredVersionWithPreflightErrorDeletingYaml(t *testing.T) {
+	test.MarkIntegration(t)
 	ds := ciliumDaemonSet()
 	operator := ciliumOperator()
 	cm := ciliumConfigMap()
@@ -144,6 +151,7 @@ func TestReconcilerReconcileAlreadyInDesiredVersionWithPreflightErrorDeletingYam
 }
 
 func TestReconcilerReconcileUpgradeButCiliumDaemonSetNotReady(t *testing.T) {
+	test.MarkIntegration(t)
 	ds := ciliumDaemonSet()
 	operator := ciliumOperator()
 	tt := newReconcileTest(t).withObjects(ds, operator)
@@ -164,6 +172,7 @@ func TestReconcilerReconcileUpgradeButCiliumDaemonSetNotReady(t *testing.T) {
 }
 
 func TestReconcilerReconcileUpgradeNeedsPreflightAndPreflightDaemonSetNotAvailable(t *testing.T) {
+	test.MarkIntegration(t)
 	ds := ciliumDaemonSet()
 	operator := ciliumOperator()
 	tt := newReconcileTest(t).withObjects(ds, operator)
@@ -186,6 +195,7 @@ func TestReconcilerReconcileUpgradeNeedsPreflightAndPreflightDaemonSetNotAvailab
 }
 
 func TestReconcilerReconcileUpgradeErrorGeneratingPreflight(t *testing.T) {
+	test.MarkIntegration(t)
 	ds := ciliumDaemonSet()
 	operator := ciliumOperator()
 	tt := newReconcileTest(t).withObjects(ds, operator)
@@ -206,6 +216,7 @@ func TestReconcilerReconcileUpgradeErrorGeneratingPreflight(t *testing.T) {
 }
 
 func TestReconcilerReconcileUpgradeNeedsPreflightAndPreflightDeploymentNotAvailable(t *testing.T) {
+	test.MarkIntegration(t)
 	ds := ciliumDaemonSet()
 	operator := ciliumOperator()
 	tt := newReconcileTest(t).withObjects(ds, operator)
@@ -229,6 +240,7 @@ func TestReconcilerReconcileUpgradeNeedsPreflightAndPreflightDeploymentNotAvaila
 }
 
 func TestReconcilerReconcileUpgradeNeedsPreflightAndPreflightNotReady(t *testing.T) {
+	test.MarkIntegration(t)
 	ds := ciliumDaemonSet()
 	operator := ciliumOperator()
 	tt := newReconcileTest(t).withObjects(ds, operator)
@@ -252,6 +264,7 @@ func TestReconcilerReconcileUpgradeNeedsPreflightAndPreflightNotReady(t *testing
 }
 
 func TestReconcilerReconcileUpgradePreflightDaemonSetNotReady(t *testing.T) {
+	test.MarkIntegration(t)
 	ds := ciliumDaemonSet()
 	operator := ciliumOperator()
 	tt := newReconcileTest(t).withObjects(ds, operator, ciliumPreflightDaemonSet(), ciliumPreflightDeployment())
@@ -272,6 +285,7 @@ func TestReconcilerReconcileUpgradePreflightDaemonSetNotReady(t *testing.T) {
 }
 
 func TestReconcilerReconcileUpgradePreflightDeploymentSetNotReady(t *testing.T) {
+	test.MarkIntegration(t)
 	ds := ciliumDaemonSet()
 	operator := ciliumOperator()
 	preflight := ciliumPreflightDaemonSet()
@@ -294,6 +308,7 @@ func TestReconcilerReconcileUpgradePreflightDeploymentSetNotReady(t *testing.T) 
 }
 
 func TestReconcilerReconcileUpgradeInvalidCiliumInstalledVersion(t *testing.T) {
+	test.MarkIntegration(t)
 	ds := ciliumDaemonSet()
 	ds.Spec.Template.Spec.Containers[0].Image = "cilium:eksa-invalid-version"
 	operator := ciliumOperator()
@@ -320,6 +335,7 @@ func TestReconcilerReconcileUpgradeInvalidCiliumInstalledVersion(t *testing.T) {
 }
 
 func TestReconcilerReconcileUpgradeErrorGeneratingManifest(t *testing.T) {
+	test.MarkIntegration(t)
 	ds := ciliumDaemonSet()
 	operator := ciliumOperator()
 	preflight := ciliumPreflightDaemonSet()
@@ -348,6 +364,7 @@ func TestReconcilerReconcileUpgradeErrorGeneratingManifest(t *testing.T) {
 }
 
 func TestReconcilerReconcileUpgradePreflightErrorYamlReconcile(t *testing.T) {
+	test.MarkIntegration(t)
 	ds := ciliumDaemonSet()
 	operator := ciliumOperator()
 	preflight := ciliumPreflightDaemonSet()
@@ -375,6 +392,7 @@ func TestReconcilerReconcileUpgradePreflightErrorYamlReconcile(t *testing.T) {
 }
 
 func TestReconcilerReconcileUpgradePreflightReady(t *testing.T) {
+	test.MarkIntegration(t)
 	ds := ciliumDaemonSet()
 	operator := ciliumOperator()
 	preflight := ciliumPreflightDaemonSet()
@@ -411,6 +429,7 @@ func TestReconcilerReconcileUpgradePreflightReady(t *testing.T) {
 }
 
 func TestReconcilerReconcileUpdateConfigConfigMapEnablePolicyChange(t *testing.T) {
+	test.MarkIntegration(t)
 	ds := ciliumDaemonSet()
 	operator := ciliumOperator()
 	cm := ciliumConfigMap()
@@ -440,6 +459,7 @@ func TestReconcilerReconcileUpdateConfigConfigMapEnablePolicyChange(t *testing.T
 }
 
 func TestReconcilerReconcileSkipUpgradeWithoutCiliumInstalled(t *testing.T) {
+	test.MarkIntegration(t)
 	ds := ciliumDaemonSet()
 	operator := ciliumOperator()
 	cm := ciliumConfigMap()
@@ -467,6 +487,7 @@ func TestReconcilerReconcileSkipUpgradeWithoutCiliumInstalled(t *testing.T) {
 }
 
 func TestReconcilerReconcileSkipUpgradeWithCiliumInstalled(t *testing.T) {
+	test.MarkIntegration(t)
 	ds := ciliumDaemonSet()
 	operator := ciliumOperator()
 	cm := ciliumConfigMap()
@@ -490,6 +511,7 @@ func TestReconcilerReconcileSkipUpgradeWithCiliumInstalled(t *testing.T) {
 }
 
 func TestReconcilerReconcileSkipUpgradeWithAnnotationWithoutCilium(t *testing.T) {
+	test.MarkIntegration(t)
 	tt := newReconcileTest(t)
 	tt.spec = test.NewClusterSpec(func(s *cluster.Spec) {
 		s.Cluster.Spec.ClusterNetwork.CNIConfig = &anywherev1.CNIConfig{
@@ -510,6 +532,7 @@ func TestReconcilerReconcileSkipUpgradeWithAnnotationWithoutCilium(t *testing.T)
 }
 
 func TestReconcilerReconcileSkipUpgradeWithAnnotationWithCilium(t *testing.T) {
+	test.MarkIntegration(t)
 	ds := ciliumDaemonSet()
 	operator := ciliumOperator()
 	cm := ciliumConfigMap()

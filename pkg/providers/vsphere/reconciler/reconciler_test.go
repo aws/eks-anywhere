@@ -45,6 +45,7 @@ const (
 )
 
 func TestReconcilerReconcileSuccess(t *testing.T) {
+	test.MarkIntegration(t)
 	tt := newReconcilerTest(t)
 	// We want to check that the cluster status is cleaned up if validations are passed
 	tt.cluster.SetFailure(anywherev1.FailureReasonType("InvalidCluster"), "invalid cluster")
@@ -82,6 +83,7 @@ func TestReconcilerReconcileSuccess(t *testing.T) {
 }
 
 func TestReconcilerReconcileWorkerNodesSuccess(t *testing.T) {
+	test.MarkIntegration(t)
 	tt := newReconcilerTest(t)
 	tt.cluster.Name = "my-management-cluster"
 	tt.cluster.SetSelfManaged()
@@ -135,6 +137,7 @@ func TestReconcilerReconcileWorkerNodesSuccess(t *testing.T) {
 }
 
 func TestReconcilerFailToSetUpMachineConfigCP(t *testing.T) {
+	test.MarkIntegration(t)
 	tt := newReconcilerTest(t)
 	logger := test.NewNullLogger()
 	tt.withFakeClient()
@@ -152,6 +155,7 @@ func TestReconcilerFailToSetUpMachineConfigCP(t *testing.T) {
 }
 
 func TestSetupEnvVars(t *testing.T) {
+	test.MarkIntegration(t)
 	tt := newReconcilerTest(t)
 	tt.withFakeClient()
 
@@ -166,6 +170,7 @@ func TestSetupEnvVars(t *testing.T) {
 }
 
 func TestReconcilerControlPlaneIsNotReady(t *testing.T) {
+	test.MarkIntegration(t)
 	tt := newReconcilerTest(t)
 	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
 		c.Name = tt.cluster.Name
@@ -198,6 +203,7 @@ func TestReconcilerControlPlaneIsNotReady(t *testing.T) {
 }
 
 func TestReconcilerReconcileWorkersSuccess(t *testing.T) {
+	test.MarkIntegration(t)
 	tt := newReconcilerTest(t)
 	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
 		c.Name = tt.cluster.Name
@@ -214,6 +220,7 @@ func TestReconcilerReconcileWorkersSuccess(t *testing.T) {
 }
 
 func TestReconcilerReconcileInvalidDatacenterConfig(t *testing.T) {
+	test.MarkIntegration(t)
 	tt := newReconcilerTest(t)
 	logger := test.NewNullLogger()
 	tt.datacenterConfig.Status.SpecValid = false
@@ -230,6 +237,7 @@ func TestReconcilerReconcileInvalidDatacenterConfig(t *testing.T) {
 }
 
 func TestReconcilerDatacenterConfigNotValidated(t *testing.T) {
+	test.MarkIntegration(t)
 	tt := newReconcilerTest(t)
 	logger := test.NewNullLogger()
 	tt.datacenterConfig.Status.SpecValid = false
@@ -244,6 +252,7 @@ func TestReconcilerDatacenterConfigNotValidated(t *testing.T) {
 }
 
 func TestReconcileCNISuccess(t *testing.T) {
+	test.MarkIntegration(t)
 	tt := newReconcilerTest(t)
 	tt.withFakeClient()
 
@@ -265,6 +274,7 @@ func TestReconcileCNISuccess(t *testing.T) {
 }
 
 func TestReconcileCNIErrorClientRegistry(t *testing.T) {
+	test.MarkIntegration(t)
 	tt := newReconcilerTest(t)
 	tt.withFakeClient()
 
@@ -284,6 +294,7 @@ func TestReconcileCNIErrorClientRegistry(t *testing.T) {
 }
 
 func TestReconcilerReconcileControlPlaneSuccess(t *testing.T) {
+	test.MarkIntegration(t)
 	tt := newReconcilerTest(t)
 	tt.createAllObjs()
 

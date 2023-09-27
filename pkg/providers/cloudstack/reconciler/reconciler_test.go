@@ -40,6 +40,7 @@ const (
 )
 
 func TestReconcilerReconcileSuccess(t *testing.T) {
+	test.MarkIntegration(t)
 	tt := newReconcilerTest(t)
 	// We want to check that the cluster status is cleaned up if validations are passed
 	tt.cluster.SetFailure(anywherev1.FailureReasonType("InvalidCluster"), "invalid cluster")
@@ -83,6 +84,7 @@ func TestReconcilerReconcileSuccess(t *testing.T) {
 }
 
 func TestReconcilerValidateDatacenterConfigRequeue(t *testing.T) {
+	test.MarkIntegration(t)
 	tt := newReconcilerTest(t)
 	tt.datacenterConfig.Status.SpecValid = false
 
@@ -103,6 +105,7 @@ func TestReconcilerValidateDatacenterConfigRequeue(t *testing.T) {
 }
 
 func TestReconcilerValidateDatacenterConfigFail(t *testing.T) {
+	test.MarkIntegration(t)
 	tt := newReconcilerTest(t)
 	tt.datacenterConfig.Status.SpecValid = false
 	tt.datacenterConfig.Status.FailureMessage = ptr.String("Invalid CloudStackDatacenterConfig")
@@ -123,6 +126,7 @@ func TestReconcilerValidateDatacenterConfigFail(t *testing.T) {
 }
 
 func TestReconcilerValidateMachineConfigInvalidSecret(t *testing.T) {
+	test.MarkIntegration(t)
 	tt := newReconcilerTest(t)
 	tt.createAllObjs()
 
@@ -138,6 +142,7 @@ func TestReconcilerValidateMachineConfigInvalidSecret(t *testing.T) {
 }
 
 func TestReconcilerValidateMachineConfigGetValidatorFail(t *testing.T) {
+	test.MarkIntegration(t)
 	tt := newReconcilerTest(t)
 	tt.eksaSupportObjs = append(tt.eksaSupportObjs, tt.secret)
 	tt.createAllObjs()
@@ -157,6 +162,7 @@ func TestReconcilerValidateMachineConfigGetValidatorFail(t *testing.T) {
 }
 
 func TestReconcilerValidateMachineConfigFail(t *testing.T) {
+	test.MarkIntegration(t)
 	tt := newReconcilerTest(t)
 	tt.eksaSupportObjs = append(tt.eksaSupportObjs, tt.secret)
 	tt.createAllObjs()
@@ -179,6 +185,7 @@ func TestReconcilerValidateMachineConfigFail(t *testing.T) {
 }
 
 func TestReconcilerControlPlaneIsNotReady(t *testing.T) {
+	test.MarkIntegration(t)
 	tt := newReconcilerTest(t)
 
 	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
@@ -211,6 +218,7 @@ func TestReconcilerControlPlaneIsNotReady(t *testing.T) {
 }
 
 func TestReconcileControlPlaneUnstackedEtcdSuccess(t *testing.T) {
+	test.MarkIntegration(t)
 	tt := newReconcilerTest(t)
 	tt.cluster.Spec.ExternalEtcdConfiguration = &anywherev1.ExternalEtcdConfiguration{
 		Count: 1,
@@ -275,6 +283,7 @@ func TestReconcileControlPlaneUnstackedEtcdSuccess(t *testing.T) {
 }
 
 func TestReconcileControlPlaneStackedEtcdSuccess(t *testing.T) {
+	test.MarkIntegration(t)
 	tt := newReconcilerTest(t)
 	tt.eksaSupportObjs = append(tt.eksaSupportObjs, tt.secret)
 	tt.createAllObjs()
@@ -332,6 +341,7 @@ func TestReconcileControlPlaneStackedEtcdSuccess(t *testing.T) {
 }
 
 func TestReconcileCNISuccess(t *testing.T) {
+	test.MarkIntegration(t)
 	tt := newReconcilerTest(t)
 	tt.withFakeClient()
 
@@ -354,6 +364,7 @@ func TestReconcileCNISuccess(t *testing.T) {
 }
 
 func TestReconcileCNIErrorClientRegistry(t *testing.T) {
+	test.MarkIntegration(t)
 	tt := newReconcilerTest(t)
 	tt.withFakeClient()
 
@@ -374,6 +385,7 @@ func TestReconcileCNIErrorClientRegistry(t *testing.T) {
 }
 
 func TestReconcilerReconcileWorkersSuccess(t *testing.T) {
+	test.MarkIntegration(t)
 	tt := newReconcilerTest(t)
 	tt.cluster.Name = "mgmt-cluster"
 	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
@@ -419,6 +431,7 @@ func TestReconcilerReconcileWorkersSuccess(t *testing.T) {
 }
 
 func TestReconcilerReconcileWorkersFailure(t *testing.T) {
+	test.MarkIntegration(t)
 	tt := newReconcilerTest(t)
 	tt.cluster.Name = "mgmt-cluster"
 	tt.cluster.SetSelfManaged()
@@ -438,6 +451,7 @@ func TestReconcilerReconcileWorkersFailure(t *testing.T) {
 }
 
 func TestReconcilerReconcileWorkerNodesSuccess(t *testing.T) {
+	test.MarkIntegration(t)
 	tt := newReconcilerTest(t)
 	tt.cluster.Name = "mgmt-cluster"
 	tt.cluster.SetSelfManaged()
@@ -485,6 +499,7 @@ func TestReconcilerReconcileWorkerNodesSuccess(t *testing.T) {
 }
 
 func TestReconcilerReconcileWorkerNodesFailure(t *testing.T) {
+	test.MarkIntegration(t)
 	tt := newReconcilerTest(t)
 	tt.cluster.Name = "mgmt-cluster"
 	tt.cluster.SetSelfManaged()

@@ -26,6 +26,7 @@ import (
 )
 
 func TestReconcileControlPlaneStackedEtcd(t *testing.T) {
+	test.MarkIntegration(t)
 	g := NewWithT(t)
 	c := env.Client()
 	api := envtest.NewAPIExpecter(t, c)
@@ -42,6 +43,7 @@ func TestReconcileControlPlaneStackedEtcd(t *testing.T) {
 }
 
 func TestReconcileControlPlaneExternalEtcdNewCluster(t *testing.T) {
+	test.MarkIntegration(t)
 	g := NewWithT(t)
 	c := env.Client()
 	api := envtest.NewAPIExpecter(t, c)
@@ -72,6 +74,7 @@ func TestReconcileControlPlaneExternalEtcdNewCluster(t *testing.T) {
 }
 
 func TestReconcileControlPlaneExternalEtcdUpgradeWithDiff(t *testing.T) {
+	test.MarkIntegration(t)
 	g := NewWithT(t)
 	c := env.Client()
 	api := envtest.NewAPIExpecter(t, c)
@@ -129,6 +132,7 @@ func TestReconcileControlPlaneExternalEtcdUpgradeWithDiff(t *testing.T) {
 }
 
 func TestReconcileControlPlaneExternalEtcdNotReady(t *testing.T) {
+	test.MarkIntegration(t)
 	g := NewWithT(t)
 	c := env.Client()
 	api := envtest.NewAPIExpecter(t, c)
@@ -166,6 +170,7 @@ func TestReconcileControlPlaneExternalEtcdNotReady(t *testing.T) {
 }
 
 func TestReconcileControlPlaneExternalEtcdReadyControlPlaneUpgrade(t *testing.T) {
+	test.MarkIntegration(t)
 	g := NewWithT(t)
 	c := env.Client()
 	api := envtest.NewAPIExpecter(t, c)
@@ -223,6 +228,7 @@ func TestReconcileControlPlaneExternalEtcdReadyControlPlaneUpgrade(t *testing.T)
 }
 
 func TestReconcileControlPlaneExternalEtcdUpgradeWithNoNamespace(t *testing.T) {
+	test.MarkIntegration(t)
 	g := NewWithT(t)
 	c := env.Client()
 	api := envtest.NewAPIExpecter(t, c)

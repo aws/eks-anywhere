@@ -3,7 +3,6 @@ package controllers_test
 import (
 	"context"
 	"errors"
-	"os"
 	"testing"
 
 	"github.com/go-logr/logr"
@@ -32,9 +31,7 @@ import (
 )
 
 func TestClusterReconcilerEnsureOwnerReferences(t *testing.T) {
-	if os.Getenv(integrationTestEnvVar) != "true" {
-		t.Skipf("set env var '%v=true' to run this test", integrationTestEnvVar)
-	}
+	test.MarkIntegration(t)
 	g := NewWithT(t)
 	ctx := context.Background()
 
@@ -208,6 +205,7 @@ func TestClusterReconcilerReconcileChildObjectNotFound(t *testing.T) {
 }
 
 func TestClusterReconcilerSetupWithManager(t *testing.T) {
+	test.MarkIntegration(t)
 	client := env.Client()
 	r := controllers.NewClusterReconciler(client, newRegistryForDummyProviderReconciler(), newMockAWSIamConfigReconciler(t), newMockClusterValidator(t), nil, nil)
 

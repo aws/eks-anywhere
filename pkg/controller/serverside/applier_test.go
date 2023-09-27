@@ -3,22 +3,20 @@ package serverside_test
 import (
 	"context"
 	"errors"
-	"os"
 	"testing"
 
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/controller"
 	"github.com/aws/eks-anywhere/pkg/controller/serverside"
 )
 
 func TestObjectApplierApplySuccess(t *testing.T) {
-	if os.Getenv(integrationTestEnvVar) != "true" {
-		t.Skipf("set env var '%v=true' to run this test", integrationTestEnvVar)
-	}
+	test.MarkIntegration(t)
 	g := NewWithT(t)
 	ctx := context.Background()
 	namespace := env.CreateNamespaceForTest(ctx, t)
@@ -31,9 +29,7 @@ func TestObjectApplierApplySuccess(t *testing.T) {
 }
 
 func TestObjectApplierApplyErrorFromGenerator(t *testing.T) {
-	if os.Getenv(integrationTestEnvVar) != "true" {
-		t.Skipf("set env var '%v=true' to run this test", integrationTestEnvVar)
-	}
+	test.MarkIntegration(t)
 	g := NewWithT(t)
 	ctx := context.Background()
 
@@ -45,9 +41,7 @@ func TestObjectApplierApplyErrorFromGenerator(t *testing.T) {
 }
 
 func TestObjectApplierApplyErrorApplying(t *testing.T) {
-	if os.Getenv(integrationTestEnvVar) != "true" {
-		t.Skipf("set env var '%v=true' to run this test", integrationTestEnvVar)
-	}
+	test.MarkIntegration(t)
 	g := NewWithT(t)
 	ctx := context.Background()
 

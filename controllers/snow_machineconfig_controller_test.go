@@ -18,6 +18,7 @@ import (
 
 	"github.com/aws/eks-anywhere/controllers"
 	"github.com/aws/eks-anywhere/controllers/mocks"
+	"github.com/aws/eks-anywhere/internal/test"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 )
 
@@ -27,6 +28,7 @@ var (
 )
 
 func TestSnowMachineConfigReconcilerSetupWithManager(t *testing.T) {
+	test.MarkIntegration(t)
 	client := env.Client()
 	r := controllers.NewSnowMachineConfigReconciler(client, nil)
 

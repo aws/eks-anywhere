@@ -2,7 +2,6 @@ package serverside_test
 
 import (
 	"context"
-	"os"
 	"strings"
 	"testing"
 
@@ -12,14 +11,13 @@ import (
 	clusterapiv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
 	"github.com/aws/eks-anywhere/pkg/controller/serverside"
 )
 
 func TestReconcileYaml(t *testing.T) {
-	if os.Getenv(integrationTestEnvVar) != "true" {
-		t.Skipf("set env var '%v=true' to run this test", integrationTestEnvVar)
-	}
+	test.MarkIntegration(t)
 	cluster1 := newCluster("cluster-1")
 	cluster2 := newCluster("cluster-2")
 	tests := []struct {
@@ -128,9 +126,7 @@ spec:
 }
 
 func TestReconcileUpdateObject(t *testing.T) {
-	if os.Getenv(integrationTestEnvVar) != "true" {
-		t.Skipf("set env var '%v=true' to run this test", integrationTestEnvVar)
-	}
+	test.MarkIntegration(t)
 	cluster1 := newCluster("cluster-1")
 
 	yaml := []byte(`apiVersion: cluster.x-k8s.io/v1beta1
@@ -200,9 +196,7 @@ spec:
 }
 
 func TestReconcileUpdateObjectError(t *testing.T) {
-	if os.Getenv(integrationTestEnvVar) != "true" {
-		t.Skipf("set env var '%v=true' to run this test", integrationTestEnvVar)
-	}
+	test.MarkIntegration(t)
 	cluster1 := newCluster("cluster-1")
 
 	yaml := []byte(`apiVersion: cluster.x-k8s.io/v1beta1

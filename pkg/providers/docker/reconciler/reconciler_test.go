@@ -35,6 +35,7 @@ const (
 )
 
 func TestReconcilerReconcileSuccess(t *testing.T) {
+	test.MarkIntegration(t)
 	tt := newReconcilerTest(t)
 	logger := test.NewNullLogger()
 	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
@@ -124,6 +125,7 @@ func TestReconcilerReconcileSuccess(t *testing.T) {
 }
 
 func TestReconcilerReconcileWorkerNodesSuccess(t *testing.T) {
+	test.MarkIntegration(t)
 	tt := newReconcilerTest(t)
 	tt.cluster.Name = "my-management-cluster"
 	tt.cluster.SetSelfManaged()
@@ -172,6 +174,7 @@ func TestReconcilerReconcileWorkerNodesSuccess(t *testing.T) {
 }
 
 func TestReconcileCNISuccess(t *testing.T) {
+	test.MarkIntegration(t)
 	tt := newReconcilerTest(t)
 	tt.withFakeClient()
 
@@ -193,6 +196,7 @@ func TestReconcileCNISuccess(t *testing.T) {
 }
 
 func TestReconcileCNIErrorClientRegistry(t *testing.T) {
+	test.MarkIntegration(t)
 	tt := newReconcilerTest(t)
 	tt.withFakeClient()
 
@@ -212,6 +216,7 @@ func TestReconcileCNIErrorClientRegistry(t *testing.T) {
 }
 
 func TestReconcilerReconcileWorkersSuccess(t *testing.T) {
+	test.MarkIntegration(t)
 	tt := newReconcilerTest(t)
 	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
 		c.Name = tt.cluster.Name
@@ -255,6 +260,7 @@ func TestReconcilerReconcileWorkersSuccess(t *testing.T) {
 }
 
 func TestReconcilerReconcileWorkersErrorGeneratingSpec(t *testing.T) {
+	test.MarkIntegration(t)
 	tt := newReconcilerTest(t)
 	tt.createAllObjs()
 	spec := tt.buildSpec()
@@ -267,6 +273,7 @@ func TestReconcilerReconcileWorkersErrorGeneratingSpec(t *testing.T) {
 }
 
 func TestReconcilerReconcileWorkerNodesFail(t *testing.T) {
+	test.MarkIntegration(t)
 	tt := newReconcilerTest(t)
 	tt.cluster.Name = "my-management-cluster"
 	tt.cluster.SetSelfManaged()
@@ -285,6 +292,7 @@ func TestReconcilerReconcileWorkerNodesFail(t *testing.T) {
 }
 
 func TestReconcileControlPlaneStackedEtcdSuccess(t *testing.T) {
+	test.MarkIntegration(t)
 	tt := newReconcilerTest(t)
 	tt.createAllObjs()
 	logger := test.NewNullLogger()
@@ -343,6 +351,7 @@ func TestReconcileControlPlaneStackedEtcdSuccess(t *testing.T) {
 }
 
 func TestReconcileControlPlaneUnstackedEtcdSuccess(t *testing.T) {
+	test.MarkIntegration(t)
 	tt := newReconcilerTest(t)
 	tt.cluster.Spec.ExternalEtcdConfiguration = &anywherev1.ExternalEtcdConfiguration{
 		Count: 1,
@@ -404,6 +413,7 @@ func TestReconcileControlPlaneUnstackedEtcdSuccess(t *testing.T) {
 }
 
 func TestReconcilerReconcileControlPlaneFailure(t *testing.T) {
+	test.MarkIntegration(t)
 	tt := newReconcilerTest(t)
 	tt.createAllObjs()
 	spec := tt.buildSpec()

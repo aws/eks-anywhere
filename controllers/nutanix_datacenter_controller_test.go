@@ -12,11 +12,13 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	"github.com/aws/eks-anywhere/controllers"
+	"github.com/aws/eks-anywhere/internal/test"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/providers/nutanix"
 )
 
 func TestNutanixDatacenterConfigReconcilerSetupWithManager(t *testing.T) {
+	test.MarkIntegration(t)
 	client := env.Client()
 	r := controllers.NewNutanixDatacenterReconciler(client, nutanix.NewDefaulter())
 

@@ -40,6 +40,7 @@ const (
 )
 
 func TestReconcilerGenerateSpec(t *testing.T) {
+	test.MarkIntegration(t)
 	tt := newReconcilerTest(t)
 	tt.createAllObjs()
 	logger := test.NewNullLogger()
@@ -54,6 +55,7 @@ func TestReconcilerGenerateSpec(t *testing.T) {
 }
 
 func TestReconcilerReconcileSuccess(t *testing.T) {
+	test.MarkIntegration(t)
 	tt := newReconcilerTest(t)
 
 	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
@@ -82,6 +84,7 @@ func TestReconcilerReconcileSuccess(t *testing.T) {
 }
 
 func TestReconcilerValidateDatacenterConfigSuccess(t *testing.T) {
+	test.MarkIntegration(t)
 	tt := newReconcilerTest(t)
 	tt.withFakeClient()
 
@@ -93,6 +96,7 @@ func TestReconcilerValidateDatacenterConfigSuccess(t *testing.T) {
 }
 
 func TestReconcilerValidateDatacenterConfigMissingManagementCluster(t *testing.T) {
+	test.MarkIntegration(t)
 	tt := newReconcilerTest(t)
 	tt.cluster.Spec.ManagementCluster.Name = "nonexistent-management-cluster"
 	tt.withFakeClient()
@@ -107,6 +111,7 @@ func TestReconcilerValidateDatacenterConfigMissingManagementCluster(t *testing.T
 }
 
 func TestReconcilerValidateDatacenterConfigMissingManagementDatacenter(t *testing.T) {
+	test.MarkIntegration(t)
 	tt := newReconcilerTest(t)
 	tt.managementCluster.Spec.DatacenterRef.Name = "nonexistent-datacenter"
 	tt.withFakeClient()
@@ -121,6 +126,7 @@ func TestReconcilerValidateDatacenterConfigMissingManagementDatacenter(t *testin
 }
 
 func TestReconcilerValidateDatacenterConfigIpMismatch(t *testing.T) {
+	test.MarkIntegration(t)
 	tt := newReconcilerTest(t)
 	managementDatacenterConfig := dataCenter(func(d *anywherev1.TinkerbellDatacenterConfig) {
 		d.Name = "ip-mismatch-datacenter"
@@ -140,6 +146,7 @@ func TestReconcilerValidateDatacenterConfigIpMismatch(t *testing.T) {
 }
 
 func TestReconcileCNISuccess(t *testing.T) {
+	test.MarkIntegration(t)
 	tt := newReconcilerTest(t)
 	tt.withFakeClient()
 
@@ -163,6 +170,7 @@ func TestReconcileCNISuccess(t *testing.T) {
 }
 
 func TestReconcileCNIErrorClientRegistry(t *testing.T) {
+	test.MarkIntegration(t)
 	tt := newReconcilerTest(t)
 	tt.withFakeClient()
 
@@ -183,6 +191,7 @@ func TestReconcileCNIErrorClientRegistry(t *testing.T) {
 }
 
 func TestReconcilerReconcileControlPlaneScaleSuccess(t *testing.T) {
+	test.MarkIntegration(t)
 	tt := newReconcilerTest(t)
 
 	tt.createAllObjs()
@@ -215,6 +224,7 @@ func TestReconcilerReconcileControlPlaneScaleSuccess(t *testing.T) {
 }
 
 func TestReconcilerReconcileControlPlaneSuccess(t *testing.T) {
+	test.MarkIntegration(t)
 	tt := newReconcilerTest(t)
 	tt.createAllObjs()
 	scope := tt.buildScope()
@@ -250,6 +260,7 @@ func TestReconcilerReconcileControlPlaneSuccess(t *testing.T) {
 }
 
 func TestReconcilerReconcileControlPlaneSuccessRegistryMirrorAuthentication(t *testing.T) {
+	test.MarkIntegration(t)
 	t.Setenv("REGISTRY_USERNAME", "username")
 	t.Setenv("REGISTRY_PASSWORD", "password")
 	tt := newReconcilerTest(t)
@@ -294,6 +305,7 @@ func TestReconcilerReconcileControlPlaneSuccessRegistryMirrorAuthentication(t *t
 }
 
 func TestReconcilerReconcileControlPlaneFailure(t *testing.T) {
+	test.MarkIntegration(t)
 	tt := newReconcilerTest(t)
 	tt.createAllObjs()
 	scope := tt.buildScope()
@@ -310,6 +322,7 @@ func TestReconcilerReconcileControlPlaneFailure(t *testing.T) {
 }
 
 func TestReconcilerValidateClusterSpecValidationFailedDatacenterConfig(t *testing.T) {
+	test.MarkIntegration(t)
 	tt := newReconcilerTest(t)
 
 	logger := test.NewNullLogger()
@@ -331,6 +344,7 @@ func TestReconcilerValidateClusterSpecValidationFailedDatacenterConfig(t *testin
 }
 
 func TestReconcilerValidateClusterSpecValidationFailedOSFamily(t *testing.T) {
+	test.MarkIntegration(t)
 	tt := newReconcilerTest(t)
 
 	logger := test.NewNullLogger()
@@ -352,6 +366,7 @@ func TestReconcilerValidateClusterSpecValidationFailedOSFamily(t *testing.T) {
 }
 
 func TestReconcilerReconcileWorkerNodesSuccess(t *testing.T) {
+	test.MarkIntegration(t)
 	tt := newReconcilerTest(t)
 	tt.cluster.Name = "mgmt-cluster"
 	tt.cluster.SetSelfManaged()
@@ -403,6 +418,7 @@ func TestReconcilerReconcileWorkerNodesSuccess(t *testing.T) {
 }
 
 func TestReconcilerReconcileWorkersScaleSuccess(t *testing.T) {
+	test.MarkIntegration(t)
 	tt := newReconcilerTest(t)
 	tt.cluster.Name = "mgmt-cluster"
 	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
@@ -449,6 +465,7 @@ func TestReconcilerReconcileWorkersScaleSuccess(t *testing.T) {
 }
 
 func TestReconcilerReconcileWorkersSuccess(t *testing.T) {
+	test.MarkIntegration(t)
 	tt := newReconcilerTest(t)
 	tt.cluster.Name = "mgmt-cluster"
 	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
@@ -500,6 +517,7 @@ func TestReconcilerReconcileWorkersSuccess(t *testing.T) {
 }
 
 func TestReconcilerReconcileWorkerNodesFailure(t *testing.T) {
+	test.MarkIntegration(t)
 	tt := newReconcilerTest(t)
 	tt.cluster.Name = "mgmt-cluster"
 	tt.cluster.SetSelfManaged()
@@ -519,6 +537,7 @@ func TestReconcilerReconcileWorkerNodesFailure(t *testing.T) {
 }
 
 func TestReconcilerValidateHardwareCountNewClusterFail(t *testing.T) {
+	test.MarkIntegration(t)
 	tt := newReconcilerTest(t)
 	logger := test.NewNullLogger()
 
@@ -538,6 +557,7 @@ func TestReconcilerValidateHardwareCountNewClusterFail(t *testing.T) {
 }
 
 func TestReconcilerValidateHardwareCountRollingUpdateFail(t *testing.T) {
+	test.MarkIntegration(t)
 	tt := newReconcilerTest(t)
 	tt.createAllObjs()
 
@@ -558,6 +578,7 @@ func TestReconcilerValidateHardwareCountRollingUpdateFail(t *testing.T) {
 }
 
 func TestReconcilerValidateHardwareScalingUpdateFail(t *testing.T) {
+	test.MarkIntegration(t)
 	tt := newReconcilerTest(t)
 	tt.createAllObjs()
 
@@ -579,6 +600,7 @@ func TestReconcilerValidateHardwareScalingUpdateFail(t *testing.T) {
 }
 
 func TestReconcilerValidateHardwareNoHardware(t *testing.T) {
+	test.MarkIntegration(t)
 	tt := newReconcilerTest(t)
 	logger := test.NewNullLogger()
 
@@ -598,6 +620,7 @@ func TestReconcilerValidateHardwareNoHardware(t *testing.T) {
 }
 
 func TestReconcilerValidateRufioMachinesFail(t *testing.T) {
+	test.MarkIntegration(t)
 	tt := newReconcilerTest(t)
 	logger := test.NewNullLogger()
 
@@ -657,6 +680,7 @@ func TestReconcilerValidateRufioMachinesFail(t *testing.T) {
 }
 
 func TestReconcilerDetectOperationK8sVersionUpgrade(t *testing.T) {
+	test.MarkIntegration(t)
 	tt := newReconcilerTest(t)
 	tt.createAllObjs()
 
@@ -672,6 +696,7 @@ func TestReconcilerDetectOperationK8sVersionUpgrade(t *testing.T) {
 }
 
 func TestReconcilerDetectOperationExistingWorkerNodeGroupScaleUpdate(t *testing.T) {
+	test.MarkIntegration(t)
 	tt := newReconcilerTest(t)
 	tt.createAllObjs()
 
@@ -687,6 +712,7 @@ func TestReconcilerDetectOperationExistingWorkerNodeGroupScaleUpdate(t *testing.
 }
 
 func TestReconcilerDetectOperationNewWorkerNodeGroupScaleUpdate(t *testing.T) {
+	test.MarkIntegration(t)
 	tt := newReconcilerTest(t)
 	tt.createAllObjs()
 
@@ -712,6 +738,7 @@ func TestReconcilerDetectOperationNewWorkerNodeGroupScaleUpdate(t *testing.T) {
 }
 
 func TestReconcilerDetectOperationNoChanges(t *testing.T) {
+	test.MarkIntegration(t)
 	tt := newReconcilerTest(t)
 	tt.createAllObjs()
 
@@ -726,6 +753,7 @@ func TestReconcilerDetectOperationNoChanges(t *testing.T) {
 }
 
 func TestReconcilerDetectOperationNewCluster(t *testing.T) {
+	test.MarkIntegration(t)
 	tt := newReconcilerTest(t)
 	tt.createAllObjs()
 	logger := test.NewNullLogger()
@@ -740,6 +768,7 @@ func TestReconcilerDetectOperationNewCluster(t *testing.T) {
 }
 
 func TestReconcilerDetectOperationFail(t *testing.T) {
+	test.MarkIntegration(t)
 	tt := newReconcilerTest(t)
 	tt.client = fake.NewClientBuilder().WithScheme(runtime.NewScheme()).Build()
 	_, err := tt.reconciler().DetectOperation(tt.ctx, test.NewNullLogger(), &reconciler.Scope{ClusterSpec: &clusterspec.Spec{Config: &clusterspec.Config{Cluster: &anywherev1.Cluster{}}}})
