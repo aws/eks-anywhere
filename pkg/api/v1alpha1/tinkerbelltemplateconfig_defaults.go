@@ -100,17 +100,8 @@ func GetDefaultActionsFromBundle(clusterSpec *Cluster, b v1alpha1.VersionsBundle
 	return actions
 }
 
-func withStreamImageAction(b v1alpha1.VersionsBundle, disk, osImageOverride string, additionalEnvVar map[string]string) ActionOpt {
+func withStreamImageAction(b v1alpha1.VersionsBundle, disk, imageURL string, additionalEnvVar map[string]string) ActionOpt {
 	return func(a *[]tinkerbell.Action) {
-		var imageURL string
-
-		switch {
-		case osImageOverride != "":
-			imageURL = osImageOverride
-		default:
-			imageURL = b.EksD.Raw.Bottlerocket.URI
-		}
-
 		env := map[string]string{
 			"DEST_DISK":  disk,
 			"IMG_URL":    imageURL,

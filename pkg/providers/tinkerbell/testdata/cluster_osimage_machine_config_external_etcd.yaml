@@ -65,7 +65,7 @@ spec:
   hardwareSelector:
     type: "cp"
   osFamily: ubuntu
-  osImageURL: "https://ubuntu.gz"
+  osImageURL: "https://ubuntu-1-21.gz"
   templateRef:
     kind: TinkerbellTemplateConfig
     name: tink-test

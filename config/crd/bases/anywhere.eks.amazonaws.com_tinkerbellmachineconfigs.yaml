@@ -155,7 +155,6 @@ spec:
             required:
             - hardwareSelector
             - osFamily
-            - osImageURL
             type: object
           status:
             description: TinkerbellMachineConfigStatus defines the observed state

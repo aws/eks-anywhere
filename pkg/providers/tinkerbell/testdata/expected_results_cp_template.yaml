@@ -326,7 +326,7 @@ spec:
           - environment:
               COMPRESSED: "true"
               DEST_DISK: '{{ index .Hardware.Disks 0 }}'
-              IMG_URL: https://ubuntu.gz
+              IMG_URL: https://ubuntu-1-21.gz
             image: ""
             name: stream-image
             timeout: 600
