@@ -29,8 +29,21 @@ func validateOsFamily(spec *ClusterSpec) error {
 		}
 	}
 
-	if controlPlaneOsFamily != v1alpha1.Bottlerocket && spec.DatacenterConfig.Spec.OSImageURL == "" {
+	if controlPlaneOsFamily != v1alpha1.Bottlerocket && spec.DatacenterConfig.Spec.OSImageURL == "" && spec.ControlPlaneMachineConfig().Spec.OSImageURL == "" {
 		return fmt.Errorf("please use bottlerocket as osFamily for auto-importing or provide a valid osImageURL")
+	}
+	return nil
+}
+
+func validateOSImageURL(spec *ClusterSpec) error {
+	dcOSImageURL := spec.DatacenterConfig.Spec.OSImageURL
+	for _, mc := range spec.MachineConfigs {
+		if mc.Spec.OSImageURL != "" && dcOSImageURL != "" {
+			return fmt.Errorf("cannot specify OSImageURL on both TinkerbellMachineConfig's and TinkerbellDatacenterConfig")
+		}
+		if mc.Spec.OSImageURL == "" && dcOSImageURL == "" && mc.Spec.OSFamily != v1alpha1.Bottlerocket {
+			return fmt.Errorf("missing OSImageURL on TinkerbellMachineConfig '%s'", mc.ObjectMeta.Name)
+		}
 	}
 	return nil
 }

@@ -90,6 +90,11 @@ func AssertOsFamilyValid(spec *ClusterSpec) error {
 	return validateOsFamily(spec)
 }
 
+// AssertOSImageURL ensures that the OSImageURL value is either set at the datacenter config level or set for each machine config and not at both levels.
+func AssertOSImageURL(spec *ClusterSpec) error {
+	return validateOSImageURL(spec)
+}
+
 // AssertcontrolPlaneIPNotInUse ensures the endpoint host for the control plane isn't in use.
 // The check may be unreliable due to its implementation.
 func NewIPNotInUseAssertion(client networkutils.NetClient) ClusterSpecAssertion {
@@ -264,6 +269,12 @@ type ValidatableCluster interface {
 
 	// ControlPlaneReplicaCount retrieves the control plane replica count of the ValidatableCluster.
 	ControlPlaneReplicaCount() int
+
+	// ClusterK8sVersion retreives the Cluster level Kubernetes version
+	ClusterK8sVersion() v1alpha1.KubernetesVersion
+
+	// WorkerGroupK8sVersion maps each worker group with its Kubernetes version.
+	WorkerNodeGroupK8sVersion() map[string]v1alpha1.KubernetesVersion
 }
 
 // ValidatableTinkerbellClusterSpec wraps around the Tinkerbell ClusterSpec as a ValidatableCluster.
@@ -289,6 +300,16 @@ func (v *ValidatableTinkerbellClusterSpec) WorkerNodeHardwareGroups() []WorkerNo
 	return workerNodeGroupConfigs
 }
 
+// ClusterK8sVersion retrieves the Kubernetes version set at the cluster level.
+func (v *ValidatableTinkerbellClusterSpec) ClusterK8sVersion() v1alpha1.KubernetesVersion {
+	return v.Cluster.Spec.KubernetesVersion
+}
+
+// WorkerNodeGroupK8sVersion returns each worker node group with its associated Kubernetes version.
+func (v *ValidatableTinkerbellClusterSpec) WorkerNodeGroupK8sVersion() map[string]v1alpha1.KubernetesVersion {
+	return WorkerNodeGroupWithK8sVersion(v.ClusterSpec.Spec)
+}
+
 // ValidatableTinkerbellCAPI wraps around the Tinkerbell control plane and worker CAPI obects as a ValidatableCluster.
 type ValidatableTinkerbellCAPI struct {
 	KubeadmControlPlane *controlplanev1.KubeadmControlPlane
@@ -311,6 +332,26 @@ func (v *ValidatableTinkerbellCAPI) WorkerNodeHardwareGroups() []WorkerNodeHardw
 		workerNodeHardwareList = append(workerNodeHardwareList, *workerNodeHardware)
 	}
 	return workerNodeHardwareList
+}
+
+// ClusterK8sVersion returns the Kubernetes version in major.minor format for a ValidatableTinkerbellCAPI.
+func (v *ValidatableTinkerbellCAPI) ClusterK8sVersion() v1alpha1.KubernetesVersion {
+	return v.toK8sVersion(v.KubeadmControlPlane.Spec.Version)
+}
+
+// WorkerNodeGroupK8sVersion returns each worker node group mapped to Kubernetes version in major.minor format for a ValidatableTinkerbellCAPI.
+func (v *ValidatableTinkerbellCAPI) WorkerNodeGroupK8sVersion() map[string]v1alpha1.KubernetesVersion {
+	wngK8sversion := make(map[string]v1alpha1.KubernetesVersion)
+	for _, wng := range v.WorkerGroups {
+		k8sVersion := v.toK8sVersion(*wng.MachineDeployment.Spec.Template.Spec.Version)
+		wngK8sversion[wng.MachineDeployment.Name] = k8sVersion
+	}
+	return wngK8sversion
+}
+
+func (v *ValidatableTinkerbellCAPI) toK8sVersion(k8sversion string) v1alpha1.KubernetesVersion {
+	kubeVersion := v1alpha1.KubernetesVersion(k8sversion[1:5])
+	return kubeVersion
 }
 
 // AssertionsForScaleUpDown asserts that catalogue has sufficient hardware to
@@ -391,7 +432,7 @@ func AssertionsForScaleUpDown(catalogue *hardware.Catalogue, current Validatable
 
 // ExtraHardwareAvailableAssertionForRollingUpgrade asserts that catalogue has sufficient hardware to
 // support the ClusterSpec during an rolling upgrade workflow.
-func ExtraHardwareAvailableAssertionForRollingUpgrade(catalogue *hardware.Catalogue) ClusterSpecAssertion {
+func ExtraHardwareAvailableAssertionForRollingUpgrade(catalogue *hardware.Catalogue, current ValidatableCluster, eksaVersionUpgrade bool) ClusterSpecAssertion {
 	return func(spec *ClusterSpec) error {
 		// Without Hardware selectors we get undesirable behavior so ensure we have them for
 		// all MachineConfigs.
@@ -403,30 +444,14 @@ func ExtraHardwareAvailableAssertionForRollingUpgrade(catalogue *hardware.Catalo
 		// will account for the same selector being specified on different groups.
 		requirements := minimumHardwareRequirements{}
 
-		maxSurge := 1
-		if spec.Cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy != nil {
-			maxSurge = spec.Cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy.RollingUpdate.MaxSurge
-		}
-		err := requirements.Add(
-			spec.ControlPlaneMachineConfig().Spec.HardwareSelector,
-			maxSurge,
-		)
-		if err != nil {
-			return fmt.Errorf("for rolling upgrade, %v", err)
+		if spec.Cluster.Spec.KubernetesVersion != current.ClusterK8sVersion() || eksaVersionUpgrade {
+			if err := ensureCPHardwareAvailability(spec, current, requirements); err != nil {
+				return err
+			}
 		}
 
-		for _, nodeGroup := range spec.WorkerNodeGroupConfigurations() {
-			maxSurge = 1
-			if nodeGroup.UpgradeRolloutStrategy != nil {
-				maxSurge = nodeGroup.UpgradeRolloutStrategy.RollingUpdate.MaxSurge
-			}
-			err := requirements.Add(
-				spec.WorkerNodeGroupMachineConfig(nodeGroup).Spec.HardwareSelector,
-				maxSurge,
-			)
-			if err != nil {
-				return fmt.Errorf("for rolling upgrade, %v", err)
-			}
+		if err := ensureWorkerHardwareAvailability(spec, current, requirements, eksaVersionUpgrade); err != nil {
+			return err
 		}
 
 		if spec.HasExternalEtcd() {
@@ -438,6 +463,45 @@ func ExtraHardwareAvailableAssertionForRollingUpgrade(catalogue *hardware.Catalo
 		}
 		return nil
 	}
+}
+
+func ensureCPHardwareAvailability(spec *ClusterSpec, current ValidatableCluster, hwReq minimumHardwareRequirements) error {
+	maxSurge := 1
+
+	if spec.Cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy != nil {
+		maxSurge = spec.Cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy.RollingUpdate.MaxSurge
+	}
+	err := hwReq.Add(
+		spec.ControlPlaneMachineConfig().Spec.HardwareSelector,
+		maxSurge,
+	)
+	if err != nil {
+		return fmt.Errorf("for rolling upgrade, %v", err)
+	}
+	return nil
+}
+
+func ensureWorkerHardwareAvailability(spec *ClusterSpec, current ValidatableCluster, hwReq minimumHardwareRequirements, eksaVersionUpgrade bool) error {
+	currentWngK8sversion := current.WorkerNodeGroupK8sVersion()
+	desiredWngK8sVersion := WorkerNodeGroupWithK8sVersion(spec.Spec)
+	for _, nodeGroup := range spec.WorkerNodeGroupConfigurations() {
+		maxSurge := 1
+		// As rolling upgrades and scale up/down is not permitted in a single operation, its safe to access directly using the md name.
+		mdName := fmt.Sprintf("%s-%s", spec.Cluster.Name, nodeGroup.Name)
+		if currentWngK8sversion[mdName] != desiredWngK8sVersion[mdName] || eksaVersionUpgrade {
+			if nodeGroup.UpgradeRolloutStrategy != nil {
+				maxSurge = nodeGroup.UpgradeRolloutStrategy.RollingUpdate.MaxSurge
+			}
+			err := hwReq.Add(
+				spec.WorkerNodeGroupMachineConfig(nodeGroup).Spec.HardwareSelector,
+				maxSurge,
+			)
+			if err != nil {
+				return fmt.Errorf("for rolling upgrade, %v", err)
+			}
+		}
+	}
+	return nil
 }
 
 // ensureHardwareSelectorsSpecified ensures each machine config present in spec has a hardware

@@ -21,6 +21,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	filewritermocks "github.com/aws/eks-anywhere/pkg/filewriter/mocks"
+	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/mocks"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/rufiounreleased"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/stack"
@@ -965,6 +966,155 @@ func TestProvider_ValidateNewSpec_NewWorkerNodeGroup(t *testing.T) {
 	}
 
 	err := provider.ValidateNewSpec(ctx, desiredClusterSpec.ManagementCluster, desiredClusterSpec)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestProviderValidateAvailableHardwareOnlyCPUpgradeSuccess(t *testing.T) {
+	clusterSpecManifest := "cluster_osimage_machine_config.yaml"
+	mockCtrl := gomock.NewController(t)
+	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
+	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
+	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
+	docker := stackmocks.NewMockDocker(mockCtrl)
+	helm := stackmocks.NewMockHelm(mockCtrl)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	stackInstaller := stackmocks.NewMockStackInstaller(mockCtrl)
+	writer := filewritermocks.NewMockFileWriter(mockCtrl)
+	ctx := context.Background()
+	provider := newTinkerbellProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl)
+	provider.stackInstaller = stackInstaller
+
+	clusterSpec.ManagementCluster = &types.Cluster{Name: "test", KubeconfigFile: "kubeconfig-file"}
+	clusterSpec.Cluster.Spec.ManagementCluster = v1alpha1.ManagementCluster{Name: "test-mgmt"}
+	catalogue := hardware.NewCatalogue()
+	newCluster := clusterSpec.DeepCopy()
+	newCluster.Cluster.Spec.KubernetesVersion = v1alpha1.Kube122
+	_ = catalogue.InsertHardware(&tinkv1.Hardware{ObjectMeta: metav1.ObjectMeta{
+		Labels: map[string]string{"type": "cp"},
+	}})
+	provider.catalogue = catalogue
+	err := provider.validateAvailableHardwareForUpgrade(ctx, clusterSpec, newCluster)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestProviderValidateAvailableHardwareOnlyCPUpgradeError(t *testing.T) {
+	clusterSpecManifest := "cluster_osimage_machine_config.yaml"
+	mockCtrl := gomock.NewController(t)
+	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
+	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
+	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
+	docker := stackmocks.NewMockDocker(mockCtrl)
+	helm := stackmocks.NewMockHelm(mockCtrl)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	stackInstaller := stackmocks.NewMockStackInstaller(mockCtrl)
+	writer := filewritermocks.NewMockFileWriter(mockCtrl)
+	ctx := context.Background()
+	provider := newTinkerbellProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl)
+	provider.stackInstaller = stackInstaller
+
+	clusterSpec.ManagementCluster = &types.Cluster{Name: "test", KubeconfigFile: "kubeconfig-file"}
+	clusterSpec.Cluster.Spec.ManagementCluster = v1alpha1.ManagementCluster{Name: "test-mgmt"}
+	catalogue := hardware.NewCatalogue()
+	newCluster := clusterSpec.DeepCopy()
+	newCluster.Cluster.Spec.KubernetesVersion = v1alpha1.Kube122
+	provider.catalogue = catalogue
+	err := provider.validateAvailableHardwareForUpgrade(ctx, clusterSpec, newCluster)
+	if err == nil || !strings.Contains(err.Error(), "for rolling upgrade, minimum hardware count not met for selector '{\"type\":\"cp\"}'") {
+		t.Fatal(err)
+	}
+}
+
+func TestProviderValidateAvailableHardwareOnlyWorkerUpgradeSuccess(t *testing.T) {
+	clusterSpecManifest := "cluster_osimage_machine_config.yaml"
+	mockCtrl := gomock.NewController(t)
+	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
+	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
+	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
+	docker := stackmocks.NewMockDocker(mockCtrl)
+	helm := stackmocks.NewMockHelm(mockCtrl)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	stackInstaller := stackmocks.NewMockStackInstaller(mockCtrl)
+	writer := filewritermocks.NewMockFileWriter(mockCtrl)
+	ctx := context.Background()
+	provider := newTinkerbellProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl)
+	provider.stackInstaller = stackInstaller
+
+	clusterSpec.ManagementCluster = &types.Cluster{Name: "test", KubeconfigFile: "kubeconfig-file"}
+	clusterSpec.Cluster.Spec.ManagementCluster = v1alpha1.ManagementCluster{Name: "test-mgmt"}
+	catalogue := hardware.NewCatalogue()
+	newCluster := clusterSpec.DeepCopy()
+	kube122 := v1alpha1.Kube122
+	newCluster.Cluster.Spec.WorkerNodeGroupConfigurations[0].KubernetesVersion = &kube122
+	_ = catalogue.InsertHardware(&tinkv1.Hardware{ObjectMeta: metav1.ObjectMeta{
+		Labels: map[string]string{"type": "worker"},
+	}})
+	provider.catalogue = catalogue
+	err := provider.validateAvailableHardwareForUpgrade(ctx, clusterSpec, newCluster)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestProviderValidateAvailableHardwareOnlyWorkerUpgradeError(t *testing.T) {
+	clusterSpecManifest := "cluster_osimage_machine_config.yaml"
+	mockCtrl := gomock.NewController(t)
+	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
+	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
+	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
+	docker := stackmocks.NewMockDocker(mockCtrl)
+	helm := stackmocks.NewMockHelm(mockCtrl)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	stackInstaller := stackmocks.NewMockStackInstaller(mockCtrl)
+	writer := filewritermocks.NewMockFileWriter(mockCtrl)
+	ctx := context.Background()
+	provider := newTinkerbellProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl)
+	provider.stackInstaller = stackInstaller
+
+	clusterSpec.ManagementCluster = &types.Cluster{Name: "test", KubeconfigFile: "kubeconfig-file"}
+	clusterSpec.Cluster.Spec.ManagementCluster = v1alpha1.ManagementCluster{Name: "test-mgmt"}
+	catalogue := hardware.NewCatalogue()
+	newCluster := clusterSpec.DeepCopy()
+	kube122 := v1alpha1.Kube122
+	newCluster.Cluster.Spec.WorkerNodeGroupConfigurations[0].KubernetesVersion = &kube122
+	provider.catalogue = catalogue
+	err := provider.validateAvailableHardwareForUpgrade(ctx, clusterSpec, newCluster)
+	if err == nil || !strings.Contains(err.Error(), "for rolling upgrade, minimum hardware count not met for selector '{\"type\":\"worker\"}'") {
+		t.Fatal(err)
+	}
+}
+
+func TestProviderValidateAvailableHardwareEksaVersionUpgradeSuccess(t *testing.T) {
+	clusterSpecManifest := "cluster_osimage_machine_config.yaml"
+	mockCtrl := gomock.NewController(t)
+	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
+	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
+	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
+	docker := stackmocks.NewMockDocker(mockCtrl)
+	helm := stackmocks.NewMockHelm(mockCtrl)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	stackInstaller := stackmocks.NewMockStackInstaller(mockCtrl)
+	writer := filewritermocks.NewMockFileWriter(mockCtrl)
+	ctx := context.Background()
+	provider := newTinkerbellProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl)
+	provider.stackInstaller = stackInstaller
+
+	clusterSpec.ManagementCluster = &types.Cluster{Name: "test", KubeconfigFile: "kubeconfig-file"}
+	clusterSpec.Cluster.Spec.ManagementCluster = v1alpha1.ManagementCluster{Name: "test-mgmt"}
+	catalogue := hardware.NewCatalogue()
+	newCluster := clusterSpec.DeepCopy()
+	newCluster.Bundles.Spec.Number++
+	_ = catalogue.InsertHardware(&tinkv1.Hardware{ObjectMeta: metav1.ObjectMeta{
+		Labels: map[string]string{"type": "cp"},
+	}})
+	_ = catalogue.InsertHardware(&tinkv1.Hardware{ObjectMeta: metav1.ObjectMeta{
+		Labels: map[string]string{"type": "worker"},
+	}})
+	provider.catalogue = catalogue
+	err := provider.validateAvailableHardwareForUpgrade(ctx, clusterSpec, newCluster)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -13,6 +13,7 @@ type TinkerbellMachineConfigSpec struct {
 	HardwareSelector    HardwareSelector     `json:"hardwareSelector"`
 	TemplateRef         Ref                  `json:"templateRef,omitempty"`
 	OSFamily            OSFamily             `json:"osFamily"`
+	OSImageURL          string               `json:"osImageURL"`
 	Users               []UserConfiguration  `json:"users,omitempty"`
 	HostOSConfiguration *HostOSConfiguration `json:"hostOSConfiguration,omitempty"`
 }
