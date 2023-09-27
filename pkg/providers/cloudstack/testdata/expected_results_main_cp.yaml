@@ -454,7 +454,7 @@ spec:
         name: m4-large
       sshKey: ""
       template:
-        name: centos7-k8s-118
+        name: kubernetes_1_21
 
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta3
@@ -485,6 +485,6 @@ spec:
         name: m4-large
       sshKey: ""
       template:
-        name: centos7-k8s-118
+        name: kubernetes_1_21
 
 ---

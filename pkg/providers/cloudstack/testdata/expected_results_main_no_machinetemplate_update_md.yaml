@@ -121,7 +121,7 @@ spec:
         name: m4-large
       sshKey: ""
       template:
-        name: centos7-k8s-118
+        name: kubernetes_1_21
 
 ---
 

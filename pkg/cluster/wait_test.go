@@ -2,6 +2,7 @@ package cluster_test
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	. "github.com/onsi/gomega"
@@ -145,6 +146,115 @@ func TestWaitForCondition(t *testing.T) {
 			client := test.NewFakeKubeClient(tt.currentCluster)
 
 			gotErr := cluster.WaitForCondition(ctx, client, tt.clusterInput, tt.retrier, tt.condition)
+			if tt.wantErr != "" {
+				g.Expect(gotErr).To(MatchError(tt.wantErr))
+			} else {
+				g.Expect(gotErr).NotTo(HaveOccurred())
+			}
+		})
+	}
+}
+
+func TestWaitFor(t *testing.T) {
+	testCases := []struct {
+		name                         string
+		clusterInput, currentCluster *anywherev1.Cluster
+		retrier                      *retrier.Retrier
+		matcher                      func(_ *anywherev1.Cluster) error
+		wantErr                      string
+	}{
+		{
+			name: "cluster does not exist",
+			clusterInput: &anywherev1.Cluster{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "my-c",
+					Namespace: "my-n",
+				},
+			},
+			currentCluster: &anywherev1.Cluster{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "my-c",
+					Namespace: "default",
+				},
+			},
+			retrier: retrier.NewWithMaxRetries(1, 0),
+			matcher: func(_ *anywherev1.Cluster) error {
+				return nil
+			},
+			wantErr: "clusters.anywhere.eks.amazonaws.com \"my-c\" not found",
+		},
+		{
+			name: "cluster namespace not provided",
+			clusterInput: &anywherev1.Cluster{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "my-c",
+				},
+			},
+			currentCluster: &anywherev1.Cluster{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "my-c",
+					Namespace: "eksa-namespace",
+				},
+			},
+			retrier: retrier.NewWithMaxRetries(1, 0),
+			matcher: func(_ *anywherev1.Cluster) error {
+				return nil
+			},
+			wantErr: "clusters.anywhere.eks.amazonaws.com \"my-c\" not found",
+		},
+		{
+			name: "observed generation not updated",
+			clusterInput: &anywherev1.Cluster{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "my-c",
+					Namespace: "my-n",
+				},
+			},
+			currentCluster: &anywherev1.Cluster{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:       "my-c",
+					Namespace:  "my-n",
+					Generation: 5,
+				},
+				Status: anywherev1.ClusterStatus{
+					ObservedGeneration: 4,
+				},
+			},
+			retrier: retrier.NewWithMaxRetries(1, 0),
+			matcher: func(_ *anywherev1.Cluster) error {
+				return nil
+			},
+			wantErr: "cluster generation (5) and observedGeneration (4) differ",
+		},
+		{
+			name: "matcher return error",
+			clusterInput: &anywherev1.Cluster{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "my-c",
+					Namespace: "my-n",
+				},
+			},
+			currentCluster: &anywherev1.Cluster{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "my-c",
+					Namespace: "my-n",
+				},
+			},
+			retrier: retrier.NewWithMaxRetries(1, 0),
+			matcher: func(_ *anywherev1.Cluster) error {
+				return fmt.Errorf("error")
+			},
+			wantErr: "error",
+		},
+	}
+
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+			g := NewWithT(t)
+			client := test.NewFakeKubeClient(tt.currentCluster)
+
+			gotErr := cluster.WaitFor(ctx, client, tt.clusterInput, tt.retrier, tt.matcher)
 			if tt.wantErr != "" {
 				g.Expect(gotErr).To(MatchError(tt.wantErr))
 			} else {

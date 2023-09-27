@@ -38,7 +38,7 @@ func (n *DummyNetClient) DialTimeout(network, address string, timeout time.Durat
 }
 
 var testTemplate = v1alpha1.CloudStackResourceIdentifier{
-	Name: "centos7-k8s-118",
+	Name: "kubernetes_1_21",
 }
 
 var testOffering = v1alpha1.CloudStackResourceIdentifier{
@@ -276,6 +276,7 @@ func TestValidateMachineConfigsHappyCase(t *testing.T) {
 func TestValidateCloudStackMachineConfig(t *testing.T) {
 	ctx := context.Background()
 	cmk := mocks.NewMockProviderCmkClient(gomock.NewController(t))
+
 	config, err := cluster.ParseConfigFromFile(path.Join(testDataDir, testClusterConfigMainFilename))
 	if err != nil {
 		t.Fatalf("unable to get machine configs from file: %v", err)
@@ -300,6 +301,29 @@ func TestValidateCloudStackMachineConfig(t *testing.T) {
 	for _, machineConfig := range machineConfigs {
 		err := validator.validateMachineConfig(ctx, datacenterConfig, machineConfig)
 		if err != nil {
+			t.Fatalf("failed to validate CloudStackMachineConfig: %v", err)
+		}
+	}
+}
+
+func TestValidateTemplateMatchesKubernetesVersionError(t *testing.T) {
+	ctx := context.Background()
+	cmk := mocks.NewMockProviderCmkClient(gomock.NewController(t))
+	clusterSpec := test.NewFullClusterSpec(t, path.Join(testDataDir, testClusterConfigMainFilename))
+	config, err := cluster.ParseConfigFromFile(path.Join(testDataDir, testClusterConfigMainFilename))
+	if err != nil {
+		t.Fatalf("unable to get machine configs from file: %v", err)
+	}
+	machineConfigs := config.CloudStackMachineConfigs
+	if err != nil {
+		t.Fatalf("unable to get machine configs from file %s", testClusterConfigMainFilename)
+	}
+	clusterSpec.Cluster.Spec.KubernetesVersion = "1.22"
+	validator := NewValidator(cmk, &DummyNetClient{}, true)
+
+	for _, machineConfig := range machineConfigs {
+		err := validator.validateTemplateMatchesKubernetesVersion(ctx, machineConfig, clusterSpec)
+		if err == nil {
 			t.Fatalf("failed to validate CloudStackMachineConfig: %v", err)
 		}
 	}

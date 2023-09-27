@@ -54,6 +54,11 @@ func (a *applierTest) buildClient(objs ...kubernetes.Object) {
 	a.clientFactory.EXPECT().BuildClientFromKubeconfig(a.mgmtCluster.KubeconfigFile).Return(a.client, nil)
 }
 
+func (a *applierTest) updateFailureMessage(c *anywherev1.Cluster, err string) {
+	c.Status.FailureMessage = ptr.String(err)
+	a.Expect(a.client.Update(a.ctx, c)).To(Succeed())
+}
+
 func (a *applierTest) markCPReady(c *anywherev1.Cluster) {
 	conditions.MarkTrue(c, anywherev1.ControlPlaneReadyCondition)
 	a.Expect(a.client.Update(a.ctx, c)).To(Succeed())
@@ -171,6 +176,18 @@ func TestApplierRunErrorApplying(t *testing.T) {
 	)
 
 	tt.Expect(a.Run(tt.ctx, tt.spec, tt.mgmtCluster)).To(MatchError(ContainSubstring("applying cluster spec")))
+}
+
+func TestApplierRunFailureMessage(t *testing.T) {
+	tt := newApplierTest(t)
+	tt.buildClient(tt.spec.ClusterAndChildren()...)
+	tt.updateFailureMessage(tt.spec.Cluster, "error")
+	tt.startFakeController()
+	a := clustermanager.NewApplier(tt.log, tt.clientFactory,
+		clustermanager.WithApplierRetryBackOff(time.Millisecond),
+	)
+
+	tt.Expect(a.Run(tt.ctx, tt.spec, tt.mgmtCluster)).To(MatchError(ContainSubstring("cluster has a validation error that doesn't seem transient")))
 }
 
 func TestApplierRunControlPlaneNotReady(t *testing.T) {
