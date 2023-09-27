@@ -51,7 +51,7 @@ func WithNutanixIntFromEnvVar(envVar string, opt func(int) NutanixFiller) Nutani
 
 // WithNutanixInt32FromEnvVar returns a NutanixFiller that sets the given int32 value to the given environment variable.
 func WithNutanixInt32FromEnvVar(envVar string, opt func(int32) NutanixFiller) NutanixFiller {
-	intVar, _ := strconv.Atoi(os.Getenv(envVar))
+	intVar, _ := strconv.ParseInt(os.Getenv(envVar), 10, 32)
 	return opt(int32(intVar))
 }
 
