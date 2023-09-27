@@ -209,7 +209,7 @@ https://github.com/kubernetes/apiextensions-apiserver
 ** k8s.io/apimachinery/pkg; version v0.26.2 --
 https://github.com/kubernetes/apimachinery
 
-** k8s.io/apiserver/pkg/apis/audit; version v0.26.2 --
+** k8s.io/apiserver/pkg/apis; version v0.26.2 --
 https://github.com/kubernetes/apiserver
 
 ** k8s.io/client-go; version v0.26.2 --
