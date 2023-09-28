@@ -2,7 +2,9 @@ package hardware_test
 
 import (
 	"errors"
+	"net/http"
 	"testing"
+	"time"
 
 	"github.com/onsi/gomega"
 
@@ -240,5 +242,47 @@ func NewValidMachine() hardware.Machine {
 		BMCUsername:  "username",
 		BMCPassword:  "password",
 		VLANID:       "200",
+	}
+}
+
+func NewMachineWithOptions() hardware.Machine {
+	return hardware.Machine{
+		IPAddress:    "10.10.10.10",
+		Gateway:      "10.10.10.1",
+		Nameservers:  []string{"ns1"},
+		MACAddress:   "00:00:00:00:00:00",
+		Netmask:      "255.255.255.255",
+		Hostname:     "localhost",
+		Labels:       hardware.Labels{"type": "cp"},
+		Disk:         "/dev/sda",
+		BMCIPAddress: "10.10.10.11",
+		BMCUsername:  "username",
+		BMCPassword:  "password",
+		VLANID:       "200",
+		BMCMachineOptions: &hardware.BMCMachineOptions{
+			RPC: &hardware.RPCOpts{
+				ConsumerURL: "https://example.net",
+				Request: hardware.RequestOpts{
+					HTTPContentType: "application/vnd.api+json",
+					HTTPMethod:      http.MethodPost,
+					StaticHeaders:   map[string][]string{"myheader": {"myvalue"}},
+					TimestampFormat: time.RFC3339,
+					TimestampHeader: "X-Example-Timestamp",
+				},
+				Signature: hardware.SignatureOpts{
+					HeaderName:                 "X-Example-Signature",
+					AppendAlgoToHeaderDisabled: true,
+					IncludedPayloadHeaders:     []string{"X-Example-Timestamp"},
+				},
+				HMAC: hardware.HMACOpts{
+					PrefixSigDisabled: true,
+					Secrets:           []string{"superSecret1", "superSecret2"},
+				},
+				Experimental: hardware.ExperimentalOpts{
+					CustomRequestPayload: `{"data":{"type":"articles","id":"1","attributes":{"title": "Rails is Omakase"},"relationships":{"author":{"links":{"self":"/articles/1/relationships/author","related":"/articles/1/author"},"data":null}}}}`,
+					DotPath:              "data.relationships.author.data",
+				},
+			},
+		},
 	}
 }
