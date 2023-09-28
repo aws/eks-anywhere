@@ -32,7 +32,6 @@ Please upgrade to `v0.15.3` if you are using Tinkerbell (Bare Metal) provider.
 - Ignore node taints when scheduling Cilium preflight daemonset ([#6698](https://github.com/aws/eks-anywhere/pull/6698)) 
 - Baremetal: Prevent bare metal machine config references from changing to existing machine configs ([#6674](https://github.com/aws/eks-anywhere/pull/6674))
 
-
 ## [v0.17.2](https://github.com/aws/eks-anywhere/releases/tag/v0.17.2)
 
 ### Supported OS version details
