@@ -2,6 +2,7 @@ package hardware
 
 import (
 	"fmt"
+	"net/http"
 	"sort"
 	"strings"
 )
@@ -27,6 +28,74 @@ type Machine struct {
 	BMCUsername  string `csv:"bmc_username, omitempty"`
 	BMCPassword  string `csv:"bmc_password, omitempty"`
 	VLANID       string `csv:"vlan_id, omitempty"`
+
+	// BMCMachineOptions are the options used for Rufio providers.
+	BMCMachineOptions *BMCMachineOptions `csv:"-"`
+}
+
+// BMCMachineOptions are the options used to configure the Rufio providers.
+// Right now we only support the RPC provider.
+type BMCMachineOptions struct {
+	// RPC are the options for the Rufio RPC provider.
+	RPC *RPCOpts `csv:"-"`
+}
+
+// RPCOpts are the options used for the Rufio RPC provider.
+type RPCOpts struct {
+	// ConsumerURL is the URL where an rpc consumer/listener is running
+	// and to which we will send and receive all notifications.
+	ConsumerURL string `csv:"-"`
+	// Request is the options used to create the rpc HTTP request.
+	Request RequestOpts `csv:"-"`
+	// Signature is the options used for adding an HMAC signature to an HTTP request.
+	Signature SignatureOpts `csv:"-"`
+	// HMAC is the options used to create a HMAC signature.
+	HMAC HMACOpts `csv:"-"`
+	// Experimental options.
+	Experimental ExperimentalOpts `csv:"-"`
+}
+
+// ExperimentalOpts are the experimental options used in the Rufio RPC provider.
+type ExperimentalOpts struct {
+	// CustomRequestPayload must be in json.
+	CustomRequestPayload string `csv:"-"`
+	// DotPath is the path to the json object where the bmclib RequestPayload{} struct will be embedded. For example: object.data.body
+	DotPath string `csv:"-"`
+}
+
+// SignatureOpts are the options used for adding an HMAC signature to an HTTP request.
+type SignatureOpts struct {
+	// HeaderName is the header name that should contain the signature(s). Example: X-BMCLIB-Signature
+	HeaderName string `csv:"-"`
+	// AppendAlgoToHeaderDisabled decides whether to append the algorithm to the signature header or not.
+	// Example: X-BMCLIB-Signature becomes X-BMCLIB-Signature-256
+	// When set to true, a header will be added for each algorithm. Example: X-BMCLIB-Signature-256 and X-BMCLIB-Signature-512
+	AppendAlgoToHeaderDisabled bool `csv:"-"`
+	// IncludedPayloadHeaders are headers whose values will be included in the signature payload. Example: X-BMCLIB-My-Custom-Header
+	// All headers will be deduplicated.
+	IncludedPayloadHeaders []string `csv:"-"`
+}
+
+// RequestOpts are the options used to create the rpc HTTP request.
+type RequestOpts struct {
+	// HTTPContentType is the content type to use for the rpc request notification.
+	HTTPContentType string `csv:"-"`
+	// HTTPMethod is the HTTP method to use for the rpc request notification.
+	HTTPMethod string `csv:"-"`
+	// StaticHeaders are predefined headers that will be added to every request.
+	StaticHeaders http.Header `csv:"-"`
+	// TimestampFormat is the time format for the timestamp header.
+	TimestampFormat string `csv:"-"`
+	// TimestampHeader is the header name that should contain the timestamp. Example: X-BMCLIB-Timestamp
+	TimestampHeader string `csv:"-"`
+}
+
+// HMACOpts are the options used to create a HMAC signature.
+type HMACOpts struct {
+	// PrefixSigDisabled determines whether the algorithm will be prefixed to the signature. Example: sha256=abc123
+	PrefixSigDisabled bool `csv:"-"`
+	// Secrets used for signing.
+	Secrets []string `csv:"-"`
 }
 
 // HasBMC determines if m has a BMC configuration. A BMC configuration is present if any of the BMC fields

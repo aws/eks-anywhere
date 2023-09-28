@@ -1,6 +1,8 @@
 package hardware
 
 import (
+	"fmt"
+
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/cluster-api/cmd/clusterctl/api/v1alpha3"
@@ -78,25 +80,51 @@ func NewSecretCatalogueWriter(catalogue *Catalogue) *SecretCatalogueWriter {
 // Write converts m to a Tinkerbell BaseboardManagement and inserts it into w's Catalogue.
 func (w *SecretCatalogueWriter) Write(m Machine) error {
 	if m.HasBMC() {
-		return w.catalogue.InsertSecret(baseboardManagementSecretFromMachine(m))
+		for _, s := range baseboardManagementSecretFromMachine(m) {
+			if err := w.catalogue.InsertSecret(s); err != nil {
+				return err
+			}
+		}
 	}
 	return nil
 }
 
-func baseboardManagementSecretFromMachine(m Machine) *corev1.Secret {
-	return &corev1.Secret{
-		TypeMeta: newSecretTypeMeta(),
-		ObjectMeta: v1.ObjectMeta{
-			Name:      formatBMCSecretRef(m),
-			Namespace: constants.EksaSystemNamespace,
-			Labels: map[string]string{
-				v1alpha3.ClusterctlMoveLabel: "true",
+func baseboardManagementSecretFromMachine(m Machine) []*corev1.Secret {
+	var s []*corev1.Secret
+
+	if m.BMCMachineOptions != nil && m.BMCMachineOptions.RPC.ConsumerURL != "" {
+		for idx, secret := range m.BMCMachineOptions.RPC.HMAC.Secrets {
+			s = append(s, &corev1.Secret{
+				TypeMeta: newSecretTypeMeta(),
+				ObjectMeta: v1.ObjectMeta{
+					Name:      fmt.Sprintf("%v-%v", formatBMCSecretRef(m), idx),
+					Namespace: constants.EksaSystemNamespace,
+					Labels: map[string]string{
+						v1alpha3.ClusterctlMoveLabel: "true",
+					},
+				},
+				Type: "Opaque",
+				Data: map[string][]byte{
+					"secret": []byte(secret),
+				},
+			})
+		}
+	} else {
+		s = append(s, &corev1.Secret{
+			TypeMeta: newSecretTypeMeta(),
+			ObjectMeta: v1.ObjectMeta{
+				Name:      formatBMCSecretRef(m),
+				Namespace: constants.EksaSystemNamespace,
+				Labels: map[string]string{
+					v1alpha3.ClusterctlMoveLabel: "true",
+				},
 			},
-		},
-		Type: "kubernetes.io/basic-auth",
-		Data: map[string][]byte{
-			"username": []byte(m.BMCUsername),
-			"password": []byte(m.BMCPassword),
-		},
+			Type: "kubernetes.io/basic-auth",
+			Data: map[string][]byte{
+				"username": []byte(m.BMCUsername),
+				"password": []byte(m.BMCPassword),
+			},
+		})
 	}
+	return s
 }

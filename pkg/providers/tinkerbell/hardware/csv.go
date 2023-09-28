@@ -43,6 +43,7 @@ func (cr CSVReader) Read() (Machine, error) {
 	if err != nil {
 		return Machine{}, err
 	}
+
 	return machine.(Machine), nil
 }
 
