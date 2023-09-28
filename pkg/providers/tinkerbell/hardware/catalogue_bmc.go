@@ -98,9 +98,9 @@ func toRufioMachine(m Machine) *v1alpha1.Machine {
 		},
 		InsecureTLS: true,
 	}
-	if m.BMCMachineOptions != nil && m.BMCMachineOptions.RPC.ConsumerURL != "" {
+	if m.BMCOptions != nil && m.BMCOptions.RPC.ConsumerURL != "" {
 		conn.ProviderOptions = &v1alpha1.ProviderOptions{
-			RPC: toRPCOptions(m.BMCMachineOptions.RPC),
+			RPC: toRPCOptions(m.BMCOptions.RPC),
 		}
 	}
 	return &v1alpha1.Machine{

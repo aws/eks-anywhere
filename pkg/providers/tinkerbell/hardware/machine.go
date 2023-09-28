@@ -29,13 +29,13 @@ type Machine struct {
 	BMCPassword  string `csv:"bmc_password, omitempty"`
 	VLANID       string `csv:"vlan_id, omitempty"`
 
-	// BMCMachineOptions are the options used for Rufio providers.
-	BMCMachineOptions *BMCMachineOptions `csv:"-"`
+	// BMCOptions are the options used for Rufio providers.
+	BMCOptions *BMCOptions `csv:"-"`
 }
 
-// BMCMachineOptions are the options used to configure the Rufio providers.
+// BMCOptions are the options used to configure the Rufio providers.
 // Right now we only support the RPC provider.
-type BMCMachineOptions struct {
+type BMCOptions struct {
 	// RPC are the options for the Rufio RPC provider.
 	RPC *RPCOpts `csv:"-"`
 }

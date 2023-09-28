@@ -88,7 +88,7 @@ func TestRPCSecrets(t *testing.T) {
 	catalogue := hardware.NewCatalogue()
 	writer := hardware.NewSecretCatalogueWriter(catalogue)
 	machine := NewValidMachine()
-	machine.BMCMachineOptions = &hardware.BMCMachineOptions{
+	machine.BMCOptions = &hardware.BMCOptions{
 		RPC: &hardware.RPCOpts{
 			ConsumerURL: "http://localhost:8080",
 			HMAC: hardware.HMACOpts{

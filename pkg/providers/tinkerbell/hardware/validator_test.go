@@ -259,7 +259,7 @@ func NewMachineWithOptions() hardware.Machine {
 		BMCUsername:  "username",
 		BMCPassword:  "password",
 		VLANID:       "200",
-		BMCMachineOptions: &hardware.BMCMachineOptions{
+		BMCOptions: &hardware.BMCOptions{
 			RPC: &hardware.RPCOpts{
 				ConsumerURL: "https://example.net",
 				Request: hardware.RequestOpts{

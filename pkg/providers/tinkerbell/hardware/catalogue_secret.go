@@ -92,8 +92,8 @@ func (w *SecretCatalogueWriter) Write(m Machine) error {
 func baseboardManagementSecretFromMachine(m Machine) []*corev1.Secret {
 	var s []*corev1.Secret
 
-	if m.BMCMachineOptions != nil && m.BMCMachineOptions.RPC.ConsumerURL != "" {
-		for idx, secret := range m.BMCMachineOptions.RPC.HMAC.Secrets {
+	if m.BMCOptions != nil && m.BMCOptions.RPC.ConsumerURL != "" {
+		for idx, secret := range m.BMCOptions.RPC.HMAC.Secrets {
 			s = append(s, &corev1.Secret{
 				TypeMeta: newSecretTypeMeta(),
 				ObjectMeta: v1.ObjectMeta{
