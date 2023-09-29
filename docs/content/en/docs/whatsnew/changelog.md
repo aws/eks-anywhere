@@ -23,7 +23,7 @@ Please upgrade to `v0.15.3` if you are using Tinkerbell (Bare Metal) provider.
 |    :---:     |  :---:  |   :---:   |   :---:  |    :---:   | :---: |
 | Ubuntu       | 20.04	 | 20.04     |	20.04             | Not supported	     | 20.04 |  
 |              | 22.04   | 22.04     |  22.04             | Not supported      | Not supported   |
-| Bottlerocket | 1.13.1  | 1.13.1    |  Not supported     | Not supported	     | Not supported   |
+| Bottlerocket | 1.14.3  | 1.14.3    |  Not supported     | Not supported	     | Not supported   |
 | RHEL         | 8.7	   | 8.7	     |  Not supported     | 8.7	               | Not supported   |
 
 
@@ -40,7 +40,7 @@ Please upgrade to `v0.15.3` if you are using Tinkerbell (Bare Metal) provider.
 |    :---:     |  :---:  |   :---:   |   :---:  |    :---:   | :---: |
 | Ubuntu       | 20.04	 | 20.04     |	20.04             | Not supported	     | 20.04 |  
 |              | 22.04   | 22.04     |  22.04             | Not supported      | Not supported   |
-| Bottlerocket | 1.13.1  | 1.13.1    |  Not supported     | Not supported	     | Not supported   |
+| Bottlerocket | 1.14.0  | 1.14.0    |  Not supported     | Not supported	     | Not supported   |
 | RHEL         | 8.7	   | 8.7	     |  Not supported     | 8.7	               | Not supported   |
 
 
@@ -62,7 +62,7 @@ Please upgrade to `v0.15.3` if you are using Tinkerbell (Bare Metal) provider.
 |    :---:     |  :---:  |   :---:   |   :---:  |    :---:   | :---: |
 | Ubuntu       | 20.04	 | 20.04     |	20.04             | Not supported	     | 20.04 |  
 |              | 22.04   | 22.04     |  22.04             | Not supported      | Not supported   |
-| Bottlerocket | 1.13.1  | 1.13.1    |  Not supported     | Not supported	     | Not supported   |
+| Bottlerocket | 1.14.0  | 1.14.0    |  Not supported     | Not supported	     | Not supported   |
 | RHEL         | 8.7	   | 8.7	     |  Not supported     | 8.7	               | Not supported   |
 
 
@@ -82,7 +82,7 @@ Please upgrade to `v0.15.3` if you are using Tinkerbell (Bare Metal) provider.
 |    :---:     |  :---:  |   :---:   |   :---:  |    :---:   | :---: |
 | Ubuntu       | 20.04	 | 20.04     |	20.04             | Not supported	     | 20.04 |  
 |              | 22.04   | 22.04     |  22.04             | Not supported      | Not supported   |
-| Bottlerocket | 1.13.1  | 1.13.1    |  Not supported     | Not supported	     | Not supported   |
+| Bottlerocket | 1.14.0  | 1.14.0    |  Not supported     | Not supported	     | Not supported   |
 | RHEL         | 8.7	   | 8.7	     |  Not supported     | 8.7	               | Not supported   |
 
 **Note:** We have updated the image-builder docs to include the latest enhancements. Please refer to the [image-builder docs](https://anywhere.eks.amazonaws.com/docs/osmgmt/artifacts/) for more details.
