@@ -6,8 +6,15 @@ description: >
 ---
 
 EKS Anywhere can be used in airgapped environments, where clusters are not connected to the internet or external networks.
+The following diagrams illustrate how to set up for cluster creation in an airgapped environment:
 
-If you are planning to run EKS Anywhere in an airgapped environments, before you create a cluster, you must temporarily connect your Admin machine to the internet to install the `eksctl` CLI and pull the required EKS Anywhere dependencies. Once these dependencies are downloaded and imported in a local registry, you no longer need internet access. In the EKS Anywhere cluster specification, you can configure EKS Anywhere to use your local registry mirror. When the registry mirror configuration is set in the EKS Anywhere cluster specification, EKS Anywhere configures containerd to pull from that registry instead of Amazon ECR during cluster creation and lifecycle operations. For more information, reference the [Registry Mirror Configuration documentation.]({{< relref "../optional/registrymirror" >}})
+![Download EKS Anywhere artifacts to Admin machine](/images/airgap-arch01.png)
+
+If you are planning to run EKS Anywhere in an airgapped environments, before you create a cluster, you must temporarily connect your Admin machine to the internet to install the `eksctl` CLI and pull the required EKS Anywhere dependencies.
+
+![Download EKS Anywhere artifacts to Admin machine](/images/airgap-arch02.png)
+
+Once these dependencies are downloaded and imported in a local registry, you no longer need internet access. In the EKS Anywhere cluster specification, you can configure EKS Anywhere to use your local registry mirror. When the registry mirror configuration is set in the EKS Anywhere cluster specification, EKS Anywhere configures containerd to pull from that registry instead of Amazon ECR during cluster creation and lifecycle operations. For more information, reference the [Registry Mirror Configuration documentation.]({{< relref "../optional/registrymirror" >}})
 
 If you are using Ubuntu or RHEL as the operating system for nodes in your EKS Anywhere cluster, you must connect to the internet while building the images with the EKS Anywhere image-builder tool. After building the operating system images, you can configure EKS Anywhere to pull the operating system images from a location of your chosing in the EKS Anywhere cluster specification. For more information on the image building process and operating system cluster specification, reference the [Operating System Management documentation.]({{< relref "../../osmgmt/overview" >}})
 
