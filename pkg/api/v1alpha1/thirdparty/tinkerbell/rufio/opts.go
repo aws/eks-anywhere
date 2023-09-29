@@ -45,16 +45,16 @@ type RPCOptions struct {
 	LogNotificationsDisabled bool `json:"logNotificationsDisabled"`
 	// Request is the options used to create the rpc HTTP request.
 	// +optional
-	Request RequestOpts `json:"request"`
+	Request *RequestOpts `json:"request"`
 	// Signature is the options used for adding an HMAC signature to an HTTP request.
 	// +optional
-	Signature SignatureOpts `json:"signature"`
+	Signature *SignatureOpts `json:"signature"`
 	// HMAC is the options used to create a HMAC signature.
 	// +optional
-	HMAC HMACOpts `json:"hmac"`
+	HMAC *HMACOpts `json:"hmac"`
 	// Experimental options.
 	// +optional
-	Experimental ExperimentalOpts `json:"experimental"`
+	Experimental *ExperimentalOpts `json:"experimental"`
 }
 
 // RequestOpts are the options used when creating an HTTP request.
