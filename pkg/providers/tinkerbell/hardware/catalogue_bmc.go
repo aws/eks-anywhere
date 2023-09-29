@@ -200,7 +200,6 @@ func toHMACOpts(h HMACOpts, m Machine) *v1alpha1.HMACOpts {
 		hmac.Secrets = make(map[rufio.HMACAlgorithm][]corev1.SecretReference)
 		for idx := range h.Secrets {
 			s := corev1.SecretReference{
-				// TODO(jacobweinstock): get hostname from the machine object.
 				Name:      fmt.Sprintf("%v-%v", formatBMCSecretRef(m), idx),
 				Namespace: constants.EksaSystemNamespace,
 			}
