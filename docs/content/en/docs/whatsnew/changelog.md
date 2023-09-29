@@ -15,6 +15,24 @@ Please upgrade to `v0.15.3` if you are using Tinkerbell (Bare Metal) provider.
 * When upgrading to a new minor version, a new OS image must be created using the new image-builder cli.
 {{% /alert %}}
 
+[Unreleased]
+
+## [v0.17.3](https://github.com/aws/eks-anywhere/releases/tag/v0.17.3)
+
+### Supported OS version details
+|              | vSphere | Bare Metal |  Nutanix | CloudStack | Snow  |
+|    :---:     |  :---:  |   :---:   |   :---:  |    :---:   | :---: |
+| Ubuntu       | 20.04	 | 20.04     |	20.04             | Not supported	     | 20.04 |  
+|              | 22.04   | 22.04     |  22.04             | Not supported      | Not supported   |
+| Bottlerocket | 1.14.3  | 1.14.3    |  Not supported     | Not supported	     | Not supported   |
+| RHEL         | 8.7	   | 8.7	     |  Not supported     | 8.7	               | Not supported   |
+
+
+### Fixed
+- Fixed cli upgrade mgmt kubeconfig flag ([#6666](https://github.com/aws/eks-anywhere/pull/6666))
+- Ignore node taints when scheduling Cilium preflight daemonset ([#6697](https://github.com/aws/eks-anywhere/pull/6697)) 
+- Baremetal: Prevent bare metal machine config references from changing to existing machine configs ([#6674](https://github.com/aws/eks-anywhere/pull/6674))
+
 ## [v0.17.2](https://github.com/aws/eks-anywhere/releases/tag/v0.17.2)
 
 ### Supported OS version details
@@ -22,7 +40,7 @@ Please upgrade to `v0.15.3` if you are using Tinkerbell (Bare Metal) provider.
 |    :---:     |  :---:  |   :---:   |   :---:  |    :---:   | :---: |
 | Ubuntu       | 20.04	 | 20.04     |	20.04             | Not supported	     | 20.04 |  
 |              | 22.04   | 22.04     |  22.04             | Not supported      | Not supported   |
-| Bottlerocket | 1.13.1  | 1.13.1    |  Not supported     | Not supported	     | Not supported   |
+| Bottlerocket | 1.14.0  | 1.14.0    |  Not supported     | Not supported	     | Not supported   |
 | RHEL         | 8.7	   | 8.7	     |  Not supported     | 8.7	               | Not supported   |
 
 
@@ -44,7 +62,7 @@ Please upgrade to `v0.15.3` if you are using Tinkerbell (Bare Metal) provider.
 |    :---:     |  :---:  |   :---:   |   :---:  |    :---:   | :---: |
 | Ubuntu       | 20.04	 | 20.04     |	20.04             | Not supported	     | 20.04 |  
 |              | 22.04   | 22.04     |  22.04             | Not supported      | Not supported   |
-| Bottlerocket | 1.13.1  | 1.13.1    |  Not supported     | Not supported	     | Not supported   |
+| Bottlerocket | 1.14.0  | 1.14.0    |  Not supported     | Not supported	     | Not supported   |
 | RHEL         | 8.7	   | 8.7	     |  Not supported     | 8.7	               | Not supported   |
 
 
@@ -64,7 +82,7 @@ Please upgrade to `v0.15.3` if you are using Tinkerbell (Bare Metal) provider.
 |    :---:     |  :---:  |   :---:   |   :---:  |    :---:   | :---: |
 | Ubuntu       | 20.04	 | 20.04     |	20.04             | Not supported	     | 20.04 |  
 |              | 22.04   | 22.04     |  22.04             | Not supported      | Not supported   |
-| Bottlerocket | 1.13.1  | 1.13.1    |  Not supported     | Not supported	     | Not supported   |
+| Bottlerocket | 1.14.0  | 1.14.0    |  Not supported     | Not supported	     | Not supported   |
 | RHEL         | 8.7	   | 8.7	     |  Not supported     | 8.7	               | Not supported   |
 
 **Note:** We have updated the image-builder docs to include the latest enhancements. Please refer to the [image-builder docs](https://anywhere.eks.amazonaws.com/docs/osmgmt/artifacts/) for more details.
