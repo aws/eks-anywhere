@@ -17,10 +17,11 @@ import (
 )
 
 const (
-	applyClusterSpecTimeout        = 2 * time.Minute
-	waitForClusterReconcileTimeout = time.Hour
-	retryBackOff                   = time.Second
-	defaultFieldManager            = "eks-a-cli"
+	applyClusterSpecTimeout           = 2 * time.Minute
+	waitForClusterReconcileTimeout    = time.Hour
+	retryBackOff                      = time.Second
+	waitForFailureMessageErrorTimeout = 20 * time.Second
+	defaultFieldManager               = "eks-a-cli"
 )
 
 // ApplierOpt allows to customize a Applier on construction.
@@ -29,10 +30,10 @@ type ApplierOpt func(*Applier)
 // Applier applies the cluster spec to the management cluster and waits
 // until the changes are fully reconciled.
 type Applier struct {
-	log                                          logr.Logger
-	clientFactory                                ClientFactory
-	applyClusterTimeout, waitForClusterReconcile time.Duration
-	retryBackOff                                 time.Duration
+	log                                                                 logr.Logger
+	clientFactory                                                       ClientFactory
+	applyClusterTimeout, waitForClusterReconcile, waitForFailureMessage time.Duration
+	retryBackOff                                                        time.Duration
 }
 
 // NewApplier builds an Applier.
@@ -42,6 +43,7 @@ func NewApplier(log logr.Logger, clientFactory ClientFactory, opts ...ApplierOpt
 		clientFactory:           clientFactory,
 		applyClusterTimeout:     applyClusterSpecTimeout,
 		waitForClusterReconcile: waitForClusterReconcileTimeout,
+		waitForFailureMessage:   waitForFailureMessageErrorTimeout,
 		retryBackOff:            retryBackOff,
 	}
 
@@ -58,6 +60,7 @@ func WithApplierNoTimeouts() ApplierOpt {
 		maxTime := time.Duration(math.MaxInt64)
 		a.applyClusterTimeout = maxTime
 		a.waitForClusterReconcile = maxTime
+		a.waitForFailureMessage = maxTime
 	}
 }
 
@@ -130,7 +133,7 @@ func (a Applier) Run(ctx context.Context, spec *cluster.Spec, managementCluster 
 	waitStartTime := time.Now()
 	retry := a.retrierForWait(waitStartTime)
 
-	if err := cluster.WaitFor(ctx, client, spec.Cluster, retrier.New(5*time.Second), func(c *anywherev1.Cluster) error {
+	if err := cluster.WaitFor(ctx, client, spec.Cluster, a.retrierForFailureMessage(), func(c *anywherev1.Cluster) error {
 		if c.Status.FailureMessage != nil && *c.Status.FailureMessage != "" {
 			return fmt.Errorf("cluster has an error: %s", *c.Status.FailureMessage)
 		}
@@ -170,6 +173,13 @@ func (a Applier) Run(ctx context.Context, spec *cluster.Spec, managementCluster 
 func (a Applier) retrierForWait(waitStartTime time.Time) *retrier.Retrier {
 	return retrier.New(
 		a.waitForClusterReconcile-time.Since(waitStartTime),
+		retrier.WithRetryPolicy(retrier.BackOffPolicy(a.retryBackOff)),
+	)
+}
+
+func (a Applier) retrierForFailureMessage() *retrier.Retrier {
+	return retrier.New(
+		a.waitForFailureMessage,
 		retrier.WithRetryPolicy(retrier.BackOffPolicy(a.retryBackOff)),
 	)
 }
