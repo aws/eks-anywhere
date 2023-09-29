@@ -100,19 +100,19 @@ func TestBMCMachineWithOptions(t *testing.T) {
 			ProviderOptions: &v1alpha1.ProviderOptions{
 				RPC: &v1alpha1.RPCOptions{
 					ConsumerURL: "https://example.net",
-					Request: v1alpha1.RequestOpts{
+					Request: &v1alpha1.RequestOpts{
 						HTTPContentType: "application/vnd.api+json",
 						HTTPMethod:      "POST",
 						StaticHeaders:   map[string][]string{"myheader": {"myvalue"}},
 						TimestampFormat: "2006-01-02T15:04:05Z07:00", // time.RFC3339
 						TimestampHeader: "X-Example-Timestamp",
 					},
-					Signature: v1alpha1.SignatureOpts{
+					Signature: &v1alpha1.SignatureOpts{
 						HeaderName:                 "X-Example-Signature",
 						AppendAlgoToHeaderDisabled: true,
 						IncludedPayloadHeaders:     []string{"X-Example-Timestamp"},
 					},
-					HMAC: v1alpha1.HMACOpts{
+					HMAC: &v1alpha1.HMACOpts{
 						PrefixSigDisabled: true,
 						Secrets: map[v1alpha1.HMACAlgorithm][]v1.SecretReference{
 							v1alpha1.HMACAlgorithm("sha256"): {
@@ -125,7 +125,7 @@ func TestBMCMachineWithOptions(t *testing.T) {
 							},
 						},
 					},
-					Experimental: v1alpha1.ExperimentalOpts{
+					Experimental: &v1alpha1.ExperimentalOpts{
 						CustomRequestPayload: `{"data":{"type":"articles","id":"1","attributes":{"title": "Rails is Omakase"},"relationships":{"author":{"links":{"self":"/articles/1/relationships/author","related":"/articles/1/author"},"data":null}}}}`,
 						DotPath:              "data.relationships.author.data",
 					},

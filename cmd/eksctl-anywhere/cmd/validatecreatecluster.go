@@ -9,6 +9,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
+	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
 	"github.com/aws/eks-anywhere/pkg/validations/createcluster"
@@ -20,9 +21,18 @@ type validateOptions struct {
 	clusterOptions
 	hardwareCSVPath       string
 	tinkerbellBootstrapIP string
+	providerOptions       *dependencies.ProviderOptions
 }
 
-var valOpt = &validateOptions{}
+var valOpt = &validateOptions{
+	providerOptions: &dependencies.ProviderOptions{
+		Tinkerbell: &dependencies.TinkerbellOptions{
+			BMCOptions: &hardware.BMCOptions{
+				RPC: &hardware.RPCOpts{},
+			},
+		},
+	},
+}
 
 var validateCreateClusterCmd = &cobra.Command{
 	Use:          "cluster -f <cluster-config-file> [flags]",
@@ -42,6 +52,7 @@ func init() {
 	if err := validateCreateClusterCmd.MarkFlagRequired("filename"); err != nil {
 		log.Fatalf("Error marking flag as required: %v", err)
 	}
+	tinkerbellFlags(validateCreateClusterCmd.Flags(), valOpt.providerOptions.Tinkerbell.BMCOptions.RPC)
 }
 
 func (valOpt *validateOptions) validateCreateCluster(cmd *cobra.Command, _ []string) error {
@@ -73,7 +84,7 @@ func (valOpt *validateOptions) validateCreateCluster(cmd *cobra.Command, _ []str
 		WithWriterFolder(tmpPath).
 		WithDocker().
 		WithKubectl().
-		WithProvider(valOpt.fileName, clusterSpec.Cluster, false, valOpt.hardwareCSVPath, true, valOpt.tinkerbellBootstrapIP, map[string]bool{}).
+		WithProvider(valOpt.fileName, clusterSpec.Cluster, false, valOpt.hardwareCSVPath, true, valOpt.tinkerbellBootstrapIP, map[string]bool{}, valOpt.providerOptions).
 		WithGitOpsFlux(clusterSpec.Cluster, clusterSpec.FluxConfig, cliConfig).
 		WithUnAuthKubeClient().
 		WithValidatorClients().

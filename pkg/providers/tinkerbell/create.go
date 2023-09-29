@@ -233,7 +233,7 @@ func (p *Provider) readCSVToCatalogue() error {
 	// Translate all Machine instances from the p.machines source into Kubernetes object types.
 	// The PostBootstrapSetup() call invoked elsewhere in the program serializes the catalogue
 	// and submits it to the clsuter.
-	machines, err := hardware.NewNormalizedCSVReaderFromFile(p.hardwareCSVFile)
+	machines, err := hardware.NewNormalizedCSVReaderFromFile(p.hardwareCSVFile, p.BMCOptions)
 	if err != nil {
 		return err
 	}

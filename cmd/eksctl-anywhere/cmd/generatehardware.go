@@ -6,15 +6,25 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
 )
 
 type hardwareOptions struct {
-	csvPath    string
-	outputPath string
+	csvPath         string
+	outputPath      string
+	providerOptions *dependencies.ProviderOptions
 }
 
-var hOpts = &hardwareOptions{}
+var hOpts = &hardwareOptions{
+	providerOptions: &dependencies.ProviderOptions{
+		Tinkerbell: &dependencies.TinkerbellOptions{
+			BMCOptions: &hardware.BMCOptions{
+				RPC: &hardware.RPCOpts{},
+			},
+		},
+	},
+}
 
 var generateHardwareCmd = &cobra.Command{
 	Use:   "hardware",
@@ -22,15 +32,16 @@ var generateHardwareCmd = &cobra.Command{
 	Long: `
 Generate Kubernetes hardware YAML manifests for each Hardware entry in the source.
 `,
-	RunE: hOpts.generateHardware,
+	RunE:    hOpts.generateHardware,
+	PreRunE: bindFlagsToViper,
 }
 
 func init() {
 	generateCmd.AddCommand(generateHardwareCmd)
 
-	flags := generateHardwareCmd.Flags()
-	flags.StringVarP(&hOpts.outputPath, "output", "o", "", "Path to output hardware YAML.")
-	flags.StringVarP(
+	fset := generateHardwareCmd.Flags()
+	fset.StringVarP(&hOpts.outputPath, "output", "o", "", "Path to output hardware YAML.")
+	fset.StringVarP(
 		&hOpts.csvPath,
 		TinkerbellHardwareCSVFlagName,
 		TinkerbellHardwareCSVFlagAlias,
@@ -41,10 +52,11 @@ func init() {
 	if err := generateHardwareCmd.MarkFlagRequired(TinkerbellHardwareCSVFlagName); err != nil {
 		panic(err)
 	}
+	tinkerbellFlags(fset, hOpts.providerOptions.Tinkerbell.BMCOptions.RPC)
 }
 
 func (hOpts *hardwareOptions) generateHardware(cmd *cobra.Command, args []string) error {
-	hardwareYaml, err := hardware.BuildHardwareYAML(hOpts.csvPath)
+	hardwareYaml, err := hardware.BuildHardwareYAML(hOpts.csvPath, hOpts.providerOptions.Tinkerbell.BMCOptions)
 	if err != nil {
 		return fmt.Errorf("building hardware yaml from csv: %v", err)
 	}

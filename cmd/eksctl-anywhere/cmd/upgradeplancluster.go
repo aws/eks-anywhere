@@ -9,8 +9,6 @@ import (
 	"text/tabwriter"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
-	"github.com/spf13/viper"
 
 	capiupgrader "github.com/aws/eks-anywhere/pkg/clusterapi"
 	eksaupgrader "github.com/aws/eks-anywhere/pkg/clustermanager"
@@ -34,7 +32,7 @@ var upgradePlanClusterCmd = &cobra.Command{
 	Use:          "cluster",
 	Short:        "Provides new release versions for the next cluster upgrade",
 	Long:         "Provides a list of target versions for upgrading the core components in the workload cluster",
-	PreRunE:      preRunUpgradePlanCluster,
+	PreRunE:      bindFlagsToViper,
 	SilenceUsage: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if err := uc.upgradePlanCluster(cmd.Context()); err != nil {
@@ -42,16 +40,6 @@ var upgradePlanClusterCmd = &cobra.Command{
 		}
 		return nil
 	},
-}
-
-func preRunUpgradePlanCluster(cmd *cobra.Command, args []string) error {
-	cmd.Flags().VisitAll(func(flag *pflag.Flag) {
-		err := viper.BindPFlag(flag.Name, flag)
-		if err != nil {
-			log.Fatalf("Error initializing flags: %v", err)
-		}
-	})
-	return nil
 }
 
 func init() {
@@ -78,7 +66,7 @@ func (uc *upgradeClusterOptions) upgradePlanCluster(ctx context.Context) error {
 
 	deps, err := dependencies.ForSpec(ctx, newClusterSpec).
 		WithClusterManager(newClusterSpec.Cluster, nil).
-		WithProvider(uc.fileName, newClusterSpec.Cluster, false, uc.hardwareCSVPath, uc.forceClean, uc.tinkerbellBootstrapIP, map[string]bool{}).
+		WithProvider(uc.fileName, newClusterSpec.Cluster, false, uc.hardwareCSVPath, uc.forceClean, uc.tinkerbellBootstrapIP, map[string]bool{}, uc.providerOptions).
 		WithGitOpsFlux(newClusterSpec.Cluster, newClusterSpec.FluxConfig, nil).
 		WithCAPIManager().
 		Build(ctx)

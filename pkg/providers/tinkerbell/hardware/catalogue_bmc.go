@@ -100,7 +100,7 @@ func toRufioMachine(m Machine) *v1alpha1.Machine {
 	}
 	if m.BMCOptions != nil && m.BMCOptions.RPC.ConsumerURL != "" {
 		conn.ProviderOptions = &v1alpha1.ProviderOptions{
-			RPC: toRPCOptions(m.BMCOptions.RPC),
+			RPC: toRPCOptions(m.BMCOptions.RPC, m),
 		}
 	}
 	return &v1alpha1.Machine{
@@ -115,21 +115,21 @@ func toRufioMachine(m Machine) *v1alpha1.Machine {
 	}
 }
 
-func toRPCOptions(r *RPCOpts) *v1alpha1.RPCOptions {
+func toRPCOptions(r *RPCOpts, m Machine) *v1alpha1.RPCOptions {
 	opts := &v1alpha1.RPCOptions{
 		ConsumerURL: r.ConsumerURL,
 	}
 	if req := toRequestOpts(r.Request); req != nil {
-		opts.Request = *req
+		opts.Request = req
 	}
 	if sig := toSignatureOpts(r.Signature); sig != nil {
-		opts.Signature = *sig
+		opts.Signature = sig
 	}
-	if hmac := toHMACOpts(r.HMAC); hmac != nil {
-		opts.HMAC = *hmac
+	if hmac := toHMACOpts(r.HMAC, m); hmac != nil {
+		opts.HMAC = hmac
 	}
 	if exp := toExperimentalOpts(r.Experimental); exp != nil {
-		opts.Experimental = *exp
+		opts.Experimental = exp
 	}
 
 	return opts
@@ -189,7 +189,7 @@ func toSignatureOpts(s SignatureOpts) *v1alpha1.SignatureOpts {
 	return sig
 }
 
-func toHMACOpts(h HMACOpts) *v1alpha1.HMACOpts {
+func toHMACOpts(h HMACOpts, m Machine) *v1alpha1.HMACOpts {
 	hmac := &v1alpha1.HMACOpts{}
 	empty := true
 	if h.PrefixSigDisabled {
@@ -201,7 +201,7 @@ func toHMACOpts(h HMACOpts) *v1alpha1.HMACOpts {
 		for idx := range h.Secrets {
 			s := corev1.SecretReference{
 				// TODO(jacobweinstock): get hostname from the machine object.
-				Name:      fmt.Sprintf("%v-%v", "bmc-localhost-auth", idx),
+				Name:      fmt.Sprintf("%v-%v", formatBMCSecretRef(m), idx),
 				Namespace: constants.EksaSystemNamespace,
 			}
 			hmac.Secrets[rufio.HMACAlgorithm("sha256")] = append(hmac.Secrets[rufio.HMACAlgorithm("sha256")], s)

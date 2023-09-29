@@ -3,11 +3,8 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"log"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
-	"github.com/spf13/viper"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
@@ -29,7 +26,7 @@ var generateBundleConfigCmd = &cobra.Command{
 	Use:     "support-bundle-config",
 	Short:   "Generate support bundle config",
 	Long:    "This command is used to generate a default support bundle config yaml",
-	PreRunE: preRunGenerateBundleConfigCmd,
+	PreRunE: bindFlagsToViper,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		err := gsbo.validateCmdInput()
 		if err != nil {
@@ -50,16 +47,6 @@ var generateBundleConfigCmd = &cobra.Command{
 func init() {
 	generateCmd.AddCommand(generateBundleConfigCmd)
 	generateBundleConfigCmd.Flags().StringVarP(&gsbo.fileName, "filename", "f", "", "Filename that contains EKS-A cluster configuration")
-}
-
-func preRunGenerateBundleConfigCmd(cmd *cobra.Command, args []string) error {
-	cmd.Flags().VisitAll(func(flag *pflag.Flag) {
-		err := viper.BindPFlag(flag.Name, flag)
-		if err != nil {
-			log.Fatalf("Error initializing flags: %v", err)
-		}
-	})
-	return nil
 }
 
 func (gsbo *generateSupportBundleOptions) validateCmdInput() error {
@@ -89,7 +76,7 @@ func (gsbo *generateSupportBundleOptions) generateBundleConfig(ctx context.Conte
 	}
 
 	deps, err := dependencies.ForSpec(ctx, clusterSpec).
-		WithProvider(clusterConfigPath, clusterSpec.Cluster, cc.skipIpCheck, gsbo.hardwareFileName, false, gsbo.tinkerbellBootstrapIP, map[string]bool{}).
+		WithProvider(clusterConfigPath, clusterSpec.Cluster, cc.skipIpCheck, gsbo.hardwareFileName, false, gsbo.tinkerbellBootstrapIP, map[string]bool{}, nil).
 		WithDiagnosticBundleFactory().
 		Build(ctx)
 	if err != nil {

@@ -18,11 +18,13 @@ import (
 // the Machine is optional in the CSV. If unspecified, CSVReader will generate a UUID and apply it to the machine.
 type CSVReader struct {
 	reader *csv.Unmarshaller
+	// BMCOptions used in a Machine that do not have a corresponding column in the CSV.
+	BMCOptions *BMCOptions
 }
 
 // NewCSVReader returns a new CSVReader instance that consumes csv data from r. r should return io.EOF when no more
 // records are available.
-func NewCSVReader(r io.Reader) (CSVReader, error) {
+func NewCSVReader(r io.Reader, opts *BMCOptions) (CSVReader, error) {
 	stdreader := stdcsv.NewReader(r)
 
 	reader, err := csv.NewUnmarshaller(stdreader, Machine{})
@@ -34,7 +36,7 @@ func NewCSVReader(r io.Reader) (CSVReader, error) {
 		return CSVReader{}, err
 	}
 
-	return CSVReader{reader: reader}, nil
+	return CSVReader{reader: reader, BMCOptions: opts}, nil
 }
 
 // Read reads a single entry from the CSV data source and returns a new Machine representation.
@@ -43,19 +45,23 @@ func (cr CSVReader) Read() (Machine, error) {
 	if err != nil {
 		return Machine{}, err
 	}
+	m := machine.(Machine)
+	if cr.BMCOptions != nil {
+		m.BMCOptions = cr.BMCOptions
+	}
 
-	return machine.(Machine), nil
+	return m, nil
 }
 
 // NewNormalizedCSVReaderFromFile creates a MachineReader instance backed by a CSVReader reading from path
 // that applies default normalizations to machines.
-func NewNormalizedCSVReaderFromFile(path string) (MachineReader, error) {
+func NewNormalizedCSVReaderFromFile(path string, opts *BMCOptions) (MachineReader, error) {
 	fh, err := os.Open(path)
 	if err != nil {
 		return CSVReader{}, err
 	}
 
-	reader, err := NewCSVReader(bufio.NewReader(fh))
+	reader, err := NewCSVReader(bufio.NewReader(fh), opts)
 	if err != nil {
 		return nil, err
 	}
@@ -93,8 +99,8 @@ func ensureRequiredColumnsInCSV(unmatched []string) error {
 }
 
 // BuildHardwareYAML builds a hardware yaml from the csv at the provided path.
-func BuildHardwareYAML(path string) ([]byte, error) {
-	reader, err := NewNormalizedCSVReaderFromFile(path)
+func BuildHardwareYAML(path string, opts *BMCOptions) ([]byte, error) {
+	reader, err := NewNormalizedCSVReaderFromFile(path, opts)
 	if err != nil {
 		return nil, fmt.Errorf("reading csv: %v", err)
 	}

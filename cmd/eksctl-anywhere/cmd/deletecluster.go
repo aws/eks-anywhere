@@ -10,6 +10,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 	"github.com/aws/eks-anywhere/pkg/logger"
+	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
 	"github.com/aws/eks-anywhere/pkg/workflows"
@@ -21,9 +22,18 @@ type deleteClusterOptions struct {
 	forceCleanup          bool
 	hardwareFileName      string
 	tinkerbellBootstrapIP string
+	providerOptions       *dependencies.ProviderOptions
 }
 
-var dc = &deleteClusterOptions{}
+var dc = &deleteClusterOptions{
+	providerOptions: &dependencies.ProviderOptions{
+		Tinkerbell: &dependencies.TinkerbellOptions{
+			BMCOptions: &hardware.BMCOptions{
+				RPC: &hardware.RPCOpts{},
+			},
+		},
+	},
+}
 
 var deleteClusterCmd = &cobra.Command{
 	Use:          "cluster (<cluster-name>|-f <config-file>)",
@@ -50,6 +60,7 @@ func init() {
 	hideForceCleanup(deleteClusterCmd.Flags())
 	deleteClusterCmd.Flags().StringVar(&dc.managementKubeconfig, "kubeconfig", "", "kubeconfig file pointing to a management cluster")
 	deleteClusterCmd.Flags().StringVar(&dc.bundlesOverride, "bundles-override", "", "Override default Bundles manifest (not recommended)")
+	tinkerbellFlags(deleteClusterCmd.Flags(), dc.providerOptions.Tinkerbell.BMCOptions.RPC)
 }
 
 func (dc *deleteClusterOptions) validate(ctx context.Context, args []string) error {
@@ -101,7 +112,7 @@ func (dc *deleteClusterOptions) deleteCluster(ctx context.Context) error {
 		WithBootstrapper().
 		WithCliConfig(cliConfig).
 		WithClusterManager(clusterSpec.Cluster, nil).
-		WithProvider(dc.fileName, clusterSpec.Cluster, cc.skipIpCheck, dc.hardwareFileName, false, dc.tinkerbellBootstrapIP, map[string]bool{}).
+		WithProvider(dc.fileName, clusterSpec.Cluster, cc.skipIpCheck, dc.hardwareFileName, false, dc.tinkerbellBootstrapIP, map[string]bool{}, dc.providerOptions).
 		WithGitOpsFlux(clusterSpec.Cluster, clusterSpec.FluxConfig, cliConfig).
 		WithWriter().
 		Build(ctx)
