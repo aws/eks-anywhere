@@ -12,7 +12,7 @@ The following diagrams illustrate how to set up for cluster creation in an airga
 
 If you are planning to run EKS Anywhere in an airgapped environments, before you create a cluster, you must temporarily connect your Admin machine to the internet to install the `eksctl` CLI and pull the required EKS Anywhere dependencies.
 
-![Download EKS Anywhere artifacts to Admin machine](/images/airgap-arch02.png)
+![Disconnect Admin machine from Internet to create cluster](/images/airgap-arch02.png)
 
 Once these dependencies are downloaded and imported in a local registry, you no longer need internet access. In the EKS Anywhere cluster specification, you can configure EKS Anywhere to use your local registry mirror. When the registry mirror configuration is set in the EKS Anywhere cluster specification, EKS Anywhere configures containerd to pull from that registry instead of Amazon ECR during cluster creation and lifecycle operations. For more information, reference the [Registry Mirror Configuration documentation.]({{< relref "../optional/registrymirror" >}})
 
