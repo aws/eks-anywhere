@@ -26,5 +26,5 @@ Copy EKS Anywhere resources and artifacts
 ### SEE ALSO
 
 * [anywhere](../anywhere/)	 - Amazon EKS Anywhere
-* [anywhere copy packages](../anywhere_copy_packages/)	 - Copy curated package images and charts from a source to a destination
+* [anywhere copy packages](../anywhere_copy_packages/)	 - Copy curated package images and charts from source registries to a destination registry
 

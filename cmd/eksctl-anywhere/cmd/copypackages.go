@@ -1,217 +1,108 @@
 package cmd
 
 import (
+	"bytes"
 	"context"
+	"crypto/tls"
+	"encoding/json"
 	"fmt"
-	"log"
-	"os"
+	"net/http"
 	"strings"
 
+	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
+	"helm.sh/helm/v3/pkg/chart/loader"
+	helmRegistry "helm.sh/helm/v3/pkg/registry"
+	"oras.land/oras-go/v2"
+	"oras.land/oras-go/v2/registry/remote"
+	"oras.land/oras-go/v2/registry/remote/auth"
 
-	"github.com/aws/eks-anywhere/pkg/config"
+	packagesv1 "github.com/aws/eks-anywhere-packages/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/curatedpackages"
-	"github.com/aws/eks-anywhere/pkg/dependencies"
-	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/logger"
-	"github.com/aws/eks-anywhere/pkg/manifests/bundles"
 	"github.com/aws/eks-anywhere/pkg/registry"
 )
 
 // copyPackagesCmd is the context for the copy packages command.
 var copyPackagesCmd = &cobra.Command{
 	Use:          "packages <destination-registry>",
-	Short:        "Copy curated package images and charts from a source to a destination",
-	Long:         `Copy all the EKS Anywhere curated package images and helm charts from a source to a destination.`,
+	Short:        "Copy curated package images and charts from source registries to a destination registry",
+	Long:         `Copy all the EKS Anywhere curated package images and helm charts from source registries to a destination registry. Registry credentials are fetched from docker config.`,
 	SilenceUsage: true,
 	RunE:         runCopyPackages,
 	Args: func(cmd *cobra.Command, args []string) error {
 		if err := cobra.ExactArgs(1)(cmd, args); err != nil {
-			return fmt.Errorf("A destination must be specified as an argument")
+			return fmt.Errorf("A destination registry must be specified as an argument")
 		}
 		return nil
 	},
 }
 
+var cs = registry.NewCredentialStore()
+
 func init() {
 	copyCmd.AddCommand(copyPackagesCmd)
 
-	copyPackagesCmd.Flags().StringVarP(&copyPackagesCommand.bundleFile, "bundle", "b", "", "EKS-A bundle file to read artifact dependencies from")
-	if err := copyPackagesCmd.MarkFlagRequired("bundle"); err != nil {
-		log.Fatalf("Cannot mark 'bundle' flag as required: %s", err)
+	copyPackagesCmd.Flags().StringVar(&cpc.srcImageRegistry, "src-image-registry", "", "The source registry that stores container images")
+	if err := copyPackagesCmd.MarkFlagRequired("src-image-registry"); err != nil {
+		logger.Fatal(err, "Cannot mark flag as required")
 	}
-	copyPackagesCmd.Flags().StringVarP(&copyPackagesCommand.dstCert, "dst-cert", "", "", "TLS certificate for destination registry")
-	copyPackagesCmd.Flags().StringVarP(&copyPackagesCommand.srcCert, "src-cert", "", "", "TLS certificate for source registry")
-	copyPackagesCmd.Flags().BoolVar(&copyPackagesCommand.insecure, "insecure", false, "Skip TLS verification while copying images and charts")
-	copyPackagesCmd.Flags().BoolVar(&copyPackagesCommand.dryRun, "dry-run", false, "Dry run copy to print images that would be copied")
-	copyPackagesCmd.Flags().StringVarP(&copyPackagesCommand.awsRegion, "aws-region", "", os.Getenv(config.EksaRegionEnv), "Region to copy images from")
+	copyPackagesCmd.Flags().StringVar(&cpc.kubeVersion, "kube-version", "", "The kubernetes version of the package bundle to copy")
+	if err := copyPackagesCmd.MarkFlagRequired("kube-version"); err != nil {
+		logger.Fatal(err, "Cannot mark flag as required")
+	}
+	copyPackagesCmd.Flags().StringVar(&cpc.srcChartRegistry, "src-chart-registry", "", "The source registry that stores helm charts (default src-image-registry)")
+	copyPackagesCmd.Flags().BoolVar(&cpc.dstPlainHTTP, "dst-plain-http", false, "Whether or not to use plain http for destination registry")
+	copyPackagesCmd.Flags().BoolVar(&cpc.dstInsecure, "dst-insecure", false, "Skip TLS verification against the destination registry")
+	copyPackagesCmd.Flags().BoolVar(&cpc.dryRun, "dry-run", false, "Dry run will show what artifacts would be copied, but not actually copy them")
+
+	// making oras client to use dockerconfig
+	if err := cs.Init(); err != nil {
+		panic(err)
+	}
+	auth.DefaultClient.Credential = func(ctx context.Context, registry string) (auth.Credential, error) {
+		return cs.Credential(registry)
+	}
 }
 
-var copyPackagesCommand = CopyPackagesCommand{}
+var cpc = copyPackagesConfig{}
 
 var publicPackages = []string{"ecr-token-refresher", "eks-anywhere-packages", "credential-provider-package"}
 
-// CopyPackagesCommand copies packages specified in a bundle to a destination.
-type CopyPackagesCommand struct {
-	destination   string
-	bundleFile    string
-	srcCert       string
-	dstCert       string
-	insecure      bool
-	dryRun        bool
-	awsRegion     string
-	registryCache *registry.Cache
+// copyPackagesConfig copies packages specified in a bundle to a destination.
+type copyPackagesConfig struct {
+	destRegistry     string
+	srcImageRegistry string
+	srcChartRegistry string
+	kubeVersion      string
+	dstPlainHTTP     bool
+	dstInsecure      bool
+	dryRun           bool
 }
 
 func runCopyPackages(_ *cobra.Command, args []string) error {
+	cpc.destRegistry = args[0]
+	if cpc.srcChartRegistry == "" {
+		cpc.srcChartRegistry = cpc.srcImageRegistry
+	}
 	ctx := context.Background()
-	copyPackagesCommand.destination = args[0]
-
-	credentialStore := registry.NewCredentialStore()
-	err := credentialStore.Init()
+	bundle, err := getPackageBundle(ctx, cpc.srcChartRegistry, cpc.kubeVersion)
 	if err != nil {
+		return fmt.Errorf("cannot fetch package bundle: %w", err)
+	}
+	if err := copyArtifacts(context.Background(), bundle); err != nil {
 		return err
 	}
 
-	return copyPackagesCommand.call(ctx, credentialStore)
+	// copy package bundle yaml after charts and images
+	tag := getPackageBundleTag(cpc.kubeVersion)
+	_, err = orasCopy(ctx, curatedpackages.ImageRepositoryName, cpc.srcChartRegistry, tag, cpc.destRegistry, tag)
+	return err
 }
 
-func (c CopyPackagesCommand) call(ctx context.Context, credentialStore *registry.CredentialStore) error {
-	factory := dependencies.NewFactory()
-	deps, err := factory.
-		WithExecutableImage().
-		WithManifestReader().
-		WithHelm().
-		Build(ctx)
-	if err != nil {
-		return err
-	}
-	defer deps.Close(ctx)
-
-	eksaBundle, err := bundles.Read(deps.ManifestReader, c.bundleFile)
-	if err != nil {
-		return err
-	}
-
-	c.registryCache = registry.NewCache()
-	bundleReader := curatedpackages.NewPackageReader(c.registryCache, credentialStore, c.awsRegion)
-
-	// Note: package bundle yaml file is included by charts below
-	charts := bundleReader.ReadChartsFromBundles(ctx, eksaBundle)
-	tags, err := getTagsFromCharts(ctx, deps.Helm, charts)
-	if err != nil {
-		return err
-	}
-
-	certificates, err := registry.GetCertificates(c.dstCert)
-	if err != nil {
-		return err
-	}
-
-	dstContext := registry.NewStorageContext(c.destination, credentialStore, certificates, c.insecure)
-	dstRegistry, err := c.registryCache.Get(dstContext)
-	if err != nil {
-		return fmt.Errorf("error with repository %s: %v", c.destination, err)
-	}
-
-	logger.V(0).Info("Copying curated packages helm charts from public ECR to destination", "destination", c.destination)
-	if err = c.copyArtifacts(ctx, func(a registry.Artifact) registry.StorageClient {
-		return dstRegistry
-	}, credentialStore, charts); err != nil {
-		return err
-	}
-
-	imageList, err := bundleReader.ReadImagesFromBundles(ctx, eksaBundle)
-	if err != nil {
-		return err
-	}
-	addTags(imageList, tags)
-
-	logger.V(0).Info("Copying curated packages images from private ECR to destination", "destination", c.destination)
-	publicRepoPrefix := strings.Split(charts[0].Repository, "/")[0] + "/"
-	return c.copyArtifacts(ctx, func(a registry.Artifact) registry.StorageClient {
-		// private curated packages should go to curated-packages
-		dstRegistry.SetProject("curated-packages/")
-		for _, pp := range publicPackages {
-			if strings.HasSuffix(a.Repository, pp) {
-				// public curated packages images should go to publicRepo/*
-				dstRegistry.SetProject(publicRepoPrefix)
-			}
-		}
-		return dstRegistry
-	}, credentialStore, imageList)
-}
-
-func addTags(images []registry.Artifact, tags map[string]string) {
-	for idx, i := range images {
-		if tag, ok := tags[i.Digest]; ok {
-			images[idx].Tag = tag
-		}
-	}
-}
-
-func (c CopyPackagesCommand) copyArtifacts(ctx context.Context, getDstRegistry func(registry.Artifact) registry.StorageClient, credentialStore *registry.CredentialStore, artifacts []registry.Artifact) error {
-	certificates, err := registry.GetCertificates(c.srcCert)
-	if err != nil {
-		return err
-	}
-
-	for _, a := range artifacts {
-		host := a.Registry
-
-		srcContext := registry.NewStorageContext(host, credentialStore, certificates, c.insecure)
-		srcRegistry, err := c.registryCache.Get(srcContext)
-		if err != nil {
-			return fmt.Errorf("error with repository %s: %v", host, err)
-		}
-
-		dstRegistry := getDstRegistry(a)
-
-		artifact := registry.NewArtifact(a.Registry, a.Repository, a.Tag, a.Digest)
-		logger.V(0).Info("Copying image to destination", "destination", dstRegistry.Destination(artifact))
-		if c.dryRun {
-			continue
-		}
-
-		err = registry.Copy(ctx, srcRegistry, dstRegistry, artifact)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-// Since package bundle doesn't contain tags, we get tags from chart values.
-func getTagsFromCharts(ctx context.Context, helm *executables.Helm, charts []registry.Artifact) (map[string]string, error) {
-	tags := make(map[string]string)
-	for _, chart := range charts {
-		for _, pp := range publicPackages {
-			// only public package charts may contain tags info
-			if strings.HasSuffix(chart.Repository, "/"+pp) {
-				url := "oci://" + chart.Registry + "/" + chart.Repository
-				values, err := helm.ShowValues(ctx, url, chart.Tag)
-				if err != nil {
-					return nil, err
-				}
-
-				err = getTagsFromChartValues(values.Bytes(), tags)
-				if err != nil {
-					return nil, err
-				}
-			}
-		}
-	}
-	return tags, nil
-}
-
-func getTagsFromChartValues(chartValues []byte, res map[string]string) error {
-	type nodeType = map[interface{}]interface{}
-	m := make(nodeType)
-
-	if err := yaml.Unmarshal(chartValues, &m); err != nil {
-		return err
-	}
+func getTagsFromChartValues(chartValues map[string]any, res map[string]string) error {
+	type nodeType = map[string]interface{}
 
 	var dfs func(nodeType, map[string]string)
 	dfs = func(node nodeType, res map[string]string) {
@@ -225,13 +116,141 @@ func getTagsFromChartValues(chartValues []byte, res map[string]string) error {
 						continue
 					}
 					res[vv["digest"].(string)] = vv["tag"].(string)
-				} else {
-					dfs(vv, res)
 				}
+				dfs(vv, res)
 			}
 		}
 	}
 
-	dfs(m, res)
+	dfs(chartValues, res)
 	return nil
+}
+
+func getPackageBundleTag(kubeVersion string) string {
+	return "v" + strings.Replace(kubeVersion, ".", "-", -1) + "-latest"
+}
+
+func getPackageBundle(ctx context.Context, registry, kubeVersion string) (*packagesv1.PackageBundle, error) {
+	repo, err := remote.NewRepository(registry + "/" + curatedpackages.ImageRepositoryName)
+	if err != nil {
+		return nil, err
+	}
+	tag := getPackageBundleTag(kubeVersion)
+	_, data, err := oras.FetchBytes(ctx, repo, tag, oras.DefaultFetchBytesOptions)
+	if err != nil {
+		return nil, err
+	}
+
+	var mani ocispec.Manifest
+	if err := json.Unmarshal(data, &mani); err != nil {
+		return nil, fmt.Errorf("unmarshal manifest: %v", err)
+	}
+	if len(mani.Layers) < 1 {
+		return nil, fmt.Errorf("missing layer")
+	}
+
+	_, data, err = oras.FetchBytes(ctx, repo.Blobs(), string(mani.Layers[0].Digest), oras.DefaultFetchBytesOptions)
+	if err != nil {
+		return nil, err
+	}
+
+	bundle := packagesv1.PackageBundle{}
+	err = yaml.Unmarshal(data, &bundle)
+	if err != nil {
+		return nil, err
+	}
+	return &bundle, nil
+}
+
+func copyArtifacts(ctx context.Context, bundle *packagesv1.PackageBundle) error {
+	for _, p := range bundle.Spec.Packages {
+		for _, v := range p.Source.Versions {
+			chartTag := v.Name
+			url := cpc.srcChartRegistry + "/" + p.Source.Repository
+			values, err := getChartValues(url + ":" + chartTag)
+			if err != nil {
+				return fmt.Errorf("cannot get chart values %s: %w", url+":"+chartTag, err)
+			}
+
+			tags := make(map[string]string)
+			if err = getTagsFromChartValues(values, tags); err != nil {
+				return fmt.Errorf("cannot get tags from chart values: %w", err)
+			}
+			_, err = orasCopy(ctx, p.Source.Repository, cpc.srcChartRegistry, chartTag, cpc.destRegistry, chartTag)
+			if err != nil {
+				return fmt.Errorf("cannot copy chart to repo: %w", err)
+			}
+			if err := copyImages(ctx, v.Images, tags); err != nil {
+				return fmt.Errorf("cannot process images: %w", err)
+			}
+		}
+	}
+	return nil
+}
+
+func copyImages(ctx context.Context, images []packagesv1.VersionImages, tags map[string]string) error {
+	for _, i := range images {
+		dstRef := i.Digest
+		if t, ok := tags[i.Digest]; ok {
+			logger.V(0).Info("Using tag as the reference for digest", "tag", t, "digest", i.Digest)
+			dstRef = t
+		}
+		_, err := orasCopy(ctx, i.Repository, cpc.srcImageRegistry, i.Digest, cpc.destRegistry, dstRef)
+		if err != nil {
+			return fmt.Errorf("cannot copy image to repo: %w", err)
+		}
+	}
+	return nil
+}
+
+func getChartValues(chartURL string) (map[string]interface{}, error) {
+	helmClient, err := helmRegistry.NewClient()
+	if err != nil {
+		return nil, err
+	}
+	res, err := helmClient.Pull(chartURL)
+	if err != nil {
+		return nil, err
+	}
+	chart, _ := loader.LoadArchive(bytes.NewReader(res.Chart.Data))
+	return chart.Values, nil
+}
+
+func orasCopy(ctx context.Context, repo, srcRegistry, srcRef, dstRegistry, dstRef string) (ocispec.Descriptor, error) {
+	logger.V(0).Info("Copying artifact", "from", srcRegistry+"/"+repo, "to", dstRegistry+"/"+repo, "dstRef", dstRef)
+
+	if cpc.dryRun {
+		return ocispec.Descriptor{}, nil
+	}
+
+	src, err := remote.NewRepository(srcRegistry + "/" + repo)
+	if err != nil {
+		return ocispec.Descriptor{}, err
+	}
+
+	dst, err := remote.NewRepository(dstRegistry + "/" + repo)
+	if err != nil {
+		return ocispec.Descriptor{}, err
+	}
+	setUpDstRepo(dst, &cpc)
+
+	return oras.Copy(ctx, src, srcRef, dst, dstRef, oras.DefaultCopyOptions)
+}
+
+func setUpDstRepo(dst *remote.Repository, c *copyPackagesConfig) {
+	dst.PlainHTTP = c.dstPlainHTTP
+	dst.Client = &auth.Client{
+		Client: &http.Client{
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{InsecureSkipVerify: c.dstInsecure},
+			},
+		},
+		Header: http.Header{
+			"User-Agent": {"oras-go"},
+		},
+		Cache: auth.DefaultCache,
+		Credential: func(ctx context.Context, registry string) (auth.Credential, error) {
+			return cs.Credential(registry)
+		},
+	}
 }
