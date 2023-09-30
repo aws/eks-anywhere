@@ -439,6 +439,27 @@ Status:
   Phase:                   Running
 ```
 
+### Machine gets stuck at `Provisioned` state without `providerID` set
+
+The VM can be created in the provider infrastructure with proper IP assigned but running `kubectl get machines -n eksa-system` indicates that the machine is in `Provisioned` state and never gets to `Running`.
+
+Check the CAPI controller manager log with `k logs -f -n capi-system -l control-plane="controller-manager" --tail -1`:
+
+```sh
+E0218 03:41:53.126751 1 machine_controller_noderef.go:152] controllers/Machine "msg"="Failed to parse ProviderID" "error"="providerID is empty" "providerID"={} "node"="test-cluster-6ffd74bd5b-khxzr"
+E0218 03:42:09.155577 1 machine_controller.go:685] controllers/Machine "msg"="Unable to retrieve machine from node" "error"="no matching Machine" "node"="test-cluster-6ffd74bd5b-khxzr"
+```
+
+When inspecting the CAPI `machine` object, you may find out that the `Node.Spec.ProviderID` is not set. 
+This can happen when the workload environment does not have proper network access to the underlying provider infrastructure. For example in vSphere, without the network access to vCenter endpoint, the `vsphere-cloud-controller-manager` in the workload cluster cannot set node's providerID, thus the machine will never get to `Running` state, blocking cluster provisioning from continuing.
+
+To fix it, make sure to validate the network/firewall settings from the workload cluster to the infrastructure provider environment. Read through the `Requirements` page, especially around the networking requirements in each provider before retrying the cluster provisioning:
+* [Requirements for EKS Anywhere on VMware vSphere]({{< relref "../getting-started/vsphere/vsphere-prereq" >}}) 
+* [Network Requirements for EKS Anywhere on Bare Metal]({{< relref "../getting-started/baremetal/bare-prereq" >}}) 
+* [Requirements for EKS Anywhere on CloudStack]({{< relref "../getting-started/cloudstack/cloudstack-prereq" >}}) 
+* [Prerequisite Checklist for EKS Anywhere on Snow]({{< relref "../getting-started/snow/snow-getstarted/#prerequisite-checklist" >}}) 
+* [Requirements for EKS Anywhere on Nutanix Cloud Infrastructure]({{< relref "../getting-started/nutanix/nutanix-prereq" >}}) 
+
 ## Bare Metal troubleshooting
 
 ### Creating new workload cluster hangs or fails
