@@ -95,7 +95,7 @@ func WithApplierRetryBackOff(backOff time.Duration) ApplierOpt {
 // until the changes are fully reconciled.
 func (a Applier) Run(ctx context.Context, spec *cluster.Spec, managementCluster types.Cluster) error {
 	var client kubernetes.Client
-
+	a.log.V(9).Info("Cluster generation before applying specs", "generation", spec.Cluster.Generation)
 	a.log.V(3).Info("Applying cluster spec")
 	err := retrier.New(
 		a.applyClusterTimeout,
@@ -133,7 +133,7 @@ func (a Applier) Run(ctx context.Context, spec *cluster.Spec, managementCluster 
 	waitStartTime := time.Now()
 	retry := a.retrierForWait(waitStartTime)
 
-	if err := cluster.WaitFor(ctx, client, spec.Cluster, a.retrierForFailureMessage(), func(c *anywherev1.Cluster) error {
+	if err := cluster.WaitFor(ctx, a.log, client, spec.Cluster, a.retrierForFailureMessage(), func(c *anywherev1.Cluster) error {
 		if c.Status.FailureMessage != nil && *c.Status.FailureMessage != "" {
 			return fmt.Errorf("cluster has an error: %s", *c.Status.FailureMessage)
 		}
@@ -143,27 +143,27 @@ func (a Applier) Run(ctx context.Context, spec *cluster.Spec, managementCluster 
 	}
 
 	a.log.V(3).Info("Waiting for control plane to be ready")
-	if err := cluster.WaitForCondition(ctx, client, spec.Cluster, retry, anywherev1.ControlPlaneReadyCondition); err != nil {
+	if err := cluster.WaitForCondition(ctx, a.log, client, spec.Cluster, retry, anywherev1.ControlPlaneReadyCondition); err != nil {
 		return errors.Wrapf(err, "waiting for cluster's control plane to be ready")
 	}
 
 	if spec.Cluster.Spec.ClusterNetwork.CNIConfig.IsManaged() {
 		a.log.V(3).Info("Waiting for default CNI to be updated")
 		retry = a.retrierForWait(waitStartTime)
-		if err := cluster.WaitForCondition(ctx, client, spec.Cluster, retry, anywherev1.DefaultCNIConfiguredCondition); err != nil {
+		if err := cluster.WaitForCondition(ctx, a.log, client, spec.Cluster, retry, anywherev1.DefaultCNIConfiguredCondition); err != nil {
 			return errors.Wrapf(err, "waiting for cluster's CNI to be configured")
 		}
 	}
 
 	a.log.V(3).Info("Waiting for worker nodes to be ready after upgrade")
 	retry = a.retrierForWait(waitStartTime)
-	if err := cluster.WaitForCondition(ctx, client, spec.Cluster, retry, anywherev1.WorkersReadyCondition); err != nil {
+	if err := cluster.WaitForCondition(ctx, a.log, client, spec.Cluster, retry, anywherev1.WorkersReadyCondition); err != nil {
 		return errors.Wrapf(err, "waiting for cluster's workers to be ready")
 	}
 
 	a.log.V(3).Info("Waiting for cluster upgrade to be completed")
 	retry = a.retrierForWait(waitStartTime)
-	if err := cluster.WaitForCondition(ctx, client, spec.Cluster, retry, anywherev1.ReadyCondition); err != nil {
+	if err := cluster.WaitForCondition(ctx, a.log, client, spec.Cluster, retry, anywherev1.ReadyCondition); err != nil {
 		return errors.Wrapf(err, "waiting for cluster to be ready")
 	}
 
