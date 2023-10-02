@@ -21,7 +21,7 @@ To prepare a VMware vSphere environment to run EKS Anywhere, you need the follow
   * [Prepare DHCP IP addresses pool]({{< relref "../../clustermgmt/cluster-upgrades/vsphere-and-cloudstack-upgrades.md/#prepare-dhcp-ip-addresses-pool" >}})
 * One network in vSphere to use for the cluster. EKS Anywhere clusters need access to vCenter through the network to enable self-managing and storage capabilities.
 * An [OVA]({{< relref "customize/vsphere-ovas/" >}}) imported into vSphere and converted into a template for the workload VMs
-* It's critical that you set up your [vSphere user credentials properly.]({{< relref "../vsphere-preparation#configuring-vsphere-user-group-and-roles" >}})
+* It's critical that you set up your [vSphere user credentials properly.]({{< relref "./vsphere-preparation#configuring-vsphere-user-group-and-roles" >}})
 * One IP address routable from cluster but excluded from DHCP offering. 
   This IP address is to be used as the [Control Plane Endpoint IP.]({{< relref "./vsphere-spec/#controlplaneconfigurationendpointhost-required" >}})
 
@@ -86,7 +86,7 @@ If you have [govc installed,](https://github.com/vmware/govmomi/blob/master/govc
   ```
 
 * **template**: The VM template to use for your EKS Anywhere cluster.
-This template was created when you imported the [OVA file]({{< relref "../vsphere-preparation##deploy-an-ova-template" >}}) into vSphere. 
+This template was created when you imported the [OVA file]({{< relref "./vsphere-preparation##deploy-an-ova-template" >}}) into vSphere. 
 
   ![Import ova wizard](/images/ovatemplate.png) 
 
@@ -96,7 +96,7 @@ This template was created when you imported the [OVA file]({{< relref "../vspher
 
 
 * **folder**:
-The [folder]({{< relref "../vsphere-preparation#configuring-folder-resources" >}}) parameter in VSphereMachineConfig allows you to organize the VMs of an EKS Anywhere cluster.
+The [folder]({{< relref "./vsphere-preparation#configuring-folder-resources" >}}) parameter in VSphereMachineConfig allows you to organize the VMs of an EKS Anywhere cluster.
 With this, each cluster can be organized as a folder in vSphere.
 You will have a separate folder for the management cluster and each cluster you are adding. 
 
