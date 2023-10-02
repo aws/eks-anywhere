@@ -3,7 +3,6 @@ package workflows
 import (
 	"context"
 
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/task"
 )
@@ -55,7 +54,7 @@ func (s *CollectWorkloadClusterDiagnosticsTask) Name() string {
 func (s *CollectMgmtClusterDiagnosticsTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
 	logger.Info("collecting management cluster diagnostics")
 	mgmt := commandContext.BootstrapCluster
-	if features.IsActive(features.ExperimentalSelfManagedClusterUpgrade()) {
+	if mgmt == nil {
 		mgmt = commandContext.ManagementCluster
 	}
 
