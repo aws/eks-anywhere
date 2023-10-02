@@ -15,14 +15,15 @@ The following shows validated EKS Anywhere partners whose products have passed c
 ## Bare Metal provider validated partners
 
 ```
-Kubernetes Version :  1.23 
-Date of Conformance Test : 2023-08-24
+Kubernetes Version :  1.27 
+Date of Conformance Test : 2023-09-21
  
 Following ISV Partners have Validated their Conformance : 
  
 VENDOR_PRODUCT   VENDOR_PRODUCT_TYPE
 dynatrace        dynatrace
 komodor          k8s-watcher
+kong             kong-enterprise
 accuknox         kubearmor
 kubecost         cost-analyzer
 nirmata          enterprise-kyverno
@@ -30,6 +31,7 @@ lacework         polygraph
 suse             neuvector
 newrelic         newrelic-bundle
 perfectscale     perfectscale
+pulumi           pulumi-kubernetes-operator
 sysdig           sysdig-agent
 hashicorp        vault
 ```
@@ -38,13 +40,14 @@ hashicorp        vault
 
 ```
 Kubernetes Version :  1.27 
-Date of Conformance Test : 2023-08-24
+Date of Conformance Test : 2023-09-21
  
 Following ISV Partners have Validated their Conformance : 
  
 VENDOR_PRODUCT   VENDOR_PRODUCT_TYPE
 dynatrace        dynatrace
 komodor          k8s-watcher
+kong             kong-enterprise
 accuknox         kubearmor
 kubecost         cost-analyzer
 nirmata          enterprise-kyverno
@@ -52,6 +55,7 @@ lacework         polygraph
 suse             neuvector
 newrelic         newrelic-bundle
 perfectscale     perfectscale
+pulumi           pulumi-kubernetes-operator
 sysdig           sysdig-agent
 hashicorp        vault
 ```
@@ -59,14 +63,15 @@ hashicorp        vault
 ## AWS Snow provider validated partners
 
 ```
-Kubernetes Version :  1.24 
-Date of Conformance Test : 2023-08-24
+Kubernetes Version :  1.27 
+Date of Conformance Test : 2023-09-21
  
 Following ISV Partners have Validated their Conformance : 
  
 VENDOR_PRODUCT   VENDOR_PRODUCT_TYPE
 dynatrace        dynatrace
 komodor          k8s-watcher
+kong             kong-enterprise
 accuknox         kubearmor
 kubecost         cost-analyzer
 nirmata          enterprise-kyverno
@@ -74,6 +79,7 @@ lacework         polygraph
 suse             neuvector
 newrelic         newrelic-bundle
 perfectscale     perfectscale
+pulumi           pulumi-kubernetes-operator
 sysdig           sysdig-agent
 hashicorp        vault
 ```
