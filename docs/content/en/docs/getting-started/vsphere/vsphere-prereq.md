@@ -15,15 +15,15 @@ Set up an Administrative machine as described in [Install EKS Anywhere ]({{< rel
 
 ### Prepare a VMware vSphere environment
 To prepare a VMware vSphere environment to run EKS Anywhere, you need the following:
-* A vSphere 7+ environment running vCenter
-* Capacity to deploy 6-10 VMs
-* [DHCP service]({{< relref "customize/vsphere-dhcp/" >}}) running in vSphere environment in the primary VM network for your workload cluster
+* A vSphere 7+ environment running vCenter.
+* Capacity to deploy 6-10 VMs.
+* [DHCP service]({{< relref "customize/vsphere-dhcp/" >}}) running in vSphere environment in the primary VM network for your workload cluster.
   * [Prepare DHCP IP addresses pool]({{< relref "../../clustermgmt/cluster-upgrades/vsphere-and-cloudstack-upgrades.md/#prepare-dhcp-ip-addresses-pool" >}})
 * One network in vSphere to use for the cluster. EKS Anywhere clusters need access to vCenter through the network to enable self-managing and storage capabilities.
 * An [OVA]({{< relref "customize/vsphere-ovas/" >}}) imported into vSphere and converted into a template for the workload VMs
-* User credentials to create VMs and attach networks, etc
+* It's critical that you set up your [vSphere user credentials properly.]({{< relref "./vsphere-preparation#configuring-vsphere-user-group-and-roles" >}})
 * One IP address routable from cluster but excluded from DHCP offering. 
-  This IP address is to be used as the [Control Plane Endpoint IP]({{< relref "./vsphere-spec/#controlplaneconfigurationendpointhost-required" >}})
+  This IP address is to be used as the [Control Plane Endpoint IP.]({{< relref "./vsphere-spec/#controlplaneconfigurationendpointhost-required" >}})
 
   Below are some suggestions to ensure that this IP address is never handed out by your DHCP server. 
  
@@ -50,10 +50,10 @@ The administrative machine and the target workload environment will need network
 You need to get the following information before creating the cluster:
 
 * **Static IP Addresses**: 
-You will need one IP address for the management cluster control plane endpoint, and a separate one for the controlplane of each workload cluster you add. 
+You will need one IP address for the management cluster control plane endpoint, and a separate IP address for the control plane of each workload cluster you add. 
 
   Let’s say you are going to have the management cluster and two workload clusters.
-For those, you would need three IP addresses, one for each.
+For those, you would need three IP addresses, one for each cluster.
 All of those addresses will be configured the same way in the configuration file you will generate for each cluster.
 
   A static IP address will be used for each control plane VM in your EKS Anywhere cluster.
@@ -79,14 +79,14 @@ A separate IP address must be assigned for each workload cluster.
 * **thumbprint** (required if insecure=false): The SHA1 thumbprint of the vCenter server certificate which is only required if you have a self-signed certificate for your vSphere endpoint.
 
   There are several ways to obtain your vCenter thumbprint.
-If you have [govc installed](https://github.com/vmware/govmomi/blob/master/govc/README.md), you can run the following command in the Administrative machine terminal, and take a note of the output:
+If you have [govc installed,](https://github.com/vmware/govmomi/blob/master/govc/README.md) you can run the following command in the Administrative machine terminal, and take a note of the output:
 
   ```bash
   govc about.cert -thumbprint -k
   ```
 
 * **template**: The VM template to use for your EKS Anywhere cluster.
-This template was created when you imported the OVA file into vSphere. 
+This template was created when you imported the [OVA file]({{< relref "./vsphere-preparation#deploy-an-ova-template" >}}) into vSphere. 
 
   ![Import ova wizard](/images/ovatemplate.png) 
 
@@ -96,7 +96,7 @@ This template was created when you imported the OVA file into vSphere.
 
 
 * **folder**:
-The folder parameter in VSphereMachineConfig allows you to organize the VMs of an EKS Anywhere cluster.
+The [folder]({{< relref "./vsphere-preparation#configuring-folder-resources" >}}) parameter in VSphereMachineConfig allows you to organize the VMs of an EKS Anywhere cluster.
 With this, each cluster can be organized as a folder in vSphere.
 You will have a separate folder for the management cluster and each cluster you are adding. 
 
@@ -104,6 +104,6 @@ You will have a separate folder for the management cluster and each cluster you 
 
 
 * **resourcePool**:
-The vSphere Resource pools for your VMs in the EKS Anywhere cluster. If there is a resource pool: `/<datacenter>/host/<resource-pool-name>/Resources`
+The vSphere resource pools for your VMs in the EKS Anywhere cluster. If there is a resource pool: `/<datacenter>/host/<resource-pool-name>/Resources`
 
   ![Import ova wizard](/images/resourcepool.png) 
