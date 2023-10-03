@@ -240,9 +240,24 @@ spec:
         imageTag: v1.8.3-eks-1-21-4
       apiServer:
         extraArgs:
+          audit-policy-file: /etc/kubernetes/audit-policy.yaml
+          audit-log-path: /var/log/kubernetes/api-audit.log
+          audit-log-maxage: "30"
+          audit-log-maxbackup: "10"
+          audit-log-maxsize: "512"
           authentication-token-webhook-config-file: /etc/kubernetes/aws-iam-authenticator/kubeconfig.yaml
           feature-gates: ServiceLoadBalancerClass=true
         extraVolumes:
+          - hostPath: /etc/kubernetes/audit-policy.yaml
+            mountPath: /etc/kubernetes/audit-policy.yaml
+            name: audit-policy
+            pathType: File
+            readOnly: true
+          - hostPath: /var/log/kubernetes
+            mountPath: /var/log/kubernetes
+            name: audit-log-dir
+            pathType: DirectoryOrCreate
+            readOnly: false
           - hostPath: /var/lib/kubeadm/aws-iam-authenticator/
             mountPath: /etc/kubernetes/aws-iam-authenticator/
             name: authconfig
@@ -322,6 +337,8 @@ spec:
           status: {}
         owner: root:root
         path: /etc/kubernetes/manifests/kube-vip.yaml
+      - owner: root:root
+        path: /etc/kubernetes/audit-policy.yaml
       - content: |
           # clusters refers to the remote service.
           clusters:
@@ -395,9 +412,24 @@ spec:
     clusterConfiguration:
       apiServer:
         extraArgs:
+          audit-policy-file: /etc/kubernetes/audit-policy.yaml
+          audit-log-path: /var/log/kubernetes/api-audit.log
+          audit-log-maxage: "30"
+          audit-log-maxbackup: "10"
+          audit-log-maxsize: "512"
           authentication-token-webhook-config-file: /etc/kubernetes/aws-iam-authenticator/kubeconfig.yaml
           feature-gates: ServiceLoadBalancerClass=true
         extraVolumes:
+        - hostPath: /etc/kubernetes/audit-policy.yaml
+          mountPath: /etc/kubernetes/audit-policy.yaml
+          name: audit-policy
+          pathType: File
+          readOnly: true
+        - hostPath: /var/log/kubernetes
+          mountPath: /var/log/kubernetes
+          name: audit-log-dir
+          pathType: DirectoryOrCreate
+          readOnly: false
         - hostPath: /var/lib/kubeadm/aws-iam-authenticator/
           mountPath: /etc/kubernetes/aws-iam-authenticator/
           name: authconfig
@@ -476,6 +508,8 @@ spec:
         status: {}
       owner: root:root
       path: /etc/kubernetes/manifests/kube-vip.yaml
+    - owner: root:root
+      path: /etc/kubernetes/audit-policy.yaml
     - content: |
         # clusters refers to the remote service.
         clusters:

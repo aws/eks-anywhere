@@ -1203,6 +1203,10 @@ func tinkerbellCP(clusterName string, opts ...cpOpt) *tinkerbell.ControlPlane {
 								Content:     "apiVersion: v1\nkind: Pod\nmetadata:\n  creationTimestamp: null\n  name: kube-vip\n  namespace: kube-system\nspec:\n  containers:\n  - args:\n    - manager\n    env:\n    - name: vip_arp\n      value: \"true\"\n    - name: port\n      value: \"6443\"\n    - name: vip_cidr\n      value: \"32\"\n    - name: cp_enable\n      value: \"true\"\n    - name: cp_namespace\n      value: kube-system\n    - name: vip_ddns\n      value: \"false\"\n    - name: vip_leaderelection\n      value: \"true\"\n    - name: vip_leaseduration\n      value: \"15\"\n    - name: vip_renewdeadline\n      value: \"10\"\n    - name: vip_retryperiod\n      value: \"2\"\n    - name: address\n      value: 1.1.1.1\n    image: \n    imagePullPolicy: IfNotPresent\n    name: kube-vip\n    resources: {}\n    securityContext:\n      capabilities:\n        add:\n        - NET_ADMIN\n        - NET_RAW\n    volumeMounts:\n    - mountPath: /etc/kubernetes/admin.conf\n      name: kubeconfig\n  hostNetwork: true\n  volumes:\n  - hostPath:\n      path: /etc/kubernetes/admin.conf\n    name: kubeconfig\nstatus: {}\n",
 								ContentFrom: nil,
 							},
+							{
+								Path:  "/etc/kubernetes/audit-policy.yaml",
+								Owner: "root:root",
+							},
 						},
 						Users: []bootstrapv1.User{
 							{
