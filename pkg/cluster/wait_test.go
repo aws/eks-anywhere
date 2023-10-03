@@ -145,7 +145,7 @@ func TestWaitForCondition(t *testing.T) {
 			g := NewWithT(t)
 			client := test.NewFakeKubeClient(tt.currentCluster)
 
-			gotErr := cluster.WaitForCondition(ctx, client, tt.clusterInput, tt.retrier, tt.condition)
+			gotErr := cluster.WaitForCondition(ctx, test.NewNullLogger(), client, tt.clusterInput, tt.retrier, tt.condition)
 			if tt.wantErr != "" {
 				g.Expect(gotErr).To(MatchError(tt.wantErr))
 			} else {
@@ -254,7 +254,7 @@ func TestWaitFor(t *testing.T) {
 			g := NewWithT(t)
 			client := test.NewFakeKubeClient(tt.currentCluster)
 
-			gotErr := cluster.WaitFor(ctx, client, tt.clusterInput, tt.retrier, tt.matcher)
+			gotErr := cluster.WaitFor(ctx, test.NewNullLogger(), client, tt.clusterInput, tt.retrier, tt.matcher)
 			if tt.wantErr != "" {
 				g.Expect(gotErr).To(MatchError(tt.wantErr))
 			} else {
