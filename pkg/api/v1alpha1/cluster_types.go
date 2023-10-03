@@ -626,6 +626,10 @@ func (n *CiliumConfig) Equal(o *CiliumConfig) bool {
 		return false
 	}
 
+	if n.RoutingMode != o.RoutingMode {
+		return false
+	}
+
 	oSkipUpgradeIsFalse := o.SkipUpgrade == nil || !*o.SkipUpgrade
 	nSkipUpgradeIsFalse := n.SkipUpgrade == nil || !*n.SkipUpgrade
 
@@ -825,6 +829,8 @@ type CNI string
 
 type CiliumPolicyEnforcementMode string
 
+type CiliumRoutingMode string
+
 type CNIConfig struct {
 	Cilium   *CiliumConfig   `json:"cilium,omitempty"`
 	Kindnetd *KindnetdConfig `json:"kindnetd,omitempty"`
@@ -847,6 +853,12 @@ type CiliumConfig struct {
 	// be used when operators wish to self manage the Cilium installation.
 	// +optional
 	SkipUpgrade *bool `json:"skipUpgrade,omitempty"`
+
+	// RoutingMode indicates the routing tunnel mode to use for Cilium. Accepted values are overlay (geneve tunnel with overlay)
+	// or direct (tunneling disabled with direct routing)
+	// Defaults to overlay.
+	// +optional
+	RoutingMode CiliumRoutingMode `json:"routingMode,omitempty"`
 }
 
 // IsManaged returns true if SkipUpgrade is nil or false indicating EKS-A is responsible for
@@ -879,6 +891,11 @@ var validCiliumPolicyEnforcementModes = map[CiliumPolicyEnforcementMode]bool{
 	CiliumPolicyModeDefault: true,
 	CiliumPolicyModeNever:   true,
 }
+
+const (
+	CiliumRoutingModeOverlay CiliumRoutingMode = "overlay"
+	CiliumRoutingModeDirect  CiliumRoutingMode = "direct"
+)
 
 // FailureReasonType is a type for defining failure reasons.
 type FailureReasonType string

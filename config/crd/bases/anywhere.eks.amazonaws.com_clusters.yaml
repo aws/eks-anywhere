@@ -77,6 +77,12 @@ spec:
                               allowed between pods. Accepted values are default, always,
                               never.
                             type: string
+                          routingMode:
+                            description: RoutingMode indicates the routing tunnel
+                              mode to use for Cilium. Accepted values are overlay
+                              (geneve tunnel with overlay) or direct (tunneling disabled
+                              with direct routing) Defaults to overlay.
+                            type: string
                           skipUpgrade:
                             description: SkipUpgrade indicicates that Cilium maintenance
                               should be skipped during upgrades. This can be used

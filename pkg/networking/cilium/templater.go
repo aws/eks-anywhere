@@ -237,6 +237,11 @@ func templateValues(spec *cluster.Spec, versionsBundle *cluster.VersionsBundle) 
 		val["egressMasqueradeInterfaces"] = spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.EgressMasqueradeInterfaces
 	}
 
+	if spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.RoutingMode == anywherev1.CiliumRoutingModeDirect {
+		val["tunnel"] = "disabled"
+		val["routingMode"] = "native"
+	}
+
 	return val
 }
 
