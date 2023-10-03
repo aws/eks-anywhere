@@ -81,17 +81,18 @@ func tinkerbellFlags(fs *pflag.FlagSet, r *hardware.RPCOpts) {
 	aflag.MarkHidden(fs, aflag.TinkerbellBMCHTTPMethod.Name)
 	aflag.String(aflag.TinkerbellBMCTimestampHeader, &r.Request.TimestampHeader, fs)
 	aflag.MarkHidden(fs, aflag.TinkerbellBMCTimestampHeader.Name)
-	// add static headers here
-	aflag.String(aflag.TinkerbellBMCHeaderName, &r.Signature.HeaderName, fs)
-	aflag.MarkHidden(fs, aflag.TinkerbellBMCHeaderName.Name)
+	aflag.HTTPHeader(aflag.TinkerbellBMCStaticHeaders, aflag.NewHeader(&r.Request.StaticHeaders), fs)
+	aflag.MarkHidden(fs, aflag.TinkerbellBMCStaticHeaders.Name)
+	aflag.String(aflag.TinkerbellBMCSigHeaderName, &r.Signature.HeaderName, fs)
+	aflag.MarkHidden(fs, aflag.TinkerbellBMCSigHeaderName.Name)
 	aflag.Bool(aflag.TinkerbellBMCAppendAlgoToHeaderDisabled, &r.Signature.AppendAlgoToHeaderDisabled, fs)
 	aflag.MarkHidden(fs, aflag.TinkerbellBMCAppendAlgoToHeaderDisabled.Name)
-	aflag.StringSlice(aflag.TinkerbellBMCIncludedPayloadHeaders, &r.Signature.IncludedPayloadHeaders, fs)
-	aflag.MarkHidden(fs, aflag.TinkerbellBMCIncludedPayloadHeaders.Name)
+	aflag.StringSlice(aflag.TinkerbellBMCSigIncludedPayloadHeaders, &r.Signature.IncludedPayloadHeaders, fs)
+	aflag.MarkHidden(fs, aflag.TinkerbellBMCSigIncludedPayloadHeaders.Name)
 	aflag.Bool(aflag.TinkerbellBMCPrefixSigDisabled, &r.HMAC.PrefixSigDisabled, fs)
 	aflag.MarkHidden(fs, aflag.TinkerbellBMCPrefixSigDisabled.Name)
-	aflag.StringSlice(aflag.TinkerbellBMCWebhookSecrets, &r.HMAC.Secrets, fs)
-	aflag.MarkHidden(fs, aflag.TinkerbellBMCWebhookSecrets.Name)
+	aflag.StringSlice(aflag.TinkerbellBMCHMACSecrets, &r.HMAC.Secrets, fs)
+	aflag.MarkHidden(fs, aflag.TinkerbellBMCHMACSecrets.Name)
 }
 
 func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) error {
