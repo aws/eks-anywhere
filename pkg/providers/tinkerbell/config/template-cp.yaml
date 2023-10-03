@@ -119,15 +119,14 @@ spec:
           pathType: DirectoryOrCreate
           readOnly: false
 {{- if .awsIamAuth}}
-        extraVolumes:
-          - hostPath: /var/lib/kubeadm/aws-iam-authenticator/
-            mountPath: /etc/kubernetes/aws-iam-authenticator/
-            name: authconfig
-            readOnly: false
-          - hostPath: /var/lib/kubeadm/aws-iam-authenticator/pki/
-            mountPath: /var/aws-iam-authenticator/
-            name: awsiamcert
-            readOnly: false
+        - hostPath: /var/lib/kubeadm/aws-iam-authenticator/
+          mountPath: /etc/kubernetes/aws-iam-authenticator/
+          name: authconfig
+          readOnly: false
+        - hostPath: /var/lib/kubeadm/aws-iam-authenticator/pki/
+          mountPath: /var/aws-iam-authenticator/
+          name: awsiamcert
+          readOnly: false
 {{- end}}
 {{- /*
   BottleRocket uses different host paths for kubeconfigs requiring host mount path overwrites for
@@ -299,6 +298,10 @@ spec:
         owner: root:root
         path: /etc/kubernetes/manifests/kube-vip.yaml
 {{- end }}
+      - content: |
+{{ .auditPolicy | indent 8 }}
+        owner: root:root
+        path: /etc/kubernetes/audit-policy.yaml
 {{- if .awsIamAuth}}
       - content: |
           # clusters refers to the remote service.
@@ -336,9 +339,6 @@ spec:
         owner: root:root
         path: /var/lib/kubeadm/aws-iam-authenticator/pki/key.pem
 {{- end}}
-{{ .auditPolicy | indent 8 }}
-      owner: root:root
-      path: /etc/kubernetes/audit-policy.yaml
 {{- if (ne .format "bottlerocket") }}
 {{- if .proxyConfig }}
       - content: |

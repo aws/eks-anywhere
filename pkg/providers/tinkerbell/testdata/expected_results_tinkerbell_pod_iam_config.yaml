@@ -60,15 +60,14 @@ spec:
           name: audit-log-dir
           pathType: DirectoryOrCreate
           readOnly: false
-        extraVolumes:
-          - hostPath: /var/lib/kubeadm/aws-iam-authenticator/
-            mountPath: /etc/kubernetes/aws-iam-authenticator/
-            name: authconfig
-            readOnly: false
-          - hostPath: /var/lib/kubeadm/aws-iam-authenticator/pki/
-            mountPath: /var/aws-iam-authenticator/
-            name: awsiamcert
-            readOnly: false
+        - hostPath: /var/lib/kubeadm/aws-iam-authenticator/
+          mountPath: /etc/kubernetes/aws-iam-authenticator/
+          name: authconfig
+          readOnly: false
+        - hostPath: /var/lib/kubeadm/aws-iam-authenticator/pki/
+          mountPath: /var/aws-iam-authenticator/
+          name: awsiamcert
+          readOnly: false
     initConfiguration:
       nodeRegistration:
         kubeletExtraArgs:
@@ -141,40 +140,6 @@ spec:
         owner: root:root
         path: /etc/kubernetes/manifests/kube-vip.yaml
       - content: |
-          # clusters refers to the remote service.
-          clusters:
-            - name: aws-iam-authenticator
-              cluster:
-                certificate-authority: /var/aws-iam-authenticator/cert.pem
-                server: https://localhost:21362/authenticate
-          # users refers to the API Server's webhook configuration
-          # (we don't need to authenticate the API server).
-          users:
-            - name: apiserver
-          # kubeconfig files require a context. Provide one for the API Server.
-          current-context: webhook
-          contexts:
-          - name: webhook
-            context:
-              cluster: aws-iam-authenticator
-              user: apiserver
-        permissions: "0640"
-        owner: root:root
-        path: /var/lib/kubeadm/aws-iam-authenticator/kubeconfig.yaml
-      - contentFrom:
-          secret:
-            name: test-aws-iam-authenticator-ca
-            key: cert.pem
-        permissions: "0640"
-        owner: root:root
-        path: /var/lib/kubeadm/aws-iam-authenticator/pki/cert.pem
-      - contentFrom:
-          secret:
-            name: test-aws-iam-authenticator-ca
-            key: key.pem
-        permissions: "0640"
-        owner: root:root
-        path: /var/lib/kubeadm/aws-iam-authenticator/pki/key.pem
         apiVersion: audit.k8s.io/v1beta1
         kind: Policy
         rules:
@@ -330,8 +295,43 @@ spec:
         - level: Metadata
           omitStages:
           - "RequestReceived"
-      owner: root:root
-      path: /etc/kubernetes/audit-policy.yaml
+        owner: root:root
+        path: /etc/kubernetes/audit-policy.yaml
+      - content: |
+          # clusters refers to the remote service.
+          clusters:
+            - name: aws-iam-authenticator
+              cluster:
+                certificate-authority: /var/aws-iam-authenticator/cert.pem
+                server: https://localhost:21362/authenticate
+          # users refers to the API Server's webhook configuration
+          # (we don't need to authenticate the API server).
+          users:
+            - name: apiserver
+          # kubeconfig files require a context. Provide one for the API Server.
+          current-context: webhook
+          contexts:
+          - name: webhook
+            context:
+              cluster: aws-iam-authenticator
+              user: apiserver
+        permissions: "0640"
+        owner: root:root
+        path: /var/lib/kubeadm/aws-iam-authenticator/kubeconfig.yaml
+      - contentFrom:
+          secret:
+            name: test-aws-iam-authenticator-ca
+            key: cert.pem
+        permissions: "0640"
+        owner: root:root
+        path: /var/lib/kubeadm/aws-iam-authenticator/pki/cert.pem
+      - contentFrom:
+          secret:
+            name: test-aws-iam-authenticator-ca
+            key: key.pem
+        permissions: "0640"
+        owner: root:root
+        path: /var/lib/kubeadm/aws-iam-authenticator/pki/key.pem
     users:
     - name: tink-user
       sshAuthorizedKeys:
