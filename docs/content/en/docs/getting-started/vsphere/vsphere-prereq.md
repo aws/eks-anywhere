@@ -86,7 +86,7 @@ If you have [govc installed,](https://github.com/vmware/govmomi/blob/master/govc
   ```
 
 * **template**: The VM template to use for your EKS Anywhere cluster.
-This template was created when you imported the [OVA file]({{< relref "./vsphere-preparation##deploy-an-ova-template" >}}) into vSphere. 
+This template was created when you imported the [OVA file]({{< relref "./vsphere-preparation#deploy-an-ova-template" >}}) into vSphere. 
 
   ![Import ova wizard](/images/ovatemplate.png) 
 
