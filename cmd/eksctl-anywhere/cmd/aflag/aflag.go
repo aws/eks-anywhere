@@ -45,7 +45,7 @@ func StringSlice(f Flag[[]string], dst *[]string, fs *pflag.FlagSet) {
 	}
 }
 
-// StringSlice applies f to fs and writes the value to dst.
+// StringString applies f to fs and writes the value to dst.
 func StringString(f Flag[map[string]string], dst *map[string]string, fs *pflag.FlagSet) {
 	switch {
 	case f.Short != "":
@@ -55,6 +55,7 @@ func StringString(f Flag[map[string]string], dst *map[string]string, fs *pflag.F
 	}
 }
 
+// HTTPHeader applies f to fs and writes the value to dst.
 func HTTPHeader(f Flag[Header], dst *Header, fs *pflag.FlagSet) {
 	switch {
 	case f.Short != "":

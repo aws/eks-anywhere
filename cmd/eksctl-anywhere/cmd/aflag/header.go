@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-// -- Header Value
+// Header Value.
 type Header http.Header
 
 // NewHeader returns a new Header pointer.
@@ -26,7 +26,7 @@ func (h *Header) String() string {
 }
 
 // Set sets the value of the Header.
-// Format: "a=1;2,b=2;4;5"
+// Format: "a=1;2,b=2;4;5".
 func (h *Header) Set(val string) error {
 	var ss []string
 	n := strings.Count(val, "=")
