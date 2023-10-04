@@ -93,6 +93,10 @@ func tinkerbellFlags(fs *pflag.FlagSet, r *hardware.RPCOpts) {
 	aflag.MarkHidden(fs, aflag.TinkerbellBMCPrefixSigDisabled.Name)
 	aflag.StringSlice(aflag.TinkerbellBMCHMACSecrets, &r.HMAC.Secrets, fs)
 	aflag.MarkHidden(fs, aflag.TinkerbellBMCHMACSecrets.Name)
+	aflag.String(aflag.TinkerbellBMCCustomPayload, &r.Experimental.CustomRequestPayload, fs)
+	aflag.MarkHidden(fs, aflag.TinkerbellBMCCustomPayload.Name)
+	aflag.String(aflag.TinkerbellBMCCustomPayloadDotLocation, &r.Experimental.DotPath, fs)
+	aflag.MarkHidden(fs, aflag.TinkerbellBMCCustomPayloadDotLocation.Name)
 }
 
 func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) error {

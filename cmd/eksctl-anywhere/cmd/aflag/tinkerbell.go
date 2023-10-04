@@ -87,3 +87,15 @@ var TinkerbellBMCHMACSecrets = Flag[[]string]{
 	Name:  "tinkerbell-bmc-hmac-secrets",
 	Usage: "The secrets used to HMAC sign a payload, used in RPC BMC interactions",
 }
+
+// TinkerbellBMCCustomPayload allows providing a JSON payload that will be used in the RPC request.
+var TinkerbellBMCCustomPayload = Flag[string]{
+	Name:  "tinkerbell-bmc-custom-payload",
+	Usage: "The custom payload used in RPC BMC interactions, must be used with tinkerbell-bmc-custom-payload-dot-location",
+}
+
+// TinkerbellBMCCustomPayloadDotLocation is the path to where the bmclib RequestPayload{} will be embedded. For example: object.data.body.
+var TinkerbellBMCCustomPayloadDotLocation = Flag[string]{
+	Name:  "tinkerbell-bmc-custom-payload-dot-location",
+	Usage: "The dot location of the custom payload used in RPC BMC interactions, must be used with tinkerbell-bmc-custom-payload",
+}
