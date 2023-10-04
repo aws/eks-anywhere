@@ -2,6 +2,7 @@ package clusters_test
 
 import (
 	"context"
+	"os"
 	"testing"
 	"time"
 
@@ -10,6 +11,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	"sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 	controllerruntime "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
@@ -17,8 +19,10 @@ import (
 	_ "github.com/aws/eks-anywhere/internal/test/envtest"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/controller"
 	"github.com/aws/eks-anywhere/pkg/controller/clusters"
+	"github.com/aws/eks-anywhere/pkg/features"
 )
 
 func TestCheckControlPlaneReadyItIsReady(t *testing.T) {
@@ -82,6 +86,92 @@ func TestCheckControlPlaneReadyErrorReading(t *testing.T) {
 	g.Expect(err).To(MatchError(ContainSubstring("no kind is registered for the type")))
 }
 
+func TestCheckControlPlaneReadyItIsReadyWithKindlessUpgrade(t *testing.T) {
+	features.ClearCache()
+	os.Setenv(features.ExperimentalSelfManagedClusterUpgradeEnvVar, "true")
+
+	g := NewWithT(t)
+	ctx := context.Background()
+	eksaCluster := eksaCluster()
+	kcp := kcpObject(func(k *v1beta1.KubeadmControlPlane) {
+		k.Status.Conditions = clusterv1.Conditions{
+			{
+				Type:   clusterapi.ReadyCondition,
+				Status: corev1.ConditionTrue,
+			},
+		}
+	})
+
+	client := fake.NewClientBuilder().WithObjects(eksaCluster, kcp).Build()
+
+	result, err := clusters.CheckControlPlaneReady(ctx, client, test.NewNullLogger(), eksaCluster)
+	g.Expect(err).NotTo(HaveOccurred())
+	g.Expect(result).To(Equal(controller.Result{}))
+}
+
+func TestCheckControlPlaneReadyNoKcpWithKindlessUpgrade(t *testing.T) {
+	features.ClearCache()
+	os.Setenv(features.ExperimentalSelfManagedClusterUpgradeEnvVar, "true")
+
+	g := NewWithT(t)
+	ctx := context.Background()
+	eksaCluster := eksaCluster()
+	client := fake.NewClientBuilder().WithObjects(eksaCluster).Build()
+
+	result, err := clusters.CheckControlPlaneReady(ctx, client, test.NewNullLogger(), eksaCluster)
+	g.Expect(err).NotTo(HaveOccurred())
+	g.Expect(result).To(Equal(
+		controller.Result{Result: &controllerruntime.Result{RequeueAfter: 5 * time.Second}}),
+	)
+}
+
+func TestCheckControlPlaneNotReadyWithKindlessUpgrade(t *testing.T) {
+	features.ClearCache()
+	os.Setenv(features.ExperimentalSelfManagedClusterUpgradeEnvVar, "true")
+
+	g := NewWithT(t)
+	ctx := context.Background()
+	eksaCluster := eksaCluster()
+	kcp := kcpObject(func(k *v1beta1.KubeadmControlPlane) {
+		k.Status = v1beta1.KubeadmControlPlaneStatus{
+			ObservedGeneration: 2,
+		}
+	})
+
+	client := fake.NewClientBuilder().WithObjects(eksaCluster, kcp).Build()
+
+	result, err := clusters.CheckControlPlaneReady(ctx, client, test.NewNullLogger(), eksaCluster)
+	g.Expect(err).NotTo(HaveOccurred())
+	g.Expect(result).To(Equal(
+		controller.Result{Result: &controllerruntime.Result{RequeueAfter: 5 * time.Second}}),
+	)
+}
+
+func TestCheckControlPlaneStatusNotReadyWithKindlessUpgrade(t *testing.T) {
+	features.ClearCache()
+	os.Setenv(features.ExperimentalSelfManagedClusterUpgradeEnvVar, "true")
+
+	g := NewWithT(t)
+	ctx := context.Background()
+	eksaCluster := eksaCluster()
+	kcp := kcpObject(func(k *v1beta1.KubeadmControlPlane) {
+		k.Status.Conditions = clusterv1.Conditions{
+			{
+				Type:   clusterapi.ReadyCondition,
+				Status: corev1.ConditionFalse,
+			},
+		}
+	})
+
+	client := fake.NewClientBuilder().WithObjects(eksaCluster, kcp).Build()
+
+	result, err := clusters.CheckControlPlaneReady(ctx, client, test.NewNullLogger(), eksaCluster)
+	g.Expect(err).NotTo(HaveOccurred())
+	g.Expect(result).To(Equal(
+		controller.Result{Result: &controllerruntime.Result{RequeueAfter: 30 * time.Second}}),
+	)
+}
+
 func eksaCluster() *anywherev1.Cluster {
 	return &anywherev1.Cluster{
 		TypeMeta: metav1.TypeMeta{
@@ -104,13 +194,33 @@ func capiCluster(opts ...capiClusterOpt) *clusterv1.Cluster {
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "my-cluster",
-			Namespace: "eksa-system",
+			Namespace: constants.EksaSystemNamespace,
 		},
 	}
-
 	for _, opt := range opts {
 		opt(c)
 	}
 
 	return c
+}
+
+type kcpObjectOpt func(*v1beta1.KubeadmControlPlane)
+
+func kcpObject(opts ...kcpObjectOpt) *v1beta1.KubeadmControlPlane {
+	k := &v1beta1.KubeadmControlPlane{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "KubeadmControlPlane",
+			APIVersion: v1beta1.GroupVersion.String(),
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "my-cluster",
+			Namespace: constants.EksaSystemNamespace,
+		},
+	}
+
+	for _, opt := range opts {
+		opt(k)
+	}
+
+	return k
 }
