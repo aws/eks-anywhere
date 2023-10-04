@@ -1178,6 +1178,12 @@ func TestEnableFullLifecyclePath(t *testing.T) {
 	}
 }
 
+type stubRegistryAccessTester struct{}
+
+func (s *stubRegistryAccessTester) Test(ctx context.Context, accessKey, secret, registry, region, awsConfig string) error {
+	return nil
+}
+
 func TestGetCuratedPackagesRegistries(s *testing.T) {
 	s.Run("substitutes a region if set", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
@@ -1248,9 +1254,7 @@ func TestGetCuratedPackagesRegistries(s *testing.T) {
 			cm, k, clusterName, kubeConfig, chart, nil,
 			curatedpackages.WithManagementClusterName(clusterName),
 			curatedpackages.WithValuesFileWriter(writer),
-			curatedpackages.WithRegistryAccessTester(func(ctx context.Context, accessKey, secret, registry, region string) error {
-				return nil
-			}),
+			curatedpackages.WithRegistryAccessTester(&stubRegistryAccessTester{}),
 		)
 
 		expected := "TODO.dkr.ecr.us-west-2.amazonaws.com"

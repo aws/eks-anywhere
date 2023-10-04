@@ -40,8 +40,6 @@ const (
 
 type PackageControllerClientOpt func(client *PackageControllerClient)
 
-type registryAccessTester func(ctx context.Context, accessKey, secret, registry, region string) error
-
 type PackageControllerClient struct {
 	kubeConfig string
 	chart      *releasev1.Image
@@ -76,7 +74,7 @@ type PackageControllerClient struct {
 	mu sync.Mutex
 
 	// registryAccessTester test if the aws credential has access to registry
-	registryAccessTester registryAccessTester
+	registryAccessTester RegistryAccessTester
 }
 
 // ClientBuilder returns a k8s client for the specified cluster.
@@ -112,7 +110,7 @@ func NewPackageControllerClientFullLifecycle(logger logr.Logger, chartManager Ch
 		skipWaitForPackageBundle: true,
 		eksaRegion:               eksaDefaultRegion,
 		clientBuilder:            clientBuilder,
-		registryAccessTester:     TestRegistryAccess,
+		registryAccessTester:     &DefaultRegistryAccessTester{},
 	}
 }
 
@@ -171,7 +169,7 @@ func NewPackageControllerClient(chartManager ChartManager, kubectl KubectlRunner
 		kubectl:              kubectl,
 		registryMirror:       registryMirror,
 		eksaRegion:           eksaDefaultRegion,
-		registryAccessTester: TestRegistryAccess,
+		registryAccessTester: &DefaultRegistryAccessTester{},
 	}
 
 	for _, o := range options {
@@ -269,7 +267,7 @@ func (pc *PackageControllerClient) GetCuratedPackagesRegistries(ctx context.Cont
 		}
 
 		regionalRegistry := GetRegionalRegistry(defaultRegistry, pc.eksaRegion)
-		if err := pc.registryAccessTester(ctx, pc.eksaAccessKeyID, pc.eksaSecretAccessKey, regionalRegistry, pc.eksaRegion); err == nil {
+		if err := pc.registryAccessTester.Test(ctx, pc.eksaAccessKeyID, pc.eksaSecretAccessKey, pc.eksaRegion, pc.eksaAwsConfig, regionalRegistry); err == nil {
 			// use regional registry when the above credential is good
 			logger.V(6).Info("Using regional registry")
 			defaultRegistry = regionalRegistry
@@ -619,7 +617,7 @@ func WithClusterSpec(clusterSpec *cluster.Spec) func(client *PackageControllerCl
 }
 
 // WithRegistryAccessTester sets the registryTester.
-func WithRegistryAccessTester(registryTester registryAccessTester) func(client *PackageControllerClient) {
+func WithRegistryAccessTester(registryTester RegistryAccessTester) func(client *PackageControllerClient) {
 	return func(config *PackageControllerClient) {
 		config.registryAccessTester = registryTester
 	}
