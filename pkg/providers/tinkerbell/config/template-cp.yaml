@@ -93,7 +93,6 @@ spec:
 {{ .Data | indent 10 }}
         {{- end }}
 {{- end}}
-{{- if .apiserverExtraArgs }}
       apiServer:
         extraArgs:
           audit-policy-file: /etc/kubernetes/audit-policy.yaml
@@ -101,6 +100,7 @@ spec:
           audit-log-maxage: "30"
           audit-log-maxbackup: "10"
           audit-log-maxsize: "512"
+{{- if .apiserverExtraArgs }}
 {{ .apiserverExtraArgs.ToYaml | indent 10 }}
 {{- end }}
         extraVolumes:
@@ -299,7 +299,7 @@ spec:
         path: /etc/kubernetes/manifests/kube-vip.yaml
 {{- end }}
       - content: |
-{{ .auditPolicy | indent 8 }}
+{{ .auditPolicy | indent 10 }}
         owner: root:root
         path: /etc/kubernetes/audit-policy.yaml
 {{- if .awsIamAuth}}
