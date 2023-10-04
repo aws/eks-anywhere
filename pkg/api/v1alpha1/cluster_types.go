@@ -859,6 +859,24 @@ type CiliumConfig struct {
 	// Defaults to overlay.
 	// +optional
 	RoutingMode CiliumRoutingMode `json:"routingMode,omitempty"`
+
+	// When RoutingMode is set to direct this flag allows too explicitly specify the
+	// IPv4 CIDR for native routing.
+	// When specified, Cilium assumes networking for this CIDR is preconfigured and
+	// hands traffic destined for that range to the Linux network stack without
+	// applying any SNAT.
+	// If this is not set autoDirectNodeRoutes will be set to true
+	// +optional
+	IPv4NativeRoutingCIDR string `json:"ipv4NativeRoutingCIDR,omitempty"`
+
+	// When RoutingMode is set to direct this flag allows too explicitly specify the
+	// IPv6 CIDR for native routing.
+	// When specified, Cilium assumes networking for this CIDR is preconfigured and
+	// hands traffic destined for that range to the Linux network stack without
+	// applying any SNAT.
+	// If this is not set autoDirectNodeRoutes will be set to true
+	// +optional
+	IPv6NativeRoutingCIDR string `json:"ipv6NativeRoutingCIDR,omitempty"`
 }
 
 // IsManaged returns true if SkipUpgrade is nil or false indicating EKS-A is responsible for

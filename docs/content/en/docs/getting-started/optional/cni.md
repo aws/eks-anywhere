@@ -164,6 +164,29 @@ spec:
         egressMasqueradeInterfaces: "eth0"
 ```
 
+### RoutingMode option for Cilium plugin
+
+By default all traffic is sent by Cilium over Geneve tunneling on the network. The `routingMode` option allows users to switch to [native routing](https://docs.cilium.io/en/v1.12/concepts/networking/routing/#native-routing) instead. 
+
+This field can be set as follows:
+```yaml
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: Cluster
+metadata:
+  name: my-cluster-name
+spec:
+  clusterNetwork:
+    pods:
+      cidrBlocks:
+      - 192.168.0.0/16
+    services:
+      cidrBlocks:
+      - 10.96.0.0/12
+    cniConfig:
+      cilium: 
+        routingMode: "direct"
+```
+
 ### Use a custom CNI
 
 EKS Anywhere can be configured to skip EKS Anywhere's default Cilium CNI upgrades via the `skipUpgrade` field. 
