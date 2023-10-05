@@ -1163,6 +1163,33 @@ func tinkerbellCP(clusterName string, opts ...cpOpt) *tinkerbell.ControlPlane {
 									},
 								},
 							},
+							APIServer: bootstrapv1.APIServer{
+								ControlPlaneComponent: bootstrapv1.ControlPlaneComponent{
+									ExtraArgs: map[string]string{
+										"audit-log-maxage":    "30",
+										"audit-log-maxbackup": "10",
+										"audit-log-maxsize":   "512",
+										"audit-log-path":      "/var/log/kubernetes/api-audit.log",
+										"audit-policy-file":   "/etc/kubernetes/audit-policy.yaml",
+									},
+									ExtraVolumes: []bootstrapv1.HostPathMount{
+										{
+											HostPath:  "/var/lib/kubeadm/audit-policy.yaml",
+											MountPath: "/etc/kubernetes/audit-policy.yaml",
+											Name:      "audit-policy",
+											PathType:  "File",
+											ReadOnly:  true,
+										},
+										{
+											HostPath:  "/var/log/kubernetes",
+											MountPath: "/var/log/kubernetes",
+											Name:      "audit-log-dir",
+											PathType:  "DirectoryOrCreate",
+											ReadOnly:  false,
+										},
+									},
+								},
+							},
 							CertificatesDir: "/var/lib/kubeadm/pki",
 						},
 						InitConfiguration: &bootstrapv1.InitConfiguration{
@@ -1202,6 +1229,166 @@ func tinkerbellCP(clusterName string, opts ...cpOpt) *tinkerbell.ControlPlane {
 								Append:      false,
 								Content:     "apiVersion: v1\nkind: Pod\nmetadata:\n  creationTimestamp: null\n  name: kube-vip\n  namespace: kube-system\nspec:\n  containers:\n  - args:\n    - manager\n    env:\n    - name: vip_arp\n      value: \"true\"\n    - name: port\n      value: \"6443\"\n    - name: vip_cidr\n      value: \"32\"\n    - name: cp_enable\n      value: \"true\"\n    - name: cp_namespace\n      value: kube-system\n    - name: vip_ddns\n      value: \"false\"\n    - name: vip_leaderelection\n      value: \"true\"\n    - name: vip_leaseduration\n      value: \"15\"\n    - name: vip_renewdeadline\n      value: \"10\"\n    - name: vip_retryperiod\n      value: \"2\"\n    - name: address\n      value: 1.1.1.1\n    image: \n    imagePullPolicy: IfNotPresent\n    name: kube-vip\n    resources: {}\n    securityContext:\n      capabilities:\n        add:\n        - NET_ADMIN\n        - NET_RAW\n    volumeMounts:\n    - mountPath: /etc/kubernetes/admin.conf\n      name: kubeconfig\n  hostNetwork: true\n  volumes:\n  - hostPath:\n      path: /etc/kubernetes/admin.conf\n    name: kubeconfig\nstatus: {}\n",
 								ContentFrom: nil,
+							},
+							{
+								Path:  "/etc/kubernetes/audit-policy.yaml",
+								Owner: "root:root",
+								Content: `apiVersion: audit.k8s.io/v1beta1
+kind: Policy
+rules:
+# Log aws-auth configmap changes
+- level: RequestResponse
+  namespaces: ["kube-system"]
+  verbs: ["update", "patch", "delete"]
+  resources:
+  - group: "" # core
+    resources: ["configmaps"]
+    resourceNames: ["aws-auth"]
+  omitStages:
+  - "RequestReceived"
+# The following requests were manually identified as high-volume and low-risk,
+# so drop them.
+- level: None
+  users: ["system:kube-proxy"]
+  verbs: ["watch"]
+  resources:
+  - group: "" # core
+    resources: ["endpoints", "services", "services/status"]
+- level: None
+  users: ["kubelet"] # legacy kubelet identity
+  verbs: ["get"]
+  resources:
+  - group: "" # core
+    resources: ["nodes", "nodes/status"]
+- level: None
+  userGroups: ["system:nodes"]
+  verbs: ["get"]
+  resources:
+  - group: "" # core
+    resources: ["nodes", "nodes/status"]
+- level: None
+  users:
+  - system:kube-controller-manager
+  - system:kube-scheduler
+  - system:serviceaccount:kube-system:endpoint-controller
+  verbs: ["get", "update"]
+  namespaces: ["kube-system"]
+  resources:
+  - group: "" # core
+    resources: ["endpoints"]
+- level: None
+  users: ["system:apiserver"]
+  verbs: ["get"]
+  resources:
+  - group: "" # core
+    resources: ["namespaces", "namespaces/status", "namespaces/finalize"]
+# Don't log HPA fetching metrics.
+- level: None
+  users:
+  - system:kube-controller-manager
+  verbs: ["get", "list"]
+  resources:
+  - group: "metrics.k8s.io"
+# Don't log these read-only URLs.
+- level: None
+  nonResourceURLs:
+  - /healthz*
+  - /version
+  - /swagger*
+# Don't log events requests.
+- level: None
+  resources:
+  - group: "" # core
+    resources: ["events"]
+# node and pod status calls from nodes are high-volume and can be large, don't log responses for expected updates from nodes
+- level: Request
+  users: ["kubelet", "system:node-problem-detector", "system:serviceaccount:kube-system:node-problem-detector"]
+  verbs: ["update","patch"]
+  resources:
+  - group: "" # core
+    resources: ["nodes/status", "pods/status"]
+  omitStages:
+  - "RequestReceived"
+- level: Request
+  userGroups: ["system:nodes"]
+  verbs: ["update","patch"]
+  resources:
+  - group: "" # core
+    resources: ["nodes/status", "pods/status"]
+  omitStages:
+  - "RequestReceived"
+# deletecollection calls can be large, don't log responses for expected namespace deletions
+- level: Request
+  users: ["system:serviceaccount:kube-system:namespace-controller"]
+  verbs: ["deletecollection"]
+  omitStages:
+  - "RequestReceived"
+# Secrets, ConfigMaps, and TokenReviews can contain sensitive & binary data,
+# so only log at the Metadata level.
+- level: Metadata
+  resources:
+  - group: "" # core
+    resources: ["secrets", "configmaps"]
+  - group: authentication.k8s.io
+    resources: ["tokenreviews"]
+  omitStages:
+    - "RequestReceived"
+- level: Request
+  resources:
+  - group: ""
+    resources: ["serviceaccounts/token"]
+# Get repsonses can be large; skip them.
+- level: Request
+  verbs: ["get", "list", "watch"]
+  resources:
+  - group: "" # core
+  - group: "admissionregistration.k8s.io"
+  - group: "apiextensions.k8s.io"
+  - group: "apiregistration.k8s.io"
+  - group: "apps"
+  - group: "authentication.k8s.io"
+  - group: "authorization.k8s.io"
+  - group: "autoscaling"
+  - group: "batch"
+  - group: "certificates.k8s.io"
+  - group: "extensions"
+  - group: "metrics.k8s.io"
+  - group: "networking.k8s.io"
+  - group: "policy"
+  - group: "rbac.authorization.k8s.io"
+  - group: "scheduling.k8s.io"
+  - group: "settings.k8s.io"
+  - group: "storage.k8s.io"
+  omitStages:
+  - "RequestReceived"
+# Default level for known APIs
+- level: RequestResponse
+  resources:
+  - group: "" # core
+  - group: "admissionregistration.k8s.io"
+  - group: "apiextensions.k8s.io"
+  - group: "apiregistration.k8s.io"
+  - group: "apps"
+  - group: "authentication.k8s.io"
+  - group: "authorization.k8s.io"
+  - group: "autoscaling"
+  - group: "batch"
+  - group: "certificates.k8s.io"
+  - group: "extensions"
+  - group: "metrics.k8s.io"
+  - group: "networking.k8s.io"
+  - group: "policy"
+  - group: "rbac.authorization.k8s.io"
+  - group: "scheduling.k8s.io"
+  - group: "settings.k8s.io"
+  - group: "storage.k8s.io"
+  omitStages:
+  - "RequestReceived"
+# Default level for all other requests.
+- level: Metadata
+  omitStages:
+  - "RequestReceived"
+`,
 							},
 						},
 						Users: []bootstrapv1.User{
