@@ -52,6 +52,7 @@ const (
 	backOffPeriod            = 5 * time.Second
 	disk1                    = "Hard disk 1"
 	disk2                    = "Hard disk 2"
+	MemoryAvailable          = "Memory_Available"
 	ethtoolDaemonSetName     = "vsphere-disable-udp-offload"
 )
 
@@ -122,6 +123,7 @@ type ProviderGovcClient interface {
 	CreateRole(ctx context.Context, name string, privileges []string) error
 	SetGroupRoleOnObject(ctx context.Context, principal string, role string, object string, domain string) error
 	GetHardDiskSize(ctx context.Context, vm, datacenter string) (map[string]float64, error)
+	GetResourcePoolInfo(ctx context.Context, datacenter, resourcepool string, args ...string) (map[string]int, error)
 }
 
 type ProviderKubectlClient interface {
@@ -338,7 +340,9 @@ func (p *vsphereProvider) SetupAndValidateCreateCluster(ctx context.Context, clu
 	if err := p.validateDatastoreUsageForCreate(ctx, vSphereClusterSpec); err != nil {
 		return fmt.Errorf("validating vsphere machine configs datastore usage: %v", err)
 	}
-
+	if err := p.validateMemoryUsage(ctx, vSphereClusterSpec, nil); err != nil {
+		return fmt.Errorf("validating vsphere machine configs resource pool memory usage: %v", err)
+	}
 	if err := p.generateSSHKeysIfNotSet(clusterSpec.VSphereMachineConfigs); err != nil {
 		return fmt.Errorf("failed setup and validations: %v", err)
 	}
@@ -417,6 +421,10 @@ func (p *vsphereProvider) SetupAndValidateUpgradeCluster(ctx context.Context, cl
 
 	if err := p.validateDatastoreUsageForUpgrade(ctx, vSphereClusterSpec, cluster); err != nil {
 		return fmt.Errorf("validating vsphere machine configs datastore usage: %v", err)
+	}
+
+	if err := p.validateMemoryUsage(ctx, vSphereClusterSpec, cluster); err != nil {
+		return fmt.Errorf("validating vsphere machine configs resource pool memory usage: %v", err)
 	}
 
 	if !p.skippedValidations[validations.VSphereUserPriv] {
@@ -587,6 +595,103 @@ func (p *vsphereProvider) validateDatastoreUsageForCreate(ctx context.Context, v
 	for datastore, usage := range usage {
 		if float64(usage.needGiBSpace) > usage.availableSpace {
 			return fmt.Errorf("not enough space in datastore %v for given diskGiB and count for respective machine groups", datastore)
+		}
+	}
+	return nil
+}
+
+// getPrevMachineConfigMemoryUsage returns the memoryMiB freed up from the given machineConfig based on the count.
+func (p *vsphereProvider) getPrevMachineConfigMemoryUsage(ctx context.Context, mc *v1alpha1.VSphereMachineConfig, cluster *types.Cluster, machineConfigCount int) (memoryMiB int, err error) {
+	em, err := p.providerKubectlClient.GetEksaVSphereMachineConfig(ctx, mc.Name, cluster.KubeconfigFile, mc.GetNamespace())
+	if err != nil {
+		return 0, err
+	}
+	if em != nil && em.Spec.ResourcePool == mc.Spec.ResourcePool {
+		return em.Spec.MemoryMiB * machineConfigCount, nil
+	}
+	return 0, nil
+}
+
+// getMachineConfigMemoryAvailability accepts a machine config and returns available memory in the config's resource pool along with needed memory for the machine config.
+func (p *vsphereProvider) getMachineConfigMemoryAvailability(ctx context.Context, datacenter string, mc *v1alpha1.VSphereMachineConfig, machineConfigCount int) (availableMemoryMiB, needMemoryMiB int, err error) {
+	poolInfo, err := p.providerGovcClient.GetResourcePoolInfo(ctx, datacenter, mc.Spec.ResourcePool)
+	if err != nil {
+		return 0, 0, err
+	}
+	needMemoryMiB = mc.Spec.MemoryMiB * machineConfigCount
+	return poolInfo[MemoryAvailable], needMemoryMiB, nil
+}
+
+// updateMemoryUsageMap updates the memory availability for the machine config's resource pool.
+func updateMemoryUsageMap(mc *v1alpha1.VSphereMachineConfig, needMiB, availableMiB int, mu map[string]int) {
+	if _, ok := mu[mc.Spec.ResourcePool]; !ok {
+		mu[mc.Spec.ResourcePool] = availableMiB
+	}
+	// needMiB can be ignored when the resource pool memory limit is unset
+	if availableMiB != -1 {
+		mu[mc.Spec.ResourcePool] -= needMiB
+	}
+}
+
+func addPrevMachineConfigMemoryUsage(mc *v1alpha1.VSphereMachineConfig, prevUsage int, memoryUsage map[string]int) {
+	// when the memory limit for the respective resource pool is unset, skip accounting for previous usage and validating the needed memory
+	if _, ok := memoryUsage[mc.Spec.ResourcePool]; ok && memoryUsage[mc.Spec.ResourcePool] != -1 {
+		memoryUsage[mc.Spec.ResourcePool] += prevUsage
+	}
+}
+
+func (p *vsphereProvider) validateMemoryUsage(ctx context.Context, clusterSpec *Spec, cluster *types.Cluster) error {
+	memoryUsage := make(map[string]int)
+	datacenter := clusterSpec.VSphereDatacenter.Spec.Datacenter
+	for _, mc := range clusterSpec.machineConfigsWithCount() {
+		availableMemoryMiB, needMemoryMiB, err := p.getMachineConfigMemoryAvailability(ctx, datacenter, mc.VSphereMachineConfig, mc.Count)
+		if err != nil {
+			return fmt.Errorf("calculating memory usage for machine config %v: %v", mc.VSphereMachineConfig.ObjectMeta.Name, err)
+		}
+		updateMemoryUsageMap(mc.VSphereMachineConfig, needMemoryMiB, availableMemoryMiB, memoryUsage)
+	}
+	// account for previous cluster resources that are freed up during upgrade.
+	if cluster != nil {
+		err := p.updatePrevClusterMemoryUsage(ctx, clusterSpec, cluster, memoryUsage)
+		if err != nil {
+			return err
+		}
+	}
+	for resourcePool, remaniningMiB := range memoryUsage {
+		if remaniningMiB != -1 && remaniningMiB < 0 {
+			return fmt.Errorf("not enough memory avaialable in resource pool %v for given memoryMiB and count for respective machine groups", resourcePool)
+		}
+	}
+	logger.V(5).Info("Memory availability for machine configs in requested resource pool validated")
+	return nil
+}
+
+// updatePrevClusterMemoryUsage calculates memory freed up from previous CP and worker nodes during upgrade and adds up the memory usage for the specific resource pool.
+func (p *vsphereProvider) updatePrevClusterMemoryUsage(ctx context.Context, clusterSpec *Spec, cluster *types.Cluster, memoryUsage map[string]int) error {
+	prevEksaCluster, err := p.providerKubectlClient.GetEksaCluster(ctx, cluster, clusterSpec.Cluster.GetName())
+	if err != nil {
+		return err
+	}
+	prevMachineConfigRefs := machineRefSliceToMap(prevEksaCluster.MachineConfigRefs())
+	if _, ok := prevMachineConfigRefs[clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name]; ok {
+		cpMachineConfig := clusterSpec.controlPlaneMachineConfig()
+		// The last CP machine is deleted only after the desired number of new worker machines are rolled out, so don't add it's memory
+		prevCPusage, err := p.getPrevMachineConfigMemoryUsage(ctx, cpMachineConfig, cluster, prevEksaCluster.Spec.ControlPlaneConfiguration.Count-1)
+		if err != nil {
+			return fmt.Errorf("calculating previous memory usage for control plane: %v", err)
+		}
+		addPrevMachineConfigMemoryUsage(cpMachineConfig, prevCPusage, memoryUsage)
+	}
+	for _, workerNodeGroupConfiguration := range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
+		workerMachineConfig := clusterSpec.workerMachineConfig(workerNodeGroupConfiguration)
+		if _, ok := prevMachineConfigRefs[workerNodeGroupConfiguration.MachineGroupRef.Name]; ok {
+			prevCount := *workerNodeGroupConfiguration.Count
+			// The last worker machine is deleted only after the desired number of new worker machines are rolled out, so don't add it's memory
+			prevWorkerUsage, err := p.getPrevMachineConfigMemoryUsage(ctx, workerMachineConfig, cluster, prevCount-1)
+			if err != nil {
+				return fmt.Errorf("calculating previous memory usage for worker node group - %v: %v", workerMachineConfig.Name, err)
+			}
+			addPrevMachineConfigMemoryUsage(workerMachineConfig, prevWorkerUsage, memoryUsage)
 		}
 	}
 	return nil

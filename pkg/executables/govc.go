@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -39,6 +40,7 @@ const (
 	DeployOptsFile       = "deploy-opts.json"
 	disk1                = "Hard disk 1"
 	disk2                = "Hard disk 2"
+	MemoryAvailable      = "Memory_Available"
 )
 
 var requiredEnvs = []string{govcUsernameKey, govcPasswordKey, govcURLKey, govcInsecure, govcDatacenterKey}
@@ -1142,4 +1144,77 @@ func (g *Govc) SetGroupRoleOnObject(ctx context.Context, principal string, role 
 	}
 
 	return nil
+}
+
+type resourcePoolInfo struct {
+	ResourcePoolIdentifier *resourcePool
+}
+
+type resourcePool struct {
+	memoryUsage string
+	memoryLimit string
+}
+
+// GetResourcePoolInfo returns the pool info for the provided resource pool.
+func (g *Govc) GetResourcePoolInfo(ctx context.Context, datacenter, resourcepool string, args ...string) (map[string]int, error) {
+	params := []string{"pool.info", "-dc", datacenter, resourcepool}
+	params = append(params, args...)
+	response, err := g.exec(ctx, params...)
+	if err != nil {
+		return nil, fmt.Errorf("getting resource pool information: %v", err)
+	}
+
+	scanner := bufio.NewScanner(strings.NewReader(response.String()))
+	var resourcePoolInfoResponse resourcePoolInfo
+	resourcePoolInfoResponse.ResourcePoolIdentifier = new(resourcePool)
+	for scanner.Scan() {
+		metaData := scanner.Text()
+		if strings.Contains(metaData, "Mem Usage") {
+			resourcePoolInfoResponse.ResourcePoolIdentifier.memoryUsage = strings.Split(metaData, ":")[1]
+		}
+		if strings.Contains(metaData, "Mem Limit") {
+			resourcePoolInfoResponse.ResourcePoolIdentifier.memoryLimit = strings.Split(metaData, ":")[1]
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		return nil, fmt.Errorf("failure reading memory allocation for resource pool")
+	}
+
+	poolInfo, err := getPoolInfo(resourcePoolInfoResponse.ResourcePoolIdentifier)
+	if err != nil {
+		return nil, err
+	}
+	return poolInfo, nil
+}
+
+// getPoolInfo parses resource pool response and returns memory requirements.
+func getPoolInfo(rp *resourcePool) (map[string]int, error) {
+	memoryUsed, err := getValueFromString(rp.memoryUsage)
+	if err != nil {
+		return nil, fmt.Errorf("unable to obtain memory usage for resource pool %s: %v", rp.memoryUsage, err)
+	}
+	memoryLimit, err := getValueFromString(rp.memoryLimit)
+	if err != nil {
+		return nil, fmt.Errorf("unable to obtain memory limit for resource pool %s: %v", rp.memoryLimit, err)
+	}
+	poolInfo := make(map[string]int)
+	if memoryLimit != -1 {
+		poolInfo[MemoryAvailable] = memoryLimit - memoryUsed
+	} else {
+		poolInfo[MemoryAvailable] = memoryLimit
+	}
+	return poolInfo, nil
+}
+
+// getValueFromString cleans the input string and returns the extracted numerical value.
+func getValueFromString(str string) (int, error) {
+	splitResponse := strings.Split(strings.TrimSpace(str), " ")
+	nonNumericRegex := regexp.MustCompile(`[^0-9- ]+`)
+	cleanedString := nonNumericRegex.ReplaceAllString(splitResponse[0], "")
+	numValue, err := strconv.Atoi(cleanedString)
+	if err != nil {
+		return 0, err
+	}
+	return numValue, nil
 }

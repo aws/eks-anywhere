@@ -37,6 +37,36 @@ func (s *Spec) machineConfigs() []*anywherev1.VSphereMachineConfig {
 	return machineConfigs
 }
 
+// MachineConfigCount represents a machineConfig with it's associated count.
+type MachineConfigCount struct {
+	*anywherev1.VSphereMachineConfig
+	Count int
+}
+
+func (s *Spec) machineConfigsWithCount() []MachineConfigCount {
+	machineConfigs := make([]MachineConfigCount, 0, len(s.VSphereMachineConfigs))
+	cpMachineConfig := MachineConfigCount{
+		VSphereMachineConfig: s.controlPlaneMachineConfig(),
+		Count:                s.Cluster.Spec.ControlPlaneConfiguration.Count,
+	}
+	machineConfigs = append(machineConfigs, cpMachineConfig)
+	if s.etcdMachineConfig() != nil {
+		etcdMachineConfig := MachineConfigCount{
+			VSphereMachineConfig: s.etcdMachineConfig(),
+			Count:                s.Cluster.Spec.ExternalEtcdConfiguration.Count,
+		}
+		machineConfigs = append(machineConfigs, etcdMachineConfig)
+	}
+	for _, wc := range s.Cluster.Spec.WorkerNodeGroupConfigurations {
+		workerNodeGroupConfig := MachineConfigCount{
+			VSphereMachineConfig: s.workerMachineConfig(wc),
+			Count:                *wc.Count,
+		}
+		machineConfigs = append(machineConfigs, workerNodeGroupConfig)
+	}
+	return machineConfigs
+}
+
 func etcdMachineConfig(s *cluster.Spec) *anywherev1.VSphereMachineConfig {
 	if s.Cluster.Spec.ExternalEtcdConfiguration == nil || s.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef == nil {
 		return nil
