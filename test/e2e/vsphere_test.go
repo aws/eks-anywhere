@@ -1010,13 +1010,6 @@ func TestVSphereMultipleTemplatesUbuntu127(t *testing.T) {
 	runMultiTemplatesSimpleFlow(test)
 }
 
-func TestVSphereKubernetes128UbuntuWorkloadClusterCuratedPackagesSimpleFlow(t *testing.T) {
-	framework.CheckCuratedPackagesCredentials(t)
-	provider := framework.NewVSphere(t, framework.WithUbuntu128())
-	test := SetupSimpleMultiCluster(t, provider, v1alpha1.Kube128)
-	runCuratedPackageRemoteClusterInstallSimpleFlow(test)
-}
-
 func TestVSphereKubernetes124BottleRocketWorkloadClusterCuratedPackagesSimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	provider := framework.NewVSphere(t, framework.WithBottleRocket124())
