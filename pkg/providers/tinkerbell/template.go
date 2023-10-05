@@ -384,6 +384,7 @@ func buildTemplateMapCP(
 		Append(clusterapi.ControlPlaneNodeLabelsExtraArgs(clusterSpec.Cluster.Spec.ControlPlaneConfiguration))
 
 	values := map[string]interface{}{
+		"auditPolicy":                   auditPolicy,
 		"clusterName":                   clusterSpec.Cluster.Name,
 		"controlPlaneEndpointIp":        clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host,
 		"controlPlaneReplicas":          clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Count,
@@ -414,7 +415,6 @@ func buildTemplateMapCP(
 		"skipLoadBalancerDeployment":    datacenterSpec.SkipLoadBalancerDeployment,
 		"cpSkipLoadBalancerDeployment":  clusterSpec.Cluster.Spec.ControlPlaneConfiguration.SkipLoadBalancerDeployment,
 	}
-	values["auditPolicy"] = auditPolicy
 
 	if clusterSpec.Cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy != nil {
 		values["upgradeRolloutStrategy"] = true
