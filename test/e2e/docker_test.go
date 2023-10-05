@@ -374,7 +374,7 @@ func TestDockerKubernetes127CuratedPackagesPrometheusSimpleFlow(t *testing.T) {
 	runCuratedPackagesPrometheusInstallSimpleFlow(test)
 }
 
-func TestDockerKubernetes128CuratedPackagesAdotSimpleFlow(t *testing.T) {
+func TestDockerKubernetes128CuratedPackagesPrometheusSimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t, framework.NewDocker(t),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube128)),
@@ -382,7 +382,7 @@ func TestDockerKubernetes128CuratedPackagesAdotSimpleFlow(t *testing.T) {
 			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
 			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
-	runCuratedPackagesAdotInstallSimpleFlow(test) // other args as necessary
+	runCuratedPackagesPrometheusInstallSimpleFlow(test)
 }
 
 func TestDockerKubernetes124CuratedPackagesDisabled(t *testing.T) {
