@@ -1996,7 +1996,7 @@ func TestTinkerbellKubernetes128BottlerocketWorkerNodeGroupsTaintsAndLabels(t *t
 			framework.WithCustomTinkerbellMachineConfig(nodeGroupLabel2),
 		),
 		framework.WithClusterFiller(
-			api.WithKubernetesVersion(v1alpha1.TestDockerKubernetes128AWSIamAuth),
+			api.WithKubernetesVersion(v1alpha1.Kube128),
 			api.WithControlPlaneLabel(cpKey1, cpVal1),
 			api.WithControlPlaneTaints([]corev1.Taint{framework.NoScheduleTaint()}),
 			api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
