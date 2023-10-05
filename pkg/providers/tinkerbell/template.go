@@ -362,6 +362,11 @@ func buildTemplateMapCP(
 	etcdTemplateOverride string,
 	datacenterSpec v1alpha1.TinkerbellDatacenterConfigSpec,
 ) (map[string]interface{}, error) {
+	auditPolicy, err := common.GetAuditPolicy(clusterSpec.Cluster.Spec.KubernetesVersion)
+	if err != nil {
+		return nil, err
+	}
+
 	versionsBundle := clusterSpec.ControlPlaneVersionsBundle()
 	format := "cloud-config"
 
@@ -379,6 +384,7 @@ func buildTemplateMapCP(
 		Append(clusterapi.ControlPlaneNodeLabelsExtraArgs(clusterSpec.Cluster.Spec.ControlPlaneConfiguration))
 
 	values := map[string]interface{}{
+		"auditPolicy":                   auditPolicy,
 		"clusterName":                   clusterSpec.Cluster.Name,
 		"controlPlaneEndpointIp":        clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host,
 		"controlPlaneReplicas":          clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Count,

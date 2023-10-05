@@ -93,21 +93,40 @@ spec:
 {{ .Data | indent 10 }}
         {{- end }}
 {{- end}}
-{{- if .apiserverExtraArgs }}
       apiServer:
         extraArgs:
+          audit-policy-file: /etc/kubernetes/audit-policy.yaml
+          audit-log-path: /var/log/kubernetes/api-audit.log
+          audit-log-maxage: "30"
+          audit-log-maxbackup: "10"
+          audit-log-maxsize: "512"
+{{- if .apiserverExtraArgs }}
 {{ .apiserverExtraArgs.ToYaml | indent 10 }}
 {{- end }}
-{{- if .awsIamAuth}}
         extraVolumes:
-          - hostPath: /var/lib/kubeadm/aws-iam-authenticator/
-            mountPath: /etc/kubernetes/aws-iam-authenticator/
-            name: authconfig
-            readOnly: false
-          - hostPath: /var/lib/kubeadm/aws-iam-authenticator/pki/
-            mountPath: /var/aws-iam-authenticator/
-            name: awsiamcert
-            readOnly: false
+{{- if (eq .format "bottlerocket") }}
+        - hostPath: /var/lib/kubeadm/audit-policy.yaml
+{{- else }}
+        - hostPath: /etc/kubernetes/audit-policy.yaml
+{{- end }}
+          mountPath: /etc/kubernetes/audit-policy.yaml
+          name: audit-policy
+          pathType: File
+          readOnly: true
+        - hostPath: /var/log/kubernetes
+          mountPath: /var/log/kubernetes
+          name: audit-log-dir
+          pathType: DirectoryOrCreate
+          readOnly: false
+{{- if .awsIamAuth}}
+        - hostPath: /var/lib/kubeadm/aws-iam-authenticator/
+          mountPath: /etc/kubernetes/aws-iam-authenticator/
+          name: authconfig
+          readOnly: false
+        - hostPath: /var/lib/kubeadm/aws-iam-authenticator/pki/
+          mountPath: /var/aws-iam-authenticator/
+          name: awsiamcert
+          readOnly: false
 {{- end}}
 {{- /*
   BottleRocket uses different host paths for kubeconfigs requiring host mount path overwrites for
@@ -279,6 +298,10 @@ spec:
         owner: root:root
         path: /etc/kubernetes/manifests/kube-vip.yaml
 {{- end }}
+      - content: |
+{{ .auditPolicy | indent 10 }}
+        owner: root:root
+        path: /etc/kubernetes/audit-policy.yaml
 {{- if .awsIamAuth}}
       - content: |
           # clusters refers to the remote service.
