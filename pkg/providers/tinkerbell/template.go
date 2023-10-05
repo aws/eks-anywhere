@@ -362,6 +362,11 @@ func buildTemplateMapCP(
 	etcdTemplateOverride string,
 	datacenterSpec v1alpha1.TinkerbellDatacenterConfigSpec,
 ) (map[string]interface{}, error) {
+	auditPolicy, err := common.GetAuditPolicy(clusterSpec.Cluster.Spec.KubernetesVersion)
+	if err != nil {
+		return nil, err
+	}
+
 	versionsBundle := clusterSpec.RootVersionsBundle()
 	format := "cloud-config"
 
@@ -408,11 +413,6 @@ func buildTemplateMapCP(
 		"workerNodeGroupConfigurations": clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations,
 		"skipLoadBalancerDeployment":    datacenterSpec.SkipLoadBalancerDeployment,
 		"cpSkipLoadBalancerDeployment":  clusterSpec.Cluster.Spec.ControlPlaneConfiguration.SkipLoadBalancerDeployment,
-	}
-
-	auditPolicy, err := common.GetAuditPolicy(clusterSpec.Cluster.Spec.KubernetesVersion)
-	if err != nil {
-		return nil, err
 	}
 	values["auditPolicy"] = auditPolicy
 
