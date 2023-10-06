@@ -1953,7 +1953,7 @@ func TestCloudStackUpgradeKubernetes127MulticlusterWorkloadClusterWithGithubFlux
 }
 
 func TestCloudStackUpgradeKubernetes128MulticlusterWorkloadClusterWithGithubFlux(t *testing.T) {
-	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat126())
+	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat127())
 	test := framework.NewMulticlusterE2ETest(
 		t,
 		framework.NewClusterE2ETest(
@@ -1961,7 +1961,7 @@ func TestCloudStackUpgradeKubernetes128MulticlusterWorkloadClusterWithGithubFlux
 			provider,
 			framework.WithFluxGithub(),
 			framework.WithClusterFiller(
-				api.WithKubernetesVersion(v1alpha1.Kube126),
+				api.WithKubernetesVersion(v1alpha1.Kube127),
 				api.WithControlPlaneCount(1),
 				api.WithWorkerNodeCount(1),
 				api.WithStackedEtcdTopology(),
@@ -1972,7 +1972,7 @@ func TestCloudStackUpgradeKubernetes128MulticlusterWorkloadClusterWithGithubFlux
 			provider,
 			framework.WithFluxGithub(),
 			framework.WithClusterFiller(
-				api.WithKubernetesVersion(v1alpha1.Kube126),
+				api.WithKubernetesVersion(v1alpha1.Kube127),
 				api.WithControlPlaneCount(1),
 				api.WithWorkerNodeCount(1),
 				api.WithStackedEtcdTopology(),
