@@ -334,7 +334,7 @@ func validateImmutableFieldsCluster(new, old *Cluster) field.ErrorList {
 		}
 	}
 
-	if !new.Spec.GitOpsRef.Equal(old.Spec.GitOpsRef) {
+	if !new.Spec.GitOpsRef.Equal(old.Spec.GitOpsRef) && !old.IsSelfManaged() {
 		allErrs = append(
 			allErrs,
 			field.Forbidden(specPath.Child("GitOpsRef"), fmt.Sprintf("field is immutable %v", new.Spec.GitOpsRef)))

@@ -692,8 +692,19 @@ func TestClusterValidateUpdateGitOpsRefImmutableNilEqual(t *testing.T) {
 	g.Expect(c.ValidateUpdate(cOld)).To(Succeed())
 }
 
+func TestClusterValidateUpdateGitOpsRefMutableManagementCluster(t *testing.T) {
+	cOld := baseCluster()
+	cOld.Spec.GitOpsRef = nil
+	c := cOld.DeepCopy()
+	c.Spec.GitOpsRef = &v1alpha1.Ref{Name: "test2", Kind: "GitOpsConfig"}
+
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(cOld)).To(Succeed())
+}
+
 func TestClusterValidateUpdateGitOpsRefImmutable(t *testing.T) {
 	cOld := baseCluster()
+	cOld.SetManagedBy("management-cluster")
 	cOld.Spec.GitOpsRef = &v1alpha1.Ref{}
 	c := cOld.DeepCopy()
 	c.Spec.GitOpsRef = &v1alpha1.Ref{Name: "test2", Kind: "GitOpsConfig2"}
@@ -704,6 +715,7 @@ func TestClusterValidateUpdateGitOpsRefImmutable(t *testing.T) {
 
 func TestClusterValidateUpdateGitOpsRefImmutableName(t *testing.T) {
 	cOld := baseCluster()
+	cOld.SetManagedBy("management-cluster")
 	cOld.Spec.GitOpsRef = &v1alpha1.Ref{
 		Name: "test1", Kind: "GitOpsConfig",
 	}
@@ -716,6 +728,7 @@ func TestClusterValidateUpdateGitOpsRefImmutableName(t *testing.T) {
 
 func TestClusterValidateUpdateGitOpsRefImmutableKind(t *testing.T) {
 	cOld := baseCluster()
+	cOld.SetManagedBy("management-cluster")
 	cOld.Spec.GitOpsRef = &v1alpha1.Ref{
 		Name: "test", Kind: "GitOpsConfig1",
 	}
@@ -728,6 +741,7 @@ func TestClusterValidateUpdateGitOpsRefImmutableKind(t *testing.T) {
 
 func TestClusterValidateUpdateGitOpsRefOldNilImmutable(t *testing.T) {
 	cOld := baseCluster()
+	cOld.SetManagedBy("management-cluster")
 	cOld.Spec.GitOpsRef = nil
 
 	c := cOld.DeepCopy()
@@ -739,6 +753,7 @@ func TestClusterValidateUpdateGitOpsRefOldNilImmutable(t *testing.T) {
 
 func TestClusterValidateUpdateGitOpsRefNewNilImmutable(t *testing.T) {
 	cOld := baseCluster()
+	cOld.SetManagedBy("management-cluster")
 	cOld.Spec.GitOpsRef = &v1alpha1.Ref{
 		Name: "test", Kind: "GitOpsConfig",
 	}
