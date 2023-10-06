@@ -748,7 +748,7 @@ spec:
           description: Helm chart for tinkerbell-chart
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: tinkerbell-chart
-          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.2.2-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.2.3-eks-a-v0.0.0-dev-build.1
       version: v0.4.0+abcdef1
     vSphere:
       clusterAPIController:
@@ -1534,7 +1534,7 @@ spec:
           description: Helm chart for tinkerbell-chart
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: tinkerbell-chart
-          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.2.2-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.2.3-eks-a-v0.0.0-dev-build.1
       version: v0.4.0+abcdef1
     vSphere:
       clusterAPIController:
@@ -2293,7 +2293,7 @@ spec:
           description: Helm chart for tinkerbell-chart
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: tinkerbell-chart
-          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.2.2-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.2.3-eks-a-v0.0.0-dev-build.1
       version: v0.4.0+abcdef1
     vSphere:
       clusterAPIController:
@@ -3052,7 +3052,7 @@ spec:
           description: Helm chart for tinkerbell-chart
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: tinkerbell-chart
-          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.2.2-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.2.3-eks-a-v0.0.0-dev-build.1
       version: v0.4.0+abcdef1
     vSphere:
       clusterAPIController:
@@ -3811,7 +3811,7 @@ spec:
           description: Helm chart for tinkerbell-chart
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: tinkerbell-chart
-          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.2.2-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.2.3-eks-a-v0.0.0-dev-build.1
       version: v0.4.0+abcdef1
     vSphere:
       clusterAPIController:
@@ -4570,7 +4570,7 @@ spec:
           description: Helm chart for tinkerbell-chart
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: tinkerbell-chart
-          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.2.2-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.2.3-eks-a-v0.0.0-dev-build.1
       version: v0.4.0+abcdef1
     vSphere:
       clusterAPIController:
