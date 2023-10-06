@@ -20,9 +20,11 @@ const (
 	applyClusterSpecTimeout           = 2 * time.Minute
 	waitForClusterReconcileTimeout    = time.Hour
 	retryBackOff                      = time.Second
-	waitForFailureMessageErrorTimeout = 20 * time.Second
+	waitForFailureMessageErrorTimeout = time.Minute
 	defaultFieldManager               = "eks-a-cli"
 )
+
+var defaultConditionCheckTotalCount = 20
 
 // ApplierOpt allows to customize a Applier on construction.
 type ApplierOpt func(*Applier)
@@ -91,6 +93,16 @@ func WithApplierRetryBackOff(backOff time.Duration) ApplierOpt {
 	}
 }
 
+// WithApplierWaitForFailureMessage allows to configure how long the applier waits for failure message
+// to be empty and check the status of the Cluster.
+// Generally only used in tests.
+func WithApplierWaitForFailureMessage(timeout time.Duration) ApplierOpt {
+	return func(a *Applier) {
+		a.waitForFailureMessage = timeout
+		defaultConditionCheckTotalCount = int(timeout)
+	}
+}
+
 // Run applies the cluster's spec in the management cluster and waits
 // until the changes are fully reconciled.
 func (a Applier) Run(ctx context.Context, spec *cluster.Spec, managementCluster types.Cluster) error {
@@ -133,7 +145,7 @@ func (a Applier) Run(ctx context.Context, spec *cluster.Spec, managementCluster 
 	waitStartTime := time.Now()
 	retry := a.retrierForWait(waitStartTime)
 
-	if err := cluster.WaitFor(ctx, a.log, client, spec.Cluster, a.retrierForFailureMessage(), func(c *anywherev1.Cluster) error {
+	if err := cluster.WaitFor(ctx, a.log, client, spec.Cluster, defaultConditionCheckTotalCount, a.retrierForFailureMessage(), func(c *anywherev1.Cluster) error {
 		if c.Status.FailureMessage != nil && *c.Status.FailureMessage != "" {
 			return fmt.Errorf("cluster has an error: %s", *c.Status.FailureMessage)
 		}
@@ -143,27 +155,27 @@ func (a Applier) Run(ctx context.Context, spec *cluster.Spec, managementCluster 
 	}
 
 	a.log.V(3).Info("Waiting for control plane to be ready")
-	if err := cluster.WaitForCondition(ctx, a.log, client, spec.Cluster, retry, anywherev1.ControlPlaneReadyCondition); err != nil {
+	if err := cluster.WaitForCondition(ctx, a.log, client, spec.Cluster, defaultConditionCheckTotalCount, retry, anywherev1.ControlPlaneReadyCondition); err != nil {
 		return errors.Wrapf(err, "waiting for cluster's control plane to be ready")
 	}
 
 	if spec.Cluster.Spec.ClusterNetwork.CNIConfig.IsManaged() {
 		a.log.V(3).Info("Waiting for default CNI to be updated")
 		retry = a.retrierForWait(waitStartTime)
-		if err := cluster.WaitForCondition(ctx, a.log, client, spec.Cluster, retry, anywherev1.DefaultCNIConfiguredCondition); err != nil {
+		if err := cluster.WaitForCondition(ctx, a.log, client, spec.Cluster, defaultConditionCheckTotalCount, retry, anywherev1.DefaultCNIConfiguredCondition); err != nil {
 			return errors.Wrapf(err, "waiting for cluster's CNI to be configured")
 		}
 	}
 
 	a.log.V(3).Info("Waiting for worker nodes to be ready after upgrade")
 	retry = a.retrierForWait(waitStartTime)
-	if err := cluster.WaitForCondition(ctx, a.log, client, spec.Cluster, retry, anywherev1.WorkersReadyCondition); err != nil {
+	if err := cluster.WaitForCondition(ctx, a.log, client, spec.Cluster, defaultConditionCheckTotalCount, retry, anywherev1.WorkersReadyCondition); err != nil {
 		return errors.Wrapf(err, "waiting for cluster's workers to be ready")
 	}
 
 	a.log.V(3).Info("Waiting for cluster upgrade to be completed")
 	retry = a.retrierForWait(waitStartTime)
-	if err := cluster.WaitForCondition(ctx, a.log, client, spec.Cluster, retry, anywherev1.ReadyCondition); err != nil {
+	if err := cluster.WaitForCondition(ctx, a.log, client, spec.Cluster, defaultConditionCheckTotalCount, retry, anywherev1.ReadyCondition); err != nil {
 		return errors.Wrapf(err, "waiting for cluster to be ready")
 	}
 

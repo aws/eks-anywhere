@@ -151,6 +151,7 @@ func TestApplierRunCClusterUpdatedWithCNINotManaged(t *testing.T) {
 	tt.markClusterReady(tt.spec.Cluster)
 	a := clustermanager.NewApplier(tt.log, tt.clientFactory,
 		clustermanager.WithApplierWaitForClusterReconcile(0),
+		clustermanager.WithApplierWaitForFailureMessage(0),
 	)
 
 	tt.Expect(a.Run(tt.ctx, tt.spec, tt.mgmtCluster)).To(Succeed())
@@ -184,7 +185,8 @@ func TestApplierRunFailureMessage(t *testing.T) {
 	tt.updateFailureMessage(tt.spec.Cluster, "error")
 	tt.startFakeController()
 	a := clustermanager.NewApplier(tt.log, tt.clientFactory,
-		clustermanager.WithApplierRetryBackOff(time.Millisecond),
+		clustermanager.WithApplierRetryBackOff(0),
+		clustermanager.WithApplierWaitForFailureMessage(0),
 	)
 
 	tt.Expect(a.Run(tt.ctx, tt.spec, tt.mgmtCluster)).To(MatchError(ContainSubstring("cluster has a validation error that doesn't seem transient")))
@@ -195,6 +197,7 @@ func TestApplierRunControlPlaneNotReady(t *testing.T) {
 	tt.buildClient()
 	a := clustermanager.NewApplier(tt.log, tt.clientFactory,
 		clustermanager.WithApplierWaitForClusterReconcile(0),
+		clustermanager.WithApplierWaitForFailureMessage(0),
 	)
 
 	tt.Expect(a.Run(tt.ctx, tt.spec, tt.mgmtCluster)).To(MatchError(ContainSubstring("waiting for cluster's control plane to be ready")))
@@ -206,6 +209,7 @@ func TestApplierRunCNINotConfigured(t *testing.T) {
 	tt.markCPReady(tt.spec.Cluster)
 	a := clustermanager.NewApplier(tt.log, tt.clientFactory,
 		clustermanager.WithApplierWaitForClusterReconcile(0),
+		clustermanager.WithApplierWaitForFailureMessage(0),
 	)
 
 	tt.Expect(a.Run(tt.ctx, tt.spec, tt.mgmtCluster)).To(MatchError(ContainSubstring("waiting for cluster's CNI to be configured")))
@@ -218,6 +222,7 @@ func TestApplierRunWorkersNotReady(t *testing.T) {
 	tt.markCNIConfigured(tt.spec.Cluster)
 	a := clustermanager.NewApplier(tt.log, tt.clientFactory,
 		clustermanager.WithApplierWaitForClusterReconcile(0),
+		clustermanager.WithApplierWaitForFailureMessage(0),
 	)
 
 	tt.Expect(a.Run(tt.ctx, tt.spec, tt.mgmtCluster)).To(MatchError(ContainSubstring("waiting for cluster's workers to be ready")))
@@ -231,6 +236,7 @@ func TestApplierRunClusterNotReady(t *testing.T) {
 	tt.markWorkersReady(tt.spec.Cluster)
 	a := clustermanager.NewApplier(tt.log, tt.clientFactory,
 		clustermanager.WithApplierWaitForClusterReconcile(0),
+		clustermanager.WithApplierWaitForFailureMessage(0),
 	)
 
 	tt.Expect(a.Run(tt.ctx, tt.spec, tt.mgmtCluster)).To(MatchError(ContainSubstring("waiting for cluster to be ready")))
