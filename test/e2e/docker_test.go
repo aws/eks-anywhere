@@ -697,7 +697,7 @@ func TestDockerKubernetes127To128StackedEtcdUpgrade(t *testing.T) {
 	)
 	runSimpleUpgradeFlow(
 		test,
-		v1alpha1.Kube127,
+		v1alpha1.Kube128,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube128)),
 	)
 }
@@ -712,7 +712,7 @@ func TestDockerKubernetes127To128ExternalEtcdUpgrade(t *testing.T) {
 	)
 	runSimpleUpgradeFlow(
 		test,
-		v1alpha1.Kube127,
+		v1alpha1.Kube128,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube128)),
 	)
 }
