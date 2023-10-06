@@ -134,7 +134,7 @@ func TestWaitForCondition(t *testing.T) {
 					},
 				},
 			},
-			retrier:   retrier.NewWithMaxRetries(1, 0),
+			retrier:   retrier.NewWithMaxRetries(2, 0),
 			condition: anywherev1.ControlPlaneReadyCondition,
 		},
 	}
@@ -145,7 +145,7 @@ func TestWaitForCondition(t *testing.T) {
 			g := NewWithT(t)
 			client := test.NewFakeKubeClient(tt.currentCluster)
 
-			gotErr := cluster.WaitForCondition(ctx, test.NewNullLogger(), client, tt.clusterInput, tt.retrier, tt.condition)
+			gotErr := cluster.WaitForCondition(ctx, test.NewNullLogger(), client, tt.clusterInput, 2, tt.retrier, tt.condition)
 			if tt.wantErr != "" {
 				g.Expect(gotErr).To(MatchError(tt.wantErr))
 			} else {
@@ -246,6 +246,46 @@ func TestWaitFor(t *testing.T) {
 			},
 			wantErr: "error",
 		},
+		{
+			name: "condition is met, retry not enough",
+			clusterInput: &anywherev1.Cluster{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "my-c",
+					Namespace: "my-n",
+				},
+			},
+			currentCluster: &anywherev1.Cluster{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "my-c",
+					Namespace: "my-n",
+				},
+			},
+			retrier: retrier.NewWithMaxRetries(3, 0),
+			matcher: func(_ *anywherev1.Cluster) error {
+				return nil
+			},
+			wantErr: "cluster has reached to expected condition in 3/5 times",
+		},
+		{
+			name: "condition is met, consistency checked",
+			clusterInput: &anywherev1.Cluster{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "my-c",
+					Namespace: "my-n",
+				},
+			},
+			currentCluster: &anywherev1.Cluster{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "my-c",
+					Namespace: "my-n",
+				},
+			},
+			retrier: retrier.NewWithMaxRetries(5, 0),
+			matcher: func(_ *anywherev1.Cluster) error {
+				return nil
+			},
+			wantErr: "",
+		},
 	}
 
 	for _, tt := range testCases {
@@ -254,7 +294,7 @@ func TestWaitFor(t *testing.T) {
 			g := NewWithT(t)
 			client := test.NewFakeKubeClient(tt.currentCluster)
 
-			gotErr := cluster.WaitFor(ctx, test.NewNullLogger(), client, tt.clusterInput, tt.retrier, tt.matcher)
+			gotErr := cluster.WaitFor(ctx, test.NewNullLogger(), client, tt.clusterInput, 5, tt.retrier, tt.matcher)
 			if tt.wantErr != "" {
 				g.Expect(gotErr).To(MatchError(tt.wantErr))
 			} else {
