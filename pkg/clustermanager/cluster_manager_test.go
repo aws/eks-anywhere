@@ -1781,7 +1781,7 @@ func TestClusterManagerCreateEKSAResourcesSuccess(t *testing.T) {
 
 	c, m := newClusterManager(t)
 
-	m.client.EXPECT().ApplyKubeSpecFromBytesForce(ctx, tt.cluster, gomock.Any())
+	m.client.EXPECT().ApplyKubeSpecFromBytes(ctx, tt.cluster, gomock.Any())
 	// ApplyKubeSpecFromBytes is called twice. Once for Bundles and again for EKSARelease.
 	m.client.EXPECT().ApplyKubeSpecFromBytes(ctx, tt.cluster, gomock.Any()).MaxTimes(2)
 	m.client.EXPECT().ApplyKubeSpecFromBytesWithNamespace(ctx, tt.cluster, gomock.Any(), gomock.Any()).MaxTimes(2)
@@ -1834,7 +1834,7 @@ func TestClusterManagerCreateEKSAResourcesFailureBundles(t *testing.T) {
 	c := clustermanager.New(cf, client, m.networking, m.writer, m.diagnosticsFactory, m.awsIamAuth, m.eksaComponents)
 
 	m.client.EXPECT().CreateNamespaceIfNotPresent(ctx, gomock.Any(), tt.clusterSpec.Cluster.Namespace).Return(nil)
-	m.client.EXPECT().ApplyKubeSpecFromBytesForce(ctx, gomock.Any(), gomock.Any()).Return(nil)
+	m.client.EXPECT().ApplyKubeSpecFromBytes(ctx, gomock.Any(), gomock.Any()).Return(nil)
 	m.client.EXPECT().ApplyKubeSpecFromBytes(ctx, gomock.Any(), gomock.Any()).Return(errors.New(""))
 	tt.Expect(c.CreateEKSAResources(ctx, tt.cluster, tt.clusterSpec, datacenterConfig, machineConfigs)).NotTo(Succeed())
 }
@@ -1866,7 +1866,7 @@ func TestClusterManagerCreateEKSAResourcesFailureEKSARelease(t *testing.T) {
 	c := clustermanager.New(cf, client, m.networking, m.writer, m.diagnosticsFactory, m.awsIamAuth, m.eksaComponents)
 
 	m.client.EXPECT().CreateNamespaceIfNotPresent(ctx, gomock.Any(), tt.clusterSpec.Cluster.Namespace).Return(nil)
-	m.client.EXPECT().ApplyKubeSpecFromBytesForce(ctx, gomock.Any(), gomock.Any()).Return(nil)
+	m.client.EXPECT().ApplyKubeSpecFromBytes(ctx, gomock.Any(), gomock.Any()).Return(nil)
 	m.client.EXPECT().ApplyKubeSpecFromBytes(ctx, gomock.Any(), gomock.Any()).Return(nil)
 	m.client.EXPECT().ApplyKubeSpecFromBytes(ctx, gomock.Any(), gomock.Any()).Return(errors.New(""))
 	tt.Expect(c.CreateEKSAResources(ctx, tt.cluster, tt.clusterSpec, datacenterConfig, machineConfigs)).NotTo(Succeed())
