@@ -38,7 +38,6 @@ const (
 
 var requiredTinkerbellEnvVars = []string{
 	tinkerbellControlPlaneNetworkCidrEnvVar,
-	tinkerbellImageUbuntu123EnvVar,
 	tinkerbellImageUbuntu124EnvVar,
 	tinkerbellImageUbuntu125EnvVar,
 	tinkerbellImageUbuntu126EnvVar,
@@ -177,11 +176,6 @@ func withKubeVersionAndOS(kubeVersion anywherev1.KubernetesVersion, os OS, relea
 	}
 }
 
-// WithUbuntu123Tinkerbell tink test with ubuntu 1.23.
-func WithUbuntu123Tinkerbell() TinkerbellOpt {
-	return withKubeVersionAndOS(anywherev1.Kube123, Ubuntu2004, nil)
-}
-
 // WithUbuntu124Tinkerbell tink test with ubuntu 1.24.
 func WithUbuntu124Tinkerbell() TinkerbellOpt {
 	return withKubeVersionAndOS(anywherev1.Kube124, Ubuntu2004, nil)
@@ -205,11 +199,6 @@ func WithUbuntu127Tinkerbell() TinkerbellOpt {
 // WithUbuntu128Tinkerbell tink test with ubuntu 1.28.
 func WithUbuntu128Tinkerbell() TinkerbellOpt {
 	return withKubeVersionAndOS(anywherev1.Kube128, Ubuntu2004, nil)
-}
-
-// WithRedHat123Tinkerbell tink test with redhat 1.23.
-func WithRedHat123Tinkerbell() TinkerbellOpt {
-	return withKubeVersionAndOS(anywherev1.Kube123, RedHat8, nil)
 }
 
 // WithRedHat124Tinkerbell tink test with redhat 1.24.
@@ -283,11 +272,6 @@ func WithHookImagesURLPath(url string) TinkerbellOpt {
 
 func imageForKubeVersionAndOS(kubeVersion anywherev1.KubernetesVersion, operatingSystem OS) api.TinkerbellFiller {
 	return api.WithTinkerbellOSImageURL(os.Getenv(envVarForImage(operatingSystem, kubeVersion)))
-}
-
-// Ubuntu123Image represents an Ubuntu raw image corresponding to Kubernetes 1.23.
-func Ubuntu123Image() api.TinkerbellFiller {
-	return imageForKubeVersionAndOS(anywherev1.Kube123, Ubuntu2004)
 }
 
 // Ubuntu124Image represents an Ubuntu raw image corresponding to Kubernetes 1.24.
