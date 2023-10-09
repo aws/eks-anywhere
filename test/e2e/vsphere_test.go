@@ -2186,7 +2186,7 @@ func TestVSphereKubernetes128Ubuntu2004To2204Upgrade(t *testing.T) {
 }
 
 func TestVSphereKubernetes127UbuntuTo128UpgradeCiliumPolicyEnforcementMode(t *testing.T) {
-	provider := framework.NewVSphere(t, framework.WithUbuntu126())
+	provider := framework.NewVSphere(t, framework.WithUbuntu127())
 	test := framework.NewClusterE2ETest(
 		t,
 		provider,
@@ -2205,7 +2205,7 @@ func TestVSphereKubernetes127UbuntuTo128UpgradeCiliumPolicyEnforcementMode(t *te
 }
 
 func TestVSphereKubernetes127UbuntuTo128MultipleFieldsUpgrade(t *testing.T) {
-	provider := framework.NewVSphere(t, framework.WithUbuntu126())
+	provider := framework.NewVSphere(t, framework.WithUbuntu127())
 	test := framework.NewClusterE2ETest(
 		t,
 		provider,
