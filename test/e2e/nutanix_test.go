@@ -484,7 +484,7 @@ func TestNutanixKubernetes127To128UbuntuUpgrade(t *testing.T) {
 	)
 	runSimpleUpgradeFlow(
 		test,
-		v1alpha1.Kube124,
+		v1alpha1.Kube128,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube128)),
 		provider.WithProviderUpgrade(provider.Ubuntu128Template()),
 	)
