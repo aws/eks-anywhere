@@ -37,10 +37,10 @@ The following table notes which EKS Anywhere and related Kubernetes versions are
 | EKS Anywhere version      | Kubernetes versions included | EKS Anywhere Release Date | CVE patches and bug fixes back-ported? |
 |------------|------------------------------|---------------------------------|-------------------------|
 | 0.17 | 1.27, 1.26, 1.25, 1.24, 1.23 | August 16, 2023 | Yes |
-| 0.16 | 1.27, 1.26, 1.25, 1.24, 1.23 | June 1, 2023 | Yes |
-| 0.15 | 1.26, 1.25, 1.24, 1.23, 1.22 | March 30, 2023 | Yes |
-| 0.14 | 1.25, 1.24, 1.23, 1.22, 1.21 | January 19, 2023 | Yes |
-| 0.13 | 1.24, 1.23, 1.22, 1.21       | December 15, 2022 | Yes |
+| 0.16 | 1.27, 1.26, 1.25, 1.24, 1.23 | June 1, 2023 | No |
+| 0.15 | 1.26, 1.25, 1.24, 1.23, 1.22 | March 30, 2023 | No |
+| 0.14 | 1.25, 1.24, 1.23, 1.22, 1.21 | January 19, 2023 | No |
+| 0.13 | 1.24, 1.23, 1.22, 1.21       | December 15, 2022 | No |
 | 0.12 | 1.24, 1.23, 1.22, 1.21, 1.20 | October 20, 2022 | No |
 | 0.11 | 1.23, 1.22, 1.21, 1.20       | August 18, 2022 | No | 
 | 0.10 | 1.22, 1.21, 1.20             | June 30, 2022 | No | 
@@ -50,7 +50,7 @@ The following table notes which EKS Anywhere and related Kubernetes versions are
 | 0.6 | 1.21, 1.20                   | October 29, 2021 | No | 
 | 0.5 | 1.21, 1.20                   | September 8, 2021 | No | 
 
-* [Amazon EKS Anywhere Enterprise subscription](https://aws.amazon.com/eks/eks-anywhere/pricing/) is required to receive AWS support on any Amazon EKS Anywhere clusters.
+* An [EKS Anywhere Enterprise Subscription](https://aws.amazon.com/eks/eks-anywhere/pricing/) is required to receive support for EKS Anywhere from AWS.
 
 ## EKS Anywhere versions and bundles
 
@@ -86,20 +86,21 @@ For details on supported operating systems for Admin machines, [see the install 
 
 ## EKS Anywhere version support FAQs
 
-### What is the difference between an Amazon EKS Anywhere minor version versus a patch version?
+### What is the difference between an EKS Anywhere minor version versus a patch version?
 
-An Amazon EKS Anywhere minor version includes new Amazon EKS Anywhere capabilities, bug fixes, security patches, and a new Kubernetes minor version if there is one. An Amazon EKS Anywhere patch version generally includes only bug fixes, security patches, and Kubernetes patch version. Amazon EKS Anywhere patch versions are released more frequently than the Amazon EKS Anywhere minor versions so you can receive the latest security and bug fixes sooner. 
+An EKS Anywhere minor version includes new EKS Anywhere capabilities, bug fixes, security patches, and a new Kubernetes minor version if there is one. An EKS Anywhere patch version generally includes only bug fixes, security patches, and Kubernetes patch version. EKS Anywhere patch versions are released more frequently than the EKS Anywhere minor versions so you can receive the latest security and bug fixes sooner. 
 
-### Where can I find the content of the Amazon EKS Anywhere versions?
+### Where can I find the content of the EKS Anywhere versions?
 
-You can find the content of the previous Amazon EKS Anywhere minor versions and patch versions on the [What’s New]({{< relref "../whatsnew/" >}}) page.
+You can find the content of the previous EKS Anywhere minor versions and patch versions on the [What’s New]({{< relref "../whatsnew/" >}}) page.
 
-### Will I get notified when there is a new Amazon EKS Anywhere version release?
+### Will I get notified when there is a new EKS Anywhere version release?
+
 You will get notified if you have subscribed as documented on the Release Alerts page.
 
-### Can I use different Amazon EKS Anywhere minor versions for my management cluster and workload clusters?
+### Can I use different EKS Anywhere minor versions for my management cluster and workload clusters?
 
-Yes, the management cluster can be upgraded to newer Amazon EKS Anywhere versions than its workload clusters.
+Yes, the management cluster can be upgraded to newer EKS Anywhere versions than its workload clusters.
 However, we only support a maximum skew of one EKS Anywhere minor version for management and workload clusters.
 This means that we support the management cluster being one EKS Anywhere minor version newer than the workload clusters (such as v0.15 for workload clusters if the management cluster is at v0.16).
 In the event that you want to upgrade your management cluster to a version that does not satisfy this condition, we recommend upgrading the workload cluster's EKS Anywhere version first, followed by upgrading to your desired EKS Anywhere version for the management cluster.
@@ -108,16 +109,26 @@ In the event that you want to upgrade your management cluster to a version that 
 For example, if you create your management cluster with v0.15.0, you can only create workload clusters with v0.15.0.
 However, if you create your management cluster with version v0.15.0 and then upgrade to v0.16.0, you can create workload clusters in either v0.15.0 or v0.16.0.
 
-### Can I skip Amazon EKS Anywhere minor versions during cluster upgrade (such as going from v0.9 directly to v0.11)?
+### Can I skip EKS Anywhere minor versions during cluster upgrade (such as going from v0.9 directly to v0.11)?
 
 No. We perform regular upgrade reliability testing for sequential version upgrade (e.g. going from version 0.9 to 0.10, then from version 0.10 to 0.11), but we do not perform testing on non-sequential upgrade path (e.g. going from version 0.9 directly to 0.11). You should _not_ skip minor versions during cluster upgrade. However, you can choose to skip patch versions.
 
-### What kind of fixes are back-ported to the previous versions?*
-Back-ported fixes include CVE patches and bug fixes for the Amazon EKS Anywhere components and the Kubernetes versions that are supported by the corresponding Amazon EKS Anywhere versions. 
+### What kind of fixes are back-ported to the previous versions?
+
+Back-ported fixes include CVE patches and bug fixes for EKS Anywhere components and the Kubernetes versions that are supported by the corresponding EKS Anywhere version.
 
 ### What happens on the end of support date for a Kubernetes version?
-On the end of support date, you can still create a new cluster with the unsupported Kubernetes version using an old version of the Amazon EKS Anywhere toolkit that was released with this Kubernetes version. Any existing Amazon EKS Anywhere clusters with the unsupported Kubernetes version will continue to function. If you have the [Amazon EKS Anywhere Enterprise subscription](https://aws.amazon.com/eks/eks-anywhere/pricing/), AWS Support will continue to provide troubleshooting support and configuration guidance to those clusters as long as their Amazon EKS Anywhere versions are still being supported. However, you will not be able to receive CVE patches or bug fixes for the unsupported Kubernetes version.
 
-### Will I get notified when support is ending for a Kubernetes version on Amazon EKS Anywhere?
+On the end of support date, you can still create a new cluster with the unsupported Kubernetes version using an old version of the EKS Anywhere toolkit that was released with this Kubernetes version. Any existing EKS Anywhere clusters with the unsupported Kubernetes version will continue to function. However, you will not be able to receive CVE patches or bug fixes for the unsupported Kubernetes version.
+
+### What EKS Anywhere versions are supported if you have the EKS Anywhere Enterprise Subscription?
+
+If you have an [EKS Anywhere Enterprise Subscription](https://aws.amazon.com/eks/eks-anywhere/pricing/), AWS will provide troubleshooting support and configuration guidance for your licensed cluster, irrespective of the specific EKS Anywhere version it's running on. However, as the CVE patches and bug fixes are only back-ported to the latest EKS Anywhere version, it is highly recommended to keep your clusters updated with the latest EKS Anywhere release. With an EKS Anywhere Enterprise Subscription, AWS will assist you in upgrading your licensed cluster to the most recent EKS Anywhere version.
+
+### Does EKS extended support for Kubernetes versions apply to EKS Anywhere clusters?
+
+No. EKS extended support for Kubernetes versions does not apply to EKS Anywhere at this time. To request this capability, please comment or upvote on this [EKS Anywhere GitHub issue](https://github.com/aws/eks-anywhere/issues/6793).
+
+### Will I get notified when support is ending for a Kubernetes version on EKS Anywhere?
+
 Not automatically. You should check this page regularly and take note of the end of support date for the Kubernetes version you’re using.
-
