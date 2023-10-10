@@ -39,13 +39,14 @@ var upgradeClusterCmd = &cobra.Command{
 	Long:         "This command is used to upgrade workload clusters",
 	PreRunE:      bindFlagsToViper,
 	SilenceUsage: true,
+	Args:         cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if uc.forceClean {
 			logger.MarkFail(forceCleanupDeprecationMessageForUpgrade)
 			return errors.New("please remove the --force-cleanup flag")
 		}
 
-		if err := uc.upgradeCluster(cmd); err != nil {
+		if err := uc.upgradeCluster(cmd, args); err != nil {
 			return fmt.Errorf("failed to upgrade cluster: %v", err)
 		}
 		return nil
@@ -65,7 +66,8 @@ func init() {
 	flags.MarkRequired(createClusterCmd.Flags(), flags.ClusterConfig.Name)
 }
 
-func (uc *upgradeClusterOptions) upgradeCluster(cmd *cobra.Command) error {
+// nolint:gocyclo
+func (uc *upgradeClusterOptions) upgradeCluster(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
 
 	clusterConfigFileExist := validations.FileExists(uc.fileName)
@@ -90,6 +92,10 @@ func (uc *upgradeClusterOptions) upgradeCluster(cmd *cobra.Command) error {
 
 	if _, err := uc.commonValidations(ctx); err != nil {
 		return fmt.Errorf("common validations failed due to: %v", err)
+	}
+
+	if err := validations.ValidateClusterNameFromCommandAndConfig(args, clusterConfig.Name); err != nil {
+		return err
 	}
 	clusterSpec, err := newClusterSpec(uc.clusterOptions)
 	if err != nil {

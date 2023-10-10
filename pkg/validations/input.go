@@ -2,6 +2,7 @@ package validations
 
 import (
 	"errors"
+	"fmt"
 	"os"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -30,4 +31,18 @@ func FileExists(filename string) bool {
 func FileExistsAndIsNotEmpty(filename string) bool {
 	info, err := os.Stat(filename)
 	return err == nil && info.Size() > 0
+}
+
+// ValidateClusterNameFromCommandAndConfig validates if cluster name provided in command matches with cluster name in config file.
+func ValidateClusterNameFromCommandAndConfig(args []string, clusterNameConfig string) error {
+	if len(args) != 0 {
+		clusterNameCli, err := ValidateClusterNameArg(args)
+		if err != nil {
+			return fmt.Errorf("please provide a valid <cluster-name>")
+		}
+		if clusterNameCli != clusterNameConfig {
+			return fmt.Errorf("please make sure cluster name provided in command matches with cluster name in config file")
+		}
+	}
+	return nil
 }
