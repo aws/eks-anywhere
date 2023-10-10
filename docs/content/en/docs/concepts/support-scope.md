@@ -14,7 +14,7 @@ EKS Anywhere is available as open source software that you can run on hardware i
 
 You can purchase EKS Anywhere Enterprise Subscriptions for 24/7 support from AWS subject matter experts and access to EKS Anywhere Curated Packages. You can only receive support for your EKS Anywhere clusters that are licensed under an active EKS Anywhere Enterprise Subscription. EKS Anywhere Enterprise Subscriptions are available for a 1-year or 3-year term, and are priced on a per cluster basis.
 
-EKS Anywhere Enterprise Subscriptions include the following components:
+EKS Anywhere Enterprise Subscriptions include support for the following components:
 
 - EKS Distro (see [documentation](https://distro.eks.aws.com/) for components)
 - EKS Anywhere core components such as the Cilium CNI, Flux GitOps controller, kube-vip, EKS Anywhere CLI, EKS Anywhere controllers, image builder, and EKS Connector
@@ -41,7 +41,7 @@ For pricing information, visit the [EKS Anywhere pricing page]((https://aws..com
 
 **2. How can I purchase an EKS Anywhere Enterprise Subscription?**
 
-Go to the [EKS Anywhere Enterprise Subscription section](https://console.aws.amazon.com/eks/home#/eks-anywhere) of the EKS console. In the console, select your preferred term (1-year or 3-year). Then, specify the license quantity, configure tags and automatic renewal. Review the pending purchase. When the purchase is submitted, you can review licenses associated with your subscription in the console, accept the license grants with AWS License Manager, apply the licenses to your EKS Anywhere clusters, and access EKS Anywhere Curated Packages. For more information, reference the EKS Anywhere documentation.
+Go to the [EKS Anywhere Enterprise Subscription section](https://console.aws.amazon.com/eks/home#/eks-anywhere) of the EKS console. In the console, select your preferred term (1-year or 3-year). Then, specify the license quantity, configure tags and automatic renewal. Review the pending purchase. When the purchase is submitted, you can review licenses associated with your subscription in the console, accept the license grants with AWS License Manager, apply the licenses to your EKS Anywhere clusters, and access EKS Anywhere Curated Packages. For more information, reference the [EKS Anywhere documentation.]({{< relref "../clustermgmt/support/purchase-subscription" >}})
 
 **3. Are subscriptions I previously purchased manually integrated into the  EKS console?**
 
@@ -51,27 +51,34 @@ No, EKS Anywhere Enterprise Subscriptions purchased manually before October 2023
 
 You can cancel your subscription within the first 7 days of purchase by filing an AWS Support ticket. When you cancel your subscription within the first 7 days, you are not charged for the subscription. To cancel your subscription outside of the 7-day time period, contact your AWS account team.
 
-**5. Can I renew my subscription through the EKS console, APIs, and AWS CLI?**
-Yes, you can configure auto-renewal during subscription creation or at any time during your subscription term. When auto-renewal is enabled for your subscription, the subscription and associated licenses will be automatically renewed for the term of the existing subscription (1-year or 3-years). The 7-day cancellation period does not apply to renewals. You do not need to reapply licenses to your EKS Anywhere clusters when subscriptions are automatically renewed.
-
-**6. Can I edit my subscription through the EKS console, APIs, and AWS CLI?**
-You can edit the auto-renewal and tags configurations for your subscription with the  EKS console, APIs, and AWS CLI. To change the term or license quantity for a subscription, you must create a new subscription.
-
-**7. What happens when a subscription expires?**
-When subscriptions expire, licenses associated with the subscription can no longer be used for new support tickets, access to EKS Anywhere Curated Packages is revoked, and you are no longer billed for the subscription. Support tickets created during the active subscription period will continue to be serviced. You will receive emails 3 months, 1 month, and 1 week before subscriptions expire, and an alert is presented in the EKS console for approaching expiration dates. Subscriptions can be viewed with the EKS console, APIs, and AWS CLI after expiration.
-
-**8. In which AWS Regions can I purchase subscriptions?**
+**5. In which AWS Regions can I purchase subscriptions?**
 
 You can purchase subscriptions in US East (Ohio), US East (N. Virginia), US West (N. California), US West (Oregon), Africa (Cape Town), Asia Pacific (Hong Kong), Asia Pacific (Jakarta), Asia Pacific (Mumbai), Asia Pacific (Osaka), Asia Pacific (Seoul), Asia Pacific (Singapore), Asia Pacific (Sydney), Asia Pacific (Tokyo), Canada (Central), Europe (Frankfurt), Europe (Ireland), Europe (London), Europe (Milan), Europe (Paris), Europe (Stockholm), Middle East (Bahrain), South America (Sao Paulo).
 
-**9. Is there an option to pay for subscriptions upfront?**
+**6. Can I renew my subscription through the EKS console, APIs, and AWS CLI?**
+
+Yes, you can configure auto renewal during subscription creation or at any time during your subscription term. When auto renewal is enabled for your subscription, the subscription and associated licenses will be automatically renewed for the term of the existing subscription (1-year or 3-years). The 7-day cancellation period does not apply to renewals. You do not need to reapply licenses to your EKS Anywhere clusters when subscriptions are automatically renewed.
+
+**7. Can I edit my subscription through the EKS console, APIs, and AWS CLI?**
+
+You can edit the auto renewal and tags configurations for your subscription with the  EKS console, APIs, and AWS CLI. To change the term or license quantity for a subscription, you must create a new subscription.
+
+**8. What happens when a subscription expires?**
+
+When subscriptions expire, licenses associated with the subscription can no longer be used for new support tickets, access to EKS Anywhere Curated Packages is revoked, and you are no longer billed for the subscription. Support tickets created during the active subscription period will continue to be serviced. You will receive emails 3 months, 1 month, and 1 week before subscriptions expire, and an alert is presented in the EKS console for approaching expiration dates. Subscriptions can be viewed with the EKS console, APIs, and AWS CLI after expiration.
+
+**9. Can I share access to curated packages with other AWS accounts?**
+
+Yes, reference the [documentation]({{< relref "../clustermgmt/support/share-packages" >}}) for instructions on how to share access to curated packages with other AWS accounts in your organization.
+
+**10. How do I apply licenses to my EKS Anywhere clusters?**
+
+Reference the [documentation]({{< relref "../clustermgmt/support/cluster-license" >}}) for instructions on how to apply licenses your EKS Anywhere clusters.
+
+**11. Is there an option to pay for subscriptions upfront?**
 
 If you need to pay upfront for subscriptions, please contact your AWS account team.
 
-**10. Is there a free-trial option for subscriptions?**
+**12. Is there a free-trial option for subscriptions?**
 
 To request a free-trial, please contact your AWS account team.
-
-**11. Can I share access to curated packages with other AWS accounts?**
-
-Yes, reference the [documentation]({{< relref "../clustermgmt/support/share-packages" >}}) for instructions on how to share access to curated packages with other AWS accounts in your organization.
