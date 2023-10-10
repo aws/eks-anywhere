@@ -57,7 +57,14 @@ env:
     EKSA_CLOUDSTACK_B64ENCODED_SECRET: "cloudstack_ci_beta_connection:b64_encoded_secret"
     T_CLOUDSTACK_POD_CIDR: "cloudstack_ci_beta_connection:pod_cidr"
     T_CLOUDSTACK_SERVICE_CIDR: "cloudstack_ci_beta_connection:service_cidr"
+    T_IRSA_S3_BUCKET: "etcd-encryption:irsa_s3_bucket"
+    T_KMS_IAM_ROLE: "etcd-encryption:kms_iam_role_arn"
+    T_KMS_IMAGE: "etcd-encryption:kms_image"
+    T_KMS_KEY_ARN: "etcd-encryption:kms_key_arn"
+    T_KMS_KEY_REGION: "etcd-encryption:region"
+    T_KMS_SOCKET: "etcd-encryption:socket"
     T_CLOUDSTACK_SSH_AUTHORIZED_KEY: "vsphere_ci_beta_connection:ssh_authorized_key"
+    T_SSH_PRIVATE_KEY: "vsphere_ci_beta_connection:base64_encoded_ssh_private_key"
 phases:
   pre_build:
     commands:

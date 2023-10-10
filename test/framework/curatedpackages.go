@@ -32,9 +32,9 @@ func WithPackageConfig(t *testing.T, bundleURI, chartName, chartURI,
 }
 
 const (
-	eksaPackagesRegion    = "EKSA_AWS_SECRET_ACCESS_KEY"
+	eksaPackagesSecretKey = "EKSA_AWS_SECRET_ACCESS_KEY"
 	eksaPackagesAccessKey = "EKSA_AWS_ACCESS_KEY_ID"
-	eksaPackagesSecretKey = "EKSA_AWS_REGION"
+	eksaPackagesRegion    = "EKSA_AWS_REGION"
 	route53AccessKey      = "ROUTE53_ACCESS_KEY_ID"
 	route53SecretKey      = "ROUTE53_SECRET_ACCESS_KEY"
 	route53Region         = "ROUTE53_REGION"

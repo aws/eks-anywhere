@@ -98,6 +98,11 @@ func (e *E2ESession) setup(regex string) error {
 		return err
 	}
 
+	err = e.setupEtcdEncryption(regex)
+	if err != nil {
+		return err
+	}
+
 	err = e.setupVSphereEnv(regex)
 	if err != nil {
 		return err

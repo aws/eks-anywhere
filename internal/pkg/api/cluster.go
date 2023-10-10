@@ -286,3 +286,28 @@ func WithWorkerNodeGroup(name string, fillers ...WorkerNodeGroupFiller) ClusterF
 		c.Spec.WorkerNodeGroupConfigurations[position] = *nodeGroup
 	}
 }
+
+// WithPodIamFiller configures pod IAM config to enable IRSA.
+func WithPodIamFiller(issuerURL string) ClusterFiller {
+	return func(c *anywherev1.Cluster) {
+		c.Spec.PodIAMConfig = &anywherev1.PodIAMConfig{
+			ServiceAccountIssuer: issuerURL,
+		}
+	}
+}
+
+// WithEtcdEncryptionFiller configures EtcdEncyption on the cluster.
+func WithEtcdEncryptionFiller(kms *anywherev1.KMS, resources []string) ClusterFiller {
+	return func(c *anywherev1.Cluster) {
+		c.Spec.EtcdEncryption = &[]anywherev1.EtcdEncryption{
+			{
+				Providers: []anywherev1.EtcdEncryptionProvider{
+					{
+						KMS: kms,
+					},
+				},
+				Resources: resources,
+			},
+		}
+	}
+}

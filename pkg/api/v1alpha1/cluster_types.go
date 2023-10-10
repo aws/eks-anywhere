@@ -3,6 +3,7 @@ package v1alpha1
 import (
 	"fmt"
 	"net"
+	"reflect"
 	"strings"
 
 	corev1 "k8s.io/api/core/v1"
@@ -188,6 +189,9 @@ func (n *Cluster) Equal(o *Cluster) bool {
 		return false
 	}
 	if !n.Spec.EksaVersion.Equal(o.Spec.EksaVersion) {
+		return false
+	}
+	if !reflect.DeepEqual(n.Spec.EtcdEncryption, o.Spec.EtcdEncryption) {
 		return false
 	}
 
