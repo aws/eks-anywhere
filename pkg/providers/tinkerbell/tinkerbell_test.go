@@ -153,8 +153,8 @@ func TestGenerateDeploymentFileWithMachineConfigOSImageExternalEtcd(t *testing.T
 		t.Fatalf("failed to generate cluster api spec contents: %v", err)
 	}
 
-	test.AssertContentToFile(t, string(cp), "testdata/expected_results_cluster_tinkerbell_cp_awsiam.yaml")
-	test.AssertContentToFile(t, string(md), "testdata/expected_results_cluster_tinkerbell_md.yaml")
+	test.AssertContentToFile(t, string(cp), "testdata/expected_results_cp_template.yaml")
+	test.AssertContentToFile(t, string(md), "testdata/expected_results_md_template.yaml")
 }
 
 func TestTinkerbellProviderWithExternalEtcdFail(t *testing.T) {
@@ -287,8 +287,8 @@ func TestGenerateDeploymentFileWithMachineConfigOSImage(t *testing.T) {
 		t.Fatalf("failed to generate cluster api spec contents: %v", err)
 	}
 
-	test.AssertContentToFile(t, string(cp), "testdata/expected_results_cluster_tinkerbell_cp_awsiam.yaml")
-	test.AssertContentToFile(t, string(md), "testdata/expected_results_cluster_tinkerbell_md.yaml")
+	test.AssertContentToFile(t, string(cp), "testdata/expected_results_cp_template.yaml")
+	test.AssertContentToFile(t, string(md), "testdata/expected_results_md_template.yaml")
 }
 
 func TestGenerateDeploymentFileWithMachineConfigOSImageError(t *testing.T) {
