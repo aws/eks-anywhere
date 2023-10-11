@@ -1914,7 +1914,7 @@ func TestTinkerbellKubernetes128SingleNodeSkipPowerActions(t *testing.T) {
 }
 
 func TestTinkerbellKubernetes128UbuntuControlPlaneScaleUp(t *testing.T) {
-	provider := framework.NewTinkerbell(t, framework.WithUbuntu127Tinkerbell())
+	provider := framework.NewTinkerbell(t, framework.WithUbuntu128Tinkerbell())
 	test := framework.NewClusterE2ETest(
 		t,
 		provider,
