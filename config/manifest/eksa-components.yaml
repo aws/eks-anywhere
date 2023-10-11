@@ -5745,6 +5745,8 @@ spec:
                 type: object
               osFamily:
                 type: string
+              osImageURL:
+                type: string
               templateRef:
                 properties:
                   kind:
@@ -5771,6 +5773,7 @@ spec:
             required:
             - hardwareSelector
             - osFamily
+            - osImageURL
             type: object
           status:
             description: TinkerbellMachineConfigStatus defines the observed state

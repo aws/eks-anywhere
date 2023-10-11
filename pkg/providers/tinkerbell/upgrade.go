@@ -145,16 +145,16 @@ func (p *Provider) validateAvailableHardwareForUpgrade(ctx context.Context, curr
 	clusterSpecValidator := NewClusterSpecValidator(
 		HardwareSatisfiesOnlyOneSelectorAssertion(p.catalogue),
 	)
-
-	rollingUpgrade := false
-	if currentSpec.Cluster.Spec.KubernetesVersion != newClusterSpec.Cluster.Spec.KubernetesVersion ||
-		currentSpec.Bundles.Spec.Number != newClusterSpec.Bundles.Spec.Number {
-		clusterSpecValidator.Register(ExtraHardwareAvailableAssertionForRollingUpgrade(p.catalogue))
-		rollingUpgrade = true
-	}
+	eksaVersionUpgrade := currentSpec.Bundles.Spec.Number != newClusterSpec.Bundles.Spec.Number
 
 	currentTinkerbellSpec := NewClusterSpec(currentSpec, currentSpec.TinkerbellMachineConfigs, currentSpec.TinkerbellDatacenter)
-	clusterSpecValidator.Register(AssertionsForScaleUpDown(p.catalogue, &ValidatableTinkerbellClusterSpec{currentTinkerbellSpec}, rollingUpgrade))
+	rollingUpgrade := p.isRollingUpgrade(currentSpec, newClusterSpec)
+	currentCluster := &ValidatableTinkerbellClusterSpec{currentTinkerbellSpec}
+	if rollingUpgrade || eksaVersionUpgrade {
+		clusterSpecValidator.Register(ExtraHardwareAvailableAssertionForRollingUpgrade(p.catalogue, currentCluster, eksaVersionUpgrade))
+	}
+	// ScaleUpDown should not be supported in case of either rolling upgrade or eksa version upgrade.
+	clusterSpecValidator.Register(AssertionsForScaleUpDown(p.catalogue, currentCluster, rollingUpgrade || eksaVersionUpgrade))
 
 	tinkerbellClusterSpec := NewClusterSpec(newClusterSpec, p.machineConfigs, p.datacenterConfig)
 
@@ -369,6 +369,35 @@ func (p *Provider) isScaleUpDown(oldCluster *v1alpha1.Cluster, newCluster *v1alp
 	}
 
 	return false
+}
+
+func (p *Provider) isRollingUpgrade(currentSpec, newClusterSpec *cluster.Spec) bool {
+	if currentSpec.Cluster.Spec.KubernetesVersion != newClusterSpec.Cluster.Spec.KubernetesVersion {
+		return true
+	}
+	currentWNGSwithK8sVersion := WorkerNodeGroupWithK8sVersion(currentSpec)
+	desiredWNGwithK8sVersion := WorkerNodeGroupWithK8sVersion(newClusterSpec)
+	for wngName, K8sVersion := range desiredWNGwithK8sVersion {
+		currentWngK8sVersion, ok := currentWNGSwithK8sVersion[wngName]
+		if ok && (currentWngK8sVersion != K8sVersion) {
+			return true
+		}
+	}
+	return false
+}
+
+// WorkerNodeGroupWithK8sVersion maps each worker node group configurations in s to its K8s version.
+func WorkerNodeGroupWithK8sVersion(spec *cluster.Spec) map[string]v1alpha1.KubernetesVersion {
+	WNGwithK8sVersion := make(map[string]v1alpha1.KubernetesVersion)
+	K8sVersion := spec.Cluster.Spec.KubernetesVersion
+	for _, wng := range spec.Cluster.Spec.WorkerNodeGroupConfigurations {
+		mdName := fmt.Sprintf("%s-%s", spec.Cluster.Name, wng.Name)
+		if wng.KubernetesVersion != nil {
+			K8sVersion = *wng.KubernetesVersion
+		}
+		WNGwithK8sVersion[mdName] = K8sVersion
+	}
+	return WNGwithK8sVersion
 }
 
 func (p *Provider) validateMachineCfg(ctx context.Context, cluster *types.Cluster, newConfig *v1alpha1.TinkerbellMachineConfig, clusterSpec *cluster.Spec) error {

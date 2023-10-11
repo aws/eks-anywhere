@@ -2,6 +2,7 @@ package tinkerbell_test
 
 import (
 	"errors"
+	"fmt"
 	"net"
 	"testing"
 	"time"
@@ -117,6 +118,42 @@ func TestAssertMachineConfigNamespaceMatchesDatacenterConfig_Different(t *testin
 
 	err := tinkerbell.AssertMachineConfigNamespaceMatchesDatacenterConfig(clusterSpec)
 	g.Expect(err).ToNot(gomega.Succeed())
+}
+
+func TestAssertMachineConfigOSImageURL_Error(t *testing.T) {
+	g := gomega.NewWithT(t)
+	builder := NewDefaultValidClusterSpecBuilder()
+	clusterSpec := builder.Build()
+	clusterSpec.Spec.Cluster.Spec.ExternalEtcdConfiguration = nil
+	clusterSpec.DatacenterConfig.Spec.OSImageURL = "test-url"
+	clusterSpec.MachineConfigs[builder.ControlPlaneMachineName].Spec.OSImageURL = "test-url"
+	err := tinkerbell.AssertOSImageURL(clusterSpec)
+	g.Expect(err).ToNot(gomega.Succeed())
+}
+
+func TestAssertMachineConfigOSImageURLNotSpecified_Error(t *testing.T) {
+	g := gomega.NewWithT(t)
+	builder := NewDefaultValidClusterSpecBuilder()
+	clusterSpec := builder.Build()
+	clusterSpec.DatacenterConfig.Spec.OSImageURL = ""
+	// set OsImageURL at machineConfig level but not for all machine configs
+	clusterSpec.MachineConfigs[builder.ControlPlaneMachineName].Spec.OSImageURL = "test-url"
+	err := tinkerbell.AssertOSImageURL(clusterSpec)
+	g.Expect(err).ToNot(gomega.Succeed())
+}
+
+func TestAssertMachineConfigOSImageURLSpecified_Succeed(t *testing.T) {
+	g := gomega.NewWithT(t)
+	builder := NewDefaultValidClusterSpecBuilder()
+	clusterSpec := builder.Build()
+	clusterSpec.Spec.Cluster.Spec.ExternalEtcdConfiguration = nil
+	clusterSpec.DatacenterConfig.Spec.OSImageURL = ""
+	// set OsImageURL at machineConfig level but not for all machine configs
+	clusterSpec.MachineConfigs[builder.ControlPlaneMachineName].Spec.OSImageURL = "test-url"
+	clusterSpec.MachineConfigs[builder.ExternalEtcdMachineName].Spec.OSImageURL = "test-url"
+	clusterSpec.MachineConfigs[builder.WorkerNodeGroupMachineName].Spec.OSImageURL = "test-url"
+	err := tinkerbell.AssertOSImageURL(clusterSpec)
+	g.Expect(err).To(gomega.Succeed())
 }
 
 func TestAssertEtcdMachineRefExists_Exists(t *testing.T) {
@@ -480,6 +517,27 @@ func TestValidatableClusterWorkerNodeGroupConfigs(t *testing.T) {
 	g.Expect(workerConfigs[0].Replicas).To(gomega.Equal(1))
 }
 
+func TestValidatableClusterClusterK8sVersion(t *testing.T) {
+	g := gomega.NewWithT(t)
+	clusterSpec := NewDefaultValidClusterSpecBuilder().Build()
+	clusterSpec.Cluster.Spec.KubernetesVersion = eksav1alpha1.Kube125
+	validatableCluster := &tinkerbell.ValidatableTinkerbellClusterSpec{clusterSpec}
+
+	g.Expect(validatableCluster.ClusterK8sVersion()).To(gomega.Equal(eksav1alpha1.Kube125))
+}
+
+func TestValidatableClusterWorkerNodeGroupK8sVersion(t *testing.T) {
+	g := gomega.NewWithT(t)
+	clusterSpec := NewDefaultValidClusterSpecBuilder().Build()
+	kube125 := eksav1alpha1.Kube125
+	clusterSpec.WorkerNodeGroupConfigurations()[0].KubernetesVersion = &kube125
+	validatableCluster := &tinkerbell.ValidatableTinkerbellClusterSpec{clusterSpec}
+	wngK8sVersion := validatableCluster.WorkerNodeGroupK8sVersion()
+	mdName := fmt.Sprintf("%s-%s", clusterSpec.Cluster.Name, clusterSpec.WorkerNodeGroupConfigurations()[0].Name)
+
+	g.Expect(wngK8sVersion[mdName]).To(gomega.Equal(kube125))
+}
+
 func TestValidatableTinkerbellCAPIControlPlaneReplicaCount(t *testing.T) {
 	g := gomega.NewWithT(t)
 
@@ -497,6 +555,24 @@ func TestValidatableTinkerbellCAPIWorkerNodeGroupConfigs(t *testing.T) {
 
 	g.Expect(workerConfigs[0].MachineDeploymentName).To(gomega.Equal("cluster-worker-node-group-0"))
 	g.Expect(workerConfigs[0].Replicas).To(gomega.Equal(1))
+}
+
+func TestValidateTinkerbellCAPIClusterK8sVersion(t *testing.T) {
+	g := gomega.NewWithT(t)
+	validatableCAPI := validatableTinkerbellCAPI()
+	validatableCAPI.KubeadmControlPlane.Spec.Version = "v1.27.5-eks-1-27-12"
+	k8sVersion := validatableCAPI.ClusterK8sVersion()
+	kube127 := eksav1alpha1.Kube127
+	g.Expect(k8sVersion).To(gomega.Equal(kube127))
+}
+
+func TestValidateTinkerbellCAPIWorkerNodeK8sVersion(t *testing.T) {
+	g := gomega.NewWithT(t)
+	validatableCAPI := validatableTinkerbellCAPI()
+	wngK8sVersion := validatableCAPI.WorkerNodeGroupK8sVersion()
+	mdName := validatableCAPI.WorkerGroups[0].MachineDeployment.Name
+	kube121 := eksav1alpha1.Kube121
+	g.Expect(wngK8sVersion[mdName]).To(gomega.Equal(kube121))
 }
 
 func TestAssertionsForScaleUpDown_Success(t *testing.T) {
@@ -582,6 +658,103 @@ func TestAssertionsForScaleUpDown_AddWorkerSuccess(t *testing.T) {
 	newClusterSpec.Spec.Cluster.Spec.ExternalEtcdConfiguration = nil
 
 	g.Expect(assertion(newClusterSpec)).To(gomega.Succeed())
+}
+
+func TestAssertionsForRollingUpgrade_CPOnly(t *testing.T) {
+	g := gomega.NewWithT(t)
+	clusterSpec := NewDefaultValidClusterSpecBuilder().Build()
+	clusterSpec.Spec.Cluster.Spec.ExternalEtcdConfiguration = nil
+	clusterSpec.Cluster.Spec.KubernetesVersion = eksav1alpha1.Kube124
+	catalogue := hardware.NewCatalogue()
+	_ = catalogue.InsertHardware(&v1alpha1.Hardware{ObjectMeta: metav1.ObjectMeta{
+		Labels: map[string]string{"type": "cp"},
+	}})
+
+	kube124 := eksav1alpha1.Kube124
+	clusterSpec.WorkerNodeGroupConfigurations()[0].KubernetesVersion = &kube124
+	assertion := tinkerbell.ExtraHardwareAvailableAssertionForRollingUpgrade(catalogue, &tinkerbell.ValidatableTinkerbellClusterSpec{clusterSpec}, false)
+	newClusterSpec := NewDefaultValidClusterSpecBuilder().Build()
+	newClusterSpec.Spec.Cluster.Spec.ExternalEtcdConfiguration = nil
+	newClusterSpec.WorkerNodeGroupConfigurations()[0].KubernetesVersion = &kube124
+	newClusterSpec.Cluster.Spec.KubernetesVersion = eksav1alpha1.Kube125
+	g.Expect(assertion(newClusterSpec)).To(gomega.Succeed())
+}
+
+func TestAssertionsForRollingUpgrade_WorkerOnly(t *testing.T) {
+	g := gomega.NewWithT(t)
+	clusterSpec := NewDefaultValidClusterSpecBuilder().Build()
+	clusterSpec.Spec.Cluster.Spec.ExternalEtcdConfiguration = nil
+	kube124 := eksav1alpha1.Kube124
+	clusterSpec.Cluster.Spec.KubernetesVersion = kube124
+	catalogue := hardware.NewCatalogue()
+	_ = catalogue.InsertHardware(&v1alpha1.Hardware{ObjectMeta: metav1.ObjectMeta{
+		Labels: map[string]string{"type": "worker"},
+	}})
+
+	kube125 := eksav1alpha1.Kube125
+	clusterSpec.WorkerNodeGroupConfigurations()[0].KubernetesVersion = &kube124
+	assertion := tinkerbell.ExtraHardwareAvailableAssertionForRollingUpgrade(catalogue, &tinkerbell.ValidatableTinkerbellClusterSpec{clusterSpec}, false)
+	newClusterSpec := NewDefaultValidClusterSpecBuilder().Build()
+	newClusterSpec.Spec.Cluster.Spec.ExternalEtcdConfiguration = nil
+	newClusterSpec.Cluster.Spec.KubernetesVersion = kube124
+	newClusterSpec.WorkerNodeGroupConfigurations()[0].KubernetesVersion = &kube125
+	g.Expect(assertion(newClusterSpec)).To(gomega.Succeed())
+}
+
+func TestAssertionsForRollingUpgrade_BothCPWorker(t *testing.T) {
+	g := gomega.NewWithT(t)
+	clusterSpec := NewDefaultValidClusterSpecBuilder().Build()
+	clusterSpec.Spec.Cluster.Spec.ExternalEtcdConfiguration = nil
+	kube124 := eksav1alpha1.Kube124
+	clusterSpec.Cluster.Spec.KubernetesVersion = kube124
+	catalogue := hardware.NewCatalogue()
+	_ = catalogue.InsertHardware(&v1alpha1.Hardware{ObjectMeta: metav1.ObjectMeta{
+		Labels: map[string]string{"type": "cp"},
+	}})
+	_ = catalogue.InsertHardware(&v1alpha1.Hardware{ObjectMeta: metav1.ObjectMeta{
+		Labels: map[string]string{"type": "worker"},
+	}})
+
+	assertion := tinkerbell.ExtraHardwareAvailableAssertionForRollingUpgrade(catalogue, &tinkerbell.ValidatableTinkerbellClusterSpec{clusterSpec}, false)
+	newClusterSpec := NewDefaultValidClusterSpecBuilder().Build()
+	kube125 := eksav1alpha1.Kube125
+	newClusterSpec.Spec.Cluster.Spec.ExternalEtcdConfiguration = nil
+	newClusterSpec.Cluster.Spec.KubernetesVersion = kube125
+	g.Expect(assertion(newClusterSpec)).To(gomega.Succeed())
+}
+
+func TestAssertionsForRollingUpgrade_CPError(t *testing.T) {
+	g := gomega.NewWithT(t)
+	clusterSpec := NewDefaultValidClusterSpecBuilder().Build()
+	clusterSpec.Spec.Cluster.Spec.ExternalEtcdConfiguration = nil
+	kube124 := eksav1alpha1.Kube124
+	clusterSpec.Cluster.Spec.KubernetesVersion = kube124
+	catalogue := hardware.NewCatalogue()
+
+	assertion := tinkerbell.ExtraHardwareAvailableAssertionForRollingUpgrade(catalogue, &tinkerbell.ValidatableTinkerbellClusterSpec{clusterSpec}, false)
+	newClusterSpec := NewDefaultValidClusterSpecBuilder().Build()
+	newClusterSpec.Spec.Cluster.Spec.ExternalEtcdConfiguration = nil
+	newClusterSpec.WorkerNodeGroupConfigurations()[0].KubernetesVersion = &kube124
+	newClusterSpec.Cluster.Spec.KubernetesVersion = eksav1alpha1.Kube125
+	g.Expect(assertion(newClusterSpec)).To(gomega.MatchError(gomega.ContainSubstring("minimum hardware count not met for selector '{\"type\":\"cp\"}'")))
+}
+
+func TestAssertionsForRollingUpgrade_WorkerError(t *testing.T) {
+	g := gomega.NewWithT(t)
+	clusterSpec := NewDefaultValidClusterSpecBuilder().Build()
+	clusterSpec.Spec.Cluster.Spec.ExternalEtcdConfiguration = nil
+	kube124 := eksav1alpha1.Kube124
+	kube125 := eksav1alpha1.Kube125
+	clusterSpec.Cluster.Spec.KubernetesVersion = kube125
+	clusterSpec.WorkerNodeGroupConfigurations()[0].KubernetesVersion = &kube124
+	catalogue := hardware.NewCatalogue()
+
+	assertion := tinkerbell.ExtraHardwareAvailableAssertionForRollingUpgrade(catalogue, &tinkerbell.ValidatableTinkerbellClusterSpec{clusterSpec}, false)
+	newClusterSpec := NewDefaultValidClusterSpecBuilder().Build()
+	newClusterSpec.Spec.Cluster.Spec.ExternalEtcdConfiguration = nil
+	newClusterSpec.WorkerNodeGroupConfigurations()[0].KubernetesVersion = &kube125
+	newClusterSpec.Cluster.Spec.KubernetesVersion = kube125
+	g.Expect(assertion(newClusterSpec)).To(gomega.MatchError(gomega.ContainSubstring("minimum hardware count not met for selector '{\"type\":\"worker\"}'")))
 }
 
 func TestAssertionsForScaleUpDown_ExternalEtcdErrorFails(t *testing.T) {

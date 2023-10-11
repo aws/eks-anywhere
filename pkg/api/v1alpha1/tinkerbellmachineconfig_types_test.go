@@ -66,6 +66,13 @@ func TestTinkerbellMachineConfigValidateFail(t *testing.T) {
 			),
 			expectedErr: "HostOSConfiguration is invalid for TinkerbellMachineConfig tinkerbellmachineconfig: NTPConfiguration.Servers can not be empty",
 		},
+		{
+			name: "Invalid OS Image URL",
+			machineConfig: CreateTinkerbellMachineConfig(func(mc *TinkerbellMachineConfig) {
+				mc.Spec.OSImageURL = "test"
+			}),
+			expectedErr: "parsing osImageOverride: parse \"test\": invalid URI for request",
+		},
 	}
 
 	for _, tc := range tests {

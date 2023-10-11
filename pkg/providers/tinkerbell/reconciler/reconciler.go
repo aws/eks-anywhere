@@ -367,31 +367,18 @@ func (r *Reconciler) ValidateHardware(ctx context.Context, log logr.Logger, tink
 
 	switch o {
 	case K8sVersionUpgradeOperation:
-		v.Register(tinkerbell.ExtraHardwareAvailableAssertionForRollingUpgrade(kubeReader.GetCatalogue()))
-	case NewClusterOperation:
-		v.Register(tinkerbell.MinimumHardwareAvailableAssertionForCreate(kubeReader.GetCatalogue()))
-	case NoChange:
-		currentKCP, err := controller.GetKubeadmControlPlane(ctx, r.client, tinkerbellScope.ClusterSpec.Cluster)
+		validatableCAPI, err := r.getValidatableCAPI(ctx, tinkerbellScope.ClusterSpec.Cluster)
 		if err != nil {
 			return controller.Result{}, err
 		}
-		var wgs []*clusterapi.WorkerGroup[*tinkerbellv1.TinkerbellMachineTemplate]
-		for _, wnc := range tinkerbellScope.ClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
-			md := &clusterv1.MachineDeployment{}
-			mdName := clusterapi.MachineDeploymentName(tinkerbellScope.ClusterSpec.Cluster, wnc)
-			key := types.NamespacedName{Namespace: constants.EksaSystemNamespace, Name: mdName}
-			err := r.client.Get(ctx, key, md)
-			if err == nil {
-				wgs = append(wgs, &clusterapi.WorkerGroup[*tinkerbellv1.TinkerbellMachineTemplate]{
-					MachineDeployment: md,
-				})
-			} else if !apierrors.IsNotFound(err) {
-				return controller.Result{}, err
-			}
-		}
-		validatableCAPI := &tinkerbell.ValidatableTinkerbellCAPI{
-			KubeadmControlPlane: currentKCP,
-			WorkerGroups:        wgs,
+		// eksa version upgrade cannot be triggered from controller, so set it to false.
+		v.Register(tinkerbell.ExtraHardwareAvailableAssertionForRollingUpgrade(kubeReader.GetCatalogue(), validatableCAPI, false))
+	case NewClusterOperation:
+		v.Register(tinkerbell.MinimumHardwareAvailableAssertionForCreate(kubeReader.GetCatalogue()))
+	case NoChange:
+		validatableCAPI, err := r.getValidatableCAPI(ctx, tinkerbellScope.ClusterSpec.Cluster)
+		if err != nil {
+			return controller.Result{}, err
 		}
 		v.Register(tinkerbell.AssertionsForScaleUpDown(kubeReader.GetCatalogue(), validatableCAPI, false))
 	}
@@ -411,6 +398,32 @@ func (r *Reconciler) ValidateHardware(ctx context.Context, log logr.Logger, tink
 	}
 
 	return controller.Result{}, nil
+}
+
+func (r *Reconciler) getValidatableCAPI(ctx context.Context, cluster *anywherev1.Cluster) (*tinkerbell.ValidatableTinkerbellCAPI, error) {
+	currentKCP, err := controller.GetKubeadmControlPlane(ctx, r.client, cluster)
+	if err != nil {
+		return nil, err
+	}
+	var wgs []*clusterapi.WorkerGroup[*tinkerbellv1.TinkerbellMachineTemplate]
+	for _, wnc := range cluster.Spec.WorkerNodeGroupConfigurations {
+		md := &clusterv1.MachineDeployment{}
+		mdName := clusterapi.MachineDeploymentName(cluster, wnc)
+		key := types.NamespacedName{Namespace: constants.EksaSystemNamespace, Name: mdName}
+		err := r.client.Get(ctx, key, md)
+		if err == nil {
+			wgs = append(wgs, &clusterapi.WorkerGroup[*tinkerbellv1.TinkerbellMachineTemplate]{
+				MachineDeployment: md,
+			})
+		} else if !apierrors.IsNotFound(err) {
+			return nil, err
+		}
+	}
+	validatableCAPI := &tinkerbell.ValidatableTinkerbellCAPI{
+		KubeadmControlPlane: currentKCP,
+		WorkerGroups:        wgs,
+	}
+	return validatableCAPI, nil
 }
 
 // ValidateRufioMachines checks to ensure all the Rufio machines condition contactable is True.

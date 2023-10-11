@@ -2,6 +2,7 @@ package v1alpha1
 
 import (
 	"fmt"
+	"net/url"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -89,6 +90,12 @@ func validateTinkerbellMachineConfig(config *TinkerbellMachineConfig) error {
 			RedHat,
 			Bottlerocket,
 		)
+	}
+
+	if config.Spec.OSImageURL != "" {
+		if _, err := url.ParseRequestURI(config.Spec.OSImageURL); err != nil {
+			return fmt.Errorf("parsing osImageOverride: %v", err)
+		}
 	}
 
 	if len(config.Spec.Users) == 0 {
