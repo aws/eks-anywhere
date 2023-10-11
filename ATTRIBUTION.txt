@@ -167,9 +167,6 @@ https://github.com/spf13/cobra
 ** github.com/tinkerbell/cluster-api-provider-tinkerbell/api/v1beta1; version v0.1.1-0.20220615214617-9e9c2a397288 --
 https://github.com/tinkerbell/cluster-api-provider-tinkerbell
 
-** github.com/tinkerbell/rufio/api/v1alpha1; version v0.3.0 --
-https://github.com/tinkerbell/rufio
-
 ** github.com/tinkerbell/tink/pkg/apis/core/v1alpha1; version v0.8.0 --
 https://github.com/tinkerbell/tink
 
@@ -199,6 +196,9 @@ https://gopkg.in/ini.v1
 
 ** gopkg.in/yaml.v2; version v2.4.0 --
 https://gopkg.in/yaml.v2
+
+** helm.sh/helm/v3; version v3.11.3 --
+https://github.com/helm/helm
 
 ** k8s.io/api; version v0.26.2 --
 https://github.com/kubernetes/api
@@ -1646,6 +1646,10 @@ Copyright (c) 2014-2019 TSUYUSATO Kitsune
 
 ** github.com/Masterminds/semver; version v1.5.0 --
 https://github.com/Masterminds/semver
+Copyright (C) 2014-2019, Matt Butcher and Matt Farina
+
+** github.com/Masterminds/semver/v3; version v3.2.0 --
+https://github.com/Masterminds/semver/v3
 Copyright (C) 2014-2019, Matt Butcher and Matt Farina
 
 ** github.com/mitchellh/copystructure; version v1.2.0 --
