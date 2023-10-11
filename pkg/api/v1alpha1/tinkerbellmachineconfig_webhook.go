@@ -45,6 +45,8 @@ var _ webhook.Defaulter = &TinkerbellMachineConfig{}
 func (r *TinkerbellMachineConfig) Default() {
 	tinkerbellmachineconfiglog.Info("Setting up Tinkerbell Machine Config defaults", klog.KObj(r))
 	r.SetDefaults()
+	tinkerbellmachineconfiglog.Info("Normalize SSHKeys by removing comments from the keys", klog.KObj(r))
+	normalizeSSHKeys(r)
 }
 
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
