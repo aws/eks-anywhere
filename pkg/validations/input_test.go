@@ -111,3 +111,46 @@ func TestValidateClusterNameArg(t *testing.T) {
 		})
 	}
 }
+
+func TestValidateClusterNameFromCommandAndConfig(t *testing.T) {
+	tests := []struct {
+		name              string
+		args              []string
+		clusterNameConfig string
+		expectedError     error
+	}{
+		{
+			name:              "Success cluster name match",
+			args:              []string{"test-cluster"},
+			clusterNameConfig: "test-cluster",
+			expectedError:     nil,
+		},
+		{
+			name:              "Success empty Arguments",
+			args:              []string{},
+			clusterNameConfig: "test-cluster",
+			expectedError:     nil,
+		},
+		{
+			name:              "Failure invalid cluster name",
+			args:              []string{"123test-Cluster"},
+			clusterNameConfig: "test-cluster",
+			expectedError:     errors.New("please provide a valid <cluster-name>"),
+		},
+		{
+			name:              "Failure cluster name not match",
+			args:              []string{"test-cluster-1"},
+			clusterNameConfig: "test-cluster",
+			expectedError:     errors.New("please make sure cluster name provided in command matches with cluster name in config file"),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(tt *testing.T) {
+			gotError := validations.ValidateClusterNameFromCommandAndConfig(tc.args, tc.clusterNameConfig)
+			if !reflect.DeepEqual(tc.expectedError, gotError) {
+				t.Errorf("\n%v got Error = %v, want Error %v", tc.name, gotError, tc.expectedError)
+			}
+		})
+	}
+}
