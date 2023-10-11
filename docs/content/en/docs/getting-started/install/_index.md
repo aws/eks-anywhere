@@ -67,7 +67,7 @@ Install the latest release of `eksctl`.
 The EKS Anywhere plugin requires `eksctl` version 0.66.0 or newer.
 
 ```bash
-curl "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" \
+curl "https://github.com/eksctl-io/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" \
     --silent --location \
     | tar xz -C /tmp
 sudo install -m 0755 /tmp/eksctl /usr/local/bin/eksctl
