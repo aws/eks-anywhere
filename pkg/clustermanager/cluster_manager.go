@@ -1359,7 +1359,7 @@ func (c *ClusterManager) resumeReconcileForCluster(ctx context.Context, clusterC
 }
 
 func (c *ClusterManager) applyResource(ctx context.Context, cluster *types.Cluster, resourcesSpec []byte) error {
-	err := c.clusterClient.ApplyKubeSpecFromBytesForce(ctx, cluster, resourcesSpec)
+	err := c.clusterClient.ApplyKubeSpecFromBytes(ctx, cluster, resourcesSpec)
 	if err != nil {
 		return fmt.Errorf("applying eks-a spec: %v", err)
 	}
