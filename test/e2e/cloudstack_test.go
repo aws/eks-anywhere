@@ -5242,3 +5242,24 @@ func TestCloudStackWorkloadClusterOIDCAuthGithubFluxAPI(t *testing.T) {
 	test.ManagementCluster.StopIfFailed()
 	test.DeleteManagementCluster()
 }
+
+func TestCloudStackKubernetes124EtcdEncryption(t *testing.T) {
+	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat124())
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube124),
+			api.WithExternalEtcdTopology(1),
+			api.WithControlPlaneCount(1),
+		),
+		framework.WithPodIamConfig(),
+	)
+	test.GenerateClusterConfig()
+	test.CreateCluster()
+	test.PostClusterCreateEtcdEncryptionSetup()
+	test.UpgradeClusterWithNewConfig([]framework.ClusterE2ETestOpt{framework.WithEtcdEncrytion()})
+	test.StopIfFailed()
+	test.ValidateEtcdEncryption()
+	test.DeleteCluster()
+}

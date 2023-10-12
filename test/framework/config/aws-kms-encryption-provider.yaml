@@ -1,0 +1,71 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  annotations:
+    eks.amazonaws.com/audience: sts.amazonaws.com
+    eks.amazonaws.com/role-arn: {{ .kmsIamRole }}
+    eks.amazonaws.com/sts-regional-endpoints: "true"
+    eks.amazonaws.com/token-expiration: "86400"
+  name: {{ .serviceAccountName }}
+  namespace: kube-system
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  labels:
+    app: aws-encryption-provider
+  name: aws-encryption-provider
+  namespace: kube-system
+spec:
+  selector:
+    matchLabels:
+      app: aws-encryption-provider
+  template:
+    metadata:
+      labels:
+        app: aws-encryption-provider
+    spec:
+      containers:
+      - image: {{ .kmsImage }}
+        name: aws-encryption-provider
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "250m"
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+        command:
+        - /aws-encryption-provider
+        - --key={{ .kmsKeyArn }}
+        - --region={{ .kmsKeyRegion }}
+        - --listen={{ .kmsSocket }}
+        ports:
+        - containerPort: 8080
+          protocol: TCP
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+        volumeMounts:
+          - mountPath: /var/run/kmsplugin
+            name: var-run-kmsplugin
+          - mountPath: /root/.aws
+            name: aws-credentials
+      tolerations:
+      - key: "node-role.kubernetes.io/master"
+        effect: "NoSchedule"
+      - effect: NoSchedule
+        key: node-role.kubernetes.io/control-plane
+      nodeSelector:
+        node-role.kubernetes.io/control-plane: ""
+      serviceAccountName: {{ .serviceAccountName }}
+      volumes:
+      - hostPath:
+          path: /var/run/kmsplugin
+          type: DirectoryOrCreate
+        name: var-run-kmsplugin
+      - hostPath:
+          path: /etc/kubernetes/aws
+          type: DirectoryOrCreate
+        name: aws-credentials

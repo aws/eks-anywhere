@@ -1,0 +1,189 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: pod-identity-webhook
+  namespace: default
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: pod-identity-webhook
+  namespace: default
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - create
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - get
+  - update
+  - patch
+  resourceNames:
+  - "pod-identity-webhook"
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: pod-identity-webhook
+  namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: pod-identity-webhook
+subjects:
+- kind: ServiceAccount
+  name: pod-identity-webhook
+  namespace: default
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: pod-identity-webhook
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - serviceaccounts
+  verbs:
+  - get
+  - watch
+  - list
+- apiGroups:
+  - certificates.k8s.io
+  resources:
+  - certificatesigningrequests
+  verbs:
+  - create
+  - get
+  - list
+  - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: pod-identity-webhook
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: pod-identity-webhook
+subjects:
+- kind: ServiceAccount
+  name: pod-identity-webhook
+  namespace: default
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pod-identity-webhook
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pod-identity-webhook
+  template:
+    metadata:
+      labels:
+        app: pod-identity-webhook
+    spec:
+      serviceAccountName: pod-identity-webhook
+      containers:
+      - name: pod-identity-webhook
+        image: amazon/amazon-eks-pod-identity-webhook:latest
+        imagePullPolicy: Always
+        command:
+        - /webhook
+        - --in-cluster=false
+        - --namespace=default
+        - --service-name=pod-identity-webhook
+        - --annotation-prefix=eks.amazonaws.com
+        - --token-audience=sts.amazonaws.com
+        - --logtostderr
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "250m"
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+        volumeMounts:
+        - name: cert
+          mountPath: "/etc/webhook/certs"
+          readOnly: true
+      volumes:
+      - name: cert
+        secret:
+          secretName: pod-identity-webhook-cert
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: selfsigned
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: pod-identity-webhook
+  namespace: default
+spec:
+  secretName: pod-identity-webhook-cert
+  commonName: "pod-identity-webhook.default.svc"
+  dnsNames:
+  - "pod-identity-webhook"
+  - "pod-identity-webhook.default"
+  - "pod-identity-webhook.default.svc"
+  - "pod-identity-webhook.default.svc.local"
+  isCA: true
+  duration: 2160h # 90d
+  renewBefore: 360h # 15d
+  issuerRef:
+    name: selfsigned
+    kind: ClusterIssuer
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pod-identity-webhook
+  namespace: default
+  annotations:
+    prometheus.io/port: "443"
+    prometheus.io/scheme: "https"
+    prometheus.io/scrape: "true"
+spec:
+  ports:
+  - port: 443
+    targetPort: 443
+  selector:
+    app: pod-identity-webhook
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingWebhookConfiguration
+metadata:
+  name: pod-identity-webhook
+  namespace: default
+  annotations:
+    cert-manager.io/inject-ca-from: default/pod-identity-webhook
+webhooks:
+- name: pod-identity-webhook.amazonaws.com
+  failurePolicy: Ignore
+  clientConfig:
+    service:
+      name: pod-identity-webhook
+      namespace: default
+      path: "/mutate"
+  rules:
+  - operations: [ "CREATE" ]
+    apiGroups: [""]
+    apiVersions: ["v1"]
+    resources: ["pods"]
+  sideEffects: None
+  admissionReviewVersions: ["v1beta1"]
+---
