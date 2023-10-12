@@ -38,6 +38,7 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 		wantCondition       *anywherev1.Condition
 		externalEtcdCount   int
 		externalEtcdCluster *etcdv1.EtcdadmCluster
+		capiCluster         *clusterv1.Cluster
 	}{
 		{
 			name:                "kcp is nil",
@@ -429,6 +430,18 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 				Type:   anywherev1.ControlPlaneReadyCondition,
 				Status: "True",
 			},
+			capiCluster: &clusterv1.Cluster{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-cluster",
+					Namespace: constants.EksaSystemNamespace,
+				},
+				Spec: clusterv1.ClusterSpec{
+					ManagedExternalEtcdRef: &corev1.ObjectReference{
+						Kind: "EtcdadmCluster",
+						Name: fmt.Sprintf("%s-etcd", "test-cluster"),
+					},
+				},
+			},
 		},
 		{
 			name: "with external etcd not ready",
@@ -469,6 +482,82 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 				Message:  "Etcd is not ready",
 				Status:   "False",
 			},
+			capiCluster: &clusterv1.Cluster{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-cluster",
+					Namespace: constants.EksaSystemNamespace,
+				},
+				Spec: clusterv1.ClusterSpec{
+					ManagedExternalEtcdRef: &corev1.ObjectReference{
+						Kind: "EtcdadmCluster",
+						Name: fmt.Sprintf("%s-etcd", "test-cluster"),
+					},
+				},
+			},
+		},
+		{
+			name: "with external etcd, etcd not reconciled",
+			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
+				kcp.Status.Replicas = 3
+				kcp.Status.ReadyReplicas = 3
+				kcp.Status.UpdatedReplicas = 3
+
+				kcp.Status.Conditions = []clusterv1.Condition{
+					{
+						Type:   clusterv1.ReadyCondition,
+						Status: "True",
+					},
+				}
+			}),
+			controlPlaneCount: 3,
+			conditions: []anywherev1.Condition{
+				{
+					Type:   anywherev1.ControlPlaneInitializedCondition,
+					Status: "True",
+				},
+			},
+			externalEtcdCount:   1,
+			externalEtcdCluster: &etcdv1.EtcdadmCluster{},
+			wantCondition: &anywherev1.Condition{
+				Type:     anywherev1.ControlPlaneReadyCondition,
+				Reason:   anywherev1.ExternalEtcdNotAvailable,
+				Severity: clusterv1.ConditionSeverityInfo,
+				Message:  "Etcd cluster is not available",
+				Status:   "False",
+			},
+			capiCluster: &clusterv1.Cluster{},
+		},
+		{
+			name: "with external etcd, malformed etcd",
+			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
+				kcp.Status.Replicas = 3
+				kcp.Status.ReadyReplicas = 3
+				kcp.Status.UpdatedReplicas = 3
+
+				kcp.Status.Conditions = []clusterv1.Condition{
+					{
+						Type:   clusterv1.ReadyCondition,
+						Status: "True",
+					},
+				}
+			}),
+			controlPlaneCount: 3,
+			conditions: []anywherev1.Condition{
+				{
+					Type:   anywherev1.ControlPlaneInitializedCondition,
+					Status: "True",
+				},
+			},
+			externalEtcdCount:   1,
+			externalEtcdCluster: &etcdv1.EtcdadmCluster{},
+			wantCondition: &anywherev1.Condition{
+				Type:     anywherev1.ControlPlaneReadyCondition,
+				Reason:   anywherev1.ExternalEtcdNotAvailable,
+				Severity: clusterv1.ConditionSeverityInfo,
+				Message:  "Etcd cluster is not available",
+				Status:   "False",
+			},
+			capiCluster: &clusterv1.Cluster{},
 		},
 	}
 
@@ -497,22 +586,11 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 						Name: fmt.Sprintf("%s-etcd", cluster.Name),
 					},
 				}
-				capiCluster := &clusterv1.Cluster{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      cluster.Name,
-						Namespace: constants.EksaSystemNamespace,
-					},
-					Spec: clusterv1.ClusterSpec{
-						ManagedExternalEtcdRef: &corev1.ObjectReference{
-							Kind: "EtcdadmCluster",
-							Name: fmt.Sprintf("%s-etcd", cluster.Name),
-						},
-					},
-				}
+
 				tt.externalEtcdCluster.Name = fmt.Sprintf("%s-etcd", cluster.Name)
 				tt.externalEtcdCluster.Namespace = cluster.Namespace
 
-				objs = append(objs, capiCluster)
+				objs = append(objs, tt.capiCluster)
 				objs = append(objs, tt.externalEtcdCluster)
 			}
 
@@ -530,6 +608,43 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 			g.Expect(condition.Message).To(ContainSubstring(tt.wantCondition.Message))
 		})
 	}
+}
+
+func TestUpdateClusterStatusForControlPlaneError(t *testing.T) {
+	g := NewWithT(t)
+	cluster := &anywherev1.Cluster{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       anywherev1.ClusterKind,
+			APIVersion: anywherev1.GroupVersion.String(),
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "my-cluster",
+		},
+		Spec: anywherev1.ClusterSpec{
+			ExternalEtcdConfiguration: &anywherev1.ExternalEtcdConfiguration{
+				Count: 1,
+			},
+		},
+	}
+	capiCluster := &clusterv1.Cluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "my-cluster",
+			Namespace: constants.EksaSystemNamespace,
+		},
+		Spec: clusterv1.ClusterSpec{
+			ManagedExternalEtcdRef: &corev1.ObjectReference{
+				Kind: "EtcdadmCluster",
+				Name: fmt.Sprintf("%s-etcd", "test-cluster"),
+			},
+		},
+	}
+	objs := []runtime.Object{}
+	objs = append(objs, capiCluster)
+	objs = append(objs, &controlplanev1.KubeadmControlPlane{})
+	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
+
+	err := clusters.UpdateClusterStatusForControlPlane(context.Background(), client, cluster)
+	g.Expect(err).NotTo(BeNil())
 }
 
 func TestUpdateClusterStatusForWorkers(t *testing.T) {
