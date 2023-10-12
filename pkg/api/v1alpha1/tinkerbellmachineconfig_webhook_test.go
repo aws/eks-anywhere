@@ -1,6 +1,7 @@
 package v1alpha1_test
 
 import (
+	"fmt"
 	"testing"
 
 	. "github.com/onsi/gomega"
@@ -147,6 +148,38 @@ func TestTinkerbellMachineConfigDefaultOSFamily(t *testing.T) {
 	mOld.Default()
 	g := NewWithT(t)
 	g.Expect(mOld.Spec.OSFamily).To(Equal(v1alpha1.Bottlerocket))
+}
+
+func TestTinkerbellMachineConfigMutateSSHKey(t *testing.T) {
+	sshKey := "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGuWn+GtgUe/g85l4SqSsGCV56CXZzqktKX/hYAl7MwO"
+	mOld := v1alpha1.CreateTinkerbellMachineConfig(func(mc *v1alpha1.TinkerbellMachineConfig) {
+		mc.Spec.Users = []v1alpha1.UserConfiguration{
+			{
+				Name:              "user",
+				SshAuthorizedKeys: []string{fmt.Sprintf("%s abc@xyz.com", sshKey)},
+			},
+		}
+	})
+
+	mOld.Default()
+	g := NewWithT(t)
+	g.Expect(mOld.Spec.Users[0].SshAuthorizedKeys[0]).To(Equal(sshKey))
+}
+
+func TestTinkerbellMachineConfigMutateSSHKeyNotMutated(t *testing.T) {
+	sshKey := "ssh incorrect Key abc@xyz.com"
+	mOld := v1alpha1.CreateTinkerbellMachineConfig(func(mc *v1alpha1.TinkerbellMachineConfig) {
+		mc.Spec.Users = []v1alpha1.UserConfiguration{
+			{
+				Name:              "user",
+				SshAuthorizedKeys: []string{sshKey},
+			},
+		}
+	})
+
+	mOld.Default()
+	g := NewWithT(t)
+	g.Expect(mOld.Spec.Users[0].SshAuthorizedKeys[0]).To(Equal(sshKey))
 }
 
 func TestTinkerbellMachineConfigValidateUpdateFailUsers(t *testing.T) {

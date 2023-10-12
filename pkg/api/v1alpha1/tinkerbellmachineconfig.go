@@ -3,7 +3,9 @@ package v1alpha1
 import (
 	"fmt"
 	"net/url"
+	"strings"
 
+	"golang.org/x/crypto/ssh"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -113,4 +115,19 @@ func setTinkerbellMachineConfigDefaults(machineConfig *TinkerbellMachineConfig) 
 	if machineConfig.Spec.OSFamily == "" {
 		machineConfig.Spec.OSFamily = Bottlerocket
 	}
+}
+
+func normalizeSSHKeys(machineConfig *TinkerbellMachineConfig) {
+	_ = stripCommentsFromSSHKeys(machineConfig)
+}
+
+func stripCommentsFromSSHKeys(machine *TinkerbellMachineConfig) error {
+	public, _, _, _, err := ssh.ParseAuthorizedKey([]byte(machine.Spec.Users[0].SshAuthorizedKeys[0]))
+	if err != nil {
+		return err
+	}
+
+	machine.Spec.Users[0].SshAuthorizedKeys[0] = strings.TrimSpace(string(ssh.MarshalAuthorizedKey(public)))
+
+	return nil
 }
