@@ -14,6 +14,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	jose "github.com/go-jose/go-jose/v3"
 	v1 "k8s.io/api/core/v1"
@@ -164,7 +165,9 @@ func (e *ClusterE2ETest) ValidateEtcdEncryption() {
 func (e *ClusterE2ETest) PostClusterCreateEtcdEncryptionSetup() {
 	ctx := context.Background()
 	envVars := getEtcdEncryptionVarsFromEnv()
-	awsSession, err := session.NewSession()
+	awsSession, err := session.NewSession(&aws.Config{
+		Region: aws.String(defaultRegion),
+	})
 	if err != nil {
 		e.T.Fatalf("creating aws session for tests: %v", err)
 	}
