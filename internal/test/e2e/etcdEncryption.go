@@ -36,7 +36,7 @@ func (e *E2ESession) setupEtcdEncryption(testRegex string) error {
 		return fmt.Errorf("decoding ssh key: %v", err)
 	}
 
-	command := fmt.Sprintf("sudo cat <<EOF>> /%s\n%s\nEOF", e2etests.SSHKeyPath, string(decodedKey))
+	command := fmt.Sprintf("sudo cat <<EOF>> %s\n%s\nEOF", e2etests.SSHKeyPath, string(decodedKey))
 	if err := ssm.Run(e.session, logr.Discard(), e.instanceId, command, ssmTimeout); err != nil {
 		return fmt.Errorf("mounting ssh key in instance: %v", err)
 	}
