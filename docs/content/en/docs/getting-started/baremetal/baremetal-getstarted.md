@@ -17,10 +17,10 @@ See [Cluster topologies]({{< relref "../../concepts/architecture" >}}) for detai
 EKS Anywhere needs:
 
 * To be run on an Admin machine that has certain [machine requirements]({{< relref "../install" >}}).
+* To run a cluster in an [airgapped environment]({{< relref "../airgapped" >}}) (optional)
+* To meet [networking]({{< relref "../ports/" >}}) requirements
 * To meet certain [Bare Metal requirements]({{< relref "./bare-prereq/" >}}) for hardware and network configuration.
 * To have some [Bare Metal preparation]({{< relref "./bare-preparation/" >}}) be in place before creating an EKS Anywhere cluster.
-
-Also, see the [Ports and protocols]({{< relref "../ports/" >}}) page for information on ports that need to be accessible from control plane, worker, and Admin machines.
 
 ## Steps
 
@@ -49,16 +49,16 @@ Follow these steps to create an EKS Anywhere cluster that can be used either as 
 
    **Configure Curated Packages**
 
-      The Amazon EKS Anywhere Curated Packages are only available to customers with the Amazon EKS Anywhere Enterprise Subscription. To request a free trial, talk to your Amazon representative or connect with one [here](https://aws.amazon.com/contact-us/sales-support-eks/). Cluster creation will succeed if authentication is not set up, but some warnings may be genered.  Detailed package configurations can be found [here]({{< relref "../../packages" >}}).
+      The Amazon EKS Anywhere Curated Packages are only available to customers with the Amazon EKS Anywhere Enterprise Subscription. To request a free trial, talk to your Amazon representative or connect with one [here](https://aws.amazon.com/contact-us/sales-support-eks/). Cluster creation will succeed if authentication is not set up, but some warnings may be generated.  Detailed package configurations can be found [here.]({{< relref "../../packages" >}})
 
-      If you are going to use packages, set up authentication. These credentials should have [limited capabilities]({{< relref "../../packages/prereq#setup-authentication-to-use-curated-packages" >}}):
+      If you are going to use packages, set up authentication. These credentials should have [limited capabilities:]({{< relref "../../packages/prereq#setup-authentication-to-use-curated-packages" >}})
       ```bash
       export EKSA_AWS_ACCESS_KEY_ID="your*access*id"
       export EKSA_AWS_SECRET_ACCESS_KEY="your*secret*key"
       export EKSA_AWS_REGION="us-west-2"  
       ```
 
-1. Set an environment variables for your cluster name
+1. Set an environment variable for your cluster name:
    
    ```bash
    export CLUSTER_NAME=mgmt
@@ -124,7 +124,7 @@ Follow these steps to create an EKS Anywhere cluster that can be used either as 
    kubectl apply -f "https://anywhere.eks.amazonaws.com/manifests/hello-eks-a.yaml"
    ```
 
-   Verify the test application in [Deploy test workload]({{< relref "../../workloadmgmt/test-app" >}}).
+   Verify the test application in [Deploy test workload.]({{< relref "../../workloadmgmt/test-app" >}})
 
 ### Create separate workload clusters
 
@@ -146,7 +146,7 @@ Follow these steps if you want to use your initial cluster to create and manage 
    ```
 
    Refer to the initial config described earlier for the required and optional settings.
-   Ensure workload cluster object names (`Cluster`, `TinkerbellDatacenterConfig`, `TinkerbellMachineConfig`, etc.) are distinct from management cluster object names. Keep the tinkerbellIP of workload cluster the same as tinkerbellIP of the management cluster.
+   Ensure workload cluster object names (`Cluster`, `TinkerbellDatacenterConfig`, `TinkerbellMachineConfig`, etc.) are distinct from management cluster object names. Keep the `tinkerbellIP` of workload cluster the same as `tinkerbellIP` of the management cluster.
 
 1. Be sure to set the `managementCluster` field to identify the name of the management cluster.
 
@@ -202,14 +202,14 @@ Follow these steps if you want to use your initial cluster to create and manage 
 
    * **Terraform**: See [Manage separate workload clusters with Terraform]({{< relref "../../clustermgmt/cluster-terraform.md#manage-separate-workload-clusters-using-terraform" >}})
 
-     >**NOTE**:For kubectl, GitOps and Terraform:
+     >**NOTE**: For kubectl, GitOps and Terraform:
      > * The baremetal controller does not support scaling upgrades and Kubernetes version upgrades in the same request.
      > * While creating a new workload cluster if you need to add additional machines for the target workload cluster, run:
      >   ```
      >   eksctl anywhere generate hardware -z updated-hardware.csv > updated-hardware.yaml
      >   kubectl apply -f updated-hardware.yaml
      >   ```
-     > * * For creating multiple workload clusters, it is essential that the hardware labels and selectors defined for a given workload cluster are unique to that workload cluster. For instance, for an EKS Anywhere cluster named `eksa-workload1`, the hardware that is assigned for this cluster should have labels that are only going to be used for this cluster like `type=eksa-workload1-cp` and `type=eksa-workload1-worker`.
+     > * For creating multiple workload clusters, it is essential that the hardware labels and selectors defined for a given workload cluster are unique to that workload cluster. For instance, for an EKS Anywhere cluster named `eksa-workload1`, the hardware that is assigned for this cluster should have labels that are only going to be used for this cluster like `type=eksa-workload1-cp` and `type=eksa-workload1-worker`.
      Another workload cluster named `eksa-workload2` can have labels like `type=eksa-workload2-cp` and `type=eksa-workload2-worker`. Please note that even though labels can be arbitrary, they need to be unique for each workload cluster. Not specifying unique cluster labels can cause cluster creations to behave in unexpected ways which may lead to unsuccessful creations and unstable clusters.
      See the [hardware selectors]({{< relref "./bare-spec/#hardwareselector" >}}) section for more information
 
