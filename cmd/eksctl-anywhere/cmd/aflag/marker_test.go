@@ -128,18 +128,28 @@ func (nopValue) Type() string     { return "" }
 
 func TestMarkHidden(t *testing.T) {
 	tests := map[string]struct {
-		flags []string
+		flags       []string
+		hidden      []string
+		shouldPanic bool
 	}{
-		"success": {flags: []string{"foo", "bar"}},
+		"success":             {flags: []string{"foo", "bar"}, hidden: []string{"foo", "bar"}},
+		"flag does not exist": {flags: []string{"foo", "bar"}, hidden: []string{"foo", "bar", "baz"}, shouldPanic: true},
 	}
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
+			if tc.shouldPanic {
+				defer func() {
+					if recover() == nil {
+						t.Error("no panic received")
+					}
+				}()
+			}
 			cmd := &cobra.Command{}
 			for _, flag := range tc.flags {
 				cmd.Flags().AddFlag(&pflag.Flag{Name: flag})
 			}
-			aflag.MarkHidden(cmd.Flags(), tc.flags...)
+			aflag.MarkHidden(cmd.Flags(), tc.hidden...)
 			for _, flag := range tc.flags {
 				if !cmd.Flags().Lookup(flag).Hidden {
 					t.Errorf("flag %s should be hidden", flag)
