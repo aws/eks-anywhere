@@ -120,7 +120,7 @@ func NewClusterE2ETest(t T, provider Provider, opts ...ClusterE2ETestOpt) *Clust
 
 	// For kindless management upgrade task
 	// Remove this once we remove feature flag for ExpSelfManagedAPIUpgrade.
-	if provider.Name() == constants.VSphereProviderName || provider.Name() == constants.CloudStackProviderName {
+	if provider.Name() == constants.VSphereProviderName || provider.Name() == constants.CloudStackProviderName || provider.Name() == constants.TinkerbellProviderName {
 		opts = append(opts, WithEnvVar(features.ExperimentalSelfManagedClusterUpgradeGate, "true"))
 		opts = append(opts, WithEnvVar(features.ExperimentalSelfManagedClusterUpgradeEnvVar, "true"))
 	}
