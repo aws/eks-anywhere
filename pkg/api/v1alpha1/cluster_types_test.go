@@ -3104,7 +3104,7 @@ func TestCluster_ConvertConfigToConfigGenerateStruct(t *testing.T) {
 			Annotations: testCluster.Annotations,
 			Namespace:   testCluster.Namespace,
 		},
-		Spec: v1alpha1.ClusterSpecGenerate{
+		Spec: v1alpha1.ClusterSpec{
 			KubernetesVersion:             testCluster.Spec.KubernetesVersion,
 			ControlPlaneConfiguration:     testCluster.Spec.ControlPlaneConfiguration,
 			WorkerNodeGroupConfigurations: testCluster.Spec.WorkerNodeGroupConfigurations,
