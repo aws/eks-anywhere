@@ -1,4 +1,4 @@
-package flags_test
+package aflag_test
 
 import (
 	"testing"
@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
-	"github.com/aws/eks-anywhere/cmd/eksctl-anywhere/cmd/flags"
+	"github.com/aws/eks-anywhere/cmd/eksctl-anywhere/cmd/aflag"
 )
 
 func TestMarkRequired(t *testing.T) {
@@ -77,7 +77,7 @@ func TestMarkRequired(t *testing.T) {
 			// so we need to parse the args using the flag set before calling it.
 			_ = cmd.Flags().Parse(tc.Args)
 
-			flags.MarkRequired(cmd.Flags(), required...)
+			aflag.MarkRequired(cmd.Flags(), required...)
 
 			err := cmd.ValidateRequiredFlags()
 
@@ -109,7 +109,7 @@ func TestMarkRequired_FlagDoesNotExist(t *testing.T) {
 	}()
 
 	flgs := pflag.NewFlagSet("", pflag.ContinueOnError)
-	flags.MarkRequired(flgs, "does-not-exist")
+	aflag.MarkRequired(flgs, "does-not-exist")
 }
 
 func nopPflag(name string) pflag.Flag {
@@ -125,3 +125,36 @@ type nopValue struct{}
 func (nopValue) String() string   { return "" }
 func (nopValue) Set(string) error { return nil }
 func (nopValue) Type() string     { return "" }
+
+func TestMarkHidden(t *testing.T) {
+	tests := map[string]struct {
+		flags       []string
+		hidden      []string
+		shouldPanic bool
+	}{
+		"success":             {flags: []string{"foo", "bar"}, hidden: []string{"foo", "bar"}},
+		"flag does not exist": {flags: []string{"foo", "bar"}, hidden: []string{"foo", "bar", "baz"}, shouldPanic: true},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			if tc.shouldPanic {
+				defer func() {
+					if recover() == nil {
+						t.Error("no panic received")
+					}
+				}()
+			}
+			cmd := &cobra.Command{}
+			for _, flag := range tc.flags {
+				cmd.Flags().AddFlag(&pflag.Flag{Name: flag})
+			}
+			aflag.MarkHidden(cmd.Flags(), tc.hidden...)
+			for _, flag := range tc.flags {
+				if !cmd.Flags().Lookup(flag).Hidden {
+					t.Errorf("flag %s should be hidden", flag)
+				}
+			}
+		})
+	}
+}

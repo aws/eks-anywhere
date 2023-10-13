@@ -1,4 +1,4 @@
-package flags
+package aflag
 
 // ClusterConfig is the path to a cluster specification YAML.
 var ClusterConfig = Flag[string]{

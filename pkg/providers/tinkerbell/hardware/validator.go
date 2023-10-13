@@ -127,12 +127,14 @@ func StaticMachineAssertions() MachineAssertion {
 				return fmt.Errorf("BMCIPAddress: %v", err)
 			}
 
-			if m.BMCUsername == "" {
-				return newEmptyFieldError("BMCUsername")
-			}
+			if m.BMCOptions == nil || m.BMCOptions.RPC == nil {
+				if m.BMCUsername == "" {
+					return newEmptyFieldError("BMCUsername")
+				}
 
-			if m.BMCPassword == "" {
-				return newEmptyFieldError("BMCPassword")
+				if m.BMCPassword == "" {
+					return newEmptyFieldError("BMCPassword")
+				}
 			}
 		}
 

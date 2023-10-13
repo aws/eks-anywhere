@@ -78,7 +78,17 @@ func marshalTinkerbellBMCYAML(m Machine) ([]byte, error) {
 }
 
 func marshalSecretYAML(m Machine) ([]byte, error) {
-	return yaml.Marshal(baseboardManagementSecretFromMachine(m))
+	var final []byte
+	for _, s := range baseboardManagementSecretFromMachine(m) {
+		data, err := yaml.Marshal(s)
+		if err != nil {
+			return nil, err
+		}
+		final = append(final, data...)
+		final = append(final, yamlSeparatorWithNewline...)
+	}
+
+	return final, nil
 }
 
 // CreateOrStdout will create path and return an *os.File if path is not empty. If path is empty

@@ -1,9 +1,12 @@
 package hardware
 
 import (
+	"fmt"
+
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1/thirdparty/tinkerbell/rufio"
 	v1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1/thirdparty/tinkerbell/rufio"
 	"github.com/aws/eks-anywhere/pkg/constants"
 )
@@ -87,6 +90,19 @@ func toRufioMachine(m Machine) *v1alpha1.Machine {
 	// TODO(chrisdoherty4)
 	// 	- Set the namespace to the CAPT namespace.
 	// 	- Patch through insecure TLS.
+	conn := v1alpha1.Connection{
+		Host: m.BMCIPAddress,
+		AuthSecretRef: corev1.SecretReference{
+			Name:      formatBMCSecretRef(m),
+			Namespace: constants.EksaSystemNamespace,
+		},
+		InsecureTLS: true,
+	}
+	if m.BMCOptions != nil && m.BMCOptions.RPC.ConsumerURL != "" {
+		conn.ProviderOptions = &v1alpha1.ProviderOptions{
+			RPC: toRPCOptions(m.BMCOptions.RPC, m),
+		}
+	}
 	return &v1alpha1.Machine{
 		TypeMeta: newMachineTypeMeta(),
 		ObjectMeta: v1.ObjectMeta{
@@ -94,14 +110,127 @@ func toRufioMachine(m Machine) *v1alpha1.Machine {
 			Namespace: constants.EksaSystemNamespace,
 		},
 		Spec: v1alpha1.MachineSpec{
-			Connection: v1alpha1.Connection{
-				Host: m.BMCIPAddress,
-				AuthSecretRef: corev1.SecretReference{
-					Name:      formatBMCSecretRef(m),
-					Namespace: constants.EksaSystemNamespace,
-				},
-				InsecureTLS: true,
-			},
+			Connection: conn,
 		},
 	}
+}
+
+func toRPCOptions(r *RPCOpts, m Machine) *v1alpha1.RPCOptions {
+	opts := &v1alpha1.RPCOptions{
+		ConsumerURL: r.ConsumerURL,
+	}
+	if req := toRequestOpts(r.Request); req != nil {
+		opts.Request = req
+	}
+	if sig := toSignatureOpts(r.Signature); sig != nil {
+		opts.Signature = sig
+	}
+	if hmac := toHMACOpts(r.HMAC, m); hmac != nil {
+		opts.HMAC = hmac
+	}
+	if exp := toExperimentalOpts(r.Experimental); exp != nil {
+		opts.Experimental = exp
+	}
+
+	return opts
+}
+
+func toRequestOpts(r RequestOpts) *v1alpha1.RequestOpts {
+	req := &v1alpha1.RequestOpts{}
+	empty := true
+	if r.HTTPContentType != "" {
+		req.HTTPContentType = r.HTTPContentType
+		empty = false
+	}
+	if r.HTTPMethod != "" {
+		req.HTTPMethod = r.HTTPMethod
+		empty = false
+	}
+	if r.TimestampFormat != "" {
+		req.TimestampFormat = r.TimestampFormat
+		empty = false
+	}
+	if r.TimestampHeader != "" {
+		req.TimestampHeader = r.TimestampHeader
+		empty = false
+	}
+	if len(r.StaticHeaders) > 0 {
+		req.StaticHeaders = r.StaticHeaders
+		empty = false
+	}
+
+	if empty {
+		return nil
+	}
+
+	return req
+}
+
+func toSignatureOpts(s SignatureOpts) *v1alpha1.SignatureOpts {
+	sig := &v1alpha1.SignatureOpts{}
+	empty := true
+	if s.HeaderName != "" {
+		sig.HeaderName = s.HeaderName
+		empty = false
+	}
+	if s.AppendAlgoToHeaderDisabled {
+		sig.AppendAlgoToHeaderDisabled = s.AppendAlgoToHeaderDisabled
+		empty = false
+	}
+	if len(s.IncludedPayloadHeaders) > 0 {
+		sig.IncludedPayloadHeaders = s.IncludedPayloadHeaders
+		empty = false
+	}
+
+	if empty {
+		return nil
+	}
+
+	return sig
+}
+
+func toHMACOpts(h HMACOpts, m Machine) *v1alpha1.HMACOpts {
+	hmac := &v1alpha1.HMACOpts{}
+	empty := true
+	if h.PrefixSigDisabled {
+		hmac.PrefixSigDisabled = h.PrefixSigDisabled
+		empty = false
+	}
+	if len(h.Secrets) > 0 {
+		hmac.Secrets = make(map[rufio.HMACAlgorithm][]corev1.SecretReference)
+		for idx := range h.Secrets {
+			s := corev1.SecretReference{
+				Name:      fmt.Sprintf("%v-%v", formatBMCSecretRef(m), idx),
+				Namespace: constants.EksaSystemNamespace,
+			}
+			hmac.Secrets[rufio.HMACAlgorithm("sha256")] = append(hmac.Secrets[rufio.HMACAlgorithm("sha256")], s)
+			hmac.Secrets[rufio.HMACAlgorithm("sha512")] = append(hmac.Secrets[rufio.HMACAlgorithm("sha512")], s)
+		}
+		empty = false
+	}
+
+	if empty {
+		return nil
+	}
+
+	return hmac
+}
+
+func toExperimentalOpts(e ExperimentalOpts) *v1alpha1.ExperimentalOpts {
+	exp := &v1alpha1.ExperimentalOpts{}
+	empty := true
+	if e.CustomRequestPayload != "" {
+		exp.CustomRequestPayload = e.CustomRequestPayload
+		empty = false
+	}
+	if e.DotPath != "" {
+		exp.DotPath = e.DotPath
+		empty = false
+	}
+
+	if empty {
+		return nil
+	}
+
+	return exp
 }

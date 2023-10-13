@@ -1,6 +1,7 @@
 package hardware_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/onsi/gomega"
@@ -78,4 +79,31 @@ func TestSecretCatalogueWriter_Write(t *testing.T) {
 	g.Expect(secrets[0].Name).To(gomega.ContainSubstring(machine.Hostname))
 	g.Expect(secrets[0].Data).To(gomega.HaveKeyWithValue("username", []byte(machine.BMCUsername)))
 	g.Expect(secrets[0].Data).To(gomega.HaveKeyWithValue("password", []byte(machine.BMCPassword)))
+}
+
+// TestRPCSecrets add RPC secrets to the catalogue and verifies that they are added correctly.
+func TestRPCSecrets(t *testing.T) {
+	g := gomega.NewWithT(t)
+
+	catalogue := hardware.NewCatalogue()
+	writer := hardware.NewSecretCatalogueWriter(catalogue)
+	machine := NewValidMachine()
+	machine.BMCOptions = &hardware.BMCOptions{
+		RPC: &hardware.RPCOpts{
+			ConsumerURL: "http://localhost:8080",
+			HMAC: hardware.HMACOpts{
+				Secrets: []string{"superSecret1", "superSecret2"},
+			},
+		},
+	}
+
+	err := writer.Write(machine)
+	g.Expect(err).To(gomega.Succeed())
+
+	secrets := catalogue.AllSecrets()
+	g.Expect(secrets).To(gomega.HaveLen(2))
+	for idx, secret := range secrets {
+		g.Expect(secret.Name).To(gomega.ContainSubstring(fmt.Sprintf("bmc-%v-auth-%v", machine.Hostname, idx)))
+		g.Expect(secret.Data).To(gomega.HaveKeyWithValue("secret", []byte(fmt.Sprintf("superSecret%v", idx+1))))
+	}
 }

@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 
-	"github.com/aws/eks-anywhere/cmd/eksctl-anywhere/cmd/flags"
+	"github.com/aws/eks-anywhere/cmd/eksctl-anywhere/cmd/aflag"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
@@ -42,9 +42,9 @@ func NewGenerateTinkerbellTemplateConfig() *cobra.Command {
 	// Configure the flagset. Some of these flags are duplicated from other parts of the cmd code
 	// for consistency but their descriptions may vary because of the commands use-case.
 	flgs := pflag.NewFlagSet("", pflag.ContinueOnError)
-	flags.String(flags.ClusterConfig, &opts.fileName, flgs)
-	flags.String(flags.BundleOverride, &opts.bundlesOverride, flgs)
-	flags.String(flags.TinkerbellBootstrapIP, &opts.BootstrapTinkerbellIP, flgs)
+	aflag.String(aflag.ClusterConfig, &opts.fileName, flgs)
+	aflag.String(aflag.BundleOverride, &opts.bundlesOverride, flgs)
+	aflag.String(aflag.TinkerbellBootstrapIP, &opts.BootstrapTinkerbellIP, flgs)
 
 	cmd := &cobra.Command{
 		Use:     "tinkerbelltemplateconfig",
@@ -54,7 +54,7 @@ func NewGenerateTinkerbellTemplateConfig() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// When the bootstrap IP is unspecified attempt to derive it from IPs assigned to the
 			// primary interface.
-			if f := flgs.Lookup(flags.TinkerbellBootstrapIP.Name); !f.Changed {
+			if f := flgs.Lookup(aflag.TinkerbellBootstrapIP.Name); !f.Changed {
 				bootstrapIP, err := networkutils.GetLocalIP()
 				if err != nil {
 					return fmt.Errorf("tinkerbell bootstrap ip: %v", err)

@@ -6,8 +6,9 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 
-	"github.com/aws/eks-anywhere/cmd/eksctl-anywhere/cmd/flags"
+	"github.com/aws/eks-anywhere/cmd/eksctl-anywhere/cmd/aflag"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/awsiamauth"
 	"github.com/aws/eks-anywhere/pkg/clustermanager"
@@ -16,6 +17,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 	"github.com/aws/eks-anywhere/pkg/logger"
+	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
 	"github.com/aws/eks-anywhere/pkg/validations/createvalidations"
@@ -32,9 +34,18 @@ type createClusterOptions struct {
 	tinkerbellBootstrapIP string
 	installPackages       string
 	skipValidations       []string
+	providerOptions       *dependencies.ProviderOptions
 }
 
-var cc = &createClusterOptions{}
+var cc = &createClusterOptions{
+	providerOptions: &dependencies.ProviderOptions{
+		Tinkerbell: &dependencies.TinkerbellOptions{
+			BMCOptions: &hardware.BMCOptions{
+				RPC: &hardware.RPCOpts{},
+			},
+		},
+	},
+}
 
 var createClusterCmd = &cobra.Command{
 	Use:          "cluster -f <cluster-config-file> [flags]",
@@ -50,14 +61,42 @@ func init() {
 	applyClusterOptionFlags(createClusterCmd.Flags(), &cc.clusterOptions)
 	applyTimeoutFlags(createClusterCmd.Flags(), &cc.timeoutOptions)
 	applyTinkerbellHardwareFlag(createClusterCmd.Flags(), &cc.hardwareCSVPath)
-	flags.String(flags.TinkerbellBootstrapIP, &cc.tinkerbellBootstrapIP, createClusterCmd.Flags())
+	aflag.String(aflag.TinkerbellBootstrapIP, &cc.tinkerbellBootstrapIP, createClusterCmd.Flags())
 	createClusterCmd.Flags().BoolVar(&cc.forceClean, "force-cleanup", false, "Force deletion of previously created bootstrap cluster")
 	hideForceCleanup(createClusterCmd.Flags())
 	createClusterCmd.Flags().BoolVar(&cc.skipIpCheck, "skip-ip-check", false, "Skip check for whether cluster control plane ip is in use")
 	createClusterCmd.Flags().StringVar(&cc.installPackages, "install-packages", "", "Location of curated packages configuration files to install to the cluster")
 	createClusterCmd.Flags().StringArrayVar(&cc.skipValidations, "skip-validations", []string{}, fmt.Sprintf("Bypass create validations by name. Valid arguments you can pass are --skip-validations=%s", strings.Join(createvalidations.SkippableValidations[:], ",")))
+	tinkerbellFlags(createClusterCmd.Flags(), cc.providerOptions.Tinkerbell.BMCOptions.RPC)
 
-	flags.MarkRequired(createClusterCmd.Flags(), flags.ClusterConfig.Name)
+	aflag.MarkRequired(createClusterCmd.Flags(), aflag.ClusterConfig.Name)
+}
+
+func tinkerbellFlags(fs *pflag.FlagSet, r *hardware.RPCOpts) {
+	aflag.String(aflag.TinkerbellBMCConsumerURL, &r.ConsumerURL, fs)
+	aflag.MarkHidden(fs, aflag.TinkerbellBMCConsumerURL.Name)
+	aflag.String(aflag.TinkerbellBMCHTTPContentType, &r.Request.HTTPContentType, fs)
+	aflag.MarkHidden(fs, aflag.TinkerbellBMCHTTPContentType.Name)
+	aflag.String(aflag.TinkerbellBMCHTTPMethod, &r.Request.HTTPMethod, fs)
+	aflag.MarkHidden(fs, aflag.TinkerbellBMCHTTPMethod.Name)
+	aflag.String(aflag.TinkerbellBMCTimestampHeader, &r.Request.TimestampHeader, fs)
+	aflag.MarkHidden(fs, aflag.TinkerbellBMCTimestampHeader.Name)
+	aflag.HTTPHeader(aflag.TinkerbellBMCStaticHeaders, aflag.NewHeader(&r.Request.StaticHeaders), fs)
+	aflag.MarkHidden(fs, aflag.TinkerbellBMCStaticHeaders.Name)
+	aflag.String(aflag.TinkerbellBMCSigHeaderName, &r.Signature.HeaderName, fs)
+	aflag.MarkHidden(fs, aflag.TinkerbellBMCSigHeaderName.Name)
+	aflag.Bool(aflag.TinkerbellBMCAppendAlgoToHeaderDisabled, &r.Signature.AppendAlgoToHeaderDisabled, fs)
+	aflag.MarkHidden(fs, aflag.TinkerbellBMCAppendAlgoToHeaderDisabled.Name)
+	aflag.StringSlice(aflag.TinkerbellBMCSigIncludedPayloadHeaders, &r.Signature.IncludedPayloadHeaders, fs)
+	aflag.MarkHidden(fs, aflag.TinkerbellBMCSigIncludedPayloadHeaders.Name)
+	aflag.Bool(aflag.TinkerbellBMCPrefixSigDisabled, &r.HMAC.PrefixSigDisabled, fs)
+	aflag.MarkHidden(fs, aflag.TinkerbellBMCPrefixSigDisabled.Name)
+	aflag.StringSlice(aflag.TinkerbellBMCHMACSecrets, &r.HMAC.Secrets, fs)
+	aflag.MarkHidden(fs, aflag.TinkerbellBMCHMACSecrets.Name)
+	aflag.String(aflag.TinkerbellBMCCustomPayload, &r.Experimental.CustomRequestPayload, fs)
+	aflag.MarkHidden(fs, aflag.TinkerbellBMCCustomPayload.Name)
+	aflag.String(aflag.TinkerbellBMCCustomPayloadDotLocation, &r.Experimental.DotPath, fs)
+	aflag.MarkHidden(fs, aflag.TinkerbellBMCCustomPayloadDotLocation.Name)
 }
 
 func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) error {
@@ -141,7 +180,7 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 		WithBootstrapper().
 		WithCliConfig(cliConfig).
 		WithClusterManager(clusterSpec.Cluster, clusterManagerTimeoutOpts).
-		WithProvider(cc.fileName, clusterSpec.Cluster, cc.skipIpCheck, cc.hardwareCSVPath, cc.forceClean, cc.tinkerbellBootstrapIP, skippedValidations).
+		WithProvider(cc.fileName, clusterSpec.Cluster, cc.skipIpCheck, cc.hardwareCSVPath, cc.forceClean, cc.tinkerbellBootstrapIP, skippedValidations, cc.providerOptions).
 		WithGitOpsFlux(clusterSpec.Cluster, clusterSpec.FluxConfig, cliConfig).
 		WithWriter().
 		WithEksdInstaller().

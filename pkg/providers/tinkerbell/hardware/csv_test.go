@@ -25,7 +25,7 @@ func TestCSVReaderReads(t *testing.T) {
 	err := csv.MarshalCSV([]hardware.Machine{expect}, buf)
 	g.Expect(err).ToNot(gomega.HaveOccurred())
 
-	reader, err := hardware.NewCSVReader(buf.Buffer)
+	reader, err := hardware.NewCSVReader(buf.Buffer, nil)
 	g.Expect(err).ToNot(gomega.HaveOccurred())
 
 	machine, err := reader.Read()
@@ -45,7 +45,7 @@ func TestCSVReaderWithMultipleLabels(t *testing.T) {
 	err := csv.MarshalCSV([]hardware.Machine{expect}, buf)
 	g.Expect(err).ToNot(gomega.HaveOccurred())
 
-	reader, err := hardware.NewCSVReader(buf.Buffer)
+	reader, err := hardware.NewCSVReader(buf.Buffer, nil)
 	g.Expect(err).ToNot(gomega.HaveOccurred())
 
 	machine, err := reader.Read()
@@ -56,7 +56,7 @@ func TestCSVReaderWithMultipleLabels(t *testing.T) {
 func TestCSVReaderFromFile(t *testing.T) {
 	g := gomega.NewWithT(t)
 
-	reader, err := hardware.NewNormalizedCSVReaderFromFile("./testdata/hardware.csv")
+	reader, err := hardware.NewNormalizedCSVReaderFromFile("./testdata/hardware.csv", nil)
 	g.Expect(err).ToNot(gomega.HaveOccurred())
 
 	machine, err := reader.Read()
@@ -83,7 +83,7 @@ func TestNewCSVReaderWithIOReaderError(t *testing.T) {
 
 	expect := errors.New("read err")
 
-	_, err := hardware.NewCSVReader(iotest.ErrReader(expect))
+	_, err := hardware.NewCSVReader(iotest.ErrReader(expect), nil)
 	g.Expect(err).To(gomega.HaveOccurred())
 	g.Expect(err.Error()).To(gomega.ContainSubstring(expect.Error()))
 }
@@ -91,7 +91,7 @@ func TestNewCSVReaderWithIOReaderError(t *testing.T) {
 func TestCSVReaderWithoutBMCHeaders(t *testing.T) {
 	g := gomega.NewWithT(t)
 
-	reader, err := hardware.NewNormalizedCSVReaderFromFile("./testdata/hardware_no_bmc_headers.csv")
+	reader, err := hardware.NewNormalizedCSVReaderFromFile("./testdata/hardware_no_bmc_headers.csv", nil)
 	g.Expect(err).ToNot(gomega.HaveOccurred())
 
 	machine, err := reader.Read()
@@ -137,7 +137,7 @@ func TestCSVReaderWithMissingRequiredColumns(t *testing.T) {
 			buf := bytes.NewBufferString(fmt.Sprintf("%v", strings.Join(included, ",")))
 
 			g := gomega.NewWithT(t)
-			_, err := hardware.NewCSVReader(buf)
+			_, err := hardware.NewCSVReader(buf, nil)
 			g.Expect(err).To(gomega.HaveOccurred())
 			g.Expect(err.Error()).To(gomega.ContainSubstring(missing))
 		})
@@ -147,7 +147,7 @@ func TestCSVReaderWithMissingRequiredColumns(t *testing.T) {
 func TestCSVBuildHardwareYamlFromCSV(t *testing.T) {
 	g := gomega.NewWithT(t)
 
-	hardwareYaml, err := hardware.BuildHardwareYAML("./testdata/hardware.csv")
+	hardwareYaml, err := hardware.BuildHardwareYAML("./testdata/hardware.csv", nil)
 	g.Expect(err).ToNot(gomega.HaveOccurred())
 	g.Expect(hardwareYaml).To(gomega.Equal([]byte(`apiVersion: tinkerbell.org/v1alpha1
 kind: Hardware

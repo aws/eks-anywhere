@@ -60,6 +60,8 @@ type Provider struct {
 	hardwareCSVFile string
 	catalogue       *hardware.Catalogue
 	tinkerbellIP    string
+	// BMCOptions are Rufio BMC options that are used when creating Rufio machine CRDs.
+	BMCOptions *hardware.BMCOptions
 
 	// TODO(chrisdoheryt4) Temporarily depend on the netclient until the validator can be injected.
 	// This is already a dependency, just uncached, because we require it during the initializing

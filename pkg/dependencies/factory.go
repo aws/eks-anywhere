@@ -47,6 +47,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/providers/nutanix"
 	"github.com/aws/eks-anywhere/pkg/providers/snow"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell"
+	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
 	"github.com/aws/eks-anywhere/pkg/providers/validator"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
 	"github.com/aws/eks-anywhere/pkg/registrymirror"
@@ -381,8 +382,20 @@ func (f *Factory) WithExecutableBuilder() *Factory {
 	return f
 }
 
+// ProviderOptions contains per provider options.
+type ProviderOptions struct {
+	// Tinkerbell contains Tinkerbell specific options.
+	Tinkerbell *TinkerbellOptions
+}
+
+// TinkerbellOptions contains Tinkerbell specific options.
+type TinkerbellOptions struct {
+	// BMCOptions contains options for configuring BMC interactions.
+	BMCOptions *hardware.BMCOptions
+}
+
 // WithProvider initializes the provider dependency and adds to the build steps.
-func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1.Cluster, skipIPCheck bool, hardwareCSVPath string, force bool, tinkerbellBootstrapIP string, skippedValidations map[string]bool) *Factory { // nolint:gocyclo
+func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1.Cluster, skipIPCheck bool, hardwareCSVPath string, force bool, tinkerbellBootstrapIP string, skippedValidations map[string]bool, opts *ProviderOptions) *Factory { // nolint:gocyclo
 	switch clusterConfig.Spec.DatacenterRef.Kind {
 	case v1alpha1.VSphereDatacenterKind:
 		f.WithKubectl().WithGovc().WithWriter().WithIPValidator()
@@ -488,6 +501,9 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 			)
 			if err != nil {
 				return err
+			}
+			if opts != nil && opts.Tinkerbell != nil && opts.Tinkerbell.BMCOptions != nil {
+				provider.BMCOptions = opts.Tinkerbell.BMCOptions
 			}
 
 			f.dependencies.Provider = provider
