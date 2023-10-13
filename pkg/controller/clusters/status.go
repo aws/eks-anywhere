@@ -17,6 +17,8 @@ import (
 
 // UpdateClusterStatusForControlPlane checks the current state of the Cluster's control plane and updates the
 // Cluster status information.
+// There is a posibility that UpdateClusterStatusForControlPlane does not update the
+// controleplane status specially in case where it still waiting for cluster objects to be created.
 func UpdateClusterStatusForControlPlane(ctx context.Context, client client.Client, cluster *anywherev1.Cluster) error {
 	kcp, err := controller.GetKubeadmControlPlane(ctx, client, cluster)
 	if err != nil {
@@ -29,10 +31,11 @@ func UpdateClusterStatusForControlPlane(ctx context.Context, client client.Clien
 		if err != nil {
 			return errors.Wrap(err, "getting capi cluster")
 		}
-
-		etcdadmCluster, err = getEtcdadmCluster(ctx, client, capiCluster)
-		if err != nil {
-			return errors.Wrap(err, "reading etcdadm cluster")
+		if capiCluster != nil {
+			etcdadmCluster, err = getEtcdadmCluster(ctx, client, capiCluster)
+			if err != nil {
+				return errors.Wrap(err, "reading etcdadm cluster")
+			}
 		}
 	}
 
@@ -85,6 +88,13 @@ func UpdateClusterStatusForCNI(ctx context.Context, cluster *anywherev1.Cluster)
 // updateConditionsForEtcdAndControlPlane updates the ControlPlaneReady condition if etcdadm cluster is not ready.
 func updateConditionsForEtcdAndControlPlane(cluster *anywherev1.Cluster, kcp *controlplanev1.KubeadmControlPlane, etcdadmCluster *etcdv1.EtcdadmCluster) {
 	// Make sure etcd cluster is ready before marking ControlPlaneReady status to true
+	// This condition happens while creating a workload cluster from the management cluster using controller
+	// where it tries to get the etcdadm cluster for the first time before it generates the resources.
+	if cluster.Spec.ExternalEtcdConfiguration != nil && etcdadmCluster == nil {
+		conditions.MarkFalse(cluster, anywherev1.ControlPlaneReadyCondition, anywherev1.ExternalEtcdNotAvailable, clusterv1.ConditionSeverityInfo, "Etcd cluster is not available")
+		return
+	}
+	// Make sure etcd machine is ready before marking ControlPlaneReady status to true
 	if cluster.Spec.ExternalEtcdConfiguration != nil && !etcdadmClusterReady(etcdadmCluster) {
 		conditions.MarkFalse(cluster, anywherev1.ControlPlaneReadyCondition, anywherev1.RollingUpgradeInProgress, clusterv1.ConditionSeverityInfo, "Etcd is not ready")
 		return
