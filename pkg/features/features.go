@@ -8,7 +8,6 @@ const (
 
 	ExperimentalSelfManagedClusterUpgradeEnvVar = "EXP_SELF_MANAGED_API_UPGRADE"
 	ExperimentalSelfManagedClusterUpgradeGate   = "ExpSelfManagedAPIUpgrade"
-	K8s128SupportEnvVar                         = "K8S_1_28_SUPPORT"
 )
 
 func FeedGates(featureGates []string) {
@@ -58,13 +57,5 @@ func UseNewWorkflows() Feature {
 	return Feature{
 		Name:     "Use new workflow logic for cluster management operations",
 		IsActive: globalFeatures.isActiveForEnvVar(UseNewWorkflowsEnvVar),
-	}
-}
-
-// K8s128Support is the feature flag for Kubernetes 1.27 support.
-func K8s128Support() Feature {
-	return Feature{
-		Name:     "Kubernetes version 1.28 support",
-		IsActive: globalFeatures.isActiveForEnvVar(K8s128SupportEnvVar),
 	}
 }

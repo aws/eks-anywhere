@@ -69,11 +69,3 @@ func TestIsActiveWithFeatureGatesTrue(t *testing.T) {
 
 	g.Expect(IsActive(fakeFeatureWithGate())).To(BeTrue())
 }
-
-func TestWithK8s128FeatureFlag(t *testing.T) {
-	g := NewWithT(t)
-	setupContext(t)
-
-	g.Expect(os.Setenv(K8s128SupportEnvVar, "true")).To(Succeed())
-	g.Expect(IsActive(K8s128Support())).To(BeTrue())
-}
