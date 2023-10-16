@@ -37,7 +37,7 @@ If you are using EKS Anywhere and have not purchased a subscription, you can fil
 
 **1. How much does an EKS Anywhere Enterprise Subscription cost?**
 
-For pricing information, visit the [EKS Anywhere pricing page]((https://aws.amazon.com/eks/eks-anywhere/pricing/)).
+For pricing information, visit the [EKS Anywhere pricing page](https://aws.amazon.com/eks/eks-anywhere/pricing/).
 
 **2. How can I purchase an EKS Anywhere Enterprise Subscription?**
 
