@@ -163,6 +163,11 @@ func (e *E2ESession) setup(regex string) error {
 		return err
 	}
 
+	err = e.setupOOBEnv(regex)
+	if err != nil {
+		return err
+	}
+
 	err = e.setupPackagesEnv(regex)
 	if err != nil {
 		return err

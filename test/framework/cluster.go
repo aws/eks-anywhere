@@ -81,6 +81,7 @@ type ClusterE2ETest struct {
 	TestHardware                 map[string]*api.Hardware
 	HardwarePool                 map[string]*api.Hardware
 	WithNoPowerActions           bool
+	WithOOBConfiguration         bool
 	ClusterName                  string
 	ClusterConfig                *cluster.Config
 	clusterStateValidationConfig *clusterf.StateValidationConfig
@@ -494,6 +495,17 @@ func (e *ClusterE2ETest) generateHardwareConfig(opts ...CommandOpt) {
 			hardwareWithNoBMC[k] = &lessBmc
 		}
 		testHardware = hardwareWithNoBMC
+	}
+	// create hardware CSV with no bmc username/password
+	if e.WithOOBConfiguration {
+		hardwareWithNoUsernamePassword := make(map[string]*api.Hardware)
+		for k, h := range testHardware {
+			lessBmc := *h
+			lessBmc.BMCUsername = ""
+			lessBmc.BMCPassword = ""
+			hardwareWithNoUsernamePassword[k] = &lessBmc
+		}
+		testHardware = hardwareWithNoUsernamePassword
 	}
 
 	err := api.WriteHardwareMapToCSV(testHardware, e.HardwareCsvLocation)
