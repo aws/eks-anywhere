@@ -25,8 +25,8 @@ EKS Anywhere Enterprise Subscriptions include support for the following componen
 
 Visit the following links for more information on EKS Anywhere Enterprise Subscriptions
 
-- [EKS Anywhere Pricing Page](https://aws..com/eks/eks-anywhere/pricing/)
-- [EKS Anywhere FAQ Page](https://aws..com/eks/eks-anywhere/faqs/)
+- [EKS Anywhere Pricing Page](https://aws.amazon.com/eks/eks-anywhere/pricing/)
+- [EKS Anywhere FAQ Page](https://aws.amazon.com/eks/eks-anywhere/faqs/)
 - [Steps to purchase a subscription]({{< relref "../clustermgmt/support/purchase-subscription" >}})
 - [Steps to license your cluster]({{< relref "../clustermgmt/support/cluster-license" >}})
 - [Steps to share curated packages with another account]({{< relref "../clustermgmt/support/share-packages" >}})
@@ -37,15 +37,15 @@ If you are using EKS Anywhere and have not purchased a subscription, you can fil
 
 **1. How much does an EKS Anywhere Enterprise Subscription cost?**
 
-For pricing information, visit the [EKS Anywhere pricing page]((https://aws..com/eks/eks-anywhere/pricing/)).
+For pricing information, visit the [EKS Anywhere pricing page]((https://aws.amazon.com/eks/eks-anywhere/pricing/)).
 
 **2. How can I purchase an EKS Anywhere Enterprise Subscription?**
 
 Go to the [EKS Anywhere Enterprise Subscription section](https://console.aws.amazon.com/eks/home#/eks-anywhere) of the EKS console. In the console, select your preferred term (1-year or 3-year). Then, specify the license quantity, configure tags and automatic renewal. Review the pending purchase. When the purchase is submitted, you can review licenses associated with your subscription in the console, accept the license grants with AWS License Manager, apply the licenses to your EKS Anywhere clusters, and access EKS Anywhere Curated Packages. For more information, reference the [EKS Anywhere documentation.]({{< relref "../clustermgmt/support/purchase-subscription" >}})
 
-**3. Are subscriptions I previously purchased manually integrated into the  EKS console?**
+**3. Are subscriptions I previously purchased manually integrated into the EKS console?**
 
-No, EKS Anywhere Enterprise Subscriptions purchased manually before October 2023 cannot be viewed or managed through the  EKS console, APIs, and AWS CLI. 
+No, EKS Anywhere Enterprise Subscriptions purchased manually before October 2023 cannot be viewed or managed through the EKS console, APIs, and AWS CLI. 
 
 **4. Can I cancel my subscription in the EKS console, APIs, and AWS CLI?**
 
