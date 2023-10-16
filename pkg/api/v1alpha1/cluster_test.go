@@ -3,7 +3,6 @@ package v1alpha1
 import (
 	"errors"
 	"fmt"
-
 	//nolint: staticcheck
 	"io/ioutil"
 	"reflect"
