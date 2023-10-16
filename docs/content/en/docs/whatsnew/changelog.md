@@ -16,6 +16,20 @@ Please upgrade to `v0.15.3` if you are using Tinkerbell (Bare Metal) provider.
 {{% /alert %}}
 
 
+## [v0.17.4](https://github.com/aws/eks-anywhere/releases/tag/v0.17.4)
+
+### Supported OS version details
+|              | vSphere | Bare Metal |  Nutanix | CloudStack | Snow  |
+|    :---:     |  :---:  |   :---:   |   :---:  |    :---:   | :---: |
+| Ubuntu       | 20.04	 | 20.04     |	20.04             | Not supported	     | 20.04 |  
+|              | 22.04   | 22.04     |  22.04             | Not supported      | Not supported   |
+| Bottlerocket | 1.14.3  | 1.14.3    |  Not supported     | Not supported	     | Not supported   |
+| RHEL         | 8.7	   | 8.7	     |  Not supported     | 8.7	               | Not supported   |
+
+
+### Added
+-  Enabled audit logging for `kube-apiserver` on baremetal provider ([#6779](https://github.com/aws/eks-anywhere/pull/6779)).
+
 ## [v0.17.3](https://github.com/aws/eks-anywhere/releases/tag/v0.17.3)
 
 ### Supported OS version details
