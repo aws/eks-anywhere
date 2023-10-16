@@ -333,7 +333,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cli-tools
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cli-tools:v0.17.1-eks-a-v0.0.0-dev-release-0.17-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cli-tools:v0.17.4-eks-a-v0.0.0-dev-release-0.17-build.1
       clusterController:
         arch:
         - amd64
@@ -342,9 +342,9 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cluster-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.17.1-eks-a-v0.0.0-dev-release-0.17-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.17.4-eks-a-v0.0.0-dev-release-0.17-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.17-build.0/eks-anywhere/manifests/cluster-controller/v0.17.1/eksa-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.17-build.0/eks-anywhere/manifests/cluster-controller/v0.17.4/eksa-components.yaml
       diagnosticCollector:
         arch:
         - amd64
@@ -353,7 +353,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-diagnostic-collector
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-diagnostic-collector:v0.17.1-eks-a-v0.0.0-dev-release-0.17-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-diagnostic-collector:v0.17.4-eks-a-v0.0.0-dev-release-0.17-build.1
       version: v0.0.0-dev-release-0.17+build.0+abcdef1
     etcdadmBootstrap:
       components:
@@ -487,7 +487,7 @@ spec:
         description: Helm chart for eks-anywhere-packages
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.3.10-eks-a-v0.0.0-dev-release-0.17-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.3.12-eks-a-v0.0.0-dev-release-0.17-build.1
       packageController:
         arch:
         - amd64
@@ -496,7 +496,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.3.10-eks-a-v0.0.0-dev-release-0.17-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.3.12-eks-a-v0.0.0-dev-release-0.17-build.1
       tokenRefresher:
         arch:
         - amd64
@@ -505,8 +505,8 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: ecr-token-refresher
         os: linux
-        uri: public.ecr.aws/release-container-registry/ecr-token-refresher:v0.3.10-eks-a-v0.0.0-dev-release-0.17-build.1
-      version: v0.3.10+abcdef1
+        uri: public.ecr.aws/release-container-registry/ecr-token-refresher:v0.3.12-eks-a-v0.0.0-dev-release-0.17-build.1
+      version: v0.3.12+abcdef1
     snow:
       bottlerocketBootstrapSnow:
         arch:
@@ -1110,7 +1110,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cli-tools
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cli-tools:v0.17.1-eks-a-v0.0.0-dev-release-0.17-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cli-tools:v0.17.4-eks-a-v0.0.0-dev-release-0.17-build.1
       clusterController:
         arch:
         - amd64
@@ -1119,9 +1119,9 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cluster-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.17.1-eks-a-v0.0.0-dev-release-0.17-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.17.4-eks-a-v0.0.0-dev-release-0.17-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.17-build.0/eks-anywhere/manifests/cluster-controller/v0.17.1/eksa-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.17-build.0/eks-anywhere/manifests/cluster-controller/v0.17.4/eksa-components.yaml
       diagnosticCollector:
         arch:
         - amd64
@@ -1130,7 +1130,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-diagnostic-collector
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-diagnostic-collector:v0.17.1-eks-a-v0.0.0-dev-release-0.17-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-diagnostic-collector:v0.17.4-eks-a-v0.0.0-dev-release-0.17-build.1
       version: v0.0.0-dev-release-0.17+build.0+abcdef1
     etcdadmBootstrap:
       components:
@@ -1264,7 +1264,7 @@ spec:
         description: Helm chart for eks-anywhere-packages
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.3.10-eks-a-v0.0.0-dev-release-0.17-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.3.12-eks-a-v0.0.0-dev-release-0.17-build.1
       packageController:
         arch:
         - amd64
@@ -1273,7 +1273,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.3.10-eks-a-v0.0.0-dev-release-0.17-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.3.12-eks-a-v0.0.0-dev-release-0.17-build.1
       tokenRefresher:
         arch:
         - amd64
@@ -1282,8 +1282,8 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: ecr-token-refresher
         os: linux
-        uri: public.ecr.aws/release-container-registry/ecr-token-refresher:v0.3.10-eks-a-v0.0.0-dev-release-0.17-build.1
-      version: v0.3.10+abcdef1
+        uri: public.ecr.aws/release-container-registry/ecr-token-refresher:v0.3.12-eks-a-v0.0.0-dev-release-0.17-build.1
+      version: v0.3.12+abcdef1
     snow:
       bottlerocketBootstrapSnow:
         arch:
@@ -1860,7 +1860,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cli-tools
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cli-tools:v0.17.1-eks-a-v0.0.0-dev-release-0.17-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cli-tools:v0.17.4-eks-a-v0.0.0-dev-release-0.17-build.1
       clusterController:
         arch:
         - amd64
@@ -1869,9 +1869,9 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cluster-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.17.1-eks-a-v0.0.0-dev-release-0.17-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.17.4-eks-a-v0.0.0-dev-release-0.17-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.17-build.0/eks-anywhere/manifests/cluster-controller/v0.17.1/eksa-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.17-build.0/eks-anywhere/manifests/cluster-controller/v0.17.4/eksa-components.yaml
       diagnosticCollector:
         arch:
         - amd64
@@ -1880,7 +1880,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-diagnostic-collector
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-diagnostic-collector:v0.17.1-eks-a-v0.0.0-dev-release-0.17-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-diagnostic-collector:v0.17.4-eks-a-v0.0.0-dev-release-0.17-build.1
       version: v0.0.0-dev-release-0.17+build.0+abcdef1
     etcdadmBootstrap:
       components:
@@ -2014,7 +2014,7 @@ spec:
         description: Helm chart for eks-anywhere-packages
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.3.10-eks-a-v0.0.0-dev-release-0.17-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.3.12-eks-a-v0.0.0-dev-release-0.17-build.1
       packageController:
         arch:
         - amd64
@@ -2023,7 +2023,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.3.10-eks-a-v0.0.0-dev-release-0.17-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.3.12-eks-a-v0.0.0-dev-release-0.17-build.1
       tokenRefresher:
         arch:
         - amd64
@@ -2032,8 +2032,8 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: ecr-token-refresher
         os: linux
-        uri: public.ecr.aws/release-container-registry/ecr-token-refresher:v0.3.10-eks-a-v0.0.0-dev-release-0.17-build.1
-      version: v0.3.10+abcdef1
+        uri: public.ecr.aws/release-container-registry/ecr-token-refresher:v0.3.12-eks-a-v0.0.0-dev-release-0.17-build.1
+      version: v0.3.12+abcdef1
     snow:
       bottlerocketBootstrapSnow:
         arch:
@@ -2610,7 +2610,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cli-tools
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cli-tools:v0.17.1-eks-a-v0.0.0-dev-release-0.17-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cli-tools:v0.17.4-eks-a-v0.0.0-dev-release-0.17-build.1
       clusterController:
         arch:
         - amd64
@@ -2619,9 +2619,9 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cluster-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.17.1-eks-a-v0.0.0-dev-release-0.17-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.17.4-eks-a-v0.0.0-dev-release-0.17-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.17-build.0/eks-anywhere/manifests/cluster-controller/v0.17.1/eksa-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.17-build.0/eks-anywhere/manifests/cluster-controller/v0.17.4/eksa-components.yaml
       diagnosticCollector:
         arch:
         - amd64
@@ -2630,7 +2630,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-diagnostic-collector
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-diagnostic-collector:v0.17.1-eks-a-v0.0.0-dev-release-0.17-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-diagnostic-collector:v0.17.4-eks-a-v0.0.0-dev-release-0.17-build.1
       version: v0.0.0-dev-release-0.17+build.0+abcdef1
     etcdadmBootstrap:
       components:
@@ -2764,7 +2764,7 @@ spec:
         description: Helm chart for eks-anywhere-packages
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.3.10-eks-a-v0.0.0-dev-release-0.17-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.3.12-eks-a-v0.0.0-dev-release-0.17-build.1
       packageController:
         arch:
         - amd64
@@ -2773,7 +2773,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.3.10-eks-a-v0.0.0-dev-release-0.17-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.3.12-eks-a-v0.0.0-dev-release-0.17-build.1
       tokenRefresher:
         arch:
         - amd64
@@ -2782,8 +2782,8 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: ecr-token-refresher
         os: linux
-        uri: public.ecr.aws/release-container-registry/ecr-token-refresher:v0.3.10-eks-a-v0.0.0-dev-release-0.17-build.1
-      version: v0.3.10+abcdef1
+        uri: public.ecr.aws/release-container-registry/ecr-token-refresher:v0.3.12-eks-a-v0.0.0-dev-release-0.17-build.1
+      version: v0.3.12+abcdef1
     snow:
       bottlerocketBootstrapSnow:
         arch:
@@ -3360,7 +3360,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cli-tools
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cli-tools:v0.17.1-eks-a-v0.0.0-dev-release-0.17-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cli-tools:v0.17.4-eks-a-v0.0.0-dev-release-0.17-build.1
       clusterController:
         arch:
         - amd64
@@ -3369,9 +3369,9 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cluster-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.17.1-eks-a-v0.0.0-dev-release-0.17-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.17.4-eks-a-v0.0.0-dev-release-0.17-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.17-build.0/eks-anywhere/manifests/cluster-controller/v0.17.1/eksa-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.17-build.0/eks-anywhere/manifests/cluster-controller/v0.17.4/eksa-components.yaml
       diagnosticCollector:
         arch:
         - amd64
@@ -3380,7 +3380,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-diagnostic-collector
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-diagnostic-collector:v0.17.1-eks-a-v0.0.0-dev-release-0.17-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-diagnostic-collector:v0.17.4-eks-a-v0.0.0-dev-release-0.17-build.1
       version: v0.0.0-dev-release-0.17+build.0+abcdef1
     etcdadmBootstrap:
       components:
@@ -3514,7 +3514,7 @@ spec:
         description: Helm chart for eks-anywhere-packages
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.3.10-eks-a-v0.0.0-dev-release-0.17-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.3.12-eks-a-v0.0.0-dev-release-0.17-build.1
       packageController:
         arch:
         - amd64
@@ -3523,7 +3523,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.3.10-eks-a-v0.0.0-dev-release-0.17-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.3.12-eks-a-v0.0.0-dev-release-0.17-build.1
       tokenRefresher:
         arch:
         - amd64
@@ -3532,8 +3532,8 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: ecr-token-refresher
         os: linux
-        uri: public.ecr.aws/release-container-registry/ecr-token-refresher:v0.3.10-eks-a-v0.0.0-dev-release-0.17-build.1
-      version: v0.3.10+abcdef1
+        uri: public.ecr.aws/release-container-registry/ecr-token-refresher:v0.3.12-eks-a-v0.0.0-dev-release-0.17-build.1
+      version: v0.3.12+abcdef1
     snow:
       bottlerocketBootstrapSnow:
         arch:
