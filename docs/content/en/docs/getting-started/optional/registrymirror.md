@@ -53,7 +53,7 @@ spec:
 * __Example__: ```port: 443```
 
 ### __ociNamespaces__ (optional)
-* __Description__: when you need to mirror multiple registries, you can map each upstream registry to the "namespace" of its mirror.
+* __Description__: when you need to mirror multiple registries, you can map each upstream registry to the "namespace" of its mirror. While using the `ociNamespaces`, at least one entry __must__ exist for the `public.ecr.aws` registry to pull EKS Anywhere images from. The registry for curated packages is an optional entry. 
 * __Type__: array
 * __Example__: <br/>
   ```yaml
