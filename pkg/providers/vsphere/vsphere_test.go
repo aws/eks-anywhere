@@ -3950,3 +3950,103 @@ func TestProviderGenerateDeploymentFileForBottlerocketWithTrustedCertBundles(t *
 	test.AssertContentToFile(t, string(cp), "testdata/expected_results_bottlerocket_cert_bundles_config_cp.yaml")
 	test.AssertContentToFile(t, string(md), "testdata/expected_results_bottlerocket_cert_bundles_config_md.yaml")
 }
+
+func TestProviderGenerateCAPISpecForUpgradeEtcdEncryption(t *testing.T) {
+	tests := []struct {
+		testName          string
+		clusterconfigFile string
+		wantCPFile        string
+		wantMDFile        string
+	}{
+		{
+			testName:          "etcd-encryption",
+			clusterconfigFile: "cluster_ubuntu_etcd_encryption.yaml",
+			wantCPFile:        "testdata/expected_results_ubuntu_etcd_encryption_cp.yaml",
+			wantMDFile:        "testdata/expected_results_main_121_md.yaml",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.testName, func(t *testing.T) {
+			mockCtrl := gomock.NewController(t)
+			setupContext(t)
+			ctx := context.Background()
+			kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+			cluster := &types.Cluster{
+				Name: "test",
+			}
+			bootstrapCluster := &types.Cluster{
+				Name: "bootstrap-test",
+			}
+			clusterSpec := givenClusterSpec(t, tt.clusterconfigFile)
+
+			oldCP := &controlplanev1.KubeadmControlPlane{
+				Spec: controlplanev1.KubeadmControlPlaneSpec{
+					MachineTemplate: controlplanev1.KubeadmControlPlaneMachineTemplate{
+						InfrastructureRef: v1.ObjectReference{
+							Name: "test-control-plane-template-1234567890000",
+						},
+					},
+				},
+			}
+			oldMD := &clusterv1.MachineDeployment{
+				Spec: clusterv1.MachineDeploymentSpec{
+					Template: clusterv1.MachineTemplateSpec{
+						Spec: clusterv1.MachineSpec{
+							InfrastructureRef: v1.ObjectReference{
+								Name: "test-md-0-1234567890000",
+							},
+							Bootstrap: clusterv1.Bootstrap{
+								ConfigRef: &v1.ObjectReference{
+									Name: "test-md-0-template-1234567890000",
+								},
+							},
+						},
+					},
+				},
+			}
+			etcdadmCluster := &etcdv1.EtcdadmCluster{
+				Spec: etcdv1.EtcdadmClusterSpec{
+					InfrastructureTemplate: v1.ObjectReference{
+						Name: "test-etcd-template-1234567890000",
+					},
+				},
+			}
+
+			ipValidator := mocks.NewMockIPValidator(mockCtrl)
+			ipValidator.EXPECT().ValidateControlPlaneIPUniqueness(clusterSpec.Cluster).Return(nil)
+
+			datacenterConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
+			provider := newProviderWithKubectl(t, datacenterConfig, clusterSpec.Cluster, kubectl, ipValidator)
+			if provider == nil {
+				t.Fatalf("provider object is nil")
+			}
+
+			err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
+			if err != nil {
+				t.Fatalf("failed to setup and validate: %v", err)
+			}
+
+			controlPlaneMachineConfigName := clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
+			workerNodeMachineConfigName := clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
+			machineDeploymentName := fmt.Sprintf("%s-%s", clusterSpec.Cluster.Name, clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].Name)
+			etcdMachineConfigName := clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
+
+			kubectl.EXPECT().GetEksaCluster(ctx, cluster, clusterSpec.Cluster.Name).Return(clusterSpec.Cluster, nil)
+			kubectl.EXPECT().GetEksaVSphereDatacenterConfig(ctx, cluster.Name, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(datacenterConfig, nil)
+			kubectl.EXPECT().GetEksaVSphereMachineConfig(ctx, controlPlaneMachineConfigName, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(clusterSpec.VSphereMachineConfigs[controlPlaneMachineConfigName], nil)
+			kubectl.EXPECT().GetEksaVSphereMachineConfig(ctx, workerNodeMachineConfigName, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(clusterSpec.VSphereMachineConfigs[workerNodeMachineConfigName], nil)
+			kubectl.EXPECT().GetEksaVSphereMachineConfig(ctx, etcdMachineConfigName, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(clusterSpec.VSphereMachineConfigs[etcdMachineConfigName], nil)
+			kubectl.EXPECT().GetKubeadmControlPlane(ctx, cluster, clusterSpec.Cluster.Name, gomock.AssignableToTypeOf(executables.WithCluster(bootstrapCluster))).Return(oldCP, nil)
+			kubectl.EXPECT().GetMachineDeployment(ctx, machineDeploymentName, gomock.AssignableToTypeOf(executables.WithCluster(bootstrapCluster))).Return(oldMD, nil).Times(2)
+			kubectl.EXPECT().GetEtcdadmCluster(ctx, cluster, clusterSpec.Cluster.Name, gomock.AssignableToTypeOf(executables.WithCluster(bootstrapCluster))).Return(etcdadmCluster, nil)
+
+			cp, md, err := provider.GenerateCAPISpecForUpgrade(context.Background(), bootstrapCluster, cluster, clusterSpec, clusterSpec.DeepCopy())
+			if err != nil {
+				t.Fatalf("failed to generate cluster api spec contents: %v", err)
+			}
+
+			test.AssertContentToFile(t, string(cp), tt.wantCPFile)
+			test.AssertContentToFile(t, string(md), tt.wantMDFile)
+		})
+	}
+}
