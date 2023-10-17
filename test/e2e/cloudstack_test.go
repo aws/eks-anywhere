@@ -1246,26 +1246,6 @@ func redhat124ProviderWithLabels(t *testing.T) *framework.CloudStack {
 	)
 }
 
-func redhat124ProviderWithLabels(t *testing.T) *framework.CloudStack {
-	return framework.NewCloudStack(t,
-		framework.WithCloudStackWorkerNodeGroup(
-			worker0,
-			framework.WithWorkerNodeGroup(worker0, api.WithCount(2),
-				api.WithLabel(key1, val2)),
-		),
-		framework.WithCloudStackWorkerNodeGroup(
-			worker1,
-			framework.WithWorkerNodeGroup(worker1, api.WithCount(1)),
-		),
-		framework.WithCloudStackWorkerNodeGroup(
-			worker2,
-			framework.WithWorkerNodeGroup(worker2, api.WithCount(1),
-				api.WithLabel(key2, val2)),
-		),
-		framework.WithCloudStackRedhat124(),
-	)
-}
-
 func redhat125ProviderWithLabels(t *testing.T) *framework.CloudStack {
 	return framework.NewCloudStack(t,
 		framework.WithCloudStackWorkerNodeGroup(
@@ -2804,24 +2784,6 @@ func TestCloudStackKubernetes128RedhatTaintsUpgradeFlow(t *testing.T) {
 			api.WithWorkerNodeGroup(worker2, api.WithNoTaints()),
 			api.WithControlPlaneTaints([]corev1.Taint{framework.PreferNoScheduleTaint()}),
 		),
-	)
-}
-
-func redhat124ProviderWithTaints(t *testing.T) *framework.CloudStack {
-	return framework.NewCloudStack(t,
-		framework.WithCloudStackWorkerNodeGroup(
-			worker0,
-			framework.NoScheduleWorkerNodeGroup(worker0, 2),
-		),
-		framework.WithCloudStackWorkerNodeGroup(
-			worker1,
-			framework.WithWorkerNodeGroup(worker1, api.WithCount(1)),
-		),
-		framework.WithCloudStackWorkerNodeGroup(
-			worker2,
-			framework.PreferNoScheduleWorkerNodeGroup(worker2, 1),
-		),
-		framework.WithCloudStackRedhat124(),
 	)
 }
 
