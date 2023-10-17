@@ -74,36 +74,6 @@ type ClusterSpec struct {
 	EtcdEncryption     *[]EtcdEncryption   `json:"etcdEncryption,omitempty"`
 }
 
-// ClusterSpecGenerate is the same as ClusterSpec except for removing the omitempty tag from BundlesRef.
-// TODO: We needed this specifically such that we could generate a yaml with bundlesRef null so that it would
-// not be omitted from the kubeapi-server. There was an issue where the apply ekas yaml resources step when
-// upgrading from the latest minor release with gitps v0.16.2 to v0.17, where the newly added eksaVersion field
-// and the bundlesRef should were both populated in submission to the kubeapi server, though bundlesRef was nil
-// in the initially applied Cluster spec. After addressing that issue, we should clean this up
-// https://github.com/aws/eks-anywhere-internal/issues/1611
-// +kubebuilder:object:generate=false
-type ClusterSpecGenerate struct {
-	KubernetesVersion             KubernetesVersion              `json:"kubernetesVersion,omitempty"`
-	ControlPlaneConfiguration     ControlPlaneConfiguration      `json:"controlPlaneConfiguration,omitempty"`
-	WorkerNodeGroupConfigurations []WorkerNodeGroupConfiguration `json:"workerNodeGroupConfigurations,omitempty"`
-	DatacenterRef                 Ref                            `json:"datacenterRef,omitempty"`
-	IdentityProviderRefs          []Ref                          `json:"identityProviderRefs,omitempty"`
-	GitOpsRef                     *Ref                           `json:"gitOpsRef,omitempty"`
-	ClusterNetwork                ClusterNetwork                 `json:"clusterNetwork,omitempty"`
-	// +kubebuilder:validation:Optional
-	ExternalEtcdConfiguration   *ExternalEtcdConfiguration   `json:"externalEtcdConfiguration,omitempty"`
-	ProxyConfiguration          *ProxyConfiguration          `json:"proxyConfiguration,omitempty"`
-	RegistryMirrorConfiguration *RegistryMirrorConfiguration `json:"registryMirrorConfiguration,omitempty"`
-	ManagementCluster           ManagementCluster            `json:"managementCluster,omitempty"`
-	PodIAMConfig                *PodIAMConfig                `json:"podIamConfig,omitempty"`
-	Packages                    *PackageConfiguration        `json:"packages,omitempty"`
-	// BundlesRef contains a reference to the Bundles containing the desired dependencies for the cluster.
-	// DEPRECATED: Use EksaVersion instead.
-	BundlesRef         *BundlesRef         `json:"bundlesRef"`
-	EksaVersion        *EksaVersion        `json:"eksaVersion,omitempty"`
-	MachineHealthCheck *MachineHealthCheck `json:"machineHealthCheck,omitempty"`
-}
-
 // EksaVersion is the semver identifying the release of eks-a used to populate the cluster components.
 type EksaVersion string
 
@@ -1258,7 +1228,7 @@ type ClusterGenerate struct {
 	metav1.TypeMeta `json:",inline"`
 	ObjectMeta      `json:"metadata,omitempty"`
 
-	Spec ClusterSpecGenerate `json:"spec,omitempty"`
+	Spec ClusterSpec `json:"spec,omitempty"`
 }
 
 func (c *Cluster) Kind() string {
@@ -1419,7 +1389,7 @@ func (c *Cluster) ConvertConfigToConfigGenerateStruct() *ClusterGenerate {
 			Annotations: c.Annotations,
 			Namespace:   namespace,
 		},
-		Spec: ClusterSpecGenerate{
+		Spec: ClusterSpec{
 			KubernetesVersion:             c.Spec.KubernetesVersion,
 			ControlPlaneConfiguration:     c.Spec.ControlPlaneConfiguration,
 			WorkerNodeGroupConfigurations: c.Spec.WorkerNodeGroupConfigurations,

@@ -49,7 +49,7 @@ func NewClusterGenerate(clusterName string, opts ...ClusterGenerateOpt) *Cluster
 		ObjectMeta: ObjectMeta{
 			Name: clusterName,
 		},
-		Spec: ClusterSpecGenerate{
+		Spec: ClusterSpec{
 			KubernetesVersion: GetClusterDefaultKubernetesVersion(),
 			ClusterNetwork: ClusterNetwork{
 				Pods: Pods{
