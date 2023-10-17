@@ -991,6 +991,8 @@ func TestProviderValidateAvailableHardwareOnlyCPUpgradeSuccess(t *testing.T) {
 	catalogue := hardware.NewCatalogue()
 	newCluster := clusterSpec.DeepCopy()
 	newCluster.Cluster.Spec.KubernetesVersion = v1alpha1.Kube122
+	cpRef := newCluster.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
+	machineConfigs[cpRef].Spec.OSImageURL = "https://ubuntu-1-22.gz"
 	_ = catalogue.InsertHardware(&tinkv1.Hardware{ObjectMeta: metav1.ObjectMeta{
 		Labels: map[string]string{"type": "cp"},
 	}})
@@ -1021,6 +1023,8 @@ func TestProviderValidateAvailableHardwareOnlyCPUpgradeError(t *testing.T) {
 	catalogue := hardware.NewCatalogue()
 	newCluster := clusterSpec.DeepCopy()
 	newCluster.Cluster.Spec.KubernetesVersion = v1alpha1.Kube122
+	cpRef := newCluster.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
+	machineConfigs[cpRef].Spec.OSImageURL = "https://ubuntu-1-22.gz"
 	provider.catalogue = catalogue
 	err := provider.validateAvailableHardwareForUpgrade(ctx, clusterSpec, newCluster)
 	if err == nil || !strings.Contains(err.Error(), "for rolling upgrade, minimum hardware count not met for selector '{\"type\":\"cp\"}'") {
@@ -1052,6 +1056,8 @@ func TestProviderValidateAvailableHardwareOnlyWorkerUpgradeSuccess(t *testing.T)
 	_ = catalogue.InsertHardware(&tinkv1.Hardware{ObjectMeta: metav1.ObjectMeta{
 		Labels: map[string]string{"type": "worker"},
 	}})
+	wngRef := newCluster.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
+	machineConfigs[wngRef].Spec.OSImageURL = "https://ubuntu-1-22.gz"
 	provider.catalogue = catalogue
 	err := provider.validateAvailableHardwareForUpgrade(ctx, clusterSpec, newCluster)
 	if err != nil {
@@ -1080,6 +1086,8 @@ func TestProviderValidateAvailableHardwareOnlyWorkerUpgradeError(t *testing.T) {
 	newCluster := clusterSpec.DeepCopy()
 	kube122 := v1alpha1.Kube122
 	newCluster.Cluster.Spec.WorkerNodeGroupConfigurations[0].KubernetesVersion = &kube122
+	wngRef := newCluster.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
+	machineConfigs[wngRef].Spec.OSImageURL = "https://ubuntu-1-22.gz"
 	provider.catalogue = catalogue
 	err := provider.validateAvailableHardwareForUpgrade(ctx, clusterSpec, newCluster)
 	if err == nil || !strings.Contains(err.Error(), "for rolling upgrade, minimum hardware count not met for selector '{\"type\":\"worker\"}'") {

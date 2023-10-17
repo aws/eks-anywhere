@@ -65,7 +65,7 @@ spec:
   hardwareSelector:
     type: "cp"
   osFamily: ubuntu
-  osImageURL: "https://ubuntu.gz"
+  osImageURL: "https://ubuntu-1-21.gz"
   users:
     - name: tink-user
       sshAuthorizedKeys:
@@ -80,7 +80,7 @@ spec:
   hardwareSelector:
     type: "worker"
   osFamily: ubuntu
-  osImageURL: "https://ubuntu.gz"
+  osImageURL: "https://ubuntu-1-21.gz"
   users:
     - name: tink-user
       sshAuthorizedKeys:

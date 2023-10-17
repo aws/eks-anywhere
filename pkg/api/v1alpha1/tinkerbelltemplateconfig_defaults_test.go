@@ -32,9 +32,10 @@ warnings:
 		wantActions     []tinkerbell.Action
 	}{
 		{
-			testName:    "Bottlerocket-sda",
-			osFamily:    Bottlerocket,
-			clusterSpec: &Cluster{},
+			testName:        "Bottlerocket-sda",
+			osFamily:        Bottlerocket,
+			osImageOverride: "http://tinkerbell-example:8080/bottlerocket-2004-kube-v1.21.5.gz",
+			clusterSpec:     &Cluster{},
 			wantActions: []tinkerbell.Action{
 				{
 					Name:    "stream-image",
@@ -105,9 +106,10 @@ warnings:
 			},
 		},
 		{
-			testName:    "Bottlerocket-nvme",
-			osFamily:    Bottlerocket,
-			clusterSpec: &Cluster{},
+			testName:        "Bottlerocket-nvme",
+			osFamily:        Bottlerocket,
+			osImageOverride: "http://tinkerbell-example:8080/bottlerocket-2004-kube-v1.21.5.gz",
+			clusterSpec:     &Cluster{},
 			wantActions: []tinkerbell.Action{
 				{
 					Name:    "stream-image",

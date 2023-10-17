@@ -205,6 +205,11 @@ func Bundle() *releasev1.Bundles {
 						Name:           "test",
 						EksDReleaseUrl: "embed:///testdata/release.yaml",
 						KubeVersion:    "1.22",
+						Raw: releasev1.OSImageBundle{
+							Bottlerocket: releasev1.Archive{
+								URI: "http://tinkerbell-example:8080/bottlerocket-2004-kube-v1.22.5.gz",
+							},
+						},
 					},
 					CertManager:                releasev1.CertManagerBundle{},
 					ClusterAPI:                 releasev1.CoreClusterAPI{},

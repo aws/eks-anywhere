@@ -63,16 +63,18 @@ func TestReconcilerReconcileSuccess(t *testing.T) {
 	tt.eksaSupportObjs = append(tt.eksaSupportObjs, tinkHardware("hw1", "cp"))
 	tt.eksaSupportObjs = append(tt.eksaSupportObjs, tinkHardware("hw2", "worker"))
 	tt.createAllObjs()
-
 	logger := test.NewNullLogger()
 	remoteClient := env.Client()
-
 	tt.ipValidator.EXPECT().ValidateControlPlaneIP(tt.ctx, logger, tt.buildSpec()).Return(controller.Result{}, nil)
 
 	tt.remoteClientRegistry.EXPECT().GetClient(
 		tt.ctx, client.ObjectKey{Name: workloadClusterName, Namespace: constants.EksaSystemNamespace},
 	).Return(remoteClient, nil)
-	tt.cniReconciler.EXPECT().Reconcile(tt.ctx, logger, remoteClient, tt.buildSpec())
+	spec := tt.buildSpec()
+	for _, mc := range spec.TinkerbellMachineConfigs {
+		mc.Spec.OSImageURL = "http://tinkerbell-example:8080/bottlerocket-2004-kube-v1.22.5.gz"
+	}
+	tt.cniReconciler.EXPECT().Reconcile(tt.ctx, logger, remoteClient, spec)
 
 	result, err := tt.reconciler().Reconcile(tt.ctx, logger, tt.cluster)
 
@@ -671,6 +673,44 @@ func TestReconcilerDetectOperationK8sVersionUpgrade(t *testing.T) {
 	tt.cleanup()
 }
 
+func TestReconcilerDetectOperationK8sVersionUpgradeCPOnly(t *testing.T) {
+	tt := newReconcilerTest(t)
+	tt.createAllObjs()
+
+	logger := test.NewNullLogger()
+	scope := tt.buildScope()
+	_, err := tt.reconciler().GenerateSpec(tt.ctx, logger, scope)
+	tt.Expect(err).NotTo(HaveOccurred())
+	scope.ControlPlane = tinkerbellCP(tt.cluster.Name)
+	kube123 := "v1.23.8"
+	scope.ControlPlane.KubeadmControlPlane.Spec.Version = kube123
+	op, err := tt.reconciler().DetectOperation(tt.ctx, logger, scope)
+	tt.Expect(err).NotTo(HaveOccurred())
+	tt.Expect(op).To(Equal(reconciler.K8sVersionUpgradeOperation))
+	tt.cleanup()
+}
+
+func TestReconcilerDetectOperationK8sVersionUpgradeWorkerOnly(t *testing.T) {
+	tt := newReconcilerTest(t)
+	tt.createAllObjs()
+
+	logger := test.NewNullLogger()
+	scope := tt.buildScope()
+
+	_, err := tt.reconciler().GenerateSpec(tt.ctx, logger, scope)
+	kube123 := "v1.23.8"
+	scope.Workers = tinkWorker(tt.cluster.Name, func(w *tinkerbell.Workers) {
+		w.Groups[0].MachineDeployment.Spec.Template.Spec.Version = &kube123
+	})
+
+	tt.Expect(err).NotTo(HaveOccurred())
+
+	op, err := tt.reconciler().DetectOperation(tt.ctx, logger, scope)
+	tt.Expect(err).NotTo(HaveOccurred())
+	tt.Expect(op).To(Equal(reconciler.K8sVersionUpgradeOperation))
+	tt.cleanup()
+}
+
 func TestReconcilerDetectOperationExistingWorkerNodeGroupScaleUpdate(t *testing.T) {
 	tt := newReconcilerTest(t)
 	tt.createAllObjs()
@@ -813,7 +853,7 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 
 	bundle := test.Bundle()
 	version := test.DevEksaVersion()
-
+	kube122 := anywherev1.Kube122
 	managementClusterDatacenter := dataCenter(func(d *anywherev1.TinkerbellDatacenterConfig) {
 		d.Name = "management-datacenter"
 	})
@@ -878,11 +918,12 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 					Kind: anywherev1.TinkerbellMachineConfigKind,
 					Name: machineConfigWN.Name,
 				},
-				Name:   "md-0",
-				Labels: nil,
+				Name:              "md-0",
+				Labels:            nil,
+				KubernetesVersion: &kube122,
 			},
 		)
-
+		c.Spec.KubernetesVersion = kube122
 		c.Spec.EksaVersion = &version
 	})
 

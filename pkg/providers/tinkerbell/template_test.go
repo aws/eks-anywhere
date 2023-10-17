@@ -94,7 +94,7 @@ func TestGenerateTemplateBuilderForMachineConfigOsImageURL(t *testing.T) {
 	expectedControlPlaneMachineSpec := &v1alpha1.TinkerbellMachineConfigSpec{
 		HardwareSelector: map[string]string{"type": "cp"},
 		OSFamily:         "ubuntu",
-		OSImageURL:       "https://ubuntu.gz",
+		OSImageURL:       "https://ubuntu-1-21.gz",
 		Users: []v1alpha1.UserConfiguration{
 			{
 				Name:              "tink-user",
@@ -111,7 +111,7 @@ func TestGenerateTemplateBuilderForMachineConfigOsImageURL(t *testing.T) {
 		"test-md": {
 			HardwareSelector: map[string]string{"type": "worker"},
 			OSFamily:         "ubuntu",
-			OSImageURL:       "https://ubuntu.gz",
+			OSImageURL:       "https://ubuntu-1-21.gz",
 			Users: []v1alpha1.UserConfiguration{
 				{
 					Name:              "tink-user",

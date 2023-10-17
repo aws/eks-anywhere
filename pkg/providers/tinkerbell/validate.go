@@ -45,7 +45,83 @@ func validateOSImageURL(spec *ClusterSpec) error {
 			return fmt.Errorf("missing OSImageURL on TinkerbellMachineConfig '%s'", mc.ObjectMeta.Name)
 		}
 	}
+	return validateK8sVersionInOSImageURLs(spec)
+}
+
+func validateK8sVersionInOSImageURLs(spec *ClusterSpec) error {
+	// If the user specifies the OSImageURL via the datacenter config then ensure all kube versions specified
+	// on the cluster config are specified in the OSImageURL as the user could technically use a single image.
+	//
+	// When the user specifies OSImageURLs on each individual machine config (typical for modular upgrades) ensure
+	// each machine config OSImageURL specifies the Kubernetes version. We don't explicitly take into consideration
+	// the fact control plane, etcd and worker node groups can all reference the same machine config. If 2 components
+	// specify different kube versions this will ensure both are present in the image URL (as above).
+	if spec.DatacenterConfig.Spec.OSImageURL != "" {
+		kvs := spec.Cluster.KubernetesVersions()
+		for _, v := range kvs {
+			if !containsK8sVersion(spec.DatacenterConfig.Spec.OSImageURL, string(v)) {
+				return fmt.Errorf("missing kube version from OSImageURL: url=%v, version=%v",
+					spec.DatacenterConfig.Spec.OSImageURL, v)
+			}
+		}
+	} else {
+		// For Bottlerocket we vend images but we still allow the user to specify them if they wish. We only want
+		// to default machine config OSImageURLs if the datacenter config doesn't specify one and we default
+		// to whatever is in the bundle.
+		//
+		// TODO: Investigate how we could refactor our logic to make this unnecessary.
+		//
+		// We validate elsewhere that all machine configs specify the same OSFamily so we can rely on the
+		// control plane machine config only for the need to default OSImageURLs.
+		if spec.ControlPlaneMachineConfig().OSFamily() == v1alpha1.Bottlerocket {
+			defaultBottlerocketOSImageURLs(spec)
+		}
+
+		if !containsK8sVersion(spec.ControlPlaneMachineConfig().Spec.OSImageURL, string(spec.Cluster.Spec.KubernetesVersion)) {
+			return fmt.Errorf("missing kube version from control plane machine config OSImageURL: url=%v, version=%v",
+				spec.ControlPlaneMachineConfig().Spec.OSImageURL, spec.Cluster.Spec.KubernetesVersion)
+		}
+
+		for _, wng := range spec.WorkerNodeGroupConfigurations() {
+			url := spec.MachineConfigs[wng.MachineGroupRef.Name].Spec.OSImageURL
+			version := spec.Cluster.Spec.KubernetesVersion
+			if wng.KubernetesVersion != nil && *wng.KubernetesVersion != "" {
+				version = *wng.KubernetesVersion
+			}
+
+			if !containsK8sVersion(url, string(version)) {
+				return fmt.Errorf("missing kube version from worker node group machine config OSImageURL: url=%v, version=%v",
+					url, version)
+			}
+		}
+	}
 	return nil
+}
+
+func defaultBottlerocketOSImageURLs(spec *ClusterSpec) {
+	if spec.ControlPlaneMachineConfig().Spec.OSImageURL == "" {
+		spec.ControlPlaneMachineConfig().Spec.OSImageURL = spec.RootVersionsBundle().EksD.Raw.Bottlerocket.URI
+	}
+	for _, wng := range spec.WorkerNodeGroupConfigurations() {
+		mc := spec.MachineConfigs[wng.MachineGroupRef.Name]
+		version := spec.Cluster.Spec.KubernetesVersion
+		if wng.KubernetesVersion != nil {
+			version = *wng.KubernetesVersion
+		}
+		if mc.Spec.OSImageURL == "" {
+			mc.Spec.OSImageURL = spec.VersionsBundle(version).EksD.Raw.Bottlerocket.URI
+		}
+	}
+}
+
+func containsK8sVersion(imageURL, k8sVersion string) bool {
+	versionExtractor := strings.NewReplacer("-", "", ".", "", "_", "")
+	osImageURL := versionExtractor.Replace(imageURL)
+	kubeVersion := versionExtractor.Replace(k8sVersion)
+	// we set the containsK8sVersion to false if the OS image URL does not contain the specified kubernetes version.
+	// For ex if the kubernetes version is 1.23,
+	// the image url should include 1.23 or 1-23, 1_23 or 123 i.e. ubuntu-1-23.gz or similar in the string.
+	return strings.Contains(osImageURL, kubeVersion)
 }
 
 func validateMachineRefExists(

@@ -182,6 +182,16 @@ func (r *Reconciler) DetectOperation(ctx context.Context, log logr.Logger, tinke
 		return K8sVersionUpgradeOperation, nil
 	}
 
+	for _, wg := range tinkerbellScope.Workers.Groups {
+		machineDeployment, err := controller.GetMachineDeployment(ctx, r.client, wg.MachineDeployment.GetName())
+		if err != nil {
+			return "", errors.Wrap(err, "failed to get workernode group machinedeployment")
+		}
+		if machineDeployment != nil && (*machineDeployment.Spec.Template.Spec.Version != *wg.MachineDeployment.Spec.Template.Spec.Version) {
+			log.Info("Operation detected", "operation", K8sVersionUpgradeOperation)
+			return K8sVersionUpgradeOperation, nil
+		}
+	}
 	log.Info("Operation detected", "operation", NoChange)
 	return NoChange, nil
 }

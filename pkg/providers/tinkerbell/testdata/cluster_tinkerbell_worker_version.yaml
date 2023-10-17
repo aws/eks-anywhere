@@ -67,7 +67,6 @@ metadata:
   namespace: test-namespace
 spec:
   tinkerbellIP: "5.6.7.8"
-  osImageURL: "https://ubuntu.gz"
 
 ---
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
@@ -79,6 +78,7 @@ spec:
   hardwareSelector:
     type: "cp"
   osFamily: ubuntu
+  osImageURL: "https://ubuntu-1.21.gz"
   templateRef:
     kind: TinkerbellTemplateConfig
     name: tink-test
@@ -96,6 +96,7 @@ spec:
   hardwareSelector:
     type: "worker"
   osFamily: ubuntu
+  osImageURL: "https://ubuntu-1.20-1.21.gz"
   templateRef:
     kind: TinkerbellTemplateConfig
     name: tink-test

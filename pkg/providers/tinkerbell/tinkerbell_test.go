@@ -26,6 +26,7 @@ import (
 	stackmocks "github.com/aws/eks-anywhere/pkg/providers/tinkerbell/stack/mocks"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/utils/ptr"
+	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
 const (
@@ -924,6 +925,7 @@ func TestProviderGenerateDeploymentFileForWithBottlerocketMinimalRegistryMirror(
 	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
 	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 	ctx := context.Background()
+	clusterSpec.VersionsBundles[clusterSpec.Cluster.Spec.KubernetesVersion] = getVersionBundle()
 
 	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
 	provider.stackInstaller = stackInstaller
@@ -958,7 +960,7 @@ func TestProviderGenerateDeploymentFileForWithBottlerocketRegistryMirrorWithCert
 	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
 	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 	ctx := context.Background()
-
+	clusterSpec.VersionsBundles[clusterSpec.Cluster.Spec.KubernetesVersion] = getVersionBundle()
 	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
 	provider.stackInstaller = stackInstaller
 
@@ -995,7 +997,7 @@ func TestProviderGenerateDeploymentFileForWithBottlerocketRegistryMirrorWithAuth
 	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
 	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 	ctx := context.Background()
-
+	clusterSpec.VersionsBundles[clusterSpec.Cluster.Spec.KubernetesVersion] = getVersionBundle()
 	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
 	provider.stackInstaller = stackInstaller
 
@@ -2217,4 +2219,77 @@ func TestTinkerbellProvider_GenerateCAPISpecForUpgrade_CertBundles(t *testing.T)
 
 	test.AssertContentToFile(t, string(cp), "testdata/expected_results_bottlerocket_upgrade_cert_bundles_config_cp.yaml")
 	test.AssertContentToFile(t, string(md), "testdata/expected_results_bottlerocket_upgrade_cert_bundles_config_md.yaml")
+}
+
+func getVersionBundle() *cluster.VersionsBundle {
+	return &cluster.VersionsBundle{
+		VersionsBundle: &releasev1.VersionsBundle{
+			EksD: releasev1.EksDRelease{
+				Raw: releasev1.OSImageBundle{
+					Bottlerocket: releasev1.Archive{
+						URI: "http://tinkerbell-example:8080/bottlerocket-2004-kube-v1.21.5.gz",
+					},
+				},
+			},
+			Tinkerbell: releasev1.TinkerbellBundle{
+				KubeVip: releasev1.Image{
+					URI: "public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.581",
+				},
+			},
+			BottleRocketHostContainers: releasev1.BottlerocketHostContainersBundle{
+				Admin: releasev1.Image{
+					URI: "public.ecr.aws/eks-anywhere/bottlerocket-admin:0.0.1",
+				},
+				Control: releasev1.Image{
+					URI: "public.ecr.aws/eks-anywhere/bottlerocket-control:0.0.1",
+				},
+				KubeadmBootstrap: releasev1.Image{
+					URI: "public.ecr.aws/l0g8r8j6/bottlerocket-bootstrap:v1-21-4-eks-a-v0.0.0-dev-build.158",
+				},
+			},
+		},
+		KubeDistro: &cluster.KubeDistro{
+			EKSD: cluster.EKSD{
+				Channel: "1-21",
+			},
+			Kubernetes: cluster.VersionedRepository{
+				Repository: "public.ecr.aws/eks-distro/kubernetes",
+				Tag:        "v1.21.2-eks-1-21-4",
+			},
+			CoreDNS: cluster.VersionedRepository{
+				Repository: "public.ecr.aws/eks-distro/coredns",
+				Tag:        "v1.8.3-eks-1-21-4",
+			},
+			Etcd: cluster.VersionedRepository{
+				Repository: "public.ecr.aws/eks-distro/etcd-io",
+				Tag:        "v3.4.16-eks-1-21-4",
+			},
+			NodeDriverRegistrar: releasev1.Image{
+				URI: "public.ecr.aws/eks-distro/kubernetes-csi/node-driver-registrar:v2.1.0",
+			},
+			LivenessProbe: releasev1.Image{
+				URI: "public.ecr.aws/eks-distro/kubernetes-csi/livenessprobe:v2.2.0",
+			},
+			ExternalAttacher: releasev1.Image{
+				URI: "public.ecr.aws/eks-distro/kubernetes-csi/external-attacher:v3.1.0",
+			},
+			ExternalProvisioner: releasev1.Image{
+				URI: "public.ecr.aws/eks-distro/kubernetes-csi/external-provisioner:v2.1.1",
+			},
+			Pause: releasev1.Image{
+				URI: "public.ecr.aws/eks-distro/kubernetes/pause:v1.21.2-eks-1-21-4",
+			},
+			EtcdImage: releasev1.Image{
+				URI: "public.ecr.aws/eks-distro/etcd-io/etcd:v3.4.14",
+			},
+			AwsIamAuthImage: releasev1.Image{
+				URI: "public.ecr.aws/eks-distro/kubernetes-sigs/aws-iam-authenticator:v0.5.2",
+			},
+			KubeProxy: releasev1.Image{
+				URI: "public.ecr.aws/eks-distro/kubernetes/kube-proxy:v1.21.2-eks-1-21-4",
+			},
+			EtcdVersion: "3.4.14",
+			EtcdURL:     "https://distro.eks.amazonaws.com/kubernetes-1-19/releases/4/artifacts/etcd/v3.4.14/etcd-linux-amd64-v3.4.14.tar.gz",
+		},
+	}
 }
