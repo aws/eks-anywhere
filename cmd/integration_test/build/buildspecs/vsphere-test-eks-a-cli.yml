@@ -77,6 +77,13 @@ env:
     T_PRIVATE_REGISTRY_MIRROR_CA_CERT: "harbor-registry-data:authenticated_caCert"
     T_NTP_SERVERS: "ntp:servers"
     T_AWS_IAM_ROLE_ARN: "aws-iam-auth-role:ec2_role_arn"
+    T_IRSA_S3_BUCKET: "etcd-encryption:irsa_s3_bucket"
+    T_KMS_IAM_ROLE: "etcd-encryption:kms_iam_role_arn"
+    T_KMS_IMAGE: "etcd-encryption:kms_image"
+    T_KMS_KEY_ARN: "etcd-encryption:kms_key_arn"
+    T_KMS_KEY_REGION: "etcd-encryption:region"
+    T_KMS_SOCKET: "etcd-encryption:socket"
+    T_SSH_PRIVATE_KEY: "vsphere_ci_beta_connection:base64_encoded_ssh_private_key"
 phases:
   pre_build:
     commands:
