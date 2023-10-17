@@ -11,18 +11,21 @@ type installNewComponents struct{}
 
 // Run installNewComponents performs actions needed to upgrade the management cluster.
 func (s *installNewComponents) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
-	if commandContext.UpgradeChangeDiff.Changed() {
-		if err := commandContext.ClusterManager.ApplyBundles(ctx, commandContext.ClusterSpec, commandContext.ManagementCluster); err != nil {
-			commandContext.SetError(err)
-			return &workflows.CollectMgmtClusterDiagnosticsTask{}
-		}
-
-		if err := commandContext.ClusterManager.ApplyReleases(ctx, commandContext.ClusterSpec, commandContext.ManagementCluster); err != nil {
-			commandContext.SetError(err)
-			return &workflows.CollectMgmtClusterDiagnosticsTask{}
-		}
+	if err := commandContext.ClusterManager.ApplyBundles(ctx, commandContext.ClusterSpec, commandContext.ManagementCluster); err != nil {
+		commandContext.SetError(err)
+		return &workflows.CollectMgmtClusterDiagnosticsTask{}
 	}
 
+	if err := commandContext.ClusterManager.ApplyReleases(ctx, commandContext.ClusterSpec, commandContext.ManagementCluster); err != nil {
+		commandContext.SetError(err)
+		return &workflows.CollectMgmtClusterDiagnosticsTask{}
+	}
+
+	err := commandContext.EksdInstaller.InstallEksdManifest(ctx, commandContext.ClusterSpec, commandContext.ManagementCluster)
+	if err != nil {
+		commandContext.SetError(err)
+		return &workflows.CollectMgmtClusterDiagnosticsTask{}
+	}
 	return &upgradeCluster{}
 }
 
