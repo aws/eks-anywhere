@@ -62,6 +62,10 @@ env:
     T_HTTP_PROXY_TINKERBELL: "proxy-config-data:httpProxyTinkerbell"
     T_HTTPS_PROXY_TINKERBELL: "proxy-config-data:httpsProxyTinkerbell"
     T_NO_PROXY_TINKERBELL: "proxy-config-data:noProxyTinkerbell"
+    T_TINKERBELL_BMC_CONSUMER_URL: "tinkerbell_ci:bmc_consumer_url"
+    T_TINKERBELL_BMC_HMAC_SECRETS: "tinkerbell_ci:bmc_hmac_secrets"
+    T_TINKERBELL_BMC_TIMESTAMP_HEADER: "tinkerbell_ci:bmc_timestamp_header"
+    T_TINKERBELL_BMC_INCLUDED_PAYLOAD_HEADERS: "tinkerbell_ci:bmc_included_payload_headers"
 phases:
   pre_build:
     commands:
