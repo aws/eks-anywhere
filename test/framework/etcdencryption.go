@@ -145,7 +145,7 @@ func (e *ClusterE2ETest) ValidateEtcdEncryption() {
 		"get", fmt.Sprintf("/registry/secrets/default/%s", secretName), "| hexdump -C",
 	}
 	for _, etcdIP := range etcdIPs {
-		out, err := ssh.RunCommand(ctx, SSHKeyPath, "capc", etcdIP, cmd...)
+		out, err := ssh.RunCommand(ctx, SSHKeyPath, getSSHUsernameByProvider(e.Provider.Name()), etcdIP, cmd...)
 		if err != nil {
 			e.T.Fatalf("Error verifying the secret is encrypted in etcd: %v", err)
 		}
@@ -154,6 +154,17 @@ func (e *ClusterE2ETest) ValidateEtcdEncryption() {
 			e.T.Fatal("The secure secret is not encrypted")
 		}
 		e.T.Logf("The secret is encrypted with KMS on etcd node %s", etcdIP)
+	}
+}
+
+func getSSHUsernameByProvider(provider string) string {
+	switch provider {
+	case "cloudstack":
+		return "capc"
+	case "nutanix":
+		return "eksa"
+	default:
+		return "ec2-user"
 	}
 }
 
