@@ -698,11 +698,11 @@ func TestCloudStackKubernetes128RedhatCuratedPackagesPrometheusSimpleFlow(t *tes
 func TestCloudStackDownloadArtifacts(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
-		framework.NewCloudStack(t, framework.WithCloudStackRedhat123()),
+		framework.NewCloudStack(t, framework.WithCloudStackRedhat124()),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
 	)
 	runDownloadArtifactsFlow(test)
 }
@@ -1226,26 +1226,6 @@ func TestCloudStackKubernetes128RedhatLabelsUpgradeFlow(t *testing.T) {
 	)
 }
 
-func redhat123ProviderWithLabels(t *testing.T) *framework.CloudStack {
-	return framework.NewCloudStack(t,
-		framework.WithCloudStackWorkerNodeGroup(
-			worker0,
-			framework.WithWorkerNodeGroup(worker0, api.WithCount(2),
-				api.WithLabel(key1, val2)),
-		),
-		framework.WithCloudStackWorkerNodeGroup(
-			worker1,
-			framework.WithWorkerNodeGroup(worker1, api.WithCount(1)),
-		),
-		framework.WithCloudStackWorkerNodeGroup(
-			worker2,
-			framework.WithWorkerNodeGroup(worker2, api.WithCount(1),
-				api.WithLabel(key2, val2)),
-		),
-		framework.WithCloudStackRedhat123(),
-	)
-}
-
 func redhat124ProviderWithLabels(t *testing.T) *framework.CloudStack {
 	return framework.NewCloudStack(t,
 		framework.WithCloudStackWorkerNodeGroup(
@@ -1518,46 +1498,6 @@ func TestCloudStackKubernetes124MulticlusterWorkloadClusterPrevVersion(t *testin
 }
 
 // TODO: Add TestCloudStackUpgradeKubernetes124MulticlusterWorkloadClusterWithGithubFlux
-func TestCloudStackUpgradeKubernetes124MulticlusterWorkloadClusterWithGithubFlux(t *testing.T) {
-	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat123())
-	test := framework.NewMulticlusterE2ETest(
-		t,
-		framework.NewClusterE2ETest(
-			t,
-			provider,
-			framework.WithFluxGithub(),
-			framework.WithClusterFiller(
-				api.WithKubernetesVersion(v1alpha1.Kube123),
-				api.WithControlPlaneCount(1),
-				api.WithWorkerNodeCount(1),
-				api.WithStackedEtcdTopology(),
-			),
-		),
-		framework.NewClusterE2ETest(
-			t,
-			provider,
-			framework.WithFluxGithub(),
-			framework.WithClusterFiller(
-				api.WithKubernetesVersion(v1alpha1.Kube123),
-				api.WithControlPlaneCount(1),
-				api.WithWorkerNodeCount(1),
-				api.WithStackedEtcdTopology(),
-			),
-		),
-	)
-	runWorkloadClusterFlowWithGitOps(
-		test,
-		framework.WithClusterUpgradeGit(
-			api.WithKubernetesVersion(v1alpha1.Kube124),
-			api.WithControlPlaneCount(3),
-			api.WithWorkerNodeCount(3),
-		),
-		provider.WithProviderUpgradeGit(
-			provider.Redhat124Template(),
-		),
-	)
-}
-
 func TestCloudStackUpgradeKubernetes125MulticlusterWorkloadClusterWithGithubFlux(t *testing.T) {
 	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat124())
 	test := framework.NewMulticlusterE2ETest(
@@ -2847,24 +2787,6 @@ func TestCloudStackKubernetes128RedhatTaintsUpgradeFlow(t *testing.T) {
 	)
 }
 
-func redhat123ProviderWithTaints(t *testing.T) *framework.CloudStack {
-	return framework.NewCloudStack(t,
-		framework.WithCloudStackWorkerNodeGroup(
-			worker0,
-			framework.NoScheduleWorkerNodeGroup(worker0, 2),
-		),
-		framework.WithCloudStackWorkerNodeGroup(
-			worker1,
-			framework.WithWorkerNodeGroup(worker1, api.WithCount(1)),
-		),
-		framework.WithCloudStackWorkerNodeGroup(
-			worker2,
-			framework.PreferNoScheduleWorkerNodeGroup(worker2, 1),
-		),
-		framework.WithCloudStackRedhat123(),
-	)
-}
-
 func redhat124ProviderWithTaints(t *testing.T) *framework.CloudStack {
 	return framework.NewCloudStack(t,
 		framework.WithCloudStackWorkerNodeGroup(
@@ -3899,7 +3821,7 @@ func TestCloudStackMulticlusterWorkloadClusterAPI(t *testing.T) {
 			api.WithWorkerNodeCount(1),
 			api.WithStackedEtcdTopology(),
 		),
-		cloudstack.WithRedhat123(),
+		cloudstack.WithRedhat124(),
 	)
 
 	test := framework.NewMulticlusterE2ETest(t, managementCluster)
@@ -3914,7 +3836,7 @@ func TestCloudStackMulticlusterWorkloadClusterAPI(t *testing.T) {
 				api.WithStackedEtcdTopology(),
 				api.WithControlPlaneCount(1),
 			),
-			cloudstack.WithRedhat123(),
+			cloudstack.WithRedhat124(),
 		),
 	)
 
@@ -3929,7 +3851,7 @@ func TestCloudStackMulticlusterWorkloadClusterAPI(t *testing.T) {
 				api.WithExternalEtcdTopology(1),
 				api.WithControlPlaneCount(1),
 			),
-			cloudstack.WithRedhat124(),
+			cloudstack.WithRedhat125(),
 		),
 	)
 
@@ -3967,7 +3889,7 @@ func TestCloudStackMulticlusterWorkloadClusterNewCredentialsSecretsAPI(t *testin
 			api.WithWorkerNodeCount(1),
 			api.WithStackedEtcdTopology(),
 		),
-		cloudstack.WithRedhat124(),
+		cloudstack.WithRedhat125(),
 	)
 
 	test := framework.NewMulticlusterE2ETest(t, managementCluster)
@@ -3985,7 +3907,7 @@ func TestCloudStackMulticlusterWorkloadClusterNewCredentialsSecretsAPI(t *testin
 		api.CloudStackToConfigFiller(
 			api.WithCloudStackCredentialsRef("test-creds"),
 		),
-		cloudstack.WithRedhat123(),
+		cloudstack.WithRedhat124(),
 	))
 
 	test.WithWorkloadClusters(framework.NewClusterE2ETest(
@@ -4001,7 +3923,7 @@ func TestCloudStackMulticlusterWorkloadClusterNewCredentialsSecretsAPI(t *testin
 		api.CloudStackToConfigFiller(
 			api.WithCloudStackCredentialsRef("test-creds"),
 		),
-		cloudstack.WithRedhat124(),
+		cloudstack.WithRedhat125(),
 	))
 
 	test.CreateManagementCluster()
@@ -4020,7 +3942,7 @@ func TestCloudStackMulticlusterWorkloadClusterNewCredentialsSecretsAPI(t *testin
 	test.DeleteManagementCluster()
 }
 
-func TestCloudStackKubernetesRedHat123To124UpgradeFromLatestMinorReleaseAPI(t *testing.T) {
+func TestCloudStackKubernetesRedHat124To125UpgradeFromLatestMinorReleaseAPI(t *testing.T) {
 	release := latestMinorRelease(t)
 	cloudstack := framework.NewCloudStack(t)
 	managementCluster := framework.NewClusterE2ETest(
@@ -4029,7 +3951,7 @@ func TestCloudStackKubernetesRedHat123To124UpgradeFromLatestMinorReleaseAPI(t *t
 	)
 	managementCluster.GenerateClusterConfigForVersion(release.Version, framework.ExecuteWithEksaRelease(release))
 	managementCluster.UpdateClusterConfig(
-		cloudstack.WithKubeVersionAndOS(v1alpha1.Kube123, framework.RedHat8, release),
+		cloudstack.WithKubeVersionAndOS(v1alpha1.Kube124, framework.RedHat8, release),
 	)
 	test := framework.NewMulticlusterE2ETest(t, managementCluster)
 	wc := framework.NewClusterE2ETest(
@@ -4042,20 +3964,20 @@ func TestCloudStackKubernetesRedHat123To124UpgradeFromLatestMinorReleaseAPI(t *t
 		api.ClusterToConfigFiller(
 			api.WithManagementCluster(managementCluster.ClusterName),
 		),
-		cloudstack.WithKubeVersionAndOS(v1alpha1.Kube123, framework.RedHat8, release),
+		cloudstack.WithKubeVersionAndOS(v1alpha1.Kube124, framework.RedHat8, release),
 	)
 	test.WithWorkloadClusters(wc)
 
 	runMulticlusterUpgradeFromReleaseFlowAPI(
 		test,
 		release,
-		v1alpha1.Kube124,
+		v1alpha1.Kube125,
 		framework.RedHat8,
 	)
 }
 
 // Workload GitOps API
-func TestCloudStackKubernetesRedHat123to124UpgradeFromLatestMinorReleaseGitHubFluxAPI(t *testing.T) {
+func TestCloudStackKubernetesRedHat124to125UpgradeFromLatestMinorReleaseGitHubFluxAPI(t *testing.T) {
 	release := latestMinorRelease(t)
 	cloudstack := framework.NewCloudStack(t)
 	managementCluster := framework.NewClusterE2ETest(
@@ -4067,7 +3989,7 @@ func TestCloudStackKubernetesRedHat123to124UpgradeFromLatestMinorReleaseGitHubFl
 	)
 	managementCluster.GenerateClusterConfigForVersion(release.Version, framework.ExecuteWithEksaRelease(release))
 	managementCluster.UpdateClusterConfig(
-		cloudstack.WithKubeVersionAndOS(v1alpha1.Kube123, framework.RedHat8, release),
+		cloudstack.WithKubeVersionAndOS(v1alpha1.Kube124, framework.RedHat8, release),
 		framework.WithFluxGithubConfig(),
 	)
 	test := framework.NewMulticlusterE2ETest(t, managementCluster)
@@ -4084,7 +4006,7 @@ func TestCloudStackKubernetesRedHat123to124UpgradeFromLatestMinorReleaseGitHubFl
 		api.ClusterToConfigFiller(
 			api.WithManagementCluster(managementCluster.ClusterName),
 		),
-		cloudstack.WithKubeVersionAndOS(v1alpha1.Kube123, framework.RedHat8, release),
+		cloudstack.WithKubeVersionAndOS(v1alpha1.Kube124, framework.RedHat8, release),
 		framework.WithFluxGithubConfig(),
 	)
 	test.WithWorkloadClusters(wc)
@@ -4092,7 +4014,7 @@ func TestCloudStackKubernetesRedHat123to124UpgradeFromLatestMinorReleaseGitHubFl
 	runMulticlusterUpgradeFromReleaseFlowAPIWithFlux(
 		test,
 		release,
-		v1alpha1.Kube124,
+		v1alpha1.Kube125,
 		framework.RedHat8,
 	)
 }
@@ -4111,7 +4033,7 @@ func TestCloudStackMulticlusterWorkloadClusterGitHubFluxAPI(t *testing.T) {
 			api.WithWorkerNodeCount(1),
 			api.WithStackedEtcdTopology(),
 		),
-		cloudstack.WithRedhat123(),
+		cloudstack.WithRedhat124(),
 		framework.WithFluxGithubConfig(),
 	)
 
@@ -4127,7 +4049,7 @@ func TestCloudStackMulticlusterWorkloadClusterGitHubFluxAPI(t *testing.T) {
 				api.WithExternalEtcdTopology(1),
 				api.WithControlPlaneCount(1),
 			),
-			cloudstack.WithRedhat123(),
+			cloudstack.WithRedhat124(),
 		),
 	)
 
@@ -4142,7 +4064,7 @@ func TestCloudStackMulticlusterWorkloadClusterGitHubFluxAPI(t *testing.T) {
 				api.WithStackedEtcdTopology(),
 				api.WithControlPlaneCount(1),
 			),
-			cloudstack.WithRedhat124(),
+			cloudstack.WithRedhat125(),
 		),
 	)
 
@@ -4183,7 +4105,7 @@ func TestCloudStackMulticlusterWorkloadClusterNewCredentialsSecretGitHubFluxAPI(
 			api.WithWorkerNodeCount(1),
 			api.WithStackedEtcdTopology(),
 		),
-		cloudstack.WithRedhat124(),
+		cloudstack.WithRedhat125(),
 		framework.WithFluxGithubConfig(),
 	)
 
@@ -4202,7 +4124,7 @@ func TestCloudStackMulticlusterWorkloadClusterNewCredentialsSecretGitHubFluxAPI(
 		api.CloudStackToConfigFiller(
 			api.WithCloudStackCredentialsRef("test-creds"),
 		),
-		cloudstack.WithRedhat123(),
+		cloudstack.WithRedhat124(),
 	))
 
 	test.WithWorkloadClusters(framework.NewClusterE2ETest(
@@ -4218,7 +4140,7 @@ func TestCloudStackMulticlusterWorkloadClusterNewCredentialsSecretGitHubFluxAPI(
 		api.CloudStackToConfigFiller(
 			api.WithCloudStackCredentialsRef("test-creds"),
 		),
-		cloudstack.WithRedhat124(),
+		cloudstack.WithRedhat125(),
 	))
 
 	test.CreateManagementCluster()
@@ -4247,7 +4169,7 @@ func TestCloudStackWorkloadClusterAWSIamAuthAPI(t *testing.T) {
 			api.WithWorkerNodeCount(1),
 			api.WithStackedEtcdTopology(),
 		),
-		cloudstack.WithRedhat124(),
+		cloudstack.WithRedhat125(),
 	)
 
 	test := framework.NewMulticlusterE2ETest(t, managementCluster)
@@ -4264,7 +4186,7 @@ func TestCloudStackWorkloadClusterAWSIamAuthAPI(t *testing.T) {
 				api.WithStackedEtcdTopology(),
 			),
 			framework.WithAwsIamConfig(),
-			cloudstack.WithRedhat123(),
+			cloudstack.WithRedhat124(),
 		),
 	)
 
@@ -4299,7 +4221,7 @@ func TestCloudStackWorkloadClusterAWSIamAuthGithubFluxAPI(t *testing.T) {
 			api.WithWorkerNodeCount(1),
 			api.WithStackedEtcdTopology(),
 		),
-		cloudstack.WithRedhat123(),
+		cloudstack.WithRedhat124(),
 		framework.WithFluxGithubConfig(),
 	)
 
@@ -4317,7 +4239,7 @@ func TestCloudStackWorkloadClusterAWSIamAuthGithubFluxAPI(t *testing.T) {
 				api.WithStackedEtcdTopology(),
 			),
 			framework.WithAwsIamConfig(),
-			cloudstack.WithRedhat123(),
+			cloudstack.WithRedhat124(),
 		),
 	)
 
@@ -4348,7 +4270,7 @@ func TestCloudStackWorkloadClusterOIDCAuthAPI(t *testing.T) {
 			api.WithWorkerNodeCount(1),
 			api.WithStackedEtcdTopology(),
 		),
-		cloudstack.WithRedhat124(),
+		cloudstack.WithRedhat125(),
 	)
 
 	test := framework.NewMulticlusterE2ETest(t, managementCluster)
@@ -4365,7 +4287,7 @@ func TestCloudStackWorkloadClusterOIDCAuthAPI(t *testing.T) {
 				api.WithStackedEtcdTopology(),
 			),
 			framework.WithOIDCClusterConfig(t),
-			cloudstack.WithRedhat123(),
+			cloudstack.WithRedhat124(),
 		),
 	)
 
@@ -4400,7 +4322,7 @@ func TestCloudStackWorkloadClusterOIDCAuthGithubFluxAPI(t *testing.T) {
 			api.WithWorkerNodeCount(1),
 			api.WithStackedEtcdTopology(),
 		),
-		cloudstack.WithRedhat123(),
+		cloudstack.WithRedhat124(),
 		framework.WithFluxGithubConfig(),
 	)
 
@@ -4418,7 +4340,7 @@ func TestCloudStackWorkloadClusterOIDCAuthGithubFluxAPI(t *testing.T) {
 				api.WithStackedEtcdTopology(),
 			),
 			framework.WithOIDCClusterConfig(t),
-			cloudstack.WithRedhat123(),
+			cloudstack.WithRedhat124(),
 		),
 	)
 
