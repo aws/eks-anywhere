@@ -129,6 +129,33 @@ func WithServiceCidr(svcCidr string) ClusterFiller {
 	}
 }
 
+// WithWorkerKubernetesVersion sets the kubernetes version field for the given worker group.
+func WithWorkerKubernetesVersion(name string, version *anywherev1.KubernetesVersion) ClusterFiller {
+	return func(c *anywherev1.Cluster) {
+		pos := -1
+		for i, wng := range c.Spec.WorkerNodeGroupConfigurations {
+			if wng.Name == name {
+				wng.KubernetesVersion = version
+				pos = i
+				c.Spec.WorkerNodeGroupConfigurations[pos] = wng
+				break
+			}
+		}
+		// Append the worker node group if not already found in existing configuration
+		if pos == -1 {
+			c.Spec.WorkerNodeGroupConfigurations = append(c.Spec.WorkerNodeGroupConfigurations, workerNodeWithKubernetesVersion(name, version))
+		}
+	}
+}
+
+func workerNodeWithKubernetesVersion(name string, version *anywherev1.KubernetesVersion) anywherev1.WorkerNodeGroupConfiguration {
+	return anywherev1.WorkerNodeGroupConfiguration{
+		Name:              name,
+		Count:             ptr.Int(1),
+		KubernetesVersion: version,
+	}
+}
+
 func WithWorkerNodeCount(r int) ClusterFiller {
 	return func(c *anywherev1.Cluster) {
 		if len(c.Spec.WorkerNodeGroupConfigurations) == 0 {

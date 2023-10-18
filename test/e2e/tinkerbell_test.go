@@ -119,6 +119,48 @@ func TestTinkerbellKubernetes127UbuntuTo128Upgrade(t *testing.T) {
 	)
 }
 
+func TestTinkerbellKubernetes127UbuntuTo128UpgradeCPOnly(t *testing.T) {
+	provider := framework.NewTinkerbell(t, framework.WithUbuntu127TinkerbellForCP(), framework.WithUbuntu127TinkerbellForWorker())
+	kube127 := v1alpha1.Kube127
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(api.WithKubernetesVersion(kube127)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
+		framework.WithClusterFiller(api.WithWorkerKubernetesVersion(worker0, &kube127)),
+		framework.WithControlPlaneHardware(2),
+		framework.WithWorkerHardware(1),
+	)
+	runSimpleUpgradeFlowWorkerNodeVersionForBareMetal(
+		test,
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube128)),
+		provider.WithProviderUpgrade(framework.Ubuntu128ImageForCP()),
+	)
+}
+
+func TestTinkerbellKubernetes127UbuntuTo128UpgradeWorkerOnly(t *testing.T) {
+	provider := framework.NewTinkerbell(t, framework.WithUbuntu128TinkerbellForCP(), framework.WithUbuntu127TinkerbellForWorker())
+	kube127 := v1alpha1.Kube127
+	kube128 := v1alpha1.Kube128
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(),
+		framework.WithClusterFiller(api.WithKubernetesVersion(kube128)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
+		framework.WithClusterFiller(api.WithWorkerKubernetesVersion(worker0, &kube127)),
+		framework.WithControlPlaneHardware(1),
+		framework.WithWorkerHardware(2),
+	)
+	runSimpleUpgradeFlowWorkerNodeVersionForBareMetal(
+		test,
+		framework.WithClusterUpgrade(api.WithWorkerKubernetesVersion(worker0, &kube128)),
+		provider.WithProviderUpgrade(framework.Ubuntu128ImageForWorker()),
+	)
+}
+
 func TestTinkerbellKubernetes125To126Ubuntu2204Upgrade(t *testing.T) {
 	provider := framework.NewTinkerbell(t)
 	test := framework.NewClusterE2ETest(
