@@ -3502,7 +3502,7 @@ func TestValidateEksaVersion(t *testing.T) {
 
 func TestGetClusterDefaultKubernetesVersion(t *testing.T) {
 	g := NewWithT(t)
-	g.Expect(GetClusterDefaultKubernetesVersion()).To(Equal(Kube127))
+	g.Expect(GetClusterDefaultKubernetesVersion()).To(Equal(Kube128))
 }
 
 func TestClusterWorkerNodeConfigCount(t *testing.T) {

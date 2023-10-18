@@ -8,7 +8,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/config"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/semver"
@@ -204,14 +203,4 @@ func parseClusterEksaVersion(mgmtCluster, cluster *v1alpha1.Cluster) (*semver.Ve
 	}
 
 	return mVersion, wVersion, nil
-}
-
-// ValidateK8s128Support checks if the 1.28 feature flag is set when using k8s 1.28.
-func ValidateK8s128Support(clusterSpec *cluster.Spec) error {
-	if !features.IsActive(features.K8s128Support()) {
-		if clusterSpec.Cluster.Spec.KubernetesVersion == v1alpha1.Kube128 {
-			return fmt.Errorf("kubernetes version %s is not enabled. Please set the env variable %v", v1alpha1.Kube128, features.K8s128SupportEnvVar)
-		}
-	}
-	return nil
 }
