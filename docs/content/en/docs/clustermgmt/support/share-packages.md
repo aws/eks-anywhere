@@ -72,7 +72,7 @@ Run the following with the account that created the subscription (in this exampl
 1. On the **Review and create** page, enter a **Policy name** such as `curated-packages-policy`
 1. Choose **Create policy**
 
-### 3. Create IAM role with permissions for EKS Anywhere Curated Packages
+### 3. Create an IAM role with permissions for EKS Anywhere Curated Packages
 
 Run the following with the account that created the subscription.
 
@@ -101,11 +101,11 @@ Run the following with the account that created the subscription.
 7. On the **Name, review, and create** page, enter a **Role name** such as `curated-packages-role`
 8. Choose **Create role**
 
-### 4. Create IAM user with permissions to assume the IAM role from the source account
+### 4. Create an IAM user with permissions to assume the IAM role from the source account
 
 Run the following with the account that is receiving access to curated packages (in this example `999999999999`) .
 
-**Create policy to assume role**
+**Create a policy to assume the IAM role**
 
 1. Open the [IAM console](https://console.aws.amazon.com/iam/)
 1. In the navigation pane, choose **Policies** and then choose **Create policy**
@@ -127,7 +127,7 @@ Run the following with the account that is receiving access to curated packages 
 6. On the **Review and create** page, enter a **Policy name** such as `curated-packages-assume-role-policy`
 7. Choose **Create policy**
 
-**Create user to assume IAM role**
+**Create an IAM user to assume IAM role**
 
 1. Open the [IAM console](https://console.aws.amazon.com/iam/)
 1. In the navigation pane, choose **Users** and then choose **Create user**
