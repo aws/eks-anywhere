@@ -287,7 +287,7 @@ Modifying the labels associated with a worker node group configuration will caus
 the existing nodes associated with the configuration.
 
 ### workerNodeGroupConfigurations.kubernetesVersion
-The Kubernetes version you want to use for this worker node group. Supported values: 1.27, 1.26, 1.25, 1.24, 1.23
+The Kubernetes version you want to use for this worker node group. Supported values: 1.28, 1.27, 1.26, 1.25, 1.24, 1.23
 
 ## CloudStackDatacenterConfig
 

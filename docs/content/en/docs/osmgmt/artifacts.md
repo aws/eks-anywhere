@@ -148,7 +148,7 @@ CARGO_NET_GIT_FETCH_WITH_CLI=true cargo install --force tuftool
 curl -O "https://cache.bottlerocket.aws/root.json"
 sha512sum -c <<<"a3c58bc73999264f6f28f3ed9bfcb325a5be943a782852c7d53e803881968e0a4698bd54c2f125493f4669610a9da83a1787eb58a8303b2ee488fa2a3f7d802f  root.json"
 ```
-4. Export the desired Kubernetes version. EKS Anywhere currently supports 1.23, 1.24, 1.25, 1.26, and 1.27.
+4. Export the desired Kubernetes version. EKS Anywhere currently supports 1.23, 1.24, 1.25, 1.26, 1.27, and 1.28.
 ```bash
 export KUBEVERSION="1.27"
 ```
