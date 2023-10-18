@@ -159,15 +159,14 @@ The Kubernetes version you want to use for your cluster. Supported values: `1.27
 
 ### managementCluster
 Identifies the name of the management cluster.
-If this is a standalone cluster or if it were serving as the management cluster for other workload clusters, this will be the same as the cluster name.
-Bare Metal EKS Anywhere clusters do not yet support the creation of separate workload clusters.
+If your cluster spec is for a standalone or management cluster, this value is the same as the cluster name.
 
 ### workerNodeGroupConfigurations
 This takes in a list of node groups that you can define for your workers.
 
-You can omit workerNodeGroupConfigurations when creating Bare Metal clusters. In this case, control plane nodes will not be tainted and all pods will run on the control plane nodes. This mechanism can be used to deploy Bare Metal clusters on a single server.
+You can omit `workerNodeGroupConfigurations` when creating Bare Metal clusters. If you omit `workerNodeGroupConfigurations`, control plane nodes will not be tainted and all pods will run on the control plane nodes. This mechanism can be used to deploy Bare Metal clusters on a single server. You can also run multi-node Bare Metal clusters without `workerNodeGroupConfigurations`.
 
->**_NOTE:_** Empty workerNodeGroupConfigurations is not supported when Kubernetes version <= 1.21.
+>**_NOTE:_** Empty `workerNodeGroupConfigurations` is not supported when Kubernetes version <= 1.21.
 
 ### workerNodeGroupConfigurations.count
 Number of worker nodes. Optional if autoscalingConfiguration is used, in which case count will default to `autoscalingConfiguration.minCount`.
