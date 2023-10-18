@@ -38,7 +38,7 @@ spec:
         command:
         - /aws-encryption-provider
         - --key={{ .kmsKeyArn }}
-        - --region={{ .kmsKeyRegion }}
+        - --region=us-west-2
         - --listen={{ .kmsSocket }}
         ports:
         - containerPort: 8080
