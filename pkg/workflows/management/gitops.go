@@ -38,11 +38,7 @@ func (s *pauseGitOpsReconcile) Restore(ctx context.Context, commandContext *task
 
 // reconcileGitOps updates all the places that have a cluster definition to follow the cluster config provided to this workflow:
 // the cluster config in the git repo if GitOps is enabled. It also resumes the GitOps reconciliations.
-type reconcileGitOps struct {
-	// TODO(pjshah): check whether this field is needed or not.
-	// I will incorporate this in a separate PR.
-	// eksaSpecDiff bool
-}
+type reconcileGitOps struct{}
 
 // Run reconcileGitOps resumes GitOps reconciler and performs other GitOps related tasks after management cluster upgrade.
 func (s *reconcileGitOps) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
@@ -68,11 +64,7 @@ func (s *reconcileGitOps) Run(ctx context.Context, commandContext *task.CommandC
 		commandContext.SetError(err)
 		return &writeClusterConfig{}
 	}
-	// TODO(pjshah): check whether this field is needed or not.
-	// I will incorporate this in a separate PR.
-	// if !s.eksaSpecDiff {
-	// 	return nil
-	// }
+
 	return &writeClusterConfig{}
 }
 
