@@ -40,7 +40,7 @@ aws license-manager list-received-licenses \
   --filter 'Name=IssuerName,Values=Amazon EKS Anywhere'
 ```
 
-**Get license details based a license ARN with the AWS CLI**
+**Get license details with the AWS CLI**
 
 - Replace `region-code` with the AWS Region that hosts your subscription (for example `us-west-2`).
 - Replace `my-license-arn` with the license ARN returned from the previous command.
@@ -63,7 +63,7 @@ You can accept the license grants associated with an EKS Anywhere Enterprise Sub
 
 See the steps below for accepting EKS Anywhere license grants with the AWS CLI.
 
-**Get license grant ARNs based on subscription `name` with the AWS CLI**
+**Get license grant ARNs with subscription `name` with the AWS CLI**
 
 - Replace `region-code` with the AWS Region that hosts your subscription (for example `us-west-2`).
 - Replace `my-subscription` in the `--query` string with the `name` for your subscription.

@@ -39,7 +39,7 @@ For pricing, reference the [EKS Anywhere Pricing Page.](https://aws.amazon.com/e
 7. On the **Review and purchase** page, confirm the specifications for your subscription are correct.
 8. Click **Purchase** on the bottom right hand side of the screen to purchase your subscription. 
 
-After the subscription is created, the next step is to apply the licenses to your EKS Anywhere clusters. Reference the [License EKS Anywhere Cluster]({{< relref "./cluster-license">}}) page for instructions.
+After the subscription is created, the next step is to apply the licenses to your EKS Anywhere clusters. Reference the [License cluster]({{< relref "./cluster-license">}}) page for instructions.
 
 ### AWS CLI
 
@@ -49,7 +49,7 @@ Create your subscription with the following command. Before running the command,
 
 - Replace `region-code` with the AWS Region that will host your subscription (for example `us-west-2`). It is recommended to create your subscription in the AWS Region closest to your on-premises deployment.
 - Replace `my-subscription` with a name for your subscription.  It must be unique in your AWS account in the AWS Region you're creating the subscription in. The name can contain only alphanumeric characters (case-sensitive), hyphens, and underscores. It must start with an alphabetic character and can't be longer than 100 characters.
-- Replace `license-quantity` `1` with the number of licenses to include in the subscription
+- Replace `license-quantity` `1` with the number of licenses to include in the subscription.
 - Replace `term` `'unit=MONTHS,duration=12'` with your preferred term length. Valid options for `duration` are `12` and `36`. The only accepted `unit` is `MONTHS`.
 - Optionally, replace `tags` `'environment=prod'` with your preferred tags for your subscription.
 - Optionally, enable auto renewal with the `--auto-renew` flag. Subscriptions will not auto renew by default.
@@ -81,7 +81,7 @@ aws eks describe-eks-anywhere-subscription \
   --query 'subscription.status'
 ```
 
-After the subscription is created, the next step is to apply the licenses to your EKS Anywhere clusters. Reference the [License EKS Anywhere Cluster]({{< relref "./cluster-license">}}) page for instructions.
+After the subscription is created, the next step is to apply the licenses to your EKS Anywhere clusters. Reference the [License cluster]({{< relref "./cluster-license">}}) page for instructions.
 
 ## View and Update Subscriptions
 
@@ -91,9 +91,9 @@ After you create a subscription, you can only update the auto renewal and tags c
 
 1. Open the Amazon EKS console at https://console.aws.amazon.com/eks/home#/eks-anywhere.
 1. Navigate to the **Active Subscriptions** or **Inactive Subscriptions** tab.
-1. Optionally choose the selection button for your EKS Anywhere subscription and click the **Change auto renewal** button to change your auto renewal setting.
+1. Optionally, choose the selection button for your EKS Anywhere subscription and click the **Change auto renewal** button to change your auto renewal setting.
 1. Click the link of your EKS Anywhere subscription name to view details including subscription start and end dates, associated licenses, and tags.
-1. Optionally edit tags by clicking the **Manage Tags** button.
+1. Optionally, edit tags by clicking the **Manage Tags** button.
 
 ### AWS CLI
 

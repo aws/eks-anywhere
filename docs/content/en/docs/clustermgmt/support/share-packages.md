@@ -127,7 +127,7 @@ Run the following with the account that is receiving access to curated packages 
 6. On the **Review and create** page, enter a **Policy name** such as `curated-packages-assume-role-policy`
 7. Choose **Create policy**
 
-**Create an IAM user to assume IAM role**
+**Create an IAM user to assume the IAM role**
 
 1. Open the [IAM console](https://console.aws.amazon.com/iam/)
 1. In the navigation pane, choose **Users** and then choose **Create user**
@@ -137,7 +137,7 @@ Run the following with the account that is receiving access to curated packages 
 1. Choose **Next**
 1. On the **Review and create** page, choose **Create user**
 
-### 5. Generate access and secret key
+### 5. Generate access and secret key for IAM user
 
 Run the following with the account that is receiving access to curated packages.
 
@@ -150,7 +150,7 @@ Run the following with the account that is receiving access to curated packages.
 1. On the **Retrieve access keys** page, copy the **Access key** and **Secret access key** to a safe location.
 1. Choose **Done**
 
-### 6. Create an AWS config file
+### 6. Create an AWS config file for IAM user
 
 Run the following with the account that is receiving access to curated packages.
 
