@@ -207,7 +207,7 @@ Modifying the labels associated with a worker node group configuration will caus
 the existing nodes associated with the configuration.
 
 ### workerNodeGroupConfigurations.kubernetesVersion
-The Kubernetes version you want to use for this worker node group. [Supported values]({{< relref "../../concepts/support-versions/#kubernetes-support" >}}): `1.27`, `1.26`, `1.25`, `1.24`, `1.23`
+The Kubernetes version you want to use for this worker node group. [Supported values]({{< relref "../../concepts/support-versions/#kubernetes-support" >}}): `1.28`, `1.27`, `1.26`, `1.25`, `1.24`
 
 Must be less than or equal the cluster `kubernetesVersion`. There can only be a skew of two minor versions between the control plane and each worker node. Removing `workerNodeGroupConfiguration.kubernetesVersion` will trigger an upgrade to that node group to upgrade to the root level kubernetesVersion.
 
@@ -221,7 +221,7 @@ Refers to the Kubernetes object with vsphere specific configuration for your etc
 Refers to the Kubernetes object with vsphere environment specific configuration.  See [VSphereDatacenterConfig Fields](#vspheredatacenterconfig-fields) below.
 
 ### kubernetesVersion (required)
-The Kubernetes version you want to use for your cluster. [Supported values]({{< relref "../../concepts/support-versions/#kubernetes-support" >}}): `1.27`, `1.26`, `1.25`, `1.24`, `1.23`
+The Kubernetes version you want to use for your cluster. [Supported values]({{< relref "../../concepts/support-versions/#kubernetes-support" >}}): `1.28`, `1.27`, `1.26`, `1.25`, `1.24`
 
 ## VSphereDatacenterConfig Fields
 

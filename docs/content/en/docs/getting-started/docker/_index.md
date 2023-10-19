@@ -111,7 +111,7 @@ sudo chmod +x /usr/local/bin/kubectl
          name: mgmt
       externalEtcdConfiguration:
          count: 1
-      kubernetesVersion: "1.27"
+      kubernetesVersion: "1.28"
       managementCluster:
          name: mgmt
       workerNodeGroupConfigurations:
