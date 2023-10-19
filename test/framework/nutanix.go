@@ -33,19 +33,16 @@ const (
 	nutanixControlPlaneCidrVar       = "T_NUTANIX_CONTROL_PLANE_CIDR"
 	nutanixPodCidrVar                = "T_NUTANIX_POD_CIDR"
 	nutanixServiceCidrVar            = "T_NUTANIX_SERVICE_CIDR"
-	nutanixTemplateNameUbuntu123Var  = "T_NUTANIX_TEMPLATE_NAME_UBUNTU_1_23"
 	nutanixTemplateNameUbuntu124Var  = "T_NUTANIX_TEMPLATE_NAME_UBUNTU_1_24"
 	nutanixTemplateNameUbuntu125Var  = "T_NUTANIX_TEMPLATE_NAME_UBUNTU_1_25"
 	nutanixTemplateNameUbuntu126Var  = "T_NUTANIX_TEMPLATE_NAME_UBUNTU_1_26"
 	nutanixTemplateNameUbuntu127Var  = "T_NUTANIX_TEMPLATE_NAME_UBUNTU_1_27"
 	nutanixTemplateNameUbuntu128Var  = "T_NUTANIX_TEMPLATE_NAME_UBUNTU_1_28"
-	nutanixTemplateNameRedHat123Var  = "T_NUTANIX_TEMPLATE_NAME_REDHAT_1_23"
 	nutanixTemplateNameRedHat124Var  = "T_NUTANIX_TEMPLATE_NAME_REDHAT_1_24"
 	nutanixTemplateNameRedHat125Var  = "T_NUTANIX_TEMPLATE_NAME_REDHAT_1_25"
 	nutanixTemplateNameRedHat126Var  = "T_NUTANIX_TEMPLATE_NAME_REDHAT_1_26"
 	nutanixTemplateNameRedHat127Var  = "T_NUTANIX_TEMPLATE_NAME_REDHAT_1_27"
 	nutanixTemplateNameRedHat128Var  = "T_NUTANIX_TEMPLATE_NAME_REDHAT_1_28"
-	nutanixTemplateNameRedHat9123Var = "T_NUTANIX_TEMPLATE_NAME_REDHAT_9_1_23"
 	nutanixTemplateNameRedHat9124Var = "T_NUTANIX_TEMPLATE_NAME_REDHAT_9_1_24"
 	nutanixTemplateNameRedHat9125Var = "T_NUTANIX_TEMPLATE_NAME_REDHAT_9_1_25"
 	nutanixTemplateNameRedHat9126Var = "T_NUTANIX_TEMPLATE_NAME_REDHAT_9_1_26"
@@ -69,6 +66,21 @@ var requiredNutanixEnvVars = []string{
 	nutanixSubnetName,
 	nutanixPodCidrVar,
 	nutanixServiceCidrVar,
+	nutanixTemplateNameUbuntu124Var,
+	nutanixTemplateNameUbuntu125Var,
+	nutanixTemplateNameUbuntu126Var,
+	nutanixTemplateNameUbuntu127Var,
+	nutanixTemplateNameUbuntu128Var,
+	nutanixTemplateNameRedHat124Var,
+	nutanixTemplateNameRedHat125Var,
+	nutanixTemplateNameRedHat126Var,
+	nutanixTemplateNameRedHat127Var,
+	nutanixTemplateNameRedHat128Var,
+	nutanixTemplateNameRedHat9124Var,
+	nutanixTemplateNameRedHat9125Var,
+	nutanixTemplateNameRedHat9126Var,
+	nutanixTemplateNameRedHat9127Var,
+	nutanixTemplateNameRedHat9128Var,
 	nutanixInsecure,
 }
 
