@@ -52,7 +52,6 @@ func runSimpleUpgradeFlowForBareMetal(test *framework.ClusterE2ETest, updateVers
 }
 
 func runSimpleUpgradeFlowWorkerNodeVersionForBareMetal(test *framework.ClusterE2ETest, clusterOpts ...framework.ClusterE2ETestOpt) {
-	test.GenerateClusterConfig()
 	test.GenerateHardwareConfig()
 	test.PowerOffHardware()
 	test.CreateCluster(framework.WithControlPlaneWaitTimeout("20m"))
