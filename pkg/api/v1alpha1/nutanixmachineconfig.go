@@ -153,11 +153,12 @@ func validateNutanixMachineConfig(c *NutanixMachineConfig) error {
 		return fmt.Errorf("NutanixMachineConfig: %v", err)
 	}
 
-	if c.Spec.OSFamily != Ubuntu {
+	if c.Spec.OSFamily != Ubuntu && c.Spec.OSFamily != RedHat {
 		return fmt.Errorf(
-			"NutanixMachineConfig: unsupported spec.osFamily (%v); Please use one of the following: %s",
+			"NutanixMachineConfig: unsupported spec.osFamily (%v); Please use one of the following: %s, %s",
 			c.Spec.OSFamily,
 			Ubuntu,
+			RedHat,
 		)
 	}
 

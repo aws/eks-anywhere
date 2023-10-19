@@ -40,6 +40,17 @@ env:
     T_NUTANIX_TEMPLATE_NAME_UBUNTU_1_26: "nutanix_ci:nutanix_template_ubuntu_1_26"
     T_NUTANIX_TEMPLATE_NAME_UBUNTU_1_27: "nutanix_ci:nutanix_template_ubuntu_1_27"
     T_NUTANIX_TEMPLATE_NAME_UBUNTU_1_28: "nutanix_ci:nutanix_template_ubuntu_1_28"
+    T_NUTANIX_TEMPLATE_NAME_REDHAT_1_24: "nutanix_ci:nutanix_template_rhel_8_1_24"
+    T_NUTANIX_TEMPLATE_NAME_REDHAT_1_25: "nutanix_ci:nutanix_template_rhel_8_1_25"
+    T_NUTANIX_TEMPLATE_NAME_REDHAT_1_26: "nutanix_ci:nutanix_template_rhel_8_1_26"
+    T_NUTANIX_TEMPLATE_NAME_REDHAT_1_27: "nutanix_ci:nutanix_template_rhel_8_1_27"
+    T_NUTANIX_TEMPLATE_NAME_REDHAT_1_28: "nutanix_ci:nutanix_template_rhel_8_1_28"
+    T_NUTANIX_TEMPLATE_NAME_REDHAT_9_1_24: "nutanix_ci:nutanix_template_rhel_9_1_24"
+    T_NUTANIX_TEMPLATE_NAME_REDHAT_9_1_25: "nutanix_ci:nutanix_template_rhel_9_1_25"
+    T_NUTANIX_TEMPLATE_NAME_REDHAT_9_1_26: "nutanix_ci:nutanix_template_rhel_9_1_26"
+    T_NUTANIX_TEMPLATE_NAME_REDHAT_9_1_27: "nutanix_ci:nutanix_template_rhel_9_1_27"
+    T_NUTANIX_TEMPLATE_NAME_REDHAT_9_1_28: "nutanix_ci:nutanix_template_rhel_9_1_28"
+
 phases:
   pre_build:
     commands:
