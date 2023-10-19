@@ -320,6 +320,34 @@ func TestValidateClusterMachineConfigsError(t *testing.T) {
 	}
 }
 
+func TestValidateClusterMachineConfigsCPError(t *testing.T) {
+	ctx := context.Background()
+	cmk := mocks.NewMockProviderCmkClient(gomock.NewController(t))
+	clusterSpec := test.NewFullClusterSpec(t, path.Join(testDataDir, testClusterConfigMainFilename))
+	clusterSpec.CloudStackMachineConfigs["test-cp"].Spec.Template.Name = "kubernetes_1_22"
+
+	validator := NewValidator(cmk, &DummyNetClient{}, true)
+
+	err := validator.ValidateClusterMachineConfigs(ctx, clusterSpec)
+	if err == nil {
+		t.Fatalf("validation should not pass: %v", err)
+	}
+}
+
+func TestValidateClusterMachineConfigsEtcdError(t *testing.T) {
+	ctx := context.Background()
+	cmk := mocks.NewMockProviderCmkClient(gomock.NewController(t))
+	clusterSpec := test.NewFullClusterSpec(t, path.Join(testDataDir, testClusterConfigMainFilename))
+	clusterSpec.CloudStackMachineConfigs["test-etcd"].Spec.Template.Name = "kubernetes_1_22"
+
+	validator := NewValidator(cmk, &DummyNetClient{}, true)
+
+	err := validator.ValidateClusterMachineConfigs(ctx, clusterSpec)
+	if err == nil {
+		t.Fatalf("validation should not pass: %v", err)
+	}
+}
+
 func TestValidateClusterMachineConfigsModularUpgradeError(t *testing.T) {
 	ctx := context.Background()
 	cmk := mocks.NewMockProviderCmkClient(gomock.NewController(t))
