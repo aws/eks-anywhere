@@ -19,7 +19,7 @@ import (
 	"testing"
 	"time"
 
-	rctrl "github.com/tinkerbell/rufio/controllers"
+	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -44,6 +44,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/templater"
 	"github.com/aws/eks-anywhere/pkg/types"
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
+	"github.com/aws/eks-anywhere/test/framework/bmc"
 	clusterf "github.com/aws/eks-anywhere/test/framework/cluster"
 )
 
@@ -339,10 +340,10 @@ func (e *ClusterE2ETest) GenerateClusterConfig(opts ...CommandOpt) {
 func (e *ClusterE2ETest) PowerOffHardware() {
 	// Initializing BMC Client
 	ctx := context.Background()
-	bmcClientFactory := rctrl.NewBMCClientFactoryFunc(ctx)
+	bmcClientFactory := bmc.NewClientFunc(time.Minute)
 
 	for _, h := range e.TestHardware {
-		bmcClient, err := bmcClientFactory(ctx, h.BMCIPAddress, "623", h.BMCUsername, h.BMCPassword)
+		bmcClient, err := bmcClientFactory(ctx, logr.Discard(), h.BMCIPAddress, h.BMCUsername, h.BMCPassword)
 		if err != nil {
 			e.T.Fatalf("failed to create bmc client: %v", err)
 		}
@@ -365,10 +366,10 @@ func (e *ClusterE2ETest) PowerOffHardware() {
 func (e *ClusterE2ETest) PXEBootHardware() {
 	// Initializing BMC Client
 	ctx := context.Background()
-	bmcClientFactory := rctrl.NewBMCClientFactoryFunc(ctx)
+	bmcClientFactory := bmc.NewClientFunc(time.Minute)
 
 	for _, h := range e.TestHardware {
-		bmcClient, err := bmcClientFactory(ctx, h.BMCIPAddress, "623", h.BMCUsername, h.BMCPassword)
+		bmcClient, err := bmcClientFactory(ctx, logr.Discard(), h.BMCIPAddress, h.BMCUsername, h.BMCPassword)
 		if err != nil {
 			e.T.Fatalf("failed to create bmc client: %v", err)
 		}
@@ -391,10 +392,10 @@ func (e *ClusterE2ETest) PXEBootHardware() {
 func (e *ClusterE2ETest) PowerOnHardware() {
 	// Initializing BMC Client
 	ctx := context.Background()
-	bmcClientFactory := rctrl.NewBMCClientFactoryFunc(ctx)
+	bmcClientFactory := bmc.NewClientFunc(time.Minute)
 
 	for _, h := range e.TestHardware {
-		bmcClient, err := bmcClientFactory(ctx, h.BMCIPAddress, "623", h.BMCUsername, h.BMCPassword)
+		bmcClient, err := bmcClientFactory(ctx, logr.Discard(), h.BMCIPAddress, h.BMCUsername, h.BMCPassword)
 		if err != nil {
 			e.T.Fatalf("failed to create bmc client: %v", err)
 		}
@@ -417,11 +418,11 @@ func (e *ClusterE2ETest) PowerOnHardware() {
 func (e *ClusterE2ETest) ValidateHardwareDecommissioned() {
 	// Initializing BMC Client
 	ctx := context.Background()
-	bmcClientFactory := rctrl.NewBMCClientFactoryFunc(ctx)
+	bmcClientFactory := bmc.NewClientFunc(time.Minute)
 
 	var failedToDecomm []*api.Hardware
 	for _, h := range e.TestHardware {
-		bmcClient, err := bmcClientFactory(ctx, h.BMCIPAddress, "443", h.BMCUsername, h.BMCPassword)
+		bmcClient, err := bmcClientFactory(ctx, logr.Discard(), h.BMCIPAddress, h.BMCUsername, h.BMCPassword)
 		if err != nil {
 			e.T.Fatalf("failed to create bmc client: %v", err)
 		}
