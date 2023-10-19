@@ -20,7 +20,7 @@ require (
 	github.com/docker/cli v23.0.5+incompatible
 	github.com/go-git/go-git/v5 v5.4.2
 	github.com/go-jose/go-jose/v3 v3.0.0
-	github.com/go-logr/logr v1.2.3
+	github.com/go-logr/logr v1.2.4
 	github.com/go-logr/zapr v1.2.3
 	github.com/gocarina/gocsv v0.0.0-20220304222734-caabc5f00d30
 	github.com/golang/mock v1.6.0
@@ -37,7 +37,6 @@ require (
 	github.com/spf13/viper v1.15.0
 	github.com/stretchr/testify v1.8.2
 	github.com/tinkerbell/cluster-api-provider-tinkerbell v0.1.1-0.20220615214617-9e9c2a397288
-	github.com/tinkerbell/rufio v0.3.0
 	github.com/tinkerbell/tink v0.8.0
 	github.com/vmware/govmomi v0.29.0
 	go.uber.org/zap v1.24.0
@@ -68,14 +67,15 @@ require (
 	sigs.k8s.io/yaml v1.3.0
 )
 
-require github.com/Masterminds/semver/v3 v3.2.0 // indirect
-
 require (
+	dario.cat/mergo v1.0.0 // indirect
 	github.com/AdaLogics/go-fuzz-headers v0.0.0-20230106234847-43070de90fa1 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 // indirect
+	github.com/Jeffail/gabs/v2 v2.7.0 // indirect
 	github.com/MakeNowJust/heredoc v1.0.0 // indirect
 	github.com/Masterminds/goutils v1.1.1 // indirect
 	github.com/Masterminds/semver v1.5.0 // indirect
+	github.com/Masterminds/semver/v3 v3.2.0 // indirect
 	github.com/Microsoft/go-winio v0.6.0 // indirect
 	github.com/PaesslerAG/gval v1.0.0 // indirect
 	github.com/PaesslerAG/jsonpath v0.1.1 // indirect
@@ -95,8 +95,8 @@ require (
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/blang/semver v3.5.1+incompatible // indirect
 	github.com/blang/semver/v4 v4.0.0 // indirect
-	github.com/bmc-toolbox/bmclib/v2 v2.0.1-0.20230212165211-bac64498b8ba // indirect
-	github.com/bmc-toolbox/common v0.0.0-20221115135648-0b584f504396 // indirect
+	github.com/bmc-toolbox/bmclib/v2 v2.1.1-0.20231017114451-153e11d62a71
+	github.com/bmc-toolbox/common v0.0.0-20230220061748-93ff001f4a1d // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/cloudflare/circl v1.3.3 // indirect
 	github.com/containerd/containerd v1.7.0 // indirect
@@ -116,6 +116,7 @@ require (
 	github.com/evanphx/json-patch v5.6.0+incompatible // indirect
 	github.com/evanphx/json-patch/v5 v5.6.0 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
+	github.com/ghodss/yaml v1.0.0 // indirect
 	github.com/go-git/gcfg v1.5.0 // indirect
 	github.com/go-git/go-billy/v5 v5.3.1 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
@@ -137,9 +138,8 @@ require (
 	github.com/huandu/xstrings v1.4.0 // indirect
 	github.com/imdario/mergo v0.3.13 // indirect
 	github.com/inconshreveable/mousetrap v1.0.1 // indirect
-	github.com/jacobweinstock/go-amt v0.0.0-20221125040441-53475f4ae023 // indirect
-	github.com/jacobweinstock/registrar v0.4.6 // indirect
-	github.com/jacobweinstock/wsman v0.0.0-20221125035617-2eae65734c77 // indirect
+	github.com/jacobweinstock/iamt v0.0.0-20230502042727-d7cdbe67d9ef // indirect
+	github.com/jacobweinstock/registrar v0.4.7 // indirect
 	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
@@ -175,7 +175,7 @@ require (
 	github.com/spf13/afero v1.9.3 // indirect
 	github.com/spf13/cast v1.5.0 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
-	github.com/stmcginnis/gofish v0.13.1-0.20221107140645-5cc43fad050f // indirect
+	github.com/stmcginnis/gofish v0.14.1-0.20230920133920-77490fd98fa2 // indirect
 	github.com/subosito/gotenv v1.4.2 // indirect
 	github.com/vektah/gqlparser/v2 v2.4.5 // indirect
 	github.com/xanzy/ssh-agent v0.3.0 // indirect
@@ -183,7 +183,6 @@ require (
 	go.opentelemetry.io/otel/trace v1.14.0 // indirect
 	go.uber.org/atomic v1.10.0 // indirect
 	go.uber.org/multierr v1.8.0 // indirect
-	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616 // indirect
 	golang.org/x/mod v0.10.0 // indirect
 	golang.org/x/sync v0.2.0 // indirect
 	golang.org/x/term v0.8.0 // indirect
