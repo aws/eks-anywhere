@@ -118,7 +118,7 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, clusterSp
 		return fmt.Errorf("cannot find CloudStackMachineConfig %v for control plane", clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name)
 	}
 
-	// validate template field of each CloudStackMachineConfigs with the cluster spec kubernetes version.
+	// validate template field name contains cluster kubernetes version for the control plane machine.
 	if err := v.validateTemplateMatchesKubernetesVersion(ctx, controlPlaneMachineConfig.Spec.Template.Name, string(clusterSpec.Cluster.Spec.KubernetesVersion)); err != nil {
 		return fmt.Errorf("machine config %s validation failed: %v", controlPlaneMachineConfig.Name, err)
 	}
@@ -127,6 +127,10 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, clusterSp
 		etcdMachineConfig := etcdMachineConfig(clusterSpec)
 		if etcdMachineConfig == nil {
 			return fmt.Errorf("cannot find CloudStackMachineConfig %v for etcd machines", clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name)
+		}
+		// validate template field name contains cluster kubernetes version for the external etcd machine.
+		if err := v.validateTemplateMatchesKubernetesVersion(ctx, etcdMachineConfig.Spec.Template.Name, string(clusterSpec.Cluster.Spec.KubernetesVersion)); err != nil {
+			return fmt.Errorf("machine config %s validation failed: %v", etcdMachineConfig.Name, err)
 		}
 	}
 
