@@ -46,7 +46,6 @@ const (
 	captPackage         = "github.com/tinkerbell/cluster-api-provider-tinkerbell"
 	tinkerbellPackage   = "github.com/tinkerbell/tink"
 	etcdProviderPackage = "github.com/aws/etcdadm-controller"
-	rufioPackage        = "github.com/tinkerbell/rufio"
 	capcPackage         = "sigs.k8s.io/cluster-api-provider-cloudstack"
 )
 
@@ -86,7 +85,6 @@ var packages = []moduleWithCRD{
 		withMainCustomCRDPath("infrastructure/docker/config/crd/bases"),
 	),
 	mustBuildModuleWithCRDs(etcdProviderPackage),
-	mustBuildModuleWithCRDs(rufioPackage),
 	mustBuildModuleWithCRDs(capcPackage),
 }
 
@@ -141,6 +139,7 @@ func newEnvironment(ctx context.Context) (*Environment, error) {
 		filepath.Join(root, "config", "crd", "bases"),
 		filepath.Join(currentDir, "config", "eks-d-crds.yaml"),
 		filepath.Join(currentDir, "config", "snow-crds.yaml"),
+		filepath.Join(currentDir, "config", "rufio-crds.yaml"),
 	)
 	extraCRDPaths, err := getPathsToPackagesCRDs(root, packages...)
 	if err != nil {
