@@ -56,7 +56,7 @@ spec:
     machineGroupRef:
       kind: CloudStackMachineConfig
       name: my-cluster-name-etcd
-  kubernetesVersion: "1.23"
+  kubernetesVersion: "1.28"
   managementCluster:
     name: my-cluster-name
   workerNodeGroupConfigurations:
@@ -238,7 +238,7 @@ Number of etcd members
 Refers to the Kubernetes object with CloudStack specific configuration for your etcd members. See `CloudStackMachineConfig Fields` below.
 
 ### kubernetesVersion (required)
-The Kubernetes version you want to use for your cluster. Supported values: `1.24`, `1.23`
+The Kubernetes version you want to use for your cluster. Supported values: `1.28`, `1.27`, `1.26`, `1.25`, `1.24`
 
 ### managementCluster (required)
 Identifies the name of the management cluster.
@@ -287,7 +287,7 @@ Modifying the labels associated with a worker node group configuration will caus
 the existing nodes associated with the configuration.
 
 ### workerNodeGroupConfigurations.kubernetesVersion
-The Kubernetes version you want to use for this worker node group. Supported values: 1.28, 1.27, 1.26, 1.25, 1.24, 1.23
+The Kubernetes version you want to use for this worker node group. Supported values: 1.28, 1.27, 1.26, 1.25, 1.24
 
 ## CloudStackDatacenterConfig
 

@@ -165,7 +165,7 @@ Follow these steps to create an EKS Anywhere cluster that can be used either as 
    Example command output
    ```
    ...
-   kubernetesVersion: "1.23"
+   kubernetesVersion: "1.28"
    managementCluster:
      name: mgmt
    workerNodeGroupConfigurations:

@@ -195,7 +195,7 @@ Modifying the labels associated with a worker node group configuration will caus
 the existing nodes associated with the configuration.
 
 ### workerNodeGroupConfigurations.kubernetesVersion
-The Kubernetes version you want to use for this worker node group. Supported values: 1.28, 1.27, 1.26, 1.25, 1.24, 1.23
+The Kubernetes version you want to use for this worker node group. Supported values: 1.28, 1.27, 1.26, 1.25, 1.24
 
 ### externalEtcdConfiguration.count
 Number of etcd members.
@@ -207,7 +207,7 @@ Refers to the Kubernetes object with Snow specific configuration for your etcd m
 Refers to the Kubernetes object with Snow environment specific configuration. See `SnowDatacenterConfig Fields` below.
 
 ### kubernetesVersion (required)
-The Kubernetes version you want to use for your cluster. Supported values: `1.28`, `1.27`, `1.26`, `1.25`, `1.24`, `1.23`
+The Kubernetes version you want to use for your cluster. Supported values: `1.28`, `1.27`, `1.26`, `1.25`, `1.24`
 
 ## SnowDatacenterConfig Fields
 
