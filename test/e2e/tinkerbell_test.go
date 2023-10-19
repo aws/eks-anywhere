@@ -120,7 +120,7 @@ func TestTinkerbellKubernetes127UbuntuTo128Upgrade(t *testing.T) {
 }
 
 func TestTinkerbellKubernetes127UbuntuTo128UpgradeCPOnly(t *testing.T) {
-	provider := framework.NewTinkerbell(t, framework.WithUbuntu127TinkerbellForCP(), framework.WithUbuntu127TinkerbellForWorker())
+	provider := framework.NewTinkerbell(t)
 	kube127 := v1alpha1.Kube127
 	test := framework.NewClusterE2ETest(
 		t,
@@ -128,9 +128,12 @@ func TestTinkerbellKubernetes127UbuntuTo128UpgradeCPOnly(t *testing.T) {
 		framework.WithClusterFiller(api.WithKubernetesVersion(kube127)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithClusterFiller(api.WithWorkerKubernetesVersion(worker0, &kube127)),
+		framework.WithClusterFiller(api.WithWorkerKubernetesVersion(nodeGroupLabel1, &kube127)),
 		framework.WithControlPlaneHardware(2),
 		framework.WithWorkerHardware(1),
+	).WithClusterConfig(
+		provider.WithCPKubeVersionAndOS(v1alpha1.Kube127, framework.Ubuntu2004),
+		provider.WithWorkerKubeVersionAndOS(v1alpha1.Kube127, framework.Ubuntu2004),
 	)
 	runSimpleUpgradeFlowWorkerNodeVersionForBareMetal(
 		test,
@@ -140,7 +143,7 @@ func TestTinkerbellKubernetes127UbuntuTo128UpgradeCPOnly(t *testing.T) {
 }
 
 func TestTinkerbellKubernetes127UbuntuTo128UpgradeWorkerOnly(t *testing.T) {
-	provider := framework.NewTinkerbell(t, framework.WithUbuntu128TinkerbellForCP(), framework.WithUbuntu127TinkerbellForWorker())
+	provider := framework.NewTinkerbell(t)
 	kube127 := v1alpha1.Kube127
 	kube128 := v1alpha1.Kube128
 	test := framework.NewClusterE2ETest(
@@ -150,13 +153,16 @@ func TestTinkerbellKubernetes127UbuntuTo128UpgradeWorkerOnly(t *testing.T) {
 		framework.WithClusterFiller(api.WithKubernetesVersion(kube128)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithClusterFiller(api.WithWorkerKubernetesVersion(worker0, &kube127)),
+		framework.WithClusterFiller(api.WithWorkerKubernetesVersion(nodeGroupLabel1, &kube127)),
 		framework.WithControlPlaneHardware(1),
 		framework.WithWorkerHardware(2),
+	).WithClusterConfig(
+		provider.WithCPKubeVersionAndOS(v1alpha1.Kube128, framework.Ubuntu2004),
+		provider.WithWorkerKubeVersionAndOS(v1alpha1.Kube127, framework.Ubuntu2004),
 	)
 	runSimpleUpgradeFlowWorkerNodeVersionForBareMetal(
 		test,
-		framework.WithClusterUpgrade(api.WithWorkerKubernetesVersion(worker0, &kube128)),
+		framework.WithClusterUpgrade(api.WithWorkerKubernetesVersion(nodeGroupLabel1, &kube128)),
 		provider.WithProviderUpgrade(framework.Ubuntu128ImageForWorker()),
 	)
 }

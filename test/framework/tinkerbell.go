@@ -156,6 +156,26 @@ func (t *Tinkerbell) WithKubeVersionAndOS(kubeVersion anywherev1.KubernetesVersi
 	)
 }
 
+// WithCPKubeVersionAndOS returns a cluster config filler that sets the cluster kube version and the right image for CP
+// tinkerbell machine configs.
+func (t *Tinkerbell) WithCPKubeVersionAndOS(kubeVersion anywherev1.KubernetesVersion, os OS) api.ClusterConfigFiller {
+	return api.JoinClusterConfigFillers(
+		api.TinkerbellToConfigFiller(
+			imageForKubeVersionAndOS(kubeVersion, os, controlPlaneIdentifier),
+		),
+	)
+}
+
+// WithWorkerKubeVersionAndOS returns a cluster config filler that sets the cluster kube version and the right image for all
+// Worker tinkerbell machine configs.
+func (t *Tinkerbell) WithWorkerKubeVersionAndOS(kubeVersion anywherev1.KubernetesVersion, os OS) api.ClusterConfigFiller {
+	return api.JoinClusterConfigFillers(
+		api.TinkerbellToConfigFiller(
+			imageForKubeVersionAndOS(kubeVersion, os, workerIdentifier),
+		),
+	)
+}
+
 // WithNewWorkerNodeGroup returns an api.ClusterFiller that adds a new workerNodeGroupConfiguration and
 // a corresponding TinkerbellMachineConfig to the cluster config.
 func (t *Tinkerbell) WithNewWorkerNodeGroup(name string, workerNodeGroup *WorkerNodeGroup) api.ClusterConfigFiller {
@@ -209,26 +229,6 @@ func WithUbuntu127Tinkerbell() TinkerbellOpt {
 // WithUbuntu128Tinkerbell tink test with ubuntu 1.28.
 func WithUbuntu128Tinkerbell() TinkerbellOpt {
 	return withKubeVersionAndOS(anywherev1.Kube128, Ubuntu2004, "", nil)
-}
-
-// WithUbuntu127TinkerbellForCP tink test with ubuntu 1.27 for Control Plane Machine Config.
-func WithUbuntu127TinkerbellForCP() TinkerbellOpt {
-	return withKubeVersionAndOS(anywherev1.Kube127, Ubuntu2004, controlPlaneIdentifier, nil)
-}
-
-// WithUbuntu128TinkerbellForCP tink test with ubuntu 1.28 for Control Plane Machine Config.
-func WithUbuntu128TinkerbellForCP() TinkerbellOpt {
-	return withKubeVersionAndOS(anywherev1.Kube128, Ubuntu2004, controlPlaneIdentifier, nil)
-}
-
-// WithUbuntu127TinkerbellForWorker tink test with ubuntu 1.27 for Worker Node Group Machine Config.
-func WithUbuntu127TinkerbellForWorker() TinkerbellOpt {
-	return withKubeVersionAndOS(anywherev1.Kube127, Ubuntu2004, workerIdentifier, nil)
-}
-
-// WithUbuntu128TinkerbellForWorker tink test with ubuntu 1.28 for Worker Node Group Machine Config.
-func WithUbuntu128TinkerbellForWorker() TinkerbellOpt {
-	return withKubeVersionAndOS(anywherev1.Kube128, Ubuntu2004, workerIdentifier, nil)
 }
 
 // WithRedHat124Tinkerbell tink test with redhat 1.24.
