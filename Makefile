@@ -39,13 +39,11 @@ DEV_GIT_VERSION:=v0.0.0-dev-${BRANCH_NAME}
 BUNDLE_MANIFEST_URL?=https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/${BRANCH_NAME}/bundle-release.yaml
 RELEASE_MANIFEST_URL?=https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/${BRANCH_NAME}/eks-a-release.yaml
 LATEST=$(BRANCH_NAME)
-$(info    Using branch-specific BUNDLE_MANIFEST_URL $(BUNDLE_MANIFEST_URL) and RELEASE_MANIFEST_URL $(RELEASE_MANIFEST_URL))
 else
 ## use the standard bundle manifest if the branch is 'main'
 DEV_GIT_VERSION:=v0.0.0-dev
 BUNDLE_MANIFEST_URL?=https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/bundle-release.yaml
 RELEASE_MANIFEST_URL?=https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/eks-a-release.yaml
-$(info    Using standard BUNDLE_MANIFEST_URL $(BUNDLE_MANIFEST_URL) and RELEASE_MANIFEST_URL $(RELEASE_MANIFEST_URL))
 LATEST=latest
 endif
 
@@ -142,7 +140,7 @@ LOCAL_E2E_TESTS ?= $(DOCKER_E2E_TEST)
 
 EMBED_CONFIG_FOLDER = pkg/files/config
 
-export KUBEBUILDER_ENVTEST_KUBERNETES_VERSION ?= 1.26.x
+export KUBEBUILDER_ENVTEST_KUBERNETES_VERSION ?= 1.28.x
 
 UNAME := $(shell uname -s)
 
@@ -267,6 +265,10 @@ $(GO_VULNCHECK): $(TOOLS_BIN_DIR)
 
 $(SETUP_ENVTEST): $(TOOLS_BIN_DIR)
 	cd $(TOOLS_BIN_DIR); $(GO) build -tags=tools -o $(SETUP_ENVTEST_BIN) sigs.k8s.io/controller-runtime/tools/setup-envtest
+
+envtest-setup: $(SETUP_ENVTEST)
+	$(eval KUBEBUILDER_ASSETS ?= $(shell $(SETUP_ENVTEST) use --use-env -p path --arch $(GO_ARCH) $(KUBEBUILDER_ENVTEST_KUBERNETES_VERSION)))
+	@echo KUBEBUILDER_ASSETS=$(KUBEBUILDER_ASSETS)
 
 .PHONY: lint
 lint: $(GOLANGCI_LINT) ## Run golangci-lint
@@ -428,8 +430,7 @@ test: unit-test capd-test  ## Run unit and capd tests
 
 .PHONY: unit-test
 unit-test: ## Run unit tests
-unit-test: $(SETUP_ENVTEST) 
-unit-test: KUBEBUILDER_ASSETS ?= $(shell $(SETUP_ENVTEST) use --use-env -p path --arch $(GO_ARCH) $(KUBEBUILDER_ENVTEST_KUBERNETES_VERSION))
+unit-test: envtest-setup
 unit-test:
 	KUBEBUILDER_ASSETS="$(KUBEBUILDER_ASSETS)" $(GO_TEST) $(UNIT_TEST_PACKAGES) -cover -tags "$(BUILD_TAGS)" $(GO_TEST_FLAGS)
 
@@ -442,9 +443,8 @@ unit-test:
 # their tests run by this target.
 .PHONY: unit-test-patch
 unit-test-patch: ## Run unit tests for packages modified locally
-unit-test-patch: $(SETUP_ENVTEST)
+unit-test-patch: envtest-setup
 unit-test-patch: GO_PKGS ?= $(shell ./scripts/go-packages-in-patch.sh | grep -vE "$(UNIT_TEST_PACKAGE_EXCLUSION_REGEX)")
-unit-test-patch: KUBEBUILDER_ASSETS ?= $(shell $(SETUP_ENVTEST) use --use-env -p path --arch $(GO_ARCH) $(KUBEBUILDER_ENVTEST_KUBERNETES_VERSION))
 unit-test-patch:
 	KUBEBUILDER_ASSETS="$(KUBEBUILDER_ASSETS)" $(GO_TEST) $(GO_PKGS) -cover -tags "$(BUILD_TAGS)" $(GO_TEST_FLAGS)
 	@echo Reminder: $@ is not a substitute for make unit-test
@@ -479,8 +479,7 @@ coverage-view: coverage-unit-test
 # their tests run by this target.
 .PHONY: coverage-view-patch
 coverage-view-patch: GO_PKGS ?= $(shell ./scripts/go-packages-in-patch.sh)
-coverage-view-patch: $(SETUP_ENVTEST)
-coverage-view-patch: KUBEBUILDER_ASSETS ?= $(shell $(SETUP_ENVTEST) use --use-env -p path --arch $(GO_ARCH) $(KUBEBUILDER_ENVTEST_KUBERNETES_VERSION))
+coverage-view-patch: envtest-setup
 coverage-view-patch:
 	-$(MAKE) unit-test-patch GO_TEST_FLAGS="-coverprofile=$(COVER_PROFILE) -covermode=atomic"
 	$(GO) tool cover -html=$(COVER_PROFILE)
