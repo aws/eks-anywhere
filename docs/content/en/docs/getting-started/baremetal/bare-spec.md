@@ -9,10 +9,6 @@ description: >
 ---
 
 This is a generic template with detailed descriptions below for reference.
-The following additional optional configuration can also be included:
-
-* [CNI]({{< relref "../optional/cni.md" >}})
-* [Host OS Config]({{< relref "../optional/hostOSConfig.md" >}})
 
 To generate your own cluster configuration, follow instructions from the [Create Bare Metal cluster]({{< relref "./baremetal-getstarted" >}}) section and modify it using descriptions below.
 For information on how to add cluster configuration settings to this file for advanced node configuration, see [Advanced Bare Metal cluster configuration]({{< relref "#advanced-bare-metal-cluster-configuration" >}}).
@@ -90,6 +86,88 @@ spec:
     sshAuthorizedKeys:
     - ssh-rsa AAAAB3NzaC1yc2... jwjones@833efcab1482.home.example.com
 ```
+
+<pre>
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: Cluster
+metadata:
+   name: my-cluster-name             <a href="#name-required"># Name of the cluster (required)</a>
+spec:
+   clusterNetwork:                   <a href="#clusternetwork-required"># Cluster network configuration (required)</a>
+      cniConfig:                     <a href="#clusternetworkcniconfig-required"># Cluster CNI plugin - default: cilium (required)</a>
+         cilium: {}
+      pods:
+         cidrBlocks:                 <a href="#clusternetworkpodscidrblocks0-required"># Subnet CIDR notation for pods (required)</a>
+            - 192.168.0.0/16
+      services:
+         cidrBlocks:                 <a href="#clusternetworkservicescidrblocks0-required"># Subnet CIDR notation for services (required)</a>
+            - 10.96.0.0/12
+   controlPlaneConfiguration:        <a href="#controlplaneconfiguration-required"># Specific cluster control plane config (required)</a>
+      count: <span style="color:green">2</span>                       <a href="#controlplaneconfigurationcount-required"># Number of control plane nodes (required)</a>
+      endpoint:                      <a href="#controlplaneconfigurationendpointhost-required"># IP for control plane endpoint (required)</a>
+         host: <span>"192.168.0.10"</span>
+      machineGroupRef:               <a href="#controlplaneconfigurationmachinegroupref-required"># baremetal-specific Kubernetes node config (required)</a>
+        kind: TinkerbellMachineConfig
+        name: my-cluster-name
+   datacenterRef:                    <a href="#datacenterref"># Kubernetes object with baremetal-specific config </a>
+      kind: TinkerbellDatacenterConfig  
+      name: my-cluster-datacenter
+   kubernetesVersion: <span>"1.28"</span>         <a href="#kubernetesversion-required"># Kubernetes version to use for the cluster (required)</a>
+   workerNodeGroupConfigurations:    <a href="#workernodegroupconfigurations"># List of node groups you can define for workers (required) </a>
+   - count: <span style="color:green">2</span>                        <a href="#workernodegroupconfigurationscount"># Number of worker nodes </a>
+     machineGroupRef:                <a href="#workernodegroupconfigurationsmachinegroupref-required"># baremetal-specific Kubernetes node objects (required) </a>
+       kind: TinkerbellMachineConfig
+       name: my-cluster-name
+     name: md-0                      <a href="#workernodegroupconfigurationsname-required"># Name of the worker nodegroup (required) </a>
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: TinkerbellDatacenterConfig
+metadata:
+   name: my-cluster-datacenter
+spec:
+  tinkerbellIP: <span>"tinkerbellIP"</span>          <a href="#tinkerbellip-required"># Baremetal tinkerbell IP (required) </a>
+
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: TinkerbellMachineConfig
+metadata:
+   name: my-cluster-name-cp
+spec:
+  hardwareSelector:  <span style="color:green">{}</span>                <a href="#hardwareselector-required"># Hardware selector </a>
+  osFamily: <span>"bottlerocket"</span>             <a href="#osfamily-required"># Operating system on VMs</a>
+  templateRef: <span>{}</span>                      <a href="#templateref-optional"># Template config ref</a>
+  users:                               <a href="#users-optional"># Add users to access VMs via SSH</a>
+  - name: <span>"ec2-user"</span>                   <a href="#users0name-optional"># Name of each user set to access VMs</a>
+    sshAuthorizedKeys:                 <a href="#users0sshauthorizedkeys-optional"># SSH keys for user needed to access VMs</a>
+    - <span>"ssh-rsa AAAAB3NzaC1yc2E..."</span>
+
+    ---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: TinkerbellMachineConfig
+metadata:
+   name: my-cluster-name
+spec:
+  hardwareSelector:  <span style="color:green">{}</span>                <a href="#hardwareselector-required"># Hardware selector</a>
+  osFamily: <span>"bottlerocket"</span>             <a href="#osfamily-required"># Operating system on VMs</a>
+  templateRef:                         <a href="#templateref-optional"># Template config ref</a>
+    kind: TinkerbellTemplateConfig
+    name: my-cluster-name
+  users:                               <a href="#users-optional"># Add users to access VMs via SSH</a>
+  - name: <span>"ec2-user"</span>                   <a href="#users0name-optional"># Name of each user set to access VMs</a>
+    sshAuthorizedKeys:                 <a href="#users0sshauthorizedkeys-optional"># SSH keys for user needed to access VMs</a>
+    - <span>"ssh-rsa AAAAB3NzaC1yc2E..."</span>
+</pre>
+
+The following additional optional configuration can also be included:
+
+* [CNI]({{< relref "../optional/cni.md" >}})
+* [IAM Roles for Service Accounts]({{< relref "../optional/irsa.md" >}})
+* [IAM Authenticator]({{< relref "../optional/iamauth.md" >}})
+* [OIDC]({{< relref "../optional/oidc.md" >}})
+* [gitops]({{< relref "../optional/gitops.md" >}})
+* [proxy]({{< relref "../optional/proxy.md" >}})
+* [Registry Mirror]({{< relref "../optional/registrymirror.md" >}})
+* [Host OS Config]({{< relref "../optional/hostOSConfig.md" >}})
 
 ## Cluster Fields
 
@@ -201,7 +279,7 @@ the existing nodes associated with the configuration.
 
 ## TinkerbellDatacenterConfig Fields
 
-### tinkerbellIP
+### tinkerbellIP (required)
 Required field to identify the IP address of the Tinkerbell service.
 This IP address must be a unique IP in the network range that does not conflict with other IPs.
 Once the Tinkerbell services move from the Admin machine to run on the target cluster, this IP address makes it possible for the stack to be used for future provisioning needs.
@@ -237,14 +315,14 @@ Optional field to skip deploying the default load balancer for Tinkerbell stack.
 
 EKS Anywhere for Bare Metal uses `kube-vip` load balancer by default to expose the Tinkerbell stack externally.
 You can disable this feature by setting this field to `true`.
->**_NOTE:_** If you skip load balancer deployment, you will have to ensure that the Tinkerbell stack is available at [tinkerbellIP]({{< relref "#tinkerbellip" >}}) once the cluster creation is finished. One way to achieve this is by using the [MetalLB]({{< relref "../../packages/metallb" >}}) package. 
+>**_NOTE:_** If you skip load balancer deployment, you will have to ensure that the Tinkerbell stack is available at [tinkerbellIP]({{< relref "#tinkerbellip-required" >}}) once the cluster creation is finished. One way to achieve this is by using the [MetalLB]({{< relref "../../packages/metallb" >}}) package. 
 
 ## TinkerbellMachineConfig Fields
 In the example, there are `TinkerbellMachineConfig` sections for control plane (`my-cluster-name-cp`) and worker (`my-cluster-name`) machine groups.
 The following fields identify information needed to configure the nodes in each of those groups.
 >**_NOTE:_** Currently, you can only have one machine group for all machines in the control plane, although you can have multiple machine groups for the workers.
 >
-### hardwareSelector
+### hardwareSelector (required)
 Use fields under `hardwareSelector` to add key/value pair labels to match particular machines that you identified in the CSV file where you defined the machines in your cluster.
 Choose any label name you like.
 For example, if you had added the label `node=cp-machine` to the machines listed in your CSV file that you want to be control plane nodes, the following `hardwareSelector` field would cause those machines to be added to the control plane:
@@ -267,11 +345,14 @@ See TinkerbellTemplateConfig fields below.
 EKS Anywhere will generate default templates based on `osFamily` during the `create` command.
 You can override this default template by providing your own template here.
 
-### users
+### users (optional)
 The name of the user you want to configure to access your virtual machines through SSH.
 
-The default is `ec2-user`.
-Currently, only one user is supported.
+### users[0].name (optional)
+The name of the user you want to configure to access your virtual machines through ssh.
+
+The default is `ec2-user` if `osFamily=bottlrocket`.
+
 
 ### users[0].sshAuthorizedKeys (optional)
 The SSH public keys you want to configure to access your machines through SSH (as described below). Only 1 is supported at this time.
