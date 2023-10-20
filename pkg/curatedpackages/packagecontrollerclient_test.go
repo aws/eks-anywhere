@@ -1257,7 +1257,7 @@ func TestGetCuratedPackagesRegistries(s *testing.T) {
 			curatedpackages.WithRegistryAccessTester(&stubRegistryAccessTester{}),
 		)
 
-		expected := "TODO.dkr.ecr.us-west-2.amazonaws.com"
+		expected := "346438352937.dkr.ecr.us-west-2.amazonaws.com"
 		_, actualDefaultRegistry, actualImageRegistry := client.GetCuratedPackagesRegistries(context.Background())
 
 		if actualDefaultRegistry != expected {
