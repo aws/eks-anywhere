@@ -2007,7 +2007,7 @@ func (e *ClusterE2ETest) CombinedAutoScalerMetricServerTest(autoscalerName, metr
 		e.T.Fatalf("Failed waiting for test workload deployent %s", err)
 	}
 
-	params := []string{"autoscale", "deployment", name, "--cpu-percent=50", "--min=1", "--max=20", "--kubeconfig", e.KubeconfigFilePath()}
+	params := []string{"autoscale", "deployment", name, "--cpu-percent=50", "--min=1", "--max=150", "--kubeconfig", e.KubeconfigFilePath()}
 	_, err = e.KubectlClient.ExecuteCommand(ctx, params...)
 	if err != nil {
 		e.T.Fatalf("Failed to autoscale deployent: %s", err)

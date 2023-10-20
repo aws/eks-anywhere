@@ -20,7 +20,7 @@ spec:
               cpu: 50m
             requests:
               cpu: 10m
-              memory: 500Mi
+              memory: 1000Mi
           command: ["sh", "-c"]
           args:
             - while [ 1 ]; do
