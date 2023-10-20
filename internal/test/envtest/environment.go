@@ -1,8 +1,11 @@
 package envtest
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"os"
+	"os/exec"
 	"path"
 	"path/filepath"
 	goruntime "runtime"
@@ -47,6 +50,8 @@ const (
 	tinkerbellPackage   = "github.com/tinkerbell/tink"
 	etcdProviderPackage = "github.com/aws/etcdadm-controller"
 	capcPackage         = "sigs.k8s.io/cluster-api-provider-cloudstack"
+
+	kubebuilderAssetsEnvVar = "KUBEBUILDER_ASSETS"
 )
 
 func init() {
@@ -134,6 +139,11 @@ func RunWithEnvironment(m *testing.M, opts ...EnvironmentOpt) int {
 func newEnvironment(ctx context.Context) (*Environment, error) {
 	root := getRootPath()
 	currentDir := currentDir()
+
+	if err := ensureEnvtest(ctx, root); err != nil {
+		return nil, err
+	}
+
 	crdDirectoryPaths := make([]string, 0, len(packages)+2)
 	crdDirectoryPaths = append(crdDirectoryPaths,
 		filepath.Join(root, "config", "crd", "bases"),
@@ -192,6 +202,33 @@ func newEnvironment(ctx context.Context) (*Environment, error) {
 	env.apiReader = mgr.GetAPIReader()
 
 	return env, nil
+}
+
+func ensureEnvtest(ctx context.Context, rootDir string) error {
+	// Only if the envtest config envvar is not set, try to setup assets
+	if _, ok := os.LookupEnv(kubebuilderAssetsEnvVar); ok {
+		return nil
+	}
+
+	cmd := exec.CommandContext(ctx, "make", "-s", "envtest-setup")
+	cmd.Dir = rootDir
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed setting up env-test:\n%s", string(out))
+	}
+
+	// Last line of output is expected to be KUBEBUILDER_ASSETS=[path to envtest setup]
+	lines := bytes.Split(out, []byte("\n"))
+	lastLine := lines[len(lines)-2]
+	split := bytes.Split(lastLine, []byte("="))
+	if len(split) != 2 || string(split[0]) != kubebuilderAssetsEnvVar {
+		return fmt.Errorf("invalid last line of env-test setup: %s", string(lastLine))
+	}
+
+	fmt.Printf("Envtest auto-setup using installation path %s\n", string(split[1]))
+	os.Setenv(kubebuilderAssetsEnvVar, string(split[1]))
+
+	return nil
 }
 
 func (e *Environment) stop() error {
