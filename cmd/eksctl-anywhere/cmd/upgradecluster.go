@@ -141,7 +141,7 @@ func (uc *upgradeClusterOptions) upgradeCluster(cmd *cobra.Command, args []strin
 		}
 	}
 
-	factory := dependencies.ForSpec(ctx, clusterSpec).WithExecutableMountDirs(dirs...).
+	factory := dependencies.ForSpec(clusterSpec).WithExecutableMountDirs(dirs...).
 		WithBootstrapper().
 		WithCliConfig(cliConfig).
 		WithClusterManager(clusterSpec.Cluster, clusterManagerTimeoutOpts).
