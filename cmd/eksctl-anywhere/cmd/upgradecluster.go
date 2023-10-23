@@ -97,6 +97,10 @@ func (uc *upgradeClusterOptions) upgradeCluster(cmd *cobra.Command, args []strin
 		}
 	}
 
+	if clusterConfig.Spec.EtcdEncryption != nil && clusterConfig.Spec.DatacenterRef.Kind != v1alpha1.CloudStackDatacenterKind && clusterConfig.Spec.DatacenterRef.Kind != v1alpha1.VSphereDatacenterKind {
+		return fmt.Errorf("etcdEncryption is currently not supported for the current provider: %s", clusterConfig.Spec.DatacenterRef.Kind)
+	}
+
 	if err := v1alpha1.ValidateEtcdEncryptionConfig(clusterConfig.Spec.EtcdEncryption); err != nil {
 		return err
 	}
