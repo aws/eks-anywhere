@@ -66,6 +66,41 @@ func (v *Validator) ValidateClusterSpec(ctx context.Context, spec *cluster.Spec,
 		}
 	}
 
+	return v.checkImageNameMatchesKubernetesVersion(ctx, spec, client)
+}
+
+func (v *Validator) checkImageNameMatchesKubernetesVersion(ctx context.Context, spec *cluster.Spec, client Client) error {
+	controlPlaneMachineConfig := spec.NutanixMachineConfigs[spec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name]
+	if controlPlaneMachineConfig == nil {
+		return fmt.Errorf("cannot find NutanixMachineConfig %v for control plane", spec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name)
+	}
+	// validate template field name contains cluster kubernetes version for the control plane machine.
+	if err := v.validateTemplateMatchesKubernetesVersion(ctx, controlPlaneMachineConfig.Spec.Image, client, string(spec.Cluster.Spec.KubernetesVersion)); err != nil {
+		return fmt.Errorf("machine config %s validation failed: %v", controlPlaneMachineConfig.Name, err)
+	}
+
+	if spec.Cluster.Spec.ExternalEtcdConfiguration != nil {
+		etcdMachineConfig := spec.NutanixMachineConfigs[spec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name]
+		if etcdMachineConfig == nil {
+			return fmt.Errorf("cannot find NutanixMachineConfig %v for etcd machines", spec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name)
+		}
+		// validate template field name contains cluster kubernetes version for the external etcd machine.
+		if err := v.validateTemplateMatchesKubernetesVersion(ctx, etcdMachineConfig.Spec.Image, client, string(spec.Cluster.Spec.KubernetesVersion)); err != nil {
+			return fmt.Errorf("machine config %s validation failed: %v", etcdMachineConfig.Name, err)
+		}
+	}
+
+	for _, workerNodeGroupConfiguration := range spec.Cluster.Spec.WorkerNodeGroupConfigurations {
+		kubernetesVersion := string(spec.Cluster.Spec.KubernetesVersion)
+		if workerNodeGroupConfiguration.KubernetesVersion != nil {
+			kubernetesVersion = string(*workerNodeGroupConfiguration.KubernetesVersion)
+		}
+		// validate template field name contains cluster kubernetes version for the control plane machine.
+		imageIdentifier := spec.NutanixMachineConfigs[workerNodeGroupConfiguration.MachineGroupRef.Name].Spec.Image
+		if err := v.validateTemplateMatchesKubernetesVersion(ctx, imageIdentifier, client, kubernetesVersion); err != nil {
+			return fmt.Errorf("machine config %s validation failed: %v", controlPlaneMachineConfig.Name, err)
+		}
+	}
 	return nil
 }
 
@@ -261,6 +296,37 @@ func (v *Validator) validateImageConfig(ctx context.Context, client Client, iden
 		return fmt.Errorf("invalid image identifier type: %s; valid types are: %q and %q", identifier.Type, anywherev1.NutanixIdentifierName, anywherev1.NutanixIdentifierUUID)
 	}
 
+	return nil
+}
+
+func (v *Validator) validateTemplateMatchesKubernetesVersion(ctx context.Context, identifier anywherev1.NutanixResourceIdentifier, client Client, kubernetesVersionName string) error {
+	var templateName string
+	if identifier.Type == anywherev1.NutanixIdentifierUUID {
+		imageUUID := *identifier.UUID
+		imageDetails, err := client.GetImage(ctx, imageUUID)
+		if err != nil {
+			return fmt.Errorf("failed to find image with uuid %s: %v", imageUUID, err)
+		}
+		if imageDetails.Spec == nil || imageDetails.Spec.Name == nil {
+			return fmt.Errorf("failed to find image details with uuid %s", imageUUID)
+		}
+		templateName = *imageDetails.Spec.Name
+	} else {
+		templateName = *identifier.Name
+	}
+
+	// Replace 1.23, 1-23, 1_23 to 123 in the template name string.
+	templateReplacer := strings.NewReplacer("-", "", ".", "", "_", "")
+	template := templateReplacer.Replace(templateName)
+	// Replace 1-23 to 123 in the kubernetesversion string.
+	replacer := strings.NewReplacer(".", "")
+	kubernetesVersion := replacer.Replace(string(kubernetesVersionName))
+	// This will return an error if the template name does not contain specified kubernetes version.
+	// For ex if the kubernetes version is 1.23,
+	// the template name should include 1.23 or 1-23, 1_23 or 123 i.e. kubernetes-1-23-eks in the string.
+	if !strings.Contains(template, kubernetesVersion) {
+		return fmt.Errorf("missing kube version from the machine config template name: template=%s, version=%s", templateName, string(kubernetesVersionName))
+	}
 	return nil
 }
 

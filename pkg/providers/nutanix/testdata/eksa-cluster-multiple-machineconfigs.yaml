@@ -65,7 +65,7 @@ spec:
   memorySize: 8Gi
   image:
     type: "name"
-    name: "prism-image"
+    name: "prism-image-1-19"
   cluster:
     type: "name"
     name: "prism-cluster"
@@ -90,7 +90,7 @@ spec:
   memorySize: 8Gi
   image:
     type: "name"
-    name: "prism-image"
+    name: "prism-image-1-19"
   cluster:
     type: "name"
     name: "prism-cluster"
@@ -115,7 +115,7 @@ spec:
   memorySize: 8Gi
   image:
     type: "name"
-    name: "prism-image"
+    name: "prism-image-1-19"
   cluster:
     type: "name"
     name: "prism-cluster"
@@ -128,3 +128,29 @@ spec:
     - name: "mySshUsername"
       sshAuthorizedKeys:
         - "mySshAuthorizedKey"
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: NutanixMachineConfig
+metadata:
+  name: eksa-unit-test
+  namespace: default
+spec:
+  vcpusPerSocket: 1
+  vcpuSockets: 4
+  memorySize: 8Gi
+  image:
+    type: "name"
+    name: "prism-image-1-19"
+  cluster:
+    type: "name"
+    name: "prism-cluster"
+  subnet:
+    type: "name"
+    name: "prism-subnet"
+  systemDiskSize: 40Gi
+  osFamily: "ubuntu"
+  users:
+    - name: "mySshUsername"
+      sshAuthorizedKeys:
+        - "mySshAuthorizedKey"
+---
