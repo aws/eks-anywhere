@@ -120,10 +120,11 @@ spec:
           readOnly: false
 {{- end}}
 {{- if .encryptionProviderConfig }}
-        - hostPath: /etc/kubernetes/enc
-          mountPath: /etc/kubernetes/enc
+        - hostPath: /var/lib/kubeadm/encryption-config.yaml
+          mountPath: /etc/kubernetes/enc/encryption-config.yaml
           name: encryption-config
-          readOnly: false
+          pathType: File
+          readOnly: true
         - hostPath: /var/run/kmsplugin/
           mountPath: /var/run/kmsplugin/
           name: kms-plugin
@@ -147,7 +148,7 @@ spec:
     - content: |
 {{ .encryptionProviderConfig | indent 8}}
       owner: root:root
-      path: /etc/kubernetes/enc/encryption-config.yaml
+      path: /var/lib/kubeadm/encryption-config.yaml
 {{- end }}
 {{- if .cloudstackKubeVip}}
     - content: |

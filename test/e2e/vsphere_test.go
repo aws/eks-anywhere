@@ -3201,7 +3201,7 @@ func TestVSphereKubernetes128UbuntuAirgappedRegistryMirror(t *testing.T) {
 	runAirgapConfigFlow(test, "195.18.0.1/16,196.18.0.1/16")
 }
 
-func TestVSphereKubernetes128EtcdEncryption(t *testing.T) {
+func TestVSphereKubernetesUbuntu128EtcdEncryption(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewVSphere(t, framework.WithUbuntu128()),
@@ -3212,12 +3212,33 @@ func TestVSphereKubernetes128EtcdEncryption(t *testing.T) {
 		),
 		framework.WithPodIamConfig(),
 	)
+	test.OSFamily = v1alpha1.Ubuntu
 	test.GenerateClusterConfig()
 	test.CreateCluster()
 	test.PostClusterCreateEtcdEncryptionSetup()
 	test.UpgradeClusterWithNewConfig([]framework.ClusterE2ETestOpt{framework.WithEtcdEncrytion()})
 	test.StopIfFailed()
 	test.ValidateEtcdEncryption()
+	test.DeleteCluster()
+}
+
+func TestVSphereKubernetesBottlerocket128EtcdEncryption(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewVSphere(t, framework.WithBottleRocket128()),
+		framework.WithClusterFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube128),
+			api.WithExternalEtcdTopology(1),
+			api.WithControlPlaneCount(1),
+		),
+		framework.WithPodIamConfig(),
+	)
+	test.OSFamily = v1alpha1.Bottlerocket
+	test.GenerateClusterConfig()
+	test.CreateCluster()
+	test.PostClusterCreateEtcdEncryptionSetup()
+	test.UpgradeClusterWithNewConfig([]framework.ClusterE2ETestOpt{framework.WithEtcdEncrytion()})
+	test.StopIfFailed()
 	test.DeleteCluster()
 }
 

@@ -91,10 +91,11 @@ spec:
           name: audit-log-dir
           pathType: DirectoryOrCreate
           readOnly: false
-        - hostPath: /etc/kubernetes/enc
-          mountPath: /etc/kubernetes/enc
+        - hostPath: /var/lib/kubeadm/encryption-config.yaml
+          mountPath: /etc/kubernetes/enc/encryption-config.yaml
           name: encryption-config
-          readOnly: false
+          pathType: File
+          readOnly: true
         - hostPath: /var/run/kmsplugin/
           mountPath: /var/run/kmsplugin/
           name: kms-plugin
@@ -148,7 +149,7 @@ spec:
           - configmaps
           - resource2.anywhere.eks.amazonsaws.com
       owner: root:root
-      path: /etc/kubernetes/enc/encryption-config.yaml
+      path: /var/lib/kubeadm/encryption-config.yaml
     - content: |
         apiVersion: v1
         kind: Pod
