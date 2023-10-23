@@ -4373,6 +4373,7 @@ func TestCloudStackKubernetes124EtcdEncryption(t *testing.T) {
 		),
 		framework.WithPodIamConfig(),
 	)
+	test.OSFamily = v1alpha1.RedHat
 	test.GenerateClusterConfig()
 	test.CreateCluster()
 	test.PostClusterCreateEtcdEncryptionSetup()

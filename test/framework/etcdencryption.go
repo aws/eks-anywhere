@@ -220,6 +220,10 @@ func (e *ClusterE2ETest) deployKMSProvider(ctx context.Context, envVars *etcdEnc
 		"serviceAccountName": "kms-encrypter-decrypter",
 	}
 
+	if e.OSFamily != v1alpha1.Bottlerocket {
+		values["deployOnlyOnControlPlane"] = "true"
+	}
+
 	manifest, err := templater.Execute(kmsProviderManifest, values)
 	if err != nil {
 		return fmt.Errorf("templating kms provider manifest: %v", err)

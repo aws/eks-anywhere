@@ -97,6 +97,7 @@ type ClusterE2ETest struct {
 	PackageConfig        *PackageConfig
 	GitWriter            filewriter.FileWriter
 	eksaBinaryLocation   string
+	OSFamily             v1alpha1.OSFamily
 	ExpectFailure        bool
 	// PersistentCluster avoids creating the clusters if it finds a kubeconfig
 	// in the corresponding cluster folder. Useful for local development of tests.
