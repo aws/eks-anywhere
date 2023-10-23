@@ -16,6 +16,8 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	"sigs.k8s.io/yaml"
 
+	"github.com/aws/eks-anywhere/internal/test"
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	mockCrypto "github.com/aws/eks-anywhere/pkg/crypto/mocks"
 	mocknutanix "github.com/aws/eks-anywhere/pkg/providers/nutanix/mocks"
@@ -668,5 +670,193 @@ func TestNutanixValidatorValidateDatacenterConfigWithInvalidCreds(t *testing.T) 
 				assert.NoError(t, err, tc.name)
 			}
 		})
+	}
+}
+
+func TestValidateClusterMachineConfigsError(t *testing.T) {
+	ctx := context.Background()
+	clusterConfigFile := "testdata/eksa-cluster-multiple-machineconfigs.yaml"
+	clusterSpec := test.NewFullClusterSpec(t, clusterConfigFile)
+	clusterSpec.Cluster.Spec.KubernetesVersion = "1.22"
+
+	ctrl := gomock.NewController(t)
+	mockClient := mocknutanix.NewMockClient(ctrl)
+	mockClient.EXPECT().GetCurrentLoggedInUser(gomock.Any()).Return(&v3.UserIntentResponse{}, nil).AnyTimes()
+
+	mockTLSValidator := mockCrypto.NewMockTlsValidator(ctrl)
+	mockTLSValidator.EXPECT().ValidateCert(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+
+	mockTransport := mocknutanix.NewMockRoundTripper(ctrl)
+	mockTransport.EXPECT().RoundTrip(gomock.Any()).Return(&http.Response{}, nil).AnyTimes()
+
+	mockHTTPClient := &http.Client{Transport: mockTransport}
+	clientCache := &ClientCache{clients: map[string]Client{"test": mockClient}}
+	validator := NewValidator(clientCache, mockTLSValidator, mockHTTPClient)
+
+	err := validator.checkImageNameMatchesKubernetesVersion(ctx, clusterSpec, clientCache.clients["test"])
+	if err == nil {
+		t.Fatalf("validation should not pass: %v", err)
+	}
+}
+
+func TestValidateClusterMachineConfigsCPNotFoundError(t *testing.T) {
+	ctx := context.Background()
+	clusterConfigFile := "testdata/eksa-cluster-multiple-machineconfigs.yaml"
+	clusterSpec := test.NewFullClusterSpec(t, clusterConfigFile)
+	clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name = "invalid-cp-name"
+
+	ctrl := gomock.NewController(t)
+	mockClient := mocknutanix.NewMockClient(ctrl)
+	mockClient.EXPECT().GetCurrentLoggedInUser(gomock.Any()).Return(&v3.UserIntentResponse{}, nil).AnyTimes()
+
+	mockTLSValidator := mockCrypto.NewMockTlsValidator(ctrl)
+	mockTLSValidator.EXPECT().ValidateCert(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+
+	mockTransport := mocknutanix.NewMockRoundTripper(ctrl)
+	mockTransport.EXPECT().RoundTrip(gomock.Any()).Return(&http.Response{}, nil).AnyTimes()
+
+	mockHTTPClient := &http.Client{Transport: mockTransport}
+	clientCache := &ClientCache{clients: map[string]Client{"test": mockClient}}
+	validator := NewValidator(clientCache, mockTLSValidator, mockHTTPClient)
+
+	err := validator.checkImageNameMatchesKubernetesVersion(ctx, clusterSpec, clientCache.clients["test"])
+	if err == nil {
+		t.Fatalf("validation should not pass: %v", err)
+	}
+}
+
+func TestValidateClusterMachineConfigsEtcdNotFoundError(t *testing.T) {
+	ctx := context.Background()
+	clusterConfigFile := "testdata/eksa-cluster-multiple-machineconfigs.yaml"
+	clusterSpec := test.NewFullClusterSpec(t, clusterConfigFile)
+	clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name = "invalid-etcd-name"
+
+	ctrl := gomock.NewController(t)
+	mockClient := mocknutanix.NewMockClient(ctrl)
+	mockClient.EXPECT().GetCurrentLoggedInUser(gomock.Any()).Return(&v3.UserIntentResponse{}, nil).AnyTimes()
+
+	mockTLSValidator := mockCrypto.NewMockTlsValidator(ctrl)
+	mockTLSValidator.EXPECT().ValidateCert(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+
+	mockTransport := mocknutanix.NewMockRoundTripper(ctrl)
+	mockTransport.EXPECT().RoundTrip(gomock.Any()).Return(&http.Response{}, nil).AnyTimes()
+
+	mockHTTPClient := &http.Client{Transport: mockTransport}
+	clientCache := &ClientCache{clients: map[string]Client{"test": mockClient}}
+	validator := NewValidator(clientCache, mockTLSValidator, mockHTTPClient)
+
+	err := validator.checkImageNameMatchesKubernetesVersion(ctx, clusterSpec, clientCache.clients["test"])
+	if err == nil {
+		t.Fatalf("validation should not pass: %v", err)
+	}
+}
+
+func TestValidateClusterMachineConfigsCPError(t *testing.T) {
+	ctx := context.Background()
+	clusterConfigFile := "testdata/eksa-cluster-multiple-machineconfigs.yaml"
+	clusterSpec := test.NewFullClusterSpec(t, clusterConfigFile)
+	clusterSpec.NutanixMachineConfigs["eksa-unit-test-cp"].Spec.Image.Name = utils.StringPtr("kubernetes_1_22")
+
+	ctrl := gomock.NewController(t)
+	mockClient := mocknutanix.NewMockClient(ctrl)
+	mockClient.EXPECT().GetCurrentLoggedInUser(gomock.Any()).Return(&v3.UserIntentResponse{}, nil).AnyTimes()
+
+	mockTLSValidator := mockCrypto.NewMockTlsValidator(ctrl)
+	mockTLSValidator.EXPECT().ValidateCert(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+
+	mockTransport := mocknutanix.NewMockRoundTripper(ctrl)
+	mockTransport.EXPECT().RoundTrip(gomock.Any()).Return(&http.Response{}, nil).AnyTimes()
+
+	mockHTTPClient := &http.Client{Transport: mockTransport}
+	clientCache := &ClientCache{clients: map[string]Client{"test": mockClient}}
+	validator := NewValidator(clientCache, mockTLSValidator, mockHTTPClient)
+
+	err := validator.checkImageNameMatchesKubernetesVersion(ctx, clusterSpec, clientCache.clients["test"])
+	if err == nil {
+		t.Fatalf("validation should not pass: %v", err)
+	}
+}
+
+func TestValidateClusterMachineConfigsEtcdError(t *testing.T) {
+	ctx := context.Background()
+	clusterConfigFile := "testdata/eksa-cluster-multiple-machineconfigs.yaml"
+	clusterSpec := test.NewFullClusterSpec(t, clusterConfigFile)
+	clusterSpec.NutanixMachineConfigs["eksa-unit-test"].Spec.Image.Name = utils.StringPtr("kubernetes_1_22")
+
+	ctrl := gomock.NewController(t)
+	mockClient := mocknutanix.NewMockClient(ctrl)
+	mockClient.EXPECT().GetCurrentLoggedInUser(gomock.Any()).Return(&v3.UserIntentResponse{}, nil).AnyTimes()
+
+	mockTLSValidator := mockCrypto.NewMockTlsValidator(ctrl)
+	mockTLSValidator.EXPECT().ValidateCert(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+
+	mockTransport := mocknutanix.NewMockRoundTripper(ctrl)
+	mockTransport.EXPECT().RoundTrip(gomock.Any()).Return(&http.Response{}, nil).AnyTimes()
+
+	mockHTTPClient := &http.Client{Transport: mockTransport}
+	clientCache := &ClientCache{clients: map[string]Client{"test": mockClient}}
+	validator := NewValidator(clientCache, mockTLSValidator, mockHTTPClient)
+
+	err := validator.checkImageNameMatchesKubernetesVersion(ctx, clusterSpec, clientCache.clients["test"])
+	if err == nil {
+		t.Fatalf("validation should not pass: %v", err)
+	}
+}
+
+func TestValidateClusterMachineConfigsModularUpgradeError(t *testing.T) {
+	ctx := context.Background()
+	clusterConfigFile := "testdata/eksa-cluster-multiple-machineconfigs.yaml"
+	clusterSpec := test.NewFullClusterSpec(t, clusterConfigFile)
+	kube122 := v1alpha1.KubernetesVersion("1.22")
+	clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].KubernetesVersion = &kube122
+
+	ctrl := gomock.NewController(t)
+	mockClient := mocknutanix.NewMockClient(ctrl)
+	mockClient.EXPECT().GetCurrentLoggedInUser(gomock.Any()).Return(&v3.UserIntentResponse{}, nil).AnyTimes()
+
+	mockTLSValidator := mockCrypto.NewMockTlsValidator(ctrl)
+	mockTLSValidator.EXPECT().ValidateCert(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+
+	mockTransport := mocknutanix.NewMockRoundTripper(ctrl)
+	mockTransport.EXPECT().RoundTrip(gomock.Any()).Return(&http.Response{}, nil).AnyTimes()
+
+	mockHTTPClient := &http.Client{Transport: mockTransport}
+	clientCache := &ClientCache{clients: map[string]Client{"test": mockClient}}
+	validator := NewValidator(clientCache, mockTLSValidator, mockHTTPClient)
+
+	err := validator.checkImageNameMatchesKubernetesVersion(ctx, clusterSpec, clientCache.clients["test"])
+	if err == nil {
+		t.Fatalf("validation should not pass: %v", err)
+	}
+}
+
+func TestValidateClusterMachineConfigsSuccess(t *testing.T) {
+	ctx := context.Background()
+	clusterConfigFile := "testdata/eksa-cluster-multiple-machineconfigs.yaml"
+	clusterSpec := test.NewFullClusterSpec(t, clusterConfigFile)
+
+	clusterSpec.Cluster.Spec.KubernetesVersion = "1.22"
+	clusterSpec.NutanixMachineConfigs["eksa-unit-test-cp"].Spec.Image.Name = utils.StringPtr("kubernetes_1_22")
+	clusterSpec.NutanixMachineConfigs["eksa-unit-test"].Spec.Image.Name = utils.StringPtr("kubernetes_1_22")
+	clusterSpec.NutanixMachineConfigs["eksa-unit-test-md-1"].Spec.Image.Name = utils.StringPtr("kubernetes_1_22")
+	clusterSpec.NutanixMachineConfigs["eksa-unit-test-md-2"].Spec.Image.Name = utils.StringPtr("kubernetes_1_22")
+
+	ctrl := gomock.NewController(t)
+	mockClient := mocknutanix.NewMockClient(ctrl)
+	mockClient.EXPECT().GetCurrentLoggedInUser(gomock.Any()).Return(&v3.UserIntentResponse{}, nil).AnyTimes()
+
+	mockTLSValidator := mockCrypto.NewMockTlsValidator(ctrl)
+	mockTLSValidator.EXPECT().ValidateCert(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+
+	mockTransport := mocknutanix.NewMockRoundTripper(ctrl)
+	mockTransport.EXPECT().RoundTrip(gomock.Any()).Return(&http.Response{}, nil).AnyTimes()
+
+	mockHTTPClient := &http.Client{Transport: mockTransport}
+	clientCache := &ClientCache{clients: map[string]Client{"test": mockClient}}
+	validator := NewValidator(clientCache, mockTLSValidator, mockHTTPClient)
+
+	err := validator.checkImageNameMatchesKubernetesVersion(ctx, clusterSpec, clientCache.clients["test"])
+	if err != nil {
+		t.Fatalf("validation should pass: %v", err)
 	}
 }
