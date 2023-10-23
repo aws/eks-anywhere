@@ -57,8 +57,10 @@ spec:
         effect: "NoSchedule"
       - effect: NoSchedule
         key: node-role.kubernetes.io/control-plane
+{{- if .deployOnlyOnControlPlane }}
       nodeSelector:
         node-role.kubernetes.io/control-plane: ""
+{{- end }}
       serviceAccountName: {{ .serviceAccountName }}
       volumes:
       - hostPath:

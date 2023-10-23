@@ -1214,6 +1214,31 @@ func TestClusterCreateEtcdEncryption(t *testing.T) {
 	g.Expect(cluster.ValidateCreate()).To(MatchError(ContainSubstring("etcdEncryption is not supported during cluster creation")))
 }
 
+func TestClusterUpdateEtcdEncryptionUnsupported(t *testing.T) {
+	features.ClearCache()
+	workerConfiguration := append([]v1alpha1.WorkerNodeGroupConfiguration{}, v1alpha1.WorkerNodeGroupConfiguration{Count: ptr.Int(5)})
+	cluster := &v1alpha1.Cluster{
+		Spec: v1alpha1.ClusterSpec{
+			WorkerNodeGroupConfigurations: workerConfiguration,
+			KubernetesVersion:             v1alpha1.Kube119,
+			ControlPlaneConfiguration: v1alpha1.ControlPlaneConfiguration{
+				Count: 3, Endpoint: &v1alpha1.Endpoint{Host: "1.1.1.1/1"},
+			},
+			ExternalEtcdConfiguration: &v1alpha1.ExternalEtcdConfiguration{Count: 3},
+			EtcdEncryption:            &[]v1alpha1.EtcdEncryption{},
+			ManagementCluster: v1alpha1.ManagementCluster{
+				Name: "management-cluster",
+			},
+			DatacenterRef: v1alpha1.Ref{
+				Kind: v1alpha1.TinkerbellDatacenterKind,
+			},
+		},
+	}
+
+	g := NewWithT(t)
+	g.Expect(cluster.ValidateUpdate(cluster)).To(MatchError(ContainSubstring("etcdEncryption is currently not supported for the provider")))
+}
+
 func TestClusterUpdateEtcdEncryption(t *testing.T) {
 	features.ClearCache()
 	resources := []string{"secrets"}
