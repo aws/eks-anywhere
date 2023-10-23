@@ -112,26 +112,26 @@ spec:
         arch:
         - amd64
         description: Container image for cilium image
-        imageDigest: sha256:41c5f4064814b9b0758d88f25ff10e1e39a40865d891bd3f0a033ffbabe20f9c
+        imageDigest: sha256:68d3b7cfc68e91c7bc9ee1a388bec564cd97df84600dae925f602821a0126320
         name: cilium
         os: linux
-        uri: public.ecr.aws/isovalent/cilium:v1.12.14-eksa.1
+        uri: public.ecr.aws/isovalent/cilium:v1.12.15-eksa.1
       helmChart:
         description: Helm chart for cilium-chart
-        imageDigest: sha256:3f06965b58174c8de7bac828660635a2dabe1d11e5e6752661e592f207e7245f
+        imageDigest: sha256:041279aa0a125ac2e211c4bbea3ef19c8270f509a4effa5a63c119acc0bbb3e3
         name: cilium-chart
-        uri: public.ecr.aws/isovalent/cilium:1.12.14-eksa.1
+        uri: public.ecr.aws/isovalent/cilium:1.12.15-eksa.1
       manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.12.14-eksa.1/cilium.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.12.15-eksa.1/cilium.yaml
       operator:
         arch:
         - amd64
         description: Container image for operator-generic image
-        imageDigest: sha256:59bb26bc1f69c571cc88900b0b76a9200d44bddb9b393cd98b19a8744c4fa478
+        imageDigest: sha256:46f049d3114bf7489e1ed12e06496cea32ddd0a6edd0a6defaae382d35dea25a
         name: operator-generic
         os: linux
-        uri: public.ecr.aws/isovalent/operator-generic:v1.12.14-eksa.1
-      version: v1.12.14-eksa.1
+        uri: public.ecr.aws/isovalent/operator-generic:v1.12.15-eksa.1
+      version: v1.12.15-eksa.1
     cloudStack:
       clusterAPIController:
         arch:
@@ -141,9 +141,9 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-cloudstack
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api-provider-cloudstack/release/manager:v0.4.9-rc6-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api-provider-cloudstack/release/manager:v0.4.9-rc7-eks-a-v0.0.0-dev-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.9-rc6/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.9-rc7/infrastructure-components.yaml
       kubeRbacProxy:
         arch:
         - amd64
@@ -163,8 +163,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.6.0-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.9-rc6/metadata.yaml
-      version: v0.4.9-rc6+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.9-rc7/metadata.yaml
+      version: v0.4.9-rc7+abcdef1
     clusterAPI:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/cluster-api/v1.5.2/core-components.yaml
@@ -289,7 +289,7 @@ spec:
         os: linux
         sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/image-builder/v0.2.1/image-builder-v0.0.0-dev-build.0-linux-amd64.tar.gz
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/image-builder/v0.3.0/image-builder-v0.0.0-dev-build.0-linux-amd64.tar.gz
       kindNode:
         arch:
         - amd64
@@ -898,26 +898,26 @@ spec:
         arch:
         - amd64
         description: Container image for cilium image
-        imageDigest: sha256:41c5f4064814b9b0758d88f25ff10e1e39a40865d891bd3f0a033ffbabe20f9c
+        imageDigest: sha256:68d3b7cfc68e91c7bc9ee1a388bec564cd97df84600dae925f602821a0126320
         name: cilium
         os: linux
-        uri: public.ecr.aws/isovalent/cilium:v1.12.14-eksa.1
+        uri: public.ecr.aws/isovalent/cilium:v1.12.15-eksa.1
       helmChart:
         description: Helm chart for cilium-chart
-        imageDigest: sha256:3f06965b58174c8de7bac828660635a2dabe1d11e5e6752661e592f207e7245f
+        imageDigest: sha256:041279aa0a125ac2e211c4bbea3ef19c8270f509a4effa5a63c119acc0bbb3e3
         name: cilium-chart
-        uri: public.ecr.aws/isovalent/cilium:1.12.14-eksa.1
+        uri: public.ecr.aws/isovalent/cilium:1.12.15-eksa.1
       manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.12.14-eksa.1/cilium.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.12.15-eksa.1/cilium.yaml
       operator:
         arch:
         - amd64
         description: Container image for operator-generic image
-        imageDigest: sha256:59bb26bc1f69c571cc88900b0b76a9200d44bddb9b393cd98b19a8744c4fa478
+        imageDigest: sha256:46f049d3114bf7489e1ed12e06496cea32ddd0a6edd0a6defaae382d35dea25a
         name: operator-generic
         os: linux
-        uri: public.ecr.aws/isovalent/operator-generic:v1.12.14-eksa.1
-      version: v1.12.14-eksa.1
+        uri: public.ecr.aws/isovalent/operator-generic:v1.12.15-eksa.1
+      version: v1.12.15-eksa.1
     cloudStack:
       clusterAPIController:
         arch:
@@ -927,9 +927,9 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-cloudstack
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api-provider-cloudstack/release/manager:v0.4.9-rc6-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api-provider-cloudstack/release/manager:v0.4.9-rc7-eks-a-v0.0.0-dev-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.9-rc6/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.9-rc7/infrastructure-components.yaml
       kubeRbacProxy:
         arch:
         - amd64
@@ -949,8 +949,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.6.0-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.9-rc6/metadata.yaml
-      version: v0.4.9-rc6+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.9-rc7/metadata.yaml
+      version: v0.4.9-rc7+abcdef1
     clusterAPI:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/cluster-api/v1.5.2/core-components.yaml
@@ -1066,7 +1066,7 @@ spec:
         os: linux
         sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/image-builder/v0.2.1/image-builder-v0.0.0-dev-build.0-linux-amd64.tar.gz
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/image-builder/v0.3.0/image-builder-v0.0.0-dev-build.0-linux-amd64.tar.gz
       kindNode:
         arch:
         - amd64
@@ -1657,26 +1657,26 @@ spec:
         arch:
         - amd64
         description: Container image for cilium image
-        imageDigest: sha256:41c5f4064814b9b0758d88f25ff10e1e39a40865d891bd3f0a033ffbabe20f9c
+        imageDigest: sha256:68d3b7cfc68e91c7bc9ee1a388bec564cd97df84600dae925f602821a0126320
         name: cilium
         os: linux
-        uri: public.ecr.aws/isovalent/cilium:v1.12.14-eksa.1
+        uri: public.ecr.aws/isovalent/cilium:v1.12.15-eksa.1
       helmChart:
         description: Helm chart for cilium-chart
-        imageDigest: sha256:3f06965b58174c8de7bac828660635a2dabe1d11e5e6752661e592f207e7245f
+        imageDigest: sha256:041279aa0a125ac2e211c4bbea3ef19c8270f509a4effa5a63c119acc0bbb3e3
         name: cilium-chart
-        uri: public.ecr.aws/isovalent/cilium:1.12.14-eksa.1
+        uri: public.ecr.aws/isovalent/cilium:1.12.15-eksa.1
       manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.12.14-eksa.1/cilium.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.12.15-eksa.1/cilium.yaml
       operator:
         arch:
         - amd64
         description: Container image for operator-generic image
-        imageDigest: sha256:59bb26bc1f69c571cc88900b0b76a9200d44bddb9b393cd98b19a8744c4fa478
+        imageDigest: sha256:46f049d3114bf7489e1ed12e06496cea32ddd0a6edd0a6defaae382d35dea25a
         name: operator-generic
         os: linux
-        uri: public.ecr.aws/isovalent/operator-generic:v1.12.14-eksa.1
-      version: v1.12.14-eksa.1
+        uri: public.ecr.aws/isovalent/operator-generic:v1.12.15-eksa.1
+      version: v1.12.15-eksa.1
     cloudStack:
       clusterAPIController:
         arch:
@@ -1686,9 +1686,9 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-cloudstack
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api-provider-cloudstack/release/manager:v0.4.9-rc6-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api-provider-cloudstack/release/manager:v0.4.9-rc7-eks-a-v0.0.0-dev-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.9-rc6/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.9-rc7/infrastructure-components.yaml
       kubeRbacProxy:
         arch:
         - amd64
@@ -1708,8 +1708,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.6.0-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.9-rc6/metadata.yaml
-      version: v0.4.9-rc6+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.9-rc7/metadata.yaml
+      version: v0.4.9-rc7+abcdef1
     clusterAPI:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/cluster-api/v1.5.2/core-components.yaml
@@ -1825,7 +1825,7 @@ spec:
         os: linux
         sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/image-builder/v0.2.1/image-builder-v0.0.0-dev-build.0-linux-amd64.tar.gz
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/image-builder/v0.3.0/image-builder-v0.0.0-dev-build.0-linux-amd64.tar.gz
       kindNode:
         arch:
         - amd64
@@ -2416,26 +2416,26 @@ spec:
         arch:
         - amd64
         description: Container image for cilium image
-        imageDigest: sha256:41c5f4064814b9b0758d88f25ff10e1e39a40865d891bd3f0a033ffbabe20f9c
+        imageDigest: sha256:68d3b7cfc68e91c7bc9ee1a388bec564cd97df84600dae925f602821a0126320
         name: cilium
         os: linux
-        uri: public.ecr.aws/isovalent/cilium:v1.12.14-eksa.1
+        uri: public.ecr.aws/isovalent/cilium:v1.12.15-eksa.1
       helmChart:
         description: Helm chart for cilium-chart
-        imageDigest: sha256:3f06965b58174c8de7bac828660635a2dabe1d11e5e6752661e592f207e7245f
+        imageDigest: sha256:041279aa0a125ac2e211c4bbea3ef19c8270f509a4effa5a63c119acc0bbb3e3
         name: cilium-chart
-        uri: public.ecr.aws/isovalent/cilium:1.12.14-eksa.1
+        uri: public.ecr.aws/isovalent/cilium:1.12.15-eksa.1
       manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.12.14-eksa.1/cilium.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.12.15-eksa.1/cilium.yaml
       operator:
         arch:
         - amd64
         description: Container image for operator-generic image
-        imageDigest: sha256:59bb26bc1f69c571cc88900b0b76a9200d44bddb9b393cd98b19a8744c4fa478
+        imageDigest: sha256:46f049d3114bf7489e1ed12e06496cea32ddd0a6edd0a6defaae382d35dea25a
         name: operator-generic
         os: linux
-        uri: public.ecr.aws/isovalent/operator-generic:v1.12.14-eksa.1
-      version: v1.12.14-eksa.1
+        uri: public.ecr.aws/isovalent/operator-generic:v1.12.15-eksa.1
+      version: v1.12.15-eksa.1
     cloudStack:
       clusterAPIController:
         arch:
@@ -2445,9 +2445,9 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-cloudstack
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api-provider-cloudstack/release/manager:v0.4.9-rc6-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api-provider-cloudstack/release/manager:v0.4.9-rc7-eks-a-v0.0.0-dev-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.9-rc6/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.9-rc7/infrastructure-components.yaml
       kubeRbacProxy:
         arch:
         - amd64
@@ -2467,8 +2467,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.6.0-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.9-rc6/metadata.yaml
-      version: v0.4.9-rc6+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.9-rc7/metadata.yaml
+      version: v0.4.9-rc7+abcdef1
     clusterAPI:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/cluster-api/v1.5.2/core-components.yaml
@@ -2584,7 +2584,7 @@ spec:
         os: linux
         sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/image-builder/v0.2.1/image-builder-v0.0.0-dev-build.0-linux-amd64.tar.gz
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/image-builder/v0.3.0/image-builder-v0.0.0-dev-build.0-linux-amd64.tar.gz
       kindNode:
         arch:
         - amd64
@@ -3175,26 +3175,26 @@ spec:
         arch:
         - amd64
         description: Container image for cilium image
-        imageDigest: sha256:41c5f4064814b9b0758d88f25ff10e1e39a40865d891bd3f0a033ffbabe20f9c
+        imageDigest: sha256:68d3b7cfc68e91c7bc9ee1a388bec564cd97df84600dae925f602821a0126320
         name: cilium
         os: linux
-        uri: public.ecr.aws/isovalent/cilium:v1.12.14-eksa.1
+        uri: public.ecr.aws/isovalent/cilium:v1.12.15-eksa.1
       helmChart:
         description: Helm chart for cilium-chart
-        imageDigest: sha256:3f06965b58174c8de7bac828660635a2dabe1d11e5e6752661e592f207e7245f
+        imageDigest: sha256:041279aa0a125ac2e211c4bbea3ef19c8270f509a4effa5a63c119acc0bbb3e3
         name: cilium-chart
-        uri: public.ecr.aws/isovalent/cilium:1.12.14-eksa.1
+        uri: public.ecr.aws/isovalent/cilium:1.12.15-eksa.1
       manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.12.14-eksa.1/cilium.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.12.15-eksa.1/cilium.yaml
       operator:
         arch:
         - amd64
         description: Container image for operator-generic image
-        imageDigest: sha256:59bb26bc1f69c571cc88900b0b76a9200d44bddb9b393cd98b19a8744c4fa478
+        imageDigest: sha256:46f049d3114bf7489e1ed12e06496cea32ddd0a6edd0a6defaae382d35dea25a
         name: operator-generic
         os: linux
-        uri: public.ecr.aws/isovalent/operator-generic:v1.12.14-eksa.1
-      version: v1.12.14-eksa.1
+        uri: public.ecr.aws/isovalent/operator-generic:v1.12.15-eksa.1
+      version: v1.12.15-eksa.1
     cloudStack:
       clusterAPIController:
         arch:
@@ -3204,9 +3204,9 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-cloudstack
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api-provider-cloudstack/release/manager:v0.4.9-rc6-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api-provider-cloudstack/release/manager:v0.4.9-rc7-eks-a-v0.0.0-dev-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.9-rc6/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.9-rc7/infrastructure-components.yaml
       kubeRbacProxy:
         arch:
         - amd64
@@ -3226,8 +3226,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.6.0-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.9-rc6/metadata.yaml
-      version: v0.4.9-rc6+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.9-rc7/metadata.yaml
+      version: v0.4.9-rc7+abcdef1
     clusterAPI:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/cluster-api/v1.5.2/core-components.yaml
@@ -3343,7 +3343,7 @@ spec:
         os: linux
         sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/image-builder/v0.2.1/image-builder-v0.0.0-dev-build.0-linux-amd64.tar.gz
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/image-builder/v0.3.0/image-builder-v0.0.0-dev-build.0-linux-amd64.tar.gz
       kindNode:
         arch:
         - amd64
