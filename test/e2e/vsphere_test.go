@@ -1004,6 +1004,7 @@ func TestVSphereMultipleTemplatesUbuntu127(t *testing.T) {
 	)
 
 	test.WithClusterConfig(
+		provider.WithKubeVersionAndOS(v1alpha1.Kube127, framework.Ubuntu2204, nil),
 		provider.WithMachineTemplate(providers.GetControlPlaneNodeName(test.ClusterName), os.Getenv(framework.VSphereMultiTemplateUbuntu127)),
 		provider.WithMachineTemplate(providers.GetEtcdNodeName(test.ClusterName), os.Getenv(framework.VSphereMultiTemplateUbuntu127)),
 	)
