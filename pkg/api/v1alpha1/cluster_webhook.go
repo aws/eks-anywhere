@@ -26,7 +26,6 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/semver"
 )
 
@@ -374,49 +373,25 @@ func validateImmutableFieldsCluster(new, old *Cluster) field.ErrorList {
 		}
 	}
 
-	if !old.IsSelfManaged() || features.IsActive(features.ExperimentalSelfManagedClusterUpgrade()) {
-		oldAWSIamConfig, newAWSIamConfig := &Ref{}, &Ref{}
-		for _, identityProvider := range new.Spec.IdentityProviderRefs {
-			if identityProvider.Kind == AWSIamConfigKind {
-				newAWSIamConfig = &identityProvider
-				break
-			}
+	oldAWSIamConfig, newAWSIamConfig := &Ref{}, &Ref{}
+	for _, identityProvider := range new.Spec.IdentityProviderRefs {
+		if identityProvider.Kind == AWSIamConfigKind {
+			newAWSIamConfig = &identityProvider
+			break
 		}
-
-		for _, identityProvider := range old.Spec.IdentityProviderRefs {
-			if identityProvider.Kind == AWSIamConfigKind {
-				oldAWSIamConfig = &identityProvider
-				break
-			}
-		}
-
-		if !oldAWSIamConfig.Equal(newAWSIamConfig) {
-			allErrs = append(
-				allErrs,
-				field.Forbidden(specPath.Child("identityProviderRefs", AWSIamConfigKind), fmt.Sprintf("field is immutable %v", newAWSIamConfig.Kind)))
-		}
-		return allErrs
 	}
 
-	clusterlog.Info("Cluster config is associated with management cluster", "name", old.Name)
-
-	if !RefSliceEqual(new.Spec.IdentityProviderRefs, old.Spec.IdentityProviderRefs) {
-		allErrs = append(
-			allErrs,
-			field.Forbidden(specPath.Child("IdentityProviderRefs"), fmt.Sprintf("field is immutable %v", new.Spec.IdentityProviderRefs)))
+	for _, identityProvider := range old.Spec.IdentityProviderRefs {
+		if identityProvider.Kind == AWSIamConfigKind {
+			oldAWSIamConfig = &identityProvider
+			break
+		}
 	}
 
-	if old.Spec.KubernetesVersion != new.Spec.KubernetesVersion {
+	if !oldAWSIamConfig.Equal(newAWSIamConfig) {
 		allErrs = append(
 			allErrs,
-			field.Forbidden(specPath.Child("kubernetesVersion"), fmt.Sprintf("field is immutable %v", new.Spec.KubernetesVersion)),
-		)
-	}
-
-	if !old.Spec.ControlPlaneConfiguration.Equal(&new.Spec.ControlPlaneConfiguration) {
-		allErrs = append(
-			allErrs,
-			field.Forbidden(specPath.Child("ControlPlaneConfiguration"), fmt.Sprintf("field is immutable %v", new.Spec.ControlPlaneConfiguration)))
+			field.Forbidden(specPath.Child("identityProviderRefs", AWSIamConfigKind), fmt.Sprintf("field is immutable %v", newAWSIamConfig.Kind)))
 	}
 
 	return allErrs

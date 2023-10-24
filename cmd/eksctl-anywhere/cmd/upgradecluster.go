@@ -11,7 +11,6 @@ import (
 	"github.com/aws/eks-anywhere/cmd/eksctl-anywhere/cmd/aflag"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
@@ -195,8 +194,7 @@ func (uc *upgradeClusterOptions) upgradeCluster(cmd *cobra.Command, args []strin
 
 	upgradeValidations := upgradevalidations.New(validationOpts)
 
-	if features.ExperimentalSelfManagedClusterUpgrade().IsActive() && clusterConfig.IsSelfManaged() {
-		logger.Info("Management kindless upgrade")
+	if clusterConfig.IsSelfManaged() {
 		upgrade := management.NewUpgrade(
 			deps.Provider,
 			deps.CAPIManager,

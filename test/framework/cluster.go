@@ -35,7 +35,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/executables"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/git"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
@@ -119,11 +118,6 @@ func NewClusterE2ETest(t T, provider Provider, opts ...ClusterE2ETestOpt) *Clust
 		KubectlClient:         buildKubectl(t),
 		eksaBinaryLocation:    defaultEksaBinaryLocation,
 	}
-
-	// For kindless management upgrade task
-	// Remove this once we remove feature flag for ExpSelfManagedAPIUpgrade.
-	opts = append(opts, WithEnvVar(features.ExperimentalSelfManagedClusterUpgradeGate, "true"))
-	opts = append(opts, WithEnvVar(features.ExperimentalSelfManagedClusterUpgradeEnvVar, "true"))
 
 	for _, opt := range opts {
 		opt(e)

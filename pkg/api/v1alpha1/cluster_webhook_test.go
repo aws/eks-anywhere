@@ -30,35 +30,6 @@ func TestClusterDefault(t *testing.T) {
 	g.Expect(cOld.Spec.RegistryMirrorConfiguration.Port).To(Equal(constants.DefaultHttpsPort))
 }
 
-func TestClusterValidateUpdateManagementValueMutableExperimental(t *testing.T) {
-	features.ClearCache()
-	t.Setenv(features.ExperimentalSelfManagedClusterUpgradeEnvVar, "true")
-	cOld := baseCluster()
-	cOld.Spec.ControlPlaneConfiguration.Labels = map[string]string{"Key1": "Val1"}
-	cOld.Spec.ControlPlaneConfiguration.Taints = []v1.Taint{
-		{
-			Key:    "Key1",
-			Value:  "Val1",
-			Effect: "PreferNoSchedule",
-		},
-	}
-	cOld.SetSelfManaged()
-	cNew := cOld.DeepCopy()
-	cNew.Spec.ControlPlaneConfiguration.Labels = map[string]string{"Key2": "Val2"}
-	cNew.Spec.ControlPlaneConfiguration.Taints = []v1.Taint{
-		{
-			Key:    "Key2",
-			Value:  "Val2",
-			Effect: "PreferNoSchedule",
-		},
-	}
-	cNew.Spec.ControlPlaneConfiguration.Count = 1
-	cNew.Spec.ControlPlaneConfiguration.MachineGroupRef.Name = "test"
-
-	g := NewWithT(t)
-	g.Expect(cNew.ValidateUpdate(cOld)).To(Succeed())
-}
-
 func TestClusterValidateUpdateManagementValueImmutable(t *testing.T) {
 	cOld := baseCluster()
 	cOld.SetSelfManaged()
@@ -97,40 +68,14 @@ func TestClusterValidateUpdateManagementBothNilImmutable(t *testing.T) {
 	g.Expect(c.ValidateUpdate(cOld)).To(Succeed())
 }
 
-func TestManagementClusterValidateUpdateKubernetesVersionImmutable(t *testing.T) {
-	features.ClearCache()
-	cOld := &v1alpha1.Cluster{
-		Spec: v1alpha1.ClusterSpec{
-			KubernetesVersion:         v1alpha1.Kube119,
-			ExternalEtcdConfiguration: &v1alpha1.ExternalEtcdConfiguration{Count: 3},
-			ControlPlaneConfiguration: v1alpha1.ControlPlaneConfiguration{
-				Count: 3, Endpoint: &v1alpha1.Endpoint{Host: "1.1.1.1/1"},
-			},
-		},
-	}
+func TestManagementClusterValidateUpdateKubernetesVersionMutableManagement(t *testing.T) {
+	cOld := baseCluster()
 	cOld.SetSelfManaged()
 	c := cOld.DeepCopy()
-	c.Spec.KubernetesVersion = v1alpha1.Kube120
+	c.Spec.KubernetesVersion = v1alpha1.Kube122
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(MatchError(ContainSubstring("field is immutable 1.20")))
-}
-
-func TestManagementNilClusterValidateUpdateKubernetesVersionImmutable(t *testing.T) {
-	cOld := &v1alpha1.Cluster{
-		Spec: v1alpha1.ClusterSpec{
-			KubernetesVersion:         v1alpha1.Kube122,
-			ExternalEtcdConfiguration: &v1alpha1.ExternalEtcdConfiguration{Count: 3},
-			ControlPlaneConfiguration: v1alpha1.ControlPlaneConfiguration{
-				Count: 3, Endpoint: &v1alpha1.Endpoint{Host: "1.1.1.1/1"},
-			},
-		},
-	}
-	c := cOld.DeepCopy()
-	c.Spec.KubernetesVersion = v1alpha1.Kube120
-
-	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(MatchError(ContainSubstring("field is immutable 1.20")))
+	g.Expect(c.ValidateUpdate(cOld)).To(Succeed())
 }
 
 func TestWorkloadClusterValidateUpdateKubernetesVersionSuccess(t *testing.T) {
@@ -287,72 +232,55 @@ func TestCloudStackClusterValidateUpdateControlPlaneConfigurationOldPortImmutabl
 	g.Expect(c.ValidateUpdate(cOld)).To(MatchError(ContainSubstring("spec.ControlPlaneConfiguration.endpoint: Forbidden: field is immutable")))
 }
 
-func TestManagementClusterValidateUpdateControlPlaneConfigurationTaintsImmutable(t *testing.T) {
-	features.ClearCache()
-	t.Setenv(features.ExperimentalSelfManagedClusterUpgradeEnvVar, "false")
+func TestManagementClusterValidateUpdateControlPlaneConfigurationTaintsMutableManagement(t *testing.T) {
 	cOld := baseCluster()
-	cOld.Spec.ControlPlaneConfiguration = v1alpha1.ControlPlaneConfiguration{
-		Taints: []v1.Taint{
-			{
-				Key:    "Key1",
-				Value:  "Val1",
-				Effect: "PreferNoSchedule",
-			},
+	cOld.Spec.ControlPlaneConfiguration.Taints = []v1.Taint{
+		{
+			Key:    "Key1",
+			Value:  "Val1",
+			Effect: "PreferNoSchedule",
 		},
 	}
+
 	cOld.SetSelfManaged()
 	c := cOld.DeepCopy()
-	c.Spec.ControlPlaneConfiguration = v1alpha1.ControlPlaneConfiguration{
-		Taints: []v1.Taint{
-			{
-				Key:    "Key2",
-				Value:  "Val2",
-				Effect: "PreferNoSchedule",
-			},
+	c.Spec.ControlPlaneConfiguration.Taints = []v1.Taint{
+		{
+			Key:    "Key2",
+			Value:  "Val2",
+			Effect: "PreferNoSchedule",
 		},
 	}
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(MatchError(ContainSubstring("spec.ControlPlaneConfiguration: Forbidden: field is immutable")))
+	g.Expect(c.ValidateUpdate(cOld)).To(Succeed())
 }
 
-func TestManagementClusterValidateUpdateControlPlaneConfigurationLabelsImmutable(t *testing.T) {
-	features.ClearCache()
-	t.Setenv(features.ExperimentalSelfManagedClusterUpgradeEnvVar, "false")
+func TestManagementClusterValidateUpdateControlPlaneConfigurationLabelsMutableManagement(t *testing.T) {
 	cOld := baseCluster()
-	cOld.Spec.ControlPlaneConfiguration = v1alpha1.ControlPlaneConfiguration{
-		Labels: map[string]string{
-			"Key1": "Val1",
-		},
+	cOld.Spec.ControlPlaneConfiguration.Labels = map[string]string{
+		"Key1": "Val1",
 	}
 	cOld.SetSelfManaged()
 	c := cOld.DeepCopy()
-	c.Spec.ControlPlaneConfiguration = v1alpha1.ControlPlaneConfiguration{
-		Labels: map[string]string{
-			"Key2": "Val2",
-		},
+	c.Spec.ControlPlaneConfiguration.Labels = map[string]string{
+		"Key2": "Val2",
 	}
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(MatchError(ContainSubstring("spec.ControlPlaneConfiguration: Forbidden: field is immutable")))
+	g.Expect(c.ValidateUpdate(cOld)).To(Succeed())
 }
 
-func TestManagementClusterValidateUpdateControlPlaneConfigurationOldMachineGroupRefImmutable(t *testing.T) {
-	features.ClearCache()
-	t.Setenv(features.ExperimentalSelfManagedClusterUpgradeEnvVar, "false")
+func TestManagementClusterValidateUpdateControlPlaneConfigurationOldMachineGroupRefMutableManagement(t *testing.T) {
 	cOld := baseCluster()
-	cOld.Spec.ControlPlaneConfiguration = v1alpha1.ControlPlaneConfiguration{
-		MachineGroupRef: &v1alpha1.Ref{Name: "test1", Kind: "MachineConfig"},
-	}
+	cOld.Spec.ControlPlaneConfiguration.MachineGroupRef.Name = "test1"
 	cOld.SetSelfManaged()
 
 	c := cOld.DeepCopy()
-	c.Spec.ControlPlaneConfiguration = v1alpha1.ControlPlaneConfiguration{
-		MachineGroupRef: &v1alpha1.Ref{Name: "test2", Kind: "MachineConfig"},
-	}
+	c.Spec.ControlPlaneConfiguration.MachineGroupRef.Name = "test2"
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(MatchError(ContainSubstring("spec.ControlPlaneConfiguration: Forbidden: field is immutable")))
+	g.Expect(c.ValidateUpdate(cOld)).To(Succeed())
 }
 
 func TestWorkloadClusterValidateUpdateControlPlaneConfigurationMachineGroupRef(t *testing.T) {
@@ -365,24 +293,6 @@ func TestWorkloadClusterValidateUpdateControlPlaneConfigurationMachineGroupRef(t
 
 	g := NewWithT(t)
 	g.Expect(c.ValidateUpdate(cOld)).To(Succeed())
-}
-
-func TestManagementClusterValidateUpdateControlPlaneConfigurationOldMachineGroupRefNilImmutable(t *testing.T) {
-	features.ClearCache()
-	t.Setenv(features.ExperimentalSelfManagedClusterUpgradeEnvVar, "false")
-	cOld := baseCluster()
-	cOld.Spec.ControlPlaneConfiguration = v1alpha1.ControlPlaneConfiguration{
-		MachineGroupRef: nil,
-	}
-	cOld.SetSelfManaged()
-
-	c := cOld.DeepCopy()
-	c.Spec.ControlPlaneConfiguration = v1alpha1.ControlPlaneConfiguration{
-		MachineGroupRef: &v1alpha1.Ref{Name: "test", Kind: "MachineConfig"},
-	}
-
-	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(MatchError(ContainSubstring("spec.ControlPlaneConfiguration: Forbidden: field is immutable")))
 }
 
 func TestWorkloadClusterValidateUpdateControlPlaneConfigurationOldMachineGroupRefNilSuccess(t *testing.T) {
@@ -398,12 +308,7 @@ func TestWorkloadClusterValidateUpdateControlPlaneConfigurationOldMachineGroupRe
 }
 
 func TestManagementClusterValidateUpdateControlPlaneConfigurationNewMachineGroupRefNilImmutable(t *testing.T) {
-	features.ClearCache()
-	t.Setenv(features.ExperimentalSelfManagedClusterUpgradeEnvVar, "false")
 	cOld := baseCluster()
-	cOld.Spec.ControlPlaneConfiguration = v1alpha1.ControlPlaneConfiguration{
-		MachineGroupRef: &v1alpha1.Ref{Name: "test", Kind: "MachineConfig"},
-	}
 	cOld.SetSelfManaged()
 
 	c := cOld.DeepCopy()
@@ -412,7 +317,7 @@ func TestManagementClusterValidateUpdateControlPlaneConfigurationNewMachineGroup
 	}
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(MatchError(ContainSubstring("spec.ControlPlaneConfiguration: Forbidden: field is immutable")))
+	g.Expect(c.ValidateUpdate(cOld)).To(MatchError(ContainSubstring("ControlPlaneConfiguration.endpoint: Forbidden: field is immutable")))
 }
 
 func TestWorkloadClusterValidateUpdateControlPlaneConfigurationNewMachineGroupRefChangedSuccess(t *testing.T) {
@@ -823,7 +728,7 @@ func TestClusterValidateUpdateAWSIamNameImmutableUpdateName(t *testing.T) {
 	}
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(MatchError(ContainSubstring("spec.IdentityProviderRefs: Forbidden: field is immutable")))
+	g.Expect(c.ValidateUpdate(cOld)).To(MatchError(ContainSubstring("spec.identityProviderRefs.AWSIamConfig: Forbidden: field is immutable")))
 }
 
 func TestClusterValidateUpdateAWSIamNameImmutableEmpty(t *testing.T) {
@@ -838,7 +743,7 @@ func TestClusterValidateUpdateAWSIamNameImmutableEmpty(t *testing.T) {
 	c.Spec.IdentityProviderRefs = []v1alpha1.Ref{}
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(MatchError(ContainSubstring("spec.IdentityProviderRefs: Forbidden: field is immutable")))
+	g.Expect(c.ValidateUpdate(cOld)).To(MatchError(ContainSubstring("spec.identityProviderRefs.AWSIamConfig: Forbidden: field is immutable")))
 }
 
 func TestClusterValidateUpdateAWSIamNameImmutableAddConfig(t *testing.T) {
@@ -853,7 +758,7 @@ func TestClusterValidateUpdateAWSIamNameImmutableAddConfig(t *testing.T) {
 	}
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(MatchError(ContainSubstring("spec.IdentityProviderRefs: Forbidden: field is immutable")))
+	g.Expect(c.ValidateUpdate(cOld)).To(MatchError(ContainSubstring("spec.identityProviderRefs.AWSIamConfig: Forbidden: field is immutable")))
 }
 
 func TestClusterValidateUpdateUnsetBundlesRefImmutable(t *testing.T) {
@@ -978,7 +883,7 @@ func TestClusterValidateUpdateOIDCNameMutableUpdateNameMgmtCluster(t *testing.T)
 	c.Spec.IdentityProviderRefs[0].Name = "name2"
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(MatchError(ContainSubstring("spec.IdentityProviderRefs: Forbidden: field is immutable")))
+	g.Expect(c.ValidateUpdate(cOld)).To(Succeed())
 }
 
 func TestClusterValidateUpdateOIDCNameMutableUpdateNameUnchanged(t *testing.T) {
@@ -1025,7 +930,7 @@ func TestClusterValidateUpdateOIDCNameMutableMgmtCluster(t *testing.T) {
 	c.Spec.IdentityProviderRefs = []v1alpha1.Ref{}
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(MatchError(ContainSubstring("spec.IdentityProviderRefs: Forbidden: field is immutable")))
+	g.Expect(c.ValidateUpdate(cOld)).To(Succeed())
 }
 
 func TestClusterValidateUpdateOIDCNameMutableAddConfigWorkloadCluster(t *testing.T) {
@@ -1059,7 +964,7 @@ func TestClusterValidateUpdateOIDCNameMutableAddConfigMgmtCluster(t *testing.T) 
 		},
 	}
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(MatchError(ContainSubstring("spec.IdentityProviderRefs: Forbidden: field is immutable")))
+	g.Expect(c.ValidateUpdate(cOld)).To(Succeed())
 }
 
 func TestClusterValidateUpdateSwapIdentityProviders(t *testing.T) {
@@ -1129,18 +1034,13 @@ func TestClusterValidateEmptyIdentityProviders(t *testing.T) {
 	g.Expect(c.ValidateUpdate(cOld)).To(Succeed())
 }
 
-func TestClusterValidateUpdateGitOpsRefOldEmptyImmutable(t *testing.T) {
+func TestClusterValidateUpdateGitOpsRefOldEmptyMutableManagement(t *testing.T) {
 	cOld := baseCluster()
 	c := cOld.DeepCopy()
-	c.Spec.IdentityProviderRefs = []v1alpha1.Ref{
-		{
-			Kind: "identity",
-			Name: "name",
-		},
-	}
+	c.Spec.IdentityProviderRefs = []v1alpha1.Ref{}
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(MatchError(ContainSubstring("spec.IdentityProviderRefs: Forbidden: field is immutable")))
+	g.Expect(c.ValidateUpdate(cOld)).To(Succeed())
 }
 
 func TestClusterValidateUpdateWithPausedAnnotation(t *testing.T) {
@@ -1811,17 +1711,16 @@ func TestClusterValidateUpdateValidWorkloadCluster(t *testing.T) {
 	}
 }
 
-func TestClusterValidateUpdateInvalidRequest(t *testing.T) {
+func TestClusterValidateUpdateValidRequest(t *testing.T) {
 	features.ClearCache()
 	cOld := baseCluster()
 	cOld.SetSelfManaged()
-	t.Setenv(features.ExperimentalSelfManagedClusterUpgradeEnvVar, "false")
 
 	cNew := cOld.DeepCopy()
-	cNew.Spec.ControlPlaneConfiguration.Count = cNew.Spec.ControlPlaneConfiguration.Count + 1
+	cNew.Spec.ControlPlaneConfiguration.Count = cNew.Spec.ControlPlaneConfiguration.Count + 2
 	g := NewWithT(t)
 	err := cNew.ValidateUpdate(cOld)
-	g.Expect(err).To(MatchError(ContainSubstring("spec.ControlPlaneConfiguration: Forbidden: field is immutable")))
+	g.Expect(err).To(Succeed())
 }
 
 func TestClusterValidateUpdateRollingAndScalingTinkerbellRequest(t *testing.T) {
