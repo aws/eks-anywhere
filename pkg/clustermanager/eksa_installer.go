@@ -18,7 +18,6 @@ import (
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/manifests"
 	"github.com/aws/eks-anywhere/pkg/manifests/bundles"
 	"github.com/aws/eks-anywhere/pkg/types"
@@ -163,13 +162,7 @@ func setManagerEnvVars(d *appsv1.Deployment, spec *cluster.Spec) {
 }
 
 func managerEnabledGates(spec *cluster.Spec) []string {
-	g := []string{}
-	// TODO(pjshah): remove this feature flag after we implement kindless upgrade managaement feature for all the providers.
-	if features.IsActive(features.ExperimentalSelfManagedClusterUpgrade()) {
-		g = append(g, features.ExperimentalSelfManagedClusterUpgradeGate)
-	}
-
-	return g
+	return nil
 }
 
 func fullLifeCycleControllerForProvider(cluster *anywherev1.Cluster) bool {

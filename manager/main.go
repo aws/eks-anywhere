@@ -168,14 +168,9 @@ func setupReconcilers(ctx context.Context, setupLog logr.Logger, mgr ctrl.Manage
 		os.Exit(1)
 	}
 
-	expUpgrades := features.IsActive(features.ExperimentalSelfManagedClusterUpgrade())
-	if expUpgrades {
-		setupLog.Info("[EXPERIMENTAL] Self-managed cluster upgrades enabled. Proceed with caution, this is not intended for production scenarios.")
-	}
-
 	factory := controllers.NewFactory(ctrl.Log, mgr).
 		WithClusterReconciler(
-			providers, controllers.WithExperimentalSelfManagedClusterUpgrades(expUpgrades),
+			providers,
 		).
 		WithVSphereDatacenterReconciler().
 		WithSnowMachineConfigReconciler().
