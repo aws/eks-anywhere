@@ -54,6 +54,29 @@ func WithTinkerbellOSImageURL(value string) TinkerbellFiller {
 	}
 }
 
+// WithTinkerbellCPMachineConfigOSImageURL sets the OSImageURL & OSFamily for control-plane machine config.
+func WithTinkerbellCPMachineConfigOSImageURL(imageURL string, OSFamily anywherev1.OSFamily) TinkerbellFiller {
+	return func(config TinkerbellConfig) {
+		clusterName := config.clusterName
+		cpName := providers.GetControlPlaneNodeName(clusterName)
+		cpMachineConfig := config.machineConfigs[cpName]
+		cpMachineConfig.Spec.OSImageURL = imageURL
+		cpMachineConfig.Spec.OSFamily = OSFamily
+		config.machineConfigs[cpName] = cpMachineConfig
+	}
+}
+
+// WithTinkerbellWorkerMachineConfigOSImageURL sets the OSImageURL & OSFamily for worker machine config.
+func WithTinkerbellWorkerMachineConfigOSImageURL(imageURL string, OSFamily anywherev1.OSFamily) TinkerbellFiller {
+	return func(config TinkerbellConfig) {
+		clusterName := config.clusterName
+		workerMachineConfig := config.machineConfigs[clusterName]
+		workerMachineConfig.Spec.OSImageURL = imageURL
+		workerMachineConfig.Spec.OSFamily = OSFamily
+		config.machineConfigs[clusterName] = workerMachineConfig
+	}
+}
+
 // WithHookImagesURLPath modify HookImagesURL, it's useful for airgapped testing.
 func WithHookImagesURLPath(value string) TinkerbellFiller {
 	return func(config TinkerbellConfig) {

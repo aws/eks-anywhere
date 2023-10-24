@@ -98,6 +98,10 @@ func ValidateWorkerNodes(ctx context.Context, vc clusterf.StateValidationConfig)
 	// deduce the worker node group configuration to node mapping via the machine deployment and machine set
 	for _, w := range wn {
 		workerGroupCount := 0
+		k8sVersion := vc.ClusterSpec.Cluster.Spec.KubernetesVersion
+		if w.KubernetesVersion != nil {
+			k8sVersion = *w.KubernetesVersion
+		}
 		ms, err := getWorkerNodeMachineSets(ctx, vc, w)
 		if err != nil {
 			return fmt.Errorf("failed to get machine sets when validating worker node: %v", err)
@@ -105,7 +109,7 @@ func ValidateWorkerNodes(ctx context.Context, vc clusterf.StateValidationConfig)
 		workerNodes := filterWorkerNodes(nodes.Items, ms, w)
 		workerGroupCount += len(workerNodes)
 		for _, node := range workerNodes {
-			if err := validateNodeReady(node, vc.ClusterSpec.Cluster.Spec.KubernetesVersion); err != nil {
+			if err := validateNodeReady(node, k8sVersion); err != nil {
 				errorList = append(errorList, fmt.Errorf("failed to validate worker node ready %v", err))
 			}
 			if err := api.ValidateWorkerNodeTaints(w, node); err != nil {
