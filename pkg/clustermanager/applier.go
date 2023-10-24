@@ -20,7 +20,7 @@ const (
 	applyClusterSpecTimeout           = 2 * time.Minute
 	waitForClusterReconcileTimeout    = time.Hour
 	retryBackOff                      = time.Second
-	waitForFailureMessageErrorTimeout = time.Minute
+	waitForFailureMessageErrorTimeout = 10 * time.Minute
 	defaultFieldManager               = "eks-a-cli"
 	defaultConditionCheckTotalCount   = 20
 )
