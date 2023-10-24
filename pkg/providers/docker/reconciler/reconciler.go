@@ -53,6 +53,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, log logr.Logger, c *anywhere
 	}
 
 	return controller.NewPhaseRunner[*cluster.Spec]().Register(
+		clusters.CleanupStatusAfterValidate,
 		r.ReconcileControlPlane,
 		r.CheckControlPlaneReady,
 		r.ReconcileCNI,
