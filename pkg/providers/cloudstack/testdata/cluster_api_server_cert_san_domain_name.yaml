@@ -1,0 +1,69 @@
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: Cluster
+metadata:
+  name: test
+  namespace: test
+spec:
+  clusterNetwork:
+    cniConfig:
+      cilium: {}
+    pods:
+      cidrBlocks:
+        - 192.168.0.0/16
+    services:
+      cidrBlocks:
+        - 10.96.0.0/12
+  controlPlaneConfiguration:
+    count: 1
+    endpoint:
+      host: 0.0.0.0
+    certSANs: ["foo.bar"]
+    machineGroupRef:
+      kind: CloudStackMachineConfig
+      name: test
+  datacenterRef:
+    kind: CloudStackDatacenterConfig
+    name: test
+  kubernetesVersion: "1.21"
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: CloudStackDatacenterConfig
+metadata:
+  name: test
+  namespace: test
+spec:
+  availabilityZones:
+    - account: "admin"
+      domain: "domain1"
+      name: "default-az-0"
+      credentialsRef: "global"
+      zone:
+        name: "zone1"
+        network:
+          name: "net1"
+      managementApiEndpoint: "http://127.16.0.1:8080/client/api"
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: CloudStackMachineConfig
+metadata:
+  name: test
+  namespace: test
+spec:
+  computeOffering:
+    name: "m4-large"
+  users:
+  - name: "mySshUsername"
+    sshAuthorizedKeys: # The key below was manually generated and not used in any production systems
+    - "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC1BK73XhIzjX+meUr7pIYh6RHbvI3tmHeQIXY5lv7aztN1UoX+bhPo3dwo2sfSQn5kuxgQdnxIZ/CTzy0p0GkEYVv3gwspCeurjmu0XmrdmaSGcGxCEWT/65NtvYrQtUE5ELxJ+N/aeZNlK2B7IWANnw/82913asXH4VksV1NYNduP0o1/G4XcwLLSyVFB078q/oEnmvdNIoS61j4/o36HVtENJgYr0idcBvwJdvcGxGnPaqOhx477t+kfJAa5n5dSA5wilIaoXH5i1Tf/HsTCM52L+iNCARvQzJYZhzbWI1MDQwzILtIBEQCJsl2XSqIupleY8CxqQ6jCXt2mhae+wPc3YmbO5rFvr2/EvC57kh3yDs1Nsuj8KOvD78KeeujbR8n8pScm3WDp62HFQ8lEKNdeRNj6kB8WnuaJvPnyZfvzOhwG65/9w13IBl7B1sWxbFnq2rMpm5uHVK7mAmjL0Tt8zoDhcE1YJEnp9xte3/pvmKPkST5Q/9ZtR9P5sI+02jY0fvPkPyC03j2gsPixG7rpOCwpOdbny4dcj0TDeeXJX8er+oVfJuLYz0pNWJcT2raDdFfcqvYA0B0IyNYlj5nWX4RuEcyT3qocLReWPnZojetvAG/H8XwOh7fEVGqHAKOVSnPXCSQJPl6s0H12jPJBDJMTydtYPEszl4/CeQ== testemail@test.com"
+  template:
+    name: "kubernetes_1_21"
+  diskOffering:
+    name: "Small"
+    mountPath: "/data-small"
+    device: "/dev/vdb"
+    filesystem: "ext4"
+    label: "data_disk"
+  symlinks:
+    /var/log/kubernetes: /data-small/var/log/kubernetes
+  affinityGroupIds:
+  - control-plane-anti-affinity

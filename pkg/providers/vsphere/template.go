@@ -151,6 +151,7 @@ func buildTemplateMapCP(
 		"clusterName":                          clusterSpec.Cluster.Name,
 		"controlPlaneEndpointIp":               clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host,
 		"controlPlaneReplicas":                 clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Count,
+		"apiServerCertSANs":                    clusterSpec.Cluster.Spec.ControlPlaneConfiguration.CertSANs,
 		"kubernetesRepository":                 versionsBundle.KubeDistro.Kubernetes.Repository,
 		"kubernetesVersion":                    versionsBundle.KubeDistro.Kubernetes.Tag,
 		"etcdRepository":                       versionsBundle.KubeDistro.Etcd.Repository,

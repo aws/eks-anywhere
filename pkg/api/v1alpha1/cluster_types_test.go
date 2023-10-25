@@ -3169,3 +3169,64 @@ func TestCNIConfigIsManaged(t *testing.T) {
 		})
 	}
 }
+
+func TestValidateCluster(t *testing.T) {
+	for _, tc := range []struct {
+		Name           string
+		Cluster        *v1alpha1.Cluster
+		ExpectContains []string
+	}{
+		{
+			Name: "APIServerCertSAN_DomainName",
+			Cluster: baseCluster(func(c *v1alpha1.Cluster) {
+				c.Spec.ControlPlaneConfiguration.CertSANs = []string{"domain.com"}
+			}),
+		},
+		{
+			Name: "APIServerCertSAN_DomainName",
+			Cluster: baseCluster(func(c *v1alpha1.Cluster) {
+				c.Spec.ControlPlaneConfiguration.CertSANs = []string{"domain%com"}
+			}),
+			ExpectContains: []string{"domain%com"},
+		},
+		{
+			Name: "APIServerCertSAN_IP",
+			Cluster: baseCluster(func(c *v1alpha1.Cluster) {
+				c.Spec.ControlPlaneConfiguration.CertSANs = []string{"11.11.11.11"}
+			}),
+		},
+		{
+			Name: "APIServerCertSAN_Empty",
+			Cluster: baseCluster(func(c *v1alpha1.Cluster) {
+				c.Spec.ControlPlaneConfiguration.CertSANs = []string{""}
+			}),
+			ExpectContains: []string{""},
+		},
+		{
+			Name: "APIServerCertSAN_Multi",
+			Cluster: baseCluster(func(c *v1alpha1.Cluster) {
+				c.Spec.ControlPlaneConfiguration.CertSANs = []string{"11.11.11.11", "domain.com"}
+			}),
+		},
+		{
+			Name: "APIServerCertSAN_Multi",
+			Cluster: baseCluster(func(c *v1alpha1.Cluster) {
+				c.Spec.ControlPlaneConfiguration.CertSANs = []string{"11.11.11.11", "domain%com"}
+			}),
+			ExpectContains: []string{"domain%com"},
+		},
+	} {
+		t.Run(tc.Name, func(t *testing.T) {
+			g := NewWithT(t)
+			err := tc.Cluster.Validate()
+			if len(tc.ExpectContains) > 0 {
+				g.Expect(err).To(HaveOccurred())
+				for _, str := range tc.ExpectContains {
+					g.Expect(err.Error()).To(ContainSubstring(str))
+				}
+			} else {
+				g.Expect(err).To(Succeed())
+			}
+		})
+	}
+}

@@ -105,6 +105,7 @@ func TestConfigureAWSIAMAuthInKubeadmControlPlane(t *testing.T) {
 										},
 									},
 								},
+								CertSANs: []string{"foo.bar", "11.11.11.11"},
 							},
 							ControllerManager: bootstrapv1.ControlPlaneComponent{
 								ExtraArgs:    tlsCipherSuitesArgs(),
@@ -302,6 +303,7 @@ func TestConfigureOIDCInKubeadmControlPlane(t *testing.T) {
 									},
 									ExtraVolumes: []bootstrapv1.HostPathMount{},
 								},
+								CertSANs: []string{"foo.bar", "11.11.11.11"},
 							},
 							ControllerManager: bootstrapv1.ControlPlaneComponent{
 								ExtraArgs:    tlsCipherSuitesArgs(),
@@ -426,6 +428,7 @@ func TestConfigurePodIamAuthInKubeadmControlPlane(t *testing.T) {
 									},
 									ExtraVolumes: []bootstrapv1.HostPathMount{},
 								},
+								CertSANs: []string{"foo.bar", "11.11.11.11"},
 							},
 							ControllerManager: bootstrapv1.ControlPlaneComponent{
 								ExtraArgs:    tlsCipherSuitesArgs(),

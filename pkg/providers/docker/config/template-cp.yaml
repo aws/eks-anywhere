@@ -89,6 +89,9 @@ spec:
         certSANs:
         - localhost
         - 127.0.0.1
+        {{- with .apiServerCertSANs }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
         extraArgs:
           audit-policy-file: /etc/kubernetes/audit-policy.yaml
           audit-log-path: /var/log/kubernetes/api-audit.log
