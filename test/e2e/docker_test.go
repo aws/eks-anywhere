@@ -14,7 +14,6 @@ import (
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
-	"github.com/aws/eks-anywhere/pkg/semver"
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
@@ -1166,16 +1165,7 @@ func TestDockerCiliumSkipUpgrade_CLICreate(t *testing.T) {
 }
 
 func TestDockerCiliumSkipUpgrade_CLIUpgrade(t *testing.T) {
-	release, err := framework.GetLatestMinorReleaseFromTestBranch()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	ver, _ := semver.New(release.Version)
-	previousRelease, err := framework.GetPreviousMinorReleaseFromVersion(ver)
-	if err != nil {
-		t.Fatal(err)
-	}
+	previousRelease := prevLatestMinorRelease(t)
 
 	provider := framework.NewDocker(t)
 	test := framework.NewClusterE2ETest(t, provider,
