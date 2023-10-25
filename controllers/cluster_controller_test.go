@@ -182,7 +182,7 @@ func TestClusterReconcilerReconcileSelfManagedCluster(t *testing.T) {
 	registry := newRegistryMock(providerReconciler)
 	c := fake.NewClientBuilder().WithRuntimeObjects(selfManagedCluster, kcp).Build()
 	mockPkgs := mocks.NewMockPackagesClient(controller)
-	providerReconciler.EXPECT().ReconcileWorkerNodes(ctx, gomock.AssignableToTypeOf(logr.Logger{}), sameName(selfManagedCluster))
+	providerReconciler.EXPECT().Reconcile(ctx, gomock.AssignableToTypeOf(logr.Logger{}), sameName(selfManagedCluster))
 	mhcReconciler.EXPECT().Reconcile(ctx, gomock.AssignableToTypeOf(logr.Logger{}), sameName(selfManagedCluster)).Return(nil)
 
 	r := controllers.NewClusterReconciler(c, registry, iam, clusterValidator, mockPkgs, mhcReconciler)
@@ -622,7 +622,7 @@ func TestClusterReconcilerReconcileSelfManagedClusterConditions(t *testing.T) {
 			iam.EXPECT().EnsureCASecret(logCtx, gomock.AssignableToTypeOf(logr.Logger{}), sameName(config.Cluster)).Return(controller.Result{}, nil)
 			iam.EXPECT().Reconcile(logCtx, gomock.AssignableToTypeOf(logr.Logger{}), sameName(config.Cluster)).Return(controller.Result{}, nil)
 
-			providerReconciler.EXPECT().ReconcileWorkerNodes(gomock.Any(), gomock.Any(), gomock.Any()).Times(1)
+			providerReconciler.EXPECT().Reconcile(gomock.Any(), gomock.Any(), gomock.Any()).Times(1)
 			mhcReconciler.EXPECT().Reconcile(logCtx, gomock.AssignableToTypeOf(logr.Logger{}), sameName(config.Cluster)).Return(nil)
 
 			r := controllers.NewClusterReconciler(testClient, registry, iam, clusterValidator, mockPkgs, mhcReconciler)
@@ -774,11 +774,11 @@ func TestClusterReconcilerReconcileGenerations(t *testing.T) {
 			if tt.wantReconciliation {
 				iam.EXPECT().EnsureCASecret(ctx, gomock.AssignableToTypeOf(logr.Logger{}), gomock.AssignableToTypeOf(config.Cluster)).Return(controller.Result{}, nil)
 				iam.EXPECT().Reconcile(ctx, gomock.AssignableToTypeOf(logr.Logger{}), gomock.AssignableToTypeOf(config.Cluster)).Return(controller.Result{}, nil)
-				providerReconciler.EXPECT().ReconcileWorkerNodes(ctx, gomock.AssignableToTypeOf(logr.Logger{}), sameName(config.Cluster)).Times(1)
+				providerReconciler.EXPECT().Reconcile(ctx, gomock.AssignableToTypeOf(logr.Logger{}), sameName(config.Cluster)).Times(1)
 				mhcReconciler.EXPECT().Reconcile(ctx, gomock.AssignableToTypeOf(logr.Logger{}), sameName(config.Cluster)).Return(nil)
 
 			} else {
-				providerReconciler.EXPECT().ReconcileWorkerNodes(gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
+				providerReconciler.EXPECT().Reconcile(gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
 			}
 
 			r := controllers.NewClusterReconciler(client, registry, iam, clusterValidator, mockPkgs, mhcReconciler)
@@ -800,53 +800,6 @@ func TestClusterReconcilerReconcileGenerations(t *testing.T) {
 			})
 		})
 	}
-}
-
-func TestClusterReconcilerReconcileSelfManagedClusterWithExperimentalUpgrades(t *testing.T) {
-	g := NewWithT(t)
-	ctx := context.Background()
-	version := test.DevEksaVersion()
-
-	selfManagedCluster := &anywherev1.Cluster{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: "my-management-cluster",
-		},
-		Spec: anywherev1.ClusterSpec{
-			BundlesRef: &anywherev1.BundlesRef{
-				Name: "my-bundles-ref",
-			},
-			EksaVersion: &version,
-			ClusterNetwork: anywherev1.ClusterNetwork{
-				CNIConfig: &anywherev1.CNIConfig{
-					Cilium: &anywherev1.CiliumConfig{},
-				},
-			},
-		},
-		Status: anywherev1.ClusterStatus{
-			ReconciledGeneration: 1,
-		},
-	}
-
-	kcp := testKubeadmControlPlaneFromCluster(selfManagedCluster)
-
-	controller := gomock.NewController(t)
-	providerReconciler := mocks.NewMockProviderClusterReconciler(controller)
-	iam := mocks.NewMockAWSIamConfigReconciler(controller)
-	clusterValidator := mocks.NewMockClusterValidator(controller)
-	registry := newRegistryMock(providerReconciler)
-	c := fake.NewClientBuilder().WithRuntimeObjects(selfManagedCluster, kcp).Build()
-	mockPkgs := mocks.NewMockPackagesClient(controller)
-	mhcReconciler := mocks.NewMockMachineHealthCheckReconciler(controller)
-
-	providerReconciler.EXPECT().Reconcile(ctx, gomock.AssignableToTypeOf(logr.Logger{}), sameName(selfManagedCluster))
-	mhcReconciler.EXPECT().Reconcile(ctx, gomock.AssignableToTypeOf(logr.Logger{}), sameName(selfManagedCluster)).Return(nil)
-
-	r := controllers.NewClusterReconciler(c, registry, iam, clusterValidator, mockPkgs, mhcReconciler,
-		controllers.WithExperimentalSelfManagedClusterUpgrades(true),
-	)
-	result, err := r.Reconcile(ctx, clusterRequest(selfManagedCluster))
-	g.Expect(err).ToNot(HaveOccurred())
-	g.Expect(result).To(Equal(ctrl.Result{}))
 }
 
 func TestClusterReconcilerReconcilePausedCluster(t *testing.T) {
