@@ -5,9 +5,6 @@ const (
 	CloudStackKubeVipDisabledEnvVar = "CLOUDSTACK_KUBE_VIP_DISABLED"
 	CheckpointEnabledEnvVar         = "CHECKPOINT_ENABLED"
 	UseNewWorkflowsEnvVar           = "USE_NEW_WORKFLOWS"
-
-	ExperimentalSelfManagedClusterUpgradeEnvVar = "EXP_SELF_MANAGED_API_UPGRADE"
-	ExperimentalSelfManagedClusterUpgradeGate   = "ExpSelfManagedAPIUpgrade"
 )
 
 func FeedGates(featureGates []string) {
@@ -26,17 +23,6 @@ func IsActive(feature Feature) bool {
 // ClearCache is mainly used for unit tests as of now.
 func ClearCache() {
 	globalFeatures.clearCache()
-}
-
-// ExperimentalSelfManagedClusterUpgrade allows self managed cluster upgrades through the API.
-func ExperimentalSelfManagedClusterUpgrade() Feature {
-	return Feature{
-		Name: "[EXPERIMENTAL] Upgrade self-managed clusters through the API",
-		IsActive: globalFeatures.isActiveForEnvVarOrGate(
-			ExperimentalSelfManagedClusterUpgradeEnvVar,
-			ExperimentalSelfManagedClusterUpgradeGate,
-		),
-	}
 }
 
 func CloudStackKubeVipDisabled() Feature {

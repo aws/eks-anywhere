@@ -2,7 +2,6 @@ package v1alpha1
 
 import (
 	"fmt"
-	"reflect"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -10,8 +9,6 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
-
-	"github.com/aws/eks-anywhere/pkg/features"
 )
 
 // log is for logging in this package.
@@ -129,68 +126,6 @@ func validateImmutableFieldsVSphereMachineConfig(new, old *VSphereMachineConfig)
 	if !old.IsEtcd() && !old.IsControlPlane() {
 		vspheremachineconfiglog.Info("Machine config is associated with management cluster's worker nodes", "name", old.Name)
 		return allErrs
-	}
-
-	if features.IsActive(features.ExperimentalSelfManagedClusterUpgrade()) {
-		return allErrs
-	}
-
-	vspheremachineconfiglog.Info("Machine config is associated with management cluster's control plane or etcd", "name", old.Name)
-
-	if !reflect.DeepEqual(old.Spec.Users, new.Spec.Users) {
-		allErrs = append(
-			allErrs,
-			field.Forbidden(specPath.Child("users"), "field is immutable"),
-		)
-	}
-
-	if old.Spec.Template != new.Spec.Template {
-		allErrs = append(
-			allErrs,
-			field.Forbidden(specPath.Child("template"), "field is immutable"),
-		)
-	}
-
-	if old.Spec.Datastore != new.Spec.Datastore {
-		allErrs = append(
-			allErrs,
-			field.Forbidden(specPath.Child("datastore"), "field is immutable"),
-		)
-	}
-
-	if old.Spec.Folder != new.Spec.Folder {
-		allErrs = append(
-			allErrs,
-			field.Forbidden(specPath.Child("folder"), "field is immutable"),
-		)
-	}
-
-	if old.Spec.ResourcePool != new.Spec.ResourcePool {
-		allErrs = append(
-			allErrs,
-			field.Forbidden(specPath.Child("resourcePool"), "field is immutable"),
-		)
-	}
-
-	if old.Spec.MemoryMiB != new.Spec.MemoryMiB {
-		allErrs = append(
-			allErrs,
-			field.Forbidden(specPath.Child("memoryMiB"), "field is immutable"),
-		)
-	}
-
-	if old.Spec.NumCPUs != new.Spec.NumCPUs {
-		allErrs = append(
-			allErrs,
-			field.Forbidden(specPath.Child("numCPUs"), "field is immutable"),
-		)
-	}
-
-	if old.Spec.DiskGiB != new.Spec.DiskGiB {
-		allErrs = append(
-			allErrs,
-			field.Forbidden(specPath.Child("diskGiB"), "field is immutable"),
-		)
 	}
 
 	return allErrs

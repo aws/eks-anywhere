@@ -2,7 +2,9 @@ package reconciler_test
 
 import (
 	"context"
+	"fmt"
 	"math"
+	"strings"
 	"testing"
 	"time"
 
@@ -44,10 +46,27 @@ func TestReconcilerReconcileSuccess(t *testing.T) {
 	// We want to check that the cluster status is cleaned up if validations are passed
 	tt.cluster.SetFailure(anywherev1.FailureReasonType("InvalidCluster"), "invalid cluster")
 
-	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
-		c.Name = tt.cluster.Name
+	kcp := test.KubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
+		kcp.Name = tt.cluster.Name
+		kcp.Spec = controlplanev1.KubeadmControlPlaneSpec{
+			MachineTemplate: controlplanev1.KubeadmControlPlaneMachineTemplate{
+				InfrastructureRef: corev1.ObjectReference{
+					Name: fmt.Sprintf("%s-control-plane-1", tt.cluster.Name),
+				},
+			},
+		}
+		kcp.Status = controlplanev1.KubeadmControlPlaneStatus{
+			Conditions: clusterv1.Conditions{
+				{
+					Type:               clusterapi.ReadyCondition,
+					Status:             corev1.ConditionTrue,
+					LastTransitionTime: metav1.NewTime(time.Now()),
+				},
+			},
+			ObservedGeneration: 2,
+		}
 	})
-	tt.eksaSupportObjs = append(tt.eksaSupportObjs, capiCluster, tt.secret)
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, tt.secret, kcp)
 	tt.createAllObjs()
 
 	logger := test.NewNullLogger()
@@ -56,7 +75,7 @@ func TestReconcilerReconcileSuccess(t *testing.T) {
 	spec := tt.buildSpec()
 	tt.ipValidator.EXPECT().ValidateControlPlaneIP(tt.ctx, logger, tt.buildSpec()).Return(controller.Result{}, nil)
 	tt.remoteClientRegistry.EXPECT().GetClient(
-		tt.ctx, client.ObjectKey{Name: "workload-cluster", Namespace: constants.EksaSystemNamespace},
+		tt.ctx, client.ObjectKey{Name: tt.cluster.Name, Namespace: constants.EksaSystemNamespace},
 	).Return(remoteClient, nil).Times(1)
 
 	tt.cniReconciler.EXPECT().Reconcile(tt.ctx, logger, remoteClient, spec)
@@ -87,16 +106,12 @@ func TestReconcilerValidateDatacenterConfigRequeue(t *testing.T) {
 	tt := newReconcilerTest(t)
 	tt.datacenterConfig.Status.SpecValid = false
 
-	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
-		c.Name = tt.cluster.Name
-	})
-	tt.eksaSupportObjs = append(tt.eksaSupportObjs, capiCluster, tt.secret)
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, tt.secret)
 	tt.createAllObjs()
 
 	logger := test.NewNullLogger()
 
 	tt.ipValidator.EXPECT().ValidateControlPlaneIP(tt.ctx, logger, tt.buildSpec()).Return(controller.Result{}, nil)
-
 	result, err := tt.reconciler().Reconcile(tt.ctx, logger, tt.cluster)
 	tt.Expect(err).NotTo(HaveOccurred())
 	tt.Expect(result).To(Equal(controller.ResultWithReturn()))
@@ -108,10 +123,7 @@ func TestReconcilerValidateDatacenterConfigFail(t *testing.T) {
 	tt.datacenterConfig.Status.SpecValid = false
 	tt.datacenterConfig.Status.FailureMessage = ptr.String("Invalid CloudStackDatacenterConfig")
 
-	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
-		c.Name = tt.cluster.Name
-	})
-	tt.eksaSupportObjs = append(tt.eksaSupportObjs, capiCluster, tt.secret)
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, tt.secret)
 	tt.createAllObjs()
 
 	logger := test.NewNullLogger()
@@ -182,17 +194,27 @@ func TestReconcilerValidateMachineConfigFail(t *testing.T) {
 func TestReconcilerControlPlaneIsNotReady(t *testing.T) {
 	tt := newReconcilerTest(t)
 
-	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
-		c.Name = tt.cluster.Name
+	kcp := test.KubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
+		kcp.Name = tt.cluster.Name
+		kcp.Spec = controlplanev1.KubeadmControlPlaneSpec{
+			MachineTemplate: controlplanev1.KubeadmControlPlaneMachineTemplate{
+				InfrastructureRef: corev1.ObjectReference{
+					Name: fmt.Sprintf("%s-control-plane-1", tt.cluster.Name),
+				},
+			},
+		}
+		kcp.Status = controlplanev1.KubeadmControlPlaneStatus{
+			Conditions: clusterv1.Conditions{
+				{
+					Type:               clusterapi.ReadyCondition,
+					Status:             corev1.ConditionFalse,
+					LastTransitionTime: metav1.NewTime(time.Now()),
+				},
+			},
+			ObservedGeneration: 2,
+		}
 	})
-	capiCluster.Status.Conditions = clusterv1.Conditions{
-		{
-			Type:               clusterapi.ControlPlaneReadyCondition,
-			Status:             corev1.ConditionFalse,
-			LastTransitionTime: metav1.NewTime(time.Now()),
-		},
-	}
-	tt.eksaSupportObjs = append(tt.eksaSupportObjs, capiCluster, tt.secret)
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, kcp, tt.secret)
 	tt.createAllObjs()
 
 	logger := test.NewNullLogger()
@@ -230,11 +252,6 @@ func TestReconcileControlPlaneUnstackedEtcdSuccess(t *testing.T) {
 	tt.Expect(tt.cluster.Status.FailureReason).To(BeZero())
 	tt.Expect(result).To(Equal(controller.Result{}))
 
-	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
-		c.Name = tt.cluster.Name
-	})
-
-	tt.ShouldEventuallyExist(tt.ctx, capiCluster)
 	tt.ShouldEventuallyExist(tt.ctx, &cloudstackv1.CloudStackCluster{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      tt.cluster.Name,
@@ -342,7 +359,7 @@ func TestReconcileCNISuccess(t *testing.T) {
 	spec := tt.buildSpec()
 
 	tt.remoteClientRegistry.EXPECT().GetClient(
-		tt.ctx, client.ObjectKey{Name: "workload-cluster", Namespace: "eksa-system"},
+		tt.ctx, client.ObjectKey{Name: tt.cluster.Name, Namespace: "eksa-system"},
 	).Return(remoteClient, nil)
 	tt.cniReconciler.EXPECT().Reconcile(tt.ctx, logger, remoteClient, spec)
 
@@ -363,7 +380,7 @@ func TestReconcileCNIErrorClientRegistry(t *testing.T) {
 	spec := tt.buildSpec()
 
 	tt.remoteClientRegistry.EXPECT().GetClient(
-		tt.ctx, client.ObjectKey{Name: "workload-cluster", Namespace: "eksa-system"},
+		tt.ctx, client.ObjectKey{Name: tt.cluster.Name, Namespace: "eksa-system"},
 	).Return(nil, errors.New("building client"))
 
 	result, err := tt.reconciler().ReconcileCNI(tt.ctx, logger, spec)
@@ -615,7 +632,7 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 	})
 
 	cluster := cloudstackCluster(func(c *anywherev1.Cluster) {
-		c.Name = "workload-cluster"
+		c.Name = strings.ToLower(t.Name())
 		c.Spec.ManagementCluster = anywherev1.ManagementCluster{
 			Name: managementCluster.Name,
 		}
@@ -709,13 +726,13 @@ func (tt *reconcilerTest) cleanup() {
 	tt.DeleteAllOfAndWait(tt.ctx, &controlplanev1.KubeadmControlPlane{})
 	tt.DeleteAndWait(tt.ctx, &cloudstackv1.CloudStackMachineTemplate{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "workload-cluster-etcd-1",
+			Name:      tt.cluster.Name + "-etcd-1",
 			Namespace: "eksa-system",
 		},
 	})
 	tt.DeleteAndWait(tt.ctx, &etcdv1.EtcdadmCluster{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "workload-cluster-etcd",
+			Name:      tt.cluster.Name + "-etcd",
 			Namespace: "eksa-system",
 		},
 	})

@@ -2,7 +2,6 @@ package clustermanager_test
 
 import (
 	"context"
-	"os"
 	"testing"
 
 	"github.com/go-logr/logr"
@@ -214,21 +213,9 @@ func TestSetManagerFlags(t *testing.T) {
 			spec:       test.NewClusterSpec(),
 			want:       deployment(),
 		},
-		{
-			name:           "kindless upgrades, feature flag enabled",
-			deployment:     deployment(),
-			spec:           test.NewClusterSpec(),
-			featureEnvVars: []string{features.ExperimentalSelfManagedClusterUpgradeEnvVar},
-			want: deployment(func(d *appsv1.Deployment) {
-				d.Spec.Template.Spec.Containers[0].Args = []string{
-					"--feature-gates=ExpSelfManagedAPIUpgrade=true",
-				}
-			}),
-		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			os.Unsetenv(features.ExperimentalSelfManagedClusterUpgradeEnvVar)
 			features.ClearCache()
 			for _, e := range tt.featureEnvVars {
 				t.Setenv(e, "true")
