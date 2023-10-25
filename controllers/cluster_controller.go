@@ -50,13 +50,6 @@ type ClusterReconciler struct {
 	clusterValidator           ClusterValidator
 	packagesClient             PackagesClient
 	machineHealthCheck         MachineHealthCheckReconciler
-
-	// experimentalSelfManagedUpgrade enables management cluster full upgrades.
-	// The default behavior for management cluster only reconciles the worker nodes.
-	// When this is enabled, the controller will handle management clusters in the same
-	// way as workload clusters: it will reconcile CP, etcd and workers.
-	// Only intended for internal testing.
-	experimentalSelfManagedUpgrade bool
 }
 
 // PackagesClient handles curated packages operations from within the cluster
@@ -107,14 +100,6 @@ func NewClusterReconciler(client client.Client, registry ProviderClusterReconcil
 	}
 
 	return c
-}
-
-// WithExperimentalSelfManagedClusterUpgrades allows to enable experimental upgrades for self
-// managed clusters.
-func WithExperimentalSelfManagedClusterUpgrades(exp bool) ClusterReconcilerOption {
-	return func(c *ClusterReconciler) {
-		c.experimentalSelfManagedUpgrade = exp
-	}
 }
 
 // SetupWithManager sets up the controller with the Manager.
@@ -322,12 +307,7 @@ func (r *ClusterReconciler) reconcile(ctx context.Context, log logr.Logger, clus
 		return reconcileResult.ToCtrlResult(), nil
 	}
 
-	if cluster.IsSelfManaged() && !r.experimentalSelfManagedUpgrade {
-		// self-managed clusters should only reconcile worker nodes to avoid control plane instability
-		reconcileResult, err = clusterProviderReconciler.ReconcileWorkerNodes(ctx, log, cluster)
-	} else {
-		reconcileResult, err = clusterProviderReconciler.Reconcile(ctx, log, cluster)
-	}
+	reconcileResult, err = clusterProviderReconciler.Reconcile(ctx, log, cluster)
 
 	if err != nil {
 		return ctrl.Result{}, err
