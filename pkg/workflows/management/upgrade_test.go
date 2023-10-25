@@ -278,7 +278,6 @@ func (c *upgradeManagementTestSetup) expectPreflightValidationsToPass() {
 func TestUpgradeManagementRunUpdateSetupFailed(t *testing.T) {
 	os.Unsetenv(features.CheckpointEnabledEnvVar)
 	features.ClearCache()
-	t.Setenv(features.ExperimentalSelfManagedClusterUpgradeEnvVar, "true")
 	test := newUpgradeManagementClusterTest(t)
 	test.expectSetupToFail()
 	test.expectWriteCheckpointFile()
@@ -292,7 +291,6 @@ func TestUpgradeManagementRunUpdateSetupFailed(t *testing.T) {
 func TestUpgradeManagementRunUpdateSecretFailed(t *testing.T) {
 	os.Unsetenv(features.CheckpointEnabledEnvVar)
 	features.ClearCache()
-	t.Setenv(features.ExperimentalSelfManagedClusterUpgradeEnvVar, "true")
 	test := newUpgradeManagementClusterTest(t)
 	test.expectSetup()
 	test.expectPreflightValidationsToPass()
@@ -309,7 +307,6 @@ func TestUpgradeManagementRunUpdateSecretFailed(t *testing.T) {
 func TestUpgradeManagementRunEnsureETCDFailed(t *testing.T) {
 	os.Unsetenv(features.CheckpointEnabledEnvVar)
 	features.ClearCache()
-	t.Setenv(features.ExperimentalSelfManagedClusterUpgradeEnvVar, "true")
 	test := newUpgradeManagementClusterTest(t)
 	test.expectSetup()
 	test.expectPreflightValidationsToPass()
@@ -327,7 +324,6 @@ func TestUpgradeManagementRunEnsureETCDFailed(t *testing.T) {
 func TestUpgradeManagementRunPauseGitOpsReconcileUpgradeFailed(t *testing.T) {
 	os.Unsetenv(features.CheckpointEnabledEnvVar)
 	features.ClearCache()
-	t.Setenv(features.ExperimentalSelfManagedClusterUpgradeEnvVar, "true")
 	test := newUpgradeManagementClusterTest(t)
 	test.expectSetup()
 	test.expectPreflightValidationsToPass()
@@ -346,7 +342,6 @@ func TestUpgradeManagementRunPauseGitOpsReconcileUpgradeFailed(t *testing.T) {
 func TestUpgradeManagementRunFailedBackup(t *testing.T) {
 	os.Unsetenv(features.CheckpointEnabledEnvVar)
 	features.ClearCache()
-	t.Setenv(features.ExperimentalSelfManagedClusterUpgradeEnvVar, "true")
 	test := newUpgradeManagementClusterTest(t)
 	test.expectSetup()
 	test.expectPreflightValidationsToPass()
@@ -368,7 +363,6 @@ func TestUpgradeManagementRunFailedBackup(t *testing.T) {
 func TestUpgradeManagementRunPauseWorkloadCAPIFailed(t *testing.T) {
 	os.Unsetenv(features.CheckpointEnabledEnvVar)
 	features.ClearCache()
-	t.Setenv(features.ExperimentalSelfManagedClusterUpgradeEnvVar, "true")
 	test := newUpgradeManagementClusterTest(t)
 	test.expectSetup()
 	test.expectPreflightValidationsToPass()
@@ -390,7 +384,6 @@ func TestUpgradeManagementRunPauseWorkloadCAPIFailed(t *testing.T) {
 func TestUpgradeManagementRunFailedUpgradeInstallEksd(t *testing.T) {
 	os.Unsetenv(features.CheckpointEnabledEnvVar)
 	features.ClearCache()
-	t.Setenv(features.ExperimentalSelfManagedClusterUpgradeEnvVar, "true")
 	test := newUpgradeManagementClusterTest(t)
 	test.expectSetup()
 	test.expectPreflightValidationsToPass()
@@ -417,7 +410,6 @@ func TestUpgradeManagementRunFailedUpgradeInstallEksd(t *testing.T) {
 func TestUpgradeManagementRunFailedUpgradeApplyBundles(t *testing.T) {
 	os.Unsetenv(features.CheckpointEnabledEnvVar)
 	features.ClearCache()
-	t.Setenv(features.ExperimentalSelfManagedClusterUpgradeEnvVar, "true")
 	test := newUpgradeManagementClusterTest(t)
 	test.expectSetup()
 	test.expectPreflightValidationsToPass()
@@ -442,7 +434,6 @@ func TestUpgradeManagementRunFailedUpgradeApplyBundles(t *testing.T) {
 func TestUpgradeManagementRunFailedUpgradeApplyReleases(t *testing.T) {
 	os.Unsetenv(features.CheckpointEnabledEnvVar)
 	features.ClearCache()
-	t.Setenv(features.ExperimentalSelfManagedClusterUpgradeEnvVar, "true")
 	test := newUpgradeManagementClusterTest(t)
 	test.expectSetup()
 	test.expectPreflightValidationsToPass()
@@ -468,7 +459,6 @@ func TestUpgradeManagementRunFailedUpgradeApplyReleases(t *testing.T) {
 func TestUpgradeManagementRunFailedUpgrade(t *testing.T) {
 	os.Unsetenv(features.CheckpointEnabledEnvVar)
 	features.ClearCache()
-	t.Setenv(features.ExperimentalSelfManagedClusterUpgradeEnvVar, "true")
 	test := newUpgradeManagementClusterTest(t)
 	test.expectSetup()
 	test.expectPreflightValidationsToPass()
@@ -496,7 +486,6 @@ func TestUpgradeManagementRunFailedUpgrade(t *testing.T) {
 func TestUpgradeManagementRunResumeCAPIWorkloadFailed(t *testing.T) {
 	os.Unsetenv(features.CheckpointEnabledEnvVar)
 	features.ClearCache()
-	t.Setenv(features.ExperimentalSelfManagedClusterUpgradeEnvVar, "true")
 	test := newUpgradeManagementClusterTest(t)
 	test.expectSetup()
 	test.expectPreflightValidationsToPass()
@@ -529,7 +518,6 @@ func TestUpgradeManagementRunResumeCAPIWorkloadFailed(t *testing.T) {
 func TestUpgradeManagementRunUpdateGitEksaSpecFailed(t *testing.T) {
 	os.Unsetenv(features.CheckpointEnabledEnvVar)
 	features.ClearCache()
-	t.Setenv(features.ExperimentalSelfManagedClusterUpgradeEnvVar, "true")
 	test := newUpgradeManagementClusterTest(t)
 	test.expectSetup()
 	test.expectPreflightValidationsToPass()
@@ -558,7 +546,6 @@ func TestUpgradeManagementRunUpdateGitEksaSpecFailed(t *testing.T) {
 func TestUpgradeManagementRunForceReconcileGitRepoFailed(t *testing.T) {
 	os.Unsetenv(features.CheckpointEnabledEnvVar)
 	features.ClearCache()
-	t.Setenv(features.ExperimentalSelfManagedClusterUpgradeEnvVar, "true")
 	test := newUpgradeManagementClusterTest(t)
 	test.expectSetup()
 	test.expectPreflightValidationsToPass()
@@ -588,7 +575,6 @@ func TestUpgradeManagementRunForceReconcileGitRepoFailed(t *testing.T) {
 func TestUpgradeManagementRunResumeClusterResourcesReconcileFailed(t *testing.T) {
 	os.Unsetenv(features.CheckpointEnabledEnvVar)
 	features.ClearCache()
-	t.Setenv(features.ExperimentalSelfManagedClusterUpgradeEnvVar, "true")
 	test := newUpgradeManagementClusterTest(t)
 	test.expectSetup()
 	test.expectPreflightValidationsToPass()
@@ -620,7 +606,6 @@ func TestUpgradeManagementRunResumeClusterResourcesReconcileFailed(t *testing.T)
 func TestUpgradeManagementRunSuccess(t *testing.T) {
 	os.Unsetenv(features.CheckpointEnabledEnvVar)
 	features.ClearCache()
-	t.Setenv(features.ExperimentalSelfManagedClusterUpgradeEnvVar, "true")
 	test := newUpgradeManagementClusterTest(t)
 	test.expectSetup()
 	test.expectPreflightValidationsToPass()

@@ -15,6 +15,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -164,7 +165,7 @@ func TestReconcileBuildClusterSpecError(t *testing.T) {
 	g.Expect(result).To(Equal(controller.Result{}))
 }
 
-func TestReconcileCAPIClusterNotFound(t *testing.T) {
+func TestReconcileKCPObjectNotFound(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
 	ctrl := gomock.NewController(t)
@@ -181,6 +182,7 @@ func TestReconcileCAPIClusterNotFound(t *testing.T) {
 	_ = releasev1.AddToScheme(scheme)
 	_ = eksdv1.AddToScheme(scheme)
 	_ = clusterv1.AddToScheme(scheme)
+	_ = controlplanev1.AddToScheme(scheme)
 	cl := cb.WithScheme(scheme).WithRuntimeObjects(objs...).Build()
 	version := test.DevEksaVersion()
 
@@ -233,8 +235,17 @@ func TestReconcileRemoteGetClientError(t *testing.T) {
 			EksaVersion: &version,
 		},
 	}
-	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
-		c.Name = cluster.Name
+	kcp := test.KubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
+		kcp.Name = cluster.Name
+		kcp.Status = controlplanev1.KubeadmControlPlaneStatus{
+			Conditions: clusterv1.Conditions{
+				{
+					Type:               clusterapi.ReadyCondition,
+					Status:             corev1.ConditionTrue,
+					LastTransitionTime: metav1.NewTime(time.Now()),
+				},
+			},
+		}
 	})
 	sec := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
@@ -242,13 +253,14 @@ func TestReconcileRemoteGetClientError(t *testing.T) {
 			Namespace: constants.EksaSystemNamespace,
 		},
 	}
-	objs := []runtime.Object{bundle, eksdRelease, capiCluster, sec, eksaRelease}
+	objs := []runtime.Object{bundle, eksdRelease, kcp, sec, eksaRelease}
 	cb := fake.NewClientBuilder()
 	scheme := runtime.NewScheme()
 	_ = releasev1.AddToScheme(scheme)
 	_ = eksdv1.AddToScheme(scheme)
 	_ = clusterv1.AddToScheme(scheme)
 	_ = corev1.AddToScheme(scheme)
+	_ = controlplanev1.AddToScheme(scheme)
 	cl := cb.WithScheme(scheme).WithRuntimeObjects(objs...).Build()
 
 	remoteClientRegistry.EXPECT().GetClient(context.Background(), gomock.AssignableToTypeOf(client.ObjectKey{})).Return(nil, errors.New("client error"))
@@ -297,8 +309,17 @@ func TestReconcileConfigMapNotFoundApplyError(t *testing.T) {
 			EksaVersion: &version,
 		},
 	}
-	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
-		c.Name = cluster.Name
+	kcp := test.KubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
+		kcp.Name = cluster.Name
+		kcp.Status = controlplanev1.KubeadmControlPlaneStatus{
+			Conditions: clusterv1.Conditions{
+				{
+					Type:               clusterapi.ReadyCondition,
+					Status:             corev1.ConditionTrue,
+					LastTransitionTime: metav1.NewTime(time.Now()),
+				},
+			},
+		}
 	})
 	sec := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
@@ -321,7 +342,7 @@ func TestReconcileConfigMapNotFoundApplyError(t *testing.T) {
 			Namespace: "eksa-system",
 		},
 	}
-	objs := []runtime.Object{bundle, eksdRelease, capiCluster, sec, awsiamconfig, caSec, eksaRelease}
+	objs := []runtime.Object{bundle, eksdRelease, kcp, sec, awsiamconfig, caSec, eksaRelease}
 	cb := fake.NewClientBuilder()
 	scheme := runtime.NewScheme()
 	_ = anywherev1.AddToScheme(scheme)
@@ -329,6 +350,7 @@ func TestReconcileConfigMapNotFoundApplyError(t *testing.T) {
 	_ = eksdv1.AddToScheme(scheme)
 	_ = clusterv1.AddToScheme(scheme)
 	_ = corev1.AddToScheme(scheme)
+	_ = controlplanev1.AddToScheme(scheme)
 	cl := cb.WithScheme(scheme).WithRuntimeObjects(objs...).Build()
 
 	rCb := fake.NewClientBuilder()
