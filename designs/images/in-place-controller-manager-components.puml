@@ -1,0 +1,42 @@
+@startuml in-place-controller-manager-components
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+title Component diagram for In-place upgrades in EKS-A controller manager
+
+Container(api, "Kubernetes API server", "Go", "Provides read/write access to the kubernetes API objects stored in the etcd server and allows to subscribe to events when they change")
+Person(user, "EKS-A user", "Manages EKS-A clusters")
+Container_Ext(workloadKubeApiServer, "Workload Cluster Kubernetes API server", "Go", "Provides read/write access to the kubernetes API objects stored in the etcd server")
+
+Container_Boundary(clusterController, "EKS-A Controller Manager") {
+    Component(clusterReconciler, "Cluster Reconciler", "Go, controller-runtime", "Validates input and orchestrates Cluster reconcile requests")
+	Component(cpUpgrade, "ControlPlaneKubeadmUpgrade Reconciler", "Go, controller-runtime", "Reconciles requests to upgrade CP in-place")
+	Component(workerUpgrade, "WorkersKubeadmUpgrade Reconciler", "Go, controller-runtime", "Reconciles requests to upgrade a group of workers in-place")
+	Component(nodeUpgrade, "NodeUpgrade Reconciler", "Go, controller-runtime", "Reconciles requests to upgrade a node in-place")
+	Component(cpHook, "CP External upgrade Hook", "CAPI Runtime Hook, Go", "Implements CAPI CP External upgrade Runtime Extension")
+	Component(mdHook, "MachineDeployment External upgrade Hook", "CAPI Runtime Hook, Go", "Implements CAPI Machine Deployment upgrade Runtime Extension")
+
+	Rel(clusterReconciler, api, "Polls EKS-A Changes and updates CAPI objects", "HTTPS")
+
+	Rel(cpUpgrade, api, "Polls ControlPlaneKubeadmUpgrade changes and creates NodeUpgrades", "HTTPS")
+	Rel(workerUpgrade, api, "Polls WorkersKubeadmUpgrade changes and creates NodeUpgrades", "HTTPS")
+	Rel(nodeUpgrade, api, "Polls NodeUpgrade changes", "HTTPS")
+
+	Rel(cpHook, api, "Creates ControlPlaneKubeadmUpgrade")
+	Rel(mdHook, api, "Creates WorkersKubeadmUpgrade")
+}
+
+Container(kcp, "KCP controller", "Go, controller-runtime", "Reoncile Control Planes")
+Container(md, "Machine Deployment controller", "Go, controller-runtime", "Reoncile Control Planes")
+
+Rel(user, api, "Writes EKS-A API objects", "JSON/HTTPS")
+Rel(kcp, api, "Polls KCP Changes", "HTTPS")
+Rel(md, api, "Polls MD Changes", "HTTPS")
+
+Rel(kcp, cpHook, "Calls", "HTTPS")
+Rel(md, mdHook, "Calls", "HTTPS")
+
+Rel(nodeUpgrade, workloadKubeApiServer, "Schedules upgrader pods", "HTTPS")
+
+
+SHOW_LEGEND()
+@enduml
