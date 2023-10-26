@@ -208,7 +208,7 @@ Once the Tinkerbell services move from the Admin machine to run on the target cl
 When separate management and workload clusters are supported in Bare Metal, the IP address becomes a necessity.
 
 ### osImageURL
-Optional field to replace the default Bottlerocket operating system. EKS Anywhere can only auto-import Bottlerocket. In order to use Ubuntu or Redhat see [building baremetal node images]({{< relref "../../osmgmt/artifacts/#build-bare-metal-node-images" >}})
+Optional field to replace the default Bottlerocket operating system. EKS Anywhere can only auto-import Bottlerocket. In order to use Ubuntu or RHEL see [building baremetal node images]({{< relref "../../osmgmt/artifacts/#build-bare-metal-node-images" >}})
 to learn more on building and using Ubuntu with an EKS Anywhere cluster. This field is also useful if you want to provide a customized operating system image or simply host the standard image locally.
 
 ### hookImagesURLPath
@@ -261,12 +261,12 @@ spec:
 ### osFamily (required)
 Operating system on the machine. Permitted values: `bottlerocket`, `ubuntu`, `redhat` (Default: `bottlerocket`).
 
-### osImageURL
-Optional field to replace the default Bottlerocket operating system. EKS Anywhere can only auto-import Bottlerocket. In order to use Ubuntu or Redhat see [building baremetal node images]({{< relref "../../osmgmt/artifacts/#build-bare-metal-node-images" >}})
+### osImageURL (optional)
+Optional field to replace the default Bottlerocket operating system. EKS Anywhere can only auto-import Bottlerocket. In order to use Ubuntu or RHEL see [building baremetal node images]({{< relref "../../osmgmt/artifacts/#build-bare-metal-node-images" >}})
 to learn more on building and using Ubuntu with an EKS Anywhere cluster. This field is also useful if you want to provide a customized operating system image or simply host the standard image locally.
 
->**_NOTE:_** If specified for a single Machine Config, osImageURL has to be specified for all the Machine Configs.
-osImageURL field cannot be specified both at the DatacenterConfig and MachineConfig objects.
+>**_NOTE:_** If specified for a single `TinkerbellMachineConfig`, osImageURL has to be specified for all the `TinkerbellMachineConfigs`.
+osImageURL field cannot be specified both in the `TinkerbellDatacenterConfig` and `TinkerbellMachineConfig` objects.
 
 ### templateRef (optional)
 Identifies the template that defines the actions that will be applied to the TinkerbellMachineConfig.
