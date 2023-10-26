@@ -324,14 +324,6 @@ Packer will require prior authentication with your AWS account to launch EC2 ins
 
 Prism Central Administrator permissions are required to build a Nutanix image using `image-builder`.
 
-### Optional Proxy configuration
-You can use a proxy server to route outbound requests to the internet. To configure `image-builder` tool to use a proxy server, export these proxy environment variables:
-  ```bash
-  export HTTP_PROXY=<HTTP proxy URL e.g. http://proxy.corp.com:80>
-  export HTTPS_PROXY=<HTTPS proxy URL e.g. http://proxy.corp.com:443>
-  export NO_PROXY=<No proxy>
-  ```
-
 ### Build vSphere OVA node images
 
 These steps use `image-builder` to create an Ubuntu-based or RHEL-based image for vSphere. Before proceeding, ensure that the above system-level, network-level and vSphere-specific [prerequisites]({{< relref "#prerequisites">}}) have been met.
@@ -444,7 +436,6 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
      "rhel_password": "<RHSM password>"
    }
    ```
-
 1. Create an Ubuntu or Redhat image:
 
    **Ubuntu**
@@ -562,7 +553,7 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
 1. Create an Ubuntu or Red Hat image:
 
    **Ubuntu**
-
+   
    To create an Ubuntu-based image, run `image-builder` with the following options:
 
       * `--os`: `ubuntu`
@@ -570,6 +561,7 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
       * `--hypervisor`: `baremetal`
       * `--release-channel`: A [supported EKS Distro release](https://anywhere.eks.amazonaws.com/docs/reference/support/support-versions/)
       formatted as "[major]-[minor]"; for example "1-27"
+      * `--baremetal-config`: baremetal config file if using proxy
 
       ```bash
       image-builder build --os ubuntu --hypervisor baremetal --release-channel 1-27
@@ -816,7 +808,6 @@ These steps use `image-builder` to create an Ubuntu-based Amazon Machine Image (
       "volume_type": "gp3",
    }
    ```
-
    ##### **ami_filter_name**
    Regular expression to filter a source AMI. (default: `ubuntu/images/*ubuntu-focal-20.04-amd64-server-*`).
 
@@ -980,7 +971,6 @@ These steps use `image-builder` to create a Ubuntu-based image for Nutanix AHV a
      "rhel_password": "<RHSM password>"
    }
    ```
-
 1. Create an Ubuntu or Redhat image:
 
    **Ubuntu**
@@ -1134,7 +1124,22 @@ You can now run the `image-builder` CLI with the `files-config` option, with thi
    ```bash
    image-builder build --os <OS> --hypervisor <hypervisor> --release-channel <release channel> --<hypervisor>-config config.json --files-config files.json
    ```
+### Using Proxy Server
 
+`image-builder` supports proxy enabled build environments. In order to use proxy server to route outbound requests to internet, add the following fields to the hypervisor or provider configuration file (e.x. `baremetal.json`)
+
+  ```json
+   {
+     "http_proxy": "<proxy endpoint, for example, http://username:passwd@proxyhost:port",
+     "https_proxy": "<proxy endpoint, for example, https://proxyhost:port/",
+     "no_proxy": "<optional comma seperated list of domains that should be exluded from proxying"
+  }
+  ```
+
+Run `image-builder` CLI with the hypervisor configuration file
+  ```bash
+  image-builder build --os <OS> --hypervisor <hypervisor> --release-channel <release channel> --<hypervisor>-config config.json
+  ```
 ## Images
 
 The various images for EKS Anywhere can be found [in the EKS Anywhere ECR repository](https://gallery.ecr.aws/eks-anywhere/).
