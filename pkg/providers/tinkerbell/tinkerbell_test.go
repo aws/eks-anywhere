@@ -2289,7 +2289,6 @@ func getVersionBundle() *cluster.VersionsBundle {
 				URI: "public.ecr.aws/eks-distro/kubernetes/kube-proxy:v1.21.2-eks-1-21-4",
 			},
 			EtcdVersion: "3.4.14",
-			EtcdURL:     "https://distro.eks.amazonaws.com/kubernetes-1-19/releases/4/artifacts/etcd/v3.4.14/etcd-linux-amd64-v3.4.14.tar.gz",
 		},
 	}
 }

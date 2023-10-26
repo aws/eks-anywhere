@@ -421,7 +421,6 @@ func buildTemplateMapCP(
 		"etcdRepository":                versionsBundle.KubeDistro.Etcd.Repository,
 		"etcdImageTag":                  versionsBundle.KubeDistro.Etcd.Tag,
 		"externalEtcdVersion":           versionsBundle.KubeDistro.EtcdVersion,
-		"externalEtcdReleaseUrl":        versionsBundle.KubeDistro.EtcdURL,
 		"etcdCipherSuites":              crypto.SecureCipherSuitesString(),
 		"kubeletExtraArgs":              kubeletExtraArgs.ToPartialYaml(),
 		"hardwareSelector":              controlPlaneMachineSpec.HardwareSelector,
