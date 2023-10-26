@@ -15,15 +15,14 @@ import (
 func TestSetUbuntuConfigInEtcdCluster(t *testing.T) {
 	g := newApiBuilerTest(t)
 	got := wantEtcdCluster()
-	versionBundle := g.clusterSpec.VersionsBundles["1.21"]
+	v := "0.0.1"
 	want := got.DeepCopy()
 	want.Spec.EtcdadmConfigSpec.Format = etcdbootstrapv1.Format("cloud-config")
 	want.Spec.EtcdadmConfigSpec.CloudInitConfig = &etcdbootstrapv1.CloudInitConfig{
-		Version:        versionBundle.KubeDistro.EtcdVersion,
-		InstallDir:     "/usr/bin",
-		EtcdReleaseURL: versionBundle.KubeDistro.EtcdURL,
+		Version:    v,
+		InstallDir: "/usr/bin",
 	}
-	clusterapi.SetUbuntuConfigInEtcdCluster(got, versionBundle)
+	clusterapi.SetUbuntuConfigInEtcdCluster(got, v)
 	g.Expect(got).To(Equal(want))
 }
 

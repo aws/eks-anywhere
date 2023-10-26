@@ -1057,9 +1057,8 @@ func wantEtcdClusterUbuntu() *etcdv1.EtcdadmCluster {
 	etcd := wantEtcdCluster()
 	etcd.Spec.EtcdadmConfigSpec.Format = etcdbootstrapv1.Format("cloud-config")
 	etcd.Spec.EtcdadmConfigSpec.CloudInitConfig = &etcdbootstrapv1.CloudInitConfig{
-		Version:        "3.4.16",
-		InstallDir:     "/usr/bin",
-		EtcdReleaseURL: "https://distro.eks.amazonaws.com/kubernetes-1-21/releases/4/artifacts/etcd/v3.4.16/etcd-linux-amd64-v3.4.16.tar.gz",
+		Version:    "3.4.16",
+		InstallDir: "/usr/bin",
 	}
 	etcd.Spec.EtcdadmConfigSpec.PreEtcdadmCommands = []string{
 		"/etc/eks/bootstrap.sh",
