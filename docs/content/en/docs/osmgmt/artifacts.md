@@ -1130,9 +1130,9 @@ You can now run the `image-builder` CLI with the `files-config` option, with thi
 
   ```json
    {
-     "http_proxy": "<proxy endpoint, for example, http://username:passwd@proxyhost:port",
-     "https_proxy": "<proxy endpoint, for example, https://proxyhost:port/",
-     "no_proxy": "<optional comma seperated list of domains that should be exluded from proxying"
+     "http_proxy": "<http proxy endpoint, for example, http://username:passwd@proxyhost:port",
+     "https_proxy": "<https proxy endpoint, for example, https://proxyhost:port/",
+     "no_proxy": "<optional comma seperated list of domains that should be excluded from proxying"
   }
   ```
 
@@ -1140,6 +1140,39 @@ Run `image-builder` CLI with the hypervisor configuration file
   ```bash
   image-builder build --os <OS> --hypervisor <hypervisor> --release-channel <release channel> --<hypervisor>-config config.json
   ```
+
+### RedHat Satellite Support
+
+As part of the image building process, `image-builder` creates a virtual machine with the chosen operating system, install all the required packages and creates an image out of the virtual machine.
+While building RedHat node images, `image-builder` uses public RedHat subscription endpoints to register the build virtual machine with the provided RedHat account and download required packages.
+
+Alternatively, `image-builder` can also use a private RedHat Satellite to register the build virtual machine and pull packages from the Satellite. 
+In order to use RedHat Satellite in the image build process follow the steps below.
+
+#### Prerequisites
+1. Ensure the host running `image-builder` has bi-directional network connectivity with the RedHat Satellite
+2. Image builder flow only supports RedHat Satellite version >= 6.8
+3. Add the following RedHat repositories for the latest RedHat 8.x version on the Satellite and initiate a sync to replicate required packages
+   1. Base OS Rpms
+   2. Base OS - Extended Update Support Rpms
+   3. AppStream - Extended Update Support Rpms
+4. Create an activation key on the Satellite and ensure library environment is enabled
+
+#### Build RedHat node images using RedHat Satellite
+1. Add the following fields to the hypervisor or provider configuration file
+   ```json
+   {
+     "rhsm_server_hostname": "fqdn of RedHat Satellite server",
+     "rhsm_server_release_version": "Version of Redhat OS Packages to pull from Satellite. e.x. 8.8",
+     "rhsm_activation_key": "activation key from Satellite",
+     "rhsm_org_id": "org id from Satellite"
+   }
+   ```
+   `rhsm_server_release_version` should always point to the latest 8 minor release RedHat release synced and available on RedHat Satellite 
+2. Run `image-builder` CLI with the hypervisor configuration file
+   ```bash
+   image-builder build --os <OS> --hypervisor <hypervisor> --release-channel <release channel> --<hypervisor>-config config.json
+   ```
 ## Images
 
 The various images for EKS Anywhere can be found [in the EKS Anywhere ECR repository](https://gallery.ecr.aws/eks-anywhere/).
