@@ -244,7 +244,13 @@ Once the old KinD bootstrap cluster is deleted, you can rerun the `eksctl anywhe
 
 ### Cluster upgrade fails with management components on bootstrap cluster
 
-If a cluster upgrade of a management (or self managed) cluster fails or is halted in the middle, you may be left in a
+{{% alert title="Important" color="warning" %}}
+
+KinD cluster is no longer used during upgrade of management cluster from v0.18.0 onwards.
+
+{{% /alert %}}
+
+For `eksctl anywhere` version older than `v0.18.0`, if a cluster upgrade of a management (or self managed) cluster fails or is halted in the middle, you may be left in a
 state where the management resources (CAPI) are still on the KinD bootstrap cluster on the Admin machine. Right now, you will have to
 manually move the management resources from the KinD cluster back to the management cluster.
 

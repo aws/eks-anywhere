@@ -244,9 +244,11 @@ Type to identify the OS image. (Permitted values: `name` or `uuid`)
  
 ### image.name (`name` or `UUID` required)
 Name of the image
+The `image.name` must contain the `Cluster.Spec.KubernetesVersion` or `Cluster.Spec.WorkerNodeGroupConfiguration[].KubernetesVersion` version (in case of modular upgrade). For example, if the Kubernetes version is 1.24, `image.name` must include 1.24, 1_24, 1-24 or 124.
  
 ### image.uuid (`name` or `UUID` required)
 UUID of the image
+The name of the image associated with the `uuid` must contain the `Cluster.Spec.KubernetesVersion` or `Cluster.Spec.WorkerNodeGroupConfiguration[].KubernetesVersion` version (in case of modular upgrade). For example, if the Kubernetes version is 1.24, the name associated with `image.uuid` field must include 1.24, 1_24, 1-24 or 124.
  
 ### memorySize
 Size of RAM on virtual machines (Default: `4Gi`)
