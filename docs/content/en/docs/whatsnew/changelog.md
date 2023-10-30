@@ -23,7 +23,7 @@ Please upgrade to `v0.15.3` if you are using Tinkerbell (Bare Metal) provider.
 | Ubuntu       | 20.04	 | 20.04     |	20.04             | Not supported	     | 20.04 |  
 |              | 22.04   | 22.04     |  22.04             | Not supported      | Not supported   |
 | Bottlerocket | 1.14.3  | 1.14.3    |  Not supported     | Not supported	     | Not supported   |
-| RHEL         | 8.7	   | 8.7	     |  Not supported     | 8.7	               | Not supported   |
+| RHEL         | 8.7	   | 8.7	     |  9.x, 8.7          | 8.7	               | Not supported   |
 
 
 ### Added
@@ -35,6 +35,7 @@ Please upgrade to `v0.15.3` if you are using Tinkerbell (Bare Metal) provider.
 - Bare metal out-of-band webhook: [#5738](https://github.com/aws/eks-anywhere/issues/5738)
 - Support for Kubernetes v1.28
 - Support for air gapped image building: [#6457](https://github.com/aws/eks-anywhere/issues/6457)
+- Support for RHEL 8 and RHEL 9 for Nutanix provider: [#6822](https://github.com/aws/eks-anywhere/pull/6822)
 
 
 ### Changed
