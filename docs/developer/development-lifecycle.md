@@ -28,6 +28,6 @@ This documents aims to codify our development process for the most common scenar
 
 * The solution has been implemented, it solves the original issue and follows all requirements.
 * All PRs have been merged.
-* All new code in properly tested.
+* All new code is properly tested.
 * If E2E tests were necessary, they are merged and running in CI (ideally without flakes).
 * Documentation has been added (when necessary).

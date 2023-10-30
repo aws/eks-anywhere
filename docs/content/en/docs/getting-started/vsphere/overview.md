@@ -27,7 +27,7 @@ Details about this config file are contained on the [vSphere Config]({{< relref 
 
 #### 3. Launch the cluster creation
 
-Once you have modified the cluster configuration file, use `eksctl anywhere cluster create -f $CLUSTER_NAME.yaml` starts the cluster creation process.
+Once you have modified the cluster configuration file, use `eksctl anywhere create cluster -f $CLUSTER_NAME.yaml` starts the cluster creation process.
 To see details on the cluster creation process, increase verbosity (`-v=9` provides maximum verbosity).
 
 #### 4. Authenticate and create bootstrap cluster
@@ -39,12 +39,12 @@ To begin, the cluster creation process runs a series of [govc](https://github.co
 
 * Using the URL and credentials provided in the cluster spec files, authenticates to the vSphere provider.
 
-* Validates the datacenter and the datacenter network exists:
+* Validates that the datacenter and the datacenter network exists.
 
 * Validates that the identified datastore (to store your EKS Anywhere cluster) exists, that the folder holding your EKS Anywhere cluster VMs exists, and that the resource pools containing compute resources exist.
-If you have multiple `VSphereMachineConfig` objects in your config file, will see these validations repeated:
+If you have multiple `VSphereMachineConfig` objects in your config file, you will see these validations repeated.
 
-* Validates the virtual machine templates to be used for the control plane and worker nodes (such as `ubuntu-2004-kube-v1.20.7`):
+* Validates the virtual machine templates to be used for the control plane and worker nodes (such as `ubuntu-2004-kube-v1.20.7`).
 
 
 If all validations pass, you will see this message:
@@ -86,13 +86,13 @@ It uses `kubectl` to apply a target cluster configuration as follows:
 
 * Once etcd, the control plane, and the worker nodes are ready, it applies the networking configuration to the target cluster.
 
-* CAPI providers are configured on the target cluster, in preparation for the target cluster to take over responsibilities for running the components needed to manage the itself.
+* CAPI providers are configured on the target cluster, in preparation for the target cluster to take over responsibilities for running the components needed to manage itself.
 
-* With CAPI running on the target cluster, CAPI objects for the target cluster are moved from the bootstrap cluster to the target cluster’s CAPI service (done internally with the `clusterctl` command):
+* With CAPI running on the target cluster, CAPI objects for the target cluster are moved from the bootstrap cluster to the target cluster’s CAPI service (done internally with the `clusterctl` command).
 
 * Add Kubernetes CRDs and other addons that are specific to EKS Anywhere.
 
-* The cluster configuration is saved:
+* The cluster configuration is saved.
 
 Once etcd, the control plane, and the worker nodes are ready, it applies the networking configuration to the workload cluster:
 
@@ -100,7 +100,7 @@ Once etcd, the control plane, and the worker nodes are ready, it applies the net
 Installing networking on workload cluster
 ```
 
-After that, the CAPI providers are configured on the workload cluster, in preparation for the workload cluster to take over responsibilities for running the components needed to manage the itself.
+After that, the CAPI providers are configured on the workload cluster, in preparation for the workload cluster to take over responsibilities for running the components needed to manage itself:
 
 ```
 Installing cluster-api providers on workload cluster
