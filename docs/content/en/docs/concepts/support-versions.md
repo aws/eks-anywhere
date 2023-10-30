@@ -22,9 +22,9 @@ The following table shows EKS Anywhere version support for different Kubernetes 
 | Kubernetes version | Supported EKS Anywhere version                        | First supported    | End of support   |
 |--------------------|-------------------------------------------------------|--------------------|------------------|
 | 1.28               | 0.18                                                        | October 27, 2023    | November 2024    |
-| 1.27               | 0.17, 0.16                                                  | June 1, 2023        | September 2024   |
-| 1.26               | 0.17, 0.16, 0.15                                            | April 5, 2023	     | July 2024        | 
-| 1.25               | 0.17, 0.16, 0.15, 0.14                                      | February 16, 2023	 | April 2024       | 
+| 1.27               | 0.17, 0.16                                                  | June 1, 2023        | July 2024   |
+| 1.26               | 0.17, 0.16, 0.15                                            | April 5, 2023	     | June 2024        | 
+| 1.25               | 0.17, 0.16, 0.15, 0.14                                      | February 16, 2023	 | May 2024       | 
 | 1.24               | 0.17, 0.16, 0.15, 0.14, 0.13, 0.12                          | November 17, 2022	 | January 2024     | 
 | 1.23               | 0.17, 0.16, 0.15, 0.14, 0.13, 0.12, 0.11                    | August 18, 2022	   | October 2023     | 
 | 1.22               | 0.15, 0.14, 0.13, 0.12, 0.11, 0.10, 0.9, 0.8          | March 31, 2022     | May 2023         | 
@@ -37,6 +37,7 @@ The following table notes which EKS Anywhere and related Kubernetes versions are
 
 | EKS Anywhere version      | Kubernetes versions included | EKS Anywhere Release Date | CVE patches and bug fixes back-ported? |
 |------------|------------------------------|---------------------------------|-------------------------|
+| 0.18 | 1.28, 1.27, 1.26, 1.25, 1.24 | October 30, 2023 | Yes |
 | 0.17 | 1.27, 1.26, 1.25, 1.24, 1.23 | August 16, 2023 | Yes |
 | 0.16 | 1.27, 1.26, 1.25, 1.24, 1.23 | June 1, 2023 | No |
 | 0.15 | 1.26, 1.25, 1.24, 1.23, 1.22 | March 30, 2023 | No |
@@ -70,9 +71,10 @@ These are supported operating system versions that EKS Anywhere may use to provi
 
 | OS         | OS Versions                  | Supported EKS Anywhere version  |
 |------------|------------------------------|---------------------------------|
-| Ubuntu        | 22.04     | 0.17
-|               | 20.04     | 0.17, 0.16, 0.15, 0.14, 0.13, 0.12, 0.11, 0.10, 0.9, 0.8, 0.7, 0.6, 0.5
-| Bottlerocket  | 1.13.1    | 0.17, 0.16, 0.15
+| Ubuntu        | 22.04     | 0.18, 0.17
+|               | 20.04     | 0.18, 0.17, 0.16, 0.15, 0.14, 0.13, 0.12, 0.11, 0.10, 0.9, 0.8, 0.7, 0.6, 0.5
+| Bottlerocket  | 1.15.1    | 0.18, 0.17, 0.16, 0.15
+|               | 1.13.1    | 0.17, 0.16, 0.15
 |               | 1.12.0    | 0.14
 |               | 1.10.1    | 0.12
 |               | 1.9.2     | 0.11
@@ -81,7 +83,7 @@ These are supported operating system versions that EKS Anywhere may use to provi
 |               | 1.6.2     | 0.8
 |               | 1.6.0     | 0.7
 |               | 1.3.0     | 0.6
-| RHEL          | 8.7	      | 0.17, 0.16, 0.15, 0.13, 0.14, 0.13, 0.12
+| RHEL          | 8.7	      | 0.18, 0.17, 0.16, 0.15, 0.13, 0.14, 0.13, 0.12
 
 For details on supported operating systems for Admin machines, [see the install guide.]({{< relref "../getting-started/install/" >}})
 

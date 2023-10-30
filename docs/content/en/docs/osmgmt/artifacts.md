@@ -45,7 +45,7 @@ OR
 
 Using a specific EKS Anywhere version
 ```bash
-EKSA_RELEASE_VERSION=v0.17.2
+EKSA_RELEASE_VERSION=v0.18.0
 ```
 
 ```bash
@@ -63,7 +63,7 @@ OR
 
 Using a specific EKS Anywhere version
 ```bash
-EKSA_RELEASE_VERSION=v0.17.2
+EKSA_RELEASE_VERSION=v0.18.0
 ```
 
 kernel:
@@ -93,7 +93,7 @@ OR
 
 Using a specific EKS Anywhere version
 ```bash
-EKSA_RELEASE_VERSION=v0.17.2
+EKSA_RELEASE_VERSION=v0.18.0
 ```
 
 ```bash
@@ -118,7 +118,7 @@ OR
 
 Using a specific EKS Anywhere version
 ```bash
-EKSA_RELEASE_VERSION=v0.17.2
+EKSA_RELEASE_VERSION=v0.18.0
 ```
 
 ```bash
@@ -163,7 +163,7 @@ export KUBEVERSION="1.27"
 
    Using a specific EKS Anywhere version
    ```bash
-   EKSA_RELEASE_VERSION=v0.17.2
+   EKSA_RELEASE_VERSION=v0.18.0
    ```
 
    Set the Bottlerocket image format to the desired value (`ova` for the VMware variant or `raw` for the Baremetal variant)
@@ -396,7 +396,7 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
 
    Using a specific EKS Anywhere version
    ```bash
-   EKSA_RELEASE_VERSION=v0.17.2
+   EKSA_RELEASE_VERSION=v0.18.0
    ```
 
    ```bash
@@ -547,7 +547,7 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
 
    Using a specific EKS Anywhere version
    ```bash
-   EKSA_RELEASE_VERSION=v0.17.2
+   EKSA_RELEASE_VERSION=v0.18.0
    ```
 
    ```bash
@@ -687,7 +687,7 @@ These steps use `image-builder` to create a RHEL-based image for CloudStack. Bef
 
    Using a specific EKS Anywhere version
    ```bash
-   EKSA_RELEASE_VERSION=v0.17.2
+   EKSA_RELEASE_VERSION=v0.18.0
    ```
 
    ```bash
@@ -788,7 +788,7 @@ These steps use `image-builder` to create an Ubuntu-based Amazon Machine Image (
 
    Using a specific EKS Anywhere version
    ```bash
-   EKSA_RELEASE_VERSION=v0.17.2
+   EKSA_RELEASE_VERSION=v0.18.0
    ```
 
    ```bash
@@ -945,7 +945,7 @@ These steps use `image-builder` to create a Ubuntu-based image for Nutanix AHV a
 
    Using a specific EKS Anywhere version
    ```bash
-   EKSA_RELEASE_VERSION=v0.17.2
+   EKSA_RELEASE_VERSION=v0.18.0
    ```
 
    ```bash

@@ -15,7 +15,49 @@ Please upgrade to `v0.15.3` if you are using Tinkerbell (Bare Metal) provider.
 * When upgrading to a new minor version, a new OS image must be created using the new image-builder cli.
 {{% /alert %}}
 
-[Unreleased]
+## [v0.18.0](https://github.com/aws/eks-anywhere/releases/tag/v0.18.0)
+
+### Supported OS version details
+|              | vSphere | Bare Metal |  Nutanix | CloudStack | Snow  |
+|    :---:     |  :---:  |   :---:   |   :---:  |    :---:   | :---: |
+| Ubuntu       | 20.04	 | 20.04     |	20.04             | Not supported	     | 20.04 |  
+|              | 22.04   | 22.04     |  22.04             | Not supported      | Not supported   |
+| Bottlerocket | 1.14.3  | 1.14.3    |  Not supported     | Not supported	     | Not supported   |
+| RHEL         | 8.7	   | 8.7	     |  Not supported     | 8.7	               | Not supported   |
+
+
+### Added
+- Etcd encryption for CloudStack and vSphere: [#6557](https://github.com/aws/eks-anywhere/pull/6557)
+- KinD-less upgrades: [#6622](https://github.com/aws/eks-anywhere/pull/6622)
+- Generate TinkerbellTemplateConfig command: [#3588](https://github.com/aws/eks-anywhere/issues/3588)
+- Support for modular Kubernetes version upgrades with bare metal: [#6735](https://github.com/aws/eks-anywhere/pull/6735)
+  - OSImageURL added to Tinkerbell Machine Config
+- Bare metal out-of-band webhook: [#5738](https://github.com/aws/eks-anywhere/issues/5738)
+- Support for Kubernetes v1.28
+- Support for air gapped image building: [#6457](https://github.com/aws/eks-anywhere/issues/6457)
+
+
+### Changed
+- Increased control over upgrades by separating external etcd reconciliation from control plane nodes: [#6496](https://github.com/aws/eks-anywhere/pull/6496)
+- Upgraded Cilium to 1.12.15
+- Upgraded EKS-D:
+  - `v1-24-eks-26` to [`v1-24-eks-27`](https://distro.eks.amazonaws.com/releases/1-24/27/)
+  - `v1-25-eks-22` to [`v1-25-eks-23`](https://distro.eks.amazonaws.com/releases/1-25/23/)
+  - `v1-26-eks-18` to [`v1-26-eks-19`](https://distro.eks.amazonaws.com/releases/1-26/19/)
+  - `v1-27-eks-12` to [`v1-27-eks-13`](https://distro.eks.amazonaws.com/releases/1-27/13/)
+  - [`v1-28-eks-26`](https://distro.eks.amazonaws.com/releases/1-28/6/)
+- Cluster API Provider CloudStack: `v0.4.9-rc6` to `v0.4.9-rc7`
+- Cluster API Provider AWS Snow: `v0.1.26` to `v0.1.27`
+- Upgraded CAPI to `v1.5.2`
+
+### Removed
+- Support for Kubernetes v1.23
+
+### Fixed
+- Fail on `eksctl anywhere upgrade cluster plan -f`: [#6716](https://github.com/aws/eks-anywhere/issues/6716)
+- Error out when management kubeconfig is not present for workload cluster operations: [6501](https://github.com/aws/eks-anywhere/pull/6501)
+- Empty vSphereMachineConfig users fails CLI upgrade: [5420](https://github.com/aws/eks-anywhere/issues/5420)
+- CLI stalls on upgrade with Flux Gitops: [6453](https://github.com/aws/eks-anywhere/issues/6453)
 
 ## [v0.17.4](https://github.com/aws/eks-anywhere/releases/tag/v0.17.4)
 
