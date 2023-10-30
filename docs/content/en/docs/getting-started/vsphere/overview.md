@@ -44,7 +44,7 @@ To begin, the cluster creation process runs a series of [govc](https://github.co
 * Validates that the identified datastore (to store your EKS Anywhere cluster) exists, that the folder holding your EKS Anywhere cluster VMs exists, and that the resource pools containing compute resources exist.
 If you have multiple `VSphereMachineConfig` objects in your config file, you will see these validations repeated.
 
-* Validates the virtual machine templates to be used for the control plane and worker nodes (such as `ubuntu-2004-kube-v1.20.7`):
+* Validates the virtual machine templates to be used for the control plane and worker nodes (such as `ubuntu-2004-kube-v1.20.7`).
 
 
 If all validations pass, you will see this message:
