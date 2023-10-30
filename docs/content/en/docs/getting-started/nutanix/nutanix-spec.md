@@ -252,7 +252,7 @@ UUID of the image
 Size of RAM on virtual machines (Default: `4Gi`)
 
 ### osFamily (optional)
-Operating System on virtual machines. (Permitted values: `ubuntu`)
+Operating System on virtual machines. Permitted values: `ubuntu` and `redhat`. (Default: `ubuntu`)
  
 ### subnet
 Reference to the subnet to be assigned to the VMs.
