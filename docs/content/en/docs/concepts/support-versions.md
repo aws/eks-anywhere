@@ -83,6 +83,7 @@ These are supported operating system versions that EKS Anywhere may use to provi
 |               | 1.6.2     | 0.8
 |               | 1.6.0     | 0.7
 |               | 1.3.0     | 0.6
+| RHEL          | 9.x	      | 0.18
 | RHEL          | 8.7	      | 0.18, 0.17, 0.16, 0.15, 0.13, 0.14, 0.13, 0.12
 
 For details on supported operating systems for Admin machines, [see the install guide.]({{< relref "../getting-started/install/" >}})
