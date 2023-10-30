@@ -18,17 +18,17 @@ Support for other providers will be added in a future release.
 {{% /alert %}}
 
 ## Before you begin
-Before enabling etcd encryption, you sure you have done the following:
-- Read Kubernetes documentation on [Encrypting Secret Data at Rest.](https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/)
-- Read Kubernetes documentation on [Using a KMS Provider for data encryption.](https://kubernetes.io/docs/tasks/administer-cluster/kms-provider/)
-- Read documentation on [AWS Encryption Provider.](https://github.com/kubernetes-sigs/aws-encryption-provider#aws-encryption-provider)
-- Created an EKS Anywhere cluster since encryption can only be enabled on already created clusters.
-- Deployed a KMS provider on the cluster that the `kube-apiserver` can use to encrypt/decrypt secrets.
+Before enabling etcd encryption, make sure you have done the following:
+- Learn how encrypting confidential data works in Kubernetes by reading [Encrypting Secret Data at Rest.](https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/)
+- Learn how Kubernetes uses KMS encryption providers to encrypt data by reading [Using a KMS Provider for data encryption.](https://kubernetes.io/docs/tasks/administer-cluster/kms-provider/)
+- Learn how you can use AWS KMS keys to encrypt data using [AWS Encryption Provider.](https://github.com/kubernetes-sigs/aws-encryption-provider#aws-encryption-provider)
+- Create an EKS Anywhere cluster since encryption can only be enabled on already created clusters.
+- Deploy a KMS provider on the cluster that the `kube-apiserver` can use to encrypt/decrypt secrets.<br>
 [AWS Encryption Provider](https://github.com/kubernetes-sigs/aws-encryption-provider#aws-encryption-provider) is the recommended KMS provider for EKS Anywhere.
 
 ## Example etcd encryption configuration
 
-The following cluster spec shows an example enable etcd encryption configuration:
+The following cluster spec enables etcd encryption configuration:
 ```yaml
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: Cluster
@@ -133,8 +133,8 @@ spec:
       tolerations:
       - key: "node-role.kubernetes.io/master"
         effect: "NoSchedule"
-      - effect: NoSchedule
-        key: node-role.kubernetes.io/control-plane
+      - key: "node-role.kubernetes.io/control-plane"
+        effect: "NoSchedule"
       volumes:
       - hostPath:
           path: /var/run/kmsplugin
