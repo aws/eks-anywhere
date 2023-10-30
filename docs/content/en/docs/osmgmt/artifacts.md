@@ -454,11 +454,11 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
       * `--os`: `ubuntu`
       * `--os-version`: `2004` or `2204` (default: `2004`)
       * `--hypervisor`: For vSphere use `vsphere`
-      * `--release-channel`: Supported EKS Distro releases include 1-23, 1-24, 1-25, 1-26 and 1-27.
+      * `--release-channel`: Supported EKS Distro releases include 1-24, 1-25, 1-26, 1-27 and 1-28.
       * `--vsphere-config`: vSphere configuration file (`vsphere-connection.json` in this example)
 
       ```bash
-      image-builder build --os ubuntu --hypervisor vsphere --release-channel 1-27 --vsphere-config vsphere-connection.json
+      image-builder build --os ubuntu --hypervisor vsphere --release-channel 1-28 --vsphere-config vsphere-connection.json
       ```
 
    **Red Hat Enterprise Linux**
@@ -468,11 +468,11 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
       * `--os`: `redhat`
       * `--os-version`: `8` (default: `8`)
       * `--hypervisor`: For vSphere use `vsphere`
-      * `--release-channel`: Supported EKS Distro releases include 1-23, 1-24, 1-25, 1-26 and 1-27.
+      * `--release-channel`: Supported EKS Distro releases include 1-24, 1-25, 1-26, 1-27 and 1-28.
       * `--vsphere-config`: vSphere configuration file (`vsphere-connection.json` in this example)
 
       ```bash
-      image-builder build --os redhat --hypervisor vsphere --release-channel 1-27 --vsphere-config vsphere-connection.json
+      image-builder build --os redhat --hypervisor vsphere --release-channel 1-28 --vsphere-config vsphere-connection.json
       ```
 
 ### Build Bare Metal node images
@@ -602,7 +602,7 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
       * `--baremetal-config`: Bare metal config file
 
       ```bash
-      image-builder build --os redhat --hypervisor baremetal --release-channel 1-27 --baremetal-config baremetal.json
+      image-builder build --os redhat --hypervisor baremetal --release-channel 1-28 --baremetal-config baremetal.json
       ```
 
 1. To consume the image, serve it from an accessible web server, then create the [bare metal cluster spec]({{< relref "../getting-started/baremetal/bare-spec/" >}})
@@ -715,11 +715,11 @@ These steps use `image-builder` to create a RHEL-based image for CloudStack. Bef
       * `--os`: `redhat`
       * `--os-version`: `8` (default: `8`)
       * `--hypervisor`: For CloudStack use `cloudstack`
-      * `--release-channel`: Supported EKS Distro releases include 1-23, 1-24, 1-25, 1-26 and 1-27.
+      * `--release-channel`: Supported EKS Distro releases include 1-24, 1-25, 1-26, 1-27 and 1-28.
       * `--cloudstack-config`: CloudStack configuration file (`cloudstack.json` in this example)
 
       ```bash
-      image-builder build --os redhat --hypervisor cloudstack --release-channel 1-27 --cloudstack-config cloudstack.json
+      image-builder build --os redhat --hypervisor cloudstack --release-channel 1-28 --cloudstack-config cloudstack.json
       ```
 
 1. To consume the resulting RHEL-based image, add it as a template to your CloudStack setup as described in [Preparing CloudStack]({{< relref "../getting-started/cloudstack/cloudstack-preparation" >}}).
@@ -861,11 +861,11 @@ These steps use `image-builder` to create an Ubuntu-based Amazon Machine Image (
    * `--os`: `ubuntu`
    * `--os-version`: `2004` or `2204` (default: `2004`)
    * `--hypervisor`: For AMI, use `ami`
-   * `--release-channel`: Supported EKS Distro releases include 1-23, 1-24, 1-25, 1-26 and 1-27.
+   * `--release-channel`: Supported EKS Distro releases include 1-24, 1-25, 1-26, 1-27 and 1-28.
    * `--ami-config`: AMI configuration file (`ami.json` in this example)
 
    ```bash
-   image-builder build --os ubuntu --hypervisor ami --release-channel 1-27 --ami-config ami.json
+   image-builder build --os ubuntu --hypervisor ami --release-channel 1-28 --ami-config ami.json
    ```
 1. After the build, the Ubuntu AMI will be available in your AWS account in the AWS region specified in your AMI configuration file. If you wish to export it as a Raw image, you can achieve this using the AWS CLI.
    ```
@@ -990,11 +990,11 @@ These steps use `image-builder` to create a Ubuntu-based image for Nutanix AHV a
       * `--os`: `ubuntu`
       * `--os-version`: `2004` or `2204` (default: `2004`)
       * `--hypervisor`: For Nutanix use `nutanix`
-      * `--release-channel`: Supported EKS Distro releases include 1-23, 1-24, 1-25, 1-26 and 1-27.
+      * `--release-channel`: Supported EKS Distro releases include 1-24, 1-25, 1-26, 1-27 and 1-28.
       * `--nutanix-config`: Nutanix configuration file (`nutanix-connection.json` in this example)
 
       ```bash
-      image-builder build --os ubuntu --hypervisor nutanix --release-channel 1-27 --nutanix-config nutanix-connection.json
+      image-builder build --os ubuntu --hypervisor nutanix --release-channel 1-28 --nutanix-config nutanix-connection.json
       ```
 
    **Red Hat Enterprise Linux**
@@ -1004,11 +1004,11 @@ These steps use `image-builder` to create a Ubuntu-based image for Nutanix AHV a
       * `--os`: `redhat`
       * `--os-version`: `8` or `9` (default: `8`)
       * `--hypervisor`: For Nutanix use `nutanix`
-      * `--release-channel`: Supported EKS Distro releases include 1-23, 1-24, 1-25, 1-26 and 1-27.
+      * `--release-channel`: Supported EKS Distro releases include 1-24, 1-25, 1-26, 1-27 and 1-28.
       * `--nutanix-config`: Nutanix configuration file (`nutanix-connection.json` in this example)
 
       ```bash
-      image-builder build --os redhat --hypervisor nutanix --release-channel 1-27 --nutanix-config nutanix-connection.json
+      image-builder build --os redhat --hypervisor nutanix --release-channel 1-28 --nutanix-config nutanix-connection.json
       ```
 
 ### Configuring OS version
