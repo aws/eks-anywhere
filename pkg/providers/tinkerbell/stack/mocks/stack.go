@@ -252,15 +252,20 @@ func (mr *MockStackInstallerMockRecorder) UninstallLocal(ctx interface{}) *gomoc
 }
 
 // Upgrade mocks base method.
-func (m *MockStackInstaller) Upgrade(arg0 context.Context, arg1 v1alpha1.TinkerbellBundle, tinkerbellIP, kubeconfig, hookOverride string) error {
+func (m *MockStackInstaller) Upgrade(arg0 context.Context, arg1 v1alpha1.TinkerbellBundle, tinkerbellIP, kubeconfig, hookOverride string, opts ...stack.InstallOption) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Upgrade", arg0, arg1, tinkerbellIP, kubeconfig, hookOverride)
+	varargs := []interface{}{arg0, arg1, tinkerbellIP, kubeconfig, hookOverride}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "Upgrade", varargs...)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Upgrade indicates an expected call of Upgrade.
-func (mr *MockStackInstallerMockRecorder) Upgrade(arg0, arg1, tinkerbellIP, kubeconfig, hookOverride interface{}) *gomock.Call {
+func (mr *MockStackInstallerMockRecorder) Upgrade(arg0, arg1, tinkerbellIP, kubeconfig, hookOverride interface{}, opts ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Upgrade", reflect.TypeOf((*MockStackInstaller)(nil).Upgrade), arg0, arg1, tinkerbellIP, kubeconfig, hookOverride)
+	varargs := append([]interface{}{arg0, arg1, tinkerbellIP, kubeconfig, hookOverride}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Upgrade", reflect.TypeOf((*MockStackInstaller)(nil).Upgrade), varargs...)
 }
