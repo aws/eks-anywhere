@@ -28,7 +28,6 @@ Please upgrade to `v0.15.3` if you are using Tinkerbell (Bare Metal) provider.
 
 ### Added
 - Etcd encryption for CloudStack and vSphere: [#6557](https://github.com/aws/eks-anywhere/pull/6557)
-- KinD-less upgrades: [#6622](https://github.com/aws/eks-anywhere/pull/6622)
 - Generate TinkerbellTemplateConfig command: [#3588](https://github.com/aws/eks-anywhere/issues/3588)
 - Support for modular Kubernetes version upgrades with bare metal: [#6735](https://github.com/aws/eks-anywhere/pull/6735)
   - OSImageURL added to Tinkerbell Machine Config
@@ -39,6 +38,9 @@ Please upgrade to `v0.15.3` if you are using Tinkerbell (Bare Metal) provider.
 
 
 ### Changed
+- KinD-less upgrades: [#6622](https://github.com/aws/eks-anywhere/pull/6622)
+  - Management cluster upgrades don't require a local bootstrap cluster anymore.
+  - The control plane of management clusters can be upgraded through the API. Previously only changes to the worker nodes were allowed.
 - Increased control over upgrades by separating external etcd reconciliation from control plane nodes: [#6496](https://github.com/aws/eks-anywhere/pull/6496)
 - Upgraded Cilium to 1.12.15
 - Upgraded EKS-D:
