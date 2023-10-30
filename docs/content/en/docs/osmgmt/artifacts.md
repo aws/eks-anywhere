@@ -225,8 +225,7 @@ The table below shows the support matrix for the hypervisor and OS combinations 
 |            | vSphere | Baremetal | CloudStack | Nutanix | Snow |
 |:----------:|:-------:|:---------:|:----------:|:-------:|:----:|
 | **Ubuntu** |    ✓    |     ✓     |            |    ✓    |   ✓  |
-|  **RHEL**  |    ✓    |     ✓     |     ✓      |         |      |
-
+|  **RHEL**  |    ✓    |     ✓     |     ✓      |    ✓    |      |
 
 ### Prerequisites
 
@@ -315,7 +314,6 @@ If creating a role with these privileges via the UI, refer to the table below.
 | VirtualMachine | Interaction > Mark as virtual machine | VirtualMachine.Provisioning.MarkAsVM |
 | VirtualMachine | State > Create snapshot | VirtualMachine.State.CreateSnapshot |
 
-
 #### CloudStack requirements
 Refer to the [CloudStack Permissions for CAPC](https://github.com/kubernetes-sigs/cluster-api-provider-cloudstack/blob/main/docs/book/src/topics/cloudstack-permissions.md) doc for required CloudStack user permissions.
 
@@ -354,7 +352,7 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
 
    {{< tab header="Ubuntu" lang="bash" >}}
    sudo apt update -y
-   sudo apt install jq unzip make ansible python3-pip -y
+   sudo apt install jq unzip make -y
    sudo snap install yq
    mkdir -p /home/$USER/.ssh
    echo "HostKeyAlgorithms +ssh-rsa" >> /home/$USER/.ssh/config
@@ -363,8 +361,7 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
 
    {{< tab header="RHEL" lang="bash" >}}
    sudo dnf update -y
-   sudo dnf install jq unzip make python3-pip wget -y
-   python3 -m pip install --user ansible
+   sudo dnf install jq unzip make wget -y
    sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
    mkdir -p /home/$USER/.ssh
    echo "HostKeyAlgorithms +ssh-rsa" >> /home/$USER/.ssh/config
@@ -373,7 +370,7 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
 
    {{< tab header="Amazon Linux 2" lang="bash" >}}
    sudo yum update -y
-   sudo yum install jq unzip make python3-pip ansible wget -y
+   sudo yum install jq unzip make wget -y
    sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
    mkdir -p /home/$USER/.ssh
    echo "HostKeyAlgorithms +ssh-rsa" >> /home/$USER/.ssh/config
@@ -381,6 +378,13 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
    {{< /tab >}}
 
    {{< /tabpane >}}
+
+   * Starting with `image-builder` version `v0.3.0`, the minimum required Python version is Python 3.9. However, many Linux distros ship only up to Python 3.8, so you will need to install Python 3.9 from external sources. Refer to the `pyenv` [installation](https://github.com/pyenv/pyenv#installation) and [usage](https://github.com/pyenv/pyenv#usage) documentation to install Python 3.9 and make it the default Python version.
+   * Once you have Python 3.9, you can install Ansible using `pip`.
+     ```bash
+     python3 -m pip install --user ansible
+     ```
+
 1. Get `image-builder`:
 
    Using the latest EKS Anywhere version
@@ -411,7 +415,7 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
    ```bash
    govc library.create "<library name>"
    ```
-1. Create a vsphere configuration file (for example, `vsphere-connection.json`):
+1. Create a vSphere configuration file (for example, `vsphere-connection.json`):
    ```json
    {
      "cluster": "<vsphere cluster used for image building>",
@@ -419,7 +423,7 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
      "create_snapshot": "<creates a snapshot on base OVA after building if set to true>",
      "datacenter": "<vsphere datacenter used for image building>",
      "datastore": "<datastore used to store template/for image building>",
-     "folder": "<folder on vsphere to create temporary VM>",
+     "folder": "<folder on vSphere to create temporary VM>",
      "insecure_connection": "true",
      "linked_clone": "false",
      "network": "<vsphere network used for image building>",
@@ -436,16 +440,19 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
      "iso_url": "<https://endpoint to RHEL ISO endpoint or path to file>",
      "iso_checksum": "<for example: ea5f349d492fed819e5086d351de47261c470fc794f7124805d176d69ddf1fcd>",
      "iso_checksum_type": "<for example: sha256>",
-     "rhel_username": "<rhsm username>",
-     "rhel_password": "<rhsm password>"
+     "rhel_username": "<RHSM username>",
+     "rhel_password": "<RHSM password>"
    }
    ```
 
 1. Create an Ubuntu or Redhat image:
 
-   * To create an Ubuntu-based image, run `image-builder` with the following options:
+   **Ubuntu**
+
+   To create an Ubuntu-based image, run `image-builder` with the following options:
 
       * `--os`: `ubuntu`
+      * `--os-version`: `2004` or `2204` (default: `2004`)
       * `--hypervisor`: For vSphere use `vsphere`
       * `--release-channel`: Supported EKS Distro releases include 1-23, 1-24, 1-25, 1-26 and 1-27.
       * `--vsphere-config`: vSphere configuration file (`vsphere-connection.json` in this example)
@@ -453,9 +460,13 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
       ```bash
       image-builder build --os ubuntu --hypervisor vsphere --release-channel 1-27 --vsphere-config vsphere-connection.json
       ```
-   * To create a RHEL-based image, run `image-builder` with the following options:
+
+   **Red Hat Enterprise Linux**
+
+   To create a RHEL-based image, run `image-builder` with the following options:
 
       * `--os`: `redhat`
+      * `--os-version`: `8` (default: `8`)
       * `--hypervisor`: For vSphere use `vsphere`
       * `--release-channel`: Supported EKS Distro releases include 1-23, 1-24, 1-25, 1-26 and 1-27.
       * `--vsphere-config`: vSphere configuration file (`vsphere-connection.json` in this example)
@@ -463,6 +474,7 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
       ```bash
       image-builder build --os redhat --hypervisor vsphere --release-channel 1-27 --vsphere-config vsphere-connection.json
       ```
+
 ### Build Bare Metal node images
 These steps use `image-builder` to create an Ubuntu-based or RHEL-based image for Bare Metal. Before proceeding, ensure that the above system-level, network-level and baremetal-specific [prerequisites]({{< relref "#prerequisites">}}) have been met.
 
@@ -482,7 +494,7 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
 
    {{< tab header="Ubuntu" lang="bash" >}}
    sudo apt update -y
-   sudo apt install jq make python3-pip qemu-kvm libvirt-daemon-system libvirt-clients virtinst cpu-checker libguestfs-tools libosinfo-bin unzip ansible -y
+   sudo apt install jq make qemu-kvm libvirt-daemon-system libvirt-clients virtinst cpu-checker libguestfs-tools libosinfo-bin unzip -y
    sudo snap install yq
    sudo usermod -a -G kvm $USER
    sudo chmod 666 /dev/kvm
@@ -494,8 +506,7 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
 
    {{< tab header="RHEL" lang="bash" >}}
    sudo dnf update -y
-   sudo dnf install jq make python3-pip qemu-kvm libvirt virtinst cpu-checker libguestfs-tools libosinfo unzip wget -y
-   python3 -m pip install --user ansible
+   sudo dnf install jq make qemu-kvm libvirt virtinst cpu-checker libguestfs-tools libosinfo unzip wget -y
    sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
    sudo usermod -a -G kvm $USER
    sudo chmod 666 /dev/kvm
@@ -507,7 +518,7 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
 
    {{< tab header="Amazon Linux" lang="bash" >}}
    sudo yum update -y
-   sudo yum install jq make python3-pip qemu-kvm libvirt libvirt-clients libguestfs-tools unzip ansible wget -y
+   sudo yum install jq make qemu-kvm libvirt libvirt-clients libguestfs-tools unzip wget -y
    sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
    sudo usermod -a -G kvm $USER
    sudo chmod 666 /dev/kvm
@@ -518,6 +529,13 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
    {{< /tab >}}
 
    {{< /tabpane >}}
+
+   * Starting with `image-builder` version `v0.3.0`, the minimum required Python version is Python 3.9. However, many Linux distros ship only up to Python 3.8, so you will need to install Python 3.9 from external sources. Refer to the `pyenv` [installation](https://github.com/pyenv/pyenv#installation) and [usage](https://github.com/pyenv/pyenv#usage) documentation to install Python 3.9 and make it the default Python version.
+   * Once you have Python 3.9, you can install Ansible using `pip`.
+     ```bash
+     python3 -m pip install --user ansible
+     ```
+
 1. Get `image-builder`:
 
    Using the latest EKS Anywhere version
@@ -541,15 +559,16 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
    cd -
    ```
 
-1. Create an Ubuntu or Red Hat image.
+1. Create an Ubuntu or Red Hat image:
 
    **Ubuntu**
 
-   Run `image-builder` with the following options:
+   To create an Ubuntu-based image, run `image-builder` with the following options:
 
       * `--os`: `ubuntu`
+      * `--os-version`: `2004` or `2204` (default: `2004`)
       * `--hypervisor`: `baremetal`
-      * `--release-channel`: A [supported EKS Distro release](https://anywhere.eks.amazonaws.com/docs/reference/support/support-versions/) 
+      * `--release-channel`: A [supported EKS Distro release](https://anywhere.eks.amazonaws.com/docs/reference/support/support-versions/)
       formatted as "[major]-[minor]"; for example "1-27"
 
       ```bash
@@ -560,15 +579,15 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
 
    RHEL images require a configuration file to identify the location of the RHEL 8 ISO image and
    Red Hat subscription information. The `image-builder` command will temporarily consume a Red
-   Hat subscription that is returned once the image is built.
+   Hat subscription that is removed once the image is built.
 
    ```json
    {
      "iso_url": "<https://endpoint to RHEL ISO endpoint or path to file>",
      "iso_checksum": "<for example: ea5f349d492fed819e5086d351de47261c470fc794f7124805d176d69ddf1fcd>",
      "iso_checksum_type": "<for example: sha256>",
-     "rhel_username": "<rhsm username>",
-     "rhel_password": "<rhsm password>",
+     "rhel_username": "<RHSM username>",
+     "rhel_password": "<RHSM password>",
      "extra_rpms": "<space-separated list of RPM packages; useful for adding required drivers or other packages>"
    }
    ```
@@ -576,8 +595,9 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
    Run the `image-builder` with the following options:
 
       * `--os`: `redhat`
+      * `--os-version`: `8` (default: `8`)
       * `--hypervisor`: `baremetal`
-      * `--release-channel`: A [supported EKS Distro release](https://anywhere.eks.amazonaws.com/docs/reference/support/support-versions/) 
+      * `--release-channel`: A [supported EKS Distro release](https://anywhere.eks.amazonaws.com/docs/reference/support/support-versions/)
       formatted as "[major]-[minor]"; for example "1-27"
       * `--baremetal-config`: Bare metal config file
 
@@ -585,7 +605,7 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
       image-builder build --os redhat --hypervisor baremetal --release-channel 1-27 --baremetal-config baremetal.json
       ```
 
-1. To consume the image, serve it from an accessible web server, then create the [bare metal cluster spec]({{< relref "../getting-started/baremetal/bare-spec/" >}}) 
+1. To consume the image, serve it from an accessible web server, then create the [bare metal cluster spec]({{< relref "../getting-started/baremetal/bare-spec/" >}})
    configuring the `osImageURL` field URL of the image. For example:
 
    ```
@@ -614,7 +634,7 @@ These steps use `image-builder` to create a RHEL-based image for CloudStack. Bef
 
    {{< tab header="Ubuntu" lang="bash" >}}
    sudo apt update -y
-   sudo apt install jq make python3-pip qemu-kvm libvirt-daemon-system libvirt-clients virtinst cpu-checker libguestfs-tools libosinfo-bin unzip ansible -y
+   sudo apt install jq make qemu-kvm libvirt-daemon-system libvirt-clients virtinst cpu-checker libguestfs-tools libosinfo-bin unzip -y
    sudo snap install yq
    sudo usermod -a -G kvm $USER
    sudo chmod 666 /dev/kvm
@@ -626,8 +646,7 @@ These steps use `image-builder` to create a RHEL-based image for CloudStack. Bef
 
    {{< tab header="RHEL" lang="bash" >}}
    sudo dnf update -y
-   sudo dnf install jq make python3-pip qemu-kvm libvirt virtinst cpu-checker libguestfs-tools libosinfo unzip wget -y
-   python3 -m pip install --user ansible
+   sudo dnf install jq make qemu-kvm libvirt virtinst cpu-checker libguestfs-tools libosinfo unzip wget -y
    sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
    sudo usermod -a -G kvm $USER
    sudo chmod 666 /dev/kvm
@@ -639,7 +658,7 @@ These steps use `image-builder` to create a RHEL-based image for CloudStack. Bef
 
    {{< tab header="Amazon Linux" lang="bash" >}}
    sudo yum update -y
-   sudo yum install jq make python3-pip qemu-kvm libvirt libvirt-clients libguestfs-tools unzip ansible wget -y
+   sudo yum install jq make qemu-kvm libvirt libvirt-clients libguestfs-tools unzip wget -y
    sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
    sudo usermod -a -G kvm $USER
    sudo chmod 666 /dev/kvm
@@ -650,6 +669,13 @@ These steps use `image-builder` to create a RHEL-based image for CloudStack. Bef
    {{< /tab >}}
 
    {{< /tabpane >}}
+
+   * Starting with `image-builder` version `v0.3.0`, the minimum required Python version is Python 3.9. However, many Linux distros ship only up to Python 3.8, so you will need to install Python 3.9 from external sources. Refer to the `pyenv` [installation](https://github.com/pyenv/pyenv#installation) and [usage](https://github.com/pyenv/pyenv#usage) documentation to install Python 3.9 and make it the default Python version.
+   * Once you have Python 3.9, you can install Ansible using `pip`.
+     ```bash
+     python3 -m pip install --user ansible
+     ```
+
 1. Get `image-builder`:
 
    Using the latest EKS Anywhere version
@@ -678,15 +704,16 @@ These steps use `image-builder` to create a RHEL-based image for CloudStack. Bef
      "iso_url": "<https://endpoint to RHEL ISO endpoint or path to file>",
      "iso_checksum": "<for example: ea5f349d492fed819e5086d351de47261c470fc794f7124805d176d69ddf1fcd>",
      "iso_checksum_type": "<for example: sha256>",
-     "rhel_username": "<rhsm username>",
-     "rhel_password": "<rhsm password>"
+     "rhel_username": "<RHSM username>",
+     "rhel_password": "<RHSM password>"
    }
    ```
-   >**_NOTE_**: To build the RHEL-based image, `image-builder` temporarily consumes a Red Hat subscription. That subscription is returned once the image is built.
+   >**_NOTE_**: To build the RHEL-based image, `image-builder` temporarily consumes a Red Hat subscription. That subscription is removed once the image is built.
 
 1. To create a RHEL-based image, run `image-builder` with the following options:
 
       * `--os`: `redhat`
+      * `--os-version`: `8` (default: `8`)
       * `--hypervisor`: For CloudStack use `cloudstack`
       * `--release-channel`: Supported EKS Distro releases include 1-23, 1-24, 1-25, 1-26 and 1-27.
       * `--cloudstack-config`: CloudStack configuration file (`cloudstack.json` in this example)
@@ -717,7 +744,7 @@ These steps use `image-builder` to create an Ubuntu-based Amazon Machine Image (
 
    {{< tab header="Ubuntu" lang="bash" >}}
    sudo apt update -y
-   sudo apt install jq unzip make ansible python3-pip -y
+   sudo apt install jq unzip make -y
    sudo snap install yq
    mkdir -p /home/$USER/.ssh
    echo "HostKeyAlgorithms +ssh-rsa" >> /home/$USER/.ssh/config
@@ -726,8 +753,7 @@ These steps use `image-builder` to create an Ubuntu-based Amazon Machine Image (
 
    {{< tab header="RHEL" lang="bash" >}}
    sudo dnf update -y
-   sudo dnf install jq unzip make python3-pip wget -y
-   python3 -m pip install --user ansible
+   sudo dnf install jq unzip make wget -y
    sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
    mkdir -p /home/$USER/.ssh
    echo "HostKeyAlgorithms +ssh-rsa" >> /home/$USER/.ssh/config
@@ -736,7 +762,7 @@ These steps use `image-builder` to create an Ubuntu-based Amazon Machine Image (
 
    {{< tab header="Amazon Linux 2" lang="bash" >}}
    sudo yum update -y
-   sudo yum install jq unzip make python3-pip ansible wget -y
+   sudo yum install jq unzip make wget -y
    sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
    mkdir -p /home/$USER/.ssh
    echo "HostKeyAlgorithms +ssh-rsa" >> /home/$USER/.ssh/config
@@ -744,6 +770,13 @@ These steps use `image-builder` to create an Ubuntu-based Amazon Machine Image (
    {{< /tab >}}
 
    {{< /tabpane >}}
+
+   * Starting with `image-builder` version `v0.3.0`, the minimum required Python version is Python 3.9. However, many Linux distros ship only up to Python 3.8, so you will need to install Python 3.9 from external sources. Refer to the `pyenv` [installation](https://github.com/pyenv/pyenv#installation) and [usage](https://github.com/pyenv/pyenv#usage) documentation to install Python 3.9 and make it the default Python version.
+   * Once you have Python 3.9, you can install Ansible using `pip`.
+     ```bash
+     python3 -m pip install --user ansible
+     ```
+
 1. Get `image-builder`:
 
    Using the latest EKS Anywhere version
@@ -826,6 +859,7 @@ These steps use `image-builder` to create an Ubuntu-based Amazon Machine Image (
 1. To create an Ubuntu-based image, run `image-builder` with the following options:
 
    * `--os`: `ubuntu`
+   * `--os-version`: `2004` or `2204` (default: `2004`)
    * `--hypervisor`: For AMI, use `ami`
    * `--release-channel`: Supported EKS Distro releases include 1-23, 1-24, 1-25, 1-26 and 1-27.
    * `--ami-config`: AMI configuration file (`ami.json` in this example)
@@ -867,7 +901,7 @@ These steps use `image-builder` to create a Ubuntu-based image for Nutanix AHV a
 
    {{< tab header="Ubuntu" lang="bash" >}}
    sudo apt update -y
-   sudo apt install jq unzip make ansible python3-pip -y
+   sudo apt install jq unzip make -y
    sudo snap install yq
    mkdir -p /home/$USER/.ssh
    echo "HostKeyAlgorithms +ssh-rsa" >> /home/$USER/.ssh/config
@@ -876,8 +910,7 @@ These steps use `image-builder` to create a Ubuntu-based image for Nutanix AHV a
 
    {{< tab header="RHEL" lang="bash" >}}
    sudo dnf update -y
-   sudo dnf install jq unzip make python3-pip wget -y
-   python3 -m pip install --user ansible
+   sudo dnf install jq unzip make wget -y
    sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
    mkdir -p /home/$USER/.ssh
    echo "HostKeyAlgorithms +ssh-rsa" >> /home/$USER/.ssh/config
@@ -886,7 +919,7 @@ These steps use `image-builder` to create a Ubuntu-based image for Nutanix AHV a
 
    {{< tab header="Amazon Linux 2" lang="bash" >}}
    sudo yum update -y
-   sudo yum install jq unzip make python3-pip ansible wget -y
+   sudo yum install jq unzip make wget -y
    sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
    mkdir -p /home/$USER/.ssh
    echo "HostKeyAlgorithms +ssh-rsa" >> /home/$USER/.ssh/config
@@ -894,6 +927,13 @@ These steps use `image-builder` to create a Ubuntu-based image for Nutanix AHV a
    {{< /tab >}}
 
    {{< /tabpane >}}
+
+   * Starting with `image-builder` version `v0.3.0`, the minimum required Python version is Python 3.9. However, many Linux distros ship only up to Python 3.8, so you will need to install Python 3.9 from external sources. Refer to the `pyenv` [installation](https://github.com/pyenv/pyenv#installation) and [usage](https://github.com/pyenv/pyenv#usage) documentation to install Python 3.9 and make it the default Python version.
+   * Once you have Python 3.9, you can install Ansible using `pip`.
+     ```bash
+     python3 -m pip install --user ansible
+     ``` 
+
 1. Get `image-builder`:
 
    Using the latest EKS Anywhere version
@@ -922,6 +962,8 @@ These steps use `image-builder` to create a Ubuntu-based image for Nutanix AHV a
      "nutanix_cluster_name": "Name of PE Cluster",
      "source_image_name": "Name of Source Image",
      "image_name": "Name of Destination Image",
+     "image_url": "URL where the source image is hosted",
+     "image_export": "Exports the raw image to disk if set to true",
      "nutanix_subnet_name": "Name of Subnet",
      "nutanix_endpoint": "Prism Central IP / FQDN",
      "nutanix_insecure": "false",
@@ -930,23 +972,48 @@ These steps use `image-builder` to create a Ubuntu-based image for Nutanix AHV a
      "nutanix_password": "PrismCentral_Password"
    }
    ```
+   ```
+   For RHEL images, add the following fields:
+   ```json
+   {
+     "rhel_username": "<RHSM username>",
+     "rhel_password": "<RHSM password>"
+   }
+   ```
 
-1. Run `image-builder` with the following options:
+1. Create an Ubuntu or Redhat image:
+
+   **Ubuntu**
+
+   To create an Ubuntu-based image, run `image-builder` with the following options:
 
       * `--os`: `ubuntu`
+      * `--os-version`: `2004` or `2204` (default: `2004`)
       * `--hypervisor`: For Nutanix use `nutanix`
       * `--release-channel`: Supported EKS Distro releases include 1-23, 1-24, 1-25, 1-26 and 1-27.
       * `--nutanix-config`: Nutanix configuration file (`nutanix-connection.json` in this example)
 
       ```bash
-      cd /home/$USER
       image-builder build --os ubuntu --hypervisor nutanix --release-channel 1-27 --nutanix-config nutanix-connection.json
       ```
 
+   **Red Hat Enterprise Linux**
+
+   To create a RHEL-based image, run `image-builder` with the following options:
+
+      * `--os`: `redhat`
+      * `--os-version`: `8` or `9` (default: `8`)
+      * `--hypervisor`: For Nutanix use `nutanix`
+      * `--release-channel`: Supported EKS Distro releases include 1-23, 1-24, 1-25, 1-26 and 1-27.
+      * `--nutanix-config`: Nutanix configuration file (`nutanix-connection.json` in this example)
+
+      ```bash
+      image-builder build --os redhat --hypervisor nutanix --release-channel 1-27 --nutanix-config nutanix-connection.json
+      ```
 
 ### Configuring OS version
 
-`image-builder` supports an `os-version` flag that allows you to configure which version of the OS you wish to build. If no OS version is supplied, it will build the default for that OS, according to the table below.
+`image-builder` supports an `os-version` option that allows you to configure which version of the OS you wish to build. If no OS version is supplied, it will build the default for that OS, according to the table below.
 
 <table style>
     <thead align="center">
@@ -955,6 +1022,7 @@ These steps use `image-builder` to create a Ubuntu-based image for Nutanix AHV a
             <th><center>Supported versions</th>
             <th><center>Corresponding <code>os-version</code> value</th>
             <th><center>Default <code>os-version</code> value</th>
+            <th><center>Hypervisors supported</th>
         </tr>
     </thead>
     <tbody align="center">
@@ -963,16 +1031,23 @@ These steps use `image-builder` to create a Ubuntu-based image for Nutanix AHV a
             <td>20.04.6</td>
             <td>2004</td>
             <td rowspan=2>2004</td>
+            <td rowspan=2>All hypervisors except CloudStack</td>
         </tr>
         <tr>
             <td>22.04.3</td>
             <td>2204</td>
         </tr>
-        <tr>
-            <td><b>RHEL</b></td>
+        <tr >
+            <td rowspan=2><b>RHEL</b></td>
             <td>8.8</td>
             <td>8</td>
             <td rowspan=2>8</td>
+            <td>All hypervisors except AMI</td>
+        </tr>
+        <tr>
+            <td>9.2</td>
+            <td>9</td>
+            <td>Nutanix only</td>
         </tr>
     </tbody>
 </table>
@@ -985,7 +1060,7 @@ This section provides information about the relationship between `image-builder`
 
 Every release of EKS Anywhere includes a new version of `image-builder` CLI. For EKS-A releases prior to `v0.16.3`, the corresponding `image-builder` CLI builds images for the latest version of EKS-A released thus far. The EKS-A version determines what artifacts will be bundled into the final OS image, i.e., the core Kubernetes components vended by EKS Distro as well as several binaries vended by EKS Anywhere, such as `crictl`, `etcdadm`, etc, and users may not always want the latest versions of these, and rather wish to bake in certain specific component versions into the image.
 
-This was improved in `image-builder` released with EKS-A `v0.16.3` to `v0.16.5`. Now you can override the default latest build behavior to build images corresponding to a specific EKS-A release, including previous releases. This can be achieved by setting the `EKSA_RELEASE_VERSION` environment variable to the desired EKS-A release (`v0.16.0` and above).  
+This was improved in `image-builder` released with EKS-A `v0.16.3` to `v0.16.5`. Now you can override the default latest build behavior to build images corresponding to a specific EKS-A release, including previous releases. This can be achieved by setting the `EKSA_RELEASE_VERSION` environment variable to the desired EKS-A release (`v0.16.0` and above).
 For example, if you want to build an image for EKS-A version `v0.16.5`, you can run the following command.
    ```bash
    export EKSA_RELEASE_VERSION=v0.16.5
@@ -996,6 +1071,28 @@ With `image-builder` versions `v0.2.1` and above (released with EKS-A version `v
    ```bash
    image-builder build --os <OS> --hypervisor <hypervisor> --release-channel <release channel> --<hypervisor>-config config.json --eksa-release v0.16.5
    ```
+
+#### Building images corresponding to dev versions of EKS-A
+{{% alert title="Note" color="warning" %}}
+Please note that this is not a recommended method for building production images. Images built using this method use development versions of EKS-A and its dependencies. Consider this as an advanced use-case and proceed at your own discretion.
+{{% /alert %}}
+
+`image-builder` also provides the option to build images pertaining to dev releases of EKS-A. In the above cases, using a production release of `image-builder` leads to manifests and images being sourced from production locations. While this is usually the desired behavior, it is sometimes useful to build images pertaining to the development branch. Often, new features or enhancements are added to `image-builder` or other EKS-A dependency projects, but are only released to production weeks or months later, based on the release cadence. In other cases, users may want to build EKS-A node images for new Kubernetes versions that are available in dev EKS-A releases but have not been officially released yet. This feature of `image-builder` supports both these use-cases and other similar ones.
+
+This can be achieved using an `image-builder` CLI that has the dev version of EKS-A (`v0.0.0-dev`) baked into it, or by passing in `v0.0.0-dev` to the `eksa-release` option. For both these methods, you need to set the environment `EKSA_USE_DEV_RELEASE` to `true`.
+
+   **`image-builder` obtained from a production EKS-A release:**
+   ```bash
+   export EKSA_USE_DEV_RELEASE=true
+   image-builder build --os <OS> --hypervisor <hypervisor> --release-channel <release channel> --<hypervisor>-config config.json --eksa-release v0.0.0-dev
+   ```
+   **`image-builder` obtained from a dev EKS-A release:**
+   ```bash
+   export EKSA_USE_DEV_RELEASE=true
+   image-builder build --os <OS> --hypervisor <hypervisor> --release-channel <release channel> --<hypervisor>-config config.json
+   ```
+
+In both these above approaches, the artifacts embedded into the images will be obtained from the dev release bundle manifest instead of production. This manifest contains the latest artifacts built from the `main` branch, and is generally more up-to-date than production release artifact versions.
 
 ### UEFI support
 
