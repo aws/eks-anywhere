@@ -336,7 +336,7 @@ You can use a proxy server to route outbound requests to the internet. To config
 
 These steps use `image-builder` to create an Ubuntu-based or RHEL-based image for vSphere. Before proceeding, ensure that the above system-level, network-level and vSphere-specific [prerequisites]({{< relref "#prerequisites">}}) have been met.
 
-1. Create a linux user for running image-builder.
+1. Create a Linux user for running image-builder.
    ```bash
    sudo adduser image-builder
    ```
@@ -415,7 +415,7 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
    ```bash
    govc library.create "<library name>"
    ```
-1. Create a vSphere configuration file (for example, `vsphere-connection.json`):
+1. Create a vSphere configuration file (for example, `vsphere.json`):
    ```json
    {
      "cluster": "<vsphere cluster used for image building>",
@@ -455,10 +455,10 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
       * `--os-version`: `2004` or `2204` (default: `2004`)
       * `--hypervisor`: For vSphere use `vsphere`
       * `--release-channel`: Supported EKS Distro releases include 1-24, 1-25, 1-26, 1-27 and 1-28.
-      * `--vsphere-config`: vSphere configuration file (`vsphere-connection.json` in this example)
+      * `--vsphere-config`: vSphere configuration file (`vsphere.json` in this example)
 
       ```bash
-      image-builder build --os ubuntu --hypervisor vsphere --release-channel 1-28 --vsphere-config vsphere-connection.json
+      image-builder build --os ubuntu --hypervisor vsphere --release-channel 1-28 --vsphere-config vsphere.json
       ```
 
    **Red Hat Enterprise Linux**
@@ -469,16 +469,16 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
       * `--os-version`: `8` (default: `8`)
       * `--hypervisor`: For vSphere use `vsphere`
       * `--release-channel`: Supported EKS Distro releases include 1-24, 1-25, 1-26, 1-27 and 1-28.
-      * `--vsphere-config`: vSphere configuration file (`vsphere-connection.json` in this example)
+      * `--vsphere-config`: vSphere configuration file (`vsphere.json` in this example)
 
       ```bash
-      image-builder build --os redhat --hypervisor vsphere --release-channel 1-28 --vsphere-config vsphere-connection.json
+      image-builder build --os redhat --hypervisor vsphere --release-channel 1-28 --vsphere-config vsphere.json
       ```
 
 ### Build Bare Metal node images
 These steps use `image-builder` to create an Ubuntu-based or RHEL-based image for Bare Metal. Before proceeding, ensure that the above system-level, network-level and baremetal-specific [prerequisites]({{< relref "#prerequisites">}}) have been met.
 
-1. Create a linux user for running image-builder.
+1. Create a Linux user for running image-builder.
    ```bash
    sudo adduser image-builder
    ```
@@ -618,7 +618,7 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
 
 These steps use `image-builder` to create a RHEL-based image for CloudStack. Before proceeding, ensure that the above system-level, network-level and CloudStack-specific [prerequisites]({{< relref "#prerequisites">}}) have been met.
 
-1. Create a linux user for running image-builder.
+1. Create a Linux user for running image-builder.
    ```bash
    sudo adduser image-builder
    ```
@@ -698,7 +698,7 @@ These steps use `image-builder` to create a RHEL-based image for CloudStack. Bef
    sudo cp ./image-builder /usr/local/bin
    cd -
    ```
-1. Create a CloudStack configuration file (for example, `cloudstack.json`) to identify the location of a Red Hat Enterprise Linux 8 ISO image and related checksum and Red Hat subscription information:
+1. Create a CloudStack configuration file (for example, `cloudstack.json`) to provide the location of a Red Hat Enterprise Linux 8 ISO image and related checksum and Red Hat subscription information:
    ```json
    {
      "iso_url": "<https://endpoint to RHEL ISO endpoint or path to file>",
@@ -728,7 +728,7 @@ These steps use `image-builder` to create a RHEL-based image for CloudStack. Bef
 
 These steps use `image-builder` to create an Ubuntu-based Amazon Machine Image (AMI) that is backed by EBS volumes for Snow. Before proceeding, ensure that the above system-level, network-level and AMI-specific [prerequisites]({{< relref "#prerequisites">}}) have been met
 
-1. Create a linux user for running image-builder.
+1. Create a Linux user for running image-builder.
    ```bash
    sudo adduser image-builder
    ```
@@ -883,9 +883,9 @@ These steps use `image-builder` to create an Ubuntu-based Amazon Machine Image (
 
 These steps use `image-builder` to create a Ubuntu-based image for Nutanix AHV and import it into the AOS Image Service. Before proceeding, ensure that the above system-level, network-level and Nutanix-specific [prerequisites]({{< relref "#prerequisites">}}) have been met.
 
-1. Download an [Ubuntu cloud image](https://cloud-images.ubuntu.com/releases/focal/release/ubuntu-20.04-server-cloudimg-amd64.img) for the build and upload it to the AOS Image Service using Prism. You will need to specify this image name as the `source_image_name` in the `nutanix-connection.json` config file specified below.
+1. Download an [Ubuntu cloud image](https://cloud-images.ubuntu.com/releases) or [RHEL cloud image](https://access.redhat.com/downloads/content/rhel) pertaining to your desired OS and OS version and upload it to the AOS Image Service using Prism. You will need to specify the image's name in AOS as the `source_image_name` in the `nutanix.json` config file specified below. You can also skip this step and directly use the `image_url` field in the config file to provide the URL of a publicly accessible image as source.
 
-1. Create a linux user for running image-builder.
+1. Create a Linux user for running image-builder.
    ```bash
    sudo adduser image-builder
    ```
@@ -956,7 +956,7 @@ These steps use `image-builder` to create a Ubuntu-based image for Nutanix AHV a
    sudo cp ./image-builder /usr/local/bin
    cd -
    ```
-1. Create a `nutanix-connection.json` config file. More details on values can be found in the [image-builder documentation](https://image-builder.sigs.k8s.io/capi/providers/nutanix.html). See example below:
+1. Create a `nutanix.json` config file. More details on values can be found in the [image-builder documentation](https://image-builder.sigs.k8s.io/capi/providers/nutanix.html). See example below:
    ```json
    {
      "nutanix_cluster_name": "Name of PE Cluster",
@@ -972,7 +972,7 @@ These steps use `image-builder` to create a Ubuntu-based image for Nutanix AHV a
      "nutanix_password": "PrismCentral_Password"
    }
    ```
-   ```
+
    For RHEL images, add the following fields:
    ```json
    {
@@ -991,10 +991,10 @@ These steps use `image-builder` to create a Ubuntu-based image for Nutanix AHV a
       * `--os-version`: `2004` or `2204` (default: `2004`)
       * `--hypervisor`: For Nutanix use `nutanix`
       * `--release-channel`: Supported EKS Distro releases include 1-24, 1-25, 1-26, 1-27 and 1-28.
-      * `--nutanix-config`: Nutanix configuration file (`nutanix-connection.json` in this example)
+      * `--nutanix-config`: Nutanix configuration file (`nutanix.json` in this example)
 
       ```bash
-      image-builder build --os ubuntu --hypervisor nutanix --release-channel 1-28 --nutanix-config nutanix-connection.json
+      image-builder build --os ubuntu --hypervisor nutanix --release-channel 1-28 --nutanix-config nutanix.json
       ```
 
    **Red Hat Enterprise Linux**
@@ -1005,10 +1005,10 @@ These steps use `image-builder` to create a Ubuntu-based image for Nutanix AHV a
       * `--os-version`: `8` or `9` (default: `8`)
       * `--hypervisor`: For Nutanix use `nutanix`
       * `--release-channel`: Supported EKS Distro releases include 1-24, 1-25, 1-26, 1-27 and 1-28.
-      * `--nutanix-config`: Nutanix configuration file (`nutanix-connection.json` in this example)
+      * `--nutanix-config`: Nutanix configuration file (`nutanix.json` in this example)
 
       ```bash
-      image-builder build --os redhat --hypervisor nutanix --release-channel 1-28 --nutanix-config nutanix-connection.json
+      image-builder build --os redhat --hypervisor nutanix --release-channel 1-28 --nutanix-config nutanix.json
       ```
 
 ### Configuring OS version
