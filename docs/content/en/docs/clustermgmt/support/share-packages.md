@@ -11,7 +11,7 @@ When an EKS Anywhere Enterprise Subscription is created, the AWS account that cr
 
 ### 1. Save EKS Anywhere Curated Packages registry account for your subscription
 
-In this step, you will get the Amazon ECR registry account associated with your subscription. Run the following command with the account that created the subscription and save the 12-digit account ID from the output string.
+In this step, you will get the Amazon ECR packages registry account associated with your subscription. Run the following command with the account that created the subscription and save the 12-digit account ID from the output string. 
 
 - Replace `region-code` with the AWS Region that hosts your subscription (for example `us-west-2`).
 - Replace `my-subscription-id` with the `id` for your subscription (for example `e29fd0d2-d8a8-4ed4-be54-c6c0dd0f7964`). 
@@ -23,7 +23,16 @@ aws eks describe-eks-anywhere-subscription \
   --query 'subscription.packageRegistry'
 ```
 
-The output has the following structure: "<packages-account-id>.dkr.ecr.us-west-2.amazonaws.com". Save the `<packages-account-id>` for the next step.
+The output has the following structure: "<packages-account-id>.dkr.ecr.<region>.amazonaws.com". Save the `<packages-account-id>` for the next step.
+
+Alternatively, you can use the following table to identify the packages registry account for the AWS Region hosting your subscription.
+
+<details>
+  <summary>Expand for packages registry to AWS Region table</summary>
+  <br /> 
+  {{% content "packages-registries.md" %}}
+</details>
+<br /> 
 
 ### 2. Create an IAM Policy with ECR Login and Read permissions
 

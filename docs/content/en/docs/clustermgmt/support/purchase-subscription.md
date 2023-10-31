@@ -19,8 +19,9 @@ For pricing, reference the [EKS Anywhere Pricing Page.](https://aws.amazon.com/e
 
 - Before you create a subscription, you must onboard to use AWS License Manager. See the [AWS License Manager](https://docs.aws.amazon.com/license-manager/latest/userguide/getting-started.html) documentation for instructions.
 - Only auto renewal and tags can be changed after subscription creation. Other attributes such as the subscription name, number of licenses, or term length cannot be modified after subscription creation.
-- You can purchase Amazon EKS Anywhere Enterprise Subscriptions in the following AWS Regions: US East (Ohio), US East (N. Virginia), US West (N. California), US West (Oregon), Africa (Cape Town), Asia Pacific (Hong Kong), Asia Pacific (Jakarta), Asia Pacific (Mumbai), Asia Pacific (Osaka), Asia Pacific (Seoul), Asia Pacific (Singapore), Asia Pacific (Sydney), Asia Pacific (Tokyo), Canada (Central), Europe (Frankfurt), Europe (Ireland), Europe (London), Europe (Milan), Europe (Paris), Europe (Stockholm), Middle East (Bahrain), and South America (Sao Paulo). 
+- You can purchase Amazon EKS Anywhere Enterprise Subscriptions in the following AWS Regions: US East (Ohio), US East (N. Virginia), US West (N. California), US West (Oregon), Africa (Cape Town), Asia Pacific (Hong Kong), Asia Pacific (Hyderabad), Asia Pacific (Jakarta), Asia Pacific (Melbourne), Asia Pacific (Mumbai), Asia Pacific (Osaka), Asia Pacific (Seoul), Asia Pacific (Singapore), Asia Pacific (Sydney), Asia Pacific (Tokyo), Canada (Central), Europe (Frankfurt), Europe (Ireland), Europe (London), Europe (Milan), Europe (Paris), Europe (Stockholm), Europe (Zurich), Israel (Tel Aviv), Middle East (Bahrain), Middle East (UAE), and South America (Sao Paulo). 
 - An individual subscription can have up to 100 licenses.
+- An individual account can have up to 10 subscriptions.
 - You can create a single subscription at a time.
 
 ### AWS Management Console
