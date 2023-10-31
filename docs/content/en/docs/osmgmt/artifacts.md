@@ -1124,9 +1124,10 @@ You can now run the `image-builder` CLI with the `files-config` option, with thi
    ```bash
    image-builder build --os <OS> --hypervisor <hypervisor> --release-channel <release channel> --<hypervisor>-config config.json --files-config files.json
    ```
+
 ### Using Proxy Server
 
-`image-builder` supports proxy enabled build environments. In order to use proxy server to route outbound requests to internet, add the following fields to the hypervisor or provider configuration file (e.x. `baremetal.json`)
+`image-builder` supports proxy-enabled build environments. In order to use proxy server to route outbound requests to the Internet, add the following fields to the hypervisor or provider configuration file (e.g. `baremetal.json`)
 
   ```json
    {
@@ -1141,34 +1142,34 @@ Run `image-builder` CLI with the hypervisor configuration file
   image-builder build --os <OS> --hypervisor <hypervisor> --release-channel <release channel> --<hypervisor>-config config.json
   ```
 
-### RedHat Satellite Support
+### Red Hat Satellite Support
 
-As part of the image building process, `image-builder` creates a virtual machine with the chosen operating system, install all the required packages and creates an image out of the virtual machine.
-While building RedHat node images, `image-builder` uses public RedHat subscription endpoints to register the build virtual machine with the provided RedHat account and download required packages.
+As part of the image building process, `image-builder` creates a virtual machine with the chosen operating system, installs all the required packages and creates an image out of the virtual machine.
+While building Red Hat node images, `image-builder` uses public Red Hat subscription endpoints to register the build virtual machine with the provided Red Hat account and download required packages.
 
-Alternatively, `image-builder` can also use a private RedHat Satellite to register the build virtual machine and pull packages from the Satellite. 
-In order to use RedHat Satellite in the image build process follow the steps below.
+Alternatively, `image-builder` can also use a private Red Hat Satellite to register the build virtual machine and pull packages from the Satellite. 
+In order to use Red Hat Satellite in the image build process follow the steps below.
 
 #### Prerequisites
-1. Ensure the host running `image-builder` has bi-directional network connectivity with the RedHat Satellite
-2. Image builder flow only supports RedHat Satellite version >= 6.8
-3. Add the following RedHat repositories for the latest RedHat 8.x version on the Satellite and initiate a sync to replicate required packages
+1. Ensure the host running `image-builder` has bi-directional network connectivity with the Red Hat Satellite
+2. Image builder flow only supports Red Hat Satellite version >= 6.8
+3. Add the following Red Hat repositories for the latest Red Hat 8.x or 9.x version on the Satellite and initiate a sync to replicate required packages
    1. Base OS Rpms
    2. Base OS - Extended Update Support Rpms
    3. AppStream - Extended Update Support Rpms
 4. Create an activation key on the Satellite and ensure library environment is enabled
 
-#### Build RedHat node images using RedHat Satellite
+#### Build Red Hat node images using Red Hat Satellite
 1. Add the following fields to the hypervisor or provider configuration file
    ```json
    {
-     "rhsm_server_hostname": "fqdn of RedHat Satellite server",
-     "rhsm_server_release_version": "Version of Redhat OS Packages to pull from Satellite. e.x. 8.8",
+     "rhsm_server_hostname": "fqdn of Red Hat Satellite server",
+     "rhsm_server_release_version": "Version of Red hat OS Packages to pull from Satellite. e.x. 8.8",
      "rhsm_activation_key": "activation key from Satellite",
      "rhsm_org_id": "org id from Satellite"
    }
    ```
-   `rhsm_server_release_version` should always point to the latest 8 minor release RedHat release synced and available on RedHat Satellite 
+   `rhsm_server_release_version` should always point to the latest 8.x or 9.x minor release Red Hat release synced and available on Red Hat Satellite 
 2. Run `image-builder` CLI with the hypervisor configuration file
    ```bash
    image-builder build --os <OS> --hypervisor <hypervisor> --release-channel <release channel> --<hypervisor>-config config.json
