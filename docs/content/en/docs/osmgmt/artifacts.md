@@ -324,14 +324,6 @@ Packer will require prior authentication with your AWS account to launch EC2 ins
 
 Prism Central Administrator permissions are required to build a Nutanix image using `image-builder`.
 
-### Optional Proxy configuration
-You can use a proxy server to route outbound requests to the internet. To configure `image-builder` tool to use a proxy server, export these proxy environment variables:
-  ```bash
-  export HTTP_PROXY=<HTTP proxy URL e.g. http://proxy.corp.com:80>
-  export HTTPS_PROXY=<HTTPS proxy URL e.g. http://proxy.corp.com:443>
-  export NO_PROXY=<No proxy>
-  ```
-
 ### Build vSphere OVA node images
 
 These steps use `image-builder` to create an Ubuntu-based or RHEL-based image for vSphere. Before proceeding, ensure that the above system-level, network-level and vSphere-specific [prerequisites]({{< relref "#prerequisites">}}) have been met.
@@ -444,7 +436,6 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
      "rhel_password": "<RHSM password>"
    }
    ```
-
 1. Create an Ubuntu or Redhat image:
 
    **Ubuntu**
@@ -562,7 +553,7 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
 1. Create an Ubuntu or Red Hat image:
 
    **Ubuntu**
-
+   
    To create an Ubuntu-based image, run `image-builder` with the following options:
 
       * `--os`: `ubuntu`
@@ -570,6 +561,7 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
       * `--hypervisor`: `baremetal`
       * `--release-channel`: A [supported EKS Distro release](https://anywhere.eks.amazonaws.com/docs/reference/support/support-versions/)
       formatted as "[major]-[minor]"; for example "1-27"
+      * `--baremetal-config`: baremetal config file if using proxy
 
       ```bash
       image-builder build --os ubuntu --hypervisor baremetal --release-channel 1-27
@@ -816,7 +808,6 @@ These steps use `image-builder` to create an Ubuntu-based Amazon Machine Image (
       "volume_type": "gp3",
    }
    ```
-
    ##### **ami_filter_name**
    Regular expression to filter a source AMI. (default: `ubuntu/images/*ubuntu-focal-20.04-amd64-server-*`).
 
@@ -980,7 +971,6 @@ These steps use `image-builder` to create a Ubuntu-based image for Nutanix AHV a
      "rhel_password": "<RHSM password>"
    }
    ```
-
 1. Create an Ubuntu or Redhat image:
 
    **Ubuntu**
@@ -1135,6 +1125,55 @@ You can now run the `image-builder` CLI with the `files-config` option, with thi
    image-builder build --os <OS> --hypervisor <hypervisor> --release-channel <release channel> --<hypervisor>-config config.json --files-config files.json
    ```
 
+### Using Proxy Server
+
+`image-builder` supports proxy-enabled build environments. In order to use proxy server to route outbound requests to the Internet, add the following fields to the hypervisor or provider configuration file (e.g. `baremetal.json`)
+
+  ```json
+   {
+     "http_proxy": "<http proxy endpoint, for example, http://username:passwd@proxyhost:port>",
+     "https_proxy": "<https proxy endpoint, for example, https://proxyhost:port/>",
+     "no_proxy": "<optional comma seperated list of domains that should be excluded from proxying>"
+  }
+  ```
+
+Run `image-builder` CLI with the hypervisor configuration file
+  ```bash
+  image-builder build --os <OS> --hypervisor <hypervisor> --release-channel <release channel> --<hypervisor>-config config.json
+  ```
+
+### Red Hat Satellite Support
+
+As part of the image building process, `image-builder` creates a virtual machine with the chosen operating system, installs all the required packages and creates an image out of the virtual machine.
+While building Red Hat node images, `image-builder` uses public Red Hat subscription endpoints to register the build virtual machine with the provided Red Hat account and download required packages.
+
+Alternatively, `image-builder` can also use a private Red Hat Satellite to register the build virtual machine and pull packages from the Satellite. 
+In order to use Red Hat Satellite in the image build process follow the steps below.
+
+#### Prerequisites
+1. Ensure the host running `image-builder` has bi-directional network connectivity with the Red Hat Satellite
+2. Image builder flow only supports Red Hat Satellite version >= 6.8
+3. Add the following Red Hat repositories for the latest Red Hat 8.x or 9.x version on the Satellite and initiate a sync to replicate required packages
+   1. Base OS Rpms
+   2. Base OS - Extended Update Support Rpms
+   3. AppStream - Extended Update Support Rpms
+4. Create an activation key on the Satellite and ensure library environment is enabled
+
+#### Build Red Hat node images using Red Hat Satellite
+1. Add the following fields to the hypervisor or provider configuration file
+   ```json
+   {
+     "rhsm_server_hostname": "fqdn of Red Hat Satellite server",
+     "rhsm_server_release_version": "Version of Red hat OS Packages to pull from Satellite. e.x. 8.8",
+     "rhsm_activation_key": "activation key from Satellite",
+     "rhsm_org_id": "org id from Satellite"
+   }
+   ```
+   `rhsm_server_release_version` should always point to the latest 8.x or 9.x minor release Red Hat release synced and available on Red Hat Satellite 
+2. Run `image-builder` CLI with the hypervisor configuration file
+   ```bash
+   image-builder build --os <OS> --hypervisor <hypervisor> --release-channel <release channel> --<hypervisor>-config config.json
+   ```
 ## Images
 
 The various images for EKS Anywhere can be found [in the EKS Anywhere ECR repository](https://gallery.ecr.aws/eks-anywhere/).
