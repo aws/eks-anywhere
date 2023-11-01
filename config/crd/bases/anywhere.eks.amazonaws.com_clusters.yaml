@@ -124,6 +124,12 @@ spec:
                 type: object
               controlPlaneConfiguration:
                 properties:
+                  certSans:
+                    description: CertSANs is a slice of domain names or IPs to be
+                      added as Subject Name Alternatives of the Kube API Servers Certificate.
+                    items:
+                      type: string
+                    type: array
                   count:
                     description: Count defines the number of desired control plane
                       nodes. Defaults to 1.

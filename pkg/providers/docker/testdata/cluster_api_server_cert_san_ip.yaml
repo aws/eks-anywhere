@@ -1,0 +1,29 @@
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: Cluster
+metadata:
+  name: test
+spec:
+  clusterNetwork:
+    cniConfig:
+      cilium: {}
+    pods:
+      cidrBlocks:
+      - 192.168.0.0/16
+    services:
+      cidrBlocks:
+      - 10.96.0.0/12
+  controlPlaneConfiguration:
+    count: 1
+    certSANs: ["11.11.11.11"]
+  datacenterRef:
+    kind: DockerDatacenterConfig
+    name: test
+  kubernetesVersion: "1.21"
+  managementCluster:
+    name: test
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: DockerDatacenterConfig
+metadata:
+  name: test
+spec: {}

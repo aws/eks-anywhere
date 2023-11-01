@@ -94,6 +94,10 @@ spec:
         {{- end }}
 {{- end}}
       apiServer:
+        {{- with .apiServerCertSANs }}
+        certSANs:
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
         extraArgs:
           audit-policy-file: /etc/kubernetes/audit-policy.yaml
           audit-log-path: /var/log/kubernetes/api-audit.log
@@ -410,7 +414,7 @@ spec:
 {{- if .upgradeRolloutStrategy }}
   rolloutStrategy:
     rollingUpdate:
-      maxSurge: {{.maxSurge}} 
+      maxSurge: {{.maxSurge}}
 {{- end }}
   version: {{.kubernetesVersion}}
 ---

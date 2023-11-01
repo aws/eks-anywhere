@@ -188,6 +188,7 @@ var clusterConfigValidations = []func(*Cluster) error{
 	validateControlPlaneLabels,
 	validatePackageControllerConfiguration,
 	validateEksaVersion,
+	validateControlPlaneCertSANs,
 }
 
 // GetClusterConfig parses a Cluster object from a multiobject yaml file in disk
@@ -416,6 +417,26 @@ func validateControlPlaneEndpoint(clusterConfig *Cluster) error {
 	if (clusterConfig.Spec.ControlPlaneConfiguration.Endpoint == nil || len(clusterConfig.Spec.ControlPlaneConfiguration.Endpoint.Host) <= 0) && clusterConfig.Spec.DatacenterRef.Kind != DockerDatacenterKind {
 		return errors.New("cluster controlPlaneConfiguration.Endpoint.Host is not set or is empty")
 	}
+	return nil
+}
+
+var domainNameRegex = regexp.MustCompile(`(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9][a-z0-9-]{0,61}[a-z0-9]`)
+
+func validateControlPlaneCertSANs(cfg *Cluster) error {
+	var invalid []string
+	for _, san := range cfg.Spec.ControlPlaneConfiguration.CertSANs {
+		isDomain := domainNameRegex.MatchString(san)
+		isIP := net.ParseIP(san)
+
+		if !isDomain && isIP == nil {
+			invalid = append(invalid, san)
+		}
+	}
+
+	if len(invalid) > 0 {
+		return fmt.Errorf("invalid ControlPlaneConfiguration.CertSANs; must be an IP or domain name: [%v]", strings.Join(invalid, ", "))
+	}
+
 	return nil
 }
 

@@ -403,6 +403,7 @@ func buildTemplateMapCP(
 		"clusterName":                   clusterSpec.Cluster.Name,
 		"controlPlaneEndpointIp":        clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host,
 		"controlPlaneReplicas":          clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Count,
+		"apiServerCertSANs":             clusterSpec.Cluster.Spec.ControlPlaneConfiguration.CertSANs,
 		"controlPlaneSshAuthorizedKey":  controlPlaneMachineSpec.Users[0].SshAuthorizedKeys[0],
 		"controlPlaneSshUsername":       controlPlaneMachineSpec.Users[0].Name,
 		"eksaSystemNamespace":           constants.EksaSystemNamespace,

@@ -282,6 +282,9 @@ type ControlPlaneConfiguration struct {
 	// SkipLoadBalancerDeployment skip deploying control plane load balancer.
 	// Make sure your infrastructure can handle control plane load balancing when you set this field to true.
 	SkipLoadBalancerDeployment bool `json:"skipLoadBalancerDeployment,omitempty"`
+	// CertSANs is a slice of domain names or IPs to be added as Subject Name Alternatives of the
+	// Kube API Servers Certificate.
+	CertSANs []string `json:"certSans,omitempty"`
 }
 
 // MachineHealthCheck allows to configure timeouts for machine health checks. Machine Health Checks are responsible for remediating unhealthy Machines.
@@ -335,7 +338,8 @@ func (n *ControlPlaneConfiguration) Equal(o *ControlPlaneConfiguration) bool {
 		return false
 	}
 	return n.Count == o.Count && n.MachineGroupRef.Equal(o.MachineGroupRef) &&
-		TaintsSliceEqual(n.Taints, o.Taints) && MapEqual(n.Labels, o.Labels)
+		TaintsSliceEqual(n.Taints, o.Taints) && MapEqual(n.Labels, o.Labels) &&
+		SliceEqual(n.CertSANs, o.CertSANs)
 }
 
 type Endpoint struct {
