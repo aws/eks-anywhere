@@ -14,8 +14,8 @@ class EksAnywhere < Formula
   end
 
   if OS.linux? && Hardware::CPU.arm?
-    url "$linux_amd64_url"
-    sha256 "$linux_amd64_sha256"
+    url "$linux_arm64_url"
+    sha256 "$linux_arm64_sha256"
   end
 
   if OS.linux? && Hardware::CPU.intel?
