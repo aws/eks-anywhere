@@ -1133,7 +1133,7 @@ You can now run the `image-builder` CLI with the `files-config` option, with thi
    {
      "http_proxy": "<http proxy endpoint, for example, http://username:passwd@proxyhost:port>",
      "https_proxy": "<https proxy endpoint, for example, https://proxyhost:port/>",
-     "no_proxy": "<optional comma seperated list of domains that should be excluded from proxying"
+     "no_proxy": "<optional comma seperated list of domains that should be excluded from proxying>"
   }
   ```
 
