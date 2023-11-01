@@ -2,6 +2,7 @@ package tinkerbell
 
 import (
 	"testing"
+	"time"
 
 	. "github.com/onsi/gomega"
 
@@ -129,4 +130,37 @@ func TestGenerateTemplateBuilderForMachineConfigOsImageURL(t *testing.T) {
 	var expectedEtcdMachineSpec *v1alpha1.TinkerbellMachineConfigSpec
 	g.Expect(err).NotTo(HaveOccurred())
 	g.Expect(gotEtcdMachineSpec).To(Equal(expectedEtcdMachineSpec))
+}
+
+func TestTemplateBuilder_CertSANs(t *testing.T) {
+	for _, tc := range []struct {
+		Input  string
+		Output string
+	}{
+		{
+			Input:  "testdata/cluster_tinkerbell_api_server_cert_san_domain_name.yaml",
+			Output: "testdata/expected_cluster_tinkerbell_api_server_cert_san_domain_name.yaml",
+		},
+		{
+			Input:  "testdata/cluster_tinkerbell_api_server_cert_san_ip.yaml",
+			Output: "testdata/expected_cluster_tinkerbell_api_server_cert_san_ip.yaml",
+		},
+	} {
+		g := NewWithT(t)
+		clusterSpec := test.NewFullClusterSpec(t, tc.Input)
+
+		cpMachineCfg, err := getControlPlaneMachineSpec(clusterSpec)
+		g.Expect(err).ToNot(HaveOccurred())
+
+		wngMachineCfgs, err := getWorkerNodeGroupMachineSpec(clusterSpec)
+		g.Expect(err).ToNot(HaveOccurred())
+
+		bldr := NewTemplateBuilder(&clusterSpec.TinkerbellDatacenter.Spec, cpMachineCfg, nil, wngMachineCfgs, "0.0.0.0", time.Now)
+
+		data, err := bldr.GenerateCAPISpecControlPlane(clusterSpec)
+		g.Expect(err).ToNot(HaveOccurred())
+
+		test.AssertContentToFile(t, string(data), tc.Output)
+
+	}
 }

@@ -159,6 +159,7 @@ func KubeadmControlPlane(clusterSpec *cluster.Spec, infrastructureObject APIObje
 							ExtraArgs:    map[string]string{},
 							ExtraVolumes: []bootstrapv1.HostPathMount{},
 						},
+						CertSANs: clusterSpec.Cluster.Spec.ControlPlaneConfiguration.CertSANs,
 					},
 					ControllerManager: bootstrapv1.ControlPlaneComponent{
 						ExtraArgs:    ControllerManagerArgs(clusterSpec),
@@ -222,6 +223,7 @@ func KubeadmConfigTemplate(clusterSpec *cluster.Spec, workerNodeGroupConfig anyw
 							ControlPlaneComponent: bootstrapv1.ControlPlaneComponent{
 								ExtraArgs: map[string]string{},
 							},
+							CertSANs: clusterSpec.Cluster.Spec.ControlPlaneConfiguration.CertSANs,
 						},
 					},
 					JoinConfiguration: &bootstrapv1.JoinConfiguration{

@@ -277,6 +277,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec) (map[string]interface{}, erro
 		"haproxyImageRepository":        getHAProxyImageRepo(versionsBundle.Haproxy.Image),
 		"haproxyImageTag":               versionsBundle.Haproxy.Image.Tag(),
 		"workerNodeGroupConfigurations": clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations,
+		"apiServerCertSANs":             clusterSpec.Cluster.Spec.ControlPlaneConfiguration.CertSANs,
 	}
 
 	if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {

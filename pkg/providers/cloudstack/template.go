@@ -143,6 +143,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec) (map[string]interface{}, erro
 		"controlPlaneEndpointHost":                   host,
 		"controlPlaneEndpointPort":                   port,
 		"controlPlaneReplicas":                       clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Count,
+		"apiServerCertSANs":                          clusterSpec.Cluster.Spec.ControlPlaneConfiguration.CertSANs,
 		"kubernetesRepository":                       versionsBundle.KubeDistro.Kubernetes.Repository,
 		"kubernetesVersion":                          versionsBundle.KubeDistro.Kubernetes.Tag,
 		"etcdRepository":                             versionsBundle.KubeDistro.Etcd.Repository,

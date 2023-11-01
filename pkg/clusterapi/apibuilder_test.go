@@ -96,6 +96,7 @@ func newApiBuilerTest(t *testing.T) apiBuilerTest {
 						"key1": "val1",
 						"key2": "val2",
 					},
+					CertSANs: []string{"foo.bar", "11.11.11.11"},
 				},
 				KubernetesVersion: "1.21",
 			},
@@ -311,6 +312,7 @@ func wantKubeadmControlPlane() *controlplanev1.KubeadmControlPlane {
 							ExtraArgs:    map[string]string{},
 							ExtraVolumes: []bootstrapv1.HostPathMount{},
 						},
+						CertSANs: []string{"foo.bar", "11.11.11.11"},
 					},
 					ControllerManager: bootstrapv1.ControlPlaneComponent{
 						ExtraArgs:    tlsCipherSuitesArgs(),
@@ -392,6 +394,7 @@ func wantKubeadmConfigTemplate() *bootstrapv1.KubeadmConfigTemplate {
 							ControlPlaneComponent: bootstrapv1.ControlPlaneComponent{
 								ExtraArgs: map[string]string{},
 							},
+							CertSANs: []string{"foo.bar", "11.11.11.11"},
 						},
 					},
 					JoinConfiguration: &bootstrapv1.JoinConfiguration{
