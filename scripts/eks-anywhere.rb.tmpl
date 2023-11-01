@@ -3,25 +3,24 @@ class EksAnywhere < Formula
   homepage "https://github.com/aws/eks-anywhere"
   version "$VERSION"
 
-  if OS.mac?
-    url "$darwin_url"
-    sha256 "$darwin_sha256"
+  if OS.mac? && Hardware::CPU.arm?
+    url "$darwin_arm64_url"
+    sha256 "$darwin_arm64_sha256"
   end
 
-  if OS.linux?
-    url "$linux_url"
-    sha256 "$linux_sha256"
+  if OS.mac? && Hardware::CPU.intel?
+    url "$darwin_amd64_url"
+    sha256 "$darwin_amd64_sha256"
   end
 
-  if Hardware::CPU.arm?
-    def caveats
-      <<~EOF
-          =====WARNING=====
-          ARM CPU's are not yet supported.
-          The amd64 binary has been installed but will not work.
-          Please uninstall this formula.
-      EOF
-    end
+  if OS.linux? && Hardware::CPU.arm?
+    url "$linux_arm64_url"
+    sha256 "$linux_arm64_sha256"
+  end
+
+  if OS.linux? && Hardware::CPU.intel?
+    url "$linux_amd64_url"
+    sha256 "$linux_amd64_sha256"
   end
 
   depends_on "eksctl"
