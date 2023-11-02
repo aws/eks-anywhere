@@ -24,12 +24,12 @@ require (
 	github.com/go-logr/zapr v1.2.3
 	github.com/gocarina/gocsv v0.0.0-20220304222734-caabc5f00d30
 	github.com/golang/mock v1.6.0
-	github.com/google/go-cmp v0.5.9
+	github.com/google/go-cmp v0.6.0
 	github.com/google/go-github/v35 v35.3.0
 	github.com/google/uuid v1.4.0
 	github.com/nutanix-cloud-native/cluster-api-provider-nutanix v1.1.3
 	github.com/nutanix-cloud-native/prism-go-client v0.3.4
-	github.com/onsi/gomega v1.27.8
+	github.com/onsi/gomega v1.29.0
 	github.com/opencontainers/image-spec v1.1.0-rc5
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.7.0
@@ -182,11 +182,11 @@ require (
 	go.opentelemetry.io/otel/trace v1.14.0 // indirect
 	go.uber.org/atomic v1.10.0 // indirect
 	go.uber.org/multierr v1.8.0 // indirect
-	golang.org/x/mod v0.10.0 // indirect
+	golang.org/x/mod v0.12.0 // indirect
 	golang.org/x/sync v0.4.0 // indirect
 	golang.org/x/term v0.13.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
-	golang.org/x/tools v0.9.3 // indirect
+	golang.org/x/tools v0.12.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.2.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20230410155749-daa745c078e1 // indirect
