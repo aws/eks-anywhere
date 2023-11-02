@@ -24,7 +24,7 @@ Since kubernetesVersion is used to create an EKSD Release and VersionsBundle, we
 
 The apibuilder would need to be changed to use the new instance of the VersionsBundle when creating the machine deployment. 
 
-Additionally, each provider’s NeedNewWorkloadTemplate needs to use the workerKubernetesVersion field and buildTemplateMapMD would also need to use the new VersionsBundle.
+Additionally, each provider’s NeedNewWorkloadTemplate needs to use the worker node level KubernetesVersion field and buildTemplateMapMD would also need to use the new VersionsBundle.
 
 
 ```yaml
@@ -87,16 +87,11 @@ type WorkerNodeGroupConfiguration struct {
 type Spec struct {
     *Config
     Bundles           *v1alpha1.Bundles
-    VersionsBundle    *VersionsBundle
+    VersionsBundle    *VersionsBundle // <-- REMOVE THIS
     eksdRelease       *eksdv1alpha1.Release
     OIDCConfig        *eksav1alpha1.OIDCConfig
     AWSIamConfig      *eksav1alpha1.AWSIamConfig
     ManagementCluster *types.Cluster 
-    WorkerVersions    map[string]*WorkerVersions // <-- ADD THIS
-}
-
-type WorkerVersions struct {
-   VersionsBundle *VersionsBundle
-   eksdRelease *eksdv1alpha1.Release
+    VersionsBundles   map[eksav1alpha1.KubernetesVersion]*VersionsBundle // <-- ADD THIS
 }
 ```
