@@ -1298,3 +1298,23 @@ func TestDockerCiliumSkipUpgrade_ControllerUpgrade(t *testing.T) {
 	test.ManagementCluster.StopIfFailed()
 	test.DeleteManagementCluster()
 }
+
+func TestDockerKubernetesRegionalCuratedPackages(t *testing.T) {
+	framework.CheckCuratedPackagesCredentials(t)
+	test := framework.NewClusterE2ETest(t,
+		framework.NewDocker(t),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube128)),
+	)
+
+	test.WithCluster(func(e *framework.ClusterE2ETest) {
+		runCuratedPackageInstall(e)
+
+		pbc, err := test.KubectlClient.GetPackageBundleController(context.Background(), test.KubeconfigFilePath(), test.ClusterName)
+		if err != nil {
+			e.T.Fatalf("cannot get PackageBundleController: %v", err)
+		}
+		if pbc.Spec.DefaultImageRegistry != pbc.Spec.DefaultRegistry {
+			e.T.Fatal("in regional pbc, DefaultImageRegistry should equal to DefaultRegistry")
+		}
+	})
+}
