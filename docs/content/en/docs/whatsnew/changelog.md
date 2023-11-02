@@ -22,7 +22,7 @@ Please upgrade to `v0.15.3` if you are using Tinkerbell (Bare Metal) provider.
 |    :---:     |  :---:  |   :---:   |   :---:  |    :---:   | :---: |
 | Ubuntu       | 20.04	 | 20.04     |	20.04             | Not supported	     | 20.04 |  
 |              | 22.04   | 22.04     |  22.04             | Not supported      | Not supported   |
-| Bottlerocket | 1.14.3  | 1.14.3    |  Not supported     | Not supported	     | Not supported   |
+| Bottlerocket | 1.15.1  | 1.15.1    |  Not supported     | Not supported	     | Not supported   |
 | RHEL         | 8.7	   | 8.7	     |  9.x, 8.7          | 8.7	               | Not supported   |
 
 
