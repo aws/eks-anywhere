@@ -24,7 +24,7 @@ Since kubernetesVersion is used to create an EKSD Release and VersionsBundle, we
 
 The [apibuilder](https://github.com/aws/eks-anywhere/blob/ab8bea7667b598ce7500d49b0a3d4726f0775c2a/pkg/clusterapi/apibuilder.go#L244) would need to be changed to use the new instance of the VersionsBundle when creating the machine deployment. 
 
-Additionally, each provider’s [NeedNewWorkloadTemplate](https://github.com/aws/eks-anywhere/blob/ab8bea7667b598ce7500d49b0a3d4726f0775c2a/pkg/providers/docker/docker.go#L346) needs to use the worker node level KubernetesVersion field and [buildTemplateMapMD]() would also need to use the new VersionsBundle.
+Additionally, each provider’s [NeedNewWorkloadTemplate](https://github.com/aws/eks-anywhere/blob/ab8bea7667b598ce7500d49b0a3d4726f0775c2a/pkg/providers/docker/docker.go#L346) needs to use the worker node level KubernetesVersion field and [buildTemplateMapMD](https://github.com/aws/eks-anywhere/blob/ab8bea7667b598ce7500d49b0a3d4726f0775c2a/pkg/providers/docker/docker.go#L307) would also need to use the new VersionsBundle.
 
 
 ```yaml
