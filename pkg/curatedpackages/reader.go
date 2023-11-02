@@ -22,7 +22,7 @@ const (
 	stagingAccount    = "w9m0f3l5"
 	publicProdECR     = "public.ecr.aws/" + prodAccount
 	publicDevECR      = "public.ecr.aws/" + devAccount
-	stagingDevECR     = "public.ecr.aws/" + stagingAccount
+	publicStagingECR  = "public.ecr.aws/" + stagingAccount
 	packageProdDomain = "783794618700.dkr.ecr.us-west-2.amazonaws.com"
 	packageDevDomain  = "857151390494.dkr.ecr.us-west-2.amazonaws.com"
 )

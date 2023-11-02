@@ -249,7 +249,7 @@ func (pc *PackageControllerClient) GetCuratedPackagesRegistries(ctx context.Cont
 	if strings.Contains(pc.chart.Image(), stagingAccount) {
 		accountName = stagingAccount
 		defaultImageRegistry = packageProdDomain
-		sourceRegistry = stagingDevECR
+		sourceRegistry = publicStagingECR
 	}
 	defaultRegistry = sourceRegistry
 
@@ -270,6 +270,12 @@ func (pc *PackageControllerClient) GetCuratedPackagesRegistries(ctx context.Cont
 		if err := pc.registryAccessTester.Test(ctx, pc.eksaAccessKeyID, pc.eksaSecretAccessKey, pc.eksaRegion, pc.eksaAwsConfig, regionalRegistry); err == nil {
 			// use regional registry when the above credential is good
 			logger.V(6).Info("Using regional registry")
+			// In the dev case, we use a separate public ECR registry in the
+			// beta packages account to source the packages controller and
+			// credential provider package
+			if regionalRegistry == devRegionalECR {
+				sourceRegistry = devRegionalPublicECR
+			}
 			defaultRegistry = regionalRegistry
 			defaultImageRegistry = regionalRegistry
 		} else {
