@@ -59,7 +59,7 @@ aws license-manager get-license \
 
 ### Accept EKS Anywhere license grant
 
-You can accept the license grants associated with an EKS Anywhere Enterprise Subscription in the [AWS License Manager Console](https://console.aws.amazon.com/license-manager/) following the instructions in the [AWS License Manager documentation](https://docs.aws.amazon.com/license-manager/latest/userguide/granted-licenses.html). 
+You can accept the license grants associated with an EKS Anywhere Enterprise Subscription in the [AWS License Manager Console](https://console.aws.amazon.com/license-manager/) following the instructions in the [AWS License Manager documentation](https://docs.aws.amazon.com/license-manager/latest/userguide/granted-licenses.html). Navigate to the license for your subscription and client **Accept and Activate** in the top right of the license detail page.
 
 See the steps below for accepting EKS Anywhere license grants with the AWS CLI.
 
@@ -84,6 +84,20 @@ aws license-manager list-received-licenses \
 aws license-manager accept-grant \
   --region 'region-code' \
   --grant-arn 'my-grant-arn'
+```
+
+**Activate license grant with the AWS CLI**
+
+- Replace `region-code` with the AWS Region that hosts your subscription (for example `us-west-2`).
+- Replace `my-grant-arn` with the grant ARN returned from the previous command. If you have multiple grants, repeat for each grant ARN.
+- Replace `my-client-token` with a unique, case-sensitive identifier that you provide to ensure the idempotency of the request (for example `e75f7f81-1b0b-47b4-85b4-5cbeb7ffb921`).
+
+```bash
+aws license-manager create-grant-version \
+  --region 'region-code' \
+  --grant-arn 'my-grant-arn' \
+  --status 'ACTIVE' \
+  --client-token 'my-client-token'
 ```
 
 ### Apply a license to an EKS Anywhere cluster
