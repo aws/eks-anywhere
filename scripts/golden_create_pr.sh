@@ -43,7 +43,7 @@ git remote add upstream git@github.com:${UPSTREAM_ORG}/${REPO}.git
 git checkout -b $PR_BRANCH
 
 git diff
-git add release/pkg/test/testdata/*.yaml
+git add release/cli/pkg/test/testdata/*.yaml
 # If some other files get modified, the changes should be ignored
 git restore .
 FILES_ADDED=$(git diff --staged --name-only)

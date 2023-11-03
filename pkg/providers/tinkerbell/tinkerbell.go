@@ -8,6 +8,7 @@ import (
 
 	etcdv1 "github.com/aws/etcdadm-controller/api/v1beta1"
 	tinkv1alpha1 "github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
+	"golang.org/x/exp/slices"
 	corev1 "k8s.io/api/core/v1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
@@ -27,7 +28,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/retrier"
 	"github.com/aws/eks-anywhere/pkg/types"
 	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
-	"github.com/aws/eks-anywhere/release/pkg/util/slices"
 )
 
 const (
@@ -150,7 +150,7 @@ func NewProvider(
 		// cluster's create and upgrade that too for the kind cluster.
 		// GenerateNoProxyList is getting used by all the cluster operations.
 		// Thus moving adding tinkerbell Local IP to here.
-		if !slices.SliceContains(proxyConfig.NoProxy, tinkerbellIP) {
+		if !slices.Contains(proxyConfig.NoProxy, tinkerbellIP) {
 			proxyConfig.NoProxy = append(proxyConfig.NoProxy, tinkerbellIP)
 		}
 	} else {
