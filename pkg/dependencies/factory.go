@@ -128,7 +128,8 @@ func (d *Dependencies) Close(ctx context.Context) error {
 	return nil
 }
 
-func ForSpec(ctx context.Context, clusterSpec *cluster.Spec) *Factory {
+// ForSpec constructs a Factory using the bundle referenced by clusterSpec.
+func ForSpec(clusterSpec *cluster.Spec) *Factory {
 	versionsBundle := clusterSpec.RootVersionsBundle()
 	eksaToolsImage := versionsBundle.Eksa.CliTools
 	return NewFactory().

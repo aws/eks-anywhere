@@ -75,7 +75,7 @@ func (gsbo *generateSupportBundleOptions) generateBundleConfig(ctx context.Conte
 		return nil, fmt.Errorf("unable to get cluster config from file: %v", err)
 	}
 
-	deps, err := dependencies.ForSpec(ctx, clusterSpec).
+	deps, err := dependencies.ForSpec(clusterSpec).
 		WithProvider(clusterConfigPath, clusterSpec.Cluster, cc.skipIpCheck, gsbo.hardwareFileName, false, gsbo.tinkerbellBootstrapIP, map[string]bool{}, nil).
 		WithDiagnosticBundleFactory().
 		Build(ctx)
