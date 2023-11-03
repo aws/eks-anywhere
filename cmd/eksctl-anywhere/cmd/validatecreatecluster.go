@@ -79,7 +79,7 @@ func (valOpt *validateOptions) validateCreateCluster(cmd *cobra.Command, _ []str
 	if err != nil {
 		return err
 	}
-	deps, err := dependencies.ForSpec(ctx, clusterSpec).
+	deps, err := dependencies.ForSpec(clusterSpec).
 		WithExecutableMountDirs(dirs...).
 		WithWriterFolder(tmpPath).
 		WithDocker().

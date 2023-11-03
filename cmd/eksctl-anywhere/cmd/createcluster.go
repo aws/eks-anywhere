@@ -176,7 +176,7 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 		}
 	}
 
-	factory := dependencies.ForSpec(ctx, clusterSpec).WithExecutableMountDirs(dirs...).
+	factory := dependencies.ForSpec(clusterSpec).WithExecutableMountDirs(dirs...).
 		WithBootstrapper().
 		WithCliConfig(cliConfig).
 		WithClusterManager(clusterSpec.Cluster, clusterManagerTimeoutOpts).
