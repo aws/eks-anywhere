@@ -14,6 +14,10 @@ type TinkerbellMachineConfigSpec struct {
 	TemplateRef      Ref              `json:"templateRef,omitempty"`
 	OSFamily         OSFamily         `json:"osFamily"`
 	//+optional
+	// OSImageURL can be used to override the default OS image path to pull from a local server.
+	// OSImageURL is a URL to the OS image used during provisioning. It must include
+	// the Kubernetes version(s). For example, a URL used for Kubernetes 1.27 could
+	// be http://localhost:8080/ubuntu-2204-1.27.tgz
 	OSImageURL          string               `json:"osImageURL,omitempty"`
 	Users               []UserConfiguration  `json:"users,omitempty"`
 	HostOSConfiguration *HostOSConfiguration `json:"hostOSConfiguration,omitempty"`

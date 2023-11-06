@@ -301,6 +301,7 @@ The default is generating a key in your `$(pwd)/<cluster-name>` folder when not 
 The VM template to use for your EKS Anywhere cluster. This template was created when you
 [imported the OVA file into vSphere]({{< relref "../vsphere/customize/vsphere-ovas.md" >}}).
 This is a required field if you are using Ubuntu-based or RHEL-based OVAs.
+The `template` must contain the `Cluster.Spec.KubernetesVersion` or `Cluster.Spec.WorkerNodeGroupConfiguration[].KubernetesVersion` version (in case of modular upgrade). For example, if the Kubernetes version is 1.24, `template` must include 1.24, 1_24, 1-24 or 124.
 
 ### cloneMode (optional)
 `cloneMode` defines the clone mode to use when creating the cluster VMs from the template. Allowed values are:

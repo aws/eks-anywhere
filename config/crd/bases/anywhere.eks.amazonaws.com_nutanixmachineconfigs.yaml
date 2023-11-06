@@ -78,7 +78,9 @@ spec:
               image:
                 description: image is to identify the OS image uploaded to the Prism
                   Central (PC) The image identifier (uuid or name) can be obtained
-                  from the Prism Central console or using the Prism Central API.
+                  from the Prism Central console or using the Prism Central API. It
+                  must include the Kubernetes version(s). For example, a template
+                  used for Kubernetes 1.27 could be ubuntu-2204-1.27.
                 properties:
                   name:
                     description: name is the resource name in the PC

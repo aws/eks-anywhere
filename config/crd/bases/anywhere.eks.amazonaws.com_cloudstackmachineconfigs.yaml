@@ -117,7 +117,9 @@ spec:
               template:
                 description: Template refers to a VM image template which has been
                   previously registered in CloudStack. It can either be specified
-                  as a UUID or name
+                  as a UUID or name. When using a template name it must include the
+                  Kubernetes version(s). For example, a template used for Kubernetes
+                  1.27 could be ubuntu-2204-1.27.
                 properties:
                   id:
                     description: Id of a resource in the CloudStack environment. Mutually

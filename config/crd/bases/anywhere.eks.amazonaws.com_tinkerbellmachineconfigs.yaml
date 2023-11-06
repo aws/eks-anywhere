@@ -128,6 +128,10 @@ spec:
               osFamily:
                 type: string
               osImageURL:
+                description: OSImageURL can be used to override the default OS image
+                  path to pull from a local server. OSImageURL is a URL to the OS
+                  image used during provisioning. It must include the Kubernetes version(s).
+                  For example, a URL used for Kubernetes 1.27 could be http://localhost:8080/ubuntu-2204-1.27.tgz
                 type: string
               templateRef:
                 properties:

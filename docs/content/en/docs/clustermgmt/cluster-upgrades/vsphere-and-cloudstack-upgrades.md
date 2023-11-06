@@ -13,7 +13,7 @@ When you run `eksctl anywhere upgrade cluster -f ./cluster.yaml`, EKS Anywhere r
 EKS Anywhere then performs the upgrade, modifying your cluster to match the updated specification. 
 The upgrade command also upgrades core components of EKS Anywhere and lets the user enjoy the latest features, bug fixes and security patches.
 
-**Upgrades should never be run from ephemeral nodes (short-lived systems that spin up and down on a regular basis). It is highly recommended to run the `upgrade` command with the `--no-timeouts` option when the command is executed through automation. This prevents the CLI from timing out and enables cluster operators to fix issues preventing the upgrade from completing while the process is running. If an upgrade fails, it is very important not to delete the Docker containers running the KinD bootstrap cluster. During an upgrade, the bootstrap cluster contains critical EKS Anywhere components. If it is deleted after a failed upgrade, they cannot be recovered.**
+**Upgrades should never be run from ephemeral nodes (short-lived systems that spin up and down on a regular basis). It is highly recommended to run the `upgrade` command with the `--no-timeouts` option when the command is executed through automation. This prevents the CLI from timing out and enables cluster operators to fix issues preventing the upgrade from completing while the process is running. If an `eksctl anywhere` version is older than `v0.18.0` and upgrade fails, _you must not delete the KinD bootstrap cluster Docker container_. During an upgrade, the bootstrap cluster contains critical EKS Anywhere components. If it is deleted after a failed upgrade, they cannot be recovered.**
 
 {{% alert title="Important" color="warning" %}}
 
@@ -28,6 +28,7 @@ If you have a management cluster running EKS Anywhere version v0.15, you can suc
 When triggering a workload cluster upgrade after upgrading the management cluster, please keep in mind that it will not only apply your changes in the workload cluster spec, but also any new improvements included in the new EKS Anywhere controller that was upgraded on the management cluster.
 The changes in the EKS Anywhere controller can trigger a machine rollout on the workload cluster during upgrade, even if the changes to the workload cluster spec didn't require one (for example, scaling down a worker node group).
 
+Starting with EKS Anywhere v0.18, the `image`/`template` should include the Kubernetes version (either `Cluster.Spec.KubernetesVersion` or `Cluster.Spec.WorkerNodeGroupConfiguration[].KubernetesVersion` in the case of modular upgrades). For example, if the Kubernetes version is 1.24, the `image`/`template` must include 1.24, 1_24, 1-24 or 124.
 {{% /alert %}}
 
 ### Prepare DHCP IP addresses pool
@@ -187,25 +188,22 @@ Example output:
 ✅ validate immutable fields
 🎉 all cluster upgrade preflight validations passed
 Performing provider setup and validations
-Pausing EKS-A cluster controller reconcile
-Pausing Flux kustomization
-GitOps field not specified, pause flux kustomization skipped
-Creating bootstrap cluster
-Installing cluster-api providers on bootstrap cluster
-Moving cluster management from workload to bootstrap cluster
-Upgrading workload cluster
-Moving cluster management from bootstrap to workload cluster
-Applying new EKS-A cluster resource; resuming reconcile
-Resuming EKS-A controller reconciliation
+Ensuring etcd CAPI providers exist on management cluster before upgrade
+Pausing GitOps cluster resources reconcile
+Upgrading core components
+Backing up management cluster's resources before upgrading
+Upgrading management cluster
 Updating Git Repo with new EKS-A cluster spec
-GitOps field not specified, update git repo skipped
 Forcing reconcile Git repo with latest commit
-GitOps not configured, force reconcile flux git repo skipped
-Resuming Flux kustomization
-GitOps field not specified, resume flux kustomization skipped
+Resuming GitOps cluster resources kustomization
+Writing cluster config file
+🎉 Cluster upgraded!
+Cleaning up backup resources
 ```
 
-During the upgrade process, EKS Anywhere pauses the cluster controller reconciliation by adding the paused annotation `anywhere.eks.amazonaws.com/paused: true` to the EKS Anywhere cluster, provider datacenterconfig and machineconfig resources, before the components upgrade. After upgrade completes, the annotations are removed so that the cluster controller resumes reconciling the cluster.
+Starting in EKS Anywhere v0.18.0, when upgrading management cluster the CLI depends on the EKS Anywhere Controller to perform the upgrade. In the event an issue occurs and the CLI times out, it may be possible to fix the issue and have the upgrade complete as the EKS Anywhere Controller will continually attempt to complete the upgrade.
+
+During the workload cluster upgrade process, EKS Anywhere pauses the cluster controller reconciliation by adding the paused annotation `anywhere.eks.amazonaws.com/paused: true` to the EKS Anywhere cluster, provider datacenterconfig and machineconfig resources, before the components upgrade. After upgrade completes, the annotations are removed so that the cluster controller resumes reconciling the cluster. If the CLI execution is interrupted or times out, the controller won't reconcile changes to the EKS-A objects until these annotations are removed. You can re-run the CLI to restart the upgrade process or remove the annotations manually with `kubectl`.
 
 Though not recommended, you can manually pause the EKS Anywhere cluster controller reconciliation to perform extended maintenance work or interact with Cluster API objects directly. To do it, you can add the paused annotation to the cluster resource:
 

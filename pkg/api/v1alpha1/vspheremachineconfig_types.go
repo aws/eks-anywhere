@@ -13,14 +13,16 @@ import (
 
 // VSphereMachineConfigSpec defines the desired state of VSphereMachineConfig.
 type VSphereMachineConfigSpec struct {
-	DiskGiB             int                  `json:"diskGiB,omitempty"`
-	Datastore           string               `json:"datastore"`
-	Folder              string               `json:"folder"`
-	NumCPUs             int                  `json:"numCPUs"`
-	MemoryMiB           int                  `json:"memoryMiB"`
-	OSFamily            OSFamily             `json:"osFamily"`
-	ResourcePool        string               `json:"resourcePool"`
-	StoragePolicyName   string               `json:"storagePolicyName,omitempty"`
+	DiskGiB           int      `json:"diskGiB,omitempty"`
+	Datastore         string   `json:"datastore"`
+	Folder            string   `json:"folder"`
+	NumCPUs           int      `json:"numCPUs"`
+	MemoryMiB         int      `json:"memoryMiB"`
+	OSFamily          OSFamily `json:"osFamily"`
+	ResourcePool      string   `json:"resourcePool"`
+	StoragePolicyName string   `json:"storagePolicyName,omitempty"`
+	// Template field is the template to use for provisioning the VM. It must include the Kubernetes
+	// version(s). For example, a template used for Kubernetes 1.27 could be ubuntu-2204-1.27.
 	Template            string               `json:"template,omitempty"`
 	Users               []UserConfiguration  `json:"users,omitempty"`
 	TagIDs              []string             `json:"tags,omitempty"`

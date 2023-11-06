@@ -12,6 +12,12 @@ type TinkerbellDatacenterConfigSpec struct {
 	// TinkerbellIP is used to configure a VIP for hosting the Tinkerbell services.
 	TinkerbellIP string `json:"tinkerbellIP"`
 	// OSImageURL can be used to override the default OS image path to pull from a local server.
+	// OSImageURL is a URL to the OS image used during provisioning. To perform modular upgrades
+	// the OSImageURL must be specified on the TinkerbellMachineConfig objects. You cannot specify
+	// an OSImageURL on the TinkerbellDatacenterConfig and TinkerbellMachineConfigs simultaneously.
+	// It must include the Kubernetes version(s). For example, a URL used for Kubernetes 1.27 could
+	// be http://localhost:8080/ubuntu-2204-1.27.tgz
+	//+optional
 	OSImageURL string `json:"osImageURL,omitempty"`
 	// HookImagesURLPath can be used to override the default Hook images path to pull from a local server.
 	HookImagesURLPath string `json:"hookImagesURLPath,omitempty"`
