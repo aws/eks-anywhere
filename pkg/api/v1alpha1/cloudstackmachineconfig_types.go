@@ -25,7 +25,9 @@ import (
 // CloudStackMachineConfigSpec defines the desired state of CloudStackMachineConfig.
 type CloudStackMachineConfigSpec struct {
 	// Template refers to a VM image template which has been previously registered in CloudStack.
-	// It can either be specified as a UUID or name
+	// It can either be specified as a UUID or name.
+	// When using a template name it must include the Kubernetes version(s). For example,
+	// a template used for Kubernetes 1.27 could be ubuntu-2204-1.27.
 	Template CloudStackResourceIdentifier `json:"template"`
 	// ComputeOffering refers to a compute offering which has been previously registered in
 	// CloudStack. It represents a VM’s instance size including number of CPU’s, memory, and CPU

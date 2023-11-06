@@ -340,6 +340,7 @@ The default is generating a key in your `$(pwd)/<cluster-name>` folder when not 
 ### template.{id,name} (required)
 The VM template to use for your EKS Anywhere cluster. Currently, a VM based on RHEL 8.6 is required.
 This can be a name or ID.
+The `template.name` must contain the `Cluster.Spec.KubernetesVersion` or `Cluster.Spec.WorkerNodeGroupConfiguration[].KubernetesVersion` version (in case of modular upgrade). For example, if the Kubernetes version is 1.24, the `template.name` field name should include 1.24, 1_24, 1-24 or 124.
 See the [Artifacts]({{< relref "../../osmgmt/artifacts" >}}) page for instructions for building RHEL-based images.
 
 ### diskOffering (optional)
