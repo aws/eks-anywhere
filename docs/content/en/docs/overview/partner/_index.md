@@ -83,3 +83,24 @@ pulumi           pulumi-kubernetes-operator
 sysdig           sysdig-agent
 hashicorp        vault
 ```
+## AWS Outpost provider validated partners
+```
+Kubernetes Version :  1.27 
+Date of Conformance Test : 2023-09-21
+ 
+Following ISV Partners have Validated their Conformance : 
+ 
+VENDOR_PRODUCT   VENDOR_PRODUCT_TYPE
+dynatrace        dynatrace
+komodor          k8s-watcher
+kong             kong-enterprise
+accuknox         kubearmor
+kubecost         cost-analyzer
+nirmata          enterprise-kyverno
+lacework         polygraph
+suse             neuvector
+perfectscale     perfectscale
+pulumi           pulumi-kubernetes-operator
+sysdig           sysdig-agent
+hashicorp        vault
+```
