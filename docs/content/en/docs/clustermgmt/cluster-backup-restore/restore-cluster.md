@@ -78,14 +78,14 @@ If the cluster is no longer accessible in any means, or the infrastructure machi
     # Move workload cluster w01 resources to the new management cluster mgmt-new
     docker run -i --network host -w $(pwd) -v $(pwd):/$(pwd) --entrypoint clusterctl ${CLI_TOOLS_IMAGE} move \
         --namespace eksa-system \
-        --filter-cluster {WORKLOAD_CLUSTER_1} \
+        --filter-cluster ${WORKLOAD_CLUSTER_1} \
         --from-directory ${CLUSTER_STATE_BACKUP_LATEST_PATH} \
         --to-kubeconfig ${MGMT_CLUSTER_NEW_KUBECONFIG}
     
     # Move workload cluster w02 resources to the new management cluster mgmt-new
     docker run -i --network host -w $(pwd) -v $(pwd):/$(pwd) --entrypoint clusterctl ${CLI_TOOLS_IMAGE} move \
         --namespace eksa-system \
-        --filter-cluster {WORKLOAD_CLUSTER_2} \
+        --filter-cluster ${WORKLOAD_CLUSTER_2} \
         --from-directory ${CLUSTER_STATE_BACKUP_LATEST_PATH} \
         --to-kubeconfig ${MGMT_CLUSTER_NEW_KUBECONFIG}
     ```
