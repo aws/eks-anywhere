@@ -8,8 +8,9 @@ import (
 )
 
 const (
-	packagesRegex    = `^.*CuratedPackages.*$`
-	certManagerRegex = "^.*CuratedPackagesCertManager.*$"
+	packagesRegex         = `^.*CuratedPackages.*$`
+	regionalPackagesRegex = `^.*RegionalCuratedPackages.*$`
+	certManagerRegex      = "^.*CuratedPackagesCertManager.*$"
 )
 
 func (e *E2ESession) setupPackagesEnv(testRegex string) error {
@@ -22,6 +23,15 @@ func (e *E2ESession) setupPackagesEnv(testRegex string) error {
 	for _, eVar := range requiredEnvVars {
 		if val, ok := os.LookupEnv(eVar); ok {
 			e.testEnvVars[eVar] = val
+		}
+	}
+
+	// overwrite envs for regional curated packages test
+	if regexp.MustCompile(regionalPackagesRegex).MatchString(testRegex) {
+		for _, eVar := range requiredEnvVars {
+			if val, ok := os.LookupEnv("REGIONAL_" + eVar); ok {
+				e.testEnvVars[eVar] = val
+			}
 		}
 	}
 	return nil

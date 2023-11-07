@@ -695,13 +695,16 @@ func (k *Kubectl) DeleteFluxConfig(ctx context.Context, managementCluster *types
 // GetPackageBundleController will retrieve the packagebundlecontroller from eksa-packages namespace and return the object.
 func (k *Kubectl) GetPackageBundleController(ctx context.Context, kubeconfigFile, clusterName string) (packagesv1.PackageBundleController, error) {
 	params := []string{"get", eksaPackagesBundleControllerType, clusterName, "-o", "json", "--kubeconfig", kubeconfigFile, "--namespace", constants.EksaPackagesName, "--ignore-not-found=true"}
-	stdOut, _ := k.Execute(ctx, params...)
-	response := &packagesv1.PackageBundleController{}
-	err := json.Unmarshal(stdOut.Bytes(), response)
+	stdOut, err := k.Execute(ctx, params...)
 	if err != nil {
-		return packagesv1.PackageBundleController{}, fmt.Errorf("unmarshalling kubectl response to GO struct %s: %v", clusterName, err)
+		return packagesv1.PackageBundleController{}, fmt.Errorf("failed to execute cmd \"%s\": %w", strings.Join(params, " "), err)
 	}
-	return *response, nil
+	pbc := &packagesv1.PackageBundleController{}
+	err = json.Unmarshal(stdOut.Bytes(), pbc)
+	if err != nil {
+		return packagesv1.PackageBundleController{}, fmt.Errorf("unmarshalling kubectl response to GO struct %s: %v, response: %s", clusterName, err, stdOut.String())
+	}
+	return *pbc, nil
 }
 
 // GetPackageBundleList will retrieve the packagebundle list from eksa-packages namespace and return the list.
