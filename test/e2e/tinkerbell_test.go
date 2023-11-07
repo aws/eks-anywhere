@@ -489,7 +489,7 @@ func TestTinkerbellKubernetes127UbuntuCuratedPackagesClusterAutoscalerSimpleFlow
 			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
 			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
-	runAutoscalerWithMetricsServerSimpleFlow(test)
+	runAutoscalerWithMetricsServerTinkerbellSimpleFlow(test)
 }
 
 func TestTinkerbellKubernetes126UbuntuSingleNodeCuratedPackagesFlow(t *testing.T) {
@@ -1001,7 +1001,7 @@ func TestTinkerbellKubernetes128UbuntuCuratedPackagesClusterAutoscalerSimpleFlow
 			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
 			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
-	runAutoscalerWithMetricsServerSimpleFlow(test)
+	runAutoscalerWithMetricsServerTinkerbellSimpleFlow(test)
 }
 
 // Single node
