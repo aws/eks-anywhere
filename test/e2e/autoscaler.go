@@ -22,7 +22,11 @@ func runAutoscalerWithMetricsServerTinkerbellSimpleFlow(test *framework.ClusterE
 	test.GenerateHardwareConfig()
 	test.PowerOnHardware()
 	test.CreateCluster(framework.WithControlPlaneWaitTimeout("20m"))
-	runAutoscalerWithMetricsServerSimpleFlow(test)
+	autoscalerName := "cluster-autoscaler"
+	metricServerName := "metrics-server"
+	targetNamespace := "eksa-packages"
+	test.InstallAutoScalerWithMetricServer(targetNamespace)
+	test.CombinedAutoScalerMetricServerTest(autoscalerName, metricServerName, targetNamespace, withMgmtCluster(test))
 	test.DeleteCluster()
 	test.PowerOffHardware()
 	test.ValidateHardwareDecommissioned()
