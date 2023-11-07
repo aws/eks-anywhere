@@ -3,7 +3,7 @@ module github.com/aws/eks-anywhere/release
 go 1.20
 
 require (
-	github.com/aws/aws-sdk-go v1.38.40
+	github.com/aws/aws-sdk-go v1.47.4
 	github.com/aws/aws-sdk-go-v2 v1.22.1
 	github.com/aws/eks-distro-build-tooling/release v0.0.0-20211103003257-a7e2379eae5e
 	github.com/fsouza/go-dockerclient v1.10.0
