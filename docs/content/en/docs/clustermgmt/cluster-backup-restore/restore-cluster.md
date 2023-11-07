@@ -124,7 +124,7 @@ If the cluster is no longer accessible in any means, or the infrastructure machi
 
     Make sure that apart from the `managementCluster` field you updated above, all the other cluster configs of the workload clusters need to stay the same as the old workload clusters resources after the old management cluster fails.
 
-    Apply the updated cluster config of each workload cluster in the new management cluster.
+1. Apply the updated cluster config of each workload cluster in the new management cluster.
 
     ```bash
     MGMT_CLUSTER_NEW="mgmt-new"
