@@ -464,9 +464,9 @@ func getTinkerbellTestsWithCount(tinkerbellTests []string, conf ParallelRunConf)
 			tinkerbellTestsWithCount = append(tinkerbellTestsWithCount, TinkerbellTest{Name: testName, Count: hwCount})
 		}
 	}
-	// sort tests by Hardware count, to enable running smaller tests first for Tinkerbell Provider
+	// sort tests by Hardware count, to enable running larger tests first for Tinkerbell Provider
 	sort.Slice(tinkerbellTestsWithCount, func(i, j int) bool {
-		return tinkerbellTestsWithCount[i].Count < tinkerbellTestsWithCount[j].Count
+		return tinkerbellTestsWithCount[i].Count > tinkerbellTestsWithCount[j].Count
 	})
 
 	return tinkerbellTestsWithCount, nil
