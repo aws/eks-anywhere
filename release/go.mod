@@ -17,7 +17,7 @@ require (
 	helm.sh/helm/v3 v3.11.3
 	k8s.io/apimachinery v0.26.10
 	k8s.io/helm v2.17.0+incompatible
-	sigs.k8s.io/controller-runtime v0.14.6
+	sigs.k8s.io/controller-runtime v0.14.7
 	sigs.k8s.io/yaml v1.3.0
 )
 
@@ -152,12 +152,12 @@ require (
 	gopkg.in/ini.v1 v1.66.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	k8s.io/api v0.26.2 // indirect
-	k8s.io/apiextensions-apiserver v0.26.1 // indirect
-	k8s.io/apiserver v0.26.2 // indirect
+	k8s.io/api v0.26.10 // indirect
+	k8s.io/apiextensions-apiserver v0.26.10 // indirect
+	k8s.io/apiserver v0.26.10 // indirect
 	k8s.io/cli-runtime v0.26.0 // indirect
-	k8s.io/client-go v0.26.2 // indirect
-	k8s.io/component-base v0.26.2 // indirect
+	k8s.io/client-go v0.26.10 // indirect
+	k8s.io/component-base v0.26.10 // indirect
 	k8s.io/klog/v2 v2.90.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20221012153701-172d655c2280 // indirect
 	k8s.io/kubectl v0.26.0 // indirect
