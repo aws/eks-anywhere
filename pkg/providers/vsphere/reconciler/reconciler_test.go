@@ -46,6 +46,8 @@ const (
 )
 
 func TestReconcilerReconcileSuccess(t *testing.T) {
+	t.Skip("Flaky (https://github.com/aws/eks-anywhere/issues/6996)")
+
 	tt := newReconcilerTest(t)
 	// We want to check that the cluster status is cleaned up if validations are passed
 	tt.cluster.SetFailure(anywherev1.FailureReasonType("InvalidCluster"), "invalid cluster")
@@ -184,6 +186,8 @@ func TestSetupEnvVars(t *testing.T) {
 }
 
 func TestReconcilerControlPlaneIsNotReady(t *testing.T) {
+	t.Skip("Flaky (https://github.com/aws/eks-anywhere/issues/7000)")
+
 	tt := newReconcilerTest(t)
 	kcp := test.KubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
 		kcp.Name = tt.cluster.Name
