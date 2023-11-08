@@ -43,27 +43,8 @@ func TestReconcilerReconcileSuccess(t *testing.T) {
 
 	tt := newReconcilerTest(t)
 	logger := test.NewNullLogger()
-	kcp := test.KubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
-		kcp.Name = tt.cluster.Name
-		kcp.Spec = controlplanev1.KubeadmControlPlaneSpec{
-			MachineTemplate: controlplanev1.KubeadmControlPlaneMachineTemplate{
-				InfrastructureRef: corev1.ObjectReference{
-					Name: fmt.Sprintf("%s-control-plane-1", tt.cluster.Name),
-				},
-			},
-		}
-		kcp.Status = controlplanev1.KubeadmControlPlaneStatus{
-			Conditions: clusterv1.Conditions{
-				{
-					Type:               clusterapi.ReadyCondition,
-					Status:             corev1.ConditionTrue,
-					LastTransitionTime: metav1.NewTime(time.Now()),
-				},
-			},
-			ObservedGeneration: 2,
-		}
-	})
-	tt.eksaSupportObjs = append(tt.eksaSupportObjs, kcp)
+
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, tt.kcp)
 	tt.createAllObjs()
 
 	remoteClient := fake.NewClientBuilder().Build()
@@ -76,7 +57,7 @@ func TestReconcilerReconcileSuccess(t *testing.T) {
 	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
 	tt.Expect(tt.cluster.Status.FailureReason).To(BeZero())
 
-	tt.ShouldEventuallyExist(tt.ctx, kcp)
+	tt.ShouldEventuallyExist(tt.ctx, tt.kcp)
 	tt.ShouldEventuallyExist(tt.ctx,
 		&controlplanev1.KubeadmControlPlane{
 			ObjectMeta: metav1.ObjectMeta{
@@ -442,6 +423,7 @@ type reconcilerTest struct {
 	env                  *envtest.Environment
 	eksaSupportObjs      []client.Object
 	datacenterConfig     *anywherev1.DockerDatacenterConfig
+	kcp                  *controlplanev1.KubeadmControlPlane
 }
 
 func newReconcilerTest(t testing.TB) *reconcilerTest {
@@ -494,6 +476,27 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 		c.Spec.EksaVersion = &version
 	})
 
+	kcp := test.KubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
+		kcp.Name = cluster.Name
+		kcp.Spec = controlplanev1.KubeadmControlPlaneSpec{
+			MachineTemplate: controlplanev1.KubeadmControlPlaneMachineTemplate{
+				InfrastructureRef: corev1.ObjectReference{
+					Name: fmt.Sprintf("%s-control-plane-1", cluster.Name),
+				},
+			},
+		}
+		kcp.Status = controlplanev1.KubeadmControlPlaneStatus{
+			Conditions: clusterv1.Conditions{
+				{
+					Type:               clusterapi.ReadyCondition,
+					Status:             corev1.ConditionTrue,
+					LastTransitionTime: metav1.NewTime(time.Now()),
+				},
+			},
+			ObservedGeneration: 2,
+		}
+	})
+
 	tt := &reconcilerTest{
 		t:                    t,
 		WithT:                NewWithT(t),
@@ -514,6 +517,7 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 			test.EKSARelease(),
 		},
 		datacenterConfig: workloadClusterDatacenter,
+		kcp:              kcp,
 	}
 
 	t.Cleanup(tt.cleanup)
