@@ -46,7 +46,17 @@ const (
 
 	// ControlEndpointDefaultPort defaults cluster control plane endpoint port if not specified.
 	ControlEndpointDefaultPort = "6443"
+
+	// RollingUpgradeStrategyType defines an upgrade strategy where the old nodes are replaced by a new one using rolling update.
+	RollingUpgradeStrategyType UpgradeStrategyType = "RollingUpdate"
+
+	// InPlaceUpgradeStrategyType defines an upgrade strategy where the nodes are upgraded in-place without needing any rollouts.
+	InPlaceUpgradeStrategyType UpgradeStrategyType = "InPlaceUpdate"
 )
+
+// UpgradeStrategyType defines the type of upgrade strategy to use for upgrades.
+// +kubebuilder:validation:Enum:=RollingUpdate;InPlaceUpdate
+type UpgradeStrategyType string
 
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
@@ -1173,7 +1183,8 @@ func (a *AutoScalingConfiguration) Equal(other *AutoScalingConfiguration) bool {
 
 // ControlPlaneUpgradeRolloutStrategy indicates rollout strategy for cluster.
 type ControlPlaneUpgradeRolloutStrategy struct {
-	Type          string                          `json:"type,omitempty"`
+	// Type defines the type of upgrade strategy to be used when upgrading nodes.
+	Type          UpgradeStrategyType             `json:"type,omitempty"`
 	RollingUpdate ControlPlaneRollingUpdateParams `json:"rollingUpdate,omitempty"`
 }
 
@@ -1184,7 +1195,8 @@ type ControlPlaneRollingUpdateParams struct {
 
 // WorkerNodesUpgradeRolloutStrategy indicates rollout strategy for cluster.
 type WorkerNodesUpgradeRolloutStrategy struct {
-	Type          string                         `json:"type,omitempty"`
+	// Type defines the type of upgrade strategy to be used when upgrading nodes.
+	Type          UpgradeStrategyType            `json:"type,omitempty"`
 	RollingUpdate WorkerNodesRollingUpdateParams `json:"rollingUpdate,omitempty"`
 }
 

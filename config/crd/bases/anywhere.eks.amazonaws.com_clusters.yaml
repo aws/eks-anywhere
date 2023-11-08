@@ -208,6 +208,11 @@ spec:
                         - maxSurge
                         type: object
                       type:
+                        description: Type defines the type of upgrade strategy to
+                          be used when upgrading nodes.
+                        enum:
+                        - RollingUpdate
+                        - InPlaceUpdate
                         type: string
                     type: object
                 type: object
@@ -557,6 +562,11 @@ spec:
                           - maxUnavailable
                           type: object
                         type:
+                          description: Type defines the type of upgrade strategy to
+                            be used when upgrading nodes.
+                          enum:
+                          - RollingUpdate
+                          - InPlaceUpdate
                           type: string
                       type: object
                   type: object

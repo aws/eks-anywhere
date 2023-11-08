@@ -3560,7 +3560,9 @@ spec:
               template:
                 description: Template refers to a VM image template which has been
                   previously registered in CloudStack. It can either be specified
-                  as a UUID or name
+                  as a UUID or name. When using a template name it must include the
+                  Kubernetes version(s). For example, a template used for Kubernetes
+                  1.27 could be ubuntu-2204-1.27.
                 properties:
                   id:
                     description: Id of a resource in the CloudStack environment. Mutually
@@ -3760,6 +3762,12 @@ spec:
                 type: object
               controlPlaneConfiguration:
                 properties:
+                  certSans:
+                    description: CertSANs is a slice of domain names or IPs to be
+                      added as Subject Name Alternatives of the Kube API Servers Certificate.
+                    items:
+                      type: string
+                    type: array
                   count:
                     description: Count defines the number of desired control plane
                       nodes. Defaults to 1.
@@ -3838,6 +3846,11 @@ spec:
                         - maxSurge
                         type: object
                       type:
+                        description: Type defines the type of upgrade strategy to
+                          be used when upgrading nodes.
+                        enum:
+                        - RollingUpdate
+                        - InPlaceUpdate
                         type: string
                     type: object
                 type: object
@@ -4187,6 +4200,11 @@ spec:
                           - maxUnavailable
                           type: object
                         type:
+                          description: Type defines the type of upgrade strategy to
+                            be used when upgrading nodes.
+                          enum:
+                          - RollingUpdate
+                          - InPlaceUpdate
                           type: string
                       type: object
                   type: object
@@ -4802,7 +4820,9 @@ spec:
               image:
                 description: image is to identify the OS image uploaded to the Prism
                   Central (PC) The image identifier (uuid or name) can be obtained
-                  from the Prism Central console or using the Prism Central API.
+                  from the Prism Central console or using the Prism Central API. It
+                  must include the Kubernetes version(s). For example, a template
+                  used for Kubernetes 1.27 could be ubuntu-2204-1.27.
                 properties:
                   name:
                     description: name is the resource name in the PC
@@ -5586,7 +5606,13 @@ spec:
                 type: string
               osImageURL:
                 description: OSImageURL can be used to override the default OS image
-                  path to pull from a local server.
+                  path to pull from a local server. OSImageURL is a URL to the OS
+                  image used during provisioning. To perform modular upgrades the
+                  OSImageURL must be specified on the TinkerbellMachineConfig objects.
+                  You cannot specify an OSImageURL on the TinkerbellDatacenterConfig
+                  and TinkerbellMachineConfigs simultaneously. It must include the
+                  Kubernetes version(s). For example, a URL used for Kubernetes 1.27
+                  could be http://localhost:8080/ubuntu-2204-1.27.tgz
                 type: string
               skipLoadBalancerDeployment:
                 description: SkipLoadBalancerDeployment when set to "true" can be
@@ -5746,6 +5772,10 @@ spec:
               osFamily:
                 type: string
               osImageURL:
+                description: OSImageURL can be used to override the default OS image
+                  path to pull from a local server. OSImageURL is a URL to the OS
+                  image used during provisioning. It must include the Kubernetes version(s).
+                  For example, a URL used for Kubernetes 1.27 could be http://localhost:8080/ubuntu-2204-1.27.tgz
                 type: string
               templateRef:
                 properties:
@@ -5773,7 +5803,6 @@ spec:
             required:
             - hardwareSelector
             - osFamily
-            - osImageURL
             type: object
           status:
             description: TinkerbellMachineConfigStatus defines the observed state
@@ -6161,6 +6190,9 @@ spec:
                   type: string
                 type: array
               template:
+                description: Template field is the template to use for provisioning
+                  the VM. It must include the Kubernetes version(s). For example,
+                  a template used for Kubernetes 1.27 could be ubuntu-2204-1.27.
                 type: string
               users:
                 items:
