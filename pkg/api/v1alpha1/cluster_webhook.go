@@ -36,29 +36,33 @@ const supportedMinorVersionIncrement int64 = 1
 // log is for logging in this package.
 var clusterlog = logf.Log.WithName("cluster-resource")
 
-var kclient client.Client
+type clusterDefaulter struct {
+	client client.Client
+}
 
 func (r *Cluster) SetupWebhookWithManager(mgr ctrl.Manager) error {
-	kclient = mgr.GetClient()
+	defaulter := &clusterDefaulter{
+		client: mgr.GetClient(),
+	}
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(&Cluster{}).
-		WithDefaulter(r).
+		WithDefaulter(defaulter).
 		Complete()
 }
 
 // +kubebuilder:webhook:path=/mutate-anywhere-eks-amazonaws-com-v1alpha1-cluster,mutating=true,failurePolicy=fail,sideEffects=None,groups=anywhere.eks.amazonaws.com,resources=clusters,verbs=create;update,versions=v1alpha1,name=mutation.cluster.anywhere.amazonaws.com,admissionReviewVersions={v1,v1beta1}
 
-var _ webhook.CustomDefaulter = &Cluster{}
+var _ webhook.CustomDefaulter = &clusterDefaulter{}
 
 // Default implements webhook.Defaulter so a webhook will be registered for the type.
-func (r *Cluster) Default(ctx context.Context, obj runtime.Object) error {
+func (r *clusterDefaulter) Default(ctx context.Context, obj runtime.Object) error {
 	cluster, ok := obj.(*Cluster)
 	if !ok {
 		return apierrors.NewBadRequest(fmt.Sprintf("expected a Cluster but got a %T", obj))
 	}
-	clusterlog.Info("Setting up Cluster defaults", "name", r.Name, "namespace", r.Namespace)
+	clusterlog.Info("Setting up Cluster defaults", "name", cluster.Name, "namespace", cluster.Namespace)
 	cluster.SetDefaults()
-	if err := setEksaVersionFromPreviousCluster(ctx, cluster); err != nil {
+	if err := r.setEksaVersionFromPreviousCluster(ctx, cluster); err != nil {
 		return err
 	}
 	return nil
@@ -624,7 +628,7 @@ func validateCPWorkerKubeSkew(cpVersion, workerVersion KubernetesVersion) field.
 	return allErrs
 }
 
-func setEksaVersionFromPreviousCluster(ctx context.Context, cluster *Cluster) error {
+func (r *clusterDefaulter) setEksaVersionFromPreviousCluster(ctx context.Context, cluster *Cluster) error {
 	if cluster.Spec.EksaVersion != nil {
 		return nil
 	}
@@ -634,7 +638,7 @@ func setEksaVersionFromPreviousCluster(ctx context.Context, cluster *Cluster) er
 		Namespace: cluster.Namespace,
 		Name:      cluster.Name,
 	}
-	if err := kclient.Get(ctx, key, &oldCluster); err != nil {
+	if err := r.client.Get(ctx, key, &oldCluster); err != nil {
 		return fmt.Errorf("could not find cluster with name %s in namespace %s", cluster.Name, cluster.Namespace)
 	}
 
