@@ -15,6 +15,7 @@
 package v1alpha1
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 
@@ -23,6 +24,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apimachinery/pkg/util/version"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
@@ -34,20 +36,32 @@ const supportedMinorVersionIncrement int64 = 1
 // log is for logging in this package.
 var clusterlog = logf.Log.WithName("cluster-resource")
 
+var wmgr ctrl.Manager
+
 func (r *Cluster) SetupWebhookWithManager(mgr ctrl.Manager) error {
+	wmgr = mgr
 	return ctrl.NewWebhookManagedBy(mgr).
-		For(r).
+		For(&Cluster{}).
+		WithDefaulter(r).
 		Complete()
 }
 
-//+kubebuilder:webhook:path=/mutate-anywhere-eks-amazonaws-com-v1alpha1-cluster,mutating=true,failurePolicy=fail,sideEffects=None,groups=anywhere.eks.amazonaws.com,resources=clusters,verbs=create;update,versions=v1alpha1,name=mutation.cluster.anywhere.amazonaws.com,admissionReviewVersions={v1,v1beta1}
+// +kubebuilder:webhook:path=/mutate-anywhere-eks-amazonaws-com-v1alpha1-cluster,mutating=true,failurePolicy=fail,sideEffects=None,groups=anywhere.eks.amazonaws.com,resources=clusters,verbs=create;update,versions=v1alpha1,name=mutation.cluster.anywhere.amazonaws.com,admissionReviewVersions={v1,v1beta1}
 
-var _ webhook.Defaulter = &Cluster{}
+var _ webhook.CustomDefaulter = &Cluster{}
 
 // Default implements webhook.Defaulter so a webhook will be registered for the type.
-func (r *Cluster) Default() {
+func (r *Cluster) Default(ctx context.Context, obj runtime.Object) error {
+	cluster, ok := obj.(*Cluster)
+	if !ok {
+		return apierrors.NewBadRequest(fmt.Sprintf("expected a Cluster but got a %T", obj))
+	}
 	clusterlog.Info("Setting up Cluster defaults", "name", r.Name, "namespace", r.Namespace)
-	r.SetDefaults()
+	cluster.SetDefaults()
+	if err := setEksaVersionFromPreviousCluster(ctx, cluster); err != nil {
+		return err
+	}
+	return nil
 }
 
 // Change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
@@ -608,4 +622,28 @@ func validateCPWorkerKubeSkew(cpVersion, workerVersion KubernetesVersion) field.
 	}
 
 	return allErrs
+}
+
+func setEksaVersionFromPreviousCluster(ctx context.Context, cluster *Cluster) error {
+	kclient := wmgr.GetClient()
+
+	if cluster.Spec.EksaVersion != nil {
+		return nil
+	}
+
+	oldCluster := Cluster{}
+	key := client.ObjectKey{
+		Namespace: cluster.Namespace,
+		Name:      cluster.Name,
+	}
+	if err := kclient.Get(ctx, key, &oldCluster); err != nil {
+		return fmt.Errorf("could not find cluster with name %s in namespace %s", cluster.Name, cluster.Namespace)
+	}
+
+	if oldCluster.Spec.EksaVersion == nil {
+		return fmt.Errorf("old cluster's eksaVersion cannot be nil")
+	}
+
+	cluster.Spec.EksaVersion = oldCluster.Spec.EksaVersion
+	return nil
 }
