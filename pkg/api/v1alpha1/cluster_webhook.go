@@ -36,10 +36,10 @@ const supportedMinorVersionIncrement int64 = 1
 // log is for logging in this package.
 var clusterlog = logf.Log.WithName("cluster-resource")
 
-var wmgr ctrl.Manager
+var kclient client.Client
 
 func (r *Cluster) SetupWebhookWithManager(mgr ctrl.Manager) error {
-	wmgr = mgr
+	kclient = mgr.GetClient()
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(&Cluster{}).
 		WithDefaulter(r).
@@ -625,8 +625,6 @@ func validateCPWorkerKubeSkew(cpVersion, workerVersion KubernetesVersion) field.
 }
 
 func setEksaVersionFromPreviousCluster(ctx context.Context, cluster *Cluster) error {
-	kclient := wmgr.GetClient()
-
 	if cluster.Spec.EksaVersion != nil {
 		return nil
 	}
