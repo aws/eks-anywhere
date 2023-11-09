@@ -73,7 +73,7 @@ These are supported operating system versions that EKS Anywhere may use to provi
 |------------|------------------------------|---------------------------------|
 | Ubuntu        | 22.04     | 0.18, 0.17
 |               | 20.04     | 0.18, 0.17, 0.16, 0.15, 0.14, 0.13, 0.12, 0.11, 0.10, 0.9, 0.8, 0.7, 0.6, 0.5
-| Bottlerocket  | 1.15.1    | 0.18, 0.17, 0.16, 0.15
+| Bottlerocket  | 1.15.1    | 0.18
 |               | 1.13.1    | 0.17, 0.16, 0.15
 |               | 1.12.0    | 0.14
 |               | 1.10.1    | 0.12
@@ -83,8 +83,10 @@ These are supported operating system versions that EKS Anywhere may use to provi
 |               | 1.6.2     | 0.8
 |               | 1.6.0     | 0.7
 |               | 1.3.0     | 0.6
-| RHEL          | 9.x	      | 0.18
+| RHEL          | 9.x<sup>*</sup>	      | 0.18
 | RHEL          | 8.7	      | 0.18, 0.17, 0.16, 0.15, 0.13, 0.14, 0.13, 0.12
+
+<sup>*</sup>Nutanix only
 
 For details on supported operating systems for Admin machines, [see the install guide.]({{< relref "../getting-started/install/" >}})
 
