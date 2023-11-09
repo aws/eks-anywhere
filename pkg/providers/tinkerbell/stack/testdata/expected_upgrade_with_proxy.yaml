@@ -22,6 +22,7 @@ hegel:
     value: 192.168.0.0/16
   image: public.ecr.aws/eks-anywhere/hegel:latest
 kubevip:
+  deploy: false
   image: public.ecr.aws/eks-anywhere/kube-vip:latest
 namespace: eksa-system
 rufio:

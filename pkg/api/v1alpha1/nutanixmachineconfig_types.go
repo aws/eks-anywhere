@@ -29,6 +29,8 @@ type NutanixMachineConfigSpec struct {
 	// image is to identify the OS image uploaded to the Prism Central (PC)
 	// The image identifier (uuid or name) can be obtained from the Prism Central console
 	// or using the Prism Central API.
+	// It must include the Kubernetes version(s). For example, a template used for
+	// Kubernetes 1.27 could be ubuntu-2204-1.27.
 	// +kubebuilder:validation:Required
 	Image NutanixResourceIdentifier `json:"image"`
 	// cluster is to identify the cluster (the Prism Element under management

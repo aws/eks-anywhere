@@ -58,7 +58,7 @@ type StackInstaller interface {
 	CleanupLocalBoots(ctx context.Context, forceCleanup bool) error
 	Install(ctx context.Context, bundle releasev1alpha1.TinkerbellBundle, tinkerbellIP, kubeconfig, hookOverride string, opts ...InstallOption) error
 	UninstallLocal(ctx context.Context) error
-	Upgrade(_ context.Context, _ releasev1alpha1.TinkerbellBundle, tinkerbellIP, kubeconfig string, hookOverride string) error
+	Upgrade(_ context.Context, _ releasev1alpha1.TinkerbellBundle, tinkerbellIP, kubeconfig, hookOverride string, opts ...InstallOption) error
 	AddNoProxyIP(IP string)
 	GetNamespace() string
 }
@@ -378,8 +378,12 @@ func (s *Installer) authenticateHelmRegistry(ctx context.Context) error {
 }
 
 // Upgrade the Tinkerbell stack using images specified in bundle.
-func (s *Installer) Upgrade(ctx context.Context, bundle releasev1alpha1.TinkerbellBundle, tinkerbellIP, kubeconfig string, hookOverride string) error {
+func (s *Installer) Upgrade(ctx context.Context, bundle releasev1alpha1.TinkerbellBundle, tinkerbellIP, kubeconfig string, hookOverride string, opts ...InstallOption) error {
 	logger.V(6).Info("Upgrading Tinkerbell helm chart")
+
+	for _, option := range opts {
+		option(s)
+	}
 
 	bootEnv := s.getBootsEnv(bundle.TinkerbellStack, tinkerbellIP)
 
@@ -421,7 +425,8 @@ func (s *Installer) Upgrade(ctx context.Context, bundle releasev1alpha1.Tinkerbe
 			image: bundle.TinkerbellStack.Rufio.URI,
 		},
 		kubevip: map[string]interface{}{
-			image: bundle.KubeVip.URI,
+			image:  bundle.KubeVip.URI,
+			deploy: s.loadBalancer,
 		},
 		envoy: map[string]interface{}{
 			image: bundle.Envoy.URI,

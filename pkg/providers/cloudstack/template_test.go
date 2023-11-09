@@ -141,3 +141,31 @@ func TestTemplateBuilderGenerateCAPISpecWorkersInvalidEndpoint(t *testing.T) {
 	_, err := templateBuilder.GenerateCAPISpecWorkers(clusterSpec, machineTemplateNames, kubeadmConfigTemplateNames)
 	g.Expect(err).To(MatchError(ContainSubstring("building template map for MD host 1.1.1.1:: is invalid: address 1.1.1.1::: too many colons in address")))
 }
+
+func TestTemplateBuilder_CertSANs(t *testing.T) {
+	for _, tc := range []struct {
+		Input  string
+		Output string
+	}{
+		{
+			Input:  "testdata/cluster_api_server_cert_san_domain_name.yaml",
+			Output: "testdata/expected_cluster_api_server_cert_san_domain_name.yaml",
+		},
+		{
+			Input:  "testdata/cluster_api_server_cert_san_ip.yaml",
+			Output: "testdata/expected_cluster_api_server_cert_san_ip.yaml",
+		},
+	} {
+		g := NewWithT(t)
+		clusterSpec := test.NewFullClusterSpec(t, tc.Input)
+
+		bldr := cloudstack.NewTemplateBuilder(time.Now)
+
+		data, err := bldr.GenerateCAPISpecControlPlane(clusterSpec, func(values map[string]interface{}) {
+			values["controlPlaneTemplateName"] = clusterapi.ControlPlaneMachineTemplateName(clusterSpec.Cluster)
+		})
+		g.Expect(err).ToNot(HaveOccurred())
+
+		test.AssertContentToFile(t, string(data), tc.Output)
+	}
+}
