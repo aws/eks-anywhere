@@ -15,12 +15,38 @@ Please upgrade to `v0.15.3` if you are using Tinkerbell (Bare Metal) provider.
 * When upgrading to a new minor version, a new OS image must be created using the new image-builder cli.
 {{% /alert %}}
 
+## [v0.18.1](https://github.com/aws/eks-anywhere/releases/tag/v0.18.1)
+
+### Tool Upgrade
+* EKS Distro (Kubernetes):
+	* `v1.25.14` to `v1.25.15`
+	* `v1.26.9` to `v1.26.10`
+	* `v1.27.6` to `v1.27.7`
+	* `v1.28.2` to `v1.28.3`
+* Etcdadm Bootstrap Provider: `v1.0.9` to `v1.0.10`
+* Etcdadm Controller: `v1.0.14` to `v1.0.15`
+* Cluster API Provider CloudStack: `v0.4.9-rc7` to `v0.4.9-rc8`
+* EKS Anywhere Packages Controller : `v0.3.12` to `v0.3.13`
+
+### Bug
+* Bare Metal: Ensure the Tinkerbell stack continues to run on management clusters when worker nodes are scaled to 0 ([#2624](https://github.com/aws/eks-anywhere-build-tooling/pull/2624))
+
+### Supported Operating Systems
+
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow  |
+| :----------:        | :-----: | :--------: | :-----: | :--------: | :---: |
+| Ubuntu 20.04        | ✔       | ✔          | ✔       | —          | ✔     |
+| Ubuntu 22.04        | ✔       | ✔          | ✔       | —          | —     |
+| Bottlerocket 1.15.1 | ✔       | ✔          | —       | —          | —     |
+| RHEL 8.7            | ✔       | ✔          | ✔       | ✔          | —     |
+| RHEL 9.x            | —       | —          | ✔       | —          | —     |
+
 ## [v0.18.0](https://github.com/aws/eks-anywhere/releases/tag/v0.18.0)
 
 ### Supported OS version details
 |              | vSphere | Bare Metal |  Nutanix | CloudStack | Snow  |
 |    :---:     |  :---:  |   :---:   |   :---:  |    :---:   | :---: |
-| Ubuntu       | 20.04	 | 20.04     |	20.04             | Not supported	     | 20.04 |  
+| Ubuntu       | 20.04	 | 20.04     |	20.04             | Not supported	     | 20.04 |
 |              | 22.04   | 22.04     |  22.04             | Not supported      | Not supported   |
 | Bottlerocket | 1.15.1  | 1.15.1    |  Not supported     | Not supported	     | Not supported   |
 | RHEL         | 8.7	   | 8.7	     |  9.x, 8.7          | 8.7	               | Not supported   |
@@ -69,7 +95,7 @@ Please upgrade to `v0.15.3` if you are using Tinkerbell (Bare Metal) provider.
 ### Supported OS version details
 |              | vSphere | Bare Metal |  Nutanix | CloudStack | Snow  |
 |    :---:     |  :---:  |   :---:   |   :---:  |    :---:   | :---: |
-| Ubuntu       | 20.04	 | 20.04     |	20.04             | Not supported	     | 20.04 |  
+| Ubuntu       | 20.04	 | 20.04     |	20.04             | Not supported	     | 20.04 |
 |              | 22.04   | 22.04     |  22.04             | Not supported      | Not supported   |
 | Bottlerocket | 1.14.3  | 1.14.3    |  Not supported     | Not supported	     | Not supported   |
 | RHEL         | 8.7	   | 8.7	     |  Not supported     | 8.7	               | Not supported   |
@@ -83,7 +109,7 @@ Please upgrade to `v0.15.3` if you are using Tinkerbell (Bare Metal) provider.
 ### Supported OS version details
 |              | vSphere | Bare Metal |  Nutanix | CloudStack | Snow  |
 |    :---:     |  :---:  |   :---:   |   :---:  |    :---:   | :---: |
-| Ubuntu       | 20.04	 | 20.04     |	20.04             | Not supported	     | 20.04 |  
+| Ubuntu       | 20.04	 | 20.04     |	20.04             | Not supported	     | 20.04 |
 |              | 22.04   | 22.04     |  22.04             | Not supported      | Not supported   |
 | Bottlerocket | 1.14.3  | 1.14.3    |  Not supported     | Not supported	     | Not supported   |
 | RHEL         | 8.7	   | 8.7	     |  Not supported     | 8.7	               | Not supported   |
@@ -91,7 +117,7 @@ Please upgrade to `v0.15.3` if you are using Tinkerbell (Bare Metal) provider.
 
 ### Fixed
 - Fixed cli upgrade mgmt kubeconfig flag ([#6666](https://github.com/aws/eks-anywhere/pull/6666))
-- Ignore node taints when scheduling Cilium preflight daemonset ([#6697](https://github.com/aws/eks-anywhere/pull/6697)) 
+- Ignore node taints when scheduling Cilium preflight daemonset ([#6697](https://github.com/aws/eks-anywhere/pull/6697))
 - Baremetal: Prevent bare metal machine config references from changing to existing machine configs ([#6674](https://github.com/aws/eks-anywhere/pull/6674))
 
 ## [v0.17.2](https://github.com/aws/eks-anywhere/releases/tag/v0.17.2)
@@ -99,7 +125,7 @@ Please upgrade to `v0.15.3` if you are using Tinkerbell (Bare Metal) provider.
 ### Supported OS version details
 |              | vSphere | Bare Metal |  Nutanix | CloudStack | Snow  |
 |    :---:     |  :---:  |   :---:   |   :---:  |    :---:   | :---: |
-| Ubuntu       | 20.04	 | 20.04     |	20.04             | Not supported	     | 20.04 |  
+| Ubuntu       | 20.04	 | 20.04     |	20.04             | Not supported	     | 20.04 |
 |              | 22.04   | 22.04     |  22.04             | Not supported      | Not supported   |
 | Bottlerocket | 1.14.0  | 1.14.0    |  Not supported     | Not supported	     | Not supported   |
 | RHEL         | 8.7	   | 8.7	     |  Not supported     | 8.7	               | Not supported   |
@@ -121,7 +147,7 @@ Please upgrade to `v0.15.3` if you are using Tinkerbell (Bare Metal) provider.
 ### Supported OS version details
 |              | vSphere | Bare Metal |  Nutanix | CloudStack | Snow  |
 |    :---:     |  :---:  |   :---:   |   :---:  |    :---:   | :---: |
-| Ubuntu       | 20.04	 | 20.04     |	20.04             | Not supported	     | 20.04 |  
+| Ubuntu       | 20.04	 | 20.04     |	20.04             | Not supported	     | 20.04 |
 |              | 22.04   | 22.04     |  22.04             | Not supported      | Not supported   |
 | Bottlerocket | 1.14.0  | 1.14.0    |  Not supported     | Not supported	     | Not supported   |
 | RHEL         | 8.7	   | 8.7	     |  Not supported     | 8.7	               | Not supported   |
@@ -141,7 +167,7 @@ Please upgrade to `v0.15.3` if you are using Tinkerbell (Bare Metal) provider.
 ### Supported OS version details
 |              | vSphere | Bare Metal |  Nutanix | CloudStack | Snow  |
 |    :---:     |  :---:  |   :---:   |   :---:  |    :---:   | :---: |
-| Ubuntu       | 20.04	 | 20.04     |	20.04             | Not supported	     | 20.04 |  
+| Ubuntu       | 20.04	 | 20.04     |	20.04             | Not supported	     | 20.04 |
 |              | 22.04   | 22.04     |  22.04             | Not supported      | Not supported   |
 | Bottlerocket | 1.14.0  | 1.14.0    |  Not supported     | Not supported	     | Not supported   |
 | RHEL         | 8.7	   | 8.7	     |  Not supported     | 8.7	               | Not supported   |
@@ -200,9 +226,9 @@ Option A
 
 ```bash
 # Does not persist across reboots.
-sudo ip rule add from all fwmark 0x200/0xf00 lookup 2004 pref 9  
-sudo ip rule add from all fwmark 0xa00/0xf00 lookup 2005 pref 10  
-sudo ip rule add from all lookup local pref 100  
+sudo ip rule add from all fwmark 0x200/0xf00 lookup 2004 pref 9
+sudo ip rule add from all fwmark 0xa00/0xf00 lookup 2005 pref 10
+sudo ip rule add from all lookup local pref 100
 ```
 
 Option B
@@ -280,9 +306,9 @@ ManageForeignRoutingPolicyRules=no
 - Kubernetes 1.27 support ([#5929](https://github.com/aws/eks-anywhere/pull/5929))
 - Support for upgrades for clusters with pod disruption budgets ([#5697](https://github.com/aws/eks-anywhere/pull/5697))
 - BottleRocket network config uses mac addresses instead of interface names for configuring interfaces for the Bare Metal provider ([#3411](https://github.com/aws/eks-anywhere/issues/3411))
-- Allow users to configure additional BottleRocket settings 
-  - kernel sysctl settings ([#5304](https://github.com/aws/eks-anywhere/pull/5304)) 
-  - boot kernel parameters ([#5359](https://github.com/aws/eks-anywhere/pull/5359)) 
+- Allow users to configure additional BottleRocket settings
+  - kernel sysctl settings ([#5304](https://github.com/aws/eks-anywhere/pull/5304))
+  - boot kernel parameters ([#5359](https://github.com/aws/eks-anywhere/pull/5359))
   - custom trusted cert bundles ([#5625](https://github.com/aws/eks-anywhere/pull/5625))
 - Add support for IRSA on Nutanix ([#5698](https://github.com/aws/eks-anywhere/pull/5698))
 - Add support for aws-iam-authenticator on Nutanix ([#5698](https://github.com/aws/eks-anywhere/pull/5698))
@@ -325,7 +351,7 @@ ManageForeignRoutingPolicyRules=no
 ### Supported OS version details
 |              | vSphere | Baremetal |  Nutanix | Cloudstack | Snow  |
 |    :---:     |  :---:  |   :---:   |   :---:  |    :---:   | :---: |
-| Ubuntu       | 20.04	 | 20.04     |	20.04             | Not supported	     | 20.04 |  
+| Ubuntu       | 20.04	 | 20.04     |	20.04             | Not supported	     | 20.04 |
 | Bottlerocket | 1.13.1  | 1.13.1    |  Not supported     | Not supported	     | Not supported   |
 | RHEL         | 8.7	   | 8.7	     |  Not supported     | 8.7	               | Not supported   |
 
@@ -344,7 +370,7 @@ ManageForeignRoutingPolicyRules=no
 ### Supported OS version details
 |              | vSphere | Baremetal |  Nutanix | Cloudstack | Snow  |
 |    :---:     |  :---:  |   :---:   |   :---:  |    :---:   | :---: |
-| Ubuntu       | 20.04	 | 20.04     |	20.04             | Not supported	     | 20.04 |  
+| Ubuntu       | 20.04	 | 20.04     |	20.04             | Not supported	     | 20.04 |
 | Bottlerocket | 1.13.1  | 1.13.1    |  Not supported     | Not supported	     | Not supported   |
 | RHEL         | 8.7	   | 8.7	     |  Not supported     | 8.7	               | Not supported   |
 
@@ -362,7 +388,7 @@ ManageForeignRoutingPolicyRules=no
 ### Supported OS version details
 |              | vSphere | Baremetal |  Nutanix | Cloudstack | Snow  |
 |    :---:     |  :---:  |   :---:   |   :---:  |    :---:   | :---: |
-| Ubuntu       | 20.04	 | 20.04     |	20.04             | Not supported	     | 20.04 |  
+| Ubuntu       | 20.04	 | 20.04     |	20.04             | Not supported	     | 20.04 |
 | Bottlerocket | 1.13.1  | 1.13.1    |  Not supported     | Not supported	     | Not supported   |
 | RHEL         | 8.7	   | 8.7	     |  Not supported     | 8.7	               | Not supported   |
 
@@ -693,7 +719,7 @@ ManageForeignRoutingPolicyRules=no
 ### Changed
 - EKS-A now uses Cluster API (CAPI) v1.0.1 and v1beta1 manifests, upgrading from v0.3.23 and v1alpha3 manifests.
 - Kubernetes components and etcd now use TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256 as the
-  configured TLS cipher suite [#657](https://github.com/aws/eks-anywhere/pull/657), 
+  configured TLS cipher suite [#657](https://github.com/aws/eks-anywhere/pull/657),
   [#759](https://github.com/aws/eks-anywhere/pull/759)
 - Automated git repository structure changes during Flux component `upgrade` workflow [#577](https://github.com/aws/eks-anywhere/issues/577)
 
@@ -704,7 +730,7 @@ ManageForeignRoutingPolicyRules=no
 
 - Support to create and manage workload clusters [#94](https://github.com/aws/eks-anywhere/issues/94)
 - Support for upgrading eks-anywhere components [#93](https://github.com/aws/eks-anywhere/issues/93), [Cluster upgrades]({{< relref "../clustermgmt/cluster-upgrades" >}})
-  - IMPORTANT: Currently upgrading existing flux manged clusters requires performing a few [additional steps]({{< relref "../clustermgmt/cluster-upgrades" >}}). The fix for upgrading the existing clusters will be published in `0.6.1` release 
+  - IMPORTANT: Currently upgrading existing flux managed clusters requires performing a few [additional steps]({{< relref "../clustermgmt/cluster-upgrades" >}}). The fix for upgrading the existing clusters will be published in `0.6.1` release
     to improve the upgrade experience.
 - k8s CIS compliance [#193](https://github.com/aws/eks-anywhere/pull/192/)
 - Support bundle improvements [#92](https://github.com/aws/eks-anywhere/issues/92)
