@@ -82,6 +82,7 @@ func TestProviderPreCoreComponentsUpgrade_StackUpgradeError(t *testing.T) {
 			tconfig.DatacenterConfig.Spec.TinkerbellIP,
 			tconfig.Management.KubeconfigFile,
 			tconfig.DatacenterConfig.Spec.HookImagesURLPath,
+			gomock.Any(),
 		).
 		Return(errors.New(expect))
 
@@ -108,6 +109,7 @@ func TestProviderPreCoreComponentsUpgrade_HasBaseboardManagementCRDError(t *test
 			tconfig.TinkerbellIP,
 			tconfig.Management.KubeconfigFile,
 			tconfig.DatacenterConfig.Spec.HookImagesURLPath,
+			gomock.Any(),
 		).
 		Return(nil)
 
@@ -143,6 +145,7 @@ func TestProviderPreCoreComponentsUpgrade_NoBaseboardManagementCRD(t *testing.T)
 			tconfig.TinkerbellIP,
 			tconfig.Management.KubeconfigFile,
 			tconfig.DatacenterConfig.Spec.HookImagesURLPath,
+			gomock.Any(),
 		).
 		Return(nil)
 
@@ -454,6 +457,7 @@ func TestProviderPreCoreComponentsUpgrade_RufioConversions(t *testing.T) {
 					tconfig.DatacenterConfig.Spec.TinkerbellIP,
 					tconfig.Management.KubeconfigFile,
 					tconfig.DatacenterConfig.Spec.HookImagesURLPath,
+					gomock.Any(),
 				).
 				Return(nil)
 			tconfig.KubeClient.EXPECT().
@@ -624,6 +628,7 @@ func (t *PreCoreComponentsUpgradeTestConfig) WithStackUpgrade() *PreCoreComponen
 			t.TinkerbellIP,
 			t.Management.KubeconfigFile,
 			t.DatacenterConfig.Spec.HookImagesURLPath,
+			gomock.Any(),
 		).
 		Return(nil)
 	t.KubeClient.EXPECT().
