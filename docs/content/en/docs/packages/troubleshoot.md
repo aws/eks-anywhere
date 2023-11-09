@@ -135,7 +135,7 @@ kubectl get ns | grep eksa-packagess
 ```
 Create a PackageBundlecController for the workload cluster if it does not exist (where billy here is the cluster name):
 ```bash
- cat <<! | k apply -f -
+ cat <<! | kubectl apply -f -
 apiVersion: packages.eks.amazonaws.com/v1alpha1
 kind: PackageBundleController
 metadata:
