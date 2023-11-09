@@ -728,7 +728,7 @@ ManageForeignRoutingPolicyRules=no
 
 - Support to create and manage workload clusters [#94](https://github.com/aws/eks-anywhere/issues/94)
 - Support for upgrading eks-anywhere components [#93](https://github.com/aws/eks-anywhere/issues/93), [Cluster upgrades]({{< relref "../clustermgmt/cluster-upgrades" >}})
-  - IMPORTANT: Currently upgrading existing flux manged clusters requires performing a few [additional steps]({{< relref "../clustermgmt/cluster-upgrades" >}}). The fix for upgrading the existing clusters will be published in `0.6.1` release
+  - IMPORTANT: Currently upgrading existing flux managed clusters requires performing a few [additional steps]({{< relref "../clustermgmt/cluster-upgrades" >}}). The fix for upgrading the existing clusters will be published in `0.6.1` release
     to improve the upgrade experience.
 - k8s CIS compliance [#193](https://github.com/aws/eks-anywhere/pull/192/)
 - Support bundle improvements [#92](https://github.com/aws/eks-anywhere/issues/92)
