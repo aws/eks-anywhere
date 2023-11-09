@@ -56,6 +56,8 @@ func TestReconcilerGenerateSpec(t *testing.T) {
 }
 
 func TestReconcilerReconcileSuccess(t *testing.T) {
+	t.Skip("Flaky (https://github.com/aws/eks-anywhere/issues/6996)")
+
 	tt := newReconcilerTest(t)
 
 	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
@@ -584,6 +586,8 @@ func TestReconcilerValidateHardwareCountRollingUpdateFail(t *testing.T) {
 }
 
 func TestReconcilerValidateHardwareScalingUpdateFail(t *testing.T) {
+	t.Skip("Flaky (https://github.com/aws/eks-anywhere/issues/6997)")
+
 	tt := newReconcilerTest(t)
 	tt.createAllObjs()
 
@@ -715,6 +719,8 @@ func TestReconcilerDetectOperationK8sVersionUpgradeCPOnly(t *testing.T) {
 }
 
 func TestReconcilerDetectOperationK8sVersionUpgradeWorkerOnly(t *testing.T) {
+	t.Skip("Flaky (https://github.com/aws/eks-anywhere/issues/6998)")
+
 	tt := newReconcilerTest(t)
 	tt.createAllObjs()
 

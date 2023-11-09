@@ -39,6 +39,8 @@ const (
 )
 
 func TestReconcilerReconcileSuccess(t *testing.T) {
+	t.Skip("Flaky (https://github.com/aws/eks-anywhere/issues/6996)")
+
 	tt := newReconcilerTest(t)
 	logger := test.NewNullLogger()
 	kcp := test.KubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {

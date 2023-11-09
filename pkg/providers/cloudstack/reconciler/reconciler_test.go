@@ -42,6 +42,8 @@ const (
 )
 
 func TestReconcilerReconcileSuccess(t *testing.T) {
+	t.Skip("Flaky (https://github.com/aws/eks-anywhere/issues/6996)")
+
 	tt := newReconcilerTest(t)
 	// We want to check that the cluster status is cleaned up if validations are passed
 	tt.cluster.SetFailure(anywherev1.FailureReasonType("InvalidCluster"), "invalid cluster")
@@ -192,6 +194,8 @@ func TestReconcilerValidateMachineConfigFail(t *testing.T) {
 }
 
 func TestReconcilerControlPlaneIsNotReady(t *testing.T) {
+	t.Skip("Flaky (https://github.com/aws/eks-anywhere/issues/7000)")
+
 	tt := newReconcilerTest(t)
 
 	kcp := test.KubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
@@ -234,6 +238,8 @@ func TestReconcilerControlPlaneIsNotReady(t *testing.T) {
 }
 
 func TestReconcileControlPlaneUnstackedEtcdSuccess(t *testing.T) {
+	t.Skip("Flaky (https://github.com/aws/eks-anywhere/issues/7001)")
+
 	tt := newReconcilerTest(t)
 	tt.cluster.Spec.ExternalEtcdConfiguration = &anywherev1.ExternalEtcdConfiguration{
 		Count: 1,

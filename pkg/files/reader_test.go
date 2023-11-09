@@ -96,7 +96,8 @@ func TestReaderReadFileHTTPSSuccess(t *testing.T) {
 }
 
 func TestReaderReadFileHTTPSProxySuccess(t *testing.T) {
-	t.Skip("Flaky test, needs work")
+	t.Skip("Flaky (https://github.com/aws/eks-anywhere/issues/5775)")
+
 	g := NewWithT(t)
 	filePath := "testdata/file.yaml"
 	// It's important to use example.com because the certificate created for
