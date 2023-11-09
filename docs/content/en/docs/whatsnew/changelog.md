@@ -35,6 +35,8 @@ Please upgrade to `v0.15.3` if you are using Tinkerbell (Bare Metal) provider.
 - Support for Kubernetes v1.28
 - Support for air gapped image building: [#6457](https://github.com/aws/eks-anywhere/issues/6457)
 - Support for RHEL 8 and RHEL 9 for Nutanix provider: [#6822](https://github.com/aws/eks-anywhere/pull/6822)
+- Support proxy configuration on Redhat image building [#2466](https://github.com/aws/eks-anywhere-build-tooling/issues/2466)
+- Support Redhat Satellite in image building [#2467](https://github.com/aws/eks-anywhere-build-tooling/issues/2467)
 
 
 ### Changed
