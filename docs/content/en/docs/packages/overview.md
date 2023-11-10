@@ -12,13 +12,13 @@ weight: 1
 Components of EKS Anywhere curated packages consist of a controller, a CLI, and artifacts.
 
 ### Package controller
-The package controller is responsible for installing, upgrading, configuring, and removing packages from the cluster. It performs these actions by watching the package and packagebundle custom resources. Morever, it uses the packagebundle to determine which packages to run and by setting their appropriate configuration values.
+The package controller is responsible for installing, upgrading, configuring, and removing packages from the cluster. It performs these actions by watching the package and packagebundle custom resources. Moreover, it uses the packagebundle to determine which packages to run and sets appropriate configuration values.
 
 Packages custom resources map to helm charts that the package controller uses to install packages workloads (such as cluster-autoscaler or metrics-server) on your clusters. The packagebundle object is the mapping between the package name and the specific helm chart and images that will be installed.
 
-The package controller only runs on the management cluster, including single-node clusters, to perform the above outlined responsibilities. However, packages may be installed on both management and workload clusters. For more, see the guide on [installing packages on workload clusters.]({{< relref "./overview/#installing-packages-on-workload-clusters" >}})
+The package controller only runs on the management cluster, including single-node clusters, to perform the above outlined responsibilities. However, packages may be installed on both management and workload clusters. For more information, see the guide on [installing packages on workload clusters.]({{< relref "./overview/#installing-packages-on-workload-clusters" >}})
 
-Package release information is stored in a package bundle manifest. The package controller will continually monitor and download new package bundles. When a new package bundle is downloaded, it will show up as "available" in the PackageBundleController resource's `status.detail` field. A package bundle upgrade always requires manual intervention as outlined in the [package bundles docs.]({{< relref "./packagebundles/" >}})
+Package release information is stored in a package bundle manifest. The package controller will continually monitor and download new package bundles. When a new package bundle is downloaded, it will show up as "available" in the PackageBundleController resource's `status.detail` field. A package bundle upgrade always requires manual intervention as outlined in the [package bundles]({{< relref "./packagebundles/" >}}) docs.
 
 Any changes to a package custom resource will trigger an install, upgrade, configuration or removal of that package. The package controller will use ECR or private registry to get all resources including bundle, helm charts, and container images.
 
@@ -38,7 +38,7 @@ An upgrade through the CLI (`eksctl anywhere upgrade packages`) upgrades all pac
 
 Please check out [Install EKS Anywhere]({{< relref "../getting-started/install" >}}) to install the `eksctl anywhere` CLI on your machine.
 
-The create cluster page for each [EKS Anywhere providers]({{< relref "../getting-started/chooseprovider/" >}}) describes how to configure and install curated packages at cluster creation time.
+The create cluster page for each [EKS Anywhere provider]({{< relref "../getting-started/chooseprovider/" >}}) describes how to configure and install curated packages at cluster creation time.
 
 ### Curated packages artifacts
 There are three types of build artifacts for packages: the container images, the helm charts and the package bundle manifests. The container images, helm charts and bundle manifests for all of the packages will be built and stored in EKS Anywhere ECR repository. Each package may have multiple versions specified in the packages bundle. The bundle will reference the helm chart tag in the ECR repository. The helm chart will reference the container images for the package.
