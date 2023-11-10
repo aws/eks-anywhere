@@ -9,7 +9,7 @@ description: >
 ---
 
 ## Package Controller Configuration (optional)
-You can configure EKS Anywhere controller configuration.
+You can specify EKS Anywhere package controller configurations. For more on the curated packages and the package controller, visit the [package management]({{< relref "../../packages" >}}) documentation.
 
 The following cluster spec shows an example of how to configure package controller:
 ```yaml

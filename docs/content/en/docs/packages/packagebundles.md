@@ -1,6 +1,6 @@
 ---
 title: "Managing package bundles"
-linkTitle: "Package bundles"
+linkTitle: "Manage package bundles"
 weight: 5
 aliases:
     /docs/tasks/packages/packagebundles/
