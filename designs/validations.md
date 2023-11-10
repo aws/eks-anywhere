@@ -344,7 +344,7 @@ func (v CreateClusterDefaulter) Run(ctx context.Context, spec *cluster.Spec) (*c
 * Validation in `test/framework` should be probably be moved into proper packages. This will be low priority unless such validations need to be reused from the CLI controller.
 
 ### `errors` package
-We propose the addition of our own `errors` package (in `pkg/errors`) that will implement the `Aggregate` error functionality. Although we will mirror the functionality from `apimachinery` so we don't reinvent the wheel, this will give us more flexibility to adapt to changes in Go error aggregation and handling (possibly go 1.20).
+We propose the addition of our own `errors` package (in `pkg/errors`) that will implement the `Aggregate` error functionality. Although we will mirror the functionality from `apimachinery` so we don't reinvent the wheel, this will give us more flexibility to adapt to changes in Go error aggregation and handling (possibly go 1.21).
 
 In addition, we plan on using this package to mirror the `Wrap` functionality from `github.com/pkg/errors`. This will allow us to only import one `errors` package from our code.
 

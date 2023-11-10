@@ -1,6 +1,6 @@
 module github.com/aws/eks-anywhere/hack/tools
 
-go 1.20
+go 1.21
 
 require (
 	github.com/go-logr/logr v1.2.0 // indirect
