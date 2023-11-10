@@ -73,7 +73,7 @@ spec:
       - !!str "/MyDatacenter/vm/Templates/MyTemplates"
 ```
 
-*NOTE: if you do not want to create a resource pool, you can instead specify the cluster directly as /MyDatacenter/host/Cluster-03 in user.yaml, where Cluster-03 is your cluster name. In your cluster spec, you will need to specify `/MyDatacenter/host/Cluster-03/Resources` for the resourcePool field.*
+**NOTE**: If you do not want to create a resource pool, you can instead specify the cluster directly as `/MyDatacenter/host/Cluster-03` in user.yaml, where `Cluster-03` is your cluster name. In your cluster spec, you will need to specify `/MyDatacenter/host/Cluster-03/Resources` for the `resourcePool` field.
 
 Set the admin credentials as environment variables:
 ```bash
@@ -134,7 +134,7 @@ govc permissions.set -group=false -principal "$EKSA_USER"  -role "$USER_ROLE" "$
 govc permissions.set -group=false -principal "$EKSA_USER"  -role "$USER_ROLE" "$RESOURCE_POOL"
 ```
 
-*NOTE: if you do not want to create a resource pool, you can instead specify the cluster directly as /MyDatacenter/host/Cluster-03 in user.yaml, where Cluster-03 is your cluster name. In your cluster spec, you will need to specify `/MyDatacenter/host/Cluster-03/Resources` for the resourcePool field.*
+**NOTE**: If you do not want to create a resource pool, you can instead specify the cluster directly as `/MyDatacenter/host/Cluster-03` in user.yaml, where `Cluster-03` is your cluster name. In your cluster spec, you will need to specify `/MyDatacenter/host/Cluster-03/Resources` for the `resourcePool` field.
 
 Please note that there is one more manual step to configure global permissions [here](#manually-set-global-permissions-role-in-global-permissions-ui).
 
