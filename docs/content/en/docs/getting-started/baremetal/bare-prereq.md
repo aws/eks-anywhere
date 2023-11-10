@@ -39,7 +39,7 @@ If you are running a standalone cluster with only one control plane node, you wi
 
 When upgrading without an extra machine, keep in mind that your control plane and your workload must be able to tolerate node unavailability. When upgrading with extra machine(s), you will need additional temporary machine(s) for each control plane and worker node grouping. Refer to [Upgrade Bare Metal Cluster]({{< relref "../../clustermgmt/cluster-upgrades/baremetal-upgrades/" >}}) and [Advanced configuration for rolling upgrade]({{< relref "../../clustermgmt/cluster-upgrades/baremetal-upgrades/#advanced-configuration-for-rolling-upgrade" >}}).
 
-> **_NOTE_**: For single node clusters that require an additional temporary machine for upgrading, if you don't want to set up the extra hardware, you may recreate the cluster for upgrading and handle data recovery manually.
+> **_NOTE_**: For single-node clusters that require an additional temporary machine for upgrading, if you don't want to set up the extra hardware, you may recreate the cluster for upgrading and handle data recovery manually.
 
 ## Network requirements
 
