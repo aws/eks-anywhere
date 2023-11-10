@@ -1,6 +1,6 @@
 ---
 title: "Managing the package controller"
-linkTitle: "Package controller"
+linkTitle: "Manage package controller"
 weight: 4
 aliases:
     /docs/tasks/packages/packagecontroller/
@@ -79,7 +79,7 @@ You may need to create or update your credentials which you can do with a comman
 
 ### Upgrade the packages controller
 
-EKS Anywhere v0.15.0 (packages controller v0.3.9+) and onwards includes support for eks-anywhere-packages controller as a self-managed package feature. The package controller now  upgrades automatically according to the version specified within the management cluster's selected package bundle.
+EKS Anywhere v0.15.0 (packages controller v0.3.9+) and onwards includes support for eks-anywhere-packages controller as a self-managed package feature. The package controller now upgrades automatically according to the version specified within the management cluster's selected package bundle.
 
 For any version prior to v0.3.X, manual steps must be executed to upgrade.
 
