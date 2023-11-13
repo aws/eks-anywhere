@@ -1144,16 +1144,15 @@ Run `image-builder` CLI with the hypervisor configuration file
 
 ### Red Hat Satellite Support
 
-As part of the image building process, `image-builder` creates a virtual machine with the chosen operating system, installs all the required packages and creates an image out of the virtual machine.
 While building Red Hat node images, `image-builder` uses public Red Hat subscription endpoints to register the build virtual machine with the provided Red Hat account and download required packages.
 
 Alternatively, `image-builder` can also use a private Red Hat Satellite to register the build virtual machine and pull packages from the Satellite. 
 In order to use Red Hat Satellite in the image build process follow the steps below.
 
 #### Prerequisites
-1. Ensure the host running `image-builder` has bi-directional network connectivity with the Red Hat Satellite
-2. Image builder flow only supports Red Hat Satellite version >= 6.8
-3. Add the following Red Hat repositories for the latest Red Hat 8.x or 9.x version on the Satellite and initiate a sync to replicate required packages
+1. Ensure the host running `image-builder` has bi-directional network connectivity with the RedHat Satellite
+2. Image builder flow only supports RedHat Satellite version >= 6.8
+3. Add the following Red Hat repositories for the latest 8.x or 9.x (for Nutanix) version on the Satellite and initiate a sync to replicate required packages
    1. Base OS Rpms
    2. Base OS - Extended Update Support Rpms
    3. AppStream - Extended Update Support Rpms
@@ -1169,11 +1168,162 @@ In order to use Red Hat Satellite in the image build process follow the steps be
      "rhsm_org_id": "org id from Satellite"
    }
    ```
-   `rhsm_server_release_version` should always point to the latest 8.x or 9.x minor release Red Hat release synced and available on Red Hat Satellite 
+   `rhsm_server_release_version` should always point to the latest 8.x or 9.x minor Red Hat release synced and available on Red Hat Satellite
 2. Run `image-builder` CLI with the hypervisor configuration file
    ```bash
    image-builder build --os <OS> --hypervisor <hypervisor> --release-channel <release channel> --<hypervisor>-config config.json
    ```
+
+### Air Gapped Image Building
+`image-builder` supports building node OS images in an air-gapped environment. Currently only building Ubuntu-based node OS images for baremetal provider is supported in air-gapped building mode.
+
+#### Prerequisites
+1. Air-gapped image building requires
+   - private artifacts server e.g. artifactory from JFrog 
+   - private git server. 
+3. Ensure the host running `image-builder` has bi-directional network connectivity with the artifacts server and git server 
+4. Artifacts server should have the ability to host and serve, standalone artifacts and Ubuntu OS packages 
+
+#### Building node images in an air-gapped environment
+1. Identify the EKS-D release channel (generally aligning with Kubernetes version) to build. For example, 1.27 or 1.28
+2. Identify the latest release of EKS-A from [changelog]({{< ref "/docs/whatsnew/changelog" >}}). For example, v0.18.0
+3. Run `image-builder` CLI to download manifests in an environment with internet connectivity
+   ```bash
+   image-builder download manifests
+   ```
+   This command will download a tarball containing all currently released and supported EKS-A and EKS-D manifests that are required for image building in an air-gapped environment.
+3. Create a local file named `download-airgapped-artifacts.sh` with the contents below. This script will download the required EKS-A and EKS-D artifacts required for image building.
+   <details>
+      <summary>Click to expand download-airgapped-artifacts.sh script</summary>
+   
+      ```shell
+      #!/usr/bin/env bash
+      set +o nounset
+   
+      function downloadArtifact() {
+         local -r artifact_url=${1}
+         local -r artifact_path_pre=${2}
+   
+         # Removes hostname from url
+         artifact_path_post=$(echo ${artifact_url} | sed -E 's:[^/]*//[^/]*::')
+         artifact_path="${artifact_path_pre}${artifact_path_post}"
+         curl -sL ${artifact_url} --output ${artifact_path} --create-dirs
+      }
+   
+      if [ -z "${EKSA_RELEASE_VERSION}" ]; then
+         echo "EKSA_RELEASE_VERSION not set. Please refer https://anywhere.eks.amazonaws.com/docs/whatsnew/ or https://github.com/aws/eks-anywhere/releases to get latest EKS-A release"
+         exit 1
+      fi
+   
+      if [ -z "${RELEASE_CHANNEL}" ]; then
+         echo "RELEASE_CHANNEL not set. Supported EKS Distro releases include 1-24, 1-25, 1-26, 1-27 and 1-28"
+         exit 1
+      fi
+   
+      # Convert RELEASE_CHANNEL to dot schema
+      kube_version="${RELEASE_CHANNEL/-/.}"
+      echo "Setting Kube Version: ${kube_version}"
+   
+      # Create a local directory to download the artifacts
+      artifacts_dir="eks-a-d-artifacts"
+      eks_a_artifacts_dir="eks-a-artifacts"
+      eks_d_artifacts_dir="eks-d-artifacts"
+      echo "Creating artifacts directory: ${artifacts_dir}"
+      mkdir ${artifacts_dir}
+   
+      # Download EKS-A bundle manifest
+      cd ${artifacts_dir}
+      bundles_url=$(curl -sL https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml | yq ".spec.releases[] | select(.version==\"$EKSA_RELEASE_VERSION\").bundleManifestUrl")
+      echo "Identified EKS-A Bundles URL: ${bundles_url}"
+      echo "Downloading EKS-A Bundles manifest file"
+      bundles_file_data=$(curl -sL "${bundles_url}" | yq)
+   
+      # Download EKS-A artifacts
+      eks_a_artifacts="containerd crictl etcdadm"
+      for eks_a_artifact in ${eks_a_artifacts}; do
+         echo "Downloading EKS-A artifact: ${eks_a_artifact}"
+         artifact_url=$(echo "${bundles_file_data}" | yq e ".spec.versionsBundles[] | select(.kubeVersion==\"${kube_version}\").eksD.${eks_a_artifact}.uri" -)
+         downloadArtifact ${artifact_url} ${eks_a_artifacts_dir}
+      done
+   
+      # Download EKS-D artifacts
+      echo "Downloading EKS-D manifest file"
+      eks_d_manifest_url=$(echo "${bundles_file_data}" | yq e ".spec.versionsBundles[] | select(.kubeVersion==\"${kube_version}\").eksD.manifestUrl" -)
+      eks_d_manifest_file_data=$(curl -sL "${eks_d_manifest_url}" | yq)
+   
+      # Get EKS-D kubernetes base url from kube-apiserver
+      eks_d_kube_tag=$(echo "${eks_d_manifest_file_data}" | yq e ".status.components[] | select(.name==\"kubernetes\").gitTag" -)
+      echo "EKS-D Kube Tag: ${eks_d_kube_tag}"
+      api_server_artifact="bin/linux/amd64/kube-apiserver.tar"
+      api_server_artifact_url=$(echo "${eks_d_manifest_file_data}" | yq e ".status.components[] | select(.name==\"kubernetes\").assets[] | select(.name==\"${api_server_artifact}\").archive.uri")
+      eks_d_base_url=$(echo "${api_server_artifact_url}" | sed -E "s,/${eks_d_kube_tag}/${api_server_artifact}.*,,")
+      echo "EKS-D Kube Base URL: ${eks_d_base_url}"
+   
+      # Downloading EKS-D Kubernetes artifacts
+      eks_d_k8s_artifacts="kube-apiserver.tar kube-scheduler.tar kube-controller-manager.tar kube-proxy.tar pause.tar coredns.tar etcd.tar kubeadm kubelet kubectl"
+      for eks_d_k8s_artifact in ${eks_d_k8s_artifacts}; do
+         echo "Downloading EKS-D artifact: Kubernetes - ${eks_d_k8s_artifact}"
+         artifact_url="${eks_d_base_url}/${eks_d_kube_tag}/bin/linux/amd64/${eks_d_k8s_artifact}"
+         downloadArtifact ${artifact_url} ${eks_d_artifacts_dir}
+      done
+   
+      # Downloading EKS-D etcd artifacts
+      eks_d_extra_artifacts="etcd cni-plugins"
+      for eks_d_extra_artifact in ${eks_d_extra_artifacts}; do
+         echo "Downloading EKS-D artifact: ${eks_d_extra_artifact}"
+         eks_d_artifact_tag=$(echo "${eks_d_manifest_file_data}" | yq e ".status.components[] | select(.name==\"${eks_d_extra_artifact}\").gitTag" -)
+         artifact_url=$(echo "${eks_d_manifest_file_data}" | yq e ".status.components[] | select(.name==\"${eks_d_extra_artifact}\").assets[] | select(.name==\"${eks_d_extra_artifact}-linux-amd64-${eks_d_artifact_tag}.tar.gz\").archive.uri")
+         downloadArtifact ${artifact_url} ${eks_d_artifacts_dir}
+      done
+
+      ```
+   
+   </details>
+4. Change mode of the saved file `download-airgapped-artifacts.sh` to an executable
+   ```bash
+   chmod +x download-airgapped-artifacts.sh
+   ```
+5. Set EKS-A release version and EKS-D release channel as environment variables and execute the script
+   ```bash
+   EKSA_RELEASE_VERSION=v0.18.0 RELEASE_CHANNEL=1-28 ./download-airgapped-artifacts.sh
+   ```
+   Executing this script will create a local directory `eks-a-d-artifacts` and download the required EKS-A and EKS-D artifacts.
+6. Create two repositories, one for EKS-A and one for EKS-D on the private artifacts server.
+   Upload the contents of `eks-a-d-artifacts/eks-a-artifacts` to the EKS-A repository. Similarly upload the contents of `eks-a-d-artifacts/eks-d-artifacts` to the EKS-D repository on the private artifacts server.
+   Please note, the path of artifacts inside the downloaded directories must be preserved while hosted on the artifacts server.
+7. Download and host the base ISO image to the artifacts server.
+8. Replicate the following public git repositories to private artifacts server or git servers. Make sure to sync all branches and tags to the private git repo.
+   - [eks-anywhere-build-tooling](https://github.com/aws/eks-anywhere-build-tooling)
+   - [image-builder](https://github.com/kubernetes-sigs/image-builder)
+9. Replicate public Ubuntu packages to private artifacts server. Please refer your artifact server's documentation for more detailed instructions.
+10. Create a sources.list file that will configure apt commands to use private artifacts server for OS packages
+    ```bash
+    deb [trusted=yes] http://<private-artifacts-server>/debian focal main restricted universe multiverse
+    deb [trusted=yes] http://<private-artifacts-server>/debian focal-updates main restricted universe multiverse
+    deb [trusted=yes] http://<private-artifacts-server>/debian focal-backports main restricted universe multiverse
+    deb [trusted=yes] http://<private-artifacts-server>/debian focal-security main restricted universe multiverse
+    ```
+    `focal` in the above file refers to the name of the Ubuntu OS for version 20.04. If using Ubuntu version 22.04 replace `focal` with `jammy`.
+11. Create a provider or hypervisor configuration file and add the following fields
+    ```json
+    {
+       "eksa_build_tooling_repo_url": "https://internal-git-host/eks-anywhere-build-tooling.git",
+       "image_builder_repo_url": "https://internal-repos/image-builder.git",
+       "private_artifacts_eksd_fqdn": "http://private-artifacts-server/artifactory/eks-d-artifacts",
+       "private_artifacts_eksa_fqdn": "http://private-artifacts-server:8081/artifactory/eks-a-artifacts",
+       "extra_repos": "<full path of sources.list>",
+       "disable_public_repos": "true",
+       "iso_url": "http://<private-base-iso-url>/ubuntu-20.04.1-legacy-server-amd64.iso",
+       "iso_checksum": "<sha256 of the base iso",
+       "iso_checksum_type": "sha256"
+    }
+    ```
+12. Run `image-builder` CLI with the hypervisor configuration file and the downloaded manifest tarball
+    ```bash
+    image-builder build -os <OS> --hypervisor <hypervisor> --release-channel <release channel> --<hypervisor>-config config.json --airgapped --manifest-tarball <path to eks-a-manifests.tar>
+    ```
+    
+
 ## Images
 
 The various images for EKS Anywhere can be found [in the EKS Anywhere ECR repository](https://gallery.ecr.aws/eks-anywhere/).
