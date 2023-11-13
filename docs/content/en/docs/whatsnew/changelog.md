@@ -90,6 +90,20 @@ Please upgrade to `v0.15.3` if you are using Tinkerbell (Bare Metal) provider.
 - Empty vSphereMachineConfig users fails CLI upgrade: [5420](https://github.com/aws/eks-anywhere/issues/5420)
 - CLI stalls on upgrade with Flux Gitops: [6453](https://github.com/aws/eks-anywhere/issues/6453)
 
+## [v0.17.5](https://github.com/aws/eks-anywhere/releases/tag/v0.17.5)
+
+### Tool Upgrade
+* Cluster API Provider CloudStack: `v0.4.9-rc7` to `v0.4.9-rc8`
+
+### Supported Operating Systems
+
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow  |
+| :----------:        | :-----: | :--------: | :-----: | :--------: | :---: |
+| Ubuntu 20.04        | ✔       | ✔          | ✔       | —          | ✔     |
+| Ubuntu 22.04        | ✔       | ✔          | ✔       | —          | —     |
+| Bottlerocket 1.14.3 | ✔       | ✔          | —       | —          | —     |
+| RHEL 8.7            | ✔       | ✔          | _       | ✔          | —     |
+
 ## [v0.17.4](https://github.com/aws/eks-anywhere/releases/tag/v0.17.4)
 
 ### Supported OS version details
