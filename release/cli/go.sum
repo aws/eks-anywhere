@@ -102,8 +102,8 @@ github.com/asaskevich/govalidator v0.0.0-20200428143746-21a406dcc535/go.mod h1:o
 github.com/aws/aws-sdk-go v1.38.40/go.mod h1:hcU610XS61/+aQV88ixoOzUoG7v3b31pl2zKMmprdro=
 github.com/aws/aws-sdk-go v1.42.23 h1:V0V5hqMEyVelgpu1e4gMPVCJ+KhmscdNxP/NWP1iCOA=
 github.com/aws/aws-sdk-go v1.42.23/go.mod h1:gyRszuZ/icHmHAVE4gc/r+cfCmhA1AD+vqfWbgI+eHs=
-github.com/aws/aws-sdk-go-v2 v1.22.1 h1:sjnni/AuoTXxHitsIdT0FwmqUuNUuHtufcVDErVFT9U=
-github.com/aws/aws-sdk-go-v2 v1.22.1/go.mod h1:Kd0OJtkW3Q0M0lUWGszapWjEvrXDzRW+D21JNsroB+c=
+github.com/aws/aws-sdk-go-v2 v1.22.2 h1:lV0U8fnhAnPz8YcdmZVV60+tr6CakHzqA6P8T46ExJI=
+github.com/aws/aws-sdk-go-v2 v1.22.2/go.mod h1:Kd0OJtkW3Q0M0lUWGszapWjEvrXDzRW+D21JNsroB+c=
 github.com/aws/eks-distro-build-tooling/release v0.0.0-20211103003257-a7e2379eae5e h1:GB6Cn9yKEt31mDF7RrVWyM9WoppNkGYth8zBPIJGJ+w=
 github.com/aws/eks-distro-build-tooling/release v0.0.0-20211103003257-a7e2379eae5e/go.mod h1:p/KHVJAMv3kofnUnShkZ6pUnZYzm+LK2G7bIi8nnTKA=
 github.com/aws/smithy-go v1.16.0 h1:gJZEH/Fqh+RsvlJ1Zt4tVAtV6bKkp3cC+R6FCZMNzik=
