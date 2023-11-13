@@ -32,7 +32,7 @@ updates:
     - "ok-to-test"
 # Release Go module
 - package-ecosystem: "gomod"
-  directory: "/release"
+  directory: "/release/cli"
   schedule:
     interval: "weekly"
     day: "tuesday"

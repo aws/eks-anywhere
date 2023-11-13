@@ -734,6 +734,7 @@ func (in *PackageBundle) DeepCopyInto(out *PackageBundle) {
 	*out = *in
 	in.Controller.DeepCopyInto(&out.Controller)
 	in.TokenRefresher.DeepCopyInto(&out.TokenRefresher)
+	in.CredentialProviderPackage.DeepCopyInto(&out.CredentialProviderPackage)
 	in.HelmChart.DeepCopyInto(&out.HelmChart)
 }
 
