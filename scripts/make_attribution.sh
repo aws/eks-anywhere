@@ -45,7 +45,6 @@ function build::attribution::generate(){
     cd $REPO_ROOT
     $(build::common::get_go_path "$GOLANG_VERSION")/go mod vendor
     build::create_git_tag
-    build::fix_licenses
     build::gather_licenses _output "./cmd/eksctl-anywhere ./controllers"
     build::exclude_own
     build::generate_attribution $GOLANG_VERSION
