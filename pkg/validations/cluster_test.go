@@ -328,13 +328,13 @@ func TestValidateEksaVersion(t *testing.T) {
 		},
 		{
 			name:       "Bad Cluster version",
-			wantErr:    fmt.Errorf("parsing cluster eksa version: invalid major version in semver invalid: strconv.ParseUint: parsing \"\": invalid syntax"),
+			wantErr:    fmt.Errorf("parsing cluster eksa version: invalid major version in semver invalid: strconv.ParseInt: parsing \"\": invalid syntax"),
 			version:    &badVersion,
 			cliVersion: "v0.0.0-dev",
 		},
 		{
 			name:       "Bad CLI version",
-			wantErr:    fmt.Errorf("parsing eksa cli version: invalid major version in semver badvalue: strconv.ParseUint: parsing \"\": invalid syntax"),
+			wantErr:    fmt.Errorf("parsing eksa cli version: invalid major version in semver badvalue: strconv.ParseInt: parsing \"\": invalid syntax"),
 			version:    &v,
 			cliVersion: "badvalue",
 		},
