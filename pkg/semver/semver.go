@@ -11,7 +11,7 @@ const semverRegex = `^v?(?P<major>0|[1-9]\d*)\.(?P<minor>0|[1-9]\d*)\.(?P<patch>
 var semverRegexp = regexp.MustCompile(semverRegex)
 
 type Version struct {
-	Major, Minor, Patch       uint64
+	Major, Minor, Patch       int64
 	Prerelease, Buildmetadata string
 }
 
@@ -29,15 +29,15 @@ func New(version string) (*Version, error) {
 	v := &Version{}
 	var err error
 
-	v.Major, err = strconv.ParseUint(namedGroups["major"], 10, 64)
+	v.Major, err = strconv.ParseInt(namedGroups["major"], 10, 64)
 	if err != nil {
 		return nil, fmt.Errorf("invalid major version in semver %s: %v", version, err)
 	}
-	v.Minor, err = strconv.ParseUint(namedGroups["minor"], 10, 64)
+	v.Minor, err = strconv.ParseInt(namedGroups["minor"], 10, 64)
 	if err != nil {
 		return nil, fmt.Errorf("invalid minor version in semver %s: %v", version, err)
 	}
-	v.Patch, err = strconv.ParseUint(namedGroups["patch"], 10, 64)
+	v.Patch, err = strconv.ParseInt(namedGroups["patch"], 10, 64)
 	if err != nil {
 		return nil, fmt.Errorf("invalid patch version in semver %s: %v", version, err)
 	}
@@ -93,7 +93,7 @@ func (v *Version) String() string {
 	return fmt.Sprintf("v%d.%d.%d", v.Major, v.Minor, v.Patch)
 }
 
-func compare(i, i2 uint64) int {
+func compare(i, i2 int64) int {
 	if i > i2 {
 		return 1
 	} else if i < i2 {
