@@ -23,6 +23,9 @@ resources:
 - bases/anywhere.eks.amazonaws.com_nutanixmachineconfigs.yaml
 - bases/anywhere.eks.amazonaws.com_nutanixdatacenterconfigs.yaml
 - bases/anywhere.eks.amazonaws.com_eksareleases.yaml
+- bases/anywhere.eks.amazonaws.com_controlplaneupgrades.yaml
+- bases/anywhere.eks.amazonaws.com_machinedeploymentupgrades.yaml
+- bases/anywhere.eks.amazonaws.com_nodeupgrades.yaml
 #+kubebuilder:scaffold:crdkustomizeresource
 
 patchesStrategicMerge:
