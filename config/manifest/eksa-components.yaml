@@ -6787,6 +6787,32 @@ rules:
 - apiGroups:
   - anywhere.eks.amazonaws.com
   resources:
+  - machinedeploymentupgrades
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - anywhere.eks.amazonaws.com
+  resources:
+  - machinedeploymentupgrades/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - anywhere.eks.amazonaws.com
+  resources:
+  - machinedeploymentupgrades/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - anywhere.eks.amazonaws.com
+  resources:
   - nodeupgrades
   verbs:
   - create

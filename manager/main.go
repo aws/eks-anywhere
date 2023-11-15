@@ -175,7 +175,10 @@ func setupReconcilers(ctx context.Context, setupLog logr.Logger, mgr ctrl.Manage
 		WithVSphereDatacenterReconciler().
 		WithSnowMachineConfigReconciler().
 		WithNutanixDatacenterReconciler().
-		WithCloudStackDatacenterReconciler()
+		WithCloudStackDatacenterReconciler().
+		WithControlPlaneUpgradeReconciler().
+		WithMachineDeploymentUpgradeReconciler().
+		WithNodeUpgradeReconciler()
 
 	reconcilers, err := factory.Build(ctx)
 	if err != nil {
@@ -211,6 +214,24 @@ func setupReconcilers(ctx context.Context, setupLog logr.Logger, mgr ctrl.Manage
 	setupLog.Info("Setting up cloudstackdatacenter controller")
 	if err := (reconcilers.CloudStackDatacenterReconciler).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", anywherev1.CloudStackDatacenterKind)
+		failed = true
+	}
+
+	setupLog.Info("Setting up controlplaneupgrade controller")
+	if err := (reconcilers.ControlPlaneUpgradeReconciler).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", anywherev1.ControlPlaneUpgradeKind)
+		failed = true
+	}
+
+	setupLog.Info("Setting up machinedeploymentupgrade controller")
+	if err := (reconcilers.MachineDeploymentUpgradeReconciler).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", anywherev1.MachineDeploymentUpgradeKind)
+		failed = true
+	}
+
+	setupLog.Info("Setting up nodeupgrade controller")
+	if err := (reconcilers.NodeUpgradeReconciler).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", anywherev1.NodeUpgradeKind)
 		failed = true
 	}
 

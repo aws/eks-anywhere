@@ -59,13 +59,16 @@ type Factory struct {
 }
 
 type Reconcilers struct {
-	ClusterReconciler              *ClusterReconciler
-	DockerDatacenterReconciler     *DockerDatacenterReconciler
-	VSphereDatacenterReconciler    *VSphereDatacenterReconciler
-	SnowMachineConfigReconciler    *SnowMachineConfigReconciler
-	TinkerbellDatacenterReconciler *TinkerbellDatacenterReconciler
-	CloudStackDatacenterReconciler *CloudStackDatacenterReconciler
-	NutanixDatacenterReconciler    *NutanixDatacenterReconciler
+	ClusterReconciler                  *ClusterReconciler
+	DockerDatacenterReconciler         *DockerDatacenterReconciler
+	VSphereDatacenterReconciler        *VSphereDatacenterReconciler
+	SnowMachineConfigReconciler        *SnowMachineConfigReconciler
+	TinkerbellDatacenterReconciler     *TinkerbellDatacenterReconciler
+	CloudStackDatacenterReconciler     *CloudStackDatacenterReconciler
+	NutanixDatacenterReconciler        *NutanixDatacenterReconciler
+	ControlPlaneUpgradeReconciler      *ControlPlaneUpgradeReconciler
+	MachineDeploymentUpgradeReconciler *MachineDeploymentUpgradeReconciler
+	NodeUpgradeReconciler              *NodeUpgradeReconciler
 }
 
 type buildStep func(ctx context.Context) error
@@ -543,6 +546,57 @@ func (f *Factory) withMachineHealthCheckReconciler() *Factory {
 		f.machineHealthCheckReconciler = mhcreconciler.New(
 			f.manager.GetClient(),
 			machineHealthCheckDefaulter,
+		)
+
+		return nil
+	})
+
+	return f
+}
+
+// WithControlPlaneUpgradeReconciler builds the ControlPlaneUpgrade reconciler.
+func (f *Factory) WithControlPlaneUpgradeReconciler() *Factory {
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.reconcilers.ControlPlaneUpgradeReconciler != nil {
+			return nil
+		}
+
+		f.reconcilers.ControlPlaneUpgradeReconciler = NewControlPlaneUpgradeReconciler(
+			f.manager.GetClient(),
+		)
+
+		return nil
+	})
+
+	return f
+}
+
+// WithMachineDeploymentUpgradeReconciler builds the WithMachineDeploymentUpgrade reconciler.
+func (f *Factory) WithMachineDeploymentUpgradeReconciler() *Factory {
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.reconcilers.MachineDeploymentUpgradeReconciler != nil {
+			return nil
+		}
+
+		f.reconcilers.MachineDeploymentUpgradeReconciler = NewMachineDeploymentUpgradeReconciler(
+			f.manager.GetClient(),
+		)
+
+		return nil
+	})
+
+	return f
+}
+
+// WithNodeUpgradeReconciler builds the WithNodeUpgrade reconciler.
+func (f *Factory) WithNodeUpgradeReconciler() *Factory {
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.reconcilers.NodeUpgradeReconciler != nil {
+			return nil
+		}
+
+		f.reconcilers.NodeUpgradeReconciler = NewNodeUpgradeReconciler(
+			f.manager.GetClient(),
 		)
 
 		return nil
