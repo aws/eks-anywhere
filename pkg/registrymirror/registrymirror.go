@@ -47,7 +47,7 @@ func FromClusterRegistryMirrorConfiguration(config *v1alpha1.RegistryMirrorConfi
 		if re.MatchString(ociNamespace.Registry) {
 			// handle curated packages in all regions
 			// static key makes it easier for mirror lookup
-			registryMap[constants.DefaultCuratedPackagesRegistryRegex] = mirror
+			registryMap[constants.DefaultCuratedPackagesRegistry] = mirror
 		} else {
 			registryMap[ociNamespace.Registry] = mirror
 		}
@@ -73,7 +73,7 @@ func (r *RegistryMirror) CoreEKSAMirror() string {
 
 // CuratedPackagesMirror returns the mirror for curated packages.
 func (r *RegistryMirror) CuratedPackagesMirror() string {
-	return r.NamespacedRegistryMap[constants.DefaultCuratedPackagesRegistryRegex]
+	return r.NamespacedRegistryMap[constants.DefaultCuratedPackagesRegistry]
 }
 
 // ReplaceRegistry replaces the host in a url with corresponding registry mirror
@@ -93,7 +93,7 @@ func (r *RegistryMirror) ReplaceRegistry(url string) string {
 	}
 	key := u.Host
 	if re.MatchString(key) {
-		key = constants.DefaultCuratedPackagesRegistryRegex
+		key = constants.DefaultCuratedPackagesRegistry
 	}
 	if v, ok := r.NamespacedRegistryMap[key]; ok {
 		return strings.Replace(url, u.Host, v, 1)

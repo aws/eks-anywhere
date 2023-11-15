@@ -53,12 +53,12 @@ func TestToAPIEndpoints(t *testing.T) {
 		{
 			name: "mix",
 			URLs: map[string]string{
-				constants.DefaultCoreEKSARegistry:             "1.2.3.4:443",
-				constants.DefaultCuratedPackagesRegistryRegex: "1.2.3.4:443/curated-packages",
+				constants.DefaultCoreEKSARegistry:        "1.2.3.4:443",
+				constants.DefaultCuratedPackagesRegistry: "1.2.3.4:443/curated-packages",
 			},
 			want: map[string]string{
-				constants.DefaultCoreEKSARegistry:             "1.2.3.4:443",
-				constants.DefaultCuratedPackagesRegistryRegex: "1.2.3.4:443/v2/curated-packages",
+				constants.DefaultCoreEKSARegistry:        "1.2.3.4:443",
+				constants.DefaultCuratedPackagesRegistry: "1.2.3.4:443/v2/curated-packages",
 			},
 		},
 	}
