@@ -121,11 +121,63 @@ rules:
 - apiGroups:
   - anywhere.eks.amazonaws.com
   resources:
+  - controlplaneupgrades
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - anywhere.eks.amazonaws.com
+  resources:
+  - controlplaneupgrades/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - anywhere.eks.amazonaws.com
+  resources:
+  - controlplaneupgrades/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - anywhere.eks.amazonaws.com
+  resources:
   - eksareleases
   verbs:
   - get
   - list
   - watch
+- apiGroups:
+  - anywhere.eks.amazonaws.com
+  resources:
+  - nodeupgrades
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - anywhere.eks.amazonaws.com
+  resources:
+  - nodeupgrades/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - anywhere.eks.amazonaws.com
+  resources:
+  - nodeupgrades/status
+  verbs:
+  - get
+  - patch
+  - update
 - apiGroups:
   - bmc.tinkerbell.org
   resources:
