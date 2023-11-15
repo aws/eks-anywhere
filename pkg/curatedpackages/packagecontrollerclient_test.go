@@ -85,8 +85,8 @@ func newPackageControllerTests(t *testing.T) []*packageControllerTest {
 	registryMirror := &registrymirror.RegistryMirror{
 		BaseRegistry: "1.2.3.4:443",
 		NamespacedRegistryMap: map[string]string{
-			constants.DefaultCoreEKSARegistry:             "1.2.3.4:443/public",
-			constants.DefaultCuratedPackagesRegistryRegex: "1.2.3.4:443/private",
+			constants.DefaultCoreEKSARegistry:        "1.2.3.4:443/public",
+			constants.DefaultCuratedPackagesRegistry: "1.2.3.4:443/private",
 		},
 		Auth:               true,
 		CACertContent:      "-----BEGIN CERTIFICATE-----\nabc\nefg\n-----END CERTIFICATE-----\n",
@@ -95,8 +95,8 @@ func newPackageControllerTests(t *testing.T) []*packageControllerTest {
 	registryMirrorInsecure := &registrymirror.RegistryMirror{
 		BaseRegistry: "1.2.3.4:8443",
 		NamespacedRegistryMap: map[string]string{
-			constants.DefaultCoreEKSARegistry:             "1.2.3.4:443/public",
-			constants.DefaultCuratedPackagesRegistryRegex: "1.2.3.4:443/private",
+			constants.DefaultCoreEKSARegistry:        "1.2.3.4:443/public",
+			constants.DefaultCuratedPackagesRegistry: "1.2.3.4:443/private",
 		},
 		Auth:               true,
 		CACertContent:      "-----BEGIN CERTIFICATE-----\nabc\nefg\n-----END CERTIFICATE-----\n",

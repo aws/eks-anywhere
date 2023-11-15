@@ -118,8 +118,8 @@ func (c ImportImagesCommand) Call(ctx context.Context) error {
 		WithRegistryMirror(&registrymirror.RegistryMirror{
 			BaseRegistry: c.RegistryEndpoint,
 			NamespacedRegistryMap: map[string]string{
-				constants.DefaultCoreEKSARegistry:             c.RegistryEndpoint,
-				constants.DefaultCuratedPackagesRegistryRegex: c.RegistryEndpoint,
+				constants.DefaultCoreEKSARegistry:        c.RegistryEndpoint,
+				constants.DefaultCuratedPackagesRegistry: c.RegistryEndpoint,
 			},
 			Auth: false,
 		}).
