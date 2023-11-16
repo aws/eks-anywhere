@@ -1,0 +1,27 @@
+@startuml in-place-eks-a-container
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+title Container diagram for EKS-A In-place upgrades
+
+Person(user, "User", "An EKS-A cluster admin")
+
+System_Boundary(eksa, "EKS-A") {
+	Container(manager, "EKS-A controller manager", "Go, controller-runtime", "Reconciles EKS-A Cluster, CPUpgrade, MachineDeploymentUpgrade and NodeUpgrade")
+	Container(kcp, "KCP Controller", "Go, controller-runtime", "Reconciles Control planes")
+	Container(md, "MachineDeployment Controller", "Go, controller-runtime", "Reconciles MachineDeployments")
+}
+
+Container(api, "Kube API server", "Go", "Provides read/write access to the kubernetes API objects stored in the etcd server and  allows to subscribe to events when they change")
+Container_Ext(workloadKubeApiServer, "Workload Cluster Kube API server", "Go", "Provides read/write access to the kubernetes API objects stored in the etcd server")
+
+Rel(manager, api, "Polls EKS-A Changes and updates CAPI objects", "HTTPS")
+Rel(kcp, api, "Polls KCP Changes", "HTTPS")
+Rel(kcp, api, "Polls MD Changes", "HTTPS")
+
+Rel(user, api, "Updates EKS-A objects", "HTTPS")
+Rel(kcp, manager, "Calls external strategy webhook", "HTTPS")
+Rel(md, manager, "Calls external strategy webhook", "HTTPS")
+Rel(manager, workloadKubeApiServer, "Schedules upgrader pods", "HTTPS")
+
+SHOW_LEGEND()
+@enduml
