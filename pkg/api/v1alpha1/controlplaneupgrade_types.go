@@ -4,7 +4,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
+// ControlPlaneUpgradeKind stores the kind for ControlPlaneUpgrade.
+const ControlPlaneUpgradeKind = "ControlPlaneUpgrade"
 
 // ControlPlaneUpgradeSpec defines the desired state of ControlPlaneUpgrade.
 type ControlPlaneUpgradeSpec struct {
