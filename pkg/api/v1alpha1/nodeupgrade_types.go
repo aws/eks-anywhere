@@ -5,6 +5,9 @@ import (
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 )
 
+// NodeUpgradeKind stores the Kind for NodeUpgrade.
+const NodeUpgradeKind = "NodeUpgrade"
+
 // NodeUpgradeSpec defines the desired state of NodeUpgrade.
 type NodeUpgradeSpec struct {
 	Machine           Ref     `json:"machine"`

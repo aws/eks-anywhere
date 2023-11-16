@@ -3,7 +3,6 @@ package controllers
 import (
 	"context"
 
-	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -13,8 +12,14 @@ import (
 
 // NodeUpgradeReconciler reconciles a NodeUpgrade object.
 type NodeUpgradeReconciler struct {
-	client.Client
-	Scheme *runtime.Scheme
+	client client.Client
+}
+
+// NewNodeUpgradeReconciler returns a new instance of NodeUpgradeReconciler.
+func NewNodeUpgradeReconciler(client client.Client) *NodeUpgradeReconciler {
+	return &NodeUpgradeReconciler{
+		client: client,
+	}
 }
 
 //+kubebuilder:rbac:groups=anywhere.eks.amazonaws.com,resources=nodeupgrades,verbs=get;list;watch;create;update;patch;delete

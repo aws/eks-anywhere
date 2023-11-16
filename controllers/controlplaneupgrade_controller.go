@@ -19,7 +19,6 @@ package controllers
 import (
 	"context"
 
-	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -29,8 +28,14 @@ import (
 
 // ControlPlaneUpgradeReconciler reconciles a ControlPlaneUpgradeReconciler object.
 type ControlPlaneUpgradeReconciler struct {
-	client.Client
-	Scheme *runtime.Scheme
+	client client.Client
+}
+
+// NewControlPlaneUpgradeReconciler returns a new instance of ControlPlaneUpgradeReconciler.
+func NewControlPlaneUpgradeReconciler(client client.Client) *ControlPlaneUpgradeReconciler {
+	return &ControlPlaneUpgradeReconciler{
+		client: client,
+	}
 }
 
 //+kubebuilder:rbac:groups=anywhere.eks.amazonaws.com,resources=controlplaneupgrades,verbs=get;list;watch;create;update;patch;delete

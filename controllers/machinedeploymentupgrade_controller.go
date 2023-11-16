@@ -19,7 +19,6 @@ package controllers
 import (
 	"context"
 
-	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -29,9 +28,19 @@ import (
 
 // MachineDeploymentUpgradeReconciler reconciles a MachineDeploymentUpgrade object.
 type MachineDeploymentUpgradeReconciler struct {
-	client.Client
-	Scheme *runtime.Scheme
+	client client.Client
 }
+
+// NewMachineDeploymentUpgradeReconciler returns a new instance of MachineDeploymentUpgradeReconciler.
+func NewMachineDeploymentUpgradeReconciler(client client.Client) *MachineDeploymentUpgradeReconciler {
+	return &MachineDeploymentUpgradeReconciler{
+		client: client,
+	}
+}
+
+//+kubebuilder:rbac:groups=anywhere.eks.amazonaws.com,resources=machinedeploymentupgrades,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=anywhere.eks.amazonaws.com,resources=machinedeploymentupgrades/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=anywhere.eks.amazonaws.com,resources=machinedeploymentupgrades/finalizers,verbs=update
 
 // Reconcile reconciles a MachineDeploymentUpgrade object.
 func (r *MachineDeploymentUpgradeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
