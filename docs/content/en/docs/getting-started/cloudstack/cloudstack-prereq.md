@@ -10,10 +10,10 @@ description: >
 
 To run EKS Anywhere, you will need:
 
-### Prepare Administrative machine
+## Prepare Administrative machine
 Set up an Administrative machine as described in [Install EKS Anywhere ]({{< relref "../../getting-started/install/" >}}).
 
-### Prepare a CloudStack environment
+## Prepare a CloudStack environment
 
 To prepare a CloudStack environment to run EKS Anywhere, you need the following:
 
@@ -46,7 +46,7 @@ The administrative machine and the target workload environment will need network
 * d5l0dvt14r5h8.cloudfront.net (http://d5l0dvt14r5h8.cloudfront.net/) (for EKS Anywhere package ECR container images)
 * api.github.com (http://api.github.com/) (only if GitOps is enabled)
 
-### CloudStack information needed before creating the cluster
+## CloudStack information needed before creating the cluster
 
 You need at least the following information before creating the cluster.
 See [CloudStack configuration]({{< relref "./cloud-spec/" >}}) for a complete list of options and [Preparing CloudStack]({{< relref "./cloudstack-preparation/" >}}) for instructions on creating the assets.
@@ -62,9 +62,9 @@ An IP address will be the value of the property controlPlaneConfiguration.endpoi
     * Account (account): Account with permission to create a cluster (optional, admin by default).
     * Credentials (credentialsRef): Credentials provided in an ini file used to access the CloudStack API endpoint. See [CloudStack Getting started]({{< relref "../../getting-started/cloudstack/" >}}) for details.
     * Domain (domain):  The CloudStack domain in which to deploy the cluster (optional, ROOT by default)
-    * Management endpoint (managementApiEndpoint): Endpoint for a cloudstack client to make API calls to client. 
-    * Zone network (zone.network): Either name or ID of the network. 
+    * Management endpoint (managementApiEndpoint): Endpoint for a cloudstack client to make API calls to client.
+    * Zone network (zone.network): Either name or ID of the network.
 * CloudStack machine configuration: For each set of machines (for example, you could configure separate set of machines for control plane, worker, and etcd nodes), obtain the following information. This must be predefined in the cloudStack instance and identified by name or ID:
     * Compute offering (computeOffering): Choose an existing compute offering (such as `large-instance`), reflecting the amount of resources to apply to each VM.
     * Operating system (template): Identifies the operating system image to use (such as rhel8-k8s-118).
-    * Users (users.name): Identifies users and SSH keys needed to access the VMs. 
+    * Users (users.name): Identifies users and SSH keys needed to access the VMs.
