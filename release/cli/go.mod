@@ -9,7 +9,7 @@ require (
 	github.com/aws/eks-distro-build-tooling/release v0.0.0-20211103003257-a7e2379eae5e
 	github.com/fsouza/go-dockerclient v1.10.0
 	github.com/ghodss/yaml v1.0.0
-	github.com/go-logr/logr v1.2.4
+	github.com/go-logr/logr v1.3.0
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/onsi/gomega v1.29.0
 	github.com/pkg/errors v0.9.1
