@@ -2,8 +2,10 @@ package tar
 
 import (
 	"archive/tar"
+	"fmt"
 	"io"
 	"os"
+	"strings"
 )
 
 func UntarFile(tarFile, dstFolder string) error {
@@ -30,6 +32,12 @@ func Untar(source io.Reader, router Router) error {
 		path := router.ExtractPath(header)
 		if path == "" {
 			continue
+		}
+
+		// Prevent malicous directory traversals.
+		// https://cwe.mitre.org/data/definitions/22.html
+		if strings.Contains(header.Name, "..") {
+			return fmt.Errorf("file in tarball contains a directory traversal component (..): %v", header.Name)
 		}
 
 		info := header.FileInfo()
