@@ -6,13 +6,28 @@ import (
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 )
 
-// NodeUpgradeKind stores the Kind for NodeUpgrade.
-const NodeUpgradeKind = "NodeUpgrade"
+const (
+	// NodeUpgradeKind stores the Kind for NodeUpgrade.
+	NodeUpgradeKind = "NodeUpgrade"
+
+	UpgraderPodCreated = "UpgraderPodCreated"
+
+	//
+	BinariesCopied ConditionType = "BinariesCopied"
+
+	ContainerdUpgraded ConditionType = "ContainerdUpgraded"
+
+	CNIPluginsUpgraded ConditionType = "CNIPluginsUpgraded"
+
+	KubeadmUpgraded ConditionType = "KubeadmUpgraded"
+
+	KubeletUpgraded ConditionType = "KubeletUpgraded"
+
+	PostUpgradeCleanupCompleted ConditionType = "PostUpgradeCleanupCompleted"
+)
 
 // NodeUpgradeSpec defines the desired state of NodeUpgrade.
 type NodeUpgradeSpec struct {
-	// Cluster is a reference to the CAPI Cluster that owns this machine.
-	Cluster corev1.ObjectReference `json:"cluster"`
 	// Machine is a reference to the CAPI Machine that needs to be upgraded.
 	Machine           corev1.ObjectReference `json:"machine"`
 	KubernetesVersion string                 `json:"kubernetesVersion"`
@@ -23,9 +38,13 @@ type NodeUpgradeSpec struct {
 
 // NodeUpgradeStatus defines the observed state of NodeUpgrade.
 type NodeUpgradeStatus struct {
-	Conditions clusterv1.Conditions `json:"conditions,omitempty"`
-	Phase      string               `json:"phase"`
-	Completed  bool                 `json:"completed"`
+	// +optional
+	Conditions []Condition `json:"conditions,omitempty"`
+	// +optional
+	Completed bool `json:"completed,omitempty"`
+
+	// ObservedGeneration is the latest generation observed by the controller.
+	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
 }
 
 //+kubebuilder:object:root=true
@@ -51,4 +70,12 @@ type NodeUpgradeList struct {
 
 func init() {
 	SchemeBuilder.Register(&NodeUpgrade{}, &NodeUpgradeList{})
+}
+
+func (n *NodeUpgrade) GetConditions() clusterv1.Conditions {
+	return n.Status.Conditions
+}
+
+func (n *NodeUpgrade) SetConditions(conditions clusterv1.Conditions) {
+	n.Status.Conditions = conditions
 }

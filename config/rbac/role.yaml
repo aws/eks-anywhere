@@ -267,6 +267,16 @@ rules:
   - patch
   - watch
 - apiGroups:
+  - cluster.x-k8s.io
+  resources:
+  - machines
+  verbs:
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
   - clusterctl.cluster.x-k8s.io
   resources:
   - providers
