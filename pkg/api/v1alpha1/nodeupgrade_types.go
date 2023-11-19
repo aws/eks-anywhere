@@ -1,6 +1,7 @@
 package v1alpha1
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 )
@@ -10,12 +11,14 @@ const NodeUpgradeKind = "NodeUpgrade"
 
 // NodeUpgradeSpec defines the desired state of NodeUpgrade.
 type NodeUpgradeSpec struct {
-	Machine           Ref     `json:"machine"`
-	Node              Ref     `json:"node"`
-	KubernetesVersion string  `json:"kubernetesVersion"`
-	KubeletVersion    string  `json:"kubeletVersion"`
-	EtcdVersion       *string `json:"etcdVersion,omitempty"`
-	CoreDNSVersion    *string `json:"coreDNSVersion,omitempty"`
+	// Cluster is a reference to the CAPI Cluster that owns this machine.
+	Cluster corev1.ObjectReference `json:"cluster"`
+	// Machine is a reference to the CAPI Machine that needs to be upgraded.
+	Machine           corev1.ObjectReference `json:"machine"`
+	KubernetesVersion string                 `json:"kubernetesVersion"`
+	KubeletVersion    string                 `json:"kubeletVersion"`
+	EtcdVersion       *string                `json:"etcdVersion,omitempty"`
+	CoreDNSVersion    *string                `json:"coreDNSVersion,omitempty"`
 }
 
 // NodeUpgradeStatus defines the observed state of NodeUpgrade.
