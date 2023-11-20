@@ -101,7 +101,6 @@ func generateNodeUpgrade(machine *clusterv1.Machine) *anywherev1.NodeUpgrade {
 				Namespace: machine.Namespace,
 			},
 			KubernetesVersion: "v1.28.1",
-			KubeletVersion:    "v1.28.1",
 		},
 	}
 }

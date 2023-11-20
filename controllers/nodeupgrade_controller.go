@@ -166,7 +166,11 @@ func (r *NodeUpgradeReconciler) reconcile(ctx context.Context, log logr.Logger, 
 	}
 
 	if isControlPlane(node) {
-		upgraderPod = upgrader.UpgradeFirstControlPlanePod(node.Name, defaultUpgraderImage, nodeUpgrade.Spec.KubernetesVersion, *nodeUpgrade.Spec.EtcdVersion)
+		if nodeUpgrade.Spec.FirstNodeToBeUpgraded {
+			upgraderPod = upgrader.UpgradeFirstControlPlanePod(node.Name, defaultUpgraderImage, nodeUpgrade.Spec.KubernetesVersion, *nodeUpgrade.Spec.EtcdVersion)
+		} else {
+			upgraderPod = upgrader.UpgradeRestControlPlanePod(node.Name, defaultUpgraderImage)
+		}
 	} else {
 		upgraderPod = upgrader.UpgradeWorkerPod(node.Name, defaultUpgraderImage)
 	}

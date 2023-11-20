@@ -37,9 +37,13 @@ type NodeUpgradeSpec struct {
 	// Machine is a reference to the CAPI Machine that needs to be upgraded.
 	Machine           corev1.ObjectReference `json:"machine"`
 	KubernetesVersion string                 `json:"kubernetesVersion"`
-	KubeletVersion    string                 `json:"kubeletVersion"`
 	EtcdVersion       *string                `json:"etcdVersion,omitempty"`
 	CoreDNSVersion    *string                `json:"coreDNSVersion,omitempty"`
+	
+	// FirstNodeToBeUpgraded signifies that the Node is the first node to be upgraded.
+	// This flag is only valid for control plane nodes and ignored for worker nodes.
+	// +optional
+	FirstNodeToBeUpgraded bool `json:"firstNodeToBeUpgraded,omitempty"`
 }
 
 // NodeUpgradeStatus defines the observed state of NodeUpgrade.

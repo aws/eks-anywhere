@@ -40,8 +40,11 @@ spec:
                 type: string
               etcdVersion:
                 type: string
-              kubeletVersion:
-                type: string
+              firstNodeToBeUpgraded:
+                description: FirstNodeToBeUpgraded signifies that the Node is the
+                  first node to be upgraded. This flag is only valid for control plane
+                  nodes and ignored for worker nodes.
+                type: boolean
               kubernetesVersion:
                 type: string
               machine:
@@ -82,7 +85,6 @@ spec:
                     type: string
                 type: object
             required:
-            - kubeletVersion
             - kubernetesVersion
             - machine
             type: object
