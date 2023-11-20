@@ -20,7 +20,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
 
-func TestNodeUpgradeReconciler(t *testing.T) {
+func TestNodeUpgradeReconcilerReconcileCreate(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
 	ctrl := gomock.NewController(t)
@@ -34,11 +34,42 @@ func TestNodeUpgradeReconciler(t *testing.T) {
 	r := controllers.NewNodeUpgradeReconciler(client, clientRegistry)
 	req := nodeUpgradeRequest(nodeUpgrade)
 	_, err := r.Reconcile(ctx, req)
-	g.Expect(err).To(BeNil())
+	g.Expect(err).ToNot(HaveOccurred())
 
 	pod := &corev1.Pod{}
 	err = client.Get(ctx, types.NamespacedName{Name: upgrader.PodName(node.Name), Namespace: "eksa-system"}, pod)
-	g.Expect(err).To(BeNil())
+	g.Expect(err).ToNot(HaveOccurred())
+}
+
+func TestNodeUpgradeReconcilerReconcileDelete(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+	ctrl := gomock.NewController(t)
+	clientRegistry := mocks.NewMockRemoteClientRegistry(ctrl)
+
+	cluster, machine, node, nodeUpgrade := getObjectsForNodeUpgradeTest()
+	client := fake.NewClientBuilder().WithRuntimeObjects(cluster, machine, node, nodeUpgrade).Build()
+
+	clientRegistry.EXPECT().GetClient(ctx, types.NamespacedName{Name: cluster.Name, Namespace: cluster.Namespace}).Return(client, nil).Times(2)
+
+	r := controllers.NewNodeUpgradeReconciler(client, clientRegistry)
+	req := nodeUpgradeRequest(nodeUpgrade)
+	_, err := r.Reconcile(ctx, req)
+	g.Expect(err).ToNot(HaveOccurred())
+
+	pod := &corev1.Pod{}
+	err = client.Get(ctx, types.NamespacedName{Name: upgrader.PodName(node.Name), Namespace: "eksa-system"}, pod)
+	g.Expect(err).ToNot(HaveOccurred())
+
+	err = client.Delete(ctx, nodeUpgrade)
+	g.Expect(err).ToNot(HaveOccurred())
+
+	_, err = r.Reconcile(ctx, req)
+	g.Expect(err).ToNot(HaveOccurred())
+
+	pod = &corev1.Pod{}
+	err = client.Get(ctx, types.NamespacedName{Name: upgrader.PodName(node.Name), Namespace: "eksa-system"}, pod)
+	g.Expect(err).To(MatchError("pods \"node01-node-upgrader\" not found"))
 }
 
 func getObjectsForNodeUpgradeTest() (*clusterv1.Cluster, *clusterv1.Machine, *corev1.Node, *anywherev1.NodeUpgrade) {
