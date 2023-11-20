@@ -1177,13 +1177,14 @@ func TestDockerCiliumSkipUpgrade_CLIUpgrade(t *testing.T) {
 	)
 
 	test.ValidateCiliumCLIAvailable()
+	version := v1alpha1.EksaVersion("v0.0.0-dev")
 
 	test.GenerateClusterConfig(framework.ExecuteWithEksaRelease(previousRelease))
 	test.CreateCluster(framework.ExecuteWithEksaRelease(previousRelease))
 	test.ReplaceCiliumWithOSSCilium()
 	test.UpgradeClusterWithNewConfig(
 		[]framework.ClusterE2ETestOpt{
-			framework.WithClusterUpgrade(api.WithCiliumSkipUpgrade()),
+			framework.WithClusterUpgrade(api.WithCiliumSkipUpgrade(), api.WithEksaVersion(&version)),
 		},
 	)
 	test.ValidateClusterState()
