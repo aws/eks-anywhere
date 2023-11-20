@@ -11,43 +11,50 @@ import (
 )
 
 const (
-	upgradeScript        = "/foo/eksa-upgrades/scripts/upgrade.sh"
-	defaultUpgraderImage = "public.ecr.aws/t0n3a9y4/aws/upgrader:v1.28.3-eks-1-28-9"
-	controlPlaneLabel    = "node-role.kubernetes.io/control-plane"
+	upgradeScript = "/foo/eksa-upgrades/scripts/upgrade.sh"
 
-	CopierContainerName             = "components-copier"
+	// CopierContainerName holds the name of the components copier container.
+	CopierContainerName = "components-copier"
+
+	// ContainerdUpgraderContainerName holds the name of the containerd upgrader container.
 	ContainerdUpgraderContainerName = "containerd-upgrader"
+
+	// CNIPluginsUpgraderContainerName holds the name of the CNI plugins upgrader container.
 	CNIPluginsUpgraderContainerName = "cni-plugins-upgrader"
-	KubeadmUpgraderContainerName    = "kubeadm-upgrader"
-	KubeletUpgradeContainerName     = "kubelet-kubectl-upgrader"
-	PostUpgradeContainerName        = "post-upgrade-status"
+
+	// KubeadmUpgraderContainerName holds the name of the kubeadm upgrader container.
+	KubeadmUpgraderContainerName = "kubeadm-upgrader"
+
+	// KubeletUpgradeContainerName holds the name of the kubelet/kubectl upgrader container.
+	KubeletUpgradeContainerName = "kubelet-kubectl-upgrader"
+
+	// PostUpgradeContainerName holds the name of the post upgrade cleanup/status report container.
+	PostUpgradeContainerName = "post-upgrade-status"
 )
 
-// PodName returns the name of the upgrader pod based on the nodeName
+// PodName returns the name of the upgrader pod based on the nodeName.
 func PodName(nodeName string) string {
 	return fmt.Sprintf("%s-node-upgrader", nodeName)
 }
 
+// UpgradeFirstControlPlanePod returns an upgrader pod that should be deployed on the first control plane node.
 func UpgradeFirstControlPlanePod(nodeName, image, kubernetesVersion, etcdVersion string) *corev1.Pod {
 	p := upgraderPod(nodeName, image)
 	p.Spec.InitContainers = containersForUpgrade(image, nodeName, "kubeadm_in_first_cp", kubernetesVersion, etcdVersion)
-	p.Spec.Containers = []corev1.Container{printAndCleanupContainer(image)}
-
 	return p
 }
 
+// UpgradeRestControlPlanePod returns an upgrader pod that can be deployed on the remaining control plane nodes.
 func UpgradeRestControlPlanePod(nodeName, image string) *corev1.Pod {
 	p := upgraderPod(nodeName, image)
 	p.Spec.InitContainers = containersForUpgrade(image, nodeName, "kubeadm_in_rest_cp")
-	p.Spec.Containers = []corev1.Container{printAndCleanupContainer(image)}
-
 	return p
 }
 
+// UpgradeWorkerPod returns an upgrader pod that can be deployed on worker nodes.
 func UpgradeWorkerPod(nodeName, image string) *corev1.Pod {
 	p := upgraderPod(nodeName, image)
 	p.Spec.InitContainers = containersForUpgrade(image, nodeName, "kubeadm_in_worker")
-	p.Spec.Containers = []corev1.Container{printAndCleanupContainer(image)}
 	return p
 }
 
@@ -73,6 +80,16 @@ func upgraderPod(nodeName, image string) *corev1.Pod {
 							Type: &dirOrCreate,
 						},
 					},
+				},
+			},
+			// TODO: currently, the pod requires atleast one container.
+			// For the time being, I have added an nginx container but
+			// this should be replaced with something that makes more
+			// sense in in-place context.
+			Containers: []corev1.Container{
+				{
+					Name:  "done",
+					Image: "nginx",
 				},
 			},
 		},
@@ -114,22 +131,14 @@ func nsenterContainer(image, name string, extraArgs ...string) corev1.Container 
 		"--ipc",
 		"--net",
 	}
-	args = append(args, extraArgs...)
 
 	return corev1.Container{
 		Name:    name,
 		Image:   image,
 		Command: []string{"nsenter"},
-		Args:    args,
+		Args:    append(args, extraArgs...),
 		SecurityContext: &corev1.SecurityContext{
 			Privileged: ptr.Bool(true),
 		},
-	}
-}
-
-func printAndCleanupContainer(image string) corev1.Container {
-	return corev1.Container{
-		Name:  "done",
-		Image: "nginx",
 	}
 }

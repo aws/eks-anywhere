@@ -10,19 +10,25 @@ const (
 	// NodeUpgradeKind stores the Kind for NodeUpgrade.
 	NodeUpgradeKind = "NodeUpgrade"
 
-	UpgraderPodCreated = "UpgraderPodCreated"
+	// UpgraderPodCreated reports whether the upgrader pod has been created for the node upgrade.
+	UpgraderPodCreated ConditionType = "UpgraderPodCreated"
 
-	//
+	// BinariesCopied reports whether the binaries have been copied over by the component copier container.
 	BinariesCopied ConditionType = "BinariesCopied"
 
+	// ContainerdUpgraded reports whether containerd has been upgraded.
 	ContainerdUpgraded ConditionType = "ContainerdUpgraded"
 
+	// CNIPluginsUpgraded reports whether the CNI plugins has been upgraded.
 	CNIPluginsUpgraded ConditionType = "CNIPluginsUpgraded"
 
+	// KubeadmUpgraded reports whether Kubeadm has been upgraded.
 	KubeadmUpgraded ConditionType = "KubeadmUpgraded"
 
+	// KubeletUpgraded reports whether kubelet has been upgraded.
 	KubeletUpgraded ConditionType = "KubeletUpgraded"
 
+	// PostUpgradeCleanupCompleted reports whether the post upgrade operations have been completed.
 	PostUpgradeCleanupCompleted ConditionType = "PostUpgradeCleanupCompleted"
 )
 
@@ -72,10 +78,12 @@ func init() {
 	SchemeBuilder.Register(&NodeUpgrade{}, &NodeUpgradeList{})
 }
 
+// GetConditions returns all the Conditions for the NodeUpgrade object.
 func (n *NodeUpgrade) GetConditions() clusterv1.Conditions {
 	return n.Status.Conditions
 }
 
+// SetConditions sets the Conditons on the NodeUpgrade object.
 func (n *NodeUpgrade) SetConditions(conditions clusterv1.Conditions) {
 	n.Status.Conditions = conditions
 }

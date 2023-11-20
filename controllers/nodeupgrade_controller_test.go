@@ -1,0 +1,111 @@
+package controllers_test
+
+import (
+	"context"
+	"testing"
+
+	"github.com/golang/mock/gomock"
+	. "github.com/onsi/gomega"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+
+	"github.com/aws/eks-anywhere/controllers"
+	"github.com/aws/eks-anywhere/controllers/mocks"
+	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	upgrader "github.com/aws/eks-anywhere/pkg/nodeupgrader"
+	"github.com/aws/eks-anywhere/pkg/utils/ptr"
+)
+
+func TestNodeUpgradeReconciler(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+	ctrl := gomock.NewController(t)
+	clientRegistry := mocks.NewMockRemoteClientRegistry(ctrl)
+
+	cluster, machine, node, nodeUpgrade := getObjectsForNodeUpgradeTest()
+	client := fake.NewClientBuilder().WithRuntimeObjects(cluster, machine, node, nodeUpgrade).Build()
+
+	clientRegistry.EXPECT().GetClient(ctx, types.NamespacedName{Name: cluster.Name, Namespace: cluster.Namespace}).Return(client, nil)
+
+	r := controllers.NewNodeUpgradeReconciler(client, clientRegistry)
+	req := nodeUpgradeRequest(nodeUpgrade)
+	_, err := r.Reconcile(ctx, req)
+	g.Expect(err).To(BeNil())
+
+	pod := &corev1.Pod{}
+	err = client.Get(ctx, types.NamespacedName{Name: upgrader.PodName(node.Name), Namespace: "eksa-system"}, pod)
+	g.Expect(err).To(BeNil())
+}
+
+func getObjectsForNodeUpgradeTest() (*clusterv1.Cluster, *clusterv1.Machine, *corev1.Node, *anywherev1.NodeUpgrade) {
+	cluster := generateCluster()
+	node := generateNode()
+	machine := generateMachine(cluster, node)
+	nodeUpgrade := generateNodeUpgrade(machine)
+	return cluster, machine, node, nodeUpgrade
+}
+
+func nodeUpgradeRequest(nodeUpgrade *anywherev1.NodeUpgrade) reconcile.Request {
+	return reconcile.Request{
+		NamespacedName: types.NamespacedName{
+			Name:      nodeUpgrade.Name,
+			Namespace: nodeUpgrade.Namespace,
+		},
+	}
+}
+
+func generateNodeUpgrade(machine *clusterv1.Machine) *anywherev1.NodeUpgrade {
+	return &anywherev1.NodeUpgrade{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "node-upgrade-request",
+			Namespace: "eksa-system",
+		},
+		Spec: anywherev1.NodeUpgradeSpec{
+			Machine: corev1.ObjectReference{
+				Name:      machine.Name,
+				Namespace: machine.Namespace,
+			},
+			KubernetesVersion: "v1.28.1",
+			KubeletVersion:    "v1.28.1",
+		},
+	}
+}
+
+func generateMachine(cluster *clusterv1.Cluster, node *corev1.Node) *clusterv1.Machine {
+	return &clusterv1.Machine{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "machine01",
+			Namespace: "eksa-system",
+		},
+		Spec: clusterv1.MachineSpec{
+			Version:     ptr.String("v1.28.0"),
+			ClusterName: cluster.Name,
+		},
+		Status: clusterv1.MachineStatus{
+			NodeRef: &corev1.ObjectReference{
+				Name: node.Name,
+			},
+		},
+	}
+}
+
+func generateNode() *corev1.Node {
+	return &corev1.Node{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "node01",
+		},
+	}
+}
+
+func generateCluster() *clusterv1.Cluster {
+	return &clusterv1.Cluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "my-cluster",
+			Namespace: "eksa-system",
+		},
+	}
+}

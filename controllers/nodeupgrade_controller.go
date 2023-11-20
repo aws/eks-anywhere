@@ -25,12 +25,13 @@ import (
 )
 
 const (
-	upgradeScript        = "/foo/eksa-upgrades/scripts/upgrade.sh"
+	// TODO(in-place): Get this image from the bundle instead of using the hardcoded one.
 	defaultUpgraderImage = "public.ecr.aws/t0n3a9y4/aws/upgrader:v1.28.3-eks-1-28-9"
 	controlPlaneLabel    = "node-role.kubernetes.io/control-plane"
 	podDNEMessage        = "Upgrader pod does not exist"
 
-	NodeUpgradeFinalizerName = "nodeupgrades.anywhere.eks.amazonaws.com/finalizer"
+	// nodeUpgradeFinalizerName is the finalizer added to NodeUpgrade objects to handle deletion.
+	nodeUpgradeFinalizerName = "nodeupgrades.anywhere.eks.amazonaws.com/finalizer"
 )
 
 // RemoteClientRegistry defines methods for remote cluster controller clients.
@@ -68,6 +69,7 @@ func (r *NodeUpgradeReconciler) SetupWithManager(mgr ctrl.Manager) error {
 //+kubebuilder:rbac:groups="cluster.x-k8s.io",resources=machines,verbs=list;watch;get;patch;update
 
 // Reconcile reconciles a NodeUpgrade object.
+// nolint:gocyclo
 func (r *NodeUpgradeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (result ctrl.Result, reterr error) {
 	log := r.log.WithValues("NodeUpgrade", req.NamespacedName)
 
@@ -135,7 +137,7 @@ func (r *NodeUpgradeReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		return r.reconcileDelete(ctx, log, nodeUpgrade, machineToBeUpgraded.Status.NodeRef.Name, rClient)
 	}
 
-	controllerutil.AddFinalizer(nodeUpgrade, NodeUpgradeFinalizerName)
+	controllerutil.AddFinalizer(nodeUpgrade, nodeUpgradeFinalizerName)
 
 	return r.reconcile(ctx, log, machineToBeUpgraded, nodeUpgrade, rClient)
 }
@@ -215,7 +217,7 @@ func (r *NodeUpgradeReconciler) reconcileDelete(ctx context.Context, log logr.Lo
 	}
 
 	// Remove the finalizer from NodeUpgrade object
-	controllerutil.RemoveFinalizer(nodeUpgrade, NodeUpgradeFinalizerName)
+	controllerutil.RemoveFinalizer(nodeUpgrade, nodeUpgradeFinalizerName)
 	return ctrl.Result{}, nil
 }
 
@@ -240,7 +242,24 @@ func (r *NodeUpgradeReconciler) updateStatus(ctx context.Context, log logr.Logge
 	}
 
 	conditions.MarkTrue(nodeUpgrade, anywherev1.UpgraderPodCreated)
+	updateContainerConditions(pod, nodeUpgrade)
 
+	// Always update the readyCondition by summarizing the state of other conditions.
+	conditions.SetSummary(nodeUpgrade,
+		conditions.WithConditions(
+			anywherev1.UpgraderPodCreated,
+			anywherev1.BinariesCopied,
+			anywherev1.ContainerdUpgraded,
+			anywherev1.CNIPluginsUpgraded,
+			anywherev1.KubeadmUpgraded,
+			anywherev1.KubeletUpgraded,
+			anywherev1.PostUpgradeCleanupCompleted,
+		),
+	)
+	return nil
+}
+
+func updateContainerConditions(pod *corev1.Pod, nodeUpgrade *anywherev1.NodeUpgrade) {
 	containersMap := []struct {
 		name      string
 		condition clusterv1.ConditionType
@@ -298,22 +317,7 @@ func (r *NodeUpgradeReconciler) updateStatus(ctx context.Context, log logr.Logge
 			}
 		}
 	}
-
 	nodeUpgrade.Status.Completed = completed
-
-	// Always update the readyCondition by summarizing the state of other conditions.
-	conditions.SetSummary(nodeUpgrade,
-		conditions.WithConditions(
-			anywherev1.UpgraderPodCreated,
-			anywherev1.BinariesCopied,
-			anywherev1.ContainerdUpgraded,
-			anywherev1.CNIPluginsUpgraded,
-			anywherev1.KubeadmUpgraded,
-			anywherev1.KubeletUpgraded,
-			anywherev1.PostUpgradeCleanupCompleted,
-		),
-	)
-	return nil
 }
 
 func getInitContainerStatus(pod *corev1.Pod, containerName string) (*corev1.ContainerStatus, error) {
