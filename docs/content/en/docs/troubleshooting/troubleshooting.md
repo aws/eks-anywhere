@@ -59,7 +59,7 @@ Ensure you are running Docker Desktop 4.4.2 or newer and, if you are running EKS
 ```
 % defaults read /Applications/Docker.app/Contents/Info.plist CFBundleShortVersionString
 4.42
-% docker info --format '{{json .CgroupVersion}}' 
+% docker info --format '{{json .CgroupVersion}}'
 "1"
 ```
 
@@ -128,17 +128,17 @@ To remedy, remove `NoExecute` and `NoSchedule` taints from at least one WorkerNo
 Invalid configuration example:
 ```
 # Invalid workerNodeGroupConfiguration
-workerNodeGroupConfigurations:    # List of node groups you can define for workers 
-  - count: 1                        
-    name: md-0                      
+workerNodeGroupConfigurations:    # List of node groups you can define for workers
+  - count: 1
+    name: md-0
     taints:                       # NoSchedule taint applied to md-0, not schedulable
-    - key: "key1"                       
+    - key: "key1"
       value: "value1"
       effect: "NoSchedule"
-  - count: 1                        
-    name: md-1                      
+  - count: 1
+    name: md-1
     taints:                       # NoExecute taint applied to md-1, not schedulable
-    - key: "key2"                       
+    - key: "key2"
       value: "value2"
       effect: "NoExecute"
 ```
@@ -146,14 +146,14 @@ workerNodeGroupConfigurations:    # List of node groups you can define for worke
 Valid configuration example:
 ```
 # Valid workerNodeGroupConfiguration
-workerNodeGroupConfigurations:    # List of node groups you can define for workers 
-- count: 1                        
-  name: md-0                      
+workerNodeGroupConfigurations:    # List of node groups you can define for workers
+- count: 1
+  name: md-0
   taints:                         # NoSchedule taint applied to md-0, not schedulable
-  - key: "key1"                       
+  - key: "key1"
     value: "value1"
     effect: "NoSchedule"
-- count: 1                        
+- count: 1
   name: md-1                      # md-1 has no NoSchedule/NoExecute taints applied, is schedulable
 ```
 
@@ -193,7 +193,7 @@ Error running bootstrapper cmd: error joining as worker: Error waiting for worke
 ```
 You might also notice that the joining of nodes will fail if your Admin machine differs in time compared to your nodes. Make sure to check the server time matches between the two as well.
 
-### The connection to the server localhost:8080 was refused 
+### The connection to the server localhost:8080 was refused
 
 ```
 Performing provider setup and validations
@@ -206,7 +206,7 @@ Initializing Cluster API components on the bootstrap cluster fails. This is like
 
 ### Generic cluster unavailable
 
-Troubleshoot more by inspecting bootstrap cluster or workload cluster (depending on the stage of the failure) using kubectl commands. 
+Troubleshoot more by inspecting bootstrap cluster or workload cluster (depending on the stage of the failure) using kubectl commands.
 ```
 kubectl get pods -A --kubeconfig=<kubeconfig>
 kubectl get nodes -A --kubeconfig=<kubeconfig>
@@ -347,7 +347,7 @@ and make sure the new etcd machine IP is included in the secret.
 
 #### New etcd machine cannot join the cluster due to loss of quorum
 
-An etcd cluster needs a majority of nodes, a quorum, to agree on updates to the cluster state. For a cluster with n members, quorum is (n/2)+1. If etcd could not automatically recover and restore quorum, it is possible that there was an unhealthy or broken VM (e.g. a VM without IP assigned) that is still a member of the etcd cluster. You need to find and manually remove the unhealthy member. 
+An etcd cluster needs a majority of nodes, a quorum, to agree on updates to the cluster state. For a cluster with n members, quorum is (n/2)+1. If etcd could not automatically recover and restore quorum, it is possible that there was an unhealthy or broken VM (e.g. a VM without IP assigned) that is still a member of the etcd cluster. You need to find and manually remove the unhealthy member.
 
 To achieve that, first `ssh` into the etcd node and use `etcdctl member list` command to detect the unhealthy member.
 
@@ -389,7 +389,7 @@ Follow the VM restore process in provider-specific section.
 
 Kubernetes controller manager allocates a dedicated CIDR block per node for pod IPs from within `clusterNetwork.pods.cidrBlocks`. The size of this node CIDR block defaults to /24 and can be adjusted at cluster creation using the [optional cidrMaskSize field]({{< relref "../getting-started/optional/cni/#node-ips-configuration-option" >}}).
 
-Since each node requires a CIDR block, the maximum number of nodes in a cluster is limited to the number of non-overlapping subnets of `cidrMaskSize` that fit in the pods CIDR block. For example, for a pod CIDR block mask of `/18` and a node CIDR mask size of `/22`, a maximum of 16 nodes can be proivisioned since there are 16 subnets of size `/22` in the overall `/18` block. If more nodes are created than the `clusterNetwork.pods.cidrBlocks` can accomodate, `kube-controller-manager` will not be able to allocate a CIDR block to the extra nodes. 
+Since each node requires a CIDR block, the maximum number of nodes in a cluster is limited to the number of non-overlapping subnets of `cidrMaskSize` that fit in the pods CIDR block. For example, for a pod CIDR block mask of `/18` and a node CIDR mask size of `/22`, a maximum of 16 nodes can be proivisioned since there are 16 subnets of size `/22` in the overall `/18` block. If more nodes are created than the `clusterNetwork.pods.cidrBlocks` can accomodate, `kube-controller-manager` will not be able to allocate a CIDR block to the extra nodes.
 
 This can cause nodes to become `NotReady` with the following sympotoms:
 
@@ -456,15 +456,15 @@ E0218 03:41:53.126751 1 machine_controller_noderef.go:152] controllers/Machine "
 E0218 03:42:09.155577 1 machine_controller.go:685] controllers/Machine "msg"="Unable to retrieve machine from node" "error"="no matching Machine" "node"="test-cluster-6ffd74bd5b-khxzr"
 ```
 
-When inspecting the CAPI `machine` object, you may find out that the `Node.Spec.ProviderID` is not set. 
+When inspecting the CAPI `machine` object, you may find out that the `Node.Spec.ProviderID` is not set.
 This can happen when the workload environment does not have proper network access to the underlying provider infrastructure. For example in vSphere, without the network access to vCenter endpoint, the `vsphere-cloud-controller-manager` in the workload cluster cannot set node's providerID, thus the machine will never get to `Running` state, blocking cluster provisioning from continuing.
 
 To fix it, make sure to validate the network/firewall settings from the workload cluster to the infrastructure provider environment. Read through the `Requirements` page, especially around the networking requirements in each provider before retrying the cluster provisioning:
-* [Requirements for EKS Anywhere on VMware vSphere]({{< relref "../getting-started/vsphere/vsphere-prereq" >}}) 
-* [Network Requirements for EKS Anywhere on Bare Metal]({{< relref "../getting-started/baremetal/bare-prereq" >}}) 
-* [Requirements for EKS Anywhere on CloudStack]({{< relref "../getting-started/cloudstack/cloudstack-prereq" >}}) 
-* [Prerequisite Checklist for EKS Anywhere on Snow]({{< relref "../getting-started/snow/snow-getstarted/#prerequisite-checklist" >}}) 
-* [Requirements for EKS Anywhere on Nutanix Cloud Infrastructure]({{< relref "../getting-started/nutanix/nutanix-prereq" >}}) 
+* [Requirements for EKS Anywhere on VMware vSphere]({{< relref "../getting-started/vsphere/vsphere-prereq" >}})
+* [Network Requirements for EKS Anywhere on Bare Metal]({{< relref "../getting-started/baremetal/bare-prereq" >}})
+* [Requirements for EKS Anywhere on CloudStack]({{< relref "../getting-started/cloudstack/cloudstack-prereq" >}})
+* [Prerequisite Checklist for EKS Anywhere on Snow]({{< relref "../getting-started/snow/snow-getstarted/#prerequisite-checklist" >}})
+* [Requirements for EKS Anywhere on Nutanix Cloud Infrastructure]({{< relref "../getting-started/nutanix/nutanix-prereq" >}})
 
 ## Bare Metal troubleshooting
 
@@ -513,7 +513,7 @@ In either of those cases, the following steps can help you determine the problem
 
     * Check the Boots service logs from the machine where you are running the CLI to see if it received and/or responded to the request:
 
-        ```bash 
+        ```bash
         docker logs boots
         ```
     * Confirm no other DHCP service responded to the request and check for any errors in the BMC console. Other DHCP servers on the network can result in race conditions and should be avoided by configuring the other server to block all MAC addresses and exclude all IP addresses used by EKS Anywhere.
@@ -529,10 +529,10 @@ In either of those cases, the following steps can help you determine the problem
 
     ```bash
     kubectl get workflows -n eksa-system
-    kubectl describe workflow/<workflow-name> -n eksa-system 
+    kubectl describe workflow/<workflow-name> -n eksa-system
     ```
 
-    Check all the actions and their status to determine if all actions have been executed successfully or not. If the *stream-image* has action failed, it’s likely due to a timeout or network related issue. You can also provide your own `image_url` by specifying `osImageURL` under datacenter spec. 
+    Check all the actions and their status to determine if all actions have been executed successfully or not. If the *stream-image* has action failed, it’s likely due to a timeout or network related issue. You can also provide your own `image_url` by specifying `osImageURL` under datacenter spec.
 
 
 ## vSphere troubleshooting
@@ -649,7 +649,7 @@ If no VMs are created, check the `capi-controller-manager`, `capv-controller-man
 
 If a VM is created, check to see if it has an IPv4 IP assigned. For example, in BottleRocket machine boot logs, you might see `Failed to read current IP data`.
 
-If there are no IPv4 IPs assigned to VMs, this is most likely because you don't have a DHCP server configured for the `network` configured in the cluster config yaml, OR there are not enough IP addresses available in the DHCP pool to assign to the VMs. Ensure that you either have a DHCP running with [enough IP addresses to create a cluster]({{< relref "../clustermgmt/cluster-upgrades/vsphere-and-cloudstack-upgrades/#prepare-dhcp-ip-addresses-pool" >}}), or [create your own DHCP server]({{< relref "../getting-started/vsphere/customize/vsphere-dhcp" >}}), before running the create or upgrade command again.
+If there are no IPv4 IPs assigned to VMs, this is most likely because you don't have a DHCP server configured for the `network` configured in the cluster config yaml, OR there are not enough IP addresses available in the DHCP pool to assign to the VMs. Ensure that you have a DHCP server running with [enough IP addresses to create a cluster]({{< relref "../clustermgmt/cluster-upgrades/vsphere-and-cloudstack-upgrades/#prepare-dhcp-ip-addresses-pool" >}}) before running the create or upgrade command again.
 
 To confirm this is a DHCP issue, you could create a new VM in the same network to validate if an IPv4 IP is assigned correctly.
 
@@ -816,19 +816,19 @@ If there is a subset of devices or all devices experience an outage, see [Downlo
     eksa-system   machine-name-2  cluster-name   node-name-2       aws-snow:///192.168.1.39/s.i-8d7d3679a1713e403    Running   82s   v1.24.9-eks-1-24-7
     eksa-system   machine-name-3  cluster-name   node-name-3       aws-snow:///192.168.1.231/s.i-8201c356fb369c37f   Running   81s   v1.24.9-eks-1-24-7
     eksa-system   machine-name-4  cluster-name   node-name-4       aws-snow:///192.168.1.39/s.i-88597731b5a4a9044    Running   81s   v1.24.9-eks-1-24-7
-    eksa-system   machine-name-5  cluster-name   node-name-5       aws-snow:///192.168.1.77/s.i-822f0f46267ad4c6e    Running   81s   v1.24.9-eks-1-24-7          
+    eksa-system   machine-name-5  cluster-name   node-name-5       aws-snow:///192.168.1.77/s.i-822f0f46267ad4c6e    Running   81s   v1.24.9-eks-1-24-7
     ```
 
 1. Start all instances on the impacted devices as soon as possible.
 
     ```sh
-    $ aws ec2 start-instances --instance-id instance-id-1 instance-id-2 ... --endpoint http://snowball-ip:6078 --profile profile-name          
+    $ aws ec2 start-instances --instance-id instance-id-1 instance-id-2 ... --endpoint http://snowball-ip:6078 --profile profile-name
     ```
 
 1. Check the balance status of the current cluster after the cluster is ready again.
 
     ```sh
-    $ kubectl get machines -A --kubeconfig=cluster-name/cluster-name-eks-a-cluster.kubeconfig          
+    $ kubectl get machines -A --kubeconfig=cluster-name/cluster-name-eks-a-cluster.kubeconfig
     ```
 
 1. Check if you have unstacked etcd machines.
@@ -899,25 +899,25 @@ If you want to replace an unhealthy node which didn't get detected by Amazon EKS
 1. Cordon nodes so no further workloads are scheduled to run on it.
 
     ```sh
-    $ kubectl cordon node-name --ignore-daemonsets --kubeconfig=cluster-name/cluster-name-eks-a-cluster.kubeconfig              
+    $ kubectl cordon node-name --ignore-daemonsets --kubeconfig=cluster-name/cluster-name-eks-a-cluster.kubeconfig
     ```
 
 1. Drain machine nodes of all current workloads.
 
     ```sh
-    $ kubectl drain node-name --ignore-daemonsets --kubeconfig=cluster-name/cluster-name-eks-a-cluster.kubeconfig              
+    $ kubectl drain node-name --ignore-daemonsets --kubeconfig=cluster-name/cluster-name-eks-a-cluster.kubeconfig
     ```
 
 1. Delete machine nodes.
 
     ```sh
-    $ kubectl delete node node-name --kubeconfig=cluster-name/cluster-name-eks-a-cluster.kubeconfig              
+    $ kubectl delete node node-name --kubeconfig=cluster-name/cluster-name-eks-a-cluster.kubeconfig
     ```
 
 1. New nodes will be provisioned automatically. You can check the provision result with the get machines command.
 
     ```sh
-    $ kubectl get machines -A --kubeconfig=cluster-name/cluster-name-eks-a-cluster.kubeconfig              
+    $ kubectl get machines -A --kubeconfig=cluster-name/cluster-name-eks-a-cluster.kubeconfig
     ```
 
 ### Cluster Deletion Fails
@@ -925,13 +925,13 @@ If you want to replace an unhealthy node which didn't get detected by Amazon EKS
 If your Amazon EKS Anywhere cluster creation failed and the `eksctl anywhere delete cluster -f eksa-cluster.yaml` command cannot be run successfully, manually delete a few resources before trying the command again. Run the following commands from the computer on which you set up the AWS configuration and have the [Snowball Edge Client installed](https://docs.aws.amazon.com/snowball/latest/developer-guide/download-the-client.html). If you are using multiple Snowball Edge devices, run these commands on each.
 
 ```sh
-// get the list of instance ids that are created for Amazon EKS Anywhere cluster, 
+// get the list of instance ids that are created for Amazon EKS Anywhere cluster,
 // that can be identified by cluster name in the tag of the output
 $ aws ec2 describe-instances --endpoint http://snowball-ip:8008 --profile profile-name
 
 // the next two commands are for deleting DNI, this needs to be done before deleting instance
 $ PATH_TO_Snowball_Edge_CLIENT/bin/snowballEdge describe-direct-network-interfaces --endpoint https://snowball-ip --manifest-file path-to-manifest-file --unlock-code unlock-code
-  
+
 // DNI arn can be found in the output of last command, which is associated with the specific instance id you get from describe-instances
 $ PATH_TO_Snowball_Edge_CLIENT/bin/snowballEdge delete-direct-network-interface --direct-network-interface-arn DNI-ARN --endpoint https://snowball-ip --manifest-file path-to-manifest-file --unlock-code unlock-code
 
@@ -961,5 +961,5 @@ Also, make sure the `spec.endpoint` is correctly configured in the `NutanixDatac
 
 ### x509: certificate signed by unknown authority
 
-Failure of the `nutanix Provider setup is valid` validation with the `x509: certificate signed by unknown authority` message indicates the certificate of the Prism Central endpoint is not trusted. 
+Failure of the `nutanix Provider setup is valid` validation with the `x509: certificate signed by unknown authority` message indicates the certificate of the Prism Central endpoint is not trusted.
 In case Prism Central is configured with self-signed certificates, it is recommended to configure the `additionalTrustBundle` in the `NutanixDatacenterConfig`. More information can be found [here](https://anywhere.eks.amazonaws.com/docs/reference/clusterspec/nutanix/#nutanixdatacenterconfig-fields).
