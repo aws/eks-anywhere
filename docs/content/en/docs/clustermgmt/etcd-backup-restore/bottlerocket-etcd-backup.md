@@ -60,7 +60,7 @@ Make sure to setup the [admin environment variables]({{< relref "#admin-machine-
 1. Set these environment variables
     ```bash
     # get the container ID corresponding to etcd pod
-    export ETCD_CONTAINER_ID=$(ctr -n k8s.io c ls | grep -w "etcd-io" | cut -d " " -f1)
+    export ETCD_CONTAINER_ID=$(ctr -n k8s.io c ls | grep -w "etcd-io" | head -1 | cut -d " " -f1)
 
     # get the etcd endpoint
     export ETCD_ENDPOINT=$(cat /etc/kubernetes/manifests/etcd | grep -wA1 ETCD_ADVERTISE_CLIENT_URLS | tail -1 | grep -oE '[^ ]+$')
@@ -172,7 +172,7 @@ Make sure to setup the [admin environment variables]({{< relref "#admin-machine-
     export INITIAL_CLUSTER_TOKEN="etcd-cluster-1"
 
     # get the container ID corresponding to etcd pod
-    export ETCD_CONTAINER_ID=$(ctr -n k8s.io c ls | grep -w "etcd-io" | cut -d " " -f1)
+    export ETCD_CONTAINER_ID=$(ctr -n k8s.io c ls | grep -w "etcd-io" | head -1 | cut -d " " -f1)
 
     # run the restore command
     ctr -n k8s.io t exec -t --exec-id etcd ${ETCD_CONTAINER_ID} etcdctl \
