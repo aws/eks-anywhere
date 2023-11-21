@@ -36,10 +36,12 @@ const (
 type NodeUpgradeSpec struct {
 	// Machine is a reference to the CAPI Machine that needs to be upgraded.
 	Machine           corev1.ObjectReference `json:"machine"`
+
+	// TODO(in-place): Determine if there's a way to get these dynamically instead of expecting it from the CRD.
 	KubernetesVersion string                 `json:"kubernetesVersion"`
 	EtcdVersion       *string                `json:"etcdVersion,omitempty"`
 	CoreDNSVersion    *string                `json:"coreDNSVersion,omitempty"`
-	
+
 	// FirstNodeToBeUpgraded signifies that the Node is the first node to be upgraded.
 	// This flag is only valid for control plane nodes and ignored for worker nodes.
 	// +optional

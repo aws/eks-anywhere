@@ -71,6 +71,9 @@ func (r *NodeUpgradeReconciler) SetupWithManager(mgr ctrl.Manager) error {
 // Reconcile reconciles a NodeUpgrade object.
 // nolint:gocyclo
 func (r *NodeUpgradeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (result ctrl.Result, reterr error) {
+	// TODO(in-place): Add validating webhook to block updating the nodeUpgrade object.
+	// It should be immutable. If it needs to be changed, a new spec should be applied.
+
 	log := r.log.WithValues("NodeUpgrade", req.NamespacedName)
 
 	log.Info("Reconciling NodeUpgrade object")
@@ -214,6 +217,8 @@ func (r *NodeUpgradeReconciler) reconcileDelete(ctx context.Context, log logr.Lo
 			return ctrl.Result{}, fmt.Errorf("getting upgrader pod: %v", err)
 		}
 	} else {
+		// TODO(in-place): Make pod deletion logic more robust by checking if the pod is still running.
+		// If it is still running and not errored out, then wait before deleting the pod.
 		log.Info("Deleting upgrader pod", "Pod", pod.Name, "Namespace", pod.Namespace)
 		if err := remoteClient.Delete(ctx, pod); err != nil {
 			return ctrl.Result{}, fmt.Errorf("deleting upgrader pod: %v", err)

@@ -82,7 +82,7 @@ func upgraderPod(nodeName, image string) *corev1.Pod {
 					},
 				},
 			},
-			// TODO: currently, the pod requires atleast one container.
+			// TODO(in-place): currently, the pod requires atleast one container.
 			// For the time being, I have added an nginx container but
 			// this should be replaced with something that makes more
 			// sense in in-place context.
