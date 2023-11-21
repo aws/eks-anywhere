@@ -20,7 +20,57 @@ import (
 	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
 
-func TestNodeUpgradeReconcilerReconcileCreate(t *testing.T) {
+func TestNodeUpgradeReconcilerReconcileFirstControlPlane(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+	ctrl := gomock.NewController(t)
+	clientRegistry := mocks.NewMockRemoteClientRegistry(ctrl)
+
+	cluster, machine, node, nodeUpgrade := getObjectsForNodeUpgradeTest()
+	nodeUpgrade.Spec.FirstNodeToBeUpgraded = true
+	nodeUpgrade.Spec.EtcdVersion = ptr.String("v3.5.9-eks-1-28-9")
+	node.Labels = map[string]string{
+		"node-role.kubernetes.io/control-plane": "true",
+	}
+	client := fake.NewClientBuilder().WithRuntimeObjects(cluster, machine, node, nodeUpgrade).Build()
+
+	clientRegistry.EXPECT().GetClient(ctx, types.NamespacedName{Name: cluster.Name, Namespace: cluster.Namespace}).Return(client, nil)
+
+	r := controllers.NewNodeUpgradeReconciler(client, clientRegistry)
+	req := nodeUpgradeRequest(nodeUpgrade)
+	_, err := r.Reconcile(ctx, req)
+	g.Expect(err).ToNot(HaveOccurred())
+
+	pod := &corev1.Pod{}
+	err = client.Get(ctx, types.NamespacedName{Name: upgrader.PodName(node.Name), Namespace: "eksa-system"}, pod)
+	g.Expect(err).ToNot(HaveOccurred())
+}
+
+func TestNodeUpgradeReconcilerReconcileNextControlPlane(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+	ctrl := gomock.NewController(t)
+	clientRegistry := mocks.NewMockRemoteClientRegistry(ctrl)
+
+	cluster, machine, node, nodeUpgrade := getObjectsForNodeUpgradeTest()
+	node.Labels = map[string]string{
+		"node-role.kubernetes.io/control-plane": "true",
+	}
+	client := fake.NewClientBuilder().WithRuntimeObjects(cluster, machine, node, nodeUpgrade).Build()
+
+	clientRegistry.EXPECT().GetClient(ctx, types.NamespacedName{Name: cluster.Name, Namespace: cluster.Namespace}).Return(client, nil)
+
+	r := controllers.NewNodeUpgradeReconciler(client, clientRegistry)
+	req := nodeUpgradeRequest(nodeUpgrade)
+	_, err := r.Reconcile(ctx, req)
+	g.Expect(err).ToNot(HaveOccurred())
+
+	pod := &corev1.Pod{}
+	err = client.Get(ctx, types.NamespacedName{Name: upgrader.PodName(node.Name), Namespace: "eksa-system"}, pod)
+	g.Expect(err).ToNot(HaveOccurred())
+}
+
+func TestNodeUpgradeReconcilerReconcileWorker(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
 	ctrl := gomock.NewController(t)
@@ -38,6 +88,67 @@ func TestNodeUpgradeReconcilerReconcileCreate(t *testing.T) {
 
 	pod := &corev1.Pod{}
 	err = client.Get(ctx, types.NamespacedName{Name: upgrader.PodName(node.Name), Namespace: "eksa-system"}, pod)
+	g.Expect(err).ToNot(HaveOccurred())
+}
+
+func TestNodeUpgradeReconcilerReconcileCreateUpgraderPodState(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+	ctrl := gomock.NewController(t)
+	clientRegistry := mocks.NewMockRemoteClientRegistry(ctrl)
+
+	cluster, machine, node, nodeUpgrade := getObjectsForNodeUpgradeTest()
+	client := fake.NewClientBuilder().WithRuntimeObjects(cluster, machine, node, nodeUpgrade).Build()
+
+	clientRegistry.EXPECT().GetClient(ctx, types.NamespacedName{Name: cluster.Name, Namespace: cluster.Namespace}).Return(client, nil).Times(2)
+
+	r := controllers.NewNodeUpgradeReconciler(client, clientRegistry)
+	req := nodeUpgradeRequest(nodeUpgrade)
+	_, err := r.Reconcile(ctx, req)
+	g.Expect(err).ToNot(HaveOccurred())
+
+	pod := &corev1.Pod{}
+	g.Expect(client.Get(ctx, types.NamespacedName{Name: upgrader.PodName(node.Name), Namespace: "eksa-system"}, pod)).To(Succeed())
+
+	statuses := []corev1.ContainerStatus{
+		{
+			Name: upgrader.CopierContainerName,
+			State: corev1.ContainerState{
+				Terminated: &corev1.ContainerStateTerminated{
+					ExitCode: 0,
+				},
+			},
+		},
+		{
+			Name: upgrader.ContainerdUpgraderContainerName,
+			State: corev1.ContainerState{
+				Running: &corev1.ContainerStateRunning{},
+			},
+		},
+		{
+			Name: upgrader.CNIPluginsUpgraderContainerName,
+			State: corev1.ContainerState{
+				Waiting: &corev1.ContainerStateWaiting{},
+			},
+		},
+		{
+			Name: upgrader.KubeadmUpgraderContainerName,
+			State: corev1.ContainerState{
+				Terminated: &corev1.ContainerStateTerminated{
+					ExitCode: 1,
+				},
+			},
+		},
+		{
+			Name:  upgrader.KubeletUpgradeContainerName,
+			State: corev1.ContainerState{},
+		},
+	}
+
+	pod.Status.InitContainerStatuses = append(pod.Status.InitContainerStatuses, statuses...)
+	g.Expect(client.Update(ctx, pod)).To(Succeed())
+
+	_, err = r.Reconcile(ctx, req)
 	g.Expect(err).ToNot(HaveOccurred())
 }
 
@@ -62,6 +173,40 @@ func TestNodeUpgradeReconcilerReconcileDelete(t *testing.T) {
 	g.Expect(err).ToNot(HaveOccurred())
 
 	err = client.Delete(ctx, nodeUpgrade)
+	g.Expect(err).ToNot(HaveOccurred())
+
+	_, err = r.Reconcile(ctx, req)
+	g.Expect(err).ToNot(HaveOccurred())
+
+	pod = &corev1.Pod{}
+	err = client.Get(ctx, types.NamespacedName{Name: upgrader.PodName(node.Name), Namespace: "eksa-system"}, pod)
+	g.Expect(err).To(MatchError("pods \"node01-node-upgrader\" not found"))
+}
+
+func TestNodeUpgradeReconcilerReconcileDeleteUpgraderPodAlreadyDeleted(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+	ctrl := gomock.NewController(t)
+	clientRegistry := mocks.NewMockRemoteClientRegistry(ctrl)
+
+	cluster, machine, node, nodeUpgrade := getObjectsForNodeUpgradeTest()
+	client := fake.NewClientBuilder().WithRuntimeObjects(cluster, machine, node, nodeUpgrade).Build()
+
+	clientRegistry.EXPECT().GetClient(ctx, types.NamespacedName{Name: cluster.Name, Namespace: cluster.Namespace}).Return(client, nil).Times(2)
+
+	r := controllers.NewNodeUpgradeReconciler(client, clientRegistry)
+	req := nodeUpgradeRequest(nodeUpgrade)
+	_, err := r.Reconcile(ctx, req)
+	g.Expect(err).ToNot(HaveOccurred())
+
+	pod := &corev1.Pod{}
+	err = client.Get(ctx, types.NamespacedName{Name: upgrader.PodName(node.Name), Namespace: "eksa-system"}, pod)
+	g.Expect(err).ToNot(HaveOccurred())
+
+	err = client.Delete(ctx, nodeUpgrade)
+	g.Expect(err).ToNot(HaveOccurred())
+
+	err = client.Delete(ctx, pod)
 	g.Expect(err).ToNot(HaveOccurred())
 
 	_, err = r.Reconcile(ctx, req)
