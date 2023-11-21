@@ -26,22 +26,22 @@ This section provides information about:
 
 
 ## Cilium Features
-The following table lists Cilium features and notes which of those features are built into EKS Anywhere, upstream Open Source, and Cilium Enterprise.
+The following table lists Cilium features and notes which of those features are built into EKS Anywhere's default Cilium version , upstream Open Source, and Cilium Enterprise.
 
 <details><summary>Expand to see Cilium Features</summary>
 
-| Headline/Feature   | &nbsp;&nbsp;AWS EKS Anywhere | &nbsp;&nbsp;Cilium OSS |  &nbsp;&nbsp;Isovalent Cilium Enterprise |
+| Headline/Feature   | &nbsp;&nbsp;EKS Anywhere Default Cilium | &nbsp;&nbsp;Cilium OSS |  &nbsp;&nbsp;Isovalent Cilium Enterprise |
 | ---------------    | ----------       | ---------- |  --------------------        |
-| Networking Routing (CNI) |  &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |  &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |  &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |
-| Identity-Based Network Policy (Labels, CIDR)  | &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |  &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** | &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |
-| Load-Balancing (L3/L4) | &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** | &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |  &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |
-| Advanced Network Policy & Encryption (DNS, L7, TLS/SNI, ...) | &nbsp;&nbsp;&nbsp;&nbsp;**&mdash;** | &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |  &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |
-| Ingress, Gateway API, & Service Mesh | &nbsp;&nbsp;&nbsp;&nbsp;**&mdash;** | &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |  &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |
-| Multi-Cluster, Egress Gateway, BGP | &nbsp;&nbsp;&nbsp;&nbsp;**&mdash;** | &nbsp;&nbsp;&nbsp;&nbsp;**&mdash;** | &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |
-| Hubble Network Observability (Metrics, Logs, Prometheus, Grafana, OpenTelemetry) | &nbsp;&nbsp;&nbsp;&nbsp;**&mdash;** | &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** | &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |
-| SIEM Integration & Timescape Observability Storage | &nbsp;&nbsp;&nbsp;&nbsp;**&mdash;** | &nbsp;&nbsp;&nbsp;&nbsp;**&mdash;** | &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |
-| Tetragon Runtime Security | &nbsp;&nbsp;&nbsp;&nbsp;**&mdash;** | &nbsp;&nbsp;&nbsp;&nbsp;**&mdash;** | &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |
-| Enterprise-hardened Cilium Distribution, Training, 24x7 Enterprise Grade Support | &nbsp;&nbsp;&nbsp;&nbsp;**&mdash;** | &nbsp;&nbsp;&nbsp;&nbsp;**&mdash;** | &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |
+| Networking Routing (CNI) |  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |  &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |  &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |
+| Identity-Based Network Policy (Labels, CIDR)  | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |  &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** | &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |
+| Load-Balancing (L3/L4) | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** | &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |  &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |
+| Advanced Network Policy & Encryption (DNS, L7, TLS/SNI, ...) | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**&mdash;** | &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |  &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |
+| Ingress, Gateway API, & Service Mesh | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**&mdash;** | &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |  &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |
+| Multi-Cluster, Egress Gateway, BGP | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**&mdash;** | &nbsp;&nbsp;&nbsp;&nbsp;**&mdash;** | &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |
+| Hubble Network Observability (Metrics, Logs, Prometheus, Grafana, OpenTelemetry) | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**&mdash;** | &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** | &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |
+| SIEM Integration & Timescape Observability Storage | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**&mdash;** | &nbsp;&nbsp;&nbsp;&nbsp;**&mdash;** | &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |
+| Tetragon Runtime Security | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**&mdash;** | &nbsp;&nbsp;&nbsp;&nbsp;**&mdash;** | &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |
+| Enterprise-hardened Cilium Distribution, Training, 24x7 Enterprise Grade Support | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**&mdash;** | &nbsp;&nbsp;&nbsp;&nbsp;**&mdash;** | &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |
 
 </details>
 
