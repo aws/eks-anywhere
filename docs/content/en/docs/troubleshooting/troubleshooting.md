@@ -19,6 +19,17 @@ This guide covers EKS Anywhere troubleshooting. It is divided into the following
 
 You may want to search this document for a fragment of the error you are seeing.
 
+## Troubleshooting knowledge articles
+
+More information on troubleshooting EKS Anywhere is available from the [AWS Knowledge Center](https://repost.aws/knowledge-center) including:
+
+* [How do I check EKS Anywhere cluster component logs on primary and worker nodes for BottleRocket, Ubuntu, or Redhat?](https://repost.aws/knowledge-center/eks-anywhere-check-component-logs)
+* [How can I troubleshoot etcdadm controller issues in EKS Anywhere?](https://repost.aws/knowledge-center/eks-anywhere-etcdadm-controller-issues)
+* [How do I return an EKS Anywhere cluster to a working state when the cluster upgrade fails?](https://repost.aws/knowledge-center/eks-anywhere-return-cluster-upgrade-fail)
+* [https://repost.aws/knowledge-center/eks-clean-up-resources-failed-cluster](https://repost.aws/knowledge-center/eks-clean-up-resources-failed-cluster)
+* [How does EKS Anywhere cluster bootstrapping work?](https://repost.aws/knowledge-center/eks-anywhere-bootstrapping-process)
+
+
 ## General troubleshooting
 
 ### Increase eksctl anywhere output
