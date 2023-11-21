@@ -20,7 +20,7 @@ require (
 	github.com/bmc-toolbox/bmclib/v2 v2.1.0
 	github.com/docker/cli v24.0.6+incompatible
 	github.com/go-git/go-git/v5 v5.4.2
-	github.com/go-jose/go-jose/v3 v3.0.0
+	github.com/go-jose/go-jose/v3 v3.0.1
 	github.com/go-logr/logr v1.2.4
 	github.com/go-logr/zapr v1.2.3
 	github.com/gocarina/gocsv v0.0.0-20220304222734-caabc5f00d30
