@@ -26,7 +26,7 @@ This allows you to try EKS Anywhere on your local machine or laptop before deplo
 * 30GB free disk space
 * If you are using Ubuntu, use the Docker CE installation instructions to install Docker and not the Snap installation, as described here.
 * For EKS Anywhere v0.15 and earlier, if you are using Ubuntu 21.10 or 22.04, you will need to switch from cgroups v2 to cgroups v1. For details, see [Troubleshooting Guide.]({{< relref "../../troubleshooting/troubleshooting.md#for-eks-anywhere-v015-and-earlier-cgroups-v2-is-not-supported-in-ubuntu-2110-and-2204" >}})
-* EKS Anywhere works with x86 and amd64 architectures. It currently will not work on computers with Apple Silicon or Arm based processors.
+* EKS Anywhere works with x86 and amd64 architectures, From v0.18.1 it also works with Apple Silicon or Arm based processors.
 
 ### Install EKS Anywhere CLI tools
 To get started with EKS Anywhere, you must first install the `eksctl` CLI and the `eksctl anywhere` plugin.
