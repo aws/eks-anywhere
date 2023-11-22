@@ -15,8 +15,10 @@
 package bundles
 
 import (
-	releasetypes "github.com/aws/eks-anywhere/release/cli/pkg/types"
+	"fmt"
+
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
+	releasetypes "github.com/aws/eks-anywhere/release/cli/pkg/types"
 )
 
 func GetUpgraderBundle(r *releasetypes.ReleaseConfig, eksDReleaseChannel string, imageDigests map[string]string) (anywherev1alpha1.UpgraderBundle, error) {
@@ -27,19 +29,18 @@ func GetUpgraderBundle(r *releasetypes.ReleaseConfig, eksDReleaseChannel string,
 		if artifact.Image != nil {
 			imageArtifact := artifact.Image
 			bundleImageArtifact := anywherev1alpha1.Image{
-				Name:			imageArtifact.AssetName,
-				Description: 	fmt.Sprintf("Container image for %s image", imageArtifact.AssetName),
-				OS: 			imageArtifact.OS,
-				Arch:			imageArtifact.Arch,
-				URI:			imageArtifact.ReleaseImageURI,
-				ImageDigest:	imageDigests[imageArtifact.ReleaseImageURI],
+				Name:        imageArtifact.AssetName,
+				Description: fmt.Sprintf("Container image for %s image", imageArtifact.AssetName),
+				OS:          imageArtifact.OS,
+				Arch:        imageArtifact.Arch,
+				URI:         imageArtifact.ReleaseImageURI,
+				ImageDigest: imageDigests[imageArtifact.ReleaseImageURI],
 			}
 			bundleImageArtifacts[imageArtifact.AssetName] = bundleImageArtifact
 		}
 	}
 
 	bundle := anywherev1alpha1.UpgraderBundle{
-		Version:    version,
 		Upgrader: bundleImageArtifacts["upgrader"],
 	}
 

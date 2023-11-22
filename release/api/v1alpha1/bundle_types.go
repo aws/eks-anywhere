@@ -137,8 +137,7 @@ type EksDRelease struct {
 
 // UpgraderBundle is a In-place Kubernetes version upgrader bundle.
 type UpgraderBundle struct {
-	Version  string `json:"version,omitempty"`
-	Upgrader Image  `json:"upgrader"`
+	Upgrader Image `json:"upgrader"`
 }
 
 type OSImageBundle struct {
