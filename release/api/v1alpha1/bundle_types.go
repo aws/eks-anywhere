@@ -81,6 +81,7 @@ type VersionsBundle struct {
 	Haproxy                    HaproxyBundle                    `json:"haproxy,omitempty"`
 	Snow                       SnowBundle                       `json:"snow,omitempty"`
 	Nutanix                    NutanixBundle                    `json:"nutanix,omitempty"`
+	Upgrader                   UpgraderBundle                   `json:"upgrader,omitempty"`
 	// This field has been deprecated
 	Aws *AwsBundle `json:"aws,omitempty"`
 }
@@ -132,6 +133,12 @@ type EksDRelease struct {
 
 	// Containerd points to the containerd binary baked into this eks-D based node image
 	Containerd Archive `json:"containerd,omitempty"`
+}
+
+// UpgraderBundle is a In-place Kubernetes version upgrader bundle.
+type UpgraderBundle struct {
+	Version  string `json:"version,omitempty"`
+	Upgrader Image  `json:"upgrader"`
 }
 
 type OSImageBundle struct {

@@ -177,6 +177,11 @@ func GetVersionsBundles(r *releasetypes.ReleaseConfig, imageDigests map[string]s
 			return nil, errors.Wrapf(err, "Error getting bundle for Snow infrastructure provider")
 		}
 
+		upgraderBundle, err := GetUpgraderBundle(r, channel, imageDigests)
+		if err != nil {
+			return nil, errors.Wrapf(err, "Error getting upgrader bundle for eks-d %s release", channel)
+		}
+
 		versionsBundle := anywherev1alpha1.VersionsBundle{
 			KubeVersion:                shortKubeVersion,
 			EksD:                       eksDReleaseBundle,
@@ -199,6 +204,7 @@ func GetVersionsBundles(r *releasetypes.ReleaseConfig, imageDigests map[string]s
 			Haproxy:                    haproxyBundle,
 			Snow:                       snowBundle,
 			Nutanix:                    nutanixBundle,
+			Upgrader:					upgrader,
 		}
 		versionsBundles = append(versionsBundles, versionsBundle)
 	}
