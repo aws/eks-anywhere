@@ -10,10 +10,10 @@ description: >
 
 To run EKS Anywhere, you will need:
 
-### Prepare Administrative machine
+## Prepare Administrative machine
 Set up an Administrative machine as described in [Install EKS Anywhere ]({{< relref "../../getting-started/install/" >}}).
 
-### Prepare a VMware vSphere environment
+## Prepare a VMware vSphere environment
 To prepare a VMware vSphere environment to run EKS Anywhere, you need the following:
 * A vSphere 7+ environment running vCenter.
 * Capacity to deploy 6-10 VMs.
@@ -46,7 +46,7 @@ The administrative machine and the target workload environment will need network
 {{% content "./domains.md" %}}
 
 
-### vSphere information needed before creating the cluster
+## vSphere information needed before creating the cluster
 You need to get the following information before creating the cluster:
 
 * **Static IP Addresses**:
