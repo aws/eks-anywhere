@@ -15,6 +15,30 @@ Please upgrade to `v0.15.3` if you are using Tinkerbell (Bare Metal) provider.
 * When upgrading to a new minor version, a new OS image must be created using the new image-builder cli.
 {{% /alert %}}
 
+## [v0.18.2](https://github.com/aws/eks-anywhere/releases/tag/v0.18.2)
+
+### Fixed
+* Image Builder: Correctly parse `no_proxy` inputs when both Red Hat Satellite and Proxy is used in image-builder. ([#2664](https://github.com/aws/eks-anywhere-build-tooling/pull/2664))
+* vSphere: Fix template tag validation by specifying the full template path ([#6437](https://github.com/aws/eks-anywhere/pull/6437))
+* Bare Metal: Skip `kube-vip` deployment when `TinkerbellDatacenterConfig.skipLoadBalancerDeployment` is set to true. ([#6990](https://github.com/aws/eks-anywhere/pull/6990))
+
+### Other
+* Security: Patch incorrect conversion between uint64 and int64 ([#7048](https://github.com/aws/eks-anywhere/pull/7048))
+* Security: Fix incorrect regex for matching curated package registry URL ([#7049](https://github.com/aws/eks-anywhere/pull/7049))
+* Security: Patch malicious tarballs directory traversal vulnerability ([#7057](https://github.com/aws/eks-anywhere/pull/7057))
+
+### Supported Operating Systems
+
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow  |
+| :----------:        | :-----: | :--------: | :-----: | :--------: | :---: |
+| Ubuntu 20.04        | ✔       | ✔          | ✔       | —          | ✔     |
+| Ubuntu 22.04        | ✔       | ✔          | ✔       | —          | —     |
+| Bottlerocket 1.15.1 | ✔       | ✔          | —       | —          | —     |
+| RHEL 8.7            | ✔       | ✔          | ✔       | ✔          | —     |
+| RHEL 9.x            | —       | —          | ✔       | —          | —     |
+
+
+
 ## [v0.18.1](https://github.com/aws/eks-anywhere/releases/tag/v0.18.1)
 
 ### Tool Upgrade
