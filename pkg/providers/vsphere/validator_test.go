@@ -346,6 +346,26 @@ func TestValidatorValidateMachineConfigTagsExistTagDoesNotExist(t *testing.T) {
 	g.Expect(err).To(Not(BeNil()))
 }
 
+func TestValidatorValidateMachineConfigTemplateDoesNotExist(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	govc := govcmocks.NewMockProviderGovcClient(ctrl)
+	ctx := context.Background()
+	g := NewWithT(t)
+
+	v := Validator{
+		govc: govc,
+	}
+
+	govc.EXPECT().SearchTemplate(ctx, "", "").Return("", nil)
+
+	_, err := v.getTemplatePath(ctx, "", "")
+	g.Expect(err).To(Not(BeNil()))
+
+	govc.EXPECT().SearchTemplate(ctx, "", "").Return("", fmt.Errorf("not found"))
+	_, err = v.getTemplatePath(ctx, "", "")
+	g.Expect(err).To(MatchError("validating template: not found"))
+}
+
 func TestValidateBRHardDiskSize(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	govc := govcmocks.NewMockProviderGovcClient(ctrl)
