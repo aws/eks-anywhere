@@ -204,7 +204,7 @@ func GetVersionsBundles(r *releasetypes.ReleaseConfig, imageDigests map[string]s
 			Haproxy:                    haproxyBundle,
 			Snow:                       snowBundle,
 			Nutanix:                    nutanixBundle,
-			Upgrader:					upgrader,
+			Upgrader:                   upgraderBundle,
 		}
 		versionsBundles = append(versionsBundles, versionsBundle)
 	}

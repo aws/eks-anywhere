@@ -44,7 +44,7 @@ const (
 	KindProjectPath                     = "projects/kubernetes-sigs/kind"
 	KubeRbacProxyProjectPath            = "projects/brancz/kube-rbac-proxy"
 	PackagesProjectPath                 = "projects/aws/eks-anywhere-packages"
-	UpgraderProjectPath					= "projects/aws/upgrader"
+	UpgraderProjectPath                 = "projects/aws/upgrader"
 
 	// Date format with standard reference time values
 	// The reference time used is the specific time stamp:
