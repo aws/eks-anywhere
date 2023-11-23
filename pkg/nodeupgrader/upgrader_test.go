@@ -27,9 +27,9 @@ func TestUpgradeFirstControlPlanePod(t *testing.T) {
 	test.AssertContentToFile(t, string(data), "testdata/expected_first_control_plane_upgrader_pod.yaml")
 }
 
-func TestUpgradeRestControlPlanePod(t *testing.T) {
+func TestUpgradeSecondaryControlPlanePod(t *testing.T) {
 	g := NewWithT(t)
-	pod := nodeupgrader.UpgradeRestControlPlanePod(nodeName, upgraderImage)
+	pod := nodeupgrader.UpgradeSecondaryControlPlanePod(nodeName, upgraderImage)
 	g.Expect(pod).ToNot(BeNil())
 
 	data, err := yaml.Marshal(pod)

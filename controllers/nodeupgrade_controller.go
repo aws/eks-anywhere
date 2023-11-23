@@ -172,7 +172,7 @@ func (r *NodeUpgradeReconciler) reconcile(ctx context.Context, log logr.Logger, 
 		if nodeUpgrade.Spec.FirstNodeToBeUpgraded {
 			upgraderPod = upgrader.UpgradeFirstControlPlanePod(node.Name, defaultUpgraderImage, nodeUpgrade.Spec.KubernetesVersion, *nodeUpgrade.Spec.EtcdVersion)
 		} else {
-			upgraderPod = upgrader.UpgradeRestControlPlanePod(node.Name, defaultUpgraderImage)
+			upgraderPod = upgrader.UpgradeSecondaryControlPlanePod(node.Name, defaultUpgraderImage)
 		}
 	} else {
 		upgraderPod = upgrader.UpgradeWorkerPod(node.Name, defaultUpgraderImage)
@@ -251,7 +251,7 @@ func (r *NodeUpgradeReconciler) updateStatus(ctx context.Context, log logr.Logge
 	}
 
 	conditions.MarkTrue(nodeUpgrade, anywherev1.UpgraderPodCreated)
-	updateContainerConditions(pod, nodeUpgrade)
+	updateComponentsConditions(pod, nodeUpgrade)
 
 	// Always update the readyCondition by summarizing the state of other conditions.
 	conditions.SetSummary(nodeUpgrade,
@@ -268,7 +268,7 @@ func (r *NodeUpgradeReconciler) updateStatus(ctx context.Context, log logr.Logge
 	return nil
 }
 
-func updateContainerConditions(pod *corev1.Pod, nodeUpgrade *anywherev1.NodeUpgrade) {
+func updateComponentsConditions(pod *corev1.Pod, nodeUpgrade *anywherev1.NodeUpgrade) {
 	containersMap := []struct {
 		name      string
 		condition clusterv1.ConditionType
