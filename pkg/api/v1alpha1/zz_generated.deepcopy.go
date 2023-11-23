@@ -1857,7 +1857,6 @@ func (in *NodeUpgradeList) DeepCopyObject() runtime.Object {
 func (in *NodeUpgradeSpec) DeepCopyInto(out *NodeUpgradeSpec) {
 	*out = *in
 	out.Machine = in.Machine
-	out.Node = in.Node
 	if in.EtcdVersion != nil {
 		in, out := &in.EtcdVersion, &out.EtcdVersion
 		*out = new(string)
@@ -1885,7 +1884,7 @@ func (in *NodeUpgradeStatus) DeepCopyInto(out *NodeUpgradeStatus) {
 	*out = *in
 	if in.Conditions != nil {
 		in, out := &in.Conditions, &out.Conditions
-		*out = make(v1beta1.Conditions, len(*in))
+		*out = make([]v1beta1.Condition, len(*in))
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
