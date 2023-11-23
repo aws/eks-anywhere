@@ -603,6 +603,7 @@ mocks: ## Generate mocks
 	${MOCKGEN} -destination=pkg/controller/clusters/mocks/ipvalidator.go -package=mocks -source "pkg/controller/clusters/ipvalidator.go" IPUniquenessValidator
 	${MOCKGEN} -destination=pkg/registry/mocks/storage.go -package=mocks -source "pkg/registry/storage.go" StorageClient
 	${MOCKGEN} -destination=pkg/registry/mocks/repository.go -package=mocks oras.land/oras-go/v2/registry Repository
+	${MOCKGEN} -destination=controllers/mocks/nodeupgrade_controller.go -package=mocks -source "controllers/nodeupgrade_controller.go" RemoteClientRegistry
 
 .PHONY: verify-mocks
 verify-mocks: mocks ## Verify if mocks need to be updated

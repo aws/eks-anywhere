@@ -590,6 +590,7 @@ func (f *Factory) WithMachineDeploymentUpgradeReconciler() *Factory {
 
 // WithNodeUpgradeReconciler builds the WithNodeUpgrade reconciler.
 func (f *Factory) WithNodeUpgradeReconciler() *Factory {
+	f.withTracker()
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.reconcilers.NodeUpgradeReconciler != nil {
 			return nil
@@ -597,6 +598,7 @@ func (f *Factory) WithNodeUpgradeReconciler() *Factory {
 
 		f.reconcilers.NodeUpgradeReconciler = NewNodeUpgradeReconciler(
 			f.manager.GetClient(),
+			f.tracker,
 		)
 
 		return nil

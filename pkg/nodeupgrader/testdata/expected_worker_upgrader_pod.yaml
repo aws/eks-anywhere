@@ -1,0 +1,112 @@
+metadata:
+  creationTimestamp: null
+  labels:
+    ekd-d-upgrader: "true"
+  name: my-node-node-upgrader
+  namespace: eksa-system
+spec:
+  containers:
+  - image: nginx
+    name: done
+    resources: {}
+  hostPID: true
+  initContainers:
+  - args:
+    - -r
+    - /eksa-upgrades
+    - /usr/host
+    command:
+    - cp
+    image: public.ecr.aws/eks-anywhere/node-upgrader:latest
+    name: components-copier
+    resources: {}
+    volumeMounts:
+    - mountPath: /usr/host
+      name: host-components
+  - args:
+    - --target
+    - "1"
+    - --mount
+    - --uts
+    - --ipc
+    - --net
+    - /foo/eksa-upgrades/scripts/upgrade.sh
+    - upgrade_containerd
+    command:
+    - nsenter
+    image: public.ecr.aws/eks-anywhere/node-upgrader:latest
+    name: containerd-upgrader
+    resources: {}
+    securityContext:
+      privileged: true
+  - args:
+    - --target
+    - "1"
+    - --mount
+    - --uts
+    - --ipc
+    - --net
+    - /foo/eksa-upgrades/scripts/upgrade.sh
+    - cni_plugins
+    command:
+    - nsenter
+    image: public.ecr.aws/eks-anywhere/node-upgrader:latest
+    name: cni-plugins-upgrader
+    resources: {}
+    securityContext:
+      privileged: true
+  - args:
+    - --target
+    - "1"
+    - --mount
+    - --uts
+    - --ipc
+    - --net
+    - /foo/eksa-upgrades/scripts/upgrade.sh
+    - kubeadm_in_worker
+    command:
+    - nsenter
+    image: public.ecr.aws/eks-anywhere/node-upgrader:latest
+    name: kubeadm-upgrader
+    resources: {}
+    securityContext:
+      privileged: true
+  - args:
+    - --target
+    - "1"
+    - --mount
+    - --uts
+    - --ipc
+    - --net
+    - /foo/eksa-upgrades/scripts/upgrade.sh
+    - kubelet_and_kubectl
+    command:
+    - nsenter
+    image: public.ecr.aws/eks-anywhere/node-upgrader:latest
+    name: kubelet-kubectl-upgrader
+    resources: {}
+    securityContext:
+      privileged: true
+  - args:
+    - --target
+    - "1"
+    - --mount
+    - --uts
+    - --ipc
+    - --net
+    - /foo/eksa-upgrades/scripts/upgrade.sh
+    - print_status_and_cleanup
+    command:
+    - nsenter
+    image: public.ecr.aws/eks-anywhere/node-upgrader:latest
+    name: post-upgrade-status
+    resources: {}
+    securityContext:
+      privileged: true
+  nodeName: my-node
+  volumes:
+  - hostPath:
+      path: /foo
+      type: DirectoryOrCreate
+    name: host-components
+status: {}

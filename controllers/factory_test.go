@@ -229,3 +229,63 @@ func TestFactoryWithNutanixDatacenterReconciler(t *testing.T) {
 	g.Expect(err).NotTo(HaveOccurred())
 	g.Expect(reconcilers.NutanixDatacenterReconciler).NotTo(BeNil())
 }
+
+func TestFactoryWithNodeUpgradeReconciler(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+	logger := nullLog()
+	ctrl := gomock.NewController(t)
+	manager := mocks.NewMockManager(ctrl)
+	manager.EXPECT().GetClient().AnyTimes()
+	manager.EXPECT().GetScheme().AnyTimes()
+
+	f := controllers.NewFactory(logger, manager).
+		WithNodeUpgradeReconciler()
+
+	// testing idempotence
+	f.WithNodeUpgradeReconciler()
+
+	reconcilers, err := f.Build(ctx)
+	g.Expect(err).NotTo(HaveOccurred())
+	g.Expect(reconcilers.NodeUpgradeReconciler).NotTo(BeNil())
+}
+
+func TestFactoryWithControlPlaneUpgradeReconciler(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+	logger := nullLog()
+	ctrl := gomock.NewController(t)
+	manager := mocks.NewMockManager(ctrl)
+	manager.EXPECT().GetClient().AnyTimes()
+	manager.EXPECT().GetScheme().AnyTimes()
+
+	f := controllers.NewFactory(logger, manager).
+		WithControlPlaneUpgradeReconciler()
+
+	// testing idempotence
+	f.WithControlPlaneUpgradeReconciler()
+
+	reconcilers, err := f.Build(ctx)
+	g.Expect(err).NotTo(HaveOccurred())
+	g.Expect(reconcilers.ControlPlaneUpgradeReconciler).NotTo(BeNil())
+}
+
+func TestFactoryWithMachineDeploymentUpgradeReconciler(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+	logger := nullLog()
+	ctrl := gomock.NewController(t)
+	manager := mocks.NewMockManager(ctrl)
+	manager.EXPECT().GetClient().AnyTimes()
+	manager.EXPECT().GetScheme().AnyTimes()
+
+	f := controllers.NewFactory(logger, manager).
+		WithMachineDeploymentUpgradeReconciler()
+
+	// testing idempotence
+	f.WithMachineDeploymentUpgradeReconciler()
+
+	reconcilers, err := f.Build(ctx)
+	g.Expect(err).NotTo(HaveOccurred())
+	g.Expect(reconcilers.MachineDeploymentUpgradeReconciler).NotTo(BeNil())
+}
