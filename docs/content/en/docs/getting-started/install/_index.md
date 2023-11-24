@@ -51,7 +51,7 @@ Here are a few other things to keep in mind:
 
 {{% alert title="Warning" color="warning" %}}
 EKS Anywhere works on computers with x86 and amd64 process architecture.
-From v0.18.1 it also works with Apple Silicon or Arm based processors.
+From v0.18.1, it also works with Apple Silicon or Arm based processors.
 {{% /alert %}}
 
 You can install `eksctl` and `eksctl-anywhere` with [homebrew](http://brew.sh/).
