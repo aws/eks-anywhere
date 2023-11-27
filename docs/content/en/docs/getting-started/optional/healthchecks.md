@@ -9,6 +9,12 @@ description: >
 ---
 
 ## Machine Health Checks Support 
+
+#### Provider support details
+|                | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:--------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+| **Supported?** |   ✓	    |     ✓      |   	 ✓   |     ✓      |  ✓   |
+
 You can configure EKS Anywhere to specify timeouts for machine health checks.
 A Machine Health Check is a resource which allows users to define conditions under which Machines within a Cluster should be considered unhealthy. A Machine Health Check is defined on a management cluster and scoped to a particular workload cluster. If not configured in the spec, the default values are used to configure the machine health checks. 
 

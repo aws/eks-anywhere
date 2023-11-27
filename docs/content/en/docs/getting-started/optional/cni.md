@@ -10,6 +10,11 @@ description: >
 
 ### Specifying CNI Plugin in EKS Anywhere cluster spec
 
+#### Provider support details
+|                | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:--------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+| **Supported?** |   ✓	    |     ✓      |   	 ✓   |     ✓      |  ✓   |
+
 EKS Anywhere currently supports two CNI plugins: Cilium and Kindnet. Only one of them can be selected
 for a cluster, and the plugin cannot be changed once the cluster is created.
 Up until the 0.7.x releases, the plugin had to be specified using the `cni` field on cluster spec.

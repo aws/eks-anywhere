@@ -13,6 +13,12 @@ The following additional optional configuration can also be included:
 
 * [CNI]({{< relref "../optional/cni.md" >}})
 * [Host OS Config]({{< relref "../optional/hostOSConfig.md" >}})
+* [Proxy]({{< relref "../optional/proxy.md" >}})
+* [Gitops]({{< relref "../optional/gitops.md" >}})
+* [IAM Authenticator]({{< relref "../optional/iamauth.md" >}})
+* [OIDC]({{< relref "../optional/oidc.md" >}})
+* [Registry Mirror]({{< relref "../optional/registrymirror.md" >}})
+* [Machine Health Check Timeouts]({{< relref "../optional/healthchecks.md" >}})
 
 To generate your own cluster configuration, follow instructions from the [Create Bare Metal cluster]({{< relref "./baremetal-getstarted" >}}) section and modify it using descriptions below.
 For information on how to add cluster configuration settings to this file for advanced node configuration, see [Advanced Bare Metal cluster configuration]({{< relref "#advanced-bare-metal-cluster-configuration" >}}).

@@ -10,6 +10,16 @@ description: >
 
 This is a generic template with detailed descriptions below for reference.
 
+The following additional optional configuration can also be included:
+
+* [CNI]({{< relref "../optional/cni.md" >}})
+* [IAM Authenticator]({{< relref "../optional/iamauth.md" >}})
+* [OIDC]({{< relref "../optional/oidc.md" >}})
+* [Registry Mirror]({{< relref "../optional/registrymirror.md" >}})
+* [Proxy]({{< relref "../optional/proxy.md" >}})
+* [Gitops]({{< relref "../optional/gitops.md" >}})
+* [Machine Health Check Timeouts]({{< relref "../optional/healthchecks.md" >}})
+
 ```yaml
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: Cluster
@@ -118,11 +128,6 @@ spec:
  vcpusPerSocket: 1
 ---
 ```
-
-The following additional optional configuration can also be included:
-
-* [OIDC]({{< relref "../optional/oidc.md" >}})
-* [Registry Mirror]({{< relref "../optional/registrymirror.md" >}})
 
 ## Cluster Fields
 

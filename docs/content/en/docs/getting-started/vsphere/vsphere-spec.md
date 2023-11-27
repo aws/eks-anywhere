@@ -106,10 +106,11 @@ The following additional optional configuration can also be included:
 * [IAM Roles for Service Accounts]({{< relref "../optional/irsa.md" >}})
 * [IAM Authenticator]({{< relref "../optional/iamauth.md" >}})
 * [OIDC]({{< relref "../optional/oidc.md" >}})
-* [gitops]({{< relref "../optional/gitops.md" >}})
-* [proxy]({{< relref "../optional/proxy.md" >}})
+* [Gitops]({{< relref "../optional/gitops.md" >}})
+* [Proxy]({{< relref "../optional/proxy.md" >}})
 * [Registry Mirror]({{< relref "../optional/registrymirror.md" >}})
 * [Host OS Config]({{< relref "../optional/hostOSConfig.md" >}})
+* [Machine Health Check Timeouts]({{< relref "../optional/healthchecks.md" >}})
 
 ## Cluster Fields
 
