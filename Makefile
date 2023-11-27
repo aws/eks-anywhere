@@ -797,3 +797,7 @@ TINKERBELL_HARDWARE_REQUIREMENTS?=test/e2e/TINKERBELL_HARDWARE_COUNT.yaml
 .PHONY: validate-tinkerbell-hardware-requirements
 validate-tinkerbell-hardware-requirements: build-e2e-test-binary
 	scripts/validate_tinkerbell_hardware_file.sh $(E2E_BINARY) $(TINKERBELL_HARDWARE_REQUIREMENTS)
+
+.PHONY: validate-triggers
+validate-triggers:
+	$(BUILD_LIB)/validate_bundle_numbers.sh $(TYPE) $(ENV)
