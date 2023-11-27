@@ -828,6 +828,28 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 			"projectPath",
 		},
 	},
+	// Upgrader artifacts
+	{
+		ProjectName:    "upgrader",
+		ProjectPath:    "projects/aws/upgrader",
+		GitTagAssigner: tagger.NonExistentTagAssigner,
+		Images: []*assettypes.Image{
+			{
+				RepoName: "upgrader",
+				ImageTagConfiguration: assettypes.ImageTagConfiguration{
+					NonProdSourceImageTagFormat: "v<eksDReleaseChannel>-<eksDReleaseNumber>",
+					ProdSourceImageTagFormat:    "v<eksDReleaseChannel>-<eksDReleaseNumber>",
+					ReleaseImageTagFormat:       "v<eksDReleaseChannel>-<eksDReleaseNumber>",
+				},
+			},
+		},
+		ImageTagOptions: []string{
+			"eksDReleaseChannel",
+			"eksDReleaseNumber",
+			"gitTag",
+		},
+		HasReleaseBranches: true,
+	},
 }
 
 func GetBundleReleaseAssetsConfigMap() []assettypes.AssetConfig {
