@@ -843,6 +843,7 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 				},
 			},
 		},
+		ImageRepoPrefix: "aws",
 		ImageTagOptions: []string{
 			"eksDReleaseChannel",
 			"eksDReleaseNumber",
