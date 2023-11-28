@@ -1136,6 +1136,13 @@ You can now run the `image-builder` CLI with the `files-config` option, with thi
      "no_proxy": "<optional comma seperated list of domains that should be excluded from proxying>"
   }
   ```
+In a proxy-enabled environment, `image-builder` uses `wget` to download artifacts instead of `curl`, as `curl` does not support reading proxy environment variables. In order to add `wget` to the node OS, add the following to the above json configuration file:
+   ```json
+  {
+      "extra_rpms": "wget" #If the node OS being built is RedHat
+      "extra_debs": "wget" #If the node OS being built is Ubuntu
+  }
+  ```
 
 Run `image-builder` CLI with the hypervisor configuration file
   ```bash
