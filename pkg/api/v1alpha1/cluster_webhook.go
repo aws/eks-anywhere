@@ -61,9 +61,9 @@ func (r *Cluster) ValidateCreate() error {
 
 	var allErrs field.ErrorList
 
-	if !r.IsReconcilePaused() && r.IsSelfManaged() {
-		return apierrors.NewBadRequest("creating new cluster on existing cluster is not supported for self managed clusters")
-	}
+	// if !r.IsReconcilePaused() && r.IsSelfManaged() {
+	// 	return apierrors.NewBadRequest("creating new cluster on existing cluster is not supported for self managed clusters")
+	// }
 
 	if r.Spec.EtcdEncryption != nil {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("spec.etcdEncryption"), r.Spec.EtcdEncryption, "etcdEncryption is not supported during cluster creation"))

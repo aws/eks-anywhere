@@ -26,7 +26,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/clustermanager/internal"
-	"github.com/aws/eks-anywhere/pkg/clustermarshaller"
+	// "github.com/aws/eks-anywhere/pkg/clustermarshaller"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/diagnostics"
 	"github.com/aws/eks-anywhere/pkg/executables"
@@ -411,13 +411,13 @@ func (c *ClusterManager) CreateWorkloadCluster(ctx context.Context, managementCl
 		ExistingManagement: managementCluster.ExistingManagement,
 	}
 
-	if err := c.applyProviderManifests(ctx, clusterSpec, managementCluster, provider); err != nil {
-		return nil, err
-	}
+	// if err := c.applyProviderManifests(ctx, clusterSpec, managementCluster, provider); err != nil {
+	// 	return nil, err
+	// }
 
-	if err := c.waitUntilControlPlaneAvailable(ctx, clusterSpec, managementCluster); err != nil {
-		return nil, err
-	}
+	// if err := c.waitUntilControlPlaneAvailable(ctx, clusterSpec, managementCluster); err != nil {
+	// 	return nil, err
+	// }
 
 	logger.V(3).Info("Waiting for workload kubeconfig generation", "cluster", clusterName)
 
@@ -459,6 +459,8 @@ func (c *ClusterManager) waitUntilControlPlaneAvailable(
 	// If we have external etcd we need to wait for that first as control plane nodes can't
 	// come up without it.
 	if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
+
+		// time.Sleep(10 * time.Minute)
 		logger.V(3).Info("Waiting for external etcd to be ready", "cluster", clusterSpec.Cluster.Name)
 		err := c.clusterClient.WaitForManagedExternalEtcdReady(
 			ctx,
@@ -512,6 +514,7 @@ func (c *ClusterManager) applyProviderManifests(
 }
 
 func (c *ClusterManager) getWorkloadClusterKubeconfig(ctx context.Context, clusterName string, managementCluster *types.Cluster, w io.Writer) error {
+	fmt.Printf("clustername %s", clusterName)
 	kubeconfig, err := c.clusterClient.GetWorkloadKubeconfig(ctx, clusterName, managementCluster)
 	if err != nil {
 		return fmt.Errorf("getting workload kubeconfig: %v", err)
@@ -1149,19 +1152,19 @@ func (c *ClusterManager) CreateEKSAResources(ctx context.Context, cluster *types
 		}
 	}
 
-	clusterSpec.Cluster.PauseReconcile()
-	datacenterConfig.PauseReconcile()
+	// clusterSpec.Cluster.PauseReconcile()
+	// datacenterConfig.PauseReconcile()
 
-	resourcesSpec, err := clustermarshaller.MarshalClusterSpec(clusterSpec, datacenterConfig, machineConfigs)
-	if err != nil {
-		return err
-	}
-	logger.V(4).Info("Applying eksa yaml resources to cluster")
-	logger.V(6).Info(string(resourcesSpec))
-	if err = c.applyResource(ctx, cluster, resourcesSpec); err != nil {
-		return err
-	}
-	if err = c.ApplyBundles(ctx, clusterSpec, cluster); err != nil {
+	// resourcesSpec, err := clustermarshaller.MarshalClusterSpec(clusterSpec, datacenterConfig, machineConfigs)
+	// if err != nil {
+	// 	return err
+	// }
+	// logger.V(4).Info("Applying eksa yaml resources to cluster")
+	// logger.V(6).Info(string(resourcesSpec))
+	// if err = c.applyResource(ctx, cluster, resourcesSpec); err != nil {
+	// 	return err
+	// }
+	if err := c.ApplyBundles(ctx, clusterSpec, cluster); err != nil {
 		return err
 	}
 	return c.ApplyReleases(ctx, clusterSpec, cluster)

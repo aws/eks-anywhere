@@ -180,6 +180,7 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 		WithBootstrapper().
 		WithCliConfig(cliConfig).
 		WithClusterManager(clusterSpec.Cluster, clusterManagerTimeoutOpts).
+		WithClusterApplier().
 		WithProvider(cc.fileName, clusterSpec.Cluster, cc.skipIpCheck, cc.hardwareCSVPath, cc.forceClean, cc.tinkerbellBootstrapIP, skippedValidations, cc.providerOptions).
 		WithGitOpsFlux(clusterSpec.Cluster, clusterSpec.FluxConfig, cliConfig).
 		WithWriter().
@@ -211,6 +212,7 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 		deps.Writer,
 		deps.EksdInstaller,
 		deps.PackageInstaller,
+		deps.ClusterApplier,
 	)
 
 	validationOpts := &validations.Opts{
