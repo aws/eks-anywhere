@@ -26,6 +26,8 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/clustermanager/internal"
+	"github.com/aws/eks-anywhere/pkg/clustermarshaller"
+
 	// "github.com/aws/eks-anywhere/pkg/clustermarshaller"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/diagnostics"
@@ -1164,6 +1166,36 @@ func (c *ClusterManager) CreateEKSAResources(ctx context.Context, cluster *types
 	// if err = c.applyResource(ctx, cluster, resourcesSpec); err != nil {
 	// 	return err
 	// }
+	if err := c.ApplyBundles(ctx, clusterSpec, cluster); err != nil {
+		return err
+	}
+	return c.ApplyReleases(ctx, clusterSpec, cluster)
+}
+
+// ApplyEKSAResources applies the eks-a cluster specs (cluster, datacenterconfig, machine configs, etc.), as well as the
+// release bundle to the cluster. Before applying the spec, we pause eksa controller cluster and datacenter webhook validation
+// so that the cluster spec can be created or updated in the cluster without webhook validation error.
+func (c *ClusterManager) ApplyEKSAResources(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec,
+	datacenterConfig providers.DatacenterConfig, machineConfigs []providers.MachineConfig,
+) error {
+	if clusterSpec.Cluster.Namespace != "" {
+		if err := c.clusterClient.CreateNamespaceIfNotPresent(ctx, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace); err != nil {
+			return err
+		}
+	}
+
+	// clusterSpec.Cluster.PauseReconcile()
+	// datacenterConfig.PauseReconcile()
+
+	resourcesSpec, err := clustermarshaller.MarshalClusterSpec(clusterSpec, datacenterConfig, machineConfigs)
+	if err != nil {
+		return err
+	}
+	logger.V(4).Info("Applying eksa yaml resources to cluster")
+	logger.V(6).Info(string(resourcesSpec))
+	if err = c.applyResource(ctx, cluster, resourcesSpec); err != nil {
+		return err
+	}
 	if err := c.ApplyBundles(ctx, clusterSpec, cluster); err != nil {
 		return err
 	}

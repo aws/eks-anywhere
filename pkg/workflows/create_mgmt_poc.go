@@ -441,7 +441,7 @@ func (s *InstallEksaComponentsOnWorkloadTask) Run(ctx context.Context, commandCo
 	// }
 	fmt.Println("AFTER BOOTSTRAP")
 
-	err := commandContext.ClusterManager.CreateEKSAResources(ctx, targetCluster, commandContext.ClusterSpec, datacenterConfig, machineConfigs)
+	err := commandContext.ClusterManager.ApplyEKSAResources(ctx, targetCluster, commandContext.ClusterSpec, datacenterConfig, machineConfigs)
 	if err != nil {
 		commandContext.SetError(err)
 		return &CollectDiagnosticsTask{}
@@ -451,11 +451,11 @@ func (s *InstallEksaComponentsOnWorkloadTask) Run(ctx context.Context, commandCo
 		commandContext.SetError(err)
 		return &CollectDiagnosticsTask{}
 	}
-	err = commandContext.ClusterManager.ResumeEKSAControllerReconcile(ctx, targetCluster, commandContext.ClusterSpec, commandContext.Provider)
-	if err != nil {
-		commandContext.SetError(err)
-		return &CollectDiagnosticsTask{}
-	}
+	// err = commandContext.ClusterManager.ResumeEKSAControllerReconcile(ctx, targetCluster, commandContext.ClusterSpec, commandContext.Provider)
+	// if err != nil {
+	// 	commandContext.SetError(err)
+	// 	return &CollectDiagnosticsTask{}
+	// }
 	return &InstallGitOpsManagerTask{}
 }
 
