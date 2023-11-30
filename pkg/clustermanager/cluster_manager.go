@@ -450,6 +450,46 @@ func (c *ClusterManager) CreateWorkloadCluster(ctx context.Context, managementCl
 	return workloadCluster, nil
 }
 
+// GetWorkloadCluster gets workload cluster.
+func (c *ClusterManager) GetWorkloadCluster(ctx context.Context, managementCluster *types.Cluster, clusterSpec *cluster.Spec, provider providers.Provider) (*types.Cluster, error) {
+	clusterName := clusterSpec.Cluster.Name
+
+	workloadCluster := &types.Cluster{
+		Name: clusterName,
+	}
+
+	logger.V(3).Info("Waiting for workload kubeconfig generation", "cluster", clusterName)
+
+	// Use a buffer to cache the kubeconfig.
+	var buf bytes.Buffer
+
+	if err := c.getWorkloadClusterKubeconfig(ctx, clusterName, managementCluster, &buf); err != nil {
+		return nil, fmt.Errorf("waiting for workload kubeconfig: %v", err)
+	}
+
+	rawKubeconfig := buf.Bytes()
+
+	// The Docker provider wants to update the kubeconfig to patch the server address before
+	// we write it to disk. This is to ensure we can communicate with the cluster even when
+	// hosted inside a Docker Desktop VM.
+	if err := provider.UpdateKubeConfig(&rawKubeconfig, clusterName); err != nil {
+		return nil, err
+	}
+
+	kubeconfigFile, err := c.writer.Write(
+		kubeconfig.FormatWorkloadClusterKubeconfigFilename(clusterName),
+		rawKubeconfig,
+		filewriter.PersistentFile,
+		filewriter.Permission0600,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("writing workload kubeconfig: %v", err)
+	}
+	workloadCluster.KubeconfigFile = kubeconfigFile
+
+	return workloadCluster, nil
+}
+
 func (c *ClusterManager) waitUntilControlPlaneAvailable(
 	ctx context.Context,
 	clusterSpec *cluster.Spec,
@@ -1161,6 +1201,22 @@ func (c *ClusterManager) CreateEKSAResources(ctx context.Context, cluster *types
 		return err
 	}
 	if err = c.ApplyBundles(ctx, clusterSpec, cluster); err != nil {
+		return err
+	}
+	return c.ApplyReleases(ctx, clusterSpec, cluster)
+}
+
+// CreateEKSAReleaseBundle applies the eks-a release bundle to the cluster.
+func (c *ClusterManager) CreateEKSAReleaseBundle(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
+	if clusterSpec.Cluster.Namespace != "" {
+		if err := c.clusterClient.CreateNamespaceIfNotPresent(ctx, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace); err != nil {
+			return err
+		}
+	}
+
+	clusterSpec.Cluster.AddManagedByCLIAnnotation()
+
+	if err := c.ApplyBundles(ctx, clusterSpec, cluster); err != nil {
 		return err
 	}
 	return c.ApplyReleases(ctx, clusterSpec, cluster)

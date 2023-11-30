@@ -74,7 +74,7 @@ func (p *cloudstackProvider) PreCAPIInstallOnBootstrap(ctx context.Context, clus
 	return p.UpdateSecrets(ctx, cluster, nil)
 }
 
-func (p *cloudstackProvider) PostBootstrapSetup(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
+func (p *cloudstackProvider) PostCAPIInstallSetup(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
 	return nil
 }
 

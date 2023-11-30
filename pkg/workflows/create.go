@@ -145,7 +145,7 @@ func (s *CreateBootStrapClusterTask) Run(ctx context.Context, commandContext *ta
 	}
 
 	logger.Info("Provider specific post-setup")
-	if err = commandContext.Provider.PostBootstrapSetup(ctx, commandContext.ClusterSpec.Cluster, bootstrapCluster); err != nil {
+	if err = commandContext.Provider.PostCAPIInstallSetup(ctx, commandContext.ClusterSpec.Cluster, bootstrapCluster); err != nil {
 		commandContext.SetError(err)
 		return &CollectMgmtClusterDiagnosticsTask{}
 	}

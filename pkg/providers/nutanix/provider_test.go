@@ -138,7 +138,7 @@ func TestNutanixProviderBootstrapSetup(t *testing.T) {
 
 func TestNutanixProviderPostBootstrapSetup(t *testing.T) {
 	provider := testDefaultNutanixProvider(t)
-	err := provider.PostBootstrapSetup(context.Background(), provider.clusterConfig, &types.Cluster{Name: "eksa-unit-test"})
+	err := provider.PostCAPIInstallSetup(context.Background(), provider.clusterConfig, &types.Cluster{Name: "eksa-unit-test"})
 	assert.NoError(t, err)
 }
 

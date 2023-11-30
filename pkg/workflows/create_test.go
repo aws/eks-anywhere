@@ -116,7 +116,7 @@ func (c *createTestSetup) expectCreateBootstrap() {
 
 		c.clusterManager.EXPECT().InstallCAPI(c.ctx, c.clusterSpec, c.bootstrapCluster, c.provider),
 
-		c.provider.EXPECT().PostBootstrapSetup(c.ctx, c.clusterSpec.Cluster, c.bootstrapCluster),
+		c.provider.EXPECT().PostCAPIInstallSetup(c.ctx, c.clusterSpec.Cluster, c.bootstrapCluster),
 	)
 }
 

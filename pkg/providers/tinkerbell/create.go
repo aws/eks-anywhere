@@ -46,7 +46,8 @@ func (p *Provider) PreCAPIInstallOnBootstrap(ctx context.Context, cluster *types
 	return nil
 }
 
-func (p *Provider) PostBootstrapSetup(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
+// PostCAPIInstallSetup defines steps to carry out post the CAPI installation.
+func (p *Provider) PostCAPIInstallSetup(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
 	return p.applyHardware(ctx, cluster)
 }
 
@@ -231,7 +232,7 @@ func (p *Provider) readCSVToCatalogue() error {
 	machineValidator := hardware.NewDefaultMachineValidator()
 
 	// Translate all Machine instances from the p.machines source into Kubernetes object types.
-	// The PostBootstrapSetup() call invoked elsewhere in the program serializes the catalogue
+	// The PostCAPIInstallSetup() call invoked elsewhere in the program serializes the catalogue
 	// and submits it to the clsuter.
 	machines, err := hardware.NewNormalizedCSVReaderFromFile(p.hardwareCSVFile, p.BMCOptions)
 	if err != nil {

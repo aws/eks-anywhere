@@ -952,6 +952,26 @@ func TestPreCAPIInstallOnBootstrap(t *testing.T) {
 	}
 }
 
+func TestPostCAPIInstallSetup(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	ctx := context.Background()
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	cluster := &types.Cluster{}
+	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
+	clusterConfig := &v1alpha1.Cluster{}
+	datacenterConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
+	validator := givenWildcardValidator(mockCtrl, clusterSpec)
+	provider := newProviderWithKubectl(t, datacenterConfig, clusterSpec.Cluster, kubectl, validator)
+
+	if provider == nil {
+		t.Fatalf("provider object is nil")
+	}
+
+	if err := provider.PostCAPIInstallSetup(ctx, clusterConfig, cluster); err != nil {
+		t.Fatalf("provider.PostCAPIInstallSetup() err = %v, want err = nil", err)
+	}
+}
+
 func TestSetupAndValidateSSHAuthorizedKeyEmptyCP(t *testing.T) {
 	ctx := context.Background()
 	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)

@@ -1,7 +1,6 @@
 completedTasks:
   bootstrap-cluster-init:
     checkpoint:
-      ExistingManagement: false
       KubeconfigFile: kubeconfig.yaml
       Name: bootstrap
   capi-management-move-to-bootstrap:

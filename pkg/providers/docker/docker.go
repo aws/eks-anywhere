@@ -83,7 +83,7 @@ func (p *provider) PreCAPIInstallOnBootstrap(ctx context.Context, cluster *types
 	return nil
 }
 
-func (p *provider) PostBootstrapSetup(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
+func (p *provider) PostCAPIInstallSetup(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
 	return nil
 }
 

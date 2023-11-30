@@ -23,6 +23,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/validations/createvalidations"
 	"github.com/aws/eks-anywhere/pkg/workflow/management"
 	"github.com/aws/eks-anywhere/pkg/workflows"
+	newManagementWorkflow "github.com/aws/eks-anywhere/pkg/workflows/management"
 	"github.com/aws/eks-anywhere/pkg/workflows/workload"
 )
 
@@ -269,6 +270,22 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 		)
 		err = createWorkloadCluster.Run(ctx, clusterSpec, createValidations)
 
+	} else if clusterSpec.Cluster.IsSelfManaged() && features.UseControllerViaCLIWorkflow().IsActive() {
+
+		logger.Info("Using the new workflow using the controller for management cluster create")
+
+		createMgmtCluster := newManagementWorkflow.NewCreate(
+			deps.Bootstrapper,
+			deps.Provider,
+			deps.ClusterManager,
+			deps.GitOpsFlux,
+			deps.Writer,
+			deps.EksdInstaller,
+			deps.PackageInstaller,
+			deps.ClusterApplier,
+		)
+
+		err = createMgmtCluster.Run(ctx, clusterSpec, createValidations)
 	} else {
 		err = createCluster.Run(ctx, clusterSpec, createValidations, cc.forceClean)
 	}

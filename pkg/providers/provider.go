@@ -19,7 +19,7 @@ type Provider interface {
 	GenerateCAPISpecForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, currrentSpec, newClusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error)
 	// PreCAPIInstallOnBootstrap is called after the bootstrap cluster is setup but before CAPI resources are installed on it. This allows us to do provider specific configuration on the bootstrap cluster.
 	PreCAPIInstallOnBootstrap(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error
-	PostBootstrapSetup(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error
+	PostCAPIInstallSetup(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error
 	PostBootstrapDeleteForUpgrade(ctx context.Context, cluster *types.Cluster) error
 	PostBootstrapSetupUpgrade(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error
 	// PostWorkloadInit is called after the workload cluster is created and initialized with a CNI. This allows us to do provider specific configuration on the workload cluster.

@@ -115,7 +115,8 @@ func (p *Provider) BootstrapSetup(ctx context.Context, clusterConfig *v1alpha1.C
 	return nil
 }
 
-func (p *Provider) PostBootstrapSetup(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
+// PostCAPIInstallSetup defines steps to carry out post the CAPI installation.
+func (p *Provider) PostCAPIInstallSetup(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
 	// TODO(nutanix): figure out if we need something else here
 	return nil
 }

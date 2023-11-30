@@ -345,6 +345,31 @@ func TestClusterManagerCreateWorkloadClusterSuccess(t *testing.T) {
 	}
 }
 
+func TestClusterManagerGetWorkloadClusterSuccess(t *testing.T) {
+	ctx := context.Background()
+	clusterName := "cluster-name"
+	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
+		s.Cluster.Name = clusterName
+		s.Cluster.Spec.ControlPlaneConfiguration.Count = 3
+		s.Cluster.Spec.WorkerNodeGroupConfigurations[0].Count = ptr.Int(3)
+	})
+
+	mgmtCluster := &types.Cluster{
+		Name:           clusterName,
+		KubeconfigFile: "mgmt-kubeconfig",
+	}
+
+	c, m := newClusterManager(t)
+	kubeconfig := []byte("content")
+	m.client.EXPECT().GetWorkloadKubeconfig(ctx, clusterName, mgmtCluster).Return(kubeconfig, nil)
+	m.provider.EXPECT().UpdateKubeConfig(&kubeconfig, clusterName)
+	m.writer.EXPECT().Write(clusterName+"-eks-a-cluster.kubeconfig", gomock.Any(), gomock.Not(gomock.Nil()))
+
+	if _, err := c.GetWorkloadCluster(ctx, mgmtCluster, clusterSpec, m.provider); err != nil {
+		t.Errorf("ClusterManager.GetWorkloadCluster() error = %v, wantErr nil", err)
+	}
+}
+
 func TestClusterManagerCreateWorkloadClusterErrorGetKubeconfig(t *testing.T) {
 	tt := newTest(t)
 	tt.clusterSpec.Cluster.Name = tt.clusterName

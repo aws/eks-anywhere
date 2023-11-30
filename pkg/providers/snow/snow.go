@@ -164,7 +164,8 @@ func (p *SnowProvider) PreCAPIInstallOnBootstrap(ctx context.Context, cluster *t
 	return nil
 }
 
-func (p *SnowProvider) PostBootstrapSetup(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
+// PostCAPIInstallSetup defines steps to carry out post the CAPI installation.
+func (p *SnowProvider) PostCAPIInstallSetup(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
 	return nil
 }
 

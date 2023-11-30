@@ -599,6 +599,12 @@ func TestSetupAndValidateCreateClusterUnsupportedInstanceTypeError(t *testing.T)
 	tt.Expect(err).To(MatchError(ContainSubstring("not supported in device [1.2.3.4]")))
 }
 
+func TestPostCAPIInstallSetup(t *testing.T) {
+	tt := newSnowTest(t)
+	err := tt.provider.PostCAPIInstallSetup(tt.ctx, test.Cluster(), tt.cluster)
+	tt.Expect(err).To(BeNil())
+}
+
 func TestSetupAndValidateCreateClusterInstanceTypeVCPUError(t *testing.T) {
 	tt := newSnowTest(t)
 	instanceTypes := []aws.EC2InstanceType{
