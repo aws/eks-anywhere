@@ -2,6 +2,7 @@ package cluster
 
 import (
 	"context"
+	"fmt"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 )
@@ -130,6 +131,7 @@ func getVSphereMachineConfigs(ctx context.Context, client Client, c *Config) err
 
 		machine := &anywherev1.VSphereMachineConfig{}
 		if err := client.Get(ctx, machineRef.Name, c.Cluster.Namespace, machine); err != nil {
+			fmt.Println("INSIDE GET CALLL VSPHERE MC")
 			return err
 		}
 
