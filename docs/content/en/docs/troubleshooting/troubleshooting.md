@@ -695,6 +695,39 @@ When a CAPI machine is in not ready state, it is possible that the machine objec
 
 In order to solve this, you need to update the `vspheremachine` and `vspherevm` objects to point to the new VM running in vSphere. This requires getting the `UUID` for the new VM (using `govc` command), and using it to update the `biosUUID` and `providerID` fields. Notice that this would create a mismatch between the CAPI resources names (`vspheremachine` and `vspherevm`) and the actual VM in vSphere. However, that is only an aesthetic inconvenience, since the mapping is done based on `UUID` and not name. Once the objects are updated, a machine rollout would replace the VM with a new one, removing the name mismatch problem. You also need to cleanup the error message and error reason from the statuses to resume the reconciliation of these objects. With that done, the machine objects should move to `Running` state.
 
+### vCenter VM Deletion Causes Cluster Stuck in Deleting State with Orphaned Objects
+
+When a VM in vCenter has been deleted, however, your cluster is stuck in a deleting state with the corresponding the CAPI objects left behind, the user has to manually delete a few related resources to recover. The resources of interest related to the VM are the following: `machine`, `vspheremachine`, `vspherevm`, and `node`.
+
+To clean up the resources in order to recover from this deleting state:
+1. Delete the the corresponding CAPI `machine` object.
+    ```
+    kubectl delete machine -n eksa-system <machine-name>
+    ```
+
+2. If that is stuck, it means that the `capi-controller-manager` is unable to remove the finalizer from the object, so the user needs force delete the object.
+
+    You can do this by editing the machine object using `kubectl` and removing the finalizers on it.
+    ```
+    kubectl edit machine -n eksa-system <machine-name>`
+    ```
+
+    Look for the finalizers field in the metadata section of the resource. remove the finalizers. Save your changes.
+    ```
+    metadata:
+    finalizers:
+    - finalizer.example.com
+    ```
+
+   Remove the finalizers field under metada and save your changes. After, the object should be deleted.
+
+3. If the `capv-controller-manager` is unable to to clean up the `vspheremachine` and `vspherevm` objects, repeat the steps above for those orphaned objects that are related to the deleted VM.
+
+4. You may also need to manually delete the corresponding orphaned `node` object using `kubectl`.
+    ```
+    kubectl delete node <node-name>
+    ```
+
 ## Troubleshooting GitOps integration
 ### Cluster creation failure leaves outdated cluster configuration in GitHub.com repository
 Failed cluster creation can sometimes leave behind cluster configuration files committed to your GitHub.com repository.
