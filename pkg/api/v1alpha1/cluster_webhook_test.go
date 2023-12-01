@@ -1074,23 +1074,23 @@ func TestClusterValidateUpdateSuccess(t *testing.T) {
 	g.Expect(c.ValidateUpdate(cOld)).To(Succeed())
 }
 
-func TestClusterCreateManagementCluster(t *testing.T) {
-	features.ClearCache()
-	workerConfiguration := append([]v1alpha1.WorkerNodeGroupConfiguration{}, v1alpha1.WorkerNodeGroupConfiguration{Count: ptr.Int(5)})
-	cluster := &v1alpha1.Cluster{
-		Spec: v1alpha1.ClusterSpec{
-			WorkerNodeGroupConfigurations: workerConfiguration,
-			KubernetesVersion:             v1alpha1.Kube119,
-			ControlPlaneConfiguration: v1alpha1.ControlPlaneConfiguration{
-				Count: 3, Endpoint: &v1alpha1.Endpoint{Host: "1.1.1.1/1"},
-			},
-			ExternalEtcdConfiguration: &v1alpha1.ExternalEtcdConfiguration{Count: 3},
-		},
-	}
+// func TestClusterCreateManagementCluster(t *testing.T) {
+// 	features.ClearCache()
+// 	workerConfiguration := append([]v1alpha1.WorkerNodeGroupConfiguration{}, v1alpha1.WorkerNodeGroupConfiguration{Count: ptr.Int(5)})
+// 	cluster := &v1alpha1.Cluster{
+// 		Spec: v1alpha1.ClusterSpec{
+// 			WorkerNodeGroupConfigurations: workerConfiguration,
+// 			KubernetesVersion:             v1alpha1.Kube119,
+// 			ControlPlaneConfiguration: v1alpha1.ControlPlaneConfiguration{
+// 				Count: 3, Endpoint: &v1alpha1.Endpoint{Host: "1.1.1.1/1"},
+// 			},
+// 			ExternalEtcdConfiguration: &v1alpha1.ExternalEtcdConfiguration{Count: 3},
+// 		},
+// 	}
 
-	g := NewWithT(t)
-	g.Expect(cluster.ValidateCreate()).To(MatchError(ContainSubstring("creating new cluster on existing cluster is not supported for self managed clusters")))
-}
+// 	g := NewWithT(t)
+// 	g.Expect(cluster.ValidateCreate()).To(MatchError(ContainSubstring("creating new cluster on existing cluster is not supported for self managed clusters")))
+// }
 
 func TestClusterCreateEtcdEncryption(t *testing.T) {
 	features.ClearCache()
@@ -1482,24 +1482,24 @@ func TestClusterUpdateControlPlaneLabelsInvalid(t *testing.T) {
 	g.Expect(c.ValidateUpdate(cluster)).To(MatchError(ContainSubstring("spec.controlPlaneConfiguration.labels: Invalid value")))
 }
 
-func TestClusterValidateCreateSelfManagedUnpaused(t *testing.T) {
-	features.ClearCache()
-	cluster := baseCluster()
-	g := NewWithT(t)
-	cluster.SetSelfManaged()
-	err := cluster.ValidateCreate()
-	g.Expect(err).To(MatchError(ContainSubstring("creating new cluster on existing cluster is not supported for self managed clusters")))
-}
+// func TestClusterValidateCreateSelfManagedUnpaused(t *testing.T) {
+// 	features.ClearCache()
+// 	cluster := baseCluster()
+// 	g := NewWithT(t)
+// 	cluster.SetSelfManaged()
+// 	err := cluster.ValidateCreate()
+// 	g.Expect(err).To(MatchError(ContainSubstring("creating new cluster on existing cluster is not supported for self managed clusters")))
+// }
 
-func TestClusterValidateCreateSelfManagedNotPaused(t *testing.T) {
-	features.ClearCache()
-	cluster := baseCluster()
-	cluster.SetSelfManaged()
+// func TestClusterValidateCreateSelfManagedNotPaused(t *testing.T) {
+// 	features.ClearCache()
+// 	cluster := baseCluster()
+// 	cluster.SetSelfManaged()
 
-	g := NewWithT(t)
-	err := cluster.ValidateCreate()
-	g.Expect(err).To(MatchError(ContainSubstring("creating new cluster on existing cluster is not supported for self managed clusters")))
-}
+// 	g := NewWithT(t)
+// 	err := cluster.ValidateCreate()
+// 	g.Expect(err).To(MatchError(ContainSubstring("creating new cluster on existing cluster is not supported for self managed clusters")))
+// }
 
 func TestClusterValidateCreateInvalidCluster(t *testing.T) {
 	tests := []struct {

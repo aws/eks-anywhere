@@ -181,6 +181,20 @@ func (mr *MockClusterManagerMockRecorder) CreateEKSANamespace(arg0, arg1 interfa
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateEKSANamespace", reflect.TypeOf((*MockClusterManager)(nil).CreateEKSANamespace), arg0, arg1)
 }
 
+// CreateEKSAReleaseBundle mocks base method.
+func (m *MockClusterManager) CreateEKSAReleaseBundle(arg0 context.Context, arg1 *types.Cluster, arg2 *cluster.Spec) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateEKSAReleaseBundle", arg0, arg1, arg2)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateEKSAReleaseBundle indicates an expected call of CreateEKSAReleaseBundle.
+func (mr *MockClusterManagerMockRecorder) CreateEKSAReleaseBundle(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateEKSAReleaseBundle", reflect.TypeOf((*MockClusterManager)(nil).CreateEKSAReleaseBundle), arg0, arg1, arg2)
+}
+
 // CreateEKSAResources mocks base method.
 func (m *MockClusterManager) CreateEKSAResources(arg0 context.Context, arg1 *types.Cluster, arg2 *cluster.Spec, arg3 providers.DatacenterConfig, arg4 []providers.MachineConfig) error {
 	m.ctrl.T.Helper()
@@ -266,6 +280,21 @@ func (m *MockClusterManager) GetCurrentClusterSpec(arg0 context.Context, arg1 *t
 func (mr *MockClusterManagerMockRecorder) GetCurrentClusterSpec(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCurrentClusterSpec", reflect.TypeOf((*MockClusterManager)(nil).GetCurrentClusterSpec), arg0, arg1, arg2)
+}
+
+// GetWorkloadCluster mocks base method.
+func (m *MockClusterManager) GetWorkloadCluster(arg0 context.Context, arg1 *types.Cluster, arg2 *cluster.Spec, arg3 providers.Provider) (*types.Cluster, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetWorkloadCluster", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(*types.Cluster)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetWorkloadCluster indicates an expected call of GetWorkloadCluster.
+func (mr *MockClusterManagerMockRecorder) GetWorkloadCluster(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetWorkloadCluster", reflect.TypeOf((*MockClusterManager)(nil).GetWorkloadCluster), arg0, arg1, arg2, arg3)
 }
 
 // InstallAwsIamAuth mocks base method.
