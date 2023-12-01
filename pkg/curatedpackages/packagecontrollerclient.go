@@ -250,11 +250,17 @@ func (pc *PackageControllerClient) Enable(ctx context.Context) error {
 
 // UpdateSecrets is used to update the registry-mirror-cred secret used by the packages controller.
 func (pc *PackageControllerClient) UpdateSecrets(ctx context.Context, client client.Client, cluster *anywherev1.Cluster) error {
+	secretName := "registry-mirror-cred"
 	secretKey := types.NamespacedName{
 		Namespace: constants.EksaPackagesName,
-		Name:      "registry-mirror-cred",
+		Name:      secretName,
 	}
-	secret := &corev1.Secret{}
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      secretName,
+			Namespace: constants.EksaPackagesName,
+		},
+	}
 	credErr := client.Get(ctx, secretKey, secret)
 	err := fillRegistrySecret(cluster.Name, cluster.Spec.RegistryMirrorConfiguration, secret)
 	if err != nil {
@@ -272,13 +278,20 @@ func (pc *PackageControllerClient) UpdateSecrets(ctx context.Context, client cli
 func fillRegistrySecret(clusterName string, registry *anywherev1.RegistryMirrorConfiguration, secret *corev1.Secret) error {
 	caDataName := clusterName + "_ca.crt"
 	insecureDataName := clusterName + "_insecure"
+	configName := "config.json"
+	if secret.Data == nil {
+		secret.Data = make(map[string][]byte)
+	}
 	secret.Data[caDataName] = []byte(registry.CACertContent)
 	secret.Data[insecureDataName] = []byte(strconv.FormatBool(registry.InsecureSkipVerify))
 
 	dconfig := &dockerConfig{Auths: make(map[string]*dockerAuth)}
-	err := json.Unmarshal(secret.Data["config.json"], dconfig)
-	if err != nil {
-		return err
+	configData, ok := secret.Data[configName]
+	if ok {
+		err := json.Unmarshal(configData, dconfig)
+		if err != nil {
+			return err
+		}
 	}
 	username, password, err := config.ReadCredentials()
 	if err != nil {
@@ -295,7 +308,7 @@ func fillRegistrySecret(clusterName string, registry *anywherev1.RegistryMirrorC
 	if err != nil {
 		return err
 	}
-	secret.Data["config.json"] = configJSON
+	secret.Data[configName] = configJSON
 	return nil
 }
 
