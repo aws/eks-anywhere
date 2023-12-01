@@ -6,6 +6,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/clustermarshaller"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/task"
+	"github.com/aws/eks-anywhere/pkg/workflows"
 )
 
 type writeClusterConfig struct{}
@@ -36,4 +37,28 @@ func (s *writeClusterConfig) Checkpoint() *task.CompletedTask {
 
 func (s *writeClusterConfig) Restore(ctx context.Context, commandContext *task.CommandContext, completedTask *task.CompletedTask) (task.Task, error) {
 	return &postClusterUpgrade{}, nil
+}
+
+type writeClusterConfigTask struct{}
+
+func (s *writeClusterConfigTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
+	logger.Info("Writing cluster config file")
+	err := clustermarshaller.WriteClusterConfig(commandContext.ClusterSpec, commandContext.Provider.DatacenterConfig(commandContext.ClusterSpec), commandContext.Provider.MachineConfigs(commandContext.ClusterSpec), commandContext.Writer)
+	if err != nil {
+		commandContext.SetError(err)
+		return &workflows.CollectDiagnosticsTask{}
+	}
+	return &deleteBootstrapClusterTask{}
+}
+
+func (s *writeClusterConfigTask) Name() string {
+	return "write-cluster-config"
+}
+
+func (s *writeClusterConfigTask) Restore(ctx context.Context, commandContext *task.CommandContext, completedTask *task.CompletedTask) (task.Task, error) {
+	return nil, nil
+}
+
+func (s *writeClusterConfigTask) Checkpoint() *task.CompletedTask {
+	return nil
 }

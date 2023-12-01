@@ -272,7 +272,7 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 
 	} else if clusterSpec.Cluster.IsSelfManaged() && features.UseControllerViaCLIWorkflow().IsActive() {
 
-		fmt.Println("Using the new workflow using the controller for management cluster create")
+		logger.Info("Using the new workflow using the controller for management cluster create")
 
 		deps, err = factory.
 			WithClusterApplier().
@@ -281,7 +281,7 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 		if err != nil {
 			return err
 		}
-		createMgmtCluster := m.NewCreateManagement(
+		createMgmtCluster := m.NewCreate(
 			deps.Bootstrapper,
 			deps.Provider,
 			deps.ClusterManager,
