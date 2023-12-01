@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	bottlerocketOSFileName         = "bottlerocket.img.gz"
+	bottlerocketOSFileName         = "bottlerocket"
 	airgapUsername                 = "airgap"
 	bundleReleasePathFromArtifacts = "./eks-anywhere-downloads/bundle-release.yaml"
 )
@@ -37,7 +37,7 @@ func runAirgapConfigFlow(test *framework.ClusterE2ETest, localCIDRs string) {
 	test.DeleteCluster()
 }
 
-func runTinkerbellAirgapConfigFlow(test *framework.ClusterE2ETest, localCIDRs string) {
+func runTinkerbellAirgapConfigFlow(test *framework.ClusterE2ETest, localCIDRs, kubeVersion string) {
 	test.DownloadArtifacts()
 	test.ExtractDownloadedArtifacts()
 
@@ -46,7 +46,7 @@ func runTinkerbellAirgapConfigFlow(test *framework.ClusterE2ETest, localCIDRs st
 		test.T.Fatalf("Cannot read bundleRelease file: %v", err)
 	}
 
-	server := downloadAndServeTinkerbellArtifacts(test.T, brContent)
+	server := downloadAndServeTinkerbellArtifacts(test.T, brContent, kubeVersion)
 	defer server.Shutdown(context.Background())
 
 	test.GenerateClusterConfig()
@@ -69,7 +69,7 @@ func runTinkerbellAirgapConfigFlow(test *framework.ClusterE2ETest, localCIDRs st
 	test.ValidateHardwareDecommissioned()
 }
 
-func runTinkerbellAirgapConfigProxyFlow(test *framework.ClusterE2ETest, localCIDRs string) {
+func runTinkerbellAirgapConfigProxyFlow(test *framework.ClusterE2ETest, localCIDRs, kubeVersion string) {
 	test.DownloadArtifacts()
 	test.ExtractDownloadedArtifacts()
 	// for testing proxy feature in an air gapped env
@@ -79,7 +79,7 @@ func runTinkerbellAirgapConfigProxyFlow(test *framework.ClusterE2ETest, localCID
 		test.T.Fatalf("Cannot read bundleRelease file: %v", err)
 	}
 
-	server := downloadAndServeTinkerbellArtifacts(test.T, brContent)
+	server := downloadAndServeTinkerbellArtifacts(test.T, brContent, kubeVersion)
 	defer server.Shutdown(context.Background())
 
 	test.GenerateClusterConfig()
@@ -123,7 +123,7 @@ func downloadFile(url string, output string) error {
 	return nil
 }
 
-func downloadAndServeTinkerbellArtifacts(t framework.T, bundleRelease []byte) *http.Server {
+func downloadAndServeTinkerbellArtifacts(t framework.T, bundleRelease []byte, kubeVersion string) *http.Server {
 	initramfsUrl := regexp.MustCompile(`https://.*/hook/.*initramfs-x86_64`).Find(bundleRelease)
 	if initramfsUrl == nil {
 		t.Fatalf("Cannot find initramfsUrl from release bundle")
@@ -134,7 +134,7 @@ func downloadAndServeTinkerbellArtifacts(t framework.T, bundleRelease []byte) *h
 		t.Fatalf("Cannot find vmlinuzUrl from release bundle")
 	}
 
-	brOsUrl := regexp.MustCompile(`https://.*/raw/1-24/.*bottlerocket.*amd64.img.gz`).Find(bundleRelease)
+	brOsUrl := regexp.MustCompile(fmt.Sprintf("https://.*/raw/%s/.*bottlerocket.*amd64.img.gz", kubeVersion)).Find(bundleRelease)
 	if brOsUrl == nil {
 		t.Fatalf("Cannot find bottlerocketOS url from release bundle")
 	}
@@ -158,7 +158,8 @@ func downloadAndServeTinkerbellArtifacts(t framework.T, bundleRelease []byte) *h
 	}
 
 	t.Logf("Download bottlerocket OS from %s", brOsUrl)
-	err = downloadFile(string(brOsUrl), dir+"/"+bottlerocketOSFileName)
+	// Save image file with kube version in the image name to satisfy condition to have kube version in the template name.
+	err = downloadFile(string(brOsUrl), dir+"/"+bottlerocketOSFileName+"-"+kubeVersion+".img.gz")
 	if err != nil {
 		t.Fatal(err)
 	}
