@@ -4,6 +4,7 @@ import (
 	"context"
 	_ "embed"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
@@ -37,6 +38,17 @@ const (
 	eksaDefaultRegion = "us-west-2"
 	valueFileName     = "values.yaml"
 )
+
+type dockerConfig struct {
+	Auths map[string]*dockerAuth `json:"auths"`
+}
+
+type dockerAuth struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+	Email    string `json:"email"`
+	Auth     string `json:"auth"`
+}
 
 type PackageControllerClientOpt func(client *PackageControllerClient)
 
@@ -75,6 +87,7 @@ type PackageControllerClient struct {
 
 	// registryAccessTester test if the aws credential has access to registry
 	registryAccessTester RegistryAccessTester
+	flc                  bool
 }
 
 // ClientBuilder returns a k8s client for the specified cluster.
@@ -233,6 +246,56 @@ func (pc *PackageControllerClient) Enable(ctx context.Context) error {
 		return pc.waitForActiveBundle(ctx)
 	}
 
+	return nil
+}
+
+func (pc *PackageControllerClient) UpdateSecrets(ctx context.Context, client client.Client, cluster *anywherev1.Cluster) error {
+	secretKey := types.NamespacedName{
+		Namespace: constants.EksaPackagesName,
+		Name:      "registry-mirror-cred",
+	}
+	secret := &corev1.Secret{}
+	credErr := client.Get(ctx, secretKey, secret)
+	err := fillRegistrySecret(cluster.Name, cluster.Spec.RegistryMirrorConfiguration, secret)
+	if err != nil {
+		return err
+	}
+
+	if apierrors.IsNotFound(credErr) {
+		return client.Create(ctx, secret)
+	} else if credErr == nil {
+		return client.Update(ctx, secret)
+	}
+	return credErr
+}
+
+func fillRegistrySecret(clusterName string, registry *anywherev1.RegistryMirrorConfiguration, secret *corev1.Secret) error {
+	caDataName := clusterName + "_ca.crt"
+	insecureDataName := clusterName + "_insecure"
+	secret.Data[caDataName] = []byte(registry.CACertContent)
+	secret.Data[insecureDataName] = []byte(strconv.FormatBool(registry.InsecureSkipVerify))
+
+	dconfig := &dockerConfig{Auths: make(map[string]*dockerAuth)}
+	err := json.Unmarshal(secret.Data["config.json"], dconfig)
+	if err != nil {
+		return err
+	}
+	username, password, err := config.ReadCredentials()
+	if err != nil {
+		return err
+	}
+	dconfig.Auths[registry.Endpoint] = &dockerAuth{
+		Username: username,
+		Password: password,
+		Email:    "test@test.com",
+		Auth:     base64.StdEncoding.EncodeToString([]byte(username + ":" + password)),
+	}
+
+	configJson, err := json.Marshal(dconfig)
+	if err != nil {
+		return err
+	}
+	secret.Data["config.json"] = configJson
 	return nil
 }
 

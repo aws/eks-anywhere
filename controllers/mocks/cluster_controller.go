@@ -89,6 +89,20 @@ func (mr *MockPackagesClientMockRecorder) ReconcileDelete(arg0, arg1, arg2, arg3
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReconcileDelete", reflect.TypeOf((*MockPackagesClient)(nil).ReconcileDelete), arg0, arg1, arg2, arg3)
 }
 
+// UpdateSecrets mocks base method.
+func (m *MockPackagesClient) UpdateSecrets(ctx context.Context, client client.Client, cluster *v1alpha1.Cluster) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateSecrets", ctx, client, cluster)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateSecrets indicates an expected call of UpdateSecrets.
+func (mr *MockPackagesClientMockRecorder) UpdateSecrets(ctx, client, cluster interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateSecrets", reflect.TypeOf((*MockPackagesClient)(nil).UpdateSecrets), ctx, client, cluster)
+}
+
 // MockProviderClusterReconcilerRegistry is a mock of ProviderClusterReconcilerRegistry interface.
 type MockProviderClusterReconcilerRegistry struct {
 	ctrl     *gomock.Controller

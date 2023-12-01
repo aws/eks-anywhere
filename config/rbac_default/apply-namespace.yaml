@@ -1,0 +1,11 @@
+namePrefix:
+- path: metadata/namespace
+  kind: ServiceAccount
+- path: subjects/name
+  kind: RoleBinding
+- path: subjects/namespace
+  kind: RoleBinding
+- path: subjects/name
+  kind: ClusterRoleBinding
+- path: subjects/namespace
+  kind: ClusterRoleBinding

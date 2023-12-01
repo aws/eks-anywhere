@@ -252,6 +252,12 @@ func (s *CreateWorkloadClusterTask) Run(ctx context.Context, commandContext *tas
 			return &CollectDiagnosticsTask{}
 		}
 
+		err = commandContext.ClusterManager.CreatePackagesNamespace(ctx, workloadCluster)
+		if err != nil {
+			commandContext.SetError(err)
+			return &CollectDiagnosticsTask{}
+		}
+
 		logger.Info("Installing cluster-api providers on workload cluster")
 		err = commandContext.ClusterManager.InstallCAPI(ctx, commandContext.ClusterSpec, commandContext.WorkloadCluster, commandContext.Provider)
 		if err != nil {

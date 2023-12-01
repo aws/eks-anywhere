@@ -195,6 +195,20 @@ func (mr *MockClusterManagerMockRecorder) CreateEKSAResources(arg0, arg1, arg2, 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateEKSAResources", reflect.TypeOf((*MockClusterManager)(nil).CreateEKSAResources), arg0, arg1, arg2, arg3, arg4)
 }
 
+// CreatePackagesNamespace mocks base method.
+func (m *MockClusterManager) CreatePackagesNamespace(arg0 context.Context, arg1 *types.Cluster) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreatePackagesNamespace", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreatePackagesNamespace indicates an expected call of CreatePackagesNamespace.
+func (mr *MockClusterManagerMockRecorder) CreatePackagesNamespace(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreatePackagesNamespace", reflect.TypeOf((*MockClusterManager)(nil).CreatePackagesNamespace), arg0, arg1)
+}
+
 // CreateWorkloadCluster mocks base method.
 func (m *MockClusterManager) CreateWorkloadCluster(arg0 context.Context, arg1 *types.Cluster, arg2 *cluster.Spec, arg3 providers.Provider) (*types.Cluster, error) {
 	m.ctrl.T.Helper()

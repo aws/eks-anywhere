@@ -1137,6 +1137,10 @@ func (c *ClusterManager) CreateEKSANamespace(ctx context.Context, cluster *types
 	return c.clusterClient.CreateNamespaceIfNotPresent(ctx, cluster.KubeconfigFile, constants.EksaSystemNamespace)
 }
 
+func (c *ClusterManager) CreatePackagesNamespace(ctx context.Context, cluster *types.Cluster) error {
+	return c.clusterClient.CreateNamespaceIfNotPresent(ctx, cluster.KubeconfigFile, constants.EksaPackagesName)
+}
+
 // CreateEKSAResources applies the eks-a cluster specs (cluster, datacenterconfig, machine configs, etc.), as well as the
 // release bundle to the cluster. Before applying the spec, we pause eksa controller cluster and datacenter webhook validation
 // so that the cluster spec can be created or updated in the cluster without webhook validation error.

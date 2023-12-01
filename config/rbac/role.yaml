@@ -21,6 +21,7 @@ rules:
   verbs:
   - create
   - delete
+  - get
 - apiGroups:
   - ""
   resources:
@@ -376,6 +377,29 @@ kind: Role
 metadata:
   creationTimestamp: null
   name: manager-role
+  namespace: eksa-packages
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - packages.eks.amazonaws.com
+  resources:
+  - packagebundlecontrollers
+  verbs:
+  - delete
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  creationTimestamp: null
+  name: manager-role
   namespace: eksa-system
 rules:
 - apiGroups:
@@ -385,9 +409,3 @@ rules:
   verbs:
   - patch
   - update
-- apiGroups:
-  - packages.eks.amazonaws.com
-  resources:
-  - packagebundlecontrollers
-  verbs:
-  - delete
