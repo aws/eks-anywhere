@@ -87,7 +87,6 @@ type PackageControllerClient struct {
 
 	// registryAccessTester test if the aws credential has access to registry
 	registryAccessTester RegistryAccessTester
-	flc                  bool
 }
 
 // ClientBuilder returns a k8s client for the specified cluster.
