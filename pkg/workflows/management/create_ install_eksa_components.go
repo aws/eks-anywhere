@@ -87,15 +87,6 @@ func (s *installEksaComponentsOnWorkloadTask) Run(ctx context.Context, commandCo
 		return &workflows.CollectMgmtClusterDiagnosticsTask{}
 	}
 
-	// datacenterConfig := commandContext.Provider.DatacenterConfig(commandContext.ClusterSpec)
-	// machineConfigs := commandContext.Provider.MachineConfigs(commandContext.ClusterSpec)
-
-	// err = commandContext.ClusterManager.ApplyEKSASpec(ctx, commandContext.WorkloadCluster, commandContext.ClusterSpec, datacenterConfig, machineConfigs)
-	// if err != nil {
-	// 	commandContext.SetError(err)
-	// 	return &workflows.CollectDiagnosticsTask{}
-	// }
-
 	return &installGitOpsManagerTask{}
 }
 

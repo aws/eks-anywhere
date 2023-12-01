@@ -1222,23 +1222,6 @@ func (c *ClusterManager) CreateEKSAReleaseBundle(ctx context.Context, cluster *t
 	return c.ApplyReleases(ctx, clusterSpec, cluster)
 }
 
-// ApplyEKSASpec applies the eks-a cluster specs (cluster, datacenterconfig, machine configs, etc.).
-func (c *ClusterManager) ApplyEKSASpec(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec,
-	datacenterConfig providers.DatacenterConfig, machineConfigs []providers.MachineConfig,
-) error {
-	resourcesSpec, err := clustermarshaller.MarshalClusterSpec(clusterSpec, datacenterConfig, machineConfigs)
-	if err != nil {
-		return err
-	}
-	logger.V(4).Info("Applying eksa yaml resources to cluster")
-	logger.V(6).Info(string(resourcesSpec))
-	if err = c.applyResource(ctx, cluster, resourcesSpec); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (c *ClusterManager) ApplyBundles(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error {
 	bundleObj, err := yaml.Marshal(clusterSpec.Bundles)
 	if err != nil {
