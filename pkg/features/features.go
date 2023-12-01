@@ -6,6 +6,7 @@ const (
 	CheckpointEnabledEnvVar         = "CHECKPOINT_ENABLED"
 	UseNewWorkflowsEnvVar           = "USE_NEW_WORKFLOWS"
 	UseControllerForCli             = "USE_CONTROLLER_FOR_CLI"
+	K8s129SupportEnvVar             = "K8S_1_29_SUPPORT"
 )
 
 func FeedGates(featureGates []string) {
@@ -52,5 +53,13 @@ func UseControllerViaCLIWorkflow() Feature {
 	return Feature{
 		Name:     "Use new workflow logic for cluster operations leveraging controller via CLI",
 		IsActive: globalFeatures.isActiveForEnvVar(UseControllerForCli),
+	}
+}
+
+// K8s129Support is the feature flag for Kubernetes 1.29 support.
+func K8s129Support() Feature {
+	return Feature{
+		Name:     "Kubernetes version 1.29 support",
+		IsActive: globalFeatures.isActiveForEnvVar(K8s129SupportEnvVar),
 	}
 }
