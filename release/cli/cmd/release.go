@@ -77,6 +77,7 @@ var releaseCmd = &cobra.Command{
 		weekly := viper.GetBool("weekly")
 		releaseTime := time.Now().UTC()
 		releaseDate := releaseTime.Format(constants.YYYYMMDD)
+		awsSignerProfileArn := viper.GetString("aws-signer-profile-arn")
 
 		var bundleRelease bool
 		var releaseEnvironment string
@@ -112,6 +113,7 @@ var releaseCmd = &cobra.Command{
 			DryRun:                   dryRun,
 			Weekly:                   weekly,
 			ReleaseEnvironment:       releaseEnvironment,
+			AwsSignerProfileArn:      awsSignerProfileArn,
 		}
 
 		err := operations.SetRepoHeads(releaseConfig)
@@ -327,4 +329,5 @@ func init() {
 	releaseCmd.Flags().String("release-environment", "", "Release environment")
 	releaseCmd.Flags().Bool("dry-run", false, "Flag to indicate if the release is a dry run")
 	releaseCmd.Flags().Bool("weekly", false, "Flag to indicate a weekly bundle release")
+	releaseCmd.Flags().String("aws-signer-profile-arn", "", "Arn of AWS Signer profile to sign the container images")
 }

@@ -57,4 +57,5 @@ ${BASE_DIRECTORY}/release/bin/eks-anywhere-release release \
     --dev-release=false \
     --bundle-release=true \
     --build-repo-url "${BUILD_REPO_URL}" \
-    --cli-repo-url "${CLI_REPO_URL}"
+    --cli-repo-url "${CLI_REPO_URL}" \
+    --aws-signer-profile-arn "${AWS_SIGNER_PROFILE_ARN}"

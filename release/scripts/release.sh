@@ -50,4 +50,5 @@ ${BASE_DIRECTORY}/release/bin/eks-anywhere-release release \
     --release-container-registry "${RELEASE_CONTAINER_REGISTRY}" \
     --dev-release=true \
     --dry-run=${DRY_RUN} \
-    --weekly=${WEEKLY}
+    --weekly=${WEEKLY} \
+    --aws-signer-profile-arn "${AWS_SIGNER_PROFILE_ARN}"
