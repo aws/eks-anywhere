@@ -52,6 +52,7 @@ type ReleaseConfig struct {
 	ReleaseClients           *clients.ReleaseClients
 	BundleArtifactsTable     map[string][]Artifact
 	EksAArtifactsTable       map[string][]Artifact
+	AwsSignerProfileArn      string
 }
 
 type ImageTagOverride struct {
