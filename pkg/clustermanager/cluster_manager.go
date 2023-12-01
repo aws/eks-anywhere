@@ -1137,6 +1137,7 @@ func (c *ClusterManager) CreateEKSANamespace(ctx context.Context, cluster *types
 	return c.clusterClient.CreateNamespaceIfNotPresent(ctx, cluster.KubeconfigFile, constants.EksaSystemNamespace)
 }
 
+// CreatePackagesNamespace creates the eksa-packages namespace on the cluster if it doesn't already exist.
 func (c *ClusterManager) CreatePackagesNamespace(ctx context.Context, cluster *types.Cluster) error {
 	return c.clusterClient.CreateNamespaceIfNotPresent(ctx, cluster.KubeconfigFile, constants.EksaPackagesName)
 }

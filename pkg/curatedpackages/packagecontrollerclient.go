@@ -248,6 +248,7 @@ func (pc *PackageControllerClient) Enable(ctx context.Context) error {
 	return nil
 }
 
+// UpdateSecrets is used to update the registry-mirror-cred secret used by the packages controller.
 func (pc *PackageControllerClient) UpdateSecrets(ctx context.Context, client client.Client, cluster *anywherev1.Cluster) error {
 	secretKey := types.NamespacedName{
 		Namespace: constants.EksaPackagesName,
@@ -290,11 +291,11 @@ func fillRegistrySecret(clusterName string, registry *anywherev1.RegistryMirrorC
 		Auth:     base64.StdEncoding.EncodeToString([]byte(username + ":" + password)),
 	}
 
-	configJson, err := json.Marshal(dconfig)
+	configJSON, err := json.Marshal(dconfig)
 	if err != nil {
 		return err
 	}
-	secret.Data["config.json"] = configJson
+	secret.Data["config.json"] = configJSON
 	return nil
 }
 
