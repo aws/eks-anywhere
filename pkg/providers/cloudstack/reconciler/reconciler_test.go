@@ -46,27 +46,7 @@ func TestReconcilerReconcileSuccess(t *testing.T) {
 	// We want to check that the cluster status is cleaned up if validations are passed
 	tt.cluster.SetFailure(anywherev1.FailureReasonType("InvalidCluster"), "invalid cluster")
 
-	kcp := test.KubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
-		kcp.Name = tt.cluster.Name
-		kcp.Spec = controlplanev1.KubeadmControlPlaneSpec{
-			MachineTemplate: controlplanev1.KubeadmControlPlaneMachineTemplate{
-				InfrastructureRef: corev1.ObjectReference{
-					Name: fmt.Sprintf("%s-control-plane-1", tt.cluster.Name),
-				},
-			},
-		}
-		kcp.Status = controlplanev1.KubeadmControlPlaneStatus{
-			Conditions: clusterv1.Conditions{
-				{
-					Type:               clusterapi.ReadyCondition,
-					Status:             corev1.ConditionTrue,
-					LastTransitionTime: metav1.NewTime(time.Now()),
-				},
-			},
-			ObservedGeneration: 2,
-		}
-	})
-	tt.eksaSupportObjs = append(tt.eksaSupportObjs, tt.secret, kcp)
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, tt.secret, tt.kcp)
 	tt.createAllObjs()
 
 	logger := test.NewNullLogger()
@@ -194,27 +174,17 @@ func TestReconcilerValidateMachineConfigFail(t *testing.T) {
 func TestReconcilerControlPlaneIsNotReady(t *testing.T) {
 	tt := newReconcilerTest(t)
 
-	kcp := test.KubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
-		kcp.Name = tt.cluster.Name
-		kcp.Spec = controlplanev1.KubeadmControlPlaneSpec{
-			MachineTemplate: controlplanev1.KubeadmControlPlaneMachineTemplate{
-				InfrastructureRef: corev1.ObjectReference{
-					Name: fmt.Sprintf("%s-control-plane-1", tt.cluster.Name),
-				},
+	tt.kcp.Status = controlplanev1.KubeadmControlPlaneStatus{
+		Conditions: clusterv1.Conditions{
+			{
+				Type:               clusterapi.ReadyCondition,
+				Status:             corev1.ConditionFalse,
+				LastTransitionTime: metav1.NewTime(time.Now()),
 			},
-		}
-		kcp.Status = controlplanev1.KubeadmControlPlaneStatus{
-			Conditions: clusterv1.Conditions{
-				{
-					Type:               clusterapi.ReadyCondition,
-					Status:             corev1.ConditionFalse,
-					LastTransitionTime: metav1.NewTime(time.Now()),
-				},
-			},
-			ObservedGeneration: 2,
-		}
-	})
-	tt.eksaSupportObjs = append(tt.eksaSupportObjs, kcp, tt.secret)
+		},
+		ObservedGeneration: 2,
+	}
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, tt.kcp, tt.secret)
 	tt.createAllObjs()
 
 	logger := test.NewNullLogger()
@@ -566,6 +536,7 @@ type reconcilerTest struct {
 	validatorRegistry         *cloudstack.MockValidatorRegistry
 	execConfig                *decoder.CloudStackExecConfig
 	secret                    *corev1.Secret
+	kcp                       *controlplanev1.KubeadmControlPlane
 }
 
 func newReconcilerTest(t testing.TB) *reconcilerTest {
@@ -670,6 +641,28 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 
 		c.Spec.EksaVersion = &version
 	})
+
+	kcp := test.KubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
+		kcp.Name = cluster.Name
+		kcp.Spec = controlplanev1.KubeadmControlPlaneSpec{
+			MachineTemplate: controlplanev1.KubeadmControlPlaneMachineTemplate{
+				InfrastructureRef: corev1.ObjectReference{
+					Name: fmt.Sprintf("%s-control-plane-1", cluster.Name),
+				},
+			},
+		}
+		kcp.Status = controlplanev1.KubeadmControlPlaneStatus{
+			Conditions: clusterv1.Conditions{
+				{
+					Type:               clusterapi.ReadyCondition,
+					Status:             corev1.ConditionTrue,
+					LastTransitionTime: metav1.NewTime(time.Now()),
+				},
+			},
+			ObservedGeneration: 2,
+		}
+	})
+
 	secret := &corev1.Secret{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "v1",
@@ -711,6 +704,7 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 		validatorRegistry:         validatorRegistry,
 		execConfig:                execConfig,
 		secret:                    secret,
+		kcp:                       kcp,
 	}
 
 	t.Cleanup(tt.cleanup)
