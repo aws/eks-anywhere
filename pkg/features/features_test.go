@@ -85,3 +85,11 @@ func TestUseControllerForCliTrue(t *testing.T) {
 	t.Setenv(UseControllerForCli, "true")
 	g.Expect(UseControllerViaCLIWorkflow().IsActive()).To(BeTrue())
 }
+
+func TestWithK8s129FeatureFlag(t *testing.T) {
+	g := NewWithT(t)
+	setupContext(t)
+
+	g.Expect(os.Setenv(K8s129SupportEnvVar, "true")).To(Succeed())
+	g.Expect(IsActive(K8s129Support())).To(BeTrue())
+}
