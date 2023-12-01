@@ -5,6 +5,7 @@
 package e2e
 
 import (
+	"strings"
 	"testing"
 
 	corev1 "k8s.io/api/core/v1"
@@ -2106,12 +2107,15 @@ func TestTinkerbellAirgappedKubernetes128BottleRocketRegistryMirror(t *testing.T
 	}
 	t.Logf("Admin machine's IP is: %s", localIp)
 
+	// Append kube version in the image name to satisfy condition to have kube version in the template name.
+	kubeVersion := strings.Replace(string(v1alpha1.Kube128), ".", "-", 1)
+
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewTinkerbell(t,
 			framework.WithBottleRocketTinkerbell(),
 			framework.WithHookImagesURLPath("http://"+localIp.String()+":8080"),
-			framework.WithOSImageURL("http://"+localIp.String()+":8080/"+bottlerocketOSFileName),
+			framework.WithOSImageURL("http://"+localIp.String()+":8080/"+bottlerocketOSFileName+"-"+kubeVersion+".img.gz"),
 		),
 		framework.WithClusterFiller(
 			api.WithKubernetesVersion(v1alpha1.Kube128),
@@ -2121,7 +2125,7 @@ func TestTinkerbellAirgappedKubernetes128BottleRocketRegistryMirror(t *testing.T
 		framework.WithRegistryMirrorEndpointAndCert(constants.TinkerbellProviderName),
 	)
 
-	runTinkerbellAirgapConfigFlow(test, "10.80.0.0/16")
+	runTinkerbellAirgapConfigFlow(test, "10.80.0.0/16", kubeVersion)
 }
 
 // Proxy tests
@@ -2132,6 +2136,8 @@ func TestTinkerbellAirgappedKubernetes128BottlerocketProxyConfigFlow(t *testing.
 		t.Fatalf("Cannot get admin machine local IP: %v", err)
 	}
 	t.Logf("Admin machine's IP is: %s", localIp)
+
+	kubeVersion := strings.Replace(string(v1alpha1.Kube128), ".", "-", 1)
 
 	test := framework.NewClusterE2ETest(
 		t,
@@ -2147,7 +2153,7 @@ func TestTinkerbellAirgappedKubernetes128BottlerocketProxyConfigFlow(t *testing.
 		framework.WithProxy(framework.TinkerbellProxyRequiredEnvVars),
 	)
 
-	runTinkerbellAirgapConfigProxyFlow(test, "10.80.0.0/16")
+	runTinkerbellAirgapConfigProxyFlow(test, "10.80.0.0/16", kubeVersion)
 }
 
 func TestTinkerbellAirgappedKubernetes128UbuntuProxyConfigFlow(t *testing.T) {
@@ -2156,6 +2162,8 @@ func TestTinkerbellAirgappedKubernetes128UbuntuProxyConfigFlow(t *testing.T) {
 		t.Fatalf("Cannot get admin machine local IP: %v", err)
 	}
 	t.Logf("Admin machine's IP is: %s", localIp)
+
+	kubeVersion := strings.Replace(string(v1alpha1.Kube128), ".", "-", 1)
 
 	test := framework.NewClusterE2ETest(
 		t,
@@ -2171,7 +2179,7 @@ func TestTinkerbellAirgappedKubernetes128UbuntuProxyConfigFlow(t *testing.T) {
 		framework.WithProxy(framework.TinkerbellProxyRequiredEnvVars),
 	)
 
-	runTinkerbellAirgapConfigProxyFlow(test, "10.80.0.0/16")
+	runTinkerbellAirgapConfigProxyFlow(test, "10.80.0.0/16", kubeVersion)
 }
 
 // OOB test
