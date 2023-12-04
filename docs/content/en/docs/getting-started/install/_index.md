@@ -53,7 +53,7 @@ The EKS Anywhere plugin requires `eksctl` version 0.66.0 or newer.
 curl "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" \
     --silent --location \
     | tar xz -C /tmp
-sudo install -m 0755 ./kubectl /usr/local/bin/kubectl
+sudo install -m 0755 /tmp/eksctl /usr/local/bin/eksctl
 ```
 
 Install the `eksctl-anywhere` plugin.
