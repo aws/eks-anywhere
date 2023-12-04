@@ -80,7 +80,7 @@ func UploadFile(filePath string, bucket, key *string, s3Uploader *s3manager.Uplo
 	return nil
 }
 
-func KeyExists(bucket string, key string) bool {
+func KeyExists(bucket, key string) bool {
 	objectUrl := fmt.Sprintf("https://%s.s3.amazonaws.com/%s", bucket, key)
 
 	resp, err := http.Head(objectUrl)

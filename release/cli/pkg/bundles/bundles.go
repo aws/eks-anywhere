@@ -151,7 +151,7 @@ func GetVersionsBundles(r *releasetypes.ReleaseConfig, imageDigests map[string]s
 		number := strconv.Itoa(release.Number)
 		dev := release.Dev
 		kubeVersion := release.KubeVersion
-		shortKubeVersion := kubeVersion[1:strings.LastIndex(kubeVersion, ".")]
+		shortKubeVersion := strings.Join(strings.SplitN(kubeVersion[1:], ".", 3)[:2], ".")
 
 		if !sliceutils.SliceContains(supportedK8sVersions, channel) {
 			continue
