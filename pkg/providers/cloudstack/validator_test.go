@@ -37,7 +37,7 @@ func (n *DummyNetClient) DialTimeout(network, address string, timeout time.Durat
 }
 
 var testTemplate = v1alpha1.CloudStackResourceIdentifier{
-	Name: "centos7-k8s-118",
+	Name: "kubernetes_1_21",
 }
 
 var testOffering = v1alpha1.CloudStackResourceIdentifier{
@@ -395,6 +395,121 @@ func TestValidateSecretsUnchangedFailureSecretNotFound(t *testing.T) {
 	kubectl.EXPECT().GetSecretFromNamespace(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, notFoundError)
 	err := validator.ValidateSecretsUnchanged(ctx, cluster, testExecConfig, kubectl)
 	assert.Nil(t, err)
+}
+
+func TestValidateClusterMachineConfigsCPError(t *testing.T) {
+	ctx := context.Background()
+	cmk := mocks.NewMockProviderCmkClient(gomock.NewController(t))
+	clusterSpec := test.NewFullClusterSpec(t, path.Join(testDataDir, testClusterConfigMainFilename))
+	clusterSpec.CloudStackMachineConfigs["test-cp"].Spec.Template.Name = "kubernetes_1_22"
+
+	validator := NewValidator(cmk, &DummyNetClient{}, true)
+
+	err := validator.ValidateClusterMachineConfigs(ctx, clusterSpec)
+	if err == nil {
+		t.Fatalf("validation should not pass: %v", err)
+	}
+}
+
+func TestValidateClusterMachineConfigsEtcdError(t *testing.T) {
+	ctx := context.Background()
+	cmk := mocks.NewMockProviderCmkClient(gomock.NewController(t))
+	clusterSpec := test.NewFullClusterSpec(t, path.Join(testDataDir, testClusterConfigMainFilename))
+	clusterSpec.CloudStackMachineConfigs["test-etcd"].Spec.Template.Name = "kubernetes_1_22"
+
+	validator := NewValidator(cmk, &DummyNetClient{}, true)
+
+	err := validator.ValidateClusterMachineConfigs(ctx, clusterSpec)
+	if err == nil {
+		t.Fatalf("validation should not pass: %v", err)
+	}
+}
+
+func TestValidateClusterMachineConfigsError(t *testing.T) {
+	ctx := context.Background()
+	cmk := mocks.NewMockProviderCmkClient(gomock.NewController(t))
+	clusterSpec := test.NewFullClusterSpec(t, path.Join(testDataDir, testClusterConfigMainFilename))
+	clusterSpec.Cluster.Spec.KubernetesVersion = "1.22"
+
+	validator := NewValidator(cmk, &DummyNetClient{}, true)
+
+	err := validator.ValidateClusterMachineConfigs(ctx, clusterSpec)
+	if err == nil {
+		t.Fatalf("validation should not pass: %v", err)
+	}
+}
+
+func TestValidateClusterMachineConfigsModularUpgradeError(t *testing.T) {
+	ctx := context.Background()
+	cmk := mocks.NewMockProviderCmkClient(gomock.NewController(t))
+	clusterSpec := test.NewFullClusterSpec(t, path.Join(testDataDir, testClusterConfigMainFilename))
+	kube122 := v1alpha1.KubernetesVersion("1.22")
+	clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].KubernetesVersion = &kube122
+
+	validator := NewValidator(cmk, &DummyNetClient{}, true)
+
+	err := validator.ValidateClusterMachineConfigs(ctx, clusterSpec)
+	if err == nil {
+		t.Fatalf("validation should not pass: %v", err)
+	}
+}
+
+func TestValidateClusterMachineConfigsSuccess(t *testing.T) {
+	ctx := context.Background()
+	cmk := mocks.NewMockProviderCmkClient(gomock.NewController(t))
+	clusterSpec := test.NewFullClusterSpec(t, path.Join(testDataDir, testClusterConfigMainFilename))
+
+	clusterSpec.Cluster.Spec.KubernetesVersion = "1.22"
+	clusterSpec.CloudStackMachineConfigs["test-cp"].Spec.Template.Name = "kubernetes_1_22"
+	clusterSpec.CloudStackMachineConfigs["test-etcd"].Spec.Template.Name = "kubernetes_1_22"
+	clusterSpec.CloudStackMachineConfigs["test"].Spec.Template.Name = "kubernetes_1_22"
+
+	datacenterConfig, err := v1alpha1.GetCloudStackDatacenterConfig(path.Join(testDataDir, testClusterConfigMainFilename))
+	if err != nil {
+		t.Fatalf("unable to get datacenter config from file")
+	}
+
+	validator := NewValidator(cmk, &DummyNetClient{}, true)
+
+	cmk.EXPECT().ValidateZoneAndGetId(ctx, gomock.Any(), gomock.Any()).Times(3).Return("4e3b338d-87a6-4189-b931-a1747edeea82", nil)
+	cmk.EXPECT().ValidateTemplatePresent(ctx, gomock.Any(), gomock.Any(), gomock.Any(), datacenterConfig.Spec.AvailabilityZones[0].Account, v1alpha1.CloudStackResourceIdentifier{Name: "kubernetes_1_22"}).Times(3)
+	cmk.EXPECT().ValidateServiceOfferingPresent(ctx, gomock.Any(), gomock.Any(), testOffering).Times(3)
+	cmk.EXPECT().ValidateDiskOfferingPresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(3)
+	cmk.EXPECT().ValidateAffinityGroupsPresent(ctx, gomock.Any(), gomock.Any(), datacenterConfig.Spec.AvailabilityZones[0].Account, gomock.Any()).Times(3)
+
+	err = validator.ValidateClusterMachineConfigs(ctx, clusterSpec)
+	if err != nil {
+		t.Fatalf("validation should pass: %v", err)
+	}
+}
+
+func TestValidateClusterMachineConfigsModularUpgradeSuccess(t *testing.T) {
+	ctx := context.Background()
+	cmk := mocks.NewMockProviderCmkClient(gomock.NewController(t))
+	clusterSpec := test.NewFullClusterSpec(t, path.Join(testDataDir, testClusterConfigMainFilename))
+
+	kube122 := v1alpha1.KubernetesVersion("1.22")
+	clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].KubernetesVersion = &kube122
+	clusterSpec.CloudStackMachineConfigs["test"].Spec.Template.Name = "kubernetes_1_22"
+
+	datacenterConfig, err := v1alpha1.GetCloudStackDatacenterConfig(path.Join(testDataDir, testClusterConfigMainFilename))
+	if err != nil {
+		t.Fatalf("unable to get datacenter config from file")
+	}
+
+	validator := NewValidator(cmk, &DummyNetClient{}, true)
+
+	cmk.EXPECT().ValidateZoneAndGetId(ctx, gomock.Any(), gomock.Any()).Times(3).Return("4e3b338d-87a6-4189-b931-a1747edeea82", nil)
+	cmk.EXPECT().ValidateTemplatePresent(ctx, gomock.Any(), gomock.Any(), gomock.Any(), datacenterConfig.Spec.AvailabilityZones[0].Account, v1alpha1.CloudStackResourceIdentifier{Name: "kubernetes_1_22"})
+	cmk.EXPECT().ValidateTemplatePresent(ctx, gomock.Any(), gomock.Any(), gomock.Any(), datacenterConfig.Spec.AvailabilityZones[0].Account, testTemplate).Times(2)
+	cmk.EXPECT().ValidateServiceOfferingPresent(ctx, gomock.Any(), gomock.Any(), testOffering).Times(3)
+	cmk.EXPECT().ValidateDiskOfferingPresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(3)
+	cmk.EXPECT().ValidateAffinityGroupsPresent(ctx, gomock.Any(), gomock.Any(), datacenterConfig.Spec.AvailabilityZones[0].Account, gomock.Any()).Times(3)
+
+	err = validator.ValidateClusterMachineConfigs(ctx, clusterSpec)
+	if err != nil {
+		t.Fatalf("validation should pass: %v", err)
+	}
 }
 
 var testProfiles = []decoder.CloudStackProfileConfig{
