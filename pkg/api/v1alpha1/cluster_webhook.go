@@ -325,16 +325,15 @@ func validateImmutableFieldsCluster(new, old *Cluster) field.ErrorList {
 	if new.Spec.ExternalEtcdConfiguration != nil && old.Spec.ExternalEtcdConfiguration == nil {
 		allErrs = append(
 			allErrs,
-			field.Forbidden(specPath.Child("externalEtcdConfiguration"), "cannot switch from local to external etcd topology"),
+			field.Forbidden(specPath.Child("externalEtcdConfiguration"), "cannot switch from stacked to external etcd topology"),
 		)
 	}
-	if new.Spec.ExternalEtcdConfiguration != nil && old.Spec.ExternalEtcdConfiguration != nil {
-		if old.Spec.ExternalEtcdConfiguration.Count != new.Spec.ExternalEtcdConfiguration.Count {
-			allErrs = append(
-				allErrs,
-				field.Forbidden(specPath.Child("externalEtcdConfiguration.count"), fmt.Sprintf("field is immutable %v", new.Spec.ExternalEtcdConfiguration.Count)),
-			)
-		}
+
+	if new.Spec.ExternalEtcdConfiguration == nil && old.Spec.ExternalEtcdConfiguration != nil {
+		allErrs = append(
+			allErrs,
+			field.Forbidden(specPath.Child("externalEtcdConfiguration"), "cannot switch from external to stacked etcd topology"),
+		)
 	}
 
 	if !new.Spec.GitOpsRef.Equal(old.Spec.GitOpsRef) && !old.IsSelfManaged() {

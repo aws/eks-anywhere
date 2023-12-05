@@ -535,20 +535,6 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 			wantErr:            explodingClusterError,
 		},
 		{
-			name:               "ValidationEtcdImmutable",
-			clusterVersion:     "v1.19.16-eks-1-19-4",
-			upgradeVersion:     "1.19",
-			getClusterResponse: goodClusterResponse,
-			cpResponse:         nil,
-			workerResponse:     nil,
-			nodeResponse:       nil,
-			crdResponse:        nil,
-			wantErr:            composeError("spec.externalEtcdConfiguration.count is immutable"),
-			modifyExistingSpecFunc: func(s *cluster.Spec) {
-				s.Cluster.Spec.ExternalEtcdConfiguration.Count++
-			},
-		},
-		{
 			name:               "ValidationControlPlaneImmutable",
 			clusterVersion:     "v1.19.16-eks-1-19-4",
 			upgradeVersion:     "1.19",
@@ -900,24 +886,6 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 					NoProxy: []string{
 						"noproxy3",
 					},
-				}
-			},
-		},
-		{
-			name:               "ValidationEtcdConfigReplicasImmutable",
-			clusterVersion:     "v1.19.16-eks-1-19-4",
-			upgradeVersion:     "1.19",
-			getClusterResponse: goodClusterResponse,
-			cpResponse:         nil,
-			workerResponse:     nil,
-			nodeResponse:       nil,
-			crdResponse:        nil,
-			wantErr:            composeError("spec.externalEtcdConfiguration.count is immutable"),
-			modifyExistingSpecFunc: func(s *cluster.Spec) {
-				s.Cluster.Spec.ExternalEtcdConfiguration.Count += 1
-				s.Cluster.Spec.DatacenterRef = anywherev1.Ref{
-					Kind: anywherev1.VSphereDatacenterKind,
-					Name: "vsphere test",
 				}
 			},
 		},
