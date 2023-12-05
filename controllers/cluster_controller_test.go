@@ -728,7 +728,23 @@ func TestClusterReconcilerReconcileSelfManagedClusterConditions(t *testing.T) {
 			iam.EXPECT().EnsureCASecret(logCtx, gomock.AssignableToTypeOf(logr.Logger{}), sameName(config.Cluster)).Return(controller.Result{}, nil)
 			iam.EXPECT().Reconcile(logCtx, gomock.AssignableToTypeOf(logr.Logger{}), sameName(config.Cluster)).Return(controller.Result{}, nil)
 
-			providerReconciler.EXPECT().Reconcile(gomock.Any(), gomock.Any(), gomock.Any()).Times(1)
+			providerReconciler.EXPECT().Reconcile(gomock.Any(), gomock.Any(), gomock.Any()).Times(1).Do(
+				func(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) {
+					kcpReadyCondition := conditions.Get(kcp, clusterv1.ReadyCondition)
+					if kcpReadyCondition == nil ||
+						(kcpReadyCondition != nil && kcpReadyCondition.Status == "False") {
+						conditions.MarkFalse(cluster, anywherev1.DefaultCNIConfiguredCondition, anywherev1.ControlPlaneNotReadyReason, clusterv1.ConditionSeverityInfo, "")
+						return
+					}
+
+					if tt.skipCNIUpgrade {
+						conditions.MarkFalse(cluster, anywherev1.DefaultCNIConfiguredCondition, anywherev1.SkipUpgradesForDefaultCNIConfiguredReason, clusterv1.ConditionSeverityWarning, "Configured to skip default Cilium CNI upgrades")
+						return
+					}
+
+					conditions.MarkTrue(cluster, anywherev1.DefaultCNIConfiguredCondition)
+				},
+			)
 			mhcReconciler.EXPECT().Reconcile(logCtx, gomock.AssignableToTypeOf(logr.Logger{}), sameName(config.Cluster)).Return(nil)
 
 			r := controllers.NewClusterReconciler(testClient, registry, iam, clusterValidator, mockPkgs, mhcReconciler)
