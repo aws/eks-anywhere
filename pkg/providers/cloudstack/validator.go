@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -117,10 +118,20 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, clusterSp
 		return fmt.Errorf("cannot find CloudStackMachineConfig %v for control plane", clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name)
 	}
 
+	// validate template field name contains cluster kubernetes version for the control plane machine.
+	if err := v.validateTemplateMatchesKubernetesVersion(ctx, controlPlaneMachineConfig.Spec.Template.Name, string(clusterSpec.Cluster.Spec.KubernetesVersion)); err != nil {
+		return fmt.Errorf("machine config %s validation failed: %v", controlPlaneMachineConfig.Name, err)
+	}
+
 	if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
 		etcdMachineConfig := etcdMachineConfig(clusterSpec)
 		if etcdMachineConfig == nil {
 			return fmt.Errorf("cannot find CloudStackMachineConfig %v for etcd machines", clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name)
+		}
+
+		// validate template field name contains cluster kubernetes version for the external etcd machine.
+		if err := v.validateTemplateMatchesKubernetesVersion(ctx, etcdMachineConfig.Spec.Template.Name, string(clusterSpec.Cluster.Spec.KubernetesVersion)); err != nil {
+			return fmt.Errorf("machine config %s validation failed: %v", etcdMachineConfig.Name, err)
 		}
 	}
 
@@ -128,6 +139,16 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, clusterSp
 		_, ok := clusterSpec.CloudStackMachineConfigs[workerNodeGroupConfiguration.MachineGroupRef.Name]
 		if !ok {
 			return fmt.Errorf("cannot find CloudStackMachineConfig %v for worker nodes", workerNodeGroupConfiguration.MachineGroupRef.Name)
+		}
+
+		version := string(clusterSpec.Cluster.Spec.KubernetesVersion)
+		// validate template field of worker group spec with the kubernetes version of each workerNodeGroup - in case of modular upgrade.
+		if workerNodeGroupConfiguration.KubernetesVersion != nil {
+			version = string(*workerNodeGroupConfiguration.KubernetesVersion)
+		}
+		templateName := clusterSpec.CloudStackMachineConfigs[workerNodeGroupConfiguration.MachineGroupRef.Name].Spec.Template.Name
+		if err := v.validateTemplateMatchesKubernetesVersion(ctx, templateName, version); err != nil {
+			return fmt.Errorf("machine config %s validation failed: %v", workerNodeGroupConfiguration.Name, err)
 		}
 	}
 
@@ -187,6 +208,22 @@ func (v *Validator) validateMachineConfig(ctx context.Context, datacenterConfig 
 		}
 	}
 
+	return nil
+}
+
+func (v *Validator) validateTemplateMatchesKubernetesVersion(ctx context.Context, templateName string, kubernetesVersionName string) error {
+	// Replace 1.23, 1-23, 1_23 to 123 in the template name string.
+	templateReplacer := strings.NewReplacer("-", "", ".", "", "_", "")
+	template := templateReplacer.Replace(templateName)
+	// Replace 1-23 to 123 in the kubernetesversion string.
+	replacer := strings.NewReplacer(".", "")
+	kubernetesVersion := replacer.Replace(string(kubernetesVersionName))
+	// This will return an error if the template name does not contain specified kubernetes version.
+	// For ex if the kubernetes version is 1.23,
+	// the template name should include 1.23 or 1-23, 1_23 or 123 i.e. kubernetes-1-23-eks in the string.
+	if !strings.Contains(template, kubernetesVersion) {
+		return fmt.Errorf("missing kube version from the machine config template name: template=%s, version=%s", templateName, string(kubernetesVersionName))
+	}
 	return nil
 }
 

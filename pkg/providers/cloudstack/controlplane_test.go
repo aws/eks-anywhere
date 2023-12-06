@@ -607,7 +607,7 @@ func cloudstackMachineTemplate(name string) *cloudstackv1.CloudStackMachineTempl
 			Template: cloudstackv1.CloudStackMachineTemplateResource{
 				Spec: cloudstackv1.CloudStackMachineSpec{
 					Template: cloudstackv1.CloudStackResourceIdentifier{
-						Name: "centos7-k8s-118",
+						Name: "kubernetes_1_21",
 					},
 					Offering: cloudstackv1.CloudStackResourceIdentifier{
 						Name: "m4-large",
