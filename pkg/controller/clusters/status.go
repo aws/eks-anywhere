@@ -68,21 +68,6 @@ func UpdateClusterStatusForCNI(ctx context.Context, cluster *anywherev1.Cluster)
 		conditions.MarkFalse(cluster, anywherev1.DefaultCNIConfiguredCondition, anywherev1.ControlPlaneNotReadyReason, clusterv1.ConditionSeverityInfo, "")
 		return
 	}
-
-	// Self managed clusters do not use the CNI reconciler, so this status would never get resolved.
-	// TODO: Remove after self-managed clusters are created with the controller in the CLI
-	if cluster.IsSelfManaged() {
-		ciliumCfg := cluster.Spec.ClusterNetwork.CNIConfig.Cilium
-		// Though it may be installed initially to successfully create the cluster,
-		// if the CNI is configured to skip upgrades, we mark the condition as "False"
-		if ciliumCfg != nil && !ciliumCfg.IsManaged() {
-			conditions.MarkFalse(cluster, anywherev1.DefaultCNIConfiguredCondition, anywherev1.SkipUpgradesForDefaultCNIConfiguredReason, clusterv1.ConditionSeverityWarning, "Configured to skip default Cilium CNI upgrades")
-			return
-		}
-
-		// Otherwise, since the control plane is fully ready we can assume the CNI has been configured.
-		conditions.MarkTrue(cluster, anywherev1.DefaultCNIConfiguredCondition)
-	}
 }
 
 // updateConditionsForEtcdAndControlPlane updates the ControlPlaneReady condition if etcdadm cluster is not ready.

@@ -1045,36 +1045,6 @@ func TestUpdateClusterStatusForCNI(t *testing.T) {
 				Status: "True",
 			},
 		},
-		{
-			name:        "cilium is unmanaged",
-			skipUpgrade: ptr.Bool(true),
-			conditions: []anywherev1.Condition{
-				{
-					Type:   anywherev1.ControlPlaneReadyCondition,
-					Status: "True",
-				},
-			},
-			wantCondition: &anywherev1.Condition{
-				Type:     anywherev1.DefaultCNIConfiguredCondition,
-				Reason:   anywherev1.SkipUpgradesForDefaultCNIConfiguredReason,
-				Status:   "False",
-				Severity: clusterv1.ConditionSeverityWarning,
-			},
-		},
-		{
-			name:        "cilium is managed",
-			skipUpgrade: ptr.Bool(false),
-			conditions: []anywherev1.Condition{
-				{
-					Type:   anywherev1.ControlPlaneReadyCondition,
-					Status: "True",
-				},
-			},
-			wantCondition: &anywherev1.Condition{
-				Type:   anywherev1.DefaultCNIConfiguredCondition,
-				Status: "True",
-			},
-		},
 	}
 
 	for _, tt := range tests {
