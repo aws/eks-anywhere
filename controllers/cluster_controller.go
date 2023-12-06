@@ -437,13 +437,23 @@ func (r *ClusterReconciler) updateStatus(ctx context.Context, log logr.Logger, c
 
 	clusters.UpdateClusterStatusForCNI(ctx, cluster)
 
+	summarizedConditionTypes := []anywherev1.ConditionType{
+		anywherev1.ControlPlaneInitializedCondition,
+		anywherev1.ControlPlaneReadyCondition,
+		anywherev1.WorkersReadyCondition,
+	}
+
+	defaultCNIConfiguredCondition := conditions.Get(cluster, anywherev1.DefaultCNIConfiguredCondition)
+	if defaultCNIConfiguredCondition == nil ||
+		(defaultCNIConfiguredCondition != nil &&
+			defaultCNIConfiguredCondition.Status == "False" &&
+			defaultCNIConfiguredCondition.Reason != anywherev1.SkipUpgradesForDefaultCNIConfiguredReason) {
+		summarizedConditionTypes = append(summarizedConditionTypes, anywherev1.DefaultCNIConfiguredCondition)
+	}
+
 	// Always update the readyCondition by summarizing the state of other conditions.
 	conditions.SetSummary(cluster,
-		conditions.WithConditions(
-			anywherev1.ControlPlaneInitializedCondition,
-			anywherev1.ControlPlaneReadyCondition,
-			anywherev1.WorkersReadyCondition,
-		),
+		conditions.WithConditions(summarizedConditionTypes...),
 	)
 
 	return nil

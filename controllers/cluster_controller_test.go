@@ -195,13 +195,16 @@ func TestClusterReconcilerReconcileConditions(t *testing.T) {
 	testCases := []struct {
 		testName                string
 		skipCNIUpgrade          bool
+		cniUpgradeInProgress    bool
 		kcpStatus               controlplanev1.KubeadmControlPlaneStatus
 		machineDeploymentStatus clusterv1.MachineDeploymentStatus
 		result                  ctrl.Result
 		wantConditions          []anywherev1.Condition
 	}{
 		{
-			testName: "cluster not ready, control plane not initialized",
+			testName:             "cluster not ready, control plane not initialized",
+			skipCNIUpgrade:       false,
+			cniUpgradeInProgress: false,
 			kcpStatus: controlplanev1.KubeadmControlPlaneStatus{
 				Conditions: clusterv1.Conditions{
 					{
@@ -221,7 +224,9 @@ func TestClusterReconcilerReconcileConditions(t *testing.T) {
 			result: ctrl.Result{Requeue: false, RequeueAfter: 10 * time.Second},
 		},
 		{
-			testName: "cluster not ready, control plane initialized",
+			testName:             "cluster not ready, control plane initialized",
+			skipCNIUpgrade:       false,
+			cniUpgradeInProgress: false,
 			kcpStatus: controlplanev1.KubeadmControlPlaneStatus{
 				Conditions: clusterv1.Conditions{
 					{
@@ -245,7 +250,9 @@ func TestClusterReconcilerReconcileConditions(t *testing.T) {
 			result: ctrl.Result{Requeue: false, RequeueAfter: 10 * time.Second},
 		},
 		{
-			testName: "cluster not ready, control plane ready",
+			testName:             "cluster not ready, control plane ready",
+			skipCNIUpgrade:       false,
+			cniUpgradeInProgress: false,
 			kcpStatus: controlplanev1.KubeadmControlPlaneStatus{
 				ReadyReplicas:   1,
 				Replicas:        1,
@@ -269,13 +276,16 @@ func TestClusterReconcilerReconcileConditions(t *testing.T) {
 			wantConditions: []anywherev1.Condition{
 				*conditions.FalseCondition(anywherev1.ReadyCondition, anywherev1.ScalingUpReason, clusterv1.ConditionSeverityInfo, "Scaling up worker nodes, 1 expected (0 actual)"),
 				*conditions.TrueCondition(anywherev1.ControlPlaneReadyCondition),
+				*conditions.TrueCondition(anywherev1.DefaultCNIConfiguredCondition),
 				*conditions.FalseCondition(anywherev1.WorkersReadyCondition, anywherev1.ScalingUpReason, clusterv1.ConditionSeverityInfo, "Scaling up worker nodes, 1 expected (0 actual)"),
 				*conditions.TrueCondition(anywherev1.ControlPlaneInitializedCondition),
 			},
 			result: ctrl.Result{Requeue: false, RequeueAfter: 10 * time.Second},
 		},
 		{
-			testName: "cluster ready",
+			testName:             "cluster ready",
+			skipCNIUpgrade:       false,
+			cniUpgradeInProgress: false,
 			kcpStatus: controlplanev1.KubeadmControlPlaneStatus{
 				ReadyReplicas:   1,
 				Replicas:        1,
@@ -303,10 +313,85 @@ func TestClusterReconcilerReconcileConditions(t *testing.T) {
 			wantConditions: []anywherev1.Condition{
 				*conditions.TrueCondition(anywherev1.ReadyCondition),
 				*conditions.TrueCondition(anywherev1.ControlPlaneReadyCondition),
+				*conditions.TrueCondition(anywherev1.DefaultCNIConfiguredCondition),
 				*conditions.TrueCondition(anywherev1.WorkersReadyCondition),
 				*conditions.TrueCondition(anywherev1.ControlPlaneInitializedCondition),
 			},
 			result: ctrl.Result{},
+		},
+		{
+			testName:             "cluster ready, skip upgrades for default cni",
+			skipCNIUpgrade:       true,
+			cniUpgradeInProgress: false,
+			kcpStatus: controlplanev1.KubeadmControlPlaneStatus{
+				ReadyReplicas:   1,
+				Replicas:        1,
+				UpdatedReplicas: 1,
+				Conditions: clusterv1.Conditions{
+					{
+						Type:   controlplanev1.ControlPlaneComponentsHealthyCondition,
+						Status: apiv1.ConditionStatus("True"),
+					},
+					{
+						Type:   controlplanev1.AvailableCondition,
+						Status: apiv1.ConditionStatus("True"),
+					},
+					{
+						Type:   clusterv1.ReadyCondition,
+						Status: apiv1.ConditionStatus("True"),
+					},
+				},
+			},
+			machineDeploymentStatus: clusterv1.MachineDeploymentStatus{
+				ReadyReplicas:   1,
+				Replicas:        1,
+				UpdatedReplicas: 1,
+			},
+			wantConditions: []anywherev1.Condition{
+				*conditions.TrueCondition(anywherev1.ReadyCondition),
+				*conditions.TrueCondition(anywherev1.ControlPlaneReadyCondition),
+				*conditions.FalseCondition(anywherev1.DefaultCNIConfiguredCondition, anywherev1.SkipUpgradesForDefaultCNIConfiguredReason, clusterv1.ConditionSeverityWarning, "Configured to skip default Cilium CNI upgrades"),
+				*conditions.TrueCondition(anywherev1.WorkersReadyCondition),
+				*conditions.TrueCondition(anywherev1.ControlPlaneInitializedCondition),
+			},
+			result: ctrl.Result{},
+		},
+		{
+			testName:             "cluster not ready, default cni upgrade in progress",
+			skipCNIUpgrade:       false,
+			cniUpgradeInProgress: true,
+			kcpStatus: controlplanev1.KubeadmControlPlaneStatus{
+				ReadyReplicas:   1,
+				Replicas:        1,
+				UpdatedReplicas: 1,
+				Conditions: clusterv1.Conditions{
+					{
+						Type:   controlplanev1.ControlPlaneComponentsHealthyCondition,
+						Status: apiv1.ConditionStatus("True"),
+					},
+					{
+						Type:   controlplanev1.AvailableCondition,
+						Status: apiv1.ConditionStatus("True"),
+					},
+					{
+						Type:   clusterv1.ReadyCondition,
+						Status: apiv1.ConditionStatus("True"),
+					},
+				},
+			},
+			machineDeploymentStatus: clusterv1.MachineDeploymentStatus{
+				ReadyReplicas:   1,
+				Replicas:        1,
+				UpdatedReplicas: 1,
+			},
+			wantConditions: []anywherev1.Condition{
+				*conditions.FalseCondition(anywherev1.ReadyCondition, anywherev1.DefaultCNIUpgradeInProgressReason, clusterv1.ConditionSeverityInfo, "Cilium version upgrade needed"),
+				*conditions.TrueCondition(anywherev1.ControlPlaneReadyCondition),
+				*conditions.FalseCondition(anywherev1.DefaultCNIConfiguredCondition, anywherev1.DefaultCNIUpgradeInProgressReason, clusterv1.ConditionSeverityInfo, "Cilium version upgrade needed"),
+				*conditions.TrueCondition(anywherev1.WorkersReadyCondition),
+				*conditions.TrueCondition(anywherev1.ControlPlaneInitializedCondition),
+			},
+			result: ctrl.Result{Requeue: false, RequeueAfter: 10 * time.Second},
 		},
 	}
 	for _, tt := range testCases {
@@ -369,7 +454,28 @@ func TestClusterReconcilerReconcileConditions(t *testing.T) {
 
 			iam.EXPECT().EnsureCASecret(logCtx, gomock.AssignableToTypeOf(logr.Logger{}), sameName(config.Cluster)).Return(controller.Result{}, nil)
 			iam.EXPECT().Reconcile(logCtx, gomock.AssignableToTypeOf(logr.Logger{}), sameName(config.Cluster)).Return(controller.Result{}, nil)
-			providerReconciler.EXPECT().Reconcile(logCtx, gomock.AssignableToTypeOf(logr.Logger{}), sameName(config.Cluster)).Times(1)
+			providerReconciler.EXPECT().Reconcile(logCtx, gomock.AssignableToTypeOf(logr.Logger{}), sameName(config.Cluster)).Times(1).Do(
+				func(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) {
+					kcpReadyCondition := conditions.Get(kcp, clusterv1.ReadyCondition)
+					if kcpReadyCondition == nil ||
+						(kcpReadyCondition != nil && kcpReadyCondition.Status == "False") {
+						conditions.MarkFalse(cluster, anywherev1.DefaultCNIConfiguredCondition, anywherev1.ControlPlaneNotReadyReason, clusterv1.ConditionSeverityInfo, "")
+						return
+					}
+
+					if tt.skipCNIUpgrade {
+						conditions.MarkFalse(cluster, anywherev1.DefaultCNIConfiguredCondition, anywherev1.SkipUpgradesForDefaultCNIConfiguredReason, clusterv1.ConditionSeverityWarning, "Configured to skip default Cilium CNI upgrades")
+						return
+					}
+
+					if tt.cniUpgradeInProgress {
+						conditions.MarkFalse(cluster, anywherev1.DefaultCNIConfiguredCondition, anywherev1.DefaultCNIUpgradeInProgressReason, clusterv1.ConditionSeverityInfo, "Cilium version upgrade needed")
+						return
+					}
+
+					conditions.MarkTrue(cluster, anywherev1.DefaultCNIConfiguredCondition)
+				},
+			)
 			clusterValidator.EXPECT().ValidateManagementClusterName(logCtx, gomock.AssignableToTypeOf(logr.Logger{}), sameName(config.Cluster)).Return(nil)
 
 			mockPkgs.EXPECT().Reconcile(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any())
