@@ -75,8 +75,8 @@ ssh-agent bash -c 'ssh-add /secrets/ssh-secrets/ssh-privatekey; ssh -o StrictHos
 
 echo "Added ssh private key\n"
 
-PR_EXISTS=$(gh pr list | grep -c "${PR_BRANCH}" || true)
-if [ $PR_EXISTS -eq 0 ]; then
+PR_EXISTS=$(GH_PAGER="" gh pr list --json number -H "${PR_BRANCH}")
+if [ "$PR_EXISTS" = "[]" ]; then
   gh pr create --title "$PR_TITLE" --body "$PR_BODY" --repo "${UPSTREAM_ORG}/${REPO}"
 fi
 
