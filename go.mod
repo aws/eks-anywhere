@@ -17,11 +17,11 @@ require (
 	github.com/aws/etcdadm-bootstrap-provider v1.0.7-rc3
 	github.com/aws/etcdadm-controller v1.0.6-rc3
 	github.com/aws/smithy-go v1.16.0
-	github.com/bmc-toolbox/bmclib/v2 v2.1.0
+	github.com/bmc-toolbox/bmclib/v2 v2.1.1-0.20231206130132-1063371b9ed6
 	github.com/docker/cli v24.0.6+incompatible
 	github.com/go-git/go-git/v5 v5.4.2
 	github.com/go-jose/go-jose/v3 v3.0.1
-	github.com/go-logr/logr v1.2.4
+	github.com/go-logr/logr v1.3.0
 	github.com/go-logr/zapr v1.2.3
 	github.com/gocarina/gocsv v0.0.0-20220304222734-caabc5f00d30
 	github.com/golang/mock v1.6.0
@@ -41,12 +41,12 @@ require (
 	github.com/tinkerbell/tink v0.8.0
 	github.com/vmware/govmomi v0.29.0
 	go.uber.org/zap v1.24.0
-	golang.org/x/crypto v0.14.0
-	golang.org/x/exp v0.0.0-20231006140011-7918f672742d
-	golang.org/x/net v0.17.0
+	golang.org/x/crypto v0.15.0
+	golang.org/x/exp v0.0.0-20231110203233-9a3e6036ecaa
+	golang.org/x/net v0.18.0
 	golang.org/x/oauth2 v0.7.0
-	golang.org/x/sys v0.13.0
-	golang.org/x/text v0.13.0
+	golang.org/x/sys v0.14.0
+	golang.org/x/text v0.14.0
 	gopkg.in/ini.v1 v1.67.0
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.1
@@ -96,7 +96,7 @@ require (
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/blang/semver v3.5.1+incompatible // indirect
 	github.com/blang/semver/v4 v4.0.0 // indirect
-	github.com/bmc-toolbox/common v0.0.0-20230220061748-93ff001f4a1d // indirect
+	github.com/bmc-toolbox/common v0.0.0-20230717121556-5eb9915a8a5a // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/cloudflare/circl v1.3.3 // indirect
 	github.com/containerd/containerd v1.7.6 // indirect
@@ -172,18 +172,19 @@ require (
 	github.com/spf13/afero v1.9.3 // indirect
 	github.com/spf13/cast v1.5.0 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
-	github.com/stmcginnis/gofish v0.14.1-0.20230920133920-77490fd98fa2 // indirect
+	github.com/stmcginnis/gofish v0.15.1-0.20231121142100-22a60a77be91 // indirect
 	github.com/subosito/gotenv v1.4.2 // indirect
 	github.com/xanzy/ssh-agent v0.3.0 // indirect
-	go.opentelemetry.io/otel v1.14.0 // indirect
-	go.opentelemetry.io/otel/trace v1.14.0 // indirect
+	go.opentelemetry.io/otel v1.20.0 // indirect
+	go.opentelemetry.io/otel/metric v1.20.0 // indirect
+	go.opentelemetry.io/otel/trace v1.20.0 // indirect
 	go.uber.org/atomic v1.10.0 // indirect
 	go.uber.org/multierr v1.8.0 // indirect
-	golang.org/x/mod v0.13.0 // indirect
-	golang.org/x/sync v0.4.0 // indirect
-	golang.org/x/term v0.13.0 // indirect
+	golang.org/x/mod v0.14.0 // indirect
+	golang.org/x/sync v0.5.0 // indirect
+	golang.org/x/term v0.14.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
-	golang.org/x/tools v0.14.0 // indirect
+	golang.org/x/tools v0.15.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.2.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20230410155749-daa745c078e1 // indirect
