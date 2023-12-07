@@ -13,27 +13,32 @@ import (
 	"github.com/aws/eks-anywhere/pkg/controller"
 )
 
-// CheckControlPlaneReady is a controller helper to check whether a CAPI cluster CP for
-// an eks-a cluster is ready or not. This is intended to be used from cluster reconcilers
+// CheckControlPlaneReady is a controller helper to check whether KCP object for
+// the cluster is ready or not. This is intended to be used from cluster reconcilers
 // due its signature and that it returns controller results with appropriate wait times whenever
 // the cluster is not ready.
 func CheckControlPlaneReady(ctx context.Context, client client.Client, log logr.Logger, cluster *anywherev1.Cluster) (controller.Result, error) {
-	capiCluster, err := controller.GetCAPICluster(ctx, client, cluster)
+	kcp, err := controller.GetKubeadmControlPlane(ctx, client, cluster)
 	if err != nil {
 		return controller.Result{}, err
 	}
 
-	if capiCluster == nil {
-		log.Info("CAPI cluster does not exist yet, requeuing")
+	if kcp == nil {
+		log.Info("KCP does not exist yet, requeuing")
 		return controller.ResultWithRequeue(5 * time.Second), nil
 	}
 
-	if !conditions.IsTrue(capiCluster, clusterapi.ControlPlaneReadyCondition) {
-		log.Info("CAPI control plane is not ready yet, requeuing")
-		// TODO: eventually this can be implemented with controller watches
+	// We make sure to check that the status is up to date before using it
+	if kcp.Status.ObservedGeneration != kcp.ObjectMeta.Generation {
+		log.Info("KCP information is outdated, requeing")
+		return controller.ResultWithRequeue(5 * time.Second), nil
+	}
+
+	if !conditions.IsTrue(kcp, clusterapi.ReadyCondition) {
+		log.Info("KCP is not ready yet, requeing")
 		return controller.ResultWithRequeue(30 * time.Second), nil
 	}
 
-	log.Info("CAPI control plane is ready")
+	log.Info("KCP is ready")
 	return controller.Result{}, nil
 }

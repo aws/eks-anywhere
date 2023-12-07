@@ -3,12 +3,15 @@ package reconciler_test
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"testing"
+	"time"
 
 	etcdv1 "github.com/aws/etcdadm-controller/api/v1beta1"
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
@@ -22,6 +25,7 @@ import (
 	"github.com/aws/eks-anywhere/internal/test/envtest"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	clusterspec "github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/controller"
 	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
@@ -37,10 +41,8 @@ const (
 func TestReconcilerReconcileSuccess(t *testing.T) {
 	tt := newReconcilerTest(t)
 	logger := test.NewNullLogger()
-	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
-		c.Name = tt.cluster.Name
-	})
-	tt.eksaSupportObjs = append(tt.eksaSupportObjs, capiCluster)
+
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, tt.kcp)
 	tt.createAllObjs()
 
 	remoteClient := fake.NewClientBuilder().Build()
@@ -53,7 +55,7 @@ func TestReconcilerReconcileSuccess(t *testing.T) {
 	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
 	tt.Expect(tt.cluster.Status.FailureReason).To(BeZero())
 
-	tt.ShouldEventuallyExist(tt.ctx, capiCluster)
+	tt.ShouldEventuallyExist(tt.ctx, tt.kcp)
 	tt.ShouldEventuallyExist(tt.ctx,
 		&controlplanev1.KubeadmControlPlane{
 			ObjectMeta: metav1.ObjectMeta{
@@ -356,11 +358,7 @@ func TestReconcileControlPlaneUnstackedEtcdSuccess(t *testing.T) {
 	tt.Expect(tt.cluster.Status.FailureReason).To(BeZero())
 	tt.Expect(result).To(Equal(controller.Result{}))
 
-	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
-		c.Name = tt.cluster.Name
-	})
-
-	tt.ShouldEventuallyExist(tt.ctx, capiCluster)
+	tt.ShouldEventuallyExist(tt.ctx, tt.kcp)
 	tt.ShouldEventuallyExist(tt.ctx,
 		&controlplanev1.KubeadmControlPlane{
 			ObjectMeta: metav1.ObjectMeta{
@@ -424,6 +422,7 @@ type reconcilerTest struct {
 	env                  *envtest.Environment
 	eksaSupportObjs      []client.Object
 	datacenterConfig     *anywherev1.DockerDatacenterConfig
+	kcp                  *controlplanev1.KubeadmControlPlane
 }
 
 func newReconcilerTest(t testing.TB) *reconcilerTest {
@@ -476,6 +475,27 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 		c.Spec.EksaVersion = &version
 	})
 
+	kcp := test.KubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
+		kcp.Name = cluster.Name
+		kcp.Spec = controlplanev1.KubeadmControlPlaneSpec{
+			MachineTemplate: controlplanev1.KubeadmControlPlaneMachineTemplate{
+				InfrastructureRef: corev1.ObjectReference{
+					Name: fmt.Sprintf("%s-control-plane-1", cluster.Name),
+				},
+			},
+		}
+		kcp.Status = controlplanev1.KubeadmControlPlaneStatus{
+			Conditions: clusterv1.Conditions{
+				{
+					Type:               clusterapi.ReadyCondition,
+					Status:             corev1.ConditionTrue,
+					LastTransitionTime: metav1.NewTime(time.Now()),
+				},
+			},
+			ObservedGeneration: 2,
+		}
+	})
+
 	tt := &reconcilerTest{
 		t:                    t,
 		WithT:                NewWithT(t),
@@ -496,6 +516,7 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 			test.EKSARelease(),
 		},
 		datacenterConfig: workloadClusterDatacenter,
+		kcp:              kcp,
 	}
 
 	t.Cleanup(tt.cleanup)
