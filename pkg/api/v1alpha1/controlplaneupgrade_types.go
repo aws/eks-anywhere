@@ -21,9 +21,9 @@ type ControlPlaneUpgradeSpec struct {
 
 // ControlPlaneUpgradeStatus defines the observed state of ControlPlaneUpgrade.
 type ControlPlaneUpgradeStatus struct {
-	RequireUpgrade int64 `json:"requireUpgrade"`
-	Upgraded       int64 `json:"upgraded"`
-	Ready          bool  `json:"ready"`
+	RequireUpgrade int64 `json:"requireUpgrade,omitempty"`
+	Upgraded       int64 `json:"upgraded,omitempty"`
+	Ready          bool  `json:"ready,omitempty"`
 }
 
 //+kubebuilder:object:root=true

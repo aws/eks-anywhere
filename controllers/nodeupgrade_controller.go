@@ -26,7 +26,7 @@ import (
 
 const (
 	// TODO(in-place): Get this image from the bundle instead of using the hardcoded one.
-	defaultUpgraderImage = "public.ecr.aws/t0n3a9y4/aws/upgrader:v1.28.3-eks-1-28-9"
+	defaultUpgraderImage = "public.ecr.aws/t2p4l7v3/upgrader:eksdbase"
 	controlPlaneLabel    = "node-role.kubernetes.io/control-plane"
 	podDNEMessage        = "Upgrader pod does not exist"
 
@@ -86,11 +86,11 @@ func (r *NodeUpgradeReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	}
 
 	machineToBeUpgraded := &clusterv1.Machine{}
-	if err := r.client.Get(ctx, getNamespacedNameType(nodeUpgrade.Spec.Machine.Name, nodeUpgrade.Spec.Machine.Namespace), machineToBeUpgraded); err != nil {
+	if err := r.client.Get(ctx, GetNamespacedNameType(nodeUpgrade.Spec.Machine.Name, nodeUpgrade.Spec.Machine.Namespace), machineToBeUpgraded); err != nil {
 		return ctrl.Result{}, err
 	}
 
-	rClient, err := r.remoteClientRegistry.GetClient(ctx, getNamespacedNameType(machineToBeUpgraded.Spec.ClusterName, machineToBeUpgraded.Namespace))
+	rClient, err := r.remoteClientRegistry.GetClient(ctx, GetNamespacedNameType(machineToBeUpgraded.Spec.ClusterName, machineToBeUpgraded.Namespace))
 	if err != nil {
 		return ctrl.Result{}, err
 	}
@@ -352,7 +352,8 @@ func isControlPlane(node *corev1.Node) bool {
 	return ok
 }
 
-func getNamespacedNameType(name, namespace string) types.NamespacedName {
+// GetNamespacedNameType takes name and namespace and returns NamespacedName in namespace/name format.
+func GetNamespacedNameType(name, namespace string) types.NamespacedName {
 	return types.NamespacedName{
 		Name:      name,
 		Namespace: namespace,
@@ -384,7 +385,7 @@ func upgraderPodExists(ctx context.Context, remoteClient client.Client, nodeName
 
 func getUpgraderPod(ctx context.Context, remoteClient client.Client, nodeName string) (*corev1.Pod, error) {
 	pod := &corev1.Pod{}
-	if err := remoteClient.Get(ctx, getNamespacedNameType(upgrader.PodName(nodeName), constants.EksaSystemNamespace), pod); err != nil {
+	if err := remoteClient.Get(ctx, GetNamespacedNameType(upgrader.PodName(nodeName), constants.EksaSystemNamespace), pod); err != nil {
 		return nil, err
 	}
 	return pod, nil
