@@ -107,6 +107,7 @@ type Dependencies struct {
 	SnowValidator               *snow.Validator
 	IPValidator                 *validator.IPValidator
 	UnAuthKubectlClient         KubeClients
+	HelmFactory                 *HelmFactory
 	CreateClusterDefaulter      cli.CreateClusterDefaulter
 	UpgradeClusterDefaulter     cli.UpgradeClusterDefaulter
 }
@@ -770,6 +771,24 @@ func (f *Factory) WithHelm(opts ...executables.HelmOpt) *Factory {
 	return f
 }
 
+func (f *Factory) WithHelmFactory(opts ...executables.HelmOpt) *Factory {
+	f.WithExecutableBuilder()
+
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.dependencies.HelmFactory != nil {
+			return nil
+		}
+
+		f.dependencies.HelmFactory = NewHelmFactory(f.executablesConfig.builder).
+			WithRegistryMirror(f.registryMirror).
+			WithProxyConfigurations(f.proxyConfiguration).
+			WithInsecure()
+		return nil
+	})
+
+	return f
+}
+
 // WithNetworking builds a Networking.
 func (f *Factory) WithNetworking(clusterConfig *v1alpha1.Cluster) *Factory {
 	var networkingBuilder func() clustermanager.Networking
@@ -845,13 +864,13 @@ func (f *Factory) WithCNIInstaller(spec *cluster.Spec, provider providers.Provid
 }
 
 func (f *Factory) WithCiliumTemplater() *Factory {
-	f.WithHelm(executables.WithInsecure())
+	f.WithHelmFactory()
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.CiliumTemplater != nil {
 			return nil
 		}
-		f.dependencies.CiliumTemplater = cilium.NewTemplater(f.dependencies.Helm)
+		f.dependencies.CiliumTemplater = cilium.NewTemplater(f.dependencies.HelmFactory)
 
 		return nil
 	})

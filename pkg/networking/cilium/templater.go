@@ -11,6 +11,8 @@ import (
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/config"
+	"github.com/aws/eks-anywhere/pkg/executables"
+	"github.com/aws/eks-anywhere/pkg/registrymirror"
 	"github.com/aws/eks-anywhere/pkg/retrier"
 	"github.com/aws/eks-anywhere/pkg/semver"
 	"github.com/aws/eks-anywhere/pkg/templater"
@@ -29,13 +31,17 @@ type Helm interface {
 	RegistryLogin(ctx context.Context, registry, username, password string) error
 }
 
-type Templater struct {
-	helm Helm
+type HelmFactory interface {
+	GetInstance(opts ...executables.HelmOpt) *executables.Helm
 }
 
-func NewTemplater(helm Helm) *Templater {
+type Templater struct {
+	helmFactory HelmFactory
+}
+
+func NewTemplater(helmFactory HelmFactory) *Templater {
 	return &Templater{
-		helm: helm,
+		helmFactory: helmFactory,
 	}
 }
 
@@ -62,7 +68,16 @@ func (t *Templater) GenerateUpgradePreflightManifest(ctx context.Context, spec *
 		return nil, err
 	}
 
-	manifest, err := t.helm.Template(ctx, uri, version, namespace, v, kubeVersion)
+	r := registrymirror.FromCluster(spec.Cluster)
+	helm := t.helmFactory.GetInstance(executables.WithRegistryMirror(r))
+
+	if spec.Cluster.Spec.RegistryMirrorConfiguration != nil {
+		if err := t.registryLogin(ctx, helm, spec); err != nil {
+			return nil, err
+		}
+	}
+
+	manifest, err := helm.Template(ctx, uri, version, namespace, v, kubeVersion)
 	if err != nil {
 		return nil, fmt.Errorf("failed generating cilium upgrade preflight manifest: %v", err)
 	}
@@ -112,6 +127,20 @@ func WithPolicyAllowedNamespaces(namespaces []string) ManifestOpt {
 	}
 }
 
+func (t *Templater) registryLogin(ctx context.Context, helm Helm, spec *cluster.Spec) error {
+	if spec.Cluster.Spec.RegistryMirrorConfiguration.Authenticate {
+		username, password, err := config.ReadCredentials()
+		if err != nil {
+			return err
+		}
+		endpoint := net.JoinHostPort(spec.Cluster.Spec.RegistryMirrorConfiguration.Endpoint, spec.Cluster.Spec.RegistryMirrorConfiguration.Port)
+		if err := helm.RegistryLogin(ctx, endpoint, username, password); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (t *Templater) GenerateManifest(ctx context.Context, spec *cluster.Spec, opts ...ManifestOpt) ([]byte, error) {
 	versionsBundle := spec.RootVersionsBundle()
 	kubeVersion, err := getKubeVersionString(spec, versionsBundle)
@@ -131,21 +160,17 @@ func (t *Templater) GenerateManifest(ctx context.Context, spec *cluster.Spec, op
 	uri, version := getChartURIAndVersion(versionsBundle)
 	var manifest []byte
 
+	r := registrymirror.FromCluster(spec.Cluster)
+	helm := t.helmFactory.GetInstance(executables.WithRegistryMirror(r))
+
 	if spec.Cluster.Spec.RegistryMirrorConfiguration != nil {
-		if spec.Cluster.Spec.RegistryMirrorConfiguration.Authenticate {
-			username, password, err := config.ReadCredentials()
-			if err != nil {
-				return nil, err
-			}
-			endpoint := net.JoinHostPort(spec.Cluster.Spec.RegistryMirrorConfiguration.Endpoint, spec.Cluster.Spec.RegistryMirrorConfiguration.Port)
-			if err := t.helm.RegistryLogin(ctx, endpoint, username, password); err != nil {
-				return nil, err
-			}
+		if err := t.registryLogin(ctx, helm, spec); err != nil {
+			return nil, err
 		}
 	}
 
 	err = c.retrier.Retry(func() error {
-		manifest, err = t.helm.Template(ctx, uri, version, namespace, c.values, c.kubeVersion)
+		manifest, err = helm.Template(ctx, uri, version, namespace, c.values, c.kubeVersion)
 		return err
 	})
 	if err != nil {
