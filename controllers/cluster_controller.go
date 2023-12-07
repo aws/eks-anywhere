@@ -18,7 +18,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -46,7 +45,6 @@ const (
 type ClusterReconciler struct {
 	client                     client.Client
 	providerReconcilerRegistry ProviderClusterReconcilerRegistry
-	awsIamAuth                 AWSIamConfigReconciler
 	clusterValidator           ClusterValidator
 	packagesClient             PackagesClient
 	machineHealthCheck         MachineHealthCheckReconciler
@@ -64,13 +62,6 @@ type ProviderClusterReconcilerRegistry interface {
 	Get(datacenterKind string) clusters.ProviderClusterReconciler
 }
 
-// AWSIamConfigReconciler manages aws-iam-authenticator installation and configuration for an eks-a cluster.
-type AWSIamConfigReconciler interface {
-	EnsureCASecret(ctx context.Context, logger logr.Logger, cluster *anywherev1.Cluster) (controller.Result, error)
-	Reconcile(ctx context.Context, logger logr.Logger, cluster *anywherev1.Cluster) (controller.Result, error)
-	ReconcileDelete(ctx context.Context, logger logr.Logger, cluster *anywherev1.Cluster) error
-}
-
 // MachineHealthCheckReconciler manages machine health checks for an eks-a cluster.
 type MachineHealthCheckReconciler interface {
 	Reconcile(ctx context.Context, logger logr.Logger, cluster *anywherev1.Cluster) error
@@ -85,11 +76,10 @@ type ClusterValidator interface {
 type ClusterReconcilerOption func(*ClusterReconciler)
 
 // NewClusterReconciler constructs a new ClusterReconciler.
-func NewClusterReconciler(client client.Client, registry ProviderClusterReconcilerRegistry, awsIamAuth AWSIamConfigReconciler, clusterValidator ClusterValidator, pkgs PackagesClient, machineHealthCheck MachineHealthCheckReconciler, opts ...ClusterReconcilerOption) *ClusterReconciler {
+func NewClusterReconciler(client client.Client, registry ProviderClusterReconcilerRegistry, clusterValidator ClusterValidator, pkgs PackagesClient, machineHealthCheck MachineHealthCheckReconciler, opts ...ClusterReconcilerOption) *ClusterReconciler {
 	c := &ClusterReconciler{
 		client:                     client,
 		providerReconcilerRegistry: registry,
-		awsIamAuth:                 awsIamAuth,
 		clusterValidator:           clusterValidator,
 		packagesClient:             pkgs,
 		machineHealthCheck:         machineHealthCheck,
@@ -210,7 +200,7 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (re
 	log.Info("Reconciling cluster")
 	if err := r.client.Get(ctx, req.NamespacedName, cluster); err != nil {
 		if apierrors.IsNotFound(err) {
-			return reconcile.Result{}, nil
+			return ctrl.Result{}, nil
 		}
 		return ctrl.Result{}, err
 	}
@@ -351,13 +341,6 @@ func (r *ClusterReconciler) reconcile(ctx context.Context, log logr.Logger, clus
 
 func (r *ClusterReconciler) preClusterProviderReconcile(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) (controller.Result, error) {
 	// Run some preflight validations that can't be checked in webhook
-	if cluster.HasAWSIamConfig() {
-		if result, err := r.awsIamAuth.EnsureCASecret(ctx, log, cluster); err != nil {
-			return controller.Result{}, err
-		} else if result.Return() {
-			return result, nil
-		}
-	}
 	if cluster.IsManaged() {
 		if err := r.clusterValidator.ValidateManagementClusterName(ctx, log, cluster); err != nil {
 			log.Error(err, "Invalid cluster configuration")
@@ -390,14 +373,6 @@ func (r *ClusterReconciler) preClusterProviderReconcile(ctx context.Context, log
 }
 
 func (r *ClusterReconciler) postClusterProviderReconcile(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) (controller.Result, error) {
-	if cluster.HasAWSIamConfig() {
-		if result, err := r.awsIamAuth.Reconcile(ctx, log, cluster); err != nil {
-			return controller.Result{}, err
-		} else if result.Return() {
-			return result, nil
-		}
-	}
-
 	if err := r.machineHealthCheck.Reconcile(ctx, log, cluster); err != nil {
 		return controller.Result{}, err
 	}
@@ -496,12 +471,6 @@ func (r *ClusterReconciler) reconcileDelete(ctx context.Context, log logr.Logger
 	default:
 		return ctrl.Result{}, err
 
-	}
-
-	if cluster.HasAWSIamConfig() {
-		if err := r.awsIamAuth.ReconcileDelete(ctx, log, cluster); err != nil {
-			return ctrl.Result{}, err
-		}
 	}
 
 	if cluster.IsManaged() {
