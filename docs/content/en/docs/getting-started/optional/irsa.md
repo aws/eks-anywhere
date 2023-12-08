@@ -134,7 +134,7 @@ Set the remaining fields in cluster spec as required and create the cluster usin
 
 ### Deploy pod identity webhook
 
-1. After hosting the service account public signing key and OIDC discovery documents, the applications running in pods can start accessing the desired AWS resources, as long as the pod is mounted with the right service account tokens. This part of configuring the pods with the right service account tokens and env vars is automated by the [amazon pod identity webhook](https://github.com/aws/amazon-eks-pod-identity-webhook). Once the webhook is deployed, it mutates any pods launched using service accounts annotated with `eks.amazonaws.com/role-arn`
+After hosting the service account public signing key and OIDC discovery documents, the applications running in pods can start accessing the desired AWS resources, as long as the pod is mounted with the right service account tokens. This part of configuring the pods with the right service account tokens and env vars is automated by the [Amazon Pod Identity Webhook](https://github.com/aws/amazon-eks-pod-identity-webhook). Once the webhook is deployed, it mutates any pods launched using service accounts annotated with `eks.amazonaws.com/role-arn`. Follow the steps below to deploy the Amazon EKS Pod Identity Webhook to your cluster:
 
 1. Clone [amazon-eks-pod-identity-webhook](https://github.com/aws/amazon-eks-pod-identity-webhook) if not done already.
 
@@ -167,13 +167,13 @@ Set the remaining fields in cluster spec as required and create the cluster usin
     make cluster-up IMAGE=amazon/amazon-eks-pod-identity-webhook:latest
     ```
 
-2. Finally, apply the `my-service-account.yaml` file to create your service account.
+1. Finally, apply the `my-service-account.yaml` file to create your service account.
 
     ```bash
     kubectl apply -f my-service-account.yaml
     ```
 
-1. You can validate IRSA by using test steps mentioned [here](https://anywhere.eks.amazonaws.com/docs/workshops/packages/adot/adot_amp_amg/#irsa-set-up-test). Ensure awscli pod is deployed in same namespace of ServiceAccount `pod-identity-webhook`.
+1. You can validate IRSA by using test steps mentioned [here]({{< relref "../../packages/adot/adot_amp_amg/#irsa-set-up-test" >}}). Ensure awscli pod is deployed in same namespace of ServiceAccount `pod-identity-webhook`.
 
 
 ### Configure the trust relationship for the OIDC provider's IAM Role
