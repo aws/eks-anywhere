@@ -10,11 +10,18 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const (
+	testImage = "public.ecr.aws/eks-anywhere/cli-tools:v0.18.2-eks-a-53"
+)
+
 type expNetworkTestOptions struct {
 	hostIp         string
 	username       string
 	sshKey         string
 	enablePackages bool
+	packagesRegion string
+	additionalEndpoints []string
+	enableGitOps bool
 }
 
 var nt = &expNetworkTestOptions{}
@@ -37,17 +44,11 @@ func init() {
 	expNetworkTestCmd.Flags().StringVar(&nt.sshKey, "ssh-key", "", "ssh-key of admin user")
 	expNetworkTestCmd.Flags().StringVar(&nt.username, "username", "", "username of admin user")
 	expNetworkTestCmd.Flags().BoolVar(&nt.enablePackages, "enable-packages", false, "enable packages network check")
+	expNetworkTestCmd.Flags().StringVar(&nt.packagesRegion, "packages-region", "", "packages region")
+	expNetworkTestCmd.Flags().StringArrayVar(&nt.additionalEndpoints, "additional-endpoints", []string{}, "additional endpoints")
+	expNetworkTestCmd.Flags().BoolVar(&nt.enablePackages, "enable-git-ops", false, "enable gitops")
 
 	err := expNetworkTestCmd.MarkFlagRequired("host")
-	if err != nil {
-		log.Fatalf("marking flag as required: %v", err)
-	}
-
-	err = expNetworkTestCmd.MarkFlagRequired("ssh-key")
-	if err != nil {
-		log.Fatalf("marking flag as required: %v", err)
-	}
-	err = expNetworkTestCmd.MarkFlagRequired("username")
 	if err != nil {
 		log.Fatalf("marking flag as required: %v", err)
 	}
@@ -58,8 +59,11 @@ var endpoints = []string{
 	"anywhere-assets.eks.amazonaws.com",
 	"distro.eks.amazonaws.com",
 	"d2glxqk2uabbnd.cloudfront.net",
-	// "api.ecr.us-west-2.amazonaws.com", only required for packages
 	"d5l0dvt14r5h8.cloudfront.net",
+	"api.github.com",
+}
+
+var gitOpsEndpoints = []string{
 	"api.github.com",
 }
 
@@ -87,49 +91,30 @@ func (str *SSHTestRunner) Run(ctx context.Context, args string) error {
 	return nil
 }
 
-func PingPublicECR(ctx context.Context, tr NetworkTestRunner) error {
-	return nil
-}
-
-/*
-	network access:
-    vCenter endpoint (must be accessible to EKS Anywhere clusters)
-    public.ecr.aws
-    anywhere-assets.eks.amazonaws.com (to download the EKS Anywhere binaries, manifests and OVAs)
-    distro.eks.amazonaws.com (to download EKS Distro binaries and manifests)
-    d2glxqk2uabbnd.cloudfront.net (for EKS Anywhere and EKS Distro ECR container images)
-    api.ecr.us-west-2.amazonaws.com (for EKS Anywhere package authentication matching your region)
-    d5l0dvt14r5h8.cloudfront.net (for EKS Anywhere package ECR container images)
-    api.github.com (only if GitOps is enabled)
-
-*/
-
 // ssh panda@195.17.172.244 echo hello world
-
-func runSSHCmd(ctx context.Context, host string, args string) error {
-	fmt.Printf("running %s\n", args)
-	cmd := exec.Command("ssh", host, args)
-	var stdout, stderr bytes.Buffer
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
-	err := cmd.Run()
-	fmt.Println(stdout.String())
-	fmt.Println(stderr.String())
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
+// host := "ubuntu@195.17.172.208"
 
 func (nt expNetworkTestOptions) Call(ctx context.Context) error {
-	// host := "panda@195.17.172.244"
-	// host := "ubuntu@195.17.172.208"
+
 	username := nt.username
 	hostIp := nt.hostIp
 	host := fmt.Sprintf("%s@%s", username, hostIp)
 	fmt.Println(host)
 	tr := SSHTestRunner{Host: host}
+
+	if nt.enablePackages && nt.packagesRegion == "" {
+		return fmt.Errorf("please include packages-region if packages are enabled, e.g. us-west-2")
+	}
+
+	if nt.enablePackages {
+		endpoints = append(endpoints, fmt.Sprintf("api.ecr.%s.amazonaws.com", nt.packagesRegion))
+	}
+
+	if nt.enableGitOps {
+		endpoints = append(endpoints, gitOpsEndpoints...)
+	}
+
+	endpoints = append(endpoints, nt.additionalEndpoints...)
 
 	tr.Run(ctx, "echo hello world")
 
@@ -143,9 +128,9 @@ func (nt expNetworkTestOptions) Call(ctx context.Context) error {
 		tr.Run(ctx, fmt.Sprintf("ping -c 1 %s", endpoint))
 	}
 
-	tr.Run(ctx, "sudo crictl rmi public.ecr.aws/eks-anywhere/cli-tools:v0.18.2-eks-a-53")
-	tr.Run(ctx, "sudo crictl pull public.ecr.aws/eks-anywhere/cli-tools:v0.18.2-eks-a-53")
-	tr.Run(ctx, "sudo crictl rmi public.ecr.aws/eks-anywhere/cli-tools:v0.18.2-eks-a-53")
+	tr.Run(ctx, fmt.Sprintf("sudo crictl rmi %s", testImage))
+	tr.Run(ctx, fmt.Sprintf("sudo crictl pull %s", testImage))
+	tr.Run(ctx, fmt.Sprintf("sudo crictl rmi %s", testImage))
 
 	return nil
 }
