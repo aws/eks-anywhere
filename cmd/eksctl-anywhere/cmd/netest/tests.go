@@ -9,37 +9,34 @@ import (
 
 const testImage = "public.ecr.aws/eks-anywhere/cli-tools:v0.18.2-eks-a-53"
 
-type VSphereOptions struct {
-	AdditionalEndpoints []string
-}
-
-/*
-
-1. some tests may not be appropriate for a provider
-2. some tests may be appropriate but run using different commands
-
-Building a test report
-
-* Create a report datastructure
-* Leverage the error interface to return multierrors
-
-
-*/
-
+// Outcome is the outcome of executing a netest test suite.
 type Outcome int
 
 const (
+	// Fail indicates a test suite failed.
 	Fail Outcome = iota
+
+	// Pass indicates a test suite passed.
 	Pass
 )
 
+// Result provides detail on the result of executing an atomic test.
 type Result struct {
 	Cmd     string
 	Outcome Outcome
 	Error   string
 }
 
-func ExecVSphereTests(ctx context.Context, i invoker.Invoker, opts VSphereOptions) []Result {
+// Report is a collect of test atomic results.
+type Report []Result
+
+// VSphereOptions provides options for the ExecVSphereTests suite.
+type VSphereOptions struct {
+	AdditionalEndpoints []string
+}
+
+// ExecVSphereTests executes the test suite for a vSphere environment.
+func ExecVSphereTests(ctx context.Context, i invoker.Invoker, opts VSphereOptions) Report {
 	endpoints := append([]string{
 		"public.ecr.aws",
 		"anywhere-assets.eks.amazonaws.com",

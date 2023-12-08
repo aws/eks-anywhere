@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/cheynewallace/tabby"
+
 	"github.com/aws/eks-anywhere/cmd/eksctl-anywhere/cmd/netest"
 	"github.com/aws/eks-anywhere/cmd/eksctl-anywhere/cmd/netest/invoker"
 	"github.com/spf13/cobra"
@@ -78,12 +80,17 @@ func (nt *networkTestOptions) RunE(cmd *cobra.Command, _ []string) error {
 	}
 
 	fmt.Printf("%v of %v passed\n", passed, len(report))
+
 	fmt.Println()
-	fmt.Println("Failures")
+	fmt.Println("FAILURES")
 	for i, r := range report {
-		if r.Outcome == netest.Fail {
-			fmt.Printf("%v. Command: %v\n\tError: %v\n", i+1, r.Cmd, r.Error)
+		if r.Outcome != netest.Fail {
+			continue
 		}
+		t := tabby.New()
+		t.AddLine(fmt.Sprintf("%v.", i+1), "Cmd:", r.Cmd)
+		t.AddLine("", "Err:", r.Error)
+		t.Print()
 	}
 
 	return nil
