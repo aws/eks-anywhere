@@ -5,10 +5,11 @@ import (
 	"log"
 
 	"github.com/cheynewallace/tabby"
+	"github.com/gosuri/uilive"
+	"github.com/spf13/cobra"
 
 	"github.com/aws/eks-anywhere/cmd/eksctl-anywhere/cmd/netest"
 	"github.com/aws/eks-anywhere/cmd/eksctl-anywhere/cmd/netest/invoker"
-	"github.com/spf13/cobra"
 )
 
 type networkTestOptions struct {
@@ -61,16 +62,25 @@ func (nt *networkTestOptions) RunE(cmd *cobra.Command, _ []string) error {
 	var additionalEndpoints []string
 
 	if nt.enablePackages {
-		additionalEndpoints = append(additionalEndpoints, fmt.Sprintf("api.ecr.%s.amazonaws.com", nt.packagesRegion))
+		additionalEndpoints = append(additionalEndpoints, netest.GetPackagesEndpoint(nt.packagesRegion))
 	}
 
 	if nt.enableGitOps {
-		additionalEndpoints = append(additionalEndpoints, netest.GitOptsEndpoints...)
+		additionalEndpoints = append(additionalEndpoints, netest.GetGitOpsEndpoints()...)
 	}
 
 	fmt.Println("Starting test run...")
 
-	report := netest.ExecVSphereTests(cmd.Context(), invoker.SSH{Host: host}, netest.VSphereOptions{AdditionalEndpoints: additionalEndpoints})
+	invkr := invoker.SSH{Host: host}
+
+	liveWriter := uilive.New()
+
+	opts := netest.VSphereOptions{
+		AdditionalEndpoints: additionalEndpoints,
+	}
+
+	liveWriter.Start()
+	report := netest.ExecVSphereTests(cmd.Context(), invkr, broadcaster{liveWriter}, opts)
 
 	var passed int
 	for _, r := range report {
@@ -79,19 +89,31 @@ func (nt *networkTestOptions) RunE(cmd *cobra.Command, _ []string) error {
 		}
 	}
 
-	fmt.Printf("%v of %v passed\n", passed, len(report))
+	fmt.Fprintf(liveWriter, "PASSED: %v/%v\n", passed, len(report))
+	liveWriter.Stop()
 
-	fmt.Println()
 	fmt.Println("FAILURES")
-	for i, r := range report {
-		if r.Outcome != netest.Fail {
+	t := tabby.New()
+	// Track i externally because the report includes successful tests so the slice index
+	// will be wrong.
+	var i int
+	for _, r := range report {
+		if r.Passed() {
 			continue
 		}
-		t := tabby.New()
-		t.AddLine(fmt.Sprintf("%v.", i+1), "Cmd:", r.Cmd)
+		i++
+		t.AddLine(fmt.Sprintf("%v.", i), "Cmd:", r.Cmd)
 		t.AddLine("", "Err:", r.Error)
-		t.Print()
 	}
+	t.Print()
 
 	return nil
+}
+
+type broadcaster struct {
+	Writer *uilive.Writer
+}
+
+func (b broadcaster) Broadcast(summary string) {
+	fmt.Fprintf(b.Writer, "Test: %v\n", summary)
 }

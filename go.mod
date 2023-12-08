@@ -28,6 +28,7 @@ require (
 	github.com/google/go-cmp v0.6.0
 	github.com/google/go-github/v35 v35.3.0
 	github.com/google/uuid v1.4.0
+	github.com/gosuri/uilive v0.0.4
 	github.com/nutanix-cloud-native/cluster-api-provider-nutanix v1.1.3
 	github.com/nutanix-cloud-native/prism-go-client v0.3.4
 	github.com/onsi/gomega v1.29.0
@@ -68,7 +69,10 @@ require (
 	sigs.k8s.io/yaml v1.3.0
 )
 
-require github.com/Microsoft/hcsshim v0.11.0 // indirect
+require (
+	github.com/Microsoft/hcsshim v0.11.0 // indirect
+	github.com/mattn/go-isatty v0.0.17 // indirect
+)
 
 require (
 	dario.cat/mergo v1.0.0 // indirect
