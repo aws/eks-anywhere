@@ -1,136 +1,90 @@
 package cmd
 
 import (
-	"bytes"
-	"context"
 	"fmt"
 	"log"
-	"os/exec"
 
+	"github.com/aws/eks-anywhere/cmd/eksctl-anywhere/cmd/netest"
+	"github.com/aws/eks-anywhere/cmd/eksctl-anywhere/cmd/netest/invoker"
 	"github.com/spf13/cobra"
 )
 
-const (
-	testImage = "public.ecr.aws/eks-anywhere/cli-tools:v0.18.2-eks-a-53"
-)
-
-type expNetworkTestOptions struct {
-	hostIp         string
-	username       string
-	sshKey         string
-	enablePackages bool
-	packagesRegion string
+type networkTestOptions struct {
+	hostIP              string
+	username            string
+	sshKey              string
+	enablePackages      bool
+	packagesRegion      string
 	additionalEndpoints []string
-	enableGitOps bool
+	enableGitOps        bool
 }
 
-var nt = &expNetworkTestOptions{}
+func NewNetworkTestCmd() *cobra.Command {
+	var nt networkTestOptions
 
-var expNetworkTestCmd = &cobra.Command{
-	Use:          "network test -h <host-ip> [flags]",
-	Short:        "Experimental Network Test command",
-	Long:         "This command is used to test the correct network access",
-	SilenceUsage: true,
-	RunE: func(cmd *cobra.Command, args []string) error {
-		ctx := context.Background()
+	cmd := &cobra.Command{
+		Use:          "network test -h <host-ip> [flags]",
+		Short:        "Experimental Network Test command",
+		Long:         "This command is used to test the correct network access",
+		SilenceUsage: true,
+		RunE:         nt.RunE,
+	}
 
-		return nt.Call(ctx)
-	},
-}
+	flgs := cmd.Flags()
+	flgs.StringVar(&nt.hostIP, "host", "", "IP of VM")
+	flgs.StringVar(&nt.sshKey, "ssh-key", "", "SSH key of admin user")
+	flgs.StringVar(&nt.username, "username", "", "Username of admin user")
+	flgs.BoolVar(&nt.enablePackages, "enable-packages", false, "Enable packages network check")
+	flgs.StringVar(&nt.packagesRegion, "packages-region", "", "Packages region")
+	flgs.StringArrayVar(&nt.additionalEndpoints, "additional-endpoints", []string{}, "Additional endpoints to run DNS resolution and connectivity tests against")
+	flgs.BoolVar(&nt.enableGitOps, "enable-gitops", false, "Enable gitops")
 
-func init() {
-	expCmd.AddCommand(expNetworkTestCmd)
-	expNetworkTestCmd.Flags().StringVar(&nt.hostIp, "host", "", "IP of VM")
-	expNetworkTestCmd.Flags().StringVar(&nt.sshKey, "ssh-key", "", "ssh-key of admin user")
-	expNetworkTestCmd.Flags().StringVar(&nt.username, "username", "", "username of admin user")
-	expNetworkTestCmd.Flags().BoolVar(&nt.enablePackages, "enable-packages", false, "enable packages network check")
-	expNetworkTestCmd.Flags().StringVar(&nt.packagesRegion, "packages-region", "", "packages region")
-	expNetworkTestCmd.Flags().StringArrayVar(&nt.additionalEndpoints, "additional-endpoints", []string{}, "additional endpoints")
-	expNetworkTestCmd.Flags().BoolVar(&nt.enablePackages, "enable-git-ops", false, "enable gitops")
-
-	err := expNetworkTestCmd.MarkFlagRequired("host")
+	err := cmd.MarkFlagRequired("host")
 	if err != nil {
 		log.Fatalf("marking flag as required: %v", err)
 	}
+
+	return cmd
 }
 
-var endpoints = []string{
-	"public.ecr.aws",
-	"anywhere-assets.eks.amazonaws.com",
-	"distro.eks.amazonaws.com",
-	"d2glxqk2uabbnd.cloudfront.net",
-	"d5l0dvt14r5h8.cloudfront.net",
-	"api.github.com",
-}
-
-var gitOpsEndpoints = []string{
-	"api.github.com",
-}
-
-type NetworkTestRunner interface {
-	Run(ctx context.Context, args []string) error
-}
-
-type SSHTestRunner struct {
-	Host string
-}
-
-func (str *SSHTestRunner) Run(ctx context.Context, args string) error {
-	fmt.Printf("running %s\n", args)
-	cmd := exec.Command("ssh", str.Host, args)
-	var stdout, stderr bytes.Buffer
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
-	err := cmd.Run()
-	fmt.Println(stdout.String())
-	fmt.Println(stderr.String())
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// ssh panda@195.17.172.244 echo hello world
-// host := "ubuntu@195.17.172.208"
-
-func (nt expNetworkTestOptions) Call(ctx context.Context) error {
-
+func (nt *networkTestOptions) RunE(cmd *cobra.Command, _ []string) error {
 	username := nt.username
-	hostIp := nt.hostIp
-	host := fmt.Sprintf("%s@%s", username, hostIp)
-	fmt.Println(host)
-	tr := SSHTestRunner{Host: host}
+	hostIP := nt.hostIP
+	host := fmt.Sprintf("%s@%s", username, hostIP)
 
 	if nt.enablePackages && nt.packagesRegion == "" {
 		return fmt.Errorf("please include packages-region if packages are enabled, e.g. us-west-2")
 	}
 
+	var additionalEndpoints []string
+
 	if nt.enablePackages {
-		endpoints = append(endpoints, fmt.Sprintf("api.ecr.%s.amazonaws.com", nt.packagesRegion))
+		additionalEndpoints = append(additionalEndpoints, fmt.Sprintf("api.ecr.%s.amazonaws.com", nt.packagesRegion))
 	}
 
 	if nt.enableGitOps {
-		endpoints = append(endpoints, gitOpsEndpoints...)
+		additionalEndpoints = append(additionalEndpoints, netest.GitOptsEndpoints...)
 	}
 
-	endpoints = append(endpoints, nt.additionalEndpoints...)
+	fmt.Println("Starting test run...")
 
-	tr.Run(ctx, "echo hello world")
+	report := netest.ExecVSphereTests(cmd.Context(), invoker.SSH{Host: host}, netest.VSphereOptions{AdditionalEndpoints: additionalEndpoints})
 
-	for _, endpoint := range endpoints {
-		fmt.Printf("nslookup on %s\n", endpoint)
-		tr.Run(ctx, fmt.Sprintf("nslookup %s", endpoint))
+	var passed int
+	for _, r := range report {
+		if r.Outcome == netest.Pass {
+			passed++
+		}
 	}
 
-	for _, endpoint := range endpoints {
-		fmt.Printf("ping on %s\n", endpoint)
-		tr.Run(ctx, fmt.Sprintf("ping -c 1 %s", endpoint))
+	fmt.Printf("%v of %v passed\n", passed, len(report))
+	fmt.Println()
+	fmt.Println("Failures")
+	for i, r := range report {
+		if r.Outcome == netest.Fail {
+			fmt.Printf("%v. Command: %v\n\tError: %v\n", i+1, r.Cmd, r.Error)
+		}
 	}
-
-	tr.Run(ctx, fmt.Sprintf("sudo crictl rmi %s", testImage))
-	tr.Run(ctx, fmt.Sprintf("sudo crictl pull %s", testImage))
-	tr.Run(ctx, fmt.Sprintf("sudo crictl rmi %s", testImage))
 
 	return nil
 }

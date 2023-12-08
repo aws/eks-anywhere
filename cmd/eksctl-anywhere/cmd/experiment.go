@@ -12,4 +12,7 @@ var expCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(expCmd)
+
+	// Bind subcommands
+	expCmd.AddCommand(NewNetworkTestCmd())
 }
