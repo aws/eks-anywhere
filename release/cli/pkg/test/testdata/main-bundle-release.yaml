@@ -161,7 +161,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
         os: linux
-        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.6.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.6.4-eks-a-v0.0.0-dev-build.1
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.9-rc8/metadata.yaml
       version: v0.4.9-rc8+abcdef1
@@ -261,7 +261,7 @@ spec:
         os: linux
         sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/containerd/v1.6.21/containerd-v0.0.0-dev-build.0-linux-amd64.tar.gz
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/containerd/v1.7.11/containerd-v0.0.0-dev-build.0-linux-amd64.tar.gz
       crictl:
         arch:
         - amd64
@@ -430,7 +430,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: notification-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/notification-controller:v1.0.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/fluxcd/notification-controller:v1.2.1-eks-a-v0.0.0-dev-build.1
       sourceController:
         arch:
         - amd64
@@ -439,8 +439,8 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: source-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/source-controller:v1.0.0-eks-a-v0.0.0-dev-build.1
-      version: v2.0.0+abcdef1
+        uri: public.ecr.aws/release-container-registry/fluxcd/source-controller:v1.2.1-eks-a-v0.0.0-dev-build.1
+      version: v2.1.2+abcdef1
     haproxy:
       image:
         arch:
@@ -478,7 +478,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
         os: linux
-        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.6.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.6.4-eks-a-v0.0.0-dev-build.1
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.2.4/metadata.yaml
       version: v1.2.4+abcdef1
@@ -536,7 +536,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
         os: linux
-        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.6.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.6.4-eks-a-v0.0.0-dev-build.1
       manager:
         arch:
         - amd64
@@ -580,7 +580,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
         os: linux
-        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.6.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.6.4-eks-a-v0.0.0-dev-build.1
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.4.0/metadata.yaml
       tinkerbellStack:
@@ -791,7 +791,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
         os: linux
-        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.6.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.6.4-eks-a-v0.0.0-dev-build.1
       manager:
         arch:
         - amd64
@@ -957,7 +957,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
         os: linux
-        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.6.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.6.4-eks-a-v0.0.0-dev-build.1
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.9-rc8/metadata.yaml
       version: v0.4.9-rc8+abcdef1
@@ -1048,7 +1048,7 @@ spec:
         os: linux
         sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/containerd/v1.6.21/containerd-v0.0.0-dev-build.0-linux-amd64.tar.gz
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/containerd/v1.7.11/containerd-v0.0.0-dev-build.0-linux-amd64.tar.gz
       crictl:
         arch:
         - amd64
@@ -1199,7 +1199,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: notification-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/notification-controller:v1.0.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/fluxcd/notification-controller:v1.2.1-eks-a-v0.0.0-dev-build.1
       sourceController:
         arch:
         - amd64
@@ -1208,8 +1208,8 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: source-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/source-controller:v1.0.0-eks-a-v0.0.0-dev-build.1
-      version: v2.0.0+abcdef1
+        uri: public.ecr.aws/release-container-registry/fluxcd/source-controller:v1.2.1-eks-a-v0.0.0-dev-build.1
+      version: v2.1.2+abcdef1
     haproxy:
       image:
         arch:
@@ -1247,7 +1247,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
         os: linux
-        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.6.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.6.4-eks-a-v0.0.0-dev-build.1
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.2.4/metadata.yaml
       version: v1.2.4+abcdef1
@@ -1305,7 +1305,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
         os: linux
-        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.6.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.6.4-eks-a-v0.0.0-dev-build.1
       manager:
         arch:
         - amd64
@@ -1349,7 +1349,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
         os: linux
-        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.6.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.6.4-eks-a-v0.0.0-dev-build.1
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.4.0/metadata.yaml
       tinkerbellStack:
@@ -1560,7 +1560,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
         os: linux
-        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.6.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.6.4-eks-a-v0.0.0-dev-build.1
       manager:
         arch:
         - amd64
@@ -1726,7 +1726,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
         os: linux
-        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.6.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.6.4-eks-a-v0.0.0-dev-build.1
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.9-rc8/metadata.yaml
       version: v0.4.9-rc8+abcdef1
@@ -1817,7 +1817,7 @@ spec:
         os: linux
         sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/containerd/v1.6.21/containerd-v0.0.0-dev-build.0-linux-amd64.tar.gz
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/containerd/v1.7.11/containerd-v0.0.0-dev-build.0-linux-amd64.tar.gz
       crictl:
         arch:
         - amd64
@@ -1968,7 +1968,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: notification-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/notification-controller:v1.0.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/fluxcd/notification-controller:v1.2.1-eks-a-v0.0.0-dev-build.1
       sourceController:
         arch:
         - amd64
@@ -1977,8 +1977,8 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: source-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/source-controller:v1.0.0-eks-a-v0.0.0-dev-build.1
-      version: v2.0.0+abcdef1
+        uri: public.ecr.aws/release-container-registry/fluxcd/source-controller:v1.2.1-eks-a-v0.0.0-dev-build.1
+      version: v2.1.2+abcdef1
     haproxy:
       image:
         arch:
@@ -2016,7 +2016,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
         os: linux
-        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.6.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.6.4-eks-a-v0.0.0-dev-build.1
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.2.4/metadata.yaml
       version: v1.2.4+abcdef1
@@ -2074,7 +2074,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
         os: linux
-        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.6.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.6.4-eks-a-v0.0.0-dev-build.1
       manager:
         arch:
         - amd64
@@ -2118,7 +2118,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
         os: linux
-        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.6.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.6.4-eks-a-v0.0.0-dev-build.1
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.4.0/metadata.yaml
       tinkerbellStack:
@@ -2329,7 +2329,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
         os: linux
-        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.6.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.6.4-eks-a-v0.0.0-dev-build.1
       manager:
         arch:
         - amd64
@@ -2495,7 +2495,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
         os: linux
-        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.6.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.6.4-eks-a-v0.0.0-dev-build.1
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.9-rc8/metadata.yaml
       version: v0.4.9-rc8+abcdef1
@@ -2586,7 +2586,7 @@ spec:
         os: linux
         sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/containerd/v1.6.21/containerd-v0.0.0-dev-build.0-linux-amd64.tar.gz
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/containerd/v1.7.11/containerd-v0.0.0-dev-build.0-linux-amd64.tar.gz
       crictl:
         arch:
         - amd64
@@ -2737,7 +2737,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: notification-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/notification-controller:v1.0.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/fluxcd/notification-controller:v1.2.1-eks-a-v0.0.0-dev-build.1
       sourceController:
         arch:
         - amd64
@@ -2746,8 +2746,8 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: source-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/source-controller:v1.0.0-eks-a-v0.0.0-dev-build.1
-      version: v2.0.0+abcdef1
+        uri: public.ecr.aws/release-container-registry/fluxcd/source-controller:v1.2.1-eks-a-v0.0.0-dev-build.1
+      version: v2.1.2+abcdef1
     haproxy:
       image:
         arch:
@@ -2785,7 +2785,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
         os: linux
-        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.6.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.6.4-eks-a-v0.0.0-dev-build.1
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.2.4/metadata.yaml
       version: v1.2.4+abcdef1
@@ -2843,7 +2843,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
         os: linux
-        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.6.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.6.4-eks-a-v0.0.0-dev-build.1
       manager:
         arch:
         - amd64
@@ -2887,7 +2887,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
         os: linux
-        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.6.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.6.4-eks-a-v0.0.0-dev-build.1
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.4.0/metadata.yaml
       tinkerbellStack:
@@ -3098,7 +3098,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
         os: linux
-        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.6.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.6.4-eks-a-v0.0.0-dev-build.1
       manager:
         arch:
         - amd64
@@ -3264,7 +3264,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
         os: linux
-        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.6.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.6.4-eks-a-v0.0.0-dev-build.1
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.9-rc8/metadata.yaml
       version: v0.4.9-rc8+abcdef1
@@ -3355,7 +3355,7 @@ spec:
         os: linux
         sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/containerd/v1.6.21/containerd-v0.0.0-dev-build.0-linux-amd64.tar.gz
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/containerd/v1.7.11/containerd-v0.0.0-dev-build.0-linux-amd64.tar.gz
       crictl:
         arch:
         - amd64
@@ -3506,7 +3506,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: notification-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/notification-controller:v1.0.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/fluxcd/notification-controller:v1.2.1-eks-a-v0.0.0-dev-build.1
       sourceController:
         arch:
         - amd64
@@ -3515,8 +3515,8 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: source-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/source-controller:v1.0.0-eks-a-v0.0.0-dev-build.1
-      version: v2.0.0+abcdef1
+        uri: public.ecr.aws/release-container-registry/fluxcd/source-controller:v1.2.1-eks-a-v0.0.0-dev-build.1
+      version: v2.1.2+abcdef1
     haproxy:
       image:
         arch:
@@ -3554,7 +3554,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
         os: linux
-        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.6.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.6.4-eks-a-v0.0.0-dev-build.1
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.2.4/metadata.yaml
       version: v1.2.4+abcdef1
@@ -3612,7 +3612,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
         os: linux
-        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.6.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.6.4-eks-a-v0.0.0-dev-build.1
       manager:
         arch:
         - amd64
@@ -3656,7 +3656,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
         os: linux
-        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.6.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.6.4-eks-a-v0.0.0-dev-build.1
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.4.0/metadata.yaml
       tinkerbellStack:
@@ -3867,7 +3867,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
         os: linux
-        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.6.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.6.4-eks-a-v0.0.0-dev-build.1
       manager:
         arch:
         - amd64
@@ -4033,7 +4033,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
         os: linux
-        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.6.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.6.4-eks-a-v0.0.0-dev-build.1
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.9-rc8/metadata.yaml
       version: v0.4.9-rc8+abcdef1
@@ -4124,7 +4124,7 @@ spec:
         os: linux
         sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/containerd/v1.6.21/containerd-v0.0.0-dev-build.0-linux-amd64.tar.gz
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/containerd/v1.7.11/containerd-v0.0.0-dev-build.0-linux-amd64.tar.gz
       crictl:
         arch:
         - amd64
@@ -4275,7 +4275,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: notification-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/notification-controller:v1.0.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/fluxcd/notification-controller:v1.2.1-eks-a-v0.0.0-dev-build.1
       sourceController:
         arch:
         - amd64
@@ -4284,8 +4284,8 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: source-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/source-controller:v1.0.0-eks-a-v0.0.0-dev-build.1
-      version: v2.0.0+abcdef1
+        uri: public.ecr.aws/release-container-registry/fluxcd/source-controller:v1.2.1-eks-a-v0.0.0-dev-build.1
+      version: v2.1.2+abcdef1
     haproxy:
       image:
         arch:
@@ -4323,7 +4323,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
         os: linux
-        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.6.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.6.4-eks-a-v0.0.0-dev-build.1
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.2.4/metadata.yaml
       version: v1.2.4+abcdef1
@@ -4381,7 +4381,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
         os: linux
-        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.6.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.6.4-eks-a-v0.0.0-dev-build.1
       manager:
         arch:
         - amd64
@@ -4425,7 +4425,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
         os: linux
-        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.6.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.6.4-eks-a-v0.0.0-dev-build.1
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.4.0/metadata.yaml
       tinkerbellStack:
@@ -4636,7 +4636,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
         os: linux
-        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.6.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.6.4-eks-a-v0.0.0-dev-build.1
       manager:
         arch:
         - amd64
