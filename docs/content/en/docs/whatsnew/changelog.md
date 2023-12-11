@@ -15,6 +15,30 @@ Please upgrade to `v0.15.3` if you are using Tinkerbell (Bare Metal) provider.
 * When upgrading to a new minor version, a new OS image must be created using the new image-builder cli.
 {{% /alert %}}
 
+## [v0.18.3](https://github.com/aws/eks-anywhere/releases/tag/v0.18.3)
+
+### Fixed
+* Etcdadm: Renew client certificates when nodes rollover ([etcdadm/#56](https://github.com/aws/etcdadm-controller/pull/56))
+* Include DefaultCNIConfigured condition in Cluster Ready status except when Skip Upgrades is enabled ([#7132](https://github.com/aws/eks-anywhere/pull/7132))
+
+### Tool Upgrade
+* EKS Distro (Kubernetes):
+    * `v1.25.15` to `v1.25.16`
+    * `v1.26.10` to `v1.26.11`
+    * `v1.27.7` to `v1.27.8`
+    * `v1.28.3` to `v1.28.4`
+* Etcdadm Controller: `v1.0.15` to `v1.0.16`
+
+### Supported Operating Systems
+
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow  |
+| :----------:        | :-----: | :--------: | :-----: | :--------: | :---: |
+| Ubuntu 20.04        | ✔       | ✔          | ✔       | —          | ✔     |
+| Ubuntu 22.04        | ✔       | ✔          | ✔       | —          | —     |
+| Bottlerocket 1.15.1 | ✔       | ✔          | —       | —          | —     |
+| RHEL 8.7            | ✔       | ✔          | ✔       | ✔          | —     |
+| RHEL 9.x            | —       | —          | ✔       | —          | —     |
+
 ## [v0.18.2](https://github.com/aws/eks-anywhere/releases/tag/v0.18.2)
 
 ### Fixed
