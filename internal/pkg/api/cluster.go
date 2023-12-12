@@ -83,6 +83,16 @@ func WithCiliumSkipUpgrade() ClusterFiller {
 	}
 }
 
+// WithCiliumRoutingMode sets the tunnel mode with the provided mode option to use.
+func WithCiliumRoutingMode(mode anywherev1.CiliumRoutingMode) ClusterFiller {
+	return func(c *anywherev1.Cluster) {
+		if c.Spec.ClusterNetwork.CNIConfig == nil {
+			c.Spec.ClusterNetwork.CNIConfig = &anywherev1.CNIConfig{Cilium: &anywherev1.CiliumConfig{}}
+		}
+		c.Spec.ClusterNetwork.CNIConfig.Cilium.RoutingMode = mode
+	}
+}
+
 func WithClusterNamespace(ns string) ClusterFiller {
 	return func(c *anywherev1.Cluster) {
 		c.Namespace = ns

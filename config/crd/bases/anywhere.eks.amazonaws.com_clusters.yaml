@@ -72,10 +72,33 @@ spec:
                               network interfaces are used for masquerading. Accepted
                               values are a valid interface name or interface prefix.
                             type: string
+                          ipv4NativeRoutingCIDR:
+                            description: IPv4NativeRoutingCIDR specifies the CIDR
+                              to use when RoutingMode is set to direct. When specified,
+                              Cilium assumes networking for this CIDR is preconfigured
+                              and hands traffic destined for that range to the Linux
+                              network stack without applying any SNAT. If this is
+                              not set autoDirectNodeRoutes will be set to true
+                            type: string
+                          ipv6NativeRoutingCIDR:
+                            description: IPv6NativeRoutingCIDR specifies the IPv6
+                              CIDR to use when RoutingMode is set to direct. When
+                              specified, Cilium assumes networking for this CIDR is
+                              preconfigured and hands traffic destined for that range
+                              to the Linux network stack without applying any SNAT.
+                              If this is not set autoDirectNodeRoutes will be set
+                              to true
+                            type: string
                           policyEnforcementMode:
                             description: PolicyEnforcementMode determines communication
                               allowed between pods. Accepted values are default, always,
                               never.
+                            type: string
+                          routingMode:
+                            description: RoutingMode indicates the routing tunnel
+                              mode to use for Cilium. Accepted values are overlay
+                              (geneve tunnel with overlay) or direct (tunneling disabled
+                              with direct routing) Defaults to overlay.
                             type: string
                           skipUpgrade:
                             description: SkipUpgrade indicicates that Cilium maintenance
