@@ -20,6 +20,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/executables/cmk"
+	"github.com/aws/eks-anywhere/pkg/networking/cilium"
 	ciliumreconciler "github.com/aws/eks-anywhere/pkg/networking/cilium/reconciler"
 	cnireconciler "github.com/aws/eks-anywhere/pkg/networking/reconciler"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack"
@@ -56,6 +57,8 @@ type Factory struct {
 	deps                         *dependencies.Dependencies
 	packageControllerClient      *curatedpackages.PackageControllerClient
 	cloudStackValidatorRegistry  cloudstack.ValidatorRegistry
+	ciliumTemplater              ciliumreconciler.Templater
+	helmFactory                  *HelmFactory
 }
 
 type Reconcilers struct {
@@ -465,15 +468,45 @@ func (f *Factory) withCloudStackValidatorRegistry() *Factory {
 	return f
 }
 
+func (f *Factory) withHelmFactory() *Factory {
+	f.dependencyFactory.WithHelmFactory()
+
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.helmFactory != nil {
+			return nil
+		}
+
+		f.helmFactory = NewHelmFactory(f.manager.GetClient(), f.deps.HelmFactory)
+		return nil
+	})
+
+	return f
+}
+
+func (f *Factory) withCiliumTemplater() *Factory {
+	f.withHelmFactory()
+
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.ciliumTemplater != nil {
+			return nil
+		}
+		f.ciliumTemplater = cilium.NewTemplater(f.helmFactory)
+
+		return nil
+	})
+
+	return f
+}
+
 func (f *Factory) withCNIReconciler() *Factory {
-	f.dependencyFactory.WithCiliumTemplater()
+	f.withCiliumTemplater()
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.cniReconciler != nil {
 			return nil
 		}
 
-		f.cniReconciler = cnireconciler.New(ciliumreconciler.New(f.deps.CiliumTemplater))
+		f.cniReconciler = cnireconciler.New(ciliumreconciler.New(f.ciliumTemplater))
 
 		return nil
 	})

@@ -771,7 +771,7 @@ func (f *Factory) WithHelm(opts ...executables.HelmOpt) *Factory {
 	return f
 }
 
-func (f *Factory) WithHelmFactory(opts ...executables.HelmOpt) *Factory {
+func (f *Factory) WithHelmFactory() *Factory {
 	f.WithExecutableBuilder()
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {

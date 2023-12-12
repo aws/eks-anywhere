@@ -1,6 +1,7 @@
 package dependencies
 
 import (
+	"context"
 	"sync"
 
 	"github.com/aws/eks-anywhere/pkg/executables"
@@ -11,6 +12,7 @@ type ExecutableBuilder interface {
 	BuildHelmExecutable(...executables.HelmOpt) *executables.Helm
 }
 
+// HelmFactory is responsible for creating and owning instances of Helm client.
 type HelmFactory struct {
 	mu                 sync.Mutex
 	builder            ExecutableBuilder
@@ -44,10 +46,13 @@ func (f *HelmFactory) WithInsecure() *HelmFactory {
 func NewHelmFactory(builder ExecutableBuilder) *HelmFactory {
 	return &HelmFactory{
 		builder: builder,
+		mu:      sync.Mutex{},
 	}
+
 }
 
-func (f *HelmFactory) GetInstance(opts ...executables.HelmOpt) *executables.Helm {
+// GetClient returns a new Helm executeble client.
+func (f *HelmFactory) GetClient(opts ...executables.HelmOpt) *executables.Helm {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 
@@ -65,4 +70,11 @@ func (f *HelmFactory) GetInstance(opts ...executables.HelmOpt) *executables.Helm
 
 	f.helm = f.builder.BuildHelmExecutable(opts...)
 	return f.helm
+}
+
+// GetClientForCluster returns a new helm client.
+// There is no cluster information that needs to be passed, but this method was needed to satisfy
+// an interface together with the controller helm factory.
+func (f *HelmFactory) GetClientForCluster(_ context.Context, _ string) (*executables.Helm, error) {
+	return f.GetClient(), nil
 }

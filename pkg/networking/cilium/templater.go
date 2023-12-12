@@ -12,7 +12,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/executables"
-	"github.com/aws/eks-anywhere/pkg/registrymirror"
 	"github.com/aws/eks-anywhere/pkg/retrier"
 	"github.com/aws/eks-anywhere/pkg/semver"
 	"github.com/aws/eks-anywhere/pkg/templater"
@@ -32,7 +31,7 @@ type Helm interface {
 }
 
 type HelmFactory interface {
-	GetInstance(opts ...executables.HelmOpt) *executables.Helm
+	GetClientForCluster(ctx context.Context, clusterName string) (*executables.Helm, error)
 }
 
 type Templater struct {
@@ -67,11 +66,11 @@ func (t *Templater) GenerateUpgradePreflightManifest(ctx context.Context, spec *
 	if err != nil {
 		return nil, err
 	}
-
-	r := registrymirror.FromCluster(spec.Cluster)
-	helm := t.helmFactory.GetInstance(executables.WithRegistryMirror(r))
-
-	if spec.Cluster.Spec.RegistryMirrorConfiguration != nil {
+	helm, err := t.helmFactory.GetClientForCluster(ctx, spec.Cluster.ManagedBy())
+	if err != nil {
+		return nil, fmt.Errorf("failed to get helm client for cluster %s: %v", spec.Cluster.ManagedBy(), err)
+	}
+	if spec.Cluster.Spec.RegistryMirrorConfiguration != nil && spec.Cluster.Spec.RegistryMirrorConfiguration.Authenticate {
 		if err := t.registryLogin(ctx, helm, spec); err != nil {
 			return nil, err
 		}
@@ -128,15 +127,13 @@ func WithPolicyAllowedNamespaces(namespaces []string) ManifestOpt {
 }
 
 func (t *Templater) registryLogin(ctx context.Context, helm Helm, spec *cluster.Spec) error {
-	if spec.Cluster.Spec.RegistryMirrorConfiguration.Authenticate {
-		username, password, err := config.ReadCredentials()
-		if err != nil {
-			return err
-		}
-		endpoint := net.JoinHostPort(spec.Cluster.Spec.RegistryMirrorConfiguration.Endpoint, spec.Cluster.Spec.RegistryMirrorConfiguration.Port)
-		if err := helm.RegistryLogin(ctx, endpoint, username, password); err != nil {
-			return err
-		}
+	username, password, err := config.ReadCredentials()
+	if err != nil {
+		return err
+	}
+	endpoint := net.JoinHostPort(spec.Cluster.Spec.RegistryMirrorConfiguration.Endpoint, spec.Cluster.Spec.RegistryMirrorConfiguration.Port)
+	if err := helm.RegistryLogin(ctx, endpoint, username, password); err != nil {
+		return err
 	}
 	return nil
 }
@@ -160,10 +157,11 @@ func (t *Templater) GenerateManifest(ctx context.Context, spec *cluster.Spec, op
 	uri, version := getChartURIAndVersion(versionsBundle)
 	var manifest []byte
 
-	r := registrymirror.FromCluster(spec.Cluster)
-	helm := t.helmFactory.GetInstance(executables.WithRegistryMirror(r))
-
-	if spec.Cluster.Spec.RegistryMirrorConfiguration != nil {
+	helm, err := t.helmFactory.GetClientForCluster(ctx, spec.Cluster.ManagedBy())
+	if err != nil {
+		return nil, fmt.Errorf("failed to get helm client for cluster %s: %v", spec.Cluster.ManagedBy(), err)
+	}
+	if spec.Cluster.Spec.RegistryMirrorConfiguration != nil && spec.Cluster.Spec.RegistryMirrorConfiguration.Authenticate {
 		if err := t.registryLogin(ctx, helm, spec); err != nil {
 			return nil, err
 		}
