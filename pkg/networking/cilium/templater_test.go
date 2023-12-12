@@ -278,6 +278,85 @@ func TestTemplaterGenerateManifestEgressMasqueradeInterfacesSuccess(t *testing.T
 	tt.Expect(tt.t.GenerateManifest(tt.ctx, tt.spec)).To(Equal(tt.manifest), "templater.GenerateManifest() should return right manifest")
 }
 
+func TestTemplaterGenerateManifestDirectRouteModeSuccess(t *testing.T) {
+	wantValues := map[string]interface{}{
+		"cni": map[string]interface{}{
+			"chainingMode": "portmap",
+		},
+		"ipam": map[string]interface{}{
+			"mode": "kubernetes",
+		},
+		"identityAllocationMode": "crd",
+		"prometheus": map[string]interface{}{
+			"enabled": true,
+		},
+		"rollOutCiliumPods":    true,
+		"tunnel":               "disabled",
+		"autoDirectNodeRoutes": "true",
+		"image": map[string]interface{}{
+			"repository": "public.ecr.aws/isovalent/cilium",
+			"tag":        "v1.9.11-eksa.1",
+		},
+		"operator": map[string]interface{}{
+			"image": map[string]interface{}{
+				"repository": "public.ecr.aws/isovalent/operator",
+				"tag":        "v1.9.11-eksa.1",
+			},
+			"prometheus": map[string]interface{}{
+				"enabled": true,
+			},
+		},
+	}
+
+	tt := newtemplaterTest(t)
+	tt.spec.Cluster.Spec.ManagementCluster.Name = "managed"
+	tt.spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.RoutingMode = v1alpha1.CiliumRoutingModeDirect
+	tt.expectHelmTemplateWith(eqMap(wantValues), "1.22").Return(tt.manifest, nil)
+
+	tt.Expect(tt.t.GenerateManifest(tt.ctx, tt.spec)).To(Equal(tt.manifest), "templater.GenerateManifest() should return right manifest")
+}
+
+func TestTemplaterGenerateManifestDirectModeManualIPCIDRSuccess(t *testing.T) {
+	wantValues := map[string]interface{}{
+		"cni": map[string]interface{}{
+			"chainingMode": "portmap",
+		},
+		"ipam": map[string]interface{}{
+			"mode": "kubernetes",
+		},
+		"identityAllocationMode": "crd",
+		"prometheus": map[string]interface{}{
+			"enabled": true,
+		},
+		"rollOutCiliumPods":     true,
+		"tunnel":                "disabled",
+		"ipv4NativeRoutingCIDR": "192.168.0.0/24",
+		"ipv6NativeRoutingCIDR": "2001:db8::/32",
+		"image": map[string]interface{}{
+			"repository": "public.ecr.aws/isovalent/cilium",
+			"tag":        "v1.9.11-eksa.1",
+		},
+		"operator": map[string]interface{}{
+			"image": map[string]interface{}{
+				"repository": "public.ecr.aws/isovalent/operator",
+				"tag":        "v1.9.11-eksa.1",
+			},
+			"prometheus": map[string]interface{}{
+				"enabled": true,
+			},
+		},
+	}
+
+	tt := newtemplaterTest(t)
+	tt.spec.Cluster.Spec.ManagementCluster.Name = "managed"
+	tt.spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.RoutingMode = v1alpha1.CiliumRoutingModeDirect
+	tt.spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.IPv4NativeRoutingCIDR = "192.168.0.0/24"
+	tt.spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.IPv6NativeRoutingCIDR = "2001:db8::/32"
+	tt.expectHelmTemplateWith(eqMap(wantValues), "1.22").Return(tt.manifest, nil)
+
+	tt.Expect(tt.t.GenerateManifest(tt.ctx, tt.spec)).To(Equal(tt.manifest), "templater.GenerateManifest() should return right manifest")
+}
+
 func TestTemplaterGenerateManifestError(t *testing.T) {
 	expectedAttempts := 2
 	tt := newtemplaterTest(t)

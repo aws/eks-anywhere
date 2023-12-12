@@ -604,6 +604,10 @@ func (n *CiliumConfig) Equal(o *CiliumConfig) bool {
 		return false
 	}
 
+	if n.RoutingMode != o.RoutingMode {
+		return false
+	}
+
 	oSkipUpgradeIsFalse := o.SkipUpgrade == nil || !*o.SkipUpgrade
 	nSkipUpgradeIsFalse := n.SkipUpgrade == nil || !*n.SkipUpgrade
 
@@ -804,6 +808,8 @@ type CNI string
 
 type CiliumPolicyEnforcementMode string
 
+type CiliumRoutingMode string
+
 type CNIConfig struct {
 	Cilium   *CiliumConfig   `json:"cilium,omitempty"`
 	Kindnetd *KindnetdConfig `json:"kindnetd,omitempty"`
@@ -814,6 +820,7 @@ func (n *CNIConfig) IsManaged() bool {
 	return n != nil && (n.Kindnetd != nil || n.Cilium != nil && n.Cilium.IsManaged())
 }
 
+// CiliumConfig contains configuration specific to the Cilium CNI.
 type CiliumConfig struct {
 	// PolicyEnforcementMode determines communication allowed between pods. Accepted values are default, always, never.
 	PolicyEnforcementMode CiliumPolicyEnforcementMode `json:"policyEnforcementMode,omitempty"`
@@ -826,6 +833,28 @@ type CiliumConfig struct {
 	// be used when operators wish to self manage the Cilium installation.
 	// +optional
 	SkipUpgrade *bool `json:"skipUpgrade,omitempty"`
+
+	// RoutingMode indicates the routing tunnel mode to use for Cilium. Accepted values are overlay (geneve tunnel with overlay)
+	// or direct (tunneling disabled with direct routing)
+	// Defaults to overlay.
+	// +optional
+	RoutingMode CiliumRoutingMode `json:"routingMode,omitempty"`
+
+	// IPv4NativeRoutingCIDR specifies the CIDR to use when RoutingMode is set to direct.
+	// When specified, Cilium assumes networking for this CIDR is preconfigured and
+	// hands traffic destined for that range to the Linux network stack without
+	// applying any SNAT.
+	// If this is not set autoDirectNodeRoutes will be set to true
+	// +optional
+	IPv4NativeRoutingCIDR string `json:"ipv4NativeRoutingCIDR,omitempty"`
+
+	// IPv6NativeRoutingCIDR specifies the IPv6 CIDR to use when RoutingMode is set to direct.
+	// When specified, Cilium assumes networking for this CIDR is preconfigured and
+	// hands traffic destined for that range to the Linux network stack without
+	// applying any SNAT.
+	// If this is not set autoDirectNodeRoutes will be set to true
+	// +optional
+	IPv6NativeRoutingCIDR string `json:"ipv6NativeRoutingCIDR,omitempty"`
 }
 
 // IsManaged returns true if SkipUpgrade is nil or false indicating EKS-A is responsible for
@@ -834,12 +863,18 @@ func (n *CiliumConfig) IsManaged() bool {
 	return n.SkipUpgrade == nil || !*n.SkipUpgrade
 }
 
+// KindnetdConfig contains configuration specific to the Kindnetd CNI.
 type KindnetdConfig struct{}
 
 const (
-	Cilium           CNI = "cilium"
+	// Cilium is the EKS-A Cilium.
+	Cilium CNI = "cilium"
+
+	// CiliumEnterprise is Isovalents Cilium.
 	CiliumEnterprise CNI = "cilium-enterprise"
-	Kindnetd         CNI = "kindnetd"
+
+	// Kindnetd is the CNI shipped with KinD.
+	Kindnetd CNI = "kindnetd"
 )
 
 var validCNIs = map[CNI]struct{}{
@@ -847,6 +882,7 @@ var validCNIs = map[CNI]struct{}{
 	Kindnetd: {},
 }
 
+// Policy enforcement modes for Cilium.
 const (
 	CiliumPolicyModeDefault CiliumPolicyEnforcementMode = "default"
 	CiliumPolicyModeAlways  CiliumPolicyEnforcementMode = "always"
@@ -858,6 +894,12 @@ var validCiliumPolicyEnforcementModes = map[CiliumPolicyEnforcementMode]bool{
 	CiliumPolicyModeDefault: true,
 	CiliumPolicyModeNever:   true,
 }
+
+// Routing modes for Cilium.
+const (
+	CiliumRoutingModeOverlay CiliumRoutingMode = "overlay"
+	CiliumRoutingModeDirect  CiliumRoutingMode = "direct"
+)
 
 // FailureReasonType is a type for defining failure reasons.
 type FailureReasonType string

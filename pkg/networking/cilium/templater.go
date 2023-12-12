@@ -237,6 +237,18 @@ func templateValues(spec *cluster.Spec, versionsBundle *cluster.VersionsBundle) 
 		val["egressMasqueradeInterfaces"] = spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.EgressMasqueradeInterfaces
 	}
 
+	if spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.RoutingMode == anywherev1.CiliumRoutingModeDirect {
+		val["tunnel"] = "disabled"
+
+		if spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.IPv4NativeRoutingCIDR == "" &&
+			spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.IPv6NativeRoutingCIDR == "" {
+			val["autoDirectNodeRoutes"] = "true"
+		} else {
+			val["ipv4NativeRoutingCIDR"] = spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.IPv4NativeRoutingCIDR
+			val["ipv6NativeRoutingCIDR"] = spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.IPv6NativeRoutingCIDR
+		}
+	}
+
 	return val
 }
 
