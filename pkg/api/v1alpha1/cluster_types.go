@@ -841,6 +841,7 @@ func (n *CNIConfig) IsManaged() bool {
 	return n != nil && (n.Kindnetd != nil || n.Cilium != nil && n.Cilium.IsManaged())
 }
 
+// CiliumConfig contains configuration specific to the Cilium CNI.
 type CiliumConfig struct {
 	// PolicyEnforcementMode determines communication allowed between pods. Accepted values are default, always, never.
 	PolicyEnforcementMode CiliumPolicyEnforcementMode `json:"policyEnforcementMode,omitempty"`
@@ -860,8 +861,7 @@ type CiliumConfig struct {
 	// +optional
 	RoutingMode CiliumRoutingMode `json:"routingMode,omitempty"`
 
-	// When RoutingMode is set to direct this flag allows too explicitly specify the
-	// IPv4 CIDR for native routing.
+	// IPv4NativeRoutingCIDR specifies the CIDR to use when RoutingMode is set to direct.
 	// When specified, Cilium assumes networking for this CIDR is preconfigured and
 	// hands traffic destined for that range to the Linux network stack without
 	// applying any SNAT.
@@ -869,8 +869,7 @@ type CiliumConfig struct {
 	// +optional
 	IPv4NativeRoutingCIDR string `json:"ipv4NativeRoutingCIDR,omitempty"`
 
-	// When RoutingMode is set to direct this flag allows too explicitly specify the
-	// IPv6 CIDR for native routing.
+	// IPv6NativeRoutingCIDR specifies the IPv6 CIDR to use when RoutingMode is set to direct.
 	// When specified, Cilium assumes networking for this CIDR is preconfigured and
 	// hands traffic destined for that range to the Linux network stack without
 	// applying any SNAT.
@@ -885,12 +884,18 @@ func (n *CiliumConfig) IsManaged() bool {
 	return n.SkipUpgrade == nil || !*n.SkipUpgrade
 }
 
+// KindnetdConfig contains configuration specific to the Kindnetd CNI.
 type KindnetdConfig struct{}
 
 const (
-	Cilium           CNI = "cilium"
+	// Cilium is the EKS-A Cilium.
+	Cilium CNI = "cilium"
+
+	// CiliumEnterprise is Isovalents Cilium.
 	CiliumEnterprise CNI = "cilium-enterprise"
-	Kindnetd         CNI = "kindnetd"
+
+	// Kindnetd is the CNI shipped with KinD.
+	Kindnetd CNI = "kindnetd"
 )
 
 var validCNIs = map[CNI]struct{}{
@@ -898,6 +903,7 @@ var validCNIs = map[CNI]struct{}{
 	Kindnetd: {},
 }
 
+// Policy enforcement modes for Cilium.
 const (
 	CiliumPolicyModeDefault CiliumPolicyEnforcementMode = "default"
 	CiliumPolicyModeAlways  CiliumPolicyEnforcementMode = "always"
@@ -910,6 +916,7 @@ var validCiliumPolicyEnforcementModes = map[CiliumPolicyEnforcementMode]bool{
 	CiliumPolicyModeNever:   true,
 }
 
+// Routing modes for Cilium.
 const (
 	CiliumRoutingModeOverlay CiliumRoutingMode = "overlay"
 	CiliumRoutingModeDirect  CiliumRoutingMode = "direct"
