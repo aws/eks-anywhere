@@ -1,3 +1,5 @@
+//go:generate fyne bundle -o icons.go eks-anywhere-logo.png
+
 package main
 
 import (
@@ -5,14 +7,15 @@ import (
 	"compress/gzip"
 	"encoding/json"
 	"fmt"
-	"fyne.io/fyne/v2"
 	"image/color"
 	"io"
 	"os"
 	"path/filepath"
-	"sigs.k8s.io/yaml"
 	"strconv"
 	"strings"
+
+	"fyne.io/fyne/v2"
+	"sigs.k8s.io/yaml"
 
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/canvas"
@@ -25,6 +28,44 @@ import (
 	"github.com/replicatedhq/troubleshoot/pkg/convert"
 )
 
+type appTheme struct{}
+
+var _ fyne.Theme = (*appTheme)(nil)
+
+func (t appTheme) Color(name fyne.ThemeColorName, variant fyne.ThemeVariant) color.Color {
+	if name == theme.ColorNameBackground {
+		if variant == theme.VariantLight {
+			return color.White
+		}
+		return color.Black
+	}
+
+	return theme.DefaultTheme().Color(name, variant)
+}
+
+func (m appTheme) Icon(name fyne.ThemeIconName) fyne.Resource {
+	return theme.DefaultTheme().Icon(name)
+}
+
+func (m appTheme) Font(style fyne.TextStyle) fyne.Resource {
+	return theme.DefaultTheme().Font(style)
+}
+
+func (m appTheme) Size(name fyne.ThemeSizeName) float32 {
+	return theme.DefaultTheme().Size(name)
+}
+
+type stringList []string
+
+func (sl stringList) contains(str string) bool {
+	for _, elem := range sl {
+		if elem == str {
+			return true
+		}
+	}
+	return false
+}
+
 // Display the following metadata about the cluster
 // - eks-a version
 // - k8s version
@@ -33,23 +74,15 @@ import (
 // - provider
 // - etcd stacked / unstacked with replicas
 // - registry mirror true/false
-func addClusterMetadata(w fyne.Window, container *fyne.Container, supportBundleFolderPath string, errorResults []*convert.Result) {
+func addClusterMetadata(w fyne.Window, container *fyne.Container, supportBundleFolderPath string) {
 	// Set label for cluster meta data
-	clusterMetaDataLabel := &widget.Label{
-		BaseWidget: widget.BaseWidget{},
-		Text:       "Cluster Metadata",
-		Alignment:  0,
-		Wrapping:   0,
-		TextStyle: fyne.TextStyle{
-			Bold: true,
-		},
-		Truncation: 0,
-		Importance: 0,
-	}
+	clusterMetaDataLabel := canvas.NewText("CLUSTER METADATA", color.NRGBA{R: 255, G: 165, A: 255})
+	clusterMetaDataLabel.TextStyle = fyne.TextStyle{Bold: true}
+	clusterMetaDataLabel.TextSize = 35
 	container.Add(clusterMetaDataLabel)
 
 	// Parse cluster metadata from support bundle files
-	crdPath := filepath.Join(supportBundleFolderPath, "cluster-resources", "custom-resource-definitions")
+	crdPath := filepath.Join(supportBundleFolderPath, "cluster-resources", "custom-resources")
 	clusterSpecFilePath := filepath.Join(crdPath, "clusters.anywhere.eks.amazonaws.com", "default.yaml")
 	var clusterSpec []map[string]interface{}
 	contents, err := os.ReadFile(clusterSpecFilePath)
@@ -66,15 +99,15 @@ func addClusterMetadata(w fyne.Window, container *fyne.Container, supportBundleF
 	// Cards for metadata
 	spec := clusterSpec[0]["spec"].(map[string]interface{})
 	version := spec["eksaVersion"]
-	eksaVersion := ""
+	eksaVersion := "Unknown"
 	if version != nil {
 		eksaVersion = version.(string)
 	}
-	container.Add(getCard("EKS-A Version", eksaVersion, 18, color.Black))
+	container.Add(getCard("EKS-A Version", eksaVersion, 18, color.NRGBA{R: 255, G: 165, A: 255}))
 
 	// k8s version
 	k8sVersion := spec["kubernetesVersion"].(string)
-	container.Add(getCard("K8s Version", k8sVersion, 18, color.Black))
+	container.Add(getCard("K8s Version", k8sVersion, 18, color.NRGBA{R: 255, G: 165, A: 255}))
 
 	// Provider
 	dcRef := spec["datacenterRef"].(map[string]interface{})
@@ -100,19 +133,19 @@ func addClusterMetadata(w fyne.Window, container *fyne.Container, supportBundleF
 		machineConfigFile = "vspheremachineconfigs.anywhere.eks.amazonaws.com"
 		//machineConfigKind = "VSphereMachineConfig"
 	}
-	container.Add(getCard("Provider", provider, 18, color.Black))
+	container.Add(getCard("Provider", provider, 18, color.NRGBA{R: 255, G: 165, A: 255}))
 
 	extEtcd := spec["externalEtcdConfiguration"]
 	isExtEtcd := false
 	if extEtcd != nil {
 		isExtEtcd = true
 	}
-	container.Add(getCard("External Etcd", fmt.Sprintf("%t", isExtEtcd), 18, color.Black))
+	container.Add(getCard("External Etcd", fmt.Sprintf("%t", isExtEtcd), 18, color.NRGBA{R: 255, G: 165, A: 255}))
 
 	// CP count
 	cpConf := spec["controlPlaneConfiguration"].(map[string]interface{})
 	cpCount := cpConf["count"].(float64)
-	container.Add(getCard("CP Replica", strconv.FormatFloat(cpCount, 'f', -1, 64), 18, color.Black))
+	container.Add(getCard("CP Replica", strconv.FormatFloat(cpCount, 'f', -1, 64), 18, color.NRGBA{R: 255, G: 165, A: 255}))
 
 	// OS Family
 	// We need cp machine config for OS family
@@ -130,7 +163,7 @@ func addClusterMetadata(w fyne.Window, container *fyne.Container, supportBundleF
 	}
 	machineSpecObj := machineSpec[0]["spec"].(map[string]interface{})
 	osFamily := machineSpecObj["osFamily"].(string)
-	container.Add(getCard("OS Family", osFamily, 18, color.Black))
+	container.Add(getCard("OS Family", osFamily, 18, color.NRGBA{R: 255, G: 165, A: 255}))
 
 	// Registry mirror
 	registryMirror := spec["registryMirrorConfiguration"]
@@ -138,11 +171,11 @@ func addClusterMetadata(w fyne.Window, container *fyne.Container, supportBundleF
 	if registryMirror != nil {
 		mirror = true
 	}
-	container.Add(getCard("Registry Mirror", fmt.Sprintf("%t", mirror), 18, color.Black))
+	container.Add(getCard("Registry Mirror", fmt.Sprintf("%t", mirror), 18, color.NRGBA{R: 255, G: 165, A: 255}))
 }
 
-func getCard(title, content string, textsize float32, color color.Color) *widget.Card {
-	contentText := canvas.NewText(content, color)
+func getCard(title, content string, textsize float32, textColor color.Color) *widget.Card {
+	contentText := canvas.NewText(content, textColor)
 	contentText.Alignment = fyne.TextAlignCenter
 	contentText.TextSize = textsize
 	card := &widget.Card{
@@ -155,7 +188,20 @@ func getCard(title, content string, textsize float32, color color.Color) *widget
 	return card
 }
 
-func extractErrorsFromSupportBundle(w fyne.Window, metadataContainer, errorContainer *fyne.Container) {
+func getDeploymentCard(deploymentName string, gradientColor color.Color) *fyne.Container {
+	gradient := canvas.NewHorizontalGradient(gradientColor, color.White)
+	contentText := canvas.NewText(deploymentName, color.Black)
+	contentText.TextStyle = fyne.TextStyle{Bold: true}
+	contentText.Alignment = fyne.TextAlignCenter
+
+	statusSymbol := canvas.NewText("✅", nil)
+	statusSymbol.TextSize = 35
+	deploymentStatusText := container.NewHBox(layout.NewSpacer(), contentText, layout.NewSpacer(), statusSymbol)
+	ctr := container.NewStack(gradient, deploymentStatusText)
+	return ctr
+}
+
+func extractInfoFromSupportBundle(w fyne.Window, metadataContainer, deploymentsContainer, crdStatusHeader, crdStatusContainer, logsAnalysisHeader, logsAnalysisContainer *fyne.Container) {
 	dialog.ShowFileOpen(func(dir fyne.URIReadCloser, err error) {
 		fileSelected := "No path selected"
 		if err != nil {
@@ -185,11 +231,13 @@ func extractErrorsFromSupportBundle(w fyne.Window, metadataContainer, errorConta
 
 		var results []*convert.Result
 		analysisFile := filepath.Join(supportBundleFolderPath, "analysis.json")
-		contents, _ := os.ReadFile(analysisFile)
-		//if err != nil {
-		//	dialog.ShowError(err, w)
-		//	return
-		//}
+		contents, err := os.ReadFile(analysisFile)
+		if err != nil {
+			dialog.ShowError(err, w)
+			return
+		}
+
+		reported := stringList([]string{})
 
 		fmt.Printf("Unmarshaling analysis file: %s\n", analysisFile)
 		err = json.Unmarshal(contents, &results)
@@ -198,35 +246,111 @@ func extractErrorsFromSupportBundle(w fyne.Window, metadataContainer, errorConta
 			return
 		}
 
-		addClusterMetadata(w, metadataContainer, supportBundleFolderPath, results)
+		fmt.Println("Adding cluster metadata")
+		addClusterMetadata(w, metadataContainer, supportBundleFolderPath)
+
+		fmt.Println("Adding Deployment statuses")
+		deploymentStatusLabel := canvas.NewText("DEPLOYMENT STATUS", color.NRGBA{R: 255, G: 165, A: 255})
+		deploymentStatusLabel.TextStyle = fyne.TextStyle{Bold: true}
+		deploymentStatusLabel.TextSize = 35
+		deploymentsContainer.Add(deploymentStatusLabel)
+		deploymentsContainer.Add(widget.NewLabel(""))
 		for _, result := range results {
-			reportCard := &widget.Card{}
 			if result.Severity == convert.SeverityError {
-				reportCard.Title = result.Name
-				decoratedError := fmt.Sprintf("❌ %s", result.Error)
-				errorText := canvas.NewText(decoratedError, color.NRGBA{R: 255, A: 255})
-				reportCard.Content = errorText
-				errorContainer.Add(reportCard)
-			}
-			reportAccordion := &widget.Accordion{}
-			if result.Severity == convert.SeverityError {
-				decoratedError := fmt.Sprintf("❌ %s", result.Error)
-				errorText := canvas.NewText(decoratedError, color.NRGBA{R: 255, A: 255})
-				errorText.TextSize = 30
-				errorText.Alignment = fyne.TextAlignCenter
-				reportAccordion.Items = append(reportAccordion.Items, &widget.AccordionItem{Title: result.Name, Detail: errorText, Open: false})
-				errorContainer.Add(reportAccordion)
+				if result.Labels["iconKey"] == "kubernetes_deployment_status" {
+					deploymentName := strings.Join(strings.Split(result.Name, ".")[0:len(strings.Split(result.Name, "."))-1], "-")
+					deploymentsContainer.Add(getDeploymentCard(deploymentName, color.NRGBA{R: 255, A: 255}))
+				}
 			} else if result.Severity == convert.SeverityDebug {
-				decoratedError := fmt.Sprintf("✅ %s", result.Insight.Detail)
-				errorText := canvas.NewText(decoratedError, color.NRGBA{G: 255, A: 255})
-				errorText.TextSize = 30
-				errorText.Alignment = fyne.TextAlignCenter
-				reportAccordion.Items = append(reportAccordion.Items, &widget.AccordionItem{Title: result.Name, Detail: errorText, Open: false})
-				errorContainer.Add(reportAccordion)
+				if result.Labels["iconKey"] == "kubernetes_deployment_status" {
+					deploymentName := strings.Join(strings.Split(result.Name, ".")[0:len(strings.Split(result.Name, "."))-1], "-")
+					deploymentsContainer.Add(getDeploymentCard(deploymentName, color.NRGBA{G: 200, A: 255}))
+				}
 			}
 		}
-		if errorContainer.Hidden {
-			errorContainer.Show()
+		if deploymentsContainer.Hidden {
+			deploymentsContainer.Show()
+		}
+
+		fmt.Println("Adding CRD statuses")
+		crdStatusLabel := canvas.NewText("CRD STATUS", color.NRGBA{R: 255, G: 165, A: 255})
+		crdStatusLabel.TextStyle = fyne.TextStyle{Bold: true}
+		crdStatusLabel.TextSize = 35
+		crdStatusHeader.Add(crdStatusLabel)
+		crdStatusHeader.Add(widget.NewLabel(""))
+		for _, result := range results {
+			reportCard := &widget.Card{}
+			reportAccordion := &widget.Accordion{}
+			if result.Severity == convert.SeverityError {
+				if result.Labels["iconKey"] == "kubernetes_custom_resource_definition" {
+					if !reported.contains(result.Name) {
+						reportCard.Title = result.Name
+						decoratedError := fmt.Sprintf("❌ %s", result.Error)
+						errorText := canvas.NewText(decoratedError, color.NRGBA{R: 255, A: 255})
+						reportCard.Content = errorText
+						crdStatusContainer.Add(reportCard)
+						reported = append(reported, result.Name)
+					}
+				}
+			} else if result.Severity == convert.SeverityDebug {
+				if result.Labels["iconKey"] == "kubernetes_custom_resource_definition" {
+					if !reported.contains(result.Name) {
+						decoratedError := fmt.Sprintf("✅ %s", result.Insight.Detail)
+						errorText := canvas.NewText(decoratedError, color.NRGBA{G: 255, A: 255})
+						errorText.TextSize = 18
+						errorText.Alignment = fyne.TextAlignCenter
+						reportAccordion.Items = append(reportAccordion.Items, &widget.AccordionItem{Title: result.Name, Detail: errorText, Open: false})
+						crdStatusContainer.Add(reportAccordion)
+						reported = append(reported, result.Name)
+					}
+				}
+			}
+		}
+
+		fmt.Println("Adding logs analysis")
+		logsAnalysisLabel := canvas.NewText("LOGS ANALYSIS", color.NRGBA{R: 255, G: 165, A: 255})
+		logsAnalysisLabel.TextStyle = fyne.TextStyle{Bold: true}
+		logsAnalysisLabel.TextSize = 35
+		logsAnalysisHeader.Add(logsAnalysisLabel)
+		logsAnalysisHeader.Add(widget.NewLabel(""))
+		for _, result := range results {
+			reportCard := &widget.Card{}
+			reportAccordion := &widget.Accordion{}
+			if result.Severity == convert.SeverityError {
+				if result.Labels["iconKey"] == "kubernetes_text_analyze" {
+					if !reported.contains(result.Name) {
+						reportCard.Title = result.Name
+						decoratedError := fmt.Sprintf("❌ %s", result.Error)
+						errorText := canvas.NewText(decoratedError, color.NRGBA{R: 255, A: 255})
+						reportCard.Content = errorText
+						logsAnalysisContainer.Add(reportCard)
+						reported = append(reported, result.Name)
+					}
+				}
+			} else if result.Severity == convert.SeverityDebug {
+				if result.Labels["iconKey"] == "kubernetes_text_analyze" {
+					if !reported.contains(result.Name) {
+						decoratedError := fmt.Sprintf("✅ %s", result.Insight.Detail)
+						errorText := canvas.NewText(decoratedError, color.NRGBA{G: 255, A: 255})
+						errorText.TextSize = 18
+						errorText.Alignment = fyne.TextAlignCenter
+						reportAccordion.Items = append(reportAccordion.Items, &widget.AccordionItem{Title: result.Name, Detail: errorText, Open: false})
+						logsAnalysisContainer.Add(reportAccordion)
+						reported = append(reported, result.Name)
+					}
+				}
+			}
+		}
+
+		hidden := os.Getenv("CONTAINERS_HIDDEN")
+		if hidden == "true" {
+			metadataContainer.Show()
+			deploymentsContainer.Show()
+			crdStatusHeader.Show()
+			crdStatusContainer.Show()
+			logsAnalysisHeader.Show()
+			logsAnalysisContainer.Show()
+			_ = os.Setenv("CONTAINERS_HIDDEN", "false")
 		}
 	}, w)
 }
@@ -291,42 +415,72 @@ func extractTarGz(supportBundlePath string) error {
 
 func main() {
 	a := app.New()
+	a.Settings().SetTheme(&appTheme{})
 	w := a.NewWindow("Support Bundle Analyzer")
 	windowSize := fyne.NewSize(500, 500)
 	w.Resize(windowSize)
 
-	logo := canvas.NewImageFromFile("/Users/arnchlm/Downloads/eks-anywhere-logo.png")
+	logo := canvas.NewImageFromResource(resourceEksAnywhereLogoPng)
 	logo.FillMode = canvas.ImageFillOriginal
 	logo.Translucency = 0.8
 	logo.SetMinSize(windowSize)
 
-	hello := widget.NewLabelWithStyle("Support Bundle Analyzer", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
-	metadataContainer := container.New(layout.NewAdaptiveGridLayout(4))
-	errorContainer := container.NewVBox()
-	selectButton := widget.NewButtonWithIcon("Select Support Bundle file", theme.FolderOpenIcon(), func() {
-		extractErrorsFromSupportBundle(w, metadataContainer, errorContainer)
-	})
-	exitButton := widget.NewButtonWithIcon("Exit", theme.LogoutIcon(), func() {
-		fmt.Println("Exiting")
-		os.Exit(0)
-	})
-	startOverButton := widget.NewButtonWithIcon("Start Over", theme.ViewRefreshIcon(), func() {
-		errorContainer.Hide()
-	})
+	appHeader := canvas.NewText("SUPPORT BUNDLE ANALYZER", color.NRGBA{R: 255, G: 165, A: 255})
+	appHeader.TextStyle = fyne.TextStyle{Bold: true}
+	appHeader.Alignment = fyne.TextAlignCenter
+	appHeader.TextSize = 50
 
-	windowContainer := container.NewVBox(
-		hello,
-		selectButton,
-		startOverButton,
-		exitButton,
-		metadataContainer,
-		errorContainer,
-	)
+	metadataContainer := container.New(layout.NewAdaptiveGridLayout(4))
+	deploymentsContainer := container.New(layout.NewAdaptiveGridLayout(2))
+	crdStatusHeader := container.New(layout.NewAdaptiveGridLayout(2))
+	crdStatusContainer := container.NewVBox()
+	logsAnalysisHeader := container.New(layout.NewAdaptiveGridLayout(2))
+	logsAnalysisContainer := container.NewVBox()
+
+	displayContainers := []fyne.CanvasObject{metadataContainer, deploymentsContainer, crdStatusHeader, crdStatusContainer, logsAnalysisHeader, logsAnalysisContainer}
+
+	toolbar := &widget.Toolbar{
+		Items: []widget.ToolbarItem{
+			widget.NewToolbarAction(theme.FolderOpenIcon(), func() {
+				extractInfoFromSupportBundle(w, metadataContainer, deploymentsContainer, crdStatusHeader, crdStatusContainer, logsAnalysisHeader, logsAnalysisContainer)
+			}),
+			widget.NewToolbarAction(theme.LogoutIcon(), func() {
+				fmt.Println("Exiting")
+				os.Exit(0)
+			}),
+			widget.NewToolbarAction(theme.ViewRefreshIcon(), func() {
+				hidden := os.Getenv("CONTAINERS_HIDDEN")
+				if hidden != "true" {
+					for _, container := range displayContainers {
+						container.Hide()
+					}
+					_ = os.Setenv("CONTAINERS_HIDDEN", "true")
+				}
+			}),
+		},
+	}
+
+	windowElements := append([]fyne.CanvasObject{
+		toolbar,
+		appHeader,
+	}, displayContainers...)
+
+	windowContainer := container.NewVBox(windowElements...)
 
 	scroller := container.NewVScroll(windowContainer)
 
 	fullContainer := container.NewPadded(logo, scroller)
-	w.SetContent(fullContainer)
+
+	themes := container.NewGridWithColumns(2,
+		widget.NewButton("Dark", func() {
+			a.Settings().SetTheme(theme.DarkTheme())
+		}),
+		widget.NewButton("Light", func() {
+			a.Settings().SetTheme(theme.LightTheme())
+		}),
+	)
+
+	w.SetContent(container.NewBorder(nil, themes, nil, nil, fullContainer))
 
 	w.ShowAndRun()
 }
