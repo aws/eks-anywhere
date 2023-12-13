@@ -10,6 +10,7 @@ import (
 
 const (
 	logAnalysisAnalyzerPrefix = "log analysis:"
+	troubleShootPrefix        = "troubleshooting:"
 )
 
 type analyzerFactory struct{}
@@ -250,13 +251,14 @@ func (a *analyzerFactory) EksaLogTextAnalyzers(collectors []*Collect) []*Analyze
 func (a *analyzerFactory) namespaceLogTextAnalyzersMap() map[string][]*Analyze {
 	return map[string][]*Analyze{
 		constants.CapiKubeadmControlPlaneSystemNamespace: a.capiKubeadmControlPlaneSystemLogAnalyzers(),
+		constants.CertManagerNamespace:                   a.certManagerLogAnalyzers(),
 	}
 }
 
 func (a *analyzerFactory) capiKubeadmControlPlaneSystemLogAnalyzers() []*Analyze {
 	capiCpManagerPod := "capi-kubeadm-control-plane-controller-manager-*"
-	capiCpManagerContainerLogFile := capiCpManagerPod + ".log"
-	fullManagerPodLogPath := path.Join(logpath(constants.CapiKubeadmControlPlaneSystemNamespace), capiCpManagerContainerLogFile)
+	capiCpManagerContainerLogFile := "manager.log"
+	fullManagerPodLogPath := path.Join(logpath(constants.CapiKubeadmControlPlaneSystemNamespace), capiCpManagerPod, capiCpManagerContainerLogFile)
 	return []*Analyze{
 		{
 			TextAnalyze: &textAnalyze{
@@ -276,6 +278,37 @@ func (a *analyzerFactory) capiKubeadmControlPlaneSystemLogAnalyzers() []*Analyze
 						Pass: &singleOutcome{
 							When:    "false",
 							Message: "API server pods launched correctly",
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func (a *analyzerFactory) certManagerLogAnalyzers() []*Analyze {
+	certManagerPod := "cert-manager-*"
+	certManagerContainerLogFile := "cert-manager-controller.log"
+	fullManagerPodLogPath := path.Join(logpath(constants.CertManagerNamespace), certManagerPod, certManagerContainerLogFile)
+	return []*Analyze{
+		{
+			TextAnalyze: &textAnalyze{
+				analyzeMeta: analyzeMeta{
+					CheckName: fmt.Sprintf("%s: cert-manager pod unhealthy. Log: %s", troubleShootPrefix, fullManagerPodLogPath),
+				},
+				FileName:     fullManagerPodLogPath,
+				RegexPattern: `error="Operation cannot be fulfilled on certificates.cert-manager.io`,
+				Outcomes: []*outcome{
+					{
+						Fail: &singleOutcome{
+							When:    "true",
+							Message: fmt.Sprintf("Cert Manager is not up; Check cert-mamager configuration. See %s", fullManagerPodLogPath),
+						},
+					},
+					{
+						Pass: &singleOutcome{
+							When:    "false",
+							Message: "Cert Manager pods launched correctly",
 						},
 					},
 				},
@@ -392,8 +425,8 @@ func (a *analyzerFactory) validControlPlaneIPAnalyzer() *Analyze {
 // to be able to look up existing valid sessions to reuse them instead of having to create new ones.
 func (a *analyzerFactory) vcenterSessionValidatePermissionAnalyzer() *Analyze {
 	capvManagerPod := "capv-controller-manager-*"
-	capvManagerContainerLogFile := capvManagerPod + ".log"
-	fullManagerPodLogPath := path.Join(logpath(constants.CapvSystemNamespace), capvManagerContainerLogFile)
+	capvManagerContainerLogFile := "manager.log"
+	fullManagerPodLogPath := path.Join(logpath(constants.CapvSystemNamespace), capvManagerPod, capvManagerContainerLogFile)
 	return &Analyze{
 		TextAnalyze: &textAnalyze{
 			analyzeMeta: analyzeMeta{
