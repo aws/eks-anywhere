@@ -10,6 +10,7 @@ import (
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	clustermocks "github.com/aws/eks-anywhere/pkg/cluster/mocks"
 	"github.com/aws/eks-anywhere/pkg/networking/cilium"
 	"github.com/aws/eks-anywhere/pkg/networking/cilium/mocks"
 	"github.com/aws/eks-anywhere/pkg/types"
@@ -19,7 +20,8 @@ type upgraderTest struct {
 	*WithT
 	ctx                   context.Context
 	u                     *cilium.Upgrader
-	h                     *mocks.MockHelm
+	hf                    *mocks.MockHelmFactory
+	h                     *clustermocks.MockHelm
 	client                *mocks.MockKubernetesClient
 	manifestPre, manifest []byte
 	currentSpec, newSpec  *cluster.Spec
@@ -29,12 +31,14 @@ type upgraderTest struct {
 
 func newUpgraderTest(t *testing.T) *upgraderTest {
 	ctrl := gomock.NewController(t)
-	h := mocks.NewMockHelm(ctrl)
+	hf := mocks.NewMockHelmFactory(ctrl)
+	h := clustermocks.NewMockHelm(ctrl)
 	client := mocks.NewMockKubernetesClient(ctrl)
-	u := cilium.NewUpgrader(client, cilium.NewTemplater(h))
+	u := cilium.NewUpgrader(client, cilium.NewTemplater(hf))
 	return &upgraderTest{
 		WithT:    NewWithT(t),
 		ctx:      context.Background(),
+		hf:       hf,
 		h:        h,
 		client:   client,
 		u:        u,
@@ -79,15 +83,22 @@ func (tt *upgraderTest) expectTemplate(manifest []byte) *gomock.Call {
 	).Return(manifest, nil)
 }
 
+func (tt *upgraderTest) expectGetClientForCluster(username, password string) *gomock.Call {
+	helmClient := cluster.NewHelmClient(tt.h, tt.newSpec.Cluster, username, password)
+	return tt.hf.EXPECT().GetClientForCluster(tt.ctx, tt.newSpec.Cluster).Return(helmClient, nil)
+}
+
 func TestUpgraderUpgradeSuccess(t *testing.T) {
 	tt := newUpgraderTest(t)
 	// Templater and client and already tested individually so we only want to test the flow (order of calls)
 	gomock.InOrder(
+		tt.expectGetClientForCluster("", ""),
 		tt.expectTemplatePreFlight(),
 		tt.client.EXPECT().Apply(tt.ctx, tt.cluster, tt.manifestPre),
 		tt.client.EXPECT().WaitForPreflightDaemonSet(tt.ctx, tt.cluster),
 		tt.client.EXPECT().WaitForPreflightDeployment(tt.ctx, tt.cluster),
 		tt.client.EXPECT().Delete(tt.ctx, tt.cluster, tt.manifestPre),
+		tt.expectGetClientForCluster("", ""),
 		tt.expectTemplateManifest(),
 		tt.client.EXPECT().Apply(tt.ctx, tt.cluster, tt.manifest),
 		tt.client.EXPECT().WaitForCiliumDaemonSet(tt.ctx, tt.cluster),
@@ -115,11 +126,13 @@ func TestUpgraderUpgradeSuccessValuesChanged(t *testing.T) {
 
 	// Templater and client and already tested individually so we only want to test the flow (order of calls)
 	gomock.InOrder(
+		tt.expectGetClientForCluster("", ""),
 		tt.expectTemplatePreFlight(),
 		tt.client.EXPECT().Apply(tt.ctx, tt.cluster, tt.manifestPre),
 		tt.client.EXPECT().WaitForPreflightDaemonSet(tt.ctx, tt.cluster),
 		tt.client.EXPECT().WaitForPreflightDeployment(tt.ctx, tt.cluster),
 		tt.client.EXPECT().Delete(tt.ctx, tt.cluster, tt.manifestPre),
+		tt.expectGetClientForCluster("", ""),
 		tt.expectTemplateManifest(),
 		tt.client.EXPECT().Apply(tt.ctx, tt.cluster, tt.manifest),
 		tt.client.EXPECT().WaitForCiliumDaemonSet(tt.ctx, tt.cluster),
@@ -141,11 +154,13 @@ func TestUpgraderUpgradeSuccessValuesChangedUpgradeFromNilCNIConfigSpec(t *testi
 
 	// Templater and client and already tested individually so we only want to test the flow (order of calls)
 	gomock.InOrder(
+		tt.expectGetClientForCluster("", ""),
 		tt.expectTemplatePreFlight(),
 		tt.client.EXPECT().Apply(tt.ctx, tt.cluster, tt.manifestPre),
 		tt.client.EXPECT().WaitForPreflightDaemonSet(tt.ctx, tt.cluster),
 		tt.client.EXPECT().WaitForPreflightDeployment(tt.ctx, tt.cluster),
 		tt.client.EXPECT().Delete(tt.ctx, tt.cluster, tt.manifestPre),
+		tt.expectGetClientForCluster("", ""),
 		tt.expectTemplateManifest(),
 		tt.client.EXPECT().Apply(tt.ctx, tt.cluster, tt.manifest),
 		tt.client.EXPECT().WaitForCiliumDaemonSet(tt.ctx, tt.cluster),
@@ -167,11 +182,13 @@ func TestUpgraderUpgradeSuccessValuesChangedUpgradeFromNilCiliumConfigSpec(t *te
 
 	// Templater and client and already tested individually so we only want to test the flow (order of calls)
 	gomock.InOrder(
+		tt.expectGetClientForCluster("", ""),
 		tt.expectTemplatePreFlight(),
 		tt.client.EXPECT().Apply(tt.ctx, tt.cluster, tt.manifestPre),
 		tt.client.EXPECT().WaitForPreflightDaemonSet(tt.ctx, tt.cluster),
 		tt.client.EXPECT().WaitForPreflightDeployment(tt.ctx, tt.cluster),
 		tt.client.EXPECT().Delete(tt.ctx, tt.cluster, tt.manifestPre),
+		tt.expectGetClientForCluster("", ""),
 		tt.expectTemplateManifest(),
 		tt.client.EXPECT().Apply(tt.ctx, tt.cluster, tt.manifest),
 		tt.client.EXPECT().WaitForCiliumDaemonSet(tt.ctx, tt.cluster),
@@ -191,11 +208,13 @@ func TestUpgraderUpgradeSuccessEgressMasqueradeInterfacesValueChanged(t *testing
 
 	// Templater and client and already tested individually so we only want to test the flow (order of calls)
 	gomock.InOrder(
+		tt.expectGetClientForCluster("", ""),
 		tt.expectTemplatePreFlight(),
 		tt.client.EXPECT().Apply(tt.ctx, tt.cluster, tt.manifestPre),
 		tt.client.EXPECT().WaitForPreflightDaemonSet(tt.ctx, tt.cluster),
 		tt.client.EXPECT().WaitForPreflightDeployment(tt.ctx, tt.cluster),
 		tt.client.EXPECT().Delete(tt.ctx, tt.cluster, tt.manifestPre),
+		tt.expectGetClientForCluster("", ""),
 		tt.expectTemplateManifest(),
 		tt.client.EXPECT().Apply(tt.ctx, tt.cluster, tt.manifest),
 		tt.client.EXPECT().WaitForCiliumDaemonSet(tt.ctx, tt.cluster),

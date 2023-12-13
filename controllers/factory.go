@@ -14,6 +14,7 @@ import (
 	anywhereCluster "github.com/aws/eks-anywhere/pkg/cluster"
 	mhcreconciler "github.com/aws/eks-anywhere/pkg/clusterapi/machinehealthcheck/reconciler"
 	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
 	"github.com/aws/eks-anywhere/pkg/controller/clusters"
 	"github.com/aws/eks-anywhere/pkg/crypto"
 	"github.com/aws/eks-anywhere/pkg/curatedpackages"
@@ -466,7 +467,9 @@ func (f *Factory) withCloudStackValidatorRegistry() *Factory {
 }
 
 func (f *Factory) withCNIReconciler() *Factory {
-	f.dependencyFactory.WithCiliumTemplater()
+	f.dependencyFactory.
+		WithKubeClient(clientutil.NewKubeClient(f.manager.GetClient())).
+		WithCiliumTemplater()
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.cniReconciler != nil {

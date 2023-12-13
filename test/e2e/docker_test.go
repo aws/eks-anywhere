@@ -590,6 +590,22 @@ func TestDockerKubernetes127AirgappedRegistryMirrorAndCert(t *testing.T) {
 	runDockerAirgapConfigFlow(test)
 }
 
+func TestDockerKubernetes127AirgappedUpgradeFromLatestRegistryMirrorAndCert(t *testing.T) {
+	release := latestMinorRelease(t)
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewDocker(t),
+		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127)),
+		framework.WithAuthenticatedRegistryMirror(constants.DockerProviderName),
+	)
+	runDockerAirgapUpgradeFromReleaseFlow(
+		test,
+		release,
+		v1alpha1.Kube127,
+	)
+}
+
 func TestDockerKubernetes127RegistryMirrorInsecureSkipVerify(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,

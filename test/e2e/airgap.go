@@ -11,6 +11,8 @@ import (
 	"os"
 	"regexp"
 
+	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
@@ -191,4 +193,31 @@ func runDockerAirgapConfigFlow(test *framework.ClusterE2ETest) {
 	test.CreateCluster(framework.WithBundlesOverride(bundleReleasePathFromArtifacts))
 	test.DeleteCluster(framework.WithBundlesOverride(bundleReleasePathFromArtifacts))
 	test.ChangeInstanceSecurityGroup(os.Getenv(framework.RegistryMirrorDefaultSecurityGroup))
+}
+
+func runDockerAirgapUpgradeFromReleaseFlow(test *framework.ClusterE2ETest, latestRelease *releasev1.EksARelease, wantVersion anywherev1.KubernetesVersion, clusterOpts ...framework.ClusterE2ETestOpt) {
+	test.GenerateClusterConfigForVersion(latestRelease.Version, framework.ExecuteWithEksaRelease(latestRelease))
+
+	// Downloading and importing the artifacts from the previous version
+	test.DownloadArtifacts(framework.ExecuteWithEksaRelease(latestRelease))
+	test.ExtractDownloadedArtifacts(framework.ExecuteWithEksaRelease(latestRelease))
+	test.DownloadImages(framework.ExecuteWithEksaRelease(latestRelease))
+	test.ImportImages(framework.ExecuteWithEksaRelease(latestRelease))
+	test.CreateCluster(framework.ExecuteWithEksaRelease(latestRelease), framework.WithBundlesOverride(bundleReleasePathFromArtifacts))
+
+	// Adding this manual wait because old versions of the cli don't wait long enough
+	// after creation, which makes the upgrade preflight validations fail
+	test.WaitForControlPlaneReady()
+
+	// Downloading and importing the artifacts from the current version
+	test.DownloadArtifacts()
+	test.ExtractDownloadedArtifacts()
+	test.DownloadImages()
+	test.ChangeInstanceSecurityGroup(os.Getenv(framework.RegistryMirrorAirgappedSecurityGroup))
+	test.ImportImages()
+
+	test.UpgradeClusterWithNewConfig(clusterOpts, framework.WithBundlesOverride(bundleReleasePathFromArtifacts))
+	test.ValidateCluster(wantVersion)
+	test.StopIfFailed()
+	test.DeleteCluster(framework.WithBundlesOverride(bundleReleasePathFromArtifacts))
 }

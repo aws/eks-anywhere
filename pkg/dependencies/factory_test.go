@@ -17,6 +17,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/executables"
+	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
 	"github.com/aws/eks-anywhere/pkg/registrymirror"
@@ -232,6 +233,7 @@ func TestFactoryBuildWithMultipleDependencies(t *testing.T) {
 		WithCloudStackValidatorRegistry(false).
 		WithVSphereDefaulter().
 		WithVSphereValidator().
+		WithKubeClientFromKubeconfig(kubeconfig.FromClusterName(tt.clusterSpec.Cluster.ManagedBy())).
 		WithCiliumTemplater().
 		WithIPValidator().
 		WithClusterApplier().
@@ -256,6 +258,7 @@ func TestFactoryBuildWithMultipleDependencies(t *testing.T) {
 	tt.Expect(deps.UnAuthKubeClient).NotTo(BeNil())
 	tt.Expect(deps.VSphereDefaulter).NotTo(BeNil())
 	tt.Expect(deps.VSphereValidator).NotTo(BeNil())
+	tt.Expect(deps.KubeClient).NotTo(BeNil())
 	tt.Expect(deps.CiliumTemplater).NotTo(BeNil())
 	tt.Expect(deps.IPValidator).NotTo(BeNil())
 	tt.Expect(deps.ClusterApplier).NotTo(BeNil())

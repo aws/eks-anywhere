@@ -7,9 +7,8 @@ import (
 
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/types"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
 )
 
@@ -31,10 +30,9 @@ func ReadCredentials() (username, password string, err error) {
 
 // ReadCredentialsFromSecret reads from Kubernetes secret registry-credentials.
 // Returns the username and password, or error.
-func ReadCredentialsFromSecret(ctx context.Context, client client.Client) (username, password string, err error) {
+func ReadCredentialsFromSecret(ctx context.Context, client cluster.Client) (username, password string, err error) {
 	registryAuthSecret := &corev1.Secret{}
-	key := types.NamespacedName{Name: registryAuthSecretName, Namespace: constants.EksaSystemNamespace}
-	if err := client.Get(ctx, key, registryAuthSecret); err != nil {
+	if err := client.Get(ctx, registryAuthSecretName, constants.EksaSystemNamespace, registryAuthSecret); err != nil {
 		return "", "", errors.Wrap(err, "fetching registry auth secret")
 	}
 

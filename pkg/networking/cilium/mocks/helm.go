@@ -8,57 +8,45 @@ import (
 	context "context"
 	reflect "reflect"
 
+	v1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	cluster "github.com/aws/eks-anywhere/pkg/cluster"
 	gomock "github.com/golang/mock/gomock"
 )
 
-// MockHelm is a mock of Helm interface.
-type MockHelm struct {
+// MockHelmFactory is a mock of HelmFactory interface.
+type MockHelmFactory struct {
 	ctrl     *gomock.Controller
-	recorder *MockHelmMockRecorder
+	recorder *MockHelmFactoryMockRecorder
 }
 
-// MockHelmMockRecorder is the mock recorder for MockHelm.
-type MockHelmMockRecorder struct {
-	mock *MockHelm
+// MockHelmFactoryMockRecorder is the mock recorder for MockHelmFactory.
+type MockHelmFactoryMockRecorder struct {
+	mock *MockHelmFactory
 }
 
-// NewMockHelm creates a new mock instance.
-func NewMockHelm(ctrl *gomock.Controller) *MockHelm {
-	mock := &MockHelm{ctrl: ctrl}
-	mock.recorder = &MockHelmMockRecorder{mock}
+// NewMockHelmFactory creates a new mock instance.
+func NewMockHelmFactory(ctrl *gomock.Controller) *MockHelmFactory {
+	mock := &MockHelmFactory{ctrl: ctrl}
+	mock.recorder = &MockHelmFactoryMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockHelm) EXPECT() *MockHelmMockRecorder {
+func (m *MockHelmFactory) EXPECT() *MockHelmFactoryMockRecorder {
 	return m.recorder
 }
 
-// RegistryLogin mocks base method.
-func (m *MockHelm) RegistryLogin(ctx context.Context, registry, username, password string) error {
+// GetClientForCluster mocks base method.
+func (m *MockHelmFactory) GetClientForCluster(ctx context.Context, clus *v1alpha1.Cluster) (*cluster.HelmClient, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RegistryLogin", ctx, registry, username, password)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// RegistryLogin indicates an expected call of RegistryLogin.
-func (mr *MockHelmMockRecorder) RegistryLogin(ctx, registry, username, password interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegistryLogin", reflect.TypeOf((*MockHelm)(nil).RegistryLogin), ctx, registry, username, password)
-}
-
-// Template mocks base method.
-func (m *MockHelm) Template(ctx context.Context, ociURI, version, namespace string, values interface{}, kubeVersion string) ([]byte, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Template", ctx, ociURI, version, namespace, values, kubeVersion)
-	ret0, _ := ret[0].([]byte)
+	ret := m.ctrl.Call(m, "GetClientForCluster", ctx, clus)
+	ret0, _ := ret[0].(*cluster.HelmClient)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// Template indicates an expected call of Template.
-func (mr *MockHelmMockRecorder) Template(ctx, ociURI, version, namespace, values, kubeVersion interface{}) *gomock.Call {
+// GetClientForCluster indicates an expected call of GetClientForCluster.
+func (mr *MockHelmFactoryMockRecorder) GetClientForCluster(ctx, clus interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Template", reflect.TypeOf((*MockHelm)(nil).Template), ctx, ociURI, version, namespace, values, kubeVersion)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetClientForCluster", reflect.TypeOf((*MockHelmFactory)(nil).GetClientForCluster), ctx, clus)
 }

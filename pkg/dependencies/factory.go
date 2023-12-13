@@ -75,6 +75,7 @@ type Dependencies struct {
 	Troubleshoot                *executables.Troubleshoot
 	Helm                        *executables.Helm
 	UnAuthKubeClient            *kubernetes.UnAuthClient
+	KubeClient                  kubernetes.Client
 	Networking                  clustermanager.Networking
 	CNIInstaller                workload.CNIInstaller
 	CiliumTemplater             *cilium.Templater
@@ -107,6 +108,7 @@ type Dependencies struct {
 	SnowValidator               *snow.Validator
 	IPValidator                 *validator.IPValidator
 	UnAuthKubectlClient         KubeClients
+	HelmFactory                 *HelmFactory
 	CreateClusterDefaulter      cli.CreateClusterDefaulter
 	UpgradeClusterDefaulter     cli.UpgradeClusterDefaulter
 }
@@ -770,6 +772,30 @@ func (f *Factory) WithHelm(opts ...executables.HelmOpt) *Factory {
 	return f
 }
 
+// WithHelmFactory configures the HelmFactory dependency.
+func (f *Factory) WithHelmFactory(opts ...HelmFactoryOpt) *Factory {
+	f.WithExecutableBuilder()
+
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.dependencies.HelmFactory != nil {
+			return nil
+		}
+
+		if f.registryMirror != nil {
+			opts = append(opts, WithRegistryMirror(f.registryMirror))
+		}
+
+		if f.proxyConfiguration != nil {
+			opts = append(opts, WithEnv(f.proxyConfiguration))
+		}
+
+		f.dependencies.HelmFactory = NewHelmFactory(f.dependencies.KubeClient, f.executablesConfig.builder, opts...)
+		return nil
+	})
+
+	return f
+}
+
 // WithNetworking builds a Networking.
 func (f *Factory) WithNetworking(clusterConfig *v1alpha1.Cluster) *Factory {
 	var networkingBuilder func() clustermanager.Networking
@@ -779,7 +805,8 @@ func (f *Factory) WithNetworking(clusterConfig *v1alpha1.Cluster) *Factory {
 			return kindnetd.NewKindnetd(f.dependencies.Kubectl, f.dependencies.FileReader)
 		}
 	} else {
-		f.WithKubectl().WithCiliumTemplater()
+		managmentClusterName := kubeconfig.FromClusterName(clusterConfig.ManagedBy())
+		f.WithKubectl().WithKubeClientFromKubeconfig(managmentClusterName).WithCiliumTemplater()
 
 		networkingBuilder = func() clustermanager.Networking {
 			var opts []cilium.RetrierClientOpt
@@ -813,7 +840,8 @@ func (f *Factory) WithCNIInstaller(spec *cluster.Spec, provider providers.Provid
 	if spec.Cluster.Spec.ClusterNetwork.CNIConfig.Kindnetd != nil {
 		f.WithKubectl().WithFileReader()
 	} else {
-		f.WithKubectl().WithCiliumTemplater()
+		managmentClusterName := kubeconfig.FromClusterName(spec.Cluster.ManagedBy())
+		f.WithKubectl().WithKubeClientFromKubeconfig(managmentClusterName).WithCiliumTemplater()
 	}
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
@@ -845,13 +873,13 @@ func (f *Factory) WithCNIInstaller(spec *cluster.Spec, provider providers.Provid
 }
 
 func (f *Factory) WithCiliumTemplater() *Factory {
-	f.WithHelm(executables.WithInsecure())
+	f.WithHelmFactory(WithInsecure())
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.CiliumTemplater != nil {
 			return nil
 		}
-		f.dependencies.CiliumTemplater = cilium.NewTemplater(f.dependencies.Helm)
+		f.dependencies.CiliumTemplater = cilium.NewTemplater(f.dependencies.HelmFactory)
 
 		return nil
 	})
@@ -1453,6 +1481,37 @@ func (f *Factory) WithUnAuthKubeClient() *Factory {
 			return fmt.Errorf("building unauth kube client: %v", err)
 		}
 
+		return nil
+	})
+
+	return f
+}
+
+// WithKubeClientFromKubeconfig configures the KubeClient dependency provided with a kubeconfig file path.
+func (f *Factory) WithKubeClientFromKubeconfig(kubeconfig string) *Factory {
+	f.WithUnAuthKubeClient()
+
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.dependencies.KubeClient != nil {
+			return nil
+		}
+
+		client, _ := f.dependencies.UnAuthKubeClient.BuildClientFromKubeconfig(kubeconfig)
+		f.dependencies.KubeClient = client
+		return nil
+	})
+
+	return f
+}
+
+// WithKubeClient configures the KubeClient dependency provided with a kubernetes.Client.
+func (f *Factory) WithKubeClient(client kubernetes.Client) *Factory {
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.dependencies.KubeClient != nil {
+			return nil
+		}
+
+		f.dependencies.KubeClient = client
 		return nil
 	})
 

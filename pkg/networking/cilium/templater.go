@@ -4,13 +4,11 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
-	"net"
 	"strings"
 	"time"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
-	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/retrier"
 	"github.com/aws/eks-anywhere/pkg/semver"
 	"github.com/aws/eks-anywhere/pkg/templater"
@@ -24,18 +22,19 @@ const (
 	defaultBackOffPeriod = 5 * time.Second
 )
 
-type Helm interface {
-	Template(ctx context.Context, ociURI, version, namespace string, values interface{}, kubeVersion string) ([]byte, error)
-	RegistryLogin(ctx context.Context, registry, username, password string) error
+// HelmFactory builds a helmClient specifically using the managment cluster's registry mirror configuration.
+type HelmFactory interface {
+	GetClientForCluster(ctx context.Context, clus *anywherev1.Cluster) (*cluster.HelmClient, error)
 }
 
 type Templater struct {
-	helm Helm
+	helmFactory HelmFactory
 }
 
-func NewTemplater(helm Helm) *Templater {
+// NewTemplater returns a new Templater.
+func NewTemplater(helmFactory HelmFactory) *Templater {
 	return &Templater{
-		helm: helm,
+		helmFactory: helmFactory,
 	}
 }
 
@@ -61,8 +60,16 @@ func (t *Templater) GenerateUpgradePreflightManifest(ctx context.Context, spec *
 	if err != nil {
 		return nil, err
 	}
+	helm, err := t.helmFactory.GetClientForCluster(ctx, spec.Cluster)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get helm client for cluster %s: %v", spec.Cluster.ManagedBy(), err)
+	}
 
-	manifest, err := t.helm.Template(ctx, uri, version, namespace, v, kubeVersion)
+	if err := helm.RegistryLoginIfNeeded(ctx); err != nil {
+		return nil, err
+	}
+
+	manifest, err := helm.Template(ctx, uri, version, namespace, v, kubeVersion)
 	if err != nil {
 		return nil, fmt.Errorf("failed generating cilium upgrade preflight manifest: %v", err)
 	}
@@ -131,21 +138,17 @@ func (t *Templater) GenerateManifest(ctx context.Context, spec *cluster.Spec, op
 	uri, version := getChartURIAndVersion(versionsBundle)
 	var manifest []byte
 
-	if spec.Cluster.Spec.RegistryMirrorConfiguration != nil {
-		if spec.Cluster.Spec.RegistryMirrorConfiguration.Authenticate {
-			username, password, err := config.ReadCredentials()
-			if err != nil {
-				return nil, err
-			}
-			endpoint := net.JoinHostPort(spec.Cluster.Spec.RegistryMirrorConfiguration.Endpoint, spec.Cluster.Spec.RegistryMirrorConfiguration.Port)
-			if err := t.helm.RegistryLogin(ctx, endpoint, username, password); err != nil {
-				return nil, err
-			}
-		}
+	helm, err := t.helmFactory.GetClientForCluster(ctx, spec.Cluster)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get helm client for cluster %s: %v", spec.Cluster.ManagedBy(), err)
+	}
+
+	if err := helm.RegistryLoginIfNeeded(ctx); err != nil {
+		return nil, err
 	}
 
 	err = c.retrier.Retry(func() error {
-		manifest, err = t.helm.Template(ctx, uri, version, namespace, c.values, c.kubeVersion)
+		manifest, err = helm.Template(ctx, uri, version, namespace, c.values, c.kubeVersion)
 		return err
 	})
 	if err != nil {

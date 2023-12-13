@@ -376,7 +376,7 @@ func (r *ClusterReconciler) preClusterProviderReconcile(ctx context.Context, log
 	}
 
 	if cluster.RegistryAuth() {
-		rUsername, rPassword, err := config.ReadCredentialsFromSecret(ctx, r.client)
+		rUsername, rPassword, err := config.ReadCredentialsFromSecret(ctx, clientutil.NewKubeClient(r.client))
 		if err != nil {
 			return controller.Result{}, err
 		}
