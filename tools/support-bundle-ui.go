@@ -80,15 +80,25 @@ func addClusterMetadata(w fyne.Window, container *fyne.Container, supportBundleF
 	dcRef := spec["datacenterRef"].(map[string]interface{})
 	dcKind := dcRef["kind"].(string)
 	var provider string
+	var machineConfigFile string
+	//var machineConfigKind string
 	switch dcKind {
 	case "VSphereDatacenterConfig":
 		provider = "vSphere"
+		machineConfigFile = "vspheremachineconfigs.anywhere.eks.amazonaws.com"
+		//machineConfigKind = "VSphereMachineConfig"
 	case "TinkerbellDatacenterConfig":
 		provider = "Tinkerbell"
+		machineConfigFile = "tinkerbellmachineconfigs.anywhere.eks.amazonaws.com"
+		//machineConfigKind = "TinkerbellMachineConfig"
 	case "CloudStackDatacenterConfig":
 		provider = "CloudStack"
+		machineConfigFile = "cloudstackmachineconfigs.anywhere.eks.amazonaws.com"
+		//machineConfigKind = "CloudStackMachineConfig"
 	default:
 		provider = "Snow/Nutanix/Docker"
+		machineConfigFile = "vspheremachineconfigs.anywhere.eks.amazonaws.com"
+		//machineConfigKind = "VSphereMachineConfig"
 	}
 	container.Add(getCard("Provider", provider, 18, color.Black))
 
@@ -105,6 +115,30 @@ func addClusterMetadata(w fyne.Window, container *fyne.Container, supportBundleF
 	container.Add(getCard("CP Replica", strconv.FormatFloat(cpCount, 'f', -1, 64), 18, color.Black))
 
 	// OS Family
+	// We need cp machine config for OS family
+	machineConfigFilePath := filepath.Join(filepath.Join(crdPath, machineConfigFile, "default.yaml"))
+	var machineSpec []map[string]interface{}
+	contents, err = os.ReadFile(machineConfigFilePath)
+	if err != nil {
+		dialog.ShowError(err, w)
+		return
+	}
+	err = yaml.Unmarshal(contents, &machineSpec)
+	if err != nil {
+		dialog.ShowError(err, w)
+		return
+	}
+	machineSpecObj := machineSpec[0]["spec"].(map[string]interface{})
+	osFamily := machineSpecObj["osFamily"].(string)
+	container.Add(getCard("OS Family", osFamily, 18, color.Black))
+
+	// Registry mirror
+	registryMirror := spec["registryMirrorConfiguration"]
+	mirror := false
+	if registryMirror != nil {
+		mirror = true
+	}
+	container.Add(getCard("Registry Mirror", fmt.Sprintf("%t", mirror), 18, color.Black))
 }
 
 func getCard(title, content string, textsize float32, color color.Color) *widget.Card {
