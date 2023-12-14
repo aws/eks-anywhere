@@ -23,17 +23,17 @@ const (
 	defaultBackOffPeriod = 5 * time.Second
 )
 
-// HelmFactory builds a helmClient specifically using the managment cluster's registry mirror configuration.
-type HelmFactory interface {
+// HelmClientFactory provides a helm client for a cluster.
+type HelmClientFactory interface {
 	GetClientForCluster(ctx context.Context, clus *anywherev1.Cluster) (helm.RegistryClient, error)
 }
 
 type Templater struct {
-	helmFactory HelmFactory
+	helmFactory HelmClientFactory
 }
 
 // NewTemplater returns a new Templater.
-func NewTemplater(helmFactory HelmFactory) *Templater {
+func NewTemplater(helmFactory HelmClientFactory) *Templater {
 	return &Templater{
 		helmFactory: helmFactory,
 	}

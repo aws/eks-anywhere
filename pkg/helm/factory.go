@@ -4,11 +4,11 @@ import (
 	"context"
 	"sync"
 
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	configcli "github.com/aws/eks-anywhere/pkg/config"
+	"github.com/aws/eks-anywhere/pkg/controller/clusters"
 	"github.com/aws/eks-anywhere/pkg/registrymirror"
 )
 
@@ -73,15 +73,15 @@ type ExecutableBuilder interface {
 
 // ClientFactory provides a helm client for a cluster.
 type ClientFactory struct {
-	client     kubernetes.Client
+	client     client.Client
 	helmClient RegistryClient
 	mu         sync.Mutex
 	builder    ExecutableBuilder
 	helmOpts   []Opt
 }
 
-// NewClientFactory returns a new HelmFactory.
-func NewClientFactory(client kubernetes.Client, builder ExecutableBuilder, helmOpts ...Opt) *ClientFactory {
+// NewClientFactory returns a new helm ClientFactory.
+func NewClientFactory(client client.Client, builder ExecutableBuilder, helmOpts ...Opt) *ClientFactory {
 	hf := &ClientFactory{
 		client:   client,
 		builder:  builder,
@@ -97,7 +97,7 @@ func (f *ClientFactory) withRegistryMirror(r *registrymirror.RegistryMirror) Opt
 	}
 }
 
-// buildClient returns a new Helm executeble.
+// buildClient returns a new helm executeble client.
 func (f *ClientFactory) buildClient(opts ...Opt) ExecuteableClient {
 	opts = append(f.helmOpts, opts...)
 	return f.builder.BuildHelmExecutable(opts...)
@@ -110,18 +110,17 @@ func (f *ClientFactory) GetClientForCluster(ctx context.Context, clus *anywherev
 
 	managmentCluster := clus
 
-	var rUsername, rPassword string
 	var err error
-
 	if clus.IsManaged() {
-		managmentCluster = &anywherev1.Cluster{}
-		if err := f.client.Get(ctx, clus.ManagedBy(), clus.Namespace, managmentCluster); err != nil {
+		managmentCluster, err = clusters.FetchManagementEksaCluster(ctx, f.client, clus)
+		if err != nil {
 			return nil, err
 		}
 	}
 
+	var rUsername, rPassword string
 	if managmentCluster.RegistryAuth() {
-		rUsername, rPassword, err = f.getClusterRegistryCredentrials(ctx, managmentCluster)
+		rUsername, rPassword, err = configcli.ReadCredentialsFromSecret(ctx, f.client)
 		if err != nil {
 			return nil, err
 		}
@@ -137,26 +136,4 @@ func (f *ClientFactory) GetClientForCluster(ctx context.Context, clus *anywherev
 	}
 
 	return f.helmClient, nil
-}
-
-// getClusterRegistryCredentrials retrieves the regitry mirror credentials for the management cluster.
-// Registry credentials may not be found by retrieving on the cluster, this can happen on Cluster creation with the CLI.
-// For now, to handle this, we fallback to reading the credentials from the environment variables.
-func (f *ClientFactory) getClusterRegistryCredentrials(ctx context.Context, cluster *anywherev1.Cluster) (string, string, error) {
-	var rUsername, rPassword string
-	var err error
-
-	rUsername, rPassword, err = configcli.ReadCredentialsFromSecret(ctx, f.client)
-	if err != nil && !apierrors.IsNotFound(err) {
-		return "", "", err
-	}
-
-	if apierrors.IsNotFound(err) {
-		rUsername, rPassword, err = configcli.ReadCredentials()
-		if err != nil {
-			return "", "", err
-		}
-	}
-
-	return rUsername, rPassword, nil
 }

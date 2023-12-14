@@ -12,7 +12,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	"github.com/aws/eks-anywhere/pkg/constants"
-	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
 )
 
 func TestReadConfig(t *testing.T) {
@@ -57,7 +56,7 @@ func TestReadCredentialsFromSecret(t *testing.T) {
 	objs := []runtime.Object{sec}
 	cb := fake.NewClientBuilder()
 	cl := cb.WithRuntimeObjects(objs...).Build()
-	u, p, err := ReadCredentialsFromSecret(ctx, clientutil.NewKubeClient(cl))
+	u, p, err := ReadCredentialsFromSecret(ctx, cl)
 	assert.NoError(t, err)
 	assert.Equal(t, expectedUser, u)
 	assert.Equal(t, expectedPassword, p)
@@ -67,7 +66,7 @@ func TestReadCredentialsFromSecretNotFound(t *testing.T) {
 	ctx := context.Background()
 	cb := fake.NewClientBuilder()
 	cl := cb.Build()
-	u, p, err := ReadCredentialsFromSecret(ctx, clientutil.NewKubeClient(cl))
+	u, p, err := ReadCredentialsFromSecret(ctx, cl)
 	assert.ErrorContains(t, err, "fetching registry auth secret")
 	assert.Empty(t, u)
 	assert.Empty(t, p)

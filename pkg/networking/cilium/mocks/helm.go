@@ -13,7 +13,7 @@ import (
 	gomock "github.com/golang/mock/gomock"
 )
 
-// MockHelmFactory is a mock of HelmFactory interface.
+// MockHelmFactory is a mock of HelmClientFactory interface.
 type MockHelmFactory struct {
 	ctrl     *gomock.Controller
 	recorder *MockHelmFactoryMockRecorder

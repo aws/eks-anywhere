@@ -9,6 +9,7 @@ import (
 
 	. "github.com/onsi/gomega"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -17,7 +18,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/helm"
-	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
 	"github.com/aws/eks-anywhere/pkg/registrymirror"
@@ -192,6 +192,39 @@ func TestFactoryBuildWithClusterManager(t *testing.T) {
 	tt.Expect(deps.ClusterManager).NotTo(BeNil())
 }
 
+func TestFactoryBuildWithHelmEnvClientFactory(t *testing.T) {
+	tt := newTest(t, vsphere)
+	deps, err := dependencies.NewFactory().
+		WithLocalExecutables().
+		WithRegistryMirror(
+			&registrymirror.RegistryMirror{
+				BaseRegistry: "1.2.3.4:443",
+				NamespacedRegistryMap: map[string]string{
+					constants.DefaultCoreEKSARegistry: "1.2.3.4:443/custom",
+				},
+				Auth: false,
+			}).
+		WithProxyConfiguration().
+		WithHelmEnvClientFactory(helm.WithInsecure()).
+		Build(context.Background())
+
+	tt.Expect(err).To(BeNil())
+	tt.Expect(deps.HelmClientFactory).NotTo(BeNil())
+}
+
+func TestFactoryBuildWithHelmClientFactory(t *testing.T) {
+	tt := newTest(t, vsphere)
+	client := fake.NewClientBuilder().Build()
+	deps, err := dependencies.NewFactory().
+		WithLocalExecutables().
+		WithProxyConfiguration().
+		WithHelmClientFactory(client, helm.WithInsecure()).
+		Build(context.Background())
+
+	tt.Expect(err).To(BeNil())
+	tt.Expect(deps.HelmClientFactory).NotTo(BeNil())
+}
+
 func TestFactoryBuildWithClusterManagerWithoutCliConfig(t *testing.T) {
 	tt := newTest(t, vsphere)
 	deps, err := dependencies.NewFactory().
@@ -233,7 +266,6 @@ func TestFactoryBuildWithMultipleDependencies(t *testing.T) {
 		WithCloudStackValidatorRegistry(false).
 		WithVSphereDefaulter().
 		WithVSphereValidator().
-		WithKubeClientFromKubeconfig(kubeconfig.FromClusterName(tt.clusterSpec.Cluster.ManagedBy())).
 		WithCiliumTemplater().
 		WithIPValidator().
 		WithClusterApplier().
@@ -258,7 +290,6 @@ func TestFactoryBuildWithMultipleDependencies(t *testing.T) {
 	tt.Expect(deps.UnAuthKubeClient).NotTo(BeNil())
 	tt.Expect(deps.VSphereDefaulter).NotTo(BeNil())
 	tt.Expect(deps.VSphereValidator).NotTo(BeNil())
-	tt.Expect(deps.KubeClient).NotTo(BeNil())
 	tt.Expect(deps.CiliumTemplater).NotTo(BeNil())
 	tt.Expect(deps.IPValidator).NotTo(BeNil())
 	tt.Expect(deps.ClusterApplier).NotTo(BeNil())

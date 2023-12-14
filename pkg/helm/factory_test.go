@@ -9,6 +9,8 @@ import (
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -47,7 +49,7 @@ func TestHelmFactoryGetClientForClusterSuccess(t *testing.T) {
 		}
 	})
 
-	client := test.NewFakeKubeClient(cluster)
+	client := fake.NewClientBuilder().WithRuntimeObjects(cluster).Build()
 	helmFactory := helm.NewClientFactory(client, tt.builder)
 
 	tt.builder.EXPECT().BuildHelmExecutable(gomock.Any()).Return(tt.helm)
@@ -68,13 +70,13 @@ func TestHelmFactoryGetClientForClusterErrorManagmentClusterNotFound(t *testing.
 		}
 	})
 
-	client := test.NewFakeKubeClient(cluster)
+	client := fake.NewClientBuilder().WithRuntimeObjects(cluster).Build()
 	helmFactory := helm.NewClientFactory(client, tt.builder)
 
 	helm, err := helmFactory.GetClientForCluster(tt.ctx, cluster)
 
 	tt.Expect(helm).To(BeNil())
-	tt.Expect(err).To(MatchError(ContainSubstring("\"management-cluster\" not found")))
+	tt.Expect(err).To(MatchError(ContainSubstring("unable to retrieve management cluster")))
 }
 
 func TestHelmFactoryGetClientForClusterAuthenticatedRegistryMirrorErrorGettingSecret(t *testing.T) {
@@ -92,7 +94,7 @@ func TestHelmFactoryGetClientForClusterAuthenticatedRegistryMirrorErrorGettingSe
 		}
 	})
 
-	client := test.NewFakeKubeClientAlwaysError()
+	client := fake.NewClientBuilder().WithScheme(runtime.NewScheme()).Build()
 	helmFactory := helm.NewClientFactory(client, tt.builder)
 
 	_, err := helmFactory.GetClientForCluster(tt.ctx, cluster)
@@ -127,7 +129,7 @@ func TestHelmFactoryGetClientForClusterSuccessAuthenticatedRegistryMirror(t *tes
 		},
 	}
 
-	client := test.NewFakeKubeClient(cluster, registryAuthSecret)
+	client := fake.NewClientBuilder().WithRuntimeObjects(cluster, registryAuthSecret).Build()
 	helmFactory := helm.NewClientFactory(client, tt.builder)
 
 	tt.builder.EXPECT().BuildHelmExecutable(gomock.Any()).Return(tt.helm)
@@ -167,7 +169,7 @@ func TestHelmFactoryGetClientForClusterErrorLoginRegistry(t *testing.T) {
 		},
 	}
 
-	client := test.NewFakeKubeClient(cluster, registryAuthSecret)
+	client := fake.NewClientBuilder().WithRuntimeObjects(cluster, registryAuthSecret).Build()
 	helmFactory := helm.NewClientFactory(client, tt.builder)
 
 	tt.builder.EXPECT().BuildHelmExecutable(gomock.Any()).Return(tt.helm)
@@ -176,75 +178,4 @@ func TestHelmFactoryGetClientForClusterErrorLoginRegistry(t *testing.T) {
 	_, err := helmFactory.GetClientForCluster(tt.ctx, cluster)
 
 	tt.Expect(err).To(MatchError(ContainSubstring("login registry error")))
-}
-
-func TestHelmFactoryGetClientForClusterRegistryMirrorErrorNoRegistryCredentials(t *testing.T) {
-	tt := newHelmFactoryTest(t)
-	managmentCluster := test.Cluster(func(c *v1alpha1.Cluster) {
-		c.Name = "management-cluster"
-		c.Namespace = constants.EksaSystemNamespace
-		c.Spec.ManagementCluster = anywherev1.ManagementCluster{
-			Name: "management-cluster",
-		}
-		c.Spec.RegistryMirrorConfiguration = &anywherev1.RegistryMirrorConfiguration{
-			Authenticate: true,
-			Endpoint:     "1.2.3.4",
-			Port:         "5000",
-		}
-	})
-
-	cluster := test.Cluster(func(c *v1alpha1.Cluster) {
-		c.Name = "test-cluster"
-		c.Namespace = constants.EksaSystemNamespace
-		c.Spec.ManagementCluster = anywherev1.ManagementCluster{
-			Name: "management-cluster",
-		}
-	})
-
-	client := test.NewFakeKubeClient(managmentCluster, cluster)
-
-	helmFactory := helm.NewClientFactory(client, tt.builder)
-	_, err := helmFactory.GetClientForCluster(tt.ctx, cluster)
-
-	tt.Expect(err).To(MatchError(ContainSubstring("please set REGISTRY_USERNAME")))
-}
-
-func TestHelmFactoryGetClientForClusterSuccessRegistryMirrorEnvCredendialss(t *testing.T) {
-	tt := newHelmFactoryTest(t)
-	managmentCluster := test.Cluster(func(c *v1alpha1.Cluster) {
-		c.Name = "management-cluster"
-		c.Namespace = constants.EksaSystemNamespace
-		c.Spec.ManagementCluster = anywherev1.ManagementCluster{
-			Name: "management-cluster",
-		}
-		c.Spec.RegistryMirrorConfiguration = &anywherev1.RegistryMirrorConfiguration{
-			Authenticate: true,
-			Endpoint:     "1.2.3.4",
-			Port:         "5000",
-		}
-	})
-
-	cluster := test.Cluster(func(c *v1alpha1.Cluster) {
-		c.Name = "test-cluster"
-		c.Namespace = constants.EksaSystemNamespace
-		c.Spec.ManagementCluster = anywherev1.ManagementCluster{
-			Name: "management-cluster",
-		}
-	})
-
-	client := test.NewFakeKubeClient(managmentCluster, cluster)
-
-	helmFactory := helm.NewClientFactory(client, tt.builder)
-	rUsername := "username"
-	rPassword := "password"
-
-	t.Setenv("REGISTRY_USERNAME", rUsername)
-	t.Setenv("REGISTRY_PASSWORD", rPassword)
-
-	tt.builder.EXPECT().BuildHelmExecutable(gomock.Any()).Return(tt.helm)
-	tt.helm.EXPECT().RegistryLogin(tt.ctx, test.RegistryMirrorEndpoint(managmentCluster), rUsername, rPassword).Return(nil)
-
-	helmClient, err := helmFactory.GetClientForCluster(tt.ctx, cluster)
-	tt.Expect(err).To(BeNil())
-	tt.Expect(helmClient).ToNot(BeNil())
 }

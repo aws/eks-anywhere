@@ -11,6 +11,7 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/google/uuid"
 	"golang.org/x/exp/maps"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/aws"
@@ -76,7 +77,6 @@ type Dependencies struct {
 	Troubleshoot                *executables.Troubleshoot
 	Helm                        helm.ExecuteableClient
 	UnAuthKubeClient            *kubernetes.UnAuthClient
-	KubeClient                  kubernetes.Client
 	Networking                  clustermanager.Networking
 	CNIInstaller                workload.CNIInstaller
 	CiliumTemplater             *cilium.Templater
@@ -109,7 +109,7 @@ type Dependencies struct {
 	SnowValidator               *snow.Validator
 	IPValidator                 *validator.IPValidator
 	UnAuthKubectlClient         KubeClients
-	HelmFactory                 *helm.ClientFactory
+	HelmClientFactory           cilium.HelmClientFactory
 	CreateClusterDefaulter      cli.CreateClusterDefaulter
 	UpgradeClusterDefaulter     cli.UpgradeClusterDefaulter
 }
@@ -774,24 +774,46 @@ func (f *Factory) WithHelm(opts ...helm.Opt) *Factory {
 	return f
 }
 
-// WithHelmFactory configures the HelmFactory dependency.
-func (f *Factory) WithHelmFactory(opts ...helm.Opt) *Factory {
+// WithHelmClientFactory configures the HelmClientFactory dependency with a helm.ClientFactory.
+func (f *Factory) WithHelmClientFactory(client client.Client, opts ...helm.Opt) *Factory {
 	f.WithExecutableBuilder()
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
-		if f.dependencies.HelmFactory != nil {
+		if f.dependencies.HelmClientFactory != nil {
 			return nil
-		}
-
-		if f.registryMirror != nil {
-			opts = append(opts, helm.WithRegistryMirror(f.registryMirror))
 		}
 
 		if f.proxyConfiguration != nil {
 			opts = append(opts, helm.WithEnv(f.proxyConfiguration))
 		}
 
-		f.dependencies.HelmFactory = helm.NewClientFactory(f.dependencies.KubeClient, f.executablesConfig.builder, opts...)
+		f.dependencies.HelmClientFactory = helm.NewClientFactory(client, f.executablesConfig.builder, opts...)
+		return nil
+	})
+
+	return f
+}
+
+// WithHelmEnvClientFactory configures the HelmClientFactory dependency with a helm.EnvClientFactory.
+func (f *Factory) WithHelmEnvClientFactory(opts ...helm.Opt) *Factory {
+	f.WithExecutableBuilder()
+
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.dependencies.HelmClientFactory != nil {
+			return nil
+		}
+
+		if f.proxyConfiguration != nil {
+			opts = append(opts, helm.WithEnv(f.proxyConfiguration))
+		}
+
+		envClientFactory := helm.NewEnvClientFactory(f.executablesConfig.builder)
+		err := envClientFactory.Init(ctx, f.registryMirror, opts...)
+		if err != nil {
+			return fmt.Errorf("building helm env lient factory: %v", err)
+		}
+
+		f.dependencies.HelmClientFactory = envClientFactory
 		return nil
 	})
 
@@ -807,8 +829,7 @@ func (f *Factory) WithNetworking(clusterConfig *v1alpha1.Cluster) *Factory {
 			return kindnetd.NewKindnetd(f.dependencies.Kubectl, f.dependencies.FileReader)
 		}
 	} else {
-		managmentClusterName := kubeconfig.FromClusterName(clusterConfig.ManagedBy())
-		f.WithKubectl().WithKubeClientFromKubeconfig(managmentClusterName).WithCiliumTemplater()
+		f.WithKubectl().WithCiliumTemplater()
 
 		networkingBuilder = func() clustermanager.Networking {
 			var opts []cilium.RetrierClientOpt
@@ -842,8 +863,7 @@ func (f *Factory) WithCNIInstaller(spec *cluster.Spec, provider providers.Provid
 	if spec.Cluster.Spec.ClusterNetwork.CNIConfig.Kindnetd != nil {
 		f.WithKubectl().WithFileReader()
 	} else {
-		managmentClusterName := kubeconfig.FromClusterName(spec.Cluster.ManagedBy())
-		f.WithKubectl().WithKubeClientFromKubeconfig(managmentClusterName).WithCiliumTemplater()
+		f.WithKubectl().WithCiliumTemplater()
 	}
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
@@ -875,13 +895,13 @@ func (f *Factory) WithCNIInstaller(spec *cluster.Spec, provider providers.Provid
 }
 
 func (f *Factory) WithCiliumTemplater() *Factory {
-	f.WithHelmFactory(helm.WithInsecure())
+	f.WithHelmEnvClientFactory(helm.WithInsecure())
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.CiliumTemplater != nil {
 			return nil
 		}
-		f.dependencies.CiliumTemplater = cilium.NewTemplater(f.dependencies.HelmFactory)
+		f.dependencies.CiliumTemplater = cilium.NewTemplater(f.dependencies.HelmClientFactory)
 
 		return nil
 	})
@@ -1483,37 +1503,6 @@ func (f *Factory) WithUnAuthKubeClient() *Factory {
 			return fmt.Errorf("building unauth kube client: %v", err)
 		}
 
-		return nil
-	})
-
-	return f
-}
-
-// WithKubeClientFromKubeconfig configures the KubeClient dependency provided with a kubeconfig file path.
-func (f *Factory) WithKubeClientFromKubeconfig(kubeconfig string) *Factory {
-	f.WithUnAuthKubeClient()
-
-	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
-		if f.dependencies.KubeClient != nil {
-			return nil
-		}
-
-		client, _ := f.dependencies.UnAuthKubeClient.BuildClientFromKubeconfig(kubeconfig)
-		f.dependencies.KubeClient = client
-		return nil
-	})
-
-	return f
-}
-
-// WithKubeClient configures the KubeClient dependency provided with a kubernetes.Client.
-func (f *Factory) WithKubeClient(client kubernetes.Client) *Factory {
-	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
-		if f.dependencies.KubeClient != nil {
-			return nil
-		}
-
-		f.dependencies.KubeClient = client
 		return nil
 	})
 

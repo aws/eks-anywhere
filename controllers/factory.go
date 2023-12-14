@@ -14,13 +14,13 @@ import (
 	anywhereCluster "github.com/aws/eks-anywhere/pkg/cluster"
 	mhcreconciler "github.com/aws/eks-anywhere/pkg/clusterapi/machinehealthcheck/reconciler"
 	"github.com/aws/eks-anywhere/pkg/constants"
-	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
 	"github.com/aws/eks-anywhere/pkg/controller/clusters"
 	"github.com/aws/eks-anywhere/pkg/crypto"
 	"github.com/aws/eks-anywhere/pkg/curatedpackages"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/executables/cmk"
+	"github.com/aws/eks-anywhere/pkg/helm"
 	ciliumreconciler "github.com/aws/eks-anywhere/pkg/networking/cilium/reconciler"
 	cnireconciler "github.com/aws/eks-anywhere/pkg/networking/reconciler"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack"
@@ -466,10 +466,16 @@ func (f *Factory) withCloudStackValidatorRegistry() *Factory {
 	return f
 }
 
-func (f *Factory) withCNIReconciler() *Factory {
+func (f *Factory) withCiliumTemplater() *Factory {
 	f.dependencyFactory.
-		WithKubeClient(clientutil.NewKubeClient(f.manager.GetClient())).
+		WithHelmClientFactory(f.manager.GetClient(), helm.WithInsecure()).
 		WithCiliumTemplater()
+
+	return f
+}
+
+func (f *Factory) withCNIReconciler() *Factory {
+	f.withCiliumTemplater()
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.cniReconciler != nil {
