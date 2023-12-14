@@ -26,14 +26,14 @@ func (f *EnvClientFactory) buildClient(opts ...Opt) ExecuteableClient {
 	return f.builder.BuildHelmExecutable(opts...)
 }
 
-// GetClientForCluster returns the helm registry client.
+// Get returns the helm registry client.
 // The parameters here are not used and it only returns the client that is initialized using Init.
-func (f *EnvClientFactory) GetClientForCluster(_ context.Context, _ *anywherev1.Cluster) (RegistryClient, error) {
+func (f *EnvClientFactory) Get(_ context.Context, _ *anywherev1.Cluster) (RegistryClient, error) {
 	return f.helmClient, nil
 }
 
 // Init builds the helm registry client once using the registry mirror information from the cluster information.
-// It should be called at least once first, before trying to retrieving and using the client using GetClientForCluster.
+// It should be called at least once first, before trying to retrieving and using the client using Get.
 // It only builds the helm registry client once.
 func (f *EnvClientFactory) Init(ctx context.Context, r *registrymirror.RegistryMirror, opts ...Opt) error {
 	if f.helmClient != nil {

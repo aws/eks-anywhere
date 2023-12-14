@@ -83,21 +83,21 @@ func (tt *upgraderTest) expectTemplate(manifest []byte) *gomock.Call {
 	).Return(manifest, nil)
 }
 
-func (tt *upgraderTest) expectGetClientForCluster(username, password string) *gomock.Call {
-	return tt.hf.EXPECT().GetClientForCluster(tt.ctx, tt.newSpec.Cluster).Return(tt.h, nil)
+func (tt *upgraderTest) expectHelmClientFactoryGet(username, password string) *gomock.Call {
+	return tt.hf.EXPECT().Get(tt.ctx, tt.newSpec.Cluster).Return(tt.h, nil)
 }
 
 func TestUpgraderUpgradeSuccess(t *testing.T) {
 	tt := newUpgraderTest(t)
 	// Templater and client and already tested individually so we only want to test the flow (order of calls)
 	gomock.InOrder(
-		tt.expectGetClientForCluster("", ""),
+		tt.expectHelmClientFactoryGet("", ""),
 		tt.expectTemplatePreFlight(),
 		tt.client.EXPECT().Apply(tt.ctx, tt.cluster, tt.manifestPre),
 		tt.client.EXPECT().WaitForPreflightDaemonSet(tt.ctx, tt.cluster),
 		tt.client.EXPECT().WaitForPreflightDeployment(tt.ctx, tt.cluster),
 		tt.client.EXPECT().Delete(tt.ctx, tt.cluster, tt.manifestPre),
-		tt.expectGetClientForCluster("", ""),
+		tt.expectHelmClientFactoryGet("", ""),
 		tt.expectTemplateManifest(),
 		tt.client.EXPECT().Apply(tt.ctx, tt.cluster, tt.manifest),
 		tt.client.EXPECT().WaitForCiliumDaemonSet(tt.ctx, tt.cluster),
@@ -125,13 +125,13 @@ func TestUpgraderUpgradeSuccessValuesChanged(t *testing.T) {
 
 	// Templater and client and already tested individually so we only want to test the flow (order of calls)
 	gomock.InOrder(
-		tt.expectGetClientForCluster("", ""),
+		tt.expectHelmClientFactoryGet("", ""),
 		tt.expectTemplatePreFlight(),
 		tt.client.EXPECT().Apply(tt.ctx, tt.cluster, tt.manifestPre),
 		tt.client.EXPECT().WaitForPreflightDaemonSet(tt.ctx, tt.cluster),
 		tt.client.EXPECT().WaitForPreflightDeployment(tt.ctx, tt.cluster),
 		tt.client.EXPECT().Delete(tt.ctx, tt.cluster, tt.manifestPre),
-		tt.expectGetClientForCluster("", ""),
+		tt.expectHelmClientFactoryGet("", ""),
 		tt.expectTemplateManifest(),
 		tt.client.EXPECT().Apply(tt.ctx, tt.cluster, tt.manifest),
 		tt.client.EXPECT().WaitForCiliumDaemonSet(tt.ctx, tt.cluster),
@@ -153,13 +153,13 @@ func TestUpgraderUpgradeSuccessValuesChangedUpgradeFromNilCNIConfigSpec(t *testi
 
 	// Templater and client and already tested individually so we only want to test the flow (order of calls)
 	gomock.InOrder(
-		tt.expectGetClientForCluster("", ""),
+		tt.expectHelmClientFactoryGet("", ""),
 		tt.expectTemplatePreFlight(),
 		tt.client.EXPECT().Apply(tt.ctx, tt.cluster, tt.manifestPre),
 		tt.client.EXPECT().WaitForPreflightDaemonSet(tt.ctx, tt.cluster),
 		tt.client.EXPECT().WaitForPreflightDeployment(tt.ctx, tt.cluster),
 		tt.client.EXPECT().Delete(tt.ctx, tt.cluster, tt.manifestPre),
-		tt.expectGetClientForCluster("", ""),
+		tt.expectHelmClientFactoryGet("", ""),
 		tt.expectTemplateManifest(),
 		tt.client.EXPECT().Apply(tt.ctx, tt.cluster, tt.manifest),
 		tt.client.EXPECT().WaitForCiliumDaemonSet(tt.ctx, tt.cluster),
@@ -181,13 +181,13 @@ func TestUpgraderUpgradeSuccessValuesChangedUpgradeFromNilCiliumConfigSpec(t *te
 
 	// Templater and client and already tested individually so we only want to test the flow (order of calls)
 	gomock.InOrder(
-		tt.expectGetClientForCluster("", ""),
+		tt.expectHelmClientFactoryGet("", ""),
 		tt.expectTemplatePreFlight(),
 		tt.client.EXPECT().Apply(tt.ctx, tt.cluster, tt.manifestPre),
 		tt.client.EXPECT().WaitForPreflightDaemonSet(tt.ctx, tt.cluster),
 		tt.client.EXPECT().WaitForPreflightDeployment(tt.ctx, tt.cluster),
 		tt.client.EXPECT().Delete(tt.ctx, tt.cluster, tt.manifestPre),
-		tt.expectGetClientForCluster("", ""),
+		tt.expectHelmClientFactoryGet("", ""),
 		tt.expectTemplateManifest(),
 		tt.client.EXPECT().Apply(tt.ctx, tt.cluster, tt.manifest),
 		tt.client.EXPECT().WaitForCiliumDaemonSet(tt.ctx, tt.cluster),
@@ -207,13 +207,13 @@ func TestUpgraderUpgradeSuccessEgressMasqueradeInterfacesValueChanged(t *testing
 
 	// Templater and client and already tested individually so we only want to test the flow (order of calls)
 	gomock.InOrder(
-		tt.expectGetClientForCluster("", ""),
+		tt.expectHelmClientFactoryGet("", ""),
 		tt.expectTemplatePreFlight(),
 		tt.client.EXPECT().Apply(tt.ctx, tt.cluster, tt.manifestPre),
 		tt.client.EXPECT().WaitForPreflightDaemonSet(tt.ctx, tt.cluster),
 		tt.client.EXPECT().WaitForPreflightDeployment(tt.ctx, tt.cluster),
 		tt.client.EXPECT().Delete(tt.ctx, tt.cluster, tt.manifestPre),
-		tt.expectGetClientForCluster("", ""),
+		tt.expectHelmClientFactoryGet("", ""),
 		tt.expectTemplateManifest(),
 		tt.client.EXPECT().Apply(tt.ctx, tt.cluster, tt.manifest),
 		tt.client.EXPECT().WaitForCiliumDaemonSet(tt.ctx, tt.cluster),

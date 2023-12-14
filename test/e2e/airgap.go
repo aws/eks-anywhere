@@ -195,7 +195,7 @@ func runDockerAirgapConfigFlow(test *framework.ClusterE2ETest) {
 	test.ChangeInstanceSecurityGroup(os.Getenv(framework.RegistryMirrorDefaultSecurityGroup))
 }
 
-func runDockerAirgapUpgradeFromReleaseFlow(test *framework.ClusterE2ETest, latestRelease *releasev1.EksARelease, wantVersion anywherev1.KubernetesVersion, clusterOpts ...framework.ClusterE2ETestOpt) {
+func runDockerAirgapUpgradeFromReleaseFlow(test *framework.ClusterE2ETest, latestRelease *releasev1.EksARelease, wantVersion anywherev1.KubernetesVersion) {
 	test.GenerateClusterConfigForVersion(latestRelease.Version, framework.ExecuteWithEksaRelease(latestRelease))
 
 	// Downloading and importing the artifacts from the previous version
@@ -216,7 +216,7 @@ func runDockerAirgapUpgradeFromReleaseFlow(test *framework.ClusterE2ETest, lates
 	test.ChangeInstanceSecurityGroup(os.Getenv(framework.RegistryMirrorAirgappedSecurityGroup))
 	test.ImportImages()
 
-	test.UpgradeClusterWithNewConfig(clusterOpts, framework.WithBundlesOverride(bundleReleasePathFromArtifacts))
+	test.UpgradeClusterWithNewConfig([]framework.ClusterE2ETestOpt{}, framework.WithBundlesOverride(bundleReleasePathFromArtifacts))
 	test.ValidateCluster(wantVersion)
 	test.StopIfFailed()
 	test.DeleteCluster(framework.WithBundlesOverride(bundleReleasePathFromArtifacts))

@@ -73,8 +73,8 @@ func (t *templaterTest) expectHelmTemplateWith(wantValues gomock.Matcher, kubeVe
 	return t.h.EXPECT().Template(t.ctx, t.uri, t.version, t.namespace, wantValues, kubeVersion)
 }
 
-func (t *templaterTest) expectGetClientForCluster(username, password string) {
-	t.hf.EXPECT().GetClientForCluster(t.ctx, t.spec.Cluster).Return(t.h, nil)
+func (t *templaterTest) expectHelmClientFactoryGet(username, password string) {
+	t.hf.EXPECT().Get(t.ctx, t.spec.Cluster).Return(t.h, nil)
 }
 
 func eqMap(m map[string]interface{}) gomock.Matcher {
@@ -151,7 +151,7 @@ func TestTemplaterGenerateUpgradePreflightManifestSuccess(t *testing.T) {
 
 	tt := newtemplaterTest(t)
 
-	tt.expectGetClientForCluster("", "")
+	tt.expectHelmClientFactoryGet("", "")
 	tt.expectHelmTemplateWith(eqMap(wantValues), "1.22").Return(tt.manifest, nil)
 
 	tt.Expect(tt.t.GenerateUpgradePreflightManifest(tt.ctx, tt.spec)).To(Equal(tt.manifest), "templater.GenerateUpgradePreflightManifest() should return right manifest")
@@ -160,7 +160,7 @@ func TestTemplaterGenerateUpgradePreflightManifestSuccess(t *testing.T) {
 func TestTemplaterGenerateUpgradePreflightManifestError(t *testing.T) {
 	tt := newtemplaterTest(t)
 
-	tt.expectGetClientForCluster("", "")
+	tt.expectHelmClientFactoryGet("", "")
 	tt.expectHelmTemplateWith(gomock.Any(), "1.22").Return(nil, errors.New("error from helm")) // Using any because we only want to test the returned error
 
 	_, err := tt.t.GenerateUpgradePreflightManifest(tt.ctx, tt.spec)
@@ -207,7 +207,7 @@ func TestTemplaterGenerateManifestSuccess(t *testing.T) {
 
 	tt := newtemplaterTest(t)
 
-	tt.expectGetClientForCluster("", "")
+	tt.expectHelmClientFactoryGet("", "")
 	tt.expectHelmTemplateWith(eqMap(wantValues), "1.22").Return(tt.manifest, nil)
 
 	tt.Expect(tt.t.GenerateManifest(tt.ctx, tt.spec)).To(Equal(tt.manifest), "templater.GenerateManifest() should return right manifest")
@@ -247,7 +247,7 @@ func TestTemplaterGenerateManifestPolicyEnforcementModeSuccess(t *testing.T) {
 	tt.spec.Cluster.Spec.ManagementCluster.Name = "managed"
 	tt.spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.PolicyEnforcementMode = v1alpha1.CiliumPolicyModeAlways
 
-	tt.expectGetClientForCluster("", "")
+	tt.expectHelmClientFactoryGet("", "")
 	tt.expectHelmTemplateWith(eqMap(wantValues), "1.22").Return(tt.manifest, nil)
 
 	gotManifest, err := tt.t.GenerateManifest(tt.ctx, tt.spec)
@@ -289,7 +289,7 @@ func TestTemplaterGenerateManifestEgressMasqueradeInterfacesSuccess(t *testing.T
 	tt.spec.Cluster.Spec.ManagementCluster.Name = "managed"
 	tt.spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.EgressMasqueradeInterfaces = "eth0"
 
-	tt.expectGetClientForCluster("", "")
+	tt.expectHelmClientFactoryGet("", "")
 	tt.expectHelmTemplateWith(eqMap(wantValues), "1.22").Return(tt.manifest, nil)
 
 	tt.Expect(tt.t.GenerateManifest(tt.ctx, tt.spec)).To(Equal(tt.manifest), "templater.GenerateManifest() should return right manifest")
@@ -328,7 +328,7 @@ func TestTemplaterGenerateManifestDirectRouteModeSuccess(t *testing.T) {
 	tt := newtemplaterTest(t)
 	tt.spec.Cluster.Spec.ManagementCluster.Name = "managed"
 	tt.spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.RoutingMode = v1alpha1.CiliumRoutingModeDirect
-	tt.expectGetClientForCluster("", "")
+	tt.expectHelmClientFactoryGet("", "")
 	tt.expectHelmTemplateWith(eqMap(wantValues), "1.22").Return(tt.manifest, nil)
 
 	tt.Expect(tt.t.GenerateManifest(tt.ctx, tt.spec)).To(Equal(tt.manifest), "templater.GenerateManifest() should return right manifest")
@@ -370,7 +370,7 @@ func TestTemplaterGenerateManifestDirectModeManualIPCIDRSuccess(t *testing.T) {
 	tt.spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.RoutingMode = v1alpha1.CiliumRoutingModeDirect
 	tt.spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.IPv4NativeRoutingCIDR = "192.168.0.0/24"
 	tt.spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.IPv6NativeRoutingCIDR = "2001:db8::/32"
-	tt.expectGetClientForCluster("", "")
+	tt.expectHelmClientFactoryGet("", "")
 	tt.expectHelmTemplateWith(eqMap(wantValues), "1.22").Return(tt.manifest, nil)
 
 	tt.Expect(tt.t.GenerateManifest(tt.ctx, tt.spec)).To(Equal(tt.manifest), "templater.GenerateManifest() should return right manifest")
@@ -380,7 +380,7 @@ func TestTemplaterGenerateManifestError(t *testing.T) {
 	expectedAttempts := 2
 	tt := newtemplaterTest(t)
 
-	tt.expectGetClientForCluster("", "")
+	tt.expectHelmClientFactoryGet("", "")
 	tt.expectHelmTemplateWith(gomock.Any(), "1.22").Return(nil, errors.New("error from helm")).Times(expectedAttempts) // Using any because we only want to test the returned error
 
 	_, err := tt.t.GenerateManifest(tt.ctx, tt.spec, cilium.WithRetrier(retrier.NewWithMaxRetries(expectedAttempts, 0)))
@@ -388,10 +388,10 @@ func TestTemplaterGenerateManifestError(t *testing.T) {
 	tt.Expect(err).To(MatchError(ContainSubstring("error from helm")))
 }
 
-func TestTemplaterGenerateManifestGetClientForClusterError(t *testing.T) {
+func TestTemplaterGenerateManifestGetError(t *testing.T) {
 	tt := newtemplaterTest(t)
 
-	tt.hf.EXPECT().GetClientForCluster(tt.ctx, tt.spec.Cluster).Return(nil, errors.New("error getting helm client"))
+	tt.hf.EXPECT().Get(tt.ctx, tt.spec.Cluster).Return(nil, errors.New("error getting helm client"))
 
 	_, err := tt.t.GenerateManifest(tt.ctx, tt.spec)
 	tt.Expect(err).To(HaveOccurred(), "templater.GenerateManifest() should fail")
@@ -409,7 +409,7 @@ func TestTemplaterGenerateManifestInvalidKubeVersion(t *testing.T) {
 func TestTemplaterGenerateManifestUpgradeSameKubernetesVersionSuccess(t *testing.T) {
 	tt := newtemplaterTest(t)
 
-	tt.expectGetClientForCluster("", "")
+	tt.expectHelmClientFactoryGet("", "")
 	tt.expectHelmTemplateWith(eqMap(wantUpgradeValues()), "1.22").Return(tt.manifest, nil)
 
 	vb := tt.currentSpec.RootVersionsBundle()
@@ -427,7 +427,7 @@ func TestTemplaterGenerateManifestUpgradeSameKubernetesVersionSuccess(t *testing
 func TestTemplaterGenerateManifestUpgradeNewKubernetesVersionSuccess(t *testing.T) {
 	tt := newtemplaterTest(t)
 
-	tt.expectGetClientForCluster("", "")
+	tt.expectHelmClientFactoryGet("", "")
 	tt.expectHelmTemplateWith(eqMap(wantUpgradeValues()), "1.21").Return(tt.manifest, nil)
 
 	vb := tt.currentSpec.RootVersionsBundle()
@@ -539,7 +539,7 @@ func TestTemplaterGenerateManifestForSingleNodeCluster(t *testing.T) {
 	tt.spec.Cluster.Spec.WorkerNodeGroupConfigurations = nil
 	tt.spec.Cluster.Spec.ControlPlaneConfiguration.Count = 1
 
-	tt.expectGetClientForCluster("", "")
+	tt.expectHelmClientFactoryGet("", "")
 	tt.h.EXPECT().
 		Template(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(func(_, _, _, _ interface{}, values map[string]interface{}, _ interface{}) ([]byte, error) {
@@ -571,7 +571,7 @@ func TestTemplaterGenerateManifestForRegistryAuth(t *testing.T) {
 	t.Setenv("REGISTRY_USERNAME", "username")
 	t.Setenv("REGISTRY_PASSWORD", "password")
 
-	tt.expectGetClientForCluster("username", "password")
+	tt.expectHelmClientFactoryGet("username", "password")
 
 	tt.h.EXPECT().
 		Template(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).

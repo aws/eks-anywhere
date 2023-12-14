@@ -25,7 +25,7 @@ const (
 
 // HelmClientFactory provides a helm client for a cluster.
 type HelmClientFactory interface {
-	GetClientForCluster(ctx context.Context, clus *anywherev1.Cluster) (helm.RegistryClient, error)
+	Get(ctx context.Context, clus *anywherev1.Cluster) (helm.RegistryClient, error)
 }
 
 type Templater struct {
@@ -61,9 +61,9 @@ func (t *Templater) GenerateUpgradePreflightManifest(ctx context.Context, spec *
 	if err != nil {
 		return nil, err
 	}
-	helm, err := t.helmFactory.GetClientForCluster(ctx, spec.Cluster)
+	helm, err := t.helmFactory.Get(ctx, spec.Cluster)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get helm client for cluster %s: %v", spec.Cluster.ManagedBy(), err)
+		return nil, fmt.Errorf("failed to get helm client for cluster %s: %v", spec.Cluster.Name, err)
 	}
 
 	manifest, err := helm.Template(ctx, uri, version, namespace, v, kubeVersion)
@@ -135,9 +135,9 @@ func (t *Templater) GenerateManifest(ctx context.Context, spec *cluster.Spec, op
 	uri, version := getChartURIAndVersion(versionsBundle)
 	var manifest []byte
 
-	helm, err := t.helmFactory.GetClientForCluster(ctx, spec.Cluster)
+	helm, err := t.helmFactory.Get(ctx, spec.Cluster)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get helm client for cluster %s: %v", spec.Cluster.ManagedBy(), err)
+		return nil, fmt.Errorf("failed to get helm client for cluster %s: %v", spec.Cluster.Name, err)
 	}
 
 	err = c.retrier.Retry(func() error {

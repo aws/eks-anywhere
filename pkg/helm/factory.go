@@ -89,8 +89,8 @@ func NewClientFactory(client client.Client, builder ExecutableBuilder) *ClientFa
 	return hf
 }
 
-// GetClientForCluster returns a new Helm client configured using information from the provided cluster's management cluster.
-func (f *ClientFactory) GetClientForCluster(ctx context.Context, clus *anywherev1.Cluster) (RegistryClient, error) {
+// Get returns a new Helm client configured using information from the provided cluster's management cluster.
+func (f *ClientFactory) Get(ctx context.Context, clus *anywherev1.Cluster) (RegistryClient, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 
@@ -115,7 +115,7 @@ func (f *ClientFactory) GetClientForCluster(ctx context.Context, clus *anywherev
 	r := registrymirror.FromCluster(managmentCluster)
 	f.helmClient = f.builder.BuildHelmExecutable(WithRegistryMirror(r), WithInsecure())
 
-	if managmentCluster.RegistryAuth() {
+	if r != nil && managmentCluster.RegistryAuth() {
 		if err := f.helmClient.RegistryLogin(ctx, r.BaseRegistry, rUsername, rPassword); err != nil {
 			return nil, err
 		}

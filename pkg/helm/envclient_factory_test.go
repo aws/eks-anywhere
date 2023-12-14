@@ -36,7 +36,7 @@ func newHelmEnvClientFactoryTest(t *testing.T) *helmEnvClientFactoryTest {
 	}
 }
 
-func TestHelmEnvClientFactoryGetClientForClusterSuccessNoRegistryMirror(t *testing.T) {
+func TestHelmEnvClientFactoryGetSuccessNoRegistryMirror(t *testing.T) {
 	tt := newHelmEnvClientFactoryTest(t)
 	cluster := test.Cluster(func(c *v1alpha1.Cluster) {
 		c.Name = "test-cluster"
@@ -53,11 +53,11 @@ func TestHelmEnvClientFactoryGetClientForClusterSuccessNoRegistryMirror(t *testi
 	err := helmFactory.Init(tt.ctx, registrymirror.FromCluster(cluster))
 	tt.Expect(err).To(BeNil())
 
-	helm, _ := helmFactory.GetClientForCluster(tt.ctx, cluster)
+	helm, _ := helmFactory.Get(tt.ctx, cluster)
 	tt.Expect(helm).NotTo(BeNil())
 }
 
-func TestHelmEnvClientFactoryGetClientForClusterSuccessNoAuthRegistryMirror(t *testing.T) {
+func TestHelmEnvClientFactoryGetSuccessNoAuthRegistryMirror(t *testing.T) {
 	tt := newHelmEnvClientFactoryTest(t)
 	cluster := test.Cluster(func(c *v1alpha1.Cluster) {
 		c.Name = "test-cluster"
@@ -78,11 +78,11 @@ func TestHelmEnvClientFactoryGetClientForClusterSuccessNoAuthRegistryMirror(t *t
 	err := helmFactory.Init(tt.ctx, registrymirror.FromCluster(cluster))
 	tt.Expect(err).To(BeNil())
 
-	helm, _ := helmFactory.GetClientForCluster(tt.ctx, cluster)
+	helm, _ := helmFactory.Get(tt.ctx, cluster)
 	tt.Expect(helm).NotTo(BeNil())
 }
 
-func TestHelmEnvClientFactoryGetClientForClusterErrorMissingRegistryCredentials(t *testing.T) {
+func TestHelmEnvClientFactoryGetErrorMissingRegistryCredentials(t *testing.T) {
 	tt := newHelmEnvClientFactoryTest(t)
 	cluster := test.Cluster(func(c *v1alpha1.Cluster) {
 		c.Name = "management-cluster"
@@ -104,11 +104,11 @@ func TestHelmEnvClientFactoryGetClientForClusterErrorMissingRegistryCredentials(
 	err := helmFactory.Init(tt.ctx, registrymirror.FromCluster(cluster))
 	tt.Expect(err).To(MatchError(ContainSubstring("please set REGISTRY_USERNAME")))
 
-	helm, _ := helmFactory.GetClientForCluster(tt.ctx, cluster)
+	helm, _ := helmFactory.Get(tt.ctx, cluster)
 	tt.Expect(helm).To(BeNil())
 }
 
-func TestHelmEnvClientFactoryGetClientForClusterErrorRegistryLogin(t *testing.T) {
+func TestHelmEnvClientFactoryGetErrorRegistryLogin(t *testing.T) {
 	tt := newHelmEnvClientFactoryTest(t)
 	cluster := test.Cluster(func(c *v1alpha1.Cluster) {
 		c.Name = "test-cluster"
@@ -137,11 +137,11 @@ func TestHelmEnvClientFactoryGetClientForClusterErrorRegistryLogin(t *testing.T)
 	err := helmFactory.Init(tt.ctx, registrymirror.FromCluster(cluster))
 	tt.Expect(err).To(MatchError(ContainSubstring("login registry error")))
 
-	helm, _ := helmFactory.GetClientForCluster(tt.ctx, cluster)
+	helm, _ := helmFactory.Get(tt.ctx, cluster)
 	tt.Expect(helm).To(BeNil())
 }
 
-func TestHelmEnvClientFactoryGetClientForClusterSuccessAuthenticatedRegistryMirror(t *testing.T) {
+func TestHelmEnvClientFactoryGetSuccessAuthenticatedRegistryMirror(t *testing.T) {
 	tt := newHelmEnvClientFactoryTest(t)
 	cluster := test.Cluster(func(c *v1alpha1.Cluster) {
 		c.Name = "test-cluster"
@@ -170,11 +170,11 @@ func TestHelmEnvClientFactoryGetClientForClusterSuccessAuthenticatedRegistryMirr
 	err := helmFactory.Init(tt.ctx, registrymirror.FromCluster(cluster))
 	tt.Expect(err).To(BeNil())
 
-	helm, _ := helmFactory.GetClientForCluster(tt.ctx, cluster)
+	helm, _ := helmFactory.Get(tt.ctx, cluster)
 	tt.Expect(helm).ToNot(BeNil())
 }
 
-func TestHelmEnvClientFactoryGetClientForClusterAlreadyInitialized(t *testing.T) {
+func TestHelmEnvClientFactoryGetAlreadyInitialized(t *testing.T) {
 	tt := newHelmEnvClientFactoryTest(t)
 	cluster := test.Cluster(func(c *v1alpha1.Cluster) {
 		c.Name = "test-cluster"

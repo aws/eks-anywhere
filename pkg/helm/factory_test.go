@@ -39,7 +39,7 @@ func newHelmFactoryTest(t *testing.T) *helmFactoryTest {
 	}
 }
 
-func TestHelmFactoryGetClientForClusterSuccess(t *testing.T) {
+func TestHelmFactoryGetSuccess(t *testing.T) {
 	tt := newHelmFactoryTest(t)
 	cluster := test.Cluster(func(c *v1alpha1.Cluster) {
 		c.Name = "test-cluster"
@@ -54,13 +54,13 @@ func TestHelmFactoryGetClientForClusterSuccess(t *testing.T) {
 
 	tt.builder.EXPECT().BuildHelmExecutable(gomock.Any()).Return(tt.helm)
 
-	helm, err := helmFactory.GetClientForCluster(tt.ctx, cluster)
+	helm, err := helmFactory.Get(tt.ctx, cluster)
 
 	tt.Expect(err).To(BeNil())
 	tt.Expect(helm).NotTo(BeNil())
 }
 
-func TestHelmFactoryGetClientForClusterErrorManagmentClusterNotFound(t *testing.T) {
+func TestHelmFactoryGetErrorManagmentClusterNotFound(t *testing.T) {
 	tt := newHelmFactoryTest(t)
 	cluster := test.Cluster(func(c *v1alpha1.Cluster) {
 		c.Name = "test-cluster"
@@ -73,13 +73,13 @@ func TestHelmFactoryGetClientForClusterErrorManagmentClusterNotFound(t *testing.
 	client := fake.NewClientBuilder().WithRuntimeObjects(cluster).Build()
 	helmFactory := helm.NewClientFactory(client, tt.builder)
 
-	helm, err := helmFactory.GetClientForCluster(tt.ctx, cluster)
+	helm, err := helmFactory.Get(tt.ctx, cluster)
 
 	tt.Expect(helm).To(BeNil())
 	tt.Expect(err).To(MatchError(ContainSubstring("unable to retrieve management cluster")))
 }
 
-func TestHelmFactoryGetClientForClusterAuthenticatedRegistryMirrorErrorGettingSecret(t *testing.T) {
+func TestHelmFactoryGetAuthenticatedRegistryMirrorErrorGettingSecret(t *testing.T) {
 	tt := newHelmFactoryTest(t)
 	cluster := test.Cluster(func(c *v1alpha1.Cluster) {
 		c.Name = "test-cluster"
@@ -97,11 +97,11 @@ func TestHelmFactoryGetClientForClusterAuthenticatedRegistryMirrorErrorGettingSe
 	client := fake.NewClientBuilder().WithScheme(runtime.NewScheme()).Build()
 	helmFactory := helm.NewClientFactory(client, tt.builder)
 
-	_, err := helmFactory.GetClientForCluster(tt.ctx, cluster)
+	_, err := helmFactory.Get(tt.ctx, cluster)
 	tt.Expect(err).To(MatchError(ContainSubstring("fetching registry auth secret: no kind is registered for the type v1.Secret")))
 }
 
-func TestHelmFactoryGetClientForClusterSuccessAuthenticatedRegistryMirror(t *testing.T) {
+func TestHelmFactoryGetSuccessAuthenticatedRegistryMirror(t *testing.T) {
 	tt := newHelmFactoryTest(t)
 	cluster := test.Cluster(func(c *v1alpha1.Cluster) {
 		c.Name = "test-cluster"
@@ -135,13 +135,13 @@ func TestHelmFactoryGetClientForClusterSuccessAuthenticatedRegistryMirror(t *tes
 	tt.builder.EXPECT().BuildHelmExecutable(gomock.Any()).Return(tt.helm)
 	tt.helm.EXPECT().RegistryLogin(tt.ctx, test.RegistryMirrorEndpoint(cluster), rUsername, rPassword).Return(nil)
 
-	helmClient, err := helmFactory.GetClientForCluster(tt.ctx, cluster)
+	helmClient, err := helmFactory.Get(tt.ctx, cluster)
 
 	tt.Expect(err).To(BeNil())
 	tt.Expect(helmClient).ToNot(BeNil())
 }
 
-func TestHelmFactoryGetClientForClusterErrorLoginRegistry(t *testing.T) {
+func TestHelmFactoryGetErrorLoginRegistry(t *testing.T) {
 	tt := newHelmFactoryTest(t)
 	cluster := test.Cluster(func(c *v1alpha1.Cluster) {
 		c.Name = "test-cluster"
@@ -175,7 +175,7 @@ func TestHelmFactoryGetClientForClusterErrorLoginRegistry(t *testing.T) {
 	tt.builder.EXPECT().BuildHelmExecutable(gomock.Any()).Return(tt.helm)
 	tt.helm.EXPECT().RegistryLogin(tt.ctx, test.RegistryMirrorEndpoint(cluster), rUsername, rPassword).Return(errors.New("login registry error"))
 
-	_, err := helmFactory.GetClientForCluster(tt.ctx, cluster)
+	_, err := helmFactory.Get(tt.ctx, cluster)
 
 	tt.Expect(err).To(MatchError(ContainSubstring("login registry error")))
 }

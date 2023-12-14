@@ -36,17 +36,17 @@ func (m *MockHelmFactory) EXPECT() *MockHelmFactoryMockRecorder {
 	return m.recorder
 }
 
-// GetClientForCluster mocks base method.
-func (m *MockHelmFactory) GetClientForCluster(ctx context.Context, clus *v1alpha1.Cluster) (helm.RegistryClient, error) {
+// Get mocks base method.
+func (m *MockHelmFactory) Get(ctx context.Context, clus *v1alpha1.Cluster) (helm.RegistryClient, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetClientForCluster", ctx, clus)
+	ret := m.ctrl.Call(m, "Get", ctx, clus)
 	ret0, _ := ret[0].(helm.RegistryClient)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetClientForCluster indicates an expected call of GetClientForCluster.
-func (mr *MockHelmFactoryMockRecorder) GetClientForCluster(ctx, clus interface{}) *gomock.Call {
+// Get indicates an expected call of Get.
+func (mr *MockHelmFactoryMockRecorder) Get(ctx, clus interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetClientForCluster", reflect.TypeOf((*MockHelmFactory)(nil).GetClientForCluster), ctx, clus)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockHelmFactory)(nil).Get), ctx, clus)
 }
