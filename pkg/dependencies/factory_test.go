@@ -9,7 +9,6 @@ import (
 
 	. "github.com/onsi/gomega"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -212,19 +211,6 @@ func TestFactoryBuildWithHelmEnvClientFactory(t *testing.T) {
 	tt.Expect(deps.HelmClientFactory).NotTo(BeNil())
 }
 
-func TestFactoryBuildWithHelmClientFactory(t *testing.T) {
-	tt := newTest(t, vsphere)
-	client := fake.NewClientBuilder().Build()
-	deps, err := dependencies.NewFactory().
-		WithLocalExecutables().
-		WithProxyConfiguration().
-		WithHelmClientFactory(client).
-		Build(context.Background())
-
-	tt.Expect(err).To(BeNil())
-	tt.Expect(deps.HelmClientFactory).NotTo(BeNil())
-}
-
 func TestFactoryBuildWithClusterManagerWithoutCliConfig(t *testing.T) {
 	tt := newTest(t, vsphere)
 	deps, err := dependencies.NewFactory().
@@ -266,6 +252,7 @@ func TestFactoryBuildWithMultipleDependencies(t *testing.T) {
 		WithCloudStackValidatorRegistry(false).
 		WithVSphereDefaulter().
 		WithVSphereValidator().
+		WithHelmExecutableBuilder().
 		WithCiliumTemplater().
 		WithIPValidator().
 		WithClusterApplier().
@@ -290,6 +277,7 @@ func TestFactoryBuildWithMultipleDependencies(t *testing.T) {
 	tt.Expect(deps.UnAuthKubeClient).NotTo(BeNil())
 	tt.Expect(deps.VSphereDefaulter).NotTo(BeNil())
 	tt.Expect(deps.VSphereValidator).NotTo(BeNil())
+	tt.Expect(deps.HelmExecutableBuilder).NotTo(BeNil())
 	tt.Expect(deps.CiliumTemplater).NotTo(BeNil())
 	tt.Expect(deps.IPValidator).NotTo(BeNil())
 	tt.Expect(deps.ClusterApplier).NotTo(BeNil())

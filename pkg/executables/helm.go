@@ -22,8 +22,6 @@ type Helm struct {
 	helmOptions *helm.Config // Embed HelmOptions in Helm struct
 }
 
-type HelmOpt func(*Helm)
-
 // NewHelm returns a new Helm executable client.
 func NewHelm(executable Executable, opts ...helm.Opt) helm.ExecuteableClient {
 	helmOptions := &helm.Config{
@@ -33,6 +31,8 @@ func NewHelm(executable Executable, opts ...helm.Opt) helm.ExecuteableClient {
 		Insecure: false,
 	}
 
+	// TODO: we should not update the receiver here, so this needs to change.
+	// This is not thread safe
 	for _, o := range opts {
 		o(helmOptions)
 	}

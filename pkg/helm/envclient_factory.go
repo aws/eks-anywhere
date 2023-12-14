@@ -35,6 +35,7 @@ func (f *EnvClientFactory) Get(_ context.Context, _ *anywherev1.Cluster) (Regist
 // Init builds the helm registry client once using the registry mirror information from the cluster information.
 // It should be called at least once first, before trying to retrieving and using the client using Get.
 // It only builds the helm registry client once.
+// This is not thread safe and the caller should guarantee that it does not get called from multiple threads
 func (f *EnvClientFactory) Init(ctx context.Context, r *registrymirror.RegistryMirror, opts ...Opt) error {
 	if f.helmClient != nil {
 		return nil
@@ -49,6 +50,8 @@ func (f *EnvClientFactory) Init(ctx context.Context, r *registrymirror.RegistryM
 		return nil
 	}
 
+	// The registry credentials should be injected on construction through environment variabless REGISTRY_USERNAME
+	// and REGISTRY_PASSWORD, or passed to this method as arguments.
 	rUsername, rPassword, err := configcli.ReadCredentials()
 	if err != nil {
 		return err

@@ -11,7 +11,6 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/google/uuid"
 	"golang.org/x/exp/maps"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/aws"
@@ -110,6 +109,7 @@ type Dependencies struct {
 	IPValidator                 *validator.IPValidator
 	UnAuthKubectlClient         KubeClients
 	HelmClientFactory           cilium.HelmClientFactory
+	HelmExecutableBuilder       helm.ExecutableBuilder
 	CreateClusterDefaulter      cli.CreateClusterDefaulter
 	UpgradeClusterDefaulter     cli.UpgradeClusterDefaulter
 }
@@ -380,6 +380,21 @@ func (f *Factory) WithExecutableBuilder() *Factory {
 		}
 		f.dependencies.closers = append(f.dependencies.closers, closer)
 
+		return nil
+	})
+
+	return f
+}
+
+// WithHelmExecutableBuilder adds a build step to initializes the helm.ExecutableBuilder dependency.
+func (f *Factory) WithHelmExecutableBuilder() *Factory {
+	f.WithExecutableBuilder()
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.dependencies.HelmExecutableBuilder != nil {
+			return nil
+		}
+
+		f.dependencies.HelmExecutableBuilder = f.executablesConfig.builder
 		return nil
 	})
 
@@ -768,22 +783,6 @@ func (f *Factory) WithHelm(opts ...helm.Opt) *Factory {
 		}
 
 		f.dependencies.Helm = f.executablesConfig.builder.BuildHelmExecutable(opts...)
-		return nil
-	})
-
-	return f
-}
-
-// WithHelmClientFactory configures the HelmClientFactory dependency with a helm.ClientFactory.
-func (f *Factory) WithHelmClientFactory(client client.Client) *Factory {
-	f.WithExecutableBuilder()
-
-	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
-		if f.dependencies.HelmClientFactory != nil {
-			return nil
-		}
-
-		f.dependencies.HelmClientFactory = helm.NewClientFactory(client, f.executablesConfig.builder)
 		return nil
 	})
 
