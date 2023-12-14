@@ -21,13 +21,13 @@ type helmEnvClientFactoryTest struct {
 	*WithT
 	ctx     context.Context
 	builder *helmmocks.MockExecutableBuilder
-	helm    *helmmocks.MockExecuteableClient
+	helm    *helmmocks.MockClient
 }
 
 func newHelmEnvClientFactoryTest(t *testing.T) *helmEnvClientFactoryTest {
 	ctrl := gomock.NewController(t)
 	builder := helmmocks.NewMockExecutableBuilder(ctrl)
-	helm := helmmocks.NewMockExecuteableClient(ctrl)
+	helm := helmmocks.NewMockClient(ctrl)
 	return &helmEnvClientFactoryTest{
 		WithT:   NewWithT(t),
 		ctx:     context.Background(),

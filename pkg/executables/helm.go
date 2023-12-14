@@ -23,7 +23,7 @@ type Helm struct {
 }
 
 // NewHelm returns a new Helm executable client.
-func NewHelm(executable Executable, opts ...helm.Opt) helm.ExecuteableClient {
+func NewHelm(executable Executable, opts ...helm.Opt) helm.Client {
 	helmOptions := &helm.Config{
 		Env: map[string]string{
 			"HELM_EXPERIMENTAL_OCI": "1",

@@ -20,8 +20,8 @@ type upgraderTest struct {
 	*WithT
 	ctx                   context.Context
 	u                     *cilium.Upgrader
-	hf                    *mocks.MockHelmFactory
-	h                     *helmmocks.MockRegistryClient
+	hf                    *mocks.MockHelmClientFactory
+	h                     *helmmocks.MockClient
 	client                *mocks.MockKubernetesClient
 	manifestPre, manifest []byte
 	currentSpec, newSpec  *cluster.Spec
@@ -31,8 +31,8 @@ type upgraderTest struct {
 
 func newUpgraderTest(t *testing.T) *upgraderTest {
 	ctrl := gomock.NewController(t)
-	hf := mocks.NewMockHelmFactory(ctrl)
-	h := helmmocks.NewMockRegistryClient(ctrl)
+	hf := mocks.NewMockHelmClientFactory(ctrl)
+	h := helmmocks.NewMockClient(ctrl)
 	client := mocks.NewMockKubernetesClient(ctrl)
 	u := cilium.NewUpgrader(client, cilium.NewTemplater(hf))
 	return &upgraderTest{

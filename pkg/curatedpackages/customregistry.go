@@ -8,15 +8,15 @@ import (
 )
 
 type CustomRegistry struct {
-	helm.ExecuteableClient
+	helm.Client
 	registry string
 }
 
 // NewCustomRegistry returns a new CustomRegistry.
-func NewCustomRegistry(helm helm.ExecuteableClient, registry string) *CustomRegistry {
+func NewCustomRegistry(helm helm.Client, registry string) *CustomRegistry {
 	return &CustomRegistry{
-		ExecuteableClient: helm,
-		registry:          registry,
+		Client:   helm,
+		registry: registry,
 	}
 }
 

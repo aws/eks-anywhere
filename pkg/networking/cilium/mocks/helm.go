@@ -37,10 +37,10 @@ func (m *MockHelmClientFactory) EXPECT() *MockHelmClientFactoryMockRecorder {
 }
 
 // Get mocks base method.
-func (m *MockHelmClientFactory) Get(ctx context.Context, clus *v1alpha1.Cluster) (helm.RegistryClient, error) {
+func (m *MockHelmClientFactory) Get(ctx context.Context, clus *v1alpha1.Cluster) (helm.Client, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Get", ctx, clus)
-	ret0, _ := ret[0].(helm.RegistryClient)
+	ret0, _ := ret[0].(helm.Client)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

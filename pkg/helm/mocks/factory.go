@@ -12,31 +12,31 @@ import (
 	gomock "github.com/golang/mock/gomock"
 )
 
-// MockExecuteableClient is a mock of ExecuteableClient interface.
-type MockExecuteableClient struct {
+// MockClient is a mock of Client interface.
+type MockClient struct {
 	ctrl     *gomock.Controller
-	recorder *MockExecuteableClientMockRecorder
+	recorder *MockClientMockRecorder
 }
 
-// MockExecuteableClientMockRecorder is the mock recorder for MockExecuteableClient.
-type MockExecuteableClientMockRecorder struct {
-	mock *MockExecuteableClient
+// MockClientMockRecorder is the mock recorder for MockClient.
+type MockClientMockRecorder struct {
+	mock *MockClient
 }
 
-// NewMockExecuteableClient creates a new mock instance.
-func NewMockExecuteableClient(ctrl *gomock.Controller) *MockExecuteableClient {
-	mock := &MockExecuteableClient{ctrl: ctrl}
-	mock.recorder = &MockExecuteableClientMockRecorder{mock}
+// NewMockClient creates a new mock instance.
+func NewMockClient(ctrl *gomock.Controller) *MockClient {
+	mock := &MockClient{ctrl: ctrl}
+	mock.recorder = &MockClientMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockExecuteableClient) EXPECT() *MockExecuteableClientMockRecorder {
+func (m *MockClient) EXPECT() *MockClientMockRecorder {
 	return m.recorder
 }
 
 // Delete mocks base method.
-func (m *MockExecuteableClient) Delete(ctx context.Context, kubeconfigFilePath, installName, namespace string) error {
+func (m *MockClient) Delete(ctx context.Context, kubeconfigFilePath, installName, namespace string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Delete", ctx, kubeconfigFilePath, installName, namespace)
 	ret0, _ := ret[0].(error)
@@ -44,13 +44,13 @@ func (m *MockExecuteableClient) Delete(ctx context.Context, kubeconfigFilePath, 
 }
 
 // Delete indicates an expected call of Delete.
-func (mr *MockExecuteableClientMockRecorder) Delete(ctx, kubeconfigFilePath, installName, namespace interface{}) *gomock.Call {
+func (mr *MockClientMockRecorder) Delete(ctx, kubeconfigFilePath, installName, namespace interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockExecuteableClient)(nil).Delete), ctx, kubeconfigFilePath, installName, namespace)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockClient)(nil).Delete), ctx, kubeconfigFilePath, installName, namespace)
 }
 
 // InstallChart mocks base method.
-func (m *MockExecuteableClient) InstallChart(ctx context.Context, chart, ociURI, version, kubeconfigFilePath, namespace, valueFilePath string, skipCRDs bool, values []string) error {
+func (m *MockClient) InstallChart(ctx context.Context, chart, ociURI, version, kubeconfigFilePath, namespace, valueFilePath string, skipCRDs bool, values []string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "InstallChart", ctx, chart, ociURI, version, kubeconfigFilePath, namespace, valueFilePath, skipCRDs, values)
 	ret0, _ := ret[0].(error)
@@ -58,13 +58,13 @@ func (m *MockExecuteableClient) InstallChart(ctx context.Context, chart, ociURI,
 }
 
 // InstallChart indicates an expected call of InstallChart.
-func (mr *MockExecuteableClientMockRecorder) InstallChart(ctx, chart, ociURI, version, kubeconfigFilePath, namespace, valueFilePath, skipCRDs, values interface{}) *gomock.Call {
+func (mr *MockClientMockRecorder) InstallChart(ctx, chart, ociURI, version, kubeconfigFilePath, namespace, valueFilePath, skipCRDs, values interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InstallChart", reflect.TypeOf((*MockExecuteableClient)(nil).InstallChart), ctx, chart, ociURI, version, kubeconfigFilePath, namespace, valueFilePath, skipCRDs, values)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InstallChart", reflect.TypeOf((*MockClient)(nil).InstallChart), ctx, chart, ociURI, version, kubeconfigFilePath, namespace, valueFilePath, skipCRDs, values)
 }
 
 // InstallChartWithValuesFile mocks base method.
-func (m *MockExecuteableClient) InstallChartWithValuesFile(ctx context.Context, chart, ociURI, version, kubeconfigFilePath, valuesFilePath string) error {
+func (m *MockClient) InstallChartWithValuesFile(ctx context.Context, chart, ociURI, version, kubeconfigFilePath, valuesFilePath string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "InstallChartWithValuesFile", ctx, chart, ociURI, version, kubeconfigFilePath, valuesFilePath)
 	ret0, _ := ret[0].(error)
@@ -72,13 +72,13 @@ func (m *MockExecuteableClient) InstallChartWithValuesFile(ctx context.Context, 
 }
 
 // InstallChartWithValuesFile indicates an expected call of InstallChartWithValuesFile.
-func (mr *MockExecuteableClientMockRecorder) InstallChartWithValuesFile(ctx, chart, ociURI, version, kubeconfigFilePath, valuesFilePath interface{}) *gomock.Call {
+func (mr *MockClientMockRecorder) InstallChartWithValuesFile(ctx, chart, ociURI, version, kubeconfigFilePath, valuesFilePath interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InstallChartWithValuesFile", reflect.TypeOf((*MockExecuteableClient)(nil).InstallChartWithValuesFile), ctx, chart, ociURI, version, kubeconfigFilePath, valuesFilePath)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InstallChartWithValuesFile", reflect.TypeOf((*MockClient)(nil).InstallChartWithValuesFile), ctx, chart, ociURI, version, kubeconfigFilePath, valuesFilePath)
 }
 
 // ListCharts mocks base method.
-func (m *MockExecuteableClient) ListCharts(ctx context.Context, kubeconfigFilePath string) ([]string, error) {
+func (m *MockClient) ListCharts(ctx context.Context, kubeconfigFilePath string) ([]string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListCharts", ctx, kubeconfigFilePath)
 	ret0, _ := ret[0].([]string)
@@ -87,13 +87,13 @@ func (m *MockExecuteableClient) ListCharts(ctx context.Context, kubeconfigFilePa
 }
 
 // ListCharts indicates an expected call of ListCharts.
-func (mr *MockExecuteableClientMockRecorder) ListCharts(ctx, kubeconfigFilePath interface{}) *gomock.Call {
+func (mr *MockClientMockRecorder) ListCharts(ctx, kubeconfigFilePath interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListCharts", reflect.TypeOf((*MockExecuteableClient)(nil).ListCharts), ctx, kubeconfigFilePath)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListCharts", reflect.TypeOf((*MockClient)(nil).ListCharts), ctx, kubeconfigFilePath)
 }
 
 // PullChart mocks base method.
-func (m *MockExecuteableClient) PullChart(ctx context.Context, ociURI, version string) error {
+func (m *MockClient) PullChart(ctx context.Context, ociURI, version string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "PullChart", ctx, ociURI, version)
 	ret0, _ := ret[0].(error)
@@ -101,13 +101,13 @@ func (m *MockExecuteableClient) PullChart(ctx context.Context, ociURI, version s
 }
 
 // PullChart indicates an expected call of PullChart.
-func (mr *MockExecuteableClientMockRecorder) PullChart(ctx, ociURI, version interface{}) *gomock.Call {
+func (mr *MockClientMockRecorder) PullChart(ctx, ociURI, version interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PullChart", reflect.TypeOf((*MockExecuteableClient)(nil).PullChart), ctx, ociURI, version)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PullChart", reflect.TypeOf((*MockClient)(nil).PullChart), ctx, ociURI, version)
 }
 
 // PushChart mocks base method.
-func (m *MockExecuteableClient) PushChart(ctx context.Context, chart, registry string) error {
+func (m *MockClient) PushChart(ctx context.Context, chart, registry string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "PushChart", ctx, chart, registry)
 	ret0, _ := ret[0].(error)
@@ -115,13 +115,13 @@ func (m *MockExecuteableClient) PushChart(ctx context.Context, chart, registry s
 }
 
 // PushChart indicates an expected call of PushChart.
-func (mr *MockExecuteableClientMockRecorder) PushChart(ctx, chart, registry interface{}) *gomock.Call {
+func (mr *MockClientMockRecorder) PushChart(ctx, chart, registry interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PushChart", reflect.TypeOf((*MockExecuteableClient)(nil).PushChart), ctx, chart, registry)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PushChart", reflect.TypeOf((*MockClient)(nil).PushChart), ctx, chart, registry)
 }
 
 // RegistryLogin mocks base method.
-func (m *MockExecuteableClient) RegistryLogin(ctx context.Context, registry, username, password string) error {
+func (m *MockClient) RegistryLogin(ctx context.Context, registry, username, password string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "RegistryLogin", ctx, registry, username, password)
 	ret0, _ := ret[0].(error)
@@ -129,13 +129,13 @@ func (m *MockExecuteableClient) RegistryLogin(ctx context.Context, registry, use
 }
 
 // RegistryLogin indicates an expected call of RegistryLogin.
-func (mr *MockExecuteableClientMockRecorder) RegistryLogin(ctx, registry, username, password interface{}) *gomock.Call {
+func (mr *MockClientMockRecorder) RegistryLogin(ctx, registry, username, password interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegistryLogin", reflect.TypeOf((*MockExecuteableClient)(nil).RegistryLogin), ctx, registry, username, password)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegistryLogin", reflect.TypeOf((*MockClient)(nil).RegistryLogin), ctx, registry, username, password)
 }
 
 // SaveChart mocks base method.
-func (m *MockExecuteableClient) SaveChart(ctx context.Context, ociURI, version, folder string) error {
+func (m *MockClient) SaveChart(ctx context.Context, ociURI, version, folder string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SaveChart", ctx, ociURI, version, folder)
 	ret0, _ := ret[0].(error)
@@ -143,13 +143,13 @@ func (m *MockExecuteableClient) SaveChart(ctx context.Context, ociURI, version, 
 }
 
 // SaveChart indicates an expected call of SaveChart.
-func (mr *MockExecuteableClientMockRecorder) SaveChart(ctx, ociURI, version, folder interface{}) *gomock.Call {
+func (mr *MockClientMockRecorder) SaveChart(ctx, ociURI, version, folder interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveChart", reflect.TypeOf((*MockExecuteableClient)(nil).SaveChart), ctx, ociURI, version, folder)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveChart", reflect.TypeOf((*MockClient)(nil).SaveChart), ctx, ociURI, version, folder)
 }
 
 // Template mocks base method.
-func (m *MockExecuteableClient) Template(ctx context.Context, ociURI, version, namespace string, values interface{}, kubeVersion string) ([]byte, error) {
+func (m *MockClient) Template(ctx context.Context, ociURI, version, namespace string, values interface{}, kubeVersion string) ([]byte, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Template", ctx, ociURI, version, namespace, values, kubeVersion)
 	ret0, _ := ret[0].([]byte)
@@ -158,13 +158,13 @@ func (m *MockExecuteableClient) Template(ctx context.Context, ociURI, version, n
 }
 
 // Template indicates an expected call of Template.
-func (mr *MockExecuteableClientMockRecorder) Template(ctx, ociURI, version, namespace, values, kubeVersion interface{}) *gomock.Call {
+func (mr *MockClientMockRecorder) Template(ctx, ociURI, version, namespace, values, kubeVersion interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Template", reflect.TypeOf((*MockExecuteableClient)(nil).Template), ctx, ociURI, version, namespace, values, kubeVersion)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Template", reflect.TypeOf((*MockClient)(nil).Template), ctx, ociURI, version, namespace, values, kubeVersion)
 }
 
 // UpgradeChartWithValuesFile mocks base method.
-func (m *MockExecuteableClient) UpgradeChartWithValuesFile(ctx context.Context, chart, ociURI, version, kubeconfigFilePath, valuesFilePath string, opts ...helm.Opt) error {
+func (m *MockClient) UpgradeChartWithValuesFile(ctx context.Context, chart, ociURI, version, kubeconfigFilePath, valuesFilePath string, opts ...helm.Opt) error {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, chart, ociURI, version, kubeconfigFilePath, valuesFilePath}
 	for _, a := range opts {
@@ -176,62 +176,10 @@ func (m *MockExecuteableClient) UpgradeChartWithValuesFile(ctx context.Context, 
 }
 
 // UpgradeChartWithValuesFile indicates an expected call of UpgradeChartWithValuesFile.
-func (mr *MockExecuteableClientMockRecorder) UpgradeChartWithValuesFile(ctx, chart, ociURI, version, kubeconfigFilePath, valuesFilePath interface{}, opts ...interface{}) *gomock.Call {
+func (mr *MockClientMockRecorder) UpgradeChartWithValuesFile(ctx, chart, ociURI, version, kubeconfigFilePath, valuesFilePath interface{}, opts ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{ctx, chart, ociURI, version, kubeconfigFilePath, valuesFilePath}, opts...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpgradeChartWithValuesFile", reflect.TypeOf((*MockExecuteableClient)(nil).UpgradeChartWithValuesFile), varargs...)
-}
-
-// MockRegistryClient is a mock of RegistryClient interface.
-type MockRegistryClient struct {
-	ctrl     *gomock.Controller
-	recorder *MockRegistryClientMockRecorder
-}
-
-// MockRegistryClientMockRecorder is the mock recorder for MockRegistryClient.
-type MockRegistryClientMockRecorder struct {
-	mock *MockRegistryClient
-}
-
-// NewMockRegistryClient creates a new mock instance.
-func NewMockRegistryClient(ctrl *gomock.Controller) *MockRegistryClient {
-	mock := &MockRegistryClient{ctrl: ctrl}
-	mock.recorder = &MockRegistryClientMockRecorder{mock}
-	return mock
-}
-
-// EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockRegistryClient) EXPECT() *MockRegistryClientMockRecorder {
-	return m.recorder
-}
-
-// RegistryLogin mocks base method.
-func (m *MockRegistryClient) RegistryLogin(ctx context.Context, registry, username, password string) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RegistryLogin", ctx, registry, username, password)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// RegistryLogin indicates an expected call of RegistryLogin.
-func (mr *MockRegistryClientMockRecorder) RegistryLogin(ctx, registry, username, password interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegistryLogin", reflect.TypeOf((*MockRegistryClient)(nil).RegistryLogin), ctx, registry, username, password)
-}
-
-// Template mocks base method.
-func (m *MockRegistryClient) Template(ctx context.Context, ociURI, version, namespace string, values interface{}, kubeVersion string) ([]byte, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Template", ctx, ociURI, version, namespace, values, kubeVersion)
-	ret0, _ := ret[0].([]byte)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// Template indicates an expected call of Template.
-func (mr *MockRegistryClientMockRecorder) Template(ctx, ociURI, version, namespace, values, kubeVersion interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Template", reflect.TypeOf((*MockRegistryClient)(nil).Template), ctx, ociURI, version, namespace, values, kubeVersion)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpgradeChartWithValuesFile", reflect.TypeOf((*MockClient)(nil).UpgradeChartWithValuesFile), varargs...)
 }
 
 // MockExecutableBuilder is a mock of ExecutableBuilder interface.
@@ -258,14 +206,14 @@ func (m *MockExecutableBuilder) EXPECT() *MockExecutableBuilderMockRecorder {
 }
 
 // BuildHelmExecutable mocks base method.
-func (m *MockExecutableBuilder) BuildHelmExecutable(arg0 ...helm.Opt) helm.ExecuteableClient {
+func (m *MockExecutableBuilder) BuildHelmExecutable(arg0 ...helm.Opt) helm.Client {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{}
 	for _, a := range arg0 {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "BuildHelmExecutable", varargs...)
-	ret0, _ := ret[0].(helm.ExecuteableClient)
+	ret0, _ := ret[0].(helm.Client)
 	return ret0
 }
 

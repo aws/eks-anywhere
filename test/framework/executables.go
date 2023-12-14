@@ -52,7 +52,7 @@ func buildDocker(t T) *executables.Docker {
 	return executables.BuildDockerExecutable()
 }
 
-func buildHelm(t T) helm.ExecuteableClient {
+func buildHelm(t T) helm.Client {
 	ctx := context.Background()
 	helm := executableBuilder(ctx, t).BuildHelmExecutable(helm.WithInsecure())
 

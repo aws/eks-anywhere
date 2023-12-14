@@ -20,7 +20,7 @@ import (
 type helmTest struct {
 	*WithT
 	ctx     context.Context
-	h       helm.ExecuteableClient
+	h       helm.Client
 	e       *mocks.MockExecutable
 	envVars map[string]string
 }

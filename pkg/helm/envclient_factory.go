@@ -10,7 +10,7 @@ import (
 
 // EnvClientFactory provides a Helm client for a cluster.
 type EnvClientFactory struct {
-	helmClient RegistryClient
+	helmClient Client
 	builder    ExecutableBuilder
 }
 
@@ -22,13 +22,13 @@ func NewEnvClientFactory(builder ExecutableBuilder) *EnvClientFactory {
 }
 
 // buildClient returns a new helm executable client.
-func (f *EnvClientFactory) buildClient(opts ...Opt) ExecuteableClient {
+func (f *EnvClientFactory) buildClient(opts ...Opt) Client {
 	return f.builder.BuildHelmExecutable(opts...)
 }
 
 // Get returns the helm registry client.
 // The parameters here are not used and it only returns the client that is initialized using Init.
-func (f *EnvClientFactory) Get(_ context.Context, _ *anywherev1.Cluster) (RegistryClient, error) {
+func (f *EnvClientFactory) Get(_ context.Context, _ *anywherev1.Cluster) (Client, error) {
 	return f.helmClient, nil
 }
 

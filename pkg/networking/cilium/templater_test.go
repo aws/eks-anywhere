@@ -25,8 +25,8 @@ type templaterTest struct {
 	*WithT
 	ctx                     context.Context
 	t                       *cilium.Templater
-	hf                      *mocks.MockHelmFactory
-	h                       *helmmocks.MockRegistryClient
+	hf                      *mocks.MockHelmClientFactory
+	h                       *helmmocks.MockClient
 	manifest                []byte
 	uri, version, namespace string
 	spec, currentSpec       *cluster.Spec
@@ -34,8 +34,8 @@ type templaterTest struct {
 
 func newtemplaterTest(t *testing.T) *templaterTest {
 	ctrl := gomock.NewController(t)
-	hf := mocks.NewMockHelmFactory(ctrl)
-	h := helmmocks.NewMockRegistryClient(ctrl)
+	hf := mocks.NewMockHelmClientFactory(ctrl)
+	h := helmmocks.NewMockClient(ctrl)
 	return &templaterTest{
 		WithT:     NewWithT(t),
 		ctx:       context.Background(),

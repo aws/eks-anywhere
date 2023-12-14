@@ -25,7 +25,7 @@ const (
 
 // HelmClientFactory provides a helm client for a cluster.
 type HelmClientFactory interface {
-	Get(ctx context.Context, clus *anywherev1.Cluster) (helm.RegistryClient, error)
+	Get(ctx context.Context, clus *anywherev1.Cluster) (helm.Client, error)
 }
 
 type Templater struct {

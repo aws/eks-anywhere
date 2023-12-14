@@ -24,13 +24,13 @@ type helmFactoryTest struct {
 	*WithT
 	ctx     context.Context
 	builder *helmmocks.MockExecutableBuilder
-	helm    *helmmocks.MockExecuteableClient
+	helm    *helmmocks.MockClient
 }
 
 func newHelmFactoryTest(t *testing.T) *helmFactoryTest {
 	ctrl := gomock.NewController(t)
 	builder := helmmocks.NewMockExecutableBuilder(ctrl)
-	helm := helmmocks.NewMockExecuteableClient(ctrl)
+	helm := helmmocks.NewMockClient(ctrl)
 	return &helmFactoryTest{
 		WithT:   NewWithT(t),
 		ctx:     context.Background(),
@@ -50,7 +50,7 @@ func TestHelmFactoryGetSuccess(t *testing.T) {
 	})
 
 	client := fake.NewClientBuilder().WithRuntimeObjects(cluster).Build()
-	helmFactory := helm.NewClientFactory(client, tt.builder)
+	helmFactory := helm.NewClientForClusterFactory(client, tt.builder)
 
 	tt.builder.EXPECT().BuildHelmExecutable(gomock.Any()).Return(tt.helm)
 
@@ -71,7 +71,7 @@ func TestHelmFactoryGetErrorManagmentClusterNotFound(t *testing.T) {
 	})
 
 	client := fake.NewClientBuilder().WithRuntimeObjects(cluster).Build()
-	helmFactory := helm.NewClientFactory(client, tt.builder)
+	helmFactory := helm.NewClientForClusterFactory(client, tt.builder)
 
 	helm, err := helmFactory.Get(tt.ctx, cluster)
 
@@ -95,7 +95,7 @@ func TestHelmFactoryGetAuthenticatedRegistryMirrorErrorGettingSecret(t *testing.
 	})
 
 	client := fake.NewClientBuilder().WithScheme(runtime.NewScheme()).Build()
-	helmFactory := helm.NewClientFactory(client, tt.builder)
+	helmFactory := helm.NewClientForClusterFactory(client, tt.builder)
 
 	_, err := helmFactory.Get(tt.ctx, cluster)
 	tt.Expect(err).To(MatchError(ContainSubstring("fetching registry auth secret: no kind is registered for the type v1.Secret")))
@@ -130,7 +130,7 @@ func TestHelmFactoryGetSuccessAuthenticatedRegistryMirror(t *testing.T) {
 	}
 
 	client := fake.NewClientBuilder().WithRuntimeObjects(cluster, registryAuthSecret).Build()
-	helmFactory := helm.NewClientFactory(client, tt.builder)
+	helmFactory := helm.NewClientForClusterFactory(client, tt.builder)
 
 	tt.builder.EXPECT().BuildHelmExecutable(gomock.Any()).Return(tt.helm)
 	tt.helm.EXPECT().RegistryLogin(tt.ctx, test.RegistryMirrorEndpoint(cluster), rUsername, rPassword).Return(nil)
@@ -170,7 +170,7 @@ func TestHelmFactoryGetErrorLoginRegistry(t *testing.T) {
 	}
 
 	client := fake.NewClientBuilder().WithRuntimeObjects(cluster, registryAuthSecret).Build()
-	helmFactory := helm.NewClientFactory(client, tt.builder)
+	helmFactory := helm.NewClientForClusterFactory(client, tt.builder)
 
 	tt.builder.EXPECT().BuildHelmExecutable(gomock.Any()).Return(tt.helm)
 	tt.helm.EXPECT().RegistryLogin(tt.ctx, test.RegistryMirrorEndpoint(cluster), rUsername, rPassword).Return(errors.New("login registry error"))

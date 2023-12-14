@@ -74,7 +74,7 @@ type Dependencies struct {
 	Clusterctl                  *executables.Clusterctl
 	Flux                        *executables.Flux
 	Troubleshoot                *executables.Troubleshoot
-	Helm                        helm.ExecuteableClient
+	Helm                        helm.Client
 	UnAuthKubeClient            *kubernetes.UnAuthClient
 	Networking                  clustermanager.Networking
 	CNIInstaller                workload.CNIInstaller

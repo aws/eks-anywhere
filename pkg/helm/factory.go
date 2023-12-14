@@ -22,8 +22,8 @@ type Config struct {
 // Opt is a functional option for configuring Helm behavior.
 type Opt func(*Config)
 
-// ExecuteableClient represents a Helm client.
-type ExecuteableClient interface {
+// Client represents a Helm client.
+type Client interface {
 	PushChart(ctx context.Context, chart, registry string) error
 	PullChart(ctx context.Context, ociURI, version string) error
 	ListCharts(ctx context.Context, kubeconfigFilePath string) ([]string, error)
@@ -32,12 +32,6 @@ type ExecuteableClient interface {
 	UpgradeChartWithValuesFile(ctx context.Context, chart, ociURI, version, kubeconfigFilePath, valuesFilePath string, opts ...Opt) error
 	InstallChartWithValuesFile(ctx context.Context, chart, ociURI, version, kubeconfigFilePath, valuesFilePath string) error
 	InstallChart(ctx context.Context, chart, ociURI, version, kubeconfigFilePath, namespace, valueFilePath string, skipCRDs bool, values []string) error
-	Template(ctx context.Context, ociURI, version, namespace string, values interface{}, kubeVersion string) ([]byte, error)
-	RegistryLogin(ctx context.Context, registry, username, password string) error
-}
-
-// RegistryClient represents a Helm client.
-type RegistryClient interface {
 	Template(ctx context.Context, ociURI, version, namespace string, values interface{}, kubeVersion string) ([]byte, error)
 	RegistryLogin(ctx context.Context, registry, username, password string) error
 }
@@ -68,19 +62,19 @@ func WithEnv(env map[string]string) Opt {
 
 // ExecutableBuilder builds the Helm executable and returns it.
 type ExecutableBuilder interface {
-	BuildHelmExecutable(...Opt) ExecuteableClient
+	BuildHelmExecutable(...Opt) Client
 }
 
 // ClientFactory provides a helm client for a cluster.
 type ClientFactory struct {
 	client     client.Client
-	helmClient RegistryClient
+	helmClient Client
 	mu         sync.Mutex
 	builder    ExecutableBuilder
 }
 
-// NewClientFactory returns a new helm ClientFactory.
-func NewClientFactory(client client.Client, builder ExecutableBuilder) *ClientFactory {
+// NewClientForClusterFactory returns a new helm ClientFactory.
+func NewClientForClusterFactory(client client.Client, builder ExecutableBuilder) *ClientFactory {
 	hf := &ClientFactory{
 		client:  client,
 		builder: builder,
@@ -90,7 +84,7 @@ func NewClientFactory(client client.Client, builder ExecutableBuilder) *ClientFa
 }
 
 // Get returns a new Helm client configured using information from the provided cluster's management cluster.
-func (f *ClientFactory) Get(ctx context.Context, clus *anywherev1.Cluster) (RegistryClient, error) {
+func (f *ClientFactory) Get(ctx context.Context, clus *anywherev1.Cluster) (Client, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 

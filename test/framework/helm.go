@@ -11,7 +11,7 @@ type HelmInstallConfig struct {
 	chartURI     string
 	chartVersion string
 	chartValues  []string
-	HelmClient   helm.ExecuteableClient
+	HelmClient   helm.Client
 }
 
 func WithHelmInstallConfig(t *testing.T, chartName, chartURI, chartVersion string, chartValues []string) ClusterE2ETestOpt {

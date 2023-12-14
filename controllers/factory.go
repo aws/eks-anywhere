@@ -478,7 +478,7 @@ func (f *Factory) withHelmClientFactory() *Factory {
 			return nil
 		}
 
-		f.helmClientFactory = helm.NewClientFactory(f.manager.GetClient(), f.deps.HelmExecutableBuilder)
+		f.helmClientFactory = helm.NewClientForClusterFactory(f.manager.GetClient(), f.deps.HelmExecutableBuilder)
 		return nil
 	})
 

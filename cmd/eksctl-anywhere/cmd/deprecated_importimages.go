@@ -124,7 +124,7 @@ func importImage(ctx context.Context, docker *executables.Docker, image string, 
 	return docker.PushImage(ctx, image, endpoint)
 }
 
-func importCharts(ctx context.Context, helm helm.ExecuteableClient, charts map[string]*v1alpha1.Image, endpoint, username, password string) error {
+func importCharts(ctx context.Context, helm helm.Client, charts map[string]*v1alpha1.Image, endpoint, username, password string) error {
 	if err := helm.RegistryLogin(ctx, endpoint, username, password); err != nil {
 		return err
 	}
@@ -136,7 +136,7 @@ func importCharts(ctx context.Context, helm helm.ExecuteableClient, charts map[s
 	return nil
 }
 
-func importChart(ctx context.Context, helm helm.ExecuteableClient, chart v1alpha1.Image, endpoint string) error {
+func importChart(ctx context.Context, helm helm.Client, chart v1alpha1.Image, endpoint string) error {
 	uri, chartVersion := getChartUriAndVersion(chart)
 	if err := helm.PullChart(ctx, uri, chartVersion); err != nil {
 		return err
