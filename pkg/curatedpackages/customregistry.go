@@ -4,18 +4,19 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/aws/eks-anywhere/pkg/executables"
+	"github.com/aws/eks-anywhere/pkg/helm"
 )
 
 type CustomRegistry struct {
-	*executables.Helm
+	helm.ExecuteableClient
 	registry string
 }
 
-func NewCustomRegistry(helm *executables.Helm, registry string) *CustomRegistry {
+// NewCustomRegistry returns a new CustomRegistry.
+func NewCustomRegistry(helm helm.ExecuteableClient, registry string) *CustomRegistry {
 	return &CustomRegistry{
-		Helm:     helm,
-		registry: registry,
+		ExecuteableClient: helm,
+		registry:          registry,
 	}
 }
 

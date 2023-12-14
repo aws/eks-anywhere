@@ -5,6 +5,7 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
+	"github.com/aws/eks-anywhere/pkg/helm"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
 )
 
@@ -51,9 +52,9 @@ func buildDocker(t T) *executables.Docker {
 	return executables.BuildDockerExecutable()
 }
 
-func buildHelm(t T) *executables.Helm {
+func buildHelm(t T) helm.ExecuteableClient {
 	ctx := context.Background()
-	helm := executableBuilder(ctx, t).BuildHelmExecutable(executables.WithInsecure())
+	helm := executableBuilder(ctx, t).BuildHelmExecutable(helm.WithInsecure())
 
 	return helm
 }
