@@ -10,7 +10,7 @@ import (
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
-	clustermocks "github.com/aws/eks-anywhere/pkg/cluster/mocks"
+	helmmocks "github.com/aws/eks-anywhere/pkg/helm/mocks"
 	"github.com/aws/eks-anywhere/pkg/networking/cilium"
 	"github.com/aws/eks-anywhere/pkg/networking/cilium/mocks"
 	"github.com/aws/eks-anywhere/pkg/types"
@@ -21,7 +21,7 @@ type upgraderTest struct {
 	ctx                   context.Context
 	u                     *cilium.Upgrader
 	hf                    *mocks.MockHelmFactory
-	h                     *clustermocks.MockHelm
+	h                     *helmmocks.MockRegistryClient
 	client                *mocks.MockKubernetesClient
 	manifestPre, manifest []byte
 	currentSpec, newSpec  *cluster.Spec
@@ -32,7 +32,7 @@ type upgraderTest struct {
 func newUpgraderTest(t *testing.T) *upgraderTest {
 	ctrl := gomock.NewController(t)
 	hf := mocks.NewMockHelmFactory(ctrl)
-	h := clustermocks.NewMockHelm(ctrl)
+	h := helmmocks.NewMockRegistryClient(ctrl)
 	client := mocks.NewMockKubernetesClient(ctrl)
 	u := cilium.NewUpgrader(client, cilium.NewTemplater(hf))
 	return &upgraderTest{
@@ -84,8 +84,7 @@ func (tt *upgraderTest) expectTemplate(manifest []byte) *gomock.Call {
 }
 
 func (tt *upgraderTest) expectGetClientForCluster(username, password string) *gomock.Call {
-	helmClient := cluster.NewHelmClient(tt.h, tt.newSpec.Cluster, username, password)
-	return tt.hf.EXPECT().GetClientForCluster(tt.ctx, tt.newSpec.Cluster).Return(helmClient, nil)
+	return tt.hf.EXPECT().GetClientForCluster(tt.ctx, tt.newSpec.Cluster).Return(tt.h, nil)
 }
 
 func TestUpgraderUpgradeSuccess(t *testing.T) {

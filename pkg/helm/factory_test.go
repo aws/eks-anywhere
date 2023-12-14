@@ -2,8 +2,10 @@ package helm_test
 
 import (
 	"context"
+	"errors"
 	"testing"
 
+	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -12,13 +14,31 @@ import (
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
-	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/helm"
+	helmmocks "github.com/aws/eks-anywhere/pkg/helm/mocks"
 )
 
+type helmFactoryTest struct {
+	*WithT
+	ctx     context.Context
+	builder *helmmocks.MockExecutableBuilder
+	helm    *helmmocks.MockExecuteableClient
+}
+
+func newHelmFactoryTest(t *testing.T) *helmFactoryTest {
+	ctrl := gomock.NewController(t)
+	builder := helmmocks.NewMockExecutableBuilder(ctrl)
+	helm := helmmocks.NewMockExecuteableClient(ctrl)
+	return &helmFactoryTest{
+		WithT:   NewWithT(t),
+		ctx:     context.Background(),
+		builder: builder,
+		helm:    helm,
+	}
+}
+
 func TestHelmFactoryGetClientForClusterSuccess(t *testing.T) {
-	ctx := context.Background()
-	g := NewWithT(t)
+	tt := newHelmFactoryTest(t)
 	cluster := test.Cluster(func(c *v1alpha1.Cluster) {
 		c.Name = "test-cluster"
 		c.Namespace = constants.EksaSystemNamespace
@@ -27,30 +47,19 @@ func TestHelmFactoryGetClientForClusterSuccess(t *testing.T) {
 		}
 	})
 
-	client := test.NewFakeKubeClient()
-	deps, err := dependencies.NewFactory().
-		WithLocalExecutables().
-		WithKubeClient(client).
-		WithHelmFactory(
-			helm.WithRegistryMirror(nil),
-			helm.WithEnv(map[string]string{}),
-			helm.WithInsecure(),
-		).
-		Build(context.Background())
+	client := test.NewFakeKubeClient(cluster)
+	helmFactory := helm.NewClientFactory(client, tt.builder)
 
-	g.Expect(err).To(BeNil())
-	g.Expect(deps.HelmFactory).ToNot(BeNil())
+	tt.builder.EXPECT().BuildHelmExecutable(gomock.Any()).Return(tt.helm)
 
-	helm, err := deps.HelmFactory.GetClientForCluster(ctx, cluster)
+	helm, err := helmFactory.GetClientForCluster(tt.ctx, cluster)
 
-	g.Expect(err).To(BeNil())
-	g.Expect(helm).NotTo(BeNil())
+	tt.Expect(err).To(BeNil())
+	tt.Expect(helm).NotTo(BeNil())
 }
 
 func TestHelmFactoryGetClientForClusterErrorManagmentClusterNotFound(t *testing.T) {
-	ctx := context.Background()
-	g := NewWithT(t)
-
+	tt := newHelmFactoryTest(t)
 	cluster := test.Cluster(func(c *v1alpha1.Cluster) {
 		c.Name = "test-cluster"
 		c.Namespace = constants.EksaSystemNamespace
@@ -60,25 +69,16 @@ func TestHelmFactoryGetClientForClusterErrorManagmentClusterNotFound(t *testing.
 	})
 
 	client := test.NewFakeKubeClient(cluster)
+	helmFactory := helm.NewClientFactory(client, tt.builder)
 
-	deps, err := dependencies.NewFactory().
-		WithLocalExecutables().
-		WithKubeClient(client).
-		WithHelmFactory().
-		Build(context.Background())
+	helm, err := helmFactory.GetClientForCluster(tt.ctx, cluster)
 
-	g.Expect(err).To(BeNil())
-
-	helm, err := deps.HelmFactory.GetClientForCluster(ctx, cluster)
-
-	g.Expect(helm).To(BeNil())
-	g.Expect(err).To(MatchError(ContainSubstring("\"management-cluster\" not found")))
+	tt.Expect(helm).To(BeNil())
+	tt.Expect(err).To(MatchError(ContainSubstring("\"management-cluster\" not found")))
 }
 
-func TestHelmFactoryGetClientForClusterRegistryMirrorErrorGettingSecret(t *testing.T) {
-	ctx := context.Background()
-	g := NewWithT(t)
-
+func TestHelmFactoryGetClientForClusterAuthenticatedRegistryMirrorErrorGettingSecret(t *testing.T) {
+	tt := newHelmFactoryTest(t)
 	cluster := test.Cluster(func(c *v1alpha1.Cluster) {
 		c.Name = "test-cluster"
 		c.Namespace = constants.EksaSystemNamespace
@@ -88,27 +88,19 @@ func TestHelmFactoryGetClientForClusterRegistryMirrorErrorGettingSecret(t *testi
 		c.Spec.RegistryMirrorConfiguration = &anywherev1.RegistryMirrorConfiguration{
 			Authenticate: true,
 			Endpoint:     "1.2.3.4",
-			Port:         "65536",
+			Port:         "5000",
 		}
 	})
 
 	client := test.NewFakeKubeClientAlwaysError()
-	deps, err := dependencies.NewFactory().
-		WithLocalExecutables().
-		WithKubeClient(client).
-		WithHelmFactory().
-		Build(context.Background())
+	helmFactory := helm.NewClientFactory(client, tt.builder)
 
-	g.Expect(err).To(BeNil())
-
-	_, err = deps.HelmFactory.GetClientForCluster(ctx, cluster)
-	g.Expect(err).To(MatchError(ContainSubstring("fetching registry auth secret: no kind is registered for the type v1.Secret")))
+	_, err := helmFactory.GetClientForCluster(tt.ctx, cluster)
+	tt.Expect(err).To(MatchError(ContainSubstring("fetching registry auth secret: no kind is registered for the type v1.Secret")))
 }
 
-func TestHelmFactoryGetClientForClusterSuccessRegistryMirrorSecretCredentials(t *testing.T) {
-	ctx := context.Background()
-	g := NewWithT(t)
-
+func TestHelmFactoryGetClientForClusterSuccessAuthenticatedRegistryMirror(t *testing.T) {
+	tt := newHelmFactoryTest(t)
 	cluster := test.Cluster(func(c *v1alpha1.Cluster) {
 		c.Name = "test-cluster"
 		c.Namespace = constants.EksaSystemNamespace
@@ -118,39 +110,76 @@ func TestHelmFactoryGetClientForClusterSuccessRegistryMirrorSecretCredentials(t 
 		c.Spec.RegistryMirrorConfiguration = &anywherev1.RegistryMirrorConfiguration{
 			Authenticate: true,
 			Endpoint:     "1.2.3.4",
-			Port:         "65536",
+			Port:         "5000",
 		}
 	})
 
+	rUsername := "username"
+	rPassword := "password"
 	registryAuthSecret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "registry-credentials",
 			Namespace: cluster.Namespace,
 		},
 		Data: map[string][]byte{
-			"username": []byte("username"),
-			"password": []byte("password"),
+			"username": []byte(rUsername),
+			"password": []byte(rPassword),
 		},
 	}
 
 	client := test.NewFakeKubeClient(cluster, registryAuthSecret)
-	deps, err := dependencies.NewFactory().
-		WithLocalExecutables().
-		WithKubeClient(client).
-		WithHelmFactory().
-		Build(context.Background())
+	helmFactory := helm.NewClientFactory(client, tt.builder)
 
-	g.Expect(err).To(BeNil())
+	tt.builder.EXPECT().BuildHelmExecutable(gomock.Any()).Return(tt.helm)
+	tt.helm.EXPECT().RegistryLogin(tt.ctx, test.RegistryMirrorEndpoint(cluster), rUsername, rPassword).Return(nil)
 
-	helmClient, err := deps.HelmFactory.GetClientForCluster(ctx, cluster)
-	g.Expect(err).To(BeNil())
-	g.Expect(helmClient).ToNot(BeNil())
+	helmClient, err := helmFactory.GetClientForCluster(tt.ctx, cluster)
+
+	tt.Expect(err).To(BeNil())
+	tt.Expect(helmClient).ToNot(BeNil())
+}
+
+func TestHelmFactoryGetClientForClusterErrorLoginRegistry(t *testing.T) {
+	tt := newHelmFactoryTest(t)
+	cluster := test.Cluster(func(c *v1alpha1.Cluster) {
+		c.Name = "test-cluster"
+		c.Namespace = constants.EksaSystemNamespace
+		c.Spec.ManagementCluster = anywherev1.ManagementCluster{
+			Name: "test-cluster",
+		}
+		c.Spec.RegistryMirrorConfiguration = &anywherev1.RegistryMirrorConfiguration{
+			Authenticate: true,
+			Endpoint:     "1.2.3.4",
+			Port:         "5000",
+		}
+	})
+
+	rUsername := "username"
+	rPassword := "password"
+	registryAuthSecret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "registry-credentials",
+			Namespace: cluster.Namespace,
+		},
+		Data: map[string][]byte{
+			"username": []byte(rUsername),
+			"password": []byte(rPassword),
+		},
+	}
+
+	client := test.NewFakeKubeClient(cluster, registryAuthSecret)
+	helmFactory := helm.NewClientFactory(client, tt.builder)
+
+	tt.builder.EXPECT().BuildHelmExecutable(gomock.Any()).Return(tt.helm)
+	tt.helm.EXPECT().RegistryLogin(tt.ctx, test.RegistryMirrorEndpoint(cluster), rUsername, rPassword).Return(errors.New("login registry error"))
+
+	_, err := helmFactory.GetClientForCluster(tt.ctx, cluster)
+
+	tt.Expect(err).To(MatchError(ContainSubstring("login registry error")))
 }
 
 func TestHelmFactoryGetClientForClusterRegistryMirrorErrorNoRegistryCredentials(t *testing.T) {
-	ctx := context.Background()
-	g := NewWithT(t)
-
+	tt := newHelmFactoryTest(t)
 	managmentCluster := test.Cluster(func(c *v1alpha1.Cluster) {
 		c.Name = "management-cluster"
 		c.Namespace = constants.EksaSystemNamespace
@@ -160,7 +189,7 @@ func TestHelmFactoryGetClientForClusterRegistryMirrorErrorNoRegistryCredentials(
 		c.Spec.RegistryMirrorConfiguration = &anywherev1.RegistryMirrorConfiguration{
 			Authenticate: true,
 			Endpoint:     "1.2.3.4",
-			Port:         "65536",
+			Port:         "5000",
 		}
 	})
 
@@ -173,21 +202,15 @@ func TestHelmFactoryGetClientForClusterRegistryMirrorErrorNoRegistryCredentials(
 	})
 
 	client := test.NewFakeKubeClient(managmentCluster, cluster)
-	deps, err := dependencies.NewFactory().
-		WithLocalExecutables().
-		WithKubeClient(client).
-		WithHelmFactory().
-		Build(context.Background())
 
-	g.Expect(err).To(BeNil())
-	_, err = deps.HelmFactory.GetClientForCluster(ctx, cluster)
-	g.Expect(err).To(MatchError(ContainSubstring("please set REGISTRY_USERNAME")))
+	helmFactory := helm.NewClientFactory(client, tt.builder)
+	_, err := helmFactory.GetClientForCluster(tt.ctx, cluster)
+
+	tt.Expect(err).To(MatchError(ContainSubstring("please set REGISTRY_USERNAME")))
 }
 
 func TestHelmFactoryGetClientForClusterSuccessRegistryMirrorEnvCredendialss(t *testing.T) {
-	ctx := context.Background()
-	g := NewWithT(t)
-
+	tt := newHelmFactoryTest(t)
 	managmentCluster := test.Cluster(func(c *v1alpha1.Cluster) {
 		c.Name = "management-cluster"
 		c.Namespace = constants.EksaSystemNamespace
@@ -197,7 +220,7 @@ func TestHelmFactoryGetClientForClusterSuccessRegistryMirrorEnvCredendialss(t *t
 		c.Spec.RegistryMirrorConfiguration = &anywherev1.RegistryMirrorConfiguration{
 			Authenticate: true,
 			Endpoint:     "1.2.3.4",
-			Port:         "65536",
+			Port:         "5000",
 		}
 	})
 
@@ -210,18 +233,18 @@ func TestHelmFactoryGetClientForClusterSuccessRegistryMirrorEnvCredendialss(t *t
 	})
 
 	client := test.NewFakeKubeClient(managmentCluster, cluster)
-	deps, err := dependencies.NewFactory().
-		WithLocalExecutables().
-		WithKubeClient(client).
-		WithHelmFactory().
-		Build(context.Background())
 
-	g.Expect(err).To(BeNil())
+	helmFactory := helm.NewClientFactory(client, tt.builder)
+	rUsername := "username"
+	rPassword := "password"
 
-	t.Setenv("REGISTRY_USERNAME", "username")
-	t.Setenv("REGISTRY_PASSWORD", "password")
+	t.Setenv("REGISTRY_USERNAME", rUsername)
+	t.Setenv("REGISTRY_PASSWORD", rPassword)
 
-	helmClient, err := deps.HelmFactory.GetClientForCluster(ctx, cluster)
-	g.Expect(err).To(BeNil())
-	g.Expect(helmClient).ToNot(BeNil())
+	tt.builder.EXPECT().BuildHelmExecutable(gomock.Any()).Return(tt.helm)
+	tt.helm.EXPECT().RegistryLogin(tt.ctx, test.RegistryMirrorEndpoint(managmentCluster), rUsername, rPassword).Return(nil)
+
+	helmClient, err := helmFactory.GetClientForCluster(tt.ctx, cluster)
+	tt.Expect(err).To(BeNil())
+	tt.Expect(helmClient).ToNot(BeNil())
 }

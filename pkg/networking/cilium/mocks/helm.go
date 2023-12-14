@@ -9,7 +9,7 @@ import (
 	reflect "reflect"
 
 	v1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	cluster "github.com/aws/eks-anywhere/pkg/cluster"
+	helm "github.com/aws/eks-anywhere/pkg/helm"
 	gomock "github.com/golang/mock/gomock"
 )
 
@@ -37,10 +37,10 @@ func (m *MockHelmFactory) EXPECT() *MockHelmFactoryMockRecorder {
 }
 
 // GetClientForCluster mocks base method.
-func (m *MockHelmFactory) GetClientForCluster(ctx context.Context, clus *v1alpha1.Cluster) (*cluster.HelmClient, error) {
+func (m *MockHelmFactory) GetClientForCluster(ctx context.Context, clus *v1alpha1.Cluster) (helm.RegistryClient, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetClientForCluster", ctx, clus)
-	ret0, _ := ret[0].(*cluster.HelmClient)
+	ret0, _ := ret[0].(helm.RegistryClient)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

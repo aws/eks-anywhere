@@ -7,88 +7,107 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	configcli "github.com/aws/eks-anywhere/pkg/config"
-	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/registrymirror"
 )
 
-// ExecutableBuilder builds the Helm executeble and returns it.
+// Config contains configuration options for Helm.
+type Config struct {
+	RegistryMirror *registrymirror.RegistryMirror
+	Env            map[string]string
+	Insecure       bool
+}
+
+// Opt is a functional option for configuring Helm behavior.
+type Opt func(*Config)
+
+// ExecuteableClient represents a Helm client.
+type ExecuteableClient interface {
+	PushChart(ctx context.Context, chart, registry string) error
+	PullChart(ctx context.Context, ociURI, version string) error
+	ListCharts(ctx context.Context, kubeconfigFilePath string) ([]string, error)
+	SaveChart(ctx context.Context, ociURI, version, folder string) error
+	Delete(ctx context.Context, kubeconfigFilePath, installName, namespace string) error
+	UpgradeChartWithValuesFile(ctx context.Context, chart, ociURI, version, kubeconfigFilePath, valuesFilePath string, opts ...Opt) error
+	InstallChartWithValuesFile(ctx context.Context, chart, ociURI, version, kubeconfigFilePath, valuesFilePath string) error
+	InstallChart(ctx context.Context, chart, ociURI, version, kubeconfigFilePath, namespace, valueFilePath string, skipCRDs bool, values []string) error
+	Template(ctx context.Context, ociURI, version, namespace string, values interface{}, kubeVersion string) ([]byte, error)
+	RegistryLogin(ctx context.Context, registry, username, password string) error
+}
+
+// RegistryClient represents a Helm client.
+type RegistryClient interface {
+	Template(ctx context.Context, ociURI, version, namespace string, values interface{}, kubeVersion string) ([]byte, error)
+	RegistryLogin(ctx context.Context, registry, username, password string) error
+}
+
+// WithRegistryMirror sets up registry mirror for helm.
+func WithRegistryMirror(mirror *registrymirror.RegistryMirror) Opt {
+	return func(c *Config) {
+		c.RegistryMirror = mirror
+	}
+}
+
+// WithInsecure configures helm to skip validating TLS certificates when
+// communicating with the Kubernetes API.
+func WithInsecure() Opt {
+	return func(c *Config) {
+		c.Insecure = true
+	}
+}
+
+// WithEnv joins the default and the provided maps together.
+func WithEnv(env map[string]string) Opt {
+	return func(c *Config) {
+		for k, v := range env {
+			c.Env[k] = v
+		}
+	}
+}
+
+// ExecutableBuilder builds the Helm executable and returns it.
 type ExecutableBuilder interface {
-	BuildHelmExecutable(...executables.HelmOpt) *executables.Helm
+	BuildHelmExecutable(...Opt) ExecuteableClient
 }
 
-// HelmFactoryOpt configures a HelmFactory.
-type HelmFactoryOpt func(*HelmFactory)
-
-// HelmFactory is responsible for creating and owning instances of Helm client.
-type HelmFactory struct {
-	client         cluster.Client
-	helmClient     *cluster.HelmClient
-	mu             sync.Mutex
-	builder        ExecutableBuilder
-	registryMirror *registrymirror.RegistryMirror
-	env            map[string]string
-	insecure       bool
+// ClientFactory provides a helm client for a cluster.
+type ClientFactory struct {
+	client     kubernetes.Client
+	helmClient RegistryClient
+	mu         sync.Mutex
+	builder    ExecutableBuilder
+	helmOpts   []Opt
 }
 
-// WithRegistryMirror configures the factory to use registry mirror wherever applicable.
-func WithRegistryMirror(registryMirror *registrymirror.RegistryMirror) HelmFactoryOpt {
-	return func(hf *HelmFactory) {
-		hf.registryMirror = registryMirror
+// NewClientFactory returns a new HelmFactory.
+func NewClientFactory(client kubernetes.Client, builder ExecutableBuilder, helmOpts ...Opt) *ClientFactory {
+	hf := &ClientFactory{
+		client:   client,
+		builder:  builder,
+		mu:       sync.Mutex{},
+		helmOpts: helmOpts,
 	}
-}
-
-// WithEnv configures the factory to use proxy configurations wherever applicable.
-func WithEnv(env map[string]string) HelmFactoryOpt {
-	return func(hf *HelmFactory) {
-		hf.env = env
-	}
-}
-
-// WithInsecure configures the factory to configure helm to use to allow connections to TLS registry without certs or with self-signed certs.
-func WithInsecure() HelmFactoryOpt {
-	return func(hf *HelmFactory) {
-		hf.insecure = true
-	}
-}
-
-// NewHelmFactory returns a new HelmFactory.
-func NewHelmFactory(client cluster.Client, builder ExecutableBuilder, opts ...HelmFactoryOpt) *HelmFactory {
-	hf := &HelmFactory{
-		client:  client,
-		builder: builder,
-		mu:      sync.Mutex{},
-	}
-
-	for _, o := range opts {
-		o(hf)
-	}
-
 	return hf
 }
 
-// GetClient returns a new Helm executeble.
-func (f *HelmFactory) GetClient(opts ...executables.HelmOpt) cluster.Helm {
-	defaultOpts := []executables.HelmOpt{}
-
-	if f.registryMirror != nil {
-		defaultOpts = append(defaultOpts, executables.WithRegistryMirror(f.registryMirror))
+func (f *ClientFactory) withRegistryMirror(r *registrymirror.RegistryMirror) Opt {
+	return func(ho *Config) {
+		ho.RegistryMirror = r
 	}
-	if f.env != nil {
-		defaultOpts = append(defaultOpts, executables.WithEnv(f.env))
-	}
+}
 
-	if f.insecure {
-		defaultOpts = append(defaultOpts, executables.WithInsecure())
-	}
-
-	opts = append(defaultOpts, opts...)
+// buildClient returns a new Helm executeble.
+func (f *ClientFactory) buildClient(opts ...Opt) ExecuteableClient {
+	opts = append(f.helmOpts, opts...)
 	return f.builder.BuildHelmExecutable(opts...)
 }
 
 // GetClientForCluster returns a new Helm client configured using information from the provided cluster's management cluster.
-func (f *HelmFactory) GetClientForCluster(ctx context.Context, clus *anywherev1.Cluster) (*cluster.HelmClient, error) {
+func (f *ClientFactory) GetClientForCluster(ctx context.Context, clus *anywherev1.Cluster) (RegistryClient, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
 	managmentCluster := clus
 
 	var rUsername, rPassword string
@@ -109,16 +128,21 @@ func (f *HelmFactory) GetClientForCluster(ctx context.Context, clus *anywherev1.
 	}
 
 	r := registrymirror.FromCluster(managmentCluster)
-	helm := f.GetClient(executables.WithRegistryMirror(r))
+	f.helmClient = f.buildClient(f.withRegistryMirror(r))
 
-	f.helmClient = cluster.NewHelmClient(helm, managmentCluster, rUsername, rPassword)
+	if managmentCluster.RegistryAuth() {
+		if err := f.helmClient.RegistryLogin(ctx, r.BaseRegistry, rUsername, rPassword); err != nil {
+			return nil, err
+		}
+	}
+
 	return f.helmClient, nil
 }
 
 // getClusterRegistryCredentrials retrieves the regitry mirror credentials for the management cluster.
 // Registry credentials may not be found by retrieving on the cluster, this can happen on Cluster creation with the CLI.
 // For now, to handle this, we fallback to reading the credentials from the environment variables.
-func (f *HelmFactory) getClusterRegistryCredentrials(ctx context.Context, cluster *anywherev1.Cluster) (string, string, error) {
+func (f *ClientFactory) getClusterRegistryCredentrials(ctx context.Context, cluster *anywherev1.Cluster) (string, string, error) {
 	var rUsername, rPassword string
 	var err error
 

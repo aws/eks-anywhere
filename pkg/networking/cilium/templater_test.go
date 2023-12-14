@@ -14,7 +14,7 @@ import (
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
-	clustermocks "github.com/aws/eks-anywhere/pkg/cluster/mocks"
+	helmmocks "github.com/aws/eks-anywhere/pkg/helm/mocks"
 	"github.com/aws/eks-anywhere/pkg/networking/cilium"
 	"github.com/aws/eks-anywhere/pkg/networking/cilium/mocks"
 	"github.com/aws/eks-anywhere/pkg/retrier"
@@ -26,7 +26,7 @@ type templaterTest struct {
 	ctx                     context.Context
 	t                       *cilium.Templater
 	hf                      *mocks.MockHelmFactory
-	h                       *clustermocks.MockHelm
+	h                       *helmmocks.MockRegistryClient
 	manifest                []byte
 	uri, version, namespace string
 	spec, currentSpec       *cluster.Spec
@@ -35,7 +35,7 @@ type templaterTest struct {
 func newtemplaterTest(t *testing.T) *templaterTest {
 	ctrl := gomock.NewController(t)
 	hf := mocks.NewMockHelmFactory(ctrl)
-	h := clustermocks.NewMockHelm(ctrl)
+	h := helmmocks.NewMockRegistryClient(ctrl)
 	return &templaterTest{
 		WithT:     NewWithT(t),
 		ctx:       context.Background(),
@@ -74,8 +74,7 @@ func (t *templaterTest) expectHelmTemplateWith(wantValues gomock.Matcher, kubeVe
 }
 
 func (t *templaterTest) expectGetClientForCluster(username, password string) {
-	helmClient := cluster.NewHelmClient(t.h, t.spec.Cluster, username, password)
-	t.hf.EXPECT().GetClientForCluster(t.ctx, t.spec.Cluster).Return(helmClient, nil)
+	t.hf.EXPECT().GetClientForCluster(t.ctx, t.spec.Cluster).Return(t.h, nil)
 }
 
 func eqMap(m map[string]interface{}) gomock.Matcher {
@@ -392,8 +391,7 @@ func TestTemplaterGenerateManifestError(t *testing.T) {
 func TestTemplaterGenerateManifestGetClientForClusterError(t *testing.T) {
 	tt := newtemplaterTest(t)
 
-	helmClient := cluster.NewHelmClient(tt.h, tt.spec.Cluster, "", "")
-	tt.hf.EXPECT().GetClientForCluster(tt.ctx, tt.spec.Cluster).Return(helmClient, errors.New("error getting helm client"))
+	tt.hf.EXPECT().GetClientForCluster(tt.ctx, tt.spec.Cluster).Return(nil, errors.New("error getting helm client"))
 
 	_, err := tt.t.GenerateManifest(tt.ctx, tt.spec)
 	tt.Expect(err).To(HaveOccurred(), "templater.GenerateManifest() should fail")
@@ -574,10 +572,6 @@ func TestTemplaterGenerateManifestForRegistryAuth(t *testing.T) {
 	t.Setenv("REGISTRY_PASSWORD", "password")
 
 	tt.expectGetClientForCluster("username", "password")
-
-	tt.h.EXPECT().
-		RegistryLogin(gomock.Any(), "1.2.3.4:443", "username", "password").
-		Return(nil)
 
 	tt.h.EXPECT().
 		Template(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).

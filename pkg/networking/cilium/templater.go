@@ -9,6 +9,7 @@ import (
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/helm"
 	"github.com/aws/eks-anywhere/pkg/retrier"
 	"github.com/aws/eks-anywhere/pkg/semver"
 	"github.com/aws/eks-anywhere/pkg/templater"
@@ -24,7 +25,7 @@ const (
 
 // HelmFactory builds a helmClient specifically using the managment cluster's registry mirror configuration.
 type HelmFactory interface {
-	GetClientForCluster(ctx context.Context, clus *anywherev1.Cluster) (*cluster.HelmClient, error)
+	GetClientForCluster(ctx context.Context, clus *anywherev1.Cluster) (helm.RegistryClient, error)
 }
 
 type Templater struct {
@@ -63,10 +64,6 @@ func (t *Templater) GenerateUpgradePreflightManifest(ctx context.Context, spec *
 	helm, err := t.helmFactory.GetClientForCluster(ctx, spec.Cluster)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get helm client for cluster %s: %v", spec.Cluster.ManagedBy(), err)
-	}
-
-	if err := helm.RegistryLoginIfNeeded(ctx); err != nil {
-		return nil, err
 	}
 
 	manifest, err := helm.Template(ctx, uri, version, namespace, v, kubeVersion)
@@ -141,10 +138,6 @@ func (t *Templater) GenerateManifest(ctx context.Context, spec *cluster.Spec, op
 	helm, err := t.helmFactory.GetClientForCluster(ctx, spec.Cluster)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get helm client for cluster %s: %v", spec.Cluster.ManagedBy(), err)
-	}
-
-	if err := helm.RegistryLoginIfNeeded(ctx); err != nil {
-		return nil, err
 	}
 
 	err = c.retrier.Retry(func() error {

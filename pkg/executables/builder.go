@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/aws/eks-anywhere/pkg/filewriter"
+	"github.com/aws/eks-anywhere/pkg/helm"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/manifests"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
@@ -67,7 +68,8 @@ func (b *ExecutablesBuilder) BuildTroubleshootExecutable() *Troubleshoot {
 	return NewTroubleshoot(b.executableBuilder.Build(troubleshootPath))
 }
 
-func (b *ExecutablesBuilder) BuildHelmExecutable(opts ...HelmOpt) *Helm {
+// BuildHelmExecutable initializes a helm executable and returns it.
+func (b *ExecutablesBuilder) BuildHelmExecutable(opts ...helm.Opt) helm.ExecuteableClient {
 	return NewHelm(b.executableBuilder.Build(helmPath), opts...)
 }
 

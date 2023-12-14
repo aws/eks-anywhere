@@ -567,6 +567,7 @@ mocks: ## Generate mocks
 	${MOCKGEN} -destination=cmd/eksctl-anywhere/cmd/internal/commands/artifacts/mocks/import.go -package=mocks -source "cmd/eksctl-anywhere/cmd/internal/commands/artifacts/import.go"
 	${MOCKGEN} -destination=cmd/eksctl-anywhere/cmd/internal/commands/artifacts/mocks/import_tools_image.go -package=mocks -source "cmd/eksctl-anywhere/cmd/internal/commands/artifacts/import_tools_image.go"
 	${MOCKGEN} -destination=pkg/helm/mocks/download.go -package=mocks -source "pkg/helm/download.go"
+	${MOCKGEN} -destination=pkg/helm/mocks/factory.go -package=mocks -source "pkg/helm/factory.go"
 	${MOCKGEN} -destination=pkg/aws/mocks/ec2.go -package=mocks -source "pkg/aws/ec2.go"
 	${MOCKGEN} -destination=pkg/aws/mocks/imds.go -package=mocks -source "pkg/aws/imds.go"
 	${MOCKGEN} -destination=pkg/aws/mocks/snowballdevice.go -package=mocks -source "pkg/aws/snowballdevice.go"
@@ -588,7 +589,6 @@ mocks: ## Generate mocks
 	${MOCKGEN} -destination=pkg/curatedpackages/mocks/installer.go -package=mocks -source "pkg/curatedpackages/packagecontrollerclient.go" ChartManager ClientBuilder
 	${MOCKGEN} -destination=pkg/curatedpackages/mocks/kube_client.go -package=mocks -mock_names Client=MockKubeClient sigs.k8s.io/controller-runtime/pkg/client Client
 	${MOCKGEN} -destination=pkg/cluster/mocks/client_builder.go -package=mocks -source "pkg/cluster/client_builder.go"
-	${MOCKGEN} -destination=pkg/cluster/mocks/helm.go -package=mocks -source "pkg/cluster/helm.go"
 	${MOCKGEN} -destination=controllers/mocks/factory.go -package=mocks "github.com/aws/eks-anywhere/controllers" Manager
 	${MOCKGEN} -destination=pkg/networking/cilium/reconciler/mocks/templater.go -package=mocks -source "pkg/networking/cilium/reconciler/reconciler.go"
 	${MOCKGEN} -destination=pkg/networking/reconciler/mocks/reconcilers.go -package=mocks -source "pkg/networking/reconciler/reconciler.go"

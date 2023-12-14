@@ -16,7 +16,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
-	"github.com/aws/eks-anywhere/pkg/executables"
+	"github.com/aws/eks-anywhere/pkg/helm"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
@@ -305,7 +305,7 @@ func TestFactoryBuildWithRegistryMirror(t *testing.T) {
 				},
 				Auth: false,
 			}).
-		WithHelm(executables.WithInsecure()).
+		WithHelm(helm.WithInsecure()).
 		Build(context.Background())
 
 	tt.Expect(err).To(BeNil())
@@ -340,7 +340,7 @@ func TestFactoryBuildWithPackageInstaller(t *testing.T) {
 	tt := newTest(t, vsphere)
 	deps, err := dependencies.NewFactory().
 		WithLocalExecutables().
-		WithHelm(executables.WithInsecure()).
+		WithHelm(helm.WithInsecure()).
 		WithKubectl().
 		WithPackageInstaller(spec, "/test/packages.yaml", "kubeconfig.kubeconfig").
 		Build(context.Background())
@@ -352,7 +352,7 @@ func TestFactoryBuildWithCuratedPackagesCustomRegistry(t *testing.T) {
 	tt := newTest(t, vsphere)
 	deps, err := dependencies.NewFactory().
 		WithLocalExecutables().
-		WithHelm(executables.WithInsecure()).
+		WithHelm(helm.WithInsecure()).
 		WithCuratedPackagesRegistry("test_host:8080", "1.22", version.Info{GitVersion: "1.19"}).
 		Build(context.Background())
 
@@ -404,7 +404,7 @@ func TestFactoryBuildWithPackageControllerClientNoProxy(t *testing.T) {
 	tt := newTest(t, vsphere)
 	deps, err := dependencies.NewFactory().
 		WithLocalExecutables().
-		WithHelm(executables.WithInsecure()).
+		WithHelm(helm.WithInsecure()).
 		WithKubectl().
 		WithPackageControllerClient(spec, "kubeconfig.kubeconfig").
 		Build(context.Background())
@@ -447,7 +447,7 @@ func TestFactoryBuildWithPackageControllerClientProxy(t *testing.T) {
 	tt := newTest(t, vsphere)
 	deps, err := dependencies.NewFactory().
 		WithLocalExecutables().
-		WithHelm(executables.WithInsecure()).
+		WithHelm(helm.WithInsecure()).
 		WithKubectl().
 		WithPackageControllerClient(spec, "kubeconfig.kubeconfig").
 		Build(context.Background())
