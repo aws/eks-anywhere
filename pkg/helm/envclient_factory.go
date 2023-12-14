@@ -35,7 +35,7 @@ func (f *EnvClientFactory) Get(_ context.Context, _ *anywherev1.Cluster) (Client
 // Init builds the helm registry client once using the registry mirror information from the cluster information.
 // It should be called at least once first, before trying to retrieving and using the client using Get.
 // It only builds the helm registry client once.
-// This is not thread safe and the caller should guarantee that it does not get called from multiple threads
+// This is not thread safe and the caller should guarantee that it does not get called from multiple threads.
 func (f *EnvClientFactory) Init(ctx context.Context, r *registrymirror.RegistryMirror, opts ...Opt) error {
 	if f.helmClient != nil {
 		return nil

@@ -144,7 +144,6 @@ func TestHelmFactoryGetSuccessAuthenticatedRegistryMirrorClientReused(t *testing
 
 	tt.Expect(err).To(BeNil())
 	tt.Expect(newHelmClient).ToNot(BeNil())
-
 }
 
 func TestHelmFactoryGetSuccessAuthenticatedRegistryMirrorClientRebuilt(t *testing.T) {
