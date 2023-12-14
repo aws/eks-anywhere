@@ -46,6 +46,8 @@ spec:
                   nodes and ignored for worker nodes.
                 type: boolean
               kubernetesVersion:
+                description: 'TODO(in-place): Determine if there''s a way to get these
+                  dynamically instead of expecting it from the CRD.'
                 type: string
               machine:
                 description: Machine is a reference to the CAPI Machine that needs

@@ -13,31 +13,31 @@ import (
 	gomock "github.com/golang/mock/gomock"
 )
 
-// MockHelmFactory is a mock of HelmClientFactory interface.
-type MockHelmFactory struct {
+// MockHelmClientFactory is a mock of HelmClientFactory interface.
+type MockHelmClientFactory struct {
 	ctrl     *gomock.Controller
-	recorder *MockHelmFactoryMockRecorder
+	recorder *MockHelmClientFactoryMockRecorder
 }
 
-// MockHelmFactoryMockRecorder is the mock recorder for MockHelmFactory.
-type MockHelmFactoryMockRecorder struct {
-	mock *MockHelmFactory
+// MockHelmClientFactoryMockRecorder is the mock recorder for MockHelmClientFactory.
+type MockHelmClientFactoryMockRecorder struct {
+	mock *MockHelmClientFactory
 }
 
-// NewMockHelmFactory creates a new mock instance.
-func NewMockHelmFactory(ctrl *gomock.Controller) *MockHelmFactory {
-	mock := &MockHelmFactory{ctrl: ctrl}
-	mock.recorder = &MockHelmFactoryMockRecorder{mock}
+// NewMockHelmClientFactory creates a new mock instance.
+func NewMockHelmClientFactory(ctrl *gomock.Controller) *MockHelmClientFactory {
+	mock := &MockHelmClientFactory{ctrl: ctrl}
+	mock.recorder = &MockHelmClientFactoryMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockHelmFactory) EXPECT() *MockHelmFactoryMockRecorder {
+func (m *MockHelmClientFactory) EXPECT() *MockHelmClientFactoryMockRecorder {
 	return m.recorder
 }
 
 // Get mocks base method.
-func (m *MockHelmFactory) Get(ctx context.Context, clus *v1alpha1.Cluster) (helm.RegistryClient, error) {
+func (m *MockHelmClientFactory) Get(ctx context.Context, clus *v1alpha1.Cluster) (helm.RegistryClient, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Get", ctx, clus)
 	ret0, _ := ret[0].(helm.RegistryClient)
@@ -46,7 +46,7 @@ func (m *MockHelmFactory) Get(ctx context.Context, clus *v1alpha1.Cluster) (helm
 }
 
 // Get indicates an expected call of Get.
-func (mr *MockHelmFactoryMockRecorder) Get(ctx, clus interface{}) *gomock.Call {
+func (mr *MockHelmClientFactoryMockRecorder) Get(ctx, clus interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockHelmFactory)(nil).Get), ctx, clus)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockHelmClientFactory)(nil).Get), ctx, clus)
 }
