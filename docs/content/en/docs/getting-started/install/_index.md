@@ -41,7 +41,7 @@ Here are a few other things to keep in mind:
   * For EKS Anywhere vSphere, if you are using EKS Anywhere v0.15 or earlier and Mac OS Docker Desktop 4.4.2 or newer `"deprecatedCgroupv1": true` must be set in `~/Library/Group\ Containers/group.com.docker/settings.json`.
 
 #### Tools
-- [Docker 20.x.x](https://docs.docker.com/engine/install/)
+- [Docker](https://docs.docker.com/engine/install/) 20.x.x or above
 - [`curl`](https://everything.curl.dev/get)
 - [`yq`](https://github.com/mikefarah/yq/#install)
 
