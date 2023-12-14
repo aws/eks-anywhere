@@ -2,6 +2,7 @@ package helm
 
 import (
 	"context"
+	"reflect"
 	"sync"
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -67,10 +68,11 @@ type ExecutableBuilder interface {
 
 // ClientFactory provides a helm client for a cluster.
 type ClientFactory struct {
-	client     client.Client
-	helmClient Client
-	mu         sync.Mutex
-	builder    ExecutableBuilder
+	client         client.Client
+	helmClient     Client
+	mu             sync.Mutex
+	builder        ExecutableBuilder
+	registryMirror *registrymirror.RegistryMirror
 }
 
 // NewClientForClusterFactory returns a new helm ClientFactory.
@@ -107,7 +109,14 @@ func (f *ClientFactory) Get(ctx context.Context, clus *anywherev1.Cluster) (Clie
 	}
 
 	r := registrymirror.FromCluster(managmentCluster)
-	f.helmClient = f.builder.BuildHelmExecutable(WithRegistryMirror(r), WithInsecure())
+
+	// There is no need to rebuild the client everytime,
+	// here we check if the registry has changed and rebuild the helm client in that case
+	// Rebuild the Helm client only if the registry has changed
+	if f.helmClient == nil || !reflect.DeepEqual(f.registryMirror, r) {
+		f.helmClient = f.builder.BuildHelmExecutable(WithRegistryMirror(r), WithInsecure())
+		f.registryMirror = r
+	}
 
 	if r != nil && managmentCluster.RegistryAuth() {
 		if err := f.helmClient.RegistryLogin(ctx, r.BaseRegistry, rUsername, rPassword); err != nil {
