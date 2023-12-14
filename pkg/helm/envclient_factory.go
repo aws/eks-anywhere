@@ -40,7 +40,7 @@ func (f *EnvClientFactory) Init(ctx context.Context, r *registrymirror.RegistryM
 		return nil
 	}
 
-	opts = append(opts, f.withRegistryMirror(r))
+	opts = append(opts, WithRegistryMirror(r))
 
 	helmClient := f.buildClient(opts...)
 
@@ -60,10 +60,4 @@ func (f *EnvClientFactory) Init(ctx context.Context, r *registrymirror.RegistryM
 
 	f.helmClient = helmClient
 	return nil
-}
-
-func (f *EnvClientFactory) withRegistryMirror(r *registrymirror.RegistryMirror) Opt {
-	return func(c *Config) {
-		c.RegistryMirror = r
-	}
 }

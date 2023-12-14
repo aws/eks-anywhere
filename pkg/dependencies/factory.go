@@ -775,7 +775,7 @@ func (f *Factory) WithHelm(opts ...helm.Opt) *Factory {
 }
 
 // WithHelmClientFactory configures the HelmClientFactory dependency with a helm.ClientFactory.
-func (f *Factory) WithHelmClientFactory(client client.Client, opts ...helm.Opt) *Factory {
+func (f *Factory) WithHelmClientFactory(client client.Client) *Factory {
 	f.WithExecutableBuilder()
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
@@ -783,11 +783,7 @@ func (f *Factory) WithHelmClientFactory(client client.Client, opts ...helm.Opt) 
 			return nil
 		}
 
-		if f.proxyConfiguration != nil {
-			opts = append(opts, helm.WithEnv(f.proxyConfiguration))
-		}
-
-		f.dependencies.HelmClientFactory = helm.NewClientFactory(client, f.executablesConfig.builder, opts...)
+		f.dependencies.HelmClientFactory = helm.NewClientFactory(client, f.executablesConfig.builder)
 		return nil
 	})
 
@@ -796,7 +792,7 @@ func (f *Factory) WithHelmClientFactory(client client.Client, opts ...helm.Opt) 
 
 // WithHelmEnvClientFactory configures the HelmClientFactory dependency with a helm.EnvClientFactory.
 func (f *Factory) WithHelmEnvClientFactory(opts ...helm.Opt) *Factory {
-	f.WithExecutableBuilder()
+	f.WithExecutableBuilder().WithProxyConfiguration()
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.HelmClientFactory != nil {

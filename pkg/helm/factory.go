@@ -77,30 +77,16 @@ type ClientFactory struct {
 	helmClient RegistryClient
 	mu         sync.Mutex
 	builder    ExecutableBuilder
-	helmOpts   []Opt
 }
 
 // NewClientFactory returns a new helm ClientFactory.
-func NewClientFactory(client client.Client, builder ExecutableBuilder, helmOpts ...Opt) *ClientFactory {
+func NewClientFactory(client client.Client, builder ExecutableBuilder) *ClientFactory {
 	hf := &ClientFactory{
-		client:   client,
-		builder:  builder,
-		mu:       sync.Mutex{},
-		helmOpts: helmOpts,
+		client:  client,
+		builder: builder,
+		mu:      sync.Mutex{},
 	}
 	return hf
-}
-
-func (f *ClientFactory) withRegistryMirror(r *registrymirror.RegistryMirror) Opt {
-	return func(ho *Config) {
-		ho.RegistryMirror = r
-	}
-}
-
-// buildClient returns a new helm executeble client.
-func (f *ClientFactory) buildClient(opts ...Opt) ExecuteableClient {
-	opts = append(f.helmOpts, opts...)
-	return f.builder.BuildHelmExecutable(opts...)
 }
 
 // GetClientForCluster returns a new Helm client configured using information from the provided cluster's management cluster.
@@ -127,7 +113,7 @@ func (f *ClientFactory) GetClientForCluster(ctx context.Context, clus *anywherev
 	}
 
 	r := registrymirror.FromCluster(managmentCluster)
-	f.helmClient = f.buildClient(f.withRegistryMirror(r))
+	f.helmClient = f.builder.BuildHelmExecutable(WithRegistryMirror(r), WithInsecure())
 
 	if managmentCluster.RegistryAuth() {
 		if err := f.helmClient.RegistryLogin(ctx, r.BaseRegistry, rUsername, rPassword); err != nil {

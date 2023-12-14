@@ -20,7 +20,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/executables/cmk"
-	"github.com/aws/eks-anywhere/pkg/helm"
 	ciliumreconciler "github.com/aws/eks-anywhere/pkg/networking/cilium/reconciler"
 	cnireconciler "github.com/aws/eks-anywhere/pkg/networking/reconciler"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack"
@@ -468,7 +467,7 @@ func (f *Factory) withCloudStackValidatorRegistry() *Factory {
 
 func (f *Factory) withCiliumTemplater() *Factory {
 	f.dependencyFactory.
-		WithHelmClientFactory(f.manager.GetClient(), helm.WithInsecure()).
+		WithHelmClientFactory(f.manager.GetClient()).
 		WithCiliumTemplater()
 
 	return f

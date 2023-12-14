@@ -218,7 +218,7 @@ func TestFactoryBuildWithHelmClientFactory(t *testing.T) {
 	deps, err := dependencies.NewFactory().
 		WithLocalExecutables().
 		WithProxyConfiguration().
-		WithHelmClientFactory(client, helm.WithInsecure()).
+		WithHelmClientFactory(client).
 		Build(context.Background())
 
 	tt.Expect(err).To(BeNil())
