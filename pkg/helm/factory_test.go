@@ -1,4 +1,4 @@
-package dependencies_test
+package helm_test
 
 import (
 	"context"
@@ -13,6 +13,7 @@ import (
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
+	"github.com/aws/eks-anywhere/pkg/helm"
 )
 
 func TestHelmFactoryGetClientForClusterSuccess(t *testing.T) {
@@ -31,9 +32,9 @@ func TestHelmFactoryGetClientForClusterSuccess(t *testing.T) {
 		WithLocalExecutables().
 		WithKubeClient(client).
 		WithHelmFactory(
-			dependencies.WithRegistryMirror(nil),
-			dependencies.WithEnv(map[string]string{}),
-			dependencies.WithInsecure(),
+			helm.WithRegistryMirror(nil),
+			helm.WithEnv(map[string]string{}),
+			helm.WithInsecure(),
 		).
 		Build(context.Background())
 

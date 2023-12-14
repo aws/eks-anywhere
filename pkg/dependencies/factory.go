@@ -33,6 +33,7 @@ import (
 	gitfactory "github.com/aws/eks-anywhere/pkg/git/factory"
 	"github.com/aws/eks-anywhere/pkg/gitops/flux"
 	"github.com/aws/eks-anywhere/pkg/govmomi"
+	"github.com/aws/eks-anywhere/pkg/helm"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/manifests"
@@ -108,7 +109,7 @@ type Dependencies struct {
 	SnowValidator               *snow.Validator
 	IPValidator                 *validator.IPValidator
 	UnAuthKubectlClient         KubeClients
-	HelmFactory                 *HelmFactory
+	HelmFactory                 *helm.HelmFactory
 	CreateClusterDefaulter      cli.CreateClusterDefaulter
 	UpgradeClusterDefaulter     cli.UpgradeClusterDefaulter
 }
@@ -773,7 +774,7 @@ func (f *Factory) WithHelm(opts ...executables.HelmOpt) *Factory {
 }
 
 // WithHelmFactory configures the HelmFactory dependency.
-func (f *Factory) WithHelmFactory(opts ...HelmFactoryOpt) *Factory {
+func (f *Factory) WithHelmFactory(opts ...helm.HelmFactoryOpt) *Factory {
 	f.WithExecutableBuilder()
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
@@ -782,14 +783,14 @@ func (f *Factory) WithHelmFactory(opts ...HelmFactoryOpt) *Factory {
 		}
 
 		if f.registryMirror != nil {
-			opts = append(opts, WithRegistryMirror(f.registryMirror))
+			opts = append(opts, helm.WithRegistryMirror(f.registryMirror))
 		}
 
 		if f.proxyConfiguration != nil {
-			opts = append(opts, WithEnv(f.proxyConfiguration))
+			opts = append(opts, helm.WithEnv(f.proxyConfiguration))
 		}
 
-		f.dependencies.HelmFactory = NewHelmFactory(f.dependencies.KubeClient, f.executablesConfig.builder, opts...)
+		f.dependencies.HelmFactory = helm.NewHelmFactory(f.dependencies.KubeClient, f.executablesConfig.builder, opts...)
 		return nil
 	})
 
@@ -873,7 +874,7 @@ func (f *Factory) WithCNIInstaller(spec *cluster.Spec, provider providers.Provid
 }
 
 func (f *Factory) WithCiliumTemplater() *Factory {
-	f.WithHelmFactory(WithInsecure())
+	f.WithHelmFactory(helm.WithInsecure())
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.CiliumTemplater != nil {
