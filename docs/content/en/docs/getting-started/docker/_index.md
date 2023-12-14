@@ -16,17 +16,23 @@ This allows you to try EKS Anywhere on your local machine or laptop before deplo
 
 ### Prerequisites
 
-* Mac OS 10.15+ or Ubuntu 20.04.2+ LTS
-* [Docker 20.x.x](https://docs.docker.com/engine/install/)
-* [`curl`](https://everything.curl.dev/get)
-* [`yq`](https://github.com/mikefarah/yq/#install)
-* Internet access
-* 4 CPU cores
-* 16GB memory
-* 30GB free disk space
-* If you are using Ubuntu, use the Docker CE installation instructions to install Docker and not the Snap installation, as described here.
-* For EKS Anywhere v0.15 and earlier, if you are using Ubuntu 21.10 or 22.04, you will need to switch from cgroups v2 to cgroups v1. For details, see [Troubleshooting Guide.]({{< relref "../../troubleshooting/troubleshooting.md#for-eks-anywhere-v015-and-earlier-cgroups-v2-is-not-supported-in-ubuntu-2110-and-2204" >}})
-* EKS Anywhere works with x86 and amd64 architectures. From v0.18.1, it also works with Apple Silicon or ARM based processors.
+#### System and network requirements
+- Mac OS 10.15+ / Ubuntu 20.04.2 LTS or 22.04 LTS / RHEL or Rocky Linux 8.8+
+- 4 CPU cores
+- 16GB memory
+- 30GB free disk space
+- If you are running in an airgapped environment, the Admin machine must be amd64.
+
+Here are a few other things to keep in mind:
+
+* If you are using Ubuntu, use the Docker CE installation instructions to install Docker and not the Snap installation, as described [here.](https://docs.docker.com/engine/install/ubuntu/)
+
+* If you are using EKS Anywhere v0.15 or earlier and Ubuntu 21.10 or 22.04, you will need to switch from _cgroups v2_ to _cgroups v1_. For details, see [Troubleshooting Guide.]({{< relref "../../troubleshooting/troubleshooting.md#for-eks-anywhere-v015-and-earlier-cgroups-v2-is-not-supported-in-ubuntu-2110-and-2204" >}})
+
+#### Tools
+- [Docker](https://docs.docker.com/engine/install/) 20.x.x or above
+- [`curl`](https://everything.curl.dev/get)
+- [`yq`](https://github.com/mikefarah/yq/#install)
 
 ### Install EKS Anywhere CLI tools
 To get started with EKS Anywhere, you must first install the `eksctl` CLI and the `eksctl anywhere` plugin.
