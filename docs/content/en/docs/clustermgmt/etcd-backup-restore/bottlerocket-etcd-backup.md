@@ -67,14 +67,28 @@ Make sure to setup the [admin environment variables]({{< relref "#admin-machine-
     ```
 
 1. Create the etcd snapshot
-    ```bash
+
+    {{< tabpane >}}
+
+    {{< tab header="Using etcd < v3.5.x" lang="bash" >}}
     ctr -n k8s.io t exec -t --exec-id etcd ${ETCD_CONTAINER_ID} etcdctl \
         --endpoints=${ETCD_ENDPOINT} \
         --cacert=/var/lib/etcd/pki/ca.crt \
         --cert=/var/lib/etcd/pki/server.crt \
         --key=/var/lib/etcd/pki/server.key \
         snapshot save /var/lib/etcd/data/etcd-backup.db
-    ```
+    {{< /tab >}}
+
+    {{< tab header="Using etcd >= v3.5.x" lang="bash" >}}
+    ctr -n k8s.io t exec -t --exec-id etcd ${ETCD_CONTAINER_ID} etcdutl \
+        --endpoints=${ETCD_ENDPOINT} \
+        --cacert=/var/lib/etcd/pki/ca.crt \
+        --cert=/var/lib/etcd/pki/server.crt \
+        --key=/var/lib/etcd/pki/server.key \
+        snapshot save /var/lib/etcd/data/etcd-backup.db
+    {{< /tab >}}
+    
+    {{< /tabpane >}}
 
 1. Move the snapshot to another directory and set proper permissions
     ```bash
@@ -159,7 +173,7 @@ Make sure to setup the [admin environment variables]({{< relref "#admin-machine-
     # SSH into the etcd node using the IPs printed in previous command
     ssh -i ${SSH_KEY} ${SSH_USERNAME}@<etcd IP from previous command>
 
-    # drop into bottlerocket's root shell
+    # drop into bottlerocket\'s root shell
     sudo sheltie
 
     # copy over the etcd snapshot to the appropriate location
@@ -173,8 +187,13 @@ Make sure to setup the [admin environment variables]({{< relref "#admin-machine-
 
     # get the container ID corresponding to etcd pod
     export ETCD_CONTAINER_ID=$(ctr -n k8s.io c ls | grep -w "etcd-io" | head -1 | cut -d " " -f1)
+    ```
 
     # run the restore command
+
+    {{< tabpane >}}
+
+    {{< tab header="Using etcd < v3.5.x" lang="bash" >}}
     ctr -n k8s.io t exec -t --exec-id etcd ${ETCD_CONTAINER_ID} etcdctl \
         snapshot restore /var/lib/etcd/data/etcd-snapshot.db \
         --name=${ETCD_NAME} \
@@ -183,8 +202,24 @@ Make sure to setup the [admin environment variables]({{< relref "#admin-machine-
         --initial-advertise-peer-urls=${ETCD_INITIAL_ADVERTISE_PEER_URLS} \
         --cacert=/var/lib/etcd/pki/ca.crt \
         --cert=/var/lib/etcd/pki/server.crt \
-        --key=/var/lib/etcd/pki/server.key 
+        --key=/var/lib/etcd/pki/server.key
+    {{< /tab >}}
 
+    {{< tab header="Using etcd >= v3.5.x" lang="bash" >}}
+    ctr -n k8s.io t exec -t --exec-id etcd ${ETCD_CONTAINER_ID} etcdutl \
+        snapshot restore /var/lib/etcd/data/etcd-snapshot.db \
+        --name=${ETCD_NAME} \
+        --initial-cluster=${ETCD_INITIAL_CLUSTER} \
+        --initial-cluster-token=${INITIAL_CLUSTER_TOKEN} \
+        --initial-advertise-peer-urls=${ETCD_INITIAL_ADVERTISE_PEER_URLS} \
+        --cacert=/var/lib/etcd/pki/ca.crt \
+        --cert=/var/lib/etcd/pki/server.crt \
+        --key=/var/lib/etcd/pki/server.key
+    {{< /tab >}}
+    
+    {{< /tabpane >}} 
+
+    ```bash
     # move the etcd data files out of the container to a temporary location
     mkdir -p /tmp/etcd-files
     $(ctr -n k8s.io snapshot mounts /tmp/etcd-files/ ${ETCD_CONTAINER_ID})
