@@ -194,11 +194,12 @@ var releaseCmd = &cobra.Command{
 				os.Exit(1)
 			}
 
-			err = operations.SignImagesNotation(releaseConfig, imageDigests)
-			if err != nil {
-				fmt.Printf("Error signing container images using notation CLI and AWS Signer: %v\n", err)
-				os.Exit(1)
-			}
+			// WIP[Pankti Shah]: skip image signing until we fix maximum number of artifacts issue from Public ECR
+			// err = operations.SignImagesNotation(releaseConfig, imageDigests)
+			// if err != nil {
+			// 	fmt.Printf("Error signing container images using notation CLI and AWS Signer: %v\n", err)
+			// 	os.Exit(1)
+			// }
 
 			err = operations.GenerateBundleSpec(releaseConfig, bundle, imageDigests)
 			if err != nil {
