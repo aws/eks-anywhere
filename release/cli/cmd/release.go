@@ -194,6 +194,12 @@ var releaseCmd = &cobra.Command{
 				os.Exit(1)
 			}
 
+			err = operations.SignImagesNotation(releaseConfig, imageDigests)
+			if err != nil {
+				fmt.Printf("Error signing container images using notation CLI and AWS Signer: %v\n", err)
+				os.Exit(1)
+			}
+
 			err = operations.GenerateBundleSpec(releaseConfig, bundle, imageDigests)
 			if err != nil {
 				fmt.Printf("Error generating bundles manifest: %+v\n", err)
