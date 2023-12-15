@@ -779,7 +779,7 @@ func (f *Factory) WithHelm(opts ...helm.Opt) *Factory {
 		}
 
 		if f.proxyConfiguration != nil {
-			opts = append(opts, helm.WithEnv(f.proxyConfiguration))
+			opts = append(opts, helm.WithProxyConfig(f.proxyConfiguration))
 		}
 
 		f.dependencies.Helm = f.executablesConfig.builder.BuildHelmExecutable(opts...)
@@ -799,13 +799,13 @@ func (f *Factory) WithHelmEnvClientFactory(opts ...helm.Opt) *Factory {
 		}
 
 		if f.proxyConfiguration != nil {
-			opts = append(opts, helm.WithEnv(f.proxyConfiguration))
+			opts = append(opts, helm.WithProxyConfig(f.proxyConfiguration))
 		}
 
 		envClientFactory := helm.NewEnvClientFactory(f.executablesConfig.builder)
 		err := envClientFactory.Init(ctx, f.registryMirror, opts...)
 		if err != nil {
-			return fmt.Errorf("building helm env lient factory: %v", err)
+			return fmt.Errorf("building helm env client factory: %v", err)
 		}
 
 		f.dependencies.HelmClientFactory = envClientFactory

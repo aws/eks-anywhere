@@ -458,7 +458,7 @@ func (s *Installer) Upgrade(ctx context.Context, bundle releasev1alpha1.Tinkerbe
 		bundle.TinkerbellStack.TinkebellChart.Tag(),
 		kubeconfig,
 		valuesPath,
-		helm.WithEnv(envMap),
+		helm.WithProxyConfig(envMap),
 	)
 }
 

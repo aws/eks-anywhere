@@ -18,31 +18,43 @@ const (
 )
 
 type Helm struct {
-	executable  Executable
-	helmOptions *helm.Config // Embed HelmOptions in Helm struct
+	executable Executable
+	helmConfig *helm.Config // Embed HelmOptions in Helm struct
+	env        map[string]string
 }
 
 // NewHelm returns a new Helm executable client.
 func NewHelm(executable Executable, opts ...helm.Opt) helm.Client {
-	helmOptions := &helm.Config{
-		Env: map[string]string{
-			"HELM_EXPERIMENTAL_OCI": "1",
-		},
+	helmConfig := &helm.Config{
 		Insecure: false,
 	}
-
-	// TODO: we should not update the receiver here, so this needs to change.
-	// This is not thread safe
 	for _, o := range opts {
-		o(helmOptions)
+		o(helmConfig)
 	}
 
+	defaultEnv := map[string]string{
+		"HELM_EXPERIMENTAL_OCI": "1",
+	}
 	h := &Helm{
-		executable:  executable,
-		helmOptions: helmOptions,
+		executable: executable,
+		helmConfig: helmConfig,
+		env:        joinEnv(defaultEnv, helmConfig.ProxyConfig),
 	}
 
 	return h
+}
+
+// joinEnv joins the default and the provided maps together, then return the
+// new map.
+func joinEnv(oldEnv, newEnv map[string]string) map[string]string {
+	env := make(map[string]string)
+	for k, v := range oldEnv {
+		env[k] = v
+	}
+	for k, v := range newEnv {
+		env[k] = v
+	}
+	return env
 }
 
 func (h *Helm) Template(ctx context.Context, ociURI, version, namespace string, values interface{}, kubeVersion string) ([]byte, error) {
@@ -55,7 +67,7 @@ func (h *Helm) Template(ctx context.Context, ociURI, version, namespace string, 
 	params = h.addInsecureFlagIfProvided(params)
 	params = append(params, "-f", "-")
 
-	result, err := h.executable.Command(ctx, params...).WithStdIn(valuesYaml).WithEnvVars(h.helmOptions.Env).Run()
+	result, err := h.executable.Command(ctx, params...).WithStdIn(valuesYaml).WithEnvVars(h.env).Run()
 	if err != nil {
 		return nil, err
 	}
@@ -67,7 +79,7 @@ func (h *Helm) PullChart(ctx context.Context, ociURI, version string) error {
 	params := []string{"pull", h.url(ociURI), "--version", version}
 	params = h.addInsecureFlagIfProvided(params)
 	_, err := h.executable.Command(ctx, params...).
-		WithEnvVars(h.helmOptions.Env).Run()
+		WithEnvVars(h.env).Run()
 	return err
 }
 
@@ -75,7 +87,7 @@ func (h *Helm) PullChart(ctx context.Context, ociURI, version string) error {
 func (h *Helm) ShowValues(ctx context.Context, ociURI, version string) (bytes.Buffer, error) {
 	params := []string{"show", "values", h.url(ociURI), "--version", version}
 	out, err := h.executable.Command(ctx, params...).
-		WithEnvVars(h.helmOptions.Env).Run()
+		WithEnvVars(h.env).Run()
 	return out, err
 }
 
@@ -83,17 +95,17 @@ func (h *Helm) PushChart(ctx context.Context, chart, registry string) error {
 	logger.Info("Pushing", "chart", chart)
 	params := []string{"push", chart, registry}
 	params = h.addInsecureFlagIfProvided(params)
-	_, err := h.executable.Command(ctx, params...).WithEnvVars(h.helmOptions.Env).Run()
+	_, err := h.executable.Command(ctx, params...).WithEnvVars(h.env).Run()
 	return err
 }
 
 func (h *Helm) RegistryLogin(ctx context.Context, registry, username, password string) error {
 	logger.Info("Logging in to helm registry", "registry", registry)
 	params := []string{"registry", "login", registry, "--username", username, "--password-stdin"}
-	if h.helmOptions.Insecure {
+	if h.helmConfig.Insecure {
 		params = append(params, "--insecure")
 	}
-	_, err := h.executable.Command(ctx, params...).WithEnvVars(h.helmOptions.Env).WithStdIn([]byte(password)).Run()
+	_, err := h.executable.Command(ctx, params...).WithEnvVars(h.env).WithStdIn([]byte(password)).Run()
 	return err
 }
 
@@ -101,7 +113,7 @@ func (h *Helm) SaveChart(ctx context.Context, ociURI, version, folder string) er
 	params := []string{"pull", h.url(ociURI), "--version", version, "--destination", folder}
 	params = h.addInsecureFlagIfProvided(params)
 	_, err := h.executable.Command(ctx, params...).
-		WithEnvVars(h.helmOptions.Env).Run()
+		WithEnvVars(h.env).Run()
 	return err
 }
 
@@ -113,7 +125,7 @@ func (h *Helm) InstallChartFromName(ctx context.Context, ociURI, kubeConfig, nam
 	params := []string{"upgrade", "--install", name, ociURI, "--version", version, "--kubeconfig", kubeConfig}
 	params = h.addInsecureFlagIfProvided(params)
 	_, err := h.executable.Command(ctx, params...).
-		WithEnvVars(h.helmOptions.Env).Run()
+		WithEnvVars(h.env).Run()
 	return err
 }
 
@@ -139,7 +151,7 @@ func (h *Helm) InstallChart(ctx context.Context, chart, ociURI, version, kubecon
 	params = h.addInsecureFlagIfProvided(params)
 
 	logger.Info("Installing helm chart on cluster", "chart", chart, "version", version)
-	_, err := h.executable.Command(ctx, params...).WithEnvVars(h.helmOptions.Env).Run()
+	_, err := h.executable.Command(ctx, params...).WithEnvVars(h.env).Run()
 	return err
 }
 
@@ -148,7 +160,7 @@ func (h *Helm) InstallChart(ctx context.Context, chart, ociURI, version, kubecon
 func (h *Helm) InstallChartWithValuesFile(ctx context.Context, chart, ociURI, version, kubeconfigFilePath, valuesFilePath string) error {
 	params := []string{"upgrade", "--install", chart, ociURI, "--version", version, "--values", valuesFilePath, "--kubeconfig", kubeconfigFilePath, "--wait"}
 	params = h.addInsecureFlagIfProvided(params)
-	_, err := h.executable.Command(ctx, params...).WithEnvVars(h.helmOptions.Env).Run()
+	_, err := h.executable.Command(ctx, params...).WithEnvVars(h.env).Run()
 	return err
 }
 
@@ -163,7 +175,7 @@ func (h *Helm) Delete(ctx context.Context, kubeconfigFilePath, installName, name
 	}
 
 	params = h.addInsecureFlagIfProvided(params)
-	if _, err := h.executable.Command(ctx, params...).WithEnvVars(h.helmOptions.Env).Run(); err != nil {
+	if _, err := h.executable.Command(ctx, params...).WithEnvVars(h.env).Run(); err != nil {
 		return fmt.Errorf("deleting helm installation %w", err)
 	}
 	logger.V(6).Info("Deleted helm installation", "name", installName, "namespace", namespace)
@@ -173,7 +185,7 @@ func (h *Helm) Delete(ctx context.Context, kubeconfigFilePath, installName, name
 
 func (h *Helm) ListCharts(ctx context.Context, kubeconfigFilePath string) ([]string, error) {
 	params := []string{"list", "-q", "--kubeconfig", kubeconfigFilePath}
-	out, err := h.executable.Command(ctx, params...).WithEnvVars(h.helmOptions.Env).Run()
+	out, err := h.executable.Command(ctx, params...).WithEnvVars(h.env).Run()
 	if err != nil {
 		return nil, err
 	}
@@ -184,14 +196,14 @@ func (h *Helm) ListCharts(ctx context.Context, kubeconfigFilePath string) ([]str
 }
 
 func (h *Helm) addInsecureFlagIfProvided(params []string) []string {
-	if h.helmOptions.Insecure {
+	if h.helmConfig.Insecure {
 		return append(params, insecureSkipVerifyFlag)
 	}
 	return params
 }
 
 func (h *Helm) url(originalURL string) string {
-	registryMirror := h.helmOptions.RegistryMirror
+	registryMirror := h.helmConfig.RegistryMirror
 	return registryMirror.ReplaceRegistry(originalURL)
 }
 
@@ -214,10 +226,16 @@ func (h *Helm) UpgradeChartWithValuesFile(ctx context.Context, chart, ociURI, ve
 		"--kubeconfig", kubeconfigFilePath,
 		"--wait",
 	}
+
+	// TODO: we should not update the receiver here, so this needs to change.
+	// This is not thread safe.
+	// https://github.com/aws/eks-anywhere/issues/7176
 	for _, opt := range opts {
-		opt(h.helmOptions)
+		opt(h.helmConfig)
 	}
+	h.env = joinEnv(h.env, h.helmConfig.ProxyConfig)
+
 	params = h.addInsecureFlagIfProvided(params)
-	_, err := h.executable.Command(ctx, params...).WithEnvVars(h.helmOptions.Env).Run()
+	_, err := h.executable.Command(ctx, params...).WithEnvVars(h.env).Run()
 	return err
 }

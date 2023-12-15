@@ -96,7 +96,7 @@ func TestHelmTemplateSuccessWithRegistryMirror(t *testing.T) {
 }
 
 func TestHelmTemplateSuccessWithEnv(t *testing.T) {
-	tt := newHelmTemplateTest(t, helm.WithEnv(map[string]string{
+	tt := newHelmTemplateTest(t, helm.WithProxyConfig(map[string]string{
 		"HTTPS_PROXY": "test1",
 	}))
 	expectedEnv := map[string]string{

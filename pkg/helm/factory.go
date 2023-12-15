@@ -16,7 +16,7 @@ import (
 // Config contains configuration options for Helm.
 type Config struct {
 	RegistryMirror *registrymirror.RegistryMirror
-	Env            map[string]string
+	ProxyConfig    map[string]string
 	Insecure       bool
 }
 
@@ -52,12 +52,10 @@ func WithInsecure() Opt {
 	}
 }
 
-// WithEnv joins the default and the provided maps together.
-func WithEnv(env map[string]string) Opt {
+// WithProxyConfig sets the proxy configurations on the Config.
+func WithProxyConfig(proxyConfig map[string]string) Opt {
 	return func(c *Config) {
-		for k, v := range env {
-			c.Env[k] = v
-		}
+		c.ProxyConfig = proxyConfig
 	}
 }
 
