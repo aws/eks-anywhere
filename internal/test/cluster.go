@@ -3,6 +3,7 @@ package test
 import (
 	"embed"
 	"fmt"
+	"net"
 	"path/filepath"
 	"runtime"
 	"testing"
@@ -144,4 +145,12 @@ func EksdReleaseFromTestData(t *testing.T) *eksdv1alpha1.Release {
 
 func SetTag(image *releasev1alpha1.Image, tag string) {
 	image.URI = fmt.Sprintf("%s:%s", image.Image(), tag)
+}
+
+// RegistryMirrorEndpoint returns the address of the registry mirror configured on the Cluster if any. Just the host and the port.
+func RegistryMirrorEndpoint(cluster *v1alpha1.Cluster) string {
+	if cluster.Spec.RegistryMirrorConfiguration != nil {
+		return net.JoinHostPort(cluster.Spec.RegistryMirrorConfiguration.Endpoint, cluster.Spec.RegistryMirrorConfiguration.Port)
+	}
+	return ""
 }

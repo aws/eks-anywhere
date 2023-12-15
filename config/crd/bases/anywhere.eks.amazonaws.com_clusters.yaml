@@ -66,6 +66,8 @@ spec:
                       in the cluster
                     properties:
                       cilium:
+                        description: CiliumConfig contains configuration specific
+                          to the Cilium CNI.
                         properties:
                           egressMasqueradeInterfaces:
                             description: EgressMasquaradeInterfaces determines which
@@ -107,6 +109,8 @@ spec:
                             type: boolean
                         type: object
                       kindnetd:
+                        description: KindnetdConfig contains configuration specific
+                          to the Kindnetd CNI.
                         type: object
                     type: object
                   dns:

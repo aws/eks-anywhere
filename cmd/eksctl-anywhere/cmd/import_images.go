@@ -108,9 +108,9 @@ func (c ImportImagesCommand) Call(ctx context.Context) error {
 		return err
 	}
 
-	helmOpts := []executables.HelmOpt{}
+	helmOpts := []helm.Opt{}
 	if c.insecure {
-		helmOpts = append(helmOpts, executables.WithInsecure())
+		helmOpts = append(helmOpts, helm.WithInsecure())
 	}
 
 	deps, err = factory.

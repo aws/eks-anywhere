@@ -3,7 +3,7 @@ package framework
 import (
 	"testing"
 
-	"github.com/aws/eks-anywhere/pkg/executables"
+	"github.com/aws/eks-anywhere/pkg/helm"
 )
 
 type HelmInstallConfig struct {
@@ -11,7 +11,7 @@ type HelmInstallConfig struct {
 	chartURI     string
 	chartVersion string
 	chartValues  []string
-	HelmClient   *executables.Helm
+	HelmClient   helm.Client
 }
 
 func WithHelmInstallConfig(t *testing.T, chartName, chartURI, chartVersion string, chartValues []string) ClusterE2ETestOpt {

@@ -20,6 +20,8 @@ import (
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/executables/cmk"
+	"github.com/aws/eks-anywhere/pkg/helm"
+	"github.com/aws/eks-anywhere/pkg/networking/cilium"
 	ciliumreconciler "github.com/aws/eks-anywhere/pkg/networking/cilium/reconciler"
 	cnireconciler "github.com/aws/eks-anywhere/pkg/networking/reconciler"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack"
@@ -56,6 +58,8 @@ type Factory struct {
 	deps                         *dependencies.Dependencies
 	packageControllerClient      *curatedpackages.PackageControllerClient
 	cloudStackValidatorRegistry  cloudstack.ValidatorRegistry
+	ciliumTemplater              *cilium.Templater
+	helmClientFactory            cilium.HelmClientFactory
 }
 
 type Reconcilers struct {
@@ -465,15 +469,47 @@ func (f *Factory) withCloudStackValidatorRegistry() *Factory {
 	return f
 }
 
+// withHelmClientFactory configures the HelmClientFactory dependency with a helm.ClientFactory.
+func (f *Factory) withHelmClientFactory() *Factory {
+	f.dependencyFactory.WithExecutableBuilder()
+
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.helmClientFactory != nil {
+			return nil
+		}
+
+		f.helmClientFactory = helm.NewClientForClusterFactory(f.manager.GetClient(), f.deps.ExecutableBuilder)
+		return nil
+	})
+
+	return f
+}
+
+func (f *Factory) withCiliumTemplater() *Factory {
+	f.withHelmClientFactory()
+
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.ciliumTemplater != nil {
+			return nil
+		}
+
+		f.ciliumTemplater = cilium.NewTemplater(f.helmClientFactory)
+
+		return nil
+	})
+
+	return f
+}
+
 func (f *Factory) withCNIReconciler() *Factory {
-	f.dependencyFactory.WithCiliumTemplater()
+	f.withCiliumTemplater()
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.cniReconciler != nil {
 			return nil
 		}
 
-		f.cniReconciler = cnireconciler.New(ciliumreconciler.New(f.deps.CiliumTemplater))
+		f.cniReconciler = cnireconciler.New(ciliumreconciler.New(f.ciliumTemplater))
 
 		return nil
 	})

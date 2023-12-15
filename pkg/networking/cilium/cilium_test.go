@@ -10,6 +10,7 @@ import (
 	"github.com/aws/eks-anywhere/internal/test"
 	v1alpha12 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	clustermocks "github.com/aws/eks-anywhere/pkg/cluster/mocks"
 	"github.com/aws/eks-anywhere/pkg/networking/cilium/mocks"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/release/api/v1alpha1"
@@ -19,7 +20,7 @@ type ciliumtest struct {
 	*WithT
 	ctx              context.Context
 	client           *mocks.MockKubernetesClient
-	h                *mocks.MockHelm
+	h                *clustermocks.MockHelm
 	installTemplater *mocks.MockInstallTemplater
 	cluster          *types.Cluster
 	spec             *cluster.Spec
@@ -28,7 +29,7 @@ type ciliumtest struct {
 
 func newCiliumTest(t *testing.T) *ciliumtest {
 	ctrl := gomock.NewController(t)
-	h := mocks.NewMockHelm(ctrl)
+	h := clustermocks.NewMockHelm(ctrl)
 	client := mocks.NewMockKubernetesClient(ctrl)
 	installTemplater := mocks.NewMockInstallTemplater(ctrl)
 	return &ciliumtest{
