@@ -8,8 +8,8 @@ import (
 
 	"sigs.k8s.io/yaml"
 
+	"github.com/aws/eks-anywhere/pkg/helm"
 	"github.com/aws/eks-anywhere/pkg/logger"
-	"github.com/aws/eks-anywhere/pkg/registrymirror"
 )
 
 const (
@@ -18,52 +18,41 @@ const (
 )
 
 type Helm struct {
-	executable     Executable
-	registryMirror *registrymirror.RegistryMirror
-	env            map[string]string
-	insecure       bool
+	executable Executable
+	helmConfig *helm.Config // Embed HelmOptions in Helm struct
+	env        map[string]string
 }
 
-type HelmOpt func(*Helm)
-
-// WithRegistryMirror sets up registry mirror for helm.
-func WithRegistryMirror(mirror *registrymirror.RegistryMirror) HelmOpt {
-	return func(h *Helm) {
-		h.registryMirror = mirror
+// NewHelm returns a new Helm executable client.
+func NewHelm(executable Executable, opts ...helm.Opt) *Helm {
+	helmConfig := &helm.Config{
+		Insecure: false,
 	}
-}
-
-// WithInsecure configures helm to skip validating TLS certificates when
-// communicating with the Kubernetes API.
-func WithInsecure() HelmOpt {
-	return func(h *Helm) {
-		h.insecure = true
+	for _, o := range opts {
+		o(helmConfig)
 	}
-}
 
-// join the default and the provided maps together.
-func WithEnv(env map[string]string) HelmOpt {
-	return func(h *Helm) {
-		for k, v := range env {
-			h.env[k] = v
-		}
+	env := map[string]string{
+		"HELM_EXPERIMENTAL_OCI": "1",
 	}
-}
 
-func NewHelm(executable Executable, opts ...HelmOpt) *Helm {
+	mergeMaps(env, helmConfig.ProxyConfig)
+
 	h := &Helm{
 		executable: executable,
-		env: map[string]string{
-			"HELM_EXPERIMENTAL_OCI": "1",
-		},
-		insecure: false,
-	}
-
-	for _, o := range opts {
-		o(h)
+		helmConfig: helmConfig,
+		env:        env,
 	}
 
 	return h
+}
+
+// mergeMaps joins the default and the provided maps together, then return the
+// new map.
+func mergeMaps(defaultEnv, newEnv map[string]string) {
+	for k, v := range newEnv {
+		defaultEnv[k] = v
+	}
 }
 
 func (h *Helm) Template(ctx context.Context, ociURI, version, namespace string, values interface{}, kubeVersion string) ([]byte, error) {
@@ -111,7 +100,7 @@ func (h *Helm) PushChart(ctx context.Context, chart, registry string) error {
 func (h *Helm) RegistryLogin(ctx context.Context, registry, username, password string) error {
 	logger.Info("Logging in to helm registry", "registry", registry)
 	params := []string{"registry", "login", registry, "--username", username, "--password-stdin"}
-	if h.insecure {
+	if h.helmConfig.Insecure {
 		params = append(params, "--insecure")
 	}
 	_, err := h.executable.Command(ctx, params...).WithEnvVars(h.env).WithStdIn([]byte(password)).Run()
@@ -205,14 +194,15 @@ func (h *Helm) ListCharts(ctx context.Context, kubeconfigFilePath string) ([]str
 }
 
 func (h *Helm) addInsecureFlagIfProvided(params []string) []string {
-	if h.insecure {
+	if h.helmConfig.Insecure {
 		return append(params, insecureSkipVerifyFlag)
 	}
 	return params
 }
 
 func (h *Helm) url(originalURL string) string {
-	return h.registryMirror.ReplaceRegistry(originalURL)
+	registryMirror := h.helmConfig.RegistryMirror
+	return registryMirror.ReplaceRegistry(originalURL)
 }
 
 func GetHelmValueArgs(values []string) []string {
@@ -226,7 +216,7 @@ func GetHelmValueArgs(values []string) []string {
 
 // UpgradeChartWithValuesFile tuns a helm upgrade with the provided values file and waits for the
 // chart deployment to be ready.
-func (h *Helm) UpgradeChartWithValuesFile(ctx context.Context, chart, ociURI, version, kubeconfigFilePath, valuesFilePath string, opts ...HelmOpt) error {
+func (h *Helm) UpgradeChartWithValuesFile(ctx context.Context, chart, ociURI, version, kubeconfigFilePath, valuesFilePath string, opts ...helm.Opt) error {
 	params := []string{
 		"upgrade", chart, ociURI,
 		"--version", version,
@@ -234,9 +224,16 @@ func (h *Helm) UpgradeChartWithValuesFile(ctx context.Context, chart, ociURI, ve
 		"--kubeconfig", kubeconfigFilePath,
 		"--wait",
 	}
+
+	// TODO: we should not update the receiver here, so this needs to change.
+	// This is not thread safe.
+	// https://github.com/aws/eks-anywhere/issues/7176
 	for _, opt := range opts {
-		opt(h)
+		opt(h.helmConfig)
 	}
+
+	mergeMaps(h.env, h.helmConfig.ProxyConfig)
+
 	params = h.addInsecureFlagIfProvided(params)
 	_, err := h.executable.Command(ctx, params...).WithEnvVars(h.env).Run()
 	return err
