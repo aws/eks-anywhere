@@ -16,6 +16,7 @@ package bundles
 
 import (
 	"fmt"
+	"sync"
 
 	"github.com/pkg/errors"
 
@@ -25,8 +26,11 @@ import (
 	"github.com/aws/eks-anywhere/release/cli/pkg/version"
 )
 
-func GetCertManagerBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]string) (anywherev1alpha1.CertManagerBundle, error) {
-	artifacts := r.BundleArtifactsTable["cert-manager"]
+func GetCertManagerBundle(r *releasetypes.ReleaseConfig, imageDigests sync.Map) (anywherev1alpha1.CertManagerBundle, error) {
+	certManagerArtifacts, ok := r.BundleArtifactsTable.Load("cert-manager")
+	if !ok {
+		return anywherev1alpha1.CertManagerBundle{}, fmt.Errorf("artifacts for project cert-manager not found in bundle artifacts table")
+	}
 
 	var sourceBranch string
 	var componentChecksum string
@@ -34,18 +38,21 @@ func GetCertManagerBundle(r *releasetypes.ReleaseConfig, imageDigests map[string
 	bundleManifestArtifacts := map[string]anywherev1alpha1.Manifest{}
 	artifactHashes := []string{}
 
-	for _, artifact := range artifacts {
+	for _, artifact := range certManagerArtifacts.([]releasetypes.Artifact) {
 		if artifact.Image != nil {
 			imageArtifact := artifact.Image
 			sourceBranch = imageArtifact.SourcedFromBranch
-
+			imageDigest, ok := imageDigests.Load(imageArtifact.ReleaseImageURI)
+			if !ok {
+				return anywherev1alpha1.CertManagerBundle{}, fmt.Errorf("digest for image %s not found in image digests table", imageArtifact.ReleaseImageURI)
+			}
 			bundleArtifact := anywherev1alpha1.Image{
 				Name:        imageArtifact.AssetName,
 				Description: fmt.Sprintf("Container image for %s image", imageArtifact.AssetName),
 				OS:          imageArtifact.OS,
 				Arch:        imageArtifact.Arch,
 				URI:         imageArtifact.ReleaseImageURI,
-				ImageDigest: imageDigests[imageArtifact.ReleaseImageURI],
+				ImageDigest: imageDigest.(string),
 			}
 
 			bundleImageArtifacts[imageArtifact.AssetName] = bundleArtifact

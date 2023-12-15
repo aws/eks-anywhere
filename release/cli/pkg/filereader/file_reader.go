@@ -341,9 +341,15 @@ func ReadHttpFile(uri string) ([]byte, error) {
 }
 
 func ReadGitTag(projectPath, gitRootPath, branch string) (string, error) {
-	_, err := git.CheckoutRepo(gitRootPath, branch)
+	currentBranch, err := git.GetCurrentBranch(gitRootPath)
 	if err != nil {
-		return "", fmt.Errorf("error reading git tag: %v", err)
+		return "", fmt.Errorf("error getting current branch: %v", err)
+	}
+	if currentBranch != branch {
+		_, err = git.CheckoutRepo(gitRootPath, branch)
+		if err != nil {
+			return "", fmt.Errorf("error checking out repo: %v", err)
+		}
 	}
 
 	tagFile := filepath.Join(gitRootPath, projectPath, "GIT_TAG")

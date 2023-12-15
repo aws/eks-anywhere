@@ -16,6 +16,7 @@ package bundles
 
 import (
 	"fmt"
+	"sync"
 
 	"github.com/pkg/errors"
 
@@ -26,12 +27,15 @@ import (
 	"github.com/aws/eks-anywhere/release/cli/pkg/version"
 )
 
-func GetFluxBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]string) (anywherev1alpha1.FluxBundle, error) {
-	fluxBundleArtifacts := map[string][]releasetypes.Artifact{
-		"helm-controller":         r.BundleArtifactsTable["helm-controller"],
-		"kustomize-controller":    r.BundleArtifactsTable["kustomize-controller"],
-		"notification-controller": r.BundleArtifactsTable["notification-controller"],
-		"source-controller":       r.BundleArtifactsTable["source-controller"],
+func GetFluxBundle(r *releasetypes.ReleaseConfig, imageDigests sync.Map) (anywherev1alpha1.FluxBundle, error) {
+	projectsInBundle := []string{"helm-controller", "kustomize-controller", "notification-controller", "source-controller"}
+	fluxBundleArtifacts := map[string][]releasetypes.Artifact{}
+	for _, project := range projectsInBundle {
+		projectArtifacts, ok := r.BundleArtifactsTable.Load(project)
+		if !ok {
+			return anywherev1alpha1.FluxBundle{}, fmt.Errorf("artifacts for project %s not found in bundle artifacts table", project)
+		}
+		fluxBundleArtifacts[project] = projectArtifacts.([]releasetypes.Artifact)
 	}
 	sortedComponentNames := bundleutils.SortArtifactsMap(fluxBundleArtifacts)
 
@@ -44,14 +48,17 @@ func GetFluxBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]string
 		for _, artifact := range fluxBundleArtifacts[componentName] {
 			imageArtifact := artifact.Image
 			sourceBranch = imageArtifact.SourcedFromBranch
-
+			imageDigest, ok := imageDigests.Load(imageArtifact.ReleaseImageURI)
+			if !ok {
+				return anywherev1alpha1.FluxBundle{}, fmt.Errorf("digest for image %s not found in image digests table", imageArtifact.ReleaseImageURI)
+			}
 			bundleImageArtifact := anywherev1alpha1.Image{
 				Name:        imageArtifact.AssetName,
 				Description: fmt.Sprintf("Container image for %s image", imageArtifact.AssetName),
 				OS:          imageArtifact.OS,
 				Arch:        imageArtifact.Arch,
 				URI:         imageArtifact.ReleaseImageURI,
-				ImageDigest: imageDigests[imageArtifact.ReleaseImageURI],
+				ImageDigest: imageDigest.(string),
 			}
 
 			bundleImageArtifacts[imageArtifact.AssetName] = bundleImageArtifact

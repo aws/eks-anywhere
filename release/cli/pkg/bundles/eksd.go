@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	"github.com/pkg/errors"
 
@@ -27,22 +28,35 @@ import (
 	releasetypes "github.com/aws/eks-anywhere/release/cli/pkg/types"
 )
 
-func GetEksDReleaseBundle(r *releasetypes.ReleaseConfig, eksDReleaseChannel, kubeVer, eksDReleaseNumber string, imageDigests map[string]string, dev bool) (anywherev1alpha1.EksDRelease, error) {
-	artifacts := r.BundleArtifactsTable[fmt.Sprintf("image-builder-%s", eksDReleaseChannel)]
-	artifacts = append(artifacts, r.BundleArtifactsTable[fmt.Sprintf("kind-%s", eksDReleaseChannel)]...)
+func GetEksDReleaseBundle(r *releasetypes.ReleaseConfig, eksDReleaseChannel, kubeVer, eksDReleaseNumber string, imageDigests sync.Map, dev bool) (anywherev1alpha1.EksDRelease, error) {
+	imageBuilderArtifacts, ok := r.BundleArtifactsTable.Load(fmt.Sprintf("image-builder-%s", eksDReleaseChannel))
+	if !ok {
+		return anywherev1alpha1.EksDRelease{}, fmt.Errorf("artifacts for project image-builder-%s not found in bundle artifacts table", eksDReleaseChannel)
+	}
 
-	tarballArtifacts := map[string][]releasetypes.Artifact{
-		"containerd":    r.BundleArtifactsTable["containerd"],
-		"cri-tools":     r.BundleArtifactsTable["cri-tools"],
-		"etcdadm":       r.BundleArtifactsTable["etcdadm"],
-		"image-builder": r.BundleArtifactsTable["image-builder"],
+	kindArtifacts, ok := r.BundleArtifactsTable.Load(fmt.Sprintf("kind-%s", eksDReleaseChannel))
+	if !ok {
+		return anywherev1alpha1.EksDRelease{}, fmt.Errorf("artifacts for project kind-%s not found in bundle artifacts table", eksDReleaseChannel)
+	}
+
+	eksDArtifacts := []releasetypes.Artifact{}
+	eksDArtifacts = append(eksDArtifacts, imageBuilderArtifacts.([]releasetypes.Artifact)...)
+	eksDArtifacts = append(eksDArtifacts, kindArtifacts.([]releasetypes.Artifact)...)
+	projectsInBundle := []string{"containerd", "cri-tools", "etcdadm", "image-builder"}
+	tarballArtifacts := map[string][]releasetypes.Artifact{}
+	for _, project := range projectsInBundle {
+		projectArtifacts, ok := r.BundleArtifactsTable.Load(project)
+		if !ok {
+			return anywherev1alpha1.EksDRelease{}, fmt.Errorf("artifacts for project %s not found in bundle artifacts table", project)
+		}
+		tarballArtifacts[project] = projectArtifacts.([]releasetypes.Artifact)
 	}
 
 	bundleArchiveArtifacts := map[string]anywherev1alpha1.Archive{}
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
 
 	eksDManifestUrl := filereader.GetEksDReleaseManifestUrl(eksDReleaseChannel, eksDReleaseNumber, dev)
-	for _, artifact := range artifacts {
+	for _, artifact := range eksDArtifacts {
 		if artifact.Archive != nil {
 			archiveArtifact := artifact.Archive
 			osName := archiveArtifact.OSName
@@ -70,13 +84,17 @@ func GetEksDReleaseBundle(r *releasetypes.ReleaseConfig, eksDReleaseChannel, kub
 
 		if artifact.Image != nil {
 			imageArtifact := artifact.Image
+			imageDigest, ok := imageDigests.Load(imageArtifact.ReleaseImageURI)
+			if !ok {
+				return anywherev1alpha1.EksDRelease{}, fmt.Errorf("digest for image %s not found in image digests table", imageArtifact.ReleaseImageURI)
+			}
 			bundleImageArtifact := anywherev1alpha1.Image{
 				Name:        imageArtifact.AssetName,
 				Description: fmt.Sprintf("Container image for %s image", imageArtifact.AssetName),
 				OS:          imageArtifact.OS,
 				Arch:        imageArtifact.Arch,
 				URI:         imageArtifact.ReleaseImageURI,
-				ImageDigest: imageDigests[imageArtifact.ReleaseImageURI],
+				ImageDigest: imageDigest.(string),
 			}
 
 			bundleImageArtifacts["kind-node"] = bundleImageArtifact

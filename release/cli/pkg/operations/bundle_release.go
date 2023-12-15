@@ -15,11 +15,14 @@
 package operations
 
 import (
+	"context"
 	"fmt"
 	"os/exec"
 	"strings"
+	"sync"
 
 	"github.com/pkg/errors"
+	"golang.org/x/sync/errgroup"
 
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 	"github.com/aws/eks-anywhere/release/cli/pkg/assets"
@@ -32,24 +35,24 @@ import (
 	commandutils "github.com/aws/eks-anywhere/release/cli/pkg/util/command"
 )
 
-func GenerateBundleArtifactsTable(r *releasetypes.ReleaseConfig) (map[string][]releasetypes.Artifact, error) {
+func GenerateBundleArtifactsTable(r *releasetypes.ReleaseConfig) (sync.Map, error) {
 	fmt.Println("\n==========================================================")
 	fmt.Println("              Bundle Artifacts Table Generation")
 	fmt.Println("==========================================================")
 
 	eksDReleaseMap, err := filereader.ReadEksDReleases(r)
 	if err != nil {
-		return nil, err
+		return sync.Map{}, err
 	}
 
 	supportedK8sVersions, err := filereader.GetSupportedK8sVersions(r)
 	if err != nil {
-		return nil, errors.Wrapf(err, "Error getting supported Kubernetes versions for bottlerocket")
+		return sync.Map{}, errors.Wrapf(err, "Error getting supported Kubernetes versions for bottlerocket")
 	}
 
 	artifactsTable, err := assets.GetBundleReleaseAssets(supportedK8sVersions, eksDReleaseMap, r)
 	if err != nil {
-		return nil, errors.Wrapf(err, "Error getting bundle release assets")
+		return sync.Map{}, errors.Wrapf(err, "Error getting bundle release assets")
 	}
 
 	fmt.Printf("%s Successfully generated bundle artifacts table\n", constants.SuccessIcon)
@@ -61,17 +64,17 @@ func BundleArtifactsRelease(r *releasetypes.ReleaseConfig) error {
 	fmt.Println("\n==========================================================")
 	fmt.Println("                  Bundle Artifacts Release")
 	fmt.Println("==========================================================")
-	err := DownloadArtifacts(r, r.BundleArtifactsTable)
+	err := DownloadArtifacts(context.Background(), r, r.BundleArtifactsTable)
 	if err != nil {
 		return errors.Cause(err)
 	}
 
-	err = RenameArtifacts(r, r.BundleArtifactsTable)
+	err = RenameArtifacts(context.Background(), r, r.BundleArtifactsTable)
 	if err != nil {
 		return errors.Cause(err)
 	}
 
-	err = UploadArtifacts(r, r.BundleArtifactsTable)
+	err = UploadArtifacts(context.Background(), r, r.BundleArtifactsTable)
 	if err != nil {
 		return errors.Cause(err)
 	}
@@ -79,52 +82,56 @@ func BundleArtifactsRelease(r *releasetypes.ReleaseConfig) error {
 	return nil
 }
 
-func GenerateImageDigestsTable(r *releasetypes.ReleaseConfig) (map[string]string, error) {
+func GenerateImageDigestsTable(ctx context.Context, r *releasetypes.ReleaseConfig) (sync.Map, error) {
 	fmt.Println("\n==========================================================")
 	fmt.Println("                 Image Digests Table Generation")
 	fmt.Println("==========================================================")
-	imageDigests := make(map[string]string)
+	var imageDigests sync.Map
 
-	for _, artifacts := range r.BundleArtifactsTable {
+	errGroup, ctx := errgroup.WithContext(ctx)
+	r.BundleArtifactsTable.Range(func(k, v interface{}) bool {
+		artifacts := v.([]releasetypes.Artifact)
 		for _, artifact := range artifacts {
-			if artifact.Image != nil {
-				var imageDigestStr string
-				var err error
-				if r.DryRun {
-					sha256sum, err := artifactutils.GetFakeSHA(256)
+			r, artifact := r, artifact
+			errGroup.Go(func() error {
+				if artifact.Image != nil {
+					imageDigest, err := getImageDigest(ctx, r, artifact)
 					if err != nil {
-						return nil, errors.Cause(err)
+						return errors.Wrapf(err, "getting image digest for image %s", artifact.Image.ReleaseImageURI)
 					}
-					imageDigestStr = fmt.Sprintf("sha256:%s", sha256sum)
-				} else {
-					imageDigestStr, err = ecrpublic.GetImageDigest(artifact.Image.ReleaseImageURI, r.ReleaseContainerRegistry, r.ReleaseClients.ECRPublic.Client)
-					if err != nil {
-						return nil, errors.Cause(err)
-					}
+					imageDigests.Store(artifact.Image.ReleaseImageURI, imageDigest)
+					fmt.Printf("Image digest for %s - %s\n", artifact.Image.ReleaseImageURI, imageDigest)
 				}
 
-				imageDigests[artifact.Image.ReleaseImageURI] = imageDigestStr
-				fmt.Printf("Image digest for %s - %s\n", artifact.Image.ReleaseImageURI, imageDigestStr)
-			}
+				return nil
+			})
 		}
+		return true
+	})
+	if err := errGroup.Wait(); err != nil {
+		return sync.Map{}, fmt.Errorf("generating image digests table: %v", err)
 	}
 	fmt.Printf("%s Successfully generated image digests table\n", constants.SuccessIcon)
 
 	return imageDigests, nil
 }
 
-func SignImagesNotation(r *releasetypes.ReleaseConfig, imageDigests map[string]string) error {
+func SignImagesNotation(r *releasetypes.ReleaseConfig, imageDigests sync.Map) error {
 	if r.DryRun {
 		fmt.Println("Skipping image signing in dry-run mode")
 		return nil
 	}
 	releaseRegistryUsername := r.ReleaseClients.ECRPublic.AuthConfig.Username
 	releaseRegistryPassword := r.ReleaseClients.ECRPublic.AuthConfig.Password
-	for image, digest := range imageDigests {
+	var rangeErr error
+	imageDigests.Range(func(k, v interface{}) bool {
+		image := k.(string)
+		digest := v.(string)
 		cmd := exec.Command("notation", "list", fmt.Sprintf("%s@%s", image, digest), "-u", releaseRegistryUsername, "-p", releaseRegistryPassword)
 		out, err := commandutils.ExecCommand(cmd)
 		if err != nil {
-			return fmt.Errorf("listing signatures associated with image %s: %v", fmt.Sprintf("%s@%s", image, digest), err)
+			rangeErr = fmt.Errorf("listing signatures associated with image %s: %v", fmt.Sprintf("%s@%s", image, digest), err)
+			return false
 		}
 		// Skip signing image if it is already signed.
 		if strings.Contains(out, "no associated signature") {
@@ -134,17 +141,20 @@ func SignImagesNotation(r *releasetypes.ReleaseConfig, imageDigests map[string]s
 			out, err := commandutils.ExecCommand(cmd)
 			fmt.Println(out)
 			if err != nil {
-				return fmt.Errorf("sigining container image with Notation CLI: %v", err)
+				rangeErr = fmt.Errorf("sigining container image with Notation CLI: %v", err)
+				return false
 			}
 		} else {
+			rangeErr = nil
 			fmt.Printf("skipping the image signing for image %s since it has already been signed", fmt.Sprintf("%s@%s", image, digest))
 		}
 
-	}
-	return nil
+		return true
+	})
+	return rangeErr
 }
 
-func GenerateBundleSpec(r *releasetypes.ReleaseConfig, bundle *anywherev1alpha1.Bundles, imageDigests map[string]string) error {
+func GenerateBundleSpec(r *releasetypes.ReleaseConfig, bundle *anywherev1alpha1.Bundles, imageDigests sync.Map) error {
 	fmt.Println("\n==========================================================")
 	fmt.Println("               Bundles Manifest Spec Generation")
 	fmt.Println("==========================================================")
@@ -157,4 +167,23 @@ func GenerateBundleSpec(r *releasetypes.ReleaseConfig, bundle *anywherev1alpha1.
 
 	fmt.Printf("%s Successfully generated bundle manifest spec\n", constants.SuccessIcon)
 	return nil
+}
+
+func getImageDigest(_ context.Context, r *releasetypes.ReleaseConfig, artifact releasetypes.Artifact) (string, error) {
+	var imageDigest string
+	var err error
+	if r.DryRun {
+		sha256sum, err := artifactutils.GetFakeSHA(256)
+		if err != nil {
+			return "", errors.Cause(err)
+		}
+		imageDigest = fmt.Sprintf("sha256:%s", sha256sum)
+	} else {
+		imageDigest, err = ecrpublic.GetImageDigest(artifact.Image.ReleaseImageURI, r.ReleaseContainerRegistry, r.ReleaseClients.ECRPublic.Client)
+		if err != nil {
+			return "", errors.Cause(err)
+		}
+	}
+
+	return imageDigest, nil
 }

@@ -1,6 +1,6 @@
 module github.com/aws/eks-anywhere/release/cli
 
-go 1.20
+go 1.21
 
 require (
 	github.com/aws/aws-sdk-go v1.42.23
@@ -15,6 +15,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/viper v1.15.0
+	golang.org/x/sync v0.5.0
 	helm.sh/helm/v3 v3.11.3
 	k8s.io/apimachinery v0.26.10
 	k8s.io/helm v2.17.0+incompatible
@@ -142,7 +143,6 @@ require (
 	golang.org/x/mod v0.14.0 // indirect
 	golang.org/x/net v0.18.0 // indirect
 	golang.org/x/oauth2 v0.10.0 // indirect
-	golang.org/x/sync v0.5.0 // indirect
 	golang.org/x/sys v0.15.0 // indirect
 	golang.org/x/term v0.15.0 // indirect
 	golang.org/x/text v0.14.0 // indirect

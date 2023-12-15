@@ -2,6 +2,7 @@ package bundles
 
 import (
 	"fmt"
+	"sync"
 
 	"github.com/pkg/errors"
 
@@ -13,11 +14,15 @@ import (
 )
 
 // GetNutanixBundle returns the bundle for Nutanix.
-func GetNutanixBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]string) (anywherev1alpha1.NutanixBundle, error) {
-	nutanixBundleArtifacts := map[string][]releasetypes.Artifact{
-		"cluster-api-provider-nutanix": r.BundleArtifactsTable["cluster-api-provider-nutanix"],
-		"kube-rbac-proxy":              r.BundleArtifactsTable["kube-rbac-proxy"],
-		"kube-vip":                     r.BundleArtifactsTable["kube-vip"],
+func GetNutanixBundle(r *releasetypes.ReleaseConfig, imageDigests sync.Map) (anywherev1alpha1.NutanixBundle, error) {
+	projectsInBundle := []string{"cluster-api-provider-nutanix", "kube-rbac-proxy", "kube-vip"}
+	nutanixBundleArtifacts := map[string][]releasetypes.Artifact{}
+	for _, project := range projectsInBundle {
+		projectArtifacts, ok := r.BundleArtifactsTable.Load(project)
+		if !ok {
+			return anywherev1alpha1.NutanixBundle{}, fmt.Errorf("artifacts for project %s not found in bundle artifacts table", project)
+		}
+		nutanixBundleArtifacts[project] = projectArtifacts.([]releasetypes.Artifact)
 	}
 	sortedComponentNames := bundleutils.SortArtifactsMap(nutanixBundleArtifacts)
 
@@ -33,13 +38,17 @@ func GetNutanixBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]str
 				if componentName == "cluster-api-provider-nutanix" {
 					sourceBranch = imageArtifact.SourcedFromBranch
 				}
+				imageDigest, ok := imageDigests.Load(imageArtifact.ReleaseImageURI)
+				if !ok {
+					return anywherev1alpha1.NutanixBundle{}, fmt.Errorf("digest for image %s not found in image digests table", imageArtifact.ReleaseImageURI)
+				}
 				bundleImageArtifact := anywherev1alpha1.Image{
 					Name:        imageArtifact.AssetName,
 					Description: fmt.Sprintf("Container image for %s image", imageArtifact.AssetName),
 					OS:          imageArtifact.OS,
 					Arch:        imageArtifact.Arch,
 					URI:         imageArtifact.ReleaseImageURI,
-					ImageDigest: imageDigests[imageArtifact.ReleaseImageURI],
+					ImageDigest: imageDigest.(string),
 				}
 				bundleImageArtifacts[imageArtifact.AssetName] = bundleImageArtifact
 				artifactHashes = append(artifactHashes, bundleImageArtifact.ImageDigest)

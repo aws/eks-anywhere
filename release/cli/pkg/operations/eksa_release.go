@@ -15,7 +15,9 @@
 package operations
 
 import (
+	"context"
 	"fmt"
+	"sync"
 
 	"github.com/pkg/errors"
 
@@ -24,18 +26,18 @@ import (
 	releasetypes "github.com/aws/eks-anywhere/release/cli/pkg/types"
 )
 
-func GenerateEksAArtifactsTable(r *releasetypes.ReleaseConfig) (map[string][]releasetypes.Artifact, error) {
+func GenerateEksAArtifactsTable(r *releasetypes.ReleaseConfig) (sync.Map, error) {
 	fmt.Println("\n==========================================================")
 	fmt.Println("                 EKS-A Artifacts Table Generation")
 	fmt.Println("==========================================================")
 
-	artifactsTable := map[string][]releasetypes.Artifact{}
+	var artifactsTable sync.Map
 	artifacts, err := bundles.GetEksACliArtifacts(r)
 	if err != nil {
-		return nil, errors.Wrapf(err, "Error getting artifact information for EKS-A CLI")
+		return sync.Map{}, errors.Wrapf(err, "Error getting artifact information for EKS-A CLI")
 	}
 
-	artifactsTable["eks-a-cli"] = artifacts
+	artifactsTable.Store("eks-a-cli", artifacts)
 
 	fmt.Printf("%s Successfully generated EKS-A artifacts table\n", constants.SuccessIcon)
 
@@ -46,17 +48,17 @@ func EksAArtifactsRelease(r *releasetypes.ReleaseConfig) error {
 	fmt.Println("\n==========================================================")
 	fmt.Println("                 EKS-A CLI Artifacts Release")
 	fmt.Println("==========================================================")
-	err := DownloadArtifacts(r, r.EksAArtifactsTable)
+	err := DownloadArtifacts(context.Background(), r, r.EksAArtifactsTable)
 	if err != nil {
 		return errors.Cause(err)
 	}
 
-	err = RenameArtifacts(r, r.EksAArtifactsTable)
+	err = RenameArtifacts(context.Background(), r, r.EksAArtifactsTable)
 	if err != nil {
 		return errors.Cause(err)
 	}
 
-	err = UploadArtifacts(r, r.EksAArtifactsTable)
+	err = UploadArtifacts(context.Background(), r, r.EksAArtifactsTable)
 	if err != nil {
 		return errors.Cause(err)
 	}

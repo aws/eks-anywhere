@@ -17,6 +17,7 @@ package bundles
 import (
 	"fmt"
 	"strings"
+	"sync"
 
 	"github.com/pkg/errors"
 
@@ -31,13 +32,17 @@ import (
 	"github.com/aws/eks-anywhere/release/cli/pkg/version"
 )
 
-func GetPackagesBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]string) (anywherev1alpha1.PackageBundle, error) {
-	artifacts := map[string][]releasetypes.Artifact{
-		"eks-anywhere-packages":       r.BundleArtifactsTable["eks-anywhere-packages"],
-		"ecr-token-refresher":         r.BundleArtifactsTable["ecr-token-refresher"],
-		"credential-provider-package": r.BundleArtifactsTable["credential-provider-package"],
+func GetPackagesBundle(r *releasetypes.ReleaseConfig, imageDigests sync.Map) (anywherev1alpha1.PackageBundle, error) {
+	projectsInBundle := []string{"eks-anywhere-packages"}
+	packagesArtifacts := map[string][]releasetypes.Artifact{}
+	for _, project := range projectsInBundle {
+		projectArtifacts, ok := r.BundleArtifactsTable.Load(project)
+		if !ok {
+			return anywherev1alpha1.PackageBundle{}, fmt.Errorf("artifacts for project %s not found in bundle artifacts table", project)
+		}
+		packagesArtifacts[project] = projectArtifacts.([]releasetypes.Artifact)
 	}
-	sortedComponentNames := bundleutils.SortArtifactsMap(artifacts)
+	sortedComponentNames := bundleutils.SortArtifactsMap(packagesArtifacts)
 
 	var sourceBranch string
 	var componentChecksum string
@@ -87,15 +92,18 @@ func GetPackagesBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]st
 		}
 	}
 	for _, componentName := range sortedComponentNames {
-		for _, artifact := range artifacts[componentName] {
+		for _, artifact := range packagesArtifacts[componentName] {
 			if artifact.Image != nil {
 				imageArtifact := artifact.Image
 				sourceBranch = imageArtifact.SourcedFromBranch
 				bundleImageArtifact := anywherev1alpha1.Image{}
 				if strings.HasSuffix(imageArtifact.AssetName, "helm") {
-					Digest := imageDigests[imageArtifact.ReleaseImageURI]
+					imageDigest, ok := imageDigests.Load(imageArtifact.ReleaseImageURI)
+					if !ok {
+						return anywherev1alpha1.PackageBundle{}, fmt.Errorf("digest for image %s not found in image digests table", imageArtifact.ReleaseImageURI)
+					}
 					if r.DevRelease && Helmsha != "" && Helmtag != "" {
-						Digest = Helmsha
+						imageDigest = Helmsha
 						imageArtifact.ReleaseImageURI = replaceTag(imageArtifact.ReleaseImageURI, Helmtag)
 					}
 					assetName := strings.TrimSuffix(imageArtifact.AssetName, "-helm")
@@ -103,15 +111,18 @@ func GetPackagesBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]st
 						Name:        assetName,
 						Description: fmt.Sprintf("Helm chart for %s", assetName),
 						URI:         imageArtifact.ReleaseImageURI,
-						ImageDigest: Digest,
+						ImageDigest: imageDigest.(string),
 					}
 				} else {
-					Digest := imageDigests[imageArtifact.ReleaseImageURI]
+					imageDigest, ok := imageDigests.Load(imageArtifact.ReleaseImageURI)
+					if !ok {
+						return anywherev1alpha1.PackageBundle{}, fmt.Errorf("digest for image %s not found in image digests table", imageArtifact.ReleaseImageURI)
+					}
 					if strings.HasSuffix(imageArtifact.AssetName, "eks-anywhere-packages") && r.DevRelease && TokenSha != "" && Tokentag != "" {
-						Digest = Imagesha
+						imageDigest = Imagesha
 						imageArtifact.ReleaseImageURI = replaceTag(imageArtifact.ReleaseImageURI, Imagetag)
 					} else if strings.HasSuffix(imageArtifact.AssetName, "ecr-token-refresher") && r.DevRelease && Imagesha != "" && Imagetag != "" {
-						Digest = TokenSha
+						imageDigest = TokenSha
 						imageArtifact.ReleaseImageURI = replaceTag(imageArtifact.ReleaseImageURI, Tokentag)
 					}
 					bundleImageArtifact = anywherev1alpha1.Image{
@@ -120,7 +131,7 @@ func GetPackagesBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]st
 						OS:          imageArtifact.OS,
 						Arch:        imageArtifact.Arch,
 						URI:         imageArtifact.ReleaseImageURI,
-						ImageDigest: Digest,
+						ImageDigest: imageDigest.(string),
 					}
 				}
 				bundleImageArtifacts[imageArtifact.AssetName] = bundleImageArtifact
@@ -131,7 +142,7 @@ func GetPackagesBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]st
 
 	if !r.DryRun && r.DevRelease && r.BuildRepoBranchName == "main" {
 		for _, componentName := range sortedComponentNames {
-			for _, artifact := range artifacts[componentName] {
+			for _, artifact := range packagesArtifacts[componentName] {
 				if artifact.Image != nil {
 					imageArtifact := artifact.Image
 					sourceBranch = imageArtifact.SourcedFromBranch
@@ -150,7 +161,7 @@ func GetPackagesBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]st
 						fmt.Printf("helmDest=%v\n", helmDest)
 						fmt.Printf("Pulled helm chart locally to %s\n", helmDest)
 						fmt.Printf("r.sourceClients")
-						err = helm.ModifyAndPushChartYaml(*imageArtifact, r, helmDriver, helmDest, artifacts, bundleImageArtifacts)
+						err = helm.ModifyAndPushChartYaml(*imageArtifact, r, helmDriver, helmDest, packagesArtifacts, bundleImageArtifacts)
 						if err != nil {
 							return anywherev1alpha1.PackageBundle{}, errors.Wrap(err, "modifying Chart.yaml and pushing Helm chart to destination:")
 						}

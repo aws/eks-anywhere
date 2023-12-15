@@ -16,25 +16,33 @@ package bundles
 
 import (
 	"fmt"
+	"sync"
 
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 	releasetypes "github.com/aws/eks-anywhere/release/cli/pkg/types"
 )
 
-func GetUpgraderBundle(r *releasetypes.ReleaseConfig, eksDReleaseChannel string, imageDigests map[string]string) (anywherev1alpha1.UpgraderBundle, error) {
-	artifacts := r.BundleArtifactsTable[fmt.Sprintf("upgrader-%s", eksDReleaseChannel)]
+func GetUpgraderBundle(r *releasetypes.ReleaseConfig, eksDReleaseChannel string, imageDigests sync.Map) (anywherev1alpha1.UpgraderBundle, error) {
+	upgraderArtifacts, ok := r.BundleArtifactsTable.Load(fmt.Sprintf("upgrader-%s", eksDReleaseChannel))
+	if !ok {
+		return anywherev1alpha1.UpgraderBundle{}, fmt.Errorf("artifacts for project upgrader-%s not found in bundle artifacts table", eksDReleaseChannel)
+	}
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
 
-	for _, artifact := range artifacts {
+	for _, artifact := range upgraderArtifacts.([]releasetypes.Artifact) {
 		if artifact.Image != nil {
 			imageArtifact := artifact.Image
+			imageDigest, ok := imageDigests.Load(imageArtifact.ReleaseImageURI)
+			if !ok {
+				return anywherev1alpha1.UpgraderBundle{}, fmt.Errorf("digest for image %s not found in image digests table", imageArtifact.ReleaseImageURI)
+			}
 			bundleImageArtifact := anywherev1alpha1.Image{
 				Name:        imageArtifact.AssetName,
 				Description: fmt.Sprintf("Container image for %s image", imageArtifact.AssetName),
 				OS:          imageArtifact.OS,
 				Arch:        imageArtifact.Arch,
 				URI:         imageArtifact.ReleaseImageURI,
-				ImageDigest: imageDigests[imageArtifact.ReleaseImageURI],
+				ImageDigest: imageDigest.(string),
 			}
 			bundleImageArtifacts[imageArtifact.AssetName] = bundleImageArtifact
 		}

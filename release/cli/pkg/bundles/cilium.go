@@ -37,7 +37,10 @@ const (
 )
 
 func GetCiliumBundle(r *releasetypes.ReleaseConfig) (anywherev1alpha1.CiliumBundle, error) {
-	artifacts := r.BundleArtifactsTable["cilium"]
+	ciliumArtifacts, ok := r.BundleArtifactsTable.Load("cilium")
+	if !ok {
+		return anywherev1alpha1.CiliumBundle{}, fmt.Errorf("artifacts for project cilium not found in bundle artifacts table")
+	}
 
 	ciliumContainerRegistry := "public.ecr.aws/isovalent"
 	ciliumGitTag, err := filereader.ReadGitTag(constants.CiliumProjectPath, r.BuildRepoSource, r.BuildRepoBranchName)
@@ -64,7 +67,7 @@ func GetCiliumBundle(r *releasetypes.ReleaseConfig) (anywherev1alpha1.CiliumBund
 		bundleImageArtifacts[imageDef.name] = imageDef.builder(imageDigest)
 	}
 
-	for _, artifact := range artifacts {
+	for _, artifact := range ciliumArtifacts.([]releasetypes.Artifact) {
 		if artifact.Manifest != nil {
 			manifestArtifact := artifact.Manifest
 			bundleManifestArtifact := anywherev1alpha1.Manifest{
