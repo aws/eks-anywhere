@@ -8,7 +8,7 @@ import (
 	context "context"
 	reflect "reflect"
 
-	executables "github.com/aws/eks-anywhere/pkg/executables"
+	helm "github.com/aws/eks-anywhere/pkg/helm"
 	stack "github.com/aws/eks-anywhere/pkg/providers/tinkerbell/stack"
 	v1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 	gomock "github.com/golang/mock/gomock"
@@ -137,7 +137,7 @@ func (mr *MockHelmMockRecorder) RegistryLogin(ctx, endpoint, username, password 
 }
 
 // UpgradeChartWithValuesFile mocks base method.
-func (m *MockHelm) UpgradeChartWithValuesFile(ctx context.Context, chart, ociURI, version, kubeconfigFilePath, valuesFilePath string, opts ...executables.HelmOpt) error {
+func (m *MockHelm) UpgradeChartWithValuesFile(ctx context.Context, chart, ociURI, version, kubeconfigFilePath, valuesFilePath string, opts ...helm.Opt) error {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, chart, ociURI, version, kubeconfigFilePath, valuesFilePath}
 	for _, a := range opts {
