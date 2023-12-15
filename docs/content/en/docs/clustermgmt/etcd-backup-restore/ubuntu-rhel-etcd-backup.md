@@ -22,18 +22,31 @@ EKS-Anywhere clusters use etcd as the backing store. Taking a snapshot of etcd b
 
 ### Backup
 
-Etcd offers a built-in snapshot mechanism. You can take a snapshot using the `etcdctl snapshot save` command by following the steps given below. 
+Etcd offers a built-in snapshot mechanism. You can take a snapshot using the `etcdctl snapshot save` or `etcdutl snapshot save` command by following the steps given below. 
 
 1. Login to any one of the etcd VMs
 ```bash
 ssh -i $PRIV_KEY ec2-user@$ETCD_VM_IP
 ```
-2. Run the etcdctl command to take a snapshot with the following steps
+2. Run the etcdctl or etcdutl command to take a snapshot with the following steps
+    {{< tabpane >}}
+
+    {{< tab header="Using etcd < v3.5.x" lang="bash" >}}
+    sudo su
+    source /etc/etcd/etcdctl.env
+    etcdctl snapshot save snapshot.db
+    chown ec2-user snapshot.db
+    {{< /tab >}}
+
+    {{< tab header="Using etcd >= v3.5.x" lang="bash" >}}
+    sudo su
+    etcdutl snapshot save snapshot.db
+    chown ec2-user snapshot.db
+    {{< /tab >}}
+    
+    {{< /tabpane >}}
 ```bash
-sudo su
-source /etc/etcd/etcdctl.env
-etcdctl snapshot save snapshot.db
-chown ec2-user snapshot.db
+
 ```
 3. Exit the VM. Copy the snapshot from the VM to your local/admin setup where you can save snapshots in a secure place. Before running scp, make sure you don't already have a snapshot file saved by the same name locally. 
 ```bash
@@ -69,7 +82,7 @@ mv /etc/kubernetes/manifests/*.yaml temp-manifests
 ```
 3. Repeat these steps for all other controlplane VMs
 
-After this you can restore etcd from a saved snapshot using the `etcdctl snapshot save` command following the steps given below.
+After this you can restore etcd from a saved snapshot using the `snapshot save` command following the steps given below.
 
 #### Restoring from the snapshot
 
@@ -77,7 +90,7 @@ After this you can restore etcd from a saved snapshot using the `etcdctl snapsho
 ```bash
 scp -i $PRIV_KEY snapshot.db ec2-user@$ETCD_VM_IP:/home/ec2-user
 ```
-2. To run the etcdctl snapshot restore command, you need to provide the following configuration parameters:
+2. To run the etcdctl or etcdutl snapshot restore command, you need to provide the following configuration parameters:
 * name: This is the name of the etcd member. The value of this parameter should match the value used while starting the member. This can be obtained by running:
 ```bash
 export ETCD_NAME=$(cat /etc/etcd/etcd.env | grep ETCD_NAME | awk -F'=' '{print $2}')
@@ -102,11 +115,30 @@ cat /etc/etcd/etcdctl.env >> restore.env
 ```
 4. Make sure you form the correct `ETCD_INITIAL_CLUSTER` value using all etcd members, and set it as an env var in the restore.env file created in the above step.
 5. Once you have obtained all the right values, run the following commands to restore etcd replacing the required values:
-```bash
-sudo su
-source restore.env
-etcdctl snapshot restore snapshot.db --name=${ETCD_NAME} --initial-cluster=${ETCD_INITIAL_CLUSTER} --initial-cluster-token=etcd-cluster-1 --initial-advertise-peer-urls=${ETCD_INITIAL_ADVERTISE_PEER_URLS}
-```
+    {{< tabpane >}}
+
+    {{< tab header="Using etcd < v3.5.x" lang="bash" >}}
+    sudo su
+    source restore.env
+    etcdctl snapshot restore snapshot.db \
+        --name=${ETCD_NAME} \
+        --initial-cluster=${ETCD_INITIAL_CLUSTER} \
+        --initial-cluster-token=etcd-cluster-1 \
+        --initial-advertise-peer-urls=${ETCD_INITIAL_ADVERTISE_PEER_URLS}
+    {{< /tab >}}
+
+    {{< tab header="Using etcd >= v3.5.x" lang="bash" >}}
+    sudo su
+    source restore.env
+    etcdutl snapshot restore snapshot.db \
+        --name=${ETCD_NAME} \
+        --initial-cluster=${ETCD_INITIAL_CLUSTER} \
+        --initial-cluster-token=etcd-cluster-1 \
+        --initial-advertise-peer-urls=${ETCD_INITIAL_ADVERTISE_PEER_URLS}
+    {{< /tab >}}
+    
+    {{< /tabpane >}}
+
 5. This is going to create a new data-dir for the restored contents under a new directory `{ETCD_NAME}.etcd`. To start using this, restart etcd with the new data-dir with the following steps:
 ```bash
 systemctl stop etcd.service

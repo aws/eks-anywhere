@@ -50,7 +50,7 @@ deploy: zip ## Deploy docs to Amplify
 	bash ./deploy-docs.sh public.zip
 
 serve: submodule build ## Boot the development server.
-	hugo server --buildFuture --baseUrl http://127.0.0.1
+	hugo server --buildFuture --baseURL http://127.0.0.1
 
 server: serve
 
@@ -70,7 +70,7 @@ container-serve: ## Boot the development server using container. Run `make conta
 		--bind 0.0.0.0 \
 		--destination /tmp/hugo \
 		--cleanDestinationDir \
-		--baseUrl http://0.0.0.0
+		--baseURL http://0.0.0.0
 
 container-server: container-serve
 
