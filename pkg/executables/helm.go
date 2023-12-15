@@ -32,29 +32,27 @@ func NewHelm(executable Executable, opts ...helm.Opt) *Helm {
 		o(helmConfig)
 	}
 
-	defaultEnv := map[string]string{
+	env := map[string]string{
 		"HELM_EXPERIMENTAL_OCI": "1",
 	}
+
+	mergeMaps(env, helmConfig.ProxyConfig)
+
 	h := &Helm{
 		executable: executable,
 		helmConfig: helmConfig,
-		env:        joinEnv(defaultEnv, helmConfig.ProxyConfig),
+		env:        env,
 	}
 
 	return h
 }
 
-// joinEnv joins the default and the provided maps together, then return the
+// mergeMaps joins the default and the provided maps together, then return the
 // new map.
-func joinEnv(oldEnv, newEnv map[string]string) map[string]string {
-	env := make(map[string]string)
-	for k, v := range oldEnv {
-		env[k] = v
-	}
+func mergeMaps(defaultEnv, newEnv map[string]string) {
 	for k, v := range newEnv {
-		env[k] = v
+		defaultEnv[k] = v
 	}
-	return env
 }
 
 func (h *Helm) Template(ctx context.Context, ociURI, version, namespace string, values interface{}, kubeVersion string) ([]byte, error) {
@@ -233,7 +231,8 @@ func (h *Helm) UpgradeChartWithValuesFile(ctx context.Context, chart, ociURI, ve
 	for _, opt := range opts {
 		opt(h.helmConfig)
 	}
-	h.env = joinEnv(h.env, h.helmConfig.ProxyConfig)
+
+	mergeMaps(h.env, h.helmConfig.ProxyConfig)
 
 	params = h.addInsecureFlagIfProvided(params)
 	_, err := h.executable.Command(ctx, params...).WithEnvVars(h.env).Run()
