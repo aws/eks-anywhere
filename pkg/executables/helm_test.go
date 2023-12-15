@@ -330,3 +330,23 @@ func TestHelmDelete(s *testing.T) {
 		tt.Expect(err).To(HaveOccurred())
 	})
 }
+
+func TestHelmRegistryLoginSuccess(t *testing.T) {
+	tt := newHelmTest(t)
+	registry := "1.2.3.4:5050"
+	username := "username"
+	password := "password"
+
+	expectCommand(tt.e, tt.ctx, "registry", "login", registry, "--username", username, "--password-stdin").withEnvVars(tt.envVars).withStdIn([]byte(password)).to().Return(bytes.Buffer{}, nil)
+	tt.Expect(tt.h.RegistryLogin(tt.ctx, registry, username, password)).To(Succeed())
+}
+
+func TestHelmRegistryLoginSuccessWithInsecure(t *testing.T) {
+	tt := newHelmTest(t, helm.WithInsecure())
+	registry := "1.2.3.4:5050"
+	username := "username"
+	password := "password"
+
+	expectCommand(tt.e, tt.ctx, "registry", "login", registry, "--username", username, "--password-stdin", "--insecure").withEnvVars(tt.envVars).withStdIn([]byte(password)).to().Return(bytes.Buffer{}, nil)
+	tt.Expect(tt.h.RegistryLogin(tt.ctx, registry, username, password)).To(Succeed())
+}
