@@ -471,14 +471,14 @@ func (f *Factory) withCloudStackValidatorRegistry() *Factory {
 
 // withHelmClientFactory configures the HelmClientFactory dependency with a helm.ClientFactory.
 func (f *Factory) withHelmClientFactory() *Factory {
-	f.dependencyFactory.WithHelmExecutableBuilder()
+	f.dependencyFactory.WithExecutableBuilder()
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.helmClientFactory != nil {
 			return nil
 		}
 
-		f.helmClientFactory = helm.NewClientForClusterFactory(f.manager.GetClient(), f.deps.HelmExecutableBuilder)
+		f.helmClientFactory = helm.NewClientForClusterFactory(f.manager.GetClient(), f.deps.ExecutableBuilder)
 		return nil
 	})
 

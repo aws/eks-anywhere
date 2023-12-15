@@ -24,7 +24,7 @@ type Helm struct {
 }
 
 // NewHelm returns a new Helm executable client.
-func NewHelm(executable Executable, opts ...helm.Opt) helm.Client {
+func NewHelm(executable Executable, opts ...helm.Opt) *Helm {
 	helmConfig := &helm.Config{
 		Insecure: false,
 	}

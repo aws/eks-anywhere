@@ -74,7 +74,7 @@ type Dependencies struct {
 	Clusterctl                  *executables.Clusterctl
 	Flux                        *executables.Flux
 	Troubleshoot                *executables.Troubleshoot
-	Helm                        helm.Client
+	Helm                        *executables.Helm
 	UnAuthKubeClient            *kubernetes.UnAuthClient
 	Networking                  clustermanager.Networking
 	CNIInstaller                workload.CNIInstaller
@@ -108,8 +108,8 @@ type Dependencies struct {
 	SnowValidator               *snow.Validator
 	IPValidator                 *validator.IPValidator
 	UnAuthKubectlClient         KubeClients
-	HelmClientFactory           cilium.HelmClientFactory
-	HelmExecutableBuilder       helm.ClientBuilder
+	HelmEnvClientFactory        *helm.EnvClientFactory
+	ExecutableBuilder           *executables.ExecutablesBuilder
 	CreateClusterDefaulter      cli.CreateClusterDefaulter
 	UpgradeClusterDefaulter     cli.UpgradeClusterDefaulter
 }
@@ -367,6 +367,8 @@ func (f *Factory) WithExecutableBuilder() *Factory {
 			f.executablesConfig.builder = executables.NewLocalExecutablesBuilder()
 		}
 
+		f.dependencies.ExecutableBuilder = f.executablesConfig.builder
+
 		closer, err := f.executablesConfig.builder.Init(ctx)
 		if err != nil {
 			return err
@@ -390,11 +392,11 @@ func (f *Factory) WithExecutableBuilder() *Factory {
 func (f *Factory) WithHelmExecutableBuilder() *Factory {
 	f.WithExecutableBuilder()
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
-		if f.dependencies.HelmExecutableBuilder != nil {
+		if f.dependencies.ExecutableBuilder != nil {
 			return nil
 		}
 
-		f.dependencies.HelmExecutableBuilder = f.executablesConfig.builder
+		f.dependencies.ExecutableBuilder = f.executablesConfig.builder
 		return nil
 	})
 
@@ -789,12 +791,12 @@ func (f *Factory) WithHelm(opts ...helm.Opt) *Factory {
 	return f
 }
 
-// WithHelmEnvClientFactory configures the HelmClientFactory dependency with a helm.EnvClientFactory.
+// WithHelmEnvClientFactory configures the HelmEnvClientFactory dependency with a helm.EnvClientFactory.
 func (f *Factory) WithHelmEnvClientFactory(opts ...helm.Opt) *Factory {
 	f.WithExecutableBuilder().WithProxyConfiguration()
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
-		if f.dependencies.HelmClientFactory != nil {
+		if f.dependencies.HelmEnvClientFactory != nil {
 			return nil
 		}
 
@@ -808,7 +810,7 @@ func (f *Factory) WithHelmEnvClientFactory(opts ...helm.Opt) *Factory {
 			return fmt.Errorf("building helm env client factory: %v", err)
 		}
 
-		f.dependencies.HelmClientFactory = envClientFactory
+		f.dependencies.HelmEnvClientFactory = envClientFactory
 		return nil
 	})
 
@@ -896,7 +898,7 @@ func (f *Factory) WithCiliumTemplater() *Factory {
 		if f.dependencies.CiliumTemplater != nil {
 			return nil
 		}
-		f.dependencies.CiliumTemplater = cilium.NewTemplater(f.dependencies.HelmClientFactory)
+		f.dependencies.CiliumTemplater = cilium.NewTemplater(f.dependencies.HelmEnvClientFactory)
 
 		return nil
 	})

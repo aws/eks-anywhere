@@ -69,7 +69,7 @@ func (b *ExecutablesBuilder) BuildTroubleshootExecutable() *Troubleshoot {
 }
 
 // BuildHelmExecutable initializes a helm executable and returns it.
-func (b *ExecutablesBuilder) BuildHelmExecutable(opts ...helm.Opt) helm.Client {
+func (b *ExecutablesBuilder) BuildHelmExecutable(opts ...helm.Opt) *Helm {
 	return NewHelm(b.executableBuilder.Build(helmPath), opts...)
 }
 

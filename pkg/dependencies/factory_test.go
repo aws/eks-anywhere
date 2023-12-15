@@ -208,7 +208,7 @@ func TestFactoryBuildWithHelmEnvClientFactory(t *testing.T) {
 		Build(context.Background())
 
 	tt.Expect(err).To(BeNil())
-	tt.Expect(deps.HelmClientFactory).NotTo(BeNil())
+	tt.Expect(deps.HelmEnvClientFactory).NotTo(BeNil())
 }
 
 func TestFactoryBuildWithClusterManagerWithoutCliConfig(t *testing.T) {
@@ -277,7 +277,7 @@ func TestFactoryBuildWithMultipleDependencies(t *testing.T) {
 	tt.Expect(deps.UnAuthKubeClient).NotTo(BeNil())
 	tt.Expect(deps.VSphereDefaulter).NotTo(BeNil())
 	tt.Expect(deps.VSphereValidator).NotTo(BeNil())
-	tt.Expect(deps.HelmExecutableBuilder).NotTo(BeNil())
+	tt.Expect(deps.ExecutableBuilder).NotTo(BeNil())
 	tt.Expect(deps.CiliumTemplater).NotTo(BeNil())
 	tt.Expect(deps.IPValidator).NotTo(BeNil())
 	tt.Expect(deps.ClusterApplier).NotTo(BeNil())
