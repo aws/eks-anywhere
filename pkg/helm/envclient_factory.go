@@ -50,8 +50,9 @@ func (f *EnvClientFactory) Init(ctx context.Context, r *registrymirror.RegistryM
 		return nil
 	}
 
-	// The registry credentials should be injected on construction through environment variabless REGISTRY_USERNAME
+	// TODO (cxbrowne): The registry credentials should be injected on construction through environment variables REGISTRY_USERNAME
 	// and REGISTRY_PASSWORD, or passed to this method as arguments.
+	// Issue: https://github.com/aws/eks-anywhere-internal/issues/2115
 	rUsername, rPassword, err := configcli.ReadCredentials()
 	if err != nil {
 		return err

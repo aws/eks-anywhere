@@ -2,8 +2,6 @@ package helm
 
 import (
 	"context"
-	"reflect"
-	"sync"
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -53,6 +51,11 @@ func WithInsecure() Opt {
 }
 
 // WithProxyConfig sets the proxy configurations on the Config.
+// proxyConfig contains configurations for the proxy settings used by the Helm client.
+// The valid keys are as follows:
+// "HTTPS_PROXY": Specifies the HTTPS proxy URL.
+// "HTTP_PROXY": Specifies the HTTP proxy URL.
+// "NO_PROXY": Specifies a comma-separated a list of destination domain names, domains, IP addresses, or other network CIDRs to exclude proxying.
 func WithProxyConfig(proxyConfig map[string]string) Opt {
 	return func(c *Config) {
 		c.ProxyConfig = proxyConfig
@@ -66,11 +69,9 @@ type ExecutableBuilder interface {
 
 // ClientFactory provides a helm client for a cluster.
 type ClientFactory struct {
-	client         client.Client
-	helmClient     Client
-	mu             sync.Mutex
-	builder        ExecutableBuilder
-	registryMirror *registrymirror.RegistryMirror
+	client     client.Client
+	helmClient Client
+	builder    ExecutableBuilder
 }
 
 // NewClientForClusterFactory returns a new helm ClientFactory.
@@ -78,16 +79,12 @@ func NewClientForClusterFactory(client client.Client, builder ExecutableBuilder)
 	hf := &ClientFactory{
 		client:  client,
 		builder: builder,
-		mu:      sync.Mutex{},
 	}
 	return hf
 }
 
 // Get returns a new Helm client configured using information from the provided cluster's management cluster.
 func (f *ClientFactory) Get(ctx context.Context, clus *anywherev1.Cluster) (Client, error) {
-	f.mu.Lock()
-	defer f.mu.Unlock()
-
 	managmentCluster := clus
 
 	var err error
@@ -107,14 +104,7 @@ func (f *ClientFactory) Get(ctx context.Context, clus *anywherev1.Cluster) (Clie
 	}
 
 	r := registrymirror.FromCluster(managmentCluster)
-
-	// There is no need to rebuild the client everytime,
-	// here we check if the registry has changed and rebuild the helm client in that case
-	// Rebuild the Helm client only if the registry has changed
-	if f.helmClient == nil || !reflect.DeepEqual(f.registryMirror, r) {
-		f.helmClient = f.builder.BuildHelmExecutable(WithRegistryMirror(r), WithInsecure())
-		f.registryMirror = r
-	}
+	f.helmClient = f.builder.BuildHelmExecutable(WithRegistryMirror(r), WithInsecure())
 
 	if r != nil && managmentCluster.RegistryAuth() {
 		if err := f.helmClient.RegistryLogin(ctx, r.BaseRegistry, rUsername, rPassword); err != nil {
