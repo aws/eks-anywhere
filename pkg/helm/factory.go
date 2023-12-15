@@ -18,9 +18,8 @@ type ClientBuilder interface {
 
 // ClientFactory provides a helm client for a cluster.
 type ClientFactory struct {
-	client     client.Client
-	helmClient Client
-	builder    ClientBuilder
+	client  client.Client
+	builder ClientBuilder
 }
 
 // NewClientForClusterFactory returns a new helm ClientFactory.
@@ -53,13 +52,13 @@ func (f *ClientFactory) Get(ctx context.Context, clus *anywherev1.Cluster) (Clie
 	}
 
 	r := registrymirror.FromCluster(managmentCluster)
-	f.helmClient = f.builder.BuildHelm(WithRegistryMirror(r), WithInsecure())
+	helmClient := f.builder.BuildHelm(WithRegistryMirror(r), WithInsecure())
 
 	if r != nil && managmentCluster.RegistryAuth() {
-		if err := f.helmClient.RegistryLogin(ctx, r.BaseRegistry, rUsername, rPassword); err != nil {
+		if err := helmClient.RegistryLogin(ctx, r.BaseRegistry, rUsername, rPassword); err != nil {
 			return nil, err
 		}
 	}
 
-	return f.helmClient, nil
+	return helmClient, nil
 }
