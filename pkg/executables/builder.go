@@ -73,6 +73,11 @@ func (b *ExecutablesBuilder) BuildHelmExecutable(opts ...helm.Opt) helm.Client {
 	return NewHelm(b.executableBuilder.Build(helmPath), opts...)
 }
 
+// BuildHelm initializes a helm executable and returns it.
+func (b *ExecutablesBuilder) BuildHelm(opts ...helm.Opt) helm.Client {
+	return b.BuildHelmExecutable(opts...)
+}
+
 // BuildDockerExecutable initializes a docker executable and returns it.
 func (b *ExecutablesBuilder) BuildDockerExecutable() *Docker {
 	return NewDocker(b.executableBuilder.Build(dockerPath))

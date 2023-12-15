@@ -182,43 +182,43 @@ func (mr *MockClientMockRecorder) UpgradeChartWithValuesFile(ctx, chart, ociURI,
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpgradeChartWithValuesFile", reflect.TypeOf((*MockClient)(nil).UpgradeChartWithValuesFile), varargs...)
 }
 
-// MockExecutableBuilder is a mock of ExecutableBuilder interface.
-type MockExecutableBuilder struct {
+// MockClientBuilder is a mock of ClientBuilder interface.
+type MockClientBuilder struct {
 	ctrl     *gomock.Controller
-	recorder *MockExecutableBuilderMockRecorder
+	recorder *MockClientBuilderMockRecorder
 }
 
-// MockExecutableBuilderMockRecorder is the mock recorder for MockExecutableBuilder.
-type MockExecutableBuilderMockRecorder struct {
-	mock *MockExecutableBuilder
+// MockClientBuilderMockRecorder is the mock recorder for MockClientBuilder.
+type MockClientBuilderMockRecorder struct {
+	mock *MockClientBuilder
 }
 
-// NewMockExecutableBuilder creates a new mock instance.
-func NewMockExecutableBuilder(ctrl *gomock.Controller) *MockExecutableBuilder {
-	mock := &MockExecutableBuilder{ctrl: ctrl}
-	mock.recorder = &MockExecutableBuilderMockRecorder{mock}
+// NewMockClientBuilder creates a new mock instance.
+func NewMockClientBuilder(ctrl *gomock.Controller) *MockClientBuilder {
+	mock := &MockClientBuilder{ctrl: ctrl}
+	mock.recorder = &MockClientBuilderMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockExecutableBuilder) EXPECT() *MockExecutableBuilderMockRecorder {
+func (m *MockClientBuilder) EXPECT() *MockClientBuilderMockRecorder {
 	return m.recorder
 }
 
-// BuildHelmExecutable mocks base method.
-func (m *MockExecutableBuilder) BuildHelmExecutable(arg0 ...helm.Opt) helm.Client {
+// BuildHelm mocks base method.
+func (m *MockClientBuilder) BuildHelm(arg0 ...helm.Opt) helm.Client {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{}
 	for _, a := range arg0 {
 		varargs = append(varargs, a)
 	}
-	ret := m.ctrl.Call(m, "BuildHelmExecutable", varargs...)
+	ret := m.ctrl.Call(m, "BuildHelm", varargs...)
 	ret0, _ := ret[0].(helm.Client)
 	return ret0
 }
 
-// BuildHelmExecutable indicates an expected call of BuildHelmExecutable.
-func (mr *MockExecutableBuilderMockRecorder) BuildHelmExecutable(arg0 ...interface{}) *gomock.Call {
+// BuildHelm indicates an expected call of BuildHelm.
+func (mr *MockClientBuilderMockRecorder) BuildHelm(arg0 ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BuildHelmExecutable", reflect.TypeOf((*MockExecutableBuilder)(nil).BuildHelmExecutable), arg0...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BuildHelm", reflect.TypeOf((*MockClientBuilder)(nil).BuildHelm), arg0...)
 }

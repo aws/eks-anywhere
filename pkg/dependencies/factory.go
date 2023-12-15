@@ -109,7 +109,7 @@ type Dependencies struct {
 	IPValidator                 *validator.IPValidator
 	UnAuthKubectlClient         KubeClients
 	HelmClientFactory           cilium.HelmClientFactory
-	HelmExecutableBuilder       helm.ExecutableBuilder
+	HelmExecutableBuilder       helm.ClientBuilder
 	CreateClusterDefaulter      cli.CreateClusterDefaulter
 	UpgradeClusterDefaulter     cli.UpgradeClusterDefaulter
 }

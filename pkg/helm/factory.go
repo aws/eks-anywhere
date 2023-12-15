@@ -62,20 +62,20 @@ func WithProxyConfig(proxyConfig map[string]string) Opt {
 	}
 }
 
-// ExecutableBuilder builds the Helm executable and returns it.
-type ExecutableBuilder interface {
-	BuildHelmExecutable(...Opt) Client
+// ClientBuilder builds a Helm Client.
+type ClientBuilder interface {
+	BuildHelm(...Opt) Client
 }
 
 // ClientFactory provides a helm client for a cluster.
 type ClientFactory struct {
 	client     client.Client
 	helmClient Client
-	builder    ExecutableBuilder
+	builder    ClientBuilder
 }
 
 // NewClientForClusterFactory returns a new helm ClientFactory.
-func NewClientForClusterFactory(client client.Client, builder ExecutableBuilder) *ClientFactory {
+func NewClientForClusterFactory(client client.Client, builder ClientBuilder) *ClientFactory {
 	hf := &ClientFactory{
 		client:  client,
 		builder: builder,
@@ -104,7 +104,7 @@ func (f *ClientFactory) Get(ctx context.Context, clus *anywherev1.Cluster) (Clie
 	}
 
 	r := registrymirror.FromCluster(managmentCluster)
-	f.helmClient = f.builder.BuildHelmExecutable(WithRegistryMirror(r), WithInsecure())
+	f.helmClient = f.builder.BuildHelm(WithRegistryMirror(r), WithInsecure())
 
 	if r != nil && managmentCluster.RegistryAuth() {
 		if err := f.helmClient.RegistryLogin(ctx, r.BaseRegistry, rUsername, rPassword); err != nil {
