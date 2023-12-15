@@ -16,6 +16,7 @@ package operations
 
 import (
 	"fmt"
+	"os/exec"
 
 	"github.com/pkg/errors"
 
@@ -27,6 +28,7 @@ import (
 	"github.com/aws/eks-anywhere/release/cli/pkg/filereader"
 	releasetypes "github.com/aws/eks-anywhere/release/cli/pkg/types"
 	artifactutils "github.com/aws/eks-anywhere/release/cli/pkg/util/artifacts"
+	commandutils "github.com/aws/eks-anywhere/release/cli/pkg/util/command"
 )
 
 func GenerateBundleArtifactsTable(r *releasetypes.ReleaseConfig) (map[string][]releasetypes.Artifact, error) {
@@ -108,6 +110,26 @@ func GenerateImageDigestsTable(r *releasetypes.ReleaseConfig) (map[string]string
 	fmt.Printf("%s Successfully generated image digests table\n", constants.SuccessIcon)
 
 	return imageDigests, nil
+}
+
+func SignImagesNotation(r *releasetypes.ReleaseConfig, imageDigests map[string]string) error {
+	if r.DryRun {
+		fmt.Println("Skipping image signing in dry-run mode")
+		return nil
+	}
+	releaseRegistryUsername := r.ReleaseClients.ECRPublic.AuthConfig.Username
+	releaseRegistryPassword := r.ReleaseClients.ECRPublic.AuthConfig.Password
+	for image, digest := range imageDigests {
+		// Sign public ECR image using AWS signer and notation CLI
+		// notation sign <registry>/<repository>@<sha256:shasum> --plugin com.amazonaws.signer.notation.plugin --id <signer_profile_arn>
+		cmd := exec.Command("notation", "sign", fmt.Sprintf("%s@%s", image, digest), "--plugin", "com.amazonaws.signer.notation.plugin", "--id", r.AwsSignerProfileArn, "-u", releaseRegistryUsername, "-p", releaseRegistryPassword)
+		out, err := commandutils.ExecCommand(cmd)
+		fmt.Println(out)
+		if err != nil {
+			return fmt.Errorf("executing sigining container image with Notation CLI: %v", err)
+		}
+	}
+	return nil
 }
 
 func GenerateBundleSpec(r *releasetypes.ReleaseConfig, bundle *anywherev1alpha1.Bundles, imageDigests map[string]string) error {

@@ -111,7 +111,7 @@ func UploadArtifacts(r *releasetypes.ReleaseConfig, eksArtifacts map[string][]re
 				releaseImageUri := artifact.Image.ReleaseImageURI
 				fmt.Printf("Source Image - %s\n", sourceImageUri)
 				fmt.Printf("Destination Image - %s\n", releaseImageUri)
-				err := images.CopyToDestination(sourceEcrAuthConfig, releaseEcrAuthConfig, sourceImageUri, releaseImageUri, r.AwsSignerProfileArn)
+				err := images.CopyToDestination(sourceEcrAuthConfig, releaseEcrAuthConfig, sourceImageUri, releaseImageUri)
 				if err != nil {
 					return fmt.Errorf("copying image from source to destination: %v", err)
 				}

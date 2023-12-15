@@ -94,7 +94,7 @@ func PollForExistence(devRelease bool, authConfig *docker.AuthConfiguration, ima
 	return nil
 }
 
-func CopyToDestination(sourceAuthConfig, releaseAuthConfig *docker.AuthConfiguration, sourceImageUri, releaseImageUri, awsSignerProfileArn string) error {
+func CopyToDestination(sourceAuthConfig, releaseAuthConfig *docker.AuthConfiguration, sourceImageUri, releaseImageUri string) error {
 	retrier := retrier.NewRetrier(60*time.Minute, retrier.WithRetryPolicy(func(totalRetries int, err error) (retry bool, wait time.Duration) {
 		if err != nil && totalRetries < 10 {
 			return true, 30 * time.Second
@@ -118,14 +118,6 @@ func CopyToDestination(sourceAuthConfig, releaseAuthConfig *docker.AuthConfigura
 	})
 	if err != nil {
 		return fmt.Errorf("retries exhausted performing image copy from source to destination: %v", err)
-	}
-	// Sign public ECR image using AWS signer and notation CLI
-	// notation sign <registry>/<repository>:<tag> --plugin com.amazonaws.signer.notation.plugin --id <signer_profile_arn>
-	cmd := exec.Command("notation", "sign", releaseImageUri, "--plugin", "com.amazonaws.signer.notation.plugin", "--id", awsSignerProfileArn, "-u", releaseRegistryUsername, "-p", releaseRegistryPassword)
-	out, err := commandutils.ExecCommand(cmd)
-	fmt.Println(out)
-	if err != nil {
-		return fmt.Errorf("executing sigining container image with Notation CLI: %v", err)
 	}
 
 	return nil
