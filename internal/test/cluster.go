@@ -3,6 +3,7 @@ package test
 import (
 	"embed"
 	"fmt"
+	"net"
 	"path/filepath"
 	"runtime"
 	"testing"
@@ -144,4 +145,42 @@ func EksdReleaseFromTestData(t *testing.T) *eksdv1alpha1.Release {
 
 func SetTag(image *releasev1alpha1.Image, tag string) {
 	image.URI = fmt.Sprintf("%s:%s", image.Image(), tag)
+}
+
+// RegistryMirrorEndpoint returns the address of the registry mirror configured on the Cluster if any. Just the host and the port.
+func RegistryMirrorEndpoint(cluster *v1alpha1.Cluster) string {
+	if cluster.Spec.RegistryMirrorConfiguration != nil {
+		return net.JoinHostPort(cluster.Spec.RegistryMirrorConfiguration.Endpoint, cluster.Spec.RegistryMirrorConfiguration.Port)
+	}
+	return ""
+}
+
+// ClusterOpt allows to customize a Cluster.
+type ClusterOpt func(*v1alpha1.Cluster)
+
+// Cluster builds a Cluster for tests with some basic defaults.
+func Cluster(opts ...ClusterOpt) *v1alpha1.Cluster {
+	c := &v1alpha1.Cluster{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       v1alpha1.ClusterKind,
+			APIVersion: v1alpha1.GroupVersion.String(),
+		},
+		Spec: v1alpha1.ClusterSpec{
+			KubernetesVersion: "1.22",
+			ClusterNetwork: v1alpha1.ClusterNetwork{
+				Pods: v1alpha1.Pods{
+					CidrBlocks: []string{"0.0.0.0"},
+				},
+				Services: v1alpha1.Services{
+					CidrBlocks: []string{"0.0.0.0"},
+				},
+			},
+		},
+	}
+
+	for _, opt := range opts {
+		opt(c)
+	}
+
+	return c
 }

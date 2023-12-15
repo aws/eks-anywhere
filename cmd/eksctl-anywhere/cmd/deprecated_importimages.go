@@ -22,6 +22,7 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/executables"
+	"github.com/aws/eks-anywhere/pkg/helm"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
 	"github.com/aws/eks-anywhere/pkg/registrymirror"
@@ -82,7 +83,7 @@ func importImages(ctx context.Context, clusterSpecPath string) error {
 		return fmt.Errorf("unable to initialize executables: %v", err)
 	}
 	defer closer.CheckErr(ctx)
-	helmExecutable := executableBuilder.BuildHelmExecutable(executables.WithInsecure())
+	helmExecutable := executableBuilder.BuildHelmExecutable(helm.WithInsecure())
 
 	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration == nil || clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Endpoint == "" {
 		return fmt.Errorf("endpoint not set. It is necessary to define a valid endpoint in your spec (registryMirrorConfiguration.endpoint)")
@@ -123,7 +124,7 @@ func importImage(ctx context.Context, docker *executables.Docker, image string, 
 	return docker.PushImage(ctx, image, endpoint)
 }
 
-func importCharts(ctx context.Context, helm *executables.Helm, charts map[string]*v1alpha1.Image, endpoint, username, password string) error {
+func importCharts(ctx context.Context, helm helm.Client, charts map[string]*v1alpha1.Image, endpoint, username, password string) error {
 	if err := helm.RegistryLogin(ctx, endpoint, username, password); err != nil {
 		return err
 	}
@@ -135,7 +136,7 @@ func importCharts(ctx context.Context, helm *executables.Helm, charts map[string
 	return nil
 }
 
-func importChart(ctx context.Context, helm *executables.Helm, chart v1alpha1.Image, endpoint string) error {
+func importChart(ctx context.Context, helm helm.Client, chart v1alpha1.Image, endpoint string) error {
 	uri, chartVersion := getChartUriAndVersion(chart)
 	if err := helm.PullChart(ctx, uri, chartVersion); err != nil {
 		return err
