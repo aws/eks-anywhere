@@ -16,7 +16,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
-	"github.com/aws/eks-anywhere/pkg/executables"
+	"github.com/aws/eks-anywhere/pkg/helm"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
 	"github.com/aws/eks-anywhere/pkg/registrymirror"
 	"github.com/aws/eks-anywhere/pkg/version"
@@ -183,6 +183,26 @@ func TestFactoryBuildWithClusterManager(t *testing.T) {
 	tt.Expect(deps.ClusterManager).NotTo(BeNil())
 }
 
+func TestFactoryBuildWithHelmEnvClientFactory(t *testing.T) {
+	tt := newTest(t, vsphere)
+	deps, err := dependencies.NewFactory().
+		WithLocalExecutables().
+		WithRegistryMirror(
+			&registrymirror.RegistryMirror{
+				BaseRegistry: "1.2.3.4:443",
+				NamespacedRegistryMap: map[string]string{
+					constants.DefaultCoreEKSARegistry: "1.2.3.4:443/custom",
+				},
+				Auth: false,
+			}).
+		WithProxyConfiguration().
+		WithHelmEnvClientFactory(helm.WithInsecure()).
+		Build(context.Background())
+
+	tt.Expect(err).To(BeNil())
+	tt.Expect(deps.HelmEnvClientFactory).NotTo(BeNil())
+}
+
 func TestFactoryBuildWithClusterManagerWithoutCliConfig(t *testing.T) {
 	tt := newTest(t, vsphere)
 	deps, err := dependencies.NewFactory().
@@ -248,6 +268,7 @@ func TestFactoryBuildWithMultipleDependencies(t *testing.T) {
 	tt.Expect(deps.UnAuthKubeClient).NotTo(BeNil())
 	tt.Expect(deps.VSphereDefaulter).NotTo(BeNil())
 	tt.Expect(deps.VSphereValidator).NotTo(BeNil())
+	tt.Expect(deps.ExecutableBuilder).NotTo(BeNil())
 	tt.Expect(deps.CiliumTemplater).NotTo(BeNil())
 	tt.Expect(deps.IPValidator).NotTo(BeNil())
 	tt.Expect(deps.KubeProxyCLIUpgrader).NotTo(BeNil())
@@ -294,7 +315,7 @@ func TestFactoryBuildWithRegistryMirror(t *testing.T) {
 				},
 				Auth: false,
 			}).
-		WithHelm(executables.WithInsecure()).
+		WithHelm(helm.WithInsecure()).
 		Build(context.Background())
 
 	tt.Expect(err).To(BeNil())
@@ -329,7 +350,7 @@ func TestFactoryBuildWithPackageInstaller(t *testing.T) {
 	tt := newTest(t, vsphere)
 	deps, err := dependencies.NewFactory().
 		WithLocalExecutables().
-		WithHelm(executables.WithInsecure()).
+		WithHelm(helm.WithInsecure()).
 		WithKubectl().
 		WithPackageInstaller(spec, "/test/packages.yaml", "kubeconfig.kubeconfig").
 		Build(context.Background())
@@ -341,7 +362,7 @@ func TestFactoryBuildWithCuratedPackagesCustomRegistry(t *testing.T) {
 	tt := newTest(t, vsphere)
 	deps, err := dependencies.NewFactory().
 		WithLocalExecutables().
-		WithHelm(executables.WithInsecure()).
+		WithHelm(helm.WithInsecure()).
 		WithCuratedPackagesRegistry("test_host:8080", "1.22", version.Info{GitVersion: "1.19"}).
 		Build(context.Background())
 
@@ -393,7 +414,7 @@ func TestFactoryBuildWithPackageControllerClientNoProxy(t *testing.T) {
 	tt := newTest(t, vsphere)
 	deps, err := dependencies.NewFactory().
 		WithLocalExecutables().
-		WithHelm(executables.WithInsecure()).
+		WithHelm(helm.WithInsecure()).
 		WithKubectl().
 		WithPackageControllerClient(spec, "kubeconfig.kubeconfig").
 		Build(context.Background())
@@ -436,7 +457,7 @@ func TestFactoryBuildWithPackageControllerClientProxy(t *testing.T) {
 	tt := newTest(t, vsphere)
 	deps, err := dependencies.NewFactory().
 		WithLocalExecutables().
-		WithHelm(executables.WithInsecure()).
+		WithHelm(helm.WithInsecure()).
 		WithKubectl().
 		WithPackageControllerClient(spec, "kubeconfig.kubeconfig").
 		Build(context.Background())
