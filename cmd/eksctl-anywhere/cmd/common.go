@@ -5,8 +5,8 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
-	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/files"
+	"github.com/aws/eks-anywhere/pkg/helm"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 	"github.com/aws/eks-anywhere/pkg/manifests/bundles"
 	"github.com/aws/eks-anywhere/pkg/version"
@@ -56,7 +56,7 @@ func NewDependenciesForPackages(ctx context.Context, opts ...PackageOpt) (*depen
 		WithExecutableBuilder().
 		WithManifestReader().
 		WithKubectl().
-		WithHelm(executables.WithInsecure()).
+		WithHelm(helm.WithInsecure()).
 		WithCuratedPackagesRegistry(config.registryName, config.kubeVersion, version.Get()).
 		WithPackageControllerClient(config.spec, config.kubeConfig).
 		WithLogger().

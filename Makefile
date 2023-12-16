@@ -574,6 +574,8 @@ mocks: ## Generate mocks
 	${MOCKGEN} -destination=cmd/eksctl-anywhere/cmd/internal/commands/artifacts/mocks/import.go -package=mocks -source "cmd/eksctl-anywhere/cmd/internal/commands/artifacts/import.go"
 	${MOCKGEN} -destination=cmd/eksctl-anywhere/cmd/internal/commands/artifacts/mocks/import_tools_image.go -package=mocks -source "cmd/eksctl-anywhere/cmd/internal/commands/artifacts/import_tools_image.go"
 	${MOCKGEN} -destination=pkg/helm/mocks/download.go -package=mocks -source "pkg/helm/download.go"
+	${MOCKGEN} -destination=pkg/helm/mocks/factory.go -package=mocks -source "pkg/helm/factory.go"
+	${MOCKGEN} -destination=pkg/helm/mocks/client.go -package=mocks -source "pkg/helm/client.go"
 	${MOCKGEN} -destination=pkg/aws/mocks/ec2.go -package=mocks -source "pkg/aws/ec2.go"
 	${MOCKGEN} -destination=pkg/aws/mocks/imds.go -package=mocks -source "pkg/aws/imds.go"
 	${MOCKGEN} -destination=pkg/aws/mocks/snowballdevice.go -package=mocks -source "pkg/aws/snowballdevice.go"

@@ -26,3 +26,4 @@ docs/.hugo_build.lock
 *.log
 pkg/executables/TestDeployTemplate*
 pkg/files/config
+config/crd/bases/_.yaml
