@@ -24,7 +24,7 @@ See descriptions of the [osImageURL]({{< relref "./clusterspec/baremetal/#osimag
 ### Ubuntu or RHEL OS images for Bare Metal
 
 EKS Anywhere does not distribute Ubuntu or RHEL OS images.
-However, see [Building node images]({{< relref "#building-node-images">}}) for information on how to build EKS Anywhere images from those Linux distributions.  Note:  if you utilize your Admin Host to build images, you will need to ensure you disable the DHCP integration provided by Libvirtd, as the "boots container" will detect a port conflict and terminate.
+However, see [Building node images]({{< relref "#building-node-images">}}) for information on how to build EKS Anywhere images from those Linux distributions.  Note:  if you utilize your Admin Host to build images, you will need to review  the DHCP integration provided by Libvirtd and ensure it is disabled.  If the Libvirtd DHCP is enabled, the "boots container" will detect a port conflict and terminate.
 
 ### Bottlerocket OS images for Bare Metal
 
