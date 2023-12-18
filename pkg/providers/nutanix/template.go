@@ -159,7 +159,14 @@ func buildTemplateMapCP(
 	kubeletExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs().
 		Append(clusterapi.ResolvConfExtraArgs(clusterSpec.Cluster.Spec.ClusterNetwork.DNS.ResolvConf)).
 		Append(clusterapi.ControlPlaneNodeLabelsExtraArgs(clusterSpec.Cluster.Spec.ControlPlaneConfiguration))
+
+	auditPolicy, err := common.GetAuditPolicy(clusterSpec.Cluster.Spec.KubernetesVersion)
+	if err != nil {
+		return nil, err
+	}
+
 	values := map[string]interface{}{
+		"auditPolicy":                  auditPolicy,
 		"apiServerExtraArgs":           apiServerExtraArgs.ToPartialYaml(),
 		"clusterName":                  clusterSpec.Cluster.Name,
 		"controlPlaneEndpointIp":       clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host,
@@ -203,12 +210,6 @@ func buildTemplateMapCP(
 		"subnetUUID":                   controlPlaneMachineSpec.Subnet.UUID,
 		"apiServerCertSANs":            clusterSpec.Cluster.Spec.ControlPlaneConfiguration.CertSANs,
 	}
-
-	auditPolicy, err := common.GetAuditPolicy(clusterSpec.Cluster.Spec.KubernetesVersion)
-	if err != nil {
-		return nil, err
-	}
-	values["auditPolicy"] = auditPolicy
 
 	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration != nil {
 		registryMirror := registrymirror.FromCluster(clusterSpec.Cluster)
