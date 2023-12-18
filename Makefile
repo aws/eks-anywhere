@@ -792,3 +792,7 @@ $(BINARY_DEPS_DIR)/linux-%:
 ifneq ($(FETCH_BINARIES_TARGETS),)
 .SECONDARY: $(call FULL_FETCH_BINARIES_TARGETS, $(FETCH_BINARIES_TARGETS))
 endif
+
+.PHONY: validate-triggers
+validate-triggers:
+	$(BUILD_LIB)/validate_bundle_numbers.sh $(TYPE) $(ENV)
