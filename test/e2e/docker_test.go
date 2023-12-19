@@ -597,7 +597,7 @@ func TestDockerKubernetes127AirgappedUpgradeFromLatestRegistryMirrorAndCert(t *t
 		framework.NewDocker(t),
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127)),
-		framework.WithAuthenticatedRegistryMirror(constants.DockerProviderName),
+		framework.WithRegistryMirrorEndpointAndCert(constants.DockerProviderName),
 	)
 	runDockerAirgapUpgradeFromReleaseFlow(
 		test,
