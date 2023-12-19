@@ -89,60 +89,60 @@ var wantFluxKustomization = `apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: {{.Namespace}}
 resources:
-  - gotk-components.yaml
-  - gotk-sync.yaml
-patchesStrategicMerge:
-  - gotk-patches.yaml`
+- gotk-components.yaml
+- gotk-sync.yaml
+patches:
+- patch: |-
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: helm-controller
+      namespace: {{.Namespace}}
+    spec:
+      template:
+        spec:
+          containers:
+          - image: {{.HelmControllerImage}}
+            name: manager
+- patch: |-
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: kustomize-controller
+      namespace: {{.Namespace}}
+    spec:
+      template:
+        spec:
+          containers:
+          - image: {{.KustomizeControllerImage}}
+            name: manager
+- patch: |-
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: notification-controller
+      namespace: {{.Namespace}}
+    spec:
+      template:
+        spec:
+          containers:
+          - image: {{.NotificationControllerImage}}
+            name: manager
+- patch: |-
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: source-controller
+      namespace: {{.Namespace}}
+    spec:
+      template:
+        spec:
+          containers:
+          - image: {{.SourceControllerImage}}
+            name: manager
+`
 
-var wantFluxPatches = `apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: source-controller
-  namespace: {{.Namespace}}
-spec:
-  template:
-    spec:
-      containers:
-      - image: {{.SourceControllerImage}}
-        name: manager
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: kustomize-controller
-  namespace: {{.Namespace}}
-spec:
-  template:
-    spec:
-      containers:
-      - image: {{.KustomizeControllerImage}}
-        name: manager
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: helm-controller
-  namespace: {{.Namespace}}
-spec:
-  template:
-    spec:
-      containers:
-      - image: {{.HelmControllerImage}}
-        name: manager
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: notification-controller
-  namespace: {{.Namespace}}
-spec:
-  template:
-    spec:
-      containers:
-      - image: {{.NotificationControllerImage}}
-        name: manager`
-
-var wantPatchesValues = map[string]string{
+var wantKustomizationValues = map[string]string{
 	"Namespace":                   "flux-system",
 	"SourceControllerImage":       "public.ecr.aws/l0g8r8j6/fluxcd/source-controller:v0.12.1-8539f509df046a4f567d2182dde824b957136599",
 	"KustomizeControllerImage":    "public.ecr.aws/l0g8r8j6/fluxcd/kustomize-controller:v0.11.1-d82011942ec8a447ba89a70ff9a84bf7b9579492",
@@ -241,9 +241,8 @@ func TestFileGeneratorWriteEksaFilesWriteToFileError(t *testing.T) {
 func TestFileGeneratorWriteFluxSystemFilesSuccess(t *testing.T) {
 	tt := newFileGeneratorTest(t)
 
-	tt.t.EXPECT().WriteToFile(wantFluxKustomization, map[string]string{"Namespace": "flux-system"}, "kustomization.yaml", gomock.Any()).Return("", nil)
+	tt.t.EXPECT().WriteToFile(wantFluxKustomization, wantKustomizationValues, "kustomization.yaml", gomock.Any()).Return("", nil)
 	tt.t.EXPECT().WriteToFile("", nil, "gotk-sync.yaml", gomock.Any()).Return("", nil)
-	tt.t.EXPECT().WriteToFile(wantFluxPatches, wantPatchesValues, "gotk-patches.yaml", gomock.Any()).Return("", nil)
 
 	tt.Expect(tt.g.WriteFluxSystemFiles(tt.clusterSpec)).To(Succeed())
 }
@@ -251,7 +250,7 @@ func TestFileGeneratorWriteFluxSystemFilesSuccess(t *testing.T) {
 func TestFileGeneratorWriteFluxSystemFilesWriteFluxKustomizationError(t *testing.T) {
 	tt := newFileGeneratorTest(t)
 
-	tt.t.EXPECT().WriteToFile(wantFluxKustomization, map[string]string{"Namespace": "flux-system"}, "kustomization.yaml", gomock.Any()).Return("", errors.New("error in write kustomization"))
+	tt.t.EXPECT().WriteToFile(wantFluxKustomization, wantKustomizationValues, "kustomization.yaml", gomock.Any()).Return("", errors.New("error in write kustomization"))
 
 	tt.Expect(tt.g.WriteFluxSystemFiles(tt.clusterSpec)).To(MatchError(ContainSubstring("error in write kustomization")))
 }
@@ -259,20 +258,10 @@ func TestFileGeneratorWriteFluxSystemFilesWriteFluxKustomizationError(t *testing
 func TestFileGeneratorWriteFluxSystemFilesWriteFluxSyncError(t *testing.T) {
 	tt := newFileGeneratorTest(t)
 
-	tt.t.EXPECT().WriteToFile(wantFluxKustomization, map[string]string{"Namespace": "flux-system"}, "kustomization.yaml", gomock.Any()).Return("", nil)
+	tt.t.EXPECT().WriteToFile(wantFluxKustomization, wantKustomizationValues, "kustomization.yaml", gomock.Any()).Return("", nil)
 	tt.t.EXPECT().WriteToFile("", nil, "gotk-sync.yaml", gomock.Any()).Return("", errors.New("error in write sync"))
 
 	tt.Expect(tt.g.WriteFluxSystemFiles(tt.clusterSpec)).To(MatchError(ContainSubstring("error in write sync")))
-}
-
-func TestFileGeneratorWriteFluxSystemFilesWriteFluxPatchesError(t *testing.T) {
-	tt := newFileGeneratorTest(t)
-
-	tt.t.EXPECT().WriteToFile(wantFluxKustomization, map[string]string{"Namespace": "flux-system"}, "kustomization.yaml", gomock.Any()).Return("", nil)
-	tt.t.EXPECT().WriteToFile("", nil, "gotk-sync.yaml", gomock.Any()).Return("", nil)
-	tt.t.EXPECT().WriteToFile(wantFluxPatches, wantPatchesValues, "gotk-patches.yaml", gomock.Any()).Return("", errors.New("error in write patches"))
-
-	tt.Expect(tt.g.WriteFluxSystemFiles(tt.clusterSpec)).To(MatchError(ContainSubstring("error in write patches")))
 }
 
 func NewCluster(clusterName string) *anywherev1.Cluster {

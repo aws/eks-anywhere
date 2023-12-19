@@ -104,7 +104,7 @@ func (fc *fluxForCluster) commitFluxUpgradeFilesToGit(ctx context.Context) error
 		return err
 	}
 
-	if err := g.WriteFluxPatch(fc.clusterSpec); err != nil {
+	if err := g.WriteFluxKustomization(fc.clusterSpec); err != nil {
 		return err
 	}
 
