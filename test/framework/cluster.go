@@ -1810,7 +1810,23 @@ func (e *ClusterE2ETest) verifyLetsEncryptCert(mgmtCluster *types.Cluster) error
 	err = e.KubectlClient.WaitJSONPathLoop(ctx, e.Cluster().KubeconfigFile, "5m", "status.conditions[?(@.type=='Ready')].status", "True",
 		fmt.Sprintf("certificates.cert-manager.io/%s", letsEncryptCert), constants.EksaPackagesName)
 	if err != nil {
-		return fmt.Errorf("failed to issue a self signed certificate: %v", err)
+		return fmt.Errorf("failed to issue a let's encrypt certificate: %v", err)
+	}
+
+	return nil
+}
+
+// CleanupCerts cleans up letsencrypt certificates.
+func (e *ClusterE2ETest) CleanupCerts(mgmtCluster *types.Cluster) error {
+	ctx := context.Background()
+	letsEncryptCert := "test-cert"
+	opts := &kubernetes.KubectlDeleteOptions{
+		Name:      letsEncryptCert,
+		Namespace: constants.EksaPackagesName,
+	}
+	err := e.KubectlClient.Delete(ctx, "certificates.cert-manager.io", e.Cluster().KubeconfigFile, opts)
+	if err != nil {
+		return fmt.Errorf("failed to cleanup let's encrypt certificate: %v", err)
 	}
 
 	return nil
