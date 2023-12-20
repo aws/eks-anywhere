@@ -65,20 +65,35 @@ spec:
           - localhost
           - 127.0.0.1
           - 0.0.0.0
-{{- if .apiServerExtraArgs }}
         extraArgs:
+          audit-policy-file: /etc/kubernetes/audit-policy.yaml
+          audit-log-path: /var/log/kubernetes/api-audit.log
+          audit-log-maxage: "30"
+          audit-log-maxbackup: "10"
+          audit-log-maxsize: "512"
+{{- if .apiServerExtraArgs }}
 {{ .apiServerExtraArgs.ToYaml | indent 10 }}
 {{- end }}
-{{- if .awsIamAuth}}
         extraVolumes:
-          - hostPath: /var/lib/kubeadm/aws-iam-authenticator/
-            mountPath: /etc/kubernetes/aws-iam-authenticator/
-            name: authconfig
-            readOnly: false
-          - hostPath: /var/lib/kubeadm/aws-iam-authenticator/pki/
-            mountPath: /var/aws-iam-authenticator/
-            name: awsiamcert
-            readOnly: false
+        - hostPath: /etc/kubernetes/audit-policy.yaml
+          mountPath: /etc/kubernetes/audit-policy.yaml
+          name: audit-policy
+          pathType: File
+          readOnly: true
+        - hostPath: /var/log/kubernetes
+          mountPath: /var/log/kubernetes
+          name: audit-log-dir
+          pathType: DirectoryOrCreate
+          readOnly: false
+{{- if .awsIamAuth}}
+        - hostPath: /var/lib/kubeadm/aws-iam-authenticator/
+          mountPath: /etc/kubernetes/aws-iam-authenticator/
+          name: authconfig
+          readOnly: false
+        - hostPath: /var/lib/kubeadm/aws-iam-authenticator/pki/
+          mountPath: /var/aws-iam-authenticator/
+          name: awsiamcert
+          readOnly: false
 {{- end}}
       controllerManager:
         extraArgs:
@@ -235,6 +250,10 @@ spec:
       owner: root:root
       path: /var/lib/kubeadm/aws-iam-authenticator/pki/key.pem
 {{- end}}
+    - content: |
+{{ .auditPolicy | indent 8 }}
+      owner: root:root
+      path: /etc/kubernetes/audit-policy.yaml
     initConfiguration:
       nodeRegistration:
         kubeletExtraArgs:
