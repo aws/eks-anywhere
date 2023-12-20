@@ -13,7 +13,9 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/test"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
 //go:embed testdata/eksa-cluster.yaml
@@ -77,6 +79,47 @@ func TestNewNutanixTemplateBuilder(t *testing.T) {
 	expectedSecret, err = os.ReadFile("testdata/templated_secret_eksa.yaml")
 	require.NoError(t, err)
 	assert.Equal(t, expectedSecret, secretSpec)
+}
+
+func TestNewNutanixTemplateBuilderGenerateCAPISpecControlPlaneFailure(t *testing.T) {
+	dcConf, machineConf, workerConfs := minimalNutanixConfigSpec(t)
+
+	t.Setenv(constants.EksaNutanixUsernameKey, "admin")
+	t.Setenv(constants.EksaNutanixPasswordKey, "password")
+	creds := GetCredsFromEnv()
+	builder := NewNutanixTemplateBuilder(&dcConf.Spec, &machineConf.Spec, &machineConf.Spec, workerConfs, creds, time.Now)
+	assert.NotNil(t, builder)
+
+	buildSpec := test.NewFullClusterSpec(t, "testdata/eksa-cluster.yaml")
+	buildSpec.VersionsBundles["no-version"] = &cluster.VersionsBundle{
+		KubeDistro: &cluster.KubeDistro{
+			Kubernetes: cluster.VersionedRepository{
+				Tag:        "no-version",
+				Repository: "notarealrepo",
+			},
+			CoreDNS: cluster.VersionedRepository{
+				Tag:        "no-version",
+				Repository: "notarealrepo",
+			},
+			Etcd: cluster.VersionedRepository{
+				Tag:        "no-version",
+				Repository: "notarealrepo",
+			},
+			EtcdVersion: "no-version",
+		},
+		VersionsBundle: &v1alpha1.VersionsBundle{
+			Nutanix: v1alpha1.NutanixBundle{
+				KubeVip: v1alpha1.Image{
+					URI: "notarealuri",
+				},
+			},
+		},
+	}
+	buildSpec.Cluster.Spec.KubernetesVersion = "no-version"
+
+	cpSpec, err := builder.GenerateCAPISpecControlPlane(buildSpec)
+	assert.Error(t, err)
+	assert.Nil(t, cpSpec)
 }
 
 func TestNewNutanixTemplateBuilderGenerateSpecSecretFailure(t *testing.T) {
