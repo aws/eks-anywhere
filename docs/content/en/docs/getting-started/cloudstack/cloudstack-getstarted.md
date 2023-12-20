@@ -117,7 +117,7 @@ Follow these steps to create an EKS Anywhere cluster that can be used either as 
      
 1. Disable Kubevip load balancer
 
-   Skip this step if you want to use the Kubevip load balancer with your cluster. If you want to use a different load balancer, you can disable Kubevip as follows:
+   Skip this step if you want to use the Kubevip load balancer with your cluster (You can likely skip this step). If you want to use a different load balancer, you can disable Kubevip as follows:
 
    ```bash
    export CLOUDSTACK_KUBE_VIP_DISABLED=true
