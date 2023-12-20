@@ -1426,6 +1426,15 @@ func (c *Cluster) ManagedBy() string {
 	return c.Spec.ManagementCluster.Name
 }
 
+// IsManagedByCLI returns true if the cluster has the managed-by-cli annotation.
+func (c *Cluster) IsManagedByCLI() bool {
+	if len(c.Annotations) == 0 {
+		return false
+	}
+	val, ok := c.Annotations[ManagedByCLIAnnotation]
+	return ok && val == "true"
+}
+
 // +kubebuilder:object:root=true
 // ClusterList contains a list of Cluster.
 type ClusterList struct {
