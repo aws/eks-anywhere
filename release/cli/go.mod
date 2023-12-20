@@ -16,7 +16,7 @@ require (
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/viper v1.15.0
 	helm.sh/helm/v3 v3.11.3
-	k8s.io/apimachinery v0.26.10
+	k8s.io/apimachinery v0.26.11
 	k8s.io/helm v2.17.0+incompatible
 	sigs.k8s.io/controller-runtime v0.14.6
 	sigs.k8s.io/yaml v1.4.0
