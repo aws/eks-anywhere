@@ -1521,6 +1521,24 @@ func TestCluster_IsReconcilePaused(t *testing.T) {
 	}
 }
 
+func TestCluster_AddRemoveManagedByCLIAnnotation(t *testing.T) {
+	g := NewWithT(t)
+	c := &Cluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "cluster_test",
+		},
+	}
+	c.AddManagedByCLIAnnotation()
+	val, ok := c.Annotations[ManagedByCLIAnnotation]
+
+	g.Expect(ok).To(BeTrue())
+	g.Expect(val).To(ContainSubstring("true"))
+
+	c.ClearManagedByCLIAnnotation()
+	_, ok = c.Annotations[ManagedByCLIAnnotation]
+	g.Expect(ok).To(BeFalse())
+}
+
 func TestGitOpsEquals(t *testing.T) {
 	tests := []struct {
 		name string
