@@ -11,7 +11,7 @@ description: >
 
 When you are scaling your vSphere EKS Anywhere cluster, consider the number of nodes you need for your control plane and for your data plane.
 Each plane can be scaled horizontally (add more nodes) or vertically (provide nodes with more resources).
-In each case you can scale the cluster manually, semi-automatically, or automatically.
+In each case you can scale the cluster manually or automatically.
 
 See the [Kubernetes Components](https://kubernetes.io/docs/concepts/overview/components/) documentation to learn the differences between the control plane and the data plane (worker nodes).
 
@@ -37,8 +37,6 @@ spec:
 Vertically scaling your cluster is done by updating the machine config spec for your infrastructure provider.
 For a vSphere cluster an example is
 
->**_NOTE:_** Not all providers can be vertically scaled (e.g. bare metal)
-
 ```
 apiVersion: anywhere.eks.amazonaws.com/v1
 kind: VSphereMachineConfig
@@ -51,22 +49,9 @@ spec:
   memoryMiB: 8192   # increase this number to add memory to your VM
 ```
 
-Once you have made configuration updates you can apply the changes to your cluster.
+Once you have made configuration updates, you can use `eksctl`, `kubectl`, GitOps, or Terraform specified in the [upgrade cluster command]({{< relref "../cluster-upgrades/vsphere-and-cloudstack-upgrades/#upgrade-cluster-command" >}}) to apply those changes.
 If you are adding or removing a node, only the terminated nodes will be affected.
 If you are vertically scaling your nodes, then all nodes will be replaced one at a time.
-
-```bash
-eksctl anywhere upgrade cluster -f cluster.yaml
-```
-
-### Semi-automatic scaling
-
-Scaling your cluster in a semi-automatic way still requires changing your cluster manifest configuration.
-In a semi-automatic mode you change your cluster spec and then have automation make the cluster changes.
-
-You can do this by storing your cluster config manifest in git and then having a CI/CD system deploy your changes.
-Or you can use a GitOps controller to apply the changes.
-To read more about making changes with the integrated Flux GitOps controller you can read how to [Manage a cluster with GitOps]({{< relref "../cluster-flux" >}}).
 
 ### Autoscaling
 

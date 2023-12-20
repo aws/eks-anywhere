@@ -160,21 +160,67 @@ spec:
 
 >**_NOTE:_** If you have a custom machine image for your nodes you may also need to update your `vsphereMachineConfig` with a new `template`. Refer to [vSphere Artifacts]({{< relref "../../osmgmt/artifacts/#vsphere-artifacts" >}}) to build a new OVA template.
 
-and then you will run one of the following commands, depending on whether it is a management or workload cluster:
+and then you will run the [upgrade cluster command]({{< relref "vsphere-and-cloudstack-upgrades/#upgrade-cluster-command" >}}).
 
-**Management Cluster**
+#### Upgrade cluster command
 
+* **kubectl CLI**: The cluster lifecycle feature lets you use `kubectl` to talk to the Kubernetes API to upgrade an EKS Anywhere cluster. For example, to use `kubectl` to upgrade a management or workload cluster, you can run:
+   ```bash
+   # Upgrade a management cluster with cluster name "mgmt"
+   kubectl apply -f mgmt-cluster.yaml --kubeconfig mgmt/mgmt-eks-a-cluster.kubeconfig
+
+  # Upgrade a workload cluster with cluster name "eksa-w01"
+   kubectl apply -f eksa-w01-cluster.yaml --kubeconfig mgmt/mgmt-eks-a-cluster.kubeconfig
+   ```
+ 
+    To check the state of a cluster managed with the cluster lifecyle feature, use `kubectl` to show the cluster object with its status.
+    
+    The `status` field on the cluster object field holds information about the current state of the cluster.
+
+    ```
+    kubectl get clusters w01 -o yaml
+    ```
+
+    The cluster has been fully upgraded once the status of the `Ready` condition is marked `True`.
+    See the [cluster status]({{< relref "../cluster-status" >}}) guide for more information.
+  
+* **GitOps**: See [Manage separate workload clusters with GitOps]({{< relref "../cluster-flux.md#manage-separate-workload-clusters-using-gitops" >}})
+
+* **Terraform**: See [Manage separate workload clusters with Terraform]({{< relref "../cluster-terraform.md#manage-separate-workload-clusters-using-terraform" >}})
+
+{{% alert title="Important" color="warning" %}}
+
+**For kubectl, GitOps and Terraform**
+
+If you want to update the [registry mirror]({{< relref "../../getting-started/optional/registrymirror" >}}) credential with `kubectl`, GitOps or Terraform, you need to update the `registry-credentials` secret in the `eksa-system` namespace of your management cluster. For example with `kubectl`, you can run:
+
+```bash
+kubectl edit secret -n eksa-system registry-credentials --kubeconfig mgmt/mgmt-eks-a-cluster.kubeconfig
 ```
-eksctl anywhere upgrade cluster -f mgmt-cluster.yaml
+
+Replace username and password fields with the base64-encoded values of your new username and password. You can encode the values using the `echo` command, for example:
+
+```bash
+echo -n 'newusername' | base64
+echo -n 'newpassword' | base64
 ```
 
-**Workload Cluster**
+{{% /alert %}}
 
-```
-eksctl anywhere upgrade cluster -f workload-cluster.yaml --kubeconfig mgmt/mgmt-eks-a-cluster.kubeconfig
-```
+* **eksctl CLI**: To upgrade an EKS Anywhere cluster with `eksctl`, run:
 
-This will upgrade the cluster specification (if specified), upgrade the core components to the latest available versions and apply the changes using the provisioner controllers.
+  ```bash
+  # Upgrade a management cluster with cluster name "mgmt"
+   eksctl anywhere upgrade cluster -f mgmt-cluster.yaml
+
+  # Upgrade a workload cluster with cluster name "eksa-w01"
+   eksctl anywhere upgrade cluster -f eksa-w01-cluster.yaml --kubeconfig mgmt/mgmt-eks-a-cluster.kubeconfig
+  ```
+  As noted earlier, adding the `--kubeconfig` option tells `eksctl` to use the management cluster identified by that kubeconfig file to upgrade a different workload cluster.
+
+  This will upgrade the cluster specification (if specified), upgrade the core components to the latest available versions and apply the changes using the provisioner controllers.
+
+#### Output
 
 Example output:
 
