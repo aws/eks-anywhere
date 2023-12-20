@@ -220,4 +220,5 @@ func runDockerAirgapUpgradeFromReleaseFlow(test *framework.ClusterE2ETest, lates
 	test.ValidateCluster(wantVersion)
 	test.StopIfFailed()
 	test.DeleteCluster(framework.WithBundlesOverride(bundleReleasePathFromArtifacts))
+	test.ChangeInstanceSecurityGroup(os.Getenv(framework.RegistryMirrorDefaultSecurityGroup))
 }
