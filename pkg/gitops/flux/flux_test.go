@@ -259,11 +259,11 @@ func TestInstallGitOpsOnManagementClusterWithPrexistingRepo(t *testing.T) {
 			expectedEksaClusterConfigPath := path.Join(g.writer.Dir(), tt.expectedEksaSystemDirPath, tt.expectedEksaConfigFileName)
 			test.AssertFilesEquals(t, expectedEksaClusterConfigPath, tt.expectedConfigFileContents)
 
-			expectedKustomizationPath := path.Join(g.writer.Dir(), tt.expectedEksaSystemDirPath, tt.expectedKustomizationFileName)
-			test.AssertFilesEquals(t, expectedKustomizationPath, "./testdata/kustomization.yaml")
+			expectedEksaKustomizationPath := path.Join(g.writer.Dir(), tt.expectedEksaSystemDirPath, tt.expectedKustomizationFileName)
+			test.AssertFilesEquals(t, expectedEksaKustomizationPath, "./testdata/eksa-kustomization.yaml")
 
-			expectedFluxPatchesPath := path.Join(g.writer.Dir(), tt.expectedFluxSystemDirPath, tt.expectedFluxPatchesFileName)
-			test.AssertFilesEquals(t, expectedFluxPatchesPath, "./testdata/gotk-patches.yaml")
+			expectedFluxKustomizationPath := path.Join(g.writer.Dir(), tt.expectedFluxSystemDirPath, tt.expectedKustomizationFileName)
+			test.AssertFilesEquals(t, expectedFluxKustomizationPath, "./testdata/flux-kustomization.yaml")
 
 			expectedFluxSyncPath := path.Join(g.writer.Dir(), tt.expectedFluxSystemDirPath, tt.expectedFluxSyncFileName)
 			test.AssertFilesEquals(t, expectedFluxSyncPath, "./testdata/gotk-sync.yaml")
@@ -322,11 +322,11 @@ func TestInstallGitOpsOnManagementClusterWithoutClusterSpec(t *testing.T) {
 			expectedEksaClusterConfigPath := path.Join(g.writer.Dir(), tt.expectedEksaSystemDirPath, tt.expectedEksaConfigFileName)
 			g.Expect(validations.FileExists(expectedEksaClusterConfigPath)).To(Equal(false))
 
-			expectedKustomizationPath := path.Join(g.writer.Dir(), tt.expectedEksaSystemDirPath, tt.expectedKustomizationFileName)
-			g.Expect(validations.FileExists(expectedKustomizationPath)).To(Equal(false))
+			expectedEksaKustomizationPath := path.Join(g.writer.Dir(), tt.expectedEksaSystemDirPath, tt.expectedKustomizationFileName)
+			g.Expect(validations.FileExists(expectedEksaKustomizationPath)).To(Equal(false))
 
-			expectedFluxPatchesPath := path.Join(g.writer.Dir(), tt.expectedFluxSystemDirPath, tt.expectedFluxPatchesFileName)
-			test.AssertFilesEquals(t, expectedFluxPatchesPath, "./testdata/gotk-patches.yaml")
+			expectedFluxKustomizationPath := path.Join(g.writer.Dir(), tt.expectedFluxSystemDirPath, tt.expectedKustomizationFileName)
+			test.AssertFilesEquals(t, expectedFluxKustomizationPath, "./testdata/flux-kustomization.yaml")
 
 			expectedFluxSyncPath := path.Join(g.writer.Dir(), tt.expectedFluxSystemDirPath, tt.expectedFluxSyncFileName)
 			test.AssertFilesEquals(t, expectedFluxSyncPath, "./testdata/gotk-sync.yaml")
@@ -362,11 +362,11 @@ func TestInstallGitOpsOnWorkloadClusterWithPrexistingRepo(t *testing.T) {
 	test.AssertFilesEquals(t, expectedEksaClusterConfigPath, "./testdata/cluster-config-default-path-workload.yaml")
 
 	expectedKustomizationPath := path.Join(g.writer.Dir(), "clusters/management-cluster/workload-cluster/eksa-system", defaultKustomizationManifestFileName)
-	test.AssertFilesEquals(t, expectedKustomizationPath, "./testdata/kustomization.yaml")
+	test.AssertFilesEquals(t, expectedKustomizationPath, "./testdata/eksa-kustomization.yaml")
 
-	expectedFluxPatchesPath := path.Join(g.writer.Dir(), "clusters/management-cluster/flux-system", defaultFluxPatchesFileName)
-	if _, err := os.Stat(expectedFluxPatchesPath); errors.Is(err, os.ErrExist) {
-		t.Errorf("File exists at %s, should not exist", expectedFluxPatchesPath)
+	expectedFluxKustomizationPath := path.Join(g.writer.Dir(), "clusters/management-cluster/flux-system", defaultKustomizationManifestFileName)
+	if _, err := os.Stat(expectedFluxKustomizationPath); errors.Is(err, os.ErrExist) {
+		t.Errorf("File exists at %s, should not exist", expectedFluxKustomizationPath)
 	}
 
 	expectedFluxSyncPath := path.Join(g.writer.Dir(), "clusters/management-cluster/flux-system", defaultFluxSyncFileName)
@@ -522,11 +522,11 @@ func TestInstallGitOpsNoPrexistingRepo(t *testing.T) {
 			expectedEksaClusterConfigPath := path.Join(g.writer.Dir(), tt.expectedEksaSystemDirPath, tt.expectedEksaConfigFileName)
 			test.AssertFilesEquals(t, expectedEksaClusterConfigPath, tt.expectedConfigFileContents)
 
-			expectedKustomizationPath := path.Join(g.writer.Dir(), tt.expectedEksaSystemDirPath, tt.expectedKustomizationFileName)
-			test.AssertFilesEquals(t, expectedKustomizationPath, "./testdata/kustomization.yaml")
+			expectedEksaKustomizationPath := path.Join(g.writer.Dir(), tt.expectedEksaSystemDirPath, tt.expectedKustomizationFileName)
+			test.AssertFilesEquals(t, expectedEksaKustomizationPath, "./testdata/eksa-kustomization.yaml")
 
-			expectedFluxPatchesPath := path.Join(g.writer.Dir(), tt.expectedFluxSystemDirPath, tt.expectedFluxPatchesFileName)
-			test.AssertFilesEquals(t, expectedFluxPatchesPath, "./testdata/gotk-patches.yaml")
+			expectedFluxKustomizationPath := path.Join(g.writer.Dir(), tt.expectedFluxSystemDirPath, tt.expectedKustomizationFileName)
+			test.AssertFilesEquals(t, expectedFluxKustomizationPath, "./testdata/flux-kustomization.yaml")
 
 			expectedFluxSyncPath := path.Join(g.writer.Dir(), tt.expectedFluxSystemDirPath, tt.expectedFluxSyncFileName)
 			test.AssertFilesEquals(t, expectedFluxSyncPath, "./testdata/gotk-sync.yaml")
@@ -590,11 +590,11 @@ func TestInstallGitOpsToolkitsBareRepo(t *testing.T) {
 			expectedEksaClusterConfigPath := path.Join(g.writer.Dir(), tt.expectedEksaSystemDirPath, tt.expectedEksaConfigFileName)
 			test.AssertFilesEquals(t, expectedEksaClusterConfigPath, tt.expectedConfigFileContents)
 
-			expectedKustomizationPath := path.Join(g.writer.Dir(), tt.expectedEksaSystemDirPath, tt.expectedKustomizationFileName)
-			test.AssertFilesEquals(t, expectedKustomizationPath, "./testdata/kustomization.yaml")
+			expectedEksaKustomizationPath := path.Join(g.writer.Dir(), tt.expectedEksaSystemDirPath, tt.expectedKustomizationFileName)
+			test.AssertFilesEquals(t, expectedEksaKustomizationPath, "./testdata/eksa-kustomization.yaml")
 
-			expectedFluxPatchesPath := path.Join(g.writer.Dir(), tt.expectedFluxSystemDirPath, tt.expectedFluxPatchesFileName)
-			test.AssertFilesEquals(t, expectedFluxPatchesPath, "./testdata/gotk-patches.yaml")
+			expectedFluxKustomizationPath := path.Join(g.writer.Dir(), tt.expectedFluxSystemDirPath, tt.expectedKustomizationFileName)
+			test.AssertFilesEquals(t, expectedFluxKustomizationPath, "./testdata/flux-kustomization.yaml")
 
 			expectedFluxSyncPath := path.Join(g.writer.Dir(), tt.expectedFluxSystemDirPath, tt.expectedFluxSyncFileName)
 			test.AssertFilesEquals(t, expectedFluxSyncPath, "./testdata/gotk-sync.yaml")
