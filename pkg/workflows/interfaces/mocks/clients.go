@@ -385,6 +385,20 @@ func (mr *MockClusterManagerMockRecorder) PauseEKSAControllerReconcile(arg0, arg
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PauseEKSAControllerReconcile", reflect.TypeOf((*MockClusterManager)(nil).PauseEKSAControllerReconcile), arg0, arg1, arg2, arg3)
 }
 
+// RemoveManagedByCLIAnnotationForCluster mocks base method.
+func (m *MockClusterManager) RemoveManagedByCLIAnnotationForCluster(arg0 context.Context, arg1 *types.Cluster, arg2 *cluster.Spec, arg3 providers.Provider) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RemoveManagedByCLIAnnotationForCluster", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RemoveManagedByCLIAnnotationForCluster indicates an expected call of RemoveManagedByCLIAnnotationForCluster.
+func (mr *MockClusterManagerMockRecorder) RemoveManagedByCLIAnnotationForCluster(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveManagedByCLIAnnotationForCluster", reflect.TypeOf((*MockClusterManager)(nil).RemoveManagedByCLIAnnotationForCluster), arg0, arg1, arg2, arg3)
+}
+
 // ResumeCAPIWorkloadClusters mocks base method.
 func (m *MockClusterManager) ResumeCAPIWorkloadClusters(arg0 context.Context, arg1 *types.Cluster) error {
 	m.ctrl.T.Helper()

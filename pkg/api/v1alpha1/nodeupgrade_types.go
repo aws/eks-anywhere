@@ -38,6 +38,7 @@ type NodeUpgradeSpec struct {
 	Machine corev1.ObjectReference `json:"machine"`
 
 	// TODO(in-place): Determine if there's a way to get these dynamically instead of expecting it from the CRD.
+
 	KubernetesVersion string  `json:"kubernetesVersion"`
 	EtcdVersion       *string `json:"etcdVersion,omitempty"`
 	CoreDNSVersion    *string `json:"coreDNSVersion,omitempty"`

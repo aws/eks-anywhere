@@ -295,6 +295,21 @@ func (c *Cluster) ClearPauseAnnotation() {
 	}
 }
 
+// AddManagedByCLIAnnotation adds the managed-by-cli annotation to the cluster.
+func (c *Cluster) AddManagedByCLIAnnotation() {
+	if c.Annotations == nil {
+		c.Annotations = map[string]string{}
+	}
+	c.Annotations[ManagedByCLIAnnotation] = "true"
+}
+
+// ClearManagedByCLIAnnotation removes the managed-by-cli annotation from the cluster.
+func (c *Cluster) ClearManagedByCLIAnnotation() {
+	if c.Annotations != nil {
+		delete(c.Annotations, ManagedByCLIAnnotation)
+	}
+}
+
 // RegistryAuth returns whether registry requires authentication or not.
 func (c *Cluster) RegistryAuth() bool {
 	if c.Spec.RegistryMirrorConfiguration == nil {

@@ -2878,3 +2878,29 @@ func TestClusterManagerDeleteClusterManagedCluster(t *testing.T) {
 		tt.clusterManager.DeleteCluster(tt.ctx, managementCluster, tt.cluster, tt.mocks.provider, tt.clusterSpec),
 	).To(Succeed())
 }
+
+func TestClusterManagerRemoveManagedByCLIAnnotationSuccess(t *testing.T) {
+	clusterName := "cluster-name"
+	cluster := &types.Cluster{
+		Name: clusterName,
+	}
+
+	tt := newTest(t, clustermanager.WithRetrier(retrier.NewWithMaxRetries(1, 0)))
+
+	tt.mocks.client.EXPECT().RemoveAnnotationInNamespace(tt.ctx, gomock.Any(), gomock.Any(), gomock.Any(), cluster, gomock.Any()).Return(nil)
+
+	tt.Expect(tt.clusterManager.RemoveManagedByCLIAnnotationForCluster(tt.ctx, cluster, tt.clusterSpec, tt.mocks.provider)).To(BeNil())
+}
+
+func TestClusterManagerRemoveManagedByCLIAnnotationError(t *testing.T) {
+	clusterName := "cluster-name"
+	cluster := &types.Cluster{
+		Name: clusterName,
+	}
+
+	tt := newTest(t, clustermanager.WithRetrier(retrier.NewWithMaxRetries(1, 0)))
+
+	tt.mocks.client.EXPECT().RemoveAnnotationInNamespace(tt.ctx, gomock.Any(), gomock.Any(), gomock.Any(), cluster, gomock.Any()).Return(errors.New("removing annotation"))
+
+	tt.Expect(tt.clusterManager.RemoveManagedByCLIAnnotationForCluster(tt.ctx, cluster, tt.clusterSpec, tt.mocks.provider)).To(MatchError(ContainSubstring("removing annotation")))
+}

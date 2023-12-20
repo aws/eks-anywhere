@@ -61,7 +61,7 @@ func (r *Cluster) ValidateCreate() error {
 
 	var allErrs field.ErrorList
 
-	if !r.IsReconcilePaused() && r.IsSelfManaged() {
+	if !r.IsReconcilePaused() && r.IsSelfManaged() && !r.IsManagedByCLI() {
 		return apierrors.NewBadRequest("creating new cluster on existing cluster is not supported for self managed clusters")
 	}
 

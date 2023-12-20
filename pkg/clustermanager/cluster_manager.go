@@ -1358,6 +1358,15 @@ func (c *ClusterManager) resumeReconcileForCluster(ctx context.Context, clusterC
 	return nil
 }
 
+// RemoveManagedByCLIAnnotationForCluster removes the managed-by-cli annotation from the cluster.
+func (c *ClusterManager) RemoveManagedByCLIAnnotationForCluster(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, provider providers.Provider) error {
+	err := c.clusterClient.RemoveAnnotationInNamespace(ctx, clusterSpec.Cluster.ResourceType(), cluster.Name, v1alpha1.ManagedByCLIAnnotation, cluster, clusterSpec.Cluster.Namespace)
+	if err != nil {
+		return fmt.Errorf("removing managed by CLI annotation after apply cluster spec: %v", err)
+	}
+	return nil
+}
+
 func (c *ClusterManager) applyResource(ctx context.Context, cluster *types.Cluster, resourcesSpec []byte) error {
 	err := c.clusterClient.ApplyKubeSpecFromBytes(ctx, cluster, resourcesSpec)
 	if err != nil {
