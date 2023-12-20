@@ -28,9 +28,6 @@ var fluxKustomizeContent string
 //go:embed manifests/flux-system/gotk-sync.yaml
 var fluxSyncContent string
 
-//go:embed manifests/flux-system/gotk-patches.yaml
-var fluxPatchContent string
-
 type Templater interface {
 	WriteToFile(templateContent string, data interface{}, fileName string, f ...filewriter.FileOptionsFunc) (filePath string, err error)
 }
@@ -101,10 +98,6 @@ func (g *FileGenerator) WriteFluxSystemFiles(clusterSpec *cluster.Spec) error {
 		return err
 	}
 
-	if err := g.WriteFluxPatch(clusterSpec); err != nil {
-		return err
-	}
-
 	return nil
 }
 
@@ -132,8 +125,13 @@ func (g *FileGenerator) WriteEksaKustomization() error {
 }
 
 func (g *FileGenerator) WriteFluxKustomization(clusterSpec *cluster.Spec) error {
+	versionsBundle := clusterSpec.RootVersionsBundle()
 	values := map[string]string{
-		"Namespace": clusterSpec.FluxConfig.Spec.SystemNamespace,
+		"Namespace":                   clusterSpec.FluxConfig.Spec.SystemNamespace,
+		"SourceControllerImage":       versionsBundle.Flux.SourceController.VersionedImage(),
+		"KustomizeControllerImage":    versionsBundle.Flux.KustomizeController.VersionedImage(),
+		"HelmControllerImage":         versionsBundle.Flux.HelmController.VersionedImage(),
+		"NotificationControllerImage": versionsBundle.Flux.NotificationController.VersionedImage(),
 	}
 
 	if path, err := g.fluxTemplater.WriteToFile(fluxKustomizeContent, values, kustomizeFileName, filewriter.PersistentFile); err != nil {
@@ -145,21 +143,6 @@ func (g *FileGenerator) WriteFluxKustomization(clusterSpec *cluster.Spec) error 
 func (g *FileGenerator) WriteFluxSync() error {
 	if path, err := g.fluxTemplater.WriteToFile(fluxSyncContent, nil, fluxSyncFileName, filewriter.PersistentFile); err != nil {
 		return fmt.Errorf("creating flux-system sync manifest file into %s: %v", path, err)
-	}
-	return nil
-}
-
-func (g *FileGenerator) WriteFluxPatch(clusterSpec *cluster.Spec) error {
-	versionsBundle := clusterSpec.RootVersionsBundle()
-	values := map[string]string{
-		"Namespace":                   clusterSpec.FluxConfig.Spec.SystemNamespace,
-		"SourceControllerImage":       versionsBundle.Flux.SourceController.VersionedImage(),
-		"KustomizeControllerImage":    versionsBundle.Flux.KustomizeController.VersionedImage(),
-		"HelmControllerImage":         versionsBundle.Flux.HelmController.VersionedImage(),
-		"NotificationControllerImage": versionsBundle.Flux.NotificationController.VersionedImage(),
-	}
-	if path, err := g.fluxTemplater.WriteToFile(fluxPatchContent, values, fluxPatchFileName, filewriter.PersistentFile); err != nil {
-		return fmt.Errorf("creating flux-system patch manifest file into %s: %v", path, err)
 	}
 	return nil
 }
