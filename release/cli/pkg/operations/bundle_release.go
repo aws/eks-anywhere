@@ -17,6 +17,7 @@ package operations
 import (
 	"fmt"
 	"os/exec"
+	"strings"
 
 	"github.com/pkg/errors"
 
@@ -120,14 +121,25 @@ func SignImagesNotation(r *releasetypes.ReleaseConfig, imageDigests map[string]s
 	releaseRegistryUsername := r.ReleaseClients.ECRPublic.AuthConfig.Username
 	releaseRegistryPassword := r.ReleaseClients.ECRPublic.AuthConfig.Password
 	for image, digest := range imageDigests {
-		// Sign public ECR image using AWS signer and notation CLI
-		// notation sign <registry>/<repository>@<sha256:shasum> --plugin com.amazonaws.signer.notation.plugin --id <signer_profile_arn>
-		cmd := exec.Command("notation", "sign", fmt.Sprintf("%s@%s", image, digest), "--plugin", "com.amazonaws.signer.notation.plugin", "--id", r.AwsSignerProfileArn, "-u", releaseRegistryUsername, "-p", releaseRegistryPassword)
+		cmd := exec.Command("notation", "list", fmt.Sprintf("%s@%s", image, digest), "-u", releaseRegistryUsername, "-p", releaseRegistryPassword)
 		out, err := commandutils.ExecCommand(cmd)
-		fmt.Println(out)
 		if err != nil {
-			return fmt.Errorf("executing sigining container image with Notation CLI: %v", err)
+			return fmt.Errorf("listing signatures associated with image %s: %v", fmt.Sprintf("%s@%s", image, digest), err)
 		}
+		// Skip signing image if it is already signed.
+		if strings.Contains(out, "no associated signature") {
+			// Sign public ECR image using AWS signer and notation CLI
+			// notation sign <registry>/<repository>@<sha256:shasum> --plugin com.amazonaws.signer.notation.plugin --id <signer_profile_arn>
+			cmd := exec.Command("notation", "sign", fmt.Sprintf("%s@%s", image, digest), "--plugin", "com.amazonaws.signer.notation.plugin", "--id", r.AwsSignerProfileArn, "-u", releaseRegistryUsername, "-p", releaseRegistryPassword)
+			out, err := commandutils.ExecCommand(cmd)
+			fmt.Println(out)
+			if err != nil {
+				return fmt.Errorf("sigining container image with Notation CLI: %v", err)
+			}
+		} else {
+			fmt.Printf("skipping the image signing for image %s since it has already been signed", fmt.Sprintf("%s@%s", image, digest))
+		}
+
 	}
 	return nil
 }
