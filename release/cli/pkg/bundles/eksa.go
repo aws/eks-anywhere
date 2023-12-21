@@ -25,13 +25,16 @@ import (
 	"github.com/aws/eks-anywhere/release/cli/pkg/version"
 )
 
-func GetEksaBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]string) (anywherev1alpha1.EksaBundle, error) {
-	eksABundleArtifacts := map[string][]releasetypes.Artifact{
-		"eks-anywhere-cli-tools":            r.BundleArtifactsTable["eks-anywhere-cli-tools"],
-		"eks-anywhere-cluster-controller":   r.BundleArtifactsTable["eks-anywhere-cluster-controller"],
-		"eks-anywhere-diagnostic-collector": r.BundleArtifactsTable["eks-anywhere-diagnostic-collector"],
+func GetEksaBundle(r *releasetypes.ReleaseConfig, imageDigests releasetypes.ImageDigestsTable) (anywherev1alpha1.EksaBundle, error) {
+	projectsInBundle := []string{"eks-anywhere-cli-tools", "eks-anywhere-cluster-controller", "eks-anywhere-diagnostic-collector"}
+	eksABundleArtifacts := map[string][]releasetypes.Artifact{}
+	for _, project := range projectsInBundle {
+		projectArtifacts, err := r.BundleArtifactsTable.Load(project)
+		if err != nil {
+			return anywherev1alpha1.EksaBundle{}, fmt.Errorf("artifacts for project %s not found in bundle artifacts table", project)
+		}
+		eksABundleArtifacts[project] = projectArtifacts
 	}
-
 	sortedComponentNames := bundleutils.SortArtifactsMap(eksABundleArtifacts)
 
 	var componentChecksum string
@@ -43,14 +46,17 @@ func GetEksaBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]string
 		for _, artifact := range eksABundleArtifacts[componentName] {
 			if artifact.Image != nil {
 				imageArtifact := artifact.Image
-
+				imageDigest, err := imageDigests.Load(imageArtifact.ReleaseImageURI)
+				if err != nil {
+					return anywherev1alpha1.EksaBundle{}, fmt.Errorf("loading digest from image digests table: %v", err)
+				}
 				bundleImageArtifact := anywherev1alpha1.Image{
 					Name:        imageArtifact.AssetName,
 					Description: fmt.Sprintf("Container image for %s image", imageArtifact.AssetName),
 					OS:          imageArtifact.OS,
 					Arch:        imageArtifact.Arch,
 					URI:         imageArtifact.ReleaseImageURI,
-					ImageDigest: imageDigests[imageArtifact.ReleaseImageURI],
+					ImageDigest: imageDigest,
 				}
 				bundleImageArtifacts[imageArtifact.AssetName] = bundleImageArtifact
 				artifactHashes = append(artifactHashes, bundleImageArtifact.ImageDigest)

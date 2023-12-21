@@ -15,6 +15,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"strings"
@@ -188,7 +189,7 @@ var releaseCmd = &cobra.Command{
 				os.Exit(1)
 			}
 
-			imageDigests, err := operations.GenerateImageDigestsTable(releaseConfig)
+			imageDigests, err := operations.GenerateImageDigestsTable(context.Background(), releaseConfig)
 			if err != nil {
 				fmt.Printf("Error generating image digests table: %+v\n", err)
 				os.Exit(1)

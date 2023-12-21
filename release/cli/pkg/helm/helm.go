@@ -114,7 +114,7 @@ func GetChartImageTags(d *helmDriver, helmDest string) (*Requires, error) {
 	return helmRequires, nil
 }
 
-func ModifyAndPushChartYaml(i releasetypes.ImageArtifact, r *releasetypes.ReleaseConfig, d *helmDriver, helmDest string, eksArtifacts map[string][]releasetypes.Artifact, shaMap map[string]anywherev1alpha1.Image) error {
+func ModifyAndPushChartYaml(i releasetypes.ImageArtifact, r *releasetypes.ReleaseConfig, d *helmDriver, helmDest string, eksaArtifacts map[string][]releasetypes.Artifact, shaMap map[string]anywherev1alpha1.Image) error {
 	helmChart := strings.Split(i.ReleaseImageURI, ":")
 	helmtag := helmChart[1]
 
@@ -139,7 +139,7 @@ func ModifyAndPushChartYaml(i releasetypes.ImageArtifact, r *releasetypes.Releas
 
 	// If the chart is packages, we find the image tag values and overide them in the values.yaml.
 	if strings.Contains(helmDest, "eks-anywhere-packages") {
-		imageTagMap, err := GetPackagesImageTags(eksArtifacts)
+		imageTagMap, err := GetPackagesImageTags(eksaArtifacts)
 		fmt.Printf("Overwriting helm values.yaml version to new image tags %v\n", imageTagMap)
 		err = OverWriteChartValuesImageTag(helmDest, imageTagMap)
 		if err != nil {
@@ -466,19 +466,17 @@ func OverWriteChartValuesImageSha(filename string, shaMap map[string]anywherev1a
 	return nil
 }
 
-func GetPackagesImageTags(eksArtifacts map[string][]releasetypes.Artifact) (map[string]string, error) {
+func GetPackagesImageTags(packagesArtifacts map[string][]releasetypes.Artifact) (map[string]string, error) {
 	m := make(map[string]string)
-	for _, artifacts := range eksArtifacts {
+	for _, artifacts := range packagesArtifacts {
 		for _, artifact := range artifacts {
 			if artifact.Image != nil {
-				if artifact.Image.AssetName == "eks-anywhere-packages" || artifact.Image.AssetName == "ecr-token-refresher" {
-					m[artifact.Image.AssetName] = artifact.Image.ReleaseImageURI
-				}
+				m[artifact.Image.AssetName] = artifact.Image.ReleaseImageURI
 			}
 		}
 	}
 	if len(m) == 0 {
-		return nil, fmt.Errorf("No assets found for eks-anywhere-packages, or ecr-token-refresher in eksArtifacts")
+		return nil, fmt.Errorf("No assets found for eks-anywhere-packages, or ecr-token-refresher in packagesArtifacts")
 	}
 	return m, nil
 }

@@ -51,3 +51,8 @@ func GetRepoRoot() (string, error) {
 	cmd := exec.Command("git", "rev-parse", "--show-toplevel")
 	return commandutils.ExecCommand(cmd)
 }
+
+func GetCurrentBranch(gitRoot string) (string, error) {
+	cmd := exec.Command("git", "-C", gitRoot, "branch", "--show-current")
+	return commandutils.ExecCommand(cmd)
+}

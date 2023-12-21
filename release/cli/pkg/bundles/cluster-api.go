@@ -26,10 +26,15 @@ import (
 	"github.com/aws/eks-anywhere/release/cli/pkg/version"
 )
 
-func GetCoreClusterAPIBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]string) (anywherev1alpha1.CoreClusterAPI, error) {
-	coreClusterAPIBundleArtifacts := map[string][]releasetypes.Artifact{
-		"cluster-api":     r.BundleArtifactsTable["cluster-api"],
-		"kube-rbac-proxy": r.BundleArtifactsTable["kube-rbac-proxy"],
+func GetCoreClusterAPIBundle(r *releasetypes.ReleaseConfig, imageDigests releasetypes.ImageDigestsTable) (anywherev1alpha1.CoreClusterAPI, error) {
+	projectsInBundle := []string{"cluster-api", "kube-rbac-proxy"}
+	coreClusterAPIBundleArtifacts := map[string][]releasetypes.Artifact{}
+	for _, project := range projectsInBundle {
+		projectArtifacts, err := r.BundleArtifactsTable.Load(project)
+		if err != nil {
+			return anywherev1alpha1.CoreClusterAPI{}, fmt.Errorf("artifacts for project %s not found in bundle artifacts table", project)
+		}
+		coreClusterAPIBundleArtifacts[project] = projectArtifacts
 	}
 	sortedComponentNames := bundleutils.SortArtifactsMap(coreClusterAPIBundleArtifacts)
 
@@ -50,13 +55,17 @@ func GetCoreClusterAPIBundle(r *releasetypes.ReleaseConfig, imageDigests map[str
 					sourceBranch = imageArtifact.SourcedFromBranch
 				}
 
+				imageDigest, err := imageDigests.Load(imageArtifact.ReleaseImageURI)
+				if err != nil {
+					return anywherev1alpha1.CoreClusterAPI{}, fmt.Errorf("loading digest from image digests table: %v", err)
+				}
 				bundleImageArtifact := anywherev1alpha1.Image{
 					Name:        imageArtifact.AssetName,
 					Description: fmt.Sprintf("Container image for %s image", imageArtifact.AssetName),
 					OS:          imageArtifact.OS,
 					Arch:        imageArtifact.Arch,
 					URI:         imageArtifact.ReleaseImageURI,
-					ImageDigest: imageDigests[imageArtifact.ReleaseImageURI],
+					ImageDigest: imageDigest,
 				}
 				bundleImageArtifacts[imageArtifact.AssetName] = bundleImageArtifact
 				artifactHashes = append(artifactHashes, bundleImageArtifact.ImageDigest)
@@ -107,10 +116,15 @@ func GetCoreClusterAPIBundle(r *releasetypes.ReleaseConfig, imageDigests map[str
 	return bundle, nil
 }
 
-func GetKubeadmBootstrapBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]string) (anywherev1alpha1.KubeadmBootstrapBundle, error) {
-	kubeadmBootstrapBundleArtifacts := map[string][]releasetypes.Artifact{
-		"cluster-api":     r.BundleArtifactsTable["cluster-api"],
-		"kube-rbac-proxy": r.BundleArtifactsTable["kube-rbac-proxy"],
+func GetKubeadmBootstrapBundle(r *releasetypes.ReleaseConfig, imageDigests releasetypes.ImageDigestsTable) (anywherev1alpha1.KubeadmBootstrapBundle, error) {
+	projectsInBundle := []string{"cluster-api", "kube-rbac-proxy"}
+	kubeadmBootstrapBundleArtifacts := map[string][]releasetypes.Artifact{}
+	for _, project := range projectsInBundle {
+		projectArtifacts, err := r.BundleArtifactsTable.Load(project)
+		if err != nil {
+			return anywherev1alpha1.KubeadmBootstrapBundle{}, fmt.Errorf("artifacts for project %s not found in bundle artifacts table", project)
+		}
+		kubeadmBootstrapBundleArtifacts[project] = projectArtifacts
 	}
 	sortedComponentNames := bundleutils.SortArtifactsMap(kubeadmBootstrapBundleArtifacts)
 
@@ -130,14 +144,17 @@ func GetKubeadmBootstrapBundle(r *releasetypes.ReleaseConfig, imageDigests map[s
 					}
 					sourceBranch = imageArtifact.SourcedFromBranch
 				}
-
+				imageDigest, err := imageDigests.Load(imageArtifact.ReleaseImageURI)
+				if err != nil {
+					return anywherev1alpha1.KubeadmBootstrapBundle{}, fmt.Errorf("loading digest from image digests table: %v", err)
+				}
 				bundleImageArtifact := anywherev1alpha1.Image{
 					Name:        imageArtifact.AssetName,
 					Description: fmt.Sprintf("Container image for %s image", imageArtifact.AssetName),
 					OS:          imageArtifact.OS,
 					Arch:        imageArtifact.Arch,
 					URI:         imageArtifact.ReleaseImageURI,
-					ImageDigest: imageDigests[imageArtifact.ReleaseImageURI],
+					ImageDigest: imageDigest,
 				}
 				bundleImageArtifacts[imageArtifact.AssetName] = bundleImageArtifact
 				artifactHashes = append(artifactHashes, bundleImageArtifact.ImageDigest)
@@ -188,10 +205,15 @@ func GetKubeadmBootstrapBundle(r *releasetypes.ReleaseConfig, imageDigests map[s
 	return bundle, nil
 }
 
-func GetKubeadmControlPlaneBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]string) (anywherev1alpha1.KubeadmControlPlaneBundle, error) {
-	kubeadmControlPlaneBundleArtifacts := map[string][]releasetypes.Artifact{
-		"cluster-api":     r.BundleArtifactsTable["cluster-api"],
-		"kube-rbac-proxy": r.BundleArtifactsTable["kube-rbac-proxy"],
+func GetKubeadmControlPlaneBundle(r *releasetypes.ReleaseConfig, imageDigests releasetypes.ImageDigestsTable) (anywherev1alpha1.KubeadmControlPlaneBundle, error) {
+	projectsInBundle := []string{"cluster-api", "kube-rbac-proxy"}
+	kubeadmControlPlaneBundleArtifacts := map[string][]releasetypes.Artifact{}
+	for _, project := range projectsInBundle {
+		projectArtifacts, err := r.BundleArtifactsTable.Load(project)
+		if err != nil {
+			return anywherev1alpha1.KubeadmControlPlaneBundle{}, fmt.Errorf("artifacts for project %s not found in bundle artifacts table", project)
+		}
+		kubeadmControlPlaneBundleArtifacts[project] = projectArtifacts
 	}
 	sortedComponentNames := bundleutils.SortArtifactsMap(kubeadmControlPlaneBundleArtifacts)
 
@@ -211,14 +233,17 @@ func GetKubeadmControlPlaneBundle(r *releasetypes.ReleaseConfig, imageDigests ma
 					}
 					sourceBranch = imageArtifact.SourcedFromBranch
 				}
-
+				imageDigest, err := imageDigests.Load(imageArtifact.ReleaseImageURI)
+				if err != nil {
+					return anywherev1alpha1.KubeadmControlPlaneBundle{}, fmt.Errorf("loading digest from image digests table: %v", err)
+				}
 				bundleImageArtifact := anywherev1alpha1.Image{
 					Name:        imageArtifact.AssetName,
 					Description: fmt.Sprintf("Container image for %s image", imageArtifact.AssetName),
 					OS:          imageArtifact.OS,
 					Arch:        imageArtifact.Arch,
 					URI:         imageArtifact.ReleaseImageURI,
-					ImageDigest: imageDigests[imageArtifact.ReleaseImageURI],
+					ImageDigest: imageDigest,
 				}
 				bundleImageArtifacts[imageArtifact.AssetName] = bundleImageArtifact
 				artifactHashes = append(artifactHashes, bundleImageArtifact.ImageDigest)

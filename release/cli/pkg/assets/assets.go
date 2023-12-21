@@ -15,11 +15,14 @@
 package assets
 
 import (
+	"context"
 	"fmt"
 	"path/filepath"
+	"slices"
 	"strconv"
 
 	"github.com/pkg/errors"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/aws/eks-anywhere/release/cli/pkg/assets/archives"
 	assetconfig "github.com/aws/eks-anywhere/release/cli/pkg/assets/config"
@@ -30,10 +33,9 @@ import (
 	"github.com/aws/eks-anywhere/release/cli/pkg/filereader"
 	releasetypes "github.com/aws/eks-anywhere/release/cli/pkg/types"
 	bundleutils "github.com/aws/eks-anywhere/release/cli/pkg/util/bundles"
-	sliceutils "github.com/aws/eks-anywhere/release/cli/pkg/util/slices"
 )
 
-func getAssetsFromConfig(ac *assettypes.AssetConfig, rc *releasetypes.ReleaseConfig, eksDReleaseChannel, eksDReleaseNumber, kubeVersion string) ([]releasetypes.Artifact, error) {
+func getAssetsFromConfig(_ context.Context, ac *assettypes.AssetConfig, rc *releasetypes.ReleaseConfig, eksDReleaseChannel, eksDReleaseNumber, kubeVersion string) ([]releasetypes.Artifact, error) {
 	var artifacts []releasetypes.Artifact
 	var imageTagOverrides []releasetypes.ImageTagOverride
 	projectName := ac.ProjectName
@@ -97,15 +99,16 @@ func getAssetsFromConfig(ac *assettypes.AssetConfig, rc *releasetypes.ReleaseCon
 	return artifacts, nil
 }
 
-func GetBundleReleaseAssets(supportedK8sVersions []string, eksDReleaseMap *filereader.EksDLatestReleases, rc *releasetypes.ReleaseConfig) (map[string][]releasetypes.Artifact, error) {
-	artifactsTable := map[string][]releasetypes.Artifact{}
+func GetBundleReleaseAssets(supportedK8sVersions []string, eksDReleaseMap *filereader.EksDLatestReleases, rc *releasetypes.ReleaseConfig) (releasetypes.ArtifactsTable, error) {
+	var artifactsTable releasetypes.ArtifactsTable
 	assetConfigs := assetconfig.GetBundleReleaseAssetsConfigMap()
+	errGroup, ctx := errgroup.WithContext(context.Background())
 	for _, release := range eksDReleaseMap.Releases {
 		channel := release.Branch
 		number := strconv.Itoa(release.Number)
 		kubeVersion := release.KubeVersion
 
-		if !sliceutils.SliceContains(supportedK8sVersions, channel) {
+		if !slices.Contains(supportedK8sVersions, channel) {
 			continue
 		}
 
@@ -113,16 +116,24 @@ func GetBundleReleaseAssets(supportedK8sVersions []string, eksDReleaseMap *filer
 			if !rc.DevRelease && assetConfig.OnlyForDevRelease {
 				continue
 			}
+			assetConfig := assetConfig
 			projectName := assetConfig.ProjectName
 			if assetConfig.HasReleaseBranches {
 				projectName = fmt.Sprintf("%s-%s", projectName, channel)
 			}
-			artifactsList, err := getAssetsFromConfig(&assetConfig, rc, channel, number, kubeVersion)
-			if err != nil {
-				return nil, errors.Wrapf(err, "Error getting artifacts for project %s", projectName)
-			}
-			artifactsTable[projectName] = artifactsList
+			errGroup.Go(func() error {
+				artifactsList, err := getAssetsFromConfig(ctx, &assetConfig, rc, channel, number, kubeVersion)
+				if err != nil {
+					return errors.Wrapf(err, "Error getting artifacts for project %s", projectName)
+				}
+				artifactsTable.Store(projectName, artifactsList)
+
+				return nil
+			})
 		}
+	}
+	if err := errGroup.Wait(); err != nil {
+		return releasetypes.ArtifactsTable{}, fmt.Errorf("generating bundle artifacts table: %v", err)
 	}
 
 	return artifactsTable, nil

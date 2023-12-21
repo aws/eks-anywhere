@@ -15,6 +15,7 @@
 package operations
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"os"
@@ -135,7 +136,7 @@ func TestGenerateBundleManifest(t *testing.T) {
 			}
 			releaseConfig.BundleArtifactsTable = bundleArtifactsTable
 
-			imageDigests, err := GenerateImageDigestsTable(releaseConfig)
+			imageDigests, err := GenerateImageDigestsTable(context.Background(), releaseConfig)
 			if err != nil {
 				t.Fatalf("Error generating image digests table: %+v\n", err)
 			}

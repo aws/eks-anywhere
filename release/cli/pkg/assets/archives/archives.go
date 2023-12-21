@@ -17,6 +17,7 @@ package archives
 import (
 	"fmt"
 	"path/filepath"
+	"slices"
 
 	"github.com/pkg/errors"
 
@@ -24,7 +25,6 @@ import (
 	"github.com/aws/eks-anywhere/release/cli/pkg/filereader"
 	releasetypes "github.com/aws/eks-anywhere/release/cli/pkg/types"
 	artifactutils "github.com/aws/eks-anywhere/release/cli/pkg/util/artifacts"
-	sliceutils "github.com/aws/eks-anywhere/release/cli/pkg/util/slices"
 )
 
 func EksDistroArtifactPathGetter(rc *releasetypes.ReleaseConfig, archive *assettypes.Archive, projectPath, gitTag, eksDReleaseChannel, eksDReleaseNumber, kubeVersion, latestPath, arch string) (string, string, string, string, error) {
@@ -36,8 +36,7 @@ func EksDistroArtifactPathGetter(rc *releasetypes.ReleaseConfig, archive *assett
 	if err != nil {
 		return "", "", "", "", errors.Cause(err)
 	}
-	fmt.Println(bottlerocketSupportedK8sVersions)
-	if archive.OSName == "bottlerocket" && !sliceutils.SliceContains(bottlerocketSupportedK8sVersions, eksDReleaseChannel) {
+	if archive.OSName == "bottlerocket" && !slices.Contains(bottlerocketSupportedK8sVersions, eksDReleaseChannel) {
 		return "", "", "", "", nil
 	}
 
