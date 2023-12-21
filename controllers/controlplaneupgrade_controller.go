@@ -146,9 +146,8 @@ func (r *ControlPlaneUpgradeReconciler) reconcile(ctx context.Context, log logr.
 					return ctrl.Result{}, fmt.Errorf("failed to create node upgrader for machine %s:  %v", machineRef.Name, err)
 				}
 				return ctrl.Result{}, nil
-			} else {
-				return ctrl.Result{}, fmt.Errorf("getting node upgrader for machine %s: %v", machineRef.Name, err)
 			}
+			return ctrl.Result{}, fmt.Errorf("getting node upgrader for machine %s: %v", machineRef.Name, err)
 		}
 		if !nodeUpgrade.Status.Completed {
 			return ctrl.Result{}, nil
