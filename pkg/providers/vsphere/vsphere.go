@@ -702,9 +702,9 @@ func (p *vsphereProvider) UpdateSecrets(ctx context.Context, cluster *types.Clus
 }
 
 func (p *vsphereProvider) SetupAndValidateDeleteCluster(ctx context.Context, _ *types.Cluster, spec *cluster.Spec) error {
-	if err := p.validator.validateUpgradeRolloutStrategy(spec); err != nil {
-		return fmt.Errorf("failed setup and validations: %v", err)
-	}
+	// if err := p.validator.validateUpgradeRolloutStrategy(spec); err != nil {
+	// 	return fmt.Errorf("failed setup and validations: %v", err)
+	// }
 	if err := SetupEnvVars(spec.VSphereDatacenter); err != nil {
 		return fmt.Errorf("failed setup and validations: %v", err)
 	}

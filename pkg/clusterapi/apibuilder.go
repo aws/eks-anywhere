@@ -8,6 +8,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
@@ -199,6 +200,11 @@ func KubeadmControlPlane(clusterSpec *cluster.Spec, infrastructureObject APIObje
 		setStackedEtcdConfigInKubeadmControlPlane(kcp, bundle.KubeDistro.Etcd)
 	}
 
+	if clusterSpec.Cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy != nil {
+		maxSurge := intstr.FromInt(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy.RollingUpdate.MaxSurge)
+		kcp.Spec.RolloutStrategy.RollingUpdate.MaxSurge = &maxSurge
+	}
+
 	return kcp, nil
 }
 
@@ -289,6 +295,13 @@ func MachineDeployment(clusterSpec *cluster.Spec, workerNodeGroupConfig anywhere
 			},
 			Replicas: &replicas,
 		},
+	}
+
+	if workerNodeGroupConfig.UpgradeRolloutStrategy != nil {
+		maxSurge := intstr.FromInt(workerNodeGroupConfig.UpgradeRolloutStrategy.RollingUpdate.MaxSurge)
+		maxUnavailable := intstr.FromInt(workerNodeGroupConfig.UpgradeRolloutStrategy.RollingUpdate.MaxUnavailable)
+		md.Spec.Strategy.RollingUpdate.MaxSurge = &maxSurge
+		md.Spec.Strategy.RollingUpdate.MaxUnavailable = &maxUnavailable
 	}
 
 	ConfigureAutoscalingInMachineDeployment(md, workerNodeGroupConfig.AutoScalingConfiguration)

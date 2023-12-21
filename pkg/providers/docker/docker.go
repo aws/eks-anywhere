@@ -185,6 +185,12 @@ func (d *DockerTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spe
 		values["workloadTemplateName"] = workloadTemplateNames[workerNodeGroupConfiguration.Name]
 		values["workloadkubeadmconfigTemplateName"] = kubeadmconfigTemplateNames[workerNodeGroupConfiguration.Name]
 
+		if workerNodeGroupConfiguration.UpgradeRolloutStrategy != nil {
+			values["upgradeRolloutStrategy"] = true
+			values["maxSurge"] = workerNodeGroupConfiguration.UpgradeRolloutStrategy.RollingUpdate.MaxSurge
+			values["maxUnavailable"] = workerNodeGroupConfiguration.UpgradeRolloutStrategy.RollingUpdate.MaxUnavailable
+		}
+
 		bytes, err := templater.Execute(defaultCAPIConfigMD, values)
 		if err != nil {
 			return nil, err
@@ -301,6 +307,11 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec) (map[string]interface{}, erro
 		if err != nil {
 			return values, err
 		}
+	}
+
+	if clusterSpec.Cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy != nil {
+		values["upgradeRolloutStrategy"] = true
+		values["maxSurge"] = clusterSpec.Cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy.RollingUpdate.MaxSurge
 	}
 
 	return values, nil
