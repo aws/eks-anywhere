@@ -1,7 +1,7 @@
 metadata:
   creationTimestamp: null
   labels:
-    ekd-d-upgrader: "true"
+    eks-d-upgrader: "true"
   name: my-node-node-upgrader
   namespace: eksa-system
 spec:

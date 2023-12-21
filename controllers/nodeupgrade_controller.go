@@ -390,3 +390,16 @@ func getUpgraderPod(ctx context.Context, remoteClient client.Client, nodeName st
 	}
 	return pod, nil
 }
+
+func getNodeUpgrade(ctx context.Context, remoteClient client.Client, nodeUpgradeName string) (*anywherev1.NodeUpgrade, error) {
+	n := &anywherev1.NodeUpgrade{}
+	if err := remoteClient.Get(ctx, GetNamespacedNameType(nodeUpgradeName, constants.EksaSystemNamespace), n); err != nil {
+		return nil, err
+	}
+	return n, nil
+}
+
+// nodeUpgradeName returns the name of the node upgrade object based on the machine reference.
+func nodeUpgraderName(machineRefName string) string {
+	return fmt.Sprintf("%s-node-upgrader", machineRefName)
+}
