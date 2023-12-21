@@ -19,7 +19,7 @@ func (s *writeClusterConfig) Run(ctx context.Context, commandContext *task.Comma
 	}
 
 	successMsg := ""
-	if commandContext.CurrentClusterSpec == nil {
+	if commandContext.CurrentClusterSpec != nil {
 		successMsg = "Cluster upgraded!"
 	} else {
 		successMsg = "Cluster created!"

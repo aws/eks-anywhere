@@ -209,3 +209,21 @@ func TestUpgradeRunValidateFail(t *testing.T) {
 		t.Fatalf("Upgrade.Run() err = %v, want err = nil", err)
 	}
 }
+
+func TestUpgradeRunWriteClusterConfigFail(t *testing.T) {
+	features.ClearCache()
+	os.Setenv(features.UseControllerForCli, "true")
+	test := newUpgradeTest(t)
+	test.expectSetup()
+	test.expectPreflightValidationsToPass()
+	test.expectDatacenterConfig()
+	test.expectMachineConfigs()
+	test.expectUpgradeWorkloadCluster(nil)
+	test.expectWriteWorkloadClusterConfig(fmt.Errorf("boom"))
+	test.expectWrite()
+
+	err := test.run()
+	if err == nil {
+		t.Fatalf("Upgrade.Run() err = %v, want err = nil", err)
+	}
+}
