@@ -45,19 +45,19 @@ spec:
                   name:
                     type: string
                 type: object
-              controlPlane:
-                properties:
-                  kind:
-                    type: string
-                  name:
-                    type: string
-                type: object
               kubeadmClusterConfig:
                 type: string
               kubeletVersion:
                 type: string
               kubernetesVersion:
                 type: string
+              machineDeployment:
+                properties:
+                  kind:
+                    type: string
+                  name:
+                    type: string
+                type: object
               machinesRequireUpgrade:
                 items:
                   properties:
@@ -69,10 +69,10 @@ spec:
                 type: array
             required:
             - cluster
-            - controlPlane
             - kubeadmClusterConfig
             - kubeletVersion
             - kubernetesVersion
+            - machineDeployment
             - machinesRequireUpgrade
             type: object
           status:
@@ -87,10 +87,6 @@ spec:
               upgraded:
                 format: int64
                 type: integer
-            required:
-            - ready
-            - requireUpgrade
-            - upgraded
             type: object
         type: object
     served: true

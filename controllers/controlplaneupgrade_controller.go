@@ -156,11 +156,6 @@ func (r *ControlPlaneUpgradeReconciler) reconcile(ctx context.Context, log logr.
 	return ctrl.Result{}, nil
 }
 
-// nodeUpgradeName returns the name of the node upgrade object based on the machine reference.
-func nodeUpgraderName(machineRefName string) string {
-	return fmt.Sprintf("%s-node-upgrader", machineRefName)
-}
-
 func nodeUpgrader(machineRef anywherev1.Ref, kubernetesVersion, etcdVersion string, firstControlPlane bool) *anywherev1.NodeUpgrade {
 	return &anywherev1.NodeUpgrade{
 		ObjectMeta: metav1.ObjectMeta{

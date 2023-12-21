@@ -65,7 +65,7 @@ func upgraderPod(nodeName, image string) *corev1.Pod {
 			Name:      PodName(nodeName),
 			Namespace: constants.EksaSystemNamespace,
 			Labels: map[string]string{
-				"ekd-d-upgrader": "true",
+				"eks-d-upgrader": "true",
 			},
 		},
 		Spec: corev1.PodSpec{

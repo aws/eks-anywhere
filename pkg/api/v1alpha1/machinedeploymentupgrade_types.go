@@ -10,7 +10,7 @@ const MachineDeploymentUpgradeKind = "MachineDeploymentUpgrade"
 // MachineDeploymentUpgradeSpec defines the desired state of MachineDeploymentUpgrade.
 type MachineDeploymentUpgradeSpec struct {
 	Cluster                Ref    `json:"cluster"`
-	MachineDeployment      Ref    `json:"controlPlane"`
+	MachineDeployment      Ref    `json:"machineDeployment"`
 	MachinesRequireUpgrade []Ref  `json:"machinesRequireUpgrade"`
 	KubernetesVersion      string `json:"kubernetesVersion"`
 	KubeletVersion         string `json:"kubeletVersion"`
@@ -19,9 +19,9 @@ type MachineDeploymentUpgradeSpec struct {
 
 // MachineDeploymentUpgradeStatus defines the observed state of MachineDeploymentUpgrade.
 type MachineDeploymentUpgradeStatus struct {
-	RequireUpgrade int64 `json:"requireUpgrade"`
-	Upgraded       int64 `json:"upgraded"`
-	Ready          bool  `json:"ready"`
+	RequireUpgrade int64 `json:"requireUpgrade,omitempty"`
+	Upgraded       int64 `json:"upgraded,omitempty"`
+	Ready          bool  `json:"ready,omitempty"`
 }
 
 //+kubebuilder:object:root=true
