@@ -89,10 +89,6 @@ spec:
               upgraded:
                 format: int64
                 type: integer
-            required:
-            - ready
-            - requireUpgrade
-            - upgraded
             type: object
         type: object
     served: true
