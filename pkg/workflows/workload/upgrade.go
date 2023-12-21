@@ -45,22 +45,17 @@ func NewUpgrade(provider providers.Provider,
 // Run Upgrade implements upgrade functionality for workload cluster's upgrade operation.
 func (c *Upgrade) Run(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, validator interfaces.Validator) error {
 	logger.Info("POC New workflow creating workload cluster using the controller")
-	currentSpec, err := c.clusterManager.GetCurrentClusterSpec(ctx, clusterSpec.ManagementCluster, clusterSpec.Cluster.Name)
-	if err != nil {
-		return err
-	}
 
 	commandContext := &task.CommandContext{
-		Provider:           c.provider,
-		ClusterManager:     c.clusterManager,
-		GitOpsManager:      c.gitOpsManager,
-		ClusterSpec:        clusterSpec,
-		CurrentClusterSpec: currentSpec,
-		Writer:             c.writer,
-		Validations:        validator,
-		ManagementCluster:  clusterSpec.ManagementCluster,
-		WorkloadCluster:    cluster,
-		ClusterUpgrader:    c.ClusterUpgrader,
+		Provider:          c.provider,
+		ClusterManager:    c.clusterManager,
+		GitOpsManager:     c.gitOpsManager,
+		ClusterSpec:       clusterSpec,
+		Writer:            c.writer,
+		Validations:       validator,
+		ManagementCluster: clusterSpec.ManagementCluster,
+		WorkloadCluster:   cluster,
+		ClusterUpgrader:   c.ClusterUpgrader,
 	}
 
 	return task.NewTaskRunner(&setAndValidateWorkloadTask{}, c.writer).RunTask(ctx, commandContext)

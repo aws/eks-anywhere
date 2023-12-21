@@ -2,6 +2,7 @@ package workload_test
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"testing"
 
@@ -136,6 +137,15 @@ func (c *upgradeTestSetup) expectPreflightValidationsToPass() {
 	c.validator.EXPECT().PreflightValidations(c.ctx).Return(nil)
 }
 
+func (c *upgradeTestSetup) expectSaveLogsManagement() {
+	c.clusterManager.EXPECT().SaveLogsManagementCluster(c.ctx, c.clusterSpec, c.clusterSpec.ManagementCluster)
+	c.expectWrite()
+}
+
+func (c *upgradeTestSetup) expectWrite() {
+	c.writer.EXPECT().Write(gomock.Any(), gomock.Any(), gomock.Any()).Return("", nil)
+}
+
 func TestUpgradeRunSuccess(t *testing.T) {
 	features.ClearCache()
 	os.Setenv(features.UseControllerForCli, "true")
@@ -149,6 +159,53 @@ func TestUpgradeRunSuccess(t *testing.T) {
 
 	err := test.run()
 	if err != nil {
+		t.Fatalf("Upgrade.Run() err = %v, want err = nil", err)
+	}
+}
+
+func TestUpgradeRunUpgradeFail(t *testing.T) {
+	features.ClearCache()
+	os.Setenv(features.UseControllerForCli, "true")
+	test := newUpgradeTest(t)
+	test.expectSetup()
+	test.expectPreflightValidationsToPass()
+	test.expectDatacenterConfig()
+	test.expectMachineConfigs()
+	test.expectUpgradeWorkloadCluster(fmt.Errorf("boom"))
+	test.expectSaveLogsManagement()
+
+	err := test.run()
+	if err == nil {
+		t.Fatalf("Upgrade.Run() err = %v, want err = nil", err)
+	}
+}
+
+func TestUpgradeRunGetCurrentClusterSpecFail(t *testing.T) {
+	features.ClearCache()
+	os.Setenv(features.UseControllerForCli, "true")
+	test := newUpgradeTest(t)
+	test.clusterManager.EXPECT().GetCurrentClusterSpec(test.ctx, test.clusterSpec.ManagementCluster, test.clusterSpec.Cluster.Name).Return(nil, fmt.Errorf("boom"))
+	test.expectWrite()
+
+	err := test.run()
+	if err == nil {
+		t.Fatalf("Upgrade.Run() err = %v, want err = nil", err)
+	}
+}
+
+func TestUpgradeRunValidateFail(t *testing.T) {
+	features.ClearCache()
+	os.Setenv(features.UseControllerForCli, "true")
+	test := newUpgradeTest(t)
+	test.clusterManager.EXPECT().GetCurrentClusterSpec(test.ctx, test.clusterSpec.ManagementCluster, test.clusterSpec.Cluster.Name).AnyTimes().Return(test.currentClusterSpec, nil)
+	test.provider.EXPECT().Name().AnyTimes()
+	test.gitOpsManager.EXPECT().Validations(test.ctx, test.clusterSpec).AnyTimes()
+	test.provider.EXPECT().SetupAndValidateUpgradeCluster(test.ctx, test.workloadCluster, test.clusterSpec, test.currentClusterSpec).Return(fmt.Errorf("boom"))
+	test.expectPreflightValidationsToPass()
+	test.expectWrite()
+
+	err := test.run()
+	if err == nil {
 		t.Fatalf("Upgrade.Run() err = %v, want err = nil", err)
 	}
 }
