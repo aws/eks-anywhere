@@ -15,6 +15,8 @@
 package types
 
 import (
+	"fmt"
+	"sync"
 	"time"
 
 	"github.com/aws/eks-anywhere/release/cli/pkg/clients"
@@ -50,8 +52,8 @@ type ReleaseConfig struct {
 	ReleaseEnvironment       string
 	SourceClients            *clients.SourceClients
 	ReleaseClients           *clients.ReleaseClients
-	BundleArtifactsTable     map[string][]Artifact
-	EksAArtifactsTable       map[string][]Artifact
+	BundleArtifactsTable     ArtifactsTable
+	EksAArtifactsTable       ArtifactsTable
 	AwsSignerProfileArn      string
 }
 
@@ -105,4 +107,44 @@ type Artifact struct {
 	Archive  *ArchiveArtifact
 	Image    *ImageArtifact
 	Manifest *ManifestArtifact
+}
+
+type ArtifactsTable struct {
+	artifactsMap sync.Map
+}
+
+type ImageDigestsTable struct {
+	imageDigestsMap sync.Map
+}
+
+func (a *ArtifactsTable) Load(projectName string) ([]Artifact, error) {
+	artifacts, ok := a.artifactsMap.Load(projectName)
+	if !ok {
+		return nil, fmt.Errorf("artifacts for project %s not present in artifacts table", projectName)
+	}
+	return artifacts.([]Artifact), nil
+}
+
+func (a *ArtifactsTable) Store(projectName string, artifacts []Artifact) {
+	a.artifactsMap.Store(projectName, artifacts)
+}
+
+func (a *ArtifactsTable) Range(f func(key, value any) bool) {
+	a.artifactsMap.Range(f)
+}
+
+func (i *ImageDigestsTable) Load(imageURI string) (string, error) {
+	imageDigest, ok := i.imageDigestsMap.Load(imageURI)
+	if !ok {
+		return "", fmt.Errorf("digest for image %s not present in image digests table", imageURI)
+	}
+	return imageDigest.(string), nil
+}
+
+func (i *ImageDigestsTable) Store(imageURI, imageDigest string) {
+	i.imageDigestsMap.Store(imageURI, imageDigest)
+}
+
+func (i *ImageDigestsTable) Range(f func(key, value any) bool) {
+	i.imageDigestsMap.Range(f)
 }

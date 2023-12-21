@@ -15,6 +15,8 @@
 package bundles
 
 import (
+	"fmt"
+
 	"github.com/pkg/errors"
 
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
@@ -24,14 +26,17 @@ import (
 )
 
 func GetKindnetdBundle(r *releasetypes.ReleaseConfig) (anywherev1alpha1.KindnetdBundle, error) {
-	artifacts := r.BundleArtifactsTable["kindnetd"]
+	kindnetdArtifacts, err := r.BundleArtifactsTable.Load("kindnetd")
+	if err != nil {
+		return anywherev1alpha1.KindnetdBundle{}, fmt.Errorf("artifacts for project kindnetd not found in bundle artifacts table")
+	}
 
 	var sourceBranch string
 	var componentChecksum string
 	bundleManifestArtifacts := map[string]anywherev1alpha1.Manifest{}
 	artifactHashes := []string{}
 
-	for _, artifact := range artifacts {
+	for _, artifact := range kindnetdArtifacts {
 		if artifact.Manifest != nil {
 			manifestArtifact := artifact.Manifest
 			sourceBranch = manifestArtifact.SourcedFromBranch

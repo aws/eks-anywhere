@@ -25,8 +25,11 @@ import (
 	"github.com/aws/eks-anywhere/release/cli/pkg/version"
 )
 
-func GetCertManagerBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]string) (anywherev1alpha1.CertManagerBundle, error) {
-	artifacts := r.BundleArtifactsTable["cert-manager"]
+func GetCertManagerBundle(r *releasetypes.ReleaseConfig, imageDigests releasetypes.ImageDigestsTable) (anywherev1alpha1.CertManagerBundle, error) {
+	certManagerArtifacts, err := r.BundleArtifactsTable.Load("cert-manager")
+	if err != nil {
+		return anywherev1alpha1.CertManagerBundle{}, fmt.Errorf("artifacts for project cert-manager not found in bundle artifacts table")
+	}
 
 	var sourceBranch string
 	var componentChecksum string
@@ -34,18 +37,21 @@ func GetCertManagerBundle(r *releasetypes.ReleaseConfig, imageDigests map[string
 	bundleManifestArtifacts := map[string]anywherev1alpha1.Manifest{}
 	artifactHashes := []string{}
 
-	for _, artifact := range artifacts {
+	for _, artifact := range certManagerArtifacts {
 		if artifact.Image != nil {
 			imageArtifact := artifact.Image
 			sourceBranch = imageArtifact.SourcedFromBranch
-
+			imageDigest, err := imageDigests.Load(imageArtifact.ReleaseImageURI)
+			if err != nil {
+				return anywherev1alpha1.CertManagerBundle{}, fmt.Errorf("loading digest from image digests table: %v", err)
+			}
 			bundleArtifact := anywherev1alpha1.Image{
 				Name:        imageArtifact.AssetName,
 				Description: fmt.Sprintf("Container image for %s image", imageArtifact.AssetName),
 				OS:          imageArtifact.OS,
 				Arch:        imageArtifact.Arch,
 				URI:         imageArtifact.ReleaseImageURI,
-				ImageDigest: imageDigests[imageArtifact.ReleaseImageURI],
+				ImageDigest: imageDigest,
 			}
 
 			bundleImageArtifacts[imageArtifact.AssetName] = bundleArtifact

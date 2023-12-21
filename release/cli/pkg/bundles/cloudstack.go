@@ -25,11 +25,15 @@ import (
 	"github.com/aws/eks-anywhere/release/cli/pkg/version"
 )
 
-func GetCloudStackBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]string) (anywherev1alpha1.CloudStackBundle, error) {
-	cloudstackBundleArtifacts := map[string][]releasetypes.Artifact{
-		"cluster-api-provider-cloudstack": r.BundleArtifactsTable["cluster-api-provider-cloudstack"],
-		"kube-vip":                        r.BundleArtifactsTable["kube-vip"],
-		"kube-rbac-proxy":                 r.BundleArtifactsTable["kube-rbac-proxy"],
+func GetCloudStackBundle(r *releasetypes.ReleaseConfig, imageDigests releasetypes.ImageDigestsTable) (anywherev1alpha1.CloudStackBundle, error) {
+	projectsInBundle := []string{"cluster-api-provider-cloudstack", "kube-vip", "kube-rbac-proxy"}
+	cloudstackBundleArtifacts := map[string][]releasetypes.Artifact{}
+	for _, project := range projectsInBundle {
+		projectArtifacts, err := r.BundleArtifactsTable.Load(project)
+		if err != nil {
+			return anywherev1alpha1.CloudStackBundle{}, fmt.Errorf("artifacts for project %s not found in bundle artifacts table", project)
+		}
+		cloudstackBundleArtifacts[project] = projectArtifacts
 	}
 
 	var sourceBranch string
@@ -44,13 +48,17 @@ func GetCloudStackBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]
 				if componentName == "cluster-api-provider-cloudstack" {
 					sourceBranch = imageArtifact.SourcedFromBranch
 				}
+				imageDigest, err := imageDigests.Load(imageArtifact.ReleaseImageURI)
+				if err != nil {
+					return anywherev1alpha1.CloudStackBundle{}, fmt.Errorf("loading digest from image digests table: %v", err)
+				}
 				bundleImageArtifact := anywherev1alpha1.Image{
 					Name:        imageArtifact.AssetName,
 					Description: fmt.Sprintf("Container image for %s image", imageArtifact.AssetName),
 					OS:          imageArtifact.OS,
 					Arch:        imageArtifact.Arch,
 					URI:         imageArtifact.ReleaseImageURI,
-					ImageDigest: imageDigests[imageArtifact.ReleaseImageURI],
+					ImageDigest: imageDigest,
 				}
 				bundleImageArtifacts[imageArtifact.AssetName] = bundleImageArtifact
 				artifactHashes = append(artifactHashes, bundleImageArtifact.ImageDigest)

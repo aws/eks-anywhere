@@ -59,7 +59,7 @@ func GetManifestAssets(rc *releasetypes.ReleaseConfig, manifestComponent *assett
 	manifestArtifact := &releasetypes.ManifestArtifact{
 		SourceS3Key:       manifestFile,
 		SourceS3Prefix:    sourceS3Prefix,
-		ArtifactPath:      filepath.Join(rc.ArtifactDir, fmt.Sprintf("%s-manifests", projectName), rc.BuildRepoHead),
+		ArtifactPath:      filepath.Join(rc.ArtifactDir, fmt.Sprintf("%s-manifests", componentName), rc.BuildRepoHead),
 		ReleaseName:       manifestFile,
 		ReleaseS3Path:     releaseS3Path,
 		ReleaseCdnURI:     cdnURI,

@@ -45,8 +45,8 @@ GOBIN=$(shell go env GOBIN)
 endif
 
 # Setup Go
-GOLANG_VERSION?="1.20"
-GO_VERSION ?= $(shell source ../scripts/common.sh && build::common::get_go_path $(GOLANG_VERSION))
+GOLANG_VERSION?="1.21"
+GO_VERSION ?= $(shell source $(REPO_ROOT)/scripts/common.sh && build::common::get_go_path $(GOLANG_VERSION))
 GO ?= $(GO_VERSION)/go
 
 # Setting SHELL to bash allows bash commands to be executed by recipes.

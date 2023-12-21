@@ -24,7 +24,7 @@ import (
 	releasetypes "github.com/aws/eks-anywhere/release/cli/pkg/types"
 )
 
-func GetBottlerocketHostContainersBundle(r *releasetypes.ReleaseConfig, eksDReleaseChannel string, imageDigests map[string]string) (anywherev1alpha1.BottlerocketHostContainersBundle, error) {
+func GetBottlerocketHostContainersBundle(r *releasetypes.ReleaseConfig, eksDReleaseChannel string, imageDigests releasetypes.ImageDigestsTable) (anywherev1alpha1.BottlerocketHostContainersBundle, error) {
 	adminArtifact, err := bottlerocketDefaultArtifact(r, "BOTTLEROCKET_ADMIN_CONTAINER_METADATA", "bottlerocket-admin")
 	if err != nil {
 		return anywherev1alpha1.BottlerocketHostContainersBundle{}, errors.Cause(err)
@@ -35,10 +35,15 @@ func GetBottlerocketHostContainersBundle(r *releasetypes.ReleaseConfig, eksDRele
 		return anywherev1alpha1.BottlerocketHostContainersBundle{}, errors.Cause(err)
 	}
 
+	kubeadmBootstrapArtifact, err := bottlerocketKubeadmBootstrapArtifact(r, eksDReleaseChannel, imageDigests)
+	if err != nil {
+		return anywherev1alpha1.BottlerocketHostContainersBundle{}, errors.Cause(err)
+	}
+
 	bundle := anywherev1alpha1.BottlerocketHostContainersBundle{
 		Admin:            adminArtifact,
 		Control:          controlArtifact,
-		KubeadmBootstrap: bottlerocketKubeadmBootstrapArtifact(r, eksDReleaseChannel, imageDigests),
+		KubeadmBootstrap: kubeadmBootstrapArtifact,
 	}
 
 	return bundle, nil
@@ -61,23 +66,30 @@ func bottlerocketDefaultArtifact(r *releasetypes.ReleaseConfig, metadataFile, im
 	}, nil
 }
 
-func bottlerocketKubeadmBootstrapArtifact(r *releasetypes.ReleaseConfig, eksDReleaseChannel string, imageDigests map[string]string) anywherev1alpha1.Image {
-	artifacts := r.BundleArtifactsTable[fmt.Sprintf("bottlerocket-bootstrap-%s", eksDReleaseChannel)]
+func bottlerocketKubeadmBootstrapArtifact(r *releasetypes.ReleaseConfig, eksDReleaseChannel string, imageDigests releasetypes.ImageDigestsTable) (anywherev1alpha1.Image, error) {
+	bottlerocketBootstrapArtifacts, err := r.BundleArtifactsTable.Load(fmt.Sprintf("bottlerocket-bootstrap-%s", eksDReleaseChannel))
+	if err != nil {
+		return anywherev1alpha1.Image{}, fmt.Errorf("artifacts for project bottlerocket-bootstrap-%s not found in bundle artifacts table", eksDReleaseChannel)
+	}
 
 	bundleArtifacts := map[string]anywherev1alpha1.Image{}
 
-	for _, artifact := range artifacts {
+	for _, artifact := range bottlerocketBootstrapArtifacts {
 		imageArtifact := artifact.Image
+		imageDigest, err := imageDigests.Load(imageArtifact.ReleaseImageURI)
+		if err != nil {
+			return anywherev1alpha1.Image{}, fmt.Errorf("loading digest from image digests table: %v", err)
+		}
 		bottlerocketBootstrapImage := anywherev1alpha1.Image{
 			Name:        imageArtifact.AssetName,
 			Description: fmt.Sprintf("Container image for %s image", imageArtifact.AssetName),
 			OS:          imageArtifact.OS,
 			Arch:        imageArtifact.Arch,
 			URI:         imageArtifact.ReleaseImageURI,
-			ImageDigest: imageDigests[imageArtifact.ReleaseImageURI],
+			ImageDigest: imageDigest,
 		}
 		bundleArtifacts[imageArtifact.AssetName] = bottlerocketBootstrapImage
 	}
 
-	return bundleArtifacts["bottlerocket-bootstrap"]
+	return bundleArtifacts["bottlerocket-bootstrap"], nil
 }

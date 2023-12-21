@@ -16,6 +16,7 @@ package bundles
 
 import (
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -26,7 +27,6 @@ import (
 	"github.com/aws/eks-anywhere/release/cli/pkg/constants"
 	"github.com/aws/eks-anywhere/release/cli/pkg/filereader"
 	releasetypes "github.com/aws/eks-anywhere/release/cli/pkg/types"
-	sliceutils "github.com/aws/eks-anywhere/release/cli/pkg/util/slices"
 )
 
 // NewBundlesName provides a strict format for bundle names, which is validated against in the Cluster webhook
@@ -53,7 +53,7 @@ func NewBaseBundles(r *releasetypes.ReleaseConfig) *anywherev1alpha1.Bundles {
 
 // GetVersionsBundles will build the entire bundle manifest from the
 // individual component bundles.
-func GetVersionsBundles(r *releasetypes.ReleaseConfig, imageDigests map[string]string) ([]anywherev1alpha1.VersionsBundle, error) {
+func GetVersionsBundles(r *releasetypes.ReleaseConfig, imageDigests releasetypes.ImageDigestsTable) ([]anywherev1alpha1.VersionsBundle, error) {
 	versionsBundles := []anywherev1alpha1.VersionsBundle{}
 
 	certManagerBundle, err := GetCertManagerBundle(r, imageDigests)
@@ -153,7 +153,7 @@ func GetVersionsBundles(r *releasetypes.ReleaseConfig, imageDigests map[string]s
 		kubeVersion := release.KubeVersion
 		shortKubeVersion := strings.Join(strings.SplitN(kubeVersion[1:], ".", 3)[:2], ".")
 
-		if !sliceutils.SliceContains(supportedK8sVersions, channel) {
+		if !slices.Contains(supportedK8sVersions, channel) {
 			continue
 		}
 

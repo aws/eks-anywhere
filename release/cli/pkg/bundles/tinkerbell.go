@@ -27,18 +27,15 @@ import (
 	"github.com/aws/eks-anywhere/release/cli/pkg/version"
 )
 
-func GetTinkerbellBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]string) (anywherev1alpha1.TinkerbellBundle, error) {
-	tinkerbellBundleArtifacts := map[string][]releasetypes.Artifact{
-		"cluster-api-provider-tinkerbell": r.BundleArtifactsTable["cluster-api-provider-tinkerbell"],
-		"kube-vip":                        r.BundleArtifactsTable["kube-vip"],
-		"envoy":                           r.BundleArtifactsTable["envoy"],
-		"tink":                            r.BundleArtifactsTable["tink"],
-		"hegel":                           r.BundleArtifactsTable["hegel"],
-		"boots":                           r.BundleArtifactsTable["boots"],
-		"hub":                             r.BundleArtifactsTable["hub"],
-		"hook":                            r.BundleArtifactsTable["hook"],
-		"rufio":                           r.BundleArtifactsTable["rufio"],
-		"tinkerbell-chart":                r.BundleArtifactsTable["tinkerbell-chart"],
+func GetTinkerbellBundle(r *releasetypes.ReleaseConfig, imageDigests releasetypes.ImageDigestsTable) (anywherev1alpha1.TinkerbellBundle, error) {
+	projectsInBundle := []string{"cluster-api-provider-tinkerbell", "kube-vip", "envoy", "tink", "hegel", "boots", "hub", "hook", "rufio", "tinkerbell-chart"}
+	tinkerbellBundleArtifacts := map[string][]releasetypes.Artifact{}
+	for _, project := range projectsInBundle {
+		projectArtifacts, err := r.BundleArtifactsTable.Load(project)
+		if err != nil {
+			return anywherev1alpha1.TinkerbellBundle{}, fmt.Errorf("artifacts for project %s not found in bundle artifacts table", project)
+		}
+		tinkerbellBundleArtifacts[project] = projectArtifacts
 	}
 	sortedComponentNames := bundleutils.SortArtifactsMap(tinkerbellBundleArtifacts)
 
@@ -57,12 +54,16 @@ func GetTinkerbellBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]
 				if componentName == "cluster-api-provider-tinkerbell" {
 					sourceBranch = imageArtifact.SourcedFromBranch
 				}
+				imageDigest, err := imageDigests.Load(imageArtifact.ReleaseImageURI)
+				if err != nil {
+					return anywherev1alpha1.TinkerbellBundle{}, fmt.Errorf("loading digest from image digests table: %v", err)
+				}
 				if strings.HasSuffix(imageArtifact.AssetName, "chart") {
 					bundleImageArtifact = anywherev1alpha1.Image{
 						Name:        imageArtifact.AssetName,
 						Description: fmt.Sprintf("Helm chart for %s", imageArtifact.AssetName),
 						URI:         imageArtifact.ReleaseImageURI,
-						ImageDigest: imageDigests[imageArtifact.ReleaseImageURI],
+						ImageDigest: imageDigest,
 					}
 				} else {
 					bundleImageArtifact = anywherev1alpha1.Image{
@@ -71,7 +72,7 @@ func GetTinkerbellBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]
 						OS:          imageArtifact.OS,
 						Arch:        imageArtifact.Arch,
 						URI:         imageArtifact.ReleaseImageURI,
-						ImageDigest: imageDigests[imageArtifact.ReleaseImageURI],
+						ImageDigest: imageDigest,
 					}
 				}
 				bundleImageArtifacts[imageArtifact.AssetName] = bundleImageArtifact
