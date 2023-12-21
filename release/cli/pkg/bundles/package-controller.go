@@ -17,7 +17,6 @@ package bundles
 import (
 	"fmt"
 	"strings"
-	"sync"
 
 	"github.com/pkg/errors"
 
@@ -32,15 +31,15 @@ import (
 	"github.com/aws/eks-anywhere/release/cli/pkg/version"
 )
 
-func GetPackagesBundle(r *releasetypes.ReleaseConfig, imageDigests sync.Map) (anywherev1alpha1.PackageBundle, error) {
+func GetPackagesBundle(r *releasetypes.ReleaseConfig, imageDigests releasetypes.ImageDigestsTable) (anywherev1alpha1.PackageBundle, error) {
 	projectsInBundle := []string{"eks-anywhere-packages"}
 	packagesArtifacts := map[string][]releasetypes.Artifact{}
 	for _, project := range projectsInBundle {
-		projectArtifacts, ok := r.BundleArtifactsTable.Load(project)
-		if !ok {
+		projectArtifacts, err := r.BundleArtifactsTable.Load(project)
+		if err != nil {
 			return anywherev1alpha1.PackageBundle{}, fmt.Errorf("artifacts for project %s not found in bundle artifacts table", project)
 		}
-		packagesArtifacts[project] = projectArtifacts.([]releasetypes.Artifact)
+		packagesArtifacts[project] = projectArtifacts
 	}
 	sortedComponentNames := bundleutils.SortArtifactsMap(packagesArtifacts)
 
@@ -98,9 +97,9 @@ func GetPackagesBundle(r *releasetypes.ReleaseConfig, imageDigests sync.Map) (an
 				sourceBranch = imageArtifact.SourcedFromBranch
 				bundleImageArtifact := anywherev1alpha1.Image{}
 				if strings.HasSuffix(imageArtifact.AssetName, "helm") {
-					imageDigest, ok := imageDigests.Load(imageArtifact.ReleaseImageURI)
-					if !ok {
-						return anywherev1alpha1.PackageBundle{}, fmt.Errorf("digest for image %s not found in image digests table", imageArtifact.ReleaseImageURI)
+					imageDigest, err := imageDigests.Load(imageArtifact.ReleaseImageURI)
+					if err != nil {
+						return anywherev1alpha1.PackageBundle{}, fmt.Errorf("loading digest from image digests table: %v", err)
 					}
 					if r.DevRelease && Helmsha != "" && Helmtag != "" {
 						imageDigest = Helmsha
@@ -111,12 +110,12 @@ func GetPackagesBundle(r *releasetypes.ReleaseConfig, imageDigests sync.Map) (an
 						Name:        assetName,
 						Description: fmt.Sprintf("Helm chart for %s", assetName),
 						URI:         imageArtifact.ReleaseImageURI,
-						ImageDigest: imageDigest.(string),
+						ImageDigest: imageDigest,
 					}
 				} else {
-					imageDigest, ok := imageDigests.Load(imageArtifact.ReleaseImageURI)
-					if !ok {
-						return anywherev1alpha1.PackageBundle{}, fmt.Errorf("digest for image %s not found in image digests table", imageArtifact.ReleaseImageURI)
+					imageDigest, err := imageDigests.Load(imageArtifact.ReleaseImageURI)
+					if err != nil {
+						return anywherev1alpha1.PackageBundle{}, fmt.Errorf("loading digest from image digests table: %v", err)
 					}
 					if strings.HasSuffix(imageArtifact.AssetName, "eks-anywhere-packages") && r.DevRelease && TokenSha != "" && Tokentag != "" {
 						imageDigest = Imagesha
@@ -131,7 +130,7 @@ func GetPackagesBundle(r *releasetypes.ReleaseConfig, imageDigests sync.Map) (an
 						OS:          imageArtifact.OS,
 						Arch:        imageArtifact.Arch,
 						URI:         imageArtifact.ReleaseImageURI,
-						ImageDigest: imageDigest.(string),
+						ImageDigest: imageDigest,
 					}
 				}
 				bundleImageArtifacts[imageArtifact.AssetName] = bundleImageArtifact

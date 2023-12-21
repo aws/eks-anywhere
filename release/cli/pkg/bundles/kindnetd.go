@@ -26,8 +26,8 @@ import (
 )
 
 func GetKindnetdBundle(r *releasetypes.ReleaseConfig) (anywherev1alpha1.KindnetdBundle, error) {
-	kindnetdArtifacts, ok := r.BundleArtifactsTable.Load("kindnetd")
-	if !ok {
+	kindnetdArtifacts, err := r.BundleArtifactsTable.Load("kindnetd")
+	if err != nil {
 		return anywherev1alpha1.KindnetdBundle{}, fmt.Errorf("artifacts for project kindnetd not found in bundle artifacts table")
 	}
 
@@ -36,7 +36,7 @@ func GetKindnetdBundle(r *releasetypes.ReleaseConfig) (anywherev1alpha1.Kindnetd
 	bundleManifestArtifacts := map[string]anywherev1alpha1.Manifest{}
 	artifactHashes := []string{}
 
-	for _, artifact := range kindnetdArtifacts.([]releasetypes.Artifact) {
+	for _, artifact := range kindnetdArtifacts {
 		if artifact.Manifest != nil {
 			manifestArtifact := artifact.Manifest
 			sourceBranch = manifestArtifact.SourcedFromBranch

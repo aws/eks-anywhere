@@ -19,7 +19,6 @@ import (
 	"fmt"
 	"path/filepath"
 	"strings"
-	"sync"
 
 	"github.com/aws/aws-sdk-go/aws"
 	docker "github.com/fsouza/go-dockerclient"
@@ -33,7 +32,7 @@ import (
 	releasetypes "github.com/aws/eks-anywhere/release/cli/pkg/types"
 )
 
-func UploadArtifacts(ctx context.Context, r *releasetypes.ReleaseConfig, eksaArtifacts sync.Map) error {
+func UploadArtifacts(ctx context.Context, r *releasetypes.ReleaseConfig, eksaArtifacts releasetypes.ArtifactsTable) error {
 	fmt.Println("\n==========================================================")
 	fmt.Println("                  Artifacts Upload")
 	fmt.Println("==========================================================")
@@ -50,11 +49,11 @@ func UploadArtifacts(ctx context.Context, r *releasetypes.ReleaseConfig, eksaArt
 	projectsInBundle := []string{"eks-anywhere-packages"}
 	packagesArtifacts := map[string][]releasetypes.Artifact{}
 	for _, project := range projectsInBundle {
-		projectArtifacts, ok := r.BundleArtifactsTable.Load(project)
-		if !ok {
+		projectArtifacts, err := r.BundleArtifactsTable.Load(project)
+		if err != nil {
 			return fmt.Errorf("artifacts for project %s not found in bundle artifacts table", project)
 		}
-		packagesArtifacts[project] = projectArtifacts.([]releasetypes.Artifact)
+		packagesArtifacts[project] = projectArtifacts
 	}
 
 	eksaArtifacts.Range(func(k, v interface{}) bool {

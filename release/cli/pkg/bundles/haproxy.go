@@ -16,25 +16,24 @@ package bundles
 
 import (
 	"fmt"
-	"sync"
 
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 	releasetypes "github.com/aws/eks-anywhere/release/cli/pkg/types"
 )
 
-func GetHaproxyBundle(r *releasetypes.ReleaseConfig, imageDigests sync.Map) (anywherev1alpha1.HaproxyBundle, error) {
-	haproxyArtifacts, ok := r.BundleArtifactsTable.Load("haproxy")
-	if !ok {
+func GetHaproxyBundle(r *releasetypes.ReleaseConfig, imageDigests releasetypes.ImageDigestsTable) (anywherev1alpha1.HaproxyBundle, error) {
+	haproxyArtifacts, err := r.BundleArtifactsTable.Load("haproxy")
+	if err != nil {
 		return anywherev1alpha1.HaproxyBundle{}, fmt.Errorf("artifacts for project haproxy not found in bundle artifacts table")
 	}
 
 	bundleArtifacts := map[string]anywherev1alpha1.Image{}
 
-	for _, artifact := range haproxyArtifacts.([]releasetypes.Artifact) {
+	for _, artifact := range haproxyArtifacts {
 		imageArtifact := artifact.Image
-		imageDigest, ok := imageDigests.Load(imageArtifact.ReleaseImageURI)
-		if !ok {
-			return anywherev1alpha1.HaproxyBundle{}, fmt.Errorf("digest for image %s not found in image digests table", imageArtifact.ReleaseImageURI)
+		imageDigest, err := imageDigests.Load(imageArtifact.ReleaseImageURI)
+		if err != nil {
+			return anywherev1alpha1.HaproxyBundle{}, fmt.Errorf("loading digest from image digests table: %v", err)
 		}
 		bundleImageArtifact := anywherev1alpha1.Image{
 			Name:        imageArtifact.AssetName,
@@ -42,7 +41,7 @@ func GetHaproxyBundle(r *releasetypes.ReleaseConfig, imageDigests sync.Map) (any
 			OS:          imageArtifact.OS,
 			Arch:        imageArtifact.Arch,
 			URI:         imageArtifact.ReleaseImageURI,
-			ImageDigest: imageDigest.(string),
+			ImageDigest: imageDigest,
 		}
 		bundleArtifacts[imageArtifact.AssetName] = bundleImageArtifact
 	}

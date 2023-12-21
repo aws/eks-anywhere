@@ -16,7 +16,6 @@ package bundles
 
 import (
 	"fmt"
-	"sync"
 
 	"github.com/pkg/errors"
 
@@ -26,15 +25,15 @@ import (
 	"github.com/aws/eks-anywhere/release/cli/pkg/version"
 )
 
-func GetCloudStackBundle(r *releasetypes.ReleaseConfig, imageDigests sync.Map) (anywherev1alpha1.CloudStackBundle, error) {
+func GetCloudStackBundle(r *releasetypes.ReleaseConfig, imageDigests releasetypes.ImageDigestsTable) (anywherev1alpha1.CloudStackBundle, error) {
 	projectsInBundle := []string{"cluster-api-provider-cloudstack", "kube-vip", "kube-rbac-proxy"}
 	cloudstackBundleArtifacts := map[string][]releasetypes.Artifact{}
 	for _, project := range projectsInBundle {
-		projectArtifacts, ok := r.BundleArtifactsTable.Load(project)
-		if !ok {
+		projectArtifacts, err := r.BundleArtifactsTable.Load(project)
+		if err != nil {
 			return anywherev1alpha1.CloudStackBundle{}, fmt.Errorf("artifacts for project %s not found in bundle artifacts table", project)
 		}
-		cloudstackBundleArtifacts[project] = projectArtifacts.([]releasetypes.Artifact)
+		cloudstackBundleArtifacts[project] = projectArtifacts
 	}
 
 	var sourceBranch string
@@ -49,9 +48,9 @@ func GetCloudStackBundle(r *releasetypes.ReleaseConfig, imageDigests sync.Map) (
 				if componentName == "cluster-api-provider-cloudstack" {
 					sourceBranch = imageArtifact.SourcedFromBranch
 				}
-				imageDigest, ok := imageDigests.Load(imageArtifact.ReleaseImageURI)
-				if !ok {
-					return anywherev1alpha1.CloudStackBundle{}, fmt.Errorf("digest for image %s not found in image digests table", imageArtifact.ReleaseImageURI)
+				imageDigest, err := imageDigests.Load(imageArtifact.ReleaseImageURI)
+				if err != nil {
+					return anywherev1alpha1.CloudStackBundle{}, fmt.Errorf("loading digest from image digests table: %v", err)
 				}
 				bundleImageArtifact := anywherev1alpha1.Image{
 					Name:        imageArtifact.AssetName,
@@ -59,7 +58,7 @@ func GetCloudStackBundle(r *releasetypes.ReleaseConfig, imageDigests sync.Map) (
 					OS:          imageArtifact.OS,
 					Arch:        imageArtifact.Arch,
 					URI:         imageArtifact.ReleaseImageURI,
-					ImageDigest: imageDigest.(string),
+					ImageDigest: imageDigest,
 				}
 				bundleImageArtifacts[imageArtifact.AssetName] = bundleImageArtifact
 				artifactHashes = append(artifactHashes, bundleImageArtifact.ImageDigest)

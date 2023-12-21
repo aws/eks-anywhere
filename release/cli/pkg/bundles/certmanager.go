@@ -16,7 +16,6 @@ package bundles
 
 import (
 	"fmt"
-	"sync"
 
 	"github.com/pkg/errors"
 
@@ -26,9 +25,9 @@ import (
 	"github.com/aws/eks-anywhere/release/cli/pkg/version"
 )
 
-func GetCertManagerBundle(r *releasetypes.ReleaseConfig, imageDigests sync.Map) (anywherev1alpha1.CertManagerBundle, error) {
-	certManagerArtifacts, ok := r.BundleArtifactsTable.Load("cert-manager")
-	if !ok {
+func GetCertManagerBundle(r *releasetypes.ReleaseConfig, imageDigests releasetypes.ImageDigestsTable) (anywherev1alpha1.CertManagerBundle, error) {
+	certManagerArtifacts, err := r.BundleArtifactsTable.Load("cert-manager")
+	if err != nil {
 		return anywherev1alpha1.CertManagerBundle{}, fmt.Errorf("artifacts for project cert-manager not found in bundle artifacts table")
 	}
 
@@ -38,13 +37,13 @@ func GetCertManagerBundle(r *releasetypes.ReleaseConfig, imageDigests sync.Map) 
 	bundleManifestArtifacts := map[string]anywherev1alpha1.Manifest{}
 	artifactHashes := []string{}
 
-	for _, artifact := range certManagerArtifacts.([]releasetypes.Artifact) {
+	for _, artifact := range certManagerArtifacts {
 		if artifact.Image != nil {
 			imageArtifact := artifact.Image
 			sourceBranch = imageArtifact.SourcedFromBranch
-			imageDigest, ok := imageDigests.Load(imageArtifact.ReleaseImageURI)
-			if !ok {
-				return anywherev1alpha1.CertManagerBundle{}, fmt.Errorf("digest for image %s not found in image digests table", imageArtifact.ReleaseImageURI)
+			imageDigest, err := imageDigests.Load(imageArtifact.ReleaseImageURI)
+			if err != nil {
+				return anywherev1alpha1.CertManagerBundle{}, fmt.Errorf("loading digest from image digests table: %v", err)
 			}
 			bundleArtifact := anywherev1alpha1.Image{
 				Name:        imageArtifact.AssetName,
@@ -52,7 +51,7 @@ func GetCertManagerBundle(r *releasetypes.ReleaseConfig, imageDigests sync.Map) 
 				OS:          imageArtifact.OS,
 				Arch:        imageArtifact.Arch,
 				URI:         imageArtifact.ReleaseImageURI,
-				ImageDigest: imageDigest.(string),
+				ImageDigest: imageDigest,
 			}
 
 			bundleImageArtifacts[imageArtifact.AssetName] = bundleArtifact

@@ -17,7 +17,6 @@ package operations
 import (
 	"context"
 	"fmt"
-	"sync"
 
 	"github.com/pkg/errors"
 
@@ -26,15 +25,15 @@ import (
 	releasetypes "github.com/aws/eks-anywhere/release/cli/pkg/types"
 )
 
-func GenerateEksAArtifactsTable(r *releasetypes.ReleaseConfig) (sync.Map, error) {
+func GenerateEksAArtifactsTable(r *releasetypes.ReleaseConfig) (releasetypes.ArtifactsTable, error) {
 	fmt.Println("\n==========================================================")
 	fmt.Println("                 EKS-A Artifacts Table Generation")
 	fmt.Println("==========================================================")
 
-	var artifactsTable sync.Map
+	var artifactsTable releasetypes.ArtifactsTable
 	artifacts, err := bundles.GetEksACliArtifacts(r)
 	if err != nil {
-		return sync.Map{}, errors.Wrapf(err, "Error getting artifact information for EKS-A CLI")
+		return releasetypes.ArtifactsTable{}, errors.Wrapf(err, "Error getting artifact information for EKS-A CLI")
 	}
 
 	artifactsTable.Store("eks-a-cli", artifacts)

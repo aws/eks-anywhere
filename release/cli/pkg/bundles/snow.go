@@ -16,7 +16,6 @@ package bundles
 
 import (
 	"fmt"
-	"sync"
 
 	"github.com/pkg/errors"
 
@@ -27,21 +26,21 @@ import (
 	"github.com/aws/eks-anywhere/release/cli/pkg/version"
 )
 
-func GetSnowBundle(r *releasetypes.ReleaseConfig, eksDReleaseChannel string, imageDigests sync.Map) (anywherev1alpha1.SnowBundle, error) {
+func GetSnowBundle(r *releasetypes.ReleaseConfig, eksDReleaseChannel string, imageDigests releasetypes.ImageDigestsTable) (anywherev1alpha1.SnowBundle, error) {
 	projectsInBundle := []string{"cluster-api-provider-aws-snow", "kube-rbac-proxy", "kube-vip"}
 	snowBundleArtifacts := map[string][]releasetypes.Artifact{}
 	for _, project := range projectsInBundle {
-		projectArtifacts, ok := r.BundleArtifactsTable.Load(project)
-		if !ok {
+		projectArtifacts, err := r.BundleArtifactsTable.Load(project)
+		if err != nil {
 			return anywherev1alpha1.SnowBundle{}, fmt.Errorf("artifacts for project %s not found in bundle artifacts table", project)
 		}
-		snowBundleArtifacts[project] = projectArtifacts.([]releasetypes.Artifact)
+		snowBundleArtifacts[project] = projectArtifacts
 	}
-	bottlerocketBootstrapSnowArtifacts, ok := r.BundleArtifactsTable.Load(fmt.Sprintf("bottlerocket-bootstrap-%s", eksDReleaseChannel))
-	if !ok {
+	bottlerocketBootstrapSnowArtifacts, err := r.BundleArtifactsTable.Load(fmt.Sprintf("bottlerocket-bootstrap-%s", eksDReleaseChannel))
+	if err != nil {
 		return anywherev1alpha1.SnowBundle{}, fmt.Errorf("artifacts for project bottlerocket-bootstrap-%s not found in bundle artifacts table", eksDReleaseChannel)
 	}
-	snowBundleArtifacts["bottlerocket-bootstrap-snow"] = bottlerocketBootstrapSnowArtifacts.([]releasetypes.Artifact)
+	snowBundleArtifacts["bottlerocket-bootstrap-snow"] = bottlerocketBootstrapSnowArtifacts
 
 	sortedComponentNames := bundleutils.SortArtifactsMap(snowBundleArtifacts)
 
@@ -55,9 +54,9 @@ func GetSnowBundle(r *releasetypes.ReleaseConfig, eksDReleaseChannel string, ima
 		for _, artifact := range snowBundleArtifacts[componentName] {
 			if artifact.Image != nil {
 				imageArtifact := artifact.Image
-				imageDigest, ok := imageDigests.Load(imageArtifact.ReleaseImageURI)
-				if !ok {
-					return anywherev1alpha1.SnowBundle{}, fmt.Errorf("digest for image %s not found in image digests table", imageArtifact.ReleaseImageURI)
+				imageDigest, err := imageDigests.Load(imageArtifact.ReleaseImageURI)
+				if err != nil {
+					return anywherev1alpha1.SnowBundle{}, fmt.Errorf("loading digest from image digests table: %v", err)
 				}
 				bundleImageArtifact := anywherev1alpha1.Image{
 					Name:        imageArtifact.AssetName,
@@ -65,7 +64,7 @@ func GetSnowBundle(r *releasetypes.ReleaseConfig, eksDReleaseChannel string, ima
 					OS:          imageArtifact.OS,
 					Arch:        imageArtifact.Arch,
 					URI:         imageArtifact.ReleaseImageURI,
-					ImageDigest: imageDigest.(string),
+					ImageDigest: imageDigest,
 				}
 				bundleImageArtifacts[imageArtifact.AssetName] = bundleImageArtifact
 				artifactHashes = append(artifactHashes, bundleImageArtifact.ImageDigest)

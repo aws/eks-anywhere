@@ -19,7 +19,6 @@ import (
 	"slices"
 	"strconv"
 	"strings"
-	"sync"
 
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -54,7 +53,7 @@ func NewBaseBundles(r *releasetypes.ReleaseConfig) *anywherev1alpha1.Bundles {
 
 // GetVersionsBundles will build the entire bundle manifest from the
 // individual component bundles.
-func GetVersionsBundles(r *releasetypes.ReleaseConfig, imageDigests sync.Map) ([]anywherev1alpha1.VersionsBundle, error) {
+func GetVersionsBundles(r *releasetypes.ReleaseConfig, imageDigests releasetypes.ImageDigestsTable) ([]anywherev1alpha1.VersionsBundle, error) {
 	versionsBundles := []anywherev1alpha1.VersionsBundle{}
 
 	certManagerBundle, err := GetCertManagerBundle(r, imageDigests)

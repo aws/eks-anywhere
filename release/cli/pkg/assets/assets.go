@@ -20,7 +20,6 @@ import (
 	"path/filepath"
 	"slices"
 	"strconv"
-	"sync"
 
 	"github.com/pkg/errors"
 	"golang.org/x/sync/errgroup"
@@ -100,8 +99,8 @@ func getAssetsFromConfig(_ context.Context, ac *assettypes.AssetConfig, rc *rele
 	return artifacts, nil
 }
 
-func GetBundleReleaseAssets(supportedK8sVersions []string, eksDReleaseMap *filereader.EksDLatestReleases, rc *releasetypes.ReleaseConfig) (sync.Map, error) {
-	var artifactsTable sync.Map
+func GetBundleReleaseAssets(supportedK8sVersions []string, eksDReleaseMap *filereader.EksDLatestReleases, rc *releasetypes.ReleaseConfig) (releasetypes.ArtifactsTable, error) {
+	var artifactsTable releasetypes.ArtifactsTable
 	assetConfigs := assetconfig.GetBundleReleaseAssetsConfigMap()
 	errGroup, ctx := errgroup.WithContext(context.Background())
 	for _, release := range eksDReleaseMap.Releases {
@@ -134,7 +133,7 @@ func GetBundleReleaseAssets(supportedK8sVersions []string, eksDReleaseMap *filer
 		}
 	}
 	if err := errGroup.Wait(); err != nil {
-		return sync.Map{}, fmt.Errorf("generating bundle artifacts table: %v", err)
+		return releasetypes.ArtifactsTable{}, fmt.Errorf("generating bundle artifacts table: %v", err)
 	}
 
 	return artifactsTable, nil

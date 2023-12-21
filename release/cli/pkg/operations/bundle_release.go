@@ -19,7 +19,6 @@ import (
 	"fmt"
 	"os/exec"
 	"strings"
-	"sync"
 
 	"github.com/pkg/errors"
 	"golang.org/x/sync/errgroup"
@@ -35,24 +34,24 @@ import (
 	commandutils "github.com/aws/eks-anywhere/release/cli/pkg/util/command"
 )
 
-func GenerateBundleArtifactsTable(r *releasetypes.ReleaseConfig) (sync.Map, error) {
+func GenerateBundleArtifactsTable(r *releasetypes.ReleaseConfig) (releasetypes.ArtifactsTable, error) {
 	fmt.Println("\n==========================================================")
 	fmt.Println("              Bundle Artifacts Table Generation")
 	fmt.Println("==========================================================")
 
 	eksDReleaseMap, err := filereader.ReadEksDReleases(r)
 	if err != nil {
-		return sync.Map{}, err
+		return releasetypes.ArtifactsTable{}, err
 	}
 
 	supportedK8sVersions, err := filereader.GetSupportedK8sVersions(r)
 	if err != nil {
-		return sync.Map{}, errors.Wrapf(err, "Error getting supported Kubernetes versions for bottlerocket")
+		return releasetypes.ArtifactsTable{}, errors.Wrapf(err, "Error getting supported Kubernetes versions for bottlerocket")
 	}
 
 	artifactsTable, err := assets.GetBundleReleaseAssets(supportedK8sVersions, eksDReleaseMap, r)
 	if err != nil {
-		return sync.Map{}, errors.Wrapf(err, "Error getting bundle release assets")
+		return releasetypes.ArtifactsTable{}, errors.Wrapf(err, "Error getting bundle release assets")
 	}
 
 	fmt.Printf("%s Successfully generated bundle artifacts table\n", constants.SuccessIcon)
@@ -82,11 +81,11 @@ func BundleArtifactsRelease(r *releasetypes.ReleaseConfig) error {
 	return nil
 }
 
-func GenerateImageDigestsTable(ctx context.Context, r *releasetypes.ReleaseConfig) (sync.Map, error) {
+func GenerateImageDigestsTable(ctx context.Context, r *releasetypes.ReleaseConfig) (releasetypes.ImageDigestsTable, error) {
 	fmt.Println("\n==========================================================")
 	fmt.Println("                 Image Digests Table Generation")
 	fmt.Println("==========================================================")
-	var imageDigests sync.Map
+	var imageDigests releasetypes.ImageDigestsTable
 
 	errGroup, ctx := errgroup.WithContext(ctx)
 	r.BundleArtifactsTable.Range(func(k, v interface{}) bool {
@@ -109,14 +108,14 @@ func GenerateImageDigestsTable(ctx context.Context, r *releasetypes.ReleaseConfi
 		return true
 	})
 	if err := errGroup.Wait(); err != nil {
-		return sync.Map{}, fmt.Errorf("generating image digests table: %v", err)
+		return releasetypes.ImageDigestsTable{}, fmt.Errorf("generating image digests table: %v", err)
 	}
 	fmt.Printf("%s Successfully generated image digests table\n", constants.SuccessIcon)
 
 	return imageDigests, nil
 }
 
-func SignImagesNotation(r *releasetypes.ReleaseConfig, imageDigests sync.Map) error {
+func SignImagesNotation(r *releasetypes.ReleaseConfig, imageDigests releasetypes.ImageDigestsTable) error {
 	if r.DryRun {
 		fmt.Println("Skipping image signing in dry-run mode")
 		return nil
@@ -148,16 +147,17 @@ func SignImagesNotation(r *releasetypes.ReleaseConfig, imageDigests sync.Map) er
 			rangeErr = nil
 			fmt.Printf("skipping the image signing for image %s since it has already been signed", fmt.Sprintf("%s@%s", image, digest))
 		}
-
 		return true
 	})
+
 	return rangeErr
 }
 
-func GenerateBundleSpec(r *releasetypes.ReleaseConfig, bundle *anywherev1alpha1.Bundles, imageDigests sync.Map) error {
+func GenerateBundleSpec(r *releasetypes.ReleaseConfig, bundle *anywherev1alpha1.Bundles, imageDigests releasetypes.ImageDigestsTable) error {
 	fmt.Println("\n==========================================================")
 	fmt.Println("               Bundles Manifest Spec Generation")
 	fmt.Println("==========================================================")
+
 	versionsBundles, err := bundles.GetVersionsBundles(r, imageDigests)
 	if err != nil {
 		return err

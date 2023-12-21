@@ -19,7 +19,6 @@ import (
 	"fmt"
 	"path/filepath"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/pkg/errors"
@@ -33,7 +32,7 @@ import (
 	artifactutils "github.com/aws/eks-anywhere/release/cli/pkg/util/artifacts"
 )
 
-func DownloadArtifacts(ctx context.Context, r *releasetypes.ReleaseConfig, eksaArtifacts sync.Map) error {
+func DownloadArtifacts(ctx context.Context, r *releasetypes.ReleaseConfig, eksaArtifacts releasetypes.ArtifactsTable) error {
 	// Retrier for downloading source S3 objects. This retrier has a max timeout of 60 minutes. It
 	// checks whether the error occured during download is an ObjectNotFound error and retries the
 	// download operation for a maximum of 60 retries, with a wait time of 30 seconds per retry.

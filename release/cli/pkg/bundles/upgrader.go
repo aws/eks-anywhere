@@ -16,25 +16,24 @@ package bundles
 
 import (
 	"fmt"
-	"sync"
 
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 	releasetypes "github.com/aws/eks-anywhere/release/cli/pkg/types"
 )
 
-func GetUpgraderBundle(r *releasetypes.ReleaseConfig, eksDReleaseChannel string, imageDigests sync.Map) (anywherev1alpha1.UpgraderBundle, error) {
-	upgraderArtifacts, ok := r.BundleArtifactsTable.Load(fmt.Sprintf("upgrader-%s", eksDReleaseChannel))
-	if !ok {
+func GetUpgraderBundle(r *releasetypes.ReleaseConfig, eksDReleaseChannel string, imageDigests releasetypes.ImageDigestsTable) (anywherev1alpha1.UpgraderBundle, error) {
+	upgraderArtifacts, err := r.BundleArtifactsTable.Load(fmt.Sprintf("upgrader-%s", eksDReleaseChannel))
+	if err != nil {
 		return anywherev1alpha1.UpgraderBundle{}, fmt.Errorf("artifacts for project upgrader-%s not found in bundle artifacts table", eksDReleaseChannel)
 	}
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
 
-	for _, artifact := range upgraderArtifacts.([]releasetypes.Artifact) {
+	for _, artifact := range upgraderArtifacts {
 		if artifact.Image != nil {
 			imageArtifact := artifact.Image
-			imageDigest, ok := imageDigests.Load(imageArtifact.ReleaseImageURI)
-			if !ok {
-				return anywherev1alpha1.UpgraderBundle{}, fmt.Errorf("digest for image %s not found in image digests table", imageArtifact.ReleaseImageURI)
+			imageDigest, err := imageDigests.Load(imageArtifact.ReleaseImageURI)
+			if err != nil {
+				return anywherev1alpha1.UpgraderBundle{}, fmt.Errorf("loading digest from image digests table: %v", err)
 			}
 			bundleImageArtifact := anywherev1alpha1.Image{
 				Name:        imageArtifact.AssetName,
@@ -42,7 +41,7 @@ func GetUpgraderBundle(r *releasetypes.ReleaseConfig, eksDReleaseChannel string,
 				OS:          imageArtifact.OS,
 				Arch:        imageArtifact.Arch,
 				URI:         imageArtifact.ReleaseImageURI,
-				ImageDigest: imageDigest.(string),
+				ImageDigest: imageDigest,
 			}
 			bundleImageArtifacts[imageArtifact.AssetName] = bundleImageArtifact
 		}

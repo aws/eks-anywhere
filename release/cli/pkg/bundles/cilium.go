@@ -37,8 +37,8 @@ const (
 )
 
 func GetCiliumBundle(r *releasetypes.ReleaseConfig) (anywherev1alpha1.CiliumBundle, error) {
-	ciliumArtifacts, ok := r.BundleArtifactsTable.Load("cilium")
-	if !ok {
+	ciliumArtifacts, err := r.BundleArtifactsTable.Load("cilium")
+	if err != nil {
 		return anywherev1alpha1.CiliumBundle{}, fmt.Errorf("artifacts for project cilium not found in bundle artifacts table")
 	}
 
@@ -67,7 +67,7 @@ func GetCiliumBundle(r *releasetypes.ReleaseConfig) (anywherev1alpha1.CiliumBund
 		bundleImageArtifacts[imageDef.name] = imageDef.builder(imageDigest)
 	}
 
-	for _, artifact := range ciliumArtifacts.([]releasetypes.Artifact) {
+	for _, artifact := range ciliumArtifacts {
 		if artifact.Manifest != nil {
 			manifestArtifact := artifact.Manifest
 			bundleManifestArtifact := anywherev1alpha1.Manifest{

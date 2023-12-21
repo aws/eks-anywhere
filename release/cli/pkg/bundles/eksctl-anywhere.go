@@ -88,8 +88,8 @@ func GetEksARelease(r *releasetypes.ReleaseConfig) (anywherev1alpha1.EksARelease
 	fmt.Println("               EKS-A Release Spec Generation")
 	fmt.Println("==========================================================")
 
-	eksaCliArtifacts, ok := r.EksAArtifactsTable.Load("eks-a-cli")
-	if !ok {
+	eksaCliArtifacts, err := r.EksAArtifactsTable.Load("eks-a-cli")
+	if err != nil {
 		return anywherev1alpha1.EksARelease{}, fmt.Errorf("artifacts for project eks-a-cli not found in eks-a artifacts table")
 	}
 
@@ -100,7 +100,7 @@ func GetEksARelease(r *releasetypes.ReleaseConfig) (anywherev1alpha1.EksARelease
 	}
 	bundleArchiveArtifacts := map[string]anywherev1alpha1.Archive{}
 
-	for _, artifact := range eksaCliArtifacts.([]releasetypes.Artifact) {
+	for _, artifact := range eksaCliArtifacts {
 		archiveArtifact := artifact.Archive
 
 		tarfile := filepath.Join(archiveArtifact.ArtifactPath, archiveArtifact.ReleaseName)

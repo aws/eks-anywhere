@@ -20,7 +20,6 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
-	"sync"
 
 	"github.com/pkg/errors"
 	"golang.org/x/sync/errgroup"
@@ -29,7 +28,7 @@ import (
 	releasetypes "github.com/aws/eks-anywhere/release/cli/pkg/types"
 )
 
-func RenameArtifacts(ctx context.Context, r *releasetypes.ReleaseConfig, eksaArtifacts sync.Map) error {
+func RenameArtifacts(ctx context.Context, r *releasetypes.ReleaseConfig, eksaArtifacts releasetypes.ArtifactsTable) error {
 	fmt.Println("\n==========================================================")
 	fmt.Println("                    Artifacts Rename")
 	fmt.Println("==========================================================")

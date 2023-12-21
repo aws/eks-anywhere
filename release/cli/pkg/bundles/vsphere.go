@@ -16,7 +16,6 @@ package bundles
 
 import (
 	"fmt"
-	"sync"
 
 	"github.com/pkg/errors"
 
@@ -27,21 +26,21 @@ import (
 	"github.com/aws/eks-anywhere/release/cli/pkg/version"
 )
 
-func GetVsphereBundle(r *releasetypes.ReleaseConfig, eksDReleaseChannel string, imageDigests sync.Map) (anywherev1alpha1.VSphereBundle, error) {
+func GetVsphereBundle(r *releasetypes.ReleaseConfig, eksDReleaseChannel string, imageDigests releasetypes.ImageDigestsTable) (anywherev1alpha1.VSphereBundle, error) {
 	projectsInBundle := []string{"cluster-api-provider-vsphere", "kube-rbac-proxy", "kube-vip"}
 	vsphereBundleArtifacts := map[string][]releasetypes.Artifact{}
 	for _, project := range projectsInBundle {
-		projectArtifacts, ok := r.BundleArtifactsTable.Load(project)
-		if !ok {
+		projectArtifacts, err := r.BundleArtifactsTable.Load(project)
+		if err != nil {
 			return anywherev1alpha1.VSphereBundle{}, fmt.Errorf("artifacts for project %s not found in bundle artifacts table", project)
 		}
-		vsphereBundleArtifacts[project] = projectArtifacts.([]releasetypes.Artifact)
+		vsphereBundleArtifacts[project] = projectArtifacts
 	}
-	vSphereCloudProviderArtifacts, ok := r.BundleArtifactsTable.Load(fmt.Sprintf("cloud-provider-vsphere-%s", eksDReleaseChannel))
-	if !ok {
+	vSphereCloudProviderArtifacts, err := r.BundleArtifactsTable.Load(fmt.Sprintf("cloud-provider-vsphere-%s", eksDReleaseChannel))
+	if err != nil {
 		return anywherev1alpha1.VSphereBundle{}, fmt.Errorf("artifacts for project cloud-provider-vsphere-%s not found in bundle artifacts table", eksDReleaseChannel)
 	}
-	vsphereBundleArtifacts["cloud-provider-vsphere"] = vSphereCloudProviderArtifacts.([]releasetypes.Artifact)
+	vsphereBundleArtifacts["cloud-provider-vsphere"] = vSphereCloudProviderArtifacts
 	sortedComponentNames := bundleutils.SortArtifactsMap(vsphereBundleArtifacts)
 
 	var sourceBranch string
@@ -57,9 +56,9 @@ func GetVsphereBundle(r *releasetypes.ReleaseConfig, eksDReleaseChannel string, 
 				if componentName == "cluster-api-provider-vsphere" {
 					sourceBranch = imageArtifact.SourcedFromBranch
 				}
-				imageDigest, ok := imageDigests.Load(imageArtifact.ReleaseImageURI)
-				if !ok {
-					return anywherev1alpha1.VSphereBundle{}, fmt.Errorf("digest for image %s not found in image digests table", imageArtifact.ReleaseImageURI)
+				imageDigest, err := imageDigests.Load(imageArtifact.ReleaseImageURI)
+				if err != nil {
+					return anywherev1alpha1.VSphereBundle{}, fmt.Errorf("loading digest from image digests table: %v", err)
 				}
 				bundleImageArtifact := anywherev1alpha1.Image{
 					Name:        imageArtifact.AssetName,
@@ -67,7 +66,7 @@ func GetVsphereBundle(r *releasetypes.ReleaseConfig, eksDReleaseChannel string, 
 					OS:          imageArtifact.OS,
 					Arch:        imageArtifact.Arch,
 					URI:         imageArtifact.ReleaseImageURI,
-					ImageDigest: imageDigest.(string),
+					ImageDigest: imageDigest,
 				}
 				bundleImageArtifacts[imageArtifact.AssetName] = bundleImageArtifact
 				artifactHashes = append(artifactHashes, bundleImageArtifact.ImageDigest)

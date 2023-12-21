@@ -16,7 +16,6 @@ package bundles
 
 import (
 	"fmt"
-	"sync"
 
 	"github.com/pkg/errors"
 
@@ -27,15 +26,15 @@ import (
 	"github.com/aws/eks-anywhere/release/cli/pkg/version"
 )
 
-func GetEtcdadmControllerBundle(r *releasetypes.ReleaseConfig, imageDigests sync.Map) (anywherev1alpha1.EtcdadmControllerBundle, error) {
+func GetEtcdadmControllerBundle(r *releasetypes.ReleaseConfig, imageDigests releasetypes.ImageDigestsTable) (anywherev1alpha1.EtcdadmControllerBundle, error) {
 	projectsInBundle := []string{"etcdadm-controller", "kube-rbac-proxy"}
 	etcdadmControllerBundleArtifacts := map[string][]releasetypes.Artifact{}
 	for _, project := range projectsInBundle {
-		projectArtifacts, ok := r.BundleArtifactsTable.Load(project)
-		if !ok {
+		projectArtifacts, err := r.BundleArtifactsTable.Load(project)
+		if err != nil {
 			return anywherev1alpha1.EtcdadmControllerBundle{}, fmt.Errorf("artifacts for project %s not found in bundle artifacts table", project)
 		}
-		etcdadmControllerBundleArtifacts[project] = projectArtifacts.([]releasetypes.Artifact)
+		etcdadmControllerBundleArtifacts[project] = projectArtifacts
 	}
 	sortedComponentNames := bundleutils.SortArtifactsMap(etcdadmControllerBundleArtifacts)
 
@@ -52,9 +51,9 @@ func GetEtcdadmControllerBundle(r *releasetypes.ReleaseConfig, imageDigests sync
 				if componentName == "etcdadm-controller" {
 					sourceBranch = imageArtifact.SourcedFromBranch
 				}
-				imageDigest, ok := imageDigests.Load(imageArtifact.ReleaseImageURI)
-				if !ok {
-					return anywherev1alpha1.EtcdadmControllerBundle{}, fmt.Errorf("digest for image %s not found in image digests table", imageArtifact.ReleaseImageURI)
+				imageDigest, err := imageDigests.Load(imageArtifact.ReleaseImageURI)
+				if err != nil {
+					return anywherev1alpha1.EtcdadmControllerBundle{}, fmt.Errorf("loading digest from image digests table: %v", err)
 				}
 				bundleImageArtifact := anywherev1alpha1.Image{
 					Name:        imageArtifact.AssetName,
@@ -62,7 +61,7 @@ func GetEtcdadmControllerBundle(r *releasetypes.ReleaseConfig, imageDigests sync
 					OS:          imageArtifact.OS,
 					Arch:        imageArtifact.Arch,
 					URI:         imageArtifact.ReleaseImageURI,
-					ImageDigest: imageDigest.(string),
+					ImageDigest: imageDigest,
 				}
 				bundleImageArtifacts[imageArtifact.AssetName] = bundleImageArtifact
 				artifactHashes = append(artifactHashes, bundleImageArtifact.ImageDigest)
