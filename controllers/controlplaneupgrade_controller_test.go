@@ -86,6 +86,41 @@ func TestCPUpgradeReconcileNodeNotUpgraded(t *testing.T) {
 	g.Expect(err).ToNot(HaveOccurred())
 }
 
+func TestCPUpgradeReconcileNodeUpgradeError(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+	cluster, machines, nodes, cpUpgrade, _ := getObjectsForCPUpgradeTest()
+
+	objs := []runtime.Object{cluster, machines[0], machines[1], nodes[0], nodes[1], cpUpgrade}
+	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
+	r := controllers.NewControlPlaneUpgradeReconciler(client)
+	req := cpUpgradeRequest(cpUpgrade)
+	_, err := r.Reconcile(ctx, req)
+	g.Expect(err).To(HaveOccurred())
+	g.Expect(err).To(MatchError("getting node upgrader for machine machine02: nodeupgrades.anywhere.eks.amazonaws.com \"machine02-node-upgrader\" not found"))
+}
+
+func TestCPUpgradeReconcileNodeUpgraderCreate(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+	cluster, machines, nodes, cpUpgrade, nodeUpgrades := getObjectsForCPUpgradeTest()
+	for i := range nodeUpgrades {
+		nodeUpgrades[i].Name = fmt.Sprintf("%s-node-upgrader", machines[i].Name)
+		nodeUpgrades[i].Status = anywherev1.NodeUpgradeStatus{
+			Completed: true,
+		}
+	}
+	objs := []runtime.Object{cluster, machines[0], machines[1], nodes[0], nodes[1], cpUpgrade, nodeUpgrades[0]}
+	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
+	r := controllers.NewControlPlaneUpgradeReconciler(client)
+	req := cpUpgradeRequest(cpUpgrade)
+	_, err := r.Reconcile(ctx, req)
+	g.Expect(err).ToNot(HaveOccurred())
+	cpu := &anywherev1.ControlPlaneUpgrade{}
+	err = client.Get(ctx, types.NamespacedName{Name: cpUpgrade.Name, Namespace: "eksa-system"}, cpu)
+	g.Expect(err).ToNot(HaveOccurred())
+}
+
 func TestCPUpgradeReconcileNodesNotReadyYet(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
