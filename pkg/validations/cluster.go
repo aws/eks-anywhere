@@ -177,7 +177,7 @@ func clustersHaveEksaVersion(mgmtCluster, cluster *v1alpha1.Cluster) bool {
 		return false
 	}
 
-	if cluster.Spec.EksaVersion == nil && mgmtCluster.Spec.EksaVersion == nil {
+	if cluster.Spec.EksaVersion == nil || mgmtCluster.Spec.EksaVersion == nil {
 		return false
 	}
 

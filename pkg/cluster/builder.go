@@ -125,7 +125,9 @@ func (b FileSpecBuilder) Build(clusterConfigURL string) (*Spec, error) {
 	}
 
 	releaseVersion := v1alpha1.EksaVersion(release.Version)
-	config.Cluster.Spec.EksaVersion = &releaseVersion
+	if config.Cluster.IsSelfManaged() || (config.Cluster.IsManaged() && config.Cluster.Spec.EksaVersion == nil) {
+		config.Cluster.Spec.EksaVersion = &releaseVersion
+	}
 	eksaRelease := buildEKSARelease(release, bundlesManifest)
 
 	return NewSpec(config, bundlesManifest, eksdReleases, eksaRelease)
