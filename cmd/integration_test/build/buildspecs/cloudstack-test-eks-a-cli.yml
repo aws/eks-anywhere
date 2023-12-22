@@ -72,7 +72,11 @@ phases:
       - source ${CODEBUILD_SRC_DIR}/cmd/integration_test/build/script/create_infra_config.sh
       - ${CODEBUILD_SRC_DIR}/cmd/integration_test/build/script/start_docker.sh
       - export CLUSTER_NAME_PREFIX="${BRANCH_NAME//./-}"
-      - >
+      - |
+        if ! [[ ${CODEBUILD_INITIATOR} =~ "codepipeline" ]]; then
+          make build-eks-a-for-e2e build-integration-test-binary e2e-tests-binary E2E_TAGS="e2e cloudstack" E2E_OUTPUT_FILE=bin/cloudstack/e2e.test
+        fi
+        - >
         ./bin/test e2e cleanup cloudstack
         -n ${CLUSTER_NAME_PREFIX}
         -v 4
