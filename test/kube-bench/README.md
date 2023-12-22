@@ -25,5 +25,3 @@ The following tests are also skipped they are not applicable or check for settin
 | **Worker node configuration** |
 | 4.2.6 | Ensure that the –protect-kernel-defaults argument is set to true | System level configurations are required before provisioning the cluster in order for this argument to be set to true |
 | 4.2.10 | Ensure that the–tls-cert-file and –tls-private-key-file arguments are set as appropriate | When generating serving certificates, functionality could break in conjunction with hostname overrides which are required for certain cloud providers |
-
-**Note:** Running kube-bench on Bottlerocket controlplane currently produces false negatives with respect to pod specification file (manifest) permissions, since the [default configuration](https://github.com/aquasecurity/kube-bench/blob/main/cfg/config.yaml) does not include the file locations in which Bottlerocket places these manifests. This issue is being tracked [here](https://github.com/aquasecurity/kube-bench/issues/996).
