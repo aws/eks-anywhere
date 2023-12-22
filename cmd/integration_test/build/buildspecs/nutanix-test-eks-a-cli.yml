@@ -57,6 +57,10 @@ phases:
       - source ${CODEBUILD_SRC_DIR}/cmd/integration_test/build/script/setup_profile.sh
       - source ${CODEBUILD_SRC_DIR}/cmd/integration_test/build/script/create_infra_config.sh
       - ${CODEBUILD_SRC_DIR}/cmd/integration_test/build/script/start_docker.sh
+      - |
+        if ! [[ ${CODEBUILD_INITIATOR} =~ "codepipeline" ]]; then
+          make build-eks-a-for-e2e build-integration-test-binary e2e-tests-binary E2E_TAGS="e2e nutanix" E2E_OUTPUT_FILE=bin/nutanix/e2e.test
+        fi
   build:
     commands:
       - export JOB_ID=$CODEBUILD_BUILD_ID
