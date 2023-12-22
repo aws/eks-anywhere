@@ -107,7 +107,7 @@ test: manifests generate fmt vet ## Run tests.
 ##@ Build
 
 build: clean fmt vet ## Build release binary.
-	$(GO) build -o bin/eks-anywhere-release main.go
+	$(GO) build -C cli -o $(REPO_ROOT)/release/bin/eks-anywhere-release github.com/aws/eks-anywhere/release/cli
 
 .PHONY: lint
 lint: bin/golangci-lint ## Run golangci-lint
@@ -122,8 +122,8 @@ unit-test: ## Run go test against code.
 	$(GO) test -count=1 ./...
 
 update-bundle-golden-files: ## Updates testdata files located under pkg/test/testdata
-	$(GO) test -count=1 ./pkg/operations -update
-	$(eval DIFF_LINE_COUNT=$(shell git diff pkg/test/testdata | wc -l))
+	$(GO) test -C cli -count=1 ./pkg/operations -update
+	$(eval DIFF_LINE_COUNT=$(shell git diff cli/pkg/test/testdata | wc -l))
 	@if [[ $(DIFF_LINE_COUNT) != 0 ]]; then \
 		printf "\n\033[33mWarning:\033[0m Testdata files have been updated! Ensure that these changes were intentional.\n"; \
 	fi

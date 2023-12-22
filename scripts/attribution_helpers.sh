@@ -21,13 +21,6 @@ function build::create_git_tag(){
     git rev-parse HEAD > GIT_TAG
 }
 
-# The api/v1alpha1 package of the release submodule in the CLI repo does not have 
-# a license file. Hence we need to copy it into the vendor directory for go-licenses
-# to pick up
-function build::fix_licenses(){
-    cp LICENSE ./vendor/github.com/aws/eks-anywhere/release/api/v1alpha1/LICENSE
-}
-
 # We only need to include dependencies outside of this repo
 function build::exclude_own(){
     sed -i '/^github.com\/aws\/eks-anywhere/d' _output/attribution/go-license.csv
