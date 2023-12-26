@@ -76,7 +76,7 @@ phases:
         if ! [[ ${CODEBUILD_INITIATOR} =~ "codepipeline" ]]; then
           make build-eks-a-for-e2e build-integration-test-binary e2e-tests-binary E2E_TAGS="e2e cloudstack" E2E_OUTPUT_FILE=bin/cloudstack/e2e.test
         fi
-        - >
+      - >
         ./bin/test e2e cleanup cloudstack
         -n ${CLUSTER_NAME_PREFIX}
         -v 4
