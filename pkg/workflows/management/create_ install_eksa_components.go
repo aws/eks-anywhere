@@ -51,6 +51,11 @@ func (s *installEksaComponentsOnWorkloadTask) Run(ctx context.Context, commandCo
 		return &workflows.CollectMgmtClusterDiagnosticsTask{}
 	}
 
+	if err = commandContext.ClusterManager.RemoveManagedByCLIAnnotationForCluster(ctx, commandContext.WorkloadCluster, commandContext.ClusterSpec, commandContext.Provider); err != nil {
+		commandContext.SetError(err)
+		return &workflows.CollectMgmtClusterDiagnosticsTask{}
+	}
+
 	return &installGitOpsManagerTask{}
 }
 
@@ -65,7 +70,6 @@ func (s *installEksaComponentsOnWorkloadTask) Restore(ctx context.Context, comma
 func (s *installEksaComponentsOnWorkloadTask) Checkpoint() *task.CompletedTask {
 	return nil
 }
-
 
 func installEKSAComponents(ctx context.Context, commandContext *task.CommandContext, targetCluster *types.Cluster) error {
 

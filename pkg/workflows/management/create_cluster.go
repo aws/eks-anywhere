@@ -73,6 +73,7 @@ func (s *createBootStrapClusterTask) Checkpoint() *task.CompletedTask {
 
 func (s *createWorkloadClusterTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
 	logger.Info("Creating new workload cluster")
+	commandContext.ClusterSpec.Cluster.AddManagedByCLIAnnotation()
 
 	logger.Info("Applying cluster spec to bootstrap cluster")
 	if err := commandContext.ClusterUpgrader.Run(ctx, commandContext.ClusterSpec, *commandContext.BootstrapCluster); err != nil {
@@ -86,6 +87,13 @@ func (s *createWorkloadClusterTask) Run(ctx context.Context, commandContext *tas
 		return &workflows.CollectDiagnosticsTask{}
 	}
 	commandContext.WorkloadCluster = workloadCluster
+
+	logger.Info("Adding pause annotation")
+	err = commandContext.ClusterManager.PauseEKSAControllerReconcile(ctx, commandContext.BootstrapCluster, commandContext.ClusterSpec, commandContext.Provider)
+	if err != nil {
+		commandContext.SetError(err)
+		return &workflows.CollectDiagnosticsTask{}
+	}
 
 	logger.Info("Creating EKS-A namespace")
 	err = commandContext.ClusterManager.CreateEKSANamespace(ctx, commandContext.WorkloadCluster)
