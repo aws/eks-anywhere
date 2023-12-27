@@ -8,6 +8,7 @@ import (
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/config"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/types"
@@ -109,8 +110,8 @@ func (u *UpgradeValidations) PreflightValidations(ctx context.Context) []validat
 		},
 		func() *validations.ValidationResult {
 			return &validations.ValidationResult{
-				Name:        "validate cluster's eksaVersion matches EKS-A Version",
-				Remediation: "ensure EksaVersion matches the EKS-A release or omit the value from the cluster config",
+				Name:        "validate cluster's eksaVersion matches EKS-Anywhere Version",
+				Remediation: "ensure eksaVersion matches the EKS-Anywhere release or omit the value from the cluster config",
 				Err:         validations.ValidateEksaVersion(ctx, u.Opts.CliVersion, u.Opts.Spec),
 			}
 		},
@@ -132,6 +133,13 @@ func (u *UpgradeValidations) PreflightValidations(ctx context.Context) []validat
 					Name:        "validate management cluster eksaVersion compatibility",
 					Remediation: fmt.Sprintf("upgrade management cluster %s before upgrading workload cluster %s", u.Opts.Spec.Cluster.ManagedBy(), u.Opts.WorkloadCluster.Name),
 					Err:         validations.ValidateManagementClusterEksaVersion(ctx, k, u.Opts.ManagementCluster, u.Opts.Spec),
+				}
+			},
+			func() *validations.ValidationResult {
+				return &validations.ValidationResult{
+					Name:        "validate eksa release components exist on management cluster",
+					Remediation: fmt.Sprintf("ensure eksaVersion is in the correct format (vMajor.Minor.Patch) and matches one of the available releases on the management cluster: kubectl get eksareleases -n %s --kubeconfig %s", constants.EksaSystemNamespace, u.Opts.ManagementCluster.KubeconfigFile),
+					Err:         validations.ValidateEksaReleaseExistOnManagement(ctx, u.Opts.KubeClient, u.Opts.Spec.Cluster),
 				}
 			},
 		)

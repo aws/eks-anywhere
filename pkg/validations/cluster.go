@@ -6,15 +6,21 @@ import (
 	"fmt"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/config"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/semver"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/utils/ptr"
+	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
+
+// ReleaseType is the type of the eksareleases custom resource.
+var ReleaseType = fmt.Sprintf("eksareleases.%s", releasev1alpha1.GroupVersion.Group)
 
 // ValidateOSForRegistryMirror checks if the OS is valid for the provided registry mirror configuration.
 func ValidateOSForRegistryMirror(clusterSpec *cluster.Spec, provider providers.Provider) error {
@@ -113,7 +119,7 @@ func ValidateEksaVersion(ctx context.Context, cliVersion string, workload *clust
 	}
 
 	if !parsedVersion.SamePatch(parsedCLIVersion) {
-		return fmt.Errorf("cluster's eksaVersion does not match EKS-A CLI's version")
+		return fmt.Errorf("cluster's eksaVersion does not match EKS-Anywhere CLI's version")
 	}
 
 	return nil
@@ -212,6 +218,17 @@ func ValidateK8s129Support(clusterSpec *cluster.Spec) error {
 		if clusterSpec.Cluster.Spec.KubernetesVersion == v1alpha1.Kube129 {
 			return fmt.Errorf("kubernetes version %s is not enabled. Please set the env variable %v", v1alpha1.Kube129, features.K8s129SupportEnvVar)
 		}
+	}
+	return nil
+}
+
+// ValidateEksaReleaseExistOnManagement checks if there is a corresponding eksareleases CR for workload's eksaVersion on the mgmt cluster.
+func ValidateEksaReleaseExistOnManagement(ctx context.Context, k kubernetes.Client, workload *v1alpha1.Cluster) error {
+	v := workload.Spec.EksaVersion
+	release := &releasev1alpha1.EKSARelease{}
+	err := k.Get(ctx, releasev1alpha1.GenerateEKSAReleaseName(string(*v)), constants.EksaSystemNamespace, release)
+	if err != nil {
+		return err
 	}
 	return nil
 }

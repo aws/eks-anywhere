@@ -1,6 +1,7 @@
 package validations
 
 import (
+	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/crypto"
@@ -19,6 +20,7 @@ type Opts struct {
 	CliConfig          *config.CliConfig
 	SkippedValidations map[string]bool
 	CliVersion         string
+	KubeClient         kubernetes.Client
 }
 
 func (o *Opts) SetDefaults() {

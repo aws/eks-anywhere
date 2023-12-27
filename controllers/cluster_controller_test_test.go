@@ -33,6 +33,11 @@ import (
 func TestClusterReconcilerEnsureOwnerReferences(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
+	version := test.DevEksaVersion()
+	bundlesRef := &anywherev1.BundlesRef{
+		Name:      "my-bundles-ref",
+		Namespace: "my-namespace",
+	}
 
 	managementCluster := &anywherev1.Cluster{
 		ObjectMeta: metav1.ObjectMeta{
@@ -40,9 +45,7 @@ func TestClusterReconcilerEnsureOwnerReferences(t *testing.T) {
 			Namespace: "my-namespace",
 		},
 		Spec: anywherev1.ClusterSpec{
-			BundlesRef: &anywherev1.BundlesRef{
-				Name: "my-bundles-ref",
-			},
+			EksaVersion: &version,
 		},
 		Status: anywherev1.ClusterStatus{
 			ReconciledGeneration: 1,
@@ -56,10 +59,7 @@ func TestClusterReconcilerEnsureOwnerReferences(t *testing.T) {
 		},
 		Spec: anywherev1.ClusterSpec{
 			KubernetesVersion: "v1.25",
-			BundlesRef: &anywherev1.BundlesRef{
-				Name:      "my-bundles-ref",
-				Namespace: "my-namespace",
-			},
+			EksaVersion:       &version,
 		},
 		Status: anywherev1.ClusterStatus{
 			ReconciledGeneration: 1,
@@ -118,7 +118,7 @@ func TestClusterReconcilerEnsureOwnerReferences(t *testing.T) {
 			Namespace: constants.EksaSystemNamespace,
 		},
 	}
-	objs := []runtime.Object{cluster, managementCluster, oidc, awsIAM, bundles, secret}
+	objs := []runtime.Object{cluster, managementCluster, oidc, awsIAM, bundles, secret, test.EKSARelease()}
 	cb := fake.NewClientBuilder()
 	cl := cb.WithRuntimeObjects(objs...).Build()
 
@@ -138,7 +138,7 @@ func TestClusterReconcilerEnsureOwnerReferences(t *testing.T) {
 	r := controllers.NewClusterReconciler(cl, newRegistryForDummyProviderReconciler(), iam, validator, pcc, mhc)
 	_, err := r.Reconcile(ctx, clusterRequest(cluster))
 
-	g.Expect(cl.Get(ctx, client.ObjectKey{Namespace: cluster.Spec.BundlesRef.Namespace, Name: cluster.Spec.BundlesRef.Name}, bundles)).To(Succeed())
+	g.Expect(cl.Get(ctx, client.ObjectKey{Namespace: bundlesRef.Namespace, Name: bundlesRef.Name}, bundles)).To(Succeed())
 	g.Expect(cl.Get(ctx, client.ObjectKey{Namespace: constants.EksaSystemNamespace, Name: cluster.Name + "-kubeconfig"}, secret)).To(Succeed())
 
 	g.Expect(err).NotTo(HaveOccurred())
@@ -359,7 +359,7 @@ func TestClusterReconcilerSetDefaultEksaVersion(t *testing.T) {
 	}
 	cluster.SetManagedBy("my-management-cluster")
 
-	objs := []runtime.Object{cluster, managementCluster}
+	objs := []runtime.Object{cluster, managementCluster, test.EKSARelease()}
 	cb := fake.NewClientBuilder()
 	cl := cb.WithRuntimeObjects(objs...).Build()
 
