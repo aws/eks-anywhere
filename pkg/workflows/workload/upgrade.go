@@ -5,7 +5,6 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
-	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/task"
 	"github.com/aws/eks-anywhere/pkg/types"
@@ -44,8 +43,6 @@ func NewUpgrade(provider providers.Provider,
 
 // Run Upgrade implements upgrade functionality for workload cluster's upgrade operation.
 func (c *Upgrade) Run(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, validator interfaces.Validator) error {
-	logger.Info("POC New workflow creating workload cluster using the controller")
-
 	commandContext := &task.CommandContext{
 		Provider:          c.provider,
 		ClusterManager:    c.clusterManager,

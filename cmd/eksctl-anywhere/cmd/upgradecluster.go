@@ -215,10 +215,6 @@ func (uc *upgradeClusterOptions) upgradeCluster(cmd *cobra.Command, args []strin
 		err = upgrade.Run(ctx, clusterSpec, managementCluster, upgradeValidations)
 
 	} else if features.UseControllerViaCLIWorkflow().IsActive() {
-		logger.Info("-----------------------------------------------------")
-		logger.Info("-----------------------------------------------------")
-		logger.Info("POC Inside controller via CLI workflow")
-		logger.Info("-----------------------------------------------------")
 		upgradeWorkloadCluster := workload.NewUpgrade(
 			deps.Provider,
 			deps.ClusterManager,

@@ -4,18 +4,14 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/task"
 	"github.com/aws/eks-anywhere/pkg/validations"
 )
 
 type setAndValidateWorkloadTask struct{}
 
-// SetAndValidateTask implementation
-
-// Run upgradeCluster performs actions needed to upgrade the workload cluster.
+// Run setAndValidateWorkloadTask performs actions needed to validate the workload cluster.
 func (s *setAndValidateWorkloadTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
-	logger.Info("POC Performing setup and validations")
 	currentSpec, err := commandContext.ClusterManager.GetCurrentClusterSpec(ctx, commandContext.ClusterSpec.ManagementCluster, commandContext.ClusterSpec.Cluster.Name)
 	if err != nil {
 		commandContext.SetError(err)

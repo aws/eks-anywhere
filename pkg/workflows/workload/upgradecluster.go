@@ -10,9 +10,9 @@ import (
 
 type upgradeCluster struct{}
 
-// Run upgradeCluster performs actions needed to upgrade the management cluster.
+// Run upgradeCluster performs actions needed to upgrade the workload cluster.
 func (s *upgradeCluster) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
-	logger.Info("Creating workload cluster")
+	logger.Info("Upgrading workload cluster components")
 	if err := commandContext.ClusterUpgrader.Run(ctx, commandContext.ClusterSpec, *commandContext.ManagementCluster); err != nil {
 		commandContext.SetError(err)
 		return &workflows.CollectMgmtClusterDiagnosticsTask{}
