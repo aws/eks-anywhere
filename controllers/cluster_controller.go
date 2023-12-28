@@ -373,10 +373,10 @@ func (r *ClusterReconciler) preClusterProviderReconcile(ctx context.Context, log
 		if err := validations.ValidateManagementEksaVersion(mgmt, cluster); err != nil {
 			return controller.Result{}, err
 		}
+	}
 
-		if err := validateEksaRelease(ctx, r.client, cluster); err != nil {
-			return controller.Result{}, err
-		}
+	if err := validateEksaRelease(ctx, r.client, cluster); err != nil {
+		return controller.Result{}, err
 	}
 
 	if cluster.RegistryAuth() {
@@ -620,11 +620,14 @@ func validateEksaRelease(ctx context.Context, client client.Client, cluster *any
 	if cluster.Spec.EksaVersion == nil {
 		return nil
 	}
-	if err := validations.ValidateEksaReleaseExistOnManagement(ctx, clientutil.NewKubeClient(client), cluster); err != nil {
+	err := validations.ValidateEksaReleaseExistOnManagement(ctx, clientutil.NewKubeClient(client), cluster)
+	if apierrors.IsNotFound(err) {
 		errMsg := fmt.Sprintf("eksarelease %v could not be found on the management cluster", *cluster.Spec.EksaVersion)
 		reason := anywherev1.EksaVersionInvalidReason
 		cluster.Status.FailureMessage = ptr.String(errMsg)
 		cluster.Status.FailureReason = &reason
+		return err
+	} else if err != nil {
 		return err
 	}
 	return nil
