@@ -1544,12 +1544,11 @@ func TestClusterReconcilerNotAvailableEksaVersion(t *testing.T) {
 	g.Expect(err).To(HaveOccurred())
 	eksaCluster := &anywherev1.Cluster{}
 
-	err = testClient.Get(context.TODO(), req.NamespacedName, eksaCluster)
-	if apierrors.IsNotFound(err) {
-		t.Fatal("expected to find cluster")
-	}
-	g.Expect(eksaCluster.Status.FailureReason).ToNot(BeNil())
-	g.Expect(string(*eksaCluster.Status.FailureReason)).To(ContainSubstring(string(anywherev1.EksaVersionInvalidReason)))
+	expectedError := fmt.Sprintf("eksarelease %v could not be found on the management cluster", *config.Cluster.Spec.EksaVersion)
+	g.Expect(testClient.Get(ctx, req.NamespacedName, eksaCluster)).To(Succeed())
+
+	g.Expect(eksaCluster.Status.FailureReason).To(HaveValue(Equal(anywherev1.EksaVersionInvalidReason)))
+	g.Expect(eksaCluster.Status.FailureMessage).To(HaveValue(Equal(expectedError)))
 }
 
 func vsphereWorkerMachineConfig() *anywherev1.VSphereMachineConfig {
