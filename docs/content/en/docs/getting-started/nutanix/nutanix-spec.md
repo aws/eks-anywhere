@@ -97,7 +97,7 @@ spec:
  vcpusPerSocket: 1
  additionalCategories:
    - key: my-category
-     value: my-category-value 
+     value: my-category-value
 ---
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: NutanixMachineConfig
@@ -134,23 +134,7 @@ spec:
 ### name (required)
 Name of your cluster `mgmt` in this example.
 
-### clusterNetwork (required)
-Specific network configuration for your Kubernetes cluster.
-
-### clusterNetwork.cniConfig (required)
-CNI plugin configuration to be used in the cluster. The only supported configuration at the moment is `cilium`.
-
-### clusterNetwork.cniConfig.cilium.policyEnforcementMode
-Optionally, you may specify a `policyEnforcementMode` of `default`, `always`, `never`.
-
-### clusterNetwork.pods.cidrBlocks[0] (required)
-Subnet used by pods in CIDR notation. Please note that only 1 custom pods CIDR block specification is permitted. This CIDR block should not conflict with the network subnet range selected for the VMs.
-
-### clusterNetwork.services.cidrBlocks[0] (required)
-Subnet used by services in CIDR notation. Please note that only 1 custom services CIDR block specification is permitted. This CIDR block should not conflict with the network subnet range selected for the VMs.
-
-### clusterNetwork.dns.resolvConf.path (optional)
-Path to the file with a custom DNS resolver configuration.
+{{% include "../_configuration/cluster_clusterNetwork.html" %}}
 
 ### controlPlaneConfiguration (required)
 Specific control plane configuration for your Kubernetes cluster.
@@ -165,7 +149,7 @@ Refers to the Kubernetes object with Nutanix specific configuration for your nod
 A unique IP you want to use for the control plane VM in your EKS Anywhere cluster. Choose an IP in your network range that does not conflict with other VMs.
 
 >**_NOTE:_** This IP should be outside the network DHCP range as it is a floating IP that gets assigned to one of
-the control plane nodes for kube-apiserver loadbalancing. Suggestions on how to ensure this IP does not cause issues during cluster 
+the control plane nodes for kube-apiserver loadbalancing. Suggestions on how to ensure this IP does not cause issues during cluster
 creation process are [here]({{< relref "./nutanix-prereq/#prepare-a-nutanix-environment" >}}).
 
 ### workerNodeGroupConfigurations (required)
@@ -202,8 +186,8 @@ The Kubernetes version you want to use for your cluster. Supported values: `1.28
 ### endpoint (required)
 The Prism Central server fully qualified domain name or IP address. If the server IP is used, the PC SSL certificate must have an IP SAN configured.
 
-### port (required) 
-The Prism Central server port. (Default: `9440`) 
+### port (required)
+The Prism Central server port. (Default: `9440`)
 
 ### credentialRef (required)
 Reference to the Kubernetes secret that contains the Prism Central credentials.
@@ -232,74 +216,74 @@ __Example__:</br>
 ### cluster
 Reference to the Prism Element cluster.
 
-### cluster.type	
+### cluster.type
 Type to identify the Prism Element cluster. (Permitted values: `name` or `uuid`)
- 
-### cluster.name	
+
+### cluster.name
 Name of the Prism Element cluster.
 
 ### cluster.uuid
 UUID of the Prism Element cluster.
- 
-### image	
+
+### image
 Reference to the OS image used for the system disk.
- 
+
 ### image.type
 Type to identify the OS image. (Permitted values: `name` or `uuid`)
- 
+
 ### image.name (`name` or `UUID` required)
 Name of the image
 The `image.name` must contain the `Cluster.Spec.KubernetesVersion` or `Cluster.Spec.WorkerNodeGroupConfiguration[].KubernetesVersion` version (in case of modular upgrade). For example, if the Kubernetes version is 1.24, `image.name` must include 1.24, 1_24, 1-24 or 124.
- 
+
 ### image.uuid (`name` or `UUID` required)
 UUID of the image
 The name of the image associated with the `uuid` must contain the `Cluster.Spec.KubernetesVersion` or `Cluster.Spec.WorkerNodeGroupConfiguration[].KubernetesVersion` version (in case of modular upgrade). For example, if the Kubernetes version is 1.24, the name associated with `image.uuid` field must include 1.24, 1_24, 1-24 or 124.
- 
+
 ### memorySize
 Size of RAM on virtual machines (Default: `4Gi`)
 
 ### osFamily (optional)
 Operating System on virtual machines. Permitted values: `ubuntu` and `redhat`. (Default: `ubuntu`)
- 
+
 ### subnet
 Reference to the subnet to be assigned to the VMs.
- 
+
 ### subnet.name (`name` or `UUID` required)
 Name of the subnet.
- 
+
 ### subnet.type
 Type to identify the subnet. (Permitted values: `name` or `uuid`)
- 
+
 ### subnet.uuid (`name` or `UUID` required)
 UUID of the subnet.
- 
+
 ### systemDiskSize
 Amount of storage assigned to the system disk. (Default: `40Gi`)
- 
+
 ### vcpuSockets
 Amount of vCPU sockets. (Default: `2`)
- 
+
 ### vcpusPerSocket
 Amount of vCPUs per socket. (Default: `1`)
- 
+
 ### project	(optional)
 Reference to an existing project used for the virtual machines.
- 
+
 ### project.type
 Type to identify the project. (Permitted values: `name` or `uuid`)
- 
+
 ### project.name (`name` or `UUID` required)
 Name of the project
- 
+
 ### project.uuid (`name` or `UUID` required)
 UUID of the project
 
 ### additionalCategories (optional)
-Reference to a list of existing [Nutanix Categories](https://portal.nutanix.com/page/documents/details?targetId=Prism-Central-Guide:ssp-ssp-categories-manage-pc-c.html) to be assigned to virtual machines. 
- 
+Reference to a list of existing [Nutanix Categories](https://portal.nutanix.com/page/documents/details?targetId=Prism-Central-Guide:ssp-ssp-categories-manage-pc-c.html) to be assigned to virtual machines.
+
 ### additionalCategories[0].key
-Nutanix Category to add to the virtual machine. 
- 
+Nutanix Category to add to the virtual machine.
+
 ### additionalCategories[0].value
 Value of the Nutanix Category to add to the virtual machine
 
