@@ -40,6 +40,27 @@ func TestSnowKubernetes127To128AWSIamAuthUpgrade(t *testing.T) {
 	)
 }
 
+func TestSnowKubernetes127To128UbuntuManagementCPUpgradeAPI(t *testing.T) {
+	provider := framework.NewSnow(t, framework.WithSnowUbuntu127())
+	test := framework.NewClusterE2ETest(
+		t, provider,
+	).WithClusterConfig(
+		api.ClusterToConfigFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube127),
+			api.WithControlPlaneCount(1),
+			api.WithWorkerNodeCount(1),
+		),
+	)
+	runUpgradeFlowWithAPI(
+		test,
+		api.ClusterToConfigFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube128),
+			api.WithControlPlaneCount(3),
+		),
+		provider.WithUbuntu128(),
+	)
+}
+
 // Labels
 func TestSnowKubernetes128UbuntuLabelsUpgradeFlow(t *testing.T) {
 	provider := framework.NewSnow(t,
