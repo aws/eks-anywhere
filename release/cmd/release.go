@@ -35,6 +35,7 @@ import (
 	releasetypes "github.com/aws/eks-anywhere/release/pkg/types"
 	artifactutils "github.com/aws/eks-anywhere/release/pkg/util/artifacts"
 	releaseutils "github.com/aws/eks-anywhere/release/pkg/util/release"
+	semverutils "github.com/aws/eks-anywhere/release/pkg/util/semver"
 )
 
 var (
@@ -234,7 +235,27 @@ var releaseCmd = &cobra.Command{
 			release.APIVersion = "anywhere.eks.amazonaws.com/v1alpha1"
 			release.Kind = constants.ReleaseKind
 			release.CreationTimestamp = v1.Time{Time: releaseTime}
-			release.Spec.LatestVersion = releaseVersion
+
+			if devRelease {
+				release.Spec.LatestVersion = releaseVersion
+			} else {
+				previousLatestVersion := release.Spec.LatestVersion
+				previousLatestVersionSemver, err := semverutils.New(previousLatestVersion)
+				if err != nil {
+					fmt.Printf("Error getting semver for previous latest release version %s: %v\n", previousLatestVersion, err)
+					os.Exit(1)
+				}
+
+				releaseVersionSemver, err := semverutils.New(releaseVersion)
+				if err != nil {
+					fmt.Printf("Error getting semver for current release version %s: %v\n", releaseVersion, err)
+					os.Exit(1)
+				}
+
+				if releaseVersionSemver.GreaterThan(previousLatestVersionSemver) {
+					release.Spec.LatestVersion = releaseVersion
+				}
+			}
 
 			eksAArtifactsTable, err := operations.GenerateEksAArtifactsTable(releaseConfig)
 			if err != nil {
