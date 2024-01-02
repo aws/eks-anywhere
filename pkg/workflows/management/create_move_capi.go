@@ -15,8 +15,15 @@ func (s *moveClusterManagementTask) Run(ctx context.Context, commandContext *tas
 	if commandContext.BootstrapCluster.ExistingManagement {
 		return &installEksaComponentsOnWorkloadTask{}
 	}
+	logger.Info("Adding pause annotation")
+	err := commandContext.ClusterManager.PauseEKSAControllerReconcile(ctx, commandContext.BootstrapCluster, commandContext.ClusterSpec, commandContext.Provider)
+	if err != nil {
+		commandContext.SetError(err)
+		return &workflows.CollectDiagnosticsTask{}
+	}
+
 	logger.Info("Moving cluster management from bootstrap to workload cluster")
-	err := commandContext.ClusterManager.MoveCAPI(ctx, commandContext.BootstrapCluster, commandContext.WorkloadCluster, commandContext.WorkloadCluster.Name, commandContext.ClusterSpec, types.WithNodeRef())
+	err = commandContext.ClusterManager.MoveCAPI(ctx, commandContext.BootstrapCluster, commandContext.WorkloadCluster, commandContext.WorkloadCluster.Name, commandContext.ClusterSpec, types.WithNodeRef())
 	if err != nil {
 		commandContext.SetError(err)
 		return &workflows.CollectDiagnosticsTask{}

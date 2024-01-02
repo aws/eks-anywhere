@@ -88,13 +88,6 @@ func (s *createWorkloadClusterTask) Run(ctx context.Context, commandContext *tas
 	}
 	commandContext.WorkloadCluster = workloadCluster
 
-	logger.Info("Adding pause annotation")
-	err = commandContext.ClusterManager.PauseEKSAControllerReconcile(ctx, commandContext.BootstrapCluster, commandContext.ClusterSpec, commandContext.Provider)
-	if err != nil {
-		commandContext.SetError(err)
-		return &workflows.CollectDiagnosticsTask{}
-	}
-
 	logger.Info("Creating EKS-A namespace")
 	err = commandContext.ClusterManager.CreateEKSANamespace(ctx, commandContext.WorkloadCluster)
 	if err != nil {
