@@ -3324,3 +3324,27 @@ func runVSphereCloneModeFlow(test *framework.ClusterE2ETest, vsphere *framework.
 	vsphere.ValidateNodesDiskGiB(test.GetCapiMachinesForCluster(test.ClusterName), diskSize)
 	test.DeleteCluster()
 }
+
+func TestVSphereKubernetes127To128UbuntuManagementCPUpgradeAPI(t *testing.T) {
+	provider := framework.NewVSphere(t)
+	test := framework.NewClusterE2ETest(
+		t, provider,
+	).WithClusterConfig(
+		api.ClusterToConfigFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube127),
+			api.WithExternalEtcdTopology(1),
+			api.WithControlPlaneCount(1),
+			api.WithWorkerNodeCount(1),
+		),
+		provider.WithUbuntu127(),
+	)
+
+	runUpgradeFlowWithAPI(
+		test,
+		api.ClusterToConfigFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube128),
+			api.WithControlPlaneCount(3),
+		),
+		provider.WithUbuntu128(),
+	)
+}

@@ -1244,3 +1244,22 @@ func TestNutanixKubernetes127AWSIamAuth(t *testing.T) {
 	)
 	runAWSIamAuthFlow(test)
 }
+
+func TestNutanixKubernetes128UbuntuManagementCPUpgradeAPI(t *testing.T) {
+	provider := framework.NewNutanix(t, framework.WithUbuntu127Nutanix())
+	test := framework.NewClusterE2ETest(
+		t, provider,
+	).WithClusterConfig(
+		api.ClusterToConfigFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube128),
+			api.WithControlPlaneCount(1),
+			api.WithWorkerNodeCount(1),
+		),
+	)
+	runUpgradeFlowWithAPI(
+		test,
+		api.ClusterToConfigFiller(
+			api.WithControlPlaneCount(3),
+		),
+	)
+}
