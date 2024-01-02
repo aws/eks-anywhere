@@ -17,7 +17,7 @@ Set up an Administrative machine as described in Install EKS Anywhere.
 
 ## Compute server requirements
 
-The minimum number of physical machines needed to run EKS Anywhere on bare metal is 1. To configure EKS Anywhere to run on a single server, set `controlPlaneConfiguration.count`to 1, and omit `workerNodeGroupConfigurations` from your cluster configuration.
+The minimum number of physical machines needed to run EKS Anywhere on bare metal is 1. To configure EKS Anywhere to run on a single server, set `controlPlaneConfiguration.count` to 1, and omit `workerNodeGroupConfigurations` from your cluster configuration.
 
 The recommended number of physical machines for production is at least:
 
