@@ -2212,3 +2212,32 @@ func TestTinkerbellK8sUpgrade127to128WithUbuntuOOB(t *testing.T) {
 		provider.WithProviderUpgrade(framework.Ubuntu128Image()),
 	)
 }
+
+func TestTinkerbellSingleNode127To128UbuntuManagementCPUpgradeAPI(t *testing.T) {
+	provider := framework.NewTinkerbell(t, framework.WithUbuntu127Tinkerbell())
+	managementCluster := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithControlPlaneHardware(2),
+		framework.WithWorkerHardware(2),
+	).WithClusterConfig(
+		api.ClusterToConfigFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube127),
+			api.WithControlPlaneCount(1),
+			api.WithEtcdCountIfExternal(0),
+			api.RemoveAllWorkerNodeGroups(),
+		),
+	)
+	test := framework.NewMulticlusterE2ETest(
+		t,
+		managementCluster,
+	)
+	runWorkloadClusterUpgradeFlowWithAPIForBareMetal(
+		test,
+		api.ClusterToConfigFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube128),
+			api.WithControlPlaneCount(3),
+		),
+		provider.WithKubeVersionAndOS(v1alpha1.Kube128, framework.Ubuntu2004, nil),
+	)
+}

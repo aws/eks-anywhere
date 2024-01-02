@@ -130,3 +130,4 @@ TestTinkerbellKubernetes128UbuntuOOB: 2
 TestTinkerbellK8sUpgrade127to128WithUbuntuOOB: 4
 TestTinkerbellKubernetes127UbuntuTo128UpgradeCPOnly: 3
 TestTinkerbellKubernetes127UbuntuTo128UpgradeWorkerOnly: 3
+TestTinkerbellSingleNode127To128UbuntuManagementCPUpgradeAPI: 4

@@ -4382,3 +4382,24 @@ func TestCloudStackKubernetes124EtcdEncryption(t *testing.T) {
 	test.ValidateEtcdEncryption()
 	test.DeleteCluster()
 }
+
+func TestCloudstackKubernetes127To128RedHatManagementCPUpgradeAPI(t *testing.T) {
+	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat127())
+	test := framework.NewClusterE2ETest(
+		t, provider,
+	).WithClusterConfig(
+		api.ClusterToConfigFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube127),
+			api.WithControlPlaneCount(1),
+			api.WithWorkerNodeCount(1),
+		),
+	)
+	runUpgradeFlowWithAPI(
+		test,
+		api.ClusterToConfigFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube128),
+			api.WithControlPlaneCount(3),
+		),
+		provider.WithKubeVersionAndOS(v1alpha1.Kube128, framework.RedHat8, nil),
+	)
+}
