@@ -32,7 +32,7 @@ The compute hardware you need for your Bare Metal cluster must meet the followin
 
 ## Operating system requirements
 
-If you intend on using a non-Bottlerocket OS you must build it using image builder. See the [OS Management Artifacts]({{< relref "../../osmgmt/artifacts#bare-metal-artifacts" >}}) page for help building the OS.
+If you intend on using a non-Bottlerocket OS you must build it using `image-builder`. See the [OS Management Artifacts]({{< relref "../../osmgmt/artifacts#bare-metal-artifacts" >}}) page for help building the OS.
 
 ## Upgrade requirements
 If you are running a standalone cluster with only one control plane node, you will need at least one additional, temporary machine for each control plane node grouping. For cluster with multiple control plane nodes, you can perform a rolling upgrade with or without an extra temporary machine. For worker node upgrades, you can perform a rolling upgrade with or without an extra temporary machine.
