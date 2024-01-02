@@ -180,7 +180,7 @@ func TestClusterReconcilerReconcileSelfManagedCluster(t *testing.T) {
 
 	clusterValidator := mocks.NewMockClusterValidator(controller)
 	registry := newRegistryMock(providerReconciler)
-	c := fake.NewClientBuilder().WithRuntimeObjects(selfManagedCluster, kcp).Build()
+	c := fake.NewClientBuilder().WithRuntimeObjects(selfManagedCluster, kcp, test.EKSARelease()).Build()
 	mockPkgs := mocks.NewMockPackagesClient(controller)
 	providerReconciler.EXPECT().Reconcile(ctx, gomock.AssignableToTypeOf(logr.Logger{}), sameName(selfManagedCluster))
 	mhcReconciler.EXPECT().Reconcile(ctx, gomock.AssignableToTypeOf(logr.Logger{}), sameName(selfManagedCluster)).Return(nil)
@@ -432,7 +432,7 @@ func TestClusterReconcilerReconcileConditions(t *testing.T) {
 				md.Status = tt.machineDeploymentStatus
 			})
 
-			objs = append(objs, config.Cluster, bundles, kcp, md1, mgmt.Cluster)
+			objs = append(objs, config.Cluster, bundles, kcp, md1, mgmt.Cluster, test.EKSARelease())
 
 			for _, o := range config.ChildObjects() {
 				objs = append(objs, o)
@@ -707,7 +707,7 @@ func TestClusterReconcilerReconcileSelfManagedClusterConditions(t *testing.T) {
 				md.Status = tt.machineDeploymentStatus
 			})
 
-			objs = append(objs, config.Cluster, bundles, kcp, md1)
+			objs = append(objs, config.Cluster, bundles, kcp, md1, test.EKSARelease())
 			for _, o := range config.ChildObjects() {
 				objs = append(objs, o)
 			}
@@ -873,7 +873,7 @@ func TestClusterReconcilerReconcileGenerations(t *testing.T) {
 			ctx := context.Background()
 
 			objs := make([]runtime.Object, 0, 7+len(machineDeployments))
-			objs = append(objs, config.Cluster, bundles)
+			objs = append(objs, config.Cluster, bundles, test.EKSARelease())
 			for _, o := range config.ChildObjects() {
 				objs = append(objs, o)
 			}
@@ -1039,7 +1039,7 @@ func TestClusterReconcilerReconcileSelfManagedClusterRegAuthFailNoSecret(t *test
 	mhcReconciler := mocks.NewMockMachineHealthCheckReconciler(controller)
 
 	registry := newRegistryMock(providerReconciler)
-	c := fake.NewClientBuilder().WithRuntimeObjects(selfManagedCluster).Build()
+	c := fake.NewClientBuilder().WithRuntimeObjects(selfManagedCluster, test.EKSARelease()).Build()
 
 	r := controllers.NewClusterReconciler(c, registry, iam, clusterValidator, nil, mhcReconciler)
 	_, err := r.Reconcile(ctx, clusterRequest(selfManagedCluster))
@@ -1255,7 +1255,7 @@ func TestClusterReconcilerSkipDontInstallPackagesOnSelfManaged(t *testing.T) {
 			ReconciledGeneration: 1,
 		},
 	}
-	objs := []runtime.Object{cluster}
+	objs := []runtime.Object{cluster, test.EKSARelease()}
 	cb := fake.NewClientBuilder()
 	mockClient := cb.WithRuntimeObjects(objs...).Build()
 	nullRegistry := newRegistryForDummyProviderReconciler()
@@ -1429,7 +1429,7 @@ func TestClusterReconcilerPackagesInstall(s *testing.T) {
 		}
 		mgmt := cluster.DeepCopy()
 		mgmt.Name = "my-management-cluster"
-		objs := []runtime.Object{cluster, bundles, secret, mgmt}
+		objs := []runtime.Object{cluster, bundles, secret, mgmt, test.EKSARelease()}
 		fakeClient := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
 		nullRegistry := newRegistryForDummyProviderReconciler()
 		mockIAM := mocks.NewMockAWSIamConfigReconciler(ctrl)
@@ -1496,6 +1496,59 @@ func TestClusterReconcilerValidateManagementEksaVersionFail(t *testing.T) {
 	_, err := r.Reconcile(logCtx, clusterRequest(config.Cluster))
 
 	g.Expect(err).To(HaveOccurred())
+}
+
+func TestClusterReconcilerNotAvailableEksaVersion(t *testing.T) {
+	version := test.DevEksaVersion()
+	config, _ := baseTestVsphereCluster()
+	config.Cluster.Name = "test-cluster"
+	config.Cluster.Spec.ManagementCluster = anywherev1.ManagementCluster{Name: "management-cluster"}
+	config.Cluster.Spec.BundlesRef = nil
+	config.Cluster.Spec.EksaVersion = &version
+
+	mgmt := config.DeepCopy()
+	mgmt.Cluster.Name = "management-cluster"
+	mgmt.Cluster.Spec.BundlesRef = nil
+	mgmt.Cluster.Spec.EksaVersion = &version
+
+	g := NewWithT(t)
+
+	objs := make([]runtime.Object, 0, 4+len(config.ChildObjects()))
+	objs = append(objs, config.Cluster, mgmt.Cluster)
+
+	for _, o := range config.ChildObjects() {
+		objs = append(objs, o)
+	}
+
+	testClient := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
+
+	mockCtrl := gomock.NewController(t)
+	providerReconciler := mocks.NewMockProviderClusterReconciler(mockCtrl)
+	iam := mocks.NewMockAWSIamConfigReconciler(mockCtrl)
+	clusterValidator := mocks.NewMockClusterValidator(mockCtrl)
+	registry := newRegistryMock(providerReconciler)
+	mockPkgs := mocks.NewMockPackagesClient(mockCtrl)
+
+	ctx := context.Background()
+	log := testr.New(t)
+	logCtx := ctrl.LoggerInto(ctx, log)
+
+	iam.EXPECT().EnsureCASecret(logCtx, gomock.AssignableToTypeOf(logr.Logger{}), sameName(config.Cluster)).Return(controller.Result{}, nil)
+	clusterValidator.EXPECT().ValidateManagementClusterName(logCtx, gomock.AssignableToTypeOf(logr.Logger{}), sameName(config.Cluster)).Return(nil)
+
+	r := controllers.NewClusterReconciler(testClient, registry, iam, clusterValidator, mockPkgs, nil)
+
+	req := clusterRequest(config.Cluster)
+	_, err := r.Reconcile(logCtx, req)
+
+	g.Expect(err).To(HaveOccurred())
+	eksaCluster := &anywherev1.Cluster{}
+
+	expectedError := fmt.Sprintf("eksarelease %v could not be found on the management cluster", *config.Cluster.Spec.EksaVersion)
+	g.Expect(testClient.Get(ctx, req.NamespacedName, eksaCluster)).To(Succeed())
+
+	g.Expect(eksaCluster.Status.FailureReason).To(HaveValue(Equal(anywherev1.EksaVersionInvalidReason)))
+	g.Expect(eksaCluster.Status.FailureMessage).To(HaveValue(Equal(expectedError)))
 }
 
 func vsphereWorkerMachineConfig() *anywherev1.VSphereMachineConfig {

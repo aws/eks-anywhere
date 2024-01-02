@@ -196,6 +196,7 @@ func (uc *upgradeClusterOptions) upgradeCluster(cmd *cobra.Command, args []strin
 		Provider:           deps.Provider,
 		CliConfig:          cliConfig,
 		SkippedValidations: skippedValidations,
+		KubeClient:         deps.UnAuthKubeClient.KubeconfigClient(managementCluster.KubeconfigFile),
 	}
 
 	upgradeValidations := upgradevalidations.New(validationOpts)

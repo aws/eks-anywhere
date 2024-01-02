@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -1118,6 +1119,7 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 			if tc.modifyDefaultSpecFunc != nil {
 				tc.modifyDefaultSpecFunc(clusterSpec)
 			}
+			objects := []client.Object{test.EKSARelease()}
 			opts := &validations.Opts{
 				Kubectl:           k,
 				Spec:              clusterSpec,
@@ -1126,6 +1128,7 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 				Provider:          provider,
 				TLSValidator:      tlsValidator,
 				CliVersion:        "v0.0.0-dev",
+				KubeClient:        test.NewFakeKubeClient(objects...),
 			}
 
 			clusterSpec.Cluster.Spec.KubernetesVersion = anywherev1.KubernetesVersion(tc.upgradeVersion)
