@@ -1,0 +1,45 @@
+### clusterNetwork (required)
+Network configuration.
+
+### clusterNetwork.cniConfig (required)
+CNI plugin configuration. Supports `cilium`.
+
+### clusterNetwork.cniConfig.cilium.policyEnforcementMode
+Optionally specify a policyEnforcementMode of `default`, `always` or `never`.
+
+### clusterNetwork.cniConfig.cilium.egressMasqueradeInterfaces
+Optionally specify a network interface name or interface prefix used for
+masquerading. See <a href="/docs/getting-started/optional/cni/#egressmasqueradeinterfaces-option-for-cilium-plugin">EgressMasqueradeInterfaces</a>
+option.
+
+### clusterNetwork.cniConfig.cilium.skipUpgrade
+When true, skip Cilium maintenance during upgrades. Also see <a href="/docs/getting-started/optional/cni/#use-a-custom-cni">Use a custom
+CNI</a>.
+
+### clusterNetwork.cniConfig.cilium.routingMode
+Optionally specify the routing mode. Accepts `default` and `direct`. Also see <a href="/docs/getting-started/optional/cni/#routingmode-option-for-cilium-plugin">RoutingMode</a>
+option.
+
+### clusterNetwork.cniConfig.cilium.ipv4NativeRoutingCIDR
+Optionally specify the CIDR to use when RoutingMode is set to direct.
+When specified, Cilium assumes networking for this CIDR is preconfigured and
+hands traffic destined for that range to the Linux network stack without
+applying any SNAT.
+
+### clusterNetwork.cniConfig.cilium.ipv6NativeRoutingCIDR
+Optionally specify the IPv6 CIDR to use when RoutingMode is set to direct.
+When specified, Cilium assumes networking for this CIDR is preconfigured and
+hands traffic destined for that range to the Linux network stack without
+applying any SNAT.
+
+### clusterNetwork.pods.cidrBlocks[0] (required)
+The pod subnet specified in CIDR notation. Only 1 pod CIDR block is permitted.
+The CIDR block should not conflict with the host or service network ranges.
+
+### clusterNetwork.services.cidrBlocks[0] (required)
+The service subnet specified in CIDR notation. Only 1 service CIDR block is
+permitted.
+This CIDR block should not conflict with the host or pod network ranges.
+
+### clusterNetwork.dns.resolvConf.path (optional)
+File path to a file containing a custom DNS resolver configuration.

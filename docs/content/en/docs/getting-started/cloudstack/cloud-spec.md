@@ -149,7 +149,7 @@ spec:
     name: "m4-large"
   users:
   - name: "capc"
-    sshAuthorizedKeys: 
+    sshAuthorizedKeys:
     - "ssh-rsa AAAAB3N...
   template:
     name: "rhel8-k8s-118"
@@ -170,22 +170,7 @@ spec:
 ### name (required)
 Name of your cluster `my-cluster-name` in this example
 
-### clusterNetwork (required)
-Specific network configuration for your Kubernetes cluster.
-
-### clusterNetwork.cniConfig (required)
-CNI plugin configuration to be used in the cluster. The only supported configuration at the moment is `cilium`.
-
-### clusterNetwork.cniConfig.cilium.policyEnforcementMode
-Optionally, you may specify a policyEnforcementMode of default, always, never.
-
-### clusterNetwork.pods.cidrBlocks[0] (required)
-Subnet used by pods in CIDR notation. Please note that only 1 custom pods CIDR block specification is permitted.
-This CIDR block should not conflict with the network subnet range selected for the VMs.
-
-### clusterNetwork.services.cidrBlocks[0] (required)
-Subnet used by services in CIDR notation. Please note that only 1 custom services CIDR block specification is permitted.
-This CIDR block should not conflict with the network subnet range selected for the VMs.
+{{% include "../_configuration/cluster_clusterNetwork.html" %}}
 
 ### controlPlaneConfiguration (required)
 Specific control plane configuration for your Kubernetes cluster.
@@ -368,7 +353,7 @@ These can be used for things like identifying sets of nodes that you want to add
 
 ### affinityGroupIDs (optional)
 Group ID to attach to the set of host systems to indicate how affinity is done for services on those systems.
- 
+
 ### affinity (optional)
 Allows you to set `pro` and `anti` affinity for the `CloudStackMachineConfig`.
 This can be used in a mutually exclusive fashion with the affinityGroupIDs field.

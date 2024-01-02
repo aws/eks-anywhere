@@ -40,9 +40,9 @@ spec:
         effect: <span>"NoSchedule"</span>
       labels:                        <a href="#controlplaneconfigurationlabels"># Labels applied to control plane nodes </a>
         <span>"key1"</span>: <span>"value1"</span>
-        <span>"key2"</span>: <span>"value2"</span> 
+        <span>"key2"</span>: <span>"value2"</span>
    datacenterRef:                    <a href="#datacenterref"># Kubernetes object with vSphere-specific config </a>
-      kind: VSphereDatacenterConfig  
+      kind: VSphereDatacenterConfig
       name: my-cluster-datacenter
    externalEtcdConfiguration:
      count: <span style="color:green">3</span>                        <a href="#externaletcdconfigurationcount"># Number of etcd members </a>
@@ -57,12 +57,12 @@ spec:
        name: my-cluster-machines
      name: md-0                      <a href="#workernodegroupconfigurationsname-required"># Name of the worker nodegroup (required) </a>
      taints:                         <a href="#workernodegroupconfigurationstaints"># Taints to apply to worker node group nodes </a>
-     - key: <span>"key1"</span>                       
+     - key: <span>"key1"</span>
        value: <span>"value1"</span>
        effect: <span>"NoSchedule"</span>
      labels:                         <a href="#workernodegroupconfigurationslabels"># Labels to apply to worker node group nodes </a>
        <span>"key1"</span>: <span>"value1"</span>
-       <span">"key2"</span>: <span>"value2"</span> 
+       <span">"key2"</span>: <span>"value2"</span>
 ---
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: VSphereDatacenterConfig
@@ -117,25 +117,7 @@ The following additional optional configuration can also be included:
 ### name (required)
 Name of your cluster `my-cluster-name` in this example
 
-### clusterNetwork (required)
-Specific network configuration for your Kubernetes cluster.
-
-### clusterNetwork.cniConfig (required)
-CNI plugin configuration to be used in the cluster. The only supported configuration at the moment is `cilium`.
-
-### clusterNetwork.cniConfig.cilium.policyEnforcementMode
-Optionally, you may specify a policyEnforcementMode of `default`, `always`, `never`.
-
-### clusterNetwork.pods.cidrBlocks[0] (required)
-Subnet used by pods in CIDR notation. Please note that only 1 custom pods CIDR block specification is permitted.
-This CIDR block should not conflict with the network subnet range selected for the VMs.
-
-### clusterNetwork.services.cidrBlocks[0] (required)
-Subnet used by services in CIDR notation. Please note that only 1 custom services CIDR block specification is permitted.
-This CIDR block should not conflict with the network subnet range selected for the VMs.
-
-### clusterNetwork.dns.resolvConf.path (optional)
-Path to the file with a custom DNS resolver configuration.
+{{% include "../_configuration/cluster_clusterNetwork.html" %}}
 
 ### controlPlaneConfiguration (required)
 Specific control plane configuration for your Kubernetes cluster.
@@ -151,7 +133,7 @@ A unique IP you want to use for the control plane VM in your EKS Anywhere cluste
 range that does not conflict with other VMs.
 
 >**_NOTE:_** This IP should be outside the network DHCP range as it is a floating IP that gets assigned to one of
-the control plane nodes for kube-apiserver loadbalancing. Suggestions on how to ensure this IP does not cause issues during cluster 
+the control plane nodes for kube-apiserver loadbalancing. Suggestions on how to ensure this IP does not cause issues during cluster
 creation process are [here]({{< relref "../vsphere/vsphere-prereq/#prepare-a-vmware-vsphere-environment" >}})
 
 ### controlPlaneConfiguration.taints
@@ -163,7 +145,7 @@ Modifying the taints associated with the control plane configuration will cause 
 
 >**_NOTE:_** The taints provided will be used instead of the default control plane taint.
 Any pods that you run on the control plane nodes must tolerate the taints you provide in the control plane configuration.
-> 
+>
 
 ### controlPlaneConfiguration.labels
 A list of labels to apply to the control plane nodes of the cluster. This is in addition to the labels that
@@ -306,7 +288,7 @@ The `template` must contain the `Cluster.Spec.KubernetesVersion` or `Cluster.Spe
 
 ### cloneMode (optional)
 `cloneMode` defines the clone mode to use when creating the cluster VMs from the template. Allowed values are:
-- `fullClone`: With full clone, the cloned VM is a separate independent copy of the template. This makes provisioning the VMs a bit slower at the cost of better customization and performance. 
+- `fullClone`: With full clone, the cloned VM is a separate independent copy of the template. This makes provisioning the VMs a bit slower at the cost of better customization and performance.
 - `linkedClone`: With linked clone, the cloned VM shares the parent template's virtual disk. This makes provisioning the VMs faster while also saving the disk space. Linked clone does **not** allow customizing the disk size.
 The template should meet the following properties to use `linkedClone`:
   - The template needs to have a snapshot
@@ -355,7 +337,7 @@ Example:
 Optional host OS configurations for the EKS Anywhere Kubernetes nodes.
 More information in the [Host OS Configuration]({{< relref "../optional/hostOSConfig.md" >}}) section.
 
-## Optional VSphere Credentials 
+## Optional VSphere Credentials
 Use the following environment variables to configure the Cloud Provider with different credentials.
 
 ### EKSA_VSPHERE_CP_USERNAME

@@ -84,7 +84,7 @@ spec:
       cidrBlocks:
       - 10.96.0.0/12
     cniConfig:
-      cilium: 
+      cilium:
         policyEnforcementMode: "always"
 ```
 
@@ -137,7 +137,7 @@ through the cli upgrade command.
 EKS Anywhere will create the required NetworkPolicy objects for its core components (listed above).
    This will ensure that the cluster gets upgraded successfully. But it is up to the user to create
    the NetworkPolicy objects required for the user workloads.
-   
+
 2. Switching from `always` mode: When switching from `always` to `default` mode, EKS Anywhere
 will not delete any of the existing NetworkPolicy objects, including the ones required
    for EKS Anywhere components (listed above). The user must delete NetworkPolicy objects as needed.
@@ -165,13 +165,13 @@ spec:
       cidrBlocks:
       - 10.96.0.0/12
     cniConfig:
-      cilium: 
+      cilium:
         egressMasqueradeInterfaces: "eth0"
 ```
 
 ### RoutingMode option for Cilium plugin
 
-By default all traffic is sent by Cilium over Geneve tunneling on the network. The `routingMode` option allows users to switch to [native routing](https://docs.cilium.io/en/v1.12/concepts/networking/routing/#native-routing) instead. 
+By default all traffic is sent by Cilium over Geneve tunneling on the network. The `routingMode` option allows users to switch to [native routing](https://docs.cilium.io/en/v1.12/concepts/networking/routing/#native-routing) instead.
 
 This field can be set as follows:
 ```yaml
@@ -188,18 +188,18 @@ spec:
       cidrBlocks:
       - 10.96.0.0/12
     cniConfig:
-      cilium: 
+      cilium:
         routingMode: "direct"
 ```
 
 ### Use a custom CNI
 
-EKS Anywhere can be configured to skip EKS Anywhere's default Cilium CNI upgrades via the `skipUpgrade` field. 
+EKS Anywhere can be configured to skip EKS Anywhere's default Cilium CNI upgrades via the `skipUpgrade` field.
 `skipUpgrade` can be `true` or `false`. When not set, it defaults to `false`.
 
-When creating a new cluster with `skipUpgrade` enabled, EKS Anywhere Cilium will be installed as it 
-is required to successfully provision an EKS Anywhere cluster. 
-When the cluster successfully provisions, EKS Anywhere Cilium may be uninstalled and replaced with 
+When creating a new cluster with `skipUpgrade` enabled, EKS Anywhere Cilium will be installed as it
+is required to successfully provision an EKS Anywhere cluster.
+When the cluster successfully provisions, EKS Anywhere Cilium may be uninstalled and replaced with
 a different CNI.
 Subsequent upgrades to the cluster will not attempt to upgrade or re-install EKS Anywhere Cilium.
 
@@ -219,17 +219,17 @@ spec:
       cidrBlocks:
       - 10.96.0.0/12
     cniConfig:
-      cilium: 
+      cilium:
         skipUpgrade: true
 ```
 
-The [Cilium CLI](https://github.com/cilium/cilium-cli) can be used to uninstall EKS Anywhere Cilium 
+The [Cilium CLI](https://github.com/cilium/cilium-cli) can be used to uninstall EKS Anywhere Cilium
 via `cilium uninstall`.
 See the [replacing Cilium task]({{< ref "../../clustermgmt/networking/cluster-replace-cilium" >}}) for a walkthrough on how to successfully replace EKS Anywhere Cilium.
 
 {{% alert title="Warning" color="warning" %}}
-When uninstalling EKS Anywhere Cilium, nodes will become unhealthy. If nodes are left without a CNI 
-for longer than 5m the nodes will begin rolling. To maintain a healthy cluster, operators should 
+When uninstalling EKS Anywhere Cilium, nodes will become unhealthy. If nodes are left without a CNI
+for longer than 5m the nodes will begin rolling. To maintain a healthy cluster, operators should
 immediately install a CNI after uninstalling EKS Anywhere Cilium.
 {{% /alert %}}
 
@@ -243,9 +243,9 @@ anywhere.eks.amazonaws.com/eksa-cilium: ""
 
 ### Node IPs configuration option
 
-Starting with release v0.10, the `node-cidr-mask-size` [flag](https://kubernetes.io/docs/reference/command-line-tools-reference/kube-controller-manager/#options) 
-for Kubernetes controller manager (kube-controller-manager) is configurable via the EKS anywhere cluster spec. The `clusterNetwork.nodes` being an optional field, 
-is not generated in the EKS Anywhere spec using `generate clusterconfig` command. This block for `nodes` will need to be manually added to the cluster spec under the 
+Starting with release v0.10, the `node-cidr-mask-size` [flag](https://kubernetes.io/docs/reference/command-line-tools-reference/kube-controller-manager/#options)
+for Kubernetes controller manager (kube-controller-manager) is configurable via the EKS anywhere cluster spec. The `clusterNetwork.nodes` being an optional field,
+is not generated in the EKS Anywhere spec using `generate clusterconfig` command. This block for `nodes` will need to be manually added to the cluster spec under the
 `clusterNetwork` section:
 
 ```yaml
@@ -262,17 +262,17 @@ is not generated in the EKS Anywhere spec using `generate clusterconfig` command
       cidrMaskSize: 24
 ```
 
-If the user does not specify the `clusterNetwork.nodes` field in the cluster yaml spec, the value for this flag defaults to 24 for IPv4. 
+If the user does not specify the `clusterNetwork.nodes` field in the cluster yaml spec, the value for this flag defaults to 24 for IPv4.
 Please note that this mask size needs to be greater than the pods CIDR mask size. In the above spec, the pod CIDR mask size is `16`
-and the node CIDR mask size is `24`. This ensures the cluster 256 blocks of /24 networks. For example, node1 will get 
-192.168.0.0/24, node2 will get 192.168.1.0/24, node3 will get 192.168.2.0/24 and so on. 
+and the node CIDR mask size is `24`. This ensures the cluster 256 blocks of /24 networks. For example, node1 will get
+192.168.0.0/24, node2 will get 192.168.1.0/24, node3 will get 192.168.2.0/24 and so on.
 
-To support more than 256 nodes, the cluster CIDR block needs to be large, and the node CIDR mask size needs to be 
-small, to support that many IPs. 
+To support more than 256 nodes, the cluster CIDR block needs to be large, and the node CIDR mask size needs to be
+small, to support that many IPs.
 For instance, to support 1024 nodes, a user can do any of the following things
 - Set the pods cidr blocks to `192.168.0.0/16` and node cidr mask size to 26
 - Set the pods cidr blocks to `192.168.0.0/15` and node cidr mask size to 25
 
-Please note that the `node-cidr-mask-size` needs to be large enough to accommodate the number of pods you want to run on each node. 
+Please note that the `node-cidr-mask-size` needs to be large enough to accommodate the number of pods you want to run on each node.
 A size of 24 will give enough IP addresses for about 250 pods per node, however a size of 26 will only give you about 60 IPs.
 This is an immutable field, and the value can't be updated once the cluster has been created.

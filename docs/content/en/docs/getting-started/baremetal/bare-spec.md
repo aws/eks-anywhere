@@ -38,7 +38,7 @@ spec:
     services:
       cidrBlocks:
       - 10.96.0.0/12
-  controlPlaneConfiguration:              
+  controlPlaneConfiguration:
     count: 1
     endpoint:
       host: "<Control Plane Endpoint IP>"
@@ -102,22 +102,7 @@ spec:
 ### name (required)
 Name of your cluster (`my-cluster-name` in this example).
 
-### clusterNetwork (required)
-Specific network configuration for your Kubernetes cluster.
-
-### clusterNetwork.cniConfig (required)
-CNI plugin to be installed in the cluster. The only supported value at the moment is `cilium`.
-
-### clusterNetwork.pods.cidrBlocks[0] (required)
-Subnet used by pods in CIDR notation. Please note that only 1 custom pods CIDR block specification is permitted.
-This CIDR block should not conflict with the `clusterNetwork.services.cidrBlocks` and network subnet range selected for the machines.
-
-### clusterNetwork.services.cidrBlocks[0] (required)
-Subnet used by services in CIDR notation. Please note that only 1 custom services CIDR block specification is permitted.
-This CIDR block should not conflict with the `clusterNetwork.pods.cidrBlocks` and network subnet range selected for the machines.
-
-### clusterNetwork.dns.resolvConf.path (optional)
-Path to the file with a custom DNS resolver configuration.
+{{% include "../_configuration/cluster_clusterNetwork.html" %}}
 
 ### controlPlaneConfiguration (required)
 Specific control plane configuration for your Kubernetes cluster.
@@ -131,7 +116,7 @@ A unique IP you want to use for the control plane in your EKS Anywhere cluster. 
 range that does not conflict with other machines.
 
 >**_NOTE:_** This IP should be outside the network DHCP range as it is a floating IP that gets assigned to one of
-the control plane nodes for kube-apiserver loadbalancing. 
+the control plane nodes for kube-apiserver loadbalancing.
 
 ### controlPlaneConfiguration.machineGroupRef (required)
 Refers to the Kubernetes object with Tinkerbell-specific configuration for your nodes. See `TinkerbellMachineConfig Fields` below.
@@ -145,7 +130,7 @@ Modifying the taints associated with the control plane configuration will cause 
 
 >**_NOTE:_** The taints provided will be used instead of the default control plane taint.
 Any pods that you run on the control plane nodes must tolerate the taints you provide in the control plane configuration.
-> 
+>
 
 ### controlPlaneConfiguration.labels
 A list of labels to apply to the control plane nodes of the cluster. This is in addition to the labels that
@@ -232,7 +217,7 @@ See [Artifacts]({{< relref "../../osmgmt/artifacts/#hookos-kernel-and-initial-ra
 spec:
   tinkerbellIP: "192.168.0.10"                                          # Available, routable IP
   osImageURL: "http://my-web-server/ubuntu-v1.23.7-eks-a-12-amd64.gz"   # Full URL to the OS Image hosted locally
-  hookImagesURLPath: "http://my-web-server/hook"                        # Path to the hook images. This path must contain vmlinuz-x86_64 and initramfs-x86_64 
+  hookImagesURLPath: "http://my-web-server/hook"                        # Path to the hook images. This path must contain vmlinuz-x86_64 and initramfs-x86_64
 ```
 This is the folder structure for `my-web-server`:
 ```
@@ -248,7 +233,7 @@ Optional field to skip deploying the default load balancer for Tinkerbell stack.
 
 EKS Anywhere for Bare Metal uses `kube-vip` load balancer by default to expose the Tinkerbell stack externally.
 You can disable this feature by setting this field to `true`.
->**_NOTE:_** If you skip load balancer deployment, you will have to ensure that the Tinkerbell stack is available at [tinkerbellIP]({{< relref "#tinkerbellip" >}}) once the cluster creation is finished. One way to achieve this is by using the [MetalLB]({{< relref "../../packages/metallb" >}}) package. 
+>**_NOTE:_** If you skip load balancer deployment, you will have to ensure that the Tinkerbell stack is available at [tinkerbellIP]({{< relref "#tinkerbellip" >}}) once the cluster creation is finished. One way to achieve this is by using the [MetalLB]({{< relref "../../packages/metallb" >}}) package.
 
 ## TinkerbellMachineConfig Fields
 In the example, there are `TinkerbellMachineConfig` sections for control plane (`my-cluster-name-cp`) and worker (`my-cluster-name`) machine groups.
@@ -318,7 +303,7 @@ They can also add their own [Tinkerbell actions](https://docs.tinkerbell.org/act
 The following shows two `TinkerbellTemplateConfig` examples that you can add to your cluster configuration file to override the values that EKS Anywhere sets: one for Ubuntu and one for Bottlerocket.
 Most actions used differ for different operating systems.
 
->**_NOTE:_** For the `stream-image` action, `DEST_DISK` points to the device representing the entire hard disk (for example, `/dev/sda`). 
+>**_NOTE:_** For the `stream-image` action, `DEST_DISK` points to the device representing the entire hard disk (for example, `/dev/sda`).
 For UEFI-enabled images, such as Ubuntu, write actions use `DEST_DISK` to point to the second partition (for example, `/dev/sda2`), with the first being the EFI partition.
 For the Bottlerocket image, which has 12 partitions, `DEST_DISK` is partition 12 (for example, `/dev/sda12`).
 Device names will be different for different disk types.
@@ -392,7 +377,7 @@ spec:
         name: disable-cloud-init-network-capabilities
         timeout: 90
       - environment:
-          CONTENTS: | 
+          CONTENTS: |
             datasource: Ec2
           DEST_DISK: /dev/sda2
           DEST_PATH: /etc/cloud/ds-identify.cfg
@@ -565,7 +550,7 @@ The `write-netplan` action writes Ubuntu network configuration information to th
 * environment.CONTENTS.network.version: Identifies the network version.
 * environment.CONTENTS.network.renderer: Defines the service to manage networking. By default, the `networkd` systemd service is used.
 * environment.CONTENTS.network.ethernets: Network interface to external network (eno1, by default) and whether or not to use dhcp4 (true, by default).
-* environment.DEST_DISK: Destination block storage device partition where the operating system is copied. By default, /dev/sda2 is used (sda1 is the EFI partition). 
+* environment.DEST_DISK: Destination block storage device partition where the operating system is copied. By default, /dev/sda2 is used (sda1 is the EFI partition).
 * environment.DEST_PATH: File where the networking configuration is written (/etc/netplan/config.yaml, by default).
 * environment.DIRMODE: Linux directory permissions bits to use when creating directories (0755, by default)
 * environment.FS_TYPE: Type of filesystem on the partition (ext4, by default).
@@ -597,7 +582,7 @@ The `add-tink-cloud-init-ds-config` action configures cloud-init data store feat
 
 * environment.CONTENTS.datasource: Sets the datasource. Uses Ec2, by default.
 * environment.DEST_DISK: Destination block storage device partition where the operating system is located (/dev/sda2, by default).
-* environment.DEST_PATH: Location of the data store identity configuration file on disk (/etc/cloud/ds-identify.cfg, by default) 
+* environment.DEST_PATH: Location of the data store identity configuration file on disk (/etc/cloud/ds-identify.cfg, by default)
 * environment.DIRMODE: Linux directory permissions bits to use when creating directories (0700, by default)
 * environment.FS_TYPE: Type of filesystem on the partition (ext4, by default).
 * environment.GID: The Linux group ID to set on file. Set to 0 (root group) by default.
