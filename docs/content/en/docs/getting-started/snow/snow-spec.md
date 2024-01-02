@@ -106,25 +106,7 @@ spec:
 ### name (required)
 Name of your cluster `my-cluster-name` in this example
 
-### clusterNetwork (required)
-Specific network configuration for your Kubernetes cluster.
-
-### clusterNetwork.cniConfig (required)
-CNI plugin configuration to be used in the cluster. The only supported configuration at the moment is `cilium`.
-
-### clusterNetwork.cniConfig.cilium.policyEnforcementMode
-Optionally, you may specify a policyEnforcementMode of default, always, never.
-
-### clusterNetwork.pods.cidrBlocks[0] (required)
-Subnet used by pods in CIDR notation. Please note that only 1 custom pods CIDR block specification is permitted.
-This CIDR block should not conflict with the network subnet range selected for the devices.
-
-### clusterNetwork.services.cidrBlocks[0] (required)
-Subnet used by services in CIDR notation. Please note that only 1 custom services CIDR block specification is permitted.
-This CIDR block should not conflict with the network subnet range selected for the devices.
-
-### clusterNetwork.dns.resolvConf.path (optional)
-Path to the file with a custom DNS resolver configuration.
+{{% include "../_configuration/cluster_clusterNetwork.html" %}}
 
 ### controlPlaneConfiguration (required)
 Specific control plane configuration for your Kubernetes cluster.
@@ -151,7 +133,7 @@ Modifying the taints associated with the control plane configuration will cause 
 
 >**_NOTE:_** The taints provided will be used instead of the default control plane taint.
 Any pods that you run on the control plane nodes must tolerate the taints you provide in the control plane configuration.
-> 
+>
 
 ### controlPlaneConfiguration.labels
 A list of labels to apply to the control plane nodes of the cluster. This is in addition to the labels that
@@ -267,7 +249,7 @@ The field is optional for Ubuntu and if specified, the size must be no smaller t
 Containers volume device name.
 
 ### containersVolume.type (optional)
-Type of the containers volume. Permitted values: `sbp1`, `sbg1`. (Default: `sbp1`) 
+Type of the containers volume. Permitted values: `sbp1`, `sbg1`. (Default: `sbp1`)
 
 `sbp1` stands for capacity-optimized HDD. `sbg1` is performance-optimized SSD.
 
@@ -281,7 +263,7 @@ Non root volume device name. Must be specified and cannot have prefix "/dev/sda"
 Size of the storage device for the non root volume. Must be no smaller than 8 Gi.
 
 ### nonRootVolumes[0].type (optional)
-Type of the non root volume. Permitted values: `sbp1`, `sbg1`. (Default: `sbp1`) 
+Type of the non root volume. Permitted values: `sbp1`, `sbg1`. (Default: `sbp1`)
 
 `sbp1` stands for capacity-optimized HDD. `sbg1` is performance-optimized SSD.
 
