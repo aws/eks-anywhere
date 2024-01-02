@@ -7,6 +7,7 @@ import (
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -38,12 +39,14 @@ func newPreflightValidationsTest(t *testing.T) *preflightValidationsTest {
 		}
 	})
 	version := "v0.0.0-dev"
+	objects := []client.Object{test.EKSARelease()}
 	opts := &validations.Opts{
 		Kubectl:           k,
 		Spec:              clusterSpec,
 		WorkloadCluster:   c,
 		ManagementCluster: c,
 		CliVersion:        version,
+		KubeClient:        test.NewFakeKubeClient(objects...),
 	}
 	return &preflightValidationsTest{
 		WithT: NewWithT(t),

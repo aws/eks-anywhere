@@ -213,6 +213,8 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 		deps.PackageInstaller,
 	)
 
+	mgmt := getManagementCluster(clusterSpec)
+
 	validationOpts := &validations.Opts{
 		Kubectl: deps.UnAuthKubectlClient,
 		Spec:    clusterSpec,
@@ -220,10 +222,11 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 			Name:           clusterSpec.Cluster.Name,
 			KubeconfigFile: kubeconfig.FromClusterName(clusterSpec.Cluster.Name),
 		},
-		ManagementCluster:  getManagementCluster(clusterSpec),
+		ManagementCluster:  mgmt,
 		Provider:           deps.Provider,
 		CliConfig:          cliConfig,
 		SkippedValidations: skippedValidations,
+		KubeClient:         deps.UnAuthKubeClient.KubeconfigClient(mgmt.KubeconfigFile),
 	}
 	createValidations := createvalidations.New(validationOpts)
 

@@ -375,6 +375,10 @@ func (r *ClusterReconciler) preClusterProviderReconcile(ctx context.Context, log
 		}
 	}
 
+	if err := validateEksaRelease(ctx, r.client, cluster); err != nil {
+		return controller.Result{}, err
+	}
+
 	if cluster.RegistryAuth() {
 		rUsername, rPassword, err := config.ReadCredentialsFromSecret(ctx, r.client)
 		if err != nil {
@@ -610,4 +614,21 @@ func (r *ClusterReconciler) setDefaultBundlesRefOrEksaVersion(ctx context.Contex
 
 	clus.Status.FailureMessage = ptr.String("Management cluster must have either EksaVersion or BundlesRef")
 	return fmt.Errorf("could not set default values")
+}
+
+func validateEksaRelease(ctx context.Context, client client.Client, cluster *anywherev1.Cluster) error {
+	if cluster.Spec.EksaVersion == nil {
+		return nil
+	}
+	err := validations.ValidateEksaReleaseExistOnManagement(ctx, clientutil.NewKubeClient(client), cluster)
+	if apierrors.IsNotFound(err) {
+		errMsg := fmt.Sprintf("eksarelease %v could not be found on the management cluster", *cluster.Spec.EksaVersion)
+		reason := anywherev1.EksaVersionInvalidReason
+		cluster.Status.FailureMessage = ptr.String(errMsg)
+		cluster.Status.FailureReason = &reason
+		return err
+	} else if err != nil {
+		return err
+	}
+	return nil
 }

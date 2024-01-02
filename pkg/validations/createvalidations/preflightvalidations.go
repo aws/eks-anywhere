@@ -6,6 +6,7 @@ import (
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/config"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
@@ -103,6 +104,13 @@ func (v *CreateValidations) PreflightValidations(ctx context.Context) []validati
 					Name:        "validate management cluster eksaVersion compatibility",
 					Remediation: fmt.Sprintf("upgrade management cluster %s before creating workload cluster %s", v.Opts.Spec.Cluster.ManagedBy(), v.Opts.WorkloadCluster.Name),
 					Err:         validations.ValidateManagementClusterEksaVersion(ctx, k, v.Opts.ManagementCluster, v.Opts.Spec),
+				}
+			},
+			func() *validations.ValidationResult {
+				return &validations.ValidationResult{
+					Name:        "validate eksa release components exist on management cluster",
+					Remediation: fmt.Sprintf("ensure eksaVersion is in the correct format (vMajor.Minor.Patch) and matches one of the available releases on the management cluster: kubectl get eksareleases -n %s --kubeconfig %s", constants.EksaSystemNamespace, v.Opts.ManagementCluster.KubeconfigFile),
+					Err:         validations.ValidateEksaReleaseExistOnManagement(ctx, v.Opts.KubeClient, v.Opts.Spec.Cluster),
 				}
 			},
 		)

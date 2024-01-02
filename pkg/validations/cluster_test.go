@@ -10,6 +10,7 @@ import (
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -320,6 +321,7 @@ func TestValidateEksaVersion(t *testing.T) {
 		wantErr    error
 		version    *anywherev1.EksaVersion
 		cliVersion string
+		workload   bool
 	}{
 		{
 			name:       "Success",
@@ -339,6 +341,12 @@ func TestValidateEksaVersion(t *testing.T) {
 			version:    &v,
 			cliVersion: "badvalue",
 		},
+		{
+			name:       "Mismatch",
+			wantErr:    fmt.Errorf("cluster's eksaVersion does not match EKS-Anywhere CLI's version"),
+			version:    &v,
+			cliVersion: "v0.0.1",
+		},
 	}
 
 	for _, tc := range tests {
@@ -348,8 +356,12 @@ func TestValidateEksaVersion(t *testing.T) {
 			tt.clusterSpec.Cluster.Spec.EksaVersion = tc.version
 			ctx := context.Background()
 
+			if tc.workload {
+				tt.clusterSpec.Cluster.SetManagedBy("other")
+			}
+
 			err := validations.ValidateEksaVersion(ctx, tc.cliVersion, tt.clusterSpec)
-			if err != nil {
+			if tc.wantErr != nil {
 				tt.Expect(err).To(MatchError(tc.wantErr))
 			}
 		})
@@ -523,4 +535,35 @@ func TestValidateK8s129SupportActive(t *testing.T) {
 	features.ClearCache()
 	os.Setenv(features.K8s129SupportEnvVar, "true")
 	tt.Expect(validations.ValidateK8s129Support(tt.clusterSpec)).To(Succeed())
+}
+
+func TestValidateEksaReleaseExistOnManagement(t *testing.T) {
+	tests := []struct {
+		name    string
+		wantErr error
+	}{
+		{
+			name:    "success",
+			wantErr: nil,
+		},
+		{
+			name:    "not present",
+			wantErr: fmt.Errorf("not found"),
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			tt := newTest(t)
+			ctx := context.Background()
+			objs := []client.Object{}
+			if tc.wantErr == nil {
+				objs = append(objs, test.EKSARelease())
+			}
+			fakeClient := test.NewFakeKubeClient(objs...)
+			err := validations.ValidateEksaReleaseExistOnManagement(ctx, fakeClient, tt.clusterSpec.Cluster)
+			if err != nil {
+				tt.Expect(err.Error()).To(ContainSubstring(tc.wantErr.Error()))
+			}
+		})
+	}
 }
