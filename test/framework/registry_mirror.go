@@ -164,3 +164,10 @@ func setupRegistryMirrorEndpointAndCert(e *ClusterE2ETest, providerName string, 
 		e.T.Fatalf("unable to set REGISTRY_PASSWORD: %v", err)
 	}
 }
+
+// SetRegistryMirrorDefaultInstanceSecurityGroupOnCleanup sets the instance security group to the registry mirror default security group on cleanup.
+func (e *ClusterE2ETest) SetRegistryMirrorDefaultInstanceSecurityGroupOnCleanup(opts ...CommandOpt) {
+	e.T.Cleanup(func() {
+		e.ChangeInstanceSecurityGroup(os.Getenv(RegistryMirrorDefaultSecurityGroup))
+	})
+}
