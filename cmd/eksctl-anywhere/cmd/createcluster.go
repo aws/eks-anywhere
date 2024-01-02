@@ -23,6 +23,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/validations/createvalidations"
 	"github.com/aws/eks-anywhere/pkg/workflow/management"
 	"github.com/aws/eks-anywhere/pkg/workflows"
+	"github.com/aws/eks-anywhere/pkg/workflows/workload"
 )
 
 type createClusterOptions struct {
@@ -186,7 +187,8 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 		WithEksdInstaller().
 		WithPackageInstaller(clusterSpec, cc.installPackages, cc.managementKubeconfig).
 		WithValidatorClients().
-		WithCreateClusterDefaulter(createCLIConfig)
+		WithCreateClusterDefaulter(createCLIConfig).
+		WithClusterApplier()
 
 	if cc.timeoutOptions.noTimeouts {
 		factory.WithNoTimeouts()
@@ -255,6 +257,18 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 		}
 
 		err = wflw.Run(ctx)
+	} else if features.UseControllerViaCLIWorkflow().IsActive() && clusterConfig.IsManaged() {
+		createWorkloadCluster := workload.NewCreate(
+			deps.Provider,
+			deps.ClusterManager,
+			deps.GitOpsFlux,
+			deps.Writer,
+			deps.ClusterApplier,
+			deps.EksdInstaller,
+			deps.PackageInstaller,
+		)
+		err = createWorkloadCluster.Run(ctx, clusterSpec, createValidations)
+
 	} else {
 		err = createCluster.Run(ctx, clusterSpec, createValidations, cc.forceClean)
 	}

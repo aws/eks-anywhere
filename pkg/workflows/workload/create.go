@@ -7,42 +7,41 @@ import (
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/task"
-	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/workflows/interfaces"
 )
 
-// Upgrade is a schema for upgrade cluster.
-type Upgrade struct {
+// Create is the workflow that creates a workload clusters.
+type Create struct {
 	provider         providers.Provider
 	clusterManager   interfaces.ClusterManager
 	gitOpsManager    interfaces.GitOpsManager
 	writer           filewriter.FileWriter
 	eksdInstaller    interfaces.EksdInstaller
-	clusterUpgrader  interfaces.ClusterUpgrader
+	clusterCreator   interfaces.ClusterCreator
 	packageInstaller interfaces.PackageInstaller
 }
 
-// NewUpgrade builds a new upgrade construct.
-func NewUpgrade(provider providers.Provider,
+// NewCreate builds a new create construct.
+func NewCreate(provider providers.Provider,
 	clusterManager interfaces.ClusterManager, gitOpsManager interfaces.GitOpsManager,
 	writer filewriter.FileWriter,
-	clusterUpgrader interfaces.ClusterUpgrader,
+	clusterCreator interfaces.ClusterCreator,
 	eksdInstaller interfaces.EksdInstaller,
 	packageInstaller interfaces.PackageInstaller,
-) *Upgrade {
-	return &Upgrade{
+) *Create {
+	return &Create{
 		provider:         provider,
 		clusterManager:   clusterManager,
 		gitOpsManager:    gitOpsManager,
 		writer:           writer,
 		eksdInstaller:    eksdInstaller,
-		clusterUpgrader:  clusterUpgrader,
+		clusterCreator:   clusterCreator,
 		packageInstaller: packageInstaller,
 	}
 }
 
-// Run Upgrade implements upgrade functionality for workload cluster's upgrade operation.
-func (c *Upgrade) Run(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, validator interfaces.Validator) error {
+// Run executes the tasks to create a workload cluster.
+func (c *Create) Run(ctx context.Context, clusterSpec *cluster.Spec, validator interfaces.Validator) error {
 	commandContext := &task.CommandContext{
 		Provider:          c.provider,
 		ClusterManager:    c.clusterManager,
@@ -51,9 +50,8 @@ func (c *Upgrade) Run(ctx context.Context, cluster *types.Cluster, clusterSpec *
 		Writer:            c.writer,
 		Validations:       validator,
 		ManagementCluster: clusterSpec.ManagementCluster,
-		WorkloadCluster:   cluster,
-		ClusterUpgrader:   c.clusterUpgrader,
+		ClusterCreator:    c.clusterCreator,
 	}
 
-	return task.NewTaskRunner(&setAndValidateUpgradeWorkloadTask{}, c.writer).RunTask(ctx, commandContext)
+	return task.NewTaskRunner(&setAndValidateCreateWorkloadTask{}, c.writer).RunTask(ctx, commandContext)
 }

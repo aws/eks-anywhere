@@ -167,13 +167,13 @@ func (a Applier) Run(ctx context.Context, spec *cluster.Spec, managementCluster 
 		}
 	}
 
-	a.log.V(3).Info("Waiting for worker nodes to be ready after upgrade")
+	a.log.V(3).Info("Waiting for worker nodes to be ready")
 	retry = a.retrierForWait(waitStartTime)
 	if err := cluster.WaitForCondition(ctx, a.log, client, spec.Cluster, a.conditionCheckoutTotalCount, retry, anywherev1.WorkersReadyCondition); err != nil {
 		return errors.Wrapf(err, "waiting for cluster's workers to be ready")
 	}
 
-	a.log.V(3).Info("Waiting for cluster upgrade to be completed")
+	a.log.V(3).Info("Waiting for cluster changes to be completed")
 	retry = a.retrierForWait(waitStartTime)
 	if err := cluster.WaitForCondition(ctx, a.log, client, spec.Cluster, a.conditionCheckoutTotalCount, retry, anywherev1.ReadyCondition); err != nil {
 		return errors.Wrapf(err, "waiting for cluster to be ready")

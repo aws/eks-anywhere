@@ -101,10 +101,10 @@ func newUpgradeTest(t *testing.T) *upgradeTestSetup {
 }
 
 func (c *upgradeTestSetup) expectSetup() {
-	c.clusterManager.EXPECT().GetCurrentClusterSpec(c.ctx, c.clusterSpec.ManagementCluster, c.clusterSpec.Cluster.Name).AnyTimes().Return(c.currentClusterSpec, nil)
-	c.provider.EXPECT().SetupAndValidateUpgradeCluster(c.ctx, c.workloadCluster, c.clusterSpec, c.currentClusterSpec).AnyTimes()
-	c.provider.EXPECT().Name().AnyTimes()
-	c.gitOpsManager.EXPECT().Validations(c.ctx, c.clusterSpec).AnyTimes()
+	c.clusterManager.EXPECT().GetCurrentClusterSpec(c.ctx, c.clusterSpec.ManagementCluster, c.clusterSpec.Cluster.Name).Return(c.currentClusterSpec, nil)
+	c.provider.EXPECT().SetupAndValidateUpgradeCluster(c.ctx, c.workloadCluster, c.clusterSpec, c.currentClusterSpec)
+	c.provider.EXPECT().Name()
+	c.gitOpsManager.EXPECT().Validations(c.ctx, c.clusterSpec)
 }
 
 func (c *upgradeTestSetup) expectUpgradeWorkloadCluster(err error) {
