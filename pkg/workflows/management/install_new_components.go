@@ -9,21 +9,28 @@ import (
 
 type installNewComponents struct{}
 
-// Run installNewComponents performs actions needed to upgrade the management cluster.
-func (s *installNewComponents) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
+func runInstallNewComponents(ctx context.Context, commandContext *task.CommandContext) error {
 	if err := commandContext.ClusterManager.ApplyBundles(ctx, commandContext.ClusterSpec, commandContext.ManagementCluster); err != nil {
 		commandContext.SetError(err)
-		return &workflows.CollectMgmtClusterDiagnosticsTask{}
+		return err
 	}
 
 	if err := commandContext.ClusterManager.ApplyReleases(ctx, commandContext.ClusterSpec, commandContext.ManagementCluster); err != nil {
 		commandContext.SetError(err)
-		return &workflows.CollectMgmtClusterDiagnosticsTask{}
+		return err
 	}
 
 	err := commandContext.EksdInstaller.InstallEksdManifest(ctx, commandContext.ClusterSpec, commandContext.ManagementCluster)
 	if err != nil {
 		commandContext.SetError(err)
+		return err
+	}
+	return nil
+}
+
+// Run installNewComponents performs actions needed to upgrade the management cluster.
+func (s *installNewComponents) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
+	if err := runInstallNewComponents(ctx, commandContext); err != nil {
 		return &workflows.CollectMgmtClusterDiagnosticsTask{}
 	}
 	return &upgradeCluster{}
