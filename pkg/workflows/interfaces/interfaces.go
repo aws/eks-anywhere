@@ -2,6 +2,7 @@ package interfaces
 
 import (
 	"context"
+	"io"
 
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
 	"github.com/aws/eks-anywhere/pkg/cluster"
@@ -92,4 +93,10 @@ type ClusterUpgrader interface {
 // ClusterCreator creates the cluster and waits until it's ready.
 type ClusterCreator interface {
 	Run(ctx context.Context, spec *cluster.Spec, managementCluster types.Cluster) error
+}
+
+// Cluster
+type Cluster interface {
+	WriteKubeconfig(ctx context.Context, w io.Writer, management *types.Cluster) error
+	WaitUntilControlPlaneAvailable(ctx context.Context, management *types.Cluster) error
 }

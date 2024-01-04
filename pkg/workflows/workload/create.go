@@ -8,6 +8,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/task"
 	"github.com/aws/eks-anywhere/pkg/workflows/interfaces"
+	"github.com/aws/eks-anywhere/pkg/workflows/structs"
 )
 
 // Create is the workflow that creates a workload clusters.
@@ -17,7 +18,7 @@ type Create struct {
 	gitOpsManager    interfaces.GitOpsManager
 	writer           filewriter.FileWriter
 	eksdInstaller    interfaces.EksdInstaller
-	clusterCreator   interfaces.ClusterCreator
+	clusterCreate    structs.ClusterCreate
 	packageInstaller interfaces.PackageInstaller
 }
 
@@ -25,7 +26,7 @@ type Create struct {
 func NewCreate(provider providers.Provider,
 	clusterManager interfaces.ClusterManager, gitOpsManager interfaces.GitOpsManager,
 	writer filewriter.FileWriter,
-	clusterCreator interfaces.ClusterCreator,
+	clusterCreate structs.ClusterCreate,
 	eksdInstaller interfaces.EksdInstaller,
 	packageInstaller interfaces.PackageInstaller,
 ) *Create {
@@ -35,7 +36,7 @@ func NewCreate(provider providers.Provider,
 		gitOpsManager:    gitOpsManager,
 		writer:           writer,
 		eksdInstaller:    eksdInstaller,
-		clusterCreator:   clusterCreator,
+		clusterCreate:    clusterCreate,
 		packageInstaller: packageInstaller,
 	}
 }
@@ -50,7 +51,7 @@ func (c *Create) Run(ctx context.Context, clusterSpec *cluster.Spec, validator i
 		Writer:            c.writer,
 		Validations:       validator,
 		ManagementCluster: clusterSpec.ManagementCluster,
-		ClusterCreator:    c.clusterCreator,
+		ClusterCreate:     c.clusterCreate,
 	}
 
 	return task.NewTaskRunner(&setAndValidateCreateWorkloadTask{}, c.writer).RunTask(ctx, commandContext)

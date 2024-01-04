@@ -17,6 +17,7 @@ import (
 	providermocks "github.com/aws/eks-anywhere/pkg/providers/mocks"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/workflows/interfaces/mocks"
+	"github.com/aws/eks-anywhere/pkg/workflows/structs"
 	"github.com/aws/eks-anywhere/pkg/workflows/workload"
 )
 
@@ -41,6 +42,11 @@ type createTestSetup struct {
 func newCreateTest(t *testing.T) *createTestSetup {
 	featureEnvVars := []string{}
 	mockCtrl := gomock.NewController(t)
+	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
+		s.Cluster.Name = "workload"
+		s.Cluster.Spec.DatacenterRef.Kind = v1alpha1.VSphereDatacenterKind
+		s.ManagementCluster = &types.Cluster{Name: "management"}
+	})
 	clusterManager := mocks.NewMockClusterManager(mockCtrl)
 	gitOpsManager := mocks.NewMockGitOpsManager(mockCtrl)
 	provider := providermocks.NewMockProvider(mockCtrl)
@@ -48,10 +54,16 @@ func newCreateTest(t *testing.T) *createTestSetup {
 	eksd := mocks.NewMockEksdInstaller(mockCtrl)
 	packageInstaller := mocks.NewMockPackageInstaller(mockCtrl)
 	eksdInstaller := mocks.NewMockEksdInstaller(mockCtrl)
+	cluster := mocks.NewMockCluster(mockCtrl)
 
 	datacenterConfig := &v1alpha1.VSphereDatacenterConfig{}
 	machineConfigs := []providers.MachineConfig{&v1alpha1.VSphereMachineConfig{}}
 	clusterUpgrader := mocks.NewMockClusterCreator(mockCtrl)
+	clusterCreate := structs.ClusterCreate{
+		Cluster:        cluster,
+		ClusterCreator: clusterUpgrader,
+		FS:             writer,
+	}
 
 	validator := mocks.NewMockValidator(mockCtrl)
 
@@ -60,7 +72,7 @@ func newCreateTest(t *testing.T) *createTestSetup {
 		clusterManager,
 		gitOpsManager,
 		writer,
-		clusterUpgrader,
+		clusterCreate,
 		eksdInstaller,
 		packageInstaller,
 	)
@@ -83,12 +95,8 @@ func newCreateTest(t *testing.T) *createTestSetup {
 		workload:         workload,
 		ctx:              context.Background(),
 		clusterCreator:   clusterUpgrader,
-		clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
-			s.Cluster.Name = "workload"
-			s.Cluster.Spec.DatacenterRef.Kind = v1alpha1.VSphereDatacenterKind
-			s.ManagementCluster = &types.Cluster{Name: "management"}
-		}),
-		workloadCluster: &types.Cluster{Name: "workload"},
+		clusterSpec:      clusterSpec,
+		workloadCluster:  &types.Cluster{Name: "workload"},
 	}
 }
 

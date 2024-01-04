@@ -76,12 +76,12 @@ func (s *createWorkloadClusterTask) Run(ctx context.Context, commandContext *tas
 	commandContext.ClusterSpec.Cluster.AddManagedByCLIAnnotation()
 
 	logger.Info("Applying cluster spec to bootstrap cluster")
-	if err := commandContext.ClusterUpgrader.Run(ctx, commandContext.ClusterSpec, *commandContext.BootstrapCluster); err != nil {
+	if err := commandContext.ClusterCreate.ClusterCreator.Run(ctx, commandContext.ClusterSpec, *commandContext.BootstrapCluster); err != nil {
 		commandContext.SetError(err)
 		return &workflows.CollectMgmtClusterDiagnosticsTask{}
 	}
 
-	workloadCluster, err := commandContext.ClusterManager.GetWorkloadCluster(ctx, commandContext.BootstrapCluster, commandContext.ClusterSpec, commandContext.Provider)
+	workloadCluster, err := commandContext.ClusterCreate.GetWorkloadCluster(ctx, commandContext.ClusterSpec, *&commandContext.BootstrapCluster, commandContext.Provider)
 	if err != nil {
 		commandContext.SetError(err)
 		return &workflows.CollectDiagnosticsTask{}

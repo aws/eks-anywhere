@@ -10,10 +10,10 @@ import (
 
 type createCluster struct{}
 
-// Run createCluster performs actions needed to create the management cluster.
+// Run createCluster performs actions needed to create the workload cluster.
 func (c *createCluster) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
 	logger.Info("Creating workload cluster")
-	if err := commandContext.ClusterCreator.Run(ctx, commandContext.ClusterSpec, *commandContext.ManagementCluster); err != nil {
+	if err := commandContext.ClusterCreate.ClusterCreator.Run(ctx, commandContext.ClusterSpec, *commandContext.ManagementCluster); err != nil {
 		commandContext.SetError(err)
 		return &workflows.CollectMgmtClusterDiagnosticsTask{}
 	}

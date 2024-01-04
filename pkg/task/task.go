@@ -15,6 +15,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/workflows/interfaces"
+	"github.com/aws/eks-anywhere/pkg/workflows/structs"
 )
 
 // Task is a logical unit of work - meant to be implemented by each Task.
@@ -37,7 +38,7 @@ type CommandContext struct {
 	PackageInstaller          interfaces.PackageInstaller
 	EksdUpgrader              interfaces.EksdUpgrader
 	ClusterUpgrader           interfaces.ClusterUpgrader
-	ClusterCreator            interfaces.ClusterCreator
+	ClusterCreate             structs.ClusterCreate
 	CAPIManager               interfaces.CAPIManager
 	ClusterSpec               *cluster.Spec
 	CurrentClusterSpec        *cluster.Spec

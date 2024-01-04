@@ -24,6 +24,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/workflow/management"
 	"github.com/aws/eks-anywhere/pkg/workflows"
 	m "github.com/aws/eks-anywhere/pkg/workflows/management"
+	"github.com/aws/eks-anywhere/pkg/workflows/structs"
 	"github.com/aws/eks-anywhere/pkg/workflows/workload"
 )
 
@@ -233,6 +234,12 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 	}
 	createValidations := createvalidations.New(validationOpts)
 
+	clusterCreate := structs.ClusterCreate{
+		Cluster:        clustermanager.NewCreateClusterShim(clusterSpec, deps.ClusterManager, deps.Provider),
+		ClusterCreator: deps.ClusterApplier,
+		FS:             deps.Writer,
+	}
+
 	if features.UseNewWorkflows().IsActive() {
 		deps, err = factory.
 			WithCNIInstaller(clusterSpec, deps.Provider).
@@ -264,7 +271,7 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 			deps.ClusterManager,
 			deps.GitOpsFlux,
 			deps.Writer,
-			deps.ClusterApplier,
+			clusterCreate,
 			deps.EksdInstaller,
 			deps.PackageInstaller,
 		)
@@ -289,7 +296,7 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 			deps.Writer,
 			deps.EksdInstaller,
 			deps.PackageInstaller,
-			deps.ClusterApplier,
+			clusterCreate,
 		)
 
 		err = createMgmtCluster.Run(ctx, clusterSpec, createValidations, cc.forceClean)

@@ -46,7 +46,7 @@ func (s *installEksaComponentsOnWorkloadTask) Run(ctx context.Context, commandCo
 	}
 
 	logger.Info("Applying cluster spec to workload cluster")
-	if err = commandContext.ClusterUpgrader.Run(ctx, commandContext.ClusterSpec, *commandContext.WorkloadCluster); err != nil {
+	if err = commandContext.ClusterCreate.ClusterCreator.Run(ctx, commandContext.ClusterSpec, *commandContext.WorkloadCluster); err != nil {
 		commandContext.SetError(err)
 		return &workflows.CollectMgmtClusterDiagnosticsTask{}
 	}

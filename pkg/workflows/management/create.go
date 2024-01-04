@@ -8,6 +8,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/task"
 	"github.com/aws/eks-anywhere/pkg/workflows/interfaces"
+	"github.com/aws/eks-anywhere/pkg/workflows/structs"
 )
 
 // Create is a schema for create cluster.
@@ -19,7 +20,7 @@ type Create struct {
 	writer           filewriter.FileWriter
 	eksdInstaller    interfaces.EksdInstaller
 	packageInstaller interfaces.PackageInstaller
-	clusterUpgrader  interfaces.ClusterUpgrader
+	clusterCreate    structs.ClusterCreate
 }
 
 // NewCreate builds a new create construct.
@@ -27,7 +28,7 @@ func NewCreate(bootstrapper interfaces.Bootstrapper, provider providers.Provider
 	clusterManager interfaces.ClusterManager, gitOpsManager interfaces.GitOpsManager,
 	writer filewriter.FileWriter, eksdInstaller interfaces.EksdInstaller,
 	packageInstaller interfaces.PackageInstaller,
-	clusterUpgrade interfaces.ClusterUpgrader,
+	clusterCreate structs.ClusterCreate,
 ) *Create {
 	return &Create{
 		bootstrapper:     bootstrapper,
@@ -37,7 +38,7 @@ func NewCreate(bootstrapper interfaces.Bootstrapper, provider providers.Provider
 		writer:           writer,
 		eksdInstaller:    eksdInstaller,
 		packageInstaller: packageInstaller,
-		clusterUpgrader:  clusterUpgrade,
+		clusterCreate:    clusterCreate,
 	}
 }
 
@@ -53,7 +54,7 @@ func (c *Create) Run(ctx context.Context, clusterSpec *cluster.Spec, validator i
 		Validations:      validator,
 		EksdInstaller:    c.eksdInstaller,
 		PackageInstaller: c.packageInstaller,
-		ClusterUpgrader:  c.clusterUpgrader,
+		ClusterCreate:    c.clusterCreate,
 	}
 
 	return task.NewTaskRunner(&setupAndValidateCreate{}, c.writer).RunTask(ctx, commandContext)
