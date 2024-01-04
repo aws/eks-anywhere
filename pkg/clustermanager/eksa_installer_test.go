@@ -2,6 +2,8 @@ package clustermanager_test
 
 import (
 	"context"
+	"os"
+	"strings"
 	"testing"
 
 	"github.com/go-logr/logr"
@@ -69,8 +71,14 @@ func newInstallerTest(t *testing.T, opts ...clustermanager.EKSAInstallerOpt) *in
 func TestEKSAInstallerInstallSuccessWithRealManifest(t *testing.T) {
 	tt := newInstallerTest(t)
 	tt.newSpec.VersionsBundles["1.19"].Eksa.Components.URI = "../../config/manifest/eksa-components.yaml"
+	file, err := os.ReadFile("../../config/manifest/eksa-components.yaml")
+	if err != nil {
+		t.Fatalf("could not read eksa-components")
+	}
+	manifest := string(file)
+	expectedObjectCount := strings.Count(manifest, "---")
 	tt.client.EXPECT().Apply(tt.ctx, tt.cluster.KubeconfigFile, gomock.AssignableToTypeOf(&appsv1.Deployment{}))
-	tt.client.EXPECT().Apply(tt.ctx, tt.cluster.KubeconfigFile, gomock.Any()).Times(37) // there are 37 objects in the manifest
+	tt.client.EXPECT().Apply(tt.ctx, tt.cluster.KubeconfigFile, gomock.Any()).Times(expectedObjectCount)
 	tt.client.EXPECT().WaitForDeployment(tt.ctx, tt.cluster, "30m0s", "Available", "eksa-controller-manager", "eksa-system")
 
 	tt.Expect(tt.installer.Install(tt.ctx, test.NewNullLogger(), tt.cluster, tt.newSpec)).To(Succeed())
@@ -146,7 +154,13 @@ func TestEKSAInstallerInstallSuccessWithNoTimeout(t *testing.T) {
 	tt := newInstallerTest(t, clustermanager.WithEKSAInstallerNoTimeouts())
 	tt.newSpec.VersionsBundles["1.19"].Eksa.Components.URI = "../../config/manifest/eksa-components.yaml"
 	tt.client.EXPECT().Apply(tt.ctx, tt.cluster.KubeconfigFile, gomock.AssignableToTypeOf(&appsv1.Deployment{}))
-	tt.client.EXPECT().Apply(tt.ctx, tt.cluster.KubeconfigFile, gomock.Any()).Times(37) // there are 37 objects in the manifest
+	file, err := os.ReadFile("../../config/manifest/eksa-components.yaml")
+	if err != nil {
+		t.Fatalf("could not read eksa-components")
+	}
+	manifest := string(file)
+	expectedObjectCount := strings.Count(manifest, "---")
+	tt.client.EXPECT().Apply(tt.ctx, tt.cluster.KubeconfigFile, gomock.Any()).Times(expectedObjectCount)
 	tt.client.EXPECT().WaitForDeployment(tt.ctx, tt.cluster, maxTime.String(), "Available", "eksa-controller-manager", "eksa-system")
 
 	tt.Expect(tt.installer.Install(tt.ctx, test.NewNullLogger(), tt.cluster, tt.newSpec)).To(Succeed())
