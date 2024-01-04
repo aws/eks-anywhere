@@ -55,7 +55,7 @@ Install `eksctl`
 curl "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" \
     --silent --location \
     | tar xz -C /tmp
-sudo mv /tmp/eksctl /usr/local/bin/
+sudo install -m 0755 /tmp/eksctl /usr/local/bin/eksctl
 ```
 
 Install the `eksctl-anywhere` plugin
@@ -66,7 +66,7 @@ EKS_ANYWHERE_TARBALL_URL=$(curl https://anywhere-assets.eks.amazonaws.com/releas
 curl $EKS_ANYWHERE_TARBALL_URL \
     --silent --location \
     | tar xz ./eksctl-anywhere
-sudo mv ./eksctl-anywhere /usr/local/bin/
+sudo install -m 0755 ./eksctl-anywhere /usr/local/bin/eksctl-anywhere
 ```
 
 Install `kubectl`. See the Kubernetes [documentation](https://kubernetes.io/docs/tasks/tools/) for more information.
@@ -74,8 +74,7 @@ Install `kubectl`. See the Kubernetes [documentation](https://kubernetes.io/docs
 ```bash
 export OS="$(uname -s | tr A-Z a-z)" ARCH=$(test "$(uname -m)" = 'x86_64' && echo 'amd64' || echo 'arm64')
 curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/${OS}/${ARCH}/kubectl"
-sudo mv ./kubectl /usr/local/bin
-sudo chmod +x /usr/local/bin/kubectl
+sudo install -m 0755 ./kubectl /usr/local/bin/kubectl
 ```
 
 ### Create a local Docker cluster
