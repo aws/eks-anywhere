@@ -117,6 +117,9 @@ func (c *createTestSetup) expectCreateWorkload() {
 		c.clusterManager.EXPECT().CreateEKSANamespace(
 			c.ctx, c.workloadCluster,
 		),
+		c.clusterManager.EXPECT().CreatePackagesNamespace(
+			c.ctx, c.workloadCluster,
+		),
 		c.clusterManager.EXPECT().InstallCAPI(
 			c.ctx, c.clusterSpec, c.workloadCluster, c.provider,
 		),

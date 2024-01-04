@@ -873,6 +873,74 @@ func TestCreateHelmOverrideValuesYamlFail(t *testing.T) {
 	}
 }
 
+func TestUpdateSecrets(t *testing.T) {
+	tests := []struct {
+		name     string
+		unsetEnv bool
+		secret   *corev1.Secret
+		error    bool
+	}{
+		{
+			name:   "secret_not_found",
+			secret: nil,
+		},
+		{
+			name:   "secret_found",
+			secret: &corev1.Secret{},
+		},
+		{
+			name: "unmarshal_error",
+			secret: &corev1.Secret{
+				Data: map[string][]byte{
+					"config.json": nil,
+				},
+			},
+			error: true,
+		},
+		{
+			name:     "no_cred_env",
+			unsetEnv: true,
+			error:    true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			ctx := context.Background()
+			ctrl := gomock.NewController(t)
+			k := mocks.NewMockKubectlRunner(ctrl)
+			cm := mocks.NewMockChartManager(ctrl)
+			kubeConfig := "kubeconfig.kubeconfig"
+			cluster := newReconcileTestCluster()
+			cluster.Spec.RegistryMirrorConfiguration = test.RegistryMirrorInsecureSkipVerifyEnabledAndCACert()
+			objs := []runtime.Object{cluster}
+			if tt.secret != nil {
+				tt.secret.Name = "registry-mirror-cred"
+				tt.secret.Namespace = constants.EksaPackagesName
+				objs = append(objs, tt.secret)
+			}
+			client := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
+			pcc := curatedpackages.NewPackageControllerClient(cm, k, "test", kubeConfig, nil, nil)
+
+			os.Setenv(constants.RegistryUsername, "test")
+			os.Setenv(constants.RegistryPassword, "test")
+
+			if tt.unsetEnv {
+				os.Unsetenv(constants.RegistryUsername)
+				os.Unsetenv(constants.RegistryPassword)
+			}
+
+			err := pcc.UpdateSecrets(ctx, client, cluster)
+			if !tt.error {
+				g.Expect(err).To(BeNil())
+			} else {
+				g.Expect(err).ToNot(BeNil())
+			}
+		})
+	}
+}
+
 func TestCreateHelmOverrideValuesYamlFailWithNoWriter(t *testing.T) {
 	for _, tt := range newPackageControllerTests(t) {
 		tt.command = curatedpackages.NewPackageControllerClient(

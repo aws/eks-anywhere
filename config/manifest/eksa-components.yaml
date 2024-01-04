@@ -6630,6 +6630,28 @@ metadata:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
+  creationTimestamp: null
+  name: eksa-packages-role
+  namespace: eksa-packages
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - packages.eks.amazonaws.com
+  resources:
+  - packagebundlecontrollers
+  verbs:
+  - delete
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
   name: eksa-leader-election-role
   namespace: eksa-system
 rules:
@@ -6679,12 +6701,6 @@ rules:
   verbs:
   - patch
   - update
-- apiGroups:
-  - packages.eks.amazonaws.com
-  resources:
-  - packagebundlecontrollers
-  verbs:
-  - delete
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -6707,6 +6723,7 @@ rules:
   verbs:
   - create
   - delete
+  - get
 - apiGroups:
   - ""
   resources:
@@ -7055,6 +7072,20 @@ rules:
   verbs:
   - list
   - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: eksa-packages-rolebinding
+  namespace: eksa-packages
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: eksa-packages-role
+subjects:
+- kind: ServiceAccount
+  name: eksa-controller-manager
+  namespace: eksa-system
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding

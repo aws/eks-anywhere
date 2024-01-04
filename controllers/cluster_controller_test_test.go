@@ -130,6 +130,7 @@ func TestClusterReconcilerEnsureOwnerReferences(t *testing.T) {
 	validator.EXPECT().ValidateManagementClusterName(ctx, gomock.AssignableToTypeOf(logr.Logger{}), gomock.AssignableToTypeOf(cluster)).Return(nil)
 
 	pcc := newMockPackagesClient(t)
+	pcc.EXPECT().UpdateSecrets(ctx, cl, sameName(cluster))
 	pcc.EXPECT().Reconcile(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
 
 	mhc := newMockMachineHealthCheckReconciler(t)
@@ -312,6 +313,7 @@ func TestClusterReconcilerSetBundlesRef(t *testing.T) {
 	g.Expect(cl.Get(ctx, client.ObjectKey{Namespace: cluster.Spec.BundlesRef.Namespace, Name: cluster.Spec.BundlesRef.Name}, bundles)).To(Succeed())
 	g.Expect(cl.Get(ctx, client.ObjectKey{Namespace: constants.EksaSystemNamespace, Name: cluster.Name + "-kubeconfig"}, secret)).To(Succeed())
 	pcc := newMockPackagesClient(t)
+	pcc.EXPECT().UpdateSecrets(ctx, cl, sameName(cluster))
 	pcc.EXPECT().Reconcile(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
 
 	validator := newMockClusterValidator(t)
@@ -366,6 +368,7 @@ func TestClusterReconcilerSetDefaultEksaVersion(t *testing.T) {
 	mgmtCluster := &anywherev1.Cluster{}
 	g.Expect(cl.Get(ctx, client.ObjectKey{Namespace: cluster.Namespace, Name: managementCluster.Name}, mgmtCluster)).To(Succeed())
 	pcc := newMockPackagesClient(t)
+	pcc.EXPECT().UpdateSecrets(ctx, cl, sameName(cluster))
 	pcc.EXPECT().Reconcile(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
 
 	validator := newMockClusterValidator(t)

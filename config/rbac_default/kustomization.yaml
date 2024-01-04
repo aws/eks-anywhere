@@ -1,0 +1,38 @@
+namePrefix: eksa-
+
+bases:
+- ../rbac
+
+configurations:
+- ./apply-namespace.yaml
+
+transformers:
+  - |-
+    apiVersion: builtin
+    kind: NamespaceTransformer
+    metadata:
+      name: notImportantHere2
+      namespace: eksa-system
+    unsetOnly: true
+
+patchesJson6902:
+- patch: |-
+    - op: replace
+      path: /metadata/name
+      value: eksa-packages-rolebinding
+  target:
+    group: rbac.authorization.k8s.io
+    kind: RoleBinding
+    name: eksa-manager-rolebinding
+    namespace: eksa-packages
+    version: v1
+- patch: |-
+    - op: replace
+      path: /metadata/name
+      value: eksa-packages-role
+  target:
+    group: rbac.authorization.k8s.io
+    kind: Role
+    name: eksa-manager-role
+    namespace: eksa-packages
+    version: v1
