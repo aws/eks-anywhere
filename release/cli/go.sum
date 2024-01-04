@@ -1385,8 +1385,8 @@ k8s.io/apiextensions-apiserver v0.17.2/go.mod h1:4KdMpjkEjjDI2pPfBA15OscyNldHWdB
 k8s.io/apiextensions-apiserver v0.26.1 h1:cB8h1SRk6e/+i3NOrQgSFij1B2S0Y0wDoNl66bn8RMI=
 k8s.io/apiextensions-apiserver v0.26.1/go.mod h1:AptjOSXDGuE0JICx/Em15PaoO7buLwTs0dGleIHixSM=
 k8s.io/apimachinery v0.17.2/go.mod h1:b9qmWdKlLuU9EBh+06BtLcSf/Mu89rWL33naRxs1uZg=
-k8s.io/apimachinery v0.26.10 h1:aE+J2KIbjctFqPp3Y0q4Wh2PD+l1p2g3Zp4UYjSvtGU=
-k8s.io/apimachinery v0.26.10/go.mod h1:iT1ZP4JBP34wwM+ZQ8ByPEQ81u043iqAcsJYftX9amM=
+k8s.io/apimachinery v0.26.12 h1:y+OgufxqLIZtyXIydRhjLBGzrYLF+qwiDdCFXYOjeN4=
+k8s.io/apimachinery v0.26.12/go.mod h1:2/HZp0l6coXtS26du1Bk36fCuAEr/lVs9Q9NbpBtd1Y=
 k8s.io/apiserver v0.17.2/go.mod h1:lBmw/TtQdtxvrTk0e2cgtOxHizXI+d0mmGQURIHQZlo=
 k8s.io/apiserver v0.26.10 h1:gradpIHygzZN87yK+o6V3gpbCSF78HZ0hejLZQQwdDs=
 k8s.io/apiserver v0.26.10/go.mod h1:TGrQKQWUfQcotK3P4TtoVZxXOWklFF36QZlA5wufLs4=
