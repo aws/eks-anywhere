@@ -443,7 +443,7 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
    To create an Ubuntu-based image, run `image-builder` with the following options:
 
       * `--os`: `ubuntu`
-      * `--os-version`: `2004` or `2204` (default: `2004`)
+      * `--os-version`: `20.04` or `22.04` (default: `20.04`)
       * `--hypervisor`: For vSphere use `vsphere`
       * `--release-channel`: Supported EKS Distro releases include 1-24, 1-25, 1-26, 1-27 and 1-28.
       * `--vsphere-config`: vSphere configuration file (`vsphere.json` in this example)
@@ -557,7 +557,7 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
    To create an Ubuntu-based image, run `image-builder` with the following options:
 
       * `--os`: `ubuntu`
-      * `--os-version`: `2004` or `2204` (default: `2004`)
+      * `--os-version`: `20.04` or `22.04` (default: `20.04`)
       * `--hypervisor`: `baremetal`
       * `--release-channel`: A [supported EKS Distro release](https://anywhere.eks.amazonaws.com/docs/reference/support/support-versions/)
       formatted as "[major]-[minor]"; for example "1-27"
@@ -850,7 +850,7 @@ These steps use `image-builder` to create an Ubuntu-based Amazon Machine Image (
 1. To create an Ubuntu-based image, run `image-builder` with the following options:
 
    * `--os`: `ubuntu`
-   * `--os-version`: `2004` or `2204` (default: `2004`)
+   * `--os-version`: `20.04` or `22.04` (default: `20.04`)
    * `--hypervisor`: For AMI, use `ami`
    * `--release-channel`: Supported EKS Distro releases include 1-24, 1-25, 1-26, 1-27 and 1-28.
    * `--ami-config`: AMI configuration file (`ami.json` in this example)
@@ -978,7 +978,7 @@ These steps use `image-builder` to create a Ubuntu-based image for Nutanix AHV a
    To create an Ubuntu-based image, run `image-builder` with the following options:
 
       * `--os`: `ubuntu`
-      * `--os-version`: `2004` or `2204` (default: `2004`)
+      * `--os-version`: `20.04` or `22.04` (default: `20.04`)
       * `--hypervisor`: For Nutanix use `nutanix`
       * `--release-channel`: Supported EKS Distro releases include 1-24, 1-25, 1-26, 1-27 and 1-28.
       * `--nutanix-config`: Nutanix configuration file (`nutanix.json` in this example)
@@ -1019,13 +1019,13 @@ These steps use `image-builder` to create a Ubuntu-based image for Nutanix AHV a
         <tr >
             <td rowspan=2><b>Ubuntu</b></td>
             <td>20.04.6</td>
-            <td>2004</td>
-            <td rowspan=2>2004</td>
+            <td>20.04</td>
+            <td rowspan=2>20.04</td>
             <td rowspan=2>All hypervisors except CloudStack</td>
         </tr>
         <tr>
             <td>22.04.3</td>
-            <td>2204</td>
+            <td>22.04</td>
         </tr>
         <tr >
             <td rowspan=2><b>RHEL</b></td>
@@ -1090,7 +1090,7 @@ In both these above approaches, the artifacts embedded into the images will be o
 
 For example, to build a Kubernetes v1.27 Ubuntu 22.04 OVA with UEFI enabled, you can run the following command.
    ```bash
-   image-builder build --os ubuntu --hypervisor vsphere --os-version 2204 --release-channel 1.27 --vsphere-config config.json --firmware efi
+   image-builder build --os ubuntu --hypervisor vsphere --os-version 22.04 --release-channel 1.27 --vsphere-config config.json --firmware efi
    ```
 
 The table below shows the possible firmware options for the hypervisor and OS combinations that `image-builder` supports.
