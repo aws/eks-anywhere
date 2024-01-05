@@ -3,7 +3,6 @@ package v1alpha1
 import (
 	"errors"
 	"fmt"
-	//nolint: staticcheck
 	"io/ioutil"
 	"reflect"
 	"strings"
@@ -2931,24 +2930,6 @@ func TestValidateMirrorConfig(t *testing.T) {
 							{
 								Registry:  "783794618700.dkr.ecr.us-east-1.amazonaws.com",
 								Namespace: "",
-							},
-						},
-					},
-				},
-			},
-		},
-		{
-			name:    "one registry in OCINamespace but not public.ecr.aws",
-			wantErr: "registry must be public.ecr.aws when only one mapping is specified",
-			cluster: &Cluster{
-				Spec: ClusterSpec{
-					RegistryMirrorConfiguration: &RegistryMirrorConfiguration{
-						Endpoint: "1.2.3.4",
-						Port:     "30003",
-						OCINamespaces: []OCINamespace{
-							{
-								Registry:  "783794618700.dkr.ecr.us-west-2.amazonaws.com",
-								Namespace: "curated-packages",
 							},
 						},
 					},
