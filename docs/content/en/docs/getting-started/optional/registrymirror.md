@@ -60,7 +60,9 @@ spec:
 * __Example__: ```port: 443```
 
 ### __ociNamespaces__ (optional)
-* __Description__: when you need to mirror multiple registries, you can map each upstream registry to the "namespace" of its mirror. While using the `ociNamespaces`, at least one entry __must__ exist for the `public.ecr.aws` registry to pull EKS Anywhere images from. The registry for curated packages is an optional entry. 
+* __Description__: when you need to mirror multiple registries, you can map each upstream registry to the "namespace" of its mirror. The namespace is appended with the endpoint, `<endpoint>/<namespace>` to setup the mirror for the registry specified.
+Note while using `ociNamespaces`, you need to specify __all__ the registries that need to be mirrored. This includes an entry for the `public.ecr.aws` registry to pull EKS Anywhere images from.
+
 * __Type__: array
 * __Example__: <br/>
   ```yaml
@@ -70,6 +72,11 @@ spec:
     - registry: "783794618700.dkr.ecr.us-west-2.amazonaws.com"
       namespace: "curated-packages"
   ```
+{{% alert title="Warning" color="warning" %}}
+Currently only `public.ecr.aws` registry is supported for mirroring with Bottlerocket OS.
+{{% /alert %}}
+
+
 
 ### __caCertContent__ (optional)
 * __Description__: certificate Authority (CA) Certificate for the private registry . When using 
