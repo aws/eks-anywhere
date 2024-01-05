@@ -396,7 +396,7 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
    BUNDLE_MANIFEST_URL=$(curl -s https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml | yq ".spec.releases[] | select(.version==\"$EKSA_RELEASE_VERSION\").bundleManifestUrl")
    IMAGEBUILDER_TARBALL_URI=$(curl -s $BUNDLE_MANIFEST_URL | yq ".spec.versionsBundles[0].eksD.imagebuilder.uri")
    curl -s $IMAGEBUILDER_TARBALL_URI | tar xz ./image-builder
-   sudo cp ./image-builder /usr/local/bin
+   sudo install -m 0755 ./image-builder /usr/local/bin
    cd -
    ```
 1. Get the latest version of `govc`:
@@ -546,7 +546,7 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
    BUNDLE_MANIFEST_URL=$(curl -s https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml | yq ".spec.releases[] | select(.version==\"$EKSA_RELEASE_VERSION\").bundleManifestUrl")
    IMAGEBUILDER_TARBALL_URI=$(curl -s $BUNDLE_MANIFEST_URL | yq ".spec.versionsBundles[0].eksD.imagebuilder.uri")
    curl -s $IMAGEBUILDER_TARBALL_URI | tar xz ./image-builder
-   sudo cp ./image-builder /usr/local/bin
+   sudo install -m 0755 ./image-builder /usr/local/bin
    cd -
    ```
 
@@ -687,7 +687,7 @@ These steps use `image-builder` to create a RHEL-based image for CloudStack. Bef
    BUNDLE_MANIFEST_URL=$(curl -s https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml | yq ".spec.releases[] | select(.version==\"$EKSA_RELEASE_VERSION\").bundleManifestUrl")
    IMAGEBUILDER_TARBALL_URI=$(curl -s $BUNDLE_MANIFEST_URL | yq ".spec.versionsBundles[0].eksD.imagebuilder.uri")
    curl -s $IMAGEBUILDER_TARBALL_URI | tar xz ./image-builder
-   sudo cp ./image-builder /usr/local/bin
+   sudo install -m 0755 ./image-builder /usr/local/bin
    cd -
    ```
 1. Create a CloudStack configuration file (for example, `cloudstack.json`) to provide the location of a Red Hat Enterprise Linux 8 ISO image and related checksum and Red Hat subscription information:
@@ -788,7 +788,7 @@ These steps use `image-builder` to create an Ubuntu-based Amazon Machine Image (
    BUNDLE_MANIFEST_URL=$(curl -s https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml | yq ".spec.releases[] | select(.version==\"$EKSA_RELEASE_VERSION\").bundleManifestUrl")
    IMAGEBUILDER_TARBALL_URI=$(curl -s $BUNDLE_MANIFEST_URL | yq ".spec.versionsBundles[0].eksD.imagebuilder.uri")
    curl -s $IMAGEBUILDER_TARBALL_URI | tar xz ./image-builder
-   sudo cp ./image-builder /usr/local/bin
+   sudo install -m 0755 ./image-builder /usr/local/bin
    cd /home/$USER
    ```
 1. Create an AMI configuration file (for example, `ami.json`) that contains various AMI parameters. For example:
@@ -944,7 +944,7 @@ These steps use `image-builder` to create a Ubuntu-based image for Nutanix AHV a
    BUNDLE_MANIFEST_URL=$(curl -s https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml | yq ".spec.releases[] | select(.version==\"$EKSA_RELEASE_VERSION\").bundleManifestUrl")
    IMAGEBUILDER_TARBALL_URI=$(curl -s $BUNDLE_MANIFEST_URL | yq ".spec.versionsBundles[0].eksD.imagebuilder.uri")
    curl -s $IMAGEBUILDER_TARBALL_URI | tar xz ./image-builder
-   sudo cp ./image-builder /usr/local/bin
+   sudo install -m 0755 ./image-builder /usr/local/bin
    cd -
    ```
 1. Create a `nutanix.json` config file. More details on values can be found in the [image-builder documentation](https://image-builder.sigs.k8s.io/capi/providers/nutanix.html). See example below:
