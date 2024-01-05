@@ -13,7 +13,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/workflows/interfaces"
 )
 
-// ClusterCreate creates a Kubernetes conformant cluster that is immediately usable for simple workloads.
+// ClusterCreate creates a Kubernetes cluster that is immediately usable for simple workloads.
 type ClusterCreate struct {
 	Cluster        interfaces.Cluster
 	ClusterCreator interfaces.ClusterCreator
@@ -22,6 +22,7 @@ type ClusterCreate struct {
 	FS filewriter.FileWriter
 }
 
+// GetWorkloadCluster returns the types.Cluster object for a newly created workload cluster.
 func (cc ClusterCreate) GetWorkloadCluster(ctx context.Context, clusterSpec *cluster.Spec, management *types.Cluster, provider providers.Provider) (*types.Cluster, error) {
 	clusterName := clusterSpec.Cluster.Name
 

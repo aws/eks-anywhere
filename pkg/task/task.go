@@ -10,6 +10,7 @@ import (
 	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/clustermanager"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers"
@@ -39,6 +40,7 @@ type CommandContext struct {
 	EksdUpgrader              interfaces.EksdUpgrader
 	ClusterUpgrader           interfaces.ClusterUpgrader
 	ClusterCreate             structs.ClusterCreate
+	ClusterCreator            clustermanager.ClusterCreator
 	CAPIManager               interfaces.CAPIManager
 	ClusterSpec               *cluster.Spec
 	CurrentClusterSpec        *cluster.Spec

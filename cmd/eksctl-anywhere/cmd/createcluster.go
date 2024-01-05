@@ -288,6 +288,12 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 		if err != nil {
 			return err
 		}
+
+		clusCreator := clustermanager.ClusterCreator{
+			Applier: deps.ClusterApplier,
+			FS:      deps.Writer,
+		}
+
 		createMgmtCluster := m.NewCreate(
 			deps.Bootstrapper,
 			deps.Provider,
@@ -297,6 +303,7 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 			deps.EksdInstaller,
 			deps.PackageInstaller,
 			clusterCreate,
+			clusCreator,
 		)
 
 		err = createMgmtCluster.Run(ctx, clusterSpec, createValidations, cc.forceClean)

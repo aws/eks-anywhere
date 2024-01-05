@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/clustermanager"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/task"
@@ -21,6 +22,7 @@ type Create struct {
 	eksdInstaller    interfaces.EksdInstaller
 	packageInstaller interfaces.PackageInstaller
 	clusterCreate    structs.ClusterCreate
+	clusterCreator   clustermanager.ClusterCreator
 }
 
 // NewCreate builds a new create construct.
@@ -29,6 +31,7 @@ func NewCreate(bootstrapper interfaces.Bootstrapper, provider providers.Provider
 	writer filewriter.FileWriter, eksdInstaller interfaces.EksdInstaller,
 	packageInstaller interfaces.PackageInstaller,
 	clusterCreate structs.ClusterCreate,
+	clusterCreator clustermanager.ClusterCreator,
 ) *Create {
 	return &Create{
 		bootstrapper:     bootstrapper,
@@ -39,6 +42,7 @@ func NewCreate(bootstrapper interfaces.Bootstrapper, provider providers.Provider
 		eksdInstaller:    eksdInstaller,
 		packageInstaller: packageInstaller,
 		clusterCreate:    clusterCreate,
+		clusterCreator:   clusterCreator,
 	}
 }
 
@@ -55,6 +59,7 @@ func (c *Create) Run(ctx context.Context, clusterSpec *cluster.Spec, validator i
 		EksdInstaller:    c.eksdInstaller,
 		PackageInstaller: c.packageInstaller,
 		ClusterCreate:    c.clusterCreate,
+		ClusterCreator:   c.clusterCreator,
 	}
 
 	return task.NewTaskRunner(&setupAndValidateCreate{}, c.writer).RunTask(ctx, commandContext)

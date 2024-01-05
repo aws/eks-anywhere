@@ -95,7 +95,7 @@ type ClusterCreator interface {
 	Run(ctx context.Context, spec *cluster.Spec, managementCluster types.Cluster) error
 }
 
-// Cluster
+// Cluster represents a workload cluster to be created.
 type Cluster interface {
 	WriteKubeconfig(ctx context.Context, w io.Writer, management *types.Cluster) error
 	WaitUntilControlPlaneAvailable(ctx context.Context, management *types.Cluster) error
