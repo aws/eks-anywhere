@@ -27,15 +27,34 @@ func ValidateOSForRegistryMirror(clusterSpec *cluster.Spec, provider providers.P
 	}
 
 	machineConfigs := provider.MachineConfigs(clusterSpec)
-	if !cluster.Spec.RegistryMirrorConfiguration.InsecureSkipVerify || machineConfigs == nil {
+	if machineConfigs == nil {
 		return nil
 	}
 
 	for _, mc := range machineConfigs {
-		if mc.OSFamily() == v1alpha1.Bottlerocket {
+		if mc.OSFamily() == v1alpha1.Bottlerocket && cluster.Spec.RegistryMirrorConfiguration.InsecureSkipVerify {
 			return errors.New("InsecureSkipVerify is not supported for bottlerocket")
 		}
 	}
+
+	ociNamespaces := cluster.Spec.RegistryMirrorConfiguration.OCINamespaces
+	if len(ociNamespaces) == 0 {
+		return nil
+	}
+
+	ociNamespaceRegistryMap := make(map[string]bool)
+	for _, ns := range cluster.Spec.RegistryMirrorConfiguration.OCINamespaces {
+		ociNamespaceRegistryMap[ns.Registry] = true
+	}
+
+	for _, mc := range machineConfigs {
+		// BottleRocket accepts only one registry mirror and that is hardcoded for public.ecr.aws at this moment.
+		// Such a validation will be removed once CAPI is patched to support more than one endpoints for BottleRocket.
+		if mc.OSFamily() == v1alpha1.Bottlerocket && !ociNamespaceRegistryMap[constants.DefaultCoreEKSARegistry] {
+			return fmt.Errorf("%s is the only registry supported for %s", constants.DefaultCoreEKSARegistry, v1alpha1.Bottlerocket)
+		}
+	}
+
 	return nil
 }
 

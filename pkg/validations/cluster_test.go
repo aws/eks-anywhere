@@ -246,6 +246,29 @@ func TestValidateOSForRegistryMirrorInsecureSkipVerifyEnabled(t *testing.T) {
 	}
 }
 
+func TestValidateOSForRegistryMirrorNoPublicEcrRegistry(t *testing.T) {
+	tt := newTest(t, withTLS())
+	tt.clusterSpec.Cluster.Spec.RegistryMirrorConfiguration = &anywherev1.RegistryMirrorConfiguration{
+		Endpoint: "1.2.3.4",
+		Port:     "123",
+		OCINamespaces: []anywherev1.OCINamespace{
+			{
+				Registry: "docker.io",
+			},
+		},
+	}
+
+	tt.provider.EXPECT().MachineConfigs(tt.clusterSpec).Return([]providers.MachineConfig{
+		&anywherev1.VSphereMachineConfig{
+			Spec: anywherev1.VSphereMachineConfigSpec{
+				OSFamily: anywherev1.Bottlerocket,
+			},
+		},
+	})
+
+	tt.Expect(validations.ValidateOSForRegistryMirror(tt.clusterSpec, tt.provider)).To(MatchError("public.ecr.aws is the only registry supported for bottlerocket"))
+}
+
 func TestValidateManagementClusterNameValid(t *testing.T) {
 	mgmtName := "test"
 	tt := newTest(t, withKubectl())
