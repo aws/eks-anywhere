@@ -25,7 +25,11 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
+	"sigs.k8s.io/cluster-api/util/collections"
 	"sigs.k8s.io/cluster-api/util/patch"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -81,8 +85,24 @@ func (r *ControlPlaneUpgradeReconciler) Reconcile(ctx context.Context, req ctrl.
 		return ctrl.Result{}, err
 	}
 
+	kcp := &controlplanev1.KubeadmControlPlane{}
+	if err := r.client.Get(ctx, types.NamespacedName{Name: cpUpgrade.Spec.ControlPlane.Name, Namespace: cpUpgrade.Spec.ControlPlane.Namespace}, kcp); err != nil {
+		return ctrl.Result{}, fmt.Errorf("getting KubeadmControlPlane %s: %v", cpUpgrade.Spec.ControlPlane.Name, err)
+	}
+
+	selector, err := metav1.LabelSelectorAsSelector(&metav1.LabelSelector{MatchLabels: map[string]string{"cluster.x-k8s.io/control-plane-name": cpUpgrade.Spec.ControlPlane.Name}})
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	machineList := &clusterv1.MachineList{}
+	if err := r.client.List(ctx, machineList, &client.ListOptions{LabelSelector: selector}); err != nil {
+		return ctrl.Result{}, err
+	}
+	machines := collections.FromMachineList(machineList).SortedByCreationTimestamp()
+
 	defer func() {
-		err := r.updateStatus(ctx, log, cpUpgrade)
+		err := r.updateStatus(ctx, log, cpUpgrade, machines)
 		if err != nil {
 			reterr = kerrors.NewAggregate([]error{reterr, err})
 		}
@@ -114,10 +134,11 @@ func (r *ControlPlaneUpgradeReconciler) Reconcile(ctx context.Context, req ctrl.
 
 	// Reconcile the NodeUpgrade deletion if the DeletionTimestamp is set.
 	if !cpUpgrade.DeletionTimestamp.IsZero() {
-		return r.reconcileDelete(ctx, log, cpUpgrade)
+		return r.reconcileDelete(ctx, log, cpUpgrade, machines)
 	}
 	controllerutil.AddFinalizer(cpUpgrade, controlPlaneUpgradeFinalizerName)
-	return r.reconcile(ctx, log, cpUpgrade)
+
+	return r.reconcile(ctx, log, cpUpgrade, kcp, machines)
 }
 
 // SetupWithManager sets up the controller with the Manager.
@@ -127,8 +148,7 @@ func (r *ControlPlaneUpgradeReconciler) SetupWithManager(mgr ctrl.Manager) error
 		Complete(r)
 }
 
-func (r *ControlPlaneUpgradeReconciler) reconcile(ctx context.Context, log logr.Logger, cpUpgrade *anywherev1.ControlPlaneUpgrade) (ctrl.Result, error) {
-	var firstControlPlane bool
+func (r *ControlPlaneUpgradeReconciler) reconcile(ctx context.Context, log logr.Logger, cpUpgrade *anywherev1.ControlPlaneUpgrade, kcp *controlplanev1.KubeadmControlPlane, machines []*clusterv1.Machine) (ctrl.Result, error) {
 	// return early if controlplane upgrade is already complete
 	if cpUpgrade.Status.Ready {
 		log.Info("All Control Plane nodes are upgraded")
@@ -137,17 +157,18 @@ func (r *ControlPlaneUpgradeReconciler) reconcile(ctx context.Context, log logr.
 
 	log.Info("Upgrading all Control Plane nodes")
 
-	for idx, machineRef := range cpUpgrade.Spec.MachinesRequireUpgrade {
-		firstControlPlane = idx == 0
-		nodeUpgrade := nodeUpgrader(machineRef, kubernetesVersion, etcdVersion, firstControlPlane)
-		if err := r.client.Get(ctx, GetNamespacedNameType(nodeUpgraderName(machineRef.Name), constants.EksaSystemNamespace), nodeUpgrade); err != nil {
+	for _, machine := range machines {
+		nodeUpgrade := &anywherev1.NodeUpgrade{}
+		if err := r.client.Get(ctx, GetNamespacedNameType(nodeUpgraderName(machine.Name), constants.EksaSystemNamespace), nodeUpgrade); err != nil {
 			if apierrors.IsNotFound(err) {
+				firstControlPlane := len(cpUpgrade.Status.MachineState) == 0
+				nodeUpgrade := nodeUpgrader(machine, kcp.Spec.Version, etcdVersion, firstControlPlane)
 				if err := r.client.Create(ctx, nodeUpgrade); client.IgnoreAlreadyExists(err) != nil {
-					return ctrl.Result{}, fmt.Errorf("failed to create node upgrader for machine %s:  %v", machineRef.Name, err)
+					return ctrl.Result{}, fmt.Errorf("failed to create node upgrader for machine %s:  %v", machine.Name, err)
 				}
 				return ctrl.Result{}, nil
 			}
-			return ctrl.Result{}, fmt.Errorf("getting node upgrader for machine %s: %v", machineRef.Name, err)
+			return ctrl.Result{}, fmt.Errorf("getting node upgrader for machine %s: %v", machine.Name, err)
 		}
 		if !nodeUpgrade.Status.Completed {
 			return ctrl.Result{}, nil
@@ -156,17 +177,17 @@ func (r *ControlPlaneUpgradeReconciler) reconcile(ctx context.Context, log logr.
 	return ctrl.Result{}, nil
 }
 
-func nodeUpgrader(machineRef anywherev1.Ref, kubernetesVersion, etcdVersion string, firstControlPlane bool) *anywherev1.NodeUpgrade {
+func nodeUpgrader(machine *clusterv1.Machine, kubernetesVersion, etcdVersion string, firstControlPlane bool) *anywherev1.NodeUpgrade {
 	return &anywherev1.NodeUpgrade{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      nodeUpgraderName(machineRef.Name),
+			Name:      nodeUpgraderName(machine.Name),
 			Namespace: constants.EksaSystemNamespace,
 		},
 		Spec: anywherev1.NodeUpgradeSpec{
 			Machine: corev1.ObjectReference{
-				Kind:      machineRef.Kind,
+				Kind:      machine.Kind,
 				Namespace: constants.EksaSystemNamespace,
-				Name:      machineRef.Name,
+				Name:      machine.Name,
 			},
 			KubernetesVersion:     kubernetesVersion,
 			EtcdVersion:           &etcdVersion,
@@ -175,19 +196,19 @@ func nodeUpgrader(machineRef anywherev1.Ref, kubernetesVersion, etcdVersion stri
 	}
 }
 
-func (r *ControlPlaneUpgradeReconciler) reconcileDelete(ctx context.Context, log logr.Logger, cpUpgrade *anywherev1.ControlPlaneUpgrade) (ctrl.Result, error) {
+func (r *ControlPlaneUpgradeReconciler) reconcileDelete(ctx context.Context, log logr.Logger, cpUpgrade *anywherev1.ControlPlaneUpgrade, machines []*clusterv1.Machine) (ctrl.Result, error) {
 	log.Info("Reconcile ControlPlaneUpgrade deletion")
 
-	for _, machineRef := range cpUpgrade.Spec.MachinesRequireUpgrade {
+	for _, machine := range machines {
 		nodeUpgrade := &anywherev1.NodeUpgrade{}
-		if err := r.client.Get(ctx, GetNamespacedNameType(nodeUpgraderName(machineRef.Name), constants.EksaSystemNamespace), nodeUpgrade); err != nil {
+		if err := r.client.Get(ctx, GetNamespacedNameType(nodeUpgraderName(machine.Name), constants.EksaSystemNamespace), nodeUpgrade); err != nil {
 			if apierrors.IsNotFound(err) {
 				log.Info("Node Upgrader not found, skipping node upgrade deletion")
 			} else {
-				return ctrl.Result{}, fmt.Errorf("getting node upgrader for machine %s: %v", machineRef.Name, err)
+				return ctrl.Result{}, fmt.Errorf("getting node upgrader for machine %s: %v", machine.Name, err)
 			}
 		} else {
-			log.Info("Deleting node upgrader", "Machine", machineRef.Name)
+			log.Info("Deleting node upgrader", "Machine", machine.Name)
 			if err := r.client.Delete(ctx, nodeUpgrade); err != nil {
 				return ctrl.Result{}, fmt.Errorf("deleting node upgrader: %v", err)
 			}
@@ -199,7 +220,7 @@ func (r *ControlPlaneUpgradeReconciler) reconcileDelete(ctx context.Context, log
 	return ctrl.Result{}, nil
 }
 
-func (r *ControlPlaneUpgradeReconciler) updateStatus(ctx context.Context, log logr.Logger, cpUpgrade *anywherev1.ControlPlaneUpgrade) error {
+func (r *ControlPlaneUpgradeReconciler) updateStatus(ctx context.Context, log logr.Logger, cpUpgrade *anywherev1.ControlPlaneUpgrade, machines []*clusterv1.Machine) error {
 	// When ControlPlaneUpgrade is fully deleted, we do not need to update the status. Without this check
 	// the subsequent patch operations would fail if the status is updated after it is fully deleted.
 
@@ -211,11 +232,19 @@ func (r *ControlPlaneUpgradeReconciler) updateStatus(ctx context.Context, log lo
 	log.Info("Updating ControlPlaneUpgrade status")
 	nodeUpgrade := &anywherev1.NodeUpgrade{}
 	nodesUpgradeCompleted := 0
-	nodesUpgradeRequired := len(cpUpgrade.Spec.MachinesRequireUpgrade)
-	for _, machineRef := range cpUpgrade.Spec.MachinesRequireUpgrade {
-		if err := r.client.Get(ctx, GetNamespacedNameType(nodeUpgraderName(machineRef.Name), constants.EksaSystemNamespace), nodeUpgrade); err != nil {
-			return fmt.Errorf("getting node upgrader for machine %s: %v", machineRef.Name, err)
+	nodesUpgradeRequired := len(machines)
+	machineStates := []anywherev1.MachineState{}
+
+	for _, machine := range machines {
+		if err := r.client.Get(ctx, GetNamespacedNameType(nodeUpgraderName(machine.Name), constants.EksaSystemNamespace), nodeUpgrade); err != nil {
+			if apierrors.IsNotFound(err) {
+				log.Info("Node upgrade not found for the machine", "Machine", machine.Name, "NodeUpgrade", nodeUpgraderName(machine.Name))
+				continue
+			} else {
+				return fmt.Errorf("getting node upgrade for the machine %s: %v", machine.Name, err)
+			}
 		}
+		machineStates = append(machineStates, anywherev1.MachineState{Name: machine.Name, Upgraded: nodeUpgrade.Status.Completed})
 		if nodeUpgrade.Status.Completed {
 			nodesUpgradeCompleted++
 			nodesUpgradeRequired--
@@ -225,5 +254,8 @@ func (r *ControlPlaneUpgradeReconciler) updateStatus(ctx context.Context, log lo
 	cpUpgrade.Status.Upgraded = int64(nodesUpgradeCompleted)
 	cpUpgrade.Status.RequireUpgrade = int64(nodesUpgradeRequired)
 	cpUpgrade.Status.Ready = nodesUpgradeRequired == 0
+	cpUpgrade.Status.MachineState = machineStates
+
+	log.Info("Setting status", "status", machineStates)
 	return nil
 }

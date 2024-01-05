@@ -20,6 +20,11 @@ import (
 	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
 
+const (
+	k8s128      = "v1.28.3-eks-1-28-9"
+	etcdVersion = "v3.5.9-eks-1-28-9"
+)
+
 func TestNodeUpgradeReconcilerReconcileFirstControlPlane(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
@@ -28,7 +33,7 @@ func TestNodeUpgradeReconcilerReconcileFirstControlPlane(t *testing.T) {
 
 	cluster, machine, node, nodeUpgrade := getObjectsForNodeUpgradeTest()
 	nodeUpgrade.Spec.FirstNodeToBeUpgraded = true
-	nodeUpgrade.Spec.EtcdVersion = ptr.String("v3.5.9-eks-1-28-9")
+	nodeUpgrade.Spec.EtcdVersion = ptr.String(etcdVersion)
 	node.Labels = map[string]string{
 		"node-role.kubernetes.io/control-plane": "true",
 	}
@@ -220,7 +225,7 @@ func TestNodeUpgradeReconcilerReconcileDeleteUpgraderPodAlreadyDeleted(t *testin
 func getObjectsForNodeUpgradeTest() (*clusterv1.Cluster, *clusterv1.Machine, *corev1.Node, *anywherev1.NodeUpgrade) {
 	cluster := generateCluster()
 	node := generateNode()
-	machine := generateMachine(cluster, node)
+	machine := generateMachine(cluster, node, nil)
 	nodeUpgrade := generateNodeUpgrade(machine)
 	return cluster, machine, node, nodeUpgrade
 }
@@ -245,19 +250,20 @@ func generateNodeUpgrade(machine *clusterv1.Machine) *anywherev1.NodeUpgrade {
 				Name:      machine.Name,
 				Namespace: machine.Namespace,
 			},
-			KubernetesVersion: "v1.28.1",
+			KubernetesVersion: k8s128,
 		},
 	}
 }
 
-func generateMachine(cluster *clusterv1.Cluster, node *corev1.Node) *clusterv1.Machine {
+func generateMachine(cluster *clusterv1.Cluster, node *corev1.Node, labels map[string]string) *clusterv1.Machine {
 	return &clusterv1.Machine{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "machine01",
 			Namespace: "eksa-system",
+			Labels:    labels,
 		},
 		Spec: clusterv1.MachineSpec{
-			Version:     ptr.String("v1.28.0"),
+			Version:     ptr.String(k8s128),
 			ClusterName: cluster.Name,
 		},
 		Status: clusterv1.MachineStatus{

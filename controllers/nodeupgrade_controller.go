@@ -26,7 +26,7 @@ import (
 
 const (
 	// TODO(in-place): Get this image from the bundle instead of using the hardcoded one.
-	defaultUpgraderImage = "public.ecr.aws/t2p4l7v3/upgrader:eksdbase"
+	defaultUpgraderImage = "public.ecr.aws/l0g8r8j6/aws/upgrader:v1-28-12-eks-a-v0.0.0-dev-build.8035"
 	controlPlaneLabel    = "node-role.kubernetes.io/control-plane"
 	podDNEMessage        = "Upgrader pod does not exist"
 

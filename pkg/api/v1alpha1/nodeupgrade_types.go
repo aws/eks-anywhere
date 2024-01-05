@@ -41,7 +41,6 @@ type NodeUpgradeSpec struct {
 
 	KubernetesVersion string  `json:"kubernetesVersion"`
 	EtcdVersion       *string `json:"etcdVersion,omitempty"`
-	CoreDNSVersion    *string `json:"coreDNSVersion,omitempty"`
 
 	// FirstNodeToBeUpgraded signifies that the Node is the first node to be upgraded.
 	// This flag is only valid for control plane nodes and ignored for worker nodes.

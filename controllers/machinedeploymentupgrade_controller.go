@@ -24,14 +24,19 @@ import (
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	"sigs.k8s.io/cluster-api/util/collections"
 	"sigs.k8s.io/cluster-api/util/patch"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
 )
@@ -79,8 +84,25 @@ func (r *MachineDeploymentUpgradeReconciler) Reconcile(ctx context.Context, req 
 		return ctrl.Result{}, err
 	}
 
+	md := &clusterv1.MachineDeployment{}
+	if err := r.client.Get(ctx, types.NamespacedName{Name: mdUpgrade.Spec.MachineDeployment.Name, Namespace: mdUpgrade.Spec.MachineDeployment.Namespace}, md); err != nil {
+		return ctrl.Result{}, fmt.Errorf("getting MachineDeployment %s: %v", mdUpgrade.Spec.MachineDeployment.Name, err)
+	}
+
+	selector, err := metav1.LabelSelectorAsSelector(&metav1.LabelSelector{MatchLabels: map[string]string{"cluster.x-k8s.io/deployment-name": mdUpgrade.Spec.MachineDeployment.Name}})
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	machineList := &clusterv1.MachineList{}
+	if err := r.client.List(ctx, machineList, &client.ListOptions{LabelSelector: selector}); err != nil {
+		return ctrl.Result{}, err
+	}
+
+	machines := collections.FromMachineList(machineList).SortedByCreationTimestamp()
+
 	defer func() {
-		err := r.updateStatus(ctx, log, mdUpgrade)
+		err := r.updateStatus(ctx, log, mdUpgrade, machines)
 		if err != nil {
 			reterr = kerrors.NewAggregate([]error{reterr, err})
 		}
@@ -111,13 +133,13 @@ func (r *MachineDeploymentUpgradeReconciler) Reconcile(ctx context.Context, req 
 
 	// Reconcile the MachineDeploymentUpgrade deletion if the DeletionTimestamp is set.
 	if !mdUpgrade.DeletionTimestamp.IsZero() {
-		return r.reconcileDelete(ctx, log, mdUpgrade)
+		return r.reconcileDelete(ctx, log, mdUpgrade, machines)
 	}
 
 	// AddFinalizer	is idempotent
 	controllerutil.AddFinalizer(mdUpgrade, mdUpgradeFinalizerName)
 
-	return r.reconcile(ctx, log, mdUpgrade)
+	return r.reconcile(ctx, log, mdUpgrade, md, machines)
 }
 
 // SetupWithManager sets up the controller with the Manager.
@@ -127,19 +149,22 @@ func (r *MachineDeploymentUpgradeReconciler) SetupWithManager(mgr ctrl.Manager) 
 		Complete(r)
 }
 
-func (r *MachineDeploymentUpgradeReconciler) reconcile(ctx context.Context, log logr.Logger, mdUpgrade *anywherev1.MachineDeploymentUpgrade) (ctrl.Result, error) {
+func (r *MachineDeploymentUpgradeReconciler) reconcile(ctx context.Context, log logr.Logger, mdUpgrade *anywherev1.MachineDeploymentUpgrade, md *clusterv1.MachineDeployment, machines []*clusterv1.Machine) (ctrl.Result, error) {
 	log.Info("Upgrading all worker nodes")
-	for _, machineRef := range mdUpgrade.Spec.MachinesRequireUpgrade {
-		nodeUpgrade, err := getNodeUpgrade(ctx, r.client, nodeUpgraderName(machineRef.Name))
+	for _, machine := range machines {
+		nodeUpgrade, err := getNodeUpgrade(ctx, r.client, nodeUpgraderName(machine.Name))
 		if err != nil {
 			if apierrors.IsNotFound(err) {
-				nodeUpgrade = mdNodeUpgrader(machineRef, kubernetesVersion)
+				if md.Spec.Template.Spec.Version == nil {
+					return ctrl.Result{}, fmt.Errorf("failed to get kubernetes version for machine deployment %s", md.Name)
+				}
+				nodeUpgrade = mdNodeUpgrader(machine, *md.Spec.Template.Spec.Version)
 				if err := r.client.Create(ctx, nodeUpgrade); err != nil {
-					return ctrl.Result{}, fmt.Errorf("failed to create node upgrader for machine %s:  %v", machineRef.Name, err)
+					return ctrl.Result{}, fmt.Errorf("failed to create node upgrader for machine %s:  %v", machine.Name, err)
 				}
 				return ctrl.Result{}, nil
 			}
-			return ctrl.Result{}, fmt.Errorf("getting node upgrader for machine %s: %v", machineRef.Name, err)
+			return ctrl.Result{}, fmt.Errorf("getting node upgrader for machine %s: %v", machine.Name, err)
 		}
 		if !nodeUpgrade.Status.Completed {
 			return ctrl.Result{}, nil
@@ -149,19 +174,19 @@ func (r *MachineDeploymentUpgradeReconciler) reconcile(ctx context.Context, log 
 	return ctrl.Result{}, nil
 }
 
-func (r *MachineDeploymentUpgradeReconciler) reconcileDelete(ctx context.Context, log logr.Logger, mdUpgrade *anywherev1.MachineDeploymentUpgrade) (ctrl.Result, error) {
+func (r *MachineDeploymentUpgradeReconciler) reconcileDelete(ctx context.Context, log logr.Logger, mdUpgrade *anywherev1.MachineDeploymentUpgrade, machines []*clusterv1.Machine) (ctrl.Result, error) {
 	log.Info("Reconcile MachineDeploymentUpgrade deletion")
 
-	for _, machineRef := range mdUpgrade.Spec.MachinesRequireUpgrade {
-		nodeUpgrade, err := getNodeUpgrade(ctx, r.client, nodeUpgraderName(machineRef.Name))
+	for _, machine := range machines {
+		nodeUpgrade, err := getNodeUpgrade(ctx, r.client, nodeUpgraderName(machine.Name))
 		if err != nil {
 			if apierrors.IsNotFound(err) {
 				log.Info("Node Upgrader not found, skipping node upgrade deletion")
 			} else {
-				return ctrl.Result{}, fmt.Errorf("getting node upgrader for machine %s: %v", machineRef.Name, err)
+				return ctrl.Result{}, fmt.Errorf("getting node upgrader for machine %s: %v", machine.Name, err)
 			}
 		} else {
-			log.Info("Deleting node upgrader", "Machine", machineRef.Name)
+			log.Info("Deleting node upgrader", "Machine", machine.Name)
 			if err := r.client.Delete(ctx, nodeUpgrade); err != nil {
 				return ctrl.Result{}, fmt.Errorf("deleting node upgrader: %v", err)
 			}
@@ -178,7 +203,7 @@ func patchMachineDeploymentUpgrade(ctx context.Context, patchHelper *patch.Helpe
 	return patchHelper.Patch(ctx, mdUpgrade, patchOpts...)
 }
 
-func (r *MachineDeploymentUpgradeReconciler) updateStatus(ctx context.Context, log logr.Logger, mdUpgrade *anywherev1.MachineDeploymentUpgrade) error {
+func (r *MachineDeploymentUpgradeReconciler) updateStatus(ctx context.Context, log logr.Logger, mdUpgrade *anywherev1.MachineDeploymentUpgrade, machines []*clusterv1.Machine) error {
 	// When MachineDeploymentUpgrade is fully deleted, we do not need to update the status. Without this check
 	// the subsequent patch operations would fail if the status is updated after it is fully deleted.
 	if !mdUpgrade.DeletionTimestamp.IsZero() && len(mdUpgrade.GetFinalizers()) == 0 {
@@ -189,37 +214,44 @@ func (r *MachineDeploymentUpgradeReconciler) updateStatus(ctx context.Context, l
 	log.Info("Updating MachineDeploymentUpgrade status")
 
 	nodesUpgradeCompleted := 0
-	nodesUpgradeRequired := len(mdUpgrade.Spec.MachinesRequireUpgrade)
+	nodesUpgradeRequired := len(machines)
+	machineStates := []v1alpha1.MachineState{}
 
-	for _, machine := range mdUpgrade.Spec.MachinesRequireUpgrade {
+	for _, machine := range machines {
 		nodeUpgrade, err := getNodeUpgrade(ctx, r.client, nodeUpgraderName(machine.Name))
 		if err != nil {
-			return err
+			if apierrors.IsNotFound(err) {
+				log.Info("Node upgrader not found for the machine yet", "Machine", machine.Name)
+				continue
+			} else {
+				return err
+			}
 		}
+		machineStates = append(machineStates, anywherev1.MachineState{Name: machine.Name, Upgraded: nodeUpgrade.Status.Completed})
 		if nodeUpgrade.Status.Completed {
 			nodesUpgradeCompleted++
 			nodesUpgradeRequired--
-
 		}
 	}
 	log.Info("Worker nodes ready", "total", mdUpgrade.Status.Upgraded, "need-upgrade", mdUpgrade.Status.RequireUpgrade)
 	mdUpgrade.Status.Upgraded = int64(nodesUpgradeCompleted)
 	mdUpgrade.Status.RequireUpgrade = int64(nodesUpgradeRequired)
 	mdUpgrade.Status.Ready = nodesUpgradeRequired == 0
+	mdUpgrade.Status.MachineState = machineStates
 	return nil
 }
 
-func mdNodeUpgrader(machineRef anywherev1.Ref, kubernetesVersion string) *anywherev1.NodeUpgrade {
+func mdNodeUpgrader(machine *clusterv1.Machine, kubernetesVersion string) *anywherev1.NodeUpgrade {
 	return &anywherev1.NodeUpgrade{
 		ObjectMeta: v1.ObjectMeta{
-			Name:      nodeUpgraderName(machineRef.Name),
+			Name:      nodeUpgraderName(machine.Name),
 			Namespace: constants.EksaSystemNamespace,
 		},
 		Spec: anywherev1.NodeUpgradeSpec{
 			Machine: corev1.ObjectReference{
-				Kind:      machineRef.Kind,
+				Kind:      machine.Kind,
 				Namespace: constants.EksaSystemNamespace,
-				Name:      machineRef.Name,
+				Name:      machine.Name,
 			},
 			KubernetesVersion: kubernetesVersion,
 		},

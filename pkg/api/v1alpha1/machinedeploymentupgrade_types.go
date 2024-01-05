@@ -1,6 +1,7 @@
 package v1alpha1
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -9,19 +10,15 @@ const MachineDeploymentUpgradeKind = "MachineDeploymentUpgrade"
 
 // MachineDeploymentUpgradeSpec defines the desired state of MachineDeploymentUpgrade.
 type MachineDeploymentUpgradeSpec struct {
-	Cluster                Ref    `json:"cluster"`
-	MachineDeployment      Ref    `json:"machineDeployment"`
-	MachinesRequireUpgrade []Ref  `json:"machinesRequireUpgrade"`
-	KubernetesVersion      string `json:"kubernetesVersion"`
-	KubeletVersion         string `json:"kubeletVersion"`
-	KubeadmClusterConfig   string `json:"kubeadmClusterConfig"`
+	MachineDeployment corev1.ObjectReference `json:"machineDeployment"`
 }
 
 // MachineDeploymentUpgradeStatus defines the observed state of MachineDeploymentUpgrade.
 type MachineDeploymentUpgradeStatus struct {
-	RequireUpgrade int64 `json:"requireUpgrade,omitempty"`
-	Upgraded       int64 `json:"upgraded,omitempty"`
-	Ready          bool  `json:"ready,omitempty"`
+	RequireUpgrade int64          `json:"requireUpgrade,omitempty"`
+	Upgraded       int64          `json:"upgraded,omitempty"`
+	Ready          bool           `json:"ready,omitempty"`
+	MachineState   []MachineState `json:"machineState,omitempty"`
 }
 
 //+kubebuilder:object:root=true

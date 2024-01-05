@@ -11,6 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
@@ -21,7 +22,7 @@ import (
 func TestCPUpgradeReconcile(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
-	cluster, machines, nodes, cpUpgrade, nodeUpgrades := getObjectsForCPUpgradeTest()
+	cluster, kcp, machines, nodes, cpUpgrade, nodeUpgrades := getObjectsForCPUpgradeTest()
 	for i := range nodeUpgrades {
 		nodeUpgrades[i].Name = fmt.Sprintf("%s-node-upgrader", machines[i].Name)
 		nodeUpgrades[i].Status = anywherev1.NodeUpgradeStatus{
@@ -29,7 +30,7 @@ func TestCPUpgradeReconcile(t *testing.T) {
 		}
 	}
 
-	objs := []runtime.Object{cluster, machines[0], machines[1], nodes[0], nodes[1], cpUpgrade, nodeUpgrades[0], nodeUpgrades[1]}
+	objs := []runtime.Object{cluster, kcp, machines[0], machines[1], nodes[0], nodes[1], cpUpgrade, nodeUpgrades[0], nodeUpgrades[1]}
 	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
 	r := controllers.NewControlPlaneUpgradeReconciler(client)
 	req := cpUpgradeRequest(cpUpgrade)
@@ -44,7 +45,7 @@ func TestCPUpgradeReconcile(t *testing.T) {
 func TestCPUpgradeReconcileEarly(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
-	cluster, machines, nodes, cpUpgrade, nodeUpgrades := getObjectsForCPUpgradeTest()
+	cluster, kcp, machines, nodes, cpUpgrade, nodeUpgrades := getObjectsForCPUpgradeTest()
 	for i := range nodeUpgrades {
 		nodeUpgrades[i].Name = fmt.Sprintf("%s-node-upgrader", machines[i].Name)
 		nodeUpgrades[i].Status = anywherev1.NodeUpgradeStatus{
@@ -52,7 +53,7 @@ func TestCPUpgradeReconcileEarly(t *testing.T) {
 		}
 	}
 	cpUpgrade.Status.Ready = true
-	objs := []runtime.Object{cluster, machines[0], machines[1], nodes[0], nodes[1], cpUpgrade, nodeUpgrades[0], nodeUpgrades[1]}
+	objs := []runtime.Object{cluster, kcp, machines[0], machines[1], nodes[0], nodes[1], cpUpgrade, nodeUpgrades[0], nodeUpgrades[1]}
 	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
 	r := controllers.NewControlPlaneUpgradeReconciler(client)
 	req := cpUpgradeRequest(cpUpgrade)
@@ -67,14 +68,14 @@ func TestCPUpgradeReconcileEarly(t *testing.T) {
 func TestCPUpgradeReconcileNodeNotUpgraded(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
-	cluster, machines, nodes, cpUpgrade, nodeUpgrades := getObjectsForCPUpgradeTest()
+	cluster, kcp, machines, nodes, cpUpgrade, nodeUpgrades := getObjectsForCPUpgradeTest()
 	for i := range nodeUpgrades {
 		nodeUpgrades[i].Name = fmt.Sprintf("%s-node-upgrader", machines[i].Name)
 		nodeUpgrades[i].Status = anywherev1.NodeUpgradeStatus{
 			Completed: false,
 		}
 	}
-	objs := []runtime.Object{cluster, machines[0], machines[1], nodes[0], nodes[1], cpUpgrade, nodeUpgrades[0], nodeUpgrades[1]}
+	objs := []runtime.Object{cluster, kcp, machines[0], machines[1], nodes[0], nodes[1], cpUpgrade, nodeUpgrades[0], nodeUpgrades[1]}
 	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
 	r := controllers.NewControlPlaneUpgradeReconciler(client)
 	req := cpUpgradeRequest(cpUpgrade)
@@ -86,31 +87,17 @@ func TestCPUpgradeReconcileNodeNotUpgraded(t *testing.T) {
 	g.Expect(err).ToNot(HaveOccurred())
 }
 
-func TestCPUpgradeReconcileNodeUpgradeError(t *testing.T) {
-	g := NewWithT(t)
-	ctx := context.Background()
-	cluster, machines, nodes, cpUpgrade, _ := getObjectsForCPUpgradeTest()
-
-	objs := []runtime.Object{cluster, machines[0], machines[1], nodes[0], nodes[1], cpUpgrade}
-	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
-	r := controllers.NewControlPlaneUpgradeReconciler(client)
-	req := cpUpgradeRequest(cpUpgrade)
-	_, err := r.Reconcile(ctx, req)
-	g.Expect(err).To(HaveOccurred())
-	g.Expect(err).To(MatchError("getting node upgrader for machine machine02: nodeupgrades.anywhere.eks.amazonaws.com \"machine02-node-upgrader\" not found"))
-}
-
 func TestCPUpgradeReconcileNodeUpgraderCreate(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
-	cluster, machines, nodes, cpUpgrade, nodeUpgrades := getObjectsForCPUpgradeTest()
+	cluster, kcp, machines, nodes, cpUpgrade, nodeUpgrades := getObjectsForCPUpgradeTest()
 	for i := range nodeUpgrades {
 		nodeUpgrades[i].Name = fmt.Sprintf("%s-node-upgrader", machines[i].Name)
 		nodeUpgrades[i].Status = anywherev1.NodeUpgradeStatus{
 			Completed: true,
 		}
 	}
-	objs := []runtime.Object{cluster, machines[0], machines[1], nodes[0], nodes[1], cpUpgrade, nodeUpgrades[0]}
+	objs := []runtime.Object{cluster, kcp, machines[0], machines[1], nodes[0], nodes[1], cpUpgrade, nodeUpgrades[0]}
 	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
 	r := controllers.NewControlPlaneUpgradeReconciler(client)
 	req := cpUpgradeRequest(cpUpgrade)
@@ -125,7 +112,7 @@ func TestCPUpgradeReconcileNodesNotReadyYet(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
 
-	cluster, machines, nodes, cpUpgrade, nodeUpgrades := getObjectsForCPUpgradeTest()
+	cluster, kcp, machines, nodes, cpUpgrade, nodeUpgrades := getObjectsForCPUpgradeTest()
 	for i := range nodeUpgrades {
 		nodeUpgrades[i].Name = fmt.Sprintf("%s-node-upgrader", machines[i].Name)
 		nodeUpgrades[i].Status = anywherev1.NodeUpgradeStatus{
@@ -136,7 +123,7 @@ func TestCPUpgradeReconcileNodesNotReadyYet(t *testing.T) {
 		Upgraded:       0,
 		RequireUpgrade: 2,
 	}
-	objs := []runtime.Object{cluster, machines[0], machines[1], nodes[0], nodes[1], cpUpgrade, nodeUpgrades[0], nodeUpgrades[1]}
+	objs := []runtime.Object{cluster, kcp, machines[0], machines[1], nodes[0], nodes[1], cpUpgrade, nodeUpgrades[0], nodeUpgrades[1]}
 	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
 	r := controllers.NewControlPlaneUpgradeReconciler(client)
 
@@ -151,7 +138,7 @@ func TestCPUpgradeReconcileDelete(t *testing.T) {
 	ctx := context.Background()
 	now := metav1.Now()
 
-	cluster, machines, nodes, cpUpgrade, nodeUpgrades := getObjectsForCPUpgradeTest()
+	cluster, kcp, machines, nodes, cpUpgrade, nodeUpgrades := getObjectsForCPUpgradeTest()
 	for i := range nodeUpgrades {
 		nodeUpgrades[i].Name = fmt.Sprintf("%s-node-upgrader", machines[i].Name)
 		nodeUpgrades[i].Status = anywherev1.NodeUpgradeStatus{
@@ -159,7 +146,7 @@ func TestCPUpgradeReconcileDelete(t *testing.T) {
 		}
 	}
 	cpUpgrade.DeletionTimestamp = &now
-	objs := []runtime.Object{cluster, machines[0], machines[1], nodes[0], nodes[1], cpUpgrade, nodeUpgrades[0], nodeUpgrades[1]}
+	objs := []runtime.Object{cluster, kcp, machines[0], machines[1], nodes[0], nodes[1], cpUpgrade, nodeUpgrades[0], nodeUpgrades[1]}
 	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
 	r := controllers.NewControlPlaneUpgradeReconciler(client)
 	req := cpUpgradeRequest(cpUpgrade)
@@ -171,33 +158,49 @@ func TestCPUpgradeReconcileDelete(t *testing.T) {
 	g.Expect(err).To(MatchError("nodeupgrades.anywhere.eks.amazonaws.com \"machine01-node-upgrader\" not found"))
 }
 
-func TestCPUpgradeObjectDoesNotExist(t *testing.T) {
+func TestCPUpgradeReconcileErrors(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
 
-	cluster, machines, nodes, cpUpgrade, nodeUpgrades := getObjectsForCPUpgradeTest()
-	for i := range nodeUpgrades {
-		nodeUpgrades[i].Name = fmt.Sprintf("%s-node-upgrader", machines[i].Name)
-		nodeUpgrades[i].Status = anywherev1.NodeUpgradeStatus{
-			Completed: true,
-		}
-	}
-	objs := []runtime.Object{cluster, machines[0], machines[1], nodes[0], nodes[1], nodeUpgrades[0], nodeUpgrades[1]}
-	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
-	r := controllers.NewControlPlaneUpgradeReconciler(client)
+	cluster, kcp, machines, nodes, cpUpgrade, _ := getObjectsForCPUpgradeTest()
 
-	req := cpUpgradeRequest(cpUpgrade)
-	_, err := r.Reconcile(ctx, req)
-	g.Expect(err).To(MatchError("controlplaneupgrades.anywhere.eks.amazonaws.com \"cp-upgrade-request\" not found"))
+	tests := []struct {
+		name   string
+		objs   []runtime.Object
+		errMsg string
+	}{
+		{
+			name:   "controlplaneupgrade_missing",
+			objs:   []runtime.Object{cluster, kcp, machines[0], machines[1], nodes[0], nodes[1]},
+			errMsg: "controlplaneupgrades.anywhere.eks.amazonaws.com \"cp-upgrade-request\" not found",
+		},
+		{
+			name:   "kubeadmcontrolplane_missing",
+			objs:   []runtime.Object{cluster, cpUpgrade, machines[0], machines[1], nodes[0], nodes[1]},
+			errMsg: "getting KubeadmControlPlane my-cp: kubeadmcontrolplanes.controlplane.cluster.x-k8s.io \"my-cp\" not found",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			client := fake.NewClientBuilder().WithRuntimeObjects(test.objs...).Build()
+			r := controllers.NewControlPlaneUpgradeReconciler(client)
+
+			req := cpUpgradeRequest(cpUpgrade)
+			_, err := r.Reconcile(ctx, req)
+			g.Expect(err).To(MatchError(test.errMsg))
+		})
+	}
 }
 
-func getObjectsForCPUpgradeTest() (*clusterv1.Cluster, []*clusterv1.Machine, []*corev1.Node, *anywherev1.ControlPlaneUpgrade, []*anywherev1.NodeUpgrade) {
+func getObjectsForCPUpgradeTest() (*clusterv1.Cluster, *controlplanev1.KubeadmControlPlane, []*clusterv1.Machine, []*corev1.Node, *anywherev1.ControlPlaneUpgrade, []*anywherev1.NodeUpgrade) {
 	cluster := generateCluster()
 	node1 := generateNode()
 	node2 := node1.DeepCopy()
 	node2.ObjectMeta.Name = "node02"
-	machine1 := generateMachine(cluster, node1)
-	machine2 := generateMachine(cluster, node2)
+	kcp := generateKCP()
+	machine1 := generateMachine(cluster, node1, map[string]string{"cluster.x-k8s.io/control-plane-name": kcp.Name})
+	machine2 := generateMachine(cluster, node2, map[string]string{"cluster.x-k8s.io/control-plane-name": kcp.Name})
 	machine2.ObjectMeta.Name = "machine02"
 	nodeUpgrade1 := generateNodeUpgrade(machine1)
 	nodeUpgrade2 := generateNodeUpgrade(machine2)
@@ -205,8 +208,8 @@ func getObjectsForCPUpgradeTest() (*clusterv1.Cluster, []*clusterv1.Machine, []*
 	machines := []*clusterv1.Machine{machine1, machine2}
 	nodes := []*corev1.Node{node1, node2}
 	nodeUpgrades := []*anywherev1.NodeUpgrade{nodeUpgrade1, nodeUpgrade2}
-	cpUpgrade := generateCPUpgrade(machines, cluster)
-	return cluster, machines, nodes, cpUpgrade, nodeUpgrades
+	cpUpgrade := generateCPUpgrade(machines, cluster, kcp)
+	return cluster, kcp, machines, nodes, cpUpgrade, nodeUpgrades
 }
 
 func cpUpgradeRequest(cpUpgrade *anywherev1.ControlPlaneUpgrade) reconcile.Request {
@@ -218,36 +221,31 @@ func cpUpgradeRequest(cpUpgrade *anywherev1.ControlPlaneUpgrade) reconcile.Reque
 	}
 }
 
-func generateCPUpgrade(machine []*clusterv1.Machine, cluster *clusterv1.Cluster) *anywherev1.ControlPlaneUpgrade {
-	etcdVersion := "v1.28.3-eks-1-28-9"
+func generateCPUpgrade(machine []*clusterv1.Machine, cluster *clusterv1.Cluster, kcp *controlplanev1.KubeadmControlPlane) *anywherev1.ControlPlaneUpgrade {
 	return &anywherev1.ControlPlaneUpgrade{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "cp-upgrade-request",
 			Namespace: "eksa-system",
 		},
 		Spec: anywherev1.ControlPlaneUpgradeSpec{
-			Cluster: anywherev1.Ref{
-				Name: cluster.Name,
-				Kind: "Cluster",
+			ControlPlane: corev1.ObjectReference{
+				Name:      kcp.Name,
+				Namespace: kcp.Namespace,
+				Kind:      "KubeadmControlPlane",
 			},
-			ControlPlane: anywherev1.Ref{
-				Name: "my-cp",
-				Kind: "KubeadmControlPlane",
-			},
-			MachinesRequireUpgrade: []anywherev1.Ref{
-				{
-					Name: machine[0].Name,
-					Kind: "Machine",
-				},
-				{
-					Name: machine[1].Name,
-					Kind: "Machine",
-				},
-			},
-			KubernetesVersion:    "v1.28.1",
-			KubeletVersion:       "v1.28.1",
-			EtcdVersion:          &etcdVersion,
-			KubeadmClusterConfig: "",
+			EtcdVersion: etcdVersion,
+		},
+	}
+}
+
+func generateKCP() *controlplanev1.KubeadmControlPlane {
+	return &controlplanev1.KubeadmControlPlane{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "my-cp",
+			Namespace: "eksa-system",
+		},
+		Spec: controlplanev1.KubeadmControlPlaneSpec{
+			Version: k8s128,
 		},
 	}
 }

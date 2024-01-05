@@ -1,6 +1,7 @@
 package v1alpha1
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -9,21 +10,22 @@ const ControlPlaneUpgradeKind = "ControlPlaneUpgrade"
 
 // ControlPlaneUpgradeSpec defines the desired state of ControlPlaneUpgrade.
 type ControlPlaneUpgradeSpec struct {
-	Cluster                Ref     `json:"cluster"`
-	ControlPlane           Ref     `json:"controlPlane"`
-	MachinesRequireUpgrade []Ref   `json:"machinesRequireUpgrade"`
-	KubernetesVersion      string  `json:"kubernetesVersion"`
-	KubeletVersion         string  `json:"kubeletVersion"`
-	EtcdVersion            *string `json:"etcdVersion,omitempty"`
-	CoreDNSVersion         *string `json:"coreDNSVersion,omitempty"`
-	KubeadmClusterConfig   string  `json:"kubeadmClusterConfig"`
+	ControlPlane corev1.ObjectReference `json:"controlPlane"`
+	EtcdVersion  string                 `json:"etcdVersion"`
 }
 
 // ControlPlaneUpgradeStatus defines the observed state of ControlPlaneUpgrade.
 type ControlPlaneUpgradeStatus struct {
-	RequireUpgrade int64 `json:"requireUpgrade,omitempty"`
-	Upgraded       int64 `json:"upgraded,omitempty"`
-	Ready          bool  `json:"ready,omitempty"`
+	RequireUpgrade int64          `json:"requireUpgrade,omitempty"`
+	Upgraded       int64          `json:"upgraded,omitempty"`
+	Ready          bool           `json:"ready,omitempty"`
+	MachineState   []MachineState `json:"machineState,omitempty"`
+}
+
+// MachineState stores the name of machine and whether it has been upgraded or not.
+type MachineState struct {
+	Name     string `json:"name"`
+	Upgraded bool   `json:"upgraded"`
 }
 
 //+kubebuilder:object:root=true
