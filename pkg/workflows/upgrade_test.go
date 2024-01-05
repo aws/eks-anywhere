@@ -105,9 +105,8 @@ func (c *upgradeTestSetup) WithForceCleanup() *upgradeTestSetup {
 func newUpgradeSelfManagedClusterTest(t *testing.T) *upgradeTestSetup {
 	tt := newUpgradeTest(t)
 	tt.bootstrapCluster = &types.Cluster{
-		Name:               "bootstrap",
-		ExistingManagement: false,
-		KubeconfigFile:     "kubeconfig.yaml",
+		Name:           "bootstrap",
+		KubeconfigFile: "kubeconfig.yaml",
 	}
 	tt.managementCluster = tt.workloadCluster
 	return tt
@@ -116,13 +115,12 @@ func newUpgradeSelfManagedClusterTest(t *testing.T) *upgradeTestSetup {
 func newUpgradeManagedClusterTest(t *testing.T) *upgradeTestSetup {
 	tt := newUpgradeTest(t)
 	tt.managementCluster = &types.Cluster{
-		Name:               "management-cluster",
-		ExistingManagement: true,
-		KubeconfigFile:     "kubeconfig.yaml",
+		Name:           "management-cluster",
+		KubeconfigFile: "kubeconfig.yaml",
 	}
 	tt.workloadCluster.KubeconfigFile = "wl-kubeconfig.yaml"
 
-	tt.newClusterSpec.Cluster.SetSelfManaged()
+	tt.newClusterSpec.Cluster.SetManagedBy(tt.managementCluster.Name)
 	tt.newClusterSpec.ManagementCluster = tt.managementCluster
 	return tt
 }
@@ -246,7 +244,7 @@ func (c *upgradeTestSetup) expectUpgradeWorkload(managementCluster *types.Cluste
 		c.expectUpgradeWorkloadToReturn(managementCluster, workloadCluster, nil),
 	}
 
-	if managementCluster != nil && managementCluster.ExistingManagement {
+	if c.newClusterSpec.Cluster.IsManaged() {
 		calls = append(calls,
 			c.clusterManager.EXPECT().ApplyBundles(c.ctx, c.newClusterSpec, managementCluster),
 			c.clusterManager.EXPECT().ApplyReleases(c.ctx, c.newClusterSpec, managementCluster),

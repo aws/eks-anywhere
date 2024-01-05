@@ -76,6 +76,26 @@ func newCreateTest(t *testing.T) *createTestSetup {
 	}
 }
 
+func newCreateWorkloadClusterTest(t *testing.T) *createTestSetup {
+	tt := newCreateTest(t)
+
+	tt.bootstrapCluster = &types.Cluster{
+		Name:           "management-cluster",
+		KubeconfigFile: "kubeconfig.yaml",
+	}
+
+	tt.workloadCluster = &types.Cluster{
+		Name:           "workload-cluster",
+		KubeconfigFile: "wl-kubeconfig.yaml",
+	}
+
+	tt.clusterSpec.Cluster.Name = tt.workloadCluster.Name
+	tt.clusterSpec.Cluster.SetManagedBy(tt.bootstrapCluster.Name)
+	tt.clusterSpec.ManagementCluster = tt.bootstrapCluster
+
+	return tt
+}
+
 func (c *createTestSetup) expectSetup() {
 	c.provider.EXPECT().SetupAndValidateCreateCluster(c.ctx, c.clusterSpec)
 	c.provider.EXPECT().Name()
@@ -226,7 +246,7 @@ func (c *createTestSetup) expectWriteClusterConfig() {
 	gomock.InOrder(
 		c.provider.EXPECT().DatacenterConfig(c.clusterSpec).Return(c.datacenterConfig),
 		c.provider.EXPECT().MachineConfigs(c.clusterSpec).Return(c.machineConfigs),
-		c.writer.EXPECT().Write("cluster-name-eks-a-cluster.yaml", gomock.Any(), gomock.Any()),
+		c.writer.EXPECT().Write(c.clusterSpec.Cluster.Name+"-eks-a-cluster.yaml", gomock.Any(), gomock.Any()),
 	)
 }
 
@@ -343,18 +363,7 @@ func TestCreateRunSuccessForceCleanup(t *testing.T) {
 }
 
 func TestCreateWorkloadClusterRunSuccess(t *testing.T) {
-	managementKubeconfig := "test.kubeconfig"
-	test := newCreateTest(t)
-
-	test.bootstrapCluster.ExistingManagement = true
-	test.bootstrapCluster.KubeconfigFile = managementKubeconfig
-	test.bootstrapCluster.Name = "cluster-name"
-
-	test.clusterSpec.ManagementCluster = &types.Cluster{
-		Name:               test.bootstrapCluster.Name,
-		KubeconfigFile:     managementKubeconfig,
-		ExistingManagement: true,
-	}
+	test := newCreateWorkloadClusterTest(t)
 
 	test.expectSetup()
 	test.expectCreateWorkloadSkipCAPI()
@@ -373,18 +382,7 @@ func TestCreateWorkloadClusterRunSuccess(t *testing.T) {
 }
 
 func TestCreateWorkloadClusterRunAWSIamConfigSuccess(t *testing.T) {
-	managementKubeconfig := "test.kubeconfig"
-	test := newCreateTest(t)
-
-	test.bootstrapCluster.ExistingManagement = true
-	test.bootstrapCluster.KubeconfigFile = managementKubeconfig
-	test.bootstrapCluster.Name = "cluster-name"
-
-	test.clusterSpec.ManagementCluster = &types.Cluster{
-		Name:               test.bootstrapCluster.Name,
-		KubeconfigFile:     managementKubeconfig,
-		ExistingManagement: true,
-	}
+	test := newCreateWorkloadClusterTest(t)
 
 	// Adding AWSIAMConfig to cluster spec.
 	test.clusterSpec.AWSIamConfig = &v1alpha1.AWSIamConfig{}
@@ -408,18 +406,7 @@ func TestCreateWorkloadClusterRunAWSIamConfigSuccess(t *testing.T) {
 
 func TestCreateWorkloadClusterRunAWSIamConfigFail(t *testing.T) {
 	wantError := errors.New("test error")
-	managementKubeconfig := "test.kubeconfig"
-	test := newCreateTest(t)
-
-	test.bootstrapCluster.ExistingManagement = true
-	test.bootstrapCluster.KubeconfigFile = managementKubeconfig
-	test.bootstrapCluster.Name = "cluster-name"
-
-	test.clusterSpec.ManagementCluster = &types.Cluster{
-		Name:               test.bootstrapCluster.Name,
-		KubeconfigFile:     managementKubeconfig,
-		ExistingManagement: true,
-	}
+	test := newCreateWorkloadClusterTest(t)
 
 	// Adding AWSIAMConfig to cluster spec.
 	test.clusterSpec.AWSIamConfig = &v1alpha1.AWSIamConfig{}
@@ -435,7 +422,7 @@ func TestCreateWorkloadClusterRunAWSIamConfigFail(t *testing.T) {
 }
 
 func TestCreateWorkloadClusterTaskCreateWorkloadClusterFailure(t *testing.T) {
-	test := newCreateTest(t)
+	test := newCreateWorkloadClusterTest(t)
 	commandContext := task.CommandContext{
 		BootstrapCluster: test.bootstrapCluster,
 		ClusterSpec:      test.clusterSpec,
@@ -462,7 +449,7 @@ func TestCreateWorkloadClusterTaskCreateWorkloadClusterFailure(t *testing.T) {
 }
 
 func TestCreateWorkloadClusterTaskRunPostCreateWorkloadClusterFailure(t *testing.T) {
-	test := newCreateTest(t)
+	test := newCreateWorkloadClusterTest(t)
 	commandContext := task.CommandContext{
 		BootstrapCluster: test.bootstrapCluster,
 		ClusterSpec:      test.clusterSpec,

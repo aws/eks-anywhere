@@ -98,7 +98,7 @@ func (s *setupAndValidate) Checkpoint() *task.CompletedTask {
 }
 
 func (s *createManagementCluster) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
-	if commandContext.BootstrapCluster != nil && commandContext.BootstrapCluster.ExistingManagement {
+	if commandContext.ClusterSpec.Cluster.IsManaged() {
 		return &deleteWorkloadCluster{}
 	}
 	logger.Info("Creating management cluster")
@@ -228,7 +228,7 @@ func (s *cleanupGitRepo) Checkpoint() *task.CompletedTask {
 }
 
 func (s *deletePackageResources) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
-	if !commandContext.BootstrapCluster.ExistingManagement {
+	if commandContext.ClusterSpec.Cluster.IsSelfManaged() {
 		return &deleteManagementCluster{}
 	}
 
@@ -263,7 +263,7 @@ func (s *deleteManagementCluster) Run(ctx context.Context, commandContext *task.
 		collector := &CollectMgmtClusterDiagnosticsTask{}
 		collector.Run(ctx, commandContext)
 	}
-	if commandContext.BootstrapCluster != nil && !commandContext.BootstrapCluster.ExistingManagement {
+	if commandContext.ClusterSpec.Cluster.IsSelfManaged() {
 		if err := commandContext.Bootstrapper.DeleteBootstrapCluster(ctx, commandContext.BootstrapCluster, constants.Delete, false); err != nil {
 			commandContext.SetError(err)
 		}

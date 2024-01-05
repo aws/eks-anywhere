@@ -376,7 +376,7 @@ func (s *createBootstrapClusterTask) Run(ctx context.Context, commandContext *ta
 			return nil
 		}
 	}
-	if commandContext.ManagementCluster != nil && commandContext.ManagementCluster.ExistingManagement {
+	if commandContext.ClusterSpec.Cluster.IsManaged() {
 		return &upgradeWorkloadClusterTask{}
 	}
 	logger.Info("Creating bootstrap cluster")
@@ -425,7 +425,7 @@ func (s *createBootstrapClusterTask) Restore(ctx context.Context, commandContext
 		return nil, err
 	}
 	commandContext.BootstrapCluster = s.bootstrapCluster
-	if commandContext.ManagementCluster != nil && commandContext.ManagementCluster.ExistingManagement {
+	if commandContext.ClusterSpec.Cluster.IsManaged() {
 		return &upgradeWorkloadClusterTask{}, nil
 	}
 	return &installCAPITask{}, nil
@@ -510,7 +510,7 @@ func (s *moveManagementToBootstrapTask) Restore(ctx context.Context, commandCont
 
 func (s *upgradeWorkloadClusterTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
 	eksaManagementCluster := commandContext.WorkloadCluster
-	if commandContext.ManagementCluster != nil && commandContext.ManagementCluster.ExistingManagement {
+	if commandContext.ClusterSpec.Cluster.IsManaged() {
 		eksaManagementCluster = commandContext.ManagementCluster
 	}
 
@@ -559,7 +559,7 @@ func (s *upgradeWorkloadClusterTask) Restore(ctx context.Context, commandContext
 }
 
 func (s *moveManagementToWorkloadTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
-	if commandContext.ManagementCluster.ExistingManagement {
+	if commandContext.ClusterSpec.Cluster.IsManaged() {
 		return &reconcileClusterDefinitions{eksaSpecDiff: true}
 	}
 	logger.Info("Moving cluster management from bootstrap to workload cluster")
@@ -591,7 +591,7 @@ func (s *moveManagementToWorkloadTask) Checkpoint() *task.CompletedTask {
 }
 
 func (s *moveManagementToWorkloadTask) Restore(ctx context.Context, commandContext *task.CommandContext, completedTask *task.CompletedTask) (task.Task, error) {
-	if !commandContext.ManagementCluster.ExistingManagement {
+	if commandContext.ClusterSpec.Cluster.IsSelfManaged() {
 		commandContext.ManagementCluster = commandContext.WorkloadCluster
 	}
 	return &reconcileClusterDefinitions{eksaSpecDiff: true}, nil
@@ -687,7 +687,7 @@ func (s *deleteBootstrapClusterTask) Run(ctx context.Context, commandContext *ta
 		c := CollectDiagnosticsTask{}
 		c.Run(ctx, commandContext)
 	}
-	if commandContext.BootstrapCluster != nil && !commandContext.BootstrapCluster.ExistingManagement {
+	if commandContext.ClusterSpec.Cluster.IsSelfManaged() {
 		if err := commandContext.Bootstrapper.DeleteBootstrapCluster(ctx, commandContext.BootstrapCluster, constants.Upgrade, false); err != nil {
 			commandContext.SetError(err)
 		}

@@ -13,6 +13,7 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
@@ -20,6 +21,7 @@ import (
 	gitFactory "github.com/aws/eks-anywhere/pkg/git/factory"
 	gitMocks "github.com/aws/eks-anywhere/pkg/git/mocks"
 	"github.com/aws/eks-anywhere/pkg/gitops/flux"
+	"github.com/aws/eks-anywhere/pkg/gitops/flux/mocks"
 	fluxMocks "github.com/aws/eks-anywhere/pkg/gitops/flux/mocks"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	mocksprovider "github.com/aws/eks-anywhere/pkg/providers/mocks"
@@ -341,8 +343,6 @@ func TestInstallGitOpsOnWorkloadClusterWithPrexistingRepo(t *testing.T) {
 	clusterConfig.SetManagedBy("management-cluster")
 	g := newFluxTest(t)
 	clusterSpec := newClusterSpec(t, clusterConfig, "")
-
-	g.flux.EXPECT().BootstrapGithub(g.ctx, cluster, clusterSpec.FluxConfig)
 
 	g.git.EXPECT().GetRepo(g.ctx).Return(&git.Repository{Name: clusterSpec.FluxConfig.Spec.Github.Repository}, nil)
 
@@ -1078,4 +1078,112 @@ func TestUninstallError(t *testing.T) {
 	g.flux.EXPECT().Uninstall(g.ctx, c, g.clusterSpec.FluxConfig).Return(errors.New("error in uninstall"))
 
 	g.Expect(g.gitOpsFlux.Uninstall(g.ctx, c, g.clusterSpec)).To(MatchError(ContainSubstring("error in uninstall")))
+}
+
+func TestFluxBootstrapGithub(t *testing.T) {
+	c := &types.Cluster{}
+	ctx := context.Background()
+	testCases := []struct {
+		name                string
+		spec                *cluster.Spec
+		needBootstrapGithub bool
+	}{
+		{
+			name: "management cluster",
+			spec: test.NewClusterSpec(func(s *cluster.Spec) {
+				s.Cluster.Name = "management-cluster"
+				s.Cluster.SetSelfManaged()
+				s.FluxConfig = &anywherev1.FluxConfig{
+					Spec: anywherev1.FluxConfigSpec{
+						Github: &anywherev1.GithubProviderConfig{},
+					},
+				}
+			}),
+			needBootstrapGithub: true,
+		},
+		{
+			name: "workload cluster",
+			spec: test.NewClusterSpec(func(s *cluster.Spec) {
+				s.Cluster.Name = "workload-cluster"
+				s.Cluster.SetManagedBy("management-cluster")
+			}),
+			needBootstrapGithub: false,
+		},
+		{
+			name: "management cluster not github configured",
+			spec: test.NewClusterSpec(func(s *cluster.Spec) {
+				s.Cluster.Name = "management-cluster"
+				s.Cluster.SetSelfManaged()
+				s.FluxConfig = &anywherev1.FluxConfig{}
+			}),
+			needBootstrapGithub: false,
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			g := NewWithT(t)
+			ctrl := gomock.NewController(t)
+			mockFluxClient := mocks.NewMockFluxClient(ctrl)
+			if tc.needBootstrapGithub {
+				mockFluxClient.EXPECT().BootstrapGithub(ctx, c, tc.spec.FluxConfig).Return(nil)
+			}
+
+			f := flux.NewFlux(mockFluxClient, nil, nil, nil)
+			g.Expect(f.BootstrapGithub(ctx, c, tc.spec)).NotTo(HaveOccurred())
+		})
+	}
+}
+
+func TestFluxBootstrapGit(t *testing.T) {
+	c := &types.Cluster{}
+	ctx := context.Background()
+	testCases := []struct {
+		name             string
+		spec             *cluster.Spec
+		needBootstrapGit bool
+	}{
+		{
+			name: "management cluster",
+			spec: test.NewClusterSpec(func(s *cluster.Spec) {
+				s.Cluster.Name = "management-cluster"
+				s.Cluster.SetSelfManaged()
+				s.FluxConfig = &anywherev1.FluxConfig{
+					Spec: anywherev1.FluxConfigSpec{
+						Git: &anywherev1.GitProviderConfig{},
+					},
+				}
+			}),
+			needBootstrapGit: true,
+		},
+		{
+			name: "workload cluster",
+			spec: test.NewClusterSpec(func(s *cluster.Spec) {
+				s.Cluster.Name = "workload-cluster"
+				s.Cluster.SetManagedBy("management-cluster")
+			}),
+			needBootstrapGit: false,
+		},
+		{
+			name: "management cluster not git configured",
+			spec: test.NewClusterSpec(func(s *cluster.Spec) {
+				s.Cluster.Name = "management-cluster"
+				s.Cluster.SetSelfManaged()
+				s.FluxConfig = &anywherev1.FluxConfig{}
+			}),
+			needBootstrapGit: false,
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			g := NewWithT(t)
+			ctrl := gomock.NewController(t)
+			mockFluxClient := mocks.NewMockFluxClient(ctrl)
+			if tc.needBootstrapGit {
+				mockFluxClient.EXPECT().BootstrapGit(ctx, c, tc.spec.FluxConfig, nil).Return(nil)
+			}
+
+			f := flux.NewFlux(mockFluxClient, nil, nil, nil)
+			g.Expect(f.BootstrapGit(ctx, c, tc.spec)).NotTo(HaveOccurred())
+		})
+	}
 }
