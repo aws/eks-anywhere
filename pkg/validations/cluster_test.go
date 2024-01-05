@@ -248,12 +248,35 @@ func TestValidateOSForRegistryMirrorInsecureSkipVerifyEnabled(t *testing.T) {
 
 func TestValidateOSForRegistryMirrorNoPublicEcrRegistry(t *testing.T) {
 	tt := newTest(t, withTLS())
-	tt.clusterSpec.Cluster.Spec.RegistryMirrorConfiguration = &anywherev1.RegistryMirrorConfiguration{
-		Endpoint: "1.2.3.4",
-		Port:     "123",
-		OCINamespaces: []anywherev1.OCINamespace{
-			{
-				Registry: "docker.io",
+	tests := []struct {
+		name         string
+		mirrorConfig *anywherev1.RegistryMirrorConfiguration
+	}{
+		{
+			name: "no public ecr registry",
+			mirrorConfig: &anywherev1.RegistryMirrorConfiguration{
+				Endpoint: "1.2.3.4",
+				Port:     "123",
+				OCINamespaces: []anywherev1.OCINamespace{
+					{
+						Registry: "docker.io",
+					},
+				},
+			},
+		},
+		{
+			name: "more than one registry",
+			mirrorConfig: &anywherev1.RegistryMirrorConfiguration{
+				Endpoint: "1.2.3.4",
+				Port:     "123",
+				OCINamespaces: []anywherev1.OCINamespace{
+					{
+						Registry: "public.ecr.aws",
+					},
+					{
+						Registry: "docker.io",
+					},
+				},
 			},
 		},
 	}
@@ -264,9 +287,14 @@ func TestValidateOSForRegistryMirrorNoPublicEcrRegistry(t *testing.T) {
 				OSFamily: anywherev1.Bottlerocket,
 			},
 		},
-	})
+	}).MaxTimes(2)
 
-	tt.Expect(validations.ValidateOSForRegistryMirror(tt.clusterSpec, tt.provider)).To(MatchError("public.ecr.aws is the only registry supported for bottlerocket"))
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			tt.clusterSpec.Cluster.Spec.RegistryMirrorConfiguration = test.mirrorConfig
+			tt.Expect(validations.ValidateOSForRegistryMirror(tt.clusterSpec, tt.provider)).To(MatchError("public.ecr.aws is the only registry supported in ociNamespaces for bottlerocket"))
+		})
+	}
 }
 
 func TestValidateManagementClusterNameValid(t *testing.T) {

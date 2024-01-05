@@ -42,16 +42,12 @@ func ValidateOSForRegistryMirror(clusterSpec *cluster.Spec, provider providers.P
 		return nil
 	}
 
-	ociNamespaceRegistryMap := make(map[string]bool)
-	for _, ns := range cluster.Spec.RegistryMirrorConfiguration.OCINamespaces {
-		ociNamespaceRegistryMap[ns.Registry] = true
-	}
-
 	for _, mc := range machineConfigs {
 		// BottleRocket accepts only one registry mirror and that is hardcoded for public.ecr.aws at this moment.
 		// Such a validation will be removed once CAPI is patched to support more than one endpoints for BottleRocket.
-		if mc.OSFamily() == v1alpha1.Bottlerocket && !ociNamespaceRegistryMap[constants.DefaultCoreEKSARegistry] {
-			return fmt.Errorf("%s is the only registry supported for %s", constants.DefaultCoreEKSARegistry, v1alpha1.Bottlerocket)
+		if mc.OSFamily() == v1alpha1.Bottlerocket &&
+			(len(ociNamespaces) != 1 || ociNamespaces[0].Registry != constants.DefaultCoreEKSARegistry) {
+			return fmt.Errorf("%s is the only registry supported in ociNamespaces for %s", constants.DefaultCoreEKSARegistry, v1alpha1.Bottlerocket)
 		}
 	}
 
