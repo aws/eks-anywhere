@@ -776,13 +776,7 @@ func validateMirrorConfig(clusterConfig *Cluster) error {
 			}
 		}
 	}
-	if mirrorCount == 1 {
-		// BottleRocket accepts only one registry mirror and that is hardcoded for public.ecr.aws at this moment.
-		// Such a validation will be removed once CAPI is patched to support more than one endpoints for BottleRocket.
-		if ociNamespaces[0].Registry != constants.DefaultCoreEKSARegistry {
-			return errors.New("registry must be public.ecr.aws when only one mapping is specified")
-		}
-	}
+
 	return nil
 }
 
