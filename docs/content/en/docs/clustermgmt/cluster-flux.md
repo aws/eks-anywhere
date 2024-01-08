@@ -197,7 +197,7 @@ After your cluster has been created, you can test the GitOps controller by modif
     clusters/$CLUSTER_NAME/eksa-system/eksa-cluster.yaml
     ```
 
-1. Modify the `workerNodeGroupsConfigurations[0].count` field with your desired changes.
+1. Modify the `workerNodeGroupConfigurations[0].count` field with your desired changes.
 
 1. Commit the file to your git repository
 
