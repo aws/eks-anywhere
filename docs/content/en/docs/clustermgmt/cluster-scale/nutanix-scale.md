@@ -30,7 +30,7 @@ spec:
   controlPlaneConfiguration:
     count: 1     # increase this number to horizontally scale your control plane
 ...    
-  workerNodeGroupsConfiguration:
+  workerNodeGroupConfigurations:
   - count: 1     # increase this number to horizontally scale your data plane
 ```
 
