@@ -23,7 +23,7 @@ func NewDiscovery(kubeVersion *KubeVersion) *Discovery {
 	}
 }
 
-func NewKubeVersion(major string, minor string) *KubeVersion {
+func NewKubeVersion(major, minor string) *KubeVersion {
 	return &KubeVersion{
 		major: major,
 		minor: minor,

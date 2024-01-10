@@ -114,7 +114,7 @@ func (w *WorkloadCluster) ValidateClusterDelete() {
 	}
 }
 
-func (w *WorkloadCluster) writeKubeconfigToDisk(ctx context.Context, secretName string, filePath string) error {
+func (w *WorkloadCluster) writeKubeconfigToDisk(ctx context.Context, secretName, filePath string) error {
 	secret, err := w.KubectlClient.GetSecretFromNamespace(ctx, w.ManagementClusterKubeconfigFile(), secretName, constants.EksaSystemNamespace)
 	if err != nil {
 		return fmt.Errorf("failed to get kubeconfig for cluster: %s", err)

@@ -86,7 +86,7 @@ func (p *SnowProvider) SetupAndValidateCreateCluster(ctx context.Context, cluste
 	return nil
 }
 
-func (p *SnowProvider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, _ *cluster.Spec) error {
+func (p *SnowProvider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *types.Cluster, clusterSpec, _ *cluster.Spec) error {
 	if err := p.validateUpgradeRolloutStrategy(clusterSpec); err != nil {
 		return fmt.Errorf("failed setup and validations: %v", err)
 	}
@@ -156,7 +156,7 @@ func (p *SnowProvider) GenerateCAPISpecForCreate(ctx context.Context, cluster *t
 	return p.generateCAPISpec(ctx, cluster, clusterSpec)
 }
 
-func (p *SnowProvider) GenerateCAPISpecForUpgrade(ctx context.Context, bootstrapCluster, _ *types.Cluster, _ *cluster.Spec, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
+func (p *SnowProvider) GenerateCAPISpecForUpgrade(ctx context.Context, bootstrapCluster, _ *types.Cluster, _, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
 	return p.generateCAPISpec(ctx, bootstrapCluster, clusterSpec)
 }
 
@@ -264,7 +264,7 @@ func (p *SnowProvider) ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.Com
 	}
 }
 
-func (p *SnowProvider) RunPostControlPlaneUpgrade(ctx context.Context, oldClusterSpec *cluster.Spec, clusterSpec *cluster.Spec, workloadCluster *types.Cluster, managementCluster *types.Cluster) error {
+func (p *SnowProvider) RunPostControlPlaneUpgrade(ctx context.Context, oldClusterSpec, clusterSpec *cluster.Spec, workloadCluster, managementCluster *types.Cluster) error {
 	return nil
 }
 

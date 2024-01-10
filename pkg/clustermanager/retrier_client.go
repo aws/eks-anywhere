@@ -110,7 +110,7 @@ func (c *RetrierClient) ListObjects(ctx context.Context, resourceType, namespace
 }
 
 // DeleteGitOpsConfig deletes a GitOpsConfigObject from the cluster.
-func (c *RetrierClient) DeleteGitOpsConfig(ctx context.Context, cluster *types.Cluster, name string, namespace string) error {
+func (c *RetrierClient) DeleteGitOpsConfig(ctx context.Context, cluster *types.Cluster, name, namespace string) error {
 	return c.retrier.Retry(
 		func() error {
 			return c.ClusterClient.DeleteGitOpsConfig(ctx, cluster, name, namespace)
@@ -119,7 +119,7 @@ func (c *RetrierClient) DeleteGitOpsConfig(ctx context.Context, cluster *types.C
 }
 
 // DeleteEKSACluster deletes an EKSA Cluster object from the cluster.
-func (c *RetrierClient) DeleteEKSACluster(ctx context.Context, cluster *types.Cluster, name string, namespace string) error {
+func (c *RetrierClient) DeleteEKSACluster(ctx context.Context, cluster *types.Cluster, name, namespace string) error {
 	return c.retrier.Retry(
 		func() error {
 			return c.ClusterClient.DeleteEKSACluster(ctx, cluster, name, namespace)
@@ -128,7 +128,7 @@ func (c *RetrierClient) DeleteEKSACluster(ctx context.Context, cluster *types.Cl
 }
 
 // DeleteAWSIamConfig deletes an AWSIamConfig object from the cluster.
-func (c *RetrierClient) DeleteAWSIamConfig(ctx context.Context, cluster *types.Cluster, name string, namespace string) error {
+func (c *RetrierClient) DeleteAWSIamConfig(ctx context.Context, cluster *types.Cluster, name, namespace string) error {
 	return c.retrier.Retry(
 		func() error {
 			return c.ClusterClient.DeleteAWSIamConfig(ctx, cluster, name, namespace)
@@ -137,7 +137,7 @@ func (c *RetrierClient) DeleteAWSIamConfig(ctx context.Context, cluster *types.C
 }
 
 // DeleteOIDCConfig deletes a OIDCConfig object from the cluster.
-func (c *RetrierClient) DeleteOIDCConfig(ctx context.Context, cluster *types.Cluster, name string, namespace string) error {
+func (c *RetrierClient) DeleteOIDCConfig(ctx context.Context, cluster *types.Cluster, name, namespace string) error {
 	return c.retrier.Retry(
 		func() error {
 			return c.ClusterClient.DeleteOIDCConfig(ctx, cluster, name, namespace)

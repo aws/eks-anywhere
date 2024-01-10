@@ -42,7 +42,7 @@ const (
 type Docker interface {
 	CheckContainerExistence(ctx context.Context, name string) (bool, error)
 	ForceRemove(ctx context.Context, name string) error
-	Run(ctx context.Context, image string, name string, cmd []string, flags ...string) error
+	Run(ctx context.Context, image, name string, cmd []string, flags ...string) error
 }
 
 type Helm interface {
@@ -128,7 +128,7 @@ func (s *Installer) AddNoProxyIP(IP string) {
 }
 
 // NewInstaller returns a Tinkerbell StackInstaller which can be used to install or uninstall the Tinkerbell stack.
-func NewInstaller(docker Docker, filewriter filewriter.FileWriter, helm Helm, namespace string, podCidrRange string, registryMirror *registrymirror.RegistryMirror, proxyConfig *v1alpha1.ProxyConfiguration) StackInstaller {
+func NewInstaller(docker Docker, filewriter filewriter.FileWriter, helm Helm, namespace, podCidrRange string, registryMirror *registrymirror.RegistryMirror, proxyConfig *v1alpha1.ProxyConfiguration) StackInstaller {
 	return &Installer{
 		docker:         docker,
 		filewriter:     filewriter,
@@ -378,7 +378,7 @@ func (s *Installer) authenticateHelmRegistry(ctx context.Context) error {
 }
 
 // Upgrade the Tinkerbell stack using images specified in bundle.
-func (s *Installer) Upgrade(ctx context.Context, bundle releasev1alpha1.TinkerbellBundle, tinkerbellIP, kubeconfig string, hookOverride string, opts ...InstallOption) error {
+func (s *Installer) Upgrade(ctx context.Context, bundle releasev1alpha1.TinkerbellBundle, tinkerbellIP, kubeconfig, hookOverride string, opts ...InstallOption) error {
 	logger.V(6).Info("Upgrading Tinkerbell helm chart")
 
 	for _, option := range opts {

@@ -72,7 +72,7 @@ func (e *E2ESession) setupSnowEnv(testRegex string) error {
 	return nil
 }
 
-func sendFileViaS3(e *E2ESession, s3Path string, filename string) error {
+func sendFileViaS3(e *E2ESession, s3Path, filename string) error {
 	if err := s3.DownloadToDisk(e.session, s3Path, e.storageBucket, "bin/"+filename); err != nil {
 		return err
 	}

@@ -95,7 +95,7 @@ func Build(ctx context.Context, cluster *v1alpha1.Cluster, fluxConfig *v1alpha1.
 	return &tools, nil
 }
 
-func buildGitClient(ctx context.Context, auth transport.AuthMethod, repoUrl string, repo string) *gitclient.GitClient {
+func buildGitClient(ctx context.Context, auth transport.AuthMethod, repoUrl, repo string) *gitclient.GitClient {
 	opts := []gitclient.Opt{
 		gitclient.WithRepositoryUrl(repoUrl),
 		gitclient.WithRepositoryDirectory(repo),
@@ -133,7 +133,7 @@ func WithRepositoryDirectory(repoDir string) GitToolsOpt {
 	}
 }
 
-func getSSHAuthFromPrivateKey(privateKeyFile string, passphrase string, user string) (gogitssh.AuthMethod, error) {
+func getSSHAuthFromPrivateKey(privateKeyFile, passphrase, user string) (gogitssh.AuthMethod, error) {
 	signer, err := getSignerFromPrivateKeyFile(privateKeyFile, passphrase)
 	if err != nil {
 		return nil, err
@@ -144,7 +144,7 @@ func getSSHAuthFromPrivateKey(privateKeyFile string, passphrase string, user str
 	}, nil
 }
 
-func getSignerFromPrivateKeyFile(privateKeyFile string, passphrase string) (ssh.Signer, error) {
+func getSignerFromPrivateKeyFile(privateKeyFile, passphrase string) (ssh.Signer, error) {
 	var signer ssh.Signer
 	var err error
 

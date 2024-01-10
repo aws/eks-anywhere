@@ -112,7 +112,7 @@ func importImages(ctx context.Context, clusterSpecPath string) error {
 	return importCharts(ctx, helmExecutable, bundle.Charts(), endpoint, registryUsername, registryPassword)
 }
 
-func importImage(ctx context.Context, docker *executables.Docker, image string, endpoint string) error {
+func importImage(ctx context.Context, docker *executables.Docker, image, endpoint string) error {
 	if err := docker.PullImage(ctx, image); err != nil {
 		return err
 	}

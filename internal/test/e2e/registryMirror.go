@@ -74,7 +74,7 @@ func (e *E2ESession) setupRegistryMirrorEnv(testRegex string) error {
 	return nil
 }
 
-func (e *E2ESession) mountRegistryCert(cert string, endpoint string) error {
+func (e *E2ESession) mountRegistryCert(cert, endpoint string) error {
 	command := fmt.Sprintf("sudo mkdir -p /etc/docker/certs.d/%s", endpoint)
 
 	if err := ssm.Run(e.session, logr.Discard(), e.instanceId, command, ssmTimeout); err != nil {

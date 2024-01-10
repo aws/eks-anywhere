@@ -68,7 +68,7 @@ func (pp *Profiler) SetStartTask(taskName string) {
 }
 
 // this can be used to profile sub tasks.
-func (pp *Profiler) SetStart(taskName string, msg string) {
+func (pp *Profiler) SetStart(taskName, msg string) {
 	if _, ok := pp.starts[taskName]; !ok {
 		pp.starts[taskName] = map[string]time.Time{}
 	}
@@ -81,7 +81,7 @@ func (pp *Profiler) MarkDoneTask(taskName string) {
 }
 
 // this can be used to profile sub tasks.
-func (pp *Profiler) MarkDone(taskName string, msg string) {
+func (pp *Profiler) MarkDone(taskName, msg string) {
 	if _, ok := pp.metrics[taskName]; !ok {
 		pp.metrics[taskName] = map[string]time.Duration{}
 	}
@@ -260,7 +260,7 @@ When reading from a yaml file, there isn't a direct way in Go to do a type conve
 We use interface{} because the TaskCheckpoint type will vary depending on what's needed for a specific task. The known workaround
 for this is to marshal & unmarshal it into the checkpoint type.
 */
-func UnmarshalTaskCheckpoint(taskCheckpoint TaskCheckpoint, config TaskCheckpoint) error {
+func UnmarshalTaskCheckpoint(taskCheckpoint, config TaskCheckpoint) error {
 	checkpointYaml, err := yaml.Marshal(taskCheckpoint)
 	if err != nil {
 		return nil

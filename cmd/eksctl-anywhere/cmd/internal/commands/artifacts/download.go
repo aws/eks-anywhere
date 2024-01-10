@@ -31,7 +31,7 @@ type ManifestDownloader interface {
 }
 
 type Packager interface {
-	Package(folder string, dstFile string) error
+	Package(folder, dstFile string) error
 }
 
 type Download struct {

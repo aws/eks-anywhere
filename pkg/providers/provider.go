@@ -13,7 +13,7 @@ type Provider interface {
 	Name() string
 	SetupAndValidateCreateCluster(ctx context.Context, clusterSpec *cluster.Spec) error
 	SetupAndValidateDeleteCluster(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error
-	SetupAndValidateUpgradeCluster(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, currentSpec *cluster.Spec) error
+	SetupAndValidateUpgradeCluster(ctx context.Context, cluster *types.Cluster, clusterSpec, currentSpec *cluster.Spec) error
 	UpdateSecrets(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error
 	GenerateCAPISpecForCreate(ctx context.Context, managementCluster *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error)
 	GenerateCAPISpecForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, currrentSpec, newClusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error)
@@ -36,7 +36,7 @@ type Provider interface {
 	MachineConfigs(clusterSpec *cluster.Spec) []MachineConfig
 	ValidateNewSpec(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error
 	ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ComponentChangeDiff
-	RunPostControlPlaneUpgrade(ctx context.Context, oldClusterSpec *cluster.Spec, clusterSpec *cluster.Spec, workloadCluster *types.Cluster, managementCluster *types.Cluster) error
+	RunPostControlPlaneUpgrade(ctx context.Context, oldClusterSpec, clusterSpec *cluster.Spec, workloadCluster, managementCluster *types.Cluster) error
 	UpgradeNeeded(ctx context.Context, newSpec, currentSpec *cluster.Spec, cluster *types.Cluster) (bool, error)
 	DeleteResources(ctx context.Context, clusterSpec *cluster.Spec) error
 	InstallCustomProviderComponents(ctx context.Context, kubeconfigFile string) error

@@ -9,6 +9,6 @@ func KubectlWaitRetryPolicy(k *Kubectl, totalRetries int, err error) (retry bool
 	return k.kubectlWaitRetryPolicy(totalRetries, err)
 }
 
-func CallKubectlPrivateWait(k *Kubectl, ctx context.Context, kubeconfig string, timeoutTime time.Time, forCondition string, property string, namespace string) error {
+func CallKubectlPrivateWait(k *Kubectl, ctx context.Context, kubeconfig string, timeoutTime time.Time, forCondition, property, namespace string) error {
 	return k.wait(ctx, kubeconfig, timeoutTime, forCondition, property, namespace)
 }

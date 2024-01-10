@@ -48,7 +48,7 @@ func New(account awsprofiles.EksAccount) (*S3, error) {
 	}, nil
 }
 
-func (s *S3) ListObjects(bucket string, prefix string) (listedObjects []*s3.Object, err error) {
+func (s *S3) ListObjects(bucket, prefix string) (listedObjects []*s3.Object, err error) {
 	var nextToken *string
 	var objects []*s3.Object
 
@@ -77,7 +77,7 @@ func (s *S3) ListObjects(bucket string, prefix string) (listedObjects []*s3.Obje
 	return objects, nil
 }
 
-func (s *S3) GetObject(bucket string, key string) ([]byte, error) {
+func (s *S3) GetObject(bucket, key string) ([]byte, error) {
 	input := &s3.GetObjectInput{
 		Bucket: aws.String(bucket),
 		Key:    aws.String(key),

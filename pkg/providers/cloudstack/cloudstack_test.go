@@ -1878,7 +1878,7 @@ func TestClusterUpgradeNeededMachineConfigsChangedDiskOffering(t *testing.T) {
 	machineConfigsMap := givenMachineConfigs(t, testClusterConfigMainFilename)
 	getEksaCloudStackMachineConfig := kubectl.EXPECT().GetEksaCloudStackMachineConfig(ctx, gomock.Any(), cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).AnyTimes()
 	getEksaCloudStackMachineConfig.DoAndReturn(
-		func(ctx context.Context, cloudstackMachineConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.CloudStackMachineConfig, error) {
+		func(ctx context.Context, cloudstackMachineConfigName, kubeconfigFile, namespace string) (*v1alpha1.CloudStackMachineConfig, error) {
 			if cloudstackMachineConfigName == "test" {
 				modifiedMachineConfig := machineConfigsMap["test"].DeepCopy()
 				modifiedMachineConfig.Spec.DiskOffering = (*machineConfigsMap["test"].Spec.DiskOffering).DeepCopy()

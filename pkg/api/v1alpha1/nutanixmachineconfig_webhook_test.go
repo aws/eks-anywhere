@@ -222,17 +222,17 @@ func TestValidateUpdate_Invalid(t *testing.T) {
 	g := NewWithT(t)
 	tests := []struct {
 		name string
-		fn   func(new *v1alpha1.NutanixMachineConfig, old *v1alpha1.NutanixMachineConfig)
+		fn   func(new, old *v1alpha1.NutanixMachineConfig)
 	}{
 		{
 			name: "different os family",
-			fn: func(new *v1alpha1.NutanixMachineConfig, old *v1alpha1.NutanixMachineConfig) {
+			fn: func(new, old *v1alpha1.NutanixMachineConfig) {
 				new.Spec.OSFamily = v1alpha1.Bottlerocket
 			},
 		},
 		{
 			name: "different cluster",
-			fn: func(new *v1alpha1.NutanixMachineConfig, old *v1alpha1.NutanixMachineConfig) {
+			fn: func(new, old *v1alpha1.NutanixMachineConfig) {
 				new.Spec.Cluster = v1alpha1.NutanixResourceIdentifier{
 					Type: v1alpha1.NutanixIdentifierName,
 					Name: ptr.String("cluster-2"),
@@ -241,7 +241,7 @@ func TestValidateUpdate_Invalid(t *testing.T) {
 		},
 		{
 			name: "different subnet",
-			fn: func(new *v1alpha1.NutanixMachineConfig, old *v1alpha1.NutanixMachineConfig) {
+			fn: func(new, old *v1alpha1.NutanixMachineConfig) {
 				new.Spec.Subnet = v1alpha1.NutanixResourceIdentifier{
 					Type: v1alpha1.NutanixIdentifierName,
 					Name: ptr.String("subnet-2"),
@@ -250,42 +250,42 @@ func TestValidateUpdate_Invalid(t *testing.T) {
 		},
 		{
 			name: "old cluster is managed",
-			fn: func(new *v1alpha1.NutanixMachineConfig, old *v1alpha1.NutanixMachineConfig) {
+			fn: func(new, old *v1alpha1.NutanixMachineConfig) {
 				new.Spec.OSFamily = v1alpha1.Bottlerocket
 				old.SetManagedBy("test")
 			},
 		},
 		{
 			name: "mismatch vcpu sockets on control plane cluster",
-			fn: func(new *v1alpha1.NutanixMachineConfig, old *v1alpha1.NutanixMachineConfig) {
+			fn: func(new, old *v1alpha1.NutanixMachineConfig) {
 				old.SetControlPlane()
 				new.Spec.VCPUSockets++
 			},
 		},
 		{
 			name: "mismatch vcpu per socket on control plane cluster",
-			fn: func(new *v1alpha1.NutanixMachineConfig, old *v1alpha1.NutanixMachineConfig) {
+			fn: func(new, old *v1alpha1.NutanixMachineConfig) {
 				old.SetControlPlane()
 				new.Spec.VCPUsPerSocket++
 			},
 		},
 		{
 			name: "mismatch memory size on control plane cluster",
-			fn: func(new *v1alpha1.NutanixMachineConfig, old *v1alpha1.NutanixMachineConfig) {
+			fn: func(new, old *v1alpha1.NutanixMachineConfig) {
 				old.SetControlPlane()
 				new.Spec.MemorySize.Add(resource.MustParse("1Gi"))
 			},
 		},
 		{
 			name: "mismatch system disk size on control plane cluster",
-			fn: func(new *v1alpha1.NutanixMachineConfig, old *v1alpha1.NutanixMachineConfig) {
+			fn: func(new, old *v1alpha1.NutanixMachineConfig) {
 				old.SetControlPlane()
 				new.Spec.SystemDiskSize.Add(resource.MustParse("1Gi"))
 			},
 		},
 		{
 			name: "mismatch users on control plane cluster",
-			fn: func(new *v1alpha1.NutanixMachineConfig, old *v1alpha1.NutanixMachineConfig) {
+			fn: func(new, old *v1alpha1.NutanixMachineConfig) {
 				old.SetControlPlane()
 				new.Spec.Users = append(new.Spec.Users, v1alpha1.UserConfiguration{
 					Name: "another-user",
@@ -294,7 +294,7 @@ func TestValidateUpdate_Invalid(t *testing.T) {
 		},
 		{
 			name: "invalid vcpus per socket",
-			fn: func(new *v1alpha1.NutanixMachineConfig, old *v1alpha1.NutanixMachineConfig) {
+			fn: func(new, old *v1alpha1.NutanixMachineConfig) {
 				new.Spec.VCPUsPerSocket = 0
 			},
 		},

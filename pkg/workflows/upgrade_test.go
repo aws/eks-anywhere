@@ -150,7 +150,7 @@ func (c *upgradeTestSetup) expectEnsureEtcdCAPIComponentsExistTask(expectedClust
 	)
 }
 
-func (c *upgradeTestSetup) expectUpgradeCoreComponents(managementCluster *types.Cluster, workloadCluster *types.Cluster) {
+func (c *upgradeTestSetup) expectUpgradeCoreComponents(managementCluster, workloadCluster *types.Cluster) {
 	currentSpec := c.currentClusterSpec
 	networkingChangeDiff := types.NewChangeDiff(&types.ComponentChangeDiff{
 		ComponentName: "cilium",
@@ -241,7 +241,7 @@ func (c *upgradeTestSetup) expectNotToDeleteBootstrap() {
 	c.bootstrapper.EXPECT().DeleteBootstrapCluster(c.ctx, c.bootstrapCluster, gomock.Any(), gomock.Any()).Times(0)
 }
 
-func (c *upgradeTestSetup) expectUpgradeWorkload(managementCluster *types.Cluster, workloadCluster *types.Cluster) {
+func (c *upgradeTestSetup) expectUpgradeWorkload(managementCluster, workloadCluster *types.Cluster) {
 	calls := []*gomock.Call{
 		c.expectUpgradeWorkloadToReturn(managementCluster, workloadCluster, nil),
 	}
@@ -261,7 +261,7 @@ func (c *upgradeTestSetup) expectUpgradeWorkload(managementCluster *types.Cluste
 	gomock.InOrder(calls...)
 }
 
-func (c *upgradeTestSetup) expectUpgradeWorkloadToReturn(managementCluster *types.Cluster, workloadCluster *types.Cluster, err error) *gomock.Call {
+func (c *upgradeTestSetup) expectUpgradeWorkloadToReturn(managementCluster, workloadCluster *types.Cluster, err error) *gomock.Call {
 	return c.clusterManager.EXPECT().UpgradeCluster(
 		c.ctx, managementCluster, workloadCluster, c.newClusterSpec, c.provider,
 	).Return(err)

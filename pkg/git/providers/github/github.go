@@ -44,7 +44,7 @@ type GithubClient interface {
 	AuthenticatedUser(ctx context.Context) (*goGithub.User, error)
 	Organization(ctx context.Context, org string) (*goGithub.Organization, error)
 	GetAccessTokenPermissions(accessToken string) (string, error)
-	CheckAccessTokenPermissions(checkPATPermission string, allPermissionScopes string) error
+	CheckAccessTokenPermissions(checkPATPermission, allPermissionScopes string) error
 	PathExists(ctx context.Context, owner, repo, branch, path string) (bool, error)
 	DeleteRepo(ctx context.Context, opts git.DeleteRepoOpts) error
 }
@@ -162,6 +162,6 @@ func (e *GitProviderNotFoundError) Error() string {
 	return fmt.Sprintf("git provider %s not found", e.Provider)
 }
 
-func RepoUrl(owner string, repo string) string {
+func RepoUrl(owner, repo string) string {
 	return fmt.Sprintf(githubUrlTemplate, owner, repo)
 }

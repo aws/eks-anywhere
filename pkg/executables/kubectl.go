@@ -164,7 +164,7 @@ func (k *Kubectl) GetCAPIMachines(ctx context.Context, cluster *types.Cluster, c
 	return response.Items, nil
 }
 
-func (k *Kubectl) SearchCloudStackMachineConfig(ctx context.Context, name string, kubeconfigFile string, namespace string) ([]*v1alpha1.CloudStackMachineConfig, error) {
+func (k *Kubectl) SearchCloudStackMachineConfig(ctx context.Context, name, kubeconfigFile, namespace string) ([]*v1alpha1.CloudStackMachineConfig, error) {
 	params := []string{
 		"get", eksaCloudStackMachineResourceType, "-o", "json", "--kubeconfig",
 		kubeconfigFile, "--namespace", namespace, "--field-selector=metadata.name=" + name,
@@ -183,7 +183,7 @@ func (k *Kubectl) SearchCloudStackMachineConfig(ctx context.Context, name string
 	return response.Items, nil
 }
 
-func (k *Kubectl) SearchCloudStackDatacenterConfig(ctx context.Context, name string, kubeconfigFile string, namespace string) ([]*v1alpha1.CloudStackDatacenterConfig, error) {
+func (k *Kubectl) SearchCloudStackDatacenterConfig(ctx context.Context, name, kubeconfigFile, namespace string) ([]*v1alpha1.CloudStackDatacenterConfig, error) {
 	params := []string{
 		"get", eksaCloudStackDatacenterResourceType, "-o", "json", "--kubeconfig",
 		kubeconfigFile, "--namespace", namespace, "--field-selector=metadata.name=" + name,
@@ -202,7 +202,7 @@ func (k *Kubectl) SearchCloudStackDatacenterConfig(ctx context.Context, name str
 	return response.Items, nil
 }
 
-func (k *Kubectl) GetEksaCloudStackMachineConfig(ctx context.Context, cloudstackMachineConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.CloudStackMachineConfig, error) {
+func (k *Kubectl) GetEksaCloudStackMachineConfig(ctx context.Context, cloudstackMachineConfigName, kubeconfigFile, namespace string) (*v1alpha1.CloudStackMachineConfig, error) {
 	response := &v1alpha1.CloudStackMachineConfig{}
 	err := k.GetObject(ctx, eksaCloudStackMachineResourceType, cloudstackMachineConfigName, namespace, kubeconfigFile, response)
 	if err != nil {
@@ -212,7 +212,7 @@ func (k *Kubectl) GetEksaCloudStackMachineConfig(ctx context.Context, cloudstack
 	return response, nil
 }
 
-func (k *Kubectl) DeleteEksaCloudStackDatacenterConfig(ctx context.Context, cloudstackDatacenterConfigName string, kubeconfigFile string, namespace string) error {
+func (k *Kubectl) DeleteEksaCloudStackDatacenterConfig(ctx context.Context, cloudstackDatacenterConfigName, kubeconfigFile, namespace string) error {
 	params := []string{"delete", eksaCloudStackDatacenterResourceType, cloudstackDatacenterConfigName, "--kubeconfig", kubeconfigFile, "--namespace", namespace, "--ignore-not-found=true"}
 	_, err := k.Execute(ctx, params...)
 	if err != nil {
@@ -221,7 +221,7 @@ func (k *Kubectl) DeleteEksaCloudStackDatacenterConfig(ctx context.Context, clou
 	return nil
 }
 
-func (k *Kubectl) GetEksaCloudStackDatacenterConfig(ctx context.Context, cloudstackDatacenterConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.CloudStackDatacenterConfig, error) {
+func (k *Kubectl) GetEksaCloudStackDatacenterConfig(ctx context.Context, cloudstackDatacenterConfigName, kubeconfigFile, namespace string) (*v1alpha1.CloudStackDatacenterConfig, error) {
 	response := &v1alpha1.CloudStackDatacenterConfig{}
 	err := k.GetObject(ctx, eksaCloudStackDatacenterResourceType, cloudstackDatacenterConfigName, namespace, kubeconfigFile, response)
 	if err != nil {
@@ -231,7 +231,7 @@ func (k *Kubectl) GetEksaCloudStackDatacenterConfig(ctx context.Context, cloudst
 	return response, nil
 }
 
-func (k *Kubectl) DeleteEksaCloudStackMachineConfig(ctx context.Context, cloudstackMachineConfigName string, kubeconfigFile string, namespace string) error {
+func (k *Kubectl) DeleteEksaCloudStackMachineConfig(ctx context.Context, cloudstackMachineConfigName, kubeconfigFile, namespace string) error {
 	params := []string{"delete", eksaCloudStackMachineResourceType, cloudstackMachineConfigName, "--kubeconfig", kubeconfigFile, "--namespace", namespace, "--ignore-not-found=true"}
 	_, err := k.Execute(ctx, params...)
 	if err != nil {
@@ -245,13 +245,13 @@ type VersionResponse struct {
 	ServerVersion version.Info `json:"serverVersion"`
 }
 
-func (k *Kubectl) GetNamespace(ctx context.Context, kubeconfig string, namespace string) error {
+func (k *Kubectl) GetNamespace(ctx context.Context, kubeconfig, namespace string) error {
 	params := []string{"get", "namespace", namespace, "--kubeconfig", kubeconfig}
 	_, err := k.Execute(ctx, params...)
 	return err
 }
 
-func (k *Kubectl) CreateNamespace(ctx context.Context, kubeconfig string, namespace string) error {
+func (k *Kubectl) CreateNamespace(ctx context.Context, kubeconfig, namespace string) error {
 	params := []string{"create", "namespace", namespace, "--kubeconfig", kubeconfig}
 	_, err := k.Execute(ctx, params...)
 	if err != nil {
@@ -260,14 +260,14 @@ func (k *Kubectl) CreateNamespace(ctx context.Context, kubeconfig string, namesp
 	return nil
 }
 
-func (k *Kubectl) CreateNamespaceIfNotPresent(ctx context.Context, kubeconfig string, namespace string) error {
+func (k *Kubectl) CreateNamespaceIfNotPresent(ctx context.Context, kubeconfig, namespace string) error {
 	if err := k.GetNamespace(ctx, kubeconfig, namespace); err != nil {
 		return k.CreateNamespace(ctx, kubeconfig, namespace)
 	}
 	return nil
 }
 
-func (k *Kubectl) DeleteNamespace(ctx context.Context, kubeconfig string, namespace string) error {
+func (k *Kubectl) DeleteNamespace(ctx context.Context, kubeconfig, namespace string) error {
 	params := []string{"delete", "namespace", namespace, "--kubeconfig", kubeconfig}
 	_, err := k.Execute(ctx, params...)
 	if err != nil {
@@ -276,7 +276,7 @@ func (k *Kubectl) DeleteNamespace(ctx context.Context, kubeconfig string, namesp
 	return nil
 }
 
-func (k *Kubectl) LoadSecret(ctx context.Context, secretObject string, secretObjectType string, secretObjectName string, kubeConfFile string) error {
+func (k *Kubectl) LoadSecret(ctx context.Context, secretObject, secretObjectType, secretObjectName, kubeConfFile string) error {
 	params := []string{"create", "secret", "generic", secretObjectName, "--type", secretObjectType, "--from-literal", secretObject, "--kubeconfig", kubeConfFile, "--namespace", constants.EksaSystemNamespace}
 	_, err := k.Execute(ctx, params...)
 	if err != nil {
@@ -293,7 +293,7 @@ func (k *Kubectl) ApplyManifest(ctx context.Context, kubeconfigPath, manifestPat
 	return nil
 }
 
-func (k *Kubectl) ApplyKubeSpecWithNamespace(ctx context.Context, cluster *types.Cluster, spec string, namespace string) error {
+func (k *Kubectl) ApplyKubeSpecWithNamespace(ctx context.Context, cluster *types.Cluster, spec, namespace string) error {
 	params := []string{"apply", "-f", spec, "--namespace", namespace}
 	if cluster.KubeconfigFile != "" {
 		params = append(params, "--kubeconfig", cluster.KubeconfigFile)
@@ -370,32 +370,32 @@ func (k *Kubectl) DeleteKubeSpecFromBytes(ctx context.Context, cluster *types.Cl
 	return nil
 }
 
-func (k *Kubectl) WaitForClusterReady(ctx context.Context, cluster *types.Cluster, timeout string, clusterName string) error {
+func (k *Kubectl) WaitForClusterReady(ctx context.Context, cluster *types.Cluster, timeout, clusterName string) error {
 	return k.Wait(ctx, cluster.KubeconfigFile, timeout, "Ready", fmt.Sprintf("%s/%s", capiClustersResourceType, clusterName), constants.EksaSystemNamespace)
 }
 
-func (k *Kubectl) WaitForControlPlaneReady(ctx context.Context, cluster *types.Cluster, timeout string, newClusterName string) error {
+func (k *Kubectl) WaitForControlPlaneReady(ctx context.Context, cluster *types.Cluster, timeout, newClusterName string) error {
 	return k.Wait(ctx, cluster.KubeconfigFile, timeout, "ControlPlaneReady", fmt.Sprintf("%s/%s", capiClustersResourceType, newClusterName), constants.EksaSystemNamespace)
 }
 
 // WaitForControlPlaneAvailable blocks until the first control plane is available.
-func (k *Kubectl) WaitForControlPlaneAvailable(ctx context.Context, cluster *types.Cluster, timeout string, newClusterName string) error {
+func (k *Kubectl) WaitForControlPlaneAvailable(ctx context.Context, cluster *types.Cluster, timeout, newClusterName string) error {
 	return k.Wait(ctx, cluster.KubeconfigFile, timeout, "ControlPlaneInitialized", fmt.Sprintf("%s/%s", capiClustersResourceType, newClusterName), constants.EksaSystemNamespace)
 }
 
-func (k *Kubectl) WaitForControlPlaneNotReady(ctx context.Context, cluster *types.Cluster, timeout string, newClusterName string) error {
+func (k *Kubectl) WaitForControlPlaneNotReady(ctx context.Context, cluster *types.Cluster, timeout, newClusterName string) error {
 	return k.Wait(ctx, cluster.KubeconfigFile, timeout, "ControlPlaneReady=false", fmt.Sprintf("%s/%s", capiClustersResourceType, newClusterName), constants.EksaSystemNamespace)
 }
 
-func (k *Kubectl) WaitForManagedExternalEtcdReady(ctx context.Context, cluster *types.Cluster, timeout string, newClusterName string) error {
+func (k *Kubectl) WaitForManagedExternalEtcdReady(ctx context.Context, cluster *types.Cluster, timeout, newClusterName string) error {
 	return k.Wait(ctx, cluster.KubeconfigFile, timeout, "ManagedEtcdReady", fmt.Sprintf("clusters.%s/%s", clusterv1.GroupVersion.Group, newClusterName), constants.EksaSystemNamespace)
 }
 
-func (k *Kubectl) WaitForManagedExternalEtcdNotReady(ctx context.Context, cluster *types.Cluster, timeout string, newClusterName string) error {
+func (k *Kubectl) WaitForManagedExternalEtcdNotReady(ctx context.Context, cluster *types.Cluster, timeout, newClusterName string) error {
 	return k.Wait(ctx, cluster.KubeconfigFile, timeout, "ManagedEtcdReady=false", fmt.Sprintf("clusters.%s/%s", clusterv1.GroupVersion.Group, newClusterName), constants.EksaSystemNamespace)
 }
 
-func (k *Kubectl) WaitForMachineDeploymentReady(ctx context.Context, cluster *types.Cluster, timeout string, machineDeploymentName string) error {
+func (k *Kubectl) WaitForMachineDeploymentReady(ctx context.Context, cluster *types.Cluster, timeout, machineDeploymentName string) error {
 	return k.Wait(ctx, cluster.KubeconfigFile, timeout, "Ready=true", fmt.Sprintf("%s/%s", capiMachineDeploymentsType, machineDeploymentName), constants.EksaSystemNamespace)
 }
 
@@ -404,7 +404,7 @@ func (k *Kubectl) WaitForMachineDeploymentReady(ctx context.Context, cluster *ty
 // Until more generic status matching comes around (possibly in 1.23), poll
 // the service, checking for an IP address. Would you like to know more?
 // https://github.com/kubernetes/kubernetes/issues/83094
-func (k *Kubectl) WaitForService(ctx context.Context, kubeconfig string, timeout string, target string, namespace string) error {
+func (k *Kubectl) WaitForService(ctx context.Context, kubeconfig, timeout, target, namespace string) error {
 	timeoutDur, err := time.ParseDuration(timeout)
 	if err != nil {
 		return fmt.Errorf("parsing duration %q: %w", timeout, err)
@@ -443,12 +443,12 @@ func (k *Kubectl) WaitForService(ctx context.Context, kubeconfig string, timeout
 	}
 }
 
-func (k *Kubectl) WaitForDeployment(ctx context.Context, cluster *types.Cluster, timeout string, condition string, target string, namespace string) error {
+func (k *Kubectl) WaitForDeployment(ctx context.Context, cluster *types.Cluster, timeout, condition, target, namespace string) error {
 	return k.Wait(ctx, cluster.KubeconfigFile, timeout, condition, "deployments/"+target, namespace)
 }
 
 // WaitForResourceRolledout waits for a resource (deployment, daemonset, or statefulset) to be successfully rolled out before returning.
-func (k *Kubectl) WaitForResourceRolledout(ctx context.Context, cluster *types.Cluster, timeout string, target string, namespace string, resource string) error {
+func (k *Kubectl) WaitForResourceRolledout(ctx context.Context, cluster *types.Cluster, timeout, target, namespace, resource string) error {
 	params := []string{"rollout", "status", resource, target, "--kubeconfig", cluster.KubeconfigFile, "--namespace", namespace, "--timeout", timeout}
 	_, err := k.Execute(ctx, params...)
 	if err != nil {
@@ -458,31 +458,31 @@ func (k *Kubectl) WaitForResourceRolledout(ctx context.Context, cluster *types.C
 }
 
 // WaitForPod waits for a pod resource to reach desired condition before returning.
-func (k *Kubectl) WaitForPod(ctx context.Context, cluster *types.Cluster, timeout string, condition string, target string, namespace string) error {
+func (k *Kubectl) WaitForPod(ctx context.Context, cluster *types.Cluster, timeout, condition, target, namespace string) error {
 	return k.Wait(ctx, cluster.KubeconfigFile, timeout, condition, "pod/"+target, namespace)
 }
 
 // WaitForRufioMachines blocks until all Rufio Machines have the desired condition.
-func (k *Kubectl) WaitForRufioMachines(ctx context.Context, cluster *types.Cluster, timeout string, condition string, namespace string) error {
+func (k *Kubectl) WaitForRufioMachines(ctx context.Context, cluster *types.Cluster, timeout, condition, namespace string) error {
 	return k.Wait(ctx, cluster.KubeconfigFile, timeout, condition, rufioMachineResourceType, namespace, WithWaitAll())
 }
 
 // WaitForJobCompleted waits for a job resource to reach desired condition before returning.
-func (k *Kubectl) WaitForJobCompleted(ctx context.Context, kubeconfig, timeout string, condition string, target string, namespace string) error {
+func (k *Kubectl) WaitForJobCompleted(ctx context.Context, kubeconfig, timeout, condition, target, namespace string) error {
 	return k.Wait(ctx, kubeconfig, timeout, condition, "job/"+target, namespace)
 }
 
 // WaitForPackagesInstalled waits for a package resource to reach installed state before returning.
-func (k *Kubectl) WaitForPackagesInstalled(ctx context.Context, cluster *types.Cluster, name string, timeout string, namespace string) error {
+func (k *Kubectl) WaitForPackagesInstalled(ctx context.Context, cluster *types.Cluster, name, timeout, namespace string) error {
 	return k.WaitJSONPathLoop(ctx, cluster.KubeconfigFile, timeout, "status.state", "installed", fmt.Sprintf("%s/%s", eksaPackagesType, name), namespace)
 }
 
 // WaitForPodCompleted waits for a pod to be terminated with a Completed state before returning.
-func (k *Kubectl) WaitForPodCompleted(ctx context.Context, cluster *types.Cluster, name string, timeout string, namespace string) error {
+func (k *Kubectl) WaitForPodCompleted(ctx context.Context, cluster *types.Cluster, name, timeout, namespace string) error {
 	return k.WaitJSONPathLoop(ctx, cluster.KubeconfigFile, timeout, "status.containerStatuses[0].state.terminated.reason", "Completed", "pod/"+name, namespace)
 }
 
-func (k *Kubectl) Wait(ctx context.Context, kubeconfig string, timeout string, forCondition string, property string, namespace string, opts ...KubectlOpt) error {
+func (k *Kubectl) Wait(ctx context.Context, kubeconfig, timeout, forCondition, property, namespace string, opts ...KubectlOpt) error {
 	// On each retry kubectl wait timeout values will have to be adjusted to only wait for the remaining timeout duration.
 	// Here we establish an absolute timeout time for this based on the caller-specified timeout.
 	timeoutDuration, err := time.ParseDuration(timeout)
@@ -508,7 +508,7 @@ func (k *Kubectl) Wait(ctx context.Context, kubeconfig string, timeout string, f
 
 // WaitJSONPathLoop will wait for a given JSONPath to reach a required state similar to wait command for objects without conditions.
 // This will be deprecated in favor of WaitJSONPath after version 1.23.
-func (k *Kubectl) WaitJSONPathLoop(ctx context.Context, kubeconfig string, timeout string, jsonpath, forCondition string, property string, namespace string, opts ...KubectlOpt) error {
+func (k *Kubectl) WaitJSONPathLoop(ctx context.Context, kubeconfig, timeout, jsonpath, forCondition, property, namespace string, opts ...KubectlOpt) error {
 	// On each retry kubectl wait timeout values will have to be adjusted to only wait for the remaining timeout duration.
 	//  Here we establish an absolute timeout time for this based on the caller-specified timeout.
 	timeoutDuration, err := time.ParseDuration(timeout)
@@ -532,7 +532,7 @@ func (k *Kubectl) WaitJSONPathLoop(ctx context.Context, kubeconfig string, timeo
 }
 
 // WaitJSONPath will wait for a given JSONPath of a required state. Only compatible on K8s 1.23+.
-func (k *Kubectl) WaitJSONPath(ctx context.Context, kubeconfig string, timeout string, jsonpath, forCondition string, property string, namespace string, opts ...KubectlOpt) error {
+func (k *Kubectl) WaitJSONPath(ctx context.Context, kubeconfig, timeout, jsonpath, forCondition, property, namespace string, opts ...KubectlOpt) error {
 	// On each retry kubectl wait timeout values will have to be adjusted to only wait for the remaining timeout duration.
 	//  Here we establish an absolute timeout time for this based on the caller-specified timeout.
 	timeoutDuration, err := time.ParseDuration(timeout)
@@ -574,7 +574,7 @@ func (k *Kubectl) kubectlWaitRetryPolicy(totalRetries int, err error) (retry boo
 	return false, 0
 }
 
-func (k *Kubectl) wait(ctx context.Context, kubeconfig string, timeoutTime time.Time, forCondition string, property string, namespace string, opts ...KubectlOpt) error {
+func (k *Kubectl) wait(ctx context.Context, kubeconfig string, timeoutTime time.Time, forCondition, property, namespace string, opts ...KubectlOpt) error {
 	secondsRemainingUntilTimeout := time.Until(timeoutTime).Seconds()
 	if secondsRemainingUntilTimeout <= minimumWaitTimeout {
 		return fmt.Errorf("error: timed out waiting for condition %v on %v", forCondition, property)
@@ -592,7 +592,7 @@ func (k *Kubectl) wait(ctx context.Context, kubeconfig string, timeoutTime time.
 	return nil
 }
 
-func (k *Kubectl) waitJSONPath(ctx context.Context, kubeconfig, timeout string, jsonpath string, forCondition string, property string, namespace string, opts ...KubectlOpt) error {
+func (k *Kubectl) waitJSONPath(ctx context.Context, kubeconfig, timeout, jsonpath, forCondition, property, namespace string, opts ...KubectlOpt) error {
 	if jsonpath == "" || forCondition == "" {
 		return fmt.Errorf("empty conditions params passed to waitJSONPath()")
 	}
@@ -607,7 +607,7 @@ func (k *Kubectl) waitJSONPath(ctx context.Context, kubeconfig, timeout string, 
 }
 
 // waitJsonPathLoop will be deprecated in favor of waitJsonPath after version 1.23.
-func (k *Kubectl) waitJSONPathLoop(ctx context.Context, kubeconfig string, timeout string, jsonpath string, forCondition string, property string, namespace string, opts ...KubectlOpt) error {
+func (k *Kubectl) waitJSONPathLoop(ctx context.Context, kubeconfig, timeout, jsonpath, forCondition, property, namespace string, opts ...KubectlOpt) error {
 	if jsonpath == "" || forCondition == "" {
 		return fmt.Errorf("empty conditions params passed to waitJSONPathLoop()")
 	}
@@ -647,7 +647,7 @@ func (k *Kubectl) waitJSONPathLoop(ctx context.Context, kubeconfig string, timeo
 	}
 }
 
-func (k *Kubectl) DeleteEksaDatacenterConfig(ctx context.Context, eksaDatacenterResourceType string, eksaDatacenterConfigName string, kubeconfigFile string, namespace string) error {
+func (k *Kubectl) DeleteEksaDatacenterConfig(ctx context.Context, eksaDatacenterResourceType, eksaDatacenterConfigName, kubeconfigFile, namespace string) error {
 	params := []string{"delete", eksaDatacenterResourceType, eksaDatacenterConfigName, "--kubeconfig", kubeconfigFile, "--namespace", namespace, "--ignore-not-found=true"}
 	_, err := k.Execute(ctx, params...)
 	if err != nil {
@@ -656,7 +656,7 @@ func (k *Kubectl) DeleteEksaDatacenterConfig(ctx context.Context, eksaDatacenter
 	return nil
 }
 
-func (k *Kubectl) DeleteEksaMachineConfig(ctx context.Context, eksaMachineConfigResourceType string, eksaMachineConfigName string, kubeconfigFile string, namespace string) error {
+func (k *Kubectl) DeleteEksaMachineConfig(ctx context.Context, eksaMachineConfigResourceType, eksaMachineConfigName, kubeconfigFile, namespace string) error {
 	params := []string{"delete", eksaMachineConfigResourceType, eksaMachineConfigName, "--kubeconfig", kubeconfigFile, "--namespace", namespace, "--ignore-not-found=true"}
 	_, err := k.Execute(ctx, params...)
 	if err != nil {
@@ -824,7 +824,7 @@ func (k *Kubectl) GetControlPlaneNodes(ctx context.Context, kubeconfig string) (
 }
 
 // GetVsphereMachine will return list of vSphere machines.
-func (k *Kubectl) GetVsphereMachine(ctx context.Context, kubeconfig string, selector string) ([]vspherev1.VSphereMachine, error) {
+func (k *Kubectl) GetVsphereMachine(ctx context.Context, kubeconfig, selector string) ([]vspherev1.VSphereMachine, error) {
 	params := []string{"get", "vspheremachines", "-o", "json", "--namespace", constants.EksaSystemNamespace, "--kubeconfig", kubeconfig, "--selector=" + selector}
 	stdOut, err := k.Execute(ctx, params...)
 	if err != nil {
@@ -905,7 +905,7 @@ func (k *Kubectl) ValidateControlPlaneNodes(ctx context.Context, cluster *types.
 	return nil
 }
 
-func (k *Kubectl) ValidateWorkerNodes(ctx context.Context, clusterName string, kubeconfig string) error {
+func (k *Kubectl) ValidateWorkerNodes(ctx context.Context, clusterName, kubeconfig string) error {
 	logger.V(6).Info("waiting for nodes", "cluster", clusterName)
 	ready, total, err := k.CountMachineDeploymentReplicasReady(ctx, clusterName, kubeconfig)
 	if err != nil {
@@ -917,7 +917,7 @@ func (k *Kubectl) ValidateWorkerNodes(ctx context.Context, clusterName string, k
 	return nil
 }
 
-func (k *Kubectl) CountMachineDeploymentReplicasReady(ctx context.Context, clusterName string, kubeconfig string) (ready, total int, err error) {
+func (k *Kubectl) CountMachineDeploymentReplicasReady(ctx context.Context, clusterName, kubeconfig string) (ready, total int, err error) {
 	logger.V(6).Info("counting ready machine deployment replicas", "cluster", clusterName)
 	deployments, err := k.GetMachineDeploymentsForCluster(ctx, clusterName, WithKubeconfig(kubeconfig), WithNamespace(constants.EksaSystemNamespace))
 	if err != nil {
@@ -938,7 +938,7 @@ func (k *Kubectl) CountMachineDeploymentReplicasReady(ctx context.Context, clust
 	return ready, total, nil
 }
 
-func (k *Kubectl) VsphereWorkerNodesMachineTemplate(ctx context.Context, clusterName string, kubeconfig string, namespace string) (*vspherev1.VSphereMachineTemplate, error) {
+func (k *Kubectl) VsphereWorkerNodesMachineTemplate(ctx context.Context, clusterName, kubeconfig, namespace string) (*vspherev1.VSphereMachineTemplate, error) {
 	machineTemplateName, err := k.MachineTemplateName(ctx, clusterName, kubeconfig, WithNamespace(namespace))
 	if err != nil {
 		return nil, err
@@ -956,7 +956,7 @@ func (k *Kubectl) VsphereWorkerNodesMachineTemplate(ctx context.Context, cluster
 	return machineTemplateSpec, nil
 }
 
-func (k *Kubectl) CloudstackWorkerNodesMachineTemplate(ctx context.Context, clusterName string, kubeconfig string, namespace string) (*cloudstackv1.CloudStackMachineTemplate, error) {
+func (k *Kubectl) CloudstackWorkerNodesMachineTemplate(ctx context.Context, clusterName, kubeconfig, namespace string) (*cloudstackv1.CloudStackMachineTemplate, error) {
 	machineTemplateName, err := k.MachineTemplateName(ctx, clusterName, kubeconfig, WithNamespace(namespace))
 	if err != nil {
 		return nil, err
@@ -974,7 +974,7 @@ func (k *Kubectl) CloudstackWorkerNodesMachineTemplate(ctx context.Context, clus
 	return machineTemplateSpec, nil
 }
 
-func (k *Kubectl) MachineTemplateName(ctx context.Context, clusterName string, kubeconfig string, opts ...KubectlOpt) (string, error) {
+func (k *Kubectl) MachineTemplateName(ctx context.Context, clusterName, kubeconfig string, opts ...KubectlOpt) (string, error) {
 	template := "{{.spec.template.spec.infrastructureRef.name}}"
 	params := []string{"get", capiMachineDeploymentsType, fmt.Sprintf("%s-md-0", clusterName), "-o", "go-template", "--template", template, "--kubeconfig", kubeconfig}
 	applyOpts(&params, opts...)
@@ -1498,7 +1498,7 @@ func (k *Kubectl) UpdateAnnotationInNamespace(ctx context.Context, resourceType,
 	return k.UpdateAnnotation(ctx, resourceType, objectName, annotations, WithOverwrite(), WithCluster(cluster), WithNamespace(namespace))
 }
 
-func (k *Kubectl) RemoveAnnotation(ctx context.Context, resourceType, objectName string, key string, opts ...KubectlOpt) error {
+func (k *Kubectl) RemoveAnnotation(ctx context.Context, resourceType, objectName, key string, opts ...KubectlOpt) error {
 	params := []string{"annotate", resourceType, objectName, fmt.Sprintf("%s-", key)}
 	applyOpts(&params, opts...)
 	_, err := k.Execute(ctx, params...)
@@ -1533,7 +1533,7 @@ func (k *Kubectl) GetEksaCluster(ctx context.Context, cluster *types.Cluster, cl
 	return response, nil
 }
 
-func (k *Kubectl) SearchVsphereMachineConfig(ctx context.Context, name string, kubeconfigFile string, namespace string) ([]*v1alpha1.VSphereMachineConfig, error) {
+func (k *Kubectl) SearchVsphereMachineConfig(ctx context.Context, name, kubeconfigFile, namespace string) ([]*v1alpha1.VSphereMachineConfig, error) {
 	params := []string{
 		"get", eksaVSphereMachineResourceType, "-o", "json", "--kubeconfig",
 		kubeconfigFile, "--namespace", namespace, "--field-selector=metadata.name=" + name,
@@ -1553,7 +1553,7 @@ func (k *Kubectl) SearchVsphereMachineConfig(ctx context.Context, name string, k
 }
 
 // SearchTinkerbellMachineConfig returns the list of TinkerbellMachineConfig in the cluster.
-func (k *Kubectl) SearchTinkerbellMachineConfig(ctx context.Context, name string, kubeconfigFile string, namespace string) ([]*v1alpha1.TinkerbellMachineConfig, error) {
+func (k *Kubectl) SearchTinkerbellMachineConfig(ctx context.Context, name, kubeconfigFile, namespace string) ([]*v1alpha1.TinkerbellMachineConfig, error) {
 	params := []string{
 		"get", eksaTinkerbellMachineResourceType, "-o", "json", "--kubeconfig",
 		kubeconfigFile, "--namespace", namespace, "--field-selector=metadata.name=" + name,
@@ -1572,7 +1572,7 @@ func (k *Kubectl) SearchTinkerbellMachineConfig(ctx context.Context, name string
 	return response.Items, nil
 }
 
-func (k *Kubectl) SearchIdentityProviderConfig(ctx context.Context, ipName string, kind string, kubeconfigFile string, namespace string) ([]*v1alpha1.VSphereDatacenterConfig, error) {
+func (k *Kubectl) SearchIdentityProviderConfig(ctx context.Context, ipName, kind, kubeconfigFile, namespace string) ([]*v1alpha1.VSphereDatacenterConfig, error) {
 	var internalType string
 
 	switch kind {
@@ -1602,7 +1602,7 @@ func (k *Kubectl) SearchIdentityProviderConfig(ctx context.Context, ipName strin
 	return response.Items, nil
 }
 
-func (k *Kubectl) SearchVsphereDatacenterConfig(ctx context.Context, datacenterName string, kubeconfigFile string, namespace string) ([]*v1alpha1.VSphereDatacenterConfig, error) {
+func (k *Kubectl) SearchVsphereDatacenterConfig(ctx context.Context, datacenterName, kubeconfigFile, namespace string) ([]*v1alpha1.VSphereDatacenterConfig, error) {
 	params := []string{
 		"get", eksaVSphereDatacenterResourceType, "-o", "json", "--kubeconfig",
 		kubeconfigFile, "--namespace", namespace, "--field-selector=metadata.name=" + datacenterName,
@@ -1622,7 +1622,7 @@ func (k *Kubectl) SearchVsphereDatacenterConfig(ctx context.Context, datacenterN
 }
 
 // SearchTinkerbellDatacenterConfig returns the list of TinkerbellDatacenterConfig in the cluster.
-func (k *Kubectl) SearchTinkerbellDatacenterConfig(ctx context.Context, datacenterName string, kubeconfigFile string, namespace string) ([]*v1alpha1.TinkerbellDatacenterConfig, error) {
+func (k *Kubectl) SearchTinkerbellDatacenterConfig(ctx context.Context, datacenterName, kubeconfigFile, namespace string) ([]*v1alpha1.TinkerbellDatacenterConfig, error) {
 	params := []string{
 		"get", eksaTinkerbellDatacenterResourceType, "-o", "json", "--kubeconfig",
 		kubeconfigFile, "--namespace", namespace, "--field-selector=metadata.name=" + datacenterName,
@@ -1641,7 +1641,7 @@ func (k *Kubectl) SearchTinkerbellDatacenterConfig(ctx context.Context, datacent
 	return response.Items, nil
 }
 
-func (k *Kubectl) GetEksaFluxConfig(ctx context.Context, gitOpsConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.FluxConfig, error) {
+func (k *Kubectl) GetEksaFluxConfig(ctx context.Context, gitOpsConfigName, kubeconfigFile, namespace string) (*v1alpha1.FluxConfig, error) {
 	params := []string{"get", eksaFluxConfigResourceType, gitOpsConfigName, "-o", "json", "--kubeconfig", kubeconfigFile, "--namespace", namespace}
 	stdOut, err := k.Execute(ctx, params...)
 	if err != nil {
@@ -1657,7 +1657,7 @@ func (k *Kubectl) GetEksaFluxConfig(ctx context.Context, gitOpsConfigName string
 	return response, nil
 }
 
-func (k *Kubectl) GetEksaGitOpsConfig(ctx context.Context, gitOpsConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.GitOpsConfig, error) {
+func (k *Kubectl) GetEksaGitOpsConfig(ctx context.Context, gitOpsConfigName, kubeconfigFile, namespace string) (*v1alpha1.GitOpsConfig, error) {
 	params := []string{"get", eksaGitOpsResourceType, gitOpsConfigName, "-o", "json", "--kubeconfig", kubeconfigFile, "--namespace", namespace}
 	stdOut, err := k.Execute(ctx, params...)
 	if err != nil {
@@ -1673,7 +1673,7 @@ func (k *Kubectl) GetEksaGitOpsConfig(ctx context.Context, gitOpsConfigName stri
 	return response, nil
 }
 
-func (k *Kubectl) GetEksaOIDCConfig(ctx context.Context, oidcConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.OIDCConfig, error) {
+func (k *Kubectl) GetEksaOIDCConfig(ctx context.Context, oidcConfigName, kubeconfigFile, namespace string) (*v1alpha1.OIDCConfig, error) {
 	params := []string{"get", eksaOIDCResourceType, oidcConfigName, "-o", "json", "--kubeconfig", kubeconfigFile, "--namespace", namespace}
 	stdOut, err := k.Execute(ctx, params...)
 	if err != nil {
@@ -1689,7 +1689,7 @@ func (k *Kubectl) GetEksaOIDCConfig(ctx context.Context, oidcConfigName string, 
 	return response, nil
 }
 
-func (k *Kubectl) GetEksaAWSIamConfig(ctx context.Context, awsIamConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.AWSIamConfig, error) {
+func (k *Kubectl) GetEksaAWSIamConfig(ctx context.Context, awsIamConfigName, kubeconfigFile, namespace string) (*v1alpha1.AWSIamConfig, error) {
 	params := []string{"get", eksaAwsIamResourceType, awsIamConfigName, "-o", "json", "--kubeconfig", kubeconfigFile, "--namespace", namespace}
 	stdOut, err := k.Execute(ctx, params...)
 	if err != nil {
@@ -1705,7 +1705,7 @@ func (k *Kubectl) GetEksaAWSIamConfig(ctx context.Context, awsIamConfigName stri
 	return response, nil
 }
 
-func (k *Kubectl) GetEksaTinkerbellDatacenterConfig(ctx context.Context, tinkerbellDatacenterConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.TinkerbellDatacenterConfig, error) {
+func (k *Kubectl) GetEksaTinkerbellDatacenterConfig(ctx context.Context, tinkerbellDatacenterConfigName, kubeconfigFile, namespace string) (*v1alpha1.TinkerbellDatacenterConfig, error) {
 	params := []string{"get", eksaTinkerbellDatacenterResourceType, tinkerbellDatacenterConfigName, "-o", "json", "--kubeconfig", kubeconfigFile, "--namespace", namespace}
 	stdOut, err := k.Execute(ctx, params...)
 	if err != nil {
@@ -1721,7 +1721,7 @@ func (k *Kubectl) GetEksaTinkerbellDatacenterConfig(ctx context.Context, tinkerb
 	return response, nil
 }
 
-func (k *Kubectl) GetEksaVSphereDatacenterConfig(ctx context.Context, vsphereDatacenterConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.VSphereDatacenterConfig, error) {
+func (k *Kubectl) GetEksaVSphereDatacenterConfig(ctx context.Context, vsphereDatacenterConfigName, kubeconfigFile, namespace string) (*v1alpha1.VSphereDatacenterConfig, error) {
 	params := []string{"get", eksaVSphereDatacenterResourceType, vsphereDatacenterConfigName, "-o", "json", "--kubeconfig", kubeconfigFile, "--namespace", namespace}
 	stdOut, err := k.Execute(ctx, params...)
 	if err != nil {
@@ -1737,7 +1737,7 @@ func (k *Kubectl) GetEksaVSphereDatacenterConfig(ctx context.Context, vsphereDat
 	return response, nil
 }
 
-func (k *Kubectl) GetEksaTinkerbellMachineConfig(ctx context.Context, tinkerbellMachineConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.TinkerbellMachineConfig, error) {
+func (k *Kubectl) GetEksaTinkerbellMachineConfig(ctx context.Context, tinkerbellMachineConfigName, kubeconfigFile, namespace string) (*v1alpha1.TinkerbellMachineConfig, error) {
 	params := []string{"get", eksaTinkerbellMachineResourceType, tinkerbellMachineConfigName, "-o", "json", "--kubeconfig", kubeconfigFile, "--namespace", namespace}
 	stdOut, err := k.Execute(ctx, params...)
 	if err != nil {
@@ -1806,7 +1806,7 @@ func (k *Kubectl) GetProvisionedTinkerbellHardware(ctx context.Context, kubeconf
 	return list.Items, nil
 }
 
-func (k *Kubectl) GetEksaVSphereMachineConfig(ctx context.Context, vsphereMachineConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.VSphereMachineConfig, error) {
+func (k *Kubectl) GetEksaVSphereMachineConfig(ctx context.Context, vsphereMachineConfigName, kubeconfigFile, namespace string) (*v1alpha1.VSphereMachineConfig, error) {
 	params := []string{"get", eksaVSphereMachineResourceType, vsphereMachineConfigName, "-o", "json", "--kubeconfig", kubeconfigFile, "--namespace", namespace}
 	stdOut, err := k.Execute(ctx, params...)
 	if err != nil {
@@ -1822,7 +1822,7 @@ func (k *Kubectl) GetEksaVSphereMachineConfig(ctx context.Context, vsphereMachin
 	return response, nil
 }
 
-func (k *Kubectl) GetEksaAWSDatacenterConfig(ctx context.Context, awsDatacenterConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.AWSDatacenterConfig, error) {
+func (k *Kubectl) GetEksaAWSDatacenterConfig(ctx context.Context, awsDatacenterConfigName, kubeconfigFile, namespace string) (*v1alpha1.AWSDatacenterConfig, error) {
 	params := []string{"get", eksaAwsResourceType, awsDatacenterConfigName, "-o", "json", "--kubeconfig", kubeconfigFile, "--namespace", namespace}
 	stdOut, err := k.Execute(ctx, params...)
 	if err != nil {
@@ -1966,11 +1966,11 @@ type Toleration struct {
 	TolerationSeconds json.Number `json:"tolerationSeconds,omitempty"`
 }
 
-func (k *Kubectl) ApplyTolerationsFromTaintsToDaemonSet(ctx context.Context, oldTaints []corev1.Taint, newTaints []corev1.Taint, dsName string, kubeconfigFile string) error {
+func (k *Kubectl) ApplyTolerationsFromTaintsToDaemonSet(ctx context.Context, oldTaints, newTaints []corev1.Taint, dsName, kubeconfigFile string) error {
 	return k.ApplyTolerationsFromTaints(ctx, oldTaints, newTaints, "ds", dsName, kubeconfigFile, "kube-system", "/spec/template/spec/tolerations")
 }
 
-func (k *Kubectl) ApplyTolerationsFromTaints(ctx context.Context, oldTaints []corev1.Taint, newTaints []corev1.Taint, resource string, name string, kubeconfigFile string, namespace string, path string) error {
+func (k *Kubectl) ApplyTolerationsFromTaints(ctx context.Context, oldTaints, newTaints []corev1.Taint, resource, name, kubeconfigFile, namespace, path string) error {
 	params := []string{
 		"get", resource, name,
 		"-o", "jsonpath={range .spec.template.spec}{.tolerations} {end}",
@@ -2051,12 +2051,12 @@ func (k *Kubectl) MergePatchResource(ctx context.Context, resource, name, patch,
 	return nil
 }
 
-func (k *Kubectl) KubeconfigSecretAvailable(ctx context.Context, kubeconfig string, clusterName string, namespace string) (bool, error) {
+func (k *Kubectl) KubeconfigSecretAvailable(ctx context.Context, kubeconfig, clusterName, namespace string) (bool, error) {
 	return k.HasResource(ctx, "secret", fmt.Sprintf("%s-kubeconfig", clusterName), kubeconfig, namespace)
 }
 
 // HasResource implements KubectlRunner.
-func (k *Kubectl) HasResource(ctx context.Context, resourceType string, name string, kubeconfig string, namespace string) (bool, error) {
+func (k *Kubectl) HasResource(ctx context.Context, resourceType, name, kubeconfig, namespace string) (bool, error) {
 	throwaway := &unstructured.Unstructured{}
 	err := k.Get(ctx, resourceType, kubeconfig, throwaway, withGetResourceName(name), withNamespaceOrDefaultForGet(namespace))
 	if err != nil {
@@ -2395,7 +2395,7 @@ func (k *Kubectl) ExecuteFromYaml(ctx context.Context, yaml []byte, opts ...stri
 	return k.ExecuteWithStdin(ctx, yaml, opts...)
 }
 
-func (k *Kubectl) SearchNutanixMachineConfig(ctx context.Context, name string, kubeconfigFile string, namespace string) ([]*v1alpha1.NutanixMachineConfig, error) {
+func (k *Kubectl) SearchNutanixMachineConfig(ctx context.Context, name, kubeconfigFile, namespace string) ([]*v1alpha1.NutanixMachineConfig, error) {
 	params := []string{
 		"get", eksaNutanixMachineResourceType, "-o", "json", "--kubeconfig",
 		kubeconfigFile, "--namespace", namespace, "--field-selector=metadata.name=" + name,
@@ -2414,7 +2414,7 @@ func (k *Kubectl) SearchNutanixMachineConfig(ctx context.Context, name string, k
 	return response.Items, nil
 }
 
-func (k *Kubectl) SearchNutanixDatacenterConfig(ctx context.Context, name string, kubeconfigFile string, namespace string) ([]*v1alpha1.NutanixDatacenterConfig, error) {
+func (k *Kubectl) SearchNutanixDatacenterConfig(ctx context.Context, name, kubeconfigFile, namespace string) ([]*v1alpha1.NutanixDatacenterConfig, error) {
 	params := []string{
 		"get", eksaNutanixDatacenterResourceType, "-o", "json", "--kubeconfig",
 		kubeconfigFile, "--namespace", namespace, "--field-selector=metadata.name=" + name,
@@ -2433,7 +2433,7 @@ func (k *Kubectl) SearchNutanixDatacenterConfig(ctx context.Context, name string
 	return response.Items, nil
 }
 
-func (k *Kubectl) GetEksaNutanixDatacenterConfig(ctx context.Context, nutanixDatacenterConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.NutanixDatacenterConfig, error) {
+func (k *Kubectl) GetEksaNutanixDatacenterConfig(ctx context.Context, nutanixDatacenterConfigName, kubeconfigFile, namespace string) (*v1alpha1.NutanixDatacenterConfig, error) {
 	response := &v1alpha1.NutanixDatacenterConfig{}
 	err := k.GetObject(ctx, eksaNutanixDatacenterResourceType, nutanixDatacenterConfigName, namespace, kubeconfigFile, response)
 	if err != nil {
@@ -2443,7 +2443,7 @@ func (k *Kubectl) GetEksaNutanixDatacenterConfig(ctx context.Context, nutanixDat
 	return response, nil
 }
 
-func (k *Kubectl) GetEksaNutanixMachineConfig(ctx context.Context, nutanixMachineConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.NutanixMachineConfig, error) {
+func (k *Kubectl) GetEksaNutanixMachineConfig(ctx context.Context, nutanixMachineConfigName, kubeconfigFile, namespace string) (*v1alpha1.NutanixMachineConfig, error) {
 	response := &v1alpha1.NutanixMachineConfig{}
 	err := k.GetObject(ctx, eksaNutanixMachineResourceType, nutanixMachineConfigName, namespace, kubeconfigFile, response)
 	if err != nil {
@@ -2453,7 +2453,7 @@ func (k *Kubectl) GetEksaNutanixMachineConfig(ctx context.Context, nutanixMachin
 	return response, nil
 }
 
-func (k *Kubectl) DeleteEksaNutanixDatacenterConfig(ctx context.Context, nutanixDatacenterConfigName string, kubeconfigFile string, namespace string) error {
+func (k *Kubectl) DeleteEksaNutanixDatacenterConfig(ctx context.Context, nutanixDatacenterConfigName, kubeconfigFile, namespace string) error {
 	params := []string{"delete", eksaNutanixDatacenterResourceType, nutanixDatacenterConfigName, "--kubeconfig", kubeconfigFile, "--namespace", namespace, "--ignore-not-found=true"}
 	_, err := k.Execute(ctx, params...)
 	if err != nil {
@@ -2462,7 +2462,7 @@ func (k *Kubectl) DeleteEksaNutanixDatacenterConfig(ctx context.Context, nutanix
 	return nil
 }
 
-func (k *Kubectl) DeleteEksaNutanixMachineConfig(ctx context.Context, nutanixMachineConfigName string, kubeconfigFile string, namespace string) error {
+func (k *Kubectl) DeleteEksaNutanixMachineConfig(ctx context.Context, nutanixMachineConfigName, kubeconfigFile, namespace string) error {
 	params := []string{"delete", eksaNutanixMachineResourceType, nutanixMachineConfigName, "--kubeconfig", kubeconfigFile, "--namespace", namespace, "--ignore-not-found=true"}
 	_, err := k.Execute(ctx, params...)
 	if err != nil {

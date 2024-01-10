@@ -217,7 +217,7 @@ func validateNutanixReferences(c *NutanixMachineConfig) error {
 	return nil
 }
 
-func validateNutanixResourceReference(i *NutanixResourceIdentifier, resource string, mcName string) error {
+func validateNutanixResourceReference(i *NutanixResourceIdentifier, resource, mcName string) error {
 	if i.Type != NutanixIdentifierName && i.Type != NutanixIdentifierUUID {
 		return fmt.Errorf("NutanixMachineConfig: invalid identifier type for %s: %s", resource, i.Type)
 	}

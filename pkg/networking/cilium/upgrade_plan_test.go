@@ -561,7 +561,7 @@ func daemonSet(image string, opts ...dsOpt) *appsv1.DaemonSet {
 
 type cmOpt func(*corev1.ConfigMap)
 
-func ciliumConfigMap(enforcementMode string, egressMasqueradeInterface string, opts ...cmOpt) *corev1.ConfigMap {
+func ciliumConfigMap(enforcementMode, egressMasqueradeInterface string, opts ...cmOpt) *corev1.ConfigMap {
 	cm := &corev1.ConfigMap{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "v1",

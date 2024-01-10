@@ -57,7 +57,7 @@ type proxyLogFetcher struct {
 	processRequests             requestConsumer
 }
 
-func New(buildAccountCwClient *cloudwatch.Cloudwatch, testAccountCwClient *cloudwatch.Cloudwatch, buildAccountCodebuildClient *codebuild.Codebuild, opts ...ProxyFetcherOpt) *proxyLogFetcher {
+func New(buildAccountCwClient, testAccountCwClient *cloudwatch.Cloudwatch, buildAccountCodebuildClient *codebuild.Codebuild, opts ...ProxyFetcherOpt) *proxyLogFetcher {
 	l := &proxyLogFetcher{
 		buildAccountCwClient:        buildAccountCwClient,
 		testAccountCwClient:         testAccountCwClient,
@@ -113,7 +113,7 @@ func (l *proxyLogFetcher) FetchProviderProxyLogs(opts ...FetchSessionOpts) error
 	return nil
 }
 
-func (l *proxyLogFetcher) FetchProviderProxyLogsForbuild(project string, buildId string) ([]*cloudwatchlogs.OutputLogEvent, error) {
+func (l *proxyLogFetcher) FetchProviderProxyLogsForbuild(project, buildId string) ([]*cloudwatchlogs.OutputLogEvent, error) {
 	logger.Info("Fetching provider proxy logs...")
 	build, err := l.buildAccountCodebuildClient.FetchBuildForProject(buildId)
 	if err != nil {

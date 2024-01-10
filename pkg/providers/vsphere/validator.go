@@ -37,7 +37,7 @@ type missingPriv struct {
 }
 
 type VSphereClientBuilder interface {
-	Build(ctx context.Context, host string, username string, password string, insecure bool, datacenter string) (govmomi.VSphereClient, error)
+	Build(ctx context.Context, host, username, password string, insecure bool, datacenter string) (govmomi.VSphereClient, error)
 }
 
 type Validator struct {
@@ -534,7 +534,7 @@ func (v *Validator) validatePrivs(ctx context.Context, privObjs []PrivAssociatio
 	return passed, nil
 }
 
-func checkRequiredPrivs(requiredPrivs []string, hasPrivs []string) []string {
+func checkRequiredPrivs(requiredPrivs, hasPrivs []string) []string {
 	hp := map[string]interface{}{}
 	for _, val := range hasPrivs {
 		hp[val] = 1
@@ -550,7 +550,7 @@ func checkRequiredPrivs(requiredPrivs []string, hasPrivs []string) []string {
 	return missingPrivs
 }
 
-func (v *Validator) getMissingPrivs(ctx context.Context, vsc govmomi.VSphereClient, path string, objType string, requiredPrivsContent string, username string) ([]string, error) {
+func (v *Validator) getMissingPrivs(ctx context.Context, vsc govmomi.VSphereClient, path, objType, requiredPrivsContent, username string) ([]string, error) {
 	var requiredPrivs []string
 	err := json.Unmarshal([]byte(requiredPrivsContent), &requiredPrivs)
 	if err != nil {

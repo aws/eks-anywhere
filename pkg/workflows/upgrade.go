@@ -53,7 +53,7 @@ func NewUpgrade(bootstrapper interfaces.Bootstrapper, provider providers.Provide
 	}
 }
 
-func (c *Upgrade) Run(ctx context.Context, clusterSpec *cluster.Spec, managementCluster *types.Cluster, workloadCluster *types.Cluster, validator interfaces.Validator, forceCleanup bool) error {
+func (c *Upgrade) Run(ctx context.Context, clusterSpec *cluster.Spec, managementCluster, workloadCluster *types.Cluster, validator interfaces.Validator, forceCleanup bool) error {
 	commandContext := &task.CommandContext{
 		Bootstrapper:      c.bootstrapper,
 		Provider:          c.provider,

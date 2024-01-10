@@ -11,7 +11,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/logger"
 )
 
-func ListInstances(session *session.Session, key string, value string, maxAge float64) ([]*string, error) {
+func ListInstances(session *session.Session, key, value string, maxAge float64) ([]*string, error) {
 	service := ec2.New(session)
 	var instanceList []*string
 

@@ -25,7 +25,7 @@ func validSkippableValidationsMap(skippableValidations []string) map[string]bool
 }
 
 // ValidateSkippableValidation validates if provided validations are supported by EKSA to skip for upgrades.
-func ValidateSkippableValidation(skippedValidations []string, skippableValidations []string) (map[string]bool, error) {
+func ValidateSkippableValidation(skippedValidations, skippableValidations []string) (map[string]bool, error) {
 	svMap := validSkippableValidationsMap(skippableValidations)
 
 	for i := range skippedValidations {

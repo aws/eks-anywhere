@@ -43,7 +43,7 @@ func IsIPInUse(client NetClient, ip string) bool {
 	return err == nil || errors.Is(err, syscall.ECONNREFUSED) || errors.Is(err, syscall.ECONNRESET)
 }
 
-func IsPortInUse(client NetClient, host string, port string) bool {
+func IsPortInUse(client NetClient, host, port string) bool {
 	address := net.JoinHostPort(host, port)
 	conn, err := client.DialTimeout("tcp", address, 500*time.Millisecond)
 	if err == nil {

@@ -30,7 +30,7 @@ func defaultMachineConfigUsers(defaultUsername string, users []UserConfiguration
 	return users
 }
 
-func validateMachineConfigUsers(machineConfigName string, machineConfigKind string, users []UserConfiguration) error {
+func validateMachineConfigUsers(machineConfigName, machineConfigKind string, users []UserConfiguration) error {
 	if len(users) == 0 {
 		return fmt.Errorf("users is not set for %s %s, please provide a user", machineConfigKind, machineConfigName)
 	}

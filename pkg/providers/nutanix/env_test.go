@@ -9,11 +9,11 @@ import (
 	"github.com/aws/eks-anywhere/pkg/constants"
 )
 
-func fakeOSSetenv(key string, value string) error {
+func fakeOSSetenv(key, value string) error {
 	return errors.New("os.Setenv failed")
 }
 
-func restoreOSSetenv(replace func(key string, value string) error) {
+func restoreOSSetenv(replace func(key, value string) error) {
 	osSetenv = replace
 }
 

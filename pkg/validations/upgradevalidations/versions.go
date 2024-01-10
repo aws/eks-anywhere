@@ -10,7 +10,7 @@ import (
 )
 
 // ValidateServerVersionSkew validates Kubernetes version skew between upgrades for the CLI.
-func ValidateServerVersionSkew(ctx context.Context, newCluster *anywherev1.Cluster, cluster *types.Cluster, mgmtCluster *types.Cluster, kubectl validations.KubectlClient) error {
+func ValidateServerVersionSkew(ctx context.Context, newCluster *anywherev1.Cluster, cluster, mgmtCluster *types.Cluster, kubectl validations.KubectlClient) error {
 	managementCluster := cluster
 	if !cluster.ExistingManagement {
 		managementCluster = mgmtCluster
@@ -25,7 +25,7 @@ func ValidateServerVersionSkew(ctx context.Context, newCluster *anywherev1.Clust
 }
 
 // ValidateWorkerServerVersionSkew validates worker node group Kubernetes version skew between upgrades.
-func ValidateWorkerServerVersionSkew(ctx context.Context, newCluster *anywherev1.Cluster, cluster *types.Cluster, mgmtCluster *types.Cluster, kubectl validations.KubectlClient) error {
+func ValidateWorkerServerVersionSkew(ctx context.Context, newCluster *anywherev1.Cluster, cluster, mgmtCluster *types.Cluster, kubectl validations.KubectlClient) error {
 	managementCluster := cluster
 	if !cluster.ExistingManagement {
 		managementCluster = mgmtCluster

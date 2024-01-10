@@ -328,7 +328,7 @@ func WithVSphereWorkerNodeGroup(name string, workerNodeGroup *WorkerNodeGroup, f
 }
 
 // WithMachineTemplate returns an api.ClusterConfigFiller that changes template in machine template.
-func (v *VSphere) WithMachineTemplate(machineName string, template string) api.ClusterConfigFiller {
+func (v *VSphere) WithMachineTemplate(machineName, template string) api.ClusterConfigFiller {
 	return api.JoinClusterConfigFillers(
 		api.VSphereToConfigFiller(api.WithMachineTemplate(machineName, template)),
 	)

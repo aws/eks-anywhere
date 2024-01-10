@@ -234,7 +234,7 @@ func (k *Kind) buildConfigFile() error {
 	return nil
 }
 
-func (k *Kind) execArguments(clusterName string, kubeconfigName string) []string {
+func (k *Kind) execArguments(clusterName, kubeconfigName string) []string {
 	return []string{
 		"create", "cluster",
 		"--name", getInternalName(clusterName),

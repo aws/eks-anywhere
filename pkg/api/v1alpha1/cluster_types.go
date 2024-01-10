@@ -397,7 +397,7 @@ func (n *Endpoint) CloudStackEqual(o *Endpoint) bool {
 }
 
 // GetControlPlaneHostPort retrieves the ControlPlaneConfiguration host and port split defined in the cluster.Spec.
-func GetControlPlaneHostPort(pHost string, defaultPort string) (string, string, error) {
+func GetControlPlaneHostPort(pHost, defaultPort string) (string, string, error) {
 	host, port, err := net.SplitHostPort(pHost)
 	if err != nil {
 		if strings.Contains(err.Error(), "missing port") {
@@ -650,7 +650,7 @@ func UsersSliceEqual(a, b []UserConfiguration) bool {
 	return true
 }
 
-func CNIPluginSame(n ClusterNetwork, o ClusterNetwork) bool {
+func CNIPluginSame(n, o ClusterNetwork) bool {
 	if n.CNI != "" {
 		/*This shouldn't be required since we set CNIConfig and unset CNI as part of cluster_defaults. However, while upgrading an existing cluster, the eks-a controller
 		does not set any defaults (no mutating webhook), so it gets stuck in an error loop. Adding these checks to avoid that. We can remove it when removing the CNI field

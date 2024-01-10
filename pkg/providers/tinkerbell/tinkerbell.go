@@ -76,22 +76,22 @@ type Provider struct {
 type ProviderKubectlClient interface {
 	ApplyKubeSpecFromBytesForce(ctx context.Context, cluster *types.Cluster, data []byte) error
 	ApplyKubeSpecFromBytesWithNamespace(ctx context.Context, cluster *types.Cluster, data []byte, namespace string) error
-	DeleteEksaDatacenterConfig(ctx context.Context, eksaTinkerbellDatacenterResourceType string, tinkerbellDatacenterConfigName string, kubeconfigFile string, namespace string) error
-	DeleteEksaMachineConfig(ctx context.Context, eksaTinkerbellMachineResourceType string, tinkerbellMachineConfigName string, kubeconfigFile string, namespace string) error
+	DeleteEksaDatacenterConfig(ctx context.Context, eksaTinkerbellDatacenterResourceType, tinkerbellDatacenterConfigName, kubeconfigFile, namespace string) error
+	DeleteEksaMachineConfig(ctx context.Context, eksaTinkerbellMachineResourceType, tinkerbellMachineConfigName, kubeconfigFile, namespace string) error
 	GetMachineDeployment(ctx context.Context, machineDeploymentName string, opts ...executables.KubectlOpt) (*clusterv1.MachineDeployment, error)
 	GetEksaCluster(ctx context.Context, cluster *types.Cluster, clusterName string) (*v1alpha1.Cluster, error)
-	GetEksaTinkerbellDatacenterConfig(ctx context.Context, tinkerbellDatacenterConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.TinkerbellDatacenterConfig, error)
-	GetEksaTinkerbellMachineConfig(ctx context.Context, tinkerbellMachineConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.TinkerbellMachineConfig, error)
+	GetEksaTinkerbellDatacenterConfig(ctx context.Context, tinkerbellDatacenterConfigName, kubeconfigFile, namespace string) (*v1alpha1.TinkerbellDatacenterConfig, error)
+	GetEksaTinkerbellMachineConfig(ctx context.Context, tinkerbellMachineConfigName, kubeconfigFile, namespace string) (*v1alpha1.TinkerbellMachineConfig, error)
 	GetKubeadmControlPlane(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...executables.KubectlOpt) (*controlplanev1.KubeadmControlPlane, error)
 	GetEtcdadmCluster(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...executables.KubectlOpt) (*etcdv1.EtcdadmCluster, error)
 	GetSecret(ctx context.Context, secretObjectName string, opts ...executables.KubectlOpt) (*corev1.Secret, error)
 	UpdateAnnotation(ctx context.Context, resourceType, objectName string, annotations map[string]string, opts ...executables.KubectlOpt) error
-	WaitForDeployment(ctx context.Context, cluster *types.Cluster, timeout string, condition string, target string, namespace string) error
+	WaitForDeployment(ctx context.Context, cluster *types.Cluster, timeout, condition, target, namespace string) error
 	GetUnprovisionedTinkerbellHardware(_ context.Context, kubeconfig, namespace string) ([]tinkv1alpha1.Hardware, error)
 	GetProvisionedTinkerbellHardware(_ context.Context, kubeconfig, namespace string) ([]tinkv1alpha1.Hardware, error)
-	WaitForRufioMachines(ctx context.Context, cluster *types.Cluster, timeout string, condition string, namespace string) error
-	SearchTinkerbellMachineConfig(ctx context.Context, name string, kubeconfigFile string, namespace string) ([]*v1alpha1.TinkerbellMachineConfig, error)
-	SearchTinkerbellDatacenterConfig(ctx context.Context, name string, kubeconfigFile string, namespace string) ([]*v1alpha1.TinkerbellDatacenterConfig, error)
+	WaitForRufioMachines(ctx context.Context, cluster *types.Cluster, timeout, condition, namespace string) error
+	SearchTinkerbellMachineConfig(ctx context.Context, name, kubeconfigFile, namespace string) ([]*v1alpha1.TinkerbellMachineConfig, error)
+	SearchTinkerbellDatacenterConfig(ctx context.Context, name, kubeconfigFile, namespace string) ([]*v1alpha1.TinkerbellDatacenterConfig, error)
 	AllTinkerbellHardware(ctx context.Context, kuebconfig string) ([]tinkv1alpha1.Hardware, error)
 	AllBaseboardManagements(ctx context.Context, kubeconfig string) ([]rufiounreleased.BaseboardManagement, error)
 	HasCRD(ctx context.Context, kubeconfig, crd string) (bool, error)

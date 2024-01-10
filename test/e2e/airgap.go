@@ -100,7 +100,7 @@ func runTinkerbellAirgapConfigProxyFlow(test *framework.ClusterE2ETest, localCID
 	test.ValidateHardwareDecommissioned()
 }
 
-func downloadFile(url string, output string) error {
+func downloadFile(url, output string) error {
 	out, err := os.Create(output)
 	if err != nil {
 		return err

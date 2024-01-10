@@ -26,7 +26,7 @@ const (
 	retryBackoff   = 10 * time.Second
 )
 
-func CleanUpAwsTestResources(storageBucket string, maxAge string, tag string) error {
+func CleanUpAwsTestResources(storageBucket, maxAge, tag string) error {
 	session, err := session.NewSession()
 	if err != nil {
 		return fmt.Errorf("creating session: %v", err)

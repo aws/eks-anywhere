@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-func ValidateKubeVersion(kubeVersion string, clusterName string) error {
+func ValidateKubeVersion(kubeVersion, clusterName string) error {
 	if len(clusterName) > 0 {
 		if len(kubeVersion) > 0 {
 			return fmt.Errorf("please specify either kube-version or cluster name not both")

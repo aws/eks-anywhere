@@ -10,7 +10,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/git/providers/github"
 )
 
-func (e *E2ESession) TestGithubClient(ctx context.Context, githubToken string, owner string, repository string, personal bool) (git.ProviderClient, error) {
+func (e *E2ESession) TestGithubClient(ctx context.Context, githubToken, owner, repository string, personal bool) (git.ProviderClient, error) {
 	auth := git.TokenAuth{Token: githubToken, Username: owner}
 	gogithubOpts := gogithub.Options{Auth: auth}
 	githubProviderClient := gogithub.New(ctx, gogithubOpts)

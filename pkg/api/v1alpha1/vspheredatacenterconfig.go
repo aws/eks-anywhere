@@ -53,7 +53,7 @@ func GetVSphereDatacenterConfig(fileName string) (*VSphereDatacenterConfig, erro
 	return &clusterConfig, nil
 }
 
-func generateFullVCenterPath(foldType folderType, folderPath string, datacenter string) string {
+func generateFullVCenterPath(foldType folderType, folderPath, datacenter string) string {
 	if folderPath == "" {
 		return folderPath
 	}
@@ -69,7 +69,7 @@ func generateFullVCenterPath(foldType folderType, folderPath string, datacenter 
 	return modPath
 }
 
-func validatePath(foldType folderType, folderPath string, datacenter string) error {
+func validatePath(foldType folderType, folderPath, datacenter string) error {
 	prefix := filepath.Join(fmt.Sprintf("/%s", datacenter), string(foldType))
 	if !strings.HasPrefix(folderPath, prefix) {
 		return fmt.Errorf("invalid path, expected path [%s] to be under [%s]", folderPath, prefix)

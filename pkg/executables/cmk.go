@@ -44,7 +44,7 @@ func (c *Cmk) Close(ctx context.Context) error {
 	return nil
 }
 
-func (c *Cmk) ValidateTemplatePresent(ctx context.Context, profile string, domainId string, zoneId string, account string, template v1alpha1.CloudStackResourceIdentifier) error {
+func (c *Cmk) ValidateTemplatePresent(ctx context.Context, profile, domainId, zoneId, account string, template v1alpha1.CloudStackResourceIdentifier) error {
 	command := newCmkCommand("list templates")
 	applyCmkArgs(&command, appendArgs("templatefilter=all"), appendArgs("listall=true"))
 	if len(template.Id) > 0 {
@@ -112,7 +112,7 @@ func (c *Cmk) SearchTemplate(ctx context.Context, profile string, template v1alp
 	return templates[0].Name, nil
 }
 
-func (c *Cmk) ValidateServiceOfferingPresent(ctx context.Context, profile string, zoneId string, serviceOffering v1alpha1.CloudStackResourceIdentifier) error {
+func (c *Cmk) ValidateServiceOfferingPresent(ctx context.Context, profile, zoneId string, serviceOffering v1alpha1.CloudStackResourceIdentifier) error {
 	command := newCmkCommand("list serviceofferings")
 	if len(serviceOffering.Id) > 0 {
 		applyCmkArgs(&command, withCloudStackId(serviceOffering.Id))
@@ -144,7 +144,7 @@ func (c *Cmk) ValidateServiceOfferingPresent(ctx context.Context, profile string
 	return nil
 }
 
-func (c *Cmk) ValidateDiskOfferingPresent(ctx context.Context, profile string, zoneId string, diskOffering v1alpha1.CloudStackResourceDiskOffering) error {
+func (c *Cmk) ValidateDiskOfferingPresent(ctx context.Context, profile, zoneId string, diskOffering v1alpha1.CloudStackResourceDiskOffering) error {
 	command := newCmkCommand("list diskofferings")
 	if len(diskOffering.Id) > 0 {
 		applyCmkArgs(&command, withCloudStackId(diskOffering.Id))
@@ -182,7 +182,7 @@ func (c *Cmk) ValidateDiskOfferingPresent(ctx context.Context, profile string, z
 	return nil
 }
 
-func (c *Cmk) ValidateAffinityGroupsPresent(ctx context.Context, profile string, domainId string, account string, affinityGroupIds []string) error {
+func (c *Cmk) ValidateAffinityGroupsPresent(ctx context.Context, profile, domainId, account string, affinityGroupIds []string) error {
 	for _, affinityGroupId := range affinityGroupIds {
 		command := newCmkCommand("list affinitygroups")
 		applyCmkArgs(&command, withCloudStackId(affinityGroupId))
@@ -249,7 +249,7 @@ func (c *Cmk) ValidateZoneAndGetId(ctx context.Context, profile string, zone v1a
 	return cmkZones[0].Id, nil
 }
 
-func (c *Cmk) ValidateDomainAndGetId(ctx context.Context, profile string, domain string) (string, error) {
+func (c *Cmk) ValidateDomainAndGetId(ctx context.Context, profile, domain string) (string, error) {
 	domainId := ""
 	command := newCmkCommand("list domains")
 	// "list domains" API does not support querying by domain path, so here we extract the domain name which is the last part of the input domain
@@ -291,7 +291,7 @@ func (c *Cmk) ValidateDomainAndGetId(ctx context.Context, profile string, domain
 	return domainId, nil
 }
 
-func (c *Cmk) ValidateNetworkPresent(ctx context.Context, profile string, domainId string, network v1alpha1.CloudStackResourceIdentifier, zoneId string, account string) error {
+func (c *Cmk) ValidateNetworkPresent(ctx context.Context, profile, domainId string, network v1alpha1.CloudStackResourceIdentifier, zoneId, account string) error {
 	command := newCmkCommand("list networks")
 	// account must be specified within a domainId
 	// domainId can be specified without account
@@ -339,7 +339,7 @@ func (c *Cmk) ValidateNetworkPresent(ctx context.Context, profile string, domain
 	return nil
 }
 
-func (c *Cmk) ValidateAccountPresent(ctx context.Context, profile string, account string, domainId string) error {
+func (c *Cmk) ValidateAccountPresent(ctx context.Context, profile, account, domainId string) error {
 	// If account is not specified then no need to check its presence
 	if len(account) == 0 {
 		return nil
@@ -395,7 +395,7 @@ func (c *Cmk) GetManagementApiEndpoint(profile string) (string, error) {
 	return "", fmt.Errorf("profile %s does not exist", profile)
 }
 
-func (c *Cmk) CleanupVms(ctx context.Context, profile string, clusterName string, dryRun bool) error {
+func (c *Cmk) CleanupVms(ctx context.Context, profile, clusterName string, dryRun bool) error {
 	command := newCmkCommand("list virtualmachines")
 	applyCmkArgs(&command, withCloudStackKeyword(clusterName), appendArgs("listall=true"))
 	result, err := c.exec(ctx, profile, command...)

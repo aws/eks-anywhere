@@ -17,14 +17,14 @@ const (
 
 // GovcClient specifies govc functions required to configure a vsphere user.
 type GovcClient interface {
-	CreateUser(ctx context.Context, username string, password string) error
+	CreateUser(ctx context.Context, username, password string) error
 	UserExists(ctx context.Context, username string) (bool, error)
 	CreateGroup(ctx context.Context, name string) error
 	GroupExists(ctx context.Context, name string) (bool, error)
-	AddUserToGroup(ctx context.Context, name string, username string) error
+	AddUserToGroup(ctx context.Context, name, username string) error
 	RoleExists(ctx context.Context, name string) (bool, error)
 	CreateRole(ctx context.Context, name string, privileges []string) error
-	SetGroupRoleOnObject(ctx context.Context, principal string, role string, object string, domain string) error
+	SetGroupRoleOnObject(ctx context.Context, principal, role, object, domain string) error
 }
 
 // SetupGOVCEnv creates appropriate govc environment variables to build govc client.

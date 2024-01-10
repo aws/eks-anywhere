@@ -15,7 +15,7 @@ type PackageController interface {
 }
 
 type PackageHandler interface {
-	CreatePackages(ctx context.Context, fileName string, kubeConfig string) error
+	CreatePackages(ctx context.Context, fileName, kubeConfig string) error
 }
 
 type Installer struct {

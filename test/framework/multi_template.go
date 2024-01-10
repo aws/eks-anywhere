@@ -123,7 +123,7 @@ func getWngNameToWng(wngConfigs []v1alpha1.WorkerNodeGroupConfiguration) map[str
 }
 
 // getWngNameFromMachine gets worker node group name from machine name by trimming cluster name prefix and two unix nano time suffix.
-func getWngNameFromMachine(machineName string, clusterName string) (string, error) {
+func getWngNameFromMachine(machineName, clusterName string) (string, error) {
 	trimmedMachineName := strings.TrimPrefix(machineName, clusterName+"-")
 	wngBaseParts := strings.Split(trimmedMachineName, "-")
 	if len(wngBaseParts) < 3 {

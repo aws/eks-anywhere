@@ -171,7 +171,7 @@ func withDisableCloudInitNetworkCapabilities(b v1alpha1.VersionsBundle, disk str
 	}
 }
 
-func withTinkCloudInitAction(b v1alpha1.VersionsBundle, disk string, metadataURLs string) ActionOpt {
+func withTinkCloudInitAction(b v1alpha1.VersionsBundle, disk, metadataURLs string) ActionOpt {
 	return func(a *[]tinkerbell.Action) {
 		*a = append(*a, tinkerbell.Action{
 			Name:    "add-tink-cloud-init-config",
@@ -244,7 +244,7 @@ func withBottlerocketBootconfigAction(b v1alpha1.VersionsBundle, disk string) Ac
 	}
 }
 
-func withBottlerocketUserDataAction(b v1alpha1.VersionsBundle, disk string, metadataURLs string) ActionOpt {
+func withBottlerocketUserDataAction(b v1alpha1.VersionsBundle, disk, metadataURLs string) ActionOpt {
 	return func(a *[]tinkerbell.Action) {
 		*a = append(*a, tinkerbell.Action{
 			Name:    "write-user-data",

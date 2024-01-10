@@ -41,14 +41,14 @@ type localAvailabilityZone struct {
 // ProviderCmkClient defines the methods used by Cmk as a separate interface to be mockable when injected into other objects.
 type ProviderCmkClient interface {
 	GetManagementApiEndpoint(profile string) (string, error)
-	ValidateServiceOfferingPresent(ctx context.Context, profile string, zoneId string, serviceOffering anywherev1.CloudStackResourceIdentifier) error
-	ValidateDiskOfferingPresent(ctx context.Context, profile string, zoneId string, diskOffering anywherev1.CloudStackResourceDiskOffering) error
-	ValidateTemplatePresent(ctx context.Context, profile string, domainId string, zoneId string, account string, template anywherev1.CloudStackResourceIdentifier) error
-	ValidateAffinityGroupsPresent(ctx context.Context, profile string, domainId string, account string, affinityGroupIds []string) error
+	ValidateServiceOfferingPresent(ctx context.Context, profile, zoneId string, serviceOffering anywherev1.CloudStackResourceIdentifier) error
+	ValidateDiskOfferingPresent(ctx context.Context, profile, zoneId string, diskOffering anywherev1.CloudStackResourceDiskOffering) error
+	ValidateTemplatePresent(ctx context.Context, profile, domainId, zoneId, account string, template anywherev1.CloudStackResourceIdentifier) error
+	ValidateAffinityGroupsPresent(ctx context.Context, profile, domainId, account string, affinityGroupIds []string) error
 	ValidateZoneAndGetId(ctx context.Context, profile string, zone anywherev1.CloudStackZone) (string, error)
-	ValidateNetworkPresent(ctx context.Context, profile string, domainId string, network anywherev1.CloudStackResourceIdentifier, zoneId string, account string) error
-	ValidateDomainAndGetId(ctx context.Context, profile string, domain string) (string, error)
-	ValidateAccountPresent(ctx context.Context, profile string, account string, domainId string) error
+	ValidateNetworkPresent(ctx context.Context, profile, domainId string, network anywherev1.CloudStackResourceIdentifier, zoneId, account string) error
+	ValidateDomainAndGetId(ctx context.Context, profile, domain string) (string, error)
+	ValidateAccountPresent(ctx context.Context, profile, account, domainId string) error
 }
 
 func (v *Validator) ValidateCloudStackDatacenterConfig(ctx context.Context, datacenterConfig *anywherev1.CloudStackDatacenterConfig) error {
@@ -210,7 +210,7 @@ func (v *Validator) validateMachineConfig(ctx context.Context, datacenterConfig 
 	return nil
 }
 
-func (v *Validator) validateTemplateMatchesKubernetesVersion(ctx context.Context, templateName string, kubernetesVersionName string) error {
+func (v *Validator) validateTemplateMatchesKubernetesVersion(ctx context.Context, templateName, kubernetesVersionName string) error {
 	// Replace 1.23, 1-23, 1_23 to 123 in the template name string.
 	templateReplacer := strings.NewReplacer("-", "", ".", "", "_", "")
 	template := templateReplacer.Replace(templateName)

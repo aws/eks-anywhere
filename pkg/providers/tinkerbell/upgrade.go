@@ -55,7 +55,7 @@ func needsNewKubeadmConfigTemplate(newWorkerNodeGroup, oldWorkerNodeGroup *v1alp
 	return !v1alpha1.TaintsSliceEqual(newWorkerNodeGroup.Taints, oldWorkerNodeGroup.Taints) || !v1alpha1.MapEqual(newWorkerNodeGroup.Labels, oldWorkerNodeGroup.Labels)
 }
 
-func (p *Provider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, currentClusterSpec *cluster.Spec) error {
+func (p *Provider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *types.Cluster, clusterSpec, currentClusterSpec *cluster.Spec) error {
 	if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
 		return errExternalEtcdUnsupported
 	}
@@ -210,7 +210,7 @@ func (p *Provider) PostMoveManagementToBootstrap(ctx context.Context, bootstrapC
 	return nil
 }
 
-func (p *Provider) RunPostControlPlaneUpgrade(ctx context.Context, oldClusterSpec *cluster.Spec, clusterSpec *cluster.Spec, workloadCluster *types.Cluster, managementCluster *types.Cluster) error {
+func (p *Provider) RunPostControlPlaneUpgrade(ctx context.Context, oldClusterSpec, clusterSpec *cluster.Spec, workloadCluster, managementCluster *types.Cluster) error {
 	// @TODO: do we need this for bare metal upgrade?
 
 	// Use retrier so that cluster upgrade does not fail due to any intermittent failure while connecting to kube-api server
@@ -351,7 +351,7 @@ func (p *Provider) hardwareCSVIsProvided() bool {
 	return p.hardwareCSVFile != ""
 }
 
-func (p *Provider) isScaleUpDown(oldCluster *v1alpha1.Cluster, newCluster *v1alpha1.Cluster) bool {
+func (p *Provider) isScaleUpDown(oldCluster, newCluster *v1alpha1.Cluster) bool {
 	if oldCluster.Spec.ControlPlaneConfiguration.Count != newCluster.Spec.ControlPlaneConfiguration.Count {
 		return true
 	}

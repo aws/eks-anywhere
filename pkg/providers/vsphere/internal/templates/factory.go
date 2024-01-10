@@ -40,14 +40,14 @@ type GovcClient interface {
 	AddTag(ctx context.Context, path, tag string) error
 	ListCategories(ctx context.Context) ([]string, error)
 	CreateCategoryForVM(ctx context.Context, name string) error
-	CreateUser(ctx context.Context, username string, password string) error
+	CreateUser(ctx context.Context, username, password string) error
 	UserExists(ctx context.Context, username string) (bool, error)
 	CreateGroup(ctx context.Context, name string) error
 	GroupExists(ctx context.Context, name string) (bool, error)
-	AddUserToGroup(ctx context.Context, name string, username string) error
+	AddUserToGroup(ctx context.Context, name, username string) error
 	RoleExists(ctx context.Context, name string) (bool, error)
 	CreateRole(ctx context.Context, name string, privileges []string) error
-	SetGroupRoleOnObject(ctx context.Context, principal string, role string, object string, domain string) error
+	SetGroupRoleOnObject(ctx context.Context, principal, role, object, domain string) error
 }
 
 func NewFactory(client GovcClient, datacenter, datastore, network, resourcePool, templateLibrary string) *Factory {

@@ -19,6 +19,6 @@ type Client interface {
 	ListCategories(ctx context.Context, getEntitiesRequest *v3.CategoryListMetadata) (*v3.CategoryKeyListResponse, error)
 	GetCategoryKey(ctx context.Context, name string) (*v3.CategoryKeyStatus, error)
 	ListCategoryValues(ctx context.Context, name string, getEntitiesRequest *v3.CategoryListMetadata) (*v3.CategoryValueListResponse, error)
-	GetCategoryValue(ctx context.Context, name string, value string) (*v3.CategoryValueStatus, error)
+	GetCategoryValue(ctx context.Context, name, value string) (*v3.CategoryValueStatus, error)
 	GetCategoryQuery(ctx context.Context, query *v3.CategoryQueryInput) (*v3.CategoryQueryResponse, error)
 }

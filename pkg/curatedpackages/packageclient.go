@@ -117,7 +117,7 @@ func (pc *PackageClient) packageMap() map[string]packagesv1.BundlePackage {
 	return pMap
 }
 
-func (pc *PackageClient) InstallPackage(ctx context.Context, bp *packagesv1.BundlePackage, customName string, clusterName string, kubeConfig string) error {
+func (pc *PackageClient) InstallPackage(ctx context.Context, bp *packagesv1.BundlePackage, customName, clusterName, kubeConfig string) error {
 	configString, err := pc.getInstallConfigurations()
 	if err != nil {
 		return err
@@ -146,7 +146,7 @@ func (pc *PackageClient) getInstallConfigurations() (string, error) {
 	return GenerateAllValidConfigurations(installConfigs)
 }
 
-func (pc *PackageClient) ApplyPackages(ctx context.Context, fileName string, kubeConfig string) error {
+func (pc *PackageClient) ApplyPackages(ctx context.Context, fileName, kubeConfig string) error {
 	params := []string{"apply", "-f", fileName, "--kubeconfig", kubeConfig}
 	stdOut, err := pc.kubectl.ExecuteCommand(ctx, params...)
 	if err != nil {
@@ -157,7 +157,7 @@ func (pc *PackageClient) ApplyPackages(ctx context.Context, fileName string, kub
 	return nil
 }
 
-func (pc *PackageClient) CreatePackages(ctx context.Context, fileName string, kubeConfig string) error {
+func (pc *PackageClient) CreatePackages(ctx context.Context, fileName, kubeConfig string) error {
 	params := []string{"create", "-f", fileName, "--kubeconfig", kubeConfig}
 	stdOut, err := pc.kubectl.ExecuteCommand(ctx, params...)
 	if err != nil {
@@ -168,7 +168,7 @@ func (pc *PackageClient) CreatePackages(ctx context.Context, fileName string, ku
 	return nil
 }
 
-func (pc *PackageClient) DeletePackages(ctx context.Context, packages []string, kubeConfig string, clusterName string) error {
+func (pc *PackageClient) DeletePackages(ctx context.Context, packages []string, kubeConfig, clusterName string) error {
 	params := []string{"delete", "packages", "--kubeconfig", kubeConfig, "--namespace", constants.EksaPackagesName + "-" + clusterName}
 	params = append(params, packages...)
 	stdOut, err := pc.kubectl.ExecuteCommand(ctx, params...)
@@ -180,7 +180,7 @@ func (pc *PackageClient) DeletePackages(ctx context.Context, packages []string, 
 	return nil
 }
 
-func (pc *PackageClient) DescribePackages(ctx context.Context, packages []string, kubeConfig string, clusterName string) error {
+func (pc *PackageClient) DescribePackages(ctx context.Context, packages []string, kubeConfig, clusterName string) error {
 	params := []string{"describe", "packages", "--kubeconfig", kubeConfig, "--namespace", constants.EksaPackagesName + "-" + clusterName}
 	params = append(params, packages...)
 	stdOut, err := pc.kubectl.ExecuteCommand(ctx, params...)
@@ -195,7 +195,7 @@ func (pc *PackageClient) DescribePackages(ctx context.Context, packages []string
 	return nil
 }
 
-func convertBundlePackageToPackage(bp packagesv1.BundlePackage, name string, clusterName string, apiVersion string, config string) packagesv1.Package {
+func convertBundlePackageToPackage(bp packagesv1.BundlePackage, name, clusterName, apiVersion, config string) packagesv1.Package {
 	p := packagesv1.Package{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,

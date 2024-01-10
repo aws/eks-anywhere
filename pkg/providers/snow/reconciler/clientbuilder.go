@@ -46,7 +46,7 @@ type credentialConfiguration struct {
 	Region    string `ini:"region"`
 }
 
-func createAwsClients(ctx context.Context, credentials []byte, certificates []byte) (aws.Clients, error) {
+func createAwsClients(ctx context.Context, credentials, certificates []byte) (aws.Clients, error) {
 	var deviceIps []string
 	credsCfg, err := ini.Load(credentials)
 	if err != nil {

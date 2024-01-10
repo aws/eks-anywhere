@@ -84,7 +84,7 @@ func newFetchManagementTest(t *testing.T) *fetchManagementTest {
 	}
 }
 
-func createClustersForTest() (managementCluster *anywherev1.Cluster, workloadCluster *anywherev1.Cluster) {
+func createClustersForTest() (managementCluster, workloadCluster *anywherev1.Cluster) {
 	managementCluster = &anywherev1.Cluster{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Cluster",

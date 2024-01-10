@@ -73,7 +73,7 @@ type testLogFetcher struct {
 	processTest                 testConsumer
 }
 
-func New(buildAccountCwClient *cloudwatch.Cloudwatch, testAccountCwClient *cloudwatch.Cloudwatch, buildAccountCodebuildClient *codebuild.Codebuild, opts ...LogFetcherOpt) *testLogFetcher {
+func New(buildAccountCwClient, testAccountCwClient *cloudwatch.Cloudwatch, buildAccountCodebuildClient *codebuild.Codebuild, opts ...LogFetcherOpt) *testLogFetcher {
 	l := &testLogFetcher{
 		buildAccountCwClient:        buildAccountCwClient,
 		testAccountCwClient:         testAccountCwClient,
@@ -140,7 +140,7 @@ func (l *testLogFetcher) FetchLogs(opts ...FetchLogsOpt) error {
 	return nil
 }
 
-func (l *testLogFetcher) GetBuildProjectLogs(project string, buildId string) ([]testresults.TestResult, error) {
+func (l *testLogFetcher) GetBuildProjectLogs(project, buildId string) ([]testresults.TestResult, error) {
 	logger.Info("Fetching build project logs...")
 	build, err := l.buildAccountCodebuildClient.FetchBuildForProject(buildId)
 	if err != nil {

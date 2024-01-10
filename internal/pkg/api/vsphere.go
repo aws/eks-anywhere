@@ -99,7 +99,7 @@ func WithTemplateForAllMachines(value string) VSphereFiller {
 }
 
 // WithMachineTemplate configs template in machine config.
-func WithMachineTemplate(machineConfigName string, template string) VSphereFiller {
+func WithMachineTemplate(machineConfigName, template string) VSphereFiller {
 	return func(config VSphereConfig) {
 		config.machineConfigs[machineConfigName].Spec.Template = template
 	}

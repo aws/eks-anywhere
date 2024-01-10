@@ -138,7 +138,7 @@ func (p *provider) SetupAndValidateDeleteCluster(ctx context.Context, _ *types.C
 	return nil
 }
 
-func (p *provider) SetupAndValidateUpgradeCluster(ctx context.Context, _ *types.Cluster, _ *cluster.Spec, _ *cluster.Spec) error {
+func (p *provider) SetupAndValidateUpgradeCluster(ctx context.Context, _ *types.Cluster, _, _ *cluster.Spec) error {
 	return nil
 }
 
@@ -359,7 +359,7 @@ func NeedsNewWorkloadTemplate(oldSpec, newSpec *cluster.Spec, oldWorker, newWork
 	return oldSpec.Bundles.Spec.Number != newSpec.Bundles.Spec.Number
 }
 
-func NeedsNewKubeadmConfigTemplate(newWorkerNodeGroup *v1alpha1.WorkerNodeGroupConfiguration, oldWorkerNodeGroup *v1alpha1.WorkerNodeGroupConfiguration) bool {
+func NeedsNewKubeadmConfigTemplate(newWorkerNodeGroup, oldWorkerNodeGroup *v1alpha1.WorkerNodeGroupConfiguration) bool {
 	return !v1alpha1.TaintsSliceEqual(newWorkerNodeGroup.Taints, oldWorkerNodeGroup.Taints) || !v1alpha1.MapEqual(newWorkerNodeGroup.Labels, oldWorkerNodeGroup.Labels)
 }
 
@@ -602,7 +602,7 @@ func (p *provider) ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.Compone
 	}
 }
 
-func (p *provider) RunPostControlPlaneUpgrade(ctx context.Context, oldClusterSpec *cluster.Spec, clusterSpec *cluster.Spec, workloadCluster *types.Cluster, managementCluster *types.Cluster) error {
+func (p *provider) RunPostControlPlaneUpgrade(ctx context.Context, oldClusterSpec, clusterSpec *cluster.Spec, workloadCluster, managementCluster *types.Cluster) error {
 	return nil
 }
 

@@ -12,7 +12,7 @@ import (
 
 type VSphereClient interface {
 	Username() string
-	GetPrivsOnEntity(ctx context.Context, path string, objType string, username string) ([]string, error)
+	GetPrivsOnEntity(ctx context.Context, path, objType, username string) ([]string, error)
 }
 
 type VMOMIFinderBuilder interface {
@@ -41,7 +41,7 @@ func NewVMOMIClientBuilderOverride(vfb VMOMIFinderBuilder, gcb VMOMISessionBuild
 	return &vMOMIClientBuilder{vfb: vfb, gcb: gcb, amb: amb}
 }
 
-func (vcb *vMOMIClientBuilder) Build(ctx context.Context, host string, username string, password string, insecure bool, datacenter string) (VSphereClient, error) {
+func (vcb *vMOMIClientBuilder) Build(ctx context.Context, host, username, password string, insecure bool, datacenter string) (VSphereClient, error) {
 	u, err := soap.ParseURL(host)
 	u.User = url.UserPassword(username, password)
 	if err != nil {

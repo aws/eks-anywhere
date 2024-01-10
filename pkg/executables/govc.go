@@ -857,7 +857,7 @@ func (g *Govc) ValidateVCenterSetupMachineConfig(ctx context.Context, datacenter
 	return nil
 }
 
-func prependPath(folderType FolderType, folderPath string, datacenter string) (string, error) {
+func prependPath(folderType FolderType, folderPath, datacenter string) (string, error) {
 	prefix := fmt.Sprintf("/%s", datacenter)
 	modPath := folderPath
 	if !strings.HasPrefix(folderPath, prefix) {
@@ -1031,7 +1031,7 @@ func getDeployOptions(network string) ([]byte, error) {
 }
 
 // CreateUser creates a user.
-func (g *Govc) CreateUser(ctx context.Context, username string, password string) error {
+func (g *Govc) CreateUser(ctx context.Context, username, password string) error {
 	params := []string{
 		"sso.user.create", "-p", password, username,
 	}
@@ -1086,7 +1086,7 @@ func (g *Govc) GroupExists(ctx context.Context, name string) (bool, error) {
 }
 
 // AddUserToGroup adds a user to a group.
-func (g *Govc) AddUserToGroup(ctx context.Context, name string, username string) error {
+func (g *Govc) AddUserToGroup(ctx context.Context, name, username string) error {
 	params := []string{
 		"sso.group.update",
 		"-a", username,
@@ -1128,7 +1128,7 @@ func (g *Govc) CreateRole(ctx context.Context, name string, privileges []string)
 }
 
 // SetGroupRoleOnObject sets a role for a given group on target object.
-func (g *Govc) SetGroupRoleOnObject(ctx context.Context, principal string, role string, object string, domain string) error {
+func (g *Govc) SetGroupRoleOnObject(ctx context.Context, principal, role, object, domain string) error {
 	principal = principal + "@" + domain
 
 	params := []string{

@@ -119,7 +119,7 @@ func (t LoggingOnlyT) Run(_ string, _ func(*testing.T)) bool {
 }
 
 // Setenv implements T.
-func (t LoggingOnlyT) Setenv(_ string, _ string) {
+func (t LoggingOnlyT) Setenv(_, _ string) {
 	panic("LoggingOnlyT implements only the logging methods of T")
 }
 

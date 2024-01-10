@@ -10,7 +10,7 @@ import (
 
 const OIDCConfigKind = "OIDCConfig"
 
-func GetAndValidateOIDCConfig(fileName string, refName string, clusterConfig *Cluster) (*OIDCConfig, error) {
+func GetAndValidateOIDCConfig(fileName, refName string, clusterConfig *Cluster) (*OIDCConfig, error) {
 	config, err := getOIDCConfig(fileName)
 	if err != nil {
 		return nil, err

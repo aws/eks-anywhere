@@ -40,7 +40,7 @@ func WithKubernetesVersion(v anywherev1.KubernetesVersion) ClusterFiller {
 }
 
 // WithBundlesRef sets BundlesRef with the provided name to use.
-func WithBundlesRef(name string, namespace string, apiVersion string) ClusterFiller {
+func WithBundlesRef(name, namespace, apiVersion string) ClusterFiller {
 	return func(c *anywherev1.Cluster) {
 		c.Spec.BundlesRef = &anywherev1.BundlesRef{Name: name, Namespace: namespace, APIVersion: apiVersion}
 	}
@@ -117,7 +117,7 @@ func WithControlPlaneTaints(taints []corev1.Taint) ClusterFiller {
 	}
 }
 
-func WithControlPlaneLabel(key string, val string) ClusterFiller {
+func WithControlPlaneLabel(key, val string) ClusterFiller {
 	return func(c *anywherev1.Cluster) {
 		if c.Spec.ControlPlaneConfiguration.Labels == nil {
 			c.Spec.ControlPlaneConfiguration.Labels = map[string]string{}
@@ -176,7 +176,7 @@ func WithWorkerNodeCount(r int) ClusterFiller {
 }
 
 // WithWorkerNodeAutoScalingConfig adds an autoscaling configuration with a given min and max count.
-func WithWorkerNodeAutoScalingConfig(min int, max int) ClusterFiller {
+func WithWorkerNodeAutoScalingConfig(min, max int) ClusterFiller {
 	return func(c *anywherev1.Cluster) {
 		if len(c.Spec.WorkerNodeGroupConfigurations) == 0 {
 			c.Spec.WorkerNodeGroupConfigurations = []anywherev1.WorkerNodeGroupConfiguration{{Count: ptr.Int(min)}}
@@ -251,7 +251,7 @@ func WithProxyConfig(httpProxy, httpsProxy string, noProxy []string) ClusterFill
 }
 
 // WithRegistryMirror adds a registry mirror configuration.
-func WithRegistryMirror(endpoint, port string, caCert string, authenticate bool, insecureSkipVerify bool) ClusterFiller {
+func WithRegistryMirror(endpoint, port, caCert string, authenticate, insecureSkipVerify bool) ClusterFiller {
 	return func(c *anywherev1.Cluster) {
 		if c.Spec.RegistryMirrorConfiguration == nil {
 			c.Spec.RegistryMirrorConfiguration = &anywherev1.RegistryMirrorConfiguration{}

@@ -144,7 +144,7 @@ func (g *GoGithub) GetAccessTokenPermissions(accessToken string) (string, error)
 	return permissionsScopes, nil
 }
 
-func (g *GoGithub) CheckAccessTokenPermissions(checkPATPermission string, allPermissionScopes string) error {
+func (g *GoGithub) CheckAccessTokenPermissions(checkPATPermission, allPermissionScopes string) error {
 	logger.Info("Checking Github Access Token permissions")
 
 	allPermissions := strings.Split(allPermissionScopes, ", ")

@@ -13,7 +13,7 @@ type mutexMap struct {
 	sync.RWMutex
 }
 
-func (m *mutexMap) load(key string) (value bool, ok bool) {
+func (m *mutexMap) load(key string) (value, ok bool) {
 	m.RLock()
 	result, ok := m.internal[key]
 	m.RUnlock()

@@ -25,7 +25,7 @@ type KubernetesClient interface {
 	ApplyKubeSpecFromBytes(ctx context.Context, cluster *types.Cluster, data []byte) error
 	GetClusters(ctx context.Context, cluster *types.Cluster) ([]types.CAPICluster, error)
 	ValidateClustersCRD(ctx context.Context, cluster *types.Cluster) error
-	CreateNamespaceIfNotPresent(ctx context.Context, kubeconfig string, namespace string) error
+	CreateNamespaceIfNotPresent(ctx context.Context, kubeconfig, namespace string) error
 }
 
 // RetrierClientOpt allows to customize a RetrierClient

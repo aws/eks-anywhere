@@ -39,15 +39,15 @@ func New(account awsprofiles.EksAccount) (*Cloudwatch, error) {
 	}, nil
 }
 
-func (c *Cloudwatch) GetLogs(logGroupName string, logStreamName string) ([]*cloudwatchlogs.OutputLogEvent, error) {
+func (c *Cloudwatch) GetLogs(logGroupName, logStreamName string) ([]*cloudwatchlogs.OutputLogEvent, error) {
 	return c.getLogs(logGroupName, logStreamName, nil, nil)
 }
 
-func (c *Cloudwatch) GetLogsInTimeframe(logGroupName string, logStreamName string, startTime int64, endTime int64) ([]*cloudwatchlogs.OutputLogEvent, error) {
+func (c *Cloudwatch) GetLogsInTimeframe(logGroupName, logStreamName string, startTime, endTime int64) ([]*cloudwatchlogs.OutputLogEvent, error) {
 	return c.getLogs(logGroupName, logStreamName, &startTime, &endTime)
 }
 
-func (c *Cloudwatch) getLogs(logGroupName string, logStreamName string, startTime *int64, endTime *int64) ([]*cloudwatchlogs.OutputLogEvent, error) {
+func (c *Cloudwatch) getLogs(logGroupName, logStreamName string, startTime, endTime *int64) ([]*cloudwatchlogs.OutputLogEvent, error) {
 	var nextToken *string
 	var output []*cloudwatchlogs.OutputLogEvent
 
@@ -74,7 +74,7 @@ func (c *Cloudwatch) getLogs(logGroupName string, logStreamName string, startTim
 	return output, nil
 }
 
-func (c Cloudwatch) getLogSegment(logGroupName string, logStreamName string, startTime *int64, endTime *int64, nextToken *string) (*cloudwatchlogs.GetLogEventsOutput, error) {
+func (c Cloudwatch) getLogSegment(logGroupName, logStreamName string, startTime, endTime *int64, nextToken *string) (*cloudwatchlogs.GetLogEventsOutput, error) {
 	input := &cloudwatchlogs.GetLogEventsInput{
 		LogGroupName:  aws.String(logGroupName),
 		LogStreamName: aws.String(logStreamName),

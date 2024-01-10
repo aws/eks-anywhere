@@ -41,7 +41,7 @@ func (t *Troubleshoot) Collect(ctx context.Context, bundlePath string, sinceTime
 	return archivePath, nil
 }
 
-func (t *Troubleshoot) Analyze(ctx context.Context, bundleSpecPath string, archivePath string) ([]*SupportBundleAnalysis, error) {
+func (t *Troubleshoot) Analyze(ctx context.Context, bundleSpecPath, archivePath string) ([]*SupportBundleAnalysis, error) {
 	params := []string{"analyze", bundleSpecPath, "--bundle", archivePath, "--output", "json"}
 	output, err := t.Execute(ctx, params...)
 	if err != nil {

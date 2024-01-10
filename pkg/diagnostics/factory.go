@@ -35,7 +35,7 @@ func NewFactory(opts EksaDiagnosticBundleFactoryOpts) *eksaDiagnosticBundleFacto
 	}
 }
 
-func (f *eksaDiagnosticBundleFactory) DiagnosticBundle(spec *cluster.Spec, provider providers.Provider, kubeconfig string, bundlePath string) (DiagnosticBundle, error) {
+func (f *eksaDiagnosticBundleFactory) DiagnosticBundle(spec *cluster.Spec, provider providers.Provider, kubeconfig, bundlePath string) (DiagnosticBundle, error) {
 	if bundlePath == "" && spec != nil {
 		b, err := f.DiagnosticBundleWorkloadCluster(spec, provider, kubeconfig)
 		return b, err
@@ -55,6 +55,6 @@ func (f *eksaDiagnosticBundleFactory) DiagnosticBundleDefault() DiagnosticBundle
 	return newDiagnosticBundleDefault(f.analyzerFactory, f.collectorFactory)
 }
 
-func (f *eksaDiagnosticBundleFactory) DiagnosticBundleCustom(kubeconfig string, bundlePath string) DiagnosticBundle {
+func (f *eksaDiagnosticBundleFactory) DiagnosticBundleCustom(kubeconfig, bundlePath string) DiagnosticBundle {
 	return newDiagnosticBundleCustom(f.analyzerFactory, f.collectorFactory, f.client, f.kubectl, bundlePath, kubeconfig, f.writer)
 }

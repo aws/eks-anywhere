@@ -14,7 +14,7 @@ const (
 	DefaultAWSIamConfigPartition = "aws"
 )
 
-func GetAndValidateAWSIamConfig(fileName string, refName string, clusterConfig *Cluster) (*AWSIamConfig, error) {
+func GetAndValidateAWSIamConfig(fileName, refName string, clusterConfig *Cluster) (*AWSIamConfig, error) {
 	config, err := getAWSIamConfig(fileName)
 	if err != nil {
 		return nil, err

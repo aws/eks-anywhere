@@ -69,7 +69,7 @@ func (d *Docker) AllocatedMemory(ctx context.Context) (uint64, error) {
 	return strconv.ParseUint(totalMemory, 10, 64)
 }
 
-func (d *Docker) TagImage(ctx context.Context, image string, endpoint string) error {
+func (d *Docker) TagImage(ctx context.Context, image, endpoint string) error {
 	replacer := strings.NewReplacer(defaultRegistry, endpoint, packageProdDomain, endpoint, packageDevDomain, endpoint)
 	localImage := replacer.Replace(image)
 	logger.Info("Tagging image", "image", image, "local image", localImage)
@@ -79,7 +79,7 @@ func (d *Docker) TagImage(ctx context.Context, image string, endpoint string) er
 	return nil
 }
 
-func (d *Docker) PushImage(ctx context.Context, image string, endpoint string) error {
+func (d *Docker) PushImage(ctx context.Context, image, endpoint string) error {
 	replacer := strings.NewReplacer(defaultRegistry, endpoint, packageProdDomain, endpoint, packageDevDomain, endpoint)
 	localImage := replacer.Replace(image)
 	logger.Info("Pushing", "image", localImage)
@@ -116,7 +116,7 @@ func (d *Docker) SaveToFile(ctx context.Context, filepath string, images ...stri
 	return nil
 }
 
-func (d *Docker) Run(ctx context.Context, image string, name string, cmd []string, flags ...string) error {
+func (d *Docker) Run(ctx context.Context, image, name string, cmd []string, flags ...string) error {
 	params := []string{"run", "-d", "-i"}
 	params = append(params, flags...)
 	params = append(params, "--name", name, image)

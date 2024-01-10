@@ -76,7 +76,7 @@ func getDaemonSet(ctx context.Context, client client.Client) (*appsv1.DaemonSet,
 	return ds, nil
 }
 
-func getConfigMap(ctx context.Context, client client.Client, name string, namespace string) (*corev1.ConfigMap, error) {
+func getConfigMap(ctx context.Context, client client.Client, name, namespace string) (*corev1.ConfigMap, error) {
 	c := &corev1.ConfigMap{}
 	err := client.Get(ctx, types.NamespacedName{Name: name, Namespace: namespace}, c)
 	if apierrors.IsNotFound(err) {

@@ -115,7 +115,7 @@ func (r *CloudStackResourceDiskOffering) IsEmpty() bool {
 		r.Filesystem == "" && r.MountPath == "" && r.CustomSize == 0
 }
 
-func (r *CloudStackResourceDiskOffering) Validate() (err error, field string, value string) {
+func (r *CloudStackResourceDiskOffering) Validate() (err error, field, value string) {
 	if r != nil && (len(r.Id) > 0 || len(r.Name) > 0) {
 		if len(r.MountPath) < 2 || !strings.HasPrefix(r.MountPath, "/") {
 			return errors.New("must be non-empty and start with /"), "mountPath", r.MountPath
@@ -137,7 +137,7 @@ func (r *CloudStackResourceDiskOffering) Validate() (err error, field string, va
 	return nil, "", ""
 }
 
-func (r SymlinkMaps) Validate() (err error, field string, value string) {
+func (r SymlinkMaps) Validate() (err error, field, value string) {
 	isPortableFileNameSet := regexp.MustCompile(`^[a-zA-Z0-9\.\-\_\/]+$`)
 	for key, value := range r {
 		if !strings.HasPrefix(key, "/") || strings.HasSuffix(key, "/") {

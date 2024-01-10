@@ -149,7 +149,7 @@ func newDiagnosticBundleDefault(af AnalyzerFactory, cf CollectorFactory) *EksaDi
 		WithManagementCluster(true)
 }
 
-func newDiagnosticBundleCustom(af AnalyzerFactory, cf CollectorFactory, client BundleClient, kubectl *executables.Kubectl, bundlePath string, kubeconfig string, writer filewriter.FileWriter) *EksaDiagnosticBundle {
+func newDiagnosticBundleCustom(af AnalyzerFactory, cf CollectorFactory, client BundleClient, kubectl *executables.Kubectl, bundlePath, kubeconfig string, writer filewriter.FileWriter) *EksaDiagnosticBundle {
 	return &EksaDiagnosticBundle{
 		bundlePath:       bundlePath,
 		analyzerFactory:  af,
@@ -380,7 +380,7 @@ func ParseTimeFromDuration(since string) (*time.Time, error) {
 	return &sinceTimeValue, nil
 }
 
-func ParseTimeOptions(since string, sinceTime string) (*time.Time, error) {
+func ParseTimeOptions(since, sinceTime string) (*time.Time, error) {
 	var sinceTimeValue time.Time
 	var err error
 	if sinceTime == "" && since == "" {

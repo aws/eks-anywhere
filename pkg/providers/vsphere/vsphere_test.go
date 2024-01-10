@@ -181,7 +181,7 @@ func (pc *DummyProviderGovcClient) CreateCategoryForVM(ctx context.Context, name
 	return nil
 }
 
-func (pc *DummyProviderGovcClient) AddUserToGroup(ctx context.Context, name string, username string) error {
+func (pc *DummyProviderGovcClient) AddUserToGroup(ctx context.Context, name, username string) error {
 	return nil
 }
 
@@ -193,7 +193,7 @@ func (pc *DummyProviderGovcClient) CreateRole(ctx context.Context, name string, 
 	return nil
 }
 
-func (pc *DummyProviderGovcClient) CreateUser(ctx context.Context, username string, password string) error {
+func (pc *DummyProviderGovcClient) CreateUser(ctx context.Context, username, password string) error {
 	return nil
 }
 
@@ -209,7 +209,7 @@ func (pc *DummyProviderGovcClient) RoleExists(ctx context.Context, name string) 
 	return false, nil
 }
 
-func (pc *DummyProviderGovcClient) SetGroupRoleOnObject(ctx context.Context, principal string, role string, object string, domain string) error {
+func (pc *DummyProviderGovcClient) SetGroupRoleOnObject(ctx context.Context, principal, role, object, domain string) error {
 	return nil
 }
 
@@ -472,7 +472,7 @@ type mockVSphereClientBuilder struct {
 	vsc *govmomi_mocks.MockVSphereClient
 }
 
-func (mvscb *mockVSphereClientBuilder) Build(ctx context.Context, host string, username string, password string, insecure bool, datacenter string) (govmomi.VSphereClient, error) {
+func (mvscb *mockVSphereClientBuilder) Build(ctx context.Context, host, username, password string, insecure bool, datacenter string) (govmomi.VSphereClient, error) {
 	return mvscb.vsc, nil
 }
 

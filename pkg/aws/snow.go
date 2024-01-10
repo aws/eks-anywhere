@@ -78,7 +78,7 @@ func WithCustomCABundleFile(certsFile string) AwsConfigOpt {
 // WithSnowEndpointAccess gathers all the config's LoadOptions for snow,
 // which includes snowball ec2 endpoint, snow credentials for a specific profile,
 // and CA bundles for accessing the https endpoint.
-func WithSnowEndpointAccess(deviceIP string, certsFile, credsFile string) AwsConfigOpt {
+func WithSnowEndpointAccess(deviceIP, certsFile, credsFile string) AwsConfigOpt {
 	return AwsConfigOptSet(
 		WithCustomCABundleFile(certsFile),
 		config.WithSharedCredentialsFiles([]string{credsFile}),

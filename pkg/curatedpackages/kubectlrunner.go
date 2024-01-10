@@ -15,5 +15,5 @@ type KubectlRunner interface {
 	// If the object is not found, it returns an error implementing apimachinery errors.APIStatus
 	GetObject(ctx context.Context, resourceType, name, namespece, kubeconfig string, obj runtime.Object) error
 	// HasResource is true if the resource can be retrieved from the API and has length > 0.
-	HasResource(ctx context.Context, resourceType string, name string, kubeconfig string, namespace string) (bool, error)
+	HasResource(ctx context.Context, resourceType, name, kubeconfig, namespace string) (bool, error)
 }

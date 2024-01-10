@@ -51,7 +51,7 @@ func (vsc *VMOMIClient) Username() string {
 	return vsc.username
 }
 
-func (vsc *VMOMIClient) GetPrivsOnEntity(ctx context.Context, path string, objType string, username string) ([]string, error) {
+func (vsc *VMOMIClient) GetPrivsOnEntity(ctx context.Context, path, objType, username string) ([]string, error) {
 	var vSphereObjectReference types.ManagedObjectReference
 	emptyResult := []string{}
 	var err error

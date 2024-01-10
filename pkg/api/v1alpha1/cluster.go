@@ -103,7 +103,7 @@ func WithClusterEndpoint() ClusterGenerateOpt {
 }
 
 // WithCPUpgradeRolloutStrategy allows add UpgradeRolloutStrategy option to cluster config under ControlPlaneConfiguration.
-func WithCPUpgradeRolloutStrategy(maxSurge int, maxUnavailable int) ClusterGenerateOpt {
+func WithCPUpgradeRolloutStrategy(maxSurge, maxUnavailable int) ClusterGenerateOpt {
 	return func(c *ClusterGenerate) {
 		c.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy = &ControlPlaneUpgradeRolloutStrategy{Type: "RollingUpdate", RollingUpdate: ControlPlaneRollingUpdateParams{MaxSurge: maxSurge}}
 	}
@@ -150,7 +150,7 @@ func WithWorkerMachineGroupRef(ref ProviderRefAccessor) ClusterGenerateOpt {
 }
 
 // WithWorkerMachineUpgradeRolloutStrategy allows add UpgradeRolloutStrategy option to cluster config under WorkerNodeGroupConfiguration.
-func WithWorkerMachineUpgradeRolloutStrategy(maxSurge int, maxUnavailable int) ClusterGenerateOpt {
+func WithWorkerMachineUpgradeRolloutStrategy(maxSurge, maxUnavailable int) ClusterGenerateOpt {
 	return func(c *ClusterGenerate) {
 		c.Spec.WorkerNodeGroupConfigurations[0].UpgradeRolloutStrategy = &WorkerNodesUpgradeRolloutStrategy{
 			Type:          "RollingUpdate",

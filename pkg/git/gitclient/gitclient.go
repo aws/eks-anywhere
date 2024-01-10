@@ -315,7 +315,7 @@ func (g *GitClient) remoteBranchExists(r *gogit.Repository, localBranchRef plumb
 type GoGit interface {
 	AddGlob(f string, w *gogit.Worktree) error
 	Checkout(w *gogit.Worktree, opts *gogit.CheckoutOptions) error
-	Clone(ctx context.Context, dir string, repoUrl string, auth transport.AuthMethod) (*gogit.Repository, error)
+	Clone(ctx context.Context, dir, repoUrl string, auth transport.AuthMethod) (*gogit.Repository, error)
 	Commit(m string, sig *object.Signature, w *gogit.Worktree) (plumbing.Hash, error)
 	CommitObject(r *gogit.Repository, h plumbing.Hash) (*object.Commit, error)
 	Create(r *gogit.Repository, url string) (*gogit.Remote, error)
@@ -335,7 +335,7 @@ type GoGit interface {
 
 type goGit struct{}
 
-func (gg *goGit) Clone(ctx context.Context, dir string, repourl string, auth transport.AuthMethod) (*gogit.Repository, error) {
+func (gg *goGit) Clone(ctx context.Context, dir, repourl string, auth transport.AuthMethod) (*gogit.Repository, error) {
 	ctx, cancel := context.WithTimeout(ctx, gitTimeout)
 	defer cancel()
 

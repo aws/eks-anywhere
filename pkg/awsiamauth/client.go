@@ -18,7 +18,7 @@ import (
 type Client interface {
 	ApplyKubeSpecFromBytes(ctx context.Context, cluster *types.Cluster, data []byte) error
 	GetApiServerUrl(ctx context.Context, cluster *types.Cluster) (string, error)
-	GetObject(ctx context.Context, resourceType string, name string, namespace string, kubeconfig string, obj runtime.Object) error
+	GetObject(ctx context.Context, resourceType, name, namespace, kubeconfig string, obj runtime.Object) error
 }
 
 // RetrierClient wraps basic kubernetes API operations around a retrier.

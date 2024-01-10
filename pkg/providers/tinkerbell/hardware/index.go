@@ -57,7 +57,7 @@ func (i *FieldIndexer) Insert(v interface{}) error {
 
 // Lookup uses the index associated with field to find and return all objects associated with key.
 // If field has no associated index created by IndexField ErrUnknownIndex is returned.
-func (i *FieldIndexer) Lookup(field string, key string) ([]interface{}, error) {
+func (i *FieldIndexer) Lookup(field, key string) ([]interface{}, error) {
 	idx, ok := i.indexes[field]
 	if !ok {
 		return nil, ErrUnknownIndex{Field: field}

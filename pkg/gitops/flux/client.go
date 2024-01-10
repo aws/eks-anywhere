@@ -31,7 +31,7 @@ type FluxClient interface {
 type KubeClient interface {
 	GetEksaCluster(ctx context.Context, cluster *types.Cluster, clusterName string) (*v1alpha1.Cluster, error)
 	UpdateAnnotation(ctx context.Context, resourceType, objectName string, annotations map[string]string, opts ...executables.KubectlOpt) error
-	RemoveAnnotation(ctx context.Context, resourceType, objectName string, key string, opts ...executables.KubectlOpt) error
+	RemoveAnnotation(ctx context.Context, resourceType, objectName, key string, opts ...executables.KubectlOpt) error
 	DeleteSecret(ctx context.Context, managementCluster *types.Cluster, secretName, namespace string) error
 }
 

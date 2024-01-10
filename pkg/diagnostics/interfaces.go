@@ -12,15 +12,15 @@ import (
 
 type BundleClient interface {
 	Collect(ctx context.Context, bundlePath string, sinceTime *time.Time, kubeconfig string) (archivePath string, err error)
-	Analyze(ctx context.Context, bundleSpecPath string, archivePath string) ([]*executables.SupportBundleAnalysis, error)
+	Analyze(ctx context.Context, bundleSpecPath, archivePath string) ([]*executables.SupportBundleAnalysis, error)
 }
 
 type DiagnosticBundleFactory interface {
-	DiagnosticBundle(spec *cluster.Spec, provider providers.Provider, kubeconfig string, bundlePath string) (DiagnosticBundle, error)
+	DiagnosticBundle(spec *cluster.Spec, provider providers.Provider, kubeconfig, bundlePath string) (DiagnosticBundle, error)
 	DiagnosticBundleWorkloadCluster(spec *cluster.Spec, provider providers.Provider, kubeconfig string) (DiagnosticBundle, error)
 	DiagnosticBundleManagementCluster(spec *cluster.Spec, kubeconfig string) (DiagnosticBundle, error)
 	DiagnosticBundleDefault() DiagnosticBundle
-	DiagnosticBundleCustom(kubeconfig string, bundlePath string) DiagnosticBundle
+	DiagnosticBundleCustom(kubeconfig, bundlePath string) DiagnosticBundle
 }
 
 type DiagnosticBundle interface {
