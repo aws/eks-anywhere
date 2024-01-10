@@ -205,7 +205,7 @@ func getObjectsForCPUpgradeTest() (*clusterv1.Cluster, []*clusterv1.Machine, []*
 	machines := []*clusterv1.Machine{machine1, machine2}
 	nodes := []*corev1.Node{node1, node2}
 	nodeUpgrades := []*anywherev1.NodeUpgrade{nodeUpgrade1, nodeUpgrade2}
-	cpUpgrade := generateCPUpgrade(machines, cluster)
+	cpUpgrade := generateCPUpgrade(machines)
 	return cluster, machines, nodes, cpUpgrade, nodeUpgrades
 }
 
@@ -218,7 +218,7 @@ func cpUpgradeRequest(cpUpgrade *anywherev1.ControlPlaneUpgrade) reconcile.Reque
 	}
 }
 
-func generateCPUpgrade(machine []*clusterv1.Machine, cluster *clusterv1.Cluster) *anywherev1.ControlPlaneUpgrade {
+func generateCPUpgrade(machine []*clusterv1.Machine) *anywherev1.ControlPlaneUpgrade {
 	etcdVersion := "v1.28.3-eks-1-28-9"
 	return &anywherev1.ControlPlaneUpgrade{
 		ObjectMeta: metav1.ObjectMeta{
