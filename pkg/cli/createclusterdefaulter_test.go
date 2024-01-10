@@ -6,6 +6,7 @@ import (
 
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cli"
@@ -20,7 +21,7 @@ func TestNewCreateClusterDefaulter(t *testing.T) {
 
 	skipIPCheck := cluster.NewControlPlaneIPCheckAnnotationDefaulter(false)
 
-	mhcDefaulter := cluster.NewMachineHealthCheckDefaulter(constants.DefaultNodeStartupTimeout, constants.DefaultUnhealthyMachineTimeout)
+	mhcDefaulter := cluster.NewMachineHealthCheckDefaulter(constants.DefaultNodeStartupTimeout, constants.DefaultUnhealthyMachineTimeout, intstr.Parse(constants.DefaultMaxUnhealthy), intstr.Parse(constants.DefaultWorkerMaxUnhealthy))
 
 	r := defaulting.NewRunner[*cluster.Spec]()
 	r.Register(
@@ -43,7 +44,7 @@ func TestRunWithoutSkipIPAnnotation(t *testing.T) {
 		},
 	}
 	skipIPCheck := cluster.NewControlPlaneIPCheckAnnotationDefaulter(false)
-	mhcDefaulter := cluster.NewMachineHealthCheckDefaulter(constants.DefaultNodeStartupTimeout, constants.DefaultUnhealthyMachineTimeout)
+	mhcDefaulter := cluster.NewMachineHealthCheckDefaulter(constants.DefaultNodeStartupTimeout, constants.DefaultUnhealthyMachineTimeout, intstr.Parse(constants.DefaultMaxUnhealthy), intstr.Parse(constants.DefaultWorkerMaxUnhealthy))
 
 	createClusterDefaulter := cli.NewCreateClusterDefaulter(skipIPCheck, mhcDefaulter)
 	clusterSpec, err := createClusterDefaulter.Run(context.Background(), clusterSpec)
@@ -66,7 +67,7 @@ func TestRunWithSkipIPAnnotation(t *testing.T) {
 	}
 
 	skipIPCheck := cluster.NewControlPlaneIPCheckAnnotationDefaulter(true)
-	mhcDefaulter := cluster.NewMachineHealthCheckDefaulter(constants.DefaultNodeStartupTimeout, constants.DefaultUnhealthyMachineTimeout)
+	mhcDefaulter := cluster.NewMachineHealthCheckDefaulter(constants.DefaultNodeStartupTimeout, constants.DefaultUnhealthyMachineTimeout, intstr.Parse(constants.DefaultMaxUnhealthy), intstr.Parse(constants.DefaultWorkerMaxUnhealthy))
 	createClusterDefaulter := cli.NewCreateClusterDefaulter(skipIPCheck, mhcDefaulter)
 	clusterSpec, err := createClusterDefaulter.Run(context.Background(), clusterSpec)
 

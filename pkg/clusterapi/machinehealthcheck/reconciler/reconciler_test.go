@@ -8,6 +8,7 @@ import (
 	"github.com/go-logr/logr"
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -52,7 +53,7 @@ func (tt *reconcilerTest) withFakeClient() {
 }
 
 func newReconciler(t testing.TB) *reconcilerTest {
-	mhcDefaulter := anywhereCluster.NewMachineHealthCheckDefaulter(constants.DefaultNodeStartupTimeout, constants.DefaultUnhealthyMachineTimeout)
+	mhcDefaulter := anywhereCluster.NewMachineHealthCheckDefaulter(constants.DefaultNodeStartupTimeout, constants.DefaultUnhealthyMachineTimeout, intstr.Parse(constants.DefaultMaxUnhealthy), intstr.Parse(constants.DefaultWorkerMaxUnhealthy))
 	bundle := test.Bundle()
 	version := test.DevEksaVersion()
 

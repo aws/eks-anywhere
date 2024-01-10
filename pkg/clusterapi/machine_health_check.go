@@ -3,7 +3,6 @@ package clusterapi
 import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/intstr"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -12,9 +11,7 @@ import (
 )
 
 const (
-	machineHealthCheckKind   = "MachineHealthCheck"
-	maxUnhealthyControlPlane = "100%"
-	maxUnhealthyWorker       = "40%"
+	machineHealthCheckKind = "MachineHealthCheck"
 )
 
 func machineHealthCheck(clusterName string, unhealthyTimeout, nodeStartupTimeout *metav1.Duration) *clusterv1.MachineHealthCheck {
@@ -51,11 +48,22 @@ func machineHealthCheck(clusterName string, unhealthyTimeout, nodeStartupTimeout
 
 // MachineHealthCheckForControlPlane creates MachineHealthCheck resources for the control plane.
 func MachineHealthCheckForControlPlane(cluster *v1alpha1.Cluster) *clusterv1.MachineHealthCheck {
-	mhc := machineHealthCheck(ClusterName(cluster), cluster.Spec.MachineHealthCheck.UnhealthyMachineTimeout, cluster.Spec.MachineHealthCheck.NodeStartupTimeout)
+	unhealthyMachineTimeout := cluster.Spec.MachineHealthCheck.UnhealthyMachineTimeout
+	if cluster.Spec.ControlPlaneConfiguration.MachineHealthCheck != nil && cluster.Spec.ControlPlaneConfiguration.MachineHealthCheck.UnhealthyMachineTimeout != nil {
+		unhealthyMachineTimeout = cluster.Spec.ControlPlaneConfiguration.MachineHealthCheck.UnhealthyMachineTimeout
+	}
+	nodeStartupTimeout := cluster.Spec.MachineHealthCheck.NodeStartupTimeout
+	if cluster.Spec.ControlPlaneConfiguration.MachineHealthCheck != nil && cluster.Spec.ControlPlaneConfiguration.MachineHealthCheck.NodeStartupTimeout != nil {
+		nodeStartupTimeout = cluster.Spec.ControlPlaneConfiguration.MachineHealthCheck.NodeStartupTimeout
+	}
+	mhc := machineHealthCheck(ClusterName(cluster), unhealthyMachineTimeout, nodeStartupTimeout)
 	mhc.SetName(ControlPlaneMachineHealthCheckName(cluster))
 	mhc.Spec.Selector.MatchLabels[clusterv1.MachineControlPlaneLabel] = ""
-	maxUnhealthy := intstr.Parse(maxUnhealthyControlPlane)
-	mhc.Spec.MaxUnhealthy = &maxUnhealthy
+	maxUnhealthy := cluster.Spec.MachineHealthCheck.MaxUnhealthy
+	if cluster.Spec.ControlPlaneConfiguration.MachineHealthCheck != nil && cluster.Spec.ControlPlaneConfiguration.MachineHealthCheck.MaxUnhealthy != nil {
+		maxUnhealthy = cluster.Spec.ControlPlaneConfiguration.MachineHealthCheck.MaxUnhealthy
+	}
+	mhc.Spec.MaxUnhealthy = maxUnhealthy
 	return mhc
 }
 
@@ -70,11 +78,22 @@ func MachineHealthCheckForWorkers(cluster *v1alpha1.Cluster) []*clusterv1.Machin
 }
 
 func machineHealthCheckForWorker(cluster *v1alpha1.Cluster, workerNodeGroupConfig v1alpha1.WorkerNodeGroupConfiguration) *clusterv1.MachineHealthCheck {
-	mhc := machineHealthCheck(ClusterName(cluster), cluster.Spec.MachineHealthCheck.UnhealthyMachineTimeout, cluster.Spec.MachineHealthCheck.NodeStartupTimeout)
+	unhealthyMachineTimeout := cluster.Spec.MachineHealthCheck.UnhealthyMachineTimeout
+	if workerNodeGroupConfig.MachineHealthCheck != nil && workerNodeGroupConfig.MachineHealthCheck.UnhealthyMachineTimeout != nil {
+		unhealthyMachineTimeout = workerNodeGroupConfig.MachineHealthCheck.UnhealthyMachineTimeout
+	}
+	nodeStartupTimeout := cluster.Spec.MachineHealthCheck.NodeStartupTimeout
+	if workerNodeGroupConfig.MachineHealthCheck != nil && workerNodeGroupConfig.MachineHealthCheck.NodeStartupTimeout != nil {
+		nodeStartupTimeout = workerNodeGroupConfig.MachineHealthCheck.NodeStartupTimeout
+	}
+	mhc := machineHealthCheck(ClusterName(cluster), unhealthyMachineTimeout, nodeStartupTimeout)
 	mhc.SetName(WorkerMachineHealthCheckName(cluster, workerNodeGroupConfig))
 	mhc.Spec.Selector.MatchLabels[clusterv1.MachineDeploymentNameLabel] = MachineDeploymentName(cluster, workerNodeGroupConfig)
-	maxUnhealthy := intstr.Parse(maxUnhealthyWorker)
-	mhc.Spec.MaxUnhealthy = &maxUnhealthy
+	maxUnhealthy := cluster.Spec.MachineHealthCheck.MaxUnhealthy
+	if workerNodeGroupConfig.MachineHealthCheck != nil && workerNodeGroupConfig.MachineHealthCheck.MaxUnhealthy != nil {
+		maxUnhealthy = workerNodeGroupConfig.MachineHealthCheck.MaxUnhealthy
+	}
+	mhc.Spec.MaxUnhealthy = maxUnhealthy
 	return mhc
 }
 

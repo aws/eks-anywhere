@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 
@@ -1990,7 +1991,7 @@ metadata:
   namespace: eksa-system
 spec:
   clusterName: fluxTestCluster
-  maxUnhealthy: 40%%
+  maxUnhealthy: 100%%
   nodeStartupTimeout: %[2]s
   selector:
     matchLabels:
@@ -2042,6 +2043,7 @@ func TestInstallMachineHealthChecks(t *testing.T) {
 	ctx := context.Background()
 	tt := newTest(t)
 	tt.clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].Name = "worker-1"
+	maxUnhealthy := intstr.Parse("100%")
 	tt.clusterSpec.Cluster.Spec.MachineHealthCheck = &v1alpha1.MachineHealthCheck{
 		UnhealthyMachineTimeout: &metav1.Duration{
 			Duration: constants.DefaultUnhealthyMachineTimeout,
@@ -2049,6 +2051,7 @@ func TestInstallMachineHealthChecks(t *testing.T) {
 		NodeStartupTimeout: &metav1.Duration{
 			Duration: constants.DefaultNodeStartupTimeout,
 		},
+		MaxUnhealthy: &maxUnhealthy,
 	}
 	wantMHC := expectedMachineHealthCheck(constants.DefaultUnhealthyMachineTimeout, constants.DefaultNodeStartupTimeout)
 	tt.mocks.client.EXPECT().ApplyKubeSpecFromBytes(ctx, tt.cluster, wantMHC)
@@ -2061,6 +2064,7 @@ func TestInstallMachineHealthChecks(t *testing.T) {
 func TestInstallMachineHealthChecksWithTimeoutOverride(t *testing.T) {
 	ctx := context.Background()
 	tt := newTest(t)
+	maxUnhealthy := intstr.Parse("100%")
 	tt.clusterSpec.Cluster.Spec.MachineHealthCheck = &v1alpha1.MachineHealthCheck{
 		UnhealthyMachineTimeout: &metav1.Duration{
 			Duration: (30 * time.Minute),
@@ -2068,6 +2072,7 @@ func TestInstallMachineHealthChecksWithTimeoutOverride(t *testing.T) {
 		NodeStartupTimeout: &metav1.Duration{
 			Duration: (30 * time.Minute),
 		},
+		MaxUnhealthy: &maxUnhealthy,
 	}
 	tt.clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].Name = "worker-1"
 	wantMHC := expectedMachineHealthCheck(30*time.Minute, 30*time.Minute)
@@ -2082,6 +2087,7 @@ func TestInstallMachineHealthChecksWithNoTimeout(t *testing.T) {
 	tt := newTest(t)
 	tt.clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].Name = "worker-1"
 	maxTime := time.Duration(math.MaxInt64)
+	maxUnhealthy := intstr.Parse("100%")
 	tt.clusterSpec.Cluster.Spec.MachineHealthCheck = &v1alpha1.MachineHealthCheck{
 		UnhealthyMachineTimeout: &metav1.Duration{
 			Duration: maxTime,
@@ -2089,6 +2095,7 @@ func TestInstallMachineHealthChecksWithNoTimeout(t *testing.T) {
 		NodeStartupTimeout: &metav1.Duration{
 			Duration: maxTime,
 		},
+		MaxUnhealthy: &maxUnhealthy,
 	}
 	wantMHC := expectedMachineHealthCheck(maxTime, maxTime)
 
@@ -2100,6 +2107,7 @@ func TestInstallMachineHealthChecksWithNoTimeout(t *testing.T) {
 func TestInstallMachineHealthChecksApplyError(t *testing.T) {
 	ctx := context.Background()
 	tt := newTest(t, clustermanager.WithRetrier(retrier.NewWithMaxRetries(2, 0)))
+	maxUnhealthy := intstr.Parse("100%")
 	tt.clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].Name = "worker-1"
 	tt.clusterSpec.Cluster.Spec.MachineHealthCheck = &v1alpha1.MachineHealthCheck{
 		UnhealthyMachineTimeout: &metav1.Duration{
@@ -2108,6 +2116,7 @@ func TestInstallMachineHealthChecksApplyError(t *testing.T) {
 		NodeStartupTimeout: &metav1.Duration{
 			Duration: constants.DefaultNodeStartupTimeout,
 		},
+		MaxUnhealthy: &maxUnhealthy,
 	}
 	wantMHC := expectedMachineHealthCheck(clustermanager.DefaultUnhealthyMachineTimeout, clustermanager.DefaultNodeStartupTimeout)
 	tt.mocks.client.EXPECT().ApplyKubeSpecFromBytes(ctx, tt.cluster, wantMHC).Return(errors.New("apply error")).MaxTimes(2)

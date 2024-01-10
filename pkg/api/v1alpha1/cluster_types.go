@@ -8,6 +8,7 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 
 	"github.com/aws/eks-anywhere/pkg/logger"
@@ -296,6 +297,8 @@ type ControlPlaneConfiguration struct {
 	// CertSANs is a slice of domain names or IPs to be added as Subject Name Alternatives of the
 	// Kube API Servers Certificate.
 	CertSANs []string `json:"certSans,omitempty"`
+	// MachineHealthCheck is a control-plane level override for the timeouts and maxUnhealthy specified in the top-level MHC configuration. If not configured, the defaults in the top-level MHC configuration are used.
+	MachineHealthCheck *MachineHealthCheck `json:"machineHealthCheck,omitempty"`
 }
 
 // MachineHealthCheck allows to configure timeouts for machine health checks. Machine Health Checks are responsible for remediating unhealthy Machines.
@@ -305,6 +308,8 @@ type MachineHealthCheck struct {
 	NodeStartupTimeout *metav1.Duration `json:"nodeStartupTimeout,omitempty"`
 	// UnhealthyMachineTimeout is used to configure the unhealthy machine timeout in machine health checks. If any unhealthy conditions are met for the amount of time specified as the timeout, the machines are considered unhealthy. If not configured, the default value is set to "5m0s" (5 minutes).
 	UnhealthyMachineTimeout *metav1.Duration `json:"unhealthyMachineTimeout,omitempty"`
+	// MaxUnhealthy is used to configure the maximum number of unhealthy machines in machine health checks. This setting applies to both control plane and worker machines. If the number of unhealthy machines exceeds the limit set by maxUnhealthy, further remediation will not be performed. If not configured, the default value is set to "100%" for controlplane machines and "40%" for worker machines.
+	MaxUnhealthy *intstr.IntOrString `json:"maxUnhealthy,omitempty"`
 }
 
 func TaintsSliceEqual(s1, s2 []corev1.Taint) bool {
@@ -440,6 +445,8 @@ type WorkerNodeGroupConfiguration struct {
 	UpgradeRolloutStrategy *WorkerNodesUpgradeRolloutStrategy `json:"upgradeRolloutStrategy,omitempty"`
 	// KuberenetesVersion defines the version for worker nodes. If not set, the top level spec kubernetesVersion will be used.
 	KubernetesVersion *KubernetesVersion `json:"kubernetesVersion,omitempty"`
+	// MachineHealthCheck is a worker node level override for the timeouts and maxUnhealthy specified in the top-level MHC configuration. If not configured, the defaults in the top-level MHC configuration are used.
+	MachineHealthCheck *MachineHealthCheck `json:"machineHealthCheck,omitempty"`
 }
 
 // Equal compares two WorkerNodeGroupConfigurations.
