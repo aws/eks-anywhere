@@ -101,9 +101,9 @@ You must use a single OIDC provider per EKS Anywhere cluster, which is the best 
 
 	1. After the cluster is created you can grant service accounts access to the role by modifying the trust relationship. See the [How to use trust policies with IAM Roles](https://aws.amazon.com/blogs/security/how-to-use-trust-policies-with-iam-roles/) for more information on trust policies. Refer to [Configure the trust relationship for the OIDC provider's IAM Role](#configure-the-trust-relationship-for-the-oidc-providers-iam-role) for a working example.
 
-### Create the EKS Anywhere cluster
+### Create (or upgrade) the EKS Anywhere cluster
 
-When creating the EKS Anywhere cluster, you need to configure the kube-apiserver's `service-account-issuer` flag so it can issue and mount projected service account tokens in pods. For this, use the value obtained in the first section for `$ISSUER_HOSTPATH` as the `service-account-issuer`. Configure the kube-apiserver by setting this value through the EKS Anywhere cluster spec:
+When creating (or upgrading) the EKS Anywhere cluster, you need to configure the kube-apiserver's `service-account-issuer` flag so it can issue and mount projected service account tokens in pods. For this, use the value obtained in the first section for `$ISSUER_HOSTPATH` as the `service-account-issuer`. Configure the kube-apiserver by setting this value through the EKS Anywhere cluster spec:
 ```yaml
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: Cluster
