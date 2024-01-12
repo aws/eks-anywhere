@@ -126,7 +126,7 @@ func (f *Flux) Bootstrap(ctx context.Context, cluster *types.Cluster, clusterSpe
 }
 
 func (f *Flux) BootstrapGithub(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
-	if cluster.ExistingManagement || clusterSpec.FluxConfig.Spec.Github == nil {
+	if clusterSpec.Cluster.IsManaged() || clusterSpec.FluxConfig.Spec.Github == nil {
 		return nil
 	}
 
@@ -134,7 +134,7 @@ func (f *Flux) BootstrapGithub(ctx context.Context, cluster *types.Cluster, clus
 }
 
 func (f *Flux) BootstrapGit(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
-	if cluster.ExistingManagement || clusterSpec.FluxConfig.Spec.Git == nil {
+	if clusterSpec.Cluster.IsManaged() || clusterSpec.FluxConfig.Spec.Git == nil {
 		return nil
 	}
 

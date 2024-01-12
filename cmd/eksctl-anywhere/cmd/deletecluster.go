@@ -134,13 +134,11 @@ func (dc *deleteClusterOptions) deleteCluster(ctx context.Context) error {
 		cluster = &types.Cluster{
 			Name:               clusterSpec.Cluster.Name,
 			KubeconfigFile:     kubeconfig.FromClusterName(clusterSpec.Cluster.Name),
-			ExistingManagement: false,
 		}
 	} else {
 		cluster = &types.Cluster{
 			Name:               clusterSpec.Cluster.Name,
 			KubeconfigFile:     clusterSpec.ManagementCluster.KubeconfigFile,
-			ExistingManagement: true,
 		}
 	}
 

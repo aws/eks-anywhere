@@ -40,6 +40,5 @@ func withMgmtClusterSetup(cluster *framework.ClusterE2ETest) *types.Cluster {
 	return &types.Cluster{
 		Name:               cluster.ClusterName,
 		KubeconfigFile:     filepath.Join(cluster.ClusterName, fmt.Sprintf("%s-eks-a-cluster.kubeconfig", cluster.ClusterName)),
-		ExistingManagement: true,
 	}
 }

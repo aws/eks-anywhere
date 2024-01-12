@@ -407,8 +407,7 @@ func (c *ClusterManager) CreateWorkloadCluster(ctx context.Context, managementCl
 	clusterName := clusterSpec.Cluster.Name
 
 	workloadCluster := &types.Cluster{
-		Name:               clusterName,
-		ExistingManagement: managementCluster.ExistingManagement,
+		Name: clusterName,
 	}
 
 	if err := c.applyProviderManifests(ctx, clusterSpec, managementCluster, provider); err != nil {
@@ -590,7 +589,7 @@ func (c *ClusterManager) deleteEKSAObjects(ctx context.Context, managementCluste
 
 func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, workloadCluster *types.Cluster, newClusterSpec *cluster.Spec, provider providers.Provider) error {
 	eksaMgmtCluster := workloadCluster
-	if managementCluster != nil && managementCluster.ExistingManagement {
+	if managementCluster != nil {
 		eksaMgmtCluster = managementCluster
 	}
 
