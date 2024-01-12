@@ -84,7 +84,6 @@ func TestRunnerHappyPath(t *testing.T) {
 	managementCluster := &types.Cluster{
 		Name:               clusterSpec.Cluster.Name,
 		KubeconfigFile:     kubeconfig.FromClusterName(clusterSpec.Cluster.Name),
-		ExistingManagement: clusterSpec.Cluster.IsSelfManaged(),
 	}
 
 	ctx := context.Background()
@@ -135,7 +134,6 @@ func TestRunnerStopsWhenValidationFailed(t *testing.T) {
 	managementCluster := &types.Cluster{
 		Name:               clusterSpec.Cluster.Name,
 		KubeconfigFile:     kubeconfig.FromClusterName(clusterSpec.Cluster.Name),
-		ExistingManagement: clusterSpec.Cluster.IsSelfManaged(),
 	}
 
 	ctx := context.Background()

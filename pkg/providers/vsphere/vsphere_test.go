@@ -1572,7 +1572,6 @@ func TestSetupAndValidateCreateWorkloadClusterSuccess(t *testing.T) {
 	clusterSpec.ManagementCluster = &types.Cluster{
 		Name:               "management-cluster",
 		KubeconfigFile:     "kc.kubeconfig",
-		ExistingManagement: true,
 	}
 	for _, config := range clusterSpec.VSphereMachineConfigs {
 		kubectl.EXPECT().SearchVsphereMachineConfig(ctx, config.Name, clusterSpec.ManagementCluster.KubeconfigFile, config.Namespace).Return([]*v1alpha1.VSphereMachineConfig{}, nil)
@@ -1603,7 +1602,6 @@ func TestSetupAndValidateCreateWorkloadClusterFailsIfMachineExists(t *testing.T)
 	clusterSpec.ManagementCluster = &types.Cluster{
 		Name:               "management-cluster",
 		KubeconfigFile:     "kc.kubeconfig",
-		ExistingManagement: true,
 	}
 
 	idx := 0
@@ -1638,7 +1636,6 @@ func TestSetupAndValidateSelfManagedClusterSkipMachineNameValidateSuccess(t *tes
 	clusterSpec.ManagementCluster = &types.Cluster{
 		Name:               "management-cluster",
 		KubeconfigFile:     "kc.kubeconfig",
-		ExistingManagement: true,
 	}
 
 	kubectl.EXPECT().SearchVsphereMachineConfig(context.TODO(), gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
@@ -1669,7 +1666,6 @@ func TestSetupAndValidateCreateWorkloadClusterFailsIfDatacenterExists(t *testing
 	clusterSpec.ManagementCluster = &types.Cluster{
 		Name:               "management-cluster",
 		KubeconfigFile:     "kc.kubeconfig",
-		ExistingManagement: true,
 	}
 
 	for _, config := range clusterSpec.VSphereMachineConfigs {
@@ -1697,7 +1693,6 @@ func TestSetupAndValidateSelfManagedClusterSkipDatacenterNameValidateSuccess(t *
 	clusterSpec.ManagementCluster = &types.Cluster{
 		Name:               "management-cluster",
 		KubeconfigFile:     "kc.kubeconfig",
-		ExistingManagement: true,
 	}
 
 	kubectl.EXPECT().SearchVsphereMachineConfig(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Times(0)

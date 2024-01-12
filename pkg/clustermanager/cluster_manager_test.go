@@ -842,8 +842,7 @@ func TestClusterManagerUpgradeWorkloadClusterSuccess(t *testing.T) {
 	workClusterName := "cluster-name-w"
 
 	mCluster := &types.Cluster{
-		Name:               mgmtClusterName,
-		ExistingManagement: true,
+		Name: mgmtClusterName,
 	}
 	wCluster := &types.Cluster{
 		Name: workClusterName,
@@ -888,8 +887,7 @@ func TestClusterManagerUpgradeWorkloadClusterAWSIamConfigSuccess(t *testing.T) {
 	workClusterName := "cluster-name-w"
 
 	mCluster := &types.Cluster{
-		Name:               mgmtClusterName,
-		ExistingManagement: true,
+		Name: mgmtClusterName,
 	}
 	wCluster := &types.Cluster{
 		Name: workClusterName,
@@ -969,8 +967,7 @@ func TestClusterManagerUpgradeCloudStackWorkloadClusterSuccess(t *testing.T) {
 	workClusterName := "cluster-name-w"
 
 	mCluster := &types.Cluster{
-		Name:               mgmtClusterName,
-		ExistingManagement: true,
+		Name: mgmtClusterName,
 	}
 	wCluster := &types.Cluster{
 		Name: workClusterName,
@@ -1015,8 +1012,7 @@ func TestClusterManagerUpgradeWorkloadClusterWaitForMDReadyErrorOnce(t *testing.
 	workClusterName := "cluster-name-w"
 
 	mCluster := &types.Cluster{
-		Name:               mgmtClusterName,
-		ExistingManagement: true,
+		Name: mgmtClusterName,
 	}
 	wCluster := &types.Cluster{
 		Name: workClusterName,
@@ -1064,8 +1060,7 @@ func TestClusterManagerUpgradeWorkloadClusterWaitForMDReadyUnreadyOnce(t *testin
 	workClusterName := "cluster-name-w"
 
 	mCluster := &types.Cluster{
-		Name:               mgmtClusterName,
-		ExistingManagement: true,
+		Name: mgmtClusterName,
 	}
 	wCluster := &types.Cluster{
 		Name: workClusterName,
@@ -1152,8 +1147,7 @@ func TestClusterManagerUpgradeWorkloadClusterGetMachineDeploymentError(t *testin
 	workClusterName := "cluster-name-w"
 
 	mCluster := &types.Cluster{
-		Name:               mgmtClusterName,
-		ExistingManagement: true,
+		Name: mgmtClusterName,
 	}
 	wCluster := &types.Cluster{
 		Name: workClusterName,
@@ -1188,8 +1182,7 @@ func TestClusterManagerUpgradeWorkloadClusterRemoveOldWorkerNodeGroupsError(t *t
 	workClusterName := "cluster-name-w"
 
 	mCluster := &types.Cluster{
-		Name:               mgmtClusterName,
-		ExistingManagement: true,
+		Name: mgmtClusterName,
 	}
 	wCluster := &types.Cluster{
 		Name: workClusterName,

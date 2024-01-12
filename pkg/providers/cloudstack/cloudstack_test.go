@@ -732,9 +732,8 @@ func TestSetupAndValidateCreateWorkloadClusterSuccess(t *testing.T) {
 	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
 	clusterSpec.Cluster.SetManagedBy("management-cluster")
 	clusterSpec.ManagementCluster = &types.Cluster{
-		Name:               "management-cluster",
-		KubeconfigFile:     "kc.kubeconfig",
-		ExistingManagement: true,
+		Name:           "management-cluster",
+		KubeconfigFile: "kc.kubeconfig",
 	}
 
 	setupContext(t)
@@ -765,9 +764,8 @@ func TestSetupAndValidateCreateWorkloadClusterFailsIfMachineExists(t *testing.T)
 	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
 	clusterSpec.Cluster.SetManagedBy("management-cluster")
 	clusterSpec.ManagementCluster = &types.Cluster{
-		Name:               "management-cluster",
-		KubeconfigFile:     "kc.kubeconfig",
-		ExistingManagement: true,
+		Name:           "management-cluster",
+		KubeconfigFile: "kc.kubeconfig",
 	}
 
 	setupContext(t)
@@ -808,9 +806,8 @@ func TestSetupAndValidateSelfManagedClusterSkipMachineNameValidateSuccess(t *tes
 	provider.providerKubectlClient = kubectl
 
 	clusterSpec.ManagementCluster = &types.Cluster{
-		Name:               "management-cluster",
-		KubeconfigFile:     "kc.kubeconfig",
-		ExistingManagement: true,
+		Name:           "management-cluster",
+		KubeconfigFile: "kc.kubeconfig",
 	}
 
 	kubectl.EXPECT().SearchCloudStackMachineConfig(context.TODO(), gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
@@ -828,9 +825,8 @@ func TestSetupAndValidateCreateWorkloadClusterFailsIfDatacenterExists(t *testing
 	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
 	clusterSpec.Cluster.SetManagedBy("management-cluster")
 	clusterSpec.ManagementCluster = &types.Cluster{
-		Name:               "management-cluster",
-		KubeconfigFile:     "kc.kubeconfig",
-		ExistingManagement: true,
+		Name:           "management-cluster",
+		KubeconfigFile: "kc.kubeconfig",
 	}
 
 	setupContext(t)
@@ -864,9 +860,8 @@ func TestSetupAndValidateSelfManagedClusterSkipDatacenterNameValidateSuccess(t *
 	provider.providerKubectlClient = kubectl
 
 	clusterSpec.ManagementCluster = &types.Cluster{
-		Name:               "management-cluster",
-		KubeconfigFile:     "kc.kubeconfig",
-		ExistingManagement: true,
+		Name:           "management-cluster",
+		KubeconfigFile: "kc.kubeconfig",
 	}
 
 	kubectl.EXPECT().SearchCloudStackMachineConfig(context.TODO(), gomock.Any(), gomock.Any(), gomock.Any()).Times(0)

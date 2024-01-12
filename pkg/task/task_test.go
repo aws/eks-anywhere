@@ -172,7 +172,6 @@ func TestUnmarshalTaskCheckpointSuccess(t *testing.T) {
 	testTaskCheckpoint := types.Cluster{
 		Name:               "test-cluster",
 		KubeconfigFile:     "test.kubeconfig",
-		ExistingManagement: false,
 	}
 
 	if err := task.UnmarshalTaskCheckpoint(testTaskCheckpoint, testConfigType); err != nil {

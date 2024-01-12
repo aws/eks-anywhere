@@ -170,7 +170,6 @@ func TestDeleteWorkloadRunSuccess(t *testing.T) {
 	test.clusterSpec.ManagementCluster = &types.Cluster{
 		Name:               "management-cluster",
 		KubeconfigFile:     "kc.kubeconfig",
-		ExistingManagement: true,
 	}
 	test.clusterSpec.Cluster.SetManagedBy(test.clusterSpec.ManagementCluster.Name)
 	test.expectDeleteWorkload(test.clusterSpec.ManagementCluster)
@@ -192,7 +191,6 @@ func TestDeleteWorkloadDeletePackageResourceError(t *testing.T) {
 	test.clusterSpec.ManagementCluster = &types.Cluster{
 		Name:               "management-cluster",
 		KubeconfigFile:     "kc.kubeconfig",
-		ExistingManagement: true,
 	}
 	test.clusterSpec.Cluster.SetManagedBy(test.clusterSpec.ManagementCluster.Name)
 	test.expectDeleteWorkload(test.clusterSpec.ManagementCluster)

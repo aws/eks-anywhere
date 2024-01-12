@@ -81,9 +81,8 @@ var upgradeManagementComponentsCmd = &cobra.Command{
 		)
 
 		managementCluster := &types.Cluster{
-			Name:               clusterSpec.Cluster.Name,
-			KubeconfigFile:     kubeconfig.FromClusterName(clusterSpec.Cluster.Name),
-			ExistingManagement: clusterSpec.Cluster.IsSelfManaged(),
+			Name:           clusterSpec.Cluster.Name,
+			KubeconfigFile: kubeconfig.FromClusterName(clusterSpec.Cluster.Name),
 		}
 
 		validator := management.NewUMCValidator(managementCluster, deps.Kubectl)
