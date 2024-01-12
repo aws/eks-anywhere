@@ -4419,10 +4419,6 @@ func TestCloudStackKubernetes128ValidateDomainFourLevelsSimpleFlow(t *testing.T)
 		framework.WithClusterFiller(
 			api.WithKubernetesVersion(v1alpha1.Kube128),
 		),
-	).WithClusterConfig(
-		api.CloudStackToConfigFiller(
-			api.WithCloudStackCredentialsRef("domain-test-creds"),
-		),
 	)
 	runSimpleFlow(test)
 }
