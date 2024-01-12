@@ -327,6 +327,38 @@ func TestProviderGenerateDeploymentFileSuccessUpdateMachineTemplate(t *testing.T
 			wantCPFile: "testdata/valid_deployment_cp_expected.yaml",
 			wantMDFile: "testdata/valid_autoscaler_deployment_md_expected.yaml",
 		},
+		{
+			testName: "valid config with rollout",
+			clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
+				s.Cluster.Name = "test-cluster"
+				s.Cluster.Spec.KubernetesVersion = "1.19"
+				s.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks = []string{"192.168.0.0/16"}
+				s.Cluster.Spec.ClusterNetwork.Services.CidrBlocks = []string{"10.128.0.0/12"}
+				s.Cluster.Spec.ControlPlaneConfiguration.Count = 3
+				s.Cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy = &v1alpha1.ControlPlaneUpgradeRolloutStrategy{
+					Type: "RollingUpdate",
+					RollingUpdate: v1alpha1.ControlPlaneRollingUpdateParams{
+						MaxSurge: 1,
+					},
+				}
+				s.VersionsBundles["1.19"] = versionsBundle
+				s.Cluster.Spec.ExternalEtcdConfiguration = &v1alpha1.ExternalEtcdConfiguration{Count: 3}
+				s.Cluster.Spec.WorkerNodeGroupConfigurations = []v1alpha1.WorkerNodeGroupConfiguration{{
+					Count:           ptr.Int(3),
+					MachineGroupRef: &v1alpha1.Ref{Name: "test-cluster"},
+					Name:            "md-0",
+					UpgradeRolloutStrategy: &v1alpha1.WorkerNodesUpgradeRolloutStrategy{
+						Type: "RollingUpdate",
+						RollingUpdate: v1alpha1.WorkerNodesRollingUpdateParams{
+							MaxSurge:       1,
+							MaxUnavailable: 0,
+						},
+					},
+				}}
+			}),
+			wantCPFile: "testdata/valid_deployment_cp_rollout_expected.yaml",
+			wantMDFile: "testdata/valid_deployment_md_rollout_expected.yaml",
+		},
 	}
 
 	for _, tt := range tests {
