@@ -1,12 +1,14 @@
 package vsphere_test
 
 import (
+	"os"
 	"testing"
 	"time"
 
 	. "github.com/onsi/gomega"
 
 	"github.com/aws/eks-anywhere/internal/test"
+	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
 )
 
@@ -50,6 +52,9 @@ func TestVsphereTemplateBuilderGenerateCAPISpecControlPlaneInvalidEtcdSSHKey(t *
 }
 
 func TestTemplateBuilder_CertSANs(t *testing.T) {
+	os.Unsetenv(config.EksavSphereUsernameKey)
+	os.Unsetenv(config.EksavSpherePasswordKey)
+
 	for _, tc := range []struct {
 		Input  string
 		Output string

@@ -244,7 +244,7 @@ func (s *CreateWorkloadClusterTask) Run(ctx context.Context, commandContext *tas
 		}
 	}
 
-	if !commandContext.BootstrapCluster.ExistingManagement {
+	if commandContext.ClusterSpec.Cluster.IsSelfManaged() {
 		logger.Info("Creating EKS-A namespace")
 		err = commandContext.ClusterManager.CreateEKSANamespace(ctx, workloadCluster)
 		if err != nil {
@@ -284,7 +284,7 @@ func (s *CreateWorkloadClusterTask) Checkpoint() *task.CompletedTask {
 
 // InstallResourcesOnManagement implementation.
 func (s *InstallResourcesOnManagementTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
-	if commandContext.BootstrapCluster.ExistingManagement {
+	if commandContext.ClusterSpec.Cluster.IsManaged() {
 		return &MoveClusterManagementTask{}
 	}
 	logger.Info("Installing resources on management cluster")
@@ -311,7 +311,7 @@ func (s *InstallResourcesOnManagementTask) Checkpoint() *task.CompletedTask {
 // MoveClusterManagementTask implementation
 
 func (s *MoveClusterManagementTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
-	if commandContext.BootstrapCluster.ExistingManagement {
+	if commandContext.ClusterSpec.Cluster.IsManaged() {
 		return &InstallEksaComponentsTask{}
 	}
 	logger.Info("Moving cluster management from bootstrap to workload cluster")
@@ -339,7 +339,7 @@ func (s *MoveClusterManagementTask) Checkpoint() *task.CompletedTask {
 // InstallEksaComponentsTask implementation
 
 func (s *InstallEksaComponentsTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
-	if !commandContext.BootstrapCluster.ExistingManagement {
+	if commandContext.ClusterSpec.Cluster.IsSelfManaged() {
 		logger.Info("Installing EKS-A custom components (CRD and controller) on workload cluster")
 		err := commandContext.ClusterManager.InstallCustomComponents(ctx, commandContext.ClusterSpec, commandContext.WorkloadCluster, commandContext.Provider)
 		if err != nil {
@@ -359,7 +359,7 @@ func (s *InstallEksaComponentsTask) Run(ctx context.Context, commandContext *tas
 	machineConfigs := commandContext.Provider.MachineConfigs(commandContext.ClusterSpec)
 
 	targetCluster := commandContext.WorkloadCluster
-	if commandContext.BootstrapCluster.ExistingManagement {
+	if commandContext.ClusterSpec.Cluster.IsManaged() {
 		targetCluster = commandContext.BootstrapCluster
 	}
 	err := commandContext.ClusterManager.CreateEKSAResources(ctx, targetCluster, commandContext.ClusterSpec, datacenterConfig, machineConfigs)
@@ -442,7 +442,7 @@ func (s *WriteClusterConfigTask) Checkpoint() *task.CompletedTask {
 // DeleteBootstrapClusterTask implementation
 
 func (s *DeleteBootstrapClusterTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
-	if !commandContext.BootstrapCluster.ExistingManagement {
+	if commandContext.ClusterSpec.Cluster.IsSelfManaged() {
 		logger.Info("Deleting bootstrap cluster")
 		err := commandContext.Bootstrapper.DeleteBootstrapCluster(ctx, commandContext.BootstrapCluster, constants.Create, false)
 		if err != nil {

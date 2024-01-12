@@ -39,6 +39,5 @@ func LoadManagement(kubeconfig string) (*types.Cluster, error) {
 	return &types.Cluster{
 		Name:               kc.Clusters[0].Name,
 		KubeconfigFile:     kubeconfig,
-		ExistingManagement: true,
 	}, nil
 }
