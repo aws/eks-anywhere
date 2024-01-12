@@ -15,6 +15,24 @@ Please upgrade to `v0.15.3` if you are using Tinkerbell (Bare Metal) provider.
 * When upgrading to a new minor version, a new OS image must be created using the new image-builder cli.
 {{% /alert %}}
 
+## [v0.18.4](https://github.com/aws/eks-anywhere/releases/tag/v0.18.4)
+
+### Fixed
+* CNI reconciler now properly pulls images from registry mirror instead of public ECR in airgapped environments: [#7170](https://github.com/aws/eks-anywhere/pull/7170)
+
+### Added 
+* Nutanix: Enable audit log for Nutanix control plane template ([#2664](https://github.com/aws/eks-anywhere/pull/7190))
+
+### Supported Operating Systems
+
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow  |
+| :----------:        | :-----: | :--------: | :-----: | :--------: | :---: |
+| Ubuntu 20.04        | ✔       | ✔          | ✔       | —          | ✔     |
+| Ubuntu 22.04        | ✔       | ✔          | ✔       | —          | —     |
+| Bottlerocket 1.15.1 | ✔       | ✔          | —       | —          | —     |
+| RHEL 8.7            | ✔       | ✔          | ✔       | ✔          | —     |
+| RHEL 9.x            | —       | —          | ✔       | —          | —     |
+
 ## [v0.18.3](https://github.com/aws/eks-anywhere/releases/tag/v0.18.3)
 
 ### Fixed
