@@ -21,10 +21,12 @@ import (
 
 const (
 	cloudstackDomainVar                = "T_CLOUDSTACK_DOMAIN"
+	cloudstackDomain2Var               = "T_CLOUDSTACK_DOMAIN_2" // Not a required env var
 	cloudstackZoneVar                  = "T_CLOUDSTACK_ZONE"
 	cloudstackZone2Var                 = "T_CLOUDSTACK_ZONE_2"
 	cloudstackZone3Var                 = "T_CLOUDSTACK_ZONE_3"
 	cloudstackAccountVar               = "T_CLOUDSTACK_ACCOUNT"
+	cloudstackAccount2Var              = "T_CLOUDSTACK_ACCOUNT_2" // Not a required env var
 	cloudstackNetworkVar               = "T_CLOUDSTACK_NETWORK"
 	cloudstackNetwork2Var              = "T_CLOUDSTACK_NETWORK_2"
 	cloudstackNetwork3Var              = "T_CLOUDSTACK_NETWORK_3"
@@ -89,7 +91,13 @@ func UpdateLargerCloudStackComputeOffering() api.CloudStackFiller {
 	return api.WithCloudStackStringFromEnvVar(cloudstackComputeOfferingLargerVar, api.WithCloudStackComputeOfferingForAllMachines)
 }
 
-// UpdateAddCloudStackAz3 add availiability zone 3 to the cluster spec.
+// UpdateAddCloudStackAz4 add availability zone 4 to the cluster spec.
+func UpdateAddCloudStackAz4() api.CloudStackFiller {
+	return api.WithCloudStackAzFromEnvVars(cloudstackAccount2Var, cloudstackDomain2Var, cloudstackZoneVar, cloudstackCredentialsVar, cloudstackNetworkVar,
+		cloudstackManagementServerVar, api.WithCloudStackAz)
+}
+
+// UpdateAddCloudStackAz3 add availability zone 3 to the cluster spec.
 func UpdateAddCloudStackAz3() api.CloudStackFiller {
 	return api.WithCloudStackAzFromEnvVars(cloudstackAccountVar, cloudstackDomainVar, cloudstackZone3Var, cloudstackCredentials3Var, cloudstackNetwork3Var,
 		cloudstackManagementServer3Var, api.WithCloudStackAz)
