@@ -37,7 +37,7 @@ const (
 	cloudstackManagementServerVar               = "T_CLOUDSTACK_MANAGEMENT_SERVER"
 	cloudstackManagementServer2Var              = "T_CLOUDSTACK_MANAGEMENT_SERVER_2"
 	cloudstackManagementServer3Var              = "T_CLOUDSTACK_MANAGEMENT_SERVER_3"
-	cloudstackSshAuthorizedKeyVar               = "T_CLOUDSTACK_SSH_AUTHORIZED_KEY"
+	cloudstackSSHAuthorizedKeyVar               = "T_CLOUDSTACK_SSH_AUTHORIZED_KEY"
 	cloudstackComputeOfferingLargeVar           = "T_CLOUDSTACK_COMPUTE_OFFERING_LARGE"
 	cloudstackComputeOfferingLargerVar          = "T_CLOUDSTACK_COMPUTE_OFFERING_LARGER"
 	cloudStackClusterIPPoolEnvVar               = "T_CLOUDSTACK_CLUSTER_IP_POOL"
@@ -64,7 +64,7 @@ var requiredCloudStackEnvVars = []string{
 	cloudstackManagementServerVar,
 	cloudstackManagementServer2Var,
 	cloudstackManagementServer3Var,
-	cloudstackSshAuthorizedKeyVar,
+	cloudstackSSHAuthorizedKeyVar,
 	cloudstackComputeOfferingLargeVar,
 	cloudstackComputeOfferingLargerVar,
 	cloudStackCidrVar,
@@ -133,7 +133,7 @@ func NewCloudStack(t *testing.T, opts ...CloudStackOpt) *CloudStack {
 			api.RemoveCloudStackAzs(),
 			api.WithCloudStackAzFromEnvVars(cloudstackAccountVar, cloudstackDomainVar, cloudstackZoneVar, cloudstackCredentialsVar, cloudstackNetworkVar,
 				cloudstackManagementServerVar, api.WithCloudStackAz),
-			api.WithCloudStackStringFromEnvVar(cloudstackSshAuthorizedKeyVar, api.WithCloudStackSSHAuthorizedKey),
+			api.WithCloudStackStringFromEnvVar(cloudstackSSHAuthorizedKeyVar, api.WithCloudStackSSHAuthorizedKey),
 			api.WithCloudStackStringFromEnvVar(cloudstackComputeOfferingLargeVar, api.WithCloudStackComputeOfferingForAllMachines),
 		},
 	}
@@ -298,7 +298,7 @@ func cloudStackMachineConfig(name string, fillers ...api.CloudStackMachineConfig
 	// values to all machines have already ran
 	f = append(f,
 		api.WithCloudStackComputeOffering(os.Getenv(cloudstackComputeOfferingLargeVar)),
-		api.WithCloudStackSSHKey(os.Getenv(cloudstackSshAuthorizedKeyVar)),
+		api.WithCloudStackSSHKey(os.Getenv(cloudstackSSHAuthorizedKeyVar)),
 	)
 	f = append(f, fillers...)
 
