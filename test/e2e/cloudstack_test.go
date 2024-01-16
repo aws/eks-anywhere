@@ -4403,3 +4403,22 @@ func TestCloudstackKubernetes127To128RedHatManagementCPUpgradeAPI(t *testing.T) 
 		provider.WithKubeVersionAndOS(v1alpha1.Kube128, framework.RedHat8, nil),
 	)
 }
+
+func TestCloudStackKubernetes128ValidateDomainFourLevelsSimpleFlow(t *testing.T) {
+	provider := framework.NewCloudStack(
+		t,
+		framework.WithCloudStackRedhat128(),
+		framework.WithCloudStackFillers(
+			framework.RemoveAllCloudStackAzs(),
+			framework.UpdateAddCloudStackAz4(),
+		),
+	)
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube128),
+		),
+	)
+	runSimpleFlow(test)
+}

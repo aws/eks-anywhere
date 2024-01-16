@@ -20,29 +20,32 @@ import (
 )
 
 const (
-	cloudstackDomainVar                = "T_CLOUDSTACK_DOMAIN"
-	cloudstackZoneVar                  = "T_CLOUDSTACK_ZONE"
-	cloudstackZone2Var                 = "T_CLOUDSTACK_ZONE_2"
-	cloudstackZone3Var                 = "T_CLOUDSTACK_ZONE_3"
-	cloudstackAccountVar               = "T_CLOUDSTACK_ACCOUNT"
-	cloudstackNetworkVar               = "T_CLOUDSTACK_NETWORK"
-	cloudstackNetwork2Var              = "T_CLOUDSTACK_NETWORK_2"
-	cloudstackNetwork3Var              = "T_CLOUDSTACK_NETWORK_3"
-	cloudstackCredentialsVar           = "T_CLOUDSTACK_CREDENTIALS"
-	cloudstackCredentials2Var          = "T_CLOUDSTACK_CREDENTIALS_2"
-	cloudstackCredentials3Var          = "T_CLOUDSTACK_CREDENTIALS_3"
-	cloudstackManagementServerVar      = "T_CLOUDSTACK_MANAGEMENT_SERVER"
-	cloudstackManagementServer2Var     = "T_CLOUDSTACK_MANAGEMENT_SERVER_2"
-	cloudstackManagementServer3Var     = "T_CLOUDSTACK_MANAGEMENT_SERVER_3"
-	cloudstackSshAuthorizedKeyVar      = "T_CLOUDSTACK_SSH_AUTHORIZED_KEY"
-	cloudstackComputeOfferingLargeVar  = "T_CLOUDSTACK_COMPUTE_OFFERING_LARGE"
-	cloudstackComputeOfferingLargerVar = "T_CLOUDSTACK_COMPUTE_OFFERING_LARGER"
-	cloudStackClusterIPPoolEnvVar      = "T_CLOUDSTACK_CLUSTER_IP_POOL"
-	cloudStackCidrVar                  = "T_CLOUDSTACK_CIDR"
-	podCidrVar                         = "T_CLOUDSTACK_POD_CIDR"
-	serviceCidrVar                     = "T_CLOUDSTACK_SERVICE_CIDR"
-	cloudstackFeatureGateEnvVar        = "CLOUDSTACK_PROVIDER"
-	cloudstackB64EncodedSecretEnvVar   = "EKSA_CLOUDSTACK_B64ENCODED_SECRET"
+	cloudstackDomainVar                         = "T_CLOUDSTACK_DOMAIN"
+	cloudstackMultiLevelDomainVar               = "T_CLOUDSTACK_MULTILEVEL_DOMAIN" // Not a required env var
+	cloudstackZoneVar                           = "T_CLOUDSTACK_ZONE"
+	cloudstackZone2Var                          = "T_CLOUDSTACK_ZONE_2"
+	cloudstackZone3Var                          = "T_CLOUDSTACK_ZONE_3"
+	cloudstackAccountVar                        = "T_CLOUDSTACK_ACCOUNT"
+	cloudstackAccountForMultiLevelDomainVar     = "T_CLOUDSTACK_ACCOUNT_FOR_MULTILEVEL_DOMAIN" // Not a required env var
+	cloudstackNetworkVar                        = "T_CLOUDSTACK_NETWORK"
+	cloudstackNetwork2Var                       = "T_CLOUDSTACK_NETWORK_2"
+	cloudstackNetwork3Var                       = "T_CLOUDSTACK_NETWORK_3"
+	cloudstackCredentialsVar                    = "T_CLOUDSTACK_CREDENTIALS"
+	cloudstackCredentials2Var                   = "T_CLOUDSTACK_CREDENTIALS_2"
+	cloudstackCredentials3Var                   = "T_CLOUDSTACK_CREDENTIALS_3"
+	cloudstackCredentialsForMultiLevelDomainVar = "T_CLOUDSTACK_CREDENTIALS_FOR_MULTILEVEL_DOMAIN"
+	cloudstackManagementServerVar               = "T_CLOUDSTACK_MANAGEMENT_SERVER"
+	cloudstackManagementServer2Var              = "T_CLOUDSTACK_MANAGEMENT_SERVER_2"
+	cloudstackManagementServer3Var              = "T_CLOUDSTACK_MANAGEMENT_SERVER_3"
+	cloudstackSSHAuthorizedKeyVar               = "T_CLOUDSTACK_SSH_AUTHORIZED_KEY"
+	cloudstackComputeOfferingLargeVar           = "T_CLOUDSTACK_COMPUTE_OFFERING_LARGE"
+	cloudstackComputeOfferingLargerVar          = "T_CLOUDSTACK_COMPUTE_OFFERING_LARGER"
+	cloudStackClusterIPPoolEnvVar               = "T_CLOUDSTACK_CLUSTER_IP_POOL"
+	cloudStackCidrVar                           = "T_CLOUDSTACK_CIDR"
+	podCidrVar                                  = "T_CLOUDSTACK_POD_CIDR"
+	serviceCidrVar                              = "T_CLOUDSTACK_SERVICE_CIDR"
+	cloudstackFeatureGateEnvVar                 = "CLOUDSTACK_PROVIDER"
+	cloudstackB64EncodedSecretEnvVar            = "EKSA_CLOUDSTACK_B64ENCODED_SECRET"
 )
 
 var requiredCloudStackEnvVars = []string{
@@ -61,7 +64,7 @@ var requiredCloudStackEnvVars = []string{
 	cloudstackManagementServerVar,
 	cloudstackManagementServer2Var,
 	cloudstackManagementServer3Var,
-	cloudstackSshAuthorizedKeyVar,
+	cloudstackSSHAuthorizedKeyVar,
 	cloudstackComputeOfferingLargeVar,
 	cloudstackComputeOfferingLargerVar,
 	cloudStackCidrVar,
@@ -89,7 +92,13 @@ func UpdateLargerCloudStackComputeOffering() api.CloudStackFiller {
 	return api.WithCloudStackStringFromEnvVar(cloudstackComputeOfferingLargerVar, api.WithCloudStackComputeOfferingForAllMachines)
 }
 
-// UpdateAddCloudStackAz3 add availiability zone 3 to the cluster spec.
+// UpdateAddCloudStackAz4 add availability zone 4 to the cluster spec.
+func UpdateAddCloudStackAz4() api.CloudStackFiller {
+	return api.WithCloudStackAzFromEnvVars(cloudstackAccountForMultiLevelDomainVar, cloudstackMultiLevelDomainVar, cloudstackZoneVar, cloudstackCredentialsForMultiLevelDomainVar, cloudstackNetworkVar,
+		cloudstackManagementServerVar, api.WithCloudStackAz)
+}
+
+// UpdateAddCloudStackAz3 add availability zone 3 to the cluster spec.
 func UpdateAddCloudStackAz3() api.CloudStackFiller {
 	return api.WithCloudStackAzFromEnvVars(cloudstackAccountVar, cloudstackDomainVar, cloudstackZone3Var, cloudstackCredentials3Var, cloudstackNetwork3Var,
 		cloudstackManagementServer3Var, api.WithCloudStackAz)
@@ -124,7 +133,7 @@ func NewCloudStack(t *testing.T, opts ...CloudStackOpt) *CloudStack {
 			api.RemoveCloudStackAzs(),
 			api.WithCloudStackAzFromEnvVars(cloudstackAccountVar, cloudstackDomainVar, cloudstackZoneVar, cloudstackCredentialsVar, cloudstackNetworkVar,
 				cloudstackManagementServerVar, api.WithCloudStackAz),
-			api.WithCloudStackStringFromEnvVar(cloudstackSshAuthorizedKeyVar, api.WithCloudStackSSHAuthorizedKey),
+			api.WithCloudStackStringFromEnvVar(cloudstackSSHAuthorizedKeyVar, api.WithCloudStackSSHAuthorizedKey),
 			api.WithCloudStackStringFromEnvVar(cloudstackComputeOfferingLargeVar, api.WithCloudStackComputeOfferingForAllMachines),
 		},
 	}
@@ -289,7 +298,7 @@ func cloudStackMachineConfig(name string, fillers ...api.CloudStackMachineConfig
 	// values to all machines have already ran
 	f = append(f,
 		api.WithCloudStackComputeOffering(os.Getenv(cloudstackComputeOfferingLargeVar)),
-		api.WithCloudStackSSHKey(os.Getenv(cloudstackSshAuthorizedKeyVar)),
+		api.WithCloudStackSSHKey(os.Getenv(cloudstackSSHAuthorizedKeyVar)),
 	)
 	f = append(f, fillers...)
 
