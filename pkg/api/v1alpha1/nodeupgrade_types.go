@@ -37,11 +37,13 @@ type NodeUpgradeSpec struct {
 	// Machine is a reference to the CAPI Machine that needs to be upgraded.
 	Machine corev1.ObjectReference `json:"machine"`
 
-	// TODO(in-place): Determine if there's a way to get these dynamically instead of expecting it from the CRD.
+	// KubernetesVersion refers to the Kubernetes version to upgrade the node to.
+	KubernetesVersion string `json:"kubernetesVersion"`
 
-	KubernetesVersion string  `json:"kubernetesVersion"`
-	EtcdVersion       *string `json:"etcdVersion,omitempty"`
-	CoreDNSVersion    *string `json:"coreDNSVersion,omitempty"`
+	// EtcdVersion refers to the version of ETCD to upgrade to.
+	// This field is optional and only gets used for control plane nodes.
+	// +optional
+	EtcdVersion *string `json:"etcdVersion,omitempty"`
 
 	// FirstNodeToBeUpgraded signifies that the Node is the first node to be upgraded.
 	// This flag is only valid for control plane nodes and ignored for worker nodes.
@@ -51,8 +53,13 @@ type NodeUpgradeSpec struct {
 
 // NodeUpgradeStatus defines the observed state of NodeUpgrade.
 type NodeUpgradeStatus struct {
+	// Conditions defines current state of the NodeUpgrade,
+	// including the state of init containers, that facilitate the upgrade.
 	// +optional
 	Conditions []Condition `json:"conditions,omitempty"`
+
+	// Completed denotes that the upgrader has completed running all the operations
+	// and the node is successfully upgraded.
 	// +optional
 	Completed bool `json:"completed,omitempty"`
 

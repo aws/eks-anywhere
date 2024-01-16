@@ -36,9 +36,10 @@ spec:
           spec:
             description: NodeUpgradeSpec defines the desired state of NodeUpgrade.
             properties:
-              coreDNSVersion:
-                type: string
               etcdVersion:
+                description: EtcdVersion refers to the version of ETCD to upgrade
+                  to. This field is optional and only gets used for control plane
+                  nodes.
                 type: string
               firstNodeToBeUpgraded:
                 description: FirstNodeToBeUpgraded signifies that the Node is the
@@ -46,8 +47,8 @@ spec:
                   nodes and ignored for worker nodes.
                 type: boolean
               kubernetesVersion:
-                description: 'TODO(in-place): Determine if there''s a way to get these
-                  dynamically instead of expecting it from the CRD.'
+                description: KubernetesVersion refers to the Kubernetes version to
+                  upgrade the node to.
                 type: string
               machine:
                 description: Machine is a reference to the CAPI Machine that needs
@@ -94,8 +95,12 @@ spec:
             description: NodeUpgradeStatus defines the observed state of NodeUpgrade.
             properties:
               completed:
+                description: Completed denotes that the upgrader has completed running
+                  all the operations and the node is successfully upgraded.
                 type: boolean
               conditions:
+                description: Conditions defines current state of the NodeUpgrade,
+                  including the state of init containers, that facilitate the upgrade.
                 items:
                   description: Condition defines an observation of a Cluster API resource
                     operational state.

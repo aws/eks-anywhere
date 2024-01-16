@@ -1,6 +1,7 @@
 package v1alpha1
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -9,19 +10,26 @@ const MachineDeploymentUpgradeKind = "MachineDeploymentUpgrade"
 
 // MachineDeploymentUpgradeSpec defines the desired state of MachineDeploymentUpgrade.
 type MachineDeploymentUpgradeSpec struct {
-	Cluster                Ref    `json:"cluster"`
-	MachineDeployment      Ref    `json:"machineDeployment"`
-	MachinesRequireUpgrade []Ref  `json:"machinesRequireUpgrade"`
-	KubernetesVersion      string `json:"kubernetesVersion"`
-	KubeletVersion         string `json:"kubeletVersion"`
-	KubeadmClusterConfig   string `json:"kubeadmClusterConfig"`
+	// MachineDeployment is a reference to the KubeadmControlPlane object to upgrade.
+	MachineDeployment corev1.ObjectReference `json:"machineDeployment"`
+
+	// MachinesRequireUpgrade is a list of references to CAPI machines that need to be upgraded.
+	MachinesRequireUpgrade []corev1.ObjectReference `json:"machinesRequireUpgrade"`
+
+	// KubernetesVersion refers to the Kubernetes version to upgrade the control planes to.
+	KubernetesVersion string `json:"kubernetesVersion"`
 }
 
 // MachineDeploymentUpgradeStatus defines the observed state of MachineDeploymentUpgrade.
 type MachineDeploymentUpgradeStatus struct {
+	// RequireUpgrade is the number of machines in the MachineDeployment that still need to be upgraded.
 	RequireUpgrade int64 `json:"requireUpgrade,omitempty"`
-	Upgraded       int64 `json:"upgraded,omitempty"`
-	Ready          bool  `json:"ready,omitempty"`
+
+	// Upgraded is the number of machines in the MachineDeployment that have been upgraded.
+	Upgraded int64 `json:"upgraded,omitempty"`
+
+	// Ready denotes that the all machines in the MachineDeployment have finished upgrading and are ready.
+	Ready bool `json:"ready,omitempty"`
 }
 
 //+kubebuilder:object:root=true
