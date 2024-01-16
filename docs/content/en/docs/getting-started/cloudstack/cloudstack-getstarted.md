@@ -1,6 +1,6 @@
 ---
-title: "Create CloudStack cluster" 
-linkTitle: "3. Create cluster" 
+title: "Create CloudStack cluster"
+linkTitle: "3. Create cluster"
 weight: 30
 description: >
   Create a cluster on CloudStack
@@ -51,7 +51,7 @@ Follow these steps to create an EKS Anywhere cluster that can be used either as 
 
 <!-- this content needs to be indented so the numbers are automatically incremented -->
 
-0. Optional Configuration
+1. Optional Configuration
 
    **Set License Environment Variable**
 
@@ -71,7 +71,7 @@ Follow these steps to create an EKS Anywhere cluster that can be used either as 
       ```bash
       export EKSA_AWS_ACCESS_KEY_ID="your*access*id"
       export EKSA_AWS_SECRET_ACCESS_KEY="your*secret*key"
-      export EKSA_AWS_REGION="us-west-2"  
+      export EKSA_AWS_REGION="us-west-2"
       ```
 
 1. Generate an initial cluster config (named `mgmt` for this example):
@@ -84,7 +84,7 @@ Follow these steps to create an EKS Anywhere cluster that can be used either as 
 
    Create a credential file (for example, `cloud-config`) and add the credentials needed to access your CloudStack environment. The file should include:
 
-   * api-key: Obtained from CloudStack 
+   * api-key: Obtained from CloudStack
    * secret-key: Obtained from CloudStack
    * api-url: The URL to your CloudStack API endpoint
 
@@ -110,18 +110,11 @@ Follow these steps to create an EKS Anywhere cluster that can be used either as 
 1. Set Environment Variables
 
    Convert the credential file into base64 and set the following environment variable to that value:
-   
+
    ```bash
    export EKSA_CLOUDSTACK_B64ENCODED_SECRET=$(base64 -i cloud-config)
    ```
-     
-1. Disable Kubevip load balancer
 
-   Skip this step if you want to use the Kubevip load balancer with your cluster. If you want to use a different load balancer, you can disable Kubevip as follows:
-
-   ```bash
-   export CLOUDSTACK_KUBE_VIP_DISABLED=true
-   ```
 1. Create cluster
 
    ```bash
@@ -145,9 +138,9 @@ Follow these steps to create an EKS Anywhere cluster that can be used either as 
 
    Example command output
    ```
-   NAMESPACE   NAME                PROVIDERID        PHASE    VERSION
+   NAMESPACE   NAME                PROVIDERID           PHASE    VERSION
    eksa-system mgmt-b2xyz          cloudstack:/xxxxx    Running  v1.23.1-eks-1-21-5
-   eksa-system mgmt-etcd-r9b42     cloudstack:/xxxxx    Running  
+   eksa-system mgmt-etcd-r9b42     cloudstack:/xxxxx    Running
    eksa-system mgmt-md-8-6xr-rnr   cloudstack:/xxxxx    Running  v1.23.1-eks-1-21-5
    ...
    ```
@@ -235,11 +228,11 @@ Follow these steps if you want to use your initial cluster to create and manage 
 
    * **kubectl CLI**: The cluster lifecycle feature lets you use `kubectl`, or other tools that that can talk to the Kubernetes API, to create a workload cluster. To use `kubectl`, run:
       ```bash
-      kubectl apply -f eksa-w01-cluster.yaml 
+      kubectl apply -f eksa-w01-cluster.yaml
       ```
 
        To check the state of a cluster managed with the cluster lifecyle feature, use `kubectl` to show the cluster object with its status.
-      
+
       The `status` field on the cluster object field holds information about the current state of the cluster.
 
       ```
@@ -249,7 +242,7 @@ Follow these steps if you want to use your initial cluster to create and manage 
       The cluster has been fully upgraded once the status of the `Ready` condition is marked `True`.
       See the [cluster status]({{< relref "../../clustermgmt/cluster-status" >}}) guide for more information.
 
-     
+
 1. To check the workload cluster, get the workload cluster credentials and run a [test workload:]({{< relref "../../workloadmgmt/test-app" >}})
 
    * If your workload cluster was created with `eksctl`,
@@ -273,7 +266,17 @@ Follow these steps if you want to use your initial cluster to create and manage 
 
    To add more workload clusters, go through the same steps for creating the initial workload, copying the config file to a new name (such as `eksa-w02-cluster.yaml`), modifying resource names, and running the create cluster command again.
 
-## Next steps:
+## Next steps
 * See the [Cluster management]({{< relref "../../clustermgmt" >}}) section for more information on common operational tasks like scaling and deleting the cluster.
 
 * See the [Package management]({{< relref "../../packages" >}}) section for more information on post-creation curated packages installation.
+
+## Optional configuration
+
+### Disable KubeVIP
+
+The KubeVIP deployment used for load balancing Kube API Server requests can be disabled by setting an environment variable that will be interpreted by the `eksctl anywhere create cluster` command. Disabling the KubeVIP deployment is useful if you wish to use an external load balancer for load balancing Kube API Server requests. When disabling the KubeVIP load balancer you become responsible for hosting the `Spec.ControlPlaneConfiguration.Endpoint.Host` IP which must route requests to a Kube API Server instance of the cluster being provisioned.
+
+```sh
+export CLOUDSTACK_KUBE_VIP_DISABLED=true
+```
