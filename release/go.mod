@@ -172,4 +172,11 @@ require (
 // However, the latest release (at the moment) of helm.sh/helm/v3, uses oras 1.2.2
 // This version swap seems like a drop-in replacement and worka out of the box.
 // Once helm releases a new version using oras 1.2.3 or newer, we can remove this.
-replace oras.land/oras-go => oras.land/oras-go v1.2.3
+replace (
+	oras.land/oras-go => oras.land/oras-go v1.2.3
+
+	github.com/aws/eks-anywhere => ../../
+	github.com/aws/eks-anywhere/internal/aws-sdk-go-v2/internal/configsources => ./internal/aws-sdk-go-v2/internal/configsources
+	github.com/aws/eks-anywhere/internal/aws-sdk-go-v2/internal/endpoints/v2 => ./internal/aws-sdk-go-v2/internal/endpoints/v2
+	github.com/aws/eks-anywhere/internal/aws-sdk-go-v2/service/snowballdevice => ./internal/aws-sdk-go-v2/service/snowballdevice
+)
