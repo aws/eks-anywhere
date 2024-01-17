@@ -830,6 +830,12 @@ func TestProviderGenerateCAPISpecForUpgradeUpdateMachineTemplateExternalEtcd(t *
 			wantCPFile:        "testdata/expected_results_main_node_labels_cp.yaml",
 			wantMDFile:        "testdata/expected_results_main_md.yaml",
 		},
+		{
+			testName:          "main with upgrade rollout strategy",
+			clusterconfigFile: "cluster_main_with_rollout.yaml",
+			wantCPFile:        "testdata/expected_results_main_cp_with_upgrade_rollout.yaml",
+			wantMDFile:        "testdata/expected_results_main_md_with_upgrade_rollout.yaml",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.testName, func(t *testing.T) {
@@ -1481,76 +1487,6 @@ func TestSetupAndValidateUpgradeClusterMissingPrivError(t *testing.T) {
 	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec, clusterSpec)
 
 	thenErrorExpected(t, "validating vsphere user privileges: error", err)
-}
-
-func TestSetupAndValidateCreateCPUpgradeRolloutStrategy(t *testing.T) {
-	ctx := context.Background()
-	clusterSpec := givenClusterSpec(t, testClusterConfigWithCPUpgradeStrategy)
-	provider := givenProvider(t)
-	setupContext(t)
-
-	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
-
-	thenErrorExpected(t, "failed setup and validations: Upgrade rollout strategy customization is not supported for vSphere provider", err)
-}
-
-func TestSetupAndValidateCreateMDUpgradeRolloutStrategy(t *testing.T) {
-	ctx := context.Background()
-	clusterSpec := givenClusterSpec(t, testClusterConfigWithMDUpgradeStrategy)
-	provider := givenProvider(t)
-	setupContext(t)
-
-	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
-
-	thenErrorExpected(t, "failed setup and validations: Upgrade rollout strategy customization is not supported for vSphere provider", err)
-}
-
-func TestSetupAndValidateUpgradeCPUpgradeRolloutStrategy(t *testing.T) {
-	ctx := context.Background()
-	clusterSpec := givenClusterSpec(t, testClusterConfigWithCPUpgradeStrategy)
-	cluster := &types.Cluster{}
-	provider := givenProvider(t)
-	setupContext(t)
-
-	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec, clusterSpec)
-
-	thenErrorExpected(t, "failed setup and validations: Upgrade rollout strategy customization is not supported for vSphere provider", err)
-}
-
-func TestSetupAndValidateUpgradeMDUpgradeRolloutStrategy(t *testing.T) {
-	ctx := context.Background()
-	clusterSpec := givenClusterSpec(t, testClusterConfigWithMDUpgradeStrategy)
-	cluster := &types.Cluster{}
-	provider := givenProvider(t)
-	setupContext(t)
-
-	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec, clusterSpec)
-
-	thenErrorExpected(t, "failed setup and validations: Upgrade rollout strategy customization is not supported for vSphere provider", err)
-}
-
-func TestSetupAndValidateDeleteCPUpgradeRolloutStrategy(t *testing.T) {
-	ctx := context.Background()
-	clusterSpec := givenClusterSpec(t, testClusterConfigWithCPUpgradeStrategy)
-	provider := givenProvider(t)
-	tt := newProviderTest(t)
-	setupContext(t)
-
-	err := provider.SetupAndValidateDeleteCluster(ctx, tt.managementCluster, clusterSpec)
-
-	thenErrorExpected(t, "failed setup and validations: Upgrade rollout strategy customization is not supported for vSphere provider", err)
-}
-
-func TestSetupAndValidateDeleteMDUpgradeRolloutStrategy(t *testing.T) {
-	ctx := context.Background()
-	clusterSpec := givenClusterSpec(t, testClusterConfigWithMDUpgradeStrategy)
-	provider := givenProvider(t)
-	tt := newProviderTest(t)
-	setupContext(t)
-
-	err := provider.SetupAndValidateDeleteCluster(ctx, tt.managementCluster, clusterSpec)
-
-	thenErrorExpected(t, "failed setup and validations: Upgrade rollout strategy customization is not supported for vSphere provider", err)
 }
 
 func TestSetupAndValidateCreateWorkloadClusterSuccess(t *testing.T) {
