@@ -1,6 +1,7 @@
 package v1alpha1
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -9,21 +10,29 @@ const ControlPlaneUpgradeKind = "ControlPlaneUpgrade"
 
 // ControlPlaneUpgradeSpec defines the desired state of ControlPlaneUpgrade.
 type ControlPlaneUpgradeSpec struct {
-	Cluster                Ref     `json:"cluster"`
-	ControlPlane           Ref     `json:"controlPlane"`
-	MachinesRequireUpgrade []Ref   `json:"machinesRequireUpgrade"`
-	KubernetesVersion      string  `json:"kubernetesVersion"`
-	KubeletVersion         string  `json:"kubeletVersion"`
-	EtcdVersion            *string `json:"etcdVersion,omitempty"`
-	CoreDNSVersion         *string `json:"coreDNSVersion,omitempty"`
-	KubeadmClusterConfig   string  `json:"kubeadmClusterConfig"`
+	// ControlPlane is a reference to the KubeadmControlPlane object to upgrade.
+	ControlPlane corev1.ObjectReference `json:"controlPlane"`
+
+	// MachinesRequireUpgrade is a list of references to CAPI machines that need to be upgraded.
+	MachinesRequireUpgrade []corev1.ObjectReference `json:"machinesRequireUpgrade"`
+
+	// KubernetesVersion refers to the Kubernetes version to upgrade the control planes to.
+	KubernetesVersion string `json:"kubernetesVersion"`
+
+	// EtcdVersion refers to the version of ETCD to upgrade to.
+	EtcdVersion string `json:"etcdVersion"`
 }
 
 // ControlPlaneUpgradeStatus defines the observed state of ControlPlaneUpgrade.
 type ControlPlaneUpgradeStatus struct {
+	// RequireUpgrade is the number of machines that still need to be upgraded.
 	RequireUpgrade int64 `json:"requireUpgrade,omitempty"`
-	Upgraded       int64 `json:"upgraded,omitempty"`
-	Ready          bool  `json:"ready,omitempty"`
+
+	// Upgraded is the number of machines that have been upgraded.
+	Upgraded int64 `json:"upgraded,omitempty"`
+
+	// Ready denotes that the all control planes have finished upgrading and are ready.
+	Ready bool `json:"ready,omitempty"`
 }
 
 //+kubebuilder:object:root=true

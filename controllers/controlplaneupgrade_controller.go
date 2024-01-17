@@ -39,9 +39,6 @@ import (
 // controlPlaneUpgradeFinalizerName is the finalizer added to NodeUpgrade objects to handle deletion.
 const (
 	controlPlaneUpgradeFinalizerName = "controlplaneupgrades.anywhere.eks.amazonaws.com/finalizer"
-	// TODO(in-place): Fetch these versions dynamically from the bundle instead of using the hardcoded one.
-	kubernetesVersion = "v1.28.3-eks-1-28-9"
-	etcdVersion       = "v3.5.9-eks-1-28-9"
 )
 
 // ControlPlaneUpgradeReconciler reconciles a ControlPlaneUpgradeReconciler object.
@@ -139,7 +136,7 @@ func (r *ControlPlaneUpgradeReconciler) reconcile(ctx context.Context, log logr.
 
 	for idx, machineRef := range cpUpgrade.Spec.MachinesRequireUpgrade {
 		firstControlPlane = idx == 0
-		nodeUpgrade := nodeUpgrader(machineRef, kubernetesVersion, etcdVersion, firstControlPlane)
+		nodeUpgrade := nodeUpgrader(machineRef, cpUpgrade.Spec.KubernetesVersion, cpUpgrade.Spec.EtcdVersion, firstControlPlane)
 		if err := r.client.Get(ctx, GetNamespacedNameType(nodeUpgraderName(machineRef.Name), constants.EksaSystemNamespace), nodeUpgrade); err != nil {
 			if apierrors.IsNotFound(err) {
 				if err := r.client.Create(ctx, nodeUpgrade); client.IgnoreAlreadyExists(err) != nil {
@@ -156,7 +153,7 @@ func (r *ControlPlaneUpgradeReconciler) reconcile(ctx context.Context, log logr.
 	return ctrl.Result{}, nil
 }
 
-func nodeUpgrader(machineRef anywherev1.Ref, kubernetesVersion, etcdVersion string, firstControlPlane bool) *anywherev1.NodeUpgrade {
+func nodeUpgrader(machineRef corev1.ObjectReference, kubernetesVersion, etcdVersion string, firstControlPlane bool) *anywherev1.NodeUpgrade {
 	return &anywherev1.NodeUpgrade{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      nodeUpgraderName(machineRef.Name),

@@ -133,7 +133,7 @@ func (r *MachineDeploymentUpgradeReconciler) reconcile(ctx context.Context, log 
 		nodeUpgrade, err := getNodeUpgrade(ctx, r.client, nodeUpgraderName(machineRef.Name))
 		if err != nil {
 			if apierrors.IsNotFound(err) {
-				nodeUpgrade = mdNodeUpgrader(machineRef, kubernetesVersion)
+				nodeUpgrade = mdNodeUpgrader(machineRef, mdUpgrade.Spec.KubernetesVersion)
 				if err := r.client.Create(ctx, nodeUpgrade); err != nil {
 					return ctrl.Result{}, fmt.Errorf("failed to create node upgrader for machine %s:  %v", machineRef.Name, err)
 				}
@@ -209,7 +209,7 @@ func (r *MachineDeploymentUpgradeReconciler) updateStatus(ctx context.Context, l
 	return nil
 }
 
-func mdNodeUpgrader(machineRef anywherev1.Ref, kubernetesVersion string) *anywherev1.NodeUpgrade {
+func mdNodeUpgrader(machineRef corev1.ObjectReference, kubernetesVersion string) *anywherev1.NodeUpgrade {
 	return &anywherev1.NodeUpgrade{
 		ObjectMeta: v1.ObjectMeta{
 			Name:      nodeUpgraderName(machineRef.Name),
