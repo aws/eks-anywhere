@@ -81,6 +81,7 @@ type Dependencies struct {
 	CiliumTemplater             *cilium.Templater
 	AwsIamAuth                  *awsiamauth.Installer
 	ClusterManager              *clustermanager.ClusterManager
+	EksaInstaller               *clustermanager.EKSAInstaller
 	Bootstrapper                *bootstrapper.Bootstrapper
 	GitOpsFlux                  *flux.Flux
 	Git                         *gitfactory.GitTools
@@ -1023,7 +1024,7 @@ func (f *Factory) WithBootstrapper() *Factory {
 
 type clusterManagerClient struct {
 	*executables.Clusterctl
-	*executables.Kubectl
+	*clustermanager.KubernetesRetrierClient
 }
 
 // ClusterManagerTimeoutOptions maintains the timeout options for cluster manager.
@@ -1063,7 +1064,7 @@ func (f *Factory) clusterManagerOpts(timeoutOpts *ClusterManagerTimeoutOptions) 
 
 // WithClusterManager builds a cluster manager based on the cluster config and timeout options.
 func (f *Factory) WithClusterManager(clusterConfig *v1alpha1.Cluster, timeoutOpts *ClusterManagerTimeoutOptions) *Factory {
-	f.WithClusterctl().WithKubectl().WithNetworking(clusterConfig).WithWriter().WithDiagnosticBundleFactory().WithAwsIamAuth().WithFileReader().WithUnAuthKubeClient()
+	f.WithClusterctl().WithKubectl().WithNetworking(clusterConfig).WithWriter().WithDiagnosticBundleFactory().WithAwsIamAuth().WithFileReader().WithUnAuthKubeClient().WithEKSAInstaller()
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.ClusterManager != nil {
@@ -1077,15 +1078,15 @@ func (f *Factory) WithClusterManager(clusterConfig *v1alpha1.Cluster, timeoutOpt
 			r = clustermanager.DefaultRetrier()
 		}
 
-		client := clustermanager.NewRetrierClient(
-			&clusterManagerClient{
-				f.dependencies.Clusterctl,
-				f.dependencies.Kubectl,
-			},
+		retrierClient := clustermanager.NewRetrierClient(
+			f.dependencies.Kubectl,
 			r,
 		)
 
-		installer := clustermanager.NewEKSAInstaller(client, f.dependencies.FileReader, f.eksaInstallerOpts()...)
+		client := clusterManagerClient{
+			f.dependencies.Clusterctl,
+			retrierClient,
+		}
 
 		f.dependencies.ClusterManager = clustermanager.New(
 			f.dependencies.UnAuthKubeClient,
@@ -1094,9 +1095,39 @@ func (f *Factory) WithClusterManager(clusterConfig *v1alpha1.Cluster, timeoutOpt
 			f.dependencies.Writer,
 			f.dependencies.DignosticCollectorFactory,
 			f.dependencies.AwsIamAuth,
-			installer,
+			f.dependencies.EksaInstaller,
 			f.clusterManagerOpts(timeoutOpts)...,
 		)
+		return nil
+	})
+
+	return f
+}
+
+// WithEKSAInstaller builds a cluster manager based on the cluster config and timeout options.
+func (f *Factory) WithEKSAInstaller() *Factory {
+	f.WithClusterctl().WithKubectl().WithFileReader()
+
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.dependencies.EksaInstaller != nil {
+			return nil
+		}
+
+		var r *retrier.Retrier
+		if f.config.noTimeouts {
+			r = retrier.NewWithNoTimeout()
+		} else {
+			r = clustermanager.DefaultRetrier()
+		}
+
+		client := clustermanager.NewRetrierClient(
+			f.dependencies.Kubectl,
+			r,
+		)
+
+		installer := clustermanager.NewEKSAInstaller(client, f.dependencies.FileReader, f.eksaInstallerOpts()...)
+
+		f.dependencies.EksaInstaller = installer
 		return nil
 	})
 

@@ -36,6 +36,7 @@ type CommandContext struct {
 	Writer                filewriter.FileWriter
 	EksdInstaller         interfaces.EksdInstaller
 	PackageInstaller      interfaces.PackageInstaller
+	EksaInstaller         interfaces.EksaInstaller
 	EksdUpgrader          interfaces.EksdUpgrader
 	ClusterUpgrader       interfaces.ClusterUpgrader
 	ClusterCreator        interfaces.ClusterCreator

@@ -13,14 +13,12 @@ import (
 	"strings"
 	"time"
 
-	eksdv1alpha1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
 	etcdv1 "github.com/aws/etcdadm-controller/api/v1beta1"
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/integer"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -39,7 +37,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/retrier"
 	"github.com/aws/eks-anywhere/pkg/templater"
 	"github.com/aws/eks-anywhere/pkg/types"
-	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
 const (
@@ -80,7 +77,7 @@ var (
 type ClusterManager struct {
 	eksaComponents     EKSAComponents
 	ClientFactory      ClientFactory
-	clusterClient      *RetrierClient
+	clusterClient      ClusterClient
 	retrier            *retrier.Retrier
 	writer             filewriter.FileWriter
 	networking         Networking
@@ -106,54 +103,12 @@ type ClientFactory interface {
 	BuildClientFromKubeconfig(kubeconfigPath string) (kubernetes.Client, error)
 }
 
-type ClusterClient interface {
-	KubernetesClient
+// CAPIClient has the clusterctl methods.
+type CAPIClient interface {
 	BackupManagement(ctx context.Context, cluster *types.Cluster, managementStatePath, clusterName string) error
 	MoveManagement(ctx context.Context, from, target *types.Cluster, clusterName string) error
-	WaitForClusterReady(ctx context.Context, cluster *types.Cluster, timeout string, clusterName string) error
-	WaitForControlPlaneAvailable(ctx context.Context, cluster *types.Cluster, timeout string, newClusterName string) error
-	WaitForControlPlaneReady(ctx context.Context, cluster *types.Cluster, timeout string, newClusterName string) error
-	WaitForControlPlaneNotReady(ctx context.Context, cluster *types.Cluster, timeout string, newClusterName string) error
-	WaitForManagedExternalEtcdReady(ctx context.Context, cluster *types.Cluster, timeout string, newClusterName string) error
-	WaitForManagedExternalEtcdNotReady(ctx context.Context, cluster *types.Cluster, timeout string, newClusterName string) error
-	GetWorkloadKubeconfig(ctx context.Context, clusterName string, cluster *types.Cluster) ([]byte, error)
-	GetEksaGitOpsConfig(ctx context.Context, gitOpsConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.GitOpsConfig, error)
-	GetEksaFluxConfig(ctx context.Context, fluxConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.FluxConfig, error)
-	GetEksaOIDCConfig(ctx context.Context, oidcConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.OIDCConfig, error)
-	GetEksaAWSIamConfig(ctx context.Context, awsIamConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.AWSIamConfig, error)
-	DeleteCluster(ctx context.Context, managementCluster, clusterToDelete *types.Cluster) error
-	DeleteGitOpsConfig(ctx context.Context, managementCluster *types.Cluster, gitOpsName, namespace string) error
-	DeleteOIDCConfig(ctx context.Context, managementCluster *types.Cluster, oidcConfigName, oidcConfigNamespace string) error
-	DeleteAWSIamConfig(ctx context.Context, managementCluster *types.Cluster, awsIamConfigName, awsIamConfigNamespace string) error
-	DeleteEKSACluster(ctx context.Context, managementCluster *types.Cluster, eksaClusterName, eksaClusterNamespace string) error
-	DeletePackageResources(ctx context.Context, managementCluster *types.Cluster, clusterName string) error
 	InitInfrastructure(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster, provider providers.Provider) error
-	WaitForDeployment(ctx context.Context, cluster *types.Cluster, timeout string, condition string, target string, namespace string) error
-	SaveLog(ctx context.Context, cluster *types.Cluster, deployment *types.Deployment, fileName string, writer filewriter.FileWriter) error
-	GetMachines(ctx context.Context, cluster *types.Cluster, clusterName string) ([]types.Machine, error)
-	GetClusters(ctx context.Context, cluster *types.Cluster) ([]types.CAPICluster, error)
-	PauseCAPICluster(ctx context.Context, cluster, kubeconfig string) error
-	ResumeCAPICluster(ctx context.Context, cluster, kubeconfig string) error
-	GetEksaCluster(ctx context.Context, cluster *types.Cluster, clusterName string) (*v1alpha1.Cluster, error)
-	GetEksaVSphereDatacenterConfig(ctx context.Context, VSphereDatacenterName string, kubeconfigFile string, namespace string) (*v1alpha1.VSphereDatacenterConfig, error)
-	UpdateEnvironmentVariablesInNamespace(ctx context.Context, resourceType, resourceName string, envMap map[string]string, cluster *types.Cluster, namespace string) error
-	GetEksaVSphereMachineConfig(ctx context.Context, VSphereDatacenterName string, kubeconfigFile string, namespace string) (*v1alpha1.VSphereMachineConfig, error)
-	GetEksaCloudStackMachineConfig(ctx context.Context, cloudstackMachineConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.CloudStackMachineConfig, error)
-	SetEksaControllerEnvVar(ctx context.Context, envVar, envVarVal, kubeconfig string) error
-	CreateNamespaceIfNotPresent(ctx context.Context, kubeconfig string, namespace string) error
-	ValidateControlPlaneNodes(ctx context.Context, cluster *types.Cluster, clusterName string) error
-	ValidateWorkerNodes(ctx context.Context, clusterName string, kubeconfigFile string) error
-	CountMachineDeploymentReplicasReady(ctx context.Context, clusterName string, kubeconfigFile string) (int, int, error)
-	GetBundles(ctx context.Context, kubeconfigFile, name, namespace string) (*releasev1alpha1.Bundles, error)
-	GetApiServerUrl(ctx context.Context, cluster *types.Cluster) (string, error)
-	KubeconfigSecretAvailable(ctx context.Context, kubeconfig string, clusterName string, namespace string) (bool, error)
-	DeleteOldWorkerNodeGroup(ctx context.Context, machineDeployment *clusterv1.MachineDeployment, kubeconfig string) error
-	GetKubeadmControlPlane(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...executables.KubectlOpt) (*controlplanev1.KubeadmControlPlane, error)
-	GetMachineDeploymentsForCluster(ctx context.Context, clusterName string, opts ...executables.KubectlOpt) ([]clusterv1.MachineDeployment, error)
-	GetMachineDeployment(ctx context.Context, workerNodeGroupName string, opts ...executables.KubectlOpt) (*clusterv1.MachineDeployment, error)
-	GetEksdRelease(ctx context.Context, name, namespace, kubeconfigFile string) (*eksdv1alpha1.Release, error)
-	ListObjects(ctx context.Context, resourceType, namespace, kubeconfig string, list kubernetes.ObjectList) error
-	GetConfigMap(ctx context.Context, kubeconfigFile, name, namespace string) (*corev1.ConfigMap, error)
+	GetWorkloadKubeconfig(ctx context.Context, clusterName string, cluster *types.Cluster) ([]byte, error)
 }
 
 type Networking interface {
@@ -182,7 +137,7 @@ func DefaultRetrier() *retrier.Retrier {
 }
 
 // New constructs a new ClusterManager.
-func New(client ClientFactory, clusterClient *RetrierClient, networking Networking, writer filewriter.FileWriter, diagnosticBundleFactory diagnostics.DiagnosticBundleFactory, awsIamAuth AwsIamAuth, eksaComponents EKSAComponents, opts ...ClusterManagerOpt) *ClusterManager {
+func New(client ClientFactory, clusterClient ClusterClient, networking Networking, writer filewriter.FileWriter, diagnosticBundleFactory diagnostics.DiagnosticBundleFactory, awsIamAuth AwsIamAuth, eksaComponents EKSAComponents, opts ...ClusterManagerOpt) *ClusterManager {
 	c := &ClusterManager{
 		eksaComponents:                   eksaComponents,
 		ClientFactory:                    client,
@@ -258,7 +213,6 @@ func WithNodeStartupTimeout(timeout time.Duration) ClusterManagerOpt {
 
 func WithRetrier(retrier *retrier.Retrier) ClusterManagerOpt {
 	return func(c *ClusterManager) {
-		c.clusterClient.retrier = retrier
 		c.retrier = retrier
 	}
 }
@@ -794,23 +748,35 @@ func (c *ClusterManager) InstallCAPI(ctx context.Context, clusterSpec *cluster.S
 }
 
 func (c *ClusterManager) waitForCAPI(ctx context.Context, cluster *types.Cluster, provider providers.Provider, externalEtcdTopology bool) error {
-	err := c.clusterClient.waitForDeployments(ctx, internal.CAPIDeployments, cluster, c.deploymentWaitTimeout.String())
+	err := c.waitForDeployments(ctx, internal.CAPIDeployments, cluster, c.deploymentWaitTimeout.String())
 	if err != nil {
 		return err
 	}
 
 	if externalEtcdTopology {
-		err := c.clusterClient.waitForDeployments(ctx, internal.ExternalEtcdDeployments, cluster, c.deploymentWaitTimeout.String())
+		err := c.waitForDeployments(ctx, internal.ExternalEtcdDeployments, cluster, c.deploymentWaitTimeout.String())
 		if err != nil {
 			return err
 		}
 	}
 
-	err = c.clusterClient.waitForDeployments(ctx, provider.GetDeployments(), cluster, c.deploymentWaitTimeout.String())
+	err = c.waitForDeployments(ctx, provider.GetDeployments(), cluster, c.deploymentWaitTimeout.String())
 	if err != nil {
 		return err
 	}
 
+	return nil
+}
+
+func (c *ClusterManager) waitForDeployments(ctx context.Context, deploymentsByNamespace map[string][]string, cluster *types.Cluster, timeout string) error {
+	for namespace, deployments := range deploymentsByNamespace {
+		for _, deployment := range deployments {
+			err := c.clusterClient.WaitForDeployment(ctx, cluster, timeout, "Available", deployment, namespace)
+			if err != nil {
+				return fmt.Errorf("waiting for %s in namespace %s: %v", deployment, namespace, err)
+			}
+		}
+	}
 	return nil
 }
 

@@ -616,15 +616,11 @@ func TestClusterManagerUpgradeSelfManagedClusterFailClientError(t *testing.T) {
 
 	tt := newSpecChangedTest(t)
 	mockCtrl := gomock.NewController(t)
-	m := &clusterManagerMocks{
-		client: mocksmanager.NewMockClusterClient(mockCtrl),
-	}
-	client := clustermanager.NewRetrierClient(m.client, clustermanager.DefaultRetrier())
+
 	cf := mocksmanager.NewMockClientFactory(mockCtrl)
 	cf.EXPECT().BuildClientFromKubeconfig("").Return(nil, errors.New("can't build client"))
-	c := clustermanager.New(cf, client, nil, nil, nil, nil, nil)
+	c := clustermanager.New(cf, tt.mocks.client, nil, nil, nil, nil, nil)
 	tt.clusterManager = c
-	tt.mocks.client = m.client
 
 	tt.mocks.client.EXPECT().GetEksaCluster(tt.ctx, tt.cluster, tt.clusterSpec.Cluster.Name).Return(tt.oldClusterConfig, nil)
 
@@ -1325,7 +1321,6 @@ func TestClusterManagerBackupCAPIRetrySuccess(t *testing.T) {
 	ctx := context.Background()
 
 	c, m := newClusterManager(t)
-	// m.client.EXPECT().BackupManagement(ctx, from, managementStatePath)
 	firstTry := m.client.EXPECT().BackupManagement(ctx, from, managementStatePath, from.Name).Return(errors.New("Error: failed to connect to the management cluster: action failed after 9 attempts: Get \"https://127.0.0.1:61994/api?timeout=30s\": EOF"))
 	secondTry := m.client.EXPECT().BackupManagement(ctx, from, managementStatePath, from.Name).Return(nil)
 	gomock.InOrder(
@@ -1837,11 +1832,10 @@ func TestClusterManagerCreateEKSAResourcesFailureBundles(t *testing.T) {
 		diagnosticsBundle:  mocksdiagnostics.NewMockDiagnosticBundle(mockCtrl),
 		eksaComponents:     mocksmanager.NewMockEKSAComponents(mockCtrl),
 	}
-	client := clustermanager.NewRetrierClient(m.client, retrier.NewWithMaxRetries(1, 1))
 	fakeClient := test.NewFakeKubeClient()
 	cf := mocksmanager.NewMockClientFactory(mockCtrl)
 	cf.EXPECT().BuildClientFromKubeconfig("").Return(fakeClient, nil).AnyTimes()
-	c := clustermanager.New(cf, client, m.networking, m.writer, m.diagnosticsFactory, m.awsIamAuth, m.eksaComponents)
+	c := clustermanager.New(cf, m.client, m.networking, m.writer, m.diagnosticsFactory, m.awsIamAuth, m.eksaComponents)
 
 	m.client.EXPECT().CreateNamespaceIfNotPresent(ctx, gomock.Any(), tt.clusterSpec.Cluster.Namespace).Return(nil)
 	m.client.EXPECT().ApplyKubeSpecFromBytes(ctx, gomock.Any(), gomock.Any()).Return(nil)
@@ -1883,11 +1877,10 @@ func TestClusterManagerCreateEKSAResourcesFailureEKSARelease(t *testing.T) {
 		diagnosticsBundle:  mocksdiagnostics.NewMockDiagnosticBundle(mockCtrl),
 		eksaComponents:     mocksmanager.NewMockEKSAComponents(mockCtrl),
 	}
-	client := clustermanager.NewRetrierClient(m.client, retrier.NewWithMaxRetries(1, 1))
 	fakeClient := test.NewFakeKubeClient()
 	cf := mocksmanager.NewMockClientFactory(mockCtrl)
 	cf.EXPECT().BuildClientFromKubeconfig("").Return(fakeClient, nil).AnyTimes()
-	c := clustermanager.New(cf, client, m.networking, m.writer, m.diagnosticsFactory, m.awsIamAuth, m.eksaComponents)
+	c := clustermanager.New(cf, m.client, m.networking, m.writer, m.diagnosticsFactory, m.awsIamAuth, m.eksaComponents)
 
 	m.client.EXPECT().CreateNamespaceIfNotPresent(ctx, gomock.Any(), tt.clusterSpec.Cluster.Namespace).Return(nil)
 	m.client.EXPECT().GetConfigMap(ctx, tt.cluster.KubeconfigFile, gomock.Any(), gomock.Any()).Return(configMap, nil)
@@ -1918,11 +1911,10 @@ func TestClusterManagerCreateEKSAResourcesNewUpgraderConfigMap(t *testing.T) {
 		diagnosticsBundle:  mocksdiagnostics.NewMockDiagnosticBundle(mockCtrl),
 		eksaComponents:     mocksmanager.NewMockEKSAComponents(mockCtrl),
 	}
-	client := clustermanager.NewRetrierClient(m.client, retrier.NewWithMaxRetries(1, 1))
 	fakeClient := test.NewFakeKubeClient()
 	cf := mocksmanager.NewMockClientFactory(mockCtrl)
 	cf.EXPECT().BuildClientFromKubeconfig("").Return(fakeClient, nil).AnyTimes()
-	c := clustermanager.New(cf, client, m.networking, m.writer, m.diagnosticsFactory, m.awsIamAuth, m.eksaComponents)
+	c := clustermanager.New(cf, m.client, m.networking, m.writer, m.diagnosticsFactory, m.awsIamAuth, m.eksaComponents)
 
 	m.client.EXPECT().CreateNamespaceIfNotPresent(ctx, gomock.Any(), tt.clusterSpec.Cluster.Namespace).Return(nil)
 	m.client.EXPECT().ApplyKubeSpecFromBytes(ctx, tt.cluster, gomock.Any())
@@ -1972,11 +1964,10 @@ func TestClusterManagerCreateEKSAResourcesFailureApplyUpgraderConfigMap(t *testi
 		diagnosticsBundle:  mocksdiagnostics.NewMockDiagnosticBundle(mockCtrl),
 		eksaComponents:     mocksmanager.NewMockEKSAComponents(mockCtrl),
 	}
-	client := clustermanager.NewRetrierClient(m.client, retrier.NewWithMaxRetries(1, 1))
 	fakeClient := test.NewFakeKubeClient()
 	cf := mocksmanager.NewMockClientFactory(mockCtrl)
 	cf.EXPECT().BuildClientFromKubeconfig("").Return(fakeClient, nil).AnyTimes()
-	c := clustermanager.New(cf, client, m.networking, m.writer, m.diagnosticsFactory, m.awsIamAuth, m.eksaComponents)
+	c := clustermanager.New(cf, m.client, m.networking, m.writer, m.diagnosticsFactory, m.awsIamAuth, m.eksaComponents)
 
 	m.client.EXPECT().CreateNamespaceIfNotPresent(ctx, gomock.Any(), tt.clusterSpec.Cluster.Namespace).Return(nil)
 	m.client.EXPECT().GetConfigMap(ctx, tt.cluster.KubeconfigFile, gomock.Any(), gomock.Any()).Return(configMap, nil)
@@ -2700,7 +2691,6 @@ func TestClusterManagerClusterSpecChangedNewEksdReleaseWorkers(t *testing.T) {
 		eksaComponents:     mocksmanager.NewMockEKSAComponents(mockCtrl),
 	}
 
-	client := clustermanager.NewRetrierClient(m.client, clustermanager.DefaultRetrier())
 	clusterName := "cluster-name"
 	dc := &v1alpha1.VSphereDatacenterConfig{
 		ObjectMeta: metav1.ObjectMeta{
@@ -2728,7 +2718,7 @@ func TestClusterManagerClusterSpecChangedNewEksdReleaseWorkers(t *testing.T) {
 	fakeClient := test.NewFakeKubeClient(dc, oc, b, r, ac, gc, er, r2)
 	cf := mocksmanager.NewMockClientFactory(mockCtrl)
 	cf.EXPECT().BuildClientFromKubeconfig("").Return(fakeClient, nil).AnyTimes()
-	c := clustermanager.New(cf, client, m.networking, m.writer, m.diagnosticsFactory, m.awsIamAuth, m.eksaComponents)
+	c := clustermanager.New(cf, m.client, m.networking, m.writer, m.diagnosticsFactory, m.awsIamAuth, m.eksaComponents)
 
 	tt := newSpecChangedTest(t)
 	tt.clusterManager = c
@@ -2871,7 +2861,6 @@ func newClusterManager(t *testing.T, opts ...clustermanager.ClusterManagerOpt) (
 		eksaComponents:     mocksmanager.NewMockEKSAComponents(mockCtrl),
 	}
 
-	client := clustermanager.NewRetrierClient(m.client, clustermanager.DefaultRetrier())
 	clusterName := "cluster-name"
 	dc := &v1alpha1.VSphereDatacenterConfig{
 		ObjectMeta: metav1.ObjectMeta{
@@ -2896,7 +2885,7 @@ func newClusterManager(t *testing.T, opts ...clustermanager.ClusterManagerOpt) (
 	fakeClient := test.NewFakeKubeClient(dc, oc, b, r, ac, gc, er)
 	cf := mocksmanager.NewMockClientFactory(mockCtrl)
 	cf.EXPECT().BuildClientFromKubeconfig("").Return(fakeClient, nil).AnyTimes()
-	c := clustermanager.New(cf, client, m.networking, m.writer, m.diagnosticsFactory, m.awsIamAuth, m.eksaComponents, opts...)
+	c := clustermanager.New(cf, m.client, m.networking, m.writer, m.diagnosticsFactory, m.awsIamAuth, m.eksaComponents, opts...)
 
 	return c, m
 }

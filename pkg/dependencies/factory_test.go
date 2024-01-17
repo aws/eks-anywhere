@@ -256,6 +256,18 @@ func TestFactoryBuildWithClusterManager(t *testing.T) {
 	tt.Expect(deps.ClusterManager).NotTo(BeNil())
 }
 
+func TestFactoryBuildWithEksaInstaller(t *testing.T) {
+	tt := newTest(t, vsphere)
+	deps, err := dependencies.NewFactory().
+		WithLocalExecutables().
+		WithCliConfig(&tt.cliConfig).
+		WithEKSAInstaller().
+		Build(context.Background())
+
+	tt.Expect(err).To(BeNil())
+	tt.Expect(deps.EksaInstaller).NotTo(BeNil())
+}
+
 func TestFactoryBuildWithHelmEnvClientFactory(t *testing.T) {
 	tt := newTest(t, vsphere)
 	deps, err := dependencies.NewFactory().
@@ -302,6 +314,7 @@ func TestFactoryBuildWithMultipleDependencies(t *testing.T) {
 		WithBootstrapper().
 		WithCliConfig(&tt.cliConfig).
 		WithClusterManager(tt.clusterSpec.Cluster, timeoutOpts).
+		WithEKSAInstaller().
 		WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, tt.hardwareConfigFile, false, tt.tinkerbellBootstrapIP, map[string]bool{}, tt.providerOptions).
 		WithGitOpsFlux(tt.clusterSpec.Cluster, tt.clusterSpec.FluxConfig, nil).
 		WithWriter().

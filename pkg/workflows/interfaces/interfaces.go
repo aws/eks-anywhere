@@ -3,6 +3,8 @@ package interfaces
 import (
 	"context"
 
+	"github.com/go-logr/logr"
+
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/cluster"
@@ -98,4 +100,9 @@ type ClusterUpgrader interface {
 type ClusterCreator interface {
 	Run(ctx context.Context, spec *cluster.Spec, managementCluster types.Cluster) error
 	CreateSync(ctx context.Context, spec *cluster.Spec, managementCluster *types.Cluster) (*types.Cluster, error)
+}
+
+// EksaInstaller exposes the EKSA installer methods.
+type EksaInstaller interface {
+	Install(ctx context.Context, log logr.Logger, cluster *types.Cluster, spec *cluster.Spec) error
 }
