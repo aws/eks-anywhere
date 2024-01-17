@@ -419,18 +419,38 @@ func TestClusterValidateUpdateDatacenterRefNilImmutable(t *testing.T) {
 	g.Expect(c.ValidateUpdate(cOld)).To(MatchError(ContainSubstring("spec.datacenterRef: Forbidden: field is immutable")))
 }
 
-func TestClusterValidateUpdateExternalEtcdReplicasImmutable(t *testing.T) {
-	cOld := baseCluster()
-	cOld.Spec.ExternalEtcdConfiguration = &v1alpha1.ExternalEtcdConfiguration{Count: 3}
-	cOld.Spec.ControlPlaneConfiguration = v1alpha1.ControlPlaneConfiguration{
+func TestClusterValidateUpdateExternalEtcdConfiguration(t *testing.T) {
+	externalEtcdCluster := baseCluster()
+	externalEtcdCluster.Spec.ExternalEtcdConfiguration = &v1alpha1.ExternalEtcdConfiguration{Count: 3}
+	externalEtcdCluster.Spec.ControlPlaneConfiguration = v1alpha1.ControlPlaneConfiguration{
 		Count:    3,
 		Endpoint: &v1alpha1.Endpoint{Host: "1.1.1.1/1"},
 	}
-	c := cOld.DeepCopy()
-	c.Spec.ExternalEtcdConfiguration.Count = 5
+	stackedEtcdCluster := externalEtcdCluster.DeepCopy()
+	stackedEtcdCluster.Spec.ExternalEtcdConfiguration = nil
+	cases := map[string]struct {
+		cOld      *v1alpha1.Cluster
+		cNew      *v1alpha1.Cluster
+		expectErr string
+	}{
+		"local to external etcd configuration": {
+			cOld:      stackedEtcdCluster,
+			cNew:      externalEtcdCluster,
+			expectErr: "Forbidden: cannot switch from stacked to external etcd topology",
+		},
+		"external to local etcd configuration": {
+			cOld:      externalEtcdCluster,
+			cNew:      stackedEtcdCluster,
+			expectErr: "Forbidden: cannot switch from external to stacked etcd topology",
+		},
+	}
 
-	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(MatchError(ContainSubstring("spec.externalEtcdConfiguration.count: Forbidden: field is immutable")))
+	for name, tt := range cases {
+		t.Run(name, func(t *testing.T) {
+			g := NewWithT(t)
+			g.Expect(tt.cNew.ValidateUpdate(tt.cOld)).To(MatchError(ContainSubstring(tt.expectErr)))
+		})
+	}
 }
 
 func TestClusterValidateUpdateDataCenterRefNameImmutable(t *testing.T) {

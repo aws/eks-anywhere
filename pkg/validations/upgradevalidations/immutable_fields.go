@@ -72,11 +72,7 @@ func ValidateImmutableFields(ctx context.Context, k validations.KubectlClient, c
 
 	oldETCD := oSpec.ExternalEtcdConfiguration
 	newETCD := nSpec.ExternalEtcdConfiguration
-	if oldETCD != nil && newETCD != nil {
-		if oldETCD.Count != newETCD.Count {
-			return errors.New("spec.externalEtcdConfiguration.count is immutable")
-		}
-	} else if oldETCD != newETCD {
+	if oldETCD != nil && newETCD == nil || oldETCD == nil && newETCD != nil {
 		return errors.New("adding or removing external etcd during upgrade is not supported")
 	}
 
