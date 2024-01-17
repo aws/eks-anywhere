@@ -17,11 +17,11 @@ Please upgrade to `v0.15.3` if you are using Tinkerbell (Bare Metal) provider.
 
 ## [v0.18.4](https://github.com/aws/eks-anywhere/releases/tag/v0.18.4)
 
-### Fixed
-* CNI reconciler now properly pulls images from registry mirror instead of public ECR in airgapped environments: [#7170](https://github.com/aws/eks-anywhere/pull/7170)
+### Feature 
+* Nutanix: Enable api-server audit logging for Nutanix ([#2664](https://github.com/aws/eks-anywhere/pull/7190))
 
-### Added 
-* Nutanix: Enable audit log for Nutanix control plane template ([#2664](https://github.com/aws/eks-anywhere/pull/7190))
+### Bug
+* CNI reconciler now properly pulls images from registry mirror instead of public ECR in airgapped environments: [#7170](https://github.com/aws/eks-anywhere/pull/7170)
 
 ### Supported Operating Systems
 
