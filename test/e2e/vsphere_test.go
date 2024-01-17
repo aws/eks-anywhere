@@ -2976,3 +2976,184 @@ func TestVSphereKubernetes127To128UbuntuManagementCPUpgradeAPI(t *testing.T) {
 		provider.WithUbuntu128(),
 	)
 }
+
+// etcd scale tests
+func TestVSphereKubernetes128BottlerocketEtcdScaleUp(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewVSphere(t, framework.WithBottleRocket128()),
+		framework.WithClusterFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube128),
+			api.WithExternalEtcdTopology(1),
+			api.WithControlPlaneCount(1),
+			api.WithWorkerNodeCount(1),
+		),
+	)
+
+	runSimpleUpgradeFlow(
+		test,
+		v1alpha1.Kube128,
+		framework.WithClusterUpgrade(
+			api.WithExternalEtcdTopology(3),
+		),
+	)
+}
+
+func TestVSphereKubernetes128BottlerocketEtcdScaleDown(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewVSphere(t, framework.WithBottleRocket128()),
+		framework.WithClusterFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube128),
+			api.WithExternalEtcdTopology(3),
+			api.WithControlPlaneCount(1),
+			api.WithWorkerNodeCount(1),
+		),
+	)
+
+	runSimpleUpgradeFlow(
+		test,
+		v1alpha1.Kube128,
+		framework.WithClusterUpgrade(
+			api.WithExternalEtcdTopology(1),
+		),
+	)
+}
+
+func TestVSphereKubernetes127to128BottlerocketEtcdScaleUp(t *testing.T) {
+	provider := framework.NewVSphere(t, framework.WithBottleRocket127())
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube127),
+			api.WithExternalEtcdTopology(1),
+			api.WithControlPlaneCount(1),
+			api.WithWorkerNodeCount(1),
+		),
+	)
+
+	runSimpleUpgradeFlow(
+		test,
+		v1alpha1.Kube128,
+		framework.WithClusterUpgrade(
+			api.WithKubernetesVersion(v1alpha1.Kube128),
+			api.WithExternalEtcdTopology(3),
+		),
+		provider.WithProviderUpgrade(provider.Bottlerocket128Template()),
+	)
+}
+
+func TestVSphereKubernetes127to128BottlerocketEtcdScaleDown(t *testing.T) {
+	provider := framework.NewVSphere(t, framework.WithBottleRocket127())
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube127),
+			api.WithExternalEtcdTopology(3),
+			api.WithControlPlaneCount(1),
+			api.WithWorkerNodeCount(1),
+		),
+	)
+
+	runSimpleUpgradeFlow(
+		test,
+		v1alpha1.Kube128,
+		framework.WithClusterUpgrade(
+			api.WithKubernetesVersion(v1alpha1.Kube128),
+			api.WithExternalEtcdTopology(1),
+		),
+		provider.WithProviderUpgrade(provider.Bottlerocket128Template()),
+	)
+}
+
+func TestVSphereKubernetes128UbuntuEtcdScaleUp(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewVSphere(t, framework.WithUbuntu128()),
+		framework.WithClusterFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube128),
+			api.WithExternalEtcdTopology(1),
+			api.WithControlPlaneCount(1),
+			api.WithWorkerNodeCount(1),
+		),
+	)
+
+	runSimpleUpgradeFlow(
+		test,
+		v1alpha1.Kube128,
+		framework.WithClusterUpgrade(
+			api.WithExternalEtcdTopology(3),
+		),
+	)
+}
+
+func TestVSphereKubernetes128UbuntuEtcdScaleDown(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewVSphere(t, framework.WithUbuntu128()),
+		framework.WithClusterFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube128),
+			api.WithExternalEtcdTopology(3),
+			api.WithControlPlaneCount(1),
+			api.WithWorkerNodeCount(1),
+		),
+	)
+
+	runSimpleUpgradeFlow(
+		test,
+		v1alpha1.Kube128,
+		framework.WithClusterUpgrade(
+			api.WithExternalEtcdTopology(1),
+		),
+	)
+}
+
+func TestVSphereKubernetes127to128UbuntuEtcdScaleUp(t *testing.T) {
+	provider := framework.NewVSphere(t, framework.WithUbuntu127())
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube127),
+			api.WithExternalEtcdTopology(1),
+			api.WithControlPlaneCount(1),
+			api.WithWorkerNodeCount(1),
+		),
+	)
+
+	runSimpleUpgradeFlow(
+		test,
+		v1alpha1.Kube128,
+		framework.WithClusterUpgrade(
+			api.WithKubernetesVersion(v1alpha1.Kube128),
+			api.WithExternalEtcdTopology(3),
+		),
+		provider.WithProviderUpgrade(provider.Ubuntu128Template()),
+	)
+}
+
+func TestVSphereKubernetes127to128UbuntuEtcdScaleDown(t *testing.T) {
+	provider := framework.NewVSphere(t, framework.WithUbuntu127())
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube127),
+			api.WithExternalEtcdTopology(3),
+			api.WithControlPlaneCount(1),
+			api.WithWorkerNodeCount(1),
+		),
+	)
+
+	runSimpleUpgradeFlow(
+		test,
+		v1alpha1.Kube128,
+		framework.WithClusterUpgrade(
+			api.WithKubernetesVersion(v1alpha1.Kube128),
+			api.WithExternalEtcdTopology(1),
+		),
+		provider.WithProviderUpgrade(provider.Ubuntu128Template()),
+	)
+}

@@ -3447,3 +3447,94 @@ func TestCloudStackKubernetes128ValidateDomainFourLevelsSimpleFlow(t *testing.T)
 	)
 	runSimpleFlow(test)
 }
+
+// etcd scale tests
+func TestCloudstackKubernetes128EtcdScaleUp(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewCloudStack(t, framework.WithCloudStackRedhat128()),
+		framework.WithClusterFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube128),
+			api.WithExternalEtcdTopology(1),
+			api.WithControlPlaneCount(1),
+			api.WithWorkerNodeCount(1),
+		),
+	)
+
+	runSimpleUpgradeFlow(
+		test,
+		v1alpha1.Kube128,
+		framework.WithClusterUpgrade(
+			api.WithExternalEtcdTopology(3),
+		),
+	)
+}
+
+func TestCloudstackKubernetes128EtcdScaleDown(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewCloudStack(t, framework.WithCloudStackRedhat128()),
+		framework.WithClusterFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube128),
+			api.WithExternalEtcdTopology(3),
+			api.WithControlPlaneCount(1),
+			api.WithWorkerNodeCount(1),
+		),
+	)
+
+	runSimpleUpgradeFlow(
+		test,
+		v1alpha1.Kube128,
+		framework.WithClusterUpgrade(
+			api.WithExternalEtcdTopology(1),
+		),
+	)
+}
+
+func TestCloudstackKubernetes127to128EtcdScaleUp(t *testing.T) {
+	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat127())
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube127),
+			api.WithExternalEtcdTopology(1),
+			api.WithControlPlaneCount(1),
+			api.WithWorkerNodeCount(1),
+		),
+	)
+
+	runSimpleUpgradeFlow(
+		test,
+		v1alpha1.Kube128,
+		framework.WithClusterUpgrade(
+			api.WithKubernetesVersion(v1alpha1.Kube128),
+			api.WithExternalEtcdTopology(3),
+		),
+		provider.WithProviderUpgrade(provider.Redhat128Template()),
+	)
+}
+
+func TestCloudstackKubernetes127to128EtcdScaleDown(t *testing.T) {
+	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat127())
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube127),
+			api.WithExternalEtcdTopology(3),
+			api.WithControlPlaneCount(1),
+			api.WithWorkerNodeCount(1),
+		),
+	)
+
+	runSimpleUpgradeFlow(
+		test,
+		v1alpha1.Kube128,
+		framework.WithClusterUpgrade(
+			api.WithKubernetesVersion(v1alpha1.Kube128),
+			api.WithExternalEtcdTopology(1),
+		),
+		provider.WithProviderUpgrade(provider.Redhat128Template()),
+	)
+}

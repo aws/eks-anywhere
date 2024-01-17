@@ -1212,3 +1212,92 @@ func TestDockerKubernetesUpgradeManagementComponents(t *testing.T) {
 	test.RunEKSA([]string{"upgrade", "management-components", "-f", test.ClusterConfigLocation, "-v", "99"})
 	test.DeleteCluster()
 }
+
+// etcd scale tests
+func TestDockerKubernetes128EtcdScaleUp(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewDocker(t),
+		framework.WithClusterFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube128),
+			api.WithExternalEtcdTopology(1),
+			api.WithControlPlaneCount(1),
+			api.WithWorkerNodeCount(1),
+		),
+	)
+
+	runSimpleUpgradeFlow(
+		test,
+		v1alpha1.Kube128,
+		framework.WithClusterUpgrade(
+			api.WithExternalEtcdTopology(3),
+		),
+	)
+}
+
+func TestDockerKubernetes128EtcdScaleDown(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewDocker(t),
+		framework.WithClusterFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube128),
+			api.WithExternalEtcdTopology(3),
+			api.WithControlPlaneCount(1),
+			api.WithWorkerNodeCount(1),
+		),
+	)
+
+	runSimpleUpgradeFlow(
+		test,
+		v1alpha1.Kube128,
+		framework.WithClusterUpgrade(
+			api.WithExternalEtcdTopology(1),
+		),
+	)
+}
+
+func TestDockerKubernetes127to128EtcdScaleUp(t *testing.T) {
+	provider := framework.NewDocker(t)
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube127),
+			api.WithExternalEtcdTopology(1),
+			api.WithControlPlaneCount(1),
+			api.WithWorkerNodeCount(1),
+		),
+	)
+
+	runSimpleUpgradeFlow(
+		test,
+		v1alpha1.Kube128,
+		framework.WithClusterUpgrade(
+			api.WithKubernetesVersion(v1alpha1.Kube128),
+			api.WithExternalEtcdTopology(3),
+		),
+	)
+}
+
+func TestDockerKubernetes127to128EtcdScaleDown(t *testing.T) {
+	provider := framework.NewDocker(t)
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube127),
+			api.WithExternalEtcdTopology(3),
+			api.WithControlPlaneCount(1),
+			api.WithWorkerNodeCount(1),
+		),
+	)
+
+	runSimpleUpgradeFlow(
+		test,
+		v1alpha1.Kube128,
+		framework.WithClusterUpgrade(
+			api.WithKubernetesVersion(v1alpha1.Kube128),
+			api.WithExternalEtcdTopology(1),
+		),
+	)
+}
