@@ -66,8 +66,8 @@ func (c *Upgrade) Run(ctx context.Context, clusterSpec *cluster.Spec, management
 		ClusterUpgrader:   c.clusterUpgrader,
 	}
 	if features.IsActive(features.CheckpointEnabled()) {
-		return task.NewTaskRunner(&setupAndValidate{}, c.writer, task.WithCheckpointFile()).RunTask(ctx, commandContext)
+		return task.NewTaskRunner(&setupAndValidateUpgrade{}, c.writer, task.WithCheckpointFile()).RunTask(ctx, commandContext)
 	}
 
-	return task.NewTaskRunner(&setupAndValidate{}, c.writer).RunTask(ctx, commandContext)
+	return task.NewTaskRunner(&setupAndValidateUpgrade{}, c.writer).RunTask(ctx, commandContext)
 }
