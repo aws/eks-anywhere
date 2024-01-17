@@ -1052,6 +1052,45 @@ func TestProviderGenerateDeploymentFileForSingleNodeCluster(t *testing.T) {
 	test.AssertContentToFile(t, string(cp), "testdata/expected_results_cluster_tinkerbell_cp_single_node.yaml")
 }
 
+func TestProviderGenerateDeploymentFileForInPlaceSingleNodeCluster(t *testing.T) {
+	clusterSpecManifest := "cluster_tinkerbell_single_node.yaml"
+	mockCtrl := gomock.NewController(t)
+	docker := stackmocks.NewMockDocker(mockCtrl)
+	helm := stackmocks.NewMockHelm(mockCtrl)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	stackInstaller := stackmocks.NewMockStackInstaller(mockCtrl)
+	writer := filewritermocks.NewMockFileWriter(mockCtrl)
+	cluster := &types.Cluster{Name: "test"}
+	forceCleanup := false
+
+	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
+	clusterSpec.Cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy = &v1alpha1.ControlPlaneUpgradeRolloutStrategy{
+		Type: "InPlace",
+	}
+	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
+	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
+	ctx := context.Background()
+
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+	provider.stackInstaller = stackInstaller
+
+	stackInstaller.EXPECT().CleanupLocalBoots(ctx, forceCleanup)
+
+	if err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec); err != nil {
+		t.Fatalf("failed to setup and validate: %v", err)
+	}
+
+	cp, md, err := provider.GenerateCAPISpecForCreate(context.Background(), cluster, clusterSpec)
+	if err != nil {
+		t.Fatalf("failed to generate cluster api spec contents: %v", err)
+	}
+
+	if len(md) != 0 {
+		t.Fatalf("expect nothing to be generated for worker node")
+	}
+	test.AssertContentToFile(t, string(cp), "testdata/expected_results_cluster_tinkerbell_cp_single_node_in_place.yaml")
+}
+
 func TestProviderGenerateDeploymentFileForSingleNodeClusterSkipLB(t *testing.T) {
 	clusterSpecManifest := "cluster_tinkerbell_single_node_skip_lb.yaml"
 	mockCtrl := gomock.NewController(t)
@@ -1132,8 +1171,8 @@ func TestSetupAndValidateCreateWorkloadClusterSuccess(t *testing.T) {
 
 	clusterSpec.Cluster.SetManagedBy("management-cluster")
 	clusterSpec.ManagementCluster = &types.Cluster{
-		Name:               "management-cluster",
-		KubeconfigFile:     "kc.kubeconfig",
+		Name:           "management-cluster",
+		KubeconfigFile: "kc.kubeconfig",
 	}
 	for _, config := range machineConfigs {
 		kubectl.EXPECT().SearchTinkerbellMachineConfig(ctx, config.Name, clusterSpec.ManagementCluster.KubeconfigFile, config.Namespace).Return([]*v1alpha1.TinkerbellMachineConfig{}, nil)
@@ -1180,8 +1219,8 @@ func TestSetupAndValidateCreateWorkloadClusterDifferentNamespaceSuccess(t *testi
 
 	clusterSpec.Cluster.SetManagedBy("management-cluster")
 	clusterSpec.ManagementCluster = &types.Cluster{
-		Name:               "management-cluster",
-		KubeconfigFile:     "kc.kubeconfig",
+		Name:           "management-cluster",
+		KubeconfigFile: "kc.kubeconfig",
 	}
 	for _, config := range machineConfigs {
 		kubectl.EXPECT().SearchTinkerbellMachineConfig(ctx, config.Name, clusterSpec.ManagementCluster.KubeconfigFile, config.Namespace).Return([]*v1alpha1.TinkerbellMachineConfig{}, nil)
@@ -1226,8 +1265,8 @@ func TestSetupAndValidateCreateWorkloadClusterFailsIfMachineExists(t *testing.T)
 
 	clusterSpec.Cluster.SetManagedBy("management-cluster")
 	clusterSpec.ManagementCluster = &types.Cluster{
-		Name:               "management-cluster",
-		KubeconfigFile:     "kc.kubeconfig",
+		Name:           "management-cluster",
+		KubeconfigFile: "kc.kubeconfig",
 	}
 
 	idx := 0
@@ -1271,8 +1310,8 @@ func TestSetupAndValidateCreateWorkloadClusterFailsIfDatacenterExists(t *testing
 
 	clusterSpec.Cluster.SetManagedBy("management-cluster")
 	clusterSpec.ManagementCluster = &types.Cluster{
-		Name:               "management-cluster",
-		KubeconfigFile:     "kc.kubeconfig",
+		Name:           "management-cluster",
+		KubeconfigFile: "kc.kubeconfig",
 	}
 
 	for _, config := range machineConfigs {
@@ -1309,8 +1348,8 @@ func TestSetupAndValidateCreateWorkloadClusterFailsIfDatacenterConfigError(t *te
 
 	clusterSpec.Cluster.SetManagedBy("management-cluster")
 	clusterSpec.ManagementCluster = &types.Cluster{
-		Name:               "management-cluster",
-		KubeconfigFile:     "kc.kubeconfig",
+		Name:           "management-cluster",
+		KubeconfigFile: "kc.kubeconfig",
 	}
 
 	for _, config := range machineConfigs {
@@ -1346,8 +1385,8 @@ func TestSetupAndValidateCreateWorkloadClusterErrorUnprovisionedHardware(t *test
 
 	clusterSpec.Cluster.SetManagedBy("management-cluster")
 	clusterSpec.ManagementCluster = &types.Cluster{
-		Name:               "management-cluster",
-		KubeconfigFile:     "kc.kubeconfig",
+		Name:           "management-cluster",
+		KubeconfigFile: "kc.kubeconfig",
 	}
 	for _, config := range machineConfigs {
 		kubectl.EXPECT().SearchTinkerbellMachineConfig(ctx, config.Name, clusterSpec.ManagementCluster.KubeconfigFile, config.Namespace).Return([]*v1alpha1.TinkerbellMachineConfig{}, nil)
@@ -1384,8 +1423,8 @@ func TestSetupAndValidateCreateWorkloadClusterErrorProvisionedHardware(t *testin
 
 	clusterSpec.Cluster.SetManagedBy("management-cluster")
 	clusterSpec.ManagementCluster = &types.Cluster{
-		Name:               "management-cluster",
-		KubeconfigFile:     "kc.kubeconfig",
+		Name:           "management-cluster",
+		KubeconfigFile: "kc.kubeconfig",
 	}
 	for _, config := range machineConfigs {
 		kubectl.EXPECT().SearchTinkerbellMachineConfig(ctx, config.Name, clusterSpec.ManagementCluster.KubeconfigFile, config.Namespace).Return([]*v1alpha1.TinkerbellMachineConfig{}, nil)
@@ -1454,8 +1493,8 @@ func TestSetupAndValidateUpgradeWorkloadClusterErrorApplyHardware(t *testing.T) 
 
 	clusterSpec.Cluster.SetManagedBy("management-cluster")
 	clusterSpec.ManagementCluster = &types.Cluster{
-		Name:               "management-cluster",
-		KubeconfigFile:     "kc.kubeconfig",
+		Name:           "management-cluster",
+		KubeconfigFile: "kc.kubeconfig",
 	}
 	cluster.KubeconfigFile = "kc.kubeconfig"
 
@@ -1492,8 +1531,8 @@ func TestSetupAndValidateUpgradeWorkloadClusterErrorBMC(t *testing.T) {
 
 	clusterSpec.Cluster.SetManagedBy("management-cluster")
 	clusterSpec.ManagementCluster = &types.Cluster{
-		Name:               "management-cluster",
-		KubeconfigFile:     "kc.kubeconfig",
+		Name:           "management-cluster",
+		KubeconfigFile: "kc.kubeconfig",
 	}
 	cluster.KubeconfigFile = "kc.kubeconfig"
 
@@ -1533,8 +1572,8 @@ func TestSetupAndValidateCreateWorkloadClusterErrorManagementCluster(t *testing.
 
 	clusterSpec.Cluster.SetManagedBy("management-cluster")
 	clusterSpec.ManagementCluster = &types.Cluster{
-		Name:               "management-cluster",
-		KubeconfigFile:     "kc.kubeconfig",
+		Name:           "management-cluster",
+		KubeconfigFile: "kc.kubeconfig",
 	}
 	for _, config := range machineConfigs {
 		kubectl.EXPECT().SearchTinkerbellMachineConfig(ctx, config.Name, clusterSpec.ManagementCluster.KubeconfigFile, config.Namespace).Return([]*v1alpha1.TinkerbellMachineConfig{}, nil)
@@ -1578,8 +1617,8 @@ func TestSetupAndValidateCreateWorkloadClusterErrorUnspecifiedTinkerbellIP(t *te
 
 	clusterSpec.Cluster.SetManagedBy("management-cluster")
 	clusterSpec.ManagementCluster = &types.Cluster{
-		Name:               "management-cluster",
-		KubeconfigFile:     "kc.kubeconfig",
+		Name:           "management-cluster",
+		KubeconfigFile: "kc.kubeconfig",
 	}
 	for _, config := range machineConfigs {
 		kubectl.EXPECT().SearchTinkerbellMachineConfig(ctx, config.Name, clusterSpec.ManagementCluster.KubeconfigFile, config.Namespace).Return([]*v1alpha1.TinkerbellMachineConfig{}, nil)
@@ -1619,8 +1658,8 @@ func TestSetupAndValidateCreateWorkloadClusterErrorManagementClusterTinkerbellIP
 
 	clusterSpec.Cluster.SetManagedBy("management-cluster")
 	clusterSpec.ManagementCluster = &types.Cluster{
-		Name:               "management-cluster",
-		KubeconfigFile:     "kc.kubeconfig",
+		Name:           "management-cluster",
+		KubeconfigFile: "kc.kubeconfig",
 	}
 	for _, config := range machineConfigs {
 		kubectl.EXPECT().SearchTinkerbellMachineConfig(ctx, config.Name, clusterSpec.ManagementCluster.KubeconfigFile, config.Namespace).Return([]*v1alpha1.TinkerbellMachineConfig{}, nil)
@@ -1663,8 +1702,8 @@ func TestSetupAndValidateCreateWorkloadClusterErrorDifferentTinkerbellIP(t *test
 
 	clusterSpec.Cluster.SetManagedBy("management-cluster")
 	clusterSpec.ManagementCluster = &types.Cluster{
-		Name:               "management-cluster",
-		KubeconfigFile:     "kc.kubeconfig",
+		Name:           "management-cluster",
+		KubeconfigFile: "kc.kubeconfig",
 	}
 	for _, config := range machineConfigs {
 		kubectl.EXPECT().SearchTinkerbellMachineConfig(ctx, config.Name, clusterSpec.ManagementCluster.KubeconfigFile, config.Namespace).Return([]*v1alpha1.TinkerbellMachineConfig{}, nil)
