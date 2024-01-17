@@ -170,8 +170,8 @@ func TestTaskRunnerRunTaskWithCheckpointReadFailure(t *testing.T) {
 func TestUnmarshalTaskCheckpointSuccess(t *testing.T) {
 	testConfigType := types.Cluster{}
 	testTaskCheckpoint := types.Cluster{
-		Name:               "test-cluster",
-		KubeconfigFile:     "test.kubeconfig",
+		Name:           "test-cluster",
+		KubeconfigFile: "test.kubeconfig",
 	}
 
 	if err := task.UnmarshalTaskCheckpoint(testTaskCheckpoint, testConfigType); err != nil {
