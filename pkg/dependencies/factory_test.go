@@ -40,6 +40,7 @@ type factoryTest struct {
 type provider string
 
 const (
+	docker     provider = "docker"
 	vsphere    provider = "vsphere"
 	tinkerbell provider = "tinkerbell"
 	nutanix    provider = "nutanix"
@@ -60,6 +61,8 @@ func newTest(t *testing.T, p provider) *factoryTest {
 	}
 
 	switch p {
+	case docker:
+		f.clusterConfigFile = "testdata/cluster_docker.yaml"
 	case vsphere:
 		f.clusterConfigFile = "testdata/cluster_vsphere.yaml"
 	case tinkerbell:
@@ -84,6 +87,68 @@ func newTest(t *testing.T, p provider) *factoryTest {
 	f.clusterSpec = test.NewFullClusterSpec(t, f.clusterConfigFile)
 
 	return f
+}
+
+func TestFactoryBuildWithKubeconfigReader(t *testing.T) {
+	tests := []struct {
+		provider provider
+	}{
+		{
+			provider: docker,
+		},
+		{
+			provider: vsphere,
+		},
+	}
+
+	for _, tc := range tests {
+		tt := newTest(t, tc.provider)
+		deps, err := dependencies.NewFactory().
+			WithLocalExecutables().
+			WithKubeconfigWriter(tt.clusterSpec.Cluster).
+			Build(context.Background())
+		tt.Expect(err).To(BeNil())
+		tt.Expect(deps.KubeconfigWriter).NotTo(BeNil())
+	}
+}
+
+func TestFactoryBuildWithKubeconfigReaderAlreadyExists(t *testing.T) {
+	tt := newTest(t, docker)
+	factory := dependencies.NewFactory()
+	deps, err := factory.WithLocalExecutables().WithKubeconfigWriter(tt.clusterSpec.Cluster).Build(context.Background())
+	tt.Expect(err).To(BeNil())
+	tt.Expect(deps.KubeconfigWriter).ToNot(BeNil())
+	deps, err = factory.WithKubeconfigWriter(tt.clusterSpec.Cluster).Build(context.Background())
+	tt.Expect(err).To(BeNil())
+	tt.Expect(deps.KubeconfigWriter).NotTo(BeNil())
+}
+
+func TestFactoryBuildWithClusterCreator(t *testing.T) {
+	tt := newTest(t, docker)
+	deps, err := dependencies.NewFactory().
+		WithLocalExecutables().
+		WithKubeconfigWriter(tt.clusterSpec.Cluster).
+		WithClusterCreator(tt.clusterSpec.Cluster).
+		Build(context.Background())
+	tt.Expect(err).To(BeNil())
+	tt.Expect(deps.ClusterCreator).NotTo(BeNil())
+}
+
+func TestFactoryBuildWithClusterCreatorAlreadyExists(t *testing.T) {
+	tt := newTest(t, docker)
+	factory := dependencies.NewFactory()
+	deps, _ := factory.
+		WithLocalExecutables().
+		WithKubeconfigWriter(tt.clusterSpec.Cluster).
+		WithClusterCreator(tt.clusterSpec.Cluster).
+		Build(context.Background())
+	tt.Expect(deps.ClusterCreator).NotTo(BeNil())
+	deps, err := factory.
+		WithKubeconfigWriter(tt.clusterSpec.Cluster).
+		WithClusterCreator(tt.clusterSpec.Cluster).
+		Build(context.Background())
+	tt.Expect(err).To(BeNil())
+	tt.Expect(deps.ClusterCreator).NotTo(BeNil())
 }
 
 func TestFactoryBuildWithProvidervSphere(t *testing.T) {

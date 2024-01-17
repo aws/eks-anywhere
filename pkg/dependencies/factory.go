@@ -112,6 +112,8 @@ type Dependencies struct {
 	ExecutableBuilder           *executables.ExecutablesBuilder
 	CreateClusterDefaulter      cli.CreateClusterDefaulter
 	UpgradeClusterDefaulter     cli.UpgradeClusterDefaulter
+	KubeconfigWriter            kubeconfig.Writer
+	ClusterCreator              *clustermanager.ClusterCreator
 }
 
 // KubeClients defines super struct that exposes all behavior.
@@ -574,6 +576,45 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 			return fmt.Errorf("no provider support for datacenter kind: %s", clusterConfig.Spec.DatacenterRef.Kind)
 		}
 
+		return nil
+	})
+
+	return f
+}
+
+// WithKubeconfigWriter adds the KubeconfigReader dependency depending on the provider.
+func (f *Factory) WithKubeconfigWriter(clusterConfig *v1alpha1.Cluster) *Factory {
+	f.WithUnAuthKubeClient()
+	if clusterConfig.Spec.DatacenterRef.Kind == v1alpha1.DockerDatacenterKind {
+		f.WithDocker()
+	}
+
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.dependencies.KubeconfigWriter != nil {
+			return nil
+		}
+		writer := kubeconfig.NewClusterAPIKubeconfigSecretWriter(f.dependencies.UnAuthKubeClient)
+		switch clusterConfig.Spec.DatacenterRef.Kind {
+		case v1alpha1.DockerDatacenterKind:
+			f.dependencies.KubeconfigWriter = docker.NewKubeconfigWriter(f.dependencies.DockerClient, writer)
+		default:
+			f.dependencies.KubeconfigWriter = writer
+		}
+		return nil
+	})
+
+	return f
+}
+
+// WithClusterCreator adds the ClusterCreator dependency.
+func (f *Factory) WithClusterCreator(clusterConfig *v1alpha1.Cluster) *Factory {
+	f.WithClusterApplier().WithWriter().WithKubeconfigWriter(clusterConfig)
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.dependencies.ClusterCreator != nil {
+			return nil
+		}
+
+		f.dependencies.ClusterCreator = clustermanager.NewClusterCreator(f.dependencies.ClusterApplier, f.dependencies.KubeconfigWriter, f.dependencies.Writer)
 		return nil
 	})
 

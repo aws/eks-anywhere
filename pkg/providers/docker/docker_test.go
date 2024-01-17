@@ -1,6 +1,7 @@
 package docker_test
 
 import (
+	"bytes"
 	"context"
 	_ "embed"
 	"fmt"
@@ -1009,5 +1010,47 @@ func TestTemplateBuilder_CertSANs(t *testing.T) {
 		g.Expect(err).ToNot(HaveOccurred())
 
 		test.AssertContentToFile(t, string(data), tc.Output)
+	}
+}
+
+func TestDockerWriteKubeconfig(t *testing.T) {
+	for _, tc := range []struct {
+		clusterName    string
+		kubeconfigPath string
+		providerErr    error
+		writerErr      error
+	}{
+		{
+			clusterName:    "test",
+			kubeconfigPath: "test",
+		},
+		{
+			clusterName:    "test",
+			kubeconfigPath: "test",
+			writerErr:      fmt.Errorf("failed to write kubeconfig"),
+		},
+		{
+			clusterName:    "test",
+			kubeconfigPath: "test",
+			providerErr:    fmt.Errorf("failed to get LB port"),
+		},
+	} {
+		g := NewWithT(t)
+		ctx := context.Background()
+		buf := bytes.NewBuffer([]byte{})
+		mockCtrl := gomock.NewController(t)
+		dockerClient := dockerMocks.NewMockProviderClient(mockCtrl)
+		mocksWriter := dockerMocks.NewMockKubeconfigReader(mockCtrl)
+		mocksWriter.EXPECT().GetClusterKubeconfig(ctx, tc.clusterName, tc.kubeconfigPath).Return([]byte{}, tc.writerErr)
+		if tc.writerErr == nil {
+			dockerClient.EXPECT().GetDockerLBPort(ctx, tc.clusterName).Return("", tc.providerErr)
+		}
+		writer := docker.NewKubeconfigWriter(dockerClient, mocksWriter)
+		err := writer.WriteKubeconfig(ctx, tc.clusterName, tc.kubeconfigPath, buf)
+		if tc.writerErr == nil && tc.providerErr == nil {
+			g.Expect(err).ToNot(HaveOccurred())
+		} else {
+			g.Expect(err).To(HaveOccurred())
+		}
 	}
 }

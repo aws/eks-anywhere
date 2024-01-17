@@ -25,9 +25,9 @@ type Create struct {
 func NewCreate(provider providers.Provider,
 	clusterManager interfaces.ClusterManager, gitOpsManager interfaces.GitOpsManager,
 	writer filewriter.FileWriter,
-	clusterCreator interfaces.ClusterCreator,
 	eksdInstaller interfaces.EksdInstaller,
 	packageInstaller interfaces.PackageInstaller,
+	clusterCreator interfaces.ClusterCreator,
 ) *Create {
 	return &Create{
 		provider:         provider,
