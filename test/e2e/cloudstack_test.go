@@ -3449,7 +3449,7 @@ func TestCloudStackKubernetes128ValidateDomainFourLevelsSimpleFlow(t *testing.T)
 }
 
 // etcd scale tests
-func TestCloudstackKubernetes128EtcdScaleUp(t *testing.T) {
+func TestCloudStackKubernetes128EtcdScaleUp(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewCloudStack(t, framework.WithCloudStackRedhat128()),
@@ -3470,7 +3470,7 @@ func TestCloudstackKubernetes128EtcdScaleUp(t *testing.T) {
 	)
 }
 
-func TestCloudstackKubernetes128EtcdScaleDown(t *testing.T) {
+func TestCloudStackKubernetes128EtcdScaleDown(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewCloudStack(t, framework.WithCloudStackRedhat128()),
@@ -3491,7 +3491,7 @@ func TestCloudstackKubernetes128EtcdScaleDown(t *testing.T) {
 	)
 }
 
-func TestCloudstackKubernetes127to128EtcdScaleUp(t *testing.T) {
+func TestCloudStackKubernetes127to128EtcdScaleUp(t *testing.T) {
 	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat127())
 	test := framework.NewClusterE2ETest(
 		t,
@@ -3515,7 +3515,7 @@ func TestCloudstackKubernetes127to128EtcdScaleUp(t *testing.T) {
 	)
 }
 
-func TestCloudstackKubernetes127to128EtcdScaleDown(t *testing.T) {
+func TestCloudStackKubernetes127to128EtcdScaleDown(t *testing.T) {
 	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat127())
 	test := framework.NewClusterE2ETest(
 		t,
