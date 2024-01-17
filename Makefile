@@ -528,7 +528,7 @@ mocks: ## Generate mocks
 	${MOCKGEN} -destination=controllers/mocks/snow_machineconfig_controller.go -package=mocks -source "controllers/snow_machineconfig_controller.go"
 	${MOCKGEN} -destination=pkg/providers/mocks/providers.go -package=mocks "github.com/aws/eks-anywhere/pkg/providers" Provider,DatacenterConfig,MachineConfig
 	${MOCKGEN} -destination=pkg/executables/mocks/executables.go -package=mocks "github.com/aws/eks-anywhere/pkg/executables" Executable,DockerClient,DockerContainer
-	${MOCKGEN} -destination=pkg/providers/docker/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/providers/docker" ProviderClient,ProviderKubectlClient
+	${MOCKGEN} -destination=pkg/providers/docker/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/providers/docker" ProviderClient,ProviderKubectlClient,KubeconfigReader
 	${MOCKGEN} -destination=pkg/providers/tinkerbell/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/providers/tinkerbell" ProviderKubectlClient,SSHAuthKeyGenerator
 	${MOCKGEN} -destination=pkg/providers/cloudstack/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/providers/cloudstack" ProviderCmkClient,ProviderKubectlClient
 	${MOCKGEN} -destination=pkg/providers/cloudstack/validator_mocks.go -package=cloudstack "github.com/aws/eks-anywhere/pkg/providers/cloudstack" ProviderValidator,ValidatorRegistry
@@ -536,7 +536,7 @@ mocks: ## Generate mocks
 	${MOCKGEN} -destination=pkg/providers/vsphere/setupuser/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/providers/vsphere/setupuser" GovcClient
 	${MOCKGEN} -destination=pkg/govmomi/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/govmomi" VSphereClient,VMOMIAuthorizationManager,VMOMIFinder,VMOMISessionBuilder,VMOMIFinderBuilder,VMOMIAuthorizationManagerBuilder
 	${MOCKGEN} -destination=pkg/filewriter/mocks/filewriter.go -package=mocks "github.com/aws/eks-anywhere/pkg/filewriter" FileWriter
-	${MOCKGEN} -destination=pkg/clustermanager/mocks/client_and_networking.go -package=mocks "github.com/aws/eks-anywhere/pkg/clustermanager" ClusterClient,Networking,AwsIamAuth,EKSAComponents,KubernetesClient,ClientFactory
+	${MOCKGEN} -destination=pkg/clustermanager/mocks/client_and_networking.go -package=mocks "github.com/aws/eks-anywhere/pkg/clustermanager" ClusterClient,Networking,AwsIamAuth,EKSAComponents,KubernetesClient,ClientFactory,ClusterApplier
 	${MOCKGEN} -destination=pkg/gitops/flux/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/gitops/flux" FluxClient,KubeClient,GitOpsFluxClient,GitClient,Templater
 	${MOCKGEN} -destination=pkg/task/mocks/task.go -package=mocks "github.com/aws/eks-anywhere/pkg/task" Task
 	${MOCKGEN} -destination=pkg/bootstrapper/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/bootstrapper" KindClient,KubernetesClient
@@ -613,6 +613,7 @@ mocks: ## Generate mocks
 	${MOCKGEN} -destination=pkg/registry/mocks/storage.go -package=mocks -source "pkg/registry/storage.go" StorageClient
 	${MOCKGEN} -destination=pkg/registry/mocks/repository.go -package=mocks oras.land/oras-go/v2/registry Repository
 	${MOCKGEN} -destination=controllers/mocks/nodeupgrade_controller.go -package=mocks -source "controllers/nodeupgrade_controller.go" RemoteClientRegistry
+	${MOCKGEN} -destination=pkg/kubeconfig/mocks/writer.go -package=mocks -source "pkg/kubeconfig/kubeconfig.go" Writer
 
 .PHONY: verify-mocks
 verify-mocks: mocks ## Verify if mocks need to be updated

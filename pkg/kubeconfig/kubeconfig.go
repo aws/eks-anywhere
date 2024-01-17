@@ -1,7 +1,9 @@
 package kubeconfig
 
 import (
+	"context"
 	"fmt"
+	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -11,6 +13,11 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/validations"
 )
+
+// Writer reads the kubeconfig secret on a cluster and copies the contents to a writer.
+type Writer interface {
+	WriteKubeconfig(ctx context.Context, clusterName, kubeconfig string, w io.Writer) error
+}
 
 // FromClusterFormat defines the format of the kubeconfig of the.
 const FromClusterFormat = "%s-eks-a-cluster.kubeconfig"

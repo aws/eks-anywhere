@@ -188,7 +188,9 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 		WithPackageInstaller(clusterSpec, cc.installPackages, cc.managementKubeconfig).
 		WithValidatorClients().
 		WithCreateClusterDefaulter(createCLIConfig).
-		WithClusterApplier()
+		WithClusterApplier().
+		WithKubeconfigWriter(clusterSpec.Cluster).
+		WithClusterCreator(clusterSpec.Cluster)
 
 	if cc.timeoutOptions.noTimeouts {
 		factory.WithNoTimeouts()
@@ -263,9 +265,9 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 			deps.ClusterManager,
 			deps.GitOpsFlux,
 			deps.Writer,
-			deps.ClusterApplier,
 			deps.EksdInstaller,
 			deps.PackageInstaller,
+			deps.ClusterCreator,
 		)
 		err = createWorkloadCluster.Run(ctx, clusterSpec, createValidations)
 
