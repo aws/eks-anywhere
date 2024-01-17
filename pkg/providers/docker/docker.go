@@ -1,9 +1,11 @@
 package docker
 
 import (
+	"bytes"
 	"context"
 	_ "embed"
 	"fmt"
+	"io"
 	"os"
 	"regexp"
 
@@ -50,6 +52,17 @@ type provider struct {
 	datacenterConfig      *v1alpha1.DockerDatacenterConfig
 	providerKubectlClient ProviderKubectlClient
 	templateBuilder       *DockerTemplateBuilder
+}
+
+// KubeconfigReader reads the kubeconfig secret from the cluster.
+type KubeconfigReader interface {
+	GetClusterKubeconfig(ctx context.Context, clusterName, kubeconfigPath string) ([]byte, error)
+}
+
+// KubeconfigWriter reads the kubeconfig secret on a docker cluster and copies the contents to a writer.
+type KubeconfigWriter struct {
+	docker ProviderClient
+	reader KubeconfigReader
 }
 
 func (p *provider) InstallCustomProviderComponents(ctx context.Context, kubeconfigFile string) error {
@@ -526,13 +539,42 @@ func (p *provider) UpdateKubeConfig(content *[]byte, clusterName string) error {
 	if port, err := p.docker.GetDockerLBPort(ctx, clusterName); err != nil {
 		return err
 	} else {
-		getUpdatedKubeConfigContent(content, port)
+		updateKubeconfig(content, port)
 		return nil
 	}
 }
 
+// NewKubeconfigWriter creates a KubeconfigWriter.
+func NewKubeconfigWriter(docker ProviderClient, reader KubeconfigReader) KubeconfigWriter {
+	return KubeconfigWriter{
+		reader: reader,
+		docker: docker,
+	}
+}
+
+// WriteKubeconfig retrieves the contents of the specified cluster's kubeconfig from a secret and copies it to an io.Writer.
+func (kr KubeconfigWriter) WriteKubeconfig(ctx context.Context, clusterName, kubeconfigPath string, w io.Writer) error {
+	rawkubeconfig, err := kr.reader.GetClusterKubeconfig(ctx, clusterName, kubeconfigPath)
+	if err != nil {
+		return err
+	}
+
+	port, err := kr.docker.GetDockerLBPort(ctx, clusterName)
+	if err != nil {
+		return err
+	}
+
+	updateKubeconfig(&rawkubeconfig, port)
+
+	if _, err := io.Copy(w, bytes.NewReader(rawkubeconfig)); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // this is required for docker provider.
-func getUpdatedKubeConfigContent(content *[]byte, dockerLbPort string) {
+func updateKubeconfig(content *[]byte, dockerLbPort string) {
 	mc := regexp.MustCompile("server:.*")
 	updatedConfig := mc.ReplaceAllString(string(*content), fmt.Sprintf("server: https://127.0.0.1:%s", dockerLbPort))
 	mc = regexp.MustCompile("certificate-authority-data:.*")

@@ -90,4 +90,5 @@ type ClusterUpgrader interface {
 // ClusterCreator creates the cluster and waits until it's ready.
 type ClusterCreator interface {
 	Run(ctx context.Context, spec *cluster.Spec, managementCluster types.Cluster) error
+	CreateSync(ctx context.Context, spec *cluster.Spec, managementCluster *types.Cluster) (*types.Cluster, error)
 }

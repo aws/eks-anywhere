@@ -174,3 +174,8 @@ func EnsureNewNameIfChanged[M Object[M]](ctx context.Context,
 func ClusterCASecretName(clusterName string) string {
 	return fmt.Sprintf("%s-ca", clusterName)
 }
+
+// ClusterKubeconfigSecretName returns the name of the kubeconfig secret for the cluster.
+func ClusterKubeconfigSecretName(clusterName string) string {
+	return fmt.Sprintf("%s-kubeconfig", clusterName)
+}

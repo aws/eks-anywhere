@@ -60,9 +60,9 @@ func newCreateTest(t *testing.T) *createTestSetup {
 		clusterManager,
 		gitOpsManager,
 		writer,
-		clusterUpgrader,
 		eksdInstaller,
 		packageInstaller,
+		clusterUpgrader,
 	)
 
 	for _, e := range featureEnvVars {
@@ -99,7 +99,7 @@ func (c *createTestSetup) expectSetup() {
 }
 
 func (c *createTestSetup) expectCreateWorkloadCluster(err error) {
-	c.clusterCreator.EXPECT().Run(c.ctx, c.clusterSpec, *c.clusterSpec.ManagementCluster).Return(err)
+	c.clusterCreator.EXPECT().CreateSync(c.ctx, c.clusterSpec, c.clusterSpec.ManagementCluster).Return(nil, err)
 }
 
 func (c *createTestSetup) expectWriteWorkloadClusterConfig(err error) {

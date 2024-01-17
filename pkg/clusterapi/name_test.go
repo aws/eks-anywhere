@@ -332,6 +332,11 @@ func TestClusterCASecretName(t *testing.T) {
 	g.Expect(clusterapi.ClusterCASecretName("my-cluster")).To(Equal("my-cluster-ca"))
 }
 
+func TestClusterKubeconfigSecretName(t *testing.T) {
+	g := NewWithT(t)
+	g.Expect(clusterapi.ClusterKubeconfigSecretName("my-cluster")).To(Equal("my-cluster-kubeconfig"))
+}
+
 func TestInitialTemplateNamesForWorkers(t *testing.T) {
 	tests := []struct {
 		name         string
