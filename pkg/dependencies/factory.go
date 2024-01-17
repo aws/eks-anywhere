@@ -81,6 +81,7 @@ type Dependencies struct {
 	CiliumTemplater             *cilium.Templater
 	AwsIamAuth                  *awsiamauth.Installer
 	ClusterManager              *clustermanager.ClusterManager
+	EksaInstaller               *clustermanager.EKSAInstaller
 	Bootstrapper                *bootstrapper.Bootstrapper
 	GitOpsFlux                  *flux.Flux
 	Git                         *gitfactory.GitTools
@@ -1097,6 +1098,39 @@ func (f *Factory) WithClusterManager(clusterConfig *v1alpha1.Cluster, timeoutOpt
 			installer,
 			f.clusterManagerOpts(timeoutOpts)...,
 		)
+		return nil
+	})
+
+	return f
+}
+
+// WithEKSAInstaller builds a cluster manager based on the cluster config and timeout options.
+func (f *Factory) WithEKSAInstaller(clusterConfig *v1alpha1.Cluster, timeoutOpts *ClusterManagerTimeoutOptions) *Factory {
+	f.WithClusterctl().WithKubectl().WithFileReader()
+
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.dependencies.EksaInstaller != nil {
+			return nil
+		}
+
+		var r *retrier.Retrier
+		if f.config.noTimeouts {
+			r = retrier.NewWithNoTimeout()
+		} else {
+			r = clustermanager.DefaultRetrier()
+		}
+
+		client := clustermanager.NewRetrierClient(
+			&clusterManagerClient{
+				f.dependencies.Clusterctl,
+				f.dependencies.Kubectl,
+			},
+			r,
+		)
+
+		installer := clustermanager.NewEKSAInstaller(client, f.dependencies.FileReader, f.eksaInstallerOpts()...)
+
+		f.dependencies.EksaInstaller = installer
 		return nil
 	})
 

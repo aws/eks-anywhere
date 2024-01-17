@@ -14,6 +14,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/yaml"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
@@ -58,6 +59,51 @@ func WithEKSAInstallerNoTimeouts() EKSAInstallerOpt {
 
 // Install configures and applies eks-a components in a cluster accordingly to a spec.
 func (i *EKSAInstaller) Install(ctx context.Context, log logr.Logger, cluster *types.Cluster, spec *cluster.Spec) error {
+	err := i.createEKSAComponents(ctx, log, cluster, spec)
+	if err != nil {
+		return fmt.Errorf("applying EKSA components: %v", err)
+	}
+
+	err = i.applyBundles(ctx, log, cluster, spec)
+	if err != nil {
+		return fmt.Errorf("applying EKSA bundles: %v", err)
+	}
+
+	err = i.applyReleases(ctx, log, cluster, spec)
+	if err != nil {
+		return fmt.Errorf("applying EKSA releases: %v", err)
+	}
+
+	return nil
+}
+
+// Upgrade re-installs the eksa components in a cluster if the VersionBundle defined in the
+// new spec has a different eks-a components version. Workload clusters are ignored.
+func (i *EKSAInstaller) Upgrade(ctx context.Context, log logr.Logger, c *types.Cluster, currentSpec, newSpec *cluster.Spec) (*types.ChangeDiff, error) {
+	log.V(1).Info("Checking for EKS-A components upgrade")
+	if !newSpec.Cluster.IsSelfManaged() {
+		log.V(1).Info("Skipping EKS-A components upgrade, not a self-managed cluster")
+		return nil, nil
+	}
+	changeDiff := EksaChangeDiff(currentSpec, newSpec)
+	if changeDiff == nil {
+		log.V(1).Info("Nothing to upgrade for controller and CRDs")
+		return nil, nil
+	}
+	log.V(1).Info("Starting EKS-A components upgrade")
+	oldVersionsBundle := currentSpec.RootVersionsBundle()
+	newVersionsBundle := newSpec.RootVersionsBundle()
+	oldVersion := oldVersionsBundle.Eksa.Version
+	newVersion := newVersionsBundle.Eksa.Version
+	if err := i.createEKSAComponents(ctx, log, c, newSpec); err != nil {
+		return nil, fmt.Errorf("upgrading EKS-A components from version %v to version %v: %v", oldVersion, newVersion, err)
+	}
+
+	return changeDiff, nil
+}
+
+// createEKSAComponents creates eksa components and applies the objects to the cluster.
+func (i *EKSAInstaller) createEKSAComponents(ctx context.Context, log logr.Logger, cluster *types.Cluster, spec *cluster.Spec) error {
 	generator := EKSAComponentGenerator{log: log, reader: i.reader}
 	components, err := generator.buildEKSAComponentsSpec(spec)
 	if err != nil {
@@ -83,29 +129,34 @@ func (i *EKSAInstaller) Install(ctx context.Context, log logr.Logger, cluster *t
 	return nil
 }
 
-// Upgrade re-installs the eksa components in a cluster if the VersionBundle defined in the
-// new spec has a different eks-a components version. Workload clusters are ignored.
-func (i *EKSAInstaller) Upgrade(ctx context.Context, log logr.Logger, c *types.Cluster, currentSpec, newSpec *cluster.Spec) (*types.ChangeDiff, error) {
-	log.V(1).Info("Checking for EKS-A components upgrade")
-	if !newSpec.Cluster.IsSelfManaged() {
-		log.V(1).Info("Skipping EKS-A components upgrade, not a self-managed cluster")
-		return nil, nil
-	}
-	changeDiff := EksaChangeDiff(currentSpec, newSpec)
-	if changeDiff == nil {
-		log.V(1).Info("Nothing to upgrade for controller and CRDs")
-		return nil, nil
-	}
-	log.V(1).Info("Starting EKS-A components upgrade")
-	oldVersionsBundle := currentSpec.RootVersionsBundle()
-	newVersionsBundle := newSpec.RootVersionsBundle()
-	oldVersion := oldVersionsBundle.Eksa.Version
-	newVersion := newVersionsBundle.Eksa.Version
-	if err := i.Install(ctx, log, c, newSpec); err != nil {
-		return nil, fmt.Errorf("upgrading EKS-A components from version %v to version %v: %v", oldVersion, newVersion, err)
+// applyBundles applies the bundles to the cluster.
+func (i *EKSAInstaller) applyBundles(ctx context.Context, log logr.Logger, cluster *types.Cluster, spec *cluster.Spec) error {
+	bundleObj, err := yaml.Marshal(spec.Bundles)
+	if err != nil {
+		return fmt.Errorf("outputting bundle yaml: %v", err)
 	}
 
-	return changeDiff, nil
+	log.V(1).Info("Applying Bundles to cluster")
+	if err := i.client.ApplyKubeSpecFromBytes(ctx, cluster, bundleObj); err != nil {
+		return fmt.Errorf("applying bundle spec: %v", err)
+	}
+
+	return nil
+}
+
+// applyReleases applies the releases to the cluster.
+func (i *EKSAInstaller) applyReleases(ctx context.Context, log logr.Logger, cluster *types.Cluster, spec *cluster.Spec) error {
+	releaseObj, err := yaml.Marshal(spec.EKSARelease)
+	if err != nil {
+		return fmt.Errorf("outputting release yaml: %v", err)
+	}
+
+	log.V(1).Info("Applying EKSA Release to cluster")
+	if err := i.client.ApplyKubeSpecFromBytes(ctx, cluster, releaseObj); err != nil {
+		return fmt.Errorf("applying release spec: %v", err)
+	}
+
+	return nil
 }
 
 // EKSAComponentGenerator generates and configures eks-a components.

@@ -1084,6 +1084,20 @@ func (mr *MockKubernetesClientMockRecorder) ApplyKubeSpecFromBytesWithNamespace(
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ApplyKubeSpecFromBytesWithNamespace", reflect.TypeOf((*MockKubernetesClient)(nil).ApplyKubeSpecFromBytesWithNamespace), arg0, arg1, arg2, arg3)
 }
 
+// CreateNamespaceIfNotPresent mocks base method.
+func (m *MockKubernetesClient) CreateNamespaceIfNotPresent(arg0 context.Context, arg1, arg2 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateNamespaceIfNotPresent", arg0, arg1, arg2)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateNamespaceIfNotPresent indicates an expected call of CreateNamespaceIfNotPresent.
+func (mr *MockKubernetesClientMockRecorder) CreateNamespaceIfNotPresent(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateNamespaceIfNotPresent", reflect.TypeOf((*MockKubernetesClient)(nil).CreateNamespaceIfNotPresent), arg0, arg1, arg2)
+}
+
 // RemoveAnnotationInNamespace mocks base method.
 func (m *MockKubernetesClient) RemoveAnnotationInNamespace(arg0 context.Context, arg1, arg2, arg3 string, arg4 *types.Cluster, arg5 string) error {
 	m.ctrl.T.Helper()

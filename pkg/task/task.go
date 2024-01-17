@@ -37,6 +37,7 @@ type CommandContext struct {
 	EksdInstaller             interfaces.EksdInstaller
 	PackageInstaller          interfaces.PackageInstaller
 	EksdUpgrader              interfaces.EksdUpgrader
+	EksaInstaller             interfaces.EksaInstaller
 	ClusterUpgrader           interfaces.ClusterUpgrader
 	ClusterCreator            interfaces.ClusterCreator
 	CAPIManager               interfaces.CAPIManager
