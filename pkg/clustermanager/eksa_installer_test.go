@@ -76,7 +76,7 @@ func TestEKSAInstallerInstallSuccessWithRealManifest(t *testing.T) {
 		t.Fatalf("could not read eksa-components")
 	}
 	manifest := string(file)
-	expectedObjectCount := strings.Count(manifest, "---")
+	expectedObjectCount := strings.Count(manifest, "\n---\n")
 	tt.client.EXPECT().Apply(tt.ctx, tt.cluster.KubeconfigFile, gomock.AssignableToTypeOf(&appsv1.Deployment{}))
 	tt.client.EXPECT().Apply(tt.ctx, tt.cluster.KubeconfigFile, gomock.Any()).Times(expectedObjectCount)
 	tt.client.EXPECT().WaitForDeployment(tt.ctx, tt.cluster, "30m0s", "Available", "eksa-controller-manager", "eksa-system")
@@ -159,7 +159,7 @@ func TestEKSAInstallerInstallSuccessWithNoTimeout(t *testing.T) {
 		t.Fatalf("could not read eksa-components")
 	}
 	manifest := string(file)
-	expectedObjectCount := strings.Count(manifest, "---")
+	expectedObjectCount := strings.Count(manifest, "\n---\n")
 	tt.client.EXPECT().Apply(tt.ctx, tt.cluster.KubeconfigFile, gomock.Any()).Times(expectedObjectCount)
 	tt.client.EXPECT().WaitForDeployment(tt.ctx, tt.cluster, maxTime.String(), "Available", "eksa-controller-manager", "eksa-system")
 

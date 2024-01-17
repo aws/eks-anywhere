@@ -226,28 +226,25 @@ func generateCPUpgrade(machine []*clusterv1.Machine, cluster *clusterv1.Cluster)
 			Namespace: "eksa-system",
 		},
 		Spec: anywherev1.ControlPlaneUpgradeSpec{
-			Cluster: anywherev1.Ref{
-				Name: cluster.Name,
-				Kind: "Cluster",
+			ControlPlane: corev1.ObjectReference{
+				Name:      "my-cp",
+				Namespace: "eksa-system",
+				Kind:      "KubeadmControlPlane",
 			},
-			ControlPlane: anywherev1.Ref{
-				Name: "my-cp",
-				Kind: "KubeadmControlPlane",
-			},
-			MachinesRequireUpgrade: []anywherev1.Ref{
+			MachinesRequireUpgrade: []corev1.ObjectReference{
 				{
-					Name: machine[0].Name,
-					Kind: "Machine",
+					Kind:      "Machine",
+					Name:      machine[0].Name,
+					Namespace: machine[0].Namespace,
 				},
 				{
-					Name: machine[1].Name,
-					Kind: "Machine",
+					Kind:      "Machine",
+					Name:      machine[1].Name,
+					Namespace: machine[1].Namespace,
 				},
 			},
-			KubernetesVersion:    "v1.28.1",
-			KubeletVersion:       "v1.28.1",
-			EtcdVersion:          &etcdVersion,
-			KubeadmClusterConfig: "",
+			KubernetesVersion: "v1.28.1-eks-1-28-1",
+			EtcdVersion:       etcdVersion,
 		},
 	}
 }

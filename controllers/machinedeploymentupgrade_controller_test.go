@@ -166,23 +166,19 @@ func generateMDUpgrade(machine *clusterv1.Machine, cluster *clusterv1.Cluster) *
 			Namespace: "eksa-system",
 		},
 		Spec: anywherev1.MachineDeploymentUpgradeSpec{
-			Cluster: anywherev1.Ref{
-				Name: cluster.Name,
-				Kind: "Cluster",
+			MachineDeployment: corev1.ObjectReference{
+				Name:      "my-md",
+				Kind:      "MachineDeployment",
+				Namespace: "eksa-system",
 			},
-			MachineDeployment: anywherev1.Ref{
-				Name: "my-md",
-				Kind: "MachineDeployment",
-			},
-			MachinesRequireUpgrade: []anywherev1.Ref{
+			MachinesRequireUpgrade: []corev1.ObjectReference{
 				{
-					Name: machine.Name,
-					Kind: "Machine",
+					Kind:      "Machine",
+					Name:      machine.Name,
+					Namespace: machine.Namespace,
 				},
 			},
-			KubernetesVersion:    "v1.28.1",
-			KubeletVersion:       "v1.28.1",
-			KubeadmClusterConfig: "",
+			KubernetesVersion: "v1.28.1-eks-1-28-1",
 		},
 	}
 }
