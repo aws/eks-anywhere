@@ -63,16 +63,18 @@ type Factory struct {
 }
 
 type Reconcilers struct {
-	ClusterReconciler                  *ClusterReconciler
-	DockerDatacenterReconciler         *DockerDatacenterReconciler
-	VSphereDatacenterReconciler        *VSphereDatacenterReconciler
-	SnowMachineConfigReconciler        *SnowMachineConfigReconciler
-	TinkerbellDatacenterReconciler     *TinkerbellDatacenterReconciler
-	CloudStackDatacenterReconciler     *CloudStackDatacenterReconciler
-	NutanixDatacenterReconciler        *NutanixDatacenterReconciler
-	ControlPlaneUpgradeReconciler      *ControlPlaneUpgradeReconciler
-	MachineDeploymentUpgradeReconciler *MachineDeploymentUpgradeReconciler
-	NodeUpgradeReconciler              *NodeUpgradeReconciler
+	ClusterReconciler                           *ClusterReconciler
+	DockerDatacenterReconciler                  *DockerDatacenterReconciler
+	VSphereDatacenterReconciler                 *VSphereDatacenterReconciler
+	SnowMachineConfigReconciler                 *SnowMachineConfigReconciler
+	TinkerbellDatacenterReconciler              *TinkerbellDatacenterReconciler
+	CloudStackDatacenterReconciler              *CloudStackDatacenterReconciler
+	NutanixDatacenterReconciler                 *NutanixDatacenterReconciler
+	KubeadmControlPlaneInPlaceUpgradeReconciler *KubeadmControlPlaneInPlaceUpgradeReconciler
+	MachineDeploymentInPlaceUpgradeReconciler   *MachineDeploymentInPlaceUpgradeReconciler
+	ControlPlaneUpgradeReconciler               *ControlPlaneUpgradeReconciler
+	MachineDeploymentUpgradeReconciler          *MachineDeploymentUpgradeReconciler
+	NodeUpgradeReconciler                       *NodeUpgradeReconciler
 }
 
 type buildStep func(ctx context.Context) error
@@ -582,6 +584,40 @@ func (f *Factory) withMachineHealthCheckReconciler() *Factory {
 		f.machineHealthCheckReconciler = mhcreconciler.New(
 			f.manager.GetClient(),
 			machineHealthCheckDefaulter,
+		)
+
+		return nil
+	})
+
+	return f
+}
+
+// WithKubeadmControlPlaneInPlaceUpgradeReconciler builds the KubeadmControlPlaneInPlaceUpgrade reconciler.
+func (f *Factory) WithKubeadmControlPlaneInPlaceUpgradeReconciler() *Factory {
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.reconcilers.KubeadmControlPlaneInPlaceUpgradeReconciler != nil {
+			return nil
+		}
+
+		f.reconcilers.KubeadmControlPlaneInPlaceUpgradeReconciler = NewKubeadmControlPlaneInPlaceUpgradeReconciler(
+			f.manager.GetClient(),
+		)
+
+		return nil
+	})
+
+	return f
+}
+
+// WithMachineDeploymentInPlaceUpgradeReconciler builds the MachineDeploymentInPlace reconciler.
+func (f *Factory) WithMachineDeploymentInPlaceUpgradeReconciler() *Factory {
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.reconcilers.MachineDeploymentInPlaceUpgradeReconciler != nil {
+			return nil
+		}
+
+		f.reconcilers.MachineDeploymentInPlaceUpgradeReconciler = NewMachineDeploymentInPlaceUpgradeReconciler(
+			f.manager.GetClient(),
 		)
 
 		return nil

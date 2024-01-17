@@ -219,7 +219,7 @@ func cpUpgradeRequest(cpUpgrade *anywherev1.ControlPlaneUpgrade) reconcile.Reque
 }
 
 func generateCPUpgrade(machine []*clusterv1.Machine, cluster *clusterv1.Cluster) *anywherev1.ControlPlaneUpgrade {
-	etcdVersion := "v1.28.3-eks-1-28-9"
+	etcdVersion := "v3.5.9-eks-1-28-9"
 	return &anywherev1.ControlPlaneUpgrade{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "cp-upgrade-request",
@@ -243,7 +243,7 @@ func generateCPUpgrade(machine []*clusterv1.Machine, cluster *clusterv1.Cluster)
 					Namespace: machine[1].Namespace,
 				},
 			},
-			KubernetesVersion: "v1.28.1-eks-1-28-1",
+			KubernetesVersion: "v1.28.3-eks-1-28-9",
 			EtcdVersion:       etcdVersion,
 		},
 	}
