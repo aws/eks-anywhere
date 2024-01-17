@@ -36,8 +36,8 @@ func init() {
 }
 
 var getPackageCommand = &cobra.Command{
-	Use:          "package(s) [flags]",
-	Aliases:      []string{"package", "packages"},
+	Use:          "package [flags]",
+	Aliases:      []string{"packages"},
 	Short:        "Get package(s)",
 	Long:         "This command is used to display the curated packages installed in the cluster",
 	PreRunE:      preRunPackages,

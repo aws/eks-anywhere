@@ -53,7 +53,6 @@ func init() {
 
 var installPackageCommand = &cobra.Command{
 	Use:          "package [flags] package",
-	Aliases:      []string{"package"},
 	Short:        "Install package",
 	Long:         "This command is used to Install a curated package. Use list to discover curated packages",
 	PreRunE:      preRunPackages,

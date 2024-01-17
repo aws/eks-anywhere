@@ -37,8 +37,8 @@ func init() {
 }
 
 var generatePackageCommand = &cobra.Command{
-	Use:          "packages [flags] package",
-	Aliases:      []string{"package", "packages"},
+	Use:          "package [flags] <package>",
+	Aliases:      []string{"packages"},
 	Short:        "Generate package(s) configuration",
 	Long:         "Generates Kubernetes configuration files for curated packages",
 	PreRunE:      preRunPackages,
