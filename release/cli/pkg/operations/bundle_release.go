@@ -126,26 +126,27 @@ func SignImagesNotation(r *releasetypes.ReleaseConfig, imageDigests releasetypes
 	imageDigests.Range(func(k, v interface{}) bool {
 		image := k.(string)
 		digest := v.(string)
-		cmd := exec.Command("notation", "list", fmt.Sprintf("%s@%s", image, digest), "-u", releaseRegistryUsername, "-p", releaseRegistryPassword)
+		imageURI := fmt.Sprintf("%s@%s", image, digest)
+		cmd := exec.Command("notation", "list", imageURI, "-u", releaseRegistryUsername, "-p", releaseRegistryPassword)
 		out, err := commandutils.ExecCommand(cmd)
 		if err != nil {
-			rangeErr = fmt.Errorf("listing signatures associated with image %s: %v", fmt.Sprintf("%s@%s", image, digest), err)
+			rangeErr = fmt.Errorf("listing signatures associated with image %s: %v", imageURI, err)
 			return false
 		}
 		// Skip signing image if it is already signed.
 		if strings.Contains(out, "no associated signature") {
 			// Sign public ECR image using AWS signer and notation CLI
 			// notation sign <registry>/<repository>@<sha256:shasum> --plugin com.amazonaws.signer.notation.plugin --id <signer_profile_arn>
-			cmd := exec.Command("notation", "sign", fmt.Sprintf("%s@%s", image, digest), "--plugin", "com.amazonaws.signer.notation.plugin", "--id", r.AwsSignerProfileArn, "-u", releaseRegistryUsername, "-p", releaseRegistryPassword)
+			cmd := exec.Command("notation", "sign", imageURI, "--plugin", "com.amazonaws.signer.notation.plugin", "--id", r.AwsSignerProfileArn, "-u", releaseRegistryUsername, "-p", releaseRegistryPassword)
 			out, err := commandutils.ExecCommand(cmd)
 			fmt.Println(out)
 			if err != nil {
-				rangeErr = fmt.Errorf("sigining container image with Notation CLI: %v", err)
+				rangeErr = fmt.Errorf("signing container image with Notation CLI: %v", err)
 				return false
 			}
 		} else {
 			rangeErr = nil
-			fmt.Printf("skipping the image signing for image %s since it has already been signed", fmt.Sprintf("%s@%s", image, digest))
+			fmt.Printf("Skipping image signing for image %s since it has already been signed\n", imageURI)
 		}
 		return true
 	})
