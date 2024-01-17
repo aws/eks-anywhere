@@ -834,6 +834,10 @@ type CiliumConfig struct {
 	// +optional
 	SkipUpgrade *bool `json:"skipUpgrade,omitempty"`
 
+	// EnableKubeProxyReplacement replaces the default kube-proxy with Ciliums builtin functionality.
+	// +optional
+	EnableKubeProxyReplacement *bool `json:"enableKubeProxyReplacement,omitempty"`
+
 	// RoutingMode indicates the routing tunnel mode to use for Cilium. Accepted values are overlay (geneve tunnel with overlay)
 	// or direct (tunneling disabled with direct routing)
 	// Defaults to overlay.
@@ -861,6 +865,12 @@ type CiliumConfig struct {
 // the Cilium installation.
 func (n *CiliumConfig) IsManaged() bool {
 	return n.SkipUpgrade == nil || !*n.SkipUpgrade
+}
+
+// IsKubeProxyReplacementEnabled checks if the EnableKubeProxyReplacement flag is true. Nil
+// indicates false.
+func (n *CiliumConfig) IsKubeProxyReplacementEnabled() bool {
+	return n.EnableKubeProxyReplacement != nil && *n.EnableKubeProxyReplacement
 }
 
 // KindnetdConfig contains configuration specific to the Kindnetd CNI.

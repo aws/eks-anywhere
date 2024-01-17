@@ -191,6 +191,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec) (map[string]interface{}, erro
 		"externalEtcdVersion":                        versionsBundle.KubeDistro.EtcdVersion,
 		"etcdImage":                                  versionsBundle.KubeDistro.EtcdImage.VersionedImage(),
 		"eksaSystemNamespace":                        constants.EksaSystemNamespace,
+		"kubeadmSkipPhases":                          []string{},
 	}
 
 	auditPolicy, err := common.GetAuditPolicy(clusterSpec.Cluster.Spec.KubernetesVersion)
@@ -244,6 +245,13 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec) (map[string]interface{}, erro
 			return nil, err
 		}
 		values["encryptionProviderConfig"] = conf
+	}
+
+	cni := clusterSpec.Cluster.Spec.ClusterNetwork
+	if cni.CNIConfig != nil && cni.CNIConfig.Cilium != nil {
+		if cni.CNIConfig.Cilium.IsKubeProxyReplacementEnabled() {
+			values["kubeadmSkipPhases"] = append(values["kubeadmSkipPhases"].([]string), "addon/kube-proxy")
+		}
 	}
 
 	return values, nil

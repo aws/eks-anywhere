@@ -307,6 +307,12 @@ spec:
 {{- end }}
 {{- end }}
 {{- end }}
+{{- with .kubeadmSkipPhases }}
+      skipPhases:
+      {{- range . }}
+      - {{ . }}
+      {{- end }}
+{{- end }}
     joinConfiguration:
       nodeRegistration:
         criSocket: /var/run/containerd/containerd.sock

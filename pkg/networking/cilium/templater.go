@@ -245,6 +245,13 @@ func templateValues(spec *cluster.Spec, versionsBundle *cluster.VersionsBundle) 
 		}
 	}
 
+	if spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.IsKubeProxyReplacementEnabled() {
+		// See https://docs.cilium.io/en/v1.13/network/kubernetes/kubeproxy-free/#kube-proxy-hybrid-modes.
+		// When upgrading to Cilium> v1.13 this needs to be changed to 'true' as Cilium has simplified the
+		// API.
+		val["kubeProxyReplacement"] = "strict"
+	}
+
 	return val
 }
 

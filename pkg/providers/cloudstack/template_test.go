@@ -169,3 +169,21 @@ func TestTemplateBuilder_CertSANs(t *testing.T) {
 		test.AssertContentToFile(t, string(data), tc.Output)
 	}
 }
+
+func TestTemplateBuilder_KubeProxyReplacement(t *testing.T) {
+	input := "testdata/cluster_cilium_kube_proxy_replacement.yaml"
+	output := "testdata/expected_cluster_cilium_kube_proxy_replacement.yaml"
+
+	g := NewWithT(t)
+	clusterSpec := test.NewFullClusterSpec(t, input)
+
+	bldr := cloudstack.NewTemplateBuilder(time.Now)
+
+	data, err := bldr.GenerateCAPISpecControlPlane(clusterSpec, func(values map[string]interface{}) {
+		values["controlPlaneTemplateName"] = clusterapi.ControlPlaneMachineTemplateName(clusterSpec.Cluster)
+	})
+	g.Expect(err).ToNot(HaveOccurred())
+
+	test.AssertContentToFile(t, string(data), output)
+
+}
