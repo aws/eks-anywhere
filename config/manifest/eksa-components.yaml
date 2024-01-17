@@ -6920,6 +6920,7 @@ rules:
   - delete
   - get
   - list
+  - update
   - watch
 - apiGroups:
   - addons.cluster.x-k8s.io

@@ -172,7 +172,7 @@ func (r *ClusterReconciler) SetupWithManager(mgr ctrl.Manager, log logr.Logger) 
 }
 
 // +kubebuilder:rbac:groups="",resources=events,verbs=create;patch;update
-// +kubebuilder:rbac:groups="",resources=secrets,verbs=get;list;watch;create;delete
+// +kubebuilder:rbac:groups="",resources=secrets,verbs=get;list;watch;create;delete;update
 // +kubebuilder:rbac:groups="",namespace=eksa-system,resources=secrets,verbs=patch;update
 // +kubebuilder:rbac:groups="",resources=namespaces,verbs=create;delete
 // +kubebuilder:rbac:groups="",resources=nodes,verbs=list
