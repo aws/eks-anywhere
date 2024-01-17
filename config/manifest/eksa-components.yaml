@@ -7170,6 +7170,22 @@ rules:
 - apiGroups:
   - controlplane.cluster.x-k8s.io
   resources:
+  - kubeadmcontrolplane
+  verbs:
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - controlplane.cluster.x-k8s.io
+  resources:
+  - kubeadmcontrolplane/status
+  verbs:
+  - get
+- apiGroups:
+  - controlplane.cluster.x-k8s.io
+  resources:
   - kubeadmcontrolplanes
   verbs:
   - create
