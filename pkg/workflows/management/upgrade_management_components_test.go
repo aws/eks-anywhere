@@ -82,8 +82,8 @@ func TestRunnerHappyPath(t *testing.T) {
 
 	clusterSpec := test.NewClusterSpec()
 	managementCluster := &types.Cluster{
-		Name:               clusterSpec.Cluster.Name,
-		KubeconfigFile:     kubeconfig.FromClusterName(clusterSpec.Cluster.Name),
+		Name:           clusterSpec.Cluster.Name,
+		KubeconfigFile: kubeconfig.FromClusterName(clusterSpec.Cluster.Name),
 	}
 
 	ctx := context.Background()
@@ -132,8 +132,8 @@ func TestRunnerStopsWhenValidationFailed(t *testing.T) {
 
 	clusterSpec := test.NewClusterSpec()
 	managementCluster := &types.Cluster{
-		Name:               clusterSpec.Cluster.Name,
-		KubeconfigFile:     kubeconfig.FromClusterName(clusterSpec.Cluster.Name),
+		Name:           clusterSpec.Cluster.Name,
+		KubeconfigFile: kubeconfig.FromClusterName(clusterSpec.Cluster.Name),
 	}
 
 	ctx := context.Background()
