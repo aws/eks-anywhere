@@ -308,6 +308,7 @@ spec:
       name: single-node-control-plane-template-1234567890000
   replicas: 1
   rolloutStrategy:
+    type: RollingUpdate
     rollingUpdate:
       maxSurge: 1
   version: v1.21.2-eks-1-21-4

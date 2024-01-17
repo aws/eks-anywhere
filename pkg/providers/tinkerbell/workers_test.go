@@ -52,7 +52,7 @@ func TestWorkersSpecNewCluster(t *testing.T) {
 					md.Labels["pool"] = "md-1"
 					md.Spec.Template.ObjectMeta.Labels["pool"] = "md-1"
 					md.Spec.Strategy = &clusterv1.MachineDeploymentStrategy{
-						Type: "",
+						Type: "RollingUpdate",
 						RollingUpdate: &clusterv1.MachineRollingUpdateDeployment{
 							MaxUnavailable: &intstr.IntOrString{Type: 0, IntVal: 3, StrVal: ""},
 							MaxSurge:       &intstr.IntOrString{Type: 0, IntVal: 5, StrVal: ""},
@@ -95,7 +95,7 @@ func TestWorkersSpecUpgradeClusterNoMachineTemplateChanges(t *testing.T) {
 				md.Labels["pool"] = "md-1"
 				md.Spec.Template.ObjectMeta.Labels["pool"] = "md-1"
 				md.Spec.Strategy = &clusterv1.MachineDeploymentStrategy{
-					Type: "",
+					Type: "RollingUpdate",
 					RollingUpdate: &clusterv1.MachineRollingUpdateDeployment{
 						MaxUnavailable: &intstr.IntOrString{Type: 0, IntVal: 3, StrVal: ""},
 						MaxSurge:       &intstr.IntOrString{Type: 0, IntVal: 5, StrVal: ""},
@@ -210,7 +210,7 @@ func TestWorkersSpecRegistryMirrorInsecureSkipVerify(t *testing.T) {
 							md.Labels["pool"] = "md-1"
 							md.Spec.Template.ObjectMeta.Labels["pool"] = "md-1"
 							md.Spec.Strategy = &clusterv1.MachineDeploymentStrategy{
-								Type: "",
+								Type: "RollingUpdate",
 								RollingUpdate: &clusterv1.MachineRollingUpdateDeployment{
 									MaxUnavailable: &intstr.IntOrString{Type: 0, IntVal: 3, StrVal: ""},
 									MaxSurge:       &intstr.IntOrString{Type: 0, IntVal: 5, StrVal: ""},
@@ -269,7 +269,7 @@ func machineDeployment(opts ...func(*clusterv1.MachineDeployment)) *clusterv1.Ma
 				},
 			},
 			Strategy: &clusterv1.MachineDeploymentStrategy{
-				Type: "",
+				Type: "RollingUpdate",
 				RollingUpdate: &clusterv1.MachineRollingUpdateDeployment{
 					MaxUnavailable: &intstr.IntOrString{Type: 0, IntVal: 0, StrVal: ""},
 					MaxSurge:       &intstr.IntOrString{Type: 0, IntVal: 1, StrVal: ""},
