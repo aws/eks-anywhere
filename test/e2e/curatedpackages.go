@@ -217,8 +217,8 @@ func packageBundleURI(version v1alpha1.KubernetesVersion) string {
 
 func withMgmtCluster(cluster *framework.ClusterE2ETest) *types.Cluster {
 	return &types.Cluster{
-		Name:               cluster.ClusterName,
-		KubeconfigFile:     filepath.Join(cluster.ClusterName, fmt.Sprintf("%s-eks-a-cluster.kubeconfig", cluster.ClusterName)),
+		Name:           cluster.ClusterName,
+		KubeconfigFile: filepath.Join(cluster.ClusterName, fmt.Sprintf("%s-eks-a-cluster.kubeconfig", cluster.ClusterName)),
 	}
 }
 
