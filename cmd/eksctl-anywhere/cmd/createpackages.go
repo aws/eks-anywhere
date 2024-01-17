@@ -38,10 +38,10 @@ func init() {
 }
 
 var createPackagesCommand = &cobra.Command{
-	Use:          "package(s) [flags]",
+	Use:          "package [flags]",
 	Short:        "Create curated packages",
 	Long:         "Create Curated Packages Custom Resources to the cluster",
-	Aliases:      []string{"package", "packages"},
+	Aliases:      []string{"packages"},
 	PreRunE:      preRunPackages,
 	SilenceUsage: true,
 	RunE: func(cmd *cobra.Command, args []string) error {

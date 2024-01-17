@@ -36,8 +36,8 @@ func init() {
 }
 
 var deletePackageCommand = &cobra.Command{
-	Use:          "package(s) [flags]",
-	Aliases:      []string{"package", "packages"},
+	Use:          "package [flags]",
+	Aliases:      []string{"packages"},
 	Short:        "Delete package(s)",
 	Long:         "This command is used to delete the curated packages custom resources installed in the cluster",
 	PreRunE:      preRunPackages,

@@ -28,8 +28,8 @@ func init() {
 }
 
 var getPackageBundleCommand = &cobra.Command{
-	Use:          "packagebundle(s) [flags]",
-	Aliases:      []string{"packagebundle", "packagebundles"},
+	Use:          "packagebundle [flags]",
+	Aliases:      []string{"packagebundles"},
 	Short:        "Get packagebundle(s)",
 	Long:         "This command is used to display the currently supported packagebundles",
 	PreRunE:      preRunPackages,

@@ -27,11 +27,9 @@ var hOpts = &hardwareOptions{
 }
 
 var generateHardwareCmd = &cobra.Command{
-	Use:   "hardware",
-	Short: "Generate hardware files",
-	Long: `
-Generate Kubernetes hardware YAML manifests for each Hardware entry in the source.
-`,
+	Use:     "hardware",
+	Short:   "Generate hardware files",
+	Long:    `Generate Kubernetes hardware YAML manifests for each Hardware entry in the source.`,
 	RunE:    hOpts.generateHardware,
 	PreRunE: bindFlagsToViper,
 }
