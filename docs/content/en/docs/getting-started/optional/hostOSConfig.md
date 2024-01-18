@@ -11,9 +11,13 @@ description: >
 ## Host OS Configuration
 You can configure certain host OS settings through EKS Anywhere.
 
+#### Provider support details
+|                | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:--------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+| **Supported?** |   ✓	    |     ✓      |   	     |            |      |
+
 {{% alert title="Note" color="primary" %}}
-Currently, these settings are only supported for vSphere and Tinkerbell providers.<br>
-Additionally, settings under `bottlerocketConfiguration` are only supported for `osFamily: bottlerocket`
+Settings under `bottlerocketConfiguration` are only supported for `osFamily: bottlerocket`
 {{% /alert %}}
 
 The following cluster spec shows an example of how to configure host OS settings:
