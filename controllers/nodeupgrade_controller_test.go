@@ -26,13 +26,13 @@ func TestNodeUpgradeReconcilerReconcileFirstControlPlane(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	clientRegistry := mocks.NewMockRemoteClientRegistry(ctrl)
 
-	cluster, machine, node, nodeUpgrade := getObjectsForNodeUpgradeTest()
+	cluster, machine, node, nodeUpgrade, configMap := getObjectsForNodeUpgradeTest()
 	nodeUpgrade.Spec.FirstNodeToBeUpgraded = true
 	nodeUpgrade.Spec.EtcdVersion = ptr.String("v3.5.9-eks-1-28-9")
 	node.Labels = map[string]string{
 		"node-role.kubernetes.io/control-plane": "true",
 	}
-	client := fake.NewClientBuilder().WithRuntimeObjects(cluster, machine, node, nodeUpgrade).Build()
+	client := fake.NewClientBuilder().WithRuntimeObjects(cluster, machine, node, nodeUpgrade, configMap).Build()
 
 	clientRegistry.EXPECT().GetClient(ctx, types.NamespacedName{Name: cluster.Name, Namespace: cluster.Namespace}).Return(client, nil)
 
@@ -52,11 +52,11 @@ func TestNodeUpgradeReconcilerReconcileNextControlPlane(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	clientRegistry := mocks.NewMockRemoteClientRegistry(ctrl)
 
-	cluster, machine, node, nodeUpgrade := getObjectsForNodeUpgradeTest()
+	cluster, machine, node, nodeUpgrade, configMap := getObjectsForNodeUpgradeTest()
 	node.Labels = map[string]string{
 		"node-role.kubernetes.io/control-plane": "true",
 	}
-	client := fake.NewClientBuilder().WithRuntimeObjects(cluster, machine, node, nodeUpgrade).Build()
+	client := fake.NewClientBuilder().WithRuntimeObjects(cluster, machine, node, nodeUpgrade, configMap).Build()
 
 	clientRegistry.EXPECT().GetClient(ctx, types.NamespacedName{Name: cluster.Name, Namespace: cluster.Namespace}).Return(client, nil)
 
@@ -76,8 +76,8 @@ func TestNodeUpgradeReconcilerReconcileWorker(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	clientRegistry := mocks.NewMockRemoteClientRegistry(ctrl)
 
-	cluster, machine, node, nodeUpgrade := getObjectsForNodeUpgradeTest()
-	client := fake.NewClientBuilder().WithRuntimeObjects(cluster, machine, node, nodeUpgrade).Build()
+	cluster, machine, node, nodeUpgrade, configMap := getObjectsForNodeUpgradeTest()
+	client := fake.NewClientBuilder().WithRuntimeObjects(cluster, machine, node, nodeUpgrade, configMap).Build()
 
 	clientRegistry.EXPECT().GetClient(ctx, types.NamespacedName{Name: cluster.Name, Namespace: cluster.Namespace}).Return(client, nil)
 
@@ -97,8 +97,8 @@ func TestNodeUpgradeReconcilerReconcileCreateUpgraderPodState(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	clientRegistry := mocks.NewMockRemoteClientRegistry(ctrl)
 
-	cluster, machine, node, nodeUpgrade := getObjectsForNodeUpgradeTest()
-	client := fake.NewClientBuilder().WithRuntimeObjects(cluster, machine, node, nodeUpgrade).Build()
+	cluster, machine, node, nodeUpgrade, configMap := getObjectsForNodeUpgradeTest()
+	client := fake.NewClientBuilder().WithRuntimeObjects(cluster, machine, node, nodeUpgrade, configMap).Build()
 
 	clientRegistry.EXPECT().GetClient(ctx, types.NamespacedName{Name: cluster.Name, Namespace: cluster.Namespace}).Return(client, nil).Times(2)
 
@@ -158,8 +158,8 @@ func TestNodeUpgradeReconcilerReconcileDelete(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	clientRegistry := mocks.NewMockRemoteClientRegistry(ctrl)
 
-	cluster, machine, node, nodeUpgrade := getObjectsForNodeUpgradeTest()
-	client := fake.NewClientBuilder().WithRuntimeObjects(cluster, machine, node, nodeUpgrade).Build()
+	cluster, machine, node, nodeUpgrade, configMap := getObjectsForNodeUpgradeTest()
+	client := fake.NewClientBuilder().WithRuntimeObjects(cluster, machine, node, nodeUpgrade, configMap).Build()
 
 	clientRegistry.EXPECT().GetClient(ctx, types.NamespacedName{Name: cluster.Name, Namespace: cluster.Namespace}).Return(client, nil).Times(2)
 
@@ -189,8 +189,8 @@ func TestNodeUpgradeReconcilerReconcileDeleteUpgraderPodAlreadyDeleted(t *testin
 	ctrl := gomock.NewController(t)
 	clientRegistry := mocks.NewMockRemoteClientRegistry(ctrl)
 
-	cluster, machine, node, nodeUpgrade := getObjectsForNodeUpgradeTest()
-	client := fake.NewClientBuilder().WithRuntimeObjects(cluster, machine, node, nodeUpgrade).Build()
+	cluster, machine, node, nodeUpgrade, configMap := getObjectsForNodeUpgradeTest()
+	client := fake.NewClientBuilder().WithRuntimeObjects(cluster, machine, node, nodeUpgrade, configMap).Build()
 
 	clientRegistry.EXPECT().GetClient(ctx, types.NamespacedName{Name: cluster.Name, Namespace: cluster.Namespace}).Return(client, nil).Times(2)
 
@@ -217,12 +217,13 @@ func TestNodeUpgradeReconcilerReconcileDeleteUpgraderPodAlreadyDeleted(t *testin
 	g.Expect(err).To(MatchError("pods \"node01-node-upgrader\" not found"))
 }
 
-func getObjectsForNodeUpgradeTest() (*clusterv1.Cluster, *clusterv1.Machine, *corev1.Node, *anywherev1.NodeUpgrade) {
+func getObjectsForNodeUpgradeTest() (*clusterv1.Cluster, *clusterv1.Machine, *corev1.Node, *anywherev1.NodeUpgrade, *corev1.ConfigMap) {
 	cluster := generateCluster()
 	node := generateNode()
 	machine := generateMachine(cluster, node)
 	nodeUpgrade := generateNodeUpgrade(machine)
-	return cluster, machine, node, nodeUpgrade
+	configMap := generateConfigMap()
+	return cluster, machine, node, nodeUpgrade, configMap
 }
 
 func nodeUpgradeRequest(nodeUpgrade *anywherev1.NodeUpgrade) reconcile.Request {
@@ -282,5 +283,15 @@ func generateCluster() *clusterv1.Cluster {
 			Name:      "my-cluster",
 			Namespace: "eksa-system",
 		},
+	}
+}
+
+func generateConfigMap() *corev1.ConfigMap {
+	return &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "in-place-upgrade",
+			Namespace: "eksa-system",
+		},
+		Data: map[string]string{"v1.28.1": "test"},
 	}
 }

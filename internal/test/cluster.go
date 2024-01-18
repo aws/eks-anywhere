@@ -47,11 +47,29 @@ func NewClusterSpec(opts ...ClusterSpecOpt) *cluster.Spec {
 	}
 	s.VersionsBundles = map[v1alpha1.KubernetesVersion]*cluster.VersionsBundle{
 		v1alpha1.Kube119: {
-			VersionsBundle: &releasev1alpha1.VersionsBundle{},
-			KubeDistro:     &cluster.KubeDistro{},
+			VersionsBundle: &releasev1alpha1.VersionsBundle{
+				EksD: releasev1alpha1.EksDRelease{
+					Name:           "kubernetes-1-19-eks-7",
+					EksDReleaseUrl: "embed:///testdata/release.yaml",
+					KubeVersion:    "1.19",
+				},
+			},
+			KubeDistro: &cluster.KubeDistro{},
 		},
 	}
-	s.Bundles = &releasev1alpha1.Bundles{}
+	s.Bundles = &releasev1alpha1.Bundles{
+		Spec: releasev1alpha1.BundlesSpec{
+			VersionsBundles: []releasev1alpha1.VersionsBundle{
+				{
+					EksD: releasev1alpha1.EksDRelease{
+						Name:           "kubernetes-1-19-eks-7",
+						EksDReleaseUrl: "embed:///testdata/release.yaml",
+						KubeVersion:    "1.19",
+					},
+				},
+			},
+		},
+	}
 	s.EKSARelease = EKSARelease()
 
 	for _, opt := range opts {

@@ -146,7 +146,7 @@ func getObjectsForMDUpgradeTest() (*clusterv1.Cluster, *clusterv1.Machine, *core
 	node := generateNode()
 	machine := generateMachine(cluster, node)
 	nodeUpgrade := generateNodeUpgrade(machine)
-	mdUpgrade := generateMDUpgrade(machine, cluster)
+	mdUpgrade := generateMDUpgrade(machine)
 	return cluster, machine, node, mdUpgrade, nodeUpgrade
 }
 
@@ -159,7 +159,7 @@ func mdUpgradeRequest(mdUpgrade *anywherev1.MachineDeploymentUpgrade) reconcile.
 	}
 }
 
-func generateMDUpgrade(machine *clusterv1.Machine, cluster *clusterv1.Cluster) *anywherev1.MachineDeploymentUpgrade {
+func generateMDUpgrade(machine *clusterv1.Machine) *anywherev1.MachineDeploymentUpgrade {
 	return &anywherev1.MachineDeploymentUpgrade{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "md-upgrade-request",

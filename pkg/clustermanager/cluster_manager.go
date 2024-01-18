@@ -16,6 +16,8 @@ import (
 	eksdv1alpha1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
 	etcdv1 "github.com/aws/etcdadm-controller/api/v1beta1"
 	"github.com/go-logr/logr"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/integer"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
@@ -151,6 +153,7 @@ type ClusterClient interface {
 	GetMachineDeployment(ctx context.Context, workerNodeGroupName string, opts ...executables.KubectlOpt) (*clusterv1.MachineDeployment, error)
 	GetEksdRelease(ctx context.Context, name, namespace, kubeconfigFile string) (*eksdv1alpha1.Release, error)
 	ListObjects(ctx context.Context, resourceType, namespace, kubeconfig string, list kubernetes.ObjectList) error
+	GetConfigMap(ctx context.Context, kubeconfigFile, name, namespace string) (*corev1.ConfigMap, error)
 }
 
 type Networking interface {
@@ -1176,6 +1179,16 @@ func (c *ClusterManager) ApplyBundles(ctx context.Context, clusterSpec *cluster.
 	if err != nil {
 		return fmt.Errorf("applying bundle spec: %v", err)
 	}
+
+	// We need to update this config map with the new upgrader images whenever we
+	// apply a new Bundles object to the cluster in order to support in-place upgrades.
+	cm, err := c.getUpgraderImagesFromBundle(ctx, cluster, clusterSpec)
+	if err != nil {
+		return fmt.Errorf("getting upgrader images from bundle: %v", err)
+	}
+	if err = c.clusterClient.Apply(ctx, cluster.KubeconfigFile, cm); err != nil {
+		return fmt.Errorf("applying upgrader images config map: %v", err)
+	}
 	return nil
 }
 
@@ -1393,4 +1406,43 @@ func (c *ClusterManager) buildSpecForCluster(ctx context.Context, clus *types.Cl
 
 func (c *ClusterManager) DeletePackageResources(ctx context.Context, managementCluster *types.Cluster, clusterName string) error {
 	return c.clusterClient.DeletePackageResources(ctx, managementCluster, clusterName)
+}
+
+func (c *ClusterManager) getUpgraderImagesFromBundle(ctx context.Context, cluster *types.Cluster, cl *cluster.Spec) (*corev1.ConfigMap, error) {
+	upgraderImages := make(map[string]string)
+	for _, versionBundle := range cl.Bundles.Spec.VersionsBundles {
+		eksD := versionBundle.EksD
+		eksdVersion := fmt.Sprintf("%s-eks-%s-%s", eksD.KubeVersion, eksD.ReleaseChannel, strings.Split(eksD.Name, "-")[4])
+		if _, ok := upgraderImages[eksdVersion]; !ok {
+			upgraderImages[eksdVersion] = versionBundle.Upgrader.Upgrader.URI
+		}
+	}
+
+	upgraderConfigMap, err := c.clusterClient.GetConfigMap(ctx, cluster.KubeconfigFile, constants.UpgraderConfigMapName, constants.EksaSystemNamespace)
+	if err != nil {
+		if executables.IsKubectlNotFoundError(err) {
+			return newUpgraderConfigMap(upgraderImages), nil
+		}
+		return nil, err
+	}
+
+	for version, image := range upgraderImages {
+		upgraderConfigMap.Data[version] = image
+	}
+
+	return upgraderConfigMap, nil
+}
+
+func newUpgraderConfigMap(m map[string]string) *corev1.ConfigMap {
+	return &corev1.ConfigMap{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "ConfigMap",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      constants.UpgraderConfigMapName,
+			Namespace: constants.EksaSystemNamespace,
+		},
+		Data: m,
+	}
 }
