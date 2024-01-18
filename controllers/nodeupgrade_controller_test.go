@@ -2,6 +2,7 @@ package controllers_test
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -68,6 +69,93 @@ func TestNodeUpgradeReconcilerReconcileNextControlPlane(t *testing.T) {
 	pod := &corev1.Pod{}
 	err = client.Get(ctx, types.NamespacedName{Name: upgrader.PodName(node.Name), Namespace: "eksa-system"}, pod)
 	g.Expect(err).ToNot(HaveOccurred())
+}
+
+func TestNodeUpgradeReconcilerReconcileMachineStatus(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+	ctrl := gomock.NewController(t)
+	clientRegistry := mocks.NewMockRemoteClientRegistry(ctrl)
+
+	cluster, machine, node, nodeUpgrade := getObjectsForNodeUpgradeTest()
+	node.Labels = map[string]string{
+		"node-role.kubernetes.io/control-plane": "true",
+	}
+	client := fake.NewClientBuilder().WithRuntimeObjects(cluster, machine, node, nodeUpgrade).Build()
+
+	clientRegistry.EXPECT().GetClient(ctx, types.NamespacedName{Name: cluster.Name, Namespace: cluster.Namespace}).Return(client, nil).Times(2)
+
+	r := controllers.NewNodeUpgradeReconciler(client, clientRegistry)
+	// nodeUpgrade.Status.Completed = true
+	req := nodeUpgradeRequest(nodeUpgrade)
+	_, err := r.Reconcile(ctx, req)
+	g.Expect(err).ToNot(HaveOccurred())
+
+	pod := &corev1.Pod{}
+	g.Expect(client.Get(ctx, types.NamespacedName{Name: upgrader.PodName(node.Name), Namespace: "eksa-system"}, pod)).To(Succeed())
+
+	statuses := []corev1.ContainerStatus{
+		{
+			Name: upgrader.CopierContainerName,
+			State: corev1.ContainerState{
+				Terminated: &corev1.ContainerStateTerminated{
+					ExitCode: 0,
+				},
+			},
+		},
+		{
+			Name: upgrader.ContainerdUpgraderContainerName,
+			State: corev1.ContainerState{
+				Terminated: &corev1.ContainerStateTerminated{
+					ExitCode: 0,
+				},
+			},
+		},
+		{
+			Name: upgrader.CNIPluginsUpgraderContainerName,
+			State: corev1.ContainerState{
+				Terminated: &corev1.ContainerStateTerminated{
+					ExitCode: 0,
+				},
+			},
+		},
+		{
+			Name: upgrader.KubeadmUpgraderContainerName,
+			State: corev1.ContainerState{
+				Terminated: &corev1.ContainerStateTerminated{
+					ExitCode: 0,
+				},
+			},
+		},
+		{
+			Name: upgrader.KubeletUpgradeContainerName,
+			State: corev1.ContainerState{
+				Terminated: &corev1.ContainerStateTerminated{
+					ExitCode: 0,
+				},
+			},
+		},
+		{
+			Name: upgrader.PostUpgradeContainerName,
+			State: corev1.ContainerState{
+				Terminated: &corev1.ContainerStateTerminated{
+					ExitCode: 0,
+				},
+			},
+		},
+	}
+
+	pod.Status.InitContainerStatuses = append(pod.Status.InitContainerStatuses, statuses...)
+	g.Expect(client.Update(ctx, pod)).To(Succeed())
+
+	_, err = r.Reconcile(ctx, req)
+	g.Expect(err).ToNot(HaveOccurred())
+	machine = &clusterv1.Machine{}
+	err = client.Get(ctx, types.NamespacedName{Name: nodeUpgrade.Spec.Machine.Name, Namespace: "eksa-system"}, machine)
+	g.Expect(err).ToNot(HaveOccurred())
+	if !strings.Contains(*machine.Spec.Version, "v1.28.3-eks-1-28-9") {
+		t.Fatalf("unexpected k8s version in capi machine: %s", *machine.Spec.Version)
+	}
 }
 
 func TestNodeUpgradeReconcilerReconcileWorker(t *testing.T) {

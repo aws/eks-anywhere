@@ -23,7 +23,6 @@ import (
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	upgrader "github.com/aws/eks-anywhere/pkg/nodeupgrader"
-	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
 
 const (
@@ -251,7 +250,7 @@ func (r *NodeUpgradeReconciler) reconcileDelete(ctx context.Context, log logr.Lo
 	return ctrl.Result{}, nil
 }
 
-func (r *NodeUpgradeReconciler) updateStatus(ctx context.Context, log logr.Logger, remoteClient client.Client, nodeUpgrade *anywherev1.NodeUpgrade, machineToBeUpgraded *clusterv1.Machine) error {
+func (r *NodeUpgradeReconciler) updateStatus(ctx context.Context, log logr.Logger, remoteClient client.Client, nodeUpgrade *anywherev1.NodeUpgrade, machine *clusterv1.Machine) error {
 	// When NodeUpgrade is fully deleted, we do not need to update the status. Without this check
 	// the subsequent patch operations would fail if the status is updated after it is fully deleted.
 	if !nodeUpgrade.DeletionTimestamp.IsZero() && len(nodeUpgrade.GetFinalizers()) == 0 {
@@ -261,7 +260,7 @@ func (r *NodeUpgradeReconciler) updateStatus(ctx context.Context, log logr.Logge
 
 	log.Info("Updating NodeUpgrade status")
 
-	pod, err := getUpgraderPod(ctx, remoteClient, machineToBeUpgraded.Status.NodeRef.Name)
+	pod, err := getUpgraderPod(ctx, remoteClient, machine.Status.NodeRef.Name)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			markAllConditionsFalse(nodeUpgrade, podDNEMessage, clusterv1.ConditionSeverityInfo)
@@ -275,8 +274,8 @@ func (r *NodeUpgradeReconciler) updateStatus(ctx context.Context, log logr.Logge
 	updateComponentsConditions(pod, nodeUpgrade)
 
 	if nodeUpgrade.Status.Completed {
-		log.Info("Updating machine status", "Machine", machineToBeUpgraded.Name)
-		machineToBeUpgraded.Spec.Version = ptr.String(nodeUpgrade.Spec.KubernetesVersion)
+		log.Info("Updating machine status", "Machine", machine.Name)
+		machine.Spec.Version = &nodeUpgrade.Spec.KubernetesVersion
 	}
 	// Always update the readyCondition by summarizing the state of other conditions.
 	conditions.SetSummary(nodeUpgrade,
