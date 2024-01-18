@@ -468,7 +468,8 @@ func ExtraHardwareAvailableAssertionForRollingUpgrade(catalogue *hardware.Catalo
 func ensureCPHardwareAvailability(spec *ClusterSpec, current ValidatableCluster, hwReq minimumHardwareRequirements) error {
 	maxSurge := 1
 
-	if spec.Cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy != nil {
+	rolloutStrategy := spec.Cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy
+	if rolloutStrategy != nil && rolloutStrategy.Type == "RollingUpdate" {
 		maxSurge = spec.Cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy.RollingUpdate.MaxSurge
 	}
 	err := hwReq.Add(
@@ -489,7 +490,7 @@ func ensureWorkerHardwareAvailability(spec *ClusterSpec, current ValidatableClus
 		// As rolling upgrades and scale up/down is not permitted in a single operation, its safe to access directly using the md name.
 		mdName := fmt.Sprintf("%s-%s", spec.Cluster.Name, nodeGroup.Name)
 		if currentWngK8sversion[mdName] != desiredWngK8sVersion[mdName] || eksaVersionUpgrade {
-			if nodeGroup.UpgradeRolloutStrategy != nil {
+			if nodeGroup.UpgradeRolloutStrategy != nil && nodeGroup.UpgradeRolloutStrategy.Type == "RollingUpdate" {
 				maxSurge = nodeGroup.UpgradeRolloutStrategy.RollingUpdate.MaxSurge
 			}
 			err := hwReq.Add(

@@ -27,10 +27,21 @@ func validateOsFamily(spec *ClusterSpec) error {
 		if spec.MachineConfigs[groupRef.Name].OSFamily() != controlPlaneOsFamily {
 			return fmt.Errorf("worker node group osFamily cannot be different from control plane osFamily")
 		}
+		if group.UpgradeRolloutStrategy != nil {
+			if spec.MachineConfigs[groupRef.Name].OSFamily() != v1alpha1.DefaultOSFamily && group.UpgradeRolloutStrategy.Type == "InPlace" {
+				return fmt.Errorf("InPlace upgrades are only supported on the Ubuntu OS family")
+			}
+		}
 	}
 
 	if controlPlaneOsFamily != v1alpha1.Bottlerocket && spec.DatacenterConfig.Spec.OSImageURL == "" && spec.ControlPlaneMachineConfig().Spec.OSImageURL == "" {
 		return fmt.Errorf("please use bottlerocket as osFamily for auto-importing or provide a valid osImageURL")
+	}
+
+	if spec.ControlPlaneConfiguration().UpgradeRolloutStrategy != nil {
+		if controlPlaneOsFamily != v1alpha1.DefaultOSFamily && spec.ControlPlaneConfiguration().UpgradeRolloutStrategy.Type == "InPlace" {
+			return fmt.Errorf("InPlace upgrades are only supported on the Ubuntu OS family")
+		}
 	}
 	return nil
 }
