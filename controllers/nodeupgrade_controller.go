@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
+	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -25,10 +26,8 @@ import (
 )
 
 const (
-	// TODO(in-place): Get this image from the bundle instead of using the hardcoded one.
-	defaultUpgraderImage = "public.ecr.aws/t2p4l7v3/upgrader:eksdbase"
-	controlPlaneLabel    = "node-role.kubernetes.io/control-plane"
-	podDNEMessage        = "Upgrader pod does not exist"
+	controlPlaneLabel = "node-role.kubernetes.io/control-plane"
+	podDNEMessage     = "Upgrader pod does not exist"
 
 	// nodeUpgradeFinalizerName is the finalizer added to NodeUpgrade objects to handle deletion.
 	nodeUpgradeFinalizerName = "nodeupgrades.anywhere.eks.amazonaws.com/finalizer"
@@ -168,14 +167,26 @@ func (r *NodeUpgradeReconciler) reconcile(ctx context.Context, log logr.Logger, 
 		return ctrl.Result{}, nil
 	}
 
+	configMap := &corev1.ConfigMap{}
+	if err := remoteClient.Get(ctx, types.NamespacedName{Name: constants.UpgraderConfigMapName, Namespace: constants.EksaSystemNamespace}, configMap); err != nil {
+		return ctrl.Result{}, err
+	}
+	if configMap.Data == nil {
+		return ctrl.Result{}, errors.New("upgrader config map is empty")
+	}
+	upgraderImage, ok := configMap.Data[nodeUpgrade.Spec.KubernetesVersion]
+	if !ok {
+		return ctrl.Result{}, fmt.Errorf("upgrader image corresponding to EKS Distro version %s not found in the config map", nodeUpgrade.Spec.KubernetesVersion)
+	}
+
 	if isControlPlane(node) {
 		if nodeUpgrade.Spec.FirstNodeToBeUpgraded {
-			upgraderPod = upgrader.UpgradeFirstControlPlanePod(node.Name, defaultUpgraderImage, nodeUpgrade.Spec.KubernetesVersion, *nodeUpgrade.Spec.EtcdVersion)
+			upgraderPod = upgrader.UpgradeFirstControlPlanePod(node.Name, upgraderImage, nodeUpgrade.Spec.KubernetesVersion, *nodeUpgrade.Spec.EtcdVersion)
 		} else {
-			upgraderPod = upgrader.UpgradeSecondaryControlPlanePod(node.Name, defaultUpgraderImage)
+			upgraderPod = upgrader.UpgradeSecondaryControlPlanePod(node.Name, upgraderImage)
 		}
 	} else {
-		upgraderPod = upgrader.UpgradeWorkerPod(node.Name, defaultUpgraderImage)
+		upgraderPod = upgrader.UpgradeWorkerPod(node.Name, upgraderImage)
 	}
 
 	if err := remoteClient.Create(ctx, upgraderPod); err != nil {

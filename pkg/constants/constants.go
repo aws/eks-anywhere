@@ -46,6 +46,8 @@ const (
 	NutanixCredentialsName = "nutanix-credentials"
 	EksaLicenseName        = "eksa-license"
 	EksaPackagesName       = "eksa-packages"
+	// UpgraderConfigMapName is the name of config map that stores the upgrader images.
+	UpgraderConfigMapName = "in-place-upgrade"
 
 	CloudstackAnnotationSuffix = "cloudstack.anywhere.eks.amazonaws.com/v1alpha1"
 

@@ -12,6 +12,7 @@ import (
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
 	"github.com/stretchr/testify/assert"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
@@ -1772,11 +1773,27 @@ func TestClusterManagerCreateEKSAResourcesSuccess(t *testing.T) {
 	datacenterConfig := &v1alpha1.VSphereDatacenterConfig{}
 	machineConfigs := []providers.MachineConfig{}
 
+	configMap := &corev1.ConfigMap{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "ConfigMap",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      constants.UpgraderConfigMapName,
+			Namespace: constants.EksaSystemNamespace,
+		},
+		Data: map[string]string{
+			"v1.28": "test-image",
+		},
+	}
+
 	c, m := newClusterManager(t)
 
 	m.client.EXPECT().ApplyKubeSpecFromBytes(ctx, tt.cluster, gomock.Any())
 	// ApplyKubeSpecFromBytes is called twice. Once for Bundles and again for EKSARelease.
 	m.client.EXPECT().ApplyKubeSpecFromBytes(ctx, tt.cluster, gomock.Any()).MaxTimes(2)
+	m.client.EXPECT().GetConfigMap(ctx, tt.cluster.KubeconfigFile, gomock.Any(), gomock.Any()).Return(configMap, nil)
+	m.client.EXPECT().Apply(ctx, tt.cluster.KubeconfigFile, gomock.Any())
 	m.client.EXPECT().ApplyKubeSpecFromBytesWithNamespace(ctx, tt.cluster, gomock.Any(), gomock.Any()).MaxTimes(2)
 	tt.Expect(c.CreateEKSAResources(ctx, tt.cluster, tt.clusterSpec, datacenterConfig, machineConfigs)).To(Succeed())
 	_, ok := datacenterConfig.GetAnnotations()["anywhere.eks.amazonaws.com/paused"]
@@ -1841,6 +1858,20 @@ func TestClusterManagerCreateEKSAResourcesFailureEKSARelease(t *testing.T) {
 	datacenterConfig := &v1alpha1.VSphereDatacenterConfig{}
 	machineConfigs := []providers.MachineConfig{}
 
+	configMap := &corev1.ConfigMap{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "ConfigMap",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      constants.UpgraderConfigMapName,
+			Namespace: constants.EksaSystemNamespace,
+		},
+		Data: map[string]string{
+			"v1.28": "test-image",
+		},
+	}
+
 	mockCtrl := gomock.NewController(t)
 	m := &clusterManagerMocks{
 		writer:             mockswriter.NewMockFileWriter(mockCtrl),
@@ -1859,9 +1890,99 @@ func TestClusterManagerCreateEKSAResourcesFailureEKSARelease(t *testing.T) {
 	c := clustermanager.New(cf, client, m.networking, m.writer, m.diagnosticsFactory, m.awsIamAuth, m.eksaComponents)
 
 	m.client.EXPECT().CreateNamespaceIfNotPresent(ctx, gomock.Any(), tt.clusterSpec.Cluster.Namespace).Return(nil)
+	m.client.EXPECT().GetConfigMap(ctx, tt.cluster.KubeconfigFile, gomock.Any(), gomock.Any()).Return(configMap, nil)
+	m.client.EXPECT().Apply(ctx, tt.cluster.KubeconfigFile, gomock.Any())
 	m.client.EXPECT().ApplyKubeSpecFromBytes(ctx, gomock.Any(), gomock.Any()).Return(nil)
 	m.client.EXPECT().ApplyKubeSpecFromBytes(ctx, gomock.Any(), gomock.Any()).Return(nil)
 	m.client.EXPECT().ApplyKubeSpecFromBytes(ctx, gomock.Any(), gomock.Any()).Return(errors.New(""))
+	tt.Expect(c.CreateEKSAResources(ctx, tt.cluster, tt.clusterSpec, datacenterConfig, machineConfigs)).NotTo(Succeed())
+}
+
+func TestClusterManagerCreateEKSAResourcesNewUpgraderConfigMap(t *testing.T) {
+	features.ClearCache()
+	ctx := context.Background()
+	tt := newTest(t)
+	tt.clusterSpec.Cluster.Namespace = "test_namespace"
+
+	datacenterConfig := &v1alpha1.VSphereDatacenterConfig{}
+	machineConfigs := []providers.MachineConfig{}
+
+	mockCtrl := gomock.NewController(t)
+	m := &clusterManagerMocks{
+		writer:             mockswriter.NewMockFileWriter(mockCtrl),
+		networking:         mocksmanager.NewMockNetworking(mockCtrl),
+		awsIamAuth:         mocksmanager.NewMockAwsIamAuth(mockCtrl),
+		client:             mocksmanager.NewMockClusterClient(mockCtrl),
+		provider:           mocksprovider.NewMockProvider(mockCtrl),
+		diagnosticsFactory: mocksdiagnostics.NewMockDiagnosticBundleFactory(mockCtrl),
+		diagnosticsBundle:  mocksdiagnostics.NewMockDiagnosticBundle(mockCtrl),
+		eksaComponents:     mocksmanager.NewMockEKSAComponents(mockCtrl),
+	}
+	client := clustermanager.NewRetrierClient(m.client, retrier.NewWithMaxRetries(1, 1))
+	fakeClient := test.NewFakeKubeClient()
+	cf := mocksmanager.NewMockClientFactory(mockCtrl)
+	cf.EXPECT().BuildClientFromKubeconfig("").Return(fakeClient, nil).AnyTimes()
+	c := clustermanager.New(cf, client, m.networking, m.writer, m.diagnosticsFactory, m.awsIamAuth, m.eksaComponents)
+
+	m.client.EXPECT().CreateNamespaceIfNotPresent(ctx, gomock.Any(), tt.clusterSpec.Cluster.Namespace).Return(nil)
+	m.client.EXPECT().ApplyKubeSpecFromBytes(ctx, tt.cluster, gomock.Any())
+	// ApplyKubeSpecFromBytes is called twice. Once for Bundles and again for EKSARelease.
+	m.client.EXPECT().ApplyKubeSpecFromBytes(ctx, tt.cluster, gomock.Any()).MaxTimes(2)
+	m.client.EXPECT().GetConfigMap(ctx, tt.cluster.KubeconfigFile, gomock.Any(), gomock.Any()).Return(nil, errors.New("NotFound"))
+	m.client.EXPECT().Apply(ctx, tt.cluster.KubeconfigFile, gomock.Any())
+	m.client.EXPECT().ApplyKubeSpecFromBytesWithNamespace(ctx, tt.cluster, gomock.Any(), gomock.Any()).MaxTimes(2)
+	tt.Expect(c.CreateEKSAResources(ctx, tt.cluster, tt.clusterSpec, datacenterConfig, machineConfigs)).To(Succeed())
+	_, ok := datacenterConfig.GetAnnotations()["anywhere.eks.amazonaws.com/paused"]
+	tt.Expect(ok).To(BeTrue())
+	_, ok = tt.clusterSpec.Cluster.GetAnnotations()["anywhere.eks.amazonaws.com/paused"]
+	tt.Expect(ok).To(BeTrue())
+}
+
+func TestClusterManagerCreateEKSAResourcesFailureApplyUpgraderConfigMap(t *testing.T) {
+	features.ClearCache()
+	ctx := context.Background()
+	tt := newTest(t)
+	tt.clusterSpec.Cluster.Namespace = "test_namespace"
+
+	datacenterConfig := &v1alpha1.VSphereDatacenterConfig{}
+	machineConfigs := []providers.MachineConfig{}
+
+	configMap := &corev1.ConfigMap{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "ConfigMap",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      constants.UpgraderConfigMapName,
+			Namespace: constants.EksaSystemNamespace,
+		},
+		Data: map[string]string{
+			"v1.28": "test-image",
+		},
+	}
+
+	mockCtrl := gomock.NewController(t)
+	m := &clusterManagerMocks{
+		writer:             mockswriter.NewMockFileWriter(mockCtrl),
+		networking:         mocksmanager.NewMockNetworking(mockCtrl),
+		awsIamAuth:         mocksmanager.NewMockAwsIamAuth(mockCtrl),
+		client:             mocksmanager.NewMockClusterClient(mockCtrl),
+		provider:           mocksprovider.NewMockProvider(mockCtrl),
+		diagnosticsFactory: mocksdiagnostics.NewMockDiagnosticBundleFactory(mockCtrl),
+		diagnosticsBundle:  mocksdiagnostics.NewMockDiagnosticBundle(mockCtrl),
+		eksaComponents:     mocksmanager.NewMockEKSAComponents(mockCtrl),
+	}
+	client := clustermanager.NewRetrierClient(m.client, retrier.NewWithMaxRetries(1, 1))
+	fakeClient := test.NewFakeKubeClient()
+	cf := mocksmanager.NewMockClientFactory(mockCtrl)
+	cf.EXPECT().BuildClientFromKubeconfig("").Return(fakeClient, nil).AnyTimes()
+	c := clustermanager.New(cf, client, m.networking, m.writer, m.diagnosticsFactory, m.awsIamAuth, m.eksaComponents)
+
+	m.client.EXPECT().CreateNamespaceIfNotPresent(ctx, gomock.Any(), tt.clusterSpec.Cluster.Namespace).Return(nil)
+	m.client.EXPECT().GetConfigMap(ctx, tt.cluster.KubeconfigFile, gomock.Any(), gomock.Any()).Return(configMap, nil)
+	m.client.EXPECT().Apply(ctx, tt.cluster.KubeconfigFile, gomock.Any()).Return(errors.New(""))
+	m.client.EXPECT().ApplyKubeSpecFromBytes(ctx, gomock.Any(), gomock.Any()).Return(nil)
+	m.client.EXPECT().ApplyKubeSpecFromBytes(ctx, gomock.Any(), gomock.Any()).Return(nil)
 	tt.Expect(c.CreateEKSAResources(ctx, tt.cluster, tt.clusterSpec, datacenterConfig, machineConfigs)).NotTo(Succeed())
 }
 

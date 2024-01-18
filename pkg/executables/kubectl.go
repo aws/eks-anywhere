@@ -2179,7 +2179,8 @@ func isKubectlAlreadyExistsError(err error) bool {
 
 const notFoundErrorMessageSubString = "NotFound"
 
-func isKubectlNotFoundError(err error) bool {
+// IsKubectlNotFoundError returns true if the kubectl call returned the NotFound error.
+func IsKubectlNotFoundError(err error) bool {
 	return err != nil && strings.Contains(err.Error(), notFoundErrorMessageSubString)
 }
 
@@ -2285,7 +2286,7 @@ func (k *Kubectl) Delete(ctx context.Context, resourceType, kubeconfig string, o
 
 	params := deleteParams(resourceType, kubeconfig, o)
 	_, err := k.Execute(ctx, params...)
-	if isKubectlNotFoundError(err) {
+	if IsKubectlNotFoundError(err) {
 		return newNotFoundErrorForTypeAndName(resourceType, o.Name)
 	}
 

@@ -19,6 +19,7 @@ import (
 	v1alpha11 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
 	logr "github.com/go-logr/logr"
 	gomock "github.com/golang/mock/gomock"
+	v1 "k8s.io/api/core/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	v1beta1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	v1beta10 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
@@ -293,6 +294,21 @@ func (m *MockClusterClient) GetClusters(arg0 context.Context, arg1 *types.Cluste
 func (mr *MockClusterClientMockRecorder) GetClusters(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetClusters", reflect.TypeOf((*MockClusterClient)(nil).GetClusters), arg0, arg1)
+}
+
+// GetConfigMap mocks base method.
+func (m *MockClusterClient) GetConfigMap(arg0 context.Context, arg1, arg2, arg3 string) (*v1.ConfigMap, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetConfigMap", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(*v1.ConfigMap)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetConfigMap indicates an expected call of GetConfigMap.
+func (mr *MockClusterClientMockRecorder) GetConfigMap(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetConfigMap", reflect.TypeOf((*MockClusterClient)(nil).GetConfigMap), arg0, arg1, arg2, arg3)
 }
 
 // GetEksaAWSIamConfig mocks base method.
