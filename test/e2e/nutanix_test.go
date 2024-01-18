@@ -996,7 +996,7 @@ func TestNutanixKubernetes127AWSIamAuth(t *testing.T) {
 }
 
 func TestNutanixKubernetes128UbuntuManagementCPUpgradeAPI(t *testing.T) {
-	provider := framework.NewNutanix(t, framework.WithUbuntu127Nutanix())
+	provider := framework.NewNutanix(t, framework.WithUbuntu128Nutanix())
 	test := framework.NewClusterE2ETest(
 		t, provider,
 	).WithClusterConfig(
