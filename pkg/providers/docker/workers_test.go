@@ -8,6 +8,7 @@ import (
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
 	dockerv1 "sigs.k8s.io/cluster-api/test/infrastructure/docker/api/v1beta1"
@@ -15,6 +16,7 @@ import (
 	"github.com/aws/eks-anywhere/internal/test"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
+	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
 	"github.com/aws/eks-anywhere/pkg/providers/docker"
@@ -332,6 +334,49 @@ func TestWorkersSpecRegistryMirrorConfiguration(t *testing.T) {
 			))
 		})
 	}
+}
+
+func TestWorkersSpecUpgradeRolloutStrategy(t *testing.T) {
+	g := NewWithT(t)
+	logger := test.NewNullLogger()
+	ctx := context.Background()
+	spec := testClusterSpec(func(s *cluster.Spec) {
+		s.Cluster.Spec.WorkerNodeGroupConfigurations = []anywherev1.WorkerNodeGroupConfiguration{
+			{
+				Count:           ptr.Int(3),
+				MachineGroupRef: &anywherev1.Ref{Name: "test"},
+				Name:            "md-0",
+				UpgradeRolloutStrategy: &anywherev1.WorkerNodesUpgradeRolloutStrategy{
+					RollingUpdate: anywherev1.WorkerNodesRollingUpdateParams{
+						MaxSurge:       1,
+						MaxUnavailable: 0,
+					},
+				},
+			},
+		}
+	})
+	client := test.NewFakeKubeClient()
+
+	workers, err := docker.WorkersSpec(ctx, logger, client, spec)
+	g.Expect(err).NotTo(HaveOccurred())
+	g.Expect(workers).NotTo(BeNil())
+	g.Expect(workers.Groups).To(HaveLen(1))
+	g.Expect(workers.Groups).To(ConsistOf(
+		clusterapi.WorkerGroup[*dockerv1.DockerMachineTemplate]{
+			KubeadmConfigTemplate: kubeadmConfigTemplate(),
+			MachineDeployment: machineDeployment(func(m *clusterv1.MachineDeployment) {
+				maxSurge := intstr.FromInt(1)
+				maxUnavailable := intstr.FromInt(0)
+				m.Spec.Strategy = &clusterv1.MachineDeploymentStrategy{
+					RollingUpdate: &clusterv1.MachineRollingUpdateDeployment{
+						MaxSurge:       &maxSurge,
+						MaxUnavailable: &maxUnavailable,
+					},
+				}
+			}),
+			ProviderMachineTemplate: dockerMachineTemplate("test-md-0-1"),
+		},
+	))
 }
 
 func kubeadmConfigTemplate(opts ...func(*bootstrapv1.KubeadmConfigTemplate)) *bootstrapv1.KubeadmConfigTemplate {
