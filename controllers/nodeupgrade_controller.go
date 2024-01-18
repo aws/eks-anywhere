@@ -23,6 +23,7 @@ import (
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	upgrader "github.com/aws/eks-anywhere/pkg/nodeupgrader"
+	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
 
 const (
@@ -100,13 +101,18 @@ func (r *NodeUpgradeReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	}
 
 	// Initialize the patch helper
-	patchHelper, err := patch.NewHelper(nodeUpgrade, r.client)
+	nodeUpgradePatchHelper, err := patch.NewHelper(nodeUpgrade, r.client)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	capiMachinePatchHelper, err := patch.NewHelper(machineToBeUpgraded, r.client)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
 
 	defer func() {
-		err := r.updateStatus(ctx, log, rClient, nodeUpgrade, machineToBeUpgraded.Status.NodeRef.Name)
+		err := r.updateStatus(ctx, log, rClient, nodeUpgrade, machineToBeUpgraded)
 		if err != nil {
 			reterr = kerrors.NewAggregate([]error{reterr, err})
 		}
@@ -122,10 +128,13 @@ func (r *NodeUpgradeReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		if reterr == nil {
 			patchOpts = append(patchOpts, patch.WithStatusObservedGeneration{})
 		}
-		if err := patchNodeUpgrade(ctx, patchHelper, *nodeUpgrade, patchOpts...); err != nil {
+		if err := patchNodeUpgrade(ctx, nodeUpgradePatchHelper, *nodeUpgrade, patchOpts...); err != nil {
 			reterr = kerrors.NewAggregate([]error{reterr, err})
 		}
 
+		if err := capiMachinePatchHelper.Patch(ctx, machineToBeUpgraded); err != nil {
+			reterr = kerrors.NewAggregate([]error{reterr, err})
+		}
 		// Only requeue if we are not already re-queueing and the NodeUpgrade ready condition is false.
 		// We do this to be able to update the status continuously until the NodeUpgrade becomes ready,
 		// since there might be changes in state of the world that don't trigger reconciliation requests
@@ -242,7 +251,7 @@ func (r *NodeUpgradeReconciler) reconcileDelete(ctx context.Context, log logr.Lo
 	return ctrl.Result{}, nil
 }
 
-func (r *NodeUpgradeReconciler) updateStatus(ctx context.Context, log logr.Logger, remoteClient client.Client, nodeUpgrade *anywherev1.NodeUpgrade, nodeName string) error {
+func (r *NodeUpgradeReconciler) updateStatus(ctx context.Context, log logr.Logger, remoteClient client.Client, nodeUpgrade *anywherev1.NodeUpgrade, machineToBeUpgraded *clusterv1.Machine) error {
 	// When NodeUpgrade is fully deleted, we do not need to update the status. Without this check
 	// the subsequent patch operations would fail if the status is updated after it is fully deleted.
 	if !nodeUpgrade.DeletionTimestamp.IsZero() && len(nodeUpgrade.GetFinalizers()) == 0 {
@@ -252,7 +261,7 @@ func (r *NodeUpgradeReconciler) updateStatus(ctx context.Context, log logr.Logge
 
 	log.Info("Updating NodeUpgrade status")
 
-	pod, err := getUpgraderPod(ctx, remoteClient, nodeName)
+	pod, err := getUpgraderPod(ctx, remoteClient, machineToBeUpgraded.Status.NodeRef.Name)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			markAllConditionsFalse(nodeUpgrade, podDNEMessage, clusterv1.ConditionSeverityInfo)
@@ -266,13 +275,8 @@ func (r *NodeUpgradeReconciler) updateStatus(ctx context.Context, log logr.Logge
 	updateComponentsConditions(pod, nodeUpgrade)
 
 	if nodeUpgrade.Status.Completed {
-		capiMachine := &clusterv1.Machine{}
-		if err := r.client.Get(ctx, GetNamespacedNameType(nodeUpgrade.Spec.Machine.Name, nodeUpgrade.Spec.Machine.Namespace), capiMachine); err != nil {
-			return fmt.Errorf("getting capi Machine: %v", err)
-		}
-		log.Info("Updating machine status", "Machine", capiMachine.Name)
-		capiMachine.Spec.Version = &nodeUpgrade.Spec.KubernetesVersion
-
+		log.Info("Updating machine status", "Machine", machineToBeUpgraded.Name)
+		machineToBeUpgraded.Spec.Version = ptr.String(nodeUpgrade.Spec.KubernetesVersion)
 	}
 	// Always update the readyCondition by summarizing the state of other conditions.
 	conditions.SetSummary(nodeUpgrade,
