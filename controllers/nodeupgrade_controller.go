@@ -265,6 +265,15 @@ func (r *NodeUpgradeReconciler) updateStatus(ctx context.Context, log logr.Logge
 	conditions.MarkTrue(nodeUpgrade, anywherev1.UpgraderPodCreated)
 	updateComponentsConditions(pod, nodeUpgrade)
 
+	if nodeUpgrade.Status.Completed {
+		capiMachine := &clusterv1.Machine{}
+		if err := r.client.Get(ctx, GetNamespacedNameType(nodeUpgrade.Spec.Machine.Name, nodeUpgrade.Spec.Machine.Namespace), capiMachine); err != nil {
+			return fmt.Errorf("getting capi Machine: %v", err)
+		}
+		log.Info("Updating machine status", "Machine", capiMachine.Name)
+		capiMachine.Spec.Version = &nodeUpgrade.Spec.KubernetesVersion
+
+	}
 	// Always update the readyCondition by summarizing the state of other conditions.
 	conditions.SetSummary(nodeUpgrade,
 		conditions.WithConditions(

@@ -246,7 +246,7 @@ func generateNodeUpgrade(machine *clusterv1.Machine) *anywherev1.NodeUpgrade {
 				Name:      machine.Name,
 				Namespace: machine.Namespace,
 			},
-			KubernetesVersion: "v1.28.1",
+			KubernetesVersion: "v1.28.3-eks-1-28-9",
 		},
 	}
 }
@@ -258,7 +258,7 @@ func generateMachine(cluster *clusterv1.Cluster, node *corev1.Node) *clusterv1.M
 			Namespace: "eksa-system",
 		},
 		Spec: clusterv1.MachineSpec{
-			Version:     ptr.String("v1.28.0"),
+			Version:     ptr.String("v1.27.8-eks-1-27-18"),
 			ClusterName: cluster.Name,
 		},
 		Status: clusterv1.MachineStatus{
