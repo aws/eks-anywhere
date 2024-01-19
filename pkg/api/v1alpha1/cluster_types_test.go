@@ -3230,3 +3230,36 @@ func TestValidateCluster(t *testing.T) {
 		})
 	}
 }
+
+func TestCluster_SetManagmentComponentsVersion(t *testing.T) {
+	testCases := []struct {
+		name                            string
+		cluster                         *v1alpha1.Cluster
+		managementComponentsVersion     string
+		wantManagementComponentsVersion string
+		wantAnnotations                 map[string]string
+	}{
+		{
+			name:                        "self-managed cluster",
+			cluster:                     baseCluster(),
+			managementComponentsVersion: "v0.0.0-dev+build.0000",
+			wantAnnotations:             map[string]string{"anywhere.eks.amazonaws.com/management-components-version": "v0.0.0-dev+build.0000"},
+		},
+		{
+			name: "managed cluster",
+			cluster: baseCluster(func(c *v1alpha1.Cluster) {
+				c.SetManagedBy("mgmt-cluster")
+			}),
+			managementComponentsVersion: "v0.0.0-dev+build.0000",
+			wantAnnotations:             map[string]string{"anywhere.eks.amazonaws.com/managed-by": "mgmt-cluster"},
+		},
+	}
+
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			tt.cluster.SetManagementComponentsVersion(tt.managementComponentsVersion)
+			g.Expect(tt.cluster.Annotations).To(Equal(tt.wantAnnotations))
+		})
+	}
+}
