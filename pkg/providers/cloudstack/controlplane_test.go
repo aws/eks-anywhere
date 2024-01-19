@@ -7,6 +7,7 @@ import (
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	cloudstackv1 "sigs.k8s.io/cluster-api-provider-cloudstack/api/v1beta3"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
@@ -180,6 +181,31 @@ func TestControlPlaneSpecRegistryMirrorConfiguration(t *testing.T) {
 			g.Expect(cp.ControlPlaneMachineTemplate.Name).To(Equal("test-control-plane-1"))
 		})
 	}
+}
+
+func TestControlPlaneSpecWithUpgradeRolloutStrategy(t *testing.T) {
+	g := NewWithT(t)
+	logger := test.NewNullLogger()
+	ctx := context.Background()
+	client := test.NewFakeKubeClient()
+	spec := test.NewFullClusterSpec(t, testClusterConfigFilename)
+	spec.Cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy = &anywherev1.ControlPlaneUpgradeRolloutStrategy{
+		RollingUpdate: anywherev1.ControlPlaneRollingUpdateParams{
+			MaxSurge: 1,
+		},
+	}
+
+	cp, err := ControlPlaneSpec(ctx, logger, client, spec)
+	g.Expect(err).NotTo(HaveOccurred())
+	g.Expect(cp).NotTo(BeNil())
+	g.Expect(cp.KubeadmControlPlane).To(Equal(kubeadmControlPlane(func(k *controlplanev1.KubeadmControlPlane) {
+		maxSurge := intstr.FromInt(1)
+		k.Spec.RolloutStrategy = &controlplanev1.RolloutStrategy{
+			RollingUpdate: &controlplanev1.RollingUpdate{
+				MaxSurge: &maxSurge,
+			},
+		}
+	})))
 }
 
 func capiCluster() *clusterv1.Cluster {

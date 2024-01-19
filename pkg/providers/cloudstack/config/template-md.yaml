@@ -149,8 +149,8 @@ spec:
         name: {{.workloadTemplateName}}
       version: {{.kubernetesVersion}}
 {{- if .upgradeRolloutStrategy }}
-      strategy:
-        rollingUpdate:
-          maxSurge: {{.maxSurge}}
-          maxUnavailable: {{.maxUnavailable}}
+  strategy:
+    rollingUpdate:
+      maxSurge: {{.maxSurge}}
+      maxUnavailable: {{.maxUnavailable}}
 {{- end }}

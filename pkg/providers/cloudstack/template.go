@@ -78,6 +78,12 @@ func (cs *TemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, wo
 		values["workloadkubeadmconfigTemplateName"] = kubeadmconfigTemplateNames[workerNodeGroupConfiguration.Name]
 		values["autoscalingConfig"] = workerNodeGroupConfiguration.AutoScalingConfiguration
 
+		if workerNodeGroupConfiguration.UpgradeRolloutStrategy != nil {
+			values["upgradeRolloutStrategy"] = true
+			values["maxSurge"] = workerNodeGroupConfiguration.UpgradeRolloutStrategy.RollingUpdate.MaxSurge
+			values["maxUnavailable"] = workerNodeGroupConfiguration.UpgradeRolloutStrategy.RollingUpdate.MaxUnavailable
+		}
+
 		// TODO: Extract out worker MachineDeployments from templates to use apibuilder instead
 		bytes, err := templater.Execute(defaultClusterConfigMD, values)
 		if err != nil {
@@ -376,12 +382,6 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupConfiguration 
 			return nil, err
 		}
 		fillProxyConfigurations(values, clusterSpec, endpoint)
-	}
-
-	if workerNodeGroupConfiguration.UpgradeRolloutStrategy != nil {
-		values["upgradeRolloutStrategy"] = true
-		values["maxSurge"] = workerNodeGroupConfiguration.UpgradeRolloutStrategy.RollingUpdate.MaxSurge
-		values["maxUnavailable"] = workerNodeGroupConfiguration.UpgradeRolloutStrategy.RollingUpdate.MaxUnavailable
 	}
 
 	return values, nil
