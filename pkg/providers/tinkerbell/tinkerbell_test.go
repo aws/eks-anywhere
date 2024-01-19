@@ -123,6 +123,31 @@ func TestTinkerbellProviderGenerateDeploymentFileWithExternalEtcd(t *testing.T) 
 	test.AssertContentToFile(t, string(md), "testdata/expected_results_cluster_tinkerbell_md.yaml")
 }
 
+func TestTinkerbellProviderSetupAndValidateInPlaceBottlerocketNotSupported(t *testing.T) {
+	clusterSpecManifest := "cluster_tinkerbell_bottlerocket_minimal_registry_mirror.yaml"
+	mockCtrl := gomock.NewController(t)
+	docker := stackmocks.NewMockDocker(mockCtrl)
+	helm := stackmocks.NewMockHelm(mockCtrl)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	stackInstaller := stackmocks.NewMockStackInstaller(mockCtrl)
+	writer := filewritermocks.NewMockFileWriter(mockCtrl)
+	forceCleanup := false
+
+	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
+	clusterSpec.Cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy.Type = "InPlace"
+	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
+	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
+	ctx := context.Background()
+
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+	provider.stackInstaller = stackInstaller
+
+	stackInstaller.EXPECT().CleanupLocalBoots(ctx, forceCleanup)
+
+	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
+	assert.Error(t, err, "expect validation to fail because in place upgrades are only supported on Ubuntu OS family")
+}
+
 func TestGenerateDeploymentFileWithMachineConfigOSImageExternalEtcd(t *testing.T) {
 	t.Skip("External etcd unsupported for GA")
 	clusterSpecManifest := "cluster_osimage_machine_config_external_etcd.yaml"

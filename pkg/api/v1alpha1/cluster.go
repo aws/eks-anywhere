@@ -825,19 +825,20 @@ func validatePodIAMConfig(clusterConfig *Cluster) error {
 }
 
 func validateCPUpgradeRolloutStrategy(clusterConfig *Cluster) error {
-	if clusterConfig.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy == nil {
+	cpUpgradeRolloutStrategy := clusterConfig.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy
+	if cpUpgradeRolloutStrategy == nil {
 		return nil
 	}
 
-	if clusterConfig.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy.Type != "RollingUpdate" {
-		return fmt.Errorf("ControlPlaneConfiguration: only 'RollingUpdate' supported for upgrade rollout strategy type")
+	if cpUpgradeRolloutStrategy.Type != "RollingUpdate" && cpUpgradeRolloutStrategy.Type != "InPlace" {
+		return fmt.Errorf("ControlPlaneConfiguration: only 'RollingUpdate' and 'InPlace' are supported for upgrade rollout strategy type")
 	}
 
-	if clusterConfig.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy.RollingUpdate.MaxSurge < 0 {
+	if cpUpgradeRolloutStrategy.RollingUpdate.MaxSurge < 0 {
 		return fmt.Errorf("ControlPlaneConfiguration: maxSurge for control plane cannot be a negative value")
 	}
 
-	if clusterConfig.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy.RollingUpdate.MaxSurge > 1 {
+	if cpUpgradeRolloutStrategy.RollingUpdate.MaxSurge > 1 {
 		return fmt.Errorf("ControlPlaneConfiguration: maxSurge for control plane must be 0 or 1")
 	}
 
@@ -849,8 +850,8 @@ func validateMDUpgradeRolloutStrategy(w *WorkerNodeGroupConfiguration) error {
 		return nil
 	}
 
-	if w.UpgradeRolloutStrategy.Type != "RollingUpdate" {
-		return fmt.Errorf("WorkerNodeGroupConfiguration: only 'RollingUpdate' supported for upgrade rollout strategy type")
+	if w.UpgradeRolloutStrategy.Type != "RollingUpdate" && w.UpgradeRolloutStrategy.Type != "InPlace" {
+		return fmt.Errorf("WorkerNodeGroupConfiguration: only 'RollingUpdate' and 'InPlace' are supported for upgrade rollout strategy type")
 	}
 
 	if w.UpgradeRolloutStrategy.RollingUpdate.MaxSurge < 0 || w.UpgradeRolloutStrategy.RollingUpdate.MaxUnavailable < 0 {
