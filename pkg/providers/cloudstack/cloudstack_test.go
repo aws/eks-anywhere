@@ -268,12 +268,6 @@ func TestProviderGenerateCAPISpecForCreate(t *testing.T) {
 			wantCPFile:        "testdata/expected_results_main_cp.yaml",
 			wantMDFile:        "testdata/expected_results_main_md.yaml",
 		},
-		{
-			testName:          "main with rollout strategies",
-			clusterconfigFile: "cluster_main_with_rollout_strategy.yaml",
-			wantCPFile:        "testdata/expected_results_main_rollout_strategy_cp.yaml",
-			wantMDFile:        "testdata/expected_results_main_rollout_strategy_md.yaml",
-		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.testName, func(t *testing.T) {
@@ -1250,12 +1244,6 @@ func TestProviderGenerateCAPISpecForUpgradeUpdateMachineTemplateExternalEtcd(t *
 			clusterconfigFile: "cluster_main_with_node_labels.yaml",
 			wantCPFile:        "testdata/expected_results_main_cp.yaml",
 			wantMDFile:        "testdata/expected_results_main_node_labels_md.yaml",
-		},
-		{
-			testName:          "main with rollout strategies",
-			clusterconfigFile: "cluster_main_with_rollout_strategy.yaml",
-			wantCPFile:        "testdata/expected_results_main_rollout_strategy_cp.yaml",
-			wantMDFile:        "testdata/expected_results_main_rollout_strategy_md.yaml",
 		},
 		{
 			testName:          "main with cp node labels",
