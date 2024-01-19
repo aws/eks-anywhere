@@ -86,6 +86,12 @@ func (ntb *TemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, w
 		values["workloadkubeadmconfigTemplateName"] = kubeadmconfigTemplateNames[workerNodeGroupConfiguration.Name]
 		values["autoscalingConfig"] = workerNodeGroupConfiguration.AutoScalingConfiguration
 
+		if workerNodeGroupConfiguration.UpgradeRolloutStrategy != nil {
+			values["upgradeRolloutStrategy"] = true
+			values["maxSurge"] = workerNodeGroupConfiguration.UpgradeRolloutStrategy.RollingUpdate.MaxSurge
+			values["maxUnavailable"] = workerNodeGroupConfiguration.UpgradeRolloutStrategy.RollingUpdate.MaxUnavailable
+		}
+
 		bytes, err := templater.Execute(defaultClusterConfigMD, values)
 		if err != nil {
 			return nil, err
@@ -257,6 +263,11 @@ func buildTemplateMapCP(
 
 	if len(controlPlaneMachineSpec.AdditionalCategories) > 0 {
 		values["additionalCategories"] = controlPlaneMachineSpec.AdditionalCategories
+	}
+
+	if clusterSpec.Cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy != nil {
+		values["upgradeRolloutStrategy"] = true
+		values["maxSurge"] = clusterSpec.Cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy.RollingUpdate.MaxSurge
 	}
 
 	return values, nil

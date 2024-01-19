@@ -31,6 +31,12 @@ spec:
         kind: NutanixMachineTemplate
         name: "{{.workloadTemplateName}}"
       version: "{{.kubernetesVersion}}"
+{{- if .upgradeRolloutStrategy }}
+  strategy:
+    rollingUpdate:
+      maxSurge: {{.maxSurge}}
+      maxUnavailable: {{.maxUnavailable}}
+{{- end }}
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: NutanixMachineTemplate
