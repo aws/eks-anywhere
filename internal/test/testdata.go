@@ -42,7 +42,7 @@ func EKSARelease() *releasev1.EKSARelease {
 		},
 		Spec: releasev1.EKSAReleaseSpec{
 			ReleaseDate:       "",
-			Version:           "",
+			Version:           "v0.0.0-dev",
 			GitCommit:         "",
 			BundleManifestURL: "",
 			BundlesRef: releasev1.BundlesRef{

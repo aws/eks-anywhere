@@ -4,12 +4,19 @@ import (
 	"context"
 
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
+	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
 )
+
+// ClientFactory builds Kubernetes clients.
+type ClientFactory interface {
+	// BuildClientFromKubeconfig builds a Kubernetes client from a kubeconfig file.
+	BuildClientFromKubeconfig(kubeconfigPath string) (kubernetes.Client, error)
+}
 
 type Bootstrapper interface {
 	CreateBootstrapCluster(ctx context.Context, clusterSpec *cluster.Spec, opts ...bootstrapper.BootstrapClusterOption) (*types.Cluster, error)

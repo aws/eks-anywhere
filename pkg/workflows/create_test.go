@@ -11,7 +11,10 @@ import (
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
+	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
+	clientmocks "github.com/aws/eks-anywhere/pkg/clients/kubernetes/mocks"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	writermocks "github.com/aws/eks-anywhere/pkg/filewriter/mocks"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	providermocks "github.com/aws/eks-anywhere/pkg/providers/mocks"
@@ -23,6 +26,8 @@ import (
 
 type createTestSetup struct {
 	t                *testing.T
+	client           *clientmocks.MockClient
+	clientFactory    *mocks.MockClientFactory
 	packageInstaller *mocks.MockPackageInstaller
 	bootstrapper     *mocks.MockBootstrapper
 	clusterManager   *mocks.MockClusterManager
@@ -43,6 +48,8 @@ type createTestSetup struct {
 
 func newCreateTest(t *testing.T) *createTestSetup {
 	mockCtrl := gomock.NewController(t)
+	client := clientmocks.NewMockClient(mockCtrl)
+	clientFactory := mocks.NewMockClientFactory(mockCtrl)
 	bootstrapper := mocks.NewMockBootstrapper(mockCtrl)
 	clusterManager := mocks.NewMockClusterManager(mockCtrl)
 	gitOpsManager := mocks.NewMockGitOpsManager(mockCtrl)
@@ -53,11 +60,13 @@ func newCreateTest(t *testing.T) *createTestSetup {
 
 	datacenterConfig := &v1alpha1.VSphereDatacenterConfig{}
 	machineConfigs := []providers.MachineConfig{&v1alpha1.VSphereMachineConfig{}}
-	workflow := workflows.NewCreate(bootstrapper, provider, clusterManager, gitOpsManager, writer, eksd, packageInstaller)
+	workflow := workflows.NewCreate(clientFactory, bootstrapper, provider, clusterManager, gitOpsManager, writer, eksd, packageInstaller)
 	validator := mocks.NewMockValidator(mockCtrl)
 
 	return &createTestSetup{
 		t:                t,
+		client:           client,
+		clientFactory:    clientFactory,
 		bootstrapper:     bootstrapper,
 		clusterManager:   clusterManager,
 		gitOpsManager:    gitOpsManager,
@@ -202,6 +211,15 @@ func (c *createTestSetup) expectInstallEksaComponents() {
 		c.eksd.EXPECT().InstallEksdManifest(
 			c.ctx, c.clusterSpec, c.workloadCluster),
 
+		c.clientFactory.EXPECT().BuildClientFromKubeconfig(c.workloadCluster.KubeconfigFile).Return(c.client, nil),
+
+		c.client.EXPECT().ApplyServerSide(
+			c.ctx,
+			constants.EKSACLIFieldManager,
+			c.clusterSpec.Cluster,
+			kubernetes.ApplyServerSideOptions{ForceOwnership: true},
+		),
+
 		c.clusterManager.EXPECT().ResumeEKSAControllerReconcile(c.ctx, c.workloadCluster, c.clusterSpec, c.provider),
 	)
 }
@@ -223,6 +241,15 @@ func (c *createTestSetup) skipInstallEksaComponents() {
 
 		c.eksd.EXPECT().InstallEksdManifest(
 			c.ctx, c.clusterSpec, c.bootstrapCluster),
+
+		c.clientFactory.EXPECT().BuildClientFromKubeconfig(c.bootstrapCluster.KubeconfigFile).Return(c.client, nil),
+
+		c.client.EXPECT().ApplyServerSide(
+			c.ctx,
+			constants.EKSACLIFieldManager,
+			c.clusterSpec.Cluster,
+			kubernetes.ApplyServerSideOptions{ForceOwnership: true},
+		),
 
 		c.clusterManager.EXPECT().ResumeEKSAControllerReconcile(c.ctx, c.bootstrapCluster, c.clusterSpec, c.provider),
 	)
@@ -290,6 +317,89 @@ func TestCreateRunSuccess(t *testing.T) {
 	err := test.run()
 	if err != nil {
 		t.Fatalf("Create.Run() err = %v, want err = nil", err)
+	}
+}
+
+func TestCreateRunInstallEksaComponentsBuildClientFailure(t *testing.T) {
+	wantError := errors.New("test error")
+	test := newCreateTest(t)
+
+	test.expectSetup()
+	test.expectPreflightValidationsToPass()
+	test.expectCreateBootstrap()
+	test.expectCreateWorkload()
+	test.expectInstallResourcesOnManagementTask()
+	test.expectMoveManagement()
+	gomock.InOrder(
+		test.clusterManager.EXPECT().InstallCustomComponents(
+			test.ctx, test.clusterSpec, test.workloadCluster, test.provider),
+
+		test.eksd.EXPECT().InstallEksdCRDs(test.ctx, test.clusterSpec, test.workloadCluster),
+
+		test.provider.EXPECT().DatacenterConfig(test.clusterSpec).Return(test.datacenterConfig),
+
+		test.provider.EXPECT().MachineConfigs(test.clusterSpec).Return(test.machineConfigs),
+
+		test.clusterManager.EXPECT().CreateEKSAResources(
+			test.ctx, test.workloadCluster, test.clusterSpec, test.datacenterConfig, test.machineConfigs,
+		),
+
+		test.eksd.EXPECT().InstallEksdManifest(
+			test.ctx, test.clusterSpec, test.workloadCluster),
+
+		test.clientFactory.EXPECT().BuildClientFromKubeconfig(test.workloadCluster.KubeconfigFile).Return(nil, wantError),
+	)
+	test.clusterManager.EXPECT().SaveLogsManagementCluster(test.ctx, test.clusterSpec, test.bootstrapCluster)
+	test.clusterManager.EXPECT().SaveLogsWorkloadCluster(test.ctx, test.provider, test.clusterSpec, test.workloadCluster)
+	test.writer.EXPECT().Write(fmt.Sprintf("%s-checkpoint.yaml", test.clusterSpec.Cluster.Name), gomock.Any())
+
+	if err := test.run(); err == nil {
+		t.Fatalf("Create.Run() err = %v, want err = %v", err, wantError)
+	}
+}
+
+func TestCreateRunInstallEksaComponentsApplyServerSideFailure(t *testing.T) {
+	wantError := errors.New("test error")
+	test := newCreateTest(t)
+
+	test.expectSetup()
+	test.expectPreflightValidationsToPass()
+	test.expectCreateBootstrap()
+	test.expectCreateWorkload()
+	test.expectInstallResourcesOnManagementTask()
+	test.expectMoveManagement()
+	gomock.InOrder(
+		test.clusterManager.EXPECT().InstallCustomComponents(
+			test.ctx, test.clusterSpec, test.workloadCluster, test.provider),
+
+		test.eksd.EXPECT().InstallEksdCRDs(test.ctx, test.clusterSpec, test.workloadCluster),
+
+		test.provider.EXPECT().DatacenterConfig(test.clusterSpec).Return(test.datacenterConfig),
+
+		test.provider.EXPECT().MachineConfigs(test.clusterSpec).Return(test.machineConfigs),
+
+		test.clusterManager.EXPECT().CreateEKSAResources(
+			test.ctx, test.workloadCluster, test.clusterSpec, test.datacenterConfig, test.machineConfigs,
+		),
+
+		test.eksd.EXPECT().InstallEksdManifest(
+			test.ctx, test.clusterSpec, test.workloadCluster),
+
+		test.clientFactory.EXPECT().BuildClientFromKubeconfig(test.workloadCluster.KubeconfigFile).Return(test.client, nil),
+
+		test.client.EXPECT().ApplyServerSide(
+			test.ctx,
+			constants.EKSACLIFieldManager,
+			test.clusterSpec.Cluster,
+			kubernetes.ApplyServerSideOptions{ForceOwnership: true},
+		).Return(wantError),
+	)
+	test.clusterManager.EXPECT().SaveLogsManagementCluster(test.ctx, test.clusterSpec, test.bootstrapCluster)
+	test.clusterManager.EXPECT().SaveLogsWorkloadCluster(test.ctx, test.provider, test.clusterSpec, test.workloadCluster)
+	test.writer.EXPECT().Write(fmt.Sprintf("%s-checkpoint.yaml", test.clusterSpec.Cluster.Name), gomock.Any())
+
+	if err := test.run(); err == nil {
+		t.Fatalf("Create.Run() err = %v, want err = %v", err, wantError)
 	}
 }
 

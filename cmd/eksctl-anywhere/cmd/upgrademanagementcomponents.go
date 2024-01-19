@@ -71,6 +71,7 @@ var upgradeManagementComponentsCmd = &cobra.Command{
 		defer close(cmd.Context(), deps)
 
 		runner := management.NewUpgradeManagementComponentsRunner(
+			deps.UnAuthKubeClient,
 			deps.Provider,
 			deps.CAPIManager,
 			deps.ClusterManager,

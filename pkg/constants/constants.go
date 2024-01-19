@@ -101,3 +101,6 @@ const (
 	Upgrade Operation = 1
 	Delete  Operation = 2
 )
+
+// EKSACLIFieldManager is the owner name for fields applied by the EKS-A CLI.
+const EKSACLIFieldManager = "eks-a-cli"

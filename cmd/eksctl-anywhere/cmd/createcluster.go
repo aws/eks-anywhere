@@ -208,6 +208,7 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 	}
 
 	createCluster := workflows.NewCreate(
+		deps.UnAuthKubeClient,
 		deps.Bootstrapper,
 		deps.Provider,
 		deps.ClusterManager,

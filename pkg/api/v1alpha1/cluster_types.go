@@ -41,6 +41,11 @@ const (
 	// cluster object.
 	managementAnnotation = "anywhere.eks.amazonaws.com/managed-by"
 
+	// managementComponentsVersionAnnotation is an annotation applied to an EKS-A management cluster pointing to the current version of the management components.
+	// The value for this annotation is expected to correspond to an EKSARelease object version, following semantic version convention: e.g. v0.18.3
+	// This is an internal EKS-A managed annotation, not meant to be updated manually.
+	managementComponentsVersionAnnotation = "anywhere.eks.amazonaws.com/management-components-version"
+
 	// defaultEksaNamespace is the default namespace for EKS-A resources when not specified.
 	defaultEksaNamespace = "default"
 
@@ -1292,6 +1297,17 @@ func (c *Cluster) PausedAnnotation() string {
 
 func (c *Cluster) ControlPlaneAnnotation() string {
 	return controlPlaneAnnotation
+}
+
+// SetManagementComponentsVersion sets the `management-components version` annotation on the Cluster object.
+func (c *Cluster) SetManagementComponentsVersion(version string) {
+	if c.IsManaged() {
+		return
+	}
+	if c.Annotations == nil {
+		c.Annotations = make(map[string]string, 1)
+	}
+	c.Annotations[managementComponentsVersionAnnotation] = version
 }
 
 // DisableControlPlaneIPCheck sets the `skip-ip-check` annotation on the Cluster object.

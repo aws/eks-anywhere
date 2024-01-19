@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clustermarshaller"
 	"github.com/aws/eks-anywhere/pkg/constants"
@@ -17,6 +18,7 @@ import (
 )
 
 type Create struct {
+	clientFactory    interfaces.ClientFactory
 	bootstrapper     interfaces.Bootstrapper
 	provider         providers.Provider
 	clusterManager   interfaces.ClusterManager
@@ -26,12 +28,14 @@ type Create struct {
 	packageInstaller interfaces.PackageInstaller
 }
 
-func NewCreate(bootstrapper interfaces.Bootstrapper, provider providers.Provider,
+// NewCreate returns a Create instance.
+func NewCreate(clientFactory interfaces.ClientFactory, bootstrapper interfaces.Bootstrapper, provider providers.Provider,
 	clusterManager interfaces.ClusterManager, gitOpsManager interfaces.GitOpsManager,
 	writer filewriter.FileWriter, eksdInstaller interfaces.EksdInstaller,
 	packageInstaller interfaces.PackageInstaller,
 ) *Create {
 	return &Create{
+		clientFactory:    clientFactory,
 		bootstrapper:     bootstrapper,
 		provider:         provider,
 		clusterManager:   clusterManager,
@@ -51,6 +55,7 @@ func (c *Create) Run(ctx context.Context, clusterSpec *cluster.Spec, validator i
 		}
 	}
 	commandContext := &task.CommandContext{
+		ClientFactory:    c.clientFactory,
 		Bootstrapper:     c.bootstrapper,
 		Provider:         c.provider,
 		ClusterManager:   c.clusterManager,
@@ -372,6 +377,23 @@ func (s *InstallEksaComponentsTask) Run(ctx context.Context, commandContext *tas
 		commandContext.SetError(err)
 		return &CollectDiagnosticsTask{}
 	}
+
+	client, err := commandContext.ClientFactory.BuildClientFromKubeconfig(targetCluster.KubeconfigFile)
+	if err != nil {
+		commandContext.SetError(err)
+		return &CollectDiagnosticsTask{}
+	}
+
+	commandContext.ClusterSpec.Cluster.SetManagementComponentsVersion(commandContext.ClusterSpec.EKSARelease.Spec.Version)
+	if err := client.ApplyServerSide(ctx,
+		constants.EKSACLIFieldManager,
+		commandContext.ClusterSpec.Cluster,
+		kubernetes.ApplyServerSideOptions{ForceOwnership: true},
+	); err != nil {
+		commandContext.SetError(err)
+		return &CollectDiagnosticsTask{}
+	}
+
 	err = commandContext.ClusterManager.ResumeEKSAControllerReconcile(ctx, targetCluster, commandContext.ClusterSpec, commandContext.Provider)
 	if err != nil {
 		commandContext.SetError(err)
