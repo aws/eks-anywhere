@@ -3246,7 +3246,7 @@ func TestValidateCPUpgradeRolloutStrategy(t *testing.T) {
 	}{
 		{
 			name:    "rolling upgrade strategy invalid",
-			wantErr: "ControlPlaneConfiguration: only 'RollingUpdate' supported for upgrade rollout strategy type",
+			wantErr: "ControlPlaneConfiguration: only 'RollingUpdate' and 'InPlace' are supported for upgrade rollout strategy type",
 			cluster: &Cluster{
 				Spec: ClusterSpec{
 					ControlPlaneConfiguration: ControlPlaneConfiguration{
@@ -3332,7 +3332,7 @@ func TestValidateMDUpgradeRolloutStrategy(t *testing.T) {
 	}{
 		{
 			name:    "rolling upgrade strategy invalid",
-			wantErr: "WorkerNodeGroupConfiguration: only 'RollingUpdate' supported for upgrade rollout strategy type",
+			wantErr: "WorkerNodeGroupConfiguration: only 'RollingUpdate' and 'InPlace' are supported for upgrade rollout strategy type",
 			cluster: &Cluster{
 				Spec: ClusterSpec{
 					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
