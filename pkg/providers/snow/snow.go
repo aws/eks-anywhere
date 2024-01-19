@@ -70,9 +70,6 @@ func (p *SnowProvider) Name() string {
 }
 
 func (p *SnowProvider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpec *cluster.Spec) error {
-	if err := p.validateUpgradeRolloutStrategy(clusterSpec); err != nil {
-		return fmt.Errorf("failed setup and validations: %v", err)
-	}
 	if err := p.configManager.SetDefaultsAndValidate(ctx, clusterSpec.Config); err != nil {
 		return fmt.Errorf("setting defaults and validate snow config: %v", err)
 	}
@@ -87,9 +84,6 @@ func (p *SnowProvider) SetupAndValidateCreateCluster(ctx context.Context, cluste
 }
 
 func (p *SnowProvider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, _ *cluster.Spec) error {
-	if err := p.validateUpgradeRolloutStrategy(clusterSpec); err != nil {
-		return fmt.Errorf("failed setup and validations: %v", err)
-	}
 	if err := p.configManager.SetDefaultsAndValidate(ctx, clusterSpec.Config); err != nil {
 		return fmt.Errorf("setting defaults and validate snow config: %v", err)
 	}
@@ -97,9 +91,6 @@ func (p *SnowProvider) SetupAndValidateUpgradeCluster(ctx context.Context, clust
 }
 
 func (p *SnowProvider) SetupAndValidateDeleteCluster(ctx context.Context, _ *types.Cluster, clusterSpec *cluster.Spec) error {
-	if err := p.validateUpgradeRolloutStrategy(clusterSpec); err != nil {
-		return fmt.Errorf("failed setup and validations: %v", err)
-	}
 	if err := SetupEksaCredentialsSecret(clusterSpec.Config); err != nil {
 		return fmt.Errorf("setting up credentials: %v", err)
 	}
@@ -316,18 +307,6 @@ func namespaceOrDefault(obj client.Object) string {
 	}
 
 	return ns
-}
-
-func (p *SnowProvider) validateUpgradeRolloutStrategy(clusterSpec *cluster.Spec) error {
-	if clusterSpec.Cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy != nil {
-		return fmt.Errorf("Upgrade rollout strategy customization is not supported for snow provider")
-	}
-	for _, workerNodeGroupConfiguration := range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
-		if workerNodeGroupConfiguration.UpgradeRolloutStrategy != nil {
-			return fmt.Errorf("Upgrade rollout strategy customization is not supported for snow provider")
-		}
-	}
-	return nil
 }
 
 // UpgradeNeeded compares the new snow version bundle and objects with the existing ones in the cluster and decides whether

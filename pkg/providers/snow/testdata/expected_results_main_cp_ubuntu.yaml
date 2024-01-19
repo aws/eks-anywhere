@@ -151,6 +151,10 @@ spec:
       name: snow-test-control-plane-1
     metadata: {}
   replicas: 3
+  rolloutStrategy:
+    rollingUpdate:
+      maxSurge: 1
+    type: RollingUpdate
   version: v1.21.5-eks-1-21-9
 status:
   initialized: false

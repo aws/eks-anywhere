@@ -268,9 +268,11 @@ func TestCluster(t *testing.T) {
 	tt.Expect(got).To(Equal(want))
 }
 
-func wantKubeadmControlPlane() *controlplanev1.KubeadmControlPlane {
+type kubeadmControlPlaneOpt func(k *controlplanev1.KubeadmControlPlane)
+
+func wantKubeadmControlPlane(opts ...kubeadmControlPlaneOpt) *controlplanev1.KubeadmControlPlane {
 	replicas := int32(3)
-	return &controlplanev1.KubeadmControlPlane{
+	kcp := &controlplanev1.KubeadmControlPlane{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "controlplane.cluster.x-k8s.io/v1beta1",
 			Kind:       "KubeadmControlPlane",
@@ -363,6 +365,12 @@ func wantKubeadmControlPlane() *controlplanev1.KubeadmControlPlane {
 			Version:  "v1.21.5-eks-1-21-9",
 		},
 	}
+
+	for _, opt := range opts {
+		opt(kcp)
+	}
+
+	return kcp
 }
 
 func TestKubeadmControlPlane(t *testing.T) {
@@ -429,10 +437,12 @@ func TestKubeadmConfigTemplate(t *testing.T) {
 	tt.Expect(got).To(Equal(want))
 }
 
-func wantMachineDeployment() *clusterv1.MachineDeployment {
+type machineDeploymentOpt func(m *clusterv1.MachineDeployment)
+
+func wantMachineDeployment(opts ...machineDeploymentOpt) *clusterv1.MachineDeployment {
 	replicas := int32(3)
 	version := "v1.21.5-eks-1-21-9"
-	return &clusterv1.MachineDeployment{
+	md := &clusterv1.MachineDeployment{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "cluster.x-k8s.io/v1beta1",
 			Kind:       "MachineDeployment",
@@ -478,6 +488,12 @@ func wantMachineDeployment() *clusterv1.MachineDeployment {
 			Replicas: &replicas,
 		},
 	}
+
+	for _, opt := range opts {
+		opt(md)
+	}
+
+	return md
 }
 
 func TestMachineDeployment(t *testing.T) {

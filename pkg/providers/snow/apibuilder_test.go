@@ -9,6 +9,7 @@ import (
 	. "github.com/onsi/gomega"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
@@ -105,6 +106,7 @@ func TestCAPICluster(t *testing.T) {
 
 func wantKubeadmControlPlane() *controlplanev1.KubeadmControlPlane {
 	wantReplicas := int32(3)
+	wantMaxSurge := intstr.FromInt(1)
 	return &controlplanev1.KubeadmControlPlane{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "controlplane.cluster.x-k8s.io/v1beta1",
@@ -185,6 +187,12 @@ func wantKubeadmControlPlane() *controlplanev1.KubeadmControlPlane {
 						Owner:   "root:root",
 						Content: test.KubeVipTemplate,
 					},
+				},
+			},
+			RolloutStrategy: &controlplanev1.RolloutStrategy{
+				Type: controlplanev1.RollingUpdateStrategyType,
+				RollingUpdate: &controlplanev1.RollingUpdate{
+					MaxSurge: &wantMaxSurge,
 				},
 			},
 			Replicas: &wantReplicas,
@@ -765,6 +773,8 @@ func TestKubeadmConfigTemplate(t *testing.T) {
 func wantMachineDeployment() *clusterv1.MachineDeployment {
 	wantVersion := "v1.21.5-eks-1-21-9"
 	wantReplicas := int32(3)
+	wantMaxUnavailable := intstr.FromInt(0)
+	wantMaxSurge := intstr.FromInt(1)
 	return &clusterv1.MachineDeployment{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "cluster.x-k8s.io/v1beta1",
@@ -809,6 +819,13 @@ func wantMachineDeployment() *clusterv1.MachineDeployment {
 				},
 			},
 			Replicas: &wantReplicas,
+			Strategy: &clusterv1.MachineDeploymentStrategy{
+				RollingUpdate: &clusterv1.MachineRollingUpdateDeployment{
+					MaxUnavailable: &wantMaxUnavailable,
+					MaxSurge:       &wantMaxSurge,
+				},
+				Type: clusterv1.RollingUpdateMachineDeploymentStrategyType,
+			},
 		},
 	}
 }

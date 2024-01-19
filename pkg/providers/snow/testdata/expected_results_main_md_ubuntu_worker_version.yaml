@@ -50,6 +50,11 @@ spec:
   clusterName: snow-test
   replicas: 3
   selector: {}
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+    type: RollingUpdate
   template:
     metadata:
       labels:
@@ -154,6 +159,11 @@ spec:
   clusterName: snow-test
   replicas: 3
   selector: {}
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+    type: RollingUpdate
   template:
     metadata:
       labels:

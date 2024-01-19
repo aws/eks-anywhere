@@ -199,6 +199,8 @@ func KubeadmControlPlane(clusterSpec *cluster.Spec, infrastructureObject APIObje
 		setStackedEtcdConfigInKubeadmControlPlane(kcp, bundle.KubeDistro.Etcd)
 	}
 
+	SetUpgradeRolloutStrategyInKubeadmControlPlane(kcp, clusterSpec.Cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy)
+
 	return kcp, nil
 }
 
@@ -290,6 +292,8 @@ func MachineDeployment(clusterSpec *cluster.Spec, workerNodeGroupConfig anywhere
 			Replicas: &replicas,
 		},
 	}
+
+	SetUpgradeRolloutStrategyInMachineDeployment(md, workerNodeGroupConfig.UpgradeRolloutStrategy)
 
 	ConfigureAutoscalingInMachineDeployment(md, workerNodeGroupConfig.AutoScalingConfiguration)
 
