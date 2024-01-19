@@ -1455,8 +1455,8 @@ func (e *ClusterE2ETest) VerifyAdotPackageInstalled(packageName, targetNamespace
 	}
 	podFullIPAddress := strings.Trim(podIPAddress, `'"`) + ":8888/metrics"
 	e.T.Log("Validate content at endpoint", podFullIPAddress)
-	expectedLogs = "otelcol_exporter"
-	e.ValidateEndpointContent(podFullIPAddress, targetNamespace, expectedLogs)
+	expectedLogs = "HTTP/1.1 200 OK"
+	e.ValidateEndpointContent(podFullIPAddress, targetNamespace, expectedLogs, "-I")
 }
 
 //go:embed testdata/adot_package_deployment.yaml
@@ -2092,13 +2092,13 @@ func (e *ClusterE2ETest) ApplyPackageFile(packageName, targetNamespace string, P
 
 // CurlEndpoint creates a pod with command to curl the target endpoint,
 // and returns the created pod name.
-func (e *ClusterE2ETest) CurlEndpoint(endpoint, namespace string) string {
+func (e *ClusterE2ETest) CurlEndpoint(endpoint, namespace string, extraCurlArgs ...string) string {
 	ctx := context.Background()
 
 	e.T.Log("Launching pod to curl endpoint", endpoint)
 	randomname := fmt.Sprintf("%s-%s", "curl-test", utilrand.String(7))
 	curlPodName, err := e.KubectlClient.RunCurlPod(context.TODO(),
-		namespace, randomname, e.KubeconfigFilePath(), []string{"curl", endpoint})
+		namespace, randomname, e.KubeconfigFilePath(), append([]string{"curl", endpoint}, extraCurlArgs...))
 	if err != nil {
 		e.T.Fatalf("error launching pod: %s", err)
 	}
@@ -2141,8 +2141,8 @@ func (e *ClusterE2ETest) MatchLogs(targetNamespace, targetPodName string,
 }
 
 // ValidateEndpointContent validates the contents at the target endpoint.
-func (e *ClusterE2ETest) ValidateEndpointContent(endpoint, namespace, expectedContent string) {
-	curlPodName := e.CurlEndpoint(endpoint, namespace)
+func (e *ClusterE2ETest) ValidateEndpointContent(endpoint, namespace, expectedContent string, extraCurlArgs ...string) {
+	curlPodName := e.CurlEndpoint(endpoint, namespace, extraCurlArgs...)
 	e.MatchLogs(namespace, curlPodName, curlPodName, expectedContent, 5*time.Minute)
 }
 
