@@ -206,11 +206,6 @@ func withKubeVersionAndOS(kubeVersion anywherev1.KubernetesVersion, os OS, machi
 	}
 }
 
-// WithUbuntu124Tinkerbell tink test with ubuntu 1.24.
-func WithUbuntu124Tinkerbell() TinkerbellOpt {
-	return withKubeVersionAndOS(anywherev1.Kube124, Ubuntu2004, "", nil)
-}
-
 // WithUbuntu125Tinkerbell tink test with ubuntu 1.25.
 func WithUbuntu125Tinkerbell() TinkerbellOpt {
 	return withKubeVersionAndOS(anywherev1.Kube125, Ubuntu2004, "", nil)
@@ -229,11 +224,6 @@ func WithUbuntu127Tinkerbell() TinkerbellOpt {
 // WithUbuntu128Tinkerbell tink test with ubuntu 1.28.
 func WithUbuntu128Tinkerbell() TinkerbellOpt {
 	return withKubeVersionAndOS(anywherev1.Kube128, Ubuntu2004, "", nil)
-}
-
-// WithRedHat124Tinkerbell tink test with redhat 1.24.
-func WithRedHat124Tinkerbell() TinkerbellOpt {
-	return withKubeVersionAndOS(anywherev1.Kube124, RedHat8, "", nil)
 }
 
 // WithRedHat125Tinkerbell tink test with redhat 1.25.
@@ -311,11 +301,6 @@ func imageForKubeVersionAndOS(kubeVersion anywherev1.KubernetesVersion, operatin
 		tinkerbellFiller = api.WithTinkerbellOSImageURL(os.Getenv(envVarForImage(operatingSystem, kubeVersion)))
 	}
 	return tinkerbellFiller
-}
-
-// Ubuntu124Image represents an Ubuntu raw image corresponding to Kubernetes 1.24.
-func Ubuntu124Image() api.TinkerbellFiller {
-	return imageForKubeVersionAndOS(anywherev1.Kube124, Ubuntu2004, "")
 }
 
 // Ubuntu125Image represents an Ubuntu raw image corresponding to Kubernetes 1.25.
