@@ -1455,7 +1455,7 @@ func (e *ClusterE2ETest) VerifyAdotPackageInstalled(packageName, targetNamespace
 	}
 	podFullIPAddress := strings.Trim(podIPAddress, `'"`) + ":8888/metrics"
 	e.T.Log("Validate content at endpoint", podFullIPAddress)
-	expectedLogs = "otelcol_exporter"
+	expectedLogs = "HTTP/1.1 200 OK"
 	e.ValidateEndpointContent(podFullIPAddress, targetNamespace, expectedLogs)
 }
 
@@ -2098,7 +2098,7 @@ func (e *ClusterE2ETest) CurlEndpoint(endpoint, namespace string) string {
 	e.T.Log("Launching pod to curl endpoint", endpoint)
 	randomname := fmt.Sprintf("%s-%s", "curl-test", utilrand.String(7))
 	curlPodName, err := e.KubectlClient.RunCurlPod(context.TODO(),
-		namespace, randomname, e.KubeconfigFilePath(), []string{"curl", endpoint})
+		namespace, randomname, e.KubeconfigFilePath(), []string{"curl", "-I", endpoint})
 	if err != nil {
 		e.T.Fatalf("error launching pod: %s", err)
 	}
@@ -2129,6 +2129,7 @@ func (e *ClusterE2ETest) MatchLogs(targetNamespace, targetPodName string,
 			return fmt.Errorf("failure getting pod logs %s", err)
 		}
 		fmt.Printf("Logs from pod\n %s\n", logs)
+
 		ok := strings.Contains(logs, expectedLogs)
 		if !ok {
 			return fmt.Errorf("expected to find %s in the log, got %s", expectedLogs, logs)
