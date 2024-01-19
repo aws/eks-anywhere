@@ -167,16 +167,6 @@ func withCloudStackKubeVersionAndOS(kubeVersion anywherev1.KubernetesVersion, os
 	}
 }
 
-// WithCloudStackRedhat123 returns a function which can be invoked to configure the Cloudstack object to be compatible with K8s 1.23.
-func WithCloudStackRedhat123() CloudStackOpt {
-	return withCloudStackKubeVersionAndOS(anywherev1.Kube123, RedHat8, nil)
-}
-
-// WithCloudStackRedhat124 returns a function which can be invoked to configure the Cloudstack object to be compatible with K8s 1.24.
-func WithCloudStackRedhat124() CloudStackOpt {
-	return withCloudStackKubeVersionAndOS(anywherev1.Kube124, RedHat8, nil)
-}
-
 // WithCloudStackRedhat125 returns a function which can be invoked to configure the Cloudstack object to be compatible with K8s 1.25.
 func WithCloudStackRedhat125() CloudStackOpt {
 	return withCloudStackKubeVersionAndOS(anywherev1.Kube125, RedHat8, nil)
@@ -317,16 +307,6 @@ func (c *CloudStack) templateForKubeVersionAndOS(kubeVersion anywherev1.Kubernet
 	return api.WithCloudStackTemplateForAllMachines(template)
 }
 
-// Redhat123Template returns cloudstack filler for 1.23 RedHat.
-func (c *CloudStack) Redhat123Template() api.CloudStackFiller {
-	return c.templateForKubeVersionAndOS(anywherev1.Kube123, RedHat8, nil)
-}
-
-// Redhat124Template returns cloudstack filler for 1.24 RedHat.
-func (c *CloudStack) Redhat124Template() api.CloudStackFiller {
-	return c.templateForKubeVersionAndOS(anywherev1.Kube124, RedHat8, nil)
-}
-
 // Redhat125Template returns cloudstack filler for 1.25 RedHat.
 func (c *CloudStack) Redhat125Template() api.CloudStackFiller {
 	return c.templateForKubeVersionAndOS(anywherev1.Kube125, RedHat8, nil)
@@ -375,18 +355,6 @@ func (c *CloudStack) WithKubeVersionAndOS(kubeVersion anywherev1.KubernetesVersi
 	)
 }
 
-// WithRedhat123 returns a cluster config filler that sets the kubernetes version of the cluster to 1.23
-// as well as the right redhat template for all CloudStackMachineConfigs.
-func (c *CloudStack) WithRedhat123() api.ClusterConfigFiller {
-	return c.WithKubeVersionAndOS(anywherev1.Kube123, RedHat8, nil)
-}
-
-// WithRedhat124 returns a cluster config filler that sets the kubernetes version of the cluster to 1.24
-// as well as the right redhat template for all CloudStackMachineConfigs.
-func (c *CloudStack) WithRedhat124() api.ClusterConfigFiller {
-	return c.WithKubeVersionAndOS(anywherev1.Kube124, RedHat8, nil)
-}
-
 // WithRedhat125 returns a cluster config filler that sets the kubernetes version of the cluster to 1.25
 // as well as the right redhat template for all CloudStackMachineConfigs.
 func (c *CloudStack) WithRedhat125() api.ClusterConfigFiller {
@@ -415,10 +383,6 @@ func (c *CloudStack) WithRedhat128() api.ClusterConfigFiller {
 // version provider, as well as the right redhat template for all CloudStackMachineConfigs.
 func (c *CloudStack) WithRedhatVersion(version anywherev1.KubernetesVersion) api.ClusterConfigFiller {
 	switch version {
-	case anywherev1.Kube123:
-		return c.WithRedhat123()
-	case anywherev1.Kube124:
-		return c.WithRedhat124()
 	case anywherev1.Kube125:
 		return c.WithRedhat125()
 	case anywherev1.Kube126:

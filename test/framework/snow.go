@@ -211,24 +211,6 @@ func (s *Snow) WithProviderUpgrade(fillers ...api.SnowFiller) ClusterE2ETestOpt 
 	}
 }
 
-// WithBottlerocket123 returns a cluster config filler that sets the kubernetes version of the cluster to 1.23
-// as well as the right devices and osFamily for all SnowMachineConfigs. It also sets any
-// necessary machine config default required for BR, like the container volume size. If the env var is set, this will
-// also set the AMI ID. Otherwise, it will leave it empty and let CAPAS select one.
-func (s *Snow) WithBottlerocket123() api.ClusterConfigFiller {
-	s.t.Helper()
-	return s.withBottlerocketForKubeVersion(anywherev1.Kube123)
-}
-
-// WithBottlerocket124 returns a cluster config filler that sets the kubernetes version of the cluster to 1.24
-// as well as the right devices and osFamily for all SnowMachineConfigs. It also sets any
-// necessary machine config default required for BR, like the container volume size. If the env var is set, this will
-// also set the AMI ID. Otherwise, it will leave it empty and let CAPAS select one.
-func (s *Snow) WithBottlerocket124() api.ClusterConfigFiller {
-	s.t.Helper()
-	return s.withBottlerocketForKubeVersion(anywherev1.Kube124)
-}
-
 // WithBottlerocket125 returns a cluster config filler that sets the kubernetes version of the cluster to 1.25
 // as well as the right devices and osFamily for all SnowMachineConfigs. It also sets any
 // necessary machine config default required for BR, like the container volume size. If the env var is set, this will
@@ -265,22 +247,6 @@ func (s *Snow) WithBottlerocket128() api.ClusterConfigFiller {
 	return s.withBottlerocketForKubeVersion(anywherev1.Kube128)
 }
 
-// WithBottlerocketStaticIP123 returns a cluster config filler that sets the kubernetes version of the cluster to 1.23
-// as well as the right devices, osFamily and static ip config for all SnowMachineConfigs. Comparing to WithBottlerocket123,
-// this method also adds a snow ip pool to support static ip configuration.
-func (s *Snow) WithBottlerocketStaticIP123() api.ClusterConfigFiller {
-	s.t.Helper()
-	return s.withBottlerocketStaticIPForKubeVersion(anywherev1.Kube123)
-}
-
-// WithBottlerocketStaticIP124 returns a cluster config filler that sets the kubernetes version of the cluster to 1.24
-// as well as the right devices, osFamily and static ip config for all SnowMachineConfigs. Comparing to WithBottlerocket124,
-// this method also adds a snow ip pool to support static ip configuration.
-func (s *Snow) WithBottlerocketStaticIP124() api.ClusterConfigFiller {
-	s.t.Helper()
-	return s.withBottlerocketStaticIPForKubeVersion(anywherev1.Kube124)
-}
-
 // WithBottlerocketStaticIP125 returns a cluster config filler that sets the kubernetes version of the cluster to 1.25
 // as well as the right devices, osFamily and static ip config for all SnowMachineConfigs. Comparing to WithBottlerocket125,
 // this method also adds a snow ip pool to support static ip configuration.
@@ -311,22 +277,6 @@ func (s *Snow) WithBottlerocketStaticIP127() api.ClusterConfigFiller {
 func (s *Snow) WithBottlerocketStaticIP128() api.ClusterConfigFiller {
 	s.t.Helper()
 	return s.withBottlerocketStaticIPForKubeVersion(anywherev1.Kube128)
-}
-
-// WithUbuntu123 returns a cluster config filler that sets the kubernetes version of the cluster to 1.23
-// as well as the right devices and osFamily for all SnowMachineConfigs. If the env var is set, this will
-// also set the AMI ID. Otherwise, it will leave it empty and let CAPAS select one.
-func (s *Snow) WithUbuntu123() api.ClusterConfigFiller {
-	s.t.Helper()
-	return s.WithKubeVersionAndOS(anywherev1.Kube123, Ubuntu2004, nil)
-}
-
-// WithUbuntu124 returns a cluster config filler that sets the kubernetes version of the cluster to 1.24
-// as well as the right devices and osFamily for all SnowMachineConfigs. If the env var is set, this will
-// also set the AMI ID. Otherwise, it will leave it empty and let CAPAS select one.
-func (s *Snow) WithUbuntu124() api.ClusterConfigFiller {
-	s.t.Helper()
-	return s.WithKubeVersionAndOS(anywherev1.Kube124, Ubuntu2004, nil)
 }
 
 // WithUbuntu125 returns a cluster config filler that sets the kubernetes version of the cluster to 1.25
