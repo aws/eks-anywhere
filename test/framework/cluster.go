@@ -2129,7 +2129,6 @@ func (e *ClusterE2ETest) MatchLogs(targetNamespace, targetPodName string,
 			return fmt.Errorf("failure getting pod logs %s", err)
 		}
 		fmt.Printf("Logs from pod\n %s\n", logs)
-
 		ok := strings.Contains(logs, expectedLogs)
 		if !ok {
 			return fmt.Errorf("expected to find %s in the log, got %s", expectedLogs, logs)
