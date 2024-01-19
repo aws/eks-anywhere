@@ -257,6 +257,11 @@ spec:
     - systemctl restart containerd
 {{- end }}
   replicas: {{.control_plane_replicas}}
+{{- if .upgradeRolloutStrategy }}
+  rolloutStrategy:
+    rollingUpdate:
+      maxSurge: {{.maxSurge}} 
+{{- end }}
   version: {{.kubernetesVersion}}
 {{- if .externalEtcd }}
 ---
