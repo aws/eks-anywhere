@@ -31,18 +31,6 @@ func TestTinkerbellKubernetes128AWSIamAuth(t *testing.T) {
 	runTinkerbellAWSIamAuthFlow(test)
 }
 
-func TestTinkerbellKubernetes128BottleRocketAWSIamAuth(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell()),
-		framework.WithAWSIam(),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube128)),
-		framework.WithControlPlaneHardware(1),
-		framework.WithWorkerHardware(1),
-	)
-	runTinkerbellAWSIamAuthFlow(test)
-}
-
 // Upgrade
 func TestTinkerbellKubernetes125UbuntuTo126Upgrade(t *testing.T) {
 	provider := framework.NewTinkerbell(t, framework.WithUbuntu125Tinkerbell())
@@ -346,18 +334,6 @@ func TestTinkerbellKubernetes127UbuntuSingleNodeCuratedPackagesFlow(t *testing.T
 	runCuratedPackageInstallTinkerbellSingleNodeFlow(test)
 }
 
-func TestTinkerbellKubernetes127BottleRocketSingleNodeCuratedPackagesFlow(t *testing.T) {
-	test := framework.NewClusterE2ETest(t,
-		framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell()),
-		framework.WithClusterSingleNode(v1alpha1.Kube127),
-		framework.WithControlPlaneHardware(1),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube127),
-			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
-	)
-	runCuratedPackageInstallTinkerbellSingleNodeFlow(test)
-}
-
 func TestTinkerbellKubernetes127UbuntuSingleNodeCuratedPackagesEmissaryFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(t,
 		framework.NewTinkerbell(t, framework.WithUbuntu127Tinkerbell()),
@@ -370,33 +346,9 @@ func TestTinkerbellKubernetes127UbuntuSingleNodeCuratedPackagesEmissaryFlow(t *t
 	runCuratedPackageEmissaryInstallTinkerbellSingleNodeFlow(test)
 }
 
-func TestTinkerbellKubernetes127BottleRocketSingleNodeCuratedPackagesEmissaryFlow(t *testing.T) {
-	test := framework.NewClusterE2ETest(t,
-		framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell()),
-		framework.WithClusterSingleNode(v1alpha1.Kube127),
-		framework.WithControlPlaneHardware(1),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube127),
-			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
-	)
-	runCuratedPackageEmissaryInstallTinkerbellSingleNodeFlow(test)
-}
-
 func TestTinkerbellKubernetes127UbuntuSingleNodeCuratedPackagesHarborFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(t,
 		framework.NewTinkerbell(t, framework.WithUbuntu127Tinkerbell()),
-		framework.WithClusterSingleNode(v1alpha1.Kube127),
-		framework.WithControlPlaneHardware(1),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube127),
-			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
-	)
-	runCuratedPackageHarborInstallTinkerbellSimpleFlow(test)
-}
-
-func TestTinkerbellKubernetes127BottleRocketSingleNodeCuratedPackagesHarborFlow(t *testing.T) {
-	test := framework.NewClusterE2ETest(t,
-		framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell()),
 		framework.WithClusterSingleNode(v1alpha1.Kube127),
 		framework.WithControlPlaneHardware(1),
 		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube127),
@@ -419,36 +371,10 @@ func TestTinkerbellKubernetes127UbuntuCuratedPackagesAdotSimpleFlow(t *testing.T
 	runCuratedPackagesAdotInstallTinkerbellSimpleFlow(test)
 }
 
-func TestTinkerbellKubernetes127BottleRocketCuratedPackagesAdotSimpleFlow(t *testing.T) {
-	framework.CheckCuratedPackagesCredentials(t)
-	test := framework.NewClusterE2ETest(t,
-		framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell()),
-		framework.WithClusterSingleNode(v1alpha1.Kube127),
-		framework.WithControlPlaneHardware(1),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube127),
-			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
-	)
-	runCuratedPackagesAdotInstallTinkerbellSimpleFlow(test)
-}
-
 func TestTinkerbellKubernetes127UbuntuCuratedPackagesPrometheusSimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewTinkerbell(t, framework.WithUbuntu127Tinkerbell()),
-		framework.WithClusterSingleNode(v1alpha1.Kube127),
-		framework.WithControlPlaneHardware(1),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube127),
-			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
-	)
-	runCuratedPackagesPrometheusInstallTinkerbellSimpleFlow(test)
-}
-
-func TestTinkerbellKubernetes127BottleRocketCuratedPackagesPrometheusSimpleFlow(t *testing.T) {
-	framework.CheckCuratedPackagesCredentials(t)
-	test := framework.NewClusterE2ETest(t,
-		framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell()),
 		framework.WithClusterSingleNode(v1alpha1.Kube127),
 		framework.WithControlPlaneHardware(1),
 		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube127),
@@ -486,18 +412,6 @@ func TestTinkerbellKubernetes126UbuntuSingleNodeCuratedPackagesFlow(t *testing.T
 	runCuratedPackageInstallTinkerbellSingleNodeFlow(test)
 }
 
-func TestTinkerbellKubernetes126BottleRocketSingleNodeCuratedPackagesFlow(t *testing.T) {
-	test := framework.NewClusterE2ETest(t,
-		framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell()),
-		framework.WithClusterSingleNode(v1alpha1.Kube126),
-		framework.WithControlPlaneHardware(1),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube126),
-			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
-	)
-	runCuratedPackageInstallTinkerbellSingleNodeFlow(test)
-}
-
 func TestTinkerbellKubernetes126UbuntuSingleNodeCuratedPackagesEmissaryFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(t,
 		framework.NewTinkerbell(t, framework.WithUbuntu126Tinkerbell()),
@@ -510,33 +424,9 @@ func TestTinkerbellKubernetes126UbuntuSingleNodeCuratedPackagesEmissaryFlow(t *t
 	runCuratedPackageEmissaryInstallTinkerbellSingleNodeFlow(test)
 }
 
-func TestTinkerbellKubernetes126BottleRocketSingleNodeCuratedPackagesEmissaryFlow(t *testing.T) {
-	test := framework.NewClusterE2ETest(t,
-		framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell()),
-		framework.WithClusterSingleNode(v1alpha1.Kube126),
-		framework.WithControlPlaneHardware(1),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube126),
-			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
-	)
-	runCuratedPackageEmissaryInstallTinkerbellSingleNodeFlow(test)
-}
-
 func TestTinkerbellKubernetes126UbuntuSingleNodeCuratedPackagesHarborFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(t,
 		framework.NewTinkerbell(t, framework.WithUbuntu126Tinkerbell()),
-		framework.WithClusterSingleNode(v1alpha1.Kube126),
-		framework.WithControlPlaneHardware(1),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube126),
-			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
-	)
-	runCuratedPackageHarborInstallTinkerbellSimpleFlow(test)
-}
-
-func TestTinkerbellKubernetes126BottleRocketSingleNodeCuratedPackagesHarborFlow(t *testing.T) {
-	test := framework.NewClusterE2ETest(t,
-		framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell()),
 		framework.WithClusterSingleNode(v1alpha1.Kube126),
 		framework.WithControlPlaneHardware(1),
 		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube126),
@@ -559,36 +449,10 @@ func TestTinkerbellKubernetes126UbuntuCuratedPackagesAdotSimpleFlow(t *testing.T
 	runCuratedPackagesAdotInstallTinkerbellSimpleFlow(test)
 }
 
-func TestTinkerbellKubernetes126BottleRocketCuratedPackagesAdotSimpleFlow(t *testing.T) {
-	framework.CheckCuratedPackagesCredentials(t)
-	test := framework.NewClusterE2ETest(t,
-		framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell()),
-		framework.WithClusterSingleNode(v1alpha1.Kube126),
-		framework.WithControlPlaneHardware(1),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube126),
-			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
-	)
-	runCuratedPackagesAdotInstallTinkerbellSimpleFlow(test)
-}
-
 func TestTinkerbellKubernetes126UbuntuCuratedPackagesPrometheusSimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewTinkerbell(t, framework.WithUbuntu126Tinkerbell()),
-		framework.WithClusterSingleNode(v1alpha1.Kube126),
-		framework.WithControlPlaneHardware(1),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube126),
-			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
-	)
-	runCuratedPackagesPrometheusInstallTinkerbellSimpleFlow(test)
-}
-
-func TestTinkerbellKubernetes126BottleRocketCuratedPackagesPrometheusSimpleFlow(t *testing.T) {
-	framework.CheckCuratedPackagesCredentials(t)
-	test := framework.NewClusterE2ETest(t,
-		framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell()),
 		framework.WithClusterSingleNode(v1alpha1.Kube126),
 		framework.WithControlPlaneHardware(1),
 		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube126),
@@ -610,18 +474,6 @@ func TestTinkerbellKubernetes125UbuntuSingleNodeCuratedPackagesFlow(t *testing.T
 	runCuratedPackageInstallTinkerbellSingleNodeFlow(test)
 }
 
-func TestTinkerbellKubernetes125BottleRocketSingleNodeCuratedPackagesFlow(t *testing.T) {
-	test := framework.NewClusterE2ETest(t,
-		framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell()),
-		framework.WithClusterSingleNode(v1alpha1.Kube125),
-		framework.WithControlPlaneHardware(1),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube125),
-			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
-	)
-	runCuratedPackageInstallTinkerbellSingleNodeFlow(test)
-}
-
 func TestTinkerbellKubernetes125UbuntuSingleNodeCuratedPackagesEmissaryFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(t,
 		framework.NewTinkerbell(t, framework.WithUbuntu125Tinkerbell()),
@@ -634,33 +486,9 @@ func TestTinkerbellKubernetes125UbuntuSingleNodeCuratedPackagesEmissaryFlow(t *t
 	runCuratedPackageEmissaryInstallTinkerbellSingleNodeFlow(test)
 }
 
-func TestTinkerbellKubernetes125BottleRocketSingleNodeCuratedPackagesEmissaryFlow(t *testing.T) {
-	test := framework.NewClusterE2ETest(t,
-		framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell()),
-		framework.WithClusterSingleNode(v1alpha1.Kube125),
-		framework.WithControlPlaneHardware(1),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube125),
-			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
-	)
-	runCuratedPackageEmissaryInstallTinkerbellSingleNodeFlow(test)
-}
-
 func TestTinkerbellKubernetes125UbuntuSingleNodeCuratedPackagesHarborFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(t,
 		framework.NewTinkerbell(t, framework.WithUbuntu125Tinkerbell()),
-		framework.WithClusterSingleNode(v1alpha1.Kube125),
-		framework.WithControlPlaneHardware(1),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube125),
-			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
-	)
-	runCuratedPackageHarborInstallTinkerbellSimpleFlow(test)
-}
-
-func TestTinkerbellKubernetes125BottleRocketSingleNodeCuratedPackagesHarborFlow(t *testing.T) {
-	test := framework.NewClusterE2ETest(t,
-		framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell()),
 		framework.WithClusterSingleNode(v1alpha1.Kube125),
 		framework.WithControlPlaneHardware(1),
 		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube125),
@@ -683,36 +511,10 @@ func TestTinkerbellKubernetes125UbuntuCuratedPackagesAdotSimpleFlow(t *testing.T
 	runCuratedPackagesAdotInstallTinkerbellSimpleFlow(test)
 }
 
-func TestTinkerbellKubernetes125BottleRocketCuratedPackagesAdotSimpleFlow(t *testing.T) {
-	framework.CheckCuratedPackagesCredentials(t)
-	test := framework.NewClusterE2ETest(t,
-		framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell()),
-		framework.WithClusterSingleNode(v1alpha1.Kube125),
-		framework.WithControlPlaneHardware(1),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube125),
-			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
-	)
-	runCuratedPackagesAdotInstallTinkerbellSimpleFlow(test)
-}
-
 func TestTinkerbellKubernetes125UbuntuCuratedPackagesPrometheusSimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewTinkerbell(t, framework.WithUbuntu125Tinkerbell()),
-		framework.WithClusterSingleNode(v1alpha1.Kube125),
-		framework.WithControlPlaneHardware(1),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube125),
-			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
-	)
-	runCuratedPackagesPrometheusInstallTinkerbellSimpleFlow(test)
-}
-
-func TestTinkerbellKubernetes125BottleRocketCuratedPackagesPrometheusSimpleFlow(t *testing.T) {
-	framework.CheckCuratedPackagesCredentials(t)
-	test := framework.NewClusterE2ETest(t,
-		framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell()),
 		framework.WithClusterSingleNode(v1alpha1.Kube125),
 		framework.WithControlPlaneHardware(1),
 		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube125),
@@ -734,18 +536,6 @@ func TestTinkerbellKubernetes128UbuntuSingleNodeCuratedPackagesFlow(t *testing.T
 	runCuratedPackageInstallTinkerbellSingleNodeFlow(test)
 }
 
-func TestTinkerbellKubernetes128BottleRocketSingleNodeCuratedPackagesFlow(t *testing.T) {
-	test := framework.NewClusterE2ETest(t,
-		framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell()),
-		framework.WithClusterSingleNode(v1alpha1.Kube128),
-		framework.WithControlPlaneHardware(1),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube128),
-			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
-	)
-	runCuratedPackageInstallTinkerbellSingleNodeFlow(test)
-}
-
 func TestTinkerbellKubernetes128UbuntuSingleNodeCuratedPackagesEmissaryFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(t,
 		framework.NewTinkerbell(t, framework.WithUbuntu128Tinkerbell()),
@@ -758,33 +548,9 @@ func TestTinkerbellKubernetes128UbuntuSingleNodeCuratedPackagesEmissaryFlow(t *t
 	runCuratedPackageEmissaryInstallTinkerbellSingleNodeFlow(test)
 }
 
-func TestTinkerbellKubernetes128BottleRocketSingleNodeCuratedPackagesEmissaryFlow(t *testing.T) {
-	test := framework.NewClusterE2ETest(t,
-		framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell()),
-		framework.WithClusterSingleNode(v1alpha1.Kube128),
-		framework.WithControlPlaneHardware(1),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube128),
-			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
-	)
-	runCuratedPackageEmissaryInstallTinkerbellSingleNodeFlow(test)
-}
-
 func TestTinkerbellKubernetes128UbuntuSingleNodeCuratedPackagesHarborFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(t,
 		framework.NewTinkerbell(t, framework.WithUbuntu128Tinkerbell()),
-		framework.WithClusterSingleNode(v1alpha1.Kube128),
-		framework.WithControlPlaneHardware(1),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube128),
-			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
-	)
-	runCuratedPackageHarborInstallTinkerbellSimpleFlow(test)
-}
-
-func TestTinkerbellKubernetes128BottleRocketSingleNodeCuratedPackagesHarborFlow(t *testing.T) {
-	test := framework.NewClusterE2ETest(t,
-		framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell()),
 		framework.WithClusterSingleNode(v1alpha1.Kube128),
 		framework.WithControlPlaneHardware(1),
 		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube128),
@@ -807,36 +573,10 @@ func TestTinkerbellKubernetes128UbuntuCuratedPackagesAdotSimpleFlow(t *testing.T
 	runCuratedPackagesAdotInstallTinkerbellSimpleFlow(test)
 }
 
-func TestTinkerbellKubernetes128BottleRocketCuratedPackagesAdotSimpleFlow(t *testing.T) {
-	framework.CheckCuratedPackagesCredentials(t)
-	test := framework.NewClusterE2ETest(t,
-		framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell()),
-		framework.WithClusterSingleNode(v1alpha1.Kube128),
-		framework.WithControlPlaneHardware(1),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube128),
-			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
-	)
-	runCuratedPackagesAdotInstallTinkerbellSimpleFlow(test)
-}
-
 func TestTinkerbellKubernetes128UbuntuCuratedPackagesPrometheusSimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewTinkerbell(t, framework.WithUbuntu128Tinkerbell()),
-		framework.WithClusterSingleNode(v1alpha1.Kube128),
-		framework.WithControlPlaneHardware(1),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube128),
-			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
-	)
-	runCuratedPackagesPrometheusInstallTinkerbellSimpleFlow(test)
-}
-
-func TestTinkerbellKubernetes128BottleRocketCuratedPackagesPrometheusSimpleFlow(t *testing.T) {
-	framework.CheckCuratedPackagesCredentials(t)
-	test := framework.NewClusterE2ETest(t,
-		framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell()),
 		framework.WithClusterSingleNode(v1alpha1.Kube128),
 		framework.WithControlPlaneHardware(1),
 		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube128),
@@ -860,23 +600,6 @@ func TestTinkerbellKubernetes128UbuntuCuratedPackagesClusterAutoscalerSimpleFlow
 			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runAutoscalerWithMetricsServerTinkerbellSimpleFlow(test)
-}
-
-// Single node
-func TestTinkerbellKubernetes128BottleRocketSingleNodeSimpleFlow(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell()),
-		framework.WithClusterFiller(
-			api.WithKubernetesVersion(v1alpha1.Kube128),
-			api.WithControlPlaneCount(1),
-			api.WithEtcdCountIfExternal(0),
-			api.RemoveAllWorkerNodeGroups(),
-		),
-		framework.WithControlPlaneHardware(1),
-	)
-
-	runTinkerbellSingleNodeFlow(test)
 }
 
 func TestTinkerbellKubernetes128UbuntuSingleNodeSimpleFlow(t *testing.T) {
@@ -1095,156 +818,6 @@ func TestTinkerbellKubernetes128UbuntuSingleNodeWorkloadClusterWithAPI(t *testin
 	runWorkloadClusterWithAPIFlowForBareMetal(test)
 }
 
-func TestTinkerbellKubernetes128BottlerocketSingleNodeWorkloadCluster(t *testing.T) {
-	provider := framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell())
-	test := framework.NewMulticlusterE2ETest(
-		t,
-		framework.NewClusterE2ETest(
-			t,
-			provider,
-			framework.WithClusterFiller(
-				api.WithKubernetesVersion(v1alpha1.Kube128),
-				api.WithEtcdCountIfExternal(0),
-				api.RemoveAllWorkerNodeGroups(),
-			),
-			framework.WithControlPlaneHardware(2),
-			framework.WithWorkerHardware(0),
-		),
-		framework.NewClusterE2ETest(
-			t,
-			provider,
-			framework.WithClusterFiller(
-				api.WithKubernetesVersion(v1alpha1.Kube128),
-				api.WithEtcdCountIfExternal(0),
-				api.RemoveAllWorkerNodeGroups(),
-			),
-		),
-	)
-	runTinkerbellWorkloadClusterFlow(test)
-}
-
-func TestTinkerbellKubernetes128BottlerocketSingleNodeWorkloadClusterWithAPI(t *testing.T) {
-	provider := framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell())
-	managementCluster := framework.NewClusterE2ETest(
-		t,
-		provider,
-		framework.WithControlPlaneHardware(2),
-		framework.WithWorkerHardware(0),
-	).WithClusterConfig(
-		api.ClusterToConfigFiller(
-			api.WithKubernetesVersion(v1alpha1.Kube128),
-			api.WithEtcdCountIfExternal(0),
-			api.RemoveAllWorkerNodeGroups(),
-		),
-	)
-	test := framework.NewMulticlusterE2ETest(
-		t,
-		managementCluster,
-	)
-	test.WithWorkloadClusters(
-		framework.NewClusterE2ETest(
-			t,
-			provider,
-			framework.WithClusterName(test.NewWorkloadClusterName()),
-		).WithClusterConfig(
-			api.ClusterToConfigFiller(
-				api.WithKubernetesVersion(v1alpha1.Kube128),
-				api.WithManagementCluster(managementCluster.ClusterName),
-				api.WithEtcdCountIfExternal(0),
-				api.RemoveAllWorkerNodeGroups(),
-			),
-		),
-	)
-	runWorkloadClusterWithAPIFlowForBareMetal(test)
-}
-
-func TestTinkerbellKubernetes128BottlerocketWorkloadClusterSkipPowerActions(t *testing.T) {
-	provider := framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell())
-	test := framework.NewMulticlusterE2ETest(
-		t,
-		framework.NewClusterE2ETest(
-			t,
-			provider,
-			framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube128)),
-			framework.WithNoPowerActions(),
-			framework.WithControlPlaneHardware(2),
-			framework.WithWorkerHardware(2),
-		),
-		framework.NewClusterE2ETest(
-			t,
-			provider,
-			framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube128)),
-			framework.WithNoPowerActions(),
-		),
-	)
-	runTinkerbellWorkloadClusterFlowSkipPowerActions(test)
-}
-
-func TestTinkerbellUpgrade128MulticlusterWorkloadClusterWorkerScaleup(t *testing.T) {
-	provider := framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell())
-	test := framework.NewMulticlusterE2ETest(
-		t,
-		framework.NewClusterE2ETest(
-			t,
-			provider,
-			framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube128)),
-			framework.WithControlPlaneHardware(2),
-			framework.WithWorkerHardware(3),
-		),
-		framework.NewClusterE2ETest(
-			t,
-			provider,
-			framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube128)),
-		),
-	)
-	runSimpleWorkloadUpgradeFlowForBareMetal(
-		test,
-		v1alpha1.Kube128,
-		framework.WithClusterUpgrade(
-			api.WithKubernetesVersion(v1alpha1.Kube128),
-			api.WithWorkerNodeCount(2),
-		),
-	)
-}
-
-func TestTinkerbellSingleNode125ManagementScaleupWorkloadWithAPI(t *testing.T) {
-	provider := framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell())
-	managementCluster := framework.NewClusterE2ETest(
-		t,
-		provider,
-		framework.WithControlPlaneHardware(2),
-		framework.WithWorkerHardware(2),
-	).WithClusterConfig(
-		api.ClusterToConfigFiller(
-			api.WithKubernetesVersion(v1alpha1.Kube125),
-			api.WithEtcdCountIfExternal(0),
-			api.RemoveAllWorkerNodeGroups(),
-		),
-	)
-	test := framework.NewMulticlusterE2ETest(
-		t,
-		managementCluster,
-	)
-	test.WithWorkloadClusters(
-		framework.NewClusterE2ETest(
-			t,
-			provider,
-			framework.WithClusterName(test.NewWorkloadClusterName()),
-		).WithClusterConfig(
-			api.ClusterToConfigFiller(
-				api.WithKubernetesVersion(v1alpha1.Kube125),
-				api.WithManagementCluster(managementCluster.ClusterName),
-				api.WithEtcdCountIfExternal(0),
-			),
-		),
-	)
-	runWorkloadClusterUpgradeFlowWithAPIForBareMetal(test,
-		api.ClusterToConfigFiller(
-			api.WithWorkerNodeCount(2),
-		),
-	)
-}
-
 func TestTinkerbellUpgrade128MulticlusterWorkloadClusterWorkerScaleupGitFluxWithAPI(t *testing.T) {
 	provider := framework.NewTinkerbell(t, framework.WithUbuntu128Tinkerbell())
 	managementCluster := framework.NewClusterE2ETest(
@@ -1311,34 +884,6 @@ func TestTinkerbellUpgrade128MulticlusterWorkloadClusterCPScaleup(t *testing.T) 
 	)
 }
 
-func TestTinkerbellUpgrade128MulticlusterWorkloadClusterWorkerScaleDown(t *testing.T) {
-	provider := framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell())
-	test := framework.NewMulticlusterE2ETest(
-		t,
-		framework.NewClusterE2ETest(
-			t,
-			provider,
-			framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube128)),
-			framework.WithControlPlaneHardware(2),
-			framework.WithWorkerHardware(3),
-		),
-		framework.NewClusterE2ETest(
-			t,
-			provider,
-			framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube128)),
-			framework.WithClusterFiller(api.WithWorkerNodeCount(2)),
-		),
-	)
-	runSimpleWorkloadUpgradeFlowForBareMetal(
-		test,
-		v1alpha1.Kube128,
-		framework.WithClusterUpgrade(
-			api.WithKubernetesVersion(v1alpha1.Kube128),
-			api.WithWorkerNodeCount(1),
-		),
-	)
-}
-
 func TestTinkerbellUpgradeMulticlusterWorkloadClusterK8sUpgrade127To128(t *testing.T) {
 	provider := framework.NewTinkerbell(t, framework.WithUbuntu127Tinkerbell())
 	test := framework.NewMulticlusterE2ETest(
@@ -1361,43 +906,6 @@ func TestTinkerbellUpgradeMulticlusterWorkloadClusterK8sUpgrade127To128(t *testi
 		v1alpha1.Kube128,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube128)),
 		provider.WithProviderUpgrade(framework.Ubuntu128Image()),
-	)
-}
-
-func TestTinkerbellUpgradeMulticlusterWorkloadClusterK8sUpgrade125To126WithAPI(t *testing.T) {
-	provider := framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell())
-	managementCluster := framework.NewClusterE2ETest(
-		t,
-		provider,
-		framework.WithControlPlaneHardware(3),
-		framework.WithWorkerHardware(1),
-	).WithClusterConfig(
-		api.ClusterToConfigFiller(
-			api.WithKubernetesVersion(v1alpha1.Kube125),
-		),
-	)
-	test := framework.NewMulticlusterE2ETest(
-		t,
-		managementCluster,
-	)
-	test.WithWorkloadClusters(
-		framework.NewClusterE2ETest(
-			t,
-			provider,
-			framework.WithClusterName(test.NewWorkloadClusterName()),
-		).WithClusterConfig(
-			api.ClusterToConfigFiller(
-				api.WithKubernetesVersion(v1alpha1.Kube125),
-				api.WithManagementCluster(managementCluster.ClusterName),
-				api.WithEtcdCountIfExternal(0),
-				api.RemoveAllWorkerNodeGroups(),
-			),
-		),
-	)
-	runWorkloadClusterUpgradeFlowWithAPIForBareMetal(test,
-		api.ClusterToConfigFiller(
-			api.WithKubernetesVersion(v1alpha1.Kube126),
-		),
 	)
 }
 
@@ -1458,34 +966,10 @@ func TestTinkerbellKubernetes128UbuntuInsecureSkipVerifyRegistryMirror(t *testin
 	runTinkerbellRegistryMirrorFlow(test)
 }
 
-func TestTinkerbellKubernetes128BottlerocketRegistryMirror(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube128)),
-		framework.WithControlPlaneHardware(1),
-		framework.WithWorkerHardware(1),
-		framework.WithRegistryMirrorEndpointAndCert(constants.TinkerbellProviderName),
-	)
-	runTinkerbellRegistryMirrorFlow(test)
-}
-
 func TestTinkerbellKubernetes128UbuntuAuthenticatedRegistryMirror(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewTinkerbell(t, framework.WithUbuntu128Tinkerbell()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube128)),
-		framework.WithControlPlaneHardware(1),
-		framework.WithWorkerHardware(1),
-		framework.WithAuthenticatedRegistryMirror(constants.TinkerbellProviderName),
-	)
-	runTinkerbellRegistryMirrorFlow(test)
-}
-
-func TestTinkerbellKubernetes128BottlerocketAuthenticatedRegistryMirror(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube128)),
 		framework.WithControlPlaneHardware(1),
 		framework.WithWorkerHardware(1),
@@ -1635,39 +1119,6 @@ func TestTinkerbellKubernetes128RedHatSimpleFlow(t *testing.T) {
 	runTinkerbellSimpleFlow(test)
 }
 
-func TestTinkerbellKubernetes125BottleRocketSimpleFlow(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
-		framework.WithControlPlaneHardware(1),
-		framework.WithWorkerHardware(1),
-	)
-	runTinkerbellSimpleFlow(test)
-}
-
-func TestTinkerbellKubernetes126BottleRocketSimpleFlow(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube126)),
-		framework.WithControlPlaneHardware(1),
-		framework.WithWorkerHardware(1),
-	)
-	runTinkerbellSimpleFlow(test)
-}
-
-func TestTinkerbellKubernetes127BottleRocketSimpleFlow(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127)),
-		framework.WithControlPlaneHardware(1),
-		framework.WithWorkerHardware(1),
-	)
-	runTinkerbellSimpleFlow(test)
-}
-
 func TestTinkerbellKubernetes128BottleRocketSimpleFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
@@ -1692,36 +1143,10 @@ func TestTinkerbellKubernetes128UbuntuThreeControlPlaneReplicasSimpleFlow(t *tes
 	runTinkerbellSimpleFlow(test)
 }
 
-func TestTinkerbellKubernetes128BottleRocketThreeControlPlaneReplicasSimpleFlow(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube128)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithClusterFiller(api.WithControlPlaneCount(3)),
-		framework.WithControlPlaneHardware(3),
-		framework.WithWorkerHardware(1),
-	)
-	runTinkerbellSimpleFlow(test)
-}
-
 func TestTinkerbellKubernetes128UbuntuThreeWorkersSimpleFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewTinkerbell(t, framework.WithUbuntu128Tinkerbell()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube128)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(3)),
-		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
-		framework.WithControlPlaneHardware(1),
-		framework.WithWorkerHardware(3),
-	)
-	runTinkerbellSimpleFlow(test)
-}
-
-func TestTinkerbellKubernetes128BottleRocketThreeWorkersSimpleFlow(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube128)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(3)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
@@ -1878,94 +1303,7 @@ func TestTinkerbellKubernetes128UbuntuWorkerNodeGroupsTaintsAndLabels(t *testing
 	test.ValidateHardwareDecommissioned()
 }
 
-func TestTinkerbellKubernetes128BottlerocketWorkerNodeGroupsTaintsAndLabels(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewTinkerbell(
-			t,
-			framework.WithBottleRocketTinkerbell(),
-			framework.WithCustomTinkerbellMachineConfig(nodeGroupLabel1),
-			framework.WithCustomTinkerbellMachineConfig(nodeGroupLabel2),
-		),
-		framework.WithClusterFiller(
-			api.WithKubernetesVersion(v1alpha1.Kube128),
-			api.WithControlPlaneLabel(cpKey1, cpVal1),
-			api.WithControlPlaneTaints([]corev1.Taint{framework.NoScheduleTaint()}),
-			api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
-			api.WithWorkerNodeGroup(worker0, api.WithMachineGroupRef(nodeGroupLabel1, "TinkerbellMachineConfig"), api.WithTaint(framework.PreferNoScheduleTaint()), api.WithLabel(key1, val1), api.WithCount(1)),
-			api.WithWorkerNodeGroup(worker1, api.WithMachineGroupRef(nodeGroupLabel2, "TinkerbellMachineConfig"), api.WithLabel(key2, val2), api.WithCount(1)),
-		),
-		framework.WithControlPlaneHardware(1),
-		framework.WithCustomLabelHardware(1, nodeGroupLabel1),
-		framework.WithCustomLabelHardware(1, nodeGroupLabel2),
-	)
-
-	test.GenerateClusterConfig()
-	test.GenerateHardwareConfig()
-	test.PowerOffHardware()
-	test.CreateCluster(framework.WithControlPlaneWaitTimeout("20m"))
-	test.ValidateWorkerNodes(framework.ValidateWorkerNodeTaints, framework.ValidateWorkerNodeLabels)
-	test.ValidateControlPlaneNodes(framework.ValidateControlPlaneTaints, framework.ValidateControlPlaneLabels)
-	test.DeleteCluster()
-	test.ValidateHardwareDecommissioned()
-}
-
-// Airgapped tests
-func TestTinkerbellAirgappedKubernetes128BottleRocketRegistryMirror(t *testing.T) {
-	localIp, err := networkutils.GetLocalIP()
-	if err != nil {
-		t.Fatalf("Cannot get admin machine local IP: %v", err)
-	}
-	t.Logf("Admin machine's IP is: %s", localIp)
-
-	// Append kube version in the image name to satisfy condition to have kube version in the template name.
-	kubeVersion := strings.Replace(string(v1alpha1.Kube128), ".", "-", 1)
-
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewTinkerbell(t,
-			framework.WithBottleRocketTinkerbell(),
-			framework.WithHookImagesURLPath("http://"+localIp.String()+":8080"),
-			framework.WithOSImageURL("http://"+localIp.String()+":8080/"+bottlerocketOSFileName+"-"+kubeVersion+".img.gz"),
-		),
-		framework.WithClusterFiller(
-			api.WithKubernetesVersion(v1alpha1.Kube128),
-		),
-		framework.WithControlPlaneHardware(1),
-		framework.WithWorkerHardware(1),
-		framework.WithRegistryMirrorEndpointAndCert(constants.TinkerbellProviderName),
-	)
-
-	runTinkerbellAirgapConfigFlow(test, "10.80.0.0/16", kubeVersion)
-}
-
 // Proxy tests
-
-func TestTinkerbellAirgappedKubernetes128BottlerocketProxyConfigFlow(t *testing.T) {
-	localIp, err := networkutils.GetLocalIP()
-	if err != nil {
-		t.Fatalf("Cannot get admin machine local IP: %v", err)
-	}
-	t.Logf("Admin machine's IP is: %s", localIp)
-
-	kubeVersion := strings.Replace(string(v1alpha1.Kube128), ".", "-", 1)
-
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewTinkerbell(t,
-			framework.WithBottleRocketTinkerbell(),
-			framework.WithHookImagesURLPath("http://"+localIp.String()+":8080"),
-		),
-		framework.WithClusterFiller(
-			api.WithKubernetesVersion(v1alpha1.Kube128),
-		),
-		framework.WithControlPlaneHardware(1),
-		framework.WithWorkerHardware(1),
-		framework.WithProxy(framework.TinkerbellProxyRequiredEnvVars),
-	)
-
-	runTinkerbellAirgapConfigProxyFlow(test, "10.80.0.0/16", kubeVersion)
-}
 
 func TestTinkerbellAirgappedKubernetes128UbuntuProxyConfigFlow(t *testing.T) {
 	localIp, err := networkutils.GetLocalIP()
