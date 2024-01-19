@@ -18,6 +18,7 @@ import (
 
 // UpgradeManagementComponentsWorkflow is a schema for upgrade management components.
 type UpgradeManagementComponentsWorkflow struct {
+	clientFactory  interfaces.ClientFactory
 	provider       providers.Provider
 	clusterManager interfaces.ClusterManager
 	gitOpsManager  interfaces.GitOpsManager
@@ -29,6 +30,7 @@ type UpgradeManagementComponentsWorkflow struct {
 
 // NewUpgradeManagementComponentsRunner builds a new UpgradeManagementCommponents construct.
 func NewUpgradeManagementComponentsRunner(
+	clientFactory interfaces.ClientFactory,
 	provider providers.Provider,
 	capiManager interfaces.CAPIManager,
 	clusterManager interfaces.ClusterManager,
@@ -38,6 +40,7 @@ func NewUpgradeManagementComponentsRunner(
 	eksdInstaller interfaces.EksdInstaller,
 ) *UpgradeManagementComponentsWorkflow {
 	return &UpgradeManagementComponentsWorkflow{
+		clientFactory:  clientFactory,
 		provider:       provider,
 		clusterManager: clusterManager,
 		gitOpsManager:  gitOpsManager,
@@ -87,6 +90,7 @@ func (u *UMCValidator) PreflightValidations(ctx context.Context) []validations.V
 // Run Upgrade implements upgrade functionality for management cluster's upgrade operation.
 func (umc *UpgradeManagementComponentsWorkflow) Run(ctx context.Context, clusterSpec *cluster.Spec, managementCluster *types.Cluster, validator interfaces.Validator) error {
 	commandContext := &task.CommandContext{
+		ClientFactory:     umc.clientFactory,
 		Provider:          umc.provider,
 		ClusterManager:    umc.clusterManager,
 		ManagementCluster: managementCluster,

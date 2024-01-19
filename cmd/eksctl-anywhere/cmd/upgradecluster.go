@@ -203,6 +203,7 @@ func (uc *upgradeClusterOptions) upgradeCluster(cmd *cobra.Command, args []strin
 
 	if clusterConfig.IsSelfManaged() {
 		upgrade := management.NewUpgrade(
+			deps.UnAuthKubeClient,
 			deps.Provider,
 			deps.CAPIManager,
 			deps.ClusterManager,
