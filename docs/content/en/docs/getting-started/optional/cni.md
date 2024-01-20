@@ -15,7 +15,7 @@ description: >
 |:--------------:|:-------:|:----------:|:-------:|:----------:|:----:|
 | **Supported?** |   ✓	    |     ✓      |   	 ✓   |     ✓      |  ✓   |
 
-EKS Anywhere officially supports Cilium for production level providers as a CNI plugin. The plugin cannot be changed once the cluster is created.
+EKS Anywhere officially supports Cilium for each provider as a CNI plugin. The plugin cannot be changed via upgrades to the `cniConfig` field. However, EKS Anywhere Cilium can be replaced with a custom CNI after the cluster has been created. See [Use a custom CNI](#use-a-custom-cni) for more information. 
 Up until the 0.7.x releases, the plugin had to be specified using the `cni` field on cluster yaml spec.
 Starting with release 0.8.0, the plugin should be specified using the new `cniConfig` field as follows:
 
@@ -212,7 +212,7 @@ immediately install a CNI after uninstalling EKS Anywhere Cilium.
 {{% /alert %}}
 
 {{% alert title="Warning" color="warning" %}}
-Clusters created using the Full Lifecycle Controller prior to v0.15.0 that have removed the EKS Anywhere Cilium CNI must manually populate their `cluster.anywhere.eks.amazonaws.com` object with the following annotation to ensure EKS Anywhere does not attempt to re-install EKS Anywhere Cilium.
+Clusters created using using Kubernetes API-compatible tooling such as kubectl, Terraform, or GitOps prior to v0.15.0 that have removed the EKS Anywhere Cilium CNI must manually populate their `cluster.anywhere.eks.amazonaws.com` object with the following annotation to ensure EKS Anywhere does not attempt to re-install EKS Anywhere Cilium.
 
 ```
 anywhere.eks.amazonaws.com/eksa-cilium: ""
