@@ -8,6 +8,7 @@ import (
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/api/v1beta1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
@@ -279,6 +280,42 @@ func TestWorkersSpecRegistryMirrorConfiguration(t *testing.T) {
 			))
 		})
 	}
+}
+
+func TestWorkersSpecUpgradeRolloutStrategy(t *testing.T) {
+	g := NewWithT(t)
+	logger := test.NewNullLogger()
+	ctx := context.Background()
+	spec := test.NewFullClusterSpec(t, "testdata/cluster_main.yaml")
+	spec.Cluster.Spec.WorkerNodeGroupConfigurations = []anywherev1.WorkerNodeGroupConfiguration{
+		{
+			Count:           ptr.Int(3),
+			MachineGroupRef: &anywherev1.Ref{Name: "test-wn"},
+			Name:            "md-0",
+			UpgradeRolloutStrategy: &anywherev1.WorkerNodesUpgradeRolloutStrategy{
+				RollingUpdate: anywherev1.WorkerNodesRollingUpdateParams{
+					MaxSurge:       1,
+					MaxUnavailable: 0,
+				},
+			},
+		},
+	}
+	client := test.NewFakeKubeClient()
+
+	workers, err := vsphere.WorkersSpec(ctx, logger, client, spec)
+	g.Expect(err).NotTo(HaveOccurred())
+	g.Expect(workers).NotTo(BeNil())
+	g.Expect(workers.Groups).To(HaveLen(1))
+	g.Expect(workers.Groups[0].MachineDeployment).To(Equal(machineDeployment(func(m *clusterv1.MachineDeployment) {
+		maxSurge := intstr.FromInt(1)
+		maxUnavailable := intstr.FromInt(0)
+		m.Spec.Strategy = &clusterv1.MachineDeploymentStrategy{
+			RollingUpdate: &clusterv1.MachineRollingUpdateDeployment{
+				MaxSurge:       &maxSurge,
+				MaxUnavailable: &maxUnavailable,
+			},
+		}
+	})))
 }
 
 func machineDeployment(opts ...func(*clusterv1.MachineDeployment)) *clusterv1.MachineDeployment {

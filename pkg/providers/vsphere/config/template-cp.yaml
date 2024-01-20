@@ -476,6 +476,11 @@ spec:
       sudo: ALL=(ALL) NOPASSWD:ALL
     format: {{.format}}
   replicas: {{.controlPlaneReplicas}}
+{{- if .upgradeRolloutStrategy }}
+  rolloutStrategy:
+    rollingUpdate:
+      maxSurge: {{.maxSurge}} 
+{{- end }}
   version: {{.kubernetesVersion}}
 ---
 apiVersion: addons.cluster.x-k8s.io/v1beta1
