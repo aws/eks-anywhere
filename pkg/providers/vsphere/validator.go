@@ -12,7 +12,6 @@ import (
 	"gopkg.in/yaml.v2"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/govmomi"
 	"github.com/aws/eks-anywhere/pkg/logger"
@@ -598,18 +597,6 @@ func getRandomMachineConfig(configs map[string]*anywherev1.VSphereMachineConfig)
 		break
 	}
 	return machineConfig
-}
-
-func (v *Validator) validateUpgradeRolloutStrategy(clusterSpec *cluster.Spec) error {
-	if clusterSpec.Cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy != nil {
-		return fmt.Errorf("Upgrade rollout strategy customization is not supported for vSphere provider")
-	}
-	for _, workerNodeGroupConfiguration := range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
-		if workerNodeGroupConfiguration.UpgradeRolloutStrategy != nil {
-			return fmt.Errorf("Upgrade rollout strategy customization is not supported for vSphere provider")
-		}
-	}
-	return nil
 }
 
 func sliceIfNotNil(machines ...*anywherev1.VSphereMachineConfig) []*anywherev1.VSphereMachineConfig {
