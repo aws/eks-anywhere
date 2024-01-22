@@ -1,20 +1,20 @@
 
-** github.com/aws/aws-sdk-go-v2; version v1.22.1 --
+** github.com/aws/aws-sdk-go-v2; version v1.24.1 --
 https://github.com/aws/aws-sdk-go-v2
 
 ** github.com/aws/aws-sdk-go-v2/config; version v1.15.3 --
 https://github.com/aws/aws-sdk-go-v2/config
 
-** github.com/aws/aws-sdk-go-v2/credentials; version v1.11.2 --
+** github.com/aws/aws-sdk-go-v2/credentials; version v1.16.15 --
 https://github.com/aws/aws-sdk-go-v2/credentials
 
-** github.com/aws/aws-sdk-go-v2/feature/ec2/imds; version v1.12.3 --
+** github.com/aws/aws-sdk-go-v2/feature/ec2/imds; version v1.14.11 --
 https://github.com/aws/aws-sdk-go-v2/feature/ec2/imds
 
-** github.com/aws/aws-sdk-go-v2/internal/configsources; version v1.2.1 --
+** github.com/aws/aws-sdk-go-v2/internal/configsources; version v1.2.10 --
 https://github.com/aws/aws-sdk-go-v2/internal/configsources
 
-** github.com/aws/aws-sdk-go-v2/internal/endpoints/v2; version v2.5.1 --
+** github.com/aws/aws-sdk-go-v2/internal/endpoints/v2; version v2.5.10 --
 https://github.com/aws/aws-sdk-go-v2/internal/endpoints/v2
 
 ** github.com/aws/aws-sdk-go-v2/internal/ini; version v1.3.10 --
@@ -26,13 +26,19 @@ https://github.com/aws/aws-sdk-go-v2/service/ec2
 ** github.com/aws/aws-sdk-go-v2/service/ecr; version v1.22.0 --
 https://github.com/aws/aws-sdk-go-v2/service/ecr
 
-** github.com/aws/aws-sdk-go-v2/service/internal/presigned-url; version v1.9.37 --
+** github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding; version v1.10.4 --
+https://github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding
+
+** github.com/aws/aws-sdk-go-v2/service/internal/presigned-url; version v1.10.10 --
 https://github.com/aws/aws-sdk-go-v2/service/internal/presigned-url
 
-** github.com/aws/aws-sdk-go-v2/service/sso; version v1.11.3 --
+** github.com/aws/aws-sdk-go-v2/service/sso; version v1.18.6 --
 https://github.com/aws/aws-sdk-go-v2/service/sso
 
-** github.com/aws/aws-sdk-go-v2/service/sts; version v1.16.3 --
+** github.com/aws/aws-sdk-go-v2/service/ssooidc; version v1.21.7 --
+https://github.com/aws/aws-sdk-go-v2/service/ssooidc
+
+** github.com/aws/aws-sdk-go-v2/service/sts; version v1.26.7 --
 https://github.com/aws/aws-sdk-go-v2/service/sts
 
 ** github.com/aws/eks-distro-build-tooling/release/api/v1alpha1; version v0.0.0-20211103003257-a7e2379eae5e --
@@ -44,7 +50,7 @@ https://github.com/aws/etcdadm-bootstrap-provider
 ** github.com/aws/etcdadm-controller/api/v1beta1; version v1.0.6-rc3 --
 https://github.com/aws/etcdadm-controller
 
-** github.com/aws/smithy-go; version v1.16.0 --
+** github.com/aws/smithy-go; version v1.19.0 --
 https://github.com/aws/smithy-go
 
 ** github.com/containerd/containerd; version v1.7.11 --
@@ -215,25 +221,25 @@ https://gopkg.in/yaml.v2
 ** helm.sh/helm/v3; version v3.11.3 --
 https://github.com/helm/helm
 
-** k8s.io/api; version v0.26.10 --
+** k8s.io/api; version v0.26.12 --
 https://github.com/kubernetes/api
 
 ** k8s.io/apiextensions-apiserver/pkg/apis/apiextensions; version v0.26.1 --
 https://github.com/kubernetes/apiextensions-apiserver
 
-** k8s.io/apimachinery/pkg; version v0.26.10 --
+** k8s.io/apimachinery/pkg; version v0.26.12 --
 https://github.com/kubernetes/apimachinery
 
-** k8s.io/apiserver/pkg/apis; version v0.26.10 --
+** k8s.io/apiserver/pkg/apis; version v0.26.12 --
 https://github.com/kubernetes/apiserver
 
-** k8s.io/client-go; version v0.26.10 --
+** k8s.io/client-go; version v0.26.12 --
 https://github.com/kubernetes/client-go
 
 ** k8s.io/cluster-bootstrap/token; version v0.25.3 --
 https://github.com/kubernetes/cluster-bootstrap
 
-** k8s.io/component-base; version v0.26.10 --
+** k8s.io/component-base; version v0.26.12 --
 https://github.com/kubernetes/component-base
 
 ** k8s.io/klog/v2; version v2.90.1 --
@@ -849,10 +855,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ------
 
-** github.com/aws/aws-sdk-go-v2/internal/sync/singleflight; version v1.22.1 --
+** github.com/aws/aws-sdk-go-v2/internal/sync/singleflight; version v1.24.1 --
 https://github.com/aws/aws-sdk-go-v2
 
-** github.com/aws/smithy-go/internal/sync/singleflight; version v1.16.0 --
+** github.com/aws/smithy-go/internal/sync/singleflight; version v1.19.0 --
 https://github.com/aws/smithy-go
 
 Copyright (c) 2009 The Go Authors. All rights reserved.
@@ -1454,7 +1460,7 @@ https://github.com/ProtonMail/go-crypto
 ** github.com/vmware/govmomi/vim25/xml; version v0.29.0 --
 https://github.com/vmware/govmomi
 
-** golang.org/go; version go1.20.12 --
+** golang.org/go; version go1.20.13 --
 https://github.com/golang/go
 
 ** golang.org/x/crypto; version v0.17.0 --
@@ -1487,7 +1493,7 @@ https://golang.org/x/text
 ** golang.org/x/time/rate; version v0.3.0 --
 https://golang.org/x/time
 
-** k8s.io/apimachinery/third_party/forked/golang; version v0.26.10 --
+** k8s.io/apimachinery/third_party/forked/golang; version v0.26.12 --
 https://github.com/kubernetes/apimachinery
 
 Copyright (c) 2009 The Go Authors. All rights reserved.
