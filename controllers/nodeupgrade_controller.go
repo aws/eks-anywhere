@@ -65,6 +65,7 @@ func (r *NodeUpgradeReconciler) SetupWithManager(mgr ctrl.Manager) error {
 //+kubebuilder:rbac:groups=anywhere.eks.amazonaws.com,resources=nodeupgrades/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=anywhere.eks.amazonaws.com,resources=nodeupgrades/finalizers,verbs=update
 //+kubebuilder:rbac:groups="",resources=pods,verbs=get;list;watch;create;delete
+//+kubebuilder:rbac:groups="",resources=configmaps,verbs=get;list;watch
 //+kubebuilder:rbac:groups="cluster.x-k8s.io",resources=machines,verbs=list;watch;get;patch;update
 
 // Reconcile reconciles a NodeUpgrade object.
@@ -168,7 +169,7 @@ func (r *NodeUpgradeReconciler) reconcile(ctx context.Context, log logr.Logger, 
 	}
 
 	configMap := &corev1.ConfigMap{}
-	if err := remoteClient.Get(ctx, types.NamespacedName{Name: constants.UpgraderConfigMapName, Namespace: constants.EksaSystemNamespace}, configMap); err != nil {
+	if err := r.client.Get(ctx, types.NamespacedName{Name: constants.UpgraderConfigMapName, Namespace: constants.EksaSystemNamespace}, configMap); err != nil {
 		return ctrl.Result{}, err
 	}
 	if configMap.Data == nil {
