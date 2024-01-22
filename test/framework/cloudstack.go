@@ -21,12 +21,12 @@ import (
 
 const (
 	cloudstackDomainVar                         = "T_CLOUDSTACK_DOMAIN"
-	cloudstackMultiLevelDomainVar               = "T_CLOUDSTACK_MULTILEVEL_DOMAIN" // Not a required env var
+	cloudstackMultiLevelDomainVar               = "T_CLOUDSTACK_MULTILEVEL_DOMAIN"
 	cloudstackZoneVar                           = "T_CLOUDSTACK_ZONE"
 	cloudstackZone2Var                          = "T_CLOUDSTACK_ZONE_2"
 	cloudstackZone3Var                          = "T_CLOUDSTACK_ZONE_3"
 	cloudstackAccountVar                        = "T_CLOUDSTACK_ACCOUNT"
-	cloudstackAccountForMultiLevelDomainVar     = "T_CLOUDSTACK_ACCOUNT_FOR_MULTILEVEL_DOMAIN" // Not a required env var
+	cloudstackAccountForMultiLevelDomainVar     = "T_CLOUDSTACK_ACCOUNT_FOR_MULTILEVEL_DOMAIN"
 	cloudstackNetworkVar                        = "T_CLOUDSTACK_NETWORK"
 	cloudstackNetwork2Var                       = "T_CLOUDSTACK_NETWORK_2"
 	cloudstackNetwork3Var                       = "T_CLOUDSTACK_NETWORK_3"
@@ -50,13 +50,16 @@ const (
 
 var requiredCloudStackEnvVars = []string{
 	cloudstackAccountVar,
+	cloudstackAccountForMultiLevelDomainVar,
 	cloudstackDomainVar,
+	cloudstackMultiLevelDomainVar,
 	cloudstackZoneVar,
 	cloudstackZone2Var,
 	cloudstackZone3Var,
 	cloudstackCredentialsVar,
 	cloudstackCredentials2Var,
 	cloudstackCredentials3Var,
+	cloudstackCredentialsForMultiLevelDomainVar,
 	cloudstackAccountVar,
 	cloudstackNetworkVar,
 	cloudstackNetwork2Var,
