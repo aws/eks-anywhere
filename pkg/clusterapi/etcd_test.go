@@ -26,7 +26,7 @@ func TestSetUbuntuConfigInEtcdCluster(t *testing.T) {
 		InstallDir:     "/usr/bin",
 		EtcdReleaseURL: versionBundle.KubeDistro.EtcdURL,
 	}
-	clusterapi.SetUbuntuConfigInEtcdCluster(got, versionBundle, g.clusterSpec)
+	clusterapi.SetUbuntuConfigInEtcdCluster(got, versionBundle, string(eksaVersion))
 	g.Expect(got).To(Equal(want))
 }
 
@@ -43,7 +43,7 @@ func TestSetUbuntuConfigInEtcdClusterNoEtcdUrl(t *testing.T) {
 		Version:    versionBundle.KubeDistro.EtcdVersion,
 		InstallDir: "/usr/bin",
 	}
-	clusterapi.SetUbuntuConfigInEtcdCluster(got, versionBundle, g.clusterSpec)
+	clusterapi.SetUbuntuConfigInEtcdCluster(got, versionBundle, string(eksaVersion))
 	g.Expect(got).To(Equal(want))
 }
 

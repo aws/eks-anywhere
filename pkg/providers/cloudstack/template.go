@@ -231,9 +231,9 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec) (map[string]interface{}, erro
 		values["externalEtcd"] = true
 		values["externalEtcdReplicas"] = clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.Count
 		values["etcdSshUsername"] = etcdMachineSpec.Users[0].Name
-		etcdUrl, _ := common.GetExternalEtcdReleaseUrl(string(*clusterSpec.Cluster.Spec.EksaVersion), versionsBundle)
-		if etcdUrl != "" {
-			values["externalEtcdReleaseUrl"] = etcdUrl
+		etcdURL, _ := common.GetExternalEtcdReleaseURL(string(*clusterSpec.Cluster.Spec.EksaVersion), versionsBundle)
+		if etcdURL != "" {
+			values["externalEtcdReleaseUrl"] = etcdURL
 		}
 	}
 

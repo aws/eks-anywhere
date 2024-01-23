@@ -8,6 +8,7 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/golang/mock/gomock"
+	. "github.com/onsi/gomega"
 	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -166,6 +167,7 @@ func givenManagementCluster() *types.Cluster {
 }
 
 func givenClusterConfig() *v1alpha1.Cluster {
+	devVersion := test.DevEksaVersion()
 	return &v1alpha1.Cluster{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "snow-test",
@@ -202,6 +204,7 @@ func givenClusterConfig() *v1alpha1.Cluster {
 				},
 			},
 			KubernetesVersion: "1.21",
+			EksaVersion:       &devVersion,
 			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{
 				{
 					Name:  "md-0",
@@ -216,57 +219,6 @@ func givenClusterConfig() *v1alpha1.Cluster {
 							MaxSurge:       1,
 							MaxUnavailable: 0,
 						},
-					},
-				},
-			},
-			DatacenterRef: v1alpha1.Ref{
-				Kind: "SnowDatacenterConfig",
-				Name: "test",
-			},
-		},
-	}
-}
-
-func givenClusterConfig() *v1alpha1.Cluster {
-	devVersion := test.DevEksaVersion()
-	return &v1alpha1.Cluster{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "snow-test",
-			Namespace: "test-namespace",
-		},
-		Spec: v1alpha1.ClusterSpec{
-			ClusterNetwork: v1alpha1.ClusterNetwork{
-				CNI: v1alpha1.Cilium,
-				Pods: v1alpha1.Pods{
-					CidrBlocks: []string{
-						"10.1.0.0/16",
-					},
-				},
-				Services: v1alpha1.Services{
-					CidrBlocks: []string{
-						"10.96.0.0/12",
-					},
-				},
-			},
-			ControlPlaneConfiguration: v1alpha1.ControlPlaneConfiguration{
-				Count: 3,
-				Endpoint: &v1alpha1.Endpoint{
-					Host: "1.2.3.4",
-				},
-				MachineGroupRef: &v1alpha1.Ref{
-					Kind: "SnowMachineConfig",
-					Name: "test-cp",
-				},
-			},
-			KubernetesVersion: "1.21",
-			EksaVersion:       &devVersion,
-			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{
-				{
-					Name:  "md-0",
-					Count: ptr.Int(3),
-					MachineGroupRef: &v1alpha1.Ref{
-						Kind: "SnowMachineConfig",
-						Name: "test-wn",
 					},
 				},
 			},

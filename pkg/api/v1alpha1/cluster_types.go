@@ -86,9 +86,9 @@ const (
 	// DevBuildVersion is the version string for the dev build of EKS-A.
 	DevBuildVersion = "v0.0.0-dev"
 
-	// EtcdUrlEksAVersion is the version from which the etcd url will be set
-	// for etcdadm to pull the etcd tarball if that binary isnt cached
-	EtcdUrlEksAVersion = "v0.19.0"
+	// MinEksAVersionWithEtcdURL is the version from which the etcd url will be set
+	// for etcdadm to pull the etcd tarball if that binary isnt cached.
+	MinEksAVersionWithEtcdURL = "v0.19.0"
 )
 
 // Equal checks if two EksaVersions are equal.
