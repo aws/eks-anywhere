@@ -159,7 +159,7 @@ func getObjectsForMD() mdObjects {
 	machine.Labels = map[string]string{
 		"cluster.x-k8s.io/deployment-name": md.Name,
 	}
-	mdUpgrade := generateMDUpgrade(machine)
+	mdUpgrade := generateMDUpgrade(cluster, machine)
 	mdUpgrade.Name = md.Name + "-md-upgrade"
 	mdUpgrade.OwnerReferences = []metav1.OwnerReference{{
 		APIVersion: md.APIVersion,
@@ -197,7 +197,7 @@ func generateMD(name string) *clusterv1.MachineDeployment {
 		Spec: clusterv1.MachineDeploymentSpec{
 			Template: clusterv1.MachineTemplateSpec{
 				Spec: clusterv1.MachineSpec{
-					Version: pointer.String("v1.28.3-eks-1-28-9"),
+					Version: pointer.String("v1.28.1-eks-1-28-1"),
 				},
 			},
 		},

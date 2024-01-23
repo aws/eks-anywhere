@@ -18,14 +18,18 @@ package controllers
 
 import (
 	"context"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"time"
 
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/cluster-api/util/patch"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -39,6 +43,7 @@ import (
 const (
 	// mdUpgradeFinalizerName is the finalizer added to MachineDeploymentUpgrade objects to handle deletion.
 	mdUpgradeFinalizerName = "machinedeploymentupgrades.anywhere.eks.amazonaws.com/finalizer"
+	mdLabelIdentifier      = "cluster.x-k8s.io/deployment-name"
 )
 
 // MachineDeploymentUpgradeReconciler reconciles a MachineDeploymentUpgrade object.
@@ -58,6 +63,7 @@ func NewMachineDeploymentUpgradeReconciler(client client.Client) *MachineDeploym
 //+kubebuilder:rbac:groups=anywhere.eks.amazonaws.com,resources=machinedeploymentupgrades,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=anywhere.eks.amazonaws.com,resources=machinedeploymentupgrades/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=anywhere.eks.amazonaws.com,resources=machinedeploymentupgrades/finalizers,verbs=update
+//+kubebuilder:rbac:groups=cluster.x-k8s.io,resources=machinesets,verbs=get;list;watch;update;patch
 
 // Reconcile reconciles a MachineDeploymentUpgrade object.
 // nolint:gocyclo
@@ -74,13 +80,23 @@ func (r *MachineDeploymentUpgradeReconciler) Reconcile(ctx context.Context, req 
 		return ctrl.Result{}, err
 	}
 
-	patchHelper, err := patch.NewHelper(mdUpgrade, r.client)
+	mdUpgradePatchHelper, err := patch.NewHelper(mdUpgrade, r.client)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	md := &clusterv1.MachineDeployment{}
+	if err := r.client.Get(ctx, types.NamespacedName{Name: mdUpgrade.Spec.MachineDeployment.Name, Namespace: mdUpgrade.Spec.MachineDeployment.Namespace}, md); err != nil {
+		return ctrl.Result{}, fmt.Errorf("getting MachineDeployment %s: %v", mdUpgrade.Spec.MachineDeployment.Name, err)
+	}
+
+	ms, err := r.getCurrentMachineSet(ctx, md)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
 
 	defer func() {
-		err := r.updateStatus(ctx, log, mdUpgrade)
+		err := r.updateStatus(ctx, log, mdUpgrade, ms)
 		if err != nil {
 			reterr = kerrors.NewAggregate([]error{reterr, err})
 		}
@@ -96,7 +112,7 @@ func (r *MachineDeploymentUpgradeReconciler) Reconcile(ctx context.Context, req 
 		if reterr == nil {
 			patchOpts = append(patchOpts, patch.WithStatusObservedGeneration{})
 		}
-		if err := patchMachineDeploymentUpgrade(ctx, patchHelper, mdUpgrade, patchOpts...); err != nil {
+		if err := patchMachineDeploymentUpgrade(ctx, mdUpgradePatchHelper, mdUpgrade, patchOpts...); err != nil {
 			reterr = kerrors.NewAggregate([]error{reterr, err})
 		}
 
@@ -178,7 +194,7 @@ func patchMachineDeploymentUpgrade(ctx context.Context, patchHelper *patch.Helpe
 	return patchHelper.Patch(ctx, mdUpgrade, patchOpts...)
 }
 
-func (r *MachineDeploymentUpgradeReconciler) updateStatus(ctx context.Context, log logr.Logger, mdUpgrade *anywherev1.MachineDeploymentUpgrade) error {
+func (r *MachineDeploymentUpgradeReconciler) updateStatus(ctx context.Context, log logr.Logger, mdUpgrade *anywherev1.MachineDeploymentUpgrade, ms *clusterv1.MachineSet) error {
 	// When MachineDeploymentUpgrade is fully deleted, we do not need to update the status. Without this check
 	// the subsequent patch operations would fail if the status is updated after it is fully deleted.
 	if !mdUpgrade.DeletionTimestamp.IsZero() && len(mdUpgrade.GetFinalizers()) == 0 {
@@ -206,12 +222,62 @@ func (r *MachineDeploymentUpgradeReconciler) updateStatus(ctx context.Context, l
 	mdUpgrade.Status.Upgraded = int64(nodesUpgradeCompleted)
 	mdUpgrade.Status.RequireUpgrade = int64(nodesUpgradeRequired)
 	mdUpgrade.Status.Ready = nodesUpgradeRequired == 0
+	if mdUpgrade.Status.Ready {
+		machineSpecJSON, err := base64.StdEncoding.DecodeString(mdUpgrade.Spec.MachineSpecData)
+		if err != nil {
+			return fmt.Errorf("decoding value for %s with base64: %v", mdUpgrade.Spec.MachineSpecData, err)
+		}
+		machineSpec := clusterv1.MachineSpec{}
+		if err := json.Unmarshal(machineSpecJSON, &machineSpec); err != nil {
+			return fmt.Errorf("unmarshalling machineSpec: %v", err)
+		}
+		log.Info("Updating Spec in Machine Set", "machineset", ms.Name)
+		r.updateMachineSet(ctx, ms, machineSpec)
+	}
+	return nil
+}
+
+func (r *MachineDeploymentUpgradeReconciler) getCurrentMachineSet(ctx context.Context, md *clusterv1.MachineDeployment) (*clusterv1.MachineSet, error) {
+	selector, err := metav1.LabelSelectorAsSelector(&metav1.LabelSelector{MatchLabels: map[string]string{mdLabelIdentifier: md.Name}})
+	if err != nil {
+		return nil, err
+	}
+	machineSetsList := &clusterv1.MachineSetList{}
+	if err := r.client.List(ctx, machineSetsList, &client.ListOptions{LabelSelector: selector}); err != nil {
+		return nil, fmt.Errorf("getting machine sets for %v: %v", md.Name, err)
+	}
+	revision, ok := md.Annotations[clusterv1.RevisionAnnotation]
+	if !ok {
+		return nil, fmt.Errorf("machineDeployment is missing %s annotation", clusterv1.RevisionAnnotation)
+	}
+	var currentMS *clusterv1.MachineSet
+	for _, ms := range machineSetsList.Items {
+		if ms.Annotations[clusterv1.RevisionAnnotation] == revision {
+			currentMS = &ms
+			break
+		}
+	}
+	if currentMS == nil {
+		return nil, fmt.Errorf("couldn't find machine set with revision version %s", revision)
+	}
+	return currentMS, nil
+}
+
+func (r *MachineDeploymentUpgradeReconciler) updateMachineSet(ctx context.Context, ms *clusterv1.MachineSet, spec clusterv1.MachineSpec) error {
+	patchHelper, err := patch.NewHelper(ms, r.client)
+	if err != nil {
+		return err
+	}
+	ms.Spec.Template.Spec = spec
+	if err := patchHelper.Patch(ctx, ms); err != nil {
+		return fmt.Errorf("updating spec for machineset %s: %v", ms.Name, err)
+	}
 	return nil
 }
 
 func mdNodeUpgrader(machineRef corev1.ObjectReference, kubernetesVersion string) *anywherev1.NodeUpgrade {
 	return &anywherev1.NodeUpgrade{
-		ObjectMeta: v1.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Name:      nodeUpgraderName(machineRef.Name),
 			Namespace: constants.EksaSystemNamespace,
 		},

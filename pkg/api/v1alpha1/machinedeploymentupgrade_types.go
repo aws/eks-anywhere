@@ -18,6 +18,9 @@ type MachineDeploymentUpgradeSpec struct {
 
 	// KubernetesVersion refers to the Kubernetes version to upgrade the control planes to.
 	KubernetesVersion string `json:"kubernetesVersion"`
+
+	// MachineSpecData is a base64 encoded json string value of the machineDeplopyment.Spec.Template.Spec field that's specification of the desired behavior of the machine.
+	MachineSpecData string `json:"machineSpecData"`
 }
 
 // MachineDeploymentUpgradeStatus defines the observed state of MachineDeploymentUpgrade.
