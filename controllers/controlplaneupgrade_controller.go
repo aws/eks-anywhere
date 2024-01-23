@@ -26,6 +26,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/cluster-api/util/patch"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -214,6 +215,19 @@ func (r *ControlPlaneUpgradeReconciler) updateStatus(ctx context.Context, log lo
 			return fmt.Errorf("getting node upgrader for machine %s: %v", machineRef.Name, err)
 		}
 		if nodeUpgrade.Status.Completed {
+			machine, err := getCapiMachine(ctx, r.client, nodeUpgrade)
+			if err != nil {
+				return err
+			}
+			machinePatchHelper, err := patch.NewHelper(machine, r.client)
+			if err != nil {
+				return err
+			}
+			log.Info("Updating K8s version in  machine", "Machine", machine.Name)
+			machine.Spec.Version = &nodeUpgrade.Spec.KubernetesVersion
+			if err := machinePatchHelper.Patch(ctx, machine); err != nil {
+				return fmt.Errorf("updating spec for machine %s: %v", machine.Name, err)
+			}
 			nodesUpgradeCompleted++
 			nodesUpgradeRequired--
 		}
@@ -223,4 +237,12 @@ func (r *ControlPlaneUpgradeReconciler) updateStatus(ctx context.Context, log lo
 	cpUpgrade.Status.RequireUpgrade = int64(nodesUpgradeRequired)
 	cpUpgrade.Status.Ready = nodesUpgradeRequired == 0
 	return nil
+}
+
+func getCapiMachine(ctx context.Context, client client.Client, nodeUpgrade *anywherev1.NodeUpgrade) (*clusterv1.Machine, error) {
+	machine := &clusterv1.Machine{}
+	if err := client.Get(ctx, GetNamespacedNameType(nodeUpgrade.Spec.Machine.Name, nodeUpgrade.Spec.Machine.Namespace), machine); err != nil {
+		return nil, fmt.Errorf("getting machine %s: %v", nodeUpgrade.Spec.Machine.Name, err)
+	}
+	return machine, nil
 }
