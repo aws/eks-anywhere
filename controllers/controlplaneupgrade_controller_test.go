@@ -3,6 +3,7 @@ package controllers_test
 import (
 	"context"
 	"fmt"
+	"strings"
 	"testing"
 
 	. "github.com/onsi/gomega"
@@ -189,6 +190,33 @@ func TestCPUpgradeObjectDoesNotExist(t *testing.T) {
 	req := cpUpgradeRequest(cpUpgrade)
 	_, err := r.Reconcile(ctx, req)
 	g.Expect(err).To(MatchError("controlplaneupgrades.anywhere.eks.amazonaws.com \"cp-upgrade-request\" not found"))
+}
+
+func TestCPUpgradeReconcileUpdateCapiMachineVersion(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+
+	cluster, machines, nodes, cpUpgrade, nodeUpgrades := getObjectsForCPUpgradeTest()
+	for i := range nodeUpgrades {
+		nodeUpgrades[i].Name = fmt.Sprintf("%s-node-upgrader", machines[i].Name)
+		nodeUpgrades[i].Status = anywherev1.NodeUpgradeStatus{
+			Completed: true,
+		}
+	}
+	objs := []runtime.Object{cluster, machines[0], machines[1], nodes[0], nodes[1], cpUpgrade, nodeUpgrades[0], nodeUpgrades[1]}
+	nodeUpgrades[0].Status.Completed = true
+	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
+	r := controllers.NewControlPlaneUpgradeReconciler(client)
+
+	req := cpUpgradeRequest(cpUpgrade)
+	_, err := r.Reconcile(ctx, req)
+	g.Expect(err).ToNot(HaveOccurred())
+	machine := &clusterv1.Machine{}
+	err = client.Get(ctx, types.NamespacedName{Name: nodeUpgrades[0].Spec.Machine.Name, Namespace: "eksa-system"}, machine)
+	g.Expect(err).ToNot(HaveOccurred())
+	if !strings.Contains(*machine.Spec.Version, "v1.28.3-eks-1-28-9") {
+		t.Fatalf("unexpected k8s version in capi machine: %s", *machine.Spec.Version)
+	}
 }
 
 func getObjectsForCPUpgradeTest() (*clusterv1.Cluster, []*clusterv1.Machine, []*corev1.Node, *anywherev1.ControlPlaneUpgrade, []*anywherev1.NodeUpgrade) {
