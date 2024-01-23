@@ -37,18 +37,18 @@ spec:
         arch:
         - amd64
         description: Container image for bottlerocket-admin image
-        imageDigest: sha256:500114542651991a516baaece75e1d5d909b480ab3ce7a64b19c41dcf83fad29
+        imageDigest: sha256:63f09bdd416168d17403b9e4adea2d4719d809c3264fb2c327ce1c85850fa6ad
         name: bottlerocket-admin
         os: linux
-        uri: public.ecr.aws/bottlerocket/bottlerocket-admin:v0.11.1
+        uri: public.ecr.aws/bottlerocket/bottlerocket-admin:v0.11.3
       control:
         arch:
         - amd64
         description: Container image for bottlerocket-control image
-        imageDigest: sha256:61bc99d06b3f60ff7b9bfbc6cf440e17fcc94d0b8d46bbddc760244ba073e7cc
+        imageDigest: sha256:cf47a547bdc9c2ac6192b5c62f0158be30ff9073b4be60b6c6b22f3bf95203e9
         name: bottlerocket-control
         os: linux
-        uri: public.ecr.aws/bottlerocket/bottlerocket-control:v0.7.5
+        uri: public.ecr.aws/bottlerocket/bottlerocket-control:v0.7.7
       kubeadmBootstrap:
         arch:
         - amd64
@@ -280,7 +280,7 @@ spec:
         os: linux
         sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/image-builder/v0.3.2/image-builder-v0.0.0-dev-build.0-linux-amd64.tar.gz
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/image-builder/v0.4.0/image-builder-v0.0.0-dev-build.0-linux-amd64.tar.gz
       kindNode:
         arch:
         - amd64
@@ -806,18 +806,18 @@ spec:
         arch:
         - amd64
         description: Container image for bottlerocket-admin image
-        imageDigest: sha256:500114542651991a516baaece75e1d5d909b480ab3ce7a64b19c41dcf83fad29
+        imageDigest: sha256:63f09bdd416168d17403b9e4adea2d4719d809c3264fb2c327ce1c85850fa6ad
         name: bottlerocket-admin
         os: linux
-        uri: public.ecr.aws/bottlerocket/bottlerocket-admin:v0.11.1
+        uri: public.ecr.aws/bottlerocket/bottlerocket-admin:v0.11.3
       control:
         arch:
         - amd64
         description: Container image for bottlerocket-control image
-        imageDigest: sha256:61bc99d06b3f60ff7b9bfbc6cf440e17fcc94d0b8d46bbddc760244ba073e7cc
+        imageDigest: sha256:cf47a547bdc9c2ac6192b5c62f0158be30ff9073b4be60b6c6b22f3bf95203e9
         name: bottlerocket-control
         os: linux
-        uri: public.ecr.aws/bottlerocket/bottlerocket-control:v0.7.5
+        uri: public.ecr.aws/bottlerocket/bottlerocket-control:v0.7.7
       kubeadmBootstrap:
         arch:
         - amd64
@@ -1049,7 +1049,7 @@ spec:
         os: linux
         sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/image-builder/v0.3.2/image-builder-v0.0.0-dev-build.0-linux-amd64.tar.gz
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/image-builder/v0.4.0/image-builder-v0.0.0-dev-build.0-linux-amd64.tar.gz
       kindNode:
         arch:
         - amd64
@@ -1575,18 +1575,18 @@ spec:
         arch:
         - amd64
         description: Container image for bottlerocket-admin image
-        imageDigest: sha256:500114542651991a516baaece75e1d5d909b480ab3ce7a64b19c41dcf83fad29
+        imageDigest: sha256:63f09bdd416168d17403b9e4adea2d4719d809c3264fb2c327ce1c85850fa6ad
         name: bottlerocket-admin
         os: linux
-        uri: public.ecr.aws/bottlerocket/bottlerocket-admin:v0.11.1
+        uri: public.ecr.aws/bottlerocket/bottlerocket-admin:v0.11.3
       control:
         arch:
         - amd64
         description: Container image for bottlerocket-control image
-        imageDigest: sha256:61bc99d06b3f60ff7b9bfbc6cf440e17fcc94d0b8d46bbddc760244ba073e7cc
+        imageDigest: sha256:cf47a547bdc9c2ac6192b5c62f0158be30ff9073b4be60b6c6b22f3bf95203e9
         name: bottlerocket-control
         os: linux
-        uri: public.ecr.aws/bottlerocket/bottlerocket-control:v0.7.5
+        uri: public.ecr.aws/bottlerocket/bottlerocket-control:v0.7.7
       kubeadmBootstrap:
         arch:
         - amd64
@@ -1818,7 +1818,7 @@ spec:
         os: linux
         sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/image-builder/v0.3.2/image-builder-v0.0.0-dev-build.0-linux-amd64.tar.gz
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/image-builder/v0.4.0/image-builder-v0.0.0-dev-build.0-linux-amd64.tar.gz
       kindNode:
         arch:
         - amd64
@@ -2344,18 +2344,18 @@ spec:
         arch:
         - amd64
         description: Container image for bottlerocket-admin image
-        imageDigest: sha256:500114542651991a516baaece75e1d5d909b480ab3ce7a64b19c41dcf83fad29
+        imageDigest: sha256:63f09bdd416168d17403b9e4adea2d4719d809c3264fb2c327ce1c85850fa6ad
         name: bottlerocket-admin
         os: linux
-        uri: public.ecr.aws/bottlerocket/bottlerocket-admin:v0.11.1
+        uri: public.ecr.aws/bottlerocket/bottlerocket-admin:v0.11.3
       control:
         arch:
         - amd64
         description: Container image for bottlerocket-control image
-        imageDigest: sha256:61bc99d06b3f60ff7b9bfbc6cf440e17fcc94d0b8d46bbddc760244ba073e7cc
+        imageDigest: sha256:cf47a547bdc9c2ac6192b5c62f0158be30ff9073b4be60b6c6b22f3bf95203e9
         name: bottlerocket-control
         os: linux
-        uri: public.ecr.aws/bottlerocket/bottlerocket-control:v0.7.5
+        uri: public.ecr.aws/bottlerocket/bottlerocket-control:v0.7.7
       kubeadmBootstrap:
         arch:
         - amd64
@@ -2587,7 +2587,7 @@ spec:
         os: linux
         sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/image-builder/v0.3.2/image-builder-v0.0.0-dev-build.0-linux-amd64.tar.gz
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/image-builder/v0.4.0/image-builder-v0.0.0-dev-build.0-linux-amd64.tar.gz
       kindNode:
         arch:
         - amd64
@@ -3113,18 +3113,18 @@ spec:
         arch:
         - amd64
         description: Container image for bottlerocket-admin image
-        imageDigest: sha256:500114542651991a516baaece75e1d5d909b480ab3ce7a64b19c41dcf83fad29
+        imageDigest: sha256:63f09bdd416168d17403b9e4adea2d4719d809c3264fb2c327ce1c85850fa6ad
         name: bottlerocket-admin
         os: linux
-        uri: public.ecr.aws/bottlerocket/bottlerocket-admin:v0.11.1
+        uri: public.ecr.aws/bottlerocket/bottlerocket-admin:v0.11.3
       control:
         arch:
         - amd64
         description: Container image for bottlerocket-control image
-        imageDigest: sha256:61bc99d06b3f60ff7b9bfbc6cf440e17fcc94d0b8d46bbddc760244ba073e7cc
+        imageDigest: sha256:cf47a547bdc9c2ac6192b5c62f0158be30ff9073b4be60b6c6b22f3bf95203e9
         name: bottlerocket-control
         os: linux
-        uri: public.ecr.aws/bottlerocket/bottlerocket-control:v0.7.5
+        uri: public.ecr.aws/bottlerocket/bottlerocket-control:v0.7.7
       kubeadmBootstrap:
         arch:
         - amd64
@@ -3356,7 +3356,7 @@ spec:
         os: linux
         sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/image-builder/v0.3.2/image-builder-v0.0.0-dev-build.0-linux-amd64.tar.gz
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/image-builder/v0.4.0/image-builder-v0.0.0-dev-build.0-linux-amd64.tar.gz
       kindNode:
         arch:
         - amd64
