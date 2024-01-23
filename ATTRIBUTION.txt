@@ -20,7 +20,7 @@ https://github.com/aws/aws-sdk-go-v2/internal/endpoints/v2
 ** github.com/aws/aws-sdk-go-v2/internal/ini; version v1.3.10 --
 https://github.com/aws/aws-sdk-go-v2/internal/ini
 
-** github.com/aws/aws-sdk-go-v2/service/ec2; version v1.128.0 --
+** github.com/aws/aws-sdk-go-v2/service/ec2; version v1.144.0 --
 https://github.com/aws/aws-sdk-go-v2/service/ec2
 
 ** github.com/aws/aws-sdk-go-v2/service/ecr; version v1.22.0 --
@@ -221,25 +221,25 @@ https://gopkg.in/yaml.v2
 ** helm.sh/helm/v3; version v3.11.3 --
 https://github.com/helm/helm
 
-** k8s.io/api; version v0.26.12 --
+** k8s.io/api; version v0.26.13 --
 https://github.com/kubernetes/api
 
 ** k8s.io/apiextensions-apiserver/pkg/apis/apiextensions; version v0.26.1 --
 https://github.com/kubernetes/apiextensions-apiserver
 
-** k8s.io/apimachinery/pkg; version v0.26.12 --
+** k8s.io/apimachinery/pkg; version v0.26.13 --
 https://github.com/kubernetes/apimachinery
 
-** k8s.io/apiserver/pkg/apis; version v0.26.12 --
+** k8s.io/apiserver/pkg/apis; version v0.26.13 --
 https://github.com/kubernetes/apiserver
 
-** k8s.io/client-go; version v0.26.12 --
+** k8s.io/client-go; version v0.26.13 --
 https://github.com/kubernetes/client-go
 
 ** k8s.io/cluster-bootstrap/token; version v0.25.3 --
 https://github.com/kubernetes/cluster-bootstrap
 
-** k8s.io/component-base; version v0.26.12 --
+** k8s.io/component-base; version v0.26.13 --
 https://github.com/kubernetes/component-base
 
 ** k8s.io/klog/v2; version v2.90.1 --
@@ -1481,7 +1481,7 @@ https://golang.org/x/oauth2
 ** golang.org/x/sync; version v0.5.0 --
 https://golang.org/x/sync
 
-** golang.org/x/sys; version v0.15.0 --
+** golang.org/x/sys; version v0.16.0 --
 https://golang.org/x/sys
 
 ** golang.org/x/term; version v0.15.0 --
@@ -1493,7 +1493,7 @@ https://golang.org/x/text
 ** golang.org/x/time/rate; version v0.3.0 --
 https://golang.org/x/time
 
-** k8s.io/apimachinery/third_party/forked/golang; version v0.26.12 --
+** k8s.io/apimachinery/third_party/forked/golang; version v0.26.13 --
 https://github.com/kubernetes/apimachinery
 
 Copyright (c) 2009 The Go Authors. All rights reserved.
