@@ -226,7 +226,7 @@ func (r *ControlPlaneUpgradeReconciler) updateStatus(ctx context.Context, log lo
 			log.Info("Updating K8s version in  machine", "Machine", machine.Name)
 			machine.Spec.Version = &nodeUpgrade.Spec.KubernetesVersion
 			if err := machinePatchHelper.Patch(ctx, machine); err != nil {
-				return fmt.Errorf("updating status for machine %s: %v", machine.Name, err)
+				return fmt.Errorf("updating spec for machine %s: %v", machine.Name, err)
 			}
 			nodesUpgradeCompleted++
 			nodesUpgradeRequired--
