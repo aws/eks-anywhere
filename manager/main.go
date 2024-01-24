@@ -176,6 +176,7 @@ func setupReconcilers(ctx context.Context, setupLog logr.Logger, mgr ctrl.Manage
 		WithSnowMachineConfigReconciler().
 		WithNutanixDatacenterReconciler().
 		WithCloudStackDatacenterReconciler().
+		WithKubeadmControlPlaneReconciler().
 		WithControlPlaneUpgradeReconciler().
 		WithMachineDeploymentUpgradeReconciler().
 		WithNodeUpgradeReconciler()
@@ -214,6 +215,12 @@ func setupReconcilers(ctx context.Context, setupLog logr.Logger, mgr ctrl.Manage
 	setupLog.Info("Setting up cloudstackdatacenter controller")
 	if err := (reconcilers.CloudStackDatacenterReconciler).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", anywherev1.CloudStackDatacenterKind)
+		failed = true
+	}
+
+	setupLog.Info("Setting up kubeadmcontrolplane controller")
+	if err := (reconcilers.KubeadmControlPlaneReconciler).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "KubeadmControlPlane")
 		failed = true
 	}
 

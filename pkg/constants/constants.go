@@ -53,6 +53,8 @@ const (
 
 	FailureDomainLabelName = "cluster.x-k8s.io/failure-domain"
 
+	InPlaceUpgradeNeededAnnotation = "cluster.x-k8s.io/in-place-upgrade-needed"
+
 	// CloudstackFailureDomainPlaceholder Provider specific keywork placeholder.
 	CloudstackFailureDomainPlaceholder = "ds.meta_data.failuredomain"
 
