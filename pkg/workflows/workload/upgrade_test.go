@@ -200,7 +200,7 @@ func TestUpgradeRunValidateFail(t *testing.T) {
 	test.clusterManager.EXPECT().GetCurrentClusterSpec(test.ctx, test.clusterSpec.ManagementCluster, test.clusterSpec.Cluster.Name).AnyTimes().Return(test.currentClusterSpec, nil)
 	test.provider.EXPECT().Name().AnyTimes()
 	test.gitOpsManager.EXPECT().Validations(test.ctx, test.clusterSpec).AnyTimes()
-	test.provider.EXPECT().SetupAndValidateUpgradeCluster(test.ctx, test.workloadCluster, test.clusterSpec, test.currentClusterSpec).Return(fmt.Errorf("boom"))
+	test.provider.EXPECT().SetupAndValidateUpgradeCluster(test.ctx, test.clusterSpec.ManagementCluster, test.clusterSpec, test.currentClusterSpec).Return(fmt.Errorf("boom"))
 	test.expectPreflightValidationsToPass()
 	test.expectWrite()
 
