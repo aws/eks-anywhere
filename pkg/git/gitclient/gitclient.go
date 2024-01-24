@@ -360,7 +360,8 @@ func (gg *goGit) AddGlob(f string, w *gogit.Worktree) error {
 
 func (gg *goGit) Commit(m string, sig *object.Signature, w *gogit.Worktree) (plumbing.Hash, error) {
 	return w.Commit(m, &gogit.CommitOptions{
-		Author: sig,
+		Author:            sig,
+		AllowEmptyCommits: true,
 	})
 }
 
