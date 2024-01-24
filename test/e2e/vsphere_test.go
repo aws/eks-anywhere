@@ -1751,6 +1751,41 @@ func TestVSphereKubernetes128BottlerocketTaintsUpgradeFlow(t *testing.T) {
 	)
 }
 
+func TestVSphereKubernetes127UbuntuWorkloadClusterTaintsFlow(t *testing.T) {
+	provider := framework.NewVSphere(t, framework.WithUbuntu127())
+
+	managementCluster := framework.NewClusterE2ETest(
+		t, provider,
+	).WithClusterConfig(
+		api.ClusterToConfigFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube127),
+			api.WithControlPlaneCount(1),
+			api.WithWorkerNodeCount(1),
+			api.WithExternalEtcdTopology(1),
+		),
+	)
+
+	test := framework.NewMulticlusterE2ETest(t, managementCluster)
+
+	test.WithWorkloadClusters(
+		framework.NewClusterE2ETest(
+			t, provider, framework.WithClusterName(test.NewWorkloadClusterName()),
+		).WithClusterConfig(
+			api.ClusterToConfigFiller(
+				api.WithKubernetesVersion(v1alpha1.Kube127),
+				api.WithManagementCluster(managementCluster.ClusterName),
+				api.WithControlPlaneCount(1),
+				api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
+				api.WithStackedEtcdTopology(),
+			),
+			provider.WithNewWorkerNodeGroup("worker-0", framework.WithWorkerNodeGroup("worker-0", api.WithCount(1), api.WithLabel("key1", "val2"), api.WithTaint(framework.NoScheduleTaint()))),
+			provider.WithNewWorkerNodeGroup("worker-1", framework.WithWorkerNodeGroup("worker-1", api.WithCount(1), api.WithLabel("key1", "val2"), api.WithTaint(framework.NoExecuteTaint()))),
+		),
+	)
+
+	runWorkloadClusterExistingConfigFlow(test)
+}
+
 // Upgrade
 func TestVSphereKubernetes125UbuntuTo126Upgrade(t *testing.T) {
 	provider := framework.NewVSphere(t, framework.WithUbuntu125())
