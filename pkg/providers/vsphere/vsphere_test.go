@@ -1804,7 +1804,7 @@ func TestVersion(t *testing.T) {
 	vSphereProviderVersion := "v0.7.10"
 	provider := givenProvider(t)
 	clusterSpec := givenEmptyClusterSpec()
-	clusterSpec.FirstVersionsBundle().VSphere.Version = vSphereProviderVersion
+	clusterSpec.Bundles.Spec.VersionsBundles[0].VSphere.Version = vSphereProviderVersion
 	setupContext(t)
 
 	result := provider.Version(clusterSpec)
@@ -2797,7 +2797,7 @@ func TestGetInfrastructureBundleSuccess(t *testing.T) {
 		{
 			testName: "correct Overrides layer",
 			clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
-				s.FirstVersionsBundle().VSphere = releasev1alpha1.VSphereBundle{
+				s.Bundles.Spec.VersionsBundles[0].VSphere = releasev1alpha1.VSphereBundle{
 					Version: "v0.7.8",
 					ClusterAPIController: releasev1alpha1.Image{
 						URI: "public.ecr.aws/l0g8r8j6/kubernetes-sigs/cluster-api-provider-vsphere/release/manager:v0.7.8-35f54b0a7ff0f4f3cb0b8e30a0650acd0e55496a",
@@ -2832,7 +2832,7 @@ func TestGetInfrastructureBundleSuccess(t *testing.T) {
 			}
 			assert.Equal(t, "infrastructure-vsphere/v0.7.8/", infraBundle.FolderName, "Incorrect folder name")
 			assert.Equal(t, len(infraBundle.Manifests), 3, "Wrong number of files in the infrastructure bundle")
-			bundle := tt.clusterSpec.FirstVersionsBundle()
+			bundle := &tt.clusterSpec.Bundles.Spec.VersionsBundles[0]
 			wantManifests := []releasev1alpha1.Manifest{
 				bundle.VSphere.Components,
 				bundle.VSphere.Metadata,
@@ -3065,17 +3065,17 @@ func TestValidateNewSpecOSFamilyImmutableWorker(t *testing.T) {
 func TestChangeDiffNoChange(t *testing.T) {
 	provider := givenProvider(t)
 	clusterSpec := givenEmptyClusterSpec()
-	versionsBundle := clusterSpec.FirstVersionsBundle()
+	versionsBundle := &clusterSpec.Bundles.Spec.VersionsBundles[0]
 	assert.Nil(t, provider.ChangeDiff(versionsBundle, versionsBundle))
 }
 
 func TestChangeDiffWithChange(t *testing.T) {
 	provider := givenProvider(t)
 	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
-		s.FirstVersionsBundle().VSphere.Version = "v0.3.18"
+		s.Bundles.Spec.VersionsBundles[0].VSphere.Version = "v0.3.18"
 	})
 	newClusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
-		s.FirstVersionsBundle().VSphere.Version = "v0.3.19"
+		s.Bundles.Spec.VersionsBundles[0].VSphere.Version = "v0.3.19"
 	})
 
 	wantDiff := &types.ComponentChangeDiff{
@@ -3084,8 +3084,8 @@ func TestChangeDiffWithChange(t *testing.T) {
 		OldVersion:    "v0.3.18",
 	}
 
-	currentVersionsBundle := clusterSpec.FirstVersionsBundle()
-	newVersionsBundle := newClusterSpec.FirstVersionsBundle()
+	currentVersionsBundle := &clusterSpec.Bundles.Spec.VersionsBundles[0]
+	newVersionsBundle := &newClusterSpec.Bundles.Spec.VersionsBundles[0]
 	assert.Equal(t, wantDiff, provider.ChangeDiff(currentVersionsBundle, newVersionsBundle))
 }
 

@@ -978,7 +978,7 @@ func (p *vsphereProvider) PostWorkloadInit(ctx context.Context, cluster *types.C
 }
 
 func (p *vsphereProvider) Version(clusterSpec *cluster.Spec) string {
-	versionsBundle := clusterSpec.FirstVersionsBundle()
+	versionsBundle := &clusterSpec.Bundles.Spec.VersionsBundles[0]
 	return versionsBundle.VSphere.Version
 }
 
@@ -1001,7 +1001,7 @@ func (p *vsphereProvider) GetDeployments() map[string][]string {
 }
 
 func (p *vsphereProvider) GetInfrastructureBundle(clusterSpec *cluster.Spec) *types.InfrastructureBundle {
-	versionsBundle := clusterSpec.FirstVersionsBundle()
+	versionsBundle := &clusterSpec.Bundles.Spec.VersionsBundles[0]
 	folderName := fmt.Sprintf("infrastructure-vsphere/%s/", versionsBundle.VSphere.Version)
 
 	infraBundle := types.InfrastructureBundle{

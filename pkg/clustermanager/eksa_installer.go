@@ -93,7 +93,7 @@ func (i *EKSAInstaller) Upgrade(ctx context.Context, log logr.Logger, c *types.C
 		return nil, nil
 	}
 
-	newVersionsBundle := newSpec.FirstVersionsBundle()
+	newVersionsBundle := &newSpec.Bundles.Spec.VersionsBundles[0]
 	changeDiff := EksaChangeDiff(currentManagementComponentsVersionsBundle, newVersionsBundle)
 	if changeDiff == nil {
 		log.V(1).Info("Nothing to upgrade for controller and CRDs")
@@ -178,7 +178,7 @@ func fullLifeCycleControllerForProvider(cluster *anywherev1.Cluster) bool {
 }
 
 func (g *EKSAComponentGenerator) parseEKSAComponentsSpec(spec *cluster.Spec) (*eksaComponents, error) {
-	bundle := spec.FirstVersionsBundle()
+	bundle := &spec.Bundles.Spec.VersionsBundles[0]
 	componentsManifest, err := bundles.ReadManifest(g.reader, bundle.Eksa.Components)
 	if err != nil {
 		return nil, fmt.Errorf("loading manifest for eksa components: %v", err)

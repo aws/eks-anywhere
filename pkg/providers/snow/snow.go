@@ -181,7 +181,7 @@ func (p *SnowProvider) UpdateKubeConfig(content *[]byte, clusterName string) err
 }
 
 func (p *SnowProvider) Version(clusterSpec *cluster.Spec) string {
-	versionsBundle := clusterSpec.FirstVersionsBundle()
+	versionsBundle := &clusterSpec.Bundles.Spec.VersionsBundles[0]
 	return versionsBundle.Snow.Version
 }
 
@@ -204,7 +204,7 @@ func (p *SnowProvider) GetDeployments() map[string][]string {
 }
 
 func (p *SnowProvider) GetInfrastructureBundle(clusterSpec *cluster.Spec) *types.InfrastructureBundle {
-	versionsBundle := clusterSpec.FirstVersionsBundle()
+	versionsBundle := &clusterSpec.Bundles.Spec.VersionsBundles[0]
 	folderName := fmt.Sprintf("infrastructure-snow/%s/", versionsBundle.Snow.Version)
 
 	infraBundle := types.InfrastructureBundle{

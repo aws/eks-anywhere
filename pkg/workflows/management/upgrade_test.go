@@ -88,7 +88,7 @@ func newUpgradeManagementTest(t *testing.T) *upgradeManagementTestSetup {
 		s.Cluster.Spec.DatacenterRef.Kind = v1alpha1.VSphereDatacenterKind
 		s.Cluster.SetManagementComponentsVersion("v0.0.0-dev")
 	})
-	currentManagementComponentsVersionsBundle := currentClusterSpec.FirstVersionsBundle().DeepCopy()
+	currentManagementComponentsVersionsBundle := currentClusterSpec.Bundles.Spec.VersionsBundles[0].DeepCopy()
 
 	return &upgradeManagementTestSetup{
 		t:                t,

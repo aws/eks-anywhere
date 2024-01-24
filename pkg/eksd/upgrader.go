@@ -29,7 +29,7 @@ func NewUpgrader(client EksdInstallerClient, reader Reader, opts ...UpgraderOpt)
 func (u *Upgrader) Upgrade(ctx context.Context, cluster *types.Cluster, currentManagementComponentsVersionsBundle *releasev1alpha1.VersionsBundle, newSpec *cluster.Spec) (*types.ChangeDiff, error) {
 	logger.V(1).Info("Checking for EKS-D components upgrade")
 
-	changeDiff := ChangeDiff(currentManagementComponentsVersionsBundle, newSpec.FirstVersionsBundle())
+	changeDiff := ChangeDiff(currentManagementComponentsVersionsBundle, &newSpec.Bundles.Spec.VersionsBundles[0])
 	if changeDiff == nil {
 		logger.V(1).Info("Nothing to upgrade for EKS-D components")
 		return nil, nil

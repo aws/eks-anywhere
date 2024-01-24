@@ -217,7 +217,7 @@ func (p *Provider) UpdateKubeConfig(content *[]byte, clusterName string) error {
 }
 
 func (p *Provider) Version(clusterSpec *cluster.Spec) string {
-	versionsBundle := clusterSpec.FirstVersionsBundle()
+	versionsBundle := &clusterSpec.Bundles.Spec.VersionsBundles[0]
 	return versionsBundle.Tinkerbell.Version
 }
 
@@ -252,7 +252,7 @@ func (p *Provider) GetDeployments() map[string][]string {
 }
 
 func (p *Provider) GetInfrastructureBundle(clusterSpec *cluster.Spec) *types.InfrastructureBundle {
-	versionsBundle := clusterSpec.FirstVersionsBundle()
+	versionsBundle := &clusterSpec.Bundles.Spec.VersionsBundles[0]
 	folderName := fmt.Sprintf("infrastructure-tinkerbell/%s/", versionsBundle.Tinkerbell.Version)
 
 	infraBundle := types.InfrastructureBundle{

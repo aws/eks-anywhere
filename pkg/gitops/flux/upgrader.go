@@ -16,7 +16,7 @@ const upgradeFluxconfigCommitMessage = "Upgrade commit of flux configuration; ge
 func (f *Flux) Upgrade(ctx context.Context, managementCluster *types.Cluster, currentManagementComponentsVersionsBundle *releasev1.VersionsBundle, currentSpec *cluster.Spec, newSpec *cluster.Spec) (*types.ChangeDiff, error) {
 	logger.V(1).Info("Checking for Flux upgrades")
 
-	changeDiff := ChangeDiff(currentManagementComponentsVersionsBundle, newSpec.FirstVersionsBundle(), currentSpec, newSpec)
+	changeDiff := ChangeDiff(currentManagementComponentsVersionsBundle, &newSpec.Bundles.Spec.VersionsBundles[0], currentSpec, newSpec)
 	if changeDiff == nil {
 		logger.V(1).Info("Nothing to upgrade for Flux")
 		return nil, nil

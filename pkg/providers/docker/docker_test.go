@@ -648,17 +648,17 @@ var workerVersionsBundle = &cluster.VersionsBundle{
 func TestChangeDiffNoChange(t *testing.T) {
 	tt := newTest(t)
 	clusterSpec := test.NewClusterSpec()
-	versionsBundle := clusterSpec.FirstVersionsBundle()
+	versionsBundle := &clusterSpec.Bundles.Spec.VersionsBundles[0]
 	assert.Nil(t, tt.provider.ChangeDiff(versionsBundle, versionsBundle))
 }
 
 func TestChangeDiffWithChange(t *testing.T) {
 	tt := newTest(t)
 	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
-		s.FirstVersionsBundle().Docker.Version = "v0.3.18"
+		s.Bundles.Spec.VersionsBundles[0].Docker.Version = "v0.3.18"
 	})
 	newClusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
-		s.FirstVersionsBundle().Docker.Version = "v0.3.19"
+		s.Bundles.Spec.VersionsBundles[0].Docker.Version = "v0.3.19"
 	})
 
 	wantDiff := &types.ComponentChangeDiff{
@@ -667,8 +667,8 @@ func TestChangeDiffWithChange(t *testing.T) {
 		OldVersion:    "v0.3.18",
 	}
 
-	currentVersionsBundle := clusterSpec.FirstVersionsBundle()
-	newVersionsBundle := newClusterSpec.FirstVersionsBundle()
+	currentVersionsBundle := &clusterSpec.Bundles.Spec.VersionsBundles[0]
+	newVersionsBundle := &newClusterSpec.Bundles.Spec.VersionsBundles[0]
 	tt.Expect(tt.provider.ChangeDiff(currentVersionsBundle, newVersionsBundle)).To(Equal(wantDiff))
 }
 

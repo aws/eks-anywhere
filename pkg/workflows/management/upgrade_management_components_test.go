@@ -101,7 +101,7 @@ func TestRunnerHappyPath(t *testing.T) {
 	curSpec := test.NewClusterSpec()
 	newSpec := test.NewClusterSpec()
 
-	currentManagementComponentsVersionsBundle := curSpec.FirstVersionsBundle().DeepCopy()
+	currentManagementComponentsVersionsBundle := curSpec.Bundles.Spec.VersionsBundles[0].DeepCopy()
 
 	expectedEKSACluster := curSpec.Cluster.DeepCopy()
 	expectedEKSACluster.SetManagementComponentsVersion(newSpec.EKSARelease.Spec.Version)

@@ -31,7 +31,7 @@ type upgraderTest struct {
 func newUpgraderTest(t *testing.T) *upgraderTest {
 	currentSpec := test.NewClusterSpec(func(s *cluster.Spec) {
 		s.Bundles.Spec.Number = 1
-		s.FirstVersionsBundle().Flux.Version = "v0.1.0"
+		s.Bundles.Spec.VersionsBundles[0].Flux.Version = "v0.1.0"
 		s.Cluster.ObjectMeta.Name = "management-cluster"
 		s.Cluster.Spec.GitOpsRef = &v1alpha1.Ref{
 			Name: "testGitOpsRef",
@@ -39,7 +39,7 @@ func newUpgraderTest(t *testing.T) *upgraderTest {
 		s.Cluster.Spec.KubernetesVersion = "1.19"
 	})
 
-	currentManagementComponentsVersionsBundle := currentSpec.FirstVersionsBundle().DeepCopy()
+	currentManagementComponentsVersionsBundle := currentSpec.Bundles.Spec.VersionsBundles[0].DeepCopy()
 	return &upgraderTest{
 		WithT: NewWithT(t),
 		ctx:   context.Background(),
@@ -79,14 +79,14 @@ func TestFluxUpgradeNoSelfManaged(t *testing.T) {
 func TestFluxUpgradeNoChanges(t *testing.T) {
 	tt := newUpgraderTest(t)
 	g := newFluxTest(t)
-	tt.newSpec.FirstVersionsBundle().Flux.Version = "v0.1.0"
+	tt.newSpec.Bundles.Spec.VersionsBundles[0].Flux.Version = "v0.1.0"
 
 	tt.Expect(g.gitOpsFlux.Upgrade(tt.ctx, tt.cluster, tt.currentManagementComponentsVersionsBundle, tt.currentSpec, tt.newSpec)).To(BeNil())
 }
 
 func TestFluxUpgradeSuccess(t *testing.T) {
 	tt := newUpgraderTest(t)
-	tt.newSpec.FirstVersionsBundle().Flux.Version = "v0.2.0"
+	tt.newSpec.Bundles.Spec.VersionsBundles[0].Flux.Version = "v0.2.0"
 
 	tt.newSpec.FluxConfig = &tt.fluxConfig
 
@@ -122,7 +122,7 @@ func TestFluxUpgradeSuccess(t *testing.T) {
 
 func TestFluxUpgradeBootstrapGithubError(t *testing.T) {
 	tt := newUpgraderTest(t)
-	tt.newSpec.FirstVersionsBundle().Flux.Version = "v0.2.0"
+	tt.newSpec.Bundles.Spec.VersionsBundles[0].Flux.Version = "v0.2.0"
 
 	tt.newSpec.FluxConfig = &tt.fluxConfig
 	g := newFluxTest(t)
@@ -146,7 +146,7 @@ func TestFluxUpgradeBootstrapGithubError(t *testing.T) {
 
 func TestFluxUpgradeBootstrapGitError(t *testing.T) {
 	tt := newUpgraderTest(t)
-	tt.newSpec.FirstVersionsBundle().Flux.Version = "v0.2.0"
+	tt.newSpec.Bundles.Spec.VersionsBundles[0].Flux.Version = "v0.2.0"
 
 	tt.newSpec.FluxConfig = &tt.fluxConfig
 	g := newFluxTest(t)
@@ -171,7 +171,7 @@ func TestFluxUpgradeBootstrapGitError(t *testing.T) {
 
 func TestFluxUpgradeAddError(t *testing.T) {
 	tt := newUpgraderTest(t)
-	tt.newSpec.FirstVersionsBundle().Flux.Version = "v0.2.0"
+	tt.newSpec.Bundles.Spec.VersionsBundles[0].Flux.Version = "v0.2.0"
 
 	tt.newSpec.FluxConfig = &tt.fluxConfig
 

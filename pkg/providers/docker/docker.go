@@ -595,7 +595,7 @@ func updateKubeconfig(content *[]byte, dockerLbPort string) {
 }
 
 func (p *provider) Version(clusterSpec *cluster.Spec) string {
-	versionsBundle := clusterSpec.FirstVersionsBundle()
+	versionsBundle := &clusterSpec.Bundles.Spec.VersionsBundles[0]
 	return versionsBundle.Docker.Version
 }
 
@@ -614,7 +614,7 @@ func (p *provider) GetDeployments() map[string][]string {
 }
 
 func (p *provider) GetInfrastructureBundle(clusterSpec *cluster.Spec) *types.InfrastructureBundle {
-	versionsBundle := clusterSpec.FirstVersionsBundle()
+	versionsBundle := &clusterSpec.Bundles.Spec.VersionsBundles[0]
 	folderName := fmt.Sprintf("infrastructure-docker/%s/", versionsBundle.Docker.Version)
 
 	infraBundle := types.InfrastructureBundle{

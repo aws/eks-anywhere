@@ -42,7 +42,7 @@ func newInstallerTest(t *testing.T, opts ...clustermanager.EKSAInstallerOpt) *in
 	ctrl := gomock.NewController(t)
 	client := mocks.NewMockKubernetesClient(ctrl)
 	currentSpec := test.NewClusterSpec(func(s *cluster.Spec) {
-		s.FirstVersionsBundle().Eksa.Version = "v0.1.0"
+		s.Bundles.Spec.VersionsBundles[0].Eksa.Version = "v0.1.0"
 		s.Cluster = &anywherev1.Cluster{
 			Spec: anywherev1.ClusterSpec{
 				ControlPlaneConfiguration: anywherev1.ControlPlaneConfiguration{
@@ -55,7 +55,7 @@ func newInstallerTest(t *testing.T, opts ...clustermanager.EKSAInstallerOpt) *in
 		}
 	})
 
-	currentManagementComponentsVersionsBundle := currentSpec.FirstVersionsBundle().DeepCopy()
+	currentManagementComponentsVersionsBundle := currentSpec.Bundles.Spec.VersionsBundles[0].DeepCopy()
 
 	return &installerTest{
 		WithT:     NewWithT(t),
@@ -75,7 +75,7 @@ func newInstallerTest(t *testing.T, opts ...clustermanager.EKSAInstallerOpt) *in
 
 func TestEKSAInstallerInstallSuccessWithRealManifest(t *testing.T) {
 	tt := newInstallerTest(t)
-	tt.newSpec.FirstVersionsBundle().Eksa.Components.URI = "../../config/manifest/eksa-components.yaml"
+	tt.newSpec.Bundles.Spec.VersionsBundles[0].Eksa.Components.URI = "../../config/manifest/eksa-components.yaml"
 	file, err := os.ReadFile("../../config/manifest/eksa-components.yaml")
 	if err != nil {
 		t.Fatalf("could not read eksa-components")
@@ -91,7 +91,7 @@ func TestEKSAInstallerInstallSuccessWithRealManifest(t *testing.T) {
 
 func TestEKSAInstallerInstallSuccessWithTestManifest(t *testing.T) {
 	tt := newInstallerTest(t)
-	tt.newSpec.FirstVersionsBundle().Eksa.Components.URI = "testdata/eksa_components.yaml"
+	tt.newSpec.Bundles.Spec.VersionsBundles[0].Eksa.Components.URI = "testdata/eksa_components.yaml"
 	tt.newSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host = "1.2.3.4"
 	tt.newSpec.Cluster.Spec.DatacenterRef.Kind = anywherev1.VSphereDatacenterKind
 	tt.newSpec.Cluster.Spec.ProxyConfiguration = &anywherev1.ProxyConfiguration{
@@ -157,7 +157,7 @@ func TestEKSAInstallerInstallSuccessWithTestManifest(t *testing.T) {
 
 func TestEKSAInstallerInstallSuccessWithNoTimeout(t *testing.T) {
 	tt := newInstallerTest(t, clustermanager.WithEKSAInstallerNoTimeouts())
-	tt.newSpec.FirstVersionsBundle().Eksa.Components.URI = "../../config/manifest/eksa-components.yaml"
+	tt.newSpec.Bundles.Spec.VersionsBundles[0].Eksa.Components.URI = "../../config/manifest/eksa-components.yaml"
 	tt.client.EXPECT().Apply(tt.ctx, tt.cluster.KubeconfigFile, gomock.AssignableToTypeOf(&appsv1.Deployment{}))
 	file, err := os.ReadFile("../../config/manifest/eksa-components.yaml")
 	if err != nil {
@@ -187,8 +187,8 @@ func TestInstallerUpgradeNoChanges(t *testing.T) {
 func TestInstallerUpgradeSuccess(t *testing.T) {
 	tt := newInstallerTest(t)
 
-	tt.newSpec.FirstVersionsBundle().Eksa.Version = "v0.2.0"
-	tt.newSpec.FirstVersionsBundle().Eksa.Components = v1alpha1.Manifest{
+	tt.newSpec.Bundles.Spec.VersionsBundles[0].Eksa.Version = "v0.2.0"
+	tt.newSpec.Bundles.Spec.VersionsBundles[0].Eksa.Components = v1alpha1.Manifest{
 		URI: "testdata/eksa_components.yaml",
 	}
 
@@ -211,7 +211,7 @@ func TestInstallerUpgradeSuccess(t *testing.T) {
 func TestInstallerUpgradeInstallError(t *testing.T) {
 	tt := newInstallerTest(t)
 
-	tt.newSpec.FirstVersionsBundle().Eksa.Version = "v0.2.0"
+	tt.newSpec.Bundles.Spec.VersionsBundles[0].Eksa.Version = "v0.2.0"
 
 	// components file not set so this should return an error in failing to load manifest
 	_, err := tt.installer.Upgrade(tt.ctx, tt.log, tt.cluster, tt.currentManagementComponentsVersionsBundle, tt.newSpec)

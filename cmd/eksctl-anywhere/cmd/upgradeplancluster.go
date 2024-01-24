@@ -104,7 +104,7 @@ func (uc *upgradeClusterOptions) upgradePlanCluster(ctx context.Context) error {
 			return err
 		}
 
-		newVersionsBundle := newClusterSpec.FirstVersionsBundle()
+		newVersionsBundle := &newClusterSpec.Bundles.Spec.VersionsBundles[0]
 
 		componentChangeDiffs.Append(eksaupgrader.EksaChangeDiff(currentManagementComponentsVersionsBundle, newVersionsBundle))
 		componentChangeDiffs.Append(fluxupgrader.ChangeDiff(currentManagementComponentsVersionsBundle, newVersionsBundle, currentSpec, newClusterSpec))

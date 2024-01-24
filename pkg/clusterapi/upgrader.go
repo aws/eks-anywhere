@@ -32,7 +32,7 @@ func (u *Upgrader) Upgrade(ctx context.Context, managementCluster *types.Cluster
 		return nil, nil
 	}
 
-	newVersionsBundle := newSpec.FirstVersionsBundle()
+	newVersionsBundle := &newSpec.Bundles.Spec.VersionsBundles[0]
 	capiChangeDiff := capiChangeDiff(currentManagementComponentsVersionsBundle, newVersionsBundle, provider)
 	if capiChangeDiff == nil {
 		logger.V(1).Info("Nothing to upgrade for CAPI")

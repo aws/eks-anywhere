@@ -522,7 +522,7 @@ func (p *Provider) UpdateKubeConfig(content *[]byte, clusterName string) error {
 
 // Version returns the nutanix version from the VersionsBundle.
 func (p *Provider) Version(clusterSpec *cluster.Spec) string {
-	versionsBundle := clusterSpec.FirstVersionsBundle()
+	versionsBundle := &clusterSpec.Bundles.Spec.VersionsBundles[0]
 	return versionsBundle.Nutanix.Version
 }
 
@@ -546,7 +546,7 @@ func (p *Provider) GetDeployments() map[string][]string {
 }
 
 func (p *Provider) GetInfrastructureBundle(clusterSpec *cluster.Spec) *types.InfrastructureBundle {
-	versionsBundle := clusterSpec.FirstVersionsBundle()
+	versionsBundle := &clusterSpec.Bundles.Spec.VersionsBundles[0]
 	manifests := []releasev1alpha1.Manifest{
 		versionsBundle.Nutanix.Components,
 		versionsBundle.Nutanix.Metadata,

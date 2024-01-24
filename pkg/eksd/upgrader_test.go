@@ -35,12 +35,12 @@ func newUpgraderTest(t *testing.T) *upgraderTest {
 	client := mocks.NewMockEksdInstallerClient(ctrl)
 	reader := m.NewMockReader(ctrl)
 	currentSpec := test.NewClusterSpec(func(s *cluster.Spec) {
-		s.FirstVersionsBundle().EksD.Name = "kubernetes-1-19-eks-1"
-		s.FirstVersionsBundle().EksD.ReleaseChannel = "1-19"
-		s.FirstVersionsBundle().EksD.KubeVersion = "v1.19.1"
+		s.Bundles.Spec.VersionsBundles[0].EksD.Name = "kubernetes-1-19-eks-1"
+		s.Bundles.Spec.VersionsBundles[0].EksD.ReleaseChannel = "1-19"
+		s.Bundles.Spec.VersionsBundles[0].EksD.KubeVersion = "v1.19.1"
 	})
 
-	currentManagementComponentsVersionsBundle := currentSpec.FirstVersionsBundle().DeepCopy()
+	currentManagementComponentsVersionsBundle := currentSpec.Bundles.Spec.VersionsBundles[0].DeepCopy()
 
 	return &upgraderTest{
 		WithT:        NewWithT(t),
@@ -74,9 +74,9 @@ func TestEksdUpgradeSuccess(t *testing.T) {
 	tt := newUpgraderTest(t)
 
 	tt.newSpec.Bundles = bundle()
-	tt.newSpec.FirstVersionsBundle().EksD.Name = "kubernetes-1-19-eks-2"
-	tt.newSpec.FirstVersionsBundle().EksD.ReleaseChannel = "1-19"
-	tt.newSpec.FirstVersionsBundle().EksD.KubeVersion = "v1.19.1"
+	tt.newSpec.Bundles.Spec.VersionsBundles[0].EksD.Name = "kubernetes-1-19-eks-2"
+	tt.newSpec.Bundles.Spec.VersionsBundles[0].EksD.ReleaseChannel = "1-19"
+	tt.newSpec.Bundles.Spec.VersionsBundles[0].EksD.KubeVersion = "v1.19.1"
 
 	wantDiff := &types.ChangeDiff{
 		ComponentReports: []types.ComponentChangeDiff{
@@ -97,11 +97,11 @@ func TestUpgraderEksdUpgradeInstallError(t *testing.T) {
 	tt := newUpgraderTest(t)
 	tt.eksdUpgrader.SetRetrier(retrier.NewWithMaxRetries(1, 0))
 	tt.newSpec.Bundles = bundle()
-	tt.newSpec.FirstVersionsBundle().EksD.Name = "kubernetes-1-19-eks-2"
-	tt.newSpec.FirstVersionsBundle().EksD.Components = ""
+	tt.newSpec.Bundles.Spec.VersionsBundles[0].EksD.Name = "kubernetes-1-19-eks-2"
+	tt.newSpec.Bundles.Spec.VersionsBundles[0].EksD.Components = ""
 	tt.newSpec.Bundles.Spec.VersionsBundles[1].EksD.Components = ""
 
-	tt.reader.EXPECT().ReadFile(tt.newSpec.FirstVersionsBundle().EksD.Components).Return([]byte(""), fmt.Errorf("error"))
+	tt.reader.EXPECT().ReadFile(tt.newSpec.Bundles.Spec.VersionsBundles[0].EksD.Components).Return([]byte(""), fmt.Errorf("error"))
 	// components file not set so this should return an error in failing to load manifest
 	_, err := tt.eksdUpgrader.Upgrade(tt.ctx, tt.cluster, tt.currentManagementComponentsVersionsBundle, tt.newSpec)
 	tt.Expect(err).NotTo(BeNil())

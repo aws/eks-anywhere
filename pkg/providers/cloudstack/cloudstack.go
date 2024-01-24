@@ -810,7 +810,7 @@ func (p *cloudstackProvider) BootstrapSetup(ctx context.Context, clusterConfig *
 }
 
 func (p *cloudstackProvider) Version(clusterSpec *cluster.Spec) string {
-	versionsBundle := clusterSpec.FirstVersionsBundle()
+	versionsBundle := &clusterSpec.Bundles.Spec.VersionsBundles[0]
 	return versionsBundle.CloudStack.Version
 }
 
@@ -831,7 +831,7 @@ func (p *cloudstackProvider) GetDeployments() map[string][]string {
 }
 
 func (p *cloudstackProvider) GetInfrastructureBundle(clusterSpec *cluster.Spec) *types.InfrastructureBundle {
-	versionsBundle := clusterSpec.FirstVersionsBundle()
+	versionsBundle := &clusterSpec.Bundles.Spec.VersionsBundles[0]
 	folderName := fmt.Sprintf("infrastructure-cloudstack/%s/", versionsBundle.CloudStack.Version)
 
 	infraBundle := types.InfrastructureBundle{

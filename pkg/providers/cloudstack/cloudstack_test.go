@@ -894,7 +894,7 @@ func TestVersion(t *testing.T) {
 	cloudStackProviderVersion := "v4.14.1"
 	provider := givenProvider(t)
 	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
-	clusterSpec.FirstVersionsBundle().CloudStack.Version = cloudStackProviderVersion
+	clusterSpec.Bundles.Spec.VersionsBundles[0].CloudStack.Version = cloudStackProviderVersion
 	setupContext(t)
 
 	result := provider.Version(clusterSpec)
@@ -1039,7 +1039,7 @@ func TestGetInfrastructureBundleSuccess(t *testing.T) {
 		{
 			testName: "correct Overrides layer",
 			clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
-				s.FirstVersionsBundle().CloudStack = releasev1alpha1.CloudStackBundle{
+				s.Bundles.Spec.VersionsBundles[0].CloudStack = releasev1alpha1.CloudStackBundle{
 					Version: "v0.1.0",
 					ClusterAPIController: releasev1alpha1.Image{
 						URI: "public.ecr.aws/l0g8r8j6/kubernetes-sigs/cluster-api-provider-cloudstack/release/manager:v0.1.0",
@@ -1071,7 +1071,7 @@ func TestGetInfrastructureBundleSuccess(t *testing.T) {
 			}
 			assert.Equal(t, "infrastructure-cloudstack/v0.1.0/", infraBundle.FolderName, "Incorrect folder name")
 			assert.Equal(t, len(infraBundle.Manifests), 2, "Wrong number of files in the infrastructure bundle")
-			bundle := tt.clusterSpec.FirstVersionsBundle()
+			bundle := &tt.clusterSpec.Bundles.Spec.VersionsBundles[0]
 			wantManifests := []releasev1alpha1.Manifest{
 				bundle.CloudStack.Components,
 				bundle.CloudStack.Metadata,
