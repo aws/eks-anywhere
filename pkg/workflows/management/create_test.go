@@ -292,6 +292,8 @@ func TestCreateInstallCustomComponentsFailure(t *testing.T) {
 	c.expectPreflightValidationsToPass()
 	c.expectCAPIInstall(nil, nil, nil)
 
+	c.eksdInstaller.EXPECT().InstallEksdCRDs(c.ctx, c.clusterSpec, c.bootstrapCluster).Return(nil)
+
 	c.clusterManager.EXPECT().InstallCustomComponents(
 		c.ctx, c.clusterSpec, c.bootstrapCluster, c.provider).Return(errors.New("test"))
 
@@ -314,9 +316,6 @@ func TestCreateInstallCRDFailure(t *testing.T) {
 	c.expectCAPIInstall(nil, nil, nil)
 
 	gomock.InOrder(
-		c.clusterManager.EXPECT().InstallCustomComponents(
-			c.ctx, c.clusterSpec, c.bootstrapCluster, c.provider),
-
 		c.eksdInstaller.EXPECT().InstallEksdCRDs(c.ctx, c.clusterSpec, c.bootstrapCluster).Return(errors.New("test")),
 	)
 
