@@ -125,7 +125,7 @@ func (g *FileGenerator) WriteEksaKustomization() error {
 }
 
 func (g *FileGenerator) WriteFluxKustomization(clusterSpec *cluster.Spec) error {
-	versionsBundle := clusterSpec.RootVersionsBundle()
+	versionsBundle := clusterSpec.FirstVersionsBundle()
 	values := map[string]string{
 		"Namespace":                   clusterSpec.FluxConfig.Spec.SystemNamespace,
 		"SourceControllerImage":       versionsBundle.Flux.SourceController.VersionedImage(),

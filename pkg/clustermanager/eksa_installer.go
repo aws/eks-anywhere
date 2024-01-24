@@ -22,6 +22,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/manifests/bundles"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/yamlutil"
+	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
 // EKSAInstallerOpt updates an EKSAInstaller.
@@ -85,21 +86,20 @@ func (i *EKSAInstaller) Install(ctx context.Context, log logr.Logger, cluster *t
 
 // Upgrade re-installs the eksa components in a cluster if the VersionBundle defined in the
 // new spec has a different eks-a components version. Workload clusters are ignored.
-func (i *EKSAInstaller) Upgrade(ctx context.Context, log logr.Logger, c *types.Cluster, currentSpec, newSpec *cluster.Spec) (*types.ChangeDiff, error) {
+func (i *EKSAInstaller) Upgrade(ctx context.Context, log logr.Logger, c *types.Cluster, currentManagementComponentsVersionsBundle *releasev1alpha1.VersionsBundle, newSpec *cluster.Spec) (*types.ChangeDiff, error) {
 	log.V(1).Info("Checking for EKS-A components upgrade")
 	if !newSpec.Cluster.IsSelfManaged() {
 		log.V(1).Info("Skipping EKS-A components upgrade, not a self-managed cluster")
 		return nil, nil
 	}
-	changeDiff := EksaChangeDiff(currentSpec, newSpec)
+
+	newVersionsBundle := newSpec.FirstVersionsBundle()
+	changeDiff := EksaChangeDiff(currentManagementComponentsVersionsBundle, newVersionsBundle)
 	if changeDiff == nil {
 		log.V(1).Info("Nothing to upgrade for controller and CRDs")
 		return nil, nil
 	}
-	log.V(1).Info("Starting EKS-A components upgrade")
-	oldVersionsBundle := currentSpec.RootVersionsBundle()
-	newVersionsBundle := newSpec.RootVersionsBundle()
-	oldVersion := oldVersionsBundle.Eksa.Version
+	oldVersion := currentManagementComponentsVersionsBundle.Eksa.Version
 	newVersion := newVersionsBundle.Eksa.Version
 	if err := i.Install(ctx, log, c, newSpec); err != nil {
 		return nil, fmt.Errorf("upgrading EKS-A components from version %v to version %v: %v", oldVersion, newVersion, err)
@@ -178,7 +178,7 @@ func fullLifeCycleControllerForProvider(cluster *anywherev1.Cluster) bool {
 }
 
 func (g *EKSAComponentGenerator) parseEKSAComponentsSpec(spec *cluster.Spec) (*eksaComponents, error) {
-	bundle := spec.RootVersionsBundle()
+	bundle := spec.FirstVersionsBundle()
 	componentsManifest, err := bundles.ReadManifest(g.reader, bundle.Eksa.Components)
 	if err != nil {
 		return nil, fmt.Errorf("loading manifest for eksa components: %v", err)
@@ -224,21 +224,19 @@ func (c *eksaComponents) BuildFromParsed(lookup yamlutil.ObjectLookup) error {
 	return nil
 }
 
-// EksaChangeDiff computes the version diff in eksa components between two specs.
-func EksaChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ChangeDiff {
-	oldVersionsBundle := currentSpec.RootVersionsBundle()
-	newVersionsBundle := newSpec.RootVersionsBundle()
-
-	if oldVersionsBundle.Eksa.Version != newVersionsBundle.Eksa.Version {
+// EksaChangeDiff computes the version diff in eksa components between the management components versions and the new spec.
+func EksaChangeDiff(currentVersionsBundle, newVersionsBundle *releasev1alpha1.VersionsBundle) *types.ChangeDiff {
+	if currentVersionsBundle.Eksa.Version != newVersionsBundle.Eksa.Version {
 		return &types.ChangeDiff{
 			ComponentReports: []types.ComponentChangeDiff{
 				{
-					ComponentName: "EKS-A",
+					ComponentName: "EKS-A Management",
 					NewVersion:    newVersionsBundle.Eksa.Version,
-					OldVersion:    oldVersionsBundle.Eksa.Version,
+					OldVersion:    currentVersionsBundle.Eksa.Version,
 				},
 			},
 		}
 	}
+
 	return nil
 }

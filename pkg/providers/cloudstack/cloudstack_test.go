@@ -894,7 +894,7 @@ func TestVersion(t *testing.T) {
 	cloudStackProviderVersion := "v4.14.1"
 	provider := givenProvider(t)
 	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
-	clusterSpec.VersionsBundles["1.21"].CloudStack.Version = cloudStackProviderVersion
+	clusterSpec.FirstVersionsBundle().CloudStack.Version = cloudStackProviderVersion
 	setupContext(t)
 
 	result := provider.Version(clusterSpec)
@@ -1039,7 +1039,7 @@ func TestGetInfrastructureBundleSuccess(t *testing.T) {
 		{
 			testName: "correct Overrides layer",
 			clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
-				s.VersionsBundles["1.19"].CloudStack = releasev1alpha1.CloudStackBundle{
+				s.FirstVersionsBundle().CloudStack = releasev1alpha1.CloudStackBundle{
 					Version: "v0.1.0",
 					ClusterAPIController: releasev1alpha1.Image{
 						URI: "public.ecr.aws/l0g8r8j6/kubernetes-sigs/cluster-api-provider-cloudstack/release/manager:v0.1.0",
@@ -1071,7 +1071,7 @@ func TestGetInfrastructureBundleSuccess(t *testing.T) {
 			}
 			assert.Equal(t, "infrastructure-cloudstack/v0.1.0/", infraBundle.FolderName, "Incorrect folder name")
 			assert.Equal(t, len(infraBundle.Manifests), 2, "Wrong number of files in the infrastructure bundle")
-			bundle := tt.clusterSpec.RootVersionsBundle()
+			bundle := tt.clusterSpec.FirstVersionsBundle()
 			wantManifests := []releasev1alpha1.Manifest{
 				bundle.CloudStack.Components,
 				bundle.CloudStack.Metadata,
@@ -1120,7 +1120,8 @@ func TestProviderDeleteResources(t *testing.T) {
 func TestChangeDiffNoChange(t *testing.T) {
 	provider := givenProvider(t)
 	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
-	assert.Nil(t, provider.ChangeDiff(clusterSpec, clusterSpec))
+	versionsBundle := clusterSpec.RootVersionsBundle().VersionsBundle
+	assert.Nil(t, provider.ChangeDiff(versionsBundle, versionsBundle))
 }
 
 func TestChangeDiffWithChange(t *testing.T) {
@@ -1138,7 +1139,9 @@ func TestChangeDiffWithChange(t *testing.T) {
 		OldVersion:    "v0.2.0",
 	}
 
-	assert.Equal(t, wantDiff, provider.ChangeDiff(clusterSpec, newClusterSpec))
+	currentVersionsBundle := clusterSpec.RootVersionsBundle().VersionsBundle
+	newVersionsBundle := newClusterSpec.RootVersionsBundle().VersionsBundle
+	assert.Equal(t, wantDiff, provider.ChangeDiff(currentVersionsBundle, newVersionsBundle))
 }
 
 func TestProviderGenerateCAPISpecForUpgradeUpdateMachineTemplate(t *testing.T) {

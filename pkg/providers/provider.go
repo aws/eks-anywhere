@@ -7,6 +7,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/types"
+	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
 type Provider interface {
@@ -35,7 +36,7 @@ type Provider interface {
 	MachineResourceType() string
 	MachineConfigs(clusterSpec *cluster.Spec) []MachineConfig
 	ValidateNewSpec(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error
-	ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ComponentChangeDiff
+	ChangeDiff(currentVersionsBundle, newVersionsBundle *releasev1alpha1.VersionsBundle) *types.ComponentChangeDiff
 	RunPostControlPlaneUpgrade(ctx context.Context, oldClusterSpec *cluster.Spec, clusterSpec *cluster.Spec, workloadCluster *types.Cluster, managementCluster *types.Cluster) error
 	UpgradeNeeded(ctx context.Context, newSpec, currentSpec *cluster.Spec, cluster *types.Cluster) (bool, error)
 	DeleteResources(ctx context.Context, clusterSpec *cluster.Spec) error

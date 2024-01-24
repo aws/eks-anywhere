@@ -1310,6 +1310,15 @@ func (c *Cluster) SetManagementComponentsVersion(version string) {
 	c.Annotations[managementComponentsVersionAnnotation] = version
 }
 
+// GetManagementComponentsVersion returns `management-components version`annotation value on the Cluster object.
+func (c *Cluster) GetManagementComponentsVersion() string {
+	if c.Annotations == nil {
+		return ""
+	}
+	version := c.Annotations[managementComponentsVersionAnnotation]
+	return version
+}
+
 // DisableControlPlaneIPCheck sets the `skip-ip-check` annotation on the Cluster object.
 func (c *Cluster) DisableControlPlaneIPCheck() {
 	if c.Annotations == nil {

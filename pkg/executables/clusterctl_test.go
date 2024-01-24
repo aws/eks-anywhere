@@ -427,6 +427,7 @@ func TestClusterctlUpgradeInfrastructureProvidersError(t *testing.T) {
 
 var clusterSpec = test.NewClusterSpec(func(s *cluster.Spec) {
 	s.VersionsBundles["1.19"] = versionBundle
+	s.Bundles.Spec.VersionsBundles[0] = *versionBundle.VersionsBundle
 })
 
 var versionBundle = &cluster.VersionsBundle{

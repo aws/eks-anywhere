@@ -107,8 +107,6 @@ type deleteBootstrapClusterTask struct {
 	*CollectDiagnosticsTask
 }
 
-type updateClusterAndGitResources struct{}
-
 // reconcileClusterDefinitions updates all the places that have a cluster definition to follow the cluster config provided to this workflow:
 // the eks-a objects in the management cluster and the cluster config in the git repo if GitOps is enabled. It also resumes the eks-a controller
 // manager and GitOps reconciliations.
@@ -241,38 +239,11 @@ func (s *upgradeCoreComponents) Run(ctx context.Context, commandContext *task.Co
 	}
 	commandContext.UpgradeChangeDiff.Append(changeDiff)
 
-	changeDiff, err = commandContext.CAPIManager.Upgrade(ctx, commandContext.ManagementCluster, commandContext.Provider, commandContext.CurrentClusterSpec, commandContext.ClusterSpec)
-	if err != nil {
-		commandContext.SetError(err)
-		return &CollectDiagnosticsTask{}
-	}
-	commandContext.UpgradeChangeDiff.Append(changeDiff)
-
 	if err = commandContext.GitOpsManager.Install(ctx, commandContext.ManagementCluster, commandContext.CurrentClusterSpec, commandContext.ClusterSpec); err != nil {
 		commandContext.SetError(err)
 		return &CollectDiagnosticsTask{}
 	}
 
-	changeDiff, err = commandContext.GitOpsManager.Upgrade(ctx, commandContext.ManagementCluster, commandContext.CurrentClusterSpec, commandContext.ClusterSpec)
-	if err != nil {
-		commandContext.SetError(err)
-		return &CollectDiagnosticsTask{}
-	}
-	commandContext.UpgradeChangeDiff.Append(changeDiff)
-
-	changeDiff, err = commandContext.ClusterManager.Upgrade(ctx, commandContext.ManagementCluster, commandContext.CurrentClusterSpec, commandContext.ClusterSpec)
-	if err != nil {
-		commandContext.SetError(err)
-		return &CollectDiagnosticsTask{}
-	}
-	commandContext.UpgradeChangeDiff.Append(changeDiff)
-
-	changeDiff, err = commandContext.EksdUpgrader.Upgrade(ctx, commandContext.ManagementCluster, commandContext.CurrentClusterSpec, commandContext.ClusterSpec)
-	if err != nil {
-		commandContext.SetError(err)
-		return &CollectDiagnosticsTask{}
-	}
-	commandContext.UpgradeChangeDiff.Append(changeDiff)
 	s.UpgradeChangeDiff = commandContext.UpgradeChangeDiff
 
 	return &upgradeNeeded{}

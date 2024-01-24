@@ -978,7 +978,7 @@ func (p *vsphereProvider) PostWorkloadInit(ctx context.Context, cluster *types.C
 }
 
 func (p *vsphereProvider) Version(clusterSpec *cluster.Spec) string {
-	versionsBundle := clusterSpec.RootVersionsBundle()
+	versionsBundle := clusterSpec.FirstVersionsBundle()
 	return versionsBundle.VSphere.Version
 }
 
@@ -1001,7 +1001,7 @@ func (p *vsphereProvider) GetDeployments() map[string][]string {
 }
 
 func (p *vsphereProvider) GetInfrastructureBundle(clusterSpec *cluster.Spec) *types.InfrastructureBundle {
-	versionsBundle := clusterSpec.RootVersionsBundle()
+	versionsBundle := clusterSpec.FirstVersionsBundle()
 	folderName := fmt.Sprintf("infrastructure-vsphere/%s/", versionsBundle.VSphere.Version)
 
 	infraBundle := types.InfrastructureBundle{
@@ -1186,9 +1186,7 @@ func (p *vsphereProvider) secretContentsChanged(ctx context.Context, workloadClu
 	return false, nil
 }
 
-func (p *vsphereProvider) ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ComponentChangeDiff {
-	currentVersionsBundle := currentSpec.RootVersionsBundle()
-	newVersionsBundle := newSpec.RootVersionsBundle()
+func (p *vsphereProvider) ChangeDiff(currentVersionsBundle, newVersionsBundle *releasev1alpha1.VersionsBundle) *types.ComponentChangeDiff {
 	if currentVersionsBundle.VSphere.Version == newVersionsBundle.VSphere.Version {
 		return nil
 	}

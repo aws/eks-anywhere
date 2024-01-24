@@ -942,7 +942,8 @@ func TestNutanixProviderValidateNewSpec(t *testing.T) {
 func TestNutanixProviderChangeDiff(t *testing.T) {
 	provider := testDefaultNutanixProvider(t)
 	clusterSpec := test.NewFullClusterSpec(t, "testdata/eksa-cluster.yaml")
-	cd := provider.ChangeDiff(clusterSpec, clusterSpec)
+	versionsBundle := clusterSpec.FirstVersionsBundle()
+	cd := provider.ChangeDiff(versionsBundle, versionsBundle)
 	assert.Nil(t, cd)
 }
 
@@ -950,14 +951,16 @@ func TestNutanixProviderChangeDiffWithChange(t *testing.T) {
 	provider := testDefaultNutanixProvider(t)
 	clusterSpec := test.NewFullClusterSpec(t, "testdata/eksa-cluster.yaml")
 	newClusterSpec := clusterSpec.DeepCopy()
-	clusterSpec.VersionsBundles["1.19"].Nutanix.Version = "v0.5.2"
-	newClusterSpec.VersionsBundles["1.19"].Nutanix.Version = "v1.0.0"
+	clusterSpec.FirstVersionsBundle().Nutanix.Version = "v0.5.2"
+	newClusterSpec.FirstVersionsBundle().Nutanix.Version = "v1.0.0"
 	want := &types.ComponentChangeDiff{
 		ComponentName: "nutanix",
 		NewVersion:    "v1.0.0",
 		OldVersion:    "v0.5.2",
 	}
-	cd := provider.ChangeDiff(clusterSpec, newClusterSpec)
+	currentVersionsBundle := clusterSpec.FirstVersionsBundle()
+	newVersionsBundle := newClusterSpec.FirstVersionsBundle()
+	cd := provider.ChangeDiff(currentVersionsBundle, newVersionsBundle)
 	assert.Equal(t, cd, want)
 }
 

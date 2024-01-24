@@ -217,7 +217,7 @@ func (p *Provider) UpdateKubeConfig(content *[]byte, clusterName string) error {
 }
 
 func (p *Provider) Version(clusterSpec *cluster.Spec) string {
-	versionsBundle := clusterSpec.RootVersionsBundle()
+	versionsBundle := clusterSpec.FirstVersionsBundle()
 	return versionsBundle.Tinkerbell.Version
 }
 
@@ -252,7 +252,7 @@ func (p *Provider) GetDeployments() map[string][]string {
 }
 
 func (p *Provider) GetInfrastructureBundle(clusterSpec *cluster.Spec) *types.InfrastructureBundle {
-	versionsBundle := clusterSpec.RootVersionsBundle()
+	versionsBundle := clusterSpec.FirstVersionsBundle()
 	folderName := fmt.Sprintf("infrastructure-tinkerbell/%s/", versionsBundle.Tinkerbell.Version)
 
 	infraBundle := types.InfrastructureBundle{
@@ -303,9 +303,8 @@ func (p *Provider) MachineConfigs(_ *cluster.Spec) []providers.MachineConfig {
 	return providers.ConfigsMapToSlice(configs)
 }
 
-func (p *Provider) ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ComponentChangeDiff {
-	currentVersionsBundle := currentSpec.RootVersionsBundle()
-	newVersionsBundle := newSpec.RootVersionsBundle()
+// ChangeDiff generates a version change diff for the Tinkerbell provider component.
+func (p *Provider) ChangeDiff(currentVersionsBundle, newVersionsBundle *releasev1alpha1.VersionsBundle) *types.ComponentChangeDiff {
 	if currentVersionsBundle.Tinkerbell.Version == newVersionsBundle.Tinkerbell.Version {
 		return nil
 	}

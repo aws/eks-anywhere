@@ -87,6 +87,7 @@ func givenClusterSpec() *cluster.Spec {
 		s.SnowMachineConfigs = givenMachineConfigs()
 		s.SnowIPPools = givenIPPools()
 		s.VersionsBundles["1.21"] = givenVersionsBundle()
+		s.Bundles.Spec.VersionsBundles[0] = *givenVersionsBundle().VersionsBundle
 		s.ManagementCluster = givenManagementCluster()
 	})
 }
@@ -821,7 +822,7 @@ func TestVersion(t *testing.T) {
 	snowVersion := "v1.0.2"
 	provider := givenProvider(t)
 	clusterSpec := givenEmptyClusterSpec()
-	clusterSpec.VersionsBundles["1.19"].Snow.Version = snowVersion
+	clusterSpec.FirstVersionsBundle().Snow.Version = snowVersion
 	g := NewWithT(t)
 	result := provider.Version(clusterSpec)
 	g.Expect(result).To(Equal(snowVersion))
@@ -829,7 +830,7 @@ func TestVersion(t *testing.T) {
 
 func TestGetInfrastructureBundle(t *testing.T) {
 	tt := newSnowTest(t)
-	bundle := tt.clusterSpec.RootVersionsBundle()
+	bundle := tt.clusterSpec.FirstVersionsBundle()
 	want := &types.InfrastructureBundle{
 		FolderName: "infrastructure-snow/v1.0.2/",
 		Manifests: []releasev1alpha1.Manifest{
@@ -1214,7 +1215,8 @@ func TestChangeDiffNoChange(t *testing.T) {
 	g := NewWithT(t)
 	provider := givenProvider(t)
 	clusterSpec := givenEmptyClusterSpec()
-	g.Expect(provider.ChangeDiff(clusterSpec, clusterSpec)).To(BeNil())
+	versionsBundle := clusterSpec.FirstVersionsBundle()
+	g.Expect(provider.ChangeDiff(versionsBundle, versionsBundle)).To(BeNil())
 }
 
 func TestChangeDiffWithChange(t *testing.T) {
@@ -1222,14 +1224,16 @@ func TestChangeDiffWithChange(t *testing.T) {
 	provider := givenProvider(t)
 	clusterSpec := givenEmptyClusterSpec()
 	newClusterSpec := clusterSpec.DeepCopy()
-	clusterSpec.VersionsBundles["1.19"].Snow.Version = "v1.0.2"
-	newClusterSpec.VersionsBundles["1.19"].Snow.Version = "v1.0.3"
+	clusterSpec.FirstVersionsBundle().Snow.Version = "v1.0.2"
+	newClusterSpec.FirstVersionsBundle().Snow.Version = "v1.0.3"
 	want := &types.ComponentChangeDiff{
 		ComponentName: "snow",
 		NewVersion:    "v1.0.3",
 		OldVersion:    "v1.0.2",
 	}
-	g.Expect(provider.ChangeDiff(clusterSpec, newClusterSpec)).To(Equal(want))
+	currentVersionsBundle := clusterSpec.FirstVersionsBundle()
+	newVersionsBundle := newClusterSpec.FirstVersionsBundle()
+	g.Expect(provider.ChangeDiff(currentVersionsBundle, newVersionsBundle)).To(Equal(want))
 }
 
 func TestUpdateSecrets(t *testing.T) {

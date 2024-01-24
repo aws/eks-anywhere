@@ -13,6 +13,7 @@ import (
 	cluster "github.com/aws/eks-anywhere/pkg/cluster"
 	providers "github.com/aws/eks-anywhere/pkg/providers"
 	types "github.com/aws/eks-anywhere/pkg/types"
+	v1alpha10 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 	gomock "github.com/golang/mock/gomock"
 )
 
@@ -55,7 +56,7 @@ func (mr *MockProviderMockRecorder) BootstrapClusterOpts(arg0 interface{}) *gomo
 }
 
 // ChangeDiff mocks base method.
-func (m *MockProvider) ChangeDiff(arg0, arg1 *cluster.Spec) *types.ComponentChangeDiff {
+func (m *MockProvider) ChangeDiff(arg0, arg1 *v1alpha10.VersionsBundle) *types.ComponentChangeDiff {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ChangeDiff", arg0, arg1)
 	ret0, _ := ret[0].(*types.ComponentChangeDiff)

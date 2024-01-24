@@ -171,7 +171,7 @@ type AwsIamAuth interface {
 // EKSAComponents allows to manage the eks-a components installation in a cluster.
 type EKSAComponents interface {
 	Install(ctx context.Context, log logr.Logger, cluster *types.Cluster, spec *cluster.Spec) error
-	Upgrade(ctx context.Context, log logr.Logger, cluster *types.Cluster, currentSpec, newSpec *cluster.Spec) (*types.ChangeDiff, error)
+	Upgrade(ctx context.Context, log logr.Logger, cluster *types.Cluster, currentManagentComponentsVersionsBundle *releasev1alpha1.VersionsBundle, newSpec *cluster.Spec) (*types.ChangeDiff, error)
 }
 
 type ClusterManagerOpt func(*ClusterManager)
@@ -1131,8 +1131,8 @@ func (c *ClusterManager) InstallCustomComponents(ctx context.Context, clusterSpe
 }
 
 // Upgrade updates the eksa components in a cluster according to a Spec.
-func (c *ClusterManager) Upgrade(ctx context.Context, cluster *types.Cluster, currentSpec, newSpec *cluster.Spec) (*types.ChangeDiff, error) {
-	return c.eksaComponents.Upgrade(ctx, logger.Get(), cluster, currentSpec, newSpec)
+func (c *ClusterManager) Upgrade(ctx context.Context, cluster *types.Cluster, currentManagementComponentsVersionsBundle *releasev1alpha1.VersionsBundle, newSpec *cluster.Spec) (*types.ChangeDiff, error) {
+	return c.eksaComponents.Upgrade(ctx, logger.Get(), cluster, currentManagementComponentsVersionsBundle, newSpec)
 }
 
 func (c *ClusterManager) CreateEKSANamespace(ctx context.Context, cluster *types.Cluster) error {

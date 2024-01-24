@@ -595,7 +595,7 @@ func updateKubeconfig(content *[]byte, dockerLbPort string) {
 }
 
 func (p *provider) Version(clusterSpec *cluster.Spec) string {
-	versionsBundle := clusterSpec.RootVersionsBundle()
+	versionsBundle := clusterSpec.FirstVersionsBundle()
 	return versionsBundle.Docker.Version
 }
 
@@ -614,7 +614,7 @@ func (p *provider) GetDeployments() map[string][]string {
 }
 
 func (p *provider) GetInfrastructureBundle(clusterSpec *cluster.Spec) *types.InfrastructureBundle {
-	versionsBundle := clusterSpec.RootVersionsBundle()
+	versionsBundle := clusterSpec.FirstVersionsBundle()
 	folderName := fmt.Sprintf("infrastructure-docker/%s/", versionsBundle.Docker.Version)
 
 	infraBundle := types.InfrastructureBundle{
@@ -641,9 +641,7 @@ func (p *provider) ValidateNewSpec(_ context.Context, _ *types.Cluster, _ *clust
 	return nil
 }
 
-func (p *provider) ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ComponentChangeDiff {
-	currentVersionsBundle := currentSpec.RootVersionsBundle()
-	newVersionsBundle := newSpec.RootVersionsBundle()
+func (p *provider) ChangeDiff(currentVersionsBundle, newVersionsBundle *releasev1alpha1.VersionsBundle) *types.ComponentChangeDiff {
 	if currentVersionsBundle.Docker.Version == newVersionsBundle.Docker.Version {
 		return nil
 	}

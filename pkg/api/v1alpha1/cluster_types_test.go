@@ -3263,3 +3263,40 @@ func TestCluster_SetManagmentComponentsVersion(t *testing.T) {
 		})
 	}
 }
+
+func TestCluster_ManagementComponentsVersion(t *testing.T) {
+	tests := []struct {
+		name            string
+		cluster         *v1alpha1.Cluster
+		expectedVersion string
+	}{
+		{
+			name: "nil annotation",
+			cluster: baseCluster(func(c *v1alpha1.Cluster) {
+				c.Annotations = nil
+			}),
+			expectedVersion: "",
+		},
+		{
+			name: "empty management component version",
+			cluster: baseCluster(func(c *v1alpha1.Cluster) {
+				c.SetManagementComponentsVersion("")
+			}),
+			expectedVersion: "",
+		},
+		{
+			name: "existing management component version",
+			cluster: baseCluster(func(c *v1alpha1.Cluster) {
+				c.SetManagementComponentsVersion("v0.0.0-dev")
+			}),
+			expectedVersion: "v0.0.0-dev",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			got := tt.cluster.GetManagementComponentsVersion()
+			g.Expect(got).To(Equal(tt.expectedVersion))
+		})
+	}
+}

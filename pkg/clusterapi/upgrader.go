@@ -8,6 +8,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/types"
+	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
 type Upgrader struct {
@@ -23,14 +24,16 @@ func NewUpgrader(capiClient CAPIClient, kubectlClient KubectlClient) *Upgrader {
 	}
 }
 
-func (u *Upgrader) Upgrade(ctx context.Context, managementCluster *types.Cluster, provider providers.Provider, currentSpec, newSpec *cluster.Spec) (*types.ChangeDiff, error) {
+// Upgrade checks whether upgrading the CAPI components is necessary and, if so, upgrades them the new versions.
+func (u *Upgrader) Upgrade(ctx context.Context, managementCluster *types.Cluster, provider providers.Provider, currentManagementComponentsVersionsBundle *releasev1.VersionsBundle, newSpec *cluster.Spec) (*types.ChangeDiff, error) {
 	logger.V(1).Info("Checking for CAPI upgrades")
 	if !newSpec.Cluster.IsSelfManaged() {
 		logger.V(1).Info("Skipping CAPI upgrades, not a self-managed cluster")
 		return nil, nil
 	}
 
-	capiChangeDiff := capiChangeDiff(currentSpec, newSpec, provider)
+	newVersionsBundle := newSpec.FirstVersionsBundle()
+	capiChangeDiff := capiChangeDiff(currentManagementComponentsVersionsBundle, newVersionsBundle, provider)
 	if capiChangeDiff == nil {
 		logger.V(1).Info("Nothing to upgrade for CAPI")
 		return nil, nil
@@ -38,7 +41,7 @@ func (u *Upgrader) Upgrade(ctx context.Context, managementCluster *types.Cluster
 
 	logger.V(1).Info("Starting CAPI upgrades")
 	if err := u.capiClient.Upgrade(ctx, managementCluster, provider, newSpec, capiChangeDiff); err != nil {
-		return nil, fmt.Errorf("failed upgrading ClusterAPI from bundles %d to bundles %d: %v", currentSpec.Bundles.Spec.Number, newSpec.Bundles.Spec.Number, err)
+		return nil, fmt.Errorf("failed upgrading ClusterAPI to EKS-A version %s: %v", newVersionsBundle.Eksa.Version, err)
 	}
 
 	return capiChangeDiff.toChangeDiff(), nil
@@ -67,16 +70,14 @@ func (c *CAPIChangeDiff) toChangeDiff() *types.ChangeDiff {
 	return types.NewChangeDiff(r...)
 }
 
-func CapiChangeDiff(currentSpec, newSpec *cluster.Spec, provider providers.Provider) *types.ChangeDiff {
-	return capiChangeDiff(currentSpec, newSpec, provider).toChangeDiff()
+// CapiChangeDiff generates a version change diff for the CAPI components.
+func CapiChangeDiff(currentVersionsBundle, newVersionsBundle *releasev1.VersionsBundle, provider providers.Provider) *types.ChangeDiff {
+	return capiChangeDiff(currentVersionsBundle, newVersionsBundle, provider).toChangeDiff()
 }
 
-func capiChangeDiff(currentSpec, newSpec *cluster.Spec, provider providers.Provider) *CAPIChangeDiff {
+func capiChangeDiff(currentVersionsBundle, newVersionsBundle *releasev1.VersionsBundle, provider providers.Provider) *CAPIChangeDiff {
 	changeDiff := &CAPIChangeDiff{}
 	componentChanged := false
-
-	currentVersionsBundle := currentSpec.RootVersionsBundle()
-	newVersionsBundle := newSpec.RootVersionsBundle()
 
 	if currentVersionsBundle.CertManager.Version != newVersionsBundle.CertManager.Version {
 		changeDiff.CertManager = &types.ComponentChangeDiff{
@@ -141,7 +142,7 @@ func capiChangeDiff(currentSpec, newSpec *cluster.Spec, provider providers.Provi
 		componentChanged = true
 	}
 
-	if providerChangeDiff := provider.ChangeDiff(currentSpec, newSpec); providerChangeDiff != nil {
+	if providerChangeDiff := provider.ChangeDiff(currentVersionsBundle, newVersionsBundle); providerChangeDiff != nil {
 		changeDiff.InfrastructureProvider = providerChangeDiff
 		logger.V(1).Info("CAPI Infrastrcture Provider change diff", "provider", providerChangeDiff.ComponentName, "oldVersion", providerChangeDiff.OldVersion, "newVersion", providerChangeDiff.NewVersion)
 		componentChanged = true

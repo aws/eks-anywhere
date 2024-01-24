@@ -75,6 +75,10 @@ func newUpgradeTest(t *testing.T) *upgradeTestSetup {
 	for _, e := range featureEnvVars {
 		t.Setenv(e, "true")
 	}
+	currentClusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
+		s.Cluster.Name = "cluster-name"
+		s.Cluster.SetManagementComponentsVersion("v0.0.0-dev")
+	})
 
 	return &upgradeTestSetup{
 		t:                   t,
@@ -91,6 +95,7 @@ func newUpgradeTest(t *testing.T) *upgradeTestSetup {
 		machineConfigs:      machineConfigs,
 		workflow:            workflow,
 		ctx:                 context.Background(),
+		currentClusterSpec:  currentClusterSpec,
 		newClusterSpec:      test.NewClusterSpec(func(s *cluster.Spec) { s.Cluster.Name = "cluster-name" }),
 		workloadCluster:     &types.Cluster{Name: "workload"},
 		managementStatePath: fmt.Sprintf("%s-backup-%s", "cluster-name", time.Now().Format("2006-01-02T15_04_05")),
@@ -126,7 +131,13 @@ func newUpgradeManagedClusterTest(t *testing.T) *upgradeTestSetup {
 }
 
 func (c *upgradeTestSetup) expectSetup() {
+	c.clusterManager.EXPECT().GetCurrentClusterSpec(c.ctx, gomock.Any(), c.newClusterSpec.Cluster.Name).Return(c.currentClusterSpec, nil)
 	c.provider.EXPECT().SetupAndValidateUpgradeCluster(c.ctx, gomock.Any(), c.newClusterSpec, c.currentClusterSpec)
+	c.provider.EXPECT().Name()
+}
+
+func (c *upgradeTestSetup) expectSetupOnRestore() {
+	c.provider.EXPECT().SetupAndValidateUpgradeCluster(c.ctx, gomock.Any(), c.newClusterSpec, nil)
 	c.provider.EXPECT().Name()
 	c.clusterManager.EXPECT().GetCurrentClusterSpec(c.ctx, gomock.Any(), c.newClusterSpec.Cluster.Name).Return(c.currentClusterSpec, nil)
 }
@@ -155,33 +166,9 @@ func (c *upgradeTestSetup) expectUpgradeCoreComponents(managementCluster *types.
 		OldVersion:    "v0.0.1",
 		NewVersion:    "v0.0.2",
 	})
-	capiChangeDiff := types.NewChangeDiff(&types.ComponentChangeDiff{
-		ComponentName: "vsphere",
-		OldVersion:    "v0.0.1",
-		NewVersion:    "v0.0.2",
-	})
-	fluxChangeDiff := types.NewChangeDiff(&types.ComponentChangeDiff{
-		ComponentName: "Flux",
-		OldVersion:    "v0.0.1",
-		NewVersion:    "v0.0.2",
-	})
-	eksaChangeDiff := types.NewChangeDiff(&types.ComponentChangeDiff{
-		ComponentName: "eks-a",
-		OldVersion:    "v0.0.1",
-		NewVersion:    "v0.0.2",
-	})
-	eksdChangeDiff := types.NewChangeDiff(&types.ComponentChangeDiff{
-		ComponentName: "eks-d",
-		OldVersion:    "v0.0.1",
-		NewVersion:    "v0.0.2",
-	})
 	gomock.InOrder(
 		c.clusterManager.EXPECT().UpgradeNetworking(c.ctx, workloadCluster, currentSpec, c.newClusterSpec, c.provider).Return(networkingChangeDiff, nil),
-		c.capiManager.EXPECT().Upgrade(c.ctx, managementCluster, c.provider, currentSpec, c.newClusterSpec).Return(capiChangeDiff, nil),
 		c.gitOpsManager.EXPECT().Install(c.ctx, managementCluster, currentSpec, c.newClusterSpec).Return(nil),
-		c.gitOpsManager.EXPECT().Upgrade(c.ctx, managementCluster, currentSpec, c.newClusterSpec).Return(fluxChangeDiff, nil),
-		c.clusterManager.EXPECT().Upgrade(c.ctx, managementCluster, currentSpec, c.newClusterSpec).Return(eksaChangeDiff, nil),
-		c.eksdUpgrader.EXPECT().Upgrade(c.ctx, managementCluster, currentSpec, c.newClusterSpec).Return(eksdChangeDiff, nil),
 	)
 }
 
@@ -732,7 +719,7 @@ func TestUpgradeWithCheckpointSecondRunSuccess(t *testing.T) {
 
 	test2 := newUpgradeSelfManagedClusterTest(t)
 	test2.writer.EXPECT().TempDir().Return("testdata")
-	test2.expectSetup()
+	test2.expectSetupOnRestore()
 	test2.expectUpgradeWorkload(test2.bootstrapCluster, test2.workloadCluster)
 	test2.expectMoveManagementToWorkload()
 	test2.expectWriteClusterConfig()

@@ -15,6 +15,7 @@ import (
 	providers "github.com/aws/eks-anywhere/pkg/providers"
 	types "github.com/aws/eks-anywhere/pkg/types"
 	validations "github.com/aws/eks-anywhere/pkg/validations"
+	v1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 	gomock "github.com/golang/mock/gomock"
 )
 
@@ -471,7 +472,7 @@ func (mr *MockClusterManagerMockRecorder) SaveLogsWorkloadCluster(arg0, arg1, ar
 }
 
 // Upgrade mocks base method.
-func (m *MockClusterManager) Upgrade(arg0 context.Context, arg1 *types.Cluster, arg2, arg3 *cluster.Spec) (*types.ChangeDiff, error) {
+func (m *MockClusterManager) Upgrade(arg0 context.Context, arg1 *types.Cluster, arg2 *v1alpha1.VersionsBundle, arg3 *cluster.Spec) (*types.ChangeDiff, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Upgrade", arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].(*types.ChangeDiff)
@@ -636,18 +637,18 @@ func (mr *MockGitOpsManagerMockRecorder) UpdateGitEksaSpec(arg0, arg1, arg2, arg
 }
 
 // Upgrade mocks base method.
-func (m *MockGitOpsManager) Upgrade(arg0 context.Context, arg1 *types.Cluster, arg2, arg3 *cluster.Spec) (*types.ChangeDiff, error) {
+func (m *MockGitOpsManager) Upgrade(arg0 context.Context, arg1 *types.Cluster, arg2 *v1alpha1.VersionsBundle, arg3, arg4 *cluster.Spec) (*types.ChangeDiff, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Upgrade", arg0, arg1, arg2, arg3)
+	ret := m.ctrl.Call(m, "Upgrade", arg0, arg1, arg2, arg3, arg4)
 	ret0, _ := ret[0].(*types.ChangeDiff)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Upgrade indicates an expected call of Upgrade.
-func (mr *MockGitOpsManagerMockRecorder) Upgrade(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+func (mr *MockGitOpsManagerMockRecorder) Upgrade(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Upgrade", reflect.TypeOf((*MockGitOpsManager)(nil).Upgrade), arg0, arg1, arg2, arg3)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Upgrade", reflect.TypeOf((*MockGitOpsManager)(nil).Upgrade), arg0, arg1, arg2, arg3, arg4)
 }
 
 // Validations mocks base method.
@@ -739,7 +740,7 @@ func (mr *MockCAPIManagerMockRecorder) EnsureEtcdProvidersInstallation(arg0, arg
 }
 
 // Upgrade mocks base method.
-func (m *MockCAPIManager) Upgrade(arg0 context.Context, arg1 *types.Cluster, arg2 providers.Provider, arg3, arg4 *cluster.Spec) (*types.ChangeDiff, error) {
+func (m *MockCAPIManager) Upgrade(arg0 context.Context, arg1 *types.Cluster, arg2 providers.Provider, arg3 *v1alpha1.VersionsBundle, arg4 *cluster.Spec) (*types.ChangeDiff, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Upgrade", arg0, arg1, arg2, arg3, arg4)
 	ret0, _ := ret[0].(*types.ChangeDiff)
@@ -828,7 +829,7 @@ func (m *MockEksdUpgrader) EXPECT() *MockEksdUpgraderMockRecorder {
 }
 
 // Upgrade mocks base method.
-func (m *MockEksdUpgrader) Upgrade(arg0 context.Context, arg1 *types.Cluster, arg2, arg3 *cluster.Spec) (*types.ChangeDiff, error) {
+func (m *MockEksdUpgrader) Upgrade(arg0 context.Context, arg1 *types.Cluster, arg2 *v1alpha1.VersionsBundle, arg3 *cluster.Spec) (*types.ChangeDiff, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Upgrade", arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].(*types.ChangeDiff)

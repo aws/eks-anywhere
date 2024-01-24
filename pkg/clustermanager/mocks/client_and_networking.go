@@ -986,7 +986,7 @@ func (mr *MockEKSAComponentsMockRecorder) Install(arg0, arg1, arg2, arg3 interfa
 }
 
 // Upgrade mocks base method.
-func (m *MockEKSAComponents) Upgrade(arg0 context.Context, arg1 logr.Logger, arg2 *types.Cluster, arg3, arg4 *cluster.Spec) (*types.ChangeDiff, error) {
+func (m *MockEKSAComponents) Upgrade(arg0 context.Context, arg1 logr.Logger, arg2 *types.Cluster, arg3 *v1alpha10.VersionsBundle, arg4 *cluster.Spec) (*types.ChangeDiff, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Upgrade", arg0, arg1, arg2, arg3, arg4)
 	ret0, _ := ret[0].(*types.ChangeDiff)

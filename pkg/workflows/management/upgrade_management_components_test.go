@@ -20,6 +20,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
 	"github.com/aws/eks-anywhere/pkg/workflows/interfaces/mocks"
+	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
 var capiChangeDiff = types.NewChangeDiff(&types.ComponentChangeDiff{
@@ -100,6 +101,8 @@ func TestRunnerHappyPath(t *testing.T) {
 	curSpec := test.NewClusterSpec()
 	newSpec := test.NewClusterSpec()
 
+	currentManagementComponentsVersionsBundle := curSpec.FirstVersionsBundle().DeepCopy()
+
 	expectedEKSACluster := curSpec.Cluster.DeepCopy()
 	expectedEKSACluster.SetManagementComponentsVersion(newSpec.EKSARelease.Spec.Version)
 
@@ -109,12 +112,22 @@ func TestRunnerHappyPath(t *testing.T) {
 		mocks.provider.EXPECT().Name(),
 		mocks.provider.EXPECT().SetupAndValidateUpgradeCluster(ctx, gomock.Any(), newSpec, curSpec),
 		mocks.provider.EXPECT().PreCoreComponentsUpgrade(gomock.Any(), gomock.Any(), gomock.Any()),
-		mocks.capiManager.EXPECT().Upgrade(ctx, managementCluster, mocks.provider, curSpec, newSpec).Return(capiChangeDiff, nil),
-		mocks.gitOpsManager.EXPECT().Install(ctx, managementCluster, curSpec, newSpec).Return(nil),
-		mocks.gitOpsManager.EXPECT().Upgrade(ctx, managementCluster, curSpec, newSpec).Return(fluxChangeDiff, nil),
-		mocks.clusterManager.EXPECT().Upgrade(ctx, managementCluster, curSpec, newSpec).Return(eksaChangeDiff, nil),
-		mocks.eksdUpgrader.EXPECT().Upgrade(ctx, managementCluster, curSpec, newSpec).Return(eksdChangeDiff, nil),
 		mocks.clientFactory.EXPECT().BuildClientFromKubeconfig(managementCluster.KubeconfigFile).Return(mocks.client, nil),
+		mocks.client.EXPECT().Get(ctx, curSpec.EKSARelease.Name, curSpec.EKSARelease.Namespace, &releasev1alpha1.EKSARelease{}).
+			DoAndReturn(func(_ context.Context, _ string, _ string, obj *releasev1alpha1.EKSARelease) error {
+				curSpec.EKSARelease.DeepCopyInto(obj)
+				return nil
+			}),
+		mocks.client.EXPECT().Get(ctx, curSpec.EKSARelease.Spec.BundlesRef.Name, curSpec.EKSARelease.Spec.BundlesRef.Namespace, &releasev1alpha1.Bundles{}).
+			DoAndReturn(func(_ context.Context, _ string, _ string, obj *releasev1alpha1.Bundles) error {
+				curSpec.Bundles.DeepCopyInto(obj)
+				return nil
+			}),
+		mocks.capiManager.EXPECT().Upgrade(ctx, managementCluster, mocks.provider, currentManagementComponentsVersionsBundle, newSpec).Return(capiChangeDiff, nil),
+		mocks.gitOpsManager.EXPECT().Install(ctx, managementCluster, curSpec, newSpec).Return(nil),
+		mocks.gitOpsManager.EXPECT().Upgrade(ctx, managementCluster, currentManagementComponentsVersionsBundle, curSpec, newSpec).Return(fluxChangeDiff, nil),
+		mocks.clusterManager.EXPECT().Upgrade(ctx, managementCluster, currentManagementComponentsVersionsBundle, newSpec).Return(eksaChangeDiff, nil),
+		mocks.eksdUpgrader.EXPECT().Upgrade(ctx, managementCluster, currentManagementComponentsVersionsBundle, newSpec).Return(eksdChangeDiff, nil),
 		mocks.client.EXPECT().Get(ctx, curSpec.Cluster.Name, curSpec.Cluster.Namespace, &anywherev1.Cluster{}).
 			DoAndReturn(func(_ context.Context, _ string, _ string, obj *v1alpha1.Cluster) error {
 				curSpec.Cluster.DeepCopyInto(obj)

@@ -10,6 +10,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
+	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
 // ClientFactory builds Kubernetes clients.
@@ -49,7 +50,7 @@ type ClusterManager interface {
 	EKSAClusterSpecChanged(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) (bool, error)
 	InstallMachineHealthChecks(ctx context.Context, clusterSpec *cluster.Spec, workloadCluster *types.Cluster) error
 	GetCurrentClusterSpec(ctx context.Context, cluster *types.Cluster, clusterName string) (*cluster.Spec, error)
-	Upgrade(ctx context.Context, cluster *types.Cluster, currentSpec, newSpec *cluster.Spec) (*types.ChangeDiff, error)
+	Upgrade(ctx context.Context, cluster *types.Cluster, currentVersionsBundle *releasev1alpha1.VersionsBundle, newSpec *cluster.Spec) (*types.ChangeDiff, error)
 	InstallAwsIamAuth(ctx context.Context, managementCluster, workloadCluster *types.Cluster, clusterSpec *cluster.Spec) error
 	CreateAwsIamAuthCaSecret(ctx context.Context, bootstrapCluster *types.Cluster, workloadClusterName string) error
 	DeletePackageResources(ctx context.Context, managementCluster *types.Cluster, clusterName string) error
@@ -64,7 +65,7 @@ type GitOpsManager interface {
 	Validations(ctx context.Context, clusterSpec *cluster.Spec) []validations.Validation
 	CleanupGitRepo(ctx context.Context, clusterSpec *cluster.Spec) error
 	Install(ctx context.Context, cluster *types.Cluster, oldSpec, newSpec *cluster.Spec) error
-	Upgrade(ctx context.Context, cluster *types.Cluster, oldSpec, newSpec *cluster.Spec) (*types.ChangeDiff, error)
+	Upgrade(ctx context.Context, cluster *types.Cluster, currentManagementComponentsVersionsBundle *releasev1alpha1.VersionsBundle, oldSpec, newSpec *cluster.Spec) (*types.ChangeDiff, error)
 }
 
 type Validator interface {
@@ -72,7 +73,7 @@ type Validator interface {
 }
 
 type CAPIManager interface {
-	Upgrade(ctx context.Context, managementCluster *types.Cluster, provider providers.Provider, currentSpec, newSpec *cluster.Spec) (*types.ChangeDiff, error)
+	Upgrade(ctx context.Context, managementCluster *types.Cluster, provider providers.Provider, currentManagementComponentsVersionsBundle *releasev1alpha1.VersionsBundle, newSpec *cluster.Spec) (*types.ChangeDiff, error)
 	EnsureEtcdProvidersInstallation(ctx context.Context, managementCluster *types.Cluster, provider providers.Provider, currSpec *cluster.Spec) error
 }
 
@@ -82,7 +83,7 @@ type EksdInstaller interface {
 }
 
 type EksdUpgrader interface {
-	Upgrade(ctx context.Context, cluster *types.Cluster, currentSpec, newSpec *cluster.Spec) (*types.ChangeDiff, error)
+	Upgrade(ctx context.Context, cluster *types.Cluster, currentManagementComponentsVersionsBundle *releasev1alpha1.VersionsBundle, newSpec *cluster.Spec) (*types.ChangeDiff, error)
 }
 
 type PackageInstaller interface {

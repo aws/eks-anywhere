@@ -10,9 +10,11 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/aws/eks-anywhere/pkg/cluster"
 	capiupgrader "github.com/aws/eks-anywhere/pkg/clusterapi"
 	eksaupgrader "github.com/aws/eks-anywhere/pkg/clustermanager"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
+	eksdupgrader "github.com/aws/eks-anywhere/pkg/eksd"
 	fluxupgrader "github.com/aws/eks-anywhere/pkg/gitops/flux"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/networking/cilium"
@@ -89,13 +91,28 @@ func (uc *upgradeClusterOptions) upgradePlanCluster(ctx context.Context) error {
 		return err
 	}
 
-	componentChangeDiffs := eksaupgrader.EksaChangeDiff(currentSpec, newClusterSpec)
-	if componentChangeDiffs == nil {
-		componentChangeDiffs = &types.ChangeDiff{}
+	componentChangeDiffs := &types.ChangeDiff{}
+
+	if newClusterSpec.Cluster.IsSelfManaged() {
+		client, err := deps.UnAuthKubeClient.BuildClientFromKubeconfig(managementCluster.KubeconfigFile)
+		if err != nil {
+			return err
+		}
+
+		currentManagementComponentsVersionsBundle, err := cluster.GetManagementComponentsVersionsBundle(ctx, client, currentSpec.Cluster)
+		if err != nil {
+			return err
+		}
+
+		newVersionsBundle := newClusterSpec.FirstVersionsBundle()
+
+		componentChangeDiffs.Append(eksaupgrader.EksaChangeDiff(currentManagementComponentsVersionsBundle, newVersionsBundle))
+		componentChangeDiffs.Append(fluxupgrader.ChangeDiff(currentManagementComponentsVersionsBundle, newVersionsBundle, currentSpec, newClusterSpec))
+		componentChangeDiffs.Append(capiupgrader.CapiChangeDiff(currentManagementComponentsVersionsBundle, newVersionsBundle, deps.Provider))
 	}
-	componentChangeDiffs.Append(fluxupgrader.FluxChangeDiff(currentSpec, newClusterSpec))
-	componentChangeDiffs.Append(capiupgrader.CapiChangeDiff(currentSpec, newClusterSpec, deps.Provider))
+
 	componentChangeDiffs.Append(cilium.ChangeDiff(currentSpec, newClusterSpec))
+	componentChangeDiffs.Append(eksdupgrader.ChangeDiff(currentSpec.RootVersionsBundle().VersionsBundle, newClusterSpec.RootVersionsBundle().VersionsBundle))
 
 	serializedDiff, err := serialize(componentChangeDiffs, output)
 	if err != nil {

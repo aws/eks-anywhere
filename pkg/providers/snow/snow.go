@@ -181,7 +181,7 @@ func (p *SnowProvider) UpdateKubeConfig(content *[]byte, clusterName string) err
 }
 
 func (p *SnowProvider) Version(clusterSpec *cluster.Spec) string {
-	versionsBundle := clusterSpec.RootVersionsBundle()
+	versionsBundle := clusterSpec.FirstVersionsBundle()
 	return versionsBundle.Snow.Version
 }
 
@@ -204,7 +204,7 @@ func (p *SnowProvider) GetDeployments() map[string][]string {
 }
 
 func (p *SnowProvider) GetInfrastructureBundle(clusterSpec *cluster.Spec) *types.InfrastructureBundle {
-	versionsBundle := clusterSpec.RootVersionsBundle()
+	versionsBundle := clusterSpec.FirstVersionsBundle()
 	folderName := fmt.Sprintf("infrastructure-snow/%s/", versionsBundle.Snow.Version)
 
 	infraBundle := types.InfrastructureBundle{
@@ -241,9 +241,8 @@ func (p *SnowProvider) ValidateNewSpec(ctx context.Context, cluster *types.Clust
 	return nil
 }
 
-func (p *SnowProvider) ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ComponentChangeDiff {
-	currentVersionsBundle := currentSpec.RootVersionsBundle()
-	newVersionsBundle := newSpec.RootVersionsBundle()
+// ChangeDiff generates a version change diff for the Snow provider component.
+func (p *SnowProvider) ChangeDiff(currentVersionsBundle, newVersionsBundle *releasev1alpha1.VersionsBundle) *types.ComponentChangeDiff {
 	if currentVersionsBundle.Snow.Version == newVersionsBundle.Snow.Version {
 		return nil
 	}

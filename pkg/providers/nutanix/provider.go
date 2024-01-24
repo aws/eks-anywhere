@@ -522,7 +522,7 @@ func (p *Provider) UpdateKubeConfig(content *[]byte, clusterName string) error {
 
 // Version returns the nutanix version from the VersionsBundle.
 func (p *Provider) Version(clusterSpec *cluster.Spec) string {
-	versionsBundle := clusterSpec.RootVersionsBundle()
+	versionsBundle := clusterSpec.FirstVersionsBundle()
 	return versionsBundle.Nutanix.Version
 }
 
@@ -546,7 +546,7 @@ func (p *Provider) GetDeployments() map[string][]string {
 }
 
 func (p *Provider) GetInfrastructureBundle(clusterSpec *cluster.Spec) *types.InfrastructureBundle {
-	versionsBundle := clusterSpec.RootVersionsBundle()
+	versionsBundle := clusterSpec.FirstVersionsBundle()
 	manifests := []releasev1alpha1.Manifest{
 		versionsBundle.Nutanix.Components,
 		versionsBundle.Nutanix.Metadata,
@@ -611,16 +611,15 @@ func (p *Provider) ValidateNewSpec(_ context.Context, _ *types.Cluster, _ *clust
 	return nil
 }
 
-func (p *Provider) ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ComponentChangeDiff {
-	currentVersionsBundle := currentSpec.RootVersionsBundle()
-	newVersionsBundle := newSpec.RootVersionsBundle()
-	if currentVersionsBundle.Nutanix.Version == newVersionsBundle.Nutanix.Version {
+// ChangeDiff generates a version change diff for the Nutanix provider component.
+func (p *Provider) ChangeDiff(currentVersionsBundle, newComponentsVersionsBundle *releasev1alpha1.VersionsBundle) *types.ComponentChangeDiff {
+	if currentVersionsBundle.Nutanix.Version == newComponentsVersionsBundle.Nutanix.Version {
 		return nil
 	}
 
 	return &types.ComponentChangeDiff{
 		ComponentName: constants.NutanixProviderName,
-		NewVersion:    newVersionsBundle.Nutanix.Version,
+		NewVersion:    newComponentsVersionsBundle.Nutanix.Version,
 		OldVersion:    currentVersionsBundle.Nutanix.Version,
 	}
 }

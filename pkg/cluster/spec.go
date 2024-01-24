@@ -9,6 +9,7 @@ import (
 	eksav1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/release/api/v1alpha1"
+	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
 type Spec struct {
@@ -177,6 +178,11 @@ func (s *Spec) VersionsBundle(version eksav1alpha1.KubernetesVersion) *VersionsB
 // RootVersionsBundle returns a VersionsBundle for the Cluster objects root Kubernetes versions.
 func (s *Spec) RootVersionsBundle() *VersionsBundle {
 	return s.VersionsBundle(s.Cluster.Spec.KubernetesVersion)
+}
+
+// FirstVersionsBundle returns the VersionsBundle for the Cluster specs first Bundles.Spec.VersionBundles.
+func (s *Spec) FirstVersionsBundle() *releasev1.VersionsBundle {
+	return &s.Bundles.Spec.VersionsBundles[0]
 }
 
 // WorkerNodeGroupVersionsBundle returns a VersionsBundle for the Worker Node's kubernetes version.
