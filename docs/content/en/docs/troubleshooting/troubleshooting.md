@@ -493,7 +493,7 @@ Assigning such labels to nodes can be done after the bootstrap process has compl
 ```
 kubectl label nodes <name> node-role.kubernetes.io/worker=""
 ```
-For convenience, here are example one-liners to do this post installation:
+For convenience, here are example one-liners to do this post-installation:
 
 ```
 # For Kubernetes 1.19 (kubeadm 1.19 sets only the node-role.kubernetes.io/master label)
