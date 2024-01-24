@@ -69,7 +69,7 @@ func (s *setAndValidateUpgradeWorkloadTask) Run(ctx context.Context, commandCont
 		commandContext.SetError(err)
 		return nil
 	}
-	return &upgradeCluster{}
+	return &preClusterUpgrade{}
 }
 
 func (s *setAndValidateUpgradeWorkloadTask) providerValidation(ctx context.Context, commandContext *task.CommandContext) []validations.Validation {

@@ -23,7 +23,7 @@ func (s *postClusterUpgrade) Run(ctx context.Context, commandContext *task.Comma
 	}
 
 	logger.Info("Cleaning up backup resources")
-	capiObjectFile := filepath.Join(commandContext.ManagementCluster.Name, commandContext.ManagementClusterStateDir)
+	capiObjectFile := filepath.Join(commandContext.ManagementCluster.Name, commandContext.BackupClusterStateDir)
 	if err := os.RemoveAll(capiObjectFile); err != nil {
 		logger.Info(fmt.Sprintf("management cluster CAPI backup file not found: %v", err))
 	}
