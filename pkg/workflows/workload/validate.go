@@ -77,7 +77,7 @@ func (s *setAndValidateUpgradeWorkloadTask) providerValidation(ctx context.Conte
 		func() *validations.ValidationResult {
 			return &validations.ValidationResult{
 				Name: fmt.Sprintf("workload cluster's %s Provider setup is valid", commandContext.Provider.Name()),
-				Err:  commandContext.Provider.SetupAndValidateUpgradeCluster(ctx, commandContext.WorkloadCluster, commandContext.ClusterSpec, commandContext.CurrentClusterSpec),
+				Err:  commandContext.Provider.SetupAndValidateUpgradeCluster(ctx, commandContext.ManagementCluster, commandContext.ClusterSpec, commandContext.CurrentClusterSpec),
 			}
 		},
 	}
