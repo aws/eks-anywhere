@@ -507,7 +507,9 @@ func validateWorkerNodeGroups(clusterConfig *Cluster) error {
 	}
 
 	if len(workerNodeGroupConfigs) > 0 && len(noExecuteNoScheduleTaintedNodeGroups) == len(workerNodeGroupConfigs) {
-		return errors.New("at least one WorkerNodeGroupConfiguration must not have NoExecute and/or NoSchedule taints")
+		if clusterConfig.IsSelfManaged() {
+			return errors.New("at least one WorkerNodeGroupConfiguration must not have NoExecute and/or NoSchedule taints")
+		}
 	}
 
 	if len(workerNodeGroupConfigs) == 0 && len(clusterConfig.Spec.ControlPlaneConfiguration.Taints) != 0 {

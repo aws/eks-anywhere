@@ -604,6 +604,41 @@ func TestDockerKubernetes128Taints(t *testing.T) {
 	)
 }
 
+func TestDockerKubernetes127WorkloadClusterTaints(t *testing.T) {
+	provider := framework.NewDocker(t)
+
+	managementCluster := framework.NewClusterE2ETest(
+		t, provider,
+	).WithClusterConfig(
+		api.ClusterToConfigFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube127),
+			api.WithControlPlaneCount(1),
+			api.WithWorkerNodeCount(1),
+			api.WithExternalEtcdTopology(1),
+		),
+	)
+
+	test := framework.NewMulticlusterE2ETest(t, managementCluster)
+
+	test.WithWorkloadClusters(
+		framework.NewClusterE2ETest(
+			t, provider, framework.WithClusterName(test.NewWorkloadClusterName()),
+		).WithClusterConfig(
+			api.ClusterToConfigFiller(
+				api.WithKubernetesVersion(v1alpha1.Kube127),
+				api.WithManagementCluster(managementCluster.ClusterName),
+				api.WithControlPlaneCount(1),
+				api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
+				api.WithWorkerNodeGroup("worker-0", api.WithCount(1), api.WithTaint(framework.NoScheduleTaint())),
+				api.WithWorkerNodeGroup("worker-1", api.WithCount(1), api.WithTaint(framework.NoExecuteTaint())),
+				api.WithStackedEtcdTopology(),
+			),
+		),
+	)
+
+	runWorkloadClusterExistingConfigFlow(test)
+}
+
 // Upgrade
 func TestDockerKubernetes127To128StackedEtcdUpgrade(t *testing.T) {
 	provider := framework.NewDocker(t)

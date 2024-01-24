@@ -1,0 +1,94 @@
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: Cluster
+metadata:
+  name: eksa-unit-test
+spec:
+  controlPlaneConfiguration:
+    count: 3
+    endpoint:
+      host: test-ip
+    machineGroupRef:
+      name: eksa-unit-test
+      kind: VSphereMachineConfig
+  kubernetesVersion: "1.19"
+  managementCluster:
+    name: mgmt
+  workerNodeGroupConfigurations:
+    - count: 3
+      machineGroupRef:
+        name: eksa-unit-test-2
+        kind: VSphereMachineConfig
+      name: "md-0"
+      taints:
+        - key: key1
+          value: val1
+          effect: NoSchedule
+    - count: 3
+      machineGroupRef:
+        name: eksa-unit-test-2
+        kind: VSphereMachineConfig
+      name: "md-1"
+      taints:
+        - key: key1
+          value: val1
+          effect: NoExecute
+  datacenterRef:
+    kind: VSphereDatacenterConfig
+    name: eksa-unit-test
+  clusterNetwork:
+    cni: "cilium"
+    pods:
+      cidrBlocks:
+        - 192.168.0.0/16
+    services:
+      cidrBlocks:
+        - 10.96.0.0/12
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: VSphereMachineConfig
+metadata:
+  name: eksa-unit-test
+spec:
+  diskGiB: 25
+  datastore: "myDatastore"
+  folder: "myFolder"
+  memoryMiB: 8192
+  numCPUs: 2
+  osFamily: "ubuntu"
+  resourcePool: "myResourcePool"
+  storagePolicyName: "myStoragePolicyName"
+  template: "myTemplate"
+  users:
+    - name: "mySshUsername"
+      sshAuthorizedKeys:
+        - "mySshAuthorizedKey"
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: VSphereMachineConfig
+metadata:
+  name: eksa-unit-test-2
+spec:
+  diskGiB: 20
+  datastore: "myDatastore2"
+  folder: "myFolder2"
+  memoryMiB: 2048
+  numCPUs: 4
+  osFamily: "bottlerocket"
+  resourcePool: "myResourcePool2"
+  storagePolicyName: "myStoragePolicyName2"
+  template: "myTemplate2"
+  users:
+    - name: "mySshUsername2"
+      sshAuthorizedKeys:
+        - "mySshAuthorizedKey2"
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: VSphereDatacenterConfig
+metadata:
+  name: eksa-unit-test
+spec:
+  datacenter: "myDatacenter"
+  network: "myNetwork"
+  server: "myServer"
+  thumbprint: "myTlsThumbprint"
+  insecure: false
