@@ -155,9 +155,9 @@ Either use a different cluster name or move the directory.
 ```
 Error: the cluster config file provided is invalid: at least one WorkerNodeGroupConfiguration must not have NoExecute and/or NoSchedule taints
 ```
-At least one schedulable worker node group is required to run cluster administration components. Both `NoExecute` and `NoSchedule` taints must be absent from the workerNodeGroup for it to be considered schedulable.
+An EKS Anywhere management cluster requires at least one schedulable worker node group to run cluster administration components. Both `NoExecute` and `NoSchedule` taints must be absent from the workerNodeGroup for it to be considered schedulable. This validation was removed for workload clusters from v0.19.0 onwards, so now it only applies to management clusters.
 
-To remedy, remove `NoExecute` and `NoSchedule` taints from at least one WorkerNodeGroupConfiguration.
+To remedy, remove `NoExecute` and `NoSchedule` taints from at least one WorkerNodeGroupConfiguration on your management cluster.
 
 Invalid configuration example:
 ```
