@@ -481,7 +481,7 @@ If cluster creation or upgrade fails to complete successfully and kubelet throws
 .
 ```
 
-If your cluster spec looks like the above one for either the control plane configuration and/or worker node configuration, you might run into the below kubelet error.
+If your cluster spec looks like the above one for either the control plane configuration and/or worker node configuration, you might run into the below kubelet error:
 ```
 unknown 'kubernetes.io' or 'k8s.io' labels specified with --node-labels: [node-role.kubernetes.io/worker].
 --node-labels in the 'kubernetes.io' namespace must begin with an allowed prefix (kubelet.kubernetes.io, node.kubernetes.io) or be in the specifically allowed set (beta.kubernetes.io/arch, beta.kubernetes.io/instance-type, beta.kubernetes.io/os, failure-domain.beta.kubernetes.io/region, failure-domain.beta.kubernetes.io/zone, kubernetes.io/arch, kubernetes.io/hostname, kubernetes.io/os, node.kubernetes.io/instance-type, topology.kubernetes.io/region, topology.kubernetes.io/zone)
