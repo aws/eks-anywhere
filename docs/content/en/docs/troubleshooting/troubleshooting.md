@@ -462,7 +462,7 @@ To fix it, make sure to validate the network/firewall settings from the workload
 
 ### Labeling nodes with reserved labels such as `node-role.kubernetes.io` fails with kubeadm error during bootstrap
 
-If cluster creation or upgrade fails to complete successfully and kubelet throws an error similar to the one below, please refer this section. The cluster spec for the EKSA create or upgrade might look something like:
+If cluster creation or upgrade fails to complete successfully and kubelet throws an error similar to the one below, please refer this section. The cluster spec for EKS Anywhere create or upgrade might look something like:
 
 ```
 .
