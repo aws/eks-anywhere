@@ -7,12 +7,15 @@ import (
 
 	"github.com/go-logr/logr"
 	nutanixv1 "github.com/nutanix-cloud-native/cluster-api-provider-nutanix/api/v1beta1"
+	corev1 "k8s.io/api/core/v1"
+	addonsv1 "sigs.k8s.io/cluster-api/exp/addons/api/v1beta1"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	yamlcapi "github.com/aws/eks-anywhere/pkg/clusterapi/yaml"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/yamlutil"
 )
 
@@ -22,11 +25,16 @@ type BaseControlPlane = clusterapi.ControlPlane[*nutanixv1.NutanixCluster, *nuta
 // ControlPlane holds the Nutanix specific objects for a CAPI Nutanix control plane.
 type ControlPlane struct {
 	BaseControlPlane
+	ConfigMaps          []*corev1.ConfigMap
+	ClusterResourceSets []*addonsv1.ClusterResourceSet
 }
 
 // Objects returns the control plane objects associated with the Nutanix cluster.
 func (p ControlPlane) Objects() []kubernetes.Object {
 	o := p.BaseControlPlane.Objects()
+	o = appendKubeObjects[*corev1.ConfigMap](o, p.ConfigMaps)
+	o = appendKubeObjects[*addonsv1.ClusterResourceSet](o, p.ClusterResourceSets)
+
 	return o
 }
 
@@ -43,6 +51,8 @@ func (b *ControlPlaneBuilder) BuildFromParsed(lookup yamlutil.ObjectLookup) erro
 	}
 
 	b.ControlPlane.BaseControlPlane = *b.BaseBuilder.ControlPlane
+	buildObjects(b.ControlPlane, lookup)
+
 	return nil
 }
 
@@ -131,10 +141,48 @@ func newControlPlaneParser(logger logr.Logger) (*yamlutil.Parser, *ControlPlaneB
 		return nil, nil, fmt.Errorf("failed building nutanix control plane parser: %w", err)
 	}
 
+	err = parser.RegisterMappings(
+		yamlutil.NewMapping(
+			constants.ConfigMapKind,
+			func() yamlutil.APIObject {
+				return &corev1.ConfigMap{}
+			},
+		),
+		yamlutil.NewMapping(
+			constants.ClusterResourceSetKind,
+			func() yamlutil.APIObject {
+				return &addonsv1.ClusterResourceSet{}
+			},
+		),
+	)
+
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed registering nutanix control plane mappings: %w", err)
+	}
+
 	builder := &ControlPlaneBuilder{
 		BaseBuilder:  baseBuilder,
 		ControlPlane: &ControlPlane{},
 	}
 
 	return parser, builder, nil
+}
+
+func appendKubeObjects[V kubernetes.Object](objList []kubernetes.Object, objToAdd []V) []kubernetes.Object {
+	for _, obj := range objToAdd {
+		objList = append(objList, obj)
+	}
+
+	return objList
+}
+
+func buildObjects(cp *ControlPlane, lookup yamlutil.ObjectLookup) {
+	for _, obj := range lookup {
+		switch obj.GetObjectKind().GroupVersionKind().Kind {
+		case constants.ConfigMapKind:
+			cp.ConfigMaps = append(cp.ConfigMaps, obj.(*corev1.ConfigMap))
+		case constants.ClusterResourceSetKind:
+			cp.ClusterResourceSets = append(cp.ClusterResourceSets, obj.(*addonsv1.ClusterResourceSet))
+		}
+	}
 }

@@ -20,7 +20,7 @@ SHELL := /bin/bash
 ARTIFACTS_BUCKET?=my-s3-bucket
 GIT_VERSION?=$(shell git describe --tag)
 GIT_TAG?=$(shell git tag -l "v*.*.*" --sort -v:refname | head -1)
-GOLANG_VERSION?="1.20"
+GOLANG_VERSION?="1.21"
 GO_VERSION ?= $(shell source ./scripts/common.sh && build::common::get_go_path $(GOLANG_VERSION))
 GO ?= $(GO_VERSION)/go
 GO_TEST ?= $(GO) test
@@ -380,8 +380,8 @@ generate-attribution:
 update-attribution-files: generate-attribution
 	scripts/create_pr.sh
 
-.PHONY: update-golden-files
 update-golden-files:
+.PHONY: update-golden-files
 	make -C release update-bundle-golden-files
 	scripts/golden_create_pr.sh
 

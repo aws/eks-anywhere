@@ -38,3 +38,16 @@ func TestControlPlaneSpecWithUpgradeRolloutStrategy(t *testing.T) {
 	assert.NotNil(t, cp)
 	assert.Equal(t, int32(1), cp.KubeadmControlPlane.Spec.RolloutStrategy.RollingUpdate.MaxSurge.IntVal)
 }
+
+func TestCPObjects(t *testing.T) {
+	t.Setenv(constants.EksaNutanixUsernameKey, "admin")
+	t.Setenv(constants.EksaNutanixPasswordKey, "password")
+	logger := test.NewNullLogger()
+	client := test.NewFakeKubeClient()
+	spec := test.NewFullClusterSpec(t, "testdata/eksa-cluster.yaml")
+	cp, err := ControlPlaneSpec(context.TODO(), logger, client, spec)
+	assert.NoError(t, err)
+
+	objs := cp.Objects()
+	assert.NotEqual(t, 0, len(objs))
+}

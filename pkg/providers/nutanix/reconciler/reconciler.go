@@ -198,6 +198,14 @@ func (r *Reconciler) ReconcileControlPlane(ctx context.Context, log logr.Logger,
 }
 
 func toClientControlPlane(cp *nutanix.ControlPlane) *clusters.ControlPlane {
+	other := make([]client.Object, 0, len(cp.ConfigMaps)+len(cp.ClusterResourceSets)+1)
+	for _, o := range cp.ClusterResourceSets {
+		other = append(other, o)
+	}
+	for _, o := range cp.ConfigMaps {
+		other = append(other, o)
+	}
+
 	return &clusters.ControlPlane{
 		Cluster:                     cp.Cluster,
 		ProviderCluster:             cp.ProviderCluster,
@@ -205,6 +213,7 @@ func toClientControlPlane(cp *nutanix.ControlPlane) *clusters.ControlPlane {
 		ControlPlaneMachineTemplate: cp.ControlPlaneMachineTemplate,
 		EtcdCluster:                 cp.EtcdCluster,
 		EtcdMachineTemplate:         cp.EtcdMachineTemplate,
+		Other:                       other,
 	}
 }
 
