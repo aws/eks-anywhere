@@ -2,9 +2,11 @@ package workload_test
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/golang/mock/gomock"
 
@@ -21,22 +23,23 @@ import (
 )
 
 type upgradeTestSetup struct {
-	t                  *testing.T
-	clusterManager     *mocks.MockClusterManager
-	gitOpsManager      *mocks.MockGitOpsManager
-	provider           *providermocks.MockProvider
-	writer             *writermocks.MockFileWriter
-	validator          *mocks.MockValidator
-	eksd               *mocks.MockEksdInstaller
-	packageInstaller   *mocks.MockPackageInstaller
-	clusterUpgrader    *mocks.MockClusterUpgrader
-	datacenterConfig   providers.DatacenterConfig
-	machineConfigs     []providers.MachineConfig
-	ctx                context.Context
-	currentClusterSpec *cluster.Spec
-	clusterSpec        *cluster.Spec
-	workloadCluster    *types.Cluster
-	workload           *workload.Upgrade
+	t                     *testing.T
+	clusterManager        *mocks.MockClusterManager
+	gitOpsManager         *mocks.MockGitOpsManager
+	provider              *providermocks.MockProvider
+	writer                *writermocks.MockFileWriter
+	validator             *mocks.MockValidator
+	eksd                  *mocks.MockEksdInstaller
+	packageInstaller      *mocks.MockPackageInstaller
+	clusterUpgrader       *mocks.MockClusterUpgrader
+	datacenterConfig      providers.DatacenterConfig
+	machineConfigs        []providers.MachineConfig
+	ctx                   context.Context
+	currentClusterSpec    *cluster.Spec
+	clusterSpec           *cluster.Spec
+	workloadCluster       *types.Cluster
+	workload              *workload.Upgrade
+	backupClusterStateDir string
 }
 
 func newUpgradeTest(t *testing.T) *upgradeTestSetup {
@@ -96,7 +99,8 @@ func newUpgradeTest(t *testing.T) *upgradeTestSetup {
 			s.ManagementCluster = &types.Cluster{Name: "management"}
 			s.Cluster.Spec.KubernetesVersion = v1alpha1.Kube128
 		}),
-		workloadCluster: &types.Cluster{Name: "workload"},
+		workloadCluster:       &types.Cluster{Name: "workload"},
+		backupClusterStateDir: fmt.Sprintf("%s-backup-%s", "workload", time.Now().Format("2006-01-02T15_04_05")),
 	}
 }
 
@@ -137,6 +141,12 @@ func (c *upgradeTestSetup) expectPreflightValidationsToPass() {
 	c.validator.EXPECT().PreflightValidations(c.ctx).Return(nil)
 }
 
+func (c *upgradeTestSetup) expectBackupWorkloadFromCluster(err error) {
+	gomock.InOrder(
+		c.clusterManager.EXPECT().BackupCAPI(c.ctx, c.clusterSpec.ManagementCluster, c.backupClusterStateDir, c.workloadCluster.Name).Return(err),
+	)
+}
+
 func (c *upgradeTestSetup) expectSaveLogsManagement() {
 	c.clusterManager.EXPECT().SaveLogsManagementCluster(c.ctx, c.clusterSpec, c.clusterSpec.ManagementCluster)
 	c.expectWrite()
@@ -154,6 +164,7 @@ func TestUpgradeRunSuccess(t *testing.T) {
 	test.expectPreflightValidationsToPass()
 	test.expectDatacenterConfig()
 	test.expectMachineConfigs()
+	test.expectBackupWorkloadFromCluster(nil)
 	test.expectUpgradeWorkloadCluster(nil)
 	test.expectWriteWorkloadClusterConfig(nil)
 
@@ -171,6 +182,7 @@ func TestUpgradeRunUpgradeFail(t *testing.T) {
 	test.expectPreflightValidationsToPass()
 	test.expectDatacenterConfig()
 	test.expectMachineConfigs()
+	test.expectBackupWorkloadFromCluster(nil)
 	test.expectUpgradeWorkloadCluster(fmt.Errorf("boom"))
 	test.expectSaveLogsManagement()
 
@@ -210,6 +222,23 @@ func TestUpgradeRunValidateFail(t *testing.T) {
 	}
 }
 
+func TestUpgradeWorkloadRunBackupFailed(t *testing.T) {
+	features.ClearCache()
+	os.Setenv(features.UseControllerForCli, "true")
+	test := newUpgradeTest(t)
+	test.expectSetup()
+	test.expectPreflightValidationsToPass()
+	test.expectDatacenterConfig()
+	test.expectMachineConfigs()
+	test.expectBackupWorkloadFromCluster(errors.New(""))
+	test.expectSaveLogsManagement()
+
+	err := test.run()
+	if err == nil {
+		t.Fatalf("Upgrade.Run() err = %v, want err = nil", err)
+	}
+}
+
 func TestUpgradeRunWriteClusterConfigFail(t *testing.T) {
 	features.ClearCache()
 	os.Setenv(features.UseControllerForCli, "true")
@@ -218,6 +247,7 @@ func TestUpgradeRunWriteClusterConfigFail(t *testing.T) {
 	test.expectPreflightValidationsToPass()
 	test.expectDatacenterConfig()
 	test.expectMachineConfigs()
+	test.expectBackupWorkloadFromCluster(nil)
 	test.expectUpgradeWorkloadCluster(nil)
 	test.expectWriteWorkloadClusterConfig(fmt.Errorf("boom"))
 	test.expectWrite()
