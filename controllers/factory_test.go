@@ -230,7 +230,7 @@ func TestFactoryWithNutanixDatacenterReconciler(t *testing.T) {
 	g.Expect(reconcilers.NutanixDatacenterReconciler).NotTo(BeNil())
 }
 
-func TestFactoryWithKubeadmControlPlaneInPlaceUpgradeReconciler(t *testing.T) {
+func TestFactoryWithKubeadmControlPlaneReconciler(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
 	logger := nullLog()
@@ -248,6 +248,26 @@ func TestFactoryWithKubeadmControlPlaneInPlaceUpgradeReconciler(t *testing.T) {
 	reconcilers, err := f.Build(ctx)
 	g.Expect(err).NotTo(HaveOccurred())
 	g.Expect(reconcilers.KubeadmControlPlaneReconciler).NotTo(BeNil())
+}
+
+func TestFactoryWithMachineDeploymentReconciler(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+	logger := nullLog()
+	ctrl := gomock.NewController(t)
+	manager := mocks.NewMockManager(ctrl)
+	manager.EXPECT().GetClient().AnyTimes()
+	manager.EXPECT().GetScheme().AnyTimes()
+
+	f := controllers.NewFactory(logger, manager).
+		WithMachineDeploymentReconciler()
+
+	// testing idempotence
+	f.WithMachineDeploymentReconciler()
+
+	reconcilers, err := f.Build(ctx)
+	g.Expect(err).NotTo(HaveOccurred())
+	g.Expect(reconcilers.MachineDeploymentReconciler).NotTo(BeNil())
 }
 
 func TestFactoryWithNodeUpgradeReconciler(t *testing.T) {
