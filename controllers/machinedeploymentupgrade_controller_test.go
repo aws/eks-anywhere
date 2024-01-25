@@ -178,7 +178,7 @@ func generateMDUpgrade(machine *clusterv1.Machine) *anywherev1.MachineDeployment
 					Namespace: machine.Namespace,
 				},
 			},
-			KubernetesVersion: "v1.28.1-eks-1-28-1",
+			KubernetesVersion: "v1.28.3-eks-1-28-9",
 		},
 	}
 }

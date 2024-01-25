@@ -19,6 +19,7 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -146,8 +147,7 @@ func (r *KubeadmControlPlaneReconciler) reconcile(ctx context.Context, log logr.
 }
 
 func (r *KubeadmControlPlaneReconciler) inPlaceUpgradeNeeded(kcp *controlplanev1.KubeadmControlPlane) bool {
-	_, ok := kcp.Annotations[kcpInPlaceUpgradeNeededAnnotation]
-	return ok
+	return strings.ToLower(kcp.Annotations[kcpInPlaceUpgradeNeededAnnotation]) == "true"
 }
 
 func (r *KubeadmControlPlaneReconciler) machinesToUpgrade(ctx context.Context, kcp *controlplanev1.KubeadmControlPlane) ([]corev1.ObjectReference, error) {
@@ -175,7 +175,7 @@ func (r *KubeadmControlPlaneReconciler) machinesToUpgrade(ctx context.Context, k
 
 func (r *KubeadmControlPlaneReconciler) validateStackedEtcd(kcp *controlplanev1.KubeadmControlPlane) error {
 	if kcp.Spec.KubeadmConfigSpec.ClusterConfiguration == nil {
-		return fmt.Errorf("ClusterConfiguration not set for KubeadmControlPlane, unable to retrieve etcd information")
+		return fmt.Errorf("ClusterConfiguration not set for KubeadmControlPlane \"%s\", unable to retrieve etcd information", kcp.Name)
 	}
 	if kcp.Spec.KubeadmConfigSpec.ClusterConfiguration.Etcd.Local == nil {
 		return fmt.Errorf("local etcd configuration is missing")

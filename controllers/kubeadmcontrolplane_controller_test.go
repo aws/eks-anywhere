@@ -153,7 +153,7 @@ func TestKCPReconcileClusterConfigurationMissing(t *testing.T) {
 	r := controllers.NewKubeadmControlPlaneReconciler(client)
 	req := kcpRequest(kcpObjs.kcp)
 	_, err := r.Reconcile(ctx, req)
-	g.Expect(err).To(MatchError("ClusterConfiguration not set for KubeadmControlPlane, unable to retrieve etcd information"))
+	g.Expect(err).To(MatchError("ClusterConfiguration not set for KubeadmControlPlane \"my-cluster\", unable to retrieve etcd information"))
 }
 
 func TestKCPReconcileStackedEtcdMissing(t *testing.T) {
@@ -173,7 +173,7 @@ func TestKCPReconcileStackedEtcdMissing(t *testing.T) {
 
 func getObjectsForKCP() kcpObjects {
 	cluster := generateCluster()
-	kcp := generateKCP(cluster)
+	kcp := generateKCP(cluster.Name)
 	kcp.Name = cluster.Name
 	kcp.TypeMeta = metav1.TypeMeta{
 		APIVersion: controlplanev1.GroupVersion.String(),
@@ -217,14 +217,14 @@ func kcpRequest(kcp *controlplanev1.KubeadmControlPlane) reconcile.Request {
 	}
 }
 
-func generateKCP(cluster *clusterv1.Cluster) *controlplanev1.KubeadmControlPlane {
+func generateKCP(name string) *controlplanev1.KubeadmControlPlane {
 	return &controlplanev1.KubeadmControlPlane{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      cluster.Name,
+			Name:      name,
 			Namespace: constants.EksaSystemNamespace,
 			UID:       "test-uid",
 			Annotations: map[string]string{
-				"controlplane.clusters.x-k8s.io/in-place-upgrade-needed": "",
+				"controlplane.clusters.x-k8s.io/in-place-upgrade-needed": "true",
 			},
 		},
 		Spec: controlplanev1.KubeadmControlPlaneSpec{
