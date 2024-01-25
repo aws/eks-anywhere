@@ -154,6 +154,43 @@ func SignImagesNotation(r *releasetypes.ReleaseConfig, imageDigests releasetypes
 	return rangeErr
 }
 
+// Copy image signatures to production account from staging account
+func CopyImageSignatureUsingOras(r *releasetypes.ReleaseConfig, imageDigests releasetypes.ImageDigestsTable) error {
+	if r.DryRun {
+		fmt.Println("Skipping image signature copy in dry-run mode")
+		return nil
+	}
+	sourceRegistryUsername := r.SourceClients.ECR.AuthConfig.Username
+	sourceRegistryPassword := r.SourceClients.ECR.AuthConfig.Password
+	releaseRegistryUsername := r.ReleaseClients.ECRPublic.AuthConfig.Username
+	releaseRegistryPassword := r.ReleaseClients.ECRPublic.AuthConfig.Password
+	var rangeErr error
+	imageDigests.Range(func(k, v interface{}) bool {
+		image := k.(string)
+		digest := v.(string)
+		// Digest is in the form sha256:digest. Notation image index and signatures are in the form sha256-digest.
+		shaDigest := strings.Replace(digest, ":", "-", -1)
+
+		// Get imageRespository name since we have a different source and release registry.
+		imageRepository, _ := artifactutils.SplitImageUri(image, r.ReleaseContainerRegistry)
+		// Form releaseImageURI in the form <source-registry>/<repository>:<sha256-digest>
+		sourceImageURI := fmt.Sprintf("%s/%s:%s", r.SourceContainerRegistry, imageRepository, shaDigest)
+		// Form releaseImageURI in the form <release-registry>/<repository>:<sha256-digest>
+		releaseImageURI := fmt.Sprintf("%s/%s:%s", r.ReleaseContainerRegistry, imageRepository, shaDigest)
+
+		cmd := exec.Command("oras", "copy", "--from-username", sourceRegistryUsername, "--from-password", sourceRegistryPassword, sourceImageURI, "--to-username", releaseRegistryUsername, "--to-password", releaseRegistryPassword, releaseImageURI)
+		out, err := commandutils.ExecCommand(cmd)
+		fmt.Println(out)
+		if err != nil {
+			rangeErr = fmt.Errorf("copying signatures associated with image %s: %v\n", fmt.Sprintf("%s@%s", image, digest), err)
+			return false
+		}
+		return true
+	})
+
+	return rangeErr
+}
+
 func GenerateBundleSpec(r *releasetypes.ReleaseConfig, bundle *anywherev1alpha1.Bundles, imageDigests releasetypes.ImageDigestsTable) error {
 	fmt.Println("\n==========================================================")
 	fmt.Println("               Bundles Manifest Spec Generation")
