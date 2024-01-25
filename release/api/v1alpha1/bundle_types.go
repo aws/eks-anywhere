@@ -345,6 +345,7 @@ type SnowBundle struct {
 
 type NutanixBundle struct {
 	ClusterAPIController Image    `json:"clusterAPIController"`
+	CloudProvider        Image    `json:"cloudProvider,omitempty"`
 	Version              string   `json:"version"`
 	KubeVip              Image    `json:"kubeVip"`
 	Components           Manifest `json:"components"`

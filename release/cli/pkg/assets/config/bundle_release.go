@@ -109,6 +109,18 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 			},
 		},
 	},
+	// Cloud-provider-nutanix artifacts
+	{
+		ProjectName: "cloud-provider-nutanix",
+		ProjectPath: "projects/nutanix-cloud-native/cloud-provider-nutanix",
+		Images: []*assettypes.Image{
+			{
+				RepoName:  "controller",
+				AssetName: "cloud-provider-nutanix",
+			},
+		},
+		ImageRepoPrefix: "nutanix-cloud-native/cloud-provider-nutanix",
+	},
 	// Cloud-provider-vsphere artifacts
 	{
 		ProjectName: "cloud-provider-vsphere",
