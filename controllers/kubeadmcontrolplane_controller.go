@@ -18,6 +18,8 @@ package controllers
 
 import (
 	"context"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -126,7 +128,11 @@ func (r *KubeadmControlPlaneReconciler) reconcile(ctx context.Context, log logr.
 			if err != nil {
 				return ctrl.Result{}, fmt.Errorf("retrieving list of control plane machines: %v", err)
 			}
-			if err := r.client.Create(ctx, controlPlaneUpgrade(kcp, machines)); client.IgnoreAlreadyExists(err) != nil {
+			cpUpgrade, err := controlPlaneUpgrade(kcp, machines)
+			if err != nil {
+				return ctrl.Result{}, fmt.Errorf("generating ControlPlaneUpgrade: %v", err)
+			}
+			if err := r.client.Create(ctx, cpUpgrade); client.IgnoreAlreadyExists(err) != nil {
 				return ctrl.Result{}, fmt.Errorf("failed to create control plane upgrade for KubeadmControlPlane %s:  %v", kcp.Name, err)
 			}
 			return ctrl.Result{}, nil
@@ -183,7 +189,12 @@ func (r *KubeadmControlPlaneReconciler) validateStackedEtcd(kcp *controlplanev1.
 	return nil
 }
 
-func controlPlaneUpgrade(kcp *controlplanev1.KubeadmControlPlane, machines []corev1.ObjectReference) *anywherev1.ControlPlaneUpgrade {
+func controlPlaneUpgrade(kcp *controlplanev1.KubeadmControlPlane, machines []corev1.ObjectReference) (*anywherev1.ControlPlaneUpgrade, error) {
+	kcpSpec, err := json.Marshal(kcp.Spec)
+	if err != nil {
+		return nil, fmt.Errorf("marshaling KCP spec: %v", err)
+	}
+
 	return &anywherev1.ControlPlaneUpgrade{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      cpUpgradeName(kcp.Name),
@@ -204,8 +215,9 @@ func controlPlaneUpgrade(kcp *controlplanev1.KubeadmControlPlane, machines []cor
 			KubernetesVersion:      kcp.Spec.Version,
 			EtcdVersion:            kcp.Spec.KubeadmConfigSpec.ClusterConfiguration.Etcd.Local.ImageTag,
 			MachinesRequireUpgrade: machines,
+			ControlPlaneSpecData:   base64.StdEncoding.EncodeToString(kcpSpec),
 		},
-	}
+	}, nil
 }
 
 func cpUpgradeName(kcpName string) string {

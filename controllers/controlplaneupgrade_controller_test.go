@@ -2,6 +2,8 @@ package controllers_test
 
 import (
 	"context"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"testing"
@@ -12,6 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
@@ -120,6 +123,46 @@ func TestCPUpgradeReconcileNodeUpgraderCreate(t *testing.T) {
 	cpu := &anywherev1.ControlPlaneUpgrade{}
 	err = client.Get(ctx, types.NamespacedName{Name: cpUpgrade.Name, Namespace: "eksa-system"}, cpu)
 	g.Expect(err).ToNot(HaveOccurred())
+}
+
+func TestCPUpgradeReconcileNodeUpgraderInvalidKCPSpec(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+	cluster, machines, nodes, cpUpgrade, nodeUpgrades := getObjectsForCPUpgradeTest()
+	for i := range nodeUpgrades {
+		nodeUpgrades[i].Name = fmt.Sprintf("%s-node-upgrader", machines[i].Name)
+		nodeUpgrades[i].Status = anywherev1.NodeUpgradeStatus{
+			Completed: true,
+		}
+	}
+
+	for _, test := range []struct {
+		name    string
+		kcpSpec string
+		errMsg  string
+	}{
+		{
+			name:    "invalid base64",
+			kcpSpec: "not-a-valid-base-64",
+			errMsg:  "decoding cpUpgrade.Spec.ControlPlaneSpec",
+		},
+		{
+			name:    "invalid json",
+			kcpSpec: "aW52YWxpZC1qc29uCg==",
+			errMsg:  "unmarshaling cpUpgrade.Spec.ControlPlaneSpec",
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			cpUpgrade.Spec.ControlPlaneSpecData = test.kcpSpec
+			objs := []runtime.Object{cluster, machines[0], machines[1], nodes[0], nodes[1], cpUpgrade, nodeUpgrades[0]}
+			client := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
+			r := controllers.NewControlPlaneUpgradeReconciler(client)
+			req := cpUpgradeRequest(cpUpgrade)
+			_, err := r.Reconcile(ctx, req)
+			g.Expect(err).To(HaveOccurred())
+			g.Expect(err.Error()).To(ContainSubstring(test.errMsg))
+		})
+	}
 }
 
 func TestCPUpgradeReconcileNodesNotReadyYet(t *testing.T) {
@@ -247,7 +290,7 @@ func cpUpgradeRequest(cpUpgrade *anywherev1.ControlPlaneUpgrade) reconcile.Reque
 }
 
 func generateCPUpgrade(machine []*clusterv1.Machine) *anywherev1.ControlPlaneUpgrade {
-	etcdVersion := "v3.5.9-eks-1-28-9"
+	kcpSpec, _ := json.Marshal(&controlplanev1.KubeadmControlPlaneSpec{})
 	return &anywherev1.ControlPlaneUpgrade{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "cp-upgrade-request",
@@ -271,8 +314,9 @@ func generateCPUpgrade(machine []*clusterv1.Machine) *anywherev1.ControlPlaneUpg
 					Namespace: machine[1].Namespace,
 				},
 			},
-			KubernetesVersion: "v1.28.3-eks-1-28-9",
-			EtcdVersion:       etcdVersion,
+			KubernetesVersion:    "v1.28.3-eks-1-28-9",
+			EtcdVersion:          "v3.5.9-eks-1-28-9",
+			ControlPlaneSpecData: base64.StdEncoding.EncodeToString(kcpSpec),
 		},
 	}
 }
