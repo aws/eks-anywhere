@@ -93,7 +93,7 @@ func newUpgradeTest(t *testing.T) *upgradeTestSetup {
 		ctx:                 context.Background(),
 		newClusterSpec:      test.NewClusterSpec(func(s *cluster.Spec) { s.Cluster.Name = "cluster-name" }),
 		workloadCluster:     &types.Cluster{Name: "workload"},
-		managementStatePath: fmt.Sprintf("cluster-state-backup-%s", time.Now().Format("2006-01-02T15_04_05")),
+		managementStatePath: fmt.Sprintf("%s-backup-%s", "cluster-name", time.Now().Format("2006-01-02T15_04_05")),
 	}
 }
 

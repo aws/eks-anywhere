@@ -106,7 +106,7 @@ func newUpgradeManagementTest(t *testing.T) *upgradeManagementTestSetup {
 			s.Cluster.Name = "management"
 			s.Cluster.Spec.DatacenterRef.Kind = v1alpha1.VSphereDatacenterKind
 		}),
-		managementStatePath: fmt.Sprintf("cluster-state-backup-%s", time.Now().Format("2006-01-02T15_04_05")),
+		managementStatePath: fmt.Sprintf("%s-backup-%s", "management", time.Now().Format("2006-01-02T15_04_05")),
 	}
 }
 

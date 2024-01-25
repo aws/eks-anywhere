@@ -459,9 +459,9 @@ func (s *moveManagementToBootstrapTask) Run(ctx context.Context, commandContext 
 	// Take best effort CAPI backup of workload cluster without filter.
 	// If that errors, then take CAPI backup filtering on only workload cluster.
 	logger.Info("Backing up workload cluster's management resources before moving to bootstrap cluster")
-	err := commandContext.ClusterManager.BackupCAPI(ctx, commandContext.WorkloadCluster, commandContext.ManagementClusterStateDir, "")
+	err := commandContext.ClusterManager.BackupCAPI(ctx, commandContext.WorkloadCluster, commandContext.BackupClusterStateDir, "")
 	if err != nil {
-		err = commandContext.ClusterManager.BackupCAPIWaitForInfrastructure(ctx, commandContext.WorkloadCluster, commandContext.ManagementClusterStateDir, commandContext.WorkloadCluster.Name)
+		err = commandContext.ClusterManager.BackupCAPIWaitForInfrastructure(ctx, commandContext.WorkloadCluster, commandContext.BackupClusterStateDir, commandContext.WorkloadCluster.Name)
 		if err != nil {
 			commandContext.SetError(err)
 			return &CollectDiagnosticsTask{}
@@ -521,7 +521,7 @@ func (s *upgradeWorkloadClusterTask) Run(ctx context.Context, commandContext *ta
 		// Take backup of bootstrap cluster capi components
 		if commandContext.BootstrapCluster != nil {
 			logger.Info("Backing up management components from bootstrap cluster")
-			err := commandContext.ClusterManager.BackupCAPIWaitForInfrastructure(ctx, commandContext.BootstrapCluster, fmt.Sprintf("bootstrap-%s", commandContext.ManagementClusterStateDir), commandContext.WorkloadCluster.Name)
+			err := commandContext.ClusterManager.BackupCAPIWaitForInfrastructure(ctx, commandContext.BootstrapCluster, fmt.Sprintf("bootstrap-%s", commandContext.BackupClusterStateDir), commandContext.WorkloadCluster.Name)
 			if err != nil {
 				logger.Info("Bootstrap management component backup failed, use existing workload cluster backup", "error", err)
 			}
@@ -701,7 +701,7 @@ func (s *deleteBootstrapClusterTask) Run(ctx context.Context, commandContext *ta
 			logger.Info(fmt.Sprintf("%v", err))
 		}
 
-		capiObjectFile := filepath.Join(commandContext.BootstrapCluster.Name, commandContext.ManagementClusterStateDir)
+		capiObjectFile := filepath.Join(commandContext.BootstrapCluster.Name, commandContext.BackupClusterStateDir)
 		if err := os.RemoveAll(capiObjectFile); err != nil {
 			logger.Info(fmt.Sprintf("management cluster CAPI backup file not found: %v", err))
 		}

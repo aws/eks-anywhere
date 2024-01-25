@@ -28,6 +28,9 @@ func (s *writeClusterConfig) Run(ctx context.Context, commandContext *task.Comma
 	if commandContext.OriginalError == nil {
 		logger.MarkSuccess(successMsg)
 	}
+	if commandContext.CurrentClusterSpec != nil {
+		return &postClusterUpgrade{}
+	}
 	return nil
 }
 
@@ -42,5 +45,8 @@ func (s *writeClusterConfig) Checkpoint() *task.CompletedTask {
 }
 
 func (s *writeClusterConfig) Restore(ctx context.Context, commandContext *task.CommandContext, completedTask *task.CompletedTask) (task.Task, error) {
+	if commandContext.CurrentClusterSpec == nil {
+		return &postClusterUpgrade{}, nil
+	}
 	return nil, nil
 }
