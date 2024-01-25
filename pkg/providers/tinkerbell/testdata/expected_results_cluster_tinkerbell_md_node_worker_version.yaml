@@ -29,7 +29,6 @@ spec:
         name: test-md-0-1234567890000
       version: v1.20.4-eks-1-20-1
   strategy:
-    type: RollingUpdate
     rollingUpdate:
       maxSurge: 1
       maxUnavailable: 0
@@ -201,7 +200,6 @@ spec:
         name: test-md-1-1234567890000
       version: v1.21.2-eks-1-21-4
   strategy:
-    type: RollingUpdate
     rollingUpdate:
       maxSurge: 1
       maxUnavailable: 0

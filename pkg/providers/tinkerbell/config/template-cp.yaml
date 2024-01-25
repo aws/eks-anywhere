@@ -413,8 +413,9 @@ spec:
   replicas: {{.controlPlaneReplicas}}
 {{- if .upgradeRolloutStrategy }}
   rolloutStrategy:
-    type: {{.upgradeRolloutStrategy}}
-{{- if .rollingUpdate }}
+{{- if (eq .upgradeRolloutStrategyType "InPlace") }}
+    type: {{.upgradeRolloutStrategyType}}
+{{- else}}
     rollingUpdate:
       maxSurge: {{.maxSurge}}
 {{- end }}

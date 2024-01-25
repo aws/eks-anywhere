@@ -52,12 +52,69 @@ func TestWorkersSpecNewCluster(t *testing.T) {
 					md.Labels["pool"] = "md-1"
 					md.Spec.Template.ObjectMeta.Labels["pool"] = "md-1"
 					md.Spec.Strategy = &clusterv1.MachineDeploymentStrategy{
-						Type: "RollingUpdate",
+						Type: "",
 						RollingUpdate: &clusterv1.MachineRollingUpdateDeployment{
 							MaxUnavailable: &intstr.IntOrString{Type: 0, IntVal: 3, StrVal: ""},
 							MaxSurge:       &intstr.IntOrString{Type: 0, IntVal: 5, StrVal: ""},
 							DeletePolicy:   nil,
 						},
+					}
+				},
+			),
+			ProviderMachineTemplate: machineTemplate(
+				func(tmt *tinkerbellv1.TinkerbellMachineTemplate) {
+					tmt.Name = "test-md-1-1"
+				},
+			),
+		},
+	))
+}
+
+func TestWorkersSpecNewClusterInPlaceRolloutStrategy(t *testing.T) {
+	g := NewWithT(t)
+	logger := test.NewNullLogger()
+	ctx := context.Background()
+	spec := test.NewFullClusterSpec(t, "testdata/cluster_tinkerbell_multiple_node_groups.yaml")
+	spec.Cluster.Spec.WorkerNodeGroupConfigurations[0].UpgradeRolloutStrategy = &anywherev1.WorkerNodesUpgradeRolloutStrategy{
+		Type: "InPlace",
+	}
+	spec.Cluster.Spec.WorkerNodeGroupConfigurations[1].UpgradeRolloutStrategy = &anywherev1.WorkerNodesUpgradeRolloutStrategy{
+		Type: "InPlace",
+	}
+	client := test.NewFakeKubeClient()
+
+	workers, err := tinkerbell.WorkersSpec(ctx, logger, client, spec)
+	g.Expect(err).NotTo(HaveOccurred())
+	g.Expect(workers).NotTo(BeNil())
+	g.Expect(workers.Groups).To(HaveLen(2))
+	g.Expect(workers.Groups).To(ConsistOf(
+		clusterapi.WorkerGroup[*tinkerbellv1.TinkerbellMachineTemplate]{
+			KubeadmConfigTemplate: kubeadmConfigTemplate(),
+			MachineDeployment: machineDeployment(
+				func(md *clusterv1.MachineDeployment) {
+					md.Spec.Strategy = &clusterv1.MachineDeploymentStrategy{
+						Type: "InPlace",
+					}
+				},
+			),
+			ProviderMachineTemplate: machineTemplate(),
+		},
+		clusterapi.WorkerGroup[*tinkerbellv1.TinkerbellMachineTemplate]{
+			KubeadmConfigTemplate: kubeadmConfigTemplate(
+				func(kct *bootstrapv1.KubeadmConfigTemplate) {
+					kct.Name = "test-md-1-1"
+				},
+			),
+			MachineDeployment: machineDeployment(
+				func(md *clusterv1.MachineDeployment) {
+					md.Name = "test-md-1"
+					md.Spec.Template.Spec.InfrastructureRef.Name = "test-md-1-1"
+					md.Spec.Template.Spec.Bootstrap.ConfigRef.Name = "test-md-1-1"
+					md.Spec.Replicas = ptr.Int32(1)
+					md.Labels["pool"] = "md-1"
+					md.Spec.Template.ObjectMeta.Labels["pool"] = "md-1"
+					md.Spec.Strategy = &clusterv1.MachineDeploymentStrategy{
+						Type: "InPlace",
 					}
 				},
 			),
@@ -95,7 +152,7 @@ func TestWorkersSpecUpgradeClusterNoMachineTemplateChanges(t *testing.T) {
 				md.Labels["pool"] = "md-1"
 				md.Spec.Template.ObjectMeta.Labels["pool"] = "md-1"
 				md.Spec.Strategy = &clusterv1.MachineDeploymentStrategy{
-					Type: "RollingUpdate",
+					Type: "",
 					RollingUpdate: &clusterv1.MachineRollingUpdateDeployment{
 						MaxUnavailable: &intstr.IntOrString{Type: 0, IntVal: 3, StrVal: ""},
 						MaxSurge:       &intstr.IntOrString{Type: 0, IntVal: 5, StrVal: ""},
@@ -210,7 +267,7 @@ func TestWorkersSpecRegistryMirrorInsecureSkipVerify(t *testing.T) {
 							md.Labels["pool"] = "md-1"
 							md.Spec.Template.ObjectMeta.Labels["pool"] = "md-1"
 							md.Spec.Strategy = &clusterv1.MachineDeploymentStrategy{
-								Type: "RollingUpdate",
+								Type: "",
 								RollingUpdate: &clusterv1.MachineRollingUpdateDeployment{
 									MaxUnavailable: &intstr.IntOrString{Type: 0, IntVal: 3, StrVal: ""},
 									MaxSurge:       &intstr.IntOrString{Type: 0, IntVal: 5, StrVal: ""},
@@ -269,7 +326,7 @@ func machineDeployment(opts ...func(*clusterv1.MachineDeployment)) *clusterv1.Ma
 				},
 			},
 			Strategy: &clusterv1.MachineDeploymentStrategy{
-				Type: "RollingUpdate",
+				Type: "",
 				RollingUpdate: &clusterv1.MachineRollingUpdateDeployment{
 					MaxUnavailable: &intstr.IntOrString{Type: 0, IntVal: 0, StrVal: ""},
 					MaxSurge:       &intstr.IntOrString{Type: 0, IntVal: 1, StrVal: ""},

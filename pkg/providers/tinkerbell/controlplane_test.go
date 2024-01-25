@@ -539,7 +539,6 @@ spec:
   rolloutStrategy:
     rollingUpdate:
       maxSurge: 1
-    type: RollingUpdate
   machineTemplate:
     infrastructureRef:
       apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
@@ -911,7 +910,6 @@ spec:
   rolloutStrategy:
     rollingUpdate:
       maxSurge: 1
-    type: RollingUpdate
   version: v1.21.2-eks-1-21-4
 status:
   initialized: false

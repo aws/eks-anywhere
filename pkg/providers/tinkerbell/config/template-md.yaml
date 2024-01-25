@@ -35,8 +35,9 @@ spec:
       version: {{.kubernetesVersion}}
 {{- if .upgradeRolloutStrategy }}
   strategy:
-    type: {{.upgradeRolloutStrategy}}
-{{- if .rollingUpdate }}
+{{- if (eq .upgradeRolloutStrategyType "InPlace") }}
+    type: {{.upgradeRolloutStrategyType}}
+{{- else}}
     rollingUpdate:
       maxSurge: {{.maxSurge}}
       maxUnavailable: {{.maxUnavailable}}

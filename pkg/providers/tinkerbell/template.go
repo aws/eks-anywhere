@@ -40,6 +40,7 @@ var defaultClusterConfigMD string
 const (
 	TinkerbellMachineTemplateKind = "TinkerbellMachineTemplate"
 	defaultRegistry               = "public.ecr.aws"
+	inPlaceUpgradeRolloutStrategy = "InPlace"
 )
 
 type TemplateBuilder struct {
@@ -160,9 +161,10 @@ func (tb *TemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, wo
 		values["autoscalingConfig"] = workerNodeGroupConfiguration.AutoScalingConfiguration
 
 		if workerNodeGroupConfiguration.UpgradeRolloutStrategy != nil {
-			values["upgradeRolloutStrategy"] = workerNodeGroupConfiguration.UpgradeRolloutStrategy.Type
-			if workerNodeGroupConfiguration.UpgradeRolloutStrategy.Type == "RollingUpdate" {
-				values["rollingUpdate"] = true
+			values["upgradeRolloutStrategy"] = true
+			if workerNodeGroupConfiguration.UpgradeRolloutStrategy.Type == inPlaceUpgradeRolloutStrategy {
+				values["upgradeRolloutStrategyType"] = workerNodeGroupConfiguration.UpgradeRolloutStrategy.Type
+			} else {
 				values["maxSurge"] = workerNodeGroupConfiguration.UpgradeRolloutStrategy.RollingUpdate.MaxSurge
 				values["maxUnavailable"] = workerNodeGroupConfiguration.UpgradeRolloutStrategy.RollingUpdate.MaxUnavailable
 			}
@@ -435,9 +437,10 @@ func buildTemplateMapCP(
 	}
 
 	if clusterSpec.Cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy != nil {
-		values["upgradeRolloutStrategy"] = clusterSpec.Cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy.Type
-		if clusterSpec.Cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy.Type == "RollingUpdate" {
-			values["rollingUpdate"] = true
+		values["upgradeRolloutStrategy"] = true
+		if clusterSpec.Cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy.Type == inPlaceUpgradeRolloutStrategy {
+			values["upgradeRolloutStrategyType"] = clusterSpec.Cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy.Type
+		} else {
 			values["maxSurge"] = clusterSpec.Cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy.RollingUpdate.MaxSurge
 		}
 	}
