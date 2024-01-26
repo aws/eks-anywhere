@@ -408,3 +408,28 @@ func wantKubeDistroForEksdRelease() (*eksdv1.Release, *cluster.KubeDistro) {
 
 	return eksdRelease, kubeDistro
 }
+
+func TestManagementComponentsFromBundles(t *testing.T) {
+	g := NewWithT(t)
+	bundles := test.Bundle()
+	got := cluster.ManagementComponentsFromBundles(bundles)
+	want := &cluster.ManagementComponents{
+		EksD:                   bundles.Spec.VersionsBundles[0].EksD,
+		CertManager:            bundles.Spec.VersionsBundles[0].CertManager,
+		ClusterAPI:             bundles.Spec.VersionsBundles[0].ClusterAPI,
+		Bootstrap:              bundles.Spec.VersionsBundles[0].Bootstrap,
+		ControlPlane:           bundles.Spec.VersionsBundles[0].ControlPlane,
+		VSphere:                bundles.Spec.VersionsBundles[0].VSphere,
+		CloudStack:             bundles.Spec.VersionsBundles[0].CloudStack,
+		Docker:                 bundles.Spec.VersionsBundles[0].Docker,
+		Eksa:                   bundles.Spec.VersionsBundles[0].Eksa,
+		Flux:                   bundles.Spec.VersionsBundles[0].Flux,
+		ExternalEtcdBootstrap:  bundles.Spec.VersionsBundles[0].ExternalEtcdBootstrap,
+		ExternalEtcdController: bundles.Spec.VersionsBundles[0].ExternalEtcdController,
+		Tinkerbell:             bundles.Spec.VersionsBundles[0].Tinkerbell,
+		Snow:                   bundles.Spec.VersionsBundles[0].Snow,
+		Nutanix:                bundles.Spec.VersionsBundles[0].Nutanix,
+	}
+
+	g.Expect(got).To(Equal(want))
+}
