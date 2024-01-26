@@ -275,9 +275,12 @@ allowing you to upgrade a number of fields simultaneously with the same procedur
 - `kubernetesVersion`
 - `controlPlaneConfig.count`
 - `controlPlaneConfigurations.machineGroupRef.name`
+- `controlPlaneConfigurations.upgradeRolloutStrategy.rollingUpdate.maxSurge`
 - `workerNodeGroupConfigurations.count`
 - `workerNodeGroupConfigurations.machineGroupRef.name`
 - `workerNodeGroupConfigurations.kubernetesVersion`
+- `workerNodeGroupConfigurations.upgradeRolloutStrategy.rollingUpdate.maxSurge`
+- `workerNodeGroupConfigurations.upgradeRolloutStrategy.rollingUpdate.maxUnavailable`
 - `externalEtcdConfiguration.machineGroupRef.name`
 - `identityProviderRefs` (Only for `kind:OIDCConfig`, `kind:AWSIamConfig` is immutable)
 - `gitOpsRef` (Once set, you can't change or delete the field's content later)
@@ -367,6 +370,87 @@ spec:
 ```
 
 Worker node groups can use the same machineGroupRef as previous groups, or you can define a new machine configuration for your new group.
+
+#### Advanced configuration for rolling upgrade
+
+EKS Anywhere allows an optional configuration to customize the behavior of upgrades. 
+
+It allows the specification of 
+Two parameters that control the desired behavior of rolling upgrades: 
+* maxSurge - The maximum number of machines that can be scheduled above the desired number of machines. When not specified, the current CAPI default of 1 is used.
+* maxUnavailable - The maximum number of machines that can be unavailable during the upgrade. When not specified, the current CAPI default of 0 is used.
+
+Example configuration:
+
+```bash
+upgradeRolloutStrategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxSurge: 1
+    maxUnavailable: 0    # only configurable for worker nodes
+```
+
+'upgradeRolloutStrategy' configuration can be specified separately for control plane and for each worker node group. This template contains an example for control plane under the 'controlPlaneConfiguration' section and for worker node group under 'workerNodeGroupConfigurations':
+
+```bash
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: Cluster
+metadata:
+  name: my-cluster-name
+spec:
+  controlPlaneConfiguration:
+    count: 1
+    endpoint:
+      host: "xx.xx.xx.xx"
+    machineGroupRef:
+      kind: VSphereMachineConfig
+      name: my-cluster-name-cp
+    upgradeRolloutStrategy:
+      type: RollingUpdate
+      rollingUpdate:
+        maxSurge: 1 
+  workerNodeGroupConfigurations:
+  - count: 2
+    machineGroupRef:
+      kind: VSphereMachineConfig
+      name: my-cluster-name 
+    name: md-0
+    upgradeRolloutStrategy:
+      type: RollingUpdate
+      rollingUpdate:
+        maxSurge: 1
+        maxUnavailable: 0
+
+---
+...
+```
+
+#### upgradeRolloutStrategy
+Configuration parameters for upgrade strategy.
+
+#### upgradeRolloutStrategy.type
+Type of rollout strategy. Currently only `RollingUpdate` is supported.
+
+#### upgradeRolloutStrategy.rollingUpdate
+Configuration parameters for customizing rolling upgrade behavior.
+
+#### upgradeRolloutStrategy.rollingUpdate.maxSurge
+Default: 1
+
+This can not be 0 if maxUnavailable is 0.
+
+The maximum number of machines that can be scheduled above the desired number of machines. 
+
+Example: When this is set to n, the new worker node group can be scaled up immediately by n when the rolling upgrade starts. Total number of machines in the cluster (old + new) never exceeds (desired number of machines + n). Once scale down happens and old machines are brought down, the new worker node group can be scaled up further ensuring that the total number of machines running at any time does not exceed the desired number of machines + n.
+
+#### upgradeRolloutStrategy.rollingUpdate.maxUnavailable
+Default: 0
+
+This can not be 0 if MaxSurge is 0.
+
+The maximum number of machines that can be unavailable during the upgrade.
+
+Example: When this is set to n, the old worker node group can be scaled down by n machines immediately when the rolling upgrade starts. Once new machines are ready, old worker node group can be scaled down further, followed by scaling up the new worker node group, ensuring that the total number of machines unavailable at all times during the upgrade never falls below n.
 
 ### Resume upgrade after failure
 
