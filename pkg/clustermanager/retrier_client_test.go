@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -12,7 +13,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/clustermanager/mocks"
 	"github.com/aws/eks-anywhere/pkg/retrier"
 	"github.com/aws/eks-anywhere/pkg/types"
-	"github.com/golang/mock/gomock"
 )
 
 func TestApplyKubeSpecFromBytes(t *testing.T) {
