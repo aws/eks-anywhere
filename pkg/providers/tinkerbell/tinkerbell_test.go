@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
+	. "github.com/onsi/gomega"
 	"github.com/stretchr/testify/assert"
 	tinkv1alpha1 "github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
 	v1 "k8s.io/api/core/v1"
@@ -27,6 +28,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
+	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
 const (
@@ -55,6 +57,26 @@ func givenMachineConfigs(t *testing.T, fileName string) map[string]*v1alpha1.Tin
 	return config.TinkerbellMachineConfigs
 }
 
+func givenManagementComponents() *cluster.ManagementComponents {
+	return &cluster.ManagementComponents{
+		Tinkerbell: releasev1.TinkerbellBundle{
+			Version: "v1.2.2",
+			KubeVip: releasev1.Image{
+				URI: "public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.581",
+			},
+			Components: releasev1alpha1.Manifest{
+				URI: "embed:///config/clusterctl/overrides/infrastructure-tinkerbell/v1.2.2/infrastructure-components-development.yaml",
+			},
+			ClusterTemplate: releasev1alpha1.Manifest{
+				URI: "embed:///config/clusterctl/overrides/nfrastructure-tinkerbell/v1.2.2/cluster-template-development.yaml",
+			},
+			Metadata: releasev1alpha1.Manifest{
+				URI: "embed:///config/clusterctl/overrides/nfrastructure-tinkerbell/v1.2.2/metadata.yaml",
+			},
+		},
+	}
+}
+
 func assertError(t *testing.T, expected string, err error) {
 	if err == nil {
 		t.Fatalf("Expected=<%s> actual=<nil>", expected)
@@ -62,6 +84,34 @@ func assertError(t *testing.T, expected string, err error) {
 	actual := err.Error()
 	if expected != actual {
 		t.Fatalf("Expected=<%s> actual=<%s>", expected, actual)
+	}
+}
+
+type providerTest struct {
+	*WithT
+	provider *Provider
+}
+
+func newProviderTest(t *testing.T) *providerTest {
+	clusterSpecManifest := "cluster_tinkerbell_external_etcd.yaml"
+	mockCtrl := gomock.NewController(t)
+	docker := stackmocks.NewMockDocker(mockCtrl)
+	helm := stackmocks.NewMockHelm(mockCtrl)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	stackInstaller := stackmocks.NewMockStackInstaller(mockCtrl)
+	writer := filewritermocks.NewMockFileWriter(mockCtrl)
+	forceCleanup := false
+
+	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
+	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
+	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
+
+	p := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+	p.stackInstaller = stackInstaller
+
+	return &providerTest{
+		WithT:    NewWithT(t),
+		provider: p,
 	}
 }
 
@@ -2342,4 +2392,71 @@ func getVersionBundle() *cluster.VersionsBundle {
 			EtcdVersion: "3.4.14",
 		},
 	}
+}
+
+func TestGetInfrastructureBundleFromManagementComponents(t *testing.T) {
+	g := NewWithT(t)
+	clusterSpecManifest := "cluster_tinkerbell_external_etcd.yaml"
+	mockCtrl := gomock.NewController(t)
+	docker := stackmocks.NewMockDocker(mockCtrl)
+	helm := stackmocks.NewMockHelm(mockCtrl)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	stackInstaller := stackmocks.NewMockStackInstaller(mockCtrl)
+	writer := filewritermocks.NewMockFileWriter(mockCtrl)
+	forceCleanup := false
+
+	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
+	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
+	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
+
+	p := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+	p.stackInstaller = stackInstaller
+
+	managementComponents := givenManagementComponents()
+
+	wantInfraBundle := &types.InfrastructureBundle{
+		FolderName: "infrastructure-tinkerbell/v1.2.2/",
+		Manifests: []releasev1alpha1.Manifest{
+			managementComponents.Tinkerbell.Components,
+			managementComponents.Tinkerbell.Metadata,
+			managementComponents.Tinkerbell.ClusterTemplate,
+		},
+	}
+
+	infraBundle := p.GetInfrastructureBundleFromManagementComponents(managementComponents)
+	g.Expect(infraBundle).To(Equal(wantInfraBundle))
+}
+
+func TestVersionFromManagementComponents(t *testing.T) {
+	tt := newProviderTest(t)
+	tinkerbellVersion := "v1.2.3"
+	managementComponents := givenManagementComponents()
+	managementComponents.Tinkerbell.Version = tinkerbellVersion
+	got := tt.provider.VersionFromManagementComponents(managementComponents)
+	tt.Expect(got).To(Equal(tinkerbellVersion))
+}
+
+func TestChangeDiffFromManagementComponentsNoChange(t *testing.T) {
+	tt := newProviderTest(t)
+	managementComponents := givenManagementComponents()
+	got := tt.provider.ChangeDiffFromManagementComponents(managementComponents, managementComponents)
+	tt.Expect(got).To(BeNil())
+}
+
+func TestChangeDiffFromManagementComponentsWithChange(t *testing.T) {
+	tt := newProviderTest(t)
+	managementComponents := givenManagementComponents()
+	managementComponents.Tinkerbell.Version = "v1.2.2"
+
+	newManagementComponents := givenManagementComponents()
+	newManagementComponents.Tinkerbell.Version = "v1.2.3"
+
+	wantDiff := &types.ComponentChangeDiff{
+		ComponentName: "tinkerbell",
+		NewVersion:    "v1.2.3",
+		OldVersion:    "v1.2.2",
+	}
+
+	got := tt.provider.ChangeDiffFromManagementComponents(managementComponents, newManagementComponents)
+	tt.Expect(got).To(Equal(wantDiff))
 }
