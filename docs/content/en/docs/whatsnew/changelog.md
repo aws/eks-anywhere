@@ -31,7 +31,7 @@ Please upgrade to `v0.15.3` if you are using Tinkerbell (Bare Metal) provider.
 | RHEL 8.7            | ✔       | ✔          | ✔       | ✔          | —     |
 | RHEL 9.x            | —       | —          | ✔       | —          | —     |
 
-## [v0.18.4](https://github.com/aws/egks-anywhere/releases/tag/v0.18.4)
+## [v0.18.4](https://github.com/aws/eks-anywhere/releases/tag/v0.18.4)
 
 ### Feature 
 * Nutanix: Enable api-server audit logging for Nutanix ([#2664](https://github.com/aws/eks-anywhere/pull/7190))
