@@ -3295,7 +3295,7 @@ func TestCluster_ManagementComponentsVersion(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			g := NewWithT(t)
-			got := tt.cluster.GetManagementComponentsVersion()
+			got := tt.cluster.ManagementComponentsVersion()
 			g.Expect(got).To(Equal(tt.expectedVersion))
 		})
 	}

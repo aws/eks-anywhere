@@ -86,20 +86,19 @@ func (i *EKSAInstaller) Install(ctx context.Context, log logr.Logger, cluster *t
 
 // Upgrade re-installs the eksa components in a cluster if the VersionBundle defined in the
 // new spec has a different eks-a components version. Workload clusters are ignored.
-func (i *EKSAInstaller) Upgrade(ctx context.Context, log logr.Logger, c *types.Cluster, currentManagementComponentsVersionsBundle *releasev1alpha1.VersionsBundle, newSpec *cluster.Spec) (*types.ChangeDiff, error) {
+func (i *EKSAInstaller) Upgrade(ctx context.Context, log logr.Logger, c *types.Cluster, currentVersionsBundle *releasev1alpha1.VersionsBundle, newVersionsBundle *releasev1alpha1.VersionsBundle, newSpec *cluster.Spec) (*types.ChangeDiff, error) {
 	log.V(1).Info("Checking for EKS-A components upgrade")
 	if !newSpec.Cluster.IsSelfManaged() {
 		log.V(1).Info("Skipping EKS-A components upgrade, not a self-managed cluster")
 		return nil, nil
 	}
 
-	newVersionsBundle := &newSpec.Bundles.Spec.VersionsBundles[0]
-	changeDiff := EksaChangeDiff(currentManagementComponentsVersionsBundle, newVersionsBundle)
+	changeDiff := EksaChangeDiff(currentVersionsBundle, newVersionsBundle)
 	if changeDiff == nil {
 		log.V(1).Info("Nothing to upgrade for controller and CRDs")
 		return nil, nil
 	}
-	oldVersion := currentManagementComponentsVersionsBundle.Eksa.Version
+	oldVersion := currentVersionsBundle.Eksa.Version
 	newVersion := newVersionsBundle.Eksa.Version
 	if err := i.Install(ctx, log, c, newSpec); err != nil {
 		return nil, fmt.Errorf("upgrading EKS-A components from version %v to version %v: %v", oldVersion, newVersion, err)

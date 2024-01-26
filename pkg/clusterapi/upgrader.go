@@ -8,7 +8,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/types"
-	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
+	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
 type Upgrader struct {
@@ -25,15 +25,14 @@ func NewUpgrader(capiClient CAPIClient, kubectlClient KubectlClient) *Upgrader {
 }
 
 // Upgrade checks whether upgrading the CAPI components is necessary and, if so, upgrades them the new versions.
-func (u *Upgrader) Upgrade(ctx context.Context, managementCluster *types.Cluster, provider providers.Provider, currentManagementComponentsVersionsBundle *releasev1.VersionsBundle, newSpec *cluster.Spec) (*types.ChangeDiff, error) {
+func (u *Upgrader) Upgrade(ctx context.Context, managementCluster *types.Cluster, provider providers.Provider, currentVersionsBundle, newVersionsBundle *releasev1alpha1.VersionsBundle, newSpec *cluster.Spec) (*types.ChangeDiff, error) {
 	logger.V(1).Info("Checking for CAPI upgrades")
 	if !newSpec.Cluster.IsSelfManaged() {
 		logger.V(1).Info("Skipping CAPI upgrades, not a self-managed cluster")
 		return nil, nil
 	}
 
-	newVersionsBundle := &newSpec.Bundles.Spec.VersionsBundles[0]
-	capiChangeDiff := capiChangeDiff(currentManagementComponentsVersionsBundle, newVersionsBundle, provider)
+	capiChangeDiff := capiChangeDiff(currentVersionsBundle, newVersionsBundle, provider)
 	if capiChangeDiff == nil {
 		logger.V(1).Info("Nothing to upgrade for CAPI")
 		return nil, nil
@@ -71,11 +70,11 @@ func (c *CAPIChangeDiff) toChangeDiff() *types.ChangeDiff {
 }
 
 // CapiChangeDiff generates a version change diff for the CAPI components.
-func CapiChangeDiff(currentVersionsBundle, newVersionsBundle *releasev1.VersionsBundle, provider providers.Provider) *types.ChangeDiff {
+func CapiChangeDiff(currentVersionsBundle, newVersionsBundle *releasev1alpha1.VersionsBundle, provider providers.Provider) *types.ChangeDiff {
 	return capiChangeDiff(currentVersionsBundle, newVersionsBundle, provider).toChangeDiff()
 }
 
-func capiChangeDiff(currentVersionsBundle, newVersionsBundle *releasev1.VersionsBundle, provider providers.Provider) *CAPIChangeDiff {
+func capiChangeDiff(currentVersionsBundle, newVersionsBundle *releasev1alpha1.VersionsBundle, provider providers.Provider) *CAPIChangeDiff {
 	changeDiff := &CAPIChangeDiff{}
 	componentChanged := false
 

@@ -11,6 +11,19 @@ import (
 	v1alpha1release "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
+// ManagementComponentsVersionsBundle returns the versions bundles for the management components.
+//
+// For decoupled component upgrades, the management components can be upgraded to the new EKS-A version
+// separately from the Cluster. So, here we have the management components bundles for that new version,
+// but, there are still multiple Kubernetes versions to choose from within the bundle to get the
+// components information. However, because management component images are the same for every Kubernetes
+// version within the same bundle manifest, it's OK to use the first bundle. If there are is differences between
+// the management components on this first versions bundle, and the new cluster specs first versions bundle,
+// that indicates an upgrade is required.
+func ManagementComponentsVersionsBundle(bundles *v1alpha1release.Bundles) *v1alpha1release.VersionsBundle {
+	return &bundles.Spec.VersionsBundles[0]
+}
+
 func bundlesNamespacedKey(cluster *v1alpha1.Cluster, release *v1alpha1release.EKSARelease) (name, namespace string) {
 	if release != nil && release.Spec.BundlesRef.Name != "" {
 		name = release.Spec.BundlesRef.Name
@@ -107,8 +120,11 @@ func getEksdRelease(ctx context.Context, client Client, version v1alpha1.Kuberne
 
 // GetManagementComponentsVersionsBundle returns the first VersionsBundle from the Bundles object for cluster's the management components version.
 func GetManagementComponentsVersionsBundle(ctx context.Context, client Client, cluster *v1alpha1.Cluster) (*v1alpha1release.VersionsBundle, error) {
-	managementComponentsVersion := cluster.GetManagementComponentsVersion()
+	managementComponentsVersion := cluster.ManagementComponentsVersion()
 	if managementComponentsVersion == "" {
+		if cluster.Spec.EksaVersion == nil {
+			return nil, fmt.Errorf("either management components version or cluster's EksaVersion need to be set")
+		}
 		managementComponentsVersion = string(*cluster.Spec.EksaVersion)
 	}
 
@@ -119,20 +135,13 @@ func GetManagementComponentsVersionsBundle(ctx context.Context, client Client, c
 		return nil, err
 	}
 
-	managementComponentBundles := &v1alpha1release.Bundles{}
-	err = client.Get(ctx, eksaRelease.Spec.BundlesRef.Name, eksaRelease.Spec.BundlesRef.Namespace, managementComponentBundles)
+	bundles := &v1alpha1release.Bundles{}
+	err = client.Get(ctx, eksaRelease.Spec.BundlesRef.Name, eksaRelease.Spec.BundlesRef.Namespace, bundles)
 	if err != nil {
 		return nil, err
 	}
 
-	// For decoupled component upgrades, the management components can be upgraded to the new EKS-A version
-	// separately from the Cluster. So, here we have the management components bundles for that new version,
-	// but, there are still multiple Kubernetes versions to choose from within the bundle to get the
-	// components information. However, because management component images are the same for every Kubernetes
-	// version within the same bundle manifest, it's OK to use the first bundle. If there are is differences between
-	// the management components on this first versions bundle, and the new cluster specs first versions bundle,
-	// that indicates an upgrade is required.
-	return &managementComponentBundles.Spec.VersionsBundles[0], nil
+	return ManagementComponentsVersionsBundle(bundles), nil
 }
 
 // BundlesForCluster returns a bundles resource for the cluster.

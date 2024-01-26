@@ -82,13 +82,15 @@ func runUpgradeCoreComponents(ctx context.Context, commandContext *task.CommandC
 		return err
 	}
 
-	currentManagementComponentsVersionsBundle, err := cluster.GetManagementComponentsVersionsBundle(ctx, client, commandContext.CurrentClusterSpec.Cluster)
+	currentVersionsBundle, err := cluster.GetManagementComponentsVersionsBundle(ctx, client, commandContext.CurrentClusterSpec.Cluster)
+	newVersionsBundle := cluster.ManagementComponentsVersionsBundle(commandContext.ClusterSpec.Bundles)
+
 	if err != nil {
 		commandContext.SetError(err)
 		return err
 	}
 
-	changeDiff, err := commandContext.CAPIManager.Upgrade(ctx, commandContext.ManagementCluster, commandContext.Provider, currentManagementComponentsVersionsBundle, commandContext.ClusterSpec)
+	changeDiff, err := commandContext.CAPIManager.Upgrade(ctx, commandContext.ManagementCluster, commandContext.Provider, currentVersionsBundle, newVersionsBundle, commandContext.ClusterSpec)
 	if err != nil {
 		commandContext.SetError(err)
 		return err
@@ -100,21 +102,21 @@ func runUpgradeCoreComponents(ctx context.Context, commandContext *task.CommandC
 		return err
 	}
 
-	changeDiff, err = commandContext.GitOpsManager.Upgrade(ctx, commandContext.ManagementCluster, currentManagementComponentsVersionsBundle, commandContext.CurrentClusterSpec, commandContext.ClusterSpec)
+	changeDiff, err = commandContext.GitOpsManager.Upgrade(ctx, commandContext.ManagementCluster, currentVersionsBundle, newVersionsBundle, commandContext.CurrentClusterSpec, commandContext.ClusterSpec)
 	if err != nil {
 		commandContext.SetError(err)
 		return err
 	}
 	commandContext.UpgradeChangeDiff.Append(changeDiff)
 
-	changeDiff, err = commandContext.ClusterManager.Upgrade(ctx, commandContext.ManagementCluster, currentManagementComponentsVersionsBundle, commandContext.ClusterSpec)
+	changeDiff, err = commandContext.ClusterManager.Upgrade(ctx, commandContext.ManagementCluster, currentVersionsBundle, newVersionsBundle, commandContext.ClusterSpec)
 	if err != nil {
 		commandContext.SetError(err)
 		return err
 	}
 	commandContext.UpgradeChangeDiff.Append(changeDiff)
 
-	changeDiff, err = commandContext.EksdUpgrader.Upgrade(ctx, commandContext.ManagementCluster, currentManagementComponentsVersionsBundle, commandContext.ClusterSpec)
+	changeDiff, err = commandContext.EksdUpgrader.Upgrade(ctx, commandContext.ManagementCluster, currentVersionsBundle, newVersionsBundle, commandContext.ClusterSpec)
 	if err != nil {
 		commandContext.SetError(err)
 		return err

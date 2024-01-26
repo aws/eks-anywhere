@@ -1310,8 +1310,8 @@ func (c *Cluster) SetManagementComponentsVersion(version string) {
 	c.Annotations[managementComponentsVersionAnnotation] = version
 }
 
-// GetManagementComponentsVersion returns `management-components version`annotation value on the Cluster object.
-func (c *Cluster) GetManagementComponentsVersion() string {
+// ManagementComponentsVersion returns `management-components version`annotation value on the Cluster object.
+func (c *Cluster) ManagementComponentsVersion() string {
 	if c.Annotations == nil {
 		return ""
 	}

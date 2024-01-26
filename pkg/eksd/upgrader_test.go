@@ -21,13 +21,14 @@ import (
 
 type upgraderTest struct {
 	*WithT
-	ctx                                       context.Context
-	client                                    *mocks.MockEksdInstallerClient
-	reader                                    *m.MockReader
-	currentManagementComponentsVersionsBundle *releasev1alpha1.VersionsBundle
-	newSpec                                   *cluster.Spec
-	eksdUpgrader                              *eksd.Upgrader
-	cluster                                   *types.Cluster
+	ctx                   context.Context
+	client                *mocks.MockEksdInstallerClient
+	reader                *m.MockReader
+	currentVersionsBundle *releasev1alpha1.VersionsBundle
+	newVersionsBundle     *releasev1alpha1.VersionsBundle
+	newSpec               *cluster.Spec
+	eksdUpgrader          *eksd.Upgrader
+	cluster               *types.Cluster
 }
 
 func newUpgraderTest(t *testing.T) *upgraderTest {
@@ -35,21 +36,26 @@ func newUpgraderTest(t *testing.T) *upgraderTest {
 	client := mocks.NewMockEksdInstallerClient(ctrl)
 	reader := m.NewMockReader(ctrl)
 	currentSpec := test.NewClusterSpec(func(s *cluster.Spec) {
-		s.Bundles.Spec.VersionsBundles[0].EksD.Name = "kubernetes-1-19-eks-1"
-		s.Bundles.Spec.VersionsBundles[0].EksD.ReleaseChannel = "1-19"
-		s.Bundles.Spec.VersionsBundles[0].EksD.KubeVersion = "v1.19.1"
+		s.Bundles = bundle()
 	})
 
-	currentManagementComponentsVersionsBundle := currentSpec.Bundles.Spec.VersionsBundles[0].DeepCopy()
+	currentVersionsBundle := cluster.ManagementComponentsVersionsBundle(currentSpec.Bundles)
+	currentVersionsBundle.EksD.Name = "kubernetes-1-19-eks-1"
+	currentVersionsBundle.EksD.ReleaseChannel = "1-19"
+	currentVersionsBundle.EksD.KubeVersion = "v1.19.1"
+
+	newSpec := currentSpec.DeepCopy()
+	newVersionsBundle := cluster.ManagementComponentsVersionsBundle(newSpec.Bundles)
 
 	return &upgraderTest{
-		WithT:        NewWithT(t),
-		ctx:          context.Background(),
-		client:       client,
-		reader:       reader,
-		eksdUpgrader: eksd.NewUpgrader(client, reader),
-		currentManagementComponentsVersionsBundle: currentManagementComponentsVersionsBundle,
-		newSpec: currentSpec.DeepCopy(),
+		WithT:                 NewWithT(t),
+		ctx:                   context.Background(),
+		client:                client,
+		reader:                reader,
+		eksdUpgrader:          eksd.NewUpgrader(client, reader),
+		currentVersionsBundle: currentVersionsBundle,
+		newVersionsBundle:     newVersionsBundle,
+		newSpec:               newSpec,
 		cluster: &types.Cluster{
 			Name:           "cluster-name",
 			KubeconfigFile: "k.kubeconfig",
@@ -61,22 +67,21 @@ func TestEksdUpgradeNoSelfManaged(t *testing.T) {
 	tt := newUpgraderTest(t)
 	tt.newSpec.Cluster.SetManagedBy("management-cluster")
 
-	tt.Expect(tt.eksdUpgrader.Upgrade(tt.ctx, tt.cluster, tt.currentManagementComponentsVersionsBundle, tt.newSpec)).To(BeNil())
+	tt.Expect(tt.eksdUpgrader.Upgrade(tt.ctx, tt.cluster, tt.currentVersionsBundle, tt.newVersionsBundle, tt.newSpec)).To(BeNil())
 }
 
 func TestEksdUpgradeNoChanges(t *testing.T) {
 	tt := newUpgraderTest(t)
 
-	tt.Expect(tt.eksdUpgrader.Upgrade(tt.ctx, tt.cluster, tt.currentManagementComponentsVersionsBundle, tt.newSpec)).To(BeNil())
+	tt.Expect(tt.eksdUpgrader.Upgrade(tt.ctx, tt.cluster, tt.currentVersionsBundle, tt.newVersionsBundle, tt.newSpec)).To(BeNil())
 }
 
 func TestEksdUpgradeSuccess(t *testing.T) {
 	tt := newUpgraderTest(t)
 
-	tt.newSpec.Bundles = bundle()
-	tt.newSpec.Bundles.Spec.VersionsBundles[0].EksD.Name = "kubernetes-1-19-eks-2"
-	tt.newSpec.Bundles.Spec.VersionsBundles[0].EksD.ReleaseChannel = "1-19"
-	tt.newSpec.Bundles.Spec.VersionsBundles[0].EksD.KubeVersion = "v1.19.1"
+	tt.newVersionsBundle.EksD.Name = "kubernetes-1-19-eks-2"
+	tt.newVersionsBundle.EksD.ReleaseChannel = "1-19"
+	tt.newVersionsBundle.EksD.KubeVersion = "v1.19.1"
 
 	wantDiff := &types.ChangeDiff{
 		ComponentReports: []types.ComponentChangeDiff{
@@ -90,19 +95,17 @@ func TestEksdUpgradeSuccess(t *testing.T) {
 
 	tt.reader.EXPECT().ReadFile(testdataFile).Return([]byte("test data"), nil)
 	tt.client.EXPECT().ApplyKubeSpecFromBytesWithNamespace(tt.ctx, tt.cluster, []byte("test data"), constants.EksaSystemNamespace).Return(nil)
-	tt.Expect(tt.eksdUpgrader.Upgrade(tt.ctx, tt.cluster, tt.currentManagementComponentsVersionsBundle, tt.newSpec)).To(Equal(wantDiff))
+	tt.Expect(tt.eksdUpgrader.Upgrade(tt.ctx, tt.cluster, tt.currentVersionsBundle, tt.newVersionsBundle, tt.newSpec)).To(Equal(wantDiff))
 }
 
 func TestUpgraderEksdUpgradeInstallError(t *testing.T) {
 	tt := newUpgraderTest(t)
 	tt.eksdUpgrader.SetRetrier(retrier.NewWithMaxRetries(1, 0))
-	tt.newSpec.Bundles = bundle()
-	tt.newSpec.Bundles.Spec.VersionsBundles[0].EksD.Name = "kubernetes-1-19-eks-2"
-	tt.newSpec.Bundles.Spec.VersionsBundles[0].EksD.Components = ""
-	tt.newSpec.Bundles.Spec.VersionsBundles[1].EksD.Components = ""
+	tt.newVersionsBundle.EksD.Name = "kubernetes-1-19-eks-2"
+	tt.newVersionsBundle.EksD.Components = ""
 
-	tt.reader.EXPECT().ReadFile(tt.newSpec.Bundles.Spec.VersionsBundles[0].EksD.Components).Return([]byte(""), fmt.Errorf("error"))
+	tt.reader.EXPECT().ReadFile(tt.newVersionsBundle.EksD.Components).Return([]byte(""), fmt.Errorf("error"))
 	// components file not set so this should return an error in failing to load manifest
-	_, err := tt.eksdUpgrader.Upgrade(tt.ctx, tt.cluster, tt.currentManagementComponentsVersionsBundle, tt.newSpec)
+	_, err := tt.eksdUpgrader.Upgrade(tt.ctx, tt.cluster, tt.currentVersionsBundle, tt.newVersionsBundle, tt.newSpec)
 	tt.Expect(err).NotTo(BeNil())
 }

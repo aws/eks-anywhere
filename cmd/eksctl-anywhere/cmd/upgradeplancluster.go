@@ -99,16 +99,16 @@ func (uc *upgradeClusterOptions) upgradePlanCluster(ctx context.Context) error {
 			return err
 		}
 
-		currentManagementComponentsVersionsBundle, err := cluster.GetManagementComponentsVersionsBundle(ctx, client, currentSpec.Cluster)
+		currentVersionsBundle, err := cluster.GetManagementComponentsVersionsBundle(ctx, client, currentSpec.Cluster)
 		if err != nil {
 			return err
 		}
 
-		newVersionsBundle := &newClusterSpec.Bundles.Spec.VersionsBundles[0]
+		newVersionsBundle := cluster.ManagementComponentsVersionsBundle(newClusterSpec.Bundles)
 
-		componentChangeDiffs.Append(eksaupgrader.EksaChangeDiff(currentManagementComponentsVersionsBundle, newVersionsBundle))
-		componentChangeDiffs.Append(fluxupgrader.ChangeDiff(currentManagementComponentsVersionsBundle, newVersionsBundle, currentSpec, newClusterSpec))
-		componentChangeDiffs.Append(capiupgrader.CapiChangeDiff(currentManagementComponentsVersionsBundle, newVersionsBundle, deps.Provider))
+		componentChangeDiffs.Append(eksaupgrader.EksaChangeDiff(currentVersionsBundle, newVersionsBundle))
+		componentChangeDiffs.Append(fluxupgrader.ChangeDiff(currentVersionsBundle, newVersionsBundle, currentSpec, newClusterSpec))
+		componentChangeDiffs.Append(capiupgrader.CapiChangeDiff(currentVersionsBundle, newVersionsBundle, deps.Provider))
 	}
 
 	componentChangeDiffs.Append(cilium.ChangeDiff(currentSpec, newClusterSpec))

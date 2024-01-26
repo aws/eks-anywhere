@@ -26,17 +26,17 @@ func NewUpgrader(client EksdInstallerClient, reader Reader, opts ...UpgraderOpt)
 }
 
 // Upgrade checks whether upgrading EKS-D components is necessary and, if so, installs the new EKS-D CRDs.
-func (u *Upgrader) Upgrade(ctx context.Context, cluster *types.Cluster, currentManagementComponentsVersionsBundle *releasev1alpha1.VersionsBundle, newSpec *cluster.Spec) (*types.ChangeDiff, error) {
+func (u *Upgrader) Upgrade(ctx context.Context, cluster *types.Cluster, currentVersionsBundle, newVersionsBundle *releasev1alpha1.VersionsBundle, newSpec *cluster.Spec) (*types.ChangeDiff, error) {
 	logger.V(1).Info("Checking for EKS-D components upgrade")
 
-	changeDiff := ChangeDiff(currentManagementComponentsVersionsBundle, &newSpec.Bundles.Spec.VersionsBundles[0])
+	changeDiff := ChangeDiff(currentVersionsBundle, newVersionsBundle)
 	if changeDiff == nil {
 		logger.V(1).Info("Nothing to upgrade for EKS-D components")
 		return nil, nil
 	}
 	logger.V(1).Info("Starting EKS-D components upgrade")
 	if err := u.InstallEksdCRDs(ctx, newSpec, cluster); err != nil {
-		return nil, fmt.Errorf("upgrading EKS-D components to EKS-A version %s: %v", *newSpec.Cluster.Spec.EksaVersion, err)
+		return nil, fmt.Errorf("upgrading EKS-D components from EKS-A version %s to EKS-A version %s: %v", currentVersionsBundle.Eksa.Version, newVersionsBundle.Eksa.Version, err)
 	}
 	return changeDiff, nil
 }

@@ -28,27 +28,28 @@ import (
 )
 
 type upgradeManagementTestSetup struct {
-	t                                         *testing.T
-	client                                    *clientmocks.MockClient
-	clientFactory                             *mocks.MockClientFactory
-	clusterManager                            *mocks.MockClusterManager
-	gitOpsManager                             *mocks.MockGitOpsManager
-	provider                                  *providermocks.MockProvider
-	writer                                    *writermocks.MockFileWriter
-	validator                                 *mocks.MockValidator
-	eksdInstaller                             *mocks.MockEksdInstaller
-	eksdUpgrader                              *mocks.MockEksdUpgrader
-	capiManager                               *mocks.MockCAPIManager
-	clusterUpgrader                           *mocks.MockClusterUpgrader
-	datacenterConfig                          providers.DatacenterConfig
-	machineConfigs                            []providers.MachineConfig
-	ctx                                       context.Context
-	newClusterSpec                            *cluster.Spec
-	currentClusterSpec                        *cluster.Spec
-	currentManagementComponentsVersionsBundle *releasev1alpha1.VersionsBundle
-	managementCluster                         *types.Cluster
-	managementStatePath                       string
-	management                                *management.Upgrade
+	t                     *testing.T
+	client                *clientmocks.MockClient
+	clientFactory         *mocks.MockClientFactory
+	clusterManager        *mocks.MockClusterManager
+	gitOpsManager         *mocks.MockGitOpsManager
+	provider              *providermocks.MockProvider
+	writer                *writermocks.MockFileWriter
+	validator             *mocks.MockValidator
+	eksdInstaller         *mocks.MockEksdInstaller
+	eksdUpgrader          *mocks.MockEksdUpgrader
+	capiManager           *mocks.MockCAPIManager
+	clusterUpgrader       *mocks.MockClusterUpgrader
+	datacenterConfig      providers.DatacenterConfig
+	machineConfigs        []providers.MachineConfig
+	ctx                   context.Context
+	newClusterSpec        *cluster.Spec
+	currentClusterSpec    *cluster.Spec
+	currentVersionsBundle *releasev1alpha1.VersionsBundle
+	newVersionsBundle     *releasev1alpha1.VersionsBundle
+	managementCluster     *types.Cluster
+	managementStatePath   string
+	management            *management.Upgrade
 }
 
 func newUpgradeManagementTest(t *testing.T) *upgradeManagementTestSetup {
@@ -88,32 +89,37 @@ func newUpgradeManagementTest(t *testing.T) *upgradeManagementTestSetup {
 		s.Cluster.Spec.DatacenterRef.Kind = v1alpha1.VSphereDatacenterKind
 		s.Cluster.SetManagementComponentsVersion("v0.0.0-dev")
 	})
-	currentManagementComponentsVersionsBundle := currentClusterSpec.Bundles.Spec.VersionsBundles[0].DeepCopy()
+	currentVersionsBundle := cluster.ManagementComponentsVersionsBundle(currentClusterSpec.Bundles)
+
+	newClusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
+		s.Cluster.Name = "management"
+		s.Cluster.Spec.DatacenterRef.Kind = v1alpha1.VSphereDatacenterKind
+	})
+
+	newVersionsBundle := cluster.ManagementComponentsVersionsBundle(newClusterSpec.Bundles)
 
 	return &upgradeManagementTestSetup{
-		t:                t,
-		client:           client,
-		clientFactory:    clientFactory,
-		clusterManager:   clusterManager,
-		gitOpsManager:    gitOpsManager,
-		provider:         provider,
-		writer:           writer,
-		validator:        validator,
-		eksdInstaller:    eksdInstaller,
-		eksdUpgrader:     eksdUpgrader,
-		capiManager:      capiUpgrader,
-		clusterUpgrader:  clusterUpgrader,
-		datacenterConfig: datacenterConfig,
-		machineConfigs:   machineConfigs,
-		management:       management,
-		ctx:              context.Background(),
-		currentManagementComponentsVersionsBundle: currentManagementComponentsVersionsBundle,
-		currentClusterSpec:                        currentClusterSpec,
-		newClusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
-			s.Cluster.Name = "management"
-			s.Cluster.Spec.DatacenterRef.Kind = v1alpha1.VSphereDatacenterKind
-		}),
-		managementStatePath: fmt.Sprintf("%s-backup-%s", "management", time.Now().Format("2006-01-02T15_04_05")),
+		t:                     t,
+		client:                client,
+		clientFactory:         clientFactory,
+		clusterManager:        clusterManager,
+		gitOpsManager:         gitOpsManager,
+		provider:              provider,
+		writer:                writer,
+		validator:             validator,
+		eksdInstaller:         eksdInstaller,
+		eksdUpgrader:          eksdUpgrader,
+		capiManager:           capiUpgrader,
+		clusterUpgrader:       clusterUpgrader,
+		datacenterConfig:      datacenterConfig,
+		machineConfigs:        machineConfigs,
+		management:            management,
+		ctx:                   context.Background(),
+		currentVersionsBundle: currentVersionsBundle,
+		newVersionsBundle:     newVersionsBundle,
+		currentClusterSpec:    currentClusterSpec,
+		newClusterSpec:        newClusterSpec,
+		managementStatePath:   fmt.Sprintf("%s-backup-%s", "management", time.Now().Format("2006-01-02T15_04_05")),
 	}
 }
 
@@ -186,7 +192,7 @@ func (c *upgradeManagementTestSetup) expectUpgradeCoreComponents() {
 		NewVersion:    "v0.0.2",
 	})
 
-	eksaReleaseName := releasev1alpha1.GenerateEKSAReleaseName(c.currentClusterSpec.Cluster.GetManagementComponentsVersion())
+	eksaReleaseName := releasev1alpha1.GenerateEKSAReleaseName(c.currentClusterSpec.Cluster.ManagementComponentsVersion())
 	gomock.InOrder(
 		c.provider.EXPECT().PreCoreComponentsUpgrade(gomock.Any(), gomock.Any(), gomock.Any()),
 		c.clientFactory.EXPECT().BuildClientFromKubeconfig(c.managementCluster.KubeconfigFile).Return(c.client, nil),
@@ -200,11 +206,11 @@ func (c *upgradeManagementTestSetup) expectUpgradeCoreComponents() {
 				c.currentClusterSpec.Bundles.DeepCopyInto(obj)
 				return nil
 			}),
-		c.capiManager.EXPECT().Upgrade(c.ctx, c.managementCluster, c.provider, c.currentManagementComponentsVersionsBundle, c.newClusterSpec).Return(capiChangeDiff, nil),
+		c.capiManager.EXPECT().Upgrade(c.ctx, c.managementCluster, c.provider, c.currentVersionsBundle, c.newVersionsBundle, c.newClusterSpec).Return(capiChangeDiff, nil),
 		c.gitOpsManager.EXPECT().Install(c.ctx, c.managementCluster, currentSpec, c.newClusterSpec).Return(nil),
-		c.gitOpsManager.EXPECT().Upgrade(c.ctx, c.managementCluster, c.currentManagementComponentsVersionsBundle, currentSpec, c.newClusterSpec).Return(fluxChangeDiff, nil),
-		c.clusterManager.EXPECT().Upgrade(c.ctx, c.managementCluster, c.currentManagementComponentsVersionsBundle, c.newClusterSpec).Return(eksaChangeDiff, nil),
-		c.eksdUpgrader.EXPECT().Upgrade(c.ctx, c.managementCluster, c.currentManagementComponentsVersionsBundle, c.newClusterSpec).Return(eksdChangeDiff, nil),
+		c.gitOpsManager.EXPECT().Upgrade(c.ctx, c.managementCluster, c.currentVersionsBundle, c.newVersionsBundle, currentSpec, c.newClusterSpec).Return(fluxChangeDiff, nil),
+		c.clusterManager.EXPECT().Upgrade(c.ctx, c.managementCluster, c.currentVersionsBundle, c.newVersionsBundle, c.newClusterSpec).Return(eksaChangeDiff, nil),
+		c.eksdUpgrader.EXPECT().Upgrade(c.ctx, c.managementCluster, c.currentVersionsBundle, c.newVersionsBundle, c.newClusterSpec).Return(eksdChangeDiff, nil),
 	)
 }
 
@@ -213,7 +219,7 @@ func (c *upgradeManagementTestSetup) expectBuildClientFromKubeconfig(err error) 
 }
 
 func (c *upgradeManagementTestSetup) expectGetManagementComponentsEKSARelease(err error) {
-	eksaReleaseName := releasev1alpha1.GenerateEKSAReleaseName(c.currentClusterSpec.Cluster.GetManagementComponentsVersion())
+	eksaReleaseName := releasev1alpha1.GenerateEKSAReleaseName(c.currentClusterSpec.Cluster.ManagementComponentsVersion())
 	c.client.EXPECT().Get(c.ctx, eksaReleaseName, constants.EksaSystemNamespace, &releasev1alpha1.EKSARelease{}).
 		DoAndReturn(func(_ context.Context, _ string, _ string, obj *releasev1alpha1.EKSARelease) error {
 			c.currentClusterSpec.EKSARelease.DeepCopyInto(obj)

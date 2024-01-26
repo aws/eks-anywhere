@@ -7,20 +7,16 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
+	. "github.com/onsi/gomega"
 
 	"github.com/aws/eks-anywhere/internal/test"
-	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
-	clientmocks "github.com/aws/eks-anywhere/pkg/clients/kubernetes/mocks"
-	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/cluster"
 	writermocks "github.com/aws/eks-anywhere/pkg/filewriter/mocks"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 	providermocks "github.com/aws/eks-anywhere/pkg/providers/mocks"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
 	"github.com/aws/eks-anywhere/pkg/workflows/interfaces/mocks"
-	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
 var capiChangeDiff = types.NewChangeDiff(&types.ComponentChangeDiff{
@@ -47,9 +43,12 @@ var eksdChangeDiff = types.NewChangeDiff(&types.ComponentChangeDiff{
 	NewVersion:    "v0.0.2",
 })
 
+var managementComponentsVersionAnnotation = map[string]string{
+	"anywhere.eks.amazonaws.com/management-components-version": "v0.0.0-dev",
+}
+
 type TestMocks struct {
 	mockCtrl       *gomock.Controller
-	client         *clientmocks.MockClient
 	clientFactory  *mocks.MockClientFactory
 	clusterManager *mocks.MockClusterManager
 	gitOpsManager  *mocks.MockGitOpsManager
@@ -65,7 +64,6 @@ func NewTestMocks(t *testing.T) *TestMocks {
 	mockCtrl := gomock.NewController(t)
 	return &TestMocks{
 		mockCtrl:       mockCtrl,
-		client:         clientmocks.NewMockClient(mockCtrl),
 		clientFactory:  mocks.NewMockClientFactory(mockCtrl),
 		clusterManager: mocks.NewMockClusterManager(mockCtrl),
 		gitOpsManager:  mocks.NewMockGitOpsManager(mockCtrl),
@@ -98,13 +96,19 @@ func TestRunnerHappyPath(t *testing.T) {
 	}
 
 	ctx := context.Background()
+	bundles := test.Bundle()
+	eksaRelease := test.EKSARelease()
+
 	curSpec := test.NewClusterSpec()
-	newSpec := test.NewClusterSpec()
+	currentVerionsBundle := cluster.ManagementComponentsVersionsBundle(bundles)
 
-	currentManagementComponentsVersionsBundle := curSpec.Bundles.Spec.VersionsBundles[0].DeepCopy()
+	newSpec := test.NewClusterSpec(func(s *cluster.Spec) {
+		s.EKSARelease = eksaRelease
+	})
 
-	expectedEKSACluster := curSpec.Cluster.DeepCopy()
-	expectedEKSACluster.SetManagementComponentsVersion(newSpec.EKSARelease.Spec.Version)
+	newVersionsBundle := cluster.ManagementComponentsVersionsBundle(newSpec.Bundles)
+
+	client := test.NewFakeKubeClient(curSpec.Cluster, eksaRelease, bundles)
 
 	mocks.clusterManager.EXPECT().GetCurrentClusterSpec(ctx, gomock.Any(), managementCluster.Name).Return(curSpec, nil)
 	gomock.InOrder(
@@ -112,33 +116,12 @@ func TestRunnerHappyPath(t *testing.T) {
 		mocks.provider.EXPECT().Name(),
 		mocks.provider.EXPECT().SetupAndValidateUpgradeCluster(ctx, gomock.Any(), newSpec, curSpec),
 		mocks.provider.EXPECT().PreCoreComponentsUpgrade(gomock.Any(), gomock.Any(), gomock.Any()),
-		mocks.clientFactory.EXPECT().BuildClientFromKubeconfig(managementCluster.KubeconfigFile).Return(mocks.client, nil),
-		mocks.client.EXPECT().Get(ctx, curSpec.EKSARelease.Name, curSpec.EKSARelease.Namespace, &releasev1alpha1.EKSARelease{}).
-			DoAndReturn(func(_ context.Context, _ string, _ string, obj *releasev1alpha1.EKSARelease) error {
-				curSpec.EKSARelease.DeepCopyInto(obj)
-				return nil
-			}),
-		mocks.client.EXPECT().Get(ctx, curSpec.EKSARelease.Spec.BundlesRef.Name, curSpec.EKSARelease.Spec.BundlesRef.Namespace, &releasev1alpha1.Bundles{}).
-			DoAndReturn(func(_ context.Context, _ string, _ string, obj *releasev1alpha1.Bundles) error {
-				curSpec.Bundles.DeepCopyInto(obj)
-				return nil
-			}),
-		mocks.capiManager.EXPECT().Upgrade(ctx, managementCluster, mocks.provider, currentManagementComponentsVersionsBundle, newSpec).Return(capiChangeDiff, nil),
+		mocks.clientFactory.EXPECT().BuildClientFromKubeconfig(managementCluster.KubeconfigFile).Return(client, nil),
+		mocks.capiManager.EXPECT().Upgrade(ctx, managementCluster, mocks.provider, currentVerionsBundle, newVersionsBundle, newSpec).Return(capiChangeDiff, nil),
 		mocks.gitOpsManager.EXPECT().Install(ctx, managementCluster, curSpec, newSpec).Return(nil),
-		mocks.gitOpsManager.EXPECT().Upgrade(ctx, managementCluster, currentManagementComponentsVersionsBundle, curSpec, newSpec).Return(fluxChangeDiff, nil),
-		mocks.clusterManager.EXPECT().Upgrade(ctx, managementCluster, currentManagementComponentsVersionsBundle, newSpec).Return(eksaChangeDiff, nil),
-		mocks.eksdUpgrader.EXPECT().Upgrade(ctx, managementCluster, currentManagementComponentsVersionsBundle, newSpec).Return(eksdChangeDiff, nil),
-		mocks.client.EXPECT().Get(ctx, curSpec.Cluster.Name, curSpec.Cluster.Namespace, &anywherev1.Cluster{}).
-			DoAndReturn(func(_ context.Context, _ string, _ string, obj *v1alpha1.Cluster) error {
-				curSpec.Cluster.DeepCopyInto(obj)
-				return nil
-			}),
-		mocks.client.EXPECT().ApplyServerSide(
-			ctx,
-			constants.EKSACLIFieldManager,
-			expectedEKSACluster,
-			kubernetes.ApplyServerSideOptions{ForceOwnership: true},
-		).Return(nil),
+		mocks.gitOpsManager.EXPECT().Upgrade(ctx, managementCluster, currentVerionsBundle, newVersionsBundle, curSpec, newSpec).Return(fluxChangeDiff, nil),
+		mocks.clusterManager.EXPECT().Upgrade(ctx, managementCluster, currentVerionsBundle, newVersionsBundle, newSpec).Return(eksaChangeDiff, nil),
+		mocks.eksdUpgrader.EXPECT().Upgrade(ctx, managementCluster, currentVerionsBundle, newVersionsBundle, newSpec).Return(eksdChangeDiff, nil),
 		mocks.clusterManager.EXPECT().ApplyBundles(
 			ctx, newSpec, managementCluster,
 		).Return(nil),
@@ -154,6 +137,9 @@ func TestRunnerHappyPath(t *testing.T) {
 	if err != nil {
 		t.Fatalf("UpgradeManagementComponents.Run() err = %v, want err = nil", err)
 	}
+
+	g := NewWithT(t)
+	g.Expect(newSpec.Cluster.Annotations).To(Equal(managementComponentsVersionAnnotation))
 }
 
 func TestRunnerStopsWhenValidationFailed(t *testing.T) {

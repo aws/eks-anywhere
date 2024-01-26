@@ -325,6 +325,17 @@ func TestGetManagementComponentsVersionsBundle(t *testing.T) {
 			wantErr: "",
 		},
 		{
+			name: "no management components version annotation and eksa version",
+			clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
+				s.Cluster.Annotations = nil
+				s.Cluster.Spec.EksaVersion = nil
+			}),
+			want: &releasev1.VersionsBundle{
+				KubeVersion: "1.28",
+			},
+			wantErr: "either management components version or cluster's EksaVersion need to be set",
+		},
+		{
 			name: "with management components version annotation",
 			clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
 				eksaVersion := test.DevEksaVersion()
