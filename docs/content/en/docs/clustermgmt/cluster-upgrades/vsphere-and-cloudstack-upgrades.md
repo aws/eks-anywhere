@@ -371,7 +371,7 @@ spec:
 
 Worker node groups can use the same machineGroupRef as previous groups, or you can define a new machine configuration for your new group.
 
-### Advanced configuration for rolling upgrade
+#### Advanced configuration for rolling upgrade
 
 EKS Anywhere allows an optional configuration to customize the behavior of upgrades. 
 
