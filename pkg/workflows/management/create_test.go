@@ -2,12 +2,15 @@ package management_test
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/golang/mock/gomock"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/bootstrapper"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/features"
 	writermocks "github.com/aws/eks-anywhere/pkg/filewriter/mocks"
@@ -105,13 +108,72 @@ func (c *createTestSetup) expectPreflightValidationsToPass() {
 	c.validator.EXPECT().PreflightValidations(c.ctx)
 }
 
+func (c *createTestSetup) expectCreateBootstrap() {
+	opts := []bootstrapper.BootstrapClusterOption{bootstrapper.WithExtraDockerMounts()}
+
+	gomock.InOrder(
+		c.provider.EXPECT().BootstrapClusterOpts(
+			c.clusterSpec).Return(opts, nil),
+		// Checking for not nil because in go you can't compare closures
+		c.bootstrapper.EXPECT().CreateBootstrapCluster(
+			c.ctx, c.clusterSpec, gomock.Not(gomock.Nil()),
+		).Return(c.bootstrapCluster, nil),
+	)
+}
+
 func TestCreateRunSuccess(t *testing.T) {
 	test := newCreateTest(t)
 	test.expectSetup()
 	test.expectPreflightValidationsToPass()
+	test.expectCreateBootstrap()
 
 	err := test.run()
 	if err != nil {
 		t.Fatalf("Create.Run() err = %v, want err = nil", err)
+	}
+}
+
+func TestCreateBootstrapOptsFailure(t *testing.T) {
+	c := newCreateTest(t)
+	c.expectSetup()
+	c.expectPreflightValidationsToPass()
+
+	err := errors.New("test")
+
+	opts := []bootstrapper.BootstrapClusterOption{}
+
+	gomock.InOrder(
+		c.provider.EXPECT().BootstrapClusterOpts(
+			c.clusterSpec).Return(opts, err),
+	)
+	c.writer.EXPECT().Write(fmt.Sprintf("%s-checkpoint.yaml", c.clusterSpec.Cluster.Name), gomock.Any())
+
+	err = c.run()
+	if err == nil {
+		t.Fatalf("expected error from task")
+	}
+}
+
+func TestCreateBootstrapFailure(t *testing.T) {
+	c := newCreateTest(t)
+	c.expectSetup()
+	c.expectPreflightValidationsToPass()
+
+	err := errors.New("test")
+
+	opts := []bootstrapper.BootstrapClusterOption{}
+
+	gomock.InOrder(
+		c.provider.EXPECT().BootstrapClusterOpts(
+			c.clusterSpec).Return(opts, nil),
+		c.bootstrapper.EXPECT().CreateBootstrapCluster(
+			c.ctx, c.clusterSpec, gomock.Not(gomock.Nil()),
+		).Return(nil, err),
+	)
+	c.writer.EXPECT().Write(fmt.Sprintf("%s-checkpoint.yaml", c.clusterSpec.Cluster.Name), gomock.Any())
+
+	err = c.run()
+	if err == nil {
+		t.Fatalf("expected error from task")
 	}
 }
