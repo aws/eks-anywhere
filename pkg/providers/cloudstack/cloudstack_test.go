@@ -155,6 +155,20 @@ func workerNodeGroup2MachineDeployment() *clusterv1.MachineDeployment {
 	}
 }
 
+func givenManagementComponents() *cluster.ManagementComponents {
+	return &cluster.ManagementComponents{
+		CloudStack: releasev1alpha1.CloudStackBundle{
+			Version: "v0.1.0",
+			Components: releasev1alpha1.Manifest{
+				URI: "embed:///config/clusterctl/overrides/infrastructure-cloudstack/v0.1.0/infrastructure-components-development.yaml",
+			},
+			Metadata: releasev1alpha1.Manifest{
+				URI: "embed:///config/clusterctl/overrides/infrastructure-cloudstack/v0.1.0/metadata.yaml",
+			},
+		},
+	}
+}
+
 func saveContext(t *testing.T, configPath string) {
 	cloudStackCloudConfig, err := configFS.ReadFile(configPath)
 	if err != nil {
@@ -903,6 +917,19 @@ func TestVersion(t *testing.T) {
 	}
 }
 
+func TestVersionFromManagementComponents(t *testing.T) {
+	cloudStackProviderVersion := "v4.14.1"
+	provider := givenProvider(t)
+	managementComponents := givenManagementComponents()
+	managementComponents.CloudStack.Version = cloudStackProviderVersion
+	setupContext(t)
+
+	result := provider.VersionFromManagementComponents(managementComponents)
+	if result != cloudStackProviderVersion {
+		t.Fatalf("Unexpected version expected <%s> actual=<%s>", cloudStackProviderVersion, result)
+	}
+}
+
 func TestPreCAPIInstallOnBootstrap(t *testing.T) {
 	tests := []struct {
 		testName                string
@@ -1081,6 +1108,24 @@ func TestGetInfrastructureBundleSuccess(t *testing.T) {
 	}
 }
 
+func TestGetInfrastructureBundleFromManagementComponentsSuccess(t *testing.T) {
+	p := givenProvider(t)
+
+	managementComponents := givenManagementComponents()
+	wantInfraBundle := &types.InfrastructureBundle{
+		FolderName: "infrastructure-cloudstack/v0.1.0/",
+		Manifests: []releasev1alpha1.Manifest{
+			managementComponents.CloudStack.Components,
+			managementComponents.CloudStack.Metadata,
+		},
+	}
+
+	infraBundle := p.GetInfrastructureBundleFromManagementComponents(managementComponents)
+	assert.Equal(t, wantInfraBundle.FolderName, infraBundle.FolderName, "Incorrect folder name")
+	assert.Equal(t, len(infraBundle.Manifests), 2, "Wrong number of files in the infrastructure bundle")
+	assert.Equal(t, wantInfraBundle.Manifests, infraBundle.Manifests, "Incorrect manifests")
+}
+
 func TestGetDatacenterConfig(t *testing.T) {
 	provider := givenProvider(t)
 
@@ -1123,6 +1168,12 @@ func TestChangeDiffNoChange(t *testing.T) {
 	assert.Nil(t, provider.ChangeDiff(clusterSpec, clusterSpec))
 }
 
+func TestChangeDiffFromManagementComponentsNoChange(t *testing.T) {
+	provider := givenProvider(t)
+	managementComponents := givenManagementComponents()
+	assert.Nil(t, provider.ChangeDiffFromManagementComponents(managementComponents, managementComponents))
+}
+
 func TestChangeDiffWithChange(t *testing.T) {
 	provider := givenProvider(t)
 	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
@@ -1139,6 +1190,22 @@ func TestChangeDiffWithChange(t *testing.T) {
 	}
 
 	assert.Equal(t, wantDiff, provider.ChangeDiff(clusterSpec, newClusterSpec))
+}
+
+func TestChangeDiffFromManagementComponentsWithChange(t *testing.T) {
+	provider := givenProvider(t)
+	managementComponents := givenManagementComponents()
+	managementComponents.CloudStack.Version = "v0.1.0"
+	newManagementComponents := givenManagementComponents()
+	newManagementComponents.CloudStack.Version = "v0.2.0"
+
+	wantDiff := &types.ComponentChangeDiff{
+		ComponentName: "cloudstack",
+		NewVersion:    "v0.2.0",
+		OldVersion:    "v0.1.0",
+	}
+
+	assert.Equal(t, wantDiff, provider.ChangeDiffFromManagementComponents(managementComponents, newManagementComponents))
 }
 
 func TestProviderGenerateCAPISpecForUpgradeUpdateMachineTemplate(t *testing.T) {
