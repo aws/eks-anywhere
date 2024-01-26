@@ -1077,6 +1077,45 @@ func TestProviderGenerateDeploymentFileForSingleNodeCluster(t *testing.T) {
 	test.AssertContentToFile(t, string(cp), "testdata/expected_results_cluster_tinkerbell_cp_single_node.yaml")
 }
 
+func TestProviderGenerateDeploymentFileForInPlaceSingleNodeCluster(t *testing.T) {
+	clusterSpecManifest := "cluster_tinkerbell_single_node.yaml"
+	mockCtrl := gomock.NewController(t)
+	docker := stackmocks.NewMockDocker(mockCtrl)
+	helm := stackmocks.NewMockHelm(mockCtrl)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	stackInstaller := stackmocks.NewMockStackInstaller(mockCtrl)
+	writer := filewritermocks.NewMockFileWriter(mockCtrl)
+	cluster := &types.Cluster{Name: "test"}
+	forceCleanup := false
+
+	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
+	clusterSpec.Cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy = &v1alpha1.ControlPlaneUpgradeRolloutStrategy{
+		Type: "InPlace",
+	}
+	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
+	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
+	ctx := context.Background()
+
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+	provider.stackInstaller = stackInstaller
+
+	stackInstaller.EXPECT().CleanupLocalBoots(ctx, forceCleanup)
+
+	if err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec); err != nil {
+		t.Fatalf("failed to setup and validate: %v", err)
+	}
+
+	cp, md, err := provider.GenerateCAPISpecForCreate(context.Background(), cluster, clusterSpec)
+	if err != nil {
+		t.Fatalf("failed to generate cluster api spec contents: %v", err)
+	}
+
+	if len(md) != 0 {
+		t.Fatalf("expect nothing to be generated for worker node")
+	}
+	test.AssertContentToFile(t, string(cp), "testdata/expected_results_cluster_tinkerbell_cp_single_node_in_place.yaml")
+}
+
 func TestProviderGenerateDeploymentFileForSingleNodeClusterSkipLB(t *testing.T) {
 	clusterSpecManifest := "cluster_tinkerbell_single_node_skip_lb.yaml"
 	mockCtrl := gomock.NewController(t)
