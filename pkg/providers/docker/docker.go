@@ -47,7 +47,8 @@ type ProviderClient interface {
 	GetDockerLBPort(ctx context.Context, clusterName string) (port string, err error)
 }
 
-type provider struct {
+// Provider implements providers.Provider for the docker cluster-api provider.
+type Provider struct {
 	docker                ProviderClient
 	datacenterConfig      *v1alpha1.DockerDatacenterConfig
 	providerKubectlClient ProviderKubectlClient
@@ -65,7 +66,8 @@ type KubeconfigWriter struct {
 	reader KubeconfigReader
 }
 
-func (p *provider) InstallCustomProviderComponents(ctx context.Context, kubeconfigFile string) error {
+// InstallCustomProviderComponents is a no-op. It implements providers.Provider.
+func (p *Provider) InstallCustomProviderComponents(ctx context.Context, kubeconfigFile string) error {
 	return nil
 }
 
@@ -77,8 +79,9 @@ type ProviderKubectlClient interface {
 	UpdateAnnotation(ctx context.Context, resourceType, objectName string, annotations map[string]string, opts ...executables.KubectlOpt) error
 }
 
-func NewProvider(providerConfig *v1alpha1.DockerDatacenterConfig, docker ProviderClient, providerKubectlClient ProviderKubectlClient, now types.NowFunc) providers.Provider {
-	return &provider{
+// NewProvider returns a new Provider.
+func NewProvider(providerConfig *v1alpha1.DockerDatacenterConfig, docker ProviderClient, providerKubectlClient ProviderKubectlClient, now types.NowFunc) *Provider {
+	return &Provider{
 		docker:                docker,
 		datacenterConfig:      providerConfig,
 		providerKubectlClient: providerKubectlClient,
@@ -88,58 +91,70 @@ func NewProvider(providerConfig *v1alpha1.DockerDatacenterConfig, docker Provide
 	}
 }
 
-func (p *provider) BootstrapClusterOpts(_ *cluster.Spec) ([]bootstrapper.BootstrapClusterOption, error) {
+// BootstrapClusterOpts returns a list of options to be used when creating the bootstrap cluster.
+func (p *Provider) BootstrapClusterOpts(_ *cluster.Spec) ([]bootstrapper.BootstrapClusterOption, error) {
 	return []bootstrapper.BootstrapClusterOption{bootstrapper.WithExtraDockerMounts()}, nil
 }
 
-func (p *provider) PreCAPIInstallOnBootstrap(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
+// PreCAPIInstallOnBootstrap is a no-op. It implements providers.Provider.
+func (p *Provider) PreCAPIInstallOnBootstrap(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
 	return nil
 }
 
-func (p *provider) PostBootstrapSetup(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
+// PostBootstrapSetup is a no-op. It implements providers.Provider.
+func (p *Provider) PostBootstrapSetup(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
 	return nil
 }
 
-// PostBootstrapDeleteForUpgrade runs any provider-specific operations after bootstrap cluster has been deleted.
-func (p *provider) PostBootstrapDeleteForUpgrade(ctx context.Context, cluster *types.Cluster) error {
+// PostBootstrapDeleteForUpgrade is a no-op. It implements providers.Provider.
+func (p *Provider) PostBootstrapDeleteForUpgrade(ctx context.Context, cluster *types.Cluster) error {
 	return nil
 }
 
-func (p *provider) PostBootstrapSetupUpgrade(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
+// PostBootstrapSetupUpgrade is a no-op. It implements providers.Provider.
+func (p *Provider) PostBootstrapSetupUpgrade(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
 	return nil
 }
 
-func (p *provider) PostWorkloadInit(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
+// PostWorkloadInit is a no-op. It implements providers.Provider.
+func (p *Provider) PostWorkloadInit(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
 	return nil
 }
 
-func (p *provider) Name() string {
+// Name returns the name of the provider.
+func (p *Provider) Name() string {
 	return constants.DockerProviderName
 }
 
-func (p *provider) DatacenterResourceType() string {
+// DatacenterResourceType returns the resource type for the dockerdatacenterconfigs.
+func (p *Provider) DatacenterResourceType() string {
 	return eksaDockerResourceType
 }
 
-func (p *provider) MachineResourceType() string {
+// MachineResourceType returns nothing because docker has no machines. It implements providers.Provider.
+func (p *Provider) MachineResourceType() string {
 	return ""
 }
 
-func (p *provider) DeleteResources(_ context.Context, _ *cluster.Spec) error {
+// DeleteResources is a no-op. It implements providers.Provider.
+func (p *Provider) DeleteResources(_ context.Context, _ *cluster.Spec) error {
 	return nil
 }
 
-func (p *provider) PostClusterDeleteValidate(_ context.Context, _ *types.Cluster) error {
+// PostClusterDeleteValidate is a no-op. It implements providers.Provider.
+func (p *Provider) PostClusterDeleteValidate(_ context.Context, _ *types.Cluster) error {
 	// No validations
 	return nil
 }
 
-func (p *provider) PostMoveManagementToBootstrap(_ context.Context, _ *types.Cluster) error {
+// PostMoveManagementToBootstrap is a no-op. It implements providers.Provider.
+func (p *Provider) PostMoveManagementToBootstrap(_ context.Context, _ *types.Cluster) error {
 	// NOOP
 	return nil
 }
 
-func (p *provider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpec *cluster.Spec) error {
+// SetupAndValidateCreateCluster validates the cluster spec and sets up any provider-specific resources.
+func (p *Provider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpec *cluster.Spec) error {
 	logger.Info("Warning: The docker infrastructure provider is meant for local development and testing only")
 	if err := ValidateControlPlaneEndpoint(clusterSpec); err != nil {
 		return err
@@ -147,15 +162,18 @@ func (p *provider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpe
 	return nil
 }
 
-func (p *provider) SetupAndValidateDeleteCluster(ctx context.Context, _ *types.Cluster, _ *cluster.Spec) error {
+// SetupAndValidateDeleteCluster is a no-op. It implements providers.Provider.
+func (p *Provider) SetupAndValidateDeleteCluster(ctx context.Context, _ *types.Cluster, _ *cluster.Spec) error {
 	return nil
 }
 
-func (p *provider) SetupAndValidateUpgradeCluster(ctx context.Context, _ *types.Cluster, _ *cluster.Spec, _ *cluster.Spec) error {
+// SetupAndValidateUpgradeCluster is a no-op. It implements providers.Provider.
+func (p *Provider) SetupAndValidateUpgradeCluster(ctx context.Context, _ *types.Cluster, _ *cluster.Spec, _ *cluster.Spec) error {
 	return nil
 }
 
-func (p *provider) UpdateSecrets(ctx context.Context, cluster *types.Cluster, _ *cluster.Spec) error {
+// UpdateSecrets is a no-op. It implements providers.Provider.
+func (p *Provider) UpdateSecrets(ctx context.Context, cluster *types.Cluster, _ *cluster.Spec) error {
 	// Not implemented
 	return nil
 }
@@ -167,10 +185,12 @@ func NewDockerTemplateBuilder(now types.NowFunc) *DockerTemplateBuilder {
 	}
 }
 
+// DockerTemplateBuilder builds the docker templates.
 type DockerTemplateBuilder struct {
 	now types.NowFunc
 }
 
+// GenerateCAPISpecControlPlane generates a yaml spec with the CAPI objects representing the control plane.
 func (d *DockerTemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *cluster.Spec, buildOptions ...providers.BuildMapOption) (content []byte, err error) {
 	values, err := buildTemplateMapCP(clusterSpec)
 	if err != nil {
@@ -188,6 +208,7 @@ func (d *DockerTemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *cluste
 	return bytes, nil
 }
 
+// GenerateCAPISpecWorkers generates a yaml spec with the CAPI objects representing the worker nodes for a particular eks-a cluster.
 func (d *DockerTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, workloadTemplateNames, kubeadmconfigTemplateNames map[string]string) (content []byte, err error) {
 	workerSpecs := make([][]byte, 0, len(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations))
 	for _, workerNodeGroupConfiguration := range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
@@ -369,6 +390,7 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupConfiguration 
 	return values, nil
 }
 
+// NeedsNewControlPlaneTemplate determines if a new control plane template is needed.
 func NeedsNewControlPlaneTemplate(oldSpec, newSpec *cluster.Spec) bool {
 	return (oldSpec.Cluster.Spec.KubernetesVersion != newSpec.Cluster.Spec.KubernetesVersion) || (oldSpec.Bundles.Spec.Number != newSpec.Bundles.Spec.Number)
 }
@@ -383,15 +405,18 @@ func NeedsNewWorkloadTemplate(oldSpec, newSpec *cluster.Spec, oldWorker, newWork
 	return oldSpec.Bundles.Spec.Number != newSpec.Bundles.Spec.Number
 }
 
+// NeedsNewKubeadmConfigTemplate determines if a new kubeadm config template is needed.
 func NeedsNewKubeadmConfigTemplate(newWorkerNodeGroup *v1alpha1.WorkerNodeGroupConfiguration, oldWorkerNodeGroup *v1alpha1.WorkerNodeGroupConfiguration) bool {
 	return !v1alpha1.TaintsSliceEqual(newWorkerNodeGroup.Taints, oldWorkerNodeGroup.Taints) || !v1alpha1.MapEqual(newWorkerNodeGroup.Labels, oldWorkerNodeGroup.Labels)
 }
 
+// NeedsNewEtcdTemplate determines if a new etcd template is needed.
 func NeedsNewEtcdTemplate(oldSpec, newSpec *cluster.Spec) bool {
 	return (oldSpec.Cluster.Spec.KubernetesVersion != newSpec.Cluster.Spec.KubernetesVersion) || (oldSpec.Bundles.Spec.Number != newSpec.Bundles.Spec.Number)
 }
 
-func (p *provider) generateCAPISpecForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, currentSpec, newClusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
+//gocyclo:ignore
+func (p *Provider) generateCAPISpecForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, currentSpec, newClusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
 	clusterName := newClusterSpec.Cluster.Name
 	var controlPlaneTemplateName, workloadTemplateName, kubeadmconfigTemplateName, etcdTemplateName string
 	var needsNewEtcdTemplate bool
@@ -488,7 +513,7 @@ func (p *provider) generateCAPISpecForUpgrade(ctx context.Context, bootstrapClus
 	return controlPlaneSpec, workersSpec, nil
 }
 
-func (p *provider) needsNewMachineTemplate(currentSpec, newClusterSpec *cluster.Spec, workerNodeGroupConfiguration v1alpha1.WorkerNodeGroupConfiguration, prevWorkerNodeGroupConfigs map[string]v1alpha1.WorkerNodeGroupConfiguration) (bool, error) {
+func (p *Provider) needsNewMachineTemplate(currentSpec, newClusterSpec *cluster.Spec, workerNodeGroupConfiguration v1alpha1.WorkerNodeGroupConfiguration, prevWorkerNodeGroupConfigs map[string]v1alpha1.WorkerNodeGroupConfiguration) (bool, error) {
 	if prevWorkerNodeGroup, ok := prevWorkerNodeGroupConfigs[workerNodeGroupConfiguration.Name]; ok {
 		needsNewWorkloadTemplate := NeedsNewWorkloadTemplate(currentSpec, newClusterSpec, prevWorkerNodeGroup, workerNodeGroupConfiguration)
 		return needsNewWorkloadTemplate, nil
@@ -496,7 +521,7 @@ func (p *provider) needsNewMachineTemplate(currentSpec, newClusterSpec *cluster.
 	return true, nil
 }
 
-func (p *provider) needsNewKubeadmConfigTemplate(workerNodeGroupConfiguration v1alpha1.WorkerNodeGroupConfiguration, prevWorkerNodeGroupConfigs map[string]v1alpha1.WorkerNodeGroupConfiguration) (bool, error) {
+func (p *Provider) needsNewKubeadmConfigTemplate(workerNodeGroupConfiguration v1alpha1.WorkerNodeGroupConfiguration, prevWorkerNodeGroupConfigs map[string]v1alpha1.WorkerNodeGroupConfiguration) (bool, error) {
 	if _, ok := prevWorkerNodeGroupConfigs[workerNodeGroupConfiguration.Name]; ok {
 		existingWorkerNodeGroupConfig := prevWorkerNodeGroupConfigs[workerNodeGroupConfiguration.Name]
 		return NeedsNewKubeadmConfigTemplate(&workerNodeGroupConfiguration, &existingWorkerNodeGroupConfig), nil
@@ -504,7 +529,7 @@ func (p *provider) needsNewKubeadmConfigTemplate(workerNodeGroupConfiguration v1
 	return true, nil
 }
 
-func (p *provider) generateCAPISpecForCreate(ctx context.Context, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
+func (p *Provider) generateCAPISpecForCreate(ctx context.Context, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
 	clusterName := clusterSpec.Cluster.Name
 
 	cpOpt := func(values map[string]interface{}) {
@@ -528,7 +553,8 @@ func (p *provider) generateCAPISpecForCreate(ctx context.Context, clusterSpec *c
 	return controlPlaneSpec, workersSpec, nil
 }
 
-func (p *provider) GenerateCAPISpecForCreate(ctx context.Context, _ *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
+// GenerateCAPISpecForCreate generates a yaml spec with the CAPI objects representing the control plane and worker nodes for a particular eks-a cluster.
+func (p *Provider) GenerateCAPISpecForCreate(ctx context.Context, _ *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
 	controlPlaneSpec, workersSpec, err = p.generateCAPISpecForCreate(ctx, clusterSpec)
 	if err != nil {
 		return nil, nil, fmt.Errorf("generating cluster api spec contents: %v", err)
@@ -536,7 +562,8 @@ func (p *provider) GenerateCAPISpecForCreate(ctx context.Context, _ *types.Clust
 	return controlPlaneSpec, workersSpec, nil
 }
 
-func (p *provider) GenerateCAPISpecForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, currentSpec, newClusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
+// GenerateCAPISpecForUpgrade generates a yaml spec with the CAPI objects representing the control plane and worker nodes for a particular eks-a cluster.
+func (p *Provider) GenerateCAPISpecForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, currentSpec, newClusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
 	controlPlaneSpec, workersSpec, err = p.generateCAPISpecForUpgrade(ctx, bootstrapCluster, workloadCluster, currentSpec, newClusterSpec)
 	if err != nil {
 		return nil, nil, fmt.Errorf("generating cluster api spec contents: %v", err)
@@ -544,7 +571,8 @@ func (p *provider) GenerateCAPISpecForUpgrade(ctx context.Context, bootstrapClus
 	return controlPlaneSpec, workersSpec, nil
 }
 
-func (p *provider) UpdateKubeConfig(content *[]byte, clusterName string) error {
+// UpdateKubeConfig updates the kubeconfig secret on a docker cluster.
+func (p *Provider) UpdateKubeConfig(content *[]byte, clusterName string) error {
 	// The Docker provider is for testing only. We don't want to change the interface just for the test
 	ctx := context.Background()
 	if port, err := p.docker.GetDockerLBPort(ctx, clusterName); err != nil {
@@ -594,12 +622,19 @@ func updateKubeconfig(content *[]byte, dockerLbPort string) {
 	*content = updatedContentByte
 }
 
-func (p *provider) Version(clusterSpec *cluster.Spec) string {
+// Version returns the version of the provider.
+func (p *Provider) Version(clusterSpec *cluster.Spec) string {
 	versionsBundle := clusterSpec.RootVersionsBundle()
 	return versionsBundle.Docker.Version
 }
 
-func (p *provider) EnvMap(_ *cluster.Spec) (map[string]string, error) {
+// VersionFromManagementComponents returns the version of the provider.
+func (p *Provider) VersionFromManagementComponents(components *cluster.ManagementComponents) string {
+	return components.Docker.Version
+}
+
+// EnvMap returns a map of environment variables to be set when running the docker clusterctl command.
+func (p *Provider) EnvMap(_ *cluster.Spec) (map[string]string, error) {
 	envMap := make(map[string]string)
 	if env, ok := os.LookupEnv(githubTokenEnvVar); ok && len(env) > 0 {
 		envMap[githubTokenEnvVar] = env
@@ -607,13 +642,15 @@ func (p *provider) EnvMap(_ *cluster.Spec) (map[string]string, error) {
 	return envMap, nil
 }
 
-func (p *provider) GetDeployments() map[string][]string {
+// GetDeployments returns a map of namespaces to deployments that should be running for the provider.
+func (p *Provider) GetDeployments() map[string][]string {
 	return map[string][]string{
 		"capd-system": {"capd-controller-manager"},
 	}
 }
 
-func (p *provider) GetInfrastructureBundle(clusterSpec *cluster.Spec) *types.InfrastructureBundle {
+// GetInfrastructureBundle returns the infrastructure bundle for the provider.
+func (p *Provider) GetInfrastructureBundle(clusterSpec *cluster.Spec) *types.InfrastructureBundle {
 	versionsBundle := clusterSpec.RootVersionsBundle()
 	folderName := fmt.Sprintf("infrastructure-docker/%s/", versionsBundle.Docker.Version)
 
@@ -629,19 +666,39 @@ func (p *provider) GetInfrastructureBundle(clusterSpec *cluster.Spec) *types.Inf
 	return &infraBundle
 }
 
-func (p *provider) DatacenterConfig(_ *cluster.Spec) providers.DatacenterConfig {
+// GetInfrastructureBundleFromManagementComponents returns the infrastructure bundle for the provider.
+func (p *Provider) GetInfrastructureBundleFromManagementComponents(components *cluster.ManagementComponents) *types.InfrastructureBundle {
+	folderName := fmt.Sprintf("infrastructure-docker/%s/", components.Docker.Version)
+
+	infraBundle := types.InfrastructureBundle{
+		FolderName: folderName,
+		Manifests: []releasev1alpha1.Manifest{
+			components.Docker.Components,
+			components.Docker.Metadata,
+			components.Docker.ClusterTemplate,
+		},
+	}
+
+	return &infraBundle
+}
+
+// DatacenterConfig returns the datacenter config for the provider.
+func (p *Provider) DatacenterConfig(_ *cluster.Spec) providers.DatacenterConfig {
 	return p.datacenterConfig
 }
 
-func (p *provider) MachineConfigs(_ *cluster.Spec) []providers.MachineConfig {
+// MachineConfigs is a no-op. It implements providers.Provider.
+func (p *Provider) MachineConfigs(_ *cluster.Spec) []providers.MachineConfig {
 	return nil
 }
 
-func (p *provider) ValidateNewSpec(_ context.Context, _ *types.Cluster, _ *cluster.Spec) error {
+// ValidateNewSpec is a no-op. It implements providers.Provider.
+func (p *Provider) ValidateNewSpec(_ context.Context, _ *types.Cluster, _ *cluster.Spec) error {
 	return nil
 }
 
-func (p *provider) ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ComponentChangeDiff {
+// ChangeDiff returns the component change diff for the provider.
+func (p *Provider) ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ComponentChangeDiff {
 	currentVersionsBundle := currentSpec.RootVersionsBundle()
 	newVersionsBundle := newSpec.RootVersionsBundle()
 	if currentVersionsBundle.Docker.Version == newVersionsBundle.Docker.Version {
@@ -655,15 +712,31 @@ func (p *provider) ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.Compone
 	}
 }
 
-func (p *provider) RunPostControlPlaneUpgrade(ctx context.Context, oldClusterSpec *cluster.Spec, clusterSpec *cluster.Spec, workloadCluster *types.Cluster, managementCluster *types.Cluster) error {
+// ChangeDiffFromManagementComponents returns the component change diff for the provider.
+func (p *Provider) ChangeDiffFromManagementComponents(currentComponents, newComponents *cluster.ManagementComponents) *types.ComponentChangeDiff {
+	if currentComponents.Docker.Version == newComponents.Docker.Version {
+		return nil
+	}
+
+	return &types.ComponentChangeDiff{
+		ComponentName: constants.DockerProviderName,
+		NewVersion:    newComponents.Docker.Version,
+		OldVersion:    currentComponents.Docker.Version,
+	}
+}
+
+// RunPostControlPlaneUpgrade is a no-op. It implements providers.Provider.
+func (p *Provider) RunPostControlPlaneUpgrade(ctx context.Context, oldClusterSpec *cluster.Spec, clusterSpec *cluster.Spec, workloadCluster *types.Cluster, managementCluster *types.Cluster) error {
 	return nil
 }
 
-func (p *provider) UpgradeNeeded(_ context.Context, _, _ *cluster.Spec, _ *types.Cluster) (bool, error) {
+// UpgradeNeeded is a no-op. It implements providers.Provider.
+func (p *Provider) UpgradeNeeded(_ context.Context, _, _ *cluster.Spec, _ *types.Cluster) (bool, error) {
 	return false, nil
 }
 
-func (p *provider) RunPostControlPlaneCreation(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error {
+// RunPostControlPlaneCreation is a no-op. It implements providers.Provider.
+func (p *Provider) RunPostControlPlaneCreation(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error {
 	return nil
 }
 
@@ -685,7 +758,7 @@ func getHAProxyImageRepo(haProxyImage releasev1alpha1.Image) string {
 }
 
 // PreCoreComponentsUpgrade staisfies the Provider interface.
-func (p *provider) PreCoreComponentsUpgrade(
+func (p *Provider) PreCoreComponentsUpgrade(
 	ctx context.Context,
 	cluster *types.Cluster,
 	clusterSpec *cluster.Spec,

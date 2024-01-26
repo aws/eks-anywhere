@@ -36,7 +36,7 @@ type dockerTest struct {
 	*WithT
 	dockerClient *dockerMocks.MockProviderClient
 	kubectl      *dockerMocks.MockProviderKubectlClient
-	provider     providers.Provider
+	provider     *docker.Provider
 }
 
 func newTest(t *testing.T) *dockerTest {
@@ -53,6 +53,24 @@ func newTest(t *testing.T) *dockerTest {
 
 func givenClusterSpec(t *testing.T, fileName string) *cluster.Spec {
 	return test.NewFullClusterSpec(t, path.Join(testdataDir, fileName))
+}
+
+func TestVersion(t *testing.T) {
+	tt := newTest(t)
+	dockerProviderVersion := "v0.3.19"
+	clusterSpec := test.NewClusterSpec()
+	clusterSpec.VersionsBundles["1.19"].Docker.Version = dockerProviderVersion
+
+	tt.Expect(tt.provider.Version(clusterSpec)).To(Equal(dockerProviderVersion))
+}
+
+func TestVersionFromManagementComponents(t *testing.T) {
+	tt := newTest(t)
+	dockerProviderVersion := "v0.3.19"
+	managementComponents := givenManagementComponents()
+	managementComponents.Docker.Version = dockerProviderVersion
+
+	tt.Expect(tt.provider.VersionFromManagementComponents(managementComponents)).To(Equal(dockerProviderVersion))
 }
 
 func TestProviderUpdateKubeConfig(t *testing.T) {
@@ -534,6 +552,42 @@ func TestGetInfrastructureBundleSuccess(t *testing.T) {
 	}
 }
 
+func TestGetInfrastructureBundleFromManagementComponentsSuccess(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+
+	tests := []struct {
+		testName             string
+		managementComponents *cluster.ManagementComponents
+	}{
+		{
+			testName:             "create overrides layer",
+			managementComponents: givenManagementComponents(),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.testName, func(t *testing.T) {
+			client := dockerMocks.NewMockProviderClient(mockCtrl)
+			kubectl := dockerMocks.NewMockProviderKubectlClient(mockCtrl)
+			p := docker.NewProvider(&v1alpha1.DockerDatacenterConfig{}, client, kubectl, test.FakeNow)
+
+			infraBundle := p.GetInfrastructureBundleFromManagementComponents(tt.managementComponents)
+			if infraBundle == nil {
+				t.Fatalf("provider.GetInfrastructureBundleFromManagementComponents() should have an infrastructure bundle")
+			}
+			assert.Equal(t, "infrastructure-docker/v0.3.19/", infraBundle.FolderName, "Incorrect folder name")
+			assert.Equal(t, len(infraBundle.Manifests), 3, "Wrong number of files in the infrastructure bundle")
+
+			wantManifests := []releasev1alpha1.Manifest{
+				versionsBundle.Docker.Components,
+				versionsBundle.Docker.Metadata,
+				versionsBundle.Docker.ClusterTemplate,
+			}
+			assert.ElementsMatch(t, infraBundle.Manifests, wantManifests, "Incorrect manifests")
+		})
+	}
+}
+
 var versionsBundle = &cluster.VersionsBundle{
 	KubeDistro: &cluster.KubeDistro{
 		Kubernetes: cluster.VersionedRepository{
@@ -634,6 +688,36 @@ var workerVersionsBundle = &cluster.VersionsBundle{
 	},
 }
 
+func givenManagementComponents() *cluster.ManagementComponents {
+	return &cluster.ManagementComponents{
+		EksD: releasev1alpha1.EksDRelease{
+			KindNode: releasev1alpha1.Image{
+				Description: "kind/node container image",
+				Name:        "kind/node",
+				URI:         "public.ecr.aws/eks-distro/kubernetes-sigs/kind/node:v1.18.16-eks-1-18-4-216edda697a37f8bf16651af6c23b7e2bb7ef42f-62681885fe3a97ee4f2b110cc277e084e71230fa",
+			},
+		},
+		Docker: releasev1alpha1.DockerBundle{
+			Version: "v0.3.19",
+			Manager: releasev1alpha1.Image{
+				URI: "public.ecr.aws/l0g8r8j6/kubernetes-sigs/cluster-api/capd-manager:v0.3.15-6bdb9fc78bb926135843c58ec8b77b54d8f2c82c",
+			},
+			KubeProxy: releasev1alpha1.Image{
+				URI: "public.ecr.aws/l0g8r8j6/brancz/kube-rbac-proxy:v0.8.0-25df7d96779e2a305a22c6e3f9425c3465a77244",
+			},
+			Components: releasev1alpha1.Manifest{
+				URI: "embed:///config/clusterctl/overrides/infrastructure-docker/v0.3.19/infrastructure-components-development.yaml",
+			},
+			ClusterTemplate: releasev1alpha1.Manifest{
+				URI: "embed:///config/clusterctl/overrides/infrastructure-docker/v0.3.19/cluster-template-development.yaml",
+			},
+			Metadata: releasev1alpha1.Manifest{
+				URI: "embed:///config/clusterctl/overrides/infrastructure-docker/v0.3.19/metadata.yaml",
+			},
+		},
+	}
+}
+
 func TestChangeDiffNoChange(t *testing.T) {
 	tt := newTest(t)
 	clusterSpec := test.NewClusterSpec()
@@ -656,6 +740,28 @@ func TestChangeDiffWithChange(t *testing.T) {
 	}
 
 	tt.Expect(tt.provider.ChangeDiff(clusterSpec, newClusterSpec)).To(Equal(wantDiff))
+}
+
+func TestChangeDiffFromManagementComponentsNoChange(t *testing.T) {
+	tt := newTest(t)
+	assert.Nil(t, tt.provider.ChangeDiffFromManagementComponents(givenManagementComponents(), givenManagementComponents()))
+}
+
+func TestChangeDiffFromManagementComponentsWithChange(t *testing.T) {
+	tt := newTest(t)
+	currentManagementComponents := givenManagementComponents()
+	currentManagementComponents.Docker.Version = "v0.3.18"
+
+	newManagementComponents := givenManagementComponents()
+	newManagementComponents.Docker.Version = "v0.3.19"
+
+	wantDiff := &types.ComponentChangeDiff{
+		ComponentName: "docker",
+		NewVersion:    "v0.3.19",
+		OldVersion:    "v0.3.18",
+	}
+
+	tt.Expect(tt.provider.ChangeDiffFromManagementComponents(currentManagementComponents, newManagementComponents)).To(Equal(wantDiff))
 }
 
 func TestProviderGenerateCAPISpecForCreateWithPodIAMConfig(t *testing.T) {

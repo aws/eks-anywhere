@@ -11,6 +11,59 @@ import (
 	v1alpha1release "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
+// ManagementComponents bundles the resource definitions of all EKS-A management components.
+type ManagementComponents struct {
+	EksD                   v1alpha1release.EksDRelease
+	CertManager            v1alpha1release.CertManagerBundle
+	ClusterAPI             v1alpha1release.CoreClusterAPI
+	Bootstrap              v1alpha1release.KubeadmBootstrapBundle
+	ControlPlane           v1alpha1release.KubeadmControlPlaneBundle
+	VSphere                v1alpha1release.VSphereBundle
+	CloudStack             v1alpha1release.CloudStackBundle
+	Docker                 v1alpha1release.DockerBundle
+	Eksa                   v1alpha1release.EksaBundle
+	Flux                   v1alpha1release.FluxBundle
+	ExternalEtcdBootstrap  v1alpha1release.EtcdadmBootstrapBundle
+	ExternalEtcdController v1alpha1release.EtcdadmControllerBundle
+	Tinkerbell             v1alpha1release.TinkerbellBundle
+	Snow                   v1alpha1release.SnowBundle
+	Nutanix                v1alpha1release.NutanixBundle
+}
+
+// ManagementComponentsFromBundles returns ManagementComponents built from a VersionsBundle.
+//
+// For decoupled component upgrades, the management components can be upgraded to the new EKS-A version
+// separately from the Cluster. So, here we have the management components bundles for that new version,
+// but, there are still multiple Kubernetes versions to choose from within the bundle to get the
+// components information. However, because management component images are the same for every Kubernetes
+// version within the same bundle manifest, it's OK to use the first bundle. If there are is differences between
+// the management components on this first versions bundle, and the new cluster specs first versions bundle,
+// that indicates an upgrade is required. In the future, we might change the bundles API to remove the assumption
+// and make this explicit. When that happens, this method will need to change.
+func ManagementComponentsFromBundles(bundles *v1alpha1release.Bundles) *ManagementComponents {
+	return newManagementComponents(&bundles.Spec.VersionsBundles[0])
+}
+
+func newManagementComponents(vb *v1alpha1release.VersionsBundle) *ManagementComponents {
+	return &ManagementComponents{
+		EksD:                   vb.EksD,
+		CertManager:            vb.CertManager,
+		ClusterAPI:             vb.ClusterAPI,
+		Bootstrap:              vb.Bootstrap,
+		ControlPlane:           vb.ControlPlane,
+		VSphere:                vb.VSphere,
+		CloudStack:             vb.CloudStack,
+		Docker:                 vb.Docker,
+		Eksa:                   vb.Eksa,
+		Flux:                   vb.Flux,
+		ExternalEtcdBootstrap:  vb.ExternalEtcdBootstrap,
+		ExternalEtcdController: vb.ExternalEtcdController,
+		Tinkerbell:             vb.Tinkerbell,
+		Snow:                   vb.Snow,
+		Nutanix:                vb.Nutanix,
+	}
+}
+
 func bundlesNamespacedKey(cluster *v1alpha1.Cluster, release *v1alpha1release.EKSARelease) (name, namespace string) {
 	if release != nil && release.Spec.BundlesRef.Name != "" {
 		name = release.Spec.BundlesRef.Name
