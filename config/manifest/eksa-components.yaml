@@ -4452,6 +4452,14 @@ spec:
                     description: 'UID of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids'
                     type: string
                 type: object
+              controlPlaneSpecData:
+                description: ControlPlaneSpecData contains base64 encoded KCP spec
+                  that's used to update the statuses of CAPI objects once the control
+                  plane upgrade is done. This field is needed so that we have a static
+                  copy of the control plane spec in case it gets modified after the
+                  ControlPlaneUpgrade was created, as ControlPlane is a reference
+                  to the object in real time.
+                type: string
               etcdVersion:
                 description: EtcdVersion refers to the version of ETCD to upgrade
                   to.
@@ -4526,6 +4534,7 @@ spec:
                 type: array
             required:
             - controlPlane
+            - controlPlaneSpecData
             - etcdVersion
             - kubernetesVersion
             - machinesRequireUpgrade

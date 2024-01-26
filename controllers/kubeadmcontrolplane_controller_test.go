@@ -2,6 +2,8 @@ package controllers_test
 
 import (
 	"context"
+	"encoding/base64"
+	"encoding/json"
 	"testing"
 
 	. "github.com/onsi/gomega"
@@ -108,6 +110,9 @@ func TestKCPReconcileCreateControlPlaneUpgrade(t *testing.T) {
 	g.Expect(len(cpu.Spec.MachinesRequireUpgrade)).To(BeEquivalentTo(len(kcpObjs.cpUpgrade.Spec.MachinesRequireUpgrade)))
 	g.Expect(cpu.Spec.EtcdVersion).To(BeEquivalentTo(kcpObjs.cpUpgrade.Spec.EtcdVersion))
 	g.Expect(cpu.Spec.KubernetesVersion).To(BeEquivalentTo(kcpObjs.cpUpgrade.Spec.KubernetesVersion))
+	kcpSpec, err := json.Marshal(kcpObjs.kcp.Spec)
+	g.Expect(err).ToNot(HaveOccurred())
+	g.Expect(cpu.Spec.ControlPlaneSpecData).To(BeEquivalentTo(base64.StdEncoding.EncodeToString(kcpSpec)))
 }
 
 func TestKCPReconcileControlPlaneUpgradeReady(t *testing.T) {

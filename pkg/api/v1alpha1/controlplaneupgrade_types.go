@@ -21,6 +21,13 @@ type ControlPlaneUpgradeSpec struct {
 
 	// EtcdVersion refers to the version of ETCD to upgrade to.
 	EtcdVersion string `json:"etcdVersion"`
+
+	// ControlPlaneSpecData contains base64 encoded KCP spec that's used to update
+	// the statuses of CAPI objects once the control plane upgrade is done.
+	// This field is needed so that we have a static copy of the control plane spec
+	// in case it gets modified after the ControlPlaneUpgrade was created,
+	// as ControlPlane is a reference to the object in real time.
+	ControlPlaneSpecData string `json:"controlPlaneSpecData"`
 }
 
 // ControlPlaneUpgradeStatus defines the observed state of ControlPlaneUpgrade.
