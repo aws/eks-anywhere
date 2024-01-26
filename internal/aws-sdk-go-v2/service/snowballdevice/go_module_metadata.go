@@ -2,5 +2,5 @@
 
 package snowballdevice
 
-// goModuleVersion is the tagged release for this module.
-const goModuleVersion = "tip"
+// goModuleVersion is the tagged release for this module
+const goModuleVersion = "1.0.0-zeta.ef580e0b09a2"

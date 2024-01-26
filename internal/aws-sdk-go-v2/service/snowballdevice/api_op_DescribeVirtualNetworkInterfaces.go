@@ -47,12 +47,22 @@ type DescribeVirtualNetworkInterfacesOutput struct {
 }
 
 func (c *Client) addOperationDescribeVirtualNetworkInterfacesMiddlewares(stack *middleware.Stack, options Options) (err error) {
+	if err := stack.Serialize.Add(&setOperationInputMiddleware{}, middleware.After); err != nil {
+		return err
+	}
 	err = stack.Serialize.Add(&awsAwsjson11_serializeOpDescribeVirtualNetworkInterfaces{}, middleware.After)
 	if err != nil {
 		return err
 	}
 	err = stack.Deserialize.Add(&awsAwsjson11_deserializeOpDescribeVirtualNetworkInterfaces{}, middleware.After)
 	if err != nil {
+		return err
+	}
+	if err := addProtocolFinalizerMiddlewares(stack, options, "DescribeVirtualNetworkInterfaces"); err != nil {
+		return fmt.Errorf("add protocol finalizers: %v", err)
+	}
+
+	if err = addlegacyEndpointContextSetter(stack, options); err != nil {
 		return err
 	}
 	if err = addSetLoggerMiddleware(stack, options); err != nil {
@@ -73,16 +83,13 @@ func (c *Client) addOperationDescribeVirtualNetworkInterfacesMiddlewares(stack *
 	if err = addRetryMiddlewares(stack, options); err != nil {
 		return err
 	}
-	if err = addHTTPSignerV4Middleware(stack, options); err != nil {
-		return err
-	}
 	if err = awsmiddleware.AddRawResponseToMetadata(stack); err != nil {
 		return err
 	}
 	if err = awsmiddleware.AddRecordResponseTiming(stack); err != nil {
 		return err
 	}
-	if err = addClientUserAgent(stack); err != nil {
+	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
 	if err = smithyhttp.AddErrorCloseResponseBodyMiddleware(stack); err != nil {
@@ -91,7 +98,13 @@ func (c *Client) addOperationDescribeVirtualNetworkInterfacesMiddlewares(stack *
 	if err = smithyhttp.AddCloseResponseBodyMiddleware(stack); err != nil {
 		return err
 	}
+	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDescribeVirtualNetworkInterfaces(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {
@@ -101,6 +114,9 @@ func (c *Client) addOperationDescribeVirtualNetworkInterfacesMiddlewares(stack *
 		return err
 	}
 	if err = addRequestResponseLogging(stack, options); err != nil {
+		return err
+	}
+	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
 	return nil
@@ -115,7 +131,7 @@ type DescribeVirtualNetworkInterfacesAPIClient interface {
 var _ DescribeVirtualNetworkInterfacesAPIClient = (*Client)(nil)
 
 // DescribeVirtualNetworkInterfacesPaginatorOptions is the paginator options for
-// DescribeVirtualNetworkInterfaces.
+// DescribeVirtualNetworkInterfaces
 type DescribeVirtualNetworkInterfacesPaginatorOptions struct {
 	// Set to true if pagination should stop if the service returns a pagination token
 	// that matches the most recent token provided to the service.
@@ -123,7 +139,7 @@ type DescribeVirtualNetworkInterfacesPaginatorOptions struct {
 }
 
 // DescribeVirtualNetworkInterfacesPaginator is a paginator for
-// DescribeVirtualNetworkInterfaces.
+// DescribeVirtualNetworkInterfaces
 type DescribeVirtualNetworkInterfacesPaginator struct {
 	options   DescribeVirtualNetworkInterfacesPaginatorOptions
 	client    DescribeVirtualNetworkInterfacesAPIClient
@@ -133,7 +149,7 @@ type DescribeVirtualNetworkInterfacesPaginator struct {
 }
 
 // NewDescribeVirtualNetworkInterfacesPaginator returns a new
-// DescribeVirtualNetworkInterfacesPaginator.
+// DescribeVirtualNetworkInterfacesPaginator
 func NewDescribeVirtualNetworkInterfacesPaginator(client DescribeVirtualNetworkInterfacesAPIClient, params *DescribeVirtualNetworkInterfacesInput, optFns ...func(*DescribeVirtualNetworkInterfacesPaginatorOptions)) *DescribeVirtualNetworkInterfacesPaginator {
 	if params == nil {
 		params = &DescribeVirtualNetworkInterfacesInput{}
@@ -154,7 +170,7 @@ func NewDescribeVirtualNetworkInterfacesPaginator(client DescribeVirtualNetworkI
 	}
 }
 
-// HasMorePages returns a boolean indicating whether more pages are available.
+// HasMorePages returns a boolean indicating whether more pages are available
 func (p *DescribeVirtualNetworkInterfacesPaginator) HasMorePages() bool {
 	return p.firstPage || (p.nextToken != nil && len(*p.nextToken) != 0)
 }
@@ -191,7 +207,6 @@ func newServiceMetadataMiddleware_opDescribeVirtualNetworkInterfaces(region stri
 	return &awsmiddleware.RegisterServiceMetadata{
 		Region:        region,
 		ServiceID:     ServiceID,
-		SigningName:   "snowballdevice",
 		OperationName: "DescribeVirtualNetworkInterfaces",
 	}
 }

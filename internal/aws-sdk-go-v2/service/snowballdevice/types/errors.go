@@ -7,8 +7,87 @@ import (
 	smithy "github.com/aws/smithy-go"
 )
 
+type DependencyException struct {
+	Message *string
+
+	ErrorCodeOverride *string
+
+	noSmithyDocumentSerde
+}
+
+func (e *DependencyException) Error() string {
+	return fmt.Sprintf("%s: %s", e.ErrorCode(), e.ErrorMessage())
+}
+func (e *DependencyException) ErrorMessage() string {
+	if e.Message == nil {
+		return ""
+	}
+	return *e.Message
+}
+func (e *DependencyException) ErrorCode() string {
+	if e == nil || e.ErrorCodeOverride == nil {
+		return "DependencyException"
+	}
+	return *e.ErrorCodeOverride
+}
+func (e *DependencyException) ErrorFault() smithy.ErrorFault { return smithy.FaultClient }
+
+type HardwarePlatformNotRecognizedException struct {
+	Message *string
+
+	ErrorCodeOverride *string
+
+	noSmithyDocumentSerde
+}
+
+func (e *HardwarePlatformNotRecognizedException) Error() string {
+	return fmt.Sprintf("%s: %s", e.ErrorCode(), e.ErrorMessage())
+}
+func (e *HardwarePlatformNotRecognizedException) ErrorMessage() string {
+	if e.Message == nil {
+		return ""
+	}
+	return *e.Message
+}
+func (e *HardwarePlatformNotRecognizedException) ErrorCode() string {
+	if e == nil || e.ErrorCodeOverride == nil {
+		return "HardwarePlatformNotRecognizedException"
+	}
+	return *e.ErrorCodeOverride
+}
+func (e *HardwarePlatformNotRecognizedException) ErrorFault() smithy.ErrorFault {
+	return smithy.FaultClient
+}
+
+type IncorrectDeviceManifestException struct {
+	Message *string
+
+	ErrorCodeOverride *string
+
+	noSmithyDocumentSerde
+}
+
+func (e *IncorrectDeviceManifestException) Error() string {
+	return fmt.Sprintf("%s: %s", e.ErrorCode(), e.ErrorMessage())
+}
+func (e *IncorrectDeviceManifestException) ErrorMessage() string {
+	if e.Message == nil {
+		return ""
+	}
+	return *e.Message
+}
+func (e *IncorrectDeviceManifestException) ErrorCode() string {
+	if e == nil || e.ErrorCodeOverride == nil {
+		return "IncorrectDeviceManifestException"
+	}
+	return *e.ErrorCodeOverride
+}
+func (e *IncorrectDeviceManifestException) ErrorFault() smithy.ErrorFault { return smithy.FaultClient }
+
 type IncorrectDeviceStateException struct {
 	Message *string
+
+	ErrorCodeOverride *string
 
 	noSmithyDocumentSerde
 }
@@ -22,11 +101,18 @@ func (e *IncorrectDeviceStateException) ErrorMessage() string {
 	}
 	return *e.Message
 }
-func (e *IncorrectDeviceStateException) ErrorCode() string             { return "IncorrectDeviceStateException" }
+func (e *IncorrectDeviceStateException) ErrorCode() string {
+	if e == nil || e.ErrorCodeOverride == nil {
+		return "IncorrectDeviceStateException"
+	}
+	return *e.ErrorCodeOverride
+}
 func (e *IncorrectDeviceStateException) ErrorFault() smithy.ErrorFault { return smithy.FaultClient }
 
 type IncorrectDeviceUpdateStateException struct {
 	Message *string
+
+	ErrorCodeOverride *string
 
 	noSmithyDocumentSerde
 }
@@ -41,36 +127,19 @@ func (e *IncorrectDeviceUpdateStateException) ErrorMessage() string {
 	return *e.Message
 }
 func (e *IncorrectDeviceUpdateStateException) ErrorCode() string {
-	return "IncorrectDeviceUpdateStateException"
+	if e == nil || e.ErrorCodeOverride == nil {
+		return "IncorrectDeviceUpdateStateException"
+	}
+	return *e.ErrorCodeOverride
 }
 func (e *IncorrectDeviceUpdateStateException) ErrorFault() smithy.ErrorFault {
 	return smithy.FaultClient
 }
 
-type IncorrectRemoteManagementStateException struct {
-	Message *string
-
-	noSmithyDocumentSerde
-}
-
-func (e *IncorrectRemoteManagementStateException) Error() string {
-	return fmt.Sprintf("%s: %s", e.ErrorCode(), e.ErrorMessage())
-}
-func (e *IncorrectRemoteManagementStateException) ErrorMessage() string {
-	if e.Message == nil {
-		return ""
-	}
-	return *e.Message
-}
-func (e *IncorrectRemoteManagementStateException) ErrorCode() string {
-	return "IncorrectRemoteManagementStateException"
-}
-func (e *IncorrectRemoteManagementStateException) ErrorFault() smithy.ErrorFault {
-	return smithy.FaultClient
-}
-
 type InternalFailureException struct {
 	Message *string
+
+	ErrorCodeOverride *string
 
 	noSmithyDocumentSerde
 }
@@ -84,11 +153,18 @@ func (e *InternalFailureException) ErrorMessage() string {
 	}
 	return *e.Message
 }
-func (e *InternalFailureException) ErrorCode() string             { return "InternalFailureException" }
+func (e *InternalFailureException) ErrorCode() string {
+	if e == nil || e.ErrorCodeOverride == nil {
+		return "InternalFailureException"
+	}
+	return *e.ErrorCodeOverride
+}
 func (e *InternalFailureException) ErrorFault() smithy.ErrorFault { return smithy.FaultClient }
 
 type InvalidPaginationTokenException struct {
 	Message *string
+
+	ErrorCodeOverride *string
 
 	noSmithyDocumentSerde
 }
@@ -103,12 +179,17 @@ func (e *InvalidPaginationTokenException) ErrorMessage() string {
 	return *e.Message
 }
 func (e *InvalidPaginationTokenException) ErrorCode() string {
-	return "InvalidPaginationTokenException"
+	if e == nil || e.ErrorCodeOverride == nil {
+		return "InvalidPaginationTokenException"
+	}
+	return *e.ErrorCodeOverride
 }
 func (e *InvalidPaginationTokenException) ErrorFault() smithy.ErrorFault { return smithy.FaultClient }
 
 type InvalidParameterCombinationException struct {
 	Message *string
+
+	ErrorCodeOverride *string
 
 	noSmithyDocumentSerde
 }
@@ -123,7 +204,10 @@ func (e *InvalidParameterCombinationException) ErrorMessage() string {
 	return *e.Message
 }
 func (e *InvalidParameterCombinationException) ErrorCode() string {
-	return "InvalidParameterCombinationException"
+	if e == nil || e.ErrorCodeOverride == nil {
+		return "InvalidParameterCombinationException"
+	}
+	return *e.ErrorCodeOverride
 }
 func (e *InvalidParameterCombinationException) ErrorFault() smithy.ErrorFault {
 	return smithy.FaultClient
@@ -131,6 +215,8 @@ func (e *InvalidParameterCombinationException) ErrorFault() smithy.ErrorFault {
 
 type InvalidParameterValueException struct {
 	Message *string
+
+	ErrorCodeOverride *string
 
 	noSmithyDocumentSerde
 }
@@ -144,11 +230,43 @@ func (e *InvalidParameterValueException) ErrorMessage() string {
 	}
 	return *e.Message
 }
-func (e *InvalidParameterValueException) ErrorCode() string             { return "InvalidParameterValueException" }
+func (e *InvalidParameterValueException) ErrorCode() string {
+	if e == nil || e.ErrorCodeOverride == nil {
+		return "InvalidParameterValueException"
+	}
+	return *e.ErrorCodeOverride
+}
 func (e *InvalidParameterValueException) ErrorFault() smithy.ErrorFault { return smithy.FaultClient }
+
+type InvalidRequestException struct {
+	Message *string
+
+	ErrorCodeOverride *string
+
+	noSmithyDocumentSerde
+}
+
+func (e *InvalidRequestException) Error() string {
+	return fmt.Sprintf("%s: %s", e.ErrorCode(), e.ErrorMessage())
+}
+func (e *InvalidRequestException) ErrorMessage() string {
+	if e.Message == nil {
+		return ""
+	}
+	return *e.Message
+}
+func (e *InvalidRequestException) ErrorCode() string {
+	if e == nil || e.ErrorCodeOverride == nil {
+		return "InvalidRequestException"
+	}
+	return *e.ErrorCodeOverride
+}
+func (e *InvalidRequestException) ErrorFault() smithy.ErrorFault { return smithy.FaultClient }
 
 type MacAddressAlreadyInUseException struct {
 	Message *string
+
+	ErrorCodeOverride *string
 
 	noSmithyDocumentSerde
 }
@@ -163,12 +281,17 @@ func (e *MacAddressAlreadyInUseException) ErrorMessage() string {
 	return *e.Message
 }
 func (e *MacAddressAlreadyInUseException) ErrorCode() string {
-	return "MacAddressAlreadyInUseException"
+	if e == nil || e.ErrorCodeOverride == nil {
+		return "MacAddressAlreadyInUseException"
+	}
+	return *e.ErrorCodeOverride
 }
 func (e *MacAddressAlreadyInUseException) ErrorFault() smithy.ErrorFault { return smithy.FaultClient }
 
 type MaxDirectNetworkExceededException struct {
 	Message *string
+
+	ErrorCodeOverride *string
 
 	noSmithyDocumentSerde
 }
@@ -183,12 +306,44 @@ func (e *MaxDirectNetworkExceededException) ErrorMessage() string {
 	return *e.Message
 }
 func (e *MaxDirectNetworkExceededException) ErrorCode() string {
-	return "MaxDirectNetworkExceededException"
+	if e == nil || e.ErrorCodeOverride == nil {
+		return "MaxDirectNetworkExceededException"
+	}
+	return *e.ErrorCodeOverride
 }
 func (e *MaxDirectNetworkExceededException) ErrorFault() smithy.ErrorFault { return smithy.FaultClient }
 
+type MaxDirectNetworkOnInstanceException struct {
+	Message *string
+
+	ErrorCodeOverride *string
+
+	noSmithyDocumentSerde
+}
+
+func (e *MaxDirectNetworkOnInstanceException) Error() string {
+	return fmt.Sprintf("%s: %s", e.ErrorCode(), e.ErrorMessage())
+}
+func (e *MaxDirectNetworkOnInstanceException) ErrorMessage() string {
+	if e.Message == nil {
+		return ""
+	}
+	return *e.Message
+}
+func (e *MaxDirectNetworkOnInstanceException) ErrorCode() string {
+	if e == nil || e.ErrorCodeOverride == nil {
+		return "MaxDirectNetworkOnInstanceException"
+	}
+	return *e.ErrorCodeOverride
+}
+func (e *MaxDirectNetworkOnInstanceException) ErrorFault() smithy.ErrorFault {
+	return smithy.FaultClient
+}
+
 type MissingParameterException struct {
 	Message *string
+
+	ErrorCodeOverride *string
 
 	noSmithyDocumentSerde
 }
@@ -202,11 +357,18 @@ func (e *MissingParameterException) ErrorMessage() string {
 	}
 	return *e.Message
 }
-func (e *MissingParameterException) ErrorCode() string             { return "MissingParameterException" }
+func (e *MissingParameterException) ErrorCode() string {
+	if e == nil || e.ErrorCodeOverride == nil {
+		return "MissingParameterException"
+	}
+	return *e.ErrorCodeOverride
+}
 func (e *MissingParameterException) ErrorFault() smithy.ErrorFault { return smithy.FaultClient }
 
 type NoCloudConnectionException struct {
 	Message *string
+
+	ErrorCodeOverride *string
 
 	noSmithyDocumentSerde
 }
@@ -220,11 +382,18 @@ func (e *NoCloudConnectionException) ErrorMessage() string {
 	}
 	return *e.Message
 }
-func (e *NoCloudConnectionException) ErrorCode() string             { return "NoCloudConnectionException" }
+func (e *NoCloudConnectionException) ErrorCode() string {
+	if e == nil || e.ErrorCodeOverride == nil {
+		return "NoCloudConnectionException"
+	}
+	return *e.ErrorCodeOverride
+}
 func (e *NoCloudConnectionException) ErrorFault() smithy.ErrorFault { return smithy.FaultClient }
 
 type NoDirectNetworkSupportException struct {
 	Message *string
+
+	ErrorCodeOverride *string
 
 	noSmithyDocumentSerde
 }
@@ -239,12 +408,119 @@ func (e *NoDirectNetworkSupportException) ErrorMessage() string {
 	return *e.Message
 }
 func (e *NoDirectNetworkSupportException) ErrorCode() string {
-	return "NoDirectNetworkSupportException"
+	if e == nil || e.ErrorCodeOverride == nil {
+		return "NoDirectNetworkSupportException"
+	}
+	return *e.ErrorCodeOverride
 }
 func (e *NoDirectNetworkSupportException) ErrorFault() smithy.ErrorFault { return smithy.FaultClient }
 
+type PciDeviceAlreadyAttachedException struct {
+	Message *string
+
+	ErrorCodeOverride *string
+
+	noSmithyDocumentSerde
+}
+
+func (e *PciDeviceAlreadyAttachedException) Error() string {
+	return fmt.Sprintf("%s: %s", e.ErrorCode(), e.ErrorMessage())
+}
+func (e *PciDeviceAlreadyAttachedException) ErrorMessage() string {
+	if e.Message == nil {
+		return ""
+	}
+	return *e.Message
+}
+func (e *PciDeviceAlreadyAttachedException) ErrorCode() string {
+	if e == nil || e.ErrorCodeOverride == nil {
+		return "PciDeviceAlreadyAttachedException"
+	}
+	return *e.ErrorCodeOverride
+}
+func (e *PciDeviceAlreadyAttachedException) ErrorFault() smithy.ErrorFault { return smithy.FaultClient }
+
+type PciDeviceMissingDataException struct {
+	Message *string
+
+	ErrorCodeOverride *string
+
+	noSmithyDocumentSerde
+}
+
+func (e *PciDeviceMissingDataException) Error() string {
+	return fmt.Sprintf("%s: %s", e.ErrorCode(), e.ErrorMessage())
+}
+func (e *PciDeviceMissingDataException) ErrorMessage() string {
+	if e.Message == nil {
+		return ""
+	}
+	return *e.Message
+}
+func (e *PciDeviceMissingDataException) ErrorCode() string {
+	if e == nil || e.ErrorCodeOverride == nil {
+		return "PciDeviceMissingDataException"
+	}
+	return *e.ErrorCodeOverride
+}
+func (e *PciDeviceMissingDataException) ErrorFault() smithy.ErrorFault { return smithy.FaultClient }
+
+type PciDeviceNotFoundException struct {
+	Message *string
+
+	ErrorCodeOverride *string
+
+	noSmithyDocumentSerde
+}
+
+func (e *PciDeviceNotFoundException) Error() string {
+	return fmt.Sprintf("%s: %s", e.ErrorCode(), e.ErrorMessage())
+}
+func (e *PciDeviceNotFoundException) ErrorMessage() string {
+	if e.Message == nil {
+		return ""
+	}
+	return *e.Message
+}
+func (e *PciDeviceNotFoundException) ErrorCode() string {
+	if e == nil || e.ErrorCodeOverride == nil {
+		return "PciDeviceNotFoundException"
+	}
+	return *e.ErrorCodeOverride
+}
+func (e *PciDeviceNotFoundException) ErrorFault() smithy.ErrorFault { return smithy.FaultClient }
+
+type PublicIpAlreadyAssociatedException struct {
+	Message *string
+
+	ErrorCodeOverride *string
+
+	noSmithyDocumentSerde
+}
+
+func (e *PublicIpAlreadyAssociatedException) Error() string {
+	return fmt.Sprintf("%s: %s", e.ErrorCode(), e.ErrorMessage())
+}
+func (e *PublicIpAlreadyAssociatedException) ErrorMessage() string {
+	if e.Message == nil {
+		return ""
+	}
+	return *e.Message
+}
+func (e *PublicIpAlreadyAssociatedException) ErrorCode() string {
+	if e == nil || e.ErrorCodeOverride == nil {
+		return "PublicIpAlreadyAssociatedException"
+	}
+	return *e.ErrorCodeOverride
+}
+func (e *PublicIpAlreadyAssociatedException) ErrorFault() smithy.ErrorFault {
+	return smithy.FaultClient
+}
+
 type ResourceNotFoundException struct {
 	Message *string
+
+	ErrorCodeOverride *string
 
 	noSmithyDocumentSerde
 }
@@ -258,11 +534,18 @@ func (e *ResourceNotFoundException) ErrorMessage() string {
 	}
 	return *e.Message
 }
-func (e *ResourceNotFoundException) ErrorCode() string             { return "ResourceNotFoundException" }
+func (e *ResourceNotFoundException) ErrorCode() string {
+	if e == nil || e.ErrorCodeOverride == nil {
+		return "ResourceNotFoundException"
+	}
+	return *e.ErrorCodeOverride
+}
 func (e *ResourceNotFoundException) ErrorFault() smithy.ErrorFault { return smithy.FaultClient }
 
 type ServiceAlreadyStartedException struct {
 	Message *string
+
+	ErrorCodeOverride *string
 
 	noSmithyDocumentSerde
 }
@@ -276,11 +559,18 @@ func (e *ServiceAlreadyStartedException) ErrorMessage() string {
 	}
 	return *e.Message
 }
-func (e *ServiceAlreadyStartedException) ErrorCode() string             { return "ServiceAlreadyStartedException" }
+func (e *ServiceAlreadyStartedException) ErrorCode() string {
+	if e == nil || e.ErrorCodeOverride == nil {
+		return "ServiceAlreadyStartedException"
+	}
+	return *e.ErrorCodeOverride
+}
 func (e *ServiceAlreadyStartedException) ErrorFault() smithy.ErrorFault { return smithy.FaultClient }
 
 type TimeServiceSettingPersistenceException struct {
 	Message *string
+
+	ErrorCodeOverride *string
 
 	noSmithyDocumentSerde
 }
@@ -295,7 +585,10 @@ func (e *TimeServiceSettingPersistenceException) ErrorMessage() string {
 	return *e.Message
 }
 func (e *TimeServiceSettingPersistenceException) ErrorCode() string {
-	return "TimeServiceSettingPersistenceException"
+	if e == nil || e.ErrorCodeOverride == nil {
+		return "TimeServiceSettingPersistenceException"
+	}
+	return *e.ErrorCodeOverride
 }
 func (e *TimeServiceSettingPersistenceException) ErrorFault() smithy.ErrorFault {
 	return smithy.FaultClient
@@ -303,6 +596,8 @@ func (e *TimeServiceSettingPersistenceException) ErrorFault() smithy.ErrorFault 
 
 type TimeServiceUnavailableException struct {
 	Message *string
+
+	ErrorCodeOverride *string
 
 	noSmithyDocumentSerde
 }
@@ -317,12 +612,42 @@ func (e *TimeServiceUnavailableException) ErrorMessage() string {
 	return *e.Message
 }
 func (e *TimeServiceUnavailableException) ErrorCode() string {
-	return "TimeServiceUnavailableException"
+	if e == nil || e.ErrorCodeOverride == nil {
+		return "TimeServiceUnavailableException"
+	}
+	return *e.ErrorCodeOverride
 }
 func (e *TimeServiceUnavailableException) ErrorFault() smithy.ErrorFault { return smithy.FaultClient }
 
+type UnsupportedFeatureException struct {
+	Message *string
+
+	ErrorCodeOverride *string
+
+	noSmithyDocumentSerde
+}
+
+func (e *UnsupportedFeatureException) Error() string {
+	return fmt.Sprintf("%s: %s", e.ErrorCode(), e.ErrorMessage())
+}
+func (e *UnsupportedFeatureException) ErrorMessage() string {
+	if e.Message == nil {
+		return ""
+	}
+	return *e.Message
+}
+func (e *UnsupportedFeatureException) ErrorCode() string {
+	if e == nil || e.ErrorCodeOverride == nil {
+		return "UnsupportedFeatureException"
+	}
+	return *e.ErrorCodeOverride
+}
+func (e *UnsupportedFeatureException) ErrorFault() smithy.ErrorFault { return smithy.FaultClient }
+
 type UnsupportedOperationException struct {
 	Message *string
+
+	ErrorCodeOverride *string
 
 	noSmithyDocumentSerde
 }
@@ -336,5 +661,10 @@ func (e *UnsupportedOperationException) ErrorMessage() string {
 	}
 	return *e.Message
 }
-func (e *UnsupportedOperationException) ErrorCode() string             { return "UnsupportedOperationException" }
+func (e *UnsupportedOperationException) ErrorCode() string {
+	if e == nil || e.ErrorCodeOverride == nil {
+		return "UnsupportedOperationException"
+	}
+	return *e.ErrorCodeOverride
+}
 func (e *UnsupportedOperationException) ErrorFault() smithy.ErrorFault { return smithy.FaultClient }

@@ -45,12 +45,22 @@ type DescribeTagsOutput struct {
 }
 
 func (c *Client) addOperationDescribeTagsMiddlewares(stack *middleware.Stack, options Options) (err error) {
+	if err := stack.Serialize.Add(&setOperationInputMiddleware{}, middleware.After); err != nil {
+		return err
+	}
 	err = stack.Serialize.Add(&awsAwsjson11_serializeOpDescribeTags{}, middleware.After)
 	if err != nil {
 		return err
 	}
 	err = stack.Deserialize.Add(&awsAwsjson11_deserializeOpDescribeTags{}, middleware.After)
 	if err != nil {
+		return err
+	}
+	if err := addProtocolFinalizerMiddlewares(stack, options, "DescribeTags"); err != nil {
+		return fmt.Errorf("add protocol finalizers: %v", err)
+	}
+
+	if err = addlegacyEndpointContextSetter(stack, options); err != nil {
 		return err
 	}
 	if err = addSetLoggerMiddleware(stack, options); err != nil {
@@ -71,16 +81,13 @@ func (c *Client) addOperationDescribeTagsMiddlewares(stack *middleware.Stack, op
 	if err = addRetryMiddlewares(stack, options); err != nil {
 		return err
 	}
-	if err = addHTTPSignerV4Middleware(stack, options); err != nil {
-		return err
-	}
 	if err = awsmiddleware.AddRawResponseToMetadata(stack); err != nil {
 		return err
 	}
 	if err = awsmiddleware.AddRecordResponseTiming(stack); err != nil {
 		return err
 	}
-	if err = addClientUserAgent(stack); err != nil {
+	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
 	if err = smithyhttp.AddErrorCloseResponseBodyMiddleware(stack); err != nil {
@@ -89,7 +96,13 @@ func (c *Client) addOperationDescribeTagsMiddlewares(stack *middleware.Stack, op
 	if err = smithyhttp.AddCloseResponseBodyMiddleware(stack); err != nil {
 		return err
 	}
+	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDescribeTags(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {
@@ -99,6 +112,9 @@ func (c *Client) addOperationDescribeTagsMiddlewares(stack *middleware.Stack, op
 		return err
 	}
 	if err = addRequestResponseLogging(stack, options); err != nil {
+		return err
+	}
+	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
 	return nil
@@ -111,14 +127,14 @@ type DescribeTagsAPIClient interface {
 
 var _ DescribeTagsAPIClient = (*Client)(nil)
 
-// DescribeTagsPaginatorOptions is the paginator options for DescribeTags.
+// DescribeTagsPaginatorOptions is the paginator options for DescribeTags
 type DescribeTagsPaginatorOptions struct {
 	// Set to true if pagination should stop if the service returns a pagination token
 	// that matches the most recent token provided to the service.
 	StopOnDuplicateToken bool
 }
 
-// DescribeTagsPaginator is a paginator for DescribeTags.
+// DescribeTagsPaginator is a paginator for DescribeTags
 type DescribeTagsPaginator struct {
 	options   DescribeTagsPaginatorOptions
 	client    DescribeTagsAPIClient
@@ -127,7 +143,7 @@ type DescribeTagsPaginator struct {
 	firstPage bool
 }
 
-// NewDescribeTagsPaginator returns a new DescribeTagsPaginator.
+// NewDescribeTagsPaginator returns a new DescribeTagsPaginator
 func NewDescribeTagsPaginator(client DescribeTagsAPIClient, params *DescribeTagsInput, optFns ...func(*DescribeTagsPaginatorOptions)) *DescribeTagsPaginator {
 	if params == nil {
 		params = &DescribeTagsInput{}
@@ -148,7 +164,7 @@ func NewDescribeTagsPaginator(client DescribeTagsAPIClient, params *DescribeTags
 	}
 }
 
-// HasMorePages returns a boolean indicating whether more pages are available.
+// HasMorePages returns a boolean indicating whether more pages are available
 func (p *DescribeTagsPaginator) HasMorePages() bool {
 	return p.firstPage || (p.nextToken != nil && len(*p.nextToken) != 0)
 }
@@ -185,7 +201,6 @@ func newServiceMetadataMiddleware_opDescribeTags(region string) *awsmiddleware.R
 	return &awsmiddleware.RegisterServiceMetadata{
 		Region:        region,
 		ServiceID:     ServiceID,
-		SigningName:   "snowballdevice",
 		OperationName: "DescribeTags",
 	}
 }
