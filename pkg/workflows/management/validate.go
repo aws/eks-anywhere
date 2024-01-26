@@ -26,7 +26,7 @@ func (s *setupAndValidateCreate) Run(ctx context.Context, commandContext *task.C
 		return nil
 	}
 
-	return nil
+	return &createBootStrapClusterTask{}
 }
 
 func (s *setupAndValidateCreate) providerValidation(ctx context.Context, commandContext *task.CommandContext) []validations.Validation {
