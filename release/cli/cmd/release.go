@@ -196,10 +196,20 @@ var releaseCmd = &cobra.Command{
 				os.Exit(1)
 			}
 
-			err = operations.SignImagesNotation(releaseConfig, imageDigests)
-			if err != nil {
-				fmt.Printf("Error signing container images using notation CLI and AWS Signer: %v\n", err)
-				os.Exit(1)
+			if bundleRelease && releaseEnvironment == "development" {
+				err = operations.SignImagesNotation(releaseConfig, imageDigests)
+				if err != nil {
+					fmt.Printf("Error signing container images using notation CLI and AWS Signer: %v\n", err)
+					os.Exit(1)
+				}
+			}
+
+			if bundleRelease && releaseEnvironment == "production" {
+				err = operations.CopyImageSignatureUsingOras(releaseConfig, imageDigests)
+				if err != nil {
+					fmt.Printf("Error copying image signature: %v\n", err)
+					os.Exit(1)
+				}
 			}
 
 			err = operations.GenerateBundleSpec(releaseConfig, bundle, imageDigests)
