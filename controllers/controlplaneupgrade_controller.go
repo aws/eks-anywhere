@@ -27,8 +27,10 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 	"sigs.k8s.io/cluster-api/util/annotations"
 	"sigs.k8s.io/cluster-api/util/patch"
@@ -64,6 +66,7 @@ func NewControlPlaneUpgradeReconciler(client client.Client) *ControlPlaneUpgrade
 //+kubebuilder:rbac:groups=anywhere.eks.amazonaws.com,resources=controlplaneupgrades,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=anywhere.eks.amazonaws.com,resources=controlplaneupgrades/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=anywhere.eks.amazonaws.com,resources=controlplaneupgrades/finalizers,verbs=update
+//+kubebuilder:rbac:groups=bootstrap.cluster.x-k8s.io,resources=kubeadmconfigs,verbs=get;list;watch;update;patch
 
 // Reconcile reconciles a ControlPlaneUpgrade object.
 // nolint:gocyclo
@@ -220,7 +223,7 @@ func (r *ControlPlaneUpgradeReconciler) updateStatus(ctx context.Context, log lo
 			return fmt.Errorf("getting node upgrader for machine %s: %v", machineRef.Name, err)
 		}
 		if nodeUpgrade.Status.Completed {
-			if err := r.updateMachine(ctx, log, cpUpgrade, nodeUpgrade); err != nil {
+			if err := r.updateResources(ctx, log, cpUpgrade, nodeUpgrade); err != nil {
 				return err
 			}
 			nodesUpgradeCompleted++
@@ -234,47 +237,89 @@ func (r *ControlPlaneUpgradeReconciler) updateStatus(ctx context.Context, log lo
 	return nil
 }
 
-func (r *ControlPlaneUpgradeReconciler) updateMachine(ctx context.Context, log logr.Logger, cpUpgrade *anywherev1.ControlPlaneUpgrade, nodeUpgrade *anywherev1.NodeUpgrade) error {
+func (r *ControlPlaneUpgradeReconciler) updateResources(ctx context.Context, log logr.Logger, cpUpgrade *anywherev1.ControlPlaneUpgrade, nodeUpgrade *anywherev1.NodeUpgrade) error {
 	machine, err := getCapiMachine(ctx, r.client, nodeUpgrade)
 	if err != nil {
 		return err
 	}
+
+	log = log.WithValues("Machine", machine.Name)
 	machinePatchHelper, err := patch.NewHelper(machine, r.client)
 	if err != nil {
 		return err
 	}
-	log.Info("Updating K8s version and kubeadmClusterConfiguration annotation in machine", "Machine", machine.Name)
-	// Update the machine k8s version
-	machine.Spec.Version = &nodeUpgrade.Spec.KubernetesVersion
 
-	// Update the machine kubeadmClusterConfiguration annotation
-	kcc, err := getKubeadmClusterConfig(cpUpgrade)
+	log.Info("Updating K8s version and kubeadmClusterConfiguration annotation in machine")
+	kcpSpec, err := decodeAndUnmarshalKcpSpecData(cpUpgrade.Spec.ControlPlaneSpecData)
 	if err != nil {
 		return err
 	}
-	annotations.AddAnnotations(machine, map[string]string{kubeadmClusterConfigurationAnnotation: kcc})
+
+	// Update the machine kubeadmClusterConfiguration annotation
+	kcc, err := json.Marshal(kcpSpec.KubeadmConfigSpec.ClusterConfiguration)
+	if err != nil {
+		return fmt.Errorf("marshaling KCP cluster configuration: %v", err)
+	}
+
+	// Update the machine k8s version and update the KubeadmClusterConfiguration annotation
+	machine.Spec.Version = &nodeUpgrade.Spec.KubernetesVersion
+	annotations.AddAnnotations(machine, map[string]string{kubeadmClusterConfigurationAnnotation: string(kcc)})
 
 	if err := machinePatchHelper.Patch(ctx, machine); err != nil {
 		return fmt.Errorf("updating spec for machine %s: %v", machine.Name, err)
 	}
 
+	if err := r.updateKubeadmConfig(ctx, log, kcpSpec, machine); err != nil {
+		return fmt.Errorf("updating kubeadm config: %v", err)
+	}
+
 	return nil
 }
 
-func getKubeadmClusterConfig(cpUpgrade *anywherev1.ControlPlaneUpgrade) (string, error) {
-	kcpSpec := &controlplanev1.KubeadmControlPlaneSpec{}
-	decodedKcpSpec, err := base64.StdEncoding.DecodeString(cpUpgrade.Spec.ControlPlaneSpecData)
+func (r *ControlPlaneUpgradeReconciler) updateKubeadmConfig(ctx context.Context, log logr.Logger, kcpSpec *controlplanev1.KubeadmControlPlaneSpec, machine *clusterv1.Machine) error {
+	bootstrapRef := machine.Spec.Bootstrap.ConfigRef
+	if bootstrapRef == nil {
+		return fmt.Errorf("bootstrap config for machine %s is nil", machine.Name)
+	}
+
+	kc := &bootstrapv1.KubeadmConfig{}
+	if err := r.client.Get(ctx, types.NamespacedName{Name: bootstrapRef.Name, Namespace: machine.Namespace}, kc); err != nil {
+		return fmt.Errorf("retrieving bootstrap config for machine %s: %v", machine.Name, err)
+	}
+
+	patchHelper, err := patch.NewHelper(kc, r.client)
 	if err != nil {
-		return "", fmt.Errorf("decoding cpUpgrade.Spec.ControlPlaneSpec: %v", err)
+		return fmt.Errorf("initializing patch helper for KubeadmConfig %s: %v", kc.Name, err)
+	}
+
+	kcSpec := kcpSpec.KubeadmConfigSpec.DeepCopy()
+	if kc.Spec.InitConfiguration == nil {
+		kcSpec.InitConfiguration = nil
+	}
+
+	if kc.Spec.JoinConfiguration == nil {
+		kcSpec.JoinConfiguration = nil
+	}
+
+	kc.Spec = *kcSpec
+	log.Info("Patching KubeadmConfig", "KubeadmConfig", kc.Name)
+	if err := patchHelper.Patch(ctx, kc); err != nil {
+		return fmt.Errorf("patching KubeadmConfig %s for Machine %s: %v", kc.Name, machine.Name, err)
+	}
+
+	return nil
+}
+
+func decodeAndUnmarshalKcpSpecData(kcpSpecData string) (*controlplanev1.KubeadmControlPlaneSpec, error) {
+	kcpSpec := &controlplanev1.KubeadmControlPlaneSpec{}
+	decodedKcpSpec, err := base64.StdEncoding.DecodeString(kcpSpecData)
+	if err != nil {
+		return nil, fmt.Errorf("decoding cpUpgrade.Spec.ControlPlaneSpec: %v", err)
 	}
 	if err := json.Unmarshal(decodedKcpSpec, kcpSpec); err != nil {
-		return "", fmt.Errorf("unmarshaling cpUpgrade.Spec.ControlPlaneSpec: %v", err)
+		return nil, fmt.Errorf("unmarshaling cpUpgrade.Spec.ControlPlaneSpec: %v", err)
 	}
-	clusterConfig, err := json.Marshal(kcpSpec.KubeadmConfigSpec.ClusterConfiguration)
-	if err != nil {
-		return "", fmt.Errorf("marshaling KCP cluster configuration: %v", err)
-	}
-	return string(clusterConfig), nil
+	return kcpSpec, nil
 }
 
 func getCapiMachine(ctx context.Context, client client.Client, nodeUpgrade *anywherev1.NodeUpgrade) (*clusterv1.Machine, error) {

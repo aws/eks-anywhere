@@ -155,7 +155,8 @@ func getObjectsForMD() mdObjects {
 		Kind:       "MachineDeployment",
 	}
 	node := generateNode()
-	machine := generateMachine(cluster, node)
+	kubeadmConfig := generateKubeadmConfig()
+	machine := generateMachine(cluster, node, kubeadmConfig)
 	machine.Labels = map[string]string{
 		"cluster.x-k8s.io/deployment-name": md.Name,
 	}

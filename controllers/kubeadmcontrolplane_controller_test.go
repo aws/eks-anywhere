@@ -187,11 +187,13 @@ func getObjectsForKCP() kcpObjects {
 	node1 := generateNode()
 	node2 := node1.DeepCopy()
 	node2.ObjectMeta.Name = "node02"
-	machine1 := generateMachine(cluster, node1)
+	kubeadmConfig1 := generateKubeadmConfig()
+	kubeadmConfig2 := generateKubeadmConfig()
+	machine1 := generateMachine(cluster, node1, kubeadmConfig1)
 	machine1.Labels = map[string]string{
 		"cluster.x-k8s.io/control-plane-name": kcp.Name,
 	}
-	machine2 := generateMachine(cluster, node2)
+	machine2 := generateMachine(cluster, node2, kubeadmConfig2)
 	machine2.ObjectMeta.Name = "machine02"
 	machine2.Labels = map[string]string{
 		"cluster.x-k8s.io/control-plane-name": kcp.Name,
@@ -238,13 +240,13 @@ func generateKCP(name string) *controlplanev1.KubeadmControlPlane {
 					Etcd: bootstrapv1.Etcd{
 						Local: &bootstrapv1.LocalEtcd{
 							ImageMeta: bootstrapv1.ImageMeta{
-								ImageTag: "v3.5.9-eks-1-28-9",
+								ImageTag: etcd129,
 							},
 						},
 					},
 				},
 			},
-			Version: "v1.28.3-eks-1-28-9",
+			Version: k8s129,
 		},
 	}
 }
