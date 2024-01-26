@@ -221,6 +221,11 @@ func (p *Provider) Version(clusterSpec *cluster.Spec) string {
 	return versionsBundle.Tinkerbell.Version
 }
 
+// VersionFromManagementComponents returns the version of the provider.
+func (p *Provider) VersionFromManagementComponents(components *cluster.ManagementComponents) string {
+	return components.Tinkerbell.Version
+}
+
 func (p *Provider) EnvMap(spec *cluster.Spec) (map[string]string, error) {
 	return map[string]string{
 		// The TINKERBELL_IP is input for the CAPT deployment and used as part of default template
@@ -263,6 +268,22 @@ func (p *Provider) GetInfrastructureBundle(clusterSpec *cluster.Spec) *types.Inf
 			versionsBundle.Tinkerbell.ClusterTemplate,
 		},
 	}
+	return &infraBundle
+}
+
+// GetInfrastructureBundleFromManagementComponents returns the infrastructure bundle for the provider.
+func (p *Provider) GetInfrastructureBundleFromManagementComponents(components *cluster.ManagementComponents) *types.InfrastructureBundle {
+	folderName := fmt.Sprintf("infrastructure-tinkerbell/%s/", components.Tinkerbell.Version)
+
+	infraBundle := types.InfrastructureBundle{
+		FolderName: folderName,
+		Manifests: []releasev1alpha1.Manifest{
+			components.Tinkerbell.Components,
+			components.Tinkerbell.Metadata,
+			components.Tinkerbell.ClusterTemplate,
+		},
+	}
+
 	return &infraBundle
 }
 
@@ -314,6 +335,19 @@ func (p *Provider) ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.Compone
 		ComponentName: constants.TinkerbellProviderName,
 		NewVersion:    newVersionsBundle.Tinkerbell.Version,
 		OldVersion:    currentVersionsBundle.Tinkerbell.Version,
+	}
+}
+
+// ChangeDiffFromManagementComponents returns the component change diff for the provider.
+func (p *Provider) ChangeDiffFromManagementComponents(currentComponents, newComponents *cluster.ManagementComponents) *types.ComponentChangeDiff {
+	if currentComponents.Tinkerbell.Version == newComponents.Tinkerbell.Version {
+		return nil
+	}
+
+	return &types.ComponentChangeDiff{
+		ComponentName: constants.TinkerbellProviderName,
+		NewVersion:    newComponents.Tinkerbell.Version,
+		OldVersion:    currentComponents.Tinkerbell.Version,
 	}
 }
 
