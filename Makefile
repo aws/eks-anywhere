@@ -536,7 +536,7 @@ mocks: ## Generate mocks
 	${MOCKGEN} -destination=pkg/providers/vsphere/setupuser/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/providers/vsphere/setupuser" GovcClient
 	${MOCKGEN} -destination=pkg/govmomi/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/govmomi" VSphereClient,VMOMIAuthorizationManager,VMOMIFinder,VMOMISessionBuilder,VMOMIFinderBuilder,VMOMIAuthorizationManagerBuilder
 	${MOCKGEN} -destination=pkg/filewriter/mocks/filewriter.go -package=mocks "github.com/aws/eks-anywhere/pkg/filewriter" FileWriter
-	${MOCKGEN} -destination=pkg/clustermanager/mocks/client_and_networking.go -package=mocks "github.com/aws/eks-anywhere/pkg/clustermanager" ClusterClient,Networking,AwsIamAuth,EKSAComponents,KubernetesClient,ClientFactory,ClusterApplier
+	${MOCKGEN} -destination=pkg/clustermanager/mocks/client_and_networking.go -package=mocks "github.com/aws/eks-anywhere/pkg/clustermanager" ClusterClient,Networking,AwsIamAuth,EKSAComponents,KubernetesClient,ClientFactory,ClusterApplier,CAPIClient
 	${MOCKGEN} -destination=pkg/gitops/flux/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/gitops/flux" FluxClient,KubeClient,GitOpsFluxClient,GitClient,Templater
 	${MOCKGEN} -destination=pkg/task/mocks/task.go -package=mocks "github.com/aws/eks-anywhere/pkg/task" Task
 	${MOCKGEN} -destination=pkg/bootstrapper/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/bootstrapper" KindClient,KubernetesClient

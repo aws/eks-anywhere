@@ -324,6 +324,7 @@ func TestFactoryBuildWithMultipleDependencies(t *testing.T) {
 		WithValidatorClients().
 		WithCreateClusterDefaulter(&tt.createCLIConfig).
 		WithUpgradeClusterDefaulter(&tt.upgradeCLIConfig).
+		WithKubernetesRetrierClient().
 		Build(context.Background())
 
 	tt.Expect(err).To(BeNil())
@@ -347,6 +348,7 @@ func TestFactoryBuildWithMultipleDependencies(t *testing.T) {
 	tt.Expect(deps.IPValidator).NotTo(BeNil())
 	tt.Expect(deps.ClusterApplier).NotTo(BeNil())
 	tt.Expect(deps.UnAuthKubectlClient).NotTo(BeNil())
+	tt.Expect(deps.KubernetesRetrierClient).NotTo(BeNil())
 }
 
 func TestFactoryBuildWithProxyConfiguration(t *testing.T) {
