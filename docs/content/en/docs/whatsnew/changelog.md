@@ -15,6 +15,22 @@ Please upgrade to `v0.15.3` if you are using Tinkerbell (Bare Metal) provider.
 * When upgrading to a new minor version, a new OS image must be created using the new image-builder cli.
 {{% /alert %}}
 
+## [v0.18.5](https://github.com/aws/eks-anywhere/releases/tag/v0.18.5)
+
+### Tool Upgrade
+* New EKS Anywhere Admin AMI with CVE fixes for Amazon Linux 2
+* New base images with CVE fixes for Amazon Linux 2
+
+### Supported Operating Systems
+
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow  |
+| :----------:        | :-----: | :--------: | :-----: | :--------: | :---: |
+| Ubuntu 20.04        | ✔       | ✔          | ✔       | —          | ✔     |
+| Ubuntu 22.04        | ✔       | ✔          | ✔       | —          | —     |
+| Bottlerocket 1.15.1 | ✔       | ✔          | —       | —          | —     |
+| RHEL 8.7            | ✔       | ✔          | ✔       | ✔          | —     |
+| RHEL 9.x            | —       | —          | ✔       | —          | —     |
+
 ## [v0.18.4](https://github.com/aws/eks-anywhere/releases/tag/v0.18.4)
 
 ### Feature 
