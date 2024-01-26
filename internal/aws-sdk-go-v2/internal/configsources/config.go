@@ -2,12 +2,11 @@ package configsources
 
 import (
 	"context"
-
 	"github.com/aws/aws-sdk-go-v2/aws"
 )
 
 // EnableEndpointDiscoveryProvider is an interface for retrieving external configuration value
-// for Enable Endpoint Discovery.
+// for Enable Endpoint Discovery
 type EnableEndpointDiscoveryProvider interface {
 	GetEnableEndpointDiscovery(ctx context.Context) (value aws.EndpointDiscoveryEnableState, found bool, err error)
 }
@@ -27,7 +26,7 @@ func ResolveEnableEndpointDiscovery(ctx context.Context, configs []interface{}) 
 	return
 }
 
-// UseDualStackEndpointProvider is an interface for retrieving external configuration values for UseDualStackEndpoint.
+// UseDualStackEndpointProvider is an interface for retrieving external configuration values for UseDualStackEndpoint
 type UseDualStackEndpointProvider interface {
 	GetUseDualStackEndpoint(context.Context) (value aws.DualStackEndpointState, found bool, err error)
 }
@@ -46,7 +45,7 @@ func ResolveUseDualStackEndpoint(ctx context.Context, configs []interface{}) (va
 	return
 }
 
-// UseFIPSEndpointProvider is an interface for retrieving external configuration values for UseFIPSEndpoint.
+// UseFIPSEndpointProvider is an interface for retrieving external configuration values for UseFIPSEndpoint
 type UseFIPSEndpointProvider interface {
 	GetUseFIPSEndpoint(context.Context) (value aws.FIPSEndpointState, found bool, err error)
 }

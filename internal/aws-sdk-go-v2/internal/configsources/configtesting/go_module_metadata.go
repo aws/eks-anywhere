@@ -2,5 +2,5 @@
 
 package configtesting
 
-// goModuleVersion is the tagged release for this module.
+// goModuleVersion is the tagged release for this module
 const goModuleVersion = "tip"
