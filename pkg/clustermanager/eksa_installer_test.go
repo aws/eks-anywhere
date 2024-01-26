@@ -2,6 +2,7 @@ package clustermanager_test
 
 import (
 	"context"
+	"errors"
 	"os"
 	"strings"
 	"testing"
@@ -80,8 +81,80 @@ func TestEKSAInstallerInstallSuccessWithRealManifest(t *testing.T) {
 	tt.client.EXPECT().Apply(tt.ctx, tt.cluster.KubeconfigFile, gomock.AssignableToTypeOf(&appsv1.Deployment{}))
 	tt.client.EXPECT().Apply(tt.ctx, tt.cluster.KubeconfigFile, gomock.Any()).Times(expectedObjectCount)
 	tt.client.EXPECT().WaitForDeployment(tt.ctx, tt.cluster, "30m0s", "Available", "eksa-controller-manager", "eksa-system")
+	tt.client.EXPECT().ApplyKubeSpecFromBytes(tt.ctx, tt.cluster, gomock.Any()).Times(2)
 
 	tt.Expect(tt.installer.Install(tt.ctx, test.NewNullLogger(), tt.cluster, tt.newSpec)).To(Succeed())
+}
+
+func TestEKSAInstallerInstallFailComponentsDeployment(t *testing.T) {
+	tt := newInstallerTest(t)
+	tt.newSpec.VersionsBundles["1.19"].Eksa.Components.URI = "../../config/manifest/eksa-components.yaml"
+	file, err := os.ReadFile("../../config/manifest/eksa-components.yaml")
+	if err != nil {
+		t.Fatalf("could not read eksa-components")
+	}
+
+	manifest := string(file)
+	expectedObjectCount := strings.Count(manifest, "\n---\n")
+	tt.client.EXPECT().Apply(tt.ctx, tt.cluster.KubeconfigFile, gomock.AssignableToTypeOf(&appsv1.Deployment{}))
+	tt.client.EXPECT().Apply(tt.ctx, tt.cluster.KubeconfigFile, gomock.Any()).Times(expectedObjectCount)
+	tt.client.EXPECT().WaitForDeployment(tt.ctx, tt.cluster, "30m0s", "Available", "eksa-controller-manager", "eksa-system").Return(errors.New("test"))
+
+	err = tt.installer.Install(tt.ctx, test.NewNullLogger(), tt.cluster, tt.newSpec)
+	tt.Expect(err.Error()).To(ContainSubstring("waiting for eksa-controller-manager"))
+}
+
+func TestEKSAInstallerInstallFailComponents(t *testing.T) {
+	tt := newInstallerTest(t)
+	tt.newSpec.VersionsBundles["1.19"].Eksa.Components.URI = "../../config/manifest/eksa-components.yaml"
+
+	tt.client.EXPECT().Apply(tt.ctx, tt.cluster.KubeconfigFile, gomock.AssignableToTypeOf(&appsv1.Deployment{})).Return(errors.New("test"))
+
+	err := tt.installer.Install(tt.ctx, test.NewNullLogger(), tt.cluster, tt.newSpec)
+	tt.Expect(err.Error()).To(ContainSubstring("applying eksa components"))
+}
+
+func TestEKSAInstallerInstallFailBundles(t *testing.T) {
+	tt := newInstallerTest(t)
+	tt.newSpec.VersionsBundles["1.19"].Eksa.Components.URI = "../../config/manifest/eksa-components.yaml"
+	file, err := os.ReadFile("../../config/manifest/eksa-components.yaml")
+	if err != nil {
+		t.Fatalf("could not read eksa-components")
+	}
+
+	tt.newSpec.Bundles = &v1alpha1.Bundles{}
+	tt.newSpec.EKSARelease = &v1alpha1.EKSARelease{}
+	manifest := string(file)
+	expectedObjectCount := strings.Count(manifest, "\n---\n")
+	tt.client.EXPECT().Apply(tt.ctx, tt.cluster.KubeconfigFile, gomock.AssignableToTypeOf(&appsv1.Deployment{}))
+	tt.client.EXPECT().Apply(tt.ctx, tt.cluster.KubeconfigFile, gomock.Any()).Times(expectedObjectCount)
+	tt.client.EXPECT().WaitForDeployment(tt.ctx, tt.cluster, "30m0s", "Available", "eksa-controller-manager", "eksa-system")
+	tt.client.EXPECT().ApplyKubeSpecFromBytes(tt.ctx, tt.cluster, gomock.Any()).Return(errors.New("test"))
+
+	err = tt.installer.Install(tt.ctx, test.NewNullLogger(), tt.cluster, tt.newSpec)
+	tt.Expect(err.Error()).To(ContainSubstring("applying bundle spec"))
+}
+
+func TestEKSAInstallerInstallFailEKSARelease(t *testing.T) {
+	tt := newInstallerTest(t)
+	tt.newSpec.VersionsBundles["1.19"].Eksa.Components.URI = "../../config/manifest/eksa-components.yaml"
+	file, err := os.ReadFile("../../config/manifest/eksa-components.yaml")
+	if err != nil {
+		t.Fatalf("could not read eksa-components")
+	}
+
+	tt.newSpec.Bundles = &v1alpha1.Bundles{}
+	tt.newSpec.EKSARelease = &v1alpha1.EKSARelease{}
+	manifest := string(file)
+	expectedObjectCount := strings.Count(manifest, "\n---\n")
+	tt.client.EXPECT().Apply(tt.ctx, tt.cluster.KubeconfigFile, gomock.AssignableToTypeOf(&appsv1.Deployment{}))
+	tt.client.EXPECT().Apply(tt.ctx, tt.cluster.KubeconfigFile, gomock.Any()).Times(expectedObjectCount)
+	tt.client.EXPECT().WaitForDeployment(tt.ctx, tt.cluster, "30m0s", "Available", "eksa-controller-manager", "eksa-system")
+	tt.client.EXPECT().ApplyKubeSpecFromBytes(tt.ctx, tt.cluster, gomock.Any())
+	tt.client.EXPECT().ApplyKubeSpecFromBytes(tt.ctx, tt.cluster, gomock.Any()).Return(errors.New("test"))
+
+	err = tt.installer.Install(tt.ctx, test.NewNullLogger(), tt.cluster, tt.newSpec)
+	tt.Expect(err.Error()).To(ContainSubstring("applying EKSA release spec"))
 }
 
 func TestEKSAInstallerInstallSuccessWithTestManifest(t *testing.T) {
@@ -146,6 +219,7 @@ func TestEKSAInstallerInstallSuccessWithTestManifest(t *testing.T) {
 	tt.client.EXPECT().Apply(tt.ctx, tt.cluster.KubeconfigFile, wantDeployment)
 	tt.client.EXPECT().Apply(tt.ctx, tt.cluster.KubeconfigFile, wantNamespace)
 	tt.client.EXPECT().WaitForDeployment(tt.ctx, tt.cluster, "30m0s", "Available", "eksa-controller-manager", "eksa-system")
+	tt.client.EXPECT().ApplyKubeSpecFromBytes(tt.ctx, tt.cluster, gomock.Any()).Times(2)
 
 	tt.Expect(tt.installer.Install(tt.ctx, test.NewNullLogger(), tt.cluster, tt.newSpec)).To(Succeed())
 }
@@ -162,6 +236,7 @@ func TestEKSAInstallerInstallSuccessWithNoTimeout(t *testing.T) {
 	expectedObjectCount := strings.Count(manifest, "\n---\n")
 	tt.client.EXPECT().Apply(tt.ctx, tt.cluster.KubeconfigFile, gomock.Any()).Times(expectedObjectCount)
 	tt.client.EXPECT().WaitForDeployment(tt.ctx, tt.cluster, maxTime.String(), "Available", "eksa-controller-manager", "eksa-system")
+	tt.client.EXPECT().ApplyKubeSpecFromBytes(tt.ctx, tt.cluster, gomock.Any()).Times(2)
 
 	tt.Expect(tt.installer.Install(tt.ctx, test.NewNullLogger(), tt.cluster, tt.newSpec)).To(Succeed())
 }

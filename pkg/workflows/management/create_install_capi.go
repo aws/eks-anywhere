@@ -29,7 +29,7 @@ func (s *installCAPIComponentsTask) Run(ctx context.Context, commandContext *tas
 		return &workflows.CollectMgmtClusterDiagnosticsTask{}
 	}
 
-	return nil
+	return &installEksaComponentsOnBootstrapTask{}
 }
 
 func (s *installCAPIComponentsTask) Name() string {
