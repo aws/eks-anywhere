@@ -18,6 +18,8 @@ package controllers
 
 import (
 	"context"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -27,6 +29,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
+	"sigs.k8s.io/cluster-api/util/annotations"
 	"sigs.k8s.io/cluster-api/util/patch"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -39,7 +43,8 @@ import (
 
 // controlPlaneUpgradeFinalizerName is the finalizer added to NodeUpgrade objects to handle deletion.
 const (
-	controlPlaneUpgradeFinalizerName = "controlplaneupgrades.anywhere.eks.amazonaws.com/finalizer"
+	controlPlaneUpgradeFinalizerName      = "controlplaneupgrades.anywhere.eks.amazonaws.com/finalizer"
+	kubeadmClusterConfigurationAnnotation = "controlplane.cluster.x-k8s.io/kubeadm-cluster-configuration"
 )
 
 // ControlPlaneUpgradeReconciler reconciles a ControlPlaneUpgradeReconciler object.
@@ -215,18 +220,8 @@ func (r *ControlPlaneUpgradeReconciler) updateStatus(ctx context.Context, log lo
 			return fmt.Errorf("getting node upgrader for machine %s: %v", machineRef.Name, err)
 		}
 		if nodeUpgrade.Status.Completed {
-			machine, err := getCapiMachine(ctx, r.client, nodeUpgrade)
-			if err != nil {
+			if err := r.updateMachine(ctx, log, cpUpgrade, nodeUpgrade); err != nil {
 				return err
-			}
-			machinePatchHelper, err := patch.NewHelper(machine, r.client)
-			if err != nil {
-				return err
-			}
-			log.Info("Updating K8s version in  machine", "Machine", machine.Name)
-			machine.Spec.Version = &nodeUpgrade.Spec.KubernetesVersion
-			if err := machinePatchHelper.Patch(ctx, machine); err != nil {
-				return fmt.Errorf("updating spec for machine %s: %v", machine.Name, err)
 			}
 			nodesUpgradeCompleted++
 			nodesUpgradeRequired--
@@ -237,6 +232,49 @@ func (r *ControlPlaneUpgradeReconciler) updateStatus(ctx context.Context, log lo
 	cpUpgrade.Status.RequireUpgrade = int64(nodesUpgradeRequired)
 	cpUpgrade.Status.Ready = nodesUpgradeRequired == 0
 	return nil
+}
+
+func (r *ControlPlaneUpgradeReconciler) updateMachine(ctx context.Context, log logr.Logger, cpUpgrade *anywherev1.ControlPlaneUpgrade, nodeUpgrade *anywherev1.NodeUpgrade) error {
+	machine, err := getCapiMachine(ctx, r.client, nodeUpgrade)
+	if err != nil {
+		return err
+	}
+	machinePatchHelper, err := patch.NewHelper(machine, r.client)
+	if err != nil {
+		return err
+	}
+	log.Info("Updating K8s version and kubeadmClusterConfiguration annotation in machine", "Machine", machine.Name)
+	// Update the machine k8s version
+	machine.Spec.Version = &nodeUpgrade.Spec.KubernetesVersion
+
+	// Update the machine kubeadmClusterConfiguration annotation
+	kcc, err := getKubeadmClusterConfig(cpUpgrade)
+	if err != nil {
+		return err
+	}
+	annotations.AddAnnotations(machine, map[string]string{kubeadmClusterConfigurationAnnotation: kcc})
+
+	if err := machinePatchHelper.Patch(ctx, machine); err != nil {
+		return fmt.Errorf("updating spec for machine %s: %v", machine.Name, err)
+	}
+
+	return nil
+}
+
+func getKubeadmClusterConfig(cpUpgrade *anywherev1.ControlPlaneUpgrade) (string, error) {
+	kcpSpec := &controlplanev1.KubeadmControlPlaneSpec{}
+	decodedKcpSpec, err := base64.StdEncoding.DecodeString(cpUpgrade.Spec.ControlPlaneSpecData)
+	if err != nil {
+		return "", fmt.Errorf("decoding cpUpgrade.Spec.ControlPlaneSpec: %v", err)
+	}
+	if err := json.Unmarshal(decodedKcpSpec, kcpSpec); err != nil {
+		return "", fmt.Errorf("unmarshaling cpUpgrade.Spec.ControlPlaneSpec: %v", err)
+	}
+	clusterConfig, err := json.Marshal(kcpSpec.KubeadmConfigSpec.ClusterConfiguration)
+	if err != nil {
+		return "", fmt.Errorf("marshaling KCP cluster configuration: %v", err)
+	}
+	return string(clusterConfig), nil
 }
 
 func getCapiMachine(ctx context.Context, client client.Client, nodeUpgrade *anywherev1.NodeUpgrade) (*clusterv1.Machine, error) {
