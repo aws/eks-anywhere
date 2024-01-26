@@ -9,7 +9,7 @@ import (
 	"regexp"
 )
 
-// Options is the endpoint resolver configuration options.
+// Options is the endpoint resolver configuration options
 type Options struct {
 	// Logger is a logging implementation that log events should be sent to.
 	Logger logging.Logger
@@ -62,12 +62,12 @@ func transformToSharedOptions(options Options) endpoints.Options {
 	}
 }
 
-// Resolver Snowball Device endpoint resolver.
+// Resolver Snowball Device endpoint resolver
 type Resolver struct {
 	partitions endpoints.Partitions
 }
 
-// ResolveEndpoint resolves the service endpoint for the given region and options.
+// ResolveEndpoint resolves the service endpoint for the given region and options
 func (r *Resolver) ResolveEndpoint(region string, options Options) (endpoint aws.Endpoint, err error) {
 	if len(region) == 0 {
 		return endpoint, &aws.MissingRegionError{}
@@ -77,7 +77,7 @@ func (r *Resolver) ResolveEndpoint(region string, options Options) (endpoint aws
 	return r.partitions.ResolveEndpoint(region, opt)
 }
 
-// New returns a new Resolver.
+// New returns a new Resolver
 func New() *Resolver {
 	return &Resolver{
 		partitions: defaultPartitions,
@@ -89,13 +89,17 @@ var partitionRegexp = struct {
 	AwsCn    *regexp.Regexp
 	AwsIso   *regexp.Regexp
 	AwsIsoB  *regexp.Regexp
+	AwsIsoE  *regexp.Regexp
+	AwsIsoF  *regexp.Regexp
 	AwsUsGov *regexp.Regexp
 }{
 
-	Aws:      regexp.MustCompile("^(us|eu|ap|sa|ca|me|af)\\-\\w+\\-\\d+$"),
+	Aws:      regexp.MustCompile("^(us|eu|ap|sa|ca|me|af|il)\\-\\w+\\-\\d+$"),
 	AwsCn:    regexp.MustCompile("^cn\\-\\w+\\-\\d+$"),
 	AwsIso:   regexp.MustCompile("^us\\-iso\\-\\w+\\-\\d+$"),
 	AwsIsoB:  regexp.MustCompile("^us\\-isob\\-\\w+\\-\\d+$"),
+	AwsIsoE:  regexp.MustCompile("^eu\\-isoe\\-\\w+\\-\\d+$"),
+	AwsIsoF:  regexp.MustCompile("^us\\-isof\\-\\w+\\-\\d+$"),
 	AwsUsGov: regexp.MustCompile("^us\\-gov\\-\\w+\\-\\d+$"),
 }
 
@@ -210,6 +214,48 @@ var defaultPartitions = endpoints.Partitions{
 			},
 		},
 		RegionRegex:    partitionRegexp.AwsIsoB,
+		IsRegionalized: true,
+	},
+	{
+		ID: "aws-iso-e",
+		Defaults: map[endpoints.DefaultKey]endpoints.Endpoint{
+			{
+				Variant: endpoints.FIPSVariant,
+			}: {
+				Hostname:          "snowballdevice-fips.{region}.cloud.adc-e.uk",
+				Protocols:         []string{"https"},
+				SignatureVersions: []string{"v4"},
+			},
+			{
+				Variant: 0,
+			}: {
+				Hostname:          "snowballdevice.{region}.cloud.adc-e.uk",
+				Protocols:         []string{"https"},
+				SignatureVersions: []string{"v4"},
+			},
+		},
+		RegionRegex:    partitionRegexp.AwsIsoE,
+		IsRegionalized: true,
+	},
+	{
+		ID: "aws-iso-f",
+		Defaults: map[endpoints.DefaultKey]endpoints.Endpoint{
+			{
+				Variant: endpoints.FIPSVariant,
+			}: {
+				Hostname:          "snowballdevice-fips.{region}.csp.hci.ic.gov",
+				Protocols:         []string{"https"},
+				SignatureVersions: []string{"v4"},
+			},
+			{
+				Variant: 0,
+			}: {
+				Hostname:          "snowballdevice.{region}.csp.hci.ic.gov",
+				Protocols:         []string{"https"},
+				SignatureVersions: []string{"v4"},
+			},
+		},
+		RegionRegex:    partitionRegexp.AwsIsoF,
 		IsRegionalized: true,
 	},
 	{

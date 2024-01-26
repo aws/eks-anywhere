@@ -45,12 +45,22 @@ type DescribeAutoUpdateStrategiesOutput struct {
 }
 
 func (c *Client) addOperationDescribeAutoUpdateStrategiesMiddlewares(stack *middleware.Stack, options Options) (err error) {
+	if err := stack.Serialize.Add(&setOperationInputMiddleware{}, middleware.After); err != nil {
+		return err
+	}
 	err = stack.Serialize.Add(&awsAwsjson11_serializeOpDescribeAutoUpdateStrategies{}, middleware.After)
 	if err != nil {
 		return err
 	}
 	err = stack.Deserialize.Add(&awsAwsjson11_deserializeOpDescribeAutoUpdateStrategies{}, middleware.After)
 	if err != nil {
+		return err
+	}
+	if err := addProtocolFinalizerMiddlewares(stack, options, "DescribeAutoUpdateStrategies"); err != nil {
+		return fmt.Errorf("add protocol finalizers: %v", err)
+	}
+
+	if err = addlegacyEndpointContextSetter(stack, options); err != nil {
 		return err
 	}
 	if err = addSetLoggerMiddleware(stack, options); err != nil {
@@ -71,16 +81,13 @@ func (c *Client) addOperationDescribeAutoUpdateStrategiesMiddlewares(stack *midd
 	if err = addRetryMiddlewares(stack, options); err != nil {
 		return err
 	}
-	if err = addHTTPSignerV4Middleware(stack, options); err != nil {
-		return err
-	}
 	if err = awsmiddleware.AddRawResponseToMetadata(stack); err != nil {
 		return err
 	}
 	if err = awsmiddleware.AddRecordResponseTiming(stack); err != nil {
 		return err
 	}
-	if err = addClientUserAgent(stack); err != nil {
+	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
 	if err = smithyhttp.AddErrorCloseResponseBodyMiddleware(stack); err != nil {
@@ -89,7 +96,13 @@ func (c *Client) addOperationDescribeAutoUpdateStrategiesMiddlewares(stack *midd
 	if err = smithyhttp.AddCloseResponseBodyMiddleware(stack); err != nil {
 		return err
 	}
+	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDescribeAutoUpdateStrategies(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {
@@ -99,6 +112,9 @@ func (c *Client) addOperationDescribeAutoUpdateStrategiesMiddlewares(stack *midd
 		return err
 	}
 	if err = addRequestResponseLogging(stack, options); err != nil {
+		return err
+	}
+	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
 	return nil
@@ -113,7 +129,7 @@ type DescribeAutoUpdateStrategiesAPIClient interface {
 var _ DescribeAutoUpdateStrategiesAPIClient = (*Client)(nil)
 
 // DescribeAutoUpdateStrategiesPaginatorOptions is the paginator options for
-// DescribeAutoUpdateStrategies.
+// DescribeAutoUpdateStrategies
 type DescribeAutoUpdateStrategiesPaginatorOptions struct {
 	// Set to true if pagination should stop if the service returns a pagination token
 	// that matches the most recent token provided to the service.
@@ -121,7 +137,7 @@ type DescribeAutoUpdateStrategiesPaginatorOptions struct {
 }
 
 // DescribeAutoUpdateStrategiesPaginator is a paginator for
-// DescribeAutoUpdateStrategies.
+// DescribeAutoUpdateStrategies
 type DescribeAutoUpdateStrategiesPaginator struct {
 	options   DescribeAutoUpdateStrategiesPaginatorOptions
 	client    DescribeAutoUpdateStrategiesAPIClient
@@ -131,7 +147,7 @@ type DescribeAutoUpdateStrategiesPaginator struct {
 }
 
 // NewDescribeAutoUpdateStrategiesPaginator returns a new
-// DescribeAutoUpdateStrategiesPaginator.
+// DescribeAutoUpdateStrategiesPaginator
 func NewDescribeAutoUpdateStrategiesPaginator(client DescribeAutoUpdateStrategiesAPIClient, params *DescribeAutoUpdateStrategiesInput, optFns ...func(*DescribeAutoUpdateStrategiesPaginatorOptions)) *DescribeAutoUpdateStrategiesPaginator {
 	if params == nil {
 		params = &DescribeAutoUpdateStrategiesInput{}
@@ -152,7 +168,7 @@ func NewDescribeAutoUpdateStrategiesPaginator(client DescribeAutoUpdateStrategie
 	}
 }
 
-// HasMorePages returns a boolean indicating whether more pages are available.
+// HasMorePages returns a boolean indicating whether more pages are available
 func (p *DescribeAutoUpdateStrategiesPaginator) HasMorePages() bool {
 	return p.firstPage || (p.nextToken != nil && len(*p.nextToken) != 0)
 }
@@ -189,7 +205,6 @@ func newServiceMetadataMiddleware_opDescribeAutoUpdateStrategies(region string) 
 	return &awsmiddleware.RegisterServiceMetadata{
 		Region:        region,
 		ServiceID:     ServiceID,
-		SigningName:   "snowballdevice",
 		OperationName: "DescribeAutoUpdateStrategies",
 	}
 }

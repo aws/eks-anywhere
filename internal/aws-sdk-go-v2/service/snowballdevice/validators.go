@@ -10,6 +10,26 @@ import (
 	"github.com/aws/smithy-go/middleware"
 )
 
+type validateOpAttachPciDevice struct {
+}
+
+func (*validateOpAttachPciDevice) ID() string {
+	return "OperationInputValidation"
+}
+
+func (m *validateOpAttachPciDevice) HandleInitialize(ctx context.Context, in middleware.InitializeInput, next middleware.InitializeHandler) (
+	out middleware.InitializeOutput, metadata middleware.Metadata, err error,
+) {
+	input, ok := in.Parameters.(*AttachPciDeviceInput)
+	if !ok {
+		return out, metadata, fmt.Errorf("unknown input parameters type %T", in.Parameters)
+	}
+	if err := validateOpAttachPciDeviceInput(input); err != nil {
+		return out, metadata, err
+	}
+	return next.HandleInitialize(ctx, in)
+}
+
 type validateOpCreateAutoStartConfiguration struct {
 }
 
@@ -110,6 +130,26 @@ func (m *validateOpDeleteAutoStartConfiguration) HandleInitialize(ctx context.Co
 	return next.HandleInitialize(ctx, in)
 }
 
+type validateOpDeleteCertificate struct {
+}
+
+func (*validateOpDeleteCertificate) ID() string {
+	return "OperationInputValidation"
+}
+
+func (m *validateOpDeleteCertificate) HandleInitialize(ctx context.Context, in middleware.InitializeInput, next middleware.InitializeHandler) (
+	out middleware.InitializeOutput, metadata middleware.Metadata, err error,
+) {
+	input, ok := in.Parameters.(*DeleteCertificateInput)
+	if !ok {
+		return out, metadata, fmt.Errorf("unknown input parameters type %T", in.Parameters)
+	}
+	if err := validateOpDeleteCertificateInput(input); err != nil {
+		return out, metadata, err
+	}
+	return next.HandleInitialize(ctx, in)
+}
+
 type validateOpDeleteDirectNetworkInterface struct {
 }
 
@@ -190,6 +230,26 @@ func (m *validateOpDescribeService) HandleInitialize(ctx context.Context, in mid
 	return next.HandleInitialize(ctx, in)
 }
 
+type validateOpDetachPciDevice struct {
+}
+
+func (*validateOpDetachPciDevice) ID() string {
+	return "OperationInputValidation"
+}
+
+func (m *validateOpDetachPciDevice) HandleInitialize(ctx context.Context, in middleware.InitializeInput, next middleware.InitializeHandler) (
+	out middleware.InitializeOutput, metadata middleware.Metadata, err error,
+) {
+	input, ok := in.Parameters.(*DetachPciDeviceInput)
+	if !ok {
+		return out, metadata, fmt.Errorf("unknown input parameters type %T", in.Parameters)
+	}
+	if err := validateOpDetachPciDeviceInput(input); err != nil {
+		return out, metadata, err
+	}
+	return next.HandleInitialize(ctx, in)
+}
+
 type validateOpGetCertificate struct {
 }
 
@@ -250,6 +310,26 @@ func (m *validateOpGetSecretAccessKey) HandleInitialize(ctx context.Context, in 
 	return next.HandleInitialize(ctx, in)
 }
 
+type validateOpListAlertHistory struct {
+}
+
+func (*validateOpListAlertHistory) ID() string {
+	return "OperationInputValidation"
+}
+
+func (m *validateOpListAlertHistory) HandleInitialize(ctx context.Context, in middleware.InitializeInput, next middleware.InitializeHandler) (
+	out middleware.InitializeOutput, metadata middleware.Metadata, err error,
+) {
+	input, ok := in.Parameters.(*ListAlertHistoryInput)
+	if !ok {
+		return out, metadata, fmt.Errorf("unknown input parameters type %T", in.Parameters)
+	}
+	if err := validateOpListAlertHistoryInput(input); err != nil {
+		return out, metadata, err
+	}
+	return next.HandleInitialize(ctx, in)
+}
+
 type validateOpPutNotificationConfiguration struct {
 }
 
@@ -270,21 +350,21 @@ func (m *validateOpPutNotificationConfiguration) HandleInitialize(ctx context.Co
 	return next.HandleInitialize(ctx, in)
 }
 
-type validateOpSetFeatures struct {
+type validateOpSetAlertSubscription struct {
 }
 
-func (*validateOpSetFeatures) ID() string {
+func (*validateOpSetAlertSubscription) ID() string {
 	return "OperationInputValidation"
 }
 
-func (m *validateOpSetFeatures) HandleInitialize(ctx context.Context, in middleware.InitializeInput, next middleware.InitializeHandler) (
+func (m *validateOpSetAlertSubscription) HandleInitialize(ctx context.Context, in middleware.InitializeInput, next middleware.InitializeHandler) (
 	out middleware.InitializeOutput, metadata middleware.Metadata, err error,
 ) {
-	input, ok := in.Parameters.(*SetFeaturesInput)
+	input, ok := in.Parameters.(*SetAlertSubscriptionInput)
 	if !ok {
 		return out, metadata, fmt.Errorf("unknown input parameters type %T", in.Parameters)
 	}
-	if err := validateOpSetFeaturesInput(input); err != nil {
+	if err := validateOpSetAlertSubscriptionInput(input); err != nil {
 		return out, metadata, err
 	}
 	return next.HandleInitialize(ctx, in)
@@ -330,6 +410,26 @@ func (m *validateOpUpdateDirectNetworkInterface) HandleInitialize(ctx context.Co
 	return next.HandleInitialize(ctx, in)
 }
 
+type validateOpUpdatePhysicalNetworkConfiguration struct {
+}
+
+func (*validateOpUpdatePhysicalNetworkConfiguration) ID() string {
+	return "OperationInputValidation"
+}
+
+func (m *validateOpUpdatePhysicalNetworkConfiguration) HandleInitialize(ctx context.Context, in middleware.InitializeInput, next middleware.InitializeHandler) (
+	out middleware.InitializeOutput, metadata middleware.Metadata, err error,
+) {
+	input, ok := in.Parameters.(*UpdatePhysicalNetworkConfigurationInput)
+	if !ok {
+		return out, metadata, fmt.Errorf("unknown input parameters type %T", in.Parameters)
+	}
+	if err := validateOpUpdatePhysicalNetworkConfigurationInput(input); err != nil {
+		return out, metadata, err
+	}
+	return next.HandleInitialize(ctx, in)
+}
+
 type validateOpUpdateVirtualNetworkInterface struct {
 }
 
@@ -348,6 +448,10 @@ func (m *validateOpUpdateVirtualNetworkInterface) HandleInitialize(ctx context.C
 		return out, metadata, err
 	}
 	return next.HandleInitialize(ctx, in)
+}
+
+func addOpAttachPciDeviceValidationMiddleware(stack *middleware.Stack) error {
+	return stack.Initialize.Add(&validateOpAttachPciDevice{}, middleware.After)
 }
 
 func addOpCreateAutoStartConfigurationValidationMiddleware(stack *middleware.Stack) error {
@@ -370,6 +474,10 @@ func addOpDeleteAutoStartConfigurationValidationMiddleware(stack *middleware.Sta
 	return stack.Initialize.Add(&validateOpDeleteAutoStartConfiguration{}, middleware.After)
 }
 
+func addOpDeleteCertificateValidationMiddleware(stack *middleware.Stack) error {
+	return stack.Initialize.Add(&validateOpDeleteCertificate{}, middleware.After)
+}
+
 func addOpDeleteDirectNetworkInterfaceValidationMiddleware(stack *middleware.Stack) error {
 	return stack.Initialize.Add(&validateOpDeleteDirectNetworkInterface{}, middleware.After)
 }
@@ -386,6 +494,10 @@ func addOpDescribeServiceValidationMiddleware(stack *middleware.Stack) error {
 	return stack.Initialize.Add(&validateOpDescribeService{}, middleware.After)
 }
 
+func addOpDetachPciDeviceValidationMiddleware(stack *middleware.Stack) error {
+	return stack.Initialize.Add(&validateOpDetachPciDevice{}, middleware.After)
+}
+
 func addOpGetCertificateValidationMiddleware(stack *middleware.Stack) error {
 	return stack.Initialize.Add(&validateOpGetCertificate{}, middleware.After)
 }
@@ -398,12 +510,16 @@ func addOpGetSecretAccessKeyValidationMiddleware(stack *middleware.Stack) error 
 	return stack.Initialize.Add(&validateOpGetSecretAccessKey{}, middleware.After)
 }
 
+func addOpListAlertHistoryValidationMiddleware(stack *middleware.Stack) error {
+	return stack.Initialize.Add(&validateOpListAlertHistory{}, middleware.After)
+}
+
 func addOpPutNotificationConfigurationValidationMiddleware(stack *middleware.Stack) error {
 	return stack.Initialize.Add(&validateOpPutNotificationConfiguration{}, middleware.After)
 }
 
-func addOpSetFeaturesValidationMiddleware(stack *middleware.Stack) error {
-	return stack.Initialize.Add(&validateOpSetFeatures{}, middleware.After)
+func addOpSetAlertSubscriptionValidationMiddleware(stack *middleware.Stack) error {
+	return stack.Initialize.Add(&validateOpSetAlertSubscription{}, middleware.After)
 }
 
 func addOpUpdateAutoStartConfigurationValidationMiddleware(stack *middleware.Stack) error {
@@ -412,6 +528,10 @@ func addOpUpdateAutoStartConfigurationValidationMiddleware(stack *middleware.Sta
 
 func addOpUpdateDirectNetworkInterfaceValidationMiddleware(stack *middleware.Stack) error {
 	return stack.Initialize.Add(&validateOpUpdateDirectNetworkInterface{}, middleware.After)
+}
+
+func addOpUpdatePhysicalNetworkConfigurationValidationMiddleware(stack *middleware.Stack) error {
+	return stack.Initialize.Add(&validateOpUpdatePhysicalNetworkConfiguration{}, middleware.After)
 }
 
 func addOpUpdateVirtualNetworkInterfaceValidationMiddleware(stack *middleware.Stack) error {
@@ -428,6 +548,24 @@ func validateStaticIpAddressConfiguration(v *types.StaticIpAddressConfiguration)
 	}
 	if v.Netmask == nil {
 		invalidParams.Add(smithy.NewErrParamRequired("Netmask"))
+	}
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	} else {
+		return nil
+	}
+}
+
+func validateOpAttachPciDeviceInput(v *AttachPciDeviceInput) error {
+	if v == nil {
+		return nil
+	}
+	invalidParams := smithy.InvalidParamsError{Context: "AttachPciDeviceInput"}
+	if v.InstanceId == nil {
+		invalidParams.Add(smithy.NewErrParamRequired("InstanceId"))
+	}
+	if v.PciDeviceId == nil {
+		invalidParams.Add(smithy.NewErrParamRequired("PciDeviceId"))
 	}
 	if invalidParams.Len() > 0 {
 		return invalidParams
@@ -530,6 +668,21 @@ func validateOpDeleteAutoStartConfigurationInput(v *DeleteAutoStartConfiguration
 	}
 }
 
+func validateOpDeleteCertificateInput(v *DeleteCertificateInput) error {
+	if v == nil {
+		return nil
+	}
+	invalidParams := smithy.InvalidParamsError{Context: "DeleteCertificateInput"}
+	if v.CertificateArn == nil {
+		invalidParams.Add(smithy.NewErrParamRequired("CertificateArn"))
+	}
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	} else {
+		return nil
+	}
+}
+
 func validateOpDeleteDirectNetworkInterfaceInput(v *DeleteDirectNetworkInterfaceInput) error {
 	if v == nil {
 		return nil
@@ -590,6 +743,21 @@ func validateOpDescribeServiceInput(v *DescribeServiceInput) error {
 	}
 }
 
+func validateOpDetachPciDeviceInput(v *DetachPciDeviceInput) error {
+	if v == nil {
+		return nil
+	}
+	invalidParams := smithy.InvalidParamsError{Context: "DetachPciDeviceInput"}
+	if v.PciDeviceId == nil {
+		invalidParams.Add(smithy.NewErrParamRequired("PciDeviceId"))
+	}
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	} else {
+		return nil
+	}
+}
+
 func validateOpGetCertificateInput(v *GetCertificateInput) error {
 	if v == nil {
 		return nil
@@ -635,6 +803,24 @@ func validateOpGetSecretAccessKeyInput(v *GetSecretAccessKeyInput) error {
 	}
 }
 
+func validateOpListAlertHistoryInput(v *ListAlertHistoryInput) error {
+	if v == nil {
+		return nil
+	}
+	invalidParams := smithy.InvalidParamsError{Context: "ListAlertHistoryInput"}
+	if v.Namespace == nil {
+		invalidParams.Add(smithy.NewErrParamRequired("Namespace"))
+	}
+	if v.Name == nil {
+		invalidParams.Add(smithy.NewErrParamRequired("Name"))
+	}
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	} else {
+		return nil
+	}
+}
+
 func validateOpPutNotificationConfigurationInput(v *PutNotificationConfigurationInput) error {
 	if v == nil {
 		return nil
@@ -653,13 +839,19 @@ func validateOpPutNotificationConfigurationInput(v *PutNotificationConfiguration
 	}
 }
 
-func validateOpSetFeaturesInput(v *SetFeaturesInput) error {
+func validateOpSetAlertSubscriptionInput(v *SetAlertSubscriptionInput) error {
 	if v == nil {
 		return nil
 	}
-	invalidParams := smithy.InvalidParamsError{Context: "SetFeaturesInput"}
-	if len(v.RemoteManagementState) == 0 {
-		invalidParams.Add(smithy.NewErrParamRequired("RemoteManagementState"))
+	invalidParams := smithy.InvalidParamsError{Context: "SetAlertSubscriptionInput"}
+	if v.Namespace == nil {
+		invalidParams.Add(smithy.NewErrParamRequired("Namespace"))
+	}
+	if v.Name == nil {
+		invalidParams.Add(smithy.NewErrParamRequired("Name"))
+	}
+	if len(v.State) == 0 {
+		invalidParams.Add(smithy.NewErrParamRequired("State"))
 	}
 	if invalidParams.Len() > 0 {
 		return invalidParams
@@ -695,6 +887,29 @@ func validateOpUpdateDirectNetworkInterfaceInput(v *UpdateDirectNetworkInterface
 	invalidParams := smithy.InvalidParamsError{Context: "UpdateDirectNetworkInterfaceInput"}
 	if v.DirectNetworkInterfaceArn == nil {
 		invalidParams.Add(smithy.NewErrParamRequired("DirectNetworkInterfaceArn"))
+	}
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	} else {
+		return nil
+	}
+}
+
+func validateOpUpdatePhysicalNetworkConfigurationInput(v *UpdatePhysicalNetworkConfigurationInput) error {
+	if v == nil {
+		return nil
+	}
+	invalidParams := smithy.InvalidParamsError{Context: "UpdatePhysicalNetworkConfigurationInput"}
+	if v.PhysicalNetworkInterfaceId == nil {
+		invalidParams.Add(smithy.NewErrParamRequired("PhysicalNetworkInterfaceId"))
+	}
+	if len(v.IpAddressAssignment) == 0 {
+		invalidParams.Add(smithy.NewErrParamRequired("IpAddressAssignment"))
+	}
+	if v.StaticIpAddressConfiguration != nil {
+		if err := validateStaticIpAddressConfiguration(v.StaticIpAddressConfiguration); err != nil {
+			invalidParams.AddNested("StaticIpAddressConfiguration", err.(smithy.InvalidParamsError))
+		}
 	}
 	if invalidParams.Len() > 0 {
 		return invalidParams

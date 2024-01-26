@@ -2,9 +2,103 @@
 
 package types
 
+type AlertLevel string
+
+// Enum values for AlertLevel
+const (
+	AlertLevelInfo     AlertLevel = "INFO"
+	AlertLevelWarning  AlertLevel = "WARNING"
+	AlertLevelError    AlertLevel = "ERROR"
+	AlertLevelCritical AlertLevel = "CRITICAL"
+)
+
+// Values returns all known values for AlertLevel. Note that this can be expanded
+// in the future, and so it is only as up to date as the client. The ordering of
+// this slice is not guaranteed to be stable across updates.
+func (AlertLevel) Values() []AlertLevel {
+	return []AlertLevel{
+		"INFO",
+		"WARNING",
+		"ERROR",
+		"CRITICAL",
+	}
+}
+
+type AlertNotificationStatus string
+
+// Enum values for AlertNotificationStatus
+const (
+	AlertNotificationStatusSent    AlertNotificationStatus = "SENT"
+	AlertNotificationStatusNotSent AlertNotificationStatus = "NOT_SENT"
+	AlertNotificationStatusFailed  AlertNotificationStatus = "FAILED"
+)
+
+// Values returns all known values for AlertNotificationStatus. Note that this can
+// be expanded in the future, and so it is only as up to date as the client. The
+// ordering of this slice is not guaranteed to be stable across updates.
+func (AlertNotificationStatus) Values() []AlertNotificationStatus {
+	return []AlertNotificationStatus{
+		"SENT",
+		"NOT_SENT",
+		"FAILED",
+	}
+}
+
+type AlertState string
+
+// Enum values for AlertState
+const (
+	AlertStateActive   AlertState = "ACTIVE"
+	AlertStateInactive AlertState = "INACTIVE"
+)
+
+// Values returns all known values for AlertState. Note that this can be expanded
+// in the future, and so it is only as up to date as the client. The ordering of
+// this slice is not guaranteed to be stable across updates.
+func (AlertState) Values() []AlertState {
+	return []AlertState{
+		"ACTIVE",
+		"INACTIVE",
+	}
+}
+
+type AlertSubscriptionChannel string
+
+// Enum values for AlertSubscriptionChannel
+const (
+	AlertSubscriptionChannelSmtp AlertSubscriptionChannel = "SMTP"
+)
+
+// Values returns all known values for AlertSubscriptionChannel. Note that this
+// can be expanded in the future, and so it is only as up to date as the client.
+// The ordering of this slice is not guaranteed to be stable across updates.
+func (AlertSubscriptionChannel) Values() []AlertSubscriptionChannel {
+	return []AlertSubscriptionChannel{
+		"SMTP",
+	}
+}
+
+type AlertSubscriptionState string
+
+// Enum values for AlertSubscriptionState
+const (
+	AlertSubscriptionStateSubscribed   AlertSubscriptionState = "SUBSCRIBED"
+	AlertSubscriptionStateUnsubscribed AlertSubscriptionState = "UNSUBSCRIBED"
+)
+
+// Values returns all known values for AlertSubscriptionState. Note that this can
+// be expanded in the future, and so it is only as up to date as the client. The
+// ordering of this slice is not guaranteed to be stable across updates.
+func (AlertSubscriptionState) Values() []AlertSubscriptionState {
+	return []AlertSubscriptionState{
+		"SUBSCRIBED",
+		"UNSUBSCRIBED",
+	}
+}
+
 type ClusterAssociationState string
 
-// Enum values for ClusterAssociationState.
+// Enum values for ClusterAssociationState
 const (
 	ClusterAssociationStateAssociated     ClusterAssociationState = "ASSOCIATED"
 	ClusterAssociationStateAssociating    ClusterAssociationState = "ASSOCIATING"
@@ -26,7 +120,7 @@ func (ClusterAssociationState) Values() []ClusterAssociationState {
 
 type DirectNetworkDriver string
 
-// Enum values for DirectNetworkDriver.
+// Enum values for DirectNetworkDriver
 const (
 	DirectNetworkDriverIxgbevf  DirectNetworkDriver = "ixgbevf"
 	DirectNetworkDriverMlx5Core DirectNetworkDriver = "mlx5_core"
@@ -42,9 +136,47 @@ func (DirectNetworkDriver) Values() []DirectNetworkDriver {
 	}
 }
 
+type FeatureState string
+
+// Enum values for FeatureState
+const (
+	FeatureStateInstalledAutostart FeatureState = "INSTALLED_AUTOSTART"
+	FeatureStateInstalledOnly      FeatureState = "INSTALLED_ONLY"
+	FeatureStateNotInstalled       FeatureState = "NOT_INSTALLED"
+)
+
+// Values returns all known values for FeatureState. Note that this can be
+// expanded in the future, and so it is only as up to date as the client. The
+// ordering of this slice is not guaranteed to be stable across updates.
+func (FeatureState) Values() []FeatureState {
+	return []FeatureState{
+		"INSTALLED_AUTOSTART",
+		"INSTALLED_ONLY",
+		"NOT_INSTALLED",
+	}
+}
+
+type FeatureStateInput string
+
+// Enum values for FeatureStateInput
+const (
+	FeatureStateInputInstalledAutostart FeatureStateInput = "INSTALLED_AUTOSTART"
+	FeatureStateInputInstalledOnly      FeatureStateInput = "INSTALLED_ONLY"
+)
+
+// Values returns all known values for FeatureStateInput. Note that this can be
+// expanded in the future, and so it is only as up to date as the client. The
+// ordering of this slice is not guaranteed to be stable across updates.
+func (FeatureStateInput) Values() []FeatureStateInput {
+	return []FeatureStateInput{
+		"INSTALLED_AUTOSTART",
+		"INSTALLED_ONLY",
+	}
+}
+
 type InstallState string
 
-// Enum values for InstallState.
+// Enum values for InstallState
 const (
 	InstallStateNa             InstallState = "NA"
 	InstallStateDecrypting     InstallState = "DECRYPTING"
@@ -57,9 +189,9 @@ const (
 	InstallStateInstallFailed  InstallState = "INSTALL_FAILED"
 )
 
-// Values returns all known values for InstallState. Note that this can be expanded
-// in the future, and so it is only as up to date as the client. The ordering of
-// this slice is not guaranteed to be stable across updates.
+// Values returns all known values for InstallState. Note that this can be
+// expanded in the future, and so it is only as up to date as the client. The
+// ordering of this slice is not guaranteed to be stable across updates.
 func (InstallState) Values() []InstallState {
 	return []InstallState{
 		"NA",
@@ -76,7 +208,7 @@ func (InstallState) Values() []InstallState {
 
 type IpAddressAssignment string
 
-// Enum values for IpAddressAssignment.
+// Enum values for IpAddressAssignment
 const (
 	IpAddressAssignmentDhcp   IpAddressAssignment = "DHCP"
 	IpAddressAssignmentStatic IpAddressAssignment = "STATIC"
@@ -94,15 +226,15 @@ func (IpAddressAssignment) Values() []IpAddressAssignment {
 
 type NetworkReachabilityState string
 
-// Enum values for NetworkReachabilityState.
+// Enum values for NetworkReachabilityState
 const (
 	NetworkReachabilityStateReachable   NetworkReachabilityState = "REACHABLE"
 	NetworkReachabilityStateUnreachable NetworkReachabilityState = "UNREACHABLE"
 )
 
-// Values returns all known values for NetworkReachabilityState. Note that this can
-// be expanded in the future, and so it is only as up to date as the client. The
-// ordering of this slice is not guaranteed to be stable across updates.
+// Values returns all known values for NetworkReachabilityState. Note that this
+// can be expanded in the future, and so it is only as up to date as the client.
+// The ordering of this slice is not guaranteed to be stable across updates.
 func (NetworkReachabilityState) Values() []NetworkReachabilityState {
 	return []NetworkReachabilityState{
 		"REACHABLE",
@@ -110,9 +242,45 @@ func (NetworkReachabilityState) Values() []NetworkReachabilityState {
 	}
 }
 
+type NotificationType string
+
+// Enum values for NotificationType
+const (
+	NotificationTypeSmtp NotificationType = "smtp"
+)
+
+// Values returns all known values for NotificationType. Note that this can be
+// expanded in the future, and so it is only as up to date as the client. The
+// ordering of this slice is not guaranteed to be stable across updates.
+func (NotificationType) Values() []NotificationType {
+	return []NotificationType{
+		"smtp",
+	}
+}
+
+type PciDeviceStatus string
+
+// Enum values for PciDeviceStatus
+const (
+	PciDeviceStatusAttached  PciDeviceStatus = "ATTACHED"
+	PciDeviceStatusAvailable PciDeviceStatus = "AVAILABLE"
+	PciDeviceStatusFailed    PciDeviceStatus = "FAILED"
+)
+
+// Values returns all known values for PciDeviceStatus. Note that this can be
+// expanded in the future, and so it is only as up to date as the client. The
+// ordering of this slice is not guaranteed to be stable across updates.
+func (PciDeviceStatus) Values() []PciDeviceStatus {
+	return []PciDeviceStatus{
+		"ATTACHED",
+		"AVAILABLE",
+		"FAILED",
+	}
+}
+
 type PhysicalConnectorType string
 
-// Enum values for PhysicalConnectorType.
+// Enum values for PhysicalConnectorType
 const (
 	PhysicalConnectorTypeRj45    PhysicalConnectorType = "RJ45"
 	PhysicalConnectorTypeRj452   PhysicalConnectorType = "RJ45_2"
@@ -121,8 +289,8 @@ const (
 	PhysicalConnectorTypeWifi    PhysicalConnectorType = "WIFI"
 )
 
-// Values returns all known values for PhysicalConnectorType. Note that this can be
-// expanded in the future, and so it is only as up to date as the client. The
+// Values returns all known values for PhysicalConnectorType. Note that this can
+// be expanded in the future, and so it is only as up to date as the client. The
 // ordering of this slice is not guaranteed to be stable across updates.
 func (PhysicalConnectorType) Values() []PhysicalConnectorType {
 	return []PhysicalConnectorType{
@@ -134,33 +302,18 @@ func (PhysicalConnectorType) Values() []PhysicalConnectorType {
 	}
 }
 
-type RemoteManagementState string
-
-// Enum values for RemoteManagementState.
-const (
-	RemoteManagementStateInstalledAutostart RemoteManagementState = "INSTALLED_AUTOSTART"
-	RemoteManagementStateInstalledOnly      RemoteManagementState = "INSTALLED_ONLY"
-)
-
-// Values returns all known values for RemoteManagementState. Note that this can be
-// expanded in the future, and so it is only as up to date as the client. The
-// ordering of this slice is not guaranteed to be stable across updates.
-func (RemoteManagementState) Values() []RemoteManagementState {
-	return []RemoteManagementState{
-		"INSTALLED_AUTOSTART",
-		"INSTALLED_ONLY",
-	}
-}
-
 type ServiceStatusState string
 
-// Enum values for ServiceStatusState.
+// Enum values for ServiceStatusState
 const (
 	ServiceStatusStateInactive     ServiceStatusState = "INACTIVE"
 	ServiceStatusStateDeactivating ServiceStatusState = "DEACTIVATING"
 	ServiceStatusStateDeactivated  ServiceStatusState = "DEACTIVATED"
 	ServiceStatusStateActivating   ServiceStatusState = "ACTIVATING"
 	ServiceStatusStateActive       ServiceStatusState = "ACTIVE"
+	ServiceStatusStateDegraded     ServiceStatusState = "DEGRADED"
+	ServiceStatusStateUpgrading    ServiceStatusState = "UPGRADING"
+	ServiceStatusStateUnhealthy    ServiceStatusState = "UNHEALTHY"
 )
 
 // Values returns all known values for ServiceStatusState. Note that this can be
@@ -173,12 +326,15 @@ func (ServiceStatusState) Values() []ServiceStatusState {
 		"DEACTIVATED",
 		"ACTIVATING",
 		"ACTIVE",
+		"DEGRADED",
+		"UPGRADING",
+		"UNHEALTHY",
 	}
 }
 
 type ShippingLabelUpdateStatus string
 
-// Enum values for ShippingLabelUpdateStatus.
+// Enum values for ShippingLabelUpdateStatus
 const (
 	ShippingLabelUpdateStatusLabelStateUnavailable ShippingLabelUpdateStatus = "LABEL_STATE_UNAVAILABLE"
 	ShippingLabelUpdateStatusLabelFound            ShippingLabelUpdateStatus = "LABEL_FOUND"
@@ -216,7 +372,7 @@ func (ShippingLabelUpdateStatus) Values() []ShippingLabelUpdateStatus {
 
 type TimeSourceState string
 
-// Enum values for TimeSourceState.
+// Enum values for TimeSourceState
 const (
 	TimeSourceStateCurrent      TimeSourceState = "CURRENT"
 	TimeSourceStateCombined     TimeSourceState = "COMBINED"
@@ -240,7 +396,7 @@ func (TimeSourceState) Values() []TimeSourceState {
 
 type TimeSourceType string
 
-// Enum values for TimeSourceType.
+// Enum values for TimeSourceType
 const (
 	TimeSourceTypeServer TimeSourceType = "SERVER"
 	TimeSourceTypePeer   TimeSourceType = "PEER"
@@ -258,7 +414,7 @@ func (TimeSourceType) Values() []TimeSourceType {
 
 type UnlockStatusState string
 
-// Enum values for UnlockStatusState.
+// Enum values for UnlockStatusState
 const (
 	UnlockStatusStateLocked    UnlockStatusState = "LOCKED"
 	UnlockStatusStateUnlocked  UnlockStatusState = "UNLOCKED"

@@ -2,11 +2,11 @@ package endpoints
 
 import (
 	"fmt"
+	"github.com/aws/smithy-go/logging"
 	"regexp"
 	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/smithy-go/logging"
 )
 
 // DefaultKey is a compound map key of a variant and other values.
@@ -84,7 +84,7 @@ func (o Options) GetEndpointVariant() (v EndpointVariant) {
 	return v
 }
 
-// Partitions is a slice of partition.
+// Partitions is a slice of partition
 type Partitions []Partition
 
 // ResolveEndpoint resolves a service endpoint for the given region and options.
@@ -173,16 +173,16 @@ func (p Partition) endpointForRegion(region string, variant EndpointVariant, ser
 	return Endpoint{}
 }
 
-// Endpoints is a map of service config regions to endpoints.
+// Endpoints is a map of service config regions to endpoints
 type Endpoints map[EndpointKey]Endpoint
 
-// CredentialScope is the credential scope of a region and service.
+// CredentialScope is the credential scope of a region and service
 type CredentialScope struct {
 	Region  string
 	Service string
 }
 
-// Endpoint is a service endpoint description.
+// Endpoint is a service endpoint description
 type Endpoint struct {
 	// True if the endpoint cannot be resolved for this partition/region/service
 	Unresolveable aws.Ternary

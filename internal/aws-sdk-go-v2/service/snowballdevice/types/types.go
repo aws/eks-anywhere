@@ -4,7 +4,64 @@ package types
 
 import (
 	smithydocument "github.com/aws/smithy-go/document"
+	"time"
 )
+
+type Alert struct {
+	Arn *string
+
+	Description *string
+
+	DisplayName *string
+
+	LastUpdatedTimestamp *time.Time
+
+	Level AlertLevel
+
+	Name *string
+
+	Namespace *string
+
+	State AlertState
+
+	Subscription *AlertSubscription
+
+	noSmithyDocumentSerde
+}
+
+type AlertHistory struct {
+	Name *string
+
+	Namespace *string
+
+	Notifications []AlertNotification
+
+	State AlertState
+
+	Timestamp *time.Time
+
+	noSmithyDocumentSerde
+}
+
+type AlertNotification struct {
+	Channel AlertSubscriptionChannel
+
+	Details map[string]string
+
+	Status AlertNotificationStatus
+
+	Timestamp *time.Time
+
+	noSmithyDocumentSerde
+}
+
+type AlertSubscription struct {
+	Channels []AlertSubscriptionChannel
+
+	State AlertSubscriptionState
+
+	noSmithyDocumentSerde
+}
 
 type AutoStartConfiguration struct {
 	AutoStartConfigurationArn *string
@@ -159,6 +216,12 @@ type Endpoint struct {
 
 	CertificateAssociation *CertificateAssociation
 
+	Description *string
+
+	DeviceId *string
+
+	Status *ServiceStatus
+
 	noSmithyDocumentSerde
 }
 
@@ -172,6 +235,22 @@ type NetworkReachability struct {
 
 	// This member is required.
 	State NetworkReachabilityState
+
+	noSmithyDocumentSerde
+}
+
+type PciDevice struct {
+	DeviceClass *string
+
+	InstanceId *string
+
+	Name *string
+
+	PciDeviceId *string
+
+	Status PciDeviceStatus
+
+	VendorName *string
 
 	noSmithyDocumentSerde
 }
@@ -201,6 +280,8 @@ type ServiceConfiguration struct {
 }
 
 type ServiceStatus struct {
+	Details *string
+
 	State ServiceStatusState
 
 	noSmithyDocumentSerde
@@ -224,6 +305,8 @@ type StaticIpAddressConfiguration struct {
 
 	// This member is required.
 	Netmask *string
+
+	DefaultGateway *string
 
 	noSmithyDocumentSerde
 }
