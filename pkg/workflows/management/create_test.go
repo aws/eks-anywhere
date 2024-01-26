@@ -121,11 +121,25 @@ func (c *createTestSetup) expectCreateBootstrap() {
 	)
 }
 
+func (c *createTestSetup) expectCAPIInstall(err1, err2, err3 error) {
+	gomock.InOrder(
+		c.provider.EXPECT().PreCAPIInstallOnBootstrap(
+			c.ctx, c.bootstrapCluster, c.clusterSpec).Return(err1),
+
+		c.clusterManager.EXPECT().InstallCAPI(
+			c.ctx, c.clusterSpec, c.bootstrapCluster, c.provider).Return(err2),
+
+		c.provider.EXPECT().PostBootstrapSetup(
+			c.ctx, c.clusterSpec.Cluster, c.bootstrapCluster).Return(err3),
+	)
+}
+
 func TestCreateRunSuccess(t *testing.T) {
 	test := newCreateTest(t)
 	test.expectSetup()
 	test.expectPreflightValidationsToPass()
 	test.expectCreateBootstrap()
+	test.expectCAPIInstall(nil, nil, nil)
 
 	err := test.run()
 	if err != nil {
@@ -175,5 +189,63 @@ func TestCreateBootstrapFailure(t *testing.T) {
 	err = c.run()
 	if err == nil {
 		t.Fatalf("expected error from task")
+	}
+}
+
+func TestCreatePreCAPIFailure(t *testing.T) {
+	c := newCreateTest(t)
+	c.expectSetup()
+	c.expectCreateBootstrap()
+	c.expectPreflightValidationsToPass()
+
+	c.provider.EXPECT().PreCAPIInstallOnBootstrap(
+		c.ctx, c.bootstrapCluster, c.clusterSpec).Return(errors.New("test"))
+
+	c.clusterManager.EXPECT().SaveLogsManagementCluster(c.ctx, c.clusterSpec, c.bootstrapCluster)
+	c.writer.EXPECT().Write(fmt.Sprintf("%s-checkpoint.yaml", c.clusterSpec.Cluster.Name), gomock.Any())
+
+	err := c.run()
+	if err == nil {
+		t.Fatalf("Create.Run() expected to return an error %v", err)
+	}
+}
+
+func TestCreateInstallCAPIFailure(t *testing.T) {
+	c := newCreateTest(t)
+	c.expectSetup()
+	c.expectCreateBootstrap()
+	c.expectPreflightValidationsToPass()
+
+	gomock.InOrder(
+		c.provider.EXPECT().PreCAPIInstallOnBootstrap(
+			c.ctx, c.bootstrapCluster, c.clusterSpec),
+
+		c.clusterManager.EXPECT().InstallCAPI(
+			c.ctx, c.clusterSpec, c.bootstrapCluster, c.provider).Return(errors.New("test")),
+	)
+
+	c.clusterManager.EXPECT().SaveLogsManagementCluster(c.ctx, c.clusterSpec, c.bootstrapCluster)
+	c.writer.EXPECT().Write(fmt.Sprintf("%s-checkpoint.yaml", c.clusterSpec.Cluster.Name), gomock.Any())
+
+	err := c.run()
+	if err == nil {
+		t.Fatalf("Create.Run() expected to return an error %v", err)
+	}
+}
+
+func TestCreatePostCAPIFailure(t *testing.T) {
+	c := newCreateTest(t)
+	err := errors.New("test")
+	c.expectSetup()
+	c.expectCreateBootstrap()
+	c.expectPreflightValidationsToPass()
+	c.expectCAPIInstall(nil, nil, err)
+
+	c.clusterManager.EXPECT().SaveLogsManagementCluster(c.ctx, c.clusterSpec, c.bootstrapCluster)
+	c.writer.EXPECT().Write(fmt.Sprintf("%s-checkpoint.yaml", c.clusterSpec.Cluster.Name), gomock.Any())
+
+	err = c.run()
+	if err == nil {
+		t.Fatalf("Create.Run() expected to return an error %v", err)
 	}
 }
