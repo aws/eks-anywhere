@@ -1200,6 +1200,40 @@ func (p *vsphereProvider) ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.
 	}
 }
 
+// ChangeDiffFromManagementComponents returns the component change diff for the provider.
+func (p *vsphereProvider) ChangeDiffFromManagementComponents(currentComponents, newComponents *cluster.ManagementComponents) *types.ComponentChangeDiff {
+	if currentComponents.VSphere.Version == newComponents.VSphere.Version {
+		return nil
+	}
+
+	return &types.ComponentChangeDiff{
+		ComponentName: constants.VSphereProviderName,
+		NewVersion:    newComponents.VSphere.Version,
+		OldVersion:    currentComponents.VSphere.Version,
+	}
+}
+
+// GetInfrastructureBundleFromManagementComponents returns the infrastructure bundle for the provider.
+func (p *vsphereProvider) GetInfrastructureBundleFromManagementComponents(components *cluster.ManagementComponents) *types.InfrastructureBundle {
+	folderName := fmt.Sprintf("infrastructure-vsphere/%s/", components.VSphere.Version)
+
+	infraBundle := types.InfrastructureBundle{
+		FolderName: folderName,
+		Manifests: []releasev1alpha1.Manifest{
+			components.VSphere.Components,
+			components.VSphere.Metadata,
+			components.VSphere.ClusterTemplate,
+		},
+	}
+
+	return &infraBundle
+}
+
+// VersionFromManagementComponents returns the version of the provider.
+func (p *vsphereProvider) VersionFromManagementComponents(components *cluster.ManagementComponents) string {
+	return components.VSphere.Version
+}
+
 func (p *vsphereProvider) RunPostControlPlaneUpgrade(_ context.Context, _ *cluster.Spec, _ *cluster.Spec, _ *types.Cluster, _ *types.Cluster) error {
 	return nil
 }
