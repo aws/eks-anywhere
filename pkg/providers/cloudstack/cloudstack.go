@@ -216,6 +216,19 @@ func (p *cloudstackProvider) ChangeDiff(currentSpec, newSpec *cluster.Spec) *typ
 	}
 }
 
+// ChangeDiffFromManagementComponents returns the component change diff for the provider.
+func (p *cloudstackProvider) ChangeDiffFromManagementComponents(currentComponents, newComponents *cluster.ManagementComponents) *types.ComponentChangeDiff {
+	if currentComponents.CloudStack.Version == newComponents.CloudStack.Version {
+		return nil
+	}
+
+	return &types.ComponentChangeDiff{
+		ComponentName: constants.CloudStackProviderName,
+		NewVersion:    newComponents.CloudStack.Version,
+		OldVersion:    currentComponents.CloudStack.Version,
+	}
+}
+
 func (p *cloudstackProvider) RunPostControlPlaneUpgrade(ctx context.Context, oldClusterSpec *cluster.Spec, clusterSpec *cluster.Spec, workloadCluster *types.Cluster, managementCluster *types.Cluster) error {
 	// Nothing to do
 	return nil
@@ -816,6 +829,11 @@ func (p *cloudstackProvider) Version(clusterSpec *cluster.Spec) string {
 	return versionsBundle.CloudStack.Version
 }
 
+// VersionFromManagementComponents returns the version of the provider.
+func (p *cloudstackProvider) VersionFromManagementComponents(componnets *cluster.ManagementComponents) string {
+	return componnets.CloudStack.Version
+}
+
 func (p *cloudstackProvider) EnvMap(_ *cluster.Spec) (map[string]string, error) {
 	envMap := make(map[string]string)
 	for _, key := range requiredEnvs {
@@ -841,6 +859,20 @@ func (p *cloudstackProvider) GetInfrastructureBundle(clusterSpec *cluster.Spec) 
 		Manifests: []releasev1alpha1.Manifest{
 			versionsBundle.CloudStack.Components,
 			versionsBundle.CloudStack.Metadata,
+		},
+	}
+	return &infraBundle
+}
+
+// GetInfrastructureBundleFromManagementComponents returns the infrastructure bundle for the provider.
+func (p *cloudstackProvider) GetInfrastructureBundleFromManagementComponents(components *cluster.ManagementComponents) *types.InfrastructureBundle {
+	folderName := fmt.Sprintf("infrastructure-cloudstack/%s/", components.CloudStack.Version)
+
+	infraBundle := types.InfrastructureBundle{
+		FolderName: folderName,
+		Manifests: []releasev1alpha1.Manifest{
+			components.CloudStack.Components,
+			components.CloudStack.Metadata,
 		},
 	}
 	return &infraBundle
