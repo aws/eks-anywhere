@@ -526,6 +526,11 @@ func (p *Provider) Version(clusterSpec *cluster.Spec) string {
 	return versionsBundle.Nutanix.Version
 }
 
+// VersionFromManagementComponents returns the version of the provider.
+func (p *Provider) VersionFromManagementComponents(components *cluster.ManagementComponents) string {
+	return components.Nutanix.Version
+}
+
 func (p *Provider) EnvMap(_ *cluster.Spec) (map[string]string, error) {
 	// TODO(nutanix): determine if any env vars are needed and add them to requiredEnvs
 	envMap := make(map[string]string)
@@ -553,6 +558,21 @@ func (p *Provider) GetInfrastructureBundle(clusterSpec *cluster.Spec) *types.Inf
 		versionsBundle.Nutanix.ClusterTemplate,
 	}
 	folderName := fmt.Sprintf("infrastructure-nutanix/%s/", p.Version(clusterSpec))
+	infraBundle := types.InfrastructureBundle{
+		FolderName: folderName,
+		Manifests:  manifests,
+	}
+	return &infraBundle
+}
+
+// GetInfrastructureBundleFromManagementComponents returns the infrastructure bundle for the provider.
+func (p *Provider) GetInfrastructureBundleFromManagementComponents(components *cluster.ManagementComponents) *types.InfrastructureBundle {
+	manifests := []releasev1alpha1.Manifest{
+		components.Nutanix.Components,
+		components.Nutanix.Metadata,
+		components.Nutanix.ClusterTemplate,
+	}
+	folderName := fmt.Sprintf("infrastructure-nutanix/%s/", components.Nutanix.Version)
 	infraBundle := types.InfrastructureBundle{
 		FolderName: folderName,
 		Manifests:  manifests,
@@ -622,6 +642,19 @@ func (p *Provider) ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.Compone
 		ComponentName: constants.NutanixProviderName,
 		NewVersion:    newVersionsBundle.Nutanix.Version,
 		OldVersion:    currentVersionsBundle.Nutanix.Version,
+	}
+}
+
+// ChangeDiffFromManagementComponents returns the component change diff for the provider.
+func (p *Provider) ChangeDiffFromManagementComponents(currentComponents, newComponents *cluster.ManagementComponents) *types.ComponentChangeDiff {
+	if currentComponents.Nutanix.Version == newComponents.Nutanix.Version {
+		return nil
+	}
+
+	return &types.ComponentChangeDiff{
+		ComponentName: constants.NutanixProviderName,
+		NewVersion:    newComponents.Nutanix.Version,
+		OldVersion:    currentComponents.Nutanix.Version,
 	}
 }
 
