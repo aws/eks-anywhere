@@ -697,6 +697,7 @@ func (in *Manifest) DeepCopy() *Manifest {
 func (in *NutanixBundle) DeepCopyInto(out *NutanixBundle) {
 	*out = *in
 	in.ClusterAPIController.DeepCopyInto(&out.ClusterAPIController)
+	in.CloudProvider.DeepCopyInto(&out.CloudProvider)
 	in.KubeVip.DeepCopyInto(&out.KubeVip)
 	out.Components = in.Components
 	out.Metadata = in.Metadata

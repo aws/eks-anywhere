@@ -14,7 +14,7 @@ import (
 
 // GetNutanixBundle returns the bundle for Nutanix.
 func GetNutanixBundle(r *releasetypes.ReleaseConfig, imageDigests releasetypes.ImageDigestsTable) (anywherev1alpha1.NutanixBundle, error) {
-	projectsInBundle := []string{"cluster-api-provider-nutanix", "kube-rbac-proxy", "kube-vip"}
+	projectsInBundle := []string{"cluster-api-provider-nutanix", "cloud-provider-nutanix", "kube-rbac-proxy", "kube-vip"}
 	nutanixBundleArtifacts := map[string][]releasetypes.Artifact{}
 	for _, project := range projectsInBundle {
 		projectArtifacts, err := r.BundleArtifactsTable.Load(project)
@@ -86,6 +86,7 @@ func GetNutanixBundle(r *releasetypes.ReleaseConfig, imageDigests releasetypes.I
 	bundle := anywherev1alpha1.NutanixBundle{
 		Version:              capxVersion,
 		ClusterAPIController: bundleImageArtifacts["cluster-api-provider-nutanix"],
+		CloudProvider:        bundleImageArtifacts["cloud-provider-nutanix"],
 		KubeVip:              bundleImageArtifacts["kube-vip"],
 		Components:           bundleManifestArtifacts["infrastructure-components.yaml"],
 		ClusterTemplate:      bundleManifestArtifacts["cluster-template.yaml"],
