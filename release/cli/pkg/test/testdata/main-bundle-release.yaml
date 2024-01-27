@@ -430,6 +430,15 @@ spec:
       version: v0.20.0+abcdef1
     kubeVersion: "1.25"
     nutanix:
+      cloudProvider:
+        arch:
+        - amd64
+        - arm64
+        description: Container image for cloud-provider-nutanix image
+        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        name: cloud-provider-nutanix
+        os: linux
+        uri: public.ecr.aws/release-container-registry/nutanix-cloud-native/cloud-provider-nutanix/controller:-eks-a-v0.0.0-dev-build.1
       clusterAPIController:
         arch:
         - amd64
@@ -1199,6 +1208,15 @@ spec:
       version: v0.20.0+abcdef1
     kubeVersion: "1.26"
     nutanix:
+      cloudProvider:
+        arch:
+        - amd64
+        - arm64
+        description: Container image for cloud-provider-nutanix image
+        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        name: cloud-provider-nutanix
+        os: linux
+        uri: public.ecr.aws/release-container-registry/nutanix-cloud-native/cloud-provider-nutanix/controller:-eks-a-v0.0.0-dev-build.1
       clusterAPIController:
         arch:
         - amd64
@@ -1968,6 +1986,15 @@ spec:
       version: v0.20.0+abcdef1
     kubeVersion: "1.27"
     nutanix:
+      cloudProvider:
+        arch:
+        - amd64
+        - arm64
+        description: Container image for cloud-provider-nutanix image
+        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        name: cloud-provider-nutanix
+        os: linux
+        uri: public.ecr.aws/release-container-registry/nutanix-cloud-native/cloud-provider-nutanix/controller:-eks-a-v0.0.0-dev-build.1
       clusterAPIController:
         arch:
         - amd64
@@ -2737,6 +2764,15 @@ spec:
       version: v0.20.0+abcdef1
     kubeVersion: "1.28"
     nutanix:
+      cloudProvider:
+        arch:
+        - amd64
+        - arm64
+        description: Container image for cloud-provider-nutanix image
+        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        name: cloud-provider-nutanix
+        os: linux
+        uri: public.ecr.aws/release-container-registry/nutanix-cloud-native/cloud-provider-nutanix/controller:-eks-a-v0.0.0-dev-build.1
       clusterAPIController:
         arch:
         - amd64
@@ -3506,6 +3542,15 @@ spec:
       version: v0.20.0+abcdef1
     kubeVersion: "1.29"
     nutanix:
+      cloudProvider:
+        arch:
+        - amd64
+        - arm64
+        description: Container image for cloud-provider-nutanix image
+        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        name: cloud-provider-nutanix
+        os: linux
+        uri: public.ecr.aws/release-container-registry/nutanix-cloud-native/cloud-provider-nutanix/controller:-eks-a-v0.0.0-dev-build.1
       clusterAPIController:
         arch:
         - amd64
