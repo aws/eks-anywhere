@@ -75,20 +75,20 @@ eksa:
   kube_versions: ['1.22', '1.21', '1.20']
   receiving_patches: false
 
-- version: '0.7'
-  released: 2022-01-27
-  kube_versions: ['1.21', '1.20']
-  receiving_patches: false
-
-- version: '0.6'
-  released: 2021-10-29
-  kube_versions: ['1.21', '1.20']
-  receiving_patches: false
-
-- version: '0.5'
-  released: 2021-09-08
-  kube_versions: ['1.21', '1.20']
-  receiving_patches: false
+#- version: '0.7'
+#  released: 2022-01-27
+#  kube_versions: ['1.21', '1.20']
+#  receiving_patches: false
+#
+#- version: '0.6'
+#  released: 2021-10-29
+#  kube_versions: ['1.21', '1.20']
+#  receiving_patches: false
+#
+#- version: '0.5'
+#  released: 2021-09-08
+#  kube_versions: ['1.21', '1.20']
+#  receiving_patches: false
 
 # Format:
 #
@@ -105,23 +105,23 @@ eksa:
 #                        with `endOfLifeIn`.
 kube:
 - version: '1.28'
-  releasedIn: '0.5'
-  expectedEndOfLifeDate: 2024-11-01
+  releasedIn: '0.18'
+  expectedEndOfLifeDate: 2024-12-01
 
 - version: '1.27'
-  releasedIn: '0.5'
-  expectedEndOfLifeDate: 2024-07-01
+  releasedIn: '0.16'
+  expectedEndOfLifeDate: 2024-08-01
 
 - version: '1.26'
-  releasedIn: '0.5'
+  releasedIn: '0.15'
   expectedEndOfLifeDate: 2024-06-01
 
 - version: '1.25'
-  releasedIn: '0.5'
+  releasedIn: '0.14'
   expectedEndOfLifeDate: 2024-05-01
 
 - version: '1.24'
-  releasedIn: '0.5'
+  releasedIn: '0.12'
   expectedEndOfLifeDate: 2024-02-01
 
 - version: '1.23'
@@ -131,11 +131,11 @@ kube:
 - version: '1.22'
   releasedIn: '0.8'
   endOfLifeIn: '0.16'
-
-- version: '1.21'
-  releasedIn: '0.5'
-  endOfLifeIn: '0.15'
-
-- version: '1.20'
-  releasedIn: '0.5'
-  endOfLifeIn: '0.13'
+#
+#- version: '1.21'
+#  releasedIn: '0.5'
+#  endOfLifeIn: '0.15'
+#
+#- version: '1.20'
+#  releasedIn: '0.5'
+#  endOfLifeIn: '0.13'
