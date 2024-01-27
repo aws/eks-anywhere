@@ -25,7 +25,7 @@ func (s *createBootStrapClusterTask) Run(ctx context.Context, commandContext *ta
 	}
 	commandContext.BootstrapCluster = bootstrapCluster
 
-	return nil
+	return &installCAPIComponentsTask{}
 }
 
 func (s *createBootStrapClusterTask) Name() string {
