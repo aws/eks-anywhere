@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
 	"strings"
+
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -160,7 +160,6 @@ func (c *createTestSetup) expectWrite() {
 
 func TestCreateRunSuccess(t *testing.T) {
 	features.ClearCache()
-	os.Setenv(features.UseControllerForCli, "true")
 	test := newCreateTest(t)
 	test.expectSetup()
 	test.expectPreflightValidationsToPass()
@@ -178,7 +177,6 @@ func TestCreateRunSuccess(t *testing.T) {
 
 func TestCreateRunFail(t *testing.T) {
 	features.ClearCache()
-	os.Setenv(features.UseControllerForCli, "true")
 	test := newCreateTest(t)
 	test.expectSetup()
 	test.expectPreflightValidationsToPass()

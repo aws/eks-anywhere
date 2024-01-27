@@ -13,7 +13,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
 	clientmocks "github.com/aws/eks-anywhere/pkg/clients/kubernetes/mocks"
 	"github.com/aws/eks-anywhere/pkg/cluster"
-	"github.com/aws/eks-anywhere/pkg/features"
 	writermocks "github.com/aws/eks-anywhere/pkg/filewriter/mocks"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers"
@@ -48,7 +47,6 @@ type createTestSetup struct {
 
 func newCreateTest(t *testing.T) *createTestSetup {
 	featureEnvVars := []string{}
-	featureEnvVars = append(featureEnvVars, features.UseControllerForCli)
 	mockCtrl := gomock.NewController(t)
 	bootstrapper := mocks.NewMockBootstrapper(mockCtrl)
 	clusterManager := mocks.NewMockClusterManager(mockCtrl)
