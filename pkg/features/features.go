@@ -5,7 +5,6 @@ const (
 	CloudStackKubeVipDisabledEnvVar = "CLOUDSTACK_KUBE_VIP_DISABLED"
 	CheckpointEnabledEnvVar         = "CHECKPOINT_ENABLED"
 	UseNewWorkflowsEnvVar           = "USE_NEW_WORKFLOWS"
-	UseControllerForCli             = "USE_CONTROLLER_FOR_CLI"
 	K8s129SupportEnvVar             = "K8S_1_29_SUPPORT"
 )
 
@@ -45,14 +44,6 @@ func UseNewWorkflows() Feature {
 	return Feature{
 		Name:     "Use new workflow logic for cluster management operations",
 		IsActive: globalFeatures.isActiveForEnvVar(UseNewWorkflowsEnvVar),
-	}
-}
-
-// UseControllerViaCLIWorkflow is used for the controller behind the CLI workflow.
-func UseControllerViaCLIWorkflow() Feature {
-	return Feature{
-		Name:     "Use new workflow logic for cluster operations leveraging controller via CLI",
-		IsActive: globalFeatures.isActiveForEnvVar(UseControllerForCli),
 	}
 }
 
