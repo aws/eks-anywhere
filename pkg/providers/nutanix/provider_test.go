@@ -31,6 +31,7 @@ import (
 	filewritermocks "github.com/aws/eks-anywhere/pkg/filewriter/mocks"
 	mocknutanix "github.com/aws/eks-anywhere/pkg/providers/nutanix/mocks"
 	"github.com/aws/eks-anywhere/pkg/types"
+	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
 //go:embed testdata/eksa-cluster.json
@@ -104,6 +105,23 @@ func testNutanixProvider(t *testing.T, nutanixClient Client, kubectl *executable
 	provider := NewProvider(dcConf, workerConfs, clusterConf, kubectl, writer, clientCache, mockIPValidator, certValidator, httpClient, time.Now, false)
 	require.NotNil(t, provider)
 	return provider
+}
+
+func givenManagementComponents() *cluster.ManagementComponents {
+	return &cluster.ManagementComponents{
+		Nutanix: releasev1alpha1.NutanixBundle{
+			Version: "1.0.0",
+			Components: releasev1alpha1.Manifest{
+				URI: "embed:///config/clusterctl/overrides/infrastructure-nutanix/v1.0.0/infrastructure-components-development.yaml",
+			},
+			ClusterTemplate: releasev1alpha1.Manifest{
+				URI: "embed:///config/clusterctl/overrides/infrastructure-nutanix/v1.0.0/cluster-template.yaml",
+			},
+			Metadata: releasev1alpha1.Manifest{
+				URI: "embed:///config/clusterctl/overrides/infrastructure-nutanix/v1.0.0/metadata.yaml",
+			},
+		},
+	}
 }
 
 func testNutanixProviderWithClusterSpec(t *testing.T, nutanixClient Client, kubectl *executables.Kubectl, certValidator crypto.TlsValidator, httpClient *http.Client, writer filewriter.FileWriter, clusterSpec *cluster.Spec) *Provider {
@@ -917,6 +935,21 @@ func TestNutanixProviderGetInfrastructureBundle(t *testing.T) {
 	assert.NotNil(t, bundle)
 }
 
+func TestNutanixProviderGetInfrastructureBundleFromManagementComponents(t *testing.T) {
+	provider := testDefaultNutanixProvider(t)
+	managementComponents := givenManagementComponents()
+	wantInfraBundle := &types.InfrastructureBundle{
+		FolderName: "infrastructure-nutanix/1.0.0/",
+		Manifests: []releasev1alpha1.Manifest{
+			managementComponents.Nutanix.Components,
+			managementComponents.Nutanix.Metadata,
+			managementComponents.Nutanix.ClusterTemplate,
+		},
+	}
+
+	assert.Equal(t, wantInfraBundle, provider.GetInfrastructureBundleFromManagementComponents(managementComponents))
+}
+
 func TestNutanixProviderDatacenterConfig(t *testing.T) {
 	provider := testDefaultNutanixProvider(t)
 	clusterSpec := test.NewFullClusterSpec(t, "testdata/eksa-cluster.yaml")
@@ -946,6 +979,13 @@ func TestNutanixProviderChangeDiff(t *testing.T) {
 	assert.Nil(t, cd)
 }
 
+func TestNutanixProviderChangeDiffFromManagementComponentsNoChange(t *testing.T) {
+	provider := testDefaultNutanixProvider(t)
+	managementComponents := givenManagementComponents()
+	got := provider.ChangeDiffFromManagementComponents(managementComponents, managementComponents)
+	assert.Nil(t, got)
+}
+
 func TestNutanixProviderChangeDiffWithChange(t *testing.T) {
 	provider := testDefaultNutanixProvider(t)
 	clusterSpec := test.NewFullClusterSpec(t, "testdata/eksa-cluster.yaml")
@@ -959,6 +999,23 @@ func TestNutanixProviderChangeDiffWithChange(t *testing.T) {
 	}
 	cd := provider.ChangeDiff(clusterSpec, newClusterSpec)
 	assert.Equal(t, cd, want)
+}
+
+func TestNutanixProviderChangeDiffFromManagementComponentsWithChange(t *testing.T) {
+	provider := testDefaultNutanixProvider(t)
+	managementComponents := givenManagementComponents()
+	managementComponents.Nutanix.Version = "v0.5.2"
+
+	newManagementComponents := givenManagementComponents()
+	newManagementComponents.Nutanix.Version = "v1.0.0"
+	want := &types.ComponentChangeDiff{
+		ComponentName: "nutanix",
+		NewVersion:    "v1.0.0",
+		OldVersion:    "v0.5.2",
+	}
+
+	got := provider.ChangeDiffFromManagementComponents(managementComponents, newManagementComponents)
+	assert.Equal(t, got, want)
 }
 
 func TestNutanixProviderRunPostControlPlaneUpgrade(t *testing.T) {
