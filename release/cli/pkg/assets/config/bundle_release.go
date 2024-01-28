@@ -119,6 +119,10 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 				AssetName: "cloud-provider-nutanix",
 			},
 		},
+		ImageTagOptions: []string{
+			"gitTag",
+			"projectPath",
+		},
 		ImageRepoPrefix: "nutanix-cloud-native/cloud-provider-nutanix",
 	},
 	// Cloud-provider-vsphere artifacts
