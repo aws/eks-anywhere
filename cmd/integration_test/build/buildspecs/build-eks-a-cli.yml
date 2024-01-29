@@ -21,6 +21,10 @@ phases:
       "amd64,arm64"
       $BRANCH_NAME
       false
+cache:
+  paths:
+    - '/root/.cache/go-build/**/*'
+    - '/go/pkg/mod/**/*'
 
 artifacts:
   files:
