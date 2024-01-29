@@ -1029,15 +1029,15 @@ func (m *MockEksaInstaller) EXPECT() *MockEksaInstallerMockRecorder {
 }
 
 // Install mocks base method.
-func (m *MockEksaInstaller) Install(arg0 context.Context, arg1 logr.Logger, arg2 *types.Cluster, arg3 *cluster.Spec) error {
+func (m *MockEksaInstaller) Install(arg0 context.Context, arg1 logr.Logger, arg2 *types.Cluster, arg3 *cluster.ManagementComponents, arg4 *cluster.Spec) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Install", arg0, arg1, arg2, arg3)
+	ret := m.ctrl.Call(m, "Install", arg0, arg1, arg2, arg3, arg4)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Install indicates an expected call of Install.
-func (mr *MockEksaInstallerMockRecorder) Install(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+func (mr *MockEksaInstallerMockRecorder) Install(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Install", reflect.TypeOf((*MockEksaInstaller)(nil).Install), arg0, arg1, arg2, arg3)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Install", reflect.TypeOf((*MockEksaInstaller)(nil).Install), arg0, arg1, arg2, arg3, arg4)
 }

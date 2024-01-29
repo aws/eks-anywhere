@@ -92,7 +92,7 @@ func TestEKSAInstallerInstallSuccessWithRealManifest(t *testing.T) {
 
 func TestEKSAInstallerInstallFailComponentsDeployment(t *testing.T) {
 	tt := newInstallerTest(t)
-	tt.newSpec.VersionsBundles["1.19"].Eksa.Components.URI = "../../config/manifest/eksa-components.yaml"
+	tt.newManagementComponents.Eksa.Components.URI = "../../config/manifest/eksa-components.yaml"
 	file, err := os.ReadFile("../../config/manifest/eksa-components.yaml")
 	if err != nil {
 		t.Fatalf("could not read eksa-components")
@@ -104,23 +104,23 @@ func TestEKSAInstallerInstallFailComponentsDeployment(t *testing.T) {
 	tt.client.EXPECT().Apply(tt.ctx, tt.cluster.KubeconfigFile, gomock.Any()).Times(expectedObjectCount)
 	tt.client.EXPECT().WaitForDeployment(tt.ctx, tt.cluster, "30m0s", "Available", "eksa-controller-manager", "eksa-system").Return(errors.New("test"))
 
-	err = tt.installer.Install(tt.ctx, test.NewNullLogger(), tt.cluster, tt.newSpec)
+	err = tt.installer.Install(tt.ctx, test.NewNullLogger(), tt.cluster, tt.newManagementComponents, tt.newSpec)
 	tt.Expect(err.Error()).To(ContainSubstring("waiting for eksa-controller-manager"))
 }
 
 func TestEKSAInstallerInstallFailComponents(t *testing.T) {
 	tt := newInstallerTest(t)
-	tt.newSpec.VersionsBundles["1.19"].Eksa.Components.URI = "../../config/manifest/eksa-components.yaml"
+	tt.newManagementComponents.Eksa.Components.URI = "../../config/manifest/eksa-components.yaml"
 
 	tt.client.EXPECT().Apply(tt.ctx, tt.cluster.KubeconfigFile, gomock.AssignableToTypeOf(&appsv1.Deployment{})).Return(errors.New("test"))
 
-	err := tt.installer.Install(tt.ctx, test.NewNullLogger(), tt.cluster, tt.newSpec)
+	err := tt.installer.Install(tt.ctx, test.NewNullLogger(), tt.cluster, tt.newManagementComponents, tt.newSpec)
 	tt.Expect(err.Error()).To(ContainSubstring("applying eksa components"))
 }
 
 func TestEKSAInstallerInstallFailBundles(t *testing.T) {
 	tt := newInstallerTest(t)
-	tt.newSpec.VersionsBundles["1.19"].Eksa.Components.URI = "../../config/manifest/eksa-components.yaml"
+	tt.newManagementComponents.Eksa.Components.URI = "../../config/manifest/eksa-components.yaml"
 	file, err := os.ReadFile("../../config/manifest/eksa-components.yaml")
 	if err != nil {
 		t.Fatalf("could not read eksa-components")
@@ -135,13 +135,13 @@ func TestEKSAInstallerInstallFailBundles(t *testing.T) {
 	tt.client.EXPECT().WaitForDeployment(tt.ctx, tt.cluster, "30m0s", "Available", "eksa-controller-manager", "eksa-system")
 	tt.client.EXPECT().ApplyKubeSpecFromBytes(tt.ctx, tt.cluster, gomock.Any()).Return(errors.New("test"))
 
-	err = tt.installer.Install(tt.ctx, test.NewNullLogger(), tt.cluster, tt.newSpec)
+	err = tt.installer.Install(tt.ctx, test.NewNullLogger(), tt.cluster, tt.newManagementComponents, tt.newSpec)
 	tt.Expect(err.Error()).To(ContainSubstring("applying bundle spec"))
 }
 
 func TestEKSAInstallerInstallFailEKSARelease(t *testing.T) {
 	tt := newInstallerTest(t)
-	tt.newSpec.VersionsBundles["1.19"].Eksa.Components.URI = "../../config/manifest/eksa-components.yaml"
+	tt.newManagementComponents.Eksa.Components.URI = "../../config/manifest/eksa-components.yaml"
 	file, err := os.ReadFile("../../config/manifest/eksa-components.yaml")
 	if err != nil {
 		t.Fatalf("could not read eksa-components")
@@ -157,7 +157,7 @@ func TestEKSAInstallerInstallFailEKSARelease(t *testing.T) {
 	tt.client.EXPECT().ApplyKubeSpecFromBytes(tt.ctx, tt.cluster, gomock.Any())
 	tt.client.EXPECT().ApplyKubeSpecFromBytes(tt.ctx, tt.cluster, gomock.Any()).Return(errors.New("test"))
 
-	err = tt.installer.Install(tt.ctx, test.NewNullLogger(), tt.cluster, tt.newSpec)
+	err = tt.installer.Install(tt.ctx, test.NewNullLogger(), tt.cluster, tt.newManagementComponents, tt.newSpec)
 	tt.Expect(err.Error()).To(ContainSubstring("applying EKSA release spec"))
 }
 

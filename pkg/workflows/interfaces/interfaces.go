@@ -104,5 +104,5 @@ type ClusterCreator interface {
 
 // EksaInstaller installs the EKS-A controllers and CRDs.
 type EksaInstaller interface {
-	Install(ctx context.Context, log logr.Logger, cluster *types.Cluster, spec *cluster.Spec) error
+	Install(ctx context.Context, log logr.Logger, cluster *types.Cluster, managementComponents *cluster.ManagementComponents, spec *cluster.Spec) error
 }
