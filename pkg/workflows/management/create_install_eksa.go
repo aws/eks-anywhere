@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
+	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/task"
@@ -44,7 +45,8 @@ func installEKSAComponents(ctx context.Context, commandContext *task.CommandCont
 	}
 
 	logger.Info("Installing EKS-A custom components (CRD and controller)")
-	if err := commandContext.EksaInstaller.Install(ctx, logger.Get(), targetCluster, commandContext.ClusterSpec); err != nil {
+	managementComponents := cluster.ManagementComponentsFromBundles(commandContext.ClusterSpec.Bundles)
+	if err := commandContext.EksaInstaller.Install(ctx, logger.Get(), targetCluster, managementComponents, commandContext.ClusterSpec); err != nil {
 		commandContext.SetError(err)
 		return err
 	}
