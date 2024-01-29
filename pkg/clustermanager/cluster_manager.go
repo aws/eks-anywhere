@@ -125,8 +125,8 @@ type AwsIamAuth interface {
 
 // EKSAComponents allows to manage the eks-a components installation in a cluster.
 type EKSAComponents interface {
-	Install(ctx context.Context, log logr.Logger, cluster *types.Cluster, spec *cluster.Spec) error
-	Upgrade(ctx context.Context, log logr.Logger, cluster *types.Cluster, currentSpec, newSpec *cluster.Spec) (*types.ChangeDiff, error)
+	Install(ctx context.Context, log logr.Logger, cluster *types.Cluster, managementComponents *cluster.ManagementComponents, spec *cluster.Spec) error
+	Upgrade(ctx context.Context, log logr.Logger, cluster *types.Cluster, currentManagementComponents, newManagementComponents *cluster.ManagementComponents, newSpec *cluster.Spec) (*types.ChangeDiff, error)
 }
 
 type ClusterManagerOpt func(*ClusterManager)
@@ -1087,8 +1087,9 @@ func (c *ClusterManager) removeOldWorkerNodeGroups(ctx context.Context, workload
 	return nil
 }
 
-func (c *ClusterManager) InstallCustomComponents(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster, provider providers.Provider) error {
-	if err := c.eksaComponents.Install(ctx, logger.Get(), cluster, clusterSpec); err != nil {
+// InstallCustomComponents installs the eks-a components in a cluster.
+func (c *ClusterManager) InstallCustomComponents(ctx context.Context, managementComponents *cluster.ManagementComponents, clusterSpec *cluster.Spec, cluster *types.Cluster, provider providers.Provider) error {
+	if err := c.eksaComponents.Install(ctx, logger.Get(), cluster, managementComponents, clusterSpec); err != nil {
 		return err
 	}
 
@@ -1097,8 +1098,8 @@ func (c *ClusterManager) InstallCustomComponents(ctx context.Context, clusterSpe
 }
 
 // Upgrade updates the eksa components in a cluster according to a Spec.
-func (c *ClusterManager) Upgrade(ctx context.Context, cluster *types.Cluster, currentSpec, newSpec *cluster.Spec) (*types.ChangeDiff, error) {
-	return c.eksaComponents.Upgrade(ctx, logger.Get(), cluster, currentSpec, newSpec)
+func (c *ClusterManager) Upgrade(ctx context.Context, cluster *types.Cluster, currentManagementComponents, newManagementComponents *cluster.ManagementComponents, newSpec *cluster.Spec) (*types.ChangeDiff, error) {
+	return c.eksaComponents.Upgrade(ctx, logger.Get(), cluster, currentManagementComponents, newManagementComponents, newSpec)
 }
 
 func (c *ClusterManager) CreateEKSANamespace(ctx context.Context, cluster *types.Cluster) error {

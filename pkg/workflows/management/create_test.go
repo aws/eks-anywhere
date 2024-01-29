@@ -26,26 +26,27 @@ import (
 )
 
 type createTestSetup struct {
-	t                *testing.T
-	packageInstaller *mocks.MockPackageInstaller
-	clusterManager   *mocks.MockClusterManager
-	bootstrapper     *mocks.MockBootstrapper
-	gitOpsManager    *mocks.MockGitOpsManager
-	provider         *providermocks.MockProvider
-	writer           *writermocks.MockFileWriter
-	validator        *mocks.MockValidator
-	eksdInstaller    *mocks.MockEksdInstaller
-	eksaInstaller    *mocks.MockEksaInstaller
-	clientFactory    *mocks.MockClientFactory
-	clusterCreator   *mocks.MockClusterCreator
-	datacenterConfig providers.DatacenterConfig
-	machineConfigs   []providers.MachineConfig
-	ctx              context.Context
-	clusterSpec      *cluster.Spec
-	bootstrapCluster *types.Cluster
-	workloadCluster  *types.Cluster
-	workflow         *management.Create
-	client           *clientmocks.MockClient
+	t                    *testing.T
+	packageInstaller     *mocks.MockPackageInstaller
+	clusterManager       *mocks.MockClusterManager
+	bootstrapper         *mocks.MockBootstrapper
+	gitOpsManager        *mocks.MockGitOpsManager
+	provider             *providermocks.MockProvider
+	writer               *writermocks.MockFileWriter
+	validator            *mocks.MockValidator
+	eksdInstaller        *mocks.MockEksdInstaller
+	eksaInstaller        *mocks.MockEksaInstaller
+	clientFactory        *mocks.MockClientFactory
+	clusterCreator       *mocks.MockClusterCreator
+	datacenterConfig     providers.DatacenterConfig
+	machineConfigs       []providers.MachineConfig
+	ctx                  context.Context
+	managementComponents *cluster.ManagementComponents
+	clusterSpec          *cluster.Spec
+	bootstrapCluster     *types.Cluster
+	workloadCluster      *types.Cluster
+	workflow             *management.Create
+	client               *clientmocks.MockClient
 }
 
 func newCreateTest(t *testing.T) *createTestSetup {
@@ -86,27 +87,31 @@ func newCreateTest(t *testing.T) *createTestSetup {
 		t.Setenv(e, "true")
 	}
 
+	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) { s.Cluster.Name = "bootstrap" })
+	managementComponents := cluster.ManagementComponentsFromBundles(clusterSpec.Bundles)
+
 	return &createTestSetup{
-		t:                t,
-		bootstrapper:     bootstrapper,
-		clusterManager:   clusterManager,
-		gitOpsManager:    gitOpsManager,
-		provider:         provider,
-		writer:           writer,
-		validator:        validator,
-		eksdInstaller:    eksdInstaller,
-		eksaInstaller:    eksaInstaller,
-		packageInstaller: packageInstaller,
-		clusterCreator:   clusterCreator,
-		datacenterConfig: datacenterConfig,
-		machineConfigs:   machineConfigs,
-		workflow:         workflow,
-		ctx:              context.Background(),
-		bootstrapCluster: &types.Cluster{Name: "bootstrap"},
-		workloadCluster:  &types.Cluster{Name: "workload"},
-		clusterSpec:      test.NewClusterSpec(func(s *cluster.Spec) { s.Cluster.Name = "bootstrap" }),
-		client:           client,
-		clientFactory:    clientFactory,
+		t:                    t,
+		bootstrapper:         bootstrapper,
+		clusterManager:       clusterManager,
+		gitOpsManager:        gitOpsManager,
+		provider:             provider,
+		writer:               writer,
+		validator:            validator,
+		eksdInstaller:        eksdInstaller,
+		eksaInstaller:        eksaInstaller,
+		packageInstaller:     packageInstaller,
+		clusterCreator:       clusterCreator,
+		datacenterConfig:     datacenterConfig,
+		machineConfigs:       machineConfigs,
+		workflow:             workflow,
+		ctx:                  context.Background(),
+		bootstrapCluster:     &types.Cluster{Name: "bootstrap"},
+		workloadCluster:      &types.Cluster{Name: "workload"},
+		managementComponents: managementComponents,
+		clusterSpec:          clusterSpec,
+		client:               client,
+		clientFactory:        clientFactory,
 	}
 }
 
@@ -156,7 +161,7 @@ func (c *createTestSetup) expectInstallEksaComponentsBootstrap(err1, err2, err3,
 		c.eksdInstaller.EXPECT().InstallEksdCRDs(c.ctx, c.clusterSpec, c.bootstrapCluster).Return(err1),
 
 		c.eksaInstaller.EXPECT().Install(
-			c.ctx, logger.Get(), c.bootstrapCluster, c.clusterSpec).Return(err2),
+			c.ctx, logger.Get(), c.bootstrapCluster, c.managementComponents, c.clusterSpec).Return(err2),
 
 		c.provider.EXPECT().InstallCustomProviderComponents(
 			c.ctx, c.bootstrapCluster.KubeconfigFile).Return(err3),
@@ -323,7 +328,7 @@ func TestCreateInstallCustomComponentsFailure(t *testing.T) {
 	c.eksdInstaller.EXPECT().InstallEksdCRDs(c.ctx, c.clusterSpec, c.bootstrapCluster)
 
 	c.eksaInstaller.EXPECT().Install(
-		c.ctx, logger.Get(), c.bootstrapCluster, c.clusterSpec).Return(err)
+		c.ctx, logger.Get(), c.bootstrapCluster, c.managementComponents, c.clusterSpec).Return(err)
 
 	c.clusterManager.EXPECT().SaveLogsManagementCluster(c.ctx, c.clusterSpec, c.bootstrapCluster)
 	c.clusterManager.EXPECT().SaveLogsWorkloadCluster(c.ctx, c.provider, c.clusterSpec, nil)
@@ -348,7 +353,7 @@ func TestCreateInstallCustomProviderComponentsFailure(t *testing.T) {
 	c.eksdInstaller.EXPECT().InstallEksdCRDs(c.ctx, c.clusterSpec, c.bootstrapCluster)
 
 	c.eksaInstaller.EXPECT().Install(
-		c.ctx, logger.Get(), c.bootstrapCluster, c.clusterSpec)
+		c.ctx, logger.Get(), c.bootstrapCluster, c.managementComponents, c.clusterSpec)
 
 	c.provider.EXPECT().InstallCustomProviderComponents(
 		c.ctx, c.bootstrapCluster.KubeconfigFile).Return(err)
@@ -376,7 +381,7 @@ func TestCreateInstallEksdManifestFailure(t *testing.T) {
 	c.eksdInstaller.EXPECT().InstallEksdCRDs(c.ctx, c.clusterSpec, c.bootstrapCluster)
 
 	c.eksaInstaller.EXPECT().Install(
-		c.ctx, logger.Get(), c.bootstrapCluster, c.clusterSpec)
+		c.ctx, logger.Get(), c.bootstrapCluster, c.managementComponents, c.clusterSpec)
 
 	c.provider.EXPECT().InstallCustomProviderComponents(
 		c.ctx, c.bootstrapCluster.KubeconfigFile)
@@ -407,7 +412,7 @@ func TestCreateBuildClientFailure(t *testing.T) {
 	c.eksdInstaller.EXPECT().InstallEksdCRDs(c.ctx, c.clusterSpec, c.bootstrapCluster)
 
 	c.eksaInstaller.EXPECT().Install(
-		c.ctx, logger.Get(), c.bootstrapCluster, c.clusterSpec)
+		c.ctx, logger.Get(), c.bootstrapCluster, c.managementComponents, c.clusterSpec)
 
 	c.provider.EXPECT().InstallCustomProviderComponents(
 		c.ctx, c.bootstrapCluster.KubeconfigFile)

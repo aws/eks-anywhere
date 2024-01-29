@@ -5,6 +5,7 @@ import (
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
+	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/task"
@@ -55,6 +56,20 @@ func runUpgradeCoreComponents(ctx context.Context, commandContext *task.CommandC
 		return err
 	}
 
+	client, err := commandContext.ClientFactory.BuildClientFromKubeconfig(commandContext.ManagementCluster.KubeconfigFile)
+	if err != nil {
+		commandContext.SetError(err)
+		return err
+	}
+
+	currentManagementComponents, err := cluster.GetManagementComponents(ctx, client, commandContext.CurrentClusterSpec.Cluster)
+	if err != nil {
+		commandContext.SetError(err)
+		return err
+	}
+
+	newManagementComponents := cluster.ManagementComponentsFromBundles(commandContext.ClusterSpec.Bundles)
+
 	changeDiff, err := commandContext.CAPIManager.Upgrade(ctx, commandContext.ManagementCluster, commandContext.Provider, commandContext.CurrentClusterSpec, commandContext.ClusterSpec)
 	if err != nil {
 		commandContext.SetError(err)
@@ -74,7 +89,7 @@ func runUpgradeCoreComponents(ctx context.Context, commandContext *task.CommandC
 	}
 	commandContext.UpgradeChangeDiff.Append(changeDiff)
 
-	changeDiff, err = commandContext.ClusterManager.Upgrade(ctx, commandContext.ManagementCluster, commandContext.CurrentClusterSpec, commandContext.ClusterSpec)
+	changeDiff, err = commandContext.ClusterManager.Upgrade(ctx, commandContext.ManagementCluster, currentManagementComponents, newManagementComponents, commandContext.ClusterSpec)
 	if err != nil {
 		commandContext.SetError(err)
 		return err
@@ -87,12 +102,6 @@ func runUpgradeCoreComponents(ctx context.Context, commandContext *task.CommandC
 		return err
 	}
 	commandContext.UpgradeChangeDiff.Append(changeDiff)
-
-	client, err := commandContext.ClientFactory.BuildClientFromKubeconfig(commandContext.ManagementCluster.KubeconfigFile)
-	if err != nil {
-		commandContext.SetError(err)
-		return err
-	}
 
 	eksaCluster := &anywherev1.Cluster{}
 	err = client.Get(ctx, commandContext.CurrentClusterSpec.Cluster.Name, commandContext.CurrentClusterSpec.Cluster.Namespace, eksaCluster)

@@ -194,9 +194,10 @@ func (c *createTestSetup) skipMoveManagement() {
 }
 
 func (c *createTestSetup) expectInstallEksaComponents() {
+	managementComponents := cluster.ManagementComponentsFromBundles(c.clusterSpec.Bundles)
 	gomock.InOrder(
 		c.clusterManager.EXPECT().InstallCustomComponents(
-			c.ctx, c.clusterSpec, c.workloadCluster, c.provider),
+			c.ctx, managementComponents, c.clusterSpec, c.workloadCluster, c.provider),
 
 		c.eksd.EXPECT().InstallEksdCRDs(c.ctx, c.clusterSpec, c.workloadCluster),
 
@@ -225,9 +226,10 @@ func (c *createTestSetup) expectInstallEksaComponents() {
 }
 
 func (c *createTestSetup) skipInstallEksaComponents() {
+	managementComponents := cluster.ManagementComponentsFromBundles(c.clusterSpec.Bundles)
 	gomock.InOrder(
 		c.clusterManager.EXPECT().InstallCustomComponents(
-			c.ctx, c.clusterSpec, c.workloadCluster, c.provider).Times(0),
+			c.ctx, managementComponents, c.clusterSpec, c.workloadCluster, c.provider).Times(0),
 
 		c.eksd.EXPECT().InstallEksdCRDs(c.ctx, c.clusterSpec, c.workloadCluster).Times(0),
 
@@ -323,6 +325,7 @@ func TestCreateRunSuccess(t *testing.T) {
 func TestCreateRunInstallEksaComponentsBuildClientFailure(t *testing.T) {
 	wantError := errors.New("test error")
 	test := newCreateTest(t)
+	managementComponents := cluster.ManagementComponentsFromBundles(test.clusterSpec.Bundles)
 
 	test.expectSetup()
 	test.expectPreflightValidationsToPass()
@@ -332,7 +335,7 @@ func TestCreateRunInstallEksaComponentsBuildClientFailure(t *testing.T) {
 	test.expectMoveManagement()
 	gomock.InOrder(
 		test.clusterManager.EXPECT().InstallCustomComponents(
-			test.ctx, test.clusterSpec, test.workloadCluster, test.provider),
+			test.ctx, managementComponents, test.clusterSpec, test.workloadCluster, test.provider),
 
 		test.eksd.EXPECT().InstallEksdCRDs(test.ctx, test.clusterSpec, test.workloadCluster),
 
@@ -361,6 +364,7 @@ func TestCreateRunInstallEksaComponentsBuildClientFailure(t *testing.T) {
 func TestCreateRunInstallEksaComponentsApplyServerSideFailure(t *testing.T) {
 	wantError := errors.New("test error")
 	test := newCreateTest(t)
+	managementComponents := cluster.ManagementComponentsFromBundles(test.clusterSpec.Bundles)
 
 	test.expectSetup()
 	test.expectPreflightValidationsToPass()
@@ -370,7 +374,7 @@ func TestCreateRunInstallEksaComponentsApplyServerSideFailure(t *testing.T) {
 	test.expectMoveManagement()
 	gomock.InOrder(
 		test.clusterManager.EXPECT().InstallCustomComponents(
-			test.ctx, test.clusterSpec, test.workloadCluster, test.provider),
+			test.ctx, managementComponents, test.clusterSpec, test.workloadCluster, test.provider),
 
 		test.eksd.EXPECT().InstallEksdCRDs(test.ctx, test.clusterSpec, test.workloadCluster),
 

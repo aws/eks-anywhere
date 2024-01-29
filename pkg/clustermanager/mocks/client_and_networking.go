@@ -972,32 +972,32 @@ func (m *MockEKSAComponents) EXPECT() *MockEKSAComponentsMockRecorder {
 }
 
 // Install mocks base method.
-func (m *MockEKSAComponents) Install(arg0 context.Context, arg1 logr.Logger, arg2 *types.Cluster, arg3 *cluster.Spec) error {
+func (m *MockEKSAComponents) Install(arg0 context.Context, arg1 logr.Logger, arg2 *types.Cluster, arg3 *cluster.ManagementComponents, arg4 *cluster.Spec) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Install", arg0, arg1, arg2, arg3)
+	ret := m.ctrl.Call(m, "Install", arg0, arg1, arg2, arg3, arg4)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Install indicates an expected call of Install.
-func (mr *MockEKSAComponentsMockRecorder) Install(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+func (mr *MockEKSAComponentsMockRecorder) Install(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Install", reflect.TypeOf((*MockEKSAComponents)(nil).Install), arg0, arg1, arg2, arg3)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Install", reflect.TypeOf((*MockEKSAComponents)(nil).Install), arg0, arg1, arg2, arg3, arg4)
 }
 
 // Upgrade mocks base method.
-func (m *MockEKSAComponents) Upgrade(arg0 context.Context, arg1 logr.Logger, arg2 *types.Cluster, arg3, arg4 *cluster.Spec) (*types.ChangeDiff, error) {
+func (m *MockEKSAComponents) Upgrade(arg0 context.Context, arg1 logr.Logger, arg2 *types.Cluster, arg3, arg4 *cluster.ManagementComponents, arg5 *cluster.Spec) (*types.ChangeDiff, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Upgrade", arg0, arg1, arg2, arg3, arg4)
+	ret := m.ctrl.Call(m, "Upgrade", arg0, arg1, arg2, arg3, arg4, arg5)
 	ret0, _ := ret[0].(*types.ChangeDiff)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Upgrade indicates an expected call of Upgrade.
-func (mr *MockEKSAComponentsMockRecorder) Upgrade(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
+func (mr *MockEKSAComponentsMockRecorder) Upgrade(arg0, arg1, arg2, arg3, arg4, arg5 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Upgrade", reflect.TypeOf((*MockEKSAComponents)(nil).Upgrade), arg0, arg1, arg2, arg3, arg4)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Upgrade", reflect.TypeOf((*MockEKSAComponents)(nil).Upgrade), arg0, arg1, arg2, arg3, arg4, arg5)
 }
 
 // MockKubernetesClient is a mock of KubernetesClient interface.
