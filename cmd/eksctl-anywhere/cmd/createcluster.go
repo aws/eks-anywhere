@@ -260,7 +260,7 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 		}
 
 		err = wflw.Run(ctx)
-	} else if features.UseControllerViaCLIWorkflow().IsActive() && clusterConfig.IsManaged() {
+	} else if clusterConfig.IsManaged() {
 		createWorkloadCluster := workload.NewCreate(
 			deps.Provider,
 			deps.ClusterManager,
