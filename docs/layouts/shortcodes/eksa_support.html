@@ -1,0 +1,17 @@
+{{ $versionSupport :=  $.Page.Site.Data.version_support}}
+<table>
+    <tr>
+        <th>EKS Anywhere Version</th>
+        <th>Supported Kubernetes Versions</th>
+        <th>Release Date</th>
+        <th>Receiving Patches</th>
+    </tr>
+    {{ range $versionSupport.eksa }}
+    <tr>
+        <td>{{ .version }}</td>
+        <td>{{ delimit .kube_versions ", " }}</td>
+        <td>{{ .released | time.Format "January 1, 2006" }} </td>
+        <td>{{ if .receiving_patches }}Yes{{ else }}No{{end}}</td>
+    </tr>
+    {{ end }}
+</table>
