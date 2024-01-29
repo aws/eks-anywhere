@@ -21,7 +21,7 @@ func (s *installEksaComponentsOnBootstrapTask) Run(ctx context.Context, commandC
 		return &workflows.CollectDiagnosticsTask{}
 	}
 
-	return nil
+	return &createWorkloadClusterTask{}
 }
 
 func (s *installEksaComponentsOnBootstrapTask) Name() string {
