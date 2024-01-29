@@ -10,6 +10,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
@@ -220,7 +221,8 @@ func TestNodeUpgradeReconcilerReconcileDeleteUpgraderPodAlreadyDeleted(t *testin
 func getObjectsForNodeUpgradeTest() (*clusterv1.Cluster, *clusterv1.Machine, *corev1.Node, *anywherev1.NodeUpgrade, *corev1.ConfigMap) {
 	cluster := generateCluster()
 	node := generateNode()
-	machine := generateMachine(cluster, node)
+	bootstrapConfig := generateKubeadmConfig()
+	machine := generateMachine(cluster, node, bootstrapConfig)
 	nodeUpgrade := generateNodeUpgrade(machine)
 	configMap := generateConfigMap()
 	return cluster, machine, node, nodeUpgrade, configMap
@@ -251,7 +253,7 @@ func generateNodeUpgrade(machine *clusterv1.Machine) *anywherev1.NodeUpgrade {
 	}
 }
 
-func generateMachine(cluster *clusterv1.Cluster, node *corev1.Node) *clusterv1.Machine {
+func generateMachine(cluster *clusterv1.Cluster, node *corev1.Node, bootstrapConfig *bootstrapv1.KubeadmConfig) *clusterv1.Machine {
 	return &clusterv1.Machine{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "machine01",
@@ -260,6 +262,12 @@ func generateMachine(cluster *clusterv1.Cluster, node *corev1.Node) *clusterv1.M
 		Spec: clusterv1.MachineSpec{
 			Version:     ptr.String("v1.27.8-eks-1-27-18"),
 			ClusterName: cluster.Name,
+			Bootstrap: clusterv1.Bootstrap{
+				ConfigRef: &corev1.ObjectReference{
+					Name:      bootstrapConfig.Name,
+					Namespace: bootstrapConfig.Namespace,
+				},
+			},
 		},
 		Status: clusterv1.MachineStatus{
 			NodeRef: &corev1.ObjectReference{
