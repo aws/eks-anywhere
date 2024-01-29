@@ -9,14 +9,12 @@ import (
 	"time"
 
 	"github.com/golang/mock/gomock"
+	. "github.com/onsi/gomega"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
-	clientmocks "github.com/aws/eks-anywhere/pkg/clients/kubernetes/mocks"
 	"github.com/aws/eks-anywhere/pkg/cluster"
-	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/features"
 	writermocks "github.com/aws/eks-anywhere/pkg/filewriter/mocks"
 	"github.com/aws/eks-anywhere/pkg/providers"
@@ -28,7 +26,7 @@ import (
 
 type upgradeManagementTestSetup struct {
 	t                   *testing.T
-	client              *clientmocks.MockClient
+	client              kubernetes.Client
 	clientFactory       *mocks.MockClientFactory
 	clusterManager      *mocks.MockClusterManager
 	gitOpsManager       *mocks.MockGitOpsManager
@@ -52,7 +50,6 @@ type upgradeManagementTestSetup struct {
 func newUpgradeManagementTest(t *testing.T) *upgradeManagementTestSetup {
 	featureEnvVars := []string{}
 	mockCtrl := gomock.NewController(t)
-	client := clientmocks.NewMockClient(mockCtrl)
 	clientFactory := mocks.NewMockClientFactory(mockCtrl)
 	clusterManager := mocks.NewMockClusterManager(mockCtrl)
 	gitOpsManager := mocks.NewMockGitOpsManager(mockCtrl)
@@ -81,31 +78,33 @@ func newUpgradeManagementTest(t *testing.T) *upgradeManagementTestSetup {
 		t.Setenv(e, "true")
 	}
 
+	currentClusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
+		s.Cluster.Name = "management"
+		s.Cluster.Namespace = "default"
+		s.Cluster.Spec.DatacenterRef.Kind = v1alpha1.VSphereDatacenterKind
+	})
+
+	client := test.NewFakeKubeClient(currentClusterSpec.Cluster)
+
 	return &upgradeManagementTestSetup{
-		t:                t,
-		client:           client,
-		clientFactory:    clientFactory,
-		clusterManager:   clusterManager,
-		gitOpsManager:    gitOpsManager,
-		provider:         provider,
-		writer:           writer,
-		validator:        validator,
-		eksdInstaller:    eksdInstaller,
-		eksdUpgrader:     eksdUpgrader,
-		capiManager:      capiUpgrader,
-		clusterUpgrader:  clusterUpgrader,
-		datacenterConfig: datacenterConfig,
-		machineConfigs:   machineConfigs,
-		management:       management,
-		ctx:              context.Background(),
-		currentClusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
-			s.Cluster.Name = "management"
-			s.Cluster.Spec.DatacenterRef.Kind = v1alpha1.VSphereDatacenterKind
-		}),
-		newClusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
-			s.Cluster.Name = "management"
-			s.Cluster.Spec.DatacenterRef.Kind = v1alpha1.VSphereDatacenterKind
-		}),
+		t:                   t,
+		client:              client,
+		clientFactory:       clientFactory,
+		clusterManager:      clusterManager,
+		gitOpsManager:       gitOpsManager,
+		provider:            provider,
+		writer:              writer,
+		validator:           validator,
+		eksdInstaller:       eksdInstaller,
+		eksdUpgrader:        eksdUpgrader,
+		capiManager:         capiUpgrader,
+		clusterUpgrader:     clusterUpgrader,
+		datacenterConfig:    datacenterConfig,
+		machineConfigs:      machineConfigs,
+		management:          management,
+		ctx:                 context.Background(),
+		currentClusterSpec:  currentClusterSpec,
+		newClusterSpec:      currentClusterSpec.DeepCopy(),
 		managementStatePath: fmt.Sprintf("%s-backup-%s", "management", time.Now().Format("2006-01-02T15_04_05")),
 	}
 }
@@ -186,41 +185,6 @@ func (c *upgradeManagementTestSetup) expectUpgradeCoreComponents() {
 
 func (c *upgradeManagementTestSetup) expectBuildClientFromKubeconfig(err error) {
 	c.clientFactory.EXPECT().BuildClientFromKubeconfig(c.managementCluster.KubeconfigFile).Return(c.client, err)
-}
-
-func (c *upgradeManagementTestSetup) expectClientGet(err error) {
-	c.client.EXPECT().Get(c.ctx, c.currentClusterSpec.Cluster.Name, c.currentClusterSpec.Cluster.Namespace, &anywherev1.Cluster{}).
-		DoAndReturn(func(_ context.Context, _ string, _ string, obj *v1alpha1.Cluster) error {
-			c.currentClusterSpec.Cluster.DeepCopyInto(obj)
-			return err
-		})
-}
-
-func (c *upgradeManagementTestSetup) expectClientApplyServerSide(err error) {
-	c.client.EXPECT().ApplyServerSide(
-		c.ctx,
-		constants.EKSACLIFieldManager,
-		c.wantEKSAClusterWithManagementComponentVersionAnnotation(),
-		kubernetes.ApplyServerSideOptions{ForceOwnership: true},
-	).Return(err)
-}
-
-func (c *upgradeManagementTestSetup) expectUpdateManagementComponentVersion() {
-	c.clientFactory.EXPECT().BuildClientFromKubeconfig(c.managementCluster.KubeconfigFile).Return(c.client, nil)
-	c.client.EXPECT().Get(c.ctx, c.currentClusterSpec.Cluster.Name, c.currentClusterSpec.Cluster.Namespace, &anywherev1.Cluster{}).
-		DoAndReturn(func(_ context.Context, _ string, _ string, obj *v1alpha1.Cluster) error {
-			c.currentClusterSpec.Cluster.DeepCopyInto(obj)
-			return nil
-		})
-
-	expectedEKSACluster := c.currentClusterSpec.Cluster.DeepCopy()
-	expectedEKSACluster.SetManagementComponentsVersion(c.newClusterSpec.EKSARelease.Spec.Version)
-	c.client.EXPECT().ApplyServerSide(
-		c.ctx,
-		constants.EKSACLIFieldManager,
-		expectedEKSACluster,
-		kubernetes.ApplyServerSideOptions{ForceOwnership: true},
-	).Return(nil)
 }
 
 func (c *upgradeManagementTestSetup) expectBackupManagementFromCluster(err error) {
@@ -409,7 +373,7 @@ func TestUpgradeManagementRunFailedBackup(t *testing.T) {
 	test.expectEnsureManagementEtcdCAPIComponentsExist(nil)
 	test.expectPauseGitOpsReconcile(nil)
 	test.expectUpgradeCoreComponents()
-	test.expectUpdateManagementComponentVersion()
+	test.expectBuildClientFromKubeconfig(nil)
 	test.expectBackupManagementFromCluster(errors.New(""))
 	test.expectBackupManagementInfrastructureFromCluster(errors.New(""))
 	test.expectSaveLogs()
@@ -431,7 +395,7 @@ func TestUpgradeManagementRunPauseWorkloadCAPIFailed(t *testing.T) {
 	test.expectEnsureManagementEtcdCAPIComponentsExist(nil)
 	test.expectPauseGitOpsReconcile(nil)
 	test.expectUpgradeCoreComponents()
-	test.expectUpdateManagementComponentVersion()
+	test.expectBuildClientFromKubeconfig(nil)
 	test.expectBackupManagementFromCluster(nil)
 	test.expectPauseCAPIWorkloadClusters(errors.New(""))
 	test.expectSaveLogs()
@@ -466,50 +430,49 @@ func TestUpgradeManagementRunFailedUpgradeBuildClientFromKubeconfig(t *testing.T
 }
 
 func TestUpgradeManagementRunFailedUpgradeClientGet(t *testing.T) {
+	c := newUpgradeManagementClusterTest(t)
+	c.client = test.NewFakeKubeClient()
+
 	os.Unsetenv(features.CheckpointEnabledEnvVar)
 	features.ClearCache()
-	test := newUpgradeManagementClusterTest(t)
-	test.expectSetup()
-	test.expectPreflightValidationsToPass()
-	test.expectUpdateSecrets(nil)
-	test.expectEnsureManagementEtcdCAPIComponentsExist(nil)
-	test.expectPauseGitOpsReconcile(nil)
-	test.expectUpgradeCoreComponents()
-	test.expectBuildClientFromKubeconfig(nil)
-	test.expectClientGet(errors.New(""))
-	test.expectDatacenterConfig()
-	test.expectMachineConfigs()
-	test.expectSaveLogs()
-	test.expectWriteCheckpointFile()
+	c.expectSetup()
+	c.expectPreflightValidationsToPass()
+	c.expectUpdateSecrets(nil)
+	c.expectEnsureManagementEtcdCAPIComponentsExist(nil)
+	c.expectPauseGitOpsReconcile(nil)
+	c.expectUpgradeCoreComponents()
+	c.expectBuildClientFromKubeconfig(nil)
+	c.expectDatacenterConfig()
+	c.expectMachineConfigs()
+	c.expectSaveLogs()
+	c.expectWriteCheckpointFile()
 
-	err := test.run()
-	if err == nil {
-		t.Fatal("UpgradeManagement.Run() err = nil, want err not nil")
-	}
+	err := c.run()
+	g := NewWithT(t)
+	g.Expect(err).To(MatchError(ContainSubstring("\"management\" not found")))
 }
 
-func TestUpgradeManagementRunFailedUpgradeApplyServerSide(t *testing.T) {
+func TestUpgradeManagementRunUpgradeFailedUpgradeClientGet(t *testing.T) {
+	c := newUpgradeManagementClusterTest(t)
+	c.client = test.NewFakeKubeClient()
+
 	os.Unsetenv(features.CheckpointEnabledEnvVar)
 	features.ClearCache()
-	test := newUpgradeManagementClusterTest(t)
-	test.expectSetup()
-	test.expectPreflightValidationsToPass()
-	test.expectUpdateSecrets(nil)
-	test.expectEnsureManagementEtcdCAPIComponentsExist(nil)
-	test.expectPauseGitOpsReconcile(nil)
-	test.expectUpgradeCoreComponents()
-	test.expectBuildClientFromKubeconfig(nil)
-	test.expectClientGet(nil)
-	test.expectClientApplyServerSide(errors.New(""))
-	test.expectDatacenterConfig()
-	test.expectMachineConfigs()
-	test.expectSaveLogs()
-	test.expectWriteCheckpointFile()
+	c.expectSetup()
+	c.expectPreflightValidationsToPass()
+	c.expectUpdateSecrets(nil)
+	c.expectEnsureManagementEtcdCAPIComponentsExist(nil)
+	c.expectPauseGitOpsReconcile(nil)
+	c.expectUpgradeCoreComponents()
+	c.expectBuildClientFromKubeconfig(nil)
+	c.expectDatacenterConfig()
+	c.expectMachineConfigs()
+	c.expectSaveLogs()
+	c.expectWriteCheckpointFile()
 
-	err := test.run()
-	if err == nil {
-		t.Fatal("UpgradeManagement.Run() err = nil, want err not nil")
-	}
+	err := c.run()
+	g := NewWithT(t)
+	g.Expect(err).To(MatchError(ContainSubstring("\"management\" not found")))
 }
 
 func TestUpgradeManagementRunFailedUpgradeInstallEksd(t *testing.T) {
@@ -522,7 +485,7 @@ func TestUpgradeManagementRunFailedUpgradeInstallEksd(t *testing.T) {
 	test.expectEnsureManagementEtcdCAPIComponentsExist(nil)
 	test.expectPauseGitOpsReconcile(nil)
 	test.expectUpgradeCoreComponents()
-	test.expectUpdateManagementComponentVersion()
+	test.expectBuildClientFromKubeconfig(nil)
 	test.expectBackupManagementFromCluster(nil)
 	test.expectPauseCAPIWorkloadClusters(nil)
 	test.expectDatacenterConfig()
@@ -549,7 +512,7 @@ func TestUpgradeManagementRunFailedUpgradeApplyBundles(t *testing.T) {
 	test.expectEnsureManagementEtcdCAPIComponentsExist(nil)
 	test.expectPauseGitOpsReconcile(nil)
 	test.expectUpgradeCoreComponents()
-	test.expectUpdateManagementComponentVersion()
+	test.expectBuildClientFromKubeconfig(nil)
 	test.expectBackupManagementFromCluster(nil)
 	test.expectPauseCAPIWorkloadClusters(nil)
 	test.expectDatacenterConfig()
@@ -574,7 +537,7 @@ func TestUpgradeManagementRunFailedUpgradeApplyReleases(t *testing.T) {
 	test.expectEnsureManagementEtcdCAPIComponentsExist(nil)
 	test.expectPauseGitOpsReconcile(nil)
 	test.expectUpgradeCoreComponents()
-	test.expectUpdateManagementComponentVersion()
+	test.expectBuildClientFromKubeconfig(nil)
 	test.expectBackupManagementFromCluster(nil)
 	test.expectPauseCAPIWorkloadClusters(nil)
 	test.expectDatacenterConfig()
@@ -600,7 +563,7 @@ func TestUpgradeManagementRunFailedUpgrade(t *testing.T) {
 	test.expectEnsureManagementEtcdCAPIComponentsExist(nil)
 	test.expectPauseGitOpsReconcile(nil)
 	test.expectUpgradeCoreComponents()
-	test.expectUpdateManagementComponentVersion()
+	test.expectBuildClientFromKubeconfig(nil)
 	test.expectBackupManagementFromCluster(nil)
 	test.expectPauseCAPIWorkloadClusters(nil)
 	test.expectDatacenterConfig()
@@ -627,7 +590,7 @@ func TestUpgradeManagementRunResumeCAPIWorkloadFailed(t *testing.T) {
 	test.expectUpdateSecrets(nil)
 	test.expectEnsureManagementEtcdCAPIComponentsExist(nil)
 	test.expectUpgradeCoreComponents()
-	test.expectUpdateManagementComponentVersion()
+	test.expectBuildClientFromKubeconfig(nil)
 	test.expectPauseGitOpsReconcile(nil)
 	test.expectBackupManagementFromCluster(nil)
 	test.expectPauseCAPIWorkloadClusters(nil)
@@ -660,7 +623,7 @@ func TestUpgradeManagementRunUpdateGitEksaSpecFailed(t *testing.T) {
 	test.expectUpdateSecrets(nil)
 	test.expectEnsureManagementEtcdCAPIComponentsExist(nil)
 	test.expectUpgradeCoreComponents()
-	test.expectUpdateManagementComponentVersion()
+	test.expectBuildClientFromKubeconfig(nil)
 	test.expectPauseGitOpsReconcile(nil)
 	test.expectBackupManagementFromCluster(nil)
 	test.expectPauseCAPIWorkloadClusters(nil)
@@ -689,7 +652,7 @@ func TestUpgradeManagementRunForceReconcileGitRepoFailed(t *testing.T) {
 	test.expectUpdateSecrets(nil)
 	test.expectEnsureManagementEtcdCAPIComponentsExist(nil)
 	test.expectUpgradeCoreComponents()
-	test.expectUpdateManagementComponentVersion()
+	test.expectBuildClientFromKubeconfig(nil)
 	test.expectPauseGitOpsReconcile(nil)
 	test.expectBackupManagementFromCluster(nil)
 	test.expectPauseCAPIWorkloadClusters(nil)
@@ -719,7 +682,7 @@ func TestUpgradeManagementRunResumeClusterResourcesReconcileFailed(t *testing.T)
 	test.expectUpdateSecrets(nil)
 	test.expectEnsureManagementEtcdCAPIComponentsExist(nil)
 	test.expectUpgradeCoreComponents()
-	test.expectUpdateManagementComponentVersion()
+	test.expectBuildClientFromKubeconfig(nil)
 	test.expectPauseGitOpsReconcile(nil)
 	test.expectBackupManagementFromCluster(nil)
 	test.expectPauseCAPIWorkloadClusters(nil)
@@ -751,7 +714,7 @@ func TestUpgradeManagementRunSuccess(t *testing.T) {
 	test.expectUpdateSecrets(nil)
 	test.expectEnsureManagementEtcdCAPIComponentsExist(nil)
 	test.expectUpgradeCoreComponents()
-	test.expectUpdateManagementComponentVersion()
+	test.expectBuildClientFromKubeconfig(nil)
 	test.expectPauseGitOpsReconcile(nil)
 	test.expectBackupManagementFromCluster(nil)
 	test.expectPauseCAPIWorkloadClusters(nil)
