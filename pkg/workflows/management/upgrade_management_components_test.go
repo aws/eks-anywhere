@@ -9,11 +9,6 @@ import (
 	"github.com/golang/mock/gomock"
 
 	"github.com/aws/eks-anywhere/internal/test"
-	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
-	clientmocks "github.com/aws/eks-anywhere/pkg/clients/kubernetes/mocks"
-	"github.com/aws/eks-anywhere/pkg/constants"
 	writermocks "github.com/aws/eks-anywhere/pkg/filewriter/mocks"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 	providermocks "github.com/aws/eks-anywhere/pkg/providers/mocks"
@@ -48,7 +43,6 @@ var eksdChangeDiff = types.NewChangeDiff(&types.ComponentChangeDiff{
 
 type TestMocks struct {
 	mockCtrl       *gomock.Controller
-	client         *clientmocks.MockClient
 	clientFactory  *mocks.MockClientFactory
 	clusterManager *mocks.MockClusterManager
 	gitOpsManager  *mocks.MockGitOpsManager
@@ -64,7 +58,6 @@ func NewTestMocks(t *testing.T) *TestMocks {
 	mockCtrl := gomock.NewController(t)
 	return &TestMocks{
 		mockCtrl:       mockCtrl,
-		client:         clientmocks.NewMockClient(mockCtrl),
 		clientFactory:  mocks.NewMockClientFactory(mockCtrl),
 		clusterManager: mocks.NewMockClusterManager(mockCtrl),
 		gitOpsManager:  mocks.NewMockGitOpsManager(mockCtrl),
@@ -100,6 +93,8 @@ func TestRunnerHappyPath(t *testing.T) {
 	curSpec := test.NewClusterSpec()
 	newSpec := test.NewClusterSpec()
 
+	client := test.NewFakeKubeClient(curSpec.Cluster)
+
 	expectedEKSACluster := curSpec.Cluster.DeepCopy()
 	expectedEKSACluster.SetManagementComponentsVersion(newSpec.EKSARelease.Spec.Version)
 
@@ -114,18 +109,7 @@ func TestRunnerHappyPath(t *testing.T) {
 		mocks.gitOpsManager.EXPECT().Upgrade(ctx, managementCluster, curSpec, newSpec).Return(fluxChangeDiff, nil),
 		mocks.clusterManager.EXPECT().Upgrade(ctx, managementCluster, curSpec, newSpec).Return(eksaChangeDiff, nil),
 		mocks.eksdUpgrader.EXPECT().Upgrade(ctx, managementCluster, curSpec, newSpec).Return(eksdChangeDiff, nil),
-		mocks.clientFactory.EXPECT().BuildClientFromKubeconfig(managementCluster.KubeconfigFile).Return(mocks.client, nil),
-		mocks.client.EXPECT().Get(ctx, curSpec.Cluster.Name, curSpec.Cluster.Namespace, &anywherev1.Cluster{}).
-			DoAndReturn(func(_ context.Context, _ string, _ string, obj *v1alpha1.Cluster) error {
-				curSpec.Cluster.DeepCopyInto(obj)
-				return nil
-			}),
-		mocks.client.EXPECT().ApplyServerSide(
-			ctx,
-			constants.EKSACLIFieldManager,
-			expectedEKSACluster,
-			kubernetes.ApplyServerSideOptions{ForceOwnership: true},
-		).Return(nil),
+		mocks.clientFactory.EXPECT().BuildClientFromKubeconfig(managementCluster.KubeconfigFile).Return(client, nil),
 		mocks.clusterManager.EXPECT().ApplyBundles(
 			ctx, newSpec, managementCluster,
 		).Return(nil),
