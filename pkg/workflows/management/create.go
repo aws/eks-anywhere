@@ -12,6 +12,7 @@ import (
 
 // Create is a schema for create cluster.
 type Create struct {
+	clientFactory    interfaces.ClientFactory
 	bootstrapper     interfaces.Bootstrapper
 	provider         providers.Provider
 	clusterManager   interfaces.ClusterManager
@@ -20,16 +21,19 @@ type Create struct {
 	eksdInstaller    interfaces.EksdInstaller
 	packageInstaller interfaces.PackageInstaller
 	clusterCreator   interfaces.ClusterCreator
+	eksaInstaller    interfaces.EksaInstaller
 }
 
 // NewCreate builds a new create construct.
-func NewCreate(bootstrapper interfaces.Bootstrapper, provider providers.Provider,
+func NewCreate(clientFactory interfaces.ClientFactory, bootstrapper interfaces.Bootstrapper, provider providers.Provider,
 	clusterManager interfaces.ClusterManager, gitOpsManager interfaces.GitOpsManager,
 	writer filewriter.FileWriter, eksdInstaller interfaces.EksdInstaller,
 	packageInstaller interfaces.PackageInstaller,
 	clusterCreator interfaces.ClusterCreator,
+	eksaInstaller interfaces.EksaInstaller,
 ) *Create {
 	return &Create{
+		clientFactory:    clientFactory,
 		bootstrapper:     bootstrapper,
 		provider:         provider,
 		clusterManager:   clusterManager,
@@ -38,6 +42,7 @@ func NewCreate(bootstrapper interfaces.Bootstrapper, provider providers.Provider
 		eksdInstaller:    eksdInstaller,
 		packageInstaller: packageInstaller,
 		clusterCreator:   clusterCreator,
+		eksaInstaller:    eksaInstaller,
 	}
 }
 
@@ -54,6 +59,8 @@ func (c *Create) Run(ctx context.Context, clusterSpec *cluster.Spec, validator i
 		EksdInstaller:    c.eksdInstaller,
 		PackageInstaller: c.packageInstaller,
 		ClusterCreator:   c.clusterCreator,
+		ClientFactory:    c.clientFactory,
+		EksaInstaller:    c.eksaInstaller,
 	}
 
 	return task.NewTaskRunner(&setupAndValidateCreate{}, c.writer).RunTask(ctx, commandContext)

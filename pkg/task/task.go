@@ -35,6 +35,7 @@ type CommandContext struct {
 	Validations           interfaces.Validator
 	Writer                filewriter.FileWriter
 	EksdInstaller         interfaces.EksdInstaller
+	EksaInstaller         interfaces.EksaInstaller
 	PackageInstaller      interfaces.PackageInstaller
 	EksdUpgrader          interfaces.EksdUpgrader
 	ClusterUpgrader       interfaces.ClusterUpgrader

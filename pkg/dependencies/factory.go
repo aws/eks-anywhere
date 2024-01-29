@@ -115,6 +115,7 @@ type Dependencies struct {
 	UpgradeClusterDefaulter     cli.UpgradeClusterDefaulter
 	KubeconfigWriter            kubeconfig.Writer
 	ClusterCreator              *clustermanager.ClusterCreator
+	EksaInstaller               *clustermanager.EKSAInstaller
 }
 
 // KubeClients defines super struct that exposes all behavior.
@@ -1064,7 +1065,7 @@ func (f *Factory) clusterManagerOpts(timeoutOpts *ClusterManagerTimeoutOptions) 
 
 // WithClusterManager builds a cluster manager based on the cluster config and timeout options.
 func (f *Factory) WithClusterManager(clusterConfig *v1alpha1.Cluster, timeoutOpts *ClusterManagerTimeoutOptions) *Factory {
-	f.WithClusterctl().WithNetworking(clusterConfig).WithWriter().WithDiagnosticBundleFactory().WithAwsIamAuth().WithFileReader().WithUnAuthKubeClient().WithKubernetesRetrierClient()
+	f.WithClusterctl().WithNetworking(clusterConfig).WithWriter().WithDiagnosticBundleFactory().WithAwsIamAuth().WithFileReader().WithUnAuthKubeClient().WithKubernetesRetrierClient().WithEKSAInstaller()
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.ClusterManager != nil {
@@ -1076,8 +1077,6 @@ func (f *Factory) WithClusterManager(clusterConfig *v1alpha1.Cluster, timeoutOpt
 			f.dependencies.KubernetesRetrierClient,
 		}
 
-		installer := clustermanager.NewEKSAInstaller(client, f.dependencies.FileReader, f.eksaInstallerOpts()...)
-
 		f.dependencies.ClusterManager = clustermanager.New(
 			f.dependencies.UnAuthKubeClient,
 			client,
@@ -1085,9 +1084,27 @@ func (f *Factory) WithClusterManager(clusterConfig *v1alpha1.Cluster, timeoutOpt
 			f.dependencies.Writer,
 			f.dependencies.DignosticCollectorFactory,
 			f.dependencies.AwsIamAuth,
-			installer,
+			f.dependencies.EksaInstaller,
 			f.clusterManagerOpts(timeoutOpts)...,
 		)
+		return nil
+	})
+
+	return f
+}
+
+// WithEKSAInstaller builds a cluster manager based on the cluster config and timeout options.
+func (f *Factory) WithEKSAInstaller() *Factory {
+	f.WithFileReader().WithKubernetesRetrierClient()
+
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.dependencies.EksaInstaller != nil {
+			return nil
+		}
+
+		installer := clustermanager.NewEKSAInstaller(f.dependencies.KubernetesRetrierClient, f.dependencies.FileReader, f.eksaInstallerOpts()...)
+
+		f.dependencies.EksaInstaller = installer
 		return nil
 	})
 
