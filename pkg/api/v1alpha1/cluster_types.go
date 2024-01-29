@@ -1299,6 +1299,14 @@ func (c *Cluster) ControlPlaneAnnotation() string {
 	return controlPlaneAnnotation
 }
 
+// ManagementComponentsVersion returns `management-components version`annotation value on the Cluster object.
+func (c *Cluster) ManagementComponentsVersion() string {
+	if c.Annotations == nil {
+		return ""
+	}
+	return c.Annotations[managementComponentsVersionAnnotation]
+}
+
 // SetManagementComponentsVersion sets the `management-components version` annotation on the Cluster object.
 func (c *Cluster) SetManagementComponentsVersion(version string) {
 	if c.IsManaged() {
