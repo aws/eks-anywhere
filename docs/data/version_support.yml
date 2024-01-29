@@ -1,0 +1,141 @@
+# ---
+# Instructions
+#
+# This file contains the supported version for EKS-A and the support lifecycle for the various
+# Kubernetes versions.
+#
+# When adding a new EKS Anywhere version, ensure the previous version is updated as needed.
+#
+# When adding a new Kubernetes version, ensure it features in both an EKS Anywhere release and
+# has an entry in the `kube` array.
+
+
+# Format:
+#
+# version: The version number of the EKS-A release
+#
+# released: The date of the EKS-A release
+#
+# kube_versions: An array of supported Kubernetes versions.
+#
+# receiving_patches: Whether or not the release is receiving patches.
+eksa:
+- version: '0.18'
+  released: 2023-10-30
+  kube_versions: ['1.28', '1.27', '1.26', '1.25', '1.24']
+  receiving_patches: true
+
+- version: '0.17'
+  released: 2023-08-16
+  kube_versions: ['1.27', '1.26', '1.25', '1.24', '1.23']
+  receiving_patches: false
+
+- version: '0.16'
+  released: 2023-06-01
+  kube_versions: ['1.27', '1.26', '1.25', '1.24', '1.23']
+  receiving_patches: false
+
+- version: '0.15'
+  released: 2023-03-30
+  kube_versions: ['1.26', '1.25', '1.24', '1.23', '1.22']
+  receiving_patches: false
+
+- version: '0.14'
+  released: 2023-01-19
+  kube_versions: ['1.25', '1.24', '1.23', '1.22', '1.21']
+  receiving_patches: false
+
+- version: '0.13'
+  released: 2022-12-15
+  kube_versions: ['1.24', '1.23', '1.22', '1.21']
+  receiving_patches: false
+
+- version: '0.12'
+  released: 2022-10-20
+  kube_versions: ['1.24', '1.23', '1.22', '1.21', '1.20']
+  receiving_patches: false
+
+- version: '0.11'
+  released: 2022-08-18
+  kube_versions: ['1.23', '1.22', '1.21', '1.20']
+  receiving_patches: false
+
+- version: '0.10'
+  released: 2022-06-30
+  kube_versions: ['1.22', '1.21', '1.20']
+  receiving_patches: false
+
+- version: '0.9'
+  released: 2022-05-12
+  kube_versions: ['1.22', '1.21', '1.20']
+  receiving_patches: false
+
+- version: '0.8'
+  released: 2022-03-31
+  kube_versions: ['1.22', '1.21', '1.20']
+  receiving_patches: false
+
+#- version: '0.7'
+#  released: 2022-01-27
+#  kube_versions: ['1.21', '1.20']
+#  receiving_patches: false
+#
+#- version: '0.6'
+#  released: 2021-10-29
+#  kube_versions: ['1.21', '1.20']
+#  receiving_patches: false
+#
+#- version: '0.5'
+#  released: 2021-09-08
+#  kube_versions: ['1.21', '1.20']
+#  receiving_patches: false
+
+# Format:
+#
+# version: The Kubernetes version
+#
+# releasedIn: The EKS-A release the Kubernetes version first appeared. It must be present in the
+#                 eksa array above.
+#
+# endOfLifeIn: The EKS-A version the Kubernetes version end of lifed. Mutually exclusive with
+#              `expectedEndOfLifeDate`.
+#
+# expectedEndOfLifeDate: The expected end of life date for the Kubernetes release. This is necessary
+#                        when there is no EKS-A release in the eksa array above. Mutually exclusive
+#                        with `endOfLifeIn`.
+kube:
+- version: '1.28'
+  releasedIn: '0.18'
+  expectedEndOfLifeDate: 2024-12-01
+
+- version: '1.27'
+  releasedIn: '0.16'
+  expectedEndOfLifeDate: 2024-08-01
+
+- version: '1.26'
+  releasedIn: '0.15'
+  expectedEndOfLifeDate: 2024-06-01
+
+- version: '1.25'
+  releasedIn: '0.14'
+  expectedEndOfLifeDate: 2024-05-01
+
+- version: '1.24'
+  releasedIn: '0.12'
+  expectedEndOfLifeDate: 2024-02-01
+
+- version: '1.23'
+  releasedIn: '0.11'
+  endOfLifeIn: '0.15'
+
+- version: '1.22'
+  releasedIn: '0.8'
+  endOfLifeIn: '0.16'
+#
+#- version: '1.21'
+#  releasedIn: '0.5'
+#  endOfLifeIn: '0.15'
+#
+#- version: '1.20'
+#  releasedIn: '0.5'
+#  endOfLifeIn: '0.13'

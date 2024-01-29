@@ -1,0 +1,26 @@
+{{ $versionSupport := $.Page.Site.Data.version_support }}
+<table>
+    <tr>
+        <th>Kubernetes Version</th>
+        <th>Release Date</th>
+        <th>Support End</th>
+    </tr>
+{{ range $versionSupport.kube }}
+    {{ $released := where $versionSupport.eksa "version" .releasedIn }}
+    {{ $released := (index $released 0).released | time | dateFormat "January 1, 2006" }}
+
+    {{ $eol := "" }}
+    {{ if eq .expectedEndOfLifeDate nil }}
+        {{ $eol = where $versionSupport.eksa "version" .endOfLifeIn }}
+        {{ $eol = (index $eol 0).released }}
+        {{ $eol = $eol | time | dateFormat "January 1, 2006" }}
+    {{ else }}
+        {{ $eol = .expectedEndOfLifeDate | time | dateFormat "January, 2006" }}
+    {{ end }}
+    <tr>
+        <td>{{ .version }}</td>
+        <td>{{ $released }}</td>
+        <td>{{ $eol }}</td>
+    </tr>
+{{ end }}
+</table>

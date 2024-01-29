@@ -191,7 +191,7 @@ Modifying the labels associated with a worker node group configuration will caus
 the existing nodes associated with the configuration.
 
 ### workerNodeGroupConfigurations.kubernetesVersion
-The Kubernetes version you want to use for this worker node group. [Supported values]({{< relref "../../concepts/support-versions/#kubernetes-support" >}}): `1.28`, `1.27`, `1.26`, `1.25`, `1.24`
+The Kubernetes version you want to use for this worker node group. [Supported values]({{< relref "../../concepts/support-versions/#kubernetes-versions" >}}): `1.28`, `1.27`, `1.26`, `1.25`, `1.24`
 
 Must be less than or equal to the cluster `kubernetesVersion` defined at the root level of the cluster spec. The worker node kubernetesVersion must be no more than two minor Kubernetes versions lower than the cluster control plane's Kubernetes version. Removing `workerNodeGroupConfiguration.kubernetesVersion` will trigger an upgrade of the node group to the `kubernetesVersion` defined at the root level of the cluster spec.
 
