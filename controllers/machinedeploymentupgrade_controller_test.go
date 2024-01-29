@@ -144,7 +144,8 @@ func TestMDUpgradeObjectDoesNotExist(t *testing.T) {
 func getObjectsForMDUpgradeTest() (*clusterv1.Cluster, *clusterv1.Machine, *corev1.Node, *anywherev1.MachineDeploymentUpgrade, *anywherev1.NodeUpgrade) {
 	cluster := generateCluster()
 	node := generateNode()
-	machine := generateMachine(cluster, node)
+	kubeadmConfig := generateKubeadmConfig()
+	machine := generateMachine(cluster, node, kubeadmConfig)
 	nodeUpgrade := generateNodeUpgrade(machine)
 	mdUpgrade := generateMDUpgrade(machine)
 	return cluster, machine, node, mdUpgrade, nodeUpgrade
