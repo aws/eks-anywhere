@@ -192,6 +192,12 @@ func (c *createTestSetup) expectCreateWorkload(err1, err2, err3, err4 error) {
 	)
 }
 
+func (c *createTestSetup) expectInstallResourcesOnManagementTask(err error) {
+	gomock.InOrder(
+		c.provider.EXPECT().PostWorkloadInit(c.ctx, c.workloadCluster, c.clusterSpec).Return(err),
+	)
+}
+
 func TestCreateRunSuccess(t *testing.T) {
 	test := newCreateTest(t)
 	test.expectSetup()
@@ -200,6 +206,7 @@ func TestCreateRunSuccess(t *testing.T) {
 	test.expectCAPIInstall(nil, nil, nil)
 	test.expectInstallEksaComponentsBootstrap(nil, nil, nil, nil, nil, nil)
 	test.expectCreateWorkload(nil, nil, nil, nil)
+	test.expectInstallResourcesOnManagementTask(nil)
 
 	err := test.run()
 	if err != nil {
@@ -556,5 +563,27 @@ func TestCreateUpdateSecretsFailure(t *testing.T) {
 	err := test.run()
 	if err == nil {
 		t.Fatalf("expected error from task")
+	}
+}
+
+func TestCreatePostWorkloadInitFailure(t *testing.T) {
+	c := newCreateTest(t)
+	c.expectSetup()
+	c.expectCreateBootstrap()
+	c.expectPreflightValidationsToPass()
+	c.expectCAPIInstall(nil, nil, nil)
+	c.expectInstallEksaComponentsBootstrap(nil, nil, nil, nil, nil, nil)
+	c.expectCreateWorkload(nil, nil, nil, nil)
+
+	c.expectInstallResourcesOnManagementTask(fmt.Errorf("test"))
+
+	c.clusterManager.EXPECT().SaveLogsManagementCluster(c.ctx, c.clusterSpec, c.bootstrapCluster)
+	c.clusterManager.EXPECT().SaveLogsWorkloadCluster(c.ctx, c.provider, c.clusterSpec, c.workloadCluster)
+
+	c.writer.EXPECT().Write(fmt.Sprintf("%s-checkpoint.yaml", c.clusterSpec.Cluster.Name), gomock.Any())
+
+	err := c.run()
+	if err == nil {
+		t.Fatalf("Create.Run() expected to return an error %v", err)
 	}
 }
