@@ -194,7 +194,7 @@ spec:
           hostNetwork: true
           volumes:
           - hostPath:
-              path: /etc/kubernetes/admin.conf
+              path: /var/lib/kubeadm/admin.conf
             name: kubeconfig
         status: {}
       owner: root:root

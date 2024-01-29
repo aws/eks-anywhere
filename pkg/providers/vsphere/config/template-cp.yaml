@@ -283,7 +283,11 @@ spec:
           hostNetwork: true
           volumes:
           - hostPath:
+{{- if (eq .format "bottlerocket") }}
+              path: /var/lib/kubeadm/admin.conf
+{{- else }}
               path: /etc/kubernetes/admin.conf
+{{- end }}
             name: kubeconfig
         status: {}
       owner: root:root
