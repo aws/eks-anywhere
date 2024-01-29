@@ -82,6 +82,32 @@ func bundlesNamespacedKey(cluster *v1alpha1.Cluster, release *v1alpha1release.EK
 	return name, namespace
 }
 
+// GetManagementComponents returns the first VersionsBundle from the Bundles object for cluster's the management components version.
+func GetManagementComponents(ctx context.Context, client Client, cluster *v1alpha1.Cluster) (*ManagementComponents, error) {
+	managementComponentsVersion := cluster.ManagementComponentsVersion()
+	if managementComponentsVersion == "" {
+		if cluster.Spec.EksaVersion == nil {
+			return nil, fmt.Errorf("either management components version or cluster's EksaVersion need to be set")
+		}
+		managementComponentsVersion = string(*cluster.Spec.EksaVersion)
+	}
+
+	eksaReleaseName := v1alpha1release.GenerateEKSAReleaseName(managementComponentsVersion)
+	eksaRelease := &v1alpha1release.EKSARelease{}
+	err := client.Get(ctx, eksaReleaseName, constants.EksaSystemNamespace, eksaRelease)
+	if err != nil {
+		return nil, err
+	}
+
+	bundles := &v1alpha1release.Bundles{}
+	err = client.Get(ctx, eksaRelease.Spec.BundlesRef.Name, eksaRelease.Spec.BundlesRef.Namespace, bundles)
+	if err != nil {
+		return nil, err
+	}
+
+	return ManagementComponentsFromBundles(bundles), nil
+}
+
 // GetVersionsBundle gets the VersionsBundle that corresponds to KubernetesVersion.
 func GetVersionsBundle(version v1alpha1.KubernetesVersion, bundles *v1alpha1release.Bundles) (*v1alpha1release.VersionsBundle, error) {
 	return getVersionsBundleForKubernetesVersion(version, bundles)
