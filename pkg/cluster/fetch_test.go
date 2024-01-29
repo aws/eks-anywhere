@@ -15,6 +15,7 @@ import (
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/cluster/mocks"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
@@ -432,4 +433,152 @@ func TestManagementComponentsFromBundles(t *testing.T) {
 	}
 
 	g.Expect(got).To(Equal(want))
+}
+
+func TestGetManagementComponents(t *testing.T) {
+	tests := []struct {
+		name        string
+		clusterSpec *cluster.Spec
+		want        *cluster.ManagementComponents
+		wantErr     string
+	}{
+		{
+			name: "no management components version annotation",
+			clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
+				s.Cluster.Annotations = nil
+				s.Bundles = &releasev1.Bundles{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "bundles-1",
+						Namespace: "my-namespace",
+					},
+					Spec: releasev1.BundlesSpec{
+						VersionsBundles: []releasev1.VersionsBundle{
+							{
+								Eksa: releasev1.EksaBundle{
+									Version: "v0.0.0-dev",
+								},
+							},
+						},
+					},
+				}
+				s.EKSARelease = &releasev1.EKSARelease{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "eksa-v0-0-0-dev",
+						Namespace: constants.EksaSystemNamespace,
+					},
+					Spec: releasev1.EKSAReleaseSpec{
+						BundlesRef: releasev1.BundlesRef{
+							Name:      "bundles-1",
+							Namespace: "my-namespace",
+						},
+					},
+				}
+			}),
+			want: &cluster.ManagementComponents{
+				Eksa: releasev1.EksaBundle{
+					Version: "v0.0.0-dev",
+				},
+			},
+			wantErr: "",
+		},
+		{
+			name: "no management components version annotation and eksa version",
+			clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
+				s.Cluster.Annotations = nil
+				s.Cluster.Spec.EksaVersion = nil
+			}),
+			want:    nil,
+			wantErr: "either management components version or cluster's EksaVersion need to be set",
+		},
+		{
+			name: "with management components version annotation",
+			clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
+				eksaVersion := test.DevEksaVersion()
+				s.Cluster.Spec.EksaVersion = &eksaVersion
+				s.Cluster.SetManagementComponentsVersion("v0.0.1-dev")
+				s.Bundles = &releasev1.Bundles{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "bundles-2",
+						Namespace: "my-namespace",
+					},
+					Spec: releasev1.BundlesSpec{
+						VersionsBundles: []releasev1.VersionsBundle{
+							{
+								Eksa: releasev1.EksaBundle{
+									Version: "v0.0.1-dev",
+								},
+							},
+						},
+					},
+				}
+				s.EKSARelease = &releasev1.EKSARelease{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "eksa-v0-0-1-dev",
+						Namespace: constants.EksaSystemNamespace,
+					},
+					Spec: releasev1.EKSAReleaseSpec{
+						BundlesRef: releasev1.BundlesRef{
+							Name:      "bundles-2",
+							Namespace: "my-namespace",
+						},
+					},
+				}
+			}),
+			want: &cluster.ManagementComponents{
+				Eksa: releasev1.EksaBundle{
+					Version: "v0.0.1-dev",
+				},
+			},
+			wantErr: "",
+		},
+		{
+			name: "eksarelease not found",
+			clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
+				eksaVersion := test.DevEksaVersion()
+				s.Cluster.Spec.EksaVersion = &eksaVersion
+				s.Cluster.SetManagementComponentsVersion("v0.0.1-dev")
+				s.EKSARelease = &releasev1.EKSARelease{}
+			}),
+			want:    nil,
+			wantErr: "\"eksa-v0-0-1-dev\" not found",
+		},
+		{
+			name: "bundles not found",
+			clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
+				eksaVersion := test.DevEksaVersion()
+				s.Cluster.Spec.EksaVersion = &eksaVersion
+				s.Cluster.SetManagementComponentsVersion("v0.0.1-dev")
+				s.EKSARelease = &releasev1.EKSARelease{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "eksa-v0-0-1-dev",
+						Namespace: constants.EksaSystemNamespace,
+					},
+					Spec: releasev1.EKSAReleaseSpec{
+						BundlesRef: releasev1.BundlesRef{
+							Name:      "bundles-2",
+							Namespace: "my-namespace",
+						},
+					},
+				}
+			}),
+			want:    nil,
+			wantErr: " \"bundles-2\" not found",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			ctx := context.Background()
+
+			client := test.NewFakeKubeClient(tt.clusterSpec.Cluster, tt.clusterSpec.Bundles, tt.clusterSpec.EKSARelease)
+
+			vb, err := cluster.GetManagementComponents(ctx, client, tt.clusterSpec.Cluster)
+			if tt.wantErr != "" {
+				g.Expect(err).To(MatchError(ContainSubstring(tt.wantErr)))
+			} else {
+				g.Expect(err).To(BeNil())
+				g.Expect(vb).To(Equal(tt.want))
+			}
+		})
+	}
 }
