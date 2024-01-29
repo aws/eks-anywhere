@@ -346,7 +346,8 @@ func (s *MoveClusterManagementTask) Checkpoint() *task.CompletedTask {
 func (s *InstallEksaComponentsTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
 	if commandContext.ClusterSpec.Cluster.IsSelfManaged() {
 		logger.Info("Installing EKS-A custom components (CRD and controller) on workload cluster")
-		err := commandContext.ClusterManager.InstallCustomComponents(ctx, commandContext.ClusterSpec, commandContext.WorkloadCluster, commandContext.Provider)
+		managementComponents := cluster.ManagementComponentsFromBundles(commandContext.ClusterSpec.Bundles)
+		err := commandContext.ClusterManager.InstallCustomComponents(ctx, managementComponents, commandContext.ClusterSpec, commandContext.WorkloadCluster, commandContext.Provider)
 		if err != nil {
 			commandContext.SetError(err)
 			return &CollectDiagnosticsTask{}

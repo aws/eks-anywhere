@@ -10,6 +10,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/aws/eks-anywhere/pkg/cluster"
 	capiupgrader "github.com/aws/eks-anywhere/pkg/clusterapi"
 	eksaupgrader "github.com/aws/eks-anywhere/pkg/clustermanager"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
@@ -89,10 +90,24 @@ func (uc *upgradeClusterOptions) upgradePlanCluster(ctx context.Context) error {
 		return err
 	}
 
-	componentChangeDiffs := eksaupgrader.EksaChangeDiff(currentSpec, newClusterSpec)
-	if componentChangeDiffs == nil {
-		componentChangeDiffs = &types.ChangeDiff{}
+	componentChangeDiffs := &types.ChangeDiff{}
+
+	if newClusterSpec.Cluster.IsSelfManaged() {
+		client, err := deps.UnAuthKubeClient.BuildClientFromKubeconfig(managementCluster.KubeconfigFile)
+		if err != nil {
+			return err
+		}
+
+		currentManagementComponents, err := cluster.GetManagementComponents(ctx, client, currentSpec.Cluster)
+		if err != nil {
+			return err
+		}
+
+		newManagementComponents := cluster.ManagementComponentsFromBundles(newClusterSpec.Bundles)
+		componentChangeDiffs.Append(eksaupgrader.EksaChangeDiff(currentManagementComponents, newManagementComponents))
+
 	}
+
 	componentChangeDiffs.Append(fluxupgrader.FluxChangeDiff(currentSpec, newClusterSpec))
 	componentChangeDiffs.Append(capiupgrader.CapiChangeDiff(currentSpec, newClusterSpec, deps.Provider))
 	componentChangeDiffs.Append(cilium.ChangeDiff(currentSpec, newClusterSpec))

@@ -299,17 +299,17 @@ func (mr *MockClusterManagerMockRecorder) InstallCAPI(arg0, arg1, arg2, arg3 int
 }
 
 // InstallCustomComponents mocks base method.
-func (m *MockClusterManager) InstallCustomComponents(arg0 context.Context, arg1 *cluster.Spec, arg2 *types.Cluster, arg3 providers.Provider) error {
+func (m *MockClusterManager) InstallCustomComponents(arg0 context.Context, arg1 *cluster.ManagementComponents, arg2 *cluster.Spec, arg3 *types.Cluster, arg4 providers.Provider) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "InstallCustomComponents", arg0, arg1, arg2, arg3)
+	ret := m.ctrl.Call(m, "InstallCustomComponents", arg0, arg1, arg2, arg3, arg4)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // InstallCustomComponents indicates an expected call of InstallCustomComponents.
-func (mr *MockClusterManagerMockRecorder) InstallCustomComponents(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+func (mr *MockClusterManagerMockRecorder) InstallCustomComponents(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InstallCustomComponents", reflect.TypeOf((*MockClusterManager)(nil).InstallCustomComponents), arg0, arg1, arg2, arg3)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InstallCustomComponents", reflect.TypeOf((*MockClusterManager)(nil).InstallCustomComponents), arg0, arg1, arg2, arg3, arg4)
 }
 
 // InstallMachineHealthChecks mocks base method.
@@ -472,18 +472,18 @@ func (mr *MockClusterManagerMockRecorder) SaveLogsWorkloadCluster(arg0, arg1, ar
 }
 
 // Upgrade mocks base method.
-func (m *MockClusterManager) Upgrade(arg0 context.Context, arg1 *types.Cluster, arg2, arg3 *cluster.Spec) (*types.ChangeDiff, error) {
+func (m *MockClusterManager) Upgrade(arg0 context.Context, arg1 *types.Cluster, arg2, arg3 *cluster.ManagementComponents, arg4 *cluster.Spec) (*types.ChangeDiff, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Upgrade", arg0, arg1, arg2, arg3)
+	ret := m.ctrl.Call(m, "Upgrade", arg0, arg1, arg2, arg3, arg4)
 	ret0, _ := ret[0].(*types.ChangeDiff)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Upgrade indicates an expected call of Upgrade.
-func (mr *MockClusterManagerMockRecorder) Upgrade(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+func (mr *MockClusterManagerMockRecorder) Upgrade(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Upgrade", reflect.TypeOf((*MockClusterManager)(nil).Upgrade), arg0, arg1, arg2, arg3)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Upgrade", reflect.TypeOf((*MockClusterManager)(nil).Upgrade), arg0, arg1, arg2, arg3, arg4)
 }
 
 // UpgradeCluster mocks base method.

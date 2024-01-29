@@ -28,20 +28,21 @@ import (
 
 type installerTest struct {
 	*WithT
-	ctx         context.Context
-	log         logr.Logger
-	client      *mocks.MockKubernetesClient
-	currentSpec *cluster.Spec
-	newSpec     *cluster.Spec
-	installer   *clustermanager.EKSAInstaller
-	cluster     *types.Cluster
+	ctx                         context.Context
+	log                         logr.Logger
+	client                      *mocks.MockKubernetesClient
+	currentManagementComponents *cluster.ManagementComponents
+	newManagementComponents     *cluster.ManagementComponents
+	currentSpec                 *cluster.Spec
+	newSpec                     *cluster.Spec
+	installer                   *clustermanager.EKSAInstaller
+	cluster                     *types.Cluster
 }
 
 func newInstallerTest(t *testing.T, opts ...clustermanager.EKSAInstallerOpt) *installerTest {
 	ctrl := gomock.NewController(t)
 	client := mocks.NewMockKubernetesClient(ctrl)
 	currentSpec := test.NewClusterSpec(func(s *cluster.Spec) {
-		s.VersionsBundles["1.19"].Eksa.Version = "v0.1.0"
 		s.Cluster = &anywherev1.Cluster{
 			Spec: anywherev1.ClusterSpec{
 				ControlPlaneConfiguration: anywherev1.ControlPlaneConfiguration{
@@ -52,16 +53,19 @@ func newInstallerTest(t *testing.T, opts ...clustermanager.EKSAInstallerOpt) *in
 				KubernetesVersion: "1.19",
 			},
 		}
+		s.Bundles.Spec.VersionsBundles[0].Eksa.Version = "v0.1.0"
 	})
 
 	return &installerTest{
-		WithT:       NewWithT(t),
-		ctx:         context.Background(),
-		log:         test.NewNullLogger(),
-		client:      client,
-		installer:   clustermanager.NewEKSAInstaller(client, files.NewReader(), opts...),
-		currentSpec: currentSpec,
-		newSpec:     currentSpec.DeepCopy(),
+		WithT:                       NewWithT(t),
+		ctx:                         context.Background(),
+		log:                         test.NewNullLogger(),
+		client:                      client,
+		installer:                   clustermanager.NewEKSAInstaller(client, files.NewReader(), opts...),
+		currentManagementComponents: cluster.ManagementComponentsFromBundles(currentSpec.Bundles),
+		newManagementComponents:     cluster.ManagementComponentsFromBundles(currentSpec.Bundles),
+		currentSpec:                 currentSpec,
+		newSpec:                     currentSpec.DeepCopy(),
 		cluster: &types.Cluster{
 			Name:           "cluster-name",
 			KubeconfigFile: "k.kubeconfig",
@@ -71,7 +75,7 @@ func newInstallerTest(t *testing.T, opts ...clustermanager.EKSAInstallerOpt) *in
 
 func TestEKSAInstallerInstallSuccessWithRealManifest(t *testing.T) {
 	tt := newInstallerTest(t)
-	tt.newSpec.VersionsBundles["1.19"].Eksa.Components.URI = "../../config/manifest/eksa-components.yaml"
+	tt.newManagementComponents.Eksa.Components.URI = "../../config/manifest/eksa-components.yaml"
 	file, err := os.ReadFile("../../config/manifest/eksa-components.yaml")
 	if err != nil {
 		t.Fatalf("could not read eksa-components")
@@ -83,7 +87,7 @@ func TestEKSAInstallerInstallSuccessWithRealManifest(t *testing.T) {
 	tt.client.EXPECT().WaitForDeployment(tt.ctx, tt.cluster, "30m0s", "Available", "eksa-controller-manager", "eksa-system")
 	tt.client.EXPECT().ApplyKubeSpecFromBytes(tt.ctx, tt.cluster, gomock.Any()).Times(2)
 
-	tt.Expect(tt.installer.Install(tt.ctx, test.NewNullLogger(), tt.cluster, tt.newSpec)).To(Succeed())
+	tt.Expect(tt.installer.Install(tt.ctx, test.NewNullLogger(), tt.cluster, tt.newManagementComponents, tt.newSpec)).To(Succeed())
 }
 
 func TestEKSAInstallerInstallFailComponentsDeployment(t *testing.T) {
@@ -159,7 +163,7 @@ func TestEKSAInstallerInstallFailEKSARelease(t *testing.T) {
 
 func TestEKSAInstallerInstallSuccessWithTestManifest(t *testing.T) {
 	tt := newInstallerTest(t)
-	tt.newSpec.VersionsBundles["1.19"].Eksa.Components.URI = "testdata/eksa_components.yaml"
+	tt.newManagementComponents.Eksa.Components.URI = "testdata/eksa_components.yaml"
 	tt.newSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host = "1.2.3.4"
 	tt.newSpec.Cluster.Spec.DatacenterRef.Kind = anywherev1.VSphereDatacenterKind
 	tt.newSpec.Cluster.Spec.ProxyConfiguration = &anywherev1.ProxyConfiguration{
@@ -221,12 +225,13 @@ func TestEKSAInstallerInstallSuccessWithTestManifest(t *testing.T) {
 	tt.client.EXPECT().WaitForDeployment(tt.ctx, tt.cluster, "30m0s", "Available", "eksa-controller-manager", "eksa-system")
 	tt.client.EXPECT().ApplyKubeSpecFromBytes(tt.ctx, tt.cluster, gomock.Any()).Times(2)
 
-	tt.Expect(tt.installer.Install(tt.ctx, test.NewNullLogger(), tt.cluster, tt.newSpec)).To(Succeed())
+	tt.Expect(tt.installer.Install(tt.ctx, test.NewNullLogger(), tt.cluster, tt.newManagementComponents, tt.newSpec)).To(Succeed())
 }
 
 func TestEKSAInstallerInstallSuccessWithNoTimeout(t *testing.T) {
 	tt := newInstallerTest(t, clustermanager.WithEKSAInstallerNoTimeouts())
-	tt.newSpec.VersionsBundles["1.19"].Eksa.Components.URI = "../../config/manifest/eksa-components.yaml"
+	newManagementComponents := cluster.ManagementComponentsFromBundles(tt.newSpec.Bundles)
+	newManagementComponents.Eksa.Components.URI = "../../config/manifest/eksa-components.yaml"
 	tt.client.EXPECT().Apply(tt.ctx, tt.cluster.KubeconfigFile, gomock.AssignableToTypeOf(&appsv1.Deployment{}))
 	file, err := os.ReadFile("../../config/manifest/eksa-components.yaml")
 	if err != nil {
@@ -238,34 +243,34 @@ func TestEKSAInstallerInstallSuccessWithNoTimeout(t *testing.T) {
 	tt.client.EXPECT().WaitForDeployment(tt.ctx, tt.cluster, maxTime.String(), "Available", "eksa-controller-manager", "eksa-system")
 	tt.client.EXPECT().ApplyKubeSpecFromBytes(tt.ctx, tt.cluster, gomock.Any()).Times(2)
 
-	tt.Expect(tt.installer.Install(tt.ctx, test.NewNullLogger(), tt.cluster, tt.newSpec)).To(Succeed())
+	tt.Expect(tt.installer.Install(tt.ctx, test.NewNullLogger(), tt.cluster, newManagementComponents, tt.newSpec)).To(Succeed())
 }
 
 func TestInstallerUpgradeNoSelfManaged(t *testing.T) {
 	tt := newInstallerTest(t)
 	tt.newSpec.Cluster.SetManagedBy("management-cluster")
 
-	tt.Expect(tt.installer.Upgrade(tt.ctx, tt.log, tt.cluster, tt.currentSpec, tt.newSpec)).To(BeNil())
+	tt.Expect(tt.installer.Upgrade(tt.ctx, tt.log, tt.cluster, tt.currentManagementComponents, tt.newManagementComponents, tt.newSpec)).To(BeNil())
 }
 
 func TestInstallerUpgradeNoChanges(t *testing.T) {
 	tt := newInstallerTest(t)
 
-	tt.Expect(tt.installer.Upgrade(tt.ctx, tt.log, tt.cluster, tt.currentSpec, tt.newSpec)).To(BeNil())
+	tt.Expect(tt.installer.Upgrade(tt.ctx, tt.log, tt.cluster, tt.currentManagementComponents, tt.newManagementComponents, tt.newSpec)).To(BeNil())
 }
 
 func TestInstallerUpgradeSuccess(t *testing.T) {
 	tt := newInstallerTest(t)
 
-	tt.newSpec.VersionsBundles["1.19"].Eksa.Version = "v0.2.0"
-	tt.newSpec.VersionsBundles["1.19"].Eksa.Components = v1alpha1.Manifest{
+	tt.newManagementComponents.Eksa.Version = "v0.2.0"
+	tt.newManagementComponents.Eksa.Components = v1alpha1.Manifest{
 		URI: "testdata/eksa_components.yaml",
 	}
 
 	wantDiff := &types.ChangeDiff{
 		ComponentReports: []types.ComponentChangeDiff{
 			{
-				ComponentName: "EKS-A",
+				ComponentName: "EKS-A Management",
 				NewVersion:    "v0.2.0",
 				OldVersion:    "v0.1.0",
 			},
@@ -275,16 +280,16 @@ func TestInstallerUpgradeSuccess(t *testing.T) {
 	tt.client.EXPECT().Apply(tt.ctx, tt.cluster.KubeconfigFile, gomock.AssignableToTypeOf(&appsv1.Deployment{}))
 	tt.client.EXPECT().Apply(tt.ctx, tt.cluster.KubeconfigFile, gomock.AssignableToTypeOf(&unstructured.Unstructured{}))
 	tt.client.EXPECT().WaitForDeployment(tt.ctx, tt.cluster, "30m0s", "Available", "eksa-controller-manager", "eksa-system")
-	tt.Expect(tt.installer.Upgrade(tt.ctx, tt.log, tt.cluster, tt.currentSpec, tt.newSpec)).To(Equal(wantDiff))
+	tt.Expect(tt.installer.Upgrade(tt.ctx, tt.log, tt.cluster, tt.currentManagementComponents, tt.newManagementComponents, tt.newSpec)).To(Equal(wantDiff))
 }
 
 func TestInstallerUpgradeInstallError(t *testing.T) {
 	tt := newInstallerTest(t)
 
-	tt.newSpec.VersionsBundles["1.19"].Eksa.Version = "v0.2.0"
+	tt.newManagementComponents.Eksa.Version = "v0.2.0"
 
 	// components file not set so this should return an error in failing to load manifest
-	_, err := tt.installer.Upgrade(tt.ctx, tt.log, tt.cluster, tt.currentSpec, tt.newSpec)
+	_, err := tt.installer.Upgrade(tt.ctx, tt.log, tt.cluster, tt.currentManagementComponents, tt.newManagementComponents, tt.newSpec)
 	tt.Expect(err).NotTo(BeNil())
 }
 

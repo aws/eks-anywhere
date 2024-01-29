@@ -2514,9 +2514,9 @@ func TestClusterManagerInstallCustomComponentsSuccess(t *testing.T) {
 	features.ClearCache()
 	tt := newTest(t)
 
-	tt.mocks.eksaComponents.EXPECT().Install(tt.ctx, logger.Get(), tt.cluster, tt.clusterSpec)
+	tt.mocks.eksaComponents.EXPECT().Install(tt.ctx, logger.Get(), tt.cluster, tt.managementComponents, tt.clusterSpec)
 	tt.mocks.provider.EXPECT().InstallCustomProviderComponents(tt.ctx, tt.cluster.KubeconfigFile)
-	if err := tt.clusterManager.InstallCustomComponents(tt.ctx, tt.clusterSpec, tt.cluster, tt.mocks.provider); err != nil {
+	if err := tt.clusterManager.InstallCustomComponents(tt.ctx, tt.managementComponents, tt.clusterSpec, tt.cluster, tt.mocks.provider); err != nil {
 		t.Errorf("ClusterManager.InstallCustomComponents() error = %v, wantErr nil", err)
 	}
 }
@@ -2524,9 +2524,9 @@ func TestClusterManagerInstallCustomComponentsSuccess(t *testing.T) {
 func TestClusterManagerInstallCustomComponentsErrorInstalling(t *testing.T) {
 	tt := newTest(t, clustermanager.WithRetrier(retrier.NewWithMaxRetries(2, 0)))
 
-	tt.mocks.eksaComponents.EXPECT().Install(tt.ctx, logger.Get(), tt.cluster, tt.clusterSpec).Return(errors.New("error from apply"))
+	tt.mocks.eksaComponents.EXPECT().Install(tt.ctx, logger.Get(), tt.cluster, tt.managementComponents, tt.clusterSpec).Return(errors.New("error from apply"))
 
-	if err := tt.clusterManager.InstallCustomComponents(tt.ctx, tt.clusterSpec, tt.cluster, nil); err == nil {
+	if err := tt.clusterManager.InstallCustomComponents(tt.ctx, tt.managementComponents, tt.clusterSpec, tt.cluster, nil); err == nil {
 		t.Error("ClusterManager.InstallCustomComponents() error = nil, wantErr not nil")
 	}
 }
@@ -2791,12 +2791,13 @@ func TestClusterManagerClusterSpecChangedAWSIamConfigChanged(t *testing.T) {
 
 type testSetup struct {
 	*WithT
-	clusterManager *clustermanager.ClusterManager
-	mocks          *clusterManagerMocks
-	ctx            context.Context
-	clusterSpec    *cluster.Spec
-	cluster        *types.Cluster
-	clusterName    string
+	clusterManager       *clustermanager.ClusterManager
+	mocks                *clusterManagerMocks
+	ctx                  context.Context
+	managementComponents *cluster.ManagementComponents
+	clusterSpec          *cluster.Spec
+	cluster              *types.Cluster
+	clusterName          string
 }
 
 func (tt *testSetup) expectPauseClusterReconciliation() *gomock.Call {
@@ -2824,12 +2825,14 @@ func (tt *testSetup) expectPauseClusterReconciliation() *gomock.Call {
 func newTest(t *testing.T, opts ...clustermanager.ClusterManagerOpt) *testSetup {
 	c, m := newClusterManager(t, opts...)
 	clusterName := "cluster-name"
+	clusterSpec := test.NewClusterSpec()
 	return &testSetup{
-		WithT:          NewWithT(t),
-		clusterManager: c,
-		mocks:          m,
-		ctx:            context.Background(),
-		clusterSpec:    test.NewClusterSpec(),
+		WithT:                NewWithT(t),
+		clusterManager:       c,
+		mocks:                m,
+		ctx:                  context.Background(),
+		managementComponents: cluster.ManagementComponentsFromBundles(clusterSpec.Bundles),
+		clusterSpec:          clusterSpec,
 		cluster: &types.Cluster{
 			Name: clusterName,
 		},
