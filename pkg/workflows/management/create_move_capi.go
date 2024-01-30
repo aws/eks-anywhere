@@ -19,7 +19,7 @@ func (s *moveClusterManagementTask) Run(ctx context.Context, commandContext *tas
 		return &workflows.CollectDiagnosticsTask{}
 	}
 
-	return nil
+	return &installEksaComponentsOnWorkloadTask{}
 }
 
 func (s *moveClusterManagementTask) Name() string {
