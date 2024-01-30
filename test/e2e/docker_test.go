@@ -362,8 +362,20 @@ func TestDockerKubernetes128CuratedPackagesDisabled(t *testing.T) {
 	runDisabledCuratedPackageInstallSimpleFlow(test) // other args as necessary
 }
 
-func TestDockerCuratedPackagesMetalLB(t *testing.T) {
-	RunMetalLBDockerTests(t)
+func TestDockerKubernetes125CuratedPackagesMetalLB(t *testing.T) {
+	RunMetalLBDockerTestsForKubeVersion(t, v1alpha1.Kube125)
+}
+
+func TestDockerKubernetes126CuratedPackagesMetalLB(t *testing.T) {
+	RunMetalLBDockerTestsForKubeVersion(t, v1alpha1.Kube126)
+}
+
+func TestDockerKubernetes127CuratedPackagesMetalLB(t *testing.T) {	
+	RunMetalLBDockerTestsForKubeVersion(t, v1alpha1.Kube127)
+}
+
+func TestDockerKubernetes128CuratedPackagesMetalLB(t *testing.T) {
+	RunMetalLBDockerTestsForKubeVersion(t, v1alpha1.Kube128)
 }
 
 // AWS IAM Auth
