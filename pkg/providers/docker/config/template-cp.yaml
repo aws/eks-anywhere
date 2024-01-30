@@ -276,6 +276,9 @@ spec:
     etcdadmBuiltin: true
     cloudInitConfig:
       version: {{.externalEtcdVersion}}
+{{- if .externalEtcdReleaseUrl }}
+      etcdReleaseURL: {{.externalEtcdReleaseUrl}}
+{{- end }}
 {{- if .etcdCipherSuites }}
     cipherSuites: {{.etcdCipherSuites}}
 {{- end }}

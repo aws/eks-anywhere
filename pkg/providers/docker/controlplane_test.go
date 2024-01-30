@@ -301,6 +301,7 @@ func TestControlPlaneUpgradeRolloutStrategy(t *testing.T) {
 func testClusterSpec(opts ...test.ClusterSpecOpt) *cluster.Spec {
 	name := "test"
 	namespace := "test-namespace"
+	devVersion := test.DevEksaVersion()
 
 	clusterOpts := make([]test.ClusterSpecOpt, 0)
 	clusterOpts = append(clusterOpts, func(s *cluster.Spec) {
@@ -322,6 +323,7 @@ func testClusterSpec(opts ...test.ClusterSpecOpt) *cluster.Spec {
 					Count: 3,
 				},
 				KubernetesVersion: "1.23",
+				EksaVersion:       &devVersion,
 				WorkerNodeGroupConfigurations: []anywherev1.WorkerNodeGroupConfiguration{
 					{
 						Count:           ptr.Int(3),

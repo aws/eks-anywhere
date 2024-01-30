@@ -113,6 +113,7 @@ func givenVersionsBundle() *cluster.VersionsBundle {
 				URI: "public.ecr.aws/eks-distro/kubernetes/pause:0.0.1",
 			},
 			EtcdVersion: "3.4.16",
+			EtcdURL:     "https://distro.eks.amazonaws.com/kubernetes-1-21/releases/4/artifacts/etcd/v3.4.16/etcd-linux-amd64-v3.4.16.tar.gz",
 		},
 		VersionsBundle: &releasev1alpha1.VersionsBundle{
 			KubeVersion: "1.21",
@@ -166,6 +167,7 @@ func givenManagementCluster() *types.Cluster {
 }
 
 func givenClusterConfig() *v1alpha1.Cluster {
+	devVersion := test.DevEksaVersion()
 	return &v1alpha1.Cluster{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "snow-test",
@@ -202,6 +204,7 @@ func givenClusterConfig() *v1alpha1.Cluster {
 				},
 			},
 			KubernetesVersion: "1.21",
+			EksaVersion:       &devVersion,
 			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{
 				{
 					Name:  "md-0",
