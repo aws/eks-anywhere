@@ -232,7 +232,9 @@ func (r *MachineDeploymentUpgradeReconciler) updateStatus(ctx context.Context, l
 			return fmt.Errorf("unmarshalling machineSpec: %v", err)
 		}
 		log.Info("Updating Spec in Machine Set", "machineset", ms.Name)
-		r.updateMachineSet(ctx, ms, machineSpec)
+		if err = r.updateMachineSet(ctx, ms, machineSpec); err != nil {
+			return err
+		}
 	}
 	return nil
 }
