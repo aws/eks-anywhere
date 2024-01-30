@@ -27,20 +27,38 @@ func validateOsFamily(spec *ClusterSpec) error {
 		if spec.MachineConfigs[groupRef.Name].OSFamily() != controlPlaneOsFamily {
 			return fmt.Errorf("worker node group osFamily cannot be different from control plane osFamily")
 		}
-		if group.UpgradeRolloutStrategy != nil {
-			if spec.MachineConfigs[groupRef.Name].OSFamily() != v1alpha1.DefaultOSFamily && group.UpgradeRolloutStrategy.Type == "InPlace" {
-				return fmt.Errorf("InPlace upgrades are only supported on the Ubuntu OS family")
-			}
-		}
 	}
 
 	if controlPlaneOsFamily != v1alpha1.Bottlerocket && spec.DatacenterConfig.Spec.OSImageURL == "" && spec.ControlPlaneMachineConfig().Spec.OSImageURL == "" {
 		return fmt.Errorf("please use bottlerocket as osFamily for auto-importing or provide a valid osImageURL")
 	}
 
+	return nil
+}
+
+func validateUpgradeRolloutStrategy(spec *ClusterSpec) error {
+	cpUpgradeRolloutStrategyType := v1alpha1.RollingUpdateStrategyType
+
 	if spec.ControlPlaneConfiguration().UpgradeRolloutStrategy != nil {
-		if controlPlaneOsFamily != v1alpha1.DefaultOSFamily && spec.ControlPlaneConfiguration().UpgradeRolloutStrategy.Type == "InPlace" {
+		cpUpgradeRolloutStrategyType = spec.ControlPlaneConfiguration().UpgradeRolloutStrategy.Type
+		controlPlaneRef := spec.ControlPlaneConfiguration().MachineGroupRef
+		controlPlaneOsFamily := spec.MachineConfigs[controlPlaneRef.Name].OSFamily()
+
+		if controlPlaneOsFamily != v1alpha1.Ubuntu && cpUpgradeRolloutStrategyType == v1alpha1.InPlaceStrategyType {
 			return fmt.Errorf("InPlace upgrades are only supported on the Ubuntu OS family")
+		}
+	}
+
+	for _, group := range spec.Cluster.Spec.WorkerNodeGroupConfigurations {
+		groupRef := group.MachineGroupRef
+
+		if group.UpgradeRolloutStrategy != nil {
+			if spec.MachineConfigs[groupRef.Name].OSFamily() != v1alpha1.Ubuntu && group.UpgradeRolloutStrategy.Type == v1alpha1.InPlaceStrategyType {
+				return fmt.Errorf("InPlace upgrades are only supported on the Ubuntu OS family")
+			}
+			if group.UpgradeRolloutStrategy.Type != cpUpgradeRolloutStrategyType {
+				return fmt.Errorf("cannot specify different upgrade rollout strategy types for control plane and worker node group configurations")
+			}
 		}
 	}
 	return nil
@@ -218,7 +236,7 @@ func (r *minimumHardwareRequirements) Add(selector v1alpha1.HardwareSelector, mi
 	return nil
 }
 
-// validateminimumHardwareRequirements validates all requirements can be satisfied using hardware
+// validateMinimumHardwareRequirements validates all requirements can be satisfied using hardware
 // registered with catalogue.
 func validateMinimumHardwareRequirements(requirements minimumHardwareRequirements, catalogue *hardware.Catalogue) error {
 	// Count all hardware that meets the selector requirements for each requirement.
@@ -247,7 +265,7 @@ func validateMinimumHardwareRequirements(requirements minimumHardwareRequirement
 	return nil
 }
 
-// validateHardwareSatifiesOnlyOneSelector ensures hardware in allHardware meets one and only one
+// validateHardwareSatisfiesOnlyOneSelector ensures hardware in allHardware meets one and only one
 // selector in selectors. selectors uses the selectorSet construct to ensure we don't
 // operate on duplicate selectors given a selector can be re-used among groups as they may reference
 // the same TinkerbellMachineConfig.
