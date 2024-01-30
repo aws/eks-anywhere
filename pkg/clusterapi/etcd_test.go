@@ -14,15 +14,36 @@ import (
 
 func TestSetUbuntuConfigInEtcdCluster(t *testing.T) {
 	g := newApiBuilerTest(t)
+	eksaVersion := anywherev1.EksaVersion("v0.19.2")
+	g.clusterSpec.Cluster.Spec.EksaVersion = &eksaVersion
 	got := wantEtcdCluster()
-	v := "0.0.1"
+	versionBundle := g.clusterSpec.VersionsBundles["1.21"]
+
 	want := got.DeepCopy()
 	want.Spec.EtcdadmConfigSpec.Format = etcdbootstrapv1.Format("cloud-config")
 	want.Spec.EtcdadmConfigSpec.CloudInitConfig = &etcdbootstrapv1.CloudInitConfig{
-		Version:    v,
+		Version:        versionBundle.KubeDistro.EtcdVersion,
+		InstallDir:     "/usr/bin",
+		EtcdReleaseURL: versionBundle.KubeDistro.EtcdURL,
+	}
+	clusterapi.SetUbuntuConfigInEtcdCluster(got, versionBundle, string(eksaVersion))
+	g.Expect(got).To(Equal(want))
+}
+
+func TestSetUbuntuConfigInEtcdClusterNoEtcdUrl(t *testing.T) {
+	g := newApiBuilerTest(t)
+	eksaVersion := anywherev1.EksaVersion("v0.18.2")
+	g.clusterSpec.Cluster.Spec.EksaVersion = &eksaVersion
+	got := wantEtcdCluster()
+	versionBundle := g.clusterSpec.VersionsBundles["1.21"]
+
+	want := got.DeepCopy()
+	want.Spec.EtcdadmConfigSpec.Format = etcdbootstrapv1.Format("cloud-config")
+	want.Spec.EtcdadmConfigSpec.CloudInitConfig = &etcdbootstrapv1.CloudInitConfig{
+		Version:    versionBundle.KubeDistro.EtcdVersion,
 		InstallDir: "/usr/bin",
 	}
-	clusterapi.SetUbuntuConfigInEtcdCluster(got, v)
+	clusterapi.SetUbuntuConfigInEtcdCluster(got, versionBundle, string(eksaVersion))
 	g.Expect(got).To(Equal(want))
 }
 

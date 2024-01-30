@@ -398,6 +398,7 @@ spec:
     cloudInitConfig:
       version: 3.4.16
       installDir: "/usr/bin"
+      etcdReleaseURL: https://distro.eks.amazonaws.com/kubernetes-1-21/releases/4/artifacts/etcd/v3.4.16/etcd-linux-amd64-v3.4.16.tar.gz
     preEtcdadmCommands:
       - hostname "{{ ds.meta_data.hostname }}"
       - echo "::1         ipv6-localhost ipv6-loopback" >/etc/hosts

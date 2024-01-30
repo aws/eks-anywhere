@@ -323,6 +323,10 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec) (map[string]interface{}, erro
 	if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
 		values["externalEtcd"] = true
 		values["externalEtcdReplicas"] = clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.Count
+		etcdURL, _ := common.GetExternalEtcdReleaseURL(string(*clusterSpec.Cluster.Spec.EksaVersion), versionsBundle)
+		if etcdURL != "" {
+			values["externalEtcdReleaseUrl"] = etcdURL
+		}
 	}
 	if clusterSpec.AWSIamConfig != nil {
 		values["awsIamAuth"] = true

@@ -297,6 +297,10 @@ func buildTemplateMapCP(
 				}
 			}
 		}
+		etcdURL, _ := common.GetExternalEtcdReleaseURL(string(*clusterSpec.Cluster.Spec.EksaVersion), versionsBundle)
+		if etcdURL != "" {
+			values["externalEtcdReleaseUrl"] = etcdURL
+		}
 	}
 
 	if controlPlaneMachineSpec.OSFamily == anywherev1.Bottlerocket {

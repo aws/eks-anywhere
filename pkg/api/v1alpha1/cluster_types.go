@@ -82,8 +82,14 @@ type ClusterSpec struct {
 // EksaVersion is the semver identifying the release of eks-a used to populate the cluster components.
 type EksaVersion string
 
-// DevBuildVersion is the version string for the dev build of EKS-A.
-const DevBuildVersion = "v0.0.0-dev"
+const (
+	// DevBuildVersion is the version string for the dev build of EKS-A.
+	DevBuildVersion = "v0.0.0-dev"
+
+	// MinEksAVersionWithEtcdURL is the version from which the etcd url will be set
+	// for etcdadm to pull the etcd tarball if that binary isnt cached.
+	MinEksAVersionWithEtcdURL = "v0.19.0"
+)
 
 // Equal checks if two EksaVersions are equal.
 func (n *EksaVersion) Equal(o *EksaVersion) bool {

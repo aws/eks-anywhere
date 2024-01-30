@@ -7,6 +7,7 @@ import (
 	. "github.com/onsi/gomega"
 	"sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
 
+	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/providers/common"
 )
@@ -133,6 +134,49 @@ func TestGetCAPIBottlerocketSettingsConfig(t *testing.T) {
 			}
 
 			g.Expect(got).To(Equal(tt.expected))
+		})
+	}
+}
+
+func TestGetExternalEtcdReleaseURL(t *testing.T) {
+	g := NewWithT(t)
+	testcases := []struct {
+		name           string
+		clusterVersion string
+		etcdURL        string
+		err            error
+	}{
+		{
+			name:           "Pre-etcd url enabled version < 0.19.0",
+			clusterVersion: "v0.15.2",
+			etcdURL:        "",
+			err:            nil,
+		},
+		{
+			name:           "Etcd url enabled version = 0.19.0",
+			clusterVersion: "v0.19.0",
+			etcdURL:        test.VersionBundle().KubeDistro.EtcdURL,
+		},
+		{
+			name:           "Post etcd url enabled version > 0.19.0",
+			clusterVersion: "v0.21.0",
+			etcdURL:        test.VersionBundle().KubeDistro.EtcdURL,
+		},
+		{
+			name:           "Invalid semver for eks-a cluster version",
+			clusterVersion: "a.12.4.3.78",
+			err:            fmt.Errorf("invalid semver for clusterVersion: invalid major version in semver a.12.4.3.78: strconv.ParseInt: parsing \"\": invalid syntax"),
+		},
+	}
+	for _, tt := range testcases {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := common.GetExternalEtcdReleaseURL(tt.clusterVersion, test.VersionBundle())
+			if tt.err == nil {
+				g.Expect(err).ToNot(HaveOccurred())
+			} else {
+				g.Expect(err.Error()).To(Equal(tt.err.Error()))
+			}
+			g.Expect(got).To(Equal(tt.etcdURL))
 		})
 	}
 }

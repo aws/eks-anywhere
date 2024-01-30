@@ -80,6 +80,7 @@ type KubeDistro struct {
 	Pause               v1alpha1.Image
 	EtcdImage           v1alpha1.Image
 	EtcdVersion         string
+	EtcdURL             string
 	AwsIamAuthImage     v1alpha1.Image
 	KubeProxy           v1alpha1.Image
 }
@@ -200,9 +201,17 @@ func buildKubeDistro(eksd *eksdv1alpha1.Release) (*KubeDistro, error) {
 			if asset.Image != nil {
 				assets[asset.Name] = asset.Image
 			}
-		}
-		if component.Name == "etcd" {
-			kubeDistro.EtcdVersion = strings.TrimPrefix(component.GitTag, "v")
+
+			if component.Name == "etcd" {
+				kubeDistro.EtcdVersion = strings.TrimPrefix(component.GitTag, "v")
+
+				// Get archive uri for amd64
+				if asset.Archive != nil && len(asset.Arch) > 0 {
+					if asset.Arch[0] == "amd64" {
+						kubeDistro.EtcdURL = asset.Archive.URI
+					}
+				}
+			}
 		}
 	}
 

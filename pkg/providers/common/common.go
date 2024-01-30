@@ -12,9 +12,11 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
+	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/crypto"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
+	"github.com/aws/eks-anywhere/pkg/semver"
 	"github.com/aws/eks-anywhere/pkg/types"
 )
 
@@ -146,4 +148,27 @@ func GetCAPIBottlerocketSettingsConfig(config *v1alpha1.BottlerocketConfiguratio
 	}
 
 	return strings.Trim(string(marshaledConfig), "\n"), nil
+}
+
+// GetExternalEtcdReleaseURL returns a valid etcd URL  from version bundles if the eksaVersion is greater than
+// MinEksAVersionWithEtcdURL. Return "" if eksaVersion < MinEksAVersionWithEtcdURL to prevent etcd node rolled out.
+func GetExternalEtcdReleaseURL(clusterVersion string, versionBundle *cluster.VersionsBundle) (string, error) {
+	clusterVersionSemVer, err := semver.New(clusterVersion)
+	if err != nil {
+		return "", fmt.Errorf("invalid semver for clusterVersion: %v", err)
+	}
+	minEksAVersionWithEtcdURL, err := semver.New(v1alpha1.MinEksAVersionWithEtcdURL)
+	if err != nil {
+		return "", fmt.Errorf("invalid semver for etcd url enabled clusterVersion: %v", err)
+	}
+	devEksaVersion, err := semver.New(v1alpha1.DevBuildVersion)
+	if err != nil {
+		return "", fmt.Errorf("invalid semver for dev eksa version: %v", err)
+	}
+	if clusterVersionSemVer.Equal(minEksAVersionWithEtcdURL) || clusterVersionSemVer.GreaterThan(minEksAVersionWithEtcdURL) ||
+		clusterVersionSemVer.Equal(devEksaVersion) {
+		return versionBundle.KubeDistro.EtcdURL, nil
+	}
+	logger.V(4).Info(fmt.Sprintf("Eks-a cluster version is less than version %s. Skip setting etcd url", v1alpha1.MinEksAVersionWithEtcdURL))
+	return "", nil
 }

@@ -11,14 +11,19 @@ import (
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/providers/common"
 )
 
 // SetUbuntuConfigInEtcdCluster sets up the etcd config in EtcdadmCluster.
-func SetUbuntuConfigInEtcdCluster(etcd *etcdv1.EtcdadmCluster, version string) {
+func SetUbuntuConfigInEtcdCluster(etcd *etcdv1.EtcdadmCluster, versionsBundle *cluster.VersionsBundle, eksaVersion string) {
 	etcd.Spec.EtcdadmConfigSpec.Format = etcdbootstrapv1.Format("cloud-config")
 	etcd.Spec.EtcdadmConfigSpec.CloudInitConfig = &etcdbootstrapv1.CloudInitConfig{
-		Version:    version,
+		Version:    versionsBundle.KubeDistro.EtcdVersion,
 		InstallDir: "/usr/bin",
+	}
+	etcdURL, _ := common.GetExternalEtcdReleaseURL(eksaVersion, versionsBundle)
+	if etcdURL != "" {
+		etcd.Spec.EtcdadmConfigSpec.CloudInitConfig.EtcdReleaseURL = etcdURL
 	}
 }
 
