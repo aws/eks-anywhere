@@ -31,6 +31,7 @@ import (
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
+	"sigs.k8s.io/cluster-api/controllers/external"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 	"sigs.k8s.io/cluster-api/util/annotations"
 	"sigs.k8s.io/cluster-api/util/patch"
@@ -47,6 +48,7 @@ import (
 const (
 	controlPlaneUpgradeFinalizerName      = "controlplaneupgrades.anywhere.eks.amazonaws.com/finalizer"
 	kubeadmClusterConfigurationAnnotation = "controlplane.cluster.x-k8s.io/kubeadm-cluster-configuration"
+	cloneFromNameAnnotationInfraMachine   = "cluster.x-k8s.io/cloned-from-name"
 )
 
 // ControlPlaneUpgradeReconciler reconciles a ControlPlaneUpgradeReconciler object.
@@ -67,6 +69,7 @@ func NewControlPlaneUpgradeReconciler(client client.Client) *ControlPlaneUpgrade
 //+kubebuilder:rbac:groups=anywhere.eks.amazonaws.com,resources=controlplaneupgrades/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=anywhere.eks.amazonaws.com,resources=controlplaneupgrades/finalizers,verbs=update
 //+kubebuilder:rbac:groups=bootstrap.cluster.x-k8s.io,resources=kubeadmconfigs,verbs=get;list;watch;update;patch
+//+kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=tinkerbellmachines;vspheremachines,verbs=get;list;update;patch
 
 // Reconcile reconciles a ControlPlaneUpgrade object.
 // nolint:gocyclo
@@ -273,6 +276,10 @@ func (r *ControlPlaneUpgradeReconciler) updateResources(ctx context.Context, log
 		return fmt.Errorf("updating kubeadm config: %v", err)
 	}
 
+	if err := r.updateInfraMachine(ctx, log, kcpSpec, machine); err != nil {
+		return fmt.Errorf("updating infra machine: %v", err)
+	}
+
 	return nil
 }
 
@@ -307,6 +314,30 @@ func (r *ControlPlaneUpgradeReconciler) updateKubeadmConfig(ctx context.Context,
 		return fmt.Errorf("patching KubeadmConfig %s for Machine %s: %v", kc.Name, machine.Name, err)
 	}
 
+	return nil
+}
+
+func (r *ControlPlaneUpgradeReconciler) updateInfraMachine(ctx context.Context, log logr.Logger, kcpSpec *controlplanev1.KubeadmControlPlaneSpec, machine *clusterv1.Machine) error {
+	infraMachineObj, err := external.Get(ctx, r.client, &machine.Spec.InfrastructureRef, machine.Namespace)
+	if err != nil {
+		return fmt.Errorf("retrieving infra machine %s for machine %s: %v", machine.Spec.InfrastructureRef.Name, machine.Name, err)
+	}
+	patchHelper, err := patch.NewHelper(infraMachineObj, r.client)
+	if err != nil {
+		return err
+	}
+	log.Info("Updating infra machine template annotation in infra machine", "InfrastructureRef.Name", kcpSpec.MachineTemplate.InfrastructureRef.Name)
+	// Update the cloned-from-name annotation to match the updated infra machine template name in KubeadmControlPlane
+	annotations := infraMachineObj.GetAnnotations()
+	if annotations == nil {
+		annotations = make(map[string]string)
+	}
+	annotations[cloneFromNameAnnotationInfraMachine] = kcpSpec.MachineTemplate.InfrastructureRef.Name
+	infraMachineObj.SetAnnotations(annotations)
+
+	if err := patchHelper.Patch(ctx, infraMachineObj); err != nil {
+		return fmt.Errorf("updating spec for infra machine %s: %v", infraMachineObj.GetName(), err)
+	}
 	return nil
 }
 

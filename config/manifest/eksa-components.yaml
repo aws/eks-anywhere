@@ -7330,6 +7330,16 @@ rules:
   - update
   - watch
 - apiGroups:
+  - infrastructure.cluster.x-k8s.io
+  resources:
+  - tinkerbellmachines
+  - vspheremachines
+  verbs:
+  - get
+  - list
+  - patch
+  - update
+- apiGroups:
   - packages.eks.amazonaws.com
   resources:
   - packages
