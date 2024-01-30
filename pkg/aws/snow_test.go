@@ -35,7 +35,7 @@ func TestLoadConfigWithSnow(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			g := newAwsTest(t)
-			_, err := aws.LoadConfig(g.ctx, aws.WithSnowEndpointAccess("device-ip", tt.certsFilePath, ""))
+			_, err := aws.LoadConfig(g.ctx, aws.WithSnowEndpointAccess("", tt.certsFilePath, ""))
 			if tt.wantErr == "" {
 				g.Expect(err).To(Succeed())
 			} else {
