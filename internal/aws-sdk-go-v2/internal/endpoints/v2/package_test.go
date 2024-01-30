@@ -2,14 +2,15 @@ package endpoints_test
 
 import (
 	"bytes"
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/internal/endpoints/v2"
-	"github.com/aws/smithy-go/logging"
-	"github.com/google/go-cmp/cmp"
 	"log"
 	"regexp"
 	"strconv"
 	"testing"
+
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/internal/endpoints/v2"
+	"github.com/aws/smithy-go/logging"
+	"github.com/google/go-cmp/cmp"
 )
 
 type testCase struct {
@@ -28,7 +29,6 @@ var partitionRegexp = struct {
 	Aws    *regexp.Regexp
 	AwsIso *regexp.Regexp
 }{
-
 	Aws:    regexp.MustCompile("^(us|eu|ap|sa|ca|me|af)\\-\\w+\\-\\d+$"),
 	AwsIso: regexp.MustCompile("^us\\-iso\\-\\w+\\-\\d+$"),
 }

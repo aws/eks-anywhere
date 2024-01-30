@@ -144,7 +144,7 @@ var testPartitions = Partitions{
 }
 
 func TestResolveEndpoint(t *testing.T) {
-	var cases = map[string]struct {
+	cases := map[string]struct {
 		Region   string
 		Options  Options
 		Expected aws.Endpoint

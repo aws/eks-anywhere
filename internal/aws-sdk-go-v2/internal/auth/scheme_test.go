@@ -7,7 +7,6 @@ import (
 )
 
 func TestV4(t *testing.T) {
-
 	propsV4 := smithy.Properties{}
 
 	propsV4.Set("authSchemes", interface{}([]interface{}{
@@ -37,11 +36,9 @@ func TestV4(t *testing.T) {
 	if v4Scheme.Name != "sigv4" {
 		t.Fatalf("Did not get expected AuthenticationSchemeV4 signer version name")
 	}
-
 }
 
 func TestV4A(t *testing.T) {
-
 	propsV4A := smithy.Properties{}
 
 	propsV4A.Set("authSchemes", []interface{}{
@@ -71,7 +68,6 @@ func TestV4A(t *testing.T) {
 	if v4AScheme.Name != "sigv4a" {
 		t.Fatalf("Did not get expected AuthenticationSchemeV4A signer version name")
 	}
-
 }
 
 func TestV4S3Express(t *testing.T) {
