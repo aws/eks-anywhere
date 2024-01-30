@@ -111,6 +111,7 @@ func NewClusterSpecValidator(assertions ...ClusterSpecAssertion) *ClusterSpecVal
 		AssertOSImageURL,
 		AssertTinkerbellIPAndControlPlaneIPNotSame,
 		AssertHookRetrievableWithoutProxy,
+		AssertUpgradeRolloutStrategyValid,
 	)
 	v.Register(assertions...)
 	return &v

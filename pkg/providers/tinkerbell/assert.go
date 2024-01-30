@@ -90,6 +90,11 @@ func AssertOsFamilyValid(spec *ClusterSpec) error {
 	return validateOsFamily(spec)
 }
 
+// AssertUpgradeRolloutStrategyValid ensures that the upgrade rollout strategy is valid for both CP and worker node configurations.
+func AssertUpgradeRolloutStrategyValid(spec *ClusterSpec) error {
+	return validateUpgradeRolloutStrategy(spec)
+}
+
 // AssertOSImageURL ensures that the OSImageURL value is either set at the datacenter config level or set for each machine config and not at both levels.
 func AssertOSImageURL(spec *ClusterSpec) error {
 	return validateOSImageURL(spec)

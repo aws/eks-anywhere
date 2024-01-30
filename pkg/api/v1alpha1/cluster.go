@@ -482,7 +482,7 @@ func validateWorkerNodeGroups(clusterConfig *Cluster) error {
 			return fmt.Errorf("validating autoscaling configuration: %v", err)
 		}
 
-		if err := validateMDUpgradeRolloutStrategy(&workerNodeGroupConfig); err != nil {
+		if err := validateMDUpgradeRolloutStrategy(&workerNodeGroupConfig, clusterConfig.Spec.DatacenterRef.Kind); err != nil {
 			return fmt.Errorf("validating upgrade rollout strategy configuration: %v", err)
 		}
 
@@ -832,36 +832,45 @@ func validateCPUpgradeRolloutStrategy(clusterConfig *Cluster) error {
 		return nil
 	}
 
-	if cpUpgradeRolloutStrategy.Type != "RollingUpdate" && cpUpgradeRolloutStrategy.Type != "InPlace" {
+	switch cpUpgradeRolloutStrategy.Type {
+	case RollingUpdateStrategyType:
+		if cpUpgradeRolloutStrategy.RollingUpdate.MaxSurge < 0 {
+			return fmt.Errorf("ControlPlaneConfiguration: maxSurge for control plane cannot be a negative value")
+		}
+		if cpUpgradeRolloutStrategy.RollingUpdate.MaxSurge > 1 {
+			return fmt.Errorf("ControlPlaneConfiguration: maxSurge for control plane must be 0 or 1")
+		}
+	case InPlaceStrategyType:
+		if clusterConfig.Spec.DatacenterRef.Kind != TinkerbellDatacenterKind {
+			return fmt.Errorf("ControlPlaneConfiguration: 'InPlace' upgrade rollout strategy type is only supported on Bare Metal")
+		}
+	default:
 		return fmt.Errorf("ControlPlaneConfiguration: only 'RollingUpdate' and 'InPlace' are supported for upgrade rollout strategy type")
-	}
-
-	if cpUpgradeRolloutStrategy.RollingUpdate.MaxSurge < 0 {
-		return fmt.Errorf("ControlPlaneConfiguration: maxSurge for control plane cannot be a negative value")
-	}
-
-	if cpUpgradeRolloutStrategy.RollingUpdate.MaxSurge > 1 {
-		return fmt.Errorf("ControlPlaneConfiguration: maxSurge for control plane must be 0 or 1")
 	}
 
 	return nil
 }
 
-func validateMDUpgradeRolloutStrategy(w *WorkerNodeGroupConfiguration) error {
+func validateMDUpgradeRolloutStrategy(w *WorkerNodeGroupConfiguration, datacenterRefKind string) error {
 	if w.UpgradeRolloutStrategy == nil {
 		return nil
 	}
 
-	if w.UpgradeRolloutStrategy.Type != "RollingUpdate" && w.UpgradeRolloutStrategy.Type != "InPlace" {
+	switch w.UpgradeRolloutStrategy.Type {
+	case RollingUpdateStrategyType:
+		if w.UpgradeRolloutStrategy.RollingUpdate.MaxSurge < 0 || w.UpgradeRolloutStrategy.RollingUpdate.MaxUnavailable < 0 {
+			return fmt.Errorf("WorkerNodeGroupConfiguration: maxSurge and maxUnavailable values cannot be negative")
+		}
+
+		if w.UpgradeRolloutStrategy.RollingUpdate.MaxSurge == 0 && w.UpgradeRolloutStrategy.RollingUpdate.MaxUnavailable == 0 {
+			return fmt.Errorf("WorkerNodeGroupConfiguration: maxSurge and maxUnavailable not specified or are 0. maxSurge and maxUnavailable cannot both be 0")
+		}
+	case InPlaceStrategyType:
+		if datacenterRefKind != TinkerbellDatacenterKind {
+			return fmt.Errorf("WorkerNodeGroupConfiguration: 'InPlace' upgrade rollout strategy type is only supported on Bare Metal")
+		}
+	default:
 		return fmt.Errorf("WorkerNodeGroupConfiguration: only 'RollingUpdate' and 'InPlace' are supported for upgrade rollout strategy type")
-	}
-
-	if w.UpgradeRolloutStrategy.RollingUpdate.MaxSurge < 0 || w.UpgradeRolloutStrategy.RollingUpdate.MaxUnavailable < 0 {
-		return fmt.Errorf("WorkerNodeGroupConfiguration: maxSurge and maxUnavailable values cannot be negative")
-	}
-
-	if w.UpgradeRolloutStrategy.RollingUpdate.MaxSurge == 0 && w.UpgradeRolloutStrategy.RollingUpdate.MaxUnavailable == 0 {
-		return fmt.Errorf("WorkerNodeGroupConfiguration: maxSurge and maxUnavailable not specified or are 0. maxSurge and maxUnavailable cannot both be 0")
 	}
 
 	return nil
