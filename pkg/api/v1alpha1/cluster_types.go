@@ -1219,9 +1219,20 @@ func (a *AutoScalingConfiguration) Equal(other *AutoScalingConfiguration) bool {
 	return a.MaxCount == other.MaxCount && a.MinCount == other.MinCount
 }
 
+// UpgradeRolloutStrategyType defines the types of upgrade rollout strategies.
+type UpgradeRolloutStrategyType string
+
+const (
+	// RollingUpdateStrategyType replaces the old machine by new one using rolling update.
+	RollingUpdateStrategyType UpgradeRolloutStrategyType = "RollingUpdate"
+
+	// InPlaceStrategyType upgrades the machines in-place without rolling out any new nodes.
+	InPlaceStrategyType UpgradeRolloutStrategyType = "InPlace"
+)
+
 // ControlPlaneUpgradeRolloutStrategy indicates rollout strategy for cluster.
 type ControlPlaneUpgradeRolloutStrategy struct {
-	Type          string                          `json:"type,omitempty"`
+	Type          UpgradeRolloutStrategyType      `json:"type,omitempty"`
 	RollingUpdate ControlPlaneRollingUpdateParams `json:"rollingUpdate,omitempty"`
 }
 
@@ -1232,7 +1243,7 @@ type ControlPlaneRollingUpdateParams struct {
 
 // WorkerNodesUpgradeRolloutStrategy indicates rollout strategy for cluster.
 type WorkerNodesUpgradeRolloutStrategy struct {
-	Type          string                         `json:"type,omitempty"`
+	Type          UpgradeRolloutStrategyType     `json:"type,omitempty"`
 	RollingUpdate WorkerNodesRollingUpdateParams `json:"rollingUpdate,omitempty"`
 }
 

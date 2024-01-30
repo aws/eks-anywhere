@@ -25,7 +25,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
 
-func TestAssertMachineConfigsValid_ValidSucceds(t *testing.T) {
+func TestAssertMachineConfigsValid_ValidSucceeds(t *testing.T) {
 	g := gomega.NewWithT(t)
 	clusterSpec := NewDefaultValidClusterSpecBuilder().Build()
 	g.Expect(tinkerbell.AssertMachineConfigsValid(clusterSpec)).To(gomega.Succeed())
@@ -1017,6 +1017,42 @@ func TestHardwareSatisfiesOnlyOneSelectorAssertion_NoLabelsMeetsNothing(t *testi
 
 	assertion := tinkerbell.HardwareSatisfiesOnlyOneSelectorAssertion(catalogue)
 	g.Expect(assertion(clusterSpec)).To(gomega.Succeed())
+}
+
+func TestAssertUpgradeRolloutStrategyValid_Succeeds(t *testing.T) {
+	g := gomega.NewWithT(t)
+	clusterSpec := NewDefaultValidClusterSpecBuilder().Build()
+	g.Expect(tinkerbell.AssertUpgradeRolloutStrategyValid(clusterSpec)).To(gomega.Succeed())
+}
+
+func TestAssertUpgradeRolloutStrategyValid_InPlaceFails(t *testing.T) {
+	g := gomega.NewWithT(t)
+
+	clusterSpec := NewDefaultValidClusterSpecBuilder().Build()
+	clusterSpec.Cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy = &eksav1alpha1.ControlPlaneUpgradeRolloutStrategy{
+		Type: "InPlace",
+	}
+
+	for _, mc := range clusterSpec.MachineConfigs {
+		// InPlace upgrades are only supported on the Ubuntu OS family
+		mc.Spec.OSFamily = eksav1alpha1.Bottlerocket
+	}
+
+	g.Expect(tinkerbell.AssertUpgradeRolloutStrategyValid(clusterSpec)).ToNot(gomega.Succeed())
+}
+
+func TestAssertUpgradeRolloutStrategyValid_UpgradeStrategyNotEqual(t *testing.T) {
+	g := gomega.NewWithT(t)
+
+	clusterSpec := NewDefaultValidClusterSpecBuilder().Build()
+	clusterSpec.Cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy = &eksav1alpha1.ControlPlaneUpgradeRolloutStrategy{
+		Type: "InPlace",
+	}
+	clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].UpgradeRolloutStrategy = &eksav1alpha1.WorkerNodesUpgradeRolloutStrategy{
+		Type: "RollingUpdate",
+	}
+
+	g.Expect(tinkerbell.AssertUpgradeRolloutStrategyValid(clusterSpec)).ToNot(gomega.Succeed())
 }
 
 // mergeHardwareSelectors merges m1 with m2. Values already in m1 will be overwritten by m2.

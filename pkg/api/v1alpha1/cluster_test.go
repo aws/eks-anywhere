@@ -3385,6 +3385,31 @@ func TestValidateCPUpgradeRolloutStrategy(t *testing.T) {
 				},
 			},
 		},
+		{
+			name:    "in place upgrade - tinkerbell",
+			wantErr: "",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					DatacenterRef: Ref{
+						Kind: TinkerbellDatacenterKind,
+					},
+					ControlPlaneConfiguration: ControlPlaneConfiguration{
+						UpgradeRolloutStrategy: &ControlPlaneUpgradeRolloutStrategy{Type: "InPlace"},
+					},
+				},
+			},
+		},
+		{
+			name:    "in place upgrade - provider not supported",
+			wantErr: "ControlPlaneConfiguration: 'InPlace' upgrade rollout strategy type is only supported on Bare Metal",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					ControlPlaneConfiguration: ControlPlaneConfiguration{
+						UpgradeRolloutStrategy: &ControlPlaneUpgradeRolloutStrategy{Type: "InPlace"},
+					},
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -3515,11 +3540,36 @@ func TestValidateMDUpgradeRolloutStrategy(t *testing.T) {
 				},
 			},
 		},
+		{
+			name:    "in place upgrade - tinkerbell",
+			wantErr: "",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					DatacenterRef: Ref{
+						Kind: TinkerbellDatacenterKind,
+					},
+					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
+						UpgradeRolloutStrategy: &WorkerNodesUpgradeRolloutStrategy{Type: "InPlace"},
+					}},
+				},
+			},
+		},
+		{
+			name:    "in place upgrade - provider not supported",
+			wantErr: "WorkerNodeGroupConfiguration: 'InPlace' upgrade rollout strategy type is only supported on Bare Metal",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
+						UpgradeRolloutStrategy: &WorkerNodesUpgradeRolloutStrategy{Type: "InPlace"},
+					}},
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			g := NewWithT(t)
-			err := validateMDUpgradeRolloutStrategy(&tt.cluster.Spec.WorkerNodeGroupConfigurations[0])
+			err := validateMDUpgradeRolloutStrategy(&tt.cluster.Spec.WorkerNodeGroupConfigurations[0], tt.cluster.Spec.DatacenterRef.Kind)
 			if tt.wantErr == "" {
 				g.Expect(err).To(BeNil())
 			} else {
