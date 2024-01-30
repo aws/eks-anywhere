@@ -14,7 +14,7 @@ func (s *installProviderSpecificResources) Run(ctx context.Context, commandConte
 		commandContext.SetError(err)
 		return &workflows.CollectDiagnosticsTask{}
 	}
-	return nil
+	return &moveClusterManagementTask{}
 }
 
 func (s *installProviderSpecificResources) Name() string {
