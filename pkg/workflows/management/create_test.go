@@ -203,6 +203,30 @@ func (c *createTestSetup) expectMoveManagement(err error) {
 		c.ctx, c.bootstrapCluster, c.workloadCluster, c.workloadCluster.Name, c.clusterSpec, gomock.Any()).Return(err)
 }
 
+func (c *createTestSetup) expectInstallEksaComponentsWorkload(err1, err2 error) {
+	gomock.InOrder(
+
+		c.eksdInstaller.EXPECT().InstallEksdCRDs(c.ctx, c.clusterSpec, c.workloadCluster).Return(err1),
+
+		c.eksaInstaller.EXPECT().Install(
+			c.ctx, logger.Get(), c.workloadCluster, c.managementComponents, c.clusterSpec),
+
+		c.provider.EXPECT().InstallCustomProviderComponents(
+			c.ctx, c.workloadCluster.KubeconfigFile),
+
+		c.eksdInstaller.EXPECT().InstallEksdManifest(
+			c.ctx, c.clusterSpec, c.workloadCluster),
+
+		c.clientFactory.EXPECT().BuildClientFromKubeconfig(
+			c.workloadCluster.KubeconfigFile).Return(c.client, nil),
+
+		c.client.EXPECT().ApplyServerSide(
+			c.ctx, constants.EKSACLIFieldManager, c.clusterSpec.Cluster, kubernetes.ApplyServerSideOptions{ForceOwnership: true}),
+
+		c.clusterCreator.EXPECT().Run(c.ctx, c.clusterSpec, *c.workloadCluster).Return(err2),
+	)
+}
+
 func TestCreateRunSuccess(t *testing.T) {
 	test := newCreateTest(t)
 	test.expectSetup()
@@ -213,6 +237,7 @@ func TestCreateRunSuccess(t *testing.T) {
 	test.expectCreateWorkload(nil, nil, nil, nil)
 	test.expectInstallResourcesOnManagementTask(nil)
 	test.expectMoveManagement(nil)
+	test.expectInstallEksaComponentsWorkload(nil, nil)
 
 	err := test.run()
 	if err != nil {
@@ -611,6 +636,52 @@ func TestCreateMoveCAPIFailure(t *testing.T) {
 	c.writer.EXPECT().Write(fmt.Sprintf("%s-checkpoint.yaml", c.clusterSpec.Cluster.Name), gomock.Any())
 
 	err := c.run()
+	if err == nil {
+		t.Fatalf("Create.Run() expected to return an error %v", err)
+	}
+}
+
+func TestCreateEKSAWorkloadComponentsFailure(t *testing.T) {
+	test := newCreateTest(t)
+	test.expectSetup()
+	test.expectPreflightValidationsToPass()
+	test.expectCreateBootstrap()
+	test.expectCAPIInstall(nil, nil, nil)
+	test.expectInstallEksaComponentsBootstrap(nil, nil, nil, nil, nil, nil)
+	test.expectCreateWorkload(nil, nil, nil, nil)
+	test.expectInstallResourcesOnManagementTask(nil)
+	test.expectMoveManagement(nil)
+
+	test.eksdInstaller.EXPECT().InstallEksdCRDs(test.ctx, test.clusterSpec, test.workloadCluster).Return(fmt.Errorf("test"))
+
+	test.clusterManager.EXPECT().SaveLogsManagementCluster(test.ctx, test.clusterSpec, test.bootstrapCluster)
+	test.clusterManager.EXPECT().SaveLogsWorkloadCluster(test.ctx, test.provider, test.clusterSpec, test.workloadCluster)
+
+	test.writer.EXPECT().Write(fmt.Sprintf("%s-checkpoint.yaml", test.clusterSpec.Cluster.Name), gomock.Any())
+
+	err := test.run()
+	if err == nil {
+		t.Fatalf("Create.Run() expected to return an error %v", err)
+	}
+}
+
+func TestCreateEKSAWorkloadFailure(t *testing.T) {
+	test := newCreateTest(t)
+	test.expectSetup()
+	test.expectPreflightValidationsToPass()
+	test.expectCreateBootstrap()
+	test.expectCAPIInstall(nil, nil, nil)
+	test.expectInstallEksaComponentsBootstrap(nil, nil, nil, nil, nil, nil)
+	test.expectCreateWorkload(nil, nil, nil, nil)
+	test.expectInstallResourcesOnManagementTask(nil)
+	test.expectMoveManagement(nil)
+	test.expectInstallEksaComponentsWorkload(nil, fmt.Errorf("test"))
+
+	test.clusterManager.EXPECT().SaveLogsManagementCluster(test.ctx, test.clusterSpec, test.bootstrapCluster)
+
+	test.writer.EXPECT().Write(fmt.Sprintf("%s-checkpoint.yaml", test.clusterSpec.Cluster.Name), gomock.Any())
+
+	err := test.run()
 	if err == nil {
 		t.Fatalf("Create.Run() expected to return an error %v", err)
 	}

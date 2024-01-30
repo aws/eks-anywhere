@@ -37,6 +37,38 @@ func (s *installEksaComponentsOnBootstrapTask) Checkpoint() *task.CompletedTask 
 	return nil
 }
 
+type installEksaComponentsOnWorkloadTask struct{}
+
+func (s *installEksaComponentsOnWorkloadTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
+	logger.Info("Installing EKS-A custom components on workload cluster")
+
+	err := installEKSAComponents(ctx, commandContext, commandContext.WorkloadCluster)
+	if err != nil {
+		commandContext.SetError(err)
+		return &workflows.CollectDiagnosticsTask{}
+	}
+
+	logger.Info("Applying cluster spec to workload cluster")
+	if err = commandContext.ClusterCreator.Run(ctx, commandContext.ClusterSpec, *commandContext.WorkloadCluster); err != nil {
+		commandContext.SetError(err)
+		return &workflows.CollectMgmtClusterDiagnosticsTask{}
+	}
+
+	return nil
+}
+
+func (s *installEksaComponentsOnWorkloadTask) Name() string {
+	return "eksa-components-workload-install"
+}
+
+func (s *installEksaComponentsOnWorkloadTask) Restore(ctx context.Context, commandContext *task.CommandContext, completedTask *task.CompletedTask) (task.Task, error) {
+	return nil, nil
+}
+
+func (s *installEksaComponentsOnWorkloadTask) Checkpoint() *task.CompletedTask {
+	return nil
+}
+
 func installEKSAComponents(ctx context.Context, commandContext *task.CommandContext, targetCluster *types.Cluster) error {
 	logger.Info("Installing EKS-D components")
 	if err := commandContext.EksdInstaller.InstallEksdCRDs(ctx, commandContext.ClusterSpec, targetCluster); err != nil {
