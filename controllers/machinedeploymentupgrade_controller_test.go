@@ -2,7 +2,10 @@ package controllers_test
 
 import (
 	"context"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
+	"strings"
 	"testing"
 
 	. "github.com/onsi/gomega"
@@ -15,18 +18,19 @@ import (
 
 	"github.com/aws/eks-anywhere/controllers"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
 
 func TestMDUpgradeReconcile(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
 
-	cluster, machine, node, mdUpgrade, nodeUpgrade := getObjectsForMDUpgradeTest()
+	cluster, machine, node, mdUpgrade, nodeUpgrade, md, ms := getObjectsForMDUpgradeTest()
 	nodeUpgrade.Name = fmt.Sprintf("%s-node-upgrader", machine.Name)
 	nodeUpgrade.Status = anywherev1.NodeUpgradeStatus{
 		Completed: true,
 	}
-	client := fake.NewClientBuilder().WithRuntimeObjects(cluster, machine, node, mdUpgrade, nodeUpgrade).Build()
+	client := fake.NewClientBuilder().WithRuntimeObjects(cluster, machine, node, mdUpgrade, nodeUpgrade, md, ms).Build()
 
 	r := controllers.NewMachineDeploymentUpgradeReconciler(client)
 	req := mdUpgradeRequest(mdUpgrade)
@@ -43,13 +47,13 @@ func TestMDUpgradeReconcileNodesNotReadyYet(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
 
-	cluster, machine, node, mdUpgrade, nodeUpgrade := getObjectsForMDUpgradeTest()
+	cluster, machine, node, mdUpgrade, nodeUpgrade, md, ms := getObjectsForMDUpgradeTest()
 	mdUpgrade.Status = anywherev1.MachineDeploymentUpgradeStatus{
 		Upgraded:       0,
 		RequireUpgrade: 1,
 	}
 	nodeUpgrade.Name = fmt.Sprintf("%s-node-upgrader", machine.Name)
-	client := fake.NewClientBuilder().WithRuntimeObjects(cluster, machine, node, mdUpgrade, nodeUpgrade).Build()
+	client := fake.NewClientBuilder().WithRuntimeObjects(cluster, machine, node, mdUpgrade, nodeUpgrade, md, ms).Build()
 
 	r := controllers.NewMachineDeploymentUpgradeReconciler(client)
 	req := mdUpgradeRequest(mdUpgrade)
@@ -63,13 +67,13 @@ func TestMDUpgradeReconcileDelete(t *testing.T) {
 	now := metav1.Now()
 	ctx := context.Background()
 
-	cluster, machine, node, mdUpgrade, nodeUpgrade := getObjectsForMDUpgradeTest()
+	cluster, machine, node, mdUpgrade, nodeUpgrade, md, ms := getObjectsForMDUpgradeTest()
 	nodeUpgrade.Name = fmt.Sprintf("%s-node-upgrader", machine.Name)
 	nodeUpgrade.Status = anywherev1.NodeUpgradeStatus{
 		Completed: true,
 	}
 	mdUpgrade.DeletionTimestamp = &now
-	client := fake.NewClientBuilder().WithRuntimeObjects(cluster, machine, node, mdUpgrade, nodeUpgrade).Build()
+	client := fake.NewClientBuilder().WithRuntimeObjects(cluster, machine, node, mdUpgrade, nodeUpgrade, md, ms).Build()
 
 	r := controllers.NewMachineDeploymentUpgradeReconciler(client)
 	req := mdUpgradeRequest(mdUpgrade)
@@ -86,13 +90,13 @@ func TestMDUpgradeReconcileDeleteNodeUgradeAlreadyDeleted(t *testing.T) {
 	now := metav1.Now()
 	ctx := context.Background()
 
-	cluster, machine, node, mdUpgrade, nodeUpgrade := getObjectsForMDUpgradeTest()
+	cluster, machine, node, mdUpgrade, nodeUpgrade, md, ms := getObjectsForMDUpgradeTest()
 	nodeUpgrade.Name = fmt.Sprintf("%s-node-upgrader", machine.Name)
 	nodeUpgrade.Status = anywherev1.NodeUpgradeStatus{
 		Completed: true,
 	}
 	mdUpgrade.DeletionTimestamp = &now
-	client := fake.NewClientBuilder().WithRuntimeObjects(cluster, machine, node, mdUpgrade, nodeUpgrade).Build()
+	client := fake.NewClientBuilder().WithRuntimeObjects(cluster, machine, node, mdUpgrade, nodeUpgrade, md, ms).Build()
 
 	r := controllers.NewMachineDeploymentUpgradeReconciler(client)
 	req := mdUpgradeRequest(mdUpgrade)
@@ -110,8 +114,8 @@ func TestMDUpgradeReconcileDeleteNodeUgradeAlreadyDeleted(t *testing.T) {
 func TestMDUpgradeReconcileNodeUpgraderCreate(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
-	cluster, machine, node, mdUpgrade, _ := getObjectsForMDUpgradeTest()
-	client := fake.NewClientBuilder().WithRuntimeObjects(cluster, machine, node, mdUpgrade).Build()
+	cluster, machine, node, mdUpgrade, _, md, ms := getObjectsForMDUpgradeTest()
+	client := fake.NewClientBuilder().WithRuntimeObjects(cluster, machine, node, mdUpgrade, md, ms).Build()
 
 	r := controllers.NewMachineDeploymentUpgradeReconciler(client)
 	req := mdUpgradeRequest(mdUpgrade)
@@ -128,12 +132,12 @@ func TestMDUpgradeObjectDoesNotExist(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
 
-	cluster, machine, node, mdUpgrade, nodeUpgrade := getObjectsForMDUpgradeTest()
+	cluster, machine, node, mdUpgrade, nodeUpgrade, md, ms := getObjectsForMDUpgradeTest()
 	nodeUpgrade.Name = fmt.Sprintf("%s-node-upgrade", machine.Name)
 	nodeUpgrade.Status = anywherev1.NodeUpgradeStatus{
 		Completed: true,
 	}
-	client := fake.NewClientBuilder().WithRuntimeObjects(cluster, machine, node, nodeUpgrade).Build()
+	client := fake.NewClientBuilder().WithRuntimeObjects(cluster, machine, node, nodeUpgrade, md, ms).Build()
 
 	r := controllers.NewMachineDeploymentUpgradeReconciler(client)
 	req := mdUpgradeRequest(mdUpgrade)
@@ -141,14 +145,76 @@ func TestMDUpgradeObjectDoesNotExist(t *testing.T) {
 	g.Expect(err).To(MatchError("machinedeploymentupgrades.anywhere.eks.amazonaws.com \"md-upgrade-request\" not found"))
 }
 
-func getObjectsForMDUpgradeTest() (*clusterv1.Cluster, *clusterv1.Machine, *corev1.Node, *anywherev1.MachineDeploymentUpgrade, *anywherev1.NodeUpgrade) {
+func TestMDUpgradeReconcileUpdateMachineSet(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+
+	cluster, machine, node, mdUpgrade, nodeUpgrade, md, ms := getObjectsForMDUpgradeTest()
+	nodeUpgrade.Name = fmt.Sprintf("%s-node-upgrader", machine.Name)
+	nodeUpgrade.Status = anywherev1.NodeUpgradeStatus{
+		Completed: true,
+	}
+	mdUpgrade.Status.Ready = true
+	client := fake.NewClientBuilder().WithRuntimeObjects(cluster, machine, node, mdUpgrade, nodeUpgrade, md, ms).Build()
+
+	r := controllers.NewMachineDeploymentUpgradeReconciler(client)
+	req := mdUpgradeRequest(mdUpgrade)
+	_, err := r.Reconcile(ctx, req)
+	g.Expect(err).ToNot(HaveOccurred())
+
+	ms = &clusterv1.MachineSet{}
+	err = client.Get(ctx, types.NamespacedName{Name: "my-md-ms", Namespace: "eksa-system"}, ms)
+	g.Expect(err).ToNot(HaveOccurred())
+	if !strings.Contains(*ms.Spec.Template.Spec.Version, "v1.28.1-eks-1-28-1") {
+		t.Fatalf("unexpected k8s version in capi machine: %s", *machine.Spec.Version)
+	}
+}
+
+func TestMDUpgradeReconcileUpdateMachineSetError(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+
+	cluster, machine, node, mdUpgrade, nodeUpgrade, md, ms := getObjectsForMDUpgradeTest()
+	nodeUpgrade.Name = fmt.Sprintf("%s-node-upgrader", machine.Name)
+	nodeUpgrade.Status = anywherev1.NodeUpgradeStatus{
+		Completed: true,
+	}
+	ms.Annotations[clusterv1.RevisionAnnotation] = "0"
+	client := fake.NewClientBuilder().WithRuntimeObjects(cluster, machine, node, mdUpgrade, nodeUpgrade, md, ms).Build()
+
+	r := controllers.NewMachineDeploymentUpgradeReconciler(client)
+	req := mdUpgradeRequest(mdUpgrade)
+	_, err := r.Reconcile(ctx, req)
+	g.Expect(err).To(MatchError(fmt.Sprintf("couldn't find machine set with revision version %v", md.Annotations[clusterv1.RevisionAnnotation])))
+}
+
+func TestMDObjectDoesNotExistError(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+
+	cluster, machine, node, mdUpgrade, nodeUpgrade, _, ms := getObjectsForMDUpgradeTest()
+	nodeUpgrade.Name = fmt.Sprintf("%s-node-upgrade", machine.Name)
+	nodeUpgrade.Status = anywherev1.NodeUpgradeStatus{
+		Completed: true,
+	}
+	client := fake.NewClientBuilder().WithRuntimeObjects(cluster, machine, node, nodeUpgrade, mdUpgrade, ms).Build()
+
+	r := controllers.NewMachineDeploymentUpgradeReconciler(client)
+	req := mdUpgradeRequest(mdUpgrade)
+	_, err := r.Reconcile(ctx, req)
+	g.Expect(err).To(MatchError("getting MachineDeployment my-md: machinedeployments.cluster.x-k8s.io \"my-md\" not found"))
+}
+
+func getObjectsForMDUpgradeTest() (*clusterv1.Cluster, *clusterv1.Machine, *corev1.Node, *anywherev1.MachineDeploymentUpgrade, *anywherev1.NodeUpgrade, *clusterv1.MachineDeployment, *clusterv1.MachineSet) {
 	cluster := generateCluster()
 	node := generateNode()
 	kubeadmConfig := generateKubeadmConfig()
 	machine := generateMachine(cluster, node, kubeadmConfig)
 	nodeUpgrade := generateNodeUpgrade(machine)
-	mdUpgrade := generateMDUpgrade(machine)
-	return cluster, machine, node, mdUpgrade, nodeUpgrade
+	mdUpgrade := generateMDUpgrade(cluster, machine)
+	md := generateMachineDeployment(cluster)
+	ms := generateMachineset(cluster)
+	return cluster, machine, node, mdUpgrade, nodeUpgrade, md, ms
 }
 
 func mdUpgradeRequest(mdUpgrade *anywherev1.MachineDeploymentUpgrade) reconcile.Request {
@@ -160,7 +226,10 @@ func mdUpgradeRequest(mdUpgrade *anywherev1.MachineDeploymentUpgrade) reconcile.
 	}
 }
 
-func generateMDUpgrade(machine *clusterv1.Machine) *anywherev1.MachineDeploymentUpgrade {
+func generateMDUpgrade(cluster *clusterv1.Cluster, machine *clusterv1.Machine) *anywherev1.MachineDeploymentUpgrade {
+	machineSpec := getMachineSpec(cluster)
+	machineSpecJSON, _ := json.Marshal(machineSpec)
+	machineSpecB64Encoded := base64.StdEncoding.EncodeToString(machineSpecJSON)
 	return &anywherev1.MachineDeploymentUpgrade{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "md-upgrade-request",
@@ -179,7 +248,56 @@ func generateMDUpgrade(machine *clusterv1.Machine) *anywherev1.MachineDeployment
 					Namespace: machine.Namespace,
 				},
 			},
-			KubernetesVersion: "v1.28.3-eks-1-28-9",
+			KubernetesVersion: "v1.28.1-eks-1-28-1",
+			MachineSpecData:   machineSpecB64Encoded,
 		},
+	}
+}
+
+func generateMachineset(cluster *clusterv1.Cluster) *clusterv1.MachineSet {
+	ms := getMachineSpec(cluster)
+	ms.Version = ptr.String("v1.27.1-eks-1-27-1")
+	return &clusterv1.MachineSet{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:        "my-md-ms",
+			Namespace:   "eksa-system",
+			Labels:      map[string]string{"cluster.x-k8s.io/deployment-name": "my-md"},
+			Annotations: map[string]string{clusterv1.RevisionAnnotation: "1"},
+		},
+		Spec: clusterv1.MachineSetSpec{
+			ClusterName: cluster.Name,
+			Replicas:    new(int32),
+			Template: clusterv1.MachineTemplateSpec{
+				Spec: *ms,
+			},
+		},
+	}
+}
+
+func generateMachineDeployment(cluster *clusterv1.Cluster) *clusterv1.MachineDeployment {
+	ms := getMachineSpec(cluster)
+	return &clusterv1.MachineDeployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:        "my-md",
+			Namespace:   "eksa-system",
+			Annotations: map[string]string{clusterv1.RevisionAnnotation: "1"},
+		},
+		Spec: clusterv1.MachineDeploymentSpec{
+			ClusterName: cluster.Name,
+			Replicas:    ptr.Int32(1),
+			Selector: metav1.LabelSelector{
+				MatchLabels: map[string]string{"cluster.x-k8s.io/deployment-name": "my-md"},
+			},
+			Template: clusterv1.MachineTemplateSpec{
+				Spec: *ms,
+			},
+		},
+	}
+}
+
+func getMachineSpec(cluster *clusterv1.Cluster) *clusterv1.MachineSpec {
+	return &clusterv1.MachineSpec{
+		ClusterName: cluster.Name,
+		Version:     ptr.String("v1.28.1-eks-1-28-1"),
 	}
 }
