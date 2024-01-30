@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	. "github.com/onsi/gomega"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -54,8 +55,7 @@ func TestMDReconcileComplete(t *testing.T) {
 	ctx := context.Background()
 	mdObjs := getObjectsForMD()
 
-	mdObjs.md.Spec.Replicas = pointer.Int32(1)
-	mdObjs.md.Status.UpdatedReplicas = 1
+	mdObjs.md.Status.UpdatedReplicas = *mdObjs.md.Spec.Replicas
 
 	runtimeObjs := []runtime.Object{mdObjs.md}
 	client := fake.NewClientBuilder().WithRuntimeObjects(runtimeObjs...).Build()
@@ -114,9 +114,23 @@ func TestMDReconcileMachineDeploymentUpgradeReady(t *testing.T) {
 	_, err := r.Reconcile(ctx, req)
 	g.Expect(err).ToNot(HaveOccurred())
 
+	// MachineDeploymentUpgrade object should still exist since the MD.Status.UpdatedReplicas != MD.Spec.Replicas
 	mdu := &anywherev1.MachineDeploymentUpgrade{}
 	err = client.Get(ctx, types.NamespacedName{Name: mdObjs.mdUpgrade.Name, Namespace: constants.EksaSystemNamespace}, mdu)
+	g.Expect(err).ToNot(HaveOccurred())
+
+	// Set UpdatedReplicas to desired replica count and ensure that the MachineDeploymentUpgrade object is deleted
+	mdObjs.md.Status.UpdatedReplicas = *mdObjs.md.Spec.Replicas
+
+	err = client.Update(ctx, mdObjs.md)
+	g.Expect(err).ToNot(HaveOccurred())
+
+	_, err = r.Reconcile(ctx, req)
+	g.Expect(err).ToNot(HaveOccurred())
+
+	err = client.Get(ctx, types.NamespacedName{Name: mdObjs.mdUpgrade.Name, Namespace: constants.EksaSystemNamespace}, mdu)
 	g.Expect(err).To(HaveOccurred())
+	g.Expect(apierrors.IsNotFound(err)).To(BeTrue())
 }
 
 func TestMDReconcileNotFound(t *testing.T) {
@@ -201,6 +215,7 @@ func generateMD(name string) *clusterv1.MachineDeployment {
 					Version: pointer.String("v1.28.3-eks-1-28-9"),
 				},
 			},
+			Replicas: pointer.Int32(1),
 		},
 	}
 }

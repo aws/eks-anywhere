@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	. "github.com/onsi/gomega"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -129,9 +130,22 @@ func TestKCPReconcileControlPlaneUpgradeReady(t *testing.T) {
 	_, err := r.Reconcile(ctx, req)
 	g.Expect(err).ToNot(HaveOccurred())
 
+	// ControlPlaneUpgrade object should still exist since the KCP.Status.UpdatedReplicas != KCP.Spec.Replicas
 	cpu := &anywherev1.ControlPlaneUpgrade{}
 	err = client.Get(ctx, types.NamespacedName{Name: kcpObjs.cpUpgrade.Name, Namespace: constants.EksaSystemNamespace}, cpu)
-	g.Expect(err).To(HaveOccurred())
+	g.Expect(err).ToNot(HaveOccurred())
+
+	// Set UpdatedReplicas to desired replica count and ensure that the ControlPlaneUpgrade object is deleted
+	kcpObjs.kcp.Status.UpdatedReplicas = *kcpObjs.kcp.Spec.Replicas
+
+	err = client.Update(ctx, kcpObjs.kcp)
+	g.Expect(err).ToNot(HaveOccurred())
+
+	_, err = r.Reconcile(ctx, req)
+	g.Expect(err).ToNot(HaveOccurred())
+
+	err = client.Get(ctx, types.NamespacedName{Name: kcpObjs.cpUpgrade.Name, Namespace: constants.EksaSystemNamespace}, cpu)
+	g.Expect(apierrors.IsNotFound(err)).To(BeTrue())
 }
 
 func TestKCPReconcileNotFound(t *testing.T) {
@@ -246,7 +260,8 @@ func generateKCP(name string) *controlplanev1.KubeadmControlPlane {
 					},
 				},
 			},
-			Version: k8s129,
+			Replicas: pointer.Int32(3),
+			Version:  k8s129,
 		},
 	}
 }

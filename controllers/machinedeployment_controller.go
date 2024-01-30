@@ -116,6 +116,21 @@ func (r *MachineDeploymentReconciler) reconcile(ctx context.Context, log logr.Lo
 		log.Info("MachineDeployment is ready, nothing else to reconcile for in place upgrade")
 		// Remove in-place-upgrade-needed annotation
 		delete(md.Annotations, mdInPlaceUpgradeNeededAnnotation)
+
+		mdUpgrade := &anywherev1.MachineDeploymentUpgrade{}
+		if err := r.client.Get(ctx, GetNamespacedNameType(mdUpgradeName(md.Name), constants.EksaSystemNamespace), mdUpgrade); err != nil {
+			if apierrors.IsNotFound(err) {
+				log.Info("MachineDeploymentUpgrade %s not found, it might already be deleted", mdUpgradeName(md.Name))
+				return ctrl.Result{}, nil
+			}
+			return ctrl.Result{}, fmt.Errorf("getting control plane upgrade object for deletion: %v", err)
+		}
+		if mdUpgrade.Status.Ready {
+			log.Info("Machine deployment upgrade complete, deleting object")
+			if err := r.client.Delete(ctx, mdUpgrade); err != nil {
+				return ctrl.Result{}, fmt.Errorf("deleting machine deployment upgrade object: %v", err)
+			}
+		}
 		return ctrl.Result{}, nil
 	}
 	mdUpgrade := &anywherev1.MachineDeploymentUpgrade{}
@@ -132,14 +147,6 @@ func (r *MachineDeploymentReconciler) reconcile(ctx context.Context, log logr.Lo
 			return ctrl.Result{}, nil
 		}
 		return ctrl.Result{}, fmt.Errorf("getting machine deployment upgrade for MachineDeployment %s: %v", md.Name, err)
-	}
-	if !mdUpgrade.Status.Ready {
-		return ctrl.Result{}, nil
-	}
-	// TODO: update status for templates and other resources
-	log.Info("Machine deployment upgrade complete, deleting object")
-	if err := r.client.Delete(ctx, mdUpgrade); err != nil {
-		return ctrl.Result{}, fmt.Errorf("deleting machine deployment upgrade object: %v", err)
 	}
 
 	return ctrl.Result{}, nil

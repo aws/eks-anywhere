@@ -115,12 +115,30 @@ func (r *KubeadmControlPlaneReconciler) reconcile(ctx context.Context, log logr.
 		log.Info("Stacked etcd validation failed, unable to reconcile for in place upgrade")
 		return ctrl.Result{}, err
 	}
+
 	if kcp.Spec.Replicas != nil && (*kcp.Spec.Replicas == kcp.Status.UpdatedReplicas) {
 		log.Info("KubeadmControlPlane is ready, nothing else to reconcile for in place upgrade")
 		// Remove in-place-upgrade-needed annotation
 		delete(kcp.Annotations, kcpInPlaceUpgradeNeededAnnotation)
+
+		cpUpgrade := &anywherev1.ControlPlaneUpgrade{}
+		if err := r.client.Get(ctx, GetNamespacedNameType(cpUpgradeName(kcp.Name), constants.EksaSystemNamespace), cpUpgrade); err != nil {
+			if apierrors.IsNotFound(err) {
+				log.Info("ControlPlaneUpgrade %s not found, it might already be deleted", cpUpgradeName(kcp.Name))
+				return ctrl.Result{}, nil
+			}
+			return ctrl.Result{}, fmt.Errorf("getting control plane upgrade object for deletion: %v", err)
+		}
+		// only delete the ControlPlaneUpgrade object if all kcp replicas are updated and the cpUpgrade is ready
+		if cpUpgrade.Status.Ready {
+			log.Info("Control plane upgrade complete, deleting object")
+			if err := r.client.Delete(ctx, cpUpgrade); err != nil {
+				return ctrl.Result{}, fmt.Errorf("deleting control plane upgrade object: %v", err)
+			}
+		}
 		return ctrl.Result{}, nil
 	}
+
 	cpUpgrade := &anywherev1.ControlPlaneUpgrade{}
 	if err := r.client.Get(ctx, GetNamespacedNameType(cpUpgradeName(kcp.Name), constants.EksaSystemNamespace), cpUpgrade); err != nil {
 		if apierrors.IsNotFound(err) {
@@ -139,14 +157,6 @@ func (r *KubeadmControlPlaneReconciler) reconcile(ctx context.Context, log logr.
 			return ctrl.Result{}, nil
 		}
 		return ctrl.Result{}, fmt.Errorf("getting control plane upgrade for KubeadmControlPlane %s: %v", kcp.Name, err)
-	}
-	if !cpUpgrade.Status.Ready {
-		return ctrl.Result{}, nil
-	}
-	// TODO: update status for templates and other resources
-	log.Info("Control plane upgrade complete, deleting object")
-	if err := r.client.Delete(ctx, cpUpgrade); err != nil {
-		return ctrl.Result{}, fmt.Errorf("deleting control plane upgrade object: %v", err)
 	}
 
 	return ctrl.Result{}, nil
