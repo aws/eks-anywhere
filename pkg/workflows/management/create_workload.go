@@ -42,7 +42,7 @@ func (s *createWorkloadClusterTask) Run(ctx context.Context, commandContext *tas
 		return &workflows.CollectDiagnosticsTask{}
 	}
 
-	return nil
+	return &installProviderSpecificResources{}
 }
 
 func (s *createWorkloadClusterTask) Name() string {
