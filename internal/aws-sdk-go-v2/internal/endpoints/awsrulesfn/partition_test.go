@@ -86,7 +86,6 @@ func TestGetPartition(t *testing.T) {
 
 	for n, c := range cases {
 		t.Run(n, func(t *testing.T) {
-
 			// monkey patch the partitions data structure
 			// thats used by the GetPartition func
 			partitions = mockPartitions

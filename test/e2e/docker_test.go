@@ -370,7 +370,7 @@ func TestDockerKubernetes126CuratedPackagesMetalLB(t *testing.T) {
 	RunMetalLBDockerTestsForKubeVersion(t, v1alpha1.Kube126)
 }
 
-func TestDockerKubernetes127CuratedPackagesMetalLB(t *testing.T) {	
+func TestDockerKubernetes127CuratedPackagesMetalLB(t *testing.T) {
 	RunMetalLBDockerTestsForKubeVersion(t, v1alpha1.Kube127)
 }
 
