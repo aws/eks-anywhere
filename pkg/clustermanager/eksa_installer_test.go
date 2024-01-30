@@ -20,6 +20,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clustermanager"
 	"github.com/aws/eks-anywhere/pkg/clustermanager/mocks"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/files"
 	"github.com/aws/eks-anywhere/pkg/types"
@@ -378,6 +379,88 @@ func TestSetManagerEnvVars(t *testing.T) {
 			g.Expect(tt.deployment).To(Equal(tt.want))
 		})
 	}
+}
+
+func TestEKSAInstallerNewUpgraderConfigMap(t *testing.T) {
+	tt := newInstallerTest(t)
+
+	tt.newManagementComponents.Eksa.Components.URI = "../../config/manifest/eksa-components.yaml"
+	file, err := os.ReadFile("../../config/manifest/eksa-components.yaml")
+	if err != nil {
+		t.Fatalf("could not read eksa-components")
+	}
+
+	tt.newSpec.Bundles = &v1alpha1.Bundles{}
+	tt.newSpec.EKSARelease = &v1alpha1.EKSARelease{}
+	manifest := string(file)
+	expectedObjectCount := strings.Count(manifest, "\n---\n") + 1
+	tt.client.EXPECT().Apply(tt.ctx, tt.cluster.KubeconfigFile, gomock.AssignableToTypeOf(&appsv1.Deployment{}))
+	tt.client.EXPECT().Apply(tt.ctx, tt.cluster.KubeconfigFile, gomock.Any()).Times(expectedObjectCount)
+	tt.client.EXPECT().WaitForDeployment(tt.ctx, tt.cluster, "30m0s", "Available", "eksa-controller-manager", "eksa-system")
+	tt.client.EXPECT().ApplyKubeSpecFromBytes(tt.ctx, tt.cluster, gomock.Any())
+	tt.client.EXPECT().ApplyKubeSpecFromBytes(tt.ctx, tt.cluster, gomock.Any())
+	tt.client.EXPECT().GetConfigMap(tt.ctx, tt.cluster.KubeconfigFile, gomock.Any(), gomock.Any()).Return(nil, errors.New("NotFound"))
+
+	tt.Expect(tt.installer.Install(tt.ctx, test.NewNullLogger(), tt.cluster, tt.newManagementComponents, tt.newSpec)).To(Succeed())
+}
+
+func TestEKSAInstallerNewUpgraderConfigMapFailure(t *testing.T) {
+	tt := newInstallerTest(t)
+
+	tt.newManagementComponents.Eksa.Components.URI = "../../config/manifest/eksa-components.yaml"
+	file, err := os.ReadFile("../../config/manifest/eksa-components.yaml")
+	if err != nil {
+		t.Fatalf("could not read eksa-components")
+	}
+
+	tt.newSpec.Bundles = &v1alpha1.Bundles{}
+	tt.newSpec.EKSARelease = &v1alpha1.EKSARelease{}
+	manifest := string(file)
+	expectedObjectCount := strings.Count(manifest, "\n---\n")
+	tt.client.EXPECT().Apply(tt.ctx, tt.cluster.KubeconfigFile, gomock.AssignableToTypeOf(&appsv1.Deployment{}))
+	tt.client.EXPECT().Apply(tt.ctx, tt.cluster.KubeconfigFile, gomock.Any()).Times(expectedObjectCount)
+	tt.client.EXPECT().WaitForDeployment(tt.ctx, tt.cluster, "30m0s", "Available", "eksa-controller-manager", "eksa-system")
+	tt.client.EXPECT().ApplyKubeSpecFromBytes(tt.ctx, tt.cluster, gomock.Any())
+	tt.client.EXPECT().GetConfigMap(tt.ctx, tt.cluster.KubeconfigFile, gomock.Any(), gomock.Any()).Return(nil, errors.New(""))
+	err = tt.installer.Install(tt.ctx, test.NewNullLogger(), tt.cluster, tt.newManagementComponents, tt.newSpec)
+
+	tt.Expect(err.Error()).To(ContainSubstring("getting upgrader images from bundle"))
+}
+
+func TestEKSAInstallerFailureApplyUpgraderConfigMap(t *testing.T) {
+	tt := newInstallerTest(t)
+
+	configMap := &corev1.ConfigMap{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "ConfigMap",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      constants.UpgraderConfigMapName,
+			Namespace: constants.EksaSystemNamespace,
+		},
+		Data: map[string]string{
+			"v1.28": "test-image",
+		},
+	}
+
+	tt.newManagementComponents.Eksa.Components.URI = "../../config/manifest/eksa-components.yaml"
+	file, err := os.ReadFile("../../config/manifest/eksa-components.yaml")
+	if err != nil {
+		t.Fatalf("could not read eksa-components")
+	}
+
+	manifest := string(file)
+	expectedObjectCount := strings.Count(manifest, "\n---\n")
+	tt.client.EXPECT().Apply(tt.ctx, tt.cluster.KubeconfigFile, gomock.AssignableToTypeOf(&appsv1.Deployment{}))
+	tt.client.EXPECT().Apply(tt.ctx, tt.cluster.KubeconfigFile, gomock.Any()).Times(expectedObjectCount)
+	tt.client.EXPECT().WaitForDeployment(tt.ctx, tt.cluster, "30m0s", "Available", "eksa-controller-manager", "eksa-system")
+	tt.client.EXPECT().ApplyKubeSpecFromBytes(tt.ctx, tt.cluster, gomock.Any())
+	tt.client.EXPECT().GetConfigMap(tt.ctx, tt.cluster.KubeconfigFile, gomock.Any(), gomock.Any()).Return(configMap, nil)
+	tt.client.EXPECT().Apply(tt.ctx, tt.cluster.KubeconfigFile, configMap).Return(errors.New(""))
+
+	err = tt.installer.Install(tt.ctx, test.NewNullLogger(), tt.cluster, tt.newManagementComponents, tt.newSpec)
+	tt.Expect(err.Error()).To(ContainSubstring("applying upgrader images config map"))
 }
 
 type deploymentOpt func(*appsv1.Deployment)
