@@ -54,7 +54,7 @@ func (s *installEksaComponentsOnWorkloadTask) Run(ctx context.Context, commandCo
 		return &workflows.CollectMgmtClusterDiagnosticsTask{}
 	}
 
-	return nil
+	return &installGitOpsManagerTask{}
 }
 
 func (s *installEksaComponentsOnWorkloadTask) Name() string {

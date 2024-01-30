@@ -227,6 +227,19 @@ func (c *createTestSetup) expectInstallEksaComponentsWorkload(err1, err2 error) 
 	)
 }
 
+func (c *createTestSetup) expectInstallGitOpsManager() {
+	gomock.InOrder(
+		c.provider.EXPECT().DatacenterConfig(
+			c.clusterSpec).Return(c.datacenterConfig),
+
+		c.provider.EXPECT().MachineConfigs(
+			c.clusterSpec).Return(c.machineConfigs),
+
+		c.gitOpsManager.EXPECT().InstallGitOps(
+			c.ctx, c.workloadCluster, c.clusterSpec, c.datacenterConfig, c.machineConfigs),
+	)
+}
+
 func TestCreateRunSuccess(t *testing.T) {
 	test := newCreateTest(t)
 	test.expectSetup()
@@ -238,6 +251,7 @@ func TestCreateRunSuccess(t *testing.T) {
 	test.expectInstallResourcesOnManagementTask(nil)
 	test.expectMoveManagement(nil)
 	test.expectInstallEksaComponentsWorkload(nil, nil)
+	test.expectInstallGitOpsManager()
 
 	err := test.run()
 	if err != nil {
@@ -684,5 +698,34 @@ func TestCreateEKSAWorkloadFailure(t *testing.T) {
 	err := test.run()
 	if err == nil {
 		t.Fatalf("Create.Run() expected to return an error %v", err)
+	}
+}
+
+func TestCreateGitOPsFailure(t *testing.T) {
+	test := newCreateTest(t)
+	test.expectSetup()
+	test.expectPreflightValidationsToPass()
+	test.expectCreateBootstrap()
+	test.expectCAPIInstall(nil, nil, nil)
+	test.expectInstallEksaComponentsBootstrap(nil, nil, nil, nil, nil, nil)
+	test.expectCreateWorkload(nil, nil, nil, nil)
+	test.expectInstallResourcesOnManagementTask(nil)
+	test.expectMoveManagement(nil)
+	test.expectInstallEksaComponentsWorkload(nil, nil)
+
+	gomock.InOrder(
+		test.provider.EXPECT().DatacenterConfig(
+			test.clusterSpec).Return(test.datacenterConfig),
+
+		test.provider.EXPECT().MachineConfigs(
+			test.clusterSpec).Return(test.machineConfigs),
+
+		test.gitOpsManager.EXPECT().InstallGitOps(
+			test.ctx, test.workloadCluster, test.clusterSpec, test.datacenterConfig, test.machineConfigs).Return(errors.New("test")),
+	)
+
+	err := test.run()
+	if err != nil {
+		t.Fatalf("Create.Run() err = %v, want err = nil", err)
 	}
 }
