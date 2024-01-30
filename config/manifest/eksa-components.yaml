@@ -5004,6 +5004,11 @@ spec:
                     description: 'UID of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids'
                     type: string
                 type: object
+              machineSpecData:
+                description: MachineSpecData is a base64 encoded json string value
+                  of the machineDeplopyment.Spec.Template.Spec field that's specification
+                  of the desired behavior of the machine.
+                type: string
               machinesRequireUpgrade:
                 description: MachinesRequireUpgrade is a list of references to CAPI
                   machines that need to be upgraded.
@@ -5071,6 +5076,7 @@ spec:
             required:
             - kubernetesVersion
             - machineDeployment
+            - machineSpecData
             - machinesRequireUpgrade
             type: object
           status:
@@ -7217,6 +7223,16 @@ rules:
   - cluster.x-k8s.io
   resources:
   - machines
+  verbs:
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - cluster.x-k8s.io
+  resources:
+  - machinesets
   verbs:
   - get
   - list
