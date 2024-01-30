@@ -17,11 +17,22 @@ For optimal cluster maintenance, it is crucial to perform regular etcd backups o
 
 ## Cluster API backup
 
-Since cluster failures primarily occur following unsuccessful cluster upgrades, EKS Anywhere takes the proactive step of automatically creating backups for the Cluster API objects that capture the states of both the management cluster and its workload clusters if all the clusters are in ready state. If one of the workload clusters is not ready, EKS Anywhere takes the best effort to backup the management cluster itself. These backups are stored within the management cluster folder, where the upgrade command is initiated from the Admin machine, and are generated before each management cluster upgrade process. For example, after executing a cluster upgrade command on `mgmt-cluster`, a backup folder is generated with the naming convention of `cluster-state-backup-${timestamp}`:
+Since cluster failures primarily occur following unsuccessful cluster upgrades, EKS Anywhere takes the proactive step of automatically creating backups for the Cluster API objects. For the management cluster, it captures the states of both the management cluster and its workload clusters if all the clusters are in ready state. If one of the workload clusters is not ready, EKS Anywhere takes the best effort to backup the management cluster itself. For the workload cluster, it captures the state workload cluster's Cluster API objects. These backups are stored within the management cluster folder, where the upgrade command is initiated from the Admin machine, and are generated before each management and/or workload cluster upgrade process. 
+For example, after executing a cluster upgrade command on `mgmt-cluster`, a backup folder is generated with the naming convention of `mgmt-cluster-backup-${timestamp}`:
 
 ```bash
 mgmt-cluster/ 
-├── cluster-state-backup-2023-10-11T02_55_56 <------ Folder with a backup of the CAPI objects 
+├── mgmt-cluster-backup-2023-10-11T02_55_56 <------ Folder with a backup of the CAPI objects 
+├── mgmt-cluster-eks-a-cluster.kubeconfig
+├── mgmt-cluster-eks-a-cluster.yaml
+└── generated
+```
+
+For workload cluster, a backup folder is generated with the naming convention of `wkld-cluster-backup-${timestamp}` under `mgmt-cluster` directory
+
+```bash
+mgmt-cluster/ 
+├── wkld-cluster-backup-2023-10-11T02_55_56 <------ Folder with a backup of the CAPI objects 
 ├── mgmt-cluster-eks-a-cluster.kubeconfig
 ├── mgmt-cluster-eks-a-cluster.yaml
 └── generated

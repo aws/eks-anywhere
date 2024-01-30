@@ -63,7 +63,7 @@ If the cluster is no longer accessible in any means, or the infrastructure machi
     
     # Retrieve the Cluster API backup folder path that are automatically generated during the cluster upgrade
     # This folder contains all the resources that represent the cluster state of the old management cluster along with its workload clusters
-    CLUSTER_STATE_BACKUP_LATEST=$(ls -Art ${WORKSPACE_PATH}/${MGMT_CLUSTER_OLD} | grep 'cluster-state-backup' | tail -1)
+    CLUSTER_STATE_BACKUP_LATEST=$(ls -Art ${WORKSPACE_PATH}/${MGMT_CLUSTER_OLD} | grep ${MGMT_CLUSTER_OLD}-backup | tail -1)
     CLUSTER_STATE_BACKUP_LATEST_PATH=${WORKSPACE_PATH}/${MGMT_CLUSTER_OLD}/${CLUSTER_STATE_BACKUP_LATEST}/
 
     # Substitute the EKS Anywhere release version with the EKS Anywhere version of the original management cluster
