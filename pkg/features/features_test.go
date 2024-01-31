@@ -93,3 +93,11 @@ func TestWithK8s129FeatureFlag(t *testing.T) {
 	g.Expect(os.Setenv(K8s129SupportEnvVar, "true")).To(Succeed())
 	g.Expect(IsActive(K8s129Support())).To(BeTrue())
 }
+
+func TestVSphereInPlaceUpgradeEnabledFeatureFlag(t *testing.T) {
+	g := NewWithT(t)
+	setupContext(t)
+
+	g.Expect(os.Setenv(VSphereInPlaceEnvVar, "true")).To(Succeed())
+	g.Expect(IsActive(VSphereInPlaceUpgradeEnabled())).To(BeTrue())
+}

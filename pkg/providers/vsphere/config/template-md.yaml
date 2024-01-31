@@ -172,9 +172,13 @@ spec:
       version: {{.kubernetesVersion}}
 {{- if .upgradeRolloutStrategy }}
   strategy:
+{{- if (eq .upgradeRolloutStrategyType "InPlace") }}
+    type: {{.upgradeRolloutStrategyType}}
+{{- else}}
     rollingUpdate:
       maxSurge: {{.maxSurge}}
       maxUnavailable: {{.maxUnavailable}}
+{{- end }}
 {{- end }}
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1

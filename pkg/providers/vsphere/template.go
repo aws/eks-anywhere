@@ -111,8 +111,12 @@ func (vs *VsphereTemplateBuilder) GenerateCAPISpecWorkers(
 
 		if workerNodeGroupConfiguration.UpgradeRolloutStrategy != nil {
 			values["upgradeRolloutStrategy"] = true
-			values["maxSurge"] = workerNodeGroupConfiguration.UpgradeRolloutStrategy.RollingUpdate.MaxSurge
-			values["maxUnavailable"] = workerNodeGroupConfiguration.UpgradeRolloutStrategy.RollingUpdate.MaxUnavailable
+			if workerNodeGroupConfiguration.UpgradeRolloutStrategy.Type == anywherev1.InPlaceStrategyType {
+				values["upgradeRolloutStrategyType"] = workerNodeGroupConfiguration.UpgradeRolloutStrategy.Type
+			} else {
+				values["maxSurge"] = workerNodeGroupConfiguration.UpgradeRolloutStrategy.RollingUpdate.MaxSurge
+				values["maxUnavailable"] = workerNodeGroupConfiguration.UpgradeRolloutStrategy.RollingUpdate.MaxUnavailable
+			}
 		}
 
 		bytes, err := templater.Execute(defaultClusterConfigMD, values)
@@ -345,7 +349,11 @@ func buildTemplateMapCP(
 
 	if clusterSpec.Cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy != nil {
 		values["upgradeRolloutStrategy"] = true
-		values["maxSurge"] = clusterSpec.Cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy.RollingUpdate.MaxSurge
+		if clusterSpec.Cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy.Type == anywherev1.InPlaceStrategyType {
+			values["upgradeRolloutStrategyType"] = clusterSpec.Cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy.Type
+		} else {
+			values["maxSurge"] = clusterSpec.Cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy.RollingUpdate.MaxSurge
+		}
 	}
 
 	return values, nil
