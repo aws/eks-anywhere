@@ -96,12 +96,17 @@ func (c *deleteTestSetup) expectSaveLogsWorkload() {
 	c.expectWrite()
 }
 
+func (c *deleteTestSetup) expectCleanup() {
+	c.writer.EXPECT().CleanUp()
+}
+
 func TestDeleteRunSuccess(t *testing.T) {
 	features.ClearCache()
 	os.Setenv(features.UseControllerForCli, "true")
 	test := newDeleteTest(t)
 	test.expectSetup(nil)
 	test.expectDeleteWorkloadCluster(nil)
+	test.expectCleanup()
 
 	err := test.run()
 	if err != nil {
