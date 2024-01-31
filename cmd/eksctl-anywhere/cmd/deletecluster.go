@@ -108,6 +108,11 @@ func (dc *deleteClusterOptions) deleteCluster(ctx context.Context) error {
 		return err
 	}
 
+	deleteCLIConfig := buildDeleteCliConfig()
+	if err != nil {
+		return err
+	}
+
 	deps, err := dependencies.ForSpec(clusterSpec).WithExecutableMountDirs(dirs...).
 		WithBootstrapper().
 		WithCliConfig(cliConfig).
@@ -115,11 +120,17 @@ func (dc *deleteClusterOptions) deleteCluster(ctx context.Context) error {
 		WithProvider(dc.fileName, clusterSpec.Cluster, cc.skipIpCheck, dc.hardwareFileName, false, dc.tinkerbellBootstrapIP, map[string]bool{}, dc.providerOptions).
 		WithGitOpsFlux(clusterSpec.Cluster, clusterSpec.FluxConfig, cliConfig).
 		WithWriter().
+		WithDeleteClusterDefaulter(deleteCLIConfig).
 		Build(ctx)
 	if err != nil {
 		return err
 	}
 	defer close(ctx, deps)
+
+	clusterSpec, err = deps.DeleteClusterDefaulter.Run(ctx, clusterSpec)
+	if err != nil {
+		return err
+	}
 
 	deleteCluster := workflows.NewDelete(
 		deps.Bootstrapper,

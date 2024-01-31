@@ -226,6 +226,49 @@ func TestNewControlPlaneIPCheckAnnotationDefaulterAddAnnotation(t *testing.T) {
 	g.Expect(oldCluster).To(Equal(clusterSpec.Config.Cluster))
 }
 
+func TestNewClusterNamespaceDefaulter(t *testing.T) {
+	tests := []struct {
+		testname          string
+		namespace         string
+		expectedNamespace string
+	}{
+		{
+			testname:          "namespace empty",
+			namespace:         "",
+			expectedNamespace: "default",
+		},
+		{
+			testname:          "namespace configured",
+			namespace:         "custom-ns",
+			expectedNamespace: "custom-ns",
+		},
+	}
+
+	for _, tt := range tests {
+		g := NewWithT(t)
+		ns := "default"
+
+		newClusterNamespaceDefaulter := cluster.NewNamespaceDefaulter(ns)
+
+		c := baseCluster()
+		c.Namespace = tt.namespace
+
+		clusterSpec := &cluster.Spec{
+			Config: &cluster.Config{
+				Cluster: c,
+			},
+		}
+
+		finalSpec, err := newClusterNamespaceDefaulter.NamespaceDefault(context.Background(), clusterSpec)
+
+		g.Expect(err).To(BeNil())
+
+		for _, obj := range finalSpec.ClusterAndChildren() {
+			g.Expect(obj.GetNamespace()).To(Equal(tt.expectedNamespace))
+		}
+	}
+}
+
 type clusterOpt func(c *anywherev1.Cluster)
 
 func baseCluster(opts ...clusterOpt) *anywherev1.Cluster {
