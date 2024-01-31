@@ -10,11 +10,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/aws/eks-anywhere/pkg/cluster"
-	capiupgrader "github.com/aws/eks-anywhere/pkg/clusterapi"
-	eksaupgrader "github.com/aws/eks-anywhere/pkg/clustermanager"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
-	fluxupgrader "github.com/aws/eks-anywhere/pkg/gitops/flux"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/networking/cilium"
 	"github.com/aws/eks-anywhere/pkg/types"
@@ -93,23 +89,12 @@ func (uc *upgradeClusterOptions) upgradePlanCluster(ctx context.Context) error {
 	componentChangeDiffs := &types.ChangeDiff{}
 
 	if newClusterSpec.Cluster.IsSelfManaged() {
-		client, err := deps.UnAuthKubeClient.BuildClientFromKubeconfig(managementCluster.KubeconfigFile)
+		componentChangeDiffs, err = getManagementComponentsChangeDiffs(ctx, deps.UnAuthKubeClient, managementCluster, currentSpec, newClusterSpec, deps.Provider)
 		if err != nil {
 			return err
 		}
-
-		currentManagementComponents, err := cluster.GetManagementComponents(ctx, client, currentSpec.Cluster)
-		if err != nil {
-			return err
-		}
-
-		newManagementComponents := cluster.ManagementComponentsFromBundles(newClusterSpec.Bundles)
-		componentChangeDiffs.Append(eksaupgrader.EksaChangeDiff(currentManagementComponents, newManagementComponents))
-
 	}
 
-	componentChangeDiffs.Append(fluxupgrader.FluxChangeDiff(currentSpec, newClusterSpec))
-	componentChangeDiffs.Append(capiupgrader.CapiChangeDiff(currentSpec, newClusterSpec, deps.Provider))
 	componentChangeDiffs.Append(cilium.ChangeDiff(currentSpec, newClusterSpec))
 
 	serializedDiff, err := serialize(componentChangeDiffs, output)
@@ -117,7 +102,7 @@ func (uc *upgradeClusterOptions) upgradePlanCluster(ctx context.Context) error {
 		return err
 	}
 
-	fmt.Print(serializedDiff)
+	logger.V(0).Info(serializedDiff)
 
 	return nil
 }
@@ -135,7 +120,7 @@ func serialize(componentChangeDiffs *types.ChangeDiff, outputFormat string) (str
 
 func serializeToText(componentChangeDiffs *types.ChangeDiff) (string, error) {
 	if componentChangeDiffs == nil {
-		return "All the components are up to date with the latest versions", nil
+		return "All the components are up to date with the latest versions\n", nil
 	}
 
 	buffer := bytes.Buffer{}
