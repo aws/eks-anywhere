@@ -21,7 +21,9 @@ func runCertManagerRemoteClusterInstallSimpleFlow(test *framework.MulticlusterE2
 	test.CreateManagementClusterWithConfig()
 	test.RunInWorkloadClusters(func(e *framework.WorkloadCluster) {
 		e.GenerateClusterConfig()
-		e.CreateCluster()
+		e.ApplyClusterManifest()
+		e.WaitForKubeconfig()
+		e.ValidateClusterState()
 		e.VerifyPackageControllerNotInstalled()
 		test.ManagementCluster.SetPackageBundleActive()
 		packageName := "cert-manager"
@@ -30,7 +32,8 @@ func runCertManagerRemoteClusterInstallSimpleFlow(test *framework.MulticlusterE2
 		test.ManagementCluster.InstallCuratedPackageFile(packageFile, kubeconfig.FromClusterName(test.ManagementCluster.ClusterName))
 		e.VerifyCertManagerPackageInstalled(packagePrefix, EksaPackagesNamespace, cmPackageName, withMgmtClusterSetup(test.ManagementCluster))
 		e.CleanupCerts(withMgmtClusterSetup(test.ManagementCluster))
-		e.DeleteCluster()
+		e.DeleteClusterWithKubectl()
+		e.ValidateClusterDelete()
 	})
 	time.Sleep(5 * time.Minute)
 	test.DeleteManagementCluster()
