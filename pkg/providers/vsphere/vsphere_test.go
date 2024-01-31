@@ -1893,6 +1893,28 @@ func TestProviderBootstrapSetup(t *testing.T) {
 	}
 }
 
+func TestPreCAPIInstallOnBootstrap(t *testing.T) {
+	ctx := context.Background()
+	datacenterConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
+	clusterConfig := givenClusterConfig(t, testClusterConfigMainFilename)
+	mockCtrl := gomock.NewController(t)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	ipValidator := mocks.NewMockIPValidator(mockCtrl)
+	provider := newProviderWithKubectl(t, datacenterConfig, clusterConfig, kubectl, ipValidator)
+	testCluster := types.Cluster{
+		Name:           "test",
+		KubeconfigFile: "",
+	}
+
+	kubectl.EXPECT().ApplyKubeSpecFromBytes(ctx, gomock.Any(), gomock.Any())
+	clusterSpec := &cluster.Spec{}
+
+	err := provider.PreCAPIInstallOnBootstrap(ctx, &testCluster, clusterSpec)
+	if err != nil {
+		t.Fatalf("TestPreCAPIInstallOnBootstrap error %v", err)
+	}
+}
+
 func TestProviderUpdateSecretSuccess(t *testing.T) {
 	ctx := context.Background()
 	datacenterConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
