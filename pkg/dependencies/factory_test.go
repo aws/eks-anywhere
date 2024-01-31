@@ -34,6 +34,7 @@ type factoryTest struct {
 	cliConfig             config.CliConfig
 	createCLIConfig       config.CreateClusterCLIConfig
 	upgradeCLIConfig      config.UpgradeClusterCLIConfig
+	deleteCLIConfig       config.DeleteClusterCLIConfig
 	providerOptions       *dependencies.ProviderOptions
 	deleteCLIConfig       config.DeleteClusterCLIConfig
 }
@@ -668,6 +669,18 @@ func TestFactoryBuildWithClusterApplierNoTimeout(t *testing.T) {
 		WithLocalExecutables().
 		WithNoTimeouts().
 		WithClusterApplier().
+		Build(context.Background())
+
+	tt.Expect(err).To(BeNil())
+	tt.Expect(deps.ClusterApplier).NotTo(BeNil())
+}
+
+func TestFactoryBuildWithClusterDeleterNoTimeout(t *testing.T) {
+	tt := newTest(t, vsphere)
+	deps, err := dependencies.NewFactory().
+		WithLocalExecutables().
+		WithNoTimeouts().
+		WithClusterDeleter().
 		Build(context.Background())
 
 	tt.Expect(err).To(BeNil())
