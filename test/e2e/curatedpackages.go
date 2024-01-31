@@ -53,7 +53,9 @@ func runCuratedPackageRemoteClusterInstallSimpleFlow(test *framework.Multicluste
 	test.CreateManagementClusterWithConfig()
 	test.RunInWorkloadClusters(func(e *framework.WorkloadCluster) {
 		e.GenerateClusterConfig()
-		e.CreateCluster()
+		e.ApplyClusterManifest()
+		e.WaitForKubeconfig()
+		e.ValidateClusterState()
 		e.VerifyPackageControllerNotInstalled()
 		test.ManagementCluster.SetPackageBundleActive()
 		packageName := "hello-eks-anywhere"
@@ -61,7 +63,8 @@ func runCuratedPackageRemoteClusterInstallSimpleFlow(test *framework.Multicluste
 		packageFile := e.BuildPackageConfigFile(packageName, packagePrefix, EksaPackagesNamespace)
 		test.ManagementCluster.InstallCuratedPackageFile(packageFile, kubeconfig.FromClusterName(test.ManagementCluster.ClusterName))
 		e.VerifyHelloPackageInstalled(packagePrefix+"-"+packageName, withMgmtCluster(test.ManagementCluster))
-		e.DeleteCluster()
+		e.DeleteClusterWithKubectl()
+		e.ValidateClusterDelete()
 	})
 	time.Sleep(5 * time.Minute)
 	test.DeleteManagementCluster()
