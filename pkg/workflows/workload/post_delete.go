@@ -11,6 +11,8 @@ import (
 type postDeleteWorkload struct{}
 
 func (s *postDeleteWorkload) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
+	commandContext.Writer.CleanUp()
+
 	if commandContext.OriginalError != nil {
 		collector := &workflows.CollectMgmtClusterDiagnosticsTask{}
 		collector.Run(ctx, commandContext)
