@@ -16,7 +16,7 @@ description: >
 | **Supported?** |   ✓	    |     ✓      |   	 ✓   |     ✓      |  ✓   |
 
 EKS Anywhere officially supports Cilium for each provider as a CNI plugin. The plugin cannot be changed via upgrades to the `cniConfig` field. However, EKS Anywhere Cilium can be replaced with a custom CNI after the cluster has been created. See [Use a custom CNI](#use-a-custom-cni) for more information. 
-Up until the 0.7.x releases, the plugin had to be specified using the `cni` field on cluster yaml spec.
+Up until the 0.7.x release, the plugin had to be specified using the `cni` field on cluster yaml spec.
 Starting with release 0.8.0, the plugin should be specified using the new `cniConfig` field as follows:
 
 - For selecting Cilium as the CNI plugin:
@@ -223,7 +223,7 @@ anywhere.eks.amazonaws.com/eksa-cilium: ""
 
 Starting with release v0.10.0, the `node-cidr-mask-size` [flag](https://kubernetes.io/docs/reference/command-line-tools-reference/kube-controller-manager/#options)
 for Kubernetes controller manager (kube-controller-manager) is configurable via the EKS anywhere cluster yaml spec. The `clusterNetwork.nodes` being an optional field,
-is not generated in the EKS Anywhere spec using `generate clusterconfig` command. This block for `nodes` will need to be manually added to the cluster yaml spec under the
+is not generated in the EKS Anywhere spec using `generate clusterconfig` command. The block for `nodes` will need to be manually added to the cluster yaml spec under the
 `clusterNetwork` section:
 
 ```yaml
