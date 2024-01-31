@@ -6,9 +6,22 @@ metadata:
   namespace: eksa-system
 spec:
   containers:
-  - image: nginx
-    name: done
+  - args:
+    - --target
+    - "1"
+    - --mount
+    - --uts
+    - --ipc
+    - --net
+    - /foo/eksa-upgrades/scripts/upgrade.sh
+    - print_status_and_cleanup
+    command:
+    - nsenter
+    image: public.ecr.aws/eks-anywhere/node-upgrader:latest
+    name: post-upgrade-status
     resources: {}
+    securityContext:
+      privileged: true
   hostPID: true
   initContainers:
   - args:
@@ -87,23 +100,8 @@ spec:
     resources: {}
     securityContext:
       privileged: true
-  - args:
-    - --target
-    - "1"
-    - --mount
-    - --uts
-    - --ipc
-    - --net
-    - /foo/eksa-upgrades/scripts/upgrade.sh
-    - print_status_and_cleanup
-    command:
-    - nsenter
-    image: public.ecr.aws/eks-anywhere/node-upgrader:latest
-    name: post-upgrade-status
-    resources: {}
-    securityContext:
-      privileged: true
   nodeName: my-node
+  restartPolicy: Never
   volumes:
   - hostPath:
       path: /foo

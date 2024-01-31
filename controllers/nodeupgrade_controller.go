@@ -313,7 +313,7 @@ func updateComponentsConditions(pod *corev1.Pod, nodeUpgrade *anywherev1.NodeUpg
 
 	completed := true
 	for _, container := range containersMap {
-		status, err := getInitContainerStatus(pod, container.name)
+		status, err := getContainerStatus(pod, container.name)
 		if err != nil {
 			conditions.MarkFalse(nodeUpgrade, container.condition, "Container status not available yet", clusterv1.ConditionSeverityWarning, "")
 			completed = false
@@ -341,8 +341,13 @@ func updateComponentsConditions(pod *corev1.Pod, nodeUpgrade *anywherev1.NodeUpg
 	nodeUpgrade.Status.Completed = completed
 }
 
-func getInitContainerStatus(pod *corev1.Pod, containerName string) (*corev1.ContainerStatus, error) {
+func getContainerStatus(pod *corev1.Pod, containerName string) (*corev1.ContainerStatus, error) {
 	for _, status := range pod.Status.InitContainerStatuses {
+		if status.Name == containerName {
+			return &status, nil
+		}
+	}
+	for _, status := range pod.Status.ContainerStatuses {
 		if status.Name == containerName {
 			return &status, nil
 		}
