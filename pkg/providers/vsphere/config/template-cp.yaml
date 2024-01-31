@@ -482,8 +482,12 @@ spec:
   replicas: {{.controlPlaneReplicas}}
 {{- if .upgradeRolloutStrategy }}
   rolloutStrategy:
+{{- if (eq .upgradeRolloutStrategyType "InPlace") }}
+    type: {{.upgradeRolloutStrategyType}}
+{{- else}}
     rollingUpdate:
       maxSurge: {{.maxSurge}} 
+{{- end }}
 {{- end }}
   version: {{.kubernetesVersion}}
 ---

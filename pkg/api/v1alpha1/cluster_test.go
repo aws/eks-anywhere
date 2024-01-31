@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"reflect"
 	"strings"
 	"testing"
@@ -14,6 +15,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
 
@@ -3577,6 +3579,74 @@ func TestValidateMDUpgradeRolloutStrategy(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestValidateVSphereMDInPlaceNotEnabled(t *testing.T) {
+	g := NewWithT(t)
+	cluster := &Cluster{
+		Spec: ClusterSpec{
+			WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
+				UpgradeRolloutStrategy: &WorkerNodesUpgradeRolloutStrategy{Type: "InPlace"},
+			}},
+			DatacenterRef: Ref{
+				Kind: VSphereDatacenterKind,
+			},
+		},
+	}
+	err := validateMDUpgradeRolloutStrategy(&cluster.Spec.WorkerNodeGroupConfigurations[0], cluster.Spec.DatacenterRef.Kind)
+	g.Expect(err).To(MatchError(ContainSubstring("in place upgrades are not supported on vSphere")))
+}
+
+func TestValidateVSphereCPInPlaceNotEnabled(t *testing.T) {
+	g := NewWithT(t)
+	cluster := &Cluster{
+		Spec: ClusterSpec{
+			ControlPlaneConfiguration: ControlPlaneConfiguration{
+				UpgradeRolloutStrategy: &ControlPlaneUpgradeRolloutStrategy{Type: "InPlace"},
+			},
+			DatacenterRef: Ref{
+				Kind: VSphereDatacenterKind,
+			},
+		},
+	}
+	err := validateCPUpgradeRolloutStrategy(cluster)
+	g.Expect(err).To(MatchError(ContainSubstring("in place upgrades are not supported on vSphere")))
+}
+
+func TestValidateVSphereMDInPlaceEnabled(t *testing.T) {
+	g := NewWithT(t)
+	cluster := &Cluster{
+		Spec: ClusterSpec{
+			WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
+				UpgradeRolloutStrategy: &WorkerNodesUpgradeRolloutStrategy{Type: "InPlace"},
+			}},
+			DatacenterRef: Ref{
+				Kind: VSphereDatacenterKind,
+			},
+		},
+	}
+	features.ClearCache()
+	os.Setenv(features.VSphereInPlaceEnvVar, "true")
+	err := validateMDUpgradeRolloutStrategy(&cluster.Spec.WorkerNodeGroupConfigurations[0], cluster.Spec.DatacenterRef.Kind)
+	g.Expect(err).To(BeNil())
+}
+
+func TestValidateVSphereCPInPlaceEnabled(t *testing.T) {
+	g := NewWithT(t)
+	cluster := &Cluster{
+		Spec: ClusterSpec{
+			ControlPlaneConfiguration: ControlPlaneConfiguration{
+				UpgradeRolloutStrategy: &ControlPlaneUpgradeRolloutStrategy{Type: "InPlace"},
+			},
+			DatacenterRef: Ref{
+				Kind: VSphereDatacenterKind,
+			},
+		},
+	}
+	features.ClearCache()
+	os.Setenv(features.VSphereInPlaceEnvVar, "true")
+	err := validateCPUpgradeRolloutStrategy(cluster)
+	g.Expect(err).To(BeNil())
 }
 
 func TestValidateEksaVersion(t *testing.T) {

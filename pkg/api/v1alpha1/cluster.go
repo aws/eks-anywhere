@@ -22,6 +22,7 @@ import (
 	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
 	"github.com/aws/eks-anywhere/pkg/semver"
@@ -841,6 +842,13 @@ func validateCPUpgradeRolloutStrategy(clusterConfig *Cluster) error {
 			return fmt.Errorf("ControlPlaneConfiguration: maxSurge for control plane must be 0 or 1")
 		}
 	case InPlaceStrategyType:
+		if clusterConfig.Spec.DatacenterRef.Kind == VSphereDatacenterKind {
+			if features.IsActive(features.VSphereInPlaceUpgradeEnabled()) {
+				return nil
+			}
+			return errors.New("in place upgrades are not supported on vSphere")
+
+		}
 		if clusterConfig.Spec.DatacenterRef.Kind != TinkerbellDatacenterKind {
 			return fmt.Errorf("ControlPlaneConfiguration: 'InPlace' upgrade rollout strategy type is only supported on Bare Metal")
 		}
@@ -866,6 +874,12 @@ func validateMDUpgradeRolloutStrategy(w *WorkerNodeGroupConfiguration, datacente
 			return fmt.Errorf("WorkerNodeGroupConfiguration: maxSurge and maxUnavailable not specified or are 0. maxSurge and maxUnavailable cannot both be 0")
 		}
 	case InPlaceStrategyType:
+		if datacenterRefKind == VSphereDatacenterKind {
+			if features.IsActive(features.VSphereInPlaceUpgradeEnabled()) {
+				return nil
+			}
+			return errors.New("in place upgrades are not supported on vSphere")
+		}
 		if datacenterRefKind != TinkerbellDatacenterKind {
 			return fmt.Errorf("WorkerNodeGroupConfiguration: 'InPlace' upgrade rollout strategy type is only supported on Bare Metal")
 		}
