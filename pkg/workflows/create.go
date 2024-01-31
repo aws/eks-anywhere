@@ -420,7 +420,8 @@ func (s *InstallEksaComponentsTask) Checkpoint() *task.CompletedTask {
 func (s *InstallGitOpsManagerTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
 	logger.Info("Installing GitOps Toolkit on workload cluster")
 
-	err := commandContext.GitOpsManager.InstallGitOps(ctx, commandContext.WorkloadCluster, commandContext.ClusterSpec, commandContext.Provider.DatacenterConfig(commandContext.ClusterSpec), commandContext.Provider.MachineConfigs(commandContext.ClusterSpec))
+	managementComponents := cluster.ManagementComponentsFromBundles(commandContext.ClusterSpec.Bundles)
+	err := commandContext.GitOpsManager.InstallGitOps(ctx, commandContext.WorkloadCluster, managementComponents, commandContext.ClusterSpec, commandContext.Provider.DatacenterConfig(commandContext.ClusterSpec), commandContext.Provider.MachineConfigs(commandContext.ClusterSpec))
 	if err != nil {
 		logger.MarkFail("Error when installing GitOps toolkits on workload cluster; EKS-A will continue with cluster creation, but GitOps will not be enabled", "error", err)
 		return &WriteClusterConfigTask{}

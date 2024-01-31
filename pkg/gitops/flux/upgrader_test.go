@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	. "github.com/onsi/gomega"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -20,35 +19,40 @@ import (
 
 type upgraderTest struct {
 	*WithT
-	ctx         context.Context
-	currentSpec *cluster.Spec
-	newSpec     *cluster.Spec
-	cluster     *types.Cluster
-	fluxConfig  v1alpha1.FluxConfig
+	ctx                         context.Context
+	currentManagementComponents *cluster.ManagementComponents
+	newManagementComponents     *cluster.ManagementComponents
+	currentSpec                 *cluster.Spec
+	newSpec                     *cluster.Spec
+	cluster                     *types.Cluster
+	fluxConfig                  v1alpha1.FluxConfig
 }
 
 func newUpgraderTest(t *testing.T) *upgraderTest {
 	currentSpec := test.NewClusterSpec(func(s *cluster.Spec) {
 		s.Bundles.Spec.Number = 1
 		s.VersionsBundles["1.19"].Flux.Version = "v0.1.0"
-		s.Cluster = &v1alpha1.Cluster{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "management-cluster",
-			},
-			Spec: v1alpha1.ClusterSpec{
-				GitOpsRef: &v1alpha1.Ref{
-					Name: "testGitOpsRef",
-				},
-				KubernetesVersion: "1.19",
-			},
+		s.Bundles.Spec.VersionsBundles[0].Flux.Version = "v0.1.0"
+
+		s.Cluster.ObjectMeta.Name = "management-cluster"
+		s.Cluster.Spec.GitOpsRef = &v1alpha1.Ref{
+			Name: "testGitOpsRef",
 		}
+		s.Cluster.Spec.KubernetesVersion = "1.19"
 	})
 
+	currentManagementComponents := cluster.ManagementComponentsFromBundles(currentSpec.Bundles)
+
+	newSpec := currentSpec.DeepCopy()
+	newManagementComponents := cluster.ManagementComponentsFromBundles(newSpec.Bundles)
+
 	return &upgraderTest{
-		WithT:       NewWithT(t),
-		ctx:         context.Background(),
-		currentSpec: currentSpec,
-		newSpec:     currentSpec.DeepCopy(),
+		WithT:                       NewWithT(t),
+		ctx:                         context.Background(),
+		currentManagementComponents: currentManagementComponents,
+		newManagementComponents:     newManagementComponents,
+		currentSpec:                 currentSpec,
+		newSpec:                     newSpec,
 		cluster: &types.Cluster{
 			Name:           "management-cluster",
 			KubeconfigFile: "k.kubeconfig",
@@ -74,22 +78,23 @@ func newUpgraderTest(t *testing.T) *upgraderTest {
 func TestFluxUpgradeNoSelfManaged(t *testing.T) {
 	tt := newUpgraderTest(t)
 	g := newFluxTest(t)
+	tt.newSpec.Cluster.Name = "workload-cluster"
 	tt.newSpec.Cluster.SetManagedBy("management-cluster")
 
-	tt.Expect(g.gitOpsFlux.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)).To(BeNil())
+	tt.Expect(g.gitOpsFlux.Upgrade(tt.ctx, tt.cluster, tt.currentManagementComponents, tt.newManagementComponents, tt.currentSpec, tt.newSpec)).To(BeNil())
 }
 
 func TestFluxUpgradeNoChanges(t *testing.T) {
 	tt := newUpgraderTest(t)
 	g := newFluxTest(t)
-	tt.newSpec.VersionsBundles["1.19"].Flux.Version = "v0.1.0"
+	tt.newManagementComponents.Flux.Version = "v0.1.0"
 
-	tt.Expect(g.gitOpsFlux.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)).To(BeNil())
+	tt.Expect(g.gitOpsFlux.Upgrade(tt.ctx, tt.cluster, tt.currentManagementComponents, tt.newManagementComponents, tt.currentSpec, tt.newSpec)).To(BeNil())
 }
 
 func TestFluxUpgradeSuccess(t *testing.T) {
 	tt := newUpgraderTest(t)
-	tt.newSpec.VersionsBundles["1.19"].Flux.Version = "v0.2.0"
+	tt.newManagementComponents.Flux.Version = "v0.2.0"
 
 	tt.newSpec.FluxConfig = &tt.fluxConfig
 
@@ -120,12 +125,12 @@ func TestFluxUpgradeSuccess(t *testing.T) {
 	g.flux.EXPECT().BootstrapGit(tt.ctx, tt.cluster, tt.newSpec.FluxConfig, nil)
 	g.flux.EXPECT().Reconcile(tt.ctx, tt.cluster, tt.newSpec.FluxConfig)
 
-	tt.Expect(g.gitOpsFlux.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)).To(Equal(wantDiff))
+	tt.Expect(g.gitOpsFlux.Upgrade(tt.ctx, tt.cluster, tt.currentManagementComponents, tt.newManagementComponents, tt.currentSpec, tt.newSpec)).To(Equal(wantDiff))
 }
 
 func TestFluxUpgradeBootstrapGithubError(t *testing.T) {
 	tt := newUpgraderTest(t)
-	tt.newSpec.VersionsBundles["1.19"].Flux.Version = "v0.2.0"
+	tt.newManagementComponents.Flux.Version = "v0.2.0"
 
 	tt.newSpec.FluxConfig = &tt.fluxConfig
 	g := newFluxTest(t)
@@ -143,13 +148,13 @@ func TestFluxUpgradeBootstrapGithubError(t *testing.T) {
 	g.flux.EXPECT().DeleteSystemSecret(tt.ctx, tt.cluster, tt.newSpec.FluxConfig.Spec.SystemNamespace)
 	g.flux.EXPECT().BootstrapGithub(tt.ctx, tt.cluster, tt.newSpec.FluxConfig).Return(errors.New("error from client"))
 
-	_, err := g.gitOpsFlux.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)
+	_, err := g.gitOpsFlux.Upgrade(tt.ctx, tt.cluster, tt.currentManagementComponents, tt.newManagementComponents, tt.currentSpec, tt.newSpec)
 	tt.Expect(err).NotTo(BeNil())
 }
 
 func TestFluxUpgradeBootstrapGitError(t *testing.T) {
 	tt := newUpgraderTest(t)
-	tt.newSpec.VersionsBundles["1.19"].Flux.Version = "v0.2.0"
+	tt.newManagementComponents.Flux.Version = "v0.2.0"
 
 	tt.newSpec.FluxConfig = &tt.fluxConfig
 	g := newFluxTest(t)
@@ -168,13 +173,13 @@ func TestFluxUpgradeBootstrapGitError(t *testing.T) {
 	g.flux.EXPECT().BootstrapGithub(tt.ctx, tt.cluster, tt.newSpec.FluxConfig)
 	g.flux.EXPECT().BootstrapGit(tt.ctx, tt.cluster, tt.newSpec.FluxConfig, nil).Return(errors.New("error in bootstrap git"))
 
-	_, err := g.gitOpsFlux.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)
+	_, err := g.gitOpsFlux.Upgrade(tt.ctx, tt.cluster, tt.currentManagementComponents, tt.newManagementComponents, tt.currentSpec, tt.newSpec)
 	tt.Expect(err).To(MatchError(ContainSubstring("error in bootstrap git")))
 }
 
 func TestFluxUpgradeAddError(t *testing.T) {
 	tt := newUpgraderTest(t)
-	tt.newSpec.VersionsBundles["1.19"].Flux.Version = "v0.2.0"
+	tt.newManagementComponents.Flux.Version = "v0.2.0"
 
 	tt.newSpec.FluxConfig = &tt.fluxConfig
 
@@ -188,7 +193,7 @@ func TestFluxUpgradeAddError(t *testing.T) {
 	g.git.EXPECT().Branch(tt.fluxConfig.Spec.Branch).Return(nil)
 	g.git.EXPECT().Add(tt.fluxConfig.Spec.ClusterConfigPath).Return(errors.New("error in add"))
 
-	_, err := g.gitOpsFlux.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)
+	_, err := g.gitOpsFlux.Upgrade(tt.ctx, tt.cluster, tt.currentManagementComponents, tt.newManagementComponents, tt.currentSpec, tt.newSpec)
 	tt.Expect(err).To(MatchError(ContainSubstring("error in add")))
 }
 
@@ -197,14 +202,14 @@ func TestFluxUpgradeNoGitOpsConfig(t *testing.T) {
 	g := newFluxTest(t)
 	tt.newSpec.FluxConfig = nil
 
-	tt.Expect(g.gitOpsFlux.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)).To(BeNil())
+	tt.Expect(g.gitOpsFlux.Upgrade(tt.ctx, tt.cluster, tt.currentManagementComponents, tt.newManagementComponents, tt.currentSpec, tt.newSpec)).To(BeNil())
 }
 
 func TestFluxUpgradeNewGitOpsConfig(t *testing.T) {
 	tt := newUpgraderTest(t)
 	g := newFluxTest(t)
 	tt.currentSpec.Cluster.Spec.GitOpsRef = nil
-	tt.Expect(g.gitOpsFlux.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)).To(BeNil())
+	tt.Expect(g.gitOpsFlux.Upgrade(tt.ctx, tt.cluster, tt.currentManagementComponents, tt.newManagementComponents, tt.currentSpec, tt.newSpec)).To(BeNil())
 }
 
 func setupTestFiles(t *testing.T, writer filewriter.FileWriter) error {
@@ -227,7 +232,7 @@ func TestInstallSuccess(t *testing.T) {
 	tt := newUpgraderTest(t)
 	c := flux.NewFlux(nil, nil, nil, nil)
 	tt.currentSpec.Cluster.Spec.GitOpsRef = nil
-	tt.Expect(c.Install(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)).To(BeNil())
+	tt.Expect(c.Install(tt.ctx, tt.cluster, tt.newManagementComponents, tt.currentSpec, tt.newSpec)).To(BeNil())
 }
 
 func TestInstallSkip(t *testing.T) {
@@ -252,7 +257,7 @@ func TestInstallSkip(t *testing.T) {
 			g := newFluxTest(t)
 			test.currentSpec.Cluster.Spec.GitOpsRef = tt.old
 			test.newSpec.Cluster.Spec.GitOpsRef = tt.new
-			test.Expect(g.gitOpsFlux.Install(test.ctx, test.cluster, test.currentSpec, test.newSpec)).To(BeNil())
+			test.Expect(g.gitOpsFlux.Install(test.ctx, test.cluster, test.newManagementComponents, test.currentSpec, test.newSpec)).To(BeNil())
 		})
 	}
 }
