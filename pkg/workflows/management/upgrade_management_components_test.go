@@ -118,8 +118,8 @@ func TestRunnerHappyPath(t *testing.T) {
 		mocks.provider.EXPECT().PreCoreComponentsUpgrade(gomock.Any(), gomock.Any(), gomock.Any()),
 		mocks.clientFactory.EXPECT().BuildClientFromKubeconfig(managementCluster.KubeconfigFile).Return(client, nil),
 		mocks.capiManager.EXPECT().Upgrade(ctx, managementCluster, mocks.provider, curSpec, newSpec).Return(capiChangeDiff, nil),
-		mocks.gitOpsManager.EXPECT().Install(ctx, managementCluster, curSpec, newSpec).Return(nil),
-		mocks.gitOpsManager.EXPECT().Upgrade(ctx, managementCluster, curSpec, newSpec).Return(fluxChangeDiff, nil),
+		mocks.gitOpsManager.EXPECT().Install(ctx, managementCluster, newManagementComponents, curSpec, newSpec).Return(nil),
+		mocks.gitOpsManager.EXPECT().Upgrade(ctx, managementCluster, currentManagementComponents, newManagementComponents, curSpec, newSpec).Return(fluxChangeDiff, nil),
 		mocks.clusterManager.EXPECT().Upgrade(ctx, managementCluster, currentManagementComponents, newManagementComponents, newSpec).Return(eksaChangeDiff, nil),
 		mocks.eksdUpgrader.EXPECT().Upgrade(ctx, managementCluster, curSpec, newSpec).Return(eksdChangeDiff, nil),
 		mocks.clusterManager.EXPECT().ApplyBundles(

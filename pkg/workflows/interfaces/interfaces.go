@@ -58,15 +58,15 @@ type ClusterManager interface {
 }
 
 type GitOpsManager interface {
-	InstallGitOps(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, datacenterConfig providers.DatacenterConfig, machineConfigs []providers.MachineConfig) error
+	InstallGitOps(ctx context.Context, cluster *types.Cluster, managementComponents *cluster.ManagementComponents, clusterSpec *cluster.Spec, datacenterConfig providers.DatacenterConfig, machineConfigs []providers.MachineConfig) error
 	PauseClusterResourcesReconcile(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, provider providers.Provider) error
 	ResumeClusterResourcesReconcile(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, provider providers.Provider) error
 	UpdateGitEksaSpec(ctx context.Context, clusterSpec *cluster.Spec, datacenterConfig providers.DatacenterConfig, machineConfigs []providers.MachineConfig) error
 	ForceReconcileGitRepo(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error
 	Validations(ctx context.Context, clusterSpec *cluster.Spec) []validations.Validation
 	CleanupGitRepo(ctx context.Context, clusterSpec *cluster.Spec) error
-	Install(ctx context.Context, cluster *types.Cluster, oldSpec, newSpec *cluster.Spec) error
-	Upgrade(ctx context.Context, cluster *types.Cluster, oldSpec, newSpec *cluster.Spec) (*types.ChangeDiff, error)
+	Install(ctx context.Context, cluster *types.Cluster, managementComponents *cluster.ManagementComponents, oldSpec, newSpec *cluster.Spec) error
+	Upgrade(ctx context.Context, cluster *types.Cluster, currentManagementComponents, newManagementComponents *cluster.ManagementComponents, oldSpec, newSpec *cluster.Spec) (*types.ChangeDiff, error)
 }
 
 type Validator interface {

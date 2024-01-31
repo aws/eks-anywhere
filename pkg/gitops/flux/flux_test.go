@@ -164,6 +164,7 @@ func newClusterSpec(t *testing.T, clusterConfig *v1alpha1.Cluster, fluxPath stri
 	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
 		s.Cluster = clusterConfig
 		s.VersionsBundles["1.19"].Flux = fluxBundle()
+		s.Bundles.Spec.VersionsBundles[0].Flux = fluxBundle()
 		s.FluxConfig = &fluxConfig
 	})
 	if err := cluster.SetConfigDefaults(clusterSpec.Config); err != nil {
@@ -237,11 +238,12 @@ func TestInstallGitOpsOnManagementClusterWithPrexistingRepo(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.testName, func(t *testing.T) {
-			cluster := &types.Cluster{}
 			clusterConfig := NewCluster(tt.clusterName)
 			g := newFluxTest(t)
 			clusterSpec := newClusterSpec(t, clusterConfig, tt.fluxpath)
+			managementComponents := cluster.ManagementComponentsFromBundles(clusterSpec.Bundles)
 
+			cluster := &types.Cluster{}
 			g.flux.EXPECT().BootstrapGithub(g.ctx, cluster, clusterSpec.FluxConfig)
 
 			g.git.EXPECT().GetRepo(g.ctx).Return(&git.Repository{Name: clusterSpec.FluxConfig.Spec.Github.Repository}, nil)
@@ -256,7 +258,7 @@ func TestInstallGitOpsOnManagementClusterWithPrexistingRepo(t *testing.T) {
 			datacenterConfig := datacenterConfig(tt.clusterName)
 			machineConfig := machineConfig(tt.clusterName)
 
-			g.Expect(g.gitOpsFlux.InstallGitOps(g.ctx, cluster, clusterSpec, datacenterConfig, []providers.MachineConfig{machineConfig})).To(Succeed())
+			g.Expect(g.gitOpsFlux.InstallGitOps(g.ctx, cluster, managementComponents, clusterSpec, datacenterConfig, []providers.MachineConfig{machineConfig})).To(Succeed())
 
 			expectedEksaClusterConfigPath := path.Join(g.writer.Dir(), tt.expectedEksaSystemDirPath, tt.expectedEksaConfigFileName)
 			test.AssertFilesEquals(t, expectedEksaClusterConfigPath, tt.expectedConfigFileContents)
@@ -303,11 +305,12 @@ func TestInstallGitOpsOnManagementClusterWithoutClusterSpec(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.testName, func(t *testing.T) {
-			cluster := &types.Cluster{}
 			clusterConfig := NewCluster(tt.clusterName)
 			g := newFluxTest(t)
 			clusterSpec := newClusterSpec(t, clusterConfig, tt.fluxpath)
+			managementComponents := cluster.ManagementComponentsFromBundles(clusterSpec.Bundles)
 
+			cluster := &types.Cluster{}
 			g.flux.EXPECT().BootstrapGithub(g.ctx, cluster, clusterSpec.FluxConfig)
 
 			g.git.EXPECT().GetRepo(g.ctx).Return(&git.Repository{Name: clusterSpec.FluxConfig.Spec.Github.Repository}, nil)
@@ -319,7 +322,7 @@ func TestInstallGitOpsOnManagementClusterWithoutClusterSpec(t *testing.T) {
 			g.git.EXPECT().Push(g.ctx).Return(nil)
 			g.git.EXPECT().Pull(g.ctx, clusterSpec.FluxConfig.Spec.Branch).Return(nil)
 
-			g.Expect(g.gitOpsFlux.InstallGitOps(g.ctx, cluster, clusterSpec, nil, nil)).To(Succeed())
+			g.Expect(g.gitOpsFlux.InstallGitOps(g.ctx, cluster, managementComponents, clusterSpec, nil, nil)).To(Succeed())
 
 			expectedEksaClusterConfigPath := path.Join(g.writer.Dir(), tt.expectedEksaSystemDirPath, tt.expectedEksaConfigFileName)
 			g.Expect(validations.FileExists(expectedEksaClusterConfigPath)).To(Equal(false))
@@ -337,13 +340,14 @@ func TestInstallGitOpsOnManagementClusterWithoutClusterSpec(t *testing.T) {
 }
 
 func TestInstallGitOpsOnWorkloadClusterWithPrexistingRepo(t *testing.T) {
-	cluster := &types.Cluster{}
 	clusterName := "workload-cluster"
 	clusterConfig := NewCluster(clusterName)
 	clusterConfig.SetManagedBy("management-cluster")
 	g := newFluxTest(t)
 	clusterSpec := newClusterSpec(t, clusterConfig, "")
+	managementComponents := cluster.ManagementComponentsFromBundles(clusterSpec.Bundles)
 
+	cluster := &types.Cluster{}
 	g.git.EXPECT().GetRepo(g.ctx).Return(&git.Repository{Name: clusterSpec.FluxConfig.Spec.Github.Repository}, nil)
 
 	g.git.EXPECT().Clone(g.ctx).Return(nil)
@@ -356,7 +360,7 @@ func TestInstallGitOpsOnWorkloadClusterWithPrexistingRepo(t *testing.T) {
 	datacenterConfig := datacenterConfig(clusterName)
 	machineConfig := machineConfig(clusterName)
 
-	g.Expect(g.gitOpsFlux.InstallGitOps(g.ctx, cluster, clusterSpec, datacenterConfig, []providers.MachineConfig{machineConfig})).To(Succeed())
+	g.Expect(g.gitOpsFlux.InstallGitOps(g.ctx, cluster, managementComponents, clusterSpec, datacenterConfig, []providers.MachineConfig{machineConfig})).To(Succeed())
 
 	expectedEksaClusterConfigPath := path.Join(g.writer.Dir(), "clusters/management-cluster/workload-cluster/eksa-system", defaultEksaClusterConfigFileName)
 	test.AssertFilesEquals(t, expectedEksaClusterConfigPath, "./testdata/cluster-config-default-path-workload.yaml")
@@ -376,26 +380,29 @@ func TestInstallGitOpsOnWorkloadClusterWithPrexistingRepo(t *testing.T) {
 }
 
 func TestInstallGitOpsSetupRepoError(t *testing.T) {
-	cluster := &types.Cluster{}
 	clusterName := "test-cluster"
 	clusterConfig := NewCluster(clusterName)
 	g := newFluxTest(t)
 	clusterSpec := newClusterSpec(t, clusterConfig, "")
+	managementComponents := cluster.ManagementComponentsFromBundles(clusterSpec.Bundles)
+
+	cluster := &types.Cluster{}
 
 	g.git.EXPECT().GetRepo(g.ctx).Return(&git.Repository{Name: clusterSpec.FluxConfig.Spec.Github.Repository}, nil)
 	g.git.EXPECT().Clone(g.ctx).Return(nil)
 	g.git.EXPECT().Branch(clusterSpec.FluxConfig.Spec.Branch).Return(nil)
 	g.git.EXPECT().Add(path.Dir("clusters/management-cluster")).Return(errors.New("error in add"))
 
-	g.Expect(g.gitOpsFlux.InstallGitOps(g.ctx, cluster, clusterSpec, nil, nil)).To(MatchError(ContainSubstring("error in add")))
+	g.Expect(g.gitOpsFlux.InstallGitOps(g.ctx, cluster, managementComponents, clusterSpec, nil, nil)).To(MatchError(ContainSubstring("error in add")))
 }
 
 func TestInstallGitOpsBootstrapError(t *testing.T) {
-	cluster := &types.Cluster{}
 	clusterName := "test-cluster"
 	clusterConfig := NewCluster(clusterName)
 	g := newFluxTest(t)
 	clusterSpec := newClusterSpec(t, clusterConfig, "")
+	managementComponents := cluster.ManagementComponentsFromBundles(clusterSpec.Bundles)
+	cluster := &types.Cluster{}
 
 	g.git.EXPECT().GetRepo(g.ctx).Return(&git.Repository{Name: clusterSpec.FluxConfig.Spec.Github.Repository}, nil)
 	g.git.EXPECT().Clone(g.ctx).Return(nil)
@@ -406,17 +413,21 @@ func TestInstallGitOpsBootstrapError(t *testing.T) {
 	g.flux.EXPECT().BootstrapGithub(g.ctx, cluster, clusterSpec.FluxConfig).Return(errors.New("error in bootstrap"))
 	g.flux.EXPECT().Uninstall(g.ctx, cluster, clusterSpec.FluxConfig).Return(nil)
 
-	g.Expect(g.gitOpsFlux.InstallGitOps(g.ctx, cluster, clusterSpec, nil, nil)).To(MatchError(ContainSubstring("error in bootstrap")))
+	g.Expect(g.gitOpsFlux.InstallGitOps(g.ctx, cluster, managementComponents, clusterSpec, nil, nil)).To(MatchError(ContainSubstring("error in bootstrap")))
 }
 
 func TestInstallGitOpsGitProviderSuccess(t *testing.T) {
-	cluster := &types.Cluster{}
 	clusterName := "management-cluster"
 	clusterConfig := NewCluster(clusterName)
 	g := newFluxTest(t)
 	clusterSpec := newClusterSpec(t, clusterConfig, "")
+
 	clusterSpec.FluxConfig.Spec.Git = &v1alpha1.GitProviderConfig{RepositoryUrl: "git.xyz"}
 	clusterSpec.FluxConfig.Spec.Github = nil
+
+	managementComponents := cluster.ManagementComponentsFromBundles(clusterSpec.Bundles)
+
+	cluster := &types.Cluster{}
 
 	g.flux.EXPECT().BootstrapGit(g.ctx, cluster, clusterSpec.FluxConfig, nil)
 	g.git.EXPECT().Clone(g.ctx).Return(nil)
@@ -429,20 +440,22 @@ func TestInstallGitOpsGitProviderSuccess(t *testing.T) {
 	datacenterConfig := datacenterConfig(clusterName)
 	machineConfig := machineConfig(clusterName)
 
-	g.Expect(g.gitOpsFlux.InstallGitOps(g.ctx, cluster, clusterSpec, datacenterConfig, []providers.MachineConfig{machineConfig})).To(Succeed())
+	g.Expect(g.gitOpsFlux.InstallGitOps(g.ctx, cluster, managementComponents, clusterSpec, datacenterConfig, []providers.MachineConfig{machineConfig})).To(Succeed())
 }
 
 func TestInstallGitOpsCommitFilesError(t *testing.T) {
-	cluster := &types.Cluster{}
 	clusterName := "test-cluster"
 	clusterConfig := NewCluster(clusterName)
 	g := newFluxTest(t)
 	clusterSpec := newClusterSpec(t, clusterConfig, "")
+	managementComponents := cluster.ManagementComponentsFromBundles(clusterSpec.Bundles)
+
+	cluster := &types.Cluster{}
 
 	g.git.EXPECT().GetRepo(g.ctx).Return(&git.Repository{Name: clusterSpec.FluxConfig.Spec.Github.Repository}, nil)
 	g.git.EXPECT().Clone(g.ctx).Return(errors.New("error in clone"))
 
-	g.Expect(g.gitOpsFlux.InstallGitOps(g.ctx, cluster, clusterSpec, nil, nil)).To(MatchError(ContainSubstring("error in clone")))
+	g.Expect(g.gitOpsFlux.InstallGitOps(g.ctx, cluster, managementComponents, clusterSpec, nil, nil)).To(MatchError(ContainSubstring("error in clone")))
 }
 
 func TestInstallGitOpsNoPrexistingRepo(t *testing.T) {
@@ -490,10 +503,12 @@ func TestInstallGitOpsNoPrexistingRepo(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.testName, func(t *testing.T) {
-			cluster := &types.Cluster{}
 			clusterConfig := NewCluster(tt.clusterName)
 			g := newFluxTest(t)
 			clusterSpec := newClusterSpec(t, clusterConfig, tt.fluxpath)
+			managementComponents := cluster.ManagementComponentsFromBundles(clusterSpec.Bundles)
+
+			cluster := &types.Cluster{}
 
 			g.flux.EXPECT().BootstrapGithub(g.ctx, cluster, clusterSpec.FluxConfig)
 
@@ -517,7 +532,7 @@ func TestInstallGitOpsNoPrexistingRepo(t *testing.T) {
 
 			datacenterConfig := datacenterConfig(tt.clusterName)
 			machineConfig := machineConfig(tt.clusterName)
-			g.Expect(g.gitOpsFlux.InstallGitOps(g.ctx, cluster, clusterSpec, datacenterConfig, []providers.MachineConfig{machineConfig})).To(Succeed())
+			g.Expect(g.gitOpsFlux.InstallGitOps(g.ctx, cluster, managementComponents, clusterSpec, datacenterConfig, []providers.MachineConfig{machineConfig})).To(Succeed())
 
 			expectedEksaClusterConfigPath := path.Join(g.writer.Dir(), tt.expectedEksaSystemDirPath, tt.expectedEksaConfigFileName)
 			test.AssertFilesEquals(t, expectedEksaClusterConfigPath, tt.expectedConfigFileContents)
@@ -565,10 +580,12 @@ func TestInstallGitOpsToolkitsBareRepo(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.testName, func(t *testing.T) {
-			cluster := &types.Cluster{}
 			clusterConfig := NewCluster(tt.clusterName)
 			g := newFluxTest(t)
 			clusterSpec := newClusterSpec(t, clusterConfig, tt.fluxpath)
+			managementComponents := cluster.ManagementComponentsFromBundles(clusterSpec.Bundles)
+
+			cluster := &types.Cluster{}
 
 			g.flux.EXPECT().BootstrapGithub(g.ctx, cluster, clusterSpec.FluxConfig)
 
@@ -585,7 +602,7 @@ func TestInstallGitOpsToolkitsBareRepo(t *testing.T) {
 
 			datacenterConfig := datacenterConfig(tt.clusterName)
 			machineConfig := machineConfig(tt.clusterName)
-			g.Expect(g.gitOpsFlux.InstallGitOps(g.ctx, cluster, clusterSpec, datacenterConfig, []providers.MachineConfig{machineConfig})).To(Succeed())
+			g.Expect(g.gitOpsFlux.InstallGitOps(g.ctx, cluster, managementComponents, clusterSpec, datacenterConfig, []providers.MachineConfig{machineConfig})).To(Succeed())
 
 			expectedEksaClusterConfigPath := path.Join(g.writer.Dir(), tt.expectedEksaSystemDirPath, tt.expectedEksaConfigFileName)
 			test.AssertFilesEquals(t, expectedEksaClusterConfigPath, tt.expectedConfigFileContents)

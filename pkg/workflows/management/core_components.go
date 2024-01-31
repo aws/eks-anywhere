@@ -77,12 +77,12 @@ func runUpgradeCoreComponents(ctx context.Context, commandContext *task.CommandC
 	}
 	commandContext.UpgradeChangeDiff.Append(changeDiff)
 
-	if err = commandContext.GitOpsManager.Install(ctx, commandContext.ManagementCluster, commandContext.CurrentClusterSpec, commandContext.ClusterSpec); err != nil {
+	if err = commandContext.GitOpsManager.Install(ctx, commandContext.ManagementCluster, newManagementComponents, commandContext.CurrentClusterSpec, commandContext.ClusterSpec); err != nil {
 		commandContext.SetError(err)
 		return err
 	}
 
-	changeDiff, err = commandContext.GitOpsManager.Upgrade(ctx, commandContext.ManagementCluster, commandContext.CurrentClusterSpec, commandContext.ClusterSpec)
+	changeDiff, err = commandContext.GitOpsManager.Upgrade(ctx, commandContext.ManagementCluster, currentManagementComponents, newManagementComponents, commandContext.CurrentClusterSpec, commandContext.ClusterSpec)
 	if err != nil {
 		commandContext.SetError(err)
 		return err

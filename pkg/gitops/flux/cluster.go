@@ -37,7 +37,7 @@ func newFluxForCluster(flux *Flux, clusterSpec *cluster.Spec, datacenterConfig p
 // If the remote repository does not exist it will initialize a local repository and push it to the configured remote.
 // It will generate the kustomization file and marshal the cluster configuration file to the required locations in the repo.
 // These will later be used by Flux and our controllers to reconcile the repository contents and the cluster configuration.
-func (fc *fluxForCluster) commitFluxAndClusterConfigToGit(ctx context.Context) error {
+func (fc *fluxForCluster) commitFluxAndClusterConfigToGit(ctx context.Context, managementComponents *cluster.ManagementComponents) error {
 	logger.Info("Adding cluster configuration files to Git")
 	config := fc.clusterSpec.FluxConfig
 
@@ -55,7 +55,7 @@ func (fc *fluxForCluster) commitFluxAndClusterConfigToGit(ctx context.Context) e
 	}
 
 	if fc.clusterSpec.Cluster.IsSelfManaged() {
-		if err := g.WriteFluxSystemFiles(fc.clusterSpec); err != nil {
+		if err := g.WriteFluxSystemFiles(managementComponents, fc.clusterSpec); err != nil {
 			return fmt.Errorf("writing flux system files: %v", err)
 		}
 	}

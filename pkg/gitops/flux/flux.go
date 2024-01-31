@@ -81,7 +81,8 @@ func NewFluxFromGitOpsFluxClient(fluxClient GitOpsFluxClient, gitClient GitClien
 	}
 }
 
-func (f *Flux) InstallGitOps(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, datacenterConfig providers.DatacenterConfig, machineConfigs []providers.MachineConfig) error {
+// InstallGitOps installs the GitOps components for the cluster.
+func (f *Flux) InstallGitOps(ctx context.Context, cluster *types.Cluster, managementComponents *cluster.ManagementComponents, clusterSpec *cluster.Spec, datacenterConfig providers.DatacenterConfig, machineConfigs []providers.MachineConfig) error {
 	if f.shouldSkipFlux() {
 		logger.Info("GitOps field not specified, bootstrap flux skipped")
 		return nil
@@ -93,7 +94,7 @@ func (f *Flux) InstallGitOps(ctx context.Context, cluster *types.Cluster, cluste
 		return err
 	}
 
-	if err := fc.commitFluxAndClusterConfigToGit(ctx); err != nil {
+	if err := fc.commitFluxAndClusterConfigToGit(ctx, managementComponents); err != nil {
 		return err
 	}
 
