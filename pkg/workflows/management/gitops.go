@@ -62,10 +62,10 @@ func (s *reconcileGitOps) Run(ctx context.Context, commandContext *task.CommandC
 	err = commandContext.GitOpsManager.ResumeClusterResourcesReconcile(ctx, commandContext.ManagementCluster, commandContext.ClusterSpec, commandContext.Provider)
 	if err != nil {
 		commandContext.SetError(err)
-		return &writeClusterConfig{}
+		return &writeUpgradeClusterConfig{}
 	}
 
-	return &writeClusterConfig{}
+	return &writeUpgradeClusterConfig{}
 }
 
 func (s *reconcileGitOps) Name() string {
@@ -79,5 +79,5 @@ func (s *reconcileGitOps) Checkpoint() *task.CompletedTask {
 }
 
 func (s *reconcileGitOps) Restore(ctx context.Context, commandContext *task.CommandContext, completedTask *task.CompletedTask) (task.Task, error) {
-	return &writeClusterConfig{}, nil
+	return &writeUpgradeClusterConfig{}, nil
 }

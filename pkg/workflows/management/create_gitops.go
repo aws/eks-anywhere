@@ -17,7 +17,7 @@ func (s *installGitOpsManagerTask) Run(ctx context.Context, commandContext *task
 		logger.MarkFail("Error when installing GitOps toolkits on workload cluster; EKS-A will continue with cluster creation, but GitOps will not be enabled", "error", err)
 		return nil
 	}
-	return nil
+	return &writeCreateClusterConfig{}
 }
 
 func (s *installGitOpsManagerTask) Name() string {
