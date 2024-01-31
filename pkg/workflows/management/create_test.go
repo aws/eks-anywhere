@@ -253,6 +253,10 @@ func (c *createTestSetup) expectWriteClusterConfig() {
 	)
 }
 
+func (c *createTestSetup) expectDeleteBootstrap(err error) {
+	c.bootstrapper.EXPECT().DeleteBootstrapCluster(c.ctx, c.bootstrapCluster, gomock.Any(), gomock.Any()).Return(err)
+}
+
 func TestCreateRunSuccess(t *testing.T) {
 	test := newCreateTest(t)
 	test.expectSetup()
@@ -266,6 +270,7 @@ func TestCreateRunSuccess(t *testing.T) {
 	test.expectInstallEksaComponentsWorkload(nil, nil)
 	test.expectInstallGitOpsManager()
 	test.expectWriteClusterConfig()
+	test.expectDeleteBootstrap(nil)
 
 	err := test.run()
 	if err != nil {
@@ -776,6 +781,29 @@ func TestCreateWriteConfigFailure(t *testing.T) {
 		test.ctx, test.provider, test.clusterSpec, test.workloadCluster,
 	)
 	test.writer.EXPECT().Write(fmt.Sprintf("%s-checkpoint.yaml", test.clusterSpec.Cluster.Name), gomock.Any())
+
+	err := test.run()
+	if err == nil {
+		t.Fatalf("Create.Run() err = %v, want err = nil", err)
+	}
+}
+
+func TestCreateRunDeleteBootstrapFailure(t *testing.T) {
+	test := newCreateTest(t)
+	test.expectSetup()
+	test.expectCreateBootstrap()
+	test.expectPreflightValidationsToPass()
+	test.expectCAPIInstall(nil, nil, nil)
+	test.expectInstallEksaComponentsBootstrap(nil, nil, nil, nil, nil, nil)
+	test.expectCreateWorkload(nil, nil, nil, nil)
+	test.expectInstallResourcesOnManagementTask(nil)
+	test.expectMoveManagement(nil)
+	test.expectInstallEksaComponentsWorkload(nil, nil)
+	test.expectInstallGitOpsManager()
+	test.expectWriteClusterConfig()
+	test.expectDeleteBootstrap(fmt.Errorf("test"))
+
+	test.writer.EXPECT().Write("test-cluster-checkpoint.yaml", gomock.Any(), gomock.Any())
 
 	err := test.run()
 	if err == nil {

@@ -49,7 +49,7 @@ func (s *writeCreateClusterConfig) Run(ctx context.Context, commandContext *task
 		commandContext.SetError(err)
 		return &workflows.CollectDiagnosticsTask{}
 	}
-	return nil
+	return &deleteBootstrapClusterTask{}
 }
 
 func (s *writeCreateClusterConfig) Name() string {
