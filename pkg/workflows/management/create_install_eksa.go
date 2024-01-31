@@ -99,6 +99,8 @@ func installEKSAComponents(ctx context.Context, commandContext *task.CommandCont
 		return err
 	}
 
+	commandContext.ClusterSpec.Cluster.AddManagedByCLIAnnotation()
+	
 	commandContext.ClusterSpec.Cluster.SetManagementComponentsVersion(commandContext.ClusterSpec.EKSARelease.Spec.Version)
 	if err := client.ApplyServerSide(ctx,
 		constants.EKSACLIFieldManager,
