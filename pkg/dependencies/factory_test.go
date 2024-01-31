@@ -34,7 +34,6 @@ type factoryTest struct {
 	cliConfig             config.CliConfig
 	createCLIConfig       config.CreateClusterCLIConfig
 	upgradeCLIConfig      config.UpgradeClusterCLIConfig
-	deleteCLIConfig       config.DeleteClusterCLIConfig
 	providerOptions       *dependencies.ProviderOptions
 	deleteCLIConfig       config.DeleteClusterCLIConfig
 }
