@@ -19,13 +19,12 @@ func TestRunnerRunError(t *testing.T) {
 	})
 	r.Register(func() *validations.ValidationResult {
 		return &validations.ValidationResult{
-			Err: errors.New("failed"),
+			Err: errors.New("one error"),
 		}
 	})
 
-	err := r.Run()
-	g.Expect(err).NotTo(BeNil())
-	g.Expect(err.Error()).To(Equal("validations failed"))
+	g.Expect(r.Run()).To(MatchError(ContainSubstring("validations failed")))
+	g.Expect(r.Run()).To(MatchError(ContainSubstring("one error")))
 }
 
 func TestRunnerRunSuccess(t *testing.T) {
