@@ -27,6 +27,9 @@ This approach also reduces provider permissions for workload clusters.
 
 {{% /alert %}}
 
+**Note:** Before you create your cluster, you have the option of validating the EKS Anywhere bundle manifest container images by following instructions in the [Verify Cluster Images]({{< relref "../../clustermgmt/verify-cluster-image.md" >}}) page.
+
+
 ## Prerequisite Checklist
 
 EKS Anywhere needs to:
