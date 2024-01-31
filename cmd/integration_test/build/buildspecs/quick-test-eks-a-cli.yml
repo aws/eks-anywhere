@@ -1,0 +1,63 @@
+version: 0.2
+
+env:
+  variables:
+    INTEGRATION_TEST_MAX_EC2_COUNT: 180
+    INTEGRATION_TEST_MAX_CONCURRENT_TEST_COUNT: 180
+    EKSA_GIT_KNOWN_HOSTS: "/tmp/known_hosts"
+    EKSA_GIT_PRIVATE_KEY: "/tmp/private-key"
+    INTEGRATION_TEST_INFRA_CONFIG: "/tmp/test-infra.yml"
+  secrets-manager:
+    EKSA_AWS_ACCESS_KEY_ID: "packages_ci_beta:aws_access_key_id"
+    EKSA_AWS_SECRET_ACCESS_KEY: "packages_ci_beta:aws_secret_access_key_id"
+    EKSA_AWS_REGION: "packages_ci_beta:aws_region"
+    REGIONAL_EKSA_AWS_ACCESS_KEY_ID: "packages_ci_beta:regional_aws_access_key_id"
+    REGIONAL_EKSA_AWS_SECRET_ACCESS_KEY: "packages_ci_beta:regional_aws_secret_access_key_id"
+    EKSA_GITHUB_TOKEN: "github-eks-anywhere-flux-bot:github-token"
+    T_GITHUB_USER: "github-eks-anywhere-flux-bot:github-user"
+    T_GIT_REPOSITORY: "github-eks-anywhere-flux-bot:github-repository"
+    T_GIT_SSH_REPO_URL: "github-eks-anywhere-flux-bot:generic-git-repository-url"
+    T_REGISTRY_MIRROR_ENDPOINT: "harbor-registry-data:endpoint"
+    T_REGISTRY_MIRROR_PORT: "harbor-registry-data:port"
+    T_REGISTRY_MIRROR_USERNAME: "harbor-registry-data:username"
+    T_REGISTRY_MIRROR_PASSWORD: "harbor-registry-data:password"
+    T_REGISTRY_MIRROR_CA_CERT: "harbor-registry-data:caCert"
+    T_REGISTRY_MIRROR_DEFAULT_SECURITY_GROUP: "harbor-registry-data:default_sg_id"
+    T_REGISTRY_MIRROR_AIRGAPPED_SECURITY_GROUP: "harbor-registry-data:airgapped_sg_id"
+    T_AWS_IAM_ROLE_ARN: "aws-iam-auth-role:ec2_role_arn"
+phases:
+  pre_build:
+    commands:
+      - source ${CODEBUILD_SRC_DIR}/cmd/integration_test/build/script/setup_profile.sh
+      - source ${CODEBUILD_SRC_DIR}/cmd/integration_test/build/script/create_infra_config.sh
+      - ${CODEBUILD_SRC_DIR}/cmd/integration_test/build/script/start_docker.sh
+      - make build-eks-a-for-e2e build-integration-test-binary e2e-tests-binary E2E_TAGS="e2e all_providers" E2E_OUTPUT_FILE=bin/e2e.test
+  build:
+    commands:
+      - export JOB_ID=$CODEBUILD_BUILD_ID
+      - BUNDLES_OVERRIDE=false
+      - |
+        if [ -f ./bin/local-bundle-release.yaml ]; then
+          BUNDLES_OVERRIDE=true
+        fi
+      - SKIPPED_TESTS=$(yq e ".skipped_tests | @csv" ${CODEBUILD_SRC_DIR}/test/e2e/SKIPPED_TESTS.yaml)
+      - >
+        ./bin/test e2e run
+        -c ${INTEGRATION_TEST_INFRA_CONFIG}
+        -s ${INTEGRATION_TEST_STORAGE_BUCKET}
+        -j ${JOB_ID}
+        -i ${INTEGRATION_TEST_INSTANCE_PROFILE}
+        -m ${INTEGRATION_TEST_MAX_EC2_COUNT}
+        -p ${INTEGRATION_TEST_MAX_CONCURRENT_TEST_COUNT}
+        -r 'TestDocker.*128'
+        -v 4
+        --skip ${SKIPPED_TESTS}
+        --bundles-override=${BUNDLES_OVERRIDE}
+        --test-report-folder=reports
+        --branch-name=${BRANCH_NAME}
+        --baremetal-branch=${BAREMETAL_BRANCH}
+reports:
+  e2e-reports:
+    files:
+      - reports/junit-testing-*.xml
+    file-format: "JUNITXML"
