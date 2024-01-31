@@ -19,7 +19,7 @@ func (s *deleteBootstrapClusterTask) Run(ctx context.Context, commandContext *ta
 	if commandContext.OriginalError == nil {
 		logger.MarkSuccess("Cluster created!")
 	}
-	return nil
+	return &installCuratedPackagesTask{}
 }
 
 func (s *deleteBootstrapClusterTask) Name() string {

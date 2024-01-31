@@ -257,6 +257,10 @@ func (c *createTestSetup) expectDeleteBootstrap(err error) {
 	c.bootstrapper.EXPECT().DeleteBootstrapCluster(c.ctx, c.bootstrapCluster, gomock.Any(), gomock.Any()).Return(err)
 }
 
+func (c *createTestSetup) expectCuratedPackagesInstallation() {
+	c.packageInstaller.EXPECT().InstallCuratedPackages(c.ctx).Times(1)
+}
+
 func TestCreateRunSuccess(t *testing.T) {
 	test := newCreateTest(t)
 	test.expectSetup()
@@ -271,6 +275,7 @@ func TestCreateRunSuccess(t *testing.T) {
 	test.expectInstallGitOpsManager()
 	test.expectWriteClusterConfig()
 	test.expectDeleteBootstrap(nil)
+	test.expectCuratedPackagesInstallation()
 
 	err := test.run()
 	if err != nil {
@@ -802,6 +807,7 @@ func TestCreateRunDeleteBootstrapFailure(t *testing.T) {
 	test.expectInstallGitOpsManager()
 	test.expectWriteClusterConfig()
 	test.expectDeleteBootstrap(fmt.Errorf("test"))
+	test.expectCuratedPackagesInstallation()
 
 	test.writer.EXPECT().Write("test-cluster-checkpoint.yaml", gomock.Any(), gomock.Any())
 
