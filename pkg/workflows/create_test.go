@@ -25,25 +25,26 @@ import (
 )
 
 type createTestSetup struct {
-	t                *testing.T
-	client           *clientmocks.MockClient
-	clientFactory    *mocks.MockClientFactory
-	packageInstaller *mocks.MockPackageInstaller
-	bootstrapper     *mocks.MockBootstrapper
-	clusterManager   *mocks.MockClusterManager
-	gitOpsManager    *mocks.MockGitOpsManager
-	provider         *providermocks.MockProvider
-	writer           *writermocks.MockFileWriter
-	validator        *mocks.MockValidator
-	eksd             *mocks.MockEksdInstaller
-	datacenterConfig providers.DatacenterConfig
-	machineConfigs   []providers.MachineConfig
-	workflow         *workflows.Create
-	ctx              context.Context
-	clusterSpec      *cluster.Spec
-	forceCleanup     bool
-	bootstrapCluster *types.Cluster
-	workloadCluster  *types.Cluster
+	t                    *testing.T
+	client               *clientmocks.MockClient
+	clientFactory        *mocks.MockClientFactory
+	packageInstaller     *mocks.MockPackageInstaller
+	bootstrapper         *mocks.MockBootstrapper
+	clusterManager       *mocks.MockClusterManager
+	gitOpsManager        *mocks.MockGitOpsManager
+	provider             *providermocks.MockProvider
+	writer               *writermocks.MockFileWriter
+	validator            *mocks.MockValidator
+	eksd                 *mocks.MockEksdInstaller
+	datacenterConfig     providers.DatacenterConfig
+	machineConfigs       []providers.MachineConfig
+	workflow             *workflows.Create
+	ctx                  context.Context
+	managementComponents *cluster.ManagementComponents
+	clusterSpec          *cluster.Spec
+	forceCleanup         bool
+	bootstrapCluster     *types.Cluster
+	workloadCluster      *types.Cluster
 }
 
 func newCreateTest(t *testing.T) *createTestSetup {
@@ -63,25 +64,28 @@ func newCreateTest(t *testing.T) *createTestSetup {
 	workflow := workflows.NewCreate(clientFactory, bootstrapper, provider, clusterManager, gitOpsManager, writer, eksd, packageInstaller)
 	validator := mocks.NewMockValidator(mockCtrl)
 
+	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) { s.Cluster.Name = "cluster-name"; s.Cluster.Annotations = map[string]string{} })
+
 	return &createTestSetup{
-		t:                t,
-		client:           client,
-		clientFactory:    clientFactory,
-		bootstrapper:     bootstrapper,
-		clusterManager:   clusterManager,
-		gitOpsManager:    gitOpsManager,
-		provider:         provider,
-		writer:           writer,
-		validator:        validator,
-		eksd:             eksd,
-		packageInstaller: packageInstaller,
-		datacenterConfig: datacenterConfig,
-		machineConfigs:   machineConfigs,
-		workflow:         workflow,
-		ctx:              context.Background(),
-		clusterSpec:      test.NewClusterSpec(func(s *cluster.Spec) { s.Cluster.Name = "cluster-name"; s.Cluster.Annotations = map[string]string{} }),
-		bootstrapCluster: &types.Cluster{Name: "bootstrap"},
-		workloadCluster:  &types.Cluster{Name: "workload"},
+		t:                    t,
+		client:               client,
+		clientFactory:        clientFactory,
+		bootstrapper:         bootstrapper,
+		clusterManager:       clusterManager,
+		gitOpsManager:        gitOpsManager,
+		provider:             provider,
+		writer:               writer,
+		validator:            validator,
+		eksd:                 eksd,
+		packageInstaller:     packageInstaller,
+		datacenterConfig:     datacenterConfig,
+		machineConfigs:       machineConfigs,
+		workflow:             workflow,
+		ctx:                  context.Background(),
+		managementComponents: cluster.ManagementComponentsFromBundles(clusterSpec.Bundles),
+		clusterSpec:          clusterSpec,
+		bootstrapCluster:     &types.Cluster{Name: "bootstrap"},
+		workloadCluster:      &types.Cluster{Name: "workload"},
 	}
 }
 
@@ -194,10 +198,9 @@ func (c *createTestSetup) skipMoveManagement() {
 }
 
 func (c *createTestSetup) expectInstallEksaComponents() {
-	managementComponents := cluster.ManagementComponentsFromBundles(c.clusterSpec.Bundles)
 	gomock.InOrder(
 		c.clusterManager.EXPECT().InstallCustomComponents(
-			c.ctx, managementComponents, c.clusterSpec, c.workloadCluster, c.provider),
+			c.ctx, c.managementComponents, c.clusterSpec, c.workloadCluster, c.provider),
 
 		c.eksd.EXPECT().InstallEksdCRDs(c.ctx, c.clusterSpec, c.workloadCluster),
 
@@ -267,7 +270,7 @@ func (c *createTestSetup) expectInstallGitOpsManager() {
 		c.provider.EXPECT().MachineConfigs(c.clusterSpec).Return(c.machineConfigs),
 
 		c.gitOpsManager.EXPECT().InstallGitOps(
-			c.ctx, c.workloadCluster, c.clusterSpec, c.datacenterConfig, c.machineConfigs),
+			c.ctx, c.workloadCluster, c.managementComponents, c.clusterSpec, c.datacenterConfig, c.machineConfigs),
 	)
 }
 

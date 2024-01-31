@@ -567,31 +567,31 @@ func (mr *MockGitOpsManagerMockRecorder) ForceReconcileGitRepo(arg0, arg1, arg2 
 }
 
 // Install mocks base method.
-func (m *MockGitOpsManager) Install(arg0 context.Context, arg1 *types.Cluster, arg2, arg3 *cluster.Spec) error {
+func (m *MockGitOpsManager) Install(arg0 context.Context, arg1 *types.Cluster, arg2 *cluster.ManagementComponents, arg3, arg4 *cluster.Spec) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Install", arg0, arg1, arg2, arg3)
+	ret := m.ctrl.Call(m, "Install", arg0, arg1, arg2, arg3, arg4)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Install indicates an expected call of Install.
-func (mr *MockGitOpsManagerMockRecorder) Install(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+func (mr *MockGitOpsManagerMockRecorder) Install(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Install", reflect.TypeOf((*MockGitOpsManager)(nil).Install), arg0, arg1, arg2, arg3)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Install", reflect.TypeOf((*MockGitOpsManager)(nil).Install), arg0, arg1, arg2, arg3, arg4)
 }
 
 // InstallGitOps mocks base method.
-func (m *MockGitOpsManager) InstallGitOps(arg0 context.Context, arg1 *types.Cluster, arg2 *cluster.Spec, arg3 providers.DatacenterConfig, arg4 []providers.MachineConfig) error {
+func (m *MockGitOpsManager) InstallGitOps(arg0 context.Context, arg1 *types.Cluster, arg2 *cluster.ManagementComponents, arg3 *cluster.Spec, arg4 providers.DatacenterConfig, arg5 []providers.MachineConfig) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "InstallGitOps", arg0, arg1, arg2, arg3, arg4)
+	ret := m.ctrl.Call(m, "InstallGitOps", arg0, arg1, arg2, arg3, arg4, arg5)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // InstallGitOps indicates an expected call of InstallGitOps.
-func (mr *MockGitOpsManagerMockRecorder) InstallGitOps(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
+func (mr *MockGitOpsManagerMockRecorder) InstallGitOps(arg0, arg1, arg2, arg3, arg4, arg5 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InstallGitOps", reflect.TypeOf((*MockGitOpsManager)(nil).InstallGitOps), arg0, arg1, arg2, arg3, arg4)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InstallGitOps", reflect.TypeOf((*MockGitOpsManager)(nil).InstallGitOps), arg0, arg1, arg2, arg3, arg4, arg5)
 }
 
 // PauseClusterResourcesReconcile mocks base method.
@@ -637,18 +637,18 @@ func (mr *MockGitOpsManagerMockRecorder) UpdateGitEksaSpec(arg0, arg1, arg2, arg
 }
 
 // Upgrade mocks base method.
-func (m *MockGitOpsManager) Upgrade(arg0 context.Context, arg1 *types.Cluster, arg2, arg3 *cluster.Spec) (*types.ChangeDiff, error) {
+func (m *MockGitOpsManager) Upgrade(arg0 context.Context, arg1 *types.Cluster, arg2, arg3 *cluster.ManagementComponents, arg4, arg5 *cluster.Spec) (*types.ChangeDiff, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Upgrade", arg0, arg1, arg2, arg3)
+	ret := m.ctrl.Call(m, "Upgrade", arg0, arg1, arg2, arg3, arg4, arg5)
 	ret0, _ := ret[0].(*types.ChangeDiff)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Upgrade indicates an expected call of Upgrade.
-func (mr *MockGitOpsManagerMockRecorder) Upgrade(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+func (mr *MockGitOpsManagerMockRecorder) Upgrade(arg0, arg1, arg2, arg3, arg4, arg5 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Upgrade", reflect.TypeOf((*MockGitOpsManager)(nil).Upgrade), arg0, arg1, arg2, arg3)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Upgrade", reflect.TypeOf((*MockGitOpsManager)(nil).Upgrade), arg0, arg1, arg2, arg3, arg4, arg5)
 }
 
 // Validations mocks base method.

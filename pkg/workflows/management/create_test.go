@@ -236,7 +236,7 @@ func (c *createTestSetup) expectInstallGitOpsManager() {
 			c.clusterSpec).Return(c.machineConfigs),
 
 		c.gitOpsManager.EXPECT().InstallGitOps(
-			c.ctx, c.workloadCluster, c.clusterSpec, c.datacenterConfig, c.machineConfigs),
+			c.ctx, c.workloadCluster, c.managementComponents, c.clusterSpec, c.datacenterConfig, c.machineConfigs),
 	)
 }
 
@@ -740,7 +740,7 @@ func TestCreateGitOPsFailure(t *testing.T) {
 			test.clusterSpec).Return(test.machineConfigs),
 
 		test.gitOpsManager.EXPECT().InstallGitOps(
-			test.ctx, test.workloadCluster, test.clusterSpec, test.datacenterConfig, test.machineConfigs).Return(errors.New("test")),
+			test.ctx, test.workloadCluster, test.managementComponents, test.clusterSpec, test.datacenterConfig, test.machineConfigs).Return(errors.New("test")),
 	)
 
 	err := test.run()

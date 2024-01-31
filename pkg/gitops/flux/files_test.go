@@ -152,13 +152,14 @@ var wantKustomizationValues = map[string]string{
 
 type fileGeneratorTest struct {
 	*WithT
-	ctx              context.Context
-	g                *flux.FileGenerator
-	w                *writerMocks.MockFileWriter
-	t                *fluxMocks.MockTemplater
-	clusterSpec      *cluster.Spec
-	datacenterConfig providers.DatacenterConfig
-	machineConfigs   []providers.MachineConfig
+	ctx                  context.Context
+	g                    *flux.FileGenerator
+	w                    *writerMocks.MockFileWriter
+	t                    *fluxMocks.MockTemplater
+	managementComponents *cluster.ManagementComponents
+	clusterSpec          *cluster.Spec
+	datacenterConfig     providers.DatacenterConfig
+	machineConfigs       []providers.MachineConfig
 }
 
 func newFileGeneratorTest(t *testing.T) *fileGeneratorTest {
@@ -166,15 +167,19 @@ func newFileGeneratorTest(t *testing.T) *fileGeneratorTest {
 	writer := writerMocks.NewMockFileWriter(ctrl)
 	templater := fluxMocks.NewMockTemplater(ctrl)
 	clusterName := "test-cluster"
+
+	clusterSpec := newClusterSpec(t, NewCluster(clusterName), "")
+
 	return &fileGeneratorTest{
-		WithT:            NewWithT(t),
-		ctx:              context.Background(),
-		g:                flux.NewFileGeneratorWithWriterTemplater(writer, writer, templater, templater),
-		w:                writer,
-		t:                templater,
-		clusterSpec:      newClusterSpec(t, NewCluster(clusterName), ""),
-		datacenterConfig: datacenterConfig(clusterName),
-		machineConfigs:   []providers.MachineConfig{machineConfig(clusterName)},
+		WithT:                NewWithT(t),
+		ctx:                  context.Background(),
+		g:                    flux.NewFileGeneratorWithWriterTemplater(writer, writer, templater, templater),
+		w:                    writer,
+		t:                    templater,
+		managementComponents: cluster.ManagementComponentsFromBundles(clusterSpec.Bundles),
+		clusterSpec:          clusterSpec,
+		datacenterConfig:     datacenterConfig(clusterName),
+		machineConfigs:       []providers.MachineConfig{machineConfig(clusterName)},
 	}
 }
 
@@ -244,7 +249,7 @@ func TestFileGeneratorWriteFluxSystemFilesSuccess(t *testing.T) {
 	tt.t.EXPECT().WriteToFile(wantFluxKustomization, wantKustomizationValues, "kustomization.yaml", gomock.Any()).Return("", nil)
 	tt.t.EXPECT().WriteToFile("", nil, "gotk-sync.yaml", gomock.Any()).Return("", nil)
 
-	tt.Expect(tt.g.WriteFluxSystemFiles(tt.clusterSpec)).To(Succeed())
+	tt.Expect(tt.g.WriteFluxSystemFiles(tt.managementComponents, tt.clusterSpec)).To(Succeed())
 }
 
 func TestFileGeneratorWriteFluxSystemFilesWriteFluxKustomizationError(t *testing.T) {
@@ -252,7 +257,7 @@ func TestFileGeneratorWriteFluxSystemFilesWriteFluxKustomizationError(t *testing
 
 	tt.t.EXPECT().WriteToFile(wantFluxKustomization, wantKustomizationValues, "kustomization.yaml", gomock.Any()).Return("", errors.New("error in write kustomization"))
 
-	tt.Expect(tt.g.WriteFluxSystemFiles(tt.clusterSpec)).To(MatchError(ContainSubstring("error in write kustomization")))
+	tt.Expect(tt.g.WriteFluxSystemFiles(tt.managementComponents, tt.clusterSpec)).To(MatchError(ContainSubstring("error in write kustomization")))
 }
 
 func TestFileGeneratorWriteFluxSystemFilesWriteFluxSyncError(t *testing.T) {
@@ -261,7 +266,7 @@ func TestFileGeneratorWriteFluxSystemFilesWriteFluxSyncError(t *testing.T) {
 	tt.t.EXPECT().WriteToFile(wantFluxKustomization, wantKustomizationValues, "kustomization.yaml", gomock.Any()).Return("", nil)
 	tt.t.EXPECT().WriteToFile("", nil, "gotk-sync.yaml", gomock.Any()).Return("", errors.New("error in write sync"))
 
-	tt.Expect(tt.g.WriteFluxSystemFiles(tt.clusterSpec)).To(MatchError(ContainSubstring("error in write sync")))
+	tt.Expect(tt.g.WriteFluxSystemFiles(tt.managementComponents, tt.clusterSpec)).To(MatchError(ContainSubstring("error in write sync")))
 }
 
 func NewCluster(clusterName string) *anywherev1.Cluster {

@@ -114,7 +114,7 @@ func getManagementComponentsChangeDiffs(ctx context.Context, clientFactory inter
 	componentChangeDiffs := &types.ChangeDiff{}
 	newManagementComponents := cluster.ManagementComponentsFromBundles(newClusterSpec.Bundles)
 	componentChangeDiffs.Append(eksaupgrader.EksaChangeDiff(currentManagementComponents, newManagementComponents))
-	componentChangeDiffs.Append(fluxupgrader.FluxChangeDiff(currentSpec, newClusterSpec))
+	componentChangeDiffs.Append(fluxupgrader.ChangeDiff(currentManagementComponents, newManagementComponents, currentSpec, newClusterSpec))
 	componentChangeDiffs.Append(capiupgrader.CapiChangeDiff(currentSpec, newClusterSpec, provider))
 
 	return componentChangeDiffs, nil

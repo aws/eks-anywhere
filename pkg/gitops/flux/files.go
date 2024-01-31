@@ -89,8 +89,9 @@ func (g *FileGenerator) WriteEksaFiles(clusterSpec *cluster.Spec, datacenterConf
 	return nil
 }
 
-func (g *FileGenerator) WriteFluxSystemFiles(clusterSpec *cluster.Spec) error {
-	if err := g.WriteFluxKustomization(clusterSpec); err != nil {
+// WriteFluxSystemFiles writes the flux-system files into the flux system git directory.
+func (g *FileGenerator) WriteFluxSystemFiles(managementComponents *cluster.ManagementComponents, clusterSpec *cluster.Spec) error {
+	if err := g.WriteFluxKustomization(managementComponents, clusterSpec); err != nil {
 		return err
 	}
 
@@ -124,14 +125,14 @@ func (g *FileGenerator) WriteEksaKustomization() error {
 	return nil
 }
 
-func (g *FileGenerator) WriteFluxKustomization(clusterSpec *cluster.Spec) error {
-	versionsBundle := clusterSpec.RootVersionsBundle()
+// WriteFluxKustomization writes the flux-system kustomization file into the flux system git directory.
+func (g *FileGenerator) WriteFluxKustomization(managementComponents *cluster.ManagementComponents, clusterSpec *cluster.Spec) error {
 	values := map[string]string{
 		"Namespace":                   clusterSpec.FluxConfig.Spec.SystemNamespace,
-		"SourceControllerImage":       versionsBundle.Flux.SourceController.VersionedImage(),
-		"KustomizeControllerImage":    versionsBundle.Flux.KustomizeController.VersionedImage(),
-		"HelmControllerImage":         versionsBundle.Flux.HelmController.VersionedImage(),
-		"NotificationControllerImage": versionsBundle.Flux.NotificationController.VersionedImage(),
+		"SourceControllerImage":       managementComponents.Flux.SourceController.VersionedImage(),
+		"KustomizeControllerImage":    managementComponents.Flux.KustomizeController.VersionedImage(),
+		"HelmControllerImage":         managementComponents.Flux.HelmController.VersionedImage(),
+		"NotificationControllerImage": managementComponents.Flux.NotificationController.VersionedImage(),
 	}
 
 	if path, err := g.fluxTemplater.WriteToFile(fluxKustomizeContent, values, kustomizeFileName, filewriter.PersistentFile); err != nil {
