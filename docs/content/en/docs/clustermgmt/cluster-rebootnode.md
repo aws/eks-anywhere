@@ -42,17 +42,8 @@ If this cannot be verified, do not proceed any further
     - add the paused annotation to the EKSA clusters and CAPI clusters: 
     ```bash
     kubectl annotate clusters.anywhere.eks.amazonaws.com $CLUSTER_NAME anywhere.eks.amazonaws.com/paused=true --kubeconfig=$MGMT_KUBECONFIG
-    ```
 
-    **NOTE**: If you are using vSphere provider, it is also necessary to set `cluster.spec.paused` to true. For example:
-    ```bash
-    kubectl edit clusters.cluster.x-k8s.io -n eksa-system $CLUSTER_NAME --kubeconfig=$MGMT_KUBECONFIG
-    ```
-    add the `paused: true` line under the spec section:
-    ```bash
-    ...
-    spec:
-      paused: true
+    kubectl patch clusters.cluster.x-k8s.io $CLUSTER_NAME --type merge -p '{"spec":{"paused": true}}' -n eksa-system --kubeconfig=$MGMT_KUBECONFIG
     ```
 
 1. For all of the nodes in the cluster, perform the following steps in this order: worker nodes, control plane nodes, and etcd nodes.
@@ -83,15 +74,6 @@ If this cannot be verified, do not proceed any further
 1. Remove the paused annotations from EKS Anywhere cluster.
     ```bash
     kubectl annotate clusters.anywhere.eks.amazonaws.com $CLUSTER_NAME anywhere.eks.amazonaws.com/paused- --kubeconfig=$MGMT_KUBECONFIG
-    ```
 
-    **NOTE**: If you are using vSphere provider, it is also necessary to set `cluster.spec.paused` to false
-    ```bash
-    kubectl edit clusters.cluster.x-k8s.io -n eksa-system $CLUSTER_NAME --kubeconfig=$MGMT_KUBECONFIG
-    ```
-    set paused in the spec section to false:
-    ```bash
-    ...
-    spec:
-      paused: false
+    kubectl patch clusters.cluster.x-k8s.io $CLUSTER_NAME --type merge -p '{"spec":{"paused": false}}' -n eksa-system --kubeconfig=$MGMT_KUBECONFIG
     ```
