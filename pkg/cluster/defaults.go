@@ -88,3 +88,26 @@ func setMachineHealthCheckTimeoutDefaults(cluster *anywherev1.Cluster, nodeStart
 		}
 	}
 }
+
+// NamespaceDefaulter is the defaulter created to configure the cluster's namespace.
+type NamespaceDefaulter struct {
+	defaultClusterNamespace string
+}
+
+// NewNamespaceDefaulter allows to create a new ClusterNamespaceDefaulter.
+func NewNamespaceDefaulter(namespace string) NamespaceDefaulter {
+	return NamespaceDefaulter{
+		defaultClusterNamespace: namespace,
+	}
+}
+
+// NamespaceDefault sets the defaults for cluster's namespace.
+func (c NamespaceDefaulter) NamespaceDefault(ctx context.Context, spec *Spec) (*Spec, error) {
+	for _, obj := range spec.ClusterAndChildren() {
+		if obj.GetNamespace() == "" {
+			obj.SetNamespace(c.defaultClusterNamespace)
+		}
+	}
+
+	return spec, nil
+}

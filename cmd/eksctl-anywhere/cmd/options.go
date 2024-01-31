@@ -225,6 +225,13 @@ func buildUpgradeCliConfig(clusterOptions *upgradeClusterOptions) (*config.Upgra
 	return &upgradeCliConfig, nil
 }
 
+func buildDeleteCliConfig() *config.DeleteClusterCLIConfig {
+	deleteCliConfig := &config.DeleteClusterCLIConfig{
+		ClusterNamespace: "default",
+	}
+	return deleteCliConfig
+}
+
 func getManagementClusterKubeconfig(clusterName string) (string, error) {
 	envKubeconfig := kubeconfig.FromEnvironment()
 	if envKubeconfig != "" {

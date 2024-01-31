@@ -116,6 +116,7 @@ type Dependencies struct {
 	KubeconfigWriter            kubeconfig.Writer
 	ClusterCreator              *clustermanager.ClusterCreator
 	EksaInstaller               *clustermanager.EKSAInstaller
+	DeleteClusterDefaulter      cli.DeleteClusterDefaulter
 }
 
 // KubeClients defines super struct that exposes all behavior.
@@ -1179,6 +1180,20 @@ func (f *Factory) WithUpgradeClusterDefaulter(upgradeCliConfig *cliconfig.Upgrad
 		upgradeClusterDefaulter := cli.NewUpgradeClusterDefaulter(machineHealthCheckDefaulter)
 
 		f.dependencies.UpgradeClusterDefaulter = upgradeClusterDefaulter
+
+		return nil
+	})
+
+	return f
+}
+
+// WithDeleteClusterDefaulter builds a delete cluster defaulter that builds defaulter dependencies specific to the delete cluster command. The defaulter is then run once the factory is built in the delete cluster command.
+func (f *Factory) WithDeleteClusterDefaulter(deleteCliConfig *cliconfig.DeleteClusterCLIConfig) *Factory {
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		nsDefaulter := cluster.NewNamespaceDefaulter(deleteCliConfig.ClusterNamespace)
+		deleteClusterDefaulter := cli.NewDeleteClusterDefaulter(nsDefaulter)
+
+		f.dependencies.DeleteClusterDefaulter = deleteClusterDefaulter
 
 		return nil
 	})

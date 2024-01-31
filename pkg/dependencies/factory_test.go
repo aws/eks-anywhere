@@ -35,6 +35,7 @@ type factoryTest struct {
 	createCLIConfig       config.CreateClusterCLIConfig
 	upgradeCLIConfig      config.UpgradeClusterCLIConfig
 	providerOptions       *dependencies.ProviderOptions
+	deleteCLIConfig       config.DeleteClusterCLIConfig
 }
 
 type provider string
@@ -57,6 +58,9 @@ func newTest(t *testing.T, p provider) *factoryTest {
 		upgradeCLIConfig: config.UpgradeClusterCLIConfig{
 			NodeStartupTimeout:      5 * time.Minute,
 			UnhealthyMachineTimeout: 5 * time.Minute,
+		},
+		deleteCLIConfig: config.DeleteClusterCLIConfig{
+			ClusterNamespace: "test-ns",
 		},
 	}
 
@@ -324,6 +328,7 @@ func TestFactoryBuildWithMultipleDependencies(t *testing.T) {
 		WithValidatorClients().
 		WithCreateClusterDefaulter(&tt.createCLIConfig).
 		WithUpgradeClusterDefaulter(&tt.upgradeCLIConfig).
+		WithDeleteClusterDefaulter(&tt.deleteCLIConfig).
 		WithKubernetesRetrierClient().
 		Build(context.Background())
 
