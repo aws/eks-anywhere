@@ -33,3 +33,8 @@ type UpgradeClusterCLIConfig struct {
 	NodeStartupTimeout      time.Duration
 	UnhealthyMachineTimeout time.Duration
 }
+
+// DeleteClusterCLIConfig is the config we use for delete cluster specific configurations.
+type DeleteClusterCLIConfig struct {
+	ClusterNamespace string
+}
