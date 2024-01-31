@@ -11,6 +11,7 @@ import (
 	"github.com/go-logr/logr"
 	"golang.org/x/exp/maps"
 	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -19,6 +20,7 @@ import (
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/manifests"
 	"github.com/aws/eks-anywhere/pkg/manifests/bundles"
 	"github.com/aws/eks-anywhere/pkg/types"
@@ -67,11 +69,47 @@ func (i *EKSAInstaller) Install(ctx context.Context, log logr.Logger, cluster *t
 		return fmt.Errorf("applying EKSA bundles: %v", err)
 	}
 
+	// We need to update this config map with the new upgrader images whenever we
+	// apply a new Bundles object to the cluster in order to support in-place upgrades.
+	cm, err := i.getUpgraderImagesFromBundle(ctx, cluster, spec)
+	if err != nil {
+		return fmt.Errorf("getting upgrader images from bundle: %v", err)
+	}
+
+	if err = i.client.Apply(ctx, cluster.KubeconfigFile, cm); err != nil {
+		return fmt.Errorf("applying upgrader images config map: %v", err)
+	}
+
 	if err := i.applyReleases(ctx, log, cluster, spec); err != nil {
 		return fmt.Errorf("applying EKSA releases: %v", err)
 	}
 
 	return nil
+}
+
+func (i *EKSAInstaller) getUpgraderImagesFromBundle(ctx context.Context, cluster *types.Cluster, cl *cluster.Spec) (*corev1.ConfigMap, error) {
+	upgraderImages := make(map[string]string)
+	for _, versionBundle := range cl.Bundles.Spec.VersionsBundles {
+		eksD := versionBundle.EksD
+		eksdVersion := fmt.Sprintf("%s-eks-%s-%s", eksD.KubeVersion, eksD.ReleaseChannel, strings.Split(eksD.Name, "-")[4])
+		if _, ok := upgraderImages[eksdVersion]; !ok {
+			upgraderImages[eksdVersion] = versionBundle.Upgrader.Upgrader.URI
+		}
+	}
+
+	upgraderConfigMap, err := i.client.GetConfigMap(ctx, cluster.KubeconfigFile, constants.UpgraderConfigMapName, constants.EksaSystemNamespace)
+	if err != nil {
+		if executables.IsKubectlNotFoundError(err) {
+			return newUpgraderConfigMap(upgraderImages), nil
+		}
+		return nil, err
+	}
+
+	for version, image := range upgraderImages {
+		upgraderConfigMap.Data[version] = image
+	}
+
+	return upgraderConfigMap, nil
 }
 
 // Upgrade re-installs the eksa components in a cluster if the VersionBundle defined in the
