@@ -279,7 +279,8 @@ func (pc *PackageControllerClient) GetCuratedPackagesRegistries(ctx context.Cont
 			defaultRegistry = regionalRegistry
 			defaultImageRegistry = regionalRegistry
 		} else {
-			logger.V(6).Info("Using fallback registry", "Registry", defaultRegistry, "RegionalRegistryAccessIssue", err)
+			logger.V(6).Info("Error pulling from regional registry", "Registry", regionalRegistry, "RegionalRegistryAccessIssue", err)
+			logger.V(6).Info("Using fallback registry", "Registry", defaultRegistry)
 		}
 	}
 	return sourceRegistry, defaultRegistry, defaultImageRegistry
