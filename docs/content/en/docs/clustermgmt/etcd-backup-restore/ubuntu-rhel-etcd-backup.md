@@ -55,7 +55,6 @@ scp -i $PRIV_KEY ec2-user@$ETCD_VM_IP:/home/ec2-user/snapshot.db .
 
 NOTE: This snapshot file contains all information stored in the cluster, so make sure you save it securely (encrypt it).
 
-
 ### Restore
 
 Restoring etcd is a 2-part process. The first part is restoring etcd using the snapshot, creating a new data-dir for etcd. The second part is replacing the current etcd data-dir with the one generated after restore. During etcd data-dir replacement, we cannot have any kube-apiserver instances running in the cluster. So we will first stop all instances of kube-apiserver and other controlplane components using the following steps for every controlplane VM:
@@ -63,10 +62,11 @@ Restoring etcd is a 2-part process. The first part is restoring etcd using the s
 #### Pausing Etcdadm cluster and control plane machine health check reconcile
 
 During restore, it is required to pause the Etcdadm controller reconcile and the control plane machine healths checks for the target cluster (whether it is management or workload cluster). To do that, you need to add a `cluster.x-k8s.io/paused` annotation to the target cluster's `etcdadmclusters` and `machinehealthchecks` resources. For example,
-```bash
-kubectl annotate machinehealthchecks ${CLUSTER_NAME}-kcp-unhealthy cluster.x-k8s.io/paused=true -n eksa-system --kubeconfig mgmt-cluster.kubeconfig
 
-kubectl annotate etcdadmclusters ${CLUSTER_NAME}-etcd cluster.x-k8s.io/paused=true -n eksa-system --kubeconfig mgmt-cluster.kubeconfig
+```bash
+kubectl annotate clusters.anywhere.eks.amazonaws.com $CLUSTER_NAME anywhere.eks.amazonaws.com/paused=true --kubeconfig mgmt-cluster.kubeconfig
+
+kubectl patch clusters.cluster.x-k8s.io $CLUSTER_NAME --type merge -p '{"spec":{"paused": true}}' -n eksa-system --kubeconfig mgmt-cluster.kubeconfig
 ```
 
 #### Stopping the controlplane components
@@ -166,8 +166,9 @@ mv temp-manifests/*.yaml /etc/kubernetes/manifests
 #### Resuming Etcdadm cluster and control plane machine health checks reconcile
 
 Resume Etcdadm cluster reconcile and control plane machine health checks for the target cluster by removing the `cluster.x-k8s.io/paused` annotation in the target cluster's  resource. For example,
-```bash
-kubectl annotate machinehealthchecks ${CLUSTER_NAME}-kcp-unhealthy cluster.x-k8s.io/paused- -n eksa-system --kubeconfig mgmt-cluster.kubeconfig
 
-kubectl annotate etcdadmclusters ${CLUSTER_NAME}-etcd cluster.x-k8s.io/paused- -n eksa-system --kubeconfig mgmt-cluster.kubeconfig
+```bash
+kubectl annotate clusters.anywhere.eks.amazonaws.com $CLUSTER_NAME anywhere.eks.amazonaws.com/paused- --kubeconfig mgmt-cluster.kubeconfig
+
+kubectl patch clusters.cluster.x-k8s.io $CLUSTER_NAME --type merge -p '{"spec":{"paused": false}}' -n eksa-system --kubeconfig mgmt-cluster.kubeconfig
 ```

@@ -116,11 +116,9 @@ Make sure to setup the [admin environment variables]({{< relref "#admin-machine-
 
     Before starting the process of restoring etcd, you have to pause some cluster reconciliation objects so EKS Anywhere doesn't try to perform any operations on the cluster while you restore the etcd snapshot.
     ```bash
-    # Pause control plane reconcilation
-    kubectl --kubeconfig=${MANAGEMENT_KUBECONFIG} -n eksa-system annotate machinehealthchecks ${CLUSTER_NAME}-kcp-unhealthy cluster.x-k8s.io/paused=true
+    kubectl annotate clusters.anywhere.eks.amazonaws.com $CLUSTER_NAME anywhere.eks.amazonaws.com/paused=true --kubeconfig=$MANAGEMENT_KUBECONFIG
 
-    # Pause etcd reconcilation
-    kubectl --kubeconfig=${MANAGEMENT_KUBECONFIG} -n eksa-system annotate etcdadmclusters ${CLUSTER_NAME}-etcd cluster.x-k8s.io/paused=true
+    kubectl patch clusters.cluster.x-k8s.io $CLUSTER_NAME --type merge -p '{"spec":{"paused": true}}' -n eksa-system --kubeconfig=$MANAGEMENT_KUBECONFIG
     ```
 
 2. Stop control plane core components
@@ -189,32 +187,32 @@ Make sure to setup the [admin environment variables]({{< relref "#admin-machine-
     export ETCD_CONTAINER_ID=$(ctr -n k8s.io c ls | grep -w "etcd-io" | head -1 | cut -d " " -f1)
     ```
 
-    # run the restore command
-
     {{< tabpane >}}
 
     {{< tab header="Using etcd < v3.5.x" lang="bash" >}}
-    ctr -n k8s.io t exec -t --exec-id etcd ${ETCD_CONTAINER_ID} etcdctl \
-        snapshot restore /var/lib/etcd/data/etcd-snapshot.db \
-        --name=${ETCD_NAME} \
-        --initial-cluster=${ETCD_INITIAL_CLUSTER} \
-        --initial-cluster-token=${INITIAL_CLUSTER_TOKEN} \
-        --initial-advertise-peer-urls=${ETCD_INITIAL_ADVERTISE_PEER_URLS} \
-        --cacert=/var/lib/etcd/pki/ca.crt \
-        --cert=/var/lib/etcd/pki/server.crt \
-        --key=/var/lib/etcd/pki/server.key
+# run the restore command
+ctr -n k8s.io t exec -t --exec-id etcd ${ETCD_CONTAINER_ID} etcdctl \
+    snapshot restore /var/lib/etcd/data/etcd-snapshot.db \
+    --name=${ETCD_NAME} \
+    --initial-cluster=${ETCD_INITIAL_CLUSTER} \
+    --initial-cluster-token=${INITIAL_CLUSTER_TOKEN} \
+    --initial-advertise-peer-urls=${ETCD_INITIAL_ADVERTISE_PEER_URLS} \
+    --cacert=/var/lib/etcd/pki/ca.crt \
+    --cert=/var/lib/etcd/pki/server.crt \
+    --key=/var/lib/etcd/pki/server.key
     {{< /tab >}}
 
     {{< tab header="Using etcd >= v3.5.x" lang="bash" >}}
-    ctr -n k8s.io t exec -t --exec-id etcd ${ETCD_CONTAINER_ID} etcdutl \
-        snapshot restore /var/lib/etcd/data/etcd-snapshot.db \
-        --name=${ETCD_NAME} \
-        --initial-cluster=${ETCD_INITIAL_CLUSTER} \
-        --initial-cluster-token=${INITIAL_CLUSTER_TOKEN} \
-        --initial-advertise-peer-urls=${ETCD_INITIAL_ADVERTISE_PEER_URLS} \
-        --cacert=/var/lib/etcd/pki/ca.crt \
-        --cert=/var/lib/etcd/pki/server.crt \
-        --key=/var/lib/etcd/pki/server.key
+# run the restore command
+ctr -n k8s.io t exec -t --exec-id etcd ${ETCD_CONTAINER_ID} etcdutl \
+    snapshot restore /var/lib/etcd/data/etcd-snapshot.db \
+    --name=${ETCD_NAME} \
+    --initial-cluster=${ETCD_INITIAL_CLUSTER} \
+    --initial-cluster-token=${INITIAL_CLUSTER_TOKEN} \
+    --initial-advertise-peer-urls=${ETCD_INITIAL_ADVERTISE_PEER_URLS} \
+    --cacert=/var/lib/etcd/pki/ca.crt \
+    --cert=/var/lib/etcd/pki/server.crt \
+    --key=/var/lib/etcd/pki/server.key
     {{< /tab >}}
     
     {{< /tabpane >}} 
@@ -234,6 +232,9 @@ Make sure to setup the [admin environment variables]({{< relref "#admin-machine-
 
     # copy over the new etcd data files to the data directory
     mv /tmp/${ETCD_NAME}.etcd/member /var/lib/etcd/data/
+
+    # copy the WAL folder for the cluster member data before the restore to the data/member directory
+    cp -r /var/lib/etcd/data/member.backup/wal /var/lib/etcd/data/member
 
     # re-start the etcd pod
     mv /tmp/temp-manifests/* /etc/kubernetes/manifests/
@@ -289,12 +290,11 @@ Make sure to setup the [admin environment variables]({{< relref "#admin-machine-
 1. Unpause the cluster reconcilers
 
     Once the etcd restore is complete, you can resume the cluster reconcilers.
-    ```bash
-    # unpause control plane reconcilation
-    kubectl --kubeconfig=${MANAGEMENT_KUBECONFIG} -n eksa-system annotate machinehealthchecks ${CLUSTER_NAME}-kcp-unhealthy cluster.x-k8s.io/paused-
 
-    # unpause etcd reconcilation
-    kubectl --kubeconfig=${MANAGEMENT_KUBECONFIG} -n eksa-system annotate etcdadmclusters ${CLUSTER_NAME}-etcd cluster.x-k8s.io/paused-
+    ```bash
+    kubectl annotate clusters.anywhere.eks.amazonaws.com $CLUSTER_NAME anywhere.eks.amazonaws.com/paused- --kubeconfig=$MANAGEMENT_KUBECONFIG
+
+    kubectl patch clusters.cluster.x-k8s.io $CLUSTER_NAME --type merge -p '{"spec":{"paused": false}}' -n eksa-system --kubeconfig=$MANAGEMENT_KUBECONFIG
     ```
 
 At this point you should have the etcd cluster restored to snapshot.
