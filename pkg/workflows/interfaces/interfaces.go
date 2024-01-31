@@ -84,7 +84,7 @@ type EksdInstaller interface {
 }
 
 type EksdUpgrader interface {
-	Upgrade(ctx context.Context, cluster *types.Cluster, currentSpec, newSpec *cluster.Spec) (*types.ChangeDiff, error)
+	Upgrade(ctx context.Context, cluster *types.Cluster, currentSpec, newSpec *cluster.Spec) error
 }
 
 type PackageInstaller interface {

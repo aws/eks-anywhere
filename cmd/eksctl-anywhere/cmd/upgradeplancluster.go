@@ -11,6 +11,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/aws/eks-anywhere/pkg/dependencies"
+	"github.com/aws/eks-anywhere/pkg/eksd"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/networking/cilium"
 	"github.com/aws/eks-anywhere/pkg/types"
@@ -96,6 +97,7 @@ func (uc *upgradeClusterOptions) upgradePlanCluster(ctx context.Context) error {
 	}
 
 	componentChangeDiffs.Append(cilium.ChangeDiff(currentSpec, newClusterSpec))
+	componentChangeDiffs.Append(eksd.ChangeDiff(currentSpec, newClusterSpec))
 
 	serializedDiff, err := serialize(componentChangeDiffs, output)
 	if err != nil {
