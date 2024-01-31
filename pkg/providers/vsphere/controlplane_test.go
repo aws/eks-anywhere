@@ -278,7 +278,7 @@ func TestControlPlaneSpecRegistryMirrorConfiguration(t *testing.T) {
 	}
 }
 
-func TestControlPlaneSpecWithUpgradeRolloutStrategy(t *testing.T) {
+func TestControlPlaneSpecWithUpgradeRolloutStrategyRollingUpdate(t *testing.T) {
 	g := NewWithT(t)
 	logger := test.NewNullLogger()
 	ctx := context.Background()
@@ -299,6 +299,26 @@ func TestControlPlaneSpecWithUpgradeRolloutStrategy(t *testing.T) {
 			RollingUpdate: &controlplanev1.RollingUpdate{
 				MaxSurge: &maxSurge,
 			},
+		}
+	})))
+}
+
+func TestControlPlaneSpecWithUpgradeRolloutStrategyInPlace(t *testing.T) {
+	g := NewWithT(t)
+	logger := test.NewNullLogger()
+	ctx := context.Background()
+	client := test.NewFakeKubeClient()
+	spec := test.NewFullClusterSpec(t, testClusterConfigMainFilename)
+	spec.Cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy = &anywherev1.ControlPlaneUpgradeRolloutStrategy{
+		Type: anywherev1.InPlaceStrategyType,
+	}
+
+	cp, err := vsphere.ControlPlaneSpec(ctx, logger, client, spec)
+	g.Expect(err).NotTo(HaveOccurred())
+	g.Expect(cp).NotTo(BeNil())
+	g.Expect(cp.KubeadmControlPlane).To(Equal(kubeadmControlPlane(func(k *controlplanev1.KubeadmControlPlane) {
+		k.Spec.RolloutStrategy = &controlplanev1.RolloutStrategy{
+			Type: "InPlace",
 		}
 	})))
 }

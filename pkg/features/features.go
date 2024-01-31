@@ -7,6 +7,7 @@ const (
 	UseNewWorkflowsEnvVar           = "USE_NEW_WORKFLOWS"
 	UseControllerForCli             = "USE_CONTROLLER_FOR_CLI"
 	K8s129SupportEnvVar             = "K8S_1_29_SUPPORT"
+	VSphereInPlaceEnvVar            = "VSPHERE_IN_PLACE_UPGRADE"
 )
 
 func FeedGates(featureGates []string) {
@@ -61,5 +62,13 @@ func K8s129Support() Feature {
 	return Feature{
 		Name:     "Kubernetes version 1.29 support",
 		IsActive: globalFeatures.isActiveForEnvVar(K8s129SupportEnvVar),
+	}
+}
+
+// VSphereInPlaceUpgradeEnabled is the feature flag for performing in-place upgrades with the vSphere provider.
+func VSphereInPlaceUpgradeEnabled() Feature {
+	return Feature{
+		Name:     "Perform in-place upgrades with the vSphere provider",
+		IsActive: globalFeatures.isActiveForEnvVar(VSphereInPlaceEnvVar),
 	}
 }

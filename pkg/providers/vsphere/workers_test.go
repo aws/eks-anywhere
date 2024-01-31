@@ -282,7 +282,7 @@ func TestWorkersSpecRegistryMirrorConfiguration(t *testing.T) {
 	}
 }
 
-func TestWorkersSpecUpgradeRolloutStrategy(t *testing.T) {
+func TestWorkersSpecUpgradeRolloutStrategyRollingUpdate(t *testing.T) {
 	g := NewWithT(t)
 	logger := test.NewNullLogger()
 	ctx := context.Background()
@@ -314,6 +314,34 @@ func TestWorkersSpecUpgradeRolloutStrategy(t *testing.T) {
 				MaxSurge:       &maxSurge,
 				MaxUnavailable: &maxUnavailable,
 			},
+		}
+	})))
+}
+
+func TestWorkersSpecUpgradeRolloutStrategyInPlace(t *testing.T) {
+	g := NewWithT(t)
+	logger := test.NewNullLogger()
+	ctx := context.Background()
+	spec := test.NewFullClusterSpec(t, "testdata/cluster_main.yaml")
+	spec.Cluster.Spec.WorkerNodeGroupConfigurations = []anywherev1.WorkerNodeGroupConfiguration{
+		{
+			Count:           ptr.Int(3),
+			MachineGroupRef: &anywherev1.Ref{Name: "test-wn"},
+			Name:            "md-0",
+			UpgradeRolloutStrategy: &anywherev1.WorkerNodesUpgradeRolloutStrategy{
+				Type: anywherev1.InPlaceStrategyType,
+			},
+		},
+	}
+	client := test.NewFakeKubeClient()
+
+	workers, err := vsphere.WorkersSpec(ctx, logger, client, spec)
+	g.Expect(err).NotTo(HaveOccurred())
+	g.Expect(workers).NotTo(BeNil())
+	g.Expect(workers.Groups).To(HaveLen(1))
+	g.Expect(workers.Groups[0].MachineDeployment).To(Equal(machineDeployment(func(m *clusterv1.MachineDeployment) {
+		m.Spec.Strategy = &clusterv1.MachineDeploymentStrategy{
+			Type: "InPlace",
 		}
 	})))
 }
