@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -182,7 +183,7 @@ func TestCreateRunValidateFail(t *testing.T) {
 	test.expectWrite()
 
 	err := test.run()
-	if err == nil || err.Error() != string("validations failed") {
+	if err == nil || !strings.Contains(err.Error(), "validations failed") {
 		t.Fatalf("Create.Run() err = %v, want err = nil", err)
 	}
 }

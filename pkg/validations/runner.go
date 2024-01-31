@@ -1,6 +1,11 @@
 package validations
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+
+	eksae "github.com/aws/eks-anywhere/pkg/errors"
+)
 
 var errRunnerValidation = errors.New("validations failed")
 
@@ -19,17 +24,17 @@ func (r *Runner) Register(validations ...Validation) {
 }
 
 func (r *Runner) Run() error {
-	failed := false
+	var errs []error
 	for _, v := range r.validations {
 		result := v()
 		result.Report()
 		if result.Err != nil {
-			failed = true
+			errs = append(errs, result.Err)
 		}
 	}
 
-	if failed {
-		return errRunnerValidation
+	if len(errs) > 0 {
+		return fmt.Errorf("validations failed: %w", eksae.NewAggregate(errs))
 	}
 
 	return nil
