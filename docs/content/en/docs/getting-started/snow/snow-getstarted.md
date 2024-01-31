@@ -11,6 +11,8 @@ EKS Anywhere supports an AWS Snow provider for EKS Anywhere deployments.
 This document walks you through setting up EKS Anywhere on Snow as a standalone, self-managed cluster or combined set of management/workload clusters.
 See [Cluster topologies]({{< relref "../../concepts/architecture" >}}) for details.
 
+**Note:** Before you create your cluster, you have the option of validating the EKS Anywhere bundle manifest container images by following instructions in the [Verify Cluster Images]({{< relref "../../clustermgmt/verify-cluster-image.md" >}}) page.
+
 ## Prerequisite checklist
 
 EKS Anywhere on Snow needs:
