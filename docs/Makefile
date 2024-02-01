@@ -81,4 +81,4 @@ compute-checksum: ## Compute docs checksum
 	sha256sum public/index.html > DOCS_CHECKSUM
 
 upload-checksum: compute-checksum ## Upload the checksum to artifacts bucket
-	aws s3 cp DOCS_CHECKSUM s3://artifactsstack-1532887287-artifactsbucket2aac5544-exgxrmntr4id --acl public-read
+	aws s3 cp DOCS_CHECKSUM s3://$(ARTIFACTS_BUCKET) --acl public-read
