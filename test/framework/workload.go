@@ -123,7 +123,7 @@ func (w *WorkloadCluster) writeKubeconfigToDisk(ctx context.Context, secretName 
 	if err := w.Provider.UpdateKubeConfig(&kubeconfig, w.ClusterName); err != nil {
 		return fmt.Errorf("failed to update kubeconfig for cluster: %s", err)
 	}
-	writer, err := filewriter.NewWriter(w.ClusterConfigFolder)
+	writer, err := filewriter.NewWriter(filepath.Dir(filePath))
 	if err != nil {
 		return fmt.Errorf("failed to write kubeconfig to disk: %v", err)
 	}
