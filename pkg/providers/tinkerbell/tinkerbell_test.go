@@ -2394,7 +2394,7 @@ func getVersionBundle() *cluster.VersionsBundle {
 	}
 }
 
-func TestGetInfrastructureBundleFromManagementComponents(t *testing.T) {
+func TestGetInfrastructureBundle(t *testing.T) {
 	g := NewWithT(t)
 	clusterSpecManifest := "cluster_tinkerbell_external_etcd.yaml"
 	mockCtrl := gomock.NewController(t)
@@ -2423,27 +2423,27 @@ func TestGetInfrastructureBundleFromManagementComponents(t *testing.T) {
 		},
 	}
 
-	infraBundle := p.GetInfrastructureBundleFromManagementComponents(managementComponents)
+	infraBundle := p.GetInfrastructureBundle(managementComponents)
 	g.Expect(infraBundle).To(Equal(wantInfraBundle))
 }
 
-func TestVersionFromManagementComponents(t *testing.T) {
+func TestVersion(t *testing.T) {
 	tt := newProviderTest(t)
 	tinkerbellVersion := "v1.2.3"
 	managementComponents := givenManagementComponents()
 	managementComponents.Tinkerbell.Version = tinkerbellVersion
-	got := tt.provider.VersionFromManagementComponents(managementComponents)
+	got := tt.provider.Version(managementComponents)
 	tt.Expect(got).To(Equal(tinkerbellVersion))
 }
 
-func TestChangeDiffFromManagementComponentsNoChange(t *testing.T) {
+func TestChangeDiffNoChange(t *testing.T) {
 	tt := newProviderTest(t)
 	managementComponents := givenManagementComponents()
-	got := tt.provider.ChangeDiffFromManagementComponents(managementComponents, managementComponents)
+	got := tt.provider.ChangeDiff(managementComponents, managementComponents)
 	tt.Expect(got).To(BeNil())
 }
 
-func TestChangeDiffFromManagementComponentsWithChange(t *testing.T) {
+func TestChangeDiffWithChange(t *testing.T) {
 	tt := newProviderTest(t)
 	managementComponents := givenManagementComponents()
 	managementComponents.Tinkerbell.Version = "v1.2.2"
@@ -2457,6 +2457,6 @@ func TestChangeDiffFromManagementComponentsWithChange(t *testing.T) {
 		OldVersion:    "v1.2.2",
 	}
 
-	got := tt.provider.ChangeDiffFromManagementComponents(managementComponents, newManagementComponents)
+	got := tt.provider.ChangeDiff(managementComponents, newManagementComponents)
 	tt.Expect(got).To(Equal(wantDiff))
 }

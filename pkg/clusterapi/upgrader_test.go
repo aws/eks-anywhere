@@ -84,7 +84,7 @@ func TestUpgraderUpgradeNoSelfManaged(t *testing.T) {
 
 func TestUpgraderUpgradeNoChanges(t *testing.T) {
 	tt := newUpgraderTest(t)
-	tt.provider.EXPECT().ChangeDiffFromManagementComponents(tt.currentManagementComponents, tt.newManagementComponents).Return(nil)
+	tt.provider.EXPECT().ChangeDiff(tt.currentManagementComponents, tt.newManagementComponents).Return(nil)
 
 	tt.Expect(tt.upgrader.Upgrade(tt.ctx, tt.cluster, tt.provider, tt.currentSpec, tt.newSpec)).To(BeNil())
 }
@@ -99,7 +99,7 @@ func TestUpgraderUpgradeProviderChanges(t *testing.T) {
 		ComponentReports: []types.ComponentChangeDiff{*tt.providerChangeDiff},
 	}
 
-	tt.provider.EXPECT().ChangeDiffFromManagementComponents(tt.currentManagementComponents, tt.newManagementComponents).Return(tt.providerChangeDiff)
+	tt.provider.EXPECT().ChangeDiff(tt.currentManagementComponents, tt.newManagementComponents).Return(tt.providerChangeDiff)
 	tt.capiClient.EXPECT().Upgrade(tt.ctx, tt.cluster, tt.provider, tt.newSpec, changeDiff)
 
 	tt.Expect(tt.upgrader.Upgrade(tt.ctx, tt.cluster, tt.provider, tt.currentSpec, tt.newSpec)).To(Equal(wantDiff))
@@ -122,7 +122,7 @@ func TestUpgraderUpgradeCoreChanges(t *testing.T) {
 		ComponentReports: []types.ComponentChangeDiff{*changeDiff.Core},
 	}
 
-	tt.provider.EXPECT().ChangeDiffFromManagementComponents(tt.currentManagementComponents, tt.newManagementComponents).Return(nil)
+	tt.provider.EXPECT().ChangeDiff(tt.currentManagementComponents, tt.newManagementComponents).Return(nil)
 	tt.capiClient.EXPECT().Upgrade(tt.ctx, tt.cluster, tt.provider, tt.newSpec, changeDiff)
 
 	tt.Expect(tt.upgrader.Upgrade(tt.ctx, tt.cluster, tt.provider, tt.currentSpec, tt.newSpec)).To(Equal(wantDiff))
@@ -180,7 +180,7 @@ func TestUpgraderUpgradeEverythingChangesStackedEtcd(t *testing.T) {
 		ComponentReports: bootstrapProviders,
 	}
 
-	tt.provider.EXPECT().ChangeDiffFromManagementComponents(tt.currentManagementComponents, tt.newManagementComponents).Return(tt.providerChangeDiff)
+	tt.provider.EXPECT().ChangeDiff(tt.currentManagementComponents, tt.newManagementComponents).Return(tt.providerChangeDiff)
 	tt.capiClient.EXPECT().Upgrade(tt.ctx, tt.cluster, tt.provider, tt.newSpec, changeDiff)
 
 	tt.Expect(tt.upgrader.Upgrade(tt.ctx, tt.cluster, tt.provider, tt.currentSpec, tt.newSpec)).To(Equal(wantDiff))
@@ -241,7 +241,7 @@ func TestUpgraderUpgradeEverythingChangesExternalEtcd(t *testing.T) {
 		},
 	}
 
-	tt.provider.EXPECT().ChangeDiffFromManagementComponents(tt.currentManagementComponents, tt.newManagementComponents).Return(tt.providerChangeDiff)
+	tt.provider.EXPECT().ChangeDiff(tt.currentManagementComponents, tt.newManagementComponents).Return(tt.providerChangeDiff)
 	tt.capiClient.EXPECT().Upgrade(tt.ctx, tt.cluster, tt.provider, tt.newSpec, changeDiff)
 
 	tt.Expect(tt.upgrader.Upgrade(tt.ctx, tt.cluster, tt.provider, tt.currentSpec, tt.newSpec)).To(Equal(wantDiff))
@@ -253,7 +253,7 @@ func TestUpgraderUpgradeCAPIClientError(t *testing.T) {
 		InfrastructureProvider: tt.providerChangeDiff,
 	}
 
-	tt.provider.EXPECT().ChangeDiffFromManagementComponents(tt.currentManagementComponents, tt.newManagementComponents).Return(tt.providerChangeDiff)
+	tt.provider.EXPECT().ChangeDiff(tt.currentManagementComponents, tt.newManagementComponents).Return(tt.providerChangeDiff)
 	tt.capiClient.EXPECT().Upgrade(tt.ctx, tt.cluster, tt.provider, tt.newSpec, changeDiff).Return(errors.New("error from client"))
 
 	_, err := tt.upgrader.Upgrade(tt.ctx, tt.cluster, tt.provider, tt.currentSpec, tt.newSpec)

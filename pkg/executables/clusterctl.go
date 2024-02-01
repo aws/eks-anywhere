@@ -118,7 +118,7 @@ func (c *Clusterctl) buildOverridesLayer(managementComponents *cluster.Managemen
 		},
 	}
 
-	infraBundles = append(infraBundles, *provider.GetInfrastructureBundleFromManagementComponents(managementComponents))
+	infraBundles = append(infraBundles, *provider.GetInfrastructureBundle(managementComponents))
 	for _, infraBundle := range infraBundles {
 		if err := c.writeInfrastructureBundle(prefix, &infraBundle); err != nil {
 			return err
@@ -224,7 +224,7 @@ func (c *Clusterctl) InitInfrastructure(ctx context.Context, clusterSpec *cluste
 		"--core", clusterctlConfig.coreVersion,
 		"--bootstrap", clusterctlConfig.bootstrapVersion,
 		"--control-plane", clusterctlConfig.controlPlaneVersion,
-		"--infrastructure", fmt.Sprintf("%s:%s", provider.Name(), provider.VersionFromManagementComponents(managementComponents)),
+		"--infrastructure", fmt.Sprintf("%s:%s", provider.Name(), provider.Version(managementComponents)),
 		"--config", clusterctlConfig.configFile,
 		"--bootstrap", clusterctlConfig.etcdadmBootstrapVersion,
 		"--bootstrap", clusterctlConfig.etcdadmControllerVersion,
