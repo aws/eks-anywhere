@@ -3,10 +3,12 @@ package eksd
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/types"
+	releavev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
 type Upgrader struct {
@@ -23,34 +25,41 @@ func NewUpgrader(client EksdInstallerClient, reader Reader, opts ...UpgraderOpt)
 	}
 }
 
-func (u *Upgrader) Upgrade(ctx context.Context, cluster *types.Cluster, currentSpec, newSpec *cluster.Spec) (*types.ChangeDiff, error) {
-	logger.V(1).Info("Checking for EKS-D components upgrade")
-	changeDiff := EksdChangeDiff(currentSpec, newSpec)
+// Upgrade checks for EKS-D updates, and if there are updates the EKS-D CRDs in the cluster.
+func (u *Upgrader) Upgrade(ctx context.Context, cluster *types.Cluster, currentSpec, newSpec *cluster.Spec) error {
+	logger.V(1).Info("Checking for EKS-D CRD updates")
+	changeDiff := ChangeDiff(currentSpec, newSpec)
 	if changeDiff == nil {
-		logger.V(1).Info("Nothing to upgrade for EKS-D components")
-		return nil, nil
+		logger.V(1).Info("Nothing to update for EKS-D.")
+		return nil
 	}
-	logger.V(1).Info("Starting EKS-D components upgrade")
+	logger.V(1).Info("Updating EKS-D CRDs")
 	if err := u.InstallEksdCRDs(ctx, newSpec, cluster); err != nil {
-		return nil, fmt.Errorf("upgrading EKS-D components from version %s to version %s: %v", changeDiff.ComponentReports[0].OldVersion, changeDiff.ComponentReports[0].NewVersion, err)
+		return fmt.Errorf("updating EKS-D crds from bundles %d to bundles %d: %v", currentSpec.Bundles.Spec.Number, newSpec.Bundles.Spec.Number, err)
 	}
-	return changeDiff, nil
+	return nil
 }
 
-func EksdChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ChangeDiff {
+// ChangeDiff returns the change diff between the current and new EKS-D versions.
+func ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ChangeDiff {
 	currentVersionsBundle := currentSpec.RootVersionsBundle()
 	newVersionsBundle := newSpec.RootVersionsBundle()
 	if currentVersionsBundle.EksD.Name != newVersionsBundle.EksD.Name {
-		logger.V(1).Info("EKS-D change diff ", "oldVersion ", currentVersionsBundle.EksD.Name, "newVersion ", newVersionsBundle.EksD.Name)
 		return &types.ChangeDiff{
 			ComponentReports: []types.ComponentChangeDiff{
 				{
-					ComponentName: "EKS-D",
-					NewVersion:    newVersionsBundle.EksD.Name,
-					OldVersion:    currentVersionsBundle.EksD.Name,
+					ComponentName: "kubernetes",
+					NewVersion:    eksdKubernetesVersionTag(newVersionsBundle.EksD),
+					OldVersion:    eksdKubernetesVersionTag(currentVersionsBundle.EksD),
 				},
 			},
 		}
 	}
 	return nil
+}
+
+func eksdKubernetesVersionTag(eksd releavev1alpha1.EksDRelease) string {
+	parts := strings.Split(eksd.Name, "-")
+	releaseNumber := strings.Split(eksd.Name, "-")[len(parts)-1]
+	return fmt.Sprintf("%s-eks-%s-%s", eksd.KubeVersion, eksd.ReleaseChannel, releaseNumber)
 }

@@ -37,12 +37,6 @@ var eksaChangeDiff = types.NewChangeDiff(&types.ComponentChangeDiff{
 	NewVersion:    "v0.0.2",
 })
 
-var eksdChangeDiff = types.NewChangeDiff(&types.ComponentChangeDiff{
-	ComponentName: "eks-d",
-	OldVersion:    "v0.0.1",
-	NewVersion:    "v0.0.2",
-})
-
 var managementComponentsVersionAnnotation = map[string]string{
 	"anywhere.eks.amazonaws.com/management-components-version": "v0.0.0-dev",
 }
@@ -121,7 +115,7 @@ func TestRunnerHappyPath(t *testing.T) {
 		mocks.gitOpsManager.EXPECT().Install(ctx, managementCluster, newManagementComponents, curSpec, newSpec).Return(nil),
 		mocks.gitOpsManager.EXPECT().Upgrade(ctx, managementCluster, currentManagementComponents, newManagementComponents, curSpec, newSpec).Return(fluxChangeDiff, nil),
 		mocks.clusterManager.EXPECT().Upgrade(ctx, managementCluster, currentManagementComponents, newManagementComponents, newSpec).Return(eksaChangeDiff, nil),
-		mocks.eksdUpgrader.EXPECT().Upgrade(ctx, managementCluster, curSpec, newSpec).Return(eksdChangeDiff, nil),
+		mocks.eksdUpgrader.EXPECT().Upgrade(ctx, managementCluster, curSpec, newSpec).Return(nil),
 		mocks.clusterManager.EXPECT().ApplyBundles(
 			ctx, newSpec, managementCluster,
 		).Return(nil),
