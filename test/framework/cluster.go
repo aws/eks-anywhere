@@ -154,6 +154,23 @@ func NewClusterE2ETest(t T, provider Provider, opts ...ClusterE2ETestOpt) *Clust
 	return e
 }
 
+// UpdateClusterName updates the cluster name for the test. This will drive both the name of the eks-a
+// cluster config objects as well as the cluster config file name and the folder where the cluster config
+// file is stored.
+// The cluster config folder will be updated to the new cluster name only if it was using the default value.
+func (e *ClusterE2ETest) UpdateClusterName(name string) {
+	oldName := e.ClusterName
+	e.ClusterName = name
+	if e.ClusterConfigFolder == oldName {
+		// Only update the folder if it was using the old name. This is the default value.
+		e.ClusterConfigFolder = e.ClusterName
+		if err := os.MkdirAll(e.ClusterConfigFolder, os.ModePerm); err != nil {
+			e.T.Fatalf("Failed creating cluster config folder for test: %s", err)
+		}
+	}
+	e.ClusterConfigLocation = filepath.Join(e.ClusterConfigFolder, e.ClusterName+"-eks-a.yaml")
+}
+
 func withHardware(requiredCount int, hardareType string, labels map[string]string) ClusterE2ETestOpt {
 	return func(e *ClusterE2ETest) {
 		hardwarePool := e.GetHardwarePool()
@@ -596,6 +613,10 @@ func (e *ClusterE2ETest) generateClusterConfigWithCLI(opts ...CommandOpt) {
 	if e.PersistentCluster && fileExists(e.ClusterConfigLocation) {
 		e.T.Log("Skipping CLI cluster generation since this is a persistent cluster that already had one cluster config generated")
 		return
+	}
+
+	if err := os.MkdirAll(filepath.Dir(e.ClusterConfigLocation), os.ModePerm); err != nil {
+		e.T.Fatalf("Failed creating cluster config folder for test: %s", err)
 	}
 
 	generateClusterConfigArgs := []string{"generate", "clusterconfig", e.ClusterName, "-p", e.Provider.Name(), ">", e.ClusterConfigLocation}
