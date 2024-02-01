@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	anywherecluster "github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
@@ -63,9 +64,7 @@ func imageRepository(image v1alpha1.Image) string {
 // This method will write the configuration files
 // used by cluster api to install components.
 // See: https://cluster-api.sigs.k8s.io/clusterctl/configuration.html
-func (c *Clusterctl) buildOverridesLayer(clusterSpec *cluster.Spec, clusterName string, provider providers.Provider) error {
-	versionsBundle := clusterSpec.RootVersionsBundle()
-
+func (c *Clusterctl) buildOverridesLayer(managementComponents *cluster.ManagementComponents, clusterName string, provider providers.Provider) error {
 	// Adding cluster name to path temporarily following suggestion.
 	//
 	// This adds an implicit dependency between this method
@@ -77,51 +76,51 @@ func (c *Clusterctl) buildOverridesLayer(clusterSpec *cluster.Spec, clusterName 
 
 	infraBundles := []types.InfrastructureBundle{
 		{
-			FolderName: filepath.Join("cert-manager", versionsBundle.CertManager.Version),
+			FolderName: filepath.Join("cert-manager", managementComponents.CertManager.Version),
 			Manifests: []v1alpha1.Manifest{
-				versionsBundle.CertManager.Manifest,
+				managementComponents.CertManager.Manifest,
 			},
 		},
 		{
-			FolderName: filepath.Join("bootstrap-kubeadm", versionsBundle.Bootstrap.Version),
+			FolderName: filepath.Join("bootstrap-kubeadm", managementComponents.Bootstrap.Version),
 			Manifests: []v1alpha1.Manifest{
-				versionsBundle.Bootstrap.Components,
-				versionsBundle.Bootstrap.Metadata,
+				managementComponents.Bootstrap.Components,
+				managementComponents.Bootstrap.Metadata,
 			},
 		},
 		{
-			FolderName: filepath.Join("cluster-api", versionsBundle.ClusterAPI.Version),
+			FolderName: filepath.Join("cluster-api", managementComponents.ClusterAPI.Version),
 			Manifests: []v1alpha1.Manifest{
-				versionsBundle.ClusterAPI.Components,
-				versionsBundle.ClusterAPI.Metadata,
+				managementComponents.ClusterAPI.Components,
+				managementComponents.ClusterAPI.Metadata,
 			},
 		},
 		{
-			FolderName: filepath.Join("control-plane-kubeadm", versionsBundle.ControlPlane.Version),
+			FolderName: filepath.Join("control-plane-kubeadm", managementComponents.ControlPlane.Version),
 			Manifests: []v1alpha1.Manifest{
-				versionsBundle.ControlPlane.Components,
-				versionsBundle.ControlPlane.Metadata,
+				managementComponents.ControlPlane.Components,
+				managementComponents.ControlPlane.Metadata,
 			},
 		},
 		{
-			FolderName: filepath.Join("bootstrap-etcdadm-bootstrap", versionsBundle.ExternalEtcdBootstrap.Version),
+			FolderName: filepath.Join("bootstrap-etcdadm-bootstrap", managementComponents.ExternalEtcdBootstrap.Version),
 			Manifests: []v1alpha1.Manifest{
-				versionsBundle.ExternalEtcdBootstrap.Components,
-				versionsBundle.ExternalEtcdBootstrap.Metadata,
+				managementComponents.ExternalEtcdBootstrap.Components,
+				managementComponents.ExternalEtcdBootstrap.Metadata,
 			},
 		},
 		{
-			FolderName: filepath.Join("bootstrap-etcdadm-controller", versionsBundle.ExternalEtcdController.Version),
+			FolderName: filepath.Join("bootstrap-etcdadm-controller", managementComponents.ExternalEtcdController.Version),
 			Manifests: []v1alpha1.Manifest{
-				versionsBundle.ExternalEtcdController.Components,
-				versionsBundle.ExternalEtcdController.Metadata,
+				managementComponents.ExternalEtcdController.Components,
+				managementComponents.ExternalEtcdController.Metadata,
 			},
 		},
 	}
 
-	infraBundles = append(infraBundles, *provider.GetInfrastructureBundle(clusterSpec))
+	infraBundles = append(infraBundles, *provider.GetInfrastructureBundleFromManagementComponents(managementComponents))
 	for _, infraBundle := range infraBundles {
-		if err := c.writeInfrastructureBundle(clusterSpec, prefix, &infraBundle); err != nil {
+		if err := c.writeInfrastructureBundle(prefix, &infraBundle); err != nil {
 			return err
 		}
 	}
@@ -129,7 +128,7 @@ func (c *Clusterctl) buildOverridesLayer(clusterSpec *cluster.Spec, clusterName 
 	return nil
 }
 
-func (c *Clusterctl) writeInfrastructureBundle(clusterSpec *cluster.Spec, rootFolder string, bundle *types.InfrastructureBundle) error {
+func (c *Clusterctl) writeInfrastructureBundle(rootFolder string, bundle *types.InfrastructureBundle) error {
 	if bundle == nil {
 		return nil
 	}
@@ -214,7 +213,8 @@ func (c *Clusterctl) InitInfrastructure(ctx context.Context, clusterSpec *cluste
 	if cluster.Name == "" {
 		return fmt.Errorf("invalid cluster name '%s'", cluster.Name)
 	}
-	clusterctlConfig, err := c.buildConfig(clusterSpec, cluster.Name, provider)
+	managementComponents := anywherecluster.NewManagementComponents(clusterSpec.RootVersionsBundle().VersionsBundle)
+	clusterctlConfig, err := c.buildConfig(managementComponents, cluster.Name, provider)
 	if err != nil {
 		return err
 	}
@@ -224,7 +224,7 @@ func (c *Clusterctl) InitInfrastructure(ctx context.Context, clusterSpec *cluste
 		"--core", clusterctlConfig.coreVersion,
 		"--bootstrap", clusterctlConfig.bootstrapVersion,
 		"--control-plane", clusterctlConfig.controlPlaneVersion,
-		"--infrastructure", fmt.Sprintf("%s:%s", provider.Name(), provider.Version(clusterSpec)),
+		"--infrastructure", fmt.Sprintf("%s:%s", provider.Name(), provider.VersionFromManagementComponents(managementComponents)),
 		"--config", clusterctlConfig.configFile,
 		"--bootstrap", clusterctlConfig.etcdadmBootstrapVersion,
 		"--bootstrap", clusterctlConfig.etcdadmControllerVersion,
@@ -247,9 +247,8 @@ func (c *Clusterctl) InitInfrastructure(ctx context.Context, clusterSpec *cluste
 	return nil
 }
 
-func (c *Clusterctl) buildConfig(clusterSpec *cluster.Spec, clusterName string, provider providers.Provider) (*clusterctlConfiguration, error) {
+func (c *Clusterctl) buildConfig(managementComponents *anywherecluster.ManagementComponents, clusterName string, provider providers.Provider) (*clusterctlConfiguration, error) {
 	t := templater.New(c.writer)
-	versionsBundle := clusterSpec.RootVersionsBundle()
 
 	path, err := os.Getwd()
 	if err != nil {
@@ -257,58 +256,58 @@ func (c *Clusterctl) buildConfig(clusterSpec *cluster.Spec, clusterName string, 
 	}
 
 	data := map[string]string{
-		"CertManagerInjectorRepository":                   imageRepository(versionsBundle.CertManager.Cainjector),
-		"CertManagerInjectorTag":                          versionsBundle.CertManager.Cainjector.Tag(),
-		"CertManagerControllerRepository":                 imageRepository(versionsBundle.CertManager.Controller),
-		"CertManagerControllerTag":                        versionsBundle.CertManager.Controller.Tag(),
-		"CertManagerWebhookRepository":                    imageRepository(versionsBundle.CertManager.Webhook),
-		"CertManagerWebhookTag":                           versionsBundle.CertManager.Webhook.Tag(),
-		"CertManagerVersion":                              versionsBundle.CertManager.Version,
-		"ClusterApiControllerRepository":                  imageRepository(versionsBundle.ClusterAPI.Controller),
-		"ClusterApiControllerTag":                         versionsBundle.ClusterAPI.Controller.Tag(),
-		"ClusterApiKubeRbacProxyRepository":               imageRepository(versionsBundle.ClusterAPI.KubeProxy),
-		"ClusterApiKubeRbacProxyTag":                      versionsBundle.ClusterAPI.KubeProxy.Tag(),
-		"KubeadmBootstrapControllerRepository":            imageRepository(versionsBundle.Bootstrap.Controller),
-		"KubeadmBootstrapControllerTag":                   versionsBundle.Bootstrap.Controller.Tag(),
-		"KubeadmBootstrapKubeRbacProxyRepository":         imageRepository(versionsBundle.Bootstrap.KubeProxy),
-		"KubeadmBootstrapKubeRbacProxyTag":                versionsBundle.Bootstrap.KubeProxy.Tag(),
-		"KubeadmControlPlaneControllerRepository":         imageRepository(versionsBundle.ControlPlane.Controller),
-		"KubeadmControlPlaneControllerTag":                versionsBundle.ControlPlane.Controller.Tag(),
-		"KubeadmControlPlaneKubeRbacProxyRepository":      imageRepository(versionsBundle.ControlPlane.KubeProxy),
-		"KubeadmControlPlaneKubeRbacProxyTag":             versionsBundle.ControlPlane.KubeProxy.Tag(),
-		"ClusterApiVSphereControllerRepository":           imageRepository(versionsBundle.VSphere.ClusterAPIController),
-		"ClusterApiVSphereControllerTag":                  versionsBundle.VSphere.ClusterAPIController.Tag(),
-		"ClusterApiNutanixControllerRepository":           imageRepository(versionsBundle.Nutanix.ClusterAPIController),
-		"ClusterApiNutanixControllerTag":                  versionsBundle.Nutanix.ClusterAPIController.Tag(),
-		"ClusterApiCloudStackManagerRepository":           imageRepository(versionsBundle.CloudStack.ClusterAPIController),
-		"ClusterApiCloudStackManagerTag":                  versionsBundle.CloudStack.ClusterAPIController.Tag(),
-		"ClusterApiCloudStackKubeRbacProxyRepository":     imageRepository(versionsBundle.CloudStack.KubeRbacProxy),
-		"ClusterApiCloudStackKubeRbacProxyTag":            versionsBundle.CloudStack.KubeRbacProxy.Tag(),
-		"ClusterApiVSphereKubeRbacProxyRepository":        imageRepository(versionsBundle.VSphere.KubeProxy),
-		"ClusterApiVSphereKubeRbacProxyTag":               versionsBundle.VSphere.KubeProxy.Tag(),
-		"DockerKubeRbacProxyRepository":                   imageRepository(versionsBundle.Docker.KubeProxy),
-		"DockerKubeRbacProxyTag":                          versionsBundle.Docker.KubeProxy.Tag(),
-		"DockerManagerRepository":                         imageRepository(versionsBundle.Docker.Manager),
-		"DockerManagerTag":                                versionsBundle.Docker.Manager.Tag(),
-		"EtcdadmBootstrapProviderRepository":              imageRepository(versionsBundle.ExternalEtcdBootstrap.Controller),
-		"EtcdadmBootstrapProviderTag":                     versionsBundle.ExternalEtcdBootstrap.Controller.Tag(),
-		"EtcdadmBootstrapProviderKubeRbacProxyRepository": imageRepository(versionsBundle.ExternalEtcdBootstrap.KubeProxy),
-		"EtcdadmBootstrapProviderKubeRbacProxyTag":        versionsBundle.ExternalEtcdBootstrap.KubeProxy.Tag(),
-		"EtcdadmControllerRepository":                     imageRepository(versionsBundle.ExternalEtcdController.Controller),
-		"EtcdadmControllerTag":                            versionsBundle.ExternalEtcdController.Controller.Tag(),
-		"EtcdadmControllerKubeRbacProxyRepository":        imageRepository(versionsBundle.ExternalEtcdController.KubeProxy),
-		"EtcdadmControllerKubeRbacProxyTag":               versionsBundle.ExternalEtcdController.KubeProxy.Tag(),
-		"DockerProviderVersion":                           versionsBundle.Docker.Version,
-		"VSphereProviderVersion":                          versionsBundle.VSphere.Version,
-		"CloudStackProviderVersion":                       versionsBundle.CloudStack.Version,
-		"SnowProviderVersion":                             versionsBundle.Snow.Version,
-		"TinkerbellProviderVersion":                       versionsBundle.Tinkerbell.Version,
-		"NutanixProviderVersion":                          versionsBundle.Nutanix.Version,
-		"ClusterApiProviderVersion":                       versionsBundle.ClusterAPI.Version,
-		"KubeadmControlPlaneProviderVersion":              versionsBundle.ControlPlane.Version,
-		"KubeadmBootstrapProviderVersion":                 versionsBundle.Bootstrap.Version,
-		"EtcdadmBootstrapProviderVersion":                 versionsBundle.ExternalEtcdBootstrap.Version,
-		"EtcdadmControllerProviderVersion":                versionsBundle.ExternalEtcdController.Version,
+		"CertManagerInjectorRepository":                   imageRepository(managementComponents.CertManager.Cainjector),
+		"CertManagerInjectorTag":                          managementComponents.CertManager.Cainjector.Tag(),
+		"CertManagerControllerRepository":                 imageRepository(managementComponents.CertManager.Controller),
+		"CertManagerControllerTag":                        managementComponents.CertManager.Controller.Tag(),
+		"CertManagerWebhookRepository":                    imageRepository(managementComponents.CertManager.Webhook),
+		"CertManagerWebhookTag":                           managementComponents.CertManager.Webhook.Tag(),
+		"CertManagerVersion":                              managementComponents.CertManager.Version,
+		"ClusterApiControllerRepository":                  imageRepository(managementComponents.ClusterAPI.Controller),
+		"ClusterApiControllerTag":                         managementComponents.ClusterAPI.Controller.Tag(),
+		"ClusterApiKubeRbacProxyRepository":               imageRepository(managementComponents.ClusterAPI.KubeProxy),
+		"ClusterApiKubeRbacProxyTag":                      managementComponents.ClusterAPI.KubeProxy.Tag(),
+		"KubeadmBootstrapControllerRepository":            imageRepository(managementComponents.Bootstrap.Controller),
+		"KubeadmBootstrapControllerTag":                   managementComponents.Bootstrap.Controller.Tag(),
+		"KubeadmBootstrapKubeRbacProxyRepository":         imageRepository(managementComponents.Bootstrap.KubeProxy),
+		"KubeadmBootstrapKubeRbacProxyTag":                managementComponents.Bootstrap.KubeProxy.Tag(),
+		"KubeadmControlPlaneControllerRepository":         imageRepository(managementComponents.ControlPlane.Controller),
+		"KubeadmControlPlaneControllerTag":                managementComponents.ControlPlane.Controller.Tag(),
+		"KubeadmControlPlaneKubeRbacProxyRepository":      imageRepository(managementComponents.ControlPlane.KubeProxy),
+		"KubeadmControlPlaneKubeRbacProxyTag":             managementComponents.ControlPlane.KubeProxy.Tag(),
+		"ClusterApiVSphereControllerRepository":           imageRepository(managementComponents.VSphere.ClusterAPIController),
+		"ClusterApiVSphereControllerTag":                  managementComponents.VSphere.ClusterAPIController.Tag(),
+		"ClusterApiNutanixControllerRepository":           imageRepository(managementComponents.Nutanix.ClusterAPIController),
+		"ClusterApiNutanixControllerTag":                  managementComponents.Nutanix.ClusterAPIController.Tag(),
+		"ClusterApiCloudStackManagerRepository":           imageRepository(managementComponents.CloudStack.ClusterAPIController),
+		"ClusterApiCloudStackManagerTag":                  managementComponents.CloudStack.ClusterAPIController.Tag(),
+		"ClusterApiCloudStackKubeRbacProxyRepository":     imageRepository(managementComponents.CloudStack.KubeRbacProxy),
+		"ClusterApiCloudStackKubeRbacProxyTag":            managementComponents.CloudStack.KubeRbacProxy.Tag(),
+		"ClusterApiVSphereKubeRbacProxyRepository":        imageRepository(managementComponents.VSphere.KubeProxy),
+		"ClusterApiVSphereKubeRbacProxyTag":               managementComponents.VSphere.KubeProxy.Tag(),
+		"DockerKubeRbacProxyRepository":                   imageRepository(managementComponents.Docker.KubeProxy),
+		"DockerKubeRbacProxyTag":                          managementComponents.Docker.KubeProxy.Tag(),
+		"DockerManagerRepository":                         imageRepository(managementComponents.Docker.Manager),
+		"DockerManagerTag":                                managementComponents.Docker.Manager.Tag(),
+		"EtcdadmBootstrapProviderRepository":              imageRepository(managementComponents.ExternalEtcdBootstrap.Controller),
+		"EtcdadmBootstrapProviderTag":                     managementComponents.ExternalEtcdBootstrap.Controller.Tag(),
+		"EtcdadmBootstrapProviderKubeRbacProxyRepository": imageRepository(managementComponents.ExternalEtcdBootstrap.KubeProxy),
+		"EtcdadmBootstrapProviderKubeRbacProxyTag":        managementComponents.ExternalEtcdBootstrap.KubeProxy.Tag(),
+		"EtcdadmControllerRepository":                     imageRepository(managementComponents.ExternalEtcdController.Controller),
+		"EtcdadmControllerTag":                            managementComponents.ExternalEtcdController.Controller.Tag(),
+		"EtcdadmControllerKubeRbacProxyRepository":        imageRepository(managementComponents.ExternalEtcdController.KubeProxy),
+		"EtcdadmControllerKubeRbacProxyTag":               managementComponents.ExternalEtcdController.KubeProxy.Tag(),
+		"DockerProviderVersion":                           managementComponents.Docker.Version,
+		"VSphereProviderVersion":                          managementComponents.VSphere.Version,
+		"CloudStackProviderVersion":                       managementComponents.CloudStack.Version,
+		"SnowProviderVersion":                             managementComponents.Snow.Version,
+		"TinkerbellProviderVersion":                       managementComponents.Tinkerbell.Version,
+		"NutanixProviderVersion":                          managementComponents.Nutanix.Version,
+		"ClusterApiProviderVersion":                       managementComponents.ClusterAPI.Version,
+		"KubeadmControlPlaneProviderVersion":              managementComponents.ControlPlane.Version,
+		"KubeadmBootstrapProviderVersion":                 managementComponents.Bootstrap.Version,
+		"EtcdadmBootstrapProviderVersion":                 managementComponents.ExternalEtcdBootstrap.Version,
+		"EtcdadmControllerProviderVersion":                managementComponents.ExternalEtcdController.Version,
 		"dir":                                             path + "/" + clusterName + capiPrefix,
 	}
 
@@ -316,17 +315,17 @@ func (c *Clusterctl) buildConfig(clusterSpec *cluster.Spec, clusterName string, 
 	if err != nil {
 		return nil, fmt.Errorf("generating configuration file for clusterctl: %v", err)
 	}
-	if err := c.buildOverridesLayer(clusterSpec, clusterName, provider); err != nil {
+	if err := c.buildOverridesLayer(managementComponents, clusterName, provider); err != nil {
 		return nil, err
 	}
 
 	return &clusterctlConfiguration{
 		configFile:               filePath,
-		bootstrapVersion:         fmt.Sprintf("%s:%s", kubeadmBootstrapProviderName, versionsBundle.Bootstrap.Version),
-		controlPlaneVersion:      fmt.Sprintf("kubeadm:%s", versionsBundle.ControlPlane.Version),
-		coreVersion:              fmt.Sprintf("cluster-api:%s", versionsBundle.ClusterAPI.Version),
-		etcdadmBootstrapVersion:  fmt.Sprintf("%s:%s", etcdadmBootstrapProviderName, versionsBundle.ExternalEtcdBootstrap.Version),
-		etcdadmControllerVersion: fmt.Sprintf("%s:%s", etcdadmControllerProviderName, versionsBundle.ExternalEtcdController.Version),
+		bootstrapVersion:         fmt.Sprintf("%s:%s", kubeadmBootstrapProviderName, managementComponents.Bootstrap.Version),
+		controlPlaneVersion:      fmt.Sprintf("kubeadm:%s", managementComponents.ControlPlane.Version),
+		coreVersion:              fmt.Sprintf("cluster-api:%s", managementComponents.ClusterAPI.Version),
+		etcdadmBootstrapVersion:  fmt.Sprintf("%s:%s", etcdadmBootstrapProviderName, managementComponents.ExternalEtcdBootstrap.Version),
+		etcdadmControllerVersion: fmt.Sprintf("%s:%s", etcdadmControllerProviderName, managementComponents.ExternalEtcdController.Version),
 	}, nil
 }
 
@@ -344,7 +343,8 @@ var providerNamespaces = map[string]string{
 }
 
 func (c *Clusterctl) Upgrade(ctx context.Context, managementCluster *types.Cluster, provider providers.Provider, newSpec *cluster.Spec, changeDiff *clusterapi.CAPIChangeDiff) error {
-	clusterctlConfig, err := c.buildConfig(newSpec, managementCluster.Name, provider)
+	managementComponents := anywherecluster.NewManagementComponents(newSpec.RootVersionsBundle().VersionsBundle)
+	clusterctlConfig, err := c.buildConfig(managementComponents, managementCluster.Name, provider)
 	if err != nil {
 		return err
 	}
@@ -392,7 +392,9 @@ func (c *Clusterctl) InstallEtcdadmProviders(ctx context.Context, clusterSpec *c
 	if cluster.Name == "" {
 		return fmt.Errorf("invalid cluster name '%s'", cluster.Name)
 	}
-	clusterctlConfig, err := c.buildConfig(clusterSpec, cluster.Name, infraProvider)
+
+	managementComponents := anywherecluster.NewManagementComponents(clusterSpec.RootVersionsBundle().VersionsBundle)
+	clusterctlConfig, err := c.buildConfig(managementComponents, cluster.Name, infraProvider)
 	if err != nil {
 		return err
 	}
