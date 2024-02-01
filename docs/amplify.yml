@@ -5,6 +5,9 @@ applications:
         build:
           commands:
             - make release
+        postBuild:
+          commands:
+            - make upload-checksum
       artifacts:
         baseDirectory: public
         files:
