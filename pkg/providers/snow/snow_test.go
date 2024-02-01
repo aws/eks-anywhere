@@ -86,77 +86,149 @@ func givenClusterSpec() *cluster.Spec {
 		s.SnowCredentialsSecret = wantEksaCredentialsSecret()
 		s.SnowMachineConfigs = givenMachineConfigs()
 		s.SnowIPPools = givenIPPools()
-		s.VersionsBundles["1.21"] = givenVersionsBundle()
+		s.VersionsBundles["1.21"] = givenVersionsBundle("1.21")
+		s.VersionsBundles["1.29"] = givenVersionsBundle("1.29")
 		s.ManagementCluster = givenManagementCluster()
 	})
 }
 
-func givenVersionsBundle() *cluster.VersionsBundle {
-	return &cluster.VersionsBundle{
-		KubeDistro: &cluster.KubeDistro{
-			Kubernetes: cluster.VersionedRepository{
-				Repository: "public.ecr.aws/eks-distro/kubernetes",
-				Tag:        "v1.21.5-eks-1-21-9",
-			},
-			CoreDNS: cluster.VersionedRepository{
-				Repository: "public.ecr.aws/eks-distro/coredns",
-				Tag:        "v1.8.4-eks-1-21-9",
-			},
-			Etcd: cluster.VersionedRepository{
-				Repository: "public.ecr.aws/eks-distro/etcd-io",
-				Tag:        "v3.4.16-eks-1-21-9",
-			},
-			EtcdImage: releasev1alpha1.Image{
-				URI: "public.ecr.aws/eks-distro/etcd-io/etcd:0.0.1",
-			},
-			Pause: releasev1alpha1.Image{
-				URI: "public.ecr.aws/eks-distro/kubernetes/pause:0.0.1",
-			},
-			EtcdVersion: "3.4.16",
-			EtcdURL:     "https://distro.eks.amazonaws.com/kubernetes-1-21/releases/4/artifacts/etcd/v3.4.16/etcd-linux-amd64-v3.4.16.tar.gz",
-		},
-		VersionsBundle: &releasev1alpha1.VersionsBundle{
-			KubeVersion: "1.21",
-			Snow: releasev1alpha1.SnowBundle{
-				Version: "v1.0.2",
-				KubeVip: releasev1alpha1.Image{
-					Name:        "kube-vip",
-					OS:          "linux",
-					URI:         "public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.1433",
-					ImageDigest: "sha256:cf324971db7696810effd5c6c95e34b2c115893e1fbcaeb8877355dc74768ef1",
-					Description: "Container image for kube-vip image",
-					Arch:        []string{"amd64"},
+func givenVersionsBundle(kubeVersion v1alpha1.KubernetesVersion) *cluster.VersionsBundle {
+	switch kubeVersion {
+	case "1.21":
+		return &cluster.VersionsBundle{
+			KubeDistro: &cluster.KubeDistro{
+				Kubernetes: cluster.VersionedRepository{
+					Repository: "public.ecr.aws/eks-distro/kubernetes",
+					Tag:        "v1.21.5-eks-1-21-9",
 				},
-				Manager: releasev1alpha1.Image{
-					Name:        "cluster-api-snow-controller",
-					OS:          "linux",
-					URI:         "public.ecr.aws/l0g8r8j6/aws/cluster-api-provider-aws-snow/manager:v0.1.4-eks-a-v0.0.0-dev-build.2216",
-					ImageDigest: "sha256:59da9c726c4816c29d119e77956c6391e2dff451daf36aeb60e5d6425eb88018",
-					Description: "Container image for cluster-api-snow-controller image",
-					Arch:        []string{"amd64"},
+				CoreDNS: cluster.VersionedRepository{
+					Repository: "public.ecr.aws/eks-distro/coredns",
+					Tag:        "v1.8.4-eks-1-21-9",
 				},
-				BottlerocketBootstrapSnow: releasev1alpha1.Image{
-					Name:        "bottlerocket-bootstrap-snow",
-					OS:          "linux",
-					URI:         "public.ecr.aws/l0g8r8j6/bottlerocket-bootstrap-snow:v1-20-22-eks-a-v0.0.0-dev-build.4984",
-					ImageDigest: "sha256:59da9c726c4816c29d119e77956c6391e2dff451daf36aeb60e5d6425eb88018",
-					Description: "Container image for bottlerocket-bootstrap-snow image",
-					Arch:        []string{"amd64"},
+				Etcd: cluster.VersionedRepository{
+					Repository: "public.ecr.aws/eks-distro/etcd-io",
+					Tag:        "v3.4.16-eks-1-21-9",
+				},
+				EtcdImage: releasev1alpha1.Image{
+					URI: "public.ecr.aws/eks-distro/etcd-io/etcd:0.0.1",
+				},
+				Pause: releasev1alpha1.Image{
+					URI: "public.ecr.aws/eks-distro/kubernetes/pause:0.0.1",
+				},
+				EtcdVersion: "3.4.16",
+				EtcdURL:     "https://distro.eks.amazonaws.com/kubernetes-1-21/releases/4/artifacts/etcd/v3.4.16/etcd-linux-amd64-v3.4.16.tar.gz",
+			},
+			VersionsBundle: &releasev1alpha1.VersionsBundle{
+				KubeVersion: "1.21",
+				Snow: releasev1alpha1.SnowBundle{
+					Version: "v1.0.2",
+					KubeVip: releasev1alpha1.Image{
+						Name:        "kube-vip",
+						OS:          "linux",
+						URI:         "public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.1433",
+						ImageDigest: "sha256:cf324971db7696810effd5c6c95e34b2c115893e1fbcaeb8877355dc74768ef1",
+						Description: "Container image for kube-vip image",
+						Arch:        []string{"amd64"},
+					},
+					Manager: releasev1alpha1.Image{
+						Name:        "cluster-api-snow-controller",
+						OS:          "linux",
+						URI:         "public.ecr.aws/l0g8r8j6/aws/cluster-api-provider-aws-snow/manager:v0.1.4-eks-a-v0.0.0-dev-build.2216",
+						ImageDigest: "sha256:59da9c726c4816c29d119e77956c6391e2dff451daf36aeb60e5d6425eb88018",
+						Description: "Container image for cluster-api-snow-controller image",
+						Arch:        []string{"amd64"},
+					},
+					BottlerocketBootstrapSnow: releasev1alpha1.Image{
+						Name:        "bottlerocket-bootstrap-snow",
+						OS:          "linux",
+						URI:         "public.ecr.aws/l0g8r8j6/bottlerocket-bootstrap-snow:v1-20-22-eks-a-v0.0.0-dev-build.4984",
+						ImageDigest: "sha256:59da9c726c4816c29d119e77956c6391e2dff451daf36aeb60e5d6425eb88018",
+						Description: "Container image for bottlerocket-bootstrap-snow image",
+						Arch:        []string{"amd64"},
+					},
+				},
+				BottleRocketHostContainers: releasev1alpha1.BottlerocketHostContainersBundle{
+					Admin: releasev1alpha1.Image{
+						URI: "public.ecr.aws/eks-anywhere/bottlerocket-admin:0.0.1",
+					},
+					Control: releasev1alpha1.Image{
+						URI: "public.ecr.aws/eks-anywhere/bottlerocket-control:0.0.1",
+					},
+					KubeadmBootstrap: releasev1alpha1.Image{
+						URI: "public.ecr.aws/eks-anywhere/bottlerocket-bootstrap:0.0.1",
+					},
 				},
 			},
-			BottleRocketHostContainers: releasev1alpha1.BottlerocketHostContainersBundle{
-				Admin: releasev1alpha1.Image{
-					URI: "public.ecr.aws/eks-anywhere/bottlerocket-admin:0.0.1",
+		}
+	case "1.29":
+		return &cluster.VersionsBundle{
+			KubeDistro: &cluster.KubeDistro{
+				Kubernetes: cluster.VersionedRepository{
+					Repository: "public.ecr.aws/eks-distro/kubernetes",
+					Tag:        "v1.29.0-eks-1-29-3",
 				},
-				Control: releasev1alpha1.Image{
-					URI: "public.ecr.aws/eks-anywhere/bottlerocket-control:0.0.1",
+				CoreDNS: cluster.VersionedRepository{
+					Repository: "public.ecr.aws/eks-distro/coredns",
+					Tag:        "v1.11.1-eks-1-29-3",
 				},
-				KubeadmBootstrap: releasev1alpha1.Image{
-					URI: "public.ecr.aws/eks-anywhere/bottlerocket-bootstrap:0.0.1",
+				Etcd: cluster.VersionedRepository{
+					Repository: "public.ecr.aws/eks-distro/etcd-io",
+					Tag:        "v3.5.10-eks-1-29-3",
+				},
+				EtcdImage: releasev1alpha1.Image{
+					URI: "public.ecr.aws/eks-distro/etcd-io/etcd:v3.5.10-eks-1-29-3",
+				},
+				EtcdURL:     "https://distro.eks.amazonaws.com/kubernetes-1-29/releases/3/artifacts/etcd/v3.5.10/etcd-linux-amd64-v3.5.10.tar.gz",
+				EtcdVersion: "3.5.10",
+				Pause: releasev1alpha1.Image{
+					URI: "public.ecr.aws/eks-distro/kubernetes/pause:v1.29.0-eks-1-29-3",
 				},
 			},
-		},
+			VersionsBundle: &releasev1alpha1.VersionsBundle{
+				KubeVersion: "1.29",
+				Snow: releasev1alpha1.SnowBundle{
+					Version: "v1.0.2",
+					KubeVip: releasev1alpha1.Image{
+						Name:        "kube-vip",
+						OS:          "linux",
+						URI:         "public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.1433",
+						ImageDigest: "sha256:cf324971db7696810effd5c6c95e34b2c115893e1fbcaeb8877355dc74768ef1",
+						Description: "Container image for kube-vip image",
+						Arch:        []string{"amd64"},
+					},
+					Manager: releasev1alpha1.Image{
+						Name:        "cluster-api-snow-controller",
+						OS:          "linux",
+						URI:         "public.ecr.aws/l0g8r8j6/aws/cluster-api-provider-aws-snow/manager:v0.1.4-eks-a-v0.0.0-dev-build.2216",
+						ImageDigest: "sha256:59da9c726c4816c29d119e77956c6391e2dff451daf36aeb60e5d6425eb88018",
+						Description: "Container image for cluster-api-snow-controller image",
+						Arch:        []string{"amd64"},
+					},
+					BottlerocketBootstrapSnow: releasev1alpha1.Image{
+						Name:        "bottlerocket-bootstrap-snow",
+						OS:          "linux",
+						URI:         "public.ecr.aws/l0g8r8j6/bottlerocket-bootstrap-snow:v1-20-22-eks-a-v0.0.0-dev-build.4984",
+						ImageDigest: "sha256:59da9c726c4816c29d119e77956c6391e2dff451daf36aeb60e5d6425eb88018",
+						Description: "Container image for bottlerocket-bootstrap-snow image",
+						Arch:        []string{"amd64"},
+					},
+				},
+				BottleRocketHostContainers: releasev1alpha1.BottlerocketHostContainersBundle{
+					Admin: releasev1alpha1.Image{
+						URI: "public.ecr.aws/eks-anywhere/bottlerocket-admin:0.0.1",
+					},
+					Control: releasev1alpha1.Image{
+						URI: "public.ecr.aws/eks-anywhere/bottlerocket-control:0.0.1",
+					},
+					KubeadmBootstrap: releasev1alpha1.Image{
+						URI: "public.ecr.aws/eks-anywhere/bottlerocket-bootstrap:0.0.1",
+					},
+				},
+			},
+		}
 	}
+
+	return nil
 }
 
 func givenManagementComponents() *cluster.ManagementComponents {
@@ -738,7 +810,7 @@ func TestGenerateCAPISpecForUpgrade(t *testing.T) {
 
 func TestGenerateCAPISpecForUpgradeWorkerVersion(t *testing.T) {
 	tt := newSnowTest(t)
-	workerVersionsBundle := givenVersionsBundle()
+	workerVersionsBundle := givenVersionsBundle("1.21")
 	workerVersionsBundle.KubeDistro.Kubernetes.Tag = "v1.20.2-eks-1-20-7"
 	tt.clusterSpec.VersionsBundles["1.20"] = workerVersionsBundle
 	nodeGroups := tt.clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations

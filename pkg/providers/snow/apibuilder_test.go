@@ -104,9 +104,10 @@ func TestCAPICluster(t *testing.T) {
 	tt.Expect(got).To(Equal(wantCAPICluster()))
 }
 
-func wantKubeadmControlPlane() *controlplanev1.KubeadmControlPlane {
+func wantKubeadmControlPlane(kubeVersion v1alpha1.KubernetesVersion) *controlplanev1.KubeadmControlPlane {
 	wantReplicas := int32(3)
 	wantMaxSurge := intstr.FromInt(1)
+	versionBundles := givenVersionsBundle(kubeVersion)
 	return &controlplanev1.KubeadmControlPlane{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "controlplane.cluster.x-k8s.io/v1beta1",
@@ -126,18 +127,18 @@ func wantKubeadmControlPlane() *controlplanev1.KubeadmControlPlane {
 			},
 			KubeadmConfigSpec: bootstrapv1.KubeadmConfigSpec{
 				ClusterConfiguration: &bootstrapv1.ClusterConfiguration{
-					ImageRepository: "public.ecr.aws/eks-distro/kubernetes",
+					ImageRepository: versionBundles.KubeDistro.Kubernetes.Repository,
 					DNS: bootstrapv1.DNS{
 						ImageMeta: bootstrapv1.ImageMeta{
-							ImageRepository: "public.ecr.aws/eks-distro/coredns",
-							ImageTag:        "v1.8.4-eks-1-21-9",
+							ImageRepository: versionBundles.KubeDistro.CoreDNS.Repository,
+							ImageTag:        versionBundles.KubeDistro.CoreDNS.Tag,
 						},
 					},
 					Etcd: bootstrapv1.Etcd{
 						Local: &bootstrapv1.LocalEtcd{
 							ImageMeta: bootstrapv1.ImageMeta{
-								ImageRepository: "public.ecr.aws/eks-distro/etcd-io",
-								ImageTag:        "v3.4.16-eks-1-21-9",
+								ImageRepository: versionBundles.KubeDistro.Etcd.Repository,
+								ImageTag:        versionBundles.KubeDistro.Etcd.Tag,
 							},
 							ExtraArgs: map[string]string{
 								"cipher-suites":      "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
@@ -196,13 +197,13 @@ func wantKubeadmControlPlane() *controlplanev1.KubeadmControlPlane {
 				},
 			},
 			Replicas: &wantReplicas,
-			Version:  "v1.21.5-eks-1-21-9",
+			Version:  versionBundles.KubeDistro.Kubernetes.Tag,
 		},
 	}
 }
 
 func wantKubeadmControlPlaneUnstackedEtcd() *controlplanev1.KubeadmControlPlane {
-	kcp := wantKubeadmControlPlane()
+	kcp := wantKubeadmControlPlane("1.21")
 	kcp.Spec.KubeadmConfigSpec.ClusterConfiguration.Etcd = bootstrapv1.Etcd{
 		External: &bootstrapv1.ExternalEtcd{
 			Endpoints: []string{},
@@ -228,7 +229,7 @@ func TestKubeadmControlPlane(t *testing.T) {
 	got, err := snow.KubeadmControlPlane(tt.logger, tt.clusterSpec, controlPlaneMachineTemplate)
 	tt.Expect(err).To(Succeed())
 
-	want := wantKubeadmControlPlane()
+	want := wantKubeadmControlPlane("1.21")
 	want.Spec.KubeadmConfigSpec.JoinConfiguration.NodeRegistration.IgnorePreflightErrors = []string{"DirAvailable--etc-kubernetes-manifests"}
 	tt.Expect(got).To(BeComparableTo(want))
 }
@@ -394,7 +395,7 @@ func TestKubeadmControlPlaneWithRegistryMirrorUbuntu(t *testing.T) {
 			controlPlaneMachineTemplate := snow.MachineTemplate("snow-test-control-plane-1", g.machineConfigs[g.clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name], nil)
 			got, err := snow.KubeadmControlPlane(g.logger, g.clusterSpec, controlPlaneMachineTemplate)
 			g.Expect(err).To(Succeed())
-			want := wantKubeadmControlPlane()
+			want := wantKubeadmControlPlane("1.21")
 			want.Spec.KubeadmConfigSpec.Files = append(want.Spec.KubeadmConfigSpec.Files, tt.wantFiles...)
 			want.Spec.KubeadmConfigSpec.PreKubeadmCommands = append(want.Spec.KubeadmConfigSpec.PreKubeadmCommands, wantRegistryMirrorCommands()...)
 			want.Spec.KubeadmConfigSpec.JoinConfiguration.NodeRegistration.IgnorePreflightErrors = []string{"DirAvailable--etc-kubernetes-manifests"}
@@ -451,7 +452,7 @@ func TestKubeadmControlPlaneWithRegistryMirrorBottlerocket(t *testing.T) {
 			controlPlaneMachineTemplate := snow.MachineTemplate("snow-test-control-plane-1", g.machineConfigs["test-cp"], nil)
 			got, err := snow.KubeadmControlPlane(g.logger, g.clusterSpec, controlPlaneMachineTemplate)
 			g.Expect(err).To(Succeed())
-			want := wantKubeadmControlPlane()
+			want := wantKubeadmControlPlane("1.21")
 			want.Spec.KubeadmConfigSpec.Format = "bottlerocket"
 			want.Spec.KubeadmConfigSpec.PreKubeadmCommands = []string{}
 			want.Spec.KubeadmConfigSpec.ClusterConfiguration.BottlerocketBootstrap = bootstrap
@@ -548,13 +549,26 @@ func TestKubeadmControlPlaneWithProxyConfigUbuntu(t *testing.T) {
 			controlPlaneMachineTemplate := snow.MachineTemplate("snow-test-control-plane-1", g.machineConfigs[g.clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name], nil)
 			got, err := snow.KubeadmControlPlane(g.logger, g.clusterSpec, controlPlaneMachineTemplate)
 			g.Expect(err).To(Succeed())
-			want := wantKubeadmControlPlane()
+			want := wantKubeadmControlPlane("1.21")
 			want.Spec.KubeadmConfigSpec.Files = append(want.Spec.KubeadmConfigSpec.Files, tt.wantFiles...)
 			want.Spec.KubeadmConfigSpec.PreKubeadmCommands = append(want.Spec.KubeadmConfigSpec.PreKubeadmCommands, wantProxyConfigCommands()...)
 			want.Spec.KubeadmConfigSpec.JoinConfiguration.NodeRegistration.IgnorePreflightErrors = []string{"DirAvailable--etc-kubernetes-manifests"}
 			g.Expect(got).To(BeComparableTo(want))
 		})
 	}
+}
+
+func TestKubeadmControlPlaneUbuntuKubernetes129(t *testing.T) {
+	tt := newApiBuilerTest(t)
+	tt.clusterSpec.Cluster.Spec.KubernetesVersion = "1.29"
+	controlPlaneMachineTemplate := snow.MachineTemplate("snow-test-control-plane-1", tt.machineConfigs[tt.clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name], nil)
+	got, err := snow.KubeadmControlPlane(tt.logger, tt.clusterSpec, controlPlaneMachineTemplate)
+	tt.Expect(err).To(Succeed())
+
+	want := wantKubeadmControlPlane("1.29")
+	want.Spec.KubeadmConfigSpec.PreKubeadmCommands = append(want.Spec.KubeadmConfigSpec.PreKubeadmCommands, "if [ -f /run/kubeadm/kubeadm.yaml ]; then sed -i 's#path: /etc/kubernetes/admin.conf#path: /etc/kubernetes/super-admin.conf#' /etc/kubernetes/manifests/kube-vip.yaml; fi")
+	want.Spec.KubeadmConfigSpec.JoinConfiguration.NodeRegistration.IgnorePreflightErrors = []string{"DirAvailable--etc-kubernetes-manifests"}
+	tt.Expect(got).To(BeComparableTo(want))
 }
 
 func TestKubeadmControlPlaneWithProxyConfigBottlerocket(t *testing.T) {
@@ -566,7 +580,7 @@ func TestKubeadmControlPlaneWithProxyConfigBottlerocket(t *testing.T) {
 			controlPlaneMachineTemplate := snow.MachineTemplate("snow-test-control-plane-1", g.machineConfigs["test-cp"], nil)
 			got, err := snow.KubeadmControlPlane(g.logger, g.clusterSpec, controlPlaneMachineTemplate)
 			g.Expect(err).To(Succeed())
-			want := wantKubeadmControlPlane()
+			want := wantKubeadmControlPlane("1.21")
 			want.Spec.KubeadmConfigSpec.Format = "bottlerocket"
 			want.Spec.KubeadmConfigSpec.PreKubeadmCommands = []string{}
 			want.Spec.KubeadmConfigSpec.ClusterConfiguration.BottlerocketBootstrap = bootstrap
@@ -679,7 +693,7 @@ func TestKubeadmControlPlaneWithBottlerocketAdditionalSettings(t *testing.T) {
 			controlPlaneMachineTemplate := snow.MachineTemplate("snow-test-control-plane-1", g.machineConfigs["test-cp"], nil)
 			got, err := snow.KubeadmControlPlane(g.logger, g.clusterSpec, controlPlaneMachineTemplate)
 			g.Expect(err).To(Succeed())
-			want := wantKubeadmControlPlane()
+			want := wantKubeadmControlPlane("1.21")
 			want.Spec.KubeadmConfigSpec.Format = "bottlerocket"
 			want.Spec.KubeadmConfigSpec.PreKubeadmCommands = []string{}
 			want.Spec.KubeadmConfigSpec.ClusterConfiguration.BottlerocketBootstrap = bootstrap

@@ -352,6 +352,10 @@ spec:
         else echo "{{$dir}} already symlnk";
       fi
 {{- end}}
+{{- $kube_minor_version := (index (splitList "." (trimPrefix "v" .kubernetesVersion)) 1) }}
+{{- if (ge (atoi $kube_minor_version) 29) }}
+    - "if [ -f /run/kubeadm/kubeadm.yaml ]; then sed -i 's#path: /etc/kubernetes/admin.conf#path: /etc/kubernetes/super-admin.conf#' /etc/kubernetes/manifests/kube-vip.yaml; fi"
+{{- end }}
 {{- if .cloudstackControlPlaneDiskOfferingProvided }}
     diskSetup:
       filesystems:
