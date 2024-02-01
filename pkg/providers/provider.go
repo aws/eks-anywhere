@@ -27,15 +27,18 @@ type Provider interface {
 	BootstrapClusterOpts(clusterSpec *cluster.Spec) ([]bootstrapper.BootstrapClusterOption, error)
 	UpdateKubeConfig(content *[]byte, clusterName string) error
 	Version(clusterSpec *cluster.Spec) string
+	VersionFromManagementComponents(components *cluster.ManagementComponents) string
 	EnvMap(clusterSpec *cluster.Spec) (map[string]string, error)
 	GetDeployments() map[string][]string
 	GetInfrastructureBundle(clusterSpec *cluster.Spec) *types.InfrastructureBundle
+	GetInfrastructureBundleFromManagementComponents(components *cluster.ManagementComponents) *types.InfrastructureBundle
 	DatacenterConfig(clusterSpec *cluster.Spec) DatacenterConfig
 	DatacenterResourceType() string
 	MachineResourceType() string
 	MachineConfigs(clusterSpec *cluster.Spec) []MachineConfig
 	ValidateNewSpec(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error
 	ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ComponentChangeDiff
+	ChangeDiffFromManagementComponents(currentComponents, newComponents *cluster.ManagementComponents) *types.ComponentChangeDiff
 	RunPostControlPlaneUpgrade(ctx context.Context, oldClusterSpec *cluster.Spec, clusterSpec *cluster.Spec, workloadCluster *types.Cluster, managementCluster *types.Cluster) error
 	UpgradeNeeded(ctx context.Context, newSpec, currentSpec *cluster.Spec, cluster *types.Cluster) (bool, error)
 	DeleteResources(ctx context.Context, clusterSpec *cluster.Spec) error
