@@ -159,6 +159,38 @@ func givenVersionsBundle() *cluster.VersionsBundle {
 	}
 }
 
+func givenManagementComponents() *cluster.ManagementComponents {
+	return &cluster.ManagementComponents{
+		Snow: releasev1alpha1.SnowBundle{
+			Version: "v1.0.2",
+			KubeVip: releasev1alpha1.Image{
+				Name:        "kube-vip",
+				OS:          "linux",
+				URI:         "public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.1433",
+				ImageDigest: "sha256:cf324971db7696810effd5c6c95e34b2c115893e1fbcaeb8877355dc74768ef1",
+				Description: "Container image for kube-vip image",
+				Arch:        []string{"amd64"},
+			},
+			Manager: releasev1alpha1.Image{
+				Name:        "cluster-api-snow-controller",
+				OS:          "linux",
+				URI:         "public.ecr.aws/l0g8r8j6/aws/cluster-api-provider-aws-snow/manager:v0.1.4-eks-a-v0.0.0-dev-build.2216",
+				ImageDigest: "sha256:59da9c726c4816c29d119e77956c6391e2dff451daf36aeb60e5d6425eb88018",
+				Description: "Container image for cluster-api-snow-controller image",
+				Arch:        []string{"amd64"},
+			},
+			BottlerocketBootstrapSnow: releasev1alpha1.Image{
+				Name:        "bottlerocket-bootstrap-snow",
+				OS:          "linux",
+				URI:         "public.ecr.aws/l0g8r8j6/bottlerocket-bootstrap-snow:v1-20-22-eks-a-v0.0.0-dev-build.4984",
+				ImageDigest: "sha256:59da9c726c4816c29d119e77956c6391e2dff451daf36aeb60e5d6425eb88018",
+				Description: "Container image for bottlerocket-bootstrap-snow image",
+				Arch:        []string{"amd64"},
+			},
+		},
+	}
+}
+
 func givenManagementCluster() *types.Cluster {
 	return &types.Cluster{
 		Name:           "test-snow",
@@ -830,6 +862,16 @@ func TestVersion(t *testing.T) {
 	g.Expect(result).To(Equal(snowVersion))
 }
 
+func TestVersionFromManagementComponents(t *testing.T) {
+	snowVersion := "v1.0.2"
+	provider := givenProvider(t)
+	managementComponents := givenManagementComponents()
+	managementComponents.Snow.Version = snowVersion
+	g := NewWithT(t)
+	result := provider.VersionFromManagementComponents(managementComponents)
+	g.Expect(result).To(Equal(snowVersion))
+}
+
 func TestGetInfrastructureBundle(t *testing.T) {
 	tt := newSnowTest(t)
 	bundle := tt.clusterSpec.RootVersionsBundle()
@@ -841,6 +883,21 @@ func TestGetInfrastructureBundle(t *testing.T) {
 		},
 	}
 	got := tt.provider.GetInfrastructureBundle(tt.clusterSpec)
+	tt.Expect(got).To(Equal(want))
+}
+
+func TestGetInfrastructureBundleFromManagementComponents(t *testing.T) {
+	tt := newSnowTest(t)
+	managementComponents := givenManagementComponents()
+
+	want := &types.InfrastructureBundle{
+		FolderName: "infrastructure-snow/v1.0.2/",
+		Manifests: []releasev1alpha1.Manifest{
+			managementComponents.Snow.Components,
+			managementComponents.Snow.Metadata,
+		},
+	}
+	got := tt.provider.GetInfrastructureBundleFromManagementComponents(managementComponents)
 	tt.Expect(got).To(Equal(want))
 }
 
@@ -1233,6 +1290,29 @@ func TestChangeDiffWithChange(t *testing.T) {
 		OldVersion:    "v1.0.2",
 	}
 	g.Expect(provider.ChangeDiff(clusterSpec, newClusterSpec)).To(Equal(want))
+}
+
+func TestChangeDiffFromManagementComponentsNoChange(t *testing.T) {
+	g := NewWithT(t)
+	provider := givenProvider(t)
+	managementComponents := givenManagementComponents()
+	g.Expect(provider.ChangeDiffFromManagementComponents(managementComponents, managementComponents)).To(BeNil())
+}
+
+func TestChangeDiffFromManagementComponentsWithChange(t *testing.T) {
+	g := NewWithT(t)
+	provider := givenProvider(t)
+	managementComponents := givenManagementComponents()
+	newManagementComponents := givenManagementComponents()
+
+	managementComponents.Snow.Version = "v1.0.2"
+	newManagementComponents.Snow.Version = "v1.0.3"
+	want := &types.ComponentChangeDiff{
+		ComponentName: "snow",
+		NewVersion:    "v1.0.3",
+		OldVersion:    "v1.0.2",
+	}
+	g.Expect(provider.ChangeDiffFromManagementComponents(managementComponents, newManagementComponents)).To(Equal(want))
 }
 
 func TestUpdateSecrets(t *testing.T) {
