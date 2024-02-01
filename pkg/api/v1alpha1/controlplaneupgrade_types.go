@@ -33,17 +33,24 @@ type ControlPlaneUpgradeSpec struct {
 // ControlPlaneUpgradeStatus defines the observed state of ControlPlaneUpgrade.
 type ControlPlaneUpgradeStatus struct {
 	// RequireUpgrade is the number of machines that still need to be upgraded.
-	RequireUpgrade int64 `json:"requireUpgrade,omitempty"`
+	RequireUpgrade int64 `json:"requireUpgrade"`
 
 	// Upgraded is the number of machines that have been upgraded.
-	Upgraded int64 `json:"upgraded,omitempty"`
+	Upgraded int64 `json:"upgraded"`
 
 	// Ready denotes that the all control planes have finished upgrading and are ready.
 	Ready bool `json:"ready,omitempty"`
 }
 
 //+kubebuilder:object:root=true
+//+kubebuilder:resource:path=controlplaneupgrades,shortName=cpu,scope=Namespaced,singular=controlplaneupgrade
 //+kubebuilder:subresource:status
+//+kubebuilder:printcolumn:name="KubeadmControlPlane",type="string",JSONPath=".spec.controlPlane.name",description="KubeadmControlPlane"
+//+kubebuilder:printcolumn:name="Upgraded",type="string",JSONPath=".status.upgraded",description="Control Plane machines that are already upgraded"
+//+kubebuilder:printcolumn:name="PendingUpgrade",type="string",JSONPath=".status.requireUpgrade",description="Control Plane machines that still require upgrade"
+//+kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.ready",description="Denotes whether the upgrade has finished or not"
+//+kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp",description="Time duration since creation of Control Plane Upgrade"
+//+kubebuilder:printcolumn:name="KubernetesVersion",type="string",JSONPath=".spec.kubernetesVersion",description="Requested Kubernetes version"
 
 // ControlPlaneUpgrade is the Schema for the controlplaneupgrade API.
 type ControlPlaneUpgrade struct {

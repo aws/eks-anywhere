@@ -3938,6 +3938,8 @@ spec:
                         - maxSurge
                         type: object
                       type:
+                        description: UpgradeRolloutStrategyType defines the types
+                          of upgrade rollout strategies.
                         type: string
                     type: object
                 type: object
@@ -4287,6 +4289,8 @@ spec:
                           - maxUnavailable
                           type: object
                         type:
+                          description: UpgradeRolloutStrategyType defines the types
+                            of upgrade rollout strategies.
                           type: string
                       type: object
                   type: object
@@ -4420,10 +4424,37 @@ spec:
     kind: ControlPlaneUpgrade
     listKind: ControlPlaneUpgradeList
     plural: controlplaneupgrades
+    shortNames:
+    - cpu
     singular: controlplaneupgrade
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - additionalPrinterColumns:
+    - description: KubeadmControlPlane
+      jsonPath: .spec.controlPlane.name
+      name: KubeadmControlPlane
+      type: string
+    - description: Control Plane machines that are already upgraded
+      jsonPath: .status.upgraded
+      name: Upgraded
+      type: string
+    - description: Control Plane machines that still require upgrade
+      jsonPath: .status.requireUpgrade
+      name: PendingUpgrade
+      type: string
+    - description: Denotes whether the upgrade has finished or not
+      jsonPath: .status.ready
+      name: Ready
+      type: string
+    - description: Time duration since creation of Control Plane Upgrade
+      jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    - description: Requested Kubernetes version
+      jsonPath: .spec.kubernetesVersion
+      name: KubernetesVersion
+      type: string
+    name: v1alpha1
     schema:
       openAPIV3Schema:
         description: ControlPlaneUpgrade is the Schema for the controlplaneupgrade
@@ -4584,6 +4615,9 @@ spec:
                 description: Upgraded is the number of machines that have been upgraded.
                 format: int64
                 type: integer
+            required:
+            - requireUpgrade
+            - upgraded
             type: object
         type: object
     served: true
@@ -4938,10 +4972,37 @@ spec:
     kind: MachineDeploymentUpgrade
     listKind: MachineDeploymentUpgradeList
     plural: machinedeploymentupgrades
+    shortNames:
+    - mdu
     singular: machinedeploymentupgrade
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - additionalPrinterColumns:
+    - description: Machine Deployment
+      jsonPath: .spec.machineDeployment.name
+      name: Machine Deployment
+      type: string
+    - description: Worker machines that are already upgraded
+      jsonPath: .status.upgraded
+      name: Upgraded
+      type: string
+    - description: Worker machines that still require upgrade
+      jsonPath: .status.requireUpgrade
+      name: PendingUpgrade
+      type: string
+    - description: Denotes whether the upgrade has finished or not
+      jsonPath: .status.ready
+      name: Ready
+      type: string
+    - description: Time duration since creation of Control Plane Upgrade
+      jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    - description: Requested Kubernetes version
+      jsonPath: .spec.kubernetesVersion
+      name: KubernetesVersion
+      type: string
+    name: v1alpha1
     schema:
       openAPIV3Schema:
         description: MachineDeploymentUpgrade is the Schema for the machinedeploymentupgrades
@@ -5097,6 +5158,9 @@ spec:
                   that have been upgraded.
                 format: int64
                 type: integer
+            required:
+            - requireUpgrade
+            - upgraded
             type: object
         type: object
     served: true
@@ -5123,10 +5187,29 @@ spec:
     kind: NodeUpgrade
     listKind: NodeUpgradeList
     plural: nodeupgrades
+    shortNames:
+    - nu
     singular: nodeupgrade
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - additionalPrinterColumns:
+    - description: Machine
+      jsonPath: .spec.machine.name
+      name: Machine
+      type: string
+    - description: Denotes whether the upgrade has finished or not
+      jsonPath: .status.completed
+      name: Ready
+      type: string
+    - description: Time duration since creation of Control Plane Upgrade
+      jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    - description: Requested Kubernetes version
+      jsonPath: .spec.kubernetesVersion
+      name: KubernetesVersion
+      type: string
+    name: v1alpha1
     schema:
       openAPIV3Schema:
         description: NodeUpgrade is the Schema for the nodeupgrades API.

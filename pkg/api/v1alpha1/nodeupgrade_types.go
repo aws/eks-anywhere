@@ -61,14 +61,19 @@ type NodeUpgradeStatus struct {
 	// Completed denotes that the upgrader has completed running all the operations
 	// and the node is successfully upgraded.
 	// +optional
-	Completed bool `json:"completed,omitempty"`
+	Completed bool `json:"completed"`
 
 	// ObservedGeneration is the latest generation observed by the controller.
 	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
 }
 
 //+kubebuilder:object:root=true
+//+kubebuilder:resource:path=nodeupgrades,shortName=nu,scope=Namespaced,singular=nodeupgrade
 //+kubebuilder:subresource:status
+//+kubebuilder:printcolumn:name="Machine",type="string",JSONPath=".spec.machine.name",description="Machine"
+//+kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.completed",description="Denotes whether the upgrade has finished or not"
+//+kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp",description="Time duration since creation of Control Plane Upgrade"
+//+kubebuilder:printcolumn:name="KubernetesVersion",type="string",JSONPath=".spec.kubernetesVersion",description="Requested Kubernetes version"
 
 // NodeUpgrade is the Schema for the nodeupgrades API.
 type NodeUpgrade struct {
