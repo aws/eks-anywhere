@@ -2,7 +2,6 @@ package framework
 
 import (
 	"fmt"
-	"path/filepath"
 	"sync"
 	"testing"
 	"time"
@@ -31,9 +30,7 @@ func NewMulticlusterE2ETest(t *testing.T, managementCluster *ClusterE2ETest, wor
 	m.WorkloadClusters = make(WorkloadClusters, len(workloadClusters))
 	for _, c := range workloadClusters {
 		c.clusterFillers = append(c.clusterFillers, api.WithManagementCluster(managementCluster.ClusterName))
-		c.ClusterName = m.NewWorkloadClusterName()
-		c.ClusterConfigFolder = c.ClusterName
-		c.ClusterConfigLocation = filepath.Join(c.ClusterConfigFolder, c.ClusterName+"-eks-a.yaml")
+		c.UpdateClusterName(m.NewWorkloadClusterName())
 		m.WithWorkloadClusters(c)
 	}
 
