@@ -26,13 +26,13 @@ build-docs: submodule ## Generate the static site into the /public folder
 
 release: build
 
-submodule: ## initialize the docsy theme submodule
+submodule: ## Initialize the docsy theme submodule
 	git submodule update --init --recursive
 
-submodule-apply-patches: submodule ## apply submodule patches
+submodule-apply-patches: submodule ## Apply submodule patches
 	cd themes/docsy; git am ../../patches/0001-Make-docsy-js-files-static.patch; cd ../..
 
-submodule-reset: ## reset submodules to tracked commit
+submodule-reset: ## Reset submodules to tracked commit
 	git submodule update --init --recursive --force
 
 htmltest: install-htmltest
@@ -76,3 +76,9 @@ container-server: container-serve
 
 clean: ## Delete generated content. (requires sudo if using container-serve)
 	rm -rf public resources node_modules public.zip
+
+compute-checksum: ## Compute docs checksum
+	sha256sum public/index.html > DOCS_CHECKSUM
+
+upload-checksum: compute-checksum ## Upload the checksum to artifacts bucket
+	aws s3 cp DOCS_CHECKSUM s3://$(ARTIFACTS_BUCKET) --acl public-read
