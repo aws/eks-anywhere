@@ -185,6 +185,11 @@ func (p *SnowProvider) Version(clusterSpec *cluster.Spec) string {
 	return versionsBundle.Snow.Version
 }
 
+// VersionFromManagementComponents returns the snow version from the management components.
+func (p *SnowProvider) VersionFromManagementComponents(components *cluster.ManagementComponents) string {
+	return components.Snow.Version
+}
+
 func (p *SnowProvider) EnvMap(clusterSpec *cluster.Spec) (map[string]string, error) {
 	envMap := make(map[string]string)
 	envMap[snowCredentialsKey] = string(clusterSpec.SnowCredentialsSecret.Data[v1alpha1.SnowCredentialsKey])
@@ -212,6 +217,20 @@ func (p *SnowProvider) GetInfrastructureBundle(clusterSpec *cluster.Spec) *types
 		Manifests: []releasev1alpha1.Manifest{
 			versionsBundle.Snow.Components,
 			versionsBundle.Snow.Metadata,
+		},
+	}
+	return &infraBundle
+}
+
+// GetInfrastructureBundleFromManagementComponents returns the infrastructure bundle from the management components.
+func (p *SnowProvider) GetInfrastructureBundleFromManagementComponents(components *cluster.ManagementComponents) *types.InfrastructureBundle {
+	folderName := fmt.Sprintf("infrastructure-snow/%s/", components.Snow.Version)
+
+	infraBundle := types.InfrastructureBundle{
+		FolderName: folderName,
+		Manifests: []releasev1alpha1.Manifest{
+			components.Snow.Components,
+			components.Snow.Metadata,
 		},
 	}
 	return &infraBundle
@@ -252,6 +271,19 @@ func (p *SnowProvider) ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.Com
 		ComponentName: constants.SnowProviderName,
 		NewVersion:    newVersionsBundle.Snow.Version,
 		OldVersion:    currentVersionsBundle.Snow.Version,
+	}
+}
+
+// ChangeDiffFromManagementComponents returns the change diff from the management components.
+func (p *SnowProvider) ChangeDiffFromManagementComponents(currentComponents, newComponents *cluster.ManagementComponents) *types.ComponentChangeDiff {
+	if currentComponents.Snow.Version == newComponents.Snow.Version {
+		return nil
+	}
+
+	return &types.ComponentChangeDiff{
+		ComponentName: constants.SnowProviderName,
+		NewVersion:    newComponents.Snow.Version,
+		OldVersion:    currentComponents.Snow.Version,
 	}
 }
 
