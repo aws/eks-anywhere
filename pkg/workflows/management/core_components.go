@@ -96,12 +96,11 @@ func runUpgradeCoreComponents(ctx context.Context, commandContext *task.CommandC
 	}
 	commandContext.UpgradeChangeDiff.Append(changeDiff)
 
-	changeDiff, err = commandContext.EksdUpgrader.Upgrade(ctx, commandContext.ManagementCluster, commandContext.CurrentClusterSpec, commandContext.ClusterSpec)
+	err = commandContext.EksdUpgrader.Upgrade(ctx, commandContext.ManagementCluster, commandContext.CurrentClusterSpec, commandContext.ClusterSpec)
 	if err != nil {
 		commandContext.SetError(err)
 		return err
 	}
-	commandContext.UpgradeChangeDiff.Append(changeDiff)
 
 	eksaCluster := &anywherev1.Cluster{}
 	err = client.Get(ctx, commandContext.CurrentClusterSpec.Cluster.Name, commandContext.CurrentClusterSpec.Cluster.Namespace, eksaCluster)

@@ -248,12 +248,11 @@ func (s *upgradeCoreComponents) Run(ctx context.Context, commandContext *task.Co
 	}
 	commandContext.UpgradeChangeDiff.Append(changeDiff)
 
-	changeDiff, err = commandContext.EksdUpgrader.Upgrade(ctx, commandContext.ManagementCluster, commandContext.CurrentClusterSpec, commandContext.ClusterSpec)
+	err = commandContext.EksdUpgrader.Upgrade(ctx, commandContext.ManagementCluster, commandContext.CurrentClusterSpec, commandContext.ClusterSpec)
 	if err != nil {
 		commandContext.SetError(err)
 		return &CollectDiagnosticsTask{}
 	}
-	commandContext.UpgradeChangeDiff.Append(changeDiff)
 	s.UpgradeChangeDiff = commandContext.UpgradeChangeDiff
 
 	return &upgradeNeeded{}
@@ -510,16 +509,14 @@ func (s *upgradeWorkloadClusterTask) Run(ctx context.Context, commandContext *ta
 		return &CollectDiagnosticsTask{}
 	}
 
-	if commandContext.UpgradeChangeDiff.Changed() {
-		if err = commandContext.ClusterManager.ApplyBundles(ctx, commandContext.ClusterSpec, eksaManagementCluster); err != nil {
-			commandContext.SetError(err)
-			return &CollectDiagnosticsTask{}
-		}
+	if err = commandContext.ClusterManager.ApplyBundles(ctx, commandContext.ClusterSpec, eksaManagementCluster); err != nil {
+		commandContext.SetError(err)
+		return &CollectDiagnosticsTask{}
+	}
 
-		if err = commandContext.ClusterManager.ApplyReleases(ctx, commandContext.ClusterSpec, eksaManagementCluster); err != nil {
-			commandContext.SetError(err)
-			return &CollectDiagnosticsTask{}
-		}
+	if err = commandContext.ClusterManager.ApplyReleases(ctx, commandContext.ClusterSpec, eksaManagementCluster); err != nil {
+		commandContext.SetError(err)
+		return &CollectDiagnosticsTask{}
 	}
 
 	return &moveManagementToWorkloadTask{}

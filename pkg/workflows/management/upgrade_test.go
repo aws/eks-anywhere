@@ -177,11 +177,6 @@ func (c *upgradeManagementTestSetup) expectUpgradeCoreComponents() {
 		OldVersion:    "v0.0.1",
 		NewVersion:    "v0.0.2",
 	})
-	eksdChangeDiff := types.NewChangeDiff(&types.ComponentChangeDiff{
-		ComponentName: "eks-d",
-		OldVersion:    "v0.0.1",
-		NewVersion:    "v0.0.2",
-	})
 
 	gomock.InOrder(
 		c.provider.EXPECT().PreCoreComponentsUpgrade(gomock.Any(), gomock.Any(), gomock.Any()),
@@ -190,7 +185,7 @@ func (c *upgradeManagementTestSetup) expectUpgradeCoreComponents() {
 		c.gitOpsManager.EXPECT().Install(c.ctx, c.managementCluster, c.newManagementComponents, currentSpec, c.newClusterSpec).Return(nil),
 		c.gitOpsManager.EXPECT().Upgrade(c.ctx, c.managementCluster, c.currentManagementComponents, c.newManagementComponents, currentSpec, c.newClusterSpec).Return(fluxChangeDiff, nil),
 		c.clusterManager.EXPECT().Upgrade(c.ctx, c.managementCluster, c.currentManagementComponents, c.newManagementComponents, c.newClusterSpec).Return(eksaChangeDiff, nil),
-		c.eksdUpgrader.EXPECT().Upgrade(c.ctx, c.managementCluster, currentSpec, c.newClusterSpec).Return(eksdChangeDiff, nil),
+		c.eksdUpgrader.EXPECT().Upgrade(c.ctx, c.managementCluster, currentSpec, c.newClusterSpec).Return(nil),
 	)
 }
 
