@@ -1046,7 +1046,7 @@ func (e *ClusterE2ETest) managementCluster() *types.Cluster {
 
 // KubeconfigFilePath retrieves the Kubeconfig path used for the workload cluster.
 func (e *ClusterE2ETest) KubeconfigFilePath() string {
-	return filepath.Join(e.ClusterName, fmt.Sprintf("%s-eks-a-cluster.kubeconfig", e.ClusterName))
+	return filepath.Join(e.ClusterConfigFolder, fmt.Sprintf("%s-eks-a-cluster.kubeconfig", e.ClusterName))
 }
 
 // BuildWorkloadClusterClient creates a client for the workload cluster created by e.
