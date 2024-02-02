@@ -139,7 +139,8 @@ func (s *createManagementCluster) Checkpoint() *task.CompletedTask {
 
 func (s *installCAPI) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
 	logger.Info("Installing cluster-api providers on management cluster")
-	err := commandContext.ClusterManager.InstallCAPI(ctx, commandContext.ClusterSpec, commandContext.BootstrapCluster, commandContext.Provider)
+	managementComponents := cluster.ManagementComponentsFromBundles(commandContext.ClusterSpec.Bundles)
+	err := commandContext.ClusterManager.InstallCAPI(ctx, managementComponents, commandContext.ClusterSpec, commandContext.BootstrapCluster, commandContext.Provider)
 	if err != nil {
 		commandContext.SetError(err)
 		return &deleteManagementCluster{}

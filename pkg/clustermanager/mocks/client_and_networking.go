@@ -537,17 +537,17 @@ func (mr *MockClusterClientMockRecorder) GetWorkloadKubeconfig(arg0, arg1, arg2 
 }
 
 // InitInfrastructure mocks base method.
-func (m *MockClusterClient) InitInfrastructure(arg0 context.Context, arg1 *cluster.Spec, arg2 *types.Cluster, arg3 providers.Provider) error {
+func (m *MockClusterClient) InitInfrastructure(arg0 context.Context, arg1 *cluster.ManagementComponents, arg2 *cluster.Spec, arg3 *types.Cluster, arg4 providers.Provider) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "InitInfrastructure", arg0, arg1, arg2, arg3)
+	ret := m.ctrl.Call(m, "InitInfrastructure", arg0, arg1, arg2, arg3, arg4)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // InitInfrastructure indicates an expected call of InitInfrastructure.
-func (mr *MockClusterClientMockRecorder) InitInfrastructure(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+func (mr *MockClusterClientMockRecorder) InitInfrastructure(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InitInfrastructure", reflect.TypeOf((*MockClusterClient)(nil).InitInfrastructure), arg0, arg1, arg2, arg3)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InitInfrastructure", reflect.TypeOf((*MockClusterClient)(nil).InitInfrastructure), arg0, arg1, arg2, arg3, arg4)
 }
 
 // KubeconfigSecretAvailable mocks base method.
@@ -1863,17 +1863,17 @@ func (mr *MockCAPIClientMockRecorder) GetWorkloadKubeconfig(arg0, arg1, arg2 int
 }
 
 // InitInfrastructure mocks base method.
-func (m *MockCAPIClient) InitInfrastructure(arg0 context.Context, arg1 *cluster.Spec, arg2 *types.Cluster, arg3 providers.Provider) error {
+func (m *MockCAPIClient) InitInfrastructure(arg0 context.Context, arg1 *cluster.ManagementComponents, arg2 *cluster.Spec, arg3 *types.Cluster, arg4 providers.Provider) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "InitInfrastructure", arg0, arg1, arg2, arg3)
+	ret := m.ctrl.Call(m, "InitInfrastructure", arg0, arg1, arg2, arg3, arg4)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // InitInfrastructure indicates an expected call of InitInfrastructure.
-func (mr *MockCAPIClientMockRecorder) InitInfrastructure(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+func (mr *MockCAPIClientMockRecorder) InitInfrastructure(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InitInfrastructure", reflect.TypeOf((*MockCAPIClient)(nil).InitInfrastructure), arg0, arg1, arg2, arg3)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InitInfrastructure", reflect.TypeOf((*MockCAPIClient)(nil).InitInfrastructure), arg0, arg1, arg2, arg3, arg4)
 }
 
 // MoveManagement mocks base method.

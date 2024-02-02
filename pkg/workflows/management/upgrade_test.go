@@ -80,20 +80,19 @@ func newUpgradeManagementTest(t *testing.T) *upgradeManagementTestSetup {
 		t.Setenv(e, "true")
 	}
 
-	bundles := test.Bundle()
-	eksaRelease := test.EKSARelease()
-
 	currentClusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
 		s.Cluster.Name = "management"
 		s.Cluster.Namespace = "default"
 		s.Cluster.Spec.DatacenterRef.Kind = v1alpha1.VSphereDatacenterKind
 		s.Cluster.SetManagementComponentsVersion("v0.0.0-dev")
+		s.Bundles = test.Bundle()
+		s.EKSARelease = test.EKSARelease()
 	})
 
 	newClusterSpec := currentClusterSpec.DeepCopy()
 	newClusterSpec.Cluster.Annotations = nil
 
-	client := test.NewFakeKubeClient(currentClusterSpec.Cluster, eksaRelease, bundles)
+	client := test.NewFakeKubeClient(currentClusterSpec.Cluster, currentClusterSpec.EKSARelease, currentClusterSpec.Bundles)
 
 	return &upgradeManagementTestSetup{
 		t:                           t,
@@ -112,7 +111,7 @@ func newUpgradeManagementTest(t *testing.T) *upgradeManagementTestSetup {
 		machineConfigs:              machineConfigs,
 		management:                  management,
 		ctx:                         context.Background(),
-		currentManagementComponents: cluster.ManagementComponentsFromBundles(bundles),
+		currentManagementComponents: cluster.ManagementComponentsFromBundles(currentClusterSpec.Bundles),
 		newManagementComponents:     cluster.ManagementComponentsFromBundles(newClusterSpec.Bundles),
 		currentClusterSpec:          currentClusterSpec,
 		newClusterSpec:              newClusterSpec,
@@ -144,7 +143,7 @@ func (c *upgradeManagementTestSetup) expectUpdateSecrets(err error) {
 
 func (c *upgradeManagementTestSetup) expectEnsureManagementEtcdCAPIComponentsExist(err error) {
 	gomock.InOrder(
-		c.capiManager.EXPECT().EnsureEtcdProvidersInstallation(c.ctx, c.managementCluster, c.provider, c.currentClusterSpec).Return(err),
+		c.capiManager.EXPECT().EnsureEtcdProvidersInstallation(c.ctx, c.managementCluster, c.provider, c.currentManagementComponents, c.currentClusterSpec).Return(err),
 	)
 }
 
@@ -181,7 +180,7 @@ func (c *upgradeManagementTestSetup) expectUpgradeCoreComponents() {
 	gomock.InOrder(
 		c.provider.EXPECT().PreCoreComponentsUpgrade(gomock.Any(), gomock.Any(), gomock.Any()),
 		c.clientFactory.EXPECT().BuildClientFromKubeconfig(c.managementCluster.KubeconfigFile).Return(c.client, nil),
-		c.capiManager.EXPECT().Upgrade(c.ctx, c.managementCluster, c.provider, currentSpec, c.newClusterSpec).Return(capiChangeDiff, nil),
+		c.capiManager.EXPECT().Upgrade(c.ctx, c.managementCluster, c.provider, c.currentManagementComponents, c.newManagementComponents, c.newClusterSpec).Return(capiChangeDiff, nil),
 		c.gitOpsManager.EXPECT().Install(c.ctx, c.managementCluster, c.newManagementComponents, currentSpec, c.newClusterSpec).Return(nil),
 		c.gitOpsManager.EXPECT().Upgrade(c.ctx, c.managementCluster, c.currentManagementComponents, c.newManagementComponents, currentSpec, c.newClusterSpec).Return(fluxChangeDiff, nil),
 		c.clusterManager.EXPECT().Upgrade(c.ctx, c.managementCluster, c.currentManagementComponents, c.newManagementComponents, c.newClusterSpec).Return(eksaChangeDiff, nil),

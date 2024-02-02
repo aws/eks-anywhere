@@ -41,11 +41,11 @@ type ManagementComponents struct {
 // that indicates an upgrade is required. In the future, we might change the bundles API to remove the assumption
 // and make this explicit. When that happens, this method will need to change.
 func ManagementComponentsFromBundles(bundles *v1alpha1release.Bundles) *ManagementComponents {
-	return NewManagementComponents(&bundles.Spec.VersionsBundles[0])
+	return newManagementComponents(&bundles.Spec.VersionsBundles[0])
 }
 
-// NewManagementComponents returns a ManagementComponents object built from a VersionsBundle.
-func NewManagementComponents(vb *v1alpha1release.VersionsBundle) *ManagementComponents {
+// newManagementComponents returns a ManagementComponents object built from a VersionsBundle.
+func newManagementComponents(vb *v1alpha1release.VersionsBundle) *ManagementComponents {
 	return &ManagementComponents{
 		EksD:                   vb.EksD,
 		CertManager:            vb.CertManager,

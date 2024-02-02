@@ -97,8 +97,9 @@ func TestClusterManagerCAPIWaitForDeploymentStackedEtcd(t *testing.T) {
 	clusterObj := &types.Cluster{}
 	c, m := newClusterManager(t)
 	clusterSpecStackedEtcd := test.NewClusterSpec()
+	managementComponents := cluster.ManagementComponentsFromBundles(clusterSpecStackedEtcd.Bundles)
 
-	m.client.EXPECT().InitInfrastructure(ctx, clusterSpecStackedEtcd, clusterObj, m.provider)
+	m.client.EXPECT().InitInfrastructure(ctx, managementComponents, clusterSpecStackedEtcd, clusterObj, m.provider)
 	for namespace, deployments := range internal.CAPIDeployments {
 		for _, deployment := range deployments {
 			m.client.EXPECT().WaitForDeployment(ctx, clusterObj, "30m0s", "Available", deployment, namespace)
@@ -111,7 +112,8 @@ func TestClusterManagerCAPIWaitForDeploymentStackedEtcd(t *testing.T) {
 			m.client.EXPECT().WaitForDeployment(ctx, clusterObj, "30m0s", "Available", deployment, namespace)
 		}
 	}
-	if err := c.InstallCAPI(ctx, clusterSpecStackedEtcd, clusterObj, m.provider); err != nil {
+
+	if err := c.InstallCAPI(ctx, managementComponents, clusterSpecStackedEtcd, clusterObj, m.provider); err != nil {
 		t.Errorf("ClusterManager.InstallCAPI() error = %v, wantErr nil", err)
 	}
 }
@@ -123,7 +125,9 @@ func TestClusterManagerCAPIWaitForDeploymentExternalEtcd(t *testing.T) {
 	clusterSpecExternalEtcd := test.NewClusterSpec(func(s *cluster.Spec) {
 		s.Cluster.Spec.ExternalEtcdConfiguration = &v1alpha1.ExternalEtcdConfiguration{Count: 1}
 	})
-	m.client.EXPECT().InitInfrastructure(ctx, clusterSpecExternalEtcd, clusterObj, m.provider)
+	managementComponents := cluster.ManagementComponentsFromBundles(clusterSpecExternalEtcd.Bundles)
+
+	m.client.EXPECT().InitInfrastructure(ctx, managementComponents, clusterSpecExternalEtcd, clusterObj, m.provider)
 	for namespace, deployments := range internal.CAPIDeployments {
 		for _, deployment := range deployments {
 			m.client.EXPECT().WaitForDeployment(ctx, clusterObj, "30m0s", "Available", deployment, namespace)
@@ -141,7 +145,7 @@ func TestClusterManagerCAPIWaitForDeploymentExternalEtcd(t *testing.T) {
 			m.client.EXPECT().WaitForDeployment(ctx, clusterObj, "30m0s", "Available", deployment, namespace)
 		}
 	}
-	if err := c.InstallCAPI(ctx, clusterSpecExternalEtcd, clusterObj, m.provider); err != nil {
+	if err := c.InstallCAPI(ctx, managementComponents, clusterSpecExternalEtcd, clusterObj, m.provider); err != nil {
 		t.Errorf("ClusterManager.InstallCAPI() error = %v, wantErr nil", err)
 	}
 }

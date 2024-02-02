@@ -3,6 +3,7 @@ package management
 import (
 	"context"
 
+	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/task"
 	"github.com/aws/eks-anywhere/pkg/workflows"
@@ -18,7 +19,8 @@ func (s *installCAPIComponentsTask) Run(ctx context.Context, commandContext *tas
 	}
 
 	logger.Info("Installing cluster-api providers on bootstrap cluster")
-	if err := commandContext.ClusterManager.InstallCAPI(ctx, commandContext.ClusterSpec, commandContext.BootstrapCluster, commandContext.Provider); err != nil {
+	managementComponents := cluster.ManagementComponentsFromBundles(commandContext.ClusterSpec.Bundles)
+	if err := commandContext.ClusterManager.InstallCAPI(ctx, managementComponents, commandContext.ClusterSpec, commandContext.BootstrapCluster, commandContext.Provider); err != nil {
 		commandContext.SetError(err)
 		return &workflows.CollectMgmtClusterDiagnosticsTask{}
 	}

@@ -18,7 +18,8 @@ type ensureEtcdCAPIComponentsExist struct{}
 // Run ensureEtcdCAPIComponentsExist ensures ETCD CAPI providers on the management cluster.
 func (s *ensureEtcdCAPIComponentsExist) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
 	logger.Info("Ensuring etcd CAPI providers exist on management cluster before upgrade")
-	if err := commandContext.CAPIManager.EnsureEtcdProvidersInstallation(ctx, commandContext.ManagementCluster, commandContext.Provider, commandContext.CurrentClusterSpec); err != nil {
+	managementComponents := cluster.ManagementComponentsFromBundles(commandContext.CurrentClusterSpec.Bundles)
+	if err := commandContext.CAPIManager.EnsureEtcdProvidersInstallation(ctx, commandContext.ManagementCluster, commandContext.Provider, managementComponents, commandContext.CurrentClusterSpec); err != nil {
 		commandContext.SetError(err)
 		return &workflows.CollectMgmtClusterDiagnosticsTask{}
 	}
@@ -70,7 +71,7 @@ func runUpgradeCoreComponents(ctx context.Context, commandContext *task.CommandC
 
 	newManagementComponents := cluster.ManagementComponentsFromBundles(commandContext.ClusterSpec.Bundles)
 
-	changeDiff, err := commandContext.CAPIManager.Upgrade(ctx, commandContext.ManagementCluster, commandContext.Provider, commandContext.CurrentClusterSpec, commandContext.ClusterSpec)
+	changeDiff, err := commandContext.CAPIManager.Upgrade(ctx, commandContext.ManagementCluster, commandContext.Provider, currentManagementComponents, newManagementComponents, commandContext.ClusterSpec)
 	if err != nil {
 		commandContext.SetError(err)
 		return err

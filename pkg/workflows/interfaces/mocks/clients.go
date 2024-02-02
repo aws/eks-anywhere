@@ -285,17 +285,17 @@ func (mr *MockClusterManagerMockRecorder) InstallAwsIamAuth(arg0, arg1, arg2, ar
 }
 
 // InstallCAPI mocks base method.
-func (m *MockClusterManager) InstallCAPI(arg0 context.Context, arg1 *cluster.Spec, arg2 *types.Cluster, arg3 providers.Provider) error {
+func (m *MockClusterManager) InstallCAPI(arg0 context.Context, arg1 *cluster.ManagementComponents, arg2 *cluster.Spec, arg3 *types.Cluster, arg4 providers.Provider) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "InstallCAPI", arg0, arg1, arg2, arg3)
+	ret := m.ctrl.Call(m, "InstallCAPI", arg0, arg1, arg2, arg3, arg4)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // InstallCAPI indicates an expected call of InstallCAPI.
-func (mr *MockClusterManagerMockRecorder) InstallCAPI(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+func (mr *MockClusterManagerMockRecorder) InstallCAPI(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InstallCAPI", reflect.TypeOf((*MockClusterManager)(nil).InstallCAPI), arg0, arg1, arg2, arg3)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InstallCAPI", reflect.TypeOf((*MockClusterManager)(nil).InstallCAPI), arg0, arg1, arg2, arg3, arg4)
 }
 
 // InstallCustomComponents mocks base method.
@@ -726,32 +726,32 @@ func (m *MockCAPIManager) EXPECT() *MockCAPIManagerMockRecorder {
 }
 
 // EnsureEtcdProvidersInstallation mocks base method.
-func (m *MockCAPIManager) EnsureEtcdProvidersInstallation(arg0 context.Context, arg1 *types.Cluster, arg2 providers.Provider, arg3 *cluster.Spec) error {
+func (m *MockCAPIManager) EnsureEtcdProvidersInstallation(arg0 context.Context, arg1 *types.Cluster, arg2 providers.Provider, arg3 *cluster.ManagementComponents, arg4 *cluster.Spec) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "EnsureEtcdProvidersInstallation", arg0, arg1, arg2, arg3)
+	ret := m.ctrl.Call(m, "EnsureEtcdProvidersInstallation", arg0, arg1, arg2, arg3, arg4)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // EnsureEtcdProvidersInstallation indicates an expected call of EnsureEtcdProvidersInstallation.
-func (mr *MockCAPIManagerMockRecorder) EnsureEtcdProvidersInstallation(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+func (mr *MockCAPIManagerMockRecorder) EnsureEtcdProvidersInstallation(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnsureEtcdProvidersInstallation", reflect.TypeOf((*MockCAPIManager)(nil).EnsureEtcdProvidersInstallation), arg0, arg1, arg2, arg3)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnsureEtcdProvidersInstallation", reflect.TypeOf((*MockCAPIManager)(nil).EnsureEtcdProvidersInstallation), arg0, arg1, arg2, arg3, arg4)
 }
 
 // Upgrade mocks base method.
-func (m *MockCAPIManager) Upgrade(arg0 context.Context, arg1 *types.Cluster, arg2 providers.Provider, arg3, arg4 *cluster.Spec) (*types.ChangeDiff, error) {
+func (m *MockCAPIManager) Upgrade(arg0 context.Context, arg1 *types.Cluster, arg2 providers.Provider, arg3, arg4 *cluster.ManagementComponents, arg5 *cluster.Spec) (*types.ChangeDiff, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Upgrade", arg0, arg1, arg2, arg3, arg4)
+	ret := m.ctrl.Call(m, "Upgrade", arg0, arg1, arg2, arg3, arg4, arg5)
 	ret0, _ := ret[0].(*types.ChangeDiff)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Upgrade indicates an expected call of Upgrade.
-func (mr *MockCAPIManagerMockRecorder) Upgrade(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
+func (mr *MockCAPIManagerMockRecorder) Upgrade(arg0, arg1, arg2, arg3, arg4, arg5 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Upgrade", reflect.TypeOf((*MockCAPIManager)(nil).Upgrade), arg0, arg1, arg2, arg3, arg4)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Upgrade", reflect.TypeOf((*MockCAPIManager)(nil).Upgrade), arg0, arg1, arg2, arg3, arg4, arg5)
 }
 
 // MockEksdInstaller is a mock of EksdInstaller interface.
