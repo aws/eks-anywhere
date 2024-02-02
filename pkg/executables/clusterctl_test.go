@@ -29,13 +29,14 @@ import (
 
 type clusterctlTest struct {
 	*WithT
-	ctx            context.Context
-	cluster        *types.Cluster
-	clusterctl     *executables.Clusterctl
-	e              *mockexecutables.MockExecutable
-	provider       *mockproviders.MockProvider
-	writer         filewriter.FileWriter
-	providerEnvMap map[string]string
+	ctx                  context.Context
+	managementComponents *cluster.ManagementComponents
+	cluster              *types.Cluster
+	clusterctl           *executables.Clusterctl
+	e                    *mockexecutables.MockExecutable
+	provider             *mockproviders.MockProvider
+	writer               filewriter.FileWriter
+	providerEnvMap       map[string]string
 }
 
 func newClusterctlTest(t *testing.T) *clusterctlTest {
@@ -45,8 +46,9 @@ func newClusterctlTest(t *testing.T) *clusterctlTest {
 	e := mockexecutables.NewMockExecutable(ctrl)
 
 	return &clusterctlTest{
-		WithT: NewWithT(t),
-		ctx:   context.Background(),
+		WithT:                NewWithT(t),
+		ctx:                  context.Background(),
+		managementComponents: cluster.ManagementComponentsFromBundles(clusterSpec.Bundles),
 		cluster: &types.Cluster{
 			Name:           "cluster-name",
 			KubeconfigFile: "config/c.kubeconfig",
@@ -60,7 +62,7 @@ func newClusterctlTest(t *testing.T) *clusterctlTest {
 }
 
 func (ct *clusterctlTest) expectBuildOverrideLayer() {
-	ct.provider.EXPECT().GetInfrastructureBundle(clusterSpec).Return(&types.InfrastructureBundle{})
+	ct.provider.EXPECT().GetInfrastructureBundleFromManagementComponents(ct.managementComponents).Return(&types.InfrastructureBundle{})
 }
 
 func (ct *clusterctlTest) expectGetProviderEnvMap() {
@@ -131,9 +133,9 @@ func TestClusterctlInitInfrastructure(t *testing.T) {
 			gotConfig := ""
 
 			tc.provider.EXPECT().Name().Return(tt.providerName)
-			tc.provider.EXPECT().Version(clusterSpec).Return(tt.providerVersion)
+			tc.provider.EXPECT().VersionFromManagementComponents(tc.managementComponents).Return(tt.providerVersion)
 			tc.provider.EXPECT().EnvMap(clusterSpec).Return(tt.env, nil)
-			tc.provider.EXPECT().GetInfrastructureBundle(clusterSpec).Return(&types.InfrastructureBundle{})
+			tc.provider.EXPECT().GetInfrastructureBundleFromManagementComponents(tc.managementComponents).Return(&types.InfrastructureBundle{})
 
 			tc.e.EXPECT().ExecuteWithEnv(tc.ctx, tt.env, tt.wantExecArgs...).Return(bytes.Buffer{}, nil).Times(1).Do(
 				func(ctx context.Context, envs map[string]string, args ...string) (stdout bytes.Buffer, err error) {
@@ -179,9 +181,9 @@ func TestClusterctlInitInfrastructureEnvMapError(t *testing.T) {
 	tt := newClusterctlTest(t)
 
 	tt.provider.EXPECT().Name()
-	tt.provider.EXPECT().Version(clusterSpec)
+	tt.provider.EXPECT().VersionFromManagementComponents(tt.managementComponents)
 	tt.provider.EXPECT().EnvMap(clusterSpec).Return(nil, errors.New("error with env map"))
-	tt.provider.EXPECT().GetInfrastructureBundle(clusterSpec).Return(&types.InfrastructureBundle{})
+	tt.provider.EXPECT().GetInfrastructureBundleFromManagementComponents(tt.managementComponents).Return(&types.InfrastructureBundle{})
 
 	if err := tt.clusterctl.InitInfrastructure(tt.ctx, clusterSpec, cluster, tt.provider); err == nil {
 		t.Fatal("Clusterctl.InitInfrastructure() error = nil")
@@ -198,9 +200,9 @@ func TestClusterctlInitInfrastructureExecutableError(t *testing.T) {
 	tt := newClusterctlTest(t)
 
 	tt.provider.EXPECT().Name()
-	tt.provider.EXPECT().Version(clusterSpec)
+	tt.provider.EXPECT().VersionFromManagementComponents(tt.managementComponents)
 	tt.provider.EXPECT().EnvMap(clusterSpec)
-	tt.provider.EXPECT().GetInfrastructureBundle(clusterSpec).Return(&types.InfrastructureBundle{})
+	tt.provider.EXPECT().GetInfrastructureBundleFromManagementComponents(tt.managementComponents).Return(&types.InfrastructureBundle{})
 
 	tt.e.EXPECT().ExecuteWithEnv(tt.ctx, nil, gomock.Any()).Return(bytes.Buffer{}, errors.New("error from execute with env"))
 
@@ -427,6 +429,7 @@ func TestClusterctlUpgradeInfrastructureProvidersError(t *testing.T) {
 
 var clusterSpec = test.NewClusterSpec(func(s *cluster.Spec) {
 	s.VersionsBundles["1.19"] = versionBundle
+	s.Bundles.Spec.VersionsBundles[0] = *versionBundle.VersionsBundle
 })
 
 var versionBundle = &cluster.VersionsBundle{
