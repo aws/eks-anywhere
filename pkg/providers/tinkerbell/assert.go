@@ -95,6 +95,11 @@ func AssertUpgradeRolloutStrategyValid(spec *ClusterSpec) error {
 	return validateUpgradeRolloutStrategy(spec)
 }
 
+// AssertAutoScalerDisabledForInPlace ensures that the autoscaler configuration is not enabled when upgrade rollout strategy is InPlace.
+func AssertAutoScalerDisabledForInPlace(spec *ClusterSpec) error {
+	return validateAutoScalerDisabledForInPlace(spec)
+}
+
 // AssertOSImageURL ensures that the OSImageURL value is either set at the datacenter config level or set for each machine config and not at both levels.
 func AssertOSImageURL(spec *ClusterSpec) error {
 	return validateOSImageURL(spec)
