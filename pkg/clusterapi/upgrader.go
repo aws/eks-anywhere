@@ -141,7 +141,10 @@ func capiChangeDiff(currentSpec, newSpec *cluster.Spec, provider providers.Provi
 		componentChanged = true
 	}
 
-	if providerChangeDiff := provider.ChangeDiff(currentSpec, newSpec); providerChangeDiff != nil {
+	currentManagementComponents := cluster.NewManagementComponents(currentSpec.RootVersionsBundle().VersionsBundle)
+	newManagementComponents := cluster.NewManagementComponents(newSpec.RootVersionsBundle().VersionsBundle)
+
+	if providerChangeDiff := provider.ChangeDiffFromManagementComponents(currentManagementComponents, newManagementComponents); providerChangeDiff != nil {
 		changeDiff.InfrastructureProvider = providerChangeDiff
 		logger.V(1).Info("CAPI Infrastrcture Provider change diff", "provider", providerChangeDiff.ComponentName, "oldVersion", providerChangeDiff.OldVersion, "newVersion", providerChangeDiff.NewVersion)
 		componentChanged = true
