@@ -72,7 +72,7 @@ func (c *deleteTestSetup) expectCreateBootstrap() {
 		).Return(c.bootstrapCluster, nil),
 
 		c.provider.EXPECT().PreCAPIInstallOnBootstrap(c.ctx, c.bootstrapCluster, c.clusterSpec),
-		c.clusterManager.EXPECT().InstallCAPI(c.ctx, gomock.Not(gomock.Nil()), c.bootstrapCluster, c.provider),
+		c.clusterManager.EXPECT().InstallCAPI(c.ctx, cluster.ManagementComponentsFromBundles(c.clusterSpec.Bundles), gomock.Not(gomock.Nil()), c.bootstrapCluster, c.provider),
 	)
 }
 
@@ -86,7 +86,7 @@ func (c *deleteTestSetup) expectNotToCreateBootstrap() {
 		c.ctx, gomock.Not(gomock.Nil()), gomock.Not(gomock.Nil()),
 	).Return(c.bootstrapCluster, nil).Times(0)
 
-	c.clusterManager.EXPECT().InstallCAPI(c.ctx, gomock.Not(gomock.Nil()), c.bootstrapCluster, c.provider).Times(0)
+	c.clusterManager.EXPECT().InstallCAPI(c.ctx, cluster.ManagementComponentsFromBundles(c.clusterSpec.Bundles), gomock.Not(gomock.Nil()), c.bootstrapCluster, c.provider).Times(0)
 }
 
 func (c *deleteTestSetup) expectDeletePackageResources() {

@@ -39,18 +39,18 @@ func newUpgraderTest(t *testing.T) *upgraderTest {
 
 	currentSpec := test.NewClusterSpec(func(s *cluster.Spec) {
 		s.Bundles.Spec.Number = 1
-		s.VersionsBundles["1.19"].CertManager.Version = "v0.1.0"
-		s.VersionsBundles["1.19"].ClusterAPI.Version = "v0.1.0"
-		s.VersionsBundles["1.19"].ControlPlane.Version = "v0.1.0"
-		s.VersionsBundles["1.19"].Bootstrap.Version = "v0.1.0"
-		s.VersionsBundles["1.19"].ExternalEtcdBootstrap.Version = "v0.1.0"
-		s.VersionsBundles["1.19"].ExternalEtcdController.Version = "v0.1.0"
+		s.Bundles.Spec.VersionsBundles[0].CertManager.Version = "v0.1.0"
+		s.Bundles.Spec.VersionsBundles[0].ClusterAPI.Version = "v0.1.0"
+		s.Bundles.Spec.VersionsBundles[0].ControlPlane.Version = "v0.1.0"
+		s.Bundles.Spec.VersionsBundles[0].Bootstrap.Version = "v0.1.0"
+		s.Bundles.Spec.VersionsBundles[0].ExternalEtcdBootstrap.Version = "v0.1.0"
+		s.Bundles.Spec.VersionsBundles[0].ExternalEtcdController.Version = "v0.1.0"
 	})
 
-	currentManagementComponents := cluster.NewManagementComponents(currentSpec.RootVersionsBundle().VersionsBundle)
+	currentManagementComponents := cluster.ManagementComponentsFromBundles(currentSpec.Bundles)
 
 	newSpec := currentSpec.DeepCopy()
-	newManagementComponents := cluster.NewManagementComponents(newSpec.RootVersionsBundle().VersionsBundle)
+	newManagementComponents := cluster.ManagementComponentsFromBundles(newSpec.Bundles)
 
 	return &upgraderTest{
 		WithT:                       NewWithT(t),
@@ -79,14 +79,14 @@ func TestUpgraderUpgradeNoSelfManaged(t *testing.T) {
 	tt := newUpgraderTest(t)
 	tt.newSpec.Cluster.SetManagedBy("management-cluster")
 
-	tt.Expect(tt.upgrader.Upgrade(tt.ctx, tt.cluster, tt.provider, tt.currentSpec, tt.newSpec)).To(BeNil())
+	tt.Expect(tt.upgrader.Upgrade(tt.ctx, tt.cluster, tt.provider, tt.currentManagementComponents, tt.newManagementComponents, tt.newSpec)).To(BeNil())
 }
 
 func TestUpgraderUpgradeNoChanges(t *testing.T) {
 	tt := newUpgraderTest(t)
 	tt.provider.EXPECT().ChangeDiff(tt.currentManagementComponents, tt.newManagementComponents).Return(nil)
 
-	tt.Expect(tt.upgrader.Upgrade(tt.ctx, tt.cluster, tt.provider, tt.currentSpec, tt.newSpec)).To(BeNil())
+	tt.Expect(tt.upgrader.Upgrade(tt.ctx, tt.cluster, tt.provider, tt.currentManagementComponents, tt.newManagementComponents, tt.newSpec)).To(BeNil())
 }
 
 func TestUpgraderUpgradeProviderChanges(t *testing.T) {
@@ -100,15 +100,15 @@ func TestUpgraderUpgradeProviderChanges(t *testing.T) {
 	}
 
 	tt.provider.EXPECT().ChangeDiff(tt.currentManagementComponents, tt.newManagementComponents).Return(tt.providerChangeDiff)
-	tt.capiClient.EXPECT().Upgrade(tt.ctx, tt.cluster, tt.provider, tt.newSpec, changeDiff)
+	tt.capiClient.EXPECT().Upgrade(tt.ctx, tt.cluster, tt.provider, tt.newManagementComponents, tt.newSpec, changeDiff)
 
-	tt.Expect(tt.upgrader.Upgrade(tt.ctx, tt.cluster, tt.provider, tt.currentSpec, tt.newSpec)).To(Equal(wantDiff))
+	tt.Expect(tt.upgrader.Upgrade(tt.ctx, tt.cluster, tt.provider, tt.currentManagementComponents, tt.newManagementComponents, tt.newSpec)).To(Equal(wantDiff))
 }
 
 func TestUpgraderUpgradeCoreChanges(t *testing.T) {
 	tt := newUpgraderTest(t)
-	tt.newSpec.VersionsBundles["1.19"].ClusterAPI.Version = "v0.2.0"
-	tt.newManagementComponents = cluster.NewManagementComponents(tt.newSpec.RootVersionsBundle().VersionsBundle)
+	tt.newSpec.Bundles.Spec.VersionsBundles[0].ClusterAPI.Version = "v0.2.0"
+	tt.newManagementComponents = cluster.ManagementComponentsFromBundles(tt.newSpec.Bundles)
 
 	changeDiff := &clusterapi.CAPIChangeDiff{
 		Core: &types.ComponentChangeDiff{
@@ -123,20 +123,20 @@ func TestUpgraderUpgradeCoreChanges(t *testing.T) {
 	}
 
 	tt.provider.EXPECT().ChangeDiff(tt.currentManagementComponents, tt.newManagementComponents).Return(nil)
-	tt.capiClient.EXPECT().Upgrade(tt.ctx, tt.cluster, tt.provider, tt.newSpec, changeDiff)
+	tt.capiClient.EXPECT().Upgrade(tt.ctx, tt.cluster, tt.provider, tt.newManagementComponents, tt.newSpec, changeDiff)
 
-	tt.Expect(tt.upgrader.Upgrade(tt.ctx, tt.cluster, tt.provider, tt.currentSpec, tt.newSpec)).To(Equal(wantDiff))
+	tt.Expect(tt.upgrader.Upgrade(tt.ctx, tt.cluster, tt.provider, tt.currentManagementComponents, tt.newManagementComponents, tt.newSpec)).To(Equal(wantDiff))
 }
 
 func TestUpgraderUpgradeEverythingChangesStackedEtcd(t *testing.T) {
 	tt := newUpgraderTest(t)
-	tt.newSpec.VersionsBundles["1.19"].CertManager.Version = "v0.2.0"
-	tt.newSpec.VersionsBundles["1.19"].ClusterAPI.Version = "v0.2.0"
-	tt.newSpec.VersionsBundles["1.19"].ControlPlane.Version = "v0.2.0"
-	tt.newSpec.VersionsBundles["1.19"].Bootstrap.Version = "v0.2.0"
-	tt.newSpec.VersionsBundles["1.19"].ExternalEtcdBootstrap.Version = "v0.2.0"
-	tt.newSpec.VersionsBundles["1.19"].ExternalEtcdController.Version = "v0.2.0"
-	tt.newManagementComponents = cluster.NewManagementComponents(tt.newSpec.RootVersionsBundle().VersionsBundle)
+	tt.newSpec.Bundles.Spec.VersionsBundles[0].CertManager.Version = "v0.2.0"
+	tt.newSpec.Bundles.Spec.VersionsBundles[0].ClusterAPI.Version = "v0.2.0"
+	tt.newSpec.Bundles.Spec.VersionsBundles[0].ControlPlane.Version = "v0.2.0"
+	tt.newSpec.Bundles.Spec.VersionsBundles[0].Bootstrap.Version = "v0.2.0"
+	tt.newSpec.Bundles.Spec.VersionsBundles[0].ExternalEtcdBootstrap.Version = "v0.2.0"
+	tt.newSpec.Bundles.Spec.VersionsBundles[0].ExternalEtcdController.Version = "v0.2.0"
+	tt.newManagementComponents = cluster.ManagementComponentsFromBundles(tt.newSpec.Bundles)
 
 	changeDiff := &clusterapi.CAPIChangeDiff{
 		CertManager: &types.ComponentChangeDiff{
@@ -181,21 +181,21 @@ func TestUpgraderUpgradeEverythingChangesStackedEtcd(t *testing.T) {
 	}
 
 	tt.provider.EXPECT().ChangeDiff(tt.currentManagementComponents, tt.newManagementComponents).Return(tt.providerChangeDiff)
-	tt.capiClient.EXPECT().Upgrade(tt.ctx, tt.cluster, tt.provider, tt.newSpec, changeDiff)
+	tt.capiClient.EXPECT().Upgrade(tt.ctx, tt.cluster, tt.provider, tt.newManagementComponents, tt.newSpec, changeDiff)
 
-	tt.Expect(tt.upgrader.Upgrade(tt.ctx, tt.cluster, tt.provider, tt.currentSpec, tt.newSpec)).To(Equal(wantDiff))
+	tt.Expect(tt.upgrader.Upgrade(tt.ctx, tt.cluster, tt.provider, tt.currentManagementComponents, tt.newManagementComponents, tt.newSpec)).To(Equal(wantDiff))
 }
 
 func TestUpgraderUpgradeEverythingChangesExternalEtcd(t *testing.T) {
 	tt := newUpgraderTest(t)
 	tt.newSpec.Cluster.Spec.ExternalEtcdConfiguration = &v1alpha1.ExternalEtcdConfiguration{}
-	tt.newSpec.VersionsBundles["1.19"].CertManager.Version = "v0.2.0"
-	tt.newSpec.VersionsBundles["1.19"].ClusterAPI.Version = "v0.2.0"
-	tt.newSpec.VersionsBundles["1.19"].ControlPlane.Version = "v0.2.0"
-	tt.newSpec.VersionsBundles["1.19"].Bootstrap.Version = "v0.2.0"
-	tt.newSpec.VersionsBundles["1.19"].ExternalEtcdBootstrap.Version = "v0.2.0"
-	tt.newSpec.VersionsBundles["1.19"].ExternalEtcdController.Version = "v0.2.0"
-	tt.newManagementComponents = cluster.NewManagementComponents(tt.newSpec.RootVersionsBundle().VersionsBundle)
+	tt.newSpec.Bundles.Spec.VersionsBundles[0].CertManager.Version = "v0.2.0"
+	tt.newSpec.Bundles.Spec.VersionsBundles[0].ClusterAPI.Version = "v0.2.0"
+	tt.newSpec.Bundles.Spec.VersionsBundles[0].ControlPlane.Version = "v0.2.0"
+	tt.newSpec.Bundles.Spec.VersionsBundles[0].Bootstrap.Version = "v0.2.0"
+	tt.newSpec.Bundles.Spec.VersionsBundles[0].ExternalEtcdBootstrap.Version = "v0.2.0"
+	tt.newSpec.Bundles.Spec.VersionsBundles[0].ExternalEtcdController.Version = "v0.2.0"
+	tt.newManagementComponents = cluster.ManagementComponentsFromBundles(tt.newSpec.Bundles)
 
 	changeDiff := &clusterapi.CAPIChangeDiff{
 		CertManager: &types.ComponentChangeDiff{
@@ -242,9 +242,9 @@ func TestUpgraderUpgradeEverythingChangesExternalEtcd(t *testing.T) {
 	}
 
 	tt.provider.EXPECT().ChangeDiff(tt.currentManagementComponents, tt.newManagementComponents).Return(tt.providerChangeDiff)
-	tt.capiClient.EXPECT().Upgrade(tt.ctx, tt.cluster, tt.provider, tt.newSpec, changeDiff)
+	tt.capiClient.EXPECT().Upgrade(tt.ctx, tt.cluster, tt.provider, tt.newManagementComponents, tt.newSpec, changeDiff)
 
-	tt.Expect(tt.upgrader.Upgrade(tt.ctx, tt.cluster, tt.provider, tt.currentSpec, tt.newSpec)).To(Equal(wantDiff))
+	tt.Expect(tt.upgrader.Upgrade(tt.ctx, tt.cluster, tt.provider, tt.currentManagementComponents, tt.newManagementComponents, tt.newSpec)).To(Equal(wantDiff))
 }
 
 func TestUpgraderUpgradeCAPIClientError(t *testing.T) {
@@ -254,8 +254,8 @@ func TestUpgraderUpgradeCAPIClientError(t *testing.T) {
 	}
 
 	tt.provider.EXPECT().ChangeDiff(tt.currentManagementComponents, tt.newManagementComponents).Return(tt.providerChangeDiff)
-	tt.capiClient.EXPECT().Upgrade(tt.ctx, tt.cluster, tt.provider, tt.newSpec, changeDiff).Return(errors.New("error from client"))
+	tt.capiClient.EXPECT().Upgrade(tt.ctx, tt.cluster, tt.provider, tt.newManagementComponents, tt.newSpec, changeDiff).Return(errors.New("error from client"))
 
-	_, err := tt.upgrader.Upgrade(tt.ctx, tt.cluster, tt.provider, tt.currentSpec, tt.newSpec)
+	_, err := tt.upgrader.Upgrade(tt.ctx, tt.cluster, tt.provider, tt.currentManagementComponents, tt.newManagementComponents, tt.newSpec)
 	tt.Expect(err).NotTo(BeNil())
 }
