@@ -36,7 +36,7 @@ func (vo *versionOptions) printVersion() error {
 	case "":
 		fmt.Printf("Version: %s\n", versionInfo.GitVersion)
 		if bundlesErr != nil {
-			return fmt.Errorf("error getting bundle manifest URL for version %s: %v", versionInfo, bundlesErr)
+			return fmt.Errorf("error getting bundle manifest URL for version %s: %v", versionInfo.GitVersion, bundlesErr)
 		}
 		fmt.Printf("Bundle Manifest URL: %s\n", versionInfo.BundleManifestURL)
 	case "json":

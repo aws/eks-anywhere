@@ -163,3 +163,69 @@ func TestReleaseForVersionError(t *testing.T) {
 		})
 	}
 }
+
+func TestBundleManifestURL(t *testing.T) {
+	tests := []struct {
+		name     string
+		releases *releasev1.Release
+		version  string
+		wantURL  string
+		wantErr  string
+	}{
+		{
+			name: "valid version",
+			releases: &releasev1.Release{
+				Spec: releasev1.ReleaseSpec{
+					Releases: []releasev1.EksARelease{
+						{Version: "v0.0.1", Number: 1, BundleManifestUrl: "https://example.com/bundle-manifest"},
+						{Version: "v0.0.2", Number: 2, BundleManifestUrl: "https://example.com/bundle-manifest"},
+					},
+				},
+			},
+			version: "v0.0.1",
+			wantURL: "https://example.com/bundle-manifest",
+			wantErr: "",
+		},
+		{
+			name: "invalid version",
+			releases: &releasev1.Release{
+				Spec: releasev1.ReleaseSpec{
+					Releases: []releasev1.EksARelease{
+						{Version: "v0.0.1", Number: 1, BundleManifestUrl: "https://example.com/bundle-manifest"},
+						{Version: "v0.0.2", Number: 2, BundleManifestUrl: "https://example.com/bundle-manifest"},
+					},
+				},
+			},
+			version: "v0.0.X",
+			wantURL: "",
+			wantErr: "failed to get EKS-A release for version v0.0.X",
+		},
+		{
+			name: "error getting release",
+			releases: &releasev1.Release{
+				Spec: releasev1.ReleaseSpec{
+					Releases: []releasev1.EksARelease{
+						{Version: "v0.0.1", Number: 1, BundleManifestUrl: "https://example.com/bundle-manifest"},
+						{Version: "v0.0.2", Number: 2, BundleManifestUrl: "https://example.com/bundle-manifest"},
+					},
+				},
+			},
+			version: "v0.0.3",
+			wantURL: "",
+			wantErr: "no matching release found for version v0.0.3 to get Bundles URL",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			gotURL, gotErr := releases.BundleManifestURL(tt.releases, tt.version)
+			if tt.wantErr != "" {
+				g.Expect(gotErr).To(MatchError(ContainSubstring(tt.wantErr)))
+			} else {
+				g.Expect(gotErr).To(BeNil())
+				g.Expect(gotURL).To(Equal(tt.wantURL))
+			}
+		})
+	}
+}

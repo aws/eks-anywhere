@@ -49,9 +49,19 @@ func GetBundleManifestURL(reader Reader, version string) (string, error) {
 		return "", fmt.Errorf("failed to read releases: %v", err)
 	}
 
-	eksAReleaseForVersion, err := ReleaseForVersion(eksAReleases, version)
+	return BundleManifestURL(eksAReleases, version)
+}
+
+// BundleManifestURL returns the  Bundles manifest URL for the release matched by the provided
+// version. If no release is found for the version, an error is returned.
+func BundleManifestURL(releases *releasev1.Release, version string) (string, error) {
+	eksAReleaseForVersion, err := ReleaseForVersion(releases, version)
 	if err != nil {
 		return "", fmt.Errorf("failed to get EKS-A release for version %s: %v", version, err)
+	}
+
+	if eksAReleaseForVersion == nil {
+		return "", fmt.Errorf("no matching release found for version %s to get Bundles URL", version)
 	}
 
 	return eksAReleaseForVersion.BundleManifestUrl, nil
