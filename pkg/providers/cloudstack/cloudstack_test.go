@@ -907,24 +907,11 @@ func TestCleanupProviderInfrastructure(t *testing.T) {
 func TestVersion(t *testing.T) {
 	cloudStackProviderVersion := "v4.14.1"
 	provider := givenProvider(t)
-	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
-	clusterSpec.VersionsBundles["1.21"].CloudStack.Version = cloudStackProviderVersion
-	setupContext(t)
-
-	result := provider.Version(clusterSpec)
-	if result != cloudStackProviderVersion {
-		t.Fatalf("Unexpected version expected <%s> actual=<%s>", cloudStackProviderVersion, result)
-	}
-}
-
-func TestVersionFromManagementComponents(t *testing.T) {
-	cloudStackProviderVersion := "v4.14.1"
-	provider := givenProvider(t)
 	managementComponents := givenManagementComponents()
 	managementComponents.CloudStack.Version = cloudStackProviderVersion
 	setupContext(t)
 
-	result := provider.VersionFromManagementComponents(managementComponents)
+	result := provider.Version(managementComponents)
 	if result != cloudStackProviderVersion {
 		t.Fatalf("Unexpected version expected <%s> actual=<%s>", cloudStackProviderVersion, result)
 	}
@@ -1059,56 +1046,6 @@ func TestSetupAndValidateSSHAuthorizedKeyEmptyAllMachineConfigs(t *testing.T) {
 }
 
 func TestGetInfrastructureBundleSuccess(t *testing.T) {
-	tests := []struct {
-		testName    string
-		clusterSpec *cluster.Spec
-	}{
-		{
-			testName: "correct Overrides layer",
-			clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
-				s.VersionsBundles["1.19"].CloudStack = releasev1alpha1.CloudStackBundle{
-					Version: "v0.1.0",
-					ClusterAPIController: releasev1alpha1.Image{
-						URI: "public.ecr.aws/l0g8r8j6/kubernetes-sigs/cluster-api-provider-cloudstack/release/manager:v0.1.0",
-					},
-					KubeRbacProxy: releasev1alpha1.Image{
-						URI: "public.ecr.aws/l0g8r8j6/brancz/kube-rbac-proxy:v0.8.0-25df7d96779e2a305a22c6e3f9425c3465a77244",
-					},
-					KubeVip: releasev1alpha1.Image{
-						URI: "public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.3.2-2093eaeda5a4567f0e516d652e0b25b1d7abc774",
-					},
-					Metadata: releasev1alpha1.Manifest{
-						URI: "Metadata.yaml",
-					},
-					Components: releasev1alpha1.Manifest{
-						URI: "Components.yaml",
-					},
-				}
-			}),
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.testName, func(t *testing.T) {
-			p := givenProvider(t)
-
-			infraBundle := p.GetInfrastructureBundle(tt.clusterSpec)
-			if infraBundle == nil {
-				t.Fatalf("provider.GetInfrastructureBundle() should have an infrastructure bundle")
-			}
-			assert.Equal(t, "infrastructure-cloudstack/v0.1.0/", infraBundle.FolderName, "Incorrect folder name")
-			assert.Equal(t, len(infraBundle.Manifests), 2, "Wrong number of files in the infrastructure bundle")
-			bundle := tt.clusterSpec.RootVersionsBundle()
-			wantManifests := []releasev1alpha1.Manifest{
-				bundle.CloudStack.Components,
-				bundle.CloudStack.Metadata,
-			}
-			assert.ElementsMatch(t, infraBundle.Manifests, wantManifests, "Incorrect manifests")
-		})
-	}
-}
-
-func TestGetInfrastructureBundleFromManagementComponentsSuccess(t *testing.T) {
 	p := givenProvider(t)
 
 	managementComponents := givenManagementComponents()
@@ -1120,7 +1057,7 @@ func TestGetInfrastructureBundleFromManagementComponentsSuccess(t *testing.T) {
 		},
 	}
 
-	infraBundle := p.GetInfrastructureBundleFromManagementComponents(managementComponents)
+	infraBundle := p.GetInfrastructureBundle(managementComponents)
 	assert.Equal(t, wantInfraBundle.FolderName, infraBundle.FolderName, "Incorrect folder name")
 	assert.Equal(t, len(infraBundle.Manifests), 2, "Wrong number of files in the infrastructure bundle")
 	assert.Equal(t, wantInfraBundle.Manifests, infraBundle.Manifests, "Incorrect manifests")
@@ -1164,35 +1101,11 @@ func TestProviderDeleteResources(t *testing.T) {
 
 func TestChangeDiffNoChange(t *testing.T) {
 	provider := givenProvider(t)
-	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
-	assert.Nil(t, provider.ChangeDiff(clusterSpec, clusterSpec))
-}
-
-func TestChangeDiffFromManagementComponentsNoChange(t *testing.T) {
-	provider := givenProvider(t)
 	managementComponents := givenManagementComponents()
-	assert.Nil(t, provider.ChangeDiffFromManagementComponents(managementComponents, managementComponents))
+	assert.Nil(t, provider.ChangeDiff(managementComponents, managementComponents))
 }
 
 func TestChangeDiffWithChange(t *testing.T) {
-	provider := givenProvider(t)
-	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
-		s.VersionsBundles["1.19"].CloudStack.Version = "v0.2.0"
-	})
-	newClusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
-		s.VersionsBundles["1.19"].CloudStack.Version = "v0.1.0"
-	})
-
-	wantDiff := &types.ComponentChangeDiff{
-		ComponentName: "cloudstack",
-		NewVersion:    "v0.1.0",
-		OldVersion:    "v0.2.0",
-	}
-
-	assert.Equal(t, wantDiff, provider.ChangeDiff(clusterSpec, newClusterSpec))
-}
-
-func TestChangeDiffFromManagementComponentsWithChange(t *testing.T) {
 	provider := givenProvider(t)
 	managementComponents := givenManagementComponents()
 	managementComponents.CloudStack.Version = "v0.1.0"
@@ -1205,7 +1118,7 @@ func TestChangeDiffFromManagementComponentsWithChange(t *testing.T) {
 		OldVersion:    "v0.1.0",
 	}
 
-	assert.Equal(t, wantDiff, provider.ChangeDiffFromManagementComponents(managementComponents, newManagementComponents))
+	assert.Equal(t, wantDiff, provider.ChangeDiff(managementComponents, newManagementComponents))
 }
 
 func TestProviderGenerateCAPISpecForUpgradeUpdateMachineTemplate(t *testing.T) {

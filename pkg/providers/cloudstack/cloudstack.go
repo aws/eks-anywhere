@@ -202,22 +202,8 @@ func (p *cloudstackProvider) ValidateNewSpec(ctx context.Context, cluster *types
 	return nil
 }
 
-func (p *cloudstackProvider) ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ComponentChangeDiff {
-	currentVersionsBundle := currentSpec.RootVersionsBundle()
-	newVersionsBundle := newSpec.RootVersionsBundle()
-	if currentVersionsBundle.CloudStack.Version == newVersionsBundle.CloudStack.Version {
-		return nil
-	}
-
-	return &types.ComponentChangeDiff{
-		ComponentName: constants.CloudStackProviderName,
-		NewVersion:    newVersionsBundle.CloudStack.Version,
-		OldVersion:    currentVersionsBundle.CloudStack.Version,
-	}
-}
-
-// ChangeDiffFromManagementComponents returns the component change diff for the provider.
-func (p *cloudstackProvider) ChangeDiffFromManagementComponents(currentComponents, newComponents *cluster.ManagementComponents) *types.ComponentChangeDiff {
+// ChangeDiff returns the component change diff for the provider.
+func (p *cloudstackProvider) ChangeDiff(currentComponents, newComponents *cluster.ManagementComponents) *types.ComponentChangeDiff {
 	if currentComponents.CloudStack.Version == newComponents.CloudStack.Version {
 		return nil
 	}
@@ -824,13 +810,8 @@ func (p *cloudstackProvider) BootstrapSetup(ctx context.Context, clusterConfig *
 	return nil
 }
 
-func (p *cloudstackProvider) Version(clusterSpec *cluster.Spec) string {
-	versionsBundle := clusterSpec.RootVersionsBundle()
-	return versionsBundle.CloudStack.Version
-}
-
-// VersionFromManagementComponents returns the version of the provider.
-func (p *cloudstackProvider) VersionFromManagementComponents(componnets *cluster.ManagementComponents) string {
+// Version returns the version of the provider.
+func (p *cloudstackProvider) Version(componnets *cluster.ManagementComponents) string {
 	return componnets.CloudStack.Version
 }
 
@@ -850,22 +831,8 @@ func (p *cloudstackProvider) GetDeployments() map[string][]string {
 	return map[string][]string{"capc-system": {"capc-controller-manager"}}
 }
 
-func (p *cloudstackProvider) GetInfrastructureBundle(clusterSpec *cluster.Spec) *types.InfrastructureBundle {
-	versionsBundle := clusterSpec.RootVersionsBundle()
-	folderName := fmt.Sprintf("infrastructure-cloudstack/%s/", versionsBundle.CloudStack.Version)
-
-	infraBundle := types.InfrastructureBundle{
-		FolderName: folderName,
-		Manifests: []releasev1alpha1.Manifest{
-			versionsBundle.CloudStack.Components,
-			versionsBundle.CloudStack.Metadata,
-		},
-	}
-	return &infraBundle
-}
-
-// GetInfrastructureBundleFromManagementComponents returns the infrastructure bundle for the provider.
-func (p *cloudstackProvider) GetInfrastructureBundleFromManagementComponents(components *cluster.ManagementComponents) *types.InfrastructureBundle {
+// GetInfrastructureBundle returns the infrastructure bundle for the provider.
+func (p *cloudstackProvider) GetInfrastructureBundle(components *cluster.ManagementComponents) *types.InfrastructureBundle {
 	folderName := fmt.Sprintf("infrastructure-cloudstack/%s/", components.CloudStack.Version)
 
 	infraBundle := types.InfrastructureBundle{

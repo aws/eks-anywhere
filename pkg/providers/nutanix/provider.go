@@ -520,14 +520,8 @@ func (p *Provider) UpdateKubeConfig(content *[]byte, clusterName string) error {
 	return nil
 }
 
-// Version returns the nutanix version from the VersionsBundle.
-func (p *Provider) Version(clusterSpec *cluster.Spec) string {
-	versionsBundle := clusterSpec.RootVersionsBundle()
-	return versionsBundle.Nutanix.Version
-}
-
-// VersionFromManagementComponents returns the version of the provider.
-func (p *Provider) VersionFromManagementComponents(components *cluster.ManagementComponents) string {
+// Version returns the version of the provider.
+func (p *Provider) Version(components *cluster.ManagementComponents) string {
 	return components.Nutanix.Version
 }
 
@@ -550,23 +544,8 @@ func (p *Provider) GetDeployments() map[string][]string {
 	}
 }
 
-func (p *Provider) GetInfrastructureBundle(clusterSpec *cluster.Spec) *types.InfrastructureBundle {
-	versionsBundle := clusterSpec.RootVersionsBundle()
-	manifests := []releasev1alpha1.Manifest{
-		versionsBundle.Nutanix.Components,
-		versionsBundle.Nutanix.Metadata,
-		versionsBundle.Nutanix.ClusterTemplate,
-	}
-	folderName := fmt.Sprintf("infrastructure-nutanix/%s/", p.Version(clusterSpec))
-	infraBundle := types.InfrastructureBundle{
-		FolderName: folderName,
-		Manifests:  manifests,
-	}
-	return &infraBundle
-}
-
-// GetInfrastructureBundleFromManagementComponents returns the infrastructure bundle for the provider.
-func (p *Provider) GetInfrastructureBundleFromManagementComponents(components *cluster.ManagementComponents) *types.InfrastructureBundle {
+// GetInfrastructureBundle returns the infrastructure bundle for the provider.
+func (p *Provider) GetInfrastructureBundle(components *cluster.ManagementComponents) *types.InfrastructureBundle {
 	manifests := []releasev1alpha1.Manifest{
 		components.Nutanix.Components,
 		components.Nutanix.Metadata,
@@ -631,22 +610,8 @@ func (p *Provider) ValidateNewSpec(_ context.Context, _ *types.Cluster, _ *clust
 	return nil
 }
 
-func (p *Provider) ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ComponentChangeDiff {
-	currentVersionsBundle := currentSpec.RootVersionsBundle()
-	newVersionsBundle := newSpec.RootVersionsBundle()
-	if currentVersionsBundle.Nutanix.Version == newVersionsBundle.Nutanix.Version {
-		return nil
-	}
-
-	return &types.ComponentChangeDiff{
-		ComponentName: constants.NutanixProviderName,
-		NewVersion:    newVersionsBundle.Nutanix.Version,
-		OldVersion:    currentVersionsBundle.Nutanix.Version,
-	}
-}
-
-// ChangeDiffFromManagementComponents returns the component change diff for the provider.
-func (p *Provider) ChangeDiffFromManagementComponents(currentComponents, newComponents *cluster.ManagementComponents) *types.ComponentChangeDiff {
+// ChangeDiff returns the component change diff for the provider.
+func (p *Provider) ChangeDiff(currentComponents, newComponents *cluster.ManagementComponents) *types.ComponentChangeDiff {
 	if currentComponents.Nutanix.Version == newComponents.Nutanix.Version {
 		return nil
 	}

@@ -55,7 +55,7 @@ func (mr *MockProviderMockRecorder) BootstrapClusterOpts(arg0 interface{}) *gomo
 }
 
 // ChangeDiff mocks base method.
-func (m *MockProvider) ChangeDiff(arg0, arg1 *cluster.Spec) *types.ComponentChangeDiff {
+func (m *MockProvider) ChangeDiff(arg0, arg1 *cluster.ManagementComponents) *types.ComponentChangeDiff {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ChangeDiff", arg0, arg1)
 	ret0, _ := ret[0].(*types.ComponentChangeDiff)
@@ -66,20 +66,6 @@ func (m *MockProvider) ChangeDiff(arg0, arg1 *cluster.Spec) *types.ComponentChan
 func (mr *MockProviderMockRecorder) ChangeDiff(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ChangeDiff", reflect.TypeOf((*MockProvider)(nil).ChangeDiff), arg0, arg1)
-}
-
-// ChangeDiffFromManagementComponents mocks base method.
-func (m *MockProvider) ChangeDiffFromManagementComponents(arg0, arg1 *cluster.ManagementComponents) *types.ComponentChangeDiff {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ChangeDiffFromManagementComponents", arg0, arg1)
-	ret0, _ := ret[0].(*types.ComponentChangeDiff)
-	return ret0
-}
-
-// ChangeDiffFromManagementComponents indicates an expected call of ChangeDiffFromManagementComponents.
-func (mr *MockProviderMockRecorder) ChangeDiffFromManagementComponents(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ChangeDiffFromManagementComponents", reflect.TypeOf((*MockProvider)(nil).ChangeDiffFromManagementComponents), arg0, arg1)
 }
 
 // DatacenterConfig mocks base method.
@@ -186,7 +172,7 @@ func (mr *MockProviderMockRecorder) GetDeployments() *gomock.Call {
 }
 
 // GetInfrastructureBundle mocks base method.
-func (m *MockProvider) GetInfrastructureBundle(arg0 *cluster.Spec) *types.InfrastructureBundle {
+func (m *MockProvider) GetInfrastructureBundle(arg0 *cluster.ManagementComponents) *types.InfrastructureBundle {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetInfrastructureBundle", arg0)
 	ret0, _ := ret[0].(*types.InfrastructureBundle)
@@ -197,20 +183,6 @@ func (m *MockProvider) GetInfrastructureBundle(arg0 *cluster.Spec) *types.Infras
 func (mr *MockProviderMockRecorder) GetInfrastructureBundle(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetInfrastructureBundle", reflect.TypeOf((*MockProvider)(nil).GetInfrastructureBundle), arg0)
-}
-
-// GetInfrastructureBundleFromManagementComponents mocks base method.
-func (m *MockProvider) GetInfrastructureBundleFromManagementComponents(arg0 *cluster.ManagementComponents) *types.InfrastructureBundle {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetInfrastructureBundleFromManagementComponents", arg0)
-	ret0, _ := ret[0].(*types.InfrastructureBundle)
-	return ret0
-}
-
-// GetInfrastructureBundleFromManagementComponents indicates an expected call of GetInfrastructureBundleFromManagementComponents.
-func (mr *MockProviderMockRecorder) GetInfrastructureBundleFromManagementComponents(arg0 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetInfrastructureBundleFromManagementComponents", reflect.TypeOf((*MockProvider)(nil).GetInfrastructureBundleFromManagementComponents), arg0)
 }
 
 // InstallCustomProviderComponents mocks base method.
@@ -495,7 +467,7 @@ func (mr *MockProviderMockRecorder) ValidateNewSpec(arg0, arg1, arg2 interface{}
 }
 
 // Version mocks base method.
-func (m *MockProvider) Version(arg0 *cluster.Spec) string {
+func (m *MockProvider) Version(arg0 *cluster.ManagementComponents) string {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Version", arg0)
 	ret0, _ := ret[0].(string)
@@ -506,20 +478,6 @@ func (m *MockProvider) Version(arg0 *cluster.Spec) string {
 func (mr *MockProviderMockRecorder) Version(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Version", reflect.TypeOf((*MockProvider)(nil).Version), arg0)
-}
-
-// VersionFromManagementComponents mocks base method.
-func (m *MockProvider) VersionFromManagementComponents(arg0 *cluster.ManagementComponents) string {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "VersionFromManagementComponents", arg0)
-	ret0, _ := ret[0].(string)
-	return ret0
-}
-
-// VersionFromManagementComponents indicates an expected call of VersionFromManagementComponents.
-func (mr *MockProviderMockRecorder) VersionFromManagementComponents(arg0 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "VersionFromManagementComponents", reflect.TypeOf((*MockProvider)(nil).VersionFromManagementComponents), arg0)
 }
 
 // MockDatacenterConfig is a mock of DatacenterConfig interface.

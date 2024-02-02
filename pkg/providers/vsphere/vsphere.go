@@ -977,11 +977,6 @@ func (p *vsphereProvider) PostWorkloadInit(ctx context.Context, cluster *types.C
 	return nil
 }
 
-func (p *vsphereProvider) Version(clusterSpec *cluster.Spec) string {
-	versionsBundle := clusterSpec.RootVersionsBundle()
-	return versionsBundle.VSphere.Version
-}
-
 func (p *vsphereProvider) EnvMap(_ *cluster.Spec) (map[string]string, error) {
 	envMap := make(map[string]string)
 	for _, key := range requiredEnvs {
@@ -998,21 +993,6 @@ func (p *vsphereProvider) GetDeployments() map[string][]string {
 	return map[string][]string{
 		"capv-system": {"capv-controller-manager"},
 	}
-}
-
-func (p *vsphereProvider) GetInfrastructureBundle(clusterSpec *cluster.Spec) *types.InfrastructureBundle {
-	versionsBundle := clusterSpec.RootVersionsBundle()
-	folderName := fmt.Sprintf("infrastructure-vsphere/%s/", versionsBundle.VSphere.Version)
-
-	infraBundle := types.InfrastructureBundle{
-		FolderName: folderName,
-		Manifests: []releasev1alpha1.Manifest{
-			versionsBundle.VSphere.Components,
-			versionsBundle.VSphere.Metadata,
-			versionsBundle.VSphere.ClusterTemplate,
-		},
-	}
-	return &infraBundle
 }
 
 func (p *vsphereProvider) DatacenterConfig(spec *cluster.Spec) providers.DatacenterConfig {
@@ -1186,22 +1166,8 @@ func (p *vsphereProvider) secretContentsChanged(ctx context.Context, workloadClu
 	return false, nil
 }
 
-func (p *vsphereProvider) ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ComponentChangeDiff {
-	currentVersionsBundle := currentSpec.RootVersionsBundle()
-	newVersionsBundle := newSpec.RootVersionsBundle()
-	if currentVersionsBundle.VSphere.Version == newVersionsBundle.VSphere.Version {
-		return nil
-	}
-
-	return &types.ComponentChangeDiff{
-		ComponentName: constants.VSphereProviderName,
-		NewVersion:    newVersionsBundle.VSphere.Version,
-		OldVersion:    currentVersionsBundle.VSphere.Version,
-	}
-}
-
-// ChangeDiffFromManagementComponents returns the component change diff for the provider.
-func (p *vsphereProvider) ChangeDiffFromManagementComponents(currentComponents, newComponents *cluster.ManagementComponents) *types.ComponentChangeDiff {
+// ChangeDiff returns the component change diff for the provider.
+func (p *vsphereProvider) ChangeDiff(currentComponents, newComponents *cluster.ManagementComponents) *types.ComponentChangeDiff {
 	if currentComponents.VSphere.Version == newComponents.VSphere.Version {
 		return nil
 	}
@@ -1213,8 +1179,8 @@ func (p *vsphereProvider) ChangeDiffFromManagementComponents(currentComponents, 
 	}
 }
 
-// GetInfrastructureBundleFromManagementComponents returns the infrastructure bundle for the provider.
-func (p *vsphereProvider) GetInfrastructureBundleFromManagementComponents(components *cluster.ManagementComponents) *types.InfrastructureBundle {
+// GetInfrastructureBundle returns the infrastructure bundle for the provider.
+func (p *vsphereProvider) GetInfrastructureBundle(components *cluster.ManagementComponents) *types.InfrastructureBundle {
 	folderName := fmt.Sprintf("infrastructure-vsphere/%s/", components.VSphere.Version)
 
 	infraBundle := types.InfrastructureBundle{
@@ -1229,8 +1195,8 @@ func (p *vsphereProvider) GetInfrastructureBundleFromManagementComponents(compon
 	return &infraBundle
 }
 
-// VersionFromManagementComponents returns the version of the provider.
-func (p *vsphereProvider) VersionFromManagementComponents(components *cluster.ManagementComponents) string {
+// Version returns the version of the provider.
+func (p *vsphereProvider) Version(components *cluster.ManagementComponents) string {
 	return components.VSphere.Version
 }
 

@@ -62,7 +62,7 @@ func newClusterctlTest(t *testing.T) *clusterctlTest {
 }
 
 func (ct *clusterctlTest) expectBuildOverrideLayer() {
-	ct.provider.EXPECT().GetInfrastructureBundleFromManagementComponents(ct.managementComponents).Return(&types.InfrastructureBundle{})
+	ct.provider.EXPECT().GetInfrastructureBundle(ct.managementComponents).Return(&types.InfrastructureBundle{})
 }
 
 func (ct *clusterctlTest) expectGetProviderEnvMap() {
@@ -133,9 +133,9 @@ func TestClusterctlInitInfrastructure(t *testing.T) {
 			gotConfig := ""
 
 			tc.provider.EXPECT().Name().Return(tt.providerName)
-			tc.provider.EXPECT().VersionFromManagementComponents(tc.managementComponents).Return(tt.providerVersion)
+			tc.provider.EXPECT().Version(tc.managementComponents).Return(tt.providerVersion)
 			tc.provider.EXPECT().EnvMap(clusterSpec).Return(tt.env, nil)
-			tc.provider.EXPECT().GetInfrastructureBundleFromManagementComponents(tc.managementComponents).Return(&types.InfrastructureBundle{})
+			tc.provider.EXPECT().GetInfrastructureBundle(tc.managementComponents).Return(&types.InfrastructureBundle{})
 
 			tc.e.EXPECT().ExecuteWithEnv(tc.ctx, tt.env, tt.wantExecArgs...).Return(bytes.Buffer{}, nil).Times(1).Do(
 				func(ctx context.Context, envs map[string]string, args ...string) (stdout bytes.Buffer, err error) {
@@ -181,9 +181,9 @@ func TestClusterctlInitInfrastructureEnvMapError(t *testing.T) {
 	tt := newClusterctlTest(t)
 
 	tt.provider.EXPECT().Name()
-	tt.provider.EXPECT().VersionFromManagementComponents(tt.managementComponents)
+	tt.provider.EXPECT().Version(tt.managementComponents)
 	tt.provider.EXPECT().EnvMap(clusterSpec).Return(nil, errors.New("error with env map"))
-	tt.provider.EXPECT().GetInfrastructureBundleFromManagementComponents(tt.managementComponents).Return(&types.InfrastructureBundle{})
+	tt.provider.EXPECT().GetInfrastructureBundle(tt.managementComponents).Return(&types.InfrastructureBundle{})
 
 	if err := tt.clusterctl.InitInfrastructure(tt.ctx, clusterSpec, cluster, tt.provider); err == nil {
 		t.Fatal("Clusterctl.InitInfrastructure() error = nil")
@@ -200,9 +200,9 @@ func TestClusterctlInitInfrastructureExecutableError(t *testing.T) {
 	tt := newClusterctlTest(t)
 
 	tt.provider.EXPECT().Name()
-	tt.provider.EXPECT().VersionFromManagementComponents(tt.managementComponents)
+	tt.provider.EXPECT().Version(tt.managementComponents)
 	tt.provider.EXPECT().EnvMap(clusterSpec)
-	tt.provider.EXPECT().GetInfrastructureBundleFromManagementComponents(tt.managementComponents).Return(&types.InfrastructureBundle{})
+	tt.provider.EXPECT().GetInfrastructureBundle(tt.managementComponents).Return(&types.InfrastructureBundle{})
 
 	tt.e.EXPECT().ExecuteWithEnv(tt.ctx, nil, gomock.Any()).Return(bytes.Buffer{}, errors.New("error from execute with env"))
 

@@ -1829,24 +1829,11 @@ func TestSetupAndValidateUpgradeClusterSameMachineConfigforCPandEtcd(t *testing.
 func TestVersion(t *testing.T) {
 	vSphereProviderVersion := "v0.7.10"
 	provider := givenProvider(t)
-	clusterSpec := givenEmptyClusterSpec()
-	clusterSpec.VersionsBundles["1.19"].VSphere.Version = vSphereProviderVersion
-	setupContext(t)
-
-	result := provider.Version(clusterSpec)
-	if result != vSphereProviderVersion {
-		t.Fatalf("Unexpected version expected <%s> actual=<%s>", vSphereProviderVersion, result)
-	}
-}
-
-func TestVersionFromManagementComponents(t *testing.T) {
-	vSphereProviderVersion := "v0.7.10"
-	provider := givenProvider(t)
 	managementComponents := givenManagementComponents()
 	managementComponents.VSphere.Version = vSphereProviderVersion
 	setupContext(t)
 
-	result := provider.VersionFromManagementComponents(managementComponents)
+	result := provider.Version(managementComponents)
 	if result != vSphereProviderVersion {
 		t.Fatalf("Unexpected version expected <%s> actual=<%s>", vSphereProviderVersion, result)
 	}
@@ -2852,60 +2839,6 @@ func TestSetupAndValidateCreateClusterDefaultTemplateCP(t *testing.T) {
 
 func TestGetInfrastructureBundleSuccess(t *testing.T) {
 	tests := []struct {
-		testName    string
-		clusterSpec *cluster.Spec
-	}{
-		{
-			testName: "correct Overrides layer",
-			clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
-				s.VersionsBundles["1.19"].VSphere = releasev1alpha1.VSphereBundle{
-					Version: "v0.7.8",
-					ClusterAPIController: releasev1alpha1.Image{
-						URI: "public.ecr.aws/l0g8r8j6/kubernetes-sigs/cluster-api-provider-vsphere/release/manager:v0.7.8-35f54b0a7ff0f4f3cb0b8e30a0650acd0e55496a",
-					},
-					Manager: releasev1alpha1.Image{
-						URI: "public.ecr.aws/l0g8r8j6/kubernetes/cloud-provider-vsphere/cpi/manager:v1.18.1-2093eaeda5a4567f0e516d652e0b25b1d7abc774",
-					},
-					KubeVip: releasev1alpha1.Image{
-						URI: "public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.3.2-2093eaeda5a4567f0e516d652e0b25b1d7abc774",
-					},
-					Metadata: releasev1alpha1.Manifest{
-						URI: "Metadata.yaml",
-					},
-					Components: releasev1alpha1.Manifest{
-						URI: "Components.yaml",
-					},
-					ClusterTemplate: releasev1alpha1.Manifest{
-						URI: "ClusterTemplate.yaml",
-					},
-				}
-			}),
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.testName, func(t *testing.T) {
-			p := givenProvider(t)
-
-			infraBundle := p.GetInfrastructureBundle(tt.clusterSpec)
-			if infraBundle == nil {
-				t.Fatalf("provider.GetInfrastructureBundle() should have an infrastructure bundle")
-			}
-			assert.Equal(t, "infrastructure-vsphere/v0.7.8/", infraBundle.FolderName, "Incorrect folder name")
-			assert.Equal(t, len(infraBundle.Manifests), 3, "Wrong number of files in the infrastructure bundle")
-			bundle := tt.clusterSpec.RootVersionsBundle()
-			wantManifests := []releasev1alpha1.Manifest{
-				bundle.VSphere.Components,
-				bundle.VSphere.Metadata,
-				bundle.VSphere.ClusterTemplate,
-			}
-			assert.ElementsMatch(t, infraBundle.Manifests, wantManifests, "Incorrect manifests")
-		})
-	}
-}
-
-func TestGetInfrastructureBundleFromManagementComponentsSuccess(t *testing.T) {
-	tests := []struct {
 		testName             string
 		managementComponents *cluster.ManagementComponents
 	}{
@@ -2919,7 +2852,7 @@ func TestGetInfrastructureBundleFromManagementComponentsSuccess(t *testing.T) {
 		t.Run(tt.testName, func(t *testing.T) {
 			p := givenProvider(t)
 
-			infraBundle := p.GetInfrastructureBundleFromManagementComponents(tt.managementComponents)
+			infraBundle := p.GetInfrastructureBundle(tt.managementComponents)
 			if infraBundle == nil {
 				t.Fatalf("provider.GetInfrastructureBundle() should have an infrastructure bundle")
 			}
@@ -3156,35 +3089,11 @@ func TestValidateNewSpecOSFamilyImmutableWorker(t *testing.T) {
 
 func TestChangeDiffNoChange(t *testing.T) {
 	provider := givenProvider(t)
-	clusterSpec := givenEmptyClusterSpec()
-	assert.Nil(t, provider.ChangeDiff(clusterSpec, clusterSpec))
-}
-
-func TestChangeDiffFromManagementComponentsNoChange(t *testing.T) {
-	provider := givenProvider(t)
 	managementComponents := givenManagementComponents()
-	assert.Nil(t, provider.ChangeDiffFromManagementComponents(managementComponents, managementComponents))
+	assert.Nil(t, provider.ChangeDiff(managementComponents, managementComponents))
 }
 
 func TestChangeDiffWithChange(t *testing.T) {
-	provider := givenProvider(t)
-	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
-		s.VersionsBundles["1.19"].VSphere.Version = "v0.3.18"
-	})
-	newClusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
-		s.VersionsBundles["1.19"].VSphere.Version = "v0.3.19"
-	})
-
-	wantDiff := &types.ComponentChangeDiff{
-		ComponentName: "vsphere",
-		NewVersion:    "v0.3.19",
-		OldVersion:    "v0.3.18",
-	}
-
-	assert.Equal(t, wantDiff, provider.ChangeDiff(clusterSpec, newClusterSpec))
-}
-
-func TestChangeDiffFromManagementComponentsWithChange(t *testing.T) {
 	provider := givenProvider(t)
 	managementComponents := givenManagementComponents()
 	managementComponents.VSphere.Version = "v0.3.18"
@@ -3198,7 +3107,7 @@ func TestChangeDiffFromManagementComponentsWithChange(t *testing.T) {
 		OldVersion:    "v0.3.18",
 	}
 
-	assert.Equal(t, wantDiff, provider.ChangeDiffFromManagementComponents(managementComponents, newManagementComponents))
+	assert.Equal(t, wantDiff, provider.ChangeDiff(managementComponents, newManagementComponents))
 }
 
 func TestVsphereProviderRunPostControlPlaneUpgrade(t *testing.T) {
