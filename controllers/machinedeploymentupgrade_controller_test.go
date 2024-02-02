@@ -18,6 +18,7 @@ import (
 
 	"github.com/aws/eks-anywhere/controllers"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
 
@@ -38,7 +39,7 @@ func TestMDUpgradeReconcile(t *testing.T) {
 	g.Expect(err).ToNot(HaveOccurred())
 
 	mdu := &anywherev1.MachineDeploymentUpgrade{}
-	err = client.Get(ctx, types.NamespacedName{Name: mdUpgrade.Name, Namespace: "eksa-system"}, mdu)
+	err = client.Get(ctx, types.NamespacedName{Name: mdUpgrade.Name, Namespace: constants.EksaSystemNamespace}, mdu)
 	g.Expect(err).ToNot(HaveOccurred())
 	g.Expect(mdu.Status.Ready).To(BeTrue())
 }
@@ -81,7 +82,7 @@ func TestMDUpgradeReconcileDelete(t *testing.T) {
 	g.Expect(err).ToNot(HaveOccurred())
 
 	n := &anywherev1.NodeUpgrade{}
-	err = client.Get(ctx, types.NamespacedName{Name: nodeUpgrade.Name, Namespace: "eksa-system"}, n)
+	err = client.Get(ctx, types.NamespacedName{Name: nodeUpgrade.Name, Namespace: constants.EksaSystemNamespace}, n)
 	g.Expect(err).To(MatchError("nodeupgrades.anywhere.eks.amazonaws.com \"machine01-node-upgrader\" not found"))
 }
 
@@ -104,7 +105,7 @@ func TestMDUpgradeReconcileDeleteNodeUgradeAlreadyDeleted(t *testing.T) {
 	g.Expect(err).ToNot(HaveOccurred())
 
 	n := &anywherev1.NodeUpgrade{}
-	err = client.Get(ctx, types.NamespacedName{Name: nodeUpgrade.Name, Namespace: "eksa-system"}, n)
+	err = client.Get(ctx, types.NamespacedName{Name: nodeUpgrade.Name, Namespace: constants.EksaSystemNamespace}, n)
 	g.Expect(err).To(MatchError("nodeupgrades.anywhere.eks.amazonaws.com \"machine01-node-upgrader\" not found"))
 
 	_, err = r.Reconcile(ctx, req)
@@ -124,7 +125,7 @@ func TestMDUpgradeReconcileNodeUpgraderCreate(t *testing.T) {
 
 	n := &anywherev1.NodeUpgrade{}
 	nodeUpgradeName := fmt.Sprintf("%s-node-upgrader", machine.Name)
-	err = client.Get(ctx, types.NamespacedName{Name: nodeUpgradeName, Namespace: "eksa-system"}, n)
+	err = client.Get(ctx, types.NamespacedName{Name: nodeUpgradeName, Namespace: constants.EksaSystemNamespace}, n)
 	g.Expect(err).ToNot(HaveOccurred())
 }
 
@@ -163,9 +164,9 @@ func TestMDUpgradeReconcileUpdateMachineSet(t *testing.T) {
 	g.Expect(err).ToNot(HaveOccurred())
 
 	ms = &clusterv1.MachineSet{}
-	err = client.Get(ctx, types.NamespacedName{Name: "my-md-ms", Namespace: "eksa-system"}, ms)
+	err = client.Get(ctx, types.NamespacedName{Name: "my-md-ms", Namespace: constants.EksaSystemNamespace}, ms)
 	g.Expect(err).ToNot(HaveOccurred())
-	if !strings.Contains(*ms.Spec.Template.Spec.Version, "v1.28.1-eks-1-28-1") {
+	if !strings.Contains(*ms.Spec.Template.Spec.Version, k8s128) {
 		t.Fatalf("unexpected k8s version in capi machine: %s", *machine.Spec.Version)
 	}
 }
@@ -202,7 +203,7 @@ func TestMDObjectDoesNotExistError(t *testing.T) {
 	r := controllers.NewMachineDeploymentUpgradeReconciler(client)
 	req := mdUpgradeRequest(mdUpgrade)
 	_, err := r.Reconcile(ctx, req)
-	g.Expect(err).To(MatchError("getting MachineDeployment my-md: machinedeployments.cluster.x-k8s.io \"my-md\" not found"))
+	g.Expect(err).To(MatchError("getting MachineDeployment my-cluster-md: machinedeployments.cluster.x-k8s.io \"my-cluster-md\" not found"))
 }
 
 func getObjectsForMDUpgradeTest() (*clusterv1.Cluster, *clusterv1.Machine, *corev1.Node, *anywherev1.MachineDeploymentUpgrade, *anywherev1.NodeUpgrade, *clusterv1.MachineDeployment, *clusterv1.MachineSet) {
@@ -233,13 +234,13 @@ func generateMDUpgrade(cluster *clusterv1.Cluster, machine *clusterv1.Machine) *
 	return &anywherev1.MachineDeploymentUpgrade{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "md-upgrade-request",
-			Namespace: "eksa-system",
+			Namespace: constants.EksaSystemNamespace,
 		},
 		Spec: anywherev1.MachineDeploymentUpgradeSpec{
 			MachineDeployment: corev1.ObjectReference{
-				Name:      "my-md",
+				Name:      fmt.Sprintf("%s-md", cluster.Name),
 				Kind:      "MachineDeployment",
-				Namespace: "eksa-system",
+				Namespace: constants.EksaSystemNamespace,
 			},
 			MachinesRequireUpgrade: []corev1.ObjectReference{
 				{
@@ -248,7 +249,7 @@ func generateMDUpgrade(cluster *clusterv1.Cluster, machine *clusterv1.Machine) *
 					Namespace: machine.Namespace,
 				},
 			},
-			KubernetesVersion: "v1.28.1-eks-1-28-1",
+			KubernetesVersion: k8s128,
 			MachineSpecData:   machineSpecB64Encoded,
 		},
 	}
@@ -256,12 +257,12 @@ func generateMDUpgrade(cluster *clusterv1.Cluster, machine *clusterv1.Machine) *
 
 func generateMachineset(cluster *clusterv1.Cluster) *clusterv1.MachineSet {
 	ms := getMachineSpec(cluster)
-	ms.Version = ptr.String("v1.27.1-eks-1-27-1")
+	ms.Version = ptr.String(k8s127)
 	return &clusterv1.MachineSet{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        "my-md-ms",
-			Namespace:   "eksa-system",
-			Labels:      map[string]string{"cluster.x-k8s.io/deployment-name": "my-md"},
+			Namespace:   constants.EksaSystemNamespace,
+			Labels:      map[string]string{"cluster.x-k8s.io/deployment-name": fmt.Sprintf("%s-md", cluster.Name)},
 			Annotations: map[string]string{clusterv1.RevisionAnnotation: "1"},
 		},
 		Spec: clusterv1.MachineSetSpec{
@@ -278,15 +279,18 @@ func generateMachineDeployment(cluster *clusterv1.Cluster) *clusterv1.MachineDep
 	ms := getMachineSpec(cluster)
 	return &clusterv1.MachineDeployment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:        "my-md",
-			Namespace:   "eksa-system",
-			Annotations: map[string]string{clusterv1.RevisionAnnotation: "1"},
+			Name:      fmt.Sprintf("%s-md", cluster.Name),
+			Namespace: constants.EksaSystemNamespace,
+			Annotations: map[string]string{
+				clusterv1.RevisionAnnotation:                                  "1",
+				"machinedeployment.clusters.x-k8s.io/in-place-upgrade-needed": "true",
+			},
 		},
 		Spec: clusterv1.MachineDeploymentSpec{
 			ClusterName: cluster.Name,
 			Replicas:    ptr.Int32(1),
 			Selector: metav1.LabelSelector{
-				MatchLabels: map[string]string{"cluster.x-k8s.io/deployment-name": "my-md"},
+				MatchLabels: map[string]string{"cluster.x-k8s.io/deployment-name": cluster.Name},
 			},
 			Template: clusterv1.MachineTemplateSpec{
 				Spec: *ms,
@@ -298,6 +302,6 @@ func generateMachineDeployment(cluster *clusterv1.Cluster) *clusterv1.MachineDep
 func getMachineSpec(cluster *clusterv1.Cluster) *clusterv1.MachineSpec {
 	return &clusterv1.MachineSpec{
 		ClusterName: cluster.Name,
-		Version:     ptr.String("v1.28.1-eks-1-28-1"),
+		Version:     ptr.String(k8s128),
 	}
 }

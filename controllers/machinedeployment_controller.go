@@ -78,7 +78,6 @@ func (r *MachineDeploymentReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		return ctrl.Result{}, nil
 	}
 
-	log.Info("Reconciling MachineDeployment object")
 	patchHelper, err := patch.NewHelper(md, r.client)
 	if err != nil {
 		return ctrl.Result{}, err
@@ -114,16 +113,28 @@ func (r *MachineDeploymentReconciler) reconcile(ctx context.Context, log logr.Lo
 		log.Info("Kubernetes version not present, unable to reconcile for in place upgrade")
 		return ctrl.Result{}, fmt.Errorf("unable to retrieve kubernetes version from MachineDeployment \"%s\"", md.Name)
 	}
+
+	mdUpgrade := &anywherev1.MachineDeploymentUpgrade{}
+	mduGetErr := r.client.Get(ctx, GetNamespacedNameType(mdUpgradeName(md.Name), constants.EksaSystemNamespace), mdUpgrade)
+
 	if md.Spec.Replicas != nil && (*md.Spec.Replicas == md.Status.UpdatedReplicas) {
-		log.Info("MachineDeployment is ready, nothing else to reconcile for in place upgrade")
-		// Remove in-place-upgrade-needed annotation
+		if mduGetErr == nil && mdUpgrade.Status.Ready {
+			log.Info("Machine deployment upgrade complete, deleting object", "MachineDeploymentUpgrade", mdUpgrade.Name)
+			if err := r.client.Delete(ctx, mdUpgrade); err != nil {
+				return ctrl.Result{}, fmt.Errorf("deleting MachineDeploymentUpgrade object: %v", err)
+			}
+		} else if !apierrors.IsNotFound(mduGetErr) {
+			return ctrl.Result{}, fmt.Errorf("getting MachineDeploymentUpgrade for MachineDeployment %s: %v", md.Name, mduGetErr)
+		}
+		log.Info("MachineDeployment is ready, removing the \"in-place-upgrade-needed\" annotation")
+		// Remove the in-place-upgrade-needed annotation only after the MachineDeploymentUpgrade object is deleted
 		delete(md.Annotations, mdInPlaceUpgradeNeededAnnotation)
 		return ctrl.Result{}, nil
 	}
-	mdUpgrade := &anywherev1.MachineDeploymentUpgrade{}
-	if err := r.client.Get(ctx, GetNamespacedNameType(mdUpgradeName(md.Name), constants.EksaSystemNamespace), mdUpgrade); err != nil {
-		if apierrors.IsNotFound(err) {
-			log.Info("Creating machine deployment upgrade object")
+
+	if mduGetErr != nil {
+		if apierrors.IsNotFound(mduGetErr) {
+			log.Info("Creating MachineDeploymentUpgrade object")
 			machines, err := r.machinesToUpgrade(ctx, md)
 			if err != nil {
 				return ctrl.Result{}, fmt.Errorf("retrieving list of control plane machines: %v", err)
@@ -133,19 +144,18 @@ func (r *MachineDeploymentReconciler) reconcile(ctx context.Context, log logr.Lo
 				return ctrl.Result{}, fmt.Errorf("generating MachineDeploymentUpgrade: %v", err)
 			}
 			if err := r.client.Create(ctx, mdUpgrade); client.IgnoreAlreadyExists(err) != nil {
-				return ctrl.Result{}, fmt.Errorf("failed to create machine deployment upgrade for MachineDeployment %s:  %v", md.Name, err)
+				return ctrl.Result{}, fmt.Errorf("failed to create MachineDeploymentUpgrade for MachineDeployment %s:  %v", md.Name, err)
 			}
 			return ctrl.Result{}, nil
 		}
-		return ctrl.Result{}, fmt.Errorf("getting machine deployment upgrade for MachineDeployment %s: %v", md.Name, err)
+		return ctrl.Result{}, fmt.Errorf("getting MachineDeploymentUpgrade for MachineDeployment %s: %v", md.Name, mduGetErr)
 	}
 	if !mdUpgrade.Status.Ready {
 		return ctrl.Result{}, nil
 	}
-	// TODO: update status for templates and other resources
-	log.Info("Machine deployment upgrade complete, deleting object")
+	log.Info("Machine deployment upgrade complete, deleting object", "MachineDeploymentUpgrade", mdUpgrade.Name)
 	if err := r.client.Delete(ctx, mdUpgrade); err != nil {
-		return ctrl.Result{}, fmt.Errorf("deleting machine deployment upgrade object: %v", err)
+		return ctrl.Result{}, fmt.Errorf("deleting MachineDeploymentUpgrade object: %v", err)
 	}
 
 	return ctrl.Result{}, nil

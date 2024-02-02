@@ -79,7 +79,6 @@ func (r *KubeadmControlPlaneReconciler) Reconcile(ctx context.Context, req ctrl.
 		return ctrl.Result{}, nil
 	}
 
-	log.Info("Reconciling KubeadmControlPlane object")
 	patchHelper, err := patch.NewHelper(kcp, r.client)
 	if err != nil {
 		return ctrl.Result{}, err
@@ -115,16 +114,29 @@ func (r *KubeadmControlPlaneReconciler) reconcile(ctx context.Context, log logr.
 		log.Info("Stacked etcd validation failed, unable to reconcile for in place upgrade")
 		return ctrl.Result{}, err
 	}
+
+	cpUpgrade := &anywherev1.ControlPlaneUpgrade{}
+	cpuGetErr := r.client.Get(ctx, GetNamespacedNameType(cpUpgradeName(kcp.Name), constants.EksaSystemNamespace), cpUpgrade)
+
 	if kcp.Spec.Replicas != nil && (*kcp.Spec.Replicas == kcp.Status.UpdatedReplicas) {
-		log.Info("KubeadmControlPlane is ready, nothing else to reconcile for in place upgrade")
-		// Remove in-place-upgrade-needed annotation
+		if cpuGetErr == nil && cpUpgrade.Status.Ready {
+			log.Info("Control plane upgrade complete, deleting object", "ControlPlaneUpgrade", cpUpgrade.Name)
+			if err := r.client.Delete(ctx, cpUpgrade); err != nil {
+				return ctrl.Result{}, fmt.Errorf("deleting ControlPlaneUpgrade object: %v", err)
+			}
+		} else if !apierrors.IsNotFound(cpuGetErr) {
+			return ctrl.Result{}, fmt.Errorf("getting ControlPlaneUpgrade for KubeadmControlPlane %s: %v", kcp.Name, cpuGetErr)
+		}
+
+		log.Info("KubeadmControlPlane is ready, removing the \"in-place-upgrade-needed\" annotation")
+		// Remove the in-place-upgrade-needed annotation only after the ControlPlaneUpgrade object is deleted
 		delete(kcp.Annotations, kcpInPlaceUpgradeNeededAnnotation)
 		return ctrl.Result{}, nil
 	}
-	cpUpgrade := &anywherev1.ControlPlaneUpgrade{}
-	if err := r.client.Get(ctx, GetNamespacedNameType(cpUpgradeName(kcp.Name), constants.EksaSystemNamespace), cpUpgrade); err != nil {
-		if apierrors.IsNotFound(err) {
-			log.Info("Creating control plane upgrade object")
+
+	if cpuGetErr != nil {
+		if apierrors.IsNotFound(cpuGetErr) {
+			log.Info("Creating ControlPlaneUpgrade object")
 			machines, err := r.machinesToUpgrade(ctx, kcp)
 			if err != nil {
 				return ctrl.Result{}, fmt.Errorf("retrieving list of control plane machines: %v", err)
@@ -134,19 +146,19 @@ func (r *KubeadmControlPlaneReconciler) reconcile(ctx context.Context, log logr.
 				return ctrl.Result{}, fmt.Errorf("generating ControlPlaneUpgrade: %v", err)
 			}
 			if err := r.client.Create(ctx, cpUpgrade); client.IgnoreAlreadyExists(err) != nil {
-				return ctrl.Result{}, fmt.Errorf("failed to create control plane upgrade for KubeadmControlPlane %s:  %v", kcp.Name, err)
+				return ctrl.Result{}, fmt.Errorf("failed to create ControlPlaneUpgrade for KubeadmControlPlane %s:  %v", kcp.Name, err)
 			}
 			return ctrl.Result{}, nil
 		}
-		return ctrl.Result{}, fmt.Errorf("getting control plane upgrade for KubeadmControlPlane %s: %v", kcp.Name, err)
+		return ctrl.Result{}, fmt.Errorf("getting ControlPlaneUpgrade for KubeadmControlPlane %s: %v", kcp.Name, cpuGetErr)
 	}
 	if !cpUpgrade.Status.Ready {
 		return ctrl.Result{}, nil
 	}
-	// TODO: update status for templates and other resources
-	log.Info("Control plane upgrade complete, deleting object")
+
+	log.Info("Control plane upgrade complete, deleting object", "ControlPlaneUpgrade", cpUpgrade.Name)
 	if err := r.client.Delete(ctx, cpUpgrade); err != nil {
-		return ctrl.Result{}, fmt.Errorf("deleting control plane upgrade object: %v", err)
+		return ctrl.Result{}, fmt.Errorf("deleting ControlPlaneUpgrade object: %v", err)
 	}
 
 	return ctrl.Result{}, nil

@@ -29,6 +29,7 @@ import (
 const (
 	etcd128 = "v3.5.9-eks-1-28-9"
 	etcd129 = "v3.5.10-eks-1-29-0"
+	k8s127  = "v1.27.1-eks-1-27-1"
 	k8s128  = "v1.28.3-eks-1-28-9"
 	k8s129  = "v1.29.0-eks-1-29-0"
 )
@@ -499,7 +500,8 @@ func TestCPUpgradeReconcileUpdateInfraMachineAnnotationErrror(t *testing.T) {
 
 	req := cpUpgradeRequest(testObjs.cpUpgrade)
 	_, err := r.Reconcile(ctx, req)
-	g.Expect(err.Error()).To(MatchRegexp("updating infra machine: retrieving infra machine machine01 for machine machine01: failed to retrieve TinkerbellMachine external object \"eksa-system\"/\"machine01\": tinkerbellmachines.infrastructure.cluster.x-k8s.io \"machine01\" not found"))
+	g.Expect(err).To(HaveOccurred())
+	g.Expect(err).To(MatchError("updating infra machine: retrieving infra machine machine01 for machine machine01: failed to retrieve TinkerbellMachine external object \"eksa-system\"/\"machine01\": tinkerbellmachines.infrastructure.cluster.x-k8s.io \"machine01\" not found"))
 }
 
 func getObjectsForCPUpgradeTest() cpUpgradeObjects {
