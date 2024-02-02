@@ -80,7 +80,7 @@ func (uc *upgradeClusterOptions) upgradePlanManagementComponents(ctx context.Con
 	}
 
 	if !newClusterSpec.Cluster.IsSelfManaged() {
-		logger.V(0).Info("No management components to plan. Cluster %s is not a self-managed cluster.\n", newClusterSpec.Cluster.Name)
+		logger.V(0).Info(fmt.Sprintf("No management components to plan. Cluster %s is not a self-managed cluster.", newClusterSpec.Cluster.Name))
 		return nil
 	}
 

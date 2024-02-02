@@ -121,8 +121,8 @@ func serialize(componentChangeDiffs *types.ChangeDiff, outputFormat string) (str
 }
 
 func serializeToText(componentChangeDiffs *types.ChangeDiff) (string, error) {
-	if componentChangeDiffs == nil {
-		return "All the components are up to date with the latest versions\n", nil
+	if componentChangeDiffs == nil || (componentChangeDiffs != nil && len(componentChangeDiffs.ComponentReports) == 0) {
+		return "All the components are up to date with the latest versions", nil
 	}
 
 	buffer := bytes.Buffer{}
