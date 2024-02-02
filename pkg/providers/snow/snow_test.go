@@ -855,38 +855,14 @@ func TestGenerateCAPISpecForUpgradeWorkerVersion(t *testing.T) {
 func TestVersion(t *testing.T) {
 	snowVersion := "v1.0.2"
 	provider := givenProvider(t)
-	clusterSpec := givenEmptyClusterSpec()
-	clusterSpec.VersionsBundles["1.19"].Snow.Version = snowVersion
-	g := NewWithT(t)
-	result := provider.Version(clusterSpec)
-	g.Expect(result).To(Equal(snowVersion))
-}
-
-func TestVersionFromManagementComponents(t *testing.T) {
-	snowVersion := "v1.0.2"
-	provider := givenProvider(t)
 	managementComponents := givenManagementComponents()
 	managementComponents.Snow.Version = snowVersion
 	g := NewWithT(t)
-	result := provider.VersionFromManagementComponents(managementComponents)
+	result := provider.Version(managementComponents)
 	g.Expect(result).To(Equal(snowVersion))
 }
 
 func TestGetInfrastructureBundle(t *testing.T) {
-	tt := newSnowTest(t)
-	bundle := tt.clusterSpec.RootVersionsBundle()
-	want := &types.InfrastructureBundle{
-		FolderName: "infrastructure-snow/v1.0.2/",
-		Manifests: []releasev1alpha1.Manifest{
-			bundle.Snow.Components,
-			bundle.Snow.Metadata,
-		},
-	}
-	got := tt.provider.GetInfrastructureBundle(tt.clusterSpec)
-	tt.Expect(got).To(Equal(want))
-}
-
-func TestGetInfrastructureBundleFromManagementComponents(t *testing.T) {
 	tt := newSnowTest(t)
 	managementComponents := givenManagementComponents()
 
@@ -897,7 +873,7 @@ func TestGetInfrastructureBundleFromManagementComponents(t *testing.T) {
 			managementComponents.Snow.Metadata,
 		},
 	}
-	got := tt.provider.GetInfrastructureBundleFromManagementComponents(managementComponents)
+	got := tt.provider.GetInfrastructureBundle(managementComponents)
 	tt.Expect(got).To(Equal(want))
 }
 
@@ -1273,33 +1249,11 @@ func TestUpgradeNeededBundle(t *testing.T) {
 func TestChangeDiffNoChange(t *testing.T) {
 	g := NewWithT(t)
 	provider := givenProvider(t)
-	clusterSpec := givenEmptyClusterSpec()
-	g.Expect(provider.ChangeDiff(clusterSpec, clusterSpec)).To(BeNil())
+	managementComponents := givenManagementComponents()
+	g.Expect(provider.ChangeDiff(managementComponents, managementComponents)).To(BeNil())
 }
 
 func TestChangeDiffWithChange(t *testing.T) {
-	g := NewWithT(t)
-	provider := givenProvider(t)
-	clusterSpec := givenEmptyClusterSpec()
-	newClusterSpec := clusterSpec.DeepCopy()
-	clusterSpec.VersionsBundles["1.19"].Snow.Version = "v1.0.2"
-	newClusterSpec.VersionsBundles["1.19"].Snow.Version = "v1.0.3"
-	want := &types.ComponentChangeDiff{
-		ComponentName: "snow",
-		NewVersion:    "v1.0.3",
-		OldVersion:    "v1.0.2",
-	}
-	g.Expect(provider.ChangeDiff(clusterSpec, newClusterSpec)).To(Equal(want))
-}
-
-func TestChangeDiffFromManagementComponentsNoChange(t *testing.T) {
-	g := NewWithT(t)
-	provider := givenProvider(t)
-	managementComponents := givenManagementComponents()
-	g.Expect(provider.ChangeDiffFromManagementComponents(managementComponents, managementComponents)).To(BeNil())
-}
-
-func TestChangeDiffFromManagementComponentsWithChange(t *testing.T) {
 	g := NewWithT(t)
 	provider := givenProvider(t)
 	managementComponents := givenManagementComponents()
@@ -1312,7 +1266,7 @@ func TestChangeDiffFromManagementComponentsWithChange(t *testing.T) {
 		NewVersion:    "v1.0.3",
 		OldVersion:    "v1.0.2",
 	}
-	g.Expect(provider.ChangeDiffFromManagementComponents(managementComponents, newManagementComponents)).To(Equal(want))
+	g.Expect(provider.ChangeDiff(managementComponents, newManagementComponents)).To(Equal(want))
 }
 
 func TestUpdateSecrets(t *testing.T) {

@@ -180,13 +180,8 @@ func (p *SnowProvider) UpdateKubeConfig(content *[]byte, clusterName string) err
 	return nil
 }
 
-func (p *SnowProvider) Version(clusterSpec *cluster.Spec) string {
-	versionsBundle := clusterSpec.RootVersionsBundle()
-	return versionsBundle.Snow.Version
-}
-
-// VersionFromManagementComponents returns the snow version from the management components.
-func (p *SnowProvider) VersionFromManagementComponents(components *cluster.ManagementComponents) string {
+// Version returns the snow version from the management components.
+func (p *SnowProvider) Version(components *cluster.ManagementComponents) string {
 	return components.Snow.Version
 }
 
@@ -208,22 +203,8 @@ func (p *SnowProvider) GetDeployments() map[string][]string {
 	}
 }
 
-func (p *SnowProvider) GetInfrastructureBundle(clusterSpec *cluster.Spec) *types.InfrastructureBundle {
-	versionsBundle := clusterSpec.RootVersionsBundle()
-	folderName := fmt.Sprintf("infrastructure-snow/%s/", versionsBundle.Snow.Version)
-
-	infraBundle := types.InfrastructureBundle{
-		FolderName: folderName,
-		Manifests: []releasev1alpha1.Manifest{
-			versionsBundle.Snow.Components,
-			versionsBundle.Snow.Metadata,
-		},
-	}
-	return &infraBundle
-}
-
-// GetInfrastructureBundleFromManagementComponents returns the infrastructure bundle from the management components.
-func (p *SnowProvider) GetInfrastructureBundleFromManagementComponents(components *cluster.ManagementComponents) *types.InfrastructureBundle {
+// GetInfrastructureBundle returns the infrastructure bundle from the management components.
+func (p *SnowProvider) GetInfrastructureBundle(components *cluster.ManagementComponents) *types.InfrastructureBundle {
 	folderName := fmt.Sprintf("infrastructure-snow/%s/", components.Snow.Version)
 
 	infraBundle := types.InfrastructureBundle{
@@ -260,22 +241,8 @@ func (p *SnowProvider) ValidateNewSpec(ctx context.Context, cluster *types.Clust
 	return nil
 }
 
-func (p *SnowProvider) ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ComponentChangeDiff {
-	currentVersionsBundle := currentSpec.RootVersionsBundle()
-	newVersionsBundle := newSpec.RootVersionsBundle()
-	if currentVersionsBundle.Snow.Version == newVersionsBundle.Snow.Version {
-		return nil
-	}
-
-	return &types.ComponentChangeDiff{
-		ComponentName: constants.SnowProviderName,
-		NewVersion:    newVersionsBundle.Snow.Version,
-		OldVersion:    currentVersionsBundle.Snow.Version,
-	}
-}
-
-// ChangeDiffFromManagementComponents returns the change diff from the management components.
-func (p *SnowProvider) ChangeDiffFromManagementComponents(currentComponents, newComponents *cluster.ManagementComponents) *types.ComponentChangeDiff {
+// ChangeDiff returns the change diff from the management components.
+func (p *SnowProvider) ChangeDiff(currentComponents, newComponents *cluster.ManagementComponents) *types.ComponentChangeDiff {
 	if currentComponents.Snow.Version == newComponents.Snow.Version {
 		return nil
 	}

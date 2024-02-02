@@ -58,19 +58,10 @@ func givenClusterSpec(t *testing.T, fileName string) *cluster.Spec {
 func TestVersion(t *testing.T) {
 	tt := newTest(t)
 	dockerProviderVersion := "v0.3.19"
-	clusterSpec := test.NewClusterSpec()
-	clusterSpec.VersionsBundles["1.19"].Docker.Version = dockerProviderVersion
-
-	tt.Expect(tt.provider.Version(clusterSpec)).To(Equal(dockerProviderVersion))
-}
-
-func TestVersionFromManagementComponents(t *testing.T) {
-	tt := newTest(t)
-	dockerProviderVersion := "v0.3.19"
 	managementComponents := givenManagementComponents()
 	managementComponents.Docker.Version = dockerProviderVersion
 
-	tt.Expect(tt.provider.VersionFromManagementComponents(managementComponents)).To(Equal(dockerProviderVersion))
+	tt.Expect(tt.provider.Version(managementComponents)).To(Equal(dockerProviderVersion))
 }
 
 func TestProviderUpdateKubeConfig(t *testing.T) {
@@ -517,45 +508,6 @@ func TestGetInfrastructureBundleSuccess(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 
 	tests := []struct {
-		testName    string
-		clusterSpec *cluster.Spec
-	}{
-		{
-			testName: "create overrides layer",
-			clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
-				s.Cluster.Name = "test-cluster"
-				s.VersionsBundles["1.19"] = versionsBundle
-			}),
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.testName, func(t *testing.T) {
-			client := dockerMocks.NewMockProviderClient(mockCtrl)
-			kubectl := dockerMocks.NewMockProviderKubectlClient(mockCtrl)
-			p := docker.NewProvider(&v1alpha1.DockerDatacenterConfig{}, client, kubectl, test.FakeNow)
-
-			infraBundle := p.GetInfrastructureBundle(tt.clusterSpec)
-			if infraBundle == nil {
-				t.Fatalf("provider.GetInfrastructureBundle() should have an infrastructure bundle")
-			}
-			assert.Equal(t, "infrastructure-docker/v0.3.19/", infraBundle.FolderName, "Incorrect folder name")
-			assert.Equal(t, len(infraBundle.Manifests), 3, "Wrong number of files in the infrastructure bundle")
-
-			wantManifests := []releasev1alpha1.Manifest{
-				versionsBundle.Docker.Components,
-				versionsBundle.Docker.Metadata,
-				versionsBundle.Docker.ClusterTemplate,
-			}
-			assert.ElementsMatch(t, infraBundle.Manifests, wantManifests, "Incorrect manifests")
-		})
-	}
-}
-
-func TestGetInfrastructureBundleFromManagementComponentsSuccess(t *testing.T) {
-	mockCtrl := gomock.NewController(t)
-
-	tests := []struct {
 		testName             string
 		managementComponents *cluster.ManagementComponents
 	}{
@@ -571,9 +523,9 @@ func TestGetInfrastructureBundleFromManagementComponentsSuccess(t *testing.T) {
 			kubectl := dockerMocks.NewMockProviderKubectlClient(mockCtrl)
 			p := docker.NewProvider(&v1alpha1.DockerDatacenterConfig{}, client, kubectl, test.FakeNow)
 
-			infraBundle := p.GetInfrastructureBundleFromManagementComponents(tt.managementComponents)
+			infraBundle := p.GetInfrastructureBundle(tt.managementComponents)
 			if infraBundle == nil {
-				t.Fatalf("provider.GetInfrastructureBundleFromManagementComponents() should have an infrastructure bundle")
+				t.Fatalf("provider.GetInfrastructureBundle() should have an infrastructure bundle")
 			}
 			assert.Equal(t, "infrastructure-docker/v0.3.19/", infraBundle.FolderName, "Incorrect folder name")
 			assert.Equal(t, len(infraBundle.Manifests), 3, "Wrong number of files in the infrastructure bundle")
@@ -721,34 +673,10 @@ func givenManagementComponents() *cluster.ManagementComponents {
 
 func TestChangeDiffNoChange(t *testing.T) {
 	tt := newTest(t)
-	clusterSpec := test.NewClusterSpec()
-	assert.Nil(t, tt.provider.ChangeDiff(clusterSpec, clusterSpec))
+	assert.Nil(t, tt.provider.ChangeDiff(givenManagementComponents(), givenManagementComponents()))
 }
 
 func TestChangeDiffWithChange(t *testing.T) {
-	tt := newTest(t)
-	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
-		s.VersionsBundles["1.19"].Docker.Version = "v0.3.18"
-	})
-	newClusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
-		s.VersionsBundles["1.19"].Docker.Version = "v0.3.19"
-	})
-
-	wantDiff := &types.ComponentChangeDiff{
-		ComponentName: "docker",
-		NewVersion:    "v0.3.19",
-		OldVersion:    "v0.3.18",
-	}
-
-	tt.Expect(tt.provider.ChangeDiff(clusterSpec, newClusterSpec)).To(Equal(wantDiff))
-}
-
-func TestChangeDiffFromManagementComponentsNoChange(t *testing.T) {
-	tt := newTest(t)
-	assert.Nil(t, tt.provider.ChangeDiffFromManagementComponents(givenManagementComponents(), givenManagementComponents()))
-}
-
-func TestChangeDiffFromManagementComponentsWithChange(t *testing.T) {
 	tt := newTest(t)
 	currentManagementComponents := givenManagementComponents()
 	currentManagementComponents.Docker.Version = "v0.3.18"
@@ -762,7 +690,7 @@ func TestChangeDiffFromManagementComponentsWithChange(t *testing.T) {
 		OldVersion:    "v0.3.18",
 	}
 
-	tt.Expect(tt.provider.ChangeDiffFromManagementComponents(currentManagementComponents, newManagementComponents)).To(Equal(wantDiff))
+	tt.Expect(tt.provider.ChangeDiff(currentManagementComponents, newManagementComponents)).To(Equal(wantDiff))
 }
 
 func TestProviderGenerateCAPISpecForCreateWithPodIAMConfig(t *testing.T) {
