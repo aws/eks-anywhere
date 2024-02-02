@@ -136,7 +136,8 @@ func (s *CreateBootStrapClusterTask) Run(ctx context.Context, commandContext *ta
 	}
 
 	logger.Info("Installing cluster-api providers on bootstrap cluster")
-	if err = commandContext.ClusterManager.InstallCAPI(ctx, commandContext.ClusterSpec, bootstrapCluster, commandContext.Provider); err != nil {
+	managementComponents := cluster.ManagementComponentsFromBundles(commandContext.ClusterSpec.Bundles)
+	if err = commandContext.ClusterManager.InstallCAPI(ctx, managementComponents, commandContext.ClusterSpec, bootstrapCluster, commandContext.Provider); err != nil {
 		commandContext.SetError(err)
 		return &CollectMgmtClusterDiagnosticsTask{}
 	}
@@ -258,7 +259,8 @@ func (s *CreateWorkloadClusterTask) Run(ctx context.Context, commandContext *tas
 		}
 
 		logger.Info("Installing cluster-api providers on workload cluster")
-		err = commandContext.ClusterManager.InstallCAPI(ctx, commandContext.ClusterSpec, commandContext.WorkloadCluster, commandContext.Provider)
+		managementComponents := cluster.ManagementComponentsFromBundles(commandContext.ClusterSpec.Bundles)
+		err = commandContext.ClusterManager.InstallCAPI(ctx, managementComponents, commandContext.ClusterSpec, commandContext.WorkloadCluster, commandContext.Provider)
 		if err != nil {
 			commandContext.SetError(err)
 			return &CollectDiagnosticsTask{}

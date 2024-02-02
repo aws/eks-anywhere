@@ -107,7 +107,7 @@ type ClientFactory interface {
 type CAPIClient interface {
 	BackupManagement(ctx context.Context, cluster *types.Cluster, managementStatePath, clusterName string) error
 	MoveManagement(ctx context.Context, from, target *types.Cluster, clusterName string) error
-	InitInfrastructure(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster, provider providers.Provider) error
+	InitInfrastructure(ctx context.Context, managementComponents *cluster.ManagementComponents, clusterSpec *cluster.Spec, cluster *types.Cluster, provider providers.Provider) error
 	GetWorkloadKubeconfig(ctx context.Context, clusterName string, cluster *types.Cluster) ([]byte, error)
 }
 
@@ -738,8 +738,9 @@ func compareEKSAClusterSpec(ctx context.Context, currentClusterSpec, newClusterS
 	return false, nil
 }
 
-func (c *ClusterManager) InstallCAPI(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster, provider providers.Provider) error {
-	err := c.clusterClient.InitInfrastructure(ctx, clusterSpec, cluster, provider)
+// InstallCAPI installs the cluster-api components in a cluster.
+func (c *ClusterManager) InstallCAPI(ctx context.Context, managementComponents *cluster.ManagementComponents, clusterSpec *cluster.Spec, cluster *types.Cluster, provider providers.Provider) error {
+	err := c.clusterClient.InitInfrastructure(ctx, managementComponents, clusterSpec, cluster, provider)
 	if err != nil {
 		return fmt.Errorf("initializing capi resources in cluster: %v", err)
 	}

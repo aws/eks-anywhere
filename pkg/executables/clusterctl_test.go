@@ -164,7 +164,7 @@ func TestClusterctlInitInfrastructure(t *testing.T) {
 				},
 			)
 
-			if err := tc.clusterctl.InitInfrastructure(tc.ctx, clusterSpec, tt.cluster, tc.provider); err != nil {
+			if err := tc.clusterctl.InitInfrastructure(tc.ctx, tc.managementComponents, clusterSpec, tt.cluster, tc.provider); err != nil {
 				t.Fatalf("Clusterctl.InitInfrastructure() error = %v, want nil", err)
 			}
 		})
@@ -185,7 +185,7 @@ func TestClusterctlInitInfrastructureEnvMapError(t *testing.T) {
 	tt.provider.EXPECT().EnvMap(clusterSpec).Return(nil, errors.New("error with env map"))
 	tt.provider.EXPECT().GetInfrastructureBundle(tt.managementComponents).Return(&types.InfrastructureBundle{})
 
-	if err := tt.clusterctl.InitInfrastructure(tt.ctx, clusterSpec, cluster, tt.provider); err == nil {
+	if err := tt.clusterctl.InitInfrastructure(tt.ctx, tt.managementComponents, clusterSpec, cluster, tt.provider); err == nil {
 		t.Fatal("Clusterctl.InitInfrastructure() error = nil")
 	}
 }
@@ -206,7 +206,7 @@ func TestClusterctlInitInfrastructureExecutableError(t *testing.T) {
 
 	tt.e.EXPECT().ExecuteWithEnv(tt.ctx, nil, gomock.Any()).Return(bytes.Buffer{}, errors.New("error from execute with env"))
 
-	if err := tt.clusterctl.InitInfrastructure(tt.ctx, clusterSpec, cluster, tt.provider); err == nil {
+	if err := tt.clusterctl.InitInfrastructure(tt.ctx, tt.managementComponents, clusterSpec, cluster, tt.provider); err == nil {
 		t.Fatal("Clusterctl.InitInfrastructure() error = nil")
 	}
 }
@@ -214,7 +214,7 @@ func TestClusterctlInitInfrastructureExecutableError(t *testing.T) {
 func TestClusterctlInitInfrastructureInvalidClusterNameError(t *testing.T) {
 	tt := newClusterctlTest(t)
 
-	if err := tt.clusterctl.InitInfrastructure(tt.ctx, clusterSpec, &types.Cluster{Name: ""}, tt.provider); err == nil {
+	if err := tt.clusterctl.InitInfrastructure(tt.ctx, tt.managementComponents, clusterSpec, &types.Cluster{Name: ""}, tt.provider); err == nil {
 		t.Fatal("Clusterctl.InitInfrastructure() error != nil")
 	}
 }
@@ -380,7 +380,7 @@ func TestClusterctlUpgradeAllProvidersSucess(t *testing.T) {
 		"--bootstrap", "etcdadm-controller-system/etcdadm-controller:v0.1.0",
 	)
 
-	tt.Expect(tt.clusterctl.Upgrade(tt.ctx, tt.cluster, tt.provider, clusterSpec, changeDiff)).To(Succeed())
+	tt.Expect(tt.clusterctl.Upgrade(tt.ctx, tt.cluster, tt.provider, tt.managementComponents, clusterSpec, changeDiff)).To(Succeed())
 }
 
 func TestClusterctlUpgradeInfrastructureProvidersSucess(t *testing.T) {
@@ -402,7 +402,7 @@ func TestClusterctlUpgradeInfrastructureProvidersSucess(t *testing.T) {
 		"--infrastructure", "capv-system/vsphere:v0.4.1",
 	)
 
-	tt.Expect(tt.clusterctl.Upgrade(tt.ctx, tt.cluster, tt.provider, clusterSpec, changeDiff)).To(Succeed())
+	tt.Expect(tt.clusterctl.Upgrade(tt.ctx, tt.cluster, tt.provider, tt.managementComponents, clusterSpec, changeDiff)).To(Succeed())
 }
 
 func TestClusterctlUpgradeInfrastructureProvidersError(t *testing.T) {
@@ -424,7 +424,7 @@ func TestClusterctlUpgradeInfrastructureProvidersError(t *testing.T) {
 		"--infrastructure", "capv-system/vsphere:v0.4.1",
 	).Return(bytes.Buffer{}, errors.New("error in exec"))
 
-	tt.Expect(tt.clusterctl.Upgrade(tt.ctx, tt.cluster, tt.provider, clusterSpec, changeDiff)).NotTo(Succeed())
+	tt.Expect(tt.clusterctl.Upgrade(tt.ctx, tt.cluster, tt.provider, tt.managementComponents, clusterSpec, changeDiff)).NotTo(Succeed())
 }
 
 var clusterSpec = test.NewClusterSpec(func(s *cluster.Spec) {

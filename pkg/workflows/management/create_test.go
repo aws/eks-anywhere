@@ -148,7 +148,7 @@ func (c *createTestSetup) expectCAPIInstall(err1, err2, err3 error) {
 			c.ctx, c.bootstrapCluster, c.clusterSpec).Return(err1),
 
 		c.clusterManager.EXPECT().InstallCAPI(
-			c.ctx, c.clusterSpec, c.bootstrapCluster, c.provider).Return(err2),
+			c.ctx, c.managementComponents, c.clusterSpec, c.bootstrapCluster, c.provider).Return(err2),
 
 		c.provider.EXPECT().PostBootstrapSetup(
 			c.ctx, c.clusterSpec.Cluster, c.bootstrapCluster).Return(err3),
@@ -185,7 +185,7 @@ func (c *createTestSetup) expectCreateWorkload(err1, err2, err3, err4 error) {
 			c.ctx, c.workloadCluster).Return(err2),
 
 		c.clusterManager.EXPECT().InstallCAPI(
-			c.ctx, c.clusterSpec, c.workloadCluster, c.provider).Return(err3),
+			c.ctx, c.managementComponents, c.clusterSpec, c.workloadCluster, c.provider).Return(err3),
 
 		c.provider.EXPECT().UpdateSecrets(
 			c.ctx, c.workloadCluster, c.clusterSpec).Return(err4),
@@ -363,7 +363,7 @@ func TestCreateInstallCAPIFailure(t *testing.T) {
 			c.ctx, c.bootstrapCluster, c.clusterSpec),
 
 		c.clusterManager.EXPECT().InstallCAPI(
-			c.ctx, c.clusterSpec, c.bootstrapCluster, c.provider).Return(errors.New("test")),
+			c.ctx, c.managementComponents, c.clusterSpec, c.bootstrapCluster, c.provider).Return(errors.New("test")),
 	)
 
 	c.clusterManager.EXPECT().SaveLogsManagementCluster(c.ctx, c.clusterSpec, c.bootstrapCluster)
@@ -607,7 +607,7 @@ func TestCreateInstallCAPIWorkloadFailure(t *testing.T) {
 		test.ctx, test.workloadCluster)
 
 	test.clusterManager.EXPECT().InstallCAPI(
-		test.ctx, test.clusterSpec, test.workloadCluster, test.provider).Return(errors.New("test"))
+		test.ctx, test.managementComponents, test.clusterSpec, test.workloadCluster, test.provider).Return(errors.New("test"))
 
 	test.clusterManager.EXPECT().SaveLogsManagementCluster(test.ctx, test.clusterSpec, test.bootstrapCluster)
 	test.clusterManager.EXPECT().SaveLogsWorkloadCluster(test.ctx, test.provider, test.clusterSpec, test.workloadCluster)

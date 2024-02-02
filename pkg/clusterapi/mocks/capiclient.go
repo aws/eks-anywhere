@@ -39,31 +39,31 @@ func (m *MockCAPIClient) EXPECT() *MockCAPIClientMockRecorder {
 }
 
 // InstallEtcdadmProviders mocks base method.
-func (m *MockCAPIClient) InstallEtcdadmProviders(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster, provider providers.Provider, installProviders []string) error {
+func (m *MockCAPIClient) InstallEtcdadmProviders(ctx context.Context, managementComponents *cluster.ManagementComponents, clusterSpec *cluster.Spec, cluster *types.Cluster, provider providers.Provider, installProviders []string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "InstallEtcdadmProviders", ctx, clusterSpec, cluster, provider, installProviders)
+	ret := m.ctrl.Call(m, "InstallEtcdadmProviders", ctx, managementComponents, clusterSpec, cluster, provider, installProviders)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // InstallEtcdadmProviders indicates an expected call of InstallEtcdadmProviders.
-func (mr *MockCAPIClientMockRecorder) InstallEtcdadmProviders(ctx, clusterSpec, cluster, provider, installProviders interface{}) *gomock.Call {
+func (mr *MockCAPIClientMockRecorder) InstallEtcdadmProviders(ctx, managementComponents, clusterSpec, cluster, provider, installProviders interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InstallEtcdadmProviders", reflect.TypeOf((*MockCAPIClient)(nil).InstallEtcdadmProviders), ctx, clusterSpec, cluster, provider, installProviders)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InstallEtcdadmProviders", reflect.TypeOf((*MockCAPIClient)(nil).InstallEtcdadmProviders), ctx, managementComponents, clusterSpec, cluster, provider, installProviders)
 }
 
 // Upgrade mocks base method.
-func (m *MockCAPIClient) Upgrade(ctx context.Context, managementCluster *types.Cluster, provider providers.Provider, newSpec *cluster.Spec, changeDiff *clusterapi.CAPIChangeDiff) error {
+func (m *MockCAPIClient) Upgrade(ctx context.Context, managementCluster *types.Cluster, provider providers.Provider, managementComponents *cluster.ManagementComponents, newSpec *cluster.Spec, changeDiff *clusterapi.CAPIChangeDiff) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Upgrade", ctx, managementCluster, provider, newSpec, changeDiff)
+	ret := m.ctrl.Call(m, "Upgrade", ctx, managementCluster, provider, managementComponents, newSpec, changeDiff)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Upgrade indicates an expected call of Upgrade.
-func (mr *MockCAPIClientMockRecorder) Upgrade(ctx, managementCluster, provider, newSpec, changeDiff interface{}) *gomock.Call {
+func (mr *MockCAPIClientMockRecorder) Upgrade(ctx, managementCluster, provider, managementComponents, newSpec, changeDiff interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Upgrade", reflect.TypeOf((*MockCAPIClient)(nil).Upgrade), ctx, managementCluster, provider, newSpec, changeDiff)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Upgrade", reflect.TypeOf((*MockCAPIClient)(nil).Upgrade), ctx, managementCluster, provider, managementComponents, newSpec, changeDiff)
 }
 
 // MockKubectlClient is a mock of KubectlClient interface.

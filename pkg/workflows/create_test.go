@@ -127,7 +127,7 @@ func (c *createTestSetup) expectCreateBootstrap() {
 
 		c.provider.EXPECT().PreCAPIInstallOnBootstrap(c.ctx, c.bootstrapCluster, c.clusterSpec),
 
-		c.clusterManager.EXPECT().InstallCAPI(c.ctx, c.clusterSpec, c.bootstrapCluster, c.provider),
+		c.clusterManager.EXPECT().InstallCAPI(c.ctx, c.managementComponents, c.clusterSpec, c.bootstrapCluster, c.provider),
 
 		c.provider.EXPECT().PostBootstrapSetup(c.ctx, c.clusterSpec.Cluster, c.bootstrapCluster),
 	)
@@ -151,7 +151,7 @@ func (c *createTestSetup) expectCreateWorkload() {
 			c.ctx, c.workloadCluster,
 		),
 		c.clusterManager.EXPECT().InstallCAPI(
-			c.ctx, c.clusterSpec, c.workloadCluster, c.provider,
+			c.ctx, c.managementComponents, c.clusterSpec, c.workloadCluster, c.provider,
 		),
 		c.provider.EXPECT().UpdateSecrets(c.ctx, c.workloadCluster, c.clusterSpec),
 	)
@@ -180,7 +180,7 @@ func (c *createTestSetup) expectCreateWorkloadSkipCAPI() {
 		),
 	)
 	c.clusterManager.EXPECT().InstallCAPI(
-		c.ctx, c.clusterSpec, c.workloadCluster, c.provider,
+		c.ctx, c.managementComponents, c.clusterSpec, c.workloadCluster, c.provider,
 	).Times(0)
 	c.provider.EXPECT().UpdateSecrets(c.ctx, c.workloadCluster, c.clusterSpec).Times(0)
 }
@@ -421,7 +421,7 @@ func TestCreateRunAWSIamConfigFail(t *testing.T) {
 	test.provider.EXPECT().BootstrapClusterOpts(test.clusterSpec).Return([]bootstrapper.BootstrapClusterOption{bootstrapper.WithExtraDockerMounts()}, nil)
 	test.bootstrapper.EXPECT().CreateBootstrapCluster(test.ctx, test.clusterSpec, gomock.Not(gomock.Nil())).Return(test.bootstrapCluster, nil)
 	test.provider.EXPECT().PreCAPIInstallOnBootstrap(test.ctx, test.bootstrapCluster, test.clusterSpec)
-	test.clusterManager.EXPECT().InstallCAPI(test.ctx, test.clusterSpec, test.bootstrapCluster, test.provider)
+	test.clusterManager.EXPECT().InstallCAPI(test.ctx, test.managementComponents, test.clusterSpec, test.bootstrapCluster, test.provider)
 	test.clusterManager.EXPECT().CreateAwsIamAuthCaSecret(test.ctx, test.bootstrapCluster, test.clusterSpec.Cluster.Name).Return(wantError)
 	test.clusterManager.EXPECT().SaveLogsManagementCluster(test.ctx, test.clusterSpec, test.bootstrapCluster)
 	test.writer.EXPECT().Write(fmt.Sprintf("%s-checkpoint.yaml", test.clusterSpec.Cluster.Name), gomock.Any())

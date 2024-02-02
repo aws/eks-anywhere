@@ -200,7 +200,8 @@ func (s *updateSecrets) Restore(ctx context.Context, commandContext *task.Comman
 
 func (s *ensureEtcdCAPIComponentsExistTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
 	logger.Info("Ensuring etcd CAPI providers exist on management cluster before upgrade")
-	if err := commandContext.CAPIManager.EnsureEtcdProvidersInstallation(ctx, commandContext.ManagementCluster, commandContext.Provider, commandContext.CurrentClusterSpec); err != nil {
+	managementComponents := cluster.ManagementComponentsFromBundles(commandContext.CurrentClusterSpec.Bundles)
+	if err := commandContext.CAPIManager.EnsureEtcdProvidersInstallation(ctx, commandContext.ManagementCluster, commandContext.Provider, managementComponents, commandContext.CurrentClusterSpec); err != nil {
 		commandContext.SetError(err)
 		return nil
 	}
@@ -235,13 +236,6 @@ func (s *upgradeCoreComponents) Run(ctx context.Context, commandContext *task.Co
 	}
 
 	changeDiff, err := commandContext.ClusterManager.UpgradeNetworking(ctx, commandContext.WorkloadCluster, commandContext.CurrentClusterSpec, commandContext.ClusterSpec, commandContext.Provider)
-	if err != nil {
-		commandContext.SetError(err)
-		return &CollectDiagnosticsTask{}
-	}
-	commandContext.UpgradeChangeDiff.Append(changeDiff)
-
-	changeDiff, err = commandContext.CAPIManager.Upgrade(ctx, commandContext.ManagementCluster, commandContext.Provider, commandContext.CurrentClusterSpec, commandContext.ClusterSpec)
 	if err != nil {
 		commandContext.SetError(err)
 		return &CollectDiagnosticsTask{}
@@ -413,7 +407,8 @@ func (s *createBootstrapClusterTask) Restore(ctx context.Context, commandContext
 
 func (s *installCAPITask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
 	logger.Info("Installing cluster-api providers on bootstrap cluster")
-	err := commandContext.ClusterManager.InstallCAPI(ctx, commandContext.ClusterSpec, commandContext.BootstrapCluster, commandContext.Provider)
+	managementComponents := cluster.ManagementComponentsFromBundles(commandContext.ClusterSpec.Bundles)
+	err := commandContext.ClusterManager.InstallCAPI(ctx, managementComponents, commandContext.ClusterSpec, commandContext.BootstrapCluster, commandContext.Provider)
 	if err != nil {
 		commandContext.SetError(err)
 		return &CollectMgmtClusterDiagnosticsTask{}

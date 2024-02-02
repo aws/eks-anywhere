@@ -76,6 +76,8 @@ func newUpgradeTest(t *testing.T) *upgradeTestSetup {
 		t.Setenv(e, "true")
 	}
 
+	currentSpec := test.NewClusterSpec(func(s *cluster.Spec) { s.Cluster.Name = "cluster-name" })
+
 	return &upgradeTestSetup{
 		t:                   t,
 		bootstrapper:        bootstrapper,
@@ -91,7 +93,8 @@ func newUpgradeTest(t *testing.T) *upgradeTestSetup {
 		machineConfigs:      machineConfigs,
 		workflow:            workflow,
 		ctx:                 context.Background(),
-		newClusterSpec:      test.NewClusterSpec(func(s *cluster.Spec) { s.Cluster.Name = "cluster-name" }),
+		currentClusterSpec:  currentSpec,
+		newClusterSpec:      currentSpec.DeepCopy(),
 		workloadCluster:     &types.Cluster{Name: "workload"},
 		managementStatePath: fmt.Sprintf("%s-backup-%s", "cluster-name", time.Now().Format("2006-01-02T15_04_05")),
 	}
@@ -131,6 +134,12 @@ func (c *upgradeTestSetup) expectSetup() {
 	c.clusterManager.EXPECT().GetCurrentClusterSpec(c.ctx, gomock.Any(), c.newClusterSpec.Cluster.Name).Return(c.currentClusterSpec, nil)
 }
 
+func (c *upgradeTestSetup) expectSetupRestore() {
+	c.provider.EXPECT().SetupAndValidateUpgradeCluster(c.ctx, gomock.Any(), c.newClusterSpec, nil)
+	c.provider.EXPECT().Name()
+	c.clusterManager.EXPECT().GetCurrentClusterSpec(c.ctx, gomock.Any(), c.newClusterSpec.Cluster.Name).Return(c.currentClusterSpec, nil)
+}
+
 func (c *upgradeTestSetup) expectSetupToFail() {
 	c.clusterManager.EXPECT().GetCurrentClusterSpec(c.ctx, gomock.Any(), c.newClusterSpec.Cluster.Name).Return(nil, errors.New("failed setup"))
 }
@@ -144,7 +153,7 @@ func (c *upgradeTestSetup) expectUpdateSecrets(expectedCluster *types.Cluster) {
 func (c *upgradeTestSetup) expectEnsureEtcdCAPIComponentsExistTask(expectedCluster *types.Cluster) {
 	currentSpec := c.currentClusterSpec
 	gomock.InOrder(
-		c.capiManager.EXPECT().EnsureEtcdProvidersInstallation(c.ctx, expectedCluster, c.provider, currentSpec),
+		c.capiManager.EXPECT().EnsureEtcdProvidersInstallation(c.ctx, expectedCluster, c.provider, cluster.ManagementComponentsFromBundles(currentSpec.Bundles), currentSpec),
 	)
 }
 
@@ -155,14 +164,8 @@ func (c *upgradeTestSetup) expectUpgradeCoreComponents(managementCluster *types.
 		OldVersion:    "v0.0.1",
 		NewVersion:    "v0.0.2",
 	})
-	capiChangeDiff := types.NewChangeDiff(&types.ComponentChangeDiff{
-		ComponentName: "vsphere",
-		OldVersion:    "v0.0.1",
-		NewVersion:    "v0.0.2",
-	})
 	gomock.InOrder(
 		c.clusterManager.EXPECT().UpgradeNetworking(c.ctx, workloadCluster, currentSpec, c.newClusterSpec, c.provider).Return(networkingChangeDiff, nil),
-		c.capiManager.EXPECT().Upgrade(c.ctx, managementCluster, c.provider, currentSpec, c.newClusterSpec).Return(capiChangeDiff, nil),
 		c.eksdUpgrader.EXPECT().Upgrade(c.ctx, managementCluster, currentSpec, c.newClusterSpec).Return(nil),
 	)
 }
@@ -188,7 +191,7 @@ func (c *upgradeTestSetup) expectCreateBootstrap() {
 
 		c.provider.EXPECT().PreCAPIInstallOnBootstrap(c.ctx, c.bootstrapCluster, c.newClusterSpec),
 		c.provider.EXPECT().PostBootstrapSetupUpgrade(c.ctx, c.newClusterSpec.Cluster, c.bootstrapCluster),
-		c.clusterManager.EXPECT().InstallCAPI(c.ctx, gomock.Not(gomock.Nil()), c.bootstrapCluster, c.provider),
+		c.clusterManager.EXPECT().InstallCAPI(c.ctx, cluster.ManagementComponentsFromBundles(c.newClusterSpec.Bundles), gomock.Not(gomock.Nil()), c.bootstrapCluster, c.provider),
 	)
 }
 
@@ -198,7 +201,7 @@ func (c *upgradeTestSetup) expectNotToCreateBootstrap() {
 		c.ctx, gomock.Not(gomock.Nil()), gomock.Not(gomock.Nil()),
 	).Times(0)
 
-	c.clusterManager.EXPECT().InstallCAPI(c.ctx, gomock.Not(gomock.Nil()), c.bootstrapCluster, c.provider).Times(0)
+	c.clusterManager.EXPECT().InstallCAPI(c.ctx, cluster.ManagementComponentsFromBundles(c.newClusterSpec.Bundles), gomock.Not(gomock.Nil()), c.bootstrapCluster, c.provider).Times(0)
 }
 
 func (c *upgradeTestSetup) expectWriteClusterConfig() {
@@ -422,7 +425,7 @@ func (c *upgradeTestSetup) expectVerifyClusterSpecNoChanges() {
 func (c *upgradeTestSetup) expectCreateBootstrapNotToBeCalled() {
 	c.provider.EXPECT().BootstrapClusterOpts(c.newClusterSpec).Times(0)
 	c.bootstrapper.EXPECT().CreateBootstrapCluster(c.ctx, gomock.Not(gomock.Nil()), gomock.Not(gomock.Nil())).Times(0)
-	c.clusterManager.EXPECT().InstallCAPI(c.ctx, gomock.Not(gomock.Nil()), c.bootstrapCluster, c.provider).Times(0)
+	c.clusterManager.EXPECT().InstallCAPI(c.ctx, cluster.ManagementComponentsFromBundles(c.newClusterSpec.Bundles), gomock.Not(gomock.Nil()), c.bootstrapCluster, c.provider).Times(0)
 }
 
 func (c *upgradeTestSetup) expectPreflightValidationsToPass() {
@@ -714,7 +717,7 @@ func TestUpgradeWithCheckpointSecondRunSuccess(t *testing.T) {
 
 	test2 := newUpgradeSelfManagedClusterTest(t)
 	test2.writer.EXPECT().TempDir().Return("testdata")
-	test2.expectSetup()
+	test2.expectSetupRestore()
 	test2.expectUpgradeWorkload(test2.bootstrapCluster, test2.workloadCluster)
 	test2.expectMoveManagementToWorkload()
 	test2.expectWriteClusterConfig()

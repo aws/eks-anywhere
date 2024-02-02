@@ -26,8 +26,8 @@ func NewManager(capiClient CAPIClient, kubectlClient KubectlClient) *Manager {
 }
 
 type CAPIClient interface {
-	Upgrade(ctx context.Context, managementCluster *types.Cluster, provider providers.Provider, newSpec *cluster.Spec, changeDiff *CAPIChangeDiff) error
-	InstallEtcdadmProviders(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster, provider providers.Provider, installProviders []string) error
+	Upgrade(ctx context.Context, managementCluster *types.Cluster, provider providers.Provider, managementComponents *cluster.ManagementComponents, newSpec *cluster.Spec, changeDiff *CAPIChangeDiff) error
+	InstallEtcdadmProviders(ctx context.Context, managementComponents *cluster.ManagementComponents, clusterSpec *cluster.Spec, cluster *types.Cluster, provider providers.Provider, installProviders []string) error
 }
 
 type KubectlClient interface {
