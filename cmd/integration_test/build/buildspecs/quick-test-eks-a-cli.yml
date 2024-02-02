@@ -7,6 +7,8 @@ env:
     EKSA_GIT_KNOWN_HOSTS: "/tmp/known_hosts"
     EKSA_GIT_PRIVATE_KEY: "/tmp/private-key"
     INTEGRATION_TEST_INFRA_CONFIG: "/tmp/test-infra.yml"
+    # vsphere variables
+    T_VSPHERE_TEMPLATE_UBUNTU_2204_1_28: "/SDDC-Datacenter/vm/Templates/ubuntu-2204-kube-v1-28"
   secrets-manager:
     EKSA_AWS_ACCESS_KEY_ID: "packages_ci_beta:aws_access_key_id"
     EKSA_AWS_SECRET_ACCESS_KEY: "packages_ci_beta:aws_secret_access_key_id"
@@ -25,6 +27,26 @@ env:
     T_REGISTRY_MIRROR_DEFAULT_SECURITY_GROUP: "harbor-registry-data:default_sg_id"
     T_REGISTRY_MIRROR_AIRGAPPED_SECURITY_GROUP: "harbor-registry-data:airgapped_sg_id"
     T_AWS_IAM_ROLE_ARN: "aws-iam-auth-role:ec2_role_arn"
+    # vsphere secrets
+    GOVC_INSECURE: "vsphere_ci_beta_connection:govc_insecure"
+    GOVC_DATACENTER: "vsphere_ci_beta_connection:vsphere_datacenter"
+    VSPHERE_SERVER: "vsphere_ci_beta_connection:vsphere_url"
+    T_VSPHERE_SERVER: "vsphere_ci_beta_connection:server"
+    EKSA_VSPHERE_USERNAME: "vsphere_ci_beta_connection:vsphere_username"
+    EKSA_VSPHERE_PASSWORD: "vsphere_ci_beta_connection:vsphere_password"
+    T_VSPHERE_DATACENTER: "vsphere_ci_beta_connection:vsphere_datacenter"
+    T_VSPHERE_DATASTORE: "vsphere_ci_beta_connection:datastore"
+    T_VSPHERE_FOLDER: "vsphere_ci_beta_connection:folder"
+    T_VSPHERE_NETWORK: "vsphere_ci_beta_connection:network"
+    T_VSPHERE_PRIVATE_NETWORK: "vsphere_ci_beta_connection:private_network"
+    T_VSPHERE_CIDR: "vsphere_ci_beta_connection:vsphere_cidr"
+    T_VSPHERE_PRIVATE_NETWORK_CIDR: "vsphere_ci_beta_connection:vsphere_private_network_cidr"
+    T_VSPHERE_RESOURCE_POOL: "vsphere_ci_beta_connection:resource_pool"
+    T_VSPHERE_SERVER: "vsphere_ci_beta_connection:server"
+    T_VSPHERE_SSH_AUTHORIZED_KEY: "vsphere_ci_beta_connection:ssh_authorized_key"
+    T_VSPHERE_TLS_INSECURE: "vsphere_ci_beta_connection:tls_insecure"
+    T_VSPHERE_TLS_THUMBPRINT: "vsphere_ci_beta_connection:tls_thumbprint"
+    T_VSPHERE_TAG: "vsphere_ci_beta_connection:vm_test_tag"
 phases:
   pre_build:
     commands:
@@ -49,7 +71,7 @@ phases:
         -i ${INTEGRATION_TEST_INSTANCE_PROFILE}
         -m ${INTEGRATION_TEST_MAX_EC2_COUNT}
         -p ${INTEGRATION_TEST_MAX_CONCURRENT_TEST_COUNT}
-        -r 'TestDocker.*128'
+        -r 'TestDocker.*128|TestVSphereKubernetes128Ubuntu2204SimpleFlow'
         -v 4
         --skip ${SKIPPED_TESTS}
         --bundles-override=${BUNDLES_OVERRIDE}
