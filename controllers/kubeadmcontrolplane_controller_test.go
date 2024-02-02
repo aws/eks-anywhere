@@ -72,8 +72,7 @@ func TestKCPReconcileComplete(t *testing.T) {
 	kcp := &controlplanev1.KubeadmControlPlane{}
 	err = client.Get(ctx, types.NamespacedName{Name: kcpObjs.kcp.Name, Namespace: constants.EksaSystemNamespace}, kcp)
 	g.Expect(err).ToNot(HaveOccurred())
-	_, ok := kcp.Annotations["controlplane.clusters.x-k8s.io/in-place-upgrade-needed"]
-	g.Expect(ok).To(BeFalse())
+	g.Expect(kcp.Annotations).ToNot(HaveKey("controlplane.clusters.x-k8s.io/in-place-upgrade-needed"))
 }
 
 func TestKCPReconcileNotNeeded(t *testing.T) {
@@ -132,6 +131,53 @@ func TestKCPReconcileControlPlaneUpgradeReady(t *testing.T) {
 	cpu := &anywherev1.ControlPlaneUpgrade{}
 	err = client.Get(ctx, types.NamespacedName{Name: kcpObjs.cpUpgrade.Name, Namespace: constants.EksaSystemNamespace}, cpu)
 	g.Expect(err).To(HaveOccurred())
+}
+
+func TestKCPReconcileKCPAndControlPlaneUpgradeReady(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+	kcpObjs := getObjectsForKCP()
+
+	kcpObjs.kcp.Status.UpdatedReplicas = *kcpObjs.kcp.Spec.Replicas
+	kcpObjs.cpUpgrade.Status.Ready = true
+
+	runtimeObjs := []runtime.Object{kcpObjs.machines[0], kcpObjs.machines[1], kcpObjs.cpUpgrade, kcpObjs.kcp}
+	client := fake.NewClientBuilder().WithRuntimeObjects(runtimeObjs...).Build()
+	r := controllers.NewKubeadmControlPlaneReconciler(client)
+	req := kcpRequest(kcpObjs.kcp)
+	_, err := r.Reconcile(ctx, req)
+	g.Expect(err).ToNot(HaveOccurred())
+
+	cpu := &anywherev1.ControlPlaneUpgrade{}
+	err = client.Get(ctx, types.NamespacedName{Name: kcpObjs.cpUpgrade.Name, Namespace: constants.EksaSystemNamespace}, cpu)
+	g.Expect(err).To(HaveOccurred())
+	g.Expect(err).To(MatchError("controlplaneupgrades.anywhere.eks.amazonaws.com \"my-cluster-cp-upgrade\" not found"))
+
+	kcp := &controlplanev1.KubeadmControlPlane{}
+	err = client.Get(ctx, types.NamespacedName{Name: kcpObjs.kcp.Name, Namespace: constants.EksaSystemNamespace}, kcp)
+	g.Expect(err).ToNot(HaveOccurred())
+	g.Expect(kcp.Annotations).ToNot(HaveKey("controlplane.clusters.x-k8s.io/in-place-upgrade-needed"))
+}
+
+func TestKCPReconcileKCPReadyAndCPUpgradeAlreadyDeleted(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+	kcpObjs := getObjectsForKCP()
+
+	kcpObjs.kcp.Status.UpdatedReplicas = *kcpObjs.kcp.Spec.Replicas
+
+	runtimeObjs := []runtime.Object{kcpObjs.machines[0], kcpObjs.machines[1], kcpObjs.kcp}
+	client := fake.NewClientBuilder().WithRuntimeObjects(runtimeObjs...).Build()
+	r := controllers.NewKubeadmControlPlaneReconciler(client)
+	req := kcpRequest(kcpObjs.kcp)
+	_, err := r.Reconcile(ctx, req)
+	g.Expect(err).ToNot(HaveOccurred())
+
+	// verify the in-place-upgrade-needed annotation is removed even when the ControlPlaneUpgrade object is not found
+	kcp := &controlplanev1.KubeadmControlPlane{}
+	err = client.Get(ctx, types.NamespacedName{Name: kcpObjs.kcp.Name, Namespace: constants.EksaSystemNamespace}, kcp)
+	g.Expect(err).ToNot(HaveOccurred())
+	g.Expect(kcp.Annotations).ToNot(HaveKey("controlplane.clusters.x-k8s.io/in-place-upgrade-needed"))
 }
 
 func TestKCPReconcileNotFound(t *testing.T) {
@@ -246,7 +292,8 @@ func generateKCP(name string) *controlplanev1.KubeadmControlPlane {
 					},
 				},
 			},
-			Version: k8s129,
+			Replicas: pointer.Int32(3),
+			Version:  k8s129,
 		},
 	}
 }
