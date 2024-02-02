@@ -13,10 +13,29 @@ spec:
     kind: NodeUpgrade
     listKind: NodeUpgradeList
     plural: nodeupgrades
+    shortNames:
+    - nu
     singular: nodeupgrade
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - additionalPrinterColumns:
+    - description: Machine
+      jsonPath: .spec.machine.name
+      name: Machine
+      type: string
+    - description: Denotes whether the upgrade has finished or not
+      jsonPath: .status.completed
+      name: Ready
+      type: string
+    - description: Time duration since creation of Control Plane Upgrade
+      jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    - description: Requested Kubernetes version
+      jsonPath: .spec.kubernetesVersion
+      name: KubernetesVersion
+      type: string
+    name: v1alpha1
     schema:
       openAPIV3Schema:
         description: NodeUpgrade is the Schema for the nodeupgrades API.

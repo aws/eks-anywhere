@@ -235,6 +235,8 @@ spec:
                         - maxSurge
                         type: object
                       type:
+                        description: UpgradeRolloutStrategyType defines the types
+                          of upgrade rollout strategies.
                         type: string
                     type: object
                 type: object
@@ -584,6 +586,8 @@ spec:
                           - maxUnavailable
                           type: object
                         type:
+                          description: UpgradeRolloutStrategyType defines the types
+                            of upgrade rollout strategies.
                           type: string
                       type: object
                   type: object
