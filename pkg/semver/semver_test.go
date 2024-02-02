@@ -198,3 +198,112 @@ func TestCompareSuccess(t *testing.T) {
 		})
 	}
 }
+
+func TestCompareBuildMetadata(t *testing.T) {
+	testCases := []struct {
+		testName string
+		v1       *semver.Version
+		v2       *semver.Version
+		want     int
+	}{
+		{
+			testName: "equal build metadata only strings",
+			v1: &semver.Version{
+				Buildmetadata: "f234f.werwe",
+			},
+			v2: &semver.Version{
+				Buildmetadata: "f234f.werwe",
+			},
+			want: 0,
+		},
+		{
+			testName: "equal build metadata strings and numbers",
+			v1: &semver.Version{
+				Buildmetadata: "build.1234",
+			},
+			v2: &semver.Version{
+				Buildmetadata: "build.1234",
+			},
+			want: 0,
+		},
+		{
+			testName: "different build metadata only strings",
+			v1: &semver.Version{
+				Buildmetadata: "f4fe.f234f",
+			},
+			v2: &semver.Version{
+				Buildmetadata: "f4fe.werwe",
+			},
+			want: 2,
+		},
+		{
+			testName: "lower with build metadata strings and numbers",
+			v1: &semver.Version{
+				Buildmetadata: "build.1234",
+			},
+			v2: &semver.Version{
+				Buildmetadata: "build.1235",
+			},
+			want: -1,
+		},
+		{
+			testName: "lower as a subset with v2 longer",
+			v1: &semver.Version{
+				Buildmetadata: "build.1235",
+			},
+			v2: &semver.Version{
+				Buildmetadata: "build.1235.custom",
+			},
+			want: -1,
+		},
+		{
+			testName: "lower because v2 is string and v1 is number",
+			v1: &semver.Version{
+				Buildmetadata: "build.1235",
+			},
+			v2: &semver.Version{
+				Buildmetadata: "build.custom",
+			},
+			want: -1,
+		},
+		{
+			testName: "greater with build metadata strings and numbers",
+			v1: &semver.Version{
+				Buildmetadata: "build.2340",
+			},
+			v2: &semver.Version{
+				Buildmetadata: "build.423",
+			},
+			want: 1,
+		},
+		{
+			testName: "greater as a subset with v1 longer",
+			v1: &semver.Version{
+				Buildmetadata: "build.1235.custom.v2",
+			},
+			v2: &semver.Version{
+				Buildmetadata: "build.1235.custom",
+			},
+			want: 1,
+		},
+		{
+			testName: "greater because v1 is string and v2 is number",
+			v1: &semver.Version{
+				Buildmetadata: "build.v1235",
+			},
+			v2: &semver.Version{
+				Buildmetadata: "build.222",
+			},
+			want: 1,
+		},
+	}
+
+	for _, tt := range testCases {
+		t.Run(tt.testName, func(t *testing.T) {
+			got := tt.v1.CompareBuildMetadata(tt.v2)
+			if got != tt.want {
+				t.Fatalf("Version.CompareBuildMetadata() got = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
