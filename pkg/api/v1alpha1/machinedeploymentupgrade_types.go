@@ -26,17 +26,24 @@ type MachineDeploymentUpgradeSpec struct {
 // MachineDeploymentUpgradeStatus defines the observed state of MachineDeploymentUpgrade.
 type MachineDeploymentUpgradeStatus struct {
 	// RequireUpgrade is the number of machines in the MachineDeployment that still need to be upgraded.
-	RequireUpgrade int64 `json:"requireUpgrade,omitempty"`
+	RequireUpgrade int64 `json:"requireUpgrade"`
 
 	// Upgraded is the number of machines in the MachineDeployment that have been upgraded.
-	Upgraded int64 `json:"upgraded,omitempty"`
+	Upgraded int64 `json:"upgraded"`
 
 	// Ready denotes that the all machines in the MachineDeployment have finished upgrading and are ready.
 	Ready bool `json:"ready,omitempty"`
 }
 
 //+kubebuilder:object:root=true
+//+kubebuilder:resource:path=machinedeploymentupgrades,shortName=mdu,scope=Namespaced,singular=machinedeploymentupgrade
 //+kubebuilder:subresource:status
+//+kubebuilder:printcolumn:name="Machine Deployment",type="string",JSONPath=".spec.machineDeployment.name",description="Machine Deployment"
+//+kubebuilder:printcolumn:name="Upgraded",type="string",JSONPath=".status.upgraded",description="Worker machines that are already upgraded"
+//+kubebuilder:printcolumn:name="PendingUpgrade",type="string",JSONPath=".status.requireUpgrade",description="Worker machines that still require upgrade"
+//+kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.ready",description="Denotes whether the upgrade has finished or not"
+//+kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp",description="Time duration since creation of Control Plane Upgrade"
+//+kubebuilder:printcolumn:name="KubernetesVersion",type="string",JSONPath=".spec.kubernetesVersion",description="Requested Kubernetes version"
 
 // MachineDeploymentUpgrade is the Schema for the machinedeploymentupgrades API.
 type MachineDeploymentUpgrade struct {
