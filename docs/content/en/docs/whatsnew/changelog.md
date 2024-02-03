@@ -8,12 +8,37 @@ description: >
   Changelog for EKS Anywhere releases
 ---
 
-{{% alert title="Warnings" color="warning" %}}
-* EKS Anywhere releases `v0.15.0` - `v0.15.2` have an issue with Tinkerbell provider where BMC/IPMI calls time out for certain hardware.<br>
-Please upgrade to `v0.15.3` if you are using Tinkerbell (Bare Metal) provider.
-* Installing CSI as part of VSphere cluster creation was deprecated in version `v0.16.0` and has been removed in `v0.17.0`. Please refer to the [deprecation section]({{< relref "../clustermgmt/storage/vsphere-storage/#vsphere-csi-driver-deprecation" >}}) in the vSphere provider documentation for more information.
-* When upgrading to a new minor version, a new OS image must be created using the new image-builder cli.
+{{% alert title="Announcements" color="warning" %}}
+* On January 31, 2024, a **High**-severity vulnerability CVE-2024-21626 was published affecting all `runc` versions <= `v1.1.11`. This CVE has been fixed in runc version `v1.1.12`, which has been included in EKS Anywhere release `v0.18.6`. In order to fix this CVE in your new/existing EKS-A cluster, you **MUST** build or download new OS images pertaining to version `v0.18.6` and create/upgrade your cluster with these images.<br>
+  Refer to the following links for more information on the steps to mitigate the CVE.
+  * [AWS Security bulletin for the `runc` issue](https://aws.amazon.com/security/security-bulletins/AWS-2024-001)
+  * [Building Ubuntu and Red Hat node images]({{< relref "../osmgmt/artifacts/#building-node-images" >}})
+  * [Downloading Bottlerocket node images]({{< relref "../osmgmt/artifacts/#download-bottlerocket-node-images" >}})
+  * [Upgrading an EKS Anywhere cluster]({{< relref "../clustermgmt/cluster-upgrades" >}})
 {{% /alert %}}
+
+{{% alert title="General Information" color="info" %}}
+* When upgrading to a new minor version, a new OS image must be created using the new image-builder CLI pertaining to that release.
+{{% /alert %}}
+
+## [v0.18.6](https://github.com/aws/eks-anywhere/releases/tag/v0.18.6)
+
+### **Tool Upgrade**
+- EKS Anywhere v0.18.6 Admin AMI with CVE fixes for `runc`
+- New base images with CVE fixes for Amazon Linux 2
+- Bottlerocket `v1.15.1` to `1.19.0`
+- runc `v1.1.10` to `v1.1.12` ([CVE-2024-21626](https://nvd.nist.gov/vuln/detail/CVE-2024-21626))
+- containerd `v1.7.11` to `v.1.7.12`
+
+### Supported Operating Systems
+
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow  |
+| :----------:        | :-----: | :--------: | :-----: | :--------: | :---: |
+| Ubuntu 20.04        | ✔       | ✔          | ✔       | —          | ✔     |
+| Ubuntu 22.04        | ✔       | ✔          | ✔       | —          | —     |
+| Bottlerocket 1.19.0 | ✔       | ✔          | —       | —          | —     |
+| RHEL 8.7            | ✔       | ✔          | ✔       | ✔          | —     |
+| RHEL 9.x            | —       | —          | ✔       | —          | —     |
 
 ## [v0.18.5](https://github.com/aws/eks-anywhere/releases/tag/v0.18.5)
 
