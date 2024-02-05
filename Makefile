@@ -135,6 +135,9 @@ EKS_A_CROSS_PLATFORMS := $(foreach platform,$(EKS_A_PLATFORMS),eks-a-cross-platf
 E2E_CROSS_PLATFORMS := $(foreach platform,$(EKS_A_PLATFORMS),e2e-cross-platform-$(platform))
 EKS_A_RELEASE_CROSS_PLATFORMS := $(foreach platform,$(EKS_A_PLATFORMS),eks-a-release-cross-platform-$(platform))
 
+EKS_A_PROVIDERS=$(shell ls test/e2e/*_test.go | xargs -I_ basename _ | cut -d_ -f1 | grep -v conformance)
+E2E_TEST_PROVIDER_BINARIES=$(foreach provider,$(EKS_A_PROVIDERS),e2e-tests-binary-$(provider))
+
 DOCKER_E2E_TEST := TestDockerKubernetes125SimpleFlow
 LOCAL_E2E_TESTS ?= $(DOCKER_E2E_TEST)
 
@@ -379,7 +382,7 @@ update-attribution-files: generate-attribution
 
 .PHONY: update-golden-files
 update-golden-files:
-	make -C release update-bundle-golden-files
+	$(MAKE) -C release update-bundle-golden-files
 	scripts/golden_create_pr.sh
 
 .PHONY: prepare-release-artifacts
@@ -408,7 +411,7 @@ endif
 	rm -rf vendor
 	rm -rf GIT_TAG
 	rm -rf _output
-	make -C docs clean
+	$(MAKE) -C docs clean
 
 #
 # Generate zz_generated.deepcopy.go
@@ -640,23 +643,30 @@ e2e-cross-platform-%:
 build-eks-a-for-e2e:
 	if [ "$(CODEBUILD_CI)" = "true" ]; then \
 		if [[ "$(CODEBUILD_BUILD_ID)" =~ "aws-staging-eks-a-build" ]]; then \
-			make eks-a-release-cross-platform GIT_VERSION=$(shell cat release/triggers/eks-a-release/development/RELEASE_VERSION) RELEASE_MANIFEST_URL=https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml; \
-			make eks-a-release GIT_VERSION=$(DEV_GIT_VERSION); \
+			$(MAKE) eks-a-release-cross-platform GIT_VERSION=$(shell cat release/triggers/eks-a-release/development/RELEASE_VERSION) RELEASE_MANIFEST_URL=https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml; \
+			$(MAKE) eks-a-release GIT_VERSION=$(DEV_GIT_VERSION); \
 			scripts/get_bundle.sh; \
 		else \
-			make eks-a-cross-platform; \
-			make eks-a; \
+			$(MAKE) eks-a-cross-platform; \
+			$(MAKE) eks-a; \
 		fi \
 	else \
-		make eksa-components-override; \
-		make eks-a; \
+		$(MAKE) eksa-components-override; \
+		$(MAKE) eks-a; \
 	fi
+
+.PHONY: e2e-test-provider-binaries
+e2e-test-provider-binaries: $(E2E_TEST_PROVIDER_BINARIES)
 
 .PHONY: e2e-tests-binary
 e2e-tests-binary: E2E_TAGS ?= e2e
 e2e-tests-binary: E2E_OUTPUT_FILE ?= bin/e2e.test
 e2e-tests-binary:
 	GOOS=$(GO_OS) GOARCH=$(GO_ARCH) $(GO) test ./test/e2e -c -o "$(E2E_OUTPUT_FILE)" -tags "$(E2E_TAGS)" -ldflags "-X github.com/aws/eks-anywhere/pkg/version.gitVersion=$(DEV_GIT_VERSION) -X github.com/aws/eks-anywhere/pkg/manifests/releases.manifestURL=$(RELEASE_MANIFEST_URL)"
+
+.PHONY: e2e-tests-binary-%
+e2e-tests-binary-%:
+	$(MAKE) e2e-tests-binary E2E_TAGS="e2e $*" E2E_OUTPUT_FILE=bin/$*/e2e.test
 
 .PHONY: build-integration-test-binary
 build-integration-test-binary:
