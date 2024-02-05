@@ -4615,9 +4615,6 @@ spec:
                 description: Upgraded is the number of machines that have been upgraded.
                 format: int64
                 type: integer
-            required:
-            - requireUpgrade
-            - upgraded
             type: object
         type: object
     served: true
@@ -5158,9 +5155,6 @@ spec:
                   that have been upgraded.
                 format: int64
                 type: integer
-            required:
-            - requireUpgrade
-            - upgraded
             type: object
         type: object
     served: true

@@ -33,10 +33,10 @@ type ControlPlaneUpgradeSpec struct {
 // ControlPlaneUpgradeStatus defines the observed state of ControlPlaneUpgrade.
 type ControlPlaneUpgradeStatus struct {
 	// RequireUpgrade is the number of machines that still need to be upgraded.
-	RequireUpgrade int64 `json:"requireUpgrade"`
+	RequireUpgrade int64 `json:"requireUpgrade,omitempty"`
 
 	// Upgraded is the number of machines that have been upgraded.
-	Upgraded int64 `json:"upgraded"`
+	Upgraded int64 `json:"upgraded,omitempty"`
 
 	// Ready denotes that the all control planes have finished upgrading and are ready.
 	Ready bool `json:"ready,omitempty"`
