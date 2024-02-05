@@ -8,12 +8,14 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/aws/eks-anywhere/pkg/dependencies"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
 	"github.com/aws/eks-anywhere/pkg/workflows"
+	"github.com/aws/eks-anywhere/pkg/workflows/workload"
 )
 
 type deleteClusterOptions struct {
@@ -121,6 +123,7 @@ func (dc *deleteClusterOptions) deleteCluster(ctx context.Context) error {
 		WithGitOpsFlux(clusterSpec.Cluster, clusterSpec.FluxConfig, cliConfig).
 		WithWriter().
 		WithDeleteClusterDefaulter(deleteCLIConfig).
+		WithClusterDeleter().
 		Build(ctx)
 	if err != nil {
 		return err
@@ -153,7 +156,12 @@ func (dc *deleteClusterOptions) deleteCluster(ctx context.Context) error {
 		}
 	}
 
-	err = deleteCluster.Run(ctx, cluster, clusterSpec, dc.forceCleanup, dc.managementKubeconfig)
+	if features.UseControllerViaCLIWorkflow().IsActive() && clusterSpec.Cluster.IsManaged() {
+		deleteWorkload := workload.NewDelete(deps.Provider, deps.Writer, deps.ClusterManager, deps.ClusterDeleter)
+		err = deleteWorkload.Run(ctx, cluster, clusterSpec)
+	} else {
+		err = deleteCluster.Run(ctx, cluster, clusterSpec, dc.forceCleanup, dc.managementKubeconfig)
+	}
 	cleanup(deps, &err)
 	return err
 }

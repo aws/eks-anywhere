@@ -106,3 +106,8 @@ type ClusterCreator interface {
 type EksaInstaller interface {
 	Install(ctx context.Context, log logr.Logger, cluster *types.Cluster, managementComponents *cluster.ManagementComponents, spec *cluster.Spec) error
 }
+
+// ClusterDeleter deletes the cluster.
+type ClusterDeleter interface {
+	Run(ctx context.Context, spec *cluster.Spec, managementCluster types.Cluster) error
+}
