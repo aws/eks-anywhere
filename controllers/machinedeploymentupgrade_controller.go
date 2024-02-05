@@ -210,7 +210,10 @@ func (r *MachineDeploymentUpgradeReconciler) updateStatus(ctx context.Context, l
 	for _, machine := range mdUpgrade.Spec.MachinesRequireUpgrade {
 		nodeUpgrade, err := getNodeUpgrade(ctx, r.client, nodeUpgraderName(machine.Name))
 		if err != nil {
-			return err
+			if apierrors.IsNotFound(err) {
+				continue
+			}
+			return fmt.Errorf("getting node upgrader for machine %s: %v", machine.Name, err)
 		}
 		if nodeUpgrade.Status.Completed {
 			nodesUpgradeCompleted++
@@ -218,7 +221,7 @@ func (r *MachineDeploymentUpgradeReconciler) updateStatus(ctx context.Context, l
 
 		}
 	}
-	log.Info("Worker nodes ready", "total", mdUpgrade.Status.Upgraded, "need-upgrade", mdUpgrade.Status.RequireUpgrade)
+	log.Info("Worker nodes ready", "upgraded", mdUpgrade.Status.Upgraded, "need-upgrade", mdUpgrade.Status.RequireUpgrade)
 	mdUpgrade.Status.Upgraded = int64(nodesUpgradeCompleted)
 	mdUpgrade.Status.RequireUpgrade = int64(nodesUpgradeRequired)
 	mdUpgrade.Status.Ready = nodesUpgradeRequired == 0
