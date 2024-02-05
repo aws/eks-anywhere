@@ -121,7 +121,7 @@ func TestCPUpgradeReconcileNodeNotUpgraded(t *testing.T) {
 	g.Expect(err).ToNot(HaveOccurred())
 }
 
-func TestCPUpgradeReconcileNodeUpgradeError(t *testing.T) {
+func TestCPUpgradeReconcileNodeUpgradeEnsureStatusUpdated(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
 	testObjs := getObjectsForCPUpgradeTest()
@@ -134,8 +134,14 @@ func TestCPUpgradeReconcileNodeUpgradeError(t *testing.T) {
 	r := controllers.NewControlPlaneUpgradeReconciler(client)
 	req := cpUpgradeRequest(testObjs.cpUpgrade)
 	_, err := r.Reconcile(ctx, req)
-	g.Expect(err).To(HaveOccurred())
-	g.Expect(err).To(MatchError("getting node upgrader for machine machine02: nodeupgrades.anywhere.eks.amazonaws.com \"machine02-node-upgrader\" not found"))
+	g.Expect(err).ToNot(HaveOccurred())
+
+	cpu := &anywherev1.ControlPlaneUpgrade{}
+	err = client.Get(ctx, types.NamespacedName{Name: testObjs.cpUpgrade.Name, Namespace: constants.EksaSystemNamespace}, cpu)
+	g.Expect(err).ToNot(HaveOccurred())
+	g.Expect(cpu.Status.RequireUpgrade).To(BeEquivalentTo(2))
+	g.Expect(cpu.Status.Upgraded).To(BeEquivalentTo(0))
+	g.Expect(cpu.Status.Ready).To(BeFalse())
 }
 
 func TestCPUpgradeReconcileNodeUpgraderCreate(t *testing.T) {

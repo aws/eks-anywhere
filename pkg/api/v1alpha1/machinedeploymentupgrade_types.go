@@ -26,10 +26,10 @@ type MachineDeploymentUpgradeSpec struct {
 // MachineDeploymentUpgradeStatus defines the observed state of MachineDeploymentUpgrade.
 type MachineDeploymentUpgradeStatus struct {
 	// RequireUpgrade is the number of machines in the MachineDeployment that still need to be upgraded.
-	RequireUpgrade int64 `json:"requireUpgrade"`
+	RequireUpgrade int64 `json:"requireUpgrade,omitempty"`
 
 	// Upgraded is the number of machines in the MachineDeployment that have been upgraded.
-	Upgraded int64 `json:"upgraded"`
+	Upgraded int64 `json:"upgraded,omitempty"`
 
 	// Ready denotes that the all machines in the MachineDeployment have finished upgrading and are ready.
 	Ready bool `json:"ready,omitempty"`

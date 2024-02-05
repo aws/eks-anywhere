@@ -223,6 +223,9 @@ func (r *ControlPlaneUpgradeReconciler) updateStatus(ctx context.Context, log lo
 	nodesUpgradeRequired := len(cpUpgrade.Spec.MachinesRequireUpgrade)
 	for _, machineRef := range cpUpgrade.Spec.MachinesRequireUpgrade {
 		if err := r.client.Get(ctx, GetNamespacedNameType(nodeUpgraderName(machineRef.Name), constants.EksaSystemNamespace), nodeUpgrade); err != nil {
+			if apierrors.IsNotFound(err) {
+				continue
+			}
 			return fmt.Errorf("getting node upgrader for machine %s: %v", machineRef.Name, err)
 		}
 		if nodeUpgrade.Status.Completed {
@@ -233,7 +236,7 @@ func (r *ControlPlaneUpgradeReconciler) updateStatus(ctx context.Context, log lo
 			nodesUpgradeRequired--
 		}
 	}
-	log.Info("Control Plane Nodes ready", "total", cpUpgrade.Status.Upgraded, "need-upgrade", cpUpgrade.Status.RequireUpgrade)
+	log.Info("Control Plane Nodes ready", "upgraded", cpUpgrade.Status.Upgraded, "need-upgrade", cpUpgrade.Status.RequireUpgrade)
 	cpUpgrade.Status.Upgraded = int64(nodesUpgradeCompleted)
 	cpUpgrade.Status.RequireUpgrade = int64(nodesUpgradeRequired)
 	cpUpgrade.Status.Ready = nodesUpgradeRequired == 0

@@ -164,7 +164,7 @@ func (r *NodeUpgradeReconciler) reconcile(ctx context.Context, log logr.Logger, 
 	log.Info("Upgrading node", "Node", node.Name)
 	upgraderPod := &corev1.Pod{}
 	if conditions.IsTrue(nodeUpgrade, anywherev1.UpgraderPodCreated) || upgraderPodExists(ctx, remoteClient, node.Name) {
-		log.Info("Upgrader pod already exists, skipping creation of the pod", "Pod", upgraderPod.Name)
+		log.Info("Upgrader pod already exists, skipping creation of the pod", "Pod", upgrader.PodName(node.Name))
 		return ctrl.Result{}, nil
 	}
 
