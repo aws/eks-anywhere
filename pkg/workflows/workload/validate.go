@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/task"
 	"github.com/aws/eks-anywhere/pkg/validations"
 )
@@ -92,5 +93,29 @@ func (s *setAndValidateUpgradeWorkloadTask) Restore(ctx context.Context, command
 }
 
 func (s *setAndValidateUpgradeWorkloadTask) Checkpoint() *task.CompletedTask {
+	return nil
+}
+
+type setupAndValidateDelete struct{}
+
+func (s *setupAndValidateDelete) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
+	logger.Info("Performing provider setup and validations")
+	err := commandContext.Provider.SetupAndValidateDeleteCluster(ctx, commandContext.WorkloadCluster, commandContext.ClusterSpec)
+	if err != nil {
+		commandContext.SetError(err)
+		return nil
+	}
+	return &deleteWorkloadCluster{}
+}
+
+func (s *setupAndValidateDelete) Name() string {
+	return "setup-and-validate-delete"
+}
+
+func (s *setupAndValidateDelete) Restore(ctx context.Context, commandContext *task.CommandContext, completedTask *task.CompletedTask) (task.Task, error) {
+	return nil, nil
+}
+
+func (s *setupAndValidateDelete) Checkpoint() *task.CompletedTask {
 	return nil
 }
