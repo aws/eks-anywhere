@@ -277,7 +277,6 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 		logger.Info("Using the new workflow using the controller for management cluster create")
 
 		createMgmtCluster := management.NewCreate(
-			deps.ClusterManager.ClientFactory,
 			deps.Bootstrapper,
 			deps.Provider,
 			deps.ClusterManager,

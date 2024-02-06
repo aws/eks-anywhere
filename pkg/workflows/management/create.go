@@ -12,7 +12,6 @@ import (
 
 // Create is a schema for create cluster.
 type Create struct {
-	clientFactory    interfaces.ClientFactory
 	bootstrapper     interfaces.Bootstrapper
 	provider         providers.Provider
 	clusterManager   interfaces.ClusterManager
@@ -25,7 +24,7 @@ type Create struct {
 }
 
 // NewCreate builds a new create construct.
-func NewCreate(clientFactory interfaces.ClientFactory, bootstrapper interfaces.Bootstrapper, provider providers.Provider,
+func NewCreate(bootstrapper interfaces.Bootstrapper, provider providers.Provider,
 	clusterManager interfaces.ClusterManager, gitOpsManager interfaces.GitOpsManager,
 	writer filewriter.FileWriter, eksdInstaller interfaces.EksdInstaller,
 	packageInstaller interfaces.PackageInstaller,
@@ -33,7 +32,6 @@ func NewCreate(clientFactory interfaces.ClientFactory, bootstrapper interfaces.B
 	eksaInstaller interfaces.EksaInstaller,
 ) *Create {
 	return &Create{
-		clientFactory:    clientFactory,
 		bootstrapper:     bootstrapper,
 		provider:         provider,
 		clusterManager:   clusterManager,
@@ -59,7 +57,6 @@ func (c *Create) Run(ctx context.Context, clusterSpec *cluster.Spec, validator i
 		EksdInstaller:    c.eksdInstaller,
 		PackageInstaller: c.packageInstaller,
 		ClusterCreator:   c.clusterCreator,
-		ClientFactory:    c.clientFactory,
 		EksaInstaller:    c.eksaInstaller,
 	}
 

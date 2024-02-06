@@ -15,6 +15,9 @@ type createWorkloadClusterTask struct{}
 func (s *createWorkloadClusterTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
 	logger.Info("Creating new workload cluster")
 
+	commandContext.ClusterSpec.Cluster.AddManagedByCLIAnnotation()
+	commandContext.ClusterSpec.Cluster.SetManagementComponentsVersion(commandContext.ClusterSpec.EKSARelease.Spec.Version)
+
 	workloadCluster, err := commandContext.ClusterCreator.CreateSync(ctx, commandContext.ClusterSpec, commandContext.BootstrapCluster)
 	if err != nil {
 		commandContext.SetError(err)
