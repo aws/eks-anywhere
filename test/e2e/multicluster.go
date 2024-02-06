@@ -24,7 +24,7 @@ func runWorkloadClusterFlow(test *framework.MulticlusterE2ETest) {
 }
 
 func runWorkloadClusterExistingConfigFlow(test *framework.MulticlusterE2ETest) {
-	test.CreateManagementCluster()
+	test.ManagementCluster.CreateCluster()
 	test.RunInWorkloadClusters(func(w *framework.WorkloadCluster) {
 		w.CreateCluster()
 		w.DeleteCluster()
