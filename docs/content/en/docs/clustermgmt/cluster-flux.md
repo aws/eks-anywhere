@@ -9,8 +9,6 @@ description: >
   Use Flux to manage clusters with GitOps
 ---
 
-> **_NOTE_**: GitOps support is available for vSphere clusters, but is not yet available for Bare Metal clusters
->
 ## GitOps Support (optional)
 
 EKS Anywhere supports a [GitOps](https://www.weave.works/technologies/gitops/) workflow for the management of your cluster.
