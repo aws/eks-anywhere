@@ -472,6 +472,10 @@ spec:
     - echo "127.0.0.1   localhost" >>/etc/hosts
     - echo "127.0.0.1   {{`{{ ds.meta_data.hostname }}`}}" >>/etc/hosts
     - echo "{{`{{ ds.meta_data.hostname }}`}}" >/etc/hostname
+{{- $kube_minor_version := (index (splitList "." (trimPrefix "v" .kubernetesVersion)) 1) }}
+{{- if and (ge (atoi $kube_minor_version) 29) (ne .format "bottlerocket") }}
+    - "if [ -f /run/kubeadm/kubeadm.yaml ]; then sed -i 's#path: /etc/kubernetes/admin.conf#path: /etc/kubernetes/super-admin.conf#' /etc/kubernetes/manifests/kube-vip.yaml; fi"
+{{- end }}
     useExperimentalRetryJoin: true
     users:
     - name: {{.controlPlaneSshUsername}}
