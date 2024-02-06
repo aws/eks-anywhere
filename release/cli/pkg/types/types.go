@@ -55,6 +55,7 @@ type ReleaseConfig struct {
 	BundleArtifactsTable     ArtifactsTable
 	EksAArtifactsTable       ArtifactsTable
 	AwsSignerProfileArn      string
+	MaxReleasesInManifest    int
 }
 
 type ImageTagOverride struct {
@@ -115,6 +116,40 @@ type ArtifactsTable struct {
 
 type ImageDigestsTable struct {
 	imageDigestsMap sync.Map
+}
+
+// BundlesManifestFilepath returns the filepath for the bundles manifest.
+func (r *ReleaseConfig) BundlesManifestFilepath() string {
+	if !r.DevRelease {
+		return fmt.Sprintf("releases/bundles/%d/manifest.yaml", r.BundleNumber)
+	}
+
+	if r.BuildRepoBranchName != "main" {
+		return fmt.Sprintf("%s/%s/bundles.yaml", r.BuildRepoBranchName, r.ReleaseVersion)
+	}
+
+	if r.Weekly {
+		return fmt.Sprintf("weekly-releases/%s/bundle-release.yaml", r.ReleaseDate)
+	}
+
+	return fmt.Sprintf("%s/bundles.yaml", r.ReleaseVersion)
+}
+
+// ReleaseManifestFilepath returns the filepath for the release manifest.
+func (r *ReleaseConfig) ReleaseManifestFilepath() string {
+	if !r.DevRelease {
+		return "releases/eks-a/manifest.yaml"
+	}
+
+	if r.BuildRepoBranchName != "main" {
+		return fmt.Sprintf("%s/eks-a-release.yaml", r.BuildRepoBranchName)
+	}
+
+	if r.Weekly {
+		return fmt.Sprintf("weekly-releases/%s/eks-a-release.yaml", r.ReleaseDate)
+	}
+
+	return "eks-a-release.yaml"
 }
 
 func (a *ArtifactsTable) Load(projectName string) ([]Artifact, error) {

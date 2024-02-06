@@ -35,9 +35,10 @@ import (
 	"github.com/aws/eks-anywhere/release/cli/pkg/filereader"
 	"github.com/aws/eks-anywhere/release/cli/pkg/operations"
 	releasetypes "github.com/aws/eks-anywhere/release/cli/pkg/types"
-	artifactutils "github.com/aws/eks-anywhere/release/cli/pkg/util/artifacts"
 	releaseutils "github.com/aws/eks-anywhere/release/cli/pkg/util/release"
 )
+
+const maxReleasesInDevManifest = 20
 
 var (
 	bundleReleaseManifestFile = "/bundle-release.yaml"
@@ -116,6 +117,7 @@ var releaseCmd = &cobra.Command{
 			Weekly:                   weekly,
 			ReleaseEnvironment:       releaseEnvironment,
 			AwsSignerProfileArn:      awsSignerProfileArn,
+			MaxReleasesInManifest:    -1,
 		}
 
 		err := operations.SetRepoHeads(releaseConfig)
@@ -167,6 +169,7 @@ var releaseCmd = &cobra.Command{
 			}
 			releaseConfig.BundleNumber = buildNumber
 			releaseConfig.ReleaseVersion = releaseVersion
+			releaseConfig.MaxReleasesInManifest = maxReleasesInDevManifest
 		}
 		releaseConfig.DevReleaseUriVersion = strings.ReplaceAll(releaseVersion, "+", "-")
 
@@ -232,7 +235,7 @@ var releaseCmd = &cobra.Command{
 					os.Exit(1)
 				}
 
-				bundleReleaseManifestKey := artifactutils.GetManifestFilepaths(releaseConfig.DevRelease, releaseConfig.Weekly, releaseConfig.BundleNumber, constants.BundlesKind, releaseConfig.BuildRepoBranchName, releaseConfig.ReleaseDate)
+				bundleReleaseManifestKey := releaseConfig.BundlesManifestFilepath()
 				err = s3.UploadFile(bundleReleaseManifestFile, aws.String(releaseConfig.ReleaseBucket), aws.String(bundleReleaseManifestKey), releaseConfig.ReleaseClients.S3.Uploader)
 				if err != nil {
 					fmt.Printf("Error uploading bundle manifest to release bucket: %+v", err)
@@ -309,6 +312,7 @@ var releaseCmd = &cobra.Command{
 
 			previousReleases := releaseutils.EksAReleases(release.Spec.Releases)
 			release.Spec.Releases = previousReleases.AppendOrUpdateRelease(currentEksARelease)
+			release.Spec.Releases = releaseutils.Trim(release.Spec.Releases, releaseConfig.MaxReleasesInManifest)
 
 			releaseManifest, err := yaml.Marshal(release)
 			if err != nil {
@@ -323,7 +327,7 @@ var releaseCmd = &cobra.Command{
 				os.Exit(1)
 			}
 
-			eksAReleaseManifestKey := artifactutils.GetManifestFilepaths(releaseConfig.DevRelease, releaseConfig.Weekly, releaseConfig.BundleNumber, constants.ReleaseKind, releaseConfig.BuildRepoBranchName, releaseConfig.ReleaseDate)
+			eksAReleaseManifestKey := releaseConfig.ReleaseManifestFilepath()
 			err = s3.UploadFile(eksAReleaseManifestFile, aws.String(releaseConfig.ReleaseBucket), aws.String(eksAReleaseManifestKey), releaseConfig.ReleaseClients.S3.Uploader)
 			if err != nil {
 				fmt.Printf("Error uploading EKS-A release manifest to release bucket: %v", err)

@@ -33,7 +33,6 @@ import (
 	"github.com/aws/eks-anywhere/release/cli/pkg/aws/ecr"
 	"github.com/aws/eks-anywhere/release/cli/pkg/aws/ecrpublic"
 	"github.com/aws/eks-anywhere/release/cli/pkg/aws/s3"
-	"github.com/aws/eks-anywhere/release/cli/pkg/constants"
 	"github.com/aws/eks-anywhere/release/cli/pkg/filereader"
 	"github.com/aws/eks-anywhere/release/cli/pkg/retrier"
 	releasetypes "github.com/aws/eks-anywhere/release/cli/pkg/types"
@@ -318,7 +317,7 @@ func GetPreviousReleaseImageSemver(r *releasetypes.ReleaseConfig, releaseImageUr
 		semver = "v0.0.0-dev-build.0"
 	} else {
 		bundles := &anywherev1alpha1.Bundles{}
-		bundleReleaseManifestKey := artifactutils.GetManifestFilepaths(r.DevRelease, r.Weekly, r.BundleNumber, constants.BundlesKind, r.BuildRepoBranchName, r.ReleaseDate)
+		bundleReleaseManifestKey := r.BundlesManifestFilepath()
 		bundleManifestUrl := fmt.Sprintf("https://%s.s3.amazonaws.com/%s", r.ReleaseBucket, bundleReleaseManifestKey)
 		if s3.KeyExists(r.ReleaseBucket, bundleReleaseManifestKey) {
 			contents, err := filereader.ReadHttpFile(bundleManifestUrl)

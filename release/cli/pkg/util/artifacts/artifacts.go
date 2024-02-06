@@ -30,39 +30,6 @@ func IsImageNotFoundError(err error) bool {
 	return err.Error() == "Requested image not found"
 }
 
-func GetManifestFilepaths(devRelease, weekly bool, bundleNumber int, kind, branch, releaseDate string) string {
-	var manifestFilepath string
-	switch kind {
-	case constants.BundlesKind:
-		if devRelease {
-			if branch != "main" {
-				manifestFilepath = fmt.Sprintf("%s/bundle-release.yaml", branch)
-			} else {
-				manifestFilepath = "bundle-release.yaml"
-				if weekly {
-					manifestFilepath = fmt.Sprintf("weekly-releases/%s/bundle-release.yaml", releaseDate)
-				}
-			}
-		} else {
-			manifestFilepath = fmt.Sprintf("releases/bundles/%d/manifest.yaml", bundleNumber)
-		}
-	case constants.ReleaseKind:
-		if devRelease {
-			if branch != "main" {
-				manifestFilepath = fmt.Sprintf("%s/eks-a-release.yaml", branch)
-			} else {
-				manifestFilepath = "eks-a-release.yaml"
-				if weekly {
-					manifestFilepath = fmt.Sprintf("weekly-releases/%s/eks-a-release.yaml", releaseDate)
-				}
-			}
-		} else {
-			manifestFilepath = "releases/eks-a/manifest.yaml"
-		}
-	}
-	return manifestFilepath
-}
-
 func GetFakeSHA(hashType int) (string, error) {
 	if (hashType != 256) && (hashType != 512) {
 		return "", fmt.Errorf("unsupported hash algorithm: %d", hashType)
