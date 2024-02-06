@@ -348,3 +348,18 @@ func WithEtcdEncryptionFiller(kms *anywherev1.KMS, resources []string) ClusterFi
 		}
 	}
 }
+
+// WithInPlaceUpgradeStrategy configures the UpgradeStrategy on Control-plane and Worker node groups to InPlace.
+func WithInPlaceUpgradeStrategy() ClusterFiller {
+	return func(c *anywherev1.Cluster) {
+		c.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy = &anywherev1.ControlPlaneUpgradeRolloutStrategy{
+			Type: anywherev1.InPlaceStrategyType,
+		}
+		for idx, wng := range c.Spec.WorkerNodeGroupConfigurations {
+			wng.UpgradeRolloutStrategy = &anywherev1.WorkerNodesUpgradeRolloutStrategy{
+				Type: anywherev1.InPlaceStrategyType,
+			}
+			c.Spec.WorkerNodeGroupConfigurations[idx] = wng
+		}
+	}
+}
