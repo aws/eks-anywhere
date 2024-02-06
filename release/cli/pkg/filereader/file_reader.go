@@ -244,20 +244,16 @@ func GetCurrentEksADevReleaseVersion(releaseVersion string, r *releasetypes.Rele
 	fmt.Println("              Dev Release Version Computation")
 	fmt.Println("==========================================================")
 
-	if releaseVersion == "vDev" { // TODO: remove when we update the pipeline
+	if releaseVersion == "" || releaseVersion == "vDev" { // TODO: remove when we update the pipeline
 		releaseVersion = "v0.0.0"
 	}
 	releaseVersionIdentifier := "dev+build"
-
-	if r.BuildRepoBranchName != "main" {
-		releaseVersionIdentifier = fmt.Sprintf("dev-%s+build", r.BuildRepoBranchName)
-	}
 
 	var newDevReleaseVersion string
 	if r.Weekly {
 		newDevReleaseVersion = fmt.Sprintf("v0.0.0-%s.%s", releaseVersionIdentifier, r.ReleaseDate)
 	} else {
-		newDevReleaseVersion = fmt.Sprintf("v0.0.0-%s.%d", releaseVersionIdentifier, buildNumber)
+		newDevReleaseVersion = fmt.Sprintf("%s-%s.%d", releaseVersion, releaseVersionIdentifier, buildNumber)
 	}
 	fmt.Printf("New dev release release version: %s\n", newDevReleaseVersion)
 	fmt.Printf("%s Successfully computed current dev release version\n", constants.SuccessIcon)

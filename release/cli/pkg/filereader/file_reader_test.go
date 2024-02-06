@@ -16,6 +16,10 @@ package filereader
 
 import (
 	"testing"
+
+	. "github.com/onsi/gomega"
+
+	releasetypes "github.com/aws/eks-anywhere/release/cli/pkg/types"
 )
 
 func TestNewBuildNumberFromLastVersion(t *testing.T) {
@@ -70,6 +74,67 @@ func TestNewBuildNumberFromLastVersion(t *testing.T) {
 			} else if got != tt.want {
 				t.Fatalf("NewBuildNumberFromLastVersion version = %d, want %d", got, tt.want)
 			}
+		})
+	}
+}
+
+func TestGetCurrentEksADevReleaseVersion(t *testing.T) {
+	testCases := []struct {
+		testName        string
+		releaseVersion  string
+		releaseConfig   *releasetypes.ReleaseConfig
+		buildNumber     int
+		expectedVersion string
+		expectedError   error
+	}{
+		{
+			testName:       "Empty release version",
+			releaseVersion: "",
+			releaseConfig: &releasetypes.ReleaseConfig{
+				BuildRepoBranchName: "main",
+				Weekly:              false,
+				ReleaseDate:         "2022-01-01",
+			},
+			buildNumber:     1,
+			expectedVersion: "v0.0.0-dev+build.1",
+			expectedError:   nil,
+		},
+		{
+			testName:       "vDev release version",
+			releaseVersion: "vDev",
+			releaseConfig: &releasetypes.ReleaseConfig{
+				BuildRepoBranchName: "main",
+				Weekly:              false,
+				ReleaseDate:         "2022-01-01",
+			},
+			buildNumber:     2,
+			expectedVersion: "v0.0.0-dev+build.2",
+			expectedError:   nil,
+		},
+		{
+			testName:       "vDev release version",
+			releaseVersion: "v0.19.0",
+			releaseConfig: &releasetypes.ReleaseConfig{
+				BuildRepoBranchName: "main",
+				Weekly:              false,
+				ReleaseDate:         "2022-01-01",
+			},
+			buildNumber:     10,
+			expectedVersion: "v0.19.0-dev+build.10",
+			expectedError:   nil,
+		},
+	}
+
+	for _, tt := range testCases {
+		t.Run(tt.testName, func(t *testing.T) {
+			g := NewGomegaWithT(t)
+			got, err := GetCurrentEksADevReleaseVersion(tt.releaseVersion, tt.releaseConfig, tt.buildNumber)
+			if tt.expectedError != nil {
+				g.Expect(err).To(MatchError(tt.expectedError))
+			} else {
+				g.Expect(err).ToNot(HaveOccurred())
+			}
+			g.Expect(got).To(Equal(tt.expectedVersion))
 		})
 	}
 }
