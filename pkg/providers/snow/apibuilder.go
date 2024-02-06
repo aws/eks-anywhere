@@ -17,6 +17,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	snowv1 "github.com/aws/eks-anywhere/pkg/providers/snow/api/v1beta1"
+	"github.com/aws/eks-anywhere/pkg/semver"
 )
 
 const (
@@ -73,6 +74,21 @@ func KubeadmControlPlane(log logr.Logger, clusterSpec *cluster.Spec, snowMachine
 		kcp.Spec.KubeadmConfigSpec.PreKubeadmCommands = append(kcp.Spec.KubeadmConfigSpec.PreKubeadmCommands,
 			"/etc/eks/bootstrap.sh",
 		)
+		kubeVersionSemver, err := semver.New(string(clusterSpec.Cluster.Spec.KubernetesVersion) + ".0")
+		if err != nil {
+			return nil, fmt.Errorf("error converting kubeVersion %v to semver %v", clusterSpec.Cluster.Spec.KubernetesVersion, err)
+		}
+
+		kube129Semver, err := semver.New(string(v1alpha1.Kube129) + ".0")
+		if err != nil {
+			return nil, fmt.Errorf("error converting kubeVersion %v to semver %v", v1alpha1.Kube129, err)
+		}
+
+		if kubeVersionSemver.Compare(kube129Semver) != -1 {
+			kcp.Spec.KubeadmConfigSpec.PreKubeadmCommands = append(kcp.Spec.KubeadmConfigSpec.PreKubeadmCommands,
+				"if [ -f /run/kubeadm/kubeadm.yaml ]; then sed -i 's#path: /etc/kubernetes/admin.conf#path: /etc/kubernetes/super-admin.conf#' /etc/kubernetes/manifests/kube-vip.yaml; fi",
+			)
+		}
 
 		if err := clusterapi.SetProxyConfigInKubeadmControlPlaneForUbuntu(kcp, clusterSpec.Cluster); err != nil {
 			return nil, err

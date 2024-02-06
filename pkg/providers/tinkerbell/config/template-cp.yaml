@@ -395,13 +395,19 @@ spec:
       - {{ . }}
       {{- end }}
 {{- end }}
-{{- if and (or .proxyConfig .registryMirrorMap) (ne .format "bottlerocket") }}
+{{- $kube_minor_version := (index (splitList "." (trimPrefix "v" .kubernetesVersion)) 1) }}
+{{- if and (or .registryMirrorMap .proxyConfig (ge (atoi $kube_minor_version) 29)) (ne .format "bottlerocket") }}
     preKubeadmCommands:
 {{- if .registryMirrorMap }}
     - cat /etc/containerd/config_append.toml >> /etc/containerd/config.toml
 {{- end}}
+{{- if (or .registryMirrorMap .proxyConfig) }}
     - sudo systemctl daemon-reload
     - sudo systemctl restart containerd
+{{- end}}
+{{- if (ge (atoi $kube_minor_version) 29) }}
+    - "if [ -f /run/kubeadm/kubeadm.yaml ]; then sed -i 's#path: /etc/kubernetes/admin.conf#path: /etc/kubernetes/super-admin.conf#' /etc/kubernetes/manifests/kube-vip.yaml; fi"
+{{- end }}
 {{- end }}
     users:
     - name: {{.controlPlaneSshUsername}}

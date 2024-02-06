@@ -53,7 +53,7 @@ func TestControlPlaneObjects(t *testing.T) {
 	wantMachineTemplateName := "test-cp-2"
 	mt.SetName(wantMachineTemplateName)
 	mt.Spec.Template.Spec.InstanceType = "sbe-c.large"
-	kcp := wantKubeadmControlPlane()
+	kcp := wantKubeadmControlPlane("1.21")
 	kcp.Spec.MachineTemplate.InfrastructureRef.Name = wantMachineTemplateName
 	kcp.Spec.KubeadmConfigSpec.JoinConfiguration.NodeRegistration.IgnorePreflightErrors = []string{"DirAvailable--etc-kubernetes-manifests"}
 
@@ -117,7 +117,7 @@ func TestControlPlaneObjectsWithIPPools(t *testing.T) {
 	wantMachineTemplateName := "test-cp-2"
 	mt.SetName(wantMachineTemplateName)
 	mt.Spec.Template.Spec.InstanceType = "sbe-c.large"
-	kcp := wantKubeadmControlPlane()
+	kcp := wantKubeadmControlPlane("1.21")
 	kcp.Spec.MachineTemplate.InfrastructureRef.Name = wantMachineTemplateName
 	kcp.Spec.KubeadmConfigSpec.JoinConfiguration.NodeRegistration.IgnorePreflightErrors = []string{"DirAvailable--etc-kubernetes-manifests"}
 
@@ -273,7 +273,7 @@ func TestControlPlaneObjectsOldControlPlaneNotExists(t *testing.T) {
 
 	mt.SetName("snow-test-control-plane-1")
 	mt.Spec.Template.Spec.InstanceType = "sbe-c.large"
-	kcp := wantKubeadmControlPlane()
+	kcp := wantKubeadmControlPlane("1.21")
 	kcp.Spec.KubeadmConfigSpec.JoinConfiguration.NodeRegistration.IgnorePreflightErrors = []string{"DirAvailable--etc-kubernetes-manifests"}
 
 	got, err := snow.ControlPlaneObjects(g.ctx, g.logger, g.clusterSpec, g.kubeconfigClient)
@@ -306,7 +306,7 @@ func TestControlPlaneObjectsOldMachineTemplateNotExists(t *testing.T) {
 
 	mt.SetName("snow-test-control-plane-1")
 	mt.Spec.Template.Spec.InstanceType = "sbe-c.large"
-	kcp := wantKubeadmControlPlane()
+	kcp := wantKubeadmControlPlane("1.21")
 	kcp.Spec.KubeadmConfigSpec.JoinConfiguration.NodeRegistration.IgnorePreflightErrors = []string{"DirAvailable--etc-kubernetes-manifests"}
 
 	got, err := snow.ControlPlaneObjects(g.ctx, g.logger, g.clusterSpec, g.kubeconfigClient)
