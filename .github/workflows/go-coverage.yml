@@ -23,6 +23,6 @@ jobs:
       - name: Run go test with coverage
         run: COVER_PROFILE=coverage.txt make coverage-unit-test
       - name: Codecov upload
-        uses: codecov/codecov-action@v3.1.5
+        uses: codecov/codecov-action@v4.0.1
         with:
           files: ./coverage.txt
