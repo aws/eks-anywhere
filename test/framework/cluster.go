@@ -977,23 +977,13 @@ func (e *ClusterE2ETest) GenerateSupportBundleOnCleanupIfTestFailed(opts ...Comm
 }
 
 func (e *ClusterE2ETest) Run(name string, args ...string) {
-	command := strings.Join(append([]string{name}, args...), " ")
-	shArgs := []string{"-c", command}
-
-	e.T.Log("Running shell command", "[", command, "]")
-	cmd := exec.CommandContext(context.Background(), "sh", shArgs...)
-
-	envPath := os.Getenv("PATH")
-
-	binDir, err := DefaultLocalEKSABinDir()
+	cmd, err := prepareCommand(name, args...)
 	if err != nil {
-		e.T.Fatalf("Error finding current directory: %v", err)
+		e.T.Fatalf("Error preparing command: %v", err)
 	}
+	e.T.Log("Running shell command", "[", cmd.String(), "]")
 
 	var stdoutAndErr bytes.Buffer
-
-	cmd.Env = os.Environ()
-	cmd.Env = append(cmd.Env, fmt.Sprintf("PATH=%s:%s", binDir, envPath))
 	cmd.Stderr = io.MultiWriter(os.Stderr, &stdoutAndErr)
 	cmd.Stdout = io.MultiWriter(os.Stdout, &stdoutAndErr)
 
