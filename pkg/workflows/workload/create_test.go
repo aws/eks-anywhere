@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-
 	"testing"
 
 	"github.com/golang/mock/gomock"

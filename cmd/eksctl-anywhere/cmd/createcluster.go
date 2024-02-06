@@ -207,6 +207,17 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 		return err
 	}
 
+	// createCluster := workflows.NewCreate(
+	// 	deps.UnAuthKubeClient,
+	// 	deps.Bootstrapper,
+	// 	deps.Provider,
+	// 	deps.ClusterManager,
+	// 	deps.GitOpsFlux,
+	// 	deps.Writer,
+	// 	deps.EksdInstaller,
+	// 	deps.PackageInstaller,
+	// )
+
 	mgmt := getManagementCluster(clusterSpec)
 
 	validationOpts := &validations.Opts{
@@ -277,6 +288,8 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 		)
 
 		err = createMgmtCluster.Run(ctx, clusterSpec, createValidations)
+		// } else {
+		// 	err = createCluster.Run(ctx, clusterSpec, createValidations, cc.forceClean)
 	}
 
 	cleanup(deps, &err)
