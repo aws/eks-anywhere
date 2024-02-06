@@ -3,9 +3,7 @@ package management
 import (
 	"context"
 
-	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/cluster"
-	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/task"
 	"github.com/aws/eks-anywhere/pkg/types"
@@ -48,6 +46,9 @@ func (s *installEksaComponentsOnWorkloadTask) Run(ctx context.Context, commandCo
 		return &workflows.CollectDiagnosticsTask{}
 	}
 
+	commandContext.ClusterSpec.Cluster.AddManagedByCLIAnnotation()
+	commandContext.ClusterSpec.Cluster.SetManagementComponentsVersion(commandContext.ClusterSpec.EKSARelease.Spec.Version)
+
 	logger.Info("Applying cluster spec to workload cluster")
 	if err = commandContext.ClusterCreator.Run(ctx, commandContext.ClusterSpec, *commandContext.WorkloadCluster); err != nil {
 		commandContext.SetError(err)
@@ -89,24 +90,6 @@ func installEKSAComponents(ctx context.Context, commandContext *task.CommandCont
 	}
 
 	if err := commandContext.EksdInstaller.InstallEksdManifest(ctx, commandContext.ClusterSpec, targetCluster); err != nil {
-		commandContext.SetError(err)
-		return err
-	}
-
-	client, err := commandContext.ClientFactory.BuildClientFromKubeconfig(targetCluster.KubeconfigFile)
-	if err != nil {
-		commandContext.SetError(err)
-		return err
-	}
-
-	commandContext.ClusterSpec.Cluster.AddManagedByCLIAnnotation()
-
-	commandContext.ClusterSpec.Cluster.SetManagementComponentsVersion(commandContext.ClusterSpec.EKSARelease.Spec.Version)
-	if err := client.ApplyServerSide(ctx,
-		constants.EKSACLIFieldManager,
-		commandContext.ClusterSpec.Cluster,
-		kubernetes.ApplyServerSideOptions{ForceOwnership: true},
-	); err != nil {
 		commandContext.SetError(err)
 		return err
 	}
