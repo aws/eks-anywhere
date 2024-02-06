@@ -95,7 +95,7 @@ https://github.com/go-logr/logr
 ** github.com/go-logr/stdr; version v1.2.2 --
 https://github.com/go-logr/stdr
 
-** github.com/go-logr/zapr; version v1.2.3 --
+** github.com/go-logr/zapr; version v1.3.0 --
 https://github.com/go-logr/zapr
 
 ** github.com/go-openapi/jsonpointer; version v0.19.5 --
@@ -1800,15 +1800,11 @@ Copyright (c) 2014 Steve Francia
 https://github.com/subosito/gotenv
 Copyright (c) 2013 Alif Rachmawadi
 
-** go.uber.org/atomic; version v1.10.0 --
-https://github.com/uber-go/atomic
-Copyright (c) 2016 Uber Technologies, Inc.
-
-** go.uber.org/multierr; version v1.8.0 --
+** go.uber.org/multierr; version v1.10.0 --
 https://github.com/uber-go/multierr
 Copyright (c) 2017-2021 Uber Technologies, Inc.
 
-** go.uber.org/zap; version v1.24.0 --
+** go.uber.org/zap; version v1.26.0 --
 https://github.com/uber-go/zap
 Copyright (c) 2016-2017 Uber Technologies, Inc.
 
