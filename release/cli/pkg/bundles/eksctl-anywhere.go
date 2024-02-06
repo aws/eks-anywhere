@@ -93,7 +93,7 @@ func GetEksARelease(r *releasetypes.ReleaseConfig) (anywherev1alpha1.EksARelease
 		return anywherev1alpha1.EksARelease{}, fmt.Errorf("artifacts for project eks-a-cli not found in eks-a artifacts table")
 	}
 
-	bundleManifestFilePath := artifactutils.GetManifestFilepaths(r.DevRelease, r.Weekly, r.BundleNumber, constants.BundlesKind, r.BuildRepoBranchName, r.ReleaseDate)
+	bundleManifestFilePath := r.BundlesManifestFilepath()
 	bundleManifestUrl, err := artifactutils.GetURI(r.CDN, bundleManifestFilePath)
 	if err != nil {
 		return anywherev1alpha1.EksARelease{}, errors.Cause(err)

@@ -16,16 +16,13 @@ package release
 
 import (
 	"fmt"
-	"strings"
 
 	"sigs.k8s.io/yaml"
 
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 	"github.com/aws/eks-anywhere/release/cli/pkg/aws/s3"
-	"github.com/aws/eks-anywhere/release/cli/pkg/constants"
 	"github.com/aws/eks-anywhere/release/cli/pkg/filereader"
 	releasetypes "github.com/aws/eks-anywhere/release/cli/pkg/types"
-	artifactutils "github.com/aws/eks-anywhere/release/cli/pkg/util/artifacts"
 )
 
 type EksAReleases []anywherev1alpha1.EksARelease
@@ -41,7 +38,7 @@ func GetPreviousReleaseIfExists(r *releasetypes.ReleaseConfig) (*anywherev1alpha
 	}
 
 	release := &anywherev1alpha1.Release{}
-	eksAReleaseManifestKey := artifactutils.GetManifestFilepaths(r.DevRelease, r.Weekly, r.BundleNumber, constants.ReleaseKind, r.BuildRepoBranchName, r.ReleaseDate)
+	eksAReleaseManifestKey := r.ReleaseManifestFilepath()
 	eksAReleaseManifestUrl := fmt.Sprintf("%s/%s", r.CDN, eksAReleaseManifestKey)
 
 	if s3.KeyExists(r.ReleaseBucket, eksAReleaseManifestKey) {
@@ -60,11 +57,10 @@ func GetPreviousReleaseIfExists(r *releasetypes.ReleaseConfig) (*anywherev1alpha
 	return emptyRelease, nil
 }
 
+// AppendOrUpdateRelease appends a new release to the manifest if it does not exist, or updates the existing release.
 func (releases EksAReleases) AppendOrUpdateRelease(r anywherev1alpha1.EksARelease) EksAReleases {
-	currentReleaseSemver := strings.Split(r.Version, "+")[0]
 	for i, release := range releases {
-		existingReleaseSemver := strings.Split(release.Version, "+")[0]
-		if currentReleaseSemver == existingReleaseSemver {
+		if r.Version == release.Version {
 			releases[i] = r
 			fmt.Println("Updating existing release in releases manifest")
 			return releases
@@ -73,4 +69,13 @@ func (releases EksAReleases) AppendOrUpdateRelease(r anywherev1alpha1.EksAReleas
 	releases = append(releases, r)
 	fmt.Println("Adding new release to releases manifest")
 	return releases
+}
+
+// Trim removes the oldest releases if the manifest size exceeds the maxSize.
+// If maxSize is -1, no releases are removed.
+func Trim(releases EksAReleases, maxSize int) EksAReleases {
+	if maxSize == -1 || len(releases) <= maxSize {
+		return releases
+	}
+	return releases[len(releases)-maxSize:]
 }
