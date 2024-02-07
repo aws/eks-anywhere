@@ -348,7 +348,7 @@ func (e *ClusterE2ETest) GenerateClusterConfig(opts ...CommandOpt) {
 	e.GenerateClusterConfigForVersion("", opts...)
 }
 
-func newBmclibClient(ctx context.Context, log logr.Logger, hostIP, username, password string, timeout time.Duration) *bmclib.Client {
+func newBmclibClient(ctx context.Context, log logr.Logger, hostIP, username, password string) *bmclib.Client {
 	o := []bmclib.Option{}
 	log = log.WithValues("host", hostIP, "username", username)
 	o = append(o, bmclib.WithLogger(log))
@@ -365,8 +365,9 @@ func (e *ClusterE2ETest) PowerOffHardware() {
 	// but because we want to make sure that no other Tinkerbell Boots DHCP server is running.
 	// Another Boots DHCP server running can cause netboot issues with hardware.
 	for _, h := range e.TestHardware {
-		ctx := context.Background()
-		bmcClient := newBmclibClient(ctx, logr.Discard(), h.BMCIPAddress, h.BMCUsername, h.BMCPassword, time.Minute)
+		ctx, done := context.WithTimeout(context.Background(), 2*time.Minute)
+		defer done()
+		bmcClient := newBmclibClient(ctx, logr.Discard(), h.BMCIPAddress, h.BMCUsername, h.BMCPassword)
 
 		if err := bmcClient.Open(ctx); err != nil {
 			md := bmcClient.GetMetadata()
@@ -397,8 +398,9 @@ func (e *ClusterE2ETest) ValidateHardwareDecommissioned() {
 	// We should fail the test if any hardware was not powered off.
 	var failedToDecomm []*api.Hardware
 	for _, h := range e.TestHardware {
-		ctx := context.Background()
-		bmcClient := newBmclibClient(ctx, logr.Discard(), h.BMCIPAddress, h.BMCUsername, h.BMCPassword, time.Minute)
+		ctx, done := context.WithTimeout(context.Background(), 2*time.Minute)
+		defer done()
+		bmcClient := newBmclibClient(ctx, logr.Discard(), h.BMCIPAddress, h.BMCUsername, h.BMCPassword)
 
 		if err := bmcClient.Open(ctx); err != nil {
 			md := bmcClient.GetMetadata()
