@@ -120,7 +120,7 @@ phases:
       - source ${CODEBUILD_SRC_DIR}/cmd/integration_test/build/script/setup_profile.sh
       - source ${CODEBUILD_SRC_DIR}/cmd/integration_test/build/script/create_infra_config.sh
       - ${CODEBUILD_SRC_DIR}/cmd/integration_test/build/script/start_docker.sh
-      - make eks-a build-integration-test-binary e2e-tests-binary E2E_TAGS="e2e all_providers" E2E_OUTPUT_FILE=bin/e2e.test
+      - make eks-a-for-dev-e2e build-integration-test-binary e2e-tests-binary E2E_TAGS="e2e all_providers" E2E_OUTPUT_FILE=bin/e2e.test
   build:
     commands:
       - export JOB_ID=$CODEBUILD_BUILD_ID
