@@ -7,3 +7,5 @@ quick_tests:
 - TestCloudStackKubernetes127To128RedhatMultipleFieldsUpgrade
 # Nutanix
 - TestNutanixKubernetes127to128RedHat9Upgrade
+# Snow
+# - TestSnowKubernetes128SimpleFlow
