@@ -251,11 +251,11 @@ func (p *Provider) UpdateSecrets(ctx context.Context, cluster *types.Cluster, cl
 		return fmt.Errorf("loading secrets object: %v", err)
 	}
 
-	return p.UpdateEKSASecrets(ctx, cluster, clusterSpec)
+	return p.updateEKSASecrets(ctx, cluster, clusterSpec)
 }
 
-// UpdateEKSASecrets generates and applies the EKSA secret on the cluster.
-func (p *Provider) UpdateEKSASecrets(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
+// updateEKSASecrets generates and applies the EKSA secret on the cluster.
+func (p *Provider) updateEKSASecrets(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
 	eksaSecretContents, err := p.templateBuilder.GenerateEKSASpecSecret(clusterSpec)
 	if err != nil {
 		return err
@@ -697,7 +697,7 @@ func (p *Provider) InstallCustomProviderComponents(ctx context.Context, kubeconf
 }
 
 func (p *Provider) PreCAPIInstallOnBootstrap(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
-	return p.UpdateEKSASecrets(ctx, cluster, clusterSpec)
+	return p.updateEKSASecrets(ctx, cluster, clusterSpec)
 }
 
 func (p *Provider) PostMoveManagementToBootstrap(ctx context.Context, bootstrapCluster *types.Cluster) error {
