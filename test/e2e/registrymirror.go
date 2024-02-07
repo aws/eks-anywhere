@@ -24,7 +24,6 @@ func runTinkerbellRegistryMirrorFlow(test *framework.ClusterE2ETest) {
 	test.DownloadImages()
 	test.ImportImages()
 	test.GenerateHardwareConfig()
-	test.PowerOffHardware()
 	test.CreateCluster(framework.WithBundlesOverride(bundleReleasePathFromArtifacts))
 	test.StopIfFailed()
 	test.DeleteCluster(framework.WithBundlesOverride(bundleReleasePathFromArtifacts))

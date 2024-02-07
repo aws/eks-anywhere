@@ -124,7 +124,6 @@ func (m *MulticlusterE2ETest) CreateManagementCluster(opts ...CommandOpt) {
 // CreateTinkerbellManagementCluster runs tinkerbell related steps for cluster creation.
 func (m *MulticlusterE2ETest) CreateTinkerbellManagementCluster(opts ...CommandOpt) {
 	m.ManagementCluster.GenerateHardwareConfig()
-	m.ManagementCluster.PowerOffHardware()
 	m.ManagementCluster.CreateCluster(opts...)
 }
 
