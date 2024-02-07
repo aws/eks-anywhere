@@ -183,6 +183,23 @@ func latestRelease(releases *releasev1alpha1.Release) (*releasev1alpha1.EksARele
 	return latestRelease, nil
 }
 
+// localEksaCLIDevVersionRelease returns the EKS-A release for the local eks-a CLI version.
+// It reads the version from the local eks-a CLI by running `eksctl anywhere version` command
+// and follows the same logic as the CLI to extract the release.
+func localEksaCLIDevVersionRelease() (*releasev1alpha1.EksARelease, error) {
+	version, err := localEKSAVersion()
+	if err != nil {
+		return nil, err
+	}
+
+	r, err := devReleases()
+	if err != nil {
+		return nil, err
+	}
+
+	return releases.ReleaseForVersion(r, version)
+}
+
 // GetPreviousMinorReleaseFromVersion calculates the previous minor release by decrementing the
 // version minor number, then retrieves the latest <major>.<minor>.<patch>  for the calculated
 // version.

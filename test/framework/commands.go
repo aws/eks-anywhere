@@ -1,7 +1,10 @@
 package framework
 
 import (
+	"context"
+	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -126,4 +129,23 @@ func DefaultLocalEKSABinDir() (string, error) {
 	}
 
 	return filepath.Join(workDir, "bin"), nil
+}
+
+func prepareCommand(name string, args ...string) (*exec.Cmd, error) {
+	command := strings.Join(append([]string{name}, args...), " ")
+	shArgs := []string{"-c", command}
+
+	cmd := exec.CommandContext(context.Background(), "sh", shArgs...)
+
+	envPath := os.Getenv("PATH")
+
+	binDir, err := DefaultLocalEKSABinDir()
+	if err != nil {
+		return nil, err
+	}
+
+	cmd.Env = os.Environ()
+	cmd.Env = append(cmd.Env, fmt.Sprintf("PATH=%s:%s", binDir, envPath))
+
+	return cmd, nil
 }

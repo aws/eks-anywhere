@@ -30,18 +30,21 @@ UNIT_TEST_PACKAGES ?= $$($(GO) list ./... | grep -vE "$(UNIT_TEST_PACKAGE_EXCLUS
 
 ## ensure local execution uses the 'main' branch bundle
 BRANCH_NAME?=main
+# DEV_GIT_VERSION should be something like v0.19.0-dev+latest, depending on the base branch
+# https://github.com/aws/eks-anywhere/blob/main/docs/developer/manifests.md#locally-building-the-cli
 ifneq ($(PULL_BASE_REF),) # PULL_BASE_REF originates from prow
 	BRANCH_NAME=$(PULL_BASE_REF)
+	DEV_GIT_VERSION ?= $(shell source ./scripts/eksa_version.sh && eksa-version::get_next_eksa_version_for_ancestor $(PULL_BASE_REF))-dev+latest
+else
+	DEV_GIT_VERSION ?= $(shell source ./scripts/eksa_version.sh && eksa-version::get_next_eksa_version)-dev+latest
 endif
 ifeq (,$(findstring $(BRANCH_NAME),main))
 ## use the branch-specific bundle manifest if the branch is not 'main'
-DEV_GIT_VERSION:=v0.0.0-dev-${BRANCH_NAME}
 BUNDLE_MANIFEST_URL?=https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/${BRANCH_NAME}/bundle-release.yaml
 RELEASE_MANIFEST_URL?=https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/${BRANCH_NAME}/eks-a-release.yaml
 LATEST=$(BRANCH_NAME)
 else
 ## use the standard bundle manifest if the branch is 'main'
-DEV_GIT_VERSION:=v0.0.0-dev
 BUNDLE_MANIFEST_URL?=https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/bundle-release.yaml
 RELEASE_MANIFEST_URL?=https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/eks-a-release.yaml
 LATEST=latest
@@ -645,7 +648,7 @@ build-eks-a-for-e2e:
 			scripts/get_bundle.sh; \
 		else \
 			make eks-a-cross-platform; \
-			make eks-a; \
+			DEV_GIT_VERSION=$(shell source ./scripts/eksa_version.sh && eksa-version::latest_release_verison_in_manifest "$(RELEASE_MANIFEST_URL)") make eks-a; \
 		fi \
 	else \
 		make eksa-components-override; \

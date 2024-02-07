@@ -504,11 +504,12 @@ func (v *VSphere) Redhat127Template() api.VSphereFiller {
 func (v *VSphere) getDevRelease() *releasev1.EksARelease {
 	v.t.Helper()
 	if v.devRelease == nil {
-		latestRelease, err := getLatestDevRelease()
+		localDevRelease, err := localEksaCLIDevVersionRelease()
 		if err != nil {
 			v.t.Fatal(err)
 		}
-		v.devRelease = latestRelease
+		v.t.Log("Using local eksa dev release:", localDevRelease.Version)
+		v.devRelease = localDevRelease
 	}
 
 	return v.devRelease
