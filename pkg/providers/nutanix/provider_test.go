@@ -1041,12 +1041,28 @@ func TestNutanixProviderInstallCustomProviderComponents(t *testing.T) {
 }
 
 func TestNutanixProviderPreCAPIInstallOnBootstrap(t *testing.T) {
-	provider := testDefaultNutanixProvider(t)
+	ctrl := gomock.NewController(t)
+	executable := mockexecutables.NewMockExecutable(ctrl)
+	executable.EXPECT().ExecuteWithStdin(gomock.Any(), gomock.Any(), gomock.Any()).Return(bytes.Buffer{}, nil)
+	kubectl := executables.NewKubectl(executable)
+	mockClient := mocknutanix.NewMockClient(ctrl)
+	mockCertValidator := mockCrypto.NewMockTlsValidator(ctrl)
+	mockTransport := mocknutanix.NewMockRoundTripper(ctrl)
+	mockTransport.EXPECT().RoundTrip(gomock.Any()).Return(&http.Response{}, nil).AnyTimes()
+	mockHTTPClient := &http.Client{Transport: mockTransport}
+	mockWriter := filewritermocks.NewMockFileWriter(ctrl)
+	provider := testNutanixProvider(t, mockClient, kubectl, mockCertValidator, mockHTTPClient, mockWriter)
 
 	cluster := &types.Cluster{Name: "eksa-unit-test"}
 	clusterSpec := test.NewFullClusterSpec(t, "testdata/eksa-cluster.yaml")
 	err := provider.PreCAPIInstallOnBootstrap(context.Background(), cluster, clusterSpec)
 	assert.NoError(t, err)
+
+	storedMarshal := jsonMarshal
+	jsonMarshal = fakemarshal
+	err = provider.PreCAPIInstallOnBootstrap(context.Background(), cluster, clusterSpec)
+	assert.ErrorContains(t, err, "marshalling failed")
+	restoremarshal(storedMarshal)
 }
 
 func TestNutanixProviderPostMoveManagementToBootstrap(t *testing.T) {
