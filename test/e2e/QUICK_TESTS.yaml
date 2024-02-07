@@ -5,3 +5,5 @@ quick_tests:
 - TestVSphereKubernetes128Ubuntu2204SimpleFlow
 # CloudStack
 - TestCloudStackKubernetes127To128RedhatMultipleFieldsUpgrade
+# Nutanix
+- TestNutanixKubernetes127to128RedHat9Upgrade
