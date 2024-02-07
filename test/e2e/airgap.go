@@ -56,7 +56,6 @@ func runTinkerbellAirgapConfigFlow(test *framework.ClusterE2ETest, localCIDRs, k
 		framework.WithBundlesOverride(bundleReleasePathFromArtifacts),
 	)
 	test.GenerateHardwareConfig()
-	test.PowerOffHardware()
 	test.AirgapDockerContainers(localCIDRs)
 	test.CreateAirgappedUser(localCIDRs)
 	test.AssertAirgappedNetwork()
@@ -86,7 +85,6 @@ func runTinkerbellAirgapConfigProxyFlow(test *framework.ClusterE2ETest, localCID
 
 	test.GenerateClusterConfig()
 	test.GenerateHardwareConfig()
-	test.PowerOffHardware()
 	test.AirgapDockerContainers(localCIDRs)
 	test.CreateAirgappedUser(localCIDRs)
 	test.AssertAirgappedNetwork()

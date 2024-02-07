@@ -20,7 +20,6 @@ func runAutoscalerWithMetricsServerSimpleFlow(test *framework.ClusterE2ETest) {
 func runAutoscalerWithMetricsServerTinkerbellSimpleFlow(test *framework.ClusterE2ETest) {
 	test.GenerateClusterConfig()
 	test.GenerateHardwareConfig()
-	test.PowerOnHardware()
 	test.CreateCluster(framework.WithControlPlaneWaitTimeout("20m"))
 	autoscalerName := "cluster-autoscaler"
 	metricServerName := "metrics-server"
@@ -28,6 +27,5 @@ func runAutoscalerWithMetricsServerTinkerbellSimpleFlow(test *framework.ClusterE
 	test.InstallAutoScalerWithMetricServer(targetNamespace)
 	test.CombinedAutoScalerMetricServerTest(autoscalerName, metricServerName, targetNamespace, withMgmtCluster(test))
 	test.DeleteCluster()
-	test.PowerOffHardware()
 	test.ValidateHardwareDecommissioned()
 }

@@ -19,7 +19,6 @@ func runOIDCFlow(test *framework.ClusterE2ETest) {
 func runTinkerbellOIDCFlow(test *framework.ClusterE2ETest) {
 	test.GenerateClusterConfig()
 	test.GenerateHardwareConfig()
-	test.PowerOffHardware()
 	test.CreateCluster(framework.WithControlPlaneWaitTimeout("20m"))
 	test.ValidateOIDC()
 	test.StopIfFailed()
