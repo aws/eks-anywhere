@@ -90,23 +90,24 @@ func ReleaseForVersion(releases *releasev1.Release, version string) (*releasev1.
 			return &release, nil
 		}
 
+		// If we are looking for the latest pre-release, we need to compare the build metadata
+		// Else we continue to look for an exact match.
+		if !wantLatestPreRelease {
+			continue
+		}
+
 		releaseVersion, err := semver.New(release.Version)
 		if err != nil {
 			return nil, fmt.Errorf("invalid version for release %d: %v", release.Number, err)
 		}
 
-		if semVer.SamePrerelease(releaseVersion) {
-			if wantLatestPreRelease {
-				// If we are looking for the latest pre-release, we need to compare the build metadata
-				// to find the latest one. CompareBuildMetadata will compare the build identifiers
-				// in order. For example: v0.19.0-dev+build.10 > v0.19.0-dev+build.9
-				if latestPreReleaseVersion == nil || releaseVersion.CompareBuildMetadata(latestPreReleaseVersion) > 0 {
-					latestPreRelease = &release
-					latestPreReleaseVersion = releaseVersion
-				}
-			} else {
-				return &release, nil
-			}
+		if semVer.SamePrerelease(releaseVersion) &&
+			(latestPreReleaseVersion == nil || releaseVersion.CompareBuildMetadata(latestPreReleaseVersion) > 0) {
+			// If we are looking for the latest pre-release, we need to compare the build metadata
+			// to find the latest one. CompareBuildMetadata will compare the build identifiers
+			// in order. For example: v0.19.0-dev+build.10 > v0.19.0-dev+build.9
+			latestPreRelease = &release
+			latestPreReleaseVersion = releaseVersion
 		}
 	}
 
