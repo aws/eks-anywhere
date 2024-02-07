@@ -3,7 +3,7 @@ module github.com/aws/eks-anywhere/release/cli
 go 1.21
 
 require (
-	github.com/aws/aws-sdk-go v1.50.6
+	github.com/aws/aws-sdk-go v1.50.11
 	github.com/aws/aws-sdk-go-v2 v1.24.1
 	github.com/aws/eks-anywhere v0.18.0
 	github.com/aws/eks-distro-build-tooling/release v0.0.0-20211103003257-a7e2379eae5e
