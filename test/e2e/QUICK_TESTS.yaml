@@ -1,0 +1,7 @@
+quick_tests:
+# Docker
+- TestDocker.*128
+# vSphere
+- TestVSphereKubernetes128Ubuntu2204SimpleFlow
+# CloudStack
+- TestCloudStackKubernetes127To128RedhatMultipleFieldsUpgrade
