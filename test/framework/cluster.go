@@ -402,8 +402,8 @@ func (e *ClusterE2ETest) powerOffHardware() {
 }
 
 // ValidateHardwareDecommissioned checks that the all hardware was powered off during the cluster deletion.
-// This function tests that the hardware was powered off during the cluster deletion.
-// We should fail the test if any hardware was not powered off.
+// This function tests that the hardware was powered off during the cluster deletion. If any hardware are not powered off
+// this func calls powerOffHardware to power off the hardware and then fails this test.
 func (e *ClusterE2ETest) ValidateHardwareDecommissioned() {
 	var failedToDecomm []*api.Hardware
 	for _, h := range e.TestHardware {
