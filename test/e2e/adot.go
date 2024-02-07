@@ -45,11 +45,9 @@ func runCuratedPackagesAdotInstallUpdateFlow(test *framework.ClusterE2ETest) {
 func runCuratedPackagesAdotInstallTinkerbellSimpleFlow(test *framework.ClusterE2ETest) {
 	test.GenerateClusterConfig()
 	test.GenerateHardwareConfig()
-	test.PowerOnHardware()
 	test.CreateCluster(framework.WithControlPlaneWaitTimeout("20m"))
 	test.ValidateControlPlaneNodes(framework.ValidateControlPlaneNoTaints, framework.ValidateControlPlaneLabels)
 	runCuratedPackagesAdotInstall(test)
 	test.DeleteCluster()
-	test.PowerOffHardware()
 	test.ValidateHardwareDecommissioned()
 }

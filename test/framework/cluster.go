@@ -31,7 +31,6 @@ import (
 	packagesv1 "github.com/aws/eks-anywhere-packages/api/v1alpha1"
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	rapi "github.com/aws/eks-anywhere/pkg/api/v1alpha1/thirdparty/tinkerbell/rufio"
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
@@ -358,13 +357,13 @@ func newBmclibClient(log logr.Logger, hostIP, username, password string) *bmclib
 	return client
 }
 
-// PowerOffHardware issues power off calls to all Hardware. This function does not fail the test if it encounters an error.
+// powerOffHardware issues power off calls to all Hardware. This function does not fail the test if it encounters an error.
 // This function is a helper and not part of the code path that we are testing.
 // For this reason, we are only logging the errors and not failing the test.
 // This function exists not because we need the hardware to be powered off before a test run,
 // but because we want to make sure that no other Tinkerbell Boots DHCP server is running.
 // Another Boots DHCP server running can cause netboot issues with hardware.
-func (e *ClusterE2ETest) PowerOffHardware() {
+func (e *ClusterE2ETest) powerOffHardware() {
 	for _, h := range e.TestHardware {
 		ctx, done := context.WithTimeout(context.Background(), 2*time.Minute)
 		defer done()
@@ -386,7 +385,15 @@ func (e *ClusterE2ETest) PowerOffHardware() {
 			}
 		}()
 
-		if _, err := bmcClient.SetPowerState(ctx, string(rapi.Off)); err != nil {
+		state, err := bmcClient.GetPowerState(ctx)
+		if err != nil {
+			state = "unknown"
+		}
+		if strings.Contains(strings.ToLower(state), "off") {
+			return
+		}
+
+		if _, err := bmcClient.SetPowerState(ctx, "off"); err != nil {
 			md := bmcClient.GetMetadata()
 			e.T.Logf("failed to power off hardware: %v, hardware: %v, providersAttempted: %v, failedProviderDetail: %v", err, h.BMCIPAddress, md.ProvidersAttempted, md.SuccessfulOpenConns)
 			continue
@@ -394,69 +401,9 @@ func (e *ClusterE2ETest) PowerOffHardware() {
 	}
 }
 
-// PXEBootHardware sets the next device to PXE for all Hardware. This function should only be used when testing EKSA without power actions enabled.
-func (e *ClusterE2ETest) PXEBootHardware() {
-	for _, h := range e.TestHardware {
-		ctx, done := context.WithTimeout(context.Background(), time.Minute)
-		defer done()
-		bmcClient := newBmclibClient(logr.Discard(), h.BMCIPAddress, h.BMCUsername, h.BMCPassword)
-
-		if err := bmcClient.Open(ctx); err != nil {
-			md := bmcClient.GetMetadata()
-			e.T.Logf("Failed to open connection to BMC: %v, hardware: %v, providersAttempted: %v, failedProviderDetail: %v", err, h.BMCIPAddress, md.ProvidersAttempted, md.SuccessfulOpenConns)
-
-			continue
-		}
-		md := bmcClient.GetMetadata()
-		e.T.Logf("Connected to BMC: hardware: %v, providersAttempted: %v, successfulProvider: %v", h.BMCIPAddress, md.ProvidersAttempted, md.SuccessfulOpenConns)
-
-		defer func() {
-			if err := bmcClient.Close(ctx); err != nil {
-				md := bmcClient.GetMetadata()
-				e.T.Logf("BMC close connection failed: %v, hardware: %v, providersAttempted: %v, failedProviderDetail: %v", err, h.BMCIPAddress, md.ProvidersAttempted, md.FailedProviderDetail)
-			}
-		}()
-
-		ok, err := bmcClient.SetBootDevice(ctx, string(rapi.PXE), false, true)
-		if err != nil || !ok {
-			e.T.Fatalf("failed to pxe boot hardware: %v: ok: %v", err, ok)
-		}
-	}
-}
-
-// PowerOnHardware issues power on calls to all Hardware. This function should only be used when testing EKSA without power actions enabled.
-func (e *ClusterE2ETest) PowerOnHardware() {
-	for _, h := range e.TestHardware {
-		ctx, done := context.WithTimeout(context.Background(), time.Minute)
-		defer done()
-		bmcClient := newBmclibClient(logr.Discard(), h.BMCIPAddress, h.BMCUsername, h.BMCPassword)
-
-		if err := bmcClient.Open(ctx); err != nil {
-			md := bmcClient.GetMetadata()
-			e.T.Logf("Failed to open connection to BMC: %v, hardware: %v, providersAttempted: %v, failedProviderDetail: %v", err, h.BMCIPAddress, md.ProvidersAttempted, md.SuccessfulOpenConns)
-
-			continue
-		}
-		md := bmcClient.GetMetadata()
-		e.T.Logf("Connected to BMC: hardware: %v, providersAttempted: %v, successfulProvider: %v", h.BMCIPAddress, md.ProvidersAttempted, md.SuccessfulOpenConns)
-
-		defer func() {
-			if err := bmcClient.Close(ctx); err != nil {
-				md := bmcClient.GetMetadata()
-				e.T.Logf("BMC close connection failed: %v, hardware: %v, providersAttempted: %v, failedProviderDetail: %v", err, h.BMCIPAddress, md.ProvidersAttempted, md.FailedProviderDetail)
-			}
-		}()
-
-		ok, err := bmcClient.SetPowerState(ctx, string(rapi.On))
-		if err != nil || !ok {
-			e.T.Fatalf("failed to power on hardware: %v, ok: %v", err, ok)
-		}
-	}
-}
-
 // ValidateHardwareDecommissioned checks that the all hardware was powered off during the cluster deletion.
-// This function tests that the hardware was powered off during the cluster deletion.
-// We should fail the test if any hardware was not powered off.
+// This function tests that the hardware was powered off during the cluster deletion. If any hardware are not powered off
+// this func calls powerOffHardware to power off the hardware and then fails this test.
 func (e *ClusterE2ETest) ValidateHardwareDecommissioned() {
 	var failedToDecomm []*api.Hardware
 	for _, h := range e.TestHardware {
@@ -497,8 +444,8 @@ func (e *ClusterE2ETest) ValidateHardwareDecommissioned() {
 				)
 				continue
 			}
-			if !strings.EqualFold(powerState, string(rapi.Off)) {
-				e.T.Logf("failed to decommission hardware: id=%s, hostname=%s, bmc_ip=%s", h.MACAddress, h.Hostname, h.BMCIPAddress)
+			if !strings.Contains(strings.ToLower(powerState), "off") {
+				e.T.Logf("failed to decommission hardware: id=%s, hostname=%s, bmc_ip=%s, powerState=%v", h.MACAddress, h.Hostname, h.BMCIPAddress, powerState)
 				failedToDecomm = append(failedToDecomm, h)
 			} else {
 				e.T.Logf("successfully decommissioned hardware: id=%s, hostname=%s, bmc_ip=%s", h.MACAddress, h.Hostname, h.BMCIPAddress)
@@ -508,6 +455,7 @@ func (e *ClusterE2ETest) ValidateHardwareDecommissioned() {
 	}
 
 	if len(failedToDecomm) > 0 {
+		e.powerOffHardware()
 		e.T.Fatalf("failed to decommission all hardware during cluster deletion")
 	}
 }

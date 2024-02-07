@@ -24,7 +24,6 @@ func runSimpleFlowWithoutClusterConfigGeneration(test *framework.ClusterE2ETest)
 func runTinkerbellSimpleFlow(test *framework.ClusterE2ETest) {
 	test.GenerateClusterConfig()
 	test.GenerateHardwareConfig()
-	test.PowerOffHardware()
 	test.CreateCluster(framework.WithControlPlaneWaitTimeout("20m"))
 	test.DeleteCluster()
 	test.ValidateHardwareDecommissioned()
@@ -35,7 +34,6 @@ func runTinkerbellSimpleFlow(test *framework.ClusterE2ETest) {
 // test object is created, and avoids regenerating a cluster config with defaults.
 func runTinkerbellSimpleFlowWithoutClusterConfigGeneration(test *framework.ClusterE2ETest) {
 	test.GenerateHardwareConfig()
-	test.PowerOffHardware()
 	test.CreateCluster(framework.WithControlPlaneWaitTimeout("20m"))
 	test.DeleteCluster()
 	test.ValidateHardwareDecommissioned()

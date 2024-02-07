@@ -909,25 +909,6 @@ func TestTinkerbellUpgradeMulticlusterWorkloadClusterK8sUpgrade127To128(t *testi
 	)
 }
 
-// Nodes powered on
-func TestTinkerbellKubernetes128WithNodesPoweredOn(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewTinkerbell(t, framework.WithUbuntu128Tinkerbell()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube128)),
-		framework.WithControlPlaneHardware(1),
-		framework.WithWorkerHardware(1),
-	)
-
-	test.GenerateClusterConfig()
-	test.GenerateHardwareConfig()
-	test.PowerOffHardware()
-	test.PowerOnHardware()
-	test.CreateCluster(framework.WithControlPlaneWaitTimeout("20m"))
-	test.DeleteCluster()
-	test.ValidateHardwareDecommissioned()
-}
-
 // OIDC
 func TestTinkerbellKubernetes128OIDC(t *testing.T) {
 	test := framework.NewClusterE2ETest(
@@ -1156,48 +1137,6 @@ func TestTinkerbellKubernetes128UbuntuThreeWorkersSimpleFlow(t *testing.T) {
 	runTinkerbellSimpleFlow(test)
 }
 
-// Skip power actions
-func TestTinkerbellKubernetes128SkipPowerActions(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewTinkerbell(t, framework.WithUbuntu128Tinkerbell()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube128)),
-		framework.WithNoPowerActions(),
-		framework.WithControlPlaneHardware(1),
-		framework.WithWorkerHardware(1),
-	)
-
-	test.GenerateClusterConfig()
-	test.GenerateHardwareConfig()
-	test.PowerOffHardware()
-	test.PXEBootHardware()
-	test.PowerOnHardware()
-	test.CreateCluster(framework.WithControlPlaneWaitTimeout("20m"))
-	test.DeleteCluster()
-	test.PowerOffHardware()
-	test.ValidateHardwareDecommissioned()
-}
-
-func TestTinkerbellKubernetes128SingleNodeSkipPowerActions(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewTinkerbell(t, framework.WithUbuntu128Tinkerbell()),
-		framework.WithClusterSingleNode(v1alpha1.Kube128),
-		framework.WithNoPowerActions(),
-		framework.WithControlPlaneHardware(1),
-	)
-
-	test.GenerateClusterConfig()
-	test.GenerateHardwareConfig()
-	test.PowerOffHardware()
-	test.PXEBootHardware()
-	test.PowerOnHardware()
-	test.CreateCluster(framework.WithControlPlaneWaitTimeout("20m"))
-	test.DeleteCluster()
-	test.PowerOffHardware()
-	test.ValidateHardwareDecommissioned()
-}
-
 func TestTinkerbellKubernetes128UbuntuControlPlaneScaleUp(t *testing.T) {
 	provider := framework.NewTinkerbell(t, framework.WithUbuntu128Tinkerbell())
 	test := framework.NewClusterE2ETest(
@@ -1295,7 +1234,6 @@ func TestTinkerbellKubernetes128UbuntuWorkerNodeGroupsTaintsAndLabels(t *testing
 
 	test.GenerateClusterConfig()
 	test.GenerateHardwareConfig()
-	test.PowerOffHardware()
 	test.CreateCluster(framework.WithControlPlaneWaitTimeout("20m"))
 	test.ValidateWorkerNodes(framework.ValidateWorkerNodeTaints, framework.ValidateWorkerNodeLabels)
 	test.ValidateControlPlaneNodes(framework.ValidateControlPlaneTaints, framework.ValidateControlPlaneLabels)

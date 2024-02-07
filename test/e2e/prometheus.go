@@ -59,11 +59,9 @@ func runCuratedPackagesPrometheusUpdateFlow(test *framework.ClusterE2ETest) {
 func runCuratedPackagesPrometheusInstallTinkerbellSimpleFlow(test *framework.ClusterE2ETest) {
 	test.GenerateClusterConfig()
 	test.GenerateHardwareConfig()
-	test.PowerOnHardware()
 	test.CreateCluster(framework.WithControlPlaneWaitTimeout("20m"))
 	test.ValidateControlPlaneNodes(framework.ValidateControlPlaneNoTaints, framework.ValidateControlPlaneLabels)
 	runCuratedPackagesPrometheusInstall(test)
 	test.DeleteCluster()
-	test.PowerOffHardware()
 	test.ValidateHardwareDecommissioned()
 }

@@ -73,12 +73,10 @@ func runCuratedPackageRemoteClusterInstallSimpleFlow(test *framework.Multicluste
 func runCuratedPackageInstallTinkerbellSingleNodeFlow(test *framework.ClusterE2ETest) {
 	test.GenerateClusterConfig()
 	test.GenerateHardwareConfig()
-	test.PowerOnHardware()
 	test.CreateCluster(framework.WithControlPlaneWaitTimeout("20m"))
 	test.ValidateControlPlaneNodes(framework.ValidateControlPlaneNoTaints, framework.ValidateControlPlaneLabels)
 	runCuratedPackageInstall(test)
 	test.DeleteCluster()
-	test.PowerOffHardware()
 	test.ValidateHardwareDecommissioned()
 }
 

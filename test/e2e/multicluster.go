@@ -60,7 +60,6 @@ func runWorkloadClusterGitOpsAPIFlowForBareMetal(test *framework.MulticlusterE2E
 	test.CreateTinkerbellManagementCluster()
 	test.RunInWorkloadClusters(func(w *framework.WorkloadCluster) {
 		w.WaitForAvailableHardware()
-		w.PowerOffHardware()
 		test.PushWorkloadClusterToGit(w)
 		w.WaitForKubeconfig()
 		w.ValidateClusterState()
@@ -75,7 +74,6 @@ func runWorkloadClusterGitOpsAPIUpgradeFlowForBareMetal(test *framework.Multiclu
 	test.CreateTinkerbellManagementCluster()
 	test.RunInWorkloadClusters(func(w *framework.WorkloadCluster) {
 		w.WaitForAvailableHardware()
-		w.PowerOffHardware()
 		test.PushWorkloadClusterToGit(w)
 		w.WaitForKubeconfig()
 		w.ValidateClusterState()
@@ -93,7 +91,6 @@ func runTinkerbellWorkloadClusterFlow(test *framework.MulticlusterE2ETest) {
 	test.CreateTinkerbellManagementCluster()
 	test.RunInWorkloadClusters(func(w *framework.WorkloadCluster) {
 		w.GenerateClusterConfig()
-		w.PowerOffHardware()
 		w.CreateCluster(framework.WithControlPlaneWaitTimeout("20m"))
 		w.StopIfFailed()
 		w.DeleteCluster()
@@ -106,7 +103,6 @@ func runWorkloadClusterWithAPIFlowForBareMetal(test *framework.MulticlusterE2ETe
 	test.CreateTinkerbellManagementCluster()
 	test.RunInWorkloadClusters(func(w *framework.WorkloadCluster) {
 		w.WaitForAvailableHardware()
-		w.PowerOffHardware()
 		w.ApplyClusterManifest()
 		w.WaitForKubeconfig()
 		w.ValidateClusterState()
@@ -122,7 +118,6 @@ func runSimpleWorkloadUpgradeFlowForBareMetal(test *framework.MulticlusterE2ETes
 	test.CreateTinkerbellManagementCluster()
 	test.RunInWorkloadClusters(func(w *framework.WorkloadCluster) {
 		w.GenerateClusterConfig()
-		w.PowerOffHardware()
 		w.CreateCluster(framework.WithControlPlaneWaitTimeout("20m"))
 		time.Sleep(2 * time.Minute)
 		w.UpgradeCluster(clusterOpts)
@@ -139,7 +134,6 @@ func runWorkloadClusterUpgradeFlowWithAPIForBareMetal(test *framework.Multiclust
 	test.CreateTinkerbellManagementCluster()
 	test.RunInWorkloadClusters(func(w *framework.WorkloadCluster) {
 		w.WaitForAvailableHardware()
-		w.PowerOffHardware()
 		w.ApplyClusterManifest()
 		w.WaitForKubeconfig()
 		w.ValidateClusterState()
@@ -152,24 +146,4 @@ func runWorkloadClusterUpgradeFlowWithAPIForBareMetal(test *framework.Multiclust
 	})
 	test.ManagementCluster.StopIfFailed()
 	test.DeleteManagementCluster()
-}
-
-func runTinkerbellWorkloadClusterFlowSkipPowerActions(test *framework.MulticlusterE2ETest) {
-	test.ManagementCluster.GenerateClusterConfig()
-	test.CreateTinkerbellManagementCluster()
-	test.RunInWorkloadClusters(func(w *framework.WorkloadCluster) {
-		w.GenerateClusterConfig()
-		w.PowerOffHardware()
-		w.PXEBootHardware()
-		w.PowerOnHardware()
-		w.CreateCluster(framework.WithControlPlaneWaitTimeout("20m"))
-		w.StopIfFailed()
-		w.DeleteCluster()
-		w.PowerOffHardware()
-		w.ValidateHardwareDecommissioned()
-	})
-	test.ManagementCluster.StopIfFailed()
-	test.ManagementCluster.DeleteCluster()
-	test.ManagementCluster.PowerOffHardware()
-	test.ManagementCluster.ValidateHardwareDecommissioned()
 }

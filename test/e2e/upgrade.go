@@ -42,7 +42,6 @@ func runUpgradeFlowWithCheckpoint(test *framework.ClusterE2ETest, updateVersion 
 func runSimpleUpgradeFlowForBareMetal(test *framework.ClusterE2ETest, updateVersion v1alpha1.KubernetesVersion, clusterOpts ...framework.ClusterE2ETestOpt) {
 	test.GenerateClusterConfig()
 	test.GenerateHardwareConfig()
-	test.PowerOffHardware()
 	test.CreateCluster(framework.WithControlPlaneWaitTimeout("20m"))
 	test.UpgradeClusterWithNewConfig(clusterOpts)
 	test.ValidateCluster(updateVersion)
@@ -53,7 +52,6 @@ func runSimpleUpgradeFlowForBareMetal(test *framework.ClusterE2ETest, updateVers
 
 func runSimpleUpgradeFlowWorkerNodeVersionForBareMetal(test *framework.ClusterE2ETest, clusterOpts ...framework.ClusterE2ETestOpt) {
 	test.GenerateHardwareConfig()
-	test.PowerOffHardware()
 	test.CreateCluster(framework.WithControlPlaneWaitTimeout("20m"))
 	test.UpgradeClusterWithNewConfig(clusterOpts)
 	test.ValidateClusterState()
@@ -67,7 +65,6 @@ func runSimpleUpgradeFlowWorkerNodeVersionForBareMetal(test *framework.ClusterE2
 // and avoids regenerating a cluster config with defaults.
 func runSimpleUpgradeFlowForBaremetalWithoutClusterConfigGeneration(test *framework.ClusterE2ETest, updateVersion v1alpha1.KubernetesVersion, clusterOpts ...framework.ClusterE2ETestOpt) {
 	test.GenerateHardwareConfig()
-	test.PowerOffHardware()
 	test.CreateCluster(framework.WithControlPlaneWaitTimeout("20m"))
 	test.UpgradeClusterWithNewConfig(clusterOpts)
 	test.ValidateCluster(updateVersion)
@@ -89,7 +86,6 @@ func runUpgradeFlowWithAPI(test *framework.ClusterE2ETest, fillers ...api.Cluste
 func runUpgradeFlowForBareMetalWithAPI(test *framework.ClusterE2ETest, fillers ...api.ClusterConfigFiller) {
 	test.GenerateClusterConfig()
 	test.GenerateHardwareConfig()
-	test.PowerOffHardware()
 	test.CreateCluster(framework.WithControlPlaneWaitTimeout("20m"))
 	test.LoadClusterConfigGeneratedByCLI()
 	test.UpdateClusterConfig(fillers...)
