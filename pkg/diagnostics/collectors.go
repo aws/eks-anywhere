@@ -346,6 +346,9 @@ func (c *EKSACollectorFactory) managementClusterLogCollectors() []*Collect {
 func (c *EKSACollectorFactory) managementClusterCrdCollectors() []*Collect {
 	mgmtCrds := []string{
 		"clusters.anywhere.eks.amazonaws.com",
+		"controlplaneupgrades.anywhere.eks.amazonaws.com",
+		"machinedeploymentupgrades.anywhere.eks.amazonaws.com",
+		"nodeupgrades.anywhere.eks.amazonaws.com",
 		"bundles.anywhere.eks.amazonaws.com",
 		"clusters.cluster.x-k8s.io",
 		"machinedeployments.cluster.x-k8s.io",
