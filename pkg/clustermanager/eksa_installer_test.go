@@ -400,6 +400,26 @@ func TestSetManagerEnvVars(t *testing.T) {
 	}
 }
 
+func TestSetManagerEnvVarsVSphereInPlaceUpgrade(t *testing.T) {
+	g := NewWithT(t)
+	features.ClearCache()
+	t.Setenv(features.VSphereInPlaceEnvVar, "true")
+
+	deploy := deployment()
+	spec := test.NewClusterSpec()
+	want := deployment(func(d *appsv1.Deployment) {
+		d.Spec.Template.Spec.Containers[0].Env = []corev1.EnvVar{
+			{
+				Name:  "VSPHERE_IN_PLACE_UPGRADE",
+				Value: "true",
+			},
+		}
+	})
+
+	clustermanager.SetManagerEnvVars(deploy, spec)
+	g.Expect(deploy).To(Equal(want))
+}
+
 func TestEKSAInstallerNewUpgraderConfigMap(t *testing.T) {
 	tt := newInstallerTest(t)
 
