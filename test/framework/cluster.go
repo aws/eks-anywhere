@@ -394,7 +394,7 @@ func (e *ClusterE2ETest) PowerOffHardware() {
 	}
 }
 
-// PowerOnHardware issues power on calls to all Hardware. This function should only be used when testing EKSA without power actions enabled.
+// PXEBootHardware issues power on calls to all Hardware. This function should only be used when testing EKSA without power actions enabled.
 func (e *ClusterE2ETest) PXEBootHardware() {
 	for _, h := range e.TestHardware {
 		ctx, done := context.WithTimeout(context.Background(), time.Minute)
