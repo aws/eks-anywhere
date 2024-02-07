@@ -91,21 +91,6 @@ func TestReleaseForVersionSuccess(t *testing.T) {
 			want:    &releasev1.EksARelease{Version: "v0.0.1-alpha", Number: 3},
 		},
 		{
-			name: "multiple releases same patch, same prerelease, different build metadata",
-			releases: &releasev1.Release{
-				Spec: releasev1.ReleaseSpec{
-					Releases: []releasev1.EksARelease{
-						{Version: "v0.0.1-alpha+werwe", Number: 1},
-						{Version: "v0.0.1-alpha+f4fe", Number: 2},
-						{Version: "v0.0.1-alpha+f43fs", Number: 3},
-						{Version: "v0.0.1-alpha+f234f", Number: 4},
-					},
-				},
-			},
-			version: "v0.0.1-alpha",
-			want:    &releasev1.EksARelease{Version: "v0.0.1-alpha+werwe", Number: 1},
-		},
-		{
 			name: "version doesn't exist",
 			releases: &releasev1.Release{
 				Spec: releasev1.ReleaseSpec{
@@ -134,6 +119,22 @@ func TestReleaseForVersionSuccess(t *testing.T) {
 			},
 			version: "v0.0.1-alpha+latest",
 			want:    &releasev1.EksARelease{Version: "v0.0.1-alpha+build.10", Number: 3},
+		},
+		{
+			name: "want exact match with versions in same pre-release",
+			releases: &releasev1.Release{
+				Spec: releasev1.ReleaseSpec{
+					Releases: []releasev1.EksARelease{
+						{Version: "v0.0.1-alpha+build.3", Number: 1},
+						{Version: "v0.0.1-alpha+build.1", Number: 2},
+						{Version: "v0.0.1-alpha+build.10", Number: 3},
+						{Version: "v0.0.1-alpha+build.4", Number: 4},
+						{Version: "v0.0.1-alpha+build.9", Number: 5},
+					},
+				},
+			},
+			version: "v0.0.1-alpha+build.4",
+			want:    &releasev1.EksARelease{Version: "v0.0.1-alpha+build.4", Number: 4},
 		},
 	}
 	for _, tt := range tests {
@@ -166,7 +167,9 @@ func TestReleaseForVersionError(t *testing.T) {
 					},
 				},
 			},
-			version: "1.1.1",
+			// We need to ask fo the latest pre-release if we want to trigger
+			// the version parsing
+			version: "1.1.1-dev+latest",
 			want:    "invalid version for release 2",
 		},
 	}
