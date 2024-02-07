@@ -381,8 +381,12 @@ func (r *Reconciler) ValidateHardware(ctx context.Context, log logr.Logger, tink
 		if err != nil {
 			return controller.Result{}, err
 		}
-		// eksa version upgrade cannot be triggered from controller, so set it to false.
-		v.Register(tinkerbell.ExtraHardwareAvailableAssertionForRollingUpgrade(kubeReader.GetCatalogue(), validatableCAPI, false))
+		upgradeStrategy := clusterSpec.Cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy
+		// skip extra hardware validation for InPlace upgrades
+		if upgradeStrategy == nil || upgradeStrategy.Type != anywherev1.InPlaceStrategyType {
+			// eksa version upgrade cannot be triggered from controller, so set it to false.
+			v.Register(tinkerbell.ExtraHardwareAvailableAssertionForRollingUpgrade(kubeReader.GetCatalogue(), validatableCAPI, false))
+		}
 	case NewClusterOperation:
 		v.Register(tinkerbell.MinimumHardwareAvailableAssertionForCreate(kubeReader.GetCatalogue()))
 	case NoChange:
