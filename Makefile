@@ -648,12 +648,16 @@ build-eks-a-for-e2e:
 			scripts/get_bundle.sh; \
 		else \
 			make eks-a-cross-platform; \
-			DEV_GIT_VERSION=$(shell source ./scripts/eksa_version.sh && eksa-version::latest_release_verison_in_manifest "$(RELEASE_MANIFEST_URL)") make eks-a; \
+			make eks-a-for-dev-e2e; \
 		fi \
 	else \
 		make eksa-components-override; \
 		make eks-a; \
 	fi
+
+.PHONY: eks-a-for-dev-e2e
+eks-a-for-dev-e2e:
+	DEV_GIT_VERSION=$(shell source ./scripts/eksa_version.sh && eksa-version::latest_release_verison_in_manifest "$(RELEASE_MANIFEST_URL)") $(MAKE) eks-a;
 
 .PHONY: e2e-tests-binary
 e2e-tests-binary: E2E_TAGS ?= e2e
