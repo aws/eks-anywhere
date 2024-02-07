@@ -21,6 +21,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/executables"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/manifests"
 	"github.com/aws/eks-anywhere/pkg/manifests/bundles"
 	"github.com/aws/eks-anywhere/pkg/types"
@@ -240,6 +241,11 @@ func setManagerEnvVars(d *appsv1.Deployment, spec *cluster.Spec) {
 		for _, name := range proxyEnvVarNames {
 			envVars = append(envVars, v1.EnvVar{Name: name, Value: proxy[name]})
 		}
+	}
+
+	// TODO: remove this feature flag if we decide to support in-place upgrades for vSphere provider.
+	if features.IsActive(features.VSphereInPlaceUpgradeEnabled()) {
+		envVars = append(envVars, v1.EnvVar{Name: features.VSphereInPlaceEnvVar, Value: "true"})
 	}
 
 	d.Spec.Template.Spec.Containers[0].Env = envVars
