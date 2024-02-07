@@ -394,6 +394,66 @@ func (e *ClusterE2ETest) PowerOffHardware() {
 	}
 }
 
+// PowerOnHardware issues power on calls to all Hardware. This function should only be used when testing EKSA without power actions enabled.
+func (e *ClusterE2ETest) PXEBootHardware() {
+	for _, h := range e.TestHardware {
+		ctx, done := context.WithTimeout(context.Background(), time.Minute)
+		defer done()
+		bmcClient := newBmclibClient(logr.Discard(), h.BMCIPAddress, h.BMCUsername, h.BMCPassword)
+
+		if err := bmcClient.Open(ctx); err != nil {
+			md := bmcClient.GetMetadata()
+			e.T.Logf("Failed to open connection to BMC: %v, hardware: %v, providersAttempted: %v, failedProviderDetail: %v", err, h.BMCIPAddress, md.ProvidersAttempted, md.SuccessfulOpenConns)
+
+			continue
+		}
+		md := bmcClient.GetMetadata()
+		e.T.Logf("Connected to BMC: hardware: %v, providersAttempted: %v, successfulProvider: %v", h.BMCIPAddress, md.ProvidersAttempted, md.SuccessfulOpenConns)
+
+		defer func() {
+			if err := bmcClient.Close(ctx); err != nil {
+				md := bmcClient.GetMetadata()
+				e.T.Logf("BMC close connection failed: %v, hardware: %v, providersAttempted: %v, failedProviderDetail: %v", err, h.BMCIPAddress, md.ProvidersAttempted, md.FailedProviderDetail)
+			}
+		}()
+
+		ok, err := bmcClient.SetBootDevice(ctx, string(rapi.PXE), false, true)
+		if err != nil || !ok {
+			e.T.Fatalf("failed to pxe boot hardware: %v: ok: %v", err, ok)
+		}
+	}
+}
+
+// PowerOnHardware issues power on calls to all Hardware. This function should only be used when testing EKSA without power actions enabled.
+func (e *ClusterE2ETest) PowerOnHardware() {
+	for _, h := range e.TestHardware {
+		ctx, done := context.WithTimeout(context.Background(), time.Minute)
+		defer done()
+		bmcClient := newBmclibClient(logr.Discard(), h.BMCIPAddress, h.BMCUsername, h.BMCPassword)
+
+		if err := bmcClient.Open(ctx); err != nil {
+			md := bmcClient.GetMetadata()
+			e.T.Logf("Failed to open connection to BMC: %v, hardware: %v, providersAttempted: %v, failedProviderDetail: %v", err, h.BMCIPAddress, md.ProvidersAttempted, md.SuccessfulOpenConns)
+
+			continue
+		}
+		md := bmcClient.GetMetadata()
+		e.T.Logf("Connected to BMC: hardware: %v, providersAttempted: %v, successfulProvider: %v", h.BMCIPAddress, md.ProvidersAttempted, md.SuccessfulOpenConns)
+
+		defer func() {
+			if err := bmcClient.Close(ctx); err != nil {
+				md := bmcClient.GetMetadata()
+				e.T.Logf("BMC close connection failed: %v, hardware: %v, providersAttempted: %v, failedProviderDetail: %v", err, h.BMCIPAddress, md.ProvidersAttempted, md.FailedProviderDetail)
+			}
+		}()
+
+		ok, err := bmcClient.SetPowerState(ctx, string(rapi.On))
+		if err != nil || !ok {
+			e.T.Fatalf("failed to power on hardware: %v, ok: %v", err, ok)
+		}
+	}
+}
+
 // ValidateHardwareDecommissioned checks that the all hardware was powered off during the cluster deletion.
 // This function tests that the hardware was powered off during the cluster deletion.
 // We should fail the test if any hardware was not powered off.
