@@ -464,13 +464,13 @@ func (c *CloudStack) WithRedhatVersion(version anywherev1.KubernetesVersion) api
 }
 
 func (c *CloudStack) getDevRelease() *releasev1.EksARelease {
-	c.t.Helper()
 	if c.devRelease == nil {
-		latestRelease, err := getLatestDevRelease()
+		localDevRelease, err := localEksaCLIDevVersionRelease()
 		if err != nil {
 			c.t.Fatal(err)
 		}
-		c.devRelease = latestRelease
+		c.t.Log("Using local eksa dev release:", localDevRelease.Version)
+		c.devRelease = localDevRelease
 	}
 
 	return c.devRelease

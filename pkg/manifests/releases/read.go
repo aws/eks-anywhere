@@ -77,20 +77,38 @@ func ReleaseForVersion(releases *releasev1.Release, version string) (*releasev1.
 		return nil, fmt.Errorf("invalid eksa version: %v", err)
 	}
 
+	// We treat "latest" as a special case to be able to get the latest build without requiring an exact match.
+	// We will look for an exact match at the pre-release level and then compare the build metadata.
+	// This allows a locally built CLI to get the latest dev build without needing to know the exact build number.
+	wantLatestPreRelease := semVer.Buildmetadata == "latest"
+
+	var latestPreRelease *releasev1.EksARelease
+	var latestPreReleaseVersion *semver.Version
 	for _, r := range releases.Spec.Releases {
-		if r.Version == version {
-			return &r, nil
+		release := r
+		if release.Version == version {
+			return &release, nil
 		}
 
-		releaseVersion, err := semver.New(r.Version)
+		releaseVersion, err := semver.New(release.Version)
 		if err != nil {
-			return nil, fmt.Errorf("invalid version for release %d: %v", r.Number, err)
+			return nil, fmt.Errorf("invalid version for release %d: %v", release.Number, err)
 		}
 
 		if semVer.SamePrerelease(releaseVersion) {
-			return &r, nil
+			if wantLatestPreRelease {
+				// If we are looking for the latest pre-release, we need to compare the build metadata
+				// to find the latest one. CompareBuildMetadata will compare the build identifiers
+				// in order. For example: v0.19.0-dev+build.10 > v0.19.0-dev+build.9
+				if latestPreReleaseVersion == nil || releaseVersion.CompareBuildMetadata(latestPreReleaseVersion) > 0 {
+					latestPreRelease = &release
+					latestPreReleaseVersion = releaseVersion
+				}
+			} else {
+				return &release, nil
+			}
 		}
 	}
 
-	return nil, nil
+	return latestPreRelease, nil
 }

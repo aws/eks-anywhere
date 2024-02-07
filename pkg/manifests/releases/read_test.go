@@ -120,6 +120,21 @@ func TestReleaseForVersionSuccess(t *testing.T) {
 			version: "v0.0.2-alpha",
 			want:    nil,
 		},
+		{
+			name: "want latest prerelease",
+			releases: &releasev1.Release{
+				Spec: releasev1.ReleaseSpec{
+					Releases: []releasev1.EksARelease{
+						{Version: "v0.0.1-alpha+build.3", Number: 1},
+						{Version: "v0.0.1-alpha+build.1", Number: 2},
+						{Version: "v0.0.1-alpha+build.10", Number: 3},
+						{Version: "v0.0.1-alpha+build.9", Number: 4},
+					},
+				},
+			},
+			version: "v0.0.1-alpha+latest",
+			want:    &releasev1.EksARelease{Version: "v0.0.1-alpha+build.10", Number: 3},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

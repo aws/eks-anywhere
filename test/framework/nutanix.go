@@ -501,11 +501,12 @@ func (n *Nutanix) ClusterStateValidations() []clusterf.StateValidation {
 func (n *Nutanix) getDevRelease() *releasev1.EksARelease {
 	n.t.Helper()
 	if n.devRelease == nil {
-		latestRelease, err := getLatestDevRelease()
+		localDevRelease, err := localEksaCLIDevVersionRelease()
 		if err != nil {
 			n.t.Fatal(err)
 		}
-		n.devRelease = latestRelease
+		n.t.Log("Using local eksa dev release:", localDevRelease.Version)
+		n.devRelease = localDevRelease
 	}
 
 	return n.devRelease
