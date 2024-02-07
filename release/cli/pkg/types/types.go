@@ -125,14 +125,14 @@ func (r *ReleaseConfig) BundlesManifestFilepath() string {
 	}
 
 	if r.BuildRepoBranchName != "main" {
-		return fmt.Sprintf("%s/%s/bundles.yaml", r.BuildRepoBranchName, r.ReleaseVersion)
+		return fmt.Sprintf("%s/%s/bundles.yaml", r.BuildRepoBranchName, r.DevReleaseUriVersion)
 	}
 
 	if r.Weekly {
 		return fmt.Sprintf("weekly-releases/%s/bundle-release.yaml", r.ReleaseDate)
 	}
 
-	return fmt.Sprintf("%s/bundles.yaml", r.ReleaseVersion)
+	return fmt.Sprintf("%s/bundles.yaml", r.DevReleaseUriVersion)
 }
 
 // ReleaseManifestFilepath returns the filepath for the release manifest.
