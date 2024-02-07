@@ -348,7 +348,7 @@ func (e *ClusterE2ETest) GenerateClusterConfig(opts ...CommandOpt) {
 	e.GenerateClusterConfigForVersion("", opts...)
 }
 
-func newBmclibClient(ctx context.Context, log logr.Logger, hostIP, username, password string) *bmclib.Client {
+func newBmclibClient(log logr.Logger, hostIP, username, password string) *bmclib.Client {
 	o := []bmclib.Option{}
 	log = log.WithValues("host", hostIP, "username", username)
 	o = append(o, bmclib.WithLogger(log))
@@ -358,22 +358,23 @@ func newBmclibClient(ctx context.Context, log logr.Logger, hostIP, username, pas
 	return client
 }
 
+// PowerOffHardware issues power off calls to all Hardware. This function does not fail the test if it encounters an error.
+// This function is a helper and not part of the code path that we are testing.
+// For this reason, we are only logging the errors and not failing the test.
+// This function exists not because we need the hardware to be powered off before a test run,
+// but because we want to make sure that no other Tinkerbell Boots DHCP server is running.
+// Another Boots DHCP server running can cause netboot issues with hardware.
 func (e *ClusterE2ETest) PowerOffHardware() {
-	// This function is a helper and not part of the code path that we are testing.
-	// For this reason, we are only logging the errors and not failing the test.
-	// This function exists not because we need the hardware to be powered off before a test run,
-	// but because we want to make sure that no other Tinkerbell Boots DHCP server is running.
-	// Another Boots DHCP server running can cause netboot issues with hardware.
 	for _, h := range e.TestHardware {
 		ctx, done := context.WithTimeout(context.Background(), 2*time.Minute)
 		defer done()
-		bmcClient := newBmclibClient(ctx, logr.Discard(), h.BMCIPAddress, h.BMCUsername, h.BMCPassword)
+		bmcClient := newBmclibClient(logr.Discard(), h.BMCIPAddress, h.BMCUsername, h.BMCPassword)
 
 		if err := bmcClient.Open(ctx); err != nil {
 			md := bmcClient.GetMetadata()
 			e.T.Logf("Failed to open connection to BMC: %v, hardware: %v, providersAttempted: %v, failedProviderDetail: %v", err, h.BMCIPAddress, md.ProvidersAttempted, md.SuccessfulOpenConns)
 
-			return
+			continue
 		}
 		md := bmcClient.GetMetadata()
 		e.T.Logf("Connected to BMC: hardware: %v, providersAttempted: %v, successfulProvider: %v", h.BMCIPAddress, md.ProvidersAttempted, md.SuccessfulOpenConns)
@@ -388,19 +389,20 @@ func (e *ClusterE2ETest) PowerOffHardware() {
 		if _, err := bmcClient.SetPowerState(ctx, string(rapi.Off)); err != nil {
 			md := bmcClient.GetMetadata()
 			e.T.Logf("failed to power off hardware: %v, hardware: %v, providersAttempted: %v, failedProviderDetail: %v", err, h.BMCIPAddress, md.ProvidersAttempted, md.SuccessfulOpenConns)
-			return
+			continue
 		}
 	}
 }
 
+// ValidateHardwareDecommissioned checks that the all hardware was powered off during the cluster deletion.
+// This function tests that the hardware was powered off during the cluster deletion.
+// We should fail the test if any hardware was not powered off.
 func (e *ClusterE2ETest) ValidateHardwareDecommissioned() {
-	// This function tests that the hardware was powered off during the cluster deletion.
-	// We should fail the test if any hardware was not powered off.
 	var failedToDecomm []*api.Hardware
 	for _, h := range e.TestHardware {
 		ctx, done := context.WithTimeout(context.Background(), 2*time.Minute)
 		defer done()
-		bmcClient := newBmclibClient(ctx, logr.Discard(), h.BMCIPAddress, h.BMCUsername, h.BMCPassword)
+		bmcClient := newBmclibClient(logr.Discard(), h.BMCIPAddress, h.BMCUsername, h.BMCPassword)
 
 		if err := bmcClient.Open(ctx); err != nil {
 			md := bmcClient.GetMetadata()
