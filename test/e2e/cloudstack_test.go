@@ -3548,7 +3548,7 @@ func TestCloudStackWorkloadClusterOIDCAuthGithubFluxAPI(t *testing.T) {
 	test.DeleteManagementCluster()
 }
 
-func TestCloudstackKubernetes127To128RedHatManagementCPUpgradeAPI(t *testing.T) {
+func TestCloudStackKubernetes127To128RedHatManagementCPUpgradeAPI(t *testing.T) {
 	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes127())
 	test := framework.NewClusterE2ETest(
 		t, provider,
