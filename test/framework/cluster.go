@@ -19,6 +19,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/bmc-toolbox/bmclib/v2"
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -44,7 +45,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/templater"
 	"github.com/aws/eks-anywhere/pkg/types"
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
-	"github.com/aws/eks-anywhere/test/framework/bmc"
 	clusterf "github.com/aws/eks-anywhere/test/framework/cluster"
 )
 
@@ -348,138 +348,103 @@ func (e *ClusterE2ETest) GenerateClusterConfig(opts ...CommandOpt) {
 	e.GenerateClusterConfigForVersion("", opts...)
 }
 
+func newBmclibClient(ctx context.Context, log logr.Logger, hostIP, username, password string, timeout time.Duration) *bmclib.Client {
+	o := []bmclib.Option{}
+	log = log.WithValues("host", hostIP, "username", username)
+	o = append(o, bmclib.WithLogger(log))
+	client := bmclib.NewClient(hostIP, username, password, o...)
+	client.Registry.Drivers = client.Registry.PreferProtocol("redfish")
+
+	return client
+}
+
 func (e *ClusterE2ETest) PowerOffHardware() {
-	// Initializing BMC Client
-	ctx := context.Background()
-	bmcClientFactory := bmc.NewClientFunc(time.Minute)
-
+	// This function is a helper and not part of the code path that we are testing.
+	// For this reason, we are only logging the errors and not failing the test.
+	// This function exists not because we need the hardware to be powered off before a test run,
+	// but because we want to make sure that no other Tinkerbell Boots DHCP server is running.
+	// Another Boots DHCP server running can cause netboot issues with hardware.
 	for _, h := range e.TestHardware {
-		bmcClient, err := bmcClientFactory(ctx, logr.Discard(), h.BMCIPAddress, h.BMCUsername, h.BMCPassword)
-		if err != nil {
-			e.T.Fatalf("failed to create bmc client: %v", err)
+		ctx := context.Background()
+		bmcClient := newBmclibClient(ctx, logr.Discard(), h.BMCIPAddress, h.BMCUsername, h.BMCPassword, time.Minute)
+
+		if err := bmcClient.Open(ctx); err != nil {
+			md := bmcClient.GetMetadata()
+			e.T.Logf("Failed to open connection to BMC: %v, hardware: %v, providersAttempted: %v, failedProviderDetail: %v", err, h.BMCIPAddress, md.ProvidersAttempted, md.SuccessfulOpenConns)
+
+			return
 		}
+		md := bmcClient.GetMetadata()
+		e.T.Logf("Connected to BMC: hardware: %v, providersAttempted: %v, successfulProvider: %v", h.BMCIPAddress, md.ProvidersAttempted, md.SuccessfulOpenConns)
 
 		defer func() {
-			// Close BMC connection after reconcilation
-			err = bmcClient.Close(ctx)
-			if err != nil {
-				e.T.Fatalf("BMC close connection failed: %v", err)
+			if err := bmcClient.Close(ctx); err != nil {
+				md := bmcClient.GetMetadata()
+				e.T.Logf("BMC close connection failed: %v, hardware: %v, providersAttempted: %v, failedProviderDetail: %v", err, h.BMCIPAddress, md.ProvidersAttempted, md.FailedProviderDetail)
 			}
 		}()
 
-		_, err = bmcClient.SetPowerState(ctx, string(rapi.Off))
-		if err != nil {
-			e.T.Fatalf("failed to power off hardware: %v", err)
-		}
-	}
-}
-
-func (e *ClusterE2ETest) PXEBootHardware() {
-	// Initializing BMC Client
-	ctx := context.Background()
-	bmcClientFactory := bmc.NewClientFunc(time.Minute)
-
-	for _, h := range e.TestHardware {
-		bmcClient, err := bmcClientFactory(ctx, logr.Discard(), h.BMCIPAddress, h.BMCUsername, h.BMCPassword)
-		if err != nil {
-			e.T.Fatalf("failed to create bmc client: %v", err)
-		}
-
-		defer func() {
-			// Close BMC connection after reconcilation
-			err = bmcClient.Close(ctx)
-			if err != nil {
-				e.T.Fatalf("BMC close connection failed: %v", err)
-			}
-		}()
-
-		_, err = bmcClient.SetBootDevice(ctx, string(rapi.PXE), false, true)
-		if err != nil {
-			e.T.Fatalf("failed to pxe boot hardware: %v", err)
-		}
-	}
-}
-
-func (e *ClusterE2ETest) PowerOnHardware() {
-	// Initializing BMC Client
-	ctx := context.Background()
-	bmcClientFactory := bmc.NewClientFunc(time.Minute)
-
-	for _, h := range e.TestHardware {
-		bmcClient, err := bmcClientFactory(ctx, logr.Discard(), h.BMCIPAddress, h.BMCUsername, h.BMCPassword)
-		if err != nil {
-			e.T.Fatalf("failed to create bmc client: %v", err)
-		}
-
-		defer func() {
-			// Close BMC connection after reconcilation
-			err = bmcClient.Close(ctx)
-			if err != nil {
-				e.T.Fatalf("BMC close connection failed: %v", err)
-			}
-		}()
-
-		_, err = bmcClient.SetPowerState(ctx, string(rapi.On))
-		if err != nil {
-			e.T.Fatalf("failed to power on hardware: %v", err)
+		if _, err := bmcClient.SetPowerState(ctx, string(rapi.Off)); err != nil {
+			md := bmcClient.GetMetadata()
+			e.T.Logf("failed to power off hardware: %v, hardware: %v, providersAttempted: %v, failedProviderDetail: %v", err, h.BMCIPAddress, md.ProvidersAttempted, md.SuccessfulOpenConns)
+			return
 		}
 	}
 }
 
 func (e *ClusterE2ETest) ValidateHardwareDecommissioned() {
-	// Initializing BMC Client
-	ctx := context.Background()
-	bmcClientFactory := bmc.NewClientFunc(time.Minute)
-
+	// This function tests that the hardware was powered off during the cluster deletion.
+	// We should fail the test if any hardware was not powered off.
 	var failedToDecomm []*api.Hardware
 	for _, h := range e.TestHardware {
-		bmcClient, err := bmcClientFactory(ctx, logr.Discard(), h.BMCIPAddress, h.BMCUsername, h.BMCPassword)
-		if err != nil {
-			e.T.Fatalf("failed to create bmc client: %v", err)
+		ctx := context.Background()
+		bmcClient := newBmclibClient(ctx, logr.Discard(), h.BMCIPAddress, h.BMCUsername, h.BMCPassword, time.Minute)
+
+		if err := bmcClient.Open(ctx); err != nil {
+			md := bmcClient.GetMetadata()
+			e.T.Logf("Failed to open connection to BMC: %v, hardware: %v, providersAttempted: %v, failedProviderDetail: %v", err, h.BMCIPAddress, md.ProvidersAttempted, md.SuccessfulOpenConns)
+
+			continue
 		}
+		md := bmcClient.GetMetadata()
+		e.T.Logf("Connected to BMC: hardware: %v, providersAttempted: %v, successfulProvider: %v", h.BMCIPAddress, md.ProvidersAttempted, md.SuccessfulOpenConns)
 
 		defer func() {
-			// Close BMC connection after reconcilation
-			err = bmcClient.Close(ctx)
-			if err != nil {
-				e.T.Fatalf("BMC close connection failed: %v", err)
+			if err := bmcClient.Close(ctx); err != nil {
+				md := bmcClient.GetMetadata()
+				e.T.Logf("BMC close connection failed: %v, hardware: %v, providersAttempted: %v, failedProviderDetail: %v", err, h.BMCIPAddress, md.ProvidersAttempted, md.FailedProviderDetail)
 			}
 		}()
 
-		powerState, err := bmcClient.GetPowerState(ctx)
 		// add sleep retries to give the machine time to power off
-		timeout := 15
-		for !strings.EqualFold(powerState, string(rapi.Off)) && timeout > 0 {
+		wait := 5 * time.Second
+		for tries := 1; tries <= 4; tries++ {
+			time.Sleep(wait)
+			powerState, err := bmcClient.GetPowerState(ctx)
+			e.T.Logf("hardware power state (id=%s, hostname=%s, bmc_ip=%s): power_state=%s", h.MACAddress, h.Hostname, h.BMCIPAddress, powerState)
 			if err != nil {
-				e.T.Logf("failed to get power state for hardware (%v): %v", h, err)
+				md := bmcClient.GetMetadata()
+				e.T.Logf("failed to get power state for hardware: id=%s, hostname=%s, bmc_ip=%s, providersAttempted: %v, failedProviderDetail: %v",
+					h.MACAddress,
+					h.Hostname,
+					h.BMCIPAddress,
+					md.ProvidersAttempted,
+					md.FailedProviderDetail,
+				)
+				continue
 			}
-			time.Sleep(5 * time.Second)
-			timeout = timeout - 5
-			powerState, err = bmcClient.GetPowerState(ctx)
-			e.T.Logf(
-				"hardware power state (id=%s, hostname=%s, bmc_ip=%s): power_state=%s",
-				h.MACAddress,
-				h.Hostname,
-				h.BMCIPAddress,
-				powerState,
-			)
-		}
-
-		if !strings.EqualFold(powerState, string(rapi.Off)) {
-			e.T.Logf(
-				"failed to decommission hardware: id=%s, hostname=%s, bmc_ip=%s",
-				h.MACAddress,
-				h.Hostname,
-				h.BMCIPAddress,
-			)
-			failedToDecomm = append(failedToDecomm, h)
-		} else {
-			e.T.Logf("successfully decommissioned hardware: id=%s, hostname=%s, bmc_ip=%s", h.MACAddress, h.Hostname, h.BMCIPAddress)
+			if !strings.EqualFold(powerState, string(rapi.Off)) {
+				e.T.Logf("failed to decommission hardware: id=%s, hostname=%s, bmc_ip=%s", h.MACAddress, h.Hostname, h.BMCIPAddress)
+				failedToDecomm = append(failedToDecomm, h)
+			} else {
+				e.T.Logf("successfully decommissioned hardware: id=%s, hostname=%s, bmc_ip=%s", h.MACAddress, h.Hostname, h.BMCIPAddress)
+				break
+			}
 		}
 	}
 
 	if len(failedToDecomm) > 0 {
-		e.T.Fatalf("failed to decommision hardware during cluster deletion")
+		e.T.Fatalf("failed to decommission all hardware during cluster deletion")
 	}
 }
 
