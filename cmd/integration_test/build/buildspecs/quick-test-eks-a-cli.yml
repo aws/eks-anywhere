@@ -9,6 +9,9 @@ env:
     INTEGRATION_TEST_INFRA_CONFIG: "/tmp/test-infra.yml"
     # vsphere variables
     T_VSPHERE_TEMPLATE_UBUNTU_2204_1_28: "/SDDC-Datacenter/vm/Templates/ubuntu-2204-kube-v1-28"
+    # cloudstack variables
+    CLOUDSTACK_PROVIDER: true
+    T_CLOUDSTACK_CIDR: "10.80.214.0/23"
   secrets-manager:
     EKSA_AWS_ACCESS_KEY_ID: "packages_ci_beta:aws_access_key_id"
     EKSA_AWS_SECRET_ACCESS_KEY: "packages_ci_beta:aws_secret_access_key_id"
@@ -42,11 +45,39 @@ env:
     T_VSPHERE_CIDR: "vsphere_ci_beta_connection:vsphere_cidr"
     T_VSPHERE_PRIVATE_NETWORK_CIDR: "vsphere_ci_beta_connection:vsphere_private_network_cidr"
     T_VSPHERE_RESOURCE_POOL: "vsphere_ci_beta_connection:resource_pool"
-    T_VSPHERE_SERVER: "vsphere_ci_beta_connection:server"
     T_VSPHERE_SSH_AUTHORIZED_KEY: "vsphere_ci_beta_connection:ssh_authorized_key"
     T_VSPHERE_TLS_INSECURE: "vsphere_ci_beta_connection:tls_insecure"
     T_VSPHERE_TLS_THUMBPRINT: "vsphere_ci_beta_connection:tls_thumbprint"
     T_VSPHERE_TAG: "vsphere_ci_beta_connection:vm_test_tag"
+    #cloudstack secrets
+    T_HTTP_PROXY_CLOUDSTACK: "proxy-config-data:httpProxyCloudStack"
+    T_HTTPS_PROXY_CLOUDSTACK: "proxy-config-data:httpsProxyCloudStack"
+    T_NO_PROXY_CLOUDSTACK: "proxy-config-data:noProxyCloudStack"
+    EKSA_CLOUDSTACK_B64ENCODED_SECRET: "cloudstack_ci_beta_connection:b64_encoded_secret"
+    T_CLOUDSTACK_DOMAIN: "cloudstack_ci_beta_connection:domain"
+    T_CLOUDSTACK_MULTILEVEL_DOMAIN: "cloudstack_ci_beta_connection:multilevel_domain"
+    T_CLOUDSTACK_CREDENTIALS: "cloudstack_ci_beta_connection:credentials"
+    T_CLOUDSTACK_CREDENTIALS_2: "cloudstack_ci_beta_connection:credentials_2"
+    T_CLOUDSTACK_CREDENTIALS_3: "cloudstack_ci_beta_connection:credentials_3"
+    T_CLOUDSTACK_CREDENTIALS_FOR_MULTILEVEL_DOMAIN: "cloudstack_ci_beta_connection:credentials_for_multilevel_domain"
+    T_CLOUDSTACK_ZONE: "cloudstack_ci_beta_connection:zone"
+    T_CLOUDSTACK_ZONE_2: "cloudstack_ci_beta_connection:zone_2"
+    T_CLOUDSTACK_ZONE_3: "cloudstack_ci_beta_connection:zone_3"
+    T_CLOUDSTACK_ACCOUNT: "cloudstack_ci_beta_connection:account"
+    T_CLOUDSTACK_ACCOUNT_FOR_MULTILEVEL_DOMAIN: "cloudstack_ci_beta_connection:account_for_multilevel_domain"
+    T_CLOUDSTACK_NETWORK: "cloudstack_ci_beta_connection:network"
+    T_CLOUDSTACK_NETWORK_2: "cloudstack_ci_beta_connection:network_2"
+    T_CLOUDSTACK_NETWORK_3: "cloudstack_ci_beta_connection:network_3"
+    T_CLOUDSTACK_MANAGEMENT_SERVER: "cloudstack_ci_beta_connection:management_server"
+    T_CLOUDSTACK_MANAGEMENT_SERVER_2: "cloudstack_ci_beta_connection:management_server_2"
+    T_CLOUDSTACK_MANAGEMENT_SERVER_3: "cloudstack_ci_beta_connection:management_server_3"
+    T_CLOUDSTACK_COMPUTE_OFFERING_LARGE: "cloudstack_ci_beta_connection:compute_offering_large"
+    T_CLOUDSTACK_COMPUTE_OFFERING_LARGER: "cloudstack_ci_beta_connection:compute_offering_larger"
+    T_CLOUDSTACK_TLS_INSECURE: "cloudstack_ci_beta_connection:tls_insecure"
+    T_CLOUDSTACK_POD_CIDR: "cloudstack_ci_beta_connection:pod_cidr"
+    T_CLOUDSTACK_SERVICE_CIDR: "cloudstack_ci_beta_connection:service_cidr"
+    T_CLOUDSTACK_SSH_AUTHORIZED_KEY: "vsphere_ci_beta_connection:ssh_authorized_key"
+
 phases:
   pre_build:
     commands:
@@ -63,6 +94,7 @@ phases:
           BUNDLES_OVERRIDE=true
         fi
       - SKIPPED_TESTS=$(yq e ".skipped_tests | @csv" ${CODEBUILD_SRC_DIR}/test/e2e/SKIPPED_TESTS.yaml)
+      - QUICK_TESTS="($(yq e '.quick_tests | join("|")' ./test/e2e/QUICK_TESTS.yaml))"
       - >
         ./bin/test e2e run
         -c ${INTEGRATION_TEST_INFRA_CONFIG}
@@ -71,7 +103,7 @@ phases:
         -i ${INTEGRATION_TEST_INSTANCE_PROFILE}
         -m ${INTEGRATION_TEST_MAX_EC2_COUNT}
         -p ${INTEGRATION_TEST_MAX_CONCURRENT_TEST_COUNT}
-        -r 'TestDocker.*128|TestVSphereKubernetes128Ubuntu2204SimpleFlow'
+        -r ${QUICK_TESTS}
         -v 4
         --skip ${SKIPPED_TESTS}
         --bundles-override=${BUNDLES_OVERRIDE}
