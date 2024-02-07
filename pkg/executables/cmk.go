@@ -395,6 +395,93 @@ func (c *Cmk) GetManagementApiEndpoint(profile string) (string, error) {
 	return "", fmt.Errorf("profile %s does not exist", profile)
 }
 
+// DeleteVirtualRouter finds the virtual router for the provided network name and deletes the router only if found.
+func (c *Cmk) DeleteVirtualRouter(ctx context.Context, profile, networkName string, dryRun bool) error {
+	command := newCmkCommand("list routers")
+	applyCmkArgs(&command, withCloudStackKeyword(networkName), appendArgs("listall=true"))
+	result, err := c.exec(ctx, profile, command...)
+	if err != nil {
+		return fmt.Errorf("listing virtual routers with networkName %s: %s: %v", networkName, result.String(), err)
+	}
+	response := struct {
+		VirtualRouters []cmkResourceIdentifier `json:"router"`
+	}{}
+	if err = json.Unmarshal(result.Bytes(), &response); err != nil {
+		return fmt.Errorf("parsing response into json: %v", err)
+	}
+	if len(response.VirtualRouters) == 0 {
+		logger.Info("virtual routers not found", "network name", networkName)
+		return nil
+	}
+	for _, router := range response.VirtualRouters {
+		if dryRun {
+			logger.Info("Found ", "virtual router name", router.Name)
+			continue
+		}
+		destroyCommand := newCmkCommand("destroy router")
+		applyCmkArgs(&destroyCommand, withCloudStackId(router.Id))
+		destroyResult, err := c.exec(ctx, profile, destroyCommand...)
+		if err != nil {
+			return fmt.Errorf("destroying virtual router with name %s and id %s: %s: %v", router.Name, router.Id, destroyResult.String(), err)
+		}
+		logger.Info("Deleted ", "router name:", router.Name, "router id", router.Id)
+	}
+	return nil
+}
+
+// RestartNetwork finds the network on CloudStack with provided name, if found will restart the network.
+func (c *Cmk) RestartNetwork(ctx context.Context, profile, networkName, networkType string, dryRun bool) error {
+	network, err := c.GetNetwork(ctx, profile, networkName, networkType)
+	if err != nil {
+		return err
+	}
+	if network == nil {
+		logger.Info("No network found to restart", "network name", networkName)
+		return nil
+	}
+
+	if dryRun {
+		logger.Info("Found ", "network name", network.Name, "network id", network.Id)
+		return nil
+	}
+	restartCommand := newCmkCommand("restart network")
+	applyCmkArgs(&restartCommand, withCloudStackId(network.Id))
+	result, err := c.exec(ctx, profile, restartCommand...)
+	if err != nil {
+		return fmt.Errorf("restarting network %s: %s: %v", network.Name, result.String(), err)
+	}
+	logger.Info("Restarted", "network name", network.Name, "network id", network.Id)
+
+	return nil
+}
+
+// GetNetwork searches CloudStack for network with provided name and type and returns the network object only when
+// one network was found with the provided name. Returns error if multiple networks with same name are found.
+// Returns nil if no networks are found.
+func (c *Cmk) GetNetwork(ctx context.Context, profile, networkName, networkType string) (*CmkNetwork, error) {
+	command := newCmkCommand("list networks")
+	applyCmkArgs(&command, withCloudStackName(networkName), withCloudStackNetworkType(networkType), appendArgs("listall=true"))
+	result, err := c.exec(ctx, profile, command...)
+	if err != nil {
+		return nil, fmt.Errorf("listing networks with name %s: %s: %v", networkName, result.String(), err)
+	}
+	response := struct {
+		Networks []CmkNetwork `json:"network"`
+	}{}
+	if err = json.Unmarshal(result.Bytes(), &response); err != nil {
+		return nil, fmt.Errorf("parsing response into json: %v", err)
+	}
+	if len(response.Networks) == 0 {
+		logger.Info("networks not found", "networkName", networkName)
+		return nil, nil
+	}
+	if len(response.Networks) > 1 {
+		logger.Info("More then one network found", "network name", networkName)
+		return nil, fmt.Errorf("multiple networks with same name found")
+	}
+	return &response.Networks[0], nil
+}
+
 func (c *Cmk) CleanupVms(ctx context.Context, profile string, clusterName string, dryRun bool) error {
 	command := newCmkCommand("list virtualmachines")
 	applyCmkArgs(&command, withCloudStackKeyword(clusterName), appendArgs("listall=true"))
@@ -493,6 +580,13 @@ type cmkServiceOffering struct {
 type cmkResourceIdentifier struct {
 	Id   string `json:"id"`
 	Name string `json:"name"`
+}
+
+type CmkNetwork struct {
+	State string `json:"state"`
+	Type  string `json:"type"`
+
+	cmkResourceIdentifier
 }
 
 type cmkDiskOffering struct {

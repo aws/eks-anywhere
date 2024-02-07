@@ -81,7 +81,8 @@ phases:
         fi
       - >
         ./bin/test e2e cleanup cloudstack
-        -n ${CLUSTER_NAME_PREFIX}
+        -c ${CLUSTER_NAME_PREFIX}
+        -n "${T_CLOUDSTACK_NETWORK},${T_CLOUDSTACK_NETWORK_2},${T_CLOUDSTACK_NETWORK_3}"
         -v 4
   build:
     commands:

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -22,8 +23,11 @@ import (
 )
 
 const (
-	cleanupRetries = 5
-	retryBackoff   = 10 * time.Second
+	cleanupRetries              = 5
+	retryBackoff                = 10 * time.Second
+	cloudStackNetworkType       = "Shared"
+	cloudStackNetworkReadyState = "Setup"
+	cloudStackAdminProfileName  = "global"
 )
 
 func CleanUpAwsTestResources(storageBucket string, maxAge string, tag string) error {
@@ -95,25 +99,17 @@ func VsphereRmVms(ctx context.Context, clusterName string, opts ...executables.G
 	return govc.CleanupVms(ctx, clusterName, false)
 }
 
-func CleanUpCloudstackTestResources(ctx context.Context, clusterName string, dryRun bool) error {
-	executableBuilder, close, err := executables.InitInDockerExecutablesBuilder(ctx, executables.DefaultEksaImage())
+// CloudStackRmVms deletes cloudstack vms created for cluster with `clusterName`.
+func CloudStackRmVms(ctx context.Context, clusterName string, dryRun bool) error {
+	cmk, close, execConfig, err := initCmk(ctx)
 	if err != nil {
-		return fmt.Errorf("unable to initialize executables: %v", err)
+		return err
 	}
-	defer close.CheckErr(ctx)
-	tmpWriter, err := filewriter.NewWriter("rmvms")
-	if err != nil {
-		return fmt.Errorf("creating filewriter for directory rmvms: %v", err)
-	}
-	execConfig, err := decoder.ParseCloudStackCredsFromEnv()
-	if err != nil {
-		return fmt.Errorf("parsing cloudstack credentials from environment: %v", err)
-	}
-	cmk, err := executableBuilder.BuildCmkExecutable(tmpWriter, execConfig)
-	if err != nil {
-		return fmt.Errorf("building cmk executable: %v", err)
-	}
-	defer cmk.Close(ctx)
+	defer func() {
+		cmk.Close(ctx)
+		close.CheckErr(ctx)
+	}()
+
 	cleanupRetrier := retrier.NewWithMaxRetries(cleanupRetries, retryBackoff)
 
 	errorsMap := map[string]error{}
@@ -124,11 +120,88 @@ func CleanUpCloudstackTestResources(ctx context.Context, clusterName string, dry
 			errorsMap[profile.Name] = err
 		}
 	}
-
 	if len(errorsMap) > 0 {
 		return fmt.Errorf("cleaning up VMs: %+v", errorsMap)
 	}
 	return nil
+}
+
+func cleanUpCloudStackNetwork(ctx context.Context, networkNames string, dryRun bool) error {
+	cmk, close, execConfig, err := initCmk(ctx)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		cmk.Close(ctx)
+		close.CheckErr(ctx)
+	}()
+	cleanupRetrier := retrier.NewWithMaxRetries(cleanupRetries, retryBackoff)
+
+	for _, profile := range execConfig.Profiles {
+		if profile.Name == cloudStackAdminProfileName {
+			networks := strings.Split(networkNames, ",")
+			for _, network := range networks {
+				logger.Info("Cleaning network", "network name", network)
+				// Network cleanup. Delete router
+				if err := cmk.DeleteVirtualRouter(ctx, profile.Name, network, dryRun); err != nil {
+					return err
+				}
+
+				// Restart network and wait till network status is "Setup"
+				logger.V(4).Info("Restarting network", "network name", network)
+				if err := cmk.RestartNetwork(ctx, profile.Name, network, cloudStackNetworkType, dryRun); err != nil {
+					return err
+				}
+				if err := cleanupRetrier.Retry(func() error {
+					cloudstackNetwork, err := cmk.GetNetwork(ctx, profile.Name, network, cloudStackNetworkType)
+					if err != nil {
+						return err
+					}
+					if cloudstackNetwork.State != cloudStackNetworkReadyState {
+						return fmt.Errorf("network has not finished restarting")
+					}
+					return nil
+				}); err != nil {
+					return err
+				}
+				logger.Info("Finished cleaning network", "network name", network)
+			}
+		}
+	}
+	return nil
+}
+
+// CleanUpCloudstackTestResources cleans up cloudstack vms and cloudstack networks.
+func CleanUpCloudstackTestResources(ctx context.Context, clusterName, networkNames string, dryRun bool) error {
+	err := CloudStackRmVms(ctx, clusterName, dryRun)
+	if err != nil {
+		return err
+	}
+	err = cleanUpCloudStackNetwork(ctx, networkNames, dryRun)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func initCmk(ctx context.Context) (*executables.Cmk, executables.Closer, *decoder.CloudStackExecConfig, error) {
+	executableBuilder, close, err := executables.InitInDockerExecutablesBuilder(ctx, executables.DefaultEksaImage())
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("unable to initialize executables: %v", err)
+	}
+	tmpWriter, err := filewriter.NewWriter("rmvms")
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("creating filewriter for directory rmvms: %v", err)
+	}
+	execConfig, err := decoder.ParseCloudStackCredsFromEnv()
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("parsing cloudstack credentials from environment: %v", err)
+	}
+	cmk, err := executableBuilder.BuildCmkExecutable(tmpWriter, execConfig)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("building cmk executable: %v", err)
+	}
+	return cmk, close, execConfig, nil
 }
 
 // NutanixTestResourcesCleanup cleans up any leftover VMs in Nutanix after a test run.

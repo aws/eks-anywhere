@@ -46,3 +46,7 @@ func withCloudStackName(name string) cmkCommandArgs {
 func withCloudStackKeyword(keyword string) cmkCommandArgs {
 	return appendArgs(fmt.Sprintf("keyword=\"%s\"", keyword))
 }
+
+func withCloudStackNetworkType(networkType string) cmkCommandArgs {
+	return appendArgs(fmt.Sprintf("type=\"%s\"", networkType))
+}
