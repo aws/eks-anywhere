@@ -70,14 +70,17 @@ var requiredNutanixEnvVars = []string{
 	nutanixTemplateNameUbuntu126Var,
 	nutanixTemplateNameUbuntu127Var,
 	nutanixTemplateNameUbuntu128Var,
+	nutanixTemplateNameUbuntu129Var,
 	nutanixTemplateNameRedHat125Var,
 	nutanixTemplateNameRedHat126Var,
 	nutanixTemplateNameRedHat127Var,
 	nutanixTemplateNameRedHat128Var,
+	nutanixTemplateNameRedHat129Var,
 	nutanixTemplateNameRedHat9125Var,
 	nutanixTemplateNameRedHat9126Var,
 	nutanixTemplateNameRedHat9127Var,
 	nutanixTemplateNameRedHat9128Var,
+	nutanixTemplateNameRedHat9129Var,
 	nutanixInsecure,
 }
 
