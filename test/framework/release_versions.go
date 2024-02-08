@@ -134,15 +134,6 @@ func eksaVersionForReleaseBranch(branch string) (string, error) {
 	return latestReleaseSemVer.String(), nil
 }
 
-func getLatestDevRelease() (*releasev1alpha1.EksARelease, error) {
-	releases, err := devReleases()
-	if err != nil {
-		return nil, err
-	}
-
-	return latestRelease(releases)
-}
-
 func GetLatestMinorReleaseBinaryFromMain() (binaryPath string, err error) {
 	return getBinaryFromRelease(GetLatestMinorReleaseFromMain())
 }
@@ -187,17 +178,26 @@ func latestRelease(releases *releasev1alpha1.Release) (*releasev1alpha1.EksARele
 // It reads the version from the local eks-a CLI by running `eksctl anywhere version` command
 // and follows the same logic as the CLI to extract the release.
 func localEksaCLIDevVersionRelease() (*releasev1alpha1.EksARelease, error) {
-	version, err := localEKSAVersion()
+	version, err := localEKSAVersionCommand()
 	if err != nil {
 		return nil, err
 	}
 
-	r, err := devReleases()
+	r, err := getReleases(version.ReleaseManifestURL)
 	if err != nil {
 		return nil, err
 	}
 
-	return releases.ReleaseForVersion(r, version)
+	eksaRelease, err := releases.ReleaseForVersion(r, version.GitVersion)
+	if err != nil {
+		return nil, err
+	}
+
+	if eksaRelease == nil {
+		return nil, fmt.Errorf("no matching release found for version %s in manifest %s. Latest available version is %s", version.GitVersion, version.ReleaseManifestURL, r.Spec.LatestVersion)
+	}
+
+	return eksaRelease, nil
 }
 
 // GetPreviousMinorReleaseFromVersion calculates the previous minor release by decrementing the
@@ -315,10 +315,6 @@ func (p *platformAwareRelease) binaryUri() (binaryUri string, err error) {
 
 func prodReleases() (release *releasev1alpha1.Release, err error) {
 	return getReleases(prodReleasesManifest)
-}
-
-func devReleases() (release *releasev1alpha1.Release, err error) {
-	return getReleases(devReleaseURL())
 }
 
 func getReleases(url string) (release *releasev1alpha1.Release, err error) {
