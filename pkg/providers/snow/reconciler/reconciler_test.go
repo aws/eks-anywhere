@@ -12,6 +12,7 @@ import (
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/pointer"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
@@ -230,6 +231,8 @@ func TestReconcilerReconcileControlPlane(t *testing.T) {
 
 func TestReconcilerCheckControlPlaneReadyItIsReady(t *testing.T) {
 	tt := newReconcilerTest(t)
+	kcpVersion := "test"
+	tt.kcp.Spec.Version = kcpVersion
 	tt.kcp.Status = controlplanev1.KubeadmControlPlaneStatus{
 		Conditions: clusterv1.Conditions{
 			{
@@ -238,6 +241,7 @@ func TestReconcilerCheckControlPlaneReadyItIsReady(t *testing.T) {
 				LastTransitionTime: metav1.NewTime(time.Now()),
 			},
 		},
+		Version: pointer.String(kcpVersion),
 	}
 	tt.eksaSupportObjs = append(tt.eksaSupportObjs, tt.kcp)
 	tt.withFakeClient()

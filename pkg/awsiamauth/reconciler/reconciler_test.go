@@ -14,6 +14,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/utils/pointer"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -235,8 +236,10 @@ func TestReconcileRemoteGetClientError(t *testing.T) {
 			EksaVersion: &version,
 		},
 	}
+	kcpVersion := "test"
 	kcp := test.KubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
 		kcp.Name = cluster.Name
+		kcp.Spec.Version = kcpVersion
 		kcp.Status = controlplanev1.KubeadmControlPlaneStatus{
 			Conditions: clusterv1.Conditions{
 				{
@@ -245,6 +248,7 @@ func TestReconcileRemoteGetClientError(t *testing.T) {
 					LastTransitionTime: metav1.NewTime(time.Now()),
 				},
 			},
+			Version: pointer.String(kcpVersion),
 		}
 	})
 	sec := &corev1.Secret{
@@ -309,8 +313,10 @@ func TestReconcileConfigMapNotFoundApplyError(t *testing.T) {
 			EksaVersion: &version,
 		},
 	}
+	kcpVersion := "test"
 	kcp := test.KubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
 		kcp.Name = cluster.Name
+		kcp.Spec.Version = kcpVersion
 		kcp.Status = controlplanev1.KubeadmControlPlaneStatus{
 			Conditions: clusterv1.Conditions{
 				{
@@ -319,6 +325,7 @@ func TestReconcileConfigMapNotFoundApplyError(t *testing.T) {
 					LastTransitionTime: metav1.NewTime(time.Now()),
 				},
 			},
+			Version: pointer.String(kcpVersion),
 		}
 	})
 	sec := &corev1.Secret{

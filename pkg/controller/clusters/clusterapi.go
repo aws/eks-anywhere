@@ -34,7 +34,9 @@ func CheckControlPlaneReady(ctx context.Context, client client.Client, log logr.
 		return controller.ResultWithRequeue(5 * time.Second), nil
 	}
 
-	if !conditions.IsTrue(kcp, clusterapi.ReadyCondition) {
+	// Checking for version as well to avoid race condition of status not being updated in time at least for Kubernetes version upgrades
+	if !conditions.IsTrue(kcp, clusterapi.ReadyCondition) ||
+		kcp.Status.Version == nil || kcp.Spec.Version != *kcp.Status.Version {
 		log.Info("KCP is not ready yet, requeing")
 		return controller.ResultWithRequeue(30 * time.Second), nil
 	}
