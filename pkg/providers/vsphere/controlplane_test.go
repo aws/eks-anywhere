@@ -285,7 +285,7 @@ func TestControlPlaneSpecWithUpgradeRolloutStrategyRollingUpdate(t *testing.T) {
 	client := test.NewFakeKubeClient()
 	spec := test.NewFullClusterSpec(t, testClusterConfigMainFilename)
 	spec.Cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy = &anywherev1.ControlPlaneUpgradeRolloutStrategy{
-		RollingUpdate: anywherev1.ControlPlaneRollingUpdateParams{
+		RollingUpdate: &anywherev1.ControlPlaneRollingUpdateParams{
 			MaxSurge: 1,
 		},
 	}

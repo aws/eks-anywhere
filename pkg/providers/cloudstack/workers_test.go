@@ -719,7 +719,7 @@ func TestWorkersSpecUpgradeRolloutStrategy(t *testing.T) {
 			MachineGroupRef: &anywherev1.Ref{Name: "test"},
 			Name:            "md-0",
 			UpgradeRolloutStrategy: &anywherev1.WorkerNodesUpgradeRolloutStrategy{
-				RollingUpdate: anywherev1.WorkerNodesRollingUpdateParams{
+				RollingUpdate: &anywherev1.WorkerNodesRollingUpdateParams{
 					MaxSurge:       1,
 					MaxUnavailable: 0,
 				},
