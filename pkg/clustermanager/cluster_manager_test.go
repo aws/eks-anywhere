@@ -2934,6 +2934,30 @@ func TestCreateAwsIamAuthCaSecretSuccess(t *testing.T) {
 	tt.Expect(err).To(BeNil())
 }
 
+func TestCreateRegistryCredSecretSuccess(t *testing.T) {
+	tt := newTest(t)
+
+	secret := &corev1.Secret{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Secret",
+			APIVersion: corev1.SchemeGroupVersion.Version,
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: constants.EksaSystemNamespace,
+			Name:      "registry-credentials",
+		},
+		StringData: map[string]string{
+			"username": "",
+			"password": "",
+		},
+	}
+
+	tt.mocks.client.EXPECT().Apply(tt.ctx, tt.cluster.KubeconfigFile, secret).Return(nil)
+
+	err := tt.clusterManager.CreateRegistryCredSecret(tt.ctx, tt.cluster)
+	tt.Expect(err).To(BeNil())
+}
+
 func TestClusterManagerDeleteClusterSelfManagedCluster(t *testing.T) {
 	tt := newTest(t)
 	managementCluster := &types.Cluster{

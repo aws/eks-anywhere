@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"math"
+	"os"
 	"reflect"
 	"regexp"
 	"strings"
@@ -736,6 +737,26 @@ func compareEKSAClusterSpec(ctx context.Context, currentClusterSpec, newClusterS
 	}
 
 	return false, nil
+}
+
+// CreateRegistryCredSecret creates the registry-credentials secret on a managment cluster.
+func (c *ClusterManager) CreateRegistryCredSecret(ctx context.Context, mgmt *types.Cluster) error {
+	secret := &corev1.Secret{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Secret",
+			APIVersion: corev1.SchemeGroupVersion.Version,
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: constants.EksaSystemNamespace,
+			Name:      "registry-credentials",
+		},
+		StringData: map[string]string{
+			"username": os.Getenv("REGISTRY_USERNAME"),
+			"password": os.Getenv("REGISTRY_PASSWORD"),
+		},
+	}
+
+	return c.clusterClient.Apply(ctx, mgmt.KubeconfigFile, secret)
 }
 
 // InstallCAPI installs the cluster-api components in a cluster.
