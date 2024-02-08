@@ -35,15 +35,24 @@ BRANCH_NAME?=main
 ifneq ($(PULL_BASE_REF),) # PULL_BASE_REF originates from prow
 	BRANCH_NAME=$(PULL_BASE_REF)
 endif
+
+ifeq ($(CODEBUILD_CI),true)
+# For CI E2E tests, use the S3 URl to bypass the CloudFront cache and avoid race conditions
+# Revisit this if we start gettig rate limited by S3
+	RELEASE_MANIFEST_HOST=https://dev-release-prod-pdx.s3.us-west-2.amazonaws.com
+else
+	RELEASE_MANIFEST_HOST=https://dev-release-assets.eks-anywhere.model-rocket.aws.dev
+endif
+
 ifeq (,$(findstring $(BRANCH_NAME),main))
 ## use the branch-specific bundle manifest if the branch is not 'main'
 BUNDLE_MANIFEST_URL?=https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/${BRANCH_NAME}/bundle-release.yaml
-RELEASE_MANIFEST_URL?=https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/${BRANCH_NAME}/eks-a-release.yaml
+RELEASE_MANIFEST_URL?=$(RELEASE_MANIFEST_HOST)/${BRANCH_NAME}/eks-a-release.yaml
 LATEST=$(BRANCH_NAME)
 else
 ## use the standard bundle manifest if the branch is 'main'
 BUNDLE_MANIFEST_URL?=https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/bundle-release.yaml
-RELEASE_MANIFEST_URL?=https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/eks-a-release.yaml
+RELEASE_MANIFEST_URL?=$(RELEASE_MANIFEST_HOST)/eks-a-release.yaml
 LATEST=latest
 endif
 
