@@ -8,8 +8,9 @@ import (
 var gitVersion string
 
 type Info struct {
-	GitVersion        string `json:"version"`
-	BundleManifestURL string `json:"bundleManifestURL,omitempty"`
+	GitVersion         string `json:"version"`
+	BundleManifestURL  string `json:"bundleManifestURL,omitempty"`
+	ReleaseManifestURL string `json:"releaseManifestURL,omitempty"`
 }
 
 func Get() Info {
@@ -29,7 +30,8 @@ func GetFullVersionInfo() (Info, error) {
 	}
 
 	return Info{
-		GitVersion:        gitVersion,
-		BundleManifestURL: bundleManifestURL,
+		GitVersion:         gitVersion,
+		BundleManifestURL:  bundleManifestURL,
+		ReleaseManifestURL: releases.ManifestURL(),
 	}, nil
 }

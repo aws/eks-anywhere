@@ -222,6 +222,7 @@ func TestBundleManifestURL(t *testing.T) {
 			name: "error getting release",
 			releases: &releasev1.Release{
 				Spec: releasev1.ReleaseSpec{
+					LatestVersion: "v0.0.2",
 					Releases: []releasev1.EksARelease{
 						{Version: "v0.0.1", Number: 1, BundleManifestUrl: "https://example.com/bundle-manifest"},
 						{Version: "v0.0.2", Number: 2, BundleManifestUrl: "https://example.com/bundle-manifest"},
@@ -230,7 +231,7 @@ func TestBundleManifestURL(t *testing.T) {
 			},
 			version: "v0.0.3",
 			wantURL: "",
-			wantErr: "no matching release found for version v0.0.3 to get Bundles URL",
+			wantErr: "no matching release found for version v0.0.3 to get Bundles URL. Latest available version is v0.0.2",
 		},
 	}
 
