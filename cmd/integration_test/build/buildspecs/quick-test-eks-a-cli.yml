@@ -108,6 +108,11 @@ env:
     T_NUTANIX_TEMPLATE_NAME_REDHAT_9_1_26: "nutanix_ci:nutanix_template_rhel_9_1_26"
     T_NUTANIX_TEMPLATE_NAME_REDHAT_9_1_27: "nutanix_ci:nutanix_template_rhel_9_1_27"
     T_NUTANIX_TEMPLATE_NAME_REDHAT_9_1_28: "nutanix_ci:nutanix_template_rhel_9_1_28"
+    # Snow secrets
+    T_SNOW_DEVICES: "snow_ci:snow_devices"
+    T_SNOW_CREDENTIALS_S3_PATH: "snow_ci:snow_credentials_s3_path"
+    T_SNOW_CERTIFICATES_S3_PATH: "snow_ci:snow_certificates_s3_path"
+    T_SNOW_CONTROL_PLANE_CIDRS: "snow_ci:control_plane_cidrs"
 
 phases:
   pre_build:
