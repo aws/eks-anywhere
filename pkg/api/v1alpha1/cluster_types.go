@@ -1238,8 +1238,8 @@ const (
 
 // ControlPlaneUpgradeRolloutStrategy indicates rollout strategy for cluster.
 type ControlPlaneUpgradeRolloutStrategy struct {
-	Type          UpgradeRolloutStrategyType      `json:"type,omitempty"`
-	RollingUpdate ControlPlaneRollingUpdateParams `json:"rollingUpdate,omitempty"`
+	Type          UpgradeRolloutStrategyType       `json:"type,omitempty"`
+	RollingUpdate *ControlPlaneRollingUpdateParams `json:"rollingUpdate,omitempty"`
 }
 
 // ControlPlaneRollingUpdateParams is API for rolling update strategy knobs.
@@ -1249,8 +1249,8 @@ type ControlPlaneRollingUpdateParams struct {
 
 // WorkerNodesUpgradeRolloutStrategy indicates rollout strategy for cluster.
 type WorkerNodesUpgradeRolloutStrategy struct {
-	Type          UpgradeRolloutStrategyType     `json:"type,omitempty"`
-	RollingUpdate WorkerNodesRollingUpdateParams `json:"rollingUpdate,omitempty"`
+	Type          UpgradeRolloutStrategyType      `json:"type,omitempty"`
+	RollingUpdate *WorkerNodesRollingUpdateParams `json:"rollingUpdate,omitempty"`
 }
 
 // Equal compares two WorkerNodesUpgradeRolloutStrategies.
@@ -1263,7 +1263,19 @@ func (w *WorkerNodesUpgradeRolloutStrategy) Equal(other *WorkerNodesUpgradeRollo
 		return false
 	}
 
-	return w.Type == other.Type && w.RollingUpdate == other.RollingUpdate
+	if w.Type != other.Type {
+		return false
+	}
+
+	if w.RollingUpdate == other.RollingUpdate {
+		return true
+	}
+
+	if w.RollingUpdate == nil || other.RollingUpdate == nil {
+		return false
+	}
+
+	return w.RollingUpdate.MaxSurge == other.RollingUpdate.MaxSurge && w.RollingUpdate.MaxUnavailable == other.RollingUpdate.MaxUnavailable
 }
 
 // WorkerNodesRollingUpdateParams is API for rolling update strategy knobs.

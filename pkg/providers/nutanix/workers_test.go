@@ -40,7 +40,7 @@ func TestWorkersSpecWithUpgradeRolloutStrategy(t *testing.T) {
 			},
 			Name: "eksa-unit-test",
 			UpgradeRolloutStrategy: &v1alpha1.WorkerNodesUpgradeRolloutStrategy{
-				RollingUpdate: v1alpha1.WorkerNodesRollingUpdateParams{
+				RollingUpdate: &v1alpha1.WorkerNodesRollingUpdateParams{
 					MaxSurge:       1,
 					MaxUnavailable: 0,
 				},

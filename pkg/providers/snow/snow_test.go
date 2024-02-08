@@ -302,7 +302,7 @@ func givenClusterConfig() *v1alpha1.Cluster {
 				},
 				UpgradeRolloutStrategy: &v1alpha1.ControlPlaneUpgradeRolloutStrategy{
 					Type: "RollingUpdate",
-					RollingUpdate: v1alpha1.ControlPlaneRollingUpdateParams{
+					RollingUpdate: &v1alpha1.ControlPlaneRollingUpdateParams{
 						MaxSurge: 1,
 					},
 				},
@@ -319,7 +319,7 @@ func givenClusterConfig() *v1alpha1.Cluster {
 					},
 					UpgradeRolloutStrategy: &v1alpha1.WorkerNodesUpgradeRolloutStrategy{
 						Type: "RollingUpdate",
-						RollingUpdate: v1alpha1.WorkerNodesRollingUpdateParams{
+						RollingUpdate: &v1alpha1.WorkerNodesRollingUpdateParams{
 							MaxSurge:       1,
 							MaxUnavailable: 0,
 						},
