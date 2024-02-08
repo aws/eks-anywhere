@@ -34,9 +34,6 @@ BRANCH_NAME?=main
 # https://github.com/aws/eks-anywhere/blob/main/docs/developer/manifests.md#locally-building-the-cli
 ifneq ($(PULL_BASE_REF),) # PULL_BASE_REF originates from prow
 	BRANCH_NAME=$(PULL_BASE_REF)
-	DEV_GIT_VERSION ?= $(shell source ./scripts/eksa_version.sh && eksa-version::get_next_eksa_version_for_ancestor $(PULL_BASE_REF))-dev+latest
-else
-	DEV_GIT_VERSION ?= $(shell source ./scripts/eksa_version.sh && eksa-version::get_next_eksa_version)-dev+latest
 endif
 ifeq (,$(findstring $(BRANCH_NAME),main))
 ## use the branch-specific bundle manifest if the branch is not 'main'
@@ -48,6 +45,22 @@ else
 BUNDLE_MANIFEST_URL?=https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/bundle-release.yaml
 RELEASE_MANIFEST_URL?=https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/eks-a-release.yaml
 LATEST=latest
+endif
+
+# DEV_GIT_VERSION should be something like v0.19.0-dev+latest, depending on the base branch
+# and if this is a local build or a CI build.
+# https://github.com/aws/eks-anywhere/blob/main/docs/developer/manifests.md#locally-building-the-cli
+ifneq ($(PULL_BASE_REF),)
+# PULL_BASE_REF originates from prow
+# If prow presubmit, ping to the latest available version
+	DEV_GIT_VERSION ?= $(shell source ./scripts/eksa_version.sh && eksa-version::latest_release_verison_in_manifest "$(RELEASE_MANIFEST_URL)")
+else ifeq ($(CODEBUILD_CI),true)
+# If codebuild e2e tests, ping to the latest available version
+	DEV_GIT_VERSION ?= $(shell source ./scripts/eksa_version.sh && eksa-version::latest_release_verison_in_manifest "$(RELEASE_MANIFEST_URL)")
+else
+# Else, this is a local buid, so use "dev+latest" to always select the latest
+# version in the manifest in runtime.
+	DEV_GIT_VERSION ?= $(shell source ./scripts/eksa_version.sh && eksa-version::get_next_eksa_version)-dev+latest
 endif
 
 CUSTOM_GIT_VERSION:=v0.0.0-custom
@@ -648,7 +661,7 @@ build-eks-a-for-e2e:
 			scripts/get_bundle.sh; \
 		else \
 			make eks-a-cross-platform; \
-			make eks-a-for-dev-e2e; \
+			make eks-a; \
 		fi \
 	else \
 		make eksa-components-override; \
