@@ -130,7 +130,10 @@ phases:
           BUNDLES_OVERRIDE=true
         fi
       - SKIPPED_TESTS=$(yq e ".skipped_tests | @csv" ${CODEBUILD_SRC_DIR}/test/e2e/SKIPPED_TESTS.yaml)
-      - QUICK_TESTS="($(yq e '.quick_tests | join("|")' ./test/e2e/QUICK_TESTS.yaml))"
+      - |
+        if [ -z "$TESTS" ] || [ "$TESTS" == "QUICK" ]; then
+          TESTS=$(yq e '.quick_tests | join("|")' ./test/e2e/QUICK_TESTS.yaml)
+        fi
       - >
         ./bin/test e2e run
         -c ${INTEGRATION_TEST_INFRA_CONFIG}
@@ -139,7 +142,7 @@ phases:
         -i ${INTEGRATION_TEST_INSTANCE_PROFILE}
         -m ${INTEGRATION_TEST_MAX_EC2_COUNT}
         -p ${INTEGRATION_TEST_MAX_CONCURRENT_TEST_COUNT}
-        -r ${QUICK_TESTS}
+        -r ${TESTS}
         -v 4
         --skip ${SKIPPED_TESTS}
         --bundles-override=${BUNDLES_OVERRIDE}
