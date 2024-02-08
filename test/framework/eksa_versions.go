@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"log"
 
+	"github.com/pkg/errors"
+
 	"github.com/aws/eks-anywhere/pkg/semver"
 )
 
@@ -38,7 +40,7 @@ func localEKSAVersionCommand() (versionCommandOutput, error) {
 	}
 	out, err := cmd.CombinedOutput()
 	if err != nil {
-		return versionCommandOutput{}, err
+		return versionCommandOutput{}, errors.Errorf("failed to run eksctl anywhere version: %v, output: %s", err, out)
 	}
 
 	versionOut := &versionCommandOutput{}
