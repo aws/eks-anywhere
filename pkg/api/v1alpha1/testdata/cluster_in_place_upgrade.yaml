@@ -1,0 +1,26 @@
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: Cluster
+metadata:
+  name: test-cluster
+spec:
+  clusterNetwork:
+    cniConfig:
+      cilium: {}
+    dns: {}
+    pods:
+      cidrBlocks:
+      - 192.168.0.0/16
+    services:
+      cidrBlocks:
+      - 10.96.0.0/12
+  controlPlaneConfiguration:
+    upgradeRolloutStrategy:
+      type: InPlace
+  datacenterRef: {}
+  kubernetesVersion: "1.28"
+  managementCluster:
+    name: test-cluster
+  workerNodeGroupConfigurations:
+  - count: 1
+    upgradeRolloutStrategy:
+      type: InPlace

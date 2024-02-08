@@ -26,7 +26,7 @@ func TestSetUpgradeRolloutStrategyInKubeadmControlPlane(t *testing.T) {
 		{
 			name: "with maxSurge",
 			rolloutStrategy: &anywherev1.ControlPlaneUpgradeRolloutStrategy{
-				RollingUpdate: anywherev1.ControlPlaneRollingUpdateParams{
+				RollingUpdate: &anywherev1.ControlPlaneRollingUpdateParams{
 					MaxSurge: 1,
 				},
 			},
@@ -64,7 +64,7 @@ func TestSetUpgradeRolloutStrategyInMachineDeployment(t *testing.T) {
 		{
 			name: "with maxSurge and maxUnavailable",
 			rolloutStrategy: &anywherev1.WorkerNodesUpgradeRolloutStrategy{
-				RollingUpdate: anywherev1.WorkerNodesRollingUpdateParams{
+				RollingUpdate: &anywherev1.WorkerNodesRollingUpdateParams{
 					MaxSurge:       1,
 					MaxUnavailable: 0,
 				},

@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/utils/ptr"
@@ -3349,7 +3350,7 @@ func TestValidateCPUpgradeRolloutStrategy(t *testing.T) {
 			cluster: &Cluster{
 				Spec: ClusterSpec{
 					ControlPlaneConfiguration: ControlPlaneConfiguration{
-						UpgradeRolloutStrategy: &ControlPlaneUpgradeRolloutStrategy{Type: "RollingUpdate", RollingUpdate: ControlPlaneRollingUpdateParams{MaxSurge: 2}},
+						UpgradeRolloutStrategy: &ControlPlaneUpgradeRolloutStrategy{Type: "RollingUpdate", RollingUpdate: &ControlPlaneRollingUpdateParams{MaxSurge: 2}},
 					},
 				},
 			},
@@ -3360,7 +3361,7 @@ func TestValidateCPUpgradeRolloutStrategy(t *testing.T) {
 			cluster: &Cluster{
 				Spec: ClusterSpec{
 					ControlPlaneConfiguration: ControlPlaneConfiguration{
-						UpgradeRolloutStrategy: &ControlPlaneUpgradeRolloutStrategy{Type: "RollingUpdate", RollingUpdate: ControlPlaneRollingUpdateParams{MaxSurge: 0}},
+						UpgradeRolloutStrategy: &ControlPlaneUpgradeRolloutStrategy{Type: "RollingUpdate", RollingUpdate: &ControlPlaneRollingUpdateParams{MaxSurge: 0}},
 					},
 				},
 			},
@@ -3371,7 +3372,7 @@ func TestValidateCPUpgradeRolloutStrategy(t *testing.T) {
 			cluster: &Cluster{
 				Spec: ClusterSpec{
 					ControlPlaneConfiguration: ControlPlaneConfiguration{
-						UpgradeRolloutStrategy: &ControlPlaneUpgradeRolloutStrategy{Type: "RollingUpdate", RollingUpdate: ControlPlaneRollingUpdateParams{MaxSurge: 1}},
+						UpgradeRolloutStrategy: &ControlPlaneUpgradeRolloutStrategy{Type: "RollingUpdate", RollingUpdate: &ControlPlaneRollingUpdateParams{MaxSurge: 1}},
 					},
 				},
 			},
@@ -3382,7 +3383,7 @@ func TestValidateCPUpgradeRolloutStrategy(t *testing.T) {
 			cluster: &Cluster{
 				Spec: ClusterSpec{
 					ControlPlaneConfiguration: ControlPlaneConfiguration{
-						UpgradeRolloutStrategy: &ControlPlaneUpgradeRolloutStrategy{Type: "RollingUpdate", RollingUpdate: ControlPlaneRollingUpdateParams{MaxSurge: -1}},
+						UpgradeRolloutStrategy: &ControlPlaneUpgradeRolloutStrategy{Type: "RollingUpdate", RollingUpdate: &ControlPlaneRollingUpdateParams{MaxSurge: -1}},
 					},
 				},
 			},
@@ -3408,6 +3409,17 @@ func TestValidateCPUpgradeRolloutStrategy(t *testing.T) {
 				Spec: ClusterSpec{
 					ControlPlaneConfiguration: ControlPlaneConfiguration{
 						UpgradeRolloutStrategy: &ControlPlaneUpgradeRolloutStrategy{Type: "InPlace"},
+					},
+				},
+			},
+		},
+		{
+			name:    "in place upgrade - rollingUpdate field specified",
+			wantErr: "ControlPlaneConfiguration: RollingUpdate field must be empty for 'InPlace' upgrade rollout strategy type",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					ControlPlaneConfiguration: ControlPlaneConfiguration{
+						UpgradeRolloutStrategy: &ControlPlaneUpgradeRolloutStrategy{Type: "InPlace", RollingUpdate: &ControlPlaneRollingUpdateParams{MaxSurge: 1}},
 					},
 				},
 			},
@@ -3445,7 +3457,7 @@ func TestValidateMDUpgradeRolloutStrategy(t *testing.T) {
 		},
 		{
 			name:    "rolling upgrade knobs not specified",
-			wantErr: "WorkerNodeGroupConfiguration: maxSurge and maxUnavailable not specified or are 0. maxSurge and maxUnavailable cannot both be 0",
+			wantErr: "WorkerNodeGroupConfiguration: upgradeRolloutStrategy.rollingUpdate field is required for upgradeRolloutStrategy.type RollingUpdate",
 			cluster: &Cluster{
 				Spec: ClusterSpec{
 					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
@@ -3460,7 +3472,7 @@ func TestValidateMDUpgradeRolloutStrategy(t *testing.T) {
 			cluster: &Cluster{
 				Spec: ClusterSpec{
 					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
-						UpgradeRolloutStrategy: &WorkerNodesUpgradeRolloutStrategy{Type: "RollingUpdate", RollingUpdate: WorkerNodesRollingUpdateParams{MaxSurge: 0, MaxUnavailable: 0}},
+						UpgradeRolloutStrategy: &WorkerNodesUpgradeRolloutStrategy{Type: "RollingUpdate", RollingUpdate: &WorkerNodesRollingUpdateParams{MaxSurge: 0, MaxUnavailable: 0}},
 					}},
 				},
 			},
@@ -3471,7 +3483,7 @@ func TestValidateMDUpgradeRolloutStrategy(t *testing.T) {
 			cluster: &Cluster{
 				Spec: ClusterSpec{
 					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
-						UpgradeRolloutStrategy: &WorkerNodesUpgradeRolloutStrategy{Type: "RollingUpdate", RollingUpdate: WorkerNodesRollingUpdateParams{MaxSurge: 0, MaxUnavailable: 1}},
+						UpgradeRolloutStrategy: &WorkerNodesUpgradeRolloutStrategy{Type: "RollingUpdate", RollingUpdate: &WorkerNodesRollingUpdateParams{MaxSurge: 0, MaxUnavailable: 1}},
 					}},
 				},
 			},
@@ -3482,7 +3494,7 @@ func TestValidateMDUpgradeRolloutStrategy(t *testing.T) {
 			cluster: &Cluster{
 				Spec: ClusterSpec{
 					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
-						UpgradeRolloutStrategy: &WorkerNodesUpgradeRolloutStrategy{Type: "RollingUpdate", RollingUpdate: WorkerNodesRollingUpdateParams{MaxSurge: 1, MaxUnavailable: 0}},
+						UpgradeRolloutStrategy: &WorkerNodesUpgradeRolloutStrategy{Type: "RollingUpdate", RollingUpdate: &WorkerNodesRollingUpdateParams{MaxSurge: 1, MaxUnavailable: 0}},
 					}},
 				},
 			},
@@ -3493,7 +3505,7 @@ func TestValidateMDUpgradeRolloutStrategy(t *testing.T) {
 			cluster: &Cluster{
 				Spec: ClusterSpec{
 					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
-						UpgradeRolloutStrategy: &WorkerNodesUpgradeRolloutStrategy{Type: "RollingUpdate", RollingUpdate: WorkerNodesRollingUpdateParams{MaxSurge: 5, MaxUnavailable: 0}},
+						UpgradeRolloutStrategy: &WorkerNodesUpgradeRolloutStrategy{Type: "RollingUpdate", RollingUpdate: &WorkerNodesRollingUpdateParams{MaxSurge: 5, MaxUnavailable: 0}},
 					}},
 				},
 			},
@@ -3504,7 +3516,7 @@ func TestValidateMDUpgradeRolloutStrategy(t *testing.T) {
 			cluster: &Cluster{
 				Spec: ClusterSpec{
 					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
-						UpgradeRolloutStrategy: &WorkerNodesUpgradeRolloutStrategy{Type: "RollingUpdate", RollingUpdate: WorkerNodesRollingUpdateParams{MaxSurge: 3, MaxUnavailable: 1}},
+						UpgradeRolloutStrategy: &WorkerNodesUpgradeRolloutStrategy{Type: "RollingUpdate", RollingUpdate: &WorkerNodesRollingUpdateParams{MaxSurge: 3, MaxUnavailable: 1}},
 					}},
 				},
 			},
@@ -3515,7 +3527,7 @@ func TestValidateMDUpgradeRolloutStrategy(t *testing.T) {
 			cluster: &Cluster{
 				Spec: ClusterSpec{
 					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
-						UpgradeRolloutStrategy: &WorkerNodesUpgradeRolloutStrategy{Type: "RollingUpdate", RollingUpdate: WorkerNodesRollingUpdateParams{MaxSurge: 3, MaxUnavailable: -1}},
+						UpgradeRolloutStrategy: &WorkerNodesUpgradeRolloutStrategy{Type: "RollingUpdate", RollingUpdate: &WorkerNodesRollingUpdateParams{MaxSurge: 3, MaxUnavailable: -1}},
 					}},
 				},
 			},
@@ -3526,7 +3538,7 @@ func TestValidateMDUpgradeRolloutStrategy(t *testing.T) {
 			cluster: &Cluster{
 				Spec: ClusterSpec{
 					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
-						UpgradeRolloutStrategy: &WorkerNodesUpgradeRolloutStrategy{Type: "RollingUpdate", RollingUpdate: WorkerNodesRollingUpdateParams{MaxSurge: -3, MaxUnavailable: 1}},
+						UpgradeRolloutStrategy: &WorkerNodesUpgradeRolloutStrategy{Type: "RollingUpdate", RollingUpdate: &WorkerNodesRollingUpdateParams{MaxSurge: -3, MaxUnavailable: 1}},
 					}},
 				},
 			},
@@ -3537,7 +3549,7 @@ func TestValidateMDUpgradeRolloutStrategy(t *testing.T) {
 			cluster: &Cluster{
 				Spec: ClusterSpec{
 					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
-						UpgradeRolloutStrategy: &WorkerNodesUpgradeRolloutStrategy{Type: "RollingUpdate", RollingUpdate: WorkerNodesRollingUpdateParams{MaxSurge: -3, MaxUnavailable: -1}},
+						UpgradeRolloutStrategy: &WorkerNodesUpgradeRolloutStrategy{Type: "RollingUpdate", RollingUpdate: &WorkerNodesRollingUpdateParams{MaxSurge: -3, MaxUnavailable: -1}},
 					}},
 				},
 			},
@@ -3563,6 +3575,17 @@ func TestValidateMDUpgradeRolloutStrategy(t *testing.T) {
 				Spec: ClusterSpec{
 					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
 						UpgradeRolloutStrategy: &WorkerNodesUpgradeRolloutStrategy{Type: "InPlace"},
+					}},
+				},
+			},
+		},
+		{
+			name:    "in place upgrade - rollingUpdate field specified",
+			wantErr: "WorkerNodeGroupConfiguration: RollingUpdate field must be empty for 'InPlace' upgrade rollout strategy type",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
+						UpgradeRolloutStrategy: &WorkerNodesUpgradeRolloutStrategy{Type: "InPlace", RollingUpdate: &WorkerNodesRollingUpdateParams{MaxSurge: 5, MaxUnavailable: 0}},
 					}},
 				},
 			},
@@ -3778,7 +3801,7 @@ func TestClusterCPUpgradeRolloutStrategyNotNil(t *testing.T) {
 				MachineGroupRef:        nil,
 				Taints:                 nil,
 				Labels:                 nil,
-				UpgradeRolloutStrategy: &ControlPlaneUpgradeRolloutStrategy{Type: "RollingUpdate", RollingUpdate: ControlPlaneRollingUpdateParams{MaxSurge: 5}},
+				UpgradeRolloutStrategy: &ControlPlaneUpgradeRolloutStrategy{Type: "RollingUpdate", RollingUpdate: &ControlPlaneRollingUpdateParams{MaxSurge: 5}},
 			},
 		},
 	}
@@ -3838,7 +3861,7 @@ func TestClusterMDUpgradeRolloutStrategyNotNil(t *testing.T) {
 					MachineGroupRef:        nil,
 					Taints:                 nil,
 					Labels:                 nil,
-					UpgradeRolloutStrategy: &WorkerNodesUpgradeRolloutStrategy{Type: "RollingUpdate", RollingUpdate: WorkerNodesRollingUpdateParams{MaxSurge: 5, MaxUnavailable: 2}},
+					UpgradeRolloutStrategy: &WorkerNodesUpgradeRolloutStrategy{Type: "RollingUpdate", RollingUpdate: &WorkerNodesRollingUpdateParams{MaxSurge: 5, MaxUnavailable: 2}},
 				},
 			},
 		},
@@ -3850,4 +3873,19 @@ func TestClusterMDUpgradeRolloutStrategyNotNil(t *testing.T) {
 			g.Expect(cg.Spec.WorkerNodeGroupConfigurations).To(Equal(tt.want))
 		})
 	}
+}
+
+func TestClusterCPUpgradeInPlace(t *testing.T) {
+	g := NewWithT(t)
+
+	cluster := NewClusterGenerate("test-cluster", WorkerNodeConfigCount(1))
+	cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy = &ControlPlaneUpgradeRolloutStrategy{Type: InPlaceStrategyType}
+	cluster.Spec.WorkerNodeGroupConfigurations[0].UpgradeRolloutStrategy = &WorkerNodesUpgradeRolloutStrategy{Type: InPlaceStrategyType}
+
+	clusterSpec, err := yaml.Marshal(cluster)
+	g.Expect(err).To(BeNil())
+
+	expected, err := os.ReadFile("testdata/cluster_in_place_upgrade.yaml")
+	g.Expect(err).To(BeNil())
+	g.Expect(string(clusterSpec)).To(BeEquivalentTo(string(expected)))
 }

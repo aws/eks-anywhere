@@ -2962,16 +2962,29 @@ func TestWorkerNodesUpgradeRolloutStrategyEqual(t *testing.T) {
 			want: false,
 		},
 		{
+			name: "one rolling update nil",
+			a: &v1alpha1.WorkerNodesUpgradeRolloutStrategy{
+				Type: "Rolling",
+			},
+			b: &v1alpha1.WorkerNodesUpgradeRolloutStrategy{
+				Type: "Rolling",
+				RollingUpdate: &v1alpha1.WorkerNodesRollingUpdateParams{
+					MaxSurge: 2,
+				},
+			},
+			want: false,
+		},
+		{
 			name: "diff rolling update",
 			a: &v1alpha1.WorkerNodesUpgradeRolloutStrategy{
 				Type: "Rolling",
-				RollingUpdate: v1alpha1.WorkerNodesRollingUpdateParams{
+				RollingUpdate: &v1alpha1.WorkerNodesRollingUpdateParams{
 					MaxSurge: 1,
 				},
 			},
 			b: &v1alpha1.WorkerNodesUpgradeRolloutStrategy{
 				Type: "Rolling",
-				RollingUpdate: v1alpha1.WorkerNodesRollingUpdateParams{
+				RollingUpdate: &v1alpha1.WorkerNodesRollingUpdateParams{
 					MaxSurge: 2,
 				},
 			},
@@ -2981,17 +2994,27 @@ func TestWorkerNodesUpgradeRolloutStrategyEqual(t *testing.T) {
 			name: "equal",
 			a: &v1alpha1.WorkerNodesUpgradeRolloutStrategy{
 				Type: "Rolling",
-				RollingUpdate: v1alpha1.WorkerNodesRollingUpdateParams{
+				RollingUpdate: &v1alpha1.WorkerNodesRollingUpdateParams{
 					MaxSurge:       2,
 					MaxUnavailable: 2,
 				},
 			},
 			b: &v1alpha1.WorkerNodesUpgradeRolloutStrategy{
 				Type: "Rolling",
-				RollingUpdate: v1alpha1.WorkerNodesRollingUpdateParams{
+				RollingUpdate: &v1alpha1.WorkerNodesRollingUpdateParams{
 					MaxSurge:       2,
 					MaxUnavailable: 2,
 				},
+			},
+			want: true,
+		},
+		{
+			name: "equal, no rollingUpdate field",
+			a: &v1alpha1.WorkerNodesUpgradeRolloutStrategy{
+				Type: "Rolling",
+			},
+			b: &v1alpha1.WorkerNodesUpgradeRolloutStrategy{
+				Type: "Rolling",
 			},
 			want: true,
 		},

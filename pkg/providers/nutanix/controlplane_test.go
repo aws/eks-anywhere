@@ -29,7 +29,7 @@ func TestControlPlaneSpecWithUpgradeRolloutStrategy(t *testing.T) {
 	client := test.NewFakeKubeClient()
 	spec := test.NewFullClusterSpec(t, "testdata/eksa-cluster.yaml")
 	spec.Cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy = &v1alpha1.ControlPlaneUpgradeRolloutStrategy{
-		RollingUpdate: v1alpha1.ControlPlaneRollingUpdateParams{
+		RollingUpdate: &v1alpha1.ControlPlaneRollingUpdateParams{
 			MaxSurge: 1,
 		},
 	}

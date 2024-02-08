@@ -279,7 +279,7 @@ func TestControlPlaneUpgradeRolloutStrategy(t *testing.T) {
 	client := test.NewFakeKubeClient()
 	spec := testClusterSpec(func(s *cluster.Spec) {
 		s.Cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy = &anywherev1.ControlPlaneUpgradeRolloutStrategy{
-			RollingUpdate: anywherev1.ControlPlaneRollingUpdateParams{
+			RollingUpdate: &anywherev1.ControlPlaneRollingUpdateParams{
 				MaxSurge: 1,
 			},
 		}

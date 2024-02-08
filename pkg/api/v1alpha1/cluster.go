@@ -106,7 +106,7 @@ func WithClusterEndpoint() ClusterGenerateOpt {
 // WithCPUpgradeRolloutStrategy allows add UpgradeRolloutStrategy option to cluster config under ControlPlaneConfiguration.
 func WithCPUpgradeRolloutStrategy(maxSurge int, maxUnavailable int) ClusterGenerateOpt {
 	return func(c *ClusterGenerate) {
-		c.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy = &ControlPlaneUpgradeRolloutStrategy{Type: "RollingUpdate", RollingUpdate: ControlPlaneRollingUpdateParams{MaxSurge: maxSurge}}
+		c.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy = &ControlPlaneUpgradeRolloutStrategy{Type: "RollingUpdate", RollingUpdate: &ControlPlaneRollingUpdateParams{MaxSurge: maxSurge}}
 	}
 }
 
@@ -155,7 +155,7 @@ func WithWorkerMachineUpgradeRolloutStrategy(maxSurge int, maxUnavailable int) C
 	return func(c *ClusterGenerate) {
 		c.Spec.WorkerNodeGroupConfigurations[0].UpgradeRolloutStrategy = &WorkerNodesUpgradeRolloutStrategy{
 			Type:          "RollingUpdate",
-			RollingUpdate: WorkerNodesRollingUpdateParams{MaxSurge: maxSurge, MaxUnavailable: maxUnavailable},
+			RollingUpdate: &WorkerNodesRollingUpdateParams{MaxSurge: maxSurge, MaxUnavailable: maxUnavailable},
 		}
 	}
 }
@@ -835,13 +835,18 @@ func validateCPUpgradeRolloutStrategy(clusterConfig *Cluster) error {
 
 	switch cpUpgradeRolloutStrategy.Type {
 	case RollingUpdateStrategyType:
-		if cpUpgradeRolloutStrategy.RollingUpdate.MaxSurge < 0 {
-			return fmt.Errorf("ControlPlaneConfiguration: maxSurge for control plane cannot be a negative value")
-		}
-		if cpUpgradeRolloutStrategy.RollingUpdate.MaxSurge > 1 {
-			return fmt.Errorf("ControlPlaneConfiguration: maxSurge for control plane must be 0 or 1")
+		if cpUpgradeRolloutStrategy.RollingUpdate != nil {
+			if cpUpgradeRolloutStrategy.RollingUpdate.MaxSurge < 0 {
+				return fmt.Errorf("ControlPlaneConfiguration: maxSurge for control plane cannot be a negative value")
+			}
+			if cpUpgradeRolloutStrategy.RollingUpdate.MaxSurge > 1 {
+				return fmt.Errorf("ControlPlaneConfiguration: maxSurge for control plane must be 0 or 1")
+			}
 		}
 	case InPlaceStrategyType:
+		if cpUpgradeRolloutStrategy.RollingUpdate != nil {
+			return fmt.Errorf("ControlPlaneConfiguration: RollingUpdate field must be empty for 'InPlace' upgrade rollout strategy type")
+		}
 		if clusterConfig.Spec.DatacenterRef.Kind == VSphereDatacenterKind {
 			if features.IsActive(features.VSphereInPlaceUpgradeEnabled()) {
 				return nil
@@ -866,6 +871,9 @@ func validateMDUpgradeRolloutStrategy(w *WorkerNodeGroupConfiguration, datacente
 
 	switch w.UpgradeRolloutStrategy.Type {
 	case RollingUpdateStrategyType:
+		if w.UpgradeRolloutStrategy.RollingUpdate == nil {
+			return fmt.Errorf("WorkerNodeGroupConfiguration: upgradeRolloutStrategy.rollingUpdate field is required for upgradeRolloutStrategy.type RollingUpdate")
+		}
 		if w.UpgradeRolloutStrategy.RollingUpdate.MaxSurge < 0 || w.UpgradeRolloutStrategy.RollingUpdate.MaxUnavailable < 0 {
 			return fmt.Errorf("WorkerNodeGroupConfiguration: maxSurge and maxUnavailable values cannot be negative")
 		}
@@ -873,7 +881,11 @@ func validateMDUpgradeRolloutStrategy(w *WorkerNodeGroupConfiguration, datacente
 		if w.UpgradeRolloutStrategy.RollingUpdate.MaxSurge == 0 && w.UpgradeRolloutStrategy.RollingUpdate.MaxUnavailable == 0 {
 			return fmt.Errorf("WorkerNodeGroupConfiguration: maxSurge and maxUnavailable not specified or are 0. maxSurge and maxUnavailable cannot both be 0")
 		}
+
 	case InPlaceStrategyType:
+		if w.UpgradeRolloutStrategy.RollingUpdate != nil {
+			return fmt.Errorf("WorkerNodeGroupConfiguration: RollingUpdate field must be empty for 'InPlace' upgrade rollout strategy type")
+		}
 		if datacenterRefKind == VSphereDatacenterKind {
 			if features.IsActive(features.VSphereInPlaceUpgradeEnabled()) {
 				return nil
