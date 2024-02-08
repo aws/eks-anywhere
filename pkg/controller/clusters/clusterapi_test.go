@@ -8,6 +8,7 @@ import (
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/pointer"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 	controllerruntime "sigs.k8s.io/controller-runtime"
@@ -26,13 +27,16 @@ func TestCheckControlPlaneReadyItIsReady(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
 	eksaCluster := eksaCluster()
+	kcpVersion := "test"
 	kcp := kcpObject(func(k *v1beta1.KubeadmControlPlane) {
+		k.Spec.Version = kcpVersion
 		k.Status.Conditions = clusterv1.Conditions{
 			{
 				Type:   clusterapi.ReadyCondition,
 				Status: corev1.ConditionTrue,
 			},
 		}
+		k.Status.Version = pointer.String(kcpVersion)
 	})
 
 	client := fake.NewClientBuilder().WithObjects(eksaCluster, kcp).Build()
@@ -74,7 +78,7 @@ func TestCheckControlPlaneNotReady(t *testing.T) {
 	)
 }
 
-func TestCheckControlPlaneStatusNotReady(t *testing.T) {
+func TestCheckControlPlaneReadyConditionStatusNotReady(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
 	eksaCluster := eksaCluster()
@@ -85,6 +89,51 @@ func TestCheckControlPlaneStatusNotReady(t *testing.T) {
 				Status: corev1.ConditionFalse,
 			},
 		}
+	})
+
+	client := fake.NewClientBuilder().WithObjects(eksaCluster, kcp).Build()
+
+	result, err := clusters.CheckControlPlaneReady(ctx, client, test.NewNullLogger(), eksaCluster)
+	g.Expect(err).NotTo(HaveOccurred())
+	g.Expect(result).To(Equal(
+		controller.Result{Result: &controllerruntime.Result{RequeueAfter: 30 * time.Second}}),
+	)
+}
+
+func TestCheckControlPlaneVersionNilStatusNotReady(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+	eksaCluster := eksaCluster()
+	kcp := kcpObject(func(k *v1beta1.KubeadmControlPlane) {
+		k.Status.Conditions = clusterv1.Conditions{
+			{
+				Type:   clusterapi.ReadyCondition,
+				Status: corev1.ConditionTrue,
+			},
+		}
+	})
+
+	client := fake.NewClientBuilder().WithObjects(eksaCluster, kcp).Build()
+
+	result, err := clusters.CheckControlPlaneReady(ctx, client, test.NewNullLogger(), eksaCluster)
+	g.Expect(err).NotTo(HaveOccurred())
+	g.Expect(result).To(Equal(
+		controller.Result{Result: &controllerruntime.Result{RequeueAfter: 30 * time.Second}}),
+	)
+}
+
+func TestCheckControlPlaneVersionMismatchStatusNotReady(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+	eksaCluster := eksaCluster()
+	kcp := kcpObject(func(k *v1beta1.KubeadmControlPlane) {
+		k.Status.Conditions = clusterv1.Conditions{
+			{
+				Type:   clusterapi.ReadyCondition,
+				Status: corev1.ConditionTrue,
+			},
+		}
+		k.Status.Version = pointer.String("test")
 	})
 
 	client := fake.NewClientBuilder().WithObjects(eksaCluster, kcp).Build()
