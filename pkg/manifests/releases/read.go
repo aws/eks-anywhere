@@ -6,6 +6,7 @@ import (
 	"github.com/pkg/errors"
 	"sigs.k8s.io/yaml"
 
+	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/manifests/bundles"
 	"github.com/aws/eks-anywhere/pkg/semver"
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
@@ -28,6 +29,7 @@ func ReadReleases(reader Reader) (*releasev1.Release, error) {
 }
 
 func ReadReleasesFromURL(reader Reader, url string) (*releasev1.Release, error) {
+	logger.V(4).Info("Reading release manifest", "url", url)
 	content, err := reader.ReadFile(url)
 	if err != nil {
 		return nil, errors.Wrapf(err, "reading Releases file")
@@ -61,7 +63,7 @@ func BundleManifestURL(releases *releasev1.Release, version string) (string, err
 	}
 
 	if eksAReleaseForVersion == nil {
-		return "", fmt.Errorf("no matching release found for version %s to get Bundles URL", version)
+		return "", fmt.Errorf("no matching release found for version %s to get Bundles URL. Latest available version is %s", version, releases.Spec.LatestVersion)
 	}
 
 	return eksAReleaseForVersion.BundleManifestUrl, nil
