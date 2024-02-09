@@ -31,6 +31,7 @@ import (
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
+	"sigs.k8s.io/cluster-api/util/annotations"
 	"sigs.k8s.io/cluster-api/util/collections"
 	"sigs.k8s.io/cluster-api/util/patch"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -118,11 +119,27 @@ func (r *KubeadmControlPlaneReconciler) reconcile(ctx context.Context, log logr.
 	cpUpgrade := &anywherev1.ControlPlaneUpgrade{}
 	cpuGetErr := r.client.Get(ctx, GetNamespacedNameType(cpUpgradeName(kcp.Name), constants.EksaSystemNamespace), cpUpgrade)
 
+	mhc := &clusterv1.MachineHealthCheck{}
+	if err := r.client.Get(ctx, GetNamespacedNameType(cpMachineHealthCheckName(kcp.Name), constants.EksaSystemNamespace), mhc); err != nil {
+		if apierrors.IsNotFound(err) {
+			return reconcile.Result{}, err
+		}
+		return ctrl.Result{}, fmt.Errorf("getting MachineHealthCheck %s: %v", cpMachineHealthCheckName(kcp.Name), err)
+	}
+	mhcPatchHelper, err := patch.NewHelper(mhc, r.client)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
 	if kcp.Spec.Replicas != nil && (*kcp.Spec.Replicas == kcp.Status.UpdatedReplicas) {
 		if cpuGetErr == nil && cpUpgrade.Status.Ready {
 			log.Info("Control plane upgrade complete, deleting object", "ControlPlaneUpgrade", cpUpgrade.Name)
 			if err := r.client.Delete(ctx, cpUpgrade); err != nil {
 				return ctrl.Result{}, fmt.Errorf("deleting ControlPlaneUpgrade object: %v", err)
+			}
+			log.Info("Resuming control plane machine health check", "MachineHealthCheck", cpMachineHealthCheckName(kcp.Name))
+			if err := resumeMachineHealthCheck(ctx, mhc, mhcPatchHelper); err != nil {
+				return ctrl.Result{}, fmt.Errorf("updating annotations for machine health check: %v", err)
 			}
 		} else if !apierrors.IsNotFound(cpuGetErr) {
 			return ctrl.Result{}, fmt.Errorf("getting ControlPlaneUpgrade for KubeadmControlPlane %s: %v", kcp.Name, cpuGetErr)
@@ -145,6 +162,12 @@ func (r *KubeadmControlPlaneReconciler) reconcile(ctx context.Context, log logr.
 			if err != nil {
 				return ctrl.Result{}, fmt.Errorf("generating ControlPlaneUpgrade: %v", err)
 			}
+
+			log.Info("Pausing control plane machine health check", "MachineHealthCheck", cpMachineHealthCheckName(kcp.Name))
+			if err := pauseMachineHealthCheck(ctx, mhc, mhcPatchHelper); err != nil {
+				return ctrl.Result{}, fmt.Errorf("updating annotations for machine health check: %v", err)
+			}
+
 			if err := r.client.Create(ctx, cpUpgrade); client.IgnoreAlreadyExists(err) != nil {
 				return ctrl.Result{}, fmt.Errorf("failed to create ControlPlaneUpgrade for KubeadmControlPlane %s:  %v", kcp.Name, err)
 			}
@@ -159,6 +182,11 @@ func (r *KubeadmControlPlaneReconciler) reconcile(ctx context.Context, log logr.
 	log.Info("Control plane upgrade complete, deleting object", "ControlPlaneUpgrade", cpUpgrade.Name)
 	if err := r.client.Delete(ctx, cpUpgrade); err != nil {
 		return ctrl.Result{}, fmt.Errorf("deleting ControlPlaneUpgrade object: %v", err)
+	}
+
+	log.Info("Resuming control plane machine health check", "MachineHealthCheck", cpMachineHealthCheckName(kcp.Name))
+	if err := resumeMachineHealthCheck(ctx, mhc, mhcPatchHelper); err != nil {
+		return ctrl.Result{}, fmt.Errorf("updating annotations for machine health check: %v", err)
 	}
 
 	return ctrl.Result{}, nil
@@ -201,6 +229,16 @@ func (r *KubeadmControlPlaneReconciler) validateStackedEtcd(kcp *controlplanev1.
 	return nil
 }
 
+func pauseMachineHealthCheck(ctx context.Context, mhc *clusterv1.MachineHealthCheck, mhcPatchHelper *patch.Helper) error {
+	annotations.AddAnnotations(mhc, map[string]string{clusterv1.PausedAnnotation: "true"})
+	return mhcPatchHelper.Patch(ctx, mhc)
+}
+
+func resumeMachineHealthCheck(ctx context.Context, mhc *clusterv1.MachineHealthCheck, mhcPatchHelper *patch.Helper) error {
+	delete(mhc.Annotations, clusterv1.PausedAnnotation)
+	return mhcPatchHelper.Patch(ctx, mhc)
+}
+
 func controlPlaneUpgrade(kcp *controlplanev1.KubeadmControlPlane, machines []corev1.ObjectReference) (*anywherev1.ControlPlaneUpgrade, error) {
 	kcpSpec, err := json.Marshal(kcp.Spec)
 	if err != nil {
@@ -234,4 +272,8 @@ func controlPlaneUpgrade(kcp *controlplanev1.KubeadmControlPlane, machines []cor
 
 func cpUpgradeName(kcpName string) string {
 	return kcpName + "-cp-upgrade"
+}
+
+func cpMachineHealthCheckName(kcpName string) string {
+	return fmt.Sprintf("%s-kcp-unhealthy", kcpName)
 }
