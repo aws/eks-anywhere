@@ -1,6 +1,7 @@
 package tinkerbell
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -18,19 +19,19 @@ func validateOsFamily(spec *ClusterSpec) error {
 	if spec.Cluster.Spec.ExternalEtcdConfiguration != nil {
 		etcdMachineRef := spec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef
 		if spec.MachineConfigs[etcdMachineRef.Name].OSFamily() != controlPlaneOsFamily {
-			return fmt.Errorf("etcd osFamily cannot be different from control plane osFamily")
+			return errors.New("etcd osFamily cannot be different from control plane osFamily")
 		}
 	}
 
 	for _, group := range spec.Cluster.Spec.WorkerNodeGroupConfigurations {
 		groupRef := group.MachineGroupRef
 		if spec.MachineConfigs[groupRef.Name].OSFamily() != controlPlaneOsFamily {
-			return fmt.Errorf("worker node group osFamily cannot be different from control plane osFamily")
+			return errors.New("worker node group osFamily cannot be different from control plane osFamily")
 		}
 	}
 
 	if controlPlaneOsFamily != v1alpha1.Bottlerocket && spec.DatacenterConfig.Spec.OSImageURL == "" && spec.ControlPlaneMachineConfig().Spec.OSImageURL == "" {
-		return fmt.Errorf("please use bottlerocket as osFamily for auto-importing or provide a valid osImageURL")
+		return errors.New("please use bottlerocket as osFamily for auto-importing or provide a valid osImageURL")
 	}
 
 	return nil
@@ -45,7 +46,7 @@ func validateUpgradeRolloutStrategy(spec *ClusterSpec) error {
 		controlPlaneOsFamily := spec.MachineConfigs[controlPlaneRef.Name].OSFamily()
 
 		if controlPlaneOsFamily != v1alpha1.Ubuntu && cpUpgradeRolloutStrategyType == v1alpha1.InPlaceStrategyType {
-			return fmt.Errorf("InPlace upgrades are only supported on the Ubuntu OS family")
+			return errors.New("InPlace upgrades are only supported on the Ubuntu OS family")
 		}
 	}
 
@@ -54,11 +55,26 @@ func validateUpgradeRolloutStrategy(spec *ClusterSpec) error {
 
 		if group.UpgradeRolloutStrategy != nil {
 			if spec.MachineConfigs[groupRef.Name].OSFamily() != v1alpha1.Ubuntu && group.UpgradeRolloutStrategy.Type == v1alpha1.InPlaceStrategyType {
-				return fmt.Errorf("InPlace upgrades are only supported on the Ubuntu OS family")
+				return errors.New("InPlace upgrades are only supported on the Ubuntu OS family")
 			}
 			if group.UpgradeRolloutStrategy.Type != cpUpgradeRolloutStrategyType {
-				return fmt.Errorf("cannot specify different upgrade rollout strategy types for control plane and worker node group configurations")
+				return errors.New("cannot specify different upgrade rollout strategy types for control plane and worker node group configurations")
 			}
+		}
+	}
+	return nil
+}
+
+func validateAutoScalerDisabledForInPlace(spec *ClusterSpec) error {
+	cpUpgradeRolloutStrategyType := spec.ControlPlaneConfiguration().UpgradeRolloutStrategy
+	// We do not support different strategy types for Inplace between CP and worker nodes so it is okay to check only CP
+	if cpUpgradeRolloutStrategyType == nil || cpUpgradeRolloutStrategyType.Type != v1alpha1.InPlaceStrategyType {
+		return nil
+	}
+
+	for _, wng := range spec.Cluster.Spec.WorkerNodeGroupConfigurations {
+		if wng.AutoScalingConfiguration != nil {
+			return errors.New("austoscaler configuration not supported with InPlace upgrades")
 		}
 	}
 	return nil
@@ -68,7 +84,7 @@ func validateOSImageURL(spec *ClusterSpec) error {
 	dcOSImageURL := spec.DatacenterConfig.Spec.OSImageURL
 	for _, mc := range spec.MachineConfigs {
 		if mc.Spec.OSImageURL != "" && dcOSImageURL != "" {
-			return fmt.Errorf("cannot specify OSImageURL on both TinkerbellMachineConfig's and TinkerbellDatacenterConfig")
+			return errors.New("cannot specify OSImageURL on both TinkerbellMachineConfig's and TinkerbellDatacenterConfig")
 		}
 		if mc.Spec.OSImageURL == "" && dcOSImageURL == "" && mc.Spec.OSFamily != v1alpha1.Bottlerocket {
 			return fmt.Errorf("missing OSImageURL on TinkerbellMachineConfig '%s'", mc.ObjectMeta.Name)
