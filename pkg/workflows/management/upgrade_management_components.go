@@ -192,6 +192,11 @@ func (s *installNewComponentsMC) Run(ctx context.Context, commandContext *task.C
 	if err := runInstallNewComponents(ctx, commandContext); err != nil {
 		return &workflows.CollectMgmtClusterDiagnosticsTask{}
 	}
+
+	if commandContext.OriginalError == nil {
+		logger.MarkSuccess("Management components upgraded!")
+	}
+
 	return nil
 }
 
