@@ -122,6 +122,7 @@ type AwsIamAuth interface {
 	CreateAndInstallAWSIAMAuthCASecret(ctx context.Context, managementCluster *types.Cluster, workloadClusterName string) error
 	InstallAWSIAMAuth(ctx context.Context, management, workload *types.Cluster, spec *cluster.Spec) error
 	UpgradeAWSIAMAuth(ctx context.Context, cluster *types.Cluster, spec *cluster.Spec) error
+	GenerateKubeconfig(ctx context.Context, management, workload *types.Cluster, spec *cluster.Spec) error
 }
 
 // EKSAComponents allows to manage the eks-a components installation in a cluster.
@@ -837,6 +838,11 @@ func (c *ClusterManager) InstallMachineHealthChecks(ctx context.Context, cluster
 // Generates a kubeconfig for interacting with the cluster with aws-iam-authenticator client.
 func (c *ClusterManager) InstallAwsIamAuth(ctx context.Context, management, workload *types.Cluster, spec *cluster.Spec) error {
 	return c.awsIamAuth.InstallAWSIAMAuth(ctx, management, workload, spec)
+}
+
+// GenerateIamAuthKubeconfig generates a kubeconfig for interacting with the cluster with aws-iam-authenticator client.
+func (c *ClusterManager) GenerateIamAuthKubeconfig(ctx context.Context, management, workload *types.Cluster, spec *cluster.Spec) error {
+	return c.awsIamAuth.GenerateKubeconfig(ctx, management, workload, spec)
 }
 
 func (c *ClusterManager) CreateAwsIamAuthCaSecret(ctx context.Context, managementCluster *types.Cluster, workloadClusterName string) error {
