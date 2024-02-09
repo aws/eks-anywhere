@@ -1055,6 +1055,29 @@ func TestAssertUpgradeRolloutStrategyValid_UpgradeStrategyNotEqual(t *testing.T)
 	g.Expect(tinkerbell.AssertUpgradeRolloutStrategyValid(clusterSpec)).ToNot(gomega.Succeed())
 }
 
+func TestAssertAutoScalerDisabledForInPlace_Success(t *testing.T) {
+	g := gomega.NewWithT(t)
+	clusterSpec := NewDefaultValidClusterSpecBuilder().Build()
+	clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].AutoScalingConfiguration = &eksav1alpha1.AutoScalingConfiguration{
+		MinCount: 1,
+		MaxCount: 3,
+	}
+	g.Expect(tinkerbell.AssertAutoScalerDisabledForInPlace(clusterSpec)).To(gomega.Succeed())
+}
+
+func TestAssertAutoScalerDisabledForInPlace(t *testing.T) {
+	g := gomega.NewWithT(t)
+	clusterSpec := NewDefaultValidClusterSpecBuilder().Build()
+	clusterSpec.Cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy = &eksav1alpha1.ControlPlaneUpgradeRolloutStrategy{
+		Type: "InPlace",
+	}
+	clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].AutoScalingConfiguration = &eksav1alpha1.AutoScalingConfiguration{
+		MinCount: 1,
+		MaxCount: 3,
+	}
+	g.Expect(tinkerbell.AssertAutoScalerDisabledForInPlace(clusterSpec)).To(gomega.MatchError(gomega.ContainSubstring("austoscaler configuration not supported with InPlace")))
+}
+
 // mergeHardwareSelectors merges m1 with m2. Values already in m1 will be overwritten by m2.
 func mergeHardwareSelectors(m1, m2 map[string]string) map[string]string {
 	for name, value := range m2 {
