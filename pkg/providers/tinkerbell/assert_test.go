@@ -1053,6 +1053,9 @@ func TestAssertUpgradeRolloutStrategyValid_UpgradeStrategyNotEqual(t *testing.T)
 	}
 
 	g.Expect(tinkerbell.AssertUpgradeRolloutStrategyValid(clusterSpec)).ToNot(gomega.Succeed())
+
+	clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].UpgradeRolloutStrategy = nil
+	g.Expect(tinkerbell.AssertUpgradeRolloutStrategyValid(clusterSpec)).ToNot(gomega.Succeed())
 }
 
 func TestAssertAutoScalerDisabledForInPlace_Success(t *testing.T) {
