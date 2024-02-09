@@ -8,4 +8,6 @@ quick_tests:
 # Nutanix
 - TestNutanixKubernetes127to128RedHat9Upgrade
 # Snow
-# - TestSnowKubernetes128SimpleFlow
+- TestSnowKubernetes128SimpleFlow
+# Tinkerbell
+# - ^TestTinkerbellKubernetes127UbuntuTo128Upgrade$
