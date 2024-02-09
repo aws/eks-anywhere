@@ -411,13 +411,14 @@ metadata:
 data:
   nutanix-ccm.yaml: |
     ---
+{{- if .nutanixAdditionalTrustBundle }}
     apiVersion: v1
     kind: ConfigMap
     metadata:
       name: user-ca-bundle
       namespace: kube-system
     binaryData:
-      ca.crt:{{- if .nutanixAdditionalTrustBundle }}{{- .nutanixAdditionalTrustBundle }}{{- end }}
+      ca.crt:{{- .nutanixAdditionalTrustBundle }}{{- end }}
     ---
     apiVersion: v1
     kind: ServiceAccount
