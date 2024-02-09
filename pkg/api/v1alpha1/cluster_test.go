@@ -3318,9 +3318,10 @@ func TestValidateControlPlaneEndpoint(t *testing.T) {
 
 func TestValidateCPUpgradeRolloutStrategy(t *testing.T) {
 	tests := []struct {
-		name    string
-		wantErr string
-		cluster *Cluster
+		name           string
+		wantErr        string
+		featureEnvVars []string
+		cluster        *Cluster
 	}{
 		{
 			name:    "rolling upgrade strategy invalid",
@@ -3414,6 +3415,24 @@ func TestValidateCPUpgradeRolloutStrategy(t *testing.T) {
 			},
 		},
 		{
+			name:           "in place upgrade - vsphere, external etcd",
+			wantErr:        "stacked etcd must be configured when performing in place upgrades",
+			featureEnvVars: []string{features.VSphereInPlaceEnvVar},
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					DatacenterRef: Ref{
+						Kind: VSphereDatacenterKind,
+					},
+					ControlPlaneConfiguration: ControlPlaneConfiguration{
+						UpgradeRolloutStrategy: &ControlPlaneUpgradeRolloutStrategy{Type: "InPlace"},
+					},
+					ExternalEtcdConfiguration: &ExternalEtcdConfiguration{
+						Count: 3,
+					},
+				},
+			},
+		},
+		{
 			name:    "in place upgrade - rollingUpdate field specified",
 			wantErr: "ControlPlaneConfiguration: RollingUpdate field must be empty for 'InPlace' upgrade rollout strategy type",
 			cluster: &Cluster{
@@ -3428,12 +3447,16 @@ func TestValidateCPUpgradeRolloutStrategy(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			g := NewWithT(t)
+			for _, e := range tt.featureEnvVars {
+				t.Setenv(e, "true")
+			}
 			err := validateCPUpgradeRolloutStrategy(tt.cluster)
 			if tt.wantErr == "" {
 				g.Expect(err).To(BeNil())
 			} else {
 				g.Expect(err).To(MatchError(ContainSubstring(tt.wantErr)))
 			}
+			features.ClearCache()
 		})
 	}
 }
@@ -3649,7 +3672,7 @@ func TestValidateVSphereMDInPlaceEnabled(t *testing.T) {
 		},
 	}
 	features.ClearCache()
-	os.Setenv(features.VSphereInPlaceEnvVar, "true")
+	t.Setenv(features.VSphereInPlaceEnvVar, "true")
 	err := validateMDUpgradeRolloutStrategy(&cluster.Spec.WorkerNodeGroupConfigurations[0], cluster.Spec.DatacenterRef.Kind)
 	g.Expect(err).To(BeNil())
 }
@@ -3667,7 +3690,7 @@ func TestValidateVSphereCPInPlaceEnabled(t *testing.T) {
 		},
 	}
 	features.ClearCache()
-	os.Setenv(features.VSphereInPlaceEnvVar, "true")
+	t.Setenv(features.VSphereInPlaceEnvVar, "true")
 	err := validateCPUpgradeRolloutStrategy(cluster)
 	g.Expect(err).To(BeNil())
 }
