@@ -11,7 +11,8 @@ import (
 )
 
 const (
-	nutanixEndpointKey = "NUTANIX_ENDPOINT"
+	nutanixEndpointKey       = "NUTANIX_ENDPOINT"
+	expClusterResourceSetKey = "EXP_CLUSTER_RESOURCE_SET"
 )
 
 var osSetenv = os.Setenv
@@ -36,6 +37,11 @@ func setupEnvVars(datacenterConfig *anywherev1.NutanixDatacenterConfig) error {
 	if err := osSetenv(nutanixEndpointKey, datacenterConfig.Spec.Endpoint); err != nil {
 		return fmt.Errorf("unable to set %s: %v", nutanixEndpointKey, err)
 	}
+
+	if err := osSetenv(expClusterResourceSetKey, "true"); err != nil {
+		return fmt.Errorf("unable to set %s: %v", expClusterResourceSetKey, err)
+	}
+
 	return nil
 }
 

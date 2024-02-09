@@ -4,6 +4,7 @@ metadata:
   name: "test"
   namespace: "eksa-system"
 spec:
+  failureDomains: []
   prismCentral:
     address: "prism.nutanix.com"
     port: 9440
@@ -61,6 +62,7 @@ spec:
           - 0.0.0.0
           - 11.11.11.11
         extraArgs:
+          cloud-provider: external
           audit-policy-file: /etc/kubernetes/audit-policy.yaml
           audit-log-path: /var/log/kubernetes/api-audit.log
           audit-log-maxage: "30"
@@ -79,6 +81,7 @@ spec:
           readOnly: false
       controllerManager:
         extraArgs:
+          cloud-provider: external
           enable-hostpath-provisioner: "true"
       dns:
         imageRepository: public.ecr.aws/eks-distro/coredns
@@ -309,6 +312,7 @@ spec:
     initConfiguration:
       nodeRegistration:
         kubeletExtraArgs:
+          cloud-provider: external
           # We have to pin the cgroupDriver to cgroupfs as kubeadm >=1.21 defaults to systemd
           # kind will implement systemd support in: https://github.com/kubernetes-sigs/kind/issues/1726
           #cgroup-driver: cgroupfs
@@ -362,3 +366,219 @@ spec:
         - type: name
           name: "prism-subnet"
 ---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: test-nutanix-ccm
+  namespace: "eksa-system"
+data:
+  nutanix-ccm.yaml: |
+    ---
+    apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      name: cloud-controller-manager
+      namespace: kube-system
+    ---
+    kind: ConfigMap
+    apiVersion: v1
+    metadata:
+      name: nutanix-config
+      namespace: kube-system
+    data:
+      nutanix_config.json: |-
+        {
+          "prismCentral": {
+            "address": "prism.nutanix.com",
+            "port": 9440,
+            "insecure": false,
+            "credentialRef": {
+              "kind": "secret",
+              "name": "nutanix-creds",
+              "namespace": "kube-system"
+            }
+          },
+          "enableCustomLabeling": false,
+          "topologyDiscovery": {
+            "type": "Prism"
+          }
+        }
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRole
+    metadata:
+      annotations:
+        rbac.authorization.kubernetes.io/autoupdate: "true"
+      name: system:cloud-controller-manager
+    rules:
+      - apiGroups:
+          - ""
+        resources:
+          - secrets
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
+          - ""
+        resources:
+          - configmaps
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
+          - ""
+        resources:
+          - events
+        verbs:
+          - create
+          - patch
+          - update
+      - apiGroups:
+          - ""
+        resources:
+          - nodes
+        verbs:
+          - "*"
+      - apiGroups:
+          - ""
+        resources:
+          - nodes/status
+        verbs:
+          - patch
+      - apiGroups:
+          - ""
+        resources:
+          - serviceaccounts
+        verbs:
+          - create
+      - apiGroups:
+          - ""
+        resources:
+          - endpoints
+        verbs:
+          - create
+          - get
+          - list
+          - watch
+          - update
+      - apiGroups:
+          - coordination.k8s.io
+        resources:
+          - leases
+        verbs:
+          - get
+          - list
+          - watch
+          - create
+          - update
+          - patch
+          - delete
+    ---
+    kind: ClusterRoleBinding
+    apiVersion: rbac.authorization.k8s.io/v1
+    metadata:
+      name: system:cloud-controller-manager
+    roleRef:
+      apiGroup: rbac.authorization.k8s.io
+      kind: ClusterRole
+      name: system:cloud-controller-manager
+    subjects:
+      - kind: ServiceAccount
+        name: cloud-controller-manager
+        namespace: kube-system
+    ---
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        k8s-app: nutanix-cloud-controller-manager
+      name: nutanix-cloud-controller-manager
+      namespace: kube-system
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          k8s-app: nutanix-cloud-controller-manager
+      strategy:
+        type: Recreate
+      template:
+        metadata:
+          labels:
+            k8s-app: nutanix-cloud-controller-manager
+        spec:
+          hostNetwork: true
+          priorityClassName: system-cluster-critical
+          nodeSelector:
+            node-role.kubernetes.io/control-plane: ""
+          serviceAccountName: cloud-controller-manager
+          affinity:
+            podAntiAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+              - labelSelector:
+                  matchLabels:
+                    k8s-app: nutanix-cloud-controller-manager
+                topologyKey: kubernetes.io/hostname
+          dnsPolicy: Default
+          tolerations:
+            - effect: NoSchedule
+              key: node-role.kubernetes.io/master
+              operator: Exists
+            - effect: NoSchedule
+              key: node-role.kubernetes.io/control-plane
+              operator: Exists
+            - effect: NoExecute
+              key: node.kubernetes.io/unreachable
+              operator: Exists
+              tolerationSeconds: 120
+            - effect: NoExecute
+              key: node.kubernetes.io/not-ready
+              operator: Exists
+              tolerationSeconds: 120
+            - effect: NoSchedule
+              key: node.cloudprovider.kubernetes.io/uninitialized
+              operator: Exists
+            - effect: NoSchedule
+              key: node.kubernetes.io/not-ready
+              operator: Exists
+          containers:
+            - image: ""
+              imagePullPolicy: IfNotPresent
+              name: nutanix-cloud-controller-manager
+              env:
+                - name: POD_NAMESPACE
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.namespace
+              args:
+                - "--leader-elect=true"
+                - "--cloud-config=/etc/cloud/nutanix_config.json"
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 50Mi
+              volumeMounts:
+                - mountPath: /etc/cloud
+                  name: nutanix-config-volume
+                  readOnly: true
+          volumes:
+            - name: nutanix-config-volume
+              configMap:
+                name: nutanix-config
+---
+apiVersion: addons.cluster.x-k8s.io/v1beta1
+kind: ClusterResourceSet
+metadata:
+  name: test-nutanix-ccm-crs
+  namespace: "eksa-system"
+spec:
+  clusterSelector:
+    matchLabels:
+      cluster.x-k8s.io/cluster-name: "test"
+  resources:
+  - kind: ConfigMap
+    name: test-nutanix-ccm
+  - kind: Secret
+    name: test-nutanix-ccm-secret
+  strategy: Reconcile

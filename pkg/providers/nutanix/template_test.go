@@ -329,9 +329,8 @@ func TestNewNutanixTemplateBuilderAdditionalCategories(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, cpSpec)
 
-	expectedControlPlaneSpec, err := os.ReadFile("testdata/expected_results_additional_categories.yaml")
 	require.NoError(t, err)
-	assert.Equal(t, expectedControlPlaneSpec, cpSpec)
+	test.AssertContentToFile(t, string(cpSpec), "testdata/expected_results_additional_categories.yaml")
 
 	workloadTemplateNames := map[string]string{
 		"eksa-unit-test": "eksa-unit-test",
@@ -343,9 +342,8 @@ func TestNewNutanixTemplateBuilderAdditionalCategories(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, workerSpec)
 
-	expectedWorkersSpec, err := os.ReadFile("testdata/expected_results_additional_categories_md.yaml")
 	require.NoError(t, err)
-	assert.Equal(t, expectedWorkersSpec, workerSpec)
+	test.AssertContentToFile(t, string(workerSpec), "testdata/expected_results_additional_categories_md.yaml")
 }
 
 func TestNewNutanixTemplateBuilderNodeTaintsAndLabels(t *testing.T) {

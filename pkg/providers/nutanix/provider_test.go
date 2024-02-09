@@ -914,6 +914,7 @@ func TestNutanixProviderEnvMap(t *testing.T) {
 		t.Setenv(constants.NutanixUsernameKey, "nutanix")
 		t.Setenv(constants.NutanixPasswordKey, "nutanix")
 		t.Setenv(nutanixEndpointKey, "prism.nutanix.com")
+		t.Setenv(expClusterResourceSetKey, "true")
 
 		envMap, err := provider.EnvMap(clusterSpec)
 		assert.NoError(t, err)
