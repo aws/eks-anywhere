@@ -13,12 +13,14 @@ type createCluster struct{}
 // Run createCluster performs actions needed to create the management cluster.
 func (c *createCluster) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
 	logger.Info("Creating workload cluster")
-	if _, err := commandContext.ClusterCreator.CreateSync(ctx, commandContext.ClusterSpec, commandContext.ManagementCluster); err != nil {
+	workloadCluster, err := commandContext.ClusterCreator.CreateSync(ctx, commandContext.ClusterSpec, commandContext.ManagementCluster)
+	if err != nil {
 		commandContext.SetError(err)
 		return &workflows.CollectMgmtClusterDiagnosticsTask{}
 	}
+	commandContext.WorkloadCluster = workloadCluster
 
-	return &writeClusterConfig{}
+	return &installGitOpsManagerTask{}
 }
 
 func (c *createCluster) Name() string {
@@ -32,5 +34,5 @@ func (c *createCluster) Checkpoint() *task.CompletedTask {
 }
 
 func (c *createCluster) Restore(ctx context.Context, commandContext *task.CommandContext, completedTask *task.CompletedTask) (task.Task, error) {
-	return &writeClusterConfig{}, nil
+	return &installGitOpsManagerTask{}, nil
 }

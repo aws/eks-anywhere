@@ -22,21 +22,22 @@ import (
 )
 
 type createTestSetup struct {
-	t                *testing.T
-	clusterManager   *mocks.MockClusterManager
-	gitOpsManager    *mocks.MockGitOpsManager
-	provider         *providermocks.MockProvider
-	writer           *writermocks.MockFileWriter
-	validator        *mocks.MockValidator
-	eksd             *mocks.MockEksdInstaller
-	packageInstaller *mocks.MockPackageInstaller
-	clusterCreator   *mocks.MockClusterCreator
-	datacenterConfig providers.DatacenterConfig
-	machineConfigs   []providers.MachineConfig
-	ctx              context.Context
-	clusterSpec      *cluster.Spec
-	workloadCluster  *types.Cluster
-	workload         *workload.Create
+	t                    *testing.T
+	clusterManager       *mocks.MockClusterManager
+	gitOpsManager        *mocks.MockGitOpsManager
+	provider             *providermocks.MockProvider
+	writer               *writermocks.MockFileWriter
+	validator            *mocks.MockValidator
+	eksd                 *mocks.MockEksdInstaller
+	packageInstaller     *mocks.MockPackageInstaller
+	clusterCreator       *mocks.MockClusterCreator
+	datacenterConfig     providers.DatacenterConfig
+	machineConfigs       []providers.MachineConfig
+	ctx                  context.Context
+	clusterSpec          *cluster.Spec
+	workloadCluster      *types.Cluster
+	workload             *workload.Create
+	managementComponents *cluster.ManagementComponents
 }
 
 func newCreateTest(t *testing.T) *createTestSetup {
@@ -55,6 +56,9 @@ func newCreateTest(t *testing.T) *createTestSetup {
 	clusterUpgrader := mocks.NewMockClusterCreator(mockCtrl)
 
 	validator := mocks.NewMockValidator(mockCtrl)
+
+	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) { s.Cluster.Name = "test-cluster" })
+	managementComponents := cluster.ManagementComponentsFromBundles(clusterSpec.Bundles)
 
 	workload := workload.NewCreate(
 		provider,
@@ -89,7 +93,8 @@ func newCreateTest(t *testing.T) *createTestSetup {
 			s.Cluster.Spec.DatacenterRef.Kind = v1alpha1.VSphereDatacenterKind
 			s.ManagementCluster = &types.Cluster{Name: "management"}
 		}),
-		workloadCluster: &types.Cluster{Name: "workload"},
+		workloadCluster:      &types.Cluster{Name: "workload"},
+		managementComponents: managementComponents,
 	}
 }
 
@@ -100,7 +105,7 @@ func (c *createTestSetup) expectSetup() {
 }
 
 func (c *createTestSetup) expectCreateWorkloadCluster(err error) {
-	c.clusterCreator.EXPECT().CreateSync(c.ctx, c.clusterSpec, c.clusterSpec.ManagementCluster).Return(nil, err)
+	c.clusterCreator.EXPECT().CreateSync(c.ctx, c.clusterSpec, c.clusterSpec.ManagementCluster).Return(c.workloadCluster, err)
 }
 
 func (c *createTestSetup) expectWriteWorkloadClusterConfig(err error) {
@@ -134,6 +139,11 @@ func (c *createTestSetup) expectSaveLogsManagement() {
 	c.expectWrite()
 }
 
+func (c *createTestSetup) expectInstallGitOpsManager(err error) {
+	c.gitOpsManager.EXPECT().InstallGitOps(
+		c.ctx, c.workloadCluster, c.managementComponents, c.clusterSpec, c.datacenterConfig, c.machineConfigs).Return(err)
+}
+
 func (c *createTestSetup) expectWrite() {
 	c.writer.EXPECT().Write(gomock.Any(), gomock.Any(), gomock.Any()).Return("", nil)
 }
@@ -147,6 +157,7 @@ func TestCreateRunSuccess(t *testing.T) {
 	test.expectDatacenterConfig()
 	test.expectMachineConfigs()
 	test.expectCreateWorkloadCluster(nil)
+	test.expectInstallGitOpsManager(nil)
 	test.expectWriteWorkloadClusterConfig(nil)
 
 	err := test.run()
@@ -188,6 +199,24 @@ func TestCreateRunValidateFail(t *testing.T) {
 	}
 }
 
+func TestCreateRunGitOpsConfigFail(t *testing.T) {
+	features.ClearCache()
+	os.Setenv(features.UseControllerForCli, "true")
+	test := newCreateTest(t)
+	test.expectSetup()
+	test.expectPreflightValidationsToPass()
+	test.expectDatacenterConfig()
+	test.expectMachineConfigs()
+	test.expectCreateWorkloadCluster(nil)
+	test.expectInstallGitOpsManager(fmt.Errorf("Failure"))
+	test.expectWriteWorkloadClusterConfig(nil)
+
+	err := test.run()
+	if err != nil {
+		t.Fatalf("Create.Run() err = %v, want err = nil", err)
+	}
+}
+
 func TestCreateRunWriteClusterConfigFail(t *testing.T) {
 	features.ClearCache()
 	os.Setenv(features.UseControllerForCli, "true")
@@ -197,6 +226,7 @@ func TestCreateRunWriteClusterConfigFail(t *testing.T) {
 	test.expectDatacenterConfig()
 	test.expectMachineConfigs()
 	test.expectCreateWorkloadCluster(nil)
+	test.expectInstallGitOpsManager(nil)
 	test.expectWriteWorkloadClusterConfig(fmt.Errorf("Failure"))
 	test.expectWrite()
 
