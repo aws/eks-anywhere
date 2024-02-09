@@ -848,11 +848,13 @@ func validateCPUpgradeRolloutStrategy(clusterConfig *Cluster) error {
 			return fmt.Errorf("ControlPlaneConfiguration: RollingUpdate field must be empty for 'InPlace' upgrade rollout strategy type")
 		}
 		if clusterConfig.Spec.DatacenterRef.Kind == VSphereDatacenterKind {
-			if features.IsActive(features.VSphereInPlaceUpgradeEnabled()) {
-				return nil
+			if !features.IsActive(features.VSphereInPlaceUpgradeEnabled()) {
+				return errors.New("in place upgrades are not supported on vSphere")
 			}
-			return errors.New("in place upgrades are not supported on vSphere")
-
+			if clusterConfig.Spec.ExternalEtcdConfiguration != nil {
+				return errors.New("stacked etcd must be configured when performing in place upgrades")
+			}
+			return nil
 		}
 		if clusterConfig.Spec.DatacenterRef.Kind != TinkerbellDatacenterKind {
 			return fmt.Errorf("ControlPlaneConfiguration: 'InPlace' upgrade rollout strategy type is only supported on Bare Metal")
