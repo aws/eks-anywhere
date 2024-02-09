@@ -727,6 +727,9 @@ func TestCreateGitOPsFailure(t *testing.T) {
 		test.gitOpsManager.EXPECT().InstallGitOps(
 			test.ctx, test.workloadCluster, test.managementComponents, test.clusterSpec, test.datacenterConfig, test.machineConfigs).Return(errors.New("test")),
 	)
+	test.expectWriteClusterConfig()
+	test.expectDeleteBootstrap(nil)
+	test.expectCuratedPackagesInstallation()
 
 	err := test.run()
 	if err != nil {
