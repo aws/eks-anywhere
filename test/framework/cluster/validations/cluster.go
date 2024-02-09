@@ -87,7 +87,7 @@ func validateKCP(ctx context.Context, vc clusterf.StateValidationConfig) error {
 	}
 	if conditions.IsFalse(kcp, v1beta1.ReadyCondition) {
 		return errors.New("kcp ready condition is not true")
-	} else if kcp.Status.UpdatedReplicas != kcp.Status.ReadyReplicas || kcp.Spec.Replicas != &kcp.Status.UpdatedReplicas {
+	} else if kcp.Status.UpdatedReplicas != kcp.Status.ReadyReplicas || *kcp.Spec.Replicas != kcp.Status.UpdatedReplicas {
 		return fmt.Errorf("kcp replicas count %d, updated replicas count %d and ready replicas count %d are not in sync", *kcp.Spec.Replicas, kcp.Status.UpdatedReplicas, kcp.Status.ReadyReplicas)
 	}
 	return nil
@@ -104,7 +104,7 @@ func validateMDs(ctx context.Context, vc clusterf.StateValidationConfig) error {
 	for _, md := range mds {
 		if conditions.IsFalse(&md, v1beta1.ReadyCondition) {
 			return fmt.Errorf("md ready condition is not true for md %s", md.Name)
-		} else if md.Status.UpdatedReplicas != md.Status.ReadyReplicas || md.Spec.Replicas != &md.Status.UpdatedReplicas {
+		} else if md.Status.UpdatedReplicas != md.Status.ReadyReplicas || *md.Spec.Replicas != md.Status.UpdatedReplicas {
 			return fmt.Errorf("md replicas count %d, updated replicas count %d and ready replicas count %d for md %s are not in sync", *md.Spec.Replicas, md.Status.UpdatedReplicas, md.Status.ReadyReplicas, md.Name)
 		}
 	}
