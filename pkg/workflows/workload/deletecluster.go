@@ -18,7 +18,7 @@ func (s *deleteWorkloadCluster) Run(ctx context.Context, commandContext *task.Co
 		return &workflows.CollectWorkloadClusterDiagnosticsTask{}
 	}
 
-	return &postDeleteWorkload{}
+	return &cleanupGitRepo{}
 }
 
 func (s *deleteWorkloadCluster) Name() string {

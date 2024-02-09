@@ -157,7 +157,7 @@ func (dc *deleteClusterOptions) deleteCluster(ctx context.Context) error {
 	}
 
 	if features.UseControllerViaCLIWorkflow().IsActive() && clusterSpec.Cluster.IsManaged() {
-		deleteWorkload := workload.NewDelete(deps.Provider, deps.Writer, deps.ClusterManager, deps.ClusterDeleter)
+		deleteWorkload := workload.NewDelete(deps.Provider, deps.Writer, deps.ClusterManager, deps.ClusterDeleter, deps.GitOpsFlux)
 		err = deleteWorkload.Run(ctx, cluster, clusterSpec)
 	} else {
 		err = deleteCluster.Run(ctx, cluster, clusterSpec, dc.forceCleanup, dc.managementKubeconfig)
