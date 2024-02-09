@@ -8,6 +8,7 @@ import (
 )
 
 type updateSecrets struct{}
+type updateSecretsCreate struct{}
 
 // Run updateSecrets updates management cluster's secrets.
 func (s *updateSecrets) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
@@ -31,4 +32,32 @@ func (s *updateSecrets) Checkpoint() *task.CompletedTask {
 
 func (s *updateSecrets) Restore(ctx context.Context, commandContext *task.CommandContext, completedTask *task.CompletedTask) (task.Task, error) {
 	return &ensureEtcdCAPIComponentsExist{}, nil
+}
+
+// Run updateSecrets updates management cluster's secrets.
+func (s *updateSecretsCreate) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
+	if !commandContext.ClusterSpec.Cluster.RegistryAuth() {
+		return &installCAPIComponentsTask{}
+	}
+
+	err := commandContext.ClusterManager.CreateRegistryCredSecret(ctx, commandContext.BootstrapCluster)
+	if err != nil {
+		commandContext.SetError(err)
+		return &workflows.CollectMgmtClusterDiagnosticsTask{}
+	}
+	return &installCAPIComponentsTask{}
+}
+
+func (s *updateSecretsCreate) Name() string {
+	return "update-secrets-create"
+}
+
+func (s *updateSecretsCreate) Checkpoint() *task.CompletedTask {
+	return &task.CompletedTask{
+		Checkpoint: nil,
+	}
+}
+
+func (s *updateSecretsCreate) Restore(ctx context.Context, commandContext *task.CommandContext, completedTask *task.CompletedTask) (task.Task, error) {
+	return nil, nil
 }
