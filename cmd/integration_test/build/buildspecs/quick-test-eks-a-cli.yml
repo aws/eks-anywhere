@@ -18,6 +18,12 @@ env:
     T_NUTANIX_MACHINE_MEMORY_SIZE: "4Gi"
     T_NUTANIX_SYSTEMDISK_SIZE: "40Gi"
     T_NUTANIX_INSECURE: true
+    # tinkerbell variables
+    T_TINKERBELL_MAX_HARDWARE_PER_TEST: 4
+    T_TINKERBELL_INVENTORY_CSV: "hardware-manifests/inventory.csv"
+    T_TINKERBELL_BOOTSTRAP_INTERFACE: "ens192"
+    TEST_RUNNER_GOVC_LIBRARY: "eks-a-templates"
+    TEST_RUNNER_GOVC_TEMPLATE: "eks-a-admin-ci"
   secrets-manager:
     EKSA_AWS_ACCESS_KEY_ID: "packages_ci_beta:aws_access_key_id"
     EKSA_AWS_SECRET_ACCESS_KEY: "packages_ci_beta:aws_secret_access_key_id"
@@ -113,7 +119,35 @@ env:
     T_SNOW_CREDENTIALS_S3_PATH: "snow_ci:snow_credentials_s3_path"
     T_SNOW_CERTIFICATES_S3_PATH: "snow_ci:snow_certificates_s3_path"
     T_SNOW_CONTROL_PLANE_CIDRS: "snow_ci:control_plane_cidrs"
-
+    # Tinkerbell secrets
+    T_TINKERBELL_IMAGE_UBUNTU_1_24: "tinkerbell_ci:image_ubuntu_1_24"
+    T_TINKERBELL_IMAGE_UBUNTU_1_25: "tinkerbell_ci:image_ubuntu_1_25"
+    T_TINKERBELL_IMAGE_UBUNTU_1_26: "tinkerbell_ci:image_ubuntu_1_26"
+    T_TINKERBELL_IMAGE_UBUNTU_1_27: "tinkerbell_ci:image_ubuntu_1_27"
+    T_TINKERBELL_IMAGE_UBUNTU_1_28: "tinkerbell_ci:image_ubuntu_1_28"
+    T_TINKERBELL_IMAGE_UBUNTU_2204_1_24: "tinkerbell_ci:image_ubuntu_2204_1_24"
+    T_TINKERBELL_IMAGE_UBUNTU_2204_1_25: "tinkerbell_ci:image_ubuntu_2204_1_25"
+    T_TINKERBELL_IMAGE_UBUNTU_2204_1_26: "tinkerbell_ci:image_ubuntu_2204_1_26"
+    T_TINKERBELL_IMAGE_UBUNTU_2204_1_27: "tinkerbell_ci:image_ubuntu_2204_1_27"
+    T_TINKERBELL_IMAGE_UBUNTU_2204_1_28: "tinkerbell_ci:image_ubuntu_2204_1_28"
+    T_TINKERBELL_IMAGE_REDHAT_1_24: "tinkerbell_ci:image_redhat_1_24"
+    T_TINKERBELL_IMAGE_REDHAT_1_25: "tinkerbell_ci:image_redhat_1_25"
+    T_TINKERBELL_IMAGE_REDHAT_1_26: "tinkerbell_ci:image_redhat_1_26"
+    T_TINKERBELL_IMAGE_REDHAT_1_27: "tinkerbell_ci:image_redhat_1_27"
+    T_TINKERBELL_IMAGE_REDHAT_1_28: "tinkerbell_ci:image_redhat_1_28"
+    T_TINKERBELL_SSH_AUTHORIZED_KEY: "vsphere_ci_beta_connection:ssh_authorized_key"
+    T_TINKERBELL_CP_NETWORK_CIDR: "tinkerbell_ci:cp_network_cidr"
+    T_TINKERBELL_S3_INVENTORY_CSV_KEY: "tinkerbell_ci:s3_inventory_csv"
+    T_TINKERBELL_S3_AG_INVENTORY_CSV_KEY: "tinkerbell_ci:s3_ag_inventory_csv"
+    BAREMETAL_BRANCH: "tinkerbell_ci:baremetal_branch"
+    TEST_RUNNER_GOVC_USERNAME: "tinkerbell_ci:govc_username"
+    TEST_RUNNER_GOVC_PASSWORD: "tinkerbell_ci:govc_password"
+    TEST_RUNNER_GOVC_URL: "tinkerbell_ci:govc_url"
+    TEST_RUNNER_GOVC_DATACENTER: "tinkerbell_ci:govc_datacenter"
+    TEST_RUNNER_GOVC_DATASTORE: "tinkerbell_ci:govc_datastore"
+    TEST_RUNNER_GOVC_RESOURCE_POOL: "tinkerbell_ci:govc_resource_pool"
+    TEST_RUNNER_GOVC_NETWORK: "tinkerbell_ci:govc_network"
+    TEST_RUNNER_GOVC_FOLDER: "tinkerbell_ci:govc_folder"
 phases:
   pre_build:
     commands:
