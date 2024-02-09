@@ -55,6 +55,7 @@ type ClusterManager interface {
 	InstallAwsIamAuth(ctx context.Context, managementCluster, workloadCluster *types.Cluster, clusterSpec *cluster.Spec) error
 	CreateAwsIamAuthCaSecret(ctx context.Context, bootstrapCluster *types.Cluster, workloadClusterName string) error
 	DeletePackageResources(ctx context.Context, managementCluster *types.Cluster, clusterName string) error
+	CreateRegistryCredSecret(ctx context.Context, mgmt *types.Cluster) error
 }
 
 type GitOpsManager interface {

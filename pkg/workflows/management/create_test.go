@@ -136,6 +136,10 @@ func (c *createTestSetup) expectCreateBootstrap() {
 	)
 }
 
+func (c *createTestSetup) expectCreateRegistrySecret(err error) {
+	c.clusterManager.EXPECT().CreateRegistryCredSecret(c.ctx, c.bootstrapCluster).Return(err)
+}
+
 func (c *createTestSetup) expectCAPIInstall(err1, err2, err3 error) {
 	gomock.InOrder(
 		c.provider.EXPECT().PreCAPIInstallOnBootstrap(
@@ -313,6 +317,24 @@ func TestCreateBootstrapFailure(t *testing.T) {
 	err = c.run()
 	if err == nil {
 		t.Fatalf("expected error from task")
+	}
+}
+
+func TestCreateRegistrySecretFailure(t *testing.T) {
+	c := newCreateTest(t)
+	c.clusterSpec.Cluster.Spec.RegistryMirrorConfiguration = &v1alpha1.RegistryMirrorConfiguration{Authenticate: true}
+	c.expectSetup()
+	c.expectCreateBootstrap()
+	c.expectPreflightValidationsToPass()
+
+	c.expectCreateRegistrySecret(fmt.Errorf(""))
+
+	c.clusterManager.EXPECT().SaveLogsManagementCluster(c.ctx, c.clusterSpec, c.bootstrapCluster)
+	c.writer.EXPECT().Write(fmt.Sprintf("%s-checkpoint.yaml", c.clusterSpec.Cluster.Name), gomock.Any())
+
+	err := c.run()
+	if err == nil {
+		t.Fatalf("Create.Run() expected to return an error %v", err)
 	}
 }
 
