@@ -7,8 +7,10 @@ import (
 	"github.com/aws/eks-anywhere/pkg/workflows"
 )
 
-type updateSecrets struct{}
-type updateSecretsCreate struct{}
+type (
+	updateSecrets       struct{}
+	updateSecretsCreate struct{}
+)
 
 // Run updateSecrets updates management cluster's secrets.
 func (s *updateSecrets) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
