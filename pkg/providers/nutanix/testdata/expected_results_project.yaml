@@ -380,14 +380,6 @@ data:
   nutanix-ccm.yaml: |
     ---
     apiVersion: v1
-    kind: ConfigMap
-    metadata:
-      name: user-ca-bundle
-      namespace: kube-system
-    binaryData:
-      ca.crt:
-    ---
-    apiVersion: v1
     kind: ServiceAccount
     metadata:
       name: cloud-controller-manager

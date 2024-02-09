@@ -410,8 +410,8 @@ metadata:
   namespace: "{{.eksaSystemNamespace}}"
 data:
   nutanix-ccm.yaml: |
-    ---
 {{- if .nutanixAdditionalTrustBundle }}
+    ---
     apiVersion: v1
     kind: ConfigMap
     metadata:

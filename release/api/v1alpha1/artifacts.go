@@ -152,9 +152,13 @@ func (vb *VersionsBundle) TinkerbellImages() []Image {
 }
 
 func (vb *VersionsBundle) NutanixImages() []Image {
-	i := make([]Image, 0, 1)
+	i := make([]Image, 0, 2)
 	if vb.Nutanix.ClusterAPIController.URI != "" {
 		i = append(i, vb.Nutanix.ClusterAPIController)
+	}
+
+	if vb.Nutanix.CloudProvider.URI != "" {
+		i = append(i, vb.Nutanix.CloudProvider)
 	}
 
 	return i
