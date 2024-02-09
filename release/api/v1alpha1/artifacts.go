@@ -193,6 +193,7 @@ func (vb *VersionsBundle) SharedImages() []Image {
 		vb.Haproxy.Image,
 		vb.PackageController.Controller,
 		vb.PackageController.TokenRefresher,
+		vb.Upgrader.Upgrader,
 	}
 }
 
