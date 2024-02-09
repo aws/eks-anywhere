@@ -32,6 +32,7 @@ type deleteTestSetup struct {
 	workloadCluster  *types.Cluster
 	workload         *workload.Delete
 	writer           *writermocks.MockFileWriter
+	gitopsManager    *mocks.MockGitOpsManager
 }
 
 func newDeleteTest(t *testing.T) *deleteTestSetup {
@@ -44,12 +45,14 @@ func newDeleteTest(t *testing.T) *deleteTestSetup {
 	datacenterConfig := &v1alpha1.VSphereDatacenterConfig{}
 	machineConfigs := []providers.MachineConfig{&v1alpha1.VSphereMachineConfig{}}
 	clusterDeleter := mocks.NewMockClusterDeleter(mockCtrl)
+	gitopsManager := mocks.NewMockGitOpsManager(mockCtrl)
 
 	workload := workload.NewDelete(
 		provider,
 		writer,
 		manager,
 		clusterDeleter,
+		gitopsManager,
 	)
 
 	for _, e := range featureEnvVars {
@@ -72,6 +75,7 @@ func newDeleteTest(t *testing.T) *deleteTestSetup {
 		workloadCluster: &types.Cluster{Name: "workload"},
 		clusterManager:  manager,
 		writer:          writer,
+		gitopsManager:   gitopsManager,
 	}
 }
 
@@ -96,8 +100,11 @@ func (c *deleteTestSetup) expectSaveLogsWorkload() {
 	c.expectWrite()
 }
 
-func (c *deleteTestSetup) expectCleanup() {
-	c.writer.EXPECT().CleanUp()
+func (c *deleteTestSetup) expectCleanup(err error) {
+	c.gitopsManager.EXPECT().CleanupGitRepo(c.ctx, c.clusterSpec).Return(err)
+	if err == nil {
+		c.writer.EXPECT().CleanUp()
+	}
 }
 
 func TestDeleteRunSuccess(t *testing.T) {
@@ -106,7 +113,7 @@ func TestDeleteRunSuccess(t *testing.T) {
 	test := newDeleteTest(t)
 	test.expectSetup(nil)
 	test.expectDeleteWorkloadCluster(nil)
-	test.expectCleanup()
+	test.expectCleanup(nil)
 
 	err := test.run()
 	if err != nil {
@@ -134,6 +141,22 @@ func TestDeleteRunFailSetup(t *testing.T) {
 	test := newDeleteTest(t)
 	test.expectSetup(fmt.Errorf("Failure"))
 	test.expectWrite()
+
+	err := test.run()
+	if err == nil {
+		t.Fatalf("Delete.Run() err = %v, want err = nil", err)
+	}
+}
+
+func TestDeleteRunFailCleanup(t *testing.T) {
+	features.ClearCache()
+	os.Setenv(features.UseControllerForCli, "true")
+	test := newDeleteTest(t)
+	test.expectSetup(nil)
+	test.expectDeleteWorkloadCluster(nil)
+	test.expectCleanup(fmt.Errorf(""))
+	test.clusterManager.EXPECT().SaveLogsManagementCluster(test.ctx, test.clusterSpec, test.clusterSpec.ManagementCluster)
+	test.expectSaveLogsWorkload()
 
 	err := test.run()
 	if err == nil {
