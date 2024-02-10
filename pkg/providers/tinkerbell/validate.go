@@ -51,15 +51,17 @@ func validateUpgradeRolloutStrategy(spec *ClusterSpec) error {
 	}
 
 	for _, group := range spec.Cluster.Spec.WorkerNodeGroupConfigurations {
+		wnUpgradeRolloutStrategyType := v1alpha1.RollingUpdateStrategyType
 		groupRef := group.MachineGroupRef
 
 		if group.UpgradeRolloutStrategy != nil {
-			if spec.MachineConfigs[groupRef.Name].OSFamily() != v1alpha1.Ubuntu && group.UpgradeRolloutStrategy.Type == v1alpha1.InPlaceStrategyType {
+			wnUpgradeRolloutStrategyType = group.UpgradeRolloutStrategy.Type
+			if spec.MachineConfigs[groupRef.Name].OSFamily() != v1alpha1.Ubuntu && wnUpgradeRolloutStrategyType == v1alpha1.InPlaceStrategyType {
 				return errors.New("InPlace upgrades are only supported on the Ubuntu OS family")
 			}
-			if group.UpgradeRolloutStrategy.Type != cpUpgradeRolloutStrategyType {
-				return errors.New("cannot specify different upgrade rollout strategy types for control plane and worker node group configurations")
-			}
+		}
+		if wnUpgradeRolloutStrategyType != cpUpgradeRolloutStrategyType {
+			return errors.New("cannot specify different upgrade rollout strategy types for control plane and worker node group configurations")
 		}
 	}
 	return nil
