@@ -119,7 +119,13 @@ func updateControlPlaneReadyCondition(cluster *anywherev1.Cluster, kcp *controlp
 	totalOutdated := totalReplicas - updatedReplicas
 
 	if totalOutdated > 0 {
-		conditions.MarkFalse(cluster, anywherev1.ControlPlaneReadyCondition, anywherev1.RollingUpgradeInProgress, clusterv1.ConditionSeverityInfo, "Control plane nodes not up-to-date yet, %d rolling (%d up to date)", totalReplicas, updatedReplicas)
+		upgradeReason := anywherev1.RollingUpgradeInProgress
+		if cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy != nil {
+			if cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy.Type == anywherev1.InPlaceStrategyType {
+				upgradeReason = anywherev1.InPlaceUpgradeInProgress
+			}
+		}
+		conditions.MarkFalse(cluster, anywherev1.ControlPlaneReadyCondition, upgradeReason, clusterv1.ConditionSeverityInfo, "Control plane nodes not up-to-date yet, %d upgrading (%d up to date)", totalReplicas, updatedReplicas)
 		return
 	}
 
@@ -218,7 +224,15 @@ func updateWorkersReadyCondition(cluster *anywherev1.Cluster, machineDeployments
 	// so reflect that on the conditon with an appropriate message.
 	totalOutdated := totalReplicas - totalUpdatedReplicas
 	if totalOutdated > 0 {
-		conditions.MarkFalse(cluster, anywherev1.WorkersReadyCondition, anywherev1.RollingUpgradeInProgress, clusterv1.ConditionSeverityInfo, "Worker nodes not up-to-date yet, %d rolling (%d up to date)", totalReplicas, totalUpdatedReplicas)
+		upgradeReason := anywherev1.RollingUpgradeInProgress
+		// We are checking the control plane configuration here because we already validate that all the machines
+		// have the same upgrade strategy.
+		if cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy != nil {
+			if cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy.Type == anywherev1.InPlaceStrategyType {
+				upgradeReason = anywherev1.InPlaceUpgradeInProgress
+			}
+		}
+		conditions.MarkFalse(cluster, anywherev1.WorkersReadyCondition, upgradeReason, clusterv1.ConditionSeverityInfo, "Worker nodes not up-to-date yet, %d upgrading (%d up to date)", totalReplicas, totalUpdatedReplicas)
 		return
 	}
 
