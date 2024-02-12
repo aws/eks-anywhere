@@ -39,6 +39,7 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 		externalEtcdCount   int
 		externalEtcdCluster *etcdv1.EtcdadmCluster
 		capiCluster         *clusterv1.Cluster
+		upgradeType         anywherev1.UpgradeRolloutStrategyType
 	}{
 		{
 			name:                "kcp is nil",
@@ -295,6 +296,39 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 				Severity: clusterv1.ConditionSeverityInfo,
 				Message:  "Control plane nodes not up-to-date yet",
 			},
+		},
+		{
+			name: "control plane replicas out of date, inplace upgrade",
+			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
+				kcp.Status.ReadyReplicas = 3
+				kcp.Status.Replicas = 3
+				kcp.Status.UpdatedReplicas = 1
+
+				kcp.Status.Conditions = []clusterv1.Condition{
+					{
+						Type:     clusterv1.ReadyCondition,
+						Status:   "False",
+						Severity: clusterv1.ConditionSeverityInfo,
+					},
+				}
+			}),
+			controlPlaneCount: 3,
+			externalEtcdCount: 0,
+			conditions: []anywherev1.Condition{
+				{
+					Type:   anywherev1.ControlPlaneInitializedCondition,
+					Status: "True",
+				},
+			},
+			externalEtcdCluster: nil,
+			wantCondition: &anywherev1.Condition{
+				Type:     anywherev1.ControlPlaneReadyCondition,
+				Status:   "False",
+				Reason:   anywherev1.InPlaceUpgradeInProgress,
+				Severity: clusterv1.ConditionSeverityInfo,
+				Message:  "Control plane nodes not up-to-date yet",
+			},
+			upgradeType: anywherev1.InPlaceStrategyType,
 		},
 		{
 			name: "control plane nodes not ready yet",
@@ -593,6 +627,11 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 				objs = append(objs, tt.capiCluster)
 				objs = append(objs, tt.externalEtcdCluster)
 			}
+			if tt.upgradeType != "" {
+				cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy = &anywherev1.ControlPlaneUpgradeRolloutStrategy{
+					Type: tt.upgradeType,
+				}
+			}
 
 			client = fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
 
@@ -659,6 +698,7 @@ func TestUpdateClusterStatusForWorkers(t *testing.T) {
 		conditions                    []anywherev1.Condition
 		wantCondition                 *anywherev1.Condition
 		wantErr                       string
+		upgradeType                   anywherev1.UpgradeRolloutStrategyType
 	}{
 		{
 			name:                          "workers not ready, control plane not initialized",
@@ -791,6 +831,51 @@ func TestUpdateClusterStatusForWorkers(t *testing.T) {
 				Severity: clusterv1.ConditionSeverityInfo,
 				Message:  "Worker nodes not up-to-date yet",
 			},
+		},
+		{
+			name: "workers not ready, nodes not up to date ",
+			workerNodeGroupConfigurations: []anywherev1.WorkerNodeGroupConfiguration{
+				{
+					Count: ptr.Int(1),
+				},
+				{
+					Count: ptr.Int(2),
+				},
+			},
+			machineDeployments: []clusterv1.MachineDeployment{
+				*test.MachineDeployment(func(md *clusterv1.MachineDeployment) {
+					md.ObjectMeta.Name = "md-0"
+					md.ObjectMeta.Labels = map[string]string{
+						clusterv1.ClusterNameLabel: clusterName,
+					}
+					md.Status.Replicas = 1
+					md.Status.ReadyReplicas = 1
+					md.Status.UpdatedReplicas = 1
+				}),
+				*test.MachineDeployment(func(md *clusterv1.MachineDeployment) {
+					md.ObjectMeta.Name = "md-1"
+					md.ObjectMeta.Labels = map[string]string{
+						clusterv1.ClusterNameLabel: clusterName,
+					}
+					md.Status.Replicas = 2
+					md.Status.ReadyReplicas = 2
+					md.Status.UpdatedReplicas = 1
+				}),
+			},
+			conditions: []anywherev1.Condition{
+				{
+					Type:   anywherev1.ControlPlaneInitializedCondition,
+					Status: "True",
+				},
+			},
+			wantCondition: &anywherev1.Condition{
+				Type:     anywherev1.WorkersReadyCondition,
+				Status:   "False",
+				Reason:   anywherev1.InPlaceUpgradeInProgress,
+				Severity: clusterv1.ConditionSeverityInfo,
+				Message:  "Worker nodes not up-to-date yet",
+			},
+			upgradeType: anywherev1.InPlaceStrategyType,
 		},
 		{
 			name: "workers not ready, scaling up",
@@ -975,6 +1060,12 @@ func TestUpdateClusterStatusForWorkers(t *testing.T) {
 			cluster.Namespace = constants.EksaSystemNamespace
 			cluster.Spec.WorkerNodeGroupConfigurations = tt.workerNodeGroupConfigurations
 			cluster.Status.Conditions = tt.conditions
+
+			if tt.upgradeType != "" {
+				cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy = &anywherev1.ControlPlaneUpgradeRolloutStrategy{
+					Type: tt.upgradeType,
+				}
+			}
 
 			objs := []runtime.Object{}
 

@@ -49,6 +49,10 @@ const (
 	// a new desired machine spec.
 	RollingUpgradeInProgress = "RollingUpgradeInProgress"
 
+	// InPlaceUpgradeInProgress reports the Cluster is executing a in place upgrade to align the nodes to
+	// a new desired machine specs.
+	InPlaceUpgradeInProgress = "InPlaceUpgradeInProgress"
+
 	// ExternalEtcdNotAvailable reports the Cluster status is waiting for Etcd to be available.
 	ExternalEtcdNotAvailable = "ExternalEtcdNotAvailable"
 )
