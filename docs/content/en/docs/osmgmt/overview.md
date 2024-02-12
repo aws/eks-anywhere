@@ -18,7 +18,7 @@ Reference the table below for the operating systems supported per deployment opt
 
 | OS | Supported Versions |
 | :---: | :---: |
-| Bottlerocket | 1.15.x |
+| Bottlerocket | 1.19.x |
 | Ubuntu | 20.04.x, 22.04.x |
 | RHEL | 8.x, 9.x<sup>*</sup> |
 
