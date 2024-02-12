@@ -2,12 +2,21 @@ quick_tests:
 # Docker
 - TestDocker.*128
 # vSphere
-- TestVSphereKubernetes128Ubuntu2204SimpleFlow
+- ^TestVSphereKubernetes127UbuntuTo128Upgrade$
+- TestVSphereKubernetes127UbuntuTo128StackedEtcdUpgrade
+- TestVSphereKubernetes127To128Ubuntu2204Upgrade
+- TestVSphereKubernetes128Ubuntu2004To2204Upgrade
+- TestVSphereKubernetes127BottlerocketTo128Upgrade
+- TestVSphereKubernetes127BottlerocketTo128StackedEtcdUpgrade
 # CloudStack
 - TestCloudStackKubernetes127To128RedhatMultipleFieldsUpgrade
 # Nutanix
-- TestNutanixKubernetes127to128RedHat9Upgrade
+- TestNutanixKubernetes128to129RedHat9Upgrade
+- TestNutanixKubernetes128to129RedHat8Upgrade
+- TestNutanixKubernetes128To129UbuntuUpgrade
 # Snow
 - TestSnowKubernetes128SimpleFlow
 # Tinkerbell
 # - ^TestTinkerbellKubernetes127UbuntuTo128Upgrade$
+# - TestTinkerbellKubernetes128Ubuntu2004To2204Upgrade
+# - TestTinkerbellKubernetes127To128Ubuntu2204Upgrade
