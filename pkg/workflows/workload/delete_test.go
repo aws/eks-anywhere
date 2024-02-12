@@ -3,6 +3,7 @@ package workload_test
 import (
 	"context"
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -10,6 +11,7 @@ import (
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/features"
 	writermocks "github.com/aws/eks-anywhere/pkg/filewriter/mocks"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	providermocks "github.com/aws/eks-anywhere/pkg/providers/mocks"
@@ -106,6 +108,8 @@ func (c *deleteTestSetup) expectCleanup(err error) {
 }
 
 func TestDeleteRunSuccess(t *testing.T) {
+	features.ClearCache()
+	os.Setenv(features.UseControllerForCli, "true")
 	test := newDeleteTest(t)
 	test.expectSetup(nil)
 	test.expectDeleteWorkloadCluster(nil)
@@ -118,6 +122,8 @@ func TestDeleteRunSuccess(t *testing.T) {
 }
 
 func TestDeleteRunFail(t *testing.T) {
+	features.ClearCache()
+	os.Setenv(features.UseControllerForCli, "true")
 	test := newDeleteTest(t)
 	test.expectSetup(nil)
 	test.expectDeleteWorkloadCluster(fmt.Errorf("Failure"))
@@ -130,6 +136,8 @@ func TestDeleteRunFail(t *testing.T) {
 }
 
 func TestDeleteRunFailSetup(t *testing.T) {
+	features.ClearCache()
+	os.Setenv(features.UseControllerForCli, "true")
 	test := newDeleteTest(t)
 	test.expectSetup(fmt.Errorf("Failure"))
 	test.expectWrite()
@@ -141,6 +149,8 @@ func TestDeleteRunFailSetup(t *testing.T) {
 }
 
 func TestDeleteRunFailCleanup(t *testing.T) {
+	features.ClearCache()
+	os.Setenv(features.UseControllerForCli, "true")
 	test := newDeleteTest(t)
 	test.expectSetup(nil)
 	test.expectDeleteWorkloadCluster(nil)

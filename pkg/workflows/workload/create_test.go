@@ -3,6 +3,7 @@ package workload_test
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 	"testing"
 
@@ -11,6 +12,7 @@ import (
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/features"
 	writermocks "github.com/aws/eks-anywhere/pkg/filewriter/mocks"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	providermocks "github.com/aws/eks-anywhere/pkg/providers/mocks"
@@ -147,6 +149,8 @@ func (c *createTestSetup) expectWrite() {
 }
 
 func TestCreateRunSuccess(t *testing.T) {
+	features.ClearCache()
+	os.Setenv(features.UseControllerForCli, "true")
 	test := newCreateTest(t)
 	test.expectSetup()
 	test.expectPreflightValidationsToPass()
@@ -163,6 +167,8 @@ func TestCreateRunSuccess(t *testing.T) {
 }
 
 func TestCreateRunFail(t *testing.T) {
+	features.ClearCache()
+	os.Setenv(features.UseControllerForCli, "true")
 	test := newCreateTest(t)
 	test.expectSetup()
 	test.expectPreflightValidationsToPass()
@@ -178,6 +184,8 @@ func TestCreateRunFail(t *testing.T) {
 }
 
 func TestCreateRunValidateFail(t *testing.T) {
+	features.ClearCache()
+	os.Setenv(features.UseControllerForCli, "true")
 	test := newCreateTest(t)
 	test.provider.EXPECT().Name()
 	test.gitOpsManager.EXPECT().Validations(test.ctx, test.clusterSpec)
@@ -192,6 +200,8 @@ func TestCreateRunValidateFail(t *testing.T) {
 }
 
 func TestCreateRunGitOpsConfigFail(t *testing.T) {
+	features.ClearCache()
+	os.Setenv(features.UseControllerForCli, "true")
 	test := newCreateTest(t)
 	test.expectSetup()
 	test.expectPreflightValidationsToPass()
@@ -208,6 +218,8 @@ func TestCreateRunGitOpsConfigFail(t *testing.T) {
 }
 
 func TestCreateRunWriteClusterConfigFail(t *testing.T) {
+	features.ClearCache()
+	os.Setenv(features.UseControllerForCli, "true")
 	test := newCreateTest(t)
 	test.expectSetup()
 	test.expectPreflightValidationsToPass()
