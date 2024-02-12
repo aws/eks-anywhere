@@ -16,12 +16,12 @@ package release
 
 import (
 	"fmt"
+	"io"
 
 	"sigs.k8s.io/yaml"
 
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 	"github.com/aws/eks-anywhere/release/cli/pkg/aws/s3"
-	"github.com/aws/eks-anywhere/release/cli/pkg/filereader"
 	releasetypes "github.com/aws/eks-anywhere/release/cli/pkg/types"
 )
 
@@ -39,22 +39,27 @@ func GetPreviousReleaseIfExists(r *releasetypes.ReleaseConfig) (*anywherev1alpha
 
 	release := &anywherev1alpha1.Release{}
 	eksAReleaseManifestKey := r.ReleaseManifestFilepath()
-	eksAReleaseManifestUrl := fmt.Sprintf("%s/%s", r.CDN, eksAReleaseManifestKey)
 
-	if s3.KeyExists(r.ReleaseBucket, eksAReleaseManifestKey) {
-		contents, err := filereader.ReadHttpFile(eksAReleaseManifestUrl)
-		if err != nil {
-			return nil, fmt.Errorf("Error reading releases manifest from S3: %v", err)
-		}
-
-		if err = yaml.Unmarshal(contents, release); err != nil {
-			return nil, fmt.Errorf("Error unmarshaling releases manifest from [%s]: %v", eksAReleaseManifestUrl, err)
-		}
-
-		return release, nil
+	if !s3.KeyExists(r.ReleaseBucket, eksAReleaseManifestKey) {
+		return emptyRelease, nil
 	}
 
-	return emptyRelease, nil
+	content, err := s3.Read(r.ReleaseBucket, eksAReleaseManifestKey)
+	if err != nil {
+		return nil, fmt.Errorf("reading releases manifest from S3: %v", err)
+	}
+	defer content.Close()
+
+	contents, err := io.ReadAll(content)
+	if err != nil {
+		return nil, fmt.Errorf("reading releases manifest response from S3: %v", err)
+	}
+
+	if err = yaml.Unmarshal(contents, release); err != nil {
+		return nil, fmt.Errorf("unmarshaling releases manifest from [%s]: %v", eksAReleaseManifestKey, err)
+	}
+
+	return release, nil
 }
 
 // AppendOrUpdateRelease appends a new release to the manifest if it does not exist, or updates the existing release.

@@ -26,9 +26,23 @@ import (
 	"github.com/pkg/errors"
 )
 
-func DownloadFile(filePath, bucket, key string) error {
+// Read reads the content of an object from an S3 bucket.
+// It returns an io.ReadCloser that should be closed after use.
+func Read(bucket, key string) (io.ReadCloser, error) {
 	objectURL := fmt.Sprintf("https://%s.s3.amazonaws.com/%s", bucket, key)
+	resp, err := http.Get(objectURL)
+	if err != nil {
+		return nil, err
+	}
 
+	if resp.StatusCode != http.StatusOK {
+		resp.Body.Close()
+		return nil, fmt.Errorf("download file returned code %s", resp.Status)
+	}
+	return resp.Body, nil
+}
+
+func DownloadFile(filePath, bucket, key string) error {
 	if err := os.MkdirAll(filepath.Dir(filePath), 0o755); err != nil {
 		return errors.Cause(err)
 	}
@@ -39,20 +53,14 @@ func DownloadFile(filePath, bucket, key string) error {
 	}
 	defer fd.Close()
 
-	// Get the data
-	resp, err := http.Get(objectURL)
+	body, err := Read(bucket, key)
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
 
-	// Check server response
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("bad status: %s", resp.Status)
-	}
+	defer body.Close()
 
-	_, err = io.Copy(fd, resp.Body)
-	if err != nil {
+	if _, err = io.Copy(fd, body); err != nil {
 		return err
 	}
 
