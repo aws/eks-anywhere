@@ -9,7 +9,7 @@ quick_tests:
 - TestVSphereKubernetes127BottlerocketTo128Upgrade
 - TestVSphereKubernetes127BottlerocketTo128StackedEtcdUpgrade
 # CloudStack
-- TestCloudStackKubernetes127To128RedhatMultipleFieldsUpgrade
+- TestCloudStackKubernetes128To129RedhatMultipleFieldsUpgrade
 # Nutanix
 - TestNutanixKubernetes128to129RedHat9Upgrade
 - TestNutanixKubernetes128to129RedHat8Upgrade
