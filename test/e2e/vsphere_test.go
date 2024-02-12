@@ -1549,6 +1549,37 @@ func TestVSphereKubernetes128RedHatSimpleFlow(t *testing.T) {
 	runSimpleFlow(test)
 }
 
+func TestVSphereKubernetes127To128RedHatUpgrade(t *testing.T) {
+	provider := framework.NewVSphere(t, framework.WithRedHat127VSphere())
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127)),
+	)
+	runSimpleUpgradeFlow(
+		test,
+		v1alpha1.Kube128,
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube128)),
+		provider.WithProviderUpgrade(provider.Redhat128Template()),
+	)
+}
+
+func TestVSphereKubernetes127To128StackedEtcdRedHatUpgrade(t *testing.T) {
+	provider := framework.NewVSphere(t, framework.WithRedHat127VSphere())
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127)),
+		framework.WithClusterFiller(api.WithStackedEtcdTopology()),
+	)
+	runSimpleUpgradeFlow(
+		test,
+		v1alpha1.Kube128,
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube128)),
+		provider.WithProviderUpgrade(provider.Redhat128Template()),
+	)
+}
+
 func TestVSphereKubernetes128ThreeReplicasFiveWorkersSimpleFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
@@ -1871,6 +1902,25 @@ func TestVSphereKubernetes127To128Ubuntu2204Upgrade(t *testing.T) {
 		provider,
 	).WithClusterConfig(
 		provider.WithKubeVersionAndOS(v1alpha1.Kube127, framework.Ubuntu2204, nil),
+	)
+	runSimpleUpgradeFlowWithoutClusterConfigGeneration(
+		test,
+		v1alpha1.Kube128,
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube128)),
+		provider.WithProviderUpgrade(provider.Ubuntu2204Kubernetes128Template()),
+	)
+}
+
+func TestVSphereKubernetes127To128Ubuntu2204StackedEtcdUpgrade(t *testing.T) {
+	provider := framework.NewVSphere(t)
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+	).WithClusterConfig(
+		provider.WithKubeVersionAndOS(v1alpha1.Kube127, framework.Ubuntu2204, nil),
+		api.ClusterToConfigFiller(
+			api.WithStackedEtcdTopology(),
+		),
 	)
 	runSimpleUpgradeFlowWithoutClusterConfigGeneration(
 		test,
