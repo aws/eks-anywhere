@@ -1,79 +1,89 @@
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: NutanixCluster
 metadata:
-  name: "{{.clusterName}}"
-  namespace: "{{.eksaSystemNamespace}}"
+  name: "eksa-unit-test"
+  namespace: "eksa-system"
 spec:
   failureDomains: []
   prismCentral:
-{{- if .nutanixAdditionalTrustBundle }}
     additionalTrustBundle:
       kind: String
       data: |
-{{ .nutanixAdditionalTrustBundle | indent 8 }}
-{{- end }}
-    address: "{{.nutanixEndpoint}}"
-    port: {{.nutanixPort}}
-    insecure: {{.nutanixInsecure}}
+        -----BEGIN CERTIFICATE-----
+        MIIDajCCAlKgAwIBAgIUZOD4pznfHyCO8gMvP87F+PnhGHMwDQYJKoZIhvcNAQEL
+        BQAwNDELMAkGA1UEBhMCREUxFDASBgNVBAgMC0xhbmQgQmVybGluMQ8wDQYDVQQH
+        DAZCZXJsaW4wHhcNMjIwODI1MTYxNzI5WhcNMzIwODIyMTYxNzI5WjA0MQswCQYD
+        VQQGEwJERTEUMBIGA1UECAwLTGFuZCBCZXJsaW4xDzANBgNVBAcMBkJlcmxpbjCC
+        ASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAO280znVj6qLpCqAeNgpw7gw
+        0OE54gBW8Y9gBtEYxBux6hXBl+doj+JNZLcfIoDoqdTlgZX13Y//WakfMuvuhYUN
+        53fpwsiup3pqqL+JHhKy+Bq/BSQcHkLGi/aUGph7qK/wQMZBGBbbBXaCwnhjYovl
+        nRq4p+Cm5wm4S/QUhgyvqyoeNWAc6+2AHniuIzo6Q1MU9ktaSAdL8ZdW5g6el5iA
+        oHjDHNjTwyTeybKFScEQvFqO6qfzTRn8eV6dwH4gOYec1IdDwSp8PSv9R7J9AC+1
+        DtAjsYtqO4i6qRpgf0zyGQb+uNKXdz/ovOGa58twfMKYU7Z2crPj3K7NOJVelZEC
+        AwEAAaN0MHIwHQYDVR0OBBYEFPlcZspynb+2DwRN5K3slRyEV0nxMB8GA1UdIwQY
+        MBaAFPlcZspynb+2DwRN5K3slRyEV0nxMA4GA1UdDwEB/wQEAwIFoDAgBgNVHSUB
+        Af8EFjAUBggrBgEFBQcDAQYIKwYBBQUHAwIwDQYJKoZIhvcNAQELBQADggEBACXY
+        FH72svBSALkqmTyU9rsh4rRK9yo7tmNJkFkRQ/cjYycpNKZ6Cg9+wGwN6o6pXdqb
+        JfeuePclDdGcgYe8SbGr0T7pFXdUIVmuO/jjatKCftXQQZK5zHCkUTLhVlAbnNpC
+        3NIU4wWjx/QLtk+zEqjl5kyDgXD5GwxXbgzzY+7wi4QZO8VRyLG5lawZVKer3gkt
+        +NGIOtoyz4RjnWIKV34Z6HUDhdgbVyX1uPG/a5mLmcbLjuSf39WdAgv9bFGkUHZk
+        2dU0bIXepIZ5Mz3aovl35EjbGAbpI8tpKWlsHNoiVNQm1vojfKvKVibVS2FNo0cD
+        gu45O/O1hxzezDKiKKU=
+        -----END CERTIFICATE-----
+    address: "prism.nutanix.com"
+    port: 9440
+    insecure: false
     credentialRef:
-      name: "{{.secretName}}"
+      name: "capx-eksa-unit-test"
       kind: Secret
   controlPlaneEndpoint:
-    host: "{{.controlPlaneEndpointIp}}"
+    host: "test-ip"
     port: 6443
 ---
 apiVersion: cluster.x-k8s.io/v1beta1
 kind: Cluster
 metadata:
   labels:
-    cluster.x-k8s.io/cluster-name: "{{.clusterName}}"
-  name: "{{.clusterName}}"
-  namespace: "{{.eksaSystemNamespace}}"
+    cluster.x-k8s.io/cluster-name: "eksa-unit-test"
+  name: "eksa-unit-test"
+  namespace: "eksa-system"
 spec:
   clusterNetwork:
     services:
-      cidrBlocks: {{.serviceCidrs}}
+      cidrBlocks: [10.96.0.0/12]
     pods:
-      cidrBlocks: {{.podCidrs}}
+      cidrBlocks: [192.168.0.0/16]
     serviceDomain: "cluster.local"
   controlPlaneRef:
     apiVersion: controlplane.cluster.x-k8s.io/v1beta1
     kind: KubeadmControlPlane
-    name: "{{.clusterName}}"
+    name: "eksa-unit-test"
   infrastructureRef:
     apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
     kind: NutanixCluster
-    name: "{{.clusterName}}"
+    name: "eksa-unit-test"
 ---
 apiVersion: controlplane.cluster.x-k8s.io/v1beta1
 kind: KubeadmControlPlane
 metadata:
-  name: "{{.clusterName}}"
-  namespace: "{{.eksaSystemNamespace}}"
+  name: "eksa-unit-test"
+  namespace: "eksa-system"
 spec:
-  replicas: {{.controlPlaneReplicas}}
-  version: "{{.kubernetesVersion}}"
+  replicas: 3
+  version: "v1.19.8-eks-1-19-4"
   machineTemplate:
     infrastructureRef:
       apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
       kind: NutanixMachineTemplate
-      name: "{{.controlPlaneTemplateName}}"
-{{- if .upgradeRolloutStrategy }}
-  rolloutStrategy:
-    rollingUpdate:
-      maxSurge: {{.maxSurge}} 
-{{- end }}
+      name: "<no value>"
   kubeadmConfigSpec:
     clusterConfiguration:
-      imageRepository: "{{.kubernetesRepository}}"
+      imageRepository: "public.ecr.aws/eks-distro/kubernetes"
       apiServer:
         certSANs:
           - localhost
           - 127.0.0.1
           - 0.0.0.0
-          {{- with .apiServerCertSANs }}
-          {{- toYaml . | nindent 10 }}
-          {{- end }}
         extraArgs:
           cloud-provider: external
           audit-policy-file: /etc/kubernetes/audit-policy.yaml
@@ -81,9 +91,6 @@ spec:
           audit-log-maxage: "30"
           audit-log-maxbackup: "10"
           audit-log-maxsize: "512"
-{{- if .apiServerExtraArgs }}
-{{ .apiServerExtraArgs.ToYaml | indent 10 }}
-{{- end }}
         extraVolumes:
         - hostPath: /etc/kubernetes/audit-policy.yaml
           mountPath: /etc/kubernetes/audit-policy.yaml
@@ -95,35 +102,17 @@ spec:
           name: audit-log-dir
           pathType: DirectoryOrCreate
           readOnly: false
-{{- if .awsIamAuth}}
-        - hostPath: /var/lib/kubeadm/aws-iam-authenticator/
-          mountPath: /etc/kubernetes/aws-iam-authenticator/
-          name: authconfig
-          readOnly: false
-        - hostPath: /var/lib/kubeadm/aws-iam-authenticator/pki/
-          mountPath: /var/aws-iam-authenticator/
-          name: awsiamcert
-          readOnly: false
-{{- end}}
       controllerManager:
         extraArgs:
           cloud-provider: external
           enable-hostpath-provisioner: "true"
       dns:
-        imageRepository: {{.corednsRepository}}
-        imageTag: {{.corednsVersion}}
+        imageRepository: public.ecr.aws/eks-distro/coredns
+        imageTag: v1.8.0-eks-1-19-4
       etcd:
-{{- if .externalEtcd }}
-        external:
-          endpoints: []
-          caFile: "/etc/kubernetes/pki/etcd/ca.crt"
-          certFile: "/etc/kubernetes/pki/apiserver-etcd-client.crt"
-          keyFile: "/etc/kubernetes/pki/apiserver-etcd-client.key"
-{{- else }}
         local:
-          imageRepository: {{.etcdRepository}}
-          imageTag: {{.etcdImageTag}}
-{{- end }}
+          imageRepository: public.ecr.aws/eks-distro/etcd-io
+          imageTag: v3.4.14-eks-1-19-4
     files:
     - content: |
         apiVersion: v1
@@ -135,7 +124,7 @@ spec:
         spec:
           containers:
             - name: kube-vip
-              image: {{.kubeVipImage}}
+              image: 
               imagePullPolicy: IfNotPresent
               args:
                 - manager
@@ -143,7 +132,7 @@ spec:
                 - name: vip_arp
                   value: "true"
                 - name: address
-                  value: "{{.controlPlaneEndpointIp}}"
+                  value: "test-ip"
                 - name: port
                   value: "6443"
                 - name: vip_cidr
@@ -163,9 +152,9 @@ spec:
                 - name: vip_retryperiod
                   value: "2"
                 - name: svc_enable
-                  value: "{{.kubeVipSvcEnable}}"
+                  value: "false"
                 - name: lb_enable
-                  value: "{{.kubeVipLBEnable}}"
+                  value: "false"
               securityContext:
                 capabilities:
                   add:
@@ -185,84 +174,162 @@ spec:
         status: {}
       owner: root:root
       path: /etc/kubernetes/manifests/kube-vip.yaml
-{{- if .registryCACert }}
     - content: |
-{{ .registryCACert | indent 8 }}
-      owner: root:root
-      path: "/etc/containerd/certs.d/{{ .mirrorBase }}/ca.crt"
-{{- end }}
-{{- if .proxyConfig }}
-    - content: |
-        [Service]
-        Environment="HTTP_PROXY={{.httpProxy}}"
-        Environment="HTTPS_PROXY={{.httpsProxy}}"
-        Environment="NO_PROXY={{ stringsJoin .noProxy "," }}"
-      owner: root:root
-      path: /etc/systemd/system/containerd.service.d/http-proxy.conf
-{{- end }}
-{{- if .registryMirrorMap }}
-    - content: |
-        [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
-          {{- range $orig, $mirror := .registryMirrorMap }}
-          [plugins."io.containerd.grpc.v1.cri".registry.mirrors."{{ $orig }}"]
-            endpoint = ["https://{{ $mirror }}"]
-          {{- end }}
-{{- if or .registryCACert .insecureSkip }}
-          [plugins."io.containerd.grpc.v1.cri".registry.configs."{{ .mirrorBase }}".tls]
-{{- if .registryCACert }}
-            ca_file = "/etc/containerd/certs.d/{{ .mirrorBase }}/ca.crt"
-{{- end }}
-{{- if .insecureSkip }}
-            insecure_skip_verify = {{ .insecureSkip }}
-{{- end }}
-{{- end }}
-{{- if .registryAuth }}
-          [plugins."io.containerd.grpc.v1.cri".registry.configs."{{ .mirrorBase }}".auth]
-            username = "{{.registryUsername}}"
-            password = "{{.registryPassword}}"
-{{- end }}
-      owner: root:root
-      path: "/etc/containerd/config_append.toml"
-{{- end }}
-{{- if .awsIamAuth}}
-    - content: |
-        # clusters refers to the remote service.
-        clusters:
-          - name: aws-iam-authenticator
-            cluster:
-              certificate-authority: /var/aws-iam-authenticator/cert.pem
-              server: https://localhost:21362/authenticate
-        # users refers to the API Server's webhook configuration
-        # (we don't need to authenticate the API server).
-        users:
-          - name: apiserver
-        # kubeconfig files require a context. Provide one for the API Server.
-        current-context: webhook
-        contexts:
-        - name: webhook
-          context:
-            cluster: aws-iam-authenticator
-            user: apiserver
-      permissions: "0640"
-      owner: root:root
-      path: /var/lib/kubeadm/aws-iam-authenticator/kubeconfig.yaml
-    - contentFrom:
-        secret:
-          name: {{.clusterName}}-aws-iam-authenticator-ca
-          key: cert.pem
-      permissions: "0640"
-      owner: root:root
-      path: /var/lib/kubeadm/aws-iam-authenticator/pki/cert.pem
-    - contentFrom:
-        secret:
-          name: {{.clusterName}}-aws-iam-authenticator-ca
-          key: key.pem
-      permissions: "0640"
-      owner: root:root
-      path: /var/lib/kubeadm/aws-iam-authenticator/pki/key.pem
-{{- end}}
-    - content: |
-{{ .auditPolicy | indent 8 }}
+        apiVersion: audit.k8s.io/v1beta1
+        kind: Policy
+        rules:
+        # Log aws-auth configmap changes
+        - level: RequestResponse
+          namespaces: ["kube-system"]
+          verbs: ["update", "patch", "delete"]
+          resources:
+          - group: "" # core
+            resources: ["configmaps"]
+            resourceNames: ["aws-auth"]
+          omitStages:
+          - "RequestReceived"
+        # The following requests were manually identified as high-volume and low-risk,
+        # so drop them.
+        - level: None
+          users: ["system:kube-proxy"]
+          verbs: ["watch"]
+          resources:
+          - group: "" # core
+            resources: ["endpoints", "services", "services/status"]
+        - level: None
+          users: ["kubelet"] # legacy kubelet identity
+          verbs: ["get"]
+          resources:
+          - group: "" # core
+            resources: ["nodes", "nodes/status"]
+        - level: None
+          userGroups: ["system:nodes"]
+          verbs: ["get"]
+          resources:
+          - group: "" # core
+            resources: ["nodes", "nodes/status"]
+        - level: None
+          users:
+          - system:kube-controller-manager
+          - system:kube-scheduler
+          - system:serviceaccount:kube-system:endpoint-controller
+          verbs: ["get", "update"]
+          namespaces: ["kube-system"]
+          resources:
+          - group: "" # core
+            resources: ["endpoints"]
+        - level: None
+          users: ["system:apiserver"]
+          verbs: ["get"]
+          resources:
+          - group: "" # core
+            resources: ["namespaces", "namespaces/status", "namespaces/finalize"]
+        # Don't log HPA fetching metrics.
+        - level: None
+          users:
+          - system:kube-controller-manager
+          verbs: ["get", "list"]
+          resources:
+          - group: "metrics.k8s.io"
+        # Don't log these read-only URLs.
+        - level: None
+          nonResourceURLs:
+          - /healthz*
+          - /version
+          - /swagger*
+        # Don't log events requests.
+        - level: None
+          resources:
+          - group: "" # core
+            resources: ["events"]
+        # node and pod status calls from nodes are high-volume and can be large, don't log responses for expected updates from nodes
+        - level: Request
+          users: ["kubelet", "system:node-problem-detector", "system:serviceaccount:kube-system:node-problem-detector"]
+          verbs: ["update","patch"]
+          resources:
+          - group: "" # core
+            resources: ["nodes/status", "pods/status"]
+          omitStages:
+          - "RequestReceived"
+        - level: Request
+          userGroups: ["system:nodes"]
+          verbs: ["update","patch"]
+          resources:
+          - group: "" # core
+            resources: ["nodes/status", "pods/status"]
+          omitStages:
+          - "RequestReceived"
+        # deletecollection calls can be large, don't log responses for expected namespace deletions
+        - level: Request
+          users: ["system:serviceaccount:kube-system:namespace-controller"]
+          verbs: ["deletecollection"]
+          omitStages:
+          - "RequestReceived"
+        # Secrets, ConfigMaps, and TokenReviews can contain sensitive & binary data,
+        # so only log at the Metadata level.
+        - level: Metadata
+          resources:
+          - group: "" # core
+            resources: ["secrets", "configmaps"]
+          - group: authentication.k8s.io
+            resources: ["tokenreviews"]
+          omitStages:
+            - "RequestReceived"
+        - level: Request
+          resources:
+          - group: ""
+            resources: ["serviceaccounts/token"]
+        # Get repsonses can be large; skip them.
+        - level: Request
+          verbs: ["get", "list", "watch"]
+          resources:
+          - group: "" # core
+          - group: "admissionregistration.k8s.io"
+          - group: "apiextensions.k8s.io"
+          - group: "apiregistration.k8s.io"
+          - group: "apps"
+          - group: "authentication.k8s.io"
+          - group: "authorization.k8s.io"
+          - group: "autoscaling"
+          - group: "batch"
+          - group: "certificates.k8s.io"
+          - group: "extensions"
+          - group: "metrics.k8s.io"
+          - group: "networking.k8s.io"
+          - group: "policy"
+          - group: "rbac.authorization.k8s.io"
+          - group: "scheduling.k8s.io"
+          - group: "settings.k8s.io"
+          - group: "storage.k8s.io"
+          omitStages:
+          - "RequestReceived"
+        # Default level for known APIs
+        - level: RequestResponse
+          resources:
+          - group: "" # core
+          - group: "admissionregistration.k8s.io"
+          - group: "apiextensions.k8s.io"
+          - group: "apiregistration.k8s.io"
+          - group: "apps"
+          - group: "authentication.k8s.io"
+          - group: "authorization.k8s.io"
+          - group: "autoscaling"
+          - group: "batch"
+          - group: "certificates.k8s.io"
+          - group: "extensions"
+          - group: "metrics.k8s.io"
+          - group: "networking.k8s.io"
+          - group: "policy"
+          - group: "rbac.authorization.k8s.io"
+          - group: "scheduling.k8s.io"
+          - group: "settings.k8s.io"
+          - group: "storage.k8s.io"
+          omitStages:
+          - "RequestReceived"
+        # Default level for all other requests.
+        - level: Metadata
+          omitStages:
+          - "RequestReceived"
       owner: root:root
       path: /etc/kubernetes/audit-policy.yaml
     initConfiguration:
@@ -273,20 +340,7 @@ spec:
           # kind will implement systemd support in: https://github.com/kubernetes-sigs/kind/issues/1726
           #cgroup-driver: cgroupfs
           eviction-hard: nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%
-{{- if .kubeletExtraArgs }}
-{{ .kubeletExtraArgs.ToYaml | indent 10 }}
-{{- end }}
-{{- if .controlPlaneTaints }}
-        taints:
-{{- range .controlPlaneTaints}}
-          - key: {{ .Key }}
-            value: {{ .Value }}
-            effect: {{ .Effect }}
-{{- if .TimeAdded }}
-            timeAdded: {{ .TimeAdded }}
-{{- end }}
-{{- end }}
-{{- end }}
+          tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
     joinConfiguration:
       nodeRegistration:
         criSocket: /var/run/containerd/containerd.sock
@@ -294,43 +348,19 @@ spec:
           cloud-provider: external
           read-only-port: "0"
           anonymous-auth: "false"
-{{- if .kubeletExtraArgs }}
-{{ .kubeletExtraArgs.ToYaml | indent 10 }}
-{{- end }}
-{{- if .controlPlaneTaints }}
-        taints:
-{{- range .controlPlaneTaints}}
-          - key: {{ .Key }}
-            value: {{ .Value }}
-            effect: {{ .Effect }}
-{{- if .TimeAdded }}
-            timeAdded: {{ .TimeAdded }}
-{{- end }}
-{{- end }}
-{{- end }}
-        name: "{{`{{ ds.meta_data.hostname }}`}}"
+          tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+        name: "{{ ds.meta_data.hostname }}"
     users:
-      - name: "{{.controlPlaneSshUsername }}"
+      - name: "mySshUsername"
         lockPassword: false
         sudo: ALL=(ALL) NOPASSWD:ALL
         sshAuthorizedKeys:
-          - "{{.controlPlaneSshAuthorizedKey}}"
+          - "mySshAuthorizedKey"
     preKubeadmCommands:
-{{- if .registryMirrorMap }}
-      - cat /etc/containerd/config_append.toml >> /etc/containerd/config.toml
-{{- end }}
-{{- if or .proxyConfig .registryMirrorMap }}
-      - sudo systemctl daemon-reload
-      - sudo systemctl restart containerd
-{{- end }}
-      - hostnamectl set-hostname "{{`{{ ds.meta_data.hostname }}`}}"
+      - hostnamectl set-hostname "{{ ds.meta_data.hostname }}"
       - echo "::1         ipv6-localhost ipv6-loopback" >/etc/hosts
       - echo "127.0.0.1   localhost" >>/etc/hosts
-      - echo "127.0.0.1   {{`{{ ds.meta_data.hostname }}`}}" >> /etc/hosts
-{{- $kube_minor_version := (index (splitList "." (trimPrefix "v" .kubernetesVersion)) 1) }}
-{{- if (ge (atoi $kube_minor_version) 29) }}
-      - "if [ -f /run/kubeadm/kubeadm.yaml ]; then sed -i 's#path: /etc/kubernetes/admin.conf#path: /etc/kubernetes/super-admin.conf#' /etc/kubernetes/manifests/kube-vip.yaml; fi"
-{{- end }}
+      - echo "127.0.0.1   {{ ds.meta_data.hostname }}" >> /etc/hosts
     postKubeadmCommands:
       - echo export KUBECONFIG=/etc/kubernetes/admin.conf >> /root/.bashrc
     useExperimentalRetryJoin: true
@@ -338,79 +368,34 @@ spec:
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: NutanixMachineTemplate
 metadata:
-  name: "{{.controlPlaneTemplateName}}"
-  namespace: "{{.eksaSystemNamespace}}"
+  name: "<no value>"
+  namespace: "eksa-system"
 spec:
   template:
     spec:
-      providerID: "nutanix://{{.clusterName}}-m1"
-      vcpusPerSocket: {{.vcpusPerSocket}}
-      vcpuSockets: {{.vcpuSockets}}
-      memorySize: {{.memorySize}}
-      systemDiskSize: {{.systemDiskSize}}
+      providerID: "nutanix://eksa-unit-test-m1"
+      vcpusPerSocket: 1
+      vcpuSockets: 4
+      memorySize: 8Gi
+      systemDiskSize: 40Gi
       image:
-{{- if (eq .imageIDType "name") }}
         type: name
-        name: "{{.imageName}}"
-{{ else if (eq .imageIDType "uuid") }}
-        type: uuid
-        uuid: "{{.imageUUID}}"
-{{- end }}
+        name: "prism-image-1-19"
+
       cluster:
-{{- if (eq .nutanixPEClusterIDType "name") }}
         type: name
-        name: "{{.nutanixPEClusterName}}"
-{{- else if (eq .nutanixPEClusterIDType "uuid") }}
-        type: uuid
-        uuid: "{{.nutanixPEClusterUUID}}"
-{{- end }}
+        name: "prism-cluster"
       subnet:
-{{- if (eq .subnetIDType "name") }}
         - type: name
-          name: "{{.subnetName}}"
-{{- else if (eq .subnetIDType "uuid") }}
-        - type: uuid
-          uuid: "{{.subnetUUID}}"
-{{ end }}
-{{- if .projectIDType}}
-      project:
-{{- if (eq .projectIDType "name") }}
-        type: name
-        name: "{{.projectName}}"
-{{- else if (eq .projectIDType "uuid") }}
-        type: uuid
-        uuid: "{{.projectUUID}}"
-{{ end }}
-{{ end }}
-{{- if .additionalCategories}}
-      additionalCategories:
-{{- range .additionalCategories}}
-        - key:   "{{ .Key }}"
-          value: "{{ .Value }}"
-{{- end }}
-{{- end }}
+          name: "prism-subnet"
 ---
-{{- if .registryAuth }}
-apiVersion: v1
-kind: Secret
-metadata:
-  name: registry-credentials
-  namespace: {{.eksaSystemNamespace}}
-  labels:
-    clusterctl.cluster.x-k8s.io/move: "true"
-stringData:
-  username: "{{.registryUsername}}"
-  password: "{{.registryPassword}}"
----
-{{- end }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{.clusterName}}-nutanix-ccm
-  namespace: "{{.eksaSystemNamespace}}"
+  name: eksa-unit-test-nutanix-ccm
+  namespace: "eksa-system"
 data:
   nutanix-ccm.yaml: |
-{{- if .nutanixAdditionalTrustBundle }}
     ---
     apiVersion: v1
     kind: ConfigMap
@@ -419,8 +404,27 @@ data:
       namespace: kube-system
     data:
       ca.crt: |
-{{ .nutanixAdditionalTrustBundle | indent 8 }}
-{{- end }}
+        -----BEGIN CERTIFICATE-----
+        MIIDajCCAlKgAwIBAgIUZOD4pznfHyCO8gMvP87F+PnhGHMwDQYJKoZIhvcNAQEL
+        BQAwNDELMAkGA1UEBhMCREUxFDASBgNVBAgMC0xhbmQgQmVybGluMQ8wDQYDVQQH
+        DAZCZXJsaW4wHhcNMjIwODI1MTYxNzI5WhcNMzIwODIyMTYxNzI5WjA0MQswCQYD
+        VQQGEwJERTEUMBIGA1UECAwLTGFuZCBCZXJsaW4xDzANBgNVBAcMBkJlcmxpbjCC
+        ASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAO280znVj6qLpCqAeNgpw7gw
+        0OE54gBW8Y9gBtEYxBux6hXBl+doj+JNZLcfIoDoqdTlgZX13Y//WakfMuvuhYUN
+        53fpwsiup3pqqL+JHhKy+Bq/BSQcHkLGi/aUGph7qK/wQMZBGBbbBXaCwnhjYovl
+        nRq4p+Cm5wm4S/QUhgyvqyoeNWAc6+2AHniuIzo6Q1MU9ktaSAdL8ZdW5g6el5iA
+        oHjDHNjTwyTeybKFScEQvFqO6qfzTRn8eV6dwH4gOYec1IdDwSp8PSv9R7J9AC+1
+        DtAjsYtqO4i6qRpgf0zyGQb+uNKXdz/ovOGa58twfMKYU7Z2crPj3K7NOJVelZEC
+        AwEAAaN0MHIwHQYDVR0OBBYEFPlcZspynb+2DwRN5K3slRyEV0nxMB8GA1UdIwQY
+        MBaAFPlcZspynb+2DwRN5K3slRyEV0nxMA4GA1UdDwEB/wQEAwIFoDAgBgNVHSUB
+        Af8EFjAUBggrBgEFBQcDAQYIKwYBBQUHAwIwDQYJKoZIhvcNAQELBQADggEBACXY
+        FH72svBSALkqmTyU9rsh4rRK9yo7tmNJkFkRQ/cjYycpNKZ6Cg9+wGwN6o6pXdqb
+        JfeuePclDdGcgYe8SbGr0T7pFXdUIVmuO/jjatKCftXQQZK5zHCkUTLhVlAbnNpC
+        3NIU4wWjx/QLtk+zEqjl5kyDgXD5GwxXbgzzY+7wi4QZO8VRyLG5lawZVKer3gkt
+        +NGIOtoyz4RjnWIKV34Z6HUDhdgbVyX1uPG/a5mLmcbLjuSf39WdAgv9bFGkUHZk
+        2dU0bIXepIZ5Mz3aovl35EjbGAbpI8tpKWlsHNoiVNQm1vojfKvKVibVS2FNo0cD
+        gu45O/O1hxzezDKiKKU=
+        -----END CERTIFICATE-----
     ---
     apiVersion: v1
     kind: ServiceAccount
@@ -437,19 +441,19 @@ data:
       nutanix_config.json: |-
         {
           "prismCentral": {
-            "address": "{{.nutanixEndpoint}}",
-            "port": {{.nutanixPort}},
-            "insecure": {{.nutanixInsecure}},
+            "address": "prism.nutanix.com",
+            "port": 9440,
+            "insecure": false,
             "credentialRef": {
               "kind": "secret",
               "name": "nutanix-creds",
               "namespace": "kube-system"
-            }{{- if .nutanixAdditionalTrustBundle }},
+            },
             "additionalTrustBundle": {
               "kind": "ConfigMap",
               "name": "user-ca-bundle",
               "namespace": "kube-system"
-            }{{- end }}
+            }
           },
           "enableCustomLabeling": false,
           "topologyDiscovery": {
@@ -596,7 +600,7 @@ data:
               key: node.kubernetes.io/not-ready
               operator: Exists
           containers:
-            - image: "{{.cloudProviderImage}}"
+            - image: ""
               imagePullPolicy: IfNotPresent
               name: nutanix-cloud-controller-manager
               env:
@@ -623,19 +627,17 @@ data:
 apiVersion: addons.cluster.x-k8s.io/v1beta1
 kind: ClusterResourceSet
 metadata:
-  name: {{.clusterName}}-nutanix-ccm-crs
-  namespace: "{{.eksaSystemNamespace}}"
+  name: eksa-unit-test-nutanix-ccm-crs
+  namespace: "eksa-system"
 spec:
   clusterSelector:
     matchLabels:
-      cluster.x-k8s.io/cluster-name: "{{.clusterName}}"
+      cluster.x-k8s.io/cluster-name: "eksa-unit-test"
   resources:
   - kind: ConfigMap
-    name: {{.clusterName}}-nutanix-ccm
+    name: eksa-unit-test-nutanix-ccm
   - kind: Secret
-    name: {{.clusterName}}-nutanix-ccm-secret
-{{- if .nutanixAdditionalTrustBundle }}
+    name: eksa-unit-test-nutanix-ccm-secret
   - kind: ConfigMap
     name: user-ca-bundle
-{{- end }}
   strategy: Reconcile
