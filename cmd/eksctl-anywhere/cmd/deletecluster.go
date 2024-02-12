@@ -8,7 +8,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/aws/eks-anywhere/pkg/dependencies"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
@@ -156,7 +155,7 @@ func (dc *deleteClusterOptions) deleteCluster(ctx context.Context) error {
 		}
 	}
 
-	if features.UseControllerViaCLIWorkflow().IsActive() && clusterSpec.Cluster.IsManaged() {
+	if clusterSpec.Cluster.IsManaged() {
 		deleteWorkload := workload.NewDelete(deps.Provider, deps.Writer, deps.ClusterManager, deps.ClusterDeleter, deps.GitOpsFlux)
 		err = deleteWorkload.Run(ctx, cluster, clusterSpec)
 	} else {
