@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
 	"testing"
 	"time"
 
@@ -13,7 +12,6 @@ import (
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
-	"github.com/aws/eks-anywhere/pkg/features"
 	writermocks "github.com/aws/eks-anywhere/pkg/filewriter/mocks"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	providermocks "github.com/aws/eks-anywhere/pkg/providers/mocks"
@@ -157,8 +155,6 @@ func (c *upgradeTestSetup) expectWrite() {
 }
 
 func TestUpgradeRunSuccess(t *testing.T) {
-	features.ClearCache()
-	os.Setenv(features.UseControllerForCli, "true")
 	test := newUpgradeTest(t)
 	test.expectSetup()
 	test.expectPreflightValidationsToPass()
@@ -175,8 +171,6 @@ func TestUpgradeRunSuccess(t *testing.T) {
 }
 
 func TestUpgradeRunUpgradeFail(t *testing.T) {
-	features.ClearCache()
-	os.Setenv(features.UseControllerForCli, "true")
 	test := newUpgradeTest(t)
 	test.expectSetup()
 	test.expectPreflightValidationsToPass()
@@ -193,8 +187,6 @@ func TestUpgradeRunUpgradeFail(t *testing.T) {
 }
 
 func TestUpgradeRunGetCurrentClusterSpecFail(t *testing.T) {
-	features.ClearCache()
-	os.Setenv(features.UseControllerForCli, "true")
 	test := newUpgradeTest(t)
 	test.clusterManager.EXPECT().GetCurrentClusterSpec(test.ctx, test.clusterSpec.ManagementCluster, test.clusterSpec.Cluster.Name).Return(nil, fmt.Errorf("boom"))
 	test.expectWrite()
@@ -206,8 +198,6 @@ func TestUpgradeRunGetCurrentClusterSpecFail(t *testing.T) {
 }
 
 func TestUpgradeRunValidateFail(t *testing.T) {
-	features.ClearCache()
-	os.Setenv(features.UseControllerForCli, "true")
 	test := newUpgradeTest(t)
 	test.clusterManager.EXPECT().GetCurrentClusterSpec(test.ctx, test.clusterSpec.ManagementCluster, test.clusterSpec.Cluster.Name).AnyTimes().Return(test.currentClusterSpec, nil)
 	test.provider.EXPECT().Name().AnyTimes()
@@ -223,8 +213,6 @@ func TestUpgradeRunValidateFail(t *testing.T) {
 }
 
 func TestUpgradeWorkloadRunBackupFailed(t *testing.T) {
-	features.ClearCache()
-	os.Setenv(features.UseControllerForCli, "true")
 	test := newUpgradeTest(t)
 	test.expectSetup()
 	test.expectPreflightValidationsToPass()
@@ -240,8 +228,6 @@ func TestUpgradeWorkloadRunBackupFailed(t *testing.T) {
 }
 
 func TestUpgradeRunWriteClusterConfigFail(t *testing.T) {
-	features.ClearCache()
-	os.Setenv(features.UseControllerForCli, "true")
 	test := newUpgradeTest(t)
 	test.expectSetup()
 	test.expectPreflightValidationsToPass()
