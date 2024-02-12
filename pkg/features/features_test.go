@@ -70,6 +70,22 @@ func TestIsActiveWithFeatureGatesTrue(t *testing.T) {
 	g.Expect(IsActive(fakeFeatureWithGate())).To(BeTrue())
 }
 
+func TestUseControllerForCliFalse(t *testing.T) {
+	g := NewWithT(t)
+	setupContext(t)
+
+	t.Setenv(UseControllerForCli, "false")
+	g.Expect(UseControllerViaCLIWorkflow().IsActive()).To(BeFalse())
+}
+
+func TestUseControllerForCliTrue(t *testing.T) {
+	g := NewWithT(t)
+	setupContext(t)
+
+	t.Setenv(UseControllerForCli, "true")
+	g.Expect(UseControllerViaCLIWorkflow().IsActive()).To(BeTrue())
+}
+
 func TestWithK8s129FeatureFlag(t *testing.T) {
 	g := NewWithT(t)
 	setupContext(t)
