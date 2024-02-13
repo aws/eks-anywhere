@@ -116,6 +116,7 @@ func (p *Provider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpe
 	if err := p.configureSshKeys(); err != nil {
 		return err
 	}
+	clusterSpec.TinkerbellMachineConfigs = p.machineConfigs
 	if p.hardwareCSVIsProvided() {
 		if err := p.readCSVToCatalogue(); err != nil {
 			return err
