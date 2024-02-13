@@ -902,10 +902,11 @@ func TestNutanixProviderVersion(t *testing.T) {
 func TestNutanixProviderEnvMap(t *testing.T) {
 	provider := testDefaultNutanixProvider(t)
 	clusterSpec := test.NewFullClusterSpec(t, "testdata/eksa-cluster.yaml")
+	managementComponents := givenManagementComponents()
 
 	t.Run("required envs not set", func(t *testing.T) {
 		os.Clearenv()
-		envMap, err := provider.EnvMap(clusterSpec)
+		envMap, err := provider.EnvMap(managementComponents, clusterSpec)
 		assert.Error(t, err)
 		assert.Nil(t, envMap)
 	})
@@ -916,7 +917,7 @@ func TestNutanixProviderEnvMap(t *testing.T) {
 		t.Setenv(nutanixEndpointKey, "prism.nutanix.com")
 		t.Setenv(expClusterResourceSetKey, "true")
 
-		envMap, err := provider.EnvMap(clusterSpec)
+		envMap, err := provider.EnvMap(managementComponents, clusterSpec)
 		assert.NoError(t, err)
 		assert.NotNil(t, envMap)
 	})
