@@ -199,6 +199,7 @@ func (p *Provider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpe
 	if err := p.generateSSHKeysIfNotSet(); err != nil {
 		return fmt.Errorf("failed to generate ssh key: %v", err)
 	}
+	clusterSpec.NutanixMachineConfigs = p.machineConfigs
 
 	if !p.skipIPCheck {
 		if err := p.ipValidator.ValidateControlPlaneIPUniqueness(clusterSpec.Cluster); err != nil {
