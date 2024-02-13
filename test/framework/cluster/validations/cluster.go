@@ -98,7 +98,7 @@ func validateMDs(ctx context.Context, vc clusterf.StateValidationConfig) error {
 	if err != nil {
 		return fmt.Errorf("failed to retrieve machinedeployments: %s", err)
 	}
-	if len(mds) == 0 {
+	if len(mds) == 0 && len(vc.ClusterSpec.Config.Cluster.Spec.WorkerNodeGroupConfigurations) != 0 {
 		return errors.New("machinedeployment object not found")
 	}
 	for _, md := range mds {
