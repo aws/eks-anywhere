@@ -632,7 +632,7 @@ func (p *Provider) Version(components *cluster.ManagementComponents) string {
 }
 
 // EnvMap returns a map of environment variables to be set when running the docker clusterctl command.
-func (p *Provider) EnvMap(_ *cluster.Spec) (map[string]string, error) {
+func (p *Provider) EnvMap(_ *cluster.ManagementComponents, _ *cluster.Spec) (map[string]string, error) {
 	envMap := make(map[string]string)
 	if env, ok := os.LookupEnv(githubTokenEnvVar); ok && len(env) > 0 {
 		envMap[githubTokenEnvVar] = env

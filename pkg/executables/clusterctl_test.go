@@ -66,7 +66,7 @@ func (ct *clusterctlTest) expectBuildOverrideLayer() {
 }
 
 func (ct *clusterctlTest) expectGetProviderEnvMap() {
-	ct.provider.EXPECT().EnvMap(clusterSpec).Return(ct.providerEnvMap, nil)
+	ct.provider.EXPECT().EnvMap(ct.managementComponents, clusterSpec).Return(ct.providerEnvMap, nil)
 }
 
 func TestClusterctlInitInfrastructure(t *testing.T) {
@@ -134,7 +134,7 @@ func TestClusterctlInitInfrastructure(t *testing.T) {
 
 			tc.provider.EXPECT().Name().Return(tt.providerName)
 			tc.provider.EXPECT().Version(tc.managementComponents).Return(tt.providerVersion)
-			tc.provider.EXPECT().EnvMap(clusterSpec).Return(tt.env, nil)
+			tc.provider.EXPECT().EnvMap(tc.managementComponents, clusterSpec).Return(tt.env, nil)
 			tc.provider.EXPECT().GetInfrastructureBundle(tc.managementComponents).Return(&types.InfrastructureBundle{})
 
 			tc.e.EXPECT().ExecuteWithEnv(tc.ctx, tt.env, tt.wantExecArgs...).Return(bytes.Buffer{}, nil).Times(1).Do(
@@ -182,7 +182,7 @@ func TestClusterctlInitInfrastructureEnvMapError(t *testing.T) {
 
 	tt.provider.EXPECT().Name()
 	tt.provider.EXPECT().Version(tt.managementComponents)
-	tt.provider.EXPECT().EnvMap(clusterSpec).Return(nil, errors.New("error with env map"))
+	tt.provider.EXPECT().EnvMap(tt.managementComponents, clusterSpec).Return(nil, errors.New("error with env map"))
 	tt.provider.EXPECT().GetInfrastructureBundle(tt.managementComponents).Return(&types.InfrastructureBundle{})
 
 	if err := tt.clusterctl.InitInfrastructure(tt.ctx, tt.managementComponents, clusterSpec, cluster, tt.provider); err == nil {
@@ -201,7 +201,7 @@ func TestClusterctlInitInfrastructureExecutableError(t *testing.T) {
 
 	tt.provider.EXPECT().Name()
 	tt.provider.EXPECT().Version(tt.managementComponents)
-	tt.provider.EXPECT().EnvMap(clusterSpec)
+	tt.provider.EXPECT().EnvMap(tt.managementComponents, clusterSpec)
 	tt.provider.EXPECT().GetInfrastructureBundle(tt.managementComponents).Return(&types.InfrastructureBundle{})
 
 	tt.e.EXPECT().ExecuteWithEnv(tt.ctx, nil, gomock.Any()).Return(bytes.Buffer{}, errors.New("error from execute with env"))

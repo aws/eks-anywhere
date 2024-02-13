@@ -815,7 +815,8 @@ func (p *cloudstackProvider) Version(componnets *cluster.ManagementComponents) s
 	return componnets.CloudStack.Version
 }
 
-func (p *cloudstackProvider) EnvMap(_ *cluster.Spec) (map[string]string, error) {
+// EnvMap returns a map of environment variables required for the cloudstack provider.
+func (p *cloudstackProvider) EnvMap(_ *cluster.ManagementComponents, _ *cluster.Spec) (map[string]string, error) {
 	envMap := make(map[string]string)
 	for _, key := range requiredEnvs {
 		if env, ok := os.LookupEnv(key); ok && len(env) > 0 {

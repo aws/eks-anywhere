@@ -111,18 +111,18 @@ func (mr *MockProviderMockRecorder) DeleteResources(arg0, arg1 interface{}) *gom
 }
 
 // EnvMap mocks base method.
-func (m *MockProvider) EnvMap(arg0 *cluster.Spec) (map[string]string, error) {
+func (m *MockProvider) EnvMap(arg0 *cluster.ManagementComponents, arg1 *cluster.Spec) (map[string]string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "EnvMap", arg0)
+	ret := m.ctrl.Call(m, "EnvMap", arg0, arg1)
 	ret0, _ := ret[0].(map[string]string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // EnvMap indicates an expected call of EnvMap.
-func (mr *MockProviderMockRecorder) EnvMap(arg0 interface{}) *gomock.Call {
+func (mr *MockProviderMockRecorder) EnvMap(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnvMap", reflect.TypeOf((*MockProvider)(nil).EnvMap), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnvMap", reflect.TypeOf((*MockProvider)(nil).EnvMap), arg0, arg1)
 }
 
 // GenerateCAPISpecForCreate mocks base method.
