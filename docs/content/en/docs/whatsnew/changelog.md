@@ -37,7 +37,7 @@ description: >
 | Ubuntu 20.04        | ✔       | ✔          | ✔       | —          | ✔     |
 | Ubuntu 22.04        | ✔       | ✔          | ✔       | —          | —     |
 | Bottlerocket 1.19.0 | ✔       | ✔          | —       | —          | —     |
-| RHEL 8.7            | ✔       | ✔          | ✔       | ✔          | —     |
+| RHEL 8.x            | ✔       | ✔          | ✔       | ✔          | —     |
 | RHEL 9.x            | —       | —          | ✔       | —          | —     |
 
 ## [v0.18.5](https://github.com/aws/eks-anywhere/releases/tag/v0.18.5)
