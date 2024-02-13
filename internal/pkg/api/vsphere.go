@@ -246,3 +246,14 @@ func WithVSphereMachineConfig(name string, fillers ...VSphereMachineConfigFiller
 		FillVSphereMachineConfig(m, fillers...)
 	}
 }
+
+// RemoveEtcdVsphereMachineConfig removes the etcd VSphereMachineConfig from the cluster spec.
+func RemoveEtcdVsphereMachineConfig() VSphereFiller {
+	return func(config VSphereConfig) {
+		for k, m := range config.machineConfigs {
+			if strings.HasSuffix(m.Name, "-etcd") {
+				delete(config.machineConfigs, k)
+			}
+		}
+	}
+}
