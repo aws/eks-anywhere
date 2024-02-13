@@ -2,9 +2,12 @@ quick_tests:
 # Docker
 - TestDocker.*128
 # vSphere
+- ^TestVSphereKubernetes127To128RedHatUpgrade$
+- TestVSphereKubernetes127To128StackedEtcdRedHatUpgrade
 - ^TestVSphereKubernetes127UbuntuTo128Upgrade$
 - TestVSphereKubernetes127UbuntuTo128StackedEtcdUpgrade
 - TestVSphereKubernetes127To128Ubuntu2204Upgrade
+- TestVSphereKubernetes127To128Ubuntu2204StackedEtcdUpgrade
 - TestVSphereKubernetes128Ubuntu2004To2204Upgrade
 - TestVSphereKubernetes127BottlerocketTo128Upgrade
 - TestVSphereKubernetes127BottlerocketTo128StackedEtcdUpgrade
