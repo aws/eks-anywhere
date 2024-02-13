@@ -185,14 +185,13 @@ func (p *SnowProvider) Version(components *cluster.ManagementComponents) string 
 	return components.Snow.Version
 }
 
-func (p *SnowProvider) EnvMap(clusterSpec *cluster.Spec) (map[string]string, error) {
+// EnvMap returns the environment variables for the snow provider.
+func (p *SnowProvider) EnvMap(managementComponents *cluster.ManagementComponents, clusterSpec *cluster.Spec) (map[string]string, error) {
 	envMap := make(map[string]string)
 	envMap[snowCredentialsKey] = string(clusterSpec.SnowCredentialsSecret.Data[v1alpha1.SnowCredentialsKey])
 	envMap[snowCertsKey] = string(clusterSpec.SnowCredentialsSecret.Data[v1alpha1.SnowCertificatesKey])
 
-	versionsBundle := clusterSpec.RootVersionsBundle()
-
-	envMap["SNOW_CONTROLLER_IMAGE"] = versionsBundle.Snow.Manager.VersionedImage()
+	envMap["SNOW_CONTROLLER_IMAGE"] = managementComponents.Snow.Manager.VersionedImage()
 
 	return envMap, nil
 }

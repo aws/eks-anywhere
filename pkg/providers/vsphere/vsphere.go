@@ -977,7 +977,8 @@ func (p *vsphereProvider) PostWorkloadInit(ctx context.Context, cluster *types.C
 	return nil
 }
 
-func (p *vsphereProvider) EnvMap(_ *cluster.Spec) (map[string]string, error) {
+// EnvMap returns a map of environment variables required for the vsphere provider.
+func (p *vsphereProvider) EnvMap(_ *cluster.ManagementComponents, _ *cluster.Spec) (map[string]string, error) {
 	envMap := make(map[string]string)
 	for _, key := range requiredEnvs {
 		if env, ok := os.LookupEnv(key); ok && len(env) > 0 {

@@ -531,7 +531,8 @@ func (p *Provider) Version(components *cluster.ManagementComponents) string {
 	return components.Nutanix.Version
 }
 
-func (p *Provider) EnvMap(_ *cluster.Spec) (map[string]string, error) {
+// EnvMap returns the environment variables for the provider.
+func (p *Provider) EnvMap(_ *cluster.ManagementComponents, _ *cluster.Spec) (map[string]string, error) {
 	// TODO(nutanix): determine if any env vars are needed and add them to requiredEnvs
 	envMap := make(map[string]string)
 	for _, key := range requiredEnvs {

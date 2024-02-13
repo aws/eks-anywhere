@@ -234,7 +234,7 @@ func (c *Clusterctl) InitInfrastructure(ctx context.Context, managementComponent
 		params = append(params, "--kubeconfig", cluster.KubeconfigFile)
 	}
 
-	envMap, err := provider.EnvMap(clusterSpec)
+	envMap, err := provider.EnvMap(managementComponents, clusterSpec)
 	if err != nil {
 		return err
 	}
@@ -373,7 +373,7 @@ func (c *Clusterctl) Upgrade(ctx context.Context, managementCluster *types.Clust
 		upgradeCommand = append(upgradeCommand, "--bootstrap", newBootstrapProvider)
 	}
 
-	providerEnvMap, err := provider.EnvMap(newSpec)
+	providerEnvMap, err := provider.EnvMap(managementComponents, newSpec)
 	if err != nil {
 		return fmt.Errorf("failed generating provider env map for clusterctl upgrade: %v", err)
 	}
@@ -419,7 +419,7 @@ func (c *Clusterctl) InstallEtcdadmProviders(ctx context.Context, managementComp
 		params = append(params, "--kubeconfig", cluster.KubeconfigFile)
 	}
 
-	envMap, err := infraProvider.EnvMap(clusterSpec)
+	envMap, err := infraProvider.EnvMap(managementComponents, clusterSpec)
 	if err != nil {
 		return err
 	}
