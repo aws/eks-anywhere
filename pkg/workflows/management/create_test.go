@@ -512,6 +512,7 @@ func TestCreateSyncFailure(t *testing.T) {
 	test.expectCAPIInstall(nil, nil, nil)
 	test.expectInstallEksaComponentsBootstrap(nil, nil, nil, nil)
 
+	test.clusterManager.EXPECT().CreateNamespace(test.ctx, test.bootstrapCluster, test.clusterSpec.Cluster.Namespace).Return(nil)
 	test.clusterCreator.EXPECT().CreateSync(test.ctx, test.clusterSpec, test.bootstrapCluster).Return(nil, errors.New("test"))
 	test.clusterManager.EXPECT().SaveLogsManagementCluster(test.ctx, test.clusterSpec, test.bootstrapCluster)
 	test.writer.EXPECT().Write(fmt.Sprintf("%s-checkpoint.yaml", test.clusterSpec.Cluster.Name), gomock.Any())
@@ -530,6 +531,7 @@ func TestCreateEKSANamespaceFailure(t *testing.T) {
 	test.expectCAPIInstall(nil, nil, nil)
 	test.expectInstallEksaComponentsBootstrap(nil, nil, nil, nil)
 
+	test.clusterManager.EXPECT().CreateNamespace(test.ctx, test.bootstrapCluster, test.clusterSpec.Cluster.Namespace).Return(nil)
 	test.clusterCreator.EXPECT().CreateSync(test.ctx, test.clusterSpec, test.bootstrapCluster).Return(test.workloadCluster, nil)
 	test.clusterManager.EXPECT().CreateEKSANamespace(test.ctx, test.workloadCluster).Return(errors.New("test"))
 	test.clusterManager.EXPECT().SaveLogsManagementCluster(test.ctx, test.clusterSpec, test.bootstrapCluster)
@@ -550,6 +552,7 @@ func TestCreateInstallCAPIWorkloadFailure(t *testing.T) {
 	test.expectInstallEksaComponentsBootstrap(nil, nil, nil, nil)
 	test.expectPreflightValidationsToPass()
 
+	test.clusterManager.EXPECT().CreateNamespace(test.ctx, test.bootstrapCluster, test.clusterSpec.Cluster.Namespace).Return(nil)
 	test.clusterCreator.EXPECT().CreateSync(
 		test.ctx, test.clusterSpec, test.bootstrapCluster).Return(test.workloadCluster, nil)
 
