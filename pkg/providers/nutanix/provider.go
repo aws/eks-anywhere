@@ -148,7 +148,7 @@ func (p *Provider) MachineResourceType() string {
 	return eksaNutanixMachineResourceType
 }
 
-func (p *Provider) generateSSHKeysIfNotSet(machineConfigs map[string]*v1alpha1.NutanixMachineConfig) error {
+func (p *Provider) generateSSHKeysIfNotSet() error {
 	var generatedKey string
 	for _, machineConfig := range p.machineConfigs {
 		user := machineConfig.Spec.Users[0]
@@ -196,7 +196,7 @@ func (p *Provider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpe
 		return fmt.Errorf("failed to validate cluster spec: %v", err)
 	}
 
-	if err := p.generateSSHKeysIfNotSet(clusterSpec.NutanixMachineConfigs); err != nil {
+	if err := p.generateSSHKeysIfNotSet(); err != nil {
 		return fmt.Errorf("failed to generate ssh key: %v", err)
 	}
 	clusterSpec.NutanixMachineConfigs = p.machineConfigs
