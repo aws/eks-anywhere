@@ -1,27 +1,10 @@
 skipped_tests:
 # CloudStack
 #Airgapped tests
-- TestCloudStackKubernetes123RedhatAirgappedRegistryMirror
 - TestCloudStackKubernetes125RedhatAirgappedRegistryMirror
 - TestCloudStackKubernetes126RedhatAirgappedRegistryMirror
-# This test will fail until we the latest minor release version is 15.x as there is a preflight for 1.24
-- TestCloudStackKubernetes123RedhatProxyConfig
-- TestCloudStackKubernetes123RedhatProxyConfigAPI
-- TestCloudStackKubernetes123AddRemoveAz
-- TestCloudStackKubernetes123MultiEndpointSimpleFlow
-- TestCloudStackKubernetes125MultiEndpointSimpleFlow
-- TestCloudStackKubernetes126MultiEndpointSimpleFlow
-- TestCloudStackKubernetes127MultiEndpointSimpleFlow
-- TestCloudStackKubernetes128MultiEndpointSimpleFlow
-
-# These tests will fail until there is a new latest minor release version as 16.2 has a preflight check to prevent k8s version > 1.24
-- TestCloudStackKubernetes125WithOIDCManagementClusterUpgradeFromLatestSideEffects
-- TestCloudStackKubernetes126WithOIDCManagementClusterUpgradeFromLatestSideEffects
-- TestCloudStackKubernetes127WithOIDCManagementClusterUpgradeFromLatestSideEffects
-- TestCloudStackKubernetes128WithOIDCManagementClusterUpgradeFromLatestSideEffects
 
 # Proxy tests
-- TestCloudStackKubernetes123RedhatProxyConfigAPI
 - TestCloudStackKubernetes125RedhatProxyConfigAPI
 - TestCloudStackKubernetes126RedhatProxyConfigAPI
 - TestCloudStackKubernetes127RedhatProxyConfigAPI
@@ -97,16 +80,16 @@ skipped_tests:
 # Conformance
 - TestSnowKubernetes123ThreeWorkersConformanceFlow
 
-# 127to128FromLatestMinorRelease will fail until there is a new patch release using a newer packages controller
-# Remove these once v0.17.4 is out
-- TestDockerKubernetes127to128UpgradeFromLatestMinorRelease
-- TestDockerKubernetes127to128GithubFluxEnabledUpgradeFromLatestMinorRelease
-- TestDockerKubernetes127to128UpgradeFromLatestMinorReleaseAPI
-- TestVSphereKubernetes127To128UbuntuUpgradeFromLatestMinorRelease
-- TestVSphereKubernetes127To128RedhatUpgradeFromLatestMinorRelease
-- TestVSphereKubernetes127to128UpgradeFromLatestMinorReleaseBottleRocketAPI
-
 # Skipping 1.29 curated packages tests until we add support
+- TestCloudStackKubernetes129RedhatCuratedPackagesSimpleFlow
+- TestCloudStackKubernetes129RedhatCuratedPackagesAdotSimpleFlow
+- TestCloudStackKubernetes129RedhatCuratedPackagesAdotUpdateFlow
+- TestCloudStackKubernetes129RedhatCuratedPackagesCertManagerSimpleFlow
+- TestCloudStackKubernetes129RedHatCuratedPackagesClusterAutoscalerSimpleFlow
+- TestCloudStackKubernetes129RedhatWorkloadClusterCuratedPackagesEmissarySimpleFlow
+- TestCloudStackKubernetes129RedhatCuratedPackagesEmissarySimpleFlow
+- TestCloudStackKubernetes129RedhatCuratedPackagesHarborSimpleFlow
+- TestCloudStackKubernetes129RedhatCuratedPackagesPrometheusSimpleFlow
 - TestDockerKubernetes129CuratedPackagesSimpleFlow
 - TestDockerKubernetes129CuratedPackagesAdotSimpleFlow
 - TestDockerKubernetes129CuratedPackagesEmissarySimpleFlow
