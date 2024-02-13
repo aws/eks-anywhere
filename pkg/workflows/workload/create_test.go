@@ -184,6 +184,23 @@ func TestCreateRunFail(t *testing.T) {
 	}
 }
 
+func TestCreateNamespaceFail(t *testing.T) {
+	features.ClearCache()
+	os.Setenv(features.UseControllerForCli, "true")
+	test := newCreateTest(t)
+	test.expectSetup()
+	test.expectPreflightValidationsToPass()
+	test.expectDatacenterConfig()
+	test.expectMachineConfigs()
+	test.clusterManager.EXPECT().CreateNamespace(test.ctx, test.clusterSpec.ManagementCluster, test.clusterSpec.Cluster.Namespace).Return(fmt.Errorf(""))
+	test.expectSaveLogsManagement()
+
+	err := test.run()
+	if err == nil {
+		t.Fatalf("Create.Run() err = %v, want err = nil", err)
+	}
+}
+
 func TestCreateRunValidateFail(t *testing.T) {
 	features.ClearCache()
 	os.Setenv(features.UseControllerForCli, "true")
