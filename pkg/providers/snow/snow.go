@@ -365,6 +365,7 @@ func (p *SnowProvider) InstallCustomProviderComponents(ctx context.Context, kube
 func (p *SnowProvider) PreCoreComponentsUpgrade(
 	ctx context.Context,
 	cluster *types.Cluster,
+	managementComponents *cluster.ManagementComponents,
 	clusterSpec *cluster.Spec,
 ) error {
 	return nil

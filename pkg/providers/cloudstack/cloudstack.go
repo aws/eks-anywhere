@@ -980,6 +980,7 @@ func machineDeploymentName(clusterName, nodeGroupName string) string {
 func (p *cloudstackProvider) PreCoreComponentsUpgrade(
 	ctx context.Context,
 	cluster *types.Cluster,
+	managementComponents *cluster.ManagementComponents,
 	clusterSpec *cluster.Spec,
 ) error {
 	return nil

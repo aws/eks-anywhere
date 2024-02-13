@@ -43,7 +43,7 @@ type Provider interface {
 	PostClusterDeleteValidate(ctx context.Context, managementCluster *types.Cluster) error
 	// PostMoveManagementToBootstrap is called after the CAPI management is moved back to the bootstrap cluster.
 	PostMoveManagementToBootstrap(ctx context.Context, bootstrapCluster *types.Cluster) error
-	PreCoreComponentsUpgrade(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error
+	PreCoreComponentsUpgrade(ctx context.Context, cluster *types.Cluster, managementComponents *cluster.ManagementComponents, clusterSpec *cluster.Spec) error
 }
 
 type DatacenterConfig interface {
