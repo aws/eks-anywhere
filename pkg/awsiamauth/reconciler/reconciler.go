@@ -155,7 +155,7 @@ func (r *Reconciler) applyIAMAuthManifest(ctx context.Context, client client.Cli
 }
 
 func (r *Reconciler) createKubeconfigSecret(ctx context.Context, clusterSpec *anywhereCluster.Spec, cluster *anywherev1.Cluster, clusterID uuid.UUID) error {
-	endpoint := "127.0.0.1"
+	endpoint := "localhost"
 	if cluster.Spec.DatacenterRef.Kind != v1alpha1.DockerDatacenterKind {
 		endpoint = cluster.Spec.ControlPlaneConfiguration.Endpoint.Host
 	}
