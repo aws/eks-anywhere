@@ -167,12 +167,11 @@ func WithTinkerbellEtcdMachineConfig() TinkerbellFiller {
 	}
 }
 
+// RemoveTinkerbellWorkerMachineConfig removes the worker node TinkerbellMachineConfig for single node clusters.
 func RemoveTinkerbellWorkerMachineConfig() TinkerbellFiller {
 	return func(config TinkerbellConfig) {
 		clusterName := config.clusterName
-		if _, ok := config.machineConfigs[clusterName]; ok {
-			delete(config.machineConfigs, clusterName)
-		}
+		delete(config.machineConfigs, clusterName)
 	}
 }
 
