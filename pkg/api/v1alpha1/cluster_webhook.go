@@ -106,7 +106,10 @@ func (r *Cluster) ValidateUpdate(old runtime.Object) error {
 
 	allErrs = append(allErrs, ValidateWorkerKubernetesVersionSkew(r, oldCluster)...)
 
-	if r.Spec.EtcdEncryption != nil && r.Spec.DatacenterRef.Kind != CloudStackDatacenterKind && r.Spec.DatacenterRef.Kind != VSphereDatacenterKind {
+	if r.Spec.EtcdEncryption != nil &&
+		r.Spec.DatacenterRef.Kind != CloudStackDatacenterKind &&
+		r.Spec.DatacenterRef.Kind != VSphereDatacenterKind &&
+		r.Spec.DatacenterRef.Kind != NutanixDatacenterKind {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("spec.etcdEncryption"), r.Spec.EtcdEncryption, fmt.Sprintf("etcdEncryption is currently not supported for the provider: %s", r.Spec.DatacenterRef.Kind)))
 	}
 

@@ -161,7 +161,8 @@ func buildTemplateMapCP(
 	format := "cloud-config"
 	apiServerExtraArgs := clusterapi.OIDCToExtraArgs(clusterSpec.OIDCConfig).
 		Append(clusterapi.AwsIamAuthExtraArgs(clusterSpec.AWSIamConfig)).
-		Append(clusterapi.PodIAMAuthExtraArgs(clusterSpec.Cluster.Spec.PodIAMConfig))
+		Append(clusterapi.PodIAMAuthExtraArgs(clusterSpec.Cluster.Spec.PodIAMConfig)).
+		Append(clusterapi.EtcdEncryptionExtraArgs(clusterSpec.Cluster.Spec.EtcdEncryption))
 	kubeletExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs().
 		Append(clusterapi.ResolvConfExtraArgs(clusterSpec.Cluster.Spec.ClusterNetwork.DNS.ResolvConf)).
 		Append(clusterapi.ControlPlaneNodeLabelsExtraArgs(clusterSpec.Cluster.Spec.ControlPlaneConfiguration))
@@ -298,6 +299,15 @@ func buildTemplateMapCP(
 	etcdURL, _ := common.GetExternalEtcdReleaseURL(string(*clusterSpec.Cluster.Spec.EksaVersion), versionsBundle)
 	if etcdURL != "" {
 		values["externalEtcdReleaseUrl"] = etcdURL
+	}
+	
+	if clusterSpec.Cluster.Spec.EtcdEncryption != nil && len(*clusterSpec.Cluster.Spec.EtcdEncryption) != 0 {
+		conf, err := common.GenerateKMSEncryptionConfiguration(clusterSpec.Cluster.Spec.EtcdEncryption)
+		if err != nil {
+			return nil, err
+		}
+
+		values["encryptionProviderConfig"] = conf
 	}
 
 	return values, nil
