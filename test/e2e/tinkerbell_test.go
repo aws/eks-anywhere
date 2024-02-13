@@ -384,6 +384,93 @@ func TestTinkerbellKubernetes127UbuntuTo128InPlaceUpgrade_3CP_1Worker(t *testing
 	)
 }
 
+func TestTinkerbellKubernetes125UbuntuTo126SingleNodeInPlaceUpgrade(t *testing.T) {
+	provider := framework.NewTinkerbell(t)
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithEtcdCountIfExternal(0)),
+		framework.WithClusterFiller(api.RemoveAllWorkerNodeGroups()),
+		framework.WithClusterFiller(api.WithInPlaceUpgradeStrategy()),
+		framework.WithControlPlaneHardware(1),
+	).WithClusterConfig(
+		provider.WithKubeVersionAndOS(v1alpha1.Kube125, framework.Ubuntu2004, nil),
+	)
+	runInPlaceUpgradeFlowForBareMetal(
+		test,
+		framework.WithUpgradeClusterConfig(
+			api.ClusterToConfigFiller(
+				api.WithKubernetesVersion(v1alpha1.Kube126),
+				api.WithInPlaceUpgradeStrategy(),
+			),
+			api.TinkerbellToConfigFiller(
+				api.RemoveTinkerbellWorkerMachineConfig(),
+			),
+		),
+		provider.WithProviderUpgrade(framework.Ubuntu126Image()),
+	)
+}
+
+func TestTinkerbellKubernetes126UbuntuTo127SingleNodeInPlaceUpgrade(t *testing.T) {
+	provider := framework.NewTinkerbell(t)
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube126)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithEtcdCountIfExternal(0)),
+		framework.WithClusterFiller(api.RemoveAllWorkerNodeGroups()),
+		framework.WithClusterFiller(api.WithInPlaceUpgradeStrategy()),
+		framework.WithControlPlaneHardware(1),
+	).WithClusterConfig(
+		provider.WithKubeVersionAndOS(v1alpha1.Kube126, framework.Ubuntu2004, nil),
+	)
+	runInPlaceUpgradeFlowForBareMetal(
+		test,
+		framework.WithUpgradeClusterConfig(
+			api.ClusterToConfigFiller(
+				api.WithKubernetesVersion(v1alpha1.Kube127),
+				api.WithInPlaceUpgradeStrategy(),
+			),
+			api.TinkerbellToConfigFiller(
+				api.RemoveTinkerbellWorkerMachineConfig(),
+			),
+		),
+		provider.WithProviderUpgrade(framework.Ubuntu127Image()),
+	)
+}
+
+func TestTinkerbellKubernetes127UbuntuTo128SingleNodeInPlaceUpgrade(t *testing.T) {
+	provider := framework.NewTinkerbell(t)
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterSingleNode(v1alpha1.Kube127),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithEtcdCountIfExternal(0)),
+		framework.WithClusterFiller(api.RemoveAllWorkerNodeGroups()),
+		framework.WithClusterFiller(api.WithInPlaceUpgradeStrategy()),
+		framework.WithControlPlaneHardware(1),
+	).WithClusterConfig(
+		provider.WithKubeVersionAndOS(v1alpha1.Kube127, framework.Ubuntu2004, nil),
+	)
+	runInPlaceUpgradeFlowForBareMetal(
+		test,
+		framework.WithUpgradeClusterConfig(
+			api.ClusterToConfigFiller(
+				api.WithKubernetesVersion(v1alpha1.Kube128),
+				api.WithInPlaceUpgradeStrategy(),
+			),
+			api.TinkerbellToConfigFiller(
+				api.RemoveTinkerbellWorkerMachineConfig(),
+			),
+		),
+		provider.WithProviderUpgrade(framework.Ubuntu128Image()),
+	)
+}
+
 // Curated packages
 func TestTinkerbellKubernetes127UbuntuSingleNodeCuratedPackagesFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(t,
