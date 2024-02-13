@@ -13,6 +13,12 @@ type createCluster struct{}
 // Run createCluster performs actions needed to create the management cluster.
 func (c *createCluster) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
 	logger.Info("Creating workload cluster")
+
+	if err := commandContext.ClusterManager.CreateNamespace(ctx, commandContext.ManagementCluster, commandContext.ClusterSpec.Cluster.Namespace); err != nil {
+		commandContext.SetError(err)
+		return &workflows.CollectMgmtClusterDiagnosticsTask{}
+	}
+
 	workloadCluster, err := commandContext.ClusterCreator.CreateSync(ctx, commandContext.ClusterSpec, commandContext.ManagementCluster)
 	if err != nil {
 		commandContext.SetError(err)
