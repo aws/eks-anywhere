@@ -167,6 +167,15 @@ func WithTinkerbellEtcdMachineConfig() TinkerbellFiller {
 	}
 }
 
+func RemoveTinkerbellWorkerMachineConfig() TinkerbellFiller {
+	return func(config TinkerbellConfig) {
+		clusterName := config.clusterName
+		if _, ok := config.machineConfigs[clusterName]; ok {
+			delete(config.machineConfigs, clusterName)
+		}
+	}
+}
+
 // WithStringFromEnvVarTinkerbellMachineFiller runs a TinkerbellMachineFiller function with an envVar value.
 func WithStringFromEnvVarTinkerbellMachineFiller(envVar string, opt func(string) TinkerbellMachineFiller) TinkerbellMachineFiller {
 	return opt(os.Getenv(envVar))
