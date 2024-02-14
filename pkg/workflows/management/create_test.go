@@ -82,26 +82,31 @@ func newCreateTest(t *testing.T) *createTestSetup {
 		t.Setenv(e, "true")
 	}
 
-	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) { s.Cluster.Name = "test-cluster" })
+	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
+		s.Cluster.Name = "test-cluster"
+		s.Cluster.Namespace = "test-ns"
+	})
 	managementComponents := cluster.ManagementComponentsFromBundles(clusterSpec.Bundles)
 
 	return &createTestSetup{
-		t:                    t,
-		bootstrapper:         bootstrapper,
-		clusterManager:       clusterManager,
-		gitOpsManager:        gitOpsManager,
-		provider:             provider,
-		writer:               writer,
-		validator:            validator,
-		eksdInstaller:        eksdInstaller,
-		eksaInstaller:        eksaInstaller,
-		packageInstaller:     packageInstaller,
-		clusterCreator:       clusterCreator,
-		datacenterConfig:     datacenterConfig,
-		machineConfigs:       machineConfigs,
-		workflow:             workflow,
-		ctx:                  context.Background(),
-		bootstrapCluster:     &types.Cluster{Name: "test-cluster"},
+		t:                t,
+		bootstrapper:     bootstrapper,
+		clusterManager:   clusterManager,
+		gitOpsManager:    gitOpsManager,
+		provider:         provider,
+		writer:           writer,
+		validator:        validator,
+		eksdInstaller:    eksdInstaller,
+		eksaInstaller:    eksaInstaller,
+		packageInstaller: packageInstaller,
+		clusterCreator:   clusterCreator,
+		datacenterConfig: datacenterConfig,
+		machineConfigs:   machineConfigs,
+		workflow:         workflow,
+		ctx:              context.Background(),
+		bootstrapCluster: &types.Cluster{
+			Name: "test-cluster",
+		},
 		workloadCluster:      &types.Cluster{},
 		managementComponents: managementComponents,
 		clusterSpec:          clusterSpec,

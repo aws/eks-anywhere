@@ -49,9 +49,11 @@ func (s *installEksaComponentsOnWorkloadTask) Run(ctx context.Context, commandCo
 	commandContext.ClusterSpec.Cluster.AddManagedByCLIAnnotation()
 	commandContext.ClusterSpec.Cluster.SetManagementComponentsVersion(commandContext.ClusterSpec.EKSARelease.Spec.Version)
 
-	if err := commandContext.ClusterManager.CreateNamespace(ctx, commandContext.WorkloadCluster, commandContext.ClusterSpec.Cluster.Namespace); err != nil {
-		commandContext.SetError(err)
-		return &workflows.CollectMgmtClusterDiagnosticsTask{}
+	if commandContext.ClusterSpec.Cluster.Namespace != "" {
+		if err := commandContext.ClusterManager.CreateNamespace(ctx, commandContext.WorkloadCluster, commandContext.ClusterSpec.Cluster.Namespace); err != nil {
+			commandContext.SetError(err)
+			return &workflows.CollectMgmtClusterDiagnosticsTask{}
+		}
 	}
 
 	logger.Info("Applying cluster spec to workload cluster")

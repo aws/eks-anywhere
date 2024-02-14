@@ -57,7 +57,9 @@ func newCreateTest(t *testing.T) *createTestSetup {
 
 	validator := mocks.NewMockValidator(mockCtrl)
 
-	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) { s.Cluster.Name = "test-cluster" })
+	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
+		s.Cluster.Name = "test-cluster"
+	})
 	managementComponents := cluster.ManagementComponentsFromBundles(clusterSpec.Bundles)
 
 	workload := workload.NewCreate(
@@ -90,6 +92,7 @@ func newCreateTest(t *testing.T) *createTestSetup {
 		clusterCreator:   clusterUpgrader,
 		clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
 			s.Cluster.Name = "workload"
+			s.Cluster.Namespace = "test-ns"
 			s.Cluster.Spec.DatacenterRef.Kind = v1alpha1.VSphereDatacenterKind
 			s.ManagementCluster = &types.Cluster{Name: "management"}
 		}),
