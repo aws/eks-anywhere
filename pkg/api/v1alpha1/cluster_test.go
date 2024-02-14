@@ -3316,6 +3316,76 @@ func TestValidateControlPlaneEndpoint(t *testing.T) {
 	}
 }
 
+func TestValidateControlPlaneReplicas(t *testing.T) {
+	tests := []struct {
+		name    string
+		wantErr string
+		cluster *Cluster
+	}{
+		{
+			name:    "Odd CP replicas with stacked etcd",
+			wantErr: "",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					ControlPlaneConfiguration: ControlPlaneConfiguration{
+						Count: 3,
+					},
+				},
+			},
+		},
+		{
+			name:    "Even CP replicas with stacked etcd",
+			wantErr: "control plane node count cannot be an even number when using stacked etcd topology",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					ControlPlaneConfiguration: ControlPlaneConfiguration{
+						Count: 2,
+					},
+				},
+			},
+		},
+		{
+			name:    "Odd CP replicas with unstacked etcd",
+			wantErr: "",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					ControlPlaneConfiguration: ControlPlaneConfiguration{
+						Count: 3,
+					},
+					ExternalEtcdConfiguration: &ExternalEtcdConfiguration{
+						Count: 1,
+					},
+				},
+			},
+		},
+		{
+			name:    "Odd CP replicas with unstacked etcd",
+			wantErr: "",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					ControlPlaneConfiguration: ControlPlaneConfiguration{
+						Count: 2,
+					},
+					ExternalEtcdConfiguration: &ExternalEtcdConfiguration{
+						Count: 1,
+					},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			err := validateControlPlaneReplicas(tt.cluster)
+			if tt.wantErr == "" {
+				g.Expect(err).To(BeNil())
+			} else {
+				g.Expect(err).To(MatchError(ContainSubstring(tt.wantErr)))
+			}
+		})
+	}
+}
+
 func TestValidateCPUpgradeRolloutStrategy(t *testing.T) {
 	tests := []struct {
 		name           string
