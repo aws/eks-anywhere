@@ -104,6 +104,6 @@ You will have a separate folder for the management cluster and each cluster you 
 
 
 * **resourcePool**:
-The vSphere resource pools for your VMs in the EKS Anywhere cluster. If there is a resource pool: `/<datacenter>/host/<resource-pool-name>/Resources`
+The vSphere resource pools for your VMs in the EKS Anywhere cluster. If there is a resource pool: `/<datacenter>/host/<cluster-name>/Resources/<resource-pool-name>`
 
   ![Import ova wizard](/images/resourcepool.png)
