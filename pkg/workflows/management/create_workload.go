@@ -63,6 +63,12 @@ func (s *createWorkloadClusterTask) Run(ctx context.Context, commandContext *tas
 		return &workflows.CollectDiagnosticsTask{}
 	}
 
+	err = commandContext.ClusterManager.CreateRegistryCredSecret(ctx, commandContext.WorkloadCluster)
+	if err != nil {
+		commandContext.SetError(err)
+		return &workflows.CollectDiagnosticsTask{}
+	}
+
 	return &installProviderSpecificResources{}
 }
 
