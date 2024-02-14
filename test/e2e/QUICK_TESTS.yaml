@@ -10,7 +10,7 @@ quick_tests:
 - TestVSphereKubernetes128To129Ubuntu2204StackedEtcdUpgrade
 - TestVSphereKubernetes129Ubuntu2004To2204Upgrade
 - TestVSphereKubernetes128BottlerocketTo129Upgrade
-- TestVSphereKubernetes127BottlerocketTo128StackedEtcdUpgrade
+- TestVSphereKubernetes128BottlerocketTo129StackedEtcdUpgrade
 # CloudStack
 - TestCloudStackKubernetes128To129RedhatMultipleFieldsUpgrade
 # Nutanix
