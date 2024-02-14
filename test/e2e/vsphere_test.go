@@ -3555,6 +3555,12 @@ func TestVSphereKubernetes128UbuntuInPlaceWorkerScaleDown2To1(t *testing.T) {
 	)
 }
 
+func TestVSphereKubernetes128UpgradeManagementComponents(t *testing.T) {
+	release := latestMinorRelease(t)
+	provider := framework.NewVSphere(t, framework.WithUbuntu128())
+	runUpgradeManagementComponentsFlow(t, release, provider, v1alpha1.Kube128, framework.Ubuntu2004)
+}
+
 // Workload API
 func TestVSphereMulticlusterWorkloadClusterAPI(t *testing.T) {
 	vsphere := framework.NewVSphere(t)

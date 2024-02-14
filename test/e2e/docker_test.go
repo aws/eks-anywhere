@@ -1358,14 +1358,8 @@ func TestDockerKubernetesRegionalCuratedPackages(t *testing.T) {
 
 func TestDockerKubernetesUpgradeManagementComponents(t *testing.T) {
 	release := latestMinorRelease(t)
-	test := framework.NewClusterE2ETest(t, framework.NewDocker(t))
-
-	test.GenerateClusterConfig()
-	// create cluster with old eksa
-	test.CreateCluster(framework.ExecuteWithEksaRelease(release))
-	// upgrade management-components with new eksa
-	test.RunEKSA([]string{"upgrade", "management-components", "-f", test.ClusterConfigLocation, "-v", "99"})
-	test.DeleteCluster()
+	provider := framework.NewDocker(t)
+	runUpgradeManagementComponentsFlow(t, release, provider, v1alpha1.Kube128, "")
 }
 
 // etcd scale tests

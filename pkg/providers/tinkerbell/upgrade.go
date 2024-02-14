@@ -146,6 +146,11 @@ func (p *Provider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *
 	return nil
 }
 
+// SetupAndValidateUpgradeManagementComponents performs necessary setup for upgrade management components operation.
+func (p *Provider) SetupAndValidateUpgradeManagementComponents(_ context.Context, _ *cluster.Spec) error {
+	return nil
+}
+
 func (p *Provider) validateAvailableHardwareForUpgrade(ctx context.Context, currentSpec, newClusterSpec *cluster.Spec) (err error) {
 	clusterSpecValidator := NewClusterSpecValidator(
 		HardwareSatisfiesOnlyOneSelectorAssertion(p.catalogue),

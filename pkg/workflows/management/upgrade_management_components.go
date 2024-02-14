@@ -122,8 +122,8 @@ func (s *setupAndValidateMC) Run(ctx context.Context, commandContext *task.Comma
 	runner.Register(
 		func() *validations.ValidationResult {
 			return &validations.ValidationResult{
-				Name: fmt.Sprintf("%s provider validation", commandContext.Provider.Name()),
-				Err:  commandContext.Provider.SetupAndValidateUpgradeCluster(ctx, commandContext.ManagementCluster, commandContext.ClusterSpec, commandContext.CurrentClusterSpec),
+				Name: fmt.Sprintf("%s provider setup and validation", commandContext.Provider.Name()),
+				Err:  commandContext.Provider.SetupAndValidateUpgradeManagementComponents(ctx, commandContext.ClusterSpec),
 			}
 		},
 	)

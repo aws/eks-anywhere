@@ -10,6 +10,9 @@ import (
 )
 
 func SetupEnvVars(datacenterConfig *anywherev1.VSphereDatacenterConfig) error {
+	// TODO(cxbrowne): We set environment variables here in response to existing of other environment
+	// variables. Investigate why this is done, and possible remove the need for this.
+	// https://github.com/aws/eks-anywhere-internal/issues/2192
 	if vSphereUsername, ok := os.LookupEnv(config.EksavSphereUsernameKey); ok && len(vSphereUsername) > 0 {
 		if err := os.Setenv(vSphereUsernameKey, vSphereUsername); err != nil {
 			return fmt.Errorf("unable to set %s: %v", config.EksavSphereUsernameKey, err)

@@ -108,7 +108,7 @@ func TestRunnerHappyPath(t *testing.T) {
 	gomock.InOrder(
 		mocks.validator.EXPECT().PreflightValidations(ctx).Return(nil),
 		mocks.provider.EXPECT().Name(),
-		mocks.provider.EXPECT().SetupAndValidateUpgradeCluster(ctx, gomock.Any(), newSpec, curSpec),
+		mocks.provider.EXPECT().SetupAndValidateUpgradeManagementComponents(ctx, newSpec),
 		mocks.provider.EXPECT().PreCoreComponentsUpgrade(gomock.Any(), gomock.Any(), newManagementComponents, gomock.Any()),
 		mocks.clientFactory.EXPECT().BuildClientFromKubeconfig(managementCluster.KubeconfigFile).Return(client, nil),
 		mocks.capiManager.EXPECT().Upgrade(ctx, managementCluster, mocks.provider, currentManagementComponents, newManagementComponents, newSpec).Return(capiChangeDiff, nil),
@@ -160,7 +160,7 @@ func TestRunnerStopsWhenValidationFailed(t *testing.T) {
 	newSpec := test.NewClusterSpec()
 
 	mocks.provider.EXPECT().Name()
-	mocks.provider.EXPECT().SetupAndValidateUpgradeCluster(ctx, gomock.Any(), newSpec, curSpec)
+	mocks.provider.EXPECT().SetupAndValidateUpgradeManagementComponents(ctx, newSpec)
 	mocks.clusterManager.EXPECT().GetCurrentClusterSpec(ctx, gomock.Any(), managementCluster.Name).Return(curSpec, nil)
 	mocks.validator.EXPECT().PreflightValidations(ctx).Return(
 		[]validations.Validation{
