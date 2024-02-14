@@ -117,11 +117,27 @@ func (r *MachineDeploymentReconciler) reconcile(ctx context.Context, log logr.Lo
 	mdUpgrade := &anywherev1.MachineDeploymentUpgrade{}
 	mduGetErr := r.client.Get(ctx, GetNamespacedNameType(mdUpgradeName(md.Name), constants.EksaSystemNamespace), mdUpgrade)
 
+	mhc := &clusterv1.MachineHealthCheck{}
+	if err := r.client.Get(ctx, GetNamespacedNameType(mdMachineHealthCheckName(md.Name), constants.EksaSystemNamespace), mhc); err != nil {
+		if apierrors.IsNotFound(err) {
+			return reconcile.Result{}, err
+		}
+		return ctrl.Result{}, fmt.Errorf("getting MachineHealthCheck %s: %v", mdMachineHealthCheckName(md.Name), err)
+	}
+	mhcPatchHelper, err := patch.NewHelper(mhc, r.client)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
 	if md.Spec.Replicas != nil && (*md.Spec.Replicas == md.Status.UpdatedReplicas) {
 		if mduGetErr == nil && mdUpgrade.Status.Ready {
 			log.Info("Machine deployment upgrade complete, deleting object", "MachineDeploymentUpgrade", mdUpgrade.Name)
 			if err := r.client.Delete(ctx, mdUpgrade); err != nil {
 				return ctrl.Result{}, fmt.Errorf("deleting MachineDeploymentUpgrade object: %v", err)
+			}
+			log.Info("Resuming machine deployment machine health check", "MachineHealthCheck", mdMachineHealthCheckName(md.Name))
+			if err := resumeMachineHealthCheck(ctx, mhc, mhcPatchHelper); err != nil {
+				return ctrl.Result{}, fmt.Errorf("updating annotations for machine health check: %v", err)
 			}
 		} else if !apierrors.IsNotFound(mduGetErr) {
 			return ctrl.Result{}, fmt.Errorf("getting MachineDeploymentUpgrade for MachineDeployment %s: %v", md.Name, mduGetErr)
@@ -143,6 +159,12 @@ func (r *MachineDeploymentReconciler) reconcile(ctx context.Context, log logr.Lo
 			if err != nil {
 				return ctrl.Result{}, fmt.Errorf("generating MachineDeploymentUpgrade: %v", err)
 			}
+
+			log.Info("Pausing machine deployment machine health check", "MachineHealthCheck", mdMachineHealthCheckName(md.Name))
+			if err := pauseMachineHealthCheck(ctx, mhc, mhcPatchHelper); err != nil {
+				return ctrl.Result{}, fmt.Errorf("updating annotations for machine health check: %v", err)
+			}
+
 			if err := r.client.Create(ctx, mdUpgrade); client.IgnoreAlreadyExists(err) != nil {
 				return ctrl.Result{}, fmt.Errorf("failed to create MachineDeploymentUpgrade for MachineDeployment %s:  %v", md.Name, err)
 			}
@@ -156,6 +178,11 @@ func (r *MachineDeploymentReconciler) reconcile(ctx context.Context, log logr.Lo
 	log.Info("Machine deployment upgrade complete, deleting object", "MachineDeploymentUpgrade", mdUpgrade.Name)
 	if err := r.client.Delete(ctx, mdUpgrade); err != nil {
 		return ctrl.Result{}, fmt.Errorf("deleting MachineDeploymentUpgrade object: %v", err)
+	}
+
+	log.Info("Resuming machine deployment machine health check", "MachineHealthCheck", mdMachineHealthCheckName(md.Name))
+	if err := resumeMachineHealthCheck(ctx, mhc, mhcPatchHelper); err != nil {
+		return ctrl.Result{}, fmt.Errorf("updating annotations for machine health check: %v", err)
 	}
 
 	return ctrl.Result{}, nil
@@ -219,4 +246,8 @@ func machineDeploymentUpgrade(md *clusterv1.MachineDeployment, machines []corev1
 
 func mdUpgradeName(mdName string) string {
 	return mdName + "-md-upgrade"
+}
+
+func mdMachineHealthCheckName(mdName string) string {
+	return fmt.Sprintf("%s-worker-unhealthy", mdName)
 }
