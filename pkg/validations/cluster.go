@@ -243,3 +243,15 @@ func ValidateEksaReleaseExistOnManagement(ctx context.Context, k kubernetes.Clie
 	}
 	return nil
 }
+
+// ValidatePauseAnnotation checks if the target cluster has annotation anywhere.eks.amazonaws.com/paused set to true or not.
+func ValidatePauseAnnotation(ctx context.Context, k KubectlClient, cluster *types.Cluster, clusterName string) error {
+	currentCluster, err := k.GetEksaCluster(ctx, cluster, clusterName)
+	if err != nil {
+		return err
+	}
+	if currentCluster.IsReconcilePaused() {
+		return fmt.Errorf("cluster cannot be upgraded with paused cluster controller reconciler")
+	}
+	return nil
+}
