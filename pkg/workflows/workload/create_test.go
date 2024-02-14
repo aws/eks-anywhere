@@ -104,8 +104,9 @@ func (c *createTestSetup) expectSetup() {
 	c.gitOpsManager.EXPECT().Validations(c.ctx, c.clusterSpec)
 }
 
-func (c *createTestSetup) expectCreateWorkloadCluster(err error) {
-	c.clusterCreator.EXPECT().CreateSync(c.ctx, c.clusterSpec, c.clusterSpec.ManagementCluster).Return(c.workloadCluster, err)
+func (c *createTestSetup) expectCreateWorkloadCluster(err1, err2 error) {
+	c.clusterManager.EXPECT().CreateNamespace(c.ctx, c.clusterSpec.ManagementCluster, c.clusterSpec.Cluster.Namespace).Return(err1)
+	c.clusterCreator.EXPECT().CreateSync(c.ctx, c.clusterSpec, c.clusterSpec.ManagementCluster).Return(c.workloadCluster, err2)
 }
 
 func (c *createTestSetup) expectWriteWorkloadClusterConfig(err error) {
@@ -156,7 +157,7 @@ func TestCreateRunSuccess(t *testing.T) {
 	test.expectPreflightValidationsToPass()
 	test.expectDatacenterConfig()
 	test.expectMachineConfigs()
-	test.expectCreateWorkloadCluster(nil)
+	test.expectCreateWorkloadCluster(nil, nil)
 	test.expectInstallGitOpsManager(nil)
 	test.expectWriteWorkloadClusterConfig(nil)
 
@@ -174,7 +175,24 @@ func TestCreateRunFail(t *testing.T) {
 	test.expectPreflightValidationsToPass()
 	test.expectDatacenterConfig()
 	test.expectMachineConfigs()
-	test.expectCreateWorkloadCluster(fmt.Errorf("Failure"))
+	test.expectCreateWorkloadCluster(nil, fmt.Errorf("Failure"))
+	test.expectSaveLogsManagement()
+
+	err := test.run()
+	if err == nil {
+		t.Fatalf("Create.Run() err = %v, want err = nil", err)
+	}
+}
+
+func TestCreateNamespaceFail(t *testing.T) {
+	features.ClearCache()
+	os.Setenv(features.UseControllerForCli, "true")
+	test := newCreateTest(t)
+	test.expectSetup()
+	test.expectPreflightValidationsToPass()
+	test.expectDatacenterConfig()
+	test.expectMachineConfigs()
+	test.clusterManager.EXPECT().CreateNamespace(test.ctx, test.clusterSpec.ManagementCluster, test.clusterSpec.Cluster.Namespace).Return(fmt.Errorf(""))
 	test.expectSaveLogsManagement()
 
 	err := test.run()
@@ -207,7 +225,7 @@ func TestCreateRunGitOpsConfigFail(t *testing.T) {
 	test.expectPreflightValidationsToPass()
 	test.expectDatacenterConfig()
 	test.expectMachineConfigs()
-	test.expectCreateWorkloadCluster(nil)
+	test.expectCreateWorkloadCluster(nil, nil)
 	test.expectInstallGitOpsManager(fmt.Errorf("Failure"))
 	test.expectWriteWorkloadClusterConfig(nil)
 
@@ -225,7 +243,7 @@ func TestCreateRunWriteClusterConfigFail(t *testing.T) {
 	test.expectPreflightValidationsToPass()
 	test.expectDatacenterConfig()
 	test.expectMachineConfigs()
-	test.expectCreateWorkloadCluster(nil)
+	test.expectCreateWorkloadCluster(nil, nil)
 	test.expectInstallGitOpsManager(nil)
 	test.expectWriteWorkloadClusterConfig(fmt.Errorf("Failure"))
 	test.expectWrite()

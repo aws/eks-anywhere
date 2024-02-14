@@ -197,6 +197,20 @@ func (mr *MockClusterManagerMockRecorder) CreateEKSAResources(arg0, arg1, arg2, 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateEKSAResources", reflect.TypeOf((*MockClusterManager)(nil).CreateEKSAResources), arg0, arg1, arg2, arg3, arg4)
 }
 
+// CreateNamespace mocks base method.
+func (m *MockClusterManager) CreateNamespace(arg0 context.Context, arg1 *types.Cluster, arg2 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateNamespace", arg0, arg1, arg2)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateNamespace indicates an expected call of CreateNamespace.
+func (mr *MockClusterManagerMockRecorder) CreateNamespace(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateNamespace", reflect.TypeOf((*MockClusterManager)(nil).CreateNamespace), arg0, arg1, arg2)
+}
+
 // CreateRegistryCredSecret mocks base method.
 func (m *MockClusterManager) CreateRegistryCredSecret(arg0 context.Context, arg1 *types.Cluster) error {
 	m.ctrl.T.Helper()

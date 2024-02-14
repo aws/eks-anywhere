@@ -18,6 +18,11 @@ func (s *createWorkloadClusterTask) Run(ctx context.Context, commandContext *tas
 	commandContext.ClusterSpec.Cluster.AddManagedByCLIAnnotation()
 	commandContext.ClusterSpec.Cluster.SetManagementComponentsVersion(commandContext.ClusterSpec.EKSARelease.Spec.Version)
 
+	if err := commandContext.ClusterManager.CreateNamespace(ctx, commandContext.BootstrapCluster, commandContext.ClusterSpec.Cluster.Namespace); err != nil {
+		commandContext.SetError(err)
+		return &workflows.CollectMgmtClusterDiagnosticsTask{}
+	}
+
 	workloadCluster, err := commandContext.ClusterCreator.CreateSync(ctx, commandContext.ClusterSpec, commandContext.BootstrapCluster)
 	if err != nil {
 		commandContext.SetError(err)
