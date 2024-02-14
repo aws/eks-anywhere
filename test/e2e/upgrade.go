@@ -61,7 +61,7 @@ func runSimpleUpgradeFlowWorkerNodeVersionForBareMetal(test *framework.ClusterE2
 }
 
 func runInPlaceUpgradeFlow(test *framework.ClusterE2ETest, clusterOpts ...framework.ClusterE2ETestOpt) {
-	test.CreateCluster(framework.WithControlPlaneWaitTimeout("20m"))
+	test.CreateCluster()
 	test.UpgradeClusterWithNewConfig(clusterOpts)
 	test.ValidateClusterState()
 	test.StopIfFailed()

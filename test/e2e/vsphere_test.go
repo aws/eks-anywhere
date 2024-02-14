@@ -2475,11 +2475,12 @@ func TestVSphereKubernetes127to128UpgradeFromLatestMinorReleaseBottleRocketAPI(t
 	)
 }
 
-func TestVSphereKubernetes128UbuntuControlPlaneScaleUp1To3(t *testing.T) {
+func TestVSphereKubernetes128UbuntuInPlaceCPScaleUp1To3(t *testing.T) {
 	provider := framework.NewVSphere(t, framework.WithUbuntu128())
 	test := framework.NewClusterE2ETest(
 		t,
 		provider,
+		framework.WithEnvVar(features.VSphereInPlaceEnvVar, "true"),
 	).WithClusterConfig(
 		api.ClusterToConfigFiller(
 			api.WithKubernetesVersion(v1alpha1.Kube128),
@@ -2502,11 +2503,12 @@ func TestVSphereKubernetes128UbuntuControlPlaneScaleUp1To3(t *testing.T) {
 	)
 }
 
-func TestVSphereKubernetes128UbuntuControlPlaneScaleDown3To1(t *testing.T) {
+func TestVSphereKubernetes128UbuntuInPlaceCPScaleDown3To1(t *testing.T) {
 	provider := framework.NewVSphere(t, framework.WithUbuntu128())
 	test := framework.NewClusterE2ETest(
 		t,
 		provider,
+		framework.WithEnvVar(features.VSphereInPlaceEnvVar, "true"),
 	).WithClusterConfig(
 		api.ClusterToConfigFiller(
 			api.WithKubernetesVersion(v1alpha1.Kube128),
@@ -2529,11 +2531,12 @@ func TestVSphereKubernetes128UbuntuControlPlaneScaleDown3To1(t *testing.T) {
 	)
 }
 
-func TestVSphereKubernetes128UbuntuWorkerNodeScaleUp1To2(t *testing.T) {
+func TestVSphereKubernetes128UbuntuInPlaceWorkerScaleUp1To2(t *testing.T) {
 	provider := framework.NewVSphere(t, framework.WithUbuntu128())
 	test := framework.NewClusterE2ETest(
 		t,
 		provider,
+		framework.WithEnvVar(features.VSphereInPlaceEnvVar, "true"),
 	).WithClusterConfig(
 		api.ClusterToConfigFiller(
 			api.WithKubernetesVersion(v1alpha1.Kube128),
@@ -2556,11 +2559,12 @@ func TestVSphereKubernetes128UbuntuWorkerNodeScaleUp1To2(t *testing.T) {
 	)
 }
 
-func TestVSphereKubernetes128UbuntuWorkerNodeScaleDown2To1(t *testing.T) {
+func TestVSphereKubernetes128UbuntuInPlaceWorkerScaleDown2To1(t *testing.T) {
 	provider := framework.NewVSphere(t, framework.WithUbuntu128())
 	test := framework.NewClusterE2ETest(
 		t,
 		provider,
+		framework.WithEnvVar(features.VSphereInPlaceEnvVar, "true"),
 	).WithClusterConfig(
 		api.ClusterToConfigFiller(
 			api.WithKubernetesVersion(v1alpha1.Kube128),
