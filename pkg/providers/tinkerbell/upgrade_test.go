@@ -43,6 +43,7 @@ func TestProviderPreCoreComponentsUpgrade_NilClusterSpec(t *testing.T) {
 		context.Background(),
 		tconfig.Management,
 		nil,
+		nil,
 	)
 
 	expect := "cluster spec is nil"
@@ -62,6 +63,7 @@ func TestProviderPreCoreComponentsUpgrade_NilCluster(t *testing.T) {
 	err = provider.PreCoreComponentsUpgrade(
 		context.Background(),
 		nil,
+		tconfig.managementComponents,
 		tconfig.ClusterSpec,
 	)
 
@@ -74,11 +76,10 @@ func TestProviderPreCoreComponentsUpgrade_StackUpgradeError(t *testing.T) {
 	tconfig := NewPreCoreComponentsUpgradeTestConfig(t)
 
 	expect := "foobar"
-	bundle := tconfig.ClusterSpec.RootVersionsBundle()
 	tconfig.Installer.EXPECT().
 		Upgrade(
 			gomock.Any(),
-			bundle.Tinkerbell,
+			tconfig.managementComponents.Tinkerbell,
 			tconfig.DatacenterConfig.Spec.TinkerbellIP,
 			tconfig.Management.KubeconfigFile,
 			tconfig.DatacenterConfig.Spec.HookImagesURLPath,
@@ -91,7 +92,7 @@ func TestProviderPreCoreComponentsUpgrade_StackUpgradeError(t *testing.T) {
 		t.Fatalf("Couldn't create the provider: %v", err)
 	}
 
-	err = provider.PreCoreComponentsUpgrade(context.Background(), tconfig.Management, tconfig.ClusterSpec)
+	err = provider.PreCoreComponentsUpgrade(context.Background(), tconfig.Management, tconfig.managementComponents, tconfig.ClusterSpec)
 	if err == nil || !strings.Contains(err.Error(), expect) {
 		t.Fatalf("Expected error containing '%v'; Received '%v'", expect, err)
 	}
@@ -100,12 +101,10 @@ func TestProviderPreCoreComponentsUpgrade_StackUpgradeError(t *testing.T) {
 func TestProviderPreCoreComponentsUpgrade_HasBaseboardManagementCRDError(t *testing.T) {
 	tconfig := NewPreCoreComponentsUpgradeTestConfig(t)
 
-	bundle := tconfig.ClusterSpec.RootVersionsBundle()
-
 	tconfig.Installer.EXPECT().
 		Upgrade(
 			gomock.Any(),
-			bundle.Tinkerbell,
+			tconfig.managementComponents.Tinkerbell,
 			tconfig.TinkerbellIP,
 			tconfig.Management.KubeconfigFile,
 			tconfig.DatacenterConfig.Spec.HookImagesURLPath,
@@ -127,7 +126,7 @@ func TestProviderPreCoreComponentsUpgrade_HasBaseboardManagementCRDError(t *test
 		t.Fatalf("Couldn't create the provider: %v", err)
 	}
 
-	err = provider.PreCoreComponentsUpgrade(context.Background(), tconfig.Management, tconfig.ClusterSpec)
+	err = provider.PreCoreComponentsUpgrade(context.Background(), tconfig.Management, tconfig.managementComponents, tconfig.ClusterSpec)
 	if err == nil || !strings.Contains(err.Error(), expect) {
 		t.Fatalf("Expected error containing '%v'; Received '%v'", expect, err)
 	}
@@ -136,12 +135,10 @@ func TestProviderPreCoreComponentsUpgrade_HasBaseboardManagementCRDError(t *test
 func TestProviderPreCoreComponentsUpgrade_NoBaseboardManagementCRD(t *testing.T) {
 	tconfig := NewPreCoreComponentsUpgradeTestConfig(t)
 
-	bundle := tconfig.ClusterSpec.RootVersionsBundle()
-
 	tconfig.Installer.EXPECT().
 		Upgrade(
 			gomock.Any(),
-			bundle.Tinkerbell,
+			tconfig.managementComponents.Tinkerbell,
 			tconfig.TinkerbellIP,
 			tconfig.Management.KubeconfigFile,
 			tconfig.DatacenterConfig.Spec.HookImagesURLPath,
@@ -158,7 +155,7 @@ func TestProviderPreCoreComponentsUpgrade_NoBaseboardManagementCRD(t *testing.T)
 		t.Fatalf("Couldn't create the provider: %v", err)
 	}
 
-	err = provider.PreCoreComponentsUpgrade(context.Background(), tconfig.Management, tconfig.ClusterSpec)
+	err = provider.PreCoreComponentsUpgrade(context.Background(), tconfig.Management, tconfig.managementComponents, tconfig.ClusterSpec)
 	if err != nil {
 		t.Fatalf("Received unexpected error: %v", err)
 	}
@@ -446,14 +443,12 @@ func TestProviderPreCoreComponentsUpgrade_RufioConversions(t *testing.T) {
 		t.Run(tc.Name, func(t *testing.T) {
 			tconfig := NewPreCoreComponentsUpgradeTestConfig(t)
 
-			bundle := tconfig.ClusterSpec.RootVersionsBundle()
-
 			// Configure the mocks to successfully upgrade the Tinkerbell stack using the installer
 			// and identify the need to convert deprecated Rufio custom resources.
 			tconfig.Installer.EXPECT().
 				Upgrade(
 					gomock.Any(),
-					bundle.Tinkerbell,
+					tconfig.managementComponents.Tinkerbell,
 					tconfig.DatacenterConfig.Spec.TinkerbellIP,
 					tconfig.Management.KubeconfigFile,
 					tconfig.DatacenterConfig.Spec.HookImagesURLPath,
@@ -531,6 +526,7 @@ func TestProviderPreCoreComponentsUpgrade_RufioConversions(t *testing.T) {
 			err = provider.PreCoreComponentsUpgrade(
 				context.Background(),
 				tconfig.Management,
+				tconfig.managementComponents,
 				tconfig.ClusterSpec,
 			)
 			if err != nil {
@@ -561,7 +557,9 @@ type PreCoreComponentsUpgradeTestConfig struct {
 
 	TinkerbellIP string
 
-	ClusterSpec      *cluster.Spec
+	ClusterSpec          *cluster.Spec
+	managementComponents *cluster.ManagementComponents
+
 	DatacenterConfig *v1alpha1.TinkerbellDatacenterConfig
 	MachineConfigs   map[string]*v1alpha1.TinkerbellMachineConfig
 	Management       *types.Cluster
@@ -577,17 +575,18 @@ func NewPreCoreComponentsUpgradeTestConfig(t *testing.T) *PreCoreComponentsUpgra
 	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
 	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 	cfg := &PreCoreComponentsUpgradeTestConfig{
-		Ctrl:             ctrl,
-		Docker:           stackmocks.NewMockDocker(ctrl),
-		Helm:             stackmocks.NewMockHelm(ctrl),
-		KubeClient:       mocks.NewMockProviderKubectlClient(ctrl),
-		Installer:        stackmocks.NewMockStackInstaller(ctrl),
-		Writer:           filewritermocks.NewMockFileWriter(ctrl),
-		TinkerbellIP:     "1.1.1.1",
-		ClusterSpec:      clusterSpec,
-		DatacenterConfig: datacenterConfig,
-		MachineConfigs:   machineConfigs,
-		Management:       &types.Cluster{KubeconfigFile: "kubeconfig-file"},
+		Ctrl:                 ctrl,
+		Docker:               stackmocks.NewMockDocker(ctrl),
+		Helm:                 stackmocks.NewMockHelm(ctrl),
+		KubeClient:           mocks.NewMockProviderKubectlClient(ctrl),
+		Installer:            stackmocks.NewMockStackInstaller(ctrl),
+		Writer:               filewritermocks.NewMockFileWriter(ctrl),
+		TinkerbellIP:         "1.1.1.1",
+		ClusterSpec:          clusterSpec,
+		managementComponents: cluster.ManagementComponentsFromBundles(clusterSpec.Bundles),
+		DatacenterConfig:     datacenterConfig,
+		MachineConfigs:       machineConfigs,
+		Management:           &types.Cluster{KubeconfigFile: "kubeconfig-file"},
 	}
 	cfg.DatacenterConfig.Spec.TinkerbellIP = cfg.TinkerbellIP
 	return cfg
@@ -615,30 +614,6 @@ func (t *PreCoreComponentsUpgradeTestConfig) GetProvider() (*Provider, error) {
 	}
 	p.SetStackInstaller(t.Installer)
 	return p, nil
-}
-
-// WithStackUpgrade configures t mocks to get successfully reach Rufio CRD conversion.
-func (t *PreCoreComponentsUpgradeTestConfig) WithStackUpgrade() *PreCoreComponentsUpgradeTestConfig {
-	bundle := t.ClusterSpec.RootVersionsBundle()
-
-	t.Installer.EXPECT().
-		Upgrade(
-			gomock.Any(),
-			bundle.Tinkerbell,
-			t.TinkerbellIP,
-			t.Management.KubeconfigFile,
-			t.DatacenterConfig.Spec.HookImagesURLPath,
-			gomock.Any(),
-		).
-		Return(nil)
-	t.KubeClient.EXPECT().
-		HasCRD(
-			gomock.Any(),
-			rufiounreleased.BaseboardManagementResourceName,
-			t.Management.KubeconfigFile,
-		).
-		Return(true, nil)
-	return t
 }
 
 func newTinkerbellProvider(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig, clusterConfig *v1alpha1.Cluster, writer filewriter.FileWriter, docker stack.Docker, helm stack.Helm, kubectl ProviderKubectlClient) *Provider {

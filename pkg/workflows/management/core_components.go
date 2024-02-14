@@ -47,9 +47,12 @@ type upgradeCoreComponents struct {
 func runUpgradeCoreComponents(ctx context.Context, commandContext *task.CommandContext) error {
 	logger.Info("Upgrading core components")
 
+	newManagementComponents := cluster.ManagementComponentsFromBundles(commandContext.ClusterSpec.Bundles)
+
 	err := commandContext.Provider.PreCoreComponentsUpgrade(
 		ctx,
 		commandContext.ManagementCluster,
+		newManagementComponents,
 		commandContext.ClusterSpec,
 	)
 	if err != nil {
@@ -68,8 +71,6 @@ func runUpgradeCoreComponents(ctx context.Context, commandContext *task.CommandC
 		commandContext.SetError(err)
 		return err
 	}
-
-	newManagementComponents := cluster.ManagementComponentsFromBundles(commandContext.ClusterSpec.Bundles)
 
 	changeDiff, err := commandContext.CAPIManager.Upgrade(ctx, commandContext.ManagementCluster, commandContext.Provider, currentManagementComponents, newManagementComponents, commandContext.ClusterSpec)
 	if err != nil {

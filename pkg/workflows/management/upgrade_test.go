@@ -156,7 +156,7 @@ func (c *upgradeManagementTestSetup) expectPauseGitOpsReconcile(err error) {
 }
 
 func (c *upgradeManagementTestSetup) expectPreCoreComponentsUpgrade() {
-	c.provider.EXPECT().PreCoreComponentsUpgrade(gomock.Any(), gomock.Any(), gomock.Any())
+	c.provider.EXPECT().PreCoreComponentsUpgrade(gomock.Any(), gomock.Any(), c.newManagementComponents, gomock.Any())
 }
 
 func (c *upgradeManagementTestSetup) expectUpgradeCoreComponents() {
@@ -178,7 +178,7 @@ func (c *upgradeManagementTestSetup) expectUpgradeCoreComponents() {
 	})
 
 	gomock.InOrder(
-		c.provider.EXPECT().PreCoreComponentsUpgrade(gomock.Any(), gomock.Any(), gomock.Any()),
+		c.provider.EXPECT().PreCoreComponentsUpgrade(gomock.Any(), gomock.Any(), c.newManagementComponents, gomock.Any()),
 		c.clientFactory.EXPECT().BuildClientFromKubeconfig(c.managementCluster.KubeconfigFile).Return(c.client, nil),
 		c.capiManager.EXPECT().Upgrade(c.ctx, c.managementCluster, c.provider, c.currentManagementComponents, c.newManagementComponents, c.newClusterSpec).Return(capiChangeDiff, nil),
 		c.gitOpsManager.EXPECT().Install(c.ctx, c.managementCluster, c.newManagementComponents, currentSpec, c.newClusterSpec).Return(nil),

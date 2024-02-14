@@ -434,6 +434,7 @@ func (p *Provider) validateMachineCfg(ctx context.Context, cluster *types.Cluste
 func (p *Provider) PreCoreComponentsUpgrade(
 	ctx context.Context,
 	cluster *types.Cluster,
+	managementComponents *cluster.ManagementComponents,
 	clusterSpec *cluster.Spec,
 ) error {
 	// When a workload cluster the cluster object could be nil. Noop if it is.
@@ -451,13 +452,11 @@ func (p *Provider) PreCoreComponentsUpgrade(
 		return nil
 	}
 
-	versionsBundle := clusterSpec.RootVersionsBundle()
-
 	// Attempt the upgrade. This should upgrade the stack in the mangement cluster by updating
 	// images, installing new CRDs and possibly removing old ones.
 	err := p.stackInstaller.Upgrade(
 		ctx,
-		versionsBundle.Tinkerbell,
+		managementComponents.Tinkerbell,
 		p.datacenterConfig.Spec.TinkerbellIP,
 		cluster.KubeconfigFile,
 		p.datacenterConfig.Spec.HookImagesURLPath,

@@ -401,7 +401,7 @@ func (c *upgradeTestSetup) expectWriteCheckpointFile() {
 }
 
 func (c *upgradeTestSetup) expectPreCoreComponentsUpgrade() {
-	c.provider.EXPECT().PreCoreComponentsUpgrade(gomock.Any(), gomock.Any(), gomock.Any())
+	c.provider.EXPECT().PreCoreComponentsUpgrade(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any())
 }
 
 func (c *upgradeTestSetup) run() error {

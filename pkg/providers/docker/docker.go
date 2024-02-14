@@ -727,6 +727,7 @@ func getHAProxyImageRepo(haProxyImage releasev1alpha1.Image) string {
 func (p *Provider) PreCoreComponentsUpgrade(
 	ctx context.Context,
 	cluster *types.Cluster,
+	managementComponents *cluster.ManagementComponents,
 	clusterSpec *cluster.Spec,
 ) error {
 	return nil
