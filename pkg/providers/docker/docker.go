@@ -172,6 +172,11 @@ func (p *Provider) SetupAndValidateUpgradeCluster(ctx context.Context, _ *types.
 	return nil
 }
 
+// SetupAndValidateUpgradeManagementComponents performs necessary setup for upgrade management components operation.
+func (p *Provider) SetupAndValidateUpgradeManagementComponents(_ context.Context, _ *cluster.Spec) error {
+	return nil
+}
+
 // UpdateSecrets is a no-op. It implements providers.Provider.
 func (p *Provider) UpdateSecrets(ctx context.Context, cluster *types.Cluster, _ *cluster.Spec) error {
 	// Not implemented

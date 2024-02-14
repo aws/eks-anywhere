@@ -225,9 +225,19 @@ func (p *Provider) SetupAndValidateDeleteCluster(ctx context.Context, cluster *t
 
 // SetupAndValidateUpgradeCluster - Performs necessary setup and validations for upgrade cluster operation.
 func (p *Provider) SetupAndValidateUpgradeCluster(ctx context.Context, _ *types.Cluster, clusterSpec *cluster.Spec, _ *cluster.Spec) error {
+	if err := p.SetupAndValidateUpgradeManagementComponents(ctx, clusterSpec); err != nil {
+		return err
+	}
+
 	if err := p.validator.validateUpgradeRolloutStrategy(clusterSpec); err != nil {
 		return fmt.Errorf("failed setup and validations: %v", err)
 	}
+
+	return nil
+}
+
+// SetupAndValidateUpgradeManagementComponents performs necessary setup for upgrade management components operation.
+func (p *Provider) SetupAndValidateUpgradeManagementComponents(_ context.Context, _ *cluster.Spec) error {
 	// TODO(nutanix): Add validations when this is supported
 	if err := setupEnvVars(p.datacenterConfig); err != nil {
 		return fmt.Errorf("failed setup and validations: %v", err)

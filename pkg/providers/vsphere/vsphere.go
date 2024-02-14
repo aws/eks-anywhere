@@ -424,6 +424,15 @@ func (p *vsphereProvider) SetupAndValidateUpgradeCluster(ctx context.Context, cl
 	return nil
 }
 
+// SetupAndValidateUpgradeManagementComponents performs necessary setup for upgrade management components operation.
+func (p *vsphereProvider) SetupAndValidateUpgradeManagementComponents(ctx context.Context, clusterSpec *cluster.Spec) error {
+	if err := SetupEnvVars(clusterSpec.VSphereDatacenter); err != nil {
+		return fmt.Errorf("failed environment variable setup: %v", err)
+	}
+
+	return nil
+}
+
 func (p *vsphereProvider) validateMachineConfigsNameUniqueness(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
 	prevSpec, err := p.providerKubectlClient.GetEksaCluster(ctx, cluster, clusterSpec.Cluster.GetName())
 	if err != nil {

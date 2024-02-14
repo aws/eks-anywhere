@@ -399,8 +399,8 @@ func (p *cloudstackProvider) SetupAndValidateCreateCluster(ctx context.Context, 
 }
 
 func (p *cloudstackProvider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, currentSpec *cluster.Spec) error {
-	if err := p.validateEnv(ctx); err != nil {
-		return fmt.Errorf("validating environment variables: %v", err)
+	if err := p.SetupAndValidateUpgradeManagementComponents(ctx, clusterSpec); err != nil {
+		return err
 	}
 
 	p.setMachineConfigDefaults(clusterSpec)
@@ -421,6 +421,15 @@ func (p *cloudstackProvider) SetupAndValidateUpgradeCluster(ctx context.Context,
 }
 
 func (p *cloudstackProvider) SetupAndValidateDeleteCluster(ctx context.Context, _ *types.Cluster, _ *cluster.Spec) error {
+	err := p.validateEnv(ctx)
+	if err != nil {
+		return fmt.Errorf("validating environment variables: %v", err)
+	}
+	return nil
+}
+
+// SetupAndValidateUpgradeManagementComponents performs necessary setup for upgrade management components operation.
+func (p *cloudstackProvider) SetupAndValidateUpgradeManagementComponents(ctx context.Context, _ *cluster.Spec) error {
 	err := p.validateEnv(ctx)
 	if err != nil {
 		return fmt.Errorf("validating environment variables: %v", err)
