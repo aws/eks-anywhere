@@ -48,6 +48,9 @@ const (
 	EksaPackagesName       = "eksa-packages"
 	// UpgraderConfigMapName is the name of config map that stores the upgrader images.
 	UpgraderConfigMapName = "in-place-upgrade"
+	// KubeVipConfigMapName is the name of config map that stores the kube-vip config.
+	KubeVipConfigMapName = "kube-vip-in-place-upgrade"
+	KubeVipManifestName  = "kube-vip.yaml"
 
 	CloudstackAnnotationSuffix = "cloudstack.anywhere.eks.amazonaws.com/v1alpha1"
 
