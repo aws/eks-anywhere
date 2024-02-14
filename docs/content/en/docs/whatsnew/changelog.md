@@ -21,6 +21,22 @@ description: >
 * When upgrading to a new minor version, a new OS image must be created using the new image-builder CLI pertaining to that release.
 {{% /alert %}}
 
+
+## [v0.18.7](https://github.com/aws/eks-anywhere/releases/tag/v0.18.7)
+
+### Tool Upgrade
+- EKS Anywhere v0.18.7 Admin AMI with CVE fixes for Amazon Linux 2
+
+### Supported Operating Systems
+
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+|    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+| Bottlerocket 1.19.0 |    ✔    |     ✔      |    —    |     —      |  —   |
+|      RHEL 8.7       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+|      RHEL 9.x       |    —    |     —      |    ✔    |     —      |  —   |
+
 ## [v0.18.6](https://github.com/aws/eks-anywhere/releases/tag/v0.18.6)
 
 ### **Tool Upgrade**
