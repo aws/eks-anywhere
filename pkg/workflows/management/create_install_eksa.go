@@ -3,6 +3,7 @@ package management
 import (
 	"context"
 
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/task"
@@ -38,6 +39,11 @@ func (s *installEksaComponentsOnBootstrapTask) Checkpoint() *task.CompletedTask 
 type installEksaComponentsOnWorkloadTask struct{}
 
 func (s *installEksaComponentsOnWorkloadTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
+	if commandContext.ClusterSpec.Cluster.Spec.DatacenterRef.Kind == v1alpha1.TinkerbellDatacenterKind {
+		logger.Info("Removing Tinkerbell IP annotation")
+		commandContext.ClusterSpec.Cluster.ClearTinkerbellIPAnnotation()
+	}
+
 	logger.Info("Installing EKS-A custom components on workload cluster")
 
 	err := installEKSAComponents(ctx, commandContext, commandContext.WorkloadCluster)
