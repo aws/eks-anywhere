@@ -57,6 +57,7 @@ type ClusterManager interface {
 	GenerateIamAuthKubeconfig(ctx context.Context, management, workload *types.Cluster, spec *cluster.Spec) error
 	DeletePackageResources(ctx context.Context, managementCluster *types.Cluster, clusterName string) error
 	CreateRegistryCredSecret(ctx context.Context, mgmt *types.Cluster) error
+	CreateNamespace(ctx context.Context, targetCluster *types.Cluster, namespace string) error
 }
 
 type GitOpsManager interface {
