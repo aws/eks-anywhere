@@ -2475,6 +2475,118 @@ func TestVSphereKubernetes127to128UpgradeFromLatestMinorReleaseBottleRocketAPI(t
 	)
 }
 
+func TestVSphereKubernetes128UbuntuInPlaceCPScaleUp1To3(t *testing.T) {
+	provider := framework.NewVSphere(t, framework.WithUbuntu128())
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithEnvVar(features.VSphereInPlaceEnvVar, "true"),
+	).WithClusterConfig(
+		api.ClusterToConfigFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube128),
+			api.WithControlPlaneCount(1),
+			api.WithWorkerNodeCount(1),
+			api.WithStackedEtcdTopology(),
+			api.WithInPlaceUpgradeStrategy(),
+		),
+		api.VSphereToConfigFiller(
+			api.RemoveEtcdVsphereMachineConfig(),
+		),
+		provider.WithKubeVersionAndOS(v1alpha1.Kube128, framework.Ubuntu2004, nil),
+	)
+	runInPlaceUpgradeFlow(
+		test,
+		framework.WithClusterUpgrade(
+			api.WithControlPlaneCount(3),
+			api.WithInPlaceUpgradeStrategy(),
+		),
+	)
+}
+
+func TestVSphereKubernetes128UbuntuInPlaceCPScaleDown3To1(t *testing.T) {
+	provider := framework.NewVSphere(t, framework.WithUbuntu128())
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithEnvVar(features.VSphereInPlaceEnvVar, "true"),
+	).WithClusterConfig(
+		api.ClusterToConfigFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube128),
+			api.WithControlPlaneCount(3),
+			api.WithWorkerNodeCount(1),
+			api.WithStackedEtcdTopology(),
+			api.WithInPlaceUpgradeStrategy(),
+		),
+		api.VSphereToConfigFiller(
+			api.RemoveEtcdVsphereMachineConfig(),
+		),
+		provider.WithKubeVersionAndOS(v1alpha1.Kube128, framework.Ubuntu2004, nil),
+	)
+	runInPlaceUpgradeFlow(
+		test,
+		framework.WithClusterUpgrade(
+			api.WithControlPlaneCount(1),
+			api.WithInPlaceUpgradeStrategy(),
+		),
+	)
+}
+
+func TestVSphereKubernetes128UbuntuInPlaceWorkerScaleUp1To2(t *testing.T) {
+	provider := framework.NewVSphere(t, framework.WithUbuntu128())
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithEnvVar(features.VSphereInPlaceEnvVar, "true"),
+	).WithClusterConfig(
+		api.ClusterToConfigFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube128),
+			api.WithControlPlaneCount(1),
+			api.WithWorkerNodeCount(1),
+			api.WithStackedEtcdTopology(),
+			api.WithInPlaceUpgradeStrategy(),
+		),
+		api.VSphereToConfigFiller(
+			api.RemoveEtcdVsphereMachineConfig(),
+		),
+		provider.WithKubeVersionAndOS(v1alpha1.Kube128, framework.Ubuntu2004, nil),
+	)
+	runInPlaceUpgradeFlow(
+		test,
+		framework.WithClusterUpgrade(
+			api.WithWorkerNodeCount(2),
+			api.WithInPlaceUpgradeStrategy(),
+		),
+	)
+}
+
+func TestVSphereKubernetes128UbuntuInPlaceWorkerScaleDown2To1(t *testing.T) {
+	provider := framework.NewVSphere(t, framework.WithUbuntu128())
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithEnvVar(features.VSphereInPlaceEnvVar, "true"),
+	).WithClusterConfig(
+		api.ClusterToConfigFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube128),
+			api.WithControlPlaneCount(1),
+			api.WithWorkerNodeCount(2),
+			api.WithStackedEtcdTopology(),
+			api.WithInPlaceUpgradeStrategy(),
+		),
+		api.VSphereToConfigFiller(
+			api.RemoveEtcdVsphereMachineConfig(),
+		),
+		provider.WithKubeVersionAndOS(v1alpha1.Kube128, framework.Ubuntu2004, nil),
+	)
+	runInPlaceUpgradeFlow(
+		test,
+		framework.WithClusterUpgrade(
+			api.WithWorkerNodeCount(1),
+			api.WithInPlaceUpgradeStrategy(),
+		),
+	)
+}
+
 // Workload API
 func TestVSphereMulticlusterWorkloadClusterAPI(t *testing.T) {
 	vsphere := framework.NewVSphere(t)
