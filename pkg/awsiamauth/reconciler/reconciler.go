@@ -172,10 +172,13 @@ func (r *Reconciler) createKubeconfigSecret(ctx context.Context, clusterSpec *an
 		return errors.Wrap(err, "generating aws-iam-authenticator kubeconfig")
 	}
 
+	clusterctlMoveLabel := make(map[string]string)
+	clusterctlMoveLabel[constants.ClusterctlMoveLabelName] = "true"
 	kubeconfigSecret := &corev1.Secret{
 		ObjectMeta: v1.ObjectMeta{
 			Name:      awsiamauth.KubeconfigSecretName(cluster.Name),
 			Namespace: constants.EksaSystemNamespace,
+			Labels:    clusterctlMoveLabel,
 		},
 		StringData: map[string]string{
 			"value": string(yaml),
