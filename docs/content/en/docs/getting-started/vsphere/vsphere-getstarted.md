@@ -108,7 +108,7 @@ Make sure you use single quotes around the values so that your shell does not in
    {{% /alert %}}
 
      
-1. Create cluster
+1. Create cluster  
    {{% alert title="Important" color="warning" %}}
   
    If your vSphere version is 7.0.2, then few previliges don't [exist](https://github.com/aws/eks-anywhere/issues/4746),
