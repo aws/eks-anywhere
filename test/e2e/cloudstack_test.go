@@ -977,6 +977,12 @@ func TestCloudStackKubernetes129InstallGitFluxDuringUpgrade(t *testing.T) {
 	)
 }
 
+func TestCloudStackKubernetes128UpgradeManagementComponents(t *testing.T) {
+	release := latestMinorRelease(t)
+	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes128())
+	runUpgradeManagementComponentsFlow(t, release, provider, v1alpha1.Kube128, framework.RedHat9)
+}
+
 // Labels
 func TestCloudStackKubernetes125LabelsAndNodeNameRedhat(t *testing.T) {
 	test := framework.NewClusterE2ETest(

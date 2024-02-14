@@ -14,6 +14,7 @@ type Provider interface {
 	SetupAndValidateCreateCluster(ctx context.Context, clusterSpec *cluster.Spec) error
 	SetupAndValidateDeleteCluster(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error
 	SetupAndValidateUpgradeCluster(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, currentSpec *cluster.Spec) error
+	SetupAndValidateUpgradeManagementComponents(ctx context.Context, clusterSpec *cluster.Spec) error
 	UpdateSecrets(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error
 	GenerateCAPISpecForCreate(ctx context.Context, managementCluster *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error)
 	GenerateCAPISpecForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, currrentSpec, newClusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error)
