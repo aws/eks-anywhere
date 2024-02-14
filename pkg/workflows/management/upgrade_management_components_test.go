@@ -109,7 +109,7 @@ func TestRunnerHappyPath(t *testing.T) {
 		mocks.validator.EXPECT().PreflightValidations(ctx).Return(nil),
 		mocks.provider.EXPECT().Name(),
 		mocks.provider.EXPECT().SetupAndValidateUpgradeCluster(ctx, gomock.Any(), newSpec, curSpec),
-		mocks.provider.EXPECT().PreCoreComponentsUpgrade(gomock.Any(), gomock.Any(), gomock.Any()),
+		mocks.provider.EXPECT().PreCoreComponentsUpgrade(gomock.Any(), gomock.Any(), newManagementComponents, gomock.Any()),
 		mocks.clientFactory.EXPECT().BuildClientFromKubeconfig(managementCluster.KubeconfigFile).Return(client, nil),
 		mocks.capiManager.EXPECT().Upgrade(ctx, managementCluster, mocks.provider, currentManagementComponents, newManagementComponents, newSpec).Return(capiChangeDiff, nil),
 		mocks.gitOpsManager.EXPECT().Install(ctx, managementCluster, newManagementComponents, curSpec, newSpec).Return(nil),

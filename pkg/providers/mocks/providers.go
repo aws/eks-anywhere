@@ -340,17 +340,17 @@ func (mr *MockProviderMockRecorder) PreCAPIInstallOnBootstrap(arg0, arg1, arg2 i
 }
 
 // PreCoreComponentsUpgrade mocks base method.
-func (m *MockProvider) PreCoreComponentsUpgrade(arg0 context.Context, arg1 *types.Cluster, arg2 *cluster.Spec) error {
+func (m *MockProvider) PreCoreComponentsUpgrade(arg0 context.Context, arg1 *types.Cluster, arg2 *cluster.ManagementComponents, arg3 *cluster.Spec) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "PreCoreComponentsUpgrade", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "PreCoreComponentsUpgrade", arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // PreCoreComponentsUpgrade indicates an expected call of PreCoreComponentsUpgrade.
-func (mr *MockProviderMockRecorder) PreCoreComponentsUpgrade(arg0, arg1, arg2 interface{}) *gomock.Call {
+func (mr *MockProviderMockRecorder) PreCoreComponentsUpgrade(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PreCoreComponentsUpgrade", reflect.TypeOf((*MockProvider)(nil).PreCoreComponentsUpgrade), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PreCoreComponentsUpgrade", reflect.TypeOf((*MockProvider)(nil).PreCoreComponentsUpgrade), arg0, arg1, arg2, arg3)
 }
 
 // RunPostControlPlaneUpgrade mocks base method.

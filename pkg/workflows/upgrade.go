@@ -228,6 +228,7 @@ func (s *upgradeCoreComponents) Run(ctx context.Context, commandContext *task.Co
 	err := commandContext.Provider.PreCoreComponentsUpgrade(
 		ctx,
 		commandContext.ManagementCluster,
+		cluster.ManagementComponentsFromBundles(commandContext.ClusterSpec.Bundles),
 		commandContext.ClusterSpec,
 	)
 	if err != nil {
