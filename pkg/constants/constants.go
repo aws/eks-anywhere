@@ -53,6 +53,9 @@ const (
 
 	FailureDomainLabelName = "cluster.x-k8s.io/failure-domain"
 
+	// ClusterctlMoveLabelName adds the clusterctl move label.
+	ClusterctlMoveLabelName = "clusterctl.cluster.x-k8s.io/move"
+
 	// CloudstackFailureDomainPlaceholder Provider specific keywork placeholder.
 	CloudstackFailureDomainPlaceholder = "ds.meta_data.failuredomain"
 
