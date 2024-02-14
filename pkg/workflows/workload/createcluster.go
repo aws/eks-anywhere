@@ -14,9 +14,11 @@ type createCluster struct{}
 func (c *createCluster) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
 	logger.Info("Creating workload cluster")
 
-	if err := commandContext.ClusterManager.CreateNamespace(ctx, commandContext.ManagementCluster, commandContext.ClusterSpec.Cluster.Namespace); err != nil {
-		commandContext.SetError(err)
-		return &workflows.CollectMgmtClusterDiagnosticsTask{}
+	if commandContext.ClusterSpec.Cluster.Namespace != "" {
+		if err := commandContext.ClusterManager.CreateNamespace(ctx, commandContext.ManagementCluster, commandContext.ClusterSpec.Cluster.Namespace); err != nil {
+			commandContext.SetError(err)
+			return &workflows.CollectMgmtClusterDiagnosticsTask{}
+		}
 	}
 
 	workloadCluster, err := commandContext.ClusterCreator.CreateSync(ctx, commandContext.ClusterSpec, commandContext.ManagementCluster)
