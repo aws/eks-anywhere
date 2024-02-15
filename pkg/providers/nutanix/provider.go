@@ -379,7 +379,7 @@ func (p *Provider) needsNewMachineTemplate(currentSpec, newClusterSpec *cluster.
 func (p *Provider) needsNewKubeadmConfigTemplate(workerNodeGroupConfiguration v1alpha1.WorkerNodeGroupConfiguration, prevWorkerNodeGroupConfigs map[string]v1alpha1.WorkerNodeGroupConfiguration, oldWorkerNodeNmc *v1alpha1.NutanixMachineConfig, newWorkerNodeNmc *v1alpha1.NutanixMachineConfig) (bool, error) {
 	if _, ok := prevWorkerNodeGroupConfigs[workerNodeGroupConfiguration.Name]; ok {
 		existingWorkerNodeGroupConfig := prevWorkerNodeGroupConfigs[workerNodeGroupConfiguration.Name]
-		return NeedsNewKubeadmConfigTemplate(&workerNodeGroupConfiguration, &existingWorkerNodeGroupConfig, oldWorkerNodeNmc, newWorkerNodeNmc), nil
+		return needsNewKubeadmConfigTemplate(&workerNodeGroupConfiguration, &existingWorkerNodeGroupConfig, oldWorkerNodeNmc, newWorkerNodeNmc), nil
 	}
 	return true, nil
 }
@@ -397,7 +397,7 @@ func NeedsNewWorkloadTemplate(oldSpec, newSpec *cluster.Spec, oldNmc, newNmc *v1
 	return AnyImmutableFieldChanged(oldNmc, newNmc)
 }
 
-func NeedsNewKubeadmConfigTemplate(newWorkerNodeGroup *v1alpha1.WorkerNodeGroupConfiguration, oldWorkerNodeGroup *v1alpha1.WorkerNodeGroupConfiguration, oldWorkerNodeNmc *v1alpha1.NutanixMachineConfig, newWorkerNodeNmc *v1alpha1.NutanixMachineConfig) bool {
+func needsNewKubeadmConfigTemplate(newWorkerNodeGroup *v1alpha1.WorkerNodeGroupConfiguration, oldWorkerNodeGroup *v1alpha1.WorkerNodeGroupConfiguration, oldWorkerNodeNmc *v1alpha1.NutanixMachineConfig, newWorkerNodeNmc *v1alpha1.NutanixMachineConfig) bool {
 	return !v1alpha1.TaintsSliceEqual(newWorkerNodeGroup.Taints, oldWorkerNodeGroup.Taints) || !v1alpha1.MapEqual(newWorkerNodeGroup.Labels, oldWorkerNodeGroup.Labels) ||
 		!v1alpha1.UsersSliceEqual(oldWorkerNodeNmc.Spec.Users, newWorkerNodeNmc.Spec.Users)
 }
