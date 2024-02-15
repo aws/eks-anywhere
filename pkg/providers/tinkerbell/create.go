@@ -28,6 +28,8 @@ func (p *Provider) BootstrapClusterOpts(_ *cluster.Spec) ([]bootstrapper.Bootstr
 func (p *Provider) PreCAPIInstallOnBootstrap(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
 	logger.V(4).Info("Installing Tinkerbell stack on bootstrap cluster")
 
+	logger.V(4).Info("Adding annotation for tinkerbell ip on bootstrap cluster")
+	clusterSpec.Cluster.AddTinkerbellIPAnnotation(p.tinkerbellIP)
 	versionsBundle := clusterSpec.RootVersionsBundle()
 
 	err := p.stackInstaller.Install(

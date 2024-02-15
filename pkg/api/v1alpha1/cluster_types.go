@@ -25,6 +25,10 @@ const (
 	// the controller will remove the finalizer and let the cluster be deleted.
 	ManagedByCLIAnnotation = "anywhere.eks.amazonaws.com/managed-by-cli"
 
+	// tinkerbellIPAnnotation can be applied to an EKS-A Cluster to convey the tinkerbell bootstrap ip to the
+	// EKSA controller. When marked for deletion, the controller will remove the IP annotation.
+	tinkerbellIPAnnotation = "anywhere.eks.amazonaws.com/tinkerbell-bootstrap-ip"
+
 	// ControlPlaneAnnotation is an annotation that can be applied to EKS-A machineconfig
 	// object to prevent a controller from making changes to that resource.
 	controlPlaneAnnotation = "anywhere.eks.amazonaws.com/control-plane"
