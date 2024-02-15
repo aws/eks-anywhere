@@ -158,6 +158,11 @@ func TestGetExternalEtcdReleaseURL(t *testing.T) {
 			etcdURL:        test.VersionBundle().KubeDistro.EtcdURL,
 		},
 		{
+			name:           "Etcd url enabled version = 0.19.0 with dev build",
+			clusterVersion: "v0.19.0-dev+latest",
+			etcdURL:        test.VersionBundle().KubeDistro.EtcdURL,
+		},
+		{
 			name:           "Post etcd url enabled version > 0.19.0",
 			clusterVersion: "v0.21.0",
 			etcdURL:        test.VersionBundle().KubeDistro.EtcdURL,
