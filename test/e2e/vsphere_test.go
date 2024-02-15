@@ -2723,6 +2723,66 @@ func TestVSphereKubernetes129Ubuntu2004To2204Upgrade(t *testing.T) {
 	)
 }
 
+func TestVSphereKubernetes127UbuntuTo128InPlaceUpgradeCPOnly(t *testing.T) {
+	provider := framework.NewVSphere(t, framework.WithUbuntu127())
+	kube127 := v1alpha1.Kube127
+	kube128 := v1alpha1.Kube128
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithEnvVar(features.VSphereInPlaceEnvVar, "true"),
+	).WithClusterConfig(
+		api.ClusterToConfigFiller(
+			api.WithKubernetesVersion(kube127),
+			api.WithControlPlaneCount(1),
+			api.WithWorkerNodeCount(1),
+			api.WithWorkerKubernetesVersion(nodeGroupLabel1, &kube127),
+			api.WithStackedEtcdTopology(),
+			api.WithInPlaceUpgradeStrategy(),
+		),
+		api.VSphereToConfigFiller(
+			api.RemoveEtcdVsphereMachineConfig(),
+		),
+		provider.WithKubeVersionAndOS(v1alpha1.Kube127, framework.Ubuntu2004, nil),
+	)
+	runInPlaceUpgradeFlow(
+		test,
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(kube128)),
+		provider.WithProviderUpgrade(provider.Ubuntu128TemplateForMachineConfig(providers.GetControlPlaneNodeName(test.ClusterName))),
+	)
+}
+
+func TestVSphereKubernetes127UbuntuTo128InPlaceUpgradeWorkerOnly(t *testing.T) {
+	provider := framework.NewVSphere(t, framework.WithUbuntu127())
+	kube127 := v1alpha1.Kube127
+	kube128 := v1alpha1.Kube128
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithEnvVar(features.VSphereInPlaceEnvVar, "true"),
+	).WithClusterConfig(
+		api.ClusterToConfigFiller(
+			api.WithKubernetesVersion(kube128),
+			api.WithControlPlaneCount(1),
+			api.WithWorkerNodeCount(1),
+			api.WithWorkerKubernetesVersion(nodeGroupLabel1, &kube127),
+			api.WithStackedEtcdTopology(),
+			api.WithInPlaceUpgradeStrategy(),
+		),
+		api.VSphereToConfigFiller(
+			api.RemoveEtcdVsphereMachineConfig(),
+		),
+	)
+	test.UpdateClusterConfig(
+		provider.WithKubeVersionAndOSMachineConfig(providers.GetControlPlaneNodeName(test.ClusterName), kube128, framework.Ubuntu2004),
+	)
+	runInPlaceUpgradeFlow(
+		test,
+		framework.WithClusterUpgrade(api.WithWorkerKubernetesVersion(nodeGroupLabel1, &kube128)),
+		provider.WithProviderUpgrade(provider.Ubuntu128Template()), // this will just set everything to 1.28 as expected
+	)
+}
+
 func TestVSphereKubernetes127UbuntuTo128UpgradeCiliumPolicyEnforcementMode(t *testing.T) {
 	provider := framework.NewVSphere(t, framework.WithUbuntu127())
 	test := framework.NewClusterE2ETest(
