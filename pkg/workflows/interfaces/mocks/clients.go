@@ -283,18 +283,18 @@ func (mr *MockClusterManagerMockRecorder) EKSAClusterSpecChanged(arg0, arg1, arg
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EKSAClusterSpecChanged", reflect.TypeOf((*MockClusterManager)(nil).EKSAClusterSpecChanged), arg0, arg1, arg2)
 }
 
-// GenerateIamAuthKubeconfig mocks base method.
-func (m *MockClusterManager) GenerateIamAuthKubeconfig(arg0 context.Context, arg1, arg2 *types.Cluster, arg3 *cluster.Spec) error {
+// GenerateAWSIAMKubeconfig mocks base method.
+func (m *MockClusterManager) GenerateAWSIAMKubeconfig(arg0 context.Context, arg1 *types.Cluster) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GenerateIamAuthKubeconfig", arg0, arg1, arg2, arg3)
+	ret := m.ctrl.Call(m, "GenerateAWSIAMKubeconfig", arg0, arg1)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// GenerateIamAuthKubeconfig indicates an expected call of GenerateIamAuthKubeconfig.
-func (mr *MockClusterManagerMockRecorder) GenerateIamAuthKubeconfig(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+// GenerateAWSIAMKubeconfig indicates an expected call of GenerateAWSIAMKubeconfig.
+func (mr *MockClusterManagerMockRecorder) GenerateAWSIAMKubeconfig(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateIamAuthKubeconfig", reflect.TypeOf((*MockClusterManager)(nil).GenerateIamAuthKubeconfig), arg0, arg1, arg2, arg3)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateAWSIAMKubeconfig", reflect.TypeOf((*MockClusterManager)(nil).GenerateAWSIAMKubeconfig), arg0, arg1)
 }
 
 // GetCurrentClusterSpec mocks base method.

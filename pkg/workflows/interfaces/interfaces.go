@@ -54,7 +54,7 @@ type ClusterManager interface {
 	Upgrade(ctx context.Context, cluster *types.Cluster, currentManagementComponents, newManagementComponents *cluster.ManagementComponents, newSpec *cluster.Spec) (*types.ChangeDiff, error)
 	InstallAwsIamAuth(ctx context.Context, managementCluster, workloadCluster *types.Cluster, clusterSpec *cluster.Spec) error
 	CreateAwsIamAuthCaSecret(ctx context.Context, bootstrapCluster *types.Cluster, workloadClusterName string) error
-	GenerateIamAuthKubeconfig(ctx context.Context, management, workload *types.Cluster, spec *cluster.Spec) error
+	GenerateAWSIAMKubeconfig(ctx context.Context, cluster *types.Cluster) error
 	DeletePackageResources(ctx context.Context, managementCluster *types.Cluster, clusterName string) error
 	CreateRegistryCredSecret(ctx context.Context, mgmt *types.Cluster) error
 	CreateNamespace(ctx context.Context, targetCluster *types.Cluster, namespace string) error

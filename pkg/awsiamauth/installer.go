@@ -18,6 +18,7 @@ type KubernetesClient interface {
 	Apply(ctx context.Context, cluster *types.Cluster, data []byte) error
 	GetAPIServerURL(ctx context.Context, cluster *types.Cluster) (string, error)
 	GetClusterCACert(ctx context.Context, cluster *types.Cluster, clusterName string) ([]byte, error)
+	GetAWSIAMKubeconfigSecretValue(ctx context.Context, cluster *types.Cluster, clusterName string) ([]byte, error)
 }
 
 // Installer provides the necessary behavior for installing the AWS IAM Authenticator.
@@ -152,5 +153,35 @@ func (i *Installer) GenerateKubeconfig(
 
 	logger.V(3).Info("Generated aws-iam-authenticator kubeconfig", "kubeconfig", writtenFile)
 
+	return nil
+}
+
+// GenerateManagementAWSIAMKubeconfig generates the AWS IAM auth kubeconfig.
+func (i *Installer) GenerateManagementAWSIAMKubeconfig(
+	ctx context.Context,
+	cluster *types.Cluster,
+) error {
+	fileName := fmt.Sprintf("%s-aws.kubeconfig", cluster.Name)
+
+	decodedKubeconfigSecretValue, err := i.k8s.GetAWSIAMKubeconfigSecretValue(
+		ctx,
+		cluster,
+		cluster.Name,
+	)
+	if err != nil {
+		return fmt.Errorf("generating aws-iam-authenticator kubeconfig: %v", err)
+	}
+
+	writtenFile, err := i.writer.Write(
+		fileName,
+		decodedKubeconfigSecretValue,
+		filewriter.PersistentFile,
+		filewriter.Permission0600,
+	)
+	if err != nil {
+		return fmt.Errorf("writing aws-iam-authenticator kubeconfig to %s: %v", writtenFile, err)
+	}
+
+	logger.V(3).Info("Generated aws-iam-authenticator kubeconfig", "kubeconfig", writtenFile)
 	return nil
 }
