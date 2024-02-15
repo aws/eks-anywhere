@@ -71,6 +71,10 @@ func (tb *TemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *cluster.Spe
 	}
 	var OSImageURL string
 
+	if tinkerbellIP, ok := clusterSpec.Cluster.HasTinkerbellIPAnnotation(); ok {
+		tb.tinkerbellIP = tinkerbellIP
+	}
+
 	if cpTemplateConfig == nil {
 		OSImageURL = clusterSpec.TinkerbellDatacenter.Spec.OSImageURL
 		if tb.controlPlaneMachineSpec.OSImageURL != "" {
@@ -122,6 +126,10 @@ func (tb *TemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, wo
 	workerSpecs := make([][]byte, 0, len(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations))
 	bundle := clusterSpec.RootVersionsBundle()
 	OSImageURL := clusterSpec.TinkerbellDatacenter.Spec.OSImageURL
+
+	if tinkerbellIP, ok := clusterSpec.Cluster.HasTinkerbellIPAnnotation(); ok {
+		tb.tinkerbellIP = tinkerbellIP
+	}
 
 	for _, workerNodeGroupConfiguration := range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
 		workerNodeMachineSpec := tb.WorkerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name]

@@ -1616,6 +1616,24 @@ func TestCluster_AddRemoveManagedByCLIAnnotation(t *testing.T) {
 	g.Expect(ok).To(BeFalse())
 }
 
+func TestClusterClearTinkerbellIPAnnotation(t *testing.T) {
+	g := NewWithT(t)
+	c := &Cluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "cluster_test",
+		},
+	}
+	c.AddTinkerbellIPAnnotation("1.1.1.1")
+	val, ok := c.HasTinkerbellIPAnnotation()
+
+	g.Expect(ok).To(BeTrue())
+	g.Expect(val).To(ContainSubstring("1.1.1.1"))
+
+	c.ClearTinkerbellIPAnnotation()
+	_, ok = c.Annotations[tinkerbellIPAnnotation]
+	g.Expect(ok).To(BeFalse())
+}
+
 func TestGitOpsEquals(t *testing.T) {
 	tests := []struct {
 		name string

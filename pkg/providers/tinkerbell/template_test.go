@@ -164,3 +164,34 @@ func TestTemplateBuilder_CertSANs(t *testing.T) {
 
 	}
 }
+
+func TestTemplateBuilder(t *testing.T) {
+	for _, tc := range []struct {
+		Input  string
+		Output string
+	}{
+		{
+			Input:  "testdata/cluster_tinkerbell_api_server_cert_san_ip.yaml",
+			Output: "testdata/expected_cluster_tinkerbell_api_server_cert_san_ip.yaml",
+		},
+	} {
+		g := NewWithT(t)
+		clusterSpec := test.NewFullClusterSpec(t, tc.Input)
+		clusterSpec.Cluster.AddTinkerbellIPAnnotation("1.1.1.1")
+
+		cpMachineCfg, err := getControlPlaneMachineSpec(clusterSpec)
+		g.Expect(err).ToNot(HaveOccurred())
+
+		wngMachineCfgs, err := getWorkerNodeGroupMachineSpec(clusterSpec)
+		g.Expect(err).ToNot(HaveOccurred())
+
+		tinkIPBefore := "0.0.0.0"
+		bldr := NewTemplateBuilder(&clusterSpec.TinkerbellDatacenter.Spec, cpMachineCfg, nil, wngMachineCfgs, tinkIPBefore, time.Now)
+
+		data, err := bldr.GenerateCAPISpecControlPlane(clusterSpec)
+		g.Expect(err).ToNot(HaveOccurred())
+
+		test.AssertContentToFile(t, string(data), tc.Output)
+
+	}
+}

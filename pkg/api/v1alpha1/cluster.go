@@ -311,6 +311,29 @@ func (c *Cluster) ClearManagedByCLIAnnotation() {
 	}
 }
 
+// AddTinkerbellIPAnnotation adds the managed-by-cli annotation to the cluster.
+func (c *Cluster) AddTinkerbellIPAnnotation(tinkerbellIP string) {
+	if c.Annotations == nil {
+		c.Annotations = map[string]string{}
+	}
+	c.Annotations[tinkerbellIPAnnotation] = tinkerbellIP
+}
+
+// ClearTinkerbellIPAnnotation removes the managed-by-cli annotation from the cluster.
+func (c *Cluster) ClearTinkerbellIPAnnotation() {
+	if c.Annotations != nil {
+		delete(c.Annotations, tinkerbellIPAnnotation)
+	}
+}
+
+// HasTinkerbellIPAnnotation returns the tinkerbell IP value if the annotation exists.
+func (c *Cluster) HasTinkerbellIPAnnotation() (string, bool) {
+	if tinkerbellIP, ok := c.Annotations[tinkerbellIPAnnotation]; ok {
+		return tinkerbellIP, true
+	}
+	return "", false
+}
+
 // RegistryAuth returns whether registry requires authentication or not.
 func (c *Cluster) RegistryAuth() bool {
 	if c.Spec.RegistryMirrorConfiguration == nil {
