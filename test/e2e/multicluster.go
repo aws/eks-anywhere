@@ -147,3 +147,15 @@ func runWorkloadClusterUpgradeFlowWithAPIForBareMetal(test *framework.Multiclust
 	test.ManagementCluster.StopIfFailed()
 	test.DeleteManagementCluster()
 }
+
+func runInPlaceWorkloadUpgradeFlow(test *framework.MulticlusterE2ETest, clusterOpts ...framework.ClusterE2ETestOpt) {
+	test.CreateManagementCluster()
+	test.RunInWorkloadClusters(func(w *framework.WorkloadCluster) {
+		w.CreateCluster()
+		w.UpgradeClusterWithNewConfig(clusterOpts)
+		w.ValidateClusterState()
+		w.StopIfFailed()
+		w.DeleteCluster()
+	})
+	test.DeleteManagementCluster()
+}
