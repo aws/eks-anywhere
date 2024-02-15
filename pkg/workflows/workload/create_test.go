@@ -2,6 +2,7 @@ package workload_test
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -148,6 +149,11 @@ func (c *createTestSetup) expectInstallGitOpsManager(err error) {
 		c.ctx, c.workloadCluster, c.managementComponents, c.clusterSpec, c.datacenterConfig, c.machineConfigs).Return(err)
 }
 
+func (c *createTestSetup) expectAWSIAMAuthKubeconfig(err error) {
+	c.clusterManager.EXPECT().GenerateAWSIAMKubeconfig(
+		c.ctx, c.clusterSpec.ManagementCluster).Return(err)
+}
+
 func (c *createTestSetup) expectWrite() {
 	c.writer.EXPECT().Write(gomock.Any(), gomock.Any(), gomock.Any()).Return("", nil)
 }
@@ -189,7 +195,6 @@ func TestCreateRunFail(t *testing.T) {
 
 func TestCreateNamespaceFail(t *testing.T) {
 	features.ClearCache()
-	os.Setenv(features.UseControllerForCli, "true")
 	test := newCreateTest(t)
 	test.expectSetup()
 	test.expectPreflightValidationsToPass()
@@ -206,7 +211,6 @@ func TestCreateNamespaceFail(t *testing.T) {
 
 func TestCreateRunValidateFail(t *testing.T) {
 	features.ClearCache()
-	os.Setenv(features.UseControllerForCli, "true")
 	test := newCreateTest(t)
 	test.provider.EXPECT().Name()
 	test.gitOpsManager.EXPECT().Validations(test.ctx, test.clusterSpec)
@@ -222,7 +226,6 @@ func TestCreateRunValidateFail(t *testing.T) {
 
 func TestCreateRunGitOpsConfigFail(t *testing.T) {
 	features.ClearCache()
-	os.Setenv(features.UseControllerForCli, "true")
 	test := newCreateTest(t)
 	test.expectSetup()
 	test.expectPreflightValidationsToPass()
@@ -240,7 +243,6 @@ func TestCreateRunGitOpsConfigFail(t *testing.T) {
 
 func TestCreateRunWriteClusterConfigFail(t *testing.T) {
 	features.ClearCache()
-	os.Setenv(features.UseControllerForCli, "true")
 	test := newCreateTest(t)
 	test.expectSetup()
 	test.expectPreflightValidationsToPass()
@@ -252,6 +254,47 @@ func TestCreateRunWriteClusterConfigFail(t *testing.T) {
 	test.expectWrite()
 
 	err := test.run()
+	if err == nil {
+		t.Fatalf("Create.Run() err = %v, want err = nil", err)
+	}
+}
+
+func TestCreateAWSIAMSuccess(t *testing.T) {
+	features.ClearCache()
+	test := newCreateTest(t)
+	test.clusterSpec.AWSIamConfig = &v1alpha1.AWSIamConfig{}
+	test.expectSetup()
+	test.expectPreflightValidationsToPass()
+	test.expectDatacenterConfig()
+	test.expectMachineConfigs()
+	test.expectCreateWorkloadCluster(nil, nil)
+	test.expectInstallGitOpsManager(nil)
+	test.expectWriteWorkloadClusterConfig(nil)
+	test.expectAWSIAMAuthKubeconfig(nil)
+
+	err := test.run()
+	if err != nil {
+		t.Fatalf("Create.Run() err = %v, want err = nil", err)
+	}
+}
+
+func TestCreateAWSIAMFailure(t *testing.T) {
+	features.ClearCache()
+	test := newCreateTest(t)
+	test.clusterSpec.AWSIamConfig = &v1alpha1.AWSIamConfig{}
+	test.expectSetup()
+	test.expectPreflightValidationsToPass()
+	test.expectDatacenterConfig()
+	test.expectMachineConfigs()
+	test.expectCreateWorkloadCluster(nil, nil)
+	test.expectInstallGitOpsManager(nil)
+	test.expectWriteWorkloadClusterConfig(nil)
+	err := errors.New("test")
+	test.expectAWSIAMAuthKubeconfig(err)
+
+	test.writer.EXPECT().Write("workload-checkpoint.yaml", gomock.Any(), gomock.Any()).Return("workload-checkpoint.yaml.yaml", err)
+
+	err = test.run()
 	if err == nil {
 		t.Fatalf("Create.Run() err = %v, want err = nil", err)
 	}
