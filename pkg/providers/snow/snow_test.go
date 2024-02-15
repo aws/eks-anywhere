@@ -1352,6 +1352,17 @@ func TestUpdateSecrets(t *testing.T) {
 	tt.Expect(tt.provider.UpdateSecrets(tt.ctx, tt.cluster, tt.clusterSpec)).To(Succeed())
 }
 
+func TestPreCAPIInstall(t *testing.T) {
+	tt := newSnowTest(t)
+	tt.kubeUnAuthClient.EXPECT().Apply(
+		tt.ctx,
+		tt.cluster.KubeconfigFile,
+		tt.clusterSpec.SnowCredentialsSecret,
+	).Return(nil)
+
+	tt.Expect(tt.provider.PreCAPIInstallOnBootstrap(tt.ctx, tt.cluster, tt.clusterSpec)).To(Succeed())
+}
+
 func TestUpdateSecretsApplyError(t *testing.T) {
 	tt := newSnowTest(t)
 	tt.kubeUnAuthClient.EXPECT().Apply(
