@@ -96,7 +96,7 @@ func installEKSAComponents(ctx context.Context, commandContext *task.CommandCont
 		return err
 	}
 
-	if err := commandContext.EksdInstaller.InstallEksdManifest(ctx, commandContext.ClusterSpec, targetCluster); err != nil {
+	if err := commandContext.EksdInstaller.InstallEksdManifest(ctx, commandContext.ClusterSpec.Bundles, targetCluster); err != nil {
 		commandContext.SetError(err)
 		return err
 	}

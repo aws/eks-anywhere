@@ -170,7 +170,7 @@ func (c *createTestSetup) expectInstallEksaComponentsBootstrap(err1, err2, err3,
 			c.ctx, c.bootstrapCluster.KubeconfigFile).Return(err3),
 
 		c.eksdInstaller.EXPECT().InstallEksdManifest(
-			c.ctx, c.clusterSpec, c.bootstrapCluster).Return(err4),
+			c.ctx, c.clusterSpec.Bundles, c.bootstrapCluster).Return(err4),
 	)
 }
 
@@ -221,7 +221,7 @@ func (c *createTestSetup) expectInstallEksaComponentsWorkload(err1, err2, err3 e
 			c.ctx, c.workloadCluster.KubeconfigFile),
 
 		c.eksdInstaller.EXPECT().InstallEksdManifest(
-			c.ctx, c.clusterSpec, c.workloadCluster),
+			c.ctx, c.clusterSpec.Bundles, c.workloadCluster),
 
 		c.clusterManager.EXPECT().CreateNamespace(c.ctx, c.workloadCluster, c.clusterSpec.Cluster.Namespace).Return(err3),
 
@@ -500,7 +500,7 @@ func TestCreateInstallEksdManifestFailure(t *testing.T) {
 		c.ctx, c.bootstrapCluster.KubeconfigFile)
 
 	c.eksdInstaller.EXPECT().InstallEksdManifest(
-		c.ctx, c.clusterSpec, c.bootstrapCluster).Return(err)
+		c.ctx, c.clusterSpec.Bundles, c.bootstrapCluster).Return(err)
 
 	c.clusterManager.EXPECT().SaveLogsManagementCluster(c.ctx, c.clusterSpec, c.bootstrapCluster)
 	c.clusterManager.EXPECT().SaveLogsWorkloadCluster(c.ctx, c.provider, c.clusterSpec, nil)
@@ -763,7 +763,7 @@ func TestCreateEKSAWorkloadNamespaceFailure(t *testing.T) {
 			test.ctx, test.workloadCluster.KubeconfigFile),
 
 		test.eksdInstaller.EXPECT().InstallEksdManifest(
-			test.ctx, test.clusterSpec, test.workloadCluster),
+			test.ctx, test.clusterSpec.Bundles, test.workloadCluster),
 
 		test.clusterManager.EXPECT().CreateNamespace(test.ctx, test.workloadCluster, test.clusterSpec.Cluster.Namespace).Return(fmt.Errorf("")),
 	)

@@ -213,7 +213,7 @@ func (c *createTestSetup) expectInstallEksaComponents() {
 		),
 
 		c.eksd.EXPECT().InstallEksdManifest(
-			c.ctx, c.clusterSpec, c.workloadCluster),
+			c.ctx, c.clusterSpec.Bundles, c.workloadCluster),
 
 		c.clientFactory.EXPECT().BuildClientFromKubeconfig(c.workloadCluster.KubeconfigFile).Return(c.client, nil),
 
@@ -245,7 +245,7 @@ func (c *createTestSetup) skipInstallEksaComponents() {
 		),
 
 		c.eksd.EXPECT().InstallEksdManifest(
-			c.ctx, c.clusterSpec, c.bootstrapCluster),
+			c.ctx, c.clusterSpec.Bundles, c.bootstrapCluster),
 
 		c.clientFactory.EXPECT().BuildClientFromKubeconfig(c.bootstrapCluster.KubeconfigFile).Return(c.client, nil),
 
@@ -351,7 +351,7 @@ func TestCreateRunInstallEksaComponentsBuildClientFailure(t *testing.T) {
 		),
 
 		test.eksd.EXPECT().InstallEksdManifest(
-			test.ctx, test.clusterSpec, test.workloadCluster),
+			test.ctx, test.clusterSpec.Bundles, test.workloadCluster),
 
 		test.clientFactory.EXPECT().BuildClientFromKubeconfig(test.workloadCluster.KubeconfigFile).Return(nil, wantError),
 	)
@@ -390,7 +390,7 @@ func TestCreateRunInstallEksaComponentsApplyServerSideFailure(t *testing.T) {
 		),
 
 		test.eksd.EXPECT().InstallEksdManifest(
-			test.ctx, test.clusterSpec, test.workloadCluster),
+			test.ctx, test.clusterSpec.Bundles, test.workloadCluster),
 
 		test.clientFactory.EXPECT().BuildClientFromKubeconfig(test.workloadCluster.KubeconfigFile).Return(test.client, nil),
 

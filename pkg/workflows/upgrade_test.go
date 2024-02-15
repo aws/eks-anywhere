@@ -346,7 +346,7 @@ func (c *upgradeTestSetup) expectCreateEKSAResources(expectedCluster *types.Clus
 func (c *upgradeTestSetup) expectInstallEksdManifest(expectedCLuster *types.Cluster) {
 	gomock.InOrder(
 		c.eksdInstaller.EXPECT().InstallEksdManifest(
-			c.ctx, c.newClusterSpec, expectedCLuster,
+			c.ctx, c.newClusterSpec.Bundles, expectedCLuster,
 		),
 	)
 }

@@ -124,7 +124,7 @@ func TestRunnerHappyPath(t *testing.T) {
 			ctx, eksaRelease, managementCluster,
 		).Return(nil),
 		mocks.eksdInstaller.EXPECT().InstallEksdManifest(
-			ctx, newSpec, managementCluster,
+			ctx, bundles, managementCluster,
 		).Return(nil),
 	)
 

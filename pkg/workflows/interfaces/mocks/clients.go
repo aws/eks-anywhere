@@ -835,7 +835,7 @@ func (mr *MockEksdInstallerMockRecorder) InstallEksdCRDs(arg0, arg1, arg2 interf
 }
 
 // InstallEksdManifest mocks base method.
-func (m *MockEksdInstaller) InstallEksdManifest(arg0 context.Context, arg1 *cluster.Spec, arg2 *types.Cluster) error {
+func (m *MockEksdInstaller) InstallEksdManifest(arg0 context.Context, arg1 *v1alpha1.Bundles, arg2 *types.Cluster) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "InstallEksdManifest", arg0, arg1, arg2)
 	ret0, _ := ret[0].(error)

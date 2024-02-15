@@ -580,7 +580,7 @@ func (s *reconcileClusterDefinitions) Run(ctx context.Context, commandContext *t
 		commandContext.SetError(err)
 		return &CollectDiagnosticsTask{}
 	}
-	err = commandContext.EksdInstaller.InstallEksdManifest(ctx, commandContext.ClusterSpec, commandContext.ManagementCluster)
+	err = commandContext.EksdInstaller.InstallEksdManifest(ctx, commandContext.ClusterSpec.Bundles, commandContext.ManagementCluster)
 	if err != nil {
 		commandContext.SetError(err)
 		return &CollectDiagnosticsTask{}

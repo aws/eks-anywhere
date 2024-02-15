@@ -225,7 +225,7 @@ func (c *upgradeManagementTestSetup) expectMachineConfigs() {
 func (c *upgradeManagementTestSetup) expectInstallEksdManifest(err error) {
 	gomock.InOrder(
 		c.eksdInstaller.EXPECT().InstallEksdManifest(
-			c.ctx, c.newClusterSpec, c.managementCluster,
+			c.ctx, c.newClusterSpec.Bundles, c.managementCluster,
 		).Return(err),
 	)
 }

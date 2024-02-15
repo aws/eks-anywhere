@@ -84,7 +84,7 @@ type CAPIManager interface {
 
 type EksdInstaller interface {
 	InstallEksdCRDs(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error
-	InstallEksdManifest(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error
+	InstallEksdManifest(ctx context.Context, bundles *releasev1alpha1.Bundles, cluster *types.Cluster) error
 }
 
 type EksdUpgrader interface {
