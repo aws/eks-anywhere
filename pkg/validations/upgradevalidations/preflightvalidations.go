@@ -24,6 +24,7 @@ func (u *UpgradeValidations) PreflightValidations(ctx context.Context) []validat
 		Name:           u.Opts.WorkloadCluster.Name,
 		KubeconfigFile: u.Opts.ManagementCluster.KubeconfigFile,
 	}
+
 	upgradeValidations := []validations.Validation{
 		func() *validations.ValidationResult {
 			return resultForRemediableValidation(
@@ -121,6 +122,13 @@ func (u *UpgradeValidations) PreflightValidations(ctx context.Context) []validat
 				Remediation: fmt.Sprintf("ensure %v env variable is set", features.K8s129SupportEnvVar),
 				Err:         validations.ValidateK8s129Support(u.Opts.Spec),
 				Silent:      true,
+			}
+		},
+		func() *validations.ValidationResult {
+			return &validations.ValidationResult{
+				Name:        "validate eksa controller is not paused",
+				Remediation: fmt.Sprintf("remove cluster controller reconciler pause annotation %s before upgrading the cluster %s", u.Opts.Spec.Cluster.PausedAnnotation(), targetCluster.Name),
+				Err:         validations.ValidatePauseAnnotation(ctx, k, targetCluster, targetCluster.Name),
 			}
 		},
 	}

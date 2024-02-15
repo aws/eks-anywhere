@@ -618,3 +618,58 @@ func TestValidateEksaReleaseExistOnManagement(t *testing.T) {
 		})
 	}
 }
+
+func TestValidatePauseAnnotation(t *testing.T) {
+	mgmtName := "test"
+	tests := []struct {
+		name       string
+		gotCluster *anywherev1.Cluster
+		wantErr    error
+	}{
+		{
+			name: "success",
+			gotCluster: &anywherev1.Cluster{
+				ObjectMeta: v1.ObjectMeta{
+					Name:        mgmtName,
+					Annotations: map[string]string{},
+				},
+				Spec: anywherev1.ClusterSpec{
+					ManagementCluster: anywherev1.ManagementCluster{
+						Name: mgmtName,
+					},
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "success",
+			gotCluster: &anywherev1.Cluster{
+				ObjectMeta: v1.ObjectMeta{
+					Name:        mgmtName,
+					Annotations: map[string]string{"anywhere.eks.amazonaws.com/paused": "true"},
+				},
+				Spec: anywherev1.ClusterSpec{
+					ManagementCluster: anywherev1.ManagementCluster{
+						Name: mgmtName,
+					},
+				},
+			},
+			wantErr: fmt.Errorf("cluster cannot be upgraded with paused cluster controller reconciler"),
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			tt := newTest(t, withKubectl())
+			ctx := context.Background()
+
+			tt.kubectl.EXPECT().GetEksaCluster(ctx, managementCluster(mgmtName), mgmtName).Return(tc.gotCluster, nil)
+
+			err := validations.ValidatePauseAnnotation(ctx, tt.kubectl, managementCluster(mgmtName), mgmtName)
+			if err != nil {
+				tt.Expect(err.Error()).To(ContainSubstring(tc.wantErr.Error()))
+			} else {
+				tt.Expect(tc.wantErr).To(BeNil())
+			}
+		})
+	}
+}
