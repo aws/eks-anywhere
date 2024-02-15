@@ -115,7 +115,7 @@ func (mr *MockClusterManagerMockRecorder) ApplyBundles(arg0, arg1, arg2 interfac
 }
 
 // ApplyReleases mocks base method.
-func (m *MockClusterManager) ApplyReleases(arg0 context.Context, arg1 *cluster.Spec, arg2 *types.Cluster) error {
+func (m *MockClusterManager) ApplyReleases(arg0 context.Context, arg1 *v1alpha1.EKSARelease, arg2 *types.Cluster) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ApplyReleases", arg0, arg1, arg2)
 	ret0, _ := ret[0].(error)

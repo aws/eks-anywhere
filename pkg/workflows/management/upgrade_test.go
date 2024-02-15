@@ -241,7 +241,7 @@ func (c *upgradeManagementTestSetup) expectApplyBundles(err error) {
 func (c *upgradeManagementTestSetup) expectApplyReleases(err error) {
 	gomock.InOrder(
 		c.clusterManager.EXPECT().ApplyReleases(
-			c.ctx, c.newClusterSpec, c.managementCluster,
+			c.ctx, c.newClusterSpec.EKSARelease, c.managementCluster,
 		).Return(err),
 	)
 }

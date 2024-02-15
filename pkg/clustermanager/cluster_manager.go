@@ -1163,7 +1163,7 @@ func (c *ClusterManager) CreateEKSAResources(ctx context.Context, cluster *types
 	if err = c.ApplyBundles(ctx, clusterSpec.Bundles, cluster); err != nil {
 		return err
 	}
-	return c.ApplyReleases(ctx, clusterSpec, cluster)
+	return c.ApplyReleases(ctx, clusterSpec.EKSARelease, cluster)
 }
 
 // ApplyBundles applies the Bundles manifest to the cluster.
@@ -1191,8 +1191,8 @@ func (c *ClusterManager) ApplyBundles(ctx context.Context, bundles *releasev1alp
 }
 
 // ApplyReleases applies the EKSARelease manifest.
-func (c *ClusterManager) ApplyReleases(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error {
-	releaseObj, err := yaml.Marshal(clusterSpec.EKSARelease)
+func (c *ClusterManager) ApplyReleases(ctx context.Context, eksaRelease *releasev1alpha1.EKSARelease, cluster *types.Cluster) error {
+	releaseObj, err := yaml.Marshal(eksaRelease)
 	if err != nil {
 		return fmt.Errorf("outputting release yaml: %v", err)
 	}

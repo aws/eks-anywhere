@@ -15,7 +15,7 @@ func runInstallNewComponents(ctx context.Context, commandContext *task.CommandCo
 		return err
 	}
 
-	if err := commandContext.ClusterManager.ApplyReleases(ctx, commandContext.ClusterSpec, commandContext.ManagementCluster); err != nil {
+	if err := commandContext.ClusterManager.ApplyReleases(ctx, commandContext.EKSARelease, commandContext.ManagementCluster); err != nil {
 		commandContext.SetError(err)
 		return err
 	}
