@@ -24,6 +24,7 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
+	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -376,7 +377,7 @@ func cleanupKubeVipCM(ctx context.Context, log logr.Logger, client client.Client
 	cm := &corev1.ConfigMap{}
 	if err := client.Get(ctx, GetNamespacedNameType(constants.KubeVipConfigMapName, constants.EksaSystemNamespace), cm); err != nil {
 		if apierrors.IsNotFound(err) {
-			log.Info("config map %s  not found, skipping deletion", "ConfigMap", constants.KubeVipConfigMapName, "Namespace", constants.EksaSystemNamespace)
+			log.Info("config map %s not found, skipping deletion", "ConfigMap", constants.KubeVipConfigMapName, "Namespace", constants.EksaSystemNamespace)
 		} else {
 			return fmt.Errorf("getting %s config map: %v", constants.KubeVipConfigMapName, err)
 		}
@@ -419,6 +420,11 @@ func kubeVipConfigMap(cpUpgrade *anywherev1.ControlPlaneUpgrade) (*corev1.Config
 			break
 		}
 	}
+
+	if kubeVipConfig == "" {
+		return nil, errors.New("fetching kube-vip manifest from KubeadmConfigSpec")
+	}
+
 	blockOwnerDeletionFlag := true
 	return &corev1.ConfigMap{
 		TypeMeta: metav1.TypeMeta{
