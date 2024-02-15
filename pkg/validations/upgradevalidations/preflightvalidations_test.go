@@ -361,7 +361,7 @@ func TestPreflightValidationsTinkerbell(t *testing.T) {
 				ManagementCluster: workloadCluster,
 				Provider:          provider,
 				TLSValidator:      tlsValidator,
-				CliVersion:        "v0.0.0-dev",
+				CliVersion:        "v0.19.0-dev+latest",
 			}
 
 			clusterSpec.Cluster.Spec.KubernetesVersion = anywherev1.KubernetesVersion(tc.upgradeVersion)
@@ -1095,7 +1095,7 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 				ManagementCluster: workloadCluster,
 				Provider:          provider,
 				TLSValidator:      tlsValidator,
-				CliVersion:        "v0.0.0-dev",
+				CliVersion:        "v0.19.0-dev+latest",
 				KubeClient:        test.NewFakeKubeClient(objects...),
 			}
 
@@ -1335,7 +1335,7 @@ func TestPreFlightValidationsGit(t *testing.T) {
 				Provider:          provider,
 				TLSValidator:      tlsValidator,
 				CliConfig:         cliConfig,
-				CliVersion:        "v0.0.0-dev",
+				CliVersion:        "v0.19.0-dev+latest",
 			}
 
 			clusterSpec.Cluster.Spec.KubernetesVersion = anywherev1.KubernetesVersion(tc.upgradeVersion)

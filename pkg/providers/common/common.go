@@ -161,12 +161,10 @@ func GetExternalEtcdReleaseURL(clusterVersion string, versionBundle *cluster.Ver
 	if err != nil {
 		return "", fmt.Errorf("invalid semver for etcd url enabled clusterVersion: %v", err)
 	}
-	devEksaVersion, err := semver.New(v1alpha1.DevBuildVersion)
 	if err != nil {
 		return "", fmt.Errorf("invalid semver for dev eksa version: %v", err)
 	}
-	if clusterVersionSemVer.Equal(minEksAVersionWithEtcdURL) || clusterVersionSemVer.GreaterThan(minEksAVersionWithEtcdURL) ||
-		clusterVersionSemVer.Equal(devEksaVersion) {
+	if !(clusterVersionSemVer.LessThan(minEksAVersionWithEtcdURL)) {
 		return versionBundle.KubeDistro.EtcdURL, nil
 	}
 	logger.V(4).Info(fmt.Sprintf("Eks-a cluster version is less than version %s. Skip setting etcd url", v1alpha1.MinEksAVersionWithEtcdURL))

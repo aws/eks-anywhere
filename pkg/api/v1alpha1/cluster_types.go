@@ -88,7 +88,7 @@ type EksaVersion string
 
 const (
 	// DevBuildVersion is the version string for the dev build of EKS-A.
-	DevBuildVersion = "v0.0.0-dev"
+	DevBuildVersion = "v0.19.0-dev+latest"
 
 	// MinEksAVersionWithEtcdURL is the version from which the etcd url will be set
 	// for etcdadm to pull the etcd tarball if that binary isnt cached.

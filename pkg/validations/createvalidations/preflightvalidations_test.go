@@ -38,7 +38,7 @@ func newPreflightValidationsTest(t *testing.T) *preflightValidationsTest {
 			Name: "gitops",
 		}
 	})
-	version := "v0.0.0-dev"
+	version := "v0.19.0-dev+latest"
 	objects := []client.Object{test.EKSARelease()}
 	opts := &validations.Opts{
 		Kubectl:           k,

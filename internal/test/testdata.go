@@ -37,12 +37,12 @@ func EKSARelease() *releasev1.EKSARelease {
 			APIVersion: releasev1.GroupVersion.String(),
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "eksa-v0-0-0-dev",
+			Name:      "eksa-v0-19-0-dev-plus-latest",
 			Namespace: constants.EksaSystemNamespace,
 		},
 		Spec: releasev1.EKSAReleaseSpec{
 			ReleaseDate:       "",
-			Version:           "v0.0.0-dev",
+			Version:           "v0.19.0-dev+latest",
 			GitCommit:         "",
 			BundleManifestURL: "",
 			BundlesRef: releasev1.BundlesRef{

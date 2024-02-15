@@ -1247,7 +1247,6 @@ func TestGetCuratedPackagesRegistries(s *testing.T) {
 			Name: "test_controller",
 			URI:  "test_registry/eks-anywhere/eks-anywhere-packages:v1",
 		}
-		// eksaRegion := "test-region"
 		clusterName := "billy"
 		writer, _ := filewriter.NewWriter(clusterName)
 		client := curatedpackages.NewPackageControllerClient(
@@ -1449,7 +1448,7 @@ func createBundle(cluster *anywherev1.Cluster) *artifactsv1.Bundles {
 func createEKSARelease(cluster *anywherev1.Cluster, bundle *artifactsv1.Bundles) *artifactsv1.EKSARelease {
 	return &artifactsv1.EKSARelease{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "eksa-v0-0-0-dev",
+			Name:      "eksa-v0-19-0-dev-plus-latest",
 			Namespace: constants.EksaSystemNamespace,
 		},
 		Spec: artifactsv1.EKSAReleaseSpec{

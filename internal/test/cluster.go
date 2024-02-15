@@ -27,7 +27,7 @@ var configFS embed.FS
 
 // DevEksaVersion can be used in tests.
 func DevEksaVersion() v1alpha1.EksaVersion {
-	return v1alpha1.EksaVersion("v0.0.0-dev")
+	return v1alpha1.EksaVersion("v0.19.0-dev+latest")
 }
 
 func NewClusterSpec(opts ...ClusterSpecOpt) *cluster.Spec {
@@ -82,7 +82,7 @@ func NewClusterSpec(opts ...ClusterSpecOpt) *cluster.Spec {
 func NewFullClusterSpec(t *testing.T, clusterConfigFile string) *cluster.Spec {
 	b := cluster.NewFileSpecBuilder(
 		files.NewReader(files.WithEmbedFS(configFS)),
-		version.Info{GitVersion: "v0.0.0-dev"},
+		version.Info{GitVersion: "v0.19.0-dev+latest"},
 		cluster.WithReleasesManifest("embed:///testdata/releases.yaml"),
 	)
 	s, err := b.Build(clusterConfigFile)

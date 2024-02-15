@@ -9,7 +9,7 @@ spec:
     services: {}
   controlPlaneConfiguration: {}
   datacenterRef: {}
-  eksaVersion: v0.0.0-dev
+  eksaVersion: v0.19.0-dev+latest
   externalEtcdConfiguration:
     count: 3
   gitOpsRef:

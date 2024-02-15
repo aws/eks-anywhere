@@ -38,7 +38,7 @@ var eksaChangeDiff = types.NewChangeDiff(&types.ComponentChangeDiff{
 })
 
 var managementComponentsVersionAnnotation = map[string]string{
-	"anywhere.eks.amazonaws.com/management-components-version": "v0.0.0-dev",
+	"anywhere.eks.amazonaws.com/management-components-version": "v0.19.0-dev+latest",
 }
 
 type TestMocks struct {
