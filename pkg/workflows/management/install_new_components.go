@@ -10,7 +10,7 @@ import (
 type installNewComponents struct{}
 
 func runInstallNewComponents(ctx context.Context, commandContext *task.CommandContext) error {
-	if err := commandContext.ClusterManager.ApplyBundles(ctx, commandContext.ClusterSpec, commandContext.ManagementCluster); err != nil {
+	if err := commandContext.ClusterManager.ApplyBundles(ctx, commandContext.Bundles, commandContext.ManagementCluster); err != nil {
 		commandContext.SetError(err)
 		return err
 	}

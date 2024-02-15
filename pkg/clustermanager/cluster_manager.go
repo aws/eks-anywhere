@@ -38,6 +38,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/retrier"
 	"github.com/aws/eks-anywhere/pkg/templater"
 	"github.com/aws/eks-anywhere/pkg/types"
+	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
 const (
@@ -1159,14 +1160,15 @@ func (c *ClusterManager) CreateEKSAResources(ctx context.Context, cluster *types
 	if err = c.applyResource(ctx, cluster, resourcesSpec); err != nil {
 		return err
 	}
-	if err = c.ApplyBundles(ctx, clusterSpec, cluster); err != nil {
+	if err = c.ApplyBundles(ctx, clusterSpec.Bundles, cluster); err != nil {
 		return err
 	}
 	return c.ApplyReleases(ctx, clusterSpec, cluster)
 }
 
-func (c *ClusterManager) ApplyBundles(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error {
-	bundleObj, err := yaml.Marshal(clusterSpec.Bundles)
+// ApplyBundles applies the Bundles manifest to the cluster.
+func (c *ClusterManager) ApplyBundles(ctx context.Context, bundles *releasev1alpha1.Bundles, cluster *types.Cluster) error {
+	bundleObj, err := yaml.Marshal(bundles)
 	if err != nil {
 		return fmt.Errorf("outputting bundle yaml: %v", err)
 	}
@@ -1178,7 +1180,7 @@ func (c *ClusterManager) ApplyBundles(ctx context.Context, clusterSpec *cluster.
 
 	// We need to update this config map with the new upgrader images whenever we
 	// apply a new Bundles object to the cluster in order to support in-place upgrades.
-	cm, err := c.getUpgraderImagesFromBundle(ctx, cluster, clusterSpec)
+	cm, err := c.getUpgraderImagesFromBundle(ctx, cluster, bundles)
 	if err != nil {
 		return fmt.Errorf("getting upgrader images from bundle: %v", err)
 	}
@@ -1409,9 +1411,9 @@ func (c *ClusterManager) CreateNamespace(ctx context.Context, targetCluster *typ
 	return c.clusterClient.CreateNamespaceIfNotPresent(ctx, targetCluster.KubeconfigFile, namespace)
 }
 
-func (c *ClusterManager) getUpgraderImagesFromBundle(ctx context.Context, cluster *types.Cluster, cl *cluster.Spec) (*corev1.ConfigMap, error) {
+func (c *ClusterManager) getUpgraderImagesFromBundle(ctx context.Context, cluster *types.Cluster, bundles *releasev1alpha1.Bundles) (*corev1.ConfigMap, error) {
 	upgraderImages := make(map[string]string)
-	for _, versionBundle := range cl.Bundles.Spec.VersionsBundles {
+	for _, versionBundle := range bundles.Spec.VersionsBundles {
 		eksD := versionBundle.EksD
 		eksdVersion := fmt.Sprintf("%s-eks-%s-%s", eksD.KubeVersion, eksD.ReleaseChannel, strings.Split(eksD.Name, "-")[4])
 		if _, ok := upgraderImages[eksdVersion]; !ok {

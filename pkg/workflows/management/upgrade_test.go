@@ -233,7 +233,7 @@ func (c *upgradeManagementTestSetup) expectInstallEksdManifest(err error) {
 func (c *upgradeManagementTestSetup) expectApplyBundles(err error) {
 	gomock.InOrder(
 		c.clusterManager.EXPECT().ApplyBundles(
-			c.ctx, c.newClusterSpec, c.managementCluster,
+			c.ctx, c.newClusterSpec.Bundles, c.managementCluster,
 		).Return(err),
 	)
 }

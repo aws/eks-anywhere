@@ -505,7 +505,7 @@ func (s *upgradeWorkloadClusterTask) Run(ctx context.Context, commandContext *ta
 		return &CollectDiagnosticsTask{}
 	}
 
-	if err = commandContext.ClusterManager.ApplyBundles(ctx, commandContext.ClusterSpec, eksaManagementCluster); err != nil {
+	if err = commandContext.ClusterManager.ApplyBundles(ctx, commandContext.ClusterSpec.Bundles, eksaManagementCluster); err != nil {
 		commandContext.SetError(err)
 		return &CollectDiagnosticsTask{}
 	}

@@ -201,6 +201,7 @@ func (b FileSpecBuilder) getEksaRelease(mReader *manifests.Reader) (*releasev1.E
 	}, nil
 }
 
+// buildEKSARelease builds an EKSARelease from a Release and a Bundles.
 func buildEKSARelease(release *releasev1.EksARelease, bundle *releasev1.Bundles) *releasev1.EKSARelease {
 	eksaRelease := &releasev1.EKSARelease{
 		TypeMeta: v1.TypeMeta{
@@ -224,4 +225,28 @@ func buildEKSARelease(release *releasev1.EksARelease, bundle *releasev1.Bundles)
 		},
 	}
 	return eksaRelease
+}
+
+// GetBundlesManifest builds a Bundles from a FileSpecBuilder.
+func GetBundlesManifest(b FileSpecBuilder) (*releasev1.Bundles, error) {
+	mReader := b.createManifestReader()
+
+	bundlesManifest, err := b.getBundles(mReader)
+	if err != nil {
+		return nil, errors.Wrapf(err, "getting Bundles manifest")
+	}
+
+	return bundlesManifest, nil
+}
+
+// BuildEKSARelease builds an EKSARelease from a FileSpecBuilder and bundles.
+func BuildEKSARelease(b FileSpecBuilder, bundles *releasev1.Bundles) (*releasev1.EKSARelease, error) {
+	mReader := b.createManifestReader()
+	release, err := b.getEksaRelease(mReader)
+	if err != nil {
+		return nil, errors.Wrapf(err, "getting EksaRelease manifest")
+	}
+
+	eksaRelease := buildEKSARelease(release, bundles)
+	return eksaRelease, nil
 }

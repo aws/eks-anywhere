@@ -23,6 +23,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
 	"github.com/aws/eks-anywhere/pkg/version"
+	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
 const defaultTinkerbellNodeStartupTimeout = 20 * time.Minute
@@ -153,6 +154,38 @@ func newClusterSpec(options clusterOptions) (*cluster.Spec, error) {
 	}
 
 	return clusterSpec, nil
+}
+
+func newEKSARelease(bundles *releasev1.Bundles, options clusterOptions) (*releasev1.EKSARelease, error) {
+	var opts []cluster.FileSpecBuilderOpt
+	if options.bundlesOverride != "" {
+		opts = append(opts, cluster.WithOverrideBundlesManifest(options.bundlesOverride))
+	}
+
+	cliVersion := version.Get()
+	b := cluster.NewFileSpecBuilder(
+		files.NewReader(files.WithEKSAUserAgent("cli", cliVersion.GitVersion)),
+		cliVersion,
+		opts...,
+	)
+
+	return cluster.BuildEKSARelease(b, bundles)
+}
+
+func newBundles(options clusterOptions) (*releasev1.Bundles, error) {
+	var opts []cluster.FileSpecBuilderOpt
+	if options.bundlesOverride != "" {
+		opts = append(opts, cluster.WithOverrideBundlesManifest(options.bundlesOverride))
+	}
+
+	cliVersion := version.Get()
+	b := cluster.NewFileSpecBuilder(
+		files.NewReader(files.WithEKSAUserAgent("cli", cliVersion.GitVersion)),
+		cliVersion,
+		opts...,
+	)
+
+	return cluster.GetBundlesManifest(b)
 }
 
 func markFlagHidden(flagSet *pflag.FlagSet, flagName string) {

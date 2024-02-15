@@ -15,6 +15,7 @@ import (
 	providers "github.com/aws/eks-anywhere/pkg/providers"
 	types "github.com/aws/eks-anywhere/pkg/types"
 	validations "github.com/aws/eks-anywhere/pkg/validations"
+	v1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 	logr "github.com/go-logr/logr"
 	gomock "github.com/golang/mock/gomock"
 )
@@ -100,7 +101,7 @@ func (m *MockClusterManager) EXPECT() *MockClusterManagerMockRecorder {
 }
 
 // ApplyBundles mocks base method.
-func (m *MockClusterManager) ApplyBundles(arg0 context.Context, arg1 *cluster.Spec, arg2 *types.Cluster) error {
+func (m *MockClusterManager) ApplyBundles(arg0 context.Context, arg1 *v1alpha1.Bundles, arg2 *types.Cluster) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ApplyBundles", arg0, arg1, arg2)
 	ret0, _ := ret[0].(error)

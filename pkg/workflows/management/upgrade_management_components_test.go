@@ -98,6 +98,7 @@ func TestRunnerHappyPath(t *testing.T) {
 
 	newSpec := test.NewClusterSpec(func(s *cluster.Spec) {
 		s.EKSARelease = eksaRelease
+		s.Bundles = bundles
 	})
 
 	newManagementComponents := cluster.ManagementComponentsFromBundles(newSpec.Bundles)
@@ -117,7 +118,7 @@ func TestRunnerHappyPath(t *testing.T) {
 		mocks.clusterManager.EXPECT().Upgrade(ctx, managementCluster, currentManagementComponents, newManagementComponents, newSpec).Return(eksaChangeDiff, nil),
 		mocks.eksdUpgrader.EXPECT().Upgrade(ctx, managementCluster, curSpec, newSpec).Return(nil),
 		mocks.clusterManager.EXPECT().ApplyBundles(
-			ctx, newSpec, managementCluster,
+			ctx, bundles, managementCluster,
 		).Return(nil),
 		mocks.clusterManager.EXPECT().ApplyReleases(
 			ctx, newSpec, managementCluster,
@@ -127,7 +128,7 @@ func TestRunnerHappyPath(t *testing.T) {
 		).Return(nil),
 	)
 
-	err := runner.Run(ctx, newSpec, managementCluster, mocks.validator)
+	err := runner.Run(ctx, bundles, eksaRelease, newSpec, managementCluster, mocks.validator)
 	if err != nil {
 		t.Fatalf("UpgradeManagementComponents.Run() err = %v, want err = nil", err)
 	}
@@ -156,8 +157,13 @@ func TestRunnerStopsWhenValidationFailed(t *testing.T) {
 	}
 
 	ctx := context.Background()
+	bundles := test.Bundle()
+	eksaRelease := test.EKSARelease()
 	curSpec := test.NewClusterSpec()
-	newSpec := test.NewClusterSpec()
+	newSpec := test.NewClusterSpec(func(s *cluster.Spec) {
+		s.EKSARelease = eksaRelease
+		s.Bundles = bundles
+	})
 
 	mocks.provider.EXPECT().Name()
 	mocks.provider.EXPECT().SetupAndValidateUpgradeManagementComponents(ctx, newSpec)
@@ -172,7 +178,7 @@ func TestRunnerStopsWhenValidationFailed(t *testing.T) {
 		})
 
 	mocks.writer.EXPECT().Write(fmt.Sprintf("%s-checkpoint.yaml", newSpec.Cluster.Name), gomock.Any())
-	err := runner.Run(ctx, newSpec, managementCluster, mocks.validator)
+	err := runner.Run(ctx, bundles, eksaRelease, newSpec, managementCluster, mocks.validator)
 	if err == nil {
 		t.Fatalf("UpgradeManagementComponents.Run() err == nil, want err != nil")
 	}

@@ -231,12 +231,12 @@ func (c *upgradeTestSetup) expectUpgradeWorkload(managementCluster *types.Cluste
 
 	if c.newClusterSpec.Cluster.IsManaged() {
 		calls = append(calls,
-			c.clusterManager.EXPECT().ApplyBundles(c.ctx, c.newClusterSpec, managementCluster),
+			c.clusterManager.EXPECT().ApplyBundles(c.ctx, c.newClusterSpec.Bundles, managementCluster),
 			c.clusterManager.EXPECT().ApplyReleases(c.ctx, c.newClusterSpec, managementCluster),
 		)
 	} else {
 		calls = append(calls,
-			c.clusterManager.EXPECT().ApplyBundles(c.ctx, c.newClusterSpec, workloadCluster),
+			c.clusterManager.EXPECT().ApplyBundles(c.ctx, c.newClusterSpec.Bundles, workloadCluster),
 			c.clusterManager.EXPECT().ApplyReleases(c.ctx, c.newClusterSpec, workloadCluster),
 		)
 	}
