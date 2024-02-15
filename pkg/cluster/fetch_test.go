@@ -75,7 +75,7 @@ func newBuildSpecTest(t *testing.T) *buildSpecTest {
 
 	eksaRelease := &releasev1.EKSARelease{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "eksa-v0-0-0-dev",
+			Name: "eksa-v0-19-0-dev-plus-latest",
 		},
 		Spec: releasev1.EKSAReleaseSpec{
 			BundlesRef: releasev1.BundlesRef{
@@ -99,7 +99,7 @@ func newBuildSpecTest(t *testing.T) *buildSpecTest {
 }
 
 func (tt *buildSpecTest) expectGetEKSARelease() {
-	tt.client.EXPECT().Get(tt.ctx, "eksa-v0-0-0-dev", "eksa-system", &releasev1.EKSARelease{}).DoAndReturn(
+	tt.client.EXPECT().Get(tt.ctx, "eksa-v0-19-0-dev-plus-latest", "eksa-system", &releasev1.EKSARelease{}).DoAndReturn(
 		func(ctx context.Context, name, namespace string, obj runtime.Object) error {
 			o := obj.(*releasev1.EKSARelease)
 			o.ObjectMeta = tt.eksaRelease.ObjectMeta
@@ -183,7 +183,7 @@ func TestBuildSpec(t *testing.T) {
 func TestBuildSpecGetEKSAReleaseError(t *testing.T) {
 	tt := newBuildSpecTest(t)
 	tt.cluster.Spec.BundlesRef = nil
-	tt.client.EXPECT().Get(tt.ctx, "eksa-v0-0-0-dev", "eksa-system", &releasev1.EKSARelease{}).Return(errors.New("client error"))
+	tt.client.EXPECT().Get(tt.ctx, "eksa-v0-19-0-dev-plus-latest", "eksa-system", &releasev1.EKSARelease{}).Return(errors.New("client error"))
 
 	_, err := cluster.BuildSpec(tt.ctx, tt.client, tt.cluster)
 	tt.Expect(err).To(MatchError(ContainSubstring("error getting EKSARelease")))
@@ -464,7 +464,7 @@ func TestGetManagementComponents(t *testing.T) {
 						VersionsBundles: []releasev1.VersionsBundle{
 							{
 								Eksa: releasev1.EksaBundle{
-									Version: "v0.0.0-dev",
+									Version: "v0.19.0-dev+latest",
 								},
 							},
 						},
@@ -472,7 +472,7 @@ func TestGetManagementComponents(t *testing.T) {
 				}
 				s.EKSARelease = &releasev1.EKSARelease{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      "eksa-v0-0-0-dev",
+						Name:      "eksa-v0-19-0-dev-plus-latest",
 						Namespace: constants.EksaSystemNamespace,
 					},
 					Spec: releasev1.EKSAReleaseSpec{
@@ -485,7 +485,7 @@ func TestGetManagementComponents(t *testing.T) {
 			}),
 			want: &cluster.ManagementComponents{
 				Eksa: releasev1.EksaBundle{
-					Version: "v0.0.0-dev",
+					Version: "v0.19.0-dev+latest",
 				},
 			},
 			wantErr: "",

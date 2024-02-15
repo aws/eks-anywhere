@@ -84,7 +84,7 @@ func newUpgradeManagementTest(t *testing.T) *upgradeManagementTestSetup {
 		s.Cluster.Name = "management"
 		s.Cluster.Namespace = "default"
 		s.Cluster.Spec.DatacenterRef.Kind = v1alpha1.VSphereDatacenterKind
-		s.Cluster.SetManagementComponentsVersion("v0.0.0-dev")
+		s.Cluster.SetManagementComponentsVersion("v0.19.0-dev+latest")
 		s.Bundles = test.Bundle()
 		s.EKSARelease = test.EKSARelease()
 	})
@@ -452,7 +452,7 @@ func TestUpgradeManagementRunFailedUpgradeGetManagementComponents(t *testing.T) 
 
 	err := u.run()
 	g := NewWithT(t)
-	g.Expect(err).To(MatchError(ContainSubstring("\"eksa-v0-0-0-dev\" not found")))
+	g.Expect(err).To(MatchError(ContainSubstring("\"eksa-v0-19-0-dev-plus-latest\" not found")))
 }
 
 func TestUpgradeManagementRunFailedUpgradeClientGet(t *testing.T) {
