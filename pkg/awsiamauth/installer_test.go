@@ -2,14 +2,12 @@ package awsiamauth_test
 
 import (
 	"context"
-	"encoding/base64"
 	"errors"
 	"strings"
 	"testing"
 
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aws/eks-anywhere/internal/test"
