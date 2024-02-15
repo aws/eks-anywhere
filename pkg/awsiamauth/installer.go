@@ -9,6 +9,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/crypto"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
+	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/types"
 )
@@ -23,11 +24,12 @@ type KubernetesClient interface {
 
 // Installer provides the necessary behavior for installing the AWS IAM Authenticator.
 type Installer struct {
-	certgen         crypto.CertificateGenerator
-	templateBuilder *TemplateBuilder
-	clusterID       uuid.UUID
-	k8s             KubernetesClient
-	writer          filewriter.FileWriter
+	certgen          crypto.CertificateGenerator
+	templateBuilder  *TemplateBuilder
+	clusterID        uuid.UUID
+	k8s              KubernetesClient
+	writer           filewriter.FileWriter
+	kubeconfigWriter kubeconfig.Writer
 }
 
 // NewInstaller creates a new installer instance.
@@ -36,13 +38,15 @@ func NewInstaller(
 	clusterID uuid.UUID,
 	k8s KubernetesClient,
 	writer filewriter.FileWriter,
+	kubeconfigWriter kubeconfig.Writer,
 ) *Installer {
 	return &Installer{
-		certgen:         certgen,
-		templateBuilder: &TemplateBuilder{},
-		clusterID:       clusterID,
-		k8s:             k8s,
-		writer:          writer,
+		certgen:          certgen,
+		templateBuilder:  &TemplateBuilder{},
+		clusterID:        clusterID,
+		k8s:              k8s,
+		writer:           writer,
+		kubeconfigWriter: kubeconfigWriter,
 	}
 }
 
@@ -163,6 +167,17 @@ func (i *Installer) GenerateManagementAWSIAMKubeconfig(
 ) error {
 	fileName := fmt.Sprintf("%s-aws.kubeconfig", cluster.Name)
 
+	fsOptions := []filewriter.FileOptionsFunc{filewriter.PersistentFile, filewriter.Permission0600}
+	fh, path, err := i.writer.Create(
+		fileName,
+		fsOptions...,
+	)
+	if err != nil {
+		return err
+	}
+
+	defer fh.Close()
+
 	decodedKubeconfigSecretValue, err := i.k8s.GetAWSIAMKubeconfigSecretValue(
 		ctx,
 		cluster,
@@ -172,16 +187,11 @@ func (i *Installer) GenerateManagementAWSIAMKubeconfig(
 		return fmt.Errorf("generating aws-iam-authenticator kubeconfig: %v", err)
 	}
 
-	writtenFile, err := i.writer.Write(
-		fileName,
-		decodedKubeconfigSecretValue,
-		filewriter.PersistentFile,
-		filewriter.Permission0600,
-	)
+	err = i.kubeconfigWriter.WriteKubeconfigContent(ctx, cluster.Name, decodedKubeconfigSecretValue, fh)
 	if err != nil {
-		return fmt.Errorf("writing aws-iam-authenticator kubeconfig to %s: %v", writtenFile, err)
+		return fmt.Errorf("writing aws-iam-authenticator kubeconfig to %s: %v", path, err)
 	}
 
-	logger.V(3).Info("Generated aws-iam-authenticator kubeconfig", "kubeconfig", writtenFile)
+	logger.V(3).Info("Generated aws-iam-authenticator kubeconfig", "kubeconfig", path)
 	return nil
 }

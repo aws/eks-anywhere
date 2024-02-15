@@ -951,8 +951,9 @@ func (f *Factory) WithCiliumTemplater() *Factory {
 	return f
 }
 
-func (f *Factory) WithAwsIamAuth() *Factory {
-	f.WithKubectl().WithWriter()
+// WithAwsIamAuth builds dependencies for AWS IAM Auth.
+func (f *Factory) WithAwsIamAuth(clusterConfig *v1alpha1.Cluster) *Factory {
+	f.WithKubectl().WithWriter().WithKubeconfigWriter(clusterConfig)
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.AwsIamAuth != nil {
@@ -971,6 +972,7 @@ func (f *Factory) WithAwsIamAuth() *Factory {
 			clusterId,
 			awsiamauth.NewRetrierClient(f.dependencies.Kubectl, opts...),
 			f.dependencies.Writer,
+			f.dependencies.KubeconfigWriter,
 		)
 		return nil
 	})
@@ -1067,7 +1069,7 @@ func (f *Factory) clusterManagerOpts(timeoutOpts *ClusterManagerTimeoutOptions) 
 
 // WithClusterManager builds a cluster manager based on the cluster config and timeout options.
 func (f *Factory) WithClusterManager(clusterConfig *v1alpha1.Cluster, timeoutOpts *ClusterManagerTimeoutOptions) *Factory {
-	f.WithClusterctl().WithNetworking(clusterConfig).WithWriter().WithDiagnosticBundleFactory().WithAwsIamAuth().WithFileReader().WithUnAuthKubeClient().WithKubernetesRetrierClient().WithEKSAInstaller()
+	f.WithClusterctl().WithNetworking(clusterConfig).WithWriter().WithDiagnosticBundleFactory().WithAwsIamAuth(clusterConfig).WithFileReader().WithUnAuthKubeClient().WithKubernetesRetrierClient().WithEKSAInstaller()
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.ClusterManager != nil {

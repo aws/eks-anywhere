@@ -607,14 +607,23 @@ func (kr KubeconfigWriter) WriteKubeconfig(ctx context.Context, clusterName, kub
 		return err
 	}
 
+	if err := kr.WriteKubeconfigContent(ctx, clusterName, rawkubeconfig, w); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// WriteKubeconfigContent retrieves the contents of the specified cluster's kubeconfig from a secret and copies it to an io.Writer.
+func (kr KubeconfigWriter) WriteKubeconfigContent(ctx context.Context, clusterName string, content []byte, w io.Writer) error {
 	port, err := kr.docker.GetDockerLBPort(ctx, clusterName)
 	if err != nil {
 		return err
 	}
 
-	updateKubeconfig(&rawkubeconfig, port)
+	updateKubeconfig(&content, port)
 
-	if _, err := io.Copy(w, bytes.NewReader(rawkubeconfig)); err != nil {
+	if _, err := io.Copy(w, bytes.NewReader(content)); err != nil {
 		return err
 	}
 

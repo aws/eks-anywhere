@@ -48,3 +48,17 @@ func (mr *MockWriterMockRecorder) WriteKubeconfig(ctx, clusterName, kubeconfig, 
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WriteKubeconfig", reflect.TypeOf((*MockWriter)(nil).WriteKubeconfig), ctx, clusterName, kubeconfig, w)
 }
+
+// WriteKubeconfigContent mocks base method.
+func (m *MockWriter) WriteKubeconfigContent(ctx context.Context, clusterName string, content []byte, w io.Writer) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WriteKubeconfigContent", ctx, clusterName, content, w)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// WriteKubeconfigContent indicates an expected call of WriteKubeconfigContent.
+func (mr *MockWriterMockRecorder) WriteKubeconfigContent(ctx, clusterName, content, w interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WriteKubeconfigContent", reflect.TypeOf((*MockWriter)(nil).WriteKubeconfigContent), ctx, clusterName, content, w)
+}
