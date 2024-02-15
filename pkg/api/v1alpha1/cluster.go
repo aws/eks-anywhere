@@ -412,7 +412,7 @@ func validateControlPlaneReplicas(clusterConfig *Cluster) error {
 		return nil
 	}
 	if clusterConfig.Spec.ControlPlaneConfiguration.Count%2 == 0 {
-		return errors.New("control plane node count cannot be an even number")
+		return errors.New("control plane node count cannot be an even number when using stacked etcd topology")
 	}
 	if clusterConfig.Spec.ControlPlaneConfiguration.Count != 3 && clusterConfig.Spec.ControlPlaneConfiguration.Count != 5 {
 		if clusterConfig.Spec.DatacenterRef.Kind != DockerDatacenterKind {
