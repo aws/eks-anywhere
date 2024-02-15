@@ -64,6 +64,21 @@ func (mr *MockKubernetesClientMockRecorder) GetAPIServerURL(ctx, cluster interfa
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAPIServerURL", reflect.TypeOf((*MockKubernetesClient)(nil).GetAPIServerURL), ctx, cluster)
 }
 
+// GetAWSIAMKubeconfigSecretValue mocks base method.
+func (m *MockKubernetesClient) GetAWSIAMKubeconfigSecretValue(ctx context.Context, cluster *types.Cluster, clusterName string) ([]byte, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAWSIAMKubeconfigSecretValue", ctx, cluster, clusterName)
+	ret0, _ := ret[0].([]byte)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAWSIAMKubeconfigSecretValue indicates an expected call of GetAWSIAMKubeconfigSecretValue.
+func (mr *MockKubernetesClientMockRecorder) GetAWSIAMKubeconfigSecretValue(ctx, cluster, clusterName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAWSIAMKubeconfigSecretValue", reflect.TypeOf((*MockKubernetesClient)(nil).GetAWSIAMKubeconfigSecretValue), ctx, cluster, clusterName)
+}
+
 // GetClusterCACert mocks base method.
 func (m *MockKubernetesClient) GetClusterCACert(ctx context.Context, cluster *types.Cluster, clusterName string) ([]byte, error) {
 	m.ctrl.T.Helper()

@@ -934,6 +934,20 @@ func (mr *MockAwsIamAuthMockRecorder) GenerateKubeconfig(arg0, arg1, arg2, arg3 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateKubeconfig", reflect.TypeOf((*MockAwsIamAuth)(nil).GenerateKubeconfig), arg0, arg1, arg2, arg3)
 }
 
+// GenerateManagementAWSIAMKubeconfig mocks base method.
+func (m *MockAwsIamAuth) GenerateManagementAWSIAMKubeconfig(arg0 context.Context, arg1 *types.Cluster) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GenerateManagementAWSIAMKubeconfig", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// GenerateManagementAWSIAMKubeconfig indicates an expected call of GenerateManagementAWSIAMKubeconfig.
+func (mr *MockAwsIamAuthMockRecorder) GenerateManagementAWSIAMKubeconfig(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateManagementAWSIAMKubeconfig", reflect.TypeOf((*MockAwsIamAuth)(nil).GenerateManagementAWSIAMKubeconfig), arg0, arg1)
+}
+
 // InstallAWSIAMAuth mocks base method.
 func (m *MockAwsIamAuth) InstallAWSIAMAuth(arg0 context.Context, arg1, arg2 *types.Cluster, arg3 *cluster.Spec) error {
 	m.ctrl.T.Helper()
