@@ -385,6 +385,16 @@ func (v *VSphere) WithKubeVersionAndOS(kubeVersion anywherev1.KubernetesVersion,
 	)
 }
 
+// WithKubeVersionAndOSMachineConfig returns a cluster config filler that sets the cluster kube version and the right template for a specific
+// vsphere machine config.
+func (v *VSphere) WithKubeVersionAndOSMachineConfig(name string, kubeVersion anywherev1.KubernetesVersion, os OS) api.ClusterConfigFiller {
+	return api.JoinClusterConfigFillers(
+		api.VSphereToConfigFiller(
+			v.templateForKubeVersionAndOSMachineConfig(name, kubeVersion, os),
+		),
+	)
+}
+
 // WithUbuntu125 returns a cluster config filler that sets the kubernetes version of the cluster to 1.25
 // as well as the right ubuntu template and osFamily for all VSphereMachineConfigs.
 func (v *VSphere) WithUbuntu125() api.ClusterConfigFiller {
@@ -452,6 +462,12 @@ func (v *VSphere) templateForKubeVersionAndOS(kubeVersion anywherev1.KubernetesV
 	return api.WithTemplateForAllMachines(template)
 }
 
+// templateForKubeVersionAndOSMachineConfig returns a vSphere filler for the given OS and Kubernetes version for a specific machine config.
+func (v *VSphere) templateForKubeVersionAndOSMachineConfig(name string, kubeVersion anywherev1.KubernetesVersion, os OS) api.VSphereFiller {
+	template := v.templateForDevRelease(kubeVersion, os)
+	return api.WithMachineTemplate(name, template)
+}
+
 // Ubuntu125Template returns vsphere filler for 1.25 Ubuntu.
 func (v *VSphere) Ubuntu125Template() api.VSphereFiller {
 	return v.templateForKubeVersionAndOS(anywherev1.Kube125, Ubuntu2004, nil)
@@ -475,6 +491,11 @@ func (v *VSphere) Ubuntu128Template() api.VSphereFiller {
 // Ubuntu129Template returns vsphere filler for 1.29 Ubuntu.
 func (v *VSphere) Ubuntu129Template() api.VSphereFiller {
 	return v.templateForKubeVersionAndOS(anywherev1.Kube129, Ubuntu2004, nil)
+}
+
+// Ubuntu128TemplateForMachineConfig returns vsphere filler for 1.28 Ubuntu for a specific machine config.
+func (v *VSphere) Ubuntu128TemplateForMachineConfig(name string) api.VSphereFiller {
+	return v.templateForKubeVersionAndOSMachineConfig(name, anywherev1.Kube128, Ubuntu2004)
 }
 
 // Ubuntu2204Kubernetes126Template returns vsphere filler for 1.26 Ubuntu 22.04.

@@ -60,6 +60,8 @@ func runSimpleUpgradeFlowWorkerNodeVersionForBareMetal(test *framework.ClusterE2
 	test.ValidateHardwareDecommissioned()
 }
 
+// runInPlaceUpgradeFlow makes use of the new ValidateClusterState method instead of ValidateCluster, but we should incorporate this
+// in runSimpleUpgradeFlow itself.
 func runInPlaceUpgradeFlow(test *framework.ClusterE2ETest, clusterOpts ...framework.ClusterE2ETestOpt) {
 	test.CreateCluster()
 	test.UpgradeClusterWithNewConfig(clusterOpts)
