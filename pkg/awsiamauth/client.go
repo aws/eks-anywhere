@@ -99,3 +99,23 @@ func (c RetrierClient) GetClusterCACert(ctx context.Context, cluster *types.Clus
 
 	return nil, fmt.Errorf("tls.crt not found in secret [%s]", secretName)
 }
+
+// GetAWSIAMKubeconfigSecretValue gets the AWS IAM kubeconfig value for a cluster from a secret.
+func (c RetrierClient) GetAWSIAMKubeconfigSecretValue(ctx context.Context, cluster *types.Cluster, clusterName string) ([]byte, error) {
+	secret := &corev1.Secret{}
+	secretName := fmt.Sprintf("%s-aws-iam-kubeconfig", clusterName)
+	err := c.retrier.Retry(
+		func() error {
+			return c.client.GetObject(ctx, "secret", secretName, constants.EksaSystemNamespace, cluster.KubeconfigFile, secret)
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if secretValue, ok := secret.Data["value"]; ok {
+		return secretValue, nil
+	}
+
+	return nil, fmt.Errorf("AWS IAM kubeconfig token not found in secret [%s]", secretName)
+}

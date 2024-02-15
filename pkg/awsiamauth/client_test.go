@@ -118,3 +118,44 @@ func TestRetrierClientGetClusterCACertNotFound(t *testing.T) {
 	tt.Expect(cert).To(BeNil())
 	tt.Expect(err).To(MatchError(ContainSubstring("tls.crt not found in secret [test-cluster-ca]")))
 }
+
+func TestRetrierGetAWSIAMKubeconfigSecretValueSuccess(t *testing.T) {
+	tt := newRetrierTest(t)
+	tt.c.EXPECT().GetObject(tt.ctx, "secret", "test-cluster-aws-iam-kubeconfig", "eksa-system", tt.cluster.KubeconfigFile, &corev1.Secret{}).Return(errors.New("error in GetObject")).Times(4)
+	tt.c.EXPECT().
+		GetObject(tt.ctx, "secret", "test-cluster-aws-iam-kubeconfig", "eksa-system", tt.cluster.KubeconfigFile, &corev1.Secret{}).
+		DoAndReturn(func(_ context.Context, _, _, _, _ string, obj *corev1.Secret) error {
+			obj.Data = map[string][]byte{
+				"value": []byte("val"),
+			}
+			return nil
+		}).Times(1)
+
+	kubeconfig, err := tt.r.GetAWSIAMKubeconfigSecretValue(tt.ctx, tt.cluster, "test-cluster")
+	tt.Expect(kubeconfig).To(Equal([]byte("val")))
+	tt.Expect(err).To(Succeed(), "retrierClient.GetObject() should succeed after 5 tries")
+}
+
+func TestRetrierGetAWSIAMKubeconfigSecretValueError(t *testing.T) {
+	tt := newRetrierTest(t)
+	tt.c.EXPECT().GetObject(tt.ctx, "secret", "test-cluster-aws-iam-kubeconfig", "eksa-system", tt.cluster.KubeconfigFile, &corev1.Secret{}).Return(errors.New("error in GetObject")).Times(5)
+	tt.c.EXPECT().GetObject(tt.ctx, "secret", "test-cluster-aws-iam-kubeconfig", "eksa-system", tt.cluster.KubeconfigFile, &corev1.Secret{}).Return(nil).AnyTimes()
+
+	kubeconfig, err := tt.r.GetAWSIAMKubeconfigSecretValue(tt.ctx, tt.cluster, "test-cluster")
+	tt.Expect(kubeconfig).To(BeNil())
+	tt.Expect(err).To(MatchError(ContainSubstring("error in GetObject")), "retrierClient.GetObject() should fail after 5 tries")
+}
+
+func TestRetrierGetAWSIAMKubeconfigSecretValueTokenError(t *testing.T) {
+	tt := newRetrierTest(t)
+	tt.c.EXPECT().GetObject(tt.ctx, "secret", "test-cluster-aws-iam-kubeconfig", "eksa-system", tt.cluster.KubeconfigFile, &corev1.Secret{}).Return(errors.New("error in GetObject")).Times(4)
+	tt.c.EXPECT().
+		GetObject(tt.ctx, "secret", "test-cluster-aws-iam-kubeconfig", "eksa-system", tt.cluster.KubeconfigFile, &corev1.Secret{}).
+		DoAndReturn(func(_ context.Context, _, _, _, _ string, obj *corev1.Secret) error {
+			return nil
+		}).Times(1)
+
+	kubeconfig, err := tt.r.GetAWSIAMKubeconfigSecretValue(tt.ctx, tt.cluster, "test-cluster")
+	tt.Expect(kubeconfig).To(BeNil())
+	tt.Expect(err).To(MatchError(ContainSubstring("AWS IAM kubeconfig token not found in secret")))
+}

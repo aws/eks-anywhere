@@ -323,3 +323,40 @@ func TestUpgradeAWSIAMAuth(t *testing.T) {
 	}
 	test.AssertContentToFile(t, string(manifest), "testdata/UpgradeAWSIAMAuth-manifest.yaml")
 }
+
+func TestGenerateManagementAWSIAMKubeconfig(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	certs := cryptomocks.NewMockCertificateGenerator(ctrl)
+	clusterID := uuid.MustParse("36db102f-9e1e-4ca4-8300-271d30b14161")
+
+	k8s := NewMockKubernetesClient(ctrl)
+	k8s.EXPECT().GetAWSIAMKubeconfigSecretValue(gomock.Any(), gomock.Any(), gomock.Any()).Return([]byte("kubeconfig"), nil)
+
+	writer := filewritermock.NewMockFileWriter(ctrl)
+	writer.EXPECT().Write(gomock.Any(), gomock.Any(), gomock.Any()).Return("kubeconfig", nil)
+
+	installer := awsiamauth.NewInstaller(certs, clusterID, k8s, writer)
+
+	err := installer.GenerateManagementAWSIAMKubeconfig(context.Background(), &types.Cluster{})
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestGenerateManagementAWSIAMKubeconfigError(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	certs := cryptomocks.NewMockCertificateGenerator(ctrl)
+	clusterID := uuid.MustParse("36db102f-9e1e-4ca4-8300-271d30b14161")
+
+	k8s := NewMockKubernetesClient(ctrl)
+	k8s.EXPECT().GetAWSIAMKubeconfigSecretValue(gomock.Any(), gomock.Any(), gomock.Any()).Return([]byte{}, errors.New("test"))
+
+	writer := filewritermock.NewMockFileWriter(ctrl)
+
+	installer := awsiamauth.NewInstaller(certs, clusterID, k8s, writer)
+
+	err := installer.GenerateManagementAWSIAMKubeconfig(context.Background(), &types.Cluster{})
+	if err == nil {
+		t.Fatal(err)
+	}
+}
