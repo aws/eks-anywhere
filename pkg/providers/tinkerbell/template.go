@@ -71,7 +71,7 @@ func (tb *TemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *cluster.Spe
 	}
 	var OSImageURL string
 
-	if tinkerbellIP, ok := clusterSpec.Cluster.HasTinkerbellIPAnnotation(); ok {
+	if tinkerbellIP := clusterSpec.Cluster.HasTinkerbellIPAnnotation(); tinkerbellIP != "" {
 		tb.tinkerbellIP = tinkerbellIP
 	}
 
@@ -127,7 +127,7 @@ func (tb *TemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, wo
 	bundle := clusterSpec.RootVersionsBundle()
 	OSImageURL := clusterSpec.TinkerbellDatacenter.Spec.OSImageURL
 
-	if tinkerbellIP, ok := clusterSpec.Cluster.HasTinkerbellIPAnnotation(); ok {
+	if tinkerbellIP := clusterSpec.Cluster.HasTinkerbellIPAnnotation(); tinkerbellIP != "" {
 		tb.tinkerbellIP = tinkerbellIP
 	}
 

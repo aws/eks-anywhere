@@ -327,11 +327,11 @@ func (c *Cluster) ClearTinkerbellIPAnnotation() {
 }
 
 // HasTinkerbellIPAnnotation returns the tinkerbell IP value if the annotation exists.
-func (c *Cluster) HasTinkerbellIPAnnotation() (string, bool) {
+func (c *Cluster) HasTinkerbellIPAnnotation() string {
 	if tinkerbellIP, ok := c.Annotations[tinkerbellIPAnnotation]; ok {
-		return tinkerbellIP, true
+		return tinkerbellIP
 	}
-	return "", false
+	return ""
 }
 
 // RegistryAuth returns whether registry requires authentication or not.

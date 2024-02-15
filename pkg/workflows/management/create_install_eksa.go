@@ -39,6 +39,8 @@ func (s *installEksaComponentsOnBootstrapTask) Checkpoint() *task.CompletedTask 
 type installEksaComponentsOnWorkloadTask struct{}
 
 func (s *installEksaComponentsOnWorkloadTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
+	// Removes the tinkerbell IP annotation added to the spec for controller based cluster creation. This
+	// helps use the right admin machine URL for hegel URLS.
 	if commandContext.ClusterSpec.Cluster.Spec.DatacenterRef.Kind == v1alpha1.TinkerbellDatacenterKind {
 		logger.Info("Removing Tinkerbell IP annotation")
 		commandContext.ClusterSpec.Cluster.ClearTinkerbellIPAnnotation()

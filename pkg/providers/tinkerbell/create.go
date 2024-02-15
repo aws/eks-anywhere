@@ -28,6 +28,7 @@ func (p *Provider) BootstrapClusterOpts(_ *cluster.Spec) ([]bootstrapper.Bootstr
 func (p *Provider) PreCAPIInstallOnBootstrap(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
 	logger.V(4).Info("Installing Tinkerbell stack on bootstrap cluster")
 
+	// We add this annotation to pass the admin machine URL to the controller for cluster creation.
 	logger.V(4).Info("Adding annotation for tinkerbell ip on bootstrap cluster")
 	clusterSpec.Cluster.AddTinkerbellIPAnnotation(p.tinkerbellIP)
 	versionsBundle := clusterSpec.RootVersionsBundle()

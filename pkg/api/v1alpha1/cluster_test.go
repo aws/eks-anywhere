@@ -1624,14 +1624,13 @@ func TestClusterClearTinkerbellIPAnnotation(t *testing.T) {
 		},
 	}
 	c.AddTinkerbellIPAnnotation("1.1.1.1")
-	val, ok := c.HasTinkerbellIPAnnotation()
+	val := c.HasTinkerbellIPAnnotation()
 
-	g.Expect(ok).To(BeTrue())
 	g.Expect(val).To(ContainSubstring("1.1.1.1"))
 
 	c.ClearTinkerbellIPAnnotation()
-	_, ok = c.Annotations[tinkerbellIPAnnotation]
-	g.Expect(ok).To(BeFalse())
+	val = c.Annotations[tinkerbellIPAnnotation]
+	g.Expect(val).To(BeEmpty())
 }
 
 func TestGitOpsEquals(t *testing.T) {
