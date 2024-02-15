@@ -6,7 +6,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/clustermarshaller"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/task"
-	"github.com/aws/eks-anywhere/pkg/workflows"
 )
 
 type writeClusterConfig struct{}
@@ -17,6 +16,8 @@ func (s *writeClusterConfig) Run(ctx context.Context, commandContext *task.Comma
 	err := clustermarshaller.WriteClusterConfig(commandContext.ClusterSpec, commandContext.Provider.DatacenterConfig(commandContext.ClusterSpec), commandContext.Provider.MachineConfigs(commandContext.ClusterSpec), commandContext.Writer)
 	if err != nil {
 		commandContext.SetError(err)
+		logger.Error(err, "Writing cluster config file")
+
 	}
 
 	if commandContext.ClusterSpec.AWSIamConfig != nil {
@@ -24,7 +25,7 @@ func (s *writeClusterConfig) Run(ctx context.Context, commandContext *task.Comma
 		err = commandContext.ClusterManager.GenerateAWSIAMKubeconfig(ctx, commandContext.ManagementCluster)
 		if err != nil {
 			commandContext.SetError(err)
-			return &workflows.CollectDiagnosticsTask{}
+			logger.Error(err, "Generating the aws iam kubeconfig file")
 		}
 	}
 
