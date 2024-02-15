@@ -532,29 +532,6 @@ func TestCreateSyncFailure(t *testing.T) {
 	}
 }
 
-func TestCreateAWSIAMFailure(t *testing.T) {
-	test := newCreateTest(t)
-	test.expectSetup()
-	test.expectPreflightValidationsToPass()
-	test.expectCreateBootstrap()
-	test.expectCAPIInstall(nil, nil, nil)
-	test.expectInstallEksaComponentsBootstrap(nil, nil, nil, nil)
-	test.clusterSpec.AWSIamConfig = &v1alpha1.AWSIamConfig{}
-
-	test.clusterManager.EXPECT().CreateNamespace(test.ctx, test.bootstrapCluster, test.clusterSpec.Cluster.Namespace).Return(nil)
-	test.clusterCreator.EXPECT().CreateSync(test.ctx, test.clusterSpec, test.bootstrapCluster).Return(test.workloadCluster, nil)
-	test.clusterManager.EXPECT().GenerateAWSIAMKubeconfig(test.ctx, test.workloadCluster).Return(errors.New("test"))
-
-	test.clusterManager.EXPECT().SaveLogsManagementCluster(test.ctx, test.clusterSpec, test.bootstrapCluster)
-	test.clusterManager.EXPECT().SaveLogsWorkloadCluster(test.ctx, test.provider, test.clusterSpec, test.workloadCluster)
-	test.writer.EXPECT().Write(fmt.Sprintf("%s-checkpoint.yaml", test.clusterSpec.Cluster.Name), gomock.Any())
-
-	err := test.run()
-	if err == nil {
-		t.Fatalf("Create.Run() expected to return an error %v", err)
-	}
-}
-
 func TestCreateEKSANamespaceFailure(t *testing.T) {
 	test := newCreateTest(t)
 	test.expectSetup()
@@ -836,6 +813,39 @@ func TestCreateWriteConfigFailure(t *testing.T) {
 		test.writer.EXPECT().Write(
 			"test-cluster-eks-a-cluster.yaml", gomock.Any(), gomock.Any()).Return("", errors.New("test")),
 	)
+
+	test.clusterManager.EXPECT().SaveLogsManagementCluster(
+		test.ctx, test.clusterSpec, test.bootstrapCluster,
+	)
+	test.clusterManager.EXPECT().SaveLogsWorkloadCluster(
+		test.ctx, test.provider, test.clusterSpec, test.workloadCluster,
+	)
+	test.writer.EXPECT().Write(fmt.Sprintf("%s-checkpoint.yaml", test.clusterSpec.Cluster.Name), gomock.Any())
+
+	err := test.run()
+	if err == nil {
+		t.Fatalf("Create.Run() err = %v, want err = nil", err)
+	}
+}
+
+func TestCreateWriteConfigAWSIAMFailure(t *testing.T) {
+	test := newCreateTest(t)
+
+	test.expectSetup()
+	test.expectCreateBootstrap()
+	test.expectCAPIInstall(nil, nil, nil)
+	test.expectInstallEksaComponentsBootstrap(nil, nil, nil, nil)
+	test.expectCreateWorkload(nil, nil, nil, nil, nil, nil)
+	test.expectInstallResourcesOnManagementTask(nil)
+	test.expectPauseReconcile(nil)
+	test.expectMoveManagement(nil)
+	test.expectInstallEksaComponentsWorkload(nil, nil, nil)
+	test.expectInstallGitOpsManager()
+	test.expectPreflightValidationsToPass()
+	test.clusterSpec.AWSIamConfig = &v1alpha1.AWSIamConfig{}
+	test.expectWriteClusterConfig()
+
+	test.clusterManager.EXPECT().GenerateAWSIAMKubeconfig(test.ctx, test.workloadCluster).Return(errors.New("test"))
 
 	test.clusterManager.EXPECT().SaveLogsManagementCluster(
 		test.ctx, test.clusterSpec, test.bootstrapCluster,
