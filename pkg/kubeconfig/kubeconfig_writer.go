@@ -66,7 +66,16 @@ func (kr ClusterAPIKubeconfigSecretWriter) WriteKubeconfig(ctx context.Context, 
 		return err
 	}
 
-	if _, err := io.Copy(w, bytes.NewReader(rawKubeconfig)); err != nil {
+	if err := kr.WriteKubeconfigContent(ctx, clusterName, rawKubeconfig, w); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// WriteKubeconfigContent copies a raw kubeconfig to an io.Writer.
+func (kr ClusterAPIKubeconfigSecretWriter) WriteKubeconfigContent(ctx context.Context, clusterName string, content []byte, w io.Writer) error {
+	if _, err := io.Copy(w, bytes.NewReader(content)); err != nil {
 		return err
 	}
 

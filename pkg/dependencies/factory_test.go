@@ -691,7 +691,7 @@ func TestFactoryBuildWithAwsIamAuthNoTimeout(t *testing.T) {
 	deps, err := dependencies.NewFactory().
 		WithLocalExecutables().
 		WithNoTimeouts().
-		WithAwsIamAuth().
+		WithAwsIamAuth(tt.clusterSpec.Cluster).
 		Build(context.Background())
 
 	tt.Expect(err).To(BeNil())
