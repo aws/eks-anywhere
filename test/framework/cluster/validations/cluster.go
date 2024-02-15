@@ -163,7 +163,7 @@ func validateMDUsDeleted(ctx context.Context, vc clusterf.StateValidationConfig)
 
 func validateNUsAndPodsDeleted(ctx context.Context, vc clusterf.StateValidationConfig) error {
 	machines := &v1beta1.MachineList{}
-	if err := vc.ClusterClient.List(ctx, machines); err != nil {
+	if err := vc.ManagementClusterClient.List(ctx, machines); err != nil {
 		return fmt.Errorf("failed to list machines: %s", err)
 	}
 	client := vc.ManagementClusterClient
