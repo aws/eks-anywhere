@@ -157,6 +157,41 @@ spec:
       metadata:
         uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.1748/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.0-alpha/metadata.yaml
       version: v0.4.0-alpha+e3b0c44
+    nutanix:
+      cloudProvider:
+        arch:
+        - amd64
+        - arm64
+        description: Container image for cloud-provider-nutanix image
+        imageDigest: sha256:11b00e5434961ca5bde7dd90d41d5a9f695b60673f6691ced33116f40b971035
+        name: cloud-provider-nutanix
+        os: linux
+        uri: public.ecr.aws/l0g8r8j6/nutanix-cloud-native/cloud-provider-nutanix/controller:v0.3.2-eks-a-v0.0.0-dev-build.8341
+      clusterAPIController:
+        arch:
+        - amd64
+        - arm64
+        description: Container image for cluster-api-provider-nutanix image
+        imageDigest: sha256:dc6e42917719c30b2a84e11e55b3b974c51bb67e16e2e51e4793a34d02f98c21
+        name: cluster-api-provider-nutanix
+        os: linux
+        uri: public.ecr.aws/l0g8r8j6/nutanix-cloud-native/cluster-api-provider-nutanix:v1.2.4-eks-a-v0.0.0-dev-build.7927
+      clusterTemplate:
+        uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.8341/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.2.4/cluster-template.yaml
+      components:
+        uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.8341/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.2.4/infrastructure-components.yaml
+      kubeVip:
+        arch:
+        - amd64
+        - arm64
+        description: Container image for kube-vip image
+        imageDigest: sha256:af4ced2d214c3b440bf00cc04f352052796cbc384efba7dbdfb82b15315a12b8
+        name: kube-vip
+        os: linux
+        uri: public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.6.4-eks-a-v0.0.0-dev-build.7944
+      metadata:
+        uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.8341/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.2.4/metadata.yaml
+      version: v1.2.4+4b53cc4
   - aws:
       clusterTemplate:
         uri: config/clusterctl/overrides/infrastructure-aws/v0.6.4/cluster-template.yaml
@@ -297,6 +332,41 @@ spec:
       metadata:
         uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.1748/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.0-alpha/metadata.yaml
       version: v0.4.0-alpha+e3b0c44
+      nutanix:
+        cloudProvider:
+          arch:
+          - amd64
+          - arm64
+          description: Container image for cloud-provider-nutanix image
+          imageDigest: sha256:11b00e5434961ca5bde7dd90d41d5a9f695b60673f6691ced33116f40b971035
+          name: cloud-provider-nutanix
+          os: linux
+          uri: public.ecr.aws/l0g8r8j6/nutanix-cloud-native/cloud-provider-nutanix/controller:v0.3.2-eks-a-v0.0.0-dev-build.8341
+        clusterAPIController:
+          arch:
+          - amd64
+          - arm64
+          description: Container image for cluster-api-provider-nutanix image
+          imageDigest: sha256:dc6e42917719c30b2a84e11e55b3b974c51bb67e16e2e51e4793a34d02f98c21
+          name: cluster-api-provider-nutanix
+          os: linux
+          uri: public.ecr.aws/l0g8r8j6/nutanix-cloud-native/cluster-api-provider-nutanix:v1.2.4-eks-a-v0.0.0-dev-build.7927
+        clusterTemplate:
+          uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.8341/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.2.4/cluster-template.yaml
+        components:
+          uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.8341/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.2.4/infrastructure-components.yaml
+        kubeVip:
+          arch:
+          - amd64
+          - arm64
+          description: Container image for kube-vip image
+          imageDigest: sha256:af4ced2d214c3b440bf00cc04f352052796cbc384efba7dbdfb82b15315a12b8
+          name: kube-vip
+          os: linux
+          uri: public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.6.4-eks-a-v0.0.0-dev-build.7944
+        metadata:
+          uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.8341/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.2.4/metadata.yaml
+        version: v1.2.4+4b53cc4
   - aws:
       clusterTemplate:
         uri: config/clusterctl/overrides/infrastructure-aws/v0.6.4/cluster-template.yaml
@@ -461,6 +531,41 @@ spec:
       metadata:
         uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.1748/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.0-alpha/metadata.yaml
       version: v0.4.0-alpha+e3b0c44
+    nutanix:
+      cloudProvider:
+        arch:
+        - amd64
+        - arm64
+        description: Container image for cloud-provider-nutanix image
+        imageDigest: sha256:11b00e5434961ca5bde7dd90d41d5a9f695b60673f6691ced33116f40b971035
+        name: cloud-provider-nutanix
+        os: linux
+        uri: public.ecr.aws/l0g8r8j6/nutanix-cloud-native/cloud-provider-nutanix/controller:v0.3.2-eks-a-v0.0.0-dev-build.8341
+      clusterAPIController:
+        arch:
+        - amd64
+        - arm64
+        description: Container image for cluster-api-provider-nutanix image
+        imageDigest: sha256:dc6e42917719c30b2a84e11e55b3b974c51bb67e16e2e51e4793a34d02f98c21
+        name: cluster-api-provider-nutanix
+        os: linux
+        uri: public.ecr.aws/l0g8r8j6/nutanix-cloud-native/cluster-api-provider-nutanix:v1.2.4-eks-a-v0.0.0-dev-build.7927
+      clusterTemplate:
+        uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.8341/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.2.4/cluster-template.yaml
+      components:
+        uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.8341/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.2.4/infrastructure-components.yaml
+      kubeVip:
+        arch:
+        - amd64
+        - arm64
+        description: Container image for kube-vip image
+        imageDigest: sha256:af4ced2d214c3b440bf00cc04f352052796cbc384efba7dbdfb82b15315a12b8
+        name: kube-vip
+        os: linux
+        uri: public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.6.4-eks-a-v0.0.0-dev-build.7944
+      metadata:
+        uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.8341/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.2.4/metadata.yaml
+      version: v1.2.4+4b53cc4
   - aws:
       clusterTemplate:
         uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.158/cluster-api-provider-aws/manifests/infrastructure-aws/v0.6.4/cluster-template.yaml
@@ -866,4 +971,39 @@ spec:
       metadata:
         uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.1748/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.0-alpha/metadata.yaml
       version: v0.4.0-alpha+e3b0c44
+    nutanix:
+      cloudProvider:
+        arch:
+        - amd64
+        - arm64
+        description: Container image for cloud-provider-nutanix image
+        imageDigest: sha256:11b00e5434961ca5bde7dd90d41d5a9f695b60673f6691ced33116f40b971035
+        name: cloud-provider-nutanix
+        os: linux
+        uri: public.ecr.aws/l0g8r8j6/nutanix-cloud-native/cloud-provider-nutanix/controller:v0.3.2-eks-a-v0.0.0-dev-build.8341
+      clusterAPIController:
+        arch:
+        - amd64
+        - arm64
+        description: Container image for cluster-api-provider-nutanix image
+        imageDigest: sha256:dc6e42917719c30b2a84e11e55b3b974c51bb67e16e2e51e4793a34d02f98c21
+        name: cluster-api-provider-nutanix
+        os: linux
+        uri: public.ecr.aws/l0g8r8j6/nutanix-cloud-native/cluster-api-provider-nutanix:v1.2.4-eks-a-v0.0.0-dev-build.7927
+      clusterTemplate:
+        uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.8341/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.2.4/cluster-template.yaml
+      components:
+        uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.8341/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.2.4/infrastructure-components.yaml
+      kubeVip:
+        arch:
+        - amd64
+        - arm64
+        description: Container image for kube-vip image
+        imageDigest: sha256:af4ced2d214c3b440bf00cc04f352052796cbc384efba7dbdfb82b15315a12b8
+        name: kube-vip
+        os: linux
+        uri: public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.6.4-eks-a-v0.0.0-dev-build.7944
+      metadata:
+        uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.8341/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.2.4/metadata.yaml
+      version: v1.2.4+4b53cc4
 status: {}

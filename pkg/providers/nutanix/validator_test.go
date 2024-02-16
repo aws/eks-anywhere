@@ -729,7 +729,11 @@ func TestValidateClusterMachineConfigsEtcdNotFoundError(t *testing.T) {
 	ctx := context.Background()
 	clusterConfigFile := "testdata/eksa-cluster-multiple-machineconfigs.yaml"
 	clusterSpec := test.NewFullClusterSpec(t, clusterConfigFile)
-	clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name = "invalid-etcd-name"
+	clusterSpec.Cluster.Spec.ExternalEtcdConfiguration = &anywherev1.ExternalEtcdConfiguration{
+		MachineGroupRef: &anywherev1.Ref{
+			Name: "invalid-etcd-name",
+		},
+	}
 
 	ctrl := gomock.NewController(t)
 	mockClient := mocknutanix.NewMockClient(ctrl)
@@ -781,7 +785,11 @@ func TestValidateClusterMachineConfigsEtcdError(t *testing.T) {
 	ctx := context.Background()
 	clusterConfigFile := "testdata/eksa-cluster-multiple-machineconfigs.yaml"
 	clusterSpec := test.NewFullClusterSpec(t, clusterConfigFile)
-	clusterSpec.NutanixMachineConfigs["eksa-unit-test"].Spec.Image.Name = utils.StringPtr("kubernetes_1_22")
+
+	clusterSpec.NutanixMachineConfigs["eksa-unit-test-cp"].Spec.Image = anywherev1.NutanixResourceIdentifier{
+		Name: utils.StringPtr("kubernetes_1_22"),
+		Type: anywherev1.NutanixIdentifierName,
+	}
 
 	ctrl := gomock.NewController(t)
 	mockClient := mocknutanix.NewMockClient(ctrl)
@@ -837,7 +845,6 @@ func TestValidateClusterMachineConfigsSuccess(t *testing.T) {
 
 	clusterSpec.Cluster.Spec.KubernetesVersion = "1.22"
 	clusterSpec.NutanixMachineConfigs["eksa-unit-test-cp"].Spec.Image.Name = utils.StringPtr("kubernetes_1_22")
-	clusterSpec.NutanixMachineConfigs["eksa-unit-test"].Spec.Image.Name = utils.StringPtr("kubernetes_1_22")
 	clusterSpec.NutanixMachineConfigs["eksa-unit-test-md-1"].Spec.Image.Name = utils.StringPtr("kubernetes_1_22")
 	clusterSpec.NutanixMachineConfigs["eksa-unit-test-md-2"].Spec.Image.Name = utils.StringPtr("kubernetes_1_22")
 

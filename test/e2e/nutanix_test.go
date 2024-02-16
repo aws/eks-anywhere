@@ -790,6 +790,7 @@ func TestNutanixKubernetes128UbuntuWorkerNodeScaleUp1To3(t *testing.T) {
 		provider,
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube128)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithEtcdCountIfExternal(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 	)
 	runSimpleUpgradeFlow(
@@ -806,6 +807,7 @@ func TestNutanixKubernetes129UbuntuWorkerNodeScaleUp1To3(t *testing.T) {
 		provider,
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube129)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithEtcdCountIfExternal(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 	)
 	runSimpleUpgradeFlow(
@@ -823,6 +825,7 @@ func TestNutanixKubernetes125UbuntuWorkerNodeScaleUp1To3(t *testing.T) {
 		provider,
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithEtcdCountIfExternal(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 	)
 	runSimpleUpgradeFlow(
@@ -840,6 +843,7 @@ func TestNutanixKubernetes126UbuntuWorkerNodeScaleUp1To3(t *testing.T) {
 		provider,
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube126)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithEtcdCountIfExternal(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 	)
 	runSimpleUpgradeFlow(
@@ -857,6 +861,7 @@ func TestNutanixKubernetes127UbuntuWorkerNodeScaleUp1To3(t *testing.T) {
 		provider,
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithEtcdCountIfExternal(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 	)
 	runSimpleUpgradeFlow(
@@ -873,6 +878,7 @@ func TestNutanixKubernetes128UbuntuControlPlaneNodeScaleUp1To3(t *testing.T) {
 		provider,
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube128)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithEtcdCountIfExternal(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 		framework.WithEnvVar("features.NutanixProviderEnvVar", "true"),
 	)
@@ -891,6 +897,7 @@ func TestNutanixKubernetes125UbuntuControlPlaneNodeScaleUp1To3(t *testing.T) {
 		provider,
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithEtcdCountIfExternal(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(3)),
 	)
 	runSimpleUpgradeFlow(
@@ -908,6 +915,7 @@ func TestNutanixKubernetes126UbuntuControlPlaneNodeScaleUp1To3(t *testing.T) {
 		provider,
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube126)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithEtcdCountIfExternal(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(3)),
 	)
 	runSimpleUpgradeFlow(
@@ -925,6 +933,7 @@ func TestNutanixKubernetes127UbuntuControlPlaneNodeScaleUp1To3(t *testing.T) {
 		provider,
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithEtcdCountIfExternal(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(3)),
 	)
 	runSimpleUpgradeFlow(
@@ -941,6 +950,7 @@ func TestNutanixKubernetes128UbuntuWorkerNodeScaleDown3To1(t *testing.T) {
 		provider,
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube128)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithEtcdCountIfExternal(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(3)),
 	)
 	runSimpleUpgradeFlow(
@@ -958,6 +968,7 @@ func TestNutanixKubernetes125UbuntuWorkerNodeScaleDown3To1(t *testing.T) {
 		provider,
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(3)),
+		framework.WithClusterFiller(api.WithEtcdCountIfExternal(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 	)
 	runSimpleUpgradeFlow(
@@ -975,6 +986,7 @@ func TestNutanixKubernetes126UbuntuWorkerNodeScaleDown3To1(t *testing.T) {
 		provider,
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube126)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(3)),
+		framework.WithClusterFiller(api.WithEtcdCountIfExternal(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 	)
 	runSimpleUpgradeFlow(
@@ -992,6 +1004,7 @@ func TestNutanixKubernetes127UbuntuWorkerNodeScaleDown3To1(t *testing.T) {
 		provider,
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(3)),
+		framework.WithClusterFiller(api.WithEtcdCountIfExternal(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 	)
 	runSimpleUpgradeFlow(
@@ -1008,6 +1021,7 @@ func TestNutanixKubernetes128UbuntuControlPlaneNodeScaleDown3To1(t *testing.T) {
 		provider,
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube128)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(3)),
+		framework.WithClusterFiller(api.WithEtcdCountIfExternal(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 	)
 	runSimpleUpgradeFlow(
@@ -1025,6 +1039,7 @@ func TestNutanixKubernetes125UbuntuControlPlaneNodeScaleDown3To1(t *testing.T) {
 		provider,
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(3)),
+		framework.WithClusterFiller(api.WithEtcdCountIfExternal(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 	)
 	runSimpleUpgradeFlow(
@@ -1042,6 +1057,7 @@ func TestNutanixKubernetes126UbuntuControlPlaneNodeScaleDown3To1(t *testing.T) {
 		provider,
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube126)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(3)),
+		framework.WithClusterFiller(api.WithEtcdCountIfExternal(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 	)
 	runSimpleUpgradeFlow(
@@ -1059,6 +1075,7 @@ func TestNutanixKubernetes127UbuntuControlPlaneNodeScaleDown3To1(t *testing.T) {
 		provider,
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(3)),
+		framework.WithClusterFiller(api.WithEtcdCountIfExternal(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 	)
 	runSimpleUpgradeFlow(
@@ -1076,6 +1093,7 @@ func TestNutanixKubernetes125OIDC(t *testing.T) {
 		framework.WithOIDC(),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithEtcdCountIfExternal(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 	)
 	runOIDCFlow(test)
@@ -1088,6 +1106,7 @@ func TestNutanixKubernetes126OIDC(t *testing.T) {
 		framework.WithOIDC(),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube126)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithEtcdCountIfExternal(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 	)
 	runOIDCFlow(test)
@@ -1100,6 +1119,7 @@ func TestNutanixKubernetes127OIDC(t *testing.T) {
 		framework.WithOIDC(),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithEtcdCountIfExternal(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 	)
 	runOIDCFlow(test)
@@ -1112,6 +1132,7 @@ func TestNutanixKubernetes129OIDC(t *testing.T) {
 		framework.WithOIDC(),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube129)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithEtcdCountIfExternal(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 	)
 	runOIDCFlow(test)
@@ -1125,6 +1146,7 @@ func TestNutanixKubernetes125AWSIamAuth(t *testing.T) {
 		framework.WithAWSIam(),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithEtcdCountIfExternal(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 	)
 	runAWSIamAuthFlow(test)
@@ -1137,6 +1159,7 @@ func TestNutanixKubernetes126AWSIamAuth(t *testing.T) {
 		framework.WithAWSIam(),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube126)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithEtcdCountIfExternal(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 	)
 	runAWSIamAuthFlow(test)
@@ -1149,6 +1172,7 @@ func TestNutanixKubernetes127AWSIamAuth(t *testing.T) {
 		framework.WithAWSIam(),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithEtcdCountIfExternal(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 	)
 	runAWSIamAuthFlow(test)
@@ -1161,6 +1185,7 @@ func TestNutanixKubernetes129AWSIamAuth(t *testing.T) {
 		framework.WithAWSIam(),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube129)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithEtcdCountIfExternal(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 	)
 	runAWSIamAuthFlow(test)
@@ -1174,6 +1199,7 @@ func TestNutanixKubernetes128UbuntuManagementCPUpgradeAPI(t *testing.T) {
 		api.ClusterToConfigFiller(
 			api.WithKubernetesVersion(v1alpha1.Kube128),
 			api.WithControlPlaneCount(1),
+			api.WithEtcdCountIfExternal(1),
 			api.WithWorkerNodeCount(1),
 		),
 	)
