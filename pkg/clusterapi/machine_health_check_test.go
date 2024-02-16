@@ -18,9 +18,10 @@ import (
 
 func TestMachineHealthCheckForControlPlane(t *testing.T) {
 	timeouts := []time.Duration{5 * time.Minute, time.Hour, 30 * time.Second}
+	maxUnhealthy := intstr.Parse("80%")
 	for _, timeout := range timeouts {
 		tt := newApiBuilerTest(t)
-		want := expectedMachineHealthCheckForControlPlane(timeout)
+		want := expectedMachineHealthCheckForControlPlane(timeout, maxUnhealthy)
 		tt.clusterSpec.Cluster.Spec.MachineHealthCheck = &v1alpha1.MachineHealthCheck{
 			NodeStartupTimeout: &metav1.Duration{
 				Duration: timeout,
@@ -28,14 +29,65 @@ func TestMachineHealthCheckForControlPlane(t *testing.T) {
 			UnhealthyMachineTimeout: &metav1.Duration{
 				Duration: timeout,
 			},
+			MaxUnhealthy: &maxUnhealthy,
 		}
 		got := clusterapi.MachineHealthCheckForControlPlane(tt.clusterSpec.Cluster)
 		tt.Expect(got).To(BeComparableTo(want))
 	}
 }
 
-func expectedMachineHealthCheckForControlPlane(timeout time.Duration) *clusterv1.MachineHealthCheck {
+func TestMachineHealthCheckForControlPlaneWithTimeoutOverride(t *testing.T) {
+	defaultTimeout := 30 * time.Minute
+	cpTimeout := 60 * time.Minute
 	maxUnhealthy := intstr.Parse("100%")
+
+	tt := newApiBuilerTest(t)
+	want := expectedMachineHealthCheckForControlPlane(cpTimeout, maxUnhealthy)
+	tt.clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineHealthCheck = &v1alpha1.MachineHealthCheck{
+		NodeStartupTimeout: &metav1.Duration{
+			Duration: cpTimeout,
+		},
+		UnhealthyMachineTimeout: &metav1.Duration{
+			Duration: cpTimeout,
+		},
+	}
+	tt.clusterSpec.Cluster.Spec.MachineHealthCheck = &v1alpha1.MachineHealthCheck{
+		NodeStartupTimeout: &metav1.Duration{
+			Duration: defaultTimeout,
+		},
+		UnhealthyMachineTimeout: &metav1.Duration{
+			Duration: defaultTimeout,
+		},
+		MaxUnhealthy: &maxUnhealthy,
+	}
+	got := clusterapi.MachineHealthCheckForControlPlane(tt.clusterSpec.Cluster)
+	tt.Expect(got).To(BeComparableTo(want))
+}
+
+func TestMachineHealthCheckForControlPlaneWithMaxUnhealthyOverride(t *testing.T) {
+	timeout := 30 * time.Minute
+	defaultMaxUnhealthy := intstr.Parse("40%")
+	cpMaxUnhealthyOverride := intstr.Parse("100%")
+
+	tt := newApiBuilerTest(t)
+	want := expectedMachineHealthCheckForControlPlane(timeout, cpMaxUnhealthyOverride)
+	tt.clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineHealthCheck = &v1alpha1.MachineHealthCheck{
+		MaxUnhealthy: &cpMaxUnhealthyOverride,
+	}
+	tt.clusterSpec.Cluster.Spec.MachineHealthCheck = &v1alpha1.MachineHealthCheck{
+		NodeStartupTimeout: &metav1.Duration{
+			Duration: timeout,
+		},
+		UnhealthyMachineTimeout: &metav1.Duration{
+			Duration: timeout,
+		},
+		MaxUnhealthy: &defaultMaxUnhealthy,
+	}
+	got := clusterapi.MachineHealthCheckForControlPlane(tt.clusterSpec.Cluster)
+	tt.Expect(got).To(BeComparableTo(want))
+}
+
+func expectedMachineHealthCheckForControlPlane(timeout time.Duration, maxUnhealthy intstr.IntOrString) *clusterv1.MachineHealthCheck {
 	return &clusterv1.MachineHealthCheck{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "cluster.x-k8s.io/v1beta1",
@@ -77,11 +129,12 @@ func expectedMachineHealthCheckForControlPlane(timeout time.Duration) *clusterv1
 }
 
 func TestMachineHealthCheckForWorkers(t *testing.T) {
+	maxUnhealthy := intstr.Parse("40%")
 	timeouts := []time.Duration{5 * time.Minute, time.Hour, 30 * time.Second}
 	for _, timeout := range timeouts {
 		tt := newApiBuilerTest(t)
+		want := expectedMachineHealthCheckForWorkers(timeout, maxUnhealthy)
 		tt.clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations = []v1alpha1.WorkerNodeGroupConfiguration{*tt.workerNodeGroupConfig}
-		want := expectedMachineHealthCheckForWorkers(timeout)
 		tt.clusterSpec.Cluster.Spec.MachineHealthCheck = &v1alpha1.MachineHealthCheck{
 			NodeStartupTimeout: &metav1.Duration{
 				Duration: timeout,
@@ -89,14 +142,67 @@ func TestMachineHealthCheckForWorkers(t *testing.T) {
 			UnhealthyMachineTimeout: &metav1.Duration{
 				Duration: timeout,
 			},
+			MaxUnhealthy: &maxUnhealthy,
 		}
 		got := clusterapi.MachineHealthCheckForWorkers(tt.clusterSpec.Cluster)
 		tt.Expect(got).To(Equal(want))
 	}
 }
 
-func expectedMachineHealthCheckForWorkers(timeout time.Duration) []*clusterv1.MachineHealthCheck {
+func TestMachineHealthCheckForWorkersWithTimeoutOverride(t *testing.T) {
+	defaultTimeout := 30 * time.Minute
+	workerTimeout := 60 * time.Minute
 	maxUnhealthy := intstr.Parse("40%")
+
+	tt := newApiBuilerTest(t)
+	want := expectedMachineHealthCheckForWorkers(workerTimeout, maxUnhealthy)
+	tt.clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations = []v1alpha1.WorkerNodeGroupConfiguration{*tt.workerNodeGroupConfig}
+	tt.clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineHealthCheck = &v1alpha1.MachineHealthCheck{
+		NodeStartupTimeout: &metav1.Duration{
+			Duration: workerTimeout,
+		},
+		UnhealthyMachineTimeout: &metav1.Duration{
+			Duration: workerTimeout,
+		},
+	}
+	tt.clusterSpec.Cluster.Spec.MachineHealthCheck = &v1alpha1.MachineHealthCheck{
+		NodeStartupTimeout: &metav1.Duration{
+			Duration: defaultTimeout,
+		},
+		UnhealthyMachineTimeout: &metav1.Duration{
+			Duration: defaultTimeout,
+		},
+		MaxUnhealthy: &maxUnhealthy,
+	}
+	got := clusterapi.MachineHealthCheckForWorkers(tt.clusterSpec.Cluster)
+	tt.Expect(got).To(Equal(want))
+}
+
+func TestMachineHealthCheckForWorkersWithMaxUnhealthyOverride(t *testing.T) {
+	timeout := 30 * time.Minute
+	defaultMaxUnhealthy := intstr.Parse("40%")
+	workerMaxUnhealthyOverride := intstr.Parse("100%")
+
+	tt := newApiBuilerTest(t)
+	want := expectedMachineHealthCheckForWorkers(timeout, workerMaxUnhealthyOverride)
+	tt.clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations = []v1alpha1.WorkerNodeGroupConfiguration{*tt.workerNodeGroupConfig}
+	tt.clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineHealthCheck = &v1alpha1.MachineHealthCheck{
+		MaxUnhealthy: &workerMaxUnhealthyOverride,
+	}
+	tt.clusterSpec.Cluster.Spec.MachineHealthCheck = &v1alpha1.MachineHealthCheck{
+		NodeStartupTimeout: &metav1.Duration{
+			Duration: timeout,
+		},
+		UnhealthyMachineTimeout: &metav1.Duration{
+			Duration: timeout,
+		},
+		MaxUnhealthy: &defaultMaxUnhealthy,
+	}
+	got := clusterapi.MachineHealthCheckForWorkers(tt.clusterSpec.Cluster)
+	tt.Expect(got).To(Equal(want))
+}
+
+func expectedMachineHealthCheckForWorkers(timeout time.Duration, maxUnhealthy intstr.IntOrString) []*clusterv1.MachineHealthCheck {
 	return []*clusterv1.MachineHealthCheck{
 		{
 			TypeMeta: metav1.TypeMeta{

@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	. "github.com/onsi/gomega"
+	"k8s.io/apimachinery/pkg/util/intstr"
 
 	"github.com/aws/eks-anywhere/pkg/cli"
 	"github.com/aws/eks-anywhere/pkg/cluster"
@@ -21,7 +22,7 @@ func TestRunUpgradeClusterDefaulter(t *testing.T) {
 			Cluster: c,
 		},
 	}
-	mhcDefaulter := cluster.NewMachineHealthCheckDefaulter(constants.DefaultNodeStartupTimeout, constants.DefaultUnhealthyMachineTimeout)
+	mhcDefaulter := cluster.NewMachineHealthCheckDefaulter(constants.DefaultNodeStartupTimeout, constants.DefaultUnhealthyMachineTimeout, intstr.Parse(constants.DefaultMaxUnhealthy), intstr.Parse(constants.DefaultWorkerMaxUnhealthy))
 
 	upgradeClusterDefaulter := cli.NewUpgradeClusterDefaulter(mhcDefaulter)
 	clusterSpec, err := upgradeClusterDefaulter.Run(context.Background(), clusterSpec)

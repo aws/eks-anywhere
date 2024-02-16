@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/spf13/pflag"
+	"k8s.io/apimachinery/pkg/util/intstr"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
@@ -195,6 +196,8 @@ func buildCreateCliConfig(clusterOptions *createClusterOptions) (*config.CreateC
 
 	createCliConfig.NodeStartupTimeout = nodeStartupTimeout
 	createCliConfig.UnhealthyMachineTimeout = unhealthyMachineTimeout
+	createCliConfig.MaxUnhealthy = intstr.Parse(constants.DefaultMaxUnhealthy)
+	createCliConfig.WorkerMaxUnhealthy = intstr.Parse(constants.DefaultWorkerMaxUnhealthy)
 
 	return createCliConfig, nil
 }
@@ -221,6 +224,8 @@ func buildUpgradeCliConfig(clusterOptions *upgradeClusterOptions) (*config.Upgra
 
 	upgradeCliConfig.NodeStartupTimeout = nodeStartupTimeout
 	upgradeCliConfig.UnhealthyMachineTimeout = unhealthyMachineTimeout
+	upgradeCliConfig.MaxUnhealthy = intstr.Parse(constants.DefaultMaxUnhealthy)
+	upgradeCliConfig.WorkerMaxUnhealthy = intstr.Parse(constants.DefaultWorkerMaxUnhealthy)
 
 	return &upgradeCliConfig, nil
 }
