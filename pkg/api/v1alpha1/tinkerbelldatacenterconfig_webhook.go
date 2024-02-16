@@ -18,6 +18,7 @@ import (
 	"fmt"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -108,6 +109,20 @@ func validateImmutableFieldsTinkerbellDatacenterConfig(new, old *TinkerbellDatac
 		allErrs = append(
 			allErrs,
 			field.Forbidden(specPath.Child("tinkerbellIP"), "field is immutable"),
+		)
+	}
+
+	if new.Spec.HookImagesURLPath != old.Spec.HookImagesURLPath && !metav1.HasAnnotation(new.ObjectMeta, ManagedByCLIAnnotation) {
+		allErrs = append(
+			allErrs,
+			field.Forbidden(specPath.Child("hookImagesURLPath"), "field is immutable"),
+		)
+	}
+
+	if new.Spec.SkipLoadBalancerDeployment != old.Spec.SkipLoadBalancerDeployment && !metav1.HasAnnotation(new.ObjectMeta, ManagedByCLIAnnotation) {
+		allErrs = append(
+			allErrs,
+			field.Forbidden(specPath.Child("skipLoadBalancerDeployment"), "field is immutable"),
 		)
 	}
 

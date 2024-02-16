@@ -215,6 +215,7 @@ func (uc *upgradeClusterOptions) upgradeCluster(cmd *cobra.Command, args []strin
 
 	} else {
 		upgradeWorkloadCluster := workload.NewUpgrade(
+			deps.UnAuthKubeClient,
 			deps.Provider,
 			deps.ClusterManager,
 			deps.GitOpsFlux,
