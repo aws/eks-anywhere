@@ -1623,9 +1623,9 @@ func TestTinkerbellSingleNode128To129UbuntuManagementCPUpgradeAPI(t *testing.T) 
 	)
 }
 
-func TestTinkerbellKubernetes129UpgradeManagementComponents(t *testing.T) {
+func TestTinkerbellKubernetes128UpgradeManagementComponents(t *testing.T) {
 	release := latestMinorRelease(t)
-	provider := framework.NewTinkerbell(t, framework.WithUbuntu129Tinkerbell())
+	provider := framework.NewTinkerbell(t, framework.WithUbuntu128Tinkerbell())
 	test := framework.NewClusterE2ETest(
 		t,
 		provider,
@@ -1636,11 +1636,11 @@ func TestTinkerbellKubernetes129UpgradeManagementComponents(t *testing.T) {
 	test.GenerateClusterConfigForVersion(release.Version, framework.ExecuteWithEksaRelease(release))
 	test.UpdateClusterConfig(
 		api.ClusterToConfigFiller(
-			api.WithKubernetesVersion(v1alpha1.Kube129),
+			api.WithKubernetesVersion(v1alpha1.Kube128),
 			api.WithControlPlaneCount(1),
 			api.WithWorkerNodeCount(1),
 		),
-		provider.WithKubeVersionAndOS(v1alpha1.Kube129, framework.Ubuntu2004, nil),
+		provider.WithKubeVersionAndOS(v1alpha1.Kube128, framework.Ubuntu2004, nil),
 	)
 
 	test.GenerateHardwareConfig(framework.ExecuteWithEksaRelease(release))
