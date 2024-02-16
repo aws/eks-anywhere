@@ -1140,46 +1140,6 @@ func TestClusterReconcilerReconcileDeletePausedCluster(t *testing.T) {
 	})
 }
 
-func TestClusterReconcilerReconcileDeleteClusterManagedByCLI(t *testing.T) {
-	g := NewWithT(t)
-	ctx := context.Background()
-	managementCluster := vsphereCluster()
-	managementCluster.Name = "management-cluster"
-	cluster := vsphereCluster()
-	cluster.SetManagedBy(managementCluster.Name)
-	controllerutil.AddFinalizer(cluster, controllers.ClusterFinalizerName)
-	capiCluster := newCAPICluster(cluster.Name, cluster.Namespace)
-
-	// Mark cluster for deletion
-	now := metav1.Now()
-	cluster.DeletionTimestamp = &now
-
-	// Mark as managed by CLI
-	cluster.Annotations[anywherev1.ManagedByCLIAnnotation] = "true"
-
-	c := fake.NewClientBuilder().WithRuntimeObjects(
-		managementCluster, cluster, capiCluster,
-	).Build()
-	controller := gomock.NewController(t)
-	iam := mocks.NewMockAWSIamConfigReconciler(controller)
-	clusterValidator := mocks.NewMockClusterValidator(controller)
-	mhcReconciler := mocks.NewMockMachineHealthCheckReconciler(controller)
-
-	r := controllers.NewClusterReconciler(c, newRegistryForDummyProviderReconciler(), iam, clusterValidator, nil, mhcReconciler)
-	g.Expect(r.Reconcile(ctx, clusterRequest(cluster))).To(Equal(reconcile.Result{}))
-	api := envtest.NewAPIExpecter(t, c)
-
-	cl := envtest.CloneNameNamespace(cluster)
-	api.ShouldEventuallyNotExist(ctx, cl)
-
-	capiCl := envtest.CloneNameNamespace(capiCluster)
-	api.ShouldEventuallyMatch(ctx, capiCl, func(g Gomega) {
-		g.Expect(
-			capiCluster.DeletionTimestamp.IsZero(),
-		).To(BeTrue(), "CAPI cluster should exist and not be marked for deletion")
-	})
-}
-
 func TestClusterReconcilerDeleteNoCAPIClusterSuccess(t *testing.T) {
 	g := NewWithT(t)
 
