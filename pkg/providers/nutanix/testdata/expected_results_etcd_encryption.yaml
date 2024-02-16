@@ -82,6 +82,7 @@ spec:
         - hostPath: /etc/kubernetes/enc/encryption-config.yaml
           mountPath: /etc/kubernetes/enc/encryption-config.yaml
           name: encryption-config
+          pathType: File
           readOnly: false
         - hostPath: /var/run/kmsplugin/
           mountPath: /var/run/kmsplugin/
