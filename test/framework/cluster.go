@@ -707,7 +707,7 @@ func (e *ClusterE2ETest) createCluster(opts ...CommandOpt) {
 	}
 
 	e.T.Logf("Creating cluster %s", e.ClusterName)
-	createClusterArgs := []string{"create", "cluster", "-f", e.ClusterConfigLocation, "-v", "12"}
+	createClusterArgs := []string{"create", "cluster", "-f", e.ClusterConfigLocation, "-v", "6"}
 
 	dumpFile("Create cluster from file:", e.ClusterConfigLocation, e.T)
 
@@ -846,7 +846,7 @@ func (e *ClusterE2ETest) upgradeCluster(clusterOpts []ClusterE2ETestOpt, command
 
 // UpgradeCluster runs the CLI upgrade command.
 func (e *ClusterE2ETest) UpgradeCluster(commandOpts ...CommandOpt) {
-	upgradeClusterArgs := []string{"upgrade", "cluster", "-f", e.ClusterConfigLocation, "-v", "9"}
+	upgradeClusterArgs := []string{"upgrade", "cluster", "-f", e.ClusterConfigLocation, "-v", "6"}
 	if getBundlesOverride() == "true" {
 		upgradeClusterArgs = append(upgradeClusterArgs, "--bundles-override", defaultBundleReleaseManifestFile)
 	}
