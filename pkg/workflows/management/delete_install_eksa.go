@@ -49,6 +49,10 @@ func (s *installEksaComponentsOnBootstrapForDeleteTask) Checkpoint() *task.Compl
 }
 
 func applyClusterSpecOnBootstrapForDeleteTask(ctx context.Context, spec *cluster.Spec, cluster *types.Cluster, clientFactory interfaces.ClientFactory) error {
+	if err := workflows.CreateNamespaceIfNotPresent(ctx, spec.Cluster.Namespace, cluster.KubeconfigFile, clientFactory); err != nil {
+		return errors.Wrapf(err, "creating namespace on bootstrap")
+	}
+
 	client, err := clientFactory.BuildClientFromKubeconfig(cluster.KubeconfigFile)
 	if err != nil {
 		return errors.Wrap(err, "building client to apply cluster spec changes")

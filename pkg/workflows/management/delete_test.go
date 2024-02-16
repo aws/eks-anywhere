@@ -7,6 +7,10 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
+	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -192,6 +196,19 @@ func (c *deleteTestSetup) expectApplyOnBootstrap(err error) {
 	c.client.EXPECT().ApplyServerSide(c.ctx, "eks-a-cli", gomock.Any(), gomock.Any()).Return(err).AnyTimes()
 }
 
+func (c *deleteTestSetup) expectCreateNamespace() {
+	n := c.clusterSpec.Cluster.Namespace
+	ns := &corev1.Namespace{
+		TypeMeta: v1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "Namespace",
+		},
+		ObjectMeta: v1.ObjectMeta{Name: n},
+	}
+	c.client.EXPECT().Get(c.ctx, n, "", &corev1.Namespace{}).Return(apierrors.NewNotFound(schema.GroupResource{Group: "", Resource: ""}, ""))
+	c.client.EXPECT().Create(c.ctx, ns)
+}
+
 func TestDeleteRunSuccess(t *testing.T) {
 	features.ClearCache()
 	os.Setenv(features.UseControllerForCli, "true")
@@ -207,6 +224,7 @@ func TestDeleteRunSuccess(t *testing.T) {
 	test.expectDeleteCluster(nil, nil, nil, nil)
 	test.expectCleanupGitRepo(nil)
 	test.expectDeleteBootstrap(nil)
+	test.expectCreateNamespace()
 
 	err := test.run()
 	if err != nil {
@@ -419,6 +437,7 @@ func TestDeleteRunFailPostDelete(t *testing.T) {
 	test.expectInstallCAPI(nil)
 	test.expectMoveCAPI(nil)
 	test.expectInstallEksaComponentsBootstrap(nil, nil, nil, nil, nil)
+	test.expectCreateNamespace()
 	test.expectApplyOnBootstrap(nil)
 	test.expectDeleteCluster(nil, nil, nil, fmt.Errorf(""))
 	test.expectSaveLogsManagement()
@@ -440,6 +459,7 @@ func TestDeleteRunFailCleanupGit(t *testing.T) {
 	test.expectInstallCAPI(nil)
 	test.expectMoveCAPI(nil)
 	test.expectInstallEksaComponentsBootstrap(nil, nil, nil, nil, nil)
+	test.expectCreateNamespace()
 	test.expectApplyOnBootstrap(nil)
 	test.expectDeleteCluster(nil, nil, nil, nil)
 	test.expectCleanupGitRepo(fmt.Errorf(""))
@@ -464,6 +484,7 @@ func TestDeleteRunFailDeleteBootstrap(t *testing.T) {
 	test.expectMoveCAPI(nil)
 	test.expectInstallEksaComponentsBootstrap(nil, nil, nil, nil, nil)
 	test.expectApplyOnBootstrap(nil)
+	test.expectCreateNamespace()
 	test.expectDeleteCluster(nil, nil, nil, nil)
 	test.expectCleanupGitRepo(nil)
 	test.expectDeleteBootstrap(fmt.Errorf(""))
