@@ -139,14 +139,14 @@ func (d *Dependencies) Close(ctx context.Context) error {
 
 // ForSpec constructs a Factory using the bundle referenced by clusterSpec.
 func ForSpec(clusterSpec *cluster.Spec) *Factory {
-	versionsBundle := clusterSpec.RootVersionsBundle()
-	eksaToolsImage := versionsBundle.Eksa.CliTools
+	managementComponents := cluster.ManagementComponentsFromBundles(clusterSpec.Bundles)
+	eksaToolsImage := managementComponents.Eksa.CliTools
 	return NewFactory().
 		UseExecutableImage(eksaToolsImage.VersionedImage()).
 		WithRegistryMirror(registrymirror.FromCluster(clusterSpec.Cluster)).
 		UseProxyConfiguration(clusterSpec.Cluster.ProxyConfiguration()).
 		WithWriterFolder(clusterSpec.Cluster.Name).
-		WithDiagnosticCollectorImage(versionsBundle.Eksa.DiagnosticCollector.VersionedImage())
+		WithDiagnosticCollectorImage(managementComponents.Eksa.DiagnosticCollector.VersionedImage())
 }
 
 // Factory helps initialization.
