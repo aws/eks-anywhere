@@ -323,6 +323,7 @@ func TestCPUpgradeReconcileUpdateKubeadmConfigSuccess(t *testing.T) {
 	ctx := context.Background()
 
 	testObjs := getObjectsForCPUpgradeTest()
+	kubeVipCm := generateKubeVipConfigMap()
 	for i := range testObjs.nodeUpgrades {
 		testObjs.nodeUpgrades[i].Name = fmt.Sprintf("%s-node-upgrader", testObjs.machines[i].Name)
 		testObjs.nodeUpgrades[i].Status = anywherev1.NodeUpgradeStatus{
@@ -331,7 +332,7 @@ func TestCPUpgradeReconcileUpdateKubeadmConfigSuccess(t *testing.T) {
 	}
 	objs := []runtime.Object{
 		testObjs.cluster, testObjs.cpUpgrade, testObjs.machines[0], testObjs.machines[1], testObjs.nodes[0], testObjs.nodes[1],
-		testObjs.nodeUpgrades[0], testObjs.nodeUpgrades[1], testObjs.kubeadmConfigs[0], testObjs.kubeadmConfigs[1], testObjs.infraMachines[0], testObjs.infraMachines[1],
+		testObjs.nodeUpgrades[0], testObjs.nodeUpgrades[1], testObjs.kubeadmConfigs[0], testObjs.kubeadmConfigs[1], testObjs.infraMachines[0], testObjs.infraMachines[1], kubeVipCm,
 	}
 	testObjs.nodeUpgrades[0].Status.Completed = true
 	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
@@ -615,6 +616,12 @@ func generateKubeadmConfig() *bootstrapv1.KubeadmConfig {
 				},
 			},
 			InitConfiguration: &bootstrapv1.InitConfiguration{},
+			Files: []bootstrapv1.File{
+				{
+					Path:    "/etc/kubernetes/manifests/kube-vip.yaml",
+					Content: kubeVipSpec(),
+				},
+			},
 		},
 	}
 }
@@ -635,4 +642,50 @@ func generateAndSetInfraMachine(machine *clusterv1.Machine) *tinkerbellv1.Tinker
 			},
 		},
 	}
+}
+
+func generateKubeVipConfigMap() *corev1.ConfigMap {
+	return &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      constants.KubeVipConfigMapName,
+			Namespace: constants.EksaSystemNamespace,
+		},
+
+		Data: map[string]string{constants.KubeVipManifestName: kubeVipSpec()},
+	}
+}
+
+func kubeVipSpec() string {
+	return ` |
+	apiVersion: v1
+	kind: Pod
+	metadata:
+	  name: kube-vip
+	  namespace: kube-system
+	spec:
+	  containers:
+	  - args:
+		- manager
+		env:
+		- name: vip_arp
+		  value: "true"
+		- name: port
+		  value: "6443"
+		image: public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.6.4-eks-a-v0.19.0-dev-build.128
+		imagePullPolicy: IfNotPresent
+		name: kube-vip
+		resources: {}
+		securityContext:
+		  capabilities:
+			add:
+			- NET_ADMIN
+			- NET_RAW
+		volumeMounts:
+		- mountPath: /etc/kubernetes/admin.conf
+		  name: kubeconfig
+	  hostNetwork: true
+	  volumes:
+	  - hostPath:
+		  path: /etc/kubernetes/admin.conf
+		name: kubeconfig`
 }
