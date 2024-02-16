@@ -58,6 +58,14 @@ func runUpgradeWithFluxFromReleaseFlow(test *framework.ClusterE2ETest, latestRel
 	test.DeleteCluster()
 }
 
+func runInPlaceUpgradeFromReleaseFlow(test *framework.ClusterE2ETest, latestRelease *releasev1.EksARelease, clusterOpts ...framework.ClusterE2ETestOpt) {
+	test.CreateCluster(framework.ExecuteWithEksaRelease(latestRelease))
+	test.UpgradeClusterWithNewConfig(clusterOpts)
+	test.ValidateClusterState()
+	test.StopIfFailed()
+	test.DeleteCluster()
+}
+
 func runMulticlusterUpgradeFromReleaseFlowAPI(test *framework.MulticlusterE2ETest, release *releasev1.EksARelease, kubeVersion anywherev1.KubernetesVersion, os framework.OS) {
 	provider := test.ManagementCluster.Provider
 	test.CreateManagementCluster(framework.ExecuteWithEksaRelease(release))
