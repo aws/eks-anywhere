@@ -55,15 +55,17 @@ const (
 
 // ControlPlaneUpgradeReconciler reconciles a ControlPlaneUpgradeReconciler object.
 type ControlPlaneUpgradeReconciler struct {
-	client client.Client
-	log    logr.Logger
+	client               client.Client
+	remoteClientRegistry RemoteClientRegistry
+	log                  logr.Logger
 }
 
 // NewControlPlaneUpgradeReconciler returns a new instance of ControlPlaneUpgradeReconciler.
-func NewControlPlaneUpgradeReconciler(client client.Client) *ControlPlaneUpgradeReconciler {
+func NewControlPlaneUpgradeReconciler(client client.Client, remoteClientRegistry RemoteClientRegistry) *ControlPlaneUpgradeReconciler {
 	return &ControlPlaneUpgradeReconciler{
-		client: client,
-		log:    ctrl.Log.WithName("ControlPlaneUpgradeController"),
+		client:               client,
+		remoteClientRegistry: remoteClientRegistry,
+		log:                  ctrl.Log.WithName("ControlPlaneUpgradeController"),
 	}
 }
 
@@ -150,7 +152,14 @@ func (r *ControlPlaneUpgradeReconciler) reconcile(ctx context.Context, log logr.
 		return ctrl.Result{}, nil
 	}
 
-	if err := createKubeVipCMIfNotExist(ctx, r.client, cpUpgrade); err != nil {
+	rClient, err := r.remoteClientRegistry.GetClient(ctx, GetNamespacedNameType(cpUpgrade.Spec.ControlPlane.Name, cpUpgrade.Spec.ControlPlane.Namespace))
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+	if err := namespaceOrCreate(ctx, rClient, log, constants.EksaSystemNamespace); err != nil {
+		return ctrl.Result{}, nil
+	}
+	if err := createKubeVipCMIfNotExist(ctx, rClient, cpUpgrade); err != nil {
 		return ctrl.Result{}, err
 	}
 	log.Info("Upgrading all Control Plane nodes")
@@ -390,15 +399,15 @@ func cleanupKubeVipCM(ctx context.Context, log logr.Logger, client client.Client
 	return nil
 }
 
-func createKubeVipCMIfNotExist(ctx context.Context, client client.Client, cpUpgrade *anywherev1.ControlPlaneUpgrade) error {
+func createKubeVipCMIfNotExist(ctx context.Context, remoteClient client.Client, cpUpgrade *anywherev1.ControlPlaneUpgrade) error {
 	kubeVipCM := &corev1.ConfigMap{}
-	if err := client.Get(ctx, GetNamespacedNameType(constants.KubeVipConfigMapName, constants.EksaSystemNamespace), kubeVipCM); err != nil {
+	if err := remoteClient.Get(ctx, GetNamespacedNameType(constants.KubeVipConfigMapName, constants.EksaSystemNamespace), kubeVipCM); err != nil {
 		if apierrors.IsNotFound(err) {
 			kubeVipCM, err = kubeVipConfigMap(cpUpgrade)
 			if err != nil {
 				return err
 			}
-			if err := client.Create(ctx, kubeVipCM); err != nil {
+			if err := remoteClient.Create(ctx, kubeVipCM); err != nil {
 				return fmt.Errorf("failed to create %s config map: %v", constants.KubeVipConfigMapName, err)
 			}
 		} else {
