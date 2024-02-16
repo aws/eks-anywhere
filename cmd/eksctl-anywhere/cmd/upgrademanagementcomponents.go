@@ -34,7 +34,7 @@ var upgradeManagementComponentsCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx := cmd.Context()
 
-		clusterSpec, err := newClusterSpec(umco.clusterOptions)
+		clusterSpec, err := newBasicClusterSpec(umco.clusterOptions)
 		if err != nil {
 			return err
 		}

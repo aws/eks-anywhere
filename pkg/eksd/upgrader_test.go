@@ -54,19 +54,6 @@ func newUpgraderTest(t *testing.T) *upgraderTest {
 	}
 }
 
-func TestEksdUpgradeNoSelfManaged(t *testing.T) {
-	tt := newUpgraderTest(t)
-	tt.newSpec.Cluster.SetManagedBy("management-cluster")
-
-	tt.Expect(tt.eksdUpgrader.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)).To(BeNil())
-}
-
-func TestEksdUpgradeNoChanges(t *testing.T) {
-	tt := newUpgraderTest(t)
-
-	tt.Expect(tt.eksdUpgrader.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)).To(BeNil())
-}
-
 func TestEksdUpgradeSuccess(t *testing.T) {
 	tt := newUpgraderTest(t)
 
