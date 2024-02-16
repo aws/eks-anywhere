@@ -10,6 +10,15 @@ skipped_tests:
 - TestCloudStackKubernetes127RedhatProxyConfigAPI
 - TestCloudStackKubernetes128RedhatProxyConfigAPI
 
+# MultiEndpoint
+- TestCloudStackKubernetes123MultiEndpointSimpleFlow
+- TestCloudStackKubernetes124MultiEndpointSimpleFlow
+- TestCloudStackKubernetes125MultiEndpointSimpleFlow
+- TestCloudStackKubernetes126MultiEndpointSimpleFlow
+- TestCloudStackKubernetes127MultiEndpointSimpleFlow
+- TestCloudStackKubernetes128MultiEndpointSimpleFlow
+- TestCloudStackKubernetes129MultiEndpointSimpleFlow
+
 # Nutanix
 
 # Snow
