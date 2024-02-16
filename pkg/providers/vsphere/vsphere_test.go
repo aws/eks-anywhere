@@ -56,6 +56,7 @@ const (
 	eksd119Release                         = "kubernetes-1-19-eks-4"
 	eksd119ReleaseTag                      = "eksdRelease:kubernetes-1-19-eks-4"
 	eksd121ReleaseTag                      = "eksdRelease:kubernetes-1-21-eks-4"
+	eksd129ReleaseTag                      = "eksdRelease:kubernetes-1-29-eks-4"
 	ubuntuOSTag                            = "os:ubuntu"
 	bottlerocketOSTag                      = "os:bottlerocket"
 	testTemplate                           = "/SDDC-Datacenter/vm/Templates/ubuntu-1804-kube-v1.19.6"
@@ -158,7 +159,7 @@ func (pc *DummyProviderGovcClient) GetResourcePoolInfo(ctx context.Context, data
 }
 
 func (pc *DummyProviderGovcClient) GetTags(ctx context.Context, path string) (tags []string, err error) {
-	return []string{eksd119ReleaseTag, eksd121ReleaseTag, pc.osTag}, nil
+	return []string{eksd119ReleaseTag, eksd121ReleaseTag, eksd129ReleaseTag, pc.osTag}, nil
 }
 
 func (pc *DummyProviderGovcClient) ListTags(ctx context.Context) ([]executables.Tag, error) {
@@ -3912,6 +3913,12 @@ func TestProviderGenerateCAPISpecForUpgradeEtcdEncryption(t *testing.T) {
 			clusterconfigFile: "cluster_ubuntu_etcd_encryption.yaml",
 			wantCPFile:        "testdata/expected_results_ubuntu_etcd_encryption_cp.yaml",
 			wantMDFile:        "testdata/expected_results_main_121_md.yaml",
+		},
+		{
+			testName:          "etcd-encryption 1.29",
+			clusterconfigFile: "cluster_ubuntu_etcd_encryption_1_29.yaml",
+			wantCPFile:        "testdata/expected_results_ubuntu_etcd_encryption_cp_1_29.yaml",
+			wantMDFile:        "testdata/expected_results_main_129_md.yaml",
 		},
 	}
 	for _, tt := range tests {

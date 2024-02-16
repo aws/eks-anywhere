@@ -2577,6 +2577,12 @@ func TestProviderGenerateCAPISpecForUpgradeEtcdEncryption(t *testing.T) {
 			wantCPFile:        "testdata/expected_results_encryption_config_cp.yaml",
 			wantMDFile:        "testdata/expected_results_minimal_md.yaml",
 		},
+		{
+			testName:          "etcd-encryption 1.29",
+			clusterconfigFile: "cluster_etcd_encryption_1_29.yaml",
+			wantCPFile:        "testdata/expected_results_encryption_config_cp_1_29.yaml",
+			wantMDFile:        "testdata/expected_results_minimal_md_1_29.yaml",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.testName, func(t *testing.T) {
