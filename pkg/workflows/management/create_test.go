@@ -878,6 +878,7 @@ func TestCreateWriteConfigAWSIAMFailure(t *testing.T) {
 	test.expectPreflightValidationsToPass()
 	test.clusterSpec.AWSIamConfig = &v1alpha1.AWSIamConfig{}
 	test.expectWriteClusterConfig()
+	test.expectCreateNamespace()
 
 	test.clusterManager.EXPECT().GenerateAWSIAMKubeconfig(test.ctx, test.workloadCluster).Return(errors.New("test"))
 
