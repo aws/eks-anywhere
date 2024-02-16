@@ -12,6 +12,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
+	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
 // ClientFactory builds Kubernetes clients.
@@ -43,8 +44,8 @@ type ClusterManager interface {
 	InstallCustomComponents(ctx context.Context, managementComponents *cluster.ManagementComponents, clusterSpec *cluster.Spec, cluster *types.Cluster, provider providers.Provider) error
 	CreateEKSANamespace(ctx context.Context, cluster *types.Cluster) error
 	CreateEKSAResources(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, datacenterConfig providers.DatacenterConfig, machineConfigs []providers.MachineConfig) error
-	ApplyBundles(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error
-	ApplyReleases(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error
+	ApplyBundles(ctx context.Context, bundles *releasev1alpha1.Bundles, cluster *types.Cluster) error
+	ApplyReleases(ctx context.Context, eksaRelease *releasev1alpha1.EKSARelease, cluster *types.Cluster) error
 	PauseEKSAControllerReconcile(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, provider providers.Provider) error
 	ResumeEKSAControllerReconcile(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, provider providers.Provider) error
 	RemoveManagedByCLIAnnotationForCluster(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, provider providers.Provider) error
@@ -83,7 +84,7 @@ type CAPIManager interface {
 
 type EksdInstaller interface {
 	InstallEksdCRDs(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error
-	InstallEksdManifest(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error
+	InstallEksdManifest(ctx context.Context, bundles *releasev1alpha1.Bundles, cluster *types.Cluster) error
 }
 
 type EksdUpgrader interface {

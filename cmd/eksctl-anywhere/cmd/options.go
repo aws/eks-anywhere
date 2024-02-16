@@ -19,11 +19,11 @@ import (
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/files"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
-	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
 	"github.com/aws/eks-anywhere/pkg/version"
+	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
 const defaultTinkerbellNodeStartupTimeout = 20 * time.Minute
@@ -127,11 +127,17 @@ func readAndValidateClusterSpec(clusterConfigPath string, cliVersion version.Inf
 	return clusterSpec, nil
 }
 
-func newClusterSpec(options clusterOptions) (*cluster.Spec, error) {
+func fileSpecBuilderOptsFromClusterOptions(options clusterOptions) []cluster.FileSpecBuilderOpt {
 	var opts []cluster.FileSpecBuilderOpt
 	if options.bundlesOverride != "" {
 		opts = append(opts, cluster.WithOverrideBundlesManifest(options.bundlesOverride))
 	}
+
+	return opts
+}
+
+func newClusterSpec(options clusterOptions) (*cluster.Spec, error) {
+	opts := fileSpecBuilderOptsFromClusterOptions(options)
 
 	clusterSpec, err := readAndValidateClusterSpec(options.fileName, version.Get(), opts...)
 	if err != nil {
@@ -156,10 +162,30 @@ func newClusterSpec(options clusterOptions) (*cluster.Spec, error) {
 	return clusterSpec, nil
 }
 
-func markFlagHidden(flagSet *pflag.FlagSet, flagName string) {
-	if err := flagSet.MarkHidden(flagName); err != nil {
-		logger.V(5).Info("Warning: Failed to mark flag as hidden: " + flagName)
-	}
+func newEKSARelease(bundles *releasev1.Bundles, options clusterOptions) (*releasev1.EKSARelease, error) {
+	opts := fileSpecBuilderOptsFromClusterOptions(options)
+
+	cliVersion := version.Get()
+	b := cluster.NewFileSpecBuilder(
+		files.NewReader(files.WithEKSAUserAgent("cli", cliVersion.GitVersion)),
+		cliVersion,
+		opts...,
+	)
+
+	return cluster.BuildEKSARelease(b, bundles)
+}
+
+func newBundles(options clusterOptions) (*releasev1.Bundles, error) {
+	opts := fileSpecBuilderOptsFromClusterOptions(options)
+
+	cliVersion := version.Get()
+	b := cluster.NewFileSpecBuilder(
+		files.NewReader(files.WithEKSAUserAgent("cli", cliVersion.GitVersion)),
+		cliVersion,
+		opts...,
+	)
+
+	return cluster.GetBundlesManifest(b)
 }
 
 func buildCliConfig(clusterSpec *cluster.Spec) *config.CliConfig {

@@ -10,6 +10,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/retrier"
 	"github.com/aws/eks-anywhere/pkg/types"
+	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
 const (
@@ -92,9 +93,10 @@ func (i *Installer) SetRetrier(retrier *retrier.Retrier) {
 	i.retrier = retrier
 }
 
-func (i *Installer) InstallEksdManifest(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error {
+// InstallEksdManifest installs the eksd manifest to the cluster.
+func (i *Installer) InstallEksdManifest(ctx context.Context, bundles *releasev1alpha1.Bundles, cluster *types.Cluster) error {
 	var eksdReleaseManifest []byte
-	for _, vb := range clusterSpec.Bundles.Spec.VersionsBundles {
+	for _, vb := range bundles.Spec.VersionsBundles {
 		if err := i.retrier.Retry(
 			func() error {
 				var readerErr error

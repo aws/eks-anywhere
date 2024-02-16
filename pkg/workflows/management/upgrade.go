@@ -59,6 +59,8 @@ func (c *Upgrade) Run(ctx context.Context, clusterSpec *cluster.Spec, management
 		ClusterManager:    c.clusterManager,
 		GitOpsManager:     c.gitOpsManager,
 		ManagementCluster: managementCluster,
+		Bundles:           clusterSpec.Bundles,
+		EKSARelease:       clusterSpec.EKSARelease,
 		ClusterSpec:       clusterSpec,
 		Validations:       validator,
 		Writer:            c.writer,

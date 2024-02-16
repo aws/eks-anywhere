@@ -10,17 +10,17 @@ import (
 type installNewComponents struct{}
 
 func runInstallNewComponents(ctx context.Context, commandContext *task.CommandContext) error {
-	if err := commandContext.ClusterManager.ApplyBundles(ctx, commandContext.ClusterSpec, commandContext.ManagementCluster); err != nil {
+	if err := commandContext.ClusterManager.ApplyBundles(ctx, commandContext.Bundles, commandContext.ManagementCluster); err != nil {
 		commandContext.SetError(err)
 		return err
 	}
 
-	if err := commandContext.ClusterManager.ApplyReleases(ctx, commandContext.ClusterSpec, commandContext.ManagementCluster); err != nil {
+	if err := commandContext.ClusterManager.ApplyReleases(ctx, commandContext.EKSARelease, commandContext.ManagementCluster); err != nil {
 		commandContext.SetError(err)
 		return err
 	}
 
-	err := commandContext.EksdInstaller.InstallEksdManifest(ctx, commandContext.ClusterSpec, commandContext.ManagementCluster)
+	err := commandContext.EksdInstaller.InstallEksdManifest(ctx, commandContext.Bundles, commandContext.ManagementCluster)
 	if err != nil {
 		commandContext.SetError(err)
 		return err

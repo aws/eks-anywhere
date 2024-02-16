@@ -375,7 +375,7 @@ func (s *InstallEksaComponentsTask) Run(ctx context.Context, commandContext *tas
 		commandContext.SetError(err)
 		return &CollectDiagnosticsTask{}
 	}
-	err = commandContext.EksdInstaller.InstallEksdManifest(ctx, commandContext.ClusterSpec, targetCluster)
+	err = commandContext.EksdInstaller.InstallEksdManifest(ctx, commandContext.ClusterSpec.Bundles, targetCluster)
 	if err != nil {
 		commandContext.SetError(err)
 		return &CollectDiagnosticsTask{}

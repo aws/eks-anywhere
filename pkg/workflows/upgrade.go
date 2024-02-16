@@ -505,12 +505,12 @@ func (s *upgradeWorkloadClusterTask) Run(ctx context.Context, commandContext *ta
 		return &CollectDiagnosticsTask{}
 	}
 
-	if err = commandContext.ClusterManager.ApplyBundles(ctx, commandContext.ClusterSpec, eksaManagementCluster); err != nil {
+	if err = commandContext.ClusterManager.ApplyBundles(ctx, commandContext.ClusterSpec.Bundles, eksaManagementCluster); err != nil {
 		commandContext.SetError(err)
 		return &CollectDiagnosticsTask{}
 	}
 
-	if err = commandContext.ClusterManager.ApplyReleases(ctx, commandContext.ClusterSpec, eksaManagementCluster); err != nil {
+	if err = commandContext.ClusterManager.ApplyReleases(ctx, commandContext.ClusterSpec.EKSARelease, eksaManagementCluster); err != nil {
 		commandContext.SetError(err)
 		return &CollectDiagnosticsTask{}
 	}
@@ -580,7 +580,7 @@ func (s *reconcileClusterDefinitions) Run(ctx context.Context, commandContext *t
 		commandContext.SetError(err)
 		return &CollectDiagnosticsTask{}
 	}
-	err = commandContext.EksdInstaller.InstallEksdManifest(ctx, commandContext.ClusterSpec, commandContext.ManagementCluster)
+	err = commandContext.EksdInstaller.InstallEksdManifest(ctx, commandContext.ClusterSpec.Bundles, commandContext.ManagementCluster)
 	if err != nil {
 		commandContext.SetError(err)
 		return &CollectDiagnosticsTask{}
