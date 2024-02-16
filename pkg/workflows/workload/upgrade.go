@@ -13,6 +13,7 @@ import (
 
 // Upgrade is a schema for upgrade cluster.
 type Upgrade struct {
+	clientFactory    interfaces.ClientFactory
 	provider         providers.Provider
 	clusterManager   interfaces.ClusterManager
 	gitOpsManager    interfaces.GitOpsManager
@@ -23,7 +24,8 @@ type Upgrade struct {
 }
 
 // NewUpgrade builds a new upgrade construct.
-func NewUpgrade(provider providers.Provider,
+func NewUpgrade(clientFactory interfaces.ClientFactory,
+	provider providers.Provider,
 	clusterManager interfaces.ClusterManager, gitOpsManager interfaces.GitOpsManager,
 	writer filewriter.FileWriter,
 	clusterUpgrader interfaces.ClusterUpgrader,
@@ -31,6 +33,7 @@ func NewUpgrade(provider providers.Provider,
 	packageInstaller interfaces.PackageInstaller,
 ) *Upgrade {
 	return &Upgrade{
+		clientFactory:    clientFactory,
 		provider:         provider,
 		clusterManager:   clusterManager,
 		gitOpsManager:    gitOpsManager,
@@ -44,6 +47,7 @@ func NewUpgrade(provider providers.Provider,
 // Run Upgrade implements upgrade functionality for workload cluster's upgrade operation.
 func (c *Upgrade) Run(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, validator interfaces.Validator) error {
 	commandContext := &task.CommandContext{
+		ClientFactory:     c.clientFactory,
 		Provider:          c.provider,
 		ClusterManager:    c.clusterManager,
 		GitOpsManager:     c.gitOpsManager,

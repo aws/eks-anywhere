@@ -126,3 +126,46 @@ func TestAddLabel(t *testing.T) {
 		})
 	}
 }
+
+func TestRemoveAnnotation(t *testing.T) {
+	tests := []struct {
+		name string
+		obj  client.Object
+		key  string
+	}{
+		{
+			name: "empty annotations",
+			obj:  &corev1.ConfigMap{},
+			key:  "my-annotation",
+		},
+		{
+			name: "annotations key present",
+			obj: &corev1.ConfigMap{
+				ObjectMeta: metav1.ObjectMeta{
+					Annotations: map[string]string{
+						"my-annotation": "b",
+					},
+				},
+			},
+			key: "my-annotation",
+		},
+		{
+			name: "annotation key not present",
+			obj: &corev1.ConfigMap{
+				ObjectMeta: metav1.ObjectMeta{
+					Annotations: map[string]string{
+						"a": "b",
+					},
+				},
+			},
+			key: "my-annotation",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			clientutil.RemoveAnnotation(tt.obj, tt.key)
+			g.Expect(tt.obj.GetAnnotations()).ToNot(HaveKey(tt.key))
+		})
+	}
+}

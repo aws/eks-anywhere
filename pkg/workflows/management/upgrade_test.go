@@ -11,6 +11,8 @@ import (
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
@@ -246,8 +248,11 @@ func (c *upgradeManagementTestSetup) expectApplyReleases(err error) {
 	)
 }
 
-func (c *upgradeManagementTestSetup) expectUpgradeManagementCluster(err error) {
-	c.clusterUpgrader.EXPECT().Run(c.ctx, c.newClusterSpec, *c.managementCluster).Return(err)
+func (c *upgradeManagementTestSetup) expectUpgradeManagementCluster() {
+	gomock.InOrder(
+		c.clusterUpgrader.EXPECT().Run(c.ctx, c.newClusterSpec, *c.managementCluster).Return(nil),
+		c.clientFactory.EXPECT().BuildClientFromKubeconfig(c.managementCluster.KubeconfigFile).Return(c.client, nil),
+	)
 }
 
 func (c *upgradeManagementTestSetup) expectResumeCAPIWorkloadClustersAPI(err error) {
@@ -569,7 +574,34 @@ func TestUpgradeManagementRunFailedUpgrade(t *testing.T) {
 	test.expectInstallEksdManifest(nil)
 	test.expectApplyBundles(nil)
 	test.expectApplyReleases(nil)
-	test.expectUpgradeManagementCluster(errors.New("failed upgrading"))
+	test.clusterUpgrader.EXPECT().Run(test.ctx, test.newClusterSpec, *test.managementCluster).Return(errors.New("failed upgrading"))
+	test.expectSaveLogs()
+	test.expectWriteCheckpointFile()
+
+	err := test.run()
+	if err == nil {
+		t.Fatal("UpgradeManagement.Run() err = nil, want err not nil")
+	}
+}
+
+func TestUpgradeManagementRunFailedUpgradeClusterBuildClientFromKubeconfig(t *testing.T) {
+	os.Unsetenv(features.CheckpointEnabledEnvVar)
+	features.ClearCache()
+	test := newUpgradeManagementClusterTest(t)
+	test.expectSetup()
+	test.expectPreflightValidationsToPass()
+	test.expectUpdateSecrets(nil)
+	test.expectEnsureManagementEtcdCAPIComponentsExist(nil)
+	test.expectPauseGitOpsReconcile(nil)
+	test.expectUpgradeCoreComponents()
+	test.expectBackupManagementFromCluster(nil)
+	test.expectPauseCAPIWorkloadClusters(nil)
+	test.expectDatacenterConfig()
+	test.expectMachineConfigs()
+	test.expectInstallEksdManifest(nil)
+	test.expectApplyBundles(nil)
+	test.expectApplyReleases(nil)
+	test.clusterUpgrader.EXPECT().Run(test.ctx, test.newClusterSpec, *test.managementCluster).Return(errors.New("failed upgrading"))
 	test.expectSaveLogs()
 	test.expectWriteCheckpointFile()
 
@@ -596,7 +628,7 @@ func TestUpgradeManagementRunResumeCAPIWorkloadFailed(t *testing.T) {
 	test.expectInstallEksdManifest(nil)
 	test.expectApplyBundles(nil)
 	test.expectApplyReleases(nil)
-	test.expectUpgradeManagementCluster(nil)
+	test.expectUpgradeManagementCluster()
 	test.expectUpdateGitEksaSpec(nil)
 	test.expectForceReconcileGitRepo(nil)
 	test.expectResumeGitOpsReconcile(nil)
@@ -628,7 +660,7 @@ func TestUpgradeManagementRunUpdateGitEksaSpecFailed(t *testing.T) {
 	test.expectInstallEksdManifest(nil)
 	test.expectApplyBundles(nil)
 	test.expectApplyReleases(nil)
-	test.expectUpgradeManagementCluster(nil)
+	test.expectUpgradeManagementCluster()
 	test.expectUpdateGitEksaSpec(errors.New(""))
 	test.expectSaveLogs()
 	test.expectWriteCheckpointFile()
@@ -656,7 +688,7 @@ func TestUpgradeManagementRunForceReconcileGitRepoFailed(t *testing.T) {
 	test.expectInstallEksdManifest(nil)
 	test.expectApplyBundles(nil)
 	test.expectApplyReleases(nil)
-	test.expectUpgradeManagementCluster(nil)
+	test.expectUpgradeManagementCluster()
 	test.expectUpdateGitEksaSpec(nil)
 	test.expectForceReconcileGitRepo(errors.New(""))
 	test.expectSaveLogs()
@@ -685,7 +717,7 @@ func TestUpgradeManagementRunResumeClusterResourcesReconcileFailed(t *testing.T)
 	test.expectInstallEksdManifest(nil)
 	test.expectApplyBundles(nil)
 	test.expectApplyReleases(nil)
-	test.expectUpgradeManagementCluster(nil)
+	test.expectUpgradeManagementCluster()
 	test.expectUpdateGitEksaSpec(nil)
 	test.expectForceReconcileGitRepo(nil)
 	test.expectResumeGitOpsReconcile(errors.New(""))
@@ -716,7 +748,44 @@ func TestUpgradeManagementRunSuccess(t *testing.T) {
 	test.expectInstallEksdManifest(nil)
 	test.expectApplyBundles(nil)
 	test.expectApplyReleases(nil)
-	test.expectUpgradeManagementCluster(nil)
+	test.expectUpgradeManagementCluster()
+	test.expectResumeCAPIWorkloadClustersAPI(nil)
+	test.expectUpdateGitEksaSpec(nil)
+	test.expectForceReconcileGitRepo(nil)
+	test.expectResumeGitOpsReconcile(nil)
+	test.expectWriteManagementClusterConfig(nil)
+
+	err := test.run()
+	if err != nil {
+		t.Fatalf("UpgradeManagement.Run() err = %v, want err = nil", err)
+	}
+}
+
+func TestTinkerbellUpgradeManagementRunSuccess(t *testing.T) {
+	os.Unsetenv(features.CheckpointEnabledEnvVar)
+	features.ClearCache()
+	test := newUpgradeManagementClusterTest(t)
+	test.newClusterSpec.Cluster.Spec.DatacenterRef.Kind = v1alpha1.TinkerbellDatacenterKind
+	test.newClusterSpec.TinkerbellDatacenter = &v1alpha1.TinkerbellDatacenterConfig{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "my-datacenter",
+			Namespace: "default",
+		},
+	}
+	test.expectSetup()
+	test.expectPreflightValidationsToPass()
+	test.expectUpdateSecrets(nil)
+	test.expectEnsureManagementEtcdCAPIComponentsExist(nil)
+	test.expectUpgradeCoreComponents()
+	test.expectPauseGitOpsReconcile(nil)
+	test.expectBackupManagementFromCluster(nil)
+	test.expectPauseCAPIWorkloadClusters(nil)
+	test.expectDatacenterConfig()
+	test.expectMachineConfigs()
+	test.expectInstallEksdManifest(nil)
+	test.expectApplyBundles(nil)
+	test.expectApplyReleases(nil)
+	test.expectUpgradeManagementCluster()
 	test.expectResumeCAPIWorkloadClustersAPI(nil)
 	test.expectUpdateGitEksaSpec(nil)
 	test.expectForceReconcileGitRepo(nil)
