@@ -611,6 +611,31 @@ func TestTemplateBuilderEtcdEncryption(t *testing.T) {
 	}
 }
 
+func TestTemplateBuilderEtcdEncryptionKubernetes129(t *testing.T) {
+	for _, tc := range []struct {
+		Input  string
+		Output string
+	}{
+		{
+			Input:  "testdata/cluster_nutanix_etcd_encryption_1_29.yaml",
+			Output: "testdata/expected_results_etcd_encryption_1_29.yaml",
+		},
+	} {
+		clusterSpec := test.NewFullClusterSpec(t, tc.Input)
+
+		machineCfg := clusterSpec.NutanixMachineConfig(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name)
+		creds := GetCredsFromEnv()
+
+		bldr := NewNutanixTemplateBuilder(&clusterSpec.NutanixDatacenter.Spec, &machineCfg.Spec, nil,
+			map[string]anywherev1.NutanixMachineConfigSpec{}, creds, time.Now)
+
+		data, err := bldr.GenerateCAPISpecControlPlane(clusterSpec)
+		assert.NoError(t, err)
+
+		test.AssertContentToFile(t, string(data), tc.Output)
+	}
+}
+
 func minimalNutanixConfigSpec(t *testing.T) (*anywherev1.NutanixDatacenterConfig, *anywherev1.NutanixMachineConfig, map[string]anywherev1.NutanixMachineConfigSpec) {
 	dcConf := &anywherev1.NutanixDatacenterConfig{}
 	err := yaml.Unmarshal([]byte(nutanixDatacenterConfigSpec), dcConf)

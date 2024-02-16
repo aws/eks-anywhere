@@ -1,3 +1,4 @@
+{{- $kube_minor_version := (index (splitList "." (trimPrefix "v" .kubernetesVersion)) 1) -}}
 apiVersion: cluster.x-k8s.io/v1beta1
 kind: Cluster
 metadata:
@@ -99,6 +100,9 @@ spec:
           audit-log-maxbackup: "10"
           audit-log-maxsize: "512"
           profiling: "false"
+{{- if and .encryptionProviderConfig (ge (atoi $kube_minor_version) 29) }}
+          feature-gates: "KMSv1=true"
+{{- end }}
 {{- if .apiserverExtraArgs }}
 {{ .apiserverExtraArgs.ToYaml | indent 10 }}
 {{- end }}
@@ -352,7 +356,6 @@ spec:
         else echo "{{$dir}} already symlnk";
       fi
 {{- end}}
-{{- $kube_minor_version := (index (splitList "." (trimPrefix "v" .kubernetesVersion)) 1) }}
 {{- if (ge (atoi $kube_minor_version) 29) }}
     - "if [ -f /run/kubeadm/kubeadm.yaml ]; then sed -i 's#path: /etc/kubernetes/admin.conf#path: /etc/kubernetes/super-admin.conf#' /etc/kubernetes/manifests/kube-vip.yaml; fi"
 {{- end }}
