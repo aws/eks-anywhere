@@ -19,7 +19,7 @@ func (s *createWorkloadClusterTask) Run(ctx context.Context, commandContext *tas
 	commandContext.ClusterSpec.Cluster.SetManagementComponentsVersion(commandContext.ClusterSpec.EKSARelease.Spec.Version)
 
 	if commandContext.ClusterSpec.Cluster.Namespace != "" {
-		if err := commandContext.ClusterManager.CreateNamespace(ctx, commandContext.BootstrapCluster, commandContext.ClusterSpec.Cluster.Namespace); err != nil {
+		if err := workflows.CreateNamespaceIfNotPresent(ctx, commandContext.ClusterSpec.Cluster.Namespace, commandContext.BootstrapCluster.KubeconfigFile, commandContext.ClientFactory); err != nil {
 			commandContext.SetError(err)
 			return &workflows.CollectMgmtClusterDiagnosticsTask{}
 		}

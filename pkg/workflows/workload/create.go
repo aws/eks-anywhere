@@ -12,6 +12,7 @@ import (
 
 // Create is the workflow that creates a workload clusters.
 type Create struct {
+	clientFactory    interfaces.ClientFactory
 	provider         providers.Provider
 	clusterManager   interfaces.ClusterManager
 	gitOpsManager    interfaces.GitOpsManager
@@ -28,6 +29,7 @@ func NewCreate(provider providers.Provider,
 	eksdInstaller interfaces.EksdInstaller,
 	packageInstaller interfaces.PackageInstaller,
 	clusterCreator interfaces.ClusterCreator,
+	clientFactory interfaces.ClientFactory,
 ) *Create {
 	return &Create{
 		provider:         provider,
@@ -37,12 +39,14 @@ func NewCreate(provider providers.Provider,
 		eksdInstaller:    eksdInstaller,
 		clusterCreator:   clusterCreator,
 		packageInstaller: packageInstaller,
+		clientFactory:    clientFactory,
 	}
 }
 
 // Run executes the tasks to create a workload cluster.
 func (c *Create) Run(ctx context.Context, clusterSpec *cluster.Spec, validator interfaces.Validator) error {
 	commandContext := &task.CommandContext{
+		ClientFactory:     c.clientFactory,
 		Provider:          c.provider,
 		ClusterManager:    c.clusterManager,
 		GitOpsManager:     c.gitOpsManager,

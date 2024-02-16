@@ -13,6 +13,7 @@ import (
 // Create is a schema for create cluster.
 type Create struct {
 	bootstrapper     interfaces.Bootstrapper
+	clientFactory    interfaces.ClientFactory
 	provider         providers.Provider
 	clusterManager   interfaces.ClusterManager
 	gitOpsManager    interfaces.GitOpsManager
@@ -24,7 +25,8 @@ type Create struct {
 }
 
 // NewCreate builds a new create construct.
-func NewCreate(bootstrapper interfaces.Bootstrapper, provider providers.Provider,
+func NewCreate(bootstrapper interfaces.Bootstrapper,
+	clientFactory interfaces.ClientFactory, provider providers.Provider,
 	clusterManager interfaces.ClusterManager, gitOpsManager interfaces.GitOpsManager,
 	writer filewriter.FileWriter, eksdInstaller interfaces.EksdInstaller,
 	packageInstaller interfaces.PackageInstaller,
@@ -33,6 +35,7 @@ func NewCreate(bootstrapper interfaces.Bootstrapper, provider providers.Provider
 ) *Create {
 	return &Create{
 		bootstrapper:     bootstrapper,
+		clientFactory:    clientFactory,
 		provider:         provider,
 		clusterManager:   clusterManager,
 		gitOpsManager:    gitOpsManager,
@@ -48,6 +51,7 @@ func NewCreate(bootstrapper interfaces.Bootstrapper, provider providers.Provider
 func (c *Create) Run(ctx context.Context, clusterSpec *cluster.Spec, validator interfaces.Validator) error {
 	commandContext := &task.CommandContext{
 		Bootstrapper:     c.bootstrapper,
+		ClientFactory:    c.clientFactory,
 		Provider:         c.provider,
 		ClusterManager:   c.clusterManager,
 		GitOpsManager:    c.gitOpsManager,

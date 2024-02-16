@@ -258,6 +258,7 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 			deps.EksdInstaller,
 			deps.PackageInstaller,
 			deps.ClusterCreator,
+			deps.UnAuthKubectlClient,
 		)
 		err = createWorkloadCluster.Run(ctx, clusterSpec, createValidations)
 
@@ -266,6 +267,7 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 
 		createMgmtCluster := management.NewCreate(
 			deps.Bootstrapper,
+			deps.UnAuthKubeClient,
 			deps.Provider,
 			deps.ClusterManager,
 			deps.GitOpsFlux,

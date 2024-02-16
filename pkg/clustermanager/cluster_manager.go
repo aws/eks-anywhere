@@ -1404,11 +1404,6 @@ func (c *ClusterManager) DeletePackageResources(ctx context.Context, managementC
 	return c.clusterClient.DeletePackageResources(ctx, managementCluster, clusterName)
 }
 
-// CreateNamespace creates a namespace on the target cluster if it does not already exist.
-func (c *ClusterManager) CreateNamespace(ctx context.Context, targetCluster *types.Cluster, namespace string) error {
-	return c.clusterClient.CreateNamespaceIfNotPresent(ctx, targetCluster.KubeconfigFile, namespace)
-}
-
 func (c *ClusterManager) getUpgraderImagesFromBundle(ctx context.Context, cluster *types.Cluster, cl *cluster.Spec) (*corev1.ConfigMap, error) {
 	upgraderImages := make(map[string]string)
 	for _, versionBundle := range cl.Bundles.Spec.VersionsBundles {

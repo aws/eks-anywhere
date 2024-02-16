@@ -8,6 +8,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/utils/pointer"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 )
 
@@ -41,7 +42,15 @@ func (c *UnAuthClient) Get(ctx context.Context, name, namespace, kubeconfig stri
 		return fmt.Errorf("getting kubernetes resource: %v", err)
 	}
 
-	return c.kubectl.Get(ctx, resourceType, kubeconfig, obj, &KubectlGetOptions{Name: name, Namespace: namespace})
+	var opts KubectlGetOptions
+
+	if namespace == "" {
+		opts = KubectlGetOptions{Name: name, ClusterScoped: pointer.Bool(true)}
+	} else {
+		opts = KubectlGetOptions{Name: name, Namespace: namespace}
+	}
+
+	return c.kubectl.Get(ctx, resourceType, kubeconfig, obj, &opts)
 }
 
 // KubeconfigClient returns an equivalent authenticated client.

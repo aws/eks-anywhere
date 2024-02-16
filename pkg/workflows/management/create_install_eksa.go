@@ -58,7 +58,7 @@ func (s *installEksaComponentsOnWorkloadTask) Run(ctx context.Context, commandCo
 	commandContext.ClusterSpec.Cluster.SetManagementComponentsVersion(commandContext.ClusterSpec.EKSARelease.Spec.Version)
 
 	if commandContext.ClusterSpec.Cluster.Namespace != "" {
-		if err := commandContext.ClusterManager.CreateNamespace(ctx, commandContext.WorkloadCluster, commandContext.ClusterSpec.Cluster.Namespace); err != nil {
+		if err := workflows.CreateNamespaceIfNotPresent(ctx, commandContext.ClusterSpec.Cluster.Namespace, commandContext.WorkloadCluster.KubeconfigFile, commandContext.ClientFactory); err != nil {
 			commandContext.SetError(err)
 			return &workflows.CollectMgmtClusterDiagnosticsTask{}
 		}

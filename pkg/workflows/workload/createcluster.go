@@ -15,7 +15,7 @@ func (c *createCluster) Run(ctx context.Context, commandContext *task.CommandCon
 	logger.Info("Creating workload cluster")
 
 	if commandContext.ClusterSpec.Cluster.Namespace != "" {
-		if err := commandContext.ClusterManager.CreateNamespace(ctx, commandContext.ManagementCluster, commandContext.ClusterSpec.Cluster.Namespace); err != nil {
+		if err := workflows.CreateNamespaceIfNotPresent(ctx, commandContext.ClusterSpec.Cluster.Namespace, commandContext.ManagementCluster.KubeconfigFile, commandContext.ClientFactory); err != nil {
 			commandContext.SetError(err)
 			return &workflows.CollectMgmtClusterDiagnosticsTask{}
 		}
