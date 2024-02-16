@@ -95,6 +95,10 @@ const (
 	DefaultNodeStartupTimeout = 10 * time.Minute
 	// DefaultTinkerbellNodeStartupTimeout is the default node start up timeout for Tinkerbell.
 	DefaultTinkerbellNodeStartupTimeout = 20 * time.Minute
+	// DefaultMaxUnhealthy is the default maxUnhealthy value for machine health checks.
+	DefaultMaxUnhealthy = "100%"
+	// DefaultWorkerMaxUnhealthy is the default maxUnhealthy value for worker node machine health checks.
+	DefaultWorkerMaxUnhealthy = "40%"
 )
 
 type Operation int

@@ -71,7 +71,6 @@ func init() {
 	upgradeClusterCmd.Flags().BoolVar(&uc.forceClean, "force-cleanup", false, "Force deletion of previously created bootstrap cluster")
 	hideForceCleanup(upgradeClusterCmd.Flags())
 	upgradeClusterCmd.Flags().StringArrayVar(&uc.skipValidations, "skip-validations", []string{}, fmt.Sprintf("Bypass upgrade validations by name. Valid arguments you can pass are --skip-validations=%s", strings.Join(upgradevalidations.SkippableValidations[:], ",")))
-
 	aflag.MarkRequired(createClusterCmd.Flags(), aflag.ClusterConfig.Name)
 	tinkerbellFlags(upgradeClusterCmd.Flags(), uc.providerOptions.Tinkerbell.BMCOptions.RPC)
 }

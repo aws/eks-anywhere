@@ -1,6 +1,10 @@
 package config
 
-import "time"
+import (
+	"time"
+
+	"k8s.io/apimachinery/pkg/util/intstr"
+)
 
 const (
 	EksaGitPassphraseTokenEnv = "EKSA_GIT_SSH_KEY_PASSPHRASE"
@@ -26,12 +30,16 @@ type CreateClusterCLIConfig struct {
 	SkipCPIPCheck           bool
 	NodeStartupTimeout      time.Duration
 	UnhealthyMachineTimeout time.Duration
+	MaxUnhealthy            intstr.IntOrString
+	WorkerMaxUnhealthy      intstr.IntOrString
 }
 
-// UpgradeClusterCLIConfig is the config we use for create cluster specific configurations.
+// UpgradeClusterCLIConfig is the config we use for upgrade cluster specific configurations.
 type UpgradeClusterCLIConfig struct {
 	NodeStartupTimeout      time.Duration
 	UnhealthyMachineTimeout time.Duration
+	MaxUnhealthy            intstr.IntOrString
+	WorkerMaxUnhealthy      intstr.IntOrString
 }
 
 // DeleteClusterCLIConfig is the config we use for delete cluster specific configurations.
