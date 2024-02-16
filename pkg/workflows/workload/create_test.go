@@ -9,9 +9,14 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
+	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	clientmocks "github.com/aws/eks-anywhere/pkg/clients/kubernetes/mocks"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/features"
 	writermocks "github.com/aws/eks-anywhere/pkg/filewriter/mocks"
@@ -39,6 +44,8 @@ type createTestSetup struct {
 	workloadCluster      *types.Cluster
 	workload             *workload.Create
 	managementComponents *cluster.ManagementComponents
+	client               *clientmocks.MockClient
+	clientFactory        *mocks.MockClientFactory
 }
 
 func newCreateTest(t *testing.T) *createTestSetup {
@@ -55,6 +62,8 @@ func newCreateTest(t *testing.T) *createTestSetup {
 	datacenterConfig := &v1alpha1.VSphereDatacenterConfig{}
 	machineConfigs := []providers.MachineConfig{&v1alpha1.VSphereMachineConfig{}}
 	clusterUpgrader := mocks.NewMockClusterCreator(mockCtrl)
+	client := clientmocks.NewMockClient(mockCtrl)
+	clientFactory := mocks.NewMockClientFactory(mockCtrl)
 
 	validator := mocks.NewMockValidator(mockCtrl)
 
@@ -71,6 +80,7 @@ func newCreateTest(t *testing.T) *createTestSetup {
 		eksdInstaller,
 		packageInstaller,
 		clusterUpgrader,
+		clientFactory,
 	)
 
 	for _, e := range featureEnvVars {
@@ -99,6 +109,8 @@ func newCreateTest(t *testing.T) *createTestSetup {
 		}),
 		workloadCluster:      &types.Cluster{Name: "workload"},
 		managementComponents: managementComponents,
+		clientFactory:        clientFactory,
+		client:               client,
 	}
 }
 
@@ -108,9 +120,23 @@ func (c *createTestSetup) expectSetup() {
 	c.gitOpsManager.EXPECT().Validations(c.ctx, c.clusterSpec)
 }
 
+func (c *createTestSetup) expectCreateNamespace() {
+	n := c.clusterSpec.Cluster.Namespace
+	ns := &corev1.Namespace{
+		TypeMeta: v1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "Namespace",
+		},
+		ObjectMeta: v1.ObjectMeta{Name: n},
+	}
+	c.client.EXPECT().Get(c.ctx, n, "", &corev1.Namespace{}).Return(apierrors.NewNotFound(schema.GroupResource{Group: "", Resource: ""}, "")).MaxTimes(2)
+	c.client.EXPECT().Create(c.ctx, ns).MaxTimes(2)
+}
+
 func (c *createTestSetup) expectCreateWorkloadCluster(err1, err2 error) {
-	c.clusterManager.EXPECT().CreateNamespace(c.ctx, c.clusterSpec.ManagementCluster, c.clusterSpec.Cluster.Namespace).Return(err1)
+	c.clientFactory.EXPECT().BuildClientFromKubeconfig(c.clusterSpec.ManagementCluster.KubeconfigFile).Return(c.client, err1)
 	c.clusterCreator.EXPECT().CreateSync(c.ctx, c.clusterSpec, c.clusterSpec.ManagementCluster).Return(c.workloadCluster, err2)
+	c.expectCreateNamespace()
 }
 
 func (c *createTestSetup) expectWriteWorkloadClusterConfig(err error) {
@@ -200,7 +226,7 @@ func TestCreateNamespaceFail(t *testing.T) {
 	test.expectPreflightValidationsToPass()
 	test.expectDatacenterConfig()
 	test.expectMachineConfigs()
-	test.clusterManager.EXPECT().CreateNamespace(test.ctx, test.clusterSpec.ManagementCluster, test.clusterSpec.Cluster.Namespace).Return(fmt.Errorf(""))
+	test.clientFactory.EXPECT().BuildClientFromKubeconfig(test.clusterSpec.ManagementCluster.KubeconfigFile).Return(test.client, fmt.Errorf(""))
 	test.expectSaveLogsManagement()
 
 	err := test.run()

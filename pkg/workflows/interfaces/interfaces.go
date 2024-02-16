@@ -57,7 +57,6 @@ type ClusterManager interface {
 	GenerateAWSIAMKubeconfig(ctx context.Context, cluster *types.Cluster) error
 	DeletePackageResources(ctx context.Context, managementCluster *types.Cluster, clusterName string) error
 	CreateRegistryCredSecret(ctx context.Context, mgmt *types.Cluster) error
-	CreateNamespace(ctx context.Context, targetCluster *types.Cluster, namespace string) error
 }
 
 type GitOpsManager interface {
