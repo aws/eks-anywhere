@@ -102,9 +102,6 @@ func (c *deleteTestSetup) expectSaveLogsWorkload() {
 
 func (c *deleteTestSetup) expectCleanup(err error) {
 	c.gitopsManager.EXPECT().CleanupGitRepo(c.ctx, c.clusterSpec).Return(err)
-	if err == nil {
-		c.writer.EXPECT().CleanUp()
-	}
 }
 
 func TestDeleteRunSuccess(t *testing.T) {

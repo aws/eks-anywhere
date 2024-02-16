@@ -8,7 +8,6 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
@@ -464,14 +463,8 @@ func (r *ClusterReconciler) updateStatus(ctx context.Context, log logr.Logger, c
 }
 
 func (r *ClusterReconciler) reconcileDelete(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) (ctrl.Result, error) {
-	if cluster.IsSelfManaged() {
+	if cluster.IsSelfManaged() && !cluster.IsManagedByCLI() {
 		return ctrl.Result{}, errors.New("deleting self-managed clusters is not supported")
-	}
-
-	if metav1.HasAnnotation(cluster.ObjectMeta, anywherev1.ManagedByCLIAnnotation) {
-		log.Info("Clusters is managed by CLI, removing finalizer")
-		controllerutil.RemoveFinalizer(cluster, ClusterFinalizerName)
-		return ctrl.Result{}, nil
 	}
 
 	if cluster.IsReconcilePaused() {

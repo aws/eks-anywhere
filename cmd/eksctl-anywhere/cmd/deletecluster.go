@@ -13,7 +13,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
-	"github.com/aws/eks-anywhere/pkg/workflows"
+	"github.com/aws/eks-anywhere/pkg/workflows/management"
 	"github.com/aws/eks-anywhere/pkg/workflows/workload"
 )
 
@@ -123,6 +123,9 @@ func (dc *deleteClusterOptions) deleteCluster(ctx context.Context) error {
 		WithWriter().
 		WithDeleteClusterDefaulter(deleteCLIConfig).
 		WithClusterDeleter().
+		WithEksdInstaller().
+		WithEKSAInstaller().
+		WithUnAuthKubeClient().
 		Build(ctx)
 	if err != nil {
 		return err
@@ -133,14 +136,6 @@ func (dc *deleteClusterOptions) deleteCluster(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-
-	deleteCluster := workflows.NewDelete(
-		deps.Bootstrapper,
-		deps.Provider,
-		deps.ClusterManager,
-		deps.GitOpsFlux,
-		deps.Writer,
-	)
 
 	var cluster *types.Cluster
 	if clusterSpec.ManagementCluster == nil {
@@ -159,7 +154,8 @@ func (dc *deleteClusterOptions) deleteCluster(ctx context.Context) error {
 		deleteWorkload := workload.NewDelete(deps.Provider, deps.Writer, deps.ClusterManager, deps.ClusterDeleter, deps.GitOpsFlux)
 		err = deleteWorkload.Run(ctx, cluster, clusterSpec)
 	} else {
-		err = deleteCluster.Run(ctx, cluster, clusterSpec, dc.forceCleanup, dc.managementKubeconfig)
+		deleteManagement := management.NewDelete(deps.Bootstrapper, deps.Provider, deps.Writer, deps.ClusterManager, deps.GitOpsFlux, deps.ClusterDeleter, deps.EksdInstaller, deps.EksaInstaller, deps.UnAuthKubeClient)
+		err = deleteManagement.Run(ctx, cluster, clusterSpec)
 	}
 	cleanup(deps, &err)
 	return err

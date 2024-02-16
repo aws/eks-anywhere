@@ -10,7 +10,6 @@ import (
 
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aws/eks-anywhere/internal/test"
