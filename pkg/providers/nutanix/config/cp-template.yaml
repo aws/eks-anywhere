@@ -44,6 +44,13 @@ spec:
     apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
     kind: NutanixCluster
     name: "{{.clusterName}}"
+{{- if .externalEtcd }}
+  managedExternalEtcdRef:
+    apiVersion: etcdcluster.cluster.x-k8s.io/v1beta1
+    kind: EtcdadmCluster
+    name: "{{.clusterName}}-etcd"
+    namespace: "{{.eksaSystemNamespace}}"
+{{- end }}
 ---
 apiVersion: controlplane.cluster.x-k8s.io/v1beta1
 kind: KubeadmControlPlane
@@ -387,6 +394,121 @@ spec:
 {{- range .additionalCategories}}
         - key:   "{{ .Key }}"
           value: "{{ .Value }}"
+{{- end }}
+{{- end }}
+{{- if .externalEtcd }}
+---
+kind: EtcdadmCluster
+apiVersion: etcdcluster.cluster.x-k8s.io/v1beta1
+metadata:
+  name: "{{.clusterName}}-etcd"
+  namespace: "{{.eksaSystemNamespace}}"
+spec:
+  replicas: {{.externalEtcdReplicas}}
+  etcdadmConfigSpec:
+    etcdadmBuiltin: true
+    format: {{.format}}
+{{- if .etcdNtpServers }}
+    ntp:
+      enabled: true
+      servers: {{ range .etcdNtpServers }}
+      - {{ . }}
+      {{- end }}
+{{- end }}
+    cloudInitConfig:
+      version: {{.externalEtcdVersion}}
+      installDir: "/usr/bin"
+{{- if .externalEtcdReleaseUrl }}
+      etcdReleaseURL: {{.externalEtcdReleaseUrl}}
+{{- end }}
+    preEtcdadmCommands:
+      - hostname "{{`{{ ds.meta_data.hostname }}`}}"
+      - echo "::1         ipv6-localhost ipv6-loopback" >/etc/hosts
+      - echo "127.0.0.1   localhost" >>/etc/hosts
+      - echo "127.0.0.1   {{`{{ ds.meta_data.hostname }}`}}" >>/etc/hosts
+      - echo "{{`{{ ds.meta_data.hostname }}`}}" >/etc/hostname
+{{- if .etcdCipherSuites }}
+    cipherSuites: {{.etcdCipherSuites}}
+{{- end }}
+    users:
+      - name: "{{.etcdSshUsername}}"
+        sshAuthorizedKeys:
+          - "{{.etcdSshAuthorizedKey}}"
+        sudo: ALL=(ALL) NOPASSWD:ALL
+{{- if .proxyConfig }}
+    proxy:
+      httpProxy: {{ .httpProxy }}
+      httpsProxy: {{ .httpsProxy }}
+      noProxy: {{ range .noProxy }}
+        - {{ . }}
+      {{- end }}
+{{- end }}
+{{- if .registryMirrorMap }}
+    registryMirror:
+      endpoint: {{ .publicMirror }}
+      {{- if .registryCACert }}
+      caCert: |
+{{ .registryCACert | indent 8 }}
+      {{- end }}
+{{- end }}
+  infrastructureTemplate:
+    apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+    kind: NutanixMachineTemplate
+    name: "{{.etcdTemplateName}}"
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: NutanixMachineTemplate
+metadata:
+  name: "{{.etcdTemplateName}}"
+  namespace: "{{.eksaSystemNamespace}}"
+spec:
+  template:
+    spec:
+      providerID: "nutanix://{{.clusterName}}-m1"
+      vcpusPerSocket: {{.etcdVCPUsPerSocket}}
+      vcpuSockets: {{.etcdVcpuSockets}}
+      memorySize: {{.etcdMemorySize}}
+      systemDiskSize: {{.etcdSystemDiskSize}}
+      image:
+{{- if (eq .etcdImageIDType "name") }}
+        type: name
+        name: "{{.etcdImageName}}"
+{{ else if (eq .etcdImageIDType "uuid") }}
+        type: uuid
+        uuid: "{{.etcdImageUUID}}"
+{{ end }}
+      cluster:
+{{- if (eq .etcdNutanixPEClusterIDType "name") }}
+        type: name
+        name: "{{.etcdNutanixPEClusterName}}"
+{{- else if (eq .etcdNutanixPEClusterIDType "uuid") }}
+        type: uuid
+        uuid: "{{.etcdNutanixPEClusterUUID}}"
+{{ end }}
+      subnet:
+{{- if (eq .etcdSubnetIDType "name") }}
+        - type: name
+          name: "{{.etcdSubnetName}}"
+{{- else if (eq .etcdSubnetIDType "uuid") }}
+        - type: uuid
+          uuid: "{{.etcdSubnetUUID}}"
+{{ end }}
+{{- if .etcdProjectIDType}}
+      project:
+{{- if (eq .etcdProjectIDType "name") }}
+        type: name
+        name: "{{.etcdProjectName}}"
+{{- else if (eq .etcdProjectIDType "uuid") }}
+        type: uuid
+        uuid: "{{.etcdProjectUUID}}"
+{{ end }}
+{{ end }}
+{{- if .etcdAdditionalCategories}}
+      additionalCategories:
+{{- range .etcdAdditionalCategories}}
+        - key:   "{{ .Key }}"
+          value: "{{ .Value }}"
+{{- end }}
 {{- end }}
 {{- end }}
 ---
