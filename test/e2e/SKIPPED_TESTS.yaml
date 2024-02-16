@@ -11,13 +11,14 @@ skipped_tests:
 - TestCloudStackKubernetes128RedhatProxyConfigAPI
 
 # MultiEndpoint
-- TestCloudStackKubernetes123MultiEndpointSimpleFlow
-- TestCloudStackKubernetes124MultiEndpointSimpleFlow
 - TestCloudStackKubernetes125MultiEndpointSimpleFlow
 - TestCloudStackKubernetes126MultiEndpointSimpleFlow
 - TestCloudStackKubernetes127MultiEndpointSimpleFlow
 - TestCloudStackKubernetes128MultiEndpointSimpleFlow
 - TestCloudStackKubernetes129MultiEndpointSimpleFlow
+
+# Side effects
+- TestCloudStackKubernetes129WithOIDCManagementClusterUpgradeFromLatestSideEffects
 
 # Nutanix
 
@@ -55,15 +56,12 @@ skipped_tests:
 - TestTinkerbellKubernetes126UbuntuExternalEtcdSimpleFlow
 # Skipping skip power action tests - Not going to work because e2e test powers on CP and worker node at the same time and worker node times out early waiting for ipxe
 # Skipping a few redundant tests
-- TestTinkerbellKubernetes123RedHatSimpleFlow
 - TestTinkerbellKubernetes125RedHatSimpleFlow
 - TestTinkerbellKubernetes126RedHatSimpleFlow
 - TestTinkerbellKubernetes127RedHatSimpleFlow
 - TestTinkerbellKubernetes128RedHatSimpleFlow
-- TestTinkerbellKubernetes123UbuntuSimpleFlow
 - TestTinkerbellKubernetes125UbuntuSimpleFlow
 - TestTinkerbellKubernetes126UbuntuSimpleFlow
-- TestTinkerbellKubernetes123Ubuntu2204SimpleFlow
 - TestTinkerbellKubernetes125Ubuntu2204SimpleFlow
 - TestTinkerbellKubernetes126Ubuntu2204SimpleFlow
 - TestTinkerbellKubernetes125To126Ubuntu2204Upgrade
@@ -92,9 +90,6 @@ skipped_tests:
 - TestTinkerbellKubernetes129UbuntuCuratedPackagesAdotSimpleFlow
 - TestTinkerbellKubernetes129UbuntuCuratedPackagesPrometheusSimpleFlow
 - TestTinkerbellKubernetes129UbuntuCuratedPackagesClusterAutoscalerSimpleFlow
-
-# Conformance
-- TestSnowKubernetes123ThreeWorkersConformanceFlow
 
 # Skipping 1.29 curated packages tests until we add support
 - TestCloudStackKubernetes129RedhatCuratedPackagesSimpleFlow
