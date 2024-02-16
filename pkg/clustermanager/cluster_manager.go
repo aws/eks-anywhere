@@ -1375,6 +1375,19 @@ func (c *ClusterManager) RemoveManagedByCLIAnnotationForCluster(ctx context.Cont
 	return nil
 }
 
+// AddManagedByCLIAnnotationForCluster removes the managed-by-cli annotation from the cluster.
+func (c *ClusterManager) AddManagedByCLIAnnotationForCluster(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, provider providers.Provider) error {
+	err := c.clusterClient.UpdateAnnotationInNamespace(ctx, clusterSpec.Cluster.ResourceType(),
+		cluster.Name,
+		map[string]string{v1alpha1.ManagedByCLIAnnotation: "true"},
+		cluster,
+		clusterSpec.Cluster.Namespace)
+	if err != nil {
+		return fmt.Errorf("adding managed by CLI annotation after apply cluster spec: %v", err)
+	}
+	return nil
+}
+
 func (c *ClusterManager) applyResource(ctx context.Context, cluster *types.Cluster, resourcesSpec []byte) error {
 	err := c.clusterClient.ApplyKubeSpecFromBytes(ctx, cluster, resourcesSpec)
 	if err != nil {
