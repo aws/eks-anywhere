@@ -112,6 +112,17 @@ spec:
           name: awsiamcert
           readOnly: false
 {{- end}}
+{{- if .encryptionProviderConfig }}
+        - hostPath: /etc/kubernetes/enc/encryption-config.yaml
+          mountPath: /etc/kubernetes/enc/encryption-config.yaml
+          name: encryption-config
+          pathType: File
+          readOnly: false
+        - hostPath: /var/run/kmsplugin/
+          mountPath: /var/run/kmsplugin/
+          name: kms-plugin
+          readOnly: false
+{{- end }}
       controllerManager:
         extraArgs:
           cloud-provider: external
@@ -132,6 +143,12 @@ spec:
           imageTag: {{.etcdImageTag}}
 {{- end }}
     files:
+{{- if .encryptionProviderConfig }}
+    - content: |
+{{ .encryptionProviderConfig | indent 8}}
+      owner: root:root
+      path: /etc/kubernetes/enc/encryption-config.yaml
+{{- end }}
     - content: |
         apiVersion: v1
         kind: Pod
