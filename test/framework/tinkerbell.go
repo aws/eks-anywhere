@@ -379,6 +379,11 @@ func Ubuntu128ImageForWorker() api.TinkerbellFiller {
 	return imageForKubeVersionAndOS(anywherev1.Kube128, Ubuntu2004, workerIdentifier)
 }
 
+// Ubuntu129ImageForWorker represents an Ubuntu raw image corresponding to Kubernetes 1.29 and is set for worker machine config.
+func Ubuntu129ImageForWorker() api.TinkerbellFiller {
+	return imageForKubeVersionAndOS(anywherev1.Kube129, Ubuntu2004, workerIdentifier)
+}
+
 // Ubuntu2204Kubernetes126Image represents an Ubuntu 22.04 raw image corresponding to Kubernetes 1.26.
 func Ubuntu2204Kubernetes126Image() api.TinkerbellFiller {
 	return imageForKubeVersionAndOS(anywherev1.Kube126, Ubuntu2204, "")

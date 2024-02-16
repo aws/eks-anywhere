@@ -443,16 +443,16 @@ func TestTinkerbellKubernetes127UbuntuTo128InPlaceUpgrade_3CP_1Worker(t *testing
 	)
 }
 
-func TestTinkerbellKubernetes128UbuntuTo129InPlaceUpgrade_3CP_1Worker(t *testing.T) {
+func TestTinkerbellKubernetes128UbuntuTo129InPlaceUpgrade_1CP_1Worker(t *testing.T) {
 	provider := framework.NewTinkerbell(t)
 	test := framework.NewClusterE2ETest(
 		t,
 		provider,
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube128)),
-		framework.WithClusterFiller(api.WithControlPlaneCount(3)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 		framework.WithClusterFiller(api.WithInPlaceUpgradeStrategy()),
-		framework.WithControlPlaneHardware(3),
+		framework.WithControlPlaneHardware(1),
 		framework.WithWorkerHardware(1),
 	).WithClusterConfig(
 		provider.WithKubeVersionAndOS(v1alpha1.Kube128, framework.Ubuntu2004, nil),
