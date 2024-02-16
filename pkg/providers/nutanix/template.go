@@ -300,7 +300,6 @@ func buildTemplateMapCP(
 	if etcdURL != "" {
 		values["externalEtcdReleaseUrl"] = etcdURL
 	}
-	
 	if clusterSpec.Cluster.Spec.EtcdEncryption != nil && len(*clusterSpec.Cluster.Spec.EtcdEncryption) != 0 {
 		conf, err := common.GenerateKMSEncryptionConfiguration(clusterSpec.Cluster.Spec.EtcdEncryption)
 		if err != nil {
