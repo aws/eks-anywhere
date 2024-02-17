@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
 	tinkerbellv1 "github.com/tinkerbell/cluster-api-provider-tinkerbell/api/v1beta1"
 	corev1 "k8s.io/api/core/v1"
@@ -22,6 +23,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	"github.com/aws/eks-anywhere/controllers"
+	"github.com/aws/eks-anywhere/controllers/mocks"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
 )
@@ -47,6 +49,8 @@ type cpUpgradeObjects struct {
 func TestCPUpgradeReconcile(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
+	ctrl := gomock.NewController(t)
+	clientRegistry := mocks.NewMockRemoteClientRegistry(ctrl)
 	testObjs := getObjectsForCPUpgradeTest()
 	for i := range testObjs.nodeUpgrades {
 		testObjs.nodeUpgrades[i].Name = fmt.Sprintf("%s-node-upgrader", testObjs.machines[i].Name)
@@ -60,7 +64,10 @@ func TestCPUpgradeReconcile(t *testing.T) {
 		testObjs.nodeUpgrades[0], testObjs.nodeUpgrades[1], testObjs.kubeadmConfigs[0], testObjs.kubeadmConfigs[1], testObjs.infraMachines[0], testObjs.infraMachines[1],
 	}
 	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
-	r := controllers.NewControlPlaneUpgradeReconciler(client)
+	kcp := testObjs.cpUpgrade.Spec.ControlPlane
+	clientRegistry.EXPECT().GetClient(ctx, types.NamespacedName{Name: kcp.Name, Namespace: kcp.Namespace}).Return(client, nil)
+
+	r := controllers.NewControlPlaneUpgradeReconciler(client, clientRegistry)
 	req := cpUpgradeRequest(testObjs.cpUpgrade)
 	_, err := r.Reconcile(ctx, req)
 	g.Expect(err).ToNot(HaveOccurred())
@@ -73,6 +80,8 @@ func TestCPUpgradeReconcile(t *testing.T) {
 func TestCPUpgradeReconcileEarly(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
+	ctrl := gomock.NewController(t)
+	clientRegistry := mocks.NewMockRemoteClientRegistry(ctrl)
 	testObjs := getObjectsForCPUpgradeTest()
 	for i := range testObjs.nodeUpgrades {
 		testObjs.nodeUpgrades[i].Name = fmt.Sprintf("%s-node-upgrader", testObjs.machines[i].Name)
@@ -86,7 +95,9 @@ func TestCPUpgradeReconcileEarly(t *testing.T) {
 		testObjs.nodeUpgrades[0], testObjs.nodeUpgrades[1], testObjs.kubeadmConfigs[0], testObjs.kubeadmConfigs[1], testObjs.infraMachines[0], testObjs.infraMachines[1],
 	}
 	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
-	r := controllers.NewControlPlaneUpgradeReconciler(client)
+	clientRegistry.EXPECT().GetClient(ctx, types.NamespacedName{Name: "my-cp", Namespace: "eksa-system"}).Return(client, nil)
+
+	r := controllers.NewControlPlaneUpgradeReconciler(client, clientRegistry)
 	req := cpUpgradeRequest(testObjs.cpUpgrade)
 	_, err := r.Reconcile(ctx, req)
 	g.Expect(err).ToNot(HaveOccurred())
@@ -99,6 +110,8 @@ func TestCPUpgradeReconcileEarly(t *testing.T) {
 func TestCPUpgradeReconcileNodeNotUpgraded(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
+	ctrl := gomock.NewController(t)
+	clientRegistry := mocks.NewMockRemoteClientRegistry(ctrl)
 	testObjs := getObjectsForCPUpgradeTest()
 	for i := range testObjs.nodeUpgrades {
 		testObjs.nodeUpgrades[i].Name = fmt.Sprintf("%s-node-upgrader", testObjs.machines[i].Name)
@@ -111,7 +124,10 @@ func TestCPUpgradeReconcileNodeNotUpgraded(t *testing.T) {
 		testObjs.nodeUpgrades[0], testObjs.nodeUpgrades[1], testObjs.kubeadmConfigs[0], testObjs.kubeadmConfigs[1], testObjs.infraMachines[0], testObjs.infraMachines[1],
 	}
 	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
-	r := controllers.NewControlPlaneUpgradeReconciler(client)
+	kcp := testObjs.cpUpgrade.Spec.ControlPlane
+	clientRegistry.EXPECT().GetClient(ctx, types.NamespacedName{Name: kcp.Name, Namespace: kcp.Namespace}).Return(client, nil)
+
+	r := controllers.NewControlPlaneUpgradeReconciler(client, clientRegistry)
 	req := cpUpgradeRequest(testObjs.cpUpgrade)
 	_, err := r.Reconcile(ctx, req)
 	g.Expect(err).ToNot(HaveOccurred())
@@ -124,6 +140,8 @@ func TestCPUpgradeReconcileNodeNotUpgraded(t *testing.T) {
 func TestCPUpgradeReconcileNodeUpgradeEnsureStatusUpdated(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
+	ctrl := gomock.NewController(t)
+	clientRegistry := mocks.NewMockRemoteClientRegistry(ctrl)
 	testObjs := getObjectsForCPUpgradeTest()
 
 	objs := []runtime.Object{
@@ -131,7 +149,10 @@ func TestCPUpgradeReconcileNodeUpgradeEnsureStatusUpdated(t *testing.T) {
 		testObjs.kubeadmConfigs[0], testObjs.kubeadmConfigs[1], testObjs.infraMachines[0], testObjs.infraMachines[1],
 	}
 	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
-	r := controllers.NewControlPlaneUpgradeReconciler(client)
+	kcp := testObjs.cpUpgrade.Spec.ControlPlane
+	clientRegistry.EXPECT().GetClient(ctx, types.NamespacedName{Name: kcp.Name, Namespace: kcp.Namespace}).Return(client, nil)
+
+	r := controllers.NewControlPlaneUpgradeReconciler(client, clientRegistry)
 	req := cpUpgradeRequest(testObjs.cpUpgrade)
 	_, err := r.Reconcile(ctx, req)
 	g.Expect(err).ToNot(HaveOccurred())
@@ -147,6 +168,8 @@ func TestCPUpgradeReconcileNodeUpgradeEnsureStatusUpdated(t *testing.T) {
 func TestCPUpgradeReconcileNodeUpgraderCreate(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
+	ctrl := gomock.NewController(t)
+	clientRegistry := mocks.NewMockRemoteClientRegistry(ctrl)
 	testObjs := getObjectsForCPUpgradeTest()
 	for i := range testObjs.nodeUpgrades {
 		testObjs.nodeUpgrades[i].Name = fmt.Sprintf("%s-node-upgrader", testObjs.machines[i].Name)
@@ -159,7 +182,10 @@ func TestCPUpgradeReconcileNodeUpgraderCreate(t *testing.T) {
 		testObjs.nodeUpgrades[0], testObjs.kubeadmConfigs[0], testObjs.kubeadmConfigs[1], testObjs.infraMachines[0], testObjs.infraMachines[1],
 	}
 	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
-	r := controllers.NewControlPlaneUpgradeReconciler(client)
+	kcp := testObjs.cpUpgrade.Spec.ControlPlane
+	clientRegistry.EXPECT().GetClient(ctx, types.NamespacedName{Name: kcp.Name, Namespace: kcp.Namespace}).Return(client, nil)
+
+	r := controllers.NewControlPlaneUpgradeReconciler(client, clientRegistry)
 	req := cpUpgradeRequest(testObjs.cpUpgrade)
 	_, err := r.Reconcile(ctx, req)
 	g.Expect(err).ToNot(HaveOccurred())
@@ -171,6 +197,8 @@ func TestCPUpgradeReconcileNodeUpgraderCreate(t *testing.T) {
 func TestCPUpgradeReconcileNodeUpgraderInvalidKCPSpec(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
+	ctrl := gomock.NewController(t)
+	clientRegistry := mocks.NewMockRemoteClientRegistry(ctrl)
 	testObjs := getObjectsForCPUpgradeTest()
 	for i := range testObjs.nodeUpgrades {
 		testObjs.nodeUpgrades[i].Name = fmt.Sprintf("%s-node-upgrader", testObjs.machines[i].Name)
@@ -202,7 +230,10 @@ func TestCPUpgradeReconcileNodeUpgraderInvalidKCPSpec(t *testing.T) {
 				testObjs.cpUpgrade, testObjs.nodeUpgrades[0], testObjs.kubeadmConfigs[0], testObjs.kubeadmConfigs[1], testObjs.infraMachines[0], testObjs.infraMachines[1],
 			}
 			client := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
-			r := controllers.NewControlPlaneUpgradeReconciler(client)
+			kcp := testObjs.cpUpgrade.Spec.ControlPlane
+			clientRegistry.EXPECT().GetClient(ctx, types.NamespacedName{Name: kcp.Name, Namespace: kcp.Namespace}).Return(client, nil)
+
+			r := controllers.NewControlPlaneUpgradeReconciler(client, clientRegistry)
 			req := cpUpgradeRequest(testObjs.cpUpgrade)
 			_, err := r.Reconcile(ctx, req)
 			g.Expect(err).To(HaveOccurred())
@@ -214,6 +245,8 @@ func TestCPUpgradeReconcileNodeUpgraderInvalidKCPSpec(t *testing.T) {
 func TestCPUpgradeReconcileNodesNotReadyYet(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
+	ctrl := gomock.NewController(t)
+	clientRegistry := mocks.NewMockRemoteClientRegistry(ctrl)
 
 	testObjs := getObjectsForCPUpgradeTest()
 	for i := range testObjs.nodeUpgrades {
@@ -231,7 +264,10 @@ func TestCPUpgradeReconcileNodesNotReadyYet(t *testing.T) {
 		testObjs.nodeUpgrades[0], testObjs.nodeUpgrades[1], testObjs.kubeadmConfigs[0], testObjs.kubeadmConfigs[1], testObjs.infraMachines[0], testObjs.infraMachines[1],
 	}
 	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
-	r := controllers.NewControlPlaneUpgradeReconciler(client)
+	kcp := testObjs.cpUpgrade.Spec.ControlPlane
+	clientRegistry.EXPECT().GetClient(ctx, types.NamespacedName{Name: kcp.Name, Namespace: kcp.Namespace}).Return(client, nil)
+
+	r := controllers.NewControlPlaneUpgradeReconciler(client, clientRegistry)
 
 	req := cpUpgradeRequest(testObjs.cpUpgrade)
 	_, err := r.Reconcile(ctx, req)
@@ -242,6 +278,8 @@ func TestCPUpgradeReconcileNodesNotReadyYet(t *testing.T) {
 func TestCPUpgradeReconcileDelete(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
+	ctrl := gomock.NewController(t)
+	clientRegistry := mocks.NewMockRemoteClientRegistry(ctrl)
 	now := metav1.Now()
 
 	testObjs := getObjectsForCPUpgradeTest()
@@ -257,7 +295,8 @@ func TestCPUpgradeReconcileDelete(t *testing.T) {
 		testObjs.nodeUpgrades[0], testObjs.nodeUpgrades[1], testObjs.kubeadmConfigs[0], testObjs.kubeadmConfigs[1], testObjs.infraMachines[0], testObjs.infraMachines[1],
 	}
 	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
-	r := controllers.NewControlPlaneUpgradeReconciler(client)
+
+	r := controllers.NewControlPlaneUpgradeReconciler(client, clientRegistry)
 	req := cpUpgradeRequest(testObjs.cpUpgrade)
 	_, err := r.Reconcile(ctx, req)
 	g.Expect(err).ToNot(HaveOccurred())
@@ -270,6 +309,8 @@ func TestCPUpgradeReconcileDelete(t *testing.T) {
 func TestCPUpgradeObjectDoesNotExist(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
+	ctrl := gomock.NewController(t)
+	clientRegistry := mocks.NewMockRemoteClientRegistry(ctrl)
 
 	testObjs := getObjectsForCPUpgradeTest()
 	for i := range testObjs.nodeUpgrades {
@@ -283,7 +324,8 @@ func TestCPUpgradeObjectDoesNotExist(t *testing.T) {
 		testObjs.nodeUpgrades[0], testObjs.nodeUpgrades[1], testObjs.kubeadmConfigs[0], testObjs.kubeadmConfigs[1], testObjs.infraMachines[0], testObjs.infraMachines[1],
 	}
 	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
-	r := controllers.NewControlPlaneUpgradeReconciler(client)
+
+	r := controllers.NewControlPlaneUpgradeReconciler(client, clientRegistry)
 
 	req := cpUpgradeRequest(testObjs.cpUpgrade)
 	_, err := r.Reconcile(ctx, req)
@@ -293,6 +335,8 @@ func TestCPUpgradeObjectDoesNotExist(t *testing.T) {
 func TestCPUpgradeReconcileUpdateCapiMachineVersion(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
+	ctrl := gomock.NewController(t)
+	clientRegistry := mocks.NewMockRemoteClientRegistry(ctrl)
 
 	testObjs := getObjectsForCPUpgradeTest()
 	for i := range testObjs.nodeUpgrades {
@@ -307,7 +351,10 @@ func TestCPUpgradeReconcileUpdateCapiMachineVersion(t *testing.T) {
 	}
 	testObjs.nodeUpgrades[0].Status.Completed = true
 	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
-	r := controllers.NewControlPlaneUpgradeReconciler(client)
+	kcp := testObjs.cpUpgrade.Spec.ControlPlane
+	clientRegistry.EXPECT().GetClient(ctx, types.NamespacedName{Name: kcp.Name, Namespace: kcp.Namespace}).Return(client, nil)
+
+	r := controllers.NewControlPlaneUpgradeReconciler(client, clientRegistry)
 
 	req := cpUpgradeRequest(testObjs.cpUpgrade)
 	_, err := r.Reconcile(ctx, req)
@@ -321,6 +368,8 @@ func TestCPUpgradeReconcileUpdateCapiMachineVersion(t *testing.T) {
 func TestCPUpgradeReconcileUpdateKubeadmConfigSuccess(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
+	ctrl := gomock.NewController(t)
+	clientRegistry := mocks.NewMockRemoteClientRegistry(ctrl)
 
 	testObjs := getObjectsForCPUpgradeTest()
 	kubeVipCm := generateKubeVipConfigMap()
@@ -336,7 +385,10 @@ func TestCPUpgradeReconcileUpdateKubeadmConfigSuccess(t *testing.T) {
 	}
 	testObjs.nodeUpgrades[0].Status.Completed = true
 	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
-	r := controllers.NewControlPlaneUpgradeReconciler(client)
+	kcp := testObjs.cpUpgrade.Spec.ControlPlane
+	clientRegistry.EXPECT().GetClient(ctx, types.NamespacedName{Name: kcp.Name, Namespace: kcp.Namespace}).Return(client, nil)
+
+	r := controllers.NewControlPlaneUpgradeReconciler(client, clientRegistry)
 
 	req := cpUpgradeRequest(testObjs.cpUpgrade)
 	_, err := r.Reconcile(ctx, req)
@@ -370,6 +422,8 @@ func TestCPUpgradeReconcileUpdateKubeadmConfigSuccess(t *testing.T) {
 func TestCPUpgradeReconcileUpdateKubeadmConfigRefNil(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
+	ctrl := gomock.NewController(t)
+	clientRegistry := mocks.NewMockRemoteClientRegistry(ctrl)
 
 	testObjs := getObjectsForCPUpgradeTest()
 	for i := range testObjs.nodeUpgrades {
@@ -387,7 +441,10 @@ func TestCPUpgradeReconcileUpdateKubeadmConfigRefNil(t *testing.T) {
 	}
 	testObjs.nodeUpgrades[0].Status.Completed = true
 	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
-	r := controllers.NewControlPlaneUpgradeReconciler(client)
+	kcp := testObjs.cpUpgrade.Spec.ControlPlane
+	clientRegistry.EXPECT().GetClient(ctx, types.NamespacedName{Name: kcp.Name, Namespace: kcp.Namespace}).Return(client, nil)
+
+	r := controllers.NewControlPlaneUpgradeReconciler(client, clientRegistry)
 
 	req := cpUpgradeRequest(testObjs.cpUpgrade)
 	_, err := r.Reconcile(ctx, req)
@@ -398,6 +455,8 @@ func TestCPUpgradeReconcileUpdateKubeadmConfigRefNil(t *testing.T) {
 func TestCPUpgradeReconcileUpdateKubeadmConfigNotFound(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
+	ctrl := gomock.NewController(t)
+	clientRegistry := mocks.NewMockRemoteClientRegistry(ctrl)
 
 	testObjs := getObjectsForCPUpgradeTest()
 	for i := range testObjs.nodeUpgrades {
@@ -412,7 +471,10 @@ func TestCPUpgradeReconcileUpdateKubeadmConfigNotFound(t *testing.T) {
 	}
 	testObjs.nodeUpgrades[0].Status.Completed = true
 	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
-	r := controllers.NewControlPlaneUpgradeReconciler(client)
+	kcp := testObjs.cpUpgrade.Spec.ControlPlane
+	clientRegistry.EXPECT().GetClient(ctx, types.NamespacedName{Name: kcp.Name, Namespace: kcp.Namespace}).Return(client, nil)
+
+	r := controllers.NewControlPlaneUpgradeReconciler(client, clientRegistry)
 
 	req := cpUpgradeRequest(testObjs.cpUpgrade)
 	_, err := r.Reconcile(ctx, req)
@@ -423,6 +485,8 @@ func TestCPUpgradeReconcileUpdateKubeadmConfigNotFound(t *testing.T) {
 func TestCPUpgradeReconcileUpdateInfraMachineAnnotationSuccess(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
+	ctrl := gomock.NewController(t)
+	clientRegistry := mocks.NewMockRemoteClientRegistry(ctrl)
 
 	testObjs := getObjectsForCPUpgradeTest()
 	for i := range testObjs.nodeUpgrades {
@@ -437,7 +501,10 @@ func TestCPUpgradeReconcileUpdateInfraMachineAnnotationSuccess(t *testing.T) {
 	}
 	testObjs.nodeUpgrades[0].Status.Completed = true
 	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
-	r := controllers.NewControlPlaneUpgradeReconciler(client)
+	kcp := testObjs.cpUpgrade.Spec.ControlPlane
+	clientRegistry.EXPECT().GetClient(ctx, types.NamespacedName{Name: kcp.Name, Namespace: kcp.Namespace}).Return(client, nil)
+
+	r := controllers.NewControlPlaneUpgradeReconciler(client, clientRegistry)
 
 	req := cpUpgradeRequest(testObjs.cpUpgrade)
 	_, err := r.Reconcile(ctx, req)
@@ -455,6 +522,8 @@ func TestCPUpgradeReconcileUpdateInfraMachineAnnotationSuccess(t *testing.T) {
 func TestCPUpgradeReconcileUpdateInfraMachineAnnotationNilSuccess(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
+	ctrl := gomock.NewController(t)
+	clientRegistry := mocks.NewMockRemoteClientRegistry(ctrl)
 
 	testObjs := getObjectsForCPUpgradeTest()
 	for i := range testObjs.nodeUpgrades {
@@ -471,7 +540,10 @@ func TestCPUpgradeReconcileUpdateInfraMachineAnnotationNilSuccess(t *testing.T) 
 	}
 	testObjs.nodeUpgrades[0].Status.Completed = true
 	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
-	r := controllers.NewControlPlaneUpgradeReconciler(client)
+	kcp := testObjs.cpUpgrade.Spec.ControlPlane
+	clientRegistry.EXPECT().GetClient(ctx, types.NamespacedName{Name: kcp.Name, Namespace: kcp.Namespace}).Return(client, nil)
+
+	r := controllers.NewControlPlaneUpgradeReconciler(client, clientRegistry)
 
 	req := cpUpgradeRequest(testObjs.cpUpgrade)
 	_, err := r.Reconcile(ctx, req)
@@ -489,6 +561,8 @@ func TestCPUpgradeReconcileUpdateInfraMachineAnnotationNilSuccess(t *testing.T) 
 func TestCPUpgradeReconcileUpdateInfraMachineAnnotationErrror(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
+	ctrl := gomock.NewController(t)
+	clientRegistry := mocks.NewMockRemoteClientRegistry(ctrl)
 
 	testObjs := getObjectsForCPUpgradeTest()
 	for i := range testObjs.nodeUpgrades {
@@ -503,7 +577,10 @@ func TestCPUpgradeReconcileUpdateInfraMachineAnnotationErrror(t *testing.T) {
 	}
 	testObjs.nodeUpgrades[0].Status.Completed = true
 	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
-	r := controllers.NewControlPlaneUpgradeReconciler(client)
+	kcp := testObjs.cpUpgrade.Spec.ControlPlane
+	clientRegistry.EXPECT().GetClient(ctx, types.NamespacedName{Name: kcp.Name, Namespace: kcp.Namespace}).Return(client, nil)
+
+	r := controllers.NewControlPlaneUpgradeReconciler(client, clientRegistry)
 
 	req := cpUpgradeRequest(testObjs.cpUpgrade)
 	_, err := r.Reconcile(ctx, req)

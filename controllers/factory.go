@@ -629,6 +629,7 @@ func (f *Factory) WithMachineDeploymentReconciler() *Factory {
 
 // WithControlPlaneUpgradeReconciler builds the ControlPlaneUpgrade reconciler.
 func (f *Factory) WithControlPlaneUpgradeReconciler() *Factory {
+	f.withTracker()
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.reconcilers.ControlPlaneUpgradeReconciler != nil {
 			return nil
@@ -636,6 +637,7 @@ func (f *Factory) WithControlPlaneUpgradeReconciler() *Factory {
 
 		f.reconcilers.ControlPlaneUpgradeReconciler = NewControlPlaneUpgradeReconciler(
 			f.manager.GetClient(),
+			f.tracker,
 		)
 
 		return nil

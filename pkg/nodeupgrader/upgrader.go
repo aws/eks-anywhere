@@ -78,7 +78,7 @@ func upgraderPod(nodeName, image string, isCP bool) *corev1.Pod {
 			Containers: []corev1.Container{
 				nsenterContainer(image, PostUpgradeContainerName, upgradeScript, "print_status_and_cleanup"),
 			},
-			RestartPolicy: corev1.RestartPolicyNever,
+			RestartPolicy: corev1.RestartPolicyOnFailure,
 		},
 	}
 }
