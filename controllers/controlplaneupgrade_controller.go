@@ -142,20 +142,21 @@ func (r *ControlPlaneUpgradeReconciler) SetupWithManager(mgr ctrl.Manager) error
 
 func (r *ControlPlaneUpgradeReconciler) reconcile(ctx context.Context, log logr.Logger, cpUpgrade *anywherev1.ControlPlaneUpgrade) (ctrl.Result, error) {
 	var firstControlPlane bool
+	rClient, err := r.remoteClientRegistry.GetClient(ctx, GetNamespacedNameType(cpUpgrade.Spec.ControlPlane.Name, cpUpgrade.Spec.ControlPlane.Namespace))
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
 	// return early if controlplane upgrade is already complete
 	if cpUpgrade.Status.Ready {
 		log.Info("All Control Plane nodes are upgraded")
 		// check if kube-vip config map exists and clean it up
-		if err := cleanupKubeVipCM(ctx, log, r.client); err != nil {
+		if err := cleanupKubeVipCM(ctx, log, rClient); err != nil {
 			return ctrl.Result{}, err
 		}
 		return ctrl.Result{}, nil
 	}
 
-	rClient, err := r.remoteClientRegistry.GetClient(ctx, GetNamespacedNameType(cpUpgrade.Spec.ControlPlane.Name, cpUpgrade.Spec.ControlPlane.Namespace))
-	if err != nil {
-		return ctrl.Result{}, err
-	}
 	if err := namespaceOrCreate(ctx, rClient, log, constants.EksaSystemNamespace); err != nil {
 		return ctrl.Result{}, nil
 	}
@@ -382,9 +383,9 @@ func getCapiMachine(ctx context.Context, client client.Client, nodeUpgrade *anyw
 	return machine, nil
 }
 
-func cleanupKubeVipCM(ctx context.Context, log logr.Logger, client client.Client) error {
+func cleanupKubeVipCM(ctx context.Context, log logr.Logger, remoteClient client.Client) error {
 	cm := &corev1.ConfigMap{}
-	if err := client.Get(ctx, GetNamespacedNameType(constants.KubeVipConfigMapName, constants.EksaSystemNamespace), cm); err != nil {
+	if err := remoteClient.Get(ctx, GetNamespacedNameType(constants.KubeVipConfigMapName, constants.EksaSystemNamespace), cm); err != nil {
 		if apierrors.IsNotFound(err) {
 			log.Info("config map %s not found, skipping deletion", "ConfigMap", constants.KubeVipConfigMapName, "Namespace", constants.EksaSystemNamespace)
 		} else {
@@ -392,7 +393,7 @@ func cleanupKubeVipCM(ctx context.Context, log logr.Logger, client client.Client
 		}
 	} else {
 		log.Info("Deleting kube-vip config map", "ConfigMap", constants.KubeVipConfigMapName, "Namespace", constants.EksaSystemNamespace)
-		if err := client.Delete(ctx, cm); err != nil {
+		if err := remoteClient.Delete(ctx, cm); err != nil {
 			return fmt.Errorf("deleting %s config map: %v", constants.KubeVipConfigMapName, err)
 		}
 	}
@@ -434,7 +435,6 @@ func kubeVipConfigMap(cpUpgrade *anywherev1.ControlPlaneUpgrade) (*corev1.Config
 		return nil, errors.New("fetching kube-vip manifest from KubeadmConfigSpec")
 	}
 
-	blockOwnerDeletionFlag := true
 	return &corev1.ConfigMap{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "ConfigMap",
@@ -443,13 +443,6 @@ func kubeVipConfigMap(cpUpgrade *anywherev1.ControlPlaneUpgrade) (*corev1.Config
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      constants.KubeVipConfigMapName,
 			Namespace: constants.EksaSystemNamespace,
-			OwnerReferences: []metav1.OwnerReference{{
-				APIVersion:         cpUpgrade.APIVersion,
-				Kind:               cpUpgrade.Kind,
-				Name:               cpUpgrade.Name,
-				UID:                cpUpgrade.UID,
-				BlockOwnerDeletion: &blockOwnerDeletionFlag,
-			}},
 		},
 		Data: map[string]string{constants.KubeVipManifestName: kubeVipConfig},
 	}, nil

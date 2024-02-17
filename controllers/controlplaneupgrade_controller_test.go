@@ -95,6 +95,7 @@ func TestCPUpgradeReconcileEarly(t *testing.T) {
 		testObjs.nodeUpgrades[0], testObjs.nodeUpgrades[1], testObjs.kubeadmConfigs[0], testObjs.kubeadmConfigs[1], testObjs.infraMachines[0], testObjs.infraMachines[1],
 	}
 	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
+	clientRegistry.EXPECT().GetClient(ctx, types.NamespacedName{Name: "my-cp", Namespace: "eksa-system"}).Return(client, nil)
 
 	r := controllers.NewControlPlaneUpgradeReconciler(client, clientRegistry)
 	req := cpUpgradeRequest(testObjs.cpUpgrade)
