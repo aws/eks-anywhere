@@ -24,7 +24,7 @@ function eksa-version::get_closest_ancestor_branch() {
     local closest_date=""
 
     # List all branches except the current one, and iterate through them
-    for branch in $(git branch --all | grep upstream | sed 's/\*//g' | sed 's/remotes\/upstream\///g' | sed 's/^[ \t]*//' | grep -e '^main$' -e '^release-' | sort -u); do
+    for branch in $(git branch --all | grep upstream | grep -ve "^$current_branch$" | sed 's/\*//g' | sed 's/remotes\/upstream\///g' | sed 's/^[ \t]*//' | grep -e '^main$' -e '^release-' | sort -u); do
         # Avoid comparing with HEAD or detached states
         if [[ "$branch" == "HEAD" ]]; then
             continue
