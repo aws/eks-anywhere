@@ -134,11 +134,6 @@ func downloadAndServeTinkerbellArtifacts(t framework.T, bundleRelease []byte, ku
 		t.Fatalf("Cannot find vmlinuzUrl from release bundle")
 	}
 
-	brOsUrl := regexp.MustCompile(fmt.Sprintf("https://.*/raw/%s/.*bottlerocket.*amd64.img.gz", kubeVersion)).Find(bundleRelease)
-	if brOsUrl == nil {
-		t.Fatalf("Cannot find bottlerocketOS url from release bundle")
-	}
-
 	dir, err := os.MkdirTemp("", "tinkerbell_artifacts_")
 	if err != nil {
 		t.Fatalf("Cannot create temporary directory to serve Tinkerbell artifacts %v", err)
@@ -156,14 +151,6 @@ func downloadAndServeTinkerbellArtifacts(t framework.T, bundleRelease []byte, ku
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	t.Logf("Download bottlerocket OS from %s", brOsUrl)
-	// Save image file with kube version in the image name to satisfy condition to have kube version in the template name.
-	err = downloadFile(string(brOsUrl), dir+"/"+bottlerocketOSFileName+"-"+kubeVersion+".img.gz")
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Log("Downloaded Bottlerocket OS")
 
 	server := &http.Server{Addr: ":8080", Handler: http.FileServer(http.Dir(dir))}
 	go func() {
