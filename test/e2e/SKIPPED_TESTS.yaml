@@ -23,15 +23,20 @@ skipped_tests:
 # Nutanix
 
 # Snow
+- TestSnowKubernetes125SimpleFlow
+- TestSnowKubernetes126SimpleFlow
+- TestSnowKubernetes127SimpleFlow
+- TestSnowKubernetes128SimpleFlow
+- TestSnowKubernetes127To128UbuntuManagementCPUpgradeAPI
 - TestSnowKubernetes128UbuntuAWSIamAuth
 - TestSnowKubernetes127To128AWSIamAuthUpgrade
 - TestSnowKubernetes128UbuntuLabelsUpgradeFlow
 - TestSnowKubernetes128UbuntuRemoveWorkerNodeGroups
 - TestSnowKubernetes128OIDC
 - TestSnowKubernetes128UbuntuProxyConfig
-# - TestSnowKubernetes127UbuntuTo128Upgrade
-# # - TestSnowKubernetes125UbuntuTo126Upgrade
-# - TestSnowKubernetes126UbuntuTo127Upgrade
+- TestSnowKubernetes127UbuntuTo128Upgrade
+- TestSnowKubernetes125UbuntuTo126Upgrade
+- TestSnowKubernetes126UbuntuTo127Upgrade
 - TestSnowKubernetes127BottlerocketTo128Upgrade
 - TestSnowKubernetes125BottlerocketTo126Upgrade
 - TestSnowKubernetes126BottlerocketTo127Upgrade
