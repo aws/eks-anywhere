@@ -60,7 +60,10 @@ function eksa-version::get_next_eksa_version_for_ancestor() {
     # This checks if main in the ancestors of the current branch.
     # If it is, then it is either main or a branch off main.
     # If it is not, then it is a release branch or a branch off a release branch.
-    if [[ "$ancestor_branch" == "main" ]]; then
+    git config remote.upstream.url >&- && git_remote="upstream" || git_remote="origin"
+    remote_ancestor_branch=$git_remote/$ancestor_branch
+    branches_containing_ancestor_branch=($(git branch -r --contains $remote_ancestor_branch | grep $git_remote | grep -v $remote_ancestor_branch | grep -v HEAD | tr -d ' '))
+    if [[ "$ancestor_branch" == "main" ]] || [[ ${branches_containing_ancestor_branch[@]} =~ "$git_remote/main" ]]; then
         #  If the branch is main, then get the latest tag by date and
         # bump one minor version and use patch 0
         
