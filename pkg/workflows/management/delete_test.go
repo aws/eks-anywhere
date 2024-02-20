@@ -158,9 +158,12 @@ func (c *deleteTestSetup) expectInstallCAPI(err error) {
 	c.clusterManager.EXPECT().InstallCAPI(c.ctx, gomock.Any(), c.clusterSpec, c.bootstrapCluster, c.provider).Return(err)
 }
 
-func (c *deleteTestSetup) expectMoveCAPI(err error) {
-	c.clusterManager.EXPECT().PauseEKSAControllerReconcile(c.ctx, c.workloadCluster, c.clusterSpec, c.provider)
-	c.clusterManager.EXPECT().MoveCAPI(c.ctx, c.workloadCluster, c.bootstrapCluster, c.workloadCluster.Name, c.clusterSpec, gomock.Any()).Return(err)
+func (c *deleteTestSetup) expectMoveCAPI(err1, err2 error) {
+	c.clusterManager.EXPECT().PauseEKSAControllerReconcile(c.ctx, c.workloadCluster, c.clusterSpec, c.provider).Return(err1)
+	if err1 != nil {
+		return
+	}
+	c.clusterManager.EXPECT().MoveCAPI(c.ctx, c.workloadCluster, c.bootstrapCluster, c.workloadCluster.Name, c.clusterSpec, gomock.Any()).Return(err2)
 }
 
 func (c *deleteTestSetup) expectInstallEksaComponentsBootstrap(err1, err2, err3, err4, err5 error) {
@@ -219,7 +222,7 @@ func TestDeleteRunSuccess(t *testing.T) {
 	test.expectCreateBootstrap(nil)
 	test.expectPreCAPI(nil)
 	test.expectInstallCAPI(nil)
-	test.expectMoveCAPI(nil)
+	test.expectMoveCAPI(nil, nil)
 	test.expectInstallEksaComponentsBootstrap(nil, nil, nil, nil, nil)
 	test.expectApplyOnBootstrap(nil)
 	test.expectDeleteCluster(nil, nil, nil, nil)
@@ -309,6 +312,25 @@ func TestDeleteRunFailInstallCAPI(t *testing.T) {
 	}
 }
 
+func TestDeleteRunFailPauseEksa(t *testing.T) {
+	features.ClearCache()
+	os.Setenv(features.UseControllerForCli, "true")
+	test := newDeleteTest(t)
+	test.expectSetup(nil)
+	test.expectBootstrapOpts(nil)
+	test.expectCreateBootstrap(nil)
+	test.expectPreCAPI(nil)
+	test.expectInstallCAPI(nil)
+	test.expectMoveCAPI(fmt.Errorf(""), nil)
+	test.expectSaveLogsWorkload()
+	test.expectSaveLogsManagement()
+
+	err := test.run()
+	if err == nil {
+		t.Fatalf("Delete.Run() err = %v, want err = nil", err)
+	}
+}
+
 func TestDeleteRunFailMoveCAPI(t *testing.T) {
 	features.ClearCache()
 	os.Setenv(features.UseControllerForCli, "true")
@@ -318,7 +340,7 @@ func TestDeleteRunFailMoveCAPI(t *testing.T) {
 	test.expectCreateBootstrap(nil)
 	test.expectPreCAPI(nil)
 	test.expectInstallCAPI(nil)
-	test.expectMoveCAPI(fmt.Errorf(""))
+	test.expectMoveCAPI(nil, fmt.Errorf(""))
 	test.expectSaveLogsWorkload()
 	test.expectSaveLogsManagement()
 
@@ -337,7 +359,7 @@ func TestDeleteRunFailResumeReconcile(t *testing.T) {
 	test.expectCreateBootstrap(nil)
 	test.expectPreCAPI(nil)
 	test.expectInstallCAPI(nil)
-	test.expectMoveCAPI(nil)
+	test.expectMoveCAPI(nil, nil)
 	test.expectInstallEksaComponentsBootstrap(fmt.Errorf(""), nil, nil, nil, nil)
 	test.expectSaveLogsManagement()
 	test.expectSaveLogsWorkload()
@@ -356,7 +378,7 @@ func TestDeleteRunFailAddAnnotation(t *testing.T) {
 	test.expectCreateBootstrap(nil)
 	test.expectPreCAPI(nil)
 	test.expectInstallCAPI(nil)
-	test.expectMoveCAPI(nil)
+	test.expectMoveCAPI(nil, nil)
 	test.expectInstallEksaComponentsBootstrap(nil, fmt.Errorf(""), nil, nil, nil)
 	test.expectSaveLogsManagement()
 	test.expectSaveLogsWorkload()
@@ -376,7 +398,7 @@ func TestDeleteRunFailProviderInstall(t *testing.T) {
 	test.expectCreateBootstrap(nil)
 	test.expectPreCAPI(nil)
 	test.expectInstallCAPI(nil)
-	test.expectMoveCAPI(nil)
+	test.expectMoveCAPI(nil, nil)
 	test.expectInstallEksaComponentsBootstrap(nil, nil, fmt.Errorf(""), nil, nil)
 	test.expectSaveLogsManagement()
 	test.expectSaveLogsWorkload()
@@ -396,7 +418,7 @@ func TestDeleteRunFailEksdInstall(t *testing.T) {
 	test.expectCreateBootstrap(nil)
 	test.expectPreCAPI(nil)
 	test.expectInstallCAPI(nil)
-	test.expectMoveCAPI(nil)
+	test.expectMoveCAPI(nil, nil)
 	test.expectInstallEksaComponentsBootstrap(nil, nil, nil, fmt.Errorf(""), nil)
 	test.expectSaveLogsManagement()
 	test.expectSaveLogsWorkload()
@@ -416,7 +438,7 @@ func TestDeleteRunFailBuildClient(t *testing.T) {
 	test.expectCreateBootstrap(nil)
 	test.expectPreCAPI(nil)
 	test.expectInstallCAPI(nil)
-	test.expectMoveCAPI(nil)
+	test.expectMoveCAPI(nil, nil)
 	test.expectInstallEksaComponentsBootstrap(nil, nil, nil, nil, fmt.Errorf(""))
 	test.expectSaveLogsManagement()
 	test.expectSaveLogsWorkload()
@@ -436,7 +458,7 @@ func TestDeleteRunFailPostDelete(t *testing.T) {
 	test.expectCreateBootstrap(nil)
 	test.expectPreCAPI(nil)
 	test.expectInstallCAPI(nil)
-	test.expectMoveCAPI(nil)
+	test.expectMoveCAPI(nil, nil)
 	test.expectInstallEksaComponentsBootstrap(nil, nil, nil, nil, nil)
 	test.expectCreateNamespace()
 	test.expectApplyOnBootstrap(nil)
@@ -458,7 +480,7 @@ func TestDeleteRunFailCleanupGit(t *testing.T) {
 	test.expectCreateBootstrap(nil)
 	test.expectPreCAPI(nil)
 	test.expectInstallCAPI(nil)
-	test.expectMoveCAPI(nil)
+	test.expectMoveCAPI(nil, nil)
 	test.expectInstallEksaComponentsBootstrap(nil, nil, nil, nil, nil)
 	test.expectCreateNamespace()
 	test.expectApplyOnBootstrap(nil)
@@ -482,7 +504,7 @@ func TestDeleteRunFailDeleteBootstrap(t *testing.T) {
 	test.expectCreateBootstrap(nil)
 	test.expectPreCAPI(nil)
 	test.expectInstallCAPI(nil)
-	test.expectMoveCAPI(nil)
+	test.expectMoveCAPI(nil, nil)
 	test.expectInstallEksaComponentsBootstrap(nil, nil, nil, nil, nil)
 	test.expectApplyOnBootstrap(nil)
 	test.expectCreateNamespace()
