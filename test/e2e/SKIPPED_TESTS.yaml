@@ -27,6 +27,7 @@ skipped_tests:
 - TestSnowKubernetes126SimpleFlow
 - TestSnowKubernetes127SimpleFlow
 - TestSnowKubernetes128SimpleFlow
+- TestSnowKubernetes128StackedEtcdSimpleFlow
 - TestSnowKubernetes127To128UbuntuManagementCPUpgradeAPI
 - TestSnowKubernetes128UbuntuAWSIamAuth
 - TestSnowKubernetes127To128AWSIamAuthUpgrade
