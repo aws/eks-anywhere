@@ -1286,7 +1286,7 @@ func (f *Factory) WithClusterDeleter() *Factory {
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		var opts []clustermanager.DeleterOpt
 		if f.config.noTimeouts {
-			opts = append(opts, clustermanager.WithDeleterNoTimeouts())
+			opts = append(opts, clustermanager.WithDeleterApplyClusterTimeout(time.Hour))
 		}
 
 		f.dependencies.ClusterDeleter = clustermanager.NewDeleter(
