@@ -17,7 +17,7 @@ require (
 	github.com/spf13/viper v1.18.2
 	golang.org/x/sync v0.6.0
 	helm.sh/helm/v3 v3.11.3
-	k8s.io/apimachinery v0.26.13
+	k8s.io/apimachinery v0.26.14
 	k8s.io/helm v2.17.0+incompatible
 	sigs.k8s.io/controller-runtime v0.14.7
 	sigs.k8s.io/yaml v1.4.0
