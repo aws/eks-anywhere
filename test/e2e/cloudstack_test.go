@@ -3500,6 +3500,26 @@ func TestCloudStackKubernetes128To129RedhatMultipleFieldsUpgrade(t *testing.T) {
 	)
 }
 
+func TestCloudStackKubernetes128To129StackedEtcdRedhatMultipleFieldsUpgrade(t *testing.T) {
+	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes128())
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube128)),
+		framework.WithClusterFiller(api.WithStackedEtcdTopology()),
+	)
+	runSimpleUpgradeFlow(
+		test,
+		v1alpha1.Kube129,
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube129)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		provider.WithProviderUpgrade(
+			provider.Redhat9Kubernetes129Template(),
+			framework.UpdateLargerCloudStackComputeOffering(),
+		),
+	)
+}
+
 // This test is skipped as registry mirror was not configured for CloudStack
 func TestCloudStackKubernetes125RedhatAirgappedRegistryMirror(t *testing.T) {
 	test := framework.NewClusterE2ETest(
