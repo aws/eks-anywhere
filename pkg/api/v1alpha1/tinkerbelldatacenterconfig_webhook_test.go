@@ -125,7 +125,6 @@ func TestTinkerbellDatacenterValidateUpdateImmutable(t *testing.T) {
 			}
 		})
 	}
-
 }
 
 func TestTinkerbellDatacenterValidateDelete(t *testing.T) {

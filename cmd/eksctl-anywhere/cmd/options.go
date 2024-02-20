@@ -38,8 +38,6 @@ type timeoutOptions struct {
 	cpWaitTimeout           string
 	externalEtcdWaitTimeout string
 	perMachineWaitTimeout   string
-	unhealthyMachineTimeout string
-	nodeStartupTimeout      string
 	noTimeouts              bool
 }
 
@@ -47,8 +45,6 @@ func applyTimeoutFlags(flagSet *pflag.FlagSet, t *timeoutOptions) {
 	flagSet.StringVar(&t.cpWaitTimeout, cpWaitTimeoutFlag, clustermanager.DefaultControlPlaneWait.String(), "Override the default control plane wait timeout")
 	flagSet.StringVar(&t.externalEtcdWaitTimeout, externalEtcdWaitTimeoutFlag, clustermanager.DefaultEtcdWait.String(), "Override the default external etcd wait timeout")
 	flagSet.StringVar(&t.perMachineWaitTimeout, perMachineWaitTimeoutFlag, clustermanager.DefaultMaxWaitPerMachine.String(), "Override the default machine wait timeout per machine")
-	flagSet.StringVar(&t.unhealthyMachineTimeout, unhealthyMachineTimeoutFlag, constants.DefaultUnhealthyMachineTimeout.String(), "(DEPRECATED) Override the default unhealthy machine timeout")
-	flagSet.StringVar(&t.nodeStartupTimeout, nodeStartupTimeoutFlag, constants.DefaultNodeStartupTimeout.String(), "(DEPRECATED) Override the default node startup timeout (Defaults to 20m for Tinkerbell clusters)")
 	flagSet.BoolVar(&t.noTimeouts, noTimeoutsFlag, false, "Disable timeout for all wait operations")
 }
 
@@ -70,28 +66,11 @@ func buildClusterManagerOpts(t timeoutOptions, datacenterKind string) (*dependen
 		return nil, fmt.Errorf(timeoutErrorTemplate, perMachineWaitTimeoutFlag, err)
 	}
 
-	unhealthyMachineTimeout, err := time.ParseDuration(t.unhealthyMachineTimeout)
-	if err != nil {
-		return nil, fmt.Errorf(timeoutErrorTemplate, unhealthyMachineTimeoutFlag, err)
-	}
-
-	if t.nodeStartupTimeout == clustermanager.DefaultNodeStartupTimeout.String() &&
-		datacenterKind == v1alpha1.TinkerbellDatacenterKind {
-		t.nodeStartupTimeout = defaultTinkerbellNodeStartupTimeout.String()
-	}
-
-	nodeStartupTimeout, err := time.ParseDuration(t.nodeStartupTimeout)
-	if err != nil {
-		return nil, fmt.Errorf(timeoutErrorTemplate, nodeStartupTimeoutFlag, err)
-	}
-
 	return &dependencies.ClusterManagerTimeoutOptions{
-		ControlPlaneWait:     cpWaitTimeout,
-		ExternalEtcdWait:     externalEtcdWaitTimeout,
-		MachineWait:          perMachineWaitTimeout,
-		UnhealthyMachineWait: unhealthyMachineTimeout,
-		NodeStartupWait:      nodeStartupTimeout,
-		NoTimeouts:           t.noTimeouts,
+		ControlPlaneWait: cpWaitTimeout,
+		ExternalEtcdWait: externalEtcdWaitTimeout,
+		MachineWait:      perMachineWaitTimeout,
+		NoTimeouts:       t.noTimeouts,
 	}, nil
 }
 
@@ -298,12 +277,12 @@ func buildCreateCliConfig(clusterOptions *createClusterOptions) (*config.CreateC
 		return createCliConfig, nil
 	}
 
-	unhealthyMachineTimeout, err := time.ParseDuration(clusterOptions.unhealthyMachineTimeout)
+	unhealthyMachineTimeout, err := time.ParseDuration(constants.DefaultUnhealthyMachineTimeout.String())
 	if err != nil {
 		return nil, err
 	}
 
-	nodeStartupTimeout, err := time.ParseDuration(clusterOptions.nodeStartupTimeout)
+	nodeStartupTimeout, err := time.ParseDuration(constants.DefaultNodeStartupTimeout.String())
 	if err != nil {
 		return nil, err
 	}
@@ -326,18 +305,8 @@ func buildUpgradeCliConfig(clusterOptions *upgradeClusterOptions) (*config.Upgra
 		return &upgradeCliConfig, nil
 	}
 
-	unhealthyMachineTimeout, err := time.ParseDuration(clusterOptions.unhealthyMachineTimeout)
-	if err != nil {
-		return nil, err
-	}
-
-	nodeStartupTimeout, err := time.ParseDuration(clusterOptions.nodeStartupTimeout)
-	if err != nil {
-		return nil, err
-	}
-
-	upgradeCliConfig.NodeStartupTimeout = nodeStartupTimeout
-	upgradeCliConfig.UnhealthyMachineTimeout = unhealthyMachineTimeout
+	upgradeCliConfig.NodeStartupTimeout = constants.DefaultNodeStartupTimeout
+	upgradeCliConfig.UnhealthyMachineTimeout = constants.DefaultUnhealthyMachineTimeout
 	upgradeCliConfig.MaxUnhealthy = intstr.Parse(constants.DefaultMaxUnhealthy)
 	upgradeCliConfig.WorkerMaxUnhealthy = intstr.Parse(constants.DefaultWorkerMaxUnhealthy)
 

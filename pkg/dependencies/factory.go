@@ -1036,7 +1036,7 @@ type clusterManagerClient struct {
 type ClusterManagerTimeoutOptions struct {
 	NoTimeouts bool
 
-	ControlPlaneWait, ExternalEtcdWait, MachineWait, UnhealthyMachineWait, NodeStartupWait time.Duration
+	ControlPlaneWait, ExternalEtcdWait, MachineWait time.Duration
 }
 
 func (f *Factory) eksaInstallerOpts() []clustermanager.EKSAInstallerOpt {
@@ -1056,8 +1056,6 @@ func (f *Factory) clusterManagerOpts(timeoutOpts *ClusterManagerTimeoutOptions) 
 		clustermanager.WithControlPlaneWaitTimeout(timeoutOpts.ControlPlaneWait),
 		clustermanager.WithExternalEtcdWaitTimeout(timeoutOpts.ExternalEtcdWait),
 		clustermanager.WithMachineMaxWait(timeoutOpts.MachineWait),
-		clustermanager.WithUnhealthyMachineTimeout(timeoutOpts.UnhealthyMachineWait),
-		clustermanager.WithNodeStartupTimeout(timeoutOpts.NodeStartupWait),
 	}
 
 	if f.config.noTimeouts {
