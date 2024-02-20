@@ -159,6 +159,7 @@ func (c *deleteTestSetup) expectInstallCAPI(err error) {
 }
 
 func (c *deleteTestSetup) expectMoveCAPI(err error) {
+	c.clusterManager.EXPECT().PauseEKSAControllerReconcile(c.ctx, c.workloadCluster, c.clusterSpec, c.provider)
 	c.clusterManager.EXPECT().MoveCAPI(c.ctx, c.workloadCluster, c.bootstrapCluster, c.workloadCluster.Name, c.clusterSpec, gomock.Any()).Return(err)
 }
 
