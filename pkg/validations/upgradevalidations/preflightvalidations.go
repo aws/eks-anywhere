@@ -9,7 +9,6 @@ import (
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/constants"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validation"
@@ -114,14 +113,6 @@ func (u *UpgradeValidations) PreflightValidations(ctx context.Context) []validat
 				Name:        "validate cluster's eksaVersion matches EKS-Anywhere Version",
 				Remediation: "ensure eksaVersion matches the EKS-Anywhere release or omit the value from the cluster config",
 				Err:         validations.ValidateEksaVersion(ctx, u.Opts.CliVersion, u.Opts.Spec),
-			}
-		},
-		func() *validations.ValidationResult {
-			return &validations.ValidationResult{
-				Name:        "validate kubernetes version 1.29 support",
-				Remediation: fmt.Sprintf("ensure %v env variable is set", features.K8s129SupportEnvVar),
-				Err:         validations.ValidateK8s129Support(u.Opts.Spec),
-				Silent:      true,
 			}
 		},
 		func() *validations.ValidationResult {
