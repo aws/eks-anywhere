@@ -13,12 +13,17 @@ quick_tests:
 - TestVSphereKubernetes128BottlerocketTo129StackedEtcdUpgrade
 # CloudStack
 - TestCloudStackKubernetes128To129RedhatMultipleFieldsUpgrade
+- TestCloudStackKubernetes128To129StackedEtcdRedhatMultipleFieldsUpgrade
 # Nutanix
 - TestNutanixKubernetes128to129RedHat9Upgrade
+- TestNutanixKubernetes128to129StackedEtcdRedHat9Upgrade
 - TestNutanixKubernetes128to129RedHat8Upgrade
+- TestNutanixKubernetes128to129StackedEtcdRedHat8Upgrade
 - TestNutanixKubernetes128To129UbuntuUpgrade
+- TestNutanixKubernetes128To129StackedEtcdUbuntuUpgrade
 # Snow
 # - TestSnowKubernetes128SimpleFlow
+# - TestSnowKubernetes128StackedEtcdSimpleFlow
 # Tinkerbell
 # - ^TestTinkerbellKubernetes127UbuntuTo128Upgrade$
 # - TestTinkerbellKubernetes128Ubuntu2004To2204Upgrade
