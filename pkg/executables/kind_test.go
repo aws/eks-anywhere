@@ -32,6 +32,14 @@ func TestKindCreateBootstrapClusterSuccess(t *testing.T) {
 	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
 		s.Cluster.Name = clusterName
 		s.VersionsBundles["1.19"] = versionBundle
+		s.Cluster.Spec.ClusterNetwork = v1alpha1.ClusterNetwork{
+			Pods: v1alpha1.Pods{
+				CidrBlocks: []string{"1.1.1.1"},
+			},
+			Services: v1alpha1.Services{
+				CidrBlocks: []string{"2.2.2.2"},
+			},
+		}
 	})
 	eksClusterName := "test_cluster-eks-a-cluster"
 	kubeConfigFile := "test_cluster.kind.kubeconfig"
@@ -176,6 +184,14 @@ func TestKindCreateBootstrapClusterSuccessWithRegistryMirror(t *testing.T) {
 						},
 					},
 				}
+				s.Cluster.Spec.ClusterNetwork = v1alpha1.ClusterNetwork{
+					Pods: v1alpha1.Pods{
+						CidrBlocks: []string{"1.1.1.1"},
+					},
+					Services: v1alpha1.Services{
+						CidrBlocks: []string{"2.2.2.2"},
+					},
+				}
 			}),
 			env:            map[string]string{},
 			wantKindConfig: "testdata/kind_config_registry_mirror_insecure.yaml",
@@ -190,6 +206,14 @@ func TestKindCreateBootstrapClusterSuccessWithRegistryMirror(t *testing.T) {
 					Endpoint:      registryMirror,
 					Port:          constants.DefaultHttpsPort,
 					CACertContent: "test",
+				}
+				s.Cluster.Spec.ClusterNetwork = v1alpha1.ClusterNetwork{
+					Pods: v1alpha1.Pods{
+						CidrBlocks: []string{"1.1.1.1"},
+					},
+					Services: v1alpha1.Services{
+						CidrBlocks: []string{"2.2.2.2"},
+					},
 				}
 			}),
 			env:            map[string]string{},
@@ -215,6 +239,14 @@ func TestKindCreateBootstrapClusterSuccessWithRegistryMirror(t *testing.T) {
 						},
 					},
 					Authenticate: true,
+				}
+				s.Cluster.Spec.ClusterNetwork = v1alpha1.ClusterNetwork{
+					Pods: v1alpha1.Pods{
+						CidrBlocks: []string{"1.1.1.1"},
+					},
+					Services: v1alpha1.Services{
+						CidrBlocks: []string{"2.2.2.2"},
+					},
 				}
 			}),
 			env:            map[string]string{},
