@@ -23,6 +23,7 @@ Upgrade overview information was moved to a dedicated [Upgrade Overview page.]({
 - When running workload cluster upgrades after upgrading a management cluster, a machine rollout may be triggered on workload clusters during the workload cluster upgrade, even if the changes to the workload cluster spec didn't require one (for example scaling down a worker node group).
 - Starting with EKS Anywhere v0.18, the `image`/`template` must include the Kubernetes minor version (`Cluster.Spec.KubernetesVersion` or `Cluster.Spec.WorkerNodeGroupConfiguration[].KubernetesVersion` in the cluster spec). For example, if the Kubernetes version is 1.24, the `image`/`template` must include 1.24, 1_24, 1-24 or 124. If you are upgrading Kubernetes versions, you must have a new image with your target Kubernetes version components.
 - If you are running EKS Anywhere on Snow, a new Admin instance is needed when upgrading to new versions of EKS Anywhere. See [Upgrade EKS Anywhere AMIs in Snowball Edge devices](https://docs.aws.amazon.com/snowball/latest/developer-guide/CrUD-clusters.html) to upgrade and use a new Admin instance in Snow devices.
+- If you are running EKS Anywhere in an airgapped environment, you must download the new artifacts and images prior to initiating the upgrade. Reference the [Airgapped Upgrades page]({{< relref "./airgapped-upgrades" >}}) page for more information.
 
 ### Upgrade Version Skew
 
