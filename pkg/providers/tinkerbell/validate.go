@@ -10,6 +10,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
+	"github.com/aws/eks-anywhere/pkg/semver"
 )
 
 func validateOsFamily(spec *ClusterSpec) error {
@@ -23,10 +24,21 @@ func validateOsFamily(spec *ClusterSpec) error {
 		}
 	}
 
+	if controlPlaneOsFamily == v1alpha1.Bottlerocket {
+		if err := validateK8sVersionForBottleRocketOS(string(spec.Cluster.Spec.KubernetesVersion)); err != nil {
+			return fmt.Errorf("machineGroupRef %s: %v", controlPlaneRef.Name, err)
+		}
+	}
+
 	for _, group := range spec.Cluster.Spec.WorkerNodeGroupConfigurations {
 		groupRef := group.MachineGroupRef
 		if spec.MachineConfigs[groupRef.Name].OSFamily() != controlPlaneOsFamily {
 			return errors.New("worker node group osFamily cannot be different from control plane osFamily")
+		}
+		if group.KubernetesVersion != nil && *group.KubernetesVersion != "" && spec.MachineConfigs[groupRef.Name].OSFamily() == v1alpha1.Bottlerocket {
+			if err := validateK8sVersionForBottleRocketOS(string(*group.KubernetesVersion)); err != nil {
+				return fmt.Errorf("machineGroupRef %s: %v", groupRef.Name, err)
+			}
 		}
 	}
 
@@ -34,6 +46,19 @@ func validateOsFamily(spec *ClusterSpec) error {
 		return errors.New("please use bottlerocket as osFamily for auto-importing or provide a valid osImageURL")
 	}
 
+	return nil
+}
+
+func validateK8sVersionForBottleRocketOS(kubernetesVersion string) error {
+	kubeVersionSemver, err := semver.New(kubernetesVersion + ".0")
+	if err != nil {
+		return fmt.Errorf("converting kubeVersion %v to semver %v", kubernetesVersion, err)
+	}
+
+	kube128Semver, _ := semver.New(string(v1alpha1.Kube128) + ".0")
+	if kubeVersionSemver.GreaterThan(kube128Semver) {
+		return errors.New("tinkerbell provider does not support K8s version 1.29+ for BottleRocket OS")
+	}
 	return nil
 }
 

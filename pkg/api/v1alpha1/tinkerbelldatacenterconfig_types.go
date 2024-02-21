@@ -18,7 +18,7 @@ type TinkerbellDatacenterConfigSpec struct {
 	// It must include the Kubernetes version(s). For example, a URL used for Kubernetes 1.27 could
 	// be http://localhost:8080/ubuntu-2204-1.27.tgz
 	//+optional
-	OSImageURL string `json:"osImageURL,omitempty"`
+	OSImageURL string `json:"osImageURL"`
 	// HookImagesURLPath can be used to override the default Hook images path to pull from a local server.
 	HookImagesURLPath string `json:"hookImagesURLPath,omitempty"`
 	// SkipLoadBalancerDeployment when set to "true" can be used to skip deploying a load balancer to expose Tinkerbell stack.
