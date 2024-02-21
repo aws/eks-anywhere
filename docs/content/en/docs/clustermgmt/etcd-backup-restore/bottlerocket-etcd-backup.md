@@ -9,7 +9,7 @@ description: >
   How to backup and restore External etcd on Bottlerocket OS
 ---
 {{% alert title="Note" color="warning" %}}
-External etcd topology is supported for vSphere, CloudStack and Snow clusters, but not yet for Bare Metal or Nutanix clusters.
+External etcd topology is supported for vSphere, CloudStack, Snow and Nutanix clusters, but not yet for Bare Metal clusters.
 {{% /alert %}}
 
 This guide requires some common shell tools such as: 

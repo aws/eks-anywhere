@@ -10,7 +10,7 @@ description: >
 ---
 
 {{% alert title="Note" color="warning" %}}
-External etcd topology is supported for vSphere, CloudStack and Snow clusters, but not yet for Bare Metal or Nutanix clusters.
+External etcd topology is supported for vSphere, CloudStack, Snow and Nutanix clusters, but not yet for Bare Metal clusters.
 {{% /alert %}}
 
 This page contains steps for backing up a cluster by taking an etcd snapshot, and restoring the cluster from a snapshot. These steps are for an EKS Anywhere cluster provisioned using the external etcd topology (selected by default) with Ubuntu OS.

@@ -13,7 +13,7 @@ description: >
 #### Provider support details
 |                | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
 |:--------------:|:-------:|:----------:|:-------:|:----------:|:----:|
-| **Supported?** |   ✓	    |            |   	     |     ✓      |  ✓   |
+| **Supported?** |   ✓	   |            |    ✓    |     ✓      |  ✓   |
 
 There are two types of etcd topologies for configuring a Kubernetes cluster:
 
