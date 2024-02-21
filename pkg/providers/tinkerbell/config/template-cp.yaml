@@ -37,6 +37,11 @@ metadata:
 spec:
   kubeadmConfigSpec:
     clusterConfiguration:
+{{- $kube_minor_version := (index (splitList "." (trimPrefix "v" .kubernetesVersion)) 1) }}
+{{- if (ge (atoi $kube_minor_version) 29) }}
+      featureGates:
+        EtcdLearnerMode: false
+{{- end }}
       imageRepository: {{.kubernetesRepository}}
       etcd:
 {{- if .externalEtcd }}
