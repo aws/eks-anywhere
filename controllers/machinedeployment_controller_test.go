@@ -7,10 +7,10 @@ import (
 	"time"
 
 	. "github.com/onsi/gomega"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/utils/pointer"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -19,6 +19,8 @@ import (
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
 )
+
+const mdInPlaceAnnotation = "machinedeployment.clusters.x-k8s.io/in-place-upgrade-needed"
 
 type mdObjects struct {
 	machine   *clusterv1.Machine
@@ -33,6 +35,26 @@ func TestMDSetupWithManager(t *testing.T) {
 
 	g := NewWithT(t)
 	g.Expect(r.SetupWithManager(env.Manager())).To(Succeed())
+}
+
+func TestMDReconcileNotNeeded(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+	mdObjs := getObjectsForMD()
+
+	delete(mdObjs.md.Annotations, mdInPlaceAnnotation)
+
+	runtimeObjs := []runtime.Object{mdObjs.md, mdObjs.mhc}
+	client := fake.NewClientBuilder().WithRuntimeObjects(runtimeObjs...).Build()
+	r := controllers.NewMachineDeploymentReconciler(client)
+	req := mdRequest(mdObjs.md)
+	_, err := r.Reconcile(ctx, req)
+	g.Expect(err).ToNot(HaveOccurred())
+
+	mhc := &clusterv1.MachineHealthCheck{}
+	err = client.Get(ctx, types.NamespacedName{Name: mdObjs.mhc.Name, Namespace: constants.EksaSystemNamespace}, mhc)
+	g.Expect(err).ToNot(HaveOccurred())
+	g.Expect(mhc.Annotations).ToNot(HaveKey(capiPausedAnnotation))
 }
 
 func TestMDReconcile(t *testing.T) {
@@ -54,60 +76,7 @@ func TestMDReconcile(t *testing.T) {
 	mhc := &clusterv1.MachineHealthCheck{}
 	err = client.Get(ctx, types.NamespacedName{Name: mdObjs.mhc.Name, Namespace: constants.EksaSystemNamespace}, mhc)
 	g.Expect(err).ToNot(HaveOccurred())
-	g.Expect(mhc.Annotations).ToNot(HaveKey("cluster.x-k8s.io/paused"))
-}
-
-func TestMDReconcileComplete(t *testing.T) {
-	g := NewWithT(t)
-	ctx := context.Background()
-	mdObjs := getObjectsForMD()
-
-	mdObjs.md.Spec.Replicas = pointer.Int32(1)
-	mdObjs.md.Status.UpdatedReplicas = 1
-
-	runtimeObjs := []runtime.Object{mdObjs.md, mdObjs.mhc}
-	client := fake.NewClientBuilder().WithRuntimeObjects(runtimeObjs...).Build()
-	r := controllers.NewMachineDeploymentReconciler(client)
-	req := mdRequest(mdObjs.md)
-	_, err := r.Reconcile(ctx, req)
-	g.Expect(err).ToNot(HaveOccurred())
-
-	md := &clusterv1.MachineDeployment{}
-	err = client.Get(ctx, types.NamespacedName{Name: mdObjs.md.Name, Namespace: constants.EksaSystemNamespace}, md)
-	g.Expect(err).ToNot(HaveOccurred())
-	g.Expect(md.Annotations).ToNot(HaveKey("machinedeployment.clusters.x-k8s.io/in-place-upgrade-needed"))
-
-	mhc := &clusterv1.MachineHealthCheck{}
-	err = client.Get(ctx, types.NamespacedName{Name: mdObjs.mhc.Name, Namespace: constants.EksaSystemNamespace}, mhc)
-	g.Expect(err).ToNot(HaveOccurred())
-	g.Eventually(func(g Gomega) error {
-		func(g Gomega) {
-			g.Expect(mhc.Annotations).To(HaveKey("cluster.x-k8s.io/paused"))
-		}(g)
-
-		return nil
-	})
-	g.Expect(mhc.Annotations).ToNot(HaveKey("cluster.x-k8s.io/paused"))
-}
-
-func TestMDReconcileNotNeeded(t *testing.T) {
-	g := NewWithT(t)
-	ctx := context.Background()
-	mdObjs := getObjectsForMD()
-
-	delete(mdObjs.md.Annotations, "machinedeployment.clusters.x-k8s.io/in-place-upgrade-needed")
-
-	runtimeObjs := []runtime.Object{mdObjs.md, mdObjs.mhc}
-	client := fake.NewClientBuilder().WithRuntimeObjects(runtimeObjs...).Build()
-	r := controllers.NewMachineDeploymentReconciler(client)
-	req := mdRequest(mdObjs.md)
-	_, err := r.Reconcile(ctx, req)
-	g.Expect(err).ToNot(HaveOccurred())
-
-	mhc := &clusterv1.MachineHealthCheck{}
-	err = client.Get(ctx, types.NamespacedName{Name: mdObjs.mhc.Name, Namespace: constants.EksaSystemNamespace}, mhc)
-	g.Expect(err).ToNot(HaveOccurred())
-	g.Expect(mhc.Annotations).ToNot(HaveKey("cluster.x-k8s.io/paused"))
+	g.Expect(mhc.Annotations).ToNot(HaveKey(capiPausedAnnotation))
 }
 
 func TestMDReconcileCreateMachineDeploymentUpgrade(t *testing.T) {
@@ -132,31 +101,7 @@ func TestMDReconcileCreateMachineDeploymentUpgrade(t *testing.T) {
 	mhc := &clusterv1.MachineHealthCheck{}
 	err = client.Get(ctx, types.NamespacedName{Name: mdObjs.mhc.Name, Namespace: constants.EksaSystemNamespace}, mhc)
 	g.Expect(err).ToNot(HaveOccurred())
-	g.Expect(mhc.Annotations).To(HaveKey("cluster.x-k8s.io/paused"))
-}
-
-func TestMDReconcileMachineDeploymentUpgradeReady(t *testing.T) {
-	g := NewWithT(t)
-	ctx := context.Background()
-	mdObjs := getObjectsForMD()
-
-	mdObjs.mdUpgrade.Status.Ready = true
-
-	runtimeObjs := []runtime.Object{mdObjs.machine, mdObjs.md, mdObjs.mdUpgrade, mdObjs.mhc}
-	client := fake.NewClientBuilder().WithRuntimeObjects(runtimeObjs...).Build()
-	r := controllers.NewMachineDeploymentReconciler(client)
-	req := mdRequest(mdObjs.md)
-	_, err := r.Reconcile(ctx, req)
-	g.Expect(err).ToNot(HaveOccurred())
-
-	mdu := &anywherev1.MachineDeploymentUpgrade{}
-	err = client.Get(ctx, types.NamespacedName{Name: mdObjs.mdUpgrade.Name, Namespace: constants.EksaSystemNamespace}, mdu)
-	g.Expect(err).To(HaveOccurred())
-
-	mhc := &clusterv1.MachineHealthCheck{}
-	err = client.Get(ctx, types.NamespacedName{Name: mdObjs.mhc.Name, Namespace: constants.EksaSystemNamespace}, mhc)
-	g.Expect(err).ToNot(HaveOccurred())
-	g.Expect(mhc.Annotations).ToNot(HaveKey("cluster.x-k8s.io/paused"))
+	g.Expect(mhc.Annotations).To(HaveKey(capiPausedAnnotation))
 }
 
 func TestMDReconcileMDAndMachineDeploymentUpgradeReady(t *testing.T) {
@@ -165,7 +110,7 @@ func TestMDReconcileMDAndMachineDeploymentUpgradeReady(t *testing.T) {
 	mdObjs := getObjectsForMD()
 
 	mdObjs.mdUpgrade.Status.Ready = true
-	mdObjs.md.Status.UpdatedReplicas = *mdObjs.md.Spec.Replicas
+	mdObjs.machine.Spec.Version = &mdObjs.mdUpgrade.Spec.KubernetesVersion
 
 	runtimeObjs := []runtime.Object{mdObjs.machine, mdObjs.md, mdObjs.mdUpgrade, mdObjs.mhc}
 	client := fake.NewClientBuilder().WithRuntimeObjects(runtimeObjs...).Build()
@@ -182,20 +127,18 @@ func TestMDReconcileMDAndMachineDeploymentUpgradeReady(t *testing.T) {
 	md := &clusterv1.MachineDeployment{}
 	err = client.Get(ctx, types.NamespacedName{Name: mdObjs.md.Name, Namespace: constants.EksaSystemNamespace}, md)
 	g.Expect(err).ToNot(HaveOccurred())
-	g.Expect(md.Annotations).ToNot(HaveKey("machinedeployment.clusters.x-k8s.io/in-place-upgrade-needed"))
+	g.Expect(md.Annotations).ToNot(HaveKey(mdInPlaceAnnotation))
 
 	mhc := &clusterv1.MachineHealthCheck{}
 	err = client.Get(ctx, types.NamespacedName{Name: mdObjs.mhc.Name, Namespace: constants.EksaSystemNamespace}, mhc)
 	g.Expect(err).ToNot(HaveOccurred())
-	g.Expect(mhc.Annotations).ToNot(HaveKey("cluster.x-k8s.io/paused"))
+	g.Expect(mhc.Annotations).ToNot(HaveKey(capiPausedAnnotation))
 }
 
-func TestMDReconcileMDReadyAndMachineDeploymentUpgradeAlreadyDeleted(t *testing.T) {
+func TestMDReconcileFullFlow(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
 	mdObjs := getObjectsForMD()
-
-	mdObjs.md.Status.UpdatedReplicas = *mdObjs.md.Spec.Replicas
 
 	runtimeObjs := []runtime.Object{mdObjs.machine, mdObjs.md, mdObjs.mhc}
 	client := fake.NewClientBuilder().WithRuntimeObjects(runtimeObjs...).Build()
@@ -204,16 +147,55 @@ func TestMDReconcileMDReadyAndMachineDeploymentUpgradeAlreadyDeleted(t *testing.
 	_, err := r.Reconcile(ctx, req)
 	g.Expect(err).ToNot(HaveOccurred())
 
-	// verify the in-place-upgrade-needed annotation is removed even when the MachineDeploymentUpgrade object is not found
+	// Expect MachineDeploymentUpgrade object to be created and not ready
+	mdu := &anywherev1.MachineDeploymentUpgrade{}
+	err = client.Get(ctx, types.NamespacedName{Name: mdObjs.mdUpgrade.Name, Namespace: constants.EksaSystemNamespace}, mdu)
+	g.Expect(err).ToNot(HaveOccurred())
+	g.Expect(mdu.Status.Ready).To(BeFalse())
+
+	// Expect KCP to still have in-place annotation
 	md := &clusterv1.MachineDeployment{}
 	err = client.Get(ctx, types.NamespacedName{Name: mdObjs.md.Name, Namespace: constants.EksaSystemNamespace}, md)
 	g.Expect(err).ToNot(HaveOccurred())
-	g.Expect(md.Annotations).ToNot(HaveKey("machinedeployment.clusters.x-k8s.io/in-place-upgrade-needed"))
+	g.Expect(md.Annotations).To(HaveKey(mdInPlaceAnnotation))
 
+	// Expect MHC for KCP to be paused
 	mhc := &clusterv1.MachineHealthCheck{}
 	err = client.Get(ctx, types.NamespacedName{Name: mdObjs.mhc.Name, Namespace: constants.EksaSystemNamespace}, mhc)
 	g.Expect(err).ToNot(HaveOccurred())
-	g.Expect(mhc.Annotations).ToNot(HaveKey("cluster.x-k8s.io/paused"))
+	g.Expect(mhc.Annotations).To(HaveKey(capiPausedAnnotation))
+
+	machine := &clusterv1.Machine{}
+	err = client.Get(ctx, types.NamespacedName{Name: mdObjs.machine.Name, Namespace: constants.EksaSystemNamespace}, machine)
+	g.Expect(err).ToNot(HaveOccurred())
+
+	// Mark MachineDeploymentUpgrade as ready and update Machine K8s version
+	mdu.Status.Ready = true
+	err = client.Update(ctx, mdu)
+	g.Expect(err).ToNot(HaveOccurred())
+	machine.Spec.Version = &mdu.Spec.KubernetesVersion
+	err = client.Update(ctx, machine)
+	g.Expect(err).ToNot(HaveOccurred())
+
+	// trigger another reconcile loop
+	req = mdRequest(md)
+	_, err = r.Reconcile(ctx, req)
+	g.Expect(err).ToNot(HaveOccurred())
+
+	// Expect MachineDeploymentUpgrade object to be deleted
+	err = client.Get(ctx, types.NamespacedName{Name: mdObjs.mdUpgrade.Name, Namespace: constants.EksaSystemNamespace}, mdu)
+	g.Expect(err).To(HaveOccurred())
+	g.Expect(apierrors.IsNotFound(err)).To(BeTrue())
+
+	// Expect MD to no longer have in-place annotation
+	err = client.Get(ctx, types.NamespacedName{Name: mdObjs.md.Name, Namespace: constants.EksaSystemNamespace}, md)
+	g.Expect(err).ToNot(HaveOccurred())
+	g.Expect(md.Annotations).ToNot(HaveKey(mdInPlaceAnnotation))
+
+	// Expect MHC for MD to not be paused
+	err = client.Get(ctx, types.NamespacedName{Name: mdObjs.mhc.Name, Namespace: constants.EksaSystemNamespace}, mhc)
+	g.Expect(err).ToNot(HaveOccurred())
+	g.Expect(mhc.Annotations).ToNot(HaveKey(capiPausedAnnotation))
 }
 
 func TestMDReconcileNotFound(t *testing.T) {

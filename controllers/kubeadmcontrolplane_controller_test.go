@@ -9,6 +9,7 @@ import (
 	"time"
 
 	. "github.com/onsi/gomega"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -22,6 +23,11 @@ import (
 	"github.com/aws/eks-anywhere/controllers"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
+)
+
+const (
+	kcpInPlaceAnnotation = "controlplane.clusters.x-k8s.io/in-place-upgrade-needed"
+	capiPausedAnnotation = "cluster.x-k8s.io/paused"
 )
 
 type kcpObjects struct {
@@ -39,6 +45,26 @@ func TestKCPSetupWithManager(t *testing.T) {
 	g.Expect(r.SetupWithManager(env.Manager())).To(Succeed())
 }
 
+func TestKCPReconcileNotNeeded(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+	kcpObjs := getObjectsForKCP()
+
+	delete(kcpObjs.kcp.Annotations, kcpInPlaceAnnotation)
+
+	runtimeObjs := []runtime.Object{kcpObjs.kcp, kcpObjs.mhc}
+	client := fake.NewClientBuilder().WithRuntimeObjects(runtimeObjs...).Build()
+	r := controllers.NewKubeadmControlPlaneReconciler(client)
+	req := kcpRequest(kcpObjs.kcp)
+	_, err := r.Reconcile(ctx, req)
+	g.Expect(err).ToNot(HaveOccurred())
+
+	mhc := &clusterv1.MachineHealthCheck{}
+	err = client.Get(ctx, types.NamespacedName{Name: kcpObjs.mhc.Name, Namespace: constants.EksaSystemNamespace}, mhc)
+	g.Expect(err).ToNot(HaveOccurred())
+	g.Expect(mhc.Annotations).ToNot(HaveKey(capiPausedAnnotation))
+}
+
 func TestKCPReconcile(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
@@ -54,60 +80,6 @@ func TestKCPReconcile(t *testing.T) {
 	cpu := &anywherev1.ControlPlaneUpgrade{}
 	err = client.Get(ctx, types.NamespacedName{Name: kcpObjs.cpUpgrade.Name, Namespace: constants.EksaSystemNamespace}, cpu)
 	g.Expect(err).ToNot(HaveOccurred())
-}
-
-func TestKCPReconcileComplete(t *testing.T) {
-	g := NewWithT(t)
-	ctx := context.Background()
-	kcpObjs := getObjectsForKCP()
-
-	count := int32(len(kcpObjs.machines))
-	kcpObjs.kcp.Spec.Replicas = pointer.Int32(count)
-	kcpObjs.kcp.Status.UpdatedReplicas = count
-
-	runtimeObjs := []runtime.Object{kcpObjs.kcp, kcpObjs.mhc}
-	client := fake.NewClientBuilder().WithRuntimeObjects(runtimeObjs...).Build()
-	r := controllers.NewKubeadmControlPlaneReconciler(client)
-	req := kcpRequest(kcpObjs.kcp)
-	_, err := r.Reconcile(ctx, req)
-	g.Expect(err).ToNot(HaveOccurred())
-
-	kcp := &controlplanev1.KubeadmControlPlane{}
-	err = client.Get(ctx, types.NamespacedName{Name: kcpObjs.kcp.Name, Namespace: constants.EksaSystemNamespace}, kcp)
-	g.Expect(err).ToNot(HaveOccurred())
-	g.Expect(kcp.Annotations).ToNot(HaveKey("controlplane.clusters.x-k8s.io/in-place-upgrade-needed"))
-
-	mhc := &clusterv1.MachineHealthCheck{}
-	err = client.Get(ctx, types.NamespacedName{Name: kcpObjs.mhc.Name, Namespace: constants.EksaSystemNamespace}, mhc)
-	g.Expect(err).ToNot(HaveOccurred())
-	g.Eventually(func(g Gomega) error {
-		func(g Gomega) {
-			g.Expect(mhc.Annotations).To(HaveKey("cluster.x-k8s.io/paused"))
-		}(g)
-
-		return nil
-	})
-	g.Expect(mhc.Annotations).ToNot(HaveKey("cluster.x-k8s.io/paused"))
-}
-
-func TestKCPReconcileNotNeeded(t *testing.T) {
-	g := NewWithT(t)
-	ctx := context.Background()
-	kcpObjs := getObjectsForKCP()
-
-	delete(kcpObjs.kcp.Annotations, "controlplane.clusters.x-k8s.io/in-place-upgrade-needed")
-
-	runtimeObjs := []runtime.Object{kcpObjs.kcp, kcpObjs.mhc}
-	client := fake.NewClientBuilder().WithRuntimeObjects(runtimeObjs...).Build()
-	r := controllers.NewKubeadmControlPlaneReconciler(client)
-	req := kcpRequest(kcpObjs.kcp)
-	_, err := r.Reconcile(ctx, req)
-	g.Expect(err).ToNot(HaveOccurred())
-
-	mhc := &clusterv1.MachineHealthCheck{}
-	err = client.Get(ctx, types.NamespacedName{Name: kcpObjs.mhc.Name, Namespace: constants.EksaSystemNamespace}, mhc)
-	g.Expect(err).ToNot(HaveOccurred())
-	g.Expect(mhc.Annotations).ToNot(HaveKey("cluster.x-k8s.io/paused"))
 }
 
 func TestKCPReconcileCreateControlPlaneUpgrade(t *testing.T) {
@@ -136,31 +108,7 @@ func TestKCPReconcileCreateControlPlaneUpgrade(t *testing.T) {
 	mhc := &clusterv1.MachineHealthCheck{}
 	err = client.Get(ctx, types.NamespacedName{Name: kcpObjs.mhc.Name, Namespace: constants.EksaSystemNamespace}, mhc)
 	g.Expect(err).ToNot(HaveOccurred())
-	g.Expect(mhc.Annotations).To(HaveKey("cluster.x-k8s.io/paused"))
-}
-
-func TestKCPReconcileControlPlaneUpgradeReady(t *testing.T) {
-	g := NewWithT(t)
-	ctx := context.Background()
-	kcpObjs := getObjectsForKCP()
-
-	kcpObjs.cpUpgrade.Status.Ready = true
-
-	runtimeObjs := []runtime.Object{kcpObjs.machines[0], kcpObjs.machines[1], kcpObjs.cpUpgrade, kcpObjs.kcp, kcpObjs.mhc}
-	client := fake.NewClientBuilder().WithRuntimeObjects(runtimeObjs...).Build()
-	r := controllers.NewKubeadmControlPlaneReconciler(client)
-	req := kcpRequest(kcpObjs.kcp)
-	_, err := r.Reconcile(ctx, req)
-	g.Expect(err).ToNot(HaveOccurred())
-
-	cpu := &anywherev1.ControlPlaneUpgrade{}
-	err = client.Get(ctx, types.NamespacedName{Name: kcpObjs.cpUpgrade.Name, Namespace: constants.EksaSystemNamespace}, cpu)
-	g.Expect(err).To(HaveOccurred())
-
-	mhc := &clusterv1.MachineHealthCheck{}
-	err = client.Get(ctx, types.NamespacedName{Name: kcpObjs.mhc.Name, Namespace: constants.EksaSystemNamespace}, mhc)
-	g.Expect(err).ToNot(HaveOccurred())
-	g.Expect(mhc.Annotations).ToNot(HaveKey("cluster.x-k8s.io/paused"))
+	g.Expect(mhc.Annotations).To(HaveKey(capiPausedAnnotation))
 }
 
 func TestKCPReconcileKCPAndControlPlaneUpgradeReady(t *testing.T) {
@@ -168,7 +116,7 @@ func TestKCPReconcileKCPAndControlPlaneUpgradeReady(t *testing.T) {
 	ctx := context.Background()
 	kcpObjs := getObjectsForKCP()
 
-	kcpObjs.kcp.Status.UpdatedReplicas = *kcpObjs.kcp.Spec.Replicas
+	kcpObjs.kcp.Status.Version = &kcpObjs.kcp.Spec.Version
 	kcpObjs.cpUpgrade.Status.Ready = true
 
 	runtimeObjs := []runtime.Object{kcpObjs.machines[0], kcpObjs.machines[1], kcpObjs.cpUpgrade, kcpObjs.kcp, kcpObjs.mhc}
@@ -186,20 +134,18 @@ func TestKCPReconcileKCPAndControlPlaneUpgradeReady(t *testing.T) {
 	kcp := &controlplanev1.KubeadmControlPlane{}
 	err = client.Get(ctx, types.NamespacedName{Name: kcpObjs.kcp.Name, Namespace: constants.EksaSystemNamespace}, kcp)
 	g.Expect(err).ToNot(HaveOccurred())
-	g.Expect(kcp.Annotations).ToNot(HaveKey("controlplane.clusters.x-k8s.io/in-place-upgrade-needed"))
+	g.Expect(kcp.Annotations).ToNot(HaveKey(kcpInPlaceAnnotation))
 
 	mhc := &clusterv1.MachineHealthCheck{}
 	err = client.Get(ctx, types.NamespacedName{Name: kcpObjs.mhc.Name, Namespace: constants.EksaSystemNamespace}, mhc)
 	g.Expect(err).ToNot(HaveOccurred())
-	g.Expect(mhc.Annotations).ToNot(HaveKey("cluster.x-k8s.io/paused"))
+	g.Expect(mhc.Annotations).ToNot(HaveKey(capiPausedAnnotation))
 }
 
-func TestKCPReconcileKCPReadyAndCPUpgradeAlreadyDeleted(t *testing.T) {
+func TestKCPReconcileFullFlow(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
 	kcpObjs := getObjectsForKCP()
-
-	kcpObjs.kcp.Status.UpdatedReplicas = *kcpObjs.kcp.Spec.Replicas
 
 	runtimeObjs := []runtime.Object{kcpObjs.machines[0], kcpObjs.machines[1], kcpObjs.kcp, kcpObjs.mhc}
 	client := fake.NewClientBuilder().WithRuntimeObjects(runtimeObjs...).Build()
@@ -208,16 +154,51 @@ func TestKCPReconcileKCPReadyAndCPUpgradeAlreadyDeleted(t *testing.T) {
 	_, err := r.Reconcile(ctx, req)
 	g.Expect(err).ToNot(HaveOccurred())
 
-	// verify the in-place-upgrade-needed annotation is removed even when the ControlPlaneUpgrade object is not found
+	// Expect ControlPlaneUpgrade object to be created and not ready
+	cpu := &anywherev1.ControlPlaneUpgrade{}
+	err = client.Get(ctx, types.NamespacedName{Name: kcpObjs.cpUpgrade.Name, Namespace: constants.EksaSystemNamespace}, cpu)
+	g.Expect(err).ToNot(HaveOccurred())
+	g.Expect(cpu.Status.Ready).To(BeFalse())
+
+	// Expect KCP to still have in-place annotation
 	kcp := &controlplanev1.KubeadmControlPlane{}
 	err = client.Get(ctx, types.NamespacedName{Name: kcpObjs.kcp.Name, Namespace: constants.EksaSystemNamespace}, kcp)
 	g.Expect(err).ToNot(HaveOccurred())
-	g.Expect(kcp.Annotations).ToNot(HaveKey("controlplane.clusters.x-k8s.io/in-place-upgrade-needed"))
+	g.Expect(kcp.Annotations).To(HaveKey(kcpInPlaceAnnotation))
 
+	// Expect MHC for KCP to be paused
 	mhc := &clusterv1.MachineHealthCheck{}
 	err = client.Get(ctx, types.NamespacedName{Name: kcpObjs.mhc.Name, Namespace: constants.EksaSystemNamespace}, mhc)
 	g.Expect(err).ToNot(HaveOccurred())
-	g.Expect(mhc.Annotations).ToNot(HaveKey("cluster.x-k8s.io/paused"))
+	g.Expect(mhc.Annotations).To(HaveKey(capiPausedAnnotation))
+
+	// Mark ControlPlaneUpgrade as ready and update KCP status K8s version
+	cpu.Status.Ready = true
+	err = client.Update(ctx, cpu)
+	g.Expect(err).ToNot(HaveOccurred())
+	kcp.Status.Version = &kcp.Spec.Version
+	err = client.Update(ctx, kcp)
+	g.Expect(err).ToNot(HaveOccurred())
+
+	// trigger another reconcile loop
+	req = kcpRequest(kcp)
+	_, err = r.Reconcile(ctx, req)
+	g.Expect(err).ToNot(HaveOccurred())
+
+	// Expect ControlPlaneUpgrade object to be deleted
+	err = client.Get(ctx, types.NamespacedName{Name: kcpObjs.cpUpgrade.Name, Namespace: constants.EksaSystemNamespace}, cpu)
+	g.Expect(err).To(HaveOccurred())
+	g.Expect(apierrors.IsNotFound(err)).To(BeTrue())
+
+	// Expect KCP to no longer have in-place annotation
+	err = client.Get(ctx, types.NamespacedName{Name: kcpObjs.kcp.Name, Namespace: constants.EksaSystemNamespace}, kcp)
+	g.Expect(err).ToNot(HaveOccurred())
+	g.Expect(kcp.Annotations).ToNot(HaveKey(kcpInPlaceAnnotation))
+
+	// Expect MHC for KCP to not be paused
+	err = client.Get(ctx, types.NamespacedName{Name: kcpObjs.mhc.Name, Namespace: constants.EksaSystemNamespace}, mhc)
+	g.Expect(err).ToNot(HaveOccurred())
+	g.Expect(mhc.Annotations).ToNot(HaveKey(capiPausedAnnotation))
 }
 
 func TestKCPReconcileNotFound(t *testing.T) {
@@ -332,7 +313,7 @@ func generateKCP(name string) *controlplanev1.KubeadmControlPlane {
 			Namespace: constants.EksaSystemNamespace,
 			UID:       "test-uid",
 			Annotations: map[string]string{
-				"controlplane.clusters.x-k8s.io/in-place-upgrade-needed": "true",
+				kcpInPlaceAnnotation: "true",
 			},
 		},
 		Spec: controlplanev1.KubeadmControlPlaneSpec{
