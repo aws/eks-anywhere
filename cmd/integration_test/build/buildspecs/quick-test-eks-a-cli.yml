@@ -166,6 +166,15 @@ phases:
       - source ${CODEBUILD_SRC_DIR}/cmd/integration_test/build/script/create_infra_config.sh
       - ${CODEBUILD_SRC_DIR}/cmd/integration_test/build/script/start_docker.sh
       - make eks-a-for-dev-e2e build-integration-test-binary e2e-tests-binary E2E_TAGS="e2e all_providers" E2E_OUTPUT_FILE=bin/e2e.test
+      - export CLUSTER_NAME_PREFIX="${BRANCH_NAME//./-}"
+      - >
+        ./bin/test e2e cleanup vsphere
+        -n ${CLUSTER_NAME_PREFIX}
+        -v 4
+      - >
+        ./bin/test e2e cleanup cloudstack
+        -n ${CLUSTER_NAME_PREFIX}
+        -v 4
   build:
     commands:
       - export JOB_ID=$CODEBUILD_BUILD_ID
@@ -191,9 +200,21 @@ phases:
         -v 4
         --skip ${SKIPPED_TESTS}
         --bundles-override=${BUNDLES_OVERRIDE}
+        --cleanup-vms=true
         --test-report-folder=reports
         --branch-name=${BRANCH_NAME}
         --baremetal-branch=${BAREMETAL_BRANCH}
+  post_build:
+    commands:
+      - unset AWS_SDK_LOAD_CONFIG AWS_PROFILE
+      - >
+        ./bin/test e2e cleanup vsphere
+        -n ${CLUSTER_NAME_PREFIX}
+        -v 4
+      - >
+        ./bin/test e2e cleanup cloudstack
+        -n ${CLUSTER_NAME_PREFIX}
+        -v 4
 reports:
   e2e-reports:
     files:
