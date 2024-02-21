@@ -55,6 +55,9 @@ func KubeadmControlPlane(log logr.Logger, clusterSpec *cluster.Spec, snowMachine
 	joinConfigKubeletExtraArg["provider-id"] = "aws-snow:////'{{ ds.meta_data.instance_id }}'"
 
 	addStackedEtcdExtraArgsInKubeadmControlPlane(kcp, clusterSpec.Cluster.Spec.ExternalEtcdConfiguration)
+	if versionsBundle.KubeVersion == "1.29" {
+		disableEtcdLearnerMode(kcp)
+	}
 
 	machineConfig := clusterSpec.SnowMachineConfig(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name)
 
