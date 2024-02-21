@@ -11,7 +11,7 @@ description: >
 
 {{% alert title="Note" color="warning" %}}
 
-Upgrade overview information was moved to a dedicated [Upgrade Overview page.]({{< relref "./upgrade-overview" >}})
+**Upgrade overview information was moved to a dedicated [Upgrade Overview page.]({{< relref "./upgrade-overview" >}})**
 
 {{% /alert %}}
 
