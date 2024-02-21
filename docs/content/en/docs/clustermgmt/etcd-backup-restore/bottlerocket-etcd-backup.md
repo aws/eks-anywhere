@@ -151,7 +151,7 @@ Make sure to setup the [admin environment variables]({{< relref "#admin-machine-
     # exit from bottlerocket node
     exit
     ```
-    Repeat these steps for each control plane node.
+    **Repeat these steps for each control plane node.**
 
 1. Copy the backed-up etcd snapshot to all the etcd nodes
     ```bash
@@ -256,7 +256,7 @@ ctr -n k8s.io t exec -t --exec-id etcd ${ETCD_CONTAINER_ID} etcdutl \
     exit
     ```
 
-    Repeat this step for each etcd node.
+**Repeat this step for each etcd node.**
 
 1. Restart control plane core components
 
@@ -285,7 +285,7 @@ ctr -n k8s.io t exec -t --exec-id etcd ${ETCD_CONTAINER_ID} etcdutl \
     # exit from bottlerocket node
     exit
     ```
-    Repeat these steps for each control plane node.
+    **Repeat these steps for each control plane node.**
 
 1. Unpause the cluster reconcilers
 

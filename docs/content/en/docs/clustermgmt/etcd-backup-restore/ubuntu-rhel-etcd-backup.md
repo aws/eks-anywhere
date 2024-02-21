@@ -17,7 +17,7 @@ This page contains steps for backing up a cluster by taking an etcd snapshot, an
 
 ### Use case
 
-EKS-Anywhere clusters use etcd as the backing store. Taking a snapshot of etcd backs up the entire cluster data. This can later be used to restore a cluster back to an earlier state if required. Etcd backups can be taken prior to cluster upgrade, so if the upgrade doesn't go as planned you can restore from the backup.
+EKS Anywhere clusters use etcd as the backing store. Taking a snapshot of etcd backs up the entire cluster data. This can later be used to restore a cluster back to an earlier state if required. Etcd backups can be taken prior to cluster upgrade, so if the upgrade doesn't go as planned you can restore from the backup.
 
 
 ### Backup
@@ -45,9 +45,7 @@ ssh -i $PRIV_KEY ec2-user@$ETCD_VM_IP
     {{< /tab >}}
     
     {{< /tabpane >}}
-```bash
 
-```
 3. Exit the VM. Copy the snapshot from the VM to your local/admin setup where you can save snapshots in a secure place. Before running scp, make sure you don't already have a snapshot file saved by the same name locally. 
 ```bash
 scp -i $PRIV_KEY ec2-user@$ETCD_VM_IP:/home/ec2-user/snapshot.db . 
@@ -57,11 +55,14 @@ NOTE: This snapshot file contains all information stored in the cluster, so make
 
 ### Restore
 
-Restoring etcd is a 2-part process. The first part is restoring etcd using the snapshot, creating a new data-dir for etcd. The second part is replacing the current etcd data-dir with the one generated after restore. During etcd data-dir replacement, we cannot have any kube-apiserver instances running in the cluster. So we will first stop all instances of kube-apiserver and other controlplane components using the following steps for every controlplane VM:
+Restoring etcd is a 2-part process.
+The first part is restoring etcd using the snapshot, creating a new data-dir for etcd.
+The second part is replacing the current etcd data-dir with the one generated after restore.
 
 #### Pausing Etcdadm cluster and control plane machine health check reconcile
 
-During restore, it is required to pause the Etcdadm controller reconcile and the control plane machine healths checks for the target cluster (whether it is management or workload cluster). To do that, you need to add a `cluster.x-k8s.io/paused` annotation to the target cluster's `etcdadmclusters` and `machinehealthchecks` resources. For example,
+During restore, it is required to pause the Etcdadm controller reconcile and the control plane machine healths checks for the target cluster (whether it is management or workload cluster).
+To do that, you need to add a `cluster.x-k8s.io/paused` annotation to the target cluster's `etcdadmclusters` and `machinehealthchecks` resources. For example,
 
 ```bash
 kubectl annotate clusters.anywhere.eks.amazonaws.com $CLUSTER_NAME anywhere.eks.amazonaws.com/paused=true --kubeconfig mgmt-cluster.kubeconfig
@@ -70,6 +71,10 @@ kubectl patch clusters.cluster.x-k8s.io $CLUSTER_NAME --type merge -p '{"spec":{
 ```
 
 #### Stopping the controlplane components
+
+During etcd data-dir replacement, we cannot have any kube-apiserver instances running in the cluster.
+So we will first stop all instances of kube-apiserver and other controlplane components using the following steps **for every controlplane VM**:
+
 1. Login to a controlplane VM
 ```bash
 ssh -i $PRIV_KEY ec2-user@$CONTROLPLANE_VM_IP
@@ -80,7 +85,7 @@ sudo su
 mkdir temp-manifests
 mv /etc/kubernetes/manifests/*.yaml temp-manifests
 ```
-3. Repeat these steps for all other controlplane VMs
+3. **Repeat these steps for all other controlplane VMs**
 
 After this you can restore etcd from a saved snapshot using the `snapshot save` command following the steps given below.
 
@@ -99,11 +104,16 @@ export ETCD_NAME=$(cat /etc/etcd/etcd.env | grep ETCD_NAME | awk -F'=' '{print $
 ```bash
 export ETCD_INITIAL_ADVERTISE_PEER_URLS=$(cat /etc/etcd/etcd.env | grep ETCD_INITIAL_ADVERTISE_PEER_URLS | awk -F'=' '{print $2}')
 ```
-* initial-cluster: This should be a comma-separated mapping of etcd member name and its peer URL. For this, get the `ETCD_NAME` and `ETCD_INITIAL_ADVERTISE_PEER_URLS` values for each member and join them. And then use this exact value for all etcd VMs. For example, for a 3 member etcd cluster this is what the value would look like (The command below cannot be run directly without substituting the required variables and is meant to be an example)
+* initial-cluster: This should be a comma-separated mapping of etcd member name and its peer URL. For this, get the `ETCD_NAME` and `ETCD_INITIAL_ADVERTISE_PEER_URLS` values for each member and join them. And then use this exact value for all etcd VMs.
+
+    For example, for a 3 member etcd cluster this is what the value would look like (**NOTE: The command below cannot be run directly without substituting the required variables and is meant to be an example**)
 ```bash
 export ETCD_INITIAL_CLUSTER=${ETCD_NAME_1}=${ETCD_INITIAL_ADVERTISE_PEER_URLS_1},${ETCD_NAME_2}=${ETCD_INITIAL_ADVERTISE_PEER_URLS_2},${ETCD_NAME_3}=${ETCD_INITIAL_ADVERTISE_PEER_URLS_3}
 ```  
 * initial-cluster-token: Set this to a unique value and use the same value for all etcd members of the cluster. It can be any value such as `etcd-cluster-1` as long as it hasn't been used before.  
+```bash
+export ETCD_INITIAL_CLUSTER_TOKEN=etcd-cluster-1
+```  
 3. Gather the required env vars for the restore command
 ```bash
 cat <<EOF >> restore.env
@@ -123,7 +133,7 @@ cat /etc/etcd/etcdctl.env >> restore.env
     etcdctl snapshot restore snapshot.db \
         --name=${ETCD_NAME} \
         --initial-cluster=${ETCD_INITIAL_CLUSTER} \
-        --initial-cluster-token=etcd-cluster-1 \
+        --initial-cluster-token=${ETCD_INITIAL_CLUSTER_TOKEN} \
         --initial-advertise-peer-urls=${ETCD_INITIAL_ADVERTISE_PEER_URLS}
     {{< /tab >}}
 
@@ -133,19 +143,20 @@ cat /etc/etcd/etcdctl.env >> restore.env
     etcdutl snapshot restore snapshot.db \
         --name=${ETCD_NAME} \
         --initial-cluster=${ETCD_INITIAL_CLUSTER} \
-        --initial-cluster-token=etcd-cluster-1 \
+        --initial-cluster-token=${ETCD_INITIAL_CLUSTER_TOKEN} \
         --initial-advertise-peer-urls=${ETCD_INITIAL_ADVERTISE_PEER_URLS}
     {{< /tab >}}
     
     {{< /tabpane >}}
 
-5. This is going to create a new data-dir for the restored contents under a new directory `{ETCD_NAME}.etcd`. To start using this, restart etcd with the new data-dir with the following steps:
+6. This is going to create a new data-dir for the restored contents under a new directory `{ETCD_NAME}.etcd`.
+To start using this, stop etcd on each etcd VM and copy over the new data-dir with the following steps:
 ```bash
 systemctl stop etcd.service
 mv /var/lib/etcd/member /var/lib/etcd/member.bak
 mv ${ETCD_NAME}.etcd/member /var/lib/etcd/
 ```
-6. Perform this directory swap on all etcd VMs, and then start etcd again on those VMs
+7. After you have performed this directory swap on all etcd VMs, you should start etcd again on those VMs
 ```bash
 systemctl start etcd.service
 ```
