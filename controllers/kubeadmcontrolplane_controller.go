@@ -116,9 +116,6 @@ func (r *KubeadmControlPlaneReconciler) reconcile(ctx context.Context, log logr.
 		return ctrl.Result{}, err
 	}
 
-	cpUpgrade := &anywherev1.ControlPlaneUpgrade{}
-	cpuGetErr := r.client.Get(ctx, GetNamespacedNameType(cpUpgradeName(kcp.Name), constants.EksaSystemNamespace), cpUpgrade)
-
 	mhc := &clusterv1.MachineHealthCheck{}
 	if err := r.client.Get(ctx, GetNamespacedNameType(cpMachineHealthCheckName(kcp.Name), constants.EksaSystemNamespace), mhc); err != nil {
 		if apierrors.IsNotFound(err) {
@@ -131,8 +128,10 @@ func (r *KubeadmControlPlaneReconciler) reconcile(ctx context.Context, log logr.
 		return ctrl.Result{}, err
 	}
 
-	if kcp.Spec.Replicas != nil && (*kcp.Spec.Replicas == kcp.Status.UpdatedReplicas) {
-		if cpuGetErr == nil && cpUpgrade.Status.Ready {
+	cpUpgrade := &anywherev1.ControlPlaneUpgrade{}
+	cpuGetErr := r.client.Get(ctx, GetNamespacedNameType(cpUpgradeName(kcp.Name), constants.EksaSystemNamespace), cpUpgrade)
+	if cpuGetErr == nil {
+		if cpUpgrade.Status.Ready && kcp.Status.Version != nil && *kcp.Status.Version == cpUpgrade.Spec.KubernetesVersion {
 			log.Info("Control plane upgrade complete, deleting object", "ControlPlaneUpgrade", cpUpgrade.Name)
 			if err := r.client.Delete(ctx, cpUpgrade); err != nil {
 				return ctrl.Result{}, fmt.Errorf("deleting ControlPlaneUpgrade object: %v", err)
@@ -141,55 +140,38 @@ func (r *KubeadmControlPlaneReconciler) reconcile(ctx context.Context, log logr.
 			if err := resumeMachineHealthCheck(ctx, mhc, mhcPatchHelper); err != nil {
 				return ctrl.Result{}, fmt.Errorf("updating annotations for machine health check: %v", err)
 			}
-		} else if !apierrors.IsNotFound(cpuGetErr) {
-			return ctrl.Result{}, fmt.Errorf("getting ControlPlaneUpgrade for KubeadmControlPlane %s: %v", kcp.Name, cpuGetErr)
-		}
 
-		log.Info("KubeadmControlPlane is ready, removing the \"in-place-upgrade-needed\" annotation")
-		// Remove the in-place-upgrade-needed annotation only after the ControlPlaneUpgrade object is deleted
-		delete(kcp.Annotations, kcpInPlaceUpgradeNeededAnnotation)
+			log.Info("KubeadmControlPlane is ready, removing the \"in-place-upgrade-needed\" annotation")
+			// Remove the in-place-upgrade-needed annotation only after the ControlPlaneUpgrade object is deleted
+			delete(kcp.Annotations, kcpInPlaceUpgradeNeededAnnotation)
+		}
 		return ctrl.Result{}, nil
 	}
 
-	if cpuGetErr != nil {
-		if apierrors.IsNotFound(cpuGetErr) {
-			log.Info("Creating ControlPlaneUpgrade object")
-			machines, err := r.machinesToUpgrade(ctx, kcp)
-			if err != nil {
-				return ctrl.Result{}, fmt.Errorf("retrieving list of control plane machines: %v", err)
-			}
-			cpUpgrade, err := controlPlaneUpgrade(kcp, machines)
-			if err != nil {
-				return ctrl.Result{}, fmt.Errorf("generating ControlPlaneUpgrade: %v", err)
-			}
-
-			log.Info("Pausing control plane machine health check", "MachineHealthCheck", cpMachineHealthCheckName(kcp.Name))
-			if err := pauseMachineHealthCheck(ctx, mhc, mhcPatchHelper); err != nil {
-				return ctrl.Result{}, fmt.Errorf("updating annotations for machine health check: %v", err)
-			}
-
-			if err := r.client.Create(ctx, cpUpgrade); client.IgnoreAlreadyExists(err) != nil {
-				return ctrl.Result{}, fmt.Errorf("failed to create ControlPlaneUpgrade for KubeadmControlPlane %s:  %v", kcp.Name, err)
-			}
-			return ctrl.Result{}, nil
+	if apierrors.IsNotFound(cpuGetErr) {
+		log.Info("Creating ControlPlaneUpgrade object")
+		machines, err := r.machinesToUpgrade(ctx, kcp)
+		if err != nil {
+			return ctrl.Result{}, fmt.Errorf("retrieving list of control plane machines: %v", err)
 		}
-		return ctrl.Result{}, fmt.Errorf("getting ControlPlaneUpgrade for KubeadmControlPlane %s: %v", kcp.Name, cpuGetErr)
-	}
-	if !cpUpgrade.Status.Ready {
+		cpUpgrade, err := controlPlaneUpgrade(kcp, machines)
+		if err != nil {
+			return ctrl.Result{}, fmt.Errorf("generating ControlPlaneUpgrade: %v", err)
+		}
+
+		log.Info("Pausing control plane machine health check", "MachineHealthCheck", cpMachineHealthCheckName(kcp.Name))
+		if err := pauseMachineHealthCheck(ctx, mhc, mhcPatchHelper); err != nil {
+			return ctrl.Result{}, fmt.Errorf("updating annotations for machine health check: %v", err)
+		}
+
+		if err := r.client.Create(ctx, cpUpgrade); client.IgnoreAlreadyExists(err) != nil {
+			return ctrl.Result{}, fmt.Errorf("failed to create ControlPlaneUpgrade for KubeadmControlPlane %s:  %v", kcp.Name, err)
+		}
 		return ctrl.Result{}, nil
 	}
 
-	log.Info("Control plane upgrade complete, deleting object", "ControlPlaneUpgrade", cpUpgrade.Name)
-	if err := r.client.Delete(ctx, cpUpgrade); err != nil {
-		return ctrl.Result{}, fmt.Errorf("deleting ControlPlaneUpgrade object: %v", err)
-	}
+	return ctrl.Result{}, fmt.Errorf("getting ControlPlaneUpgrade for KubeadmControlPlane %s: %v", kcp.Name, err)
 
-	log.Info("Resuming control plane machine health check", "MachineHealthCheck", cpMachineHealthCheckName(kcp.Name))
-	if err := resumeMachineHealthCheck(ctx, mhc, mhcPatchHelper); err != nil {
-		return ctrl.Result{}, fmt.Errorf("updating annotations for machine health check: %v", err)
-	}
-
-	return ctrl.Result{}, nil
 }
 
 func (r *KubeadmControlPlaneReconciler) inPlaceUpgradeNeeded(kcp *controlplanev1.KubeadmControlPlane) bool {
