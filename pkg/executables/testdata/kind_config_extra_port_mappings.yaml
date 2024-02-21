@@ -1,5 +1,8 @@
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
+networking:
+  podSubnet: 1.1.1.1
+  serviceSubnet: 2.2.2.2
 kubeadmConfigPatches:
   - |
     kind: ClusterConfiguration
