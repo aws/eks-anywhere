@@ -263,7 +263,7 @@ After finishing the task, make sure you resume the cluster reconciliation by rem
 kubectl annotate clusters.anywhere.eks.amazonaws.com ${CLUSTER_NAME} -n ${CLUSTER_NAMESPACE} anywhere.eks.amazonaws.com/paused-
 ```
 
->**_NOTE (vSphere only):_** If you are upgrading a vSphere cluster created using EKS Anywhere version prior to `v0.16.0` that has the vSphere CSI Driver installed in it, please refer to the additional steps listed [here]({{< relref "../storage/vsphere-storage#-vsphere-csi-driver-cleanup-for-upgrades" >}}) before attempting an upgrade.
+>**_NOTE (vSphere only):_** If you are upgrading a vSphere cluster created using EKS Anywhere version prior to `v0.16.0` that has the vSphere CSI Driver installed in it, please refer to the additional steps listed [here]({{< relref "../storage/vsphere-storage#vsphere-csi-driver-cleanup-for-upgrades" >}}) before attempting an upgrade.
 
 ### Upgradeable Cluster Attributes
 EKS Anywhere `upgrade` supports upgrading more than just the `kubernetesVersion`, 
