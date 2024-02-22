@@ -285,6 +285,19 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (re
 	// then return without any further processing.
 	if aggregatedGeneration == cluster.Status.ChildrenReconciledGeneration && cluster.Status.ReconciledGeneration == cluster.Generation {
 		log.Info("Generation and aggregated generation match reconciled generations for cluster and child objects, skipping reconciliation.")
+
+		// Failure messages are cleared in the reconciler loop after running validations. But sometimes,
+		// it seems that Cluster failure messages on the status are is not cleared for some reason
+		//  after successfully passing the validation. The theory is that if the inital patch operation
+		// is not successful, and the reconciliation is skipped going forward, it may never be cleared.
+		//
+		// When the controller reaches here, it denotes a completed reconcile. So, we can safely
+		// clear any failure messages or reasons that may be left over as there is no further processing
+		// for the controller to do.
+		if cluster.HasFailure() {
+			cluster.ClearFailure()
+		}
+
 		return ctrl.Result{}, nil
 	}
 
