@@ -15,7 +15,10 @@ import (
 	"github.com/aws/eks-anywhere/pkg/retrier"
 )
 
-const ssmLogGroup = "/eks-anywhere/test/e2e"
+const (
+	ssmLogGroup               = "/eks-anywhere/test/e2e"
+	defaultSSMDeliveryTimeout = 300
+)
 
 var initE2EDirCommand = "mkdir -p /home/e2e/bin && cd /home/e2e"
 
@@ -127,9 +130,10 @@ func RunCommand(session *session.Session, logger logr.Logger, instanceID, comman
 
 func sendCommand(service *ssm.SSM, logger logr.Logger, instanceID, command string, timeout time.Duration, opts ...CommandOpt) (*ssm.SendCommandOutput, error) {
 	in := &ssm.SendCommandInput{
-		DocumentName: aws.String("AWS-RunShellScript"),
-		InstanceIds:  []*string{aws.String(instanceID)},
-		Parameters:   map[string][]*string{"commands": {aws.String(initE2EDirCommand), aws.String(command)}, "executionTimeout": {aws.String(strconv.FormatFloat(timeout.Seconds(), 'f', 0, 64))}},
+		DocumentName:   aws.String("AWS-RunShellScript"),
+		InstanceIds:    []*string{aws.String(instanceID)},
+		Parameters:     map[string][]*string{"commands": {aws.String(initE2EDirCommand), aws.String(command)}, "executionTimeout": {aws.String(strconv.FormatFloat(timeout.Seconds(), 'f', 0, 64))}},
+		TimeoutSeconds: aws.Int64(defaultSSMDeliveryTimeout),
 	}
 
 	for _, opt := range opts {
