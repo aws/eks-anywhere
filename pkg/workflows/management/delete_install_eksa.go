@@ -25,6 +25,7 @@ func (s *installEksaComponentsOnBootstrapForDeleteTask) Run(ctx context.Context,
 	}
 
 	commandContext.ClusterSpec.Cluster.PauseReconcile()
+	commandContext.ClusterSpec.Cluster.AllowDeleteWhilePaused()
 	commandContext.ClusterSpec.Cluster.SetFinalizers([]string{"clusters.anywhere.eks.amazonaws.com/finalizer"})
 	commandContext.ClusterSpec.Cluster.AddManagedByCLIAnnotation()
 	err = applyClusterSpecOnBootstrapForDeleteTask(ctx, commandContext.ClusterSpec, commandContext.BootstrapCluster, commandContext.ClientFactory)
