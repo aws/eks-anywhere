@@ -13,19 +13,7 @@ type deleteManagementCluster struct{}
 func (s *deleteManagementCluster) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
 	logger.Info("Deleting management cluster")
 
-	err := commandContext.ClusterManager.ResumeEKSAControllerReconcile(ctx, commandContext.BootstrapCluster, commandContext.ClusterSpec, commandContext.Provider)
-	if err != nil {
-		commandContext.SetError(err)
-		return &workflows.CollectMgmtClusterDiagnosticsTask{}
-	}
-
-	err = commandContext.ClusterManager.AddManagedByCLIAnnotationForCluster(ctx, commandContext.BootstrapCluster, commandContext.ClusterSpec, commandContext.Provider)
-	if err != nil {
-		commandContext.SetError(err)
-		return &workflows.CollectMgmtClusterDiagnosticsTask{}
-	}
-
-	err = commandContext.ClusterDeleter.Run(ctx, commandContext.ClusterSpec, *commandContext.BootstrapCluster)
+	err := commandContext.ClusterDeleter.Run(ctx, commandContext.ClusterSpec, *commandContext.BootstrapCluster)
 	if err != nil {
 		commandContext.SetError(err)
 		return &workflows.CollectMgmtClusterDiagnosticsTask{}

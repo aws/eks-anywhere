@@ -290,6 +290,21 @@ func (c *Cluster) PauseReconcile() {
 	c.Annotations[pausedAnnotation] = "true"
 }
 
+// AllowDeleteWhilePaused adds the allow-delete-when-paused annotation to the cluster.
+func (c *Cluster) AllowDeleteWhilePaused() {
+	if c.Annotations == nil {
+		c.Annotations = map[string]string{}
+	}
+	c.Annotations[AllowDeleteWhenPausedAnnotation] = "true"
+}
+
+// PreventDeleteWhilePaused removes the allow-delete-when-paused annotation to the cluster.
+func (c *Cluster) PreventDeleteWhilePaused() {
+	if c.Annotations != nil {
+		delete(c.Annotations, AllowDeleteWhenPausedAnnotation)
+	}
+}
+
 func (c *Cluster) ClearPauseAnnotation() {
 	if c.Annotations != nil {
 		delete(c.Annotations, pausedAnnotation)

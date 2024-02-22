@@ -467,7 +467,7 @@ func (r *ClusterReconciler) reconcileDelete(ctx context.Context, log logr.Logger
 		return ctrl.Result{}, errors.New("deleting self-managed clusters is not supported")
 	}
 
-	if cluster.IsReconcilePaused() {
+	if cluster.IsReconcilePaused() && !cluster.CanDeleteWhenPaused() {
 		log.Info("Cluster reconciliation is paused, won't process cluster deletion")
 		return ctrl.Result{}, nil
 	}

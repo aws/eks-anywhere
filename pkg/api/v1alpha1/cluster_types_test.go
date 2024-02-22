@@ -157,6 +157,17 @@ func TestClusterSetSelfManaged(t *testing.T) {
 	g.Expect(c.IsSelfManaged()).To(BeTrue())
 }
 
+func TestClusterCanDeleteWhenPaused(t *testing.T) {
+	c := &v1alpha1.Cluster{}
+	c.AllowDeleteWhilePaused()
+
+	g := NewWithT(t)
+	g.Expect(c.CanDeleteWhenPaused()).To(BeTrue())
+
+	c.PreventDeleteWhilePaused()
+	g.Expect(c.CanDeleteWhenPaused()).To(BeFalse())
+}
+
 func TestClusterManagementClusterEqual(t *testing.T) {
 	testCases := []struct {
 		testName                                 string

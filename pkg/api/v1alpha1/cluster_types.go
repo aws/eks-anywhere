@@ -56,6 +56,10 @@ const (
 
 	// ControlEndpointDefaultPort defaults cluster control plane endpoint port if not specified.
 	ControlEndpointDefaultPort = "6443"
+
+	// AllowDeleteWhenPausedAnnotation is an annotation applied to an EKS-A cluster that allows the deletion of the cluster
+	// when paused.
+	AllowDeleteWhenPausedAnnotation = "anywhere.eks.amazonaws.com/allow-delete-when-paused"
 )
 
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
@@ -1539,6 +1543,15 @@ func (c *Cluster) IsManagedByCLI() bool {
 		return false
 	}
 	val, ok := c.Annotations[ManagedByCLIAnnotation]
+	return ok && val == "true"
+}
+
+// CanDeleteWhenPaused returns true if the cluster has the allow-delete-when-paused annotation.
+func (c *Cluster) CanDeleteWhenPaused() bool {
+	if len(c.Annotations) == 0 {
+		return false
+	}
+	val, ok := c.Annotations[AllowDeleteWhenPausedAnnotation]
 	return ok && val == "true"
 }
 
