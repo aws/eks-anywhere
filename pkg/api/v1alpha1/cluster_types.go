@@ -1445,6 +1445,11 @@ func (c *Cluster) ClearFailure() {
 	c.Status.FailureReason = nil
 }
 
+// HasFailure checks whether there is a failureMessage and/or failureReason set on the Cluster status.
+func (c *Cluster) HasFailure() bool {
+	return c.Status.FailureMessage != nil || c.Status.FailureReason != nil
+}
+
 // KubernetesVersions returns a set of all unique k8s versions specified in the cluster
 // for both CP and workers.
 func (c *Cluster) KubernetesVersions() []KubernetesVersion {

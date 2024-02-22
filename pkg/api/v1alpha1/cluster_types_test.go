@@ -2889,6 +2889,64 @@ func TestCluster_ClearFailure(t *testing.T) {
 	g.Expect(cluster.Status.FailureReason).To(BeNil())
 }
 
+func TestCluster_HasFailure(t *testing.T) {
+	g := NewWithT(t)
+	wantFailureMessage := "invalid cluster"
+	wantFailureReason := v1alpha1.FailureReasonType("InvalidCluster")
+
+	tests := []struct {
+		name    string
+		cluster *v1alpha1.Cluster
+		want    bool
+	}{
+		{
+			name: "failureReason and failureMessage set",
+			cluster: &v1alpha1.Cluster{
+				Status: v1alpha1.ClusterStatus{
+					FailureMessage: &wantFailureMessage,
+					FailureReason:  &wantFailureReason,
+				},
+			},
+			want: true,
+		},
+		{
+			name: "failureMessage only set",
+			cluster: &v1alpha1.Cluster{
+				Status: v1alpha1.ClusterStatus{
+					FailureMessage: &wantFailureMessage,
+					FailureReason:  nil,
+				},
+			},
+			want: true,
+		},
+		{
+			name: "failureReason only set",
+			cluster: &v1alpha1.Cluster{
+				Status: v1alpha1.ClusterStatus{
+					FailureMessage: nil,
+					FailureReason:  &wantFailureReason,
+				},
+			},
+			want: true,
+		},
+		{
+			name: "no failure",
+			cluster: &v1alpha1.Cluster{
+				Status: v1alpha1.ClusterStatus{
+					FailureMessage: nil,
+					FailureReason:  &wantFailureReason,
+				},
+			},
+			want: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g.Expect(tt.cluster.HasFailure()).To(Equal(tt.want))
+		})
+	}
+}
+
 func TestClusterDisableControlPlaneIPCheck(t *testing.T) {
 	tests := []struct {
 		name    string
