@@ -28,6 +28,7 @@ import (
 	"github.com/aws/eks-anywhere/controllers/mocks"
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/internal/test/envtest"
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
@@ -189,6 +190,57 @@ func TestClusterReconcilerReconcileSelfManagedCluster(t *testing.T) {
 	result, err := r.Reconcile(ctx, clusterRequest(selfManagedCluster))
 	g.Expect(err).ToNot(HaveOccurred())
 	g.Expect(result).To(Equal(ctrl.Result{}))
+}
+
+func TestClusterReconcilerReconcileUnclearedClusterFailure(t *testing.T) {
+	config, bundles := baseTestVsphereCluster()
+	version := test.DevEksaVersion()
+	config.Cluster.Spec.EksaVersion = &version
+	config.Cluster.Generation = 1
+
+	config.Cluster.SetFailure(v1alpha1.FailureReasonType("InvalidCluster"), "invalid cluster")
+
+	kcp := testKubeadmControlPlaneFromCluster(config.Cluster)
+	machineDeployments := machineDeploymentsFromCluster(config.Cluster)
+
+	g := NewWithT(t)
+	ctx := context.Background()
+
+	objs := make([]runtime.Object, 0, 7+len(machineDeployments))
+	objs = append(objs, config.Cluster, bundles, test.EKSARelease())
+	for _, o := range config.ChildObjects() {
+		objs = append(objs, o)
+	}
+
+	objs = append(objs, kcp)
+
+	for _, obj := range machineDeployments {
+		objs = append(objs, obj.DeepCopy())
+	}
+
+	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
+	mockCtrl := gomock.NewController(t)
+	providerReconciler := mocks.NewMockProviderClusterReconciler(mockCtrl)
+	iam := mocks.NewMockAWSIamConfigReconciler(mockCtrl)
+	clusterValidator := mocks.NewMockClusterValidator(mockCtrl)
+	registry := newRegistryMock(providerReconciler)
+	mockPkgs := mocks.NewMockPackagesClient(mockCtrl)
+	mhcReconciler := mocks.NewMockMachineHealthCheckReconciler(mockCtrl)
+
+	providerReconciler.EXPECT().Reconcile(gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
+
+	r := controllers.NewClusterReconciler(client, registry, iam, clusterValidator, mockPkgs, mhcReconciler)
+
+	result, err := r.Reconcile(ctx, clusterRequest(config.Cluster))
+	g.Expect(err).ToNot(HaveOccurred())
+	g.Expect(result).To(Equal(ctrl.Result{}))
+
+	api := envtest.NewAPIExpecter(t, client)
+	c := envtest.CloneNameNamespace(config.Cluster)
+	api.ShouldEventuallyMatch(ctx, c, func(g Gomega) {
+		g.Expect(c.Status.FailureMessage).To(BeNil())
+		g.Expect(c.Status.FailureReason).To(BeNil())
+	})
 }
 
 func TestClusterReconcilerReconcileConditions(t *testing.T) {
