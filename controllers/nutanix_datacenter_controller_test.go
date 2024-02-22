@@ -56,6 +56,7 @@ func TestNutanixDatacenterConfigReconcileDelete(t *testing.T) {
 	config := nutanixDatacenterConfig()
 	now := metav1.Now()
 	config.DeletionTimestamp = &now
+	config.Finalizers = append(config.Finalizers, "fake-finalizer")
 	objs := []runtime.Object{config}
 
 	cb := fake.NewClientBuilder()

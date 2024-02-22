@@ -557,6 +557,7 @@ func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, 
 	if err != nil {
 		return fmt.Errorf("getting current cluster spec: %v", err)
 	}
+	fmt.Println(currentSpec)
 
 	cpContent, mdContent, err := provider.GenerateCAPISpecForUpgrade(ctx, managementCluster, eksaMgmtCluster, currentSpec, newClusterSpec)
 	if err != nil {

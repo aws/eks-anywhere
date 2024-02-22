@@ -19,7 +19,8 @@ func TestClusterValidateUpdateFluxRepoImmutable(t *testing.T) {
 
 	c.Spec.Github.Repository = "fancyNewRepo"
 	f := NewWithT(t)
-	f.Expect(c.ValidateUpdate(&fOld)).To(MatchError(ContainSubstring("Forbidden: config is immutable")))
+	_, err := c.ValidateUpdate(&fOld)
+	f.Expect(err).To(MatchError(ContainSubstring("Forbidden: config is immutable")))
 }
 
 func TestClusterValidateUpdateFluxRepoUrlImmutable(t *testing.T) {
@@ -31,7 +32,8 @@ func TestClusterValidateUpdateFluxRepoUrlImmutable(t *testing.T) {
 
 	c.Spec.Git.RepositoryUrl = "https://test.git/test2"
 	f := NewWithT(t)
-	f.Expect(c.ValidateUpdate(&fOld)).To(MatchError(ContainSubstring("Forbidden: config is immutable")))
+	_, err := c.ValidateUpdate(&fOld)
+	f.Expect(err).To(MatchError(ContainSubstring("Forbidden: config is immutable")))
 }
 
 func TestClusterValidateUpdateFluxSshKeyAlgoImmutable(t *testing.T) {
@@ -44,7 +46,8 @@ func TestClusterValidateUpdateFluxSshKeyAlgoImmutable(t *testing.T) {
 
 	c.Spec.Git.SshKeyAlgorithm = "rsa2"
 	f := NewWithT(t)
-	f.Expect(c.ValidateUpdate(&fOld)).To(MatchError(ContainSubstring("Forbidden: config is immutable")))
+	_, err := c.ValidateUpdate(&fOld)
+	f.Expect(err).To(MatchError(ContainSubstring("Forbidden: config is immutable")))
 }
 
 func TestClusterValidateUpdateFluxBranchImmutable(t *testing.T) {
@@ -54,7 +57,8 @@ func TestClusterValidateUpdateFluxBranchImmutable(t *testing.T) {
 
 	c.Spec.Branch = "newMain"
 	f := NewWithT(t)
-	f.Expect(c.ValidateUpdate(&fOld)).To(MatchError(ContainSubstring("Forbidden: config is immutable")))
+	_, err := c.ValidateUpdate(&fOld)
+	f.Expect(err).To(MatchError(ContainSubstring("Forbidden: config is immutable")))
 }
 
 func TestClusterValidateUpdateFluxSubtractionImmutable(t *testing.T) {
@@ -66,7 +70,8 @@ func TestClusterValidateUpdateFluxSubtractionImmutable(t *testing.T) {
 
 	c.Spec = v1alpha1.FluxConfigSpec{}
 	f := NewWithT(t)
-	f.Expect(c.ValidateUpdate(&fOld)).To(MatchError(ContainSubstring("Forbidden: config is immutable")))
+	_, err := c.ValidateUpdate(&fOld)
+	f.Expect(err).To(MatchError(ContainSubstring("Forbidden: config is immutable")))
 }
 
 func TestValidateCreateHasValidatedSpec(t *testing.T) {
@@ -75,7 +80,7 @@ func TestValidateCreateHasValidatedSpec(t *testing.T) {
 	fNew.Spec.Github = &v1alpha1.GithubProviderConfig{}
 
 	f := NewWithT(t)
-	err := fNew.ValidateCreate()
+	_, err := fNew.ValidateCreate()
 
 	f.Expect(apierrors.IsInvalid(err)).To(BeTrue())
 	f.Expect(err).To(MatchError(ContainSubstring("must specify only one provider")))
@@ -90,7 +95,7 @@ func TestValidateUpdateHasValidatedSpec(t *testing.T) {
 	c.Spec.Git = &v1alpha1.GitProviderConfig{}
 
 	f := NewWithT(t)
-	err := c.ValidateUpdate(&fOld)
+	_, err := c.ValidateUpdate(&fOld)
 	f.Expect(apierrors.IsInvalid(err)).To(BeTrue())
 	f.Expect(err).To(MatchError(ContainSubstring("must specify only one provider")))
 }

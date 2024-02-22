@@ -25,6 +25,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
+	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
 	"github.com/aws/eks-anywhere/pkg/semver"
 )
@@ -56,13 +57,13 @@ func (r *Cluster) Default() {
 var _ webhook.Validator = &Cluster{}
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
-func (r *Cluster) ValidateCreate() error {
+func (r *Cluster) ValidateCreate() (admission.Warnings, error) {
 	clusterlog.Info("validate create", "name", r.Name)
 
 	var allErrs field.ErrorList
 
 	if !r.IsReconcilePaused() && r.IsSelfManaged() && !r.IsManagedByCLI() {
-		return apierrors.NewBadRequest("creating new cluster on existing cluster is not supported for self managed clusters")
+		return nil, apierrors.NewBadRequest("creating new cluster on existing cluster is not supported for self managed clusters")
 	}
 
 	if r.Spec.EtcdEncryption != nil {
@@ -74,18 +75,18 @@ func (r *Cluster) ValidateCreate() error {
 	}
 
 	if len(allErrs) != 0 {
-		return apierrors.NewInvalid(GroupVersion.WithKind(ClusterKind).GroupKind(), r.Name, allErrs)
+		return nil, apierrors.NewInvalid(GroupVersion.WithKind(ClusterKind).GroupKind(), r.Name, allErrs)
 	}
 
-	return nil
+	return nil, nil
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
-func (r *Cluster) ValidateUpdate(old runtime.Object) error {
+func (r *Cluster) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
 	clusterlog.Info("validate update", "name", r.Name)
 	oldCluster, ok := old.(*Cluster)
 	if !ok {
-		return apierrors.NewBadRequest(fmt.Sprintf("expected a Cluster but got a %T", old))
+		return nil, apierrors.NewBadRequest(fmt.Sprintf("expected a Cluster but got a %T", old))
 	}
 
 	var allErrs field.ErrorList
@@ -118,7 +119,7 @@ func (r *Cluster) ValidateUpdate(old runtime.Object) error {
 	}
 
 	if len(allErrs) != 0 {
-		return apierrors.NewInvalid(GroupVersion.WithKind(ClusterKind).GroupKind(), r.Name, allErrs)
+		return nil, apierrors.NewInvalid(GroupVersion.WithKind(ClusterKind).GroupKind(), r.Name, allErrs)
 	}
 
 	if err := r.Validate(); err != nil {
@@ -126,10 +127,10 @@ func (r *Cluster) ValidateUpdate(old runtime.Object) error {
 	}
 
 	if len(allErrs) != 0 {
-		return apierrors.NewInvalid(GroupVersion.WithKind(ClusterKind).GroupKind(), r.Name, allErrs)
+		return nil, apierrors.NewInvalid(GroupVersion.WithKind(ClusterKind).GroupKind(), r.Name, allErrs)
 	}
 
-	return nil
+	return nil, nil
 }
 
 // ValidateEksaVersionSkew ensures that upgrades are sequential by CLI minor versions.
@@ -404,10 +405,10 @@ func validateImmutableFieldsCluster(new, old *Cluster) field.ErrorList {
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type.
-func (r *Cluster) ValidateDelete() error {
+func (r *Cluster) ValidateDelete() (admission.Warnings, error) {
 	clusterlog.Info("validate delete", "name", r.Name)
 
-	return nil
+	return nil, nil
 }
 
 // ValidateKubernetesVersionSkew validates Kubernetes version skew between upgrades.

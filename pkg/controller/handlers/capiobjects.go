@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/go-logr/logr"
@@ -15,7 +16,7 @@ import (
 // CAPIObjectToCluster returns a request handler that enqueues an EKS-A Cluster
 // reconcile request for CAPI objects that contain the cluster name and namespace labels.
 func CAPIObjectToCluster(log logr.Logger) handler.MapFunc {
-	return func(o client.Object) []reconcile.Request {
+	return func(ctx context.Context, o client.Object) []reconcile.Request {
 		labels := o.GetLabels()
 		clusterName, ok := labels[clusterapi.EKSAClusterLabelName]
 		if !ok {

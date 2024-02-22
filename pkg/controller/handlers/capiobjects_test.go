@@ -1,6 +1,7 @@
 package handlers_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/go-logr/logr"
@@ -63,7 +64,7 @@ func TestCAPIObjectToCluster(t *testing.T) {
 		t.Run(tt.testName, func(t *testing.T) {
 			g := NewWithT(t)
 			handle := handlers.CAPIObjectToCluster(logr.New(logf.NullLogSink{}))
-			requests := handle(tt.obj)
+			requests := handle(context.Background(), tt.obj)
 			g.Expect(requests).To(Equal(tt.wantRequests))
 		})
 	}

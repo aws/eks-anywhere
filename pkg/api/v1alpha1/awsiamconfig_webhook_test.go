@@ -16,7 +16,8 @@ func TestValidateUpdateAWSIamConfigFail(t *testing.T) {
 
 	aiNew.Spec.BackendMode = []string{"mode1"}
 	g := NewWithT(t)
-	g.Expect(aiNew.ValidateUpdate(&aiOld)).To(MatchError(ContainSubstring("config is immutable")))
+	_, err := aiNew.ValidateUpdate(&aiOld)
+	g.Expect(err).To(MatchError(ContainSubstring("config is immutable")))
 }
 
 func TestValidateUpdateAWSIamConfigSuccess(t *testing.T) {
@@ -32,14 +33,16 @@ func TestValidateUpdateAWSIamConfigSuccess(t *testing.T) {
 		},
 	}
 	g := NewWithT(t)
-	g.Expect(aiNew.ValidateUpdate(&aiOld)).To(Succeed())
+	_, err := aiNew.ValidateUpdate(&aiOld)
+	g.Expect(err).To(Succeed())
 }
 
 func TestValidateCreateAWSIamConfigSuccess(t *testing.T) {
 	aiNew := awsIamConfig()
 
 	g := NewWithT(t)
-	g.Expect(aiNew.ValidateCreate()).To(Succeed())
+	_, err := aiNew.ValidateCreate()
+	g.Expect(err).To(Succeed())
 }
 
 func TestValidateCreateAWSIamConfigFail(t *testing.T) {
@@ -47,7 +50,8 @@ func TestValidateCreateAWSIamConfigFail(t *testing.T) {
 	aiNew.Spec.AWSRegion = ""
 
 	g := NewWithT(t)
-	g.Expect(aiNew.ValidateCreate()).To(MatchError(ContainSubstring("AWSRegion is a required field")))
+	_, err := aiNew.ValidateCreate()
+	g.Expect(err).To(MatchError(ContainSubstring("AWSRegion is a required field")))
 }
 
 func TestValidateUpdateAWSIamConfigFailCausedByMutableFieldChange(t *testing.T) {
@@ -63,7 +67,8 @@ func TestValidateUpdateAWSIamConfigFailCausedByMutableFieldChange(t *testing.T) 
 		},
 	}
 	g := NewWithT(t)
-	g.Expect(aiNew.ValidateUpdate(&aiOld)).To(MatchError(ContainSubstring("MapRoles Username is required")))
+	_, err := aiNew.ValidateUpdate(&aiOld)
+	g.Expect(err).To(MatchError(ContainSubstring("MapRoles Username is required")))
 }
 
 func TestAWSIamConfigSetDefaults(t *testing.T) {

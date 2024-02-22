@@ -13,7 +13,8 @@ import (
 func TestNutanixDatacenterConfigWebhooksValidateCreate(t *testing.T) {
 	g := NewWithT(t)
 	dcConf := nutanixDatacenterConfig()
-	g.Expect(dcConf.ValidateCreate()).To(Succeed())
+	_, err := dcConf.ValidateCreate()
+	g.Expect(err).To(Succeed())
 }
 
 func TestNutanixDatacenterConfigWebhooksValidateCreateReconcilePaused(t *testing.T) {
@@ -22,74 +23,88 @@ func TestNutanixDatacenterConfigWebhooksValidateCreateReconcilePaused(t *testing
 	dcConf.Annotations = map[string]string{
 		"anywhere.eks.amazonaws.com/paused": "true",
 	}
-	g.Expect(dcConf.ValidateCreate()).To(Succeed())
+	_, err := dcConf.ValidateCreate()
+	g.Expect(err).To(Succeed())
 }
 
 func TestNutanixDatacenterConfigWebhookValidateCreateNoCredentialRef(t *testing.T) {
 	g := NewWithT(t)
 	dcConf := nutanixDatacenterConfig()
 	dcConf.Spec.CredentialRef = nil
-	g.Expect(dcConf.ValidateCreate().Error()).To(ContainSubstring("credentialRef is required to be set to create a new NutanixDatacenterConfig"))
+	_, err := dcConf.ValidateCreate()
+	g.Expect(err.Error()).To(ContainSubstring("credentialRef is required to be set to create a new NutanixDatacenterConfig"))
 }
 
 func TestNutanixDatacenterConfigWebhooksValidateCreateValidaitonFailure(t *testing.T) {
 	g := NewWithT(t)
 	dcConf := nutanixDatacenterConfig()
 	dcConf.Spec.Endpoint = ""
-	g.Expect(dcConf.ValidateCreate()).To(Not(Succeed()))
+	_, err := dcConf.ValidateCreate()
+	g.Expect(err).To(Not(Succeed()))
 }
 
 func TestNutanixDatacenterConfigWebhooksValidateUpdate(t *testing.T) {
 	g := NewWithT(t)
 	dcConf := nutanixDatacenterConfig()
-	g.Expect(dcConf.ValidateCreate()).To(Succeed())
+	_, err := dcConf.ValidateCreate()
+	g.Expect(err).To(Succeed())
 	newSpec := nutanixDatacenterConfig()
 	newSpec.Spec.CredentialRef.Name = "new-credential"
-	g.Expect(dcConf.ValidateUpdate(newSpec)).To(Succeed())
+	_, err = dcConf.ValidateUpdate(newSpec)
+	g.Expect(err).To(Succeed())
 }
 
 func TestNutanixDatacenterConfigWebhooksValidateUpdateReconcilePaused(t *testing.T) {
 	g := NewWithT(t)
 	dcConf := nutanixDatacenterConfig()
-	g.Expect(dcConf.ValidateCreate()).To(Succeed())
+	_, err := dcConf.ValidateCreate()
+	g.Expect(err).To(Succeed())
 	oldSpec := nutanixDatacenterConfig()
 	oldSpec.Annotations = map[string]string{
 		"anywhere.eks.amazonaws.com/paused": "true",
 	}
 	oldSpec.Spec.CredentialRef.Name = "new-credential"
-	g.Expect(dcConf.ValidateUpdate(oldSpec)).To(Succeed())
+	_, err = dcConf.ValidateUpdate(oldSpec)
+	g.Expect(err).To(Succeed())
 }
 
 func TestNutanixDatacenterConfigWebhooksValidateUpdateValidationFailure(t *testing.T) {
 	g := NewWithT(t)
 	dcConf := nutanixDatacenterConfig()
-	g.Expect(dcConf.ValidateCreate()).To(Succeed())
+	_, err := dcConf.ValidateCreate()
+	g.Expect(err).To(Succeed())
 	newSpec := nutanixDatacenterConfig()
 	newSpec.Spec.Endpoint = ""
-	g.Expect(dcConf.ValidateUpdate(newSpec)).To(Not(Succeed()))
+	_, err = dcConf.ValidateUpdate(newSpec)
+	g.Expect(err).To(Not(Succeed()))
 }
 
 func TestNutanixDatacenterConfigWebhooksValidateUpdateInvalidOldObject(t *testing.T) {
 	g := NewWithT(t)
 	newConf := nutanixDatacenterConfig()
 	newConf.Spec.CredentialRef = nil
-	g.Expect(newConf.ValidateUpdate(&v1alpha1.NutanixMachineConfig{}).Error()).To(ContainSubstring("expected a NutanixDatacenterConfig but got a *v1alpha1.NutanixMachineConfig"))
+	_, err := newConf.ValidateUpdate(&v1alpha1.NutanixMachineConfig{})
+	g.Expect(err.Error()).To(ContainSubstring("expected a NutanixDatacenterConfig but got a *v1alpha1.NutanixMachineConfig"))
 }
 
 func TestNutanixDatacenterConfigWebhooksValidateUpdateCredentialRefRemoved(t *testing.T) {
 	g := NewWithT(t)
 	oldConf := nutanixDatacenterConfig()
-	g.Expect(oldConf.ValidateCreate()).To(Succeed())
+	_, err := oldConf.ValidateCreate()
+	g.Expect(err).To(Succeed())
 	newConf := nutanixDatacenterConfig()
 	newConf.Spec.CredentialRef = nil
-	g.Expect(newConf.ValidateUpdate(oldConf).Error()).To(ContainSubstring("credentialRef cannot be removed from an existing NutanixDatacenterConfig"))
+	_, err = newConf.ValidateUpdate(oldConf)
+	g.Expect(err.Error()).To(ContainSubstring("credentialRef cannot be removed from an existing NutanixDatacenterConfig"))
 }
 
 func TestNutanixDatacenterConfigWebhooksValidateDelete(t *testing.T) {
 	g := NewWithT(t)
 	dcConf := nutanixDatacenterConfig()
-	g.Expect(dcConf.ValidateCreate()).To(Succeed())
-	g.Expect(dcConf.ValidateDelete()).To(Succeed())
+	_, err := dcConf.ValidateCreate()
+	g.Expect(err).To(Succeed())
+	_, err = dcConf.ValidateDelete()
+	g.Expect(err).To(Succeed())
 }
 
 func nutanixDatacenterConfig() *v1alpha1.NutanixDatacenterConfig {

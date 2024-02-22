@@ -101,7 +101,7 @@ func newVsphereClusterReconcilerTest(t *testing.T, objs ...runtime.Object) *vsph
 	govcClient := vspheremocks.NewMockProviderGovcClient(ctrl)
 
 	cb := fake.NewClientBuilder()
-	cl := cb.WithRuntimeObjects(objs...).Build()
+	cl := cb.WithRuntimeObjects(objs...).WithStatusSubresource(&anywherev1.Cluster{}).Build()
 	iam := mocks.NewMockAWSIamConfigReconciler(ctrl)
 	clusterValidator := mocks.NewMockClusterValidator(ctrl)
 
@@ -181,7 +181,10 @@ func TestClusterReconcilerReconcileSelfManagedCluster(t *testing.T) {
 
 	clusterValidator := mocks.NewMockClusterValidator(controller)
 	registry := newRegistryMock(providerReconciler)
-	c := fake.NewClientBuilder().WithRuntimeObjects(selfManagedCluster, kcp, test.EKSARelease()).Build()
+	c := fake.NewClientBuilder().
+		WithRuntimeObjects(selfManagedCluster, kcp, test.EKSARelease()).
+		WithStatusSubresource(&anywherev1.Cluster{}).
+		Build()
 	mockPkgs := mocks.NewMockPackagesClient(controller)
 	providerReconciler.EXPECT().Reconcile(ctx, gomock.AssignableToTypeOf(logr.Logger{}), sameName(selfManagedCluster))
 	mhcReconciler.EXPECT().Reconcile(ctx, gomock.AssignableToTypeOf(logr.Logger{}), sameName(selfManagedCluster)).Return(nil)
@@ -490,7 +493,10 @@ func TestClusterReconcilerReconcileConditions(t *testing.T) {
 				objs = append(objs, o)
 			}
 
-			testClient := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
+			testClient := fake.NewClientBuilder().
+				WithRuntimeObjects(objs...).
+				WithStatusSubresource(&anywherev1.Cluster{}).
+				Build()
 
 			mockCtrl := gomock.NewController(t)
 			providerReconciler := mocks.NewMockProviderClusterReconciler(mockCtrl)
@@ -763,7 +769,10 @@ func TestClusterReconcilerReconcileSelfManagedClusterConditions(t *testing.T) {
 			for _, o := range config.ChildObjects() {
 				objs = append(objs, o)
 			}
-			testClient := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
+			testClient := fake.NewClientBuilder().
+				WithRuntimeObjects(objs...).
+				WithStatusSubresource(&anywherev1.Cluster{}).
+				Build()
 
 			mockCtrl := gomock.NewController(t)
 			providerReconciler := mocks.NewMockProviderClusterReconciler(mockCtrl)
@@ -936,7 +945,10 @@ func TestClusterReconcilerReconcileGenerations(t *testing.T) {
 				objs = append(objs, obj.DeepCopy())
 			}
 
-			client := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
+			client := fake.NewClientBuilder().
+				WithRuntimeObjects(objs...).
+				WithStatusSubresource(&anywherev1.Cluster{}).
+				Build()
 			mockCtrl := gomock.NewController(t)
 			providerReconciler := mocks.NewMockProviderClusterReconciler(mockCtrl)
 			iam := mocks.NewMockAWSIamConfigReconciler(mockCtrl)
@@ -996,7 +1008,10 @@ func TestClusterReconcilerReconcilePausedCluster(t *testing.T) {
 	// Mark as paused
 	cluster.PauseReconcile()
 
-	c := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
+	c := fake.NewClientBuilder().
+		WithRuntimeObjects(objs...).
+		WithStatusSubresource(&anywherev1.Cluster{}).
+		Build()
 
 	ctrl := gomock.NewController(t)
 	providerReconciler := mocks.NewMockProviderClusterReconciler(ctrl)
@@ -1026,6 +1041,7 @@ func TestClusterReconcilerReconcileDeletedSelfManagedCluster(t *testing.T) {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              "my-management-cluster",
 			DeletionTimestamp: &deleteTimestamp,
+			Finalizers:        []string{"fake-finalizers"},
 		},
 		Spec: anywherev1.ClusterSpec{
 			BundlesRef: &anywherev1.BundlesRef{
@@ -1106,6 +1122,7 @@ func TestClusterReconcilerDeleteExistingCAPIClusterSuccess(t *testing.T) {
 	cluster.Spec.ManagementCluster = anywherev1.ManagementCluster{Name: "management-cluster"}
 	now := metav1.Now()
 	cluster.DeletionTimestamp = &now
+	cluster.Finalizers = append(cluster.Finalizers, "fake-finalizers")
 
 	datacenterConfig := vsphereDataCenter(cluster)
 	bundle := createBundle(managementCluster)
@@ -1171,7 +1188,10 @@ func TestClusterReconcilerReconcileDeletePausedCluster(t *testing.T) {
 	clusterValidator := mocks.NewMockClusterValidator(controller)
 	mhcReconciler := mocks.NewMockMachineHealthCheckReconciler(controller)
 
-	c := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
+	c := fake.NewClientBuilder().
+		WithRuntimeObjects(objs...).
+		WithStatusSubresource(&anywherev1.Cluster{}).
+		Build()
 
 	r := controllers.NewClusterReconciler(c, newRegistryForDummyProviderReconciler(), iam, clusterValidator, nil, mhcReconciler)
 	g.Expect(r.Reconcile(ctx, clusterRequest(cluster))).To(Equal(reconcile.Result{}))
@@ -1202,6 +1222,7 @@ func TestClusterReconcilerDeleteNoCAPIClusterSuccess(t *testing.T) {
 	cluster.Spec.ManagementCluster = anywherev1.ManagementCluster{Name: "management-cluster"}
 	now := metav1.Now()
 	cluster.DeletionTimestamp = &now
+	cluster.Finalizers = append(cluster.Finalizers, "fake-finalizers")
 
 	datacenterConfig := vsphereDataCenter(cluster)
 	bundle := createBundle(managementCluster)
@@ -1269,7 +1290,7 @@ func TestClusterReconcilerSkipDontInstallPackagesOnSelfManaged(t *testing.T) {
 	}
 	objs := []runtime.Object{cluster, test.EKSARelease()}
 	cb := fake.NewClientBuilder()
-	mockClient := cb.WithRuntimeObjects(objs...).Build()
+	mockClient := cb.WithRuntimeObjects(objs...).WithStatusSubresource(&anywherev1.Cluster{}).Build()
 	nullRegistry := newRegistryForDummyProviderReconciler()
 
 	ctrl := gomock.NewController(t)
@@ -1292,6 +1313,7 @@ func TestClusterReconcilerDontDeletePackagesOnSelfManaged(t *testing.T) {
 			Name:              "my-cluster",
 			Namespace:         "my-namespace",
 			DeletionTimestamp: &deleteTime,
+			Finalizers:        []string{"fake-finalizers"},
 		},
 		Spec: anywherev1.ClusterSpec{
 			KubernetesVersion: "v1.25",
@@ -1338,6 +1360,7 @@ func TestClusterReconcilerPackagesDeletion(s *testing.T) {
 				Name:              "my-workload-cluster",
 				Namespace:         "my-namespace",
 				DeletionTimestamp: &deleteTime,
+				Finalizers:        []string{"fake-finalizers"},
 			},
 			Spec: anywherev1.ClusterSpec{
 				KubernetesVersion: "v1.25",
@@ -1442,7 +1465,10 @@ func TestClusterReconcilerPackagesInstall(s *testing.T) {
 		mgmt := cluster.DeepCopy()
 		mgmt.Name = "my-management-cluster"
 		objs := []runtime.Object{cluster, bundles, secret, mgmt, test.EKSARelease()}
-		fakeClient := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
+		fakeClient := fake.NewClientBuilder().
+			WithRuntimeObjects(objs...).
+			WithStatusSubresource(&anywherev1.Cluster{}).
+			Build()
 		nullRegistry := newRegistryForDummyProviderReconciler()
 		mockIAM := mocks.NewMockAWSIamConfigReconciler(ctrl)
 		mockValid := mocks.NewMockClusterValidator(ctrl)
@@ -1532,7 +1558,10 @@ func TestClusterReconcilerNotAvailableEksaVersion(t *testing.T) {
 		objs = append(objs, o)
 	}
 
-	testClient := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
+	testClient := fake.NewClientBuilder().
+		WithRuntimeObjects(objs...).
+		WithStatusSubresource(&anywherev1.Cluster{}).
+		Build()
 
 	mockCtrl := gomock.NewController(t)
 	providerReconciler := mocks.NewMockProviderClusterReconciler(mockCtrl)

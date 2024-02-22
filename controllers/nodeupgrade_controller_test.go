@@ -33,7 +33,10 @@ func TestNodeUpgradeReconcilerReconcileFirstControlPlane(t *testing.T) {
 	node.Labels = map[string]string{
 		"node-role.kubernetes.io/control-plane": "true",
 	}
-	client := fake.NewClientBuilder().WithRuntimeObjects(cluster, machine, node, nodeUpgrade, configMap).Build()
+	client := fake.NewClientBuilder().
+		WithRuntimeObjects(cluster, machine, node, nodeUpgrade, configMap).
+		WithStatusSubresource(&anywherev1.NodeUpgrade{}).
+		Build()
 
 	clientRegistry.EXPECT().GetClient(ctx, types.NamespacedName{Name: cluster.Name, Namespace: cluster.Namespace}).Return(client, nil)
 
@@ -57,7 +60,10 @@ func TestNodeUpgradeReconcilerReconcileNextControlPlane(t *testing.T) {
 	node.Labels = map[string]string{
 		"node-role.kubernetes.io/control-plane": "true",
 	}
-	client := fake.NewClientBuilder().WithRuntimeObjects(cluster, machine, node, nodeUpgrade, configMap).Build()
+	client := fake.NewClientBuilder().
+		WithRuntimeObjects(cluster, machine, node, nodeUpgrade, configMap).
+		WithStatusSubresource(&anywherev1.NodeUpgrade{}).
+		Build()
 
 	clientRegistry.EXPECT().GetClient(ctx, types.NamespacedName{Name: cluster.Name, Namespace: cluster.Namespace}).Return(client, nil)
 
@@ -78,7 +84,10 @@ func TestNodeUpgradeReconcilerReconcileWorker(t *testing.T) {
 	clientRegistry := mocks.NewMockRemoteClientRegistry(ctrl)
 
 	cluster, machine, node, nodeUpgrade, configMap := getObjectsForNodeUpgradeTest()
-	client := fake.NewClientBuilder().WithRuntimeObjects(cluster, machine, node, nodeUpgrade, configMap).Build()
+	client := fake.NewClientBuilder().
+		WithRuntimeObjects(cluster, machine, node, nodeUpgrade, configMap).
+		WithStatusSubresource(&anywherev1.NodeUpgrade{}).
+		Build()
 
 	clientRegistry.EXPECT().GetClient(ctx, types.NamespacedName{Name: cluster.Name, Namespace: cluster.Namespace}).Return(client, nil)
 
@@ -99,7 +108,10 @@ func TestNodeUpgradeReconcilerReconcileCreateUpgraderPodState(t *testing.T) {
 	clientRegistry := mocks.NewMockRemoteClientRegistry(ctrl)
 
 	cluster, machine, node, nodeUpgrade, configMap := getObjectsForNodeUpgradeTest()
-	client := fake.NewClientBuilder().WithRuntimeObjects(cluster, machine, node, nodeUpgrade, configMap).Build()
+	client := fake.NewClientBuilder().
+		WithRuntimeObjects(cluster, machine, node, nodeUpgrade, configMap).
+		WithStatusSubresource(&anywherev1.NodeUpgrade{}).
+		Build()
 
 	clientRegistry.EXPECT().GetClient(ctx, types.NamespacedName{Name: cluster.Name, Namespace: cluster.Namespace}).Return(client, nil).Times(2)
 
@@ -160,7 +172,10 @@ func TestNodeUpgradeReconcilerReconcileDelete(t *testing.T) {
 	clientRegistry := mocks.NewMockRemoteClientRegistry(ctrl)
 
 	cluster, machine, node, nodeUpgrade, configMap := getObjectsForNodeUpgradeTest()
-	client := fake.NewClientBuilder().WithRuntimeObjects(cluster, machine, node, nodeUpgrade, configMap).Build()
+	client := fake.NewClientBuilder().
+		WithRuntimeObjects(cluster, machine, node, nodeUpgrade, configMap).
+		WithStatusSubresource(&anywherev1.NodeUpgrade{}).
+		Build()
 
 	clientRegistry.EXPECT().GetClient(ctx, types.NamespacedName{Name: cluster.Name, Namespace: cluster.Namespace}).Return(client, nil).Times(2)
 
@@ -191,7 +206,10 @@ func TestNodeUpgradeReconcilerReconcileDeleteUpgraderPodAlreadyDeleted(t *testin
 	clientRegistry := mocks.NewMockRemoteClientRegistry(ctrl)
 
 	cluster, machine, node, nodeUpgrade, configMap := getObjectsForNodeUpgradeTest()
-	client := fake.NewClientBuilder().WithRuntimeObjects(cluster, machine, node, nodeUpgrade, configMap).Build()
+	client := fake.NewClientBuilder().
+		WithRuntimeObjects(cluster, machine, node, nodeUpgrade, configMap).
+		WithStatusSubresource(&anywherev1.NodeUpgrade{}).
+		Build()
 
 	clientRegistry.EXPECT().GetClient(ctx, types.NamespacedName{Name: cluster.Name, Namespace: cluster.Namespace}).Return(client, nil).Times(2)
 

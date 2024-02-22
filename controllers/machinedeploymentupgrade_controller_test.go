@@ -27,7 +27,10 @@ func TestMDUpgradeReconcile(t *testing.T) {
 	ctx := context.Background()
 
 	cluster, machines, nodes, mdUpgrade, nodeUpgrades, md, ms := getObjectsForMDUpgradeTest()
-	client := fake.NewClientBuilder().WithRuntimeObjects(cluster, machines[0], machines[1], nodes[0], nodes[1], mdUpgrade, nodeUpgrades[0], nodeUpgrades[1], md, ms).Build()
+	client := fake.NewClientBuilder().
+		WithRuntimeObjects(cluster, machines[0], machines[1], nodes[0], nodes[1], mdUpgrade, nodeUpgrades[0], nodeUpgrades[1], md, ms).
+		WithStatusSubresource(&anywherev1.MachineDeploymentUpgrade{}).
+		Build()
 
 	r := controllers.NewMachineDeploymentUpgradeReconciler(client)
 	req := mdUpgradeRequest(mdUpgrade)
@@ -50,7 +53,10 @@ func TestMDUpgradeReconcileNodesNotReadyYet(t *testing.T) {
 	nodeUpgrades[1].Status = anywherev1.NodeUpgradeStatus{
 		Completed: false,
 	}
-	client := fake.NewClientBuilder().WithRuntimeObjects(cluster, machines[0], machines[1], nodes[0], nodes[1], mdUpgrade, nodeUpgrades[0], nodeUpgrades[1], md, ms).Build()
+	client := fake.NewClientBuilder().
+		WithRuntimeObjects(cluster, machines[0], machines[1], nodes[0], nodes[1], mdUpgrade, nodeUpgrades[0], nodeUpgrades[1], md, ms).
+		WithStatusSubresource(&anywherev1.MachineDeploymentUpgrade{}).
+		Build()
 
 	r := controllers.NewMachineDeploymentUpgradeReconciler(client)
 	req := mdUpgradeRequest(mdUpgrade)
@@ -72,7 +78,11 @@ func TestMDUpgradeReconcileDelete(t *testing.T) {
 
 	cluster, machines, nodes, mdUpgrade, nodeUpgrades, md, ms := getObjectsForMDUpgradeTest()
 	mdUpgrade.DeletionTimestamp = &now
-	client := fake.NewClientBuilder().WithRuntimeObjects(cluster, machines[0], machines[1], nodes[0], nodes[1], mdUpgrade, nodeUpgrades[0], nodeUpgrades[1], md, ms).Build()
+	mdUpgrade.Finalizers = append(mdUpgrade.Finalizers, "fake-finalizers")
+	client := fake.NewClientBuilder().
+		WithRuntimeObjects(cluster, machines[0], machines[1], nodes[0], nodes[1], mdUpgrade, nodeUpgrades[0], nodeUpgrades[1], md, ms).
+		WithStatusSubresource(&anywherev1.MachineDeploymentUpgrade{}).
+		Build()
 
 	r := controllers.NewMachineDeploymentUpgradeReconciler(client)
 	req := mdUpgradeRequest(mdUpgrade)
@@ -94,7 +104,11 @@ func TestMDUpgradeReconcileDeleteNodeUpgradeAlreadyDeleted(t *testing.T) {
 
 	cluster, machines, nodes, mdUpgrade, nodeUpgrades, md, ms := getObjectsForMDUpgradeTest()
 	mdUpgrade.DeletionTimestamp = &now
-	client := fake.NewClientBuilder().WithRuntimeObjects(cluster, machines[0], machines[1], nodes[0], nodes[1], mdUpgrade, nodeUpgrades[0], nodeUpgrades[1], md, ms).Build()
+	mdUpgrade.Finalizers = append(mdUpgrade.Finalizers, "fake-finalizers")
+	client := fake.NewClientBuilder().
+		WithRuntimeObjects(cluster, machines[0], machines[1], nodes[0], nodes[1], mdUpgrade, nodeUpgrades[0], nodeUpgrades[1], md, ms).
+		WithStatusSubresource(&anywherev1.MachineDeploymentUpgrade{}).
+		Build()
 
 	r := controllers.NewMachineDeploymentUpgradeReconciler(client)
 	req := mdUpgradeRequest(mdUpgrade)
@@ -116,7 +130,10 @@ func TestMDUpgradeReconcileNodeUpgraderCreate(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
 	cluster, machines, nodes, mdUpgrade, _, md, ms := getObjectsForMDUpgradeTest()
-	client := fake.NewClientBuilder().WithRuntimeObjects(cluster, machines[0], machines[1], nodes[0], nodes[1], mdUpgrade, md, ms).Build()
+	client := fake.NewClientBuilder().
+		WithRuntimeObjects(cluster, machines[0], machines[1], nodes[0], nodes[1], mdUpgrade, md, ms).
+		WithStatusSubresource(&anywherev1.MachineDeploymentUpgrade{}).
+		Build()
 
 	r := controllers.NewMachineDeploymentUpgradeReconciler(client)
 	req := mdUpgradeRequest(mdUpgrade)
@@ -147,7 +164,10 @@ func TestMDUpgradeReconcileUpdateMachineSet(t *testing.T) {
 
 	cluster, machines, nodes, mdUpgrade, nodeUpgrades, md, ms := getObjectsForMDUpgradeTest()
 	mdUpgrade.Status.Ready = true
-	client := fake.NewClientBuilder().WithRuntimeObjects(cluster, machines[0], machines[1], nodes[0], nodes[1], nodeUpgrades[0], nodeUpgrades[1], mdUpgrade, md, ms).Build()
+	client := fake.NewClientBuilder().
+		WithRuntimeObjects(cluster, machines[0], machines[1], nodes[0], nodes[1], nodeUpgrades[0], nodeUpgrades[1], mdUpgrade, md, ms).
+		WithStatusSubresource(&anywherev1.MachineDeploymentUpgrade{}).
+		Build()
 
 	r := controllers.NewMachineDeploymentUpgradeReconciler(client)
 	req := mdUpgradeRequest(mdUpgrade)
@@ -168,7 +188,9 @@ func TestMDUpgradeReconcileUpdateMachineSetError(t *testing.T) {
 
 	cluster, machines, nodes, mdUpgrade, nodeUpgrades, md, ms := getObjectsForMDUpgradeTest()
 	ms.Annotations[clusterv1.RevisionAnnotation] = "0"
-	client := fake.NewClientBuilder().WithRuntimeObjects(cluster, machines[0], machines[1], nodes[0], nodes[1], nodeUpgrades[0], nodeUpgrades[1], mdUpgrade, md, ms).Build()
+	client := fake.NewClientBuilder().
+		WithRuntimeObjects(cluster, machines[0], machines[1], nodes[0], nodes[1], nodeUpgrades[0], nodeUpgrades[1], mdUpgrade, md, ms).
+		Build()
 
 	r := controllers.NewMachineDeploymentUpgradeReconciler(client)
 	req := mdUpgradeRequest(mdUpgrade)

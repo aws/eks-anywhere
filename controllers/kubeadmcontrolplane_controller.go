@@ -171,7 +171,6 @@ func (r *KubeadmControlPlaneReconciler) reconcile(ctx context.Context, log logr.
 	}
 
 	return ctrl.Result{}, fmt.Errorf("getting ControlPlaneUpgrade for KubeadmControlPlane %s: %v", kcp.Name, err)
-
 }
 
 func (r *KubeadmControlPlaneReconciler) inPlaceUpgradeNeeded(kcp *controlplanev1.KubeadmControlPlane) bool {

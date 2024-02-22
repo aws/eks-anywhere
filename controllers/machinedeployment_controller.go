@@ -178,7 +178,6 @@ func (r *MachineDeploymentReconciler) reconcile(ctx context.Context, log logr.Lo
 	}
 
 	return ctrl.Result{}, fmt.Errorf("getting MachineDeploymentUpgrade for MachineDeployment %s: %v", md.Name, err)
-
 }
 
 func (r *MachineDeploymentReconciler) inPlaceUpgradeNeeded(md *clusterv1.MachineDeployment) bool {

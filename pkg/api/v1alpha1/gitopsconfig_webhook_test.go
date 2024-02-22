@@ -16,7 +16,8 @@ func TestClusterValidateUpdateGitOpsRepoImmutable(t *testing.T) {
 
 	c.Spec.Flux.Github.Repository = "fancyNewRepo"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&gOld)).To(MatchError(ContainSubstring("GitOpsConfig: Forbidden: config is immutable")))
+	_, err := c.ValidateUpdate(&gOld)
+	g.Expect(err).To(MatchError(ContainSubstring("GitOpsConfig: Forbidden: config is immutable")))
 }
 
 func TestClusterValidateUpdateGitOpsBranchImmutable(t *testing.T) {
@@ -26,7 +27,8 @@ func TestClusterValidateUpdateGitOpsBranchImmutable(t *testing.T) {
 
 	c.Spec.Flux.Github.Repository = "newMain"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&gOld)).To(MatchError(ContainSubstring("GitOpsConfig: Forbidden: config is immutable")))
+	_, err := c.ValidateUpdate(&gOld)
+	g.Expect(err).To(MatchError(ContainSubstring("GitOpsConfig: Forbidden: config is immutable")))
 }
 
 func TestClusterValidateUpdateGitOpsSubtractionImmutable(t *testing.T) {
@@ -36,7 +38,8 @@ func TestClusterValidateUpdateGitOpsSubtractionImmutable(t *testing.T) {
 
 	c.Spec = v1alpha1.GitOpsConfigSpec{}
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&gOld)).To(MatchError(ContainSubstring("GitOpsConfig: Forbidden: config is immutable")))
+	_, err := c.ValidateUpdate(&gOld)
+	g.Expect(err).To(MatchError(ContainSubstring("GitOpsConfig: Forbidden: config is immutable")))
 }
 
 func gitOpsConfig() v1alpha1.GitOpsConfig {

@@ -42,7 +42,8 @@ func TestSnowMachineConfigValidateCreateNoAMI(t *testing.T) {
 		},
 	}
 
-	g.Expect(sOld.ValidateCreate()).To(Succeed())
+	_, err := sOld.ValidateCreate()
+	g.Expect(err).To(Succeed())
 }
 
 func TestSnowMachineConfigValidateCreateInvalidInstanceType(t *testing.T) {
@@ -52,7 +53,8 @@ func TestSnowMachineConfigValidateCreateInvalidInstanceType(t *testing.T) {
 	sOld.Spec.SshKeyName = "testKey"
 	sOld.Spec.InstanceType = "invalid-instance-type"
 
-	g.Expect(sOld.ValidateCreate()).To(MatchError(ContainSubstring("SnowMachineConfig InstanceType invalid-instance-type is not supported")))
+	_, err := sOld.ValidateCreate()
+	g.Expect(err).To(MatchError(ContainSubstring("SnowMachineConfig InstanceType invalid-instance-type is not supported")))
 }
 
 func TestSnowMachineConfigValidateCreateEmptySSHKeyName(t *testing.T) {
@@ -71,7 +73,8 @@ func TestSnowMachineConfigValidateCreateEmptySSHKeyName(t *testing.T) {
 			},
 		},
 	}
-	g.Expect(s.ValidateCreate()).To(MatchError(ContainSubstring("SnowMachineConfig SshKeyName must not be empty")))
+	_, err := s.ValidateCreate()
+	g.Expect(err).To(MatchError(ContainSubstring("SnowMachineConfig SshKeyName must not be empty")))
 }
 
 func TestSnowMachineConfigValidateCreate(t *testing.T) {
@@ -97,7 +100,8 @@ func TestSnowMachineConfigValidateCreate(t *testing.T) {
 		},
 	}
 
-	g.Expect(sOld.ValidateCreate()).To(Succeed())
+	_, err := sOld.ValidateCreate()
+	g.Expect(err).To(Succeed())
 }
 
 func TestSnowMachineConfigValidateUpdate(t *testing.T) {
@@ -124,7 +128,8 @@ func TestSnowMachineConfigValidateUpdate(t *testing.T) {
 		},
 	}
 
-	g.Expect(sNew.ValidateUpdate(&sOld)).To(Succeed())
+	_, err := sNew.ValidateUpdate(&sOld)
+	g.Expect(err).To(Succeed())
 }
 
 func TestSnowMachineConfigValidateUpdateNoDevices(t *testing.T) {
@@ -138,7 +143,8 @@ func TestSnowMachineConfigValidateUpdateNoDevices(t *testing.T) {
 	sNew.Spec.PhysicalNetworkConnector = v1alpha1.SFPPlus
 	sNew.Spec.OSFamily = v1alpha1.Bottlerocket
 
-	g.Expect(sNew.ValidateUpdate(&sOld)).To(MatchError(ContainSubstring("Devices must contain at least one device IP")))
+	_, err := sNew.ValidateUpdate(&sOld)
+	g.Expect(err).To(MatchError(ContainSubstring("Devices must contain at least one device IP")))
 }
 
 func TestSnowMachineConfigValidateUpdateEmptySSHKeyName(t *testing.T) {
@@ -151,14 +157,16 @@ func TestSnowMachineConfigValidateUpdateEmptySSHKeyName(t *testing.T) {
 	sNew.Spec.PhysicalNetworkConnector = v1alpha1.SFPPlus
 	sNew.Spec.OSFamily = v1alpha1.Bottlerocket
 
-	g.Expect(sNew.ValidateUpdate(&sOld)).To(MatchError(ContainSubstring("SnowMachineConfig SshKeyName must not be empty")))
+	_, err := sNew.ValidateUpdate(&sOld)
+	g.Expect(err).To(MatchError(ContainSubstring("SnowMachineConfig SshKeyName must not be empty")))
 }
 
 // Unit test to pass the code coverage job.
 func TestSnowMachineConfigValidateDelete(t *testing.T) {
 	g := NewWithT(t)
 	sOld := snowMachineConfig()
-	g.Expect(sOld.ValidateDelete()).To(Succeed())
+	_, err := sOld.ValidateDelete()
+	g.Expect(err).To(Succeed())
 }
 
 func snowMachineConfig() v1alpha1.SnowMachineConfig {

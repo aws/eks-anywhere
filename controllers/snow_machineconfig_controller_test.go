@@ -47,7 +47,7 @@ func TestSnowMachineConfigReconcilerSuccess(t *testing.T) {
 	objs := []runtime.Object{config}
 
 	cb := fake.NewClientBuilder()
-	cl := cb.WithRuntimeObjects(objs...).Build()
+	cl := cb.WithRuntimeObjects(objs...).WithStatusSubresource(&anywherev1.SnowMachineConfig{}).Build()
 
 	r := controllers.NewSnowMachineConfigReconciler(cl, validator)
 
@@ -106,6 +106,7 @@ func TestSnowMachineConfigReconcilerDelete(t *testing.T) {
 
 	config := createSnowMachineConfig()
 	config.DeletionTimestamp = &metav1.Time{Time: time.Now()}
+	config.Finalizers = append(config.Finalizers, "fake-finalizer")
 
 	objs := []runtime.Object{config}
 
@@ -138,7 +139,7 @@ func TestSnowMachineConfigReconcilerFailureImageExists(t *testing.T) {
 	objs := []runtime.Object{config}
 
 	cb := fake.NewClientBuilder()
-	cl := cb.WithRuntimeObjects(objs...).Build()
+	cl := cb.WithRuntimeObjects(objs...).WithStatusSubresource(&anywherev1.SnowMachineConfig{}).Build()
 
 	r := controllers.NewSnowMachineConfigReconciler(cl, validator)
 
@@ -171,7 +172,7 @@ func TestSnowMachineConfigReconcilerFailureKeyNameExists(t *testing.T) {
 	objs := []runtime.Object{config}
 
 	cb := fake.NewClientBuilder()
-	cl := cb.WithRuntimeObjects(objs...).Build()
+	cl := cb.WithRuntimeObjects(objs...).WithStatusSubresource(&anywherev1.SnowMachineConfig{}).Build()
 
 	r := controllers.NewSnowMachineConfigReconciler(cl, validator)
 
@@ -206,7 +207,7 @@ func TestSnowMachineConfigReconcilerFailureAggregate(t *testing.T) {
 	objs := []runtime.Object{config}
 
 	cb := fake.NewClientBuilder()
-	cl := cb.WithRuntimeObjects(objs...).Build()
+	cl := cb.WithRuntimeObjects(objs...).WithStatusSubresource(&anywherev1.SnowMachineConfig{}).Build()
 
 	r := controllers.NewSnowMachineConfigReconciler(cl, validator)
 
