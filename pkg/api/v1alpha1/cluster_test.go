@@ -1616,6 +1616,24 @@ func TestCluster_AddRemoveManagedByCLIAnnotation(t *testing.T) {
 	g.Expect(ok).To(BeFalse())
 }
 
+func TestCluster_AddRemoveAllowDeleteWhenPausedAnnotation(t *testing.T) {
+	g := NewWithT(t)
+	c := &Cluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "cluster_test",
+		},
+	}
+	c.AllowDeleteWhilePaused()
+	val, ok := c.Annotations[AllowDeleteWhenPausedAnnotation]
+
+	g.Expect(ok).To(BeTrue())
+	g.Expect(val).To(ContainSubstring("true"))
+
+	c.PreventDeleteWhilePaused()
+	_, ok = c.Annotations[AllowDeleteWhenPausedAnnotation]
+	g.Expect(ok).To(BeFalse())
+}
+
 func TestClusterClearTinkerbellIPAnnotation(t *testing.T) {
 	g := NewWithT(t)
 	c := &Cluster{
