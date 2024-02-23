@@ -24,6 +24,7 @@ EKS-Anywhere clusters use etcd as the backing store. Taking a snapshot of etcd b
 
 Etcd offers a built-in snapshot mechanism. You can take a snapshot using the `etcdctl snapshot save` command by following the steps given below. 
 
+
 1. Login to any one of the etcd VMs
 ```bash
 ssh -i $PRIV_KEY ec2-user@$ETCD_VM_IP
