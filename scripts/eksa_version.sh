@@ -64,16 +64,16 @@ function eksa-version::get_next_eksa_version_for_ancestor() {
         #  If the branch is main, then get the latest tag by date and
         # bump one minor version and use patch 0
         
-        latest_tag=$(git describe --tags "$(git rev-list --tags --max-count=1)")
+        latest_tag=$(git describe --tags "$(git rev-list --tags='v*.*.*' --max-count=1)")
         
         release_version=$(echo "${latest_tag}" | awk -F. -v OFS=. '{$2++; $3=0; print}')
     else
         # For a release branch, get the latest tag for the release minor version and bump the patch version
         # If there is not tag yet, use latest tag by date but bumping the minor version and using 0 as the patch
         # Silence stdeer as the command will fail if there are no tags
-        latest_tag=$(git describe --tags --match "v$(echo "$ancestor_branch" | sed 's/release-//').*" "$(git rev-list --tags --max-count=1)" 2>/dev/null)
+        latest_tag=$(git describe --tags --match "v$(echo "$ancestor_branch" | sed 's/release-//').*" "$(git rev-list --tags='v*.*.*' --max-count=1)" 2>/dev/null)
         if [[ -z "$latest_tag" ]]; then
-            latest_tag=$(git describe --tags "$(git rev-list --tags --max-count=1)")
+            latest_tag=$(git describe --tags "$(git rev-list --tags='v*.*.*' --max-count=1)")
             release_version=$(echo "${latest_tag}" | awk -F. -v OFS=. '{$2++; $3=0; print}')
         else
             release_version=$(echo "${latest_tag}" | awk -F. -v OFS=. '{$3++; print}')
