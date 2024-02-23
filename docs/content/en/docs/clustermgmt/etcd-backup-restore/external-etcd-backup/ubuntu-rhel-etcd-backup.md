@@ -29,6 +29,7 @@ The following commands use ec2-user as the username. For EKS Anywhere on vSphere
 For EKS Anywhere on Nutanix, the default username is eksa. The default username cannot be changed.
 {{% /alert %}}
 
+
 1. Login to any one of the etcd VMs
 ```bash
 ssh -i $PRIV_KEY ec2-user@$ETCD_VM_IP
