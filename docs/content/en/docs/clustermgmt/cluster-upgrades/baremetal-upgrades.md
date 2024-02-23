@@ -17,12 +17,12 @@ description: >
 
 ### Considerations
 
-- Only EKS Anywhere and Kubernetes version upgrades are supported for Bare Metal clusters. You cannot upgrade other cluster configuration fields.
-- **Upgrades should never be run from ephemeral nodes (short-lived systems that spin up and down on a regular basis). It is highly recommended to run the `upgrade` command with the `--no-timeouts` option when the command is executed through automation. This prevents the CLI from timing out and enables cluster operators to fix issues preventing the upgrade from completing while the process is running. If an `eksctl anywhere` version is older than `v0.18.0` and upgrade fails, _you must not delete the KinD bootstrap cluster Docker container_. During an upgrade, the bootstrap cluster contains critical EKS Anywhere components. If it is deleted after a failed upgrade, they cannot be recovered.**
-- In EKS Anywhere version `v0.15.0`, we introduced the EKS Anywhere lifecycle controller that runs on management clusters and manages workload clusters. The EKS Anywhere lifecycle controller enables you to use Kubernetes API-compatible clients such as `kubectl`, GitOps, or Terraform for managing workload clusters. In this EKS Anywhere version, the EKS Anywhere lifecycle controller rolls out new nodes in workload clusters when management clusters are upgraded.
-- In `eksctl anywhere` version `v0.16.0`, this behavior was changed such that management clusters can be upgraded separately from workload clusters.
+- Only EKS Anywhere and Kubernetes version upgrades are supported for Bare Metal clusters. You cannot update other cluster configuration.
+- **Upgrades should never be run from ephemeral nodes (short-lived systems that spin up and down on a regular basis). If the EKS Anywhere version is lower than `v0.18.0` and upgrade fails, _you must not delete the KinD bootstrap cluster Docker container_. During an upgrade, the bootstrap cluster contains critical EKS Anywhere components. If it is deleted after a failed upgrade, they cannot be recovered.**
+- It is highly recommended to run the `eksctl anywhere upgrade cluster` command with the `--no-timeouts` option when the command is executed through automation. This prevents the CLI from timing out and enables cluster operators to fix issues preventing the upgrade from completing while the process is running. 
+- In EKS Anywhere version `v0.15.0`, we introduced the EKS Anywhere cluster lifecycle controller that runs on management clusters and manages workload clusters. The EKS Anywhere lifecycle controller enables you to use Kubernetes API-compatible clients such as `kubectl`, GitOps, or Terraform for managing workload clusters. In this EKS Anywhere version, the EKS Anywhere cluster lifecycle controller rolls out new nodes in workload clusters when management clusters are upgraded. In EKS Anywhere version `v0.16.0`, this behavior was changed such that management clusters can be upgraded separately from workload clusters.
 - When running workload cluster upgrades after upgrading a management cluster, a machine rollout may be triggered on workload clusters during the workload cluster upgrade, even if the changes to the workload cluster spec didn't require one (for example scaling down a worker node group).
-- Starting with EKS Anywhere v0.18, the `osImageURL` must include the Kubernetes minor version (`Cluster.Spec.KubernetesVersion` or `Cluster.Spec.WorkerNodeGroupConfiguration[].KubernetesVersion` in the cluster spec). For example, if the Kubernetes version is 1.24, the `osImageURL` must include 1.24, 1_24, 1-24 or 124. If you are upgrading Kubernetes versions, you must have a new OS image with your target Kubernetes version components.
+- Starting with EKS Anywhere `v0.18.0`, the `osImageURL` must include the Kubernetes minor version (`Cluster.Spec.KubernetesVersion` or `Cluster.Spec.WorkerNodeGroupConfiguration[].KubernetesVersion` in the cluster spec). For example, if the Kubernetes version is 1.24, the `osImageURL` must include 1.24, 1_24, 1-24 or 124. If you are upgrading Kubernetes versions, you must have a new OS image with your target Kubernetes version components.
 - If you are running EKS Anywhere in an airgapped environment, you must download the new artifacts and images prior to initiating the upgrade. Reference the [Airgapped Upgrades page]({{< relref "./airgapped-upgrades" >}}) page for more information.
 
 ### Upgrade Version Skew
@@ -31,7 +31,7 @@ description: >
 
 ### Prerequisites
 
-Upgrades on bare metal requires at least one spare hardware server for control plane upgrade and one for each worker node group upgrade. During upgrade, the spare hardware server is provisioned with the new version and then an old server is deprovisioned. The deprovisioned server is then reprovisioned with
+EKS Anywhere upgrades on Bare Metal require at least one spare hardware server for control plane upgrade and one for each worker node group upgrade. During upgrade, the spare hardware server is provisioned with the new version and then an old server is deprovisioned. The deprovisioned server is then reprovisioned with
 the new version while another old server is deprovisioned. This happens one at a time until all the control plane components have been upgraded, followed by
 worker node upgrades.
 
@@ -45,18 +45,16 @@ eksctl anywhere upgrade plan cluster -f cluster.yaml
 The output should appear similar to the following:
 
 ```
-Worker node group name not specified. Defaulting name to md-0.
-Warning: The recommended number of control plane nodes is 3 or 5
-Worker node group name not specified. Defaulting name to md-0.
 Checking new release availability...
-NAME                     CURRENT VERSION                 NEXT VERSION
-EKS-A                    v0.0.0-dev+build.1000+9886ba8   v0.0.0-dev+build.1105+46598cb
-cluster-api              v1.0.2+e8c48f5                  v1.0.2+1274316
-kubeadm                  v1.0.2+92c6d7e                  v1.0.2+aa1a03a
-vsphere                  v1.0.1+efb002c                  v1.0.1+ef26ac1
-kubadm                   v1.0.2+f002eae                  v1.0.2+f443dcf
-etcdadm-bootstrap        v1.0.2-rc3+54dcc82              v1.0.0-rc3+df07114
-etcdadm-controller       v1.0.2-rc3+a817792              v1.0.0-rc3+a310516
+NAME                 CURRENT VERSION                NEXT VERSION
+EKS-A Management     v0.19.0-dev+build.20+a0037f0   v0.19.0-dev+build.26+3bc5008
+cert-manager         v1.13.2+129095a                v1.13.2+bb56494
+cluster-api          v1.6.1+5efe087                 v1.6.1+9cf3436
+kubeadm              v1.6.1+8ceb315                 v1.6.1+82f1c0a
+tinkerbell           v0.4.0+cdde180                 v0.4.0+e848206
+kubeadm              v1.6.1+6420e1c                 v1.6.1+2f0b35f
+etcdadm-bootstrap    v1.0.10+7094b99                v1.0.10+a3f0355
+etcdadm-controller   v1.0.17+0259550                v1.0.17+ba86997
 ```
 To format the output in json, add `-o json` to the end of the command line.
 

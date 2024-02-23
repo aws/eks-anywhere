@@ -17,11 +17,11 @@ description: >
 
 ### Considerations
 
-- **Upgrades should never be run from ephemeral nodes (short-lived systems that spin up and down on a regular basis). It is highly recommended to run the `upgrade` command with the `--no-timeouts` option when the command is executed through automation. This prevents the CLI from timing out and enables cluster operators to fix issues preventing the upgrade from completing while the process is running. If an `eksctl anywhere` version is older than `v0.18.0` and upgrade fails, _you must not delete the KinD bootstrap cluster Docker container_. During an upgrade, the bootstrap cluster contains critical EKS Anywhere components. If it is deleted after a failed upgrade, they cannot be recovered.**
-- In EKS Anywhere version `v0.13.0`, we introduced the EKS Anywhere lifecycle controller that runs on management clusters and manages workload clusters. The EKS Anywhere lifecycle controller enables you to use Kubernetes API-compatible clients such as `kubectl`, GitOps, or Terraform for managing workload clusters. In this EKS Anywhere version, the EKS Anywhere lifecycle controller rolls out new nodes in workload clusters when management clusters are upgraded.
-- In `eksctl anywhere` version `v0.16.0`, this behavior was changed such that management clusters can be upgraded separately from workload clusters.
+- **Upgrades should never be run from ephemeral nodes (short-lived systems that spin up and down on a regular basis). If the EKS Anywhere version is lower than `v0.18.0` and upgrade fails, _you must not delete the KinD bootstrap cluster Docker container_. During an upgrade, the bootstrap cluster contains critical EKS Anywhere components. If it is deleted after a failed upgrade, they cannot be recovered.**
+- It is highly recommended to run the `eksctl anywhere upgrade cluster` command with the `--no-timeouts` option when the command is executed through automation. This prevents the CLI from timing out and enables cluster operators to fix issues preventing the upgrade from completing while the process is running. 
+- In EKS Anywhere version `v0.13.0`, we introduced the EKS Anywhere cluster lifecycle controller that runs on management clusters and manages workload clusters. The EKS Anywhere lifecycle controller enables you to use Kubernetes API-compatible clients such as `kubectl`, GitOps, or Terraform for managing workload clusters. In this EKS Anywhere version, the EKS Anywhere cluster lifecycle controller rolls out new nodes in workload clusters when management clusters are upgraded. In EKS Anywhere version `v0.16.0`, this behavior was changed such that management clusters can be upgraded separately from workload clusters.
 - When running workload cluster upgrades after upgrading a management cluster, a machine rollout may be triggered on workload clusters during the workload cluster upgrade, even if the changes to the workload cluster spec didn't require one (for example scaling down a worker node group).
-- Starting with EKS Anywhere v0.18, the `image`/`template` must include the Kubernetes minor version (`Cluster.Spec.KubernetesVersion` or `Cluster.Spec.WorkerNodeGroupConfiguration[].KubernetesVersion` in the cluster spec). For example, if the Kubernetes version is 1.24, the `image`/`template` must include 1.24, 1_24, 1-24 or 124. If you are upgrading Kubernetes versions, you must have a new image with your target Kubernetes version components.
+- Starting with EKS Anywhere `v0.18.0`, the `image`/`template` must include the Kubernetes minor version (`Cluster.Spec.KubernetesVersion` or `Cluster.Spec.WorkerNodeGroupConfiguration[].KubernetesVersion` in the cluster spec). For example, if the Kubernetes version is 1.24, the `image`/`template` must include 1.24, 1_24, 1-24 or 124. If you are upgrading Kubernetes versions, you must have a new image with your target Kubernetes version components.
 - If you are running EKS Anywhere on Snow, a new Admin instance is needed when upgrading to new versions of EKS Anywhere. See [Upgrade EKS Anywhere AMIs in Snowball Edge devices](https://docs.aws.amazon.com/snowball/latest/developer-guide/CrUD-clusters.html) to upgrade and use a new Admin instance in Snow devices.
 - If you are running EKS Anywhere in an airgapped environment, you must download the new artifacts and images prior to initiating the upgrade. Reference the [Airgapped Upgrades page]({{< relref "./airgapped-upgrades" >}}) page for more information.
 
@@ -55,18 +55,16 @@ eksctl anywhere upgrade plan cluster -f workload-cluster.yaml --kubeconfig mgmt/
 The output should appear similar to the following:
 
 ```
-Worker node group name not specified. Defaulting name to md-0.
-Warning: The recommended number of control plane nodes is 3 or 5
-Worker node group name not specified. Defaulting name to md-0.
 Checking new release availability...
-NAME                     CURRENT VERSION                 NEXT VERSION
-EKS-A                    v0.0.0-dev+build.1000+9886ba8   v0.0.0-dev+build.1105+46598cb
-cluster-api              v1.0.2+e8c48f5                  v1.0.2+1274316
-kubeadm                  v1.0.2+92c6d7e                  v1.0.2+aa1a03a
-vsphere                  v1.0.1+efb002c                  v1.0.1+ef26ac1
-kubadm                   v1.0.2+f002eae                  v1.0.2+f443dcf
-etcdadm-bootstrap        v1.0.2-rc3+54dcc82              v1.0.0-rc3+df07114
-etcdadm-controller       v1.0.2-rc3+a817792              v1.0.0-rc3+a310516
+NAME                 CURRENT VERSION                 NEXT VERSION
+EKS-A Management     v0.19.0-dev+build.170+6a04c21   v0.19.0-dev+build.225+c137128
+cert-manager         v1.13.2+a34c207                 v1.14.2+c0da11a
+cluster-api          v1.6.1+9bf197f                  v1.6.2+f120729
+kubeadm              v1.6.1+2c7274d                  v1.6.2+8091cf6
+vsphere              v1.8.5+205ebc5                  v1.8.5+65d2d66
+kubeadm              v1.6.1+46e4754                  v1.6.2+44d7c68
+etcdadm-bootstrap    v1.0.10+43a3235                 v1.0.10+e5e6ac4
+etcdadm-controller   v1.0.17+fc882de                 v1.0.17+3d9ebdc
 ```
 To the format output in json, add `-o json` to the end of the command line.
 
