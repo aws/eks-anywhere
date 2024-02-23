@@ -2,7 +2,7 @@
 title: "Upgrade Overview"
 linkTitle: "Overview"
 weight: 10
-date: 2023-02-19
+date: 2024-02-23
 description: >
   Overview of EKS Anywhere and Kubernetes version upgrades
 ---
