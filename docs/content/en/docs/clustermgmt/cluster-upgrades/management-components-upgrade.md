@@ -9,9 +9,13 @@ description: >
   How to upgrade EKS Anywhere management components
 ---
 
->**_NOTE:_** The `eksctl anywhere upgrade management-components` subcommand was added in EKS Anywhere version v0.19.0 for all providers. Management component upgrades can only be done through the eksctl CLI, not through the Kubernetes API.
+{{% alert title="Note" color="warning" %}}
 
-### What are “management components”?
+The `eksctl anywhere upgrade management-components` subcommand was added in EKS Anywhere version `v0.19.0` for all providers. Management component upgrades can only be done through the `eksctl` CLI, not through the Kubernetes API.
+
+{{% /alert %}}
+
+### What are management components?
 
 Management components run on management or standalone clusters and are responsible for managing the lifecycle of workload clusters. Management components include but are not limited to:
 
