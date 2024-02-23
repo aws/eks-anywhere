@@ -54,10 +54,7 @@ Before creating your first EKS Anywhere cluster, you must choose your infrastruc
 
 EKS Anywhere supports two deployment architectures:
 
-* **Standalone clusters**: If you want only a single EKS Anywhere cluster, you can deploy a standalone cluster.
-This deployment type runs the CAPI and EKS-A management components on a single standalone cluster alongside the Kubernetes cluster that runs workloads. Standalone clusters must be managed with the EKS Anywhere CLI. A standalone cluster is effectively a management cluster, but in this deployment type, only manages itself.
-
-* **Management cluster with separate workload clusters**: If you plan to deploy multiple EKS Anywhere clusters, you should deploy a management cluster with separate workload clusters. With this deployment type, the management cluster is used to perform cluster lifecycle operations on a fleet of workload clusters. The management cluster must be managed with the EKS Anywhere CLI, whereas workload clusters can be managed with the EKS Anywhere CLI, Kubernetes API-compatible tooling, or with Infrastructure as Code (IAC) tooling such as Terraform or GitOps.
+{{% content "../concepts/deployment-architectures.md" %}}
 
 For details on the EKS Anywhere architectures, see the [Architecture page.]({{< relref "../concepts/architecture.md" >}}) 
 

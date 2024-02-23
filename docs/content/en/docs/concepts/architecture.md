@@ -1,91 +1,74 @@
 ---
-title: "Architecture"
+title: "EKS Anywhere Architecture"
 linkTitle: "Architecture"
 aliases:
     /docs/concepts/cluster-topologies
 weight: 10
 description: >
-  Explanation of standalone vs. management/workload cluster topologies
+  EKS Anywhere architecture overview
 ---
 
-For trying out EKS Anywhere or for times when a single cluster is needed, it is fine to create a _standalone cluster_ and run your workloads on it.
-However, if you plan to create multiple clusters for running Kubernetes workloads, we recommend you create a _management cluster_.
-Then use that management cluster to manage a set of workload clusters.
+EKS Anywhere supports many different types of infrastructure including VMWare vSphere, bare metal, Nutanix, Apache CloudStack, and AWS Snow. EKS Anywhere is built on the Kubernetes sub-project called [Cluster API](https://cluster-api.sigs.k8s.io/) (CAPI), which is focused on providing declarative APIs and tooling to simplify the provisioning, upgrading, and operating of multiple Kubernetes clusters. EKS Anywhere inherits many of the same architectural patterns and concepts that exist in CAPI. Reference the [CAPI documentation](https://cluster-api.sigs.k8s.io/user/concepts) to learn more about the core CAPI concepts.
 
-This document describes those two different EKS Anywhere cluster topologies.
+## Components
 
-## What is an EKS Anywhere management cluster?
-An EKS Anywhere management cluster is a long-lived, on-premises Kubernetes cluster that can create and manage a fleet of EKS Anywhere workload clusters.
-The workload clusters are where you run your applications.
-The management cluster can only be created and managed by the Amazon CLI `eksctl`.
+Each EKS Anywhere version includes all components required to create and manage EKS Anywhere clusters.
 
-The management cluster runs on your on-premises hardware and it does not require any connectivity back to AWS to function.
-Customers are responsible for operating the management cluster including (but not limited to) patching, upgrading, scaling, and monitoring the cluster control plane and data plane.
- 
-## What’s the difference between a management cluster and a standalone cluster?
-From a technical point of view, they are the same.
-Regardless of which deployment topology you choose, you always start by creating a singleton, standalone cluster that’s capable of managing itself.
-This shows examples of separate, standalone clusters:
+### Administrative / CLI components
+Responsible for lifecycle operations of management or standalone clusters, building images, and collecting support diagnostics. Admin / CLI components run on Admin machines or image building machines.
+
+| Component  | Description                 | 
+|------------|-----------------------------|
+| eksctl CLI            | Command-line tool to create, upgrade, and delete management, standalone, and optionally workload clusters. |
+| image-builder         | Command-line tool to build Ubuntu and RHEL node images |
+| diagnostics collector | Command-line tool to produce support diagnostics bundle |
+
+
+### Management components
+Responsible for infrastructure and cluster lifecycle management (create, update, upgrade, scale, delete). Management components run on standalone or management clusters.
+
+| Component  | Description                 | 
+|------------|-----------------------------|
+| CAPI controller            | Controller that manages core Cluster API objects such as Cluster, Machine, MachineHealthCheck etc. |
+| EKS Anywhere lifecycle controller | Controller that manages EKS Anywhere objects such as EKS Anywhere Clusters, EKS-A Releases, FluxConfig, GitOpsConfig, AwsIamConfig, OidcConfig |
+| Curated Packages controller | Controller that manages EKS Anywhere Curated Package objects |
+| Kubeadm controller | Controller that manages Kubernetes control plane objects |
+| Etcdadm controller | Controller that manages etcd objects |
+| Provider-specific controllers | Controller that interacts with infrastructure provider (vSphere, bare metal etc.) and manages the infrastructure objects |
+| EKS Anywhere CRDs | Custom Resource Definitions that EKS Anywhere uses to define and control infrastructure, machines, clusters, and other objects |
+
+### Cluster components
+Components that make up a Kubernetes cluster where applications run. Cluster components run on standalone, management, and workload clusters.
+
+| Component  | Description                 | 
+|------------|-----------------------------|
+| Kubernetes            | Kubernetes components that include kube-apiserver, kube-controller-manager, kube-scheduler, kubelet, kubectl |
+| etcd | Etcd database used for Kubernetes control plane datastore |
+| Cilium | Container Networking Interface (CNI) |
+| CoreDNS | In-cluster DNS |
+| kube-proxy | Network proxy that runs on each node |
+| containerd | Container runtime |
+| kube-vip | Load balancer that runs on control plane to balance control plane IPs |
+
+## Deployment Architectures
+
+EKS Anywhere supports two deployment architectures:
+
+{{% content "deployment-architectures.md" %}}
+
+If you use the management cluster architecture, the management cluster must run on the same infrastructure provider as your workload clusters. For example, if you run your management cluster on vSphere, your workload clusters must also run on vSphere. If you run your management cluster on bare metal, your workload cluster must run on bare metal. Similarly, all nodes in workload clusters must run on the same infrastructure provider. You cannot have control plane nodes on vSphere, and worker nodes on bare metal.
+
+Both deployment architectures can run entirely disconnected from the internet and AWS Cloud. For information on deploying EKS Anywhere in airgapped environments, reference the [Airgapped Installation page.]({{< relref "../getting-started/airgapped" >}})
+
+### Standalone Clusters
+
+Technically, standalone clusters are the same as management clusters, with the only difference being that standalone clusters are only capable of managing themselves. Regardless of the deployment architecture you choose, you always start by creating a standalone cluster from an [Admin machine.]({{< relref "../getting-started/install" >}}) When you first create a standalone cluster, a temporary Kind bootstrap cluster is used on your Admin machine to pull down the required components and bootstrap your standalone cluster on the infrastructure of your choice.
 
 ![Standalone clusters self-manage and can run applications](/images/eks-a_cluster_standalone.png)
 
-Once a standalone cluster is created, you have an option to use it as a management cluster to create separate workload cluster(s) under it, hence making this cluster a long-lived management cluster.
-You can only use `eksctl` to create or delete the management cluster or a standalone cluster.
-This shows examples of a management cluster that deploys and manages multiple workload clusters:
+### Management Clusters
+
+Management clusters are long-lived EKS Anywhere clusters that can create and manage a fleet of EKS Anywhere workload clusters. Management clusters run both management and cluster components. Workload clusters run cluster components only and are where your applications run. Management clusters enable you to centrally manage your workload clusters with Kubernetes API-compatible clients such as `kubectl`, GitOps, or Terraform, and prevent management components from interfering with the resource usage of your applications running on workload clusters.
 
 ![Management clusters can create and manage multiple workload clusters](/images/eks-a_cluster_management.png)
 
-With the management cluster in place, you have a choice of tools for creating, upgrading, and deleting workload clusters.
-Check each provider to see which tools it currently supports.
-Supported workload cluster creation, upgrade and deletion tools include:
-
-* `eksctl` CLI
-* Terraform
-* GitOps
-* `kubectl` CLI to communicate with the Kubernetes API
-
-## What’s the difference between a management cluster and a bootstrap cluster for EKS Anywhere?
-
-A management cluster is a long-lived entity you have to actively operate.
-The _bootstrap_ cluster is a temporary, short-lived kind cluster that is created on a separate [Administrative machine]({{< relref "../getting-started/install" >}}) to facilitate the creation of an initial standalone or management cluster.
-
-The `kind` cluster is automatically deleted by the end of the initial cluster creation.
-
-## When should I deploy a management cluster?
-If you want to run three or more EKS Anywhere clusters, we recommend that you choose a management/workload cluster deployment topology because of the advantages listed in the table below.
-The EKS Anywhere Curated Packages feature recommends deploying certain packages such as the container registry package or monitoring packages on the management cluster to avoid circular dependency. 
-
-
-|        | Standalone cluster topology | Management/workload cluster topology  |
-|--------|-----------------------------|---------------------------------------|
-| **Pros**   | Save hardware resources   | Isolation of secrets                |
-|        | Reduced operational overhead of maintaining a separate management cluster | Resource isolation between different teams. Reduced noisy-neighbor effect. |
-|        |                             |  Isolation between development and production workloads. |
-|        |                             |  Isolation between applications and fleet management services, such as monitoring server or container registry. |
-|        |                             |  Provides a central control plane and API to automate cluster lifecycles |
-| **Cons** |  Shared secrets such, as SSH credentials or VMware credentials, across all teams who share the cluster. |  Consumes extra resources. |
-|        |  Without a central control plane (such as a parent management cluster), it is not possible to automate cluster creation/deletion with advanced methods like GitOps or IaC. |The creation/deletion of the management cluster itself can’t be automated through GitOps or IaC. |
-|        | Circular dependencies arise if the cluster has to host a monitoring server or a local container registry. | 
-||||
-
-
-## Which EKS Anywhere features support the management/workload cluster deployment topology today?
-
-| Features   | Supported | 
-|------------|-----------|
-| Create/upgrade/delete a workload cluster on... ||
-| <ul><li>VMware via CLI</li>  | Y |
-| <ul><li>CloudStack via CLI</li> | Y |
-| <ul><li>Bare Metal via CLI</li> | Y |
-| <ul><li>Snow via CLI</li> | Y |
-| <ul><li>Nutanix via CLI</li> | Y |
-| <ul><li>Docker via CLI (non-production only)</li> | Y |
-| Create/upgrade/delete a workload cluster on...
-| <ul><li>VMware via GitOps/Terraform</li> | Y |
-| <ul><li>CloudStack via GitOps/Terraform</li> | Y |
-| <ul><li>Bare Metal via GitOps/Terraform</li> | Y |
-| <ul><li>Snow via GitOps/Terraform</li> | Y |
-| <ul><li>Nutanix via GitOps/Terraform</li> | Y |
-| <ul><li>Docker via GitOps/Terraform (non-production only)</li> | Y |
-| Install a curated package on the management cluster | Y ||
-| Install a curated package on the workload cluster from the management cluster | Y |
