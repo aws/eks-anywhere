@@ -31,11 +31,11 @@ Reference the table below for release and support dates for each Kubernetes vers
 
 ## EKS Anywhere versions
 
-Each EKS Anywhere version includes all components required to create and manage EKS Anywhere clusters. For example, this includes:
+Each EKS Anywhere version includes all components required to create and manage EKS Anywhere clusters. This includes but is not limited to:
 
 - Administrative / CLI components (eksctl CLI, image-builder, diagnostics-collector)
 - Management components (Cluster API controller, EKS Anywhere controller, provider-specific controllers)
-- Workload components (Kubernetes, Cilium)
+- Cluster components (Kubernetes, Cilium)
 
 You can find details about each EKS Anywhere releases in the [EKS Anywhere release manifest.](https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml) The release manifest contains references to the corresponding bundle manifest for each EKS Anywhere version. Within the bundle manifest, you will find the components included in a specific EKS Anywhere version. The images running in your deployment use the same uri values specified in the bundle manifest for that component. For example, see the [bundle manifest](https://anywhere-assets.eks.amazonaws.com/releases/bundles/57/manifest.yaml) for EKS Anywhere v0.18.5.
 
