@@ -7,6 +7,6 @@ description: >
 ---
 
 {{% pageinfo %}}
-Most of the content in the EKS Anywhere documentation is specific to how EKS Anywhere deploys and manages Kuberentes clusters. For information on Kubernetes itself, reference the [Kubernetes documentation.](https://kubernetes.io/docs/home/)
+Most of the content in the EKS Anywhere documentation is specific to how EKS Anywhere deploys and manages Kubernetes clusters. For information on Kubernetes itself, reference the [Kubernetes documentation.](https://kubernetes.io/docs/home/)
 {{% /pageinfo %}}
 
