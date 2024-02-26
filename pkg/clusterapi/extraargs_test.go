@@ -621,39 +621,3 @@ func TestEtcdEncryptionExtraArgs(t *testing.T) {
 		})
 	}
 }
-
-func TestFeatureGatesExtraArgs(t *testing.T) {
-	tests := []struct {
-		testName string
-		features []string
-		want     clusterapi.ExtraArgs
-	}{
-		{
-			testName: "no feature gates",
-			features: []string{},
-			want:     nil,
-		},
-		{
-			testName: "single feature gate",
-			features: []string{"feature1=true"},
-			want: clusterapi.ExtraArgs{
-				"feature-gates": "feature1=true",
-			},
-		},
-		{
-			testName: "multiple feature gates",
-			features: []string{"feature1=true", "feature2=false", "feature3=true"},
-			want: clusterapi.ExtraArgs{
-				"feature-gates": "feature1=true,feature2=false,feature3=true",
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.testName, func(t *testing.T) {
-			if got := clusterapi.FeatureGatesExtraArgs(tt.features...); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("FeatureGatesExtraArgs() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}

@@ -246,7 +246,6 @@ spec:
           audit-log-maxbackup: "10"
           audit-log-maxsize: "512"
           authentication-token-webhook-config-file: /etc/kubernetes/aws-iam-authenticator/kubeconfig.yaml
-          feature-gates: ServiceLoadBalancerClass=true
         extraVolumes:
           - hostPath: /etc/kubernetes/audit-policy.yaml
             mountPath: /etc/kubernetes/audit-policy.yaml
@@ -574,7 +573,6 @@ spec:
           audit-log-maxbackup: "10"
           audit-log-maxsize: "512"
           authentication-token-webhook-config-file: /etc/kubernetes/aws-iam-authenticator/kubeconfig.yaml
-          feature-gates: ServiceLoadBalancerClass=true
         extraVolumes:
         - hostPath: /etc/kubernetes/audit-policy.yaml
           mountPath: /etc/kubernetes/audit-policy.yaml
