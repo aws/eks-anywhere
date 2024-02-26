@@ -151,6 +151,15 @@ spec:
                 type: object
               controlPlaneConfiguration:
                 properties:
+                  apiServerServiceAccount:
+                    description: ApiServerServiceAccount defines the service account
+                      flags to configure for the API server.
+                    properties:
+                      issuer:
+                        type: string
+                      jwksUri:
+                        type: string
+                    type: object
                   certSans:
                     description: CertSANs is a slice of domain names or IPs to be
                       added as Subject Name Alternatives of the Kube API Servers Certificate.

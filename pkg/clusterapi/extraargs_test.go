@@ -179,6 +179,62 @@ func TestExtraArgsToPartialYaml(t *testing.T) {
 	}
 }
 
+func TestApiServerServiceAccountExtraArgs(t *testing.T) {
+	tests := []struct {
+		testName                string
+		apiServerServiceAccount *v1alpha1.ApiServerServiceAccount
+		want                    clusterapi.ExtraArgs
+	}{
+		{
+			testName: "default",
+			apiServerServiceAccount: &v1alpha1.ApiServerServiceAccount{
+				Issuer:  "",
+				JwksUri: "",
+			},
+			want: map[string]string{},
+		},
+		{
+			testName: "with custom issuer url",
+			apiServerServiceAccount: &v1alpha1.ApiServerServiceAccount{
+				Issuer:  "https://my-custom-issuer-url",
+				JwksUri: "",
+			},
+			want: clusterapi.ExtraArgs{
+				"service-account-issuer": "https://my-custom-issuer-url",
+			},
+		},
+		{
+			testName: "with custom jwks uri",
+			apiServerServiceAccount: &v1alpha1.ApiServerServiceAccount{
+				Issuer:  "",
+				JwksUri: "https://my-custom-jwks-uri/openid/v1/jwks",
+			},
+			want: clusterapi.ExtraArgs{
+				"service-account-jwks-uri": "https://my-custom-jwks-uri/openid/v1/jwks",
+			},
+		},
+		{
+			testName: "with custom issuer url and jwks uri",
+			apiServerServiceAccount: &v1alpha1.ApiServerServiceAccount{
+				Issuer:  "https://my-custom-issuer-url",
+				JwksUri: "https://my-custom-jwks-uri/openid/v1/jwks",
+			},
+			want: clusterapi.ExtraArgs{
+				"service-account-issuer":   "https://my-custom-issuer-url",
+				"service-account-jwks-uri": "https://my-custom-jwks-uri/openid/v1/jwks",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.testName, func(t *testing.T) {
+			if got := clusterapi.ApiServerServiceAccountExtraArgs(tt.apiServerServiceAccount); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("ApiServerServiceAccountExtraArgs() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestAwsIamAuthExtraArgs(t *testing.T) {
 	tests := []struct {
 		testName string

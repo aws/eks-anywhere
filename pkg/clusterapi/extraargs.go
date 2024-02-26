@@ -64,6 +64,16 @@ func FeatureGatesExtraArgs(features ...string) ExtraArgs {
 	}
 }
 
+func ApiServerServiceAccountExtraArgs(apiServerServiceAccount *v1alpha1.ApiServerServiceAccount) ExtraArgs {
+	if apiServerServiceAccount == nil {
+		return nil
+	}
+	args := ExtraArgs{}
+	args.AddIfNotEmpty("service-account-issuer", apiServerServiceAccount.Issuer)
+	args.AddIfNotEmpty("service-account-jwks-uri", apiServerServiceAccount.JwksUri)
+	return args
+}
+
 func PodIAMAuthExtraArgs(podIAMConfig *v1alpha1.PodIAMConfig) ExtraArgs {
 	if podIAMConfig == nil {
 		return nil

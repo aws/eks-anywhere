@@ -307,6 +307,8 @@ type ControlPlaneConfiguration struct {
 	CertSANs []string `json:"certSans,omitempty"`
 	// MachineHealthCheck is a control-plane level override for the timeouts and maxUnhealthy specified in the top-level MHC configuration. If not configured, the defaults in the top-level MHC configuration are used.
 	MachineHealthCheck *MachineHealthCheck `json:"machineHealthCheck,omitempty"`
+	// ApiServerServiceAccount defines the service account flags to configure for the API server.
+	ApiServerServiceAccount *ApiServerServiceAccount `json:"apiServerServiceAccount,omitempty"`
 }
 
 // MachineHealthCheck allows to configure timeouts for machine health checks. Machine Health Checks are responsible for remediating unhealthy Machines.
@@ -363,7 +365,7 @@ func (n *ControlPlaneConfiguration) Equal(o *ControlPlaneConfiguration) bool {
 	}
 	return n.Count == o.Count && n.MachineGroupRef.Equal(o.MachineGroupRef) &&
 		TaintsSliceEqual(n.Taints, o.Taints) && MapEqual(n.Labels, o.Labels) &&
-		SliceEqual(n.CertSANs, o.CertSANs)
+		SliceEqual(n.CertSANs, o.CertSANs) && n.ApiServerServiceAccount.Equal(o.ApiServerServiceAccount)
 }
 
 type Endpoint struct {
@@ -418,6 +420,21 @@ func (n *Endpoint) CloudStackEqual(o *Endpoint) bool {
 	}
 
 	return n.Host == o.Host
+}
+
+type ApiServerServiceAccount struct {
+	Issuer  string `json:"issuer,omitempty"`
+	JwksUri string `json:"jwksUri,omitempty"`
+}
+
+func (n *ApiServerServiceAccount) Equal(o *ApiServerServiceAccount) bool {
+	if n == o {
+		return true
+	}
+	if n == nil || o == nil {
+		return false
+	}
+	return n.Issuer == o.Issuer && n.JwksUri == o.JwksUri
 }
 
 // GetControlPlaneHostPort retrieves the ControlPlaneConfiguration host and port split defined in the cluster.Spec.

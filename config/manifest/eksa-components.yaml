@@ -3854,6 +3854,15 @@ spec:
                 type: object
               controlPlaneConfiguration:
                 properties:
+                  apiServerServiceAccount:
+                    description: ApiServerServiceAccount defines the service account
+                      flags to configure for the API server.
+                    properties:
+                      issuer:
+                        type: string
+                      jwksUri:
+                        type: string
+                    type: object
                   certSans:
                     description: CertSANs is a slice of domain names or IPs to be
                       added as Subject Name Alternatives of the Kube API Servers Certificate.
@@ -4288,7 +4297,7 @@ spec:
                           type: string
                       type: object
                     machineHealthCheck:
-                      description: MachineHealthCheck is a control-plane level override
+                      description: MachineHealthCheck is a worker node level override
                         for the timeouts and maxUnhealthy specified in the top-level
                         MHC configuration. If not configured, the defaults in the
                         top-level MHC configuration are used.
