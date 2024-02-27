@@ -64,6 +64,7 @@ func runInPlaceMultipleUpgradesFlow(test *framework.ClusterE2ETest, clusterOpts 
 	test.CreateCluster()
 	for _, opts := range clusterOpts {
 		test.UpgradeClusterWithNewConfig(opts)
+		test.GenerateSupportBundleOnCleanupIfTestFailed()
 		test.ValidateClusterState()
 		test.StopIfFailed()
 	}
@@ -75,6 +76,7 @@ func runInPlaceMultipleUpgradesFlow(test *framework.ClusterE2ETest, clusterOpts 
 func runInPlaceUpgradeFlow(test *framework.ClusterE2ETest, clusterOpts ...framework.ClusterE2ETestOpt) {
 	test.CreateCluster()
 	test.UpgradeClusterWithNewConfig(clusterOpts)
+	test.GenerateSupportBundleOnCleanupIfTestFailed()
 	test.ValidateClusterState()
 	test.StopIfFailed()
 	test.DeleteCluster()
@@ -84,6 +86,7 @@ func runInPlaceUpgradeFlowForBareMetal(test *framework.ClusterE2ETest, clusterOp
 	test.GenerateHardwareConfig()
 	test.CreateCluster(framework.WithControlPlaneWaitTimeout("20m"))
 	test.UpgradeClusterWithNewConfig(clusterOpts)
+	test.GenerateSupportBundleOnCleanupIfTestFailed()
 	test.ValidateClusterState()
 	test.StopIfFailed()
 	test.DeleteCluster()
