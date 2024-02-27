@@ -55,11 +55,18 @@ func KubeadmControlPlane(log logr.Logger, clusterSpec *cluster.Spec, snowMachine
 	joinConfigKubeletExtraArg["provider-id"] = "aws-snow:////'{{ ds.meta_data.instance_id }}'"
 
 	addStackedEtcdExtraArgsInKubeadmControlPlane(kcp, clusterSpec.Cluster.Spec.ExternalEtcdConfiguration)
-	if versionsBundle.KubeVersion == "1.29" {
-		disableEtcdLearnerMode(kcp)
-	}
 
 	machineConfig := clusterSpec.SnowMachineConfig(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name)
+
+	kubeVersionSemver, err := semver.New(string(clusterSpec.Cluster.Spec.KubernetesVersion) + ".0")
+	if err != nil {
+		return nil, fmt.Errorf("error converting kubeVersion %v to semver %v", clusterSpec.Cluster.Spec.KubernetesVersion, err)
+	}
+
+	kube129Semver, err := semver.New(string(v1alpha1.Kube129) + ".0")
+	if err != nil {
+		return nil, fmt.Errorf("error converting kubeVersion %v to semver %v", v1alpha1.Kube129, err)
+	}
 
 	osFamily := machineConfig.OSFamily()
 	switch osFamily {
@@ -73,24 +80,20 @@ func KubeadmControlPlane(log logr.Logger, clusterSpec *cluster.Spec, snowMachine
 		addBottlerocketBootstrapSnowInKubeadmControlPlane(kcp, versionsBundle.Snow.BottlerocketBootstrapSnow)
 		clusterapi.SetBottlerocketHostConfigInKubeadmControlPlane(kcp, machineConfig.Spec.HostOSConfiguration)
 
+		if kubeVersionSemver.Compare(kube129Semver) != -1 {
+			disableEtcdLearnerMode(kcp)
+		}
+
 	case v1alpha1.Ubuntu:
 		kcp.Spec.KubeadmConfigSpec.PreKubeadmCommands = append(kcp.Spec.KubeadmConfigSpec.PreKubeadmCommands,
 			"/etc/eks/bootstrap.sh",
 		)
-		kubeVersionSemver, err := semver.New(string(clusterSpec.Cluster.Spec.KubernetesVersion) + ".0")
-		if err != nil {
-			return nil, fmt.Errorf("error converting kubeVersion %v to semver %v", clusterSpec.Cluster.Spec.KubernetesVersion, err)
-		}
-
-		kube129Semver, err := semver.New(string(v1alpha1.Kube129) + ".0")
-		if err != nil {
-			return nil, fmt.Errorf("error converting kubeVersion %v to semver %v", v1alpha1.Kube129, err)
-		}
 
 		if kubeVersionSemver.Compare(kube129Semver) != -1 {
 			kcp.Spec.KubeadmConfigSpec.PreKubeadmCommands = append(kcp.Spec.KubeadmConfigSpec.PreKubeadmCommands,
 				"if [ -f /run/kubeadm/kubeadm.yaml ]; then sed -i 's#path: /etc/kubernetes/admin.conf#path: /etc/kubernetes/super-admin.conf#' /etc/kubernetes/manifests/kube-vip.yaml; fi",
 			)
+			disableEtcdLearnerMode(kcp)
 		}
 
 		if err := clusterapi.SetProxyConfigInKubeadmControlPlaneForUbuntu(kcp, clusterSpec.Cluster); err != nil {
