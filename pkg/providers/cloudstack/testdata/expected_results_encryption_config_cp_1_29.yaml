@@ -59,8 +59,6 @@ spec:
       name: test-control-plane-template-1234567890000
   kubeadmConfigSpec:
     clusterConfiguration:
-      featureGates:
-        EtcdLearnerMode: false
       imageRepository: public.ecr.aws/eks-distro/kubernetes
       etcd:
         local:

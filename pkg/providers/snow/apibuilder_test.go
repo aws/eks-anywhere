@@ -108,7 +108,7 @@ func wantKubeadmControlPlane(kubeVersion v1alpha1.KubernetesVersion) *controlpla
 	wantReplicas := int32(3)
 	wantMaxSurge := intstr.FromInt(1)
 	versionBundles := givenVersionsBundle(kubeVersion)
-	kcp := &controlplanev1.KubeadmControlPlane{
+	return &controlplanev1.KubeadmControlPlane{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "controlplane.cluster.x-k8s.io/v1beta1",
 			Kind:       "KubeadmControlPlane",
@@ -200,14 +200,6 @@ func wantKubeadmControlPlane(kubeVersion v1alpha1.KubernetesVersion) *controlpla
 			Version:  versionBundles.KubeDistro.Kubernetes.Tag,
 		},
 	}
-
-	if kubeVersion == "1.29" {
-		kcp.Spec.KubeadmConfigSpec.ClusterConfiguration.FeatureGates = map[string]bool{
-			"EtcdLearnerMode": false,
-		}
-	}
-
-	return kcp
 }
 
 func wantKubeadmControlPlaneUnstackedEtcd() *controlplanev1.KubeadmControlPlane {

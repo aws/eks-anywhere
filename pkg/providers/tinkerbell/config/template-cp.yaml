@@ -1,4 +1,3 @@
-{{- $kube_minor_version := (index (splitList "." (trimPrefix "v" .kubernetesVersion)) 1) -}}
 apiVersion: cluster.x-k8s.io/v1beta1
 kind: Cluster
 metadata:
@@ -38,10 +37,6 @@ metadata:
 spec:
   kubeadmConfigSpec:
     clusterConfiguration:
-{{- if (ge (atoi $kube_minor_version) 29) }}
-      featureGates:
-        EtcdLearnerMode: false
-{{- end }}
       imageRepository: {{.kubernetesRepository}}
       etcd:
 {{- if .externalEtcd }}
@@ -400,6 +395,7 @@ spec:
       - {{ . }}
       {{- end }}
 {{- end }}
+{{- $kube_minor_version := (index (splitList "." (trimPrefix "v" .kubernetesVersion)) 1) }}
 {{- if and (or .registryMirrorMap .proxyConfig (ge (atoi $kube_minor_version) 29)) (ne .format "bottlerocket") }}
     preKubeadmCommands:
 {{- if .registryMirrorMap }}

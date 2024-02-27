@@ -86,10 +86,6 @@ spec:
       name: {{.controlPlaneTemplateName}}
   kubeadmConfigSpec:
     clusterConfiguration:
-{{- if (ge (atoi $kube_minor_version) 29) }}
-      featureGates:
-        EtcdLearnerMode: false
-{{- end }}
       imageRepository: {{.kubernetesRepository}}
       etcd:
 {{- if .externalEtcd }}
