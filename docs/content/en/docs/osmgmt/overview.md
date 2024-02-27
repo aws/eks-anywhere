@@ -14,7 +14,7 @@ Reference the table below for the operating systems supported per deployment opt
 | --- | :---: | :---: | :---: | :---: | :---: |
 | Bottlerocket | &#10004; | &#10004; | &mdash; | &mdash; | &mdash; |
 | Ubuntu | &#10004; | &#10004; | &#10004; | &mdash; | &#10004; |
-| RHEL | &#10004; | &#10004; | &mdash; | &#10004; | &mdash; |
+| RHEL | &#10004; | &#10004; | &mdash; | &#10004; | &#10004; |
 
 | OS | Supported Versions |
 | :---: | :---: |
