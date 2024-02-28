@@ -888,20 +888,18 @@ func (k *Kubectl) ValidateControlPlaneNodes(ctx context.Context, cluster *types.
 	observedGeneration := cp.Status.ObservedGeneration
 	generation := cp.Generation
 	if observedGeneration != generation {
-		return fmt.Errorf("kubeadm control plane %s status needs to be refreshed: observed generation is %d, want %d", cp.Name, observedGeneration, generation)
+		return fmt.Errorf("kubeadm control plane %s status needs to be refreshed: generation=%v, observedGeneration=%d", cp.Name, generation, observedGeneration)
 	}
 
 	if !cp.Status.Ready {
-		return errors.New("control plane is not ready")
+		return errors.New("api server is not ready")
 	}
 
 	if cp.Status.UnavailableReplicas != 0 {
-		return fmt.Errorf("%v control plane replicas are unavailable", cp.Status.UnavailableReplicas)
+		return fmt.Errorf("%v/%v control plane replicas are unavailable",
+			cp.Status.UnavailableReplicas, cp.Status.Replicas)
 	}
 
-	if cp.Status.ReadyReplicas != cp.Status.Replicas {
-		return fmt.Errorf("%v control plane replicas are not ready", cp.Status.Replicas-cp.Status.ReadyReplicas)
-	}
 	return nil
 }
 

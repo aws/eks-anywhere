@@ -48,14 +48,14 @@ func (u *UpgradeValidations) PreflightValidations(ctx context.Context) []validat
 		func() *validations.ValidationResult {
 			return &validations.ValidationResult{
 				Name:        "control plane ready",
-				Remediation: fmt.Sprintf("ensure control plane nodes and pods for cluster %s are Ready", u.Opts.WorkloadCluster.Name),
+				Remediation: fmt.Sprintf("ensure control plane nodes and pods for cluster %s are ready", u.Opts.WorkloadCluster.Name),
 				Err:         k.ValidateControlPlaneNodes(ctx, targetCluster, targetCluster.Name),
 			}
 		},
 		func() *validations.ValidationResult {
 			return &validations.ValidationResult{
 				Name:        "worker nodes ready",
-				Remediation: fmt.Sprintf("ensure machine deployments for cluster %s are Ready", u.Opts.WorkloadCluster.Name),
+				Remediation: fmt.Sprintf("ensure machine deployments for cluster %s are ready", u.Opts.WorkloadCluster.Name),
 				Err:         k.ValidateWorkerNodes(ctx, u.Opts.Spec.Cluster.Name, targetCluster.KubeconfigFile),
 			}
 		},
