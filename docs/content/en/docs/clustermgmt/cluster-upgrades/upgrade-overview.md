@@ -25,7 +25,7 @@ If you are using the `eksctl anywhere` CLI, there are `eksctl anywhere upgrade p
 
 If you are using an Kubernetes API-compatible client, you modify your workload cluster spec yaml and apply the modified yaml to your management cluster. The EKS Anywhere lifecycle controller, which runs on the management cluster, reconciles the desired changes on the workload cluster.
 
-As of EKS Anywhere version `v0.19.0`, management components can be upgraded separately from cluster components. This is enables you to get the latest updates to the management components such as Cluster API controller, EKS Anywhere controller, and provider-specific controllers without impact to your workload clusters. Management components can only be upgraded with the `eksctl anywhere` CLI, which has new `eksctl anywhere upgrade plan management-components` and `eksctl anywhere upgrade management-component` commands. For more information, reference the [Upgrade management components page.]({{< relref "./management-components-upgrade" >}})
+As of EKS Anywhere version `v0.19.0`, management components can be upgraded separately from cluster components. This is enables you to get the latest updates to the management components such as Cluster API controller, EKS Anywhere controller, and provider-specific controllers without impact to your workload clusters. Management components can only be upgraded with the `eksctl anywhere` CLI, which has new `eksctl anywhere upgrade plan management-components` and `eksctl anywhere upgrade management-component` commands. For more information, reference the [Upgrade Management Components page.]({{< relref "./management-components-upgrade" >}})
 
 ### Upgrading EKS Anywhere Versions
 
@@ -43,7 +43,9 @@ To upgrade the EKS Anywhere version of a workload cluster, you change the `eksaV
 
 ### Upgrading Kubernetes Versions
 
-Each EKS Anywhere version supports at least 4 minor versions of Kubernetes. Kubernetes patch version increments are included in EKS Anywhere minor and patch releases. There are two places in the cluster spec where you can configure the Kubernetes version, `Cluster.Spec.KubernetesVersion` and `Cluster.Spec.WorkerNodeGroupConfiguration[].KubernetesVersion`. If only `Cluster.Spec.KubernetesVersion` is set, then that version will apply to both control plane and worker nodes. You can use `Cluster.Spec.WorkerNodeGroupConfiguration[].KubernetesVersion` to upgrade your worker nodes separately from control plane nodes. The `Cluster.Spec.WorkerNodeGroupConfiguration[].KubernetesVersion` cannot be greater than `Cluster.Spec.KubernetesVersion`.
+Each EKS Anywhere version supports at least 4 minor versions of Kubernetes. Kubernetes patch version increments are included in EKS Anywhere minor and patch releases. There are two places in the cluster spec where you can configure the Kubernetes version, `Cluster.Spec.KubernetesVersion` and `Cluster.Spec.WorkerNodeGroupConfiguration[].KubernetesVersion`. If only `Cluster.Spec.KubernetesVersion` is set, then that version will apply to both control plane and worker nodes. You can use `Cluster.Spec.WorkerNodeGroupConfiguration[].KubernetesVersion` to upgrade your worker nodes separately from control plane nodes. 
+
+The `Cluster.Spec.WorkerNodeGroupConfiguration[].KubernetesVersion` cannot be greater than `Cluster.Spec.KubernetesVersion`. In Kubernetes versions lower than `v1.28.0`, the `Cluster.Spec.WorkerNodeGroupConfiguration[].KubernetesVersion` can be at most 2 versions lower than the `Cluster.Spec.KubernetesVersion`. In Kubernetes versions `v1.28.0` or greater, the `Cluster.Spec.WorkerNodeGroupConfiguration[].KubernetesVersion` can be at most 3 versions lower than the `Cluster.Spec.KubernetesVersion`.
 
 ### Upgrade Controls
 
