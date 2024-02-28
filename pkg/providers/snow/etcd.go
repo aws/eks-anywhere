@@ -15,3 +15,11 @@ func addStackedEtcdExtraArgsInKubeadmControlPlane(kcp *controlplanev1.KubeadmCon
 	stackedEtcdExtraArgs["listen-peer-urls"] = "https://0.0.0.0:2380"
 	stackedEtcdExtraArgs["listen-client-urls"] = "https://0.0.0.0:2379"
 }
+
+func disableEtcdLearnerMode(kcp *controlplanev1.KubeadmControlPlane) {
+	if kcp.Spec.KubeadmConfigSpec.ClusterConfiguration.FeatureGates == nil {
+		kcp.Spec.KubeadmConfigSpec.ClusterConfiguration.FeatureGates = map[string]bool{}
+	}
+
+	kcp.Spec.KubeadmConfigSpec.ClusterConfiguration.FeatureGates["EtcdLearnerMode"] = false
+}
