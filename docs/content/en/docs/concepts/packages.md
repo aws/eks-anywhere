@@ -1,10 +1,10 @@
 ---
-title: "EKS Anywhere curated packages"
-linkTitle: "Curated packages"
+title: "EKS Anywhere Curated Packages"
+linkTitle: "Curated Packages"
 weight: 60
 date: 2022-05-09
 description: >
-  All information you may need for EKS Anywhere curated packages
+  Overview of EKS Anywhere Curated Packages
 ---
 
 {{% alert title="Note" color="primary" %}}

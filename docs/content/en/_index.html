@@ -1,31 +1,34 @@
-+++
-title = "EKS Anywhere"
-linkTitle = "EKS-A"
-
-+++
+---
+title: "EKS Anywhere"
+linkTitle: "EKS-A"
+benefits:
+  - title: Simplify Kubernetes Management
+    image: /images/line-server-rack.svg
+    description: >
+      Amazon EKS Anywhere simplifies the creation and operation of on-premises Kubernetes clusters with default component configurations and cluster lifecycle automation based on open source standards.
+  - title: Streamline Support
+    image: /images/line-container-cloud.svg
+    description: >
+      AWS supports all Amazon EKS Anywhere components including the integrated third-party software, enabling customers to reduce support costs and avoid maintenance of redundant open source and third-party tools.
+  - title: Consistent and Reliable
+    image: /images/line-toolbox.svg
+    description: >
+      Amazon EKS Anywhere builds on the strengths of Amazon EKS Distro and provides open source software that’s up-to-date and patched with optional integrations with other AWS services for capabilities such as authentication, observability, and key encryption.
+---
 
 {{< blocks/header >}}
     <!-- This needs to be passed in as content because we can't use `relref` outside of the content dir -->
-    <a class="btn rounded-sm btn-warning" href="{{< relref `docs/getting-started/` >}}">
+    <a class="btn rounded-sm btn-warning" href="{{< relref `docs/getting-started/overview` >}}">
         Get Started with EKS Anywhere
     </a>
 {{< /blocks/header >}}
 
-{{< blocks/section color="white" class="w-75 mx-auto" >}}
-{{< blocks/feature title="" class="text-xl text-center mb-5" >}}
-Amazon EKS Anywhere is an open-source deployment option for Amazon EKS that allows customers to create and operate Kubernetes clusters on-premises, with optional support offered by AWS.
-EKS Anywhere supports Bare Metal, CloudStack and VMware vSphere as deployment targets.
-{{< /blocks/feature >}}
+<br>
+<div class="text-md-left p-2 w-75 align-items-center justify-content-center mx-auto" style="max-width:1000px;">
+<p>Amazon EKS Anywhere is container management software built by AWS that makes it easier to run and manage Kubernetes on-premises and at the edge. Amazon EKS Anywhere is built on <a href="https://distro.eks.amazonaws.com/">Amazon EKS Distro</a>, which is the same reliable and secure Kubernetes distribution used by  <a href="https://docs.aws.amazon.com/eks/latest/userguide/what-is-eks.html">Amazon Elastic Kubernetes Service (EKS)</a> in AWS Cloud.</p> 
 
-{{< blocks/feature title="Simplify On-Premises Kubernetes Management" image="/images/line-server-rack.svg" order="left" >}}
-Amazon EKS Anywhere helps simplify the creation and operation of on-premises Kubernetes clusters with default component configurations while providing tools for automating cluster management.
-{{< /blocks/feature >}}
+<p> Amazon EKS Anywhere simplifies Kubernetes cluster management through the automation of undifferentiated heavy lifting such as infrastructure setup and Kubernetes cluster lifecycle operations. EKS Anywhere supports many different types of infrastructure including VMWare vSphere, Bare Metal, Nutanix, Apache CloudStack, and AWS Snow.</p>
+</div>
+</br>
 
-{{< blocks/feature title="One Stop Support" image="/images/line-container-cloud.svg" order="right" >}}
-AWS supports all Amazon EKS Anywhere components including the integrated 3rd-party software, so that customers can reduce their support costs and avoid maintenance of redundant open-source and third-party tools.
-{{< /blocks/feature >}}
-{{< /blocks/section >}}
-
-{{< blocks/feature title="Consistent and Reliable" image="/images/line-toolbox.svg" order="left" >}}
-Amazon EKS Anywhere gives you on-premises Kubernetes operational tooling that’s consistent with Amazon EKS. It builds on the strengths of Amazon EKS Distro and provides open-source software that’s up-to-date and patched, so you can have a Kubernetes environment on-premises that is more reliable than self-managed Kubernetes offerings.
-{{< /blocks/feature >}}
+{{< benefits >}}
