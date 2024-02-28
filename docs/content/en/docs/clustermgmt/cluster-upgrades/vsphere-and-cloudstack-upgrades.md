@@ -207,12 +207,12 @@ allowing you to upgrade a number of fields simultaneously with the same procedur
 
 `Cluster`:
 - `kubernetesVersion`
-- `controlPlaneConfig.count`
-- `controlPlaneConfigurations.machineGroupRef.name`
-- `controlPlaneConfigurations.upgradeRolloutStrategy.rollingUpdate.maxSurge`
+- `controlPlaneConfiguration.count`
+- `controlPlaneConfiguration.machineGroupRef.name`
+- `controlPlaneConfiguration.upgradeRolloutStrategy.rollingUpdate.maxSurge`
 - `workerNodeGroupConfigurations.count`
 - `workerNodeGroupConfigurations.machineGroupRef.name`
-- `workerNodeGroupConfigurations.kubernetesVersion`
+- `workerNodeGroupConfigurations.kubernetesVersion` (in case of modular upgrade)
 - `workerNodeGroupConfigurations.upgradeRolloutStrategy.rollingUpdate.maxSurge`
 - `workerNodeGroupConfigurations.upgradeRolloutStrategy.rollingUpdate.maxUnavailable`
 - `externalEtcdConfiguration.machineGroupRef.name`
