@@ -73,3 +73,20 @@
         }
     }
 }
+
+.benefits {
+  .card-shadow {
+    padding: 20px 20px 20px;
+    border-radius: 10px;
+    box-shadow: 0 10px 10px rgba(41,26,204,.12);
+    border: none;
+    height: 100%;
+    text-align: left;
+
+    h4 {
+      font-weight: 550;
+      font-size: 1.1em;
+      line-height: 1.2;
+    }
+  }
+}

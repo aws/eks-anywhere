@@ -6,5 +6,5 @@ aliases:
     /docs/tasks/
     /docs/tasks/cluster/
 description: >
-  Common tasks for managing clusters.
+  Common tasks for managing EKS Anywhere clusters
 ---
