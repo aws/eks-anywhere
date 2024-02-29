@@ -53,17 +53,6 @@ func EtcdEncryptionExtraArgs(config *[]v1alpha1.EtcdEncryption) ExtraArgs {
 	return args
 }
 
-// FeatureGatesExtraArgs takes a list of features with the value and returns it in the proper format
-// Example FeatureGatesExtraArgs("ServiceLoadBalancerClass=true").
-func FeatureGatesExtraArgs(features ...string) ExtraArgs {
-	if len(features) == 0 {
-		return nil
-	}
-	return ExtraArgs{
-		"feature-gates": strings.Join(features[:], ","),
-	}
-}
-
 func PodIAMAuthExtraArgs(podIAMConfig *v1alpha1.PodIAMConfig) ExtraArgs {
 	if podIAMConfig == nil {
 		return nil

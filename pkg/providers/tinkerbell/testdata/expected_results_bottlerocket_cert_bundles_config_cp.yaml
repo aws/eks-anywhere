@@ -82,7 +82,6 @@ spec:
           audit-log-maxage: "30"
           audit-log-maxbackup: "10"
           audit-log-maxsize: "512"
-          feature-gates: ServiceLoadBalancerClass=true
         extraVolumes:
         - hostPath: /var/lib/kubeadm/audit-policy.yaml
           mountPath: /etc/kubernetes/audit-policy.yaml
