@@ -74,7 +74,7 @@ func BundleArtifactsRelease(r *releasetypes.ReleaseConfig) error {
 		return errors.Cause(err)
 	}
 
-	err = UploadArtifacts(context.Background(), r, r.BundleArtifactsTable)
+	err = UploadArtifacts(context.Background(), r, r.BundleArtifactsTable, true)
 	if err != nil {
 		return errors.Cause(err)
 	}
