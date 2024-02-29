@@ -119,6 +119,7 @@ func ValidateFilename(filename string) error {
 	return nil
 }
 
+// ValidateKubeconfigPath validates that the cluster config file of the clusterName under the parentFolders does not exist.
 func ValidateKubeconfigPath(clusterName string, parentFolders ...string) error {
 	kubeconfigPath := FromClusterName(clusterName)
 	for _, folder := range parentFolders {
@@ -127,7 +128,7 @@ func ValidateKubeconfigPath(clusterName string, parentFolders ...string) error {
 	info, err := os.Stat(kubeconfigPath)
 	if err == nil && info.Size() > 0 {
 		return fmt.Errorf(
-			`old cluster config file already exists under the "%s" folder, please use a different cluster name or remove the existing "%s" folder to proceed`,
+			"old cluster config file already exists under the %q folder, please use a different cluster name or remove the existing %q folder to proceed",
 			clusterName, clusterName,
 		)
 	}
