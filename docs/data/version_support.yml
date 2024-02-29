@@ -20,10 +20,15 @@
 #
 # receiving_patches: Whether or not the release is receiving patches.
 eksa:
+- version: '0.19'
+  released: 2024-02-29
+  kube_versions: ['1.29', '1.28', '1.27', '1.26', '1.25']
+  receiving_patches: true
+
 - version: '0.18'
   released: 2023-10-30
   kube_versions: ['1.28', '1.27', '1.26', '1.25', '1.24']
-  receiving_patches: true
+  receiving_patches: false
 
 - version: '0.17'
   released: 2023-08-16
@@ -104,6 +109,10 @@ eksa:
 #                        when there is no EKS-A release in the eksa array above. Mutually exclusive
 #                        with `endOfLifeIn`.
 kube:
+- version: '1.29'
+  releasedIn: '0.19'
+  expectedEndOfLifeDate: 2025-03-23
+
 - version: '1.28'
   releasedIn: '0.18'
   expectedEndOfLifeDate: 2024-12-01
@@ -122,11 +131,11 @@ kube:
 
 - version: '1.24'
   releasedIn: '0.12'
-  expectedEndOfLifeDate: 2024-02-01
+  endOfLifeIn: '0.19'
 
 - version: '1.23'
   releasedIn: '0.11'
-  endOfLifeIn: '0.15'
+  endOfLifeIn: '0.18'
 
 - version: '1.22'
   releasedIn: '0.8'
