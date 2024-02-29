@@ -127,8 +127,8 @@ func ValidateKubeconfigPath(clusterName string, parentFolders ...string) error {
 	info, err := os.Stat(kubeconfigPath)
 	if err == nil && info.Size() > 0 {
 		return fmt.Errorf(
-			"old cluster config file exists under %s, please use a different clusterName to proceed",
-			clusterName,
+			`old cluster config file already exists under the "%s" folder, please use a different cluster name or remove the existing "%s" folder to proceed`,
+			clusterName, clusterName,
 		)
 	}
 	return nil
