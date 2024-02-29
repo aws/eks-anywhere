@@ -48,6 +48,11 @@ func KubeadmControlPlane(log logr.Logger, clusterSpec *cluster.Spec, snowMachine
 		return nil, fmt.Errorf("setting kube-vip: %v", err)
 	}
 
+	apiServerExtraArgs := clusterSpec.Cluster.Spec.ControlPlaneConfiguration.APIServerExtraArgs
+	for k, v := range apiServerExtraArgs {
+		kcp.Spec.KubeadmConfigSpec.ClusterConfiguration.APIServer.ExtraArgs[k] = v
+	}
+
 	initConfigKubeletExtraArg := kcp.Spec.KubeadmConfigSpec.InitConfiguration.NodeRegistration.KubeletExtraArgs
 	initConfigKubeletExtraArg["provider-id"] = "aws-snow:////'{{ ds.meta_data.instance_id }}'"
 

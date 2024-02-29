@@ -53,6 +53,15 @@ func EtcdEncryptionExtraArgs(config *[]v1alpha1.EtcdEncryption) ExtraArgs {
 	return args
 }
 
+// APIServerExtraArgs takes a map of API Server extra args and returns the relevant API server extra args if it's not nil or empty.
+func APIServerExtraArgs(apiServerExtraArgs map[string]string) ExtraArgs {
+	args := ExtraArgs{}
+	for k, v := range apiServerExtraArgs {
+		args.AddIfNotEmpty(k, v)
+	}
+	return args
+}
+
 func PodIAMAuthExtraArgs(podIAMConfig *v1alpha1.PodIAMConfig) ExtraArgs {
 	if podIAMConfig == nil {
 		return nil

@@ -307,6 +307,8 @@ type ControlPlaneConfiguration struct {
 	CertSANs []string `json:"certSans,omitempty"`
 	// MachineHealthCheck is a control-plane level override for the timeouts and maxUnhealthy specified in the top-level MHC configuration. If not configured, the defaults in the top-level MHC configuration are used.
 	MachineHealthCheck *MachineHealthCheck `json:"machineHealthCheck,omitempty"`
+	// APIServerExtraArgs defines the flags to configure for the API server.
+	APIServerExtraArgs map[string]string `json:"apiServerExtraArgs,omitempty"`
 }
 
 // MachineHealthCheck allows to configure timeouts for machine health checks. Machine Health Checks are responsible for remediating unhealthy Machines.
@@ -363,7 +365,7 @@ func (n *ControlPlaneConfiguration) Equal(o *ControlPlaneConfiguration) bool {
 	}
 	return n.Count == o.Count && n.MachineGroupRef.Equal(o.MachineGroupRef) &&
 		TaintsSliceEqual(n.Taints, o.Taints) && MapEqual(n.Labels, o.Labels) &&
-		SliceEqual(n.CertSANs, o.CertSANs)
+		SliceEqual(n.CertSANs, o.CertSANs) && MapEqual(n.APIServerExtraArgs, o.APIServerExtraArgs)
 }
 
 type Endpoint struct {
