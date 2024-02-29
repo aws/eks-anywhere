@@ -1218,6 +1218,13 @@ func TestDockerCiliumSkipUpgrade_CLIUpgrade(t *testing.T) {
 	test.GenerateClusterConfig(framework.ExecuteWithEksaRelease(previousRelease))
 	test.CreateCluster(framework.ExecuteWithEksaRelease(previousRelease))
 	test.ReplaceCiliumWithOSSCilium()
+
+	t.Log("Waiting for cilium replacement to complete")
+	// Wait two minutes before validating cluster state and attempting the upgrade
+	// After replacing cilium, the nodes can temporarily go into a not ready state
+	// and we want to give them time to recover before validating the cluster state
+	time.Sleep(5 * time.Minute)
+
 	test.ValidateClusterState()
 	test.UpgradeClusterWithNewConfig(
 		[]framework.ClusterE2ETestOpt{
