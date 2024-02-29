@@ -157,6 +157,7 @@ func TestTinkerbellKubernetes127UbuntuTo128UpgradeWorkerOnly(t *testing.T) {
 }
 
 func TestTinkerbellKubernetes125To126Ubuntu2204Upgrade(t *testing.T) {
+	t.Skip("")
 	provider := framework.NewTinkerbell(t)
 	test := framework.NewClusterE2ETest(
 		t,
@@ -237,6 +238,7 @@ func TestTinkerbellKubernetes128To129Ubuntu2204Upgrade(t *testing.T) {
 }
 
 func TestTinkerbellKubernetes126Ubuntu2004To2204Upgrade(t *testing.T) {
+	t.Skip("")
 	provider := framework.NewTinkerbell(t)
 	test := framework.NewClusterE2ETest(
 		t,
@@ -353,6 +355,7 @@ func TestTinkerbellKubernetes129UbuntuWorkerNodeScaleUpWithAPI(t *testing.T) {
 }
 
 func TestTinkerbellKubernetes125UbuntuAddWorkerNodeGroupWithAPI(t *testing.T) {
+	t.Skip("")
 	provider := framework.NewTinkerbell(t, framework.WithUbuntu125Tinkerbell())
 	test := framework.NewClusterE2ETest(
 		t,
@@ -594,6 +597,7 @@ func TestTinkerbellKubernetes127UbuntuSingleNodeCuratedPackagesFlow(t *testing.T
 }
 
 func TestTinkerbellKubernetes127UbuntuSingleNodeCuratedPackagesEmissaryFlow(t *testing.T) {
+	t.Skip("")
 	test := framework.NewClusterE2ETest(t,
 		framework.NewTinkerbell(t, framework.WithUbuntu127Tinkerbell()),
 		framework.WithClusterSingleNode(v1alpha1.Kube127),
@@ -606,6 +610,7 @@ func TestTinkerbellKubernetes127UbuntuSingleNodeCuratedPackagesEmissaryFlow(t *t
 }
 
 func TestTinkerbellKubernetes127UbuntuSingleNodeCuratedPackagesHarborFlow(t *testing.T) {
+	t.Skip("")
 	test := framework.NewClusterE2ETest(t,
 		framework.NewTinkerbell(t, framework.WithUbuntu127Tinkerbell()),
 		framework.WithClusterSingleNode(v1alpha1.Kube127),
@@ -618,6 +623,7 @@ func TestTinkerbellKubernetes127UbuntuSingleNodeCuratedPackagesHarborFlow(t *tes
 }
 
 func TestTinkerbellKubernetes127UbuntuCuratedPackagesAdotSimpleFlow(t *testing.T) {
+	t.Skip("")
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewTinkerbell(t, framework.WithUbuntu127Tinkerbell()),
@@ -631,6 +637,7 @@ func TestTinkerbellKubernetes127UbuntuCuratedPackagesAdotSimpleFlow(t *testing.T
 }
 
 func TestTinkerbellKubernetes127UbuntuCuratedPackagesPrometheusSimpleFlow(t *testing.T) {
+	t.Skip("")
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewTinkerbell(t, framework.WithUbuntu127Tinkerbell()),
@@ -672,6 +679,7 @@ func TestTinkerbellKubernetes126UbuntuSingleNodeCuratedPackagesFlow(t *testing.T
 }
 
 func TestTinkerbellKubernetes126UbuntuSingleNodeCuratedPackagesEmissaryFlow(t *testing.T) {
+	t.Skip("")
 	test := framework.NewClusterE2ETest(t,
 		framework.NewTinkerbell(t, framework.WithUbuntu126Tinkerbell()),
 		framework.WithClusterSingleNode(v1alpha1.Kube126),
@@ -684,6 +692,7 @@ func TestTinkerbellKubernetes126UbuntuSingleNodeCuratedPackagesEmissaryFlow(t *t
 }
 
 func TestTinkerbellKubernetes126UbuntuSingleNodeCuratedPackagesHarborFlow(t *testing.T) {
+	t.Skip("")
 	test := framework.NewClusterE2ETest(t,
 		framework.NewTinkerbell(t, framework.WithUbuntu126Tinkerbell()),
 		framework.WithClusterSingleNode(v1alpha1.Kube126),
@@ -696,6 +705,7 @@ func TestTinkerbellKubernetes126UbuntuSingleNodeCuratedPackagesHarborFlow(t *tes
 }
 
 func TestTinkerbellKubernetes126UbuntuCuratedPackagesAdotSimpleFlow(t *testing.T) {
+	t.Skip("")
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewTinkerbell(t, framework.WithUbuntu126Tinkerbell()),
@@ -709,6 +719,7 @@ func TestTinkerbellKubernetes126UbuntuCuratedPackagesAdotSimpleFlow(t *testing.T
 }
 
 func TestTinkerbellKubernetes126UbuntuCuratedPackagesPrometheusSimpleFlow(t *testing.T) {
+	t.Skip("")
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewTinkerbell(t, framework.WithUbuntu126Tinkerbell()),
@@ -734,6 +745,7 @@ func TestTinkerbellKubernetes125UbuntuSingleNodeCuratedPackagesFlow(t *testing.T
 }
 
 func TestTinkerbellKubernetes125UbuntuSingleNodeCuratedPackagesEmissaryFlow(t *testing.T) {
+	t.Skip("")
 	test := framework.NewClusterE2ETest(t,
 		framework.NewTinkerbell(t, framework.WithUbuntu125Tinkerbell()),
 		framework.WithClusterSingleNode(v1alpha1.Kube125),
@@ -746,6 +758,7 @@ func TestTinkerbellKubernetes125UbuntuSingleNodeCuratedPackagesEmissaryFlow(t *t
 }
 
 func TestTinkerbellKubernetes125UbuntuSingleNodeCuratedPackagesHarborFlow(t *testing.T) {
+	t.Skip("")
 	test := framework.NewClusterE2ETest(t,
 		framework.NewTinkerbell(t, framework.WithUbuntu125Tinkerbell()),
 		framework.WithClusterSingleNode(v1alpha1.Kube125),
@@ -758,6 +771,7 @@ func TestTinkerbellKubernetes125UbuntuSingleNodeCuratedPackagesHarborFlow(t *tes
 }
 
 func TestTinkerbellKubernetes125UbuntuCuratedPackagesAdotSimpleFlow(t *testing.T) {
+	t.Skip("")
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewTinkerbell(t, framework.WithUbuntu125Tinkerbell()),
@@ -771,6 +785,7 @@ func TestTinkerbellKubernetes125UbuntuCuratedPackagesAdotSimpleFlow(t *testing.T
 }
 
 func TestTinkerbellKubernetes125UbuntuCuratedPackagesPrometheusSimpleFlow(t *testing.T) {
+	t.Skip("")
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewTinkerbell(t, framework.WithUbuntu125Tinkerbell()),
@@ -784,6 +799,7 @@ func TestTinkerbellKubernetes125UbuntuCuratedPackagesPrometheusSimpleFlow(t *tes
 }
 
 func TestTinkerbellKubernetes129UbuntuSingleNodeCuratedPackagesFlow(t *testing.T) {
+	t.Skip("")
 	test := framework.NewClusterE2ETest(t,
 		framework.NewTinkerbell(t, framework.WithUbuntu129Tinkerbell()),
 		framework.WithClusterSingleNode(v1alpha1.Kube129),
@@ -796,6 +812,7 @@ func TestTinkerbellKubernetes129UbuntuSingleNodeCuratedPackagesFlow(t *testing.T
 }
 
 func TestTinkerbellKubernetes129UbuntuSingleNodeCuratedPackagesEmissaryFlow(t *testing.T) {
+	t.Skip("")
 	test := framework.NewClusterE2ETest(t,
 		framework.NewTinkerbell(t, framework.WithUbuntu129Tinkerbell()),
 		framework.WithClusterSingleNode(v1alpha1.Kube129),
@@ -808,6 +825,7 @@ func TestTinkerbellKubernetes129UbuntuSingleNodeCuratedPackagesEmissaryFlow(t *t
 }
 
 func TestTinkerbellKubernetes129UbuntuSingleNodeCuratedPackagesHarborFlow(t *testing.T) {
+	t.Skip("")
 	test := framework.NewClusterE2ETest(t,
 		framework.NewTinkerbell(t, framework.WithUbuntu129Tinkerbell()),
 		framework.WithClusterSingleNode(v1alpha1.Kube129),
@@ -820,6 +838,7 @@ func TestTinkerbellKubernetes129UbuntuSingleNodeCuratedPackagesHarborFlow(t *tes
 }
 
 func TestTinkerbellKubernetes129UbuntuCuratedPackagesAdotSimpleFlow(t *testing.T) {
+	t.Skip("")
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewTinkerbell(t, framework.WithUbuntu129Tinkerbell()),
@@ -833,6 +852,7 @@ func TestTinkerbellKubernetes129UbuntuCuratedPackagesAdotSimpleFlow(t *testing.T
 }
 
 func TestTinkerbellKubernetes129UbuntuCuratedPackagesPrometheusSimpleFlow(t *testing.T) {
+	t.Skip("")
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewTinkerbell(t, framework.WithUbuntu129Tinkerbell()),
@@ -846,6 +866,7 @@ func TestTinkerbellKubernetes129UbuntuCuratedPackagesPrometheusSimpleFlow(t *tes
 }
 
 func TestTinkerbellKubernetes129UbuntuCuratedPackagesClusterAutoscalerSimpleFlow(t *testing.T) {
+	t.Skip("")
 	framework.CheckCuratedPackagesCredentials(t)
 	minNodes := 1
 	maxNodes := 2
@@ -1220,6 +1241,7 @@ func TestTinkerbellKubernetes129UbuntuAuthenticatedRegistryMirror(t *testing.T) 
 
 // Simpleflow
 func TestTinkerbellKubernetes125UbuntuSimpleFlow(t *testing.T) {
+	t.Skip("")
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewTinkerbell(t, framework.WithUbuntu125Tinkerbell()),
@@ -1231,6 +1253,7 @@ func TestTinkerbellKubernetes125UbuntuSimpleFlow(t *testing.T) {
 }
 
 func TestTinkerbellKubernetes126UbuntuSimpleFlow(t *testing.T) {
+	t.Skip("")
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewTinkerbell(t, framework.WithUbuntu126Tinkerbell()),
@@ -1275,6 +1298,7 @@ func TestTinkerbellKubernetes129UbuntuSimpleFlow(t *testing.T) {
 }
 
 func TestTinkerbellKubernetes125Ubuntu2204SimpleFlow(t *testing.T) {
+	t.Skip("")
 	provider := framework.NewTinkerbell(t)
 	test := framework.NewClusterE2ETest(
 		t,
@@ -1288,6 +1312,7 @@ func TestTinkerbellKubernetes125Ubuntu2204SimpleFlow(t *testing.T) {
 }
 
 func TestTinkerbellKubernetes126Ubuntu2204SimpleFlow(t *testing.T) {
+	t.Skip("")
 	provider := framework.NewTinkerbell(t)
 	test := framework.NewClusterE2ETest(
 		t,
@@ -1340,6 +1365,7 @@ func TestTinkerbellKubernetes129Ubuntu2204SimpleFlow(t *testing.T) {
 }
 
 func TestTinkerbellKubernetes125RedHatSimpleFlow(t *testing.T) {
+	t.Skip("")
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewTinkerbell(t, framework.WithRedHat125Tinkerbell()),
@@ -1351,6 +1377,7 @@ func TestTinkerbellKubernetes125RedHatSimpleFlow(t *testing.T) {
 }
 
 func TestTinkerbellKubernetes126RedHatSimpleFlow(t *testing.T) {
+	t.Skip("")
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewTinkerbell(t, framework.WithRedHat126Tinkerbell()),
@@ -1362,6 +1389,7 @@ func TestTinkerbellKubernetes126RedHatSimpleFlow(t *testing.T) {
 }
 
 func TestTinkerbellKubernetes127RedHatSimpleFlow(t *testing.T) {
+	t.Skip("")
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewTinkerbell(t, framework.WithRedHat127Tinkerbell()),
@@ -1373,6 +1401,7 @@ func TestTinkerbellKubernetes127RedHatSimpleFlow(t *testing.T) {
 }
 
 func TestTinkerbellKubernetes128RedHatSimpleFlow(t *testing.T) {
+	t.Skip("")
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewTinkerbell(t, framework.WithRedHat128Tinkerbell()),
@@ -1384,6 +1413,7 @@ func TestTinkerbellKubernetes128RedHatSimpleFlow(t *testing.T) {
 }
 
 func TestTinkerbellKubernetes129RedHatSimpleFlow(t *testing.T) {
+	t.Skip("")
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewTinkerbell(t, framework.WithRedHat129Tinkerbell()),
@@ -1538,6 +1568,7 @@ func TestTinkerbellKubernetes129UbuntuWorkerNodeGroupsTaintsAndLabels(t *testing
 // Proxy tests
 
 func TestTinkerbellAirgappedKubernetes129UbuntuProxyConfigFlow(t *testing.T) {
+	t.Skip("")
 	localIp, err := networkutils.GetLocalIP()
 	if err != nil {
 		t.Fatalf("Cannot get admin machine local IP: %v", err)

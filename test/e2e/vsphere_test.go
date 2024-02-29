@@ -2159,6 +2159,7 @@ func TestVSphereKubernetes129BottleRocketDifferentNamespaceSimpleFlow(t *testing
 }
 
 func TestVSphereKubernetes128CiliumAlwaysPolicyEnforcementModeSimpleFlow(t *testing.T) {
+	t.Skip("")
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewVSphere(t, framework.WithUbuntu128()),

@@ -45,7 +45,6 @@ type ParallelRunConf struct {
 	StorageBucket          string
 	JobId                  string
 	Regex                  string
-	TestsToSkip            []string
 	BundlesOverride        bool
 	CleanupVms             bool
 	TestReportFolder       string
@@ -65,12 +64,12 @@ type (
 
 // RunTestsInParallel Run Tests in parallel by spawning multiple admin machines.
 func RunTestsInParallel(conf ParallelRunConf) error {
-	testsList, skippedTests, err := listTests(conf.Regex, conf.TestsToSkip)
+	testsList, err := listTests(conf.Regex)
 	if err != nil {
 		return err
 	}
 
-	conf.Logger.Info("Running tests", "selected", testsList, "skipped", skippedTests)
+	conf.Logger.Info("Running tests", "selected", testsList)
 
 	if conf.TestReportFolder != "" {
 		if err = os.MkdirAll(conf.TestReportFolder, os.ModePerm); err != nil {
