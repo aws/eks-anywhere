@@ -21,11 +21,6 @@ skipped_tests:
 - TestCloudStackKubernetes129WithOIDCManagementClusterUpgradeFromLatestSideEffects
 
 # Temporary disables to stabilize tests. Owners should work on fixes and enable these test along with their fix's PR
-- TestCloudStackKubernetes126CiliumAlwaysPolicyEnforcementModeSimpleFlow
-- TestCloudStackKubernetes125CiliumAlwaysPolicyEnforcementModeSimpleFlow
-- TestCloudStackKubernetes127CiliumAlwaysPolicyEnforcementModeSimpleFlow
-- TestCloudStackKubernetes128CiliumAlwaysPolicyEnforcementModeSimpleFlow
-- TestVSphereKubernetes128CiliumAlwaysPolicyEnforcementModeSimpleFlow
 - TestTinkerbellAirgappedKubernetes129UbuntuProxyConfigFlow
 
 # Nutanix

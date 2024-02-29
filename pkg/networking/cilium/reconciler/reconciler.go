@@ -42,12 +42,15 @@ type Templater interface {
 
 // Reconciler allows to reconcile a Cilium CNI.
 type Reconciler struct {
-	templater Templater
+	templater          Templater
+	providerNamespaces []string
 }
 
-func New(templater Templater) *Reconciler {
+// New creates a new cilium reconciler object with a templater and providerNamespaces to generate manifests.
+func New(templater Templater, providerNamespaces []string) *Reconciler {
 	return &Reconciler{
-		templater: templater,
+		templater:          templater,
+		providerNamespaces: providerNamespaces,
 	}
 }
 
@@ -205,6 +208,7 @@ func (r *Reconciler) upgrade(ctx context.Context, logger logr.Logger, client cli
 
 	upgradeManifest, err := r.templater.GenerateManifest(ctx, spec,
 		cilium.WithUpgradeFromVersion(*previousCiliumVersion),
+		cilium.WithPolicyAllowedNamespaces(r.providerNamespaces),
 	)
 	if err != nil {
 		return controller.Result{}, err
@@ -238,7 +242,7 @@ func (r *Reconciler) updateConfig(ctx context.Context, client client.Client, spe
 }
 
 func (r *Reconciler) applyFullManifest(ctx context.Context, client client.Client, spec *cluster.Spec) error {
-	upgradeManifest, err := r.templater.GenerateManifest(ctx, spec)
+	upgradeManifest, err := r.templater.GenerateManifest(ctx, spec, cilium.WithPolicyAllowedNamespaces(r.providerNamespaces))
 	if err != nil {
 		return err
 	}
