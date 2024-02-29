@@ -188,17 +188,11 @@ func TestResolveAndValidateFilename(t *testing.T) {
 
 func TestValidateKubeconfigPath(t *testing.T) {
 	t.Run("returns nil when valid", func(t *testing.T) {
-		err := kubeconfig.ValidateKubeconfigPath("test-cluster")
-
-		if assert.NoError(t, err) {
-			assert.Equal(t, goodFile.Name())
-		}
+		assert.NoError(t, kubeconfig.ValidateKubeconfigPath("test-cluster"))
 	})
 
 	t.Run("returns an error when cluster config file is found", func(t *testing.T) {
 		test.WithFakeFileContents(t, bytes.NewBufferString("lakjdf"))
-		_, err := kubeconfig.ValidateKubeconfigPath("fake-file", t.TempDir())
-
-		assert.Error(t, err)
+		assert.Error(t, kubeconfig.ValidateKubeconfigPath("fake-file", t.TempDir()))
 	})
 }
