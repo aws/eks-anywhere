@@ -16,14 +16,14 @@ import (
 	"github.com/aws/eks-anywhere/pkg/controller/clusters"
 )
 
-func TestCleanupStatusAfterValidate(t *testing.T) {
+func TestCleanupStatus(t *testing.T) {
 	g := NewWithT(t)
 	spec := test.NewClusterSpec(func(s *cluster.Spec) {
 		s.Cluster.SetFailure(anywherev1.FailureReasonType("InvalidCluster"), "invalid cluster")
 	})
 
 	g.Expect(
-		clusters.CleanupStatusAfterValidate(context.Background(), test.NewNullLogger(), spec),
+		clusters.CleanupStatus(context.Background(), test.NewNullLogger(), spec),
 	).To(Equal(controller.Result{}))
 	g.Expect(spec.Cluster.Status.FailureMessage).To(BeNil())
 	g.Expect(spec.Cluster.Status.FailureReason).To(BeNil())

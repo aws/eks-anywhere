@@ -311,6 +311,8 @@ func TestReconcilerReconcileControlPlaneFailure(t *testing.T) {
 	tt.Expect(err).NotTo(HaveOccurred())
 
 	_, err = tt.reconciler().ReconcileControlPlane(tt.ctx, logger, scope)
+	tt.Expect(scope.ClusterSpec.Cluster.Status.FailureMessage).To(HaveValue(ContainSubstring("applying control plane objects")))
+	tt.Expect(scope.ClusterSpec.Cluster.Status.FailureReason).To(HaveValue(Equal(anywherev1.ControlPlaneReconciliationErrorReason)))
 
 	tt.Expect(err).To(MatchError(ContainSubstring("resource name may not be empty")))
 	tt.cleanup()

@@ -60,8 +60,9 @@ func (r *Reconciler) Reconcile(ctx context.Context, log logr.Logger, c *anywhere
 	return controller.NewPhaseRunner[*cluster.Spec]().Register(
 		r.ipValidator.ValidateControlPlaneIP,
 		r.ValidateMachineConfigs,
-		clusters.CleanupStatusAfterValidate,
+		clusters.CleanupStatus,
 		r.ReconcileControlPlane,
+		clusters.CleanupStatus,
 		r.CheckControlPlaneReady,
 		r.ReconcileCNI,
 		r.ReconcileWorkers,
@@ -108,10 +109,19 @@ func (s *Reconciler) ReconcileControlPlane(ctx context.Context, log logr.Logger,
 
 	cp, err := snow.ControlPlaneSpec(ctx, log, clientutil.NewKubeClient(s.client), clusterSpec)
 	if err != nil {
+		failureMessage := err.Error()
+		clusterSpec.Cluster.SetFailure(anywherev1.ControlPlaneReconciliationErrorReason, failureMessage)
 		return controller.Result{}, err
 	}
 
-	return clusters.ReconcileControlPlane(ctx, log, s.client, toClientControlPlane(cp))
+	result, err := clusters.ReconcileControlPlane(ctx, log, s.client, toClientControlPlane(cp))
+	if err != nil {
+		failureMessage := err.Error()
+		clusterSpec.Cluster.SetFailure(anywherev1.ControlPlaneReconciliationErrorReason, failureMessage)
+		return result, err
+	}
+
+	return result, nil
 }
 
 func (r *Reconciler) CheckControlPlaneReady(ctx context.Context, log logr.Logger, clusterSpec *cluster.Spec) (controller.Result, error) {
