@@ -29,6 +29,7 @@ import (
 	"github.com/aws/eks-anywhere/release/cli/pkg/bundles"
 	"github.com/aws/eks-anywhere/release/cli/pkg/constants"
 	"github.com/aws/eks-anywhere/release/cli/pkg/filereader"
+	"github.com/aws/eks-anywhere/release/cli/pkg/images"
 	releasetypes "github.com/aws/eks-anywhere/release/cli/pkg/types"
 	artifactutils "github.com/aws/eks-anywhere/release/cli/pkg/util/artifacts"
 	commandutils "github.com/aws/eks-anywhere/release/cli/pkg/util/command"
@@ -73,7 +74,7 @@ func BundleArtifactsRelease(r *releasetypes.ReleaseConfig) error {
 		return errors.Cause(err)
 	}
 
-	err = UploadArtifacts(context.Background(), r, r.BundleArtifactsTable)
+	err = UploadArtifacts(context.Background(), r, r.BundleArtifactsTable, true)
 	if err != nil {
 		return errors.Cause(err)
 	}
@@ -160,23 +161,37 @@ func CopyImageSignatureUsingOras(r *releasetypes.ReleaseConfig, imageDigests rel
 		fmt.Println("Skipping image signature copy in dry-run mode")
 		return nil
 	}
+	sourceRegistryClient := r.SourceClients.ECR.EcrPublicClient
 	sourceRegistryUsername := r.SourceClients.ECR.AuthConfig.Username
 	sourceRegistryPassword := r.SourceClients.ECR.AuthConfig.Password
+	releaseRegistryClient := r.ReleaseClients.ECRPublic.Client
 	releaseRegistryUsername := r.ReleaseClients.ECRPublic.AuthConfig.Username
 	releaseRegistryPassword := r.ReleaseClients.ECRPublic.AuthConfig.Password
 	var rangeErr error
 	imageDigests.Range(func(k, v interface{}) bool {
 		image := k.(string)
 		digest := v.(string)
-		// Digest is in the form sha256:digest. Notation image index and signatures are in the form sha256-digest.
-		shaDigest := strings.Replace(digest, ":", "-", -1)
 
 		// Get imageRespository name since we have a different source and release registry.
-		imageRepository, _ := artifactutils.SplitImageUri(image, r.ReleaseContainerRegistry)
+		imageRepository, imageTag := artifactutils.SplitImageUri(image, r.ReleaseContainerRegistry)
+		// Compute image digest for source and destination images from manifest contents. The digest will be in the
+		// form sha256:digest, so we are changing it to Notation's image index and signatures format, sha256-digest.
+		sourceImageDigest, err := images.ComputeImageDigestFromManifest(sourceRegistryClient, r.SourceContainerRegistry, imageRepository, imageTag)
+		if err != nil {
+			rangeErr = fmt.Errorf("computing digest for source image %s from manifest: %v\n", image, err)
+			return false
+		}
+		sourceImageSignatureDigest := fmt.Sprintf("sha256-%s", sourceImageDigest)
+		releaseImageDigest, err := images.ComputeImageDigestFromManifest(releaseRegistryClient, r.ReleaseContainerRegistry, imageRepository, imageTag)
+		if err != nil {
+			rangeErr = fmt.Errorf("computing digest for destination image %s from manifest: %v\n", image, err)
+			return false
+		}
+		releaseImageSignatureDigest := fmt.Sprintf("sha256-%s", releaseImageDigest)
 		// Form releaseImageURI in the form <source-registry>/<repository>:<sha256-digest>
-		sourceImageURI := fmt.Sprintf("%s/%s:%s", r.SourceContainerRegistry, imageRepository, shaDigest)
+		sourceImageURI := fmt.Sprintf("%s/%s:%s", r.SourceContainerRegistry, imageRepository, sourceImageSignatureDigest)
 		// Form releaseImageURI in the form <release-registry>/<repository>:<sha256-digest>
-		releaseImageURI := fmt.Sprintf("%s/%s:%s", r.ReleaseContainerRegistry, imageRepository, shaDigest)
+		releaseImageURI := fmt.Sprintf("%s/%s:%s", r.ReleaseContainerRegistry, imageRepository, releaseImageSignatureDigest)
 
 		cmd := exec.Command("oras", "copy", "--from-username", sourceRegistryUsername, "--from-password", sourceRegistryPassword, sourceImageURI, "--to-username", releaseRegistryUsername, "--to-password", releaseRegistryPassword, releaseImageURI)
 		out, err := commandutils.ExecCommand(cmd)
