@@ -213,26 +213,12 @@ and then you will run the [upgrade cluster command]({{< relref "baremetal-upgrad
 `TinkerbellDatacenterConfig`:
 - `osImageURL`
 
-### Advanced configuration for rolling upgrade
+### Advanced configuration for upgrade rollout strategy
 
 EKS Anywhere allows an optional configuration to customize the behavior of upgrades. 
 
-It allows the specification of 
-Two parameters that control the desired behavior of rolling upgrades: 
-* maxSurge - The maximum number of machines that can be scheduled above the desired number of machines. When not specified, the current CAPI default of 1 is used.
-* maxUnavailable - The maximum number of machines that can be unavailable during the upgrade. When not specified, the current CAPI default of 0 is used.
-
-Example configuration:
-
-```bash
-upgradeRolloutStrategy:
-  type: RollingUpdate
-  rollingUpdate:
-    maxSurge: 1
-    maxUnavailable: 0    # only configurable for worker nodes
-```
-
-'upgradeRolloutStrategy' configuration can be specified separately for control plane and for each worker node group. This template contains an example for control plane under the 'controlPlaneConfiguration' section and for worker node group under 'workerNodeGroupConfigurations':
+`upgradeRolloutStrategy` can be configured separately for control plane and for each worker node group.
+This template contains an example for control plane under the `controlPlaneConfiguration` section and for worker node group under `workerNodeGroupConfigurations`:
 
 ```bash
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
@@ -286,17 +272,23 @@ spec:
 Configuration parameters for upgrade strategy.
 
 #### upgradeRolloutStrategy.type
-Type of rollout strategy. Currently only `RollingUpdate` is supported.
+Default: `RollingUpdate`
+
+Type of rollout strategy. Supported values: `RollingUpdate`,`InPlace`.
+
+>**_NOTE:_** The upgrade rollout strategy type must be the same for all control plane and worker nodes.
 
 #### upgradeRolloutStrategy.rollingUpdate
 Configuration parameters for customizing rolling upgrade behavior.
+
+>**_NOTE:_** The rolling update parameters can only be configured if `upgradeRolloutStrategy.type` is `RollingUpdate`.
 
 #### upgradeRolloutStrategy.rollingUpdate.maxSurge
 Default: 1
 
 This can not be 0 if maxUnavailable is 0.
 
-The maximum number of machines that can be scheduled above the desired number of machines. 
+The maximum number of machines that can be scheduled above the desired number of machines.
 
 Example: When this is set to n, the new worker node group can be scaled up immediately by n when the rolling upgrade starts. Total number of machines in the cluster (old + new) never exceeds (desired number of machines + n). Once scale down happens and old machines are brought down, the new worker node group can be scaled up further ensuring that the total number of machines running at any time does not exceed the desired number of machines + n.
 
@@ -307,7 +299,25 @@ This can not be 0 if MaxSurge is 0.
 
 The maximum number of machines that can be unavailable during the upgrade.
 
+This can only be configured for worker nodes.
+
 Example: When this is set to n, the old worker node group can be scaled down by n machines immediately when the rolling upgrade starts. Once new machines are ready, old worker node group can be scaled down further, followed by scaling up the new worker node group, ensuring that the total number of machines unavailable at all times during the upgrade never falls below n.
+
+### Rolling Upgrades
+
+The `RollingUpdate` rollout strategy type allows the specification of two parameters that control the desired behavior of rolling upgrades: 
+* `maxSurge` - The maximum number of machines that can be scheduled above the desired number of machines. When not specified, the current CAPI default of 1 is used.
+* `maxUnavailable` - The maximum number of machines that can be unavailable during the upgrade. When not specified, the current CAPI default of 0 is used.
+
+Example configuration:
+
+```bash
+upgradeRolloutStrategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxSurge: 1
+    maxUnavailable: 0    # only configurable for worker nodes
+```
 
 ### Rolling upgrades with no additional hardware
 
@@ -317,6 +327,25 @@ When maxSurge is set to 0 and maxUnavailable is set to 1, it allows for a rollin
 
 With this kind of configuration, the rolling upgrade will proceed node by node, deprovision and delete a node fully before re-provisioning it with upgraded version, and re-join it to the cluster. This means that any point during the course of the rolling upgrade, there could be one unavailable node.
 
+
+### In-Place Upgrades
+
+As of EKS Anywhere version `v0.19.0`, the `InPlace` rollout strategy type can be used to upgrade the EKS Anywhere and Kubernetes versions by upgrading the components on the same physical machines without requiring additional server capacity.
+EKS Anywhere schedules a privileged pod that executes the upgrade logic as a sequence of init containers on each node to be upgraded.
+This upgrade logic includes updating the containerd, cri-tools, kubeadm, kubectl and kubelet binaries along with core Kubernetes components and restarting those services.
+
+Due to the nature of this upgrade, temporary downtime of workloads can be expected.
+It is best practice to configure your clusters in a way that they are resilient to having one node down.
+
+During in place upgrades, EKS Anywhere pauses machine health checks to ensure that new nodes are not rolled out while the node is temporarily down during the upgrade process.
+Moreover, autoscaler configuration is not supported when using `InPlace` upgrade rollout strategy to further ensure that no new nodes are rolled out unexpectedly.
+
+Example configuration:
+
+```bash
+upgradeRolloutStrategy:
+  type: InPlace
+```
 
 ### Troubleshooting
 

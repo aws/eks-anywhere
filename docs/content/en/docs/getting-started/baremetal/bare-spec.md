@@ -139,6 +139,30 @@ EKS Anywhere will add by default.
 Modifying the labels associated with the control plane configuration will cause new nodes to be rolled out, replacing
 the existing nodes.
 
+#### controlPlaneConfiguration.upgradeRolloutStrategy
+Configuration parameters for upgrade strategy.
+
+#### controlPlaneConfiguration.upgradeRolloutStrategy.type
+Default: `RollingUpdate`
+
+Type of rollout strategy. Supported values: `RollingUpdate`,`InPlace`.
+
+>**_NOTE:_** The upgrade rollout strategy type must be the same for all control plane and worker nodes.
+
+#### controlPlaneConfiguration.upgradeRolloutStrategy.rollingUpdate
+Configuration parameters for customizing rolling upgrade behavior.
+
+>**_NOTE:_** The rolling update parameters can only be configured if `upgradeRolloutStrategy.type` is `RollingUpdate`.
+
+#### controlPlaneConfiguration.upgradeRolloutStrategy.rollingUpdate.maxSurge
+Default: 1
+
+This can not be 0 if maxUnavailable is 0.
+
+The maximum number of machines that can be scheduled above the desired number of machines.
+
+Example: When this is set to n, the new worker node group can be scaled up immediately by n when the rolling upgrade starts. Total number of machines in the cluster (old + new) never exceeds (desired number of machines + n). Once scale down happens and old machines are brought down, the new worker node group can be scaled up further ensuring that the total number of machines running at any time does not exceed the desired number of machines + n.
+
 ### controlPlaneConfiguration.skipLoadBalancerDeployment
 Optional field to skip deploying the control plane load balancer. Make sure your infrastructure can handle control plane load balancing when you set this field to true. In most cases, you should not set this field to true.
 
@@ -170,6 +194,11 @@ Refers to the Kubernetes object with Tinkerbell-specific configuration for your 
 ### workerNodeGroupConfigurations.name (required)
 Name of the worker node group (default: md-0)
 
+### workerNodeGroupConfigurations.autoscalingConfiguration
+Configuration parameters for Cluster Autoscaler.
+
+>**_NOTE:_** Autoscaling configuration is not supported when using the `InPlace` upgrade rollout strategy.
+
 ### workerNodeGroupConfigurations.autoscalingConfiguration.minCount
 Minimum number of nodes for this node group's autoscaling configuration.
 
@@ -194,6 +223,39 @@ the existing nodes associated with the configuration.
 The Kubernetes version you want to use for this worker node group. [Supported values]({{< relref "../../concepts/support-versions/#kubernetes-versions" >}}): `1.28`, `1.27`, `1.26`, `1.25`, `1.24`
 
 Must be less than or equal to the cluster `kubernetesVersion` defined at the root level of the cluster spec. The worker node kubernetesVersion must be no more than two minor Kubernetes versions lower than the cluster control plane's Kubernetes version. Removing `workerNodeGroupConfiguration.kubernetesVersion` will trigger an upgrade of the node group to the `kubernetesVersion` defined at the root level of the cluster spec.
+
+#### workerNodeGroupConfigurations.upgradeRolloutStrategy
+Configuration parameters for upgrade strategy.
+
+#### workerNodeGroupConfigurations.upgradeRolloutStrategy.type
+Default: `RollingUpdate`
+
+Type of rollout strategy. Supported values: `RollingUpdate`,`InPlace`.
+
+>**_NOTE:_** The upgrade rollout strategy type must be the same for all control plane and worker nodes.
+
+#### workerNodeGroupConfigurations.upgradeRolloutStrategy.rollingUpdate
+Configuration parameters for customizing rolling upgrade behavior.
+
+>**_NOTE:_** The rolling update parameters can only be configured if `upgradeRolloutStrategy.type` is `RollingUpdate`.
+
+#### workerNodeGroupConfigurations.upgradeRolloutStrategy.rollingUpdate.maxSurge
+Default: 1
+
+This can not be 0 if maxUnavailable is 0.
+
+The maximum number of machines that can be scheduled above the desired number of machines.
+
+Example: When this is set to n, the new worker node group can be scaled up immediately by n when the rolling upgrade starts. Total number of machines in the cluster (old + new) never exceeds (desired number of machines + n). Once scale down happens and old machines are brought down, the new worker node group can be scaled up further ensuring that the total number of machines running at any time does not exceed the desired number of machines + n.
+
+#### workerNodeGroupConfigurations.upgradeRolloutStrategy.rollingUpdate.maxUnavailable
+Default: 0
+
+This can not be 0 if MaxSurge is 0.
+
+The maximum number of machines that can be unavailable during the upgrade.
+
+Example: When this is set to n, the old worker node group can be scaled down by n machines immediately when the rolling upgrade starts. Once new machines are ready, old worker node group can be scaled down further, followed by scaling up the new worker node group, ensuring that the total number of machines unavailable at all times during the upgrade never falls below n.
 
 ## TinkerbellDatacenterConfig Fields
 
