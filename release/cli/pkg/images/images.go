@@ -15,6 +15,7 @@
 package images
 
 import (
+	"crypto/sha256"
 	"fmt"
 	"io"
 	"net/http"
@@ -24,6 +25,7 @@ import (
 	"strings"
 	"time"
 
+	ecrpublicsdk "github.com/aws/aws-sdk-go/service/ecrpublic"
 	docker "github.com/fsouza/go-dockerclient"
 	"github.com/pkg/errors"
 	"sigs.k8s.io/yaml"
@@ -350,4 +352,34 @@ func GetPreviousReleaseImageSemver(r *releasetypes.ReleaseConfig, releaseImageUr
 		}
 	}
 	return semver, nil
+}
+
+func ComputeImageDigestFromManifest(ecrPublicClient *ecrpublicsdk.ECRPublic, registry, repository, tag string) (string, error) {
+	authToken, err := ecrpublic.GetAuthToken(ecrPublicClient)
+	if err != nil {
+		return "", errors.Cause(err)
+	}
+	imageRequestURL := fmt.Sprintf("https://public.ecr.aws/v2/%s/%s/manifests/%s", filepath.Base(registry), repository, tag)
+	req, err := http.NewRequest("GET", imageRequestURL, nil)
+	if err != nil {
+		return "", errors.Cause(err)
+	}
+	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", authToken))
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return "", errors.Cause(err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", errors.Cause(err)
+	}
+
+	h := sha256.New()
+	h.Write(body)
+	digest := h.Sum(nil)
+
+	return fmt.Sprintf("%x", digest), nil
 }
