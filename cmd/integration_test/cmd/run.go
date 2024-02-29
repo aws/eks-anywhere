@@ -20,7 +20,6 @@ const (
 	regexFlagName              = "regex"
 	maxInstancesFlagName       = "max-instances"
 	maxConcurrentTestsFlagName = "max-concurrent-tests"
-	skipFlagName               = "skip"
 	bundlesOverrideFlagName    = "bundles-override"
 	cleanupVmsFlagName         = "cleanup-vms"
 	testReportFolderFlagName   = "test-report-folder"
@@ -64,7 +63,6 @@ func init() {
 	runE2ECmd.Flags().StringP(regexFlagName, "r", "", "Run only those tests and examples matching the regular expression. Equivalent to go test -run")
 	runE2ECmd.Flags().IntP(maxInstancesFlagName, "m", 1, "Run tests in parallel on same instance within the max EC2 instance count")
 	runE2ECmd.Flags().IntP(maxConcurrentTestsFlagName, "p", 1, "Maximum number of parallel tests that can be run at a time")
-	runE2ECmd.Flags().StringSlice(skipFlagName, nil, "List of tests to skip")
 	runE2ECmd.Flags().Bool(bundlesOverrideFlagName, false, "Flag to indicate if the tests should run with a bundles override")
 	runE2ECmd.Flags().Bool(cleanupVmsFlagName, false, "Flag to indicate if VSphere VMs should be cleaned up automatically as tests complete")
 	runE2ECmd.Flags().String(testReportFolderFlagName, "", "Folder destination for JUnit tests reports")
@@ -86,7 +84,6 @@ func runE2E(ctx context.Context) error {
 	testRegex := viper.GetString(regexFlagName)
 	maxInstances := viper.GetInt(maxInstancesFlagName)
 	maxConcurrentTests := viper.GetInt(maxConcurrentTestsFlagName)
-	testsToSkip := viper.GetStringSlice(skipFlagName)
 	bundlesOverride := viper.GetBool(bundlesOverrideFlagName)
 	cleanupVms := viper.GetBool(cleanupVmsFlagName)
 	testReportFolder := viper.GetString(testReportFolderFlagName)
@@ -100,7 +97,6 @@ func runE2E(ctx context.Context) error {
 		StorageBucket:          storageBucket,
 		JobId:                  jobId,
 		Regex:                  testRegex,
-		TestsToSkip:            testsToSkip,
 		BundlesOverride:        bundlesOverride,
 		CleanupVms:             cleanupVms,
 		TestReportFolder:       testReportFolder,

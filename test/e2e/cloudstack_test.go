@@ -1560,6 +1560,7 @@ func TestCloudStackKubernetes128WithOIDCManagementClusterUpgradeFromLatestSideEf
 }
 
 func TestCloudStackKubernetes129WithOIDCManagementClusterUpgradeFromLatestSideEffects(t *testing.T) {
+	t.Skip("")
 	cloudstack := framework.NewCloudStack(t)
 	runTestManagementClusterUpgradeSideEffects(t, cloudstack, framework.RedHat9, anywherev1.Kube129)
 }
@@ -1736,6 +1737,7 @@ func TestCloudStackKubernetes129RedhatProxyConfig(t *testing.T) {
 
 // Proxy config multicluster
 func TestCloudStackKubernetes125RedhatProxyConfigAPI(t *testing.T) {
+	t.Skip("")
 	cloudstack := framework.NewCloudStack(t)
 	managementCluster := framework.NewClusterE2ETest(
 		t,
@@ -1780,6 +1782,7 @@ func TestCloudStackKubernetes125RedhatProxyConfigAPI(t *testing.T) {
 }
 
 func TestCloudStackKubernetes126RedhatProxyConfigAPI(t *testing.T) {
+	t.Skip("")
 	cloudstack := framework.NewCloudStack(t)
 	managementCluster := framework.NewClusterE2ETest(
 		t,
@@ -1824,6 +1827,7 @@ func TestCloudStackKubernetes126RedhatProxyConfigAPI(t *testing.T) {
 }
 
 func TestCloudStackKubernetes127RedhatProxyConfigAPI(t *testing.T) {
+	t.Skip("")
 	cloudstack := framework.NewCloudStack(t)
 	managementCluster := framework.NewClusterE2ETest(
 		t,
@@ -1868,6 +1872,7 @@ func TestCloudStackKubernetes127RedhatProxyConfigAPI(t *testing.T) {
 }
 
 func TestCloudStackKubernetes128RedhatProxyConfigAPI(t *testing.T) {
+	t.Skip("")
 	cloudstack := framework.NewCloudStack(t)
 	managementCluster := framework.NewClusterE2ETest(
 		t,
@@ -2228,6 +2233,7 @@ func TestCloudStackKubernetes129ThreeReplicasFiveWorkersSimpleFlow(t *testing.T)
 }
 
 func TestCloudStackKubernetes125MultiEndpointSimpleFlow(t *testing.T) {
+	t.Skip("")
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes125(),
@@ -2238,6 +2244,7 @@ func TestCloudStackKubernetes125MultiEndpointSimpleFlow(t *testing.T) {
 }
 
 func TestCloudStackKubernetes126MultiEndpointSimpleFlow(t *testing.T) {
+	t.Skip("")
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes126(),
@@ -2248,6 +2255,7 @@ func TestCloudStackKubernetes126MultiEndpointSimpleFlow(t *testing.T) {
 }
 
 func TestCloudStackKubernetes127MultiEndpointSimpleFlow(t *testing.T) {
+	t.Skip("")
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes127(),
@@ -2258,6 +2266,7 @@ func TestCloudStackKubernetes127MultiEndpointSimpleFlow(t *testing.T) {
 }
 
 func TestCloudStackKubernetes128MultiEndpointSimpleFlow(t *testing.T) {
+	t.Skip("")
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes128(),
@@ -2268,6 +2277,7 @@ func TestCloudStackKubernetes128MultiEndpointSimpleFlow(t *testing.T) {
 }
 
 func TestCloudStackKubernetes129MultiEndpointSimpleFlow(t *testing.T) {
+	t.Skip("")
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes129(),
@@ -2327,6 +2337,7 @@ func TestCloudStackKubernetes128DifferentNamespaceSimpleFlow(t *testing.T) {
 
 // Cilium Policy
 func TestCloudStackKubernetes125CiliumAlwaysPolicyEnforcementModeSimpleFlow(t *testing.T) {
+	t.Skip("")
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes125()),
@@ -2337,6 +2348,7 @@ func TestCloudStackKubernetes125CiliumAlwaysPolicyEnforcementModeSimpleFlow(t *t
 }
 
 func TestCloudStackKubernetes126CiliumAlwaysPolicyEnforcementModeSimpleFlow(t *testing.T) {
+	t.Skip("")
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes126()),
@@ -2347,6 +2359,7 @@ func TestCloudStackKubernetes126CiliumAlwaysPolicyEnforcementModeSimpleFlow(t *t
 }
 
 func TestCloudStackKubernetes127CiliumAlwaysPolicyEnforcementModeSimpleFlow(t *testing.T) {
+	t.Skip("")
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes127()),
@@ -2357,6 +2370,7 @@ func TestCloudStackKubernetes127CiliumAlwaysPolicyEnforcementModeSimpleFlow(t *t
 }
 
 func TestCloudStackKubernetes128CiliumAlwaysPolicyEnforcementModeSimpleFlow(t *testing.T) {
+	t.Skip("")
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes128()),
@@ -3522,6 +3536,7 @@ func TestCloudStackKubernetes128To129StackedEtcdRedhatMultipleFieldsUpgrade(t *t
 
 // This test is skipped as registry mirror was not configured for CloudStack
 func TestCloudStackKubernetes125RedhatAirgappedRegistryMirror(t *testing.T) {
+	t.Skip("")
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewCloudStack(t,
@@ -3544,6 +3559,7 @@ func TestCloudStackKubernetes125RedhatAirgappedRegistryMirror(t *testing.T) {
 }
 
 func TestCloudStackKubernetes126RedhatAirgappedRegistryMirror(t *testing.T) {
+	t.Skip("")
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewCloudStack(t,

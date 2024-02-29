@@ -16,6 +16,7 @@ import (
 
 // AWS IAM Auth
 func TestSnowKubernetes128UbuntuAWSIamAuth(t *testing.T) {
+	t.Skip("")
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewSnow(t, framework.WithSnowUbuntu128()),
@@ -26,6 +27,7 @@ func TestSnowKubernetes128UbuntuAWSIamAuth(t *testing.T) {
 }
 
 func TestSnowKubernetes127To128AWSIamAuthUpgrade(t *testing.T) {
+	t.Skip("")
 	provider := framework.NewSnow(t, framework.WithSnowUbuntu127())
 	test := framework.NewClusterE2ETest(
 		t,
@@ -41,6 +43,7 @@ func TestSnowKubernetes127To128AWSIamAuthUpgrade(t *testing.T) {
 }
 
 func TestSnowKubernetes127To128UbuntuManagementCPUpgradeAPI(t *testing.T) {
+	t.Skip("")
 	provider := framework.NewSnow(t, framework.WithSnowUbuntu127())
 	test := framework.NewClusterE2ETest(
 		t, provider,
@@ -63,6 +66,7 @@ func TestSnowKubernetes127To128UbuntuManagementCPUpgradeAPI(t *testing.T) {
 
 // Labels
 func TestSnowKubernetes128UbuntuLabelsUpgradeFlow(t *testing.T) {
+	t.Skip("")
 	provider := framework.NewSnow(t,
 		framework.WithSnowWorkerNodeGroup(
 			worker0,
@@ -98,6 +102,7 @@ func TestSnowKubernetes128UbuntuLabelsUpgradeFlow(t *testing.T) {
 
 // OIDC
 func TestSnowKubernetes128OIDC(t *testing.T) {
+	t.Skip("")
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewSnow(t, framework.WithSnowUbuntu128()),
@@ -111,6 +116,7 @@ func TestSnowKubernetes128OIDC(t *testing.T) {
 
 // Proxy config
 func TestSnowKubernetes128UbuntuProxyConfig(t *testing.T) {
+	t.Skip("")
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewSnow(t, framework.WithSnowUbuntu128()),
@@ -125,6 +131,7 @@ func TestSnowKubernetes128UbuntuProxyConfig(t *testing.T) {
 
 // Simpleflow
 func TestSnowKubernetes125SimpleFlow(t *testing.T) {
+	t.Skip("")
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewSnow(t, framework.WithSnowUbuntu125()),
@@ -134,6 +141,7 @@ func TestSnowKubernetes125SimpleFlow(t *testing.T) {
 }
 
 func TestSnowKubernetes126SimpleFlow(t *testing.T) {
+	t.Skip("")
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewSnow(t, framework.WithSnowUbuntu126()),
@@ -143,6 +151,7 @@ func TestSnowKubernetes126SimpleFlow(t *testing.T) {
 }
 
 func TestSnowKubernetes127SimpleFlow(t *testing.T) {
+	t.Skip("")
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewSnow(t, framework.WithSnowUbuntu127()),
@@ -152,6 +161,7 @@ func TestSnowKubernetes127SimpleFlow(t *testing.T) {
 }
 
 func TestSnowKubernetes128SimpleFlow(t *testing.T) {
+	t.Skip("")
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewSnow(t, framework.WithSnowUbuntu128()),
@@ -161,6 +171,7 @@ func TestSnowKubernetes128SimpleFlow(t *testing.T) {
 }
 
 func TestSnowKubernetes128StackedEtcdSimpleFlow(t *testing.T) {
+	t.Skip("")
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewSnow(t, framework.WithSnowUbuntu128()),
@@ -172,6 +183,7 @@ func TestSnowKubernetes128StackedEtcdSimpleFlow(t *testing.T) {
 
 // Taints
 func TestSnowKubernetes128UbuntuTaintsUpgradeFlow(t *testing.T) {
+	t.Skip("")
 	provider := framework.NewSnow(t,
 		framework.WithSnowWorkerNodeGroup(
 			worker0,
@@ -212,6 +224,7 @@ func TestSnowKubernetes128UbuntuTaintsUpgradeFlow(t *testing.T) {
 
 // Upgrade
 func TestSnowKubernetes127To128UbuntuMultipleFieldsUpgrade(t *testing.T) {
+	t.Skip("")
 	provider := framework.NewSnow(t, framework.WithSnowUbuntu127())
 	test := framework.NewClusterE2ETest(
 		t,
@@ -238,6 +251,7 @@ func TestSnowKubernetes127To128UbuntuMultipleFieldsUpgrade(t *testing.T) {
 }
 
 func TestSnowKubernetes128UbuntuRemoveWorkerNodeGroups(t *testing.T) {
+	t.Skip("")
 	provider := framework.NewSnow(t,
 		framework.WithSnowWorkerNodeGroup(
 			worker0,
@@ -277,6 +291,7 @@ func TestSnowKubernetes128UbuntuRemoveWorkerNodeGroups(t *testing.T) {
 }
 
 func TestSnowKubernetes127UbuntuTo128Upgrade(t *testing.T) {
+	t.Skip("")
 	snow := framework.NewSnow(t)
 	test := framework.NewClusterE2ETest(t, snow)
 
@@ -284,6 +299,7 @@ func TestSnowKubernetes127UbuntuTo128Upgrade(t *testing.T) {
 }
 
 func TestSnowKubernetes125UbuntuTo126Upgrade(t *testing.T) {
+	t.Skip("")
 	snow := framework.NewSnow(t)
 	test := framework.NewClusterE2ETest(t, snow)
 
@@ -291,6 +307,7 @@ func TestSnowKubernetes125UbuntuTo126Upgrade(t *testing.T) {
 }
 
 func TestSnowKubernetes126UbuntuTo127Upgrade(t *testing.T) {
+	t.Skip("")
 	snow := framework.NewSnow(t)
 	test := framework.NewClusterE2ETest(t, snow)
 
@@ -298,6 +315,7 @@ func TestSnowKubernetes126UbuntuTo127Upgrade(t *testing.T) {
 }
 
 func TestSnowKubernetes127BottlerocketTo128Upgrade(t *testing.T) {
+	t.Skip("")
 	snow := framework.NewSnow(t)
 	test := framework.NewClusterE2ETest(t, snow)
 
@@ -305,6 +323,7 @@ func TestSnowKubernetes127BottlerocketTo128Upgrade(t *testing.T) {
 }
 
 func TestSnowKubernetes125BottlerocketTo126Upgrade(t *testing.T) {
+	t.Skip("")
 	snow := framework.NewSnow(t)
 	test := framework.NewClusterE2ETest(t, snow)
 
@@ -312,6 +331,7 @@ func TestSnowKubernetes125BottlerocketTo126Upgrade(t *testing.T) {
 }
 
 func TestSnowKubernetes126BottlerocketTo127Upgrade(t *testing.T) {
+	t.Skip("")
 	snow := framework.NewSnow(t)
 	test := framework.NewClusterE2ETest(t, snow)
 
@@ -319,6 +339,7 @@ func TestSnowKubernetes126BottlerocketTo127Upgrade(t *testing.T) {
 }
 
 func TestSnowKubernetes127To128BottlerocketStaticIPUpgrade(t *testing.T) {
+	t.Skip("")
 	snow := framework.NewSnow(t)
 	test := framework.NewClusterE2ETest(t, snow)
 
@@ -326,6 +347,7 @@ func TestSnowKubernetes127To128BottlerocketStaticIPUpgrade(t *testing.T) {
 }
 
 func TestSnowKubernetes125To126BottlerocketStaticIPUpgrade(t *testing.T) {
+	t.Skip("")
 	snow := framework.NewSnow(t)
 	test := framework.NewClusterE2ETest(t, snow)
 
@@ -333,6 +355,7 @@ func TestSnowKubernetes125To126BottlerocketStaticIPUpgrade(t *testing.T) {
 }
 
 func TestSnowKubernetes126To127BottlerocketStaticIPUpgrade(t *testing.T) {
+	t.Skip("")
 	snow := framework.NewSnow(t)
 	test := framework.NewClusterE2ETest(t, snow)
 
@@ -341,6 +364,7 @@ func TestSnowKubernetes126To127BottlerocketStaticIPUpgrade(t *testing.T) {
 
 // Workload API
 func TestSnowMulticlusterWorkloadClusterAPI(t *testing.T) {
+	t.Skip("")
 	snow := framework.NewSnow(t)
 	managementCluster := framework.NewClusterE2ETest(
 		t, snow,
