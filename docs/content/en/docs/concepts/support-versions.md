@@ -57,14 +57,15 @@ Bottlerocket, Ubuntu, and Red Hat Enterprise Linux (RHEL) can be used as operati
 |------------|------------------------------|---------------------------------|
 | Ubuntu        | 22.04     | 0.17 and above
 |               | 20.04     | 0.5 and above
-| Bottlerocket  | 1.15.1    | 0.18
+| Bottlerocket  | 1.19.1    | 0.19
+|               | 1.15.1    | 0.18
 |               | 1.13.1    | 0.15-0.17
 |               | 1.12.0    | 0.14
 |               | 1.10.1    | 0.12
 | RHEL          | 9.x<sup>*</sup>	      | 0.18
 | RHEL          | 8.x	      | 0.12 and above
 
-<sup>*</sup>Nutanix only
+<sup>*</sup>CloudStack and Nutanix only
 
 * For details on supported operating systems for Admin machines, [see the Admin Machine page.]({{< relref "../getting-started/install/" >}})
 * Older Bottlerocket versions are omitted from this table for brevity
