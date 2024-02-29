@@ -91,7 +91,6 @@ phases:
         if [ -f ./bin/local-bundle-release.yaml ]; then
           BUNDLES_OVERRIDE=true
         fi
-      - SKIPPED_TESTS=$(yq e ".skipped_tests | @csv" ${CODEBUILD_SRC_DIR}/test/e2e/SKIPPED_TESTS.yaml)
       - mv bin/cloudstack/e2e.test bin/e2e.test
       - >
         ./bin/test e2e run
@@ -103,7 +102,6 @@ phases:
         -p ${INTEGRATION_TEST_MAX_CONCURRENT_TEST_COUNT}
         -r 'Test'
         -v 4
-        --skip ${SKIPPED_TESTS}
         --bundles-override=${BUNDLES_OVERRIDE}
         --cleanup-vms=true
         --test-report-folder=reports
