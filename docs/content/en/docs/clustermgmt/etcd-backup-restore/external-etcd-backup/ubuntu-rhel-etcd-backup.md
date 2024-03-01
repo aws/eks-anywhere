@@ -59,7 +59,10 @@ ssh -i $PRIV_KEY ec2-user@$ETCD_VM_IP
 scp -i $PRIV_KEY ec2-user@$ETCD_VM_IP:/home/ec2-user/snapshot.db . 
 ```
 
-NOTE: This snapshot file contains all information stored in the cluster, so make sure you save it securely (encrypt it).
+NOTE: 
+1. This snapshot file contains all information stored in the cluster, so make sure you save it securely (encrypt it).
+2. Following steps are for EKS-A on vSphere provider, where the node username is ec2-user. If you are running these backup and restore commands on a different provider,
+replace the username in the commands below accordingly. For example, for Cloudstack provider replace the username by 'capc' and for Nutanix by 'eksa'.
 
 ### Restore
 
