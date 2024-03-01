@@ -41,7 +41,10 @@ chown ec2-user snapshot.db
 scp -i $PRIV_KEY ec2-user@$ETCD_VM_IP:/home/ec2-user/snapshot.db . 
 ```
 
-NOTE: This snapshot file contains all information stored in the cluster, so make sure you save it securely (encrypt it).
+NOTE: 
+1. This snapshot file contains all information stored in the cluster, so make sure you save it securely (encrypt it).
+2. Following steps are for EKS-A on vSphere provider, where the node username is ec2-user. If you are running these backup and restore commands on a different provider,
+replace the username in the commands below accordingly. For example, for Cloudstack provider replace the username by 'capc' and for Nutanix by 'eksa'.
 
 
 ### Restore
@@ -81,6 +84,7 @@ scp -i $PRIV_KEY snapshot.db ec2-user@$ETCD_VM_IP:/home/ec2-user
 2. To run the etcdctl snapshot restore command, you need to provide the following configuration parameters:
 * name: This is the name of the etcd member. The value of this parameter should match the value used while starting the member. This can be obtained by running:
 ```bash
+sudo su
 export ETCD_NAME=$(cat /etc/etcd/etcd.env | grep ETCD_NAME | awk -F'=' '{print $2}')
 ```  
 * initial-advertise-peer-urls: This is the advertise peer URL with which this etcd member was configured. It should be the exact value with which this etcd member was started. This can be obtained by running:
