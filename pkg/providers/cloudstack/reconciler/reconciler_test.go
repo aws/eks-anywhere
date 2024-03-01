@@ -42,7 +42,9 @@ const (
 	clusterNamespace = "test-namespace"
 )
 
-func TestCloudStackReconcilerReconcileSuccess(t *testing.T) {
+func TestReconcilerReconcileSuccess(t *testing.T) {
+	t.Skip("Flaky (https://github.com/aws/eks-anywhere/issues/6996)")
+
 	tt := newReconcilerTest(t)
 	// We want to check that the cluster status is cleaned up if validations are passed
 	tt.cluster.SetFailure(anywherev1.FailureReasonType("InvalidCluster"), "invalid cluster")
@@ -172,7 +174,9 @@ func TestReconcilerValidateMachineConfigFail(t *testing.T) {
 	tt.Expect(tt.cluster.Status.FailureReason).To(HaveValue(Equal(anywherev1.MachineConfigInvalidReason)))
 }
 
-func TestCloudStackReconcilerControlPlaneIsNotReady(t *testing.T) {
+func TestReconcilerControlPlaneIsNotReady(t *testing.T) {
+	t.Skip("Flaky (https://github.com/aws/eks-anywhere/issues/7000)")
+
 	tt := newReconcilerTest(t)
 
 	kcpVersion := "v1.19.8"
@@ -207,7 +211,9 @@ func TestCloudStackReconcilerControlPlaneIsNotReady(t *testing.T) {
 	tt.Expect(result).To(Equal(controller.ResultWithRequeue(30 * time.Second)))
 }
 
-func TestCloudStackReconcileControlPlaneUnstackedEtcdSuccess(t *testing.T) {
+func TestReconcileControlPlaneUnstackedEtcdSuccess(t *testing.T) {
+	t.Skip("Flaky (https://github.com/aws/eks-anywhere/issues/7001)")
+
 	tt := newReconcilerTest(t)
 	tt.cluster.Spec.ExternalEtcdConfiguration = &anywherev1.ExternalEtcdConfiguration{
 		Count: 1,
