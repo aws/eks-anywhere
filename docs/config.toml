@@ -180,7 +180,7 @@ icon = "fab fa-github"
 desc = "Development takes place here!"
 
 [[params.versions]]
-fullversion = "v0.18"
-version = "v0.18"
+fullversion = "v0.19"
+version = "v0.19"
 docsbranch = "main"
 url = "/docs/"
