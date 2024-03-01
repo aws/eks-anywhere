@@ -25,7 +25,7 @@ func CheckControlPlaneReady(ctx context.Context, client client.Client, log logr.
 
 	if kcp == nil {
 		log.Info("KCP does not exist yet, requeuing")
-		return controller.ResultWithRequeue(5 * time.Second), nil
+		return controller.ResultWithRequeue(4 * time.Second), nil
 	}
 
 	// We make sure to check that the status is up to date before using it

@@ -13,6 +13,7 @@ import (
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/pointer"
 	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/api/v1beta1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
@@ -45,9 +46,7 @@ const (
 	clusterNamespace = "test-namespace"
 )
 
-func TestReconcilerReconcileSuccess(t *testing.T) {
-	t.Skip("Flaky (https://github.com/aws/eks-anywhere/issues/6996)")
-
+func TestVSphereReconcilerReconcileSuccess(t *testing.T) {
 	tt := newReconcilerTest(t)
 	// We want to check that the cluster status is cleaned up if validations are passed
 	tt.cluster.SetFailure(anywherev1.FailureReasonType("InvalidCluster"), "invalid cluster")
@@ -165,10 +164,9 @@ func TestSetupEnvVars(t *testing.T) {
 	tt.Expect(err).To(BeNil())
 }
 
-func TestReconcilerControlPlaneIsNotReady(t *testing.T) {
-	t.Skip("Flaky (https://github.com/aws/eks-anywhere/issues/7000)")
-
+func TestVSphereReconcilerControlPlaneIsNotReady(t *testing.T) {
 	tt := newReconcilerTest(t)
+	kcpVersion := "v1.19.8"
 	tt.kcp.Status = controlplanev1.KubeadmControlPlaneStatus{
 		Conditions: clusterv1.Conditions{
 			{
@@ -178,6 +176,8 @@ func TestReconcilerControlPlaneIsNotReady(t *testing.T) {
 			},
 		},
 		ObservedGeneration: 2,
+		Ready:              true,
+		Version:            pointer.String(kcpVersion),
 	}
 
 	tt.eksaSupportObjs = append(tt.eksaSupportObjs, tt.kcp)
@@ -440,14 +440,17 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 		c.Spec.EksaVersion = &version
 	})
 
+	kcpVersion := "v1.19.8"
 	kcp := test.KubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
 		kcp.Name = cluster.Name
+		kcp.ObjectMeta.Generation = 2
 		kcp.Spec = controlplanev1.KubeadmControlPlaneSpec{
 			MachineTemplate: controlplanev1.KubeadmControlPlaneMachineTemplate{
 				InfrastructureRef: corev1.ObjectReference{
 					Name: fmt.Sprintf("%s-control-plane-1", cluster.Name),
 				},
 			},
+			Version: kcpVersion,
 		}
 		kcp.Status = controlplanev1.KubeadmControlPlaneStatus{
 			Conditions: clusterv1.Conditions{
@@ -458,6 +461,8 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 				},
 			},
 			ObservedGeneration: 2,
+			Ready:              true,
+			Version:            pointer.String(kcpVersion),
 		}
 	})
 

@@ -55,7 +55,7 @@ func TestCheckControlPlaneReadyNoKcp(t *testing.T) {
 	result, err := clusters.CheckControlPlaneReady(ctx, client, test.NewNullLogger(), eksaCluster)
 	g.Expect(err).NotTo(HaveOccurred())
 	g.Expect(result).To(Equal(
-		controller.Result{Result: &controllerruntime.Result{RequeueAfter: 5 * time.Second}}),
+		controller.Result{Result: &controllerruntime.Result{RequeueAfter: 4 * time.Second}}),
 	)
 }
 
