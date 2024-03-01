@@ -14,6 +14,7 @@ import (
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/pointer"
 	cloudstackv1 "sigs.k8s.io/cluster-api-provider-cloudstack/api/v1beta3"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
@@ -41,9 +42,7 @@ const (
 	clusterNamespace = "test-namespace"
 )
 
-func TestReconcilerReconcileSuccess(t *testing.T) {
-	t.Skip("Flaky (https://github.com/aws/eks-anywhere/issues/6996)")
-
+func TestCloudStackReconcilerReconcileSuccess(t *testing.T) {
 	tt := newReconcilerTest(t)
 	// We want to check that the cluster status is cleaned up if validations are passed
 	tt.cluster.SetFailure(anywherev1.FailureReasonType("InvalidCluster"), "invalid cluster")
@@ -173,11 +172,10 @@ func TestReconcilerValidateMachineConfigFail(t *testing.T) {
 	tt.Expect(tt.cluster.Status.FailureReason).To(HaveValue(Equal(anywherev1.MachineConfigInvalidReason)))
 }
 
-func TestReconcilerControlPlaneIsNotReady(t *testing.T) {
-	t.Skip("Flaky (https://github.com/aws/eks-anywhere/issues/7000)")
-
+func TestCloudStackReconcilerControlPlaneIsNotReady(t *testing.T) {
 	tt := newReconcilerTest(t)
 
+	kcpVersion := "v1.19.8"
 	tt.kcp.Status = controlplanev1.KubeadmControlPlaneStatus{
 		Conditions: clusterv1.Conditions{
 			{
@@ -187,6 +185,8 @@ func TestReconcilerControlPlaneIsNotReady(t *testing.T) {
 			},
 		},
 		ObservedGeneration: 2,
+		Ready:              true,
+		Version:            pointer.String(kcpVersion),
 	}
 	tt.eksaSupportObjs = append(tt.eksaSupportObjs, tt.kcp, tt.secret)
 	tt.createAllObjs()
@@ -207,9 +207,7 @@ func TestReconcilerControlPlaneIsNotReady(t *testing.T) {
 	tt.Expect(result).To(Equal(controller.ResultWithRequeue(30 * time.Second)))
 }
 
-func TestReconcileControlPlaneUnstackedEtcdSuccess(t *testing.T) {
-	t.Skip("Flaky (https://github.com/aws/eks-anywhere/issues/7001)")
-
+func TestCloudStackReconcileControlPlaneUnstackedEtcdSuccess(t *testing.T) {
 	tt := newReconcilerTest(t)
 	tt.cluster.Spec.ExternalEtcdConfiguration = &anywherev1.ExternalEtcdConfiguration{
 		Count: 1,
@@ -648,14 +646,17 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 		c.Spec.EksaVersion = &version
 	})
 
+	kcpVersion := "v1.19.8"
 	kcp := test.KubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
 		kcp.Name = cluster.Name
+		kcp.ObjectMeta.Generation = 2
 		kcp.Spec = controlplanev1.KubeadmControlPlaneSpec{
 			MachineTemplate: controlplanev1.KubeadmControlPlaneMachineTemplate{
 				InfrastructureRef: corev1.ObjectReference{
 					Name: fmt.Sprintf("%s-control-plane-1", cluster.Name),
 				},
 			},
+			Version: kcpVersion,
 		}
 		kcp.Status = controlplanev1.KubeadmControlPlaneStatus{
 			Conditions: clusterv1.Conditions{
@@ -666,6 +667,8 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 				},
 			},
 			ObservedGeneration: 2,
+			Ready:              true,
+			Version:            pointer.String(kcpVersion),
 		}
 	})
 
