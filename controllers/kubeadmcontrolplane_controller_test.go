@@ -39,7 +39,7 @@ type kcpObjects struct {
 
 func TestKCPSetupWithManager(t *testing.T) {
 	client := env.Client()
-	r := controllers.NewKubeadmControlPlaneReconciler(client)
+	r := controllers.NewKubeadmControlPlaneReconciler(client, client)
 
 	g := NewWithT(t)
 	g.Expect(r.SetupWithManager(env.Manager())).To(Succeed())
@@ -54,7 +54,7 @@ func TestKCPReconcileNotNeeded(t *testing.T) {
 
 	runtimeObjs := []runtime.Object{kcpObjs.kcp, kcpObjs.mhc}
 	client := fake.NewClientBuilder().WithRuntimeObjects(runtimeObjs...).Build()
-	r := controllers.NewKubeadmControlPlaneReconciler(client)
+	r := controllers.NewKubeadmControlPlaneReconciler(client, client)
 	req := kcpRequest(kcpObjs.kcp)
 	_, err := r.Reconcile(ctx, req)
 	g.Expect(err).ToNot(HaveOccurred())
@@ -72,7 +72,7 @@ func TestKCPReconcile(t *testing.T) {
 
 	runtimeObjs := []runtime.Object{kcpObjs.machines[0], kcpObjs.machines[1], kcpObjs.cpUpgrade, kcpObjs.kcp, kcpObjs.mhc}
 	client := fake.NewClientBuilder().WithRuntimeObjects(runtimeObjs...).Build()
-	r := controllers.NewKubeadmControlPlaneReconciler(client)
+	r := controllers.NewKubeadmControlPlaneReconciler(client, client)
 	req := kcpRequest(kcpObjs.kcp)
 	_, err := r.Reconcile(ctx, req)
 	g.Expect(err).ToNot(HaveOccurred())
@@ -89,7 +89,7 @@ func TestKCPReconcileCreateControlPlaneUpgrade(t *testing.T) {
 
 	runtimeObjs := []runtime.Object{kcpObjs.machines[0], kcpObjs.machines[1], kcpObjs.kcp, kcpObjs.mhc}
 	client := fake.NewClientBuilder().WithRuntimeObjects(runtimeObjs...).Build()
-	r := controllers.NewKubeadmControlPlaneReconciler(client)
+	r := controllers.NewKubeadmControlPlaneReconciler(client, client)
 	req := kcpRequest(kcpObjs.kcp)
 	_, err := r.Reconcile(ctx, req)
 	g.Expect(err).ToNot(HaveOccurred())
@@ -121,7 +121,7 @@ func TestKCPReconcileKCPAndControlPlaneUpgradeReady(t *testing.T) {
 
 	runtimeObjs := []runtime.Object{kcpObjs.machines[0], kcpObjs.machines[1], kcpObjs.cpUpgrade, kcpObjs.kcp, kcpObjs.mhc}
 	client := fake.NewClientBuilder().WithRuntimeObjects(runtimeObjs...).Build()
-	r := controllers.NewKubeadmControlPlaneReconciler(client)
+	r := controllers.NewKubeadmControlPlaneReconciler(client, client)
 	req := kcpRequest(kcpObjs.kcp)
 	_, err := r.Reconcile(ctx, req)
 	g.Expect(err).ToNot(HaveOccurred())
@@ -149,7 +149,7 @@ func TestKCPReconcileFullFlow(t *testing.T) {
 
 	runtimeObjs := []runtime.Object{kcpObjs.machines[0], kcpObjs.machines[1], kcpObjs.kcp, kcpObjs.mhc}
 	client := fake.NewClientBuilder().WithRuntimeObjects(runtimeObjs...).Build()
-	r := controllers.NewKubeadmControlPlaneReconciler(client)
+	r := controllers.NewKubeadmControlPlaneReconciler(client, client)
 	req := kcpRequest(kcpObjs.kcp)
 	_, err := r.Reconcile(ctx, req)
 	g.Expect(err).ToNot(HaveOccurred())
@@ -207,7 +207,7 @@ func TestKCPReconcileNotFound(t *testing.T) {
 	kcpObjs := getObjectsForKCP()
 
 	client := fake.NewClientBuilder().WithRuntimeObjects().Build()
-	r := controllers.NewKubeadmControlPlaneReconciler(client)
+	r := controllers.NewKubeadmControlPlaneReconciler(client, client)
 	req := kcpRequest(kcpObjs.kcp)
 	_, err := r.Reconcile(ctx, req)
 	g.Expect(err).To(MatchError("kubeadmcontrolplanes.controlplane.cluster.x-k8s.io \"my-cluster\" not found"))
@@ -220,7 +220,7 @@ func TestKCPReconcileMHCNotFound(t *testing.T) {
 
 	runtimeObjs := []runtime.Object{kcpObjs.machines[0], kcpObjs.machines[1], kcpObjs.kcp}
 	client := fake.NewClientBuilder().WithRuntimeObjects(runtimeObjs...).Build()
-	r := controllers.NewKubeadmControlPlaneReconciler(client)
+	r := controllers.NewKubeadmControlPlaneReconciler(client, client)
 	req := kcpRequest(kcpObjs.kcp)
 	_, err := r.Reconcile(ctx, req)
 	g.Expect(err).To(MatchError("machinehealthchecks.cluster.x-k8s.io \"my-cluster-kcp-unhealthy\" not found"))
@@ -235,7 +235,7 @@ func TestKCPReconcileClusterConfigurationMissing(t *testing.T) {
 
 	runtimeObjs := []runtime.Object{kcpObjs.kcp}
 	client := fake.NewClientBuilder().WithRuntimeObjects(runtimeObjs...).Build()
-	r := controllers.NewKubeadmControlPlaneReconciler(client)
+	r := controllers.NewKubeadmControlPlaneReconciler(client, client)
 	req := kcpRequest(kcpObjs.kcp)
 	_, err := r.Reconcile(ctx, req)
 	g.Expect(err).To(MatchError("ClusterConfiguration not set for KubeadmControlPlane \"my-cluster\", unable to retrieve etcd information"))
@@ -250,7 +250,7 @@ func TestKCPReconcileStackedEtcdMissing(t *testing.T) {
 
 	runtimeObjs := []runtime.Object{kcpObjs.kcp}
 	client := fake.NewClientBuilder().WithRuntimeObjects(runtimeObjs...).Build()
-	r := controllers.NewKubeadmControlPlaneReconciler(client)
+	r := controllers.NewKubeadmControlPlaneReconciler(client, client)
 	req := kcpRequest(kcpObjs.kcp)
 	_, err := r.Reconcile(ctx, req)
 	g.Expect(err).To(MatchError("local etcd configuration is missing"))
