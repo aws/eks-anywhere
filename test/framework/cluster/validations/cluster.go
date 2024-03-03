@@ -40,6 +40,9 @@ func ValidateClusterReady(ctx context.Context, vc clusterf.StateValidationConfig
 	if clus.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy != nil && clus.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy.Type == v1alpha1.InPlaceStrategyType {
 		return validateCAPIobjectsForInPlace(ctx, vc)
 	}
+	if clus.Spec.ControlPlaneConfiguration.APIServerExtraArgs != nil {
+		return validateKCPobjectForAPIServerExtraArgs(ctx, vc)
+	}
 	return nil
 }
 
@@ -359,4 +362,25 @@ func getWorkerNodeMachineSets(ctx context.Context, vc clusterf.StateValidationCo
 		return nil, fmt.Errorf("invalid number of machine sets associated with worker node configuration %s", w.Name)
 	}
 	return ms.Items, nil
+}
+
+func validateKCPobjectForAPIServerExtraArgs(ctx context.Context, vc clusterf.StateValidationConfig) error {
+	kcp, err := controller.GetKubeadmControlPlane(ctx, vc.ManagementClusterClient, vc.ClusterSpec.Cluster)
+	if err != nil {
+		return fmt.Errorf("failed to retrieve kcp: %s", err)
+	}
+	if kcp == nil {
+		return errors.New("KubeadmControlPlane object not found")
+	}
+	apiServerExtraArgsKCP := kcp.Spec.KubeadmConfigSpec.ClusterConfiguration.APIServer.ExtraArgs
+	apiServerExtraArgsSpec := vc.ClusterSpec.Cluster.Spec.ControlPlaneConfiguration.APIServerExtraArgs
+	if apiServerExtraArgsKCP == nil {
+		return fmt.Errorf("kcp object APIServerExtraArgs is nil expected: %v", apiServerExtraArgsSpec)
+	}
+	for k, v := range apiServerExtraArgsSpec {
+		if val, ok := apiServerExtraArgsKCP[k]; !ok || val != v {
+			return fmt.Errorf("kcp object does not have required APIServerExtraArgs expected: %v, actual: %v", apiServerExtraArgsSpec, apiServerExtraArgsKCP)
+		}
+	}
+	return nil
 }

@@ -18,6 +18,48 @@ import (
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
+// APIServerExtraArgs
+func TestVSphereKubernetes129BottlerocketAPIServerExtraArgsSimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewVSphere(t, framework.WithBottleRocket129()),
+	).WithClusterConfig(
+		api.ClusterToConfigFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube129),
+			api.WithControlPlaneAPIServerExtraArgs(),
+		),
+	)
+	runSimpleFlowWithoutClusterConfigGeneration(test)
+}
+
+// TODO: Investigate why this test takes long time to pass with service-account-issuer flag
+func TestVSphereKubernetes129BottlerocketAPIServerExtraArgsUpgradeFlow(t *testing.T) {
+	var addAPIServerExtraArgsclusterOpts []framework.ClusterE2ETestOpt
+	var removeAPIServerExtraArgsclusterOpts []framework.ClusterE2ETestOpt
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewVSphere(t, framework.WithBottleRocket129()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube129)),
+	)
+	addAPIServerExtraArgsclusterOpts = append(
+		addAPIServerExtraArgsclusterOpts,
+		framework.WithClusterUpgrade(
+			api.WithControlPlaneAPIServerExtraArgs(),
+		),
+	)
+	removeAPIServerExtraArgsclusterOpts = append(
+		removeAPIServerExtraArgsclusterOpts,
+		framework.WithClusterUpgrade(
+			api.RemoveAllAPIServerExtraArgs(),
+		),
+	)
+	runAPIServerExtraArgsUpgradeFlow(
+		test,
+		addAPIServerExtraArgsclusterOpts,
+		removeAPIServerExtraArgsclusterOpts,
+	)
+}
+
 // Autoimport
 func TestVSphereKubernetes125BottlerocketAutoimport(t *testing.T) {
 	provider := framework.NewVSphere(t,
