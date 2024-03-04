@@ -17,7 +17,7 @@ The following diagram illustrates the cluster creation process for the Nutanix p
 
 #### 1. Generate a config file for Nutanix
 
-Identify the provider (`--provider nutanix`) and the cluster name in the `eksctl anywhere create clusterconfig` command and direct the output to a cluster config `.yaml` file.
+Identify the provider (`--provider nutanix`) and the cluster name in the `eksctl anywhere generate clusterconfig` command and direct the output to a cluster config `.yaml` file.
 
 #### 2. Modify the config file
 
