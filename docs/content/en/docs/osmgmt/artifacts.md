@@ -410,22 +410,64 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
 1. Create a vSphere configuration file (for example, `vsphere.json`):
    ```json
    {
-     "cluster": "<vsphere cluster used for image building>",
-     "convert_to_template": "false",
-     "create_snapshot": "<creates a snapshot on base OVA after building if set to true>",
-     "datacenter": "<vsphere datacenter used for image building>",
-     "datastore": "<datastore used to store template/for image building>",
-     "folder": "<folder on vSphere to create temporary VM>",
-     "insecure_connection": "true",
-     "linked_clone": "false",
-     "network": "<vsphere network used for image building>",
-     "password": "<vcenter password>",
-     "resource_pool": "<resource pool used for image building VM>",
-     "username": "<vcenter username>",
-     "vcenter_server": "<vcenter fqdn>",
-     "vsphere_library_name": "<vsphere content library name>"
+     "cluster": "",
+     "convert_to_template": "",
+     "create_snapshot": "",
+     "datacenter": "",
+     "datastore": "",
+     "folder": "",
+     "insecure_connection": "",
+     "linked_clone": "",
+     "network": "",
+     "password": "",
+     "resource_pool": "",
+     "username": "",
+     "vcenter_server": "",
+     "vsphere_library_name": ""
    }
    ```
+   ##### **[cluster](https://developer.hashicorp.com/packer/integrations/hashicorp/vsphere/latest/components/builder/vsphere-iso#location-configuration)**
+   The vSphere cluster where the virtual machine is created.
+
+   ##### **[convert_to_template](https://developer.hashicorp.com/packer/integrations/hashicorp/vsphere/latest/components/builder/vsphere-iso#configuration-reference)**
+   Convert VM to a template.
+
+   ##### **[create_snapshot](https://developer.hashicorp.com/packer/integrations/hashicorp/vsphere/latest/components/builder/vsphere-iso#configuration-reference)**
+   Create a snapshot so the VM can be used as a base for linked clones.
+
+   ##### **[datacenter](https://developer.hashicorp.com/packer/integrations/hashicorp/vsphere/latest/components/builder/vsphere-iso#connection-configuration)**
+   The vSphere datacenter name. Required if there is more than one datacenter in the vSphere inventory.
+
+   ##### **[datastore](https://developer.hashicorp.com/packer/integrations/hashicorp/vsphere/latest/components/builder/vsphere-iso#location-configuration)**
+   The vSphere datastore where the virtual machine is created.
+
+   ##### **[folder](https://developer.hashicorp.com/packer/integrations/hashicorp/vsphere/latest/components/builder/vsphere-iso#location-configuration)**
+   The VM folder where the virtual machine is created..
+
+   ##### **[insecure_connection](https://developer.hashicorp.com/packer/integrations/hashicorp/vsphere/latest/components/builder/vsphere-iso#connection-configuration)**
+   Do not validate the vCenter Server TLS certificate.
+
+   ##### **[linked_clone](https://developer.hashicorp.com/packer/integrations/hashicorp/vsphere/latest/components/builder/vsphere-clone#clone-configuration)**
+   Create the virtual machine as a linked clone from latest snapshot.
+
+   ##### **[network](https://developer.hashicorp.com/packer/integrations/hashicorp/vsphere/latest/components/builder/vsphere-iso#optional)**
+   The network which the VM will be connected to.
+
+   ##### **[password](https://developer.hashicorp.com/packer/integrations/hashicorp/vsphere/latest/components/builder/vsphere-iso#connection-configuration)**
+   The password used to connect to vSphere.
+
+   ##### **[resource_pool](https://developer.hashicorp.com/packer/integrations/hashicorp/vsphere/latest/components/builder/vsphere-iso#connection-configuration)**
+   The vSphere resource pool where the virtual machine is created. If this is not specified, the root resource pool associated with the cluster is used.
+
+   ##### **[username](https://developer.hashicorp.com/packer/integrations/hashicorp/vsphere/latest/components/builder/vsphere-iso#connection-configuration)**
+   The username used to connect to vSphere.
+
+   ##### **[vcenter_server](https://developer.hashicorp.com/packer/integrations/hashicorp/vsphere/latest/components/builder/vsphere-iso#connection-configuration)**
+   The vCenter Server hostname.
+
+   ##### **[vsphere_library_name](https://developer.hashicorp.com/packer/integrations/hashicorp/vsphere/latest/components/builder/vsphere-iso#content-library-import-configuration)**
+   Name of the library in which the new library item containing the template should be updated.
+
    For RHEL images, add the following fields:
    ```json
    {
@@ -553,7 +595,7 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
 1. Create an Ubuntu or Red Hat image:
 
    **Ubuntu**
-   
+
    To create an Ubuntu-based image, run `image-builder` with the following options:
 
       * `--os`: `ubuntu`
@@ -1202,49 +1244,49 @@ In order to use Red Hat Satellite in the image build process follow the steps be
 3. Create a local file named `download-airgapped-artifacts.sh` with the contents below. This script will download the required EKS-A and EKS-D artifacts required for image building.
    <details>
       <summary>Click to expand download-airgapped-artifacts.sh script</summary>
-   
+
       ```shell
       #!/usr/bin/env bash
       set +o nounset
-   
+
       function downloadArtifact() {
          local -r artifact_url=${1}
          local -r artifact_path_pre=${2}
-   
+
          # Removes hostname from url
          artifact_path_post=$(echo ${artifact_url} | sed -E 's:[^/]*//[^/]*::')
          artifact_path="${artifact_path_pre}${artifact_path_post}"
          curl -sL ${artifact_url} --output ${artifact_path} --create-dirs
       }
-   
+
       if [ -z "${EKSA_RELEASE_VERSION}" ]; then
          echo "EKSA_RELEASE_VERSION not set. Please refer https://anywhere.eks.amazonaws.com/docs/whatsnew/ or https://github.com/aws/eks-anywhere/releases to get latest EKS-A release"
          exit 1
       fi
-   
+
       if [ -z "${RELEASE_CHANNEL}" ]; then
          echo "RELEASE_CHANNEL not set. Supported EKS Distro releases include 1-24, 1-25, 1-26, 1-27 and 1-28"
          exit 1
       fi
-   
+
       # Convert RELEASE_CHANNEL to dot schema
       kube_version="${RELEASE_CHANNEL/-/.}"
       echo "Setting Kube Version: ${kube_version}"
-   
+
       # Create a local directory to download the artifacts
       artifacts_dir="eks-a-d-artifacts"
       eks_a_artifacts_dir="eks-a-artifacts"
       eks_d_artifacts_dir="eks-d-artifacts"
       echo "Creating artifacts directory: ${artifacts_dir}"
       mkdir ${artifacts_dir}
-   
+
       # Download EKS-A bundle manifest
       cd ${artifacts_dir}
       bundles_url=$(curl -sL https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml | yq ".spec.releases[] | select(.version==\"$EKSA_RELEASE_VERSION\").bundleManifestUrl")
       echo "Identified EKS-A Bundles URL: ${bundles_url}"
       echo "Downloading EKS-A Bundles manifest file"
       bundles_file_data=$(curl -sL "${bundles_url}" | yq)
-   
+
       # Download EKS-A artifacts
       eks_a_artifacts="containerd crictl etcdadm"
       for eks_a_artifact in ${eks_a_artifacts}; do
@@ -1252,12 +1294,12 @@ In order to use Red Hat Satellite in the image build process follow the steps be
          artifact_url=$(echo "${bundles_file_data}" | yq e ".spec.versionsBundles[] | select(.kubeVersion==\"${kube_version}\").eksD.${eks_a_artifact}.uri" -)
          downloadArtifact ${artifact_url} ${eks_a_artifacts_dir}
       done
-   
+
       # Download EKS-D artifacts
       echo "Downloading EKS-D manifest file"
       eks_d_manifest_url=$(echo "${bundles_file_data}" | yq e ".spec.versionsBundles[] | select(.kubeVersion==\"${kube_version}\").eksD.manifestUrl" -)
       eks_d_manifest_file_data=$(curl -sL "${eks_d_manifest_url}" | yq)
-   
+
       # Get EKS-D kubernetes base url from kube-apiserver
       eks_d_kube_tag=$(echo "${eks_d_manifest_file_data}" | yq e ".status.components[] | select(.name==\"kubernetes\").gitTag" -)
       echo "EKS-D Kube Tag: ${eks_d_kube_tag}"
@@ -1265,7 +1307,7 @@ In order to use Red Hat Satellite in the image build process follow the steps be
       api_server_artifact_url=$(echo "${eks_d_manifest_file_data}" | yq e ".status.components[] | select(.name==\"kubernetes\").assets[] | select(.name==\"${api_server_artifact}\").archive.uri")
       eks_d_base_url=$(echo "${api_server_artifact_url}" | sed -E "s,/${eks_d_kube_tag}/${api_server_artifact}.*,,")
       echo "EKS-D Kube Base URL: ${eks_d_base_url}"
-   
+
       # Downloading EKS-D Kubernetes artifacts
       eks_d_k8s_artifacts="kube-apiserver.tar kube-scheduler.tar kube-controller-manager.tar kube-proxy.tar pause.tar coredns.tar etcd.tar kubeadm kubelet kubectl"
       for eks_d_k8s_artifact in ${eks_d_k8s_artifacts}; do
@@ -1273,7 +1315,7 @@ In order to use Red Hat Satellite in the image build process follow the steps be
          artifact_url="${eks_d_base_url}/${eks_d_kube_tag}/bin/linux/amd64/${eks_d_k8s_artifact}"
          downloadArtifact ${artifact_url} ${eks_d_artifacts_dir}
       done
-   
+
       # Downloading EKS-D etcd artifacts
       eks_d_extra_artifacts="etcd cni-plugins"
       for eks_d_extra_artifact in ${eks_d_extra_artifacts}; do
@@ -1284,7 +1326,7 @@ In order to use Red Hat Satellite in the image build process follow the steps be
       done
 
       ```
-   
+
    </details>
 4. Change mode of the saved file `download-airgapped-artifacts.sh` to an executable
    ```bash
@@ -1329,7 +1371,7 @@ In order to use Red Hat Satellite in the image build process follow the steps be
     ```bash
     image-builder build -os <OS> --hypervisor <hypervisor> --release-channel <release channel> --<hypervisor>-config config.json --airgapped --manifest-tarball <path to eks-a-manifests.tar>
     ```
-    
+
 
 ## Images
 
