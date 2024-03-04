@@ -17,7 +17,7 @@ The following diagram illustrates what happens when you create an EKS Anywhere c
 ![Start creating EKS Anywhere Bare Metal cluster](/images/eksa-baremetal-start.png)
 
 #### 1. Generate a config file for Bare Metal
-Identify the provider (`--provider tinkerbell`) and the cluster name to the `eksctl anywhere create clusterconfig` command and direct the output into a cluster config `.yaml` file.
+Identify the provider (`--provider tinkerbell`) and the cluster name to the `eksctl anywhere generate clusterconfig` command and direct the output into a cluster config `.yaml` file.
 
 #### 2. Modify the config file and hardware CSV file
 Modify the generated cluster config file to suit your situation.
