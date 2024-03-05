@@ -1201,8 +1201,8 @@ func TestDockerCiliumSkipUpgrade_CLICreate(t *testing.T) {
 	test.DeleteCluster()
 }
 
-func TestDockerCiliumSkipUpgrade_CLIUpgrade(t *testing.T) {
-	previousRelease := prevLatestMinorRelease(t)
+func TestDockerUpgradeFromLatestMinorReleaseCiliumSkipUpgrade_CLIUpgrade(t *testing.T) {
+	release := latestMinorRelease(t)
 
 	provider := framework.NewDocker(t)
 	test := framework.NewClusterE2ETest(t, provider,
@@ -1215,8 +1215,8 @@ func TestDockerCiliumSkipUpgrade_CLIUpgrade(t *testing.T) {
 
 	test.ValidateCiliumCLIAvailable()
 
-	test.GenerateClusterConfig(framework.ExecuteWithEksaRelease(previousRelease))
-	test.CreateCluster(framework.ExecuteWithEksaRelease(previousRelease))
+	test.GenerateClusterConfig(framework.ExecuteWithEksaRelease(release))
+	test.CreateCluster(framework.ExecuteWithEksaRelease(release))
 	test.ReplaceCiliumWithOSSCilium()
 
 	t.Log("Waiting for cilium replacement to complete")
