@@ -602,6 +602,7 @@ func (f *Factory) WithKubeadmControlPlaneReconciler() *Factory {
 
 		f.reconcilers.KubeadmControlPlaneReconciler = NewKubeadmControlPlaneReconciler(
 			f.manager.GetClient(),
+			f.manager.GetAPIReader(),
 		)
 
 		return nil
@@ -619,6 +620,7 @@ func (f *Factory) WithMachineDeploymentReconciler() *Factory {
 
 		f.reconcilers.MachineDeploymentReconciler = NewMachineDeploymentReconciler(
 			f.manager.GetClient(),
+			f.manager.GetAPIReader(),
 		)
 
 		return nil

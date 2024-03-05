@@ -237,6 +237,7 @@ func TestFactoryWithKubeadmControlPlaneReconciler(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	manager := mocks.NewMockManager(ctrl)
 	manager.EXPECT().GetClient().AnyTimes()
+	manager.EXPECT().GetAPIReader().AnyTimes()
 	manager.EXPECT().GetScheme().AnyTimes()
 
 	f := controllers.NewFactory(logger, manager).
@@ -257,6 +258,7 @@ func TestFactoryWithMachineDeploymentReconciler(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	manager := mocks.NewMockManager(ctrl)
 	manager.EXPECT().GetClient().AnyTimes()
+	manager.EXPECT().GetAPIReader().AnyTimes()
 	manager.EXPECT().GetScheme().AnyTimes()
 
 	f := controllers.NewFactory(logger, manager).

@@ -31,7 +31,7 @@ type mdObjects struct {
 
 func TestMDSetupWithManager(t *testing.T) {
 	client := env.Client()
-	r := controllers.NewMachineDeploymentReconciler(client)
+	r := controllers.NewMachineDeploymentReconciler(client, client)
 
 	g := NewWithT(t)
 	g.Expect(r.SetupWithManager(env.Manager())).To(Succeed())
@@ -46,7 +46,7 @@ func TestMDReconcileNotNeeded(t *testing.T) {
 
 	runtimeObjs := []runtime.Object{mdObjs.md, mdObjs.mhc}
 	client := fake.NewClientBuilder().WithRuntimeObjects(runtimeObjs...).Build()
-	r := controllers.NewMachineDeploymentReconciler(client)
+	r := controllers.NewMachineDeploymentReconciler(client, client)
 	req := mdRequest(mdObjs.md)
 	_, err := r.Reconcile(ctx, req)
 	g.Expect(err).ToNot(HaveOccurred())
@@ -64,7 +64,7 @@ func TestMDReconcile(t *testing.T) {
 
 	runtimeObjs := []runtime.Object{mdObjs.machine, mdObjs.mdUpgrade, mdObjs.md, mdObjs.mhc}
 	client := fake.NewClientBuilder().WithRuntimeObjects(runtimeObjs...).Build()
-	r := controllers.NewMachineDeploymentReconciler(client)
+	r := controllers.NewMachineDeploymentReconciler(client, client)
 	req := mdRequest(mdObjs.md)
 	_, err := r.Reconcile(ctx, req)
 	g.Expect(err).ToNot(HaveOccurred())
@@ -86,7 +86,7 @@ func TestMDReconcileCreateMachineDeploymentUpgrade(t *testing.T) {
 
 	runtimeObjs := []runtime.Object{mdObjs.machine, mdObjs.md, mdObjs.mhc}
 	client := fake.NewClientBuilder().WithRuntimeObjects(runtimeObjs...).Build()
-	r := controllers.NewMachineDeploymentReconciler(client)
+	r := controllers.NewMachineDeploymentReconciler(client, client)
 	req := mdRequest(mdObjs.md)
 	_, err := r.Reconcile(ctx, req)
 	g.Expect(err).ToNot(HaveOccurred())
@@ -114,7 +114,7 @@ func TestMDReconcileMDAndMachineDeploymentUpgradeReady(t *testing.T) {
 
 	runtimeObjs := []runtime.Object{mdObjs.machine, mdObjs.md, mdObjs.mdUpgrade, mdObjs.mhc}
 	client := fake.NewClientBuilder().WithRuntimeObjects(runtimeObjs...).Build()
-	r := controllers.NewMachineDeploymentReconciler(client)
+	r := controllers.NewMachineDeploymentReconciler(client, client)
 	req := mdRequest(mdObjs.md)
 	_, err := r.Reconcile(ctx, req)
 	g.Expect(err).ToNot(HaveOccurred())
@@ -142,7 +142,7 @@ func TestMDReconcileFullFlow(t *testing.T) {
 
 	runtimeObjs := []runtime.Object{mdObjs.machine, mdObjs.md, mdObjs.mhc}
 	client := fake.NewClientBuilder().WithRuntimeObjects(runtimeObjs...).Build()
-	r := controllers.NewMachineDeploymentReconciler(client)
+	r := controllers.NewMachineDeploymentReconciler(client, client)
 	req := mdRequest(mdObjs.md)
 	_, err := r.Reconcile(ctx, req)
 	g.Expect(err).ToNot(HaveOccurred())
@@ -204,7 +204,7 @@ func TestMDReconcileNotFound(t *testing.T) {
 	mdObjs := getObjectsForMD()
 
 	client := fake.NewClientBuilder().WithRuntimeObjects().Build()
-	r := controllers.NewMachineDeploymentReconciler(client)
+	r := controllers.NewMachineDeploymentReconciler(client, client)
 	req := mdRequest(mdObjs.md)
 	_, err := r.Reconcile(ctx, req)
 	g.Expect(err).To(MatchError("machinedeployments.cluster.x-k8s.io \"my-cluster\" not found"))
@@ -217,7 +217,7 @@ func TestMDReconcileMHCNotFound(t *testing.T) {
 
 	runtimeObjs := []runtime.Object{mdObjs.machine, mdObjs.md}
 	client := fake.NewClientBuilder().WithRuntimeObjects(runtimeObjs...).Build()
-	r := controllers.NewMachineDeploymentReconciler(client)
+	r := controllers.NewMachineDeploymentReconciler(client, client)
 	req := mdRequest(mdObjs.md)
 	_, err := r.Reconcile(ctx, req)
 	g.Expect(err).To(MatchError("machinehealthchecks.cluster.x-k8s.io \"my-cluster-worker-unhealthy\" not found"))
@@ -232,7 +232,7 @@ func TestMDReconcileVersionMissing(t *testing.T) {
 
 	runtimeObjs := []runtime.Object{mdObjs.md}
 	client := fake.NewClientBuilder().WithRuntimeObjects(runtimeObjs...).Build()
-	r := controllers.NewMachineDeploymentReconciler(client)
+	r := controllers.NewMachineDeploymentReconciler(client, client)
 	req := mdRequest(mdObjs.md)
 	_, err := r.Reconcile(ctx, req)
 	g.Expect(err).To(MatchError("unable to retrieve kubernetes version from MachineDeployment \"my-cluster\""))
