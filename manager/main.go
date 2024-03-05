@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
 	"os"
 
 	eksdv1alpha1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
@@ -121,7 +120,7 @@ func main() {
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme: scheme,
 		Metrics: server.Options{
-			BindAddress: fmt.Sprintf("%s:%s", config.metricsAddr, "9443"),
+			BindAddress: config.metricsAddr,
 		},
 		HealthProbeBindAddress: config.probeAddr,
 		LeaderElection:         config.enableLeaderElection,
