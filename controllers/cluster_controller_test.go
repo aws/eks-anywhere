@@ -221,7 +221,10 @@ func TestClusterReconcilerReconcileUnclearedClusterFailure(t *testing.T) {
 		objs = append(objs, obj.DeepCopy())
 	}
 
-	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
+	client := fake.NewClientBuilder().
+		WithRuntimeObjects(objs...).
+		WithStatusSubresource(&anywherev1.Cluster{}).
+		Build()
 	mockCtrl := gomock.NewController(t)
 	providerReconciler := mocks.NewMockProviderClusterReconciler(mockCtrl)
 	iam := mocks.NewMockAWSIamConfigReconciler(mockCtrl)
