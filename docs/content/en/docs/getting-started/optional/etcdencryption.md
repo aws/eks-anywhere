@@ -13,7 +13,7 @@ the KMS provider on the cluster and EKS Anywhere handles configuring `kube-apise
 Because of this model, etcd encryption can only be enabled on **_cluster upgrades_** after the KMS provider has been deployed on the cluster.
 
 {{% alert title="Note" color="warning" %}}
-Currently, etcd encryption is only supported for CloudStack and vSphere.
+Currently, etcd encryption is only supported for Nutanix, CloudStack and vSphere.
 Support for other providers will be added in a future release.
 {{% /alert %}}
 
