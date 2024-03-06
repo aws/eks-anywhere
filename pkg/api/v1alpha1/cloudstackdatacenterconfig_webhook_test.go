@@ -49,7 +49,7 @@ func TestCloudStackDatacenterValidateUpdateDomainImmutable(t *testing.T) {
 
 	c.Spec.AvailabilityZones[0].Domain = "shinyNewDomain"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+	g.Expect(c.ValidateUpdate(&vOld)).Error().To(HaveOccurred())
 }
 
 func TestCloudStackDatacenterValidateUpdateV1beta1ToV1beta2Upgrade(t *testing.T) {
@@ -59,7 +59,7 @@ func TestCloudStackDatacenterValidateUpdateV1beta1ToV1beta2Upgrade(t *testing.T)
 
 	vNew.Spec.AvailabilityZones[0].Name = "12345678-abcd-4abc-abcd-abcd12345678"
 	g := NewWithT(t)
-	g.Expect(vNew.ValidateUpdate(&vOld)).To(Succeed())
+	g.Expect(vNew.ValidateUpdate(&vOld)).Error().To(Succeed())
 }
 
 func TestCloudStackDatacenterValidateUpdateV1beta1ToV1beta2UpgradeAddAzInvalid(t *testing.T) {
@@ -70,7 +70,7 @@ func TestCloudStackDatacenterValidateUpdateV1beta1ToV1beta2UpgradeAddAzInvalid(t
 	vNew.Spec.AvailabilityZones[0].Name = "12345678-abcd-4abc-abcd-abcd12345678"
 	vNew.Spec.AvailabilityZones = append(vNew.Spec.AvailabilityZones, vNew.Spec.AvailabilityZones[0])
 	g := NewWithT(t)
-	g.Expect(vNew.ValidateUpdate(&vOld)).NotTo(Succeed())
+	g.Expect(vNew.ValidateUpdate(&vOld)).Error().To(HaveOccurred())
 }
 
 func TestCloudStackDatacenterValidateUpdateRenameAzInvalid(t *testing.T) {
@@ -80,7 +80,7 @@ func TestCloudStackDatacenterValidateUpdateRenameAzInvalid(t *testing.T) {
 
 	vNew.Spec.AvailabilityZones[0].Name = "shinyNewAzName"
 	g := NewWithT(t)
-	g.Expect(vNew.ValidateUpdate(&vOld)).NotTo(Succeed())
+	g.Expect(vNew.ValidateUpdate(&vOld)).Error().To(HaveOccurred())
 }
 
 func TestCloudStackDatacenterValidateUpdateManagementApiEndpointImmutable(t *testing.T) {
@@ -90,7 +90,7 @@ func TestCloudStackDatacenterValidateUpdateManagementApiEndpointImmutable(t *tes
 
 	c.Spec.AvailabilityZones[0].ManagementApiEndpoint = "shinyNewManagementApiEndpoint"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+	g.Expect(c.ValidateUpdate(&vOld)).Error().To(HaveOccurred())
 }
 
 func TestCloudStackDatacenterValidateUpdateZonesImmutable(t *testing.T) {
@@ -99,7 +99,7 @@ func TestCloudStackDatacenterValidateUpdateZonesImmutable(t *testing.T) {
 
 	c.Spec.AvailabilityZones[0].Zone.Name = "shinyNewZone"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+	g.Expect(c.ValidateUpdate(&vOld)).Error().To(HaveOccurred())
 }
 
 func TestCloudStackDatacenterValidateUpdateAccountImmutable(t *testing.T) {
@@ -108,7 +108,7 @@ func TestCloudStackDatacenterValidateUpdateAccountImmutable(t *testing.T) {
 
 	c.Spec.AvailabilityZones[0].Account = "shinyNewAccount"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+	g.Expect(c.ValidateUpdate(&vOld)).Error().To(HaveOccurred())
 }
 
 func TestCloudStackDatacenterValidateUpdateNetworkImmutable(t *testing.T) {
@@ -117,7 +117,7 @@ func TestCloudStackDatacenterValidateUpdateNetworkImmutable(t *testing.T) {
 
 	c.Spec.AvailabilityZones[0].Zone.Network.Name = "GuestNet2"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+	g.Expect(c.ValidateUpdate(&vOld)).Error().To(HaveOccurred())
 }
 
 func TestCloudStackDatacenterValidateUpdateWithPausedAnnotation(t *testing.T) {
@@ -144,7 +144,7 @@ func TestCloudStackDatacenterValidateUpdateWithPausedAnnotation(t *testing.T) {
 	vOld.PauseReconcile()
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
+	g.Expect(c.ValidateUpdate(&vOld)).Error().To(Succeed())
 }
 
 func TestCloudStackDatacenterValidateUpdateInvalidType(t *testing.T) {
@@ -152,7 +152,7 @@ func TestCloudStackDatacenterValidateUpdateInvalidType(t *testing.T) {
 	c := &v1alpha1.CloudStackDatacenterConfig{}
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(vOld)).NotTo(Succeed())
+	g.Expect(c.ValidateUpdate(vOld)).Error().To(HaveOccurred())
 }
 
 func cloudstackDatacenterConfig() v1alpha1.CloudStackDatacenterConfig {

@@ -12,21 +12,21 @@ import (
 func TestSnowIPPoolValidateCreate(t *testing.T) {
 	g := NewWithT(t)
 	new := snowIPPool()
-	g.Expect(new.ValidateCreate()).To(Succeed())
+	g.Expect(new.ValidateCreate()).Error().To(Succeed())
 }
 
 func TestSnowIPPoolValidateCreateInvalidIPPool(t *testing.T) {
 	g := NewWithT(t)
 	new := snowIPPool()
 	new.Spec.Pools[0].IPStart = "invalid"
-	g.Expect(new.ValidateCreate()).To(MatchError(ContainSubstring("SnowIPPool Pools[0].IPStart is invalid")))
+	g.Expect(new.ValidateCreate()).Error().To(MatchError(ContainSubstring("SnowIPPool Pools[0].IPStart is invalid")))
 }
 
 func TestSnowIPPoolValidateUpdate(t *testing.T) {
 	g := NewWithT(t)
 	new := snowIPPool()
 	old := new.DeepCopy()
-	g.Expect(new.ValidateUpdate(old)).To(Succeed())
+	g.Expect(new.ValidateUpdate(old)).Error().To(Succeed())
 }
 
 func TestSnowIPPoolValidateUpdateInvalidIPPool(t *testing.T) {
@@ -34,14 +34,14 @@ func TestSnowIPPoolValidateUpdateInvalidIPPool(t *testing.T) {
 	new := snowIPPool()
 	new.Spec.Pools[0].IPStart = "invalid"
 	old := new.DeepCopy()
-	g.Expect(new.ValidateUpdate(old)).To(MatchError(ContainSubstring("SnowIPPool Pools[0].IPStart is invalid")))
+	g.Expect(new.ValidateUpdate(old)).Error().To(MatchError(ContainSubstring("SnowIPPool Pools[0].IPStart is invalid")))
 }
 
 func TestSnowIPPoolValidateUpdateInvalidObjectType(t *testing.T) {
 	g := NewWithT(t)
 	new := snowIPPool()
 	old := &v1alpha1.SnowDatacenterConfig{}
-	g.Expect(new.ValidateUpdate(old)).To(MatchError(ContainSubstring("expected a SnowIPPool but got a *v1alpha1.SnowDatacenterConfig")))
+	g.Expect(new.ValidateUpdate(old)).Error().To(MatchError(ContainSubstring("expected a SnowIPPool but got a *v1alpha1.SnowDatacenterConfig")))
 }
 
 func TestSnowIPPoolValidateUpdateIPPoolsSame(t *testing.T) {
@@ -62,7 +62,7 @@ func TestSnowIPPoolValidateUpdateIPPoolsSame(t *testing.T) {
 			Subnet:  "192.168.1.0/24",
 		},
 	}
-	g.Expect(new.ValidateUpdate(old)).To(Succeed())
+	g.Expect(new.ValidateUpdate(old)).Error().To(Succeed())
 }
 
 func TestSnowIPPoolValidateUpdateIPPoolsLengthDiff(t *testing.T) {
@@ -74,7 +74,7 @@ func TestSnowIPPoolValidateUpdateIPPoolsLengthDiff(t *testing.T) {
 			IPStart: "start",
 		},
 	}
-	g.Expect(new.ValidateUpdate(old)).To(MatchError(ContainSubstring("spec.pools: Forbidden: field is immutable")))
+	g.Expect(new.ValidateUpdate(old)).Error().To(MatchError(ContainSubstring("spec.pools: Forbidden: field is immutable")))
 }
 
 func TestSnowIPPoolValidateUpdateIPPoolsDiff(t *testing.T) {
@@ -95,13 +95,13 @@ func TestSnowIPPoolValidateUpdateIPPoolsDiff(t *testing.T) {
 			Subnet:  "192.168.1.0/24",
 		},
 	}
-	g.Expect(new.ValidateUpdate(old)).To(MatchError(ContainSubstring("spec.pools: Forbidden: field is immutable")))
+	g.Expect(new.ValidateUpdate(old)).Error().To(MatchError(ContainSubstring("spec.pools: Forbidden: field is immutable")))
 }
 
 func TestSnowIPPoolValidateDelete(t *testing.T) {
 	g := NewWithT(t)
 	new := snowIPPool()
-	g.Expect(new.ValidateDelete()).To(Succeed())
+	g.Expect(new.ValidateDelete()).Error().To(Succeed())
 }
 
 func snowIPPool() v1alpha1.SnowIPPool {

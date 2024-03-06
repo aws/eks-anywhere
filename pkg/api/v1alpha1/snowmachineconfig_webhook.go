@@ -19,6 +19,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
+	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // log is for logging in this package.
@@ -46,31 +47,31 @@ func (r *SnowMachineConfig) Default() {
 var _ webhook.Validator = &SnowMachineConfig{}
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
-func (r *SnowMachineConfig) ValidateCreate() error {
+func (r *SnowMachineConfig) ValidateCreate() (admission.Warnings, error) {
 	snowmachineconfiglog.Info("validate create", "name", r.Name)
 
 	if err := r.ValidateHasSSHKeyName(); err != nil {
-		return err
+		return nil, err
 	}
 
-	return r.Validate()
+	return nil, r.Validate()
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
-func (r *SnowMachineConfig) ValidateUpdate(old runtime.Object) error {
+func (r *SnowMachineConfig) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
 	snowmachineconfiglog.Info("validate update", "name", r.Name)
 
 	if err := r.ValidateHasSSHKeyName(); err != nil {
-		return err
+		return nil, err
 	}
 
-	return r.Validate()
+	return nil, r.Validate()
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type.
-func (r *SnowMachineConfig) ValidateDelete() error {
+func (r *SnowMachineConfig) ValidateDelete() (admission.Warnings, error) {
 	snowmachineconfiglog.Info("validate delete", "name", r.Name)
 
 	// TODO(user): fill in your validation logic upon object deletion.
-	return nil
+	return nil, nil
 }

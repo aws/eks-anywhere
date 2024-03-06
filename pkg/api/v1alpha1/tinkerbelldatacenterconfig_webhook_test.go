@@ -14,7 +14,7 @@ func TestTinkerbellDatacenterValidateCreate(t *testing.T) {
 	dataCenterConfig := tinkerbellDatacenterConfig()
 
 	g := NewWithT(t)
-	g.Expect(dataCenterConfig.ValidateCreate()).To(Succeed())
+	g.Expect(dataCenterConfig.ValidateCreate()).Error().To(Succeed())
 }
 
 func TestTinkerbellDatacenterValidateCreateFail(t *testing.T) {
@@ -22,7 +22,7 @@ func TestTinkerbellDatacenterValidateCreateFail(t *testing.T) {
 	dataCenterConfig.Spec.TinkerbellIP = ""
 
 	g := NewWithT(t)
-	g.Expect(dataCenterConfig.ValidateCreate()).NotTo(Succeed())
+	g.Expect(dataCenterConfig.ValidateCreate()).Error().To(HaveOccurred())
 }
 
 func TestTinkerbellDatacenterValidateUpdateSucceed(t *testing.T) {
@@ -32,7 +32,7 @@ func TestTinkerbellDatacenterValidateUpdateSucceed(t *testing.T) {
 
 	tNew.Spec.TinkerbellIP = "1.1.1.1"
 	g := NewWithT(t)
-	g.Expect(tNew.ValidateUpdate(&tOld)).To(Succeed())
+	g.Expect(tNew.ValidateUpdate(&tOld)).Error().To(Succeed())
 }
 
 func TestTinkerbellDatacenterValidateUpdateSucceedOSImageURL(t *testing.T) {
@@ -41,7 +41,7 @@ func TestTinkerbellDatacenterValidateUpdateSucceedOSImageURL(t *testing.T) {
 
 	tNew.Spec.OSImageURL = "https://os-image-url"
 	g := NewWithT(t)
-	g.Expect(tNew.ValidateUpdate(&tOld)).To(Succeed())
+	g.Expect(tNew.ValidateUpdate(&tOld)).Error().To(Succeed())
 }
 
 func TestTinkerbellDatacenterValidateUpdateFailBadReq(t *testing.T) {
@@ -49,7 +49,7 @@ func TestTinkerbellDatacenterValidateUpdateFailBadReq(t *testing.T) {
 	c := &v1alpha1.TinkerbellDatacenterConfig{}
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(MatchError(ContainSubstring("expected a TinkerbellDatacenterConfig but got a *v1alpha1.Cluster")))
+	g.Expect(c.ValidateUpdate(cOld)).Error().To(MatchError(ContainSubstring("expected a TinkerbellDatacenterConfig but got a *v1alpha1.Cluster")))
 }
 
 func TestTinkerbellDatacenterValidateUpdateImmutable(t *testing.T) {
@@ -117,7 +117,7 @@ func TestTinkerbellDatacenterValidateUpdateImmutable(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			g := NewWithT(t)
 
-			err := tt.new.ValidateUpdate(&tt.old)
+			_, err := tt.new.ValidateUpdate(&tt.old)
 			if tt.wantErr == "" {
 				g.Expect(err).To(BeNil())
 			} else {
@@ -131,7 +131,7 @@ func TestTinkerbellDatacenterValidateDelete(t *testing.T) {
 	tOld := tinkerbellDatacenterConfig()
 
 	g := NewWithT(t)
-	g.Expect(tOld.ValidateDelete()).To(Succeed())
+	g.Expect(tOld.ValidateDelete()).Error().To(Succeed())
 }
 
 type tinkerbellDatacenterConfigOpt func(*v1alpha1.TinkerbellDatacenterConfig)

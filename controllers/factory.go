@@ -282,7 +282,7 @@ func (f *Factory) withTracker() *Factory {
 			f.manager,
 			remote.ClusterCacheTrackerOptions{
 				Log:     &logger,
-				Indexes: remote.DefaultIndexes,
+				Indexes: []remote.Index{remote.NodeProviderIDIndex},
 			},
 		)
 		if err != nil {

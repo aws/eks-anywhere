@@ -23,6 +23,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
+	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // log is for logging in this package.
@@ -52,11 +53,11 @@ func (r *VSphereDatacenterConfig) Default() {
 var _ webhook.Validator = &VSphereDatacenterConfig{}
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
-func (r *VSphereDatacenterConfig) ValidateCreate() error {
+func (r *VSphereDatacenterConfig) ValidateCreate() (admission.Warnings, error) {
 	vspheredatacenterconfiglog.Info("validate create", "name", r.Name)
 
 	if err := r.Validate(); err != nil {
-		return apierrors.NewInvalid(
+		return nil, apierrors.NewInvalid(
 			GroupVersion.WithKind(VSphereDatacenterKind).GroupKind(),
 			r.Name,
 			field.ErrorList{
@@ -67,23 +68,23 @@ func (r *VSphereDatacenterConfig) ValidateCreate() error {
 
 	if r.IsReconcilePaused() {
 		vspheredatacenterconfiglog.Info("VSphereDatacenterConfig is paused, so allowing create", "name", r.Name)
-		return nil
+		return nil, nil
 	}
 
-	return nil
+	return nil, nil
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
-func (r *VSphereDatacenterConfig) ValidateUpdate(old runtime.Object) error {
+func (r *VSphereDatacenterConfig) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
 	vspheredatacenterconfiglog.Info("validate update", "name", r.Name)
 
 	oldDatacenterConfig, ok := old.(*VSphereDatacenterConfig)
 	if !ok {
-		return apierrors.NewBadRequest(fmt.Sprintf("expected a VSphereDataCenterConfig but got a %T", old))
+		return nil, apierrors.NewBadRequest(fmt.Sprintf("expected a VSphereDataCenterConfig but got a %T", old))
 	}
 
 	if err := r.Validate(); err != nil {
-		return apierrors.NewInvalid(
+		return nil, apierrors.NewInvalid(
 			GroupVersion.WithKind(VSphereDatacenterKind).GroupKind(),
 			r.Name,
 			field.ErrorList{
@@ -94,16 +95,16 @@ func (r *VSphereDatacenterConfig) ValidateUpdate(old runtime.Object) error {
 
 	if oldDatacenterConfig.IsReconcilePaused() {
 		vspheredatacenterconfiglog.Info("Reconciliation is paused")
-		return nil
+		return nil, nil
 	}
 
 	r.SetDefaults()
 
 	if allErrs := validateImmutableFieldsVSphereCluster(r, oldDatacenterConfig); len(allErrs) != 0 {
-		return apierrors.NewInvalid(GroupVersion.WithKind(VSphereDatacenterKind).GroupKind(), r.Name, allErrs)
+		return nil, apierrors.NewInvalid(GroupVersion.WithKind(VSphereDatacenterKind).GroupKind(), r.Name, allErrs)
 	}
 
-	return nil
+	return nil, nil
 }
 
 func validateImmutableFieldsVSphereCluster(new, old *VSphereDatacenterConfig) field.ErrorList {
@@ -135,9 +136,9 @@ func validateImmutableFieldsVSphereCluster(new, old *VSphereDatacenterConfig) fi
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type.
-func (r *VSphereDatacenterConfig) ValidateDelete() error {
+func (r *VSphereDatacenterConfig) ValidateDelete() (admission.Warnings, error) {
 	vspheredatacenterconfiglog.Info("validate delete", "name", r.Name)
 
 	// TODO(user): fill in your validation logic upon object deletion.
-	return nil
+	return nil, nil
 }

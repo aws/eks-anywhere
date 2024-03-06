@@ -63,7 +63,9 @@ func TestCPUpgradeReconcile(t *testing.T) {
 		testObjs.cluster, testObjs.cpUpgrade, testObjs.machines[0], testObjs.machines[1], testObjs.nodes[0], testObjs.nodes[1],
 		testObjs.nodeUpgrades[0], testObjs.nodeUpgrades[1], testObjs.kubeadmConfigs[0], testObjs.kubeadmConfigs[1], testObjs.infraMachines[0], testObjs.infraMachines[1],
 	}
-	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
+	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).
+		WithStatusSubresource(testObjs.cpUpgrade).
+		Build()
 	kcp := testObjs.cpUpgrade.Spec.ControlPlane
 	clientRegistry.EXPECT().GetClient(ctx, types.NamespacedName{Name: kcp.Name, Namespace: kcp.Namespace}).Return(client, nil)
 
@@ -94,7 +96,9 @@ func TestCPUpgradeReconcileEarly(t *testing.T) {
 		testObjs.cluster, testObjs.cpUpgrade, testObjs.machines[0], testObjs.machines[1], testObjs.nodes[0], testObjs.nodes[1],
 		testObjs.nodeUpgrades[0], testObjs.nodeUpgrades[1], testObjs.kubeadmConfigs[0], testObjs.kubeadmConfigs[1], testObjs.infraMachines[0], testObjs.infraMachines[1],
 	}
-	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
+	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).
+		WithStatusSubresource(testObjs.cpUpgrade).
+		Build()
 	clientRegistry.EXPECT().GetClient(ctx, types.NamespacedName{Name: "my-cp", Namespace: "eksa-system"}).Return(client, nil)
 
 	r := controllers.NewControlPlaneUpgradeReconciler(client, clientRegistry)
@@ -123,7 +127,9 @@ func TestCPUpgradeReconcileNodeNotUpgraded(t *testing.T) {
 		testObjs.cluster, testObjs.cpUpgrade, testObjs.machines[0], testObjs.machines[1], testObjs.nodes[0], testObjs.nodes[1],
 		testObjs.nodeUpgrades[0], testObjs.nodeUpgrades[1], testObjs.kubeadmConfigs[0], testObjs.kubeadmConfigs[1], testObjs.infraMachines[0], testObjs.infraMachines[1],
 	}
-	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
+	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).
+		WithStatusSubresource(testObjs.cpUpgrade).
+		Build()
 	kcp := testObjs.cpUpgrade.Spec.ControlPlane
 	clientRegistry.EXPECT().GetClient(ctx, types.NamespacedName{Name: kcp.Name, Namespace: kcp.Namespace}).Return(client, nil)
 
@@ -148,7 +154,9 @@ func TestCPUpgradeReconcileNodeUpgradeEnsureStatusUpdated(t *testing.T) {
 		testObjs.cluster, testObjs.machines[0], testObjs.machines[1], testObjs.nodes[0], testObjs.nodes[1], testObjs.cpUpgrade,
 		testObjs.kubeadmConfigs[0], testObjs.kubeadmConfigs[1], testObjs.infraMachines[0], testObjs.infraMachines[1],
 	}
-	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
+	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).
+		WithStatusSubresource(testObjs.cpUpgrade).
+		Build()
 	kcp := testObjs.cpUpgrade.Spec.ControlPlane
 	clientRegistry.EXPECT().GetClient(ctx, types.NamespacedName{Name: kcp.Name, Namespace: kcp.Namespace}).Return(client, nil)
 
@@ -181,7 +189,9 @@ func TestCPUpgradeReconcileNodeUpgraderCreate(t *testing.T) {
 		testObjs.cluster, testObjs.machines[0], testObjs.machines[1], testObjs.nodes[0], testObjs.nodes[1], testObjs.cpUpgrade,
 		testObjs.nodeUpgrades[0], testObjs.kubeadmConfigs[0], testObjs.kubeadmConfigs[1], testObjs.infraMachines[0], testObjs.infraMachines[1],
 	}
-	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
+	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).
+		WithStatusSubresource(testObjs.cpUpgrade).
+		Build()
 	kcp := testObjs.cpUpgrade.Spec.ControlPlane
 	clientRegistry.EXPECT().GetClient(ctx, types.NamespacedName{Name: kcp.Name, Namespace: kcp.Namespace}).Return(client, nil)
 
@@ -229,7 +239,9 @@ func TestCPUpgradeReconcileNodeUpgraderInvalidKCPSpec(t *testing.T) {
 				testObjs.cluster, testObjs.machines[0], testObjs.machines[1], testObjs.nodes[0], testObjs.nodes[1],
 				testObjs.cpUpgrade, testObjs.nodeUpgrades[0], testObjs.kubeadmConfigs[0], testObjs.kubeadmConfigs[1], testObjs.infraMachines[0], testObjs.infraMachines[1],
 			}
-			client := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
+			client := fake.NewClientBuilder().WithRuntimeObjects(objs...).
+				WithStatusSubresource(testObjs.cpUpgrade).
+				Build()
 			kcp := testObjs.cpUpgrade.Spec.ControlPlane
 			clientRegistry.EXPECT().GetClient(ctx, types.NamespacedName{Name: kcp.Name, Namespace: kcp.Namespace}).Return(client, nil)
 
@@ -263,7 +275,9 @@ func TestCPUpgradeReconcileNodesNotReadyYet(t *testing.T) {
 		testObjs.cluster, testObjs.cpUpgrade, testObjs.machines[0], testObjs.machines[1], testObjs.nodes[0], testObjs.nodes[1],
 		testObjs.nodeUpgrades[0], testObjs.nodeUpgrades[1], testObjs.kubeadmConfigs[0], testObjs.kubeadmConfigs[1], testObjs.infraMachines[0], testObjs.infraMachines[1],
 	}
-	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
+	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).
+		WithStatusSubresource(testObjs.cpUpgrade).
+		Build()
 	kcp := testObjs.cpUpgrade.Spec.ControlPlane
 	clientRegistry.EXPECT().GetClient(ctx, types.NamespacedName{Name: kcp.Name, Namespace: kcp.Namespace}).Return(client, nil)
 
@@ -290,11 +304,14 @@ func TestCPUpgradeReconcileDelete(t *testing.T) {
 		}
 	}
 	testObjs.cpUpgrade.DeletionTimestamp = &now
+	testObjs.cpUpgrade.Finalizers = []string{"my-finalizer"}
 	objs := []runtime.Object{
 		testObjs.cluster, testObjs.cpUpgrade, testObjs.machines[0], testObjs.machines[1], testObjs.nodes[0], testObjs.nodes[1],
 		testObjs.nodeUpgrades[0], testObjs.nodeUpgrades[1], testObjs.kubeadmConfigs[0], testObjs.kubeadmConfigs[1], testObjs.infraMachines[0], testObjs.infraMachines[1],
 	}
-	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
+	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).
+		WithStatusSubresource(testObjs.cpUpgrade).
+		Build()
 
 	r := controllers.NewControlPlaneUpgradeReconciler(client, clientRegistry)
 	req := cpUpgradeRequest(testObjs.cpUpgrade)
@@ -323,7 +340,9 @@ func TestCPUpgradeObjectDoesNotExist(t *testing.T) {
 		testObjs.cluster, testObjs.machines[0], testObjs.machines[1], testObjs.nodes[0], testObjs.nodes[1],
 		testObjs.nodeUpgrades[0], testObjs.nodeUpgrades[1], testObjs.kubeadmConfigs[0], testObjs.kubeadmConfigs[1], testObjs.infraMachines[0], testObjs.infraMachines[1],
 	}
-	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
+	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).
+		WithStatusSubresource(testObjs.cpUpgrade).
+		Build()
 
 	r := controllers.NewControlPlaneUpgradeReconciler(client, clientRegistry)
 
@@ -350,7 +369,9 @@ func TestCPUpgradeReconcileUpdateCapiMachineVersion(t *testing.T) {
 		testObjs.nodeUpgrades[0], testObjs.nodeUpgrades[1], testObjs.kubeadmConfigs[0], testObjs.kubeadmConfigs[1], testObjs.infraMachines[0], testObjs.infraMachines[1],
 	}
 	testObjs.nodeUpgrades[0].Status.Completed = true
-	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
+	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).
+		WithStatusSubresource(testObjs.cpUpgrade).
+		Build()
 	kcp := testObjs.cpUpgrade.Spec.ControlPlane
 	clientRegistry.EXPECT().GetClient(ctx, types.NamespacedName{Name: kcp.Name, Namespace: kcp.Namespace}).Return(client, nil)
 
@@ -384,7 +405,9 @@ func TestCPUpgradeReconcileUpdateKubeadmConfigSuccess(t *testing.T) {
 		testObjs.nodeUpgrades[0], testObjs.nodeUpgrades[1], testObjs.kubeadmConfigs[0], testObjs.kubeadmConfigs[1], testObjs.infraMachines[0], testObjs.infraMachines[1], kubeVipCm,
 	}
 	testObjs.nodeUpgrades[0].Status.Completed = true
-	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
+	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).
+		WithStatusSubresource(testObjs.cpUpgrade).
+		Build()
 	kcp := testObjs.cpUpgrade.Spec.ControlPlane
 	clientRegistry.EXPECT().GetClient(ctx, types.NamespacedName{Name: kcp.Name, Namespace: kcp.Namespace}).Return(client, nil)
 
@@ -440,7 +463,9 @@ func TestCPUpgradeReconcileUpdateKubeadmConfigRefNil(t *testing.T) {
 		testObjs.nodeUpgrades[0], testObjs.nodeUpgrades[1], testObjs.kubeadmConfigs[0], testObjs.kubeadmConfigs[1], testObjs.infraMachines[0], testObjs.infraMachines[1],
 	}
 	testObjs.nodeUpgrades[0].Status.Completed = true
-	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
+	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).
+		WithStatusSubresource(testObjs.cpUpgrade).
+		Build()
 	kcp := testObjs.cpUpgrade.Spec.ControlPlane
 	clientRegistry.EXPECT().GetClient(ctx, types.NamespacedName{Name: kcp.Name, Namespace: kcp.Namespace}).Return(client, nil)
 
@@ -470,7 +495,9 @@ func TestCPUpgradeReconcileUpdateKubeadmConfigNotFound(t *testing.T) {
 		testObjs.nodeUpgrades[0], testObjs.nodeUpgrades[1], testObjs.infraMachines[0], testObjs.infraMachines[1],
 	}
 	testObjs.nodeUpgrades[0].Status.Completed = true
-	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
+	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).
+		WithStatusSubresource(testObjs.cpUpgrade).
+		Build()
 	kcp := testObjs.cpUpgrade.Spec.ControlPlane
 	clientRegistry.EXPECT().GetClient(ctx, types.NamespacedName{Name: kcp.Name, Namespace: kcp.Namespace}).Return(client, nil)
 
@@ -500,7 +527,9 @@ func TestCPUpgradeReconcileUpdateInfraMachineAnnotationSuccess(t *testing.T) {
 		testObjs.nodeUpgrades[0], testObjs.nodeUpgrades[1], testObjs.kubeadmConfigs[0], testObjs.kubeadmConfigs[1], testObjs.infraMachines[0], testObjs.infraMachines[1],
 	}
 	testObjs.nodeUpgrades[0].Status.Completed = true
-	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
+	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).
+		WithStatusSubresource(testObjs.cpUpgrade).
+		Build()
 	kcp := testObjs.cpUpgrade.Spec.ControlPlane
 	clientRegistry.EXPECT().GetClient(ctx, types.NamespacedName{Name: kcp.Name, Namespace: kcp.Namespace}).Return(client, nil)
 
@@ -539,7 +568,9 @@ func TestCPUpgradeReconcileUpdateInfraMachineAnnotationNilSuccess(t *testing.T) 
 		testObjs.nodeUpgrades[0], testObjs.nodeUpgrades[1], testObjs.kubeadmConfigs[0], testObjs.kubeadmConfigs[1], testObjs.infraMachines[0], testObjs.infraMachines[1],
 	}
 	testObjs.nodeUpgrades[0].Status.Completed = true
-	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
+	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).
+		WithStatusSubresource(testObjs.cpUpgrade).
+		Build()
 	kcp := testObjs.cpUpgrade.Spec.ControlPlane
 	clientRegistry.EXPECT().GetClient(ctx, types.NamespacedName{Name: kcp.Name, Namespace: kcp.Namespace}).Return(client, nil)
 
@@ -576,7 +607,9 @@ func TestCPUpgradeReconcileUpdateInfraMachineAnnotationErrror(t *testing.T) {
 		testObjs.nodeUpgrades[0], testObjs.nodeUpgrades[1], testObjs.kubeadmConfigs[0], testObjs.kubeadmConfigs[1],
 	}
 	testObjs.nodeUpgrades[0].Status.Completed = true
-	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
+	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).
+		WithStatusSubresource(testObjs.cpUpgrade).
+		Build()
 	kcp := testObjs.cpUpgrade.Spec.ControlPlane
 	clientRegistry.EXPECT().GetClient(ctx, types.NamespacedName{Name: kcp.Name, Namespace: kcp.Namespace}).Return(client, nil)
 

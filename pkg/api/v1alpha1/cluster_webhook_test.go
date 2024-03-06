@@ -38,7 +38,7 @@ func TestClusterValidateUpdateManagementValueImmutable(t *testing.T) {
 	c.SetManagedBy("management-cluster")
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(MatchError(ContainSubstring("field is immutable")))
+	g.Expect(c.ValidateUpdate(cOld)).Error().To(MatchError(ContainSubstring("field is immutable")))
 }
 
 func TestClusterValidateUpdateManagementOldNilNewTrueSuccess(t *testing.T) {
@@ -47,7 +47,7 @@ func TestClusterValidateUpdateManagementOldNilNewTrueSuccess(t *testing.T) {
 	c.SetSelfManaged()
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(Succeed())
+	g.Expect(c.ValidateUpdate(cOld)).Error().To(Succeed())
 }
 
 func TestClusterValidateUpdateManagementOldNilNewFalseImmutable(t *testing.T) {
@@ -57,7 +57,7 @@ func TestClusterValidateUpdateManagementOldNilNewFalseImmutable(t *testing.T) {
 	c.SetManagedBy("management-cluster")
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(MatchError(ContainSubstring("field is immutable")))
+	g.Expect(c.ValidateUpdate(cOld)).Error().To(MatchError(ContainSubstring("field is immutable")))
 }
 
 func TestClusterValidateUpdateManagementBothNilImmutable(t *testing.T) {
@@ -65,7 +65,7 @@ func TestClusterValidateUpdateManagementBothNilImmutable(t *testing.T) {
 	c := cOld.DeepCopy()
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(Succeed())
+	g.Expect(c.ValidateUpdate(cOld)).Error().To(Succeed())
 }
 
 func TestManagementClusterValidateUpdateKubernetesVersionMutableManagement(t *testing.T) {
@@ -75,7 +75,7 @@ func TestManagementClusterValidateUpdateKubernetesVersionMutableManagement(t *te
 	c.Spec.KubernetesVersion = v1alpha1.Kube122
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(Succeed())
+	g.Expect(c.ValidateUpdate(cOld)).Error().To(Succeed())
 }
 
 func TestWorkloadClusterValidateUpdateKubernetesVersionSuccess(t *testing.T) {
@@ -86,7 +86,7 @@ func TestWorkloadClusterValidateUpdateKubernetesVersionSuccess(t *testing.T) {
 	c.Spec.KubernetesVersion = v1alpha1.Kube122
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(Succeed())
+	g.Expect(c.ValidateUpdate(cOld)).Error().To(Succeed())
 }
 
 func TestWorkloadClusterValidateUpdateNoUpdateSuccess(t *testing.T) {
@@ -96,7 +96,7 @@ func TestWorkloadClusterValidateUpdateNoUpdateSuccess(t *testing.T) {
 	c := cOld.DeepCopy()
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(Succeed())
+	g.Expect(c.ValidateUpdate(cOld)).Error().To(Succeed())
 }
 
 func TestManagementClusterValidateUpdateControlPlaneConfigurationEqual(t *testing.T) {
@@ -116,7 +116,7 @@ func TestManagementClusterValidateUpdateControlPlaneConfigurationEqual(t *testin
 	}
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(Succeed())
+	g.Expect(c.ValidateUpdate(cOld)).Error().To(Succeed())
 }
 
 func TestWorkloadClusterValidateUpdateControlPlaneConfigurationEqual(t *testing.T) {
@@ -136,7 +136,7 @@ func TestWorkloadClusterValidateUpdateControlPlaneConfigurationEqual(t *testing.
 	}
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(Succeed())
+	g.Expect(c.ValidateUpdate(cOld)).Error().To(Succeed())
 }
 
 func TestClusterValidateUpdateControlPlaneConfigurationImmutable(t *testing.T) {
@@ -154,7 +154,7 @@ func TestClusterValidateUpdateControlPlaneConfigurationImmutable(t *testing.T) {
 	}
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(MatchError(ContainSubstring("spec.ControlPlaneConfiguration.endpoint: Forbidden: field is immutable")))
+	g.Expect(c.ValidateUpdate(cOld)).Error().To(MatchError(ContainSubstring("spec.ControlPlaneConfiguration.endpoint: Forbidden: field is immutable")))
 }
 
 func TestClusterValidateUpdateControlPlaneConfigurationOldEndpointImmutable(t *testing.T) {
@@ -168,7 +168,7 @@ func TestClusterValidateUpdateControlPlaneConfigurationOldEndpointImmutable(t *t
 	}
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(MatchError(ContainSubstring("spec.ControlPlaneConfiguration.endpoint: Forbidden: field is immutable")))
+	g.Expect(c.ValidateUpdate(cOld)).Error().To(MatchError(ContainSubstring("spec.ControlPlaneConfiguration.endpoint: Forbidden: field is immutable")))
 }
 
 func TestClusterValidateUpdateControlPlaneConfigurationOldEndpointNilImmutable(t *testing.T) {
@@ -182,7 +182,7 @@ func TestClusterValidateUpdateControlPlaneConfigurationOldEndpointNilImmutable(t
 	}
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(MatchError(ContainSubstring("spec.ControlPlaneConfiguration.endpoint: Forbidden: field is immutable")))
+	g.Expect(c.ValidateUpdate(cOld)).Error().To(MatchError(ContainSubstring("spec.ControlPlaneConfiguration.endpoint: Forbidden: field is immutable")))
 }
 
 func TestClusterValidateUpdateControlPlaneConfigurationNewEndpointNilImmutable(t *testing.T) {
@@ -196,7 +196,7 @@ func TestClusterValidateUpdateControlPlaneConfigurationNewEndpointNilImmutable(t
 	}
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(MatchError(ContainSubstring("spec.ControlPlaneConfiguration.endpoint: Forbidden: field is immutable")))
+	g.Expect(c.ValidateUpdate(cOld)).Error().To(MatchError(ContainSubstring("spec.ControlPlaneConfiguration.endpoint: Forbidden: field is immutable")))
 }
 
 func TestCloudStackClusterValidateUpdateControlPlaneConfigurationOldDefaultPortNewNoPort(t *testing.T) {
@@ -207,7 +207,7 @@ func TestCloudStackClusterValidateUpdateControlPlaneConfigurationOldDefaultPortN
 	c.Spec.ControlPlaneConfiguration.Endpoint = &v1alpha1.Endpoint{Host: "1.1.1.1"}
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(Succeed())
+	g.Expect(c.ValidateUpdate(cOld)).Error().To(Succeed())
 }
 
 func TestCloudStackClusterValidateUpdateControlPlaneConfigurationOldNoPortNewDefaultPort(t *testing.T) {
@@ -218,7 +218,7 @@ func TestCloudStackClusterValidateUpdateControlPlaneConfigurationOldNoPortNewDef
 	c.Spec.ControlPlaneConfiguration.Endpoint = &v1alpha1.Endpoint{Host: "1.1.1.1:6443"}
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(Succeed())
+	g.Expect(c.ValidateUpdate(cOld)).Error().To(Succeed())
 }
 
 func TestCloudStackClusterValidateUpdateControlPlaneConfigurationOldPortImmutable(t *testing.T) {
@@ -229,7 +229,7 @@ func TestCloudStackClusterValidateUpdateControlPlaneConfigurationOldPortImmutabl
 	c.Spec.ControlPlaneConfiguration.Endpoint = &v1alpha1.Endpoint{Host: "1.1.1.2"}
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(MatchError(ContainSubstring("spec.ControlPlaneConfiguration.endpoint: Forbidden: field is immutable")))
+	g.Expect(c.ValidateUpdate(cOld)).Error().To(MatchError(ContainSubstring("spec.ControlPlaneConfiguration.endpoint: Forbidden: field is immutable")))
 }
 
 func TestManagementClusterValidateUpdateControlPlaneConfigurationTaintsMutableManagement(t *testing.T) {
@@ -253,7 +253,7 @@ func TestManagementClusterValidateUpdateControlPlaneConfigurationTaintsMutableMa
 	}
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(Succeed())
+	g.Expect(c.ValidateUpdate(cOld)).Error().To(Succeed())
 }
 
 func TestManagementClusterValidateUpdateControlPlaneConfigurationLabelsMutableManagement(t *testing.T) {
@@ -268,7 +268,7 @@ func TestManagementClusterValidateUpdateControlPlaneConfigurationLabelsMutableMa
 	}
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(Succeed())
+	g.Expect(c.ValidateUpdate(cOld)).Error().To(Succeed())
 }
 
 func TestManagementClusterValidateUpdateControlPlaneConfigurationOldMachineGroupRefMutableManagement(t *testing.T) {
@@ -280,7 +280,7 @@ func TestManagementClusterValidateUpdateControlPlaneConfigurationOldMachineGroup
 	c.Spec.ControlPlaneConfiguration.MachineGroupRef.Name = "test2"
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(Succeed())
+	g.Expect(c.ValidateUpdate(cOld)).Error().To(Succeed())
 }
 
 func TestWorkloadClusterValidateUpdateControlPlaneConfigurationMachineGroupRef(t *testing.T) {
@@ -292,7 +292,7 @@ func TestWorkloadClusterValidateUpdateControlPlaneConfigurationMachineGroupRef(t
 	c.Spec.ControlPlaneConfiguration.MachineGroupRef = &v1alpha1.Ref{Name: "test2", Kind: "MachineConfig"}
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(Succeed())
+	g.Expect(c.ValidateUpdate(cOld)).Error().To(Succeed())
 }
 
 func TestWorkloadClusterValidateUpdateControlPlaneConfigurationOldMachineGroupRefNilSuccess(t *testing.T) {
@@ -304,7 +304,7 @@ func TestWorkloadClusterValidateUpdateControlPlaneConfigurationOldMachineGroupRe
 	c.Spec.ControlPlaneConfiguration.MachineGroupRef = &v1alpha1.Ref{Name: "test", Kind: "MachineConfig"}
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(Succeed())
+	g.Expect(c.ValidateUpdate(cOld)).Error().To(Succeed())
 }
 
 func TestManagementClusterValidateUpdateControlPlaneConfigurationNewMachineGroupRefNilImmutable(t *testing.T) {
@@ -317,7 +317,7 @@ func TestManagementClusterValidateUpdateControlPlaneConfigurationNewMachineGroup
 	}
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(MatchError(ContainSubstring("ControlPlaneConfiguration.endpoint: Forbidden: field is immutable")))
+	g.Expect(c.ValidateUpdate(cOld)).Error().To(MatchError(ContainSubstring("ControlPlaneConfiguration.endpoint: Forbidden: field is immutable")))
 }
 
 func TestWorkloadClusterValidateUpdateControlPlaneConfigurationNewMachineGroupRefChangedSuccess(t *testing.T) {
@@ -329,7 +329,7 @@ func TestWorkloadClusterValidateUpdateControlPlaneConfigurationNewMachineGroupRe
 	c.Spec.ControlPlaneConfiguration.MachineGroupRef = &v1alpha1.Ref{Name: "test-2", Kind: "MachineConfig"}
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(Succeed())
+	g.Expect(c.ValidateUpdate(cOld)).Error().To(Succeed())
 }
 
 func TestWorkloadClusterValidateUpdateControlPlaneConfigurationNewMachineGroupRefNilError(t *testing.T) {
@@ -340,7 +340,7 @@ func TestWorkloadClusterValidateUpdateControlPlaneConfigurationNewMachineGroupRe
 	c.Spec.ControlPlaneConfiguration.MachineGroupRef = nil
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(MatchError(ContainSubstring("must specify machineGroupRef control plane machines")))
+	g.Expect(c.ValidateUpdate(cOld)).Error().To(MatchError(ContainSubstring("must specify machineGroupRef control plane machines")))
 }
 
 func TestWorkloadClusterValidateUpdateWorkerNodeConfigurationNewMachineGroupRefNilError(t *testing.T) {
@@ -351,7 +351,7 @@ func TestWorkloadClusterValidateUpdateWorkerNodeConfigurationNewMachineGroupRefN
 	c.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef = nil
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(MatchError(ContainSubstring("must specify machineGroupRef for worker nodes")))
+	g.Expect(c.ValidateUpdate(cOld)).Error().To(MatchError(ContainSubstring("must specify machineGroupRef for worker nodes")))
 }
 
 func TestWorkloadClusterValidateUpdateExternalEtcdConfigurationNewMachineGroupRefNilError(t *testing.T) {
@@ -369,7 +369,7 @@ func TestWorkloadClusterValidateUpdateExternalEtcdConfigurationNewMachineGroupRe
 	}
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(MatchError(ContainSubstring("must specify machineGroupRef for etcd machines")))
+	g.Expect(c.ValidateUpdate(cOld)).Error().To(MatchError(ContainSubstring("must specify machineGroupRef for etcd machines")))
 }
 
 func TestClusterValidateUpdateDatacenterRefImmutableEqual(t *testing.T) {
@@ -380,7 +380,7 @@ func TestClusterValidateUpdateDatacenterRefImmutableEqual(t *testing.T) {
 	c := cOld.DeepCopy()
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(Succeed())
+	g.Expect(c.ValidateUpdate(cOld)).Error().To(Succeed())
 }
 
 func TestClusterValidateUpdateDatacenterRefImmutable(t *testing.T) {
@@ -392,7 +392,7 @@ func TestClusterValidateUpdateDatacenterRefImmutable(t *testing.T) {
 	c.Spec.DatacenterRef = v1alpha1.Ref{Name: "test2", Kind: "SecondDatacenterConfig"}
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(MatchError(ContainSubstring("spec.datacenterRef: Forbidden: field is immutable")))
+	g.Expect(c.ValidateUpdate(cOld)).Error().To(MatchError(ContainSubstring("spec.datacenterRef: Forbidden: field is immutable")))
 }
 
 func TestClusterValidateUpdateDatacenterRefImmutableName(t *testing.T) {
@@ -404,7 +404,7 @@ func TestClusterValidateUpdateDatacenterRefImmutableName(t *testing.T) {
 	c.Spec.DatacenterRef = v1alpha1.Ref{Name: "test2", Kind: "DatacenterConfig"}
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(MatchError(ContainSubstring("spec.datacenterRef: Forbidden: field is immutable")))
+	g.Expect(c.ValidateUpdate(cOld)).Error().To(MatchError(ContainSubstring("spec.datacenterRef: Forbidden: field is immutable")))
 }
 
 func TestClusterValidateUpdateDatacenterRefNilImmutable(t *testing.T) {
@@ -416,7 +416,7 @@ func TestClusterValidateUpdateDatacenterRefNilImmutable(t *testing.T) {
 	c.Spec.DatacenterRef = v1alpha1.Ref{}
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(MatchError(ContainSubstring("spec.datacenterRef: Forbidden: field is immutable")))
+	g.Expect(c.ValidateUpdate(cOld)).Error().To(MatchError(ContainSubstring("spec.datacenterRef: Forbidden: field is immutable")))
 }
 
 func TestClusterValidateUpdateExternalEtcdConfiguration(t *testing.T) {
@@ -448,7 +448,7 @@ func TestClusterValidateUpdateExternalEtcdConfiguration(t *testing.T) {
 	for name, tt := range cases {
 		t.Run(name, func(t *testing.T) {
 			g := NewWithT(t)
-			g.Expect(tt.cNew.ValidateUpdate(tt.cOld)).To(MatchError(ContainSubstring(tt.expectErr)))
+			g.Expect(tt.cNew.ValidateUpdate(tt.cOld)).Error().To(MatchError(ContainSubstring(tt.expectErr)))
 		})
 	}
 }
@@ -459,7 +459,7 @@ func TestClusterValidateUpdateDataCenterRefNameImmutable(t *testing.T) {
 	c.Spec.DatacenterRef.Name = "FancyNewDataCenter"
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(MatchError(ContainSubstring("spec.datacenterRef: Forbidden: field is immutable")))
+	g.Expect(c.ValidateUpdate(cOld)).Error().To(MatchError(ContainSubstring("spec.datacenterRef: Forbidden: field is immutable")))
 }
 
 func TestClusterValidateUpdateDataCenterRefKindImmutable(t *testing.T) {
@@ -468,7 +468,7 @@ func TestClusterValidateUpdateDataCenterRefKindImmutable(t *testing.T) {
 	c.Spec.DatacenterRef.Name = v1alpha1.DockerDatacenterKind
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(MatchError(ContainSubstring("spec.datacenterRef: Forbidden: field is immutable")))
+	g.Expect(c.ValidateUpdate(cOld)).Error().To(MatchError(ContainSubstring("spec.datacenterRef: Forbidden: field is immutable")))
 }
 
 func TestClusterValidateUpdateClusterNetworkPodsImmutable(t *testing.T) {
@@ -478,7 +478,7 @@ func TestClusterValidateUpdateClusterNetworkPodsImmutable(t *testing.T) {
 	c.Spec.ClusterNetwork.Pods.CidrBlocks = []string{"1.2.3.4/5"}
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(MatchError(ContainSubstring("spec.clusterNetwork.pods: Forbidden: field is immutable")))
+	g.Expect(c.ValidateUpdate(cOld)).Error().To(MatchError(ContainSubstring("spec.clusterNetwork.pods: Forbidden: field is immutable")))
 }
 
 func TestClusterValidateUpdateClusterNetworkServicesImmutable(t *testing.T) {
@@ -488,7 +488,7 @@ func TestClusterValidateUpdateClusterNetworkServicesImmutable(t *testing.T) {
 	c.Spec.ClusterNetwork.Services.CidrBlocks = []string{"1.2.3.4/9", "1.2.3.4/10"}
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(MatchError(ContainSubstring("spec.clusterNetwork.services: Forbidden: field is immutable")))
+	g.Expect(c.ValidateUpdate(cOld)).Error().To(MatchError(ContainSubstring("spec.clusterNetwork.services: Forbidden: field is immutable")))
 }
 
 func TestClusterValidateUpdateClusterNetworkDNSImmutable(t *testing.T) {
@@ -505,7 +505,7 @@ func TestClusterValidateUpdateClusterNetworkDNSImmutable(t *testing.T) {
 	c.Spec.ClusterNetwork.DNS.ResolvConf.Path = "other-path"
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(MatchError(ContainSubstring("spec.clusterNetwork.dns: Forbidden: field is immutable")))
+	g.Expect(c.ValidateUpdate(cOld)).Error().To(MatchError(ContainSubstring("spec.clusterNetwork.dns: Forbidden: field is immutable")))
 }
 
 func TestClusterValidateUpdateClusterNetworkNodesImmutable(t *testing.T) {
@@ -516,7 +516,7 @@ func TestClusterValidateUpdateClusterNetworkNodesImmutable(t *testing.T) {
 		CIDRMaskSize: ptr.Int(10),
 	}
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(MatchError(ContainSubstring("spec.clusterNetwork.nodes: Forbidden: field is immutable")))
+	g.Expect(c.ValidateUpdate(cOld)).Error().To(MatchError(ContainSubstring("spec.clusterNetwork.nodes: Forbidden: field is immutable")))
 }
 
 func TestClusterValidateUpdateProxyConfigurationEqualOrder(t *testing.T) {
@@ -541,7 +541,7 @@ func TestClusterValidateUpdateProxyConfigurationEqualOrder(t *testing.T) {
 	}
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(Succeed())
+	g.Expect(c.ValidateUpdate(cOld)).Error().To(Succeed())
 }
 
 func TestClusterValidateUpdateProxyConfigurationImmutable(t *testing.T) {
@@ -559,7 +559,7 @@ func TestClusterValidateUpdateProxyConfigurationImmutable(t *testing.T) {
 	}
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(MatchError(ContainSubstring("spec.ProxyConfiguration: Forbidden: field is immutable")))
+	g.Expect(c.ValidateUpdate(cOld)).Error().To(MatchError(ContainSubstring("spec.ProxyConfiguration: Forbidden: field is immutable")))
 }
 
 func TestClusterValidateUpdateProxyConfigurationNoProxyImmutable(t *testing.T) {
@@ -576,7 +576,7 @@ func TestClusterValidateUpdateProxyConfigurationNoProxyImmutable(t *testing.T) {
 	}
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(MatchError(ContainSubstring("spec.ProxyConfiguration: Forbidden: field is immutable")))
+	g.Expect(c.ValidateUpdate(cOld)).Error().To(MatchError(ContainSubstring("spec.ProxyConfiguration: Forbidden: field is immutable")))
 }
 
 func TestClusterValidateUpdateProxyConfigurationOldNilImmutable(t *testing.T) {
@@ -591,7 +591,7 @@ func TestClusterValidateUpdateProxyConfigurationOldNilImmutable(t *testing.T) {
 	}
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(MatchError(ContainSubstring("spec.ProxyConfiguration: Forbidden: field is immutable")))
+	g.Expect(c.ValidateUpdate(cOld)).Error().To(MatchError(ContainSubstring("spec.ProxyConfiguration: Forbidden: field is immutable")))
 }
 
 func TestClusterValidateUpdateProxyConfigurationNewNilImmutable(t *testing.T) {
@@ -604,7 +604,7 @@ func TestClusterValidateUpdateProxyConfigurationNewNilImmutable(t *testing.T) {
 	c := cOld.DeepCopy()
 	c.Spec.ProxyConfiguration = nil
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(MatchError(ContainSubstring("spec.ProxyConfiguration: Forbidden: field is immutable")))
+	g.Expect(c.ValidateUpdate(cOld)).Error().To(MatchError(ContainSubstring("spec.ProxyConfiguration: Forbidden: field is immutable")))
 }
 
 func TestClusterValidateUpdateGitOpsRefImmutableNilEqual(t *testing.T) {
@@ -614,7 +614,7 @@ func TestClusterValidateUpdateGitOpsRefImmutableNilEqual(t *testing.T) {
 	c := cOld.DeepCopy()
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(Succeed())
+	g.Expect(c.ValidateUpdate(cOld)).Error().To(Succeed())
 }
 
 func TestClusterValidateUpdateGitOpsRefMutableManagementCluster(t *testing.T) {
@@ -624,7 +624,7 @@ func TestClusterValidateUpdateGitOpsRefMutableManagementCluster(t *testing.T) {
 	c.Spec.GitOpsRef = &v1alpha1.Ref{Name: "test2", Kind: "GitOpsConfig"}
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(Succeed())
+	g.Expect(c.ValidateUpdate(cOld)).Error().To(Succeed())
 }
 
 func TestClusterValidateUpdateGitOpsRefImmutable(t *testing.T) {
@@ -635,7 +635,7 @@ func TestClusterValidateUpdateGitOpsRefImmutable(t *testing.T) {
 	c.Spec.GitOpsRef = &v1alpha1.Ref{Name: "test2", Kind: "GitOpsConfig2"}
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(MatchError(ContainSubstring("spec.GitOpsRef: Forbidden: field is immutable")))
+	g.Expect(c.ValidateUpdate(cOld)).Error().To(MatchError(ContainSubstring("spec.GitOpsRef: Forbidden: field is immutable")))
 }
 
 func TestClusterValidateUpdateGitOpsRefImmutableName(t *testing.T) {
@@ -648,7 +648,7 @@ func TestClusterValidateUpdateGitOpsRefImmutableName(t *testing.T) {
 	c.Spec.GitOpsRef = &v1alpha1.Ref{Name: "test2", Kind: "GitOpsConfig"}
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(MatchError(ContainSubstring("spec.GitOpsRef: Forbidden: field is immutable")))
+	g.Expect(c.ValidateUpdate(cOld)).Error().To(MatchError(ContainSubstring("spec.GitOpsRef: Forbidden: field is immutable")))
 }
 
 func TestClusterValidateUpdateGitOpsRefImmutableKind(t *testing.T) {
@@ -661,7 +661,7 @@ func TestClusterValidateUpdateGitOpsRefImmutableKind(t *testing.T) {
 	c.Spec.GitOpsRef = &v1alpha1.Ref{Name: "test", Kind: "GitOpsConfig2"}
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(MatchError(ContainSubstring("spec.GitOpsRef: Forbidden: field is immutable")))
+	g.Expect(c.ValidateUpdate(cOld)).Error().To(MatchError(ContainSubstring("spec.GitOpsRef: Forbidden: field is immutable")))
 }
 
 func TestClusterValidateUpdateGitOpsRefOldNilImmutable(t *testing.T) {
@@ -673,7 +673,7 @@ func TestClusterValidateUpdateGitOpsRefOldNilImmutable(t *testing.T) {
 	c.Spec.GitOpsRef = &v1alpha1.Ref{Name: "test", Kind: "GitOpsConfig"}
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(MatchError(ContainSubstring("spec.GitOpsRef: Forbidden: field is immutable")))
+	g.Expect(c.ValidateUpdate(cOld)).Error().To(MatchError(ContainSubstring("spec.GitOpsRef: Forbidden: field is immutable")))
 }
 
 func TestClusterValidateUpdateGitOpsRefNewNilImmutable(t *testing.T) {
@@ -686,7 +686,7 @@ func TestClusterValidateUpdateGitOpsRefNewNilImmutable(t *testing.T) {
 	c.Spec.GitOpsRef = nil
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(MatchError(ContainSubstring("spec.GitOpsRef: Forbidden: field is immutable")))
+	g.Expect(c.ValidateUpdate(cOld)).Error().To(MatchError(ContainSubstring("spec.GitOpsRef: Forbidden: field is immutable")))
 }
 
 func TestClusterValidateUpdateAWSIamNameImmutableUpdateSameName(t *testing.T) {
@@ -706,7 +706,7 @@ func TestClusterValidateUpdateAWSIamNameImmutableUpdateSameName(t *testing.T) {
 	}
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(Succeed())
+	g.Expect(c.ValidateUpdate(cOld)).Error().To(Succeed())
 }
 
 func TestClusterValidateUpdateAWSIamNameImmutableUpdateSameNameWorkloadCluster(t *testing.T) {
@@ -728,7 +728,7 @@ func TestClusterValidateUpdateAWSIamNameImmutableUpdateSameNameWorkloadCluster(t
 	}
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(Succeed())
+	g.Expect(c.ValidateUpdate(cOld)).Error().To(Succeed())
 }
 
 func TestClusterValidateUpdateAWSIamNameImmutableUpdateName(t *testing.T) {
@@ -748,7 +748,7 @@ func TestClusterValidateUpdateAWSIamNameImmutableUpdateName(t *testing.T) {
 	}
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(MatchError(ContainSubstring("spec.identityProviderRefs.AWSIamConfig: Forbidden: field is immutable")))
+	g.Expect(c.ValidateUpdate(cOld)).Error().To(MatchError(ContainSubstring("spec.identityProviderRefs.AWSIamConfig: Forbidden: field is immutable")))
 }
 
 func TestClusterValidateUpdateAWSIamNameImmutableEmpty(t *testing.T) {
@@ -763,7 +763,7 @@ func TestClusterValidateUpdateAWSIamNameImmutableEmpty(t *testing.T) {
 	c.Spec.IdentityProviderRefs = []v1alpha1.Ref{}
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(MatchError(ContainSubstring("spec.identityProviderRefs.AWSIamConfig: Forbidden: field is immutable")))
+	g.Expect(c.ValidateUpdate(cOld)).Error().To(MatchError(ContainSubstring("spec.identityProviderRefs.AWSIamConfig: Forbidden: field is immutable")))
 }
 
 func TestClusterValidateUpdateAWSIamNameImmutableAddConfig(t *testing.T) {
@@ -778,7 +778,7 @@ func TestClusterValidateUpdateAWSIamNameImmutableAddConfig(t *testing.T) {
 	}
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(MatchError(ContainSubstring("spec.identityProviderRefs.AWSIamConfig: Forbidden: field is immutable")))
+	g.Expect(c.ValidateUpdate(cOld)).Error().To(MatchError(ContainSubstring("spec.identityProviderRefs.AWSIamConfig: Forbidden: field is immutable")))
 }
 
 func TestClusterValidateUpdateUnsetBundlesRefImmutable(t *testing.T) {
@@ -789,7 +789,7 @@ func TestClusterValidateUpdateUnsetBundlesRefImmutable(t *testing.T) {
 	c.Spec.EksaVersion = nil
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(MatchError(ContainSubstring("spec.BundlesRef: Invalid value: \"null\": field cannot be removed after setting")))
+	g.Expect(c.ValidateUpdate(cOld)).Error().To(MatchError(ContainSubstring("spec.BundlesRef: Invalid value: \"null\": field cannot be removed after setting")))
 }
 
 func TestClusterValidateUpdateEksaVersionSkew(t *testing.T) {
@@ -865,10 +865,11 @@ func TestClusterValidateUpdateEksaVersionSkew(t *testing.T) {
 			cOld.Status.FailureReason = &reason
 		}
 
-		err := c.ValidateUpdate(cOld)
+		warnings, err := c.ValidateUpdate(cOld)
 		g := NewWithT(t)
+		g.Expect(warnings).To(BeEmpty())
 		if tt.wantErr != "" {
-			g.Expect(c.ValidateUpdate(cOld)).To(MatchError(ContainSubstring(tt.wantErr)))
+			g.Expect(c.ValidateUpdate(cOld)).Error().To(MatchError(ContainSubstring(tt.wantErr)))
 		} else {
 			g.Expect(err).To(Succeed())
 		}
@@ -888,7 +889,7 @@ func TestClusterValidateUpdateOIDCNameMutableUpdateNameWorkloadCluster(t *testin
 	c.Spec.IdentityProviderRefs[0].Name = "name2"
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(Succeed())
+	g.Expect(c.ValidateUpdate(cOld)).Error().To(Succeed())
 }
 
 func TestClusterValidateUpdateOIDCNameMutableUpdateNameMgmtCluster(t *testing.T) {
@@ -903,7 +904,7 @@ func TestClusterValidateUpdateOIDCNameMutableUpdateNameMgmtCluster(t *testing.T)
 	c.Spec.IdentityProviderRefs[0].Name = "name2"
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(Succeed())
+	g.Expect(c.ValidateUpdate(cOld)).Error().To(Succeed())
 }
 
 func TestClusterValidateUpdateOIDCNameMutableUpdateNameUnchanged(t *testing.T) {
@@ -917,7 +918,7 @@ func TestClusterValidateUpdateOIDCNameMutableUpdateNameUnchanged(t *testing.T) {
 	c := cOld.DeepCopy()
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(Succeed())
+	g.Expect(c.ValidateUpdate(cOld)).Error().To(Succeed())
 }
 
 func TestClusterValidateUpdateOIDCNameMutableWorkloadCluster(t *testing.T) {
@@ -935,7 +936,7 @@ func TestClusterValidateUpdateOIDCNameMutableWorkloadCluster(t *testing.T) {
 
 	c.SetManagedBy("mgmt2")
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(Succeed())
+	g.Expect(c.ValidateUpdate(cOld)).Error().To(Succeed())
 }
 
 func TestClusterValidateUpdateOIDCNameMutableMgmtCluster(t *testing.T) {
@@ -950,7 +951,7 @@ func TestClusterValidateUpdateOIDCNameMutableMgmtCluster(t *testing.T) {
 	c.Spec.IdentityProviderRefs = []v1alpha1.Ref{}
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(Succeed())
+	g.Expect(c.ValidateUpdate(cOld)).Error().To(Succeed())
 }
 
 func TestClusterValidateUpdateOIDCNameMutableAddConfigWorkloadCluster(t *testing.T) {
@@ -969,7 +970,7 @@ func TestClusterValidateUpdateOIDCNameMutableAddConfigWorkloadCluster(t *testing
 	c.SetManagedBy("mgmt2")
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(Succeed())
+	g.Expect(c.ValidateUpdate(cOld)).Error().To(Succeed())
 }
 
 func TestClusterValidateUpdateOIDCNameMutableAddConfigMgmtCluster(t *testing.T) {
@@ -984,7 +985,7 @@ func TestClusterValidateUpdateOIDCNameMutableAddConfigMgmtCluster(t *testing.T) 
 		},
 	}
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(Succeed())
+	g.Expect(c.ValidateUpdate(cOld)).Error().To(Succeed())
 }
 
 func TestClusterValidateUpdateSwapIdentityProviders(t *testing.T) {
@@ -1012,7 +1013,7 @@ func TestClusterValidateUpdateSwapIdentityProviders(t *testing.T) {
 	}
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(Succeed())
+	g.Expect(c.ValidateUpdate(cOld)).Error().To(Succeed())
 }
 
 func TestClusterValidateUpdateSwapIdentityProvidersWorkloadCluster(t *testing.T) {
@@ -1042,7 +1043,7 @@ func TestClusterValidateUpdateSwapIdentityProvidersWorkloadCluster(t *testing.T)
 	}
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(Succeed())
+	g.Expect(c.ValidateUpdate(cOld)).Error().To(Succeed())
 }
 
 func TestClusterValidateEmptyIdentityProviders(t *testing.T) {
@@ -1051,7 +1052,7 @@ func TestClusterValidateEmptyIdentityProviders(t *testing.T) {
 	c := cOld.DeepCopy()
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(Succeed())
+	g.Expect(c.ValidateUpdate(cOld)).Error().To(Succeed())
 }
 
 func TestClusterValidateUpdateGitOpsRefOldEmptyMutableManagement(t *testing.T) {
@@ -1060,7 +1061,7 @@ func TestClusterValidateUpdateGitOpsRefOldEmptyMutableManagement(t *testing.T) {
 	c.Spec.IdentityProviderRefs = []v1alpha1.Ref{}
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(Succeed())
+	g.Expect(c.ValidateUpdate(cOld)).Error().To(Succeed())
 }
 
 func TestClusterValidateUpdateWithPausedAnnotation(t *testing.T) {
@@ -1071,7 +1072,7 @@ func TestClusterValidateUpdateWithPausedAnnotation(t *testing.T) {
 	c.Spec.KubernetesVersion = v1alpha1.Kube122
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(Succeed())
+	g.Expect(c.ValidateUpdate(cOld)).Error().To(Succeed())
 }
 
 func TestClusterValidateUpdateInvalidType(t *testing.T) {
@@ -1079,7 +1080,7 @@ func TestClusterValidateUpdateInvalidType(t *testing.T) {
 	c := &v1alpha1.Cluster{}
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(MatchError(ContainSubstring("expected a Cluster but got a *v1alpha1.VSphereDatacenterConfig")))
+	g.Expect(c.ValidateUpdate(cOld)).Error().To(MatchError(ContainSubstring("expected a Cluster but got a *v1alpha1.VSphereDatacenterConfig")))
 }
 
 func TestClusterValidateUpdateSuccess(t *testing.T) {
@@ -1091,7 +1092,7 @@ func TestClusterValidateUpdateSuccess(t *testing.T) {
 	c.Spec.WorkerNodeGroupConfigurations[0].Count = ptr.Int(10)
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(Succeed())
+	g.Expect(c.ValidateUpdate(cOld)).Error().To(Succeed())
 }
 
 func TestClusterCreateManagementCluster(t *testing.T) {
@@ -1109,7 +1110,7 @@ func TestClusterCreateManagementCluster(t *testing.T) {
 	}
 
 	g := NewWithT(t)
-	g.Expect(cluster.ValidateCreate()).To(MatchError(ContainSubstring("creating new cluster on existing cluster is not supported for self managed clusters")))
+	g.Expect(cluster.ValidateCreate()).Error().To(MatchError(ContainSubstring("creating new cluster on existing cluster is not supported for self managed clusters")))
 }
 
 func TestClusterCreateEtcdEncryption(t *testing.T) {
@@ -1131,7 +1132,7 @@ func TestClusterCreateEtcdEncryption(t *testing.T) {
 	}
 
 	g := NewWithT(t)
-	g.Expect(cluster.ValidateCreate()).To(MatchError(ContainSubstring("etcdEncryption is not supported during cluster creation")))
+	g.Expect(cluster.ValidateCreate()).Error().To(MatchError(ContainSubstring("etcdEncryption is not supported during cluster creation")))
 }
 
 func TestClusterUpdateEtcdEncryptionUnsupported(t *testing.T) {
@@ -1156,7 +1157,7 @@ func TestClusterUpdateEtcdEncryptionUnsupported(t *testing.T) {
 	}
 
 	g := NewWithT(t)
-	g.Expect(cluster.ValidateUpdate(cluster)).To(MatchError(ContainSubstring("etcdEncryption is currently not supported for the provider")))
+	g.Expect(cluster.ValidateUpdate(cluster)).Error().To(MatchError(ContainSubstring("etcdEncryption is currently not supported for the provider")))
 }
 
 func TestClusterUpdateEtcdEncryption(t *testing.T) {
@@ -1344,7 +1345,8 @@ func TestClusterUpdateEtcdEncryption(t *testing.T) {
 			newCluster.Spec.EtcdEncryption = tt.encryptionConfig
 
 			g := NewWithT(t)
-			err := newCluster.ValidateUpdate(baseCluster)
+			warnings, err := newCluster.ValidateUpdate(baseCluster)
+			g.Expect(warnings).To(BeEmpty())
 			if tt.expectedErr == nil {
 				g.Expect(err).ToNot(HaveOccurred())
 			} else {
@@ -1364,7 +1366,7 @@ func TestClusterCreateCloudStackMultipleWorkerNodeGroupsValidation(t *testing.T)
 	cluster.Spec.ManagementCluster.Name = "management-cluster"
 
 	g := NewWithT(t)
-	g.Expect(cluster.ValidateCreate()).To(Succeed())
+	g.Expect(cluster.ValidateCreate()).Error().To(Succeed())
 }
 
 func TestClusterCreateWorkloadCluster(t *testing.T) {
@@ -1387,7 +1389,7 @@ func TestClusterCreateWorkloadCluster(t *testing.T) {
 	cluster.Spec.ManagementCluster.Name = "management-cluster"
 
 	g := NewWithT(t)
-	g.Expect(cluster.ValidateCreate()).To(Succeed())
+	g.Expect(cluster.ValidateCreate()).Error().To(Succeed())
 }
 
 func TestClusterUpdateWorkerNodeGroupTaintsAndLabelsSuccess(t *testing.T) {
@@ -1414,7 +1416,7 @@ func TestClusterUpdateWorkerNodeGroupTaintsAndLabelsSuccess(t *testing.T) {
 	c.Spec.WorkerNodeGroupConfigurations[0].Labels["test"] = "val2"
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(Succeed())
+	g.Expect(c.ValidateUpdate(cOld)).Error().To(Succeed())
 }
 
 func TestClusterUpdateWorkerNodeGroupTaintsInvalid(t *testing.T) {
@@ -1434,7 +1436,7 @@ func TestClusterUpdateWorkerNodeGroupTaintsInvalid(t *testing.T) {
 	c.Spec.WorkerNodeGroupConfigurations[0].Taints[0].Effect = "NoSchedule"
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(MatchError(ContainSubstring("at least one WorkerNodeGroupConfiguration must not have NoExecute and/or NoSchedule taints")))
+	g.Expect(c.ValidateUpdate(cOld)).Error().To(MatchError(ContainSubstring("at least one WorkerNodeGroupConfiguration must not have NoExecute and/or NoSchedule taints")))
 }
 
 func TestClusterUpdateWorkerNodeGroupNameInvalid(t *testing.T) {
@@ -1443,7 +1445,7 @@ func TestClusterUpdateWorkerNodeGroupNameInvalid(t *testing.T) {
 	c.Spec.WorkerNodeGroupConfigurations[0].Name = ""
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(MatchError(ContainSubstring("must specify name for worker nodes")))
+	g.Expect(c.ValidateUpdate(cOld)).Error().To(MatchError(ContainSubstring("must specify name for worker nodes")))
 }
 
 func TestClusterUpdateWorkerNodeGroupLabelsInvalid(t *testing.T) {
@@ -1461,7 +1463,7 @@ func TestClusterUpdateWorkerNodeGroupLabelsInvalid(t *testing.T) {
 	c.Spec.WorkerNodeGroupConfigurations[0].Labels["test"] = "val1/val2"
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(MatchError(ContainSubstring("labels for worker node group test not valid: found following errors with labels: spec.workerNodeGroupConfigurations[0].labels: Invalid value:")))
+	g.Expect(c.ValidateUpdate(cOld)).Error().To(MatchError(ContainSubstring("labels for worker node group test not valid: found following errors with labels: spec.workerNodeGroupConfigurations[0].labels: Invalid value:")))
 }
 
 func TestClusterUpdateControlPlaneTaintsAndLabelsSuccess(t *testing.T) {
@@ -1481,7 +1483,7 @@ func TestClusterUpdateControlPlaneTaintsAndLabelsSuccess(t *testing.T) {
 	c.Spec.ControlPlaneConfiguration.Labels["test"] = "val2"
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(Succeed())
+	g.Expect(c.ValidateUpdate(cOld)).Error().To(Succeed())
 }
 
 func TestClusterUpdateControlPlaneLabelsInvalid(t *testing.T) {
@@ -1499,7 +1501,7 @@ func TestClusterUpdateControlPlaneLabelsInvalid(t *testing.T) {
 	c.Spec.ControlPlaneConfiguration.Labels["test"] = "val1/val2"
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cluster)).To(MatchError(ContainSubstring("spec.controlPlaneConfiguration.labels: Invalid value")))
+	g.Expect(c.ValidateUpdate(cluster)).Error().To(MatchError(ContainSubstring("spec.controlPlaneConfiguration.labels: Invalid value")))
 }
 
 func TestClusterValidateCreateSelfManagedUnpaused(t *testing.T) {
@@ -1507,7 +1509,8 @@ func TestClusterValidateCreateSelfManagedUnpaused(t *testing.T) {
 	cluster := baseCluster()
 	g := NewWithT(t)
 	cluster.SetSelfManaged()
-	err := cluster.ValidateCreate()
+	warnings, err := cluster.ValidateCreate()
+	g.Expect(warnings).To(BeEmpty())
 	g.Expect(err).To(MatchError(ContainSubstring("creating new cluster on existing cluster is not supported for self managed clusters")))
 }
 
@@ -1517,7 +1520,8 @@ func TestClusterValidateCreateSelfManagedNotPaused(t *testing.T) {
 	cluster.SetSelfManaged()
 
 	g := NewWithT(t)
-	err := cluster.ValidateCreate()
+	warnings, err := cluster.ValidateCreate()
+	g.Expect(warnings).To(BeEmpty())
 	g.Expect(err).To(MatchError(ContainSubstring("creating new cluster on existing cluster is not supported for self managed clusters")))
 }
 
@@ -1553,7 +1557,8 @@ func TestClusterValidateCreateInvalidCluster(t *testing.T) {
 			tt.cluster.Spec.ControlPlaneConfiguration = v1alpha1.ControlPlaneConfiguration{Endpoint: &v1alpha1.Endpoint{Host: "test-ip"}, MachineGroupRef: &v1alpha1.Ref{Name: "test"}}
 
 			g := NewWithT(t)
-			err := tt.cluster.ValidateCreate()
+			warnings, err := tt.cluster.ValidateCreate()
+			g.Expect(warnings).To(BeEmpty())
 			g.Expect(err).To(MatchError(ContainSubstring("control plane node count must be positive")))
 		})
 	}
@@ -1586,7 +1591,8 @@ func TestClusterValidateUpdateInvalidManagementCluster(t *testing.T) {
 			}}
 
 			g := NewWithT(t)
-			err := tt.clusterNew.ValidateUpdate(clusterOld)
+			warnings, err := tt.clusterNew.ValidateUpdate(clusterOld)
+			g.Expect(warnings).To(BeEmpty())
 			g.Expect(err).To(MatchError(ContainSubstring("worker node count must be >= 0")))
 		})
 	}
@@ -1630,7 +1636,8 @@ func TestClusterValidateUpdateInvalidWorkloadCluster(t *testing.T) {
 			}
 
 			g := NewWithT(t)
-			err := tt.clusterNew.ValidateUpdate(clusterOld)
+			warnings, err := tt.clusterNew.ValidateUpdate(clusterOld)
+			g.Expect(warnings).To(BeEmpty())
 			g.Expect(err).To(MatchError(ContainSubstring("control plane node count must be positive")))
 		})
 	}
@@ -1665,7 +1672,7 @@ func TestClusterValidateCreateValidCluster(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			g := NewWithT(t)
-			g.Expect(tt.cluster.ValidateCreate()).To(Succeed())
+			g.Expect(tt.cluster.ValidateCreate()).Error().To(Succeed())
 		})
 	}
 }
@@ -1710,7 +1717,8 @@ func TestClusterValidateUpdateValidManagementCluster(t *testing.T) {
 			tt.updateCluster(newCluster)
 
 			g := NewWithT(t)
-			err := newCluster.ValidateUpdate(tt.oldCluster)
+			warnings, err := newCluster.ValidateUpdate(tt.oldCluster)
+			g.Expect(warnings).To(BeEmpty())
 			g.Expect(err).To(Succeed())
 		})
 	}
@@ -1750,7 +1758,8 @@ func TestClusterValidateUpdateValidWorkloadCluster(t *testing.T) {
 			}}
 
 			g := NewWithT(t)
-			err := tt.clusterNew.ValidateUpdate(clusterOld)
+			warnings, err := tt.clusterNew.ValidateUpdate(clusterOld)
+			g.Expect(warnings).To(BeEmpty())
 			g.Expect(err).To(Succeed())
 		})
 	}
@@ -1764,7 +1773,7 @@ func TestClusterValidateUpdateValidRequest(t *testing.T) {
 	cNew := cOld.DeepCopy()
 	cNew.Spec.ControlPlaneConfiguration.Count = cNew.Spec.ControlPlaneConfiguration.Count + 2
 	g := NewWithT(t)
-	err := cNew.ValidateUpdate(cOld)
+	_, err := cNew.ValidateUpdate(cOld)
 	g.Expect(err).To(Succeed())
 }
 
@@ -1778,7 +1787,8 @@ func TestClusterValidateUpdateRollingAndScalingTinkerbellRequest(t *testing.T) {
 	cNew.Spec.KubernetesVersion = "1.23"
 	cNew.Spec.ControlPlaneConfiguration.Count = cNew.Spec.ControlPlaneConfiguration.Count + 1
 	g := NewWithT(t)
-	err := cNew.ValidateUpdate(cOld)
+	warnings, err := cNew.ValidateUpdate(cOld)
+	g.Expect(warnings).To(BeEmpty())
 	g.Expect(err).To(MatchError(ContainSubstring("cannot perform scale up or down during rolling upgrades. Previous control plane node count")))
 }
 
@@ -1796,7 +1806,8 @@ func TestClusterValidateUpdateAddWNConfig(t *testing.T) {
 	}
 	cNew.Spec.WorkerNodeGroupConfigurations = append(cNew.Spec.WorkerNodeGroupConfigurations, addWNC)
 	g := NewWithT(t)
-	err := cNew.ValidateUpdate(cOld)
+	warnings, err := cNew.ValidateUpdate(cOld)
+	g.Expect(warnings).To(BeEmpty())
 	g.Expect(err).To(MatchError(ContainSubstring("cannot perform scale up or down during rolling upgrades. Please remove the new worker node group")))
 }
 
@@ -1810,7 +1821,8 @@ func TestClusterValidateUpdateAddWNCount(t *testing.T) {
 	cNew.Spec.KubernetesVersion = "1.23"
 	cNew.Spec.WorkerNodeGroupConfigurations[0].Count = ptr.Int(3)
 	g := NewWithT(t)
-	err := cNew.ValidateUpdate(cOld)
+	warnings, err := cNew.ValidateUpdate(cOld)
+	g.Expect(warnings).To(BeEmpty())
 	g.Expect(err).To(MatchError(ContainSubstring("cannot perform scale up or down during rolling upgrades. Previous worker node count")))
 }
 
@@ -1823,7 +1835,7 @@ func TestClusterValidateUpdateRollingTinkerbellRequest(t *testing.T) {
 	cNew := cOld.DeepCopy()
 	cNew.Spec.KubernetesVersion = "1.23"
 	g := NewWithT(t)
-	g.Expect(cNew.ValidateUpdate(cOld)).To(Succeed())
+	g.Expect(cNew.ValidateUpdate(cOld)).Error().To(Succeed())
 }
 
 func TestClusterValidateUpdateLabelTaintsCPTinkerbellRequest(t *testing.T) {
@@ -1842,7 +1854,8 @@ func TestClusterValidateUpdateLabelTaintsCPTinkerbellRequest(t *testing.T) {
 	cNew.Spec.ControlPlaneConfiguration.Labels = map[string]string{}
 	cNew.Spec.ControlPlaneConfiguration.Taints = []v1.Taint{}
 	g := NewWithT(t)
-	err := cNew.ValidateUpdate(cOld)
+	warnings, err := cNew.ValidateUpdate(cOld)
+	g.Expect(warnings).To(BeEmpty())
 	g.Expect(err).To(MatchError(ContainSubstring("spec.ControlPlaneConfiguration.labels: Forbidden: field is immutable")))
 	g.Expect(err).To(MatchError(ContainSubstring("spec.ControlPlaneConfiguration.taints: Forbidden: field is immutable")))
 }
@@ -1866,7 +1879,8 @@ func TestClusterValidateUpdateLabelTaintsWNTinkerbellRequest(t *testing.T) {
 	cNew.Spec.WorkerNodeGroupConfigurations[0].Taints = []v1.Taint{}
 
 	g := NewWithT(t)
-	err := cNew.ValidateUpdate(cOld)
+	warnings, err := cNew.ValidateUpdate(cOld)
+	g.Expect(warnings).To(BeEmpty())
 	g.Expect(err).To(MatchError(ContainSubstring("spec.WorkerNodeConfiguration.labels: Forbidden: field is immutable")))
 	g.Expect(err).To(MatchError(ContainSubstring("spec.WorkerNodeConfiguration.taints: Forbidden: field is immutable")))
 }
@@ -1898,7 +1912,8 @@ func TestClusterValidateUpdateLabelTaintsMultiWNTinkerbellRequest(t *testing.T) 
 	cNew.Spec.WorkerNodeGroupConfigurations[0].Taints = []v1.Taint{{Key: "key1", Value: "val1", Effect: "NoSchedule", TimeAdded: nil}}
 
 	g := NewWithT(t)
-	err := cNew.ValidateUpdate(cOld)
+	warnings, err := cNew.ValidateUpdate(cOld)
+	g.Expect(warnings).To(BeEmpty())
 	g.Expect(err).To(BeNil())
 }
 
@@ -1971,7 +1986,8 @@ func TestClusterValidateUpdateSkipUpgradeImmutability(t *testing.T) {
 		t.Run(tc.Name, func(t *testing.T) {
 			g := NewWithT(t)
 
-			err := tc.New.ValidateUpdate(tc.Old)
+			warnings, err := tc.New.ValidateUpdate(tc.Old)
+			g.Expect(warnings).To(BeEmpty())
 			if !tc.Error {
 				g.Expect(err).To(Succeed())
 			} else {
@@ -1993,7 +2009,8 @@ func TestClusterValidateUpdateVersionSkew(t *testing.T) {
 	cNew := cOld.DeepCopy()
 	cNew.Spec.KubernetesVersion = "1.24"
 	g := NewWithT(t)
-	err := cNew.ValidateUpdate(cOld)
+	warnings, err := cNew.ValidateUpdate(cOld)
+	g.Expect(warnings).To(BeEmpty())
 	g.Expect(err).To(MatchError(ContainSubstring("only +1 minor version skew is supported")))
 }
 
@@ -2006,7 +2023,8 @@ func TestClusterValidateUpdateVersionSkewDecrement(t *testing.T) {
 	cNew := cOld.DeepCopy()
 	cNew.Spec.KubernetesVersion = "1.23"
 	g := NewWithT(t)
-	err := cNew.ValidateUpdate(cOld)
+	warnings, err := cNew.ValidateUpdate(cOld)
+	g.Expect(warnings).To(BeEmpty())
 	g.Expect(err).To(MatchError(ContainSubstring("kubernetes version downgrade is not supported")))
 }
 
@@ -2019,7 +2037,8 @@ func TestClusterValidateUpdateVersionInvalidNew(t *testing.T) {
 	cNew := cOld.DeepCopy()
 	cNew.Spec.KubernetesVersion = "test"
 	g := NewWithT(t)
-	err := cNew.ValidateUpdate(cOld)
+	warnings, err := cNew.ValidateUpdate(cOld)
+	g.Expect(warnings).To(BeEmpty())
 	g.Expect(err).To(MatchError(ContainSubstring("parsing comparison version: could not parse \"test\" as version")))
 }
 
@@ -2032,7 +2051,8 @@ func TestClusterValidateUpdateVersionInvalidOld(t *testing.T) {
 	cNew := cOld.DeepCopy()
 	cNew.Spec.KubernetesVersion = "1.24"
 	g := NewWithT(t)
-	err := cNew.ValidateUpdate(cOld)
+	warnings, err := cNew.ValidateUpdate(cOld)
+	g.Expect(warnings).To(BeEmpty())
 	g.Expect(err).To(MatchError(ContainSubstring("parsing cluster version: could not parse \"test\" as version")))
 }
 
@@ -2045,7 +2065,7 @@ func TestClusterValidateUpdateVersionMinorVersionBump(t *testing.T) {
 	cNew := cOld.DeepCopy()
 	cNew.Spec.KubernetesVersion = "1.25"
 	g := NewWithT(t)
-	g.Expect(cNew.ValidateUpdate(cOld)).To(Succeed())
+	g.Expect(cNew.ValidateUpdate(cOld)).Error().To(Succeed())
 }
 
 func newCluster(opts ...func(*v1alpha1.Cluster)) *v1alpha1.Cluster {
@@ -2242,7 +2262,9 @@ func TestValidateWorkerVersionSkew(t *testing.T) {
 			oldCluster.Spec.KubernetesVersion = tc.oldVersion
 			oldCluster.Spec.WorkerNodeGroupConfigurations[0].KubernetesVersion = tc.oldWorkerVersion
 
-			err := newCluster.ValidateUpdate(oldCluster)
+			warnings, err := newCluster.ValidateUpdate(oldCluster)
+			g := NewWithT(t)
+			g.Expect(warnings).To(BeEmpty())
 			if err != nil && !strings.Contains(err.Error(), tc.wantErr.Error()) {
 				t.Errorf("%v got = %v, \nwant %v", tc.name, err, tc.wantErr)
 			}
@@ -2271,7 +2293,8 @@ func TestValidateWorkerVersionSkewAddNodeGroup(t *testing.T) {
 	oldCluster.Spec.KubernetesVersion = kube119
 	oldCluster.Spec.WorkerNodeGroupConfigurations[0].KubernetesVersion = &kube119
 
-	err := newCluster.ValidateUpdate(oldCluster)
+	warnings, err := newCluster.ValidateUpdate(oldCluster)
 	g := NewWithT(t)
+	g.Expect(warnings).To(BeEmpty())
 	g.Expect(err).To(Succeed())
 }

@@ -25,6 +25,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
+	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // log is for logging in this package.
@@ -55,7 +56,7 @@ func (r *TinkerbellMachineConfig) Default() {
 var _ webhook.Validator = &TinkerbellMachineConfig{}
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
-func (r *TinkerbellMachineConfig) ValidateCreate() error {
+func (r *TinkerbellMachineConfig) ValidateCreate() (admission.Warnings, error) {
 	tinkerbellmachineconfiglog.Info("validate create", "name", r.Name)
 
 	var allErrs field.ErrorList
@@ -71,31 +72,31 @@ func (r *TinkerbellMachineConfig) ValidateCreate() error {
 	}
 
 	if len(allErrs) != 0 {
-		return apierrors.NewInvalid(GroupVersion.WithKind(ClusterKind).GroupKind(), r.Name, allErrs)
+		return nil, apierrors.NewInvalid(GroupVersion.WithKind(ClusterKind).GroupKind(), r.Name, allErrs)
 	}
 
 	if r.IsReconcilePaused() {
 		tinkerbellmachineconfiglog.Info("TinkerbellMachineConfig is paused, so allowing create", "name", r.Name)
-		return nil
+		return nil, nil
 	}
 
-	return nil
+	return nil, nil
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
-func (r *TinkerbellMachineConfig) ValidateUpdate(old runtime.Object) error {
+func (r *TinkerbellMachineConfig) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
 	tinkerbellmachineconfiglog.Info("validate update", "name", r.Name)
 
 	oldTinkerbellMachineConfig, ok := old.(*TinkerbellMachineConfig)
 	if !ok {
-		return apierrors.NewBadRequest(fmt.Sprintf("expected a TinkerbellMachineConfig but got a %T", old))
+		return nil, apierrors.NewBadRequest(fmt.Sprintf("expected a TinkerbellMachineConfig but got a %T", old))
 	}
 
 	var allErrs field.ErrorList
 
 	allErrs = append(allErrs, validateImmutableFieldsTinkerbellMachineConfig(r, oldTinkerbellMachineConfig)...)
 	if len(allErrs) != 0 {
-		return apierrors.NewInvalid(GroupVersion.WithKind(TinkerbellMachineConfigKind).GroupKind(), r.Name, allErrs)
+		return nil, apierrors.NewInvalid(GroupVersion.WithKind(TinkerbellMachineConfigKind).GroupKind(), r.Name, allErrs)
 	}
 
 	if err := r.Validate(); err != nil {
@@ -103,18 +104,18 @@ func (r *TinkerbellMachineConfig) ValidateUpdate(old runtime.Object) error {
 	}
 
 	if len(allErrs) != 0 {
-		return apierrors.NewInvalid(GroupVersion.WithKind(TinkerbellMachineConfigKind).GroupKind(), r.Name, allErrs)
+		return nil, apierrors.NewInvalid(GroupVersion.WithKind(TinkerbellMachineConfigKind).GroupKind(), r.Name, allErrs)
 	}
 
-	return nil
+	return nil, nil
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type.
-func (r *TinkerbellMachineConfig) ValidateDelete() error {
+func (r *TinkerbellMachineConfig) ValidateDelete() (admission.Warnings, error) {
 	tinkerbellmachineconfiglog.Info("validate delete", "name", r.Name)
 
 	// TODO(user): fill in your validation logic upon object deletion.
-	return nil
+	return nil, nil
 }
 
 func validateImmutableFieldsTinkerbellMachineConfig(new, old *TinkerbellMachineConfig) field.ErrorList {

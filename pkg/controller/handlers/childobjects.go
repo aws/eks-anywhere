@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"context"
+
 	"github.com/go-logr/logr"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -12,7 +14,7 @@ import (
 )
 
 func ChildObjectToClusters(log logr.Logger) handler.MapFunc {
-	return func(o client.Object) []reconcile.Request {
+	return func(_ context.Context, o client.Object) []reconcile.Request {
 		requests := []reconcile.Request{}
 		for _, owner := range o.GetOwnerReferences() {
 			if owner.Kind == anywherev1.ClusterKind {

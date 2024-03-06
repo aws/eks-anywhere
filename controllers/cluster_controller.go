@@ -18,7 +18,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	c "github.com/aws/eks-anywhere/pkg/cluster"
@@ -108,63 +107,63 @@ func (r *ClusterReconciler) SetupWithManager(mgr ctrl.Manager, log logr.Logger) 
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&anywherev1.Cluster{}).
 		Watches(
-			&source.Kind{Type: &anywherev1.OIDCConfig{}},
+			&anywherev1.OIDCConfig{},
 			handler.EnqueueRequestsFromMapFunc(childObjectHandler),
 		).
 		Watches(
-			&source.Kind{Type: &anywherev1.AWSIamConfig{}},
+			&anywherev1.AWSIamConfig{},
 			handler.EnqueueRequestsFromMapFunc(childObjectHandler),
 		).
 		Watches(
-			&source.Kind{Type: &anywherev1.GitOpsConfig{}},
+			&anywherev1.GitOpsConfig{},
 			handler.EnqueueRequestsFromMapFunc(childObjectHandler),
 		).
 		Watches(
-			&source.Kind{Type: &anywherev1.FluxConfig{}},
+			&anywherev1.FluxConfig{},
 			handler.EnqueueRequestsFromMapFunc(childObjectHandler),
 		).
 		Watches(
-			&source.Kind{Type: &anywherev1.VSphereDatacenterConfig{}},
+			&anywherev1.VSphereDatacenterConfig{},
 			handler.EnqueueRequestsFromMapFunc(childObjectHandler),
 		).
 		Watches(
-			&source.Kind{Type: &anywherev1.VSphereMachineConfig{}},
+			&anywherev1.VSphereMachineConfig{},
 			handler.EnqueueRequestsFromMapFunc(childObjectHandler),
 		).
 		Watches(
-			&source.Kind{Type: &anywherev1.SnowDatacenterConfig{}},
+			&anywherev1.SnowDatacenterConfig{},
 			handler.EnqueueRequestsFromMapFunc(childObjectHandler),
 		).
 		Watches(
-			&source.Kind{Type: &anywherev1.SnowMachineConfig{}},
+			&anywherev1.SnowMachineConfig{},
 			handler.EnqueueRequestsFromMapFunc(childObjectHandler),
 		).
 		Watches(
-			&source.Kind{Type: &anywherev1.TinkerbellDatacenterConfig{}},
+			&anywherev1.TinkerbellDatacenterConfig{},
 			handler.EnqueueRequestsFromMapFunc(childObjectHandler),
 		).
 		Watches(
-			&source.Kind{Type: &anywherev1.TinkerbellMachineConfig{}},
+			&anywherev1.TinkerbellMachineConfig{},
 			handler.EnqueueRequestsFromMapFunc(childObjectHandler),
 		).
 		Watches(
-			&source.Kind{Type: &anywherev1.DockerDatacenterConfig{}},
+			&anywherev1.DockerDatacenterConfig{},
 			handler.EnqueueRequestsFromMapFunc(childObjectHandler),
 		).
 		Watches(
-			&source.Kind{Type: &anywherev1.CloudStackDatacenterConfig{}},
+			&anywherev1.CloudStackDatacenterConfig{},
 			handler.EnqueueRequestsFromMapFunc(childObjectHandler),
 		).
 		Watches(
-			&source.Kind{Type: &anywherev1.CloudStackMachineConfig{}},
+			&anywherev1.CloudStackMachineConfig{},
 			handler.EnqueueRequestsFromMapFunc(childObjectHandler),
 		).
 		Watches(
-			&source.Kind{Type: &anywherev1.NutanixDatacenterConfig{}},
+			&anywherev1.NutanixDatacenterConfig{},
 			handler.EnqueueRequestsFromMapFunc(childObjectHandler),
 		).
 		Watches(
-			&source.Kind{Type: &anywherev1.NutanixMachineConfig{}},
+			&anywherev1.NutanixMachineConfig{},
 			handler.EnqueueRequestsFromMapFunc(childObjectHandler),
 		).
 		Complete(r)
@@ -320,7 +319,6 @@ func (r *ClusterReconciler) reconcile(ctx context.Context, log logr.Logger, clus
 	}
 
 	reconcileResult, err = clusterProviderReconciler.Reconcile(ctx, log, cluster)
-
 	if err != nil {
 		return ctrl.Result{}, err
 	}

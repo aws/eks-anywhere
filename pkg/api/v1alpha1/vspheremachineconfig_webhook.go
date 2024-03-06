@@ -9,6 +9,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
+	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // log is for logging in this package.
@@ -38,40 +39,40 @@ func (r *VSphereMachineConfig) Default() {
 var _ webhook.Validator = &VSphereMachineConfig{}
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
-func (r *VSphereMachineConfig) ValidateCreate() error {
+func (r *VSphereMachineConfig) ValidateCreate() (admission.Warnings, error) {
 	vspheremachineconfiglog.Info("validate create", "name", r.Name)
 
 	if err := r.ValidateHasTemplate(); err != nil {
-		return apierrors.NewInvalid(GroupVersion.WithKind(VSphereMachineConfigKind).GroupKind(), r.Name, field.ErrorList{
+		return nil, apierrors.NewInvalid(GroupVersion.WithKind(VSphereMachineConfigKind).GroupKind(), r.Name, field.ErrorList{
 			field.Invalid(field.NewPath("spec", "template"), r.Spec, err.Error()),
 		})
 	}
 	if err := r.ValidateUsers(); err != nil {
-		return apierrors.NewInvalid(GroupVersion.WithKind(VSphereMachineConfigKind).GroupKind(), r.Name, field.ErrorList{
+		return nil, apierrors.NewInvalid(GroupVersion.WithKind(VSphereMachineConfigKind).GroupKind(), r.Name, field.ErrorList{
 			field.Invalid(field.NewPath("spec", "users"), r.Spec.Users, err.Error()),
 		})
 	}
 
 	if err := r.Validate(); err != nil {
-		return apierrors.NewInvalid(GroupVersion.WithKind(VSphereMachineConfigKind).GroupKind(), r.Name, field.ErrorList{
+		return nil, apierrors.NewInvalid(GroupVersion.WithKind(VSphereMachineConfigKind).GroupKind(), r.Name, field.ErrorList{
 			field.Invalid(field.NewPath("spec", "users"), r.Spec.Users, err.Error()),
 		})
 	}
 
-	return nil
+	return nil, nil
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
-func (r *VSphereMachineConfig) ValidateUpdate(old runtime.Object) error {
+func (r *VSphereMachineConfig) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
 	vspheremachineconfiglog.Info("validate update", "name", r.Name)
 
 	oldVSphereMachineConfig, ok := old.(*VSphereMachineConfig)
 	if !ok {
-		return apierrors.NewBadRequest(fmt.Sprintf("expected a VSphereMachineConfig but got a %T", old))
+		return nil, apierrors.NewBadRequest(fmt.Sprintf("expected a VSphereMachineConfig but got a %T", old))
 	}
 
 	if err := r.ValidateUsers(); err != nil {
-		return apierrors.NewInvalid(GroupVersion.WithKind(VSphereMachineConfigKind).GroupKind(), r.Name, field.ErrorList{
+		return nil, apierrors.NewInvalid(GroupVersion.WithKind(VSphereMachineConfigKind).GroupKind(), r.Name, field.ErrorList{
 			field.Invalid(field.NewPath("spec", "users"), r.Spec.Users, err.Error()),
 		})
 	}
@@ -81,7 +82,7 @@ func (r *VSphereMachineConfig) ValidateUpdate(old runtime.Object) error {
 	allErrs = append(allErrs, validateImmutableFieldsVSphereMachineConfig(r, oldVSphereMachineConfig)...)
 
 	if len(allErrs) != 0 {
-		return apierrors.NewInvalid(GroupVersion.WithKind(VSphereMachineConfigKind).GroupKind(), r.Name, allErrs)
+		return nil, apierrors.NewInvalid(GroupVersion.WithKind(VSphereMachineConfigKind).GroupKind(), r.Name, allErrs)
 	}
 
 	if err := r.Validate(); err != nil {
@@ -89,10 +90,10 @@ func (r *VSphereMachineConfig) ValidateUpdate(old runtime.Object) error {
 	}
 
 	if len(allErrs) != 0 {
-		return apierrors.NewInvalid(GroupVersion.WithKind(VSphereMachineConfigKind).GroupKind(), r.Name, allErrs)
+		return nil, apierrors.NewInvalid(GroupVersion.WithKind(VSphereMachineConfigKind).GroupKind(), r.Name, allErrs)
 	}
 
-	return nil
+	return nil, nil
 }
 
 func validateImmutableFieldsVSphereMachineConfig(new, old *VSphereMachineConfig) field.ErrorList {
@@ -132,8 +133,8 @@ func validateImmutableFieldsVSphereMachineConfig(new, old *VSphereMachineConfig)
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type.
-func (r *VSphereMachineConfig) ValidateDelete() error {
+func (r *VSphereMachineConfig) ValidateDelete() (admission.Warnings, error) {
 	vspheremachineconfiglog.Info("validate delete", "name", r.Name)
 
-	return nil
+	return nil, nil
 }

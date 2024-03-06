@@ -9,6 +9,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
+	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // log is for logging in this package.
@@ -28,39 +29,39 @@ func (r *CloudStackMachineConfig) SetupWebhookWithManager(mgr ctrl.Manager) erro
 var _ webhook.Validator = &CloudStackMachineConfig{}
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
-func (r *CloudStackMachineConfig) ValidateCreate() error {
+func (r *CloudStackMachineConfig) ValidateCreate() (admission.Warnings, error) {
 	cloudstackmachineconfiglog.Info("validate create", "name", r.Name)
 	if err, fieldName, fieldValue := r.Spec.DiskOffering.Validate(); err != nil {
-		return apierrors.NewBadRequest(fmt.Sprintf("disk offering %s:%v, preventing CloudStackMachineConfig resource creation: %v", fieldName, fieldValue, err))
+		return nil, apierrors.NewBadRequest(fmt.Sprintf("disk offering %s:%v, preventing CloudStackMachineConfig resource creation: %v", fieldName, fieldValue, err))
 	}
 	if err, fieldName, fieldValue := r.Spec.Symlinks.Validate(); err != nil {
-		return apierrors.NewBadRequest(fmt.Sprintf("symlinks %s:%v, preventing CloudStackMachineConfig resource creation: %v", fieldName, fieldValue, err))
+		return nil, apierrors.NewBadRequest(fmt.Sprintf("symlinks %s:%v, preventing CloudStackMachineConfig resource creation: %v", fieldName, fieldValue, err))
 	}
 
 	// This is only needed for the webhook, which is why it is separate from the Validate method
 	if err := r.ValidateUsers(); err != nil {
-		return err
+		return nil, err
 	}
-	return r.Validate()
+	return nil, r.Validate()
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
-func (r *CloudStackMachineConfig) ValidateUpdate(old runtime.Object) error {
+func (r *CloudStackMachineConfig) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
 	cloudstackmachineconfiglog.Info("validate update", "name", r.Name)
 
 	oldCloudStackMachineConfig, ok := old.(*CloudStackMachineConfig)
 	if !ok {
-		return apierrors.NewBadRequest(fmt.Sprintf("expected a CloudStackMachineConfig but got a %T", old))
+		return nil, apierrors.NewBadRequest(fmt.Sprintf("expected a CloudStackMachineConfig but got a %T", old))
 	}
 
 	if oldCloudStackMachineConfig.IsReconcilePaused() {
 		cloudstackmachineconfiglog.Info("Reconciliation is paused")
-		return nil
+		return nil, nil
 	}
 
 	// This is only needed for the webhook, which is why it is separate from the Validate method
 	if err := r.ValidateUsers(); err != nil {
-		return apierrors.NewInvalid(GroupVersion.WithKind(CloudStackMachineConfigKind).GroupKind(),
+		return nil, apierrors.NewInvalid(GroupVersion.WithKind(CloudStackMachineConfigKind).GroupKind(),
 			r.Name,
 			field.ErrorList{
 				field.Invalid(field.NewPath("spec", "users"), r.Spec.Users, err.Error()),
@@ -91,10 +92,10 @@ func (r *CloudStackMachineConfig) ValidateUpdate(old runtime.Object) error {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("spec"), r.Spec, err.Error()))
 	}
 	if len(allErrs) > 0 {
-		return apierrors.NewInvalid(GroupVersion.WithKind(CloudStackMachineConfigKind).GroupKind(), r.Name, allErrs)
+		return nil, apierrors.NewInvalid(GroupVersion.WithKind(CloudStackMachineConfigKind).GroupKind(), r.Name, allErrs)
 	}
 
-	return nil
+	return nil, nil
 }
 
 func validateImmutableFieldsCloudStackMachineConfig(new, old *CloudStackMachineConfig) field.ErrorList {
@@ -129,8 +130,8 @@ func validateImmutableFieldsCloudStackMachineConfig(new, old *CloudStackMachineC
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type.
-func (r *CloudStackMachineConfig) ValidateDelete() error {
+func (r *CloudStackMachineConfig) ValidateDelete() (admission.Warnings, error) {
 	cloudstackmachineconfiglog.Info("validate delete", "name", r.Name)
 
-	return nil
+	return nil, nil
 }

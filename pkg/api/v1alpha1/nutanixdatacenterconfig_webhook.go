@@ -9,6 +9,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
+	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // nutanixdatacenterconfiglog is for logging in this package.
@@ -26,15 +27,15 @@ func (r *NutanixDatacenterConfig) SetupWebhookWithManager(mgr ctrl.Manager) erro
 var _ webhook.Validator = &NutanixDatacenterConfig{}
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
-func (r *NutanixDatacenterConfig) ValidateCreate() error {
+func (r *NutanixDatacenterConfig) ValidateCreate() (admission.Warnings, error) {
 	nutanixdatacenterconfiglog.Info("validate create", "name", r.Name)
 	if r.IsReconcilePaused() {
 		nutanixdatacenterconfiglog.Info("NutanixDatacenterConfig is paused, allowing create", "name", r.Name)
-		return nil
+		return nil, nil
 	}
 
 	if r.Spec.CredentialRef == nil {
-		return apierrors.NewInvalid(
+		return nil, apierrors.NewInvalid(
 			GroupVersion.WithKind(NutanixDatacenterKind).GroupKind(),
 			r.Name,
 			field.ErrorList{
@@ -43,7 +44,7 @@ func (r *NutanixDatacenterConfig) ValidateCreate() error {
 	}
 
 	if err := r.Validate(); err != nil {
-		return apierrors.NewInvalid(
+		return nil, apierrors.NewInvalid(
 			GroupVersion.WithKind(NutanixDatacenterKind).GroupKind(),
 			r.Name,
 			field.ErrorList{
@@ -51,20 +52,20 @@ func (r *NutanixDatacenterConfig) ValidateCreate() error {
 			})
 	}
 
-	return nil
+	return nil, nil
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
-func (r *NutanixDatacenterConfig) ValidateUpdate(old runtime.Object) error {
+func (r *NutanixDatacenterConfig) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
 	nutanixdatacenterconfiglog.Info("validate update", "name", r.Name)
 	oldDatacenterConfig, ok := old.(*NutanixDatacenterConfig)
 	if !ok {
-		return apierrors.NewBadRequest(fmt.Sprintf("expected a NutanixDatacenterConfig but got a %T", old))
+		return nil, apierrors.NewBadRequest(fmt.Sprintf("expected a NutanixDatacenterConfig but got a %T", old))
 	}
 
 	if oldDatacenterConfig.IsReconcilePaused() {
 		nutanixdatacenterconfiglog.Info("NutanixDatacenterConfig is paused, allowing update", "name", r.Name)
-		return nil
+		return nil, nil
 	}
 
 	var allErrs field.ErrorList
@@ -82,20 +83,20 @@ func (r *NutanixDatacenterConfig) ValidateUpdate(old runtime.Object) error {
 	}
 
 	if len(allErrs) > 0 {
-		return apierrors.NewInvalid(
+		return nil, apierrors.NewInvalid(
 			GroupVersion.WithKind(NutanixDatacenterKind).GroupKind(),
 			r.Name,
 			allErrs)
 	}
 
-	return nil
+	return nil, nil
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type.
-func (r *NutanixDatacenterConfig) ValidateDelete() error {
+func (r *NutanixDatacenterConfig) ValidateDelete() (admission.Warnings, error) {
 	nutanixdatacenterconfiglog.Info("validate delete", "name", r.Name)
 
-	return nil
+	return nil, nil
 }
 
 func validateImmutableFieldsNutanixDatacenterConfig(new, old *NutanixDatacenterConfig) field.ErrorList {

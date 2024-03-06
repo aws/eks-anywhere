@@ -9,6 +9,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
+	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // log is for logging in this package.
@@ -26,30 +27,30 @@ func (r *OIDCConfig) SetupWebhookWithManager(mgr ctrl.Manager) error {
 var _ webhook.Validator = &OIDCConfig{}
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
-func (r *OIDCConfig) ValidateCreate() error {
+func (r *OIDCConfig) ValidateCreate() (admission.Warnings, error) {
 	oidcconfiglog.Info("validate create", "name", r.Name)
 
 	allErrs := r.Validate()
 
 	if len(allErrs) == 0 {
-		return nil
+		return nil, nil
 	}
 
-	return apierrors.NewInvalid(GroupVersion.WithKind(OIDCConfigKind).GroupKind(), r.Name, allErrs)
+	return nil, apierrors.NewInvalid(GroupVersion.WithKind(OIDCConfigKind).GroupKind(), r.Name, allErrs)
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
-func (r *OIDCConfig) ValidateUpdate(old runtime.Object) error {
+func (r *OIDCConfig) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
 	oidcconfiglog.Info("validate update", "name", r.Name)
 
 	oldOIDCConfig, ok := old.(*OIDCConfig)
 	if !ok {
-		return apierrors.NewBadRequest(fmt.Sprintf("expected a OIDCConfig but got a %T", old))
+		return nil, apierrors.NewBadRequest(fmt.Sprintf("expected a OIDCConfig but got a %T", old))
 	}
 
 	if oldOIDCConfig.IsManaged() {
 		clusterlog.Info("OIDC config is associated with workload cluster", "name", oldOIDCConfig.Name)
-		return nil
+		return nil, nil
 	}
 
 	clusterlog.Info("OIDC config is associated with management cluster", "name", oldOIDCConfig.Name)
@@ -59,17 +60,17 @@ func (r *OIDCConfig) ValidateUpdate(old runtime.Object) error {
 	allErrs = append(allErrs, validateImmutableOIDCFields(r, oldOIDCConfig)...)
 
 	if len(allErrs) == 0 {
-		return nil
+		return nil, nil
 	}
 
-	return apierrors.NewInvalid(GroupVersion.WithKind(OIDCConfigKind).GroupKind(), r.Name, allErrs)
+	return nil, apierrors.NewInvalid(GroupVersion.WithKind(OIDCConfigKind).GroupKind(), r.Name, allErrs)
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type.
-func (r *OIDCConfig) ValidateDelete() error {
+func (r *OIDCConfig) ValidateDelete() (admission.Warnings, error) {
 	oidcconfiglog.Info("validate delete", "name", r.Name)
 
-	return nil
+	return nil, nil
 }
 
 func validateImmutableOIDCFields(new, old *OIDCConfig) field.ErrorList {
