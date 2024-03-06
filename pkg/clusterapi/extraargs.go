@@ -145,6 +145,17 @@ func (e ExtraArgs) Append(args ExtraArgs) ExtraArgs {
 	return e
 }
 
+// SetPodIAMAuthExtraArgs sets the api server extra args for the podIAMConfig.
+func SetPodIAMAuthExtraArgs(podIAMConfig *v1alpha1.PodIAMConfig, apiServerExtraArgs map[string]string) {
+	if podIAMFlags := PodIAMAuthExtraArgs(podIAMConfig); podIAMFlags != nil {
+		if v, has := apiServerExtraArgs["service-account-issuer"]; has {
+			apiServerExtraArgs["service-account-issuer"] = strings.Join([]string{v, podIAMFlags["service-account-issuer"]}, ",")
+		} else {
+			apiServerExtraArgs["service-account-issuer"] = podIAMFlags["service-account-issuer"]
+		}
+	}
+}
+
 func (e ExtraArgs) ToPartialYaml() templater.PartialYaml {
 	p := templater.PartialYaml{}
 	for k, v := range e {
