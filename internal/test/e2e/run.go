@@ -85,9 +85,7 @@ func RunTestsInParallel(conf ParallelRunConf) error {
 		return fmt.Errorf("failed to split tests: %v", err)
 	}
 
-	results := make([]instanceTestsResults, 0, len(instancesConf))
 	logTestGroups(conf.Logger, instancesConf)
-	maxConcurrentTests := conf.MaxConcurrentTests
 
 	// For Tinkerbell tests, get hardware inventory pool
 	var invCatalogue map[string]*hardwareCatalogue
@@ -108,48 +106,61 @@ func RunTestsInParallel(conf ParallelRunConf) error {
 		}
 	}
 
-	// Add a blocking channel to only allow for certain number of tests to run at a time
-	queue := make(chan struct{}, maxConcurrentTests)
-	for _, instanceConf := range instancesConf {
-		queue <- struct{}{}
-		go func(c instanceRunConf) {
+	work := make(chan instanceRunConf)
+	results := make(chan instanceTestsResults)
+	go func() {
+		for _, instanceConf := range instancesConf {
+			work <- instanceConf
+		}
+		close(work)
+	}()
+
+	numWorkers := conf.MaxConcurrentTests
+	if numWorkers > len(instancesConf) {
+		numWorkers = len(instancesConf)
+	}
+	for i := 0; i < numWorkers; i++ {
+		go func() {
 			defer wg.Done()
-			r := instanceTestsResults{conf: c}
+			for c := range work {
+				r := instanceTestsResults{conf: c}
 
-			r.conf.instanceId, r.testCommandResult, err = RunTests(c, invCatalogue)
-			if err != nil {
-				r.err = err
+				r.conf.instanceId, r.testCommandResult, err = RunTests(c, invCatalogue)
+				if err != nil {
+					r.err = err
+				}
+
+				results <- r
 			}
-
-			results = append(results, r)
-			<-queue
-		}(instanceConf)
+		}()
 		wg.Add(1)
 	}
 
-	wg.Wait()
-	close(queue)
+	go func() {
+		wg.Wait()
+		close(results)
+	}()
 
 	failedInstances := 0
 	totalInstances := len(instancesConf)
 	completedInstances := 0
-	for _, r := range results {
+	for r := range results {
 		var result string
 		// TODO: keeping the old logs temporarily for compatibility with the test tool
 		// Once the tool is updated to support the unified message, remove them
 		if r.err != nil {
 			result = testResultError
 			conf.Logger.Error(r.err, "Failed running e2e tests for instance", "jobId", r.conf.jobId, "instanceId", r.conf.instanceId, "tests", r.conf.regex, "status", testResultFail)
-			failedInstances += 1
+			failedInstances++
 		} else if !r.testCommandResult.Successful() {
 			result = testResultFail
 			conf.Logger.Info("An e2e instance run has failed", "jobId", r.conf.jobId, "instanceId", r.conf.instanceId, "commandId", r.testCommandResult.CommandId, "tests", r.conf.regex, "status", testResultFail)
-			failedInstances += 1
+			failedInstances++
 		} else {
 			result = testResultPass
 			conf.Logger.Info("Instance tests completed successfully", "jobId", r.conf.jobId, "instanceId", r.conf.instanceId, "commandId", r.testCommandResult.CommandId, "tests", r.conf.regex, "status", testResultPass)
 		}
-		completedInstances += 1
+		completedInstances++
 		conf.Logger.Info("Instance tests run finished",
 			"result", result,
 			"tests", r.conf.regex,
