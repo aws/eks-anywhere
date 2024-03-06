@@ -104,14 +104,15 @@ func runUpgradeCoreComponents(ctx context.Context, commandContext *task.CommandC
 		return err
 	}
 
+	logger.V(5).Info("Applying cluster management components version update")
 	eksaCluster := &anywherev1.Cluster{}
 	err = client.Get(ctx, commandContext.CurrentClusterSpec.Cluster.Name, commandContext.CurrentClusterSpec.Cluster.Namespace, eksaCluster)
 	if err != nil {
 		commandContext.SetError(err)
 		return err
 	}
-
 	eksaCluster.SetManagementComponentsVersion(commandContext.ClusterSpec.EKSARelease.Spec.Version)
+	eksaCluster.ResourceVersion = ""
 	if err := client.ApplyServerSide(ctx,
 		constants.EKSACLIFieldManager,
 		eksaCluster,
