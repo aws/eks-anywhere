@@ -14,6 +14,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/utils/pointer"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
@@ -38,9 +39,7 @@ const (
 	clusterNamespace = "test-namespace"
 )
 
-func TestReconcilerReconcileSuccess(t *testing.T) {
-	t.Skip("Flaky (https://github.com/aws/eks-anywhere/issues/6996)")
-
+func TestDockerReconcilerReconcileSuccess(t *testing.T) {
 	tt := newReconcilerTest(t)
 	logger := test.NewNullLogger()
 
@@ -476,14 +475,17 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 		c.Spec.EksaVersion = &version
 	})
 
+	kcpVersion := "v1.19.8"
 	kcp := test.KubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
 		kcp.Name = cluster.Name
+		kcp.ObjectMeta.Generation = 2
 		kcp.Spec = controlplanev1.KubeadmControlPlaneSpec{
 			MachineTemplate: controlplanev1.KubeadmControlPlaneMachineTemplate{
 				InfrastructureRef: corev1.ObjectReference{
 					Name: fmt.Sprintf("%s-control-plane-1", cluster.Name),
 				},
 			},
+			Version: kcpVersion,
 		}
 		kcp.Status = controlplanev1.KubeadmControlPlaneStatus{
 			Conditions: clusterv1.Conditions{
@@ -494,6 +496,8 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 				},
 			},
 			ObservedGeneration: 2,
+			Ready:              true,
+			Version:            pointer.String(kcpVersion),
 		}
 	})
 

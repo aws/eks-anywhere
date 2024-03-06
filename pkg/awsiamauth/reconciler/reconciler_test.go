@@ -206,7 +206,7 @@ func TestReconcileKCPObjectNotFound(t *testing.T) {
 	r := reconciler.New(certs, generateUUID, cl, remoteClientRegistry)
 	result, err := r.Reconcile(ctx, nullLog(), cluster)
 	g.Expect(err).ToNot(HaveOccurred())
-	g.Expect(result).To(Equal(controller.ResultWithRequeue(5 * time.Second)))
+	g.Expect(result).To(Equal(controller.ResultWithRequeue(4 * time.Second)))
 }
 
 func TestReconcileRemoteGetClientError(t *testing.T) {
