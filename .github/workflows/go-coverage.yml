@@ -9,7 +9,6 @@ on:
     paths-ignore:
     - 'release/**'
 
-
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -26,3 +25,4 @@ jobs:
         uses: codecov/codecov-action@v4.1.0
         with:
           files: ./coverage.txt
+          token: ${{ secrets.CODECOV_TOKEN }}
