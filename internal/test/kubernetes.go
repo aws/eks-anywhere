@@ -11,6 +11,7 @@ import (
 	_ "github.com/aws/eks-anywhere/internal/test/envtest"
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
+	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
 
 // testKubeClient implements a kubernetes.Client that uses
@@ -23,10 +24,20 @@ type testKubeClient struct {
 
 // ApplyServerSide creates or patches and object using server side logic.
 // Giving the limitations of the fake client, we implement a fake server side apply
-// using a simplified version, using a raw update if the object exists and create
+// using a simplified version, using a patch operation if the object exists and create
 // otherwise.
 func (t *testKubeClient) ApplyServerSide(ctx context.Context, fieldManager string, obj kubernetes.Object, opts ...kubernetes.ApplyServerSideOption) error {
-	err := t.fakeClient.Update(ctx, obj)
+	o := &kubernetes.ApplyServerSideOptions{}
+	for _, opt := range opts {
+		opt.ApplyToApplyServerSide(o)
+	}
+	patchOpts := &client.PatchOptions{
+		FieldManager: fieldManager,
+	}
+	if o.ForceOwnership {
+		patchOpts.Force = ptr.Bool(true)
+	}
+	err := t.fakeClient.Patch(ctx, obj, client.Apply, patchOpts)
 	if apierrors.IsNotFound(err) {
 		return t.fakeClient.Create(ctx, obj)
 	}
