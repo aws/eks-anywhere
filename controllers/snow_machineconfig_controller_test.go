@@ -47,7 +47,9 @@ func TestSnowMachineConfigReconcilerSuccess(t *testing.T) {
 	objs := []runtime.Object{config}
 
 	cb := fake.NewClientBuilder()
-	cl := cb.WithRuntimeObjects(objs...).Build()
+	cl := cb.WithRuntimeObjects(objs...).
+		WithStatusSubresource(config).
+		Build()
 
 	r := controllers.NewSnowMachineConfigReconciler(cl, validator)
 
@@ -85,7 +87,9 @@ func TestSnowMachineConfigReconcilerFailureIncorrectObject(t *testing.T) {
 	objs := []runtime.Object{config}
 
 	cb := fake.NewClientBuilder()
-	cl := cb.WithRuntimeObjects(objs...).Build()
+	cl := cb.WithRuntimeObjects(objs...).
+		WithStatusSubresource(config).
+		Build()
 
 	r := controllers.NewSnowMachineConfigReconciler(cl, nil)
 
@@ -106,11 +110,14 @@ func TestSnowMachineConfigReconcilerDelete(t *testing.T) {
 
 	config := createSnowMachineConfig()
 	config.DeletionTimestamp = &metav1.Time{Time: time.Now()}
+	config.Finalizers = []string{"test-finalizer"}
 
 	objs := []runtime.Object{config}
 
 	cb := fake.NewClientBuilder()
-	cl := cb.WithRuntimeObjects(objs...).Build()
+	cl := cb.WithRuntimeObjects(objs...).
+		WithStatusSubresource(config).
+		Build()
 
 	r := controllers.NewSnowMachineConfigReconciler(cl, nil)
 
@@ -138,7 +145,9 @@ func TestSnowMachineConfigReconcilerFailureImageExists(t *testing.T) {
 	objs := []runtime.Object{config}
 
 	cb := fake.NewClientBuilder()
-	cl := cb.WithRuntimeObjects(objs...).Build()
+	cl := cb.WithRuntimeObjects(objs...).
+		WithStatusSubresource(config).
+		Build()
 
 	r := controllers.NewSnowMachineConfigReconciler(cl, validator)
 
@@ -171,7 +180,9 @@ func TestSnowMachineConfigReconcilerFailureKeyNameExists(t *testing.T) {
 	objs := []runtime.Object{config}
 
 	cb := fake.NewClientBuilder()
-	cl := cb.WithRuntimeObjects(objs...).Build()
+	cl := cb.WithRuntimeObjects(objs...).
+		WithStatusSubresource(config).
+		Build()
 
 	r := controllers.NewSnowMachineConfigReconciler(cl, validator)
 
@@ -206,7 +217,9 @@ func TestSnowMachineConfigReconcilerFailureAggregate(t *testing.T) {
 	objs := []runtime.Object{config}
 
 	cb := fake.NewClientBuilder()
-	cl := cb.WithRuntimeObjects(objs...).Build()
+	cl := cb.WithRuntimeObjects(objs...).
+		WithStatusSubresource(config).
+		Build()
 
 	r := controllers.NewSnowMachineConfigReconciler(cl, validator)
 
