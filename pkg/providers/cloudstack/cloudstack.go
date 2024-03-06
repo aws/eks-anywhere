@@ -159,7 +159,7 @@ func (p *cloudstackProvider) validateMachineConfigImmutability(ctx context.Conte
 		return err
 	}
 
-	err = newConfig.ValidateUpdate(prevMachineConfig)
+	_, err = newConfig.ValidateUpdate(prevMachineConfig)
 	if err != nil {
 		return err
 	}
@@ -179,7 +179,7 @@ func (p *cloudstackProvider) ValidateNewSpec(ctx context.Context, cluster *types
 
 	prevDatacenter.SetDefaults()
 
-	if err = clusterSpec.CloudStackDatacenter.ValidateUpdate(prevDatacenter); err != nil {
+	if _, err = clusterSpec.CloudStackDatacenter.ValidateUpdate(prevDatacenter); err != nil {
 		return err
 	}
 

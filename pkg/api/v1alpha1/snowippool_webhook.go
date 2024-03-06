@@ -9,6 +9,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
+	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // log is for logging in this package.
@@ -26,33 +27,33 @@ func (r *SnowIPPool) SetupWebhookWithManager(mgr ctrl.Manager) error {
 var _ webhook.Validator = &SnowIPPool{}
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
-func (r *SnowIPPool) ValidateCreate() error {
+func (r *SnowIPPool) ValidateCreate() (admission.Warnings, error) {
 	snowippoollog.Info("validate create", "name", r.Name)
 
-	return r.Validate()
+	return nil, r.Validate()
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
-func (r *SnowIPPool) ValidateUpdate(old runtime.Object) error {
+func (r *SnowIPPool) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
 	snowippoollog.Info("validate update", "name", r.Name)
 
 	oldPool, ok := old.(*SnowIPPool)
 	if !ok {
-		return apierrors.NewBadRequest(fmt.Sprintf("expected a SnowIPPool but got a %T", old))
+		return nil, apierrors.NewBadRequest(fmt.Sprintf("expected a SnowIPPool but got a %T", old))
 	}
 
 	if allErrs := validateImmutableFieldsSnowIPPool(r, oldPool); len(allErrs) != 0 {
-		return apierrors.NewInvalid(GroupVersion.WithKind(SnowIPPoolKind).GroupKind(), r.Name, allErrs)
+		return nil, apierrors.NewInvalid(GroupVersion.WithKind(SnowIPPoolKind).GroupKind(), r.Name, allErrs)
 	}
 
-	return r.Validate()
+	return nil, r.Validate()
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type.
-func (r *SnowIPPool) ValidateDelete() error {
+func (r *SnowIPPool) ValidateDelete() (admission.Warnings, error) {
 	snowippoollog.Info("validate delete", "name", r.Name)
 
-	return nil
+	return nil, nil
 }
 
 func validateImmutableFieldsSnowIPPool(new, old *SnowIPPool) field.ErrorList {

@@ -1,6 +1,7 @@
 package handlers_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/go-logr/logr"
@@ -77,9 +78,10 @@ func TestChildObjectToClusters(t *testing.T) {
 
 	for _, tt := range testCases {
 		t.Run(tt.testName, func(t *testing.T) {
+			ctx := context.Background()
 			g := NewWithT(t)
 			handle := handlers.ChildObjectToClusters(logr.New(logf.NullLogSink{}))
-			requests := handle(tt.obj)
+			requests := handle(ctx, tt.obj)
 			g.Expect(requests).To(Equal(tt.wantRequests))
 		})
 	}
