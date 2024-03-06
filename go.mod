@@ -18,7 +18,7 @@ require (
 	github.com/aws/etcdadm-controller v1.0.6-rc3
 	github.com/aws/smithy-go v1.19.0
 	github.com/bmc-toolbox/bmclib/v2 v2.1.1-0.20231206130132-1063371b9ed6
-	github.com/docker/cli v24.0.6+incompatible
+	github.com/docker/cli v25.0.3+incompatible
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-git/go-git/v5 v5.11.0
 	github.com/go-jose/go-jose/v3 v3.0.1
