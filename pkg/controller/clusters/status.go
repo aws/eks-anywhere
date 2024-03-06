@@ -4,6 +4,7 @@ import (
 	"context"
 
 	etcdv1 "github.com/aws/etcdadm-controller/api/v1beta1"
+	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	v1 "k8s.io/api/core/v1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
@@ -12,6 +13,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/controller"
 )
 
@@ -259,4 +261,11 @@ func updateWorkersReadyCondition(cluster *anywherev1.Cluster, machineDeployments
 // controlPlaneInitializationInProgressCondition returns a new "False" condition for the ControlPlaneInitializationInProgress reason.
 func controlPlaneInitializationInProgressCondition() *anywherev1.Condition {
 	return conditions.FalseCondition(anywherev1.ControlPlaneInitializedCondition, anywherev1.ControlPlaneInitializationInProgressReason, clusterv1.ConditionSeverityInfo, "The first control plane instance is not available yet")
+}
+
+// CleanupStatus removes errors from the cluster status. Intended to be used as a reconciler phase
+// after the error has been handled.
+func CleanupStatus(_ context.Context, _ logr.Logger, spec *cluster.Spec) (controller.Result, error) {
+	spec.Cluster.ClearFailure()
+	return controller.Result{}, nil
 }

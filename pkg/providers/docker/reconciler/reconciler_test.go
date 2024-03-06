@@ -405,10 +405,45 @@ func TestReconcileControlPlaneUnstackedEtcdSuccess(t *testing.T) {
 func TestReconcilerReconcileControlPlaneFailure(t *testing.T) {
 	tt := newReconcilerTest(t)
 	tt.createAllObjs()
-	spec := tt.buildSpec()
-	spec.Cluster.Spec.KubernetesVersion = ""
-	_, err := tt.reconciler().ReconcileControlPlane(tt.ctx, test.NewNullLogger(), spec)
-	tt.Expect(err).To(MatchError(ContainSubstring("generating docker control plane yaml spec")))
+
+	tests := []struct {
+		name      string
+		buildSpec func() *clusterspec.Spec
+		wantError string
+	}{
+		{
+			name: "no kubernetes version",
+			buildSpec: func() *clusterspec.Spec {
+				originalSpec := tt.buildSpec()
+				spec := originalSpec.DeepCopy()
+				spec.Cluster.Spec.KubernetesVersion = ""
+				return spec
+			},
+			wantError: "generating docker control plane yaml spec",
+		},
+		{
+			name: "no cluster name",
+			buildSpec: func() *clusterspec.Spec {
+				originalSpec := tt.buildSpec()
+				spec := originalSpec.DeepCopy()
+				spec.Cluster.Name = ""
+				return spec
+			},
+			wantError: "applying control plane objects",
+		},
+	}
+
+	for _, testCase := range tests {
+		t.Run(testCase.name, func(t *testing.T) {
+			spec := testCase.buildSpec()
+			_, err := tt.reconciler().ReconcileControlPlane(tt.ctx, test.NewNullLogger(), spec)
+
+			tt.Expect(spec.Cluster.Status.FailureMessage).To(HaveValue(ContainSubstring(testCase.wantError)))
+			tt.Expect(spec.Cluster.Status.FailureReason).To(HaveValue(Equal(anywherev1.ControlPlaneReconciliationErrorReason)))
+
+			tt.Expect(err).To(MatchError(ContainSubstring(testCase.wantError)))
+		})
+	}
 }
 
 type reconcilerTest struct {

@@ -64,8 +64,9 @@ func (r *Reconciler) Reconcile(ctx context.Context, log logr.Logger, cluster *an
 		r.ipValidator.ValidateControlPlaneIP,
 		r.ValidateDatacenterConfig,
 		r.ValidateMachineConfig,
-		clusters.CleanupStatusAfterValidate,
+		clusters.CleanupStatus,
 		r.ReconcileControlPlane,
+		clusters.CleanupStatus,
 		r.CheckControlPlaneReady,
 		r.ReconcileCNI,
 		r.ReconcileWorkers,
@@ -122,10 +123,12 @@ func (r *Reconciler) ReconcileControlPlane(ctx context.Context, log logr.Logger,
 	log.Info("Applying control plane CAPI objects")
 	cp, err := cloudstack.ControlPlaneSpec(ctx, log, clientutil.NewKubeClient(r.client), spec)
 	if err != nil {
+		failureMessage := err.Error()
+		spec.Cluster.SetFailure(anywherev1.ControlPlaneReconciliationErrorReason, failureMessage)
 		return controller.Result{}, err
 	}
 
-	return clusters.ReconcileControlPlane(ctx, log, r.client, &clusters.ControlPlane{
+	result, err := clusters.ReconcileControlPlane(ctx, log, r.client, &clusters.ControlPlane{
 		Cluster:                     cp.Cluster,
 		ProviderCluster:             cp.ProviderCluster,
 		KubeadmControlPlane:         cp.KubeadmControlPlane,
@@ -133,6 +136,13 @@ func (r *Reconciler) ReconcileControlPlane(ctx context.Context, log logr.Logger,
 		EtcdCluster:                 cp.EtcdCluster,
 		EtcdMachineTemplate:         cp.EtcdMachineTemplate,
 	})
+	if err != nil {
+		failureMessage := err.Error()
+		spec.Cluster.SetFailure(anywherev1.ControlPlaneReconciliationErrorReason, failureMessage)
+		return result, err
+	}
+
+	return result, nil
 }
 
 // CheckControlPlaneReady checks whether the control plane for an eks-a cluster is ready or not.

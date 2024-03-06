@@ -102,8 +102,9 @@ func (r *Reconciler) Reconcile(ctx context.Context, log logr.Logger, cluster *an
 		r.ValidateHardware,
 		r.ValidateDatacenterConfig,
 		r.ValidateRufioMachines,
-		r.CleanupStatusAfterValidate,
+		r.CleanupStatus,
 		r.ReconcileControlPlane,
+		r.CleanupStatus,
 		r.CheckControlPlaneReady,
 		r.ReconcileCNI,
 		r.ReconcileWorkers,
@@ -115,9 +116,9 @@ func (r *Reconciler) ValidateControlPlaneIP(ctx context.Context, log logr.Logger
 	return r.ipValidator.ValidateControlPlaneIP(ctx, log, tinkerbellScope.ClusterSpec)
 }
 
-// CleanupStatusAfterValidate removes errors from the cluster status with the tinkerbellScope.
-func (r *Reconciler) CleanupStatusAfterValidate(ctx context.Context, log logr.Logger, tinkerbellScope *Scope) (controller.Result, error) {
-	return clusters.CleanupStatusAfterValidate(ctx, log, tinkerbellScope.ClusterSpec)
+// CleanupStatus removes errors from the cluster status with the tinkerbellScope.
+func (r *Reconciler) CleanupStatus(ctx context.Context, log logr.Logger, tinkerbellScope *Scope) (controller.Result, error) {
+	return clusters.CleanupStatus(ctx, log, tinkerbellScope.ClusterSpec)
 }
 
 // ValidateClusterSpec performs a set of assertions on a cluster spec.
@@ -245,7 +246,14 @@ func (r *Reconciler) ReconcileControlPlane(ctx context.Context, log logr.Logger,
 	log = log.WithValues("phase", "reconcileControlPlane")
 	log.Info("Applying control plane CAPI objects")
 
-	return clusters.ReconcileControlPlane(ctx, log, r.client, toClientControlPlane(tinkerbellScope.ControlPlane))
+	result, err := clusters.ReconcileControlPlane(ctx, log, r.client, toClientControlPlane(tinkerbellScope.ControlPlane))
+	if err != nil {
+		failureMessage := err.Error()
+		tinkerbellScope.ClusterSpec.Cluster.SetFailure(anywherev1.ControlPlaneReconciliationErrorReason, failureMessage)
+		return result, err
+	}
+
+	return result, nil
 }
 
 // CheckControlPlaneReady checks whether the control plane for an eks-a cluster is ready or not.

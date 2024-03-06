@@ -953,6 +953,9 @@ const (
 
 	// EksaVersionInvalidReason reports that the Cluster eksaVersion validation has failed.
 	EksaVersionInvalidReason FailureReasonType = "EksaVersionInvalid"
+
+	// ControlPlaneReconciliationErrorReason reports that an error was encountered during control plane reconciliation.
+	ControlPlaneReconciliationErrorReason FailureReasonType = "ControlPlaneReconciliationError"
 )
 
 // Reasons for the terminal failures while reconciling the Cluster object specific for Tinkerbell.

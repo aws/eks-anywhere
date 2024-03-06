@@ -146,8 +146,9 @@ func (r *Reconciler) Reconcile(ctx context.Context, log logr.Logger, c *anywhere
 		r.reconcileClusterSecret,
 		r.ipValidator.ValidateControlPlaneIP,
 		r.ValidateClusterSpec,
-		clusters.CleanupStatusAfterValidate,
+		clusters.CleanupStatus,
 		r.ReconcileControlPlane,
+		clusters.CleanupStatus,
 		r.CheckControlPlaneReady,
 		r.ReconcileCNI,
 		r.ReconcileWorkers,
@@ -191,10 +192,19 @@ func (r *Reconciler) ReconcileControlPlane(ctx context.Context, log logr.Logger,
 
 	cp, err := nutanix.ControlPlaneSpec(ctx, log, clientutil.NewKubeClient(r.client), clusterSpec)
 	if err != nil {
+		failureMessage := err.Error()
+		clusterSpec.Cluster.SetFailure(anywherev1.ControlPlaneReconciliationErrorReason, failureMessage)
 		return controller.Result{}, err
 	}
 
-	return clusters.ReconcileControlPlane(ctx, log, r.client, toClientControlPlane(cp))
+	result, err := clusters.ReconcileControlPlane(ctx, log, r.client, toClientControlPlane(cp))
+	if err != nil {
+		failureMessage := err.Error()
+		clusterSpec.Cluster.SetFailure(anywherev1.ControlPlaneReconciliationErrorReason, failureMessage)
+		return result, err
+	}
+
+	return result, nil
 }
 
 func toClientControlPlane(cp *nutanix.ControlPlane) *clusters.ControlPlane {

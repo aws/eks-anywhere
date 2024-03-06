@@ -8,16 +8,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/cluster"
-	"github.com/aws/eks-anywhere/pkg/controller"
 )
-
-// CleanupStatusAfterValidate removes errors from the cluster status. Intended to be used as a reconciler phase
-// after all validation phases have been executed.
-func CleanupStatusAfterValidate(_ context.Context, _ logr.Logger, spec *cluster.Spec) (controller.Result, error) {
-	spec.Cluster.ClearFailure()
-	return controller.Result{}, nil
-}
 
 // ClusterValidator runs cluster level validations.
 type ClusterValidator struct {

@@ -333,6 +333,22 @@ func TestReconcilerReconcileControlPlaneSuccess(t *testing.T) {
 	tt.ShouldEventuallyExist(tt.ctx, &corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: tt.cluster.Name + "-cpi-manifests", Namespace: "eksa-system"}})
 }
 
+func TestReconcilerReconcileControlPlaneFailure(t *testing.T) {
+	tt := newReconcilerTest(t)
+	tt.createAllObjs()
+
+	originalSpec := tt.buildSpec()
+	spec := originalSpec.DeepCopy()
+
+	spec.Cluster.Name = ""
+	_, err := tt.reconciler().ReconcileControlPlane(tt.ctx, test.NewNullLogger(), spec)
+
+	tt.Expect(spec.Cluster.Status.FailureMessage).To(HaveValue(ContainSubstring("applying control plane objects")))
+	tt.Expect(spec.Cluster.Status.FailureReason).To(HaveValue(Equal(anywherev1.ControlPlaneReconciliationErrorReason)))
+
+	tt.Expect(err).To(MatchError(ContainSubstring("resource name may not be empty")))
+}
+
 type reconcilerTest struct {
 	t testing.TB
 	*WithT

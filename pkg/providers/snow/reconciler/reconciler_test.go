@@ -229,6 +229,52 @@ func TestReconcilerReconcileControlPlane(t *testing.T) {
 	tt.ShouldEventuallyExist(tt.ctx, &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: tt.cluster.Name + "-snow-credentials", Namespace: "eksa-system"}})
 }
 
+func TestReconcilerReconcileControlPlaneFailure(t *testing.T) {
+	tt := newReconcilerTest(t)
+	tt.createAllObjs()
+
+	tests := []struct {
+		name      string
+		buildSpec func() *clusterspec.Spec
+		wantError string
+	}{
+		{
+			name: "no snow credentials secret",
+			buildSpec: func() *clusterspec.Spec {
+				originalSpec := tt.buildSpec()
+				spec := originalSpec.DeepCopy()
+				spec.SnowCredentialsSecret = nil
+				return spec
+			},
+			wantError: "snowCredentialsSecret in clusterSpec shall not be nil",
+		},
+		{
+			name: "no cluster name",
+			buildSpec: func() *clusterspec.Spec {
+				originalSpec := tt.buildSpec()
+				spec := originalSpec.DeepCopy()
+				spec.SnowCredentialsSecret = originalSpec.SnowCredentialsSecret.DeepCopy()
+
+				spec.Cluster.Name = ""
+				return spec
+			},
+			wantError: "applying control plane objects",
+		},
+	}
+
+	for _, testCase := range tests {
+		t.Run(testCase.name, func(t *testing.T) {
+			spec := testCase.buildSpec()
+			_, err := tt.reconciler().ReconcileControlPlane(tt.ctx, test.NewNullLogger(), spec)
+
+			tt.Expect(spec.Cluster.Status.FailureMessage).To(HaveValue(ContainSubstring(testCase.wantError)))
+			tt.Expect(spec.Cluster.Status.FailureReason).To(HaveValue(Equal(anywherev1.ControlPlaneReconciliationErrorReason)))
+
+			tt.Expect(err).To(MatchError(ContainSubstring(testCase.wantError)))
+		})
+	}
+}
+
 func TestReconcilerCheckControlPlaneReadyItIsReady(t *testing.T) {
 	tt := newReconcilerTest(t)
 	kcpVersion := "test"
