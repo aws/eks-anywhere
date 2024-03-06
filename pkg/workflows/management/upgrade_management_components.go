@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/aws/eks-anywhere/pkg/cluster"
-	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers"
@@ -14,6 +13,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/validations"
 	"github.com/aws/eks-anywhere/pkg/workflows"
 	"github.com/aws/eks-anywhere/pkg/workflows/interfaces"
+	v1releasealpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
 // UpgradeManagementComponentsWorkflow is a schema for upgrade management components.
@@ -54,15 +54,17 @@ func NewUpgradeManagementComponentsRunner(
 // UMCValidator is a struct that holds a cluster and a kubectl executable.
 // It is used to perform preflight validations on the cluster.
 type UMCValidator struct {
-	cluster *types.Cluster
-	kubectl *executables.Kubectl
+	cluster     *types.Cluster
+	eksaRelease *v1releasealpha1.EKSARelease
+	kubectl     validations.KubectlClient
 }
 
 // NewUMCValidator is a constructor function that creates a new instance of UMCValidator.
-func NewUMCValidator(cluster *types.Cluster, kubectl *executables.Kubectl) *UMCValidator {
+func NewUMCValidator(cluster *types.Cluster, eksaRelease *v1releasealpha1.EKSARelease, kubectl validations.KubectlClient) *UMCValidator {
 	return &UMCValidator{
-		cluster: cluster,
-		kubectl: kubectl,
+		cluster:     cluster,
+		eksaRelease: eksaRelease,
+		kubectl:     kubectl,
 	}
 }
 
@@ -82,6 +84,13 @@ func (u *UMCValidator) PreflightValidations(ctx context.Context) []validations.V
 				Name:        "cluster CRDs ready",
 				Remediation: "",
 				Err:         u.kubectl.ValidateClustersCRD(ctx, u.cluster),
+			}
+		},
+		func() *validations.ValidationResult {
+			return &validations.ValidationResult{
+				Name:        "validate management components version to cluster eksaVersion compatibility",
+				Remediation: "",
+				Err:         validations.ValidateManagementComponentsVersionSkew(ctx, u.kubectl, u.cluster, u.eksaRelease),
 			}
 		},
 	}
