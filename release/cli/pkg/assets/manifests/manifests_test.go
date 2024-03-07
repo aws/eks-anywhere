@@ -15,34 +15,37 @@
 package manifests
 
 import (
-	"reflect"
 	"strings"
 	"testing"
 	"time"
+
+	. "github.com/onsi/gomega"
 
 	assettypes "github.com/aws/eks-anywhere/release/cli/pkg/assets/types"
 	"github.com/aws/eks-anywhere/release/cli/pkg/filereader"
 	releasetypes "github.com/aws/eks-anywhere/release/cli/pkg/types"
 )
 
-var releaseConfig = &releasetypes.ReleaseConfig{
-	ArtifactDir:              "artifacts",
-	CliRepoSource:            "eks-a-build",
-	BuildRepoSource:          "eks-a-cli",
-	CliRepoBranchName:        "main",
-	CliRepoUrl:               "https://github.com/aws/eks-anywhere.git",
-	BuildRepoUrl:             "https://github.com/aws/eks-anywhere-build-tooling.git",
-	SourceBucket:             "projectbuildpipeline-857-pipelineoutputartifactsb-10ajmk30khe3f",
-	ReleaseBucket:            "release-bucket",
-	SourceContainerRegistry:  "source-container-registry",
-	ReleaseContainerRegistry: "release-container-registry",
-	CDN:                      "https://release-bucket",
-	BundleNumber:             1,
-	ReleaseNumber:            1,
-	ReleaseVersion:           "vDev",
-	ReleaseTime:              time.Unix(0, 0),
-	DevRelease:               true,
-	DryRun:                   true,
+func baseReleaseConfig() *releasetypes.ReleaseConfig {
+	return &releasetypes.ReleaseConfig{
+		ArtifactDir:              "artifacts",
+		CliRepoSource:            "eks-a-build",
+		BuildRepoSource:          "eks-a-cli",
+		CliRepoBranchName:        "main",
+		CliRepoUrl:               "https://github.com/aws/eks-anywhere.git",
+		BuildRepoUrl:             "https://github.com/aws/eks-anywhere-build-tooling.git",
+		SourceBucket:             "projectbuildpipeline-857-pipelineoutputartifactsb-10ajmk30khe3f",
+		ReleaseBucket:            "release-bucket",
+		SourceContainerRegistry:  "source-container-registry",
+		ReleaseContainerRegistry: "release-container-registry",
+		CDN:                      "https://release-bucket",
+		BundleNumber:             1,
+		ReleaseNumber:            1,
+		ReleaseVersion:           "v0.15.0",
+		ReleaseTime:              time.Unix(0, 0),
+		DevRelease:               true,
+		DryRun:                   true,
+	}
 }
 
 func TestGenerateManifestAssets(t *testing.T) {
@@ -72,7 +75,7 @@ func TestGenerateManifestAssets(t *testing.T) {
 			imageTagOverrides: []releasetypes.ImageTagOverride{
 				{
 					Repository: "foo/bar",
-					ReleaseUri: "release-container-registry/foo/bar:v0.1.0-eks-a-v0.0.0-dev-build.1",
+					ReleaseUri: "release-container-registry/foo/bar:v0.1.0-eks-a-v0.15.0-dev-build.1",
 				},
 			},
 			wantManifestArtifact: &releasetypes.ManifestArtifact{
@@ -80,12 +83,12 @@ func TestGenerateManifestAssets(t *testing.T) {
 				SourceS3Key:    "components.yaml",
 				ArtifactPath:   "artifacts/bar-manifests",
 				ReleaseName:    "components.yaml",
-				ReleaseS3Path:  "artifacts/v0.0.0-dev-build.0/bar-manifests/manifests/bar/v0.1.0",
-				ReleaseCdnURI:  "https://release-bucket/artifacts/v0.0.0-dev-build.0/bar-manifests/manifests/bar/v0.1.0/components.yaml",
+				ReleaseS3Path:  "artifacts/v0.15.0-dev-build.3/bar-manifests/manifests/bar/v0.1.0",
+				ReleaseCdnURI:  "https://release-bucket/artifacts/v0.15.0-dev-build.3/bar-manifests/manifests/bar/v0.1.0/components.yaml",
 				ImageTagOverrides: []releasetypes.ImageTagOverride{
 					{
 						Repository: "foo/bar",
-						ReleaseUri: "release-container-registry/foo/bar:v0.1.0-eks-a-v0.0.0-dev-build.1",
+						ReleaseUri: "release-container-registry/foo/bar:v0.1.0-eks-a-v0.15.0-dev-build.1",
 					},
 				},
 				GitTag:            "v0.1.0",
@@ -109,7 +112,7 @@ func TestGenerateManifestAssets(t *testing.T) {
 			imageTagOverrides: []releasetypes.ImageTagOverride{
 				{
 					Repository: "foo/bar",
-					ReleaseUri: "release-container-registry/foo/bar:v0.1.0-eks-a-v0.0.0-dev-release-branch-build.1",
+					ReleaseUri: "release-container-registry/foo/bar:v0.1.0-eks-a-v0.15.0-dev-release-branch-build.1",
 				},
 			},
 			wantManifestArtifact: &releasetypes.ManifestArtifact{
@@ -117,12 +120,12 @@ func TestGenerateManifestAssets(t *testing.T) {
 				SourceS3Key:    "components.yaml",
 				ArtifactPath:   "artifacts/bar-manifests",
 				ReleaseName:    "components.yaml",
-				ReleaseS3Path:  "artifacts/v0.0.0-dev-release-branch-build.0/bar-manifests/manifests/bar/v0.1.0",
-				ReleaseCdnURI:  "https://release-bucket/artifacts/v0.0.0-dev-release-branch-build.0/bar-manifests/manifests/bar/v0.1.0/components.yaml",
+				ReleaseS3Path:  "artifacts/v0.15.0-dev-build.3/bar-manifests/manifests/bar/v0.1.0",
+				ReleaseCdnURI:  "https://release-bucket/artifacts/v0.15.0-dev-build.3/bar-manifests/manifests/bar/v0.1.0/components.yaml",
 				ImageTagOverrides: []releasetypes.ImageTagOverride{
 					{
 						Repository: "foo/bar",
-						ReleaseUri: "release-container-registry/foo/bar:v0.1.0-eks-a-v0.0.0-dev-release-branch-build.1",
+						ReleaseUri: "release-container-registry/foo/bar:v0.1.0-eks-a-v0.15.0-dev-release-branch-build.1",
 					},
 				},
 				GitTag:            "v0.1.0",
@@ -136,9 +139,11 @@ func TestGenerateManifestAssets(t *testing.T) {
 
 	for _, tt := range testCases {
 		t.Run(tt.testName, func(t *testing.T) {
+			g := NewWithT(t)
+			releaseConfig := baseReleaseConfig()
 			releaseConfig.BuildRepoBranchName = tt.buildRepoBranchName
 
-			releaseVersion, err := filereader.GetCurrentEksADevReleaseVersion(releaseConfig.ReleaseVersion, releaseConfig, 0)
+			releaseVersion, err := filereader.GetCurrentEksADevReleaseVersion(releaseConfig.ReleaseVersion, releaseConfig, 3)
 			if err != nil {
 				t.Fatalf("Error getting previous EKS-A dev release number: %v\n", err)
 			}
@@ -146,10 +151,11 @@ func TestGenerateManifestAssets(t *testing.T) {
 			releaseConfig.ReleaseVersion = releaseVersion
 			releaseConfig.DevReleaseUriVersion = strings.ReplaceAll(releaseVersion, "+", "-")
 
-			if gotManifestArtifact, err := GetManifestAssets(releaseConfig, tt.manifestComponent, tt.manifestFile, tt.projectName, tt.projectPath, tt.gitTag, tt.buildRepoBranchName, tt.imageTagOverrides); (err != nil) != tt.wantErr {
-				t.Fatalf("GetManifestAssets got err = %v, want err = %v", err, tt.wantErr)
-			} else if !reflect.DeepEqual(gotManifestArtifact, tt.wantManifestArtifact) {
-				t.Fatalf("GetManifestAssets got artifact = %v, expected %v", gotManifestArtifact, tt.wantManifestArtifact)
+			gotManifestArtifact, err := GetManifestAssets(releaseConfig, tt.manifestComponent, tt.manifestFile, tt.projectName, tt.projectPath, tt.gitTag, tt.buildRepoBranchName, tt.imageTagOverrides)
+			if tt.wantErr {
+				g.Expect(err).To(HaveOccurred())
+			} else {
+				g.Expect(gotManifestArtifact).To(BeComparableTo(tt.wantManifestArtifact))
 			}
 		})
 	}
