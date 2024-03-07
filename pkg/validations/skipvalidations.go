@@ -7,9 +7,10 @@ import (
 
 // string values of supported validation names that can be skipped.
 const (
-	PDB             = "pod-disruption"
-	VSphereUserPriv = "vsphere-user-privilege"
-	EksaVersionSkew = "eksa-version-skew"
+	PDB                = "pod-disruption"
+	VSphereUserPriv    = "vsphere-user-privilege"
+	EksaVersionSkew    = "eksa-version-skew"
+	APIServerExtraArgs = "api-server-extra-args"
 )
 
 // ValidSkippableValidationsMap returns a map for all valid skippable validations as keys, defaulting values to false.

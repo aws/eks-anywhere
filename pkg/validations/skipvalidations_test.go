@@ -29,9 +29,10 @@ func TestValidateSkippableValidation(t *testing.T) {
 		{
 			name: "valid upgrade validation param",
 			want: map[string]bool{
-				validations.PDB:             true,
-				validations.VSphereUserPriv: false,
-				validations.EksaVersionSkew: false,
+				validations.PDB:                true,
+				validations.VSphereUserPriv:    false,
+				validations.EksaVersionSkew:    false,
+				validations.APIServerExtraArgs: false,
 			},
 			wantErr:              nil,
 			skippedValidations:   []string{validations.PDB},
@@ -40,7 +41,8 @@ func TestValidateSkippableValidation(t *testing.T) {
 		{
 			name: "valid create validation param",
 			want: map[string]bool{
-				validations.VSphereUserPriv: true,
+				validations.VSphereUserPriv:    true,
+				validations.APIServerExtraArgs: false,
 			},
 			wantErr:              nil,
 			skippedValidations:   []string{validations.VSphereUserPriv},

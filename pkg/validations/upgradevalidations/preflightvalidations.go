@@ -166,6 +166,17 @@ func (u *UpgradeValidations) PreflightValidations(ctx context.Context) []validat
 				}
 			})
 	}
+	if !u.Opts.SkippedValidations[validations.APIServerExtraArgs] {
+		upgradeValidations = append(
+			upgradeValidations,
+			func() *validations.ValidationResult {
+				return &validations.ValidationResult{
+					Name:        "validate api server extra args",
+					Remediation: "ensure apiServerExtraArgs have only supported flags (service-account-issuer, service-account-jwks-uri)",
+					Err:         validations.ValidateAPIServerExtraArgs(u.Opts.Spec),
+				}
+			})
+	}
 	return upgradeValidations
 }
 
