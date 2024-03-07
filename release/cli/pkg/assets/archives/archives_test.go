@@ -15,34 +15,37 @@
 package archives
 
 import (
-	"reflect"
 	"strings"
 	"testing"
 	"time"
+
+	. "github.com/onsi/gomega"
 
 	assettypes "github.com/aws/eks-anywhere/release/cli/pkg/assets/types"
 	"github.com/aws/eks-anywhere/release/cli/pkg/filereader"
 	releasetypes "github.com/aws/eks-anywhere/release/cli/pkg/types"
 )
 
-var releaseConfig = &releasetypes.ReleaseConfig{
-	ArtifactDir:              "artifacts",
-	CliRepoSource:            "eks-a-build",
-	BuildRepoSource:          "eks-a-cli",
-	CliRepoBranchName:        "main",
-	CliRepoUrl:               "https://github.com/aws/eks-anywhere.git",
-	BuildRepoUrl:             "https://github.com/aws/eks-anywhere-build-tooling.git",
-	SourceBucket:             "projectbuildpipeline-857-pipelineoutputartifactsb-10ajmk30khe3f",
-	ReleaseBucket:            "release-bucket",
-	SourceContainerRegistry:  "source-container-registry",
-	ReleaseContainerRegistry: "release-container-registry",
-	CDN:                      "https://release-bucket",
-	BundleNumber:             1,
-	ReleaseNumber:            1,
-	ReleaseVersion:           "vDev",
-	ReleaseTime:              time.Unix(0, 0),
-	DevRelease:               true,
-	DryRun:                   true,
+func baseReleaseConfig() *releasetypes.ReleaseConfig {
+	return &releasetypes.ReleaseConfig{
+		ArtifactDir:              "artifacts",
+		CliRepoSource:            "eks-a-build",
+		BuildRepoSource:          "eks-a-cli",
+		CliRepoBranchName:        "main",
+		CliRepoUrl:               "https://github.com/aws/eks-anywhere.git",
+		BuildRepoUrl:             "https://github.com/aws/eks-anywhere-build-tooling.git",
+		SourceBucket:             "projectbuildpipeline-857-pipelineoutputartifactsb-10ajmk30khe3f",
+		ReleaseBucket:            "release-bucket",
+		SourceContainerRegistry:  "source-container-registry",
+		ReleaseContainerRegistry: "release-container-registry",
+		CDN:                      "https://release-bucket",
+		BundleNumber:             1,
+		ReleaseNumber:            1,
+		ReleaseVersion:           "v0.15.0",
+		ReleaseTime:              time.Unix(0, 0),
+		DevRelease:               true,
+		DryRun:                   true,
+	}
 }
 
 func TestGenerateArchiveAssets(t *testing.T) {
@@ -74,9 +77,9 @@ func TestGenerateArchiveAssets(t *testing.T) {
 				SourceS3Key:       "baz-linux-amd64-v0.1.0.tar.gz",
 				SourceS3Prefix:    "projects/foo/bar/latest",
 				ArtifactPath:      "artifacts/baz-tarball/1-21",
-				ReleaseName:       "baz-v0.0.0-dev-build.0-linux-amd64.tar.gz",
-				ReleaseS3Path:     "artifacts/v0.0.0-dev-build.0/baz/v0.1.0",
-				ReleaseCdnURI:     "https://release-bucket/artifacts/v0.0.0-dev-build.0/baz/v0.1.0/baz-v0.0.0-dev-build.0-linux-amd64.tar.gz",
+				ReleaseName:       "baz-v0.15.0-dev-build.0-linux-amd64.tar.gz",
+				ReleaseS3Path:     "artifacts/v0.15.0-dev-build.0/baz/v0.1.0",
+				ReleaseCdnURI:     "https://release-bucket/artifacts/v0.15.0-dev-build.0/baz/v0.1.0/baz-v0.15.0-dev-build.0-linux-amd64.tar.gz",
 				OS:                "linux",
 				Arch:              []string{"amd64"},
 				GitTag:            "v0.1.0",
@@ -102,9 +105,9 @@ func TestGenerateArchiveAssets(t *testing.T) {
 				SourceS3Key:       "baz-linux-amd64-v0.2.0.tar.gz",
 				SourceS3Prefix:    "projects/foo/bar/release-branch",
 				ArtifactPath:      "artifacts/baz-tarball/1-22",
-				ReleaseName:       "baz-v0.0.0-dev-release-branch-build.0-linux-amd64.tar.gz",
-				ReleaseS3Path:     "artifacts/v0.0.0-dev-release-branch-build.0/baz/v0.2.0",
-				ReleaseCdnURI:     "https://release-bucket/artifacts/v0.0.0-dev-release-branch-build.0/baz/v0.2.0/baz-v0.0.0-dev-release-branch-build.0-linux-amd64.tar.gz",
+				ReleaseName:       "baz-v0.15.0-dev-build.0-linux-amd64.tar.gz",
+				ReleaseS3Path:     "artifacts/v0.15.0-dev-build.0/baz/v0.2.0",
+				ReleaseCdnURI:     "https://release-bucket/artifacts/v0.15.0-dev-build.0/baz/v0.2.0/baz-v0.15.0-dev-build.0-linux-amd64.tar.gz",
 				OS:                "linux",
 				Arch:              []string{"amd64"},
 				GitTag:            "v0.2.0",
@@ -133,9 +136,9 @@ func TestGenerateArchiveAssets(t *testing.T) {
 				SourceS3Key:       "lorem.ova",
 				SourceS3Prefix:    "projects/foo/bar/1-21/ova/lorem/v1.2.3/latest",
 				ArtifactPath:      "artifacts/baz-ova/1-21",
-				ReleaseName:       "lorem-1.21.9-eks-d-1-21-8-eks-a-v0.0.0-dev-build.0-amd64.ova",
-				ReleaseS3Path:     "artifacts/v0.0.0-dev-build.0/eks-distro/ova/1-21/1-21-8",
-				ReleaseCdnURI:     "https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/ova/1-21/1-21-8/lorem-1.21.9-eks-d-1-21-8-eks-a-v0.0.0-dev-build.0-amd64.ova",
+				ReleaseName:       "lorem-1.21.9-eks-d-1-21-8-eks-a-v0.15.0-dev-build.0-amd64.ova",
+				ReleaseS3Path:     "artifacts/v0.15.0-dev-build.0/eks-distro/ova/1-21/1-21-8",
+				ReleaseCdnURI:     "https://release-bucket/artifacts/v0.15.0-dev-build.0/eks-distro/ova/1-21/1-21-8/lorem-1.21.9-eks-d-1-21-8-eks-a-v0.15.0-dev-build.0-amd64.ova",
 				OS:                "linux",
 				OSName:            "lorem",
 				Arch:              []string{"amd64"},
@@ -150,6 +153,8 @@ func TestGenerateArchiveAssets(t *testing.T) {
 
 	for _, tt := range testCases {
 		t.Run(tt.testName, func(t *testing.T) {
+			g := NewWithT(t)
+			releaseConfig := baseReleaseConfig()
 			releaseConfig.BuildRepoBranchName = tt.buildRepoBranchName
 
 			releaseVersion, err := filereader.GetCurrentEksADevReleaseVersion(releaseConfig.ReleaseVersion, releaseConfig, 0)
@@ -160,10 +165,12 @@ func TestGenerateArchiveAssets(t *testing.T) {
 			releaseConfig.ReleaseVersion = releaseVersion
 			releaseConfig.DevReleaseUriVersion = strings.ReplaceAll(releaseVersion, "+", "-")
 
-			if gotArchiveArtifact, err := GetArchiveAssets(releaseConfig, tt.archive, tt.projectPath, tt.gitTag, tt.eksDReleaseChannel, tt.eksDReleaseNumber, tt.kubeVersion); (err != nil) != tt.wantErr {
-				t.Fatalf("GetArchiveAssets err = %v, want err = %v", err, tt.wantErr)
-			} else if !reflect.DeepEqual(gotArchiveArtifact, tt.wantArchiveArtifact) {
-				t.Fatalf("GetArchiveAssets got artifact = %v, expected %v", gotArchiveArtifact, tt.wantArchiveArtifact)
+			gotArchiveArtifact, err := GetArchiveAssets(releaseConfig, tt.archive, tt.projectPath, tt.gitTag, tt.eksDReleaseChannel, tt.eksDReleaseNumber, tt.kubeVersion)
+
+			if tt.wantErr {
+				g.Expect(err).To(HaveOccurred())
+			} else {
+				g.Expect(gotArchiveArtifact).To(BeComparableTo(tt.wantArchiveArtifact))
 			}
 		})
 	}

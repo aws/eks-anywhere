@@ -93,10 +93,10 @@ generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
 
 fmt: ## Run go fmt against code.
-	$(GO) fmt ./...
+	$(GO) fmt -C ./cli ./...
 
 vet: ## Run go vet against code.
-	$(GO) vet ./...
+	$(GO) vet -C ./cli ./...
 
 ENVTEST_ASSETS_DIR=$(shell pwd)/testbin
 test: manifests generate fmt vet ## Run tests.
@@ -106,7 +106,7 @@ test: manifests generate fmt vet ## Run tests.
 
 ##@ Build
 
-build: clean fmt vet ## Build release binary.
+build: clean fmt ## Build release binary.
 	$(GO) build -C cli -o $(REPO_ROOT)/release/bin/eks-anywhere-release github.com/aws/eks-anywhere/release/cli
 
 .PHONY: lint
@@ -119,7 +119,7 @@ bin/golangci-lint:
 	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s $(GOLANGCI_LINT_VERSION)
 
 unit-test: ## Run go test against code.
-	$(GO) test -count=1 ./...
+	$(GO) test -C ./cli -count=1 ./...
 
 update-bundle-golden-files: ## Updates testdata files located under pkg/test/testdata
 	$(GO) test -C cli -count=1 ./pkg/operations -update
@@ -131,7 +131,7 @@ update-bundle-golden-files: ## Updates testdata files located under pkg/test/tes
 run: manifests generate fmt vet ## Run a controller from your host.
 	$(GO) run ./main.go
 
-##@ Release
+##@ ReleaseTestGenerateManifestAssets
 
 dev-release: build ## Perform a dev release of EKS-A bundles and CLI manifests
 	scripts/release.sh $(REPO_ROOT)/release/downloaded-artifacts $(SOURCE_BUCKET) $(RELEASE_BUCKET) $(CDN) $(SOURCE_CONTAINER_REGISTRY) $(RELEASE_CONTAINER_REGISTRY) $(BUILD_REPO_URL) $(CLI_REPO_URL) $(BUILD_REPO_BRANCH_NAME) $(CLI_REPO_BRANCH_NAME) $(DRY_RUN) $(WEEKLY)
