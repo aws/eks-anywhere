@@ -23,7 +23,7 @@ func TestCache_Get(t *testing.T) {
 
 	registryContext = registry.NewStorageContext("!@#$", credentialStore, certificates, true)
 	result, err = cache.Get(registryContext)
-	assert.EqualError(t, err, "error with registry <!@#$>: invalid reference: invalid registry")
+	assert.EqualError(t, err, "error with registry <!@#$>: invalid reference: invalid registry \"!@#$\"")
 	busted, ok := result.(*registry.OCIRegistryClient)
 	assert.False(t, ok)
 	assert.Nil(t, busted)
