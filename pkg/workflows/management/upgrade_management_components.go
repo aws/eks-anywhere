@@ -88,7 +88,7 @@ func (u *UMCValidator) PreflightValidations(ctx context.Context) []validations.V
 		},
 		func() *validations.ValidationResult {
 			return &validations.ValidationResult{
-				Name:        "validate management components version to cluster eksaVersion compatibility",
+				Name:        "validate compatibility of management components version to cluster eksaVersion",
 				Remediation: "",
 				Err:         validations.ValidateManagementComponentsVersionSkew(ctx, u.kubectl, u.cluster, u.eksaRelease),
 			}

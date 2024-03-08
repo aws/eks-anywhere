@@ -720,7 +720,7 @@ func TestValidateManagementComponentsVersionSkew(t *testing.T) {
 				c.Spec.EksaVersion = nil
 			}),
 			managementComponentsVersion: "v1.19.0",
-			wantErr:                     fmt.Errorf("management cluster has nil EksaVersion"),
+			wantErr:                     fmt.Errorf("management cluster EksaVersion not specified"),
 		},
 	}
 	for _, tc := range tests {
