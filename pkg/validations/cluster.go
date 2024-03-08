@@ -18,6 +18,8 @@ import (
 	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
+const supportedManagementComponentsMinorVersionIncrement int64 = 1
+
 // ValidateOSForRegistryMirror checks if the OS is valid for the provided registry mirror configuration.
 func ValidateOSForRegistryMirror(clusterSpec *cluster.Spec, provider providers.Provider) error {
 	cluster := clusterSpec.Cluster
@@ -241,6 +243,36 @@ func ValidatePauseAnnotation(ctx context.Context, k KubectlClient, cluster *type
 	}
 	if currentCluster.IsReconcilePaused() {
 		return fmt.Errorf("cluster cannot be upgraded with paused cluster controller reconciler")
+	}
+	return nil
+}
+
+// ValidateManagementComponentsVersionSkew checks if the management components version is only one minor version greater than the cluster version.
+func ValidateManagementComponentsVersionSkew(ctx context.Context, k KubectlClient, mgmtCluster *types.Cluster, eksaRelease *releasev1alpha1.EKSARelease) error {
+	mgmt, err := k.GetEksaCluster(ctx, mgmtCluster, mgmtCluster.Name)
+	if err != nil {
+		return err
+	}
+
+	newManagementComponentsSemVer, err := semver.New(string(eksaRelease.Spec.Version))
+	if err != nil {
+		return fmt.Errorf("parsing management components version: %v", err)
+	}
+
+	if mgmt.Spec.EksaVersion == nil {
+		return fmt.Errorf("management cluster EksaVersion not specified")
+	}
+
+	managementClusterSemVer, err := semver.New(string(*mgmt.Spec.EksaVersion))
+	if err != nil {
+		return fmt.Errorf("parsing management components version: %v", err)
+	}
+
+	majorVersionDifference := int64(newManagementComponentsSemVer.Major) - int64(managementClusterSemVer.Major)
+	minorVersionDifference := int64(newManagementComponentsSemVer.Minor) - int64(managementClusterSemVer.Minor)
+
+	if majorVersionDifference != 0 || minorVersionDifference > supportedManagementComponentsMinorVersionIncrement {
+		return fmt.Errorf("management components version %s can only be one minor version greater than cluster version %s", newManagementComponentsSemVer, managementClusterSemVer)
 	}
 	return nil
 }
