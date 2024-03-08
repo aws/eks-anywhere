@@ -260,7 +260,7 @@ func ValidateManagementComponentsVersionSkew(ctx context.Context, k KubectlClien
 	}
 
 	if mgmt.Spec.EksaVersion == nil {
-		return fmt.Errorf("management cluster has nil EksaVersion")
+		return fmt.Errorf("management cluster EksaVersion not specified")
 	}
 
 	managementClusterSemVer, err := semver.New(string(*mgmt.Spec.EksaVersion))
