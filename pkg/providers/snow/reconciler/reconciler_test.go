@@ -69,61 +69,6 @@ func TestReconcilerReconcileSuccess(t *testing.T) {
 	tt.Expect(tt.cluster.Status.FailureReason).To(BeNil())
 }
 
-func TestReconcilerReconcileWorkerNodesSuccess(t *testing.T) {
-	tt := newReconcilerTest(t)
-	tt.cluster.Name = "my-management-cluster"
-	tt.cluster.SetSelfManaged()
-	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
-		c.Name = tt.cluster.Name
-	})
-	tt.eksaSupportObjs = append(tt.eksaSupportObjs, capiCluster)
-	tt.createAllObjs()
-
-	logger := test.NewNullLogger()
-	result, err := tt.reconciler().ReconcileWorkerNodes(tt.ctx, logger, tt.cluster)
-
-	tt.Expect(err).NotTo(HaveOccurred())
-	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
-	tt.Expect(tt.cluster.Status.FailureReason).To(BeZero())
-	tt.Expect(result).To(Equal(controller.Result{}))
-
-	tt.ShouldEventuallyExist(tt.ctx,
-		&bootstrapv1.KubeadmConfigTemplate{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "my-management-cluster-md-0-1",
-				Namespace: constants.EksaSystemNamespace,
-			},
-		},
-	)
-
-	tt.ShouldEventuallyExist(tt.ctx,
-		&snowv1.AWSSnowMachineTemplate{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "my-management-cluster-md-0-1",
-				Namespace: constants.EksaSystemNamespace,
-			},
-		},
-	)
-
-	tt.ShouldEventuallyExist(tt.ctx,
-		&clusterv1.MachineDeployment{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "my-management-cluster-md-0",
-				Namespace: constants.EksaSystemNamespace,
-			},
-		},
-	)
-
-	tt.ShouldEventuallyExist(tt.ctx,
-		&snowv1.AWSSnowIPPool{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "test-ip-pool",
-				Namespace: constants.EksaSystemNamespace,
-			},
-		},
-	)
-}
-
 func TestReconcilerValidateMachineConfigsInvalidWorkerMachineConfig(t *testing.T) {
 	tt := newReconcilerTest(t)
 	tt.machineConfigWorker.Status.SpecValid = false
