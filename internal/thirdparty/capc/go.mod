@@ -1,6 +1,6 @@
 module thirdparty.eks-a..com/capc
 
-go 1.20
+go 1.21
 
 require (
 	k8s.io/api v0.29.2
