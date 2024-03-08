@@ -1,10 +1,8 @@
 approvers:
 - chrisnegus
 - csplinter
-- rothgar
 reviewers:
 - chrisnegus
 - csplinter
-- rothgar
 labels:
 - documentation
