@@ -131,7 +131,7 @@ kubectl get packages,packagebundles,packagebundlecontrollers -A
 ```
 You should see a PackageBundleController for the workload cluster named with the name of the workload cluster and the status should be set. There should be a namespace for the workload cluster as well:
 ```bash
-kubectl get ns | grep eksa-packagess
+kubectl get ns | grep eksa-packages
 ```
 Create a PackageBundlecController for the workload cluster if it does not exist (where billy here is the cluster name):
 ```bash
