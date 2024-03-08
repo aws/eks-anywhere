@@ -29,8 +29,10 @@ The following commands use ec2-user as the username. For EKS Anywhere on vSphere
 For EKS Anywhere on Nutanix, the default username is eksa. The default username cannot be changed.
 {{% /alert %}}
 
-Note: The following commands use the username as 'ec2-user'. All EKS-A clusters on bare-metal, vSphere, and Snow use the username ‘ec2-user’ for their nodes. For EKS-A CloudStack, use 'capc’ instead of ec2-user; for EKS-A Nutanix, use ‘eksa’ instead of ec2-user.
-
+{{% alert title="Note" color="warning" %}}
+The following commands use the username as 'ec2-user'. All EKS Anywhere clusters on bare-metal, vSphere, and Snow use the username ‘ec2-user’ for their nodes. 
+For EKS Anywhere CloudStack, use 'capc’ instead of ec2-user; for EKS Anywhere Nutanix, use ‘eksa’ instead of ec2-user.
+{{% /alert %}}
 
 1. Login to any one of the etcd VMs
 ```bash
