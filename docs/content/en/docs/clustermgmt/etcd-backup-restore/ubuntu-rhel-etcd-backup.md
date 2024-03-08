@@ -24,8 +24,10 @@ EKS-Anywhere clusters use etcd as the backing store. Taking a snapshot of etcd b
 
 Etcd offers a built-in snapshot mechanism. You can take a snapshot using the `etcdctl snapshot save` command by following the steps given below. 
 
-Note: The following commands use the username as 'ec2-user'. All EKS-A clusters on bare-metal, vSphere, and Snow use the username ‘ec2-user’ for their nodes. For EKS-A CloudStack, use 'capc’ instead of ec2-user; for EKS-A Nutanix, use ‘eksa’ instead of ec2-user.
-
+{{% alert title="Note" color="warning" %}}
+The following commands use the username as 'ec2-user'. All EKS Anywhere clusters on bare-metal, vSphere, and Snow use the username ‘ec2-user’ for their nodes. 
+For EKS Anywhere CloudStack, use 'capc’ instead of ec2-user; for EKS Anywhere Nutanix, use ‘eksa’ instead of ec2-user.
+{{% /alert %}}
 
 1. Login to any one of the etcd VMs
 ```bash
