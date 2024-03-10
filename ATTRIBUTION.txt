@@ -41,7 +41,7 @@ https://github.com/aws/aws-sdk-go-v2/service/ssooidc
 ** github.com/aws/aws-sdk-go-v2/service/sts; version v1.26.7 --
 https://github.com/aws/aws-sdk-go-v2/service/sts
 
-** github.com/aws/eks-anywhere; version 7ba9b3c2c228d01260d5cfb60ec2620750105d0e --
+** github.com/aws/eks-anywhere; version f58e6811cc0d7e70677ce85ff58c310f207d4b72 --
 https://github.com/aws/eks-anywhere
 
 ** github.com/aws/eks-distro-build-tooling/release/api/v1alpha1; version v0.0.0-20211103003257-a7e2379eae5e --
@@ -152,7 +152,7 @@ https://github.com/nutanix-cloud-native/prism-go-client
 ** github.com/opencontainers/go-digest; version v1.0.0 --
 https://github.com/opencontainers/go-digest
 
-** github.com/opencontainers/image-spec/specs-go; version v1.1.0-rc5 --
+** github.com/opencontainers/image-spec/specs-go; version v1.1.0-rc6 --
 https://github.com/opencontainers/image-spec
 
 ** github.com/pjbgf/sha1cd; version v0.3.0 --
@@ -257,7 +257,7 @@ https://github.com/kubernetes/utils
 ** oras.land/oras-go/pkg; version v1.2.4 --
 https://github.com/oras-project/oras-go
 
-** oras.land/oras-go/v2; version v2.3.1 --
+** oras.land/oras-go/v2; version v2.4.0 --
 https://github.com/oras-project/oras-go
 
 ** github.com/abhay-krishna/cluster-api; version v1.6.0-eksa.1 --
@@ -1466,7 +1466,7 @@ https://github.com/vmware/govmomi
 ** golang.org/go; version go1.20.13 --
 https://github.com/golang/go
 
-** golang.org/x/crypto; version v0.18.0 --
+** golang.org/x/crypto; version v0.19.0 --
 https://golang.org/x/crypto
 
 ** golang.org/x/exp; version v0.0.0-20231110203233-9a3e6036ecaa --
@@ -1484,10 +1484,10 @@ https://golang.org/x/oauth2
 ** golang.org/x/sync; version v0.6.0 --
 https://golang.org/x/sync
 
-** golang.org/x/sys; version v0.16.0 --
+** golang.org/x/sys; version v0.17.0 --
 https://golang.org/x/sys
 
-** golang.org/x/term; version v0.16.0 --
+** golang.org/x/term; version v0.17.0 --
 https://golang.org/x/term
 
 ** golang.org/x/text; version v0.14.0 --
