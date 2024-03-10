@@ -349,6 +349,7 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
    mkdir -p /home/$USER/.ssh
    echo "HostKeyAlgorithms +ssh-rsa" >> /home/$USER/.ssh/config
    echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> /home/$USER/.ssh/config
+   sudo chmod 600 /home/$USER/.ssh/config
    {{< /tab >}}
 
    {{< tab header="RHEL" lang="bash" >}}
@@ -358,6 +359,7 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
    mkdir -p /home/$USER/.ssh
    echo "HostKeyAlgorithms +ssh-rsa" >> /home/$USER/.ssh/config
    echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> /home/$USER/.ssh/config
+   sudo chmod 600 /home/$USER/.ssh/config
    {{< /tab >}}
 
    {{< tab header="Amazon Linux 2" lang="bash" >}}
@@ -367,6 +369,7 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
    mkdir -p /home/$USER/.ssh
    echo "HostKeyAlgorithms +ssh-rsa" >> /home/$USER/.ssh/config
    echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> /home/$USER/.ssh/config
+   sudo chmod 600 /home/$USER/.ssh/config
    {{< /tab >}}
 
    {{< /tabpane >}}
@@ -535,6 +538,7 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
    mkdir -p /home/$USER/.ssh
    echo "HostKeyAlgorithms +ssh-rsa" >> /home/$USER/.ssh/config
    echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> /home/$USER/.ssh/config
+   sudo chmod 600 /home/$USER/.ssh/config
    {{< /tab >}}
 
    {{< tab header="RHEL" lang="bash" >}}
@@ -547,6 +551,7 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
    mkdir -p /home/$USER/.ssh
    echo "HostKeyAlgorithms +ssh-rsa" >> /home/$USER/.ssh/config
    echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> /home/$USER/.ssh/config
+   sudo chmod 600 /home/$USER/.ssh/config
    {{< /tab >}}
 
    {{< tab header="Amazon Linux" lang="bash" >}}
@@ -559,6 +564,7 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
    mkdir -p /home/$USER/.ssh
    echo "HostKeyAlgorithms +ssh-rsa" >> /home/$USER/.ssh/config
    echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> /home/$USER/.ssh/config
+   sudo chmod 600 /home/$USER/.ssh/config
    {{< /tab >}}
 
    {{< /tabpane >}}
@@ -676,6 +682,7 @@ These steps use `image-builder` to create a RHEL-based image for CloudStack. Bef
    mkdir -p /home/$USER/.ssh
    echo "HostKeyAlgorithms +ssh-rsa" >> /home/$USER/.ssh/config
    echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> /home/$USER/.ssh/config
+   sudo chmod 600 /home/$USER/.ssh/config
    {{< /tab >}}
 
    {{< tab header="RHEL" lang="bash" >}}
@@ -688,6 +695,7 @@ These steps use `image-builder` to create a RHEL-based image for CloudStack. Bef
    mkdir -p /home/$USER/.ssh
    echo "HostKeyAlgorithms +ssh-rsa" >> /home/$USER/.ssh/config
    echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> /home/$USER/.ssh/config
+   sudo chmod 600 /home/$USER/.ssh/config
    {{< /tab >}}
 
    {{< tab header="Amazon Linux" lang="bash" >}}
@@ -700,6 +708,7 @@ These steps use `image-builder` to create a RHEL-based image for CloudStack. Bef
    mkdir -p /home/$USER/.ssh
    echo "HostKeyAlgorithms +ssh-rsa" >> /home/$USER/.ssh/config
    echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> /home/$USER/.ssh/config
+   sudo chmod 600 /home/$USER/.ssh/config
    {{< /tab >}}
 
    {{< /tabpane >}}
@@ -783,6 +792,7 @@ These steps use `image-builder` to create an Ubuntu-based Amazon Machine Image (
    mkdir -p /home/$USER/.ssh
    echo "HostKeyAlgorithms +ssh-rsa" >> /home/$USER/.ssh/config
    echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> /home/$USER/.ssh/config
+   sudo chmod 600 /home/$USER/.ssh/config
    {{< /tab >}}
 
    {{< tab header="RHEL" lang="bash" >}}
@@ -792,6 +802,7 @@ These steps use `image-builder` to create an Ubuntu-based Amazon Machine Image (
    mkdir -p /home/$USER/.ssh
    echo "HostKeyAlgorithms +ssh-rsa" >> /home/$USER/.ssh/config
    echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> /home/$USER/.ssh/config
+   sudo chmod 600 /home/$USER/.ssh/config
    {{< /tab >}}
 
    {{< tab header="Amazon Linux 2" lang="bash" >}}
@@ -801,6 +812,7 @@ These steps use `image-builder` to create an Ubuntu-based Amazon Machine Image (
    mkdir -p /home/$USER/.ssh
    echo "HostKeyAlgorithms +ssh-rsa" >> /home/$USER/.ssh/config
    echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> /home/$USER/.ssh/config
+   sudo chmod 600 /home/$USER/.ssh/config
    {{< /tab >}}
 
    {{< /tabpane >}}
@@ -939,6 +951,7 @@ These steps use `image-builder` to create a Ubuntu-based image for Nutanix AHV a
    mkdir -p /home/$USER/.ssh
    echo "HostKeyAlgorithms +ssh-rsa" >> /home/$USER/.ssh/config
    echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> /home/$USER/.ssh/config
+   sudo chmod 600 /home/$USER/.ssh/config
    {{< /tab >}}
 
    {{< tab header="RHEL" lang="bash" >}}
@@ -948,6 +961,7 @@ These steps use `image-builder` to create a Ubuntu-based image for Nutanix AHV a
    mkdir -p /home/$USER/.ssh
    echo "HostKeyAlgorithms +ssh-rsa" >> /home/$USER/.ssh/config
    echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> /home/$USER/.ssh/config
+   sudo chmod 600 /home/$USER/.ssh/config
    {{< /tab >}}
 
    {{< tab header="Amazon Linux 2" lang="bash" >}}
@@ -957,6 +971,7 @@ These steps use `image-builder` to create a Ubuntu-based image for Nutanix AHV a
    mkdir -p /home/$USER/.ssh
    echo "HostKeyAlgorithms +ssh-rsa" >> /home/$USER/.ssh/config
    echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> /home/$USER/.ssh/config
+   sudo chmod 600 /home/$USER/.ssh/config
    {{< /tab >}}
 
    {{< /tabpane >}}
