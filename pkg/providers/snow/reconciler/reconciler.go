@@ -68,21 +68,6 @@ func (r *Reconciler) Reconcile(ctx context.Context, log logr.Logger, c *anywhere
 	).Run(ctx, log, clusterSpec)
 }
 
-// ReconcileWorkerNodes validates the cluster definition and reconciles the worker nodes
-// to the desired state.
-func (r *Reconciler) ReconcileWorkerNodes(ctx context.Context, log logr.Logger, c *anywherev1.Cluster) (controller.Result, error) {
-	log = log.WithValues("provider", "snow", "reconcile type", "workers")
-	clusterSpec, err := cluster.BuildSpec(ctx, clientutil.NewKubeClient(r.client), c)
-	if err != nil {
-		return controller.Result{}, err
-	}
-
-	return controller.NewPhaseRunner[*cluster.Spec]().Register(
-		r.ValidateMachineConfigs,
-		r.ReconcileWorkers,
-	).Run(ctx, log, clusterSpec)
-}
-
 func (r *Reconciler) ValidateMachineConfigs(ctx context.Context, log logr.Logger, clusterSpec *cluster.Spec) (controller.Result, error) {
 	log = log.WithValues("phase", "validateMachineConfigs")
 	for _, machineConfig := range clusterSpec.SnowMachineConfigs {

@@ -60,7 +60,3 @@ func (dummyProviderReconciler) Reconcile(ctx context.Context, log logr.Logger, c
 func (dummyProviderReconciler) ReconcileCNI(ctx context.Context, log logr.Logger, clusterSpec *cluster.Spec) (controller.Result, error) {
 	return controller.Result{}, nil
 }
-
-func (dummyProviderReconciler) ReconcileWorkerNodes(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) (controller.Result, error) {
-	return controller.Result{}, nil
-}

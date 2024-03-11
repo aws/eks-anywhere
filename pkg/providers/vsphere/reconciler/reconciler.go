@@ -125,22 +125,6 @@ func (r *Reconciler) Reconcile(ctx context.Context, log logr.Logger, cluster *an
 	).Run(ctx, log, clusterSpec)
 }
 
-// ReconcileWorkerNodes validates the cluster definition and reconciles the worker nodes
-// to the desired state.
-func (r *Reconciler) ReconcileWorkerNodes(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) (controller.Result, error) {
-	log = log.WithValues("provider", "vsphere", "reconcile type", "workers")
-	clusterSpec, err := c.BuildSpec(ctx, clientutil.NewKubeClient(r.client), cluster)
-	if err != nil {
-		return controller.Result{}, err
-	}
-
-	return controller.NewPhaseRunner[*c.Spec]().Register(
-		r.ValidateDatacenterConfig,
-		r.ValidateMachineConfigs,
-		r.ReconcileWorkers,
-	).Run(ctx, log, clusterSpec)
-}
-
 // ValidateDatacenterConfig updates the cluster status if the VSphereDatacenter status indicates that the spec is invalid.
 func (r *Reconciler) ValidateDatacenterConfig(ctx context.Context, log logr.Logger, clusterSpec *c.Spec) (controller.Result, error) {
 	log = log.WithValues("phase", "validateDatacenterConfig")

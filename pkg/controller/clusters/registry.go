@@ -13,8 +13,6 @@ import (
 type ProviderClusterReconciler interface {
 	// Reconcile handles the full cluster reconciliation.
 	Reconcile(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) (controller.Result, error)
-	// ReconcileWorkerNodes handles only the worker node reconciliation. Intended to be used on self managed clusters.
-	ReconcileWorkerNodes(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) (controller.Result, error)
 }
 
 // ProviderClusterReconcilerRegistry holds a collection of cluster provider reconcilers
