@@ -79,20 +79,6 @@ func (r *Reconciler) ReconcileCNI(ctx context.Context, log logr.Logger, clusterS
 	return r.cniReconciler.Reconcile(ctx, log, client, clusterSpec)
 }
 
-// ReconcileWorkerNodes validates the cluster definition and reconciles the worker nodes
-// to the desired state.
-func (r *Reconciler) ReconcileWorkerNodes(ctx context.Context, log logr.Logger, c *anywherev1.Cluster) (controller.Result, error) {
-	log = log.WithValues("provider", "docker", "reconcile type", "workers")
-	clusterSpec, err := cluster.BuildSpec(ctx, clientutil.NewKubeClient(r.client), c)
-	if err != nil {
-		return controller.Result{}, errors.Wrap(err, "building cluster Spec for worker node reconcile")
-	}
-
-	return controller.NewPhaseRunner[*cluster.Spec]().Register(
-		r.ReconcileWorkers,
-	).Run(ctx, log, clusterSpec)
-}
-
 // ReconcileWorkers applies the worker CAPI objects to the cluster.
 func (r *Reconciler) ReconcileWorkers(ctx context.Context, log logr.Logger, spec *cluster.Spec) (controller.Result, error) {
 	log = log.WithValues("phase", "reconcileWorkers")

@@ -256,23 +256,6 @@ func (r *Reconciler) CheckControlPlaneReady(ctx context.Context, log logr.Logger
 	return clusters.CheckControlPlaneReady(ctx, r.client, log, clusterSpec.Cluster)
 }
 
-// ReconcileWorkerNodes reconciles the worker nodes to the desired state.
-func (r *Reconciler) ReconcileWorkerNodes(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) (controller.Result, error) {
-	log = log.WithValues("provider", "tinkerbell", "reconcile type", "workers")
-	clusterSpec, err := c.BuildSpec(ctx, clientutil.NewKubeClient(r.client), cluster)
-	if err != nil {
-		return controller.Result{}, errors.Wrap(err, "building cluster Spec for worker node reconcile")
-	}
-
-	return controller.NewPhaseRunner[*Scope]().Register(
-		r.ValidateClusterSpec,
-		r.GenerateSpec,
-		r.ValidateHardware,
-		r.ValidateRufioMachines,
-		r.ReconcileWorkers,
-	).Run(ctx, log, NewScope(clusterSpec))
-}
-
 // ReconcileWorkers applies the worker CAPI objects to the cluster.
 func (r *Reconciler) ReconcileWorkers(ctx context.Context, log logr.Logger, tinkerbellScope *Scope) (controller.Result, error) {
 	spec := tinkerbellScope.ClusterSpec

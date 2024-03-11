@@ -51,18 +51,3 @@ func (mr *MockProviderClusterReconcilerMockRecorder) Reconcile(ctx, log, cluster
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Reconcile", reflect.TypeOf((*MockProviderClusterReconciler)(nil).Reconcile), ctx, log, cluster)
 }
-
-// ReconcileWorkerNodes mocks base method.
-func (m *MockProviderClusterReconciler) ReconcileWorkerNodes(ctx context.Context, log logr.Logger, cluster *v1alpha1.Cluster) (controller.Result, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ReconcileWorkerNodes", ctx, log, cluster)
-	ret0, _ := ret[0].(controller.Result)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ReconcileWorkerNodes indicates an expected call of ReconcileWorkerNodes.
-func (mr *MockProviderClusterReconcilerMockRecorder) ReconcileWorkerNodes(ctx, log, cluster interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReconcileWorkerNodes", reflect.TypeOf((*MockProviderClusterReconciler)(nil).ReconcileWorkerNodes), ctx, log, cluster)
-}
