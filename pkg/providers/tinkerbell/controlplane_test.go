@@ -1003,9 +1003,9 @@ func secret() *corev1.Secret {
 				"clusterctl.cluster.x-k8s.io/move": "true",
 			},
 		},
-		StringData: map[string]string{
-			"username": "username",
-			"password": "password",
+		Data: map[string][]byte{
+			"username": []byte("username"),
+			"password": []byte("password"),
 		},
 	}
 }
