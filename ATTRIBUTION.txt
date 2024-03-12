@@ -5,16 +5,16 @@ https://github.com/aws/aws-sdk-go-v2
 ** github.com/aws/aws-sdk-go-v2/config; version v1.26.6 --
 https://github.com/aws/aws-sdk-go-v2/config
 
-** github.com/aws/aws-sdk-go-v2/credentials; version v1.16.16 --
+** github.com/aws/aws-sdk-go-v2/credentials; version v1.17.7 --
 https://github.com/aws/aws-sdk-go-v2/credentials
 
-** github.com/aws/aws-sdk-go-v2/feature/ec2/imds; version v1.14.11 --
+** github.com/aws/aws-sdk-go-v2/feature/ec2/imds; version v1.15.3 --
 https://github.com/aws/aws-sdk-go-v2/feature/ec2/imds
 
-** github.com/aws/aws-sdk-go-v2/internal/configsources; version v1.2.10 --
+** github.com/aws/aws-sdk-go-v2/internal/configsources; version v1.3.3 --
 https://github.com/aws/aws-sdk-go-v2/internal/configsources
 
-** github.com/aws/aws-sdk-go-v2/internal/endpoints/v2; version v2.5.10 --
+** github.com/aws/aws-sdk-go-v2/internal/endpoints/v2; version v2.6.3 --
 https://github.com/aws/aws-sdk-go-v2/internal/endpoints/v2
 
 ** github.com/aws/aws-sdk-go-v2/internal/ini; version v1.7.3 --
@@ -26,22 +26,22 @@ https://github.com/aws/aws-sdk-go-v2/service/ec2
 ** github.com/aws/aws-sdk-go-v2/service/ecr; version v1.24.7 --
 https://github.com/aws/aws-sdk-go-v2/service/ecr
 
-** github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding; version v1.10.4 --
+** github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding; version v1.11.1 --
 https://github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding
 
-** github.com/aws/aws-sdk-go-v2/service/internal/presigned-url; version v1.10.10 --
+** github.com/aws/aws-sdk-go-v2/service/internal/presigned-url; version v1.11.5 --
 https://github.com/aws/aws-sdk-go-v2/service/internal/presigned-url
 
-** github.com/aws/aws-sdk-go-v2/service/sso; version v1.18.7 --
+** github.com/aws/aws-sdk-go-v2/service/sso; version v1.20.2 --
 https://github.com/aws/aws-sdk-go-v2/service/sso
 
-** github.com/aws/aws-sdk-go-v2/service/ssooidc; version v1.21.7 --
+** github.com/aws/aws-sdk-go-v2/service/ssooidc; version v1.23.2 --
 https://github.com/aws/aws-sdk-go-v2/service/ssooidc
 
-** github.com/aws/aws-sdk-go-v2/service/sts; version v1.26.7 --
+** github.com/aws/aws-sdk-go-v2/service/sts; version v1.28.4 --
 https://github.com/aws/aws-sdk-go-v2/service/sts
 
-** github.com/aws/eks-anywhere; version 92a62fb7232659fd9ac01892171bc3edce7d3db6 --
+** github.com/aws/eks-anywhere; version c3942005121e15ff95d9f63983fe99b717bfda7a --
 https://github.com/aws/eks-anywhere
 
 ** github.com/aws/eks-distro-build-tooling/release/api/v1alpha1; version v0.0.0-20211103003257-a7e2379eae5e --
@@ -146,7 +146,7 @@ https://github.com/nutanix-cloud-native/prism-go-client
 ** github.com/opencontainers/go-digest; version v1.0.0 --
 https://github.com/opencontainers/go-digest
 
-** github.com/opencontainers/image-spec/specs-go; version v1.1.0-rc6 --
+** github.com/opencontainers/image-spec/specs-go; version v1.1.0 --
 https://github.com/opencontainers/image-spec
 
 ** github.com/pjbgf/sha1cd; version v0.3.0 --
@@ -224,16 +224,16 @@ https://github.com/kubernetes/apiextensions-apiserver
 ** k8s.io/apimachinery/pkg; version v0.29.2 --
 https://github.com/kubernetes/apimachinery
 
-** k8s.io/apiserver/pkg; version v0.29.1 --
+** k8s.io/apiserver/pkg; version v0.29.2 --
 https://github.com/kubernetes/apiserver
 
-** k8s.io/client-go; version v0.29.1 --
+** k8s.io/client-go; version v0.29.2 --
 https://github.com/kubernetes/client-go
 
 ** k8s.io/cluster-bootstrap/token; version v0.28.5 --
 https://github.com/kubernetes/cluster-bootstrap
 
-** k8s.io/component-base; version v0.29.1 --
+** k8s.io/component-base; version v0.29.2 --
 https://github.com/kubernetes/component-base
 
 ** k8s.io/klog/v2; version v2.110.1 --
@@ -1457,7 +1457,7 @@ https://github.com/vmware/govmomi
 ** github.com/vmware/govmomi/vim25/xml; version v0.34.2 --
 https://github.com/vmware/govmomi
 
-** golang.org/go; version go1.21.6 --
+** golang.org/go; version go1.21.8 --
 https://github.com/golang/go
 
 ** golang.org/x/crypto; version v0.19.0 --
