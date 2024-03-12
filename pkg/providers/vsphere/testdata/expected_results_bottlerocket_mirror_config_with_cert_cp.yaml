@@ -527,9 +527,9 @@ metadata:
   namespace: eksa-system
   labels:
     clusterctl.cluster.x-k8s.io/move: "true"
-stringData:
-  username: "vsphere_username"
-  password: "vsphere_password"
+data:
+  username: dnNwaGVyZV91c2VybmFtZQ==
+  password: dnNwaGVyZV9wYXNzd29yZA==
 ---
 apiVersion: v1
 kind: Secret
@@ -557,9 +557,9 @@ stringData:
     metadata:
       name: cloud-provider-vsphere-credentials
       namespace: kube-system
-    stringData:
-      vsphere_server.password: "vsphere_password"
-      vsphere_server.username: "vsphere_username"
+    data:
+      vsphere_server.password: dnNwaGVyZV9wYXNzd29yZA==
+      vsphere_server.username: dnNwaGVyZV91c2VybmFtZQ==
     type: Opaque
 type: addons.cluster.x-k8s.io/resource-set
 ---

@@ -2955,9 +2955,9 @@ func TestCreateRegistryCredSecretSuccess(t *testing.T) {
 			Namespace: constants.EksaSystemNamespace,
 			Name:      "registry-credentials",
 		},
-		StringData: map[string]string{
-			"username": "",
-			"password": "",
+		Data: map[string][]byte{
+			"username": []byte(""),
+			"password": []byte(""),
 		},
 	}
 

@@ -557,7 +557,7 @@ metadata:
   namespace: {{.eksaSystemNamespace}}
   labels:
     clusterctl.cluster.x-k8s.io/move: "true"
-stringData:
-  username: "{{.registryUsername}}"
-  password: "{{.registryPassword}}"
+data:
+  username: {{.registryUsername | b64enc}}
+  password: {{.registryPassword | b64enc}}
 {{- end }}

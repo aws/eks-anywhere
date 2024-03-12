@@ -651,9 +651,9 @@ metadata:
   namespace: {{.eksaSystemNamespace}}
   labels:
     clusterctl.cluster.x-k8s.io/move: "true"
-stringData:
-  username: "{{.eksaVsphereUsername}}"
-  password: "{{.eksaVspherePassword}}"
+data:
+  username: {{.eksaVsphereUsername | b64enc}}
+  password: {{.eksaVspherePassword | b64enc}}
 ---
 {{- if .registryAuth }}
 apiVersion: v1
@@ -663,9 +663,9 @@ metadata:
   namespace: {{.eksaSystemNamespace}}
   labels:
     clusterctl.cluster.x-k8s.io/move: "true"
-stringData:
-  username: "{{.registryUsername}}"
-  password: "{{.registryPassword}}"
+data:
+  username: {{.registryUsername | b64enc}}
+  password: {{.registryPassword | b64enc}}
 ---
 {{- end }}
 apiVersion: v1
@@ -694,9 +694,9 @@ stringData:
     metadata:
       name: cloud-provider-vsphere-credentials
       namespace: kube-system
-    stringData:
-      {{.vsphereServer}}.password: "{{.eksaCloudProviderPassword}}"
-      {{.vsphereServer}}.username: "{{.eksaCloudProviderUsername}}"
+    data:
+      {{.vsphereServer}}.password: {{.eksaCloudProviderPassword | b64enc}}
+      {{.vsphereServer}}.username: {{.eksaCloudProviderUsername | b64enc}}
     type: Opaque
 type: addons.cluster.x-k8s.io/resource-set
 ---

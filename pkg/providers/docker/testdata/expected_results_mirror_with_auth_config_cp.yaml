@@ -377,7 +377,7 @@ metadata:
   namespace: eksa-system
   labels:
     clusterctl.cluster.x-k8s.io/move: "true"
-stringData:
-  username: "username"
-  password: "password"
+data:
+  username: dXNlcm5hbWU=
+  password: cGFzc3dvcmQ=
 ---
