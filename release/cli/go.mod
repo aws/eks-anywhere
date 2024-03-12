@@ -3,7 +3,7 @@ module github.com/aws/eks-anywhere/release/cli
 go 1.21
 
 require (
-	github.com/aws/aws-sdk-go v1.50.34
+	github.com/aws/aws-sdk-go v1.50.36
 	github.com/aws/aws-sdk-go-v2 v1.25.3
 	github.com/aws/eks-anywhere v0.18.0
 	github.com/aws/eks-distro-build-tooling/release v0.0.0-20211103003257-a7e2379eae5e
@@ -117,7 +117,7 @@ require (
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/mxk/go-flowrate v0.0.0-20140419014527-cca7078d478f // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
-	github.com/opencontainers/image-spec v1.1.0-rc6 // indirect
+	github.com/opencontainers/image-spec v1.1.0 // indirect
 	github.com/pelletier/go-toml/v2 v2.1.0 // indirect
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
 	github.com/prometheus/client_golang v1.18.0 // indirect
@@ -166,10 +166,10 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/api v0.29.2 // indirect
 	k8s.io/apiextensions-apiserver v0.29.1 // indirect
-	k8s.io/apiserver v0.29.1 // indirect
+	k8s.io/apiserver v0.29.2 // indirect
 	k8s.io/cli-runtime v0.29.0 // indirect
-	k8s.io/client-go v0.29.1 // indirect
-	k8s.io/component-base v0.29.1 // indirect
+	k8s.io/client-go v0.29.2 // indirect
+	k8s.io/component-base v0.29.2 // indirect
 	k8s.io/klog/v2 v2.110.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20231010175941-2dd684a91f00 // indirect
 	k8s.io/kubectl v0.29.0 // indirect
