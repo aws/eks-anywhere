@@ -530,8 +530,7 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
    sudo apt install jq make qemu-kvm libvirt-daemon-system libvirt-clients virtinst cpu-checker libguestfs-tools libosinfo-bin unzip -y
    sudo snap install yq
    sudo usermod -a -G kvm $USER
-   sudo chmod 666 /dev/kvm
-   sudo chown root:kvm /dev/kvm
+   newgrp kvm
    mkdir -p /home/$USER/.ssh
    echo "HostKeyAlgorithms +ssh-rsa" >> /home/$USER/.ssh/config
    echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> /home/$USER/.ssh/config
@@ -542,8 +541,7 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
    sudo dnf install jq make qemu-kvm libvirt virtinst cpu-checker libguestfs-tools libosinfo unzip wget -y
    sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
    sudo usermod -a -G kvm $USER
-   sudo chmod 666 /dev/kvm
-   sudo chown root:kvm /dev/kvm
+   newgrp kvm
    mkdir -p /home/$USER/.ssh
    echo "HostKeyAlgorithms +ssh-rsa" >> /home/$USER/.ssh/config
    echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> /home/$USER/.ssh/config
@@ -554,8 +552,7 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
    sudo yum install jq make qemu-kvm libvirt libvirt-clients libguestfs-tools unzip wget -y
    sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
    sudo usermod -a -G kvm $USER
-   sudo chmod 666 /dev/kvm
-   sudo chown root:kvm /dev/kvm
+   newgrp kvm
    mkdir -p /home/$USER/.ssh
    echo "HostKeyAlgorithms +ssh-rsa" >> /home/$USER/.ssh/config
    echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> /home/$USER/.ssh/config
@@ -671,8 +668,7 @@ These steps use `image-builder` to create a RHEL-based image for CloudStack. Bef
    sudo apt install jq make qemu-kvm libvirt-daemon-system libvirt-clients virtinst cpu-checker libguestfs-tools libosinfo-bin unzip -y
    sudo snap install yq
    sudo usermod -a -G kvm $USER
-   sudo chmod 666 /dev/kvm
-   sudo chown root:kvm /dev/kvm
+   newgrp kvm
    mkdir -p /home/$USER/.ssh
    echo "HostKeyAlgorithms +ssh-rsa" >> /home/$USER/.ssh/config
    echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> /home/$USER/.ssh/config
@@ -683,8 +679,7 @@ These steps use `image-builder` to create a RHEL-based image for CloudStack. Bef
    sudo dnf install jq make qemu-kvm libvirt virtinst cpu-checker libguestfs-tools libosinfo unzip wget -y
    sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
    sudo usermod -a -G kvm $USER
-   sudo chmod 666 /dev/kvm
-   sudo chown root:kvm /dev/kvm
+   newgrp kvm
    mkdir -p /home/$USER/.ssh
    echo "HostKeyAlgorithms +ssh-rsa" >> /home/$USER/.ssh/config
    echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> /home/$USER/.ssh/config
@@ -695,8 +690,7 @@ These steps use `image-builder` to create a RHEL-based image for CloudStack. Bef
    sudo yum install jq make qemu-kvm libvirt libvirt-clients libguestfs-tools unzip wget -y
    sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
    sudo usermod -a -G kvm $USER
-   sudo chmod 666 /dev/kvm
-   sudo chown root:kvm /dev/kvm
+   newgrp kvm
    mkdir -p /home/$USER/.ssh
    echo "HostKeyAlgorithms +ssh-rsa" >> /home/$USER/.ssh/config
    echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> /home/$USER/.ssh/config
