@@ -41,9 +41,6 @@ type CreateCluster struct {
 	// Cluster represents a logical cluster to be created.
 	Cluster workload.Cluster
 
-	// CNIInstaller installs a CNI in a Kubernetes cluster
-	CNIInstaller workload.CNIInstaller
-
 	// FS is a file system abstraction used to write files.
 	FS filewriter.FileWriter
 
@@ -86,7 +83,6 @@ func (c CreateCluster) build() (*workflow.Workflow, error) {
 
 	err = wflw.AppendTask(CreateWorkloadCluster, workload.Create{
 		Cluster: c.Cluster,
-		CNI:     c.CNIInstaller,
 		FS:      c.FS,
 	})
 	if err != nil {

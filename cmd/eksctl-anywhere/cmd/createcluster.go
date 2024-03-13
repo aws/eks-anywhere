@@ -226,7 +226,6 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 
 	if features.UseNewWorkflows().IsActive() {
 		deps, err = factory.
-			WithCNIInstaller(clusterSpec, deps.Provider).
 			Build(ctx)
 		if err != nil {
 			return err
@@ -236,8 +235,7 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 			Spec:                          clusterSpec,
 			Bootstrapper:                  deps.Bootstrapper,
 			CreateBootstrapClusterOptions: deps.Provider,
-			CNIInstaller:                  deps.CNIInstaller,
-			Cluster:                       clustermanager.NewCreateClusterShim(clusterSpec, deps.ClusterManager, deps.Provider),
+			Cluster:                       clustermanager.NewCreateClusterShim(clusterSpec, deps.Provider),
 			FS:                            deps.Writer,
 		}
 		wflw.WithHookRegistrar(awsiamauth.NewHookRegistrar(deps.AwsIamAuth, clusterSpec))

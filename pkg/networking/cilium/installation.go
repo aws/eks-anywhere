@@ -14,6 +14,21 @@ import (
 )
 
 const (
+	// DaemonSetName is the default name for the Cilium DS installed in EKS-A clusters.
+	DaemonSetName = "cilium"
+	// PreflightDaemonSetName is the default name for the Cilium preflight DS installed
+	// in EKS-A clusters during Cilium upgrades.
+	PreflightDaemonSetName = "cilium-pre-flight-check"
+	// DeploymentName is the default name for the Cilium Operator installed in EKS-A clusters.
+	DeploymentName = "cilium-operator"
+	// PreflightDeploymentName is the default name for the Cilium preflight deployment used during upgrades.
+	PreflightDeploymentName = "cilium-pre-flight-check"
+	// ConfigMapName is the default name for the Cilium ConfigMap
+	// containing Cilium's configuration.
+	ConfigMapName = "cilium-config"
+	// ServiceName is the default name for the Cilium Service installed in EKS-A clusters.
+	ServiceName = "cilium-agent"
+
 	ciliumConfigMapName   = "cilium-config"
 	ciliumConfigNamespace = "kube-system"
 )

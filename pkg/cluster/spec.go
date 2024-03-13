@@ -269,12 +269,3 @@ func kubeDistroRepository(image *eksdv1alpha1.AssetImage) (repo, tag string) {
 func (vb *VersionsBundle) Ovas() []v1alpha1.Archive {
 	return vb.VersionsBundle.Ovas()
 }
-
-func BundlesRefDefaulter() Defaulter {
-	return func(c *Config) error {
-		if c.Cluster.Spec.BundlesRef == nil {
-			c.Cluster.Spec.BundlesRef = &eksav1alpha1.BundlesRef{}
-		}
-		return nil
-	}
-}

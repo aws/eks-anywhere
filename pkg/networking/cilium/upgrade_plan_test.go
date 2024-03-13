@@ -9,9 +9,11 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aws/eks-anywhere/internal/test"
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/networking/cilium"
+	"github.com/aws/eks-anywhere/pkg/types"
 )
 
 func TestBuildUpgradePlan(t *testing.T) {
@@ -866,6 +868,62 @@ func TestUpgradePlanReason(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			g := NewWithT(t)
 			g.Expect(tt.info.Reason()).To(Equal(tt.want))
+		})
+	}
+}
+
+func TestChangeDiff(t *testing.T) {
+	tests := []struct {
+		name                 string
+		currentSpec, newSpec *cluster.Spec
+		want                 *types.ChangeDiff
+	}{
+		{
+			name: "no change",
+			currentSpec: test.NewClusterSpec(func(s *cluster.Spec) {
+				s.Cluster.Spec.KubernetesVersion = "1.22"
+				s.VersionsBundles["1.22"] = test.VersionBundle()
+				s.VersionsBundles["1.22"].Cilium.Version = "v1.9.10-eksa.1"
+				s.Cluster.Spec.ClusterNetwork.CNIConfig = &v1alpha1.CNIConfig{Cilium: &v1alpha1.CiliumConfig{}}
+			}),
+			newSpec: test.NewClusterSpec(func(s *cluster.Spec) {
+				s.Cluster.Spec.KubernetesVersion = "1.22"
+				s.VersionsBundles["1.22"] = test.VersionBundle()
+				s.VersionsBundles["1.22"].Cilium.Version = "v1.9.10-eksa.1"
+				s.Cluster.Spec.ClusterNetwork.CNIConfig = &v1alpha1.CNIConfig{Cilium: &v1alpha1.CiliumConfig{}}
+			}),
+			want: nil,
+		},
+		{
+			name: "version change",
+			currentSpec: test.NewClusterSpec(func(s *cluster.Spec) {
+				s.Cluster.Spec.KubernetesVersion = "1.22"
+				s.VersionsBundles["1.22"] = test.VersionBundle()
+				s.VersionsBundles["1.22"].Cilium.Version = "v1.9.10-eksa.1"
+				s.Cluster.Spec.ClusterNetwork.CNIConfig = &v1alpha1.CNIConfig{Cilium: &v1alpha1.CiliumConfig{}}
+			}),
+			newSpec: test.NewClusterSpec(func(s *cluster.Spec) {
+				s.Cluster.Spec.KubernetesVersion = "1.22"
+				s.VersionsBundles["1.22"] = test.VersionBundle()
+				s.VersionsBundles["1.22"].Cilium.Version = "v1.13.5-eksa.1"
+				s.Cluster.Spec.ClusterNetwork.CNIConfig = &v1alpha1.CNIConfig{Cilium: &v1alpha1.CiliumConfig{}}
+			}),
+			want: &types.ChangeDiff{
+				ComponentReports: []types.ComponentChangeDiff{
+					{
+						ComponentName: "cilium",
+						OldVersion:    "v1.9.10-eksa.1",
+						NewVersion:    "v1.13.5-eksa.1",
+					},
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			g.Expect(cilium.ChangeDiff(tt.currentSpec, tt.newSpec)).To(BeComparableTo(tt.want))
 		})
 	}
 }
