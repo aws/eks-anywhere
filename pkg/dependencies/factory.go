@@ -10,7 +10,6 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/google/uuid"
-	"golang.org/x/exp/maps"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/aws"
@@ -39,7 +38,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/manifests"
 	"github.com/aws/eks-anywhere/pkg/manifests/bundles"
 	"github.com/aws/eks-anywhere/pkg/networking/cilium"
-	"github.com/aws/eks-anywhere/pkg/networking/kindnetd"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack"
@@ -76,7 +74,6 @@ type Dependencies struct {
 	Troubleshoot                *executables.Troubleshoot
 	Helm                        *executables.Helm
 	UnAuthKubeClient            *kubernetes.UnAuthClient
-	Networking                  clustermanager.Networking
 	CNIInstaller                workload.CNIInstaller
 	CiliumTemplater             *cilium.Templater
 	AwsIamAuth                  *awsiamauth.Installer
@@ -862,80 +859,6 @@ func (f *Factory) WithHelmEnvClientFactory(opts ...helm.Opt) *Factory {
 	return f
 }
 
-// WithNetworking builds a Networking.
-func (f *Factory) WithNetworking(clusterConfig *v1alpha1.Cluster) *Factory {
-	var networkingBuilder func() clustermanager.Networking
-	if clusterConfig.Spec.ClusterNetwork.CNIConfig.Kindnetd != nil {
-		f.WithKubectl().WithFileReader()
-		networkingBuilder = func() clustermanager.Networking {
-			return kindnetd.NewKindnetd(f.dependencies.Kubectl, f.dependencies.FileReader)
-		}
-	} else {
-		f.WithKubectl().WithCiliumTemplater()
-
-		networkingBuilder = func() clustermanager.Networking {
-			var opts []cilium.RetrierClientOpt
-			if f.config.noTimeouts {
-				opts = append(opts, cilium.RetrierClientRetrier(retrier.NewWithNoTimeout()))
-			}
-
-			c := cilium.NewCilium(
-				cilium.NewRetrier(f.dependencies.Kubectl, opts...),
-				f.dependencies.CiliumTemplater,
-			)
-			c.SetSkipUpgrade(!clusterConfig.Spec.ClusterNetwork.CNIConfig.Cilium.IsManaged())
-			return c
-		}
-	}
-
-	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
-		if f.dependencies.Networking != nil {
-			return nil
-		}
-		f.dependencies.Networking = networkingBuilder()
-
-		return nil
-	})
-
-	return f
-}
-
-// WithCNIInstaller builds a CNI installer for the given cluster.
-func (f *Factory) WithCNIInstaller(spec *cluster.Spec, provider providers.Provider) *Factory {
-	if spec.Cluster.Spec.ClusterNetwork.CNIConfig.Kindnetd != nil {
-		f.WithKubectl().WithFileReader()
-	} else {
-		f.WithKubectl().WithCiliumTemplater()
-	}
-
-	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
-		if f.dependencies.CNIInstaller != nil {
-			return nil
-		}
-
-		if spec.Cluster.Spec.ClusterNetwork.CNIConfig.Kindnetd != nil {
-			f.dependencies.CNIInstaller = kindnetd.NewInstallerForSpec(
-				f.dependencies.Kubectl,
-				f.dependencies.FileReader,
-				spec,
-			)
-		} else {
-			f.dependencies.CNIInstaller = cilium.NewInstallerForSpec(
-				cilium.NewRetrier(f.dependencies.Kubectl),
-				f.dependencies.CiliumTemplater,
-				cilium.Config{
-					Spec:              spec,
-					AllowedNamespaces: maps.Keys(provider.GetDeployments()),
-				},
-			)
-		}
-
-		return nil
-	})
-
-	return f
-}
-
 func (f *Factory) WithCiliumTemplater() *Factory {
 	f.WithHelmEnvClientFactory(helm.WithInsecure())
 
@@ -990,11 +913,6 @@ func (f *Factory) WithIPValidator() *Factory {
 		return nil
 	})
 	return f
-}
-
-type bootstrapperClient struct {
-	*executables.Kind
-	*executables.Kubectl
 }
 
 func (f *Factory) WithBootstrapper() *Factory {
@@ -1067,7 +985,7 @@ func (f *Factory) clusterManagerOpts(timeoutOpts *ClusterManagerTimeoutOptions) 
 
 // WithClusterManager builds a cluster manager based on the cluster config and timeout options.
 func (f *Factory) WithClusterManager(clusterConfig *v1alpha1.Cluster, timeoutOpts *ClusterManagerTimeoutOptions) *Factory {
-	f.WithClusterctl().WithNetworking(clusterConfig).WithWriter().WithDiagnosticBundleFactory().WithAwsIamAuth(clusterConfig).WithFileReader().WithUnAuthKubeClient().WithKubernetesRetrierClient().WithEKSAInstaller()
+	f.WithClusterctl().WithWriter().WithDiagnosticBundleFactory().WithAwsIamAuth(clusterConfig).WithFileReader().WithUnAuthKubeClient().WithKubernetesRetrierClient().WithEKSAInstaller()
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.ClusterManager != nil {
@@ -1082,7 +1000,6 @@ func (f *Factory) WithClusterManager(clusterConfig *v1alpha1.Cluster, timeoutOpt
 		f.dependencies.ClusterManager = clustermanager.New(
 			f.dependencies.UnAuthKubeClient,
 			client,
-			f.dependencies.Networking,
 			f.dependencies.Writer,
 			f.dependencies.DignosticCollectorFactory,
 			f.dependencies.AwsIamAuth,
