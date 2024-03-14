@@ -49,7 +49,6 @@ func UploadArtifacts(ctx context.Context, r *releasetypes.ReleaseConfig, eksaArt
 	packagesArtifacts := map[string][]releasetypes.Artifact{}
 	if isBundleRelease {
 		projectsInBundle := []string{"eks-anywhere-packages"}
-		packagesArtifacts := map[string][]releasetypes.Artifact{}
 		for _, project := range projectsInBundle {
 			projectArtifacts, err := r.BundleArtifactsTable.Load(project)
 			if err != nil {

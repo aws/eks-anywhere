@@ -657,3 +657,88 @@ func TestValidatePauseAnnotation(t *testing.T) {
 		})
 	}
 }
+
+func TestValidateManagementComponentsVersionSkew(t *testing.T) {
+	mgmtName := "test"
+	devEksaVersion := test.DevEksaVersion()
+
+	tests := []struct {
+		name                        string
+		cluster                     *anywherev1.Cluster
+		managementComponentsVersion string
+		wantErr                     error
+	}{
+		{
+			name: "no version difference",
+			cluster: test.Cluster(func(c *anywherev1.Cluster) {
+				c.Name = mgmtName
+				c.Spec.EksaVersion = &devEksaVersion
+			}),
+			managementComponentsVersion: "v0.19.0",
+			wantErr:                     nil,
+		},
+		{
+			name: "one minor version difference",
+			cluster: test.Cluster(func(c *anywherev1.Cluster) {
+				c.Name = mgmtName
+				c.Spec.EksaVersion = &devEksaVersion
+			}),
+			managementComponentsVersion: "v0.20.0",
+			wantErr:                     nil,
+		},
+		{
+			name: "three patch version difference",
+			cluster: test.Cluster(func(c *anywherev1.Cluster) {
+				c.Name = mgmtName
+				c.Spec.EksaVersion = &devEksaVersion
+			}),
+			managementComponentsVersion: "v0.19.3",
+			wantErr:                     nil,
+		},
+		{
+			name: "two minor version difference",
+			cluster: test.Cluster(func(c *anywherev1.Cluster) {
+				c.Name = mgmtName
+				c.Spec.EksaVersion = &devEksaVersion
+			}),
+			managementComponentsVersion: "v0.21.0",
+			wantErr:                     fmt.Errorf("management components version v0.21.0 can only be one minor version greater than cluster version v0.19.0"),
+		},
+		{
+			name: "one major version difference",
+			cluster: test.Cluster(func(c *anywherev1.Cluster) {
+				c.Name = mgmtName
+				c.Spec.EksaVersion = &devEksaVersion
+			}),
+			managementComponentsVersion: "v1.19.0",
+			wantErr:                     fmt.Errorf("management components version v1.19.0 can only be one minor version greater than cluster version v0.19.0"),
+		},
+		{
+			name: "nil cluster eksa version",
+			cluster: test.Cluster(func(c *anywherev1.Cluster) {
+				c.Name = mgmtName
+				c.Spec.EksaVersion = nil
+			}),
+			managementComponentsVersion: "v1.19.0",
+			wantErr:                     fmt.Errorf("management cluster EksaVersion not specified"),
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			tt := newTest(t, withKubectl())
+			ctx := context.Background()
+
+			tt.kubectl.EXPECT().GetEksaCluster(ctx, managementCluster(mgmtName), mgmtName).Return(tc.cluster, nil)
+
+			eksaRelease := test.EKSARelease()
+			eksaRelease.Spec.Version = tc.managementComponentsVersion
+
+			err := validations.ValidateManagementComponentsVersionSkew(ctx, tt.kubectl, managementCluster(mgmtName), eksaRelease)
+			if err != nil {
+				tt.Expect(err.Error()).To(ContainSubstring(tc.wantErr.Error()))
+			} else {
+				tt.Expect(tc.wantErr).To(BeNil())
+			}
+		})
+	}
+}

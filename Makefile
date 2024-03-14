@@ -20,7 +20,7 @@ SHELL := /bin/bash
 ARTIFACTS_BUCKET?=my-s3-bucket
 GIT_VERSION?=$(shell git describe --tag)
 GIT_TAG?=$(shell git tag -l "v*.*.*" --sort -v:refname | head -1)
-GOLANG_VERSION?="1.20"
+GOLANG_VERSION?="1.21"
 GO_VERSION ?= $(shell source ./scripts/common.sh && build::common::get_go_path $(GOLANG_VERSION))
 GO ?= $(GO_VERSION)/go
 GO_TEST ?= $(GO) test
@@ -146,8 +146,8 @@ CONTROLLER_MANIFEST_OUTPUT_DIR=$(OUTPUT_DIR)/manifests/cluster-controller
 BUILD_TAGS :=
 BUILD_FLAGS?=
 
-GO_ARCH:=$(shell go env GOARCH)
-GO_OS:=$(shell go env GOOS)
+GO_ARCH:=$(shell $(GO) env GOARCH)
+GO_OS:=$(shell $(GO) env GOOS)
 
 BINARY_DEPS_DIR = $(OUTPUT_DIR)/dependencies
 CLUSTER_CONTROLLER_PLATFORMS ?= linux-amd64 linux-arm64
@@ -165,7 +165,7 @@ LOCAL_E2E_TESTS ?= $(DOCKER_E2E_TEST)
 
 EMBED_CONFIG_FOLDER = pkg/files/config
 
-export KUBEBUILDER_ENVTEST_KUBERNETES_VERSION ?= 1.28.x
+export KUBEBUILDER_ENVTEST_KUBERNETES_VERSION ?= 1.29.x
 
 UNAME := $(shell uname -s)
 
@@ -286,13 +286,13 @@ $(KUBEBUILDER): $(TOOLS_BIN_DIR)
 	chmod +x $(KUBEBUILDER)
 
 $(CONTROLLER_GEN): $(TOOLS_BIN_DIR)
-	GOBIN=$(TOOLS_BIN_DIR_ABS) go install sigs.k8s.io/controller-tools/cmd/controller-gen@v0.6.1
+	GOBIN=$(TOOLS_BIN_DIR_ABS) $(GO) install sigs.k8s.io/controller-tools/cmd/controller-gen@v0.6.1
 
 $(GO_VULNCHECK): $(TOOLS_BIN_DIR)
-	GOBIN=$(TOOLS_BIN_DIR_ABS) go install golang.org/x/vuln/cmd/govulncheck@latest
+	GOBIN=$(TOOLS_BIN_DIR_ABS) $(GO) install golang.org/x/vuln/cmd/govulncheck@latest
 
 $(SETUP_ENVTEST): $(TOOLS_BIN_DIR)
-	cd $(TOOLS_BIN_DIR); $(GO) build -tags=tools -o $(SETUP_ENVTEST_BIN) sigs.k8s.io/controller-runtime/tools/setup-envtest
+	GOBIN=$(TOOLS_BIN_DIR_ABS) $(GO) install sigs.k8s.io/controller-runtime/tools/setup-envtest@v0.0.0-20240215124517-56159419231e
 
 envtest-setup: $(SETUP_ENVTEST)
 	$(eval KUBEBUILDER_ASSETS ?= $(shell $(SETUP_ENVTEST) use --use-env -p path --arch $(GO_ARCH) $(KUBEBUILDER_ENVTEST_KUBERNETES_VERSION)))
@@ -321,7 +321,7 @@ $(TOOLS_BIN_DIR)/gci:
 
 .PHONY: run-gci
 run-gci: $(TOOLS_BIN_DIR)/gci ## Run gci against code.
-	$(LS_FILES_CMD) | xargs $(TOOLS_BIN_DIR)/gci write --skip-generated -s standard,default -s "prefix($(shell go list -m))"
+	$(LS_FILES_CMD) | xargs $(TOOLS_BIN_DIR)/gci write --skip-generated -s standard,default -s "prefix($(shell $(GO) list -m))"
 
 .PHONY: build-cross-platform
 build-cross-platform: eks-a-cross-platform
@@ -561,7 +561,7 @@ mocks: ## Generate mocks
 	${MOCKGEN} -destination=pkg/providers/vsphere/setupuser/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/providers/vsphere/setupuser" GovcClient
 	${MOCKGEN} -destination=pkg/govmomi/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/govmomi" VSphereClient,VMOMIAuthorizationManager,VMOMIFinder,VMOMISessionBuilder,VMOMIFinderBuilder,VMOMIAuthorizationManagerBuilder
 	${MOCKGEN} -destination=pkg/filewriter/mocks/filewriter.go -package=mocks "github.com/aws/eks-anywhere/pkg/filewriter" FileWriter
-	${MOCKGEN} -destination=pkg/clustermanager/mocks/client_and_networking.go -package=mocks "github.com/aws/eks-anywhere/pkg/clustermanager" ClusterClient,Networking,AwsIamAuth,EKSAComponents,KubernetesClient,ClientFactory,ClusterApplier,CAPIClient
+	${MOCKGEN} -destination=pkg/clustermanager/mocks/client_and_networking.go -package=mocks "github.com/aws/eks-anywhere/pkg/clustermanager" ClusterClient,AwsIamAuth,EKSAComponents,KubernetesClient,ClientFactory,ClusterApplier,CAPIClient
 	${MOCKGEN} -destination=pkg/gitops/flux/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/gitops/flux" FluxClient,KubeClient,GitOpsFluxClient,GitClient,Templater
 	${MOCKGEN} -destination=pkg/task/mocks/task.go -package=mocks "github.com/aws/eks-anywhere/pkg/task" Task
 	${MOCKGEN} -destination=pkg/bootstrapper/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/bootstrapper" KindClient,KubernetesClient
@@ -578,14 +578,9 @@ mocks: ## Generate mocks
 	${MOCKGEN} -destination=pkg/validations/mocks/tls.go -package=mocks -source "pkg/validations/tls.go" TlsValidator
 	${MOCKGEN} -destination=pkg/diagnostics/interfaces/mocks/diagnostics.go -package=mocks -source "pkg/diagnostics/interfaces.go" DiagnosticBundle,AnalyzerFactory,CollectorFactory,BundleClient
 	${MOCKGEN} -destination=pkg/clusterapi/mocks/capiclient.go -package=mocks -source "pkg/clusterapi/manager.go" CAPIClient,KubectlClient
-	${MOCKGEN} -destination=pkg/clusterapi/mocks/fetch.go -package=mocks -source "pkg/clusterapi/fetch.go"
 	${MOCKGEN} -destination=pkg/crypto/mocks/crypto.go -package=mocks -source "pkg/crypto/certificategen.go" CertificateGenerator
 	${MOCKGEN} -destination=pkg/crypto/mocks/validator.go -package=mocks -source "pkg/crypto/validator.go" TlsValidator
-	${MOCKGEN} -destination=pkg/networking/cilium/mocks/clients.go -package=mocks -source "pkg/networking/cilium/client.go"
 	${MOCKGEN} -destination=pkg/networking/cilium/mocks/helm.go -package=mocks -source "pkg/networking/cilium/templater.go"
-	${MOCKGEN} -destination=pkg/networking/cilium/mocks/upgrader.go -package=mocks -source "pkg/networking/cilium/upgrader.go"
-	${MOCKGEN} -destination=pkg/networking/kindnetd/mocks/client.go -package=mocks -source "pkg/networking/kindnetd/kindnetd.go"
-	${MOCKGEN} -destination=pkg/networking/cilium/mocks/installer.go -package=mocks -source "pkg/networking/cilium/installer.go"
 	${MOCKGEN} -destination=pkg/networkutils/mocks/client.go -package=mocks -source "pkg/networkutils/netclient.go" NetClient
 	${MOCKGEN} -destination=pkg/providers/tinkerbell/hardware/mocks/translate.go -package=mocks -source "pkg/providers/tinkerbell/hardware/translate.go" MachineReader,MachineWriter,MachineValidator
 	${MOCKGEN} -destination=pkg/providers/tinkerbell/stack/mocks/stack.go -package=mocks -source "pkg/providers/tinkerbell/stack/stack.go" Docker,Helm,StackInstaller

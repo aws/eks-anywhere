@@ -9,6 +9,7 @@ import (
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/helm"
 	"github.com/aws/eks-anywhere/pkg/retrier"
 	"github.com/aws/eks-anywhere/pkg/semver"
@@ -21,6 +22,7 @@ var networkPolicyAllowAll string
 const (
 	maxRetries           = 10
 	defaultBackOffPeriod = 5 * time.Second
+	namespace            = constants.KubeSystemNamespace
 )
 
 // HelmClientFactory provides a helm client for a cluster.

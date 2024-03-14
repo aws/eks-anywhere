@@ -142,20 +142,6 @@ func (r *Reconciler) CheckControlPlaneReady(ctx context.Context, log logr.Logger
 	return clusters.CheckControlPlaneReady(ctx, r.client, log, spec.Cluster)
 }
 
-// ReconcileWorkerNodes validates the cluster definition and reconciles the worker nodes
-// to the desired state.
-func (r *Reconciler) ReconcileWorkerNodes(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) (controller.Result, error) {
-	log = log.WithValues("provider", "cloudstack", "reconcile type", "workers")
-	clusterSpec, err := c.BuildSpec(ctx, clientutil.NewKubeClient(r.client), cluster)
-	if err != nil {
-		return controller.Result{}, errors.Wrap(err, "building cluster Spec for worker node reconcile")
-	}
-
-	return controller.NewPhaseRunner[*c.Spec]().Register(
-		r.ReconcileWorkers,
-	).Run(ctx, log, clusterSpec)
-}
-
 // ReconcileWorkers applies the worker CAPI objects to the cluster.
 func (r *Reconciler) ReconcileWorkers(ctx context.Context, log logr.Logger, clusterSpec *c.Spec) (controller.Result, error) {
 	log = log.WithValues("phase", "reconcileWorkers")

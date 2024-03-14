@@ -48,14 +48,6 @@ func UseNewWorkflows() Feature {
 	}
 }
 
-// UseControllerViaCLIWorkflow is used for the controller behind the CLI workflow.
-func UseControllerViaCLIWorkflow() Feature {
-	return Feature{
-		Name:     "Use new workflow logic for cluster operations leveraging controller via CLI",
-		IsActive: globalFeatures.isActiveForEnvVar(UseControllerForCli),
-	}
-}
-
 // VSphereInPlaceUpgradeEnabled is the feature flag for performing in-place upgrades with the vSphere provider.
 func VSphereInPlaceUpgradeEnabled() Feature {
 	return Feature{

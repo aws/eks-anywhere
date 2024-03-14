@@ -621,47 +621,6 @@ func TestFactoryBuildWithExecutablesUsingDocker(t *testing.T) {
 	tt.Expect(deps.Helm).NotTo(BeNil())
 }
 
-func TestFactoryBuildWithCNIInstallerCilium(t *testing.T) {
-	tt := newTest(t, vsphere)
-
-	factory := dependencies.NewFactory()
-	deps, err := factory.
-		WithLocalExecutables().
-		WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, tt.hardwareConfigFile, false, tt.tinkerbellBootstrapIP, map[string]bool{}, tt.providerOptions).
-		Build(tt.ctx)
-	tt.Expect(err).To(BeNil())
-
-	deps, err = factory.
-		WithCNIInstaller(tt.clusterSpec, deps.Provider).
-		WithCNIInstaller(tt.clusterSpec, deps.Provider). // idempotency
-		Build(tt.ctx)
-
-	tt.Expect(err).To(BeNil())
-	tt.Expect(deps.CNIInstaller).NotTo(BeNil())
-}
-
-func TestFactoryBuildWithCNIInstallerKindnetd(t *testing.T) {
-	tt := newTest(t, vsphere)
-	tt.clusterSpec.Cluster.Spec.ClusterNetwork.CNIConfig = &anywherev1.CNIConfig{
-		Kindnetd: &anywherev1.KindnetdConfig{},
-	}
-
-	factory := dependencies.NewFactory()
-	deps, err := factory.
-		WithLocalExecutables().
-		WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, tt.hardwareConfigFile, false, tt.tinkerbellBootstrapIP, map[string]bool{}, tt.providerOptions).
-		Build(tt.ctx)
-	tt.Expect(err).To(BeNil())
-
-	deps, err = factory.
-		WithCNIInstaller(tt.clusterSpec, deps.Provider).
-		WithCNIInstaller(tt.clusterSpec, deps.Provider). // idempotency
-		Build(tt.ctx)
-
-	tt.Expect(err).To(BeNil())
-	tt.Expect(deps.CNIInstaller).NotTo(BeNil())
-}
-
 func TestFactoryBuildWithClusterApplierNoTimeout(t *testing.T) {
 	tt := newTest(t, vsphere)
 	deps, err := dependencies.NewFactory().

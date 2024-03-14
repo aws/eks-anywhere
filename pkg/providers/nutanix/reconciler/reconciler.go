@@ -217,20 +217,6 @@ func toClientControlPlane(cp *nutanix.ControlPlane) *clusters.ControlPlane {
 	}
 }
 
-// ReconcileWorkerNodes reconciles the worker nodes to the desired state.
-func (r *Reconciler) ReconcileWorkerNodes(ctx context.Context, log logr.Logger, eksCluster *anywherev1.Cluster) (controller.Result, error) {
-	log = log.WithValues("provider", "nutanix", "reconcile type", "workers")
-	clusterSpec, err := cluster.BuildSpec(ctx, clientutil.NewKubeClient(r.client), eksCluster)
-	if err != nil {
-		return controller.Result{}, err
-	}
-
-	return controller.NewPhaseRunner[*cluster.Spec]().Register(
-		r.ValidateClusterSpec,
-		r.ReconcileWorkers,
-	).Run(ctx, log, clusterSpec)
-}
-
 // ReconcileWorkers reconciles the workers to the desired state.
 func (r *Reconciler) ReconcileWorkers(ctx context.Context, log logr.Logger, spec *cluster.Spec) (controller.Result, error) {
 	if spec.NutanixDatacenter == nil {

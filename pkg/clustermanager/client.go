@@ -54,7 +54,6 @@ type KubernetesClient interface {
 	GetEksaVSphereMachineConfig(ctx context.Context, VSphereDatacenterName string, kubeconfigFile string, namespace string) (*v1alpha1.VSphereMachineConfig, error)
 	GetEksaCloudStackMachineConfig(ctx context.Context, cloudstackMachineConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.CloudStackMachineConfig, error)
 	SetEksaControllerEnvVar(ctx context.Context, envVar, envVarVal, kubeconfig string) error
-	DeletePackageResources(ctx context.Context, managementCluster *types.Cluster, clusterName string) error
 	ValidateControlPlaneNodes(ctx context.Context, cluster *types.Cluster, clusterName string) error
 	ValidateWorkerNodes(ctx context.Context, clusterName string, kubeconfigFile string) error
 	CountMachineDeploymentReplicasReady(ctx context.Context, clusterName string, kubeconfigFile string) (int, int, error)
