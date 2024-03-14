@@ -23,6 +23,7 @@ func TestVSphereKubernetes129BottlerocketAPIServerExtraArgsSimpleFlow(t *testing
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewVSphere(t, framework.WithBottleRocket129()),
+		framework.WithEnvVar(features.APIServerExtraArgsEnabledEnvVar, "true"),
 	).WithClusterConfig(
 		api.ClusterToConfigFiller(
 			api.WithKubernetesVersion(v1alpha1.Kube129),
@@ -40,6 +41,7 @@ func TestVSphereKubernetes129BottlerocketAPIServerExtraArgsUpgradeFlow(t *testin
 		t,
 		framework.NewVSphere(t, framework.WithBottleRocket129()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube129)),
+		framework.WithEnvVar(features.APIServerExtraArgsEnabledEnvVar, "true"),
 	)
 	addAPIServerExtraArgsclusterOpts = append(
 		addAPIServerExtraArgsclusterOpts,

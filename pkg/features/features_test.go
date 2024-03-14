@@ -77,3 +77,11 @@ func TestVSphereInPlaceUpgradeEnabledFeatureFlag(t *testing.T) {
 	g.Expect(os.Setenv(VSphereInPlaceEnvVar, "true")).To(Succeed())
 	g.Expect(IsActive(VSphereInPlaceUpgradeEnabled())).To(BeTrue())
 }
+
+func TestAPIServerExtraArgsEnabledFeatureFlag(t *testing.T) {
+	g := NewWithT(t)
+	setupContext(t)
+
+	g.Expect(os.Setenv(APIServerExtraArgsEnabledEnvVar, "true")).To(Succeed())
+	g.Expect(IsActive(APIServerExtraArgsEnabled())).To(BeTrue())
+}

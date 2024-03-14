@@ -190,6 +190,7 @@ var clusterConfigValidations = []func(*Cluster) error{
 	validatePackageControllerConfiguration,
 	validateEksaVersion,
 	validateControlPlaneCertSANs,
+	validateControlPlaneAPIServerExtraArgs,
 }
 
 // GetClusterConfig parses a Cluster object from a multiobject yaml file in disk
@@ -491,6 +492,13 @@ func validateControlPlaneCertSANs(cfg *Cluster) error {
 		return fmt.Errorf("invalid ControlPlaneConfiguration.CertSANs; must be an IP or domain name: [%v]", strings.Join(invalid, ", "))
 	}
 
+	return nil
+}
+
+func validateControlPlaneAPIServerExtraArgs(clusterConfig *Cluster) error {
+	if clusterConfig.Spec.ControlPlaneConfiguration.APIServerExtraArgs != nil && !features.IsActive(features.APIServerExtraArgsEnabled()) {
+		return errors.New("please enable feature flag to configure APIServerExtraArgs")
+	}
 	return nil
 }
 

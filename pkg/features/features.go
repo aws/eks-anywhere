@@ -7,6 +7,7 @@ const (
 	UseNewWorkflowsEnvVar           = "USE_NEW_WORKFLOWS"
 	UseControllerForCli             = "USE_CONTROLLER_FOR_CLI"
 	VSphereInPlaceEnvVar            = "VSPHERE_IN_PLACE_UPGRADE"
+	APIServerExtraArgsEnabledEnvVar = "API_SERVER_EXTRA_ARGS_ENABLED"
 )
 
 func FeedGates(featureGates []string) {
@@ -53,5 +54,13 @@ func VSphereInPlaceUpgradeEnabled() Feature {
 	return Feature{
 		Name:     "Perform in-place upgrades with the vSphere provider",
 		IsActive: globalFeatures.isActiveForEnvVar(VSphereInPlaceEnvVar),
+	}
+}
+
+// APIServerExtraArgsEnabled is the feature flag for configuring api server extra args.
+func APIServerExtraArgsEnabled() Feature {
+	return Feature{
+		Name:     "Configure api server extra args",
+		IsActive: globalFeatures.isActiveForEnvVar(APIServerExtraArgsEnabledEnvVar),
 	}
 }

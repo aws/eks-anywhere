@@ -22,6 +22,7 @@ func TestCloudStackKubernetes129RedHat8APIServerExtraArgsSimpleFlow(t *testing.T
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewCloudStack(t, framework.WithCloudStackRedhat129()),
+		framework.WithEnvVar(features.APIServerExtraArgsEnabledEnvVar, "true"),
 	).WithClusterConfig(
 		api.ClusterToConfigFiller(
 			api.WithKubernetesVersion(v1alpha1.Kube129),
@@ -39,6 +40,7 @@ func TestCloudStackKubernetes129Redhat8APIServerExtraArgsUpgradeFlow(t *testing.
 		t,
 		framework.NewCloudStack(t, framework.WithCloudStackRedhat129()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube129)),
+		framework.WithEnvVar(features.APIServerExtraArgsEnabledEnvVar, "true"),
 	)
 	addAPIServerExtraArgsclusterOpts = append(
 		addAPIServerExtraArgsclusterOpts,
