@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	_ "embed"
-	"encoding/base64"
 	"errors"
 	"fmt"
 	"io"
@@ -744,11 +743,6 @@ func compareEKSAClusterSpec(ctx context.Context, currentClusterSpec, newClusterS
 
 // CreateRegistryCredSecret creates the registry-credentials secret on a managment cluster.
 func (c *ClusterManager) CreateRegistryCredSecret(ctx context.Context, mgmt *types.Cluster) error {
-	registryUsername := os.Getenv("REGISTRY_USERNAME")
-	encodedRegistryUsername := base64.StdEncoding.EncodeToString([]byte(registryUsername))
-	registryPassword := os.Getenv("REGISTRY_PASSWORD")
-	encodedRegistryPassword := base64.StdEncoding.EncodeToString([]byte(registryPassword))
-
 	secret := &corev1.Secret{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Secret",
@@ -759,8 +753,8 @@ func (c *ClusterManager) CreateRegistryCredSecret(ctx context.Context, mgmt *typ
 			Name:      "registry-credentials",
 		},
 		Data: map[string][]byte{
-			"username": []byte(encodedRegistryUsername),
-			"password": []byte(encodedRegistryPassword),
+			"username": []byte(os.Getenv("REGISTRY_USERNAME")),
+			"password": []byte(os.Getenv("REGISTRY_PASSWORD")),
 		},
 	}
 
