@@ -7,7 +7,6 @@ import (
 // SkippableValidations represents all the validations we offer for users to skip.
 var SkippableValidations = []string{
 	validations.VSphereUserPriv,
-	validations.APIServerExtraArgs,
 }
 
 func New(opts *validations.Opts) *CreateValidations {

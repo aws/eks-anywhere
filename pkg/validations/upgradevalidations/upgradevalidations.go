@@ -9,7 +9,6 @@ var SkippableValidations = []string{
 	validations.PDB,
 	validations.VSphereUserPriv,
 	validations.EksaVersionSkew,
-	validations.APIServerExtraArgs,
 }
 
 func New(opts *validations.Opts) *UpgradeValidations {
