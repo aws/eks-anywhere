@@ -4,6 +4,8 @@
 package e2e
 
 import (
+	"time"
+
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 	"github.com/aws/eks-anywhere/test/framework"
 )
@@ -30,6 +32,8 @@ func runCuratedPackagesAdotInstallWithUpdate(test *framework.ClusterE2ETest) {
 		kubeconfig.FromClusterName(test.ClusterName),
 		"--set mode=deployment")
 	test.VerifyAdotPackageInstalled(adotPackagePrefix+"-"+adotPackageName, adotTargetNamespace)
+	test.T.Log("Waiting before updating package")
+	time.Sleep(60 * time.Second)
 	test.VerifyAdotPackageDeploymentUpdated(adotPackagePrefix+"-"+adotPackageName, adotTargetNamespace)
 	test.VerifyAdotPackageDaemonSetUpdated(adotPackagePrefix+"-"+adotPackageName, adotTargetNamespace)
 }
