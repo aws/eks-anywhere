@@ -330,12 +330,11 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
 
 1. Create a Linux user for running image-builder.
    ```bash
-   sudo adduser image-builder
+   sudo useradd -G kvm image-builder
    ```
    Follow the prompt to provide a password for the image-builder user.
 1. Add image-builder user to the sudo group and change user as image-builder providing in the password from previous step when prompted.
    ```bash
-   sudo usermod -aG sudo image-builder
    su image-builder
    cd /home/$USER
    ```
@@ -516,12 +515,11 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
 
 1. Create a Linux user for running image-builder.
    ```bash
-   sudo adduser image-builder
+   sudo useradd -G kvm image-builder
    ```
    Follow the prompt to provide a password for the image-builder user.
 2. Add image-builder user to the sudo group and change user as image-builder providing in the password from previous step when prompted.
    ```bash
-   sudo usermod -aG sudo image-builder
    su image-builder
    cd /home/$USER
    ```
@@ -532,9 +530,6 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
    sudo apt update -y
    sudo apt install jq make qemu-kvm libvirt-daemon-system libvirt-clients virtinst cpu-checker libguestfs-tools libosinfo-bin unzip -y
    sudo snap install yq
-   sudo usermod -a -G kvm $USER
-   sudo chmod 666 /dev/kvm
-   sudo chown root:kvm /dev/kvm
    mkdir -p /home/$USER/.ssh
    echo "HostKeyAlgorithms +ssh-rsa" >> /home/$USER/.ssh/config
    echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> /home/$USER/.ssh/config
@@ -545,9 +540,6 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
    sudo dnf update -y
    sudo dnf install jq make qemu-kvm libvirt virtinst cpu-checker libguestfs-tools libosinfo unzip wget -y
    sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
-   sudo usermod -a -G kvm $USER
-   sudo chmod 666 /dev/kvm
-   sudo chown root:kvm /dev/kvm
    mkdir -p /home/$USER/.ssh
    echo "HostKeyAlgorithms +ssh-rsa" >> /home/$USER/.ssh/config
    echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> /home/$USER/.ssh/config
@@ -558,9 +550,6 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
    sudo yum update -y
    sudo yum install jq make qemu-kvm libvirt libvirt-clients libguestfs-tools unzip wget -y
    sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
-   sudo usermod -a -G kvm $USER
-   sudo chmod 666 /dev/kvm
-   sudo chown root:kvm /dev/kvm
    mkdir -p /home/$USER/.ssh
    echo "HostKeyAlgorithms +ssh-rsa" >> /home/$USER/.ssh/config
    echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> /home/$USER/.ssh/config
@@ -660,12 +649,11 @@ These steps use `image-builder` to create a RHEL-based image for CloudStack. Bef
 
 1. Create a Linux user for running image-builder.
    ```bash
-   sudo adduser image-builder
+   sudo useradd -G kvm image-builder
    ```
    Follow the prompt to provide a password for the image-builder user.
 1. Add image-builder user to the sudo group and change user as image-builder providing in the password from previous step when prompted.
    ```bash
-   sudo usermod -aG sudo image-builder
    su image-builder
    cd /home/$USER
    ```
@@ -676,9 +664,6 @@ These steps use `image-builder` to create a RHEL-based image for CloudStack. Bef
    sudo apt update -y
    sudo apt install jq make qemu-kvm libvirt-daemon-system libvirt-clients virtinst cpu-checker libguestfs-tools libosinfo-bin unzip -y
    sudo snap install yq
-   sudo usermod -a -G kvm $USER
-   sudo chmod 666 /dev/kvm
-   sudo chown root:kvm /dev/kvm
    mkdir -p /home/$USER/.ssh
    echo "HostKeyAlgorithms +ssh-rsa" >> /home/$USER/.ssh/config
    echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> /home/$USER/.ssh/config
@@ -689,9 +674,6 @@ These steps use `image-builder` to create a RHEL-based image for CloudStack. Bef
    sudo dnf update -y
    sudo dnf install jq make qemu-kvm libvirt virtinst cpu-checker libguestfs-tools libosinfo unzip wget -y
    sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
-   sudo usermod -a -G kvm $USER
-   sudo chmod 666 /dev/kvm
-   sudo chown root:kvm /dev/kvm
    mkdir -p /home/$USER/.ssh
    echo "HostKeyAlgorithms +ssh-rsa" >> /home/$USER/.ssh/config
    echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> /home/$USER/.ssh/config
@@ -702,9 +684,6 @@ These steps use `image-builder` to create a RHEL-based image for CloudStack. Bef
    sudo yum update -y
    sudo yum install jq make qemu-kvm libvirt libvirt-clients libguestfs-tools unzip wget -y
    sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
-   sudo usermod -a -G kvm $USER
-   sudo chmod 666 /dev/kvm
-   sudo chown root:kvm /dev/kvm
    mkdir -p /home/$USER/.ssh
    echo "HostKeyAlgorithms +ssh-rsa" >> /home/$USER/.ssh/config
    echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> /home/$USER/.ssh/config
@@ -773,12 +752,11 @@ These steps use `image-builder` to create an Ubuntu-based Amazon Machine Image (
 
 1. Create a Linux user for running image-builder.
    ```bash
-   sudo adduser image-builder
+   sudo useradd -G kvm image-builder
    ```
    Follow the prompt to provide a password for the image-builder user.
 1. Add the `image-builder` user to the `sudo` group and switch user to `image-builder`, providing in the password from previous step when prompted.
    ```bash
-   sudo usermod -aG sudo image-builder
    su image-builder
    cd /home/$USER
    ```
@@ -932,12 +910,11 @@ These steps use `image-builder` to create a Ubuntu-based image for Nutanix AHV a
 
 1. Create a Linux user for running image-builder.
    ```bash
-   sudo adduser image-builder
+   sudo useradd -G kvm image-builder
    ```
    Follow the prompt to provide a password for the image-builder user.
 1. Add image-builder user to the sudo group and change user as image-builder providing in the password from previous step when prompted.
    ```bash
-   sudo usermod -aG sudo image-builder
    su image-builder
    cd /home/$USER
    ```
