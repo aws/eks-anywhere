@@ -23,6 +23,34 @@ description: >
 * When upgrading to a new minor version, a new OS image must be created using the new image-builder CLI pertaining to that release.
 {{% /alert %}}
 
+## [v0.19.1](https://github.com/aws/eks-anywhere/releases/tag/v0.19.1)
+
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+|    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+| Bottlerocket 1.19.2 |    ✔    |     ✔      |    —    |     —      |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+|      RHEL 9.x       |    —    |     —      |    ✔    |     ✔      |  —   |
+
+### Changed
+- Upgraded EKS-D:
+  - `v1-25-eks-32` to [`v1-25-eks-34`](https://distro.eks.amazonaws.com/releases/1-25/34/)
+  - `v1-26-eks-28` to [`v1-26-eks-30`](https://distro.eks.amazonaws.com/releases/1-26/30/)
+  - `v1-27-eks-22` to [`v1-27-eks-24`](https://distro.eks.amazonaws.com/releases/1-27/24/)
+  - `v1-28-eks-15` to [`v1-28-eks-17`](https://distro.eks.amazonaws.com/releases/1-28/17/)
+  - `v1-29-eks-4` to [`v1-29-eks-6`](https://distro.eks.amazonaws.com/releases/1-29/6/)
+
+### Added
+- Preflight check for upgrade management components such that it ensures management components is at most 1 EKS Anywhere minor version greater than the EKS Anywhere version of cluster components [#7800](https://github.com/aws/eks-anywhere/pull/7800).
+
+### Fixed
+- EKS Anywhere package [bundles](https://gallery.ecr.aws/eks-anywhere/eks-anywhere-packages-bundles) ending with 152, 153, 154, 157 have image tag issues which have been resolved in bundle 158. Example for kubernetes version v1.29 we have `public.ecr.aws/eks-anywhere/eks-anywhere-packages-bundles:v1-29-158`
+- Fixed InPlace custom resources from being created again after a successful node upgrade due to delay in objects in client cache [#7779](https://github.com/aws/eks-anywhere/pull/7779).
+- Fixed [#7623](https://github.com/aws/eks-anywhere/issues/7623) by encoding the basic auth credentials to base64 when using them in templates [#7829](https://github.com/aws/eks-anywhere/pull/7829).
+- Added a [fix](https://github.com/aws/eks-anywhere/pull/7787) for error that may occur during upgrading management components where if the cluster object is modified by another process before applying, it throws the conflict error prompting a retry.
+
 ## [v0.19.0](https://github.com/aws/eks-anywhere/releases/tag/v0.19.0)
 
 ### Supported OS version details
