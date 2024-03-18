@@ -174,8 +174,8 @@ github.com/bgentry/speakeasy v0.1.0/go.mod h1:+zsyZBPWlz7T6j88CTgSN5bM796AkVf0kB
 github.com/blang/semver v3.5.0+incompatible/go.mod h1:kRBLl5iJ+tD4TcOOxsy/0fnwebNt5EWlYSAyrTnjyyk=
 github.com/blang/semver/v4 v4.0.0 h1:1PFHFE6yCCTv8C1TeyNNarDzntLi7wMI5i/pzqYIsAM=
 github.com/blang/semver/v4 v4.0.0/go.mod h1:IbckMUScFkM3pff0VJDNKRiT6TG/YpiHIM2yvyW5YoQ=
-github.com/bmc-toolbox/bmclib/v2 v2.1.1-0.20231206130132-1063371b9ed6 h1:7VnbUwv1Rwhpf+g4RQzg5f20lYwFB54ZDbSrxy9Qjbk=
-github.com/bmc-toolbox/bmclib/v2 v2.1.1-0.20231206130132-1063371b9ed6/go.mod h1:gFF4iD468hbW1JUdJJx3mbhNGzoLsG47epbMa++grp8=
+github.com/bmc-toolbox/bmclib/v2 v2.2.3 h1:8IqAPtGXY7vfmSJm0ZYlQ4IOP9hKb33iTyQUbW1XyaE=
+github.com/bmc-toolbox/bmclib/v2 v2.2.3/go.mod h1:gFF4iD468hbW1JUdJJx3mbhNGzoLsG47epbMa++grp8=
 github.com/bmc-toolbox/common v0.0.0-20230717121556-5eb9915a8a5a h1:SjtoU9dE3bYfYnPXODCunMztjoDgnE3DVJCPLBqwz6Q=
 github.com/bmc-toolbox/common v0.0.0-20230717121556-5eb9915a8a5a/go.mod h1:SY//n1PJjZfbFbmAsB6GvEKbc7UXz3d30s3kWxfJQ/c=
 github.com/bnkamalesh/webgo/v4 v4.1.11/go.mod h1:taIAonQTzao8G5rnB22WgKmQuIOWHpQ0n/YLAidBXlM=

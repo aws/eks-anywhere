@@ -17,7 +17,7 @@ require (
 	github.com/aws/etcdadm-bootstrap-provider v1.0.12
 	github.com/aws/etcdadm-controller v1.0.19
 	github.com/aws/smithy-go v1.20.1
-	github.com/bmc-toolbox/bmclib/v2 v2.1.1-0.20231206130132-1063371b9ed6
+	github.com/bmc-toolbox/bmclib/v2 v2.2.3
 	github.com/docker/cli v25.0.3+incompatible
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-git/go-git/v5 v5.11.0
