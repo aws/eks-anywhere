@@ -954,8 +954,8 @@ func (p *vsphereProvider) createSecret(ctx context.Context, cluster *types.Clust
 	vuc := config.NewVsphereUserConfig()
 
 	values := map[string]string{
-		"vspherePassword":           os.Getenv(vSpherePasswordKey),
-		"vsphereUsername":           os.Getenv(vSphereUsernameKey),
+		"vspherePassword":           vuc.EksaVspherePassword,
+		"vsphereUsername":           vuc.EksaVsphereUsername,
 		"eksaCloudProviderUsername": vuc.EksaVsphereCPUsername,
 		"eksaCloudProviderPassword": vuc.EksaVsphereCPPassword,
 		"eksaLicense":               os.Getenv(eksaLicense),
@@ -1102,14 +1102,6 @@ func (p *vsphereProvider) ValidateNewSpec(ctx context.Context, cluster *types.Cl
 		return fmt.Errorf("spec.network is immutable. Previous value %s, new value %s", oSpec.Network, nSpec.Network)
 	}
 
-	secretChanged, err := p.secretContentsChanged(ctx, cluster)
-	if err != nil {
-		return err
-	}
-
-	if secretChanged {
-		return fmt.Errorf("the VSphere credentials derived from %s and %s are immutable; please use the same credentials for the upgraded cluster", vSpherePasswordKey, vSphereUsernameKey)
-	}
 	return nil
 }
 
@@ -1156,24 +1148,6 @@ func (p *vsphereProvider) validateMachineConfigImmutability(ctx context.Context,
 	}
 
 	return nil
-}
-
-func (p *vsphereProvider) secretContentsChanged(ctx context.Context, workloadCluster *types.Cluster) (bool, error) {
-	nPassword := os.Getenv(vSpherePasswordKey)
-	oSecret, err := p.providerKubectlClient.GetSecretFromNamespace(ctx, workloadCluster.KubeconfigFile, CredentialsObjectName, constants.EksaSystemNamespace)
-	if err != nil {
-		return false, fmt.Errorf("obtaining VSphere secret %s from workload cluster: %v", CredentialsObjectName, err)
-	}
-
-	if string(oSecret.Data["password"]) != nPassword {
-		return true, nil
-	}
-
-	nUser := os.Getenv(vSphereUsernameKey)
-	if string(oSecret.Data["username"]) != nUser {
-		return true, nil
-	}
-	return false, nil
 }
 
 // ChangeDiff returns the component change diff for the provider.
