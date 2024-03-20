@@ -251,7 +251,7 @@ func WithProxyConfig(httpProxy, httpsProxy string, noProxy []string) ClusterFill
 }
 
 // WithRegistryMirror adds a registry mirror configuration.
-func WithRegistryMirror(endpoint, port string, caCert string, authenticate bool, insecureSkipVerify bool) ClusterFiller {
+func WithRegistryMirror(endpoint, port string, caCert string, authenticate bool, insecureSkipVerify bool, ociNamespaces ...anywherev1.OCINamespace) ClusterFiller {
 	return func(c *anywherev1.Cluster) {
 		if c.Spec.RegistryMirrorConfiguration == nil {
 			c.Spec.RegistryMirrorConfiguration = &anywherev1.RegistryMirrorConfiguration{}
@@ -261,6 +261,10 @@ func WithRegistryMirror(endpoint, port string, caCert string, authenticate bool,
 		c.Spec.RegistryMirrorConfiguration.CACertContent = caCert
 		c.Spec.RegistryMirrorConfiguration.Authenticate = authenticate
 		c.Spec.RegistryMirrorConfiguration.InsecureSkipVerify = insecureSkipVerify
+
+		if len(ociNamespaces) != 0 {
+			c.Spec.RegistryMirrorConfiguration.OCINamespaces = ociNamespaces
+		}
 	}
 }
 

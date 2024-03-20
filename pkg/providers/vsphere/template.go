@@ -229,6 +229,12 @@ func buildTemplateMapCP(
 			values["registryCACert"] = registryMirror.CACertContent
 		}
 
+		if controlPlaneMachineSpec.OSFamily == anywherev1.Bottlerocket &&
+			len(registryMirror.NamespacedRegistryMap) == 1 &&
+			registryMirror.CoreEKSAMirror() != "" {
+			values["publicECRMirror"] = containerd.ToAPIEndpoint(registryMirror.CoreEKSAMirror())
+		}
+
 		if registryMirror.Auth {
 			values["registryAuth"] = registryMirror.Auth
 			username, password, err := config.ReadCredentials()
@@ -416,6 +422,12 @@ func buildTemplateMapMD(
 		values["publicMirror"] = containerd.ToAPIEndpoint(registryMirror.CoreEKSAMirror())
 		if len(registryMirror.CACertContent) > 0 {
 			values["registryCACert"] = registryMirror.CACertContent
+		}
+
+		if workerNodeGroupMachineSpec.OSFamily == anywherev1.Bottlerocket &&
+			len(registryMirror.NamespacedRegistryMap) == 1 &&
+			registryMirror.CoreEKSAMirror() != "" {
+			values["publicECRMirror"] = containerd.ToAPIEndpoint(registryMirror.CoreEKSAMirror())
 		}
 
 		if registryMirror.Auth {
