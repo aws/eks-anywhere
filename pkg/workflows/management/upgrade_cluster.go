@@ -46,7 +46,7 @@ func (s *upgradeCluster) Run(ctx context.Context, commandContext *task.CommandCo
 }
 
 func (s *upgradeCluster) Name() string {
-	return "upgrade-workload-cluster"
+	return "upgrade-management-cluster"
 }
 
 func (s *upgradeCluster) Checkpoint() *task.CompletedTask {

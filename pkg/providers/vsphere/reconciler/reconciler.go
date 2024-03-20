@@ -14,6 +14,7 @@ import (
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	c "github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/config"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/controller"
 	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
 	"github.com/aws/eks-anywhere/pkg/controller/clusters"
@@ -63,7 +64,7 @@ func VsphereCredentials(ctx context.Context, cli client.Client) (*apiv1.Secret, 
 	secret := &apiv1.Secret{}
 	secretKey := client.ObjectKey{
 		Namespace: "eksa-system",
-		Name:      vsphere.CredentialsObjectName,
+		Name:      constants.VSphereCredentialsName,
 	}
 	if err := cli.Get(ctx, secretKey, secret); err != nil {
 		return nil, err
