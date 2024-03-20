@@ -13,6 +13,133 @@ import (
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
 )
 
+func TestConfigureAPIServerExtraArgsInKubeadmControlPlane(t *testing.T) {
+	replicas := int32(3)
+	tests := []struct {
+		name               string
+		apiServerExtraArgs map[string]string
+		want               *controlplanev1.KubeadmControlPlane
+	}{
+		{
+			name:               "no api server extra args",
+			apiServerExtraArgs: nil,
+			want:               wantKubeadmControlPlane(),
+		},
+		{
+			name: "with api server extra args",
+			apiServerExtraArgs: map[string]string{
+				"service-account-issuer":   "https://test",
+				"service-account-jwks-uri": "https://test/openid/v1/jwks",
+			},
+			want: &controlplanev1.KubeadmControlPlane{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: "controlplane.cluster.x-k8s.io/v1beta1",
+					Kind:       "KubeadmControlPlane",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-cluster",
+					Namespace: "eksa-system",
+				},
+				Spec: controlplanev1.KubeadmControlPlaneSpec{
+					MachineTemplate: controlplanev1.KubeadmControlPlaneMachineTemplate{
+						InfrastructureRef: v1.ObjectReference{
+							APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
+							Kind:       "ProviderMachineTemplate",
+							Name:       "provider-template",
+						},
+					},
+					KubeadmConfigSpec: bootstrapv1.KubeadmConfigSpec{
+						ClusterConfiguration: &bootstrapv1.ClusterConfiguration{
+							ImageRepository: "public.ecr.aws/eks-distro/kubernetes",
+							DNS: bootstrapv1.DNS{
+								ImageMeta: bootstrapv1.ImageMeta{
+									ImageRepository: "public.ecr.aws/eks-distro/coredns",
+									ImageTag:        "v1.8.4-eks-1-21-9",
+								},
+							},
+							Etcd: bootstrapv1.Etcd{
+								Local: &bootstrapv1.LocalEtcd{
+									ImageMeta: bootstrapv1.ImageMeta{
+										ImageRepository: "public.ecr.aws/eks-distro/etcd-io",
+										ImageTag:        "v3.4.16-eks-1-21-9",
+									},
+									ExtraArgs: map[string]string{
+										"cipher-suites": "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+									},
+								},
+							},
+							APIServer: bootstrapv1.APIServer{
+								ControlPlaneComponent: bootstrapv1.ControlPlaneComponent{
+									ExtraArgs: map[string]string{
+										"service-account-issuer":   "https://test",
+										"service-account-jwks-uri": "https://test/openid/v1/jwks",
+									},
+									ExtraVolumes: []bootstrapv1.HostPathMount{},
+								},
+								CertSANs: []string{"foo.bar", "11.11.11.11"},
+							},
+							ControllerManager: bootstrapv1.ControlPlaneComponent{
+								ExtraArgs:    tlsCipherSuitesArgs(),
+								ExtraVolumes: []bootstrapv1.HostPathMount{},
+							},
+							Scheduler: bootstrapv1.ControlPlaneComponent{
+								ExtraArgs:    map[string]string{},
+								ExtraVolumes: []bootstrapv1.HostPathMount{},
+							},
+						},
+						InitConfiguration: &bootstrapv1.InitConfiguration{
+							NodeRegistration: bootstrapv1.NodeRegistrationOptions{
+								KubeletExtraArgs: map[string]string{
+									"tls-cipher-suites": "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+									"node-labels":       "key1=val1,key2=val2",
+								},
+								Taints: []v1.Taint{
+									{
+										Key:       "key1",
+										Value:     "val1",
+										Effect:    v1.TaintEffectNoExecute,
+										TimeAdded: nil,
+									},
+								},
+							},
+						},
+						JoinConfiguration: &bootstrapv1.JoinConfiguration{
+							NodeRegistration: bootstrapv1.NodeRegistrationOptions{
+								KubeletExtraArgs: map[string]string{
+									"tls-cipher-suites": "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+									"node-labels":       "key1=val1,key2=val2",
+								},
+								Taints: []v1.Taint{
+									{
+										Key:       "key1",
+										Value:     "val1",
+										Effect:    v1.TaintEffectNoExecute,
+										TimeAdded: nil,
+									},
+								},
+							},
+						},
+						PreKubeadmCommands:  []string{},
+						PostKubeadmCommands: []string{},
+						Files:               []bootstrapv1.File{},
+					},
+					Replicas: &replicas,
+					Version:  "v1.21.5-eks-1-21-9",
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := newApiBuilerTest(t)
+			got := wantKubeadmControlPlane()
+			g.clusterSpec.Cluster.Spec.ControlPlaneConfiguration.APIServerExtraArgs = tt.apiServerExtraArgs
+			clusterapi.SetIdentityAuthInKubeadmControlPlane(got, g.clusterSpec)
+			g.Expect(got).To(Equal(tt.want))
+		})
+	}
+}
+
 func TestConfigureAWSIAMAuthInKubeadmControlPlane(t *testing.T) {
 	replicas := int32(3)
 	tests := []struct {

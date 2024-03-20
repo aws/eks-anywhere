@@ -103,19 +103,28 @@ func configureOIDCInKubeadmControlPlane(kcp *controlplanev1.KubeadmControlPlane,
 	}
 }
 
+func configureAPIServerExtraArgsInKubeadmControlPlane(kcp *controlplanev1.KubeadmControlPlane, apiServerExtraArgs map[string]string) {
+	if apiServerExtraArgs == nil {
+		return
+	}
+
+	for k, v := range apiServerExtraArgs {
+		kcp.Spec.KubeadmConfigSpec.ClusterConfiguration.APIServer.ExtraArgs[k] = v
+	}
+}
+
 func configurePodIamAuthInKubeadmControlPlane(kcp *controlplanev1.KubeadmControlPlane, podIamConfig *v1alpha1.PodIAMConfig) {
 	if podIamConfig == nil {
 		return
 	}
 
 	apiServerExtraArgs := kcp.Spec.KubeadmConfigSpec.ClusterConfiguration.APIServer.ExtraArgs
-	for k, v := range PodIAMAuthExtraArgs(podIamConfig) {
-		apiServerExtraArgs[k] = v
-	}
+	SetPodIAMAuthExtraArgs(podIamConfig, apiServerExtraArgs)
 }
 
 func SetIdentityAuthInKubeadmControlPlane(kcp *controlplanev1.KubeadmControlPlane, clusterSpec *cluster.Spec) {
 	configureOIDCInKubeadmControlPlane(kcp, clusterSpec.OIDCConfig)
 	configureAWSIAMAuthInKubeadmControlPlane(kcp, clusterSpec.AWSIamConfig)
+	configureAPIServerExtraArgsInKubeadmControlPlane(kcp, clusterSpec.Cluster.Spec.ControlPlaneConfiguration.APIServerExtraArgs)
 	configurePodIamAuthInKubeadmControlPlane(kcp, clusterSpec.Cluster.Spec.PodIAMConfig)
 }

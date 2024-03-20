@@ -126,6 +126,26 @@ func WithControlPlaneLabel(key string, val string) ClusterFiller {
 	}
 }
 
+// WithControlPlaneAPIServerExtraArgs adds the APIServerExtraArgs to the cluster spec.
+func WithControlPlaneAPIServerExtraArgs() ClusterFiller {
+	return func(c *anywherev1.Cluster) {
+		if c.Spec.ControlPlaneConfiguration.APIServerExtraArgs == nil {
+			c.Spec.ControlPlaneConfiguration.APIServerExtraArgs = map[string]string{}
+		}
+		issuerURL := "https://" + c.Spec.ControlPlaneConfiguration.Endpoint.Host
+		c.Spec.ControlPlaneConfiguration.APIServerExtraArgs["service-account-jwks-uri"] = issuerURL + "/openid/v1/jwks"
+	}
+}
+
+// RemoveAllAPIServerExtraArgs removes all the API server flags from the cluster spec.
+func RemoveAllAPIServerExtraArgs() ClusterFiller {
+	return func(c *anywherev1.Cluster) {
+		for k := range c.Spec.ControlPlaneConfiguration.APIServerExtraArgs {
+			delete(c.Spec.ControlPlaneConfiguration.APIServerExtraArgs, k)
+		}
+	}
+}
+
 // WithPodCidr sets an explicit pod CIDR, overriding the provider's default.
 func WithPodCidr(podCidr string) ClusterFiller {
 	return func(c *anywherev1.Cluster) {
