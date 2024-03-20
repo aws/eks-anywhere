@@ -41,7 +41,7 @@ func ValidateClusterReady(ctx context.Context, vc clusterf.StateValidationConfig
 		return validateCAPIobjectsForInPlace(ctx, vc)
 	}
 	if clus.Spec.ControlPlaneConfiguration.APIServerExtraArgs != nil {
-		return validateKCPobjectForAPIServerExtraArgs(ctx, vc)
+		return validateKCPForAPIServerExtraArgs(ctx, vc)
 	}
 	return nil
 }
@@ -364,7 +364,7 @@ func getWorkerNodeMachineSets(ctx context.Context, vc clusterf.StateValidationCo
 	return ms.Items, nil
 }
 
-func validateKCPobjectForAPIServerExtraArgs(ctx context.Context, vc clusterf.StateValidationConfig) error {
+func validateKCPForAPIServerExtraArgs(ctx context.Context, vc clusterf.StateValidationConfig) error {
 	kcp, err := controller.GetKubeadmControlPlane(ctx, vc.ManagementClusterClient, vc.ClusterSpec.Cluster)
 	if err != nil {
 		return fmt.Errorf("failed to retrieve kcp: %s", err)

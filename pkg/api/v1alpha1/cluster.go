@@ -498,7 +498,7 @@ func validateControlPlaneCertSANs(cfg *Cluster) error {
 
 func validateControlPlaneAPIServerExtraArgs(clusterConfig *Cluster) error {
 	if clusterConfig.Spec.ControlPlaneConfiguration.APIServerExtraArgs != nil && !features.IsActive(features.APIServerExtraArgsEnabled()) {
-		return errors.New("please enable feature flag to configure APIServerExtraArgs")
+		return fmt.Errorf("configuring APIServerExtraArgs is not supported. Set env var %v to enable", features.APIServerExtraArgsEnabledEnvVar)
 	}
 	return nil
 }
@@ -518,7 +518,7 @@ func validateControlPlaneAPIServerOIDCExtraArgs(clusterConfig *Cluster) error {
 			if ref.Kind == OIDCConfigKind {
 				for _, flag := range oidcFlags {
 					if _, has := clusterConfig.Spec.ControlPlaneConfiguration.APIServerExtraArgs[flag]; has {
-						return fmt.Errorf("%s flag is already configured in OIDCConfig. please remove it from apiServerExtraArgs", flag)
+						return fmt.Errorf("the following flags cannot be configured if OIDCConfig is configured for cluster.spec.identityProviderRefs: %v. Remove from apiServerExtraArgs", oidcFlags)
 					}
 				}
 			}
