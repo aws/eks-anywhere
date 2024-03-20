@@ -17,6 +17,50 @@ import (
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
+// APIServerExtraArgs
+func TestCloudStackKubernetes129RedHat8APIServerExtraArgsSimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewCloudStack(t, framework.WithCloudStackRedhat129()),
+		framework.WithEnvVar(features.APIServerExtraArgsEnabledEnvVar, "true"),
+	).WithClusterConfig(
+		api.ClusterToConfigFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube129),
+			api.WithControlPlaneAPIServerExtraArgs(),
+		),
+	)
+	runSimpleFlowWithoutClusterConfigGeneration(test)
+}
+
+// TODO: Investigate why this test takes long time to pass with service-account-issuer flag
+func TestCloudStackKubernetes129Redhat8APIServerExtraArgsUpgradeFlow(t *testing.T) {
+	var addAPIServerExtraArgsclusterOpts []framework.ClusterE2ETestOpt
+	var removeAPIServerExtraArgsclusterOpts []framework.ClusterE2ETestOpt
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewCloudStack(t, framework.WithCloudStackRedhat129()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube129)),
+		framework.WithEnvVar(features.APIServerExtraArgsEnabledEnvVar, "true"),
+	)
+	addAPIServerExtraArgsclusterOpts = append(
+		addAPIServerExtraArgsclusterOpts,
+		framework.WithClusterUpgrade(
+			api.WithControlPlaneAPIServerExtraArgs(),
+		),
+	)
+	removeAPIServerExtraArgsclusterOpts = append(
+		removeAPIServerExtraArgsclusterOpts,
+		framework.WithClusterUpgrade(
+			api.RemoveAllAPIServerExtraArgs(),
+		),
+	)
+	runAPIServerExtraArgsUpgradeFlow(
+		test,
+		addAPIServerExtraArgsclusterOpts,
+		removeAPIServerExtraArgsclusterOpts,
+	)
+}
+
 // AWS IAM Auth
 func TestCloudStackKubernetes125AWSIamAuth(t *testing.T) {
 	test := framework.NewClusterE2ETest(

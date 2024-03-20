@@ -151,6 +151,12 @@ spec:
                 type: object
               controlPlaneConfiguration:
                 properties:
+                  apiServerExtraArgs:
+                    additionalProperties:
+                      type: string
+                    description: APIServerExtraArgs defines the flags to configure
+                      for the API server.
+                    type: object
                   certSans:
                     description: CertSANs is a slice of domain names or IPs to be
                       added as Subject Name Alternatives of the Kube API Servers Certificate.

@@ -1460,6 +1460,10 @@ func TestControlPlaneConfigurationEqual(t *testing.T) {
 	taints1DiffOrder := []corev1.Taint{taint2, taint1}
 	taints2 := []corev1.Taint{taint1}
 
+	var emptyAPIServerExtraArgs map[string]string
+	apiServerExtraArgs1 := map[string]string{"key1": "value1"}
+	apiServerExtraArgs2 := map[string]string{"key2": "value2"}
+
 	testCases := []struct {
 		testName                           string
 		cluster1CPConfig, cluster2CPConfig *v1alpha1.ControlPlaneConfiguration
@@ -1592,6 +1596,52 @@ func TestControlPlaneConfigurationEqual(t *testing.T) {
 			},
 			cluster2CPConfig: &v1alpha1.ControlPlaneConfiguration{
 				Taints: emptyTaints,
+			},
+			want: true,
+		},
+		{
+			testName: "both api server extra args equal",
+			cluster1CPConfig: &v1alpha1.ControlPlaneConfiguration{
+				APIServerExtraArgs: apiServerExtraArgs1,
+			},
+			cluster2CPConfig: &v1alpha1.ControlPlaneConfiguration{
+				APIServerExtraArgs: apiServerExtraArgs1,
+			},
+			want: true,
+		},
+		{
+			testName: "different api server extra args",
+			cluster1CPConfig: &v1alpha1.ControlPlaneConfiguration{
+				APIServerExtraArgs: apiServerExtraArgs1,
+			},
+			cluster2CPConfig: &v1alpha1.ControlPlaneConfiguration{
+				APIServerExtraArgs: apiServerExtraArgs2,
+			},
+			want: false,
+		},
+		{
+			testName: "one api server extra args not present",
+			cluster1CPConfig: &v1alpha1.ControlPlaneConfiguration{
+				APIServerExtraArgs: apiServerExtraArgs1,
+			},
+			cluster2CPConfig: &v1alpha1.ControlPlaneConfiguration{},
+			want:             false,
+		},
+		{
+			testName: "one api server extra args not present and other empty",
+			cluster1CPConfig: &v1alpha1.ControlPlaneConfiguration{
+				APIServerExtraArgs: emptyAPIServerExtraArgs,
+			},
+			cluster2CPConfig: &v1alpha1.ControlPlaneConfiguration{},
+			want:             true,
+		},
+		{
+			testName: "both api server extra args empty",
+			cluster1CPConfig: &v1alpha1.ControlPlaneConfiguration{
+				APIServerExtraArgs: emptyAPIServerExtraArgs,
+			},
+			cluster2CPConfig: &v1alpha1.ControlPlaneConfiguration{
+				APIServerExtraArgs: emptyAPIServerExtraArgs,
 			},
 			want: true,
 		},

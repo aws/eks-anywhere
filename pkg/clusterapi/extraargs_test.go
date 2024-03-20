@@ -179,6 +179,39 @@ func TestExtraArgsToPartialYaml(t *testing.T) {
 	}
 }
 
+func TestAPIServerExtraArgs(t *testing.T) {
+	tests := []struct {
+		testName           string
+		apiServerExtraArgs map[string]string
+		want               clusterapi.ExtraArgs
+	}{
+		{
+			testName:           "no args",
+			apiServerExtraArgs: map[string]string{},
+			want:               clusterapi.ExtraArgs{},
+		},
+		{
+			testName: "with args",
+			apiServerExtraArgs: map[string]string{
+				"service-account-issuer":   "https://my-custom-issuer-url",
+				"service-account-jwks-uri": "http://my-custom-jwks-uri/openid/v1/jwks",
+			},
+			want: clusterapi.ExtraArgs{
+				"service-account-issuer":   "https://my-custom-issuer-url",
+				"service-account-jwks-uri": "http://my-custom-jwks-uri/openid/v1/jwks",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.testName, func(t *testing.T) {
+			if got := clusterapi.APIServerExtraArgs(tt.apiServerExtraArgs); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("APIServerExtraArgs() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestAwsIamAuthExtraArgs(t *testing.T) {
 	tests := []struct {
 		testName string
@@ -305,6 +338,51 @@ func TestSecureEtcdTlsCipherSuitesExtraArgs(t *testing.T) {
 		t.Run(tt.testName, func(t *testing.T) {
 			if got := clusterapi.SecureEtcdTlsCipherSuitesExtraArgs(); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("SecureEtcdTlsCipherSuitesExtraArgs() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestSetPodIAMAuthExtraArgs(t *testing.T) {
+	tests := []struct {
+		testName           string
+		podIAMConfig       *v1alpha1.PodIAMConfig
+		apiServerExtraArgs map[string]string
+		want               map[string]string
+	}{
+		{
+			testName: "with pod iam config",
+			podIAMConfig: &v1alpha1.PodIAMConfig{
+				ServiceAccountIssuer: "https://pod-iam-config",
+			},
+			apiServerExtraArgs: map[string]string{
+				"service-account-issuer":   "https://api-server-extra-args",
+				"service-account-jwks-uri": "https://api-server-extra-args/openid/v1/jwks",
+			},
+			want: map[string]string{
+				"service-account-issuer":   "https://api-server-extra-args,https://pod-iam-config",
+				"service-account-jwks-uri": "https://api-server-extra-args/openid/v1/jwks",
+			},
+		},
+		{
+			testName: "with api server extra args and pod iam config",
+			podIAMConfig: &v1alpha1.PodIAMConfig{
+				ServiceAccountIssuer: "https://pod-iam-config",
+			},
+			apiServerExtraArgs: map[string]string{
+				"service-account-jwks-uri": "https://api-server-extra-args/openid/v1/jwks",
+			},
+			want: map[string]string{
+				"service-account-issuer":   "https://pod-iam-config",
+				"service-account-jwks-uri": "https://api-server-extra-args/openid/v1/jwks",
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.testName, func(t *testing.T) {
+			clusterapi.SetPodIAMAuthExtraArgs(tt.podIAMConfig, tt.apiServerExtraArgs)
+			if !reflect.DeepEqual(tt.apiServerExtraArgs, tt.want) {
+				t.Errorf("SetPodIAMAuthExtraArgs() = %v, want %v", tt.apiServerExtraArgs, tt.want)
 			}
 		})
 	}

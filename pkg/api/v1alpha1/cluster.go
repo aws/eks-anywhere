@@ -190,6 +190,8 @@ var clusterConfigValidations = []func(*Cluster) error{
 	validatePackageControllerConfiguration,
 	validateEksaVersion,
 	validateControlPlaneCertSANs,
+	validateControlPlaneAPIServerExtraArgs,
+	validateControlPlaneAPIServerOIDCExtraArgs,
 }
 
 // GetClusterConfig parses a Cluster object from a multiobject yaml file in disk
@@ -491,6 +493,37 @@ func validateControlPlaneCertSANs(cfg *Cluster) error {
 		return fmt.Errorf("invalid ControlPlaneConfiguration.CertSANs; must be an IP or domain name: [%v]", strings.Join(invalid, ", "))
 	}
 
+	return nil
+}
+
+func validateControlPlaneAPIServerExtraArgs(clusterConfig *Cluster) error {
+	if clusterConfig.Spec.ControlPlaneConfiguration.APIServerExtraArgs != nil && !features.IsActive(features.APIServerExtraArgsEnabled()) {
+		return fmt.Errorf("configuring APIServerExtraArgs is not supported. Set env var %v to enable", features.APIServerExtraArgsEnabledEnvVar)
+	}
+	return nil
+}
+
+func validateControlPlaneAPIServerOIDCExtraArgs(clusterConfig *Cluster) error {
+	oidcFlags := []string{
+		"oidc-issuer-url",
+		"oidc-client-id",
+		"oidc-groups-claim",
+		"oidc-groups-prefix",
+		"oidc-required-claim",
+		"oidc-username-claim",
+		"oidc-username-prefix",
+	}
+	if clusterConfig.Spec.IdentityProviderRefs != nil {
+		for _, ref := range clusterConfig.Spec.IdentityProviderRefs {
+			if ref.Kind == OIDCConfigKind {
+				for _, flag := range oidcFlags {
+					if _, has := clusterConfig.Spec.ControlPlaneConfiguration.APIServerExtraArgs[flag]; has {
+						return fmt.Errorf("the following flags cannot be configured if OIDCConfig is configured for cluster.spec.identityProviderRefs: %v. Remove from apiServerExtraArgs", oidcFlags)
+					}
+				}
+			}
+		}
+	}
 	return nil
 }
 
