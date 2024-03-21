@@ -328,48 +328,44 @@ Prism Central Administrator permissions are required to build a Nutanix image us
 
 These steps use `image-builder` to create an Ubuntu-based or RHEL-based image for vSphere. Before proceeding, ensure that the above system-level, network-level and vSphere-specific [prerequisites]({{< relref "#prerequisites">}}) have been met.
 
-1. Create a Linux user for running image-builder.
-   ```bash
-   sudo adduser image-builder
-   ```
-   Follow the prompt to provide a password for the image-builder user.
-1. Add image-builder user to the sudo group and change user as image-builder providing in the password from previous step when prompted.
-   ```bash
-   sudo usermod -aG sudo image-builder
-   su image-builder
-   cd /home/$USER
-   ```
+1. Create a Linux user for running image-builder, and provide Secondary Groups for sudo and kvm permissions.
 1. Install packages and prepare environment:
    {{< tabpane >}}
 
    {{< tab header="Ubuntu" lang="bash" >}}
+   sudo useradd -G sudo image-builder
+   sudo su - image-builder
    sudo apt update -y
    sudo apt install jq unzip make -y
    sudo snap install yq
-   mkdir -p /home/$USER/.ssh
-   echo "HostKeyAlgorithms +ssh-rsa" >> /home/$USER/.ssh/config
-   echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> /home/$USER/.ssh/config
-   sudo chmod 600 /home/$USER/.ssh/config
+   mkdir -p ${HOME}/.ssh
+   echo "HostKeyAlgorithms +ssh-rsa" >> ${HOME}/.ssh/config
+   echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> ${HOME}/.ssh/config
+   sudo chmod 600 ${HOME}/.ssh/config
    {{< /tab >}}
 
    {{< tab header="RHEL" lang="bash" >}}
+   sudo useradd -G wheel image-builder
+   sudo su - image-builder
    sudo dnf update -y
    sudo dnf install jq unzip make wget -y
    sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
-   mkdir -p /home/$USER/.ssh
-   echo "HostKeyAlgorithms +ssh-rsa" >> /home/$USER/.ssh/config
-   echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> /home/$USER/.ssh/config
-   sudo chmod 600 /home/$USER/.ssh/config
+   mkdir -p ${HOME}/.ssh
+   echo "HostKeyAlgorithms +ssh-rsa" >> ${HOME}/.ssh/config
+   echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> ${HOME}/.ssh/config
+   sudo chmod 600 ${HOME}/.ssh/config
    {{< /tab >}}
 
    {{< tab header="Amazon Linux 2" lang="bash" >}}
+   sudo useradd -G wheel image-builder
+   sudo su - image-builder
    sudo yum update -y
    sudo yum install jq unzip make wget -y
    sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
-   mkdir -p /home/$USER/.ssh
-   echo "HostKeyAlgorithms +ssh-rsa" >> /home/$USER/.ssh/config
-   echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> /home/$USER/.ssh/config
-   sudo chmod 600 /home/$USER/.ssh/config
+   mkdir -p ${HOME}/.ssh
+   echo "HostKeyAlgorithms +ssh-rsa" >> ${HOME}/.ssh/config
+   echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> ${HOME}/.ssh/config
+   sudo chmod 600 ${HOME}/.ssh/config
    {{< /tab >}}
 
    {{< /tabpane >}}
@@ -514,57 +510,44 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
 ### Build Bare Metal node images
 These steps use `image-builder` to create an Ubuntu-based or RHEL-based image for Bare Metal. Before proceeding, ensure that the above system-level, network-level and baremetal-specific [prerequisites]({{< relref "#prerequisites">}}) have been met.
 
-1. Create a Linux user for running image-builder.
-   ```bash
-   sudo adduser image-builder
-   ```
-   Follow the prompt to provide a password for the image-builder user.
-2. Add image-builder user to the sudo group and change user as image-builder providing in the password from previous step when prompted.
-   ```bash
-   sudo usermod -aG sudo image-builder
-   su image-builder
-   cd /home/$USER
-   ```
+1. Create a Linux user for running image-builder, and provide Secondary Groups for sudo and kvm permissions.
 1. Install packages and prepare environment:
    {{< tabpane >}}
 
    {{< tab header="Ubuntu" lang="bash" >}}
+   sudo useradd -G kvm,sudo image-builder
+   sudo su - image-builder
    sudo apt update -y
    sudo apt install jq make qemu-kvm libvirt-daemon-system libvirt-clients virtinst cpu-checker libguestfs-tools libosinfo-bin unzip -y
    sudo snap install yq
-   sudo usermod -a -G kvm $USER
-   sudo chmod 666 /dev/kvm
-   sudo chown root:kvm /dev/kvm
-   mkdir -p /home/$USER/.ssh
-   echo "HostKeyAlgorithms +ssh-rsa" >> /home/$USER/.ssh/config
-   echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> /home/$USER/.ssh/config
-   sudo chmod 600 /home/$USER/.ssh/config
+   mkdir -p ${HOME}/.ssh
+   echo "HostKeyAlgorithms +ssh-rsa" >> ${HOME}/.ssh/config
+   echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> ${HOME}/.ssh/config
+   sudo chmod 600 ${HOME}/.ssh/config
    {{< /tab >}}
 
    {{< tab header="RHEL" lang="bash" >}}
+   sudo useradd -G kvm,wheel image-builder
+   sudo su - image-builder
    sudo dnf update -y
    sudo dnf install jq make qemu-kvm libvirt virtinst cpu-checker libguestfs-tools libosinfo unzip wget -y
    sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
-   sudo usermod -a -G kvm $USER
-   sudo chmod 666 /dev/kvm
-   sudo chown root:kvm /dev/kvm
-   mkdir -p /home/$USER/.ssh
-   echo "HostKeyAlgorithms +ssh-rsa" >> /home/$USER/.ssh/config
-   echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> /home/$USER/.ssh/config
-   sudo chmod 600 /home/$USER/.ssh/config
+   mkdir -p ${HOME}/.ssh
+   echo "HostKeyAlgorithms +ssh-rsa" >> ${HOME}/.ssh/config
+   echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> ${HOME}/.ssh/config
+   sudo chmod 600 ${HOME}/.ssh/config
    {{< /tab >}}
 
-   {{< tab header="Amazon Linux" lang="bash" >}}
+   {{< tab header="Amazon Linux 2" lang="bash" >}}
+   sudo useradd -G kvm,wheel image-builder
+   sudo su - image-builder
    sudo yum update -y
    sudo yum install jq make qemu-kvm libvirt libvirt-clients libguestfs-tools unzip wget -y
    sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
-   sudo usermod -a -G kvm $USER
-   sudo chmod 666 /dev/kvm
-   sudo chown root:kvm /dev/kvm
-   mkdir -p /home/$USER/.ssh
-   echo "HostKeyAlgorithms +ssh-rsa" >> /home/$USER/.ssh/config
-   echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> /home/$USER/.ssh/config
-   sudo chmod 600 /home/$USER/.ssh/config
+   mkdir -p ${HOME}/.ssh
+   echo "HostKeyAlgorithms +ssh-rsa" >> ${HOME}/.ssh/config
+   echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> ${HOME}/.ssh/config
+   sudo chmod 600 ${HOME}/.ssh/config
    {{< /tab >}}
 
    {{< /tabpane >}}
@@ -658,57 +641,44 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
 
 These steps use `image-builder` to create a RHEL-based image for CloudStack. Before proceeding, ensure that the above system-level, network-level and CloudStack-specific [prerequisites]({{< relref "#prerequisites">}}) have been met.
 
-1. Create a Linux user for running image-builder.
-   ```bash
-   sudo adduser image-builder
-   ```
-   Follow the prompt to provide a password for the image-builder user.
-1. Add image-builder user to the sudo group and change user as image-builder providing in the password from previous step when prompted.
-   ```bash
-   sudo usermod -aG sudo image-builder
-   su image-builder
-   cd /home/$USER
-   ```
+1. Create a Linux user for running image-builder, and provide Secondary Groups for sudo and kvm permissions.
 1. Install packages and prepare environment:
    {{< tabpane >}}
 
    {{< tab header="Ubuntu" lang="bash" >}}
+   sudo useradd -G kvm,sudo image-builder
+   sudo su - image-builder
    sudo apt update -y
    sudo apt install jq make qemu-kvm libvirt-daemon-system libvirt-clients virtinst cpu-checker libguestfs-tools libosinfo-bin unzip -y
    sudo snap install yq
-   sudo usermod -a -G kvm $USER
-   sudo chmod 666 /dev/kvm
-   sudo chown root:kvm /dev/kvm
-   mkdir -p /home/$USER/.ssh
-   echo "HostKeyAlgorithms +ssh-rsa" >> /home/$USER/.ssh/config
-   echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> /home/$USER/.ssh/config
-   sudo chmod 600 /home/$USER/.ssh/config
+   mkdir -p ${HOME}/.ssh
+   echo "HostKeyAlgorithms +ssh-rsa" >> ${HOME}/.ssh/config
+   echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> ${HOME}/.ssh/config
+   sudo chmod 600 ${HOME}/.ssh/config
    {{< /tab >}}
 
    {{< tab header="RHEL" lang="bash" >}}
+   sudo useradd -G kvm,wheel image-builder
+   sudo su - image-builder
    sudo dnf update -y
    sudo dnf install jq make qemu-kvm libvirt virtinst cpu-checker libguestfs-tools libosinfo unzip wget -y
    sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
-   sudo usermod -a -G kvm $USER
-   sudo chmod 666 /dev/kvm
-   sudo chown root:kvm /dev/kvm
-   mkdir -p /home/$USER/.ssh
-   echo "HostKeyAlgorithms +ssh-rsa" >> /home/$USER/.ssh/config
-   echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> /home/$USER/.ssh/config
-   sudo chmod 600 /home/$USER/.ssh/config
+   mkdir -p ${HOME}/.ssh
+   echo "HostKeyAlgorithms +ssh-rsa" >> ${HOME}/.ssh/config
+   echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> ${HOME}/.ssh/config
+   sudo chmod 600 ${HOME}/.ssh/config
    {{< /tab >}}
 
-   {{< tab header="Amazon Linux" lang="bash" >}}
+   {{< tab header="Amazon Linux 2" lang="bash" >}}
+   sudo useradd -G kvm,wheel image-builder
+   sudo su - image-builder
    sudo yum update -y
    sudo yum install jq make qemu-kvm libvirt libvirt-clients libguestfs-tools unzip wget -y
    sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
-   sudo usermod -a -G kvm $USER
-   sudo chmod 666 /dev/kvm
-   sudo chown root:kvm /dev/kvm
-   mkdir -p /home/$USER/.ssh
-   echo "HostKeyAlgorithms +ssh-rsa" >> /home/$USER/.ssh/config
-   echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> /home/$USER/.ssh/config
-   sudo chmod 600 /home/$USER/.ssh/config
+   mkdir -p ${HOME}/.ssh
+   echo "HostKeyAlgorithms +ssh-rsa" >> ${HOME}/.ssh/config
+   echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> ${HOME}/.ssh/config
+   sudo chmod 600 ${HOME}/.ssh/config
    {{< /tab >}}
 
    {{< /tabpane >}}
@@ -771,48 +741,44 @@ These steps use `image-builder` to create a RHEL-based image for CloudStack. Bef
 
 These steps use `image-builder` to create an Ubuntu-based Amazon Machine Image (AMI) that is backed by EBS volumes for Snow. Before proceeding, ensure that the above system-level, network-level and AMI-specific [prerequisites]({{< relref "#prerequisites">}}) have been met
 
-1. Create a Linux user for running image-builder.
-   ```bash
-   sudo adduser image-builder
-   ```
-   Follow the prompt to provide a password for the image-builder user.
-1. Add the `image-builder` user to the `sudo` group and switch user to `image-builder`, providing in the password from previous step when prompted.
-   ```bash
-   sudo usermod -aG sudo image-builder
-   su image-builder
-   cd /home/$USER
-   ```
+1. Create a Linux user for running image-builder, and provide Secondary Groups for sudo and kvm permissions.
 1. Install packages and prepare environment:
    {{< tabpane >}}
 
    {{< tab header="Ubuntu" lang="bash" >}}
+   sudo useradd -G sudo image-builder
+   sudo su - image-builder
    sudo apt update -y
    sudo apt install jq unzip make -y
    sudo snap install yq
-   mkdir -p /home/$USER/.ssh
-   echo "HostKeyAlgorithms +ssh-rsa" >> /home/$USER/.ssh/config
-   echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> /home/$USER/.ssh/config
-   sudo chmod 600 /home/$USER/.ssh/config
+   mkdir -p ${HOME}/.ssh
+   echo "HostKeyAlgorithms +ssh-rsa" >> ${HOME}/.ssh/config
+   echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> ${HOME}/.ssh/config
+   sudo chmod 600 ${HOME}/.ssh/config
    {{< /tab >}}
 
    {{< tab header="RHEL" lang="bash" >}}
+   sudo useradd -G wheel image-builder
+   sudo su - image-builder
    sudo dnf update -y
    sudo dnf install jq unzip make wget -y
    sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
-   mkdir -p /home/$USER/.ssh
-   echo "HostKeyAlgorithms +ssh-rsa" >> /home/$USER/.ssh/config
-   echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> /home/$USER/.ssh/config
-   sudo chmod 600 /home/$USER/.ssh/config
+   mkdir -p ${HOME}/.ssh
+   echo "HostKeyAlgorithms +ssh-rsa" >> ${HOME}/.ssh/config
+   echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> ${HOME}/.ssh/config
+   sudo chmod 600 ${HOME}/.ssh/config
    {{< /tab >}}
 
    {{< tab header="Amazon Linux 2" lang="bash" >}}
+   sudo useradd -G wheel image-builder
+   sudo su - image-builder
    sudo yum update -y
    sudo yum install jq unzip make wget -y
    sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
-   mkdir -p /home/$USER/.ssh
-   echo "HostKeyAlgorithms +ssh-rsa" >> /home/$USER/.ssh/config
-   echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> /home/$USER/.ssh/config
-   sudo chmod 600 /home/$USER/.ssh/config
+   mkdir -p ${HOME}/.ssh
+   echo "HostKeyAlgorithms +ssh-rsa" >> ${HOME}/.ssh/config
+   echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> ${HOME}/.ssh/config
+   sudo chmod 600 ${HOME}/.ssh/config
    {{< /tab >}}
 
    {{< /tabpane >}}
@@ -843,7 +809,7 @@ These steps use `image-builder` to create an Ubuntu-based Amazon Machine Image (
    IMAGEBUILDER_TARBALL_URI=$(curl -s $BUNDLE_MANIFEST_URL | yq ".spec.versionsBundles[0].eksD.imagebuilder.uri")
    curl -s $IMAGEBUILDER_TARBALL_URI | tar xz ./image-builder
    sudo install -m 0755 ./image-builder /usr/local/bin/image-builder
-   cd /home/$USER
+   cd ${HOME}
    ```
 1. Create an AMI configuration file (for example, `ami.json`) that contains various AMI parameters. For example:
 
@@ -887,7 +853,7 @@ These steps use `image-builder` to create an Ubuntu-based Amazon Machine Image (
    Space-delimited string of the custom roles to run. This field is mutually exclusive with `custom_role_name_list` and is provided for compatibility with Ansible's input format.
 
    ##### **manifest_output**
-   The absolute path to write the build artifacts manifest to. If you wish to export the AMI using this manifest, ensure that you provide a path that is not inside the `/home/$USER/eks-anywhere-build-tooling` path since that will be cleaned up when the build finishes. (default: `/home/image-builder/manifest.json`).
+   The absolute path to write the build artifacts manifest to. If you wish to export the AMI using this manifest, ensure that you provide a path that is not inside the `${HOME}/eks-anywhere-build-tooling` path since that will be cleaned up when the build finishes. (default: `/home/image-builder/manifest.json`).
 
    ##### **root_device_name**
    The device name used by EC2 for the root EBS volume attached to the instance. (default: `/dev/sda1`).
@@ -930,48 +896,44 @@ These steps use `image-builder` to create a Ubuntu-based image for Nutanix AHV a
 
 1. Download an [Ubuntu cloud image](https://cloud-images.ubuntu.com/releases) or [RHEL cloud image](https://access.redhat.com/downloads/content/rhel) pertaining to your desired OS and OS version and upload it to the AOS Image Service using Prism. You will need to specify the image's name in AOS as the `source_image_name` in the `nutanix.json` config file specified below. You can also skip this step and directly use the `image_url` field in the config file to provide the URL of a publicly accessible image as source.
 
-1. Create a Linux user for running image-builder.
-   ```bash
-   sudo adduser image-builder
-   ```
-   Follow the prompt to provide a password for the image-builder user.
-1. Add image-builder user to the sudo group and change user as image-builder providing in the password from previous step when prompted.
-   ```bash
-   sudo usermod -aG sudo image-builder
-   su image-builder
-   cd /home/$USER
-   ```
+1. Create a Linux user for running image-builder, and provide Secondary Groups for sudo and kvm permissions.
 1. Install packages and prepare environment:
    {{< tabpane >}}
 
    {{< tab header="Ubuntu" lang="bash" >}}
+   sudo useradd -G sudo image-builder
+   sudo su - image-builder
    sudo apt update -y
    sudo apt install jq unzip make -y
    sudo snap install yq
-   mkdir -p /home/$USER/.ssh
-   echo "HostKeyAlgorithms +ssh-rsa" >> /home/$USER/.ssh/config
-   echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> /home/$USER/.ssh/config
-   sudo chmod 600 /home/$USER/.ssh/config
+   mkdir -p ${HOME}/.ssh
+   echo "HostKeyAlgorithms +ssh-rsa" >> ${HOME}/.ssh/config
+   echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> ${HOME}/.ssh/config
+   sudo chmod 600 ${HOME}/.ssh/config
    {{< /tab >}}
 
    {{< tab header="RHEL" lang="bash" >}}
+   sudo useradd -G wheel image-builder
+   sudo su - image-builder
    sudo dnf update -y
    sudo dnf install jq unzip make wget -y
    sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
-   mkdir -p /home/$USER/.ssh
-   echo "HostKeyAlgorithms +ssh-rsa" >> /home/$USER/.ssh/config
-   echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> /home/$USER/.ssh/config
-   sudo chmod 600 /home/$USER/.ssh/config
+   mkdir -p ${HOME}/.ssh
+   echo "HostKeyAlgorithms +ssh-rsa" >> ${HOME}/.ssh/config
+   echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> ${HOME}/.ssh/config
+   sudo chmod 600 ${HOME}/.ssh/config
    {{< /tab >}}
 
    {{< tab header="Amazon Linux 2" lang="bash" >}}
+   sudo useradd -G wheel image-builder
+   sudo su - image-builder
    sudo yum update -y
    sudo yum install jq unzip make wget -y
    sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
-   mkdir -p /home/$USER/.ssh
-   echo "HostKeyAlgorithms +ssh-rsa" >> /home/$USER/.ssh/config
-   echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> /home/$USER/.ssh/config
-   sudo chmod 600 /home/$USER/.ssh/config
+   mkdir -p ${HOME}/.ssh
+   echo "HostKeyAlgorithms +ssh-rsa" >> ${HOME}/.ssh/config
+   echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> ${HOME}/.ssh/config
+   sudo chmod 600 ${HOME}/.ssh/config
    {{< /tab >}}
 
    {{< /tabpane >}}
