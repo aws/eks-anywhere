@@ -8,6 +8,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/task"
 	"github.com/aws/eks-anywhere/pkg/utils/ptr"
+	"github.com/aws/eks-anywhere/pkg/workflows"
 )
 
 type upgradeCuratedPackagesTask struct{}
@@ -25,6 +26,7 @@ func (s *upgradeCuratedPackagesTask) Run(ctx context.Context, commandContext *ta
 	err = client.Get(ctx, "eks-anywhere-packages", constants.EksaPackagesName, packagesManager)
 	if err != nil {
 		commandContext.SetError(err)
+		return &workflows.CollectMgmtClusterDiagnosticsTask{}
 	}
 
 	replicas := packagesManager.Spec.Replicas
@@ -32,6 +34,7 @@ func (s *upgradeCuratedPackagesTask) Run(ctx context.Context, commandContext *ta
 	err = client.Update(ctx, packagesManager)
 	if err != nil {
 		commandContext.SetError(err)
+		return &workflows.CollectMgmtClusterDiagnosticsTask{}
 	}
 
 	packagesManager.Spec.Replicas = replicas
@@ -42,6 +45,7 @@ func (s *upgradeCuratedPackagesTask) Run(ctx context.Context, commandContext *ta
 	err = client.Update(ctx, packagesManager)
 	if err != nil {
 		commandContext.SetError(err)
+		return &workflows.CollectMgmtClusterDiagnosticsTask{}
 	}
 
 	return nil

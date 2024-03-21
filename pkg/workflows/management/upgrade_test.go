@@ -741,7 +741,82 @@ func TestUpgradeManagementRunResumeClusterResourcesReconcileFailed(t *testing.T)
 	}
 }
 
-func TestUpgradeManagementRunSuccessUpgradeCuratedPackagesSuccess(t *testing.T) {
+func TestUpgradeManagementRunUpgradePackagesFailGetDeployment(t *testing.T) {
+	os.Unsetenv(features.CheckpointEnabledEnvVar)
+	features.ClearCache()
+	tt := newUpgradeManagementClusterTest(t)
+	tt.newClusterSpec.Cluster.Spec.RegistryMirrorConfiguration = &v1alpha1.RegistryMirrorConfiguration{}
+	tt.client = test.NewFakeKubeClient(tt.currentClusterSpec.Cluster, tt.currentClusterSpec.EKSARelease, tt.currentClusterSpec.Bundles)
+	tt.expectSetup()
+	tt.expectPreflightValidationsToPass()
+	tt.expectUpdateSecrets(nil)
+	tt.expectEnsureManagementEtcdCAPIComponentsExist(nil)
+	tt.expectUpgradeCoreComponents()
+	tt.expectPauseGitOpsReconcile(nil)
+	tt.expectBackupManagementFromCluster(nil)
+	tt.expectPauseCAPIWorkloadClusters(nil)
+	tt.expectDatacenterConfig()
+	tt.expectMachineConfigs()
+	tt.expectInstallEksdManifest(nil)
+	tt.expectApplyBundles(nil)
+	tt.expectApplyReleases(nil)
+	tt.expectUpgradeManagementCluster()
+	tt.expectResumeCAPIWorkloadClustersAPI(nil)
+	tt.expectUpdateGitEksaSpec(nil)
+	tt.expectForceReconcileGitRepo(nil)
+	tt.expectResumeGitOpsReconcile(nil)
+	tt.expectWriteManagementClusterConfig(nil)
+	tt.expectPackagesUpgrade(nil)
+	tt.expectSaveLogs()
+	tt.expectWriteCheckpointFile()
+
+	err := tt.run()
+	if err == nil {
+		t.Fatal("UpgradeManagement.Run() err = nil, want err not nil")
+	}
+}
+
+func TestUpgradeManagementRunUpgradePackagesFailBuildClient(t *testing.T) {
+	os.Unsetenv(features.CheckpointEnabledEnvVar)
+	features.ClearCache()
+	tt := newUpgradeManagementClusterTest(t)
+	tt.newClusterSpec.Cluster.Spec.RegistryMirrorConfiguration = &v1alpha1.RegistryMirrorConfiguration{}
+	packagesManager := &appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "eks-anywhere-packages",
+			Namespace: constants.EksaPackagesName,
+		},
+	}
+	tt.client = test.NewFakeKubeClient(tt.currentClusterSpec.Cluster, tt.currentClusterSpec.EKSARelease, tt.currentClusterSpec.Bundles, packagesManager)
+	tt.expectSetup()
+	tt.expectPreflightValidationsToPass()
+	tt.expectUpdateSecrets(nil)
+	tt.expectEnsureManagementEtcdCAPIComponentsExist(nil)
+	tt.expectUpgradeCoreComponents()
+	tt.expectPauseGitOpsReconcile(nil)
+	tt.expectBackupManagementFromCluster(nil)
+	tt.expectPauseCAPIWorkloadClusters(nil)
+	tt.expectDatacenterConfig()
+	tt.expectMachineConfigs()
+	tt.expectInstallEksdManifest(nil)
+	tt.expectApplyBundles(nil)
+	tt.expectApplyReleases(nil)
+	tt.expectUpgradeManagementCluster()
+	tt.expectResumeCAPIWorkloadClustersAPI(nil)
+	tt.expectUpdateGitEksaSpec(nil)
+	tt.expectForceReconcileGitRepo(nil)
+	tt.expectResumeGitOpsReconcile(nil)
+	tt.expectWriteManagementClusterConfig(nil)
+	tt.expectPackagesUpgrade(fmt.Errorf(""))
+	tt.expectWriteCheckpointFile()
+
+	err := tt.run()
+	if err == nil {
+		t.Fatal("UpgradeManagement.Run() err = nil, want err not nil")
+	}
+}
+
+func TestUpgradeManagementRunUpgradeCuratedPackagesSuccess(t *testing.T) {
 	os.Unsetenv(features.CheckpointEnabledEnvVar)
 	features.ClearCache()
 	tt := newUpgradeManagementClusterTest(t)
