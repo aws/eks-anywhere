@@ -28,7 +28,7 @@ func (s *postClusterUpgrade) Run(ctx context.Context, commandContext *task.Comma
 		logger.Info(fmt.Sprintf("management cluster CAPI backup file not found: %v", err))
 	}
 
-	return nil
+	return &upgradeCuratedPackagesTask{}
 }
 
 func (s *postClusterUpgrade) Name() string {

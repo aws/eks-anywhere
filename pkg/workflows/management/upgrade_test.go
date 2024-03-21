@@ -48,6 +48,7 @@ type upgradeManagementTestSetup struct {
 	managementCluster           *types.Cluster
 	managementStatePath         string
 	management                  *management.Upgrade
+	packagesInstaller           *mocks.MockPackageInstaller
 }
 
 func newUpgradeManagementTest(t *testing.T) *upgradeManagementTestSetup {
@@ -65,6 +66,7 @@ func newUpgradeManagementTest(t *testing.T) *upgradeManagementTestSetup {
 	capiUpgrader := mocks.NewMockCAPIManager(mockCtrl)
 	machineConfigs := []providers.MachineConfig{&v1alpha1.VSphereMachineConfig{}}
 	clusterUpgrader := mocks.NewMockClusterUpgrader(mockCtrl)
+	packageInstaller := mocks.NewMockPackageInstaller(mockCtrl)
 	management := management.NewUpgrade(
 		clientFactory,
 		provider,
@@ -75,6 +77,7 @@ func newUpgradeManagementTest(t *testing.T) *upgradeManagementTestSetup {
 		eksdUpgrader,
 		eksdInstaller,
 		clusterUpgrader,
+		packageInstaller,
 	)
 
 	for _, e := range featureEnvVars {
@@ -111,6 +114,7 @@ func newUpgradeManagementTest(t *testing.T) *upgradeManagementTestSetup {
 		datacenterConfig:            datacenterConfig,
 		machineConfigs:              machineConfigs,
 		management:                  management,
+		packagesInstaller:           packageInstaller,
 		ctx:                         context.Background(),
 		currentManagementComponents: cluster.ManagementComponentsFromBundles(currentClusterSpec.Bundles),
 		newManagementComponents:     cluster.ManagementComponentsFromBundles(newClusterSpec.Bundles),
@@ -306,6 +310,11 @@ func (c *upgradeManagementTestSetup) run() error {
 
 func (c *upgradeManagementTestSetup) expectPreflightValidationsToPass() {
 	c.validator.EXPECT().PreflightValidations(c.ctx).Return(nil)
+}
+
+func (c *upgradeManagementTestSetup) expectPackagesUpgrade(err1, err2 error) {
+	c.packagesInstaller.EXPECT().InstallCuratedPackages(c.ctx).Return(err1)
+	c.clientFactory.EXPECT().BuildClientFromKubeconfig(c.managementCluster.KubeconfigFile).Return(c.client, err2)
 }
 
 func TestUpgradeManagementRunUpdateSetupFailed(t *testing.T) {

@@ -1,0 +1,59 @@
+package management
+
+import (
+	"context"
+
+	appsv1 "k8s.io/api/apps/v1"
+
+	"github.com/aws/eks-anywhere/pkg/task"
+	"github.com/aws/eks-anywhere/pkg/utils/ptr"
+)
+
+type upgradeCuratedPackagesTask struct{}
+
+func (s *upgradeCuratedPackagesTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
+	commandContext.PackageInstaller.InstallCuratedPackages(ctx)
+
+	client, err := commandContext.ClientFactory.BuildClientFromKubeconfig(commandContext.ManagementCluster.KubeconfigFile)
+	if err != nil {
+		commandContext.SetError(err)
+	}
+
+	packagesManager := &appsv1.Deployment{}
+
+	err = client.Get(ctx, "eks-anywhere-packages", "eksa-packages", packagesManager)
+	if err != nil {
+		commandContext.SetError(err)
+	}
+
+	replicas := packagesManager.Spec.Replicas
+	packagesManager.Spec.Replicas = ptr.Int32(0)
+	err = client.Update(ctx, packagesManager)
+	if err != nil {
+		commandContext.SetError(err)
+	}
+
+	packagesManager.Spec.Replicas = replicas
+
+	packagesManager.SetUID("")
+	packagesManager.SetResourceVersion("")
+
+	err = client.Update(ctx, packagesManager)
+	if err != nil {
+		commandContext.SetError(err)
+	}
+
+	return nil
+}
+
+func (s *upgradeCuratedPackagesTask) Name() string {
+	return "install-curated-packages"
+}
+
+func (s *upgradeCuratedPackagesTask) Restore(ctx context.Context, commandContext *task.CommandContext, completedTask *task.CompletedTask) (task.Task, error) {
+	return nil, nil
+}
+
+func (s *upgradeCuratedPackagesTask) Checkpoint() *task.CompletedTask {
+	return nil
+}
