@@ -1317,9 +1317,10 @@ func (f *Factory) WithPackageInstaller(spec *cluster.Spec, packagesLocation, kub
 	return f
 }
 
+// WithPackageInstallerWithoutWait builds a package installer that doesn't wait for active bundles.
 func (f *Factory) WithPackageInstallerWithoutWait(spec *cluster.Spec, packagesLocation, kubeConfig string) *Factory {
 	f.WithKubectl().WithPackageControllerClientWithoutWait(spec, kubeConfig).WithPackageClient()
-	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+	f.buildSteps = append(f.buildSteps, func(_ context.Context) error {
 		if f.dependencies.PackageInstaller != nil {
 			return nil
 		}
@@ -1393,10 +1394,11 @@ func (f *Factory) WithPackageControllerClient(spec *cluster.Spec, kubeConfig str
 	return f
 }
 
+// WithPackageInstallerWithoutWait builds a package controller client that doesn't wait for active bundles.
 func (f *Factory) WithPackageControllerClientWithoutWait(spec *cluster.Spec, kubeConfig string) *Factory {
 	f.WithHelm(helm.WithInsecure()).WithKubectl()
 
-	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+	f.buildSteps = append(f.buildSteps, func(_ context.Context) error {
 		if f.dependencies.PackageControllerClient != nil || spec == nil {
 			return nil
 		}
