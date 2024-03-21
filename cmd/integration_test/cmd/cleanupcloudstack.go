@@ -37,12 +37,16 @@ func preRunCleanUpCloudstackSetup(cmd *cobra.Command, args []string) {
 	})
 }
 
-var requiredCloudstackCleanUpFlags = []string{clusterNameFlagName}
+var requiredCloudstackCleanUpFlags = []string{
+	clusterNameFlagName,
+	networkNameFlagName,
+}
 
 func init() {
 	cleanUpInstancesCmd.AddCommand(cleanUpCloudstackCmd)
-	cleanUpCloudstackCmd.Flags().StringP(clusterNameFlagName, "n", "", "Cluster name for associated vms")
-
+	cleanUpCloudstackCmd.Flags().StringP(clusterNameFlagName, "c", "", "Cluster name for associated vms")
+	cleanUpCloudstackCmd.Flags().StringP(networkNameFlagName, "n", "", "Comma seperated network names to be cleaned")
+	cleanUpCloudstackCmd.Flags().Bool(dryRunFlagName, false, "Dry run")
 	for _, flag := range requiredCloudstackCleanUpFlags {
 		if err := cleanUpCloudstackCmd.MarkFlagRequired(flag); err != nil {
 			log.Fatalf("Error marking flag %s as required: %v", flag, err)
@@ -52,7 +56,9 @@ func init() {
 
 func cleanUpCloudstackTestResources(ctx context.Context) error {
 	clusterName := viper.GetString(clusterNameFlagName)
-	err := cleanup.CleanUpCloudstackTestResources(ctx, clusterName, false)
+	networkNames := viper.GetString(networkNameFlagName)
+	dryRun := viper.GetBool(dryRunFlagName)
+	err := cleanup.CleanUpCloudstackTestResources(ctx, clusterName, networkNames, dryRun)
 	if err != nil {
 		return fmt.Errorf("running cleanup for cloudstack vms: %v", err)
 	}

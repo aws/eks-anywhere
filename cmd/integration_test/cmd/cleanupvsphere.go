@@ -15,6 +15,8 @@ import (
 
 const (
 	clusterNameFlagName = "cluster-name"
+	networkNameFlagName = "network-name"
+	dryRunFlagName      = "dry-run"
 )
 
 var cleanUpVsphereCmd = &cobra.Command{
