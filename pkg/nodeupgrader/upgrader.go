@@ -39,27 +39,30 @@ func PodName(nodeName string) string {
 
 // UpgradeFirstControlPlanePod returns an upgrader pod that should be deployed on the first control plane node.
 func UpgradeFirstControlPlanePod(nodeName, image, kubernetesVersion, etcdVersion string) *corev1.Pod {
-	p := upgraderPod(nodeName, image)
-	p.Spec.InitContainers = containersForUpgrade(image, nodeName, "kubeadm_in_first_cp", kubernetesVersion, etcdVersion)
+	p := upgraderPod(nodeName, image, true)
+	p.Spec.InitContainers = containersForUpgrade(true, image, nodeName, "kubeadm_in_first_cp", kubernetesVersion, etcdVersion)
 	return p
 }
 
 // UpgradeSecondaryControlPlanePod returns an upgrader pod that can be deployed on the remaining control plane nodes.
 func UpgradeSecondaryControlPlanePod(nodeName, image string) *corev1.Pod {
-	p := upgraderPod(nodeName, image)
-	p.Spec.InitContainers = containersForUpgrade(image, nodeName, "kubeadm_in_rest_cp")
+	p := upgraderPod(nodeName, image, true)
+	p.Spec.InitContainers = containersForUpgrade(true, image, nodeName, "kubeadm_in_rest_cp")
 	return p
 }
 
 // UpgradeWorkerPod returns an upgrader pod that can be deployed on worker nodes.
 func UpgradeWorkerPod(nodeName, image string) *corev1.Pod {
-	p := upgraderPod(nodeName, image)
-	p.Spec.InitContainers = containersForUpgrade(image, nodeName, "kubeadm_in_worker")
+	p := upgraderPod(nodeName, image, false)
+	p.Spec.InitContainers = containersForUpgrade(false, image, nodeName, "kubeadm_in_worker")
 	return p
 }
 
-func upgraderPod(nodeName, image string) *corev1.Pod {
-	dirOrCreate := corev1.HostPathDirectoryOrCreate
+func upgraderPod(nodeName, image string, isCP bool) *corev1.Pod {
+	volumes := []corev1.Volume{hostComponentsVolume()}
+	if isCP {
+		volumes = append(volumes, kubeVipVolume())
+	}
 	return &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      PodName(nodeName),
@@ -71,28 +74,18 @@ func upgraderPod(nodeName, image string) *corev1.Pod {
 		Spec: corev1.PodSpec{
 			NodeName: nodeName,
 			HostPID:  true,
-			Volumes: []corev1.Volume{
-				{
-					Name: "host-components",
-					VolumeSource: corev1.VolumeSource{
-						HostPath: &corev1.HostPathVolumeSource{
-							Path: "/foo",
-							Type: &dirOrCreate,
-						},
-					},
-				},
-			},
+			Volumes:  volumes,
 			Containers: []corev1.Container{
 				nsenterContainer(image, PostUpgradeContainerName, upgradeScript, "print_status_and_cleanup"),
 			},
-			RestartPolicy: corev1.RestartPolicyNever,
+			RestartPolicy: corev1.RestartPolicyOnFailure,
 		},
 	}
 }
 
-func containersForUpgrade(image, nodeName string, kubeadmUpgradeCommand ...string) []corev1.Container {
+func containersForUpgrade(isCP bool, image, nodeName string, kubeadmUpgradeCommand ...string) []corev1.Container {
 	return []corev1.Container{
-		copierContainer(image),
+		copierContainer(image, isCP),
 		nsenterContainer(image, ContainerdUpgraderContainerName, upgradeScript, "upgrade_containerd"),
 		nsenterContainer(image, CNIPluginsUpgraderContainerName, upgradeScript, "cni_plugins"),
 		nsenterContainer(image, KubeadmUpgraderContainerName, append([]string{upgradeScript}, kubeadmUpgradeCommand...)...),
@@ -100,18 +93,27 @@ func containersForUpgrade(image, nodeName string, kubeadmUpgradeCommand ...strin
 	}
 }
 
-func copierContainer(image string) corev1.Container {
-	return corev1.Container{
-		Name:    CopierContainerName,
-		Image:   image,
-		Command: []string{"cp"},
-		Args:    []string{"-r", "/eksa-upgrades", "/usr/host"},
-		VolumeMounts: []corev1.VolumeMount{
-			{
-				Name:      "host-components",
-				MountPath: "/usr/host",
-			},
+func copierContainer(image string, isCP bool) corev1.Container {
+	volumeMount := []corev1.VolumeMount{
+		{
+			Name:      "host-components",
+			MountPath: "/usr/host",
 		},
+	}
+	if isCP {
+		kubeVipVolMount := corev1.VolumeMount{
+			Name:      "kube-vip",
+			MountPath: fmt.Sprintf("/eksa-upgrades/%s", constants.KubeVipManifestName),
+			SubPath:   constants.KubeVipManifestName,
+		}
+		volumeMount = append(volumeMount, kubeVipVolMount)
+	}
+	return corev1.Container{
+		Name:         CopierContainerName,
+		Image:        image,
+		Command:      []string{"cp"},
+		Args:         []string{"-r", "/eksa-upgrades", "/usr/host"},
+		VolumeMounts: volumeMount,
 	}
 }
 
@@ -132,6 +134,38 @@ func nsenterContainer(image, name string, extraArgs ...string) corev1.Container 
 		Args:    append(args, extraArgs...),
 		SecurityContext: &corev1.SecurityContext{
 			Privileged: ptr.Bool(true),
+		},
+	}
+}
+
+func hostComponentsVolume() corev1.Volume {
+	dirOrCreate := corev1.HostPathDirectoryOrCreate
+	return corev1.Volume{
+		Name: "host-components",
+		VolumeSource: corev1.VolumeSource{
+			HostPath: &corev1.HostPathVolumeSource{
+				Path: "/foo",
+				Type: &dirOrCreate,
+			},
+		},
+	}
+}
+
+func kubeVipVolume() corev1.Volume {
+	return corev1.Volume{
+		Name: "kube-vip",
+		VolumeSource: corev1.VolumeSource{
+			ConfigMap: &corev1.ConfigMapVolumeSource{
+				LocalObjectReference: corev1.LocalObjectReference{
+					Name: constants.KubeVipConfigMapName,
+				},
+				Items: []corev1.KeyToPath{
+					{
+						Key:  constants.KubeVipManifestName,
+						Path: constants.KubeVipManifestName,
+					},
+				},
+			},
 		},
 	}
 }

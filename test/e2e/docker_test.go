@@ -1201,8 +1201,8 @@ func TestDockerCiliumSkipUpgrade_CLICreate(t *testing.T) {
 	test.DeleteCluster()
 }
 
-func TestDockerCiliumSkipUpgrade_CLIUpgrade(t *testing.T) {
-	previousRelease := prevLatestMinorRelease(t)
+func TestDockerUpgradeFromLatestMinorReleaseCiliumSkipUpgrade_CLIUpgrade(t *testing.T) {
+	release := latestMinorRelease(t)
 
 	provider := framework.NewDocker(t)
 	test := framework.NewClusterE2ETest(t, provider,
@@ -1215,9 +1215,17 @@ func TestDockerCiliumSkipUpgrade_CLIUpgrade(t *testing.T) {
 
 	test.ValidateCiliumCLIAvailable()
 
-	test.GenerateClusterConfig(framework.ExecuteWithEksaRelease(previousRelease))
-	test.CreateCluster(framework.ExecuteWithEksaRelease(previousRelease))
+	test.GenerateClusterConfig(framework.ExecuteWithEksaRelease(release))
+	test.CreateCluster(framework.ExecuteWithEksaRelease(release))
 	test.ReplaceCiliumWithOSSCilium()
+
+	t.Log("Waiting for cilium replacement to complete")
+	// Wait two minutes before validating cluster state and attempting the upgrade
+	// After replacing cilium, the nodes can temporarily go into a not ready state
+	// and we want to give them time to recover before validating the cluster state
+	time.Sleep(5 * time.Minute)
+
+	test.ValidateClusterState()
 	test.UpgradeClusterWithNewConfig(
 		[]framework.ClusterE2ETestOpt{
 			framework.WithClusterUpgrade(api.WithCiliumSkipUpgrade()),
@@ -1358,14 +1366,8 @@ func TestDockerKubernetesRegionalCuratedPackages(t *testing.T) {
 
 func TestDockerKubernetesUpgradeManagementComponents(t *testing.T) {
 	release := latestMinorRelease(t)
-	test := framework.NewClusterE2ETest(t, framework.NewDocker(t))
-
-	test.GenerateClusterConfig()
-	// create cluster with old eksa
-	test.CreateCluster(framework.ExecuteWithEksaRelease(release))
-	// upgrade management-components with new eksa
-	test.RunEKSA([]string{"upgrade", "management-components", "-f", test.ClusterConfigLocation, "-v", "99"})
-	test.DeleteCluster()
+	provider := framework.NewDocker(t)
+	runUpgradeManagementComponentsFlow(t, release, provider, v1alpha1.Kube128, "")
 }
 
 // etcd scale tests

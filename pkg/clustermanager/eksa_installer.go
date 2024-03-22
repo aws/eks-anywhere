@@ -17,7 +17,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/yaml"
 
-	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/executables"
@@ -253,18 +252,6 @@ func setManagerEnvVars(d *appsv1.Deployment, spec *cluster.Spec) {
 
 func managerEnabledGates(spec *cluster.Spec) []string {
 	return nil
-}
-
-func fullLifeCycleControllerForProvider(cluster *anywherev1.Cluster) bool {
-	// TODO(g-gaston): inject a dependency where this check can be delegated
-	// We can use some kind of configurator registering that allow to decouple this generator
-	// from the logic that drives the gates.
-	return cluster.Spec.DatacenterRef.Kind == anywherev1.VSphereDatacenterKind ||
-		cluster.Spec.DatacenterRef.Kind == anywherev1.DockerDatacenterKind ||
-		cluster.Spec.DatacenterRef.Kind == anywherev1.SnowDatacenterKind ||
-		cluster.Spec.DatacenterRef.Kind == anywherev1.NutanixDatacenterKind ||
-		cluster.Spec.DatacenterRef.Kind == anywherev1.TinkerbellDatacenterKind ||
-		cluster.Spec.DatacenterRef.Kind == anywherev1.CloudStackDatacenterKind
 }
 
 func (g *EKSAComponentGenerator) parseEKSAComponentsSpec(managementComponents *cluster.ManagementComponents) (*eksaComponents, error) {

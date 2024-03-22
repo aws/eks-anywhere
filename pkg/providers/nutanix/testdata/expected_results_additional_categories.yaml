@@ -86,11 +86,9 @@ spec:
         imageRepository: public.ecr.aws/eks-distro/coredns
         imageTag: v1.8.0-eks-1-19-4
       etcd:
-        external:
-          endpoints: []
-          caFile: "/etc/kubernetes/pki/etcd/ca.crt"
-          certFile: "/etc/kubernetes/pki/apiserver-etcd-client.crt"
-          keyFile: "/etc/kubernetes/pki/apiserver-etcd-client.key"
+        local:
+          imageRepository: public.ecr.aws/eks-distro/etcd-io
+          imageTag: v3.4.14-eks-1-19-4
     files:
     - content: |
         apiVersion: v1

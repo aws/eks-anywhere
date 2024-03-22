@@ -81,10 +81,10 @@ Highlight any other changes that would be useful for the user to know.
 List all supported operating systems for each provider.
 -->
 
-|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow  |
-| :----------:        | :-----: | :--------: | :-----: | :--------: | :---: |
-| Ubuntu 20.04        | ✔       | ✔          | ✔       | —          | ✔     |
-| Ubuntu 22.04        | ✔       | ✔          | ✔       | —          | —     |
-| Bottlerocket 1.15.1 | ✔       | ✔          | —       | —          | —     |
-| RHEL 8.7            | ✔       | ✔          | ✔       | ✔          | —     |
-| RHEL 9.x            | —       | —          | ✔       | —          | —     |
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+|    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+| Bottlerocket 1.19.0 |    ✔    |     ✔      |    —    |     —      |  —   |
+|      RHEL 8.7       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+|      RHEL 9.x       |    —    |     —      |    ✔    |     —      |  —   |

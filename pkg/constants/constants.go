@@ -48,10 +48,17 @@ const (
 	EksaPackagesName       = "eksa-packages"
 	// UpgraderConfigMapName is the name of config map that stores the upgrader images.
 	UpgraderConfigMapName = "in-place-upgrade"
+	// KubeVipConfigMapName is the name of config map that stores the kube-vip config.
+	KubeVipConfigMapName = "kube-vip-in-place-upgrade"
+	// KubeVipManifestName is the name of kube-vip spec file.
+	KubeVipManifestName = "kube-vip.yaml"
 
 	CloudstackAnnotationSuffix = "cloudstack.anywhere.eks.amazonaws.com/v1alpha1"
 
 	FailureDomainLabelName = "cluster.x-k8s.io/failure-domain"
+
+	// ClusterctlMoveLabelName adds the clusterctl move label.
+	ClusterctlMoveLabelName = "clusterctl.cluster.x-k8s.io/move"
 
 	// CloudstackFailureDomainPlaceholder Provider specific keywork placeholder.
 	CloudstackFailureDomainPlaceholder = "ds.meta_data.failuredomain"
@@ -92,6 +99,10 @@ const (
 	DefaultNodeStartupTimeout = 10 * time.Minute
 	// DefaultTinkerbellNodeStartupTimeout is the default node start up timeout for Tinkerbell.
 	DefaultTinkerbellNodeStartupTimeout = 20 * time.Minute
+	// DefaultMaxUnhealthy is the default maxUnhealthy value for machine health checks.
+	DefaultMaxUnhealthy = "100%"
+	// DefaultWorkerMaxUnhealthy is the default maxUnhealthy value for worker node machine health checks.
+	DefaultWorkerMaxUnhealthy = "40%"
 )
 
 type Operation int

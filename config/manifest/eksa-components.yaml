@@ -3854,6 +3854,12 @@ spec:
                 type: object
               controlPlaneConfiguration:
                 properties:
+                  apiServerExtraArgs:
+                    additionalProperties:
+                      type: string
+                    description: APIServerExtraArgs defines the flags to configure
+                      for the API server.
+                    type: object
                   certSans:
                     description: CertSANs is a slice of domain names or IPs to be
                       added as Subject Name Alternatives of the Kube API Servers Certificate.
@@ -3887,6 +3893,42 @@ spec:
                       kind:
                         type: string
                       name:
+                        type: string
+                    type: object
+                  machineHealthCheck:
+                    description: MachineHealthCheck is a control-plane level override
+                      for the timeouts and maxUnhealthy specified in the top-level
+                      MHC configuration. If not configured, the defaults in the top-level
+                      MHC configuration are used.
+                    properties:
+                      maxUnhealthy:
+                        anyOf:
+                        - type: integer
+                        - type: string
+                        description: MaxUnhealthy is used to configure the maximum
+                          number of unhealthy machines in machine health checks. This
+                          setting applies to both control plane and worker machines.
+                          If the number of unhealthy machines exceeds the limit set
+                          by maxUnhealthy, further remediation will not be performed.
+                          If not configured, the default value is set to "100%" for
+                          controlplane machines and "40%" for worker machines.
+                        x-kubernetes-int-or-string: true
+                      nodeStartupTimeout:
+                        description: NodeStartupTimeout is used to configure the node
+                          startup timeout in machine health checks. It determines
+                          how long a MachineHealthCheck should wait for a Node to
+                          join the cluster, before considering a Machine unhealthy.
+                          If not configured, the default value is set to "10m0s" (10
+                          minutes) for all providers. For Tinkerbell provider the
+                          default is "20m0s".
+                        type: string
+                      unhealthyMachineTimeout:
+                        description: UnhealthyMachineTimeout is used to configure
+                          the unhealthy machine timeout in machine health checks.
+                          If any unhealthy conditions are met for the amount of time
+                          specified as the timeout, the machines are considered unhealthy.
+                          If not configured, the default value is set to "5m0s" (5
+                          minutes).
                         type: string
                     type: object
                   skipLoadBalancerDeployment:
@@ -4047,6 +4089,18 @@ spec:
                   to wait to remediate unhealthy machine or determine health of nodes'
                   machines.
                 properties:
+                  maxUnhealthy:
+                    anyOf:
+                    - type: integer
+                    - type: string
+                    description: MaxUnhealthy is used to configure the maximum number
+                      of unhealthy machines in machine health checks. This setting
+                      applies to both control plane and worker machines. If the number
+                      of unhealthy machines exceeds the limit set by maxUnhealthy,
+                      further remediation will not be performed. If not configured,
+                      the default value is set to "100%" for controlplane machines
+                      and "40%" for worker machines.
+                    x-kubernetes-int-or-string: true
                   nodeStartupTimeout:
                     description: NodeStartupTimeout is used to configure the node
                       startup timeout in machine health checks. It determines how
@@ -4237,6 +4291,43 @@ spec:
                         kind:
                           type: string
                         name:
+                          type: string
+                      type: object
+                    machineHealthCheck:
+                      description: MachineHealthCheck is a worker node level override
+                        for the timeouts and maxUnhealthy specified in the top-level
+                        MHC configuration. If not configured, the defaults in the
+                        top-level MHC configuration are used.
+                      properties:
+                        maxUnhealthy:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          description: MaxUnhealthy is used to configure the maximum
+                            number of unhealthy machines in machine health checks.
+                            This setting applies to both control plane and worker
+                            machines. If the number of unhealthy machines exceeds
+                            the limit set by maxUnhealthy, further remediation will
+                            not be performed. If not configured, the default value
+                            is set to "100%" for controlplane machines and "40%" for
+                            worker machines.
+                          x-kubernetes-int-or-string: true
+                        nodeStartupTimeout:
+                          description: NodeStartupTimeout is used to configure the
+                            node startup timeout in machine health checks. It determines
+                            how long a MachineHealthCheck should wait for a Node to
+                            join the cluster, before considering a Machine unhealthy.
+                            If not configured, the default value is set to "10m0s"
+                            (10 minutes) for all providers. For Tinkerbell provider
+                            the default is "20m0s".
+                          type: string
+                        unhealthyMachineTimeout:
+                          description: UnhealthyMachineTimeout is used to configure
+                            the unhealthy machine timeout in machine health checks.
+                            If any unhealthy conditions are met for the amount of
+                            time specified as the timeout, the machines are considered
+                            unhealthy. If not configured, the default value is set
+                            to "5m0s" (5 minutes).
                           type: string
                       type: object
                     name:

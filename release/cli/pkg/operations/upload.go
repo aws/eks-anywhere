@@ -32,7 +32,7 @@ import (
 	releasetypes "github.com/aws/eks-anywhere/release/cli/pkg/types"
 )
 
-func UploadArtifacts(ctx context.Context, r *releasetypes.ReleaseConfig, eksaArtifacts releasetypes.ArtifactsTable) error {
+func UploadArtifacts(ctx context.Context, r *releasetypes.ReleaseConfig, eksaArtifacts releasetypes.ArtifactsTable, isBundleRelease bool) error {
 	fmt.Println("\n==========================================================")
 	fmt.Println("                  Artifacts Upload")
 	fmt.Println("==========================================================")
@@ -46,14 +46,16 @@ func UploadArtifacts(ctx context.Context, r *releasetypes.ReleaseConfig, eksaArt
 	sourceEcrAuthConfig := r.SourceClients.ECR.AuthConfig
 	releaseEcrAuthConfig := r.ReleaseClients.ECRPublic.AuthConfig
 
-	projectsInBundle := []string{"eks-anywhere-packages"}
 	packagesArtifacts := map[string][]releasetypes.Artifact{}
-	for _, project := range projectsInBundle {
-		projectArtifacts, err := r.BundleArtifactsTable.Load(project)
-		if err != nil {
-			return fmt.Errorf("artifacts for project %s not found in bundle artifacts table", project)
+	if isBundleRelease {
+		projectsInBundle := []string{"eks-anywhere-packages"}
+		for _, project := range projectsInBundle {
+			projectArtifacts, err := r.BundleArtifactsTable.Load(project)
+			if err != nil {
+				return fmt.Errorf("artifacts for project %s not found in bundle artifacts table", project)
+			}
+			packagesArtifacts[project] = projectArtifacts
 		}
-		packagesArtifacts[project] = projectArtifacts
 	}
 
 	eksaArtifacts.Range(func(k, v interface{}) bool {

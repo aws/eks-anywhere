@@ -71,6 +71,10 @@ func (tb *TemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *cluster.Spe
 	}
 	var OSImageURL string
 
+	if tinkerbellIP := clusterSpec.Cluster.HasTinkerbellIPAnnotation(); tinkerbellIP != "" {
+		tb.tinkerbellIP = tinkerbellIP
+	}
+
 	if cpTemplateConfig == nil {
 		OSImageURL = clusterSpec.TinkerbellDatacenter.Spec.OSImageURL
 		if tb.controlPlaneMachineSpec.OSImageURL != "" {
@@ -122,6 +126,10 @@ func (tb *TemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, wo
 	workerSpecs := make([][]byte, 0, len(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations))
 	bundle := clusterSpec.RootVersionsBundle()
 	OSImageURL := clusterSpec.TinkerbellDatacenter.Spec.OSImageURL
+
+	if tinkerbellIP := clusterSpec.Cluster.HasTinkerbellIPAnnotation(); tinkerbellIP != "" {
+		tb.tinkerbellIP = tinkerbellIP
+	}
 
 	for _, workerNodeGroupConfiguration := range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
 		workerNodeMachineSpec := tb.WorkerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name]
@@ -391,13 +399,8 @@ func buildTemplateMapCP(
 
 	apiServerExtraArgs := clusterapi.OIDCToExtraArgs(clusterSpec.OIDCConfig).
 		Append(clusterapi.AwsIamAuthExtraArgs(clusterSpec.AWSIamConfig)).
-		Append(clusterapi.PodIAMAuthExtraArgs(clusterSpec.Cluster.Spec.PodIAMConfig))
-
-	// LoadBalancerClass is feature gated in K8S v1.21 and needs to be enabled manually
-	if clusterSpec.Cluster.Spec.KubernetesVersion == v1alpha1.Kube121 {
-		apiServerExtraArgs.Append(clusterapi.FeatureGatesExtraArgs("ServiceLoadBalancerClass=true"))
-	}
-
+		Append(clusterapi.APIServerExtraArgs(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.APIServerExtraArgs))
+	clusterapi.SetPodIAMAuthExtraArgs(clusterSpec.Cluster.Spec.PodIAMConfig, apiServerExtraArgs)
 	kubeletExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs().
 		Append(clusterapi.ResolvConfExtraArgs(clusterSpec.Cluster.Spec.ClusterNetwork.DNS.ResolvConf)).
 		Append(clusterapi.ControlPlaneNodeLabelsExtraArgs(clusterSpec.Cluster.Spec.ControlPlaneConfiguration))

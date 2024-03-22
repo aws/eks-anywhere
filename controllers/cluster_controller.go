@@ -8,7 +8,6 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
@@ -19,7 +18,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	c "github.com/aws/eks-anywhere/pkg/cluster"
@@ -109,63 +107,63 @@ func (r *ClusterReconciler) SetupWithManager(mgr ctrl.Manager, log logr.Logger) 
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&anywherev1.Cluster{}).
 		Watches(
-			&source.Kind{Type: &anywherev1.OIDCConfig{}},
+			&anywherev1.OIDCConfig{},
 			handler.EnqueueRequestsFromMapFunc(childObjectHandler),
 		).
 		Watches(
-			&source.Kind{Type: &anywherev1.AWSIamConfig{}},
+			&anywherev1.AWSIamConfig{},
 			handler.EnqueueRequestsFromMapFunc(childObjectHandler),
 		).
 		Watches(
-			&source.Kind{Type: &anywherev1.GitOpsConfig{}},
+			&anywherev1.GitOpsConfig{},
 			handler.EnqueueRequestsFromMapFunc(childObjectHandler),
 		).
 		Watches(
-			&source.Kind{Type: &anywherev1.FluxConfig{}},
+			&anywherev1.FluxConfig{},
 			handler.EnqueueRequestsFromMapFunc(childObjectHandler),
 		).
 		Watches(
-			&source.Kind{Type: &anywherev1.VSphereDatacenterConfig{}},
+			&anywherev1.VSphereDatacenterConfig{},
 			handler.EnqueueRequestsFromMapFunc(childObjectHandler),
 		).
 		Watches(
-			&source.Kind{Type: &anywherev1.VSphereMachineConfig{}},
+			&anywherev1.VSphereMachineConfig{},
 			handler.EnqueueRequestsFromMapFunc(childObjectHandler),
 		).
 		Watches(
-			&source.Kind{Type: &anywherev1.SnowDatacenterConfig{}},
+			&anywherev1.SnowDatacenterConfig{},
 			handler.EnqueueRequestsFromMapFunc(childObjectHandler),
 		).
 		Watches(
-			&source.Kind{Type: &anywherev1.SnowMachineConfig{}},
+			&anywherev1.SnowMachineConfig{},
 			handler.EnqueueRequestsFromMapFunc(childObjectHandler),
 		).
 		Watches(
-			&source.Kind{Type: &anywherev1.TinkerbellDatacenterConfig{}},
+			&anywherev1.TinkerbellDatacenterConfig{},
 			handler.EnqueueRequestsFromMapFunc(childObjectHandler),
 		).
 		Watches(
-			&source.Kind{Type: &anywherev1.TinkerbellMachineConfig{}},
+			&anywherev1.TinkerbellMachineConfig{},
 			handler.EnqueueRequestsFromMapFunc(childObjectHandler),
 		).
 		Watches(
-			&source.Kind{Type: &anywherev1.DockerDatacenterConfig{}},
+			&anywherev1.DockerDatacenterConfig{},
 			handler.EnqueueRequestsFromMapFunc(childObjectHandler),
 		).
 		Watches(
-			&source.Kind{Type: &anywherev1.CloudStackDatacenterConfig{}},
+			&anywherev1.CloudStackDatacenterConfig{},
 			handler.EnqueueRequestsFromMapFunc(childObjectHandler),
 		).
 		Watches(
-			&source.Kind{Type: &anywherev1.CloudStackMachineConfig{}},
+			&anywherev1.CloudStackMachineConfig{},
 			handler.EnqueueRequestsFromMapFunc(childObjectHandler),
 		).
 		Watches(
-			&source.Kind{Type: &anywherev1.NutanixDatacenterConfig{}},
+			&anywherev1.NutanixDatacenterConfig{},
 			handler.EnqueueRequestsFromMapFunc(childObjectHandler),
 		).
 		Watches(
-			&source.Kind{Type: &anywherev1.NutanixMachineConfig{}},
+			&anywherev1.NutanixMachineConfig{},
 			handler.EnqueueRequestsFromMapFunc(childObjectHandler),
 		).
 		Complete(r)
@@ -286,6 +284,19 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (re
 	// then return without any further processing.
 	if aggregatedGeneration == cluster.Status.ChildrenReconciledGeneration && cluster.Status.ReconciledGeneration == cluster.Generation {
 		log.Info("Generation and aggregated generation match reconciled generations for cluster and child objects, skipping reconciliation.")
+
+		// Failure messages are cleared in the reconciler loop after running validations. But sometimes,
+		// it seems that Cluster failure messages on the status are is not cleared for some reason
+		//  after successfully passing the validation. The theory is that if the inital patch operation
+		// is not successful, and the reconciliation is skipped going forward, it may never be cleared.
+		//
+		// When the controller reaches here, it denotes a completed reconcile. So, we can safely
+		// clear any failure messages or reasons that may be left over as there is no further processing
+		// for the controller to do.
+		if cluster.HasFailure() {
+			cluster.ClearFailure()
+		}
+
 		return ctrl.Result{}, nil
 	}
 
@@ -308,7 +319,6 @@ func (r *ClusterReconciler) reconcile(ctx context.Context, log logr.Logger, clus
 	}
 
 	reconcileResult, err = clusterProviderReconciler.Reconcile(ctx, log, cluster)
-
 	if err != nil {
 		return ctrl.Result{}, err
 	}
@@ -464,17 +474,11 @@ func (r *ClusterReconciler) updateStatus(ctx context.Context, log logr.Logger, c
 }
 
 func (r *ClusterReconciler) reconcileDelete(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) (ctrl.Result, error) {
-	if cluster.IsSelfManaged() {
+	if cluster.IsSelfManaged() && !cluster.IsManagedByCLI() {
 		return ctrl.Result{}, errors.New("deleting self-managed clusters is not supported")
 	}
 
-	if metav1.HasAnnotation(cluster.ObjectMeta, anywherev1.ManagedByCLIAnnotation) {
-		log.Info("Clusters is managed by CLI, removing finalizer")
-		controllerutil.RemoveFinalizer(cluster, ClusterFinalizerName)
-		return ctrl.Result{}, nil
-	}
-
-	if cluster.IsReconcilePaused() {
+	if cluster.IsReconcilePaused() && !cluster.CanDeleteWhenPaused() {
 		log.Info("Cluster reconciliation is paused, won't process cluster deletion")
 		return ctrl.Result{}, nil
 	}

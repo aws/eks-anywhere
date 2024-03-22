@@ -8,7 +8,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/pkg/errors"
 	"github.com/spf13/pflag"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
@@ -18,11 +21,13 @@ import (
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/files"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
-	"github.com/aws/eks-anywhere/pkg/logger"
+	"github.com/aws/eks-anywhere/pkg/manifests"
+	"github.com/aws/eks-anywhere/pkg/manifests/bundles"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
 	"github.com/aws/eks-anywhere/pkg/version"
+	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
 const defaultTinkerbellNodeStartupTimeout = 20 * time.Minute
@@ -33,8 +38,6 @@ type timeoutOptions struct {
 	cpWaitTimeout           string
 	externalEtcdWaitTimeout string
 	perMachineWaitTimeout   string
-	unhealthyMachineTimeout string
-	nodeStartupTimeout      string
 	noTimeouts              bool
 }
 
@@ -42,8 +45,6 @@ func applyTimeoutFlags(flagSet *pflag.FlagSet, t *timeoutOptions) {
 	flagSet.StringVar(&t.cpWaitTimeout, cpWaitTimeoutFlag, clustermanager.DefaultControlPlaneWait.String(), "Override the default control plane wait timeout")
 	flagSet.StringVar(&t.externalEtcdWaitTimeout, externalEtcdWaitTimeoutFlag, clustermanager.DefaultEtcdWait.String(), "Override the default external etcd wait timeout")
 	flagSet.StringVar(&t.perMachineWaitTimeout, perMachineWaitTimeoutFlag, clustermanager.DefaultMaxWaitPerMachine.String(), "Override the default machine wait timeout per machine")
-	flagSet.StringVar(&t.unhealthyMachineTimeout, unhealthyMachineTimeoutFlag, constants.DefaultUnhealthyMachineTimeout.String(), "(DEPRECATED) Override the default unhealthy machine timeout")
-	flagSet.StringVar(&t.nodeStartupTimeout, nodeStartupTimeoutFlag, constants.DefaultNodeStartupTimeout.String(), "(DEPRECATED) Override the default node startup timeout (Defaults to 20m for Tinkerbell clusters)")
 	flagSet.BoolVar(&t.noTimeouts, noTimeoutsFlag, false, "Disable timeout for all wait operations")
 }
 
@@ -65,28 +66,11 @@ func buildClusterManagerOpts(t timeoutOptions, datacenterKind string) (*dependen
 		return nil, fmt.Errorf(timeoutErrorTemplate, perMachineWaitTimeoutFlag, err)
 	}
 
-	unhealthyMachineTimeout, err := time.ParseDuration(t.unhealthyMachineTimeout)
-	if err != nil {
-		return nil, fmt.Errorf(timeoutErrorTemplate, unhealthyMachineTimeoutFlag, err)
-	}
-
-	if t.nodeStartupTimeout == clustermanager.DefaultNodeStartupTimeout.String() &&
-		datacenterKind == v1alpha1.TinkerbellDatacenterKind {
-		t.nodeStartupTimeout = defaultTinkerbellNodeStartupTimeout.String()
-	}
-
-	nodeStartupTimeout, err := time.ParseDuration(t.nodeStartupTimeout)
-	if err != nil {
-		return nil, fmt.Errorf(timeoutErrorTemplate, nodeStartupTimeoutFlag, err)
-	}
-
 	return &dependencies.ClusterManagerTimeoutOptions{
-		ControlPlaneWait:     cpWaitTimeout,
-		ExternalEtcdWait:     externalEtcdWaitTimeout,
-		MachineWait:          perMachineWaitTimeout,
-		UnhealthyMachineWait: unhealthyMachineTimeout,
-		NodeStartupWait:      nodeStartupTimeout,
-		NoTimeouts:           t.noTimeouts,
+		ControlPlaneWait: cpWaitTimeout,
+		ExternalEtcdWait: externalEtcdWaitTimeout,
+		MachineWait:      perMachineWaitTimeout,
+		NoTimeouts:       t.noTimeouts,
 	}, nil
 }
 
@@ -155,10 +139,120 @@ func newClusterSpec(options clusterOptions) (*cluster.Spec, error) {
 	return clusterSpec, nil
 }
 
-func markFlagHidden(flagSet *pflag.FlagSet, flagName string) {
-	if err := flagSet.MarkHidden(flagName); err != nil {
-		logger.V(5).Info("Warning: Failed to mark flag as hidden: " + flagName)
+func getBundles(cliVersion version.Info, bundlesManifestURL string) (*releasev1.Bundles, error) {
+	reader := files.NewReader(files.WithEKSAUserAgent("cli", cliVersion.GitVersion))
+	manifestReader := manifests.NewReader(reader)
+	if bundlesManifestURL == "" {
+		return manifestReader.ReadBundlesForVersion(cliVersion.GitVersion)
 	}
+
+	return bundles.Read(reader, bundlesManifestURL)
+}
+
+func getEksaRelease(cliVersion version.Info) (*releasev1.EksARelease, error) {
+	reader := files.NewReader(files.WithEKSAUserAgent("cli", cliVersion.GitVersion))
+	manifestReader := manifests.NewReader(reader)
+	release, err := manifestReader.ReadReleaseForVersion(cliVersion.GitVersion)
+	if err != nil {
+		return nil, err
+	}
+
+	return release, nil
+}
+
+func getConfig(clusterConfigPath string, cliVersion version.Info) (*cluster.Config, error) {
+	reader := files.NewReader(files.WithEKSAUserAgent("cli", cliVersion.GitVersion))
+	yaml, err := reader.ReadFile(clusterConfigPath)
+	if err != nil {
+		return nil, errors.Wrapf(err, "reading cluster config file")
+	}
+
+	config, err := cluster.ParseConfig(yaml)
+	if err != nil {
+		return nil, errors.Wrapf(err, "parsing cluster config yaml")
+	}
+
+	return config, nil
+}
+
+// newBasicSpec creates a new cluster.Spec with the given Config, Bundles, and EKSARelease.
+// This was created as a short term fix to management upgrades when the Cluster object is using an
+// unsupported version of Kubernetes.
+//
+// When building the full cluster.Spec definition, we fetch the eksdReleases for
+// the KubernetesVersions for all unique k8s versions specified in the Cluster for both CP and workers.
+// If the Cluster object is using an unsupported version of Kubernetes, an error thrown
+// because it does not exist in the Bundles file. This method allows to build a cluster.Spec without
+// encountering this problem when performing only a management component upgrade.
+func newBasicSpec(config *cluster.Config, bundles *releasev1.Bundles, eksaRelease *releasev1.EKSARelease) *cluster.Spec {
+	s := &cluster.Spec{}
+	s.Bundles = bundles
+	s.Config = config
+
+	s.EKSARelease = eksaRelease
+	return s
+}
+
+func readBasicClusterSpec(clusterConfigPath string, cliVersion version.Info, options clusterOptions) (*cluster.Spec, error) {
+	bundle, err := getBundles(cliVersion, options.bundlesOverride)
+	if err != nil {
+		return nil, err
+	}
+	bundle.Namespace = constants.EksaSystemNamespace
+
+	config, err := getConfig(clusterConfigPath, cliVersion)
+	if err != nil {
+		return nil, err
+	}
+
+	config.Cluster.Spec.BundlesRef = nil
+
+	configManager, err := cluster.NewDefaultConfigManager()
+	if err != nil {
+		return nil, err
+	}
+	if err = configManager.SetDefaults(config); err != nil {
+		return nil, err
+	}
+
+	release, err := getEksaRelease(cliVersion)
+	if err != nil {
+		return nil, err
+	}
+
+	releaseVersion := v1alpha1.EksaVersion(release.Version)
+	config.Cluster.Spec.EksaVersion = &releaseVersion
+	eksaRelease := &releasev1.EKSARelease{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       releasev1.EKSAReleaseKind,
+			APIVersion: releasev1.SchemeBuilder.GroupVersion.String(),
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      releasev1.GenerateEKSAReleaseName(release.Version),
+			Namespace: constants.EksaSystemNamespace,
+		},
+		Spec: releasev1.EKSAReleaseSpec{
+			ReleaseDate:       release.Date,
+			Version:           release.Version,
+			GitCommit:         release.GitCommit,
+			BundleManifestURL: release.BundleManifestUrl,
+			BundlesRef: releasev1.BundlesRef{
+				APIVersion: releasev1.GroupVersion.String(),
+				Name:       bundle.Name,
+				Namespace:  bundle.Namespace,
+			},
+		},
+	}
+
+	return newBasicSpec(config, bundle, eksaRelease), nil
+}
+
+func newBasicClusterSpec(options clusterOptions) (*cluster.Spec, error) {
+	clusterSpec, err := readBasicClusterSpec(options.fileName, version.Get(), options)
+	if err != nil {
+		return nil, fmt.Errorf("unable to get cluster config from file: %v", err)
+	}
+	return clusterSpec, nil
 }
 
 func buildCliConfig(clusterSpec *cluster.Spec) *config.CliConfig {
@@ -183,18 +277,20 @@ func buildCreateCliConfig(clusterOptions *createClusterOptions) (*config.CreateC
 		return createCliConfig, nil
 	}
 
-	unhealthyMachineTimeout, err := time.ParseDuration(clusterOptions.unhealthyMachineTimeout)
+	unhealthyMachineTimeout, err := time.ParseDuration(constants.DefaultUnhealthyMachineTimeout.String())
 	if err != nil {
 		return nil, err
 	}
 
-	nodeStartupTimeout, err := time.ParseDuration(clusterOptions.nodeStartupTimeout)
+	nodeStartupTimeout, err := time.ParseDuration(constants.DefaultNodeStartupTimeout.String())
 	if err != nil {
 		return nil, err
 	}
 
 	createCliConfig.NodeStartupTimeout = nodeStartupTimeout
 	createCliConfig.UnhealthyMachineTimeout = unhealthyMachineTimeout
+	createCliConfig.MaxUnhealthy = intstr.Parse(constants.DefaultMaxUnhealthy)
+	createCliConfig.WorkerMaxUnhealthy = intstr.Parse(constants.DefaultWorkerMaxUnhealthy)
 
 	return createCliConfig, nil
 }
@@ -209,18 +305,10 @@ func buildUpgradeCliConfig(clusterOptions *upgradeClusterOptions) (*config.Upgra
 		return &upgradeCliConfig, nil
 	}
 
-	unhealthyMachineTimeout, err := time.ParseDuration(clusterOptions.unhealthyMachineTimeout)
-	if err != nil {
-		return nil, err
-	}
-
-	nodeStartupTimeout, err := time.ParseDuration(clusterOptions.nodeStartupTimeout)
-	if err != nil {
-		return nil, err
-	}
-
-	upgradeCliConfig.NodeStartupTimeout = nodeStartupTimeout
-	upgradeCliConfig.UnhealthyMachineTimeout = unhealthyMachineTimeout
+	upgradeCliConfig.NodeStartupTimeout = constants.DefaultNodeStartupTimeout
+	upgradeCliConfig.UnhealthyMachineTimeout = constants.DefaultUnhealthyMachineTimeout
+	upgradeCliConfig.MaxUnhealthy = intstr.Parse(constants.DefaultMaxUnhealthy)
+	upgradeCliConfig.WorkerMaxUnhealthy = intstr.Parse(constants.DefaultWorkerMaxUnhealthy)
 
 	return &upgradeCliConfig, nil
 }

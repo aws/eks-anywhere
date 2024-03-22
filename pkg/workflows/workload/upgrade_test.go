@@ -9,9 +9,11 @@ import (
 	"time"
 
 	"github.com/golang/mock/gomock"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/features"
 	writermocks "github.com/aws/eks-anywhere/pkg/filewriter/mocks"
@@ -24,6 +26,8 @@ import (
 
 type upgradeTestSetup struct {
 	t                     *testing.T
+	client                kubernetes.Client
+	clientFactory         *mocks.MockClientFactory
 	clusterManager        *mocks.MockClusterManager
 	gitOpsManager         *mocks.MockGitOpsManager
 	provider              *providermocks.MockProvider
@@ -45,6 +49,7 @@ type upgradeTestSetup struct {
 func newUpgradeTest(t *testing.T) *upgradeTestSetup {
 	featureEnvVars := []string{}
 	mockCtrl := gomock.NewController(t)
+	clientFactory := mocks.NewMockClientFactory(mockCtrl)
 	clusterManager := mocks.NewMockClusterManager(mockCtrl)
 	gitOpsManager := mocks.NewMockGitOpsManager(mockCtrl)
 	provider := providermocks.NewMockProvider(mockCtrl)
@@ -60,6 +65,7 @@ func newUpgradeTest(t *testing.T) *upgradeTestSetup {
 	validator := mocks.NewMockValidator(mockCtrl)
 
 	workload := workload.NewUpgrade(
+		clientFactory,
 		provider,
 		clusterManager,
 		gitOpsManager,
@@ -73,8 +79,12 @@ func newUpgradeTest(t *testing.T) *upgradeTestSetup {
 		t.Setenv(e, "true")
 	}
 
+	client := test.NewFakeKubeClient()
+
 	return &upgradeTestSetup{
 		t:                t,
+		client:           client,
+		clientFactory:    clientFactory,
 		clusterManager:   clusterManager,
 		gitOpsManager:    gitOpsManager,
 		provider:         provider,
@@ -113,6 +123,10 @@ func (c *upgradeTestSetup) expectSetup() {
 
 func (c *upgradeTestSetup) expectUpgradeWorkloadCluster(err error) {
 	c.clusterUpgrader.EXPECT().Run(c.ctx, c.clusterSpec, *c.clusterSpec.ManagementCluster).Return(err)
+}
+
+func (c *upgradeTestSetup) expectBuildClientFromKubeconfig(err error) {
+	c.clientFactory.EXPECT().BuildClientFromKubeconfig(c.clusterSpec.ManagementCluster.KubeconfigFile).Return(c.client, err)
 }
 
 func (c *upgradeTestSetup) expectWriteWorkloadClusterConfig(err error) {
@@ -166,6 +180,7 @@ func TestUpgradeRunSuccess(t *testing.T) {
 	test.expectMachineConfigs()
 	test.expectBackupWorkloadFromCluster(nil)
 	test.expectUpgradeWorkloadCluster(nil)
+	test.expectBuildClientFromKubeconfig(nil)
 	test.expectWriteWorkloadClusterConfig(nil)
 
 	err := test.run()
@@ -187,6 +202,89 @@ func TestUpgradeRunUpgradeFail(t *testing.T) {
 	test.expectSaveLogsManagement()
 
 	err := test.run()
+	if err == nil {
+		t.Fatalf("Upgrade.Run() err = %v, want err = nil", err)
+	}
+}
+
+func TestUpgradeRunUpgradeBuildClientFromKubeConfigFail(t *testing.T) {
+	features.ClearCache()
+	os.Setenv(features.UseControllerForCli, "true")
+	test := newUpgradeTest(t)
+	test.expectSetup()
+	test.expectPreflightValidationsToPass()
+	test.expectDatacenterConfig()
+	test.expectMachineConfigs()
+	test.expectBackupWorkloadFromCluster(nil)
+	test.expectUpgradeWorkloadCluster(nil)
+	test.expectBuildClientFromKubeconfig(fmt.Errorf("error"))
+	test.expectSaveLogsManagement()
+
+	err := test.run()
+	if err == nil {
+		t.Fatalf("Upgrade.Run() err = %v, want err = nil", err)
+	}
+}
+
+func TestTinkerbellUpgradeRunUpgradeSuccess(t *testing.T) {
+	features.ClearCache()
+	os.Setenv(features.UseControllerForCli, "true")
+	test := newUpgradeTest(t)
+
+	datacenterConfig := &v1alpha1.TinkerbellDatacenterConfig{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "my-datacenter-config",
+			Namespace: "default",
+		},
+	}
+	test.datacenterConfig = datacenterConfig
+	test.clusterSpec.Cluster.Spec.DatacenterRef.Kind = v1alpha1.TinkerbellDatacenterKind
+	test.clusterSpec.TinkerbellDatacenter = datacenterConfig
+
+	test.machineConfigs = []providers.MachineConfig{&v1alpha1.TinkerbellMachineConfig{}}
+
+	test.expectSetup()
+	test.expectPreflightValidationsToPass()
+	test.expectDatacenterConfig()
+	test.expectMachineConfigs()
+	test.expectBackupWorkloadFromCluster(nil)
+	test.expectUpgradeWorkloadCluster(nil)
+	test.expectBuildClientFromKubeconfig(nil)
+	test.expectWriteWorkloadClusterConfig(nil)
+
+	err := test.run()
+	if err != nil {
+		t.Fatalf("Upgrade.Run() err = %v, want err = nil", err)
+	}
+}
+
+func TestTinkerbellUpgradeRunUpgradeClientApplyServerSideFail(t *testing.T) {
+	features.ClearCache()
+	os.Setenv(features.UseControllerForCli, "true")
+	tt := newUpgradeTest(t)
+	tt.client = test.NewFakeKubeClientAlwaysError()
+	datacenterConfig := &v1alpha1.TinkerbellDatacenterConfig{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "my-datacenter-config",
+			Namespace: "default",
+		},
+	}
+	tt.datacenterConfig = datacenterConfig
+	tt.clusterSpec.Cluster.Spec.DatacenterRef.Kind = v1alpha1.TinkerbellDatacenterKind
+	tt.clusterSpec.TinkerbellDatacenter = datacenterConfig
+
+	tt.machineConfigs = []providers.MachineConfig{&v1alpha1.TinkerbellMachineConfig{}}
+
+	tt.expectSetup()
+	tt.expectPreflightValidationsToPass()
+	tt.expectDatacenterConfig()
+	tt.expectMachineConfigs()
+	tt.expectBackupWorkloadFromCluster(nil)
+	tt.expectUpgradeWorkloadCluster(nil)
+	tt.expectBuildClientFromKubeconfig(nil)
+	tt.expectSaveLogsManagement()
+
+	err := tt.run()
 	if err == nil {
 		t.Fatalf("Upgrade.Run() err = %v, want err = nil", err)
 	}
@@ -249,6 +347,7 @@ func TestUpgradeRunWriteClusterConfigFail(t *testing.T) {
 	test.expectMachineConfigs()
 	test.expectBackupWorkloadFromCluster(nil)
 	test.expectUpgradeWorkloadCluster(nil)
+	test.expectBuildClientFromKubeconfig(nil)
 	test.expectWriteWorkloadClusterConfig(fmt.Errorf("boom"))
 	test.expectWrite()
 

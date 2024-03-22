@@ -13,7 +13,7 @@ import (
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/api/v1beta1"
+	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
@@ -79,59 +79,6 @@ func TestReconcilerReconcileSuccess(t *testing.T) {
 
 	tt.Expect(tt.cluster.Status.FailureMessage).To(BeNil())
 	tt.Expect(tt.cluster.Status.FailureReason).To(BeNil())
-}
-
-func TestReconcilerReconcileWorkerNodesSuccess(t *testing.T) {
-	tt := newReconcilerTest(t)
-	tt.cluster.Name = "my-management-cluster"
-	tt.cluster.SetSelfManaged()
-	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
-		c.Name = tt.cluster.Name
-	})
-	tt.eksaSupportObjs = append(tt.eksaSupportObjs, capiCluster)
-	tt.createAllObjs()
-
-	logger := test.NewNullLogger()
-
-	tt.govcClient.EXPECT().ValidateVCenterSetupMachineConfig(tt.ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
-	tt.govcClient.EXPECT().ValidateVCenterSetupMachineConfig(tt.ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
-	tt.govcClient.EXPECT().SearchTemplate(tt.ctx, tt.datacenterConfig.Spec.Datacenter, gomock.Any()).Return("test", nil)
-	tt.govcClient.EXPECT().GetTags(tt.ctx, tt.machineConfigControlPlane.Spec.Template).Return([]string{"os:ubuntu", fmt.Sprintf("eksdRelease:%s", tt.bundle.Spec.VersionsBundles[0].EksD.Name)}, nil)
-	tt.govcClient.EXPECT().ListTags(tt.ctx).Return([]executables.Tag{}, nil)
-
-	result, err := tt.reconciler().ReconcileWorkerNodes(tt.ctx, logger, tt.cluster)
-
-	tt.Expect(err).NotTo(HaveOccurred())
-	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
-	tt.Expect(tt.cluster.Status.FailureReason).To(BeZero())
-	tt.Expect(result).To(Equal(controller.Result{}))
-
-	tt.ShouldEventuallyExist(tt.ctx,
-		&bootstrapv1.KubeadmConfigTemplate{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "my-management-cluster-md-0-1",
-				Namespace: constants.EksaSystemNamespace,
-			},
-		},
-	)
-
-	tt.ShouldEventuallyExist(tt.ctx,
-		&vspherev1.VSphereMachineTemplate{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "my-management-cluster-md-0-1",
-				Namespace: constants.EksaSystemNamespace,
-			},
-		},
-	)
-
-	tt.ShouldEventuallyExist(tt.ctx,
-		&clusterv1.MachineDeployment{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "my-management-cluster-md-0",
-				Namespace: constants.EksaSystemNamespace,
-			},
-		},
-	)
 }
 
 func TestReconcilerFailToSetUpMachineConfigCP(t *testing.T) {

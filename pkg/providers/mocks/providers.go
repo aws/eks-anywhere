@@ -409,6 +409,20 @@ func (mr *MockProviderMockRecorder) SetupAndValidateUpgradeCluster(arg0, arg1, a
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetupAndValidateUpgradeCluster", reflect.TypeOf((*MockProvider)(nil).SetupAndValidateUpgradeCluster), arg0, arg1, arg2, arg3)
 }
 
+// SetupAndValidateUpgradeManagementComponents mocks base method.
+func (m *MockProvider) SetupAndValidateUpgradeManagementComponents(arg0 context.Context, arg1 *cluster.Spec) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetupAndValidateUpgradeManagementComponents", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SetupAndValidateUpgradeManagementComponents indicates an expected call of SetupAndValidateUpgradeManagementComponents.
+func (mr *MockProviderMockRecorder) SetupAndValidateUpgradeManagementComponents(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetupAndValidateUpgradeManagementComponents", reflect.TypeOf((*MockProvider)(nil).SetupAndValidateUpgradeManagementComponents), arg0, arg1)
+}
+
 // UpdateKubeConfig mocks base method.
 func (m *MockProvider) UpdateKubeConfig(arg0 *[]byte, arg1 string) error {
 	m.ctrl.T.Helper()

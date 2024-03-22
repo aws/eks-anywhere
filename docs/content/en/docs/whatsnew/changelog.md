@@ -9,6 +9,8 @@ description: >
 ---
 
 {{% alert title="Announcements" color="warning" %}}
+* EKS Anywhere release `v0.19.0` introduces support for creating Kubernetes version v1.29 clusters. A conformance test was [promoted](https://github.com/kubernetes/kubernetes/pull/120069) in Kubernetes v1.29 that verifies that `Service`s serving different L4 protocols with the same port number can co-exist in a Kubernetes cluster. This is not supported in Cilium, the CNI deployed on EKS Anywhere clusters, because Cilium currently does not differentiate between TCP and UDP protocols for Kubernetes `Service`s. Hence EKS Anywhere v1.29 clusters will not pass this specific conformance test. This service protocol differentiation is being tracked in an upstream [issue](https://github.com/cilium/cilium/issues/9207) and will be supported in a future Cilium release. A future release of EKS Anywhere will include the patched Cilium version when it is available.
+* The Bottlerocket project [will not be releasing](https://github.com/bottlerocket-os/bottlerocket/issues/3794) bare metal variants for Kubernetes versions v1.29 and beyond. Hence Bottlerocket is not a supported operating system for creating EKS Anywhere bare metal clusters with Kubernetes versions v1.29 and above. However, Bottlerocket is still supported for bare metal clusters running Kubernetes versions v1.28 and below. Please refer to [this](https://github.com/aws/eks-anywhere/issues/7754) pinned issue for more information regarding the deprecation.
 * On January 31, 2024, a **High**-severity vulnerability CVE-2024-21626 was published affecting all `runc` versions <= `v1.1.11`. This CVE has been fixed in runc version `v1.1.12`, which has been included in EKS Anywhere release `v0.18.6`. In order to fix this CVE in your new/existing EKS-A cluster, you **MUST** build or download new OS images pertaining to version `v0.18.6` and create/upgrade your cluster with these images.<br>
   Refer to the following links for more information on the steps to mitigate the CVE.
   * [AWS Security bulletin for the `runc` issue](https://aws.amazon.com/security/security-bulletins/AWS-2024-001)
@@ -20,6 +22,101 @@ description: >
 {{% alert title="General Information" color="info" %}}
 * When upgrading to a new minor version, a new OS image must be created using the new image-builder CLI pertaining to that release.
 {{% /alert %}}
+
+## [v0.19.1](https://github.com/aws/eks-anywhere/releases/tag/v0.19.1)
+
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+|    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+| Bottlerocket 1.19.2 |    ✔    |     ✔      |    —    |     —      |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+|      RHEL 9.x       |    —    |     —      |    ✔    |     ✔      |  —   |
+
+### Changed
+- Upgraded EKS-D:
+  - `v1-25-eks-32` to [`v1-25-eks-34`](https://distro.eks.amazonaws.com/releases/1-25/34/)
+  - `v1-26-eks-28` to [`v1-26-eks-30`](https://distro.eks.amazonaws.com/releases/1-26/30/)
+  - `v1-27-eks-22` to [`v1-27-eks-24`](https://distro.eks.amazonaws.com/releases/1-27/24/)
+  - `v1-28-eks-15` to [`v1-28-eks-17`](https://distro.eks.amazonaws.com/releases/1-28/17/)
+  - `v1-29-eks-4` to [`v1-29-eks-6`](https://distro.eks.amazonaws.com/releases/1-29/6/)
+
+### Added
+- Preflight check for upgrade management components such that it ensures management components is at most 1 EKS Anywhere minor version greater than the EKS Anywhere version of cluster components [#7800](https://github.com/aws/eks-anywhere/pull/7800).
+
+### Fixed
+- EKS Anywhere package [bundles](https://gallery.ecr.aws/eks-anywhere/eks-anywhere-packages-bundles) ending with 152, 153, 154, 157 have image tag issues which have been resolved in bundle 158. Example for kubernetes version v1.29 we have `public.ecr.aws/eks-anywhere/eks-anywhere-packages-bundles:v1-29-158`
+- Fixed InPlace custom resources from being created again after a successful node upgrade due to delay in objects in client cache [#7779](https://github.com/aws/eks-anywhere/pull/7779).
+- Fixed [#7623](https://github.com/aws/eks-anywhere/issues/7623) by encoding the basic auth credentials to base64 when using them in templates [#7829](https://github.com/aws/eks-anywhere/pull/7829).
+- Added a [fix](https://github.com/aws/eks-anywhere/pull/7787) for error that may occur during upgrading management components where if the cluster object is modified by another process before applying, it throws the conflict error prompting a retry.
+
+## [v0.19.0](https://github.com/aws/eks-anywhere/releases/tag/v0.19.0)
+
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+|    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+| Bottlerocket 1.19.0 |    ✔    |     ✔      |    —    |     —      |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+|      RHEL 9.x       |    —    |     —      |    ✔    |     ✔      |  —   |
+
+### Added
+- Support for Kubernetes v1.29
+- Support for in-place EKS Anywhere and Kubernetes version upgrades on Bare Metal clusters
+- Support for horizontally scaling `etcd` count in clusters with external `etcd` deployments ([#7127](https://github.com/aws/eks-anywhere/pull/7127))
+- Etcd encryption for Nutanix ([#7565](https://github.com/aws/eks-anywhere/pull/7565))
+- Nutanix Cloud Controller Manager integration ([#7534](https://github.com/aws/eks-anywhere/pull/7534))
+- Enable image signing for all images used in cluster operations
+- RedHat 9 support for CloudStack ([#2842](https://github.com/aws/eks-anywhere-build-tooling/pull/2842))
+- New `upgrade management-components` command which upgrades management components independently of cluster components ([#7238](https://github.com/aws/eks-anywhere/pull/7238))
+- New `upgrade plan management-components` command which provides new release versions for the next management components upgrade ([#7447](https://github.com/aws/eks-anywhere/pull/7447))
+- Make `maxUnhealthy` count configurable for control plane and worker machines ([#7281](https://github.com/aws/eks-anywhere/pull/7281))
+
+### Changed
+- Unification of controller and CLI workflows for cluster lifecycle operations such as create, upgrade, and delete
+- Perform CAPI Backup on workload cluster during upgrade([#7364](https://github.com/aws/eks-anywhere/pull/7364))
+- Extend `maxSurge` and `maxUnavailable` configuration support to all providers
+- Upgraded Cilium to v1.13.19
+- Upgraded EKS-D:
+  - `v1-25-eks-30` to [`v1-25-eks-32`](https://distro.eks.amazonaws.com/releases/1-25/32/)
+  - `v1-26-eks-26` to [`v1-26-eks-28`](https://distro.eks.amazonaws.com/releases/1-26/28/)
+  - `v1-27-eks-20` to [`v1-27-eks-22`](https://distro.eks.amazonaws.com/releases/1-27/22/)
+  - `v1-28-eks-13` to [`v1-28-eks-15`](https://distro.eks.amazonaws.com/releases/1-28/15/)
+  - [`v1-29-eks-4`](https://distro.eks.amazonaws.com/releases/1-29/4/)
+- Cluster API Provider AWS Snow: `v0.1.26` to `v0.1.27`
+- Cluster API: `v1.5.2` to `v1.6.1`
+- Cluster API Provider vSphere: `v1.7.4` to `v1.8.5`
+- Cluster API Provider Nutanix: `v1.2.3` to `v1.3.1`
+- Flux: `v2.0.0` to `v2.2.3`
+- Kube-vip: `v0.6.0` to `v0.7.0`
+- Image-builder: `v0.1.19` to `v0.1.24`
+- Kind: `v0.20.0` to `v0.22.0`
+
+### Removed
+- Support for Kubernetes v1.24
+- Support for bare metal Bottlerocket clusters running Kubernetes versions v1.29 and above (https://github.com/aws/eks-anywhere/issues/7754)
+- Support for `MachineHealthCheck`-related CLI flags
+
+### Fixed
+- Validate OCI namespaces for registry mirror on Bottlerocket ([#7257](https://github.com/aws/eks-anywhere/pull/7257))
+- Make Cilium reconciler use provider namespace when generating network policy ([#7705](https://github.com/aws/eks-anywhere/pull/7705))
+
+## [v0.18.7](https://github.com/aws/eks-anywhere/releases/tag/v0.18.7)
+
+### Tool Upgrade
+- EKS Anywhere v0.18.7 Admin AMI with CVE fixes for Amazon Linux 2
+
+### Supported Operating Systems
+
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+|    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+| Bottlerocket 1.19.0 |    ✔    |     ✔      |    —    |     —      |  —   |
+|      RHEL 8.7       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+|      RHEL 9.x       |    —    |     —      |    ✔    |     —      |  —   |
 
 ## [v0.18.6](https://github.com/aws/eks-anywhere/releases/tag/v0.18.6)
 
@@ -459,7 +556,7 @@ ManageForeignRoutingPolicyRules=no
 - CloudStack control plane host port is only defaulted in CAPI objects if not provided. ([#5792](https://github.com/aws/eks-anywhere/pull/5792)) ([#5736](https://github.com/aws/eks-anywhere/pull/5736))
 
 ### Deprecated
-- Add warning to deprecate disableCSI through CLI ([#5918](https://github.com/aws/eks-anywhere/pull/5918)). Refer to the [deprecation section]({{< relref "../clustermgmt/storage/vsphere-storage/#vsphere-csi-driver-deprecation" >}}) in the vSphere provider documentation for more information.
+- Add warning to deprecate disableCSI through CLI ([#5918](https://github.com/aws/eks-anywhere/pull/5918)). Refer to the [deprecation section]({{< relref "../clustermgmt/storage/vsphere-storage/#bundled-vsphere-csi-driver-removal" >}}) in the vSphere provider documentation for more information.
 
 ### Removed
 - Kubernetes 1.22 support

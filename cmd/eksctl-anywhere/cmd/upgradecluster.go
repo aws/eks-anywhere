@@ -71,7 +71,6 @@ func init() {
 	upgradeClusterCmd.Flags().BoolVar(&uc.forceClean, "force-cleanup", false, "Force deletion of previously created bootstrap cluster")
 	hideForceCleanup(upgradeClusterCmd.Flags())
 	upgradeClusterCmd.Flags().StringArrayVar(&uc.skipValidations, "skip-validations", []string{}, fmt.Sprintf("Bypass upgrade validations by name. Valid arguments you can pass are --skip-validations=%s", strings.Join(upgradevalidations.SkippableValidations[:], ",")))
-
 	aflag.MarkRequired(createClusterCmd.Flags(), aflag.ClusterConfig.Name)
 	tinkerbellFlags(upgradeClusterCmd.Flags(), uc.providerOptions.Tinkerbell.BMCOptions.RPC)
 }
@@ -96,7 +95,10 @@ func (uc *upgradeClusterOptions) upgradeCluster(cmd *cobra.Command, args []strin
 		}
 	}
 
-	if clusterConfig.Spec.EtcdEncryption != nil && clusterConfig.Spec.DatacenterRef.Kind != v1alpha1.CloudStackDatacenterKind && clusterConfig.Spec.DatacenterRef.Kind != v1alpha1.VSphereDatacenterKind {
+	if clusterConfig.Spec.EtcdEncryption != nil &&
+		clusterConfig.Spec.DatacenterRef.Kind != v1alpha1.CloudStackDatacenterKind &&
+		clusterConfig.Spec.DatacenterRef.Kind != v1alpha1.VSphereDatacenterKind &&
+		clusterConfig.Spec.DatacenterRef.Kind != v1alpha1.NutanixDatacenterKind {
 		return fmt.Errorf("etcdEncryption is currently not supported for the current provider: %s", clusterConfig.Spec.DatacenterRef.Kind)
 	}
 
@@ -216,6 +218,7 @@ func (uc *upgradeClusterOptions) upgradeCluster(cmd *cobra.Command, args []strin
 
 	} else {
 		upgradeWorkloadCluster := workload.NewUpgrade(
+			deps.UnAuthKubeClient,
 			deps.Provider,
 			deps.ClusterManager,
 			deps.GitOpsFlux,

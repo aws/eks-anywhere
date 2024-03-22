@@ -53,15 +53,13 @@ func EtcdEncryptionExtraArgs(config *[]v1alpha1.EtcdEncryption) ExtraArgs {
 	return args
 }
 
-// FeatureGatesExtraArgs takes a list of features with the value and returns it in the proper format
-// Example FeatureGatesExtraArgs("ServiceLoadBalancerClass=true").
-func FeatureGatesExtraArgs(features ...string) ExtraArgs {
-	if len(features) == 0 {
-		return nil
+// APIServerExtraArgs takes a map of API Server extra args and returns the relevant API server extra args if it's not nil or empty.
+func APIServerExtraArgs(apiServerExtraArgs map[string]string) ExtraArgs {
+	args := ExtraArgs{}
+	for k, v := range apiServerExtraArgs {
+		args.AddIfNotEmpty(k, v)
 	}
-	return ExtraArgs{
-		"feature-gates": strings.Join(features[:], ","),
-	}
+	return args
 }
 
 func PodIAMAuthExtraArgs(podIAMConfig *v1alpha1.PodIAMConfig) ExtraArgs {
@@ -145,6 +143,17 @@ func (e ExtraArgs) Append(args ExtraArgs) ExtraArgs {
 	}
 
 	return e
+}
+
+// SetPodIAMAuthExtraArgs sets the api server extra args for the podIAMConfig.
+func SetPodIAMAuthExtraArgs(podIAMConfig *v1alpha1.PodIAMConfig, apiServerExtraArgs map[string]string) {
+	if podIAMFlags := PodIAMAuthExtraArgs(podIAMConfig); podIAMFlags != nil {
+		if v, has := apiServerExtraArgs["service-account-issuer"]; has {
+			apiServerExtraArgs["service-account-issuer"] = strings.Join([]string{v, podIAMFlags["service-account-issuer"]}, ",")
+		} else {
+			apiServerExtraArgs["service-account-issuer"] = podIAMFlags["service-account-issuer"]
+		}
+	}
 }
 
 func (e ExtraArgs) ToPartialYaml() templater.PartialYaml {

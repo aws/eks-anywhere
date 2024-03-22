@@ -1,0 +1,20 @@
+{{ $benefits := $.Page.Params.benefits -}}
+
+<div class="body-container benefits">
+    <div class="container">
+      <div class="row mb-5">
+
+        {{ range $benefits -}}
+        {{ $image  := .image -}}
+        {{ $desc := .description | markdownify -}}
+        {{ $title := .title | markdownify -}}
+        <div class="col-lg-4 mb-5">
+          <div class="card-shadow">
+            <div class="m-3 d-block mx-auto" style="width: 125px;"><img style="max-width:100%;" src="{{ $image }}"></div>
+            <h4 class="text-center">{{ $title }}</h4>
+            <p>{{ $desc }}</p>
+          </div>
+        </div>
+        {{ end }}
+    </div>
+</div>

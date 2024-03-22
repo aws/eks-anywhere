@@ -172,6 +172,11 @@ func (p *Provider) SetupAndValidateUpgradeCluster(ctx context.Context, _ *types.
 	return nil
 }
 
+// SetupAndValidateUpgradeManagementComponents performs necessary setup for upgrade management components operation.
+func (p *Provider) SetupAndValidateUpgradeManagementComponents(_ context.Context, _ *cluster.Spec) error {
+	return nil
+}
+
 // UpdateSecrets is a no-op. It implements providers.Provider.
 func (p *Provider) UpdateSecrets(ctx context.Context, cluster *types.Cluster, _ *cluster.Spec) error {
 	// Not implemented
@@ -289,8 +294,9 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec) (map[string]interface{}, erro
 
 	apiServerExtraArgs := clusterapi.OIDCToExtraArgs(clusterSpec.OIDCConfig).
 		Append(clusterapi.AwsIamAuthExtraArgs(clusterSpec.AWSIamConfig)).
-		Append(clusterapi.PodIAMAuthExtraArgs(clusterSpec.Cluster.Spec.PodIAMConfig)).
+		Append(clusterapi.APIServerExtraArgs(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.APIServerExtraArgs)).
 		Append(sharedExtraArgs)
+	clusterapi.SetPodIAMAuthExtraArgs(clusterSpec.Cluster.Spec.PodIAMConfig, apiServerExtraArgs)
 	controllerManagerExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs().
 		Append(clusterapi.NodeCIDRMaskExtraArgs(&clusterSpec.Cluster.Spec.ClusterNetwork))
 
@@ -602,14 +608,23 @@ func (kr KubeconfigWriter) WriteKubeconfig(ctx context.Context, clusterName, kub
 		return err
 	}
 
+	if err := kr.WriteKubeconfigContent(ctx, clusterName, rawkubeconfig, w); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// WriteKubeconfigContent retrieves the contents of the specified cluster's kubeconfig from a secret and copies it to an io.Writer.
+func (kr KubeconfigWriter) WriteKubeconfigContent(ctx context.Context, clusterName string, content []byte, w io.Writer) error {
 	port, err := kr.docker.GetDockerLBPort(ctx, clusterName)
 	if err != nil {
 		return err
 	}
 
-	updateKubeconfig(&rawkubeconfig, port)
+	updateKubeconfig(&content, port)
 
-	if _, err := io.Copy(w, bytes.NewReader(rawkubeconfig)); err != nil {
+	if _, err := io.Copy(w, bytes.NewReader(content)); err != nil {
 		return err
 	}
 

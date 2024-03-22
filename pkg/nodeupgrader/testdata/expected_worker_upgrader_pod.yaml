@@ -101,7 +101,7 @@ spec:
     securityContext:
       privileged: true
   nodeName: my-node
-  restartPolicy: Never
+  restartPolicy: OnFailure
   volumes:
   - hostPath:
       path: /foo

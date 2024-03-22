@@ -1,3 +1,4 @@
+{{- $kube_minor_version := (index (splitList "." (trimPrefix "v" .kubernetesVersion)) 1) -}}
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: NutanixCluster
 metadata:
@@ -44,6 +45,13 @@ spec:
     apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
     kind: NutanixCluster
     name: "{{.clusterName}}"
+{{- if .externalEtcd }}
+  managedExternalEtcdRef:
+    apiVersion: etcdcluster.cluster.x-k8s.io/v1beta1
+    kind: EtcdadmCluster
+    name: "{{.clusterName}}-etcd"
+    namespace: "{{.eksaSystemNamespace}}"
+{{- end }}
 ---
 apiVersion: controlplane.cluster.x-k8s.io/v1beta1
 kind: KubeadmControlPlane
@@ -81,6 +89,9 @@ spec:
           audit-log-maxage: "30"
           audit-log-maxbackup: "10"
           audit-log-maxsize: "512"
+{{- if and .encryptionProviderConfig (ge (atoi $kube_minor_version) 29) }}
+          feature-gates: "KMSv1=true"
+{{- end }}
 {{- if .apiServerExtraArgs }}
 {{ .apiServerExtraArgs.ToYaml | indent 10 }}
 {{- end }}
@@ -105,6 +116,17 @@ spec:
           name: awsiamcert
           readOnly: false
 {{- end}}
+{{- if .encryptionProviderConfig }}
+        - hostPath: /etc/kubernetes/enc/encryption-config.yaml
+          mountPath: /etc/kubernetes/enc/encryption-config.yaml
+          name: encryption-config
+          pathType: File
+          readOnly: false
+        - hostPath: /var/run/kmsplugin/
+          mountPath: /var/run/kmsplugin/
+          name: kms-plugin
+          readOnly: false
+{{- end }}
       controllerManager:
         extraArgs:
           cloud-provider: external
@@ -125,6 +147,12 @@ spec:
           imageTag: {{.etcdImageTag}}
 {{- end }}
     files:
+{{- if .encryptionProviderConfig }}
+    - content: |
+{{ .encryptionProviderConfig | indent 8}}
+      owner: root:root
+      path: /etc/kubernetes/enc/encryption-config.yaml
+{{- end }}
     - content: |
         apiVersion: v1
         kind: Pod
@@ -327,7 +355,6 @@ spec:
       - echo "::1         ipv6-localhost ipv6-loopback" >/etc/hosts
       - echo "127.0.0.1   localhost" >>/etc/hosts
       - echo "127.0.0.1   {{`{{ ds.meta_data.hostname }}`}}" >> /etc/hosts
-{{- $kube_minor_version := (index (splitList "." (trimPrefix "v" .kubernetesVersion)) 1) }}
 {{- if (ge (atoi $kube_minor_version) 29) }}
       - "if [ -f /run/kubeadm/kubeadm.yaml ]; then sed -i 's#path: /etc/kubernetes/admin.conf#path: /etc/kubernetes/super-admin.conf#' /etc/kubernetes/manifests/kube-vip.yaml; fi"
 {{- end }}
@@ -389,6 +416,121 @@ spec:
           value: "{{ .Value }}"
 {{- end }}
 {{- end }}
+{{- if .externalEtcd }}
+---
+kind: EtcdadmCluster
+apiVersion: etcdcluster.cluster.x-k8s.io/v1beta1
+metadata:
+  name: "{{.clusterName}}-etcd"
+  namespace: "{{.eksaSystemNamespace}}"
+spec:
+  replicas: {{.externalEtcdReplicas}}
+  etcdadmConfigSpec:
+    etcdadmBuiltin: true
+    format: {{.format}}
+{{- if .etcdNtpServers }}
+    ntp:
+      enabled: true
+      servers: {{ range .etcdNtpServers }}
+      - {{ . }}
+      {{- end }}
+{{- end }}
+    cloudInitConfig:
+      version: {{.externalEtcdVersion}}
+      installDir: "/usr/bin"
+{{- if .externalEtcdReleaseUrl }}
+      etcdReleaseURL: {{.externalEtcdReleaseUrl}}
+{{- end }}
+    preEtcdadmCommands:
+      - hostname "{{`{{ ds.meta_data.hostname }}`}}"
+      - echo "::1         ipv6-localhost ipv6-loopback" >/etc/hosts
+      - echo "127.0.0.1   localhost" >>/etc/hosts
+      - echo "127.0.0.1   {{`{{ ds.meta_data.hostname }}`}}" >>/etc/hosts
+      - echo "{{`{{ ds.meta_data.hostname }}`}}" >/etc/hostname
+{{- if .etcdCipherSuites }}
+    cipherSuites: {{.etcdCipherSuites}}
+{{- end }}
+    users:
+      - name: "{{.etcdSshUsername}}"
+        sshAuthorizedKeys:
+          - "{{.etcdSshAuthorizedKey}}"
+        sudo: ALL=(ALL) NOPASSWD:ALL
+{{- if .proxyConfig }}
+    proxy:
+      httpProxy: {{ .httpProxy }}
+      httpsProxy: {{ .httpsProxy }}
+      noProxy: {{ range .noProxy }}
+        - {{ . }}
+      {{- end }}
+{{- end }}
+{{- if .registryMirrorMap }}
+    registryMirror:
+      endpoint: {{ .publicMirror }}
+      {{- if .registryCACert }}
+      caCert: |
+{{ .registryCACert | indent 8 }}
+      {{- end }}
+{{- end }}
+  infrastructureTemplate:
+    apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+    kind: NutanixMachineTemplate
+    name: "{{.etcdTemplateName}}"
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: NutanixMachineTemplate
+metadata:
+  name: "{{.etcdTemplateName}}"
+  namespace: "{{.eksaSystemNamespace}}"
+spec:
+  template:
+    spec:
+      providerID: "nutanix://{{.clusterName}}-m1"
+      vcpusPerSocket: {{.etcdVCPUsPerSocket}}
+      vcpuSockets: {{.etcdVcpuSockets}}
+      memorySize: {{.etcdMemorySize}}
+      systemDiskSize: {{.etcdSystemDiskSize}}
+      image:
+{{- if (eq .etcdImageIDType "name") }}
+        type: name
+        name: "{{.etcdImageName}}"
+{{ else if (eq .etcdImageIDType "uuid") }}
+        type: uuid
+        uuid: "{{.etcdImageUUID}}"
+{{ end }}
+      cluster:
+{{- if (eq .etcdNutanixPEClusterIDType "name") }}
+        type: name
+        name: "{{.etcdNutanixPEClusterName}}"
+{{- else if (eq .etcdNutanixPEClusterIDType "uuid") }}
+        type: uuid
+        uuid: "{{.etcdNutanixPEClusterUUID}}"
+{{ end }}
+      subnet:
+{{- if (eq .etcdSubnetIDType "name") }}
+        - type: name
+          name: "{{.etcdSubnetName}}"
+{{- else if (eq .etcdSubnetIDType "uuid") }}
+        - type: uuid
+          uuid: "{{.etcdSubnetUUID}}"
+{{ end }}
+{{- if .etcdProjectIDType}}
+      project:
+{{- if (eq .etcdProjectIDType "name") }}
+        type: name
+        name: "{{.etcdProjectName}}"
+{{- else if (eq .etcdProjectIDType "uuid") }}
+        type: uuid
+        uuid: "{{.etcdProjectUUID}}"
+{{ end }}
+{{ end }}
+{{- if .etcdAdditionalCategories}}
+      additionalCategories:
+{{- range .etcdAdditionalCategories}}
+        - key:   "{{ .Key }}"
+          value: "{{ .Value }}"
+{{- end }}
+{{- end }}
+{{- end }}
 ---
 {{- if .registryAuth }}
 apiVersion: v1
@@ -398,9 +540,9 @@ metadata:
   namespace: {{.eksaSystemNamespace}}
   labels:
     clusterctl.cluster.x-k8s.io/move: "true"
-stringData:
-  username: "{{.registryUsername}}"
-  password: "{{.registryPassword}}"
+data:
+  username: {{.registryUsername | b64enc}}
+  password: {{.registryPassword | b64enc}}
 ---
 {{- end }}
 apiVersion: v1

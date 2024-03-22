@@ -8,6 +8,7 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 
 	"github.com/aws/eks-anywhere/pkg/logger"
@@ -24,6 +25,10 @@ const (
 	// performing an operation so the controller should not take any action. When marked for deletion,
 	// the controller will remove the finalizer and let the cluster be deleted.
 	ManagedByCLIAnnotation = "anywhere.eks.amazonaws.com/managed-by-cli"
+
+	// tinkerbellIPAnnotation can be applied to an EKS-A Cluster to convey the tinkerbell bootstrap ip to the
+	// EKSA controller. When marked for deletion, the controller will remove the IP annotation.
+	tinkerbellIPAnnotation = "anywhere.eks.amazonaws.com/tinkerbell-bootstrap-ip"
 
 	// ControlPlaneAnnotation is an annotation that can be applied to EKS-A machineconfig
 	// object to prevent a controller from making changes to that resource.
@@ -51,6 +56,10 @@ const (
 
 	// ControlEndpointDefaultPort defaults cluster control plane endpoint port if not specified.
 	ControlEndpointDefaultPort = "6443"
+
+	// AllowDeleteWhenPausedAnnotation is an annotation applied to an EKS-A cluster that allows the deletion of the cluster
+	// when paused.
+	AllowDeleteWhenPausedAnnotation = "anywhere.eks.amazonaws.com/allow-delete-when-paused"
 )
 
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
@@ -84,7 +93,7 @@ type EksaVersion string
 
 const (
 	// DevBuildVersion is the version string for the dev build of EKS-A.
-	DevBuildVersion = "v0.0.0-dev"
+	DevBuildVersion = "v0.19.0-dev+latest"
 
 	// MinEksAVersionWithEtcdURL is the version from which the etcd url will be set
 	// for etcdadm to pull the etcd tarball if that binary isnt cached.
@@ -296,6 +305,10 @@ type ControlPlaneConfiguration struct {
 	// CertSANs is a slice of domain names or IPs to be added as Subject Name Alternatives of the
 	// Kube API Servers Certificate.
 	CertSANs []string `json:"certSans,omitempty"`
+	// MachineHealthCheck is a control-plane level override for the timeouts and maxUnhealthy specified in the top-level MHC configuration. If not configured, the defaults in the top-level MHC configuration are used.
+	MachineHealthCheck *MachineHealthCheck `json:"machineHealthCheck,omitempty"`
+	// APIServerExtraArgs defines the flags to configure for the API server.
+	APIServerExtraArgs map[string]string `json:"apiServerExtraArgs,omitempty"`
 }
 
 // MachineHealthCheck allows to configure timeouts for machine health checks. Machine Health Checks are responsible for remediating unhealthy Machines.
@@ -305,6 +318,8 @@ type MachineHealthCheck struct {
 	NodeStartupTimeout *metav1.Duration `json:"nodeStartupTimeout,omitempty"`
 	// UnhealthyMachineTimeout is used to configure the unhealthy machine timeout in machine health checks. If any unhealthy conditions are met for the amount of time specified as the timeout, the machines are considered unhealthy. If not configured, the default value is set to "5m0s" (5 minutes).
 	UnhealthyMachineTimeout *metav1.Duration `json:"unhealthyMachineTimeout,omitempty"`
+	// MaxUnhealthy is used to configure the maximum number of unhealthy machines in machine health checks. This setting applies to both control plane and worker machines. If the number of unhealthy machines exceeds the limit set by maxUnhealthy, further remediation will not be performed. If not configured, the default value is set to "100%" for controlplane machines and "40%" for worker machines.
+	MaxUnhealthy *intstr.IntOrString `json:"maxUnhealthy,omitempty"`
 }
 
 func TaintsSliceEqual(s1, s2 []corev1.Taint) bool {
@@ -350,7 +365,7 @@ func (n *ControlPlaneConfiguration) Equal(o *ControlPlaneConfiguration) bool {
 	}
 	return n.Count == o.Count && n.MachineGroupRef.Equal(o.MachineGroupRef) &&
 		TaintsSliceEqual(n.Taints, o.Taints) && MapEqual(n.Labels, o.Labels) &&
-		SliceEqual(n.CertSANs, o.CertSANs)
+		SliceEqual(n.CertSANs, o.CertSANs) && MapEqual(n.APIServerExtraArgs, o.APIServerExtraArgs)
 }
 
 type Endpoint struct {
@@ -440,6 +455,8 @@ type WorkerNodeGroupConfiguration struct {
 	UpgradeRolloutStrategy *WorkerNodesUpgradeRolloutStrategy `json:"upgradeRolloutStrategy,omitempty"`
 	// KuberenetesVersion defines the version for worker nodes. If not set, the top level spec kubernetesVersion will be used.
 	KubernetesVersion *KubernetesVersion `json:"kubernetesVersion,omitempty"`
+	// MachineHealthCheck is a worker node level override for the timeouts and maxUnhealthy specified in the top-level MHC configuration. If not configured, the defaults in the top-level MHC configuration are used.
+	MachineHealthCheck *MachineHealthCheck `json:"machineHealthCheck,omitempty"`
 }
 
 // Equal compares two WorkerNodeGroupConfigurations.
@@ -1430,6 +1447,11 @@ func (c *Cluster) ClearFailure() {
 	c.Status.FailureReason = nil
 }
 
+// HasFailure checks whether there is a failureMessage and/or failureReason set on the Cluster status.
+func (c *Cluster) HasFailure() bool {
+	return c.Status.FailureMessage != nil || c.Status.FailureReason != nil
+}
+
 // KubernetesVersions returns a set of all unique k8s versions specified in the cluster
 // for both CP and workers.
 func (c *Cluster) KubernetesVersions() []KubernetesVersion {
@@ -1528,6 +1550,15 @@ func (c *Cluster) IsManagedByCLI() bool {
 		return false
 	}
 	val, ok := c.Annotations[ManagedByCLIAnnotation]
+	return ok && val == "true"
+}
+
+// CanDeleteWhenPaused returns true if the cluster has the allow-delete-when-paused annotation.
+func (c *Cluster) CanDeleteWhenPaused() bool {
+	if len(c.Annotations) == 0 {
+		return false
+	}
+	val, ok := c.Annotations[AllowDeleteWhenPausedAnnotation]
 	return ok && val == "true"
 }
 

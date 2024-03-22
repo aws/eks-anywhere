@@ -10,7 +10,6 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/google/uuid"
-	"golang.org/x/exp/maps"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/aws"
@@ -39,7 +38,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/manifests"
 	"github.com/aws/eks-anywhere/pkg/manifests/bundles"
 	"github.com/aws/eks-anywhere/pkg/networking/cilium"
-	"github.com/aws/eks-anywhere/pkg/networking/kindnetd"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack"
@@ -76,7 +74,6 @@ type Dependencies struct {
 	Troubleshoot                *executables.Troubleshoot
 	Helm                        *executables.Helm
 	UnAuthKubeClient            *kubernetes.UnAuthClient
-	Networking                  clustermanager.Networking
 	CNIInstaller                workload.CNIInstaller
 	CiliumTemplater             *cilium.Templater
 	AwsIamAuth                  *awsiamauth.Installer
@@ -139,14 +136,14 @@ func (d *Dependencies) Close(ctx context.Context) error {
 
 // ForSpec constructs a Factory using the bundle referenced by clusterSpec.
 func ForSpec(clusterSpec *cluster.Spec) *Factory {
-	versionsBundle := clusterSpec.RootVersionsBundle()
-	eksaToolsImage := versionsBundle.Eksa.CliTools
+	managementComponents := cluster.ManagementComponentsFromBundles(clusterSpec.Bundles)
+	eksaToolsImage := managementComponents.Eksa.CliTools
 	return NewFactory().
 		UseExecutableImage(eksaToolsImage.VersionedImage()).
 		WithRegistryMirror(registrymirror.FromCluster(clusterSpec.Cluster)).
 		UseProxyConfiguration(clusterSpec.Cluster.ProxyConfiguration()).
 		WithWriterFolder(clusterSpec.Cluster.Name).
-		WithDiagnosticCollectorImage(versionsBundle.Eksa.DiagnosticCollector.VersionedImage())
+		WithDiagnosticCollectorImage(managementComponents.Eksa.DiagnosticCollector.VersionedImage())
 }
 
 // Factory helps initialization.
@@ -862,80 +859,6 @@ func (f *Factory) WithHelmEnvClientFactory(opts ...helm.Opt) *Factory {
 	return f
 }
 
-// WithNetworking builds a Networking.
-func (f *Factory) WithNetworking(clusterConfig *v1alpha1.Cluster) *Factory {
-	var networkingBuilder func() clustermanager.Networking
-	if clusterConfig.Spec.ClusterNetwork.CNIConfig.Kindnetd != nil {
-		f.WithKubectl().WithFileReader()
-		networkingBuilder = func() clustermanager.Networking {
-			return kindnetd.NewKindnetd(f.dependencies.Kubectl, f.dependencies.FileReader)
-		}
-	} else {
-		f.WithKubectl().WithCiliumTemplater()
-
-		networkingBuilder = func() clustermanager.Networking {
-			var opts []cilium.RetrierClientOpt
-			if f.config.noTimeouts {
-				opts = append(opts, cilium.RetrierClientRetrier(retrier.NewWithNoTimeout()))
-			}
-
-			c := cilium.NewCilium(
-				cilium.NewRetrier(f.dependencies.Kubectl, opts...),
-				f.dependencies.CiliumTemplater,
-			)
-			c.SetSkipUpgrade(!clusterConfig.Spec.ClusterNetwork.CNIConfig.Cilium.IsManaged())
-			return c
-		}
-	}
-
-	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
-		if f.dependencies.Networking != nil {
-			return nil
-		}
-		f.dependencies.Networking = networkingBuilder()
-
-		return nil
-	})
-
-	return f
-}
-
-// WithCNIInstaller builds a CNI installer for the given cluster.
-func (f *Factory) WithCNIInstaller(spec *cluster.Spec, provider providers.Provider) *Factory {
-	if spec.Cluster.Spec.ClusterNetwork.CNIConfig.Kindnetd != nil {
-		f.WithKubectl().WithFileReader()
-	} else {
-		f.WithKubectl().WithCiliumTemplater()
-	}
-
-	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
-		if f.dependencies.CNIInstaller != nil {
-			return nil
-		}
-
-		if spec.Cluster.Spec.ClusterNetwork.CNIConfig.Kindnetd != nil {
-			f.dependencies.CNIInstaller = kindnetd.NewInstallerForSpec(
-				f.dependencies.Kubectl,
-				f.dependencies.FileReader,
-				spec,
-			)
-		} else {
-			f.dependencies.CNIInstaller = cilium.NewInstallerForSpec(
-				cilium.NewRetrier(f.dependencies.Kubectl),
-				f.dependencies.CiliumTemplater,
-				cilium.Config{
-					Spec:              spec,
-					AllowedNamespaces: maps.Keys(provider.GetDeployments()),
-				},
-			)
-		}
-
-		return nil
-	})
-
-	return f
-}
-
 func (f *Factory) WithCiliumTemplater() *Factory {
 	f.WithHelmEnvClientFactory(helm.WithInsecure())
 
@@ -951,8 +874,9 @@ func (f *Factory) WithCiliumTemplater() *Factory {
 	return f
 }
 
-func (f *Factory) WithAwsIamAuth() *Factory {
-	f.WithKubectl().WithWriter()
+// WithAwsIamAuth builds dependencies for AWS IAM Auth.
+func (f *Factory) WithAwsIamAuth(clusterConfig *v1alpha1.Cluster) *Factory {
+	f.WithKubectl().WithWriter().WithKubeconfigWriter(clusterConfig)
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.AwsIamAuth != nil {
@@ -971,6 +895,7 @@ func (f *Factory) WithAwsIamAuth() *Factory {
 			clusterId,
 			awsiamauth.NewRetrierClient(f.dependencies.Kubectl, opts...),
 			f.dependencies.Writer,
+			f.dependencies.KubeconfigWriter,
 		)
 		return nil
 	})
@@ -988,11 +913,6 @@ func (f *Factory) WithIPValidator() *Factory {
 		return nil
 	})
 	return f
-}
-
-type bootstrapperClient struct {
-	*executables.Kind
-	*executables.Kubectl
 }
 
 func (f *Factory) WithBootstrapper() *Factory {
@@ -1034,7 +954,7 @@ type clusterManagerClient struct {
 type ClusterManagerTimeoutOptions struct {
 	NoTimeouts bool
 
-	ControlPlaneWait, ExternalEtcdWait, MachineWait, UnhealthyMachineWait, NodeStartupWait time.Duration
+	ControlPlaneWait, ExternalEtcdWait, MachineWait time.Duration
 }
 
 func (f *Factory) eksaInstallerOpts() []clustermanager.EKSAInstallerOpt {
@@ -1054,8 +974,6 @@ func (f *Factory) clusterManagerOpts(timeoutOpts *ClusterManagerTimeoutOptions) 
 		clustermanager.WithControlPlaneWaitTimeout(timeoutOpts.ControlPlaneWait),
 		clustermanager.WithExternalEtcdWaitTimeout(timeoutOpts.ExternalEtcdWait),
 		clustermanager.WithMachineMaxWait(timeoutOpts.MachineWait),
-		clustermanager.WithUnhealthyMachineTimeout(timeoutOpts.UnhealthyMachineWait),
-		clustermanager.WithNodeStartupTimeout(timeoutOpts.NodeStartupWait),
 	}
 
 	if f.config.noTimeouts {
@@ -1067,7 +985,7 @@ func (f *Factory) clusterManagerOpts(timeoutOpts *ClusterManagerTimeoutOptions) 
 
 // WithClusterManager builds a cluster manager based on the cluster config and timeout options.
 func (f *Factory) WithClusterManager(clusterConfig *v1alpha1.Cluster, timeoutOpts *ClusterManagerTimeoutOptions) *Factory {
-	f.WithClusterctl().WithNetworking(clusterConfig).WithWriter().WithDiagnosticBundleFactory().WithAwsIamAuth().WithFileReader().WithUnAuthKubeClient().WithKubernetesRetrierClient().WithEKSAInstaller()
+	f.WithClusterctl().WithWriter().WithDiagnosticBundleFactory().WithAwsIamAuth(clusterConfig).WithFileReader().WithUnAuthKubeClient().WithKubernetesRetrierClient().WithEKSAInstaller()
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.ClusterManager != nil {
@@ -1082,7 +1000,6 @@ func (f *Factory) WithClusterManager(clusterConfig *v1alpha1.Cluster, timeoutOpt
 		f.dependencies.ClusterManager = clustermanager.New(
 			f.dependencies.UnAuthKubeClient,
 			client,
-			f.dependencies.Networking,
 			f.dependencies.Writer,
 			f.dependencies.DignosticCollectorFactory,
 			f.dependencies.AwsIamAuth,
@@ -1161,7 +1078,7 @@ func (f *Factory) WithCliConfig(cliConfig *cliconfig.CliConfig) *Factory {
 func (f *Factory) WithCreateClusterDefaulter(createCliConfig *cliconfig.CreateClusterCLIConfig) *Factory {
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		controlPlaneIPCheckAnnotationDefaulter := cluster.NewControlPlaneIPCheckAnnotationDefaulter(createCliConfig.SkipCPIPCheck)
-		machineHealthCheckDefaulter := cluster.NewMachineHealthCheckDefaulter(createCliConfig.NodeStartupTimeout, createCliConfig.UnhealthyMachineTimeout)
+		machineHealthCheckDefaulter := cluster.NewMachineHealthCheckDefaulter(createCliConfig.NodeStartupTimeout, createCliConfig.UnhealthyMachineTimeout, createCliConfig.MaxUnhealthy, createCliConfig.WorkerMaxUnhealthy)
 
 		createClusterDefaulter := cli.NewCreateClusterDefaulter(controlPlaneIPCheckAnnotationDefaulter, machineHealthCheckDefaulter)
 
@@ -1176,7 +1093,7 @@ func (f *Factory) WithCreateClusterDefaulter(createCliConfig *cliconfig.CreateCl
 // WithUpgradeClusterDefaulter builds a create cluster defaulter that builds defaulter dependencies specific to the create cluster command. The defaulter is then run once the factory is built in the create cluster command.
 func (f *Factory) WithUpgradeClusterDefaulter(upgradeCliConfig *cliconfig.UpgradeClusterCLIConfig) *Factory {
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
-		machineHealthCheckDefaulter := cluster.NewMachineHealthCheckDefaulter(upgradeCliConfig.NodeStartupTimeout, upgradeCliConfig.UnhealthyMachineTimeout)
+		machineHealthCheckDefaulter := cluster.NewMachineHealthCheckDefaulter(upgradeCliConfig.NodeStartupTimeout, upgradeCliConfig.UnhealthyMachineTimeout, upgradeCliConfig.MaxUnhealthy, upgradeCliConfig.WorkerMaxUnhealthy)
 
 		upgradeClusterDefaulter := cli.NewUpgradeClusterDefaulter(machineHealthCheckDefaulter)
 
@@ -1286,7 +1203,7 @@ func (f *Factory) WithClusterDeleter() *Factory {
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		var opts []clustermanager.DeleterOpt
 		if f.config.noTimeouts {
-			opts = append(opts, clustermanager.WithDeleterNoTimeouts())
+			opts = append(opts, clustermanager.WithDeleterApplyClusterTimeout(time.Hour))
 		}
 
 		f.dependencies.ClusterDeleter = clustermanager.NewDeleter(

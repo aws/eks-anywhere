@@ -43,19 +43,24 @@ import (
 const (
 	mdInPlaceUpgradeNeededAnnotation = "machinedeployment.clusters.x-k8s.io/in-place-upgrade-needed"
 	workerMachineLabel               = "cluster.x-k8s.io/deployment-name"
+	machineDeploymentKind            = "MachineDeployment"
 )
 
 // MachineDeploymentReconciler reconciles a MachineDeploymentReconciler object.
 type MachineDeploymentReconciler struct {
+	// client reads from a cache and is not a fully direct client.
 	client client.Client
-	log    logr.Logger
+	// uncachedClient reads directly from the API server and is slightly slower.
+	uncachedClient client.Reader
+	log            logr.Logger
 }
 
 // NewMachineDeploymentReconciler returns a new instance of MachineDeploymentReconciler.
-func NewMachineDeploymentReconciler(client client.Client) *MachineDeploymentReconciler {
+func NewMachineDeploymentReconciler(client client.Client, uncachedClient client.Reader) *MachineDeploymentReconciler {
 	return &MachineDeploymentReconciler{
-		client: client,
-		log:    ctrl.Log.WithName("MachineDeploymentController"),
+		client:         client,
+		uncachedClient: uncachedClient,
+		log:            ctrl.Log.WithName("MachineDeploymentController"),
 	}
 }
 
@@ -67,7 +72,7 @@ func (r *MachineDeploymentReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	log := r.log.WithValues("MachineDeployment", req.NamespacedName)
 
 	md := &clusterv1.MachineDeployment{}
-	if err := r.client.Get(ctx, req.NamespacedName, md); err != nil {
+	if err := r.uncachedClient.Get(ctx, req.NamespacedName, md); err != nil {
 		if apierrors.IsNotFound(err) {
 			return reconcile.Result{}, err
 		}
@@ -111,68 +116,87 @@ func (r *MachineDeploymentReconciler) reconcile(ctx context.Context, log logr.Lo
 	log.Info("Reconciling in place upgrade for workers")
 	if md.Spec.Template.Spec.Version == nil {
 		log.Info("Kubernetes version not present, unable to reconcile for in place upgrade")
-		return ctrl.Result{}, fmt.Errorf("unable to retrieve kubernetes version from MachineDeployment \"%s\"", md.Name)
+		return ctrl.Result{}, fmt.Errorf("unable to retrieve kubernetes version from MachineDeployment \"%s\"", md.ObjectMeta.Name)
+	}
+
+	mhc := &clusterv1.MachineHealthCheck{}
+	if err := r.client.Get(ctx, GetNamespacedNameType(mdMachineHealthCheckName(md.ObjectMeta.Name), constants.EksaSystemNamespace), mhc); err != nil {
+		if apierrors.IsNotFound(err) {
+			return reconcile.Result{}, err
+		}
+		return ctrl.Result{}, fmt.Errorf("getting MachineHealthCheck %s: %v", mdMachineHealthCheckName(md.ObjectMeta.Name), err)
+	}
+	mhcPatchHelper, err := patch.NewHelper(mhc, r.client)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	machineList, machineRefList, err := r.machinesToUpgrade(ctx, md)
+	if err != nil {
+		return ctrl.Result{}, fmt.Errorf("retrieving list of control plane machines: %v", err)
 	}
 
 	mdUpgrade := &anywherev1.MachineDeploymentUpgrade{}
-	mduGetErr := r.client.Get(ctx, GetNamespacedNameType(mdUpgradeName(md.Name), constants.EksaSystemNamespace), mdUpgrade)
-
-	if md.Spec.Replicas != nil && (*md.Spec.Replicas == md.Status.UpdatedReplicas) {
-		if mduGetErr == nil && mdUpgrade.Status.Ready {
+	mduGetErr := r.client.Get(ctx, GetNamespacedNameType(mdUpgradeName(md.ObjectMeta.Name), constants.EksaSystemNamespace), mdUpgrade)
+	if mduGetErr == nil {
+		machinesUpgraded := true
+		for i := range machineList {
+			m := machineList[i]
+			if m.Spec.Version == nil || *m.Spec.Version != mdUpgrade.Spec.KubernetesVersion {
+				machinesUpgraded = false
+				break
+			}
+		}
+		if machinesUpgraded && mdUpgrade.Status.Ready {
 			log.Info("Machine deployment upgrade complete, deleting object", "MachineDeploymentUpgrade", mdUpgrade.Name)
 			if err := r.client.Delete(ctx, mdUpgrade); err != nil {
 				return ctrl.Result{}, fmt.Errorf("deleting MachineDeploymentUpgrade object: %v", err)
 			}
-		} else if !apierrors.IsNotFound(mduGetErr) {
-			return ctrl.Result{}, fmt.Errorf("getting MachineDeploymentUpgrade for MachineDeployment %s: %v", md.Name, mduGetErr)
-		}
-		log.Info("MachineDeployment is ready, removing the \"in-place-upgrade-needed\" annotation")
-		// Remove the in-place-upgrade-needed annotation only after the MachineDeploymentUpgrade object is deleted
-		delete(md.Annotations, mdInPlaceUpgradeNeededAnnotation)
-		return ctrl.Result{}, nil
-	}
-
-	if mduGetErr != nil {
-		if apierrors.IsNotFound(mduGetErr) {
-			log.Info("Creating MachineDeploymentUpgrade object")
-			machines, err := r.machinesToUpgrade(ctx, md)
-			if err != nil {
-				return ctrl.Result{}, fmt.Errorf("retrieving list of control plane machines: %v", err)
+			log.Info("Resuming machine deployment machine health check", "MachineHealthCheck", mdMachineHealthCheckName(md.ObjectMeta.Name))
+			if err := resumeMachineHealthCheck(ctx, mhc, mhcPatchHelper); err != nil {
+				return ctrl.Result{}, fmt.Errorf("updating annotations for machine health check: %v", err)
 			}
-			mdUpgrade, err := machineDeploymentUpgrade(md, machines)
-			if err != nil {
-				return ctrl.Result{}, fmt.Errorf("generating MachineDeploymentUpgrade: %v", err)
-			}
-			if err := r.client.Create(ctx, mdUpgrade); client.IgnoreAlreadyExists(err) != nil {
-				return ctrl.Result{}, fmt.Errorf("failed to create MachineDeploymentUpgrade for MachineDeployment %s:  %v", md.Name, err)
-			}
+			log.Info("MachineDeployment is ready, removing the \"in-place-upgrade-needed\" annotation")
+			// Remove the in-place-upgrade-needed annotation only after the MachineDeploymentUpgrade object is deleted
+			delete(md.Annotations, mdInPlaceUpgradeNeededAnnotation)
 			return ctrl.Result{}, nil
 		}
-		return ctrl.Result{}, fmt.Errorf("getting MachineDeploymentUpgrade for MachineDeployment %s: %v", md.Name, mduGetErr)
-	}
-	if !mdUpgrade.Status.Ready {
 		return ctrl.Result{}, nil
 	}
-	log.Info("Machine deployment upgrade complete, deleting object", "MachineDeploymentUpgrade", mdUpgrade.Name)
-	if err := r.client.Delete(ctx, mdUpgrade); err != nil {
-		return ctrl.Result{}, fmt.Errorf("deleting MachineDeploymentUpgrade object: %v", err)
+
+	if apierrors.IsNotFound(mduGetErr) {
+		log.Info("Creating MachineDeploymentUpgrade object")
+		mdUpgrade, err := machineDeploymentUpgrade(md, machineRefList)
+		if err != nil {
+			return ctrl.Result{}, fmt.Errorf("generating MachineDeploymentUpgrade: %v", err)
+		}
+
+		log.Info("Pausing machine deployment machine health check", "MachineHealthCheck", mdMachineHealthCheckName(md.ObjectMeta.Name))
+		if err := pauseMachineHealthCheck(ctx, mhc, mhcPatchHelper); err != nil {
+			return ctrl.Result{}, fmt.Errorf("updating annotations for machine health check: %v", err)
+		}
+
+		if err := r.client.Create(ctx, mdUpgrade); client.IgnoreAlreadyExists(err) != nil {
+			return ctrl.Result{}, fmt.Errorf("failed to create MachineDeploymentUpgrade for MachineDeployment %s:  %v", md.ObjectMeta.Name, err)
+		}
+		return ctrl.Result{}, nil
 	}
 
-	return ctrl.Result{}, nil
+	return ctrl.Result{}, fmt.Errorf("getting MachineDeploymentUpgrade for MachineDeployment %s: %v", md.ObjectMeta.Name, err)
 }
 
 func (r *MachineDeploymentReconciler) inPlaceUpgradeNeeded(md *clusterv1.MachineDeployment) bool {
 	return strings.ToLower(md.Annotations[mdInPlaceUpgradeNeededAnnotation]) == "true"
 }
 
-func (r *MachineDeploymentReconciler) machinesToUpgrade(ctx context.Context, md *clusterv1.MachineDeployment) ([]corev1.ObjectReference, error) {
-	selector, err := metav1.LabelSelectorAsSelector(&metav1.LabelSelector{MatchLabels: map[string]string{workerMachineLabel: md.Name}})
+func (r *MachineDeploymentReconciler) machinesToUpgrade(ctx context.Context, md *clusterv1.MachineDeployment) ([]*clusterv1.Machine, []corev1.ObjectReference, error) {
+	selector, err := metav1.LabelSelectorAsSelector(&metav1.LabelSelector{MatchLabels: map[string]string{workerMachineLabel: md.ObjectMeta.Name}})
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	machineList := &clusterv1.MachineList{}
-	if err := r.client.List(ctx, machineList, &client.ListOptions{LabelSelector: selector, Namespace: md.Namespace}); err != nil {
-		return nil, err
+	if err := r.client.List(ctx, machineList, &client.ListOptions{LabelSelector: selector, Namespace: md.ObjectMeta.Namespace}); err != nil {
+		return nil, nil, err
 	}
 	machines := collections.FromMachineList(machineList).SortedByCreationTimestamp()
 	machineObjects := make([]corev1.ObjectReference, 0, len(machines))
@@ -185,7 +209,7 @@ func (r *MachineDeploymentReconciler) machinesToUpgrade(ctx context.Context, md 
 			},
 		)
 	}
-	return machineObjects, nil
+	return machines, machineObjects, nil
 }
 
 func machineDeploymentUpgrade(md *clusterv1.MachineDeployment, machines []corev1.ObjectReference) (*anywherev1.MachineDeploymentUpgrade, error) {
@@ -195,20 +219,20 @@ func machineDeploymentUpgrade(md *clusterv1.MachineDeployment, machines []corev1
 	}
 	return &anywherev1.MachineDeploymentUpgrade{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      mdUpgradeName(md.Name),
+			Name:      mdUpgradeName(md.ObjectMeta.Name),
 			Namespace: constants.EksaSystemNamespace,
 			OwnerReferences: []metav1.OwnerReference{{
-				APIVersion: md.APIVersion,
-				Kind:       md.Kind,
-				Name:       md.Name,
-				UID:        md.UID,
+				APIVersion: clusterv1.GroupVersion.String(),
+				Kind:       machineDeploymentKind,
+				Name:       md.ObjectMeta.Name,
+				UID:        md.ObjectMeta.UID,
 			}},
 		},
 		Spec: anywherev1.MachineDeploymentUpgradeSpec{
 			MachineDeployment: corev1.ObjectReference{
-				Kind:      md.Kind,
-				Namespace: md.Namespace,
-				Name:      md.Name,
+				Kind:      machineDeploymentKind,
+				Namespace: md.ObjectMeta.Namespace,
+				Name:      md.ObjectMeta.Name,
 			},
 			KubernetesVersion:      *md.Spec.Template.Spec.Version,
 			MachinesRequireUpgrade: machines,
@@ -219,4 +243,8 @@ func machineDeploymentUpgrade(md *clusterv1.MachineDeployment, machines []corev1
 
 func mdUpgradeName(mdName string) string {
 	return mdName + "-md-upgrade"
+}
+
+func mdMachineHealthCheckName(mdName string) string {
+	return fmt.Sprintf("%s-worker-unhealthy", mdName)
 }

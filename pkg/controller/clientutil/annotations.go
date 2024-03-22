@@ -23,3 +23,12 @@ func AddLabel(o client.Object, key, value string) {
 	l[key] = value
 	o.SetLabels(l)
 }
+
+// RemoveAnnotation removes an annotation from the given object.
+func RemoveAnnotation(o client.Object, key string) {
+	a := o.GetAnnotations()
+	if a != nil {
+		delete(a, key)
+		o.SetAnnotations(a)
+	}
+}

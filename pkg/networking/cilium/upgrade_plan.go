@@ -8,6 +8,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/types"
 )
 
 const (
@@ -249,4 +250,27 @@ func configMapUpgradePlan(configMap *corev1.ConfigMap, clusterSpec *cluster.Spec
 	updatePlan.generateUpdateReasonFromComponents()
 
 	return *updatePlan
+}
+
+// ChangeDiff returns the change diff between the current and new cluster specs.
+func ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ChangeDiff {
+	return ciliumChangeDiff(currentSpec, newSpec)
+}
+
+func ciliumChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ChangeDiff {
+	currentVersionsBundle := currentSpec.RootVersionsBundle()
+	newVersionsBundle := newSpec.RootVersionsBundle()
+	if currentVersionsBundle.Cilium.Version == newVersionsBundle.Cilium.Version {
+		return nil
+	}
+
+	return &types.ChangeDiff{
+		ComponentReports: []types.ComponentChangeDiff{
+			{
+				ComponentName: "cilium",
+				OldVersion:    currentVersionsBundle.Cilium.Version,
+				NewVersion:    newVersionsBundle.Cilium.Version,
+			},
+		},
+	}
 }

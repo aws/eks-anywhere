@@ -36,6 +36,9 @@ spec:
     volumeMounts:
     - mountPath: /usr/host
       name: host-components
+    - mountPath: /eksa-upgrades/kube-vip.yaml
+      name: kube-vip
+      subPath: kube-vip.yaml
   - args:
     - --target
     - "1"
@@ -101,10 +104,16 @@ spec:
     securityContext:
       privileged: true
   nodeName: my-node
-  restartPolicy: Never
+  restartPolicy: OnFailure
   volumes:
   - hostPath:
       path: /foo
       type: DirectoryOrCreate
     name: host-components
+  - configMap:
+      items:
+      - key: kube-vip.yaml
+        path: kube-vip.yaml
+      name: kube-vip-in-place-upgrade
+    name: kube-vip
 status: {}

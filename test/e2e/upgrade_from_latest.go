@@ -58,6 +58,14 @@ func runUpgradeWithFluxFromReleaseFlow(test *framework.ClusterE2ETest, latestRel
 	test.DeleteCluster()
 }
 
+func runInPlaceUpgradeFromReleaseFlow(test *framework.ClusterE2ETest, latestRelease *releasev1.EksARelease, clusterOpts ...framework.ClusterE2ETestOpt) {
+	test.CreateCluster(framework.ExecuteWithEksaRelease(latestRelease))
+	test.UpgradeClusterWithNewConfig(clusterOpts)
+	test.ValidateClusterState()
+	test.StopIfFailed()
+	test.DeleteCluster()
+}
+
 func runMulticlusterUpgradeFromReleaseFlowAPI(test *framework.MulticlusterE2ETest, release *releasev1.EksARelease, kubeVersion anywherev1.KubernetesVersion, os framework.OS) {
 	provider := test.ManagementCluster.Provider
 	test.CreateManagementCluster(framework.ExecuteWithEksaRelease(release))
@@ -165,4 +173,23 @@ func runMulticlusterUpgradeFromReleaseFlowAPIWithFlux(test *framework.Multiclust
 	})
 
 	test.DeleteManagementCluster()
+}
+
+func runUpgradeManagementComponentsFlow(t *testing.T, release *releasev1.EksARelease, provider framework.Provider, kubeVersion anywherev1.KubernetesVersion, os framework.OS) {
+	test := framework.NewClusterE2ETest(t, provider)
+	// create cluster with old eksa
+	test.GenerateClusterConfigForVersion(release.Version, framework.ExecuteWithEksaRelease(release))
+	test.UpdateClusterConfig(
+		api.ClusterToConfigFiller(
+			api.WithKubernetesVersion(kubeVersion),
+			api.WithControlPlaneCount(1),
+			api.WithWorkerNodeCount(1),
+		),
+		provider.WithKubeVersionAndOS(kubeVersion, os, release),
+	)
+
+	test.CreateCluster(framework.ExecuteWithEksaRelease(release))
+	// upgrade management-components with new eksa
+	test.RunEKSA([]string{"upgrade", "management-components", "-f", test.ClusterConfigLocation, "-v", "99"})
+	test.DeleteCluster()
 }

@@ -55,6 +55,8 @@ type kindExecConfig struct {
 	ExtraPortMappings    []int
 	DockerExtraMounts    bool
 	DisableDefaultCNI    bool
+	PodSubnet            string
+	ServiceSubnet        string
 }
 
 func NewKind(executable Executable, writer filewriter.FileWriter) *Kind {
@@ -74,6 +76,17 @@ func (k *Kind) CreateBootstrapCluster(ctx context.Context, clusterSpec *cluster.
 	err = processOpts(opts)
 	if err != nil {
 		return "", err
+	}
+
+	serviceCidrs := clusterSpec.Cluster.Spec.ClusterNetwork.Services.CidrBlocks
+	podCidrs := clusterSpec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks
+
+	if len(serviceCidrs) != 0 {
+		k.execConfig.ServiceSubnet = serviceCidrs[0]
+	}
+
+	if len(podCidrs) != 0 {
+		k.execConfig.PodSubnet = podCidrs[0]
 	}
 
 	err = k.buildConfigFile()

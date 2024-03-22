@@ -17,6 +17,50 @@ import (
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
+// APIServerExtraArgs
+func TestCloudStackKubernetes129RedHat8APIServerExtraArgsSimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewCloudStack(t, framework.WithCloudStackRedhat129()),
+		framework.WithEnvVar(features.APIServerExtraArgsEnabledEnvVar, "true"),
+	).WithClusterConfig(
+		api.ClusterToConfigFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube129),
+			api.WithControlPlaneAPIServerExtraArgs(),
+		),
+	)
+	runSimpleFlowWithoutClusterConfigGeneration(test)
+}
+
+// TODO: Investigate why this test takes long time to pass with service-account-issuer flag
+func TestCloudStackKubernetes129Redhat8APIServerExtraArgsUpgradeFlow(t *testing.T) {
+	var addAPIServerExtraArgsclusterOpts []framework.ClusterE2ETestOpt
+	var removeAPIServerExtraArgsclusterOpts []framework.ClusterE2ETestOpt
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewCloudStack(t, framework.WithCloudStackRedhat129()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube129)),
+		framework.WithEnvVar(features.APIServerExtraArgsEnabledEnvVar, "true"),
+	)
+	addAPIServerExtraArgsclusterOpts = append(
+		addAPIServerExtraArgsclusterOpts,
+		framework.WithClusterUpgrade(
+			api.WithControlPlaneAPIServerExtraArgs(),
+		),
+	)
+	removeAPIServerExtraArgsclusterOpts = append(
+		removeAPIServerExtraArgsclusterOpts,
+		framework.WithClusterUpgrade(
+			api.RemoveAllAPIServerExtraArgs(),
+		),
+	)
+	runAPIServerExtraArgsUpgradeFlow(
+		test,
+		addAPIServerExtraArgsclusterOpts,
+		removeAPIServerExtraArgsclusterOpts,
+	)
+}
+
 // AWS IAM Auth
 func TestCloudStackKubernetes125AWSIamAuth(t *testing.T) {
 	test := framework.NewClusterE2ETest(
@@ -975,6 +1019,12 @@ func TestCloudStackKubernetes129InstallGitFluxDuringUpgrade(t *testing.T) {
 		framework.WithFluxGit(),
 		framework.WithClusterUpgrade(api.WithGitOpsRef(framework.DefaultFluxConfigName, v1alpha1.FluxConfigKind)),
 	)
+}
+
+func TestCloudStackKubernetes128UpgradeManagementComponents(t *testing.T) {
+	release := latestMinorRelease(t)
+	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes128())
+	runUpgradeManagementComponentsFlow(t, release, provider, v1alpha1.Kube128, framework.RedHat9)
 }
 
 // Labels
@@ -3481,6 +3531,26 @@ func TestCloudStackKubernetes128To129RedhatMultipleFieldsUpgrade(t *testing.T) {
 		t,
 		provider,
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube128)),
+	)
+	runSimpleUpgradeFlow(
+		test,
+		v1alpha1.Kube129,
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube129)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		provider.WithProviderUpgrade(
+			provider.Redhat9Kubernetes129Template(),
+			framework.UpdateLargerCloudStackComputeOffering(),
+		),
+	)
+}
+
+func TestCloudStackKubernetes128To129StackedEtcdRedhatMultipleFieldsUpgrade(t *testing.T) {
+	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes128())
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube128)),
+		framework.WithClusterFiller(api.WithStackedEtcdTopology()),
 	)
 	runSimpleUpgradeFlow(
 		test,

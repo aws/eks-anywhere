@@ -3,7 +3,9 @@ package management
 import (
 	"context"
 
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/clustermarshaller"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/task"
 	"github.com/aws/eks-anywhere/pkg/types"
@@ -38,6 +40,13 @@ func (s *installEksaComponentsOnBootstrapTask) Checkpoint() *task.CompletedTask 
 type installEksaComponentsOnWorkloadTask struct{}
 
 func (s *installEksaComponentsOnWorkloadTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
+	// Removes the tinkerbell IP annotation added to the spec for controller based cluster creation. This
+	// helps use the right admin machine URL for hegel URLS.
+	if commandContext.ClusterSpec.Cluster.Spec.DatacenterRef.Kind == v1alpha1.TinkerbellDatacenterKind {
+		logger.Info("Removing Tinkerbell IP annotation")
+		commandContext.ClusterSpec.Cluster.ClearTinkerbellIPAnnotation()
+	}
+
 	logger.Info("Installing EKS-A custom components on workload cluster")
 
 	err := installEKSAComponents(ctx, commandContext, commandContext.WorkloadCluster)
@@ -49,9 +58,11 @@ func (s *installEksaComponentsOnWorkloadTask) Run(ctx context.Context, commandCo
 	commandContext.ClusterSpec.Cluster.AddManagedByCLIAnnotation()
 	commandContext.ClusterSpec.Cluster.SetManagementComponentsVersion(commandContext.ClusterSpec.EKSARelease.Spec.Version)
 
-	if err := commandContext.ClusterManager.CreateNamespace(ctx, commandContext.WorkloadCluster, commandContext.ClusterSpec.Cluster.Namespace); err != nil {
-		commandContext.SetError(err)
-		return &workflows.CollectMgmtClusterDiagnosticsTask{}
+	if commandContext.ClusterSpec.Cluster.Namespace != "" {
+		if err := workflows.CreateNamespaceIfNotPresent(ctx, commandContext.ClusterSpec.Cluster.Namespace, commandContext.WorkloadCluster.KubeconfigFile, commandContext.ClientFactory); err != nil {
+			commandContext.SetError(err)
+			return &workflows.CollectMgmtClusterDiagnosticsTask{}
+		}
 	}
 
 	logger.Info("Applying cluster spec to workload cluster")
@@ -59,6 +70,15 @@ func (s *installEksaComponentsOnWorkloadTask) Run(ctx context.Context, commandCo
 		commandContext.SetError(err)
 		return &workflows.CollectMgmtClusterDiagnosticsTask{}
 	}
+
+	datacenterConfig := commandContext.Provider.DatacenterConfig(commandContext.ClusterSpec)
+	machineConfigs := commandContext.Provider.MachineConfigs(commandContext.ClusterSpec)
+
+	resourcesSpec, err := clustermarshaller.MarshalClusterSpec(commandContext.ClusterSpec, datacenterConfig, machineConfigs)
+	if err != nil {
+		commandContext.SetError(err)
+	}
+	logger.V(6).Info(string(resourcesSpec))
 
 	return &installGitOpsManagerTask{}
 }

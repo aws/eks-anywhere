@@ -5,6 +5,7 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/google/uuid"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	clusterctlv1 "sigs.k8s.io/cluster-api/cmd/clusterctl/api/v1alpha3"
 	"sigs.k8s.io/cluster-api/controllers/remote"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
@@ -249,7 +250,7 @@ func (f *Factory) WithNutanixDatacenterReconciler() *Factory {
 // withNutanixClusterReconciler adds the NutanixClusterReconciler to the controller factory.
 func (f *Factory) withNutanixClusterReconciler() *Factory {
 	f.dependencyFactory.WithNutanixDefaulter().WithNutanixValidator()
-	f.withTracker().withCNIReconciler().withIPValidator()
+	f.withTracker().withCNIReconciler(f.getProviderNamespace(constants.NutanixProviderName)).withIPValidator()
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.nutanixClusterReconciler != nil {
 			return nil
@@ -281,7 +282,7 @@ func (f *Factory) withTracker() *Factory {
 			f.manager,
 			remote.ClusterCacheTrackerOptions{
 				Log:     &logger,
-				Indexes: remote.DefaultIndexes,
+				Indexes: []remote.Index{remote.NodeProviderIDIndex},
 			},
 		)
 		if err != nil {
@@ -344,7 +345,7 @@ func (f *Factory) WithProviderClusterReconcilerRegistry(capiProviders []clusterc
 }
 
 func (f *Factory) withDockerClusterReconciler() *Factory {
-	f.withCNIReconciler().withTracker()
+	f.withCNIReconciler(f.getProviderNamespace(constants.DockerProviderName)).withTracker()
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dockerClusterReconciler != nil {
 			return nil
@@ -365,7 +366,7 @@ func (f *Factory) withDockerClusterReconciler() *Factory {
 
 func (f *Factory) withVSphereClusterReconciler() *Factory {
 	f.dependencyFactory.WithVSphereDefaulter().WithVSphereValidator()
-	f.withTracker().withCNIReconciler().withIPValidator()
+	f.withTracker().withCNIReconciler(f.getProviderNamespace(constants.VSphereProviderName)).withIPValidator()
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.vsphereClusterReconciler != nil {
 			return nil
@@ -388,7 +389,7 @@ func (f *Factory) withVSphereClusterReconciler() *Factory {
 }
 
 func (f *Factory) withSnowClusterReconciler() *Factory {
-	f.withCNIReconciler().withTracker().withIPValidator()
+	f.withCNIReconciler(f.getProviderNamespace(constants.SnowProviderName)).withTracker().withIPValidator()
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.snowClusterReconciler != nil {
@@ -410,7 +411,7 @@ func (f *Factory) withSnowClusterReconciler() *Factory {
 }
 
 func (f *Factory) withTinkerbellClusterReconciler() *Factory {
-	f.withCNIReconciler().withTracker().withIPValidator()
+	f.withCNIReconciler(f.getProviderNamespace(constants.TinkerbellProviderName)).withTracker().withIPValidator()
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.tinkerbellClusterReconciler != nil {
@@ -432,7 +433,7 @@ func (f *Factory) withTinkerbellClusterReconciler() *Factory {
 }
 
 func (f *Factory) withCloudStackClusterReconciler() *Factory {
-	f.withCNIReconciler().withTracker().withIPValidator().withCloudStackValidatorRegistry()
+	f.withCNIReconciler(f.getProviderNamespace(constants.CloudStackProviderName)).withTracker().withIPValidator().withCloudStackValidatorRegistry()
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.cloudstackClusterReconciler != nil {
@@ -503,7 +504,7 @@ func (f *Factory) withCiliumTemplater() *Factory {
 	return f
 }
 
-func (f *Factory) withCNIReconciler() *Factory {
+func (f *Factory) withCNIReconciler(providerNamespace string) *Factory {
 	f.withCiliumTemplater()
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
@@ -511,7 +512,7 @@ func (f *Factory) withCNIReconciler() *Factory {
 			return nil
 		}
 
-		f.cniReconciler = cnireconciler.New(ciliumreconciler.New(f.ciliumTemplater))
+		f.cniReconciler = cnireconciler.New(ciliumreconciler.New(f.ciliumTemplater, []string{providerNamespace}))
 
 		return nil
 	})
@@ -579,7 +580,7 @@ func (f *Factory) withMachineHealthCheckReconciler() *Factory {
 			return nil
 		}
 
-		machineHealthCheckDefaulter := anywhereCluster.NewMachineHealthCheckDefaulter(constants.DefaultNodeStartupTimeout, constants.DefaultUnhealthyMachineTimeout)
+		machineHealthCheckDefaulter := anywhereCluster.NewMachineHealthCheckDefaulter(constants.DefaultNodeStartupTimeout, constants.DefaultUnhealthyMachineTimeout, intstr.Parse(constants.DefaultMaxUnhealthy), intstr.Parse(constants.DefaultWorkerMaxUnhealthy))
 
 		f.machineHealthCheckReconciler = mhcreconciler.New(
 			f.manager.GetClient(),
@@ -601,6 +602,7 @@ func (f *Factory) WithKubeadmControlPlaneReconciler() *Factory {
 
 		f.reconcilers.KubeadmControlPlaneReconciler = NewKubeadmControlPlaneReconciler(
 			f.manager.GetClient(),
+			f.manager.GetAPIReader(),
 		)
 
 		return nil
@@ -618,6 +620,7 @@ func (f *Factory) WithMachineDeploymentReconciler() *Factory {
 
 		f.reconcilers.MachineDeploymentReconciler = NewMachineDeploymentReconciler(
 			f.manager.GetClient(),
+			f.manager.GetAPIReader(),
 		)
 
 		return nil
@@ -628,6 +631,7 @@ func (f *Factory) WithMachineDeploymentReconciler() *Factory {
 
 // WithControlPlaneUpgradeReconciler builds the ControlPlaneUpgrade reconciler.
 func (f *Factory) WithControlPlaneUpgradeReconciler() *Factory {
+	f.withTracker()
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.reconcilers.ControlPlaneUpgradeReconciler != nil {
 			return nil
@@ -635,6 +639,7 @@ func (f *Factory) WithControlPlaneUpgradeReconciler() *Factory {
 
 		f.reconcilers.ControlPlaneUpgradeReconciler = NewControlPlaneUpgradeReconciler(
 			f.manager.GetClient(),
+			f.tracker,
 		)
 
 		return nil
@@ -677,4 +682,25 @@ func (f *Factory) WithNodeUpgradeReconciler() *Factory {
 	})
 
 	return f
+}
+
+func (f *Factory) getProviderNamespace(providerName string) string {
+	var providerNamespace string
+	switch providerName {
+	case snowProviderName:
+		providerNamespace = constants.CapasSystemNamespace
+	case vSphereProviderName:
+		providerNamespace = constants.CapvSystemNamespace
+	case tinkerbellProviderName:
+		providerNamespace = constants.CaptSystemNamespace
+	case cloudstackProviderName:
+		providerNamespace = constants.CapcSystemNamespace
+	case nutanixProviderName:
+		providerNamespace = constants.CapxSystemNamespace
+	case dockerProviderName:
+		providerNamespace = constants.CapdSystemNamespace
+	default:
+		f.logger.Info("Found unknown CAPI provider, ignoring", "providerName", providerName)
+	}
+	return providerNamespace
 }

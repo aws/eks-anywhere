@@ -1,3 +1,4 @@
+{{- $kube_minor_version := (index (splitList "." (trimPrefix "v" .kubernetesVersion)) 1) -}}
 apiVersion: cluster.x-k8s.io/v1beta1
 kind: Cluster
 metadata:
@@ -85,6 +86,10 @@ spec:
       name: {{.controlPlaneTemplateName}}
   kubeadmConfigSpec:
     clusterConfiguration:
+{{- if (ge (atoi $kube_minor_version) 29) }}
+      featureGates:
+        EtcdLearnerMode: false
+{{- end }}
       imageRepository: {{.kubernetesRepository}}
       etcd:
 {{- if .externalEtcd }}
@@ -158,6 +163,9 @@ spec:
           audit-log-maxbackup: "10"
           audit-log-maxsize: "512"
           profiling: "false"
+{{- if and .encryptionProviderConfig (ge (atoi $kube_minor_version) 29) }}
+          feature-gates: "KMSv1=true"
+{{- end }}
 {{- if .apiserverExtraArgs }}
 {{ .apiserverExtraArgs.ToYaml | indent 10 }}
 {{- end }}
@@ -472,7 +480,6 @@ spec:
     - echo "127.0.0.1   localhost" >>/etc/hosts
     - echo "127.0.0.1   {{`{{ ds.meta_data.hostname }}`}}" >>/etc/hosts
     - echo "{{`{{ ds.meta_data.hostname }}`}}" >/etc/hostname
-{{- $kube_minor_version := (index (splitList "." (trimPrefix "v" .kubernetesVersion)) 1) }}
 {{- if and (ge (atoi $kube_minor_version) 29) (ne .format "bottlerocket") }}
     - "if [ -f /run/kubeadm/kubeadm.yaml ]; then sed -i 's#path: /etc/kubernetes/admin.conf#path: /etc/kubernetes/super-admin.conf#' /etc/kubernetes/manifests/kube-vip.yaml; fi"
 {{- end }}
@@ -644,9 +651,9 @@ metadata:
   namespace: {{.eksaSystemNamespace}}
   labels:
     clusterctl.cluster.x-k8s.io/move: "true"
-stringData:
-  username: "{{.eksaVsphereUsername}}"
-  password: "{{.eksaVspherePassword}}"
+data:
+  username: {{.eksaVsphereUsername | b64enc}}
+  password: {{.eksaVspherePassword | b64enc}}
 ---
 {{- if .registryAuth }}
 apiVersion: v1
@@ -656,9 +663,9 @@ metadata:
   namespace: {{.eksaSystemNamespace}}
   labels:
     clusterctl.cluster.x-k8s.io/move: "true"
-stringData:
-  username: "{{.registryUsername}}"
-  password: "{{.registryPassword}}"
+data:
+  username: {{.registryUsername | b64enc}}
+  password: {{.registryPassword | b64enc}}
 ---
 {{- end }}
 apiVersion: v1
@@ -687,9 +694,9 @@ stringData:
     metadata:
       name: cloud-provider-vsphere-credentials
       namespace: kube-system
-    stringData:
-      {{.vsphereServer}}.password: "{{.eksaCloudProviderPassword}}"
-      {{.vsphereServer}}.username: "{{.eksaCloudProviderUsername}}"
+    data:
+      {{.vsphereServer}}.password: {{.eksaCloudProviderPassword | b64enc}}
+      {{.vsphereServer}}.username: {{.eksaCloudProviderUsername | b64enc}}
     type: Opaque
 type: addons.cluster.x-k8s.io/resource-set
 ---

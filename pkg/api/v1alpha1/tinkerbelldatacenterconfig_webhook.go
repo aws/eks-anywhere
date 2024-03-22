@@ -18,11 +18,13 @@ import (
 	"fmt"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
+	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // log is for logging in this package.
@@ -43,11 +45,11 @@ func (r *TinkerbellDatacenterConfig) SetupWebhookWithManager(mgr ctrl.Manager) e
 var _ webhook.Validator = &TinkerbellDatacenterConfig{}
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
-func (r *TinkerbellDatacenterConfig) ValidateCreate() error {
+func (r *TinkerbellDatacenterConfig) ValidateCreate() (admission.Warnings, error) {
 	tinkerbelldatacenterconfiglog.Info("validate create", "name", r.Name)
 
 	if err := r.Validate(); err != nil {
-		return apierrors.NewInvalid(
+		return nil, apierrors.NewInvalid(
 			GroupVersion.WithKind(TinkerbellDatacenterKind).GroupKind(),
 			r.Name,
 			field.ErrorList{
@@ -58,19 +60,19 @@ func (r *TinkerbellDatacenterConfig) ValidateCreate() error {
 
 	if r.IsReconcilePaused() {
 		tinkerbelldatacenterconfiglog.Info("TinkerbellDatacenterConfig is paused, so allowing create", "name", r.Name)
-		return nil
+		return nil, nil
 	}
 
-	return nil
+	return nil, nil
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
-func (r *TinkerbellDatacenterConfig) ValidateUpdate(old runtime.Object) error {
+func (r *TinkerbellDatacenterConfig) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
 	tinkerbelldatacenterconfiglog.Info("validate update", "name", r.Name)
 
 	oldTinkerbellDatacenterConfig, ok := old.(*TinkerbellDatacenterConfig)
 	if !ok {
-		return apierrors.NewBadRequest(fmt.Sprintf("expected a TinkerbellDatacenterConfig but got a %T", old))
+		return nil, apierrors.NewBadRequest(fmt.Sprintf("expected a TinkerbellDatacenterConfig but got a %T", old))
 	}
 
 	var allErrs field.ErrorList
@@ -78,7 +80,7 @@ func (r *TinkerbellDatacenterConfig) ValidateUpdate(old runtime.Object) error {
 	allErrs = append(allErrs, validateImmutableFieldsTinkerbellDatacenterConfig(r, oldTinkerbellDatacenterConfig)...)
 
 	if len(allErrs) != 0 {
-		return apierrors.NewInvalid(GroupVersion.WithKind(TinkerbellDatacenterKind).GroupKind(), r.Name, allErrs)
+		return nil, apierrors.NewInvalid(GroupVersion.WithKind(TinkerbellDatacenterKind).GroupKind(), r.Name, allErrs)
 	}
 
 	if err := r.Validate(); err != nil {
@@ -86,18 +88,18 @@ func (r *TinkerbellDatacenterConfig) ValidateUpdate(old runtime.Object) error {
 	}
 
 	if len(allErrs) != 0 {
-		return apierrors.NewInvalid(GroupVersion.WithKind(TinkerbellDatacenterKind).GroupKind(), r.Name, allErrs)
+		return nil, apierrors.NewInvalid(GroupVersion.WithKind(TinkerbellDatacenterKind).GroupKind(), r.Name, allErrs)
 	}
 
-	return nil
+	return nil, nil
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type.
-func (r *TinkerbellDatacenterConfig) ValidateDelete() error {
+func (r *TinkerbellDatacenterConfig) ValidateDelete() (admission.Warnings, error) {
 	tinkerbelldatacenterconfiglog.Info("validate delete", "name", r.Name)
 
 	// TODO(user): fill in your validation logic upon object deletion.
-	return nil
+	return nil, nil
 }
 
 func validateImmutableFieldsTinkerbellDatacenterConfig(new, old *TinkerbellDatacenterConfig) field.ErrorList {
@@ -108,6 +110,20 @@ func validateImmutableFieldsTinkerbellDatacenterConfig(new, old *TinkerbellDatac
 		allErrs = append(
 			allErrs,
 			field.Forbidden(specPath.Child("tinkerbellIP"), "field is immutable"),
+		)
+	}
+
+	if new.Spec.HookImagesURLPath != old.Spec.HookImagesURLPath && !metav1.HasAnnotation(new.ObjectMeta, ManagedByCLIAnnotation) {
+		allErrs = append(
+			allErrs,
+			field.Forbidden(specPath.Child("hookImagesURLPath"), "field is immutable"),
+		)
+	}
+
+	if new.Spec.SkipLoadBalancerDeployment != old.Spec.SkipLoadBalancerDeployment && !metav1.HasAnnotation(new.ObjectMeta, ManagedByCLIAnnotation) {
+		allErrs = append(
+			allErrs,
+			field.Forbidden(specPath.Child("skipLoadBalancerDeployment"), "field is immutable"),
 		)
 	}
 

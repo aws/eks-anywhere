@@ -155,20 +155,6 @@ func (mr *MockClusterManagerMockRecorder) BackupCAPIWaitForInfrastructure(arg0, 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BackupCAPIWaitForInfrastructure", reflect.TypeOf((*MockClusterManager)(nil).BackupCAPIWaitForInfrastructure), arg0, arg1, arg2, arg3)
 }
 
-// CreateAwsIamAuthCaSecret mocks base method.
-func (m *MockClusterManager) CreateAwsIamAuthCaSecret(arg0 context.Context, arg1 *types.Cluster, arg2 string) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateAwsIamAuthCaSecret", arg0, arg1, arg2)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// CreateAwsIamAuthCaSecret indicates an expected call of CreateAwsIamAuthCaSecret.
-func (mr *MockClusterManagerMockRecorder) CreateAwsIamAuthCaSecret(arg0, arg1, arg2 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateAwsIamAuthCaSecret", reflect.TypeOf((*MockClusterManager)(nil).CreateAwsIamAuthCaSecret), arg0, arg1, arg2)
-}
-
 // CreateEKSANamespace mocks base method.
 func (m *MockClusterManager) CreateEKSANamespace(arg0 context.Context, arg1 *types.Cluster) error {
 	m.ctrl.T.Helper()
@@ -181,34 +167,6 @@ func (m *MockClusterManager) CreateEKSANamespace(arg0 context.Context, arg1 *typ
 func (mr *MockClusterManagerMockRecorder) CreateEKSANamespace(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateEKSANamespace", reflect.TypeOf((*MockClusterManager)(nil).CreateEKSANamespace), arg0, arg1)
-}
-
-// CreateEKSAResources mocks base method.
-func (m *MockClusterManager) CreateEKSAResources(arg0 context.Context, arg1 *types.Cluster, arg2 *cluster.Spec, arg3 providers.DatacenterConfig, arg4 []providers.MachineConfig) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateEKSAResources", arg0, arg1, arg2, arg3, arg4)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// CreateEKSAResources indicates an expected call of CreateEKSAResources.
-func (mr *MockClusterManagerMockRecorder) CreateEKSAResources(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateEKSAResources", reflect.TypeOf((*MockClusterManager)(nil).CreateEKSAResources), arg0, arg1, arg2, arg3, arg4)
-}
-
-// CreateNamespace mocks base method.
-func (m *MockClusterManager) CreateNamespace(arg0 context.Context, arg1 *types.Cluster, arg2 string) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateNamespace", arg0, arg1, arg2)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// CreateNamespace indicates an expected call of CreateNamespace.
-func (mr *MockClusterManagerMockRecorder) CreateNamespace(arg0, arg1, arg2 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateNamespace", reflect.TypeOf((*MockClusterManager)(nil).CreateNamespace), arg0, arg1, arg2)
 }
 
 // CreateRegistryCredSecret mocks base method.
@@ -225,76 +183,18 @@ func (mr *MockClusterManagerMockRecorder) CreateRegistryCredSecret(arg0, arg1 in
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateRegistryCredSecret", reflect.TypeOf((*MockClusterManager)(nil).CreateRegistryCredSecret), arg0, arg1)
 }
 
-// CreateWorkloadCluster mocks base method.
-func (m *MockClusterManager) CreateWorkloadCluster(arg0 context.Context, arg1 *types.Cluster, arg2 *cluster.Spec, arg3 providers.Provider) (*types.Cluster, error) {
+// GenerateAWSIAMKubeconfig mocks base method.
+func (m *MockClusterManager) GenerateAWSIAMKubeconfig(arg0 context.Context, arg1 *types.Cluster) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateWorkloadCluster", arg0, arg1, arg2, arg3)
-	ret0, _ := ret[0].(*types.Cluster)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// CreateWorkloadCluster indicates an expected call of CreateWorkloadCluster.
-func (mr *MockClusterManagerMockRecorder) CreateWorkloadCluster(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateWorkloadCluster", reflect.TypeOf((*MockClusterManager)(nil).CreateWorkloadCluster), arg0, arg1, arg2, arg3)
-}
-
-// DeleteCluster mocks base method.
-func (m *MockClusterManager) DeleteCluster(arg0 context.Context, arg1, arg2 *types.Cluster, arg3 providers.Provider, arg4 *cluster.Spec) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteCluster", arg0, arg1, arg2, arg3, arg4)
+	ret := m.ctrl.Call(m, "GenerateAWSIAMKubeconfig", arg0, arg1)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// DeleteCluster indicates an expected call of DeleteCluster.
-func (mr *MockClusterManagerMockRecorder) DeleteCluster(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
+// GenerateAWSIAMKubeconfig indicates an expected call of GenerateAWSIAMKubeconfig.
+func (mr *MockClusterManagerMockRecorder) GenerateAWSIAMKubeconfig(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteCluster", reflect.TypeOf((*MockClusterManager)(nil).DeleteCluster), arg0, arg1, arg2, arg3, arg4)
-}
-
-// DeletePackageResources mocks base method.
-func (m *MockClusterManager) DeletePackageResources(arg0 context.Context, arg1 *types.Cluster, arg2 string) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeletePackageResources", arg0, arg1, arg2)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// DeletePackageResources indicates an expected call of DeletePackageResources.
-func (mr *MockClusterManagerMockRecorder) DeletePackageResources(arg0, arg1, arg2 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeletePackageResources", reflect.TypeOf((*MockClusterManager)(nil).DeletePackageResources), arg0, arg1, arg2)
-}
-
-// EKSAClusterSpecChanged mocks base method.
-func (m *MockClusterManager) EKSAClusterSpecChanged(arg0 context.Context, arg1 *types.Cluster, arg2 *cluster.Spec) (bool, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "EKSAClusterSpecChanged", arg0, arg1, arg2)
-	ret0, _ := ret[0].(bool)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// EKSAClusterSpecChanged indicates an expected call of EKSAClusterSpecChanged.
-func (mr *MockClusterManagerMockRecorder) EKSAClusterSpecChanged(arg0, arg1, arg2 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EKSAClusterSpecChanged", reflect.TypeOf((*MockClusterManager)(nil).EKSAClusterSpecChanged), arg0, arg1, arg2)
-}
-
-// GenerateIamAuthKubeconfig mocks base method.
-func (m *MockClusterManager) GenerateIamAuthKubeconfig(arg0 context.Context, arg1, arg2 *types.Cluster, arg3 *cluster.Spec) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GenerateIamAuthKubeconfig", arg0, arg1, arg2, arg3)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// GenerateIamAuthKubeconfig indicates an expected call of GenerateIamAuthKubeconfig.
-func (mr *MockClusterManagerMockRecorder) GenerateIamAuthKubeconfig(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateIamAuthKubeconfig", reflect.TypeOf((*MockClusterManager)(nil).GenerateIamAuthKubeconfig), arg0, arg1, arg2, arg3)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateAWSIAMKubeconfig", reflect.TypeOf((*MockClusterManager)(nil).GenerateAWSIAMKubeconfig), arg0, arg1)
 }
 
 // GetCurrentClusterSpec mocks base method.
@@ -312,20 +212,6 @@ func (mr *MockClusterManagerMockRecorder) GetCurrentClusterSpec(arg0, arg1, arg2
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCurrentClusterSpec", reflect.TypeOf((*MockClusterManager)(nil).GetCurrentClusterSpec), arg0, arg1, arg2)
 }
 
-// InstallAwsIamAuth mocks base method.
-func (m *MockClusterManager) InstallAwsIamAuth(arg0 context.Context, arg1, arg2 *types.Cluster, arg3 *cluster.Spec) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "InstallAwsIamAuth", arg0, arg1, arg2, arg3)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// InstallAwsIamAuth indicates an expected call of InstallAwsIamAuth.
-func (mr *MockClusterManagerMockRecorder) InstallAwsIamAuth(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InstallAwsIamAuth", reflect.TypeOf((*MockClusterManager)(nil).InstallAwsIamAuth), arg0, arg1, arg2, arg3)
-}
-
 // InstallCAPI mocks base method.
 func (m *MockClusterManager) InstallCAPI(arg0 context.Context, arg1 *cluster.ManagementComponents, arg2 *cluster.Spec, arg3 *types.Cluster, arg4 providers.Provider) error {
 	m.ctrl.T.Helper()
@@ -338,48 +224,6 @@ func (m *MockClusterManager) InstallCAPI(arg0 context.Context, arg1 *cluster.Man
 func (mr *MockClusterManagerMockRecorder) InstallCAPI(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InstallCAPI", reflect.TypeOf((*MockClusterManager)(nil).InstallCAPI), arg0, arg1, arg2, arg3, arg4)
-}
-
-// InstallCustomComponents mocks base method.
-func (m *MockClusterManager) InstallCustomComponents(arg0 context.Context, arg1 *cluster.ManagementComponents, arg2 *cluster.Spec, arg3 *types.Cluster, arg4 providers.Provider) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "InstallCustomComponents", arg0, arg1, arg2, arg3, arg4)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// InstallCustomComponents indicates an expected call of InstallCustomComponents.
-func (mr *MockClusterManagerMockRecorder) InstallCustomComponents(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InstallCustomComponents", reflect.TypeOf((*MockClusterManager)(nil).InstallCustomComponents), arg0, arg1, arg2, arg3, arg4)
-}
-
-// InstallMachineHealthChecks mocks base method.
-func (m *MockClusterManager) InstallMachineHealthChecks(arg0 context.Context, arg1 *cluster.Spec, arg2 *types.Cluster) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "InstallMachineHealthChecks", arg0, arg1, arg2)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// InstallMachineHealthChecks indicates an expected call of InstallMachineHealthChecks.
-func (mr *MockClusterManagerMockRecorder) InstallMachineHealthChecks(arg0, arg1, arg2 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InstallMachineHealthChecks", reflect.TypeOf((*MockClusterManager)(nil).InstallMachineHealthChecks), arg0, arg1, arg2)
-}
-
-// InstallNetworking mocks base method.
-func (m *MockClusterManager) InstallNetworking(arg0 context.Context, arg1 *types.Cluster, arg2 *cluster.Spec, arg3 providers.Provider) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "InstallNetworking", arg0, arg1, arg2, arg3)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// InstallNetworking indicates an expected call of InstallNetworking.
-func (mr *MockClusterManagerMockRecorder) InstallNetworking(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InstallNetworking", reflect.TypeOf((*MockClusterManager)(nil).InstallNetworking), arg0, arg1, arg2, arg3)
 }
 
 // MoveCAPI mocks base method.
@@ -429,20 +273,6 @@ func (mr *MockClusterManagerMockRecorder) PauseEKSAControllerReconcile(arg0, arg
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PauseEKSAControllerReconcile", reflect.TypeOf((*MockClusterManager)(nil).PauseEKSAControllerReconcile), arg0, arg1, arg2, arg3)
 }
 
-// RemoveManagedByCLIAnnotationForCluster mocks base method.
-func (m *MockClusterManager) RemoveManagedByCLIAnnotationForCluster(arg0 context.Context, arg1 *types.Cluster, arg2 *cluster.Spec, arg3 providers.Provider) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RemoveManagedByCLIAnnotationForCluster", arg0, arg1, arg2, arg3)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// RemoveManagedByCLIAnnotationForCluster indicates an expected call of RemoveManagedByCLIAnnotationForCluster.
-func (mr *MockClusterManagerMockRecorder) RemoveManagedByCLIAnnotationForCluster(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveManagedByCLIAnnotationForCluster", reflect.TypeOf((*MockClusterManager)(nil).RemoveManagedByCLIAnnotationForCluster), arg0, arg1, arg2, arg3)
-}
-
 // ResumeCAPIWorkloadClusters mocks base method.
 func (m *MockClusterManager) ResumeCAPIWorkloadClusters(arg0 context.Context, arg1 *types.Cluster) error {
 	m.ctrl.T.Helper()
@@ -455,34 +285,6 @@ func (m *MockClusterManager) ResumeCAPIWorkloadClusters(arg0 context.Context, ar
 func (mr *MockClusterManagerMockRecorder) ResumeCAPIWorkloadClusters(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ResumeCAPIWorkloadClusters", reflect.TypeOf((*MockClusterManager)(nil).ResumeCAPIWorkloadClusters), arg0, arg1)
-}
-
-// ResumeEKSAControllerReconcile mocks base method.
-func (m *MockClusterManager) ResumeEKSAControllerReconcile(arg0 context.Context, arg1 *types.Cluster, arg2 *cluster.Spec, arg3 providers.Provider) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ResumeEKSAControllerReconcile", arg0, arg1, arg2, arg3)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// ResumeEKSAControllerReconcile indicates an expected call of ResumeEKSAControllerReconcile.
-func (mr *MockClusterManagerMockRecorder) ResumeEKSAControllerReconcile(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ResumeEKSAControllerReconcile", reflect.TypeOf((*MockClusterManager)(nil).ResumeEKSAControllerReconcile), arg0, arg1, arg2, arg3)
-}
-
-// RunPostCreateWorkloadCluster mocks base method.
-func (m *MockClusterManager) RunPostCreateWorkloadCluster(arg0 context.Context, arg1, arg2 *types.Cluster, arg3 *cluster.Spec) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RunPostCreateWorkloadCluster", arg0, arg1, arg2, arg3)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// RunPostCreateWorkloadCluster indicates an expected call of RunPostCreateWorkloadCluster.
-func (mr *MockClusterManagerMockRecorder) RunPostCreateWorkloadCluster(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RunPostCreateWorkloadCluster", reflect.TypeOf((*MockClusterManager)(nil).RunPostCreateWorkloadCluster), arg0, arg1, arg2, arg3)
 }
 
 // SaveLogsManagementCluster mocks base method.
@@ -526,35 +328,6 @@ func (m *MockClusterManager) Upgrade(arg0 context.Context, arg1 *types.Cluster, 
 func (mr *MockClusterManagerMockRecorder) Upgrade(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Upgrade", reflect.TypeOf((*MockClusterManager)(nil).Upgrade), arg0, arg1, arg2, arg3, arg4)
-}
-
-// UpgradeCluster mocks base method.
-func (m *MockClusterManager) UpgradeCluster(arg0 context.Context, arg1, arg2 *types.Cluster, arg3 *cluster.Spec, arg4 providers.Provider) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpgradeCluster", arg0, arg1, arg2, arg3, arg4)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// UpgradeCluster indicates an expected call of UpgradeCluster.
-func (mr *MockClusterManagerMockRecorder) UpgradeCluster(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpgradeCluster", reflect.TypeOf((*MockClusterManager)(nil).UpgradeCluster), arg0, arg1, arg2, arg3, arg4)
-}
-
-// UpgradeNetworking mocks base method.
-func (m *MockClusterManager) UpgradeNetworking(arg0 context.Context, arg1 *types.Cluster, arg2, arg3 *cluster.Spec, arg4 providers.Provider) (*types.ChangeDiff, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpgradeNetworking", arg0, arg1, arg2, arg3, arg4)
-	ret0, _ := ret[0].(*types.ChangeDiff)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// UpgradeNetworking indicates an expected call of UpgradeNetworking.
-func (mr *MockClusterManagerMockRecorder) UpgradeNetworking(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpgradeNetworking", reflect.TypeOf((*MockClusterManager)(nil).UpgradeNetworking), arg0, arg1, arg2, arg3, arg4)
 }
 
 // MockGitOpsManager is a mock of GitOpsManager interface.

@@ -49,7 +49,7 @@ func (uc *upgradeClusterOptions) upgradePlanManagementComponents(ctx context.Con
 		return fmt.Errorf("common validations failed due to: %v", err)
 	}
 
-	newClusterSpec, err := newClusterSpec(uc.clusterOptions)
+	newClusterSpec, err := newBasicClusterSpec(uc.clusterOptions)
 	if err != nil {
 		return err
 	}

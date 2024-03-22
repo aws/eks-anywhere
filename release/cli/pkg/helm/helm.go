@@ -89,10 +89,10 @@ func GetHelmDest(d *helmDriver, r *releasetypes.ReleaseConfig, ReleaseImageURI, 
 	}
 
 	pwd, err := os.Getwd()
-	dest := filepath.Join(pwd, assetName)
 	if err != nil {
 		return "", fmt.Errorf("getting current working dir: %w", err)
 	}
+	dest := filepath.Join(pwd, assetName)
 	fmt.Printf("Untar helm chart %s into %s\n", chartPath, dest)
 	err = UnTarHelmChart(chartPath, assetName, dest)
 	if err != nil {
@@ -140,6 +140,10 @@ func ModifyAndPushChartYaml(i releasetypes.ImageArtifact, r *releasetypes.Releas
 	// If the chart is packages, we find the image tag values and overide them in the values.yaml.
 	if strings.Contains(helmDest, "eks-anywhere-packages") {
 		imageTagMap, err := GetPackagesImageTags(eksaArtifacts)
+		if err != nil {
+			return fmt.Errorf("getting packages image tags: %w", err)
+		}
+
 		fmt.Printf("Overwriting helm values.yaml version to new image tags %v\n", imageTagMap)
 		err = OverWriteChartValuesImageTag(helmDest, imageTagMap)
 		if err != nil {
@@ -190,7 +194,7 @@ func (d *helmDriver) HelmRegistryLogin(r *releasetypes.ReleaseConfig, remoteType
 		remote = r.ReleaseContainerRegistry
 	}
 	login := action.NewRegistryLogin(d.cfg)
-	err := login.Run(os.Stdout, remote, authConfig.Username, authConfig.Password, false)
+	err := login.Run(os.Stdout, remote, authConfig.Username, authConfig.Password)
 	if err != nil {
 		return fmt.Errorf("running the Helm registry login command: %w", err)
 	}

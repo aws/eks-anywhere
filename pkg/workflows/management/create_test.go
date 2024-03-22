@@ -7,6 +7,10 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
+	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -44,6 +48,7 @@ type createTestSetup struct {
 	workloadCluster      *types.Cluster
 	workflow             *management.Create
 	client               *clientmocks.MockClient
+	clientFactory        *mocks.MockClientFactory
 }
 
 func newCreateTest(t *testing.T) *createTestSetup {
@@ -65,9 +70,11 @@ func newCreateTest(t *testing.T) *createTestSetup {
 	clusterCreator := mocks.NewMockClusterCreator(mockCtrl)
 	validator := mocks.NewMockValidator(mockCtrl)
 	client := clientmocks.NewMockClient(mockCtrl)
+	clientFactory := mocks.NewMockClientFactory(mockCtrl)
 
 	workflow := management.NewCreate(
 		bootstrapper,
+		clientFactory,
 		provider,
 		clusterManager,
 		gitOpsManager,
@@ -82,26 +89,32 @@ func newCreateTest(t *testing.T) *createTestSetup {
 		t.Setenv(e, "true")
 	}
 
-	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) { s.Cluster.Name = "test-cluster" })
+	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
+		s.Cluster.Name = "test-cluster"
+		s.Cluster.Namespace = "test-ns"
+	})
 	managementComponents := cluster.ManagementComponentsFromBundles(clusterSpec.Bundles)
 
 	return &createTestSetup{
-		t:                    t,
-		bootstrapper:         bootstrapper,
-		clusterManager:       clusterManager,
-		gitOpsManager:        gitOpsManager,
-		provider:             provider,
-		writer:               writer,
-		validator:            validator,
-		eksdInstaller:        eksdInstaller,
-		eksaInstaller:        eksaInstaller,
-		packageInstaller:     packageInstaller,
-		clusterCreator:       clusterCreator,
-		datacenterConfig:     datacenterConfig,
-		machineConfigs:       machineConfigs,
-		workflow:             workflow,
-		ctx:                  context.Background(),
-		bootstrapCluster:     &types.Cluster{Name: "test-cluster"},
+		t:                t,
+		bootstrapper:     bootstrapper,
+		clientFactory:    clientFactory,
+		clusterManager:   clusterManager,
+		gitOpsManager:    gitOpsManager,
+		provider:         provider,
+		writer:           writer,
+		validator:        validator,
+		eksdInstaller:    eksdInstaller,
+		eksaInstaller:    eksaInstaller,
+		packageInstaller: packageInstaller,
+		clusterCreator:   clusterCreator,
+		datacenterConfig: datacenterConfig,
+		machineConfigs:   machineConfigs,
+		workflow:         workflow,
+		ctx:              context.Background(),
+		bootstrapCluster: &types.Cluster{
+			Name: "test-cluster",
+		},
 		workloadCluster:      &types.Cluster{},
 		managementComponents: managementComponents,
 		clusterSpec:          clusterSpec,
@@ -169,9 +182,9 @@ func (c *createTestSetup) expectInstallEksaComponentsBootstrap(err1, err2, err3,
 	)
 }
 
-func (c *createTestSetup) expectCreateWorkload(err1, err2, err3, err4, err5 error) {
+func (c *createTestSetup) expectCreateWorkload(err1, err2, err3, err4, err5, err6 error) {
 	gomock.InOrder(
-		c.clusterManager.EXPECT().CreateNamespace(c.ctx, c.bootstrapCluster, c.clusterSpec.Cluster.Namespace).Return(err1),
+		c.clientFactory.EXPECT().BuildClientFromKubeconfig(c.bootstrapCluster.KubeconfigFile).Return(c.client, err1),
 
 		c.clusterCreator.EXPECT().CreateSync(c.ctx, c.clusterSpec, c.bootstrapCluster).Return(c.workloadCluster, err2),
 
@@ -183,6 +196,8 @@ func (c *createTestSetup) expectCreateWorkload(err1, err2, err3, err4, err5 erro
 
 		c.provider.EXPECT().UpdateSecrets(
 			c.ctx, c.workloadCluster, c.clusterSpec).Return(err5),
+
+		c.clusterManager.EXPECT().CreateRegistryCredSecret(c.ctx, c.workloadCluster).Return(err6),
 	)
 }
 
@@ -216,36 +231,33 @@ func (c *createTestSetup) expectInstallEksaComponentsWorkload(err1, err2, err3 e
 		c.eksdInstaller.EXPECT().InstallEksdManifest(
 			c.ctx, c.clusterSpec, c.workloadCluster),
 
-		c.clusterManager.EXPECT().CreateNamespace(c.ctx, c.workloadCluster, c.clusterSpec.Cluster.Namespace).Return(err3),
+		c.clientFactory.EXPECT().BuildClientFromKubeconfig(c.workloadCluster.KubeconfigFile).Return(c.client, err3),
 
 		c.clusterCreator.EXPECT().Run(c.ctx, c.clusterSpec, *c.workloadCluster).Return(err2),
 	)
 }
 
 func (c *createTestSetup) expectInstallGitOpsManager() {
-	gomock.InOrder(
-		c.provider.EXPECT().DatacenterConfig(
-			c.clusterSpec).Return(c.datacenterConfig),
-
-		c.provider.EXPECT().MachineConfigs(
-			c.clusterSpec).Return(c.machineConfigs),
-
-		c.gitOpsManager.EXPECT().InstallGitOps(
-			c.ctx, c.workloadCluster, c.managementComponents, c.clusterSpec, c.datacenterConfig, c.machineConfigs),
-	)
+	c.gitOpsManager.EXPECT().InstallGitOps(
+		c.ctx, c.workloadCluster, c.managementComponents, c.clusterSpec, c.datacenterConfig, c.machineConfigs)
 }
 
 func (c *createTestSetup) expectWriteClusterConfig() {
-	gomock.InOrder(
-		c.provider.EXPECT().DatacenterConfig(
-			c.clusterSpec).Return(c.datacenterConfig),
+	c.writer.EXPECT().Write(
+		"test-cluster-eks-a-cluster.yaml", gomock.Any(), gomock.Any())
+}
 
-		c.provider.EXPECT().MachineConfigs(
-			c.clusterSpec).Return(c.machineConfigs),
-
-		c.writer.EXPECT().Write(
-			"test-cluster-eks-a-cluster.yaml", gomock.Any(), gomock.Any()),
-	)
+func (c *createTestSetup) expectCreateNamespace() {
+	n := c.clusterSpec.Cluster.Namespace
+	ns := &corev1.Namespace{
+		TypeMeta: v1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "Namespace",
+		},
+		ObjectMeta: v1.ObjectMeta{Name: n},
+	}
+	c.client.EXPECT().Get(c.ctx, n, "", &corev1.Namespace{}).Return(apierrors.NewNotFound(schema.GroupResource{Group: "", Resource: ""}, "")).MaxTimes(2)
+	c.client.EXPECT().Create(c.ctx, ns).MaxTimes(2)
 }
 
 func (c *createTestSetup) expectDeleteBootstrap(err error) {
@@ -256,6 +268,18 @@ func (c *createTestSetup) expectCuratedPackagesInstallation() {
 	c.packageInstaller.EXPECT().InstallCuratedPackages(c.ctx).Times(1)
 }
 
+func (c *createTestSetup) expectDatacenterConfig() {
+	gomock.InOrder(
+		c.provider.EXPECT().DatacenterConfig(c.clusterSpec).Return(c.datacenterConfig).AnyTimes(),
+	)
+}
+
+func (c *createTestSetup) expectMachineConfigs() {
+	gomock.InOrder(
+		c.provider.EXPECT().MachineConfigs(c.clusterSpec).Return(c.machineConfigs).AnyTimes(),
+	)
+}
+
 func TestCreateRunSuccess(t *testing.T) {
 	test := newCreateTest(t)
 	test.expectSetup()
@@ -263,7 +287,7 @@ func TestCreateRunSuccess(t *testing.T) {
 	test.expectCreateBootstrap()
 	test.expectCAPIInstall(nil, nil, nil)
 	test.expectInstallEksaComponentsBootstrap(nil, nil, nil, nil)
-	test.expectCreateWorkload(nil, nil, nil, nil, nil)
+	test.expectCreateWorkload(nil, nil, nil, nil, nil, nil)
 	test.expectInstallResourcesOnManagementTask(nil)
 	test.expectPauseReconcile(nil)
 	test.expectMoveManagement(nil)
@@ -272,6 +296,9 @@ func TestCreateRunSuccess(t *testing.T) {
 	test.expectWriteClusterConfig()
 	test.expectDeleteBootstrap(nil)
 	test.expectCuratedPackagesInstallation()
+	test.expectCreateNamespace()
+	test.expectDatacenterConfig()
+	test.expectMachineConfigs()
 
 	err := test.run()
 	if err != nil {
@@ -514,7 +541,8 @@ func TestCreateSyncFailure(t *testing.T) {
 	test.expectCAPIInstall(nil, nil, nil)
 	test.expectInstallEksaComponentsBootstrap(nil, nil, nil, nil)
 
-	test.clusterManager.EXPECT().CreateNamespace(test.ctx, test.bootstrapCluster, test.clusterSpec.Cluster.Namespace).Return(nil)
+	test.clientFactory.EXPECT().BuildClientFromKubeconfig(test.bootstrapCluster.KubeconfigFile).Return(test.client, nil)
+	test.expectCreateNamespace()
 	test.clusterCreator.EXPECT().CreateSync(test.ctx, test.clusterSpec, test.bootstrapCluster).Return(nil, errors.New("test"))
 	test.clusterManager.EXPECT().SaveLogsManagementCluster(test.ctx, test.clusterSpec, test.bootstrapCluster)
 	test.writer.EXPECT().Write(fmt.Sprintf("%s-checkpoint.yaml", test.clusterSpec.Cluster.Name), gomock.Any())
@@ -533,7 +561,8 @@ func TestCreateEKSANamespaceFailure(t *testing.T) {
 	test.expectCAPIInstall(nil, nil, nil)
 	test.expectInstallEksaComponentsBootstrap(nil, nil, nil, nil)
 
-	test.clusterManager.EXPECT().CreateNamespace(test.ctx, test.bootstrapCluster, test.clusterSpec.Cluster.Namespace).Return(nil)
+	test.clientFactory.EXPECT().BuildClientFromKubeconfig(test.bootstrapCluster.KubeconfigFile).Return(test.client, nil)
+	test.expectCreateNamespace()
 	test.clusterCreator.EXPECT().CreateSync(test.ctx, test.clusterSpec, test.bootstrapCluster).Return(test.workloadCluster, nil)
 	test.clusterManager.EXPECT().CreateEKSANamespace(test.ctx, test.workloadCluster).Return(errors.New("test"))
 	test.clusterManager.EXPECT().SaveLogsManagementCluster(test.ctx, test.clusterSpec, test.bootstrapCluster)
@@ -554,7 +583,8 @@ func TestCreateInstallCAPIWorkloadFailure(t *testing.T) {
 	test.expectInstallEksaComponentsBootstrap(nil, nil, nil, nil)
 	test.expectPreflightValidationsToPass()
 
-	test.clusterManager.EXPECT().CreateNamespace(test.ctx, test.bootstrapCluster, test.clusterSpec.Cluster.Namespace).Return(nil)
+	test.clientFactory.EXPECT().BuildClientFromKubeconfig(test.bootstrapCluster.KubeconfigFile).Return(test.client, nil)
+	test.expectCreateNamespace()
 	test.clusterCreator.EXPECT().CreateSync(
 		test.ctx, test.clusterSpec, test.bootstrapCluster).Return(test.workloadCluster, nil)
 
@@ -583,7 +613,8 @@ func TestCreateUpdateSecretsFailure(t *testing.T) {
 	test.expectInstallEksaComponentsBootstrap(nil, nil, nil, nil)
 	test.expectPreflightValidationsToPass()
 
-	test.expectCreateWorkload(nil, nil, nil, nil, errors.New("test"))
+	test.expectCreateNamespace()
+	test.expectCreateWorkload(nil, nil, nil, nil, nil, errors.New("test"))
 
 	test.clusterManager.EXPECT().SaveLogsManagementCluster(test.ctx, test.clusterSpec, test.bootstrapCluster)
 	test.clusterManager.EXPECT().SaveLogsWorkloadCluster(test.ctx, test.provider, test.clusterSpec, test.workloadCluster)
@@ -603,7 +634,8 @@ func TestCreatePostWorkloadInitFailure(t *testing.T) {
 	c.expectPreflightValidationsToPass()
 	c.expectCAPIInstall(nil, nil, nil)
 	c.expectInstallEksaComponentsBootstrap(nil, nil, nil, nil)
-	c.expectCreateWorkload(nil, nil, nil, nil, nil)
+	c.expectCreateWorkload(nil, nil, nil, nil, nil, nil)
+	c.expectCreateNamespace()
 
 	c.expectInstallResourcesOnManagementTask(fmt.Errorf("test"))
 
@@ -625,10 +657,11 @@ func TestCreateMoveCAPIFailure(t *testing.T) {
 	c.expectPreflightValidationsToPass()
 	c.expectCAPIInstall(nil, nil, nil)
 	c.expectInstallEksaComponentsBootstrap(nil, nil, nil, nil)
-	c.expectCreateWorkload(nil, nil, nil, nil, nil)
+	c.expectCreateWorkload(nil, nil, nil, nil, nil, nil)
 	c.expectInstallResourcesOnManagementTask(nil)
 	c.expectPauseReconcile(nil)
 	c.expectMoveManagement(errors.New("test"))
+	c.expectCreateNamespace()
 
 	c.clusterManager.EXPECT().SaveLogsManagementCluster(c.ctx, c.clusterSpec, c.bootstrapCluster)
 	c.clusterManager.EXPECT().SaveLogsWorkloadCluster(c.ctx, c.provider, c.clusterSpec, c.workloadCluster)
@@ -648,9 +681,10 @@ func TestPauseReconcilerFailure(t *testing.T) {
 	c.expectPreflightValidationsToPass()
 	c.expectCAPIInstall(nil, nil, nil)
 	c.expectInstallEksaComponentsBootstrap(nil, nil, nil, nil)
-	c.expectCreateWorkload(nil, nil, nil, nil, nil)
+	c.expectCreateWorkload(nil, nil, nil, nil, nil, nil)
 	c.expectInstallResourcesOnManagementTask(nil)
 	c.expectPauseReconcile(errors.New("test"))
+	c.expectCreateNamespace()
 
 	c.clusterManager.EXPECT().SaveLogsManagementCluster(c.ctx, c.clusterSpec, c.bootstrapCluster)
 	c.clusterManager.EXPECT().SaveLogsWorkloadCluster(c.ctx, c.provider, c.clusterSpec, c.workloadCluster)
@@ -670,10 +704,11 @@ func TestCreateEKSAWorkloadComponentsFailure(t *testing.T) {
 	test.expectCreateBootstrap()
 	test.expectCAPIInstall(nil, nil, nil)
 	test.expectInstallEksaComponentsBootstrap(nil, nil, nil, nil)
-	test.expectCreateWorkload(nil, nil, nil, nil, nil)
+	test.expectCreateWorkload(nil, nil, nil, nil, nil, nil)
 	test.expectInstallResourcesOnManagementTask(nil)
 	test.expectPauseReconcile(nil)
 	test.expectMoveManagement(nil)
+	test.expectCreateNamespace()
 
 	test.eksdInstaller.EXPECT().InstallEksdCRDs(test.ctx, test.clusterSpec, test.workloadCluster).Return(fmt.Errorf("test"))
 
@@ -695,11 +730,12 @@ func TestCreateEKSAWorkloadFailure(t *testing.T) {
 	test.expectCreateBootstrap()
 	test.expectCAPIInstall(nil, nil, nil)
 	test.expectInstallEksaComponentsBootstrap(nil, nil, nil, nil)
-	test.expectCreateWorkload(nil, nil, nil, nil, nil)
+	test.expectCreateWorkload(nil, nil, nil, nil, nil, nil)
 	test.expectInstallResourcesOnManagementTask(nil)
 	test.expectPauseReconcile(nil)
 	test.expectMoveManagement(nil)
 	test.expectInstallEksaComponentsWorkload(nil, fmt.Errorf("test"), nil)
+	test.expectCreateNamespace()
 
 	test.clusterManager.EXPECT().SaveLogsManagementCluster(test.ctx, test.clusterSpec, test.bootstrapCluster)
 
@@ -718,7 +754,8 @@ func TestCreateEKSAWorkloadNamespaceFailure(t *testing.T) {
 	test.expectCreateBootstrap()
 	test.expectCAPIInstall(nil, nil, nil)
 	test.expectInstallEksaComponentsBootstrap(nil, nil, nil, nil)
-	test.expectCreateWorkload(nil, nil, nil, nil, nil)
+	test.expectCreateWorkload(nil, nil, nil, nil, nil, nil)
+	test.expectCreateNamespace()
 	test.expectInstallResourcesOnManagementTask(nil)
 	test.expectPauseReconcile(nil)
 	test.expectMoveManagement(nil)
@@ -735,7 +772,7 @@ func TestCreateEKSAWorkloadNamespaceFailure(t *testing.T) {
 		test.eksdInstaller.EXPECT().InstallEksdManifest(
 			test.ctx, test.clusterSpec, test.workloadCluster),
 
-		test.clusterManager.EXPECT().CreateNamespace(test.ctx, test.workloadCluster, test.clusterSpec.Cluster.Namespace).Return(fmt.Errorf("")),
+		test.clientFactory.EXPECT().BuildClientFromKubeconfig(test.workloadCluster.KubeconfigFile).Return(test.client, fmt.Errorf("")),
 	)
 
 	test.clusterManager.EXPECT().SaveLogsManagementCluster(test.ctx, test.clusterSpec, test.bootstrapCluster)
@@ -755,22 +792,18 @@ func TestCreateGitOPsFailure(t *testing.T) {
 	test.expectCreateBootstrap()
 	test.expectCAPIInstall(nil, nil, nil)
 	test.expectInstallEksaComponentsBootstrap(nil, nil, nil, nil)
-	test.expectCreateWorkload(nil, nil, nil, nil, nil)
+	test.expectCreateWorkload(nil, nil, nil, nil, nil, nil)
 	test.expectInstallResourcesOnManagementTask(nil)
 	test.expectPauseReconcile(nil)
 	test.expectMoveManagement(nil)
 	test.expectInstallEksaComponentsWorkload(nil, nil, nil)
+	test.expectCreateNamespace()
+	test.expectDatacenterConfig()
+	test.expectMachineConfigs()
 
-	gomock.InOrder(
-		test.provider.EXPECT().DatacenterConfig(
-			test.clusterSpec).Return(test.datacenterConfig),
+	test.gitOpsManager.EXPECT().InstallGitOps(
+		test.ctx, test.workloadCluster, test.managementComponents, test.clusterSpec, test.datacenterConfig, test.machineConfigs).Return(errors.New("test"))
 
-		test.provider.EXPECT().MachineConfigs(
-			test.clusterSpec).Return(test.machineConfigs),
-
-		test.gitOpsManager.EXPECT().InstallGitOps(
-			test.ctx, test.workloadCluster, test.managementComponents, test.clusterSpec, test.datacenterConfig, test.machineConfigs).Return(errors.New("test")),
-	)
 	test.expectWriteClusterConfig()
 	test.expectDeleteBootstrap(nil)
 	test.expectCuratedPackagesInstallation()
@@ -788,24 +821,55 @@ func TestCreateWriteConfigFailure(t *testing.T) {
 	test.expectCreateBootstrap()
 	test.expectCAPIInstall(nil, nil, nil)
 	test.expectInstallEksaComponentsBootstrap(nil, nil, nil, nil)
-	test.expectCreateWorkload(nil, nil, nil, nil, nil)
+	test.expectCreateWorkload(nil, nil, nil, nil, nil, nil)
 	test.expectInstallResourcesOnManagementTask(nil)
 	test.expectPauseReconcile(nil)
 	test.expectMoveManagement(nil)
 	test.expectInstallEksaComponentsWorkload(nil, nil, nil)
 	test.expectInstallGitOpsManager()
 	test.expectPreflightValidationsToPass()
+	test.expectCreateNamespace()
+	test.expectDatacenterConfig()
+	test.expectMachineConfigs()
 
-	gomock.InOrder(
-		test.provider.EXPECT().DatacenterConfig(
-			test.clusterSpec).Return(test.datacenterConfig),
+	test.writer.EXPECT().Write(
+		"test-cluster-eks-a-cluster.yaml", gomock.Any(), gomock.Any()).Return("", errors.New("test"))
 
-		test.provider.EXPECT().MachineConfigs(
-			test.clusterSpec).Return(test.machineConfigs),
-
-		test.writer.EXPECT().Write(
-			"test-cluster-eks-a-cluster.yaml", gomock.Any(), gomock.Any()).Return("", errors.New("test")),
+	test.clusterManager.EXPECT().SaveLogsManagementCluster(
+		test.ctx, test.clusterSpec, test.bootstrapCluster,
 	)
+	test.clusterManager.EXPECT().SaveLogsWorkloadCluster(
+		test.ctx, test.provider, test.clusterSpec, test.workloadCluster,
+	)
+	test.writer.EXPECT().Write(fmt.Sprintf("%s-checkpoint.yaml", test.clusterSpec.Cluster.Name), gomock.Any())
+
+	err := test.run()
+	if err == nil {
+		t.Fatalf("Create.Run() err = %v, want err = nil", err)
+	}
+}
+
+func TestCreateWriteConfigAWSIAMFailure(t *testing.T) {
+	test := newCreateTest(t)
+
+	test.expectSetup()
+	test.expectCreateBootstrap()
+	test.expectCAPIInstall(nil, nil, nil)
+	test.expectInstallEksaComponentsBootstrap(nil, nil, nil, nil)
+	test.expectCreateWorkload(nil, nil, nil, nil, nil, nil)
+	test.expectInstallResourcesOnManagementTask(nil)
+	test.expectPauseReconcile(nil)
+	test.expectMoveManagement(nil)
+	test.expectInstallEksaComponentsWorkload(nil, nil, nil)
+	test.expectInstallGitOpsManager()
+	test.expectPreflightValidationsToPass()
+	test.clusterSpec.AWSIamConfig = &v1alpha1.AWSIamConfig{}
+	test.expectWriteClusterConfig()
+	test.expectCreateNamespace()
+	test.expectDatacenterConfig()
+	test.expectMachineConfigs()
+
+	test.clusterManager.EXPECT().GenerateAWSIAMKubeconfig(test.ctx, test.workloadCluster).Return(errors.New("test"))
 
 	test.clusterManager.EXPECT().SaveLogsManagementCluster(
 		test.ctx, test.clusterSpec, test.bootstrapCluster,
@@ -828,7 +892,7 @@ func TestCreateRunDeleteBootstrapFailure(t *testing.T) {
 	test.expectPreflightValidationsToPass()
 	test.expectCAPIInstall(nil, nil, nil)
 	test.expectInstallEksaComponentsBootstrap(nil, nil, nil, nil)
-	test.expectCreateWorkload(nil, nil, nil, nil, nil)
+	test.expectCreateWorkload(nil, nil, nil, nil, nil, nil)
 	test.expectInstallResourcesOnManagementTask(nil)
 	test.expectPauseReconcile(nil)
 	test.expectMoveManagement(nil)
@@ -837,6 +901,9 @@ func TestCreateRunDeleteBootstrapFailure(t *testing.T) {
 	test.expectWriteClusterConfig()
 	test.expectDeleteBootstrap(fmt.Errorf("test"))
 	test.expectCuratedPackagesInstallation()
+	test.expectCreateNamespace()
+	test.expectDatacenterConfig()
+	test.expectMachineConfigs()
 
 	test.writer.EXPECT().Write("test-cluster-checkpoint.yaml", gomock.Any(), gomock.Any())
 

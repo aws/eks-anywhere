@@ -121,6 +121,40 @@ func TestAssertMachineConfigNamespaceMatchesDatacenterConfig_Different(t *testin
 	g.Expect(err).ToNot(gomega.Succeed())
 }
 
+func TestAssertMachineConfigK8sVersionBRCP_Error(t *testing.T) {
+	g := gomega.NewWithT(t)
+	builder := NewDefaultValidClusterSpecBuilder()
+	clusterSpec := builder.Build()
+	clusterSpec.Spec.Cluster.Spec.ExternalEtcdConfiguration = nil
+	clusterSpec.Spec.Cluster.Spec.KubernetesVersion = eksav1alpha1.Kube129
+	clusterSpec.MachineConfigs[builder.ControlPlaneMachineName].Spec.OSFamily = "bottlerocket"
+	err := tinkerbell.AssertOsFamilyValid(clusterSpec)
+	g.Expect(err).ToNot(gomega.Succeed())
+}
+
+func TestAssertMachineConfigK8sVersionBRWorker_Error(t *testing.T) {
+	g := gomega.NewWithT(t)
+	builder := NewDefaultValidClusterSpecBuilder()
+	clusterSpec := builder.Build()
+	clusterSpec.Spec.Cluster.Spec.ExternalEtcdConfiguration = nil
+	clusterSpec.Spec.Cluster.Spec.KubernetesVersion = eksav1alpha1.Kube129
+	clusterSpec.MachineConfigs[builder.WorkerNodeGroupMachineName].Spec.OSFamily = "bottlerocket"
+	err := tinkerbell.AssertOsFamilyValid(clusterSpec)
+	g.Expect(err).ToNot(gomega.Succeed())
+}
+
+func TestAssertMachineConfigK8sVersionBR_Success(t *testing.T) {
+	g := gomega.NewWithT(t)
+	builder := NewDefaultValidClusterSpecBuilder()
+	clusterSpec := builder.Build()
+	clusterSpec.Spec.Cluster.Spec.ExternalEtcdConfiguration = nil
+	clusterSpec.Spec.Cluster.Spec.KubernetesVersion = eksav1alpha1.Kube128
+	clusterSpec.MachineConfigs[builder.ControlPlaneMachineName].Spec.OSFamily = "bottlerocket"
+	clusterSpec.MachineConfigs[builder.WorkerNodeGroupMachineName].Spec.OSFamily = "bottlerocket"
+	err := tinkerbell.AssertOsFamilyValid(clusterSpec)
+	g.Expect(err).To(gomega.Succeed())
+}
+
 func TestAssertMachineConfigOSImageURL_Error(t *testing.T) {
 	g := gomega.NewWithT(t)
 	builder := NewDefaultValidClusterSpecBuilder()

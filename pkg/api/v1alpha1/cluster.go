@@ -190,6 +190,8 @@ var clusterConfigValidations = []func(*Cluster) error{
 	validatePackageControllerConfiguration,
 	validateEksaVersion,
 	validateControlPlaneCertSANs,
+	validateControlPlaneAPIServerExtraArgs,
+	validateControlPlaneAPIServerOIDCExtraArgs,
 }
 
 // GetClusterConfig parses a Cluster object from a multiobject yaml file in disk
@@ -223,7 +225,7 @@ func GetAndValidateClusterConfig(fileName string) (*Cluster, error) {
 
 // GetClusterDefaultKubernetesVersion returns the default kubernetes version for a Cluster.
 func GetClusterDefaultKubernetesVersion() KubernetesVersion {
-	return Kube128
+	return Kube129
 }
 
 // ValidateClusterConfigContent validates a Cluster object without modifying it
@@ -290,6 +292,21 @@ func (c *Cluster) PauseReconcile() {
 	c.Annotations[pausedAnnotation] = "true"
 }
 
+// AllowDeleteWhilePaused adds the allow-delete-when-paused annotation to the cluster.
+func (c *Cluster) AllowDeleteWhilePaused() {
+	if c.Annotations == nil {
+		c.Annotations = map[string]string{}
+	}
+	c.Annotations[AllowDeleteWhenPausedAnnotation] = "true"
+}
+
+// PreventDeleteWhilePaused removes the allow-delete-when-paused annotation to the cluster.
+func (c *Cluster) PreventDeleteWhilePaused() {
+	if c.Annotations != nil {
+		delete(c.Annotations, AllowDeleteWhenPausedAnnotation)
+	}
+}
+
 func (c *Cluster) ClearPauseAnnotation() {
 	if c.Annotations != nil {
 		delete(c.Annotations, pausedAnnotation)
@@ -309,6 +326,29 @@ func (c *Cluster) ClearManagedByCLIAnnotation() {
 	if c.Annotations != nil {
 		delete(c.Annotations, ManagedByCLIAnnotation)
 	}
+}
+
+// AddTinkerbellIPAnnotation adds the managed-by-cli annotation to the cluster.
+func (c *Cluster) AddTinkerbellIPAnnotation(tinkerbellIP string) {
+	if c.Annotations == nil {
+		c.Annotations = map[string]string{}
+	}
+	c.Annotations[tinkerbellIPAnnotation] = tinkerbellIP
+}
+
+// ClearTinkerbellIPAnnotation removes the managed-by-cli annotation from the cluster.
+func (c *Cluster) ClearTinkerbellIPAnnotation() {
+	if c.Annotations != nil {
+		delete(c.Annotations, tinkerbellIPAnnotation)
+	}
+}
+
+// HasTinkerbellIPAnnotation returns the tinkerbell IP value if the annotation exists.
+func (c *Cluster) HasTinkerbellIPAnnotation() string {
+	if tinkerbellIP, ok := c.Annotations[tinkerbellIPAnnotation]; ok {
+		return tinkerbellIP
+	}
+	return ""
 }
 
 // RegistryAuth returns whether registry requires authentication or not.
@@ -412,7 +452,7 @@ func validateControlPlaneReplicas(clusterConfig *Cluster) error {
 		return nil
 	}
 	if clusterConfig.Spec.ControlPlaneConfiguration.Count%2 == 0 {
-		return errors.New("control plane node count cannot be an even number")
+		return errors.New("control plane node count cannot be an even number when using stacked etcd topology")
 	}
 	if clusterConfig.Spec.ControlPlaneConfiguration.Count != 3 && clusterConfig.Spec.ControlPlaneConfiguration.Count != 5 {
 		if clusterConfig.Spec.DatacenterRef.Kind != DockerDatacenterKind {
@@ -453,6 +493,37 @@ func validateControlPlaneCertSANs(cfg *Cluster) error {
 		return fmt.Errorf("invalid ControlPlaneConfiguration.CertSANs; must be an IP or domain name: [%v]", strings.Join(invalid, ", "))
 	}
 
+	return nil
+}
+
+func validateControlPlaneAPIServerExtraArgs(clusterConfig *Cluster) error {
+	if clusterConfig.Spec.ControlPlaneConfiguration.APIServerExtraArgs != nil && !features.IsActive(features.APIServerExtraArgsEnabled()) {
+		return fmt.Errorf("configuring APIServerExtraArgs is not supported. Set env var %v to enable", features.APIServerExtraArgsEnabledEnvVar)
+	}
+	return nil
+}
+
+func validateControlPlaneAPIServerOIDCExtraArgs(clusterConfig *Cluster) error {
+	oidcFlags := []string{
+		"oidc-issuer-url",
+		"oidc-client-id",
+		"oidc-groups-claim",
+		"oidc-groups-prefix",
+		"oidc-required-claim",
+		"oidc-username-claim",
+		"oidc-username-prefix",
+	}
+	if clusterConfig.Spec.IdentityProviderRefs != nil {
+		for _, ref := range clusterConfig.Spec.IdentityProviderRefs {
+			if ref.Kind == OIDCConfigKind {
+				for _, flag := range oidcFlags {
+					if _, has := clusterConfig.Spec.ControlPlaneConfiguration.APIServerExtraArgs[flag]; has {
+						return fmt.Errorf("the following flags cannot be configured if OIDCConfig is configured for cluster.spec.identityProviderRefs: %v. Remove from apiServerExtraArgs", oidcFlags)
+					}
+				}
+			}
+		}
+	}
 	return nil
 }
 

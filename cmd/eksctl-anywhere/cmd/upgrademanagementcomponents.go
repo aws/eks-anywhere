@@ -34,9 +34,7 @@ var upgradeManagementComponentsCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx := cmd.Context()
 
-		clusterSpec, err := newClusterSpec(clusterOptions{
-			fileName: umco.fileName,
-		})
+		clusterSpec, err := newBasicClusterSpec(umco.clusterOptions)
 		if err != nil {
 			return err
 		}
@@ -86,7 +84,7 @@ var upgradeManagementComponentsCmd = &cobra.Command{
 			KubeconfigFile: kubeconfig.FromClusterName(clusterSpec.Cluster.Name),
 		}
 
-		validator := management.NewUMCValidator(managementCluster, deps.Kubectl)
+		validator := management.NewUMCValidator(managementCluster, clusterSpec.EKSARelease, deps.UnAuthKubectlClient)
 		return runner.Run(ctx, clusterSpec, managementCluster, validator)
 	},
 }

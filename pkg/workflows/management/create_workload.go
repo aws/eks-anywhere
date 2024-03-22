@@ -18,9 +18,11 @@ func (s *createWorkloadClusterTask) Run(ctx context.Context, commandContext *tas
 	commandContext.ClusterSpec.Cluster.AddManagedByCLIAnnotation()
 	commandContext.ClusterSpec.Cluster.SetManagementComponentsVersion(commandContext.ClusterSpec.EKSARelease.Spec.Version)
 
-	if err := commandContext.ClusterManager.CreateNamespace(ctx, commandContext.BootstrapCluster, commandContext.ClusterSpec.Cluster.Namespace); err != nil {
-		commandContext.SetError(err)
-		return &workflows.CollectMgmtClusterDiagnosticsTask{}
+	if commandContext.ClusterSpec.Cluster.Namespace != "" {
+		if err := workflows.CreateNamespaceIfNotPresent(ctx, commandContext.ClusterSpec.Cluster.Namespace, commandContext.BootstrapCluster.KubeconfigFile, commandContext.ClientFactory); err != nil {
+			commandContext.SetError(err)
+			return &workflows.CollectMgmtClusterDiagnosticsTask{}
+		}
 	}
 
 	workloadCluster, err := commandContext.ClusterCreator.CreateSync(ctx, commandContext.ClusterSpec, commandContext.BootstrapCluster)
@@ -29,15 +31,6 @@ func (s *createWorkloadClusterTask) Run(ctx context.Context, commandContext *tas
 		return &workflows.CollectMgmtClusterDiagnosticsTask{}
 	}
 	commandContext.WorkloadCluster = workloadCluster
-
-	if commandContext.ClusterSpec.AWSIamConfig != nil {
-		logger.Info("Generating the aws iam kubeconfig file")
-		err = commandContext.ClusterManager.GenerateIamAuthKubeconfig(ctx, commandContext.BootstrapCluster, workloadCluster, commandContext.ClusterSpec)
-		if err != nil {
-			commandContext.SetError(err)
-			return &workflows.CollectDiagnosticsTask{}
-		}
-	}
 
 	logger.Info("Creating EKS-A namespace")
 	err = commandContext.ClusterManager.CreateEKSANamespace(ctx, commandContext.WorkloadCluster)
@@ -56,6 +49,12 @@ func (s *createWorkloadClusterTask) Run(ctx context.Context, commandContext *tas
 
 	logger.Info("Installing EKS-A secrets on workload cluster")
 	err = commandContext.Provider.UpdateSecrets(ctx, commandContext.WorkloadCluster, commandContext.ClusterSpec)
+	if err != nil {
+		commandContext.SetError(err)
+		return &workflows.CollectDiagnosticsTask{}
+	}
+
+	err = commandContext.ClusterManager.CreateRegistryCredSecret(ctx, commandContext.WorkloadCluster)
 	if err != nil {
 		commandContext.SetError(err)
 		return &workflows.CollectDiagnosticsTask{}

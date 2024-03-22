@@ -9,6 +9,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/utils/pointer"
 	clusterapiv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -24,30 +25,35 @@ func TestUnAuthClientGetSuccess(t *testing.T) {
 		namespace        string
 		obj              runtime.Object
 		wantResourceType string
+		options          kubernetes.KubectlGetOptions
 	}{
 		{
 			name:             "eksa cluster",
 			namespace:        "eksa-system",
 			obj:              &anywherev1.Cluster{},
 			wantResourceType: "Cluster.v1alpha1.anywhere.eks.amazonaws.com",
+			options:          kubernetes.KubectlGetOptions{Name: "eksa cluster", Namespace: "eksa-system"},
 		},
 		{
 			name:             "capi cluster",
 			namespace:        "eksa-system",
 			obj:              &clusterapiv1.Cluster{},
 			wantResourceType: "Cluster.v1beta1.cluster.x-k8s.io",
+			options:          kubernetes.KubectlGetOptions{Name: "capi cluster", Namespace: "eksa-system"},
 		},
 		{
 			name:             "capi kubeadm controlplane",
 			namespace:        "eksa-system",
 			obj:              &controlplanev1.KubeadmControlPlane{},
 			wantResourceType: "KubeadmControlPlane.v1beta1.controlplane.cluster.x-k8s.io",
+			options:          kubernetes.KubectlGetOptions{Name: "capi kubeadm controlplane", Namespace: "eksa-system"},
 		},
 		{
 			name:             "my-node",
 			namespace:        "",
 			obj:              &corev1.NodeList{},
 			wantResourceType: "Node",
+			options:          kubernetes.KubectlGetOptions{Name: "my-node", ClusterScoped: pointer.Bool(true)},
 		},
 	}
 	for _, tt := range tests {
@@ -58,11 +64,7 @@ func TestUnAuthClientGetSuccess(t *testing.T) {
 			kubectl := mocks.NewMockKubectl(ctrl)
 			kubeconfig := "k.kubeconfig"
 
-			o := &kubernetes.KubectlGetOptions{
-				Name:      tt.name,
-				Namespace: tt.namespace,
-			}
-			kubectl.EXPECT().Get(ctx, tt.wantResourceType, kubeconfig, tt.obj, o)
+			kubectl.EXPECT().Get(ctx, tt.wantResourceType, kubeconfig, tt.obj, &tt.options)
 
 			c := kubernetes.NewUnAuthClient(kubectl)
 			g.Expect(c.Init()).To(Succeed())

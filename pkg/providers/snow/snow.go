@@ -90,6 +90,11 @@ func (p *SnowProvider) SetupAndValidateUpgradeCluster(ctx context.Context, clust
 	return nil
 }
 
+// SetupAndValidateUpgradeManagementComponents performs necessary setup for upgrade management components operation.
+func (p *SnowProvider) SetupAndValidateUpgradeManagementComponents(_ context.Context, _ *cluster.Spec) error {
+	return nil
+}
+
 func (p *SnowProvider) SetupAndValidateDeleteCluster(ctx context.Context, _ *types.Cluster, clusterSpec *cluster.Spec) error {
 	if err := SetupEksaCredentialsSecret(clusterSpec.Config); err != nil {
 		return fmt.Errorf("setting up credentials: %v", err)
@@ -151,8 +156,9 @@ func (p *SnowProvider) GenerateCAPISpecForUpgrade(ctx context.Context, bootstrap
 	return p.generateCAPISpec(ctx, bootstrapCluster, clusterSpec)
 }
 
+// PreCAPIInstallOnBootstrap runs the steps that are provider specific before CAPI is installed on the bootstrap cluster.
 func (p *SnowProvider) PreCAPIInstallOnBootstrap(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
-	return nil
+	return p.UpdateSecrets(ctx, cluster, clusterSpec)
 }
 
 func (p *SnowProvider) PostBootstrapSetup(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {

@@ -246,7 +246,6 @@ spec:
           audit-log-maxbackup: "10"
           audit-log-maxsize: "512"
           authentication-token-webhook-config-file: /etc/kubernetes/aws-iam-authenticator/kubeconfig.yaml
-          feature-gates: ServiceLoadBalancerClass=true
         extraVolumes:
           - hostPath: /etc/kubernetes/audit-policy.yaml
             mountPath: /etc/kubernetes/audit-policy.yaml
@@ -574,7 +573,6 @@ spec:
           audit-log-maxbackup: "10"
           audit-log-maxsize: "512"
           authentication-token-webhook-config-file: /etc/kubernetes/aws-iam-authenticator/kubeconfig.yaml
-          feature-gates: ServiceLoadBalancerClass=true
         extraVolumes:
         - hostPath: /etc/kubernetes/audit-policy.yaml
           mountPath: /etc/kubernetes/audit-policy.yaml
@@ -1005,9 +1003,9 @@ func secret() *corev1.Secret {
 				"clusterctl.cluster.x-k8s.io/move": "true",
 			},
 		},
-		StringData: map[string]string{
-			"username": "username",
-			"password": "password",
+		Data: map[string][]byte{
+			"username": []byte("username"),
+			"password": []byte("password"),
 		},
 	}
 }

@@ -47,6 +47,11 @@ spec:
  datacenterRef:
    kind: NutanixDatacenterConfig
    name: nutanix-cluster
+ externalEtcdConfiguration:
+   count: 3
+   machineGroupRef:
+     kind: NutanixMachineConfig
+     name: mgmt-etcd
  kubernetesVersion: "1.28"
  workerNodeGroupConfigurations:
    - count: 1
@@ -99,6 +104,34 @@ spec:
  additionalCategories:
    - key: my-category
      value: my-category-value
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: NutanixMachineConfig
+metadata:
+ name: mgmt-etcd
+ namespace: default
+spec:
+ cluster:
+   name: nx-cluster-01
+   type: name
+ image:
+   name: eksa-ubuntu-2004-kube-v1.28
+   type: name
+ memorySize: 4Gi
+ osFamily: ubuntu
+ subnet:
+   name: vm-network
+   type: name
+ systemDiskSize: 40Gi
+ project:
+   type: name
+   name: my-project
+ users:
+   - name: eksa
+     sshAuthorizedKeys:
+       - ssh-rsa AAAA…
+ vcpuSockets: 2
+ vcpusPerSocket: 1
 ---
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: NutanixMachineConfig
@@ -175,6 +208,12 @@ Maximum number of nodes for this node group’s autoscaling configuration.
 
 ### workerNodeGroupConfigurations.kubernetesVersion
 The Kubernetes version you want to use for this worker node group. Supported values: 1.28, 1.27, 1.26, 1.25, 1.24
+
+### externalEtcdConfiguration.count
+Number of etcd members
+
+### externalEtcdConfiguration.machineGroupRef
+Refers to the Kubernetes object with Nutanix specific configuration for your etcd members.  See `NutanixMachineConfig` fields below.
 
 ### datacenterRef
 Refers to the Kubernetes object with Nutanix environment specific configuration. See `NutanixDatacenterConfig` fields below.

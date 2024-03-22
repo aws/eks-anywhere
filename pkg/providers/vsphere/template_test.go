@@ -1,7 +1,6 @@
 package vsphere_test
 
 import (
-	"os"
 	"testing"
 	"time"
 
@@ -10,6 +9,11 @@ import (
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
+)
+
+const (
+	expectedVSphereUsername = "vsphere_username"
+	expectedVSpherePassword = "vsphere_password"
 )
 
 func TestVsphereTemplateBuilderGenerateCAPISpecWorkersInvalidSSHKey(t *testing.T) {
@@ -52,8 +56,8 @@ func TestVsphereTemplateBuilderGenerateCAPISpecControlPlaneInvalidEtcdSSHKey(t *
 }
 
 func TestTemplateBuilder_CertSANs(t *testing.T) {
-	os.Unsetenv(config.EksavSphereUsernameKey)
-	os.Unsetenv(config.EksavSpherePasswordKey)
+	t.Setenv(config.EksavSphereUsernameKey, expectedVSphereUsername)
+	t.Setenv(config.EksavSpherePasswordKey, expectedVSpherePassword)
 
 	for _, tc := range []struct {
 		Input  string

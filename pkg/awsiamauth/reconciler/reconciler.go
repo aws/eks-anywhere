@@ -15,6 +15,7 @@ import (
 	"k8s.io/klog/v2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/awsiamauth"
 	anywhereCluster "github.com/aws/eks-anywhere/pkg/cluster"
@@ -154,7 +155,11 @@ func (r *Reconciler) applyIAMAuthManifest(ctx context.Context, client client.Cli
 }
 
 func (r *Reconciler) createKubeconfigSecret(ctx context.Context, clusterSpec *anywhereCluster.Spec, cluster *anywherev1.Cluster, clusterID uuid.UUID) error {
-	apiServerEndpoint := fmt.Sprintf("https://%s:6443", cluster.Spec.ControlPlaneConfiguration.Endpoint.Host)
+	endpoint := "localhost"
+	if cluster.Spec.DatacenterRef.Kind != v1alpha1.DockerDatacenterKind {
+		endpoint = cluster.Spec.ControlPlaneConfiguration.Endpoint.Host
+	}
+	apiServerEndpoint := fmt.Sprintf("https://%s:6443", endpoint)
 
 	clusterCaSecretName := clusterapi.ClusterCASecretName(cluster.Name)
 	clusterCaSecret := &corev1.Secret{}
@@ -172,10 +177,13 @@ func (r *Reconciler) createKubeconfigSecret(ctx context.Context, clusterSpec *an
 		return errors.Wrap(err, "generating aws-iam-authenticator kubeconfig")
 	}
 
+	clusterctlMoveLabel := make(map[string]string)
+	clusterctlMoveLabel[constants.ClusterctlMoveLabelName] = "true"
 	kubeconfigSecret := &corev1.Secret{
 		ObjectMeta: v1.ObjectMeta{
 			Name:      awsiamauth.KubeconfigSecretName(cluster.Name),
 			Namespace: constants.EksaSystemNamespace,
+			Labels:    clusterctlMoveLabel,
 		},
 		StringData: map[string]string{
 			"value": string(yaml),

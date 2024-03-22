@@ -33,6 +33,12 @@ var nutanixMachineConfigSpecWithProject string
 //go:embed testdata/machineConfig_additional_categories.yaml
 var nutanixMachineConfigSpecWithAdditionalCategories string
 
+//go:embed testdata/machineConfig_external_etcd.yaml
+var nutanixMachineConfigSpecExternalEtcd string
+
+//go:embed testdata/machineConfig_external_etcd_with_optional.yaml
+var nutanixMachineConfigSpecExternalEtcdWithOptional string
+
 func fakemarshal(v interface{}) ([]byte, error) {
 	return []byte{}, errors.New("marshalling failed")
 }
@@ -346,6 +352,78 @@ func TestNewNutanixTemplateBuilderAdditionalCategories(t *testing.T) {
 	test.AssertContentToFile(t, string(workerSpec), "testdata/expected_results_additional_categories_md.yaml")
 }
 
+func TestNewNutanixTemplateBuilderExternalEtcd(t *testing.T) {
+	t.Setenv(constants.EksaNutanixUsernameKey, "admin")
+	t.Setenv(constants.EksaNutanixPasswordKey, "password")
+	creds := GetCredsFromEnv()
+
+	dcConf, _, _ := minimalNutanixConfigSpec(t)
+	machineConf := &anywherev1.NutanixMachineConfig{}
+	err := yaml.Unmarshal([]byte(nutanixMachineConfigSpecExternalEtcd), machineConf)
+	require.NoError(t, err)
+
+	workerConfs := map[string]anywherev1.NutanixMachineConfigSpec{
+		"eksa-unit-test": machineConf.Spec,
+	}
+	builder := NewNutanixTemplateBuilder(&dcConf.Spec, &machineConf.Spec, &machineConf.Spec, workerConfs, creds, time.Now)
+	assert.NotNil(t, builder)
+
+	buildSpec := test.NewFullClusterSpec(t, "testdata/eksa-cluster-external-etcd.yaml")
+	cpSpec, err := builder.GenerateCAPISpecControlPlane(buildSpec)
+	assert.NoError(t, err)
+	assert.NotNil(t, cpSpec)
+
+	test.AssertContentToFile(t, string(cpSpec), "testdata/expected_results_external_etcd.yaml")
+
+	workloadTemplateNames := map[string]string{
+		"eksa-unit-test": "eksa-unit-test",
+	}
+	kubeadmconfigTemplateNames := map[string]string{
+		"eksa-unit-test": "eksa-unit-test",
+	}
+	workerSpec, err := builder.GenerateCAPISpecWorkers(buildSpec, workloadTemplateNames, kubeadmconfigTemplateNames)
+	assert.NoError(t, err)
+	assert.NotNil(t, workerSpec)
+
+	test.AssertContentToFile(t, string(workerSpec), "testdata/expected_results_external_etcd_md.yaml")
+}
+
+func TestNewNutanixTemplateBuilderExternalEtcdWithOptional(t *testing.T) {
+	t.Setenv(constants.EksaNutanixUsernameKey, "admin")
+	t.Setenv(constants.EksaNutanixPasswordKey, "password")
+	creds := GetCredsFromEnv()
+
+	dcConf, _, _ := minimalNutanixConfigSpec(t)
+	machineConf := &anywherev1.NutanixMachineConfig{}
+	err := yaml.Unmarshal([]byte(nutanixMachineConfigSpecExternalEtcdWithOptional), machineConf)
+	require.NoError(t, err)
+
+	workerConfs := map[string]anywherev1.NutanixMachineConfigSpec{
+		"eksa-unit-test": machineConf.Spec,
+	}
+	builder := NewNutanixTemplateBuilder(&dcConf.Spec, &machineConf.Spec, &machineConf.Spec, workerConfs, creds, time.Now)
+	assert.NotNil(t, builder)
+
+	buildSpec := test.NewFullClusterSpec(t, "testdata/eksa-cluster-external-etcd-with-optional.yaml")
+	cpSpec, err := builder.GenerateCAPISpecControlPlane(buildSpec)
+	assert.NoError(t, err)
+	assert.NotNil(t, cpSpec)
+
+	test.AssertContentToFile(t, string(cpSpec), "testdata/expected_results_external_etcd_with_optional.yaml")
+
+	workloadTemplateNames := map[string]string{
+		"eksa-unit-test": "eksa-unit-test",
+	}
+	kubeadmconfigTemplateNames := map[string]string{
+		"eksa-unit-test": "eksa-unit-test",
+	}
+	workerSpec, err := builder.GenerateCAPISpecWorkers(buildSpec, workloadTemplateNames, kubeadmconfigTemplateNames)
+	assert.NoError(t, err)
+	assert.NotNil(t, workerSpec)
+
+	test.AssertContentToFile(t, string(workerSpec), "testdata/expected_results_external_etcd_with_optional_md.yaml")
+}
+
 func TestNewNutanixTemplateBuilderNodeTaintsAndLabels(t *testing.T) {
 	dcConf, machineConf, workerConfs := minimalNutanixConfigSpec(t)
 
@@ -491,6 +569,56 @@ func TestTemplateBuilder_additionalTrustBundle(t *testing.T) {
 		{
 			Input:  "testdata/cluster_nutanix_with_trust_bundle.yaml",
 			Output: "testdata/expected_cluster_api_additional_trust_bundle.yaml",
+		},
+	} {
+		clusterSpec := test.NewFullClusterSpec(t, tc.Input)
+
+		machineCfg := clusterSpec.NutanixMachineConfig(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name)
+		creds := GetCredsFromEnv()
+
+		bldr := NewNutanixTemplateBuilder(&clusterSpec.NutanixDatacenter.Spec, &machineCfg.Spec, nil,
+			map[string]anywherev1.NutanixMachineConfigSpec{}, creds, time.Now)
+
+		data, err := bldr.GenerateCAPISpecControlPlane(clusterSpec)
+		assert.NoError(t, err)
+
+		test.AssertContentToFile(t, string(data), tc.Output)
+	}
+}
+
+func TestTemplateBuilderEtcdEncryption(t *testing.T) {
+	for _, tc := range []struct {
+		Input  string
+		Output string
+	}{
+		{
+			Input:  "testdata/cluster_nutanix_etcd_encryption.yaml",
+			Output: "testdata/expected_results_etcd_encryption.yaml",
+		},
+	} {
+		clusterSpec := test.NewFullClusterSpec(t, tc.Input)
+
+		machineCfg := clusterSpec.NutanixMachineConfig(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name)
+		creds := GetCredsFromEnv()
+
+		bldr := NewNutanixTemplateBuilder(&clusterSpec.NutanixDatacenter.Spec, &machineCfg.Spec, nil,
+			map[string]anywherev1.NutanixMachineConfigSpec{}, creds, time.Now)
+
+		data, err := bldr.GenerateCAPISpecControlPlane(clusterSpec)
+		assert.NoError(t, err)
+
+		test.AssertContentToFile(t, string(data), tc.Output)
+	}
+}
+
+func TestTemplateBuilderEtcdEncryptionKubernetes129(t *testing.T) {
+	for _, tc := range []struct {
+		Input  string
+		Output string
+	}{
+		{
+			Input:  "testdata/cluster_nutanix_etcd_encryption_1_29.yaml",
+			Output: "testdata/expected_results_etcd_encryption_1_29.yaml",
 		},
 	} {
 		clusterSpec := test.NewFullClusterSpec(t, tc.Input)

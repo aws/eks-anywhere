@@ -57,7 +57,7 @@ func EksAArtifactsRelease(r *releasetypes.ReleaseConfig) error {
 		return errors.Cause(err)
 	}
 
-	err = UploadArtifacts(context.Background(), r, r.EksAArtifactsTable)
+	err = UploadArtifacts(context.Background(), r, r.EksAArtifactsTable, false)
 	if err != nil {
 		return errors.Cause(err)
 	}

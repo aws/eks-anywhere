@@ -16,7 +16,7 @@ func TestSnowDatacenterConfigValidateCreateValid(t *testing.T) {
 	snowDC.Spec.IdentityRef.Name = "refName"
 	snowDC.Spec.IdentityRef.Kind = v1alpha1.SnowIdentityKind
 
-	g.Expect(snowDC.ValidateCreate()).To(Succeed())
+	g.Expect(snowDC.ValidateCreate()).Error().To(Succeed())
 }
 
 func TestSnowDatacenterConfigValidateCreateEmptyIdentityRef(t *testing.T) {
@@ -24,7 +24,7 @@ func TestSnowDatacenterConfigValidateCreateEmptyIdentityRef(t *testing.T) {
 
 	snowDC := snowDatacenterConfig()
 
-	g.Expect(snowDC.ValidateCreate()).To(MatchError(ContainSubstring("IdentityRef name must not be empty")))
+	g.Expect(snowDC.ValidateCreate()).Error().To(MatchError(ContainSubstring("IdentityRef name must not be empty")))
 }
 
 func TestSnowDatacenterConfigValidateCreateEmptyIdentityKind(t *testing.T) {
@@ -33,7 +33,7 @@ func TestSnowDatacenterConfigValidateCreateEmptyIdentityKind(t *testing.T) {
 	snowDC := snowDatacenterConfig()
 	snowDC.Spec.IdentityRef.Name = "refName"
 
-	g.Expect(snowDC.ValidateCreate()).To(MatchError(ContainSubstring("IdentityRef kind must not be empty")))
+	g.Expect(snowDC.ValidateCreate()).Error().To(MatchError(ContainSubstring("IdentityRef kind must not be empty")))
 }
 
 func TestSnowDatacenterConfigValidateCreateIdentityKindNotSnow(t *testing.T) {
@@ -43,7 +43,7 @@ func TestSnowDatacenterConfigValidateCreateIdentityKindNotSnow(t *testing.T) {
 	snowDC.Spec.IdentityRef.Name = "refName"
 	snowDC.Spec.IdentityRef.Kind = v1alpha1.OIDCConfigKind
 
-	g.Expect(snowDC.ValidateCreate()).To(MatchError(ContainSubstring("is invalid, the only supported kind is Secret")))
+	g.Expect(snowDC.ValidateCreate()).Error().To(MatchError(ContainSubstring("is invalid, the only supported kind is Secret")))
 }
 
 func TestSnowDatacenterConfigValidateValidateEmptyIdentityRef(t *testing.T) {
@@ -51,7 +51,7 @@ func TestSnowDatacenterConfigValidateValidateEmptyIdentityRef(t *testing.T) {
 
 	snowDCOld := snowDatacenterConfig()
 	snowDCNew := snowDCOld.DeepCopy()
-	g.Expect(snowDCNew.ValidateUpdate(&snowDCOld)).To(MatchError(ContainSubstring("IdentityRef name must not be empty")))
+	g.Expect(snowDCNew.ValidateUpdate(&snowDCOld)).Error().To(MatchError(ContainSubstring("IdentityRef name must not be empty")))
 }
 
 func TestSnowDatacenterConfigValidateValidateEmptyIdentityKind(t *testing.T) {
@@ -61,7 +61,7 @@ func TestSnowDatacenterConfigValidateValidateEmptyIdentityKind(t *testing.T) {
 	snowDCNew := snowDCOld.DeepCopy()
 	snowDCNew.Spec.IdentityRef.Name = "refName"
 
-	g.Expect(snowDCNew.ValidateUpdate(&snowDCOld)).To(MatchError(ContainSubstring("IdentityRef kind must not be empty")))
+	g.Expect(snowDCNew.ValidateUpdate(&snowDCOld)).Error().To(MatchError(ContainSubstring("IdentityRef kind must not be empty")))
 }
 
 func TestSnowDatacenterConfigValidateValidateIdentityKindNotSnow(t *testing.T) {
@@ -72,7 +72,7 @@ func TestSnowDatacenterConfigValidateValidateIdentityKindNotSnow(t *testing.T) {
 	snowDCNew.Spec.IdentityRef.Name = "refName"
 	snowDCNew.Spec.IdentityRef.Kind = v1alpha1.OIDCConfigKind
 
-	g.Expect(snowDCNew.ValidateUpdate(&snowDCOld)).To(MatchError(ContainSubstring("is invalid, the only supported kind is Secret")))
+	g.Expect(snowDCNew.ValidateUpdate(&snowDCOld)).Error().To(MatchError(ContainSubstring("is invalid, the only supported kind is Secret")))
 }
 
 func snowDatacenterConfig() v1alpha1.SnowDatacenterConfig {

@@ -35,7 +35,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/executables"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/git"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
@@ -707,7 +706,7 @@ func (e *ClusterE2ETest) createCluster(opts ...CommandOpt) {
 	}
 
 	e.T.Logf("Creating cluster %s", e.ClusterName)
-	createClusterArgs := []string{"create", "cluster", "-f", e.ClusterConfigLocation, "-v", "12"}
+	createClusterArgs := []string{"create", "cluster", "-f", e.ClusterConfigLocation, "-v", "6"}
 
 	dumpFile("Create cluster from file:", e.ClusterConfigLocation, e.T)
 
@@ -846,7 +845,7 @@ func (e *ClusterE2ETest) upgradeCluster(clusterOpts []ClusterE2ETestOpt, command
 
 // UpgradeCluster runs the CLI upgrade command.
 func (e *ClusterE2ETest) UpgradeCluster(commandOpts ...CommandOpt) {
-	upgradeClusterArgs := []string{"upgrade", "cluster", "-f", e.ClusterConfigLocation, "-v", "9"}
+	upgradeClusterArgs := []string{"upgrade", "cluster", "-f", e.ClusterConfigLocation, "-v", "6"}
 	if getBundlesOverride() == "true" {
 		upgradeClusterArgs = append(upgradeClusterArgs, "--bundles-override", defaultBundleReleaseManifestFile)
 	}
@@ -2180,12 +2179,11 @@ func dumpFile(description, path string, t T) {
 func (e *ClusterE2ETest) setFeatureFlagForUnreleasedKubernetesVersion(version v1alpha1.KubernetesVersion) {
 	// Update this variable to equal the feature flagged k8s version when applicable.
 	// For example, if k8s 1.26 is under a feature flag, we would set this to v1alpha1.Kube126
-	unreleasedK8sVersion := v1alpha1.Kube129
+	var unreleasedK8sVersion v1alpha1.KubernetesVersion
 
 	if version == unreleasedK8sVersion {
 		// Set feature flag for the unreleased k8s version when applicable
 		e.T.Logf("Setting k8s version support feature flag...")
-		os.Setenv(features.K8s129SupportEnvVar, "true")
 	}
 }
 

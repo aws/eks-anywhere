@@ -31,13 +31,13 @@ Reference the table below for release and support dates for each Kubernetes vers
 
 ## EKS Anywhere versions
 
-Each EKS Anywhere version includes all components required to create and manage EKS Anywhere clusters. For example, this includes:
+Each EKS Anywhere version includes all components required to create and manage EKS Anywhere clusters. This includes but is not limited to:
 
 - Administrative / CLI components (eksctl CLI, image-builder, diagnostics-collector)
 - Management components (Cluster API controller, EKS Anywhere controller, provider-specific controllers)
-- Workload components (Kubernetes, Cilium)
+- Cluster components (Kubernetes, Cilium)
 
-You can find details about each EKS Anywhere releases in the [EKS Anywhere release manifest.](https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml) The release manifest contains references to the corresponding bundle manifest for each EKS Anywhere version. Within the bundle manifest, you will find the components included in a specific EKS Anywhere version. The images running in your deployment use the same uri values specified in the bundle manifest for that component. For example, see the [bundle manifest](https://anywhere-assets.eks.amazonaws.com/releases/bundles/57/manifest.yaml) for EKS Anywhere v0.18.5.
+You can find details about each EKS Anywhere releases in the [EKS Anywhere release manifest.](https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml) The release manifest contains references to the corresponding bundle manifest for each EKS Anywhere version. Within the bundle manifest, you will find the components included in a specific EKS Anywhere version. The images running in your deployment use the same URI values specified in the bundle manifest for that component. For example, see the [bundle manifest](https://anywhere-assets.eks.amazonaws.com/releases/bundles/59/manifest.yaml) for EKS Anywhere version `v0.18.7`.
 
 Starting in 2024, EKS Anywhere follows a 4-month release cadence for minor versions. EKS Anywhere has a 2-week cadence for patch versions. Common vulnerabilities and exposures (CVE) patches and bug fixes, including those for the supported Kubernetes versions, are included in the latest EKS Anywhere minor version (version N). If you are interested in patch support for EKS Anywhere N-1 versions, please upvote or comment on [EKS Anywhere GitHub Issue #7397.](https://github.com/aws/eks-anywhere/issues/7397)
 
@@ -57,14 +57,15 @@ Bottlerocket, Ubuntu, and Red Hat Enterprise Linux (RHEL) can be used as operati
 |------------|------------------------------|---------------------------------|
 | Ubuntu        | 22.04     | 0.17 and above
 |               | 20.04     | 0.5 and above
-| Bottlerocket  | 1.15.1    | 0.18
+| Bottlerocket  | 1.19.1    | 0.19
+|               | 1.15.1    | 0.18
 |               | 1.13.1    | 0.15-0.17
 |               | 1.12.0    | 0.14
 |               | 1.10.1    | 0.12
 | RHEL          | 9.x<sup>*</sup>	      | 0.18
 | RHEL          | 8.x	      | 0.12 and above
 
-<sup>*</sup>Nutanix only
+<sup>*</sup>CloudStack and Nutanix only
 
 * For details on supported operating systems for Admin machines, [see the Admin Machine page.]({{< relref "../getting-started/install/" >}})
 * Older Bottlerocket versions are omitted from this table for brevity

@@ -8,14 +8,15 @@ env:
     EKSA_GIT_PRIVATE_KEY: "/tmp/private-key"
     INTEGRATION_TEST_INFRA_CONFIG: "/tmp/test-infra.yml"
     # vsphere variables
-    T_VSPHERE_TEMPLATE_UBUNTU_1_27: "/SDDC-Datacenter/vm/Templates/ubuntu-kube-v1-27"
+    T_VSPHERE_TEMPLATE_FOLDER: "/SDDC-Datacenter/vm/Templates"
     T_VSPHERE_TEMPLATE_UBUNTU_1_28: "/SDDC-Datacenter/vm/Templates/ubuntu-kube-v1-28"
-    T_VSPHERE_TEMPLATE_UBUNTU_2204_1_27: "/SDDC-Datacenter/vm/Templates/ubuntu-2204-kube-v1-27"
+    T_VSPHERE_TEMPLATE_UBUNTU_1_29: "/SDDC-Datacenter/vm/Templates/ubuntu-kube-v1-29"
     T_VSPHERE_TEMPLATE_UBUNTU_2204_1_28: "/SDDC-Datacenter/vm/Templates/ubuntu-2204-kube-v1-28"
-    T_VSPHERE_TEMPLATE_BR_1_27: "/SDDC-Datacenter/vm/Templates/bottlerocket-kube-v1-27"
+    T_VSPHERE_TEMPLATE_UBUNTU_2204_1_29: "/SDDC-Datacenter/vm/Templates/ubuntu-2204-kube-v1-29"
     T_VSPHERE_TEMPLATE_BR_1_28: "/SDDC-Datacenter/vm/Templates/bottlerocket-kube-v1-28"
-    T_VSPHERE_TEMPLATE_REDHAT_1_27: "/SDDC-Datacenter/vm/Templates/redhat-kube-v1-27"
+    T_VSPHERE_TEMPLATE_BR_1_29: "/SDDC-Datacenter/vm/Templates/bottlerocket-kube-v1-29"
     T_VSPHERE_TEMPLATE_REDHAT_1_28: "/SDDC-Datacenter/vm/Templates/redhat-kube-v1-28"
+    T_VSPHERE_TEMPLATE_REDHAT_1_29: "/SDDC-Datacenter/vm/Templates/redhat-kube-v1-29"
     # cloudstack variables
     CLOUDSTACK_PROVIDER: true
     T_CLOUDSTACK_CIDR: "10.80.214.0/23"
@@ -135,16 +136,19 @@ env:
     T_TINKERBELL_IMAGE_UBUNTU_1_26: "tinkerbell_ci:image_ubuntu_1_26"
     T_TINKERBELL_IMAGE_UBUNTU_1_27: "tinkerbell_ci:image_ubuntu_1_27"
     T_TINKERBELL_IMAGE_UBUNTU_1_28: "tinkerbell_ci:image_ubuntu_1_28"
+    T_TINKERBELL_IMAGE_UBUNTU_1_29: "tinkerbell_ci:image_ubuntu_1_29"
     T_TINKERBELL_IMAGE_UBUNTU_2204_1_24: "tinkerbell_ci:image_ubuntu_2204_1_24"
     T_TINKERBELL_IMAGE_UBUNTU_2204_1_25: "tinkerbell_ci:image_ubuntu_2204_1_25"
     T_TINKERBELL_IMAGE_UBUNTU_2204_1_26: "tinkerbell_ci:image_ubuntu_2204_1_26"
     T_TINKERBELL_IMAGE_UBUNTU_2204_1_27: "tinkerbell_ci:image_ubuntu_2204_1_27"
     T_TINKERBELL_IMAGE_UBUNTU_2204_1_28: "tinkerbell_ci:image_ubuntu_2204_1_28"
+    T_TINKERBELL_IMAGE_UBUNTU_2204_1_29: "tinkerbell_ci:image_ubuntu_2204_1_29"
     T_TINKERBELL_IMAGE_REDHAT_1_24: "tinkerbell_ci:image_redhat_1_24"
     T_TINKERBELL_IMAGE_REDHAT_1_25: "tinkerbell_ci:image_redhat_1_25"
     T_TINKERBELL_IMAGE_REDHAT_1_26: "tinkerbell_ci:image_redhat_1_26"
     T_TINKERBELL_IMAGE_REDHAT_1_27: "tinkerbell_ci:image_redhat_1_27"
     T_TINKERBELL_IMAGE_REDHAT_1_28: "tinkerbell_ci:image_redhat_1_28"
+    T_TINKERBELL_IMAGE_REDHAT_1_29: "tinkerbell_ci:image_redhat_1_29"
     T_TINKERBELL_SSH_AUTHORIZED_KEY: "vsphere_ci_beta_connection:ssh_authorized_key"
     T_TINKERBELL_CP_NETWORK_CIDR: "tinkerbell_ci:cp_network_cidr"
     T_TINKERBELL_S3_INVENTORY_CSV_KEY: "tinkerbell_ci:s3_inventory_csv"
@@ -165,6 +169,15 @@ phases:
       - source ${CODEBUILD_SRC_DIR}/cmd/integration_test/build/script/create_infra_config.sh
       - ${CODEBUILD_SRC_DIR}/cmd/integration_test/build/script/start_docker.sh
       - make eks-a-for-dev-e2e build-integration-test-binary e2e-tests-binary E2E_TAGS="e2e all_providers" E2E_OUTPUT_FILE=bin/e2e.test
+      - export CLUSTER_NAME_PREFIX="${BRANCH_NAME//./-}"
+      - >
+        ./bin/test e2e cleanup vsphere
+        -n ${CLUSTER_NAME_PREFIX}
+        -v 4
+      - >
+        ./bin/test e2e cleanup cloudstack
+        -n ${CLUSTER_NAME_PREFIX}
+        -v 4
   build:
     commands:
       - export JOB_ID=$CODEBUILD_BUILD_ID
@@ -190,9 +203,21 @@ phases:
         -v 4
         --skip ${SKIPPED_TESTS}
         --bundles-override=${BUNDLES_OVERRIDE}
+        --cleanup-vms=true
         --test-report-folder=reports
         --branch-name=${BRANCH_NAME}
         --baremetal-branch=${BAREMETAL_BRANCH}
+  post_build:
+    commands:
+      - unset AWS_SDK_LOAD_CONFIG AWS_PROFILE
+      - >
+        ./bin/test e2e cleanup vsphere
+        -n ${CLUSTER_NAME_PREFIX}
+        -v 4
+      - >
+        ./bin/test e2e cleanup cloudstack
+        -n ${CLUSTER_NAME_PREFIX}
+        -v 4
 reports:
   e2e-reports:
     files:

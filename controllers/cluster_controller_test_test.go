@@ -120,7 +120,9 @@ func TestClusterReconcilerEnsureOwnerReferences(t *testing.T) {
 	}
 	objs := []runtime.Object{cluster, managementCluster, oidc, awsIAM, bundles, secret, test.EKSARelease()}
 	cb := fake.NewClientBuilder()
-	cl := cb.WithRuntimeObjects(objs...).Build()
+	cl := cb.WithRuntimeObjects(objs...).
+		WithStatusSubresource(cluster).
+		Build()
 
 	iam := newMockAWSIamConfigReconciler(t)
 	iam.EXPECT().EnsureCASecret(ctx, gomock.AssignableToTypeOf(logr.Logger{}), gomock.AssignableToTypeOf(cluster)).Return(controller.Result{}, nil)
@@ -189,7 +191,9 @@ func TestClusterReconcilerReconcileChildObjectNotFound(t *testing.T) {
 
 	objs := []runtime.Object{cluster, managementCluster}
 	cb := fake.NewClientBuilder()
-	cl := cb.WithRuntimeObjects(objs...).Build()
+	cl := cb.WithRuntimeObjects(objs...).
+		WithStatusSubresource(cluster).
+		Build()
 	api := envtest.NewAPIExpecter(t, cl)
 
 	r := controllers.NewClusterReconciler(cl, newRegistryForDummyProviderReconciler(), newMockAWSIamConfigReconciler(t), newMockClusterValidator(t), nil, newMockMachineHealthCheckReconciler(t))
@@ -232,7 +236,9 @@ func TestClusterReconcilerManagementClusterNotFound(t *testing.T) {
 	objs := []runtime.Object{cluster, managementCluster}
 	cb := fake.NewClientBuilder()
 	cb.WithIndex(&anywherev1.Cluster{}, "metadata.name", clientutil.ClusterNameIndexer)
-	cl := cb.WithRuntimeObjects(objs...).Build()
+	cl := cb.WithRuntimeObjects(objs...).
+		WithStatusSubresource(cluster).
+		Build()
 	api := envtest.NewAPIExpecter(t, cl)
 
 	r := controllers.NewClusterReconciler(cl, newRegistryForDummyProviderReconciler(), newMockAWSIamConfigReconciler(t), newMockClusterValidator(t), nil, nil)
@@ -305,7 +311,9 @@ func TestClusterReconcilerSetBundlesRef(t *testing.T) {
 
 	objs := []runtime.Object{cluster, managementCluster, secret, bundles}
 	cb := fake.NewClientBuilder()
-	cl := cb.WithRuntimeObjects(objs...).Build()
+	cl := cb.WithRuntimeObjects(objs...).
+		WithStatusSubresource(cluster).
+		Build()
 
 	mgmtCluster := &anywherev1.Cluster{}
 	g.Expect(cl.Get(ctx, client.ObjectKey{Namespace: cluster.Namespace, Name: managementCluster.Name}, mgmtCluster)).To(Succeed())
@@ -361,7 +369,9 @@ func TestClusterReconcilerSetDefaultEksaVersion(t *testing.T) {
 
 	objs := []runtime.Object{cluster, managementCluster, test.EKSARelease()}
 	cb := fake.NewClientBuilder()
-	cl := cb.WithRuntimeObjects(objs...).Build()
+	cl := cb.WithRuntimeObjects(objs...).
+		WithStatusSubresource(cluster).
+		Build()
 
 	mgmtCluster := &anywherev1.Cluster{}
 	g.Expect(cl.Get(ctx, client.ObjectKey{Namespace: cluster.Namespace, Name: managementCluster.Name}, mgmtCluster)).To(Succeed())
@@ -419,7 +429,9 @@ func TestClusterReconcilerWorkloadClusterMgmtClusterNameFail(t *testing.T) {
 
 	objs := []runtime.Object{cluster, managementCluster}
 	cb := fake.NewClientBuilder()
-	cl := cb.WithRuntimeObjects(objs...).Build()
+	cl := cb.WithRuntimeObjects(objs...).
+		WithStatusSubresource(cluster).
+		Build()
 
 	validator := newMockClusterValidator(t)
 	validator.EXPECT().ValidateManagementClusterName(ctx, gomock.AssignableToTypeOf(logr.Logger{}), gomock.AssignableToTypeOf(cluster)).
@@ -462,10 +474,6 @@ func (dummyProviderReconciler) Reconcile(ctx context.Context, log logr.Logger, c
 }
 
 func (dummyProviderReconciler) ReconcileCNI(ctx context.Context, log logr.Logger, clusterSpec *c.Spec) (controller.Result, error) {
-	return controller.Result{}, nil
-}
-
-func (dummyProviderReconciler) ReconcileWorkerNodes(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) (controller.Result, error) {
 	return controller.Result{}, nil
 }
 

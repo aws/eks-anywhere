@@ -3,12 +3,15 @@ package awsiamauth_test
 import (
 	"context"
 	"errors"
+	"fmt"
+	"os"
 	"strings"
 	"testing"
 
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/pointer"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -17,6 +20,7 @@ import (
 	cryptomocks "github.com/aws/eks-anywhere/pkg/crypto/mocks"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	filewritermock "github.com/aws/eks-anywhere/pkg/filewriter/mocks"
+	kubeconfigmocks "github.com/aws/eks-anywhere/pkg/kubeconfig/mocks"
 	"github.com/aws/eks-anywhere/pkg/types"
 )
 
@@ -38,6 +42,7 @@ func TestInstallAWSIAMAuth(t *testing.T) {
 
 	var kubeconfig []byte
 	writer := filewritermock.NewMockFileWriter(ctrl)
+	kwriter := kubeconfigmocks.NewMockWriter(ctrl)
 	writer.EXPECT().Write(gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
 		func(fileName string, content []byte, f ...filewriter.FileOptionsFunc) (string, error) {
 			kubeconfig = content
@@ -80,7 +85,7 @@ func TestInstallAWSIAMAuth(t *testing.T) {
 		},
 	}
 
-	installer := awsiamauth.NewInstaller(certs, clusterID, k8s, writer)
+	installer := awsiamauth.NewInstaller(certs, clusterID, k8s, writer, kwriter)
 
 	err := installer.InstallAWSIAMAuth(context.Background(), &types.Cluster{}, &types.Cluster{}, spec)
 	if err != nil {
@@ -172,8 +177,8 @@ func TestInstallAWSIAMAuthErrors(t *testing.T) {
 					},
 				},
 			}
-
-			installer := awsiamauth.NewInstaller(certs, clusterID, k8s, writer)
+			kwriter := kubeconfigmocks.NewMockWriter(ctrl)
+			installer := awsiamauth.NewInstaller(certs, clusterID, k8s, writer, kwriter)
 
 			err := installer.InstallAWSIAMAuth(context.Background(), &types.Cluster{}, &types.Cluster{}, spec)
 			if err == nil {
@@ -205,7 +210,8 @@ func TestCreateAndInstallAWSIAMAuthCASecret(t *testing.T) {
 	certs := cryptomocks.NewMockCertificateGenerator(ctrl)
 	certs.EXPECT().GenerateIamAuthSelfSignCertKeyPair().Return([]byte("ca-cert"), []byte("ca-key"), nil)
 
-	installer := awsiamauth.NewInstaller(certs, clusterID, k8s, writer)
+	kwriter := kubeconfigmocks.NewMockWriter(ctrl)
+	installer := awsiamauth.NewInstaller(certs, clusterID, k8s, writer, kwriter)
 
 	err := installer.CreateAndInstallAWSIAMAuthCASecret(context.Background(), &types.Cluster{}, "test-cluster")
 	if err != nil {
@@ -248,7 +254,8 @@ func TestCreateAndInstallAWSIAMAuthCASecretErrors(t *testing.T) {
 			certs := cryptomocks.NewMockCertificateGenerator(ctrl)
 			certs.EXPECT().GenerateIamAuthSelfSignCertKeyPair().Return([]byte("ca-cert"), []byte("ca-key"), nil)
 
-			installer := awsiamauth.NewInstaller(certs, clusterID, k8s, writer)
+			kwriter := kubeconfigmocks.NewMockWriter(ctrl)
+			installer := awsiamauth.NewInstaller(certs, clusterID, k8s, writer, kwriter)
 
 			err := installer.CreateAndInstallAWSIAMAuthCASecret(context.Background(), &types.Cluster{}, "test-cluster")
 
@@ -280,7 +287,8 @@ func TestUpgradeAWSIAMAuth(t *testing.T) {
 		},
 	)
 
-	installer := awsiamauth.NewInstaller(certs, clusterID, k8s, writer)
+	kwriter := kubeconfigmocks.NewMockWriter(ctrl)
+	installer := awsiamauth.NewInstaller(certs, clusterID, k8s, writer, kwriter)
 
 	spec := &cluster.Spec{
 		Config: &cluster.Config{
@@ -322,4 +330,88 @@ func TestUpgradeAWSIAMAuth(t *testing.T) {
 		t.Fatalf("Received unexpected error: %v", err)
 	}
 	test.AssertContentToFile(t, string(manifest), "testdata/UpgradeAWSIAMAuth-manifest.yaml")
+}
+
+func TestGenerateManagementAWSIAMKubeconfig(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	certs := cryptomocks.NewMockCertificateGenerator(ctrl)
+	clusterID := uuid.MustParse("36db102f-9e1e-4ca4-8300-271d30b14161")
+	ctx := context.Background()
+
+	k8s := NewMockKubernetesClient(ctrl)
+	secretValue := []byte("kubeconfig")
+	k8s.EXPECT().GetAWSIAMKubeconfigSecretValue(gomock.Any(), gomock.Any(), gomock.Any()).Return(secretValue, nil)
+
+	cluster := &types.Cluster{
+		Name: "cluster-name",
+	}
+	writer := filewritermock.NewMockFileWriter(ctrl)
+	fileName := fmt.Sprintf("%s-aws.kubeconfig", cluster.Name)
+	path := "testpath"
+	fileWriter := os.NewFile(uintptr(*pointer.Uint(0)), "test")
+
+	writer.EXPECT().Create(fileName, gomock.AssignableToTypeOf([]filewriter.FileOptionsFunc{})).Return(fileWriter, path, nil)
+	kwriter := kubeconfigmocks.NewMockWriter(ctrl)
+	installer := awsiamauth.NewInstaller(certs, clusterID, k8s, writer, kwriter)
+	kwriter.EXPECT().WriteKubeconfigContent(ctx, cluster.Name, secretValue, fileWriter)
+
+	err := installer.GenerateManagementAWSIAMKubeconfig(context.Background(), cluster)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestGenerateManagementAWSIAMKubeconfigError(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	certs := cryptomocks.NewMockCertificateGenerator(ctrl)
+	clusterID := uuid.MustParse("36db102f-9e1e-4ca4-8300-271d30b14161")
+
+	k8s := NewMockKubernetesClient(ctrl)
+	k8s.EXPECT().GetAWSIAMKubeconfigSecretValue(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, errors.New("test"))
+
+	cluster := &types.Cluster{
+		Name: "cluster-name",
+	}
+	writer := filewritermock.NewMockFileWriter(ctrl)
+	fileName := fmt.Sprintf("%s-aws.kubeconfig", cluster.Name)
+	path := "testpath"
+	fileWriter := os.NewFile(uintptr(*pointer.Uint(0)), "test")
+
+	writer.EXPECT().Create(fileName, gomock.AssignableToTypeOf([]filewriter.FileOptionsFunc{})).Return(fileWriter, path, nil)
+	kwriter := kubeconfigmocks.NewMockWriter(ctrl)
+	installer := awsiamauth.NewInstaller(certs, clusterID, k8s, writer, kwriter)
+
+	err := installer.GenerateManagementAWSIAMKubeconfig(context.Background(), cluster)
+	if err == nil {
+		t.Fatal(err)
+	}
+}
+
+func TestGenerateAWSIAMKubeconfigError(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	certs := cryptomocks.NewMockCertificateGenerator(ctrl)
+	clusterID := uuid.MustParse("36db102f-9e1e-4ca4-8300-271d30b14161")
+	ctx := context.Background()
+
+	k8s := NewMockKubernetesClient(ctrl)
+	secretValue := []byte("kubeconfig")
+	k8s.EXPECT().GetAWSIAMKubeconfigSecretValue(gomock.Any(), gomock.Any(), gomock.Any()).Return(secretValue, nil)
+
+	cluster := &types.Cluster{
+		Name: "cluster-name",
+	}
+	writer := filewritermock.NewMockFileWriter(ctrl)
+	fileName := fmt.Sprintf("%s-aws.kubeconfig", cluster.Name)
+	path := "testpath"
+	fileWriter := os.NewFile(uintptr(*pointer.Uint(0)), "test")
+
+	writer.EXPECT().Create(fileName, gomock.AssignableToTypeOf([]filewriter.FileOptionsFunc{})).Return(fileWriter, path, nil)
+	kwriter := kubeconfigmocks.NewMockWriter(ctrl)
+	installer := awsiamauth.NewInstaller(certs, clusterID, k8s, writer, kwriter)
+	kwriter.EXPECT().WriteKubeconfigContent(ctx, cluster.Name, secretValue, fileWriter).Return(errors.New("test"))
+
+	err := installer.GenerateManagementAWSIAMKubeconfig(context.Background(), cluster)
+	if err == nil {
+		t.Fatal(err)
+	}
 }

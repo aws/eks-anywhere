@@ -16,6 +16,17 @@ func (s *writeClusterConfig) Run(ctx context.Context, commandContext *task.Comma
 	err := clustermarshaller.WriteClusterConfig(commandContext.ClusterSpec, commandContext.Provider.DatacenterConfig(commandContext.ClusterSpec), commandContext.Provider.MachineConfigs(commandContext.ClusterSpec), commandContext.Writer)
 	if err != nil {
 		commandContext.SetError(err)
+		logger.Error(err, "Writing cluster config file")
+
+	}
+
+	if commandContext.ClusterSpec.AWSIamConfig != nil {
+		logger.Info("Generating the aws iam kubeconfig file")
+		err = commandContext.ClusterManager.GenerateAWSIAMKubeconfig(ctx, commandContext.ManagementCluster)
+		if err != nil {
+			commandContext.SetError(err)
+			logger.Error(err, "Generating the aws iam kubeconfig file")
+		}
 	}
 
 	successMsg := ""

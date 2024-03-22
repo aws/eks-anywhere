@@ -14,6 +14,7 @@ import (
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/pointer"
 	cloudstackv1 "sigs.k8s.io/cluster-api-provider-cloudstack/api/v1beta3"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
@@ -178,6 +179,7 @@ func TestReconcilerControlPlaneIsNotReady(t *testing.T) {
 
 	tt := newReconcilerTest(t)
 
+	kcpVersion := "v1.19.8"
 	tt.kcp.Status = controlplanev1.KubeadmControlPlaneStatus{
 		Conditions: clusterv1.Conditions{
 			{
@@ -187,6 +189,8 @@ func TestReconcilerControlPlaneIsNotReady(t *testing.T) {
 			},
 		},
 		ObservedGeneration: 2,
+		Ready:              true,
+		Version:            pointer.String(kcpVersion),
 	}
 	tt.eksaSupportObjs = append(tt.eksaSupportObjs, tt.kcp, tt.secret)
 	tt.createAllObjs()
@@ -431,71 +435,6 @@ func TestReconcilerReconcileWorkersFailure(t *testing.T) {
 	tt.Expect(err).To(MatchError(ContainSubstring("Generate worker node CAPI spec")))
 }
 
-func TestReconcilerReconcileWorkerNodesSuccess(t *testing.T) {
-	tt := newReconcilerTest(t)
-	tt.cluster.Name = "mgmt-cluster"
-	tt.cluster.SetSelfManaged()
-	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
-		c.Name = tt.cluster.Name
-	})
-	tt.eksaSupportObjs = append(tt.eksaSupportObjs, capiCluster, tt.secret)
-	tt.createAllObjs()
-
-	logger := test.NewNullLogger()
-
-	result, err := tt.reconciler().ReconcileWorkerNodes(tt.ctx, logger, tt.cluster)
-
-	tt.Expect(err).NotTo(HaveOccurred())
-	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
-	tt.Expect(tt.cluster.Status.FailureReason).To(BeZero())
-	tt.Expect(result).To(Equal(controller.Result{}))
-
-	tt.ShouldEventuallyExist(tt.ctx,
-		&bootstrapv1.KubeadmConfigTemplate{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      capiCluster.Name + "-md-0-1",
-				Namespace: constants.EksaSystemNamespace,
-			},
-		},
-	)
-
-	tt.ShouldEventuallyExist(tt.ctx,
-		&cloudstackv1.CloudStackMachineTemplate{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      capiCluster.Name + "-md-0-1",
-				Namespace: constants.EksaSystemNamespace,
-			},
-		},
-	)
-
-	tt.ShouldEventuallyExist(tt.ctx,
-		&clusterv1.MachineDeployment{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      capiCluster.Name + "-md-0",
-				Namespace: constants.EksaSystemNamespace,
-			},
-		},
-	)
-}
-
-func TestReconcilerReconcileWorkerNodesFailure(t *testing.T) {
-	tt := newReconcilerTest(t)
-	tt.cluster.Name = "mgmt-cluster"
-	tt.cluster.SetSelfManaged()
-	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
-		c.Name = tt.cluster.Name
-	})
-	tt.cluster.Spec.KubernetesVersion = ""
-	tt.eksaSupportObjs = append(tt.eksaSupportObjs, capiCluster, tt.secret)
-	tt.createAllObjs()
-
-	logger := test.NewNullLogger()
-
-	_, err := tt.reconciler().ReconcileWorkerNodes(tt.ctx, logger, tt.cluster)
-
-	tt.Expect(err).To(MatchError(ContainSubstring("building cluster Spec for worker node reconcile")))
-}
-
 func (tt *reconcilerTest) withFakeClient() {
 	tt.client = fake.NewClientBuilder().WithObjects(clientutil.ObjectsToClientObjects(tt.allObjs())...).Build()
 }
@@ -648,14 +587,17 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 		c.Spec.EksaVersion = &version
 	})
 
+	kcpVersion := "v1.19.8"
 	kcp := test.KubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
 		kcp.Name = cluster.Name
+		kcp.ObjectMeta.Generation = 2
 		kcp.Spec = controlplanev1.KubeadmControlPlaneSpec{
 			MachineTemplate: controlplanev1.KubeadmControlPlaneMachineTemplate{
 				InfrastructureRef: corev1.ObjectReference{
 					Name: fmt.Sprintf("%s-control-plane-1", cluster.Name),
 				},
 			},
+			Version: kcpVersion,
 		}
 		kcp.Status = controlplanev1.KubeadmControlPlaneStatus{
 			Conditions: clusterv1.Conditions{
@@ -666,6 +608,8 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 				},
 			},
 			ObservedGeneration: 2,
+			Ready:              true,
+			Version:            pointer.String(kcpVersion),
 		}
 	})
 

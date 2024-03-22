@@ -17,6 +17,7 @@ import (
 // Writer reads the kubeconfig secret on a cluster and copies the contents to a writer.
 type Writer interface {
 	WriteKubeconfig(ctx context.Context, clusterName, kubeconfig string, w io.Writer) error
+	WriteKubeconfigContent(ctx context.Context, clusterName string, content []byte, w io.Writer) error
 }
 
 // FromClusterFormat defines the format of the kubeconfig of the.

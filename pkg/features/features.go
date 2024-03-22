@@ -6,8 +6,8 @@ const (
 	CheckpointEnabledEnvVar         = "CHECKPOINT_ENABLED"
 	UseNewWorkflowsEnvVar           = "USE_NEW_WORKFLOWS"
 	UseControllerForCli             = "USE_CONTROLLER_FOR_CLI"
-	K8s129SupportEnvVar             = "K8S_1_29_SUPPORT"
 	VSphereInPlaceEnvVar            = "VSPHERE_IN_PLACE_UPGRADE"
+	APIServerExtraArgsEnabledEnvVar = "API_SERVER_EXTRA_ARGS_ENABLED"
 )
 
 func FeedGates(featureGates []string) {
@@ -49,26 +49,18 @@ func UseNewWorkflows() Feature {
 	}
 }
 
-// UseControllerViaCLIWorkflow is used for the controller behind the CLI workflow.
-func UseControllerViaCLIWorkflow() Feature {
-	return Feature{
-		Name:     "Use new workflow logic for cluster operations leveraging controller via CLI",
-		IsActive: globalFeatures.isActiveForEnvVar(UseControllerForCli),
-	}
-}
-
-// K8s129Support is the feature flag for Kubernetes 1.29 support.
-func K8s129Support() Feature {
-	return Feature{
-		Name:     "Kubernetes version 1.29 support",
-		IsActive: globalFeatures.isActiveForEnvVar(K8s129SupportEnvVar),
-	}
-}
-
 // VSphereInPlaceUpgradeEnabled is the feature flag for performing in-place upgrades with the vSphere provider.
 func VSphereInPlaceUpgradeEnabled() Feature {
 	return Feature{
 		Name:     "Perform in-place upgrades with the vSphere provider",
 		IsActive: globalFeatures.isActiveForEnvVar(VSphereInPlaceEnvVar),
+	}
+}
+
+// APIServerExtraArgsEnabled is the feature flag for configuring api server extra args.
+func APIServerExtraArgsEnabled() Feature {
+	return Feature{
+		Name:     "Configure api server extra args",
+		IsActive: globalFeatures.isActiveForEnvVar(APIServerExtraArgsEnabledEnvVar),
 	}
 }

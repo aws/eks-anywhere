@@ -33,12 +33,14 @@ import (
 	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
 
+var providerNamespaces = []string{"test-system"}
+
 func TestReconcilerReconcileInstall(t *testing.T) {
 	tt := newReconcileTest(t)
 	ds := ciliumDaemonSet()
 	operator := ciliumOperator()
 	manifest := buildManifest(tt.WithT, ds, operator)
-	tt.templater.EXPECT().GenerateManifest(tt.ctx, tt.spec).Return(manifest, nil)
+	tt.templater.EXPECT().GenerateManifest(tt.ctx, tt.spec, gomock.Not(gomock.Nil())).Return(manifest, nil)
 
 	tt.Expect(
 		tt.reconciler.Reconcile(tt.ctx, test.NewNullLogger(), tt.client, tt.spec),
@@ -51,7 +53,7 @@ func TestReconcilerReconcileInstall(t *testing.T) {
 
 func TestReconcilerReconcileInstallErrorGeneratingManifest(t *testing.T) {
 	tt := newReconcileTest(t)
-	tt.templater.EXPECT().GenerateManifest(tt.ctx, tt.spec).Return(nil, errors.New("generating manifest"))
+	tt.templater.EXPECT().GenerateManifest(tt.ctx, tt.spec, gomock.Not(gomock.Nil())).Return(nil, errors.New("generating manifest"))
 
 	result, err := tt.reconciler.Reconcile(tt.ctx, test.NewNullLogger(), tt.client, tt.spec)
 	tt.Expect(result).To(Equal(controller.Result{}))
@@ -60,7 +62,7 @@ func TestReconcilerReconcileInstallErrorGeneratingManifest(t *testing.T) {
 
 func TestReconcilerReconcileErrorYamlReconcile(t *testing.T) {
 	tt := newReconcileTest(t)
-	tt.templater.EXPECT().GenerateManifest(tt.ctx, tt.spec).Return([]byte("invalid yaml"), nil)
+	tt.templater.EXPECT().GenerateManifest(tt.ctx, tt.spec, gomock.Not(gomock.Nil())).Return([]byte("invalid yaml"), nil)
 
 	result, err := tt.reconciler.Reconcile(tt.ctx, test.NewNullLogger(), tt.client, tt.spec)
 	tt.Expect(result).To(Equal(controller.Result{}))
@@ -72,7 +74,6 @@ func TestReconcilerReconcileAlreadyUpToDate(t *testing.T) {
 	operator := ciliumOperator()
 	cm := ciliumConfigMap()
 	tt := newReconcileTest(t).withObjects(ds, operator, cm)
-
 	tt.Expect(tt.reconciler.Reconcile(tt.ctx, test.NewNullLogger(), tt.client, tt.spec)).To(
 		Equal(controller.Result{}),
 	)
@@ -95,7 +96,6 @@ func TestReconcilerReconcileAlreadyInDesiredVersionWithPreflight(t *testing.T) {
 	tt.templater.EXPECT().GenerateUpgradePreflightManifest(tt.ctx, tt.spec).Return(preflightManifest, nil)
 
 	tt.withObjects(ds, operator, preflightDS, preflightDeployment, cm)
-
 	tt.Expect(tt.reconciler.Reconcile(tt.ctx, test.NewNullLogger(), tt.client, tt.spec)).To(
 		Equal(controller.Result{}),
 	)
@@ -119,7 +119,6 @@ func TestReconcilerReconcileAlreadyInDesiredVersionWithPreflightErrorFromTemplat
 	tt.templater.EXPECT().GenerateUpgradePreflightManifest(tt.ctx, tt.spec).Return(nil, errors.New("generating preflight"))
 
 	tt.withObjects(ds, operator, cm, preflightDS, preflightDeployment)
-
 	result, err := tt.reconciler.Reconcile(tt.ctx, test.NewNullLogger(), tt.client, tt.spec)
 	tt.Expect(result).To(Equal(controller.Result{}))
 	tt.Expect(err).To(MatchError(ContainSubstring("generating preflight")))
@@ -137,7 +136,6 @@ func TestReconcilerReconcileAlreadyInDesiredVersionWithPreflightErrorDeletingYam
 	tt.templater.EXPECT().GenerateUpgradePreflightManifest(tt.ctx, tt.spec).Return([]byte("invalid yaml"), nil)
 
 	tt.withObjects(ds, operator, cm, preflightDS, preflightDeployment)
-
 	result, err := tt.reconciler.Reconcile(tt.ctx, test.NewNullLogger(), tt.client, tt.spec)
 	tt.Expect(result).To(Equal(controller.Result{}))
 	tt.Expect(err).To(MatchError(ContainSubstring("error unmarshaling JSON")))
@@ -455,7 +453,7 @@ func TestReconcilerReconcileSkipUpgradeWithoutCiliumInstalled(t *testing.T) {
 		}
 	})
 
-	tt.templater.EXPECT().GenerateManifest(tt.ctx, tt.spec).Return(upgradeManifest, nil)
+	tt.templater.EXPECT().GenerateManifest(tt.ctx, tt.spec, gomock.Not(gomock.Nil())).Return(upgradeManifest, nil)
 
 	tt.Expect(tt.reconciler.Reconcile(tt.ctx, test.NewNullLogger(), tt.client, tt.spec)).To(
 		Equal(controller.Result{}),
@@ -572,7 +570,7 @@ func newReconcileTest(t *testing.T) *reconcileTest {
 		client:     env.Client(),
 		env:        env,
 		templater:  templater,
-		reconciler: reconciler.New(templater),
+		reconciler: reconciler.New(templater, providerNamespaces),
 	}
 
 	t.Cleanup(tt.cleanup)

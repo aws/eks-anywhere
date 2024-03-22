@@ -24,6 +24,7 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
+	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -49,19 +50,22 @@ const (
 	controlPlaneUpgradeFinalizerName      = "controlplaneupgrades.anywhere.eks.amazonaws.com/finalizer"
 	kubeadmClusterConfigurationAnnotation = "controlplane.cluster.x-k8s.io/kubeadm-cluster-configuration"
 	cloneFromNameAnnotationInfraMachine   = "cluster.x-k8s.io/cloned-from-name"
+	kubeVipStaticPodPath                  = "/etc/kubernetes/manifests/kube-vip.yaml"
 )
 
 // ControlPlaneUpgradeReconciler reconciles a ControlPlaneUpgradeReconciler object.
 type ControlPlaneUpgradeReconciler struct {
-	client client.Client
-	log    logr.Logger
+	client               client.Client
+	remoteClientRegistry RemoteClientRegistry
+	log                  logr.Logger
 }
 
 // NewControlPlaneUpgradeReconciler returns a new instance of ControlPlaneUpgradeReconciler.
-func NewControlPlaneUpgradeReconciler(client client.Client) *ControlPlaneUpgradeReconciler {
+func NewControlPlaneUpgradeReconciler(client client.Client, remoteClientRegistry RemoteClientRegistry) *ControlPlaneUpgradeReconciler {
 	return &ControlPlaneUpgradeReconciler{
-		client: client,
-		log:    ctrl.Log.WithName("ControlPlaneUpgradeController"),
+		client:               client,
+		remoteClientRegistry: remoteClientRegistry,
+		log:                  ctrl.Log.WithName("ControlPlaneUpgradeController"),
 	}
 }
 
@@ -138,12 +142,27 @@ func (r *ControlPlaneUpgradeReconciler) SetupWithManager(mgr ctrl.Manager) error
 
 func (r *ControlPlaneUpgradeReconciler) reconcile(ctx context.Context, log logr.Logger, cpUpgrade *anywherev1.ControlPlaneUpgrade) (ctrl.Result, error) {
 	var firstControlPlane bool
+	rClient, err := r.remoteClientRegistry.GetClient(ctx, GetNamespacedNameType(cpUpgrade.Spec.ControlPlane.Name, cpUpgrade.Spec.ControlPlane.Namespace))
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
 	// return early if controlplane upgrade is already complete
 	if cpUpgrade.Status.Ready {
 		log.Info("All Control Plane nodes are upgraded")
+		// check if kube-vip config map exists and clean it up
+		if err := cleanupKubeVipCM(ctx, log, rClient); err != nil {
+			return ctrl.Result{}, err
+		}
 		return ctrl.Result{}, nil
 	}
 
+	if err := namespaceOrCreate(ctx, rClient, log, constants.EksaSystemNamespace); err != nil {
+		return ctrl.Result{}, nil
+	}
+	if err := createKubeVipCMIfNotExist(ctx, rClient, cpUpgrade); err != nil {
+		return ctrl.Result{}, err
+	}
 	log.Info("Upgrading all Control Plane nodes")
 
 	for idx, machineRef := range cpUpgrade.Spec.MachinesRequireUpgrade {
@@ -362,4 +381,69 @@ func getCapiMachine(ctx context.Context, client client.Client, nodeUpgrade *anyw
 		return nil, fmt.Errorf("getting machine %s: %v", nodeUpgrade.Spec.Machine.Name, err)
 	}
 	return machine, nil
+}
+
+func cleanupKubeVipCM(ctx context.Context, log logr.Logger, remoteClient client.Client) error {
+	cm := &corev1.ConfigMap{}
+	if err := remoteClient.Get(ctx, GetNamespacedNameType(constants.KubeVipConfigMapName, constants.EksaSystemNamespace), cm); err != nil {
+		if apierrors.IsNotFound(err) {
+			log.Info("config map %s not found, skipping deletion", "ConfigMap", constants.KubeVipConfigMapName, "Namespace", constants.EksaSystemNamespace)
+		} else {
+			return fmt.Errorf("getting %s config map: %v", constants.KubeVipConfigMapName, err)
+		}
+	} else {
+		log.Info("Deleting kube-vip config map", "ConfigMap", constants.KubeVipConfigMapName, "Namespace", constants.EksaSystemNamespace)
+		if err := remoteClient.Delete(ctx, cm); err != nil {
+			return fmt.Errorf("deleting %s config map: %v", constants.KubeVipConfigMapName, err)
+		}
+	}
+	return nil
+}
+
+func createKubeVipCMIfNotExist(ctx context.Context, remoteClient client.Client, cpUpgrade *anywherev1.ControlPlaneUpgrade) error {
+	kubeVipCM := &corev1.ConfigMap{}
+	if err := remoteClient.Get(ctx, GetNamespacedNameType(constants.KubeVipConfigMapName, constants.EksaSystemNamespace), kubeVipCM); err != nil {
+		if apierrors.IsNotFound(err) {
+			kubeVipCM, err = kubeVipConfigMap(cpUpgrade)
+			if err != nil {
+				return err
+			}
+			if err := remoteClient.Create(ctx, kubeVipCM); err != nil {
+				return fmt.Errorf("failed to create %s config map: %v", constants.KubeVipConfigMapName, err)
+			}
+		} else {
+			return fmt.Errorf("getting %s configmap: %v", constants.KubeVipConfigMapName, err)
+		}
+	}
+	return nil
+}
+
+func kubeVipConfigMap(cpUpgrade *anywherev1.ControlPlaneUpgrade) (*corev1.ConfigMap, error) {
+	kcpSpec, err := decodeAndUnmarshalKcpSpecData(cpUpgrade.Spec.ControlPlaneSpecData)
+	if err != nil {
+		return nil, err
+	}
+	var kubeVipConfig string
+	for _, file := range kcpSpec.KubeadmConfigSpec.Files {
+		if file.Path == kubeVipStaticPodPath {
+			kubeVipConfig = file.Content
+			break
+		}
+	}
+
+	if kubeVipConfig == "" {
+		return nil, errors.New("fetching kube-vip manifest from KubeadmConfigSpec")
+	}
+
+	return &corev1.ConfigMap{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "ConfigMap",
+			APIVersion: "v1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      constants.KubeVipConfigMapName,
+			Namespace: constants.EksaSystemNamespace,
+		},
+		Data: map[string]string{constants.KubeVipManifestName: kubeVipConfig},
+	}, nil
 }

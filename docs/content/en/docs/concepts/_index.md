@@ -3,10 +3,10 @@ title: "Concepts"
 linkTitle: "Concepts"
 weight: 20
 description: >
-  The Concepts section will describe the components and overall architecture of EKS Anywhere.
+  The Concepts section contains an overview of the EKS Anywhere architecture, components, versioning, and support.
 ---
 
 {{% pageinfo %}}
-Most of the content of this section will cover how EKS Anywhere deploys, upgrades and otherwise manages Kubernetes clusters. It will point to Kubernetes documentation for specifics on how Kubernetes itself works.
+Most of the content in the EKS Anywhere documentation is specific to how EKS Anywhere deploys and manages Kubernetes clusters. For information on Kubernetes itself, reference the [Kubernetes documentation.](https://kubernetes.io/docs/home/)
 {{% /pageinfo %}}
 

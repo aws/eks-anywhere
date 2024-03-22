@@ -9,7 +9,6 @@ import (
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/constants"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validation"
@@ -24,6 +23,7 @@ func (u *UpgradeValidations) PreflightValidations(ctx context.Context) []validat
 		Name:           u.Opts.WorkloadCluster.Name,
 		KubeconfigFile: u.Opts.ManagementCluster.KubeconfigFile,
 	}
+
 	upgradeValidations := []validations.Validation{
 		func() *validations.ValidationResult {
 			return resultForRemediableValidation(
@@ -48,14 +48,14 @@ func (u *UpgradeValidations) PreflightValidations(ctx context.Context) []validat
 		func() *validations.ValidationResult {
 			return &validations.ValidationResult{
 				Name:        "control plane ready",
-				Remediation: fmt.Sprintf("ensure control plane nodes and pods for cluster %s are Ready", u.Opts.WorkloadCluster.Name),
+				Remediation: fmt.Sprintf("ensure control plane nodes and pods for cluster %s are ready", u.Opts.WorkloadCluster.Name),
 				Err:         k.ValidateControlPlaneNodes(ctx, targetCluster, targetCluster.Name),
 			}
 		},
 		func() *validations.ValidationResult {
 			return &validations.ValidationResult{
 				Name:        "worker nodes ready",
-				Remediation: fmt.Sprintf("ensure machine deployments for cluster %s are Ready", u.Opts.WorkloadCluster.Name),
+				Remediation: fmt.Sprintf("ensure machine deployments for cluster %s are ready", u.Opts.WorkloadCluster.Name),
 				Err:         k.ValidateWorkerNodes(ctx, u.Opts.Spec.Cluster.Name, targetCluster.KubeconfigFile),
 			}
 		},
@@ -117,10 +117,9 @@ func (u *UpgradeValidations) PreflightValidations(ctx context.Context) []validat
 		},
 		func() *validations.ValidationResult {
 			return &validations.ValidationResult{
-				Name:        "validate kubernetes version 1.29 support",
-				Remediation: fmt.Sprintf("ensure %v env variable is set", features.K8s129SupportEnvVar),
-				Err:         validations.ValidateK8s129Support(u.Opts.Spec),
-				Silent:      true,
+				Name:        "validate eksa controller is not paused",
+				Remediation: fmt.Sprintf("remove cluster controller reconciler pause annotation %s before upgrading the cluster %s", u.Opts.Spec.Cluster.PausedAnnotation(), targetCluster.Name),
+				Err:         validations.ValidatePauseAnnotation(ctx, k, targetCluster, targetCluster.Name),
 			}
 		},
 	}

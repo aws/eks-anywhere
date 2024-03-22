@@ -60,9 +60,23 @@ func runSimpleUpgradeFlowWorkerNodeVersionForBareMetal(test *framework.ClusterE2
 	test.ValidateHardwareDecommissioned()
 }
 
+func runInPlaceMultipleUpgradesFlow(test *framework.ClusterE2ETest, clusterOpts ...[]framework.ClusterE2ETestOpt) {
+	test.CreateCluster()
+	for _, opts := range clusterOpts {
+		test.UpgradeClusterWithNewConfig(opts)
+		test.GenerateSupportBundleOnCleanupIfTestFailed()
+		test.ValidateClusterState()
+		test.StopIfFailed()
+	}
+	test.DeleteCluster()
+}
+
+// runInPlaceUpgradeFlow makes use of the new ValidateClusterState method instead of ValidateCluster, but we should incorporate this
+// in runSimpleUpgradeFlow itself.
 func runInPlaceUpgradeFlow(test *framework.ClusterE2ETest, clusterOpts ...framework.ClusterE2ETestOpt) {
 	test.CreateCluster()
 	test.UpgradeClusterWithNewConfig(clusterOpts)
+	test.GenerateSupportBundleOnCleanupIfTestFailed()
 	test.ValidateClusterState()
 	test.StopIfFailed()
 	test.DeleteCluster()
@@ -72,6 +86,7 @@ func runInPlaceUpgradeFlowForBareMetal(test *framework.ClusterE2ETest, clusterOp
 	test.GenerateHardwareConfig()
 	test.CreateCluster(framework.WithControlPlaneWaitTimeout("20m"))
 	test.UpgradeClusterWithNewConfig(clusterOpts)
+	test.GenerateSupportBundleOnCleanupIfTestFailed()
 	test.ValidateClusterState()
 	test.StopIfFailed()
 	test.DeleteCluster()

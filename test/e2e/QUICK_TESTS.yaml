@@ -2,24 +2,29 @@ quick_tests:
 # Docker
 - TestDocker.*128
 # vSphere
-- ^TestVSphereKubernetes127To128RedHatUpgrade$
-- TestVSphereKubernetes127To128StackedEtcdRedHatUpgrade
-- ^TestVSphereKubernetes127UbuntuTo128Upgrade$
-- TestVSphereKubernetes127UbuntuTo128StackedEtcdUpgrade
-- TestVSphereKubernetes127To128Ubuntu2204Upgrade
-- TestVSphereKubernetes127To128Ubuntu2204StackedEtcdUpgrade
-- TestVSphereKubernetes128Ubuntu2004To2204Upgrade
-- TestVSphereKubernetes127BottlerocketTo128Upgrade
-- TestVSphereKubernetes127BottlerocketTo128StackedEtcdUpgrade
+- ^TestVSphereKubernetes128To129RedHatUpgrade$
+- TestVSphereKubernetes128To129StackedEtcdRedHatUpgrade
+- ^TestVSphereKubernetes128UbuntuTo129Upgrade$
+- TestVSphereKubernetes128UbuntuTo129StackedEtcdUpgrade
+- TestVSphereKubernetes128To129Ubuntu2204Upgrade
+- TestVSphereKubernetes128To129Ubuntu2204StackedEtcdUpgrade
+- TestVSphereKubernetes129Ubuntu2004To2204Upgrade
+- TestVSphereKubernetes128BottlerocketTo129Upgrade
+- TestVSphereKubernetes128BottlerocketTo129StackedEtcdUpgrade
 # CloudStack
 - TestCloudStackKubernetes128To129RedhatMultipleFieldsUpgrade
+- TestCloudStackKubernetes128To129StackedEtcdRedhatMultipleFieldsUpgrade
 # Nutanix
 - TestNutanixKubernetes128to129RedHat9Upgrade
+- TestNutanixKubernetes128to129StackedEtcdRedHat9Upgrade
 - TestNutanixKubernetes128to129RedHat8Upgrade
+- TestNutanixKubernetes128to129StackedEtcdRedHat8Upgrade
 - TestNutanixKubernetes128To129UbuntuUpgrade
+- TestNutanixKubernetes128To129StackedEtcdUbuntuUpgrade
 # Snow
-- TestSnowKubernetes128SimpleFlow
+# - TestSnowKubernetes128SimpleFlow
+# - TestSnowKubernetes128StackedEtcdSimpleFlow
 # Tinkerbell
-# - ^TestTinkerbellKubernetes127UbuntuTo128Upgrade$
-# - TestTinkerbellKubernetes128Ubuntu2004To2204Upgrade
-# - TestTinkerbellKubernetes127To128Ubuntu2204Upgrade
+- ^TestTinkerbellKubernetes128UbuntuTo129Upgrade$
+- TestTinkerbellKubernetes129Ubuntu2004To2204Upgrade
+- TestTinkerbellKubernetes128To129Ubuntu2204Upgrade
