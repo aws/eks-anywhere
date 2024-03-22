@@ -459,9 +459,11 @@ func buildTemplateMapCP(
 		}
 
 		// Replace public.ecr.aws endpoint with the endpoint given in the cluster config file
-		localRegistry := values["publicMirror"].(string)
-		cpTemplateOverride = strings.ReplaceAll(cpTemplateOverride, defaultRegistry, localRegistry)
-		etcdTemplateOverride = strings.ReplaceAll(etcdTemplateOverride, defaultRegistry, localRegistry)
+		localRegistry := values["coreEKSAMirror"].(string)
+		if localRegistry != "" {
+			cpTemplateOverride = strings.ReplaceAll(cpTemplateOverride, defaultRegistry, localRegistry)
+			etcdTemplateOverride = strings.ReplaceAll(etcdTemplateOverride, defaultRegistry, localRegistry)
+		}
 	}
 
 	if clusterSpec.Cluster.Spec.ProxyConfiguration != nil {
@@ -558,8 +560,10 @@ func buildTemplateMapMD(
 		}
 
 		// Replace public.ecr.aws endpoint with the endpoint given in the cluster config file
-		localRegistry := values["publicMirror"].(string)
-		workerTemplateOverride = strings.ReplaceAll(workerTemplateOverride, defaultRegistry, localRegistry)
+		localRegistry := values["coreEKSAMirror"].(string)
+		if localRegistry != "" {
+			workerTemplateOverride = strings.ReplaceAll(workerTemplateOverride, defaultRegistry, localRegistry)
+		}
 	}
 
 	if clusterSpec.Cluster.Spec.ProxyConfiguration != nil {
@@ -629,6 +633,8 @@ func populateRegistryMirrorValues(clusterSpec *cluster.Spec, values map[string]i
 	values["mirrorBase"] = registryMirror.BaseRegistry
 	values["insecureSkip"] = registryMirror.InsecureSkipVerify
 	values["publicMirror"] = containerd.ToAPIEndpoint(registryMirror.CoreEKSAMirror())
+	values["coreEKSAMirror"] = registryMirror.CoreEKSAMirror()
+
 	if len(registryMirror.CACertContent) > 0 {
 		values["registryCACert"] = registryMirror.CACertContent
 	}
