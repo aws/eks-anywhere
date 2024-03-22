@@ -115,6 +115,7 @@ type Dependencies struct {
 	EksaInstaller               *clustermanager.EKSAInstaller
 	DeleteClusterDefaulter      cli.DeleteClusterDefaulter
 	ClusterDeleter              clustermanager.Deleter
+	ClusterMover                *clustermanager.Mover
 }
 
 // KubeClients defines super struct that exposes all behavior.
@@ -1207,6 +1208,26 @@ func (f *Factory) WithClusterDeleter() *Factory {
 		}
 
 		f.dependencies.ClusterDeleter = clustermanager.NewDeleter(
+			f.dependencies.Logger,
+			f.dependencies.UnAuthKubeClient,
+			opts...,
+		)
+		return nil
+	})
+	return f
+}
+
+// WithClusterMover builds a cluster mover.
+func (f *Factory) WithClusterMover() *Factory {
+	f.WithLogger().WithUnAuthKubeClient().WithLogger()
+
+	f.buildSteps = append(f.buildSteps, func(_ context.Context) error {
+		var opts []clustermanager.MoverOpt
+		if f.config.noTimeouts {
+			opts = append(opts, clustermanager.WithMoverNoTimeouts())
+		}
+
+		f.dependencies.ClusterMover = clustermanager.NewMover(
 			f.dependencies.Logger,
 			f.dependencies.UnAuthKubeClient,
 			opts...,
