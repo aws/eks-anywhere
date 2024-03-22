@@ -115,3 +115,13 @@ const (
 
 // EKSACLIFieldManager is the owner name for fields applied by the EKS-A CLI.
 const EKSACLIFieldManager = "eks-a-cli"
+
+// SupportedProviders is the list of supported providers for generating EKS-A cluster spec.
+var SupportedProviders = []string{
+	VSphereProviderName,
+	CloudStackProviderName,
+	TinkerbellProviderName,
+	DockerProviderName,
+	NutanixProviderName,
+	SnowProviderName,
+}
