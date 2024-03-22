@@ -247,6 +247,11 @@ func setManagerEnvVars(d *appsv1.Deployment, spec *cluster.Spec) {
 		envVars = append(envVars, v1.EnvVar{Name: features.VSphereInPlaceEnvVar, Value: "true"})
 	}
 
+	// TODO: remove this feature flag when we support API server flags.
+	if features.IsActive(features.APIServerExtraArgsEnabled()) {
+		envVars = append(envVars, v1.EnvVar{Name: features.APIServerExtraArgsEnabledEnvVar, Value: "true"})
+	}
+
 	d.Spec.Template.Spec.Containers[0].Env = envVars
 }
 
