@@ -1610,7 +1610,7 @@ func (e *ClusterE2ETest) TestEmissaryPackageRouting(packageName, checkName strin
 	ctx := context.Background()
 	packageMetadatNamespace := fmt.Sprintf("%s-%s", constants.EksaPackagesName, e.ClusterName)
 
-	err := e.KubectlClient.ApplyKubeSpecFromBytes(ctx, e.Cluster(), emisarryPackage)
+	err := e.KubectlClient.ApplyKubeSpecFromBytesWithNamespace(ctx, e.Cluster(), emisarryPackage, packageMetadatNamespace)
 	if err != nil {
 		e.T.Errorf("Error upgrading emissary package: %v", err)
 		return
@@ -1634,6 +1634,8 @@ func (e *ClusterE2ETest) TestEmissaryPackageRouting(packageName, checkName strin
 		e.T.Errorf("Error applying roles for oids: %v", err)
 		return
 	}
+	e.T.Log("Waiting for hello service")
+	time.Sleep(60 * time.Second)
 
 	// Functional testing of Emissary Ingress
 	ingresssvcAddress := checkName + "." + constants.EksaPackagesName + ".svc.cluster.local"
