@@ -1790,6 +1790,19 @@ func TestVSphereKubernetes129BottlerocketAuthenticatedRegistryMirror(t *testing.
 	runRegistryMirrorConfigFlow(test)
 }
 
+func TestVSphereKubernetes129BottlerocketRegistryMirrorOciNamespaces(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewVSphere(t, framework.WithBottleRocket129(), framework.WithPrivateNetwork()),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
+		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube129)),
+		framework.WithRegistryMirrorOciNamespaces(constants.VSphereProviderName),
+	)
+	runRegistryMirrorConfigFlow(test)
+}
+
 // Clone mode
 func TestVSphereKubernetes128FullClone(t *testing.T) {
 	diskSize := 30

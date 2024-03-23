@@ -133,10 +133,20 @@ spec:
 {{- end }}
 {{- if and .registryMirrorMap (eq .format "bottlerocket") }}
       registryMirror:
-        endpoint: {{ .publicMirror }}
+        {{- if .publicECRMirror }}
+        endpoint: {{ .publicECRMirror }}
+        {{- end }}
         {{- if .registryCACert }}
         caCert: |
 {{ .registryCACert | indent 10 }}
+        {{- end }}
+        {{- if not .publicECRMirror }}
+        mirrors:
+        {{- range $orig, $mirror := .registryMirrorMap }}
+          - registry: "{{ $orig }}"
+            endpoints:
+            - {{ $mirror }}
+        {{- end }}
         {{- end }}
 {{- end }}
 {{- if .bottlerocketSettings }}
@@ -422,10 +432,20 @@ spec:
 {{- end }}
 {{- if and .registryMirrorMap (eq .format "bottlerocket") }}
       registryMirror:
-        endpoint: {{ .publicMirror }}
+        {{- if .publicECRMirror }}
+        endpoint: {{ .publicECRMirror }}
+        {{- end }}       
         {{- if .registryCACert }}
         caCert: |
 {{ .registryCACert | indent 10 }}
+        {{- end }}
+        {{- if not .publicECRMirror }}
+        mirrors:
+        {{- range $orig, $mirror := .registryMirrorMap }}
+          - registry: "{{ $orig }}"
+            endpoints:
+            - {{ $mirror }}
+        {{- end }}
         {{- end }}
 {{- end }}
 {{- if .bottlerocketSettings }}
