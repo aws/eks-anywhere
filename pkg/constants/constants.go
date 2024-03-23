@@ -103,6 +103,9 @@ const (
 	DefaultMaxUnhealthy = "100%"
 	// DefaultWorkerMaxUnhealthy is the default maxUnhealthy value for worker node machine health checks.
 	DefaultWorkerMaxUnhealthy = "40%"
+
+	// DefaultCLIFieldManager is the field manager used by EKS-Anywhere CLI
+	DefaultCLIFieldManager = "eks-a-cli"
 )
 
 type Operation int

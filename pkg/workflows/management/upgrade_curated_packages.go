@@ -5,6 +5,7 @@ import (
 
 	appsv1 "k8s.io/api/apps/v1"
 
+	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/task"
 	"github.com/aws/eks-anywhere/pkg/utils/ptr"
@@ -14,6 +15,10 @@ import (
 type upgradeCuratedPackagesTask struct{}
 
 func (s *upgradeCuratedPackagesTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
+	if commandContext.CurrentClusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Equal(commandContext.ClusterSpec.Cluster.Spec.RegistryMirrorConfiguration) {
+		return nil
+	}
+
 	commandContext.PackageInstaller.InstallCuratedPackages(ctx)
 
 	client, err := commandContext.ClientFactory.BuildClientFromKubeconfig(commandContext.ManagementCluster.KubeconfigFile)
@@ -31,7 +36,7 @@ func (s *upgradeCuratedPackagesTask) Run(ctx context.Context, commandContext *ta
 
 	replicas := packagesManager.Spec.Replicas
 	packagesManager.Spec.Replicas = ptr.Int32(0)
-	err = client.Update(ctx, packagesManager)
+	err = client.ApplyServerSide(ctx, constants.DefaultCLIFieldManager, packagesManager, kubernetes.ApplyServerSideOptions{ForceOwnership: true})
 	if err != nil {
 		commandContext.SetError(err)
 		return &workflows.CollectMgmtClusterDiagnosticsTask{}
@@ -42,7 +47,7 @@ func (s *upgradeCuratedPackagesTask) Run(ctx context.Context, commandContext *ta
 	packagesManager.SetUID("")
 	packagesManager.SetResourceVersion("")
 
-	err = client.Update(ctx, packagesManager)
+	err = client.ApplyServerSide(ctx, constants.DefaultCLIFieldManager, packagesManager, kubernetes.ApplyServerSideOptions{ForceOwnership: true})
 	if err != nil {
 		commandContext.SetError(err)
 		return &workflows.CollectMgmtClusterDiagnosticsTask{}

@@ -1319,28 +1319,12 @@ func (f *Factory) WithPackageInstaller(spec *cluster.Spec, packagesLocation, kub
 
 // WithPackageInstallerWithoutWait builds a package installer that doesn't wait for active bundles.
 func (f *Factory) WithPackageInstallerWithoutWait(spec *cluster.Spec, packagesLocation, kubeConfig string) *Factory {
-	f.WithKubectl().WithPackageControllerClientWithoutWait(spec, kubeConfig).WithPackageClient()
-	f.buildSteps = append(f.buildSteps, func(_ context.Context) error {
-		if f.dependencies.PackageInstaller != nil {
-			return nil
-		}
-		managementClusterName := getManagementClusterName(spec)
-		mgmtKubeConfig := kubeconfig.ResolveFilename(kubeConfig, managementClusterName)
-
-		f.dependencies.PackageInstaller = curatedpackages.NewInstaller(
-			f.dependencies.Kubectl,
-			f.dependencies.PackageClient,
-			f.dependencies.PackageControllerClient,
-			spec,
-			packagesLocation,
-			mgmtKubeConfig,
-		)
-		return nil
-	})
+	f.WithPackageInstaller(spec, packagesLocation, kubeConfig)
+	f.WithPackageControllerClient(spec, kubeConfig, curatedpackages.WithSkipWait())
 	return f
 }
 
-func (f *Factory) WithPackageControllerClient(spec *cluster.Spec, kubeConfig string) *Factory {
+func (f *Factory) WithPackageControllerClient(spec *cluster.Spec, kubeConfig string, opts ...curatedpackages.PackageControllerClientOpt) *Factory {
 	f.WithHelm(helm.WithInsecure()).WithKubectl()
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
@@ -1370,13 +1354,8 @@ func (f *Factory) WithPackageControllerClient(spec *cluster.Spec, kubeConfig str
 		if bundle == nil {
 			return fmt.Errorf("could not find VersionsBundle")
 		}
-		f.dependencies.PackageControllerClient = curatedpackages.NewPackageControllerClient(
-			f.dependencies.Helm,
-			f.dependencies.Kubectl,
-			spec.Cluster.Name,
-			mgmtKubeConfig,
-			&bundle.PackageController.HelmChart,
-			f.registryMirror,
+
+		opts = append(opts,
 			curatedpackages.WithEksaAccessKeyId(eksaAccessKeyID),
 			curatedpackages.WithEksaSecretAccessKey(eksaSecretKey),
 			curatedpackages.WithEksaRegion(eksaRegion),
@@ -1388,43 +1367,7 @@ func (f *Factory) WithPackageControllerClient(spec *cluster.Spec, kubeConfig str
 			curatedpackages.WithValuesFileWriter(writer),
 			curatedpackages.WithClusterSpec(spec),
 		)
-		return nil
-	})
 
-	return f
-}
-
-// WithPackageControllerClientWithoutWait builds a package controller client that doesn't wait for active bundles.
-func (f *Factory) WithPackageControllerClientWithoutWait(spec *cluster.Spec, kubeConfig string) *Factory {
-	f.WithHelm(helm.WithInsecure()).WithKubectl()
-
-	f.buildSteps = append(f.buildSteps, func(_ context.Context) error {
-		if f.dependencies.PackageControllerClient != nil || spec == nil {
-			return nil
-		}
-		managementClusterName := getManagementClusterName(spec)
-		mgmtKubeConfig := kubeconfig.ResolveFilename(kubeConfig, managementClusterName)
-
-		httpProxy, httpsProxy, noProxy := getProxyConfiguration(spec)
-		eksaAccessKeyID, eksaSecretKey, eksaRegion := os.Getenv(cliconfig.EksaAccessKeyIdEnv), os.Getenv(cliconfig.EksaSecretAccessKeyEnv), os.Getenv(cliconfig.EksaRegionEnv)
-
-		eksaAwsConfig := ""
-		p := os.Getenv(cliconfig.EksaAwsConfigFileEnv)
-		if p != "" {
-			b, err := os.ReadFile(p)
-			if err != nil {
-				return err
-			}
-			eksaAwsConfig = string(b)
-		}
-		writer, err := filewriter.NewWriter(spec.Cluster.Name)
-		if err != nil {
-			return err
-		}
-		bundle := spec.RootVersionsBundle()
-		if bundle == nil {
-			return fmt.Errorf("could not find VersionsBundle")
-		}
 		f.dependencies.PackageControllerClient = curatedpackages.NewPackageControllerClient(
 			f.dependencies.Helm,
 			f.dependencies.Kubectl,
@@ -1432,17 +1375,7 @@ func (f *Factory) WithPackageControllerClientWithoutWait(spec *cluster.Spec, kub
 			mgmtKubeConfig,
 			&bundle.PackageController.HelmChart,
 			f.registryMirror,
-			curatedpackages.WithEksaAccessKeyId(eksaAccessKeyID),
-			curatedpackages.WithEksaSecretAccessKey(eksaSecretKey),
-			curatedpackages.WithEksaRegion(eksaRegion),
-			curatedpackages.WithEksaAwsConfig(eksaAwsConfig),
-			curatedpackages.WithHTTPProxy(httpProxy),
-			curatedpackages.WithHTTPSProxy(httpsProxy),
-			curatedpackages.WithNoProxy(noProxy),
-			curatedpackages.WithManagementClusterName(managementClusterName),
-			curatedpackages.WithValuesFileWriter(writer),
-			curatedpackages.WithClusterSpec(spec),
-			curatedpackages.WithSkipWait(),
+			opts...,
 		)
 		return nil
 	})
