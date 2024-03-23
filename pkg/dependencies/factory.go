@@ -1327,7 +1327,7 @@ func (f *Factory) WithPackageInstallerWithoutWait(spec *cluster.Spec, packagesLo
 func (f *Factory) WithPackageControllerClient(spec *cluster.Spec, kubeConfig string, opts ...curatedpackages.PackageControllerClientOpt) *Factory {
 	f.WithHelm(helm.WithInsecure()).WithKubectl()
 
-	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+	f.buildSteps = append(f.buildSteps, func(_ context.Context) error {
 		if f.dependencies.PackageControllerClient != nil || spec == nil {
 			return nil
 		}
