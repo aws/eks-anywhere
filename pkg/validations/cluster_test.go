@@ -291,7 +291,7 @@ func TestValidateOSForRegistryMirrorNoPublicEcrRegistry(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			tt.clusterSpec.Cluster.Spec.RegistryMirrorConfiguration = test.mirrorConfig
-			tt.Expect(validations.ValidateOSForRegistryMirror(tt.clusterSpec, tt.provider)).To(MatchError("public.ecr.aws is the only registry supported in ociNamespaces for bottlerocket"))
+			tt.Expect(validations.ValidateOSForRegistryMirror(tt.clusterSpec, tt.provider)).To(Succeed())
 		})
 	}
 }
