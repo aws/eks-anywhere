@@ -12,6 +12,9 @@ import (
 	. "github.com/onsi/gomega"
 	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+	"sigs.k8s.io/controller-runtime/pkg/client/interceptor"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -736,6 +739,102 @@ func TestUpgradeManagementRunResumeClusterResourcesReconcileFailed(t *testing.T)
 	test.expectWriteCheckpointFile()
 
 	err := test.run()
+	if err == nil {
+		t.Fatal("UpgradeManagement.Run() err = nil, want err not nil")
+	}
+}
+
+func TestUpgradeManagementRunUpgradePackagesFailScaleDownPackages(t *testing.T) {
+	os.Unsetenv(features.CheckpointEnabledEnvVar)
+	features.ClearCache()
+	tt := newUpgradeManagementClusterTest(t)
+	tt.newClusterSpec.Cluster.Spec.RegistryMirrorConfiguration = &v1alpha1.RegistryMirrorConfiguration{}
+	packagesManager := &appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "eks-anywhere-packages",
+			Namespace: constants.EksaPackagesName,
+		},
+	}
+	tt.client = test.NewKubeClient(fake.NewClientBuilder().WithInterceptorFuncs(interceptor.Funcs{
+		Patch: func(ctx context.Context, client client.WithWatch, obj client.Object, patch client.Patch, opts ...client.PatchOption) error {
+			if obj.GetName() == "eks-anywhere-packages" {
+				return fmt.Errorf("")
+			}
+			return nil
+		},
+	}).WithObjects(tt.currentClusterSpec.Cluster, tt.currentClusterSpec.EKSARelease, tt.currentClusterSpec.Bundles, packagesManager).Build())
+	tt.expectSetup()
+	tt.expectPreflightValidationsToPass()
+	tt.expectUpdateSecrets(nil)
+	tt.expectEnsureManagementEtcdCAPIComponentsExist(nil)
+	tt.expectUpgradeCoreComponents()
+	tt.expectPauseGitOpsReconcile(nil)
+	tt.expectBackupManagementFromCluster(nil)
+	tt.expectPauseCAPIWorkloadClusters(nil)
+	tt.expectDatacenterConfig()
+	tt.expectMachineConfigs()
+	tt.expectInstallEksdManifest(nil)
+	tt.expectApplyBundles(nil)
+	tt.expectApplyReleases(nil)
+	tt.expectUpgradeManagementCluster()
+	tt.expectResumeCAPIWorkloadClustersAPI(nil)
+	tt.expectUpdateGitEksaSpec(nil)
+	tt.expectForceReconcileGitRepo(nil)
+	tt.expectResumeGitOpsReconcile(nil)
+	tt.expectWriteManagementClusterConfig(nil)
+	tt.expectPackagesUpgrade(nil)
+	tt.expectSaveLogs()
+	tt.expectWriteCheckpointFile()
+
+	err := tt.run()
+	if err == nil {
+		t.Fatal("UpgradeManagement.Run() err = nil, want err not nil")
+	}
+}
+
+func TestUpgradeManagementRunUpgradePackagesFailScaleUpPackages(t *testing.T) {
+	os.Unsetenv(features.CheckpointEnabledEnvVar)
+	features.ClearCache()
+	tt := newUpgradeManagementClusterTest(t)
+	tt.newClusterSpec.Cluster.Spec.RegistryMirrorConfiguration = &v1alpha1.RegistryMirrorConfiguration{}
+	packagesManager := &appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "eks-anywhere-packages",
+			Namespace: constants.EksaPackagesName,
+		},
+	}
+	tt.client = test.NewKubeClient(fake.NewClientBuilder().WithInterceptorFuncs(interceptor.Funcs{
+		Patch: func(ctx context.Context, client client.WithWatch, obj client.Object, patch client.Patch, opts ...client.PatchOption) error {
+			if obj.GetName() == "eks-anywhere-packages" && obj.GetResourceVersion() == "" {
+				return fmt.Errorf("")
+			}
+			return nil
+		},
+	}).WithObjects(tt.currentClusterSpec.Cluster, tt.currentClusterSpec.EKSARelease, tt.currentClusterSpec.Bundles, packagesManager).Build())
+	tt.expectSetup()
+	tt.expectPreflightValidationsToPass()
+	tt.expectUpdateSecrets(nil)
+	tt.expectEnsureManagementEtcdCAPIComponentsExist(nil)
+	tt.expectUpgradeCoreComponents()
+	tt.expectPauseGitOpsReconcile(nil)
+	tt.expectBackupManagementFromCluster(nil)
+	tt.expectPauseCAPIWorkloadClusters(nil)
+	tt.expectDatacenterConfig()
+	tt.expectMachineConfigs()
+	tt.expectInstallEksdManifest(nil)
+	tt.expectApplyBundles(nil)
+	tt.expectApplyReleases(nil)
+	tt.expectUpgradeManagementCluster()
+	tt.expectResumeCAPIWorkloadClustersAPI(nil)
+	tt.expectUpdateGitEksaSpec(nil)
+	tt.expectForceReconcileGitRepo(nil)
+	tt.expectResumeGitOpsReconcile(nil)
+	tt.expectWriteManagementClusterConfig(nil)
+	tt.expectPackagesUpgrade(nil)
+	tt.expectSaveLogs()
+	tt.expectWriteCheckpointFile()
+
+	err := tt.run()
 	if err == nil {
 		t.Fatal("UpgradeManagement.Run() err = nil, want err not nil")
 	}

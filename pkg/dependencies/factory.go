@@ -1324,6 +1324,7 @@ func (f *Factory) WithPackageInstallerWithoutWait(spec *cluster.Spec, packagesLo
 	return f
 }
 
+// WithPackageControllerClient builds a client for package controller.
 func (f *Factory) WithPackageControllerClient(spec *cluster.Spec, kubeConfig string, opts ...curatedpackages.PackageControllerClientOpt) *Factory {
 	f.WithHelm(helm.WithInsecure()).WithKubectl()
 
