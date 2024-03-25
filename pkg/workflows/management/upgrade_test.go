@@ -756,7 +756,7 @@ func TestUpgradeManagementRunUpgradePackagesFailScaleDownPackages(t *testing.T) 
 		},
 	}
 	tt.client = test.NewKubeClient(fake.NewClientBuilder().WithInterceptorFuncs(interceptor.Funcs{
-		Patch: func(ctx context.Context, client client.WithWatch, obj client.Object, patch client.Patch, opts ...client.PatchOption) error {
+		Patch: func(_ context.Context, client client.WithWatch, obj client.Object, patch client.Patch, opts ...client.PatchOption) error {
 			if obj.GetName() == "eks-anywhere-packages" {
 				return fmt.Errorf("")
 			}
@@ -804,7 +804,7 @@ func TestUpgradeManagementRunUpgradePackagesFailScaleUpPackages(t *testing.T) {
 		},
 	}
 	tt.client = test.NewKubeClient(fake.NewClientBuilder().WithInterceptorFuncs(interceptor.Funcs{
-		Patch: func(ctx context.Context, client client.WithWatch, obj client.Object, patch client.Patch, opts ...client.PatchOption) error {
+		Patch: func(_ context.Context, client client.WithWatch, obj client.Object, patch client.Patch, opts ...client.PatchOption) error {
 			if obj.GetName() == "eks-anywhere-packages" && obj.GetResourceVersion() == "" {
 				return fmt.Errorf("")
 			}

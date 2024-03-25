@@ -1297,7 +1297,7 @@ func (f *Factory) WithGitOpsFlux(clusterConfig *v1alpha1.Cluster, fluxConfig *v1
 
 func (f *Factory) WithPackageInstaller(spec *cluster.Spec, packagesLocation, kubeConfig string) *Factory {
 	f.WithKubectl().WithPackageControllerClient(spec, kubeConfig).WithPackageClient()
-	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+	f.buildSteps = append(f.buildSteps, func(_ context.Context) error {
 		if f.dependencies.PackageInstaller != nil {
 			return nil
 		}
