@@ -113,7 +113,7 @@ Make sure you use single quotes around the values so that your shell does not in
   
    If your vSphere version is 7.0.2, then few user privileges don't exist
    that are required for cluster creation. (See [Issue #4746](https://github.com/aws/eks-anywhere/issues/4746) for details.) 
-   Consider passing `--skip-validations vsphere-user-privilege` along with `eksctl` or upgrading(**recommonded**) vSphere version
+   Consider passing `--skip-validations vsphere-user-privilege` along with `eksctl` or upgrading the vSphere version (**recommended**).
    {{% /alert %}}
 
    ```bash
