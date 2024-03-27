@@ -111,7 +111,7 @@ Make sure you use single quotes around the values so that your shell does not in
 1. Create cluster  
    {{% alert title="Important" color="warning" %}}
   
-   If your vSphere version is 7.0.2, then few previliges don't [exist](https://github.com/aws/eks-anywhere/issues/4746),
+   If your vSphere version is 7.0.2, then few user privileges don't exist
    required for user related to cluster-creation.
    Consider passing `--skip-validations vsphere-user-privilege` along with `eksctl` or upgrading(**recommonded**) vSphere version
    {{% /alert %}}
