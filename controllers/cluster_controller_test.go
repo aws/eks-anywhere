@@ -1795,7 +1795,7 @@ func createSecret() *apiv1.Secret {
 	return &apiv1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "eksa-system",
-			Name:      vsphere.CredentialsObjectName,
+			Name:      constants.VSphereCredentialsName,
 		},
 		Data: map[string][]byte{
 			"username": []byte("test"),

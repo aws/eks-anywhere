@@ -21,7 +21,6 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 
@@ -1931,8 +1930,8 @@ func TestPreCAPIInstallOnBootstrap(t *testing.T) {
 		KubeconfigFile: "",
 	}
 
-	kubectl.EXPECT().ApplyKubeSpecFromBytes(ctx, gomock.Any(), gomock.Any())
-	clusterSpec := &cluster.Spec{}
+	kubectl.EXPECT().ApplyKubeSpecFromBytes(ctx, gomock.Any(), gomock.Any()).Times(3)
+	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
 
 	err := provider.PreCAPIInstallOnBootstrap(ctx, &testCluster, clusterSpec)
 	if err != nil {
@@ -1945,6 +1944,7 @@ func TestProviderUpdateSecretSuccess(t *testing.T) {
 	datacenterConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
 	clusterConfig := givenClusterConfig(t, testClusterConfigMainFilename)
 	mockCtrl := gomock.NewController(t)
+	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
 	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
 	ipValidator := mocks.NewMockIPValidator(mockCtrl)
 	provider := newProviderWithKubectl(t, datacenterConfig, clusterConfig, kubectl, ipValidator)
@@ -1964,7 +1964,7 @@ func TestProviderUpdateSecretSuccess(t *testing.T) {
 
 	setupContext(t)
 
-	kubectl.EXPECT().ApplyKubeSpecFromBytes(ctx, gomock.Any(), gomock.Any())
+	kubectl.EXPECT().ApplyKubeSpecFromBytes(ctx, gomock.Any(), gomock.Any()).Times(3)
 
 	template, err := template.New("test").Funcs(sprig.TxtFuncMap()).Parse(defaultSecretObject)
 	if err != nil {
@@ -1975,7 +1975,7 @@ func TestProviderUpdateSecretSuccess(t *testing.T) {
 		t.Fatalf("template execute error: %v", err)
 	}
 
-	err = provider.UpdateSecrets(ctx, &cluster, nil)
+	err = provider.UpdateSecrets(ctx, &cluster, clusterSpec)
 	if err != nil {
 		t.Fatalf("UpdateSecrets error %v", err)
 	}
@@ -2925,21 +2925,11 @@ func TestValidateNewSpecSuccess(t *testing.T) {
 	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
 	provider.providerKubectlClient = kubectl
 
-	clusterVsphereSecret := &v1.Secret{
-		TypeMeta:   metav1.TypeMeta{},
-		ObjectMeta: metav1.ObjectMeta{},
-		Data: map[string][]byte{
-			"username": []byte("vsphere_username"),
-			"password": []byte("vsphere_password"),
-		},
-	}
-
 	kubectl.EXPECT().GetEksaCluster(context.TODO(), gomock.Any(), gomock.Any()).Return(clusterSpec.Cluster, nil)
 	kubectl.EXPECT().GetEksaVSphereDatacenterConfig(context.TODO(), clusterSpec.Cluster.Spec.DatacenterRef.Name, gomock.Any(), clusterSpec.Cluster.Namespace).Return(clusterSpec.VSphereDatacenter, nil)
 	for _, config := range clusterSpec.VSphereMachineConfigs {
 		kubectl.EXPECT().GetEksaVSphereMachineConfig(context.TODO(), gomock.Any(), gomock.Any(), clusterSpec.Cluster.Namespace).Return(config, nil)
 	}
-	kubectl.EXPECT().GetSecretFromNamespace(gomock.Any(), gomock.Any(), CredentialsObjectName, gomock.Any()).Return(clusterVsphereSecret, nil)
 
 	err := provider.ValidateNewSpec(context.TODO(), &types.Cluster{}, newClusterSpec)
 	assert.NoError(t, err, "No error should be returned when previous spec == new spec")
@@ -2960,21 +2950,11 @@ func TestValidateNewSpecMutableFields(t *testing.T) {
 		config.Spec.Folder = "new=" + config.Spec.Folder
 	}
 
-	clusterVsphereSecret := &v1.Secret{
-		TypeMeta:   metav1.TypeMeta{},
-		ObjectMeta: metav1.ObjectMeta{},
-		Data: map[string][]byte{
-			"username": []byte("vsphere_username"),
-			"password": []byte("vsphere_password"),
-		},
-	}
-
 	kubectl.EXPECT().GetEksaCluster(context.TODO(), gomock.Any(), gomock.Any()).Return(clusterSpec.Cluster, nil)
 	kubectl.EXPECT().GetEksaVSphereDatacenterConfig(context.TODO(), clusterSpec.Cluster.Spec.DatacenterRef.Name, gomock.Any(), gomock.Any()).Return(clusterSpec.VSphereDatacenter, nil)
 	for _, config := range clusterSpec.VSphereMachineConfigs {
 		kubectl.EXPECT().GetEksaVSphereMachineConfig(context.TODO(), gomock.Any(), gomock.Any(), clusterSpec.Cluster.Namespace).Return(config, nil)
 	}
-	kubectl.EXPECT().GetSecretFromNamespace(gomock.Any(), gomock.Any(), CredentialsObjectName, gomock.Any()).Return(clusterVsphereSecret, nil)
 
 	err := provider.ValidateNewSpec(context.TODO(), &types.Cluster{}, newClusterSpec)
 	assert.NoError(t, err, "No error should be returned when modifying mutable fields")

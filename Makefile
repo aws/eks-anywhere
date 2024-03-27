@@ -84,6 +84,10 @@ TOOLS_BIN_DIR_ABS := $(shell pwd)/$(TOOLS_BIN_DIR)
 OUTPUT_DIR := _output
 OUTPUT_BIN_DIR := ${OUTPUT_DIR}/bin
 
+MOCKGEN_BIN := mockgen
+MOCKGEN := $(TOOLS_BIN_DIR)/$(MOCKGEN_BIN) --build_flags=--mod=mod
+MOCKGEN_VERSION := v1.6.0
+
 KUSTOMIZE := $(TOOLS_BIN_DIR)/kustomize
 KUSTOMIZE_VERSION := 4.2.0
 
@@ -100,12 +104,19 @@ BUILDKIT := $(BUILD_LIB)/buildkit.sh
 
 CONTROLLER_GEN_BIN := controller-gen
 CONTROLLER_GEN := $(TOOLS_BIN_DIR)/$(CONTROLLER_GEN_BIN)
+CONTROLLER_GEN_VERSION := v0.6.1
 
 GO_VULNCHECK_BIN := govulncheck
 GO_VULNCHECK := $(TOOLS_BIN_DIR)/$(GO_VULNCHECK_BIN)
+GO_VULNCHECK_VERSION := latest
 
 SETUP_ENVTEST_BIN := setup-envtest
 SETUP_ENVTEST := $(TOOLS_BIN_DIR)/$(SETUP_ENVTEST_BIN)
+SETUP_ENVTEST_VERSION := v0.0.0-20240215124517-56159419231e
+
+GCI_BIN := gci
+GCI := $(TOOLS_BIN_DIR)/$(GCI_BIN)
+GCI_VERSION := v0.8.0
 
 BINARY_NAME=eks-anywhere-cluster-controller
 ifdef CODEBUILD_SRC_DIR
@@ -276,6 +287,9 @@ $(CONTROLLER_MANIFEST_OUTPUT_DIR):
 $(TOOLS_BIN_DIR):
 	mkdir -p $(TOOLS_BIN_DIR)
 
+$(MOCKGEN): $(TOOLS_BIN_DIR)
+	GOBIN=$(TOOLS_BIN_DIR_ABS) $(GO) install github.com/golang/mock/mockgen@$(MOCKGEN_VERSION)
+
 $(KUSTOMIZE): $(TOOLS_BIN_DIR) $(KUSTOMIZE_OUTPUT_BIN_DIR)
 	-rm $(TOOLS_BIN_DIR)/kustomize
 	cd $(TOOLS_BIN_DIR) && curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | bash -s $(KUSTOMIZE_VERSION)
@@ -286,13 +300,16 @@ $(KUBEBUILDER): $(TOOLS_BIN_DIR)
 	chmod +x $(KUBEBUILDER)
 
 $(CONTROLLER_GEN): $(TOOLS_BIN_DIR)
-	GOBIN=$(TOOLS_BIN_DIR_ABS) $(GO) install sigs.k8s.io/controller-tools/cmd/controller-gen@v0.6.1
+	GOBIN=$(TOOLS_BIN_DIR_ABS) $(GO) install sigs.k8s.io/controller-tools/cmd/controller-gen@$(CONTROLLER_GEN_VERSION)
 
 $(GO_VULNCHECK): $(TOOLS_BIN_DIR)
-	GOBIN=$(TOOLS_BIN_DIR_ABS) $(GO) install golang.org/x/vuln/cmd/govulncheck@latest
+	GOBIN=$(TOOLS_BIN_DIR_ABS) $(GO) install golang.org/x/vuln/cmd/govulncheck@$(GO_VULNCHECK_VERSION)
 
 $(SETUP_ENVTEST): $(TOOLS_BIN_DIR)
-	GOBIN=$(TOOLS_BIN_DIR_ABS) $(GO) install sigs.k8s.io/controller-runtime/tools/setup-envtest@v0.0.0-20240215124517-56159419231e
+	GOBIN=$(TOOLS_BIN_DIR_ABS) $(GO) install sigs.k8s.io/controller-runtime/tools/setup-envtest@$(SETUP_ENVTEST_VERSION)
+
+$(GCI): $(TOOLS_BIN_DIR)
+	GOBIN=$(TOOLS_BIN_DIR_ABS) $(GO) install github.com/daixiang0/gci@$(GCI_VERSION)
 
 envtest-setup: $(SETUP_ENVTEST)
 	$(eval KUBEBUILDER_ASSETS ?= $(shell $(SETUP_ENVTEST) use --use-env -p path --arch $(GO_ARCH) $(KUBEBUILDER_ENVTEST_KUBERNETES_VERSION)))
@@ -316,12 +333,9 @@ vulncheck: $(GO_VULNCHECK)
 
 LS_FILES_CMD = git ls-files --exclude-standard | grep '\.go$$' | grep -v '/mocks/\|zz_generated\.'
 
-$(TOOLS_BIN_DIR)/gci:
-	GOBIN=$(TOOLS_BIN_DIR_ABS) $(GO) install github.com/daixiang0/gci@v0.8.0
-
 .PHONY: run-gci
-run-gci: $(TOOLS_BIN_DIR)/gci ## Run gci against code.
-	$(LS_FILES_CMD) | xargs $(TOOLS_BIN_DIR)/gci write --skip-generated -s standard,default -s "prefix($(shell $(GO) list -m))"
+run-gci: $(GCI) ## Run gci against code.
+	$(LS_FILES_CMD) | xargs $(GCI) write --skip-generated -s standard,default -s "prefix($(shell $(GO) list -m))"
 
 .PHONY: build-cross-platform
 build-cross-platform: eks-a-cross-platform
@@ -546,10 +560,8 @@ packages-e2e-test: build-all-test-binaries ## Run Curated Packages tests
 	./bin/e2e.test -test.v -test.run $(PACKAGES_E2E_TESTS)
 
 .PHONY: mocks
-mocks: export PATH := $(GO_VERSION):$(PATH)
-mocks: MOCKGEN := ${GOPATH}/bin/mockgen --build_flags=--mod=mod
+mocks: $(MOCKGEN)
 mocks: ## Generate mocks
-	$(GO) install github.com/golang/mock/mockgen@v1.6.0
 	${MOCKGEN} -destination=controllers/mocks/snow_machineconfig_controller.go -package=mocks -source "controllers/snow_machineconfig_controller.go"
 	${MOCKGEN} -destination=pkg/providers/mocks/providers.go -package=mocks "github.com/aws/eks-anywhere/pkg/providers" Provider,DatacenterConfig,MachineConfig
 	${MOCKGEN} -destination=pkg/executables/mocks/executables.go -package=mocks "github.com/aws/eks-anywhere/pkg/executables" Executable,DockerClient,DockerContainer

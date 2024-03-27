@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	_ "embed"
+	"encoding/base64"
 	"fmt"
 	"os"
 	"reflect"
@@ -13,8 +14,10 @@ import (
 	"github.com/Masterminds/sprig"
 	etcdv1 "github.com/aws/etcdadm-controller/api/v1beta1"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
+	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
@@ -34,7 +37,6 @@ import (
 )
 
 const (
-	CredentialsObjectName    = "vsphere-credentials"
 	eksaLicense              = "EKSA_LICENSE"
 	vSphereUsernameKey       = "VSPHERE_USERNAME"
 	vSpherePasswordKey       = "VSPHERE_PASSWORD"
@@ -50,6 +52,18 @@ const (
 	disk2                    = "Hard disk 2"
 	MemoryAvailable          = "Memory_Available"
 )
+
+const cloudProviderVsphereCredentialsDataTemplate = `
+apiVersion: v1
+kind: Secret
+metadata:
+  name: cloud-provider-vsphere-credentials
+  namespace: kube-system
+data:
+  %[1]s.password: %s
+  %[1]s.username: %s
+type: Opaque
+`
 
 //go:embed config/template-cp.yaml
 var defaultCAPIConfigCP string
@@ -690,17 +704,13 @@ func (p *vsphereProvider) updatePrevClusterMemoryUsage(ctx context.Context, clus
 	return nil
 }
 
-func (p *vsphereProvider) UpdateSecrets(ctx context.Context, cluster *types.Cluster, _ *cluster.Spec) error {
+func (p *vsphereProvider) UpdateSecrets(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
 	var contents bytes.Buffer
-	err := p.createSecret(ctx, cluster, &contents)
+	err := p.updateAllVsphereSecrets(ctx, cluster, clusterSpec, &contents)
 	if err != nil {
 		return err
 	}
 
-	err = p.providerKubectlClient.ApplyKubeSpecFromBytes(ctx, cluster, contents.Bytes())
-	if err != nil {
-		return fmt.Errorf("loading secrets object: %v", err)
-	}
 	return nil
 }
 
@@ -946,7 +956,7 @@ func (p *vsphereProvider) GenerateCAPISpecForCreate(ctx context.Context, _ *type
 	return controlPlaneSpec, workersSpec, nil
 }
 
-func (p *vsphereProvider) createSecret(ctx context.Context, cluster *types.Cluster, contents *bytes.Buffer) error {
+func (p *vsphereProvider) updateAllVsphereSecrets(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, contents *bytes.Buffer) error {
 	t, err := template.New("tmpl").Funcs(sprig.TxtFuncMap()).Parse(defaultSecretObject)
 	if err != nil {
 		return fmt.Errorf("creating secret object template: %v", err)
@@ -954,8 +964,8 @@ func (p *vsphereProvider) createSecret(ctx context.Context, cluster *types.Clust
 	vuc := config.NewVsphereUserConfig()
 
 	values := map[string]string{
-		"vspherePassword":           os.Getenv(vSpherePasswordKey),
-		"vsphereUsername":           os.Getenv(vSphereUsernameKey),
+		"vspherePassword":           vuc.EksaVspherePassword,
+		"vsphereUsername":           vuc.EksaVsphereUsername,
 		"eksaCloudProviderUsername": vuc.EksaVsphereCPUsername,
 		"eksaCloudProviderPassword": vuc.EksaVsphereCPPassword,
 		"eksaLicense":               os.Getenv(eksaLicense),
@@ -967,11 +977,69 @@ func (p *vsphereProvider) createSecret(ctx context.Context, cluster *types.Clust
 	if err != nil {
 		return fmt.Errorf("substituting values for secret object template: %v", err)
 	}
+	err = p.providerKubectlClient.ApplyKubeSpecFromBytes(ctx, cluster, contents.Bytes())
+	if err != nil {
+		return fmt.Errorf("applying secret object: %v", err)
+	}
+
+	clusterVsphereCredentialsSecret := &corev1.Secret{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Secret",
+			APIVersion: corev1.SchemeGroupVersion.Version,
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: constants.EksaSystemNamespace,
+			Name:      fmt.Sprintf("%s-%s", cluster.Name, constants.VSphereCredentialsName),
+			Labels: map[string]string{
+				constants.ClusterctlMoveLabelName: "true",
+			},
+		},
+		Data: map[string][]byte{
+			"username": []byte(vuc.EksaVsphereUsername),
+			"password": []byte(vuc.EksaVspherePassword),
+		},
+	}
+
+	encodedCloudProviderUsername := base64.StdEncoding.EncodeToString([]byte(vuc.EksaVsphereCPUsername))
+	encodedCloudProviderPassword := base64.StdEncoding.EncodeToString([]byte(vuc.EksaVsphereCPPassword))
+	cloudProviderVsphereCredentialsData := fmt.Sprintf(cloudProviderVsphereCredentialsDataTemplate, clusterSpec.VSphereDatacenter.Spec.Server, encodedCloudProviderPassword, encodedCloudProviderUsername)
+	cloudProviderVsphereCredentialsCRSSecret := &corev1.Secret{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Secret",
+			APIVersion: corev1.SchemeGroupVersion.Version,
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: constants.EksaSystemNamespace,
+			Name:      fmt.Sprintf("%s-%s", cluster.Name, constants.VSphereCloudProviderCredentialsName),
+		},
+		Data: map[string][]byte{
+			"data": []byte(cloudProviderVsphereCredentialsData),
+		},
+		Type: "addons.cluster.x-k8s.io/resource-set",
+	}
+
+	secretsToBeUpdated := []*corev1.Secret{
+		clusterVsphereCredentialsSecret,
+		cloudProviderVsphereCredentialsCRSSecret,
+	}
+
+	for _, secret := range secretsToBeUpdated {
+		objBytes, err := yaml.Marshal(secret)
+		if err != nil {
+			return fmt.Errorf("marshalling secret object: %v", err)
+		}
+
+		err = p.providerKubectlClient.ApplyKubeSpecFromBytes(ctx, cluster, objBytes)
+		if err != nil {
+			return fmt.Errorf("applying secret object: %v", err)
+		}
+	}
+
 	return nil
 }
 
 func (p *vsphereProvider) PreCAPIInstallOnBootstrap(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
-	return p.UpdateSecrets(ctx, cluster, nil)
+	return p.UpdateSecrets(ctx, cluster, clusterSpec)
 }
 
 func (p *vsphereProvider) PostBootstrapSetup(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
@@ -1102,14 +1170,6 @@ func (p *vsphereProvider) ValidateNewSpec(ctx context.Context, cluster *types.Cl
 		return fmt.Errorf("spec.network is immutable. Previous value %s, new value %s", oSpec.Network, nSpec.Network)
 	}
 
-	secretChanged, err := p.secretContentsChanged(ctx, cluster)
-	if err != nil {
-		return err
-	}
-
-	if secretChanged {
-		return fmt.Errorf("the VSphere credentials derived from %s and %s are immutable; please use the same credentials for the upgraded cluster", vSpherePasswordKey, vSphereUsernameKey)
-	}
 	return nil
 }
 
@@ -1156,24 +1216,6 @@ func (p *vsphereProvider) validateMachineConfigImmutability(ctx context.Context,
 	}
 
 	return nil
-}
-
-func (p *vsphereProvider) secretContentsChanged(ctx context.Context, workloadCluster *types.Cluster) (bool, error) {
-	nPassword := os.Getenv(vSpherePasswordKey)
-	oSecret, err := p.providerKubectlClient.GetSecretFromNamespace(ctx, workloadCluster.KubeconfigFile, CredentialsObjectName, constants.EksaSystemNamespace)
-	if err != nil {
-		return false, fmt.Errorf("obtaining VSphere secret %s from workload cluster: %v", CredentialsObjectName, err)
-	}
-
-	if string(oSecret.Data["password"]) != nPassword {
-		return true, nil
-	}
-
-	nUser := os.Getenv(vSphereUsernameKey)
-	if string(oSecret.Data["username"]) != nUser {
-		return true, nil
-	}
-	return false, nil
 }
 
 // ChangeDiff returns the component change diff for the provider.

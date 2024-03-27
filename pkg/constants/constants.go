@@ -42,10 +42,11 @@ const (
 	// DefaultNutanixPrismCentralPort is the default port for Nutanix Prism Central.
 	DefaultNutanixPrismCentralPort = 9440
 
-	VSphereCredentialsName = "vsphere-credentials"
-	NutanixCredentialsName = "nutanix-credentials"
-	EksaLicenseName        = "eksa-license"
-	EksaPackagesName       = "eksa-packages"
+	VSphereCredentialsName              = "vsphere-credentials"
+	VSphereCloudProviderCredentialsName = "cloud-provider-vsphere-credentials"
+	NutanixCredentialsName              = "nutanix-credentials"
+	EksaLicenseName                     = "eksa-license"
+	EksaPackagesName                    = "eksa-packages"
 	// UpgraderConfigMapName is the name of config map that stores the upgrader images.
 	UpgraderConfigMapName = "in-place-upgrade"
 	// KubeVipConfigMapName is the name of config map that stores the kube-vip config.
