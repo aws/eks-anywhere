@@ -10,7 +10,7 @@ description: >
 ---
 
 {{% alert title="Note" color="warning" %}}
-External etcd topology is supported for vSphere, CloudStack and Snow clusters, but not yet for Bare Metal or Nutanix clusters.
+External etcd topology is supported for vSphere, CloudStack, Nutanix, and Snow clusters, but not yet for Bare Metal clusters.
 {{% /alert %}}
 
 This page contains steps for backing up a cluster by taking an etcd snapshot, and restoring the cluster from a snapshot. These steps are for an EKS Anywhere cluster provisioned using the external etcd topology (selected by default) with Ubuntu OS.
@@ -22,7 +22,12 @@ EKS-Anywhere clusters use etcd as the backing store. Taking a snapshot of etcd b
 
 ### Backup
 
-Etcd offers a built-in snapshot mechanism. You can take a snapshot using the `etcdctl snapshot save` command by following the steps given below. 
+Etcd offers a built-in snapshot mechanism. You can take a snapshot using the `etcdctl snapshot save` command by following the steps given below.
+
+{{% alert title="Note" color="warning" %}}
+The following commands use ec2-user as the username. For EKS Anywhere on vSphere, Bare Metal, and Snow, the default username is ec2-user. For EKS Anywhere on Apache CloudStack, the default username is capc.
+For EKS Anywhere on Nutanix, the default username is eksa. The default username cannot be changed.
+{{% /alert %}}
 
 1. Login to any one of the etcd VMs
 ```bash
@@ -80,6 +85,7 @@ scp -i $PRIV_KEY snapshot.db ec2-user@$ETCD_VM_IP:/home/ec2-user
 2. To run the etcdctl snapshot restore command, you need to provide the following configuration parameters:
 * name: This is the name of the etcd member. The value of this parameter should match the value used while starting the member. This can be obtained by running:
 ```bash
+sudo su
 export ETCD_NAME=$(cat /etc/etcd/etcd.env | grep ETCD_NAME | awk -F'=' '{print $2}')
 ```  
 * initial-advertise-peer-urls: This is the advertise peer URL with which this etcd member was configured. It should be the exact value with which this etcd member was started. This can be obtained by running:
