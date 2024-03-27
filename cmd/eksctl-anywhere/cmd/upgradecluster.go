@@ -159,6 +159,7 @@ func (uc *upgradeClusterOptions) upgradeCluster(cmd *cobra.Command, args []strin
 		WithEksdInstaller().
 		WithKubectl().
 		WithValidatorClients().
+		WithPackageInstallerWithoutWait(clusterSpec, "", uc.managementKubeconfig).
 		WithUpgradeClusterDefaulter(upgradeCLIConfig)
 
 	if uc.timeoutOptions.noTimeouts {
@@ -212,6 +213,7 @@ func (uc *upgradeClusterOptions) upgradeCluster(cmd *cobra.Command, args []strin
 			deps.EksdUpgrader,
 			deps.EksdInstaller,
 			deps.ClusterApplier,
+			deps.PackageInstaller,
 		)
 
 		err = upgrade.Run(ctx, clusterSpec, managementCluster, upgradeValidations)

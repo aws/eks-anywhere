@@ -1318,7 +1318,7 @@ func (f *Factory) WithGitOpsFlux(clusterConfig *v1alpha1.Cluster, fluxConfig *v1
 
 func (f *Factory) WithPackageInstaller(spec *cluster.Spec, packagesLocation, kubeConfig string) *Factory {
 	f.WithKubectl().WithPackageControllerClient(spec, kubeConfig).WithPackageClient()
-	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+	f.buildSteps = append(f.buildSteps, func(_ context.Context) error {
 		if f.dependencies.PackageInstaller != nil {
 			return nil
 		}
@@ -1338,10 +1338,18 @@ func (f *Factory) WithPackageInstaller(spec *cluster.Spec, packagesLocation, kub
 	return f
 }
 
-func (f *Factory) WithPackageControllerClient(spec *cluster.Spec, kubeConfig string) *Factory {
+// WithPackageInstallerWithoutWait builds a package installer that doesn't wait for active bundles.
+func (f *Factory) WithPackageInstallerWithoutWait(spec *cluster.Spec, packagesLocation, kubeConfig string) *Factory {
+	f.WithPackageInstaller(spec, packagesLocation, kubeConfig)
+	f.WithPackageControllerClient(spec, kubeConfig, curatedpackages.WithSkipWait())
+	return f
+}
+
+// WithPackageControllerClient builds a client for package controller.
+func (f *Factory) WithPackageControllerClient(spec *cluster.Spec, kubeConfig string, opts ...curatedpackages.PackageControllerClientOpt) *Factory {
 	f.WithHelm(helm.WithInsecure()).WithKubectl()
 
-	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+	f.buildSteps = append(f.buildSteps, func(_ context.Context) error {
 		if f.dependencies.PackageControllerClient != nil || spec == nil {
 			return nil
 		}
@@ -1368,13 +1376,8 @@ func (f *Factory) WithPackageControllerClient(spec *cluster.Spec, kubeConfig str
 		if bundle == nil {
 			return fmt.Errorf("could not find VersionsBundle")
 		}
-		f.dependencies.PackageControllerClient = curatedpackages.NewPackageControllerClient(
-			f.dependencies.Helm,
-			f.dependencies.Kubectl,
-			spec.Cluster.Name,
-			mgmtKubeConfig,
-			&bundle.PackageController.HelmChart,
-			f.registryMirror,
+
+		opts = append(opts,
 			curatedpackages.WithEksaAccessKeyId(eksaAccessKeyID),
 			curatedpackages.WithEksaSecretAccessKey(eksaSecretKey),
 			curatedpackages.WithEksaRegion(eksaRegion),
@@ -1385,6 +1388,16 @@ func (f *Factory) WithPackageControllerClient(spec *cluster.Spec, kubeConfig str
 			curatedpackages.WithManagementClusterName(managementClusterName),
 			curatedpackages.WithValuesFileWriter(writer),
 			curatedpackages.WithClusterSpec(spec),
+		)
+
+		f.dependencies.PackageControllerClient = curatedpackages.NewPackageControllerClient(
+			f.dependencies.Helm,
+			f.dependencies.Kubectl,
+			spec.Cluster.Name,
+			mgmtKubeConfig,
+			&bundle.PackageController.HelmChart,
+			f.registryMirror,
+			opts...,
 		)
 		return nil
 	})
