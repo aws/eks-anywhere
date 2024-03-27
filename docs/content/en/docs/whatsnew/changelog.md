@@ -66,6 +66,7 @@ description: >
 - Support for Kubernetes v1.29
 - Support for in-place EKS Anywhere and Kubernetes version upgrades on Bare Metal clusters
 - Support for horizontally scaling `etcd` count in clusters with external `etcd` deployments ([#7127](https://github.com/aws/eks-anywhere/pull/7127))
+- External `etcd` support for Nutanix ([#7550](https://github.com/aws/eks-anywhere/pull/7550))
 - Etcd encryption for Nutanix ([#7565](https://github.com/aws/eks-anywhere/pull/7565))
 - Nutanix Cloud Controller Manager integration ([#7534](https://github.com/aws/eks-anywhere/pull/7534))
 - Enable image signing for all images used in cluster operations
