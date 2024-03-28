@@ -168,3 +168,74 @@ ${IMAGE_ID} tmp-cert-renew \
 5. Repeat the above steps for all control plane nodes.
 
 You can similarly use the above steps to rotate a single certificate instead of all certificates.
+
+#### Update kubeconfig on Admin machine
+
+Post completion of manual certificate rotation or if your Cluster was created more than a year ago, your kubeconfig file on Admin machine will have outdated certificates and would result in following error,
+
+```
+Error: Couldn't get current Server API group list: the server has asked for the client to provide credentials error: you must be logged in to the server.
+This error typically occurs when the cluster certificates have been renewed or extended during the upgrade process. To resolve this issue, you need to update your local kubeconfig file with the new cluster credentials.
+```
+
+Follow below steps to update kubeconfig on Admin machine.
+
+1. SSH to one of the Control Plane nodes and run the following command to validate connection with API Server, export kubeconfig from `${CLUSTER_NAME}-kubeconfig` secret object (`eksa-system` namespace) using kubectl and copy kubeconfig file to `/tmp` directory.
+
+```
+ssh <YOUR_CONTROLPLANE_IP>
+```
+
+{{< tabpane >}}
+{{< tab header="Ubuntu or RHEL" lang="bash" >}}
+
+export CLUSTER_NAME="<YOUR_CLUSTER_NAME_HERE>"
+
+cat /var/lib/kubeadm/admin.conf
+export KUBECONFIG="/var/lib/kubeadm/admin.conf"
+
+kubectl get nodes -o wide
+kubectl get secrets -A
+
+kubectl get secret ${CLUSTER_NAME}-kubeconfig -n eksa-system -o yaml > new-admin.kubeconfig
+
+cat new-admin.kubeconfig | base64 -d > /tmp/new-admin-decoded.kubeconfig
+
+{{< /tab >}}
+
+{{< tab header="Bottlerocket" lang="bash" >}}
+# you would be in the admin container when you ssh to the Bottlerocket machine
+# open a root shell
+sudo sheltie
+
+export CLUSTER_NAME="<YOUR_CLUSTER_NAME_HERE>"
+
+cat /var/lib/kubeadm/admin.conf
+export KUBECONFIG="/var/lib/kubeadm/admin.conf"
+
+kubectl get nodes -o wide
+kubectl get secrets -A
+
+cat new-admin.kubeconfig | base64 -d > /run/host-containerd/io.containerd.runtime.v2.task/default/admin/rootfs/tmp/new-admin-decoded.kubeconfig
+
+{{< /tab >}}
+{{< /tabpane >}}
+
+
+2. **SSH to Admin Machine**, download the kubeconfig file from ControlPlane to your Admin machine and access Kubernetes Cluster
+
+```
+ssh <ADMIN_MACHINE_IP>
+
+export CONTROLPLANE_IP=""
+scp -i <keypair>@${CONTROLPLANE_IP}:/tmp/new-admin-decoded.kubeconfig .
+
+# OR SFTP
+
+sftp -i <keypair>@${CONTROLPLANE_IP}:/tmp/new-admin-decoded.kubeconfig .
+
+ls -ltr 
+export KUBECONFIG="new-admin-decoded.kubeconfig"
+
+kubectl get pods
+```
