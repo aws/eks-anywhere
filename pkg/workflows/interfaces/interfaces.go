@@ -98,3 +98,8 @@ type EksaInstaller interface {
 type ClusterDeleter interface {
 	Run(ctx context.Context, spec *cluster.Spec, managementCluster types.Cluster) error
 }
+
+// ClusterMover moves the EKS-A cluster.
+type ClusterMover interface {
+	Move(ctx context.Context, spec *cluster.Spec, srcClient, dstClient kubernetes.Client) error
+}

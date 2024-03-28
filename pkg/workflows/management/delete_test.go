@@ -8,9 +8,6 @@ import (
 
 	"github.com/golang/mock/gomock"
 	corev1 "k8s.io/api/core/v1"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -48,6 +45,7 @@ type deleteTestSetup struct {
 	clientFactory        *mocks.MockClientFactory
 	managementComponents *cluster.ManagementComponents
 	client               *clientmocks.MockClient
+	mover                *mocks.MockClusterMover
 }
 
 func newDeleteTest(t *testing.T) *deleteTestSetup {
@@ -73,6 +71,7 @@ func newDeleteTest(t *testing.T) *deleteTestSetup {
 		s.GitOpsConfig = &v1alpha1.GitOpsConfig{}
 	})
 	managementComponents := cluster.ManagementComponentsFromBundles(clusterSpec.Bundles)
+	mover := mocks.NewMockClusterMover(mockCtrl)
 
 	workload := management.NewDelete(
 		bootstrapper,
@@ -84,6 +83,7 @@ func newDeleteTest(t *testing.T) *deleteTestSetup {
 		eksdInstaller,
 		eksaInstaller,
 		clientFactory,
+		mover,
 	)
 
 	for _, e := range featureEnvVars {
@@ -110,6 +110,7 @@ func newDeleteTest(t *testing.T) *deleteTestSetup {
 		clientFactory:        clientFactory,
 		managementComponents: managementComponents,
 		client:               client,
+		mover:                mover,
 	}
 }
 
@@ -166,7 +167,7 @@ func (c *deleteTestSetup) expectMoveCAPI(err1, err2 error) {
 	c.clusterManager.EXPECT().MoveCAPI(c.ctx, c.workloadCluster, c.bootstrapCluster, c.workloadCluster.Name, c.clusterSpec, gomock.Any()).Return(err2)
 }
 
-func (c *deleteTestSetup) expectInstallEksaComponentsBootstrap(err1, err2, err3, err4, err5 error) {
+func (c *deleteTestSetup) expectInstallEksaComponentsBootstrap(err1, err2, err3, err4, err5, err6 error) {
 	gomock.InOrder(
 		c.eksdInstaller.EXPECT().InstallEksdCRDs(c.ctx, c.clusterSpec, c.bootstrapCluster).Return(err1).AnyTimes(),
 
@@ -179,7 +180,15 @@ func (c *deleteTestSetup) expectInstallEksaComponentsBootstrap(err1, err2, err3,
 		c.eksdInstaller.EXPECT().InstallEksdManifest(
 			c.ctx, c.clusterSpec, c.bootstrapCluster).Return(err4).AnyTimes(),
 
-		c.clientFactory.EXPECT().BuildClientFromKubeconfig(c.bootstrapCluster.KubeconfigFile).Return(c.client, err5).AnyTimes(),
+		c.clientFactory.EXPECT().BuildClientFromKubeconfig(c.workloadCluster.KubeconfigFile).Return(c.client, nil).AnyTimes(),
+
+		c.clientFactory.EXPECT().BuildClientFromKubeconfig(c.bootstrapCluster.KubeconfigFile).Return(c.client, nil).AnyTimes(),
+
+		c.client.EXPECT().Create(c.ctx, gomock.AssignableToTypeOf(&corev1.Namespace{})).AnyTimes(),
+
+		c.mover.EXPECT().Move(c.ctx, c.clusterSpec, c.client, c.client).Return(err5).AnyTimes(),
+
+		c.clusterManager.EXPECT().AllowDeleteWhilePaused(c.ctx, c.bootstrapCluster, c.clusterSpec).Return(err6).AnyTimes(),
 	)
 }
 
@@ -195,19 +204,6 @@ func (c *deleteTestSetup) expectApplyOnBootstrap(err error) {
 	c.client.EXPECT().ApplyServerSide(c.ctx, "eks-a-cli", gomock.Any(), gomock.Any()).Return(err).AnyTimes()
 }
 
-func (c *deleteTestSetup) expectCreateNamespace() {
-	n := c.clusterSpec.Cluster.Namespace
-	ns := &corev1.Namespace{
-		TypeMeta: v1.TypeMeta{
-			APIVersion: "v1",
-			Kind:       "Namespace",
-		},
-		ObjectMeta: v1.ObjectMeta{Name: n},
-	}
-	c.client.EXPECT().Get(c.ctx, n, "", &corev1.Namespace{}).Return(apierrors.NewNotFound(schema.GroupResource{Group: "", Resource: ""}, ""))
-	c.client.EXPECT().Create(c.ctx, ns)
-}
-
 func TestDeleteRunSuccess(t *testing.T) {
 	features.ClearCache()
 	os.Setenv(features.UseControllerForCli, "true")
@@ -218,12 +214,11 @@ func TestDeleteRunSuccess(t *testing.T) {
 	test.expectPreCAPI(nil)
 	test.expectInstallCAPI(nil)
 	test.expectMoveCAPI(nil, nil)
-	test.expectInstallEksaComponentsBootstrap(nil, nil, nil, nil, nil)
+	test.expectInstallEksaComponentsBootstrap(nil, nil, nil, nil, nil, nil)
 	test.expectApplyOnBootstrap(nil)
 	test.expectDeleteCluster(nil, nil)
 	test.expectCleanupGitRepo(nil)
 	test.expectDeleteBootstrap(nil)
-	test.expectCreateNamespace()
 
 	err := test.run()
 	if err != nil {
@@ -355,7 +350,7 @@ func TestDeleteRunFailResumeReconcile(t *testing.T) {
 	test.expectPreCAPI(nil)
 	test.expectInstallCAPI(nil)
 	test.expectMoveCAPI(nil, nil)
-	test.expectInstallEksaComponentsBootstrap(fmt.Errorf(""), nil, nil, nil, nil)
+	test.expectInstallEksaComponentsBootstrap(fmt.Errorf(""), nil, nil, nil, nil, nil)
 	test.expectSaveLogsManagement()
 	test.expectSaveLogsWorkload()
 	err := test.run()
@@ -374,7 +369,7 @@ func TestDeleteRunFailAddAnnotation(t *testing.T) {
 	test.expectPreCAPI(nil)
 	test.expectInstallCAPI(nil)
 	test.expectMoveCAPI(nil, nil)
-	test.expectInstallEksaComponentsBootstrap(nil, fmt.Errorf(""), nil, nil, nil)
+	test.expectInstallEksaComponentsBootstrap(nil, fmt.Errorf(""), nil, nil, nil, nil)
 	test.expectSaveLogsManagement()
 	test.expectSaveLogsWorkload()
 
@@ -394,7 +389,7 @@ func TestDeleteRunFailProviderInstall(t *testing.T) {
 	test.expectPreCAPI(nil)
 	test.expectInstallCAPI(nil)
 	test.expectMoveCAPI(nil, nil)
-	test.expectInstallEksaComponentsBootstrap(nil, nil, fmt.Errorf(""), nil, nil)
+	test.expectInstallEksaComponentsBootstrap(nil, nil, fmt.Errorf(""), nil, nil, nil)
 	test.expectSaveLogsManagement()
 	test.expectSaveLogsWorkload()
 
@@ -414,7 +409,7 @@ func TestDeleteRunFailEksdInstall(t *testing.T) {
 	test.expectPreCAPI(nil)
 	test.expectInstallCAPI(nil)
 	test.expectMoveCAPI(nil, nil)
-	test.expectInstallEksaComponentsBootstrap(nil, nil, nil, fmt.Errorf(""), nil)
+	test.expectInstallEksaComponentsBootstrap(nil, nil, nil, fmt.Errorf(""), nil, nil)
 	test.expectSaveLogsManagement()
 	test.expectSaveLogsWorkload()
 
@@ -434,9 +429,28 @@ func TestDeleteRunFailBuildClient(t *testing.T) {
 	test.expectPreCAPI(nil)
 	test.expectInstallCAPI(nil)
 	test.expectMoveCAPI(nil, nil)
-	test.expectInstallEksaComponentsBootstrap(nil, nil, nil, nil, fmt.Errorf(""))
+	test.expectInstallEksaComponentsBootstrap(nil, nil, nil, nil, fmt.Errorf(""), nil)
 	test.expectSaveLogsManagement()
 	test.expectSaveLogsWorkload()
+
+	err := test.run()
+	if err == nil {
+		t.Fatalf("Delete.Run() err = %v, want err = nil", err)
+	}
+}
+
+func TestDeleteRunFailAllowDeleteWhilePaused(t *testing.T) {
+	features.ClearCache()
+	os.Setenv(features.UseControllerForCli, "true")
+	test := newDeleteTest(t)
+	test.expectSetup(nil)
+	test.expectBootstrapOpts(nil)
+	test.expectCreateBootstrap(nil)
+	test.expectPreCAPI(nil)
+	test.expectInstallCAPI(nil)
+	test.expectMoveCAPI(nil, nil)
+	test.expectInstallEksaComponentsBootstrap(nil, nil, nil, nil, nil, fmt.Errorf(""))
+	test.expectSaveLogsManagement()
 
 	err := test.run()
 	if err == nil {
@@ -454,8 +468,7 @@ func TestDeleteRunFailPostDelete(t *testing.T) {
 	test.expectPreCAPI(nil)
 	test.expectInstallCAPI(nil)
 	test.expectMoveCAPI(nil, nil)
-	test.expectInstallEksaComponentsBootstrap(nil, nil, nil, nil, nil)
-	test.expectCreateNamespace()
+	test.expectInstallEksaComponentsBootstrap(nil, nil, nil, nil, nil, nil)
 	test.expectApplyOnBootstrap(nil)
 	test.expectDeleteCluster(nil, fmt.Errorf(""))
 	test.expectSaveLogsManagement()
@@ -476,8 +489,7 @@ func TestDeleteRunFailCleanupGit(t *testing.T) {
 	test.expectPreCAPI(nil)
 	test.expectInstallCAPI(nil)
 	test.expectMoveCAPI(nil, nil)
-	test.expectInstallEksaComponentsBootstrap(nil, nil, nil, nil, nil)
-	test.expectCreateNamespace()
+	test.expectInstallEksaComponentsBootstrap(nil, nil, nil, nil, nil, nil)
 	test.expectApplyOnBootstrap(nil)
 	test.expectDeleteCluster(nil, nil)
 	test.expectCleanupGitRepo(fmt.Errorf(""))
@@ -500,9 +512,8 @@ func TestDeleteRunFailDeleteBootstrap(t *testing.T) {
 	test.expectPreCAPI(nil)
 	test.expectInstallCAPI(nil)
 	test.expectMoveCAPI(nil, nil)
-	test.expectInstallEksaComponentsBootstrap(nil, nil, nil, nil, nil)
+	test.expectInstallEksaComponentsBootstrap(nil, nil, nil, nil, nil, nil)
 	test.expectApplyOnBootstrap(nil)
-	test.expectCreateNamespace()
 	test.expectDeleteCluster(nil, nil)
 	test.expectCleanupGitRepo(nil)
 	test.expectDeleteBootstrap(fmt.Errorf(""))

@@ -49,6 +49,7 @@ type createTestSetup struct {
 	workflow             *management.Create
 	client               *clientmocks.MockClient
 	clientFactory        *mocks.MockClientFactory
+	mover                *mocks.MockClusterMover
 }
 
 func newCreateTest(t *testing.T) *createTestSetup {
@@ -71,6 +72,7 @@ func newCreateTest(t *testing.T) *createTestSetup {
 	validator := mocks.NewMockValidator(mockCtrl)
 	client := clientmocks.NewMockClient(mockCtrl)
 	clientFactory := mocks.NewMockClientFactory(mockCtrl)
+	mover := mocks.NewMockClusterMover(mockCtrl)
 
 	workflow := management.NewCreate(
 		bootstrapper,
@@ -83,6 +85,7 @@ func newCreateTest(t *testing.T) *createTestSetup {
 		packageInstaller,
 		clusterCreator,
 		eksaInstaller,
+		mover,
 	)
 
 	for _, e := range featureEnvVars {
@@ -119,6 +122,7 @@ func newCreateTest(t *testing.T) *createTestSetup {
 		managementComponents: managementComponents,
 		clusterSpec:          clusterSpec,
 		client:               client,
+		mover:                mover,
 	}
 }
 
@@ -231,9 +235,13 @@ func (c *createTestSetup) expectInstallEksaComponentsWorkload(err1, err2, err3 e
 		c.eksdInstaller.EXPECT().InstallEksdManifest(
 			c.ctx, c.clusterSpec, c.workloadCluster),
 
-		c.clientFactory.EXPECT().BuildClientFromKubeconfig(c.workloadCluster.KubeconfigFile).Return(c.client, err3),
+		c.clientFactory.EXPECT().BuildClientFromKubeconfig(c.bootstrapCluster.KubeconfigFile).Return(c.client, nil),
 
-		c.clusterCreator.EXPECT().Run(c.ctx, c.clusterSpec, *c.workloadCluster).Return(err2),
+		c.clientFactory.EXPECT().BuildClientFromKubeconfig(c.workloadCluster.KubeconfigFile).Return(c.client, nil),
+
+		c.mover.EXPECT().Move(c.ctx, c.clusterSpec, c.client, c.client).Return(err2),
+
+		c.clusterManager.EXPECT().ResumeEKSAControllerReconcile(c.ctx, c.workloadCluster, c.clusterSpec, c.provider).Return(err3).MaxTimes(1),
 	)
 }
 
@@ -747,7 +755,7 @@ func TestCreateEKSAWorkloadFailure(t *testing.T) {
 	}
 }
 
-func TestCreateEKSAWorkloadNamespaceFailure(t *testing.T) {
+func TestCreateEKSAResumeWorkloadFailure(t *testing.T) {
 	test := newCreateTest(t)
 	test.expectSetup()
 	test.expectPreflightValidationsToPass()
@@ -755,25 +763,11 @@ func TestCreateEKSAWorkloadNamespaceFailure(t *testing.T) {
 	test.expectCAPIInstall(nil, nil, nil)
 	test.expectInstallEksaComponentsBootstrap(nil, nil, nil, nil)
 	test.expectCreateWorkload(nil, nil, nil, nil, nil, nil)
-	test.expectCreateNamespace()
 	test.expectInstallResourcesOnManagementTask(nil)
 	test.expectPauseReconcile(nil)
 	test.expectMoveManagement(nil)
-	gomock.InOrder(
-
-		test.eksdInstaller.EXPECT().InstallEksdCRDs(test.ctx, test.clusterSpec, test.workloadCluster),
-
-		test.eksaInstaller.EXPECT().Install(
-			test.ctx, logger.Get(), test.workloadCluster, test.managementComponents, test.clusterSpec),
-
-		test.provider.EXPECT().InstallCustomProviderComponents(
-			test.ctx, test.workloadCluster.KubeconfigFile),
-
-		test.eksdInstaller.EXPECT().InstallEksdManifest(
-			test.ctx, test.clusterSpec, test.workloadCluster),
-
-		test.clientFactory.EXPECT().BuildClientFromKubeconfig(test.workloadCluster.KubeconfigFile).Return(test.client, fmt.Errorf("")),
-	)
+	test.expectInstallEksaComponentsWorkload(nil, nil, fmt.Errorf("test"))
+	test.expectCreateNamespace()
 
 	test.clusterManager.EXPECT().SaveLogsManagementCluster(test.ctx, test.clusterSpec, test.bootstrapCluster)
 

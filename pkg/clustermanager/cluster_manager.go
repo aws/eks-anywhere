@@ -693,6 +693,20 @@ func (c *ClusterManager) ResumeCAPIWorkloadClusters(ctx context.Context, managem
 	return nil
 }
 
+func (c *ClusterManager) AllowDeleteWhilePaused(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
+	return c.allowDeleteWhilePaused(ctx, cluster, clusterSpec.Cluster)
+}
+
+func (c *ClusterManager) allowDeleteWhilePaused(ctx context.Context, clusterCreds *types.Cluster, cluster *v1alpha1.Cluster) error {
+	allowDelete := map[string]string{v1alpha1.AllowDeleteWhenPausedAnnotation: "true"}
+
+	if err := c.clusterClient.UpdateAnnotationInNamespace(ctx, cluster.ResourceType(), cluster.Name, allowDelete, clusterCreds, cluster.Namespace); err != nil {
+		return fmt.Errorf("updating paused annotation in cluster reconciliation: %v", err)
+	}
+
+	return nil
+}
+
 func (c *ClusterManager) PauseEKSAControllerReconcile(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, provider providers.Provider) error {
 	if clusterSpec.Cluster.IsSelfManaged() {
 		return c.pauseEksaReconcileForManagementAndWorkloadClusters(ctx, cluster, clusterSpec, provider)
