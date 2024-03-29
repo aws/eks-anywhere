@@ -4474,6 +4474,7 @@ func TestVSphereUpgradeKubernetesCiliumUbuntuGitHubFluxAPI(t *testing.T) {
 	test.DeleteManagementCluster()
 }
 
+// Airgapped tests
 func TestVSphereKubernetes128UbuntuAirgappedRegistryMirror(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
@@ -4500,6 +4501,20 @@ func TestVSphereKubernetes129UbuntuAirgappedRegistryMirror(t *testing.T) {
 	)
 
 	runAirgapConfigFlow(test, "195.18.0.1/16,196.18.0.1/16")
+}
+
+func TestVSphereKubernetes129UbuntuAirgappedProxy(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewVSphere(t, framework.WithUbuntu129(), framework.WithPrivateNetwork()),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
+		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube129)),
+		framework.WithProxy(framework.VsphereProxyRequiredEnvVars),
+	)
+
+	runAirgapConfigProxyFlow(test, "195.18.0.1/16,196.18.0.1/16")
 }
 
 func TestVSphereKubernetesUbuntu128EtcdEncryption(t *testing.T) {
