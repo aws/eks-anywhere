@@ -3565,6 +3565,28 @@ func TestCloudStackKubernetes126RedhatAirgappedRegistryMirror(t *testing.T) {
 	runAirgapConfigFlow(test, "10.0.0.1/8")
 }
 
+func TestCloudStackKubernetes128RedhatAirgappedProxy(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewCloudStack(t,
+			framework.WithCloudStackRedhat9Kubernetes128(),
+			framework.WithCloudStackFillers(
+				framework.RemoveAllCloudStackAzs(),
+				framework.UpdateAddCloudStackAz3(),
+			),
+		),
+		framework.WithClusterFiller(
+			api.WithStackedEtcdTopology(),
+			api.WithControlPlaneCount(1),
+			api.WithWorkerNodeCount(1),
+		),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube128)),
+		framework.WithProxy(framework.CloudstackProxyRequiredEnvVars),
+	)
+
+	runAirgapConfigProxyFlow(test, "10.0.0.1/8")
+}
+
 // Workload API
 func TestCloudStackMulticlusterWorkloadClusterAPI(t *testing.T) {
 	cloudstack := framework.NewCloudStack(t)
