@@ -30,6 +30,30 @@ description: >
 * When upgrading to a new minor version, a new OS image must be created using the new image-builder CLI pertaining to that release.
 {{% /alert %}}
 
+
+## [v0.19.2](https://github.com/aws/eks-anywhere/releases/tag/v0.19.2)
+
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+|    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+| Bottlerocket 1.19.2 |    ✔    |     ✔      |    —    |     —      |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+|      RHEL 9.x       |    —    |     —      |    ✔    |     ✔      |  —   |
+
+### Changed
+- Update CAPC to 0.4.10-rc1 [#3105](https://github.com/aws/eks-anywhere-build-tooling/pull/3015)
+- Upgraded EKS-D:
+  - `v1-25-eks-34` to [`v1-25-eks-35`](https://distro.eks.amazonaws.com/releases/1-25/35/)
+  - `v1-26-eks-30` to [`v1-26-eks-31`](https://distro.eks.amazonaws.com/releases/1-26/31/)
+  - `v1-27-eks-24` to [`v1-27-eks-25`](https://distro.eks.amazonaws.com/releases/1-27/25/)
+  - `v1-28-eks-17` to [`v1-28-eks-18`](https://distro.eks.amazonaws.com/releases/1-28/18/)
+  - `v1-29-eks-6` to [`v1-29-eks-7`](https://distro.eks.amazonaws.com/releases/1-29/7/)
+
+### Fixed
+- Fixing tinkerbell action image URIs while using registry mirror with proxy cache.
+
 ## [v0.19.1](https://github.com/aws/eks-anywhere/releases/tag/v0.19.1)
 
 ### Supported OS version details
