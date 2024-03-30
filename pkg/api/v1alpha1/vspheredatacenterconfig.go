@@ -19,7 +19,7 @@ const (
 )
 
 // Used for generating yaml for generate clusterconfig command.
-func NewVSphereDatacenterConfigGenerate(clusterName string) *VSphereDatacenterConfigGenerate {
+func NewVSphereDatacenterConfigGenerate(clusterName, datacenter, network, server, thumbprint string, insecure bool) *VSphereDatacenterConfigGenerate {
 	return &VSphereDatacenterConfigGenerate{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       VSphereDatacenterKind,
@@ -28,7 +28,13 @@ func NewVSphereDatacenterConfigGenerate(clusterName string) *VSphereDatacenterCo
 		ObjectMeta: ObjectMeta{
 			Name: clusterName,
 		},
-		Spec: VSphereDatacenterConfigSpec{},
+		Spec: VSphereDatacenterConfigSpec{
+			Datacenter: datacenter,
+			Network:    network,
+			Server:     server,
+			Thumbprint: thumbprint,
+			Insecure:   insecure,
+		},
 	}
 }
 

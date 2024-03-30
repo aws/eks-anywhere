@@ -17,7 +17,7 @@ const (
 )
 
 // Used for generating yaml for generate clusterconfig command.
-func NewVSphereMachineConfigGenerate(name string) *VSphereMachineConfigGenerate {
+func NewVSphereMachineConfigGenerate(name, datastore, folder, resourcePool, template, sshAuthorizedKey string, osFamily OSFamily, diskGiB, numCPUs, memoryMiB int) *VSphereMachineConfigGenerate {
 	return &VSphereMachineConfigGenerate{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       VSphereMachineConfigKind,
@@ -27,13 +27,17 @@ func NewVSphereMachineConfigGenerate(name string) *VSphereMachineConfigGenerate 
 			Name: name,
 		},
 		Spec: VSphereMachineConfigSpec{
-			DiskGiB:   DefaultVSphereDiskGiB,
-			NumCPUs:   DefaultVSphereNumCPUs,
-			MemoryMiB: DefaultVSphereMemoryMiB,
-			OSFamily:  DefaultVSphereOSFamily,
+			Datastore:    datastore,
+			Folder:       folder,
+			ResourcePool: resourcePool,
+			Template:     template,
+			DiskGiB:      GetOrDefaultInt(diskGiB, DefaultVSphereDiskGiB),
+			NumCPUs:      GetOrDefaultInt(numCPUs, DefaultVSphereNumCPUs),
+			MemoryMiB:    GetOrDefaultInt(memoryMiB, DefaultVSphereMemoryMiB),
+			OSFamily:     GetOrDefaultOSFamily(osFamily, DefaultVSphereOSFamily),
 			Users: []UserConfiguration{{
 				Name:              "ec2-user",
-				SshAuthorizedKeys: []string{"ssh-rsa AAAA..."},
+				SshAuthorizedKeys: []string{GetOrDefaultString(sshAuthorizedKey, "ssh-rsa AAAA...")},
 			}},
 		},
 	}

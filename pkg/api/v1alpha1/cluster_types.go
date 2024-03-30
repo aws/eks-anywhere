@@ -1402,6 +1402,11 @@ func (c *Cluster) SetManagedBy(managementClusterName string) {
 	c.Spec.ManagementCluster.Name = managementClusterName
 }
 
+// SetManagedBy set the management cluster name of a cluster.
+func (c *ClusterGenerate) SetManagedBy(managementClusterName string) {
+	c.Spec.ManagementCluster.Name = managementClusterName
+}
+
 func (c *Cluster) SetSelfManaged() {
 	c.Spec.ManagementCluster.Name = c.Name
 }

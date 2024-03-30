@@ -13,7 +13,7 @@ import (
 const TinkerbellDatacenterKind = "TinkerbellDatacenterConfig"
 
 // Used for generating yaml for generate clusterconfig command.
-func NewTinkerbellDatacenterConfigGenerate(clusterName string) *TinkerbellDatacenterConfigGenerate {
+func NewTinkerbellDatacenterConfigGenerate(clusterName, tinkerbellIP, osImageURL string) *TinkerbellDatacenterConfigGenerate {
 	return &TinkerbellDatacenterConfigGenerate{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       TinkerbellDatacenterKind,
@@ -22,7 +22,10 @@ func NewTinkerbellDatacenterConfigGenerate(clusterName string) *TinkerbellDatace
 		ObjectMeta: ObjectMeta{
 			Name: clusterName,
 		},
-		Spec: TinkerbellDatacenterConfigSpec{},
+		Spec: TinkerbellDatacenterConfigSpec{
+			TinkerbellIP: tinkerbellIP,
+			OSImageURL:   osImageURL,
+		},
 	}
 }
 

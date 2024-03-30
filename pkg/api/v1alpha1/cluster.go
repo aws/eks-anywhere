@@ -40,8 +40,8 @@ var re = regexp.MustCompile(constants.DefaultCuratedPackagesRegistryRegex)
 // +kubebuilder:object:generate=false
 type ClusterGenerateOpt func(config *ClusterGenerate)
 
-// Used for generating yaml for generate clusterconfig command.
-func NewClusterGenerate(clusterName string, opts ...ClusterGenerateOpt) *ClusterGenerate {
+// NewClusterGenerate is used to generate yaml for generate clusterconfig command.
+func NewClusterGenerate(clusterName, managementClusterName, kubernetesVersion string, podsCidrBlocks, servicesCidrBlocks []string, opts ...ClusterGenerateOpt) *ClusterGenerate {
 	clusterConfig := &ClusterGenerate{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       ClusterKind,
@@ -51,19 +51,24 @@ func NewClusterGenerate(clusterName string, opts ...ClusterGenerateOpt) *Cluster
 			Name: clusterName,
 		},
 		Spec: ClusterSpec{
-			KubernetesVersion: GetClusterDefaultKubernetesVersion(),
+			KubernetesVersion: GetClusterKubernetesVersion(kubernetesVersion),
 			ClusterNetwork: ClusterNetwork{
 				Pods: Pods{
-					CidrBlocks: []string{"192.168.0.0/16"},
+					CidrBlocks: GetOrDefaultStringArray(podsCidrBlocks, []string{"192.168.0.0/16"}),
 				},
 				Services: Services{
-					CidrBlocks: []string{"10.96.0.0/12"},
+					CidrBlocks: GetOrDefaultStringArray(servicesCidrBlocks, []string{"10.96.0.0/12"}),
 				},
 				CNIConfig: &CNIConfig{Cilium: &CiliumConfig{}},
 			},
 		},
 	}
-	clusterConfig.SetSelfManaged()
+
+	if clusterName == managementClusterName {
+		clusterConfig.SetSelfManaged()
+	} else {
+		clusterConfig.SetManagedBy(managementClusterName)
+	}
 
 	for _, opt := range opts {
 		opt(clusterConfig)
@@ -100,6 +105,13 @@ func WorkerNodeConfigName(name string) ClusterGenerateOpt {
 func WithClusterEndpoint() ClusterGenerateOpt {
 	return func(c *ClusterGenerate) {
 		c.Spec.ControlPlaneConfiguration.Endpoint = &Endpoint{Host: ""}
+	}
+}
+
+// WithClusterEndpointHost is a variant of function WithClusterEndpoint with host parameter.
+func WithClusterEndpointHost(host string) ClusterGenerateOpt {
+	return func(c *ClusterGenerate) {
+		c.Spec.ControlPlaneConfiguration.Endpoint = &Endpoint{Host: host}
 	}
 }
 
@@ -226,6 +238,40 @@ func GetAndValidateClusterConfig(fileName string) (*Cluster, error) {
 // GetClusterDefaultKubernetesVersion returns the default kubernetes version for a Cluster.
 func GetClusterDefaultKubernetesVersion() KubernetesVersion {
 	return Kube129
+}
+
+// GetClusterKubernetesVersion returns the kubernetes version for a Cluster.
+func GetClusterKubernetesVersion(kubernetesVersion string) KubernetesVersion {
+	switch kubernetesVersion {
+	case "1.18":
+		return Kube118
+	case "1.19":
+		return Kube119
+	case "1.20":
+		return Kube120
+	case "1.21":
+		return Kube121
+	case "1.22":
+		return Kube122
+	case "1.23":
+		return Kube123
+	case "1.24":
+		return Kube124
+	case "1.25":
+		return Kube125
+	case "1.26":
+		return Kube126
+	case "1.27":
+		return Kube127
+	case "1.28":
+		return Kube128
+	case "1.29":
+		return Kube129
+	case "1.30":
+		return Kube130
+	default:
+		return GetClusterDefaultKubernetesVersion()
+	}
 }
 
 // ValidateClusterConfigContent validates a Cluster object without modifying it
