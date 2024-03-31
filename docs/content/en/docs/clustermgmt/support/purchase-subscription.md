@@ -184,7 +184,7 @@ aws eks tag-resource \
 
 ## Delete Subscriptions
 
->**_NOTE_** Only inactive subscriptions can be deleted. Deleting inactive subscriptions removes them from the AWS Management Console view and API responses.
+>**_NOTE_** Only inactive subscriptions can be deleted. Deleting inactive subscriptions removes them from the AWS Management Console view and API responses. To delete any Active Subscriptions, Please create a Support Case with AWS Support team.
 
 ### AWS Management Console
 
