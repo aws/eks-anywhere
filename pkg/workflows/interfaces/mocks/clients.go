@@ -99,6 +99,20 @@ func (m *MockClusterManager) EXPECT() *MockClusterManagerMockRecorder {
 	return m.recorder
 }
 
+// AllowDeleteWhilePaused mocks base method.
+func (m *MockClusterManager) AllowDeleteWhilePaused(arg0 context.Context, arg1 *types.Cluster, arg2 *cluster.Spec) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AllowDeleteWhilePaused", arg0, arg1, arg2)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AllowDeleteWhilePaused indicates an expected call of AllowDeleteWhilePaused.
+func (mr *MockClusterManagerMockRecorder) AllowDeleteWhilePaused(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AllowDeleteWhilePaused", reflect.TypeOf((*MockClusterManager)(nil).AllowDeleteWhilePaused), arg0, arg1, arg2)
+}
+
 // ApplyBundles mocks base method.
 func (m *MockClusterManager) ApplyBundles(arg0 context.Context, arg1 *cluster.Spec, arg2 *types.Cluster) error {
 	m.ctrl.T.Helper()
@@ -285,6 +299,20 @@ func (m *MockClusterManager) ResumeCAPIWorkloadClusters(arg0 context.Context, ar
 func (mr *MockClusterManagerMockRecorder) ResumeCAPIWorkloadClusters(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ResumeCAPIWorkloadClusters", reflect.TypeOf((*MockClusterManager)(nil).ResumeCAPIWorkloadClusters), arg0, arg1)
+}
+
+// ResumeEKSAControllerReconcile mocks base method.
+func (m *MockClusterManager) ResumeEKSAControllerReconcile(arg0 context.Context, arg1 *types.Cluster, arg2 *cluster.Spec, arg3 providers.Provider) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ResumeEKSAControllerReconcile", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ResumeEKSAControllerReconcile indicates an expected call of ResumeEKSAControllerReconcile.
+func (mr *MockClusterManagerMockRecorder) ResumeEKSAControllerReconcile(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ResumeEKSAControllerReconcile", reflect.TypeOf((*MockClusterManager)(nil).ResumeEKSAControllerReconcile), arg0, arg1, arg2, arg3)
 }
 
 // SaveLogsManagementCluster mocks base method.

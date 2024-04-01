@@ -674,6 +674,73 @@ func (c *ClusterManager) PauseCAPIWorkloadClusters(ctx context.Context, manageme
 	return nil
 }
 
+func (c *ClusterManager) resumeEksaReconcileForManagementAndWorkloadClusters(ctx context.Context, managementCluster *types.Cluster, clusterSpec *cluster.Spec, provider providers.Provider) error {
+	clusters := &v1alpha1.ClusterList{}
+	err := c.clusterClient.ListObjects(ctx, eksaClusterResourceType, clusterSpec.Cluster.Namespace, managementCluster.KubeconfigFile, clusters)
+	if err != nil {
+		return err
+	}
+
+	for _, w := range clusters.Items {
+		if w.ManagedBy() != clusterSpec.Cluster.Name {
+			continue
+		}
+
+		if err := c.resumeReconcileForCluster(ctx, managementCluster, &w, provider); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// ResumeEKSAControllerReconcile resumes a paused EKS-Anywhere cluster.
+func (c *ClusterManager) ResumeEKSAControllerReconcile(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, provider providers.Provider) error {
+	// clear pause annotation
+	clusterSpec.Cluster.ClearPauseAnnotation()
+	provider.DatacenterConfig(clusterSpec).ClearPauseAnnotation()
+
+	if clusterSpec.Cluster.IsSelfManaged() {
+		return c.resumeEksaReconcileForManagementAndWorkloadClusters(ctx, cluster, clusterSpec, provider)
+	}
+
+	return c.resumeReconcileForCluster(ctx, cluster, clusterSpec.Cluster, provider)
+}
+
+func (c *ClusterManager) resumeReconcileForCluster(ctx context.Context, clusterCreds *types.Cluster, cluster *v1alpha1.Cluster, provider providers.Provider) error {
+	pausedAnnotation := cluster.PausedAnnotation()
+	err := c.clusterClient.RemoveAnnotationInNamespace(ctx, provider.DatacenterResourceType(), cluster.Spec.DatacenterRef.Name, pausedAnnotation, clusterCreds, cluster.Namespace)
+	if err != nil {
+		return fmt.Errorf("removing paused annotation when resuming datacenterconfig reconciliation: %v", err)
+	}
+
+	if provider.MachineResourceType() != "" {
+		for _, machineConfigRef := range cluster.MachineConfigRefs() {
+			err = c.clusterClient.RemoveAnnotationInNamespace(ctx, provider.MachineResourceType(), machineConfigRef.Name, pausedAnnotation, clusterCreds, cluster.Namespace)
+			if err != nil {
+				return fmt.Errorf("removing paused annotation when resuming reconciliation for machine config %s: %v", machineConfigRef.Name, err)
+			}
+		}
+	}
+
+	err = c.clusterClient.RemoveAnnotationInNamespace(ctx, cluster.ResourceType(), cluster.Name, pausedAnnotation, clusterCreds, cluster.Namespace)
+	if err != nil {
+		return fmt.Errorf("removing paused annotation when resuming cluster reconciliation: %v", err)
+	}
+
+	if err = c.clusterClient.RemoveAnnotationInNamespace(ctx,
+		cluster.ResourceType(),
+		cluster.Name,
+		v1alpha1.ManagedByCLIAnnotation,
+		clusterCreds,
+		cluster.Namespace,
+	); err != nil {
+		return fmt.Errorf("removing managed by CLI annotation when resuming cluster reconciliation: %v", err)
+	}
+
+	return nil
+}
+
 // ResumeCAPIWorkloadClusters resumes all workload CAPI clusters except the management cluster.
 func (c *ClusterManager) ResumeCAPIWorkloadClusters(ctx context.Context, managementCluster *types.Cluster) error {
 	clusters, err := c.clusterClient.GetClusters(ctx, managementCluster)
@@ -693,6 +760,7 @@ func (c *ClusterManager) ResumeCAPIWorkloadClusters(ctx context.Context, managem
 	return nil
 }
 
+// AllowDeleteWhilePaused allows the deletion of paused clusters.
 func (c *ClusterManager) AllowDeleteWhilePaused(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
 	return c.allowDeleteWhilePaused(ctx, cluster, clusterSpec.Cluster)
 }

@@ -771,7 +771,7 @@ func TestPauseEKSAControllerReconcileWorkloadCluster(t *testing.T) {
 	tt.Expect(tt.clusterManager.PauseEKSAControllerReconcile(tt.ctx, tt.cluster, tt.clusterSpec, tt.mocks.provider)).To(Succeed())
 }
 
-func TestPauseEKSAControllerReconcileWorkloadClusterUpdateAnnotationError(t *testing.T) {
+func TestResumeEKSAControllerReconcileWorkloadClusterUpdateAnnotationError(t *testing.T) {
 	tt := newTest(t, clustermanager.WithRetrier(retrier.NewWithMaxRetries(1, 0)))
 	tt.clusterSpec.Cluster = &v1alpha1.Cluster{
 		ObjectMeta: metav1.ObjectMeta{
@@ -788,15 +788,26 @@ func TestPauseEKSAControllerReconcileWorkloadClusterUpdateAnnotationError(t *tes
 		},
 	}
 
+	datacenterConfig := &v1alpha1.VSphereDatacenterConfig{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: tt.clusterName,
+		},
+		Spec: v1alpha1.VSphereDatacenterConfigSpec{
+			Insecure: true,
+		},
+	}
+	pauseAnnotation := "anywhere.eks.amazonaws.com/paused"
+
 	tt.mocks.provider.EXPECT().DatacenterResourceType().Return(eksaVSphereDatacenterResourceType)
 	tt.mocks.provider.EXPECT().MachineResourceType().Return("")
-	tt.mocks.client.EXPECT().UpdateAnnotationInNamespace(tt.ctx, eksaVSphereDatacenterResourceType, tt.clusterSpec.Cluster.Spec.DatacenterRef.Name, expectedPauseAnnotation, tt.cluster, "").Return(nil)
-	tt.mocks.client.EXPECT().UpdateAnnotationInNamespace(tt.ctx, eksaClusterResourceType, tt.clusterSpec.Cluster.Name, expectedPauseAnnotation, tt.cluster, "").Return(errors.New("pause eksa cluster error"))
+	tt.mocks.provider.EXPECT().DatacenterConfig(tt.clusterSpec).Return(datacenterConfig)
+	tt.mocks.client.EXPECT().RemoveAnnotationInNamespace(tt.ctx, eksaVSphereDatacenterResourceType, tt.clusterSpec.Cluster.Spec.DatacenterRef.Name, pauseAnnotation, tt.cluster, "").Return(nil)
+	tt.mocks.client.EXPECT().RemoveAnnotationInNamespace(tt.ctx, eksaClusterResourceType, tt.clusterSpec.Cluster.Name, pauseAnnotation, tt.cluster, "").Return(errors.New("pause eksa cluster error"))
 
-	tt.Expect(tt.clusterManager.PauseEKSAControllerReconcile(tt.ctx, tt.cluster, tt.clusterSpec, tt.mocks.provider)).NotTo(Succeed())
+	tt.Expect(tt.clusterManager.ResumeEKSAControllerReconcile(tt.ctx, tt.cluster, tt.clusterSpec, tt.mocks.provider)).NotTo(Succeed())
 }
 
-func TestPauseEKSAControllerReconcileManagementCluster(t *testing.T) {
+func TestResumeEKSAControllerReconcileManagementCluster(t *testing.T) {
 	tt := newTest(t)
 	tt.clusterSpec.Cluster = &v1alpha1.Cluster{
 		ObjectMeta: metav1.ObjectMeta{
@@ -812,6 +823,18 @@ func TestPauseEKSAControllerReconcileManagementCluster(t *testing.T) {
 			},
 		},
 	}
+
+	tt.clusterSpec.Cluster.PauseReconcile()
+
+	datacenterConfig := &v1alpha1.VSphereDatacenterConfig{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: tt.clusterName,
+		},
+		Spec: v1alpha1.VSphereDatacenterConfigSpec{
+			Insecure: true,
+		},
+	}
+	pauseAnnotation := "anywhere.eks.amazonaws.com/paused"
 
 	tt.mocks.client.EXPECT().
 		ListObjects(tt.ctx, eksaClusterResourceType, "", "", &v1alpha1.ClusterList{}).
@@ -851,31 +874,28 @@ func TestPauseEKSAControllerReconcileManagementCluster(t *testing.T) {
 		})
 	tt.mocks.provider.EXPECT().DatacenterResourceType().Return(eksaVSphereDatacenterResourceType).Times(2)
 	tt.mocks.provider.EXPECT().MachineResourceType().Return("").Times(2)
-	tt.mocks.client.EXPECT().UpdateAnnotationInNamespace(tt.ctx, eksaVSphereDatacenterResourceType, tt.clusterSpec.Cluster.Spec.DatacenterRef.Name, expectedPauseAnnotation, tt.cluster, "").Return(nil).Times(2)
-	tt.mocks.client.EXPECT().UpdateAnnotationInNamespace(tt.ctx, eksaClusterResourceType, tt.clusterSpec.Cluster.Name, expectedPauseAnnotation, tt.cluster, "").Return(nil)
-	tt.mocks.client.EXPECT().UpdateAnnotationInNamespace(
+	tt.mocks.provider.EXPECT().DatacenterConfig(tt.clusterSpec).Return(datacenterConfig)
+	tt.mocks.client.EXPECT().RemoveAnnotationInNamespace(tt.ctx, eksaVSphereDatacenterResourceType, tt.clusterSpec.Cluster.Spec.DatacenterRef.Name, pauseAnnotation, tt.cluster, "").Return(nil).Times(2)
+	tt.mocks.client.EXPECT().RemoveAnnotationInNamespace(tt.ctx, eksaClusterResourceType, tt.clusterSpec.Cluster.Name, pauseAnnotation, tt.cluster, "").Return(nil)
+	tt.mocks.client.EXPECT().RemoveAnnotationInNamespace(
 		tt.ctx,
 		eksaClusterResourceType,
 		tt.clusterSpec.Cluster.Name,
-		map[string]string{
-			v1alpha1.ManagedByCLIAnnotation: "true",
-		},
+		v1alpha1.ManagedByCLIAnnotation,
 		tt.cluster,
 		"",
 	).Return(nil)
-	tt.mocks.client.EXPECT().UpdateAnnotationInNamespace(tt.ctx, eksaClusterResourceType, "workload-cluster-1", expectedPauseAnnotation, tt.cluster, "").Return(nil)
-	tt.mocks.client.EXPECT().UpdateAnnotationInNamespace(
+	tt.mocks.client.EXPECT().RemoveAnnotationInNamespace(tt.ctx, eksaClusterResourceType, "workload-cluster-1", pauseAnnotation, tt.cluster, "").Return(nil)
+	tt.mocks.client.EXPECT().RemoveAnnotationInNamespace(
 		tt.ctx,
 		eksaClusterResourceType,
 		"workload-cluster-1",
-		map[string]string{
-			v1alpha1.ManagedByCLIAnnotation: "true",
-		},
+		v1alpha1.ManagedByCLIAnnotation,
 		tt.cluster,
 		"",
 	).Return(nil)
 
-	tt.Expect(tt.clusterManager.PauseEKSAControllerReconcile(tt.ctx, tt.cluster, tt.clusterSpec, tt.mocks.provider)).To(Succeed())
+	tt.Expect(tt.clusterManager.ResumeEKSAControllerReconcile(tt.ctx, tt.cluster, tt.clusterSpec, tt.mocks.provider)).To(Succeed())
 }
 
 func TestPauseEKSAControllerReconcileManagementClusterListObjectsError(t *testing.T) {
@@ -1083,4 +1103,32 @@ func TestCreateRegistryCredSecretSuccess(t *testing.T) {
 
 	err := tt.clusterManager.CreateRegistryCredSecret(tt.ctx, tt.cluster)
 	tt.Expect(err).To(BeNil())
+}
+
+func TestAllowDeleteWhilePaused(t *testing.T) {
+	tests := []struct {
+		name string
+		err  error
+	}{
+		{
+			name: "success allow delete while paused",
+			err:  nil,
+		},
+		{
+			name: "fail allow delete while paused",
+			err:  fmt.Errorf("failure"),
+		},
+	}
+	allowDelete := map[string]string{v1alpha1.AllowDeleteWhenPausedAnnotation: "true"}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			tt := newTest(t)
+			cluster := tt.clusterSpec.Cluster
+			tt.mocks.client.EXPECT().UpdateAnnotationInNamespace(tt.ctx, cluster.ResourceType(), cluster.Name, allowDelete, tt.cluster, cluster.Namespace).Return(test.err)
+			err := tt.clusterManager.AllowDeleteWhilePaused(tt.ctx, tt.cluster, tt.clusterSpec)
+			expectedErr := fmt.Errorf("updating paused annotation in cluster reconciliation: %v", test.err)
+			tt.Expect(err).To(Or(BeNil(), MatchError(expectedErr)))
+		})
+	}
 }

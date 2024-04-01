@@ -42,6 +42,8 @@ type ClusterManager interface {
 	Upgrade(ctx context.Context, cluster *types.Cluster, currentManagementComponents, newManagementComponents *cluster.ManagementComponents, newSpec *cluster.Spec) (*types.ChangeDiff, error)
 	CreateRegistryCredSecret(ctx context.Context, mgmt *types.Cluster) error
 	GenerateAWSIAMKubeconfig(ctx context.Context, cluster *types.Cluster) error
+	ResumeEKSAControllerReconcile(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, provider providers.Provider) error
+	AllowDeleteWhilePaused(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error
 }
 
 type GitOpsManager interface {
