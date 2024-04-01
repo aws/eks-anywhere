@@ -898,7 +898,7 @@ func TestResumeEKSAControllerReconcileManagementCluster(t *testing.T) {
 	tt.Expect(tt.clusterManager.ResumeEKSAControllerReconcile(tt.ctx, tt.cluster, tt.clusterSpec, tt.mocks.provider)).To(Succeed())
 }
 
-func TestPauseEKSAControllerReconcileManagementClusterListObjectsError(t *testing.T) {
+func TestResumeEKSAControllerReconcileManagementClusterListObjectsError(t *testing.T) {
 	tt := newTest(t, clustermanager.WithRetrier(retrier.NewWithMaxRetries(1, 0)))
 	tt.clusterSpec.Cluster = &v1alpha1.Cluster{
 		ObjectMeta: metav1.ObjectMeta{
@@ -911,9 +911,20 @@ func TestPauseEKSAControllerReconcileManagementClusterListObjectsError(t *testin
 		},
 	}
 
+	datacenterConfig := &v1alpha1.VSphereDatacenterConfig{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: tt.clusterName,
+		},
+		Spec: v1alpha1.VSphereDatacenterConfigSpec{
+			Insecure: true,
+		},
+	}
+
+	tt.mocks.provider.EXPECT().DatacenterConfig(tt.clusterSpec).Return(datacenterConfig)
+
 	tt.mocks.client.EXPECT().ListObjects(tt.ctx, eksaClusterResourceType, "", "", &v1alpha1.ClusterList{}).Return(errors.New("list error"))
 
-	tt.Expect(tt.clusterManager.PauseEKSAControllerReconcile(tt.ctx, tt.cluster, tt.clusterSpec, tt.mocks.provider)).NotTo(Succeed())
+	tt.Expect(tt.clusterManager.ResumeEKSAControllerReconcile(tt.ctx, tt.cluster, tt.clusterSpec, tt.mocks.provider)).NotTo(Succeed())
 }
 
 func TestPauseEKSAControllerReconcileWorkloadClusterWithMachineConfig(t *testing.T) {
