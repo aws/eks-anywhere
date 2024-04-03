@@ -25,7 +25,7 @@ var cloudstackRmVmsCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		err = cleanup.CleanUpCloudstackTestResources(cmd.Context(), clusterName, viper.GetBool(dryRunFlag))
+		err = cleanup.CloudStackRmVms(cmd.Context(), clusterName, viper.GetBool(dryRunFlag))
 		if err != nil {
 			log.Fatalf("Error removing vms: %v", err)
 		}

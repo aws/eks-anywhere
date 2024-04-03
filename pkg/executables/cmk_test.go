@@ -102,6 +102,127 @@ var diskOfferingCustomSizeInGB = v1alpha1.CloudStackResourceDiskOffering{
 	Label:      "data_disk",
 }
 
+func TestDeleteVirtualRouter(t *testing.T) {
+	_, writer := test.NewWriter(t)
+	configFilePath, _ := filepath.Abs(filepath.Join(writer.Dir(), "generated", cmkConfigFileName))
+	tests := []struct {
+		testName               string
+		listRouterJSONFile     string
+		routerID               string
+		networkName            string
+		mockDestroyRouterError error
+		wantErr                error
+	}{
+		{
+			testName:           "Router restarted",
+			listRouterJSONFile: "testdata/cmk_list_routers.json",
+			routerID:           "2ddda113-2ca3-496a-abde-a4dbcddfbc3f",
+			networkName:        "test-network",
+		},
+		{
+			testName:           "No router found",
+			listRouterJSONFile: "testdata/cmk_list_routers_none.json",
+			networkName:        "test-network",
+		},
+		{
+			testName:               "Router failed to restart",
+			listRouterJSONFile:     "testdata/cmk_list_routers.json",
+			networkName:            "test-network",
+			routerID:               "2ddda113-2ca3-496a-abde-a4dbcddfbc3f",
+			mockDestroyRouterError: fmt.Errorf("Unable to reach cloudstack management server"),
+			wantErr:                fmt.Errorf("destroying virtual router with name r-355629-VM and id 2ddda113-2ca3-496a-abde-a4dbcddfbc3f: output from cloudstack: Unable to reach cloudstack management server"),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.testName, func(t *testing.T) {
+			listRouterFileContent := test.ReadFile(t, tt.listRouterJSONFile)
+
+			ctx := context.Background()
+			mockCtrl := gomock.NewController(t)
+
+			executable := mockexecutables.NewMockExecutable(mockCtrl)
+			listRouterExecCall := []string{
+				"-c", configFilePath,
+				"list", "routers", fmt.Sprintf("keyword=\"%s\"", tt.networkName), "listall=true",
+			}
+			executable.EXPECT().Execute(ctx, listRouterExecCall).
+				Return(*bytes.NewBufferString(listRouterFileContent), nil)
+			if tt.routerID != "" {
+				deleteRouterExecCall := []string{
+					"-c", configFilePath,
+					"destroy", "router", fmt.Sprintf("id=\"%s\"", tt.routerID),
+				}
+				executable.EXPECT().Execute(ctx, deleteRouterExecCall).
+					Return(*bytes.NewBufferString("output from cloudstack"), tt.mockDestroyRouterError)
+			}
+
+			cmk, _ := executables.NewCmk(executable, writer, execConfig)
+			err := cmk.DeleteVirtualRouter(ctx, execConfig.Profiles[0].Name, tt.networkName, false)
+			if tt.wantErr != nil && err == nil || err != nil && tt.wantErr == nil {
+				t.Fatalf("Error mismatch: Got: %v, Want: %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestRestartNetwork(t *testing.T) {
+	_, writer := test.NewWriter(t)
+	configFilePath, _ := filepath.Abs(filepath.Join(writer.Dir(), "generated", cmkConfigFileName))
+	networkName := "Test-network"
+	networkType := "Shared"
+	tests := []struct {
+		testName                string
+		networkID               string
+		mockRestartNetworkError error
+		wantErr                 error
+	}{
+		{
+			testName:  "Successful network restart",
+			networkID: "aeb3a5e6-2e80-4a73-900f-d01bbd4874b5",
+		},
+		{
+			testName: "Network not found",
+		},
+		{
+			testName:                "Network restart failed",
+			networkID:               "aeb3a5e6-2e80-4a73-900f-d01bbd4874b5",
+			mockRestartNetworkError: fmt.Errorf("Unable to reach cloudstack management server"),
+			wantErr:                 fmt.Errorf("restarting network TEST_RESOURCE: restart network result: Unable to reach cloudstack management server"),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.testName, func(t *testing.T) {
+			mockCtrl := gomock.NewController(t)
+			ctx := context.Background()
+			executable := mockexecutables.NewMockExecutable(mockCtrl)
+			getNetworkExecCall := []string{
+				"-c", configFilePath,
+				"list", "networks", fmt.Sprintf("name=\"%s\"", networkName),
+				fmt.Sprintf("type=\"%s\"", networkType), "listall=true",
+			}
+			getNetworkJSONFileContent := test.ReadFile(t, "testdata/cmk_list_network_singular.json")
+			if tt.networkID == "" {
+				getNetworkJSONFileContent = "{}"
+			}
+			executable.EXPECT().Execute(ctx, getNetworkExecCall).
+				Return(*bytes.NewBufferString(getNetworkJSONFileContent), nil)
+			if tt.networkID != "" {
+				restartNetworkExecCall := []string{
+					"-c", configFilePath,
+					"restart", "network", fmt.Sprintf("id=\"%s\"", tt.networkID),
+				}
+				executable.EXPECT().Execute(ctx, restartNetworkExecCall).
+					Return(*bytes.NewBufferString("restart network result"), tt.mockRestartNetworkError)
+			}
+			cmk, _ := executables.NewCmk(executable, writer, execConfig)
+			err := cmk.RestartNetwork(ctx, execConfig.Profiles[0].Name, networkName, networkType, false)
+			if tt.wantErr != nil && err == nil || err != nil && tt.wantErr == nil {
+				t.Fatalf("Error mismatch: Got: %v, Want: %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
 func TestCmkCleanupVms(t *testing.T) {
 	_, writer := test.NewWriter(t)
 	configFilePath, _ := filepath.Abs(filepath.Join(writer.Dir(), "generated", cmkConfigFileName))
@@ -211,6 +332,79 @@ func TestCmkCleanupVms(t *testing.T) {
 				return
 			}
 			t.Fatalf("Cmk error: %v", err)
+		})
+	}
+}
+
+func TestGetNetwork(t *testing.T) {
+	_, writer := test.NewWriter(t)
+	configFilePath, _ := filepath.Abs(filepath.Join(writer.Dir(), "generated", cmkConfigFileName))
+	tests := []struct {
+		testName          string
+		argumentsExecCall []string
+		jsonResponseFile  string
+		networkName       string
+		networkType       string
+		wantErr           error
+	}{
+		{
+			testName:         "Get single shared network",
+			networkName:      "TEST_RESOURCE",
+			networkType:      "Shared",
+			jsonResponseFile: "testdata/cmk_list_network_singular.json",
+			wantErr:          nil,
+		},
+		{
+			testName:         "Error on multiple networks found",
+			networkName:      "TEST_RESOURCE",
+			networkType:      "Shared",
+			jsonResponseFile: "testdata/cmk_list_network_multiple.json",
+			wantErr:          fmt.Errorf("multiple networks with same name found"),
+		},
+		{
+			testName:         "No network found",
+			networkName:      "TEST_RESOURCE",
+			networkType:      "Shared",
+			jsonResponseFile: "testdata/cmk_list_network_none.json",
+			wantErr:          nil,
+		},
+		{
+			testName:         "Bad response from Cloudstack",
+			networkName:      "TEST_RESOURCE",
+			networkType:      "Shared",
+			jsonResponseFile: "testdata/cmk_list_empty_response.json",
+			wantErr:          fmt.Errorf("parsing response into json: unexpected end of JSON input"),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.testName, func(t *testing.T) {
+			fileContent := test.ReadFile(t, tt.jsonResponseFile)
+
+			ctx := context.Background()
+			mockCtrl := gomock.NewController(t)
+
+			executable := mockexecutables.NewMockExecutable(mockCtrl)
+			execCall := []string{
+				"-c", configFilePath,
+				"list", "networks", fmt.Sprintf("name=\"%s\"", tt.networkName),
+				fmt.Sprintf("type=\"%s\"", tt.networkType), "listall=true",
+			}
+			executable.EXPECT().Execute(ctx, execCall).
+				Return(*bytes.NewBufferString(fileContent), nil)
+
+			cmk, _ := executables.NewCmk(executable, writer, execConfig)
+			gotNetwork, err := cmk.GetNetwork(ctx, execConfig.Profiles[0].Name, tt.networkName, tt.networkType)
+			if tt.wantErr != nil && err == nil || err != nil && tt.wantErr == nil {
+				t.Fatalf("Error mismatch: Got: %v, Want: %v", err, tt.wantErr)
+			}
+			if err == nil && gotNetwork != nil {
+				if gotNetwork.Name != tt.networkName {
+					t.Fatalf("Network name does not match. Got: %s, Want: %s", gotNetwork.Name, tt.networkName)
+				}
+				if gotNetwork.Type != tt.networkType {
+					t.Fatalf("Network type does not match. Got: %s, Want: %s", gotNetwork.Type, tt.networkType)
+				}
+			}
 		})
 	}
 }

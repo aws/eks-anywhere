@@ -255,7 +255,7 @@ func (c *CloudStack) ClusterConfigUpdates() []api.ClusterConfigFiller {
 }
 
 func (c *CloudStack) CleanupVMs(clusterName string) error {
-	return cleanup.CleanUpCloudstackTestResources(context.Background(), clusterName, false)
+	return cleanup.CloudStackRmVms(context.Background(), clusterName, false)
 }
 
 func (c *CloudStack) WithProviderUpgrade(fillers ...api.CloudStackFiller) ClusterE2ETestOpt {
