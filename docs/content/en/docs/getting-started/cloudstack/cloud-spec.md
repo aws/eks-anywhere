@@ -18,6 +18,7 @@ The following additional optional configuration can also be included:
 * [Proxy]({{< relref "../optional/proxy.md" >}})
 * [Registry Mirror]({{< relref "../optional/registrymirror.md" >}})
 * [Machine Health Check Timeouts]({{< relref "../optional/healthchecks.md" >}})
+* [API Server Extra Args]({{< relref "../optional/api-server-extra-args.md" >}})
 
 
 ```yaml
