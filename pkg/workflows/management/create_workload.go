@@ -18,8 +18,14 @@ func (s *createWorkloadClusterTask) Run(ctx context.Context, commandContext *tas
 	commandContext.ClusterSpec.Cluster.AddManagedByCLIAnnotation()
 	commandContext.ClusterSpec.Cluster.SetManagementComponentsVersion(commandContext.ClusterSpec.EKSARelease.Spec.Version)
 
+	client, err := commandContext.ClientFactory.BuildClientFromKubeconfig(commandContext.BootstrapCluster.KubeconfigFile)
+	if err != nil {
+		commandContext.SetError(err)
+		return &workflows.CollectMgmtClusterDiagnosticsTask{}
+	}
+
 	if commandContext.ClusterSpec.Cluster.Namespace != "" {
-		if err := workflows.CreateNamespaceIfNotPresent(ctx, commandContext.ClusterSpec.Cluster.Namespace, commandContext.BootstrapCluster.KubeconfigFile, commandContext.ClientFactory); err != nil {
+		if err := workflows.CreateNamespaceIfNotPresent(ctx, commandContext.ClusterSpec.Cluster.Namespace, client); err != nil {
 			commandContext.SetError(err)
 			return &workflows.CollectMgmtClusterDiagnosticsTask{}
 		}

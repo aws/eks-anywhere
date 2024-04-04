@@ -58,15 +58,32 @@ func (s *installEksaComponentsOnWorkloadTask) Run(ctx context.Context, commandCo
 	commandContext.ClusterSpec.Cluster.AddManagedByCLIAnnotation()
 	commandContext.ClusterSpec.Cluster.SetManagementComponentsVersion(commandContext.ClusterSpec.EKSARelease.Spec.Version)
 
+	srcClient, err := commandContext.ClientFactory.BuildClientFromKubeconfig(commandContext.BootstrapCluster.KubeconfigFile)
+	if err != nil {
+		commandContext.SetError(err)
+		return &workflows.CollectMgmtClusterDiagnosticsTask{}
+	}
+
+	dstClient, err := commandContext.ClientFactory.BuildClientFromKubeconfig(commandContext.WorkloadCluster.KubeconfigFile)
+	if err != nil {
+		commandContext.SetError(err)
+		return &workflows.CollectMgmtClusterDiagnosticsTask{}
+	}
+
 	if commandContext.ClusterSpec.Cluster.Namespace != "" {
-		if err := workflows.CreateNamespaceIfNotPresent(ctx, commandContext.ClusterSpec.Cluster.Namespace, commandContext.WorkloadCluster.KubeconfigFile, commandContext.ClientFactory); err != nil {
+		if err := workflows.CreateNamespaceIfNotPresent(ctx, commandContext.ClusterSpec.Cluster.Namespace, dstClient); err != nil {
 			commandContext.SetError(err)
 			return &workflows.CollectMgmtClusterDiagnosticsTask{}
 		}
 	}
 
-	logger.Info("Applying cluster spec to workload cluster")
-	if err = commandContext.ClusterCreator.Run(ctx, commandContext.ClusterSpec, *commandContext.WorkloadCluster); err != nil {
+	logger.Info("Moving cluster spec to workload cluster")
+	if err = commandContext.ClusterMover.Move(ctx, commandContext.ClusterSpec, srcClient, dstClient); err != nil {
+		commandContext.SetError(err)
+		return &workflows.CollectMgmtClusterDiagnosticsTask{}
+	}
+
+	if err = commandContext.ClusterManager.ResumeEKSAControllerReconcile(ctx, commandContext.WorkloadCluster, commandContext.ClusterSpec, commandContext.Provider); err != nil {
 		commandContext.SetError(err)
 		return &workflows.CollectMgmtClusterDiagnosticsTask{}
 	}

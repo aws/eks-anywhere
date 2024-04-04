@@ -50,14 +50,11 @@ func newNamespace(name string) *corev1.Namespace {
 
 func TestCreateNamespaceNotExistsSuccess(t *testing.T) {
 	test := newCreatePrepTest(t)
-	kubeconfig := "testpath"
 	namespace := "test-ns"
 
-	test.clientFactory.EXPECT().BuildClientFromKubeconfig(kubeconfig).Return(test.client, nil)
-	test.client.EXPECT().Get(test.ctx, namespace, "", &corev1.Namespace{}).Return(apierrors.NewNotFound(schema.GroupResource{Group: "", Resource: ""}, ""))
 	test.client.EXPECT().Create(test.ctx, newNamespace(namespace)).Return(nil)
 
-	err := workflows.CreateNamespaceIfNotPresent(test.ctx, namespace, kubeconfig, test.clientFactory)
+	err := workflows.CreateNamespaceIfNotPresent(test.ctx, namespace, test.client)
 	if err != nil {
 		t.Fatalf("Expected nil, but got %v", err)
 	}
@@ -65,57 +62,23 @@ func TestCreateNamespaceNotExistsSuccess(t *testing.T) {
 
 func TestCreateNamespaceAlreadyExistsSuccess(t *testing.T) {
 	test := newCreatePrepTest(t)
-	kubeconfig := "testpath"
 	namespace := "default"
 
-	test.clientFactory.EXPECT().BuildClientFromKubeconfig(kubeconfig).Return(test.client, nil)
-	test.client.EXPECT().Get(test.ctx, namespace, "", &corev1.Namespace{}).Return(nil)
+	test.client.EXPECT().Create(test.ctx, newNamespace(namespace)).Return(apierrors.NewAlreadyExists(schema.GroupResource{Group: "", Resource: ""}, ""))
 
-	err := workflows.CreateNamespaceIfNotPresent(test.ctx, namespace, kubeconfig, test.clientFactory)
+	err := workflows.CreateNamespaceIfNotPresent(test.ctx, namespace, test.client)
 	if err != nil {
 		t.Fatalf("Expected nil, but got %v", err)
 	}
 }
 
-func TestCreateNamespaceBuildClientFail(t *testing.T) {
-	test := newCreatePrepTest(t)
-	kubeconfig := "testpath"
-	namespace := "test-ns"
-
-	test.clientFactory.EXPECT().BuildClientFromKubeconfig(kubeconfig).Return(test.client, fmt.Errorf(""))
-
-	err := workflows.CreateNamespaceIfNotPresent(test.ctx, namespace, kubeconfig, test.clientFactory)
-
-	if err == nil {
-		t.Fatalf("Expected error, but got nil")
-	}
-}
-
-func TestCreateNamespaceGetNamespaceFail(t *testing.T) {
-	test := newCreatePrepTest(t)
-	kubeconfig := "testpath"
-	namespace := "test-ns"
-
-	test.clientFactory.EXPECT().BuildClientFromKubeconfig(kubeconfig).Return(test.client, nil)
-	test.client.EXPECT().Get(test.ctx, namespace, "", &corev1.Namespace{}).Return(fmt.Errorf(""))
-
-	err := workflows.CreateNamespaceIfNotPresent(test.ctx, namespace, kubeconfig, test.clientFactory)
-
-	if err == nil {
-		t.Fatalf("Expected error, but got nil")
-	}
-}
-
 func TestCreateNamespaceFail(t *testing.T) {
 	test := newCreatePrepTest(t)
-	kubeconfig := "testpath"
 	namespace := "test-ns"
 
-	test.clientFactory.EXPECT().BuildClientFromKubeconfig(kubeconfig).Return(test.client, nil)
-	test.client.EXPECT().Get(test.ctx, namespace, "", &corev1.Namespace{}).Return(apierrors.NewNotFound(schema.GroupResource{Group: "", Resource: ""}, ""))
 	test.client.EXPECT().Create(test.ctx, newNamespace(namespace)).Return(fmt.Errorf(""))
 
-	err := workflows.CreateNamespaceIfNotPresent(test.ctx, namespace, kubeconfig, test.clientFactory)
+	err := workflows.CreateNamespaceIfNotPresent(test.ctx, namespace, test.client)
 
 	if err == nil {
 		t.Fatalf("Expected error, but got nil")
