@@ -34,8 +34,10 @@ import (
 var secretsValueYaml string
 
 const (
-	eksaDefaultRegion = "us-west-2"
-	valueFileName     = "values.yaml"
+	eksaDefaultRegion             = "us-west-2"
+	valueFileName                 = "values.yaml"
+	defaultRegistryMirrorUsername = "username"
+	defaultRegistryMirrorPassword = "password"
 )
 
 type PackageControllerClientOpt func(client *PackageControllerClient)
@@ -305,7 +307,7 @@ func (pc *PackageControllerClient) CreateHelmOverrideValuesYaml() (string, []byt
 
 func (pc *PackageControllerClient) generateHelmOverrideValues() ([]byte, error) {
 	var err error
-	endpoint, username, password, caCertContent, insecureSkipVerify := "", "", "", "", "false"
+	endpoint, username, password, caCertContent, insecureSkipVerify := "", defaultRegistryMirrorUsername, defaultRegistryMirrorPassword, "", "false"
 	if pc.registryMirror != nil {
 		endpoint = pc.registryMirror.BaseRegistry
 		if pc.registryMirror.Auth {
