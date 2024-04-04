@@ -52,6 +52,7 @@ type CommandContext struct {
 	OriginalError         error
 	BackupClusterStateDir string
 	ForceCleanup          bool
+	ClusterMover          interfaces.ClusterMover
 }
 
 func (c *CommandContext) SetError(err error) {

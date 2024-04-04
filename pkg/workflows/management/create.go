@@ -22,6 +22,7 @@ type Create struct {
 	packageInstaller interfaces.PackageInstaller
 	clusterCreator   interfaces.ClusterCreator
 	eksaInstaller    interfaces.EksaInstaller
+	clusterMover     interfaces.ClusterMover
 }
 
 // NewCreate builds a new create construct.
@@ -32,6 +33,7 @@ func NewCreate(bootstrapper interfaces.Bootstrapper,
 	packageInstaller interfaces.PackageInstaller,
 	clusterCreator interfaces.ClusterCreator,
 	eksaInstaller interfaces.EksaInstaller,
+	mover interfaces.ClusterMover,
 ) *Create {
 	return &Create{
 		bootstrapper:     bootstrapper,
@@ -44,6 +46,7 @@ func NewCreate(bootstrapper interfaces.Bootstrapper,
 		packageInstaller: packageInstaller,
 		clusterCreator:   clusterCreator,
 		eksaInstaller:    eksaInstaller,
+		clusterMover:     mover,
 	}
 }
 
@@ -62,6 +65,7 @@ func (c *Create) Run(ctx context.Context, clusterSpec *cluster.Spec, validator i
 		PackageInstaller: c.packageInstaller,
 		ClusterCreator:   c.clusterCreator,
 		EksaInstaller:    c.eksaInstaller,
+		ClusterMover:     c.clusterMover,
 	}
 
 	return task.NewTaskRunner(&setupAndValidateCreate{}, c.writer).RunTask(ctx, commandContext)

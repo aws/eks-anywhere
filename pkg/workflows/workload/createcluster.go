@@ -15,8 +15,14 @@ type createCluster struct{}
 func (c *createCluster) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
 	logger.Info("Creating workload cluster")
 
+	client, err := commandContext.ClientFactory.BuildClientFromKubeconfig(commandContext.ManagementCluster.KubeconfigFile)
+	if err != nil {
+		commandContext.SetError(err)
+		return &workflows.CollectMgmtClusterDiagnosticsTask{}
+	}
+
 	if commandContext.ClusterSpec.Cluster.Namespace != "" {
-		if err := workflows.CreateNamespaceIfNotPresent(ctx, commandContext.ClusterSpec.Cluster.Namespace, commandContext.ManagementCluster.KubeconfigFile, commandContext.ClientFactory); err != nil {
+		if err := workflows.CreateNamespaceIfNotPresent(ctx, commandContext.ClusterSpec.Cluster.Namespace, client); err != nil {
 			commandContext.SetError(err)
 			return &workflows.CollectMgmtClusterDiagnosticsTask{}
 		}

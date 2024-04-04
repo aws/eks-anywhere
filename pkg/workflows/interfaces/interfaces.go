@@ -42,6 +42,8 @@ type ClusterManager interface {
 	Upgrade(ctx context.Context, cluster *types.Cluster, currentManagementComponents, newManagementComponents *cluster.ManagementComponents, newSpec *cluster.Spec) (*types.ChangeDiff, error)
 	CreateRegistryCredSecret(ctx context.Context, mgmt *types.Cluster) error
 	GenerateAWSIAMKubeconfig(ctx context.Context, cluster *types.Cluster) error
+	ResumeEKSAControllerReconcile(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, provider providers.Provider) error
+	AllowDeleteWhilePaused(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error
 }
 
 type GitOpsManager interface {
@@ -97,4 +99,9 @@ type EksaInstaller interface {
 // ClusterDeleter deletes the cluster.
 type ClusterDeleter interface {
 	Run(ctx context.Context, spec *cluster.Spec, managementCluster types.Cluster) error
+}
+
+// ClusterMover moves the EKS-A cluster.
+type ClusterMover interface {
+	Move(ctx context.Context, spec *cluster.Spec, srcClient, dstClient kubernetes.Client) error
 }

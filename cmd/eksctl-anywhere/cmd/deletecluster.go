@@ -126,6 +126,7 @@ func (dc *deleteClusterOptions) deleteCluster(ctx context.Context) error {
 		WithEksdInstaller().
 		WithEKSAInstaller().
 		WithUnAuthKubeClient().
+		WithClusterMover().
 		Build(ctx)
 	if err != nil {
 		return err
@@ -154,7 +155,7 @@ func (dc *deleteClusterOptions) deleteCluster(ctx context.Context) error {
 		deleteWorkload := workload.NewDelete(deps.Provider, deps.Writer, deps.ClusterManager, deps.ClusterDeleter, deps.GitOpsFlux)
 		err = deleteWorkload.Run(ctx, cluster, clusterSpec)
 	} else {
-		deleteManagement := management.NewDelete(deps.Bootstrapper, deps.Provider, deps.Writer, deps.ClusterManager, deps.GitOpsFlux, deps.ClusterDeleter, deps.EksdInstaller, deps.EksaInstaller, deps.UnAuthKubeClient)
+		deleteManagement := management.NewDelete(deps.Bootstrapper, deps.Provider, deps.Writer, deps.ClusterManager, deps.GitOpsFlux, deps.ClusterDeleter, deps.EksdInstaller, deps.EksaInstaller, deps.UnAuthKubeClient, deps.ClusterMover)
 		err = deleteManagement.Run(ctx, cluster, clusterSpec)
 	}
 	cleanup(deps, &err)
