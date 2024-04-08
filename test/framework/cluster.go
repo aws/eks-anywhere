@@ -954,6 +954,15 @@ func (e *ClusterE2ETest) GenerateSupportBundleOnCleanupIfTestFailed(opts ...Comm
 	})
 }
 
+// GenerateSupportBundleIfTestFailed runs generates a support bundle if the test failed.
+func (e *ClusterE2ETest) GenerateSupportBundleIfTestFailed(opts ...CommandOpt) {
+	if e.T.Failed() {
+		e.T.Log("Generating support bundle for failed test")
+		generateSupportBundleArgs := []string{"generate", "support-bundle", "-f", e.ClusterConfigLocation}
+		e.RunEKSA(generateSupportBundleArgs, opts...)
+	}
+}
+
 func (e *ClusterE2ETest) Run(name string, args ...string) {
 	cmd, err := prepareCommand(name, args...)
 	if err != nil {
@@ -1008,14 +1017,6 @@ func (e *ClusterE2ETest) StopIfFailed() {
 	if e.T.Failed() {
 		e.T.FailNow()
 	}
-}
-
-func (e *ClusterE2ETest) cleanup(f func()) {
-	e.T.Cleanup(func() {
-		if !e.T.Failed() {
-			f()
-		}
-	})
 }
 
 // Cluster builds a cluster obj using the ClusterE2ETest name and kubeconfig.
@@ -1286,7 +1287,10 @@ func (e *ClusterE2ETest) InstallLocalStorageProvisioner() {
 func (e *ClusterE2ETest) WithCluster(f func(e *ClusterE2ETest)) {
 	e.GenerateClusterConfig()
 	e.CreateCluster()
-	defer e.DeleteCluster()
+	defer func() {
+		e.GenerateSupportBundleIfTestFailed()
+		e.DeleteCluster()
+	}()
 	f(e)
 }
 
@@ -1374,7 +1378,6 @@ func (e *ClusterE2ETest) printDeploymentSpec(ctx context.Context, ns string) {
 func (e *ClusterE2ETest) VerifyHelloPackageInstalled(packageName string, mgmtCluster *types.Cluster) {
 	ctx := context.Background()
 	packageMetadatNamespace := fmt.Sprintf("%s-%s", constants.EksaPackagesName, e.ClusterName)
-	e.GenerateSupportBundleOnCleanupIfTestFailed()
 
 	// Log Package/Deployment outputs
 	defer func() {
@@ -1407,7 +1410,6 @@ func (e *ClusterE2ETest) VerifyHelloPackageInstalled(packageName string, mgmtClu
 func (e *ClusterE2ETest) VerifyAdotPackageInstalled(packageName, targetNamespace string) {
 	ctx := context.Background()
 	packageMetadatNamespace := fmt.Sprintf("%s-%s", constants.EksaPackagesName, e.ClusterName)
-	e.GenerateSupportBundleOnCleanupIfTestFailed()
 
 	e.T.Log("Waiting for package", packageName, "to be installed")
 	err := e.KubectlClient.WaitForPackagesInstalled(ctx,
@@ -2111,7 +2113,6 @@ func (e *ClusterE2ETest) MatchLogs(targetNamespace, targetPodName string,
 ) {
 	e.T.Logf("Match logs for pod %s, container %s in namespace %s", targetPodName,
 		targetContainerName, targetNamespace)
-	e.GenerateSupportBundleOnCleanupIfTestFailed()
 
 	err := retrier.New(timeout).Retry(func() error {
 		logs, err := e.KubectlClient.GetPodLogs(context.TODO(), targetNamespace,
