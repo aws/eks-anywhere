@@ -21,7 +21,6 @@ import (
 
 func runCuratedPackageInstall(test *framework.ClusterE2ETest) {
 	test.SetPackageBundleActive()
-	test.GenerateSupportBundleOnCleanupIfTestFailed()
 	err := WaitForPackageToBeInstalled(test, context.Background(), "eks-anywhere-packages", 3*time.Minute)
 	if err != nil {
 		test.T.Fatalf("packages controller not in installed state: %s", err)
