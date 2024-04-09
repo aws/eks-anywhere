@@ -1,0 +1,20 @@
+{
+  "count": 3,
+  "network": [
+    {
+      "id": "fe1a7310-51d4-4299-b3d0-a627a57bb4b0",
+      "name": "eksa-cloudstack-ci-net",
+      "type": "Isolated"
+    },
+    {
+      "id": "24fd6849-3016-4afe-948d-4ce2bb396cf5",
+      "name": "eksa-cloudstack-ci-net",
+      "type": "Isolated"
+    },
+    {
+      "id": "13b501c1-5629-40e1-ba1e-a31caa9aead4",
+      "name": "eksa-cloudstack-ci-net",
+      "type": "Shared"
+    }
+  ]
+}
