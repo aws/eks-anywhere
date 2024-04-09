@@ -71,6 +71,9 @@ var oidcRoles []byte
 //go:embed testdata/hpa_busybox.yaml
 var hpaBusybox []byte
 
+//go:embed testdata/local-path-storage.yaml
+var localPathProvisioner []byte
+
 type ClusterE2ETest struct {
 	T                            T
 	ClusterConfigLocation        string
@@ -1275,9 +1278,7 @@ func (e *ClusterE2ETest) UninstallCuratedPackage(packagePrefix string, opts ...s
 
 func (e *ClusterE2ETest) InstallLocalStorageProvisioner() {
 	ctx := context.Background()
-	_, err := e.KubectlClient.ExecuteCommand(ctx, "apply", "-f",
-		"https://raw.githubusercontent.com/rancher/local-path-provisioner/v0.0.22/deploy/local-path-storage.yaml",
-		"--kubeconfig", e.KubeconfigFilePath())
+	err := e.KubectlClient.ApplyKubeSpecFromBytes(ctx, e.Cluster(), localPathProvisioner)
 	if err != nil {
 		e.T.Fatalf("Error installing local-path-provisioner: %v", err)
 	}
