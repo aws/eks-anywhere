@@ -3,7 +3,6 @@ package v1alpha1
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"reflect"
 	"strings"
@@ -1506,7 +1505,7 @@ func Test_ParseClusterConfigFromContent(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			content, err := ioutil.ReadFile(test.fileName)
+			content, err := os.ReadFile(test.fileName)
 			require.NoError(t, err)
 
 			err = ParseClusterConfigFromContent(content, test.clusterConfig)

@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"context"
 	"fmt"
 	"log"
 
@@ -25,7 +24,7 @@ var cleanUpAwsCmd = &cobra.Command{
 	SilenceUsage: true,
 	PreRun:       preRunCleanUpAwsSetup,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		err := cleanUpAwsTestResources(cmd.Context())
+		err := cleanUpAwsTestResources()
 		if err != nil {
 			logger.Fatal(err, "Failed to cleanup e2e resources on aws")
 		}
@@ -57,7 +56,7 @@ func init() {
 	}
 }
 
-func cleanUpAwsTestResources(ctx context.Context) error {
+func cleanUpAwsTestResources() error {
 	maxAge := viper.GetString(maxAgeFlagName)
 	storageBucket := viper.GetString(storageBucketFlagName)
 	tag := viper.GetString(tagFlagName)

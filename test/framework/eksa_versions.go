@@ -18,15 +18,6 @@ func newVersion(version string) *semver.Version {
 	return v
 }
 
-// localEKSAVersion returns the version of eks-anywhere installed locally.
-func localEKSAVersion() (string, error) {
-	v, err := localEKSAVersionCommand()
-	if err != nil {
-		return "", err
-	}
-	return v.GitVersion, nil
-}
-
 // localEKSAVersionCommand returns the output of the eks-anywhere version command.
 func localEKSAVersionCommand() (version.Info, error) {
 	cmd, err := prepareCommand("eksctl", "anywhere", "version", "--output", "json")

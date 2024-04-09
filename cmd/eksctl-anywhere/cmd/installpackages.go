@@ -62,7 +62,7 @@ var installPackageCommand = &cobra.Command{
 		if err := cobra.ExactArgs(1)(cmd, args); err == nil {
 			return nil
 		}
-		return fmt.Errorf("The name of the package to install must be specified as an argument")
+		return fmt.Errorf("name of the package to install must be specified as an argument")
 	},
 }
 

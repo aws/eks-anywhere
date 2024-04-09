@@ -30,8 +30,6 @@ import (
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
-const defaultTinkerbellNodeStartupTimeout = 20 * time.Minute
-
 const timeoutErrorTemplate = "failed to parse timeout %s: %v"
 
 type timeoutOptions struct {
@@ -50,7 +48,7 @@ func applyTimeoutFlags(flagSet *pflag.FlagSet, t *timeoutOptions) {
 
 // buildClusterManagerOpts builds options for constructing a ClusterManager from CLI flags.
 // datacenterKind is an API kind such as v1alpha1.TinkerbellDatacenterKind.
-func buildClusterManagerOpts(t timeoutOptions, datacenterKind string) (*dependencies.ClusterManagerTimeoutOptions, error) {
+func buildClusterManagerOpts(t timeoutOptions) (*dependencies.ClusterManagerTimeoutOptions, error) {
 	cpWaitTimeout, err := time.ParseDuration(t.cpWaitTimeout)
 	if err != nil {
 		return nil, fmt.Errorf(timeoutErrorTemplate, cpWaitTimeoutFlag, err)

@@ -388,14 +388,6 @@ func getMajorMinorFromTestBranch(testBranch string) string {
 	return strings.TrimPrefix(testBranch, "release-")
 }
 
-func devReleaseURL() string {
-	testBranch := testBranch()
-	if testBranch == "main" {
-		return "https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/eks-a-release.yaml"
-	}
-	return fmt.Sprintf("https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/%s/eks-a-release.yaml", testBranch)
-}
-
 func testBranch() string {
 	return getEnvWithDefault(BranchNameEnvVar, defaultTestBranch)
 }

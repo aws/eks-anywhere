@@ -196,7 +196,7 @@ func envVarForImage(os OS, kubeVersion anywherev1.KubernetesVersion) string {
 
 // withKubeVersionAndOS returns a cluster config filler that sets the cluster kube version and the right image for all
 // tinkerbell machine configs.
-func withKubeVersionAndOS(kubeVersion anywherev1.KubernetesVersion, os OS, machineConfigType string, release *releasev1.EksARelease) TinkerbellOpt {
+func withKubeVersionAndOS(kubeVersion anywherev1.KubernetesVersion, os OS, machineConfigType string) TinkerbellOpt {
 	if machineConfigType == controlPlaneIdentifier || machineConfigType == workerIdentifier {
 		return func(t *Tinkerbell) {
 			t.fillers = append(t.fillers,
@@ -214,52 +214,52 @@ func withKubeVersionAndOS(kubeVersion anywherev1.KubernetesVersion, os OS, machi
 
 // WithUbuntu125Tinkerbell tink test with ubuntu 1.25.
 func WithUbuntu125Tinkerbell() TinkerbellOpt {
-	return withKubeVersionAndOS(anywherev1.Kube125, Ubuntu2004, "", nil)
+	return withKubeVersionAndOS(anywherev1.Kube125, Ubuntu2004, "")
 }
 
 // WithUbuntu126Tinkerbell tink test with ubuntu 1.26.
 func WithUbuntu126Tinkerbell() TinkerbellOpt {
-	return withKubeVersionAndOS(anywherev1.Kube126, Ubuntu2004, "", nil)
+	return withKubeVersionAndOS(anywherev1.Kube126, Ubuntu2004, "")
 }
 
 // WithUbuntu127Tinkerbell tink test with ubuntu 1.27.
 func WithUbuntu127Tinkerbell() TinkerbellOpt {
-	return withKubeVersionAndOS(anywherev1.Kube127, Ubuntu2004, "", nil)
+	return withKubeVersionAndOS(anywherev1.Kube127, Ubuntu2004, "")
 }
 
 // WithUbuntu128Tinkerbell tink test with ubuntu 1.28.
 func WithUbuntu128Tinkerbell() TinkerbellOpt {
-	return withKubeVersionAndOS(anywherev1.Kube128, Ubuntu2004, "", nil)
+	return withKubeVersionAndOS(anywherev1.Kube128, Ubuntu2004, "")
 }
 
 // WithUbuntu129Tinkerbell tink test with ubuntu 1.29.
 func WithUbuntu129Tinkerbell() TinkerbellOpt {
-	return withKubeVersionAndOS(anywherev1.Kube129, Ubuntu2004, "", nil)
+	return withKubeVersionAndOS(anywherev1.Kube129, Ubuntu2004, "")
 }
 
 // WithRedHat125Tinkerbell tink test with redhat 1.25.
 func WithRedHat125Tinkerbell() TinkerbellOpt {
-	return withKubeVersionAndOS(anywherev1.Kube125, RedHat8, "", nil)
+	return withKubeVersionAndOS(anywherev1.Kube125, RedHat8, "")
 }
 
 // WithRedHat126Tinkerbell tink test with redhat 1.26.
 func WithRedHat126Tinkerbell() TinkerbellOpt {
-	return withKubeVersionAndOS(anywherev1.Kube126, RedHat8, "", nil)
+	return withKubeVersionAndOS(anywherev1.Kube126, RedHat8, "")
 }
 
 // WithRedHat127Tinkerbell tink test with redhat 1.27.
 func WithRedHat127Tinkerbell() TinkerbellOpt {
-	return withKubeVersionAndOS(anywherev1.Kube127, RedHat8, "", nil)
+	return withKubeVersionAndOS(anywherev1.Kube127, RedHat8, "")
 }
 
 // WithRedHat128Tinkerbell tink test with redhat 1.28.
 func WithRedHat128Tinkerbell() TinkerbellOpt {
-	return withKubeVersionAndOS(anywherev1.Kube128, RedHat8, "", nil)
+	return withKubeVersionAndOS(anywherev1.Kube128, RedHat8, "")
 }
 
 // WithRedHat129Tinkerbell tink test with redhat 1.29.
 func WithRedHat129Tinkerbell() TinkerbellOpt {
-	return withKubeVersionAndOS(anywherev1.Kube129, RedHat8, "", nil)
+	return withKubeVersionAndOS(anywherev1.Kube129, RedHat8, "")
 }
 
 func WithBottleRocketTinkerbell() TinkerbellOpt {

@@ -127,7 +127,7 @@ func WithAuthenticatedRegistryMirror(providerName string) ClusterE2ETestOpt {
 			e.T.Fatalf("unable to set REGISTRY_PASSWORD: %v", err)
 		}
 
-		err = buildDocker(e.T).Login(context.Background(), hostPort, username, password)
+		err = buildDocker().Login(context.Background(), hostPort, username, password)
 		if err != nil {
 			e.T.Fatalf("error logging into docker registry %s: %v", hostPort, err)
 		}
@@ -174,7 +174,7 @@ func setupRegistryMirrorEndpointAndCert(e *ClusterE2ETest, providerName string, 
 		}
 	}
 
-	err := buildDocker(e.T).Login(context.Background(), hostPort, username, password)
+	err := buildDocker().Login(context.Background(), hostPort, username, password)
 	if err != nil {
 		e.T.Fatalf("error logging into docker registry %s: %v", hostPort, err)
 	}

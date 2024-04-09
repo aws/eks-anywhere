@@ -674,7 +674,7 @@ func (e *ClusterE2ETest) validateWorkerNodeReplicaUpdates(ctx context.Context) e
 	return e.validateWorkerNodeUpdates(ctx)
 }
 
-func (e *ClusterE2ETest) validateWorkerNodeUpdates(ctx context.Context, opts ...CommandOpt) error {
+func (e *ClusterE2ETest) validateWorkerNodeUpdates(ctx context.Context) error {
 	clusterConfGitPath := e.clusterConfigGitPath()
 	clusterConfig, err := v1alpha1.GetClusterConfig(clusterConfGitPath)
 	if err != nil {

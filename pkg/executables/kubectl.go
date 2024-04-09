@@ -508,7 +508,7 @@ func (k *Kubectl) Wait(ctx context.Context, kubeconfig string, timeout string, f
 
 // WaitJSONPathLoop will wait for a given JSONPath to reach a required state similar to wait command for objects without conditions.
 // This will be deprecated in favor of WaitJSONPath after version 1.23.
-func (k *Kubectl) WaitJSONPathLoop(ctx context.Context, kubeconfig string, timeout string, jsonpath, forCondition string, property string, namespace string, opts ...KubectlOpt) error {
+func (k *Kubectl) WaitJSONPathLoop(ctx context.Context, kubeconfig string, timeout string, jsonpath, forCondition string, property string, namespace string) error {
 	// On each retry kubectl wait timeout values will have to be adjusted to only wait for the remaining timeout duration.
 	//  Here we establish an absolute timeout time for this based on the caller-specified timeout.
 	timeoutDuration, err := time.ParseDuration(timeout)
@@ -522,7 +522,7 @@ func (k *Kubectl) WaitJSONPathLoop(ctx context.Context, kubeconfig string, timeo
 	retrier := retrier.New(timeoutDuration, retrier.WithRetryPolicy(k.kubectlWaitRetryPolicy))
 	err = retrier.Retry(
 		func() error {
-			return k.waitJSONPathLoop(ctx, kubeconfig, timeout, jsonpath, forCondition, property, namespace, opts...)
+			return k.waitJSONPathLoop(ctx, kubeconfig, timeout, jsonpath, forCondition, property, namespace)
 		},
 	)
 	if err != nil {
@@ -532,7 +532,7 @@ func (k *Kubectl) WaitJSONPathLoop(ctx context.Context, kubeconfig string, timeo
 }
 
 // WaitJSONPath will wait for a given JSONPath of a required state. Only compatible on K8s 1.23+.
-func (k *Kubectl) WaitJSONPath(ctx context.Context, kubeconfig string, timeout string, jsonpath, forCondition string, property string, namespace string, opts ...KubectlOpt) error {
+func (k *Kubectl) WaitJSONPath(ctx context.Context, kubeconfig string, timeout string, jsonpath, forCondition string, property string, namespace string) error {
 	// On each retry kubectl wait timeout values will have to be adjusted to only wait for the remaining timeout duration.
 	//  Here we establish an absolute timeout time for this based on the caller-specified timeout.
 	timeoutDuration, err := time.ParseDuration(timeout)
@@ -546,7 +546,7 @@ func (k *Kubectl) WaitJSONPath(ctx context.Context, kubeconfig string, timeout s
 	retrier := retrier.New(timeoutDuration, retrier.WithRetryPolicy(k.kubectlWaitRetryPolicy))
 	err = retrier.Retry(
 		func() error {
-			return k.waitJSONPath(ctx, kubeconfig, timeout, jsonpath, forCondition, property, namespace, opts...)
+			return k.waitJSONPath(ctx, kubeconfig, timeout, jsonpath, forCondition, property, namespace)
 		},
 	)
 	if err != nil {
@@ -592,7 +592,7 @@ func (k *Kubectl) wait(ctx context.Context, kubeconfig string, timeoutTime time.
 	return nil
 }
 
-func (k *Kubectl) waitJSONPath(ctx context.Context, kubeconfig, timeout string, jsonpath string, forCondition string, property string, namespace string, opts ...KubectlOpt) error {
+func (k *Kubectl) waitJSONPath(ctx context.Context, kubeconfig, timeout string, jsonpath string, forCondition string, property string, namespace string) error {
 	if jsonpath == "" || forCondition == "" {
 		return fmt.Errorf("empty conditions params passed to waitJSONPath()")
 	}
@@ -607,7 +607,7 @@ func (k *Kubectl) waitJSONPath(ctx context.Context, kubeconfig, timeout string, 
 }
 
 // waitJsonPathLoop will be deprecated in favor of waitJsonPath after version 1.23.
-func (k *Kubectl) waitJSONPathLoop(ctx context.Context, kubeconfig string, timeout string, jsonpath string, forCondition string, property string, namespace string, opts ...KubectlOpt) error {
+func (k *Kubectl) waitJSONPathLoop(ctx context.Context, kubeconfig string, timeout string, jsonpath string, forCondition string, property string, namespace string) error {
 	if jsonpath == "" || forCondition == "" {
 		return fmt.Errorf("empty conditions params passed to waitJSONPathLoop()")
 	}
@@ -1059,7 +1059,7 @@ func (k *Kubectl) getPodLogs(ctx context.Context, namespace, podName, containerN
 	}
 	logs := stdOut.String()
 	if strings.Contains(logs, "Internal Error") {
-		return "", fmt.Errorf("Fetched log contains \"Internal Error\": %q", logs)
+		return "", fmt.Errorf("fetched log contains \"Internal Error\": %q", logs)
 	}
 	return logs, err
 }

@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"context"
 	"fmt"
 	"log"
 
@@ -37,11 +36,11 @@ var listImagesCommand = &cobra.Command{
 	},
 	SilenceUsage: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return listImages(cmd.Context(), lio.fileName, lio.bundlesOverride)
+		return listImages(lio.fileName, lio.bundlesOverride)
 	},
 }
 
-func listImages(context context.Context, clusterSpecPath, bundlesOverride string) error {
+func listImages(clusterSpecPath, bundlesOverride string) error {
 	images, err := getImages(clusterSpecPath, bundlesOverride)
 	if err != nil {
 		return err

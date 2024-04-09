@@ -9,7 +9,6 @@ import (
 	"path/filepath"
 
 	"github.com/aws/eks-anywhere/pkg/cluster"
-	anywherecluster "github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
@@ -247,7 +246,7 @@ func (c *Clusterctl) InitInfrastructure(ctx context.Context, managementComponent
 	return nil
 }
 
-func (c *Clusterctl) buildConfig(managementComponents *anywherecluster.ManagementComponents, clusterName string, provider providers.Provider) (*clusterctlConfiguration, error) {
+func (c *Clusterctl) buildConfig(managementComponents *cluster.ManagementComponents, clusterName string, provider providers.Provider) (*clusterctlConfiguration, error) {
 	t := templater.New(c.writer)
 
 	path, err := os.Getwd()

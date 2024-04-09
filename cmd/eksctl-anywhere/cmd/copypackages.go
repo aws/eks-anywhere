@@ -33,7 +33,7 @@ var copyPackagesCmd = &cobra.Command{
 	RunE:         runCopyPackages,
 	Args: func(cmd *cobra.Command, args []string) error {
 		if err := cobra.ExactArgs(1)(cmd, args); err != nil {
-			return fmt.Errorf("A destination registry must be specified as an argument")
+			return fmt.Errorf("destination registry must be specified as an argument")
 		}
 		return nil
 	},
@@ -67,8 +67,6 @@ func init() {
 }
 
 var cpc = copyPackagesConfig{}
-
-var publicPackages = []string{"ecr-token-refresher", "eks-anywhere-packages", "credential-provider-package"}
 
 // copyPackagesConfig copies packages specified in a bundle to a destination.
 type copyPackagesConfig struct {

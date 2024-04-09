@@ -692,7 +692,7 @@ func (p *vsphereProvider) updatePrevClusterMemoryUsage(ctx context.Context, clus
 
 func (p *vsphereProvider) UpdateSecrets(ctx context.Context, cluster *types.Cluster, _ *cluster.Spec) error {
 	var contents bytes.Buffer
-	err := p.createSecret(ctx, cluster, &contents)
+	err := p.createSecret(&contents)
 	if err != nil {
 		return err
 	}
@@ -902,7 +902,7 @@ func (p *vsphereProvider) generateCAPISpecForUpgrade(ctx context.Context, bootst
 	return controlPlaneSpec, workersSpec, nil
 }
 
-func (p *vsphereProvider) generateCAPISpecForCreate(ctx context.Context, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
+func (p *vsphereProvider) generateCAPISpecForCreate(clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
 	clusterName := clusterSpec.Cluster.Name
 
 	cpOpt := func(values map[string]interface{}) {
@@ -939,14 +939,14 @@ func (p *vsphereProvider) GenerateCAPISpecForUpgrade(ctx context.Context, bootst
 }
 
 func (p *vsphereProvider) GenerateCAPISpecForCreate(ctx context.Context, _ *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
-	controlPlaneSpec, workersSpec, err = p.generateCAPISpecForCreate(ctx, clusterSpec)
+	controlPlaneSpec, workersSpec, err = p.generateCAPISpecForCreate(clusterSpec)
 	if err != nil {
 		return nil, nil, fmt.Errorf("generating cluster api spec contents: %v", err)
 	}
 	return controlPlaneSpec, workersSpec, nil
 }
 
-func (p *vsphereProvider) createSecret(ctx context.Context, cluster *types.Cluster, contents *bytes.Buffer) error {
+func (p *vsphereProvider) createSecret(contents *bytes.Buffer) error {
 	t, err := template.New("tmpl").Funcs(sprig.TxtFuncMap()).Parse(defaultSecretObject)
 	if err != nil {
 		return fmt.Errorf("creating secret object template: %v", err)

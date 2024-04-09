@@ -48,7 +48,7 @@ func buildGovc(t T) *executables.Govc {
 	return govc
 }
 
-func buildDocker(t T) *executables.Docker {
+func buildDocker() *executables.Docker {
 	return executables.BuildDockerExecutable()
 }
 
@@ -59,7 +59,7 @@ func buildHelm(t T) helm.Client {
 	return helm
 }
 
-func buildSSH(t T) *executables.SSH {
+func buildSSH() *executables.SSH {
 	return executables.NewLocalExecutablesBuilder().BuildSSHExecutable()
 }
 

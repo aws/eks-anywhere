@@ -70,7 +70,7 @@ func (e *ClusterE2ETest) ValidateNTPConfig(osFamily v1alpha1.OSFamily) {
 }
 
 func (e *ClusterE2ETest) validateNTP(ctx context.Context, osFamily v1alpha1.OSFamily, IP string) {
-	ssh := buildSSH(e.T)
+	ssh := buildSSH()
 	var command []string
 	if osFamily == v1alpha1.Bottlerocket {
 		command = []string{"apiclient", "get", "settings.ntp"}
@@ -109,7 +109,7 @@ func (e *ClusterE2ETest) ValidateBottlerocketKubernetesSettings() {
 
 // nolint:gocyclo
 func (e *ClusterE2ETest) validateBottlerocketKubernetesSettings(ctx context.Context, IP string) {
-	ssh := buildSSH(e.T)
+	ssh := buildSSH()
 
 	command := []string{"apiclient", "get", "settings.network.hostname"}
 	gotHostname, err := ssh.RunCommand(ctx, filepath.Join(e.ClusterName, privateKeyFileName), defaultSSHUsername, IP, command...)
