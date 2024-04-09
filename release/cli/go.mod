@@ -15,7 +15,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/viper v1.18.2
-	golang.org/x/sync v0.6.0
+	golang.org/x/sync v0.7.0
 	helm.sh/helm/v3 v3.14.3
 	k8s.io/apimachinery v0.29.3
 	k8s.io/helm v2.17.0+incompatible
