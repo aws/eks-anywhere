@@ -3,6 +3,7 @@ package cleanup
 import (
 	"context"
 	"fmt"
+	"os"
 	"strconv"
 	"time"
 
@@ -22,8 +23,9 @@ import (
 )
 
 const (
-	cleanupRetries = 5
-	retryBackoff   = 10 * time.Second
+	cleanupRetries       = 5
+	retryBackoff         = 10 * time.Second
+	cloudstackNetworkVar = "T_CLOUDSTACK_NETWORK"
 )
 
 func CleanUpAwsTestResources(storageBucket string, maxAge string, tag string) error {
@@ -95,7 +97,9 @@ func VsphereRmVms(ctx context.Context, clusterName string, opts ...executables.G
 	return govc.CleanupVms(ctx, clusterName, false)
 }
 
-func CleanUpCloudstackTestResources(ctx context.Context, clusterName string, dryRun bool) error {
+// CloudstackTestResources cleans up resources on the CloudStack environment.
+// This can include VMs as well as duplicate networks.
+func CloudstackTestResources(ctx context.Context, clusterName string, dryRun bool, deleteDuplicateNetworks bool) error {
 	executableBuilder, close, err := executables.InitInDockerExecutablesBuilder(ctx, executables.DefaultEksaImage())
 	if err != nil {
 		return fmt.Errorf("unable to initialize executables: %v", err)
@@ -127,6 +131,25 @@ func CleanUpCloudstackTestResources(ctx context.Context, clusterName string, dry
 
 	if len(errorsMap) > 0 {
 		return fmt.Errorf("cleaning up VMs: %+v", errorsMap)
+	}
+
+	return cleanupCloudstackDuplicateNetworks(ctx, cmk, execConfig, deleteDuplicateNetworks)
+}
+
+func cleanupCloudstackDuplicateNetworks(ctx context.Context, cmk *executables.Cmk, execConfig *decoder.CloudStackExecConfig, deleteDuplicateNetworks bool) error {
+	if !deleteDuplicateNetworks {
+		return nil
+	}
+
+	networkName, set := os.LookupEnv(cloudstackNetworkVar)
+	if !set {
+		return fmt.Errorf("ensuring no duplicate networks, %s is not set", cloudstackNetworkVar)
+	}
+
+	for _, profile := range execConfig.Profiles {
+		if err := cmk.EnsureNoDuplicateNetwork(ctx, profile.Name, networkName); err != nil {
+			return err
+		}
 	}
 	return nil
 }
