@@ -177,7 +177,8 @@ phases:
       - >
         ./bin/test e2e cleanup cloudstack
         -n ${CLUSTER_NAME_PREFIX}
-        -v 4
+        --delete-duplicate-networks
+        -v 6
   build:
     commands:
       - export JOB_ID=$CODEBUILD_BUILD_ID
