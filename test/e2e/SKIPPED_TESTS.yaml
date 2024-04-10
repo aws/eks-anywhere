@@ -3,6 +3,7 @@ skipped_tests:
 #Airgapped tests
 - TestCloudStackKubernetes125RedhatAirgappedRegistryMirror
 - TestCloudStackKubernetes126RedhatAirgappedRegistryMirror
+- TestCloudStackKubernetes128RedhatAirgappedProxy
 
 # Proxy tests
 - TestCloudStackKubernetes125RedhatProxyConfigAPI
