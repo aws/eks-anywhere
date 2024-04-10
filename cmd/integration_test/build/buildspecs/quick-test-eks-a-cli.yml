@@ -179,6 +179,14 @@ phases:
         -n ${CLUSTER_NAME_PREFIX}
         --delete-duplicate-networks
         -v 6
+      - >
+        ./bin/test e2e cleanup nutanix
+        -n ${CLUSTER_NAME_PREFIX}
+        -e ${T_NUTANIX_ENDPOINT}
+        -p ${T_NUTANIX_PORT}
+        --insecure
+        --ignoreErrors
+        -v 4
   build:
     commands:
       - export JOB_ID=$CODEBUILD_BUILD_ID
@@ -218,6 +226,14 @@ phases:
       - >
         ./bin/test e2e cleanup cloudstack
         -n ${CLUSTER_NAME_PREFIX}
+        -v 4
+      - >
+        ./bin/test e2e cleanup nutanix
+        -n ${CLUSTER_NAME_PREFIX}
+        -e ${T_NUTANIX_ENDPOINT}
+        -p ${T_NUTANIX_PORT}
+        --insecure
+        --ignoreErrors
         -v 4
 reports:
   e2e-reports:
