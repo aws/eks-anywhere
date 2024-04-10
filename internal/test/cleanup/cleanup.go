@@ -154,8 +154,8 @@ func cleanupCloudstackDuplicateNetworks(ctx context.Context, cmk *executables.Cm
 	return nil
 }
 
-// NutanixTestResourcesCleanup cleans up any leftover VMs in Nutanix after a test run.
-func NutanixTestResourcesCleanup(ctx context.Context, clusterName, endpoint, port string, insecure, ignoreErrors bool) error {
+// NutanixTestResources cleans up any leftover VMs in Nutanix after a test run.
+func NutanixTestResources(clusterName, endpoint, port string, insecure, ignoreErrors bool) error {
 	creds := nutanix.GetCredsFromEnv()
 	nutanixCreds := prismgoclient.Credentials{
 		URL:      fmt.Sprintf("%s:%s", endpoint, port),

@@ -31,7 +31,7 @@ var nutanixRmVmsCmd = &cobra.Command{
 		if viper.IsSet(insecureFlag) {
 			insecure = true
 		}
-		err = cleanup.NutanixTestResourcesCleanup(cmd.Context(), clusterName, viper.GetString(endpointFlag), viper.GetString(portFlag), insecure, viper.GetBool(ignoreErrorsFlag))
+		err = cleanup.NutanixTestResources(clusterName, viper.GetString(endpointFlag), viper.GetString(portFlag), insecure, viper.GetBool(ignoreErrorsFlag))
 		if err != nil {
 			log.Fatalf("Error removing vms: %v", err)
 		}
