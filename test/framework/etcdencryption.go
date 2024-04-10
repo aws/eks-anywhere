@@ -136,7 +136,7 @@ func (e *ClusterE2ETest) ValidateEtcdEncryption() {
 		}
 	}
 
-	ssh := buildSSH(e.T)
+	ssh := buildSSH()
 	cmd := []string{
 		"sudo", "ETCDCTL_API=3", "etcdctl",
 		"--cacert=/etc/etcd/pki/ca.crt",
@@ -187,7 +187,7 @@ func (e *ClusterE2ETest) PostClusterCreateEtcdEncryptionSetup() {
 		e.T.Fatal(err)
 	}
 
-	if err := e.deployPodIdentityWebhook(ctx, envVars); err != nil {
+	if err := e.deployPodIdentityWebhook(ctx); err != nil {
 		e.T.Fatal(err)
 	}
 
@@ -201,7 +201,7 @@ func getIssuerURL() string {
 	return fmt.Sprintf("https://s3.%s.amazonaws.com/%s", defaultRegion, etcdEncryptionConfig.S3Bucket)
 }
 
-func (e *ClusterE2ETest) deployPodIdentityWebhook(ctx context.Context, envVars *etcdEncryptionTestVars) error {
+func (e *ClusterE2ETest) deployPodIdentityWebhook(ctx context.Context) error {
 	e.T.Log("Deploying Pod Identity Webhook")
 	if err := e.KubectlClient.ApplyKubeSpecFromBytes(ctx, e.Cluster(), podIdentityWebhookManifest); err != nil {
 		return fmt.Errorf("deploying pod identity webhook: %v", err)

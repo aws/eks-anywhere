@@ -588,10 +588,6 @@ func validateWorkerNodeGroups(clusterConfig *Cluster) error {
 		return errors.New("cannot taint control plane when there is no worker node")
 	}
 
-	if len(workerNodeGroupConfigs) == 0 && clusterConfig.Spec.KubernetesVersion <= Kube121 {
-		return errors.New("Empty workerNodeGroupConfigs is not supported for kube version <= 1.21")
-	}
-
 	return nil
 }
 

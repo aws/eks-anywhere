@@ -111,7 +111,7 @@ func (s *Snow) CleanupVMs(clusterName string) error {
 	for _, ip := range snowDeviceIPs {
 		sess, err := newSession(ip)
 		if err != nil {
-			res = append(res, fmt.Errorf("Cannot create session to snow device: %w", err))
+			res = append(res, fmt.Errorf("cannot create session to snow device: %w", err))
 			continue
 		}
 
@@ -119,7 +119,7 @@ func (s *Snow) CleanupVMs(clusterName string) error {
 		// snow device doesn't support filter hitherto
 		out, err := ec2Client.DescribeInstances(&ec2.DescribeInstancesInput{})
 		if err != nil {
-			res = append(res, fmt.Errorf("Cannot get ec2 instances from snow device: %w", err))
+			res = append(res, fmt.Errorf("cannot get ec2 instances from snow device: %w", err))
 			continue
 		}
 
@@ -136,7 +136,7 @@ func (s *Snow) CleanupVMs(clusterName string) error {
 			if _, err = ec2Client.TerminateInstances(&ec2.TerminateInstancesInput{
 				InstanceIds: ownedInstanceIds,
 			}); err != nil {
-				res = append(res, fmt.Errorf("Cannot terminate ec2 instances from snow device: %w", err))
+				res = append(res, fmt.Errorf("cannot terminate ec2 instances from snow device: %w", err))
 			} else {
 				s.t.Logf("Cluster %s EC2 instances have been cleaned from device %s: %+v", clusterName, ip, ownedInstanceIds)
 			}
@@ -200,7 +200,7 @@ func newSession(ip string) (*session.Session, error) {
 		Region:      aws.String("snow"),
 	})
 	if err != nil {
-		return nil, fmt.Errorf("Cannot create session to snow device: %v", err)
+		return nil, fmt.Errorf("cannot create session to snow device: %v", err)
 	}
 	return sess, nil
 }

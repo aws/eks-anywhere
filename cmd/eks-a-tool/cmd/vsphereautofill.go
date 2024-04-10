@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"os"
@@ -26,7 +25,7 @@ var autofillCmd = &cobra.Command{
 	Long:   "Fills provider config with values set in environment variables",
 	PreRun: preRunAutofill,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		err := autofill(cmd.Context())
+		err := autofill()
 		if err != nil {
 			log.Fatalf("Error filling the provider config: %v", err)
 		}
@@ -52,7 +51,7 @@ func preRunAutofill(cmd *cobra.Command, args []string) {
 	})
 }
 
-func autofill(ctx context.Context) error {
+func autofill() error {
 	clusterConfigFileName := viper.GetString("filename")
 	clusterConfigFileExist := validations.FileExists(clusterConfigFileName)
 	if !clusterConfigFileExist {

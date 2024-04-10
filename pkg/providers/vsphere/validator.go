@@ -262,12 +262,12 @@ func (v *Validator) validateBRHardDiskSize(ctx context.Context, spec *Spec, mach
 		return fmt.Errorf("no hard disks found for template: %v", template)
 	} else if len(hardDiskMap) > 1 {
 		if hardDiskMap[disk1] != 2097152 { // 2GB in KB to avoid roundoff errors
-			return fmt.Errorf("Incorrect disk size for disk1 - expected: 2097152 kB got: %v", hardDiskMap[disk1])
+			return fmt.Errorf("incorrect disk size for disk1 - expected: 2097152 kB got: %v", hardDiskMap[disk1])
 		} else if hardDiskMap[disk2] != 20971520 { // 20GB in KB to avoid roundoff errors
-			return fmt.Errorf("Incorrect disk size for disk2 - expected: 20971520 kB got: %v", hardDiskMap[disk2])
+			return fmt.Errorf("incorrect disk size for disk2 - expected: 20971520 kB got: %v", hardDiskMap[disk2])
 		}
 	} else if hardDiskMap[disk1] != 23068672 { // 22GB in KB to avoid roundoff errors
-		return fmt.Errorf("Incorrect disk size for disk1 - expected: 23068672 kB got: %v", hardDiskMap[disk1])
+		return fmt.Errorf("incorrect disk size for disk1 - expected: 23068672 kB got: %v", hardDiskMap[disk1])
 	}
 	logger.V(5).Info("Bottlerocket Disk size validated: ", "diskMap", hardDiskMap)
 	return nil
@@ -326,7 +326,7 @@ func (v *Validator) validateNetwork(ctx context.Context, network string) error {
 	return nil
 }
 
-func (v *Validator) collectSpecMachineConfigs(ctx context.Context, spec *Spec) ([]*anywherev1.VSphereMachineConfig, error) {
+func (v *Validator) collectSpecMachineConfigs(spec *Spec) ([]*anywherev1.VSphereMachineConfig, error) {
 	controlPlaneMachineConfig := spec.controlPlaneMachineConfig()
 	machineConfigs := []*anywherev1.VSphereMachineConfig{controlPlaneMachineConfig}
 
@@ -371,7 +371,7 @@ func markPrivsValidationPass(passed bool, username string) {
 }
 
 func (v *Validator) validateUserPrivs(ctx context.Context, spec *Spec, vuc *config.VSphereUserConfig) (bool, error) {
-	machineConfigs, err := v.collectSpecMachineConfigs(ctx, spec)
+	machineConfigs, err := v.collectSpecMachineConfigs(spec)
 	if err != nil {
 		return false, err
 	}
@@ -572,18 +572,6 @@ func (v *Validator) sameOSFamily(configs map[string]*anywherev1.VSphereMachineCo
 
 	for _, machineConfig := range configs {
 		if machineConfig.Spec.OSFamily != osFamily {
-			return false
-		}
-	}
-	return true
-}
-
-func (v *Validator) sameTemplate(configs map[string]*anywherev1.VSphereMachineConfig) bool {
-	c := getRandomMachineConfig(configs)
-	template := c.Spec.Template
-
-	for _, machineConfig := range configs {
-		if machineConfig.Spec.Template != template {
 			return false
 		}
 	}

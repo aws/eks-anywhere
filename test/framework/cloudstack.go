@@ -10,7 +10,6 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/internal/test/cleanup"
-	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/retrier"
@@ -270,24 +269,6 @@ func (c *CloudStack) WithProviderUpgradeGit(fillers ...api.CloudStackFiller) Clu
 	}
 }
 
-func (c *CloudStack) getControlPlaneIP() (string, error) {
-	value, ok := os.LookupEnv(cloudStackClusterIPPoolEnvVar)
-	var clusterIP string
-	var err error
-	if ok && value != "" {
-		clusterIP, err = PopIPFromEnv(cloudStackClusterIPPoolEnvVar)
-		if err != nil {
-			c.t.Fatalf("failed to pop cluster ip from test environment: %v", err)
-		}
-	} else {
-		clusterIP, err = GenerateUniqueIp(c.cidr)
-		if err != nil {
-			c.t.Fatalf("failed to generate ip for cloudstack %s: %v", c.cidr, err)
-		}
-	}
-	return clusterIP, nil
-}
-
 func RequiredCloudstackEnvVars() []string {
 	return requiredCloudStackEnvVars
 }
@@ -540,9 +521,9 @@ func (c *CloudStack) defaultEnvVarForTemplate(os OS, kubeVersion anywherev1.Kube
 func (c *CloudStack) searchTemplate(ctx context.Context, template string) (string, error) {
 	profile, ok := os.LookupEnv(cloudstackCredentialsVar)
 	if !ok {
-		return "", fmt.Errorf("Required environment variable for CloudStack not set: %s", cloudstackCredentialsVar)
+		return "", fmt.Errorf("required environment variable for CloudStack not set: %s", cloudstackCredentialsVar)
 	}
-	templateResource := v1alpha1.CloudStackResourceIdentifier{
+	templateResource := anywherev1.CloudStackResourceIdentifier{
 		Name: template,
 	}
 	template, err := c.cmkClient.SearchTemplate(context.Background(), profile, templateResource)

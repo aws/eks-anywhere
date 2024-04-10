@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"strings"
@@ -48,14 +47,14 @@ var listOvasCmd = &cobra.Command{
 	PreRunE:      preRunListOvasCmd,
 	SilenceUsage: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if err := listOvas(cmd.Context(), listOvaOpts.fileName, listOvaOpts.bundlesOverride); err != nil {
+		if err := listOvas(listOvaOpts.fileName, listOvaOpts.bundlesOverride); err != nil {
 			return err
 		}
 		return nil
 	},
 }
 
-func listOvas(context context.Context, clusterSpecPath, bundlesOverride string) error {
+func listOvas(clusterSpecPath, bundlesOverride string) error {
 	var specOpts []cluster.FileSpecBuilderOpt
 	if bundlesOverride != "" {
 		specOpts = append(specOpts, cluster.WithOverrideBundlesManifest(bundlesOverride))

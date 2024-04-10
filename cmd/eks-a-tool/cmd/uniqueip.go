@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"context"
 	"fmt"
 	"log"
 
@@ -18,7 +17,7 @@ var uniqueIpCmd = &cobra.Command{
 	Long:   "Generate a random unique IP to be used for control plane endpoint ip",
 	PreRun: preRunUniqueIp,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		uniqueIp, err := generateUniqueIP(cmd.Context())
+		uniqueIp, err := generateUniqueIP()
 		if err != nil {
 			log.Fatalf("Error generating unique ip: %v", err)
 		}
@@ -45,7 +44,7 @@ func preRunUniqueIp(cmd *cobra.Command, args []string) {
 	})
 }
 
-func generateUniqueIP(ctx context.Context) (string, error) {
+func generateUniqueIP() (string, error) {
 	cidr := viper.GetString("cidr")
 	ipgen := networkutils.NewIPGenerator(&networkutils.DefaultNetClient{})
 	return ipgen.GenerateUniqueIP(cidr)

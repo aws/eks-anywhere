@@ -162,7 +162,7 @@ func (w *WorkloadCluster) availableHardware(ctx context.Context) error {
 	}
 
 	if cpHardwareAvailable < cpHardwareRequired || workerHardwareAvailable < workerHardwareRequired {
-		return errors.New("Insufficient hardware available for cluster")
+		return errors.New("insufficient hardware available for cluster")
 	}
 
 	return nil
