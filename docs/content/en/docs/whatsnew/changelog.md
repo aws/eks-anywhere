@@ -30,6 +30,23 @@ description: >
 * When upgrading to a new minor version, a new OS image must be created using the new image-builder CLI pertaining to that release.
 {{% /alert %}}
 
+## [v0.19.3](https://github.com/aws/eks-anywhere/releases/tag/v0.19.3)
+
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+|    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+| Bottlerocket 1.19.2 |    ✔    |     ✔      |    —    |     —      |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+|      RHEL 9.x       |    —    |     —      |    ✔    |     ✔      |  —   |
+
+### Changed
+- Updated helm to v3.14.3 [#3050](https://github.com/aws/eks-anywhere-build-tooling/pull/3050)
+
+### Fixed
+- Bumped golang.org/x/net that has a fix for [vunerability GO-2024-2687](https://pkg.go.dev/vuln/GO-2024-2687)
+- Fixed proxy configurations for airgapped enviornments [#7913](https://github.com/aws/eks-anywhere/pull/7913)
 
 ## [v0.19.2](https://github.com/aws/eks-anywhere/releases/tag/v0.19.2)
 
