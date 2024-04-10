@@ -121,9 +121,9 @@ bin/golangci-lint:
 unit-test: ## Run go test against code.
 	$(GO) test -C ./cli -count=1 ./...
 
-update-bundle-golden-files: ## Updates testdata files located under pkg/test/testdata
+update-bundle-golden-files: ## Updates testdata files located under pkg/operations/testdata
 	$(GO) test -C cli -count=1 ./pkg/operations -update
-	$(eval DIFF_LINE_COUNT=$(shell git diff cli/pkg/test/testdata | wc -l))
+	$(eval DIFF_LINE_COUNT=$(shell git diff cli/pkg/operations/testdata | wc -l))
 	@if [[ $(DIFF_LINE_COUNT) != 0 ]]; then \
 		printf "\n\033[33mWarning:\033[0m Testdata files have been updated! Ensure that these changes were intentional.\n"; \
 	fi

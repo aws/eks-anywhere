@@ -38,7 +38,7 @@ import (
 
 const (
 	releaseFolder         = "release"
-	testdataFolder        = "cli/pkg/test/testdata"
+	testdataFolder        = "cli/pkg/operations/testdata"
 	generatedBundleFolder = "generated-bundles"
 )
 
