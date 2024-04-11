@@ -1,0 +1,17 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: autoscaler-load
+spec:
+  selector:
+    matchLabels:
+      run: autoscaler-load
+  replicas: 111 # k8s node can have upto 110 pods so this ensures atleast 1 pod is unschedulable.
+  template:
+    metadata:
+      labels:
+        run: autoscaler-load
+    spec:
+      containers:
+        - name: nginx
+          image: public.ecr.aws/docker/library/nginx:stable
