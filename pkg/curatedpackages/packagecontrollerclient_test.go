@@ -1387,6 +1387,145 @@ func TestReconcile(s *testing.T) {
 			t.Errorf("expected packages client error, got %s", err)
 		}
 	})
+
+	s.Run("golden path with registry mirror", func(t *testing.T) {
+		ctx := context.Background()
+		log := testr.New(t)
+		cluster := newReconcileTestCluster()
+		ctrl := gomock.NewController(t)
+		k := mocks.NewMockKubectlRunner(ctrl)
+		cm := mocks.NewMockChartManager(ctrl)
+		bundles := createBundle(cluster)
+		bundles.Spec.VersionsBundles[0].KubeVersion = string(cluster.Spec.KubernetesVersion)
+		bundles.ObjectMeta.Name = cluster.Spec.BundlesRef.Name
+		bundles.ObjectMeta.Namespace = cluster.Spec.BundlesRef.Namespace
+		secret := &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: constants.EksaSystemNamespace,
+				Name:      cluster.Name + "-kubeconfig",
+			},
+		}
+		registrySecret := &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: constants.EksaSystemNamespace,
+				Name:      "registry-credentials",
+			},
+		}
+		eksaRelease := createEKSARelease(cluster, bundles)
+		cluster.Spec.BundlesRef = nil
+		cluster.Spec.RegistryMirrorConfiguration = &anywherev1.RegistryMirrorConfiguration{
+			Endpoint:     "1.2.3.4",
+			Port:         "443",
+			Authenticate: true,
+			OCINamespaces: []anywherev1.OCINamespace{
+				{
+					Namespace: "ecr-public",
+					Registry:  "public.ecr.aws",
+				},
+			},
+		}
+		t.Setenv("REGISTRY_USERNAME", "username")
+		t.Setenv("REGISTRY_PASSWORD", "password")
+
+		objs := []runtime.Object{cluster, bundles, secret, eksaRelease, registrySecret}
+		fakeClient := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
+		cm.EXPECT().RegistryLogin(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
+		cm.EXPECT().InstallChart(ctx, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
+
+		pcc := curatedpackages.NewPackageControllerClientFullLifecycle(log, cm, k, nil)
+		err := pcc.Reconcile(ctx, log, fakeClient, cluster)
+		if err != nil {
+			t.Errorf("expected nil error, got %s", err)
+		}
+	})
+
+	s.Run("registry mirror helm login fails", func(t *testing.T) {
+		ctx := context.Background()
+		log := testr.New(t)
+		cluster := newReconcileTestCluster()
+		ctrl := gomock.NewController(t)
+		k := mocks.NewMockKubectlRunner(ctrl)
+		cm := mocks.NewMockChartManager(ctrl)
+		bundles := createBundle(cluster)
+		bundles.Spec.VersionsBundles[0].KubeVersion = string(cluster.Spec.KubernetesVersion)
+		bundles.ObjectMeta.Name = cluster.Spec.BundlesRef.Name
+		bundles.ObjectMeta.Namespace = cluster.Spec.BundlesRef.Namespace
+		secret := &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: constants.EksaSystemNamespace,
+				Name:      cluster.Name + "-kubeconfig",
+			},
+		}
+		registrySecret := &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: constants.EksaSystemNamespace,
+				Name:      "registry-credentials",
+			},
+		}
+		eksaRelease := createEKSARelease(cluster, bundles)
+		cluster.Spec.BundlesRef = nil
+		cluster.Spec.RegistryMirrorConfiguration = &anywherev1.RegistryMirrorConfiguration{
+			Endpoint:     "1.2.3.4",
+			Port:         "443",
+			Authenticate: true,
+			OCINamespaces: []anywherev1.OCINamespace{
+				{
+					Namespace: "ecr-public",
+					Registry:  "public.ecr.aws",
+				},
+			},
+		}
+		t.Setenv("REGISTRY_USERNAME", "username")
+		t.Setenv("REGISTRY_PASSWORD", "password")
+
+		objs := []runtime.Object{cluster, bundles, secret, eksaRelease, registrySecret}
+		fakeClient := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
+		cm.EXPECT().RegistryLogin(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(fmt.Errorf("login error"))
+		pcc := curatedpackages.NewPackageControllerClientFullLifecycle(log, cm, k, nil)
+		err := pcc.Reconcile(ctx, log, fakeClient, cluster)
+		if err == nil {
+			t.Errorf("expected error, got %s", err)
+		}
+	})
+
+	s.Run("registry mirror secret not found error", func(t *testing.T) {
+		ctx := context.Background()
+		log := testr.New(t)
+		cluster := newReconcileTestCluster()
+		ctrl := gomock.NewController(t)
+		k := mocks.NewMockKubectlRunner(ctrl)
+		cm := mocks.NewMockChartManager(ctrl)
+		bundles := createBundle(cluster)
+		bundles.Spec.VersionsBundles[0].KubeVersion = string(cluster.Spec.KubernetesVersion)
+		bundles.ObjectMeta.Name = cluster.Spec.BundlesRef.Name
+		bundles.ObjectMeta.Namespace = cluster.Spec.BundlesRef.Namespace
+		secret := &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: constants.EksaSystemNamespace,
+				Name:      cluster.Name + "-kubeconfig",
+			},
+		}
+		eksaRelease := createEKSARelease(cluster, bundles)
+		cluster.Spec.BundlesRef = nil
+		cluster.Spec.RegistryMirrorConfiguration = &anywherev1.RegistryMirrorConfiguration{
+			Endpoint:     "1.2.3.4",
+			Port:         "443",
+			Authenticate: true,
+			OCINamespaces: []anywherev1.OCINamespace{
+				{
+					Namespace: "ecr-public",
+					Registry:  "public.ecr.aws",
+				},
+			},
+		}
+		objs := []runtime.Object{cluster, bundles, secret, eksaRelease}
+		fakeClient := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
+		pcc := curatedpackages.NewPackageControllerClientFullLifecycle(log, cm, k, nil)
+		err := pcc.Reconcile(ctx, log, fakeClient, cluster)
+		if err == nil || !strings.Contains(err.Error(), "not found") {
+			t.Errorf("expected error, got %s", err)
+		}
+	})
 }
 
 func newReconcileTestCluster() *anywherev1.Cluster {

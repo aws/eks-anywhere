@@ -176,6 +176,20 @@ func (mr *MockChartManagerMockRecorder) InstallChart(ctx, chart, ociURI, version
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InstallChart", reflect.TypeOf((*MockChartManager)(nil).InstallChart), ctx, chart, ociURI, version, kubeconfigFilePath, namespace, valueFilePath, skipCRDs, values)
 }
 
+// RegistryLogin mocks base method.
+func (m *MockChartManager) RegistryLogin(ctx context.Context, registry, username, password string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RegistryLogin", ctx, registry, username, password)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RegistryLogin indicates an expected call of RegistryLogin.
+func (mr *MockChartManagerMockRecorder) RegistryLogin(ctx, registry, username, password interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegistryLogin", reflect.TypeOf((*MockChartManager)(nil).RegistryLogin), ctx, registry, username, password)
+}
+
 // MockKubeDeleter is a mock of KubeDeleter interface.
 type MockKubeDeleter struct {
 	ctrl     *gomock.Controller
