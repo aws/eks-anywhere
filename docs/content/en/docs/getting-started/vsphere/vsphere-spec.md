@@ -29,8 +29,8 @@ spec:
             - 10.96.0.0/12
    controlPlaneConfiguration:        <a href="#controlplaneconfiguration-required"># Specific cluster control plane config (required)</a>
       count: <span style="color:green">2</span>                       <a href="#controlplaneconfigurationcount-required"># Number of control plane nodes (required)</a>
-      endpoint:                      <a href="#controlplaneconfigurationendpointhost-required"># IP for control plane endpoint (required)</a>
-         host: <span>"192.168.0.10"</span>
+      endpoint:                      
+         host: <span>"172.16.0.1"</span>        <a href="#controlplaneconfigurationendpointhost-required"># IP for control plane endpoint (required)</a>
       machineGroupRef:               <a href="#controlplaneconfigurationmachinegroupref-required"># vSphere-specific Kubernetes node config (required)</a>
         kind: VSphereMachineConfig
         name: my-cluster-machines
