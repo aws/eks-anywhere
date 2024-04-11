@@ -561,7 +561,7 @@ func (f *Factory) withAWSIamConfigReconciler() *Factory {
 }
 
 func (f *Factory) withPackageControllerClient() *Factory {
-	f.dependencyFactory.WithHelm().WithKubectl()
+	f.dependencyFactory.WithHelm(helm.WithInsecure()).WithKubectl()
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.packageControllerClient != nil {
