@@ -16,7 +16,7 @@ func TestGenerateTemplateBuilder(t *testing.T) {
 
 	expectedControlPlaneMachineSpec := &v1alpha1.TinkerbellMachineConfigSpec{
 		HardwareSelector: map[string]string{"type": "cp"},
-		TemplateRef: v1alpha1.Ref{
+		TemplateRef: &v1alpha1.Ref{
 			Kind: "TinkerbellTemplateConfig",
 			Name: "tink-test",
 		},
@@ -35,7 +35,7 @@ func TestGenerateTemplateBuilder(t *testing.T) {
 	expectedWorkerNodeGroupMachineSpec := map[string]v1alpha1.TinkerbellMachineConfigSpec{
 		"test-md": {
 			HardwareSelector: map[string]string{"type": "worker"},
-			TemplateRef: v1alpha1.Ref{
+			TemplateRef: &v1alpha1.Ref{
 				Kind: "TinkerbellTemplateConfig",
 				Name: "tink-test",
 			},
@@ -69,7 +69,7 @@ func TestBuildTemplateMapCPFailAuditPolicy(t *testing.T) {
 
 	etcdMachineSpec := &v1alpha1.TinkerbellMachineConfigSpec{
 		HardwareSelector: map[string]string{"type": "etcd"},
-		TemplateRef: v1alpha1.Ref{
+		TemplateRef: &v1alpha1.Ref{
 			Kind: "TinkerbellTemplateConfig",
 			Name: "tink-test",
 		},

@@ -101,7 +101,7 @@ func TestParseConfigFromFileTinkerbellCluster(t *testing.T) {
 					Namespace: "test-namespace",
 				},
 				Spec: anywherev1.TinkerbellMachineConfigSpec{
-					TemplateRef: anywherev1.Ref{
+					TemplateRef: &anywherev1.Ref{
 						Kind: "TinkerbellTemplateConfig",
 						Name: "tink-test",
 					},

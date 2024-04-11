@@ -156,7 +156,7 @@ func WithTinkerbellEtcdMachineConfig() TinkerbellFiller {
 				},
 				Spec: anywherev1.TinkerbellMachineConfigSpec{
 					HardwareSelector: map[string]string{HardwareLabelTypeKeyName: ExternalEtcd},
-					TemplateRef: anywherev1.Ref{
+					TemplateRef: &anywherev1.Ref{
 						Name: clusterName,
 						Kind: anywherev1.TinkerbellTemplateConfigKind,
 					},

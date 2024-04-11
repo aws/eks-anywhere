@@ -57,7 +57,7 @@ func (c *TinkerbellMachineConfigGenerate) Name() string {
 
 func WithTemplateRef(ref ProviderRefAccessor) TinkerbellMachineConfigGenerateOpt {
 	return func(c *TinkerbellMachineConfigGenerate) {
-		c.Spec.TemplateRef = Ref{
+		c.Spec.TemplateRef = &Ref{
 			Kind: ref.Kind(),
 			Name: ref.Name(),
 		}
