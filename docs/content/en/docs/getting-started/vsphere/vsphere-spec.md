@@ -22,15 +22,15 @@ spec:
       cniConfig:                     <a href="#clusternetworkcniconfig-required"># Cluster CNI plugin - default: cilium (required)</a>
          cilium: {}
       pods:
-         cidrBlocks:                 <a href="#clusternetworkpodscidrblocks0-required"># Subnet CIDR notation for pods (required)</a>
+         cidrBlocks:                 <a href="#clusternetworkpodscidrblocks0-required"># Internal Kubernetes subnet CIDR block for pods (required)</a>
             - 192.168.0.0/16
       services:
-         cidrBlocks:                 <a href="#clusternetworkservicescidrblocks0-required"># Subnet CIDR notation for services (required)</a>
+         cidrBlocks:                 <a href="#clusternetworkservicescidrblocks0-required"># Internal Kubernetes subnet CIDR block for services (required)</a>
             - 10.96.0.0/12
    controlPlaneConfiguration:        <a href="#controlplaneconfiguration-required"># Specific cluster control plane config (required)</a>
       count: <span style="color:green">2</span>                       <a href="#controlplaneconfigurationcount-required"># Number of control plane nodes (required)</a>
-      endpoint:                      <a href="#controlplaneconfigurationendpointhost-required"># IP for control plane endpoint (required)</a>
-         host: <span>"192.168.0.10"</span>
+      endpoint:                      <a href="#controlplaneconfigurationendpointhost-required"># IP for control plane endpoint on your network (required)</a>
+         host: <span>xxx.xxx.xxx.xxx</span>
       machineGroupRef:               <a href="#controlplaneconfigurationmachinegroupref-required"># vSphere-specific Kubernetes node config (required)</a>
         kind: VSphereMachineConfig
         name: my-cluster-machines
