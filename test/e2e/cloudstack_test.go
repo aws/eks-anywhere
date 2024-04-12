@@ -4106,6 +4106,28 @@ func TestCloudStackWorkloadClusterOIDCAuthGithubFluxAPI(t *testing.T) {
 	test.DeleteManagementCluster()
 }
 
+func TestCloudStackKubernetes129EtcdEncryption(t *testing.T) {
+	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat129())
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube129),
+			api.WithExternalEtcdTopology(1),
+			api.WithControlPlaneCount(1),
+		),
+		framework.WithPodIamConfig(),
+	)
+	test.OSFamily = v1alpha1.RedHat
+	test.GenerateClusterConfig()
+	test.CreateCluster()
+	test.PostClusterCreateEtcdEncryptionSetup()
+	test.UpgradeClusterWithNewConfig([]framework.ClusterE2ETestOpt{framework.WithEtcdEncrytion()})
+	test.StopIfFailed()
+	test.ValidateEtcdEncryption()
+	test.DeleteCluster()
+}
+
 func TestCloudStackKubernetes127To128RedHatManagementCPUpgradeAPI(t *testing.T) {
 	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes127())
 	test := framework.NewClusterE2ETest(
