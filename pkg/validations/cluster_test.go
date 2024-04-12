@@ -15,6 +15,7 @@ import (
 	"github.com/aws/eks-anywhere/internal/test"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	providermocks "github.com/aws/eks-anywhere/pkg/providers/mocks"
 	"github.com/aws/eks-anywhere/pkg/types"
@@ -741,4 +742,19 @@ func TestValidateManagementComponentsVersionSkew(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestValidateK8s130Support(t *testing.T) {
+	tt := newTest(t)
+	tt.clusterSpec.Cluster.Spec.KubernetesVersion = anywherev1.Kube130
+	tt.Expect(validations.ValidateK8s130Support(tt.clusterSpec)).To(
+		MatchError(ContainSubstring("kubernetes version 1.30 is not enabled. Please set the env variable K8S_1_30_SUPPORT")))
+}
+
+func TestValidateK8s130SupportActive(t *testing.T) {
+	tt := newTest(t)
+	tt.clusterSpec.Cluster.Spec.KubernetesVersion = anywherev1.Kube130
+	features.ClearCache()
+	os.Setenv(features.K8s130SupportEnvVar, "true")
+	tt.Expect(validations.ValidateK8s130Support(tt.clusterSpec)).To(Succeed())
 }
