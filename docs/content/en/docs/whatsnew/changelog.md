@@ -46,7 +46,7 @@ description: >
 
 ### Fixed
 - Bumped golang.org/x/net that has a fix for [vulnerability GO-2024-2687](https://pkg.go.dev/vuln/GO-2024-2687)
-- Fixed proxy configurations for airgapped enviornments [#7913](https://github.com/aws/eks-anywhere/pull/7913)
+- Fixed proxy configurations for airgapped environments [#7913](https://github.com/aws/eks-anywhere/pull/7913)
 
 ## [v0.19.2](https://github.com/aws/eks-anywhere/releases/tag/v0.19.2)
 
