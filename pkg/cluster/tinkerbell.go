@@ -125,7 +125,7 @@ func getTinkerbellMachineAndTemplateConfigs(ctx context.Context, client Client, 
 		}
 
 		if machineConfig.Spec.TemplateRef != nil {
-
+			c.TinkerbellTemplateConfigs = map[string]*anywherev1.TinkerbellTemplateConfig{}
 			templateRefName := machineConfig.Spec.TemplateRef.Name
 			templateConfig := &anywherev1.TinkerbellTemplateConfig{}
 			if err := client.Get(ctx, templateRefName, c.Cluster.Namespace, templateConfig); err != nil {
