@@ -28,12 +28,13 @@ import (
 )
 
 const (
-	irsaS3BucketVar = "T_IRSA_S3_BUCKET"
-	kmsIAMRoleVar   = "T_KMS_IAM_ROLE"
-	kmsImageVar     = "T_KMS_IMAGE"
-	kmsKeyArn       = "T_KMS_KEY_ARN"
-	kmsKeyRegion    = "T_KMS_KEY_REGION"
-	kmsSocketVar    = "T_KMS_SOCKET"
+	irsaS3BucketVar            = "T_IRSA_S3_BUCKET"
+	kmsIAMRoleVar              = "T_KMS_IAM_ROLE"
+	kmsImageVar                = "T_KMS_IMAGE"
+	podIdentityWebhookImageVar = "T_POD_IDENTITY_WEBHOOK_IMAGE"
+	kmsKeyArn                  = "T_KMS_KEY_ARN"
+	kmsKeyRegion               = "T_KMS_KEY_REGION"
+	kmsSocketVar               = "T_KMS_SOCKET"
 
 	defaultRegion = "us-west-2"
 	keysFilename  = "keys.json"
@@ -54,27 +55,29 @@ type keyResponse struct {
 
 // etcdEncryptionTestVars stores all the environment variables needed by etcd encryption tests.
 type etcdEncryptionTestVars struct {
-	KmsKeyRegion string
-	S3Bucket     string
-	KmsIamRole   string
-	KmsImage     string
-	KmsKeyArn    string
-	KmsSocket    string
+	KmsKeyRegion            string
+	S3Bucket                string
+	KmsIamRole              string
+	KmsImage                string
+	PodIdentityWebhookImage string
+	KmsKeyArn               string
+	KmsSocket               string
 }
 
 // RequiredEtcdEncryptionEnvVars returns the environment variables required .
 func RequiredEtcdEncryptionEnvVars() []string {
-	return []string{irsaS3BucketVar, kmsIAMRoleVar, kmsImageVar, kmsKeyArn, kmsSocketVar}
+	return []string{irsaS3BucketVar, kmsIAMRoleVar, kmsImageVar, podIdentityWebhookImageVar, kmsKeyArn, kmsSocketVar}
 }
 
 func getEtcdEncryptionVarsFromEnv() *etcdEncryptionTestVars {
 	return &etcdEncryptionTestVars{
-		KmsKeyRegion: os.Getenv(kmsKeyRegion),
-		S3Bucket:     os.Getenv(irsaS3BucketVar),
-		KmsIamRole:   os.Getenv(kmsIAMRoleVar),
-		KmsImage:     os.Getenv(kmsImageVar),
-		KmsKeyArn:    os.Getenv(kmsKeyArn),
-		KmsSocket:    os.Getenv(kmsSocketVar),
+		KmsKeyRegion:            os.Getenv(kmsKeyRegion),
+		S3Bucket:                os.Getenv(irsaS3BucketVar),
+		KmsIamRole:              os.Getenv(kmsIAMRoleVar),
+		KmsImage:                os.Getenv(kmsImageVar),
+		PodIdentityWebhookImage: os.Getenv(podIdentityWebhookImageVar),
+		KmsKeyArn:               os.Getenv(kmsKeyArn),
+		KmsSocket:               os.Getenv(kmsSocketVar),
 	}
 }
 
@@ -212,12 +215,13 @@ func (e *ClusterE2ETest) deployPodIdentityWebhook(ctx context.Context, envVars *
 func (e *ClusterE2ETest) deployKMSProvider(ctx context.Context, envVars *etcdEncryptionTestVars) error {
 	e.T.Log("Deploying AWS KMS Encryption Provider")
 	values := map[string]string{
-		"kmsImage":           envVars.KmsImage,
-		"kmsIamRole":         envVars.KmsIamRole,
-		"kmsKeyArn":          envVars.KmsKeyArn,
-		"kmsKeyRegion":       envVars.KmsKeyRegion,
-		"kmsSocket":          envVars.KmsSocket,
-		"serviceAccountName": "kms-encrypter-decrypter",
+		"kmsImage":                envVars.KmsImage,
+		"podIdentityWebhookImage": envVars.PodIdentityWebhookImage,
+		"kmsIamRole":              envVars.KmsIamRole,
+		"kmsKeyArn":               envVars.KmsKeyArn,
+		"kmsKeyRegion":            envVars.KmsKeyRegion,
+		"kmsSocket":               envVars.KmsSocket,
+		"serviceAccountName":      "kms-encrypter-decrypter",
 	}
 
 	if e.OSFamily != v1alpha1.Bottlerocket {
