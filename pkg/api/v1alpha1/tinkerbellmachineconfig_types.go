@@ -11,7 +11,7 @@ import (
 // TinkerbellMachineConfigSpec defines the desired state of TinkerbellMachineConfig.
 type TinkerbellMachineConfigSpec struct {
 	HardwareSelector HardwareSelector `json:"hardwareSelector"`
-	TemplateRef      *Ref              `json:"templateRef,omitempty"`
+	TemplateRef      *Ref             `json:"templateRef,omitempty"`
 	OSFamily         OSFamily         `json:"osFamily"`
 	//+optional
 	// OSImageURL can be used to override the default OS image path to pull from a local server.
