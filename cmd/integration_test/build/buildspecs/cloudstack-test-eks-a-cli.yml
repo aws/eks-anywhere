@@ -63,6 +63,7 @@ env:
     T_IRSA_S3_BUCKET: "etcd-encryption:irsa_s3_bucket"
     T_KMS_IAM_ROLE: "etcd-encryption:kms_iam_role_arn"
     T_KMS_IMAGE: "etcd-encryption:kms_image"
+    T_POD_IDENTITY_WEBHOOK_IMAGE: "etcd-encryption:pod_identity_webhook_image"
     T_KMS_KEY_ARN: "etcd-encryption:kms_key_arn"
     T_KMS_KEY_REGION: "etcd-encryption:region"
     T_KMS_SOCKET: "etcd-encryption:socket"
