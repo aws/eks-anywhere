@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	upgradeScript = "/foo/eksa-upgrades/scripts/upgrade.sh"
+	upgradeBin = "/foo/eksa-upgrades/tools/upgrader"
 
 	// CopierContainerName holds the name of the components copier container.
 	CopierContainerName = "components-copier"
@@ -40,21 +40,21 @@ func PodName(nodeName string) string {
 // UpgradeFirstControlPlanePod returns an upgrader pod that should be deployed on the first control plane node.
 func UpgradeFirstControlPlanePod(nodeName, image, kubernetesVersion, etcdVersion string) *corev1.Pod {
 	p := upgraderPod(nodeName, image, true)
-	p.Spec.InitContainers = containersForUpgrade(true, image, nodeName, "kubeadm_in_first_cp", kubernetesVersion, etcdVersion)
+	p.Spec.InitContainers = containersForUpgrade(true, image, nodeName, "upgrade", "node", "--type", "FirstCP", "--k8sVersion", kubernetesVersion, "--etcdVersion", etcdVersion)
 	return p
 }
 
 // UpgradeSecondaryControlPlanePod returns an upgrader pod that can be deployed on the remaining control plane nodes.
 func UpgradeSecondaryControlPlanePod(nodeName, image string) *corev1.Pod {
 	p := upgraderPod(nodeName, image, true)
-	p.Spec.InitContainers = containersForUpgrade(true, image, nodeName, "kubeadm_in_rest_cp")
+	p.Spec.InitContainers = containersForUpgrade(true, image, nodeName, "upgrade", "node", "--type", "RestCP")
 	return p
 }
 
 // UpgradeWorkerPod returns an upgrader pod that can be deployed on worker nodes.
 func UpgradeWorkerPod(nodeName, image string) *corev1.Pod {
 	p := upgraderPod(nodeName, image, false)
-	p.Spec.InitContainers = containersForUpgrade(false, image, nodeName, "kubeadm_in_worker")
+	p.Spec.InitContainers = containersForUpgrade(false, image, nodeName, "upgrade", "node", "--type", "Worker")
 	return p
 }
 
@@ -76,7 +76,7 @@ func upgraderPod(nodeName, image string, isCP bool) *corev1.Pod {
 			HostPID:  true,
 			Volumes:  volumes,
 			Containers: []corev1.Container{
-				nsenterContainer(image, PostUpgradeContainerName, upgradeScript, "print_status_and_cleanup"),
+				nsenterContainer(image, PostUpgradeContainerName, upgradeBin, "upgrade", "status"),
 			},
 			RestartPolicy: corev1.RestartPolicyOnFailure,
 		},
@@ -86,10 +86,10 @@ func upgraderPod(nodeName, image string, isCP bool) *corev1.Pod {
 func containersForUpgrade(isCP bool, image, nodeName string, kubeadmUpgradeCommand ...string) []corev1.Container {
 	return []corev1.Container{
 		copierContainer(image, isCP),
-		nsenterContainer(image, ContainerdUpgraderContainerName, upgradeScript, "upgrade_containerd"),
-		nsenterContainer(image, CNIPluginsUpgraderContainerName, upgradeScript, "cni_plugins"),
-		nsenterContainer(image, KubeadmUpgraderContainerName, append([]string{upgradeScript}, kubeadmUpgradeCommand...)...),
-		nsenterContainer(image, KubeletUpgradeContainerName, upgradeScript, "kubelet_and_kubectl"),
+		nsenterContainer(image, ContainerdUpgraderContainerName, upgradeBin, "upgrade", "containerd"),
+		nsenterContainer(image, CNIPluginsUpgraderContainerName, upgradeBin, "upgrade", "cni-plugins"),
+		nsenterContainer(image, KubeadmUpgraderContainerName, append([]string{upgradeBin}, kubeadmUpgradeCommand...)...),
+		nsenterContainer(image, KubeletUpgradeContainerName, upgradeBin, "upgrade", "kubelet-kubectl"),
 	}
 }
 
