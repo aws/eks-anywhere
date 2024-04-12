@@ -95,7 +95,7 @@ spec:
       serviceAccountName: pod-identity-webhook
       containers:
       - name: pod-identity-webhook
-        image: amazon/amazon-eks-pod-identity-webhook:latest
+        image: {{ .podIdentityWebhookImage }}
         imagePullPolicy: Always
         command:
         - /webhook
