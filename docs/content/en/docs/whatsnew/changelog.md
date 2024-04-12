@@ -45,7 +45,7 @@ description: >
 - Updated helm to v3.14.3 [#3050](https://github.com/aws/eks-anywhere-build-tooling/pull/3050)
 
 ### Fixed
-- Bumped golang.org/x/net that has a fix for [vunerability GO-2024-2687](https://pkg.go.dev/vuln/GO-2024-2687)
+- Bumped golang.org/x/net that has a fix for [vulnerability GO-2024-2687](https://pkg.go.dev/vuln/GO-2024-2687)
 - Fixed proxy configurations for airgapped enviornments [#7913](https://github.com/aws/eks-anywhere/pull/7913)
 
 ## [v0.19.2](https://github.com/aws/eks-anywhere/releases/tag/v0.19.2)
