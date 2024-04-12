@@ -7166,6 +7166,7 @@ rules:
   - snowmachineconfigs
   - tinkerbelldatacenterconfigs
   - tinkerbellmachineconfigs
+  - tinkerbelltemplateconfigs
   - vspheredatacenterconfigs
   - vspheremachineconfigs
   verbs:
@@ -7187,6 +7188,7 @@ rules:
   - snowmachineconfigs/finalizers
   - tinkerbelldatacenterconfigs/finalizers
   - tinkerbellmachineconfigs/finalizers
+  - tinkerbelltemplateconfigs/finalizers
   - vspheredatacenterconfigs/finalizers
   - vspheremachineconfigs/finalizers
   verbs:
@@ -7203,6 +7205,7 @@ rules:
   - snowmachineconfigs/status
   - tinkerbelldatacenterconfigs/status
   - tinkerbellmachineconfigs/status
+  - tinkerbelltemplateconfigs/status
   - vspheredatacenterconfigs/status
   - vspheremachineconfigs/status
   verbs:
