@@ -36,15 +36,16 @@ const (
 	kmsKeyRegion               = "T_KMS_KEY_REGION"
 	kmsSocketVar               = "T_KMS_SOCKET"
 
-	defaultRegion = "us-west-2"
-	keysFilename  = "keys.json"
+	defaultRegion       = "us-west-2"
+	keysFilename        = "keys.json"
+	keyIDFilenameFormat = "%s-oidc-keyid"
 
 	// SSHKeyPath is the path where the SSH private key is stored on the test-runner instance.
 	SSHKeyPath = "/tmp/ssh_key"
 )
 
 //go:embed config/pod-identity-webhook.yaml
-var podIdentityWebhookManifest []byte
+var podIdentityWebhookManifest string
 
 //go:embed config/aws-kms-encryption-provider.yaml
 var kmsProviderManifest string
@@ -190,12 +191,72 @@ func (e *ClusterE2ETest) PostClusterCreateEtcdEncryptionSetup() {
 		e.T.Fatal(err)
 	}
 
+	// register cleanup step to remove the keys from s3 after the test is done
+	e.T.Cleanup(e.cleanup)
+
 	if err := e.deployPodIdentityWebhook(ctx, envVars); err != nil {
 		e.T.Fatal(err)
 	}
 
 	if err := e.deployKMSProvider(ctx, envVars); err != nil {
 		e.T.Fatal(err)
+	}
+}
+
+func (e *ClusterE2ETest) cleanup() {
+	e.T.Log("Removing cluster's key from the IAM OIDC config")
+	data, err := os.ReadFile(fmt.Sprintf(keyIDFilenameFormat, e.ClusterName))
+	if err != nil {
+		e.T.Logf("failed to read key ID from file, skipping cleanup: %v", err)
+		return
+	}
+
+	envVars := getEtcdEncryptionVarsFromEnv()
+	awsSession, err := session.NewSession(&aws.Config{
+		Region: aws.String(defaultRegion),
+	})
+	if err != nil {
+		e.T.Fatalf("creating aws session for cleanup: %v", err)
+	}
+
+	// download the current keys json from S3 to add the current cluster's cert
+	content, err := s3.Download(awsSession, keysFilename, envVars.S3Bucket)
+	if err != nil {
+		e.T.Logf("downloading %s from s3: %v", keysFilename, err)
+		return
+	}
+
+	resp := &keyResponse{}
+	if err = json.Unmarshal(content, resp); err != nil {
+		e.T.Logf("unmarshaling %s into json: %v", keysFilename, err)
+		return
+	}
+
+	keyID := string(data)
+	index := -1
+	for i, key := range resp.Keys {
+		if strings.EqualFold(keyID, key.KeyID) {
+			index = i
+			break
+		}
+	}
+
+	if index >= 0 {
+		resp = &keyResponse{
+			Keys: append(resp.Keys[0:index], resp.Keys[index+1:]...),
+		}
+
+		keysJSON, err := json.MarshalIndent(resp, "", "    ")
+		if err != nil {
+			e.T.Logf("marshaling keys.json: %v", err)
+			return
+		}
+
+		// upload the modified keys json to s3 with the public read access
+		if err = s3.Upload(awsSession, keysJSON, keysFilename, envVars.S3Bucket, s3.WithPublicRead()); err != nil {
+			e.T.Logf("upload new keys.json to s3: %v", err)
+			return
+		}
 	}
 }
 
@@ -206,7 +267,14 @@ func getIssuerURL() string {
 
 func (e *ClusterE2ETest) deployPodIdentityWebhook(ctx context.Context, envVars *etcdEncryptionTestVars) error {
 	e.T.Log("Deploying Pod Identity Webhook")
-	if err := e.KubectlClient.ApplyKubeSpecFromBytes(ctx, e.Cluster(), podIdentityWebhookManifest); err != nil {
+	values := map[string]string{
+		"podIdentityWebhookImage": envVars.PodIdentityWebhookImage,
+	}
+	manifest, err := templater.Execute(podIdentityWebhookManifest, values)
+	if err != nil {
+		return fmt.Errorf("templating pod identity webhook manifest: %v", err)
+	}
+	if err := e.KubectlClient.ApplyKubeSpecFromBytes(ctx, e.Cluster(), manifest); err != nil {
 		return fmt.Errorf("deploying pod identity webhook: %v", err)
 	}
 	return nil
@@ -215,13 +283,12 @@ func (e *ClusterE2ETest) deployPodIdentityWebhook(ctx context.Context, envVars *
 func (e *ClusterE2ETest) deployKMSProvider(ctx context.Context, envVars *etcdEncryptionTestVars) error {
 	e.T.Log("Deploying AWS KMS Encryption Provider")
 	values := map[string]string{
-		"kmsImage":                envVars.KmsImage,
-		"podIdentityWebhookImage": envVars.PodIdentityWebhookImage,
-		"kmsIamRole":              envVars.KmsIamRole,
-		"kmsKeyArn":               envVars.KmsKeyArn,
-		"kmsKeyRegion":            envVars.KmsKeyRegion,
-		"kmsSocket":               envVars.KmsSocket,
-		"serviceAccountName":      "kms-encrypter-decrypter",
+		"kmsImage":           envVars.KmsImage,
+		"kmsIamRole":         envVars.KmsIamRole,
+		"kmsKeyArn":          envVars.KmsKeyArn,
+		"kmsKeyRegion":       envVars.KmsKeyRegion,
+		"kmsSocket":          envVars.KmsSocket,
+		"serviceAccountName": "kms-encrypter-decrypter",
 	}
 
 	if e.OSFamily != v1alpha1.Bottlerocket {
@@ -267,6 +334,10 @@ func (e *ClusterE2ETest) addClusterCertToIrsaOidcProvider(ctx context.Context, e
 	keysJSON, err := json.MarshalIndent(resp, "", "    ")
 	if err != nil {
 		return fmt.Errorf("marshaling keys.json: %v", err)
+	}
+
+	if err := os.WriteFile(fmt.Sprintf(keyIDFilenameFormat, e.ClusterName), []byte(newKey.KeyID), os.ModeAppend); err != nil {
+		return fmt.Errorf("writing OIDC key ID to file: %v", err)
 	}
 
 	// upload the modified keys json to s3 with the public read access
