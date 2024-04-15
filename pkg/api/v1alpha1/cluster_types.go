@@ -1043,6 +1043,14 @@ func (n *Ref) Equal(o *Ref) bool {
 	return n.Kind == o.Kind && n.Name == o.Name
 }
 
+// IsEmpty checks if the given ref object is empty.
+func (n Ref) IsEmpty() bool {
+	if n.Kind == "" && n.Name == "" {
+		return true
+	}
+	return false
+}
+
 // +kubebuilder:object:generate=false
 // Interface for getting DatacenterRef fields for Cluster type.
 type ProviderRefAccessor interface {
