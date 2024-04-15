@@ -56,7 +56,9 @@ func (e *E2ESession) setupRegistryMirrorEnv(testRegex string) error {
 	}
 
 	if endpoint != "" && port != "" && caCert != "" {
-		return e.mountRegistryCert(caCert, net.JoinHostPort(endpoint, port))
+		if err := e.mountRegistryCert(caCert, net.JoinHostPort(endpoint, port)); err != nil {
+			return err
+		}
 	}
 
 	re = regexp.MustCompile(`^.*Docker.*Airgapped.*$`)
