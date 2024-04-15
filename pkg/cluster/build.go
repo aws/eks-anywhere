@@ -6,7 +6,7 @@ func NewDefaultConfigClientBuilder() *ConfigClientBuilder {
 	return NewConfigClientBuilder().Register(
 		getCloudStackMachineConfigs,
 		getCloudStackDatacenter,
-		getTinkerbellMachineConfigs,
+		getTinkerbellMachineAndTemplateConfigs,
 		getTinkerbellDatacenter,
 		getDockerDatacenter,
 		getVSphereDatacenter,
