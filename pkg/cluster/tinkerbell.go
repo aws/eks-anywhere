@@ -106,7 +106,7 @@ func getTinkerbellDatacenter(ctx context.Context, client Client, c *Config) erro
 	return nil
 }
 
-func getTinkerbellMachineConfigs(ctx context.Context, client Client, c *Config) error {
+func getTinkerbellMachineAndTemplateConfigs(ctx context.Context, client Client, c *Config) error {
 	if c.Cluster.Spec.DatacenterRef.Kind != anywherev1.TinkerbellDatacenterKind {
 		return nil
 	}
@@ -125,6 +125,19 @@ func getTinkerbellMachineConfigs(ctx context.Context, client Client, c *Config) 
 		}
 
 		c.TinkerbellMachineConfigs[machineConfig.Name] = machineConfig
+
+		if !machineConfig.Spec.TemplateRef.IsEmpty() {
+			if c.TinkerbellTemplateConfigs == nil {
+				c.TinkerbellTemplateConfigs = map[string]*anywherev1.TinkerbellTemplateConfig{}
+			}
+
+			templateRefName := machineConfig.Spec.TemplateRef.Name
+			templateConfig := &anywherev1.TinkerbellTemplateConfig{}
+			if err := client.Get(ctx, templateRefName, c.Cluster.Namespace, templateConfig); err != nil {
+				return err
+			}
+			c.TinkerbellTemplateConfigs[templateRefName] = templateConfig
+		}
 	}
 	return nil
 }

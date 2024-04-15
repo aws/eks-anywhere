@@ -854,6 +854,48 @@ func TestClusterEqualGitOpsRef(t *testing.T) {
 	}
 }
 
+func TestClusterIsEmptyRef(t *testing.T) {
+	testCases := []struct {
+		testName    string
+		templateRef v1alpha1.Ref
+		want        bool
+	}{
+		{
+			testName: "kind not empty",
+			templateRef: v1alpha1.Ref{
+				Kind: "k1",
+			},
+			want: false,
+		},
+		{
+			testName: "name not empty",
+			templateRef: v1alpha1.Ref{
+				Name: "n1",
+			},
+			want: false,
+		},
+		{
+			testName: "both not empty",
+			templateRef: v1alpha1.Ref{
+				Kind: "k",
+				Name: "n",
+			},
+			want: false,
+		},
+		{
+			testName:    "both not empty",
+			templateRef: v1alpha1.Ref{},
+			want:        true,
+		},
+	}
+	for _, tt := range testCases {
+		t.Run(tt.testName, func(t *testing.T) {
+			g := NewWithT(t)
+			g.Expect(tt.templateRef.IsEmpty()).To(Equal(tt.want))
+		})
+	}
+}
+
 func TestClusterEqualClusterNetwork(t *testing.T) {
 	testCases := []struct {
 		testName                                       string
