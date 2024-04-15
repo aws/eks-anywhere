@@ -147,6 +147,11 @@ func RequiredRegistryMirrorEnvVars() []string {
 	return append(registryMirrorRequiredEnvVars, registryMirrorDockerAirgappedRequiredEnvVars...)
 }
 
+// RequiredOciNamespacesEnvVars returns the Env variables to set for OCI Namespaces tests.
+func RequiredOciNamespacesEnvVars() []string {
+	return append(registryMirrorOciNamespacesRequiredEnvVars, RegistryMirrorOciNamespacesRegistry2Var, RegistryMirrorOciNamespacesNamespace2Var)
+}
+
 func setupRegistryMirrorEndpointAndCert(e *ClusterE2ETest, providerName string, insecureSkipVerify bool, ociNamespaces ...v1alpha1.OCINamespace) {
 	var endpoint, hostPort, username, password, registryCert string
 	port := "443"
