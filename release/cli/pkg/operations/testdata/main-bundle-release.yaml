@@ -638,7 +638,7 @@ spec:
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: hegel
           os: linux
-          uri: public.ecr.aws/release-container-registry/tinkerbell/hegel:v0.10.1-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/hegel:v0.12.0-eks-a-v0.0.0-dev-build.1
         hook:
           bootkit:
             arch:
@@ -1416,7 +1416,7 @@ spec:
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: hegel
           os: linux
-          uri: public.ecr.aws/release-container-registry/tinkerbell/hegel:v0.10.1-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/hegel:v0.12.0-eks-a-v0.0.0-dev-build.1
         hook:
           bootkit:
             arch:
@@ -2194,7 +2194,7 @@ spec:
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: hegel
           os: linux
-          uri: public.ecr.aws/release-container-registry/tinkerbell/hegel:v0.10.1-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/hegel:v0.12.0-eks-a-v0.0.0-dev-build.1
         hook:
           bootkit:
             arch:
@@ -2972,7 +2972,7 @@ spec:
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: hegel
           os: linux
-          uri: public.ecr.aws/release-container-registry/tinkerbell/hegel:v0.10.1-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/hegel:v0.12.0-eks-a-v0.0.0-dev-build.1
         hook:
           bootkit:
             arch:
@@ -3750,7 +3750,7 @@ spec:
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: hegel
           os: linux
-          uri: public.ecr.aws/release-container-registry/tinkerbell/hegel:v0.10.1-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/hegel:v0.12.0-eks-a-v0.0.0-dev-build.1
         hook:
           bootkit:
             arch:
@@ -4528,7 +4528,7 @@ spec:
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: hegel
           os: linux
-          uri: public.ecr.aws/release-container-registry/tinkerbell/hegel:v0.10.1-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/hegel:v0.12.0-eks-a-v0.0.0-dev-build.1
         hook:
           bootkit:
             arch:
