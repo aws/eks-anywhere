@@ -538,6 +538,7 @@ func validateControlPlaneKubeletConfiguration(clusterConfig *Cluster) error {
 	cpKubeletConfig := clusterConfig.Spec.ControlPlaneConfiguration.KubeletConfiguration
 
 	return validateKubeletConfiguration(cpKubeletConfig)
+
 }
 
 func validateWorkerNodeKubeletConfiguration(clusterConfig *Cluster) error {

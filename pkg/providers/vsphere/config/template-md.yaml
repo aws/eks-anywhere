@@ -7,6 +7,10 @@ spec:
   template:
     spec:
       joinConfiguration:
+{{- if .kubeletConfiguration }}
+        patches: 
+          directory: /etc/kubernetes/patches
+{{- end }}
 {{- if (eq .format "bottlerocket") }}
         pause:
           imageRepository: {{.pauseRepository}}
@@ -76,8 +80,15 @@ spec:
 {{ .kubeletExtraArgs.ToYaml | indent 12 }}
 {{- end }}
           name: '{{"{{"}} ds.meta_data.hostname {{"}}"}}'
-{{- if and (ne .format "bottlerocket") (or .proxyConfig .registryMirrorMap) }}
+{{- if or (and (ne .format "bottlerocket") (or .proxyConfig .registryMirrorMap)) .kubeletConfiguration }}
       files:
+{{- end }}
+{{- if .kubeletConfiguration }}
+      - content: |
+{{ .kubeletConfiguration | indent 10 }}
+        owner: root:root
+        permissions: "0644"
+        path: /etc/kubernetes/patches/kubeletconfiguration0+strategic.yaml
 {{- end }}
 {{- if and .proxyConfig (ne .format "bottlerocket") }}
       - content: |
