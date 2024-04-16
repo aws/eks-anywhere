@@ -7,6 +7,10 @@ spec:
   template:
     spec:
       joinConfiguration:
+{{- if .kubeletConfiguration }}
+        patches: 
+          directory: /etc/kubernetes/patches
+{{- end }}
         nodeRegistration:
           criSocket: /var/run/containerd/containerd.sock
 {{- if .workerNodeGroupTaints }}
@@ -26,8 +30,15 @@ spec:
 {{- if .kubeletExtraArgs }}
 {{ .kubeletExtraArgs.ToYaml | indent 12 }}
 {{- end }}
-{{- if .registryMirrorMap }}
+{{- if or .registryMirrorMap .kubeletConfiguration }}
       files:
+{{- end }}
+{{- if .kubeletConfiguration }}
+      - content: |
+{{ .kubeletConfiguration | indent 10 }}
+        owner: root:root
+        permissions: "0644"
+        path: /etc/kubernetes/patches/kubeletconfiguration0+strategic.yaml
 {{- end }}
 {{- if .registryCACert }}
       - content: |
