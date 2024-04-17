@@ -707,7 +707,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-controller
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-controller:v0.8.0-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-controller:v0.10.0-eks-a-v0.0.0-dev-build.1
           tinkServer:
             arch:
             - amd64
@@ -716,7 +716,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-server
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-server:v0.8.0-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-server:v0.10.0-eks-a-v0.0.0-dev-build.1
           tinkWorker:
             arch:
             - amd64
@@ -725,12 +725,12 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-worker
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-worker:v0.8.0-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-worker:v0.10.0-eks-a-v0.0.0-dev-build.1
         tinkerbellChart:
           description: Helm chart for tinkerbell-chart
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: tinkerbell-chart
-          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.2.4-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.2.5-eks-a-v0.0.0-dev-build.1
       version: v0.5.2+abcdef1
     upgrader:
       upgrader:
@@ -1485,7 +1485,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-controller
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-controller:v0.8.0-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-controller:v0.10.0-eks-a-v0.0.0-dev-build.1
           tinkServer:
             arch:
             - amd64
@@ -1494,7 +1494,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-server
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-server:v0.8.0-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-server:v0.10.0-eks-a-v0.0.0-dev-build.1
           tinkWorker:
             arch:
             - amd64
@@ -1503,12 +1503,12 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-worker
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-worker:v0.8.0-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-worker:v0.10.0-eks-a-v0.0.0-dev-build.1
         tinkerbellChart:
           description: Helm chart for tinkerbell-chart
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: tinkerbell-chart
-          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.2.4-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.2.5-eks-a-v0.0.0-dev-build.1
       version: v0.5.2+abcdef1
     upgrader:
       upgrader:
@@ -2263,7 +2263,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-controller
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-controller:v0.8.0-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-controller:v0.10.0-eks-a-v0.0.0-dev-build.1
           tinkServer:
             arch:
             - amd64
@@ -2272,7 +2272,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-server
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-server:v0.8.0-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-server:v0.10.0-eks-a-v0.0.0-dev-build.1
           tinkWorker:
             arch:
             - amd64
@@ -2281,12 +2281,12 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-worker
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-worker:v0.8.0-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-worker:v0.10.0-eks-a-v0.0.0-dev-build.1
         tinkerbellChart:
           description: Helm chart for tinkerbell-chart
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: tinkerbell-chart
-          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.2.4-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.2.5-eks-a-v0.0.0-dev-build.1
       version: v0.5.2+abcdef1
     upgrader:
       upgrader:
@@ -3041,7 +3041,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-controller
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-controller:v0.8.0-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-controller:v0.10.0-eks-a-v0.0.0-dev-build.1
           tinkServer:
             arch:
             - amd64
@@ -3050,7 +3050,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-server
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-server:v0.8.0-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-server:v0.10.0-eks-a-v0.0.0-dev-build.1
           tinkWorker:
             arch:
             - amd64
@@ -3059,12 +3059,12 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-worker
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-worker:v0.8.0-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-worker:v0.10.0-eks-a-v0.0.0-dev-build.1
         tinkerbellChart:
           description: Helm chart for tinkerbell-chart
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: tinkerbell-chart
-          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.2.4-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.2.5-eks-a-v0.0.0-dev-build.1
       version: v0.5.2+abcdef1
     upgrader:
       upgrader:
@@ -3819,7 +3819,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-controller
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-controller:v0.8.0-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-controller:v0.10.0-eks-a-v0.0.0-dev-build.1
           tinkServer:
             arch:
             - amd64
@@ -3828,7 +3828,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-server
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-server:v0.8.0-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-server:v0.10.0-eks-a-v0.0.0-dev-build.1
           tinkWorker:
             arch:
             - amd64
@@ -3837,12 +3837,12 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-worker
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-worker:v0.8.0-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-worker:v0.10.0-eks-a-v0.0.0-dev-build.1
         tinkerbellChart:
           description: Helm chart for tinkerbell-chart
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: tinkerbell-chart
-          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.2.4-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.2.5-eks-a-v0.0.0-dev-build.1
       version: v0.5.2+abcdef1
     upgrader:
       upgrader:
@@ -4597,7 +4597,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-controller
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-controller:v0.8.0-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-controller:v0.10.0-eks-a-v0.0.0-dev-build.1
           tinkServer:
             arch:
             - amd64
@@ -4606,7 +4606,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-server
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-server:v0.8.0-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-server:v0.10.0-eks-a-v0.0.0-dev-build.1
           tinkWorker:
             arch:
             - amd64
@@ -4615,12 +4615,12 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-worker
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-worker:v0.8.0-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-worker:v0.10.0-eks-a-v0.0.0-dev-build.1
         tinkerbellChart:
           description: Helm chart for tinkerbell-chart
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: tinkerbell-chart
-          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.2.4-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.2.5-eks-a-v0.0.0-dev-build.1
       version: v0.5.2+abcdef1
     upgrader:
       upgrader:
