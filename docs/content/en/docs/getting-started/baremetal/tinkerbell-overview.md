@@ -243,7 +243,7 @@ NAME        STATUS   ROLES                 AGE    VERSION               INTERNAL
 eksa-da04   Ready    control-plane,master  9m5s   v1.22.10-eks-7dc61e8  10.80.30.23
 ```
 ```bash
-kubectl get logs -n eksa-system | grep hegel
+kubectl get pods -n eksa-system | grep hegel
 ```
 ```
 hegel-n7ngs
