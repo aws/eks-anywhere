@@ -1,7 +1,6 @@
 package cluster_test
 
 import (
-	"embed"
 	"testing"
 
 	eksdv1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
@@ -12,12 +11,8 @@ import (
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/files"
-	"github.com/aws/eks-anywhere/pkg/manifests/eksd"
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
-
-//go:embed testdata
-var testdataFS embed.FS
 
 func TestNewSpecError(t *testing.T) {
 	version := test.DevEksaVersion()
@@ -374,15 +369,4 @@ func validateVersionedRepo(t *testing.T, gotImage cluster.VersionedRepository, w
 	if gotImage.Tag != wantTag {
 		t.Errorf("GetNewSpec() = Spec: Invalid kubernetes repo, got %s, want %s", gotImage.Tag, wantTag)
 	}
-}
-
-func readEksdRelease(tb testing.TB, url string) *eksdv1.Release {
-	tb.Helper()
-	r := files.NewReader()
-	release, err := eksd.ReadManifest(r, url)
-	if err != nil {
-		tb.Fatalf("Failed reading eks-d manifest: %s", err)
-	}
-
-	return release
 }
