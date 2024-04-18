@@ -220,7 +220,14 @@ func RunTests(conf instanceRunConf, inventoryCatalogue map[string]*hardwareCatal
 		defer releaseTinkerbellHardware(&conf, hardwareCatalogue)
 	}
 
-	conf.Logger.Info("Creating runner instance", "cfg", conf)
+	conf.Logger.Info("Creating runner instance",
+		"instance_profile_name", conf.InstanceProfileName, "storage_bucket", conf.StorageBucket,
+		"parent_job_id", conf.ParentJobID, "regex", conf.Regex, "test_report_folder", conf.TestReportFolder,
+		"branch_name", conf.BranchName, "ip_pool", conf.IPPool.ToString(),
+		"hardware_count", conf.HardwareCount, "tinkerbell_airgapped_test", conf.TinkerbellAirgappedTest,
+		"bundles_override", conf.BundlesOverride, "test_runner_type", conf.TestRunnerType,
+		"cleanup_vms", conf.CleanupVMs)
+
 	instanceId, err := testRunner.createInstance(conf)
 	if err != nil {
 		return "", nil, err
