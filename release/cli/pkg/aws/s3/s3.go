@@ -22,6 +22,7 @@ import (
 	"path/filepath"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/pkg/errors"
 )
@@ -67,18 +68,22 @@ func DownloadFile(filePath, bucket, key string) error {
 	return nil
 }
 
-func UploadFile(filePath string, bucket, key *string, s3Uploader *s3manager.Uploader) error {
+func UploadFile(filePath string, bucket, key *string, s3Uploader *s3manager.Uploader, private bool) error {
 	fd, err := os.Open(filePath)
 	if err != nil {
 		return errors.Cause(err)
 	}
 	defer fd.Close()
 
+	objectCannedACL := s3.ObjectCannedACLPublicRead
+	if private {
+		objectCannedACL = s3.ObjectCannedACLPrivate
+	}
 	result, err := s3Uploader.Upload(&s3manager.UploadInput{
 		Bucket: bucket,
 		Key:    key,
 		Body:   fd,
-		ACL:    aws.String("public-read"),
+		ACL:    aws.String(objectCannedACL),
 	})
 	if err != nil {
 		return errors.Cause(err)

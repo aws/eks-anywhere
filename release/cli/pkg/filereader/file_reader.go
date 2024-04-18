@@ -286,7 +286,7 @@ func PutEksAReleaseVersion(version string, r *releasetypes.ReleaseConfig) error 
 
 	// Upload the file to S3
 	fmt.Println("Uploading latest release version file")
-	err = s3.UploadFile(currentReleaseKey, aws.String(r.ReleaseBucket), aws.String(currentReleaseKey), r.ReleaseClients.S3.Uploader)
+	err = s3.UploadFile(currentReleaseKey, aws.String(r.ReleaseBucket), aws.String(currentReleaseKey), r.ReleaseClients.S3.Uploader, false)
 	if err != nil {
 		return errors.Cause(err)
 	}
