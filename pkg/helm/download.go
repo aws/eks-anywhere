@@ -4,8 +4,10 @@ import (
 	"context"
 	"fmt"
 	"sort"
+	"time"
 
 	"github.com/aws/eks-anywhere/pkg/logger"
+	"github.com/aws/eks-anywhere/pkg/retrier"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/utils/oci"
 )
@@ -13,12 +15,15 @@ import (
 type ChartRegistryDownloader struct {
 	client    Client
 	dstFolder string
+
+	Retrier retrier.Retrier
 }
 
 func NewChartRegistryDownloader(client Client, dstFolder string) *ChartRegistryDownloader {
 	return &ChartRegistryDownloader{
 		client:    client,
 		dstFolder: dstFolder,
+		Retrier:   *retrier.NewWithMaxRetries(5, 200*time.Second),
 	}
 }
 
@@ -26,7 +31,10 @@ func (d *ChartRegistryDownloader) Download(ctx context.Context, charts ...string
 	for _, chart := range uniqueCharts(charts) {
 		chartURL, chartVersion := oci.ChartURLAndVersion(chart)
 		logger.Info("Saving helm chart to disk", "chart", chart)
-		if err := d.client.SaveChart(ctx, chartURL, chartVersion, d.dstFolder); err != nil {
+		err := d.Retrier.Retry(func() error {
+			return d.client.SaveChart(ctx, chartURL, chartVersion, d.dstFolder)
+		})
+		if err != nil {
 			return fmt.Errorf("downloading chart [%s] from registry: %v", chart, err)
 		}
 	}

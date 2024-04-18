@@ -10,6 +10,7 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/helm"
 	"github.com/aws/eks-anywhere/pkg/helm/mocks"
+	"github.com/aws/eks-anywhere/pkg/retrier"
 )
 
 func TestChartRegistryDownloaderDownload(t *testing.T) {
@@ -37,5 +38,6 @@ func TestChartRegistryDownloaderDownloadError(t *testing.T) {
 	client.EXPECT().SaveChart(ctx, "oci://ecr.com/chart2", "v2.2.0", folder).Return(errors.New("failed downloading"))
 
 	d := helm.NewChartRegistryDownloader(client, folder)
+	d.Retrier = *retrier.NewWithMaxRetries(1, 0)
 	g.Expect(d.Download(ctx, charts...)).To(MatchError(ContainSubstring("downloading chart [ecr.com/chart2:v2.2.0] from registry: failed downloading")))
 }

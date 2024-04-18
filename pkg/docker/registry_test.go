@@ -11,6 +11,7 @@ import (
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/docker"
 	"github.com/aws/eks-anywhere/pkg/docker/mocks"
+	"github.com/aws/eks-anywhere/pkg/retrier"
 )
 
 func TestNewRegistryDestination(t *testing.T) {
@@ -119,6 +120,7 @@ func TestNewOriginalRegistrySource(t *testing.T) {
 	images := []string{"image1:1", "image2:2"}
 	ctx := context.Background()
 	dstLoader := docker.NewOriginalRegistrySource(client)
+	dstLoader.Retrier = *retrier.NewWithMaxRetries(1, 0)
 	for _, i := range images {
 		client.EXPECT().PullImage(test.AContext(), i)
 	}
@@ -134,6 +136,7 @@ func TestOriginalRegistrySourceError(t *testing.T) {
 	images := []string{"image1:1", "image2:2"}
 	ctx := context.Background()
 	dstLoader := docker.NewOriginalRegistrySource(client)
+	dstLoader.Retrier = *retrier.NewWithMaxRetries(1, 0)
 	client.EXPECT().PullImage(test.AContext(), images[0]).Return(errors.New("error pulling"))
 	client.EXPECT().PullImage(test.AContext(), images[1]).MaxTimes(1)
 
