@@ -175,7 +175,8 @@ func TestGetExternalEtcdReleaseURL(t *testing.T) {
 	}
 	for _, tt := range testcases {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := common.GetExternalEtcdReleaseURL(tt.clusterVersion, test.VersionBundle())
+			eksaVersion := v1alpha1.EksaVersion(tt.clusterVersion)
+			got, err := common.GetExternalEtcdReleaseURL(&eksaVersion, test.VersionBundle())
 			if tt.err == nil {
 				g.Expect(err).ToNot(HaveOccurred())
 			} else {
@@ -184,4 +185,11 @@ func TestGetExternalEtcdReleaseURL(t *testing.T) {
 			g.Expect(got).To(Equal(tt.etcdURL))
 		})
 	}
+}
+
+func TestGetExternalEtcdReleaseURLWithNilEksaVersion(t *testing.T) {
+	g := NewWithT(t)
+	got, err := common.GetExternalEtcdReleaseURL(nil, test.VersionBundle())
+	g.Expect(err).ToNot(HaveOccurred())
+	g.Expect(got).To(BeEmpty())
 }
