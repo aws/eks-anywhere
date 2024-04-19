@@ -178,11 +178,6 @@ func (e *E2ESession) setup(regex string) error {
 		return err
 	}
 
-	err = e.loginToPublicECR()
-	if err != nil {
-		return err
-	}
-
 	ipPool := e.ipPool.ToString()
 
 	if ipPool != "" {
