@@ -310,9 +310,11 @@ func (pc *PackageControllerClient) generateHelmOverrideValues() ([]byte, error) 
 	endpoint, username, password, caCertContent, insecureSkipVerify := "", defaultRegistryMirrorUsername, defaultRegistryMirrorPassword, "", "false"
 	if pc.registryMirror != nil {
 		endpoint = pc.registryMirror.BaseRegistry
-		username, password, err = config.ReadCredentials()
-		if err != nil {
-			return []byte{}, err
+		if pc.registryMirror.Auth {
+			username, password, err = config.ReadCredentials()
+			if err != nil {
+				return []byte{}, err
+			}
 		}
 		caCertContent = pc.registryMirror.CACertContent
 		if pc.registryMirror.InsecureSkipVerify {
