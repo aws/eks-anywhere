@@ -2,6 +2,7 @@ package e2e
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"strconv"
@@ -133,7 +134,6 @@ func (v *VSphereTestRunner) setEnvironment() (map[string]string, error) {
 
 func (v *VSphereTestRunner) createInstance(c instanceRunConf) (string, error) {
 	name := getTestRunnerName(v.logger, c.JobID)
-	v.logger.V(1).Info("Creating vSphere Test Runner instance", "name", name)
 
 	ssmActivationInfo, err := ssm.CreateActivation(c.Session, name, c.InstanceProfileName)
 	if err != nil {
@@ -155,6 +155,11 @@ func (v *VSphereTestRunner) createInstance(c instanceRunConf) (string, error) {
 			{Key: ssmActivationRegionKey, Value: *c.Session.Config.Region},
 		},
 	}
+	optsJSON, err := json.Marshal(opts)
+	if err != nil {
+		return "", err
+	}
+	v.logger.V(1).Info("Creating vSphere Test Runner instance", "name", name, "ovf_deployment_opts", optsJSON)
 
 	// deploy template
 	if err := vsphere.DeployTemplate(v.envMap, v.Library, v.Template, name, v.Folder, v.Datacenter, v.Datastore, v.ResourcePool, opts); err != nil {
