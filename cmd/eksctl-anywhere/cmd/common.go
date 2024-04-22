@@ -3,12 +3,14 @@ package cmd
 import (
 	"context"
 
+	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/files"
 	"github.com/aws/eks-anywhere/pkg/helm"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 	"github.com/aws/eks-anywhere/pkg/manifests/bundles"
+	"github.com/aws/eks-anywhere/pkg/registrymirror"
 	"github.com/aws/eks-anywhere/pkg/version"
 	"github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
@@ -50,7 +52,7 @@ func getKubeconfigPath(clusterName, override string) string {
 
 func NewDependenciesForPackages(ctx context.Context, opts ...PackageOpt) (*dependencies.Dependencies, error) {
 	config := New(opts...)
-	return dependencies.NewFactory().
+	f := dependencies.NewFactory().
 		WithExecutableMountDirs(config.mountPaths...).
 		WithCustomBundles(config.bundlesOverride).
 		WithExecutableBuilder().
@@ -59,8 +61,13 @@ func NewDependenciesForPackages(ctx context.Context, opts ...PackageOpt) (*depen
 		WithHelm(helm.WithInsecure()).
 		WithCuratedPackagesRegistry(config.registryName, config.kubeVersion, version.Get()).
 		WithPackageControllerClient(config.spec, config.kubeConfig).
-		WithLogger().
-		Build(ctx)
+		WithLogger()
+
+	if config.cluster != nil && config.cluster.Spec.RegistryMirrorConfiguration != nil {
+		f.WithRegistryMirror(registrymirror.FromCluster(config.cluster))
+	}
+
+	return f.Build(ctx)
 }
 
 type PackageOpt func(*PackageConfig)
@@ -72,6 +79,7 @@ type PackageConfig struct {
 	mountPaths      []string
 	spec            *cluster.Spec
 	bundlesOverride string
+	cluster         *anywherev1.Cluster
 }
 
 func New(options ...PackageOpt) *PackageConfig {
@@ -116,5 +124,12 @@ func WithKubeConfig(kubeConfig string) func(*PackageConfig) {
 func WithBundlesOverride(bundlesOverride string) func(*PackageConfig) {
 	return func(config *PackageConfig) {
 		config.bundlesOverride = bundlesOverride
+	}
+}
+
+// WithCluster sets cluster in the config with incoming value.
+func WithCluster(cluster *anywherev1.Cluster) func(config *PackageConfig) {
+	return func(config *PackageConfig) {
+		config.cluster = cluster
 	}
 }
