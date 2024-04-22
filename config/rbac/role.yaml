@@ -29,6 +29,8 @@ rules:
   verbs:
   - create
   - delete
+  - get
+  - list
 - apiGroups:
   - ""
   resources:
@@ -54,6 +56,7 @@ rules:
   - delete
   - get
   - list
+  - patch
   - update
   - watch
 - apiGroups:

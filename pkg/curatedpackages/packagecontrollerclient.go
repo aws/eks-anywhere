@@ -95,6 +95,7 @@ type ChartUninstaller interface {
 type ChartManager interface {
 	ChartInstaller
 	ChartUninstaller
+	RegistryLogin(ctx context.Context, registry, username, password string) error
 }
 
 // NewPackageControllerClientFullLifecycle creates a PackageControllerClient
@@ -307,9 +308,11 @@ func (pc *PackageControllerClient) generateHelmOverrideValues() ([]byte, error) 
 	endpoint, username, password, caCertContent, insecureSkipVerify := "", "", "", "", "false"
 	if pc.registryMirror != nil {
 		endpoint = pc.registryMirror.BaseRegistry
-		username, password, err = config.ReadCredentials()
-		if err != nil {
-			return []byte{}, err
+		if pc.registryMirror.Auth {
+			username, password, err = config.ReadCredentials()
+			if err != nil {
+				return []byte{}, err
+			}
 		}
 		caCertContent = pc.registryMirror.CACertContent
 		if pc.registryMirror.InsecureSkipVerify {
@@ -491,6 +494,17 @@ func (pc *PackageControllerClient) Reconcile(ctx context.Context, logger logr.Lo
 	}
 
 	registry := registrymirror.FromCluster(cluster)
+
+	if registry != nil && registry.Auth {
+		rUsername, rPassword, err := config.ReadCredentialsFromSecret(ctx, client)
+		if err != nil {
+			return err
+		}
+
+		if err := pc.chartManager.RegistryLogin(ctx, registry.BaseRegistry, rUsername, rPassword); err != nil {
+			return err
+		}
+	}
 
 	// No Kubeconfig is passed. This is intentional. The helm executable will
 	// get that configuration from its environment.
