@@ -92,7 +92,7 @@ func handleArchiveUpload(_ context.Context, r *releasetypes.ReleaseConfig, artif
 	archiveFile := filepath.Join(artifact.Archive.ArtifactPath, artifact.Archive.ReleaseName)
 	fmt.Printf("Archive - %s\n", archiveFile)
 	key := filepath.Join(artifact.Archive.ReleaseS3Path, artifact.Archive.ReleaseName)
-	err := s3.UploadFile(archiveFile, aws.String(r.ReleaseBucket), aws.String(key), r.ReleaseClients.S3.Uploader)
+	err := s3.UploadFile(archiveFile, aws.String(r.ReleaseBucket), aws.String(key), r.ReleaseClients.S3.Uploader, artifact.Archive.PrivateUpload)
 	if err != nil {
 		return errors.Cause(err)
 	}
@@ -109,7 +109,7 @@ func handleArchiveUpload(_ context.Context, r *releasetypes.ReleaseConfig, artif
 		checksumFile := filepath.Join(artifact.Archive.ArtifactPath, artifact.Archive.ReleaseName) + extension
 		fmt.Printf("Checksum - %s\n", checksumFile)
 		key := filepath.Join(artifact.Archive.ReleaseS3Path, artifact.Archive.ReleaseName) + extension
-		err := s3.UploadFile(checksumFile, aws.String(r.ReleaseBucket), aws.String(key), r.ReleaseClients.S3.Uploader)
+		err := s3.UploadFile(checksumFile, aws.String(r.ReleaseBucket), aws.String(key), r.ReleaseClients.S3.Uploader, artifact.Archive.PrivateUpload)
 		if err != nil {
 			return errors.Cause(err)
 		}
@@ -122,7 +122,7 @@ func handleManifestUpload(_ context.Context, r *releasetypes.ReleaseConfig, arti
 	manifestFile := filepath.Join(artifact.Manifest.ArtifactPath, artifact.Manifest.ReleaseName)
 	fmt.Printf("Manifest - %s\n", manifestFile)
 	key := filepath.Join(artifact.Manifest.ReleaseS3Path, artifact.Manifest.ReleaseName)
-	err := s3.UploadFile(manifestFile, aws.String(r.ReleaseBucket), aws.String(key), r.ReleaseClients.S3.Uploader)
+	err := s3.UploadFile(manifestFile, aws.String(r.ReleaseBucket), aws.String(key), r.ReleaseClients.S3.Uploader, artifact.Manifest.PrivateUpload)
 	if err != nil {
 		return errors.Cause(err)
 	}

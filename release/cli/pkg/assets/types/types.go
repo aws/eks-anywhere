@@ -23,6 +23,7 @@ type ManifestComponent struct {
 	ReleaseManifestPrefix string
 	ManifestFiles         []string
 	NoVersionSuffix       bool
+	Private               bool
 }
 
 type ImageTagConfiguration struct {
@@ -47,6 +48,7 @@ type Archive struct {
 	OSVersion            string
 	ArchitectureOverride string
 	ArchiveS3PathGetter  ArchiveS3PathGenerator
+	Private              bool
 }
 
 type AssetConfig struct {
