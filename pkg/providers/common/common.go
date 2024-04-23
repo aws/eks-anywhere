@@ -152,8 +152,12 @@ func GetCAPIBottlerocketSettingsConfig(config *v1alpha1.BottlerocketConfiguratio
 
 // GetExternalEtcdReleaseURL returns a valid etcd URL  from version bundles if the eksaVersion is greater than
 // MinEksAVersionWithEtcdURL. Return "" if eksaVersion < MinEksAVersionWithEtcdURL to prevent etcd node rolled out.
-func GetExternalEtcdReleaseURL(clusterVersion string, versionBundle *cluster.VersionsBundle) (string, error) {
-	clusterVersionSemVer, err := semver.New(clusterVersion)
+func GetExternalEtcdReleaseURL(clusterVersion *v1alpha1.EksaVersion, versionBundle *cluster.VersionsBundle) (string, error) {
+	if clusterVersion == nil {
+		logger.V(4).Info("Eks-a cluster version is not specified. Skip setting etcd url")
+		return "", nil
+	}
+	clusterVersionSemVer, err := semver.New(string(*clusterVersion))
 	if err != nil {
 		return "", fmt.Errorf("invalid semver for clusterVersion: %v", err)
 	}
