@@ -476,7 +476,7 @@ func buildTemplateMapCP(
 		values["etcdSshUsername"] = etcdMachineSpec.Users[0].Name
 		values["etcdTemplateOverride"] = etcdTemplateOverride
 		values["etcdHardwareSelector"] = etcdMachineSpec.HardwareSelector
-		etcdURL, _ := common.GetExternalEtcdReleaseURL(string(*clusterSpec.Cluster.Spec.EksaVersion), versionsBundle)
+		etcdURL, _ := common.GetExternalEtcdReleaseURL(clusterSpec.Cluster.Spec.EksaVersion, versionsBundle)
 		if etcdURL != "" {
 			values["externalEtcdReleaseUrl"] = etcdURL
 		}

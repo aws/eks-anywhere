@@ -15,7 +15,6 @@ import (
 func TestSetUbuntuConfigInEtcdCluster(t *testing.T) {
 	g := newApiBuilerTest(t)
 	eksaVersion := anywherev1.EksaVersion("v0.19.2")
-	g.clusterSpec.Cluster.Spec.EksaVersion = &eksaVersion
 	got := wantEtcdCluster()
 	versionBundle := g.clusterSpec.VersionsBundles["1.21"]
 
@@ -26,14 +25,13 @@ func TestSetUbuntuConfigInEtcdCluster(t *testing.T) {
 		InstallDir:     "/usr/bin",
 		EtcdReleaseURL: versionBundle.KubeDistro.EtcdURL,
 	}
-	clusterapi.SetUbuntuConfigInEtcdCluster(got, versionBundle, string(eksaVersion))
+	clusterapi.SetUbuntuConfigInEtcdCluster(got, versionBundle, &eksaVersion)
 	g.Expect(got).To(Equal(want))
 }
 
 func TestSetUbuntuConfigInEtcdClusterNoEtcdUrl(t *testing.T) {
 	g := newApiBuilerTest(t)
 	eksaVersion := anywherev1.EksaVersion("v0.18.2")
-	g.clusterSpec.Cluster.Spec.EksaVersion = &eksaVersion
 	got := wantEtcdCluster()
 	versionBundle := g.clusterSpec.VersionsBundles["1.21"]
 
@@ -43,7 +41,7 @@ func TestSetUbuntuConfigInEtcdClusterNoEtcdUrl(t *testing.T) {
 		Version:    versionBundle.KubeDistro.EtcdVersion,
 		InstallDir: "/usr/bin",
 	}
-	clusterapi.SetUbuntuConfigInEtcdCluster(got, versionBundle, string(eksaVersion))
+	clusterapi.SetUbuntuConfigInEtcdCluster(got, versionBundle, &eksaVersion)
 	g.Expect(got).To(Equal(want))
 }
 
