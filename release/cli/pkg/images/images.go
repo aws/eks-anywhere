@@ -83,13 +83,13 @@ func PollForExistence(devRelease bool, authConfig *docker.AuthConfiguration, ima
 
 		bodyStr := string(body)
 		if strings.Contains(bodyStr, "MANIFEST_UNKNOWN") {
-			return fmt.Errorf("Requested image not found")
+			return fmt.Errorf("requested image not found")
 		}
 
 		return nil
 	})
 	if err != nil {
-		return fmt.Errorf("retries exhausted waiting for source image %s to be available for copy: %v", imageUri, err)
+		return fmt.Errorf("retries exhausted waiting for source image [%s] to be available for copy: %v", imageUri, err)
 	}
 
 	return nil
@@ -118,7 +118,7 @@ func CopyToDestination(sourceAuthConfig, releaseAuthConfig *docker.AuthConfigura
 		return nil
 	})
 	if err != nil {
-		return fmt.Errorf("retries exhausted performing image copy from source to destination: %v", err)
+		return fmt.Errorf("retries exhausted performing image copy from source [%s] to destination [%s]: %v", sourceImageUri, releaseImageUri, err)
 	}
 
 	return nil
