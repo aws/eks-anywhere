@@ -23,11 +23,11 @@ import (
 )
 
 func IsObjectNotFoundError(err error) bool {
-	return err.Error() == "Requested object not found"
+	return err.Error() == "requested object not found"
 }
 
 func IsImageNotFoundError(err error) bool {
-	return err.Error() == "Requested image not found"
+	return err.Error() == "requested image not found"
 }
 
 func GetFakeSHA(hashType int) (string, error) {

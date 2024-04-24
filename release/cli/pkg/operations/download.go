@@ -107,7 +107,7 @@ func handleArchiveDownload(_ context.Context, r *releasetypes.ReleaseConfig, art
 				}
 				objectKey = filepath.Join(latestSourceS3PrefixFromMain, sourceS3Key)
 			} else {
-				return fmt.Errorf("retries exhausted waiting for archive to be uploaded to source location: %v", err)
+				return fmt.Errorf("retries exhausted waiting for archive [%s] to be uploaded to source location: %v", objectKey, err)
 			}
 		}
 
@@ -156,7 +156,7 @@ func handleArchiveDownload(_ context.Context, r *releasetypes.ReleaseConfig, art
 					}
 					objectShasumFileKey = filepath.Join(latestSourceS3PrefixFromMain, objectShasumFileName)
 				} else {
-					return fmt.Errorf("retries exhausted waiting for checksum file to be uploaded to source location: %v", err)
+					return fmt.Errorf("retries exhausted waiting for checksum file [%s] to be uploaded to source location: %v", objectShasumFileKey, err)
 				}
 			}
 
@@ -180,7 +180,7 @@ func handleManifestDownload(_ context.Context, r *releasetypes.ReleaseConfig, ar
 
 	err := s3Retrier.Retry(func() error {
 		if !s3.KeyExists(r.SourceBucket, objectKey) {
-			return fmt.Errorf("Requested object not found")
+			return fmt.Errorf("requested object not found")
 		}
 		return nil
 	})
@@ -194,7 +194,7 @@ func handleManifestDownload(_ context.Context, r *releasetypes.ReleaseConfig, ar
 			latestSourceS3PrefixFromMain := strings.NewReplacer(r.BuildRepoBranchName, "latest", artifact.Manifest.GitTag, gitTagFromMain).Replace(sourceS3Prefix)
 			objectKey = filepath.Join(latestSourceS3PrefixFromMain, sourceS3Key)
 		} else {
-			return fmt.Errorf("retries exhausted waiting for archive to be uploaded to source location: %v", err)
+			return fmt.Errorf("retries exhausted waiting for manifest [%s] to be uploaded to source location: %v", objectKey, err)
 		}
 	}
 
