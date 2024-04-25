@@ -79,13 +79,13 @@ func TestClusterNameLength(t *testing.T) {
 	}{
 		{
 			name:        "SuccessClusterNameLength",
-			clusterName: "qwertyuiopasdfghjklzxcvbnmqwertyuiopasdfghjklzxcvbnm",
+			clusterName: "cluster-name-less-than-36-chars",
 			wantErr:     nil,
 		},
 		{
 			name:        "FailureClusterNameLength",
-			clusterName: "qwertyuiopasdfghjklzxcvbnmqwertyuiopasdfghjklzxcvbnmqwertyuiopasdfghjklzxcvbnm12345",
-			wantErr:     errors.New("number of characters in qwertyuiopasdfghjklzxcvbnmqwertyuiopasdfghjklzxcvbnmqwertyuiopasdfghjklzxcvbnm12345 should be less than 81"),
+			clusterName: "cluster-name-equals-to-36-characters",
+			wantErr:     errors.New("number of characters in cluster-name-equals-to-36-characters should be less than 36"),
 		},
 	}
 
