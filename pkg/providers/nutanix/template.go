@@ -296,7 +296,7 @@ func buildTemplateMapCP(
 		values["maxSurge"] = clusterSpec.Cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy.RollingUpdate.MaxSurge
 	}
 
-	etcdURL, _ := common.GetExternalEtcdReleaseURL(string(*clusterSpec.Cluster.Spec.EksaVersion), versionsBundle)
+	etcdURL, _ := common.GetExternalEtcdReleaseURL(clusterSpec.Cluster.Spec.EksaVersion, versionsBundle)
 	if etcdURL != "" {
 		values["externalEtcdReleaseUrl"] = etcdURL
 	}
