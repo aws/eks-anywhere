@@ -49,12 +49,12 @@ description: >
   - `v1-26-eks-31` to [`v1-26-eks-33`](https://distro.eks.amazonaws.com/releases/1-26/33/)
   - `v1-27-eks-25` to [`v1-27-eks-27`](https://distro.eks.amazonaws.com/releases/1-27/27/)
   - `v1-28-eks-18` to [`v1-28-eks-20`](https://distro.eks.amazonaws.com/releases/1-28/20/)
-  - `v1-29-eks-7` to [`v1-29-eks-9`](https://distro.eks.amazonaws.com/releases/1-29/9ßßß/)
+  - `v1-29-eks-7` to [`v1-29-eks-9`](https://distro.eks.amazonaws.com/releases/1-29/9/)
 
 ### Fixed
 - Added processor for Tinkerbell Template Config [#7980](https://github.com/aws/eks-anywhere/pull/7980)
 - Added nil check for eksa-version when setting etcd url [#8018](https://github.com/aws/eks-anywhere/pull/8018)
-- Fixed registry mirror secret credentials set to emptry [#7933](https://github.com/aws/eks-anywhere/pull/7933)
+- Fixed registry mirror secret credentials set to empty [#7933](https://github.com/aws/eks-anywhere/pull/7933)
 
 ## [v0.19.3](https://github.com/aws/eks-anywhere/releases/tag/v0.19.3)
 
