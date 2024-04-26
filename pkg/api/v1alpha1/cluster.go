@@ -396,9 +396,12 @@ func ValidateClusterName(clusterName string) error {
 }
 
 func ValidateClusterNameLength(clusterName string) error {
-	// vSphere has the maximum length for clusters to be 80 chars
-	if len(clusterName) > 80 {
-		return fmt.Errorf("number of characters in %v should be less than 81", clusterName)
+	// docker container hostname can have a maximum length of 64 characters. we append "-eks-a-cluster"
+	// to get the KinD cluster's name and on top of this, KinD also adds a "-control-plane suffix" to
+	// the cluster name to arrive at the name for the control plane node (container), which makes the
+	// control plane node name 64 characters in length.
+	if len(clusterName) > 35 {
+		return fmt.Errorf("number of characters in %v should be less than 36", clusterName)
 	}
 	return nil
 }
