@@ -1,7 +1,7 @@
 registryMirrorSecret:
   endpoint: ""
-  username: ""
-  password: ""
+  username: "dXNlcm5hbWU="
+  password: "cGFzc3dvcmQ="
   cacertcontent: ""
   insecure: "ZmFsc2U="
 awsSecret:
