@@ -30,6 +30,32 @@ description: >
 * When upgrading to a new minor version, a new OS image must be created using the new image-builder CLI pertaining to that release.
 {{% /alert %}}
 
+
+## [v0.19.4](https://github.com/aws/eks-anywhere/releases/tag/v0.19.4)
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+|    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+| Bottlerocket 1.19.2 |    ✔    |     ✔      |    —    |     —      |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+|      RHEL 9.x       |    —    |     —      |    ✔    |     ✔      |  —   |
+
+### Changed
+- Support Docs site for penultime EKS-A version [#8010](https://github.com/aws/eks-anywhere/pull/8010)
+- Update Ubuntu 22.04 ISO URLs to latest stable release [#3114](https://github.com/aws/eks-anywhere-build-tooling/pull/3114)
+- Upgraded EKS-D:
+  - `v1-25-eks-35` to [`v1-25-eks-37`](https://distro.eks.amazonaws.com/releases/1-25/37/)
+  - `v1-26-eks-31` to [`v1-26-eks-33`](https://distro.eks.amazonaws.com/releases/1-26/33/)
+  - `v1-27-eks-25` to [`v1-27-eks-27`](https://distro.eks.amazonaws.com/releases/1-27/27/)
+  - `v1-28-eks-18` to [`v1-28-eks-20`](https://distro.eks.amazonaws.com/releases/1-28/20/)
+  - `v1-29-eks-7` to [`v1-29-eks-9`](https://distro.eks.amazonaws.com/releases/1-29/9/)
+
+### Fixed
+- Added processor for Tinkerbell Template Config [#7816](https://github.com/aws/eks-anywhere/issues/7816)
+- Added nil check for eksa-version when setting etcd url [#8018](https://github.com/aws/eks-anywhere/pull/8018)
+- Fixed registry mirror secret credentials set to empty [#7933](https://github.com/aws/eks-anywhere/pull/7933)
+
 ## [v0.19.3](https://github.com/aws/eks-anywhere/releases/tag/v0.19.3)
 
 ### Supported OS version details
