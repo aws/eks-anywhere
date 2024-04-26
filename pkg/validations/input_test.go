@@ -94,9 +94,9 @@ func TestValidateClusterNameArg(t *testing.T) {
 		},
 		{
 			name:          "Failure Cluster Length",
-			args:          []string{"qwertyuiopasdfghjklzxcvbnmqwertyuiopasdfghjklzxcvbnmqwertyuiopasdfghjklzxcvbnm12345"},
-			expectedError: errors.New("number of characters in qwertyuiopasdfghjklzxcvbnmqwertyuiopasdfghjklzxcvbnmqwertyuiopasdfghjklzxcvbnm12345 should be less than 81"),
-			expectedArg:   "qwertyuiopasdfghjklzxcvbnmqwertyuiopasdfghjklzxcvbnmqwertyuiopasdfghjklzxcvbnm12345",
+			args:          []string{"cluster-name-equals-to-36-characters"},
+			expectedError: errors.New("number of characters in cluster-name-equals-to-36-characters should be less than 36"),
+			expectedArg:   "cluster-name-equals-to-36-characters",
 		},
 	}
 
