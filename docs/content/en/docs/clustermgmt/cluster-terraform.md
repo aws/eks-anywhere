@@ -67,7 +67,7 @@ how to scale your EKS Anywhere worker nodes using the Terraform Kubernetes provi
 3. Configure the Terraform cluster resource definition generated in step 2
     - Set `metadata.generation` as a [computed field](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/manifest#computed-fields). Add the following to your cluster resource configuration
    ```bash
-   computed_fields = ["metadata.generated"]
+   computed_fields = ["metadata.generation"]
    ```
     - Configure the field manager to [force reconcile managed resources](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/manifest#field_manager). Add the following configuration block to your cluster resource:
    ```bash
@@ -79,7 +79,7 @@ how to scale your EKS Anywhere worker nodes using the Terraform Kubernetes provi
     - Remove the `generation` field from the `metadata` of the cluster
     - Your Terraform cluster resource should look similar to this:
     ```bash
-    computed_fields = ["metadata.generated"]
+    computed_fields = ["metadata.generation"]
     field_manager {
       force_conflicts = true
     }
