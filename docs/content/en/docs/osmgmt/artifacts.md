@@ -12,7 +12,7 @@ EKS Anywhere supports three different node operating systems:
 
 * Bottlerocket: For vSphere and Bare Metal providers
 * Ubuntu: For vSphere, Bare Metal, Nutanix, and Snow providers
-* Red Hat Enterprise Linux (RHEL): For vSphere, CloudStack, and Bare Metal providers
+* Red Hat Enterprise Linux (RHEL): For vSphere, CloudStack, Nutanix, and Bare Metal providers
 
 Bottlerocket OVAs and images are distributed by the EKS Anywhere project.
 To build your own Ubuntu-based or RHEL-based EKS Anywhere node, see [Building node images]({{< relref "#building-node-images">}}).
