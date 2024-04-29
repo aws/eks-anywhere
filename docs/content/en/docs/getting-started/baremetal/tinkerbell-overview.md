@@ -101,7 +101,7 @@ eksa-system  mycluster-md-0-1656099863422-vxh2-provision-task-2  47s
 The following shows snippets from the `tasks.bmc` output that represent the three tasks: Power Off, enable network boot, and Power On.
 
 ```bash
-kubectl describe tasks.bmc -n eksa-system eksa-system mycluster-md-0-1656099863422-vxh2-provision-task-0
+kubectl describe tasks.bmc -n eksa-system mycluster-md-0-1656099863422-vxh2-provision-task-0
 ```
 ```
 ...
@@ -115,7 +115,7 @@ Status:
 ```
         
 ```bash
-kubectl describe tasks.bmc -n eksa-system eksa-system mycluster-md-0-1656099863422-vxh2-provision-task-1
+kubectl describe tasks.bmc -n eksa-system mycluster-md-0-1656099863422-vxh2-provision-task-1
 ```
 ```
 ...
@@ -132,7 +132,7 @@ Status:
 ```
 
 ```bash
-kubectl describe tasks.bmc -n eksa-system eksa-system mycluster-md-0-1656099863422-vxh2-provision-task-2
+kubectl describe tasks.bmc -n eksa-system mycluster-md-0-1656099863422-vxh2-provision-task-2
 ```
 ```
   Task:
