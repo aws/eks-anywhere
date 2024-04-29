@@ -98,8 +98,7 @@ EKS Anywhere stores sensitive information, like the vSphere credentials and GitH
 These secret objects are namespaced, for example in the `eksa-system` and `flux-system` namespace, and limiting access to the sensitive namespaces will ensure that these secrets will not be exposed.
 Additionally, limit access to the underlying node. Access to the node could allow access to the secret content.
 
-EKS Anywhere does not currently support encryption-at-rest for Kubernetes secrets.
-EKS Anywhere support for [Key Management Services (KMS)](https://kubernetes.io/docs/tasks/administer-cluster/kms-provider/) is planned.
+EKS Anywhere also supports encryption-at-rest for Kubernetes secrets. See [etcd encryption]({{< relref "../../getting-started/optional/etcdencryption" >}}) for more details.
 
 
 ### The EKS Anywhere `kubeconfig` file
