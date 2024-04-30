@@ -24,6 +24,7 @@ description: >
   * [Building Ubuntu and Red Hat node images]({{< relref "../osmgmt/artifacts/#building-node-images" >}})
   * [Downloading Bottlerocket node images]({{< relref "../osmgmt/artifacts/#download-bottlerocket-node-images" >}})
   * [Upgrading an EKS Anywhere cluster]({{< relref "../clustermgmt/cluster-upgrades" >}})
+* EKS Anywhere Packages workflow doesn't work with the v0.19.4 as there was a bug identified with the associated packages controller version(v0.4.2). Team is actively working on a fix and will have a follow up patch version shortly with the fix for packages workflow.
 {{% /alert %}}
 
 {{% alert title="General Information" color="info" %}}
@@ -55,8 +56,6 @@ description: >
 - Added processor for Tinkerbell Template Config [#7816](https://github.com/aws/eks-anywhere/issues/7816)
 - Added nil check for eksa-version when setting etcd url [#8018](https://github.com/aws/eks-anywhere/pull/8018)
 - Fixed registry mirror secret credentials set to empty [#7933](https://github.com/aws/eks-anywhere/pull/7933)
-
-**Note:** EKS Anywhere Packages workflow doesn't work with the current version as there was a bug identified with the associated package controller. Team is actively working on a fix and will have a follow up patch version shortly with the fix for packages workflow.
 
 ## [v0.19.3](https://github.com/aws/eks-anywhere/releases/tag/v0.19.3)
 
