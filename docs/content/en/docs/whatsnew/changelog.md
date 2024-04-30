@@ -56,6 +56,8 @@ description: >
 - Added nil check for eksa-version when setting etcd url [#8018](https://github.com/aws/eks-anywhere/pull/8018)
 - Fixed registry mirror secret credentials set to empty [#7933](https://github.com/aws/eks-anywhere/pull/7933)
 
+**Note:** EKS Anywhere Packages workflow doesn't work with the current version as there was a bug identified with the associated package controller. Team is actively working on a fix and will have a follow up patch version shortly with the fix for packages workflow.
+
 ## [v0.19.3](https://github.com/aws/eks-anywhere/releases/tag/v0.19.3)
 
 ### Supported OS version details
