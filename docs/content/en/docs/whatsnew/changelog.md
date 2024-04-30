@@ -24,7 +24,7 @@ description: >
   * [Building Ubuntu and Red Hat node images]({{< relref "../osmgmt/artifacts/#building-node-images" >}})
   * [Downloading Bottlerocket node images]({{< relref "../osmgmt/artifacts/#download-bottlerocket-node-images" >}})
   * [Upgrading an EKS Anywhere cluster]({{< relref "../clustermgmt/cluster-upgrades" >}})
-* EKS Anywhere Packages workflow doesn't work with the v0.19.4 as there was a bug identified with the associated packages controller version(v0.4.2). Team is actively working on a fix and will have a follow up patch version shortly with the fix for packages workflow.
+* EKS Anywhere version `v0.19.4` introduced a regression in the Curated Packages workflow due to a bug in the associated Packages controller version (`v0.4.2`). This will be fixed in the next patch release.
 {{% /alert %}}
 
 {{% alert title="General Information" color="info" %}}
