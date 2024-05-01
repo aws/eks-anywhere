@@ -189,7 +189,7 @@ creation process are [here]({{< relref "./nutanix-prereq/#prepare-a-nutanix-envi
 ### workerNodeGroupConfigurations (required)
 This takes in a list of node groups that you can define for your workers. You may define one or more worker node groups.
 
-### workerNodeGroupConfigurations.count
+### workerNodeGroupConfigurations.count (required)
 Number of worker nodes. Optional if `autoscalingConfiguration` is used, in which case count will default to `autoscalingConfiguration.minCount`.
 
 Refers to [troubleshooting machine health check remediation not allowed]({{< relref "../../troubleshooting/troubleshooting/#machine-health-check-shows-remediation-is-not-allowed" >}}) and choose a sufficient number to allow machine health check remediation.
@@ -200,22 +200,22 @@ Refers to the Kubernetes object with Nutanix specific configuration for your nod
 ### workerNodeGroupConfigurations.name (required)
 Name of the worker node group (default: `md-0`)
 
-### workerNodeGroupConfigurations.autoscalingConfiguration.minCount
+### workerNodeGroupConfigurations.autoscalingConfiguration.minCount (optional)
 Minimum number of nodes for this node group’s autoscaling configuration.
 
-### workerNodeGroupConfigurations.autoscalingConfiguration.maxCount
+### workerNodeGroupConfigurations.autoscalingConfiguration.maxCount (optional)
 Maximum number of nodes for this node group’s autoscaling configuration.
 
-### workerNodeGroupConfigurations.kubernetesVersion
+### workerNodeGroupConfigurations.kubernetesVersion (optional)
 The Kubernetes version you want to use for this worker node group. Supported values: 1.28, 1.27, 1.26, 1.25, 1.24
 
-### externalEtcdConfiguration.count
+### externalEtcdConfiguration.count (optional)
 Number of etcd members
 
-### externalEtcdConfiguration.machineGroupRef
+### externalEtcdConfiguration.machineGroupRef (optional)
 Refers to the Kubernetes object with Nutanix specific configuration for your etcd members.  See `NutanixMachineConfig` fields below.
 
-### datacenterRef
+### datacenterRef (required)
 Refers to the Kubernetes object with Nutanix environment specific configuration. See `NutanixDatacenterConfig` fields below.
 
 ### kubernetesVersion (required)
@@ -253,22 +253,22 @@ __Example__:</br>
 
 ## NutanixMachineConfig Fields
 
-### cluster
+### cluster (required)
 Reference to the Prism Element cluster.
 
-### cluster.type
+### cluster.type (required)
 Type to identify the Prism Element cluster. (Permitted values: `name` or `uuid`)
 
-### cluster.name
+### cluster.name (required)
 Name of the Prism Element cluster.
 
-### cluster.uuid
+### cluster.uuid (required)
 UUID of the Prism Element cluster.
 
-### image
+### image (required)
 Reference to the OS image used for the system disk.
 
-### image.type
+### image.type (required)
 Type to identify the OS image. (Permitted values: `name` or `uuid`)
 
 ### image.name (`name` or `UUID` required)
@@ -279,37 +279,37 @@ The `image.name` must contain the `Cluster.Spec.KubernetesVersion` or `Cluster.S
 UUID of the image
 The name of the image associated with the `uuid` must contain the `Cluster.Spec.KubernetesVersion` or `Cluster.Spec.WorkerNodeGroupConfiguration[].KubernetesVersion` version (in case of modular upgrade). For example, if the Kubernetes version is 1.24, the name associated with `image.uuid` field must include 1.24, 1_24, 1-24 or 124.
 
-### memorySize
+### memorySize (optional)
 Size of RAM on virtual machines (Default: `4Gi`)
 
 ### osFamily (optional)
 Operating System on virtual machines. Permitted values: `ubuntu` and `redhat`. (Default: `ubuntu`)
 
-### subnet
+### subnet (required)
 Reference to the subnet to be assigned to the VMs.
 
 ### subnet.name (`name` or `UUID` required)
 Name of the subnet.
 
-### subnet.type
+### subnet.type (required)
 Type to identify the subnet. (Permitted values: `name` or `uuid`)
 
 ### subnet.uuid (`name` or `UUID` required)
 UUID of the subnet.
 
-### systemDiskSize
+### systemDiskSize (optional)
 Amount of storage assigned to the system disk. (Default: `40Gi`)
 
-### vcpuSockets
+### vcpuSockets (optional)
 Amount of vCPU sockets. (Default: `2`)
 
-### vcpusPerSocket
+### vcpusPerSocket (optional)
 Amount of vCPUs per socket. (Default: `1`)
 
 ### project	(optional)
 Reference to an existing project used for the virtual machines.
 
-### project.type
+### project.type (required)
 Type to identify the project. (Permitted values: `name` or `uuid`)
 
 ### project.name (`name` or `UUID` required)
