@@ -241,7 +241,7 @@ type RegistryMirrorConfiguration struct {
 
 // OCINamespace represents an entity in a local reigstry to group related images.
 type OCINamespace struct {
-	// Name refers to the name of the upstream registry
+	// Registry refers to the name of the upstream registry
 	Registry string `json:"registry"`
 	// Namespace refers to the name of a namespace in the local registry
 	Namespace string `json:"namespace"`
