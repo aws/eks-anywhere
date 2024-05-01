@@ -125,7 +125,7 @@ range that does not conflict with other devices.
 >**_NOTE:_** This IP should be outside the network DHCP range as it is a floating IP that gets assigned to one of
 the control plane nodes for kube-apiserver loadbalancing.
 
-### controlPlaneConfiguration.taints
+### controlPlaneConfiguration.taints (optional)
 A list of taints to apply to the control plane nodes of the cluster.
 
 Replaces the default control plane taint. For k8s versions prior to 1.24, it replaces `node-role.kubernetes.io/master`. For k8s versions 1.24+, it replaces `node-role.kubernetes.io/control-plane`. The default control plane components will tolerate the provided taints.
@@ -136,7 +136,7 @@ Modifying the taints associated with the control plane configuration will cause 
 Any pods that you run on the control plane nodes must tolerate the taints you provide in the control plane configuration.
 >
 
-### controlPlaneConfiguration.labels
+### controlPlaneConfiguration.labels (optional)
 A list of labels to apply to the control plane nodes of the cluster. This is in addition to the labels that
 EKS Anywhere will add by default.
 
@@ -147,7 +147,7 @@ the existing nodes.
 This takes in a list of node groups that you can define for your workers.
 You may define one or more worker node groups.
 
-### workerNodeGroupConfigurations.count
+### workerNodeGroupConfigurations.count (required)
 Number of worker nodes. Optional if autoscalingConfiguration is used, in which case count will default to `autoscalingConfiguration.minCount`.
 
 Refers to [troubleshooting machine health check remediation not allowed]({{< relref "../../troubleshooting/troubleshooting/#machine-health-check-shows-remediation-is-not-allowed" >}}) and choose a sufficient number to allow machine health check remediation.
@@ -158,36 +158,36 @@ Refers to the Kubernetes object with Snow specific configuration for your nodes.
 ### workerNodeGroupConfigurations.name (required)
 Name of the worker node group (default: md-0)
 
-### workerNodeGroupConfigurations.autoscalingConfiguration.minCount
+### workerNodeGroupConfigurations.autoscalingConfiguration.minCount (optional)
 Minimum number of nodes for this node group's autoscaling configuration.
 
-### workerNodeGroupConfigurations.autoscalingConfiguration.maxCount
+### workerNodeGroupConfigurations.autoscalingConfiguration.maxCount (optional)
 Maximum number of nodes for this node group's autoscaling configuration.
 
-### workerNodeGroupConfigurations.taints
+### workerNodeGroupConfigurations.taints (optional)
 A list of taints to apply to the nodes in the worker node group.
 
 Modifying the taints associated with a worker node group configuration will cause new nodes to be rolled-out, replacing the existing nodes associated with the configuration.
 
 At least one node group must not have `NoSchedule` or `NoExecute` taints applied to it.
 
-### workerNodeGroupConfigurations.labels
+### workerNodeGroupConfigurations.labels (optional)
 A list of labels to apply to the nodes in the worker node group. This is in addition to the labels that
 EKS Anywhere will add by default.
 
 Modifying the labels associated with a worker node group configuration will cause new nodes to be rolled out, replacing
 the existing nodes associated with the configuration.
 
-### workerNodeGroupConfigurations.kubernetesVersion
+### workerNodeGroupConfigurations.kubernetesVersion (optional)
 The Kubernetes version you want to use for this worker node group. Supported values: 1.28, 1.27, 1.26, 1.25, 1.24
 
-### externalEtcdConfiguration.count
+### externalEtcdConfiguration.count (optional)
 Number of etcd members.
 
-### externalEtcdConfiguration.machineGroupRef
+### externalEtcdConfiguration.machineGroupRef (optional)
 Refers to the Kubernetes object with Snow specific configuration for your etcd members. See `SnowMachineConfig Fields` below.
 
-### datacenterRef
+### datacenterRef (required)
 Refers to the Kubernetes object with Snow environment specific configuration. See `SnowDatacenterConfig Fields` below.
 
 ### kubernetesVersion (required)
@@ -195,7 +195,7 @@ The Kubernetes version you want to use for your cluster. Supported values: `1.28
 
 ## SnowDatacenterConfig Fields
 
-### identityRef
+### identityRef (required)
 Refers to the Kubernetes secret object with Snow devices credentials used to reconcile the cluster.
 
 ## SnowMachineConfig Fields
@@ -241,7 +241,7 @@ Refers to a `SnowIPPool` object which provides a range of ip addresses. When spe
 ### containersVolume (optional)
 Configuration option for customizing containers data storage volume.
 
-### containersVolume.size
+### containersVolume.size (optional)
 Size of the storage for containerd runtime in Gi.
 
 The field is optional for Ubuntu and if specified, the size must be no smaller than 8 Gi.
@@ -257,10 +257,10 @@ Type of the containers volume. Permitted values: `sbp1`, `sbg1`. (Default: `sbp1
 ### nonRootVolumes (optional)
 Configuration options for the non root storage volumes.
 
-### nonRootVolumes[0].deviceName
+### nonRootVolumes[0].deviceName (optional)
 Non root volume device name. Must be specified and cannot have prefix "/dev/sda" as it is reserved for root volume and containers volume.
 
-### nonRootVolumes[0].size
+### nonRootVolumes[0].size (optional)
 Size of the storage device for the non root volume. Must be no smaller than 8 Gi.
 
 ### nonRootVolumes[0].type (optional)
@@ -270,14 +270,14 @@ Type of the non root volume. Permitted values: `sbp1`, `sbg1`. (Default: `sbp1`)
 
 ## SnowIPPool Fields
 
-### pools[0].ipStart
+### pools[0].ipStart (optional)
 Start address of an IP range.
 
-### pools[0].ipEnd
+### pools[0].ipEnd (optional)
 End address of an IP range.
 
-### pools[0].subnet
+### pools[0].subnet (optional)
 An IP subnet for determining whether an IP is within the subnet.
 
-### pools[0].gateway
+### pools[0].gateway (optional)
 Gateway of the subnet for routing purpose.
