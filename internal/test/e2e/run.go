@@ -158,6 +158,7 @@ func RunTestsInParallel(conf ParallelRunConf) error {
 			"completedInstances", completedInstances,
 			"totalInstances", totalInstances,
 		)
+		putInstanceTestResultMetrics(r)
 	}
 
 	if failedInstances > 0 {
