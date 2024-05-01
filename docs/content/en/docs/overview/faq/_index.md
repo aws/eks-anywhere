@@ -103,4 +103,4 @@ There would need to be a change to the upstream project to support ESXi.
 
 ### Can I deploy EKS Anywhere on a single node?
 
-Yes. Single node cluster deployment is supported for Bare Metal. See [workerNodeGroupConfigurations]({{< relref "../../getting-started/baremetal/bare-spec/#workernodegroupconfigurations">}})
+Yes. Single node cluster deployment is supported for Bare Metal. See [workerNodeGroupConfigurations]({{< relref "../../getting-started/baremetal/bare-spec/#workernodegroupconfigurations-optional">}})
