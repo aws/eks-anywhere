@@ -539,7 +539,8 @@ spec:
                             in the local registry
                           type: string
                         registry:
-                          description: Name refers to the name of the upstream registry
+                          description: Registry refers to the name of the upstream
+                            registry
                           type: string
                       required:
                       - namespace
