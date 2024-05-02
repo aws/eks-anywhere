@@ -40,6 +40,7 @@ description: >
 | Bottlerocket 1.19.2 |    ✔    |     ✔      |    —    |     —      |  —   |
 |      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
 |      RHEL 9.x       |    —    |     —      |    ✔    |     ✔      |  —   |
+* [EKS Anywhere issue regarding deprecation of Bottlerocket bare metal variants](https://github.com/aws/eks-anywhere/issues/7754)
 
 ### Changed
 - Upgraded EKS-Anywhere Packages from `v0.4.2` to [`v0.4.3`](https://github.com/aws/eks-anywhere-packages/releases/tag/v0.4.3)
