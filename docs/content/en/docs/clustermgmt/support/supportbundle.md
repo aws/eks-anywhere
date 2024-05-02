@@ -62,7 +62,7 @@ export REGISTRY_USERNAME=<username>
 export REGISTRY_PASSWORD=<password>
 ```
 
-The generate support-bundle command will collect the information from your cluster
+The `generate support-bundle` command will collect the information from your cluster
 and run an analysis of the collected information.
 
 The collected information will be saved to your local disk in an archive which can be used for 
