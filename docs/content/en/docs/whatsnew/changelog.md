@@ -31,6 +31,21 @@ description: >
 * When upgrading to a new minor version, a new OS image must be created using the new image-builder CLI pertaining to that release.
 {{% /alert %}}
 
+## [v0.19.5](https://github.com/aws/eks-anywhere/releases/tag/v0.19.5)
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+|    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+| Bottlerocket 1.19.2 |    ✔    |     ✔      |    —    |     —      |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+|      RHEL 9.x       |    —    |     —      |    ✔    |     ✔      |  —   |
+
+### Changed
+- Upgraded EKS-Anywhere Packages from `v0.4.2` to [`v0.4.3`](https://github.com/aws/eks-anywhere-packages/releases/tag/v0.4.3)
+
+### Fixed
+- Fixed registry mirror with authentication for EKS Anywhere packages
 
 ## [v0.19.4](https://github.com/aws/eks-anywhere/releases/tag/v0.19.4)
 ### Supported OS version details
