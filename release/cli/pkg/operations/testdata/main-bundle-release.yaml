@@ -112,26 +112,26 @@ spec:
         arch:
         - amd64
         description: Container image for cilium image
-        imageDigest: sha256:638f2f8f998b7f94afac1a2a2e6b65595fd98fe2cfa379d59ce6d577799c0b79
+        imageDigest: sha256:0d071c308d85b33e7c69d14a70ea746d732bc2c557506b0ae2ef388e27b9c443
         name: cilium
         os: linux
-        uri: public.ecr.aws/isovalent/cilium:v1.13.13-eksa.1
+        uri: public.ecr.aws/isovalent/cilium:v1.13.15-eksa.1
       helmChart:
         description: Helm chart for cilium-chart
-        imageDigest: sha256:6c964c5320db446d25b4badd38b9b128b00c713865488cd54c53098a6c313252
+        imageDigest: sha256:3712aa78c13fddd4f96b4a451ed1082b52f5089e70949b0e592e26f076b647de
         name: cilium-chart
-        uri: public.ecr.aws/isovalent/cilium:1.13.13-eksa.1
+        uri: public.ecr.aws/isovalent/cilium:1.13.15-eksa.1
       manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.13.13-eksa.1/cilium.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.13.15-eksa.1/cilium.yaml
       operator:
         arch:
         - amd64
         description: Container image for operator-generic image
-        imageDigest: sha256:dad5ec573a36ed1c973b4007c616bdfbcad3c010a3fa361823bf03941c81030d
+        imageDigest: sha256:872add676d7bc0cc6b26f43e082a172885919e9d96646538744124b3bd4baa06
         name: operator-generic
         os: linux
-        uri: public.ecr.aws/isovalent/operator-generic:v1.13.13-eksa.1
-      version: v1.13.13-eksa.1
+        uri: public.ecr.aws/isovalent/operator-generic:v1.13.15-eksa.1
+      version: v1.13.15-eksa.1
     cloudStack:
       clusterAPIController:
         arch:
@@ -252,7 +252,7 @@ spec:
         os: linux
         sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/containerd/v1.7.15/containerd-v0.0.0-dev-build.0-linux-amd64.tar.gz
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/containerd/v1.7.16/containerd-v0.0.0-dev-build.0-linux-amd64.tar.gz
       crictl:
         arch:
         - amd64
@@ -306,7 +306,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cli-tools
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cli-tools:v0.19.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cli-tools:v0.19.5-eks-a-v0.0.0-dev-build.1
       clusterController:
         arch:
         - amd64
@@ -315,9 +315,9 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cluster-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.19.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.19.5-eks-a-v0.0.0-dev-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-anywhere/manifests/cluster-controller/v0.19.3/eksa-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-anywhere/manifests/cluster-controller/v0.19.5/eksa-components.yaml
       diagnosticCollector:
         arch:
         - amd64
@@ -326,7 +326,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-diagnostic-collector
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-diagnostic-collector:v0.19.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-diagnostic-collector:v0.19.5-eks-a-v0.0.0-dev-build.1
       version: v0.0.0-dev+build.0+abcdef1
     etcdadmBootstrap:
       components:
@@ -890,26 +890,26 @@ spec:
         arch:
         - amd64
         description: Container image for cilium image
-        imageDigest: sha256:638f2f8f998b7f94afac1a2a2e6b65595fd98fe2cfa379d59ce6d577799c0b79
+        imageDigest: sha256:0d071c308d85b33e7c69d14a70ea746d732bc2c557506b0ae2ef388e27b9c443
         name: cilium
         os: linux
-        uri: public.ecr.aws/isovalent/cilium:v1.13.13-eksa.1
+        uri: public.ecr.aws/isovalent/cilium:v1.13.15-eksa.1
       helmChart:
         description: Helm chart for cilium-chart
-        imageDigest: sha256:6c964c5320db446d25b4badd38b9b128b00c713865488cd54c53098a6c313252
+        imageDigest: sha256:3712aa78c13fddd4f96b4a451ed1082b52f5089e70949b0e592e26f076b647de
         name: cilium-chart
-        uri: public.ecr.aws/isovalent/cilium:1.13.13-eksa.1
+        uri: public.ecr.aws/isovalent/cilium:1.13.15-eksa.1
       manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.13.13-eksa.1/cilium.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.13.15-eksa.1/cilium.yaml
       operator:
         arch:
         - amd64
         description: Container image for operator-generic image
-        imageDigest: sha256:dad5ec573a36ed1c973b4007c616bdfbcad3c010a3fa361823bf03941c81030d
+        imageDigest: sha256:872add676d7bc0cc6b26f43e082a172885919e9d96646538744124b3bd4baa06
         name: operator-generic
         os: linux
-        uri: public.ecr.aws/isovalent/operator-generic:v1.13.13-eksa.1
-      version: v1.13.13-eksa.1
+        uri: public.ecr.aws/isovalent/operator-generic:v1.13.15-eksa.1
+      version: v1.13.15-eksa.1
     cloudStack:
       clusterAPIController:
         arch:
@@ -1030,7 +1030,7 @@ spec:
         os: linux
         sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/containerd/v1.7.15/containerd-v0.0.0-dev-build.0-linux-amd64.tar.gz
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/containerd/v1.7.16/containerd-v0.0.0-dev-build.0-linux-amd64.tar.gz
       crictl:
         arch:
         - amd64
@@ -1084,7 +1084,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cli-tools
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cli-tools:v0.19.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cli-tools:v0.19.5-eks-a-v0.0.0-dev-build.1
       clusterController:
         arch:
         - amd64
@@ -1093,9 +1093,9 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cluster-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.19.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.19.5-eks-a-v0.0.0-dev-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-anywhere/manifests/cluster-controller/v0.19.3/eksa-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-anywhere/manifests/cluster-controller/v0.19.5/eksa-components.yaml
       diagnosticCollector:
         arch:
         - amd64
@@ -1104,7 +1104,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-diagnostic-collector
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-diagnostic-collector:v0.19.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-diagnostic-collector:v0.19.5-eks-a-v0.0.0-dev-build.1
       version: v0.0.0-dev+build.0+abcdef1
     etcdadmBootstrap:
       components:
@@ -1668,26 +1668,26 @@ spec:
         arch:
         - amd64
         description: Container image for cilium image
-        imageDigest: sha256:638f2f8f998b7f94afac1a2a2e6b65595fd98fe2cfa379d59ce6d577799c0b79
+        imageDigest: sha256:0d071c308d85b33e7c69d14a70ea746d732bc2c557506b0ae2ef388e27b9c443
         name: cilium
         os: linux
-        uri: public.ecr.aws/isovalent/cilium:v1.13.13-eksa.1
+        uri: public.ecr.aws/isovalent/cilium:v1.13.15-eksa.1
       helmChart:
         description: Helm chart for cilium-chart
-        imageDigest: sha256:6c964c5320db446d25b4badd38b9b128b00c713865488cd54c53098a6c313252
+        imageDigest: sha256:3712aa78c13fddd4f96b4a451ed1082b52f5089e70949b0e592e26f076b647de
         name: cilium-chart
-        uri: public.ecr.aws/isovalent/cilium:1.13.13-eksa.1
+        uri: public.ecr.aws/isovalent/cilium:1.13.15-eksa.1
       manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.13.13-eksa.1/cilium.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.13.15-eksa.1/cilium.yaml
       operator:
         arch:
         - amd64
         description: Container image for operator-generic image
-        imageDigest: sha256:dad5ec573a36ed1c973b4007c616bdfbcad3c010a3fa361823bf03941c81030d
+        imageDigest: sha256:872add676d7bc0cc6b26f43e082a172885919e9d96646538744124b3bd4baa06
         name: operator-generic
         os: linux
-        uri: public.ecr.aws/isovalent/operator-generic:v1.13.13-eksa.1
-      version: v1.13.13-eksa.1
+        uri: public.ecr.aws/isovalent/operator-generic:v1.13.15-eksa.1
+      version: v1.13.15-eksa.1
     cloudStack:
       clusterAPIController:
         arch:
@@ -1808,7 +1808,7 @@ spec:
         os: linux
         sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/containerd/v1.7.15/containerd-v0.0.0-dev-build.0-linux-amd64.tar.gz
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/containerd/v1.7.16/containerd-v0.0.0-dev-build.0-linux-amd64.tar.gz
       crictl:
         arch:
         - amd64
@@ -1862,7 +1862,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cli-tools
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cli-tools:v0.19.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cli-tools:v0.19.5-eks-a-v0.0.0-dev-build.1
       clusterController:
         arch:
         - amd64
@@ -1871,9 +1871,9 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cluster-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.19.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.19.5-eks-a-v0.0.0-dev-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-anywhere/manifests/cluster-controller/v0.19.3/eksa-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-anywhere/manifests/cluster-controller/v0.19.5/eksa-components.yaml
       diagnosticCollector:
         arch:
         - amd64
@@ -1882,7 +1882,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-diagnostic-collector
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-diagnostic-collector:v0.19.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-diagnostic-collector:v0.19.5-eks-a-v0.0.0-dev-build.1
       version: v0.0.0-dev+build.0+abcdef1
     etcdadmBootstrap:
       components:
@@ -2446,26 +2446,26 @@ spec:
         arch:
         - amd64
         description: Container image for cilium image
-        imageDigest: sha256:638f2f8f998b7f94afac1a2a2e6b65595fd98fe2cfa379d59ce6d577799c0b79
+        imageDigest: sha256:0d071c308d85b33e7c69d14a70ea746d732bc2c557506b0ae2ef388e27b9c443
         name: cilium
         os: linux
-        uri: public.ecr.aws/isovalent/cilium:v1.13.13-eksa.1
+        uri: public.ecr.aws/isovalent/cilium:v1.13.15-eksa.1
       helmChart:
         description: Helm chart for cilium-chart
-        imageDigest: sha256:6c964c5320db446d25b4badd38b9b128b00c713865488cd54c53098a6c313252
+        imageDigest: sha256:3712aa78c13fddd4f96b4a451ed1082b52f5089e70949b0e592e26f076b647de
         name: cilium-chart
-        uri: public.ecr.aws/isovalent/cilium:1.13.13-eksa.1
+        uri: public.ecr.aws/isovalent/cilium:1.13.15-eksa.1
       manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.13.13-eksa.1/cilium.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.13.15-eksa.1/cilium.yaml
       operator:
         arch:
         - amd64
         description: Container image for operator-generic image
-        imageDigest: sha256:dad5ec573a36ed1c973b4007c616bdfbcad3c010a3fa361823bf03941c81030d
+        imageDigest: sha256:872add676d7bc0cc6b26f43e082a172885919e9d96646538744124b3bd4baa06
         name: operator-generic
         os: linux
-        uri: public.ecr.aws/isovalent/operator-generic:v1.13.13-eksa.1
-      version: v1.13.13-eksa.1
+        uri: public.ecr.aws/isovalent/operator-generic:v1.13.15-eksa.1
+      version: v1.13.15-eksa.1
     cloudStack:
       clusterAPIController:
         arch:
@@ -2586,7 +2586,7 @@ spec:
         os: linux
         sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/containerd/v1.7.15/containerd-v0.0.0-dev-build.0-linux-amd64.tar.gz
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/containerd/v1.7.16/containerd-v0.0.0-dev-build.0-linux-amd64.tar.gz
       crictl:
         arch:
         - amd64
@@ -2640,7 +2640,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cli-tools
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cli-tools:v0.19.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cli-tools:v0.19.5-eks-a-v0.0.0-dev-build.1
       clusterController:
         arch:
         - amd64
@@ -2649,9 +2649,9 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cluster-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.19.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.19.5-eks-a-v0.0.0-dev-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-anywhere/manifests/cluster-controller/v0.19.3/eksa-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-anywhere/manifests/cluster-controller/v0.19.5/eksa-components.yaml
       diagnosticCollector:
         arch:
         - amd64
@@ -2660,7 +2660,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-diagnostic-collector
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-diagnostic-collector:v0.19.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-diagnostic-collector:v0.19.5-eks-a-v0.0.0-dev-build.1
       version: v0.0.0-dev+build.0+abcdef1
     etcdadmBootstrap:
       components:
@@ -3224,26 +3224,26 @@ spec:
         arch:
         - amd64
         description: Container image for cilium image
-        imageDigest: sha256:638f2f8f998b7f94afac1a2a2e6b65595fd98fe2cfa379d59ce6d577799c0b79
+        imageDigest: sha256:0d071c308d85b33e7c69d14a70ea746d732bc2c557506b0ae2ef388e27b9c443
         name: cilium
         os: linux
-        uri: public.ecr.aws/isovalent/cilium:v1.13.13-eksa.1
+        uri: public.ecr.aws/isovalent/cilium:v1.13.15-eksa.1
       helmChart:
         description: Helm chart for cilium-chart
-        imageDigest: sha256:6c964c5320db446d25b4badd38b9b128b00c713865488cd54c53098a6c313252
+        imageDigest: sha256:3712aa78c13fddd4f96b4a451ed1082b52f5089e70949b0e592e26f076b647de
         name: cilium-chart
-        uri: public.ecr.aws/isovalent/cilium:1.13.13-eksa.1
+        uri: public.ecr.aws/isovalent/cilium:1.13.15-eksa.1
       manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.13.13-eksa.1/cilium.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.13.15-eksa.1/cilium.yaml
       operator:
         arch:
         - amd64
         description: Container image for operator-generic image
-        imageDigest: sha256:dad5ec573a36ed1c973b4007c616bdfbcad3c010a3fa361823bf03941c81030d
+        imageDigest: sha256:872add676d7bc0cc6b26f43e082a172885919e9d96646538744124b3bd4baa06
         name: operator-generic
         os: linux
-        uri: public.ecr.aws/isovalent/operator-generic:v1.13.13-eksa.1
-      version: v1.13.13-eksa.1
+        uri: public.ecr.aws/isovalent/operator-generic:v1.13.15-eksa.1
+      version: v1.13.15-eksa.1
     cloudStack:
       clusterAPIController:
         arch:
@@ -3364,7 +3364,7 @@ spec:
         os: linux
         sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/containerd/v1.7.15/containerd-v0.0.0-dev-build.0-linux-amd64.tar.gz
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/containerd/v1.7.16/containerd-v0.0.0-dev-build.0-linux-amd64.tar.gz
       crictl:
         arch:
         - amd64
@@ -3418,7 +3418,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cli-tools
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cli-tools:v0.19.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cli-tools:v0.19.5-eks-a-v0.0.0-dev-build.1
       clusterController:
         arch:
         - amd64
@@ -3427,9 +3427,9 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cluster-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.19.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.19.5-eks-a-v0.0.0-dev-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-anywhere/manifests/cluster-controller/v0.19.3/eksa-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-anywhere/manifests/cluster-controller/v0.19.5/eksa-components.yaml
       diagnosticCollector:
         arch:
         - amd64
@@ -3438,7 +3438,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-diagnostic-collector
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-diagnostic-collector:v0.19.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-diagnostic-collector:v0.19.5-eks-a-v0.0.0-dev-build.1
       version: v0.0.0-dev+build.0+abcdef1
     etcdadmBootstrap:
       components:
@@ -4002,26 +4002,26 @@ spec:
         arch:
         - amd64
         description: Container image for cilium image
-        imageDigest: sha256:638f2f8f998b7f94afac1a2a2e6b65595fd98fe2cfa379d59ce6d577799c0b79
+        imageDigest: sha256:0d071c308d85b33e7c69d14a70ea746d732bc2c557506b0ae2ef388e27b9c443
         name: cilium
         os: linux
-        uri: public.ecr.aws/isovalent/cilium:v1.13.13-eksa.1
+        uri: public.ecr.aws/isovalent/cilium:v1.13.15-eksa.1
       helmChart:
         description: Helm chart for cilium-chart
-        imageDigest: sha256:6c964c5320db446d25b4badd38b9b128b00c713865488cd54c53098a6c313252
+        imageDigest: sha256:3712aa78c13fddd4f96b4a451ed1082b52f5089e70949b0e592e26f076b647de
         name: cilium-chart
-        uri: public.ecr.aws/isovalent/cilium:1.13.13-eksa.1
+        uri: public.ecr.aws/isovalent/cilium:1.13.15-eksa.1
       manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.13.13-eksa.1/cilium.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.13.15-eksa.1/cilium.yaml
       operator:
         arch:
         - amd64
         description: Container image for operator-generic image
-        imageDigest: sha256:dad5ec573a36ed1c973b4007c616bdfbcad3c010a3fa361823bf03941c81030d
+        imageDigest: sha256:872add676d7bc0cc6b26f43e082a172885919e9d96646538744124b3bd4baa06
         name: operator-generic
         os: linux
-        uri: public.ecr.aws/isovalent/operator-generic:v1.13.13-eksa.1
-      version: v1.13.13-eksa.1
+        uri: public.ecr.aws/isovalent/operator-generic:v1.13.15-eksa.1
+      version: v1.13.15-eksa.1
     cloudStack:
       clusterAPIController:
         arch:
@@ -4142,7 +4142,7 @@ spec:
         os: linux
         sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/containerd/v1.7.15/containerd-v0.0.0-dev-build.0-linux-amd64.tar.gz
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/containerd/v1.7.16/containerd-v0.0.0-dev-build.0-linux-amd64.tar.gz
       crictl:
         arch:
         - amd64
@@ -4196,7 +4196,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cli-tools
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cli-tools:v0.19.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cli-tools:v0.19.5-eks-a-v0.0.0-dev-build.1
       clusterController:
         arch:
         - amd64
@@ -4205,9 +4205,9 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cluster-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.19.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.19.5-eks-a-v0.0.0-dev-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-anywhere/manifests/cluster-controller/v0.19.3/eksa-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-anywhere/manifests/cluster-controller/v0.19.5/eksa-components.yaml
       diagnosticCollector:
         arch:
         - amd64
@@ -4216,7 +4216,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-diagnostic-collector
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-diagnostic-collector:v0.19.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-diagnostic-collector:v0.19.5-eks-a-v0.0.0-dev-build.1
       version: v0.0.0-dev+build.0+abcdef1
     etcdadmBootstrap:
       components:
