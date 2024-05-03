@@ -2,6 +2,7 @@ package e2e
 
 import (
 	"fmt"
+	"os"
 	"regexp"
 	"strings"
 	"time"
@@ -14,6 +15,8 @@ import (
 )
 
 var svc *cloudwatch.CloudWatch
+
+const integrationTestCloudWatchNamespaceOverrideEnvVar = "INTEGRATION_TEST_CLOUDWATCH_NAMESPACE_OVERRIDE"
 
 func init() {
 	if s, err := session.NewSession(); err == nil {
@@ -76,12 +79,18 @@ func putMetric(data *cloudwatch.MetricDatum, metricName string, value int) {
 	data.MetricName = aws.String(metricName)
 	data.Value = aws.Float64(float64(value))
 
+	namespace := "EksaE2ETests"
+	namespaceOverride := os.Getenv(integrationTestCloudWatchNamespaceOverrideEnvVar)
+	if namespaceOverride != "" {
+		namespace = namespaceOverride
+	}
+
 	if _, err := svc.PutMetricData(&cloudwatch.PutMetricDataInput{
-		Namespace:  aws.String("EksaE2ETests"),
+		Namespace:  aws.String(namespace),
 		MetricData: []*cloudwatch.MetricDatum{data},
 	}); err != nil {
-		logger.Error(err, "Cannot put metrics to cloudwatch")
+		logger.Error(err, "Cannot put metrics to cloudwatch", "metricName", metricName, "value", value)
 	} else {
-		logger.Info("Instance test result metrics published")
+		logger.Info("Instance test result metrics published", "metricName", metricName, "value", value)
 	}
 }
