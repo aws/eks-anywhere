@@ -1649,3 +1649,59 @@ func TestTinkerbellKubernetes128UpgradeManagementComponents(t *testing.T) {
 	test.RunEKSA([]string{"upgrade", "management-components", "-f", test.ClusterConfigLocation, "-v", "99"})
 	test.DeleteCluster()
 }
+
+// TestTinkerbellKubernetes125UbuntuTo129MultipleUpgrade creates a single 1.25 cluster and upgrades it
+// all the way until 1.29. This tests each K8s version upgrade in a single test and saves up
+// hardware which would otherwise be needed for each test as part of both create and upgrade.
+func TestTinkerbellKubernetes125UbuntuTo129MultipleUpgrade(t *testing.T) {
+	var kube126clusterOpts []framework.ClusterE2ETestOpt
+	var kube127clusterOpts []framework.ClusterE2ETestOpt
+	var kube128clusterOpts []framework.ClusterE2ETestOpt
+	var kube129clusterOpts []framework.ClusterE2ETestOpt
+	provider := framework.NewTinkerbell(t, framework.WithUbuntu125Tinkerbell())
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
+		framework.WithControlPlaneHardware(2),
+		framework.WithWorkerHardware(2),
+	)
+
+	kube126clusterOpts = append(
+		kube126clusterOpts,
+		framework.WithClusterUpgrade(
+			api.WithKubernetesVersion(v1alpha1.Kube126),
+		),
+		provider.WithProviderUpgrade(framework.Ubuntu126Image()),
+	)
+	kube127clusterOpts = append(
+		kube127clusterOpts,
+		framework.WithClusterUpgrade(
+			api.WithKubernetesVersion(v1alpha1.Kube127),
+		),
+		provider.WithProviderUpgrade(framework.Ubuntu127Image()),
+	)
+	kube128clusterOpts = append(
+		kube128clusterOpts,
+		framework.WithClusterUpgrade(
+			api.WithKubernetesVersion(v1alpha1.Kube128),
+		),
+		provider.WithProviderUpgrade(framework.Ubuntu128Image()),
+	)
+	kube129clusterOpts = append(
+		kube129clusterOpts,
+		framework.WithClusterUpgrade(
+			api.WithKubernetesVersion(v1alpha1.Kube129),
+		),
+		provider.WithProviderUpgrade(framework.Ubuntu129Image()),
+	)
+	runMultipleUpgradesFlowForBareMetal(
+		test,
+		kube126clusterOpts,
+		kube127clusterOpts,
+		kube128clusterOpts,
+		kube129clusterOpts,
+	)
+}
