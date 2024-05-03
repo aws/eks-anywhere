@@ -1,6 +1,6 @@
 module github.com/aws/eks-anywhere
 
-go 1.20
+go 1.21.0
 
 require (
 	github.com/Masterminds/sprig v2.22.0+incompatible
