@@ -1667,6 +1667,8 @@ func TestTinkerbellKubernetes125UbuntuTo129MultipleUpgrade(t *testing.T) {
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 		framework.WithControlPlaneHardware(2),
 		framework.WithWorkerHardware(2),
+	).WithClusterConfig(
+		provider.WithKubeVersionAndOS(v1alpha1.Kube125, framework.Ubuntu2004, nil),
 	)
 
 	kube126clusterOpts = append(
