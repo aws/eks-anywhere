@@ -171,8 +171,19 @@ ${IMAGE_ID} tmp-cert-renew \
 
 You can similarly use the above steps to rotate a single certificate instead of all certificates.
 
-### 
+### Kubelet
+If `kubeadm certs check-expiration` is happy, but kubectl commands against the cluster fail with `x509: certificate has expired or is not yet valid`, then it's likely that the kubelet certs did not rotate. To rotate them, SSH back into one of the control plane nodes and do the following.
 
+```
+# backup certs
+cd /var/lib/kubelet
+cp -r pki pki.bak
+rm pki/*
+
+systemctl restart kubelet
+```
+
+### Post Renewal
 Once all the certificates are valid, verify the kcp object on the affected cluster(s) is not paused. If it is paused, then this usually indicates an issue with the etcd cluster. Check the logs for pods under the `etcdadm-controller-system` namespace for any errors. 
 If the logs indicate an issue with the etcd endpoints, then you need to update `spec.clusterConfiguration.etcd.endpoints` in the cluster's `kubeadmconfig` resource:
 ```
