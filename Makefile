@@ -146,8 +146,8 @@ CONTROLLER_MANIFEST_OUTPUT_DIR=$(OUTPUT_DIR)/manifests/cluster-controller
 BUILD_TAGS :=
 BUILD_FLAGS?=
 
-GO_ARCH:=$(shell go env GOARCH)
-GO_OS:=$(shell go env GOOS)
+GO_ARCH:=$(shell $(GO) env GOARCH)
+GO_OS:=$(shell $(GO) env GOOS)
 
 BINARY_DEPS_DIR = $(OUTPUT_DIR)/dependencies
 CLUSTER_CONTROLLER_PLATFORMS ?= linux-amd64 linux-arm64
@@ -286,13 +286,14 @@ $(KUBEBUILDER): $(TOOLS_BIN_DIR)
 	chmod +x $(KUBEBUILDER)
 
 $(CONTROLLER_GEN): $(TOOLS_BIN_DIR)
-	GOBIN=$(TOOLS_BIN_DIR_ABS) go install sigs.k8s.io/controller-tools/cmd/controller-gen@v0.6.1
+	GOBIN=$(TOOLS_BIN_DIR_ABS) $(GO) install sigs.k8s.io/controller-tools/cmd/controller-gen@v0.6.1
 
 $(GO_VULNCHECK): $(TOOLS_BIN_DIR)
-	GOBIN=$(TOOLS_BIN_DIR_ABS) go install golang.org/x/vuln/cmd/govulncheck@latest
+	GOBIN=$(TOOLS_BIN_DIR_ABS) $(GO) install golang.org/x/vuln/cmd/govulncheck@latest
 
 $(SETUP_ENVTEST): $(TOOLS_BIN_DIR)
-	cd $(TOOLS_BIN_DIR); $(GO) build -tags=tools -o $(SETUP_ENVTEST_BIN) sigs.k8s.io/controller-runtime/tools/setup-envtest
+	GOBIN=$(TOOLS_BIN_DIR_ABS) $(GO) install sigs.k8s.io/controller-runtime/tools/setup-envtest@v0.0.0-20240215124517-56159419231e
+
 
 envtest-setup: $(SETUP_ENVTEST)
 	$(eval KUBEBUILDER_ASSETS ?= $(shell $(SETUP_ENVTEST) use --use-env -p path --arch $(GO_ARCH) $(KUBEBUILDER_ENVTEST_KUBERNETES_VERSION)))
@@ -321,7 +322,7 @@ $(TOOLS_BIN_DIR)/gci:
 
 .PHONY: run-gci
 run-gci: $(TOOLS_BIN_DIR)/gci ## Run gci against code.
-	$(LS_FILES_CMD) | xargs $(TOOLS_BIN_DIR)/gci write --skip-generated -s standard,default -s "prefix($(shell go list -m))"
+	$(LS_FILES_CMD) | xargs $(TOOLS_BIN_DIR)/gci write --skip-generated -s standard,default -s "prefix($(shell $(GO) list -m))"
 
 .PHONY: build-cross-platform
 build-cross-platform: eks-a-cross-platform
