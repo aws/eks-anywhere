@@ -17,7 +17,7 @@ The following additional optional configuration can also be included:
 * [GitOps]({{< relref "../optional/gitops.md" >}})
 * [Proxy]({{< relref "../optional/proxy.md" >}})
 * [Registry Mirror]({{< relref "../optional/registrymirror.md" >}})
-* [Machine Health Check Timeouts]({{< relref "../optional/healthchecks.md" >}})
+* [Machine Health Checks]({{< relref "../optional/healthchecks.md" >}})
 * [API Server Extra Args]({{< relref "../optional/api-server-extra-args.md" >}})
 
 ```yaml
