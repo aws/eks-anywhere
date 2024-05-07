@@ -248,13 +248,13 @@ kubectl logs <podname> -n <namespace> --kubeconfig=<kubeconfig>
 ....
 ```
 
-## Kubectl commands return dial tcp: i/o timeout
+### Kubectl commands return dial tcp: i/o timeout
 
-If you are unable to run kubectl commands on a cluster due to timeout errors, then check if the server endpoint in the kubeconfig matches the control plane's endpoint in the infrastructure provider. If the endpoints do not match, you can ssh into the control plane node to gather logs instead. The kubelet logs can be obtained by running `journalctl -u kubelet.service --no-pager`. It may also be helpful to look at kube-vip logs, which can be found in the `/var/log/pods/kube-system_kube-vip-*` directory. 
+If you are unable to run kubectl commands on a cluster due to timeout errors, then it is possible that the server endpoint in the kubeconfig does not match the control plane's endpoint in the infrastructure provider due to kube-vip failing to allocate a virtual IP address to the cluster. If the endpoints do not match, you can ssh into the control plane node to gather logs instead. The kubelet logs can be obtained by running `journalctl -u kubelet.service --no-pager`. It may also be helpful to look at kube-vip logs, which can be found in the `/var/log/pods/kube-system_kube-vip-*` directory. 
 
-# Verify Cluster Certificates are valid
+#### Verify Cluster Certificates are valid
 
-If kubectl commands are not working, then it may also be helpful to verify that certificates on the etcd and control plane nodes have not expired. 
+If kubectl commands are not working due to timeout issues, then it may also be helpful to verify that certificates on the etcd and control plane nodes have not expired. 
 
 SSH to one of your etcd nodes and view the etcd container logs in `/var/log/containers`. 
 
@@ -281,6 +281,8 @@ ${IMAGE_ID} tmp-certs-check \
 /opt/bin/kubeadm certs check-expiration
 {{< /tab >}}
 {{< /tabpane >}}
+
+EKS-Anywhere typically renews certificates when upgrading a cluster. However, if a cluster has not been upgraded for over a year, then it is necessary to manually renew these certificates. Please see [Certificate rotation]({{< relref "../clustermgmt/security/manually-renew-certs.md" >}}) to manually rotate expired certificates.
 
 ### Bootstrap cluster fails to come up
 

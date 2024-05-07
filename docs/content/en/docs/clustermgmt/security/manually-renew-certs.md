@@ -94,7 +94,7 @@ ctr -n k8s.io t exec -t --exec-id etcd ${ETCD_CONTAINER_ID} etcdctl \
 {{< /tab >}}
 {{< /tabpane >}}
 
-- If the above command fails due to multiple etcd containers existing, then navigate to `/var/log/containers/etcd` and confirm which container was running during the issue timeframe (this container would be the 'stale' container). Delete this older etcd once you have renewed the certs and the new etcd container will be able to enter a functioning state. If you don’t do this, the two etcd  containers will stay indefinitely and the etcd will not recover.
+- If the above command fails due to multiple etcd containers existing, then navigate to `/var/log/containers/etcd` and confirm which container was running during the issue timeframe (this container would be the 'stale' container). Delete this older etcd once you have renewed the certs and the new etcd container will be able to enter a functioning state. If you don’t do this, the two etcd containers will stay indefinitely and the etcd will not recover.
 
 3. Repeat the above steps for all etcd nodes.
 
@@ -185,7 +185,8 @@ systemctl restart kubelet
 
 ### Post Renewal
 Once all the certificates are valid, verify the kcp object on the affected cluster(s) is not paused. If it is paused, then this usually indicates an issue with the etcd cluster. Check the logs for pods under the `etcdadm-controller-system` namespace for any errors. 
-If the logs indicate an issue with the etcd endpoints, then you need to update `spec.clusterConfiguration.etcd.endpoints` in the cluster's `kubeadmconfig` resource:
+If the logs indicate an issue with the etcd endpoints, then you need to update `spec.clusterConfiguration.etcd.endpoints` in the cluster's `kubeadmconfig` resource: `kubectl edit kcp -n eksa-system`
+
 ```
 etcd:
    external:
