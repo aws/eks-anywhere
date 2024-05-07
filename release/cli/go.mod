@@ -19,7 +19,7 @@ require (
 	helm.sh/helm/v3 v3.14.4
 	k8s.io/apimachinery v0.29.4
 	k8s.io/helm v2.17.0+incompatible
-	sigs.k8s.io/controller-runtime v0.16.5
+	sigs.k8s.io/controller-runtime v0.16.6
 	sigs.k8s.io/yaml v1.4.0
 )
 
