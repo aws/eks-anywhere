@@ -41,7 +41,7 @@ const (
 	ClusterFinalizerName = "clusters.anywhere.eks.amazonaws.com/finalizer"
 )
 
-// ClusterReconciler reconciles a Cluster object.
+// ClusterReconciler reconciles a Cluster object. Test change.
 type ClusterReconciler struct {
 	client                     client.Client
 	providerReconcilerRegistry ProviderClusterReconcilerRegistry
