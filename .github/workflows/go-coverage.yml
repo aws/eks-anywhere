@@ -22,7 +22,7 @@ jobs:
       - name: Run go test with coverage
         run: COVER_PROFILE=coverage.txt make coverage-unit-test
       - name: Codecov upload
-        uses: codecov/codecov-action@v4.3.0
+        uses: codecov/codecov-action@v4.3.1
         with:
           files: ./coverage.txt
           token: ${{ secrets.CODECOV_TOKEN }}
