@@ -61,7 +61,7 @@ func nutanixMachineConfig() *v1alpha1.NutanixMachineConfig {
 func TestValidateCreate_Valid(t *testing.T) {
 	g := NewWithT(t)
 	config := nutanixMachineConfig()
-	g.Expect(config.ValidateCreate()).To(Succeed())
+	g.Expect(config.ValidateCreate()).Error().To(Succeed())
 }
 
 func TestValidateCreate_Invalid(t *testing.T) {
@@ -185,7 +185,7 @@ func TestValidateCreate_Invalid(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			config := nutanixMachineConfig()
 			tt.fn(config)
-			err := config.ValidateCreate()
+			_, err := config.ValidateCreate()
 			g.Expect(err).To(HaveOccurred(), "expected error for %s", tt.name)
 		})
 	}
@@ -199,7 +199,7 @@ func TestNutanixMachineConfigWebhooksValidateUpdateReconcilePaused(t *testing.T)
 	oldConfig.Annotations = map[string]string{
 		"anywhere.eks.amazonaws.com/paused": "true",
 	}
-	g.Expect(newConfig.ValidateUpdate(oldConfig)).To(Succeed())
+	g.Expect(newConfig.ValidateUpdate(oldConfig)).Error().To(Succeed())
 }
 
 func TestValidateUpdate(t *testing.T) {
@@ -207,15 +207,15 @@ func TestValidateUpdate(t *testing.T) {
 	oldConfig := nutanixMachineConfig()
 	newConfig := nutanixMachineConfig()
 	newConfig.Spec.VCPUSockets = 8
-	g.Expect(newConfig.ValidateUpdate(oldConfig)).To(Succeed())
+	g.Expect(newConfig.ValidateUpdate(oldConfig)).Error().To(Succeed())
 
 	oldConfig = nutanixMachineConfig()
 	oldConfig.SetManagedBy("mgmt-cluster")
-	g.Expect(newConfig.ValidateUpdate(oldConfig)).To(Succeed())
+	g.Expect(newConfig.ValidateUpdate(oldConfig)).Error().To(Succeed())
 
 	oldConfig = nutanixMachineConfig()
 	oldConfig.SetControlPlane()
-	g.Expect(newConfig.ValidateUpdate(oldConfig)).To(HaveOccurred())
+	g.Expect(newConfig.ValidateUpdate(oldConfig)).Error().To(HaveOccurred())
 }
 
 func TestValidateUpdate_Invalid(t *testing.T) {
@@ -305,7 +305,7 @@ func TestValidateUpdate_Invalid(t *testing.T) {
 			oldConfig := nutanixMachineConfig()
 			newConfig := nutanixMachineConfig()
 			tt.fn(newConfig, oldConfig)
-			err := newConfig.ValidateUpdate(oldConfig)
+			_, err := newConfig.ValidateUpdate(oldConfig)
 			g.Expect(err).To(HaveOccurred(), "expected error for %s", tt.name)
 		})
 	}
@@ -315,12 +315,12 @@ func TestValidateUpdate_OldObjectNotMachineConfig(t *testing.T) {
 	g := NewWithT(t)
 	oldConfig := nutanixDatacenterConfig()
 	newConfig := nutanixMachineConfig()
-	err := newConfig.ValidateUpdate(oldConfig)
+	_, err := newConfig.ValidateUpdate(oldConfig)
 	g.Expect(err).To(HaveOccurred())
 }
 
 func TestNutanixMachineConfigWebhooksValidateDelete(t *testing.T) {
 	g := NewWithT(t)
 	config := nutanixMachineConfig()
-	g.Expect(config.ValidateDelete()).To(Succeed())
+	g.Expect(config.ValidateDelete()).Error().To(Succeed())
 }

@@ -21,7 +21,7 @@ func TestCloudStackMachineConfigValidateCreateValidDiskOffering(t *testing.T) {
 		Label:      "data_disk",
 	}
 	g := NewWithT(t)
-	g.Expect(c.ValidateCreate()).To(Succeed())
+	g.Expect(c.ValidateCreate()).Error().To(Succeed())
 }
 
 func TestCloudStackMachineConfigValidateCreateInvalidDiskOfferingBadMountPath(t *testing.T) {
@@ -36,7 +36,7 @@ func TestCloudStackMachineConfigValidateCreateInvalidDiskOfferingBadMountPath(t 
 		Label:      "data_disk",
 	}
 	g := NewWithT(t)
-	g.Expect(c.ValidateCreate()).NotTo(Succeed())
+	g.Expect(c.ValidateCreate()).Error().NotTo(Succeed())
 }
 
 func TestCloudStackMachineConfigValidateCreateInvalidDiskOfferingEmptyDevice(t *testing.T) {
@@ -51,7 +51,7 @@ func TestCloudStackMachineConfigValidateCreateInvalidDiskOfferingEmptyDevice(t *
 		Label:      "data_disk",
 	}
 	g := NewWithT(t)
-	g.Expect(c.ValidateCreate()).NotTo(Succeed())
+	g.Expect(c.ValidateCreate()).Error().NotTo(Succeed())
 }
 
 func TestCloudStackMachineConfigValidateCreateInvalidDiskOfferingEmptyFilesystem(t *testing.T) {
@@ -66,7 +66,7 @@ func TestCloudStackMachineConfigValidateCreateInvalidDiskOfferingEmptyFilesystem
 		Label:      "data_disk",
 	}
 	g := NewWithT(t)
-	g.Expect(c.ValidateCreate()).NotTo(Succeed())
+	g.Expect(c.ValidateCreate()).Error().NotTo(Succeed())
 }
 
 func TestCloudStackMachineConfigValidateCreateInvalidDiskOfferingEmptyLabel(t *testing.T) {
@@ -81,7 +81,7 @@ func TestCloudStackMachineConfigValidateCreateInvalidDiskOfferingEmptyLabel(t *t
 		Label:      "",
 	}
 	g := NewWithT(t)
-	g.Expect(c.ValidateCreate()).NotTo(Succeed())
+	g.Expect(c.ValidateCreate()).Error().NotTo(Succeed())
 }
 
 func TestCloudStackMachineConfigValidateCreateValidSymlinks(t *testing.T) {
@@ -90,7 +90,7 @@ func TestCloudStackMachineConfigValidateCreateValidSymlinks(t *testing.T) {
 		"/var/lib.a": "/_data/var-redirect/log.d",
 	}
 	g := NewWithT(t)
-	g.Expect(c.ValidateCreate()).To(Succeed())
+	g.Expect(c.ValidateCreate()).Error().To(Succeed())
 }
 
 func TestCloudStackMachineConfigValidateCreateInvalidSymlinksColon(t *testing.T) {
@@ -99,7 +99,7 @@ func TestCloudStackMachineConfigValidateCreateInvalidSymlinksColon(t *testing.T)
 		"/var/lib:a": "/_data/var-redirect/log:d",
 	}
 	g := NewWithT(t)
-	g.Expect(c.ValidateCreate()).NotTo(Succeed())
+	g.Expect(c.ValidateCreate()).Error().NotTo(Succeed())
 }
 
 func TestCloudStackMachineConfigValidateCreateInvalidSymlinksComma(t *testing.T) {
@@ -108,7 +108,7 @@ func TestCloudStackMachineConfigValidateCreateInvalidSymlinksComma(t *testing.T)
 		"/var/lib:a": "/_data/var-redirect/log,d",
 	}
 	g := NewWithT(t)
-	g.Expect(c.ValidateCreate()).NotTo(Succeed())
+	g.Expect(c.ValidateCreate()).Error().NotTo(Succeed())
 }
 
 func TestCloudStackMachineConfigValidateCreateInvalidSymlinksKeyNotStartWithRoot(t *testing.T) {
@@ -117,7 +117,7 @@ func TestCloudStackMachineConfigValidateCreateInvalidSymlinksKeyNotStartWithRoot
 		"var/lib": "/data/var/log",
 	}
 	g := NewWithT(t)
-	g.Expect(c.ValidateCreate()).NotTo(Succeed())
+	g.Expect(c.ValidateCreate()).Error().NotTo(Succeed())
 }
 
 func TestCloudStackMachineConfigValidateCreateInvalidSymlinksValueNotStartWithRoot(t *testing.T) {
@@ -126,7 +126,7 @@ func TestCloudStackMachineConfigValidateCreateInvalidSymlinksValueNotStartWithRo
 		"/var/lib": "data/var/log",
 	}
 	g := NewWithT(t)
-	g.Expect(c.ValidateCreate()).NotTo(Succeed())
+	g.Expect(c.ValidateCreate()).Error().NotTo(Succeed())
 }
 
 func TestCloudStackMachineConfigValidateCreateInvalidSymlinksKeyEndWithRoot(t *testing.T) {
@@ -135,7 +135,7 @@ func TestCloudStackMachineConfigValidateCreateInvalidSymlinksKeyEndWithRoot(t *t
 		"/var/lib/": "/data/var/log",
 	}
 	g := NewWithT(t)
-	g.Expect(c.ValidateCreate()).NotTo(Succeed())
+	g.Expect(c.ValidateCreate()).Error().NotTo(Succeed())
 }
 
 func TestCloudStackMachineConfigValidateCreateInvalidSymlinksValueEndWithRoot(t *testing.T) {
@@ -144,28 +144,28 @@ func TestCloudStackMachineConfigValidateCreateInvalidSymlinksValueEndWithRoot(t 
 		"/var/lib": "/data/var/log/",
 	}
 	g := NewWithT(t)
-	g.Expect(c.ValidateCreate()).NotTo(Succeed())
+	g.Expect(c.ValidateCreate()).Error().NotTo(Succeed())
 }
 
 func TestCloudStackMachineConfigValidateCreateInvalidTemplateEmpty(t *testing.T) {
 	c := cloudstackMachineConfig()
 	c.Spec.Template = v1alpha1.CloudStackResourceIdentifier{}
 	g := NewWithT(t)
-	g.Expect(c.ValidateCreate()).NotTo(Succeed())
+	g.Expect(c.ValidateCreate()).Error().NotTo(Succeed())
 }
 
 func TestCloudStackMachineConfigValidateCreateInvalidComputeOfferingEmpty(t *testing.T) {
 	c := cloudstackMachineConfig()
 	c.Spec.ComputeOffering = v1alpha1.CloudStackResourceIdentifier{}
 	g := NewWithT(t)
-	g.Expect(c.ValidateCreate()).NotTo(Succeed())
+	g.Expect(c.ValidateCreate()).Error().NotTo(Succeed())
 }
 
 func TestCloudStackMachineConfigValidateCreateInvalidUsers(t *testing.T) {
 	c := cloudstackMachineConfig()
 	c.Spec.Users = []v1alpha1.UserConfiguration{{Name: "Jeff"}}
 	g := NewWithT(t)
-	g.Expect(c.ValidateCreate()).NotTo(Succeed())
+	g.Expect(c.ValidateCreate()).Error().NotTo(Succeed())
 }
 
 func TestCPCloudStackMachineValidateUpdateTemplateMutable(t *testing.T) {
@@ -180,7 +180,7 @@ func TestCPCloudStackMachineValidateUpdateTemplateMutable(t *testing.T) {
 		Name: "newTemplate",
 	}
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
+	g.Expect(c.ValidateUpdate(&vOld)).Error().To(Succeed())
 }
 
 func TestWorkersCPCloudStackMachineValidateUpdateTemplateMutable(t *testing.T) {
@@ -194,7 +194,7 @@ func TestWorkersCPCloudStackMachineValidateUpdateTemplateMutable(t *testing.T) {
 		Name: "newTemplate",
 	}
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
+	g.Expect(c.ValidateUpdate(&vOld)).Error().To(Succeed())
 }
 
 func TestCPCloudStackMachineValidateUpdateComputeOfferingMutable(t *testing.T) {
@@ -209,7 +209,7 @@ func TestCPCloudStackMachineValidateUpdateComputeOfferingMutable(t *testing.T) {
 		Name: "newComputeOffering",
 	}
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
+	g.Expect(c.ValidateUpdate(&vOld)).Error().To(Succeed())
 }
 
 func TestCPCloudStackMachineValidateUpdateDiskOfferingMutable(t *testing.T) {
@@ -236,7 +236,7 @@ func TestCPCloudStackMachineValidateUpdateDiskOfferingMutable(t *testing.T) {
 		Label:      "data_disk",
 	}
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
+	g.Expect(c.ValidateUpdate(&vOld)).Error().To(Succeed())
 }
 
 func TestCPCloudStackMachineValidateUpdateDiskOfferingMutableFailInvalidMountPath(t *testing.T) {
@@ -263,7 +263,7 @@ func TestCPCloudStackMachineValidateUpdateDiskOfferingMutableFailInvalidMountPat
 		Label:      "data_disk",
 	}
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+	g.Expect(c.ValidateUpdate(&vOld)).Error().NotTo(Succeed())
 }
 
 func TestCPCloudStackMachineValidateUpdateDiskOfferingMutableFailEmptyDevice(t *testing.T) {
@@ -290,7 +290,7 @@ func TestCPCloudStackMachineValidateUpdateDiskOfferingMutableFailEmptyDevice(t *
 		Label:      "data_disk",
 	}
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+	g.Expect(c.ValidateUpdate(&vOld)).Error().NotTo(Succeed())
 }
 
 func TestCPCloudStackMachineValidateUpdateDiskOfferingMutableFailEmptyFilesystem(t *testing.T) {
@@ -317,7 +317,7 @@ func TestCPCloudStackMachineValidateUpdateDiskOfferingMutableFailEmptyFilesystem
 		Label:      "data_disk",
 	}
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+	g.Expect(c.ValidateUpdate(&vOld)).Error().NotTo(Succeed())
 }
 
 func TestCPCloudStackMachineValidateUpdateDiskOfferingMutableFailEmptyLabel(t *testing.T) {
@@ -344,7 +344,7 @@ func TestCPCloudStackMachineValidateUpdateDiskOfferingMutableFailEmptyLabel(t *t
 		Label:      "",
 	}
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+	g.Expect(c.ValidateUpdate(&vOld)).Error().NotTo(Succeed())
 }
 
 func TestCPCloudStackMachineValidateUpdateSymlinksMutable(t *testing.T) {
@@ -359,7 +359,7 @@ func TestCPCloudStackMachineValidateUpdateSymlinksMutable(t *testing.T) {
 		"/var/log": "/data_2/var/log",
 	}
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
+	g.Expect(c.ValidateUpdate(&vOld)).Error().To(Succeed())
 }
 
 func TestCPCloudStackMachineValidateUpdateSymlinksMutableInvalidComma(t *testing.T) {
@@ -374,7 +374,7 @@ func TestCPCloudStackMachineValidateUpdateSymlinksMutableInvalidComma(t *testing
 		"/var/log": "/data_2/var/log,d",
 	}
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+	g.Expect(c.ValidateUpdate(&vOld)).Error().NotTo(Succeed())
 }
 
 func TestCPCloudStackMachineValidateUpdateSymlinksMutableColon(t *testing.T) {
@@ -389,7 +389,7 @@ func TestCPCloudStackMachineValidateUpdateSymlinksMutableColon(t *testing.T) {
 		"/var/log": "/data_2/var/log:d",
 	}
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+	g.Expect(c.ValidateUpdate(&vOld)).Error().NotTo(Succeed())
 }
 
 func TestWorkersCPCloudStackMachineValidateUpdateComputeOfferingMutable(t *testing.T) {
@@ -403,7 +403,7 @@ func TestWorkersCPCloudStackMachineValidateUpdateComputeOfferingMutable(t *testi
 		Name: "newComputeOffering",
 	}
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
+	g.Expect(c.ValidateUpdate(&vOld)).Error().To(Succeed())
 }
 
 func TestWorkersCPCloudStackMachineValidateUpdateDiskOfferingMutable(t *testing.T) {
@@ -426,7 +426,7 @@ func TestWorkersCPCloudStackMachineValidateUpdateDiskOfferingMutable(t *testing.
 		Label:      "data_disk",
 	}
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
+	g.Expect(c.ValidateUpdate(&vOld)).Error().To(Succeed())
 }
 
 func TestManagementCloudStackMachineValidateUpdateSshAuthorizedKeyMutable(t *testing.T) {
@@ -439,7 +439,7 @@ func TestManagementCloudStackMachineValidateUpdateSshAuthorizedKeyMutable(t *tes
 
 	c.Spec.Users[0].SshAuthorizedKeys[0] = "rsa-laDeLala"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
+	g.Expect(c.ValidateUpdate(&vOld)).Error().To(Succeed())
 }
 
 func TestWorkloadCloudStackMachineValidateUpdateSshAuthorizedKeyMutable(t *testing.T) {
@@ -451,7 +451,7 @@ func TestWorkloadCloudStackMachineValidateUpdateSshAuthorizedKeyMutable(t *testi
 
 	c.Spec.Users[0].SshAuthorizedKeys[0] = "rsa-laDeLala"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
+	g.Expect(c.ValidateUpdate(&vOld)).Error().To(Succeed())
 }
 
 func TestWorkloadCloudStackMachineValidateUpdateSshUsernameMutable(t *testing.T) {
@@ -465,7 +465,7 @@ func TestWorkloadCloudStackMachineValidateUpdateSshUsernameMutable(t *testing.T)
 
 	c.Spec.Users[0].Name = "Andy"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
+	g.Expect(c.ValidateUpdate(&vOld)).Error().To(Succeed())
 }
 
 func TestWorkloadCloudStackMachineValidateUpdateInvalidUsers(t *testing.T) {
@@ -479,7 +479,7 @@ func TestWorkloadCloudStackMachineValidateUpdateInvalidUsers(t *testing.T) {
 
 	c.Spec.Users[0].Name = ""
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).ToNot(Succeed())
+	g.Expect(c.ValidateUpdate(&vOld)).Error().ToNot(Succeed())
 }
 
 func TestCloudStackMachineValidateUpdateInvalidType(t *testing.T) {
@@ -487,7 +487,7 @@ func TestCloudStackMachineValidateUpdateInvalidType(t *testing.T) {
 	c := &v1alpha1.CloudStackMachineConfig{}
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(vOld)).NotTo(Succeed())
+	g.Expect(c.ValidateUpdate(vOld)).Error().NotTo(Succeed())
 }
 
 func cloudstackMachineConfig() v1alpha1.CloudStackMachineConfig {
@@ -520,7 +520,7 @@ func TestCloudStackMachineValidateUpdateAffinityImmutable(t *testing.T) {
 
 	c.Spec.Affinity = "anti"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).ToNot(Succeed())
+	g.Expect(c.ValidateUpdate(&vOld)).Error().ToNot(Succeed())
 }
 
 func TestCloudStackMachineValidateUpdateAffinityGroupIdsImmutable(t *testing.T) {
@@ -531,9 +531,9 @@ func TestCloudStackMachineValidateUpdateAffinityGroupIdsImmutable(t *testing.T) 
 
 	c.Spec.AffinityGroupIds = []string{}
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).ToNot(Succeed())
+	g.Expect(c.ValidateUpdate(&vOld)).Error().ToNot(Succeed())
 
 	c.Spec.AffinityGroupIds = []string{"affinity-group-2"}
 	g = NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).ToNot(Succeed())
+	g.Expect(c.ValidateUpdate(&vOld)).Error().ToNot(Succeed())
 }

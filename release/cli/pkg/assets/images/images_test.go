@@ -15,34 +15,37 @@
 package images
 
 import (
-	"reflect"
 	"strings"
 	"testing"
 	"time"
+
+	. "github.com/onsi/gomega"
 
 	assettypes "github.com/aws/eks-anywhere/release/cli/pkg/assets/types"
 	"github.com/aws/eks-anywhere/release/cli/pkg/filereader"
 	releasetypes "github.com/aws/eks-anywhere/release/cli/pkg/types"
 )
 
-var releaseConfig = &releasetypes.ReleaseConfig{
-	ArtifactDir:              "artifacts",
-	CliRepoSource:            "eks-a-build",
-	BuildRepoSource:          "eks-a-cli",
-	CliRepoBranchName:        "main",
-	CliRepoUrl:               "https://github.com/aws/eks-anywhere.git",
-	BuildRepoUrl:             "https://github.com/aws/eks-anywhere-build-tooling.git",
-	SourceBucket:             "projectbuildpipeline-857-pipelineoutputartifactsb-10ajmk30khe3f",
-	ReleaseBucket:            "release-bucket",
-	SourceContainerRegistry:  "source-container-registry",
-	ReleaseContainerRegistry: "release-container-registry",
-	CDN:                      "https://release-bucket",
-	BundleNumber:             1,
-	ReleaseNumber:            1,
-	ReleaseVersion:           "vDev",
-	ReleaseTime:              time.Unix(0, 0),
-	DevRelease:               true,
-	DryRun:                   true,
+func baseReleaseConfig() *releasetypes.ReleaseConfig {
+	return &releasetypes.ReleaseConfig{
+		ArtifactDir:              "artifacts",
+		CliRepoSource:            "eks-a-build",
+		BuildRepoSource:          "eks-a-cli",
+		CliRepoBranchName:        "main",
+		CliRepoUrl:               "https://github.com/aws/eks-anywhere.git",
+		BuildRepoUrl:             "https://github.com/aws/eks-anywhere-build-tooling.git",
+		SourceBucket:             "projectbuildpipeline-857-pipelineoutputartifactsb-10ajmk30khe3f",
+		ReleaseBucket:            "release-bucket",
+		SourceContainerRegistry:  "source-container-registry",
+		ReleaseContainerRegistry: "release-container-registry",
+		CDN:                      "https://release-bucket",
+		BundleNumber:             1,
+		ReleaseNumber:            1,
+		ReleaseVersion:           "v0.15.0",
+		ReleaseTime:              time.Unix(0, 0),
+		DevRelease:               true,
+		DryRun:                   true,
+	}
 }
 
 func TestGenerateImageAssets(t *testing.T) {
@@ -104,7 +107,7 @@ func TestGenerateImageAssets(t *testing.T) {
 			wantImageArtifact: &releasetypes.ImageArtifact{
 				AssetName:         "bar",
 				SourceImageURI:    "source-container-registry/foo/bar:release-branch",
-				ReleaseImageURI:   "release-container-registry/foo/bar:v0.2.0-eks-a-v0.0.0-dev-release-branch-build.1",
+				ReleaseImageURI:   "release-container-registry/foo/bar:v0.2.0-eks-a-v0.0.0-dev-build.1",
 				OS:                "linux",
 				Arch:              []string{"amd64", "arm64"},
 				GitTag:            "v0.2.0",
@@ -191,6 +194,8 @@ func TestGenerateImageAssets(t *testing.T) {
 
 	for _, tt := range testCases {
 		t.Run(tt.testName, func(t *testing.T) {
+			g := NewWithT(t)
+			releaseConfig := baseReleaseConfig()
 			releaseConfig.BuildRepoBranchName = tt.buildRepoBranchName
 
 			releaseVersion, err := filereader.GetCurrentEksADevReleaseVersion(releaseConfig.ReleaseVersion, releaseConfig, 0)
@@ -201,10 +206,11 @@ func TestGenerateImageAssets(t *testing.T) {
 			releaseConfig.ReleaseVersion = releaseVersion
 			releaseConfig.DevReleaseUriVersion = strings.ReplaceAll(releaseVersion, "+", "-")
 
-			if gotImageArtifact, _, err := GetImageAssets(releaseConfig, tt.assetConfig, tt.image, tt.imageRepoPrefix, tt.imageTagOptions, tt.gitTag, tt.projectPath, tt.projectPath, tt.eksDReleaseChannel, tt.eksDReleaseNumber, tt.kubeVersion); (err != nil) != tt.wantErr {
-				t.Fatalf("GetImageAssets got err = %v, want err = %v", err, tt.wantErr)
-			} else if !reflect.DeepEqual(gotImageArtifact, tt.wantImageArtifact) {
-				t.Fatalf("GetImageAssets got artifact = %v, expected %v", gotImageArtifact, tt.wantImageArtifact)
+			gotImageArtifact, _, err := GetImageAssets(releaseConfig, tt.assetConfig, tt.image, tt.imageRepoPrefix, tt.imageTagOptions, tt.gitTag, tt.projectPath, tt.projectPath, tt.eksDReleaseChannel, tt.eksDReleaseNumber, tt.kubeVersion)
+			if tt.wantErr {
+				g.Expect(err).To(HaveOccurred())
+			} else {
+				g.Expect(gotImageArtifact).To(BeComparableTo(tt.wantImageArtifact))
 			}
 		})
 	}

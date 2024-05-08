@@ -194,7 +194,7 @@ func (d *helmDriver) HelmRegistryLogin(r *releasetypes.ReleaseConfig, remoteType
 		remote = r.ReleaseContainerRegistry
 	}
 	login := action.NewRegistryLogin(d.cfg)
-	err := login.Run(os.Stdout, remote, authConfig.Username, authConfig.Password, false)
+	err := login.Run(os.Stdout, remote, authConfig.Username, authConfig.Password)
 	if err != nil {
 		return fmt.Errorf("running the Helm registry login command: %w", err)
 	}

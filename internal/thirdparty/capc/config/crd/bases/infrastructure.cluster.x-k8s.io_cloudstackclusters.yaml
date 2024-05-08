@@ -1,0 +1,456 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.8.0
+  creationTimestamp: null
+  name: cloudstackclusters.infrastructure.cluster.x-k8s.io
+spec:
+  group: infrastructure.cluster.x-k8s.io
+  names:
+    kind: CloudStackCluster
+    listKind: CloudStackClusterList
+    plural: cloudstackclusters
+    singular: cloudstackcluster
+  scope: Namespaced
+  versions:
+  - name: v1beta1
+    schema:
+      openAPIV3Schema:
+        description: CloudStackCluster is the Schema for the cloudstackclusters API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: CloudStackClusterSpec defines the desired state of CloudStackCluster.
+            properties:
+              account:
+                description: CloudStack account.
+                type: string
+              controlPlaneEndpoint:
+                description: The kubernetes control plane endpoint.
+                properties:
+                  host:
+                    description: The hostname on which the API server is serving.
+                    type: string
+                  port:
+                    description: The port on which the API server is serving.
+                    format: int32
+                    type: integer
+                required:
+                - host
+                - port
+                type: object
+              domain:
+                description: CloudStack domain.
+                type: string
+              identityRef:
+                description: CloudStackIdentityReference is a reference to an infrastructure
+                  provider identity to be used to provision cluster resources.
+                properties:
+                  kind:
+                    description: Kind of the identity. Must be supported by the infrastructure
+                      provider and may be either cluster or namespace-scoped.
+                    minLength: 1
+                    type: string
+                  name:
+                    description: Name of the infrastructure identity to be used.
+                    type: string
+                required:
+                - kind
+                - name
+                type: object
+              zones:
+                items:
+                  properties:
+                    id:
+                      description: ID.
+                      type: string
+                    name:
+                      description: Name.
+                      type: string
+                    network:
+                      description: The network within the Zone to use.
+                      properties:
+                        id:
+                          description: Cloudstack Network ID the cluster is built
+                            in.
+                          type: string
+                        name:
+                          description: Cloudstack Network Name the cluster is built
+                            in.
+                          type: string
+                        type:
+                          description: Cloudstack Network Type the cluster is built
+                            in.
+                          type: string
+                      type: object
+                  required:
+                  - network
+                  type: object
+                type: array
+            required:
+            - controlPlaneEndpoint
+            - zones
+            type: object
+          status:
+            description: The actual cluster state reported by CloudStack.
+            properties:
+              domainID:
+                description: Cloudstack Domain ID the cluster is built in.
+                type: string
+              failureDomains:
+                additionalProperties:
+                  description: FailureDomainSpec is the Schema for Cluster API failure
+                    domains. It allows controllers to understand how many failure
+                    domains a cluster can optionally span across.
+                  properties:
+                    attributes:
+                      additionalProperties:
+                        type: string
+                      description: Attributes is a free form map of attributes an
+                        infrastructure provider might use or require.
+                      type: object
+                    controlPlane:
+                      description: ControlPlane determines if this failure domain
+                        is suitable for use by control plane machines.
+                      type: boolean
+                  type: object
+                description: CAPI recognizes failure domains as a method to spread
+                  machines. CAPC sets failure domains to indicate functioning Zones.
+                type: object
+              loadBalancerRuleID:
+                description: The ID of the lb rule used to assign VMs to the lb.
+                type: string
+              publicIPID:
+                description: The CS public IP ID to use for the k8s endpoint.
+                type: string
+              publicIPNetworkID:
+                description: The ID of the network the PublicIP is in.
+                type: string
+              ready:
+                description: Reflects the readiness of the CS cluster.
+                type: boolean
+              zones:
+                additionalProperties:
+                  properties:
+                    id:
+                      description: ID.
+                      type: string
+                    name:
+                      description: Name.
+                      type: string
+                    network:
+                      description: The network within the Zone to use.
+                      properties:
+                        id:
+                          description: Cloudstack Network ID the cluster is built
+                            in.
+                          type: string
+                        name:
+                          description: Cloudstack Network Name the cluster is built
+                            in.
+                          type: string
+                        type:
+                          description: Cloudstack Network Type the cluster is built
+                            in.
+                          type: string
+                      type: object
+                  required:
+                  - network
+                  type: object
+                description: The status of the cluster's ACS Zones.
+                type: object
+            required:
+            - ready
+            type: object
+        type: object
+    served: true
+    storage: false
+    subresources:
+      status: {}
+  - name: v1beta2
+    schema:
+      openAPIV3Schema:
+        description: CloudStackCluster is the Schema for the cloudstackclusters API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: CloudStackClusterSpec defines the desired state of CloudStackCluster.
+            properties:
+              controlPlaneEndpoint:
+                description: The kubernetes control plane endpoint.
+                properties:
+                  host:
+                    description: The hostname on which the API server is serving.
+                    type: string
+                  port:
+                    description: The port on which the API server is serving.
+                    format: int32
+                    type: integer
+                required:
+                - host
+                - port
+                type: object
+              failureDomains:
+                items:
+                  description: CloudStackFailureDomainSpec defines the desired state
+                    of CloudStackFailureDomain
+                  properties:
+                    account:
+                      description: CloudStack account.
+                      type: string
+                    acsEndpoint:
+                      description: Apache CloudStack Endpoint secret reference.
+                      properties:
+                        name:
+                          description: name is unique within a namespace to reference
+                            a secret resource.
+                          type: string
+                        namespace:
+                          description: namespace defines the space within which the
+                            secret name must be unique.
+                          type: string
+                      type: object
+                    domain:
+                      description: CloudStack domain.
+                      type: string
+                    name:
+                      description: The failure domain unique name.
+                      type: string
+                    zone:
+                      description: The ACS Zone for this failure domain.
+                      properties:
+                        id:
+                          description: ID.
+                          type: string
+                        name:
+                          description: Name.
+                          type: string
+                        network:
+                          description: The network within the Zone to use.
+                          properties:
+                            id:
+                              description: Cloudstack Network ID the cluster is built
+                                in.
+                              type: string
+                            name:
+                              description: Cloudstack Network Name the cluster is
+                                built in.
+                              type: string
+                            type:
+                              description: Cloudstack Network Type the cluster is
+                                built in.
+                              type: string
+                          required:
+                          - name
+                          type: object
+                      required:
+                      - network
+                      type: object
+                  required:
+                  - acsEndpoint
+                  - name
+                  - zone
+                  type: object
+                type: array
+            required:
+            - controlPlaneEndpoint
+            - failureDomains
+            type: object
+          status:
+            description: The actual cluster state reported by CloudStack.
+            properties:
+              failureDomains:
+                additionalProperties:
+                  description: FailureDomainSpec is the Schema for Cluster API failure
+                    domains. It allows controllers to understand how many failure
+                    domains a cluster can optionally span across.
+                  properties:
+                    attributes:
+                      additionalProperties:
+                        type: string
+                      description: Attributes is a free form map of attributes an
+                        infrastructure provider might use or require.
+                      type: object
+                    controlPlane:
+                      description: ControlPlane determines if this failure domain
+                        is suitable for use by control plane machines.
+                      type: boolean
+                  type: object
+                description: CAPI recognizes failure domains as a method to spread
+                  machines. CAPC sets failure domains to indicate functioning CloudStackFailureDomains.
+                type: object
+              ready:
+                description: Reflects the readiness of the CS cluster.
+                type: boolean
+            required:
+            - ready
+            type: object
+        type: object
+    served: true
+    storage: false
+    subresources:
+      status: {}
+  - name: v1beta3
+    schema:
+      openAPIV3Schema:
+        description: CloudStackCluster is the Schema for the cloudstackclusters API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: CloudStackClusterSpec defines the desired state of CloudStackCluster.
+            properties:
+              controlPlaneEndpoint:
+                description: The kubernetes control plane endpoint.
+                properties:
+                  host:
+                    description: The hostname on which the API server is serving.
+                    type: string
+                  port:
+                    description: The port on which the API server is serving.
+                    format: int32
+                    type: integer
+                required:
+                - host
+                - port
+                type: object
+              failureDomains:
+                items:
+                  description: CloudStackFailureDomainSpec defines the desired state
+                    of CloudStackFailureDomain
+                  properties:
+                    account:
+                      description: CloudStack account.
+                      type: string
+                    acsEndpoint:
+                      description: Apache CloudStack Endpoint secret reference.
+                      properties:
+                        name:
+                          description: name is unique within a namespace to reference
+                            a secret resource.
+                          type: string
+                        namespace:
+                          description: namespace defines the space within which the
+                            secret name must be unique.
+                          type: string
+                      type: object
+                    domain:
+                      description: CloudStack domain.
+                      type: string
+                    name:
+                      description: The failure domain unique name.
+                      type: string
+                    zone:
+                      description: The ACS Zone for this failure domain.
+                      properties:
+                        id:
+                          description: ID.
+                          type: string
+                        name:
+                          description: Name.
+                          type: string
+                        network:
+                          description: The network within the Zone to use.
+                          properties:
+                            id:
+                              description: Cloudstack Network ID the cluster is built
+                                in.
+                              type: string
+                            name:
+                              description: Cloudstack Network Name the cluster is
+                                built in.
+                              type: string
+                            type:
+                              description: Cloudstack Network Type the cluster is
+                                built in.
+                              type: string
+                          required:
+                          - name
+                          type: object
+                      required:
+                      - network
+                      type: object
+                  required:
+                  - acsEndpoint
+                  - name
+                  - zone
+                  type: object
+                type: array
+            required:
+            - controlPlaneEndpoint
+            - failureDomains
+            type: object
+          status:
+            description: The actual cluster state reported by CloudStack.
+            properties:
+              failureDomains:
+                additionalProperties:
+                  description: FailureDomainSpec is the Schema for Cluster API failure
+                    domains. It allows controllers to understand how many failure
+                    domains a cluster can optionally span across.
+                  properties:
+                    attributes:
+                      additionalProperties:
+                        type: string
+                      description: Attributes is a free form map of attributes an
+                        infrastructure provider might use or require.
+                      type: object
+                    controlPlane:
+                      description: ControlPlane determines if this failure domain
+                        is suitable for use by control plane machines.
+                      type: boolean
+                  type: object
+                description: CAPI recognizes failure domains as a method to spread
+                  machines. CAPC sets failure domains to indicate functioning CloudStackFailureDomains.
+                type: object
+              ready:
+                description: Reflects the readiness of the CS cluster.
+                type: boolean
+            required:
+            - ready
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []

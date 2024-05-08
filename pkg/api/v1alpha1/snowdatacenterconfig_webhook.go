@@ -19,6 +19,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
+	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // log is for logging in this package.
@@ -36,22 +37,22 @@ func (r *SnowDatacenterConfig) SetupWebhookWithManager(mgr ctrl.Manager) error {
 var _ webhook.Validator = &SnowDatacenterConfig{}
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
-func (r *SnowDatacenterConfig) ValidateCreate() error {
+func (r *SnowDatacenterConfig) ValidateCreate() (admission.Warnings, error) {
 	snowdatacenterconfiglog.Info("validate create", "name", r.Name)
 
-	return r.Validate()
+	return nil, r.Validate()
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
-func (r *SnowDatacenterConfig) ValidateUpdate(old runtime.Object) error {
+func (r *SnowDatacenterConfig) ValidateUpdate(_ runtime.Object) (admission.Warnings, error) {
 	snowdatacenterconfiglog.Info("validate update", "name", r.Name)
 
-	return r.Validate()
+	return nil, r.Validate()
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type.
-func (r *SnowDatacenterConfig) ValidateDelete() error {
+func (r *SnowDatacenterConfig) ValidateDelete() (admission.Warnings, error) {
 	snowdatacenterconfiglog.Info("validate delete", "name", r.Name)
 
-	return nil
+	return nil, nil
 }

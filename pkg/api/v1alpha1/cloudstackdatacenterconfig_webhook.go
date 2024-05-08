@@ -25,6 +25,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
+	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // log is for logging in this package.
@@ -54,27 +55,27 @@ func (r *CloudStackDatacenterConfig) Default() {
 var _ webhook.Validator = &CloudStackDatacenterConfig{}
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
-func (r *CloudStackDatacenterConfig) ValidateCreate() error {
+func (r *CloudStackDatacenterConfig) ValidateCreate() (admission.Warnings, error) {
 	cloudstackdatacenterconfiglog.Info("validate create", "name", r.Name)
 	if r.IsReconcilePaused() {
 		cloudstackdatacenterconfiglog.Info("CloudStackDatacenterConfig is paused, so allowing create", "name", r.Name)
-		return nil
+		return nil, nil
 	}
-	return nil
+	return nil, nil
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
-func (r *CloudStackDatacenterConfig) ValidateUpdate(old runtime.Object) error {
+func (r *CloudStackDatacenterConfig) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
 	cloudstackdatacenterconfiglog.Info("validate update", "name", r.Name)
 
 	oldDatacenterConfig, ok := old.(*CloudStackDatacenterConfig)
 	if !ok {
-		return apierrors.NewBadRequest(fmt.Sprintf("expected a CloudStackDataCenterConfig but got a %T", old))
+		return nil, apierrors.NewBadRequest(fmt.Sprintf("expected a CloudStackDataCenterConfig but got a %T", old))
 	}
 
 	if oldDatacenterConfig.IsReconcilePaused() {
 		cloudstackdatacenterconfiglog.Info("Reconciliation is paused")
-		return nil
+		return nil, nil
 	}
 
 	var allErrs field.ErrorList
@@ -82,10 +83,10 @@ func (r *CloudStackDatacenterConfig) ValidateUpdate(old runtime.Object) error {
 	allErrs = append(allErrs, validateImmutableFieldsCloudStackCluster(r, oldDatacenterConfig)...)
 
 	if len(allErrs) == 0 {
-		return nil
+		return nil, nil
 	}
 
-	return apierrors.NewInvalid(GroupVersion.WithKind(CloudStackDatacenterKind).GroupKind(), r.Name, allErrs)
+	return nil, apierrors.NewInvalid(GroupVersion.WithKind(CloudStackDatacenterKind).GroupKind(), r.Name, allErrs)
 }
 
 func isValidAzConversionName(uuid string) bool {
@@ -146,9 +147,9 @@ func validateImmutableFieldsCloudStackCluster(new, old *CloudStackDatacenterConf
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type.
-func (r *CloudStackDatacenterConfig) ValidateDelete() error {
+func (r *CloudStackDatacenterConfig) ValidateDelete() (admission.Warnings, error) {
 	cloudstackdatacenterconfiglog.Info("validate delete", "name", r.Name)
 
 	// TODO(user): fill in your validation logic upon object deletion.
-	return nil
+	return nil, nil
 }
