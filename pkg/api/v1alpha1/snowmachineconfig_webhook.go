@@ -58,7 +58,7 @@ func (r *SnowMachineConfig) ValidateCreate() (admission.Warnings, error) {
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
-func (r *SnowMachineConfig) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
+func (r *SnowMachineConfig) ValidateUpdate(_ runtime.Object) (admission.Warnings, error) {
 	snowmachineconfiglog.Info("validate update", "name", r.Name)
 
 	if err := r.ValidateHasSSHKeyName(); err != nil {

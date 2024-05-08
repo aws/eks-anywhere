@@ -44,7 +44,7 @@ func (r *SnowDatacenterConfig) ValidateCreate() (admission.Warnings, error) {
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
-func (r *SnowDatacenterConfig) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
+func (r *SnowDatacenterConfig) ValidateUpdate(_ runtime.Object) (admission.Warnings, error) {
 	snowdatacenterconfiglog.Info("validate update", "name", r.Name)
 
 	return nil, r.Validate()
