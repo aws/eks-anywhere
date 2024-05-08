@@ -19,7 +19,7 @@ The following additional optional configuration can also be included:
 * [Registry Mirror]({{< relref "../optional/registrymirror.md" >}})
 * [Proxy]({{< relref "../optional/proxy.md" >}})
 * [Gitops]({{< relref "../optional/gitops.md" >}})
-* [Machine Health Check Timeouts]({{< relref "../optional/healthchecks.md" >}})
+* [Machine Health Checks]({{< relref "../optional/healthchecks.md" >}})
 
 ```yaml
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1

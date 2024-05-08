@@ -110,7 +110,7 @@ The following additional optional configuration can also be included:
 * [Proxy]({{< relref "../optional/proxy.md" >}})
 * [Registry Mirror]({{< relref "../optional/registrymirror.md" >}})
 * [Host OS Config]({{< relref "../optional/hostOSConfig.md" >}})
-* [Machine Health Check Timeouts]({{< relref "../optional/healthchecks.md" >}})
+* [Machine Health Checks]({{< relref "../optional/healthchecks.md" >}})
 
 ## Cluster Fields
 
