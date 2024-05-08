@@ -343,6 +343,12 @@ func (f *Factory) WithDockerLogin() *Factory {
 }
 
 func (f *Factory) WithExecutableBuilder() *Factory {
+	// Ensure the file writer is created before the tools container is launched. This is necessary
+	// because we bind mount the cluster directory into the tools container. If the directory
+	// doesn't exist, dockerd (running as root) creates the hostpath for the bind mount with root
+	// ownership. This prevents further files from being written to the cluster directory.
+	f.WithWriter()
+
 	if f.executablesConfig.useDockerContainer {
 		f.WithExecutableImage().WithDocker()
 		if f.registryMirror != nil && f.registryMirror.Auth {
