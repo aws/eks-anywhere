@@ -248,6 +248,45 @@ kubectl logs <podname> -n <namespace> --kubeconfig=<kubeconfig>
 ....
 ```
 
+### Kubectl commands return dial tcp: i/o timeout
+
+If you are unable to run kubectl commands on a cluster due to timeout errors, then it is possible that the server endpoint in the kubeconfig does not match the control plane's endpoint in the infrastructure provider due to kube-vip failing to allocate a virtual IP address to the cluster. If the endpoints do not match, you can ssh into the control plane node to gather logs instead. The kubelet logs can be obtained by running `journalctl -u kubelet.service --no-pager`. It may also be helpful to look at kube-vip logs, which can be found in the `/var/log/pods/kube-system_kube-vip-*` directory. 
+
+#### Verify Cluster Certificates are valid
+
+If kubectl commands are not working due to timeout issues, then it may also be helpful to verify that certificates on the etcd and control plane nodes have not expired. 
+
+SSH to one of your etcd nodes and view the etcd container logs in `/var/log/containers`. 
+
+View the control plane certificates by SSHing into one of your control plane nodes and run the following commands to view the validity of the /var/lib/kubeadm certificates and see their expiration dates.
+{{< tabpane >}}
+{{< tab header="Ubuntu or RHEL" lang="bash" >}}
+sudo kubeadm certs check-expiration
+{{< /tab >}}
+{{< tab header="Bottlerocket" lang="bash" >}}
+# you would be in the admin container when you ssh to the Bottlerocket machine
+# open a root shell
+sudo sheltie
+
+# pull the image
+IMAGE_ID=$(apiclient get | apiclient exec admin jq -r '.settings["host-containers"]["kubeadm-bootstrap"].source')
+
+# ctr is the containerd cli.
+# For more information, see https://github.com/projectatomic/containerd/blob/master/docs/cli.md
+ctr image pull ${IMAGE_ID}
+
+# you may see missing etcd certs error, which is expected if you have external etcd nodes
+ctr run \
+--mount type=bind,src=/var/lib/kubeadm,dst=/var/lib/kubeadm,options=rbind:rw \
+--mount type=bind,src=/var/lib/kubeadm,dst=/etc/kubernetes,options=rbind:rw \
+--rm \
+${IMAGE_ID} tmp-certs-check \
+/opt/bin/kubeadm certs check-expiration
+{{< /tab >}}
+{{< /tabpane >}}
+
+EKS Anywhere typically renews certificates when upgrading a cluster. However, if a cluster has not been upgraded for over a year, then it is necessary to manually renew these certificates. Please see [Certificate rotation]({{< relref "../clustermgmt/security/manually-renew-certs.md" >}}) to manually rotate expired certificates.
+
 ### Bootstrap cluster fails to come up
 
 If your bootstrap cluster has problems you may get detailed logs by looking at the files created under the `${CLUSTER_NAME}/logs` folder. The capv-controller-manager log file will surface issues with vsphere specific configuration while the capi-controller-manager log file might surface other generic issues with the cluster configuration passed in.
