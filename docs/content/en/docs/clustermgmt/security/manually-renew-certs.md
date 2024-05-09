@@ -187,6 +187,7 @@ systemctl restart kubelet
 Once all the certificates are valid, verify the kcp object on the affected cluster(s) is not paused. If it is paused, then this usually indicates an issue with the etcd cluster. Check the logs for pods under the `etcdadm-controller-system` namespace for any errors. 
 If the logs indicate an issue with the etcd endpoints, then you need to update `spec.clusterConfiguration.etcd.endpoints` in the cluster's `kubeadmconfig` resource: `kubectl edit kcp -n eksa-system`
 
+Example:
 ```
 etcd:
    external:
