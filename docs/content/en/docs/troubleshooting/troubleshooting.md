@@ -371,10 +371,10 @@ If the bootstrap log indicates that the etcadm join operation fail, this can mea
 
 #### New etcd machine cannot find the existing etcd cluster members
 
-The edcdadm log shows error that the new etcd machine cannot connect to the existing etcd cluster memebers. This means the `etcdadm-init` secret is outdated. To update it, run
+The edcdadm log shows error that the new etcd machine cannot connect to the existing etcd cluster members. This means the `etcdadm-init` secret is outdated. To update it, run
 
 ```sh
-kubectl edit <cluster-name>-etcd-init -n eksa-system
+kubectl edit secrets <cluster-name>-etcd-init -n eksa-system
 ```
 
 and make sure the new etcd machine IP is included in the secret.
