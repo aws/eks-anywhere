@@ -270,6 +270,9 @@ sudo sheltie
 
 # pull the image
 IMAGE_ID=$(apiclient get | apiclient exec admin jq -r '.settings["host-containers"]["kubeadm-bootstrap"].source')
+
+# ctr is the containerd cli.
+# For more information, see https://github.com/projectatomic/containerd/blob/master/docs/cli.md
 ctr image pull ${IMAGE_ID}
 
 # you may see missing etcd certs error, which is expected if you have external etcd nodes
@@ -282,7 +285,7 @@ ${IMAGE_ID} tmp-certs-check \
 {{< /tab >}}
 {{< /tabpane >}}
 
-EKS-Anywhere typically renews certificates when upgrading a cluster. However, if a cluster has not been upgraded for over a year, then it is necessary to manually renew these certificates. Please see [Certificate rotation]({{< relref "../clustermgmt/security/manually-renew-certs.md" >}}) to manually rotate expired certificates.
+EKS Anywhere typically renews certificates when upgrading a cluster. However, if a cluster has not been upgraded for over a year, then it is necessary to manually renew these certificates. Please see [Certificate rotation]({{< relref "../clustermgmt/security/manually-renew-certs.md" >}}) to manually rotate expired certificates.
 
 ### Bootstrap cluster fails to come up
 
