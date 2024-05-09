@@ -22,7 +22,9 @@ const (
 	SuccessIcon              = "✅"
 	FakeComponentChecksum    = "abcdef1"
 	FakeGitCommit            = "0123456789abcdef0123456789abcdef01234567"
+	FakeGitTag               = "v1.2.3"
 	ReleaseFolderName        = "release"
+	MainBranchName           = "main"
 	EksDReleaseComponentsUrl = "https://distro.eks.amazonaws.com/crds/releases.distro.eks.amazonaws.com-v1alpha1.yaml"
 	YamlSeparator            = "\n---\n"
 

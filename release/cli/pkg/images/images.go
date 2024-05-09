@@ -35,6 +35,7 @@ import (
 	"github.com/aws/eks-anywhere/release/cli/pkg/aws/ecr"
 	"github.com/aws/eks-anywhere/release/cli/pkg/aws/ecrpublic"
 	"github.com/aws/eks-anywhere/release/cli/pkg/aws/s3"
+	"github.com/aws/eks-anywhere/release/cli/pkg/constants"
 	"github.com/aws/eks-anywhere/release/cli/pkg/filereader"
 	"github.com/aws/eks-anywhere/release/cli/pkg/retrier"
 	releasetypes "github.com/aws/eks-anywhere/release/cli/pkg/types"
@@ -62,7 +63,7 @@ func PollForExistence(devRelease bool, authConfig *docker.AuthConfiguration, ima
 	// checks whether the error occured during download is an ImageNotFound error and retries the
 	// download operation for a maximum of 60 retries, with a wait time of 30 seconds per retry.
 	retrier := retrier.NewRetrier(60*time.Minute, retrier.WithRetryPolicy(func(totalRetries int, err error) (retry bool, wait time.Duration) {
-		if branchName == "main" && artifactutils.IsImageNotFoundError(err) && totalRetries < 60 {
+		if branchName == constants.MainBranchName && artifactutils.IsImageNotFoundError(err) && totalRetries < 60 {
 			return true, 30 * time.Second
 		}
 		return false, 0
@@ -132,7 +133,7 @@ func GetSourceImageURI(r *releasetypes.ReleaseConfig, name, repoName string, tag
 	if r.DevRelease || r.ReleaseEnvironment == "development" {
 		latestTag = artifactutils.GetLatestUploadDestination(r.BuildRepoBranchName)
 		if imageTagConfiguration.SourceLatestTagFromECR && !r.DryRun {
-			if (strings.Contains(name, "eks-anywhere-packages") || strings.Contains(name, "ecr-token-refresher")) && r.BuildRepoBranchName != "main" {
+			if (strings.Contains(name, "eks-anywhere-packages") || strings.Contains(name, "ecr-token-refresher")) && r.BuildRepoBranchName != constants.MainBranchName {
 				latestTag, _, err = ecr.FilterECRRepoByTagPrefix(r.SourceClients.ECR.EcrClient, repoName, "v0.0.0", false)
 			} else {
 				latestTag, err = ecr.GetLatestImageSha(r.SourceClients.ECR.EcrClient, repoName)
@@ -166,7 +167,7 @@ func GetSourceImageURI(r *releasetypes.ReleaseConfig, name, repoName string, tag
 			sourceEcrAuthConfig := r.SourceClients.ECR.AuthConfig
 			err := PollForExistence(r.DevRelease, sourceEcrAuthConfig, sourceImageUri, r.SourceContainerRegistry, r.ReleaseEnvironment, r.BuildRepoBranchName)
 			if err != nil {
-				if r.BuildRepoBranchName != "main" {
+				if r.BuildRepoBranchName != constants.MainBranchName {
 					fmt.Printf("Tag corresponding to %s branch not found for %s image. Using image artifact from main\n", r.BuildRepoBranchName, repoName)
 					var gitTagFromMain string
 					if strings.Contains(name, "bottlerocket-bootstrap") {
@@ -176,13 +177,13 @@ func GetSourceImageURI(r *releasetypes.ReleaseConfig, name, repoName string, tag
 						if hasSeparateTagPerReleaseBranch {
 							gitTagPath = filepath.Join(tagOptions["projectPath"], tagOptions["eksDReleaseChannel"])
 						}
-						gitTagFromMain, err = filereader.ReadGitTag(gitTagPath, r.BuildRepoSource, "main")
+						gitTagFromMain, err = filereader.ReadGitTag(gitTagPath, r.BuildRepoSource, constants.MainBranchName, r.DryRun)
 						if err != nil {
 							return "", "", errors.Cause(err)
 						}
 					}
 					sourceImageUri = strings.NewReplacer(r.BuildRepoBranchName, "latest", tagOptions["gitTag"], gitTagFromMain).Replace(sourceImageUri)
-					sourcedFromBranch = "main"
+					sourcedFromBranch = constants.MainBranchName
 				} else {
 					return "", "", errors.Cause(err)
 				}
@@ -337,7 +338,7 @@ func GetPreviousReleaseImageSemver(r *releasetypes.ReleaseConfig, releaseImageUr
 					if strings.Contains(image.URI, releaseImageUri) {
 						imageUri := image.URI
 						var differential int
-						if r.BuildRepoBranchName == "main" {
+						if r.BuildRepoBranchName == constants.MainBranchName {
 							differential = 1
 						} else {
 							differential = 2

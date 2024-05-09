@@ -59,7 +59,7 @@ func SetRepoHeads(r *releasetypes.ReleaseConfig) error {
 		return errors.Cause(err)
 	}
 
-	if r.BuildRepoBranchName != "main" {
+	if r.BuildRepoBranchName != constants.MainBranchName {
 		fmt.Printf("Checking out build-tooling repo at branch %s\n", r.BuildRepoBranchName)
 		out, err = git.CheckoutRepo(r.BuildRepoSource, r.BuildRepoBranchName)
 		fmt.Println(out)
@@ -68,7 +68,7 @@ func SetRepoHeads(r *releasetypes.ReleaseConfig) error {
 		}
 	}
 
-	if r.CliRepoBranchName != "main" {
+	if r.CliRepoBranchName != constants.MainBranchName {
 		fmt.Printf("Checking out CLI repo at branch %s\n", r.CliRepoBranchName)
 		out, err = git.CheckoutRepo(r.CliRepoSource, r.CliRepoBranchName)
 		fmt.Println(out)

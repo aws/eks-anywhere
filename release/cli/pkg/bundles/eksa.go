@@ -85,7 +85,7 @@ func GetEksaBundle(r *releasetypes.ReleaseConfig, imageDigests releasetypes.Imag
 	} else {
 		componentChecksum = version.GenerateComponentHash(artifactHashes, r.DryRun)
 	}
-	version, err := version.BuildComponentVersion(version.NewCliVersioner(r.ReleaseVersion, r.CliRepoSource), componentChecksum)
+	version, err := version.BuildComponentVersion(version.NewCliVersioner(r), componentChecksum)
 	if err != nil {
 		return anywherev1alpha1.EksaBundle{}, errors.Wrapf(err, "failed generating version for eksa bundle")
 	}

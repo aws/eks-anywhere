@@ -45,7 +45,7 @@ func GetFakeSHA(hashType int) (string, error) {
 }
 
 func GetLatestUploadDestination(sourcedFromBranch string) string {
-	if sourcedFromBranch == "main" {
+	if sourcedFromBranch == constants.MainBranchName {
 		return "latest"
 	} else {
 		return sourcedFromBranch
