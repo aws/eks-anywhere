@@ -183,8 +183,29 @@ rm pki/*
 systemctl restart kubelet
 ```
 
+In some cases, the certs might not regenerate and kubelet will fail to start due to a missing `kubelet-client-current.pem`. If this happens, run the following commands:
+
+{{< tabpane >}}
+{{< tab header="Ubuntu or RHEL" lang="bash" >}}
+cat /var/lib/kubeadm/admin.conf | grep client-certificate-data: | sed 's/^.*: //' | base64 -d > /var/lib/kubelet/pki/kubelet-client-current.pem
+
+cat /var/lib/kubeadm/admin.conf | grep client-key-data: | sed 's/^.*: //' | base64 -d >> /var/lib/kubelet/pki/kubelet-client-current.pem
+
+systemctl restart kubelet
+
+{{< /tab >}}
+{{< tab header="Bottlerocket" lang="bash" >}}
+cat /var/lib/kubeadm/admin.conf | grep client-certificate-data: | apiclient exec admin sed 's/^.*: //' | base64 -d > /var/lib/kubelet/pki/kubelet-client-current.pem
+
+cat /var/lib/kubeadm/admin.conf | grep client-key-data: | apiclient exec admin sed 's/^.*: //' | base64 -d >> /var/lib/kubelet/pki/kubelet-client-current.pem
+
+systemctl restart kubelet
+
+{{< /tab >}}
+{{< /tabpane >}}
+
 ### Post Renewal
-Once all the certificates are valid, verify the kcp object on the affected cluster(s) is not paused. If it is paused, then this usually indicates an issue with the etcd cluster. Check the logs for pods under the `etcdadm-controller-system` namespace for any errors. 
+Once all the certificates are valid, verify the kcp object on the affected cluster(s) is not paused by running `kubectl describe kcp -n eksa-system | grep cluster.x-k8s.io/paused`. If it is paused, then this usually indicates an issue with the etcd cluster. Check the logs for pods under the `etcdadm-controller-system` namespace for any errors. 
 If the logs indicate an issue with the etcd endpoints, then you need to update `spec.clusterConfiguration.etcd.endpoints` in the cluster's `kubeadmconfig` resource: `kubectl edit kcp -n eksa-system`
 
 Example:
