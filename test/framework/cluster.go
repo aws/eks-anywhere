@@ -19,7 +19,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/bmc-toolbox/bmclib/v2"
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -30,6 +29,7 @@ import (
 
 	packagesv1 "github.com/aws/eks-anywhere-packages/api/v1alpha1"
 	"github.com/aws/eks-anywhere/internal/pkg/api"
+	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/cluster"
@@ -61,7 +61,7 @@ const (
 	BundlesOverrideVar                     = "T_BUNDLES_OVERRIDE"
 	ClusterIPPoolEnvVar                    = "T_CLUSTER_IP_POOL"
 	ClusterIPEnvVar                        = "T_CLUSTER_IP"
-	CleanupVmsVar                          = "T_CLEANUP_VMS"
+	CleanupMachinesVar                     = "T_CLEANUP_MACHINES"
 	hardwareYamlPath                       = "hardware.yaml"
 	hardwareCsvPath                        = "hardware.csv"
 	EksaPackagesInstallation               = "eks-anywhere-packages"
@@ -148,7 +148,7 @@ func NewClusterE2ETest(t T, provider Provider, opts ...ClusterE2ETestOpt) *Clust
 	provider.Setup()
 
 	e.T.Cleanup(func() {
-		e.CleanupVms()
+		e.cleanupMachines()
 
 		tinkerbellCIEnvironment := os.Getenv(TinkerbellCIEnvironment)
 		if e.Provider.Name() == tinkerbellProviderName && tinkerbellCIEnvironment == "true" {
@@ -341,7 +341,7 @@ type Provider interface {
 	// Prefer to call UpdateClusterConfig directly from the tests to make it more explicit.
 	ClusterConfigUpdates() []api.ClusterConfigFiller
 	Setup()
-	CleanupVMs(clusterName string) error
+	CleanupMachines(clusterName string) error
 	UpdateKubeConfig(content *[]byte, clusterName string) error
 	ClusterStateValidations() []clusterf.StateValidation
 	WithKubeVersionAndOS(kubeVersion v1alpha1.KubernetesVersion, os OS, release *releasev1.EksARelease) api.ClusterConfigFiller
@@ -352,69 +352,14 @@ func (e *ClusterE2ETest) GenerateClusterConfig(opts ...CommandOpt) {
 	e.GenerateClusterConfigForVersion("", opts...)
 }
 
-func newBmclibClient(log logr.Logger, hostIP, username, password string) *bmclib.Client {
-	o := []bmclib.Option{}
-	log = log.WithValues("host", hostIP, "username", username)
-	o = append(o, bmclib.WithLogger(log))
-	client := bmclib.NewClient(hostIP, username, password, o...)
-	client.Registry.Drivers = client.Registry.PreferProtocol("redfish")
-
-	return client
-}
-
-// powerOffHardware issues power off calls to all Hardware. This function does not fail the test if it encounters an error.
-// This function is a helper and not part of the code path that we are testing.
-// For this reason, we are only logging the errors and not failing the test.
-// This function exists not because we need the hardware to be powered off before a test run,
-// but because we want to make sure that no other Tinkerbell Boots DHCP server is running.
-// Another Boots DHCP server running can cause netboot issues with hardware.
-func (e *ClusterE2ETest) powerOffHardware() {
-	for _, h := range e.TestHardware {
-		ctx, done := context.WithTimeout(context.Background(), 2*time.Minute)
-		defer done()
-		bmcClient := newBmclibClient(logr.Discard(), h.BMCIPAddress, h.BMCUsername, h.BMCPassword)
-
-		if err := bmcClient.Open(ctx); err != nil {
-			md := bmcClient.GetMetadata()
-			e.T.Logf("Failed to open connection to BMC: %v, hardware: %v, providersAttempted: %v, failedProviderDetail: %v", err, h.BMCIPAddress, md.ProvidersAttempted, md.SuccessfulOpenConns)
-
-			continue
-		}
-		md := bmcClient.GetMetadata()
-		e.T.Logf("Connected to BMC: hardware: %v, providersAttempted: %v, successfulProvider: %v", h.BMCIPAddress, md.ProvidersAttempted, md.SuccessfulOpenConns)
-
-		defer func() {
-			if err := bmcClient.Close(ctx); err != nil {
-				md := bmcClient.GetMetadata()
-				e.T.Logf("BMC close connection failed: %v, hardware: %v, providersAttempted: %v, failedProviderDetail: %v", err, h.BMCIPAddress, md.ProvidersAttempted, md.FailedProviderDetail)
-			}
-		}()
-
-		state, err := bmcClient.GetPowerState(ctx)
-		if err != nil {
-			state = "unknown"
-		}
-		if strings.Contains(strings.ToLower(state), "off") {
-			return
-		}
-
-		if _, err := bmcClient.SetPowerState(ctx, "off"); err != nil {
-			md := bmcClient.GetMetadata()
-			e.T.Logf("failed to power off hardware: %v, hardware: %v, providersAttempted: %v, failedProviderDetail: %v", err, h.BMCIPAddress, md.ProvidersAttempted, md.SuccessfulOpenConns)
-			continue
-		}
-	}
-}
-
 // ValidateHardwareDecommissioned checks that the all hardware was powered off during the cluster deletion.
-// This function tests that the hardware was powered off during the cluster deletion. If any hardware are not powered off
-// this func calls powerOffHardware to power off the hardware and then fails this test.
+// This function tests that the hardware was powered off during the cluster deletion.
 func (e *ClusterE2ETest) ValidateHardwareDecommissioned() {
 	var failedToDecomm []*api.Hardware
 	for _, h := range e.TestHardware {
 		ctx, done := context.WithTimeout(context.Background(), 2*time.Minute)
 		defer done()
-		bmcClient := newBmclibClient(logr.Discard(), h.BMCIPAddress, h.BMCUsername, h.BMCPassword)
+		bmcClient := test.NewBmclibClient(logr.Discard(), h.BMCIPAddress, h.BMCUsername, h.BMCPassword)
 
 		if err := bmcClient.Open(ctx); err != nil {
 			md := bmcClient.GetMetadata()
@@ -460,7 +405,6 @@ func (e *ClusterE2ETest) ValidateHardwareDecommissioned() {
 	}
 
 	if len(failedToDecomm) > 0 {
-		e.powerOffHardware()
 		e.T.Fatalf("failed to decommission all hardware during cluster deletion")
 	}
 }
@@ -913,16 +857,16 @@ func (e *ClusterE2ETest) DeleteCluster(opts ...CommandOpt) {
 	e.deleteCluster(opts...)
 }
 
-// CleanupVms is a helper to clean up VMs. It is a noop if the T_CLEANUP_VMS environment variable
+// cleanupMachines is a helper to clean up test machines resources. It is a noop if the T_CLEANUP_MACHINES environment variable
 // is false or unset.
-func (e *ClusterE2ETest) CleanupVms() {
-	if !shouldCleanUpVms() {
-		e.T.Logf("Skipping VM cleanup")
+func (e *ClusterE2ETest) cleanupMachines() {
+	if !shouldCleanUpMachines() {
+		e.T.Logf("Skipping provider machine resource cleanup")
 		return
 	}
 
-	if err := e.Provider.CleanupVMs(e.ClusterName); err != nil {
-		e.T.Logf("failed to clean up VMs: %v", err)
+	if err := e.Provider.CleanupMachines(e.ClusterName); err != nil {
+		e.T.Logf("failed to clean up %s test machine resouces: %v", e.Provider.Name(), err)
 	}
 }
 
@@ -933,9 +877,9 @@ func (e *ClusterE2ETest) CleanupDockerEnvironment() {
 	e.Run("docker", "rm", "-vf", "$(docker ps -a -q)", "||", "true")
 }
 
-func shouldCleanUpVms() bool {
-	shouldCleanupVms, err := getCleanupVmsVar()
-	return err == nil && shouldCleanupVms
+func shouldCleanUpMachines() bool {
+	shouldCleanupMachines, err := getCleanupMachinesVar()
+	return err == nil && shouldCleanupMachines
 }
 
 func (e *ClusterE2ETest) deleteCluster(opts ...CommandOpt) {
@@ -1118,8 +1062,8 @@ func getBundlesOverride() string {
 	return os.Getenv(BundlesOverrideVar)
 }
 
-func getCleanupVmsVar() (bool, error) {
-	return strconv.ParseBool(os.Getenv(CleanupVmsVar))
+func getCleanupMachinesVar() (bool, error) {
+	return strconv.ParseBool(os.Getenv(CleanupMachinesVar))
 }
 
 func setEksctlVersionEnvVar() error {

@@ -5,19 +5,25 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/go-logr/logr"
 	prismgoclient "github.com/nutanix-cloud-native/prism-go-client"
 	v3 "github.com/nutanix-cloud-native/prism-go-client/v3"
 
+	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/internal/pkg/ec2"
 	"github.com/aws/eks-anywhere/internal/pkg/s3"
+	"github.com/aws/eks-anywhere/internal/test"
+	"github.com/aws/eks-anywhere/pkg/errors"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
 	"github.com/aws/eks-anywhere/pkg/providers/nutanix"
+	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
 	"github.com/aws/eks-anywhere/pkg/retrier"
 	"github.com/aws/eks-anywhere/pkg/validations"
 )
@@ -186,6 +192,76 @@ func NutanixTestResources(clusterName, endpoint, port string, insecure, ignoreEr
 			}
 			logger.Info("Warning: Failed to delete Nutanix VM, skipping...", "Name", *vm.Spec.Name, "UUID:", *vm.Metadata.UUID)
 		}
+	}
+	return nil
+}
+
+// TinkerbellTestResources cleans up machines by powering them down.
+func TinkerbellTestResources(ctx context.Context, inventoryCSVFilePath string, ignoreErrors bool) error {
+	hardwarePool, err := api.NewHardwareMapFromFile(inventoryCSVFilePath)
+	if err != nil {
+		return fmt.Errorf("failed to create hardware map from inventory csv: %v", err)
+	}
+
+	logger.Info("Powering off hardware: %+v", hardwarePool)
+	return powerOffHardwarePool(ctx, hardwarePool, ignoreErrors)
+}
+
+func powerOffHardwarePool(ctx context.Context, hardware map[string]*hardware.Machine, ignoreErrors bool) error {
+	errList := []error{}
+	for _, h := range hardware {
+		if err := powerOffHardware(ctx, h, ignoreErrors); err != nil {
+			errList = append(errList, err)
+		}
+	}
+
+	if len(errList) > 0 {
+		return fmt.Errorf("failed to power off %d hardware: %+v", len(errList), errors.NewAggregate(errList))
+	}
+
+	return nil
+}
+
+func powerOffHardware(ctx context.Context, h *hardware.Machine, ignoreErrors bool) (reterror error) {
+	bmcClient := test.NewBmclibClient(logr.Discard(), h.BMCIPAddress, h.BMCUsername, h.BMCPassword)
+
+	if err := bmcClient.Open(ctx); err != nil {
+		md := bmcClient.GetMetadata()
+		logger.Info("Warning: Failed to open connection to BMC: %v, hardware: %v, providersAttempted: %v, failedProviderDetail: %v", err, h.BMCIPAddress, md.ProvidersAttempted, md.SuccessfulOpenConns)
+		return handlePowerOffHardwareError(err, ignoreErrors)
+	}
+
+	md := bmcClient.GetMetadata()
+	logger.Info("Connected to BMC: hardware: %v, providersAttempted: %v, successfulProvider: %v", h.BMCIPAddress, md.ProvidersAttempted, md.SuccessfulOpenConns)
+
+	defer func() {
+		if err := bmcClient.Close(ctx); err != nil {
+			md := bmcClient.GetMetadata()
+			logger.Info("Warning: BMC close connection failed: %v, hardware: %v, providersAttempted: %v, failedProviderDetail: %v", err, h.BMCIPAddress, md.ProvidersAttempted, md.FailedProviderDetail)
+			reterror = handlePowerOffHardwareError(err, ignoreErrors)
+		}
+	}()
+
+	state, err := bmcClient.GetPowerState(ctx)
+	if err != nil {
+		state = "unknown"
+	}
+	if strings.Contains(strings.ToLower(state), "off") {
+		return nil
+	}
+
+	if _, err := bmcClient.SetPowerState(ctx, "off"); err != nil {
+		md := bmcClient.GetMetadata()
+		logger.Info("Warning: failed to power off hardware: %v, hardware: %v, providersAttempted: %v, failedProviderDetail: %v", err, h.BMCIPAddress, md.ProvidersAttempted, md.SuccessfulOpenConns)
+		return handlePowerOffHardwareError(err, ignoreErrors)
+	}
+
+	return nil
+}
+
+func handlePowerOffHardwareError(err error, ignoreErrors bool) error {
+	if err != nil && !ignoreErrors {
+		return err
 	}
 	return nil
 }

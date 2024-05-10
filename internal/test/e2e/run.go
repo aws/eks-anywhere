@@ -47,7 +47,7 @@ type ParallelRunConf struct {
 	Regex                  string
 	TestsToSkip            []string
 	BundlesOverride        bool
-	CleanupVms             bool
+	CleanupMachines        bool
 	TestReportFolder       string
 	BranchName             string
 	BaremetalBranchName    string
@@ -199,7 +199,7 @@ type instanceRunConf struct {
 	BundlesOverride         bool
 	TestRunnerType          TestRunnerType
 	TestRunnerConfig        TestInfraConfig
-	CleanupVMs              bool
+	CleanupMachines         bool
 	Logger                  logr.Logger
 	Session                 *session.Session
 }
@@ -231,7 +231,7 @@ func RunTests(conf instanceRunConf, inventoryCatalogue map[string]*hardwareCatal
 		"branch_name", conf.BranchName, "ip_pool", conf.IPPool.ToString(),
 		"hardware_count", conf.HardwareCount, "tinkerbell_airgapped_test", conf.TinkerbellAirgappedTest,
 		"bundles_override", conf.BundlesOverride, "test_runner_type", conf.TestRunnerType,
-		"cleanup_vms", conf.CleanupVMs)
+		"cleanup_machines", conf.CleanupMachines)
 
 	instanceId, err := testRunner.createInstance(conf)
 	if err != nil {
@@ -519,7 +519,7 @@ func newInstanceRunConf(awsSession *session.Session, conf ParallelRunConf, jobNu
 		BundlesOverride:         conf.BundlesOverride,
 		TestReportFolder:        conf.TestReportFolder,
 		BranchName:              conf.BranchName,
-		CleanupVMs:              conf.CleanupVms,
+		CleanupMachines:         conf.CleanupMachines,
 		TestRunnerType:          testRunnerType,
 		TestRunnerConfig:        *testRunnerConfig,
 		Logger:                  conf.Logger.WithValues("jobID", jobID, "test", testRegex),

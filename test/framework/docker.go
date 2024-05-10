@@ -39,8 +39,8 @@ func (d *Docker) Name() string {
 // Setup implements the Provider interface.
 func (d *Docker) Setup() {}
 
-// CleanupVMs implements the Provider interface.
-func (d *Docker) CleanupVMs(_ string) error {
+// CleanupMachines implements the Provider interface.
+func (d *Docker) CleanupMachines(_ string) error {
 	return nil
 }
 

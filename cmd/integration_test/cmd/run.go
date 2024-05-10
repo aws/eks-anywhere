@@ -22,7 +22,7 @@ const (
 	maxConcurrentTestsFlagName = "max-concurrent-tests"
 	skipFlagName               = "skip"
 	bundlesOverrideFlagName    = "bundles-override"
-	cleanupVmsFlagName         = "cleanup-vms"
+	cleanupMachinesFlagName    = "cleanup-machines"
 	testReportFolderFlagName   = "test-report-folder"
 	branchNameFlagName         = "branch-name"
 	instanceConfigFlagName     = "instance-config"
@@ -66,7 +66,7 @@ func init() {
 	runE2ECmd.Flags().IntP(maxConcurrentTestsFlagName, "p", 1, "Maximum number of parallel tests that can be run at a time")
 	runE2ECmd.Flags().StringSlice(skipFlagName, nil, "List of tests to skip")
 	runE2ECmd.Flags().Bool(bundlesOverrideFlagName, false, "Flag to indicate if the tests should run with a bundles override")
-	runE2ECmd.Flags().Bool(cleanupVmsFlagName, false, "Flag to indicate if VSphere VMs should be cleaned up automatically as tests complete")
+	runE2ECmd.Flags().Bool(cleanupMachinesFlagName, false, "Flag to indicate if test machines should be cleaned up automatically as tests complete")
 	runE2ECmd.Flags().String(testReportFolderFlagName, "", "Folder destination for JUnit tests reports")
 	runE2ECmd.Flags().String(branchNameFlagName, "main", "EKS-A origin branch from where the tests are being run")
 	runE2ECmd.Flags().String(baremetalBranchFlagName, "main", "Branch for baremetal tests to run on")
@@ -88,7 +88,7 @@ func runE2E(ctx context.Context) error {
 	maxConcurrentTests := viper.GetInt(maxConcurrentTestsFlagName)
 	testsToSkip := viper.GetStringSlice(skipFlagName)
 	bundlesOverride := viper.GetBool(bundlesOverrideFlagName)
-	cleanupVms := viper.GetBool(cleanupVmsFlagName)
+	cleanupMachines := viper.GetBool(cleanupMachinesFlagName)
 	testReportFolder := viper.GetString(testReportFolderFlagName)
 	branchName := viper.GetString(branchNameFlagName)
 	baremetalBranchName := viper.GetString(baremetalBranchFlagName)
@@ -102,7 +102,7 @@ func runE2E(ctx context.Context) error {
 		Regex:                  testRegex,
 		TestsToSkip:            testsToSkip,
 		BundlesOverride:        bundlesOverride,
-		CleanupVms:             cleanupVms,
+		CleanupMachines:        cleanupMachines,
 		TestReportFolder:       testReportFolder,
 		BranchName:             branchName,
 		TestInstanceConfigFile: instanceConfigFile,
