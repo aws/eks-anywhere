@@ -134,6 +134,7 @@ func ParseAWSConfig(ctx context.Context, awsConfig string) (*aws.Config, error) 
 	if err != nil {
 		return nil, err
 	}
+	defer file.Close()
 	if _, err := file.Write([]byte(awsConfig)); err != nil {
 		return nil, err
 	}
