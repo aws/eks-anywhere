@@ -111,26 +111,3 @@ sysdig           sysdig-agent                 1.6.3
 tetrate.io       tetrate-istio-distribution   1.18.1
 hashicorp        vault                        0.25.0
 ```
-## Cloud partners
-```
-Kubernetes Version :  1.28 
-Date of Conformance Test : 2024-05-02
- 
-Following ISV Partners have Validated their Conformance : 
- 
-VENDOR_PRODUCT   VENDOR_PRODUCT_TYPE          VENDOR_PRODUCT_VERSION
-aqua             aqua-enforcer                2022.4.20
-komodor          k8s-watcher                  1.15.5
-kong             kong-enterprise              2.27.0
-accuknox         kubearmor                    v1.3.2
-kubecost         cost-analyzer                2.1.0
-nirmata          enterprise-kyverno           1.6.10
-lacework         polygraph                    6.11.0
-newrelic         nri-bundle                   5.0.64
-perfectscale     perfectscale                 v0.0.38
-pulumi           pulumi-kubernetes-operator   0.3.0
-solo.io          solo-istiod                  1.18.3-eks-a
-sysdig           sysdig-agent                 1.6.3
-tetrate.io       tetrate-istio-distribution   1.18.1
-hashicorp        vault                        0.25.0
-```
