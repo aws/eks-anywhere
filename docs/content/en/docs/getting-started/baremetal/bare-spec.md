@@ -171,7 +171,7 @@ Optional field to skip deploying the control plane load balancer. Make sure your
 Refers to the Kubernetes object with Tinkerbell-specific configuration. See `TinkerbellDatacenterConfig Fields` below.
 
 ### kubernetesVersion (required)
-The Kubernetes version you want to use for your cluster. Supported values: `1.28`, `1.27`, `1.26`, `1.25`, `1.24`
+The Kubernetes version you want to use for your cluster. Supported values: `1.29`, `1.28`, `1.27`, `1.26`, `1.25`
 
 ### managementCluster (required)
 Identifies the name of the management cluster.
@@ -221,7 +221,7 @@ Modifying the labels associated with a worker node group configuration will caus
 the existing nodes associated with the configuration.
 
 ### workerNodeGroupConfigurations.kubernetesVersion (optional)
-The Kubernetes version you want to use for this worker node group. [Supported values]({{< relref "../../concepts/support-versions/#kubernetes-versions" >}}): `1.28`, `1.27`, `1.26`, `1.25`, `1.24`
+The Kubernetes version you want to use for this worker node group. [Supported values]({{< relref "../../concepts/support-versions/#kubernetes-versions" >}}): `1.29`, `1.28`, `1.27`, `1.26`, `1.25`
 
 Must be less than or equal to the cluster `kubernetesVersion` defined at the root level of the cluster spec. The worker node kubernetesVersion must be no more than two minor Kubernetes versions lower than the cluster control plane's Kubernetes version. Removing `workerNodeGroupConfiguration.kubernetesVersion` will trigger an upgrade of the node group to the `kubernetesVersion` defined at the root level of the cluster spec.
 
@@ -267,7 +267,7 @@ Once the Tinkerbell services move from the Admin machine to run on the target cl
 When separate management and workload clusters are supported in Bare Metal, the IP address becomes a necessity.
 
 ### osImageURL (optional)
-Optional field to replace the default Bottlerocket operating system. EKS Anywhere can only auto-import Bottlerocket. In order to use Ubuntu or RHEL see [building baremetal node images]({{< relref "../../osmgmt/artifacts/#build-bare-metal-node-images" >}}). This field is also useful if you want to provide a customized operating system image or simply host the standard image locally. To upgrade a node or group of nodes to a new operating system version (ie. RHEL 8.7 to RHEL 8.8), modify this field to point to the new operating system image URL and run [upgrade cluster command]({{< relref "../../clustermgmt/cluster-upgrades/baremetal-upgrades/#upgrade-cluster-command" >}}).
+Optional field to replace the default Ubuntu operating system. EKS Anywhere can only auto-import Ubuntu. In order to use Ubuntu or RHEL see [building baremetal node images]({{< relref "../../osmgmt/artifacts/#build-bare-metal-node-images" >}}). This field is also useful if you want to provide a customized operating system image or simply host the standard image locally. To upgrade a node or group of nodes to a new operating system version (ie. RHEL 8.7 to RHEL 8.8), modify this field to point to the new operating system image URL and run [upgrade cluster command]({{< relref "../../clustermgmt/cluster-upgrades/baremetal-upgrades/#upgrade-cluster-command" >}}).
 The `osImageURL` must contain the `Cluster.Spec.KubernetesVersion` or `Cluster.Spec.WorkerNodeGroupConfiguration[].KubernetesVersion` version (in case of modular upgrade). For example, if the Kubernetes version is 1.24, the `osImageURL` name should include 1.24, 1_24, 1-24 or 124.
 
 ### hookImagesURLPath (optional)
@@ -318,10 +318,10 @@ spec:
     node: "cp-machine"
 ```
 ### osFamily (required)
-Operating system on the machine. Permitted values: `bottlerocket`, `ubuntu`, `redhat` (Default: `bottlerocket`).
+Operating system on the machine. Permitted values: `ubuntu`, `redhat` (Default: `ubuntu`).
 
 ### osImageURL (optional)
-Optional field to replace the default Bottlerocket operating system. EKS Anywhere can only auto-import Bottlerocket. In order to use Ubuntu or RHEL see [building baremetal node images]({{< relref "../../osmgmt/artifacts/#build-bare-metal-node-images" >}}). This field is also useful if you want to provide a customized operating system image or simply host the standard image locally. To upgrade a node or group of nodes to a new operating system version (ie. RHEL 8.7 to RHEL 8.8), modify this field to point to the new operating system image URL and run [upgrade cluster command]({{< relref "../../clustermgmt/cluster-upgrades/baremetal-upgrades/#upgrade-cluster-command" >}}).
+Optional field to replace the default Ubuntu operating system. EKS Anywhere can only auto-import Ubuntu. In order to use Ubuntu or RHEL see [building baremetal node images]({{< relref "../../osmgmt/artifacts/#build-bare-metal-node-images" >}}). This field is also useful if you want to provide a customized operating system image or simply host the standard image locally. To upgrade a node or group of nodes to a new operating system version (ie. RHEL 8.7 to RHEL 8.8), modify this field to point to the new operating system image URL and run [upgrade cluster command]({{< relref "../../clustermgmt/cluster-upgrades/baremetal-upgrades/#upgrade-cluster-command" >}}).
 
 >**_NOTE:_** If specified for a single `TinkerbellMachineConfig`, osImageURL has to be specified for all the `TinkerbellMachineConfigs`.
 osImageURL field cannot be specified both in the `TinkerbellDatacenterConfig` and `TinkerbellMachineConfig` objects.
@@ -363,12 +363,11 @@ When you generate a Bare Metal cluster configuration, the `TinkerbellTemplateCon
 Advanced users can override the default values set for `TinkerbellTemplateConfig`.
 They can also add their own [Tinkerbell actions](https://docs.tinkerbell.org/actions/action-architecture/) to make personalized modifications to EKS Anywhere nodes.
 
-The following shows two `TinkerbellTemplateConfig` examples that you can add to your cluster configuration file to override the values that EKS Anywhere sets: one for Ubuntu and one for Bottlerocket.
+The following shows Ubuntu `TinkerbellTemplateConfig` example that you can add to your cluster configuration file to override the values that EKS Anywhere sets.
 Most actions used differ for different operating systems.
 
 >**_NOTE:_** For the `stream-image` action, `DEST_DISK` points to the device representing the entire hard disk (for example, `/dev/sda`).
 For UEFI-enabled images, such as Ubuntu, write actions use `DEST_DISK` to point to the second partition (for example, `/dev/sda2`), with the first being the EFI partition.
-For the Bottlerocket image, which has 12 partitions, `DEST_DISK` is partition 12 (for example, `/dev/sda12`).
 Device names will be different for different disk types.
 >
 
@@ -468,112 +467,6 @@ spec:
     version: "0.1"
 ```
 
-### Bottlerocket TinkerbellTemplateConfig example
-
-Pay special attention to the `BOOTCONFIG_CONTENTS` environment section below if you wish to set up console redirection for the kernel and systemd.
-If you are only using a direct attached monitor as your primary display device, no additional configuration is needed here.
-However, if you need all boot output to be shown via a server's serial console for example, extra configuration should be provided inside `BOOTCONFIG_CONTENTS`.
-
-An empty `kernel {}` key is provided below in the example; inside this key is where you will specify your console devices.
-You may specify multiple comma delimited console devices in quotes to a console key as such: `console = "tty0", "ttyS0,115200n8"`.
-The order of the devices is significant; systemd will output to the last device specified.
-The console key belongs inside the kernel key like so:
-```
-kernel {
-    console = "tty0", "ttyS0,115200n8"
-}
-```
-
-The above example will send all kernel output to both consoles, and systemd output to `ttyS0`.
-Additional information about serial console setup can be found in the [Linux kernel documentation](https://www.kernel.org/doc/html/latest/admin-guide/serial-console.html).
-
-```yaml
----
-apiVersion: anywhere.eks.amazonaws.com/v1alpha1
-kind: TinkerbellTemplateConfig
-metadata:
-  name: my-cluster-name
-spec:
-  template:
-    global_timeout: 6000
-    id: ""
-    name: my-cluster-name
-    tasks:
-    - actions:
-      - environment:
-          COMPRESSED: "true"
-          DEST_DISK: /dev/sda
-          IMG_URL: https://anywhere-assets.eks.amazonaws.com/releases/bundles/11/artifacts/raw/1-22/bottlerocket-v1.22.10-eks-d-1-22-8-eks-a-11-amd64.img.gz
-        image: public.ecr.aws/eks-anywhere/tinkerbell/hub/image2disk:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-15
-        name: stream-image
-        timeout: 360
-      - environment:
-          # An example console declaration that will send all kernel output to both consoles, and systemd output to ttyS0.
-          # kernel {
-          #     console = "tty0", "ttyS0,115200n8"
-          # }
-          BOOTCONFIG_CONTENTS: |
-            kernel {}
-          DEST_DISK: /dev/sda12
-          DEST_PATH: /bootconfig.data
-          DIRMODE: "0700"
-          FS_TYPE: ext4
-          GID: "0"
-          MODE: "0644"
-          UID: "0"
-        image: public.ecr.aws/eks-anywhere/tinkerbell/hub/writefile:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-15
-        name: write-bootconfig
-        timeout: 90
-      - environment:
-          CONTENTS: |
-            # Version is required, it will change as we support
-            # additional settings
-            version = 1
-            # "eno1" is the interface name
-            # Users may turn on dhcp4 and dhcp6 via boolean
-            [eno1]
-            dhcp4 = true
-            # Define this interface as the "primary" interface
-            # for the system.  This IP is what kubelet will use
-            # as the node IP.  If none of the interfaces has
-            # "primary" set, we choose the first interface in
-            # the file
-            primary = true
-          DEST_DISK: /dev/sda12
-          DEST_PATH: /net.toml
-          DIRMODE: "0700"
-          FS_TYPE: ext4
-          GID: "0"
-          MODE: "0644"
-          UID: "0"
-        image: public.ecr.aws/eks-anywhere/tinkerbell/hub/writefile:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-15
-        name: write-netconfig
-        timeout: 90
-      - environment:
-          HEGEL_URLS: http://<hegel-ip>:50061
-          DEST_DISK: /dev/sda12
-          DEST_PATH: /user-data.toml
-          DIRMODE: "0700"
-          FS_TYPE: ext4
-          GID: "0"
-          MODE: "0644"
-          UID: "0"
-        image: public.ecr.aws/eks-anywhere/tinkerbell/hub/writefile:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-15
-        name: write-user-data
-        timeout: 90
-      - name: "reboot"
-        image: public.ecr.aws/eks-anywhere/tinkerbell/hub/reboot:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-15
-        timeout: 90
-        volumes:
-          - /worker:/worker
-      name: my-cluster-name
-      volumes:
-      - /dev:/dev
-      - /dev/console:/dev/console
-      - /lib/firmware:/lib/firmware:ro
-      worker: '{{.device_1}}'
-    version: "0.1"
-```
 ## TinkerbellTemplateConfig Fields
 
 The values in the `TinkerbellTemplateConfig` fields are created from the contents of the CSV file used to generate a configuration.
@@ -581,7 +474,7 @@ The template contains actions that are performed on a Bare Metal machine when it
 For advanced users, you can add these fields to your cluster configuration file if you have special needs to do so.
 
 While there are fields that apply to all provisioned operating systems, actions are specific to each operating system.
-Examples below describe actions for Ubuntu and Bottlerocket operating systems.
+Examples below describe actions for Ubuntu operating systems.
 
 ### template.global_timeout
 
@@ -594,9 +487,9 @@ Not set by default.
 ### template.tasks
 
 Within the TinkerbellTemplateConfig `template` under `tasks` is a set of actions.
-The following descriptions cover the actions shown in the example templates for Ubuntu and Bottlerocket:
+The following descriptions cover the actions shown in the example templates for Ubuntu:
 
-### template.tasks.actions.name.stream-image (Ubuntu and Bottlerocket)
+### template.tasks.actions.name.stream-image (Ubuntu)
 The `stream-image` action streams the selected image to the machine you are provisioning. It identifies:
 
 * environment.COMPRESSED: When set to `true`, Tinkerbell expects `IMG_URL` to be a compressed image, which Tinkerbell will uncompress when it writes the contents to disk.
@@ -675,59 +568,6 @@ actions:
   volumes:
   - /worker:/worker
 ```
-
-## Bottlerocket-specific actions
-
-### template.tasks.actions.write-bootconfig (Bottlerocket)
-The write-bootconfig action identifies the location on the machine to put content needed to boot the system from disk.
-
-* environment.BOOTCONFIG_CONTENTS.kernel: Add kernel parameters that are passed to the kernel when the system boots.
-* environment.DEST_DISK: Identifies the block storage device that holds the boot partition.
-* environment.DEST_PATH: Identifies the file holding boot configuration data (`/bootconfig.data` in this example).
-* environment.DIRMODE: The Linux permissions assigned to the boot directory.
-* environment.FS_TYPE: The filesystem type associated with the boot partition.
-* environment.GID: The group ID associated with files and directories created on the boot partition.
-* environment.MODE: The Linux permissions assigned to files in the boot partition.
-* environment.UID: The user ID associated with files and directories created on the boot partition. UID 0 is the root user.
-* image: Container image used to perform the steps needed by this action.
-* timeout: Time needed to complete the action, in seconds.
-
-### template.tasks.actions.write-netconfig (Bottlerocket)
-The write-netconfig action configures networking for the system.
-
-* environment.CONTENTS: Add network values, including: `version = 1` (version number), `[eno1]` (external network interface), `dhcp4 = true` (turns on dhcp4), and `primary = true` (identifies this interface as the primary interface used by kubelet).
-* environment.DEST_DISK: Identifies the block storage device that holds the network configuration information.
-* environment.DEST_PATH: Identifies the file holding network configuration data (`/net.toml` in this example).
-* environment.DIRMODE: The Linux permissions assigned to the directory holding network configuration settings.
-* environment.FS_TYPE: The filesystem type associated with the partition holding network configuration settings.
-* environment.GID: The group ID associated with files and directories created on the partition. GID 0 is the root group.
-* environment.MODE: The Linux permissions assigned to files in the partition.
-* environment.UID: The user ID associated with files and directories created on the partition. UID 0 is the root user.
-* image: Container image used to perform the steps needed by this action.
-
-### template.tasks.actions.write-user-data (Bottlerocket)
-The write-user-data action configures the Tinkerbell Hegel service, which provides the metadata store for Tinkerbell.
-
-* environment.HEGEL_URLS: The IP address and port number of the Tinkerbell [Hegel](https://docs.tinkerbell.org/services/hegel/) service.
-* environment.DEST_DISK: Identifies the block storage device that holds the network configuration information.
-* environment.DEST_PATH: Identifies the file holding network configuration data (`/net.toml` in this example).
-* environment.DIRMODE: The Linux permissions assigned to the directory holding network configuration settings.
-* environment.FS_TYPE: The filesystem type associated with the partition holding network configuration settings.
-* environment.GID: The group ID associated with files and directories created on the partition. GID 0 is the root group.
-* environment.MODE: The Linux permissions assigned to files in the partition.
-* environment.UID: The user ID associated with files and directories created on the partition. UID 0 is the root user.
-* image: Container image used to perform the steps needed by this action.
-* timeout: Time needed to complete the action, in seconds.
-
-### template.tasks.actions.reboot (Bottlerocket)
-The reboot action defines how the system restarts to bring up the installed system.
-
-* image: Container image used to perform the steps needed by this action.
-* timeout: Time needed to complete the action, in seconds.
-* volumes: The volume (directory) to mount into the container from the installed system.
-### version
-
-Matches the current version of the Tinkerbell template.
 
 ## Custom Tinkerbell action examples
 By creating your own custom Tinkerbell actions, you can add to or modify the installed operating system so those changes take effect when the installed system first starts (from a reboot or pivot).
