@@ -10,7 +10,7 @@ description: >
 
 EKS Anywhere supports three different node operating systems:
 
-* Bottlerocket: For vSphere and Bare Metal providers
+* Bottlerocket: For vSphere provider only
 * Ubuntu: For vSphere, Bare Metal, Nutanix, and Snow providers
 * Red Hat Enterprise Linux (RHEL): For vSphere, CloudStack, Nutanix, and Bare Metal providers
 
@@ -31,27 +31,6 @@ See descriptions of the [`osImageURL`]({{< relref "../getting-started/baremetal/
 
 EKS Anywhere does not distribute Ubuntu or RHEL OS images.
 However, see [Building node images]({{< relref "#building-node-images">}}) for information on how to build EKS Anywhere images from those Linux distributions.  Note:  if you utilize your Admin Host to build images, you will need to review  the DHCP integration provided by Libvirtd and ensure it is disabled.  If the Libvirtd DHCP is enabled, the "boots container" will detect a port conflict and terminate.
-
-### Bottlerocket OS images for Bare Metal
-
-Bottlerocket vends its Baremetal variant Images using a secure distribution tool called `tuftool`. Please refer to [Download Bottlerocket node images]({{< relref "#download-bottlerocket-node-images">}}) to download Bottlerocket image. You can also get the download URIs for Bottlerocket Baremetal images from the bundle release by running the following commands:
-
-Using the latest EKS Anywhere version
-```bash
-EKSA_RELEASE_VERSION=$(curl -sL https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml | yq ".spec.latestVersion")
-```
-
-OR
-
-Using a specific EKS Anywhere version
-```bash
-EKSA_RELEASE_VERSION=<EKS-A version>
-```
-
-```bash
-BUNDLE_MANIFEST_URL=$(curl -sL https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml | yq ".spec.releases[] | select(.version==\"$EKSA_RELEASE_VERSION\").bundleManifestUrl")
-curl -s $BUNDLE_MANIFEST_URL | yq ".spec.versionsBundles[].eksD.raw.bottlerocket.uri"
-```
 
 ### HookOS (kernel and initial ramdisk) for Bare Metal
 Using the latest EKS Anywhere version
@@ -133,7 +112,7 @@ EKS Anywhere no longer distributes Ubuntu OVAs for use with EKS Anywhere cluster
 Building your own Ubuntu-based nodes as described in [Building node images]({{< relref "#building-node-images">}}) is the only supported way to get that functionality.
 
 ## Download Bottlerocket node images
-Bottlerocket vends its VMware variant OVAs and Baremetal variants images using a secure distribution tool called `tuftool`. Please follow instructions down below to
+Bottlerocket vends its VMware variant OVAs using a secure distribution tool called `tuftool`. Please follow instructions down below to
 download Bottlerocket node images.
 1. Install Rust and Cargo
 ```bash
@@ -166,7 +145,7 @@ export KUBEVERSION="1.27"
    EKSA_RELEASE_VERSION=<EKS-A version>
    ```
 
-   Set the Bottlerocket image format to the desired value (`ova` for the VMware variant or `raw` for the Baremetal variant)
+   Set the Bottlerocket image format to the desired value (`ova` for the VMware variant)
    ```bash
    export BOTTLEROCKET_IMAGE_FORMAT="ova"
    ```
@@ -179,7 +158,6 @@ export KUBEVERSION="1.27"
 
 6. Download Bottlerocket node image
 
-    a. To download VMware variant Bottlerocket OVA
     ```bash
     OVA="bottlerocket-vmware-k8s-${KUBEVERSION}-x86_64-${BOTTLEROCKET_VERSION}.ova"
     tuftool download ${TMPDIR:-/tmp/bottlerocket-ovas} --target-name "${OVA}" \
@@ -188,21 +166,6 @@ export KUBEVERSION="1.27"
        --targets-url "https://updates.bottlerocket.aws/targets/"
     ```
    The above command will download a Bottlerocket OVA. Please refer [Deploy an OVA Template]({{< relref "../getting-started/vsphere/vsphere-preparation/#deploy-an-ova-template">}}) to proceed with the downloaded OVA.
-
-    b. To download Baremetal variant Bottlerocket image
-    ```bash
-    IMAGE="bottlerocket-metal-k8s-${KUBEVERSION}-x86_64-${BOTTLEROCKET_VERSION}.img.lz4"
-    tuftool download ${TMPDIR:-/tmp/bottlerocket-metal} --target-name "${IMAGE}" \
-       --root ./root.json \
-       --metadata-url "https://updates.bottlerocket.aws/2020-07-07/metal-k8s-${KUBEVERSION}/x86_64/" \
-       --targets-url "https://updates.bottlerocket.aws/targets/"
-    ```
-   The above command will download a Bottlerocket lz4 compressed image. Decompress and gzip the image with the following
-   commands and host the image on a webserver for using it for an EKS Anywhere Baremetal cluster.
-   ```bash
-   lz4 --decompress ${TMPDIR:-/tmp/bottlerocket-metal}/${IMAGE} ${TMPDIR:-/tmp/bottlerocket-metal}/bottlerocket.img
-   gzip ${TMPDIR:-/tmp/bottlerocket-metal}/bottlerocket.img
-   ```
 
 ## Building node images
 
