@@ -1,18 +1,16 @@
 skipped_tests:
 # CloudStack
 #Airgapped tests
-- TestCloudStackKubernetes125RedhatAirgappedRegistryMirror
 - TestCloudStackKubernetes126RedhatAirgappedRegistryMirror
 - TestCloudStackKubernetes128RedhatAirgappedProxy
 
 # Proxy tests
-- TestCloudStackKubernetes125RedhatProxyConfigAPI
 - TestCloudStackKubernetes126RedhatProxyConfigAPI
 - TestCloudStackKubernetes127RedhatProxyConfigAPI
 - TestCloudStackKubernetes128RedhatProxyConfigAPI
+- TestCloudStackKubernetes130RedhatProxyConfigAPI
 
 # MultiEndpoint
-- TestCloudStackKubernetes125MultiEndpointSimpleFlow
 - TestCloudStackKubernetes126MultiEndpointSimpleFlow
 - TestCloudStackKubernetes127MultiEndpointSimpleFlow
 - TestCloudStackKubernetes128MultiEndpointSimpleFlow
