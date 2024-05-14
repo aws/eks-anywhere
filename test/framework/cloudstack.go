@@ -372,12 +372,12 @@ func (c *CloudStack) Redhat128Template() api.CloudStackFiller {
 
 // Redhat129Template returns cloudstack filler for 1.29 RedHat.
 func (c *CloudStack) Redhat129Template() api.CloudStackFiller {
-	return c.templateForKubeVersionAndOS(anywherev1.Kube129, RedHat9, nil)
+	return c.templateForKubeVersionAndOS(anywherev1.Kube129, RedHat8, nil)
 }
 
 // Redhat130Template returns cloudstack filler for 1.30 RedHat.
 func (c *CloudStack) Redhat130Template() api.CloudStackFiller {
-	return c.templateForKubeVersionAndOS(anywherev1.Kube130, RedHat9, nil)
+	return c.templateForKubeVersionAndOS(anywherev1.Kube130, RedHat8, nil)
 }
 
 // Redhat9Kubernetes125Template returns cloudstack filler for 1.25 RedHat.
