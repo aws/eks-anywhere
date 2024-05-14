@@ -81,8 +81,9 @@ Here are other network requirements:
 
 ## Validated hardware
 
-Through extensive testing in a variety of on-premises environments, we expect Amazon EKS Anywhere on bare metal to run on most generic hardware that meets the above requirements.
-In addition, we have collaborated with our hardware original equipment manufacturer (OEM) partners to provide you a list of validated hardware:
+Through extensive testing in a variety of on-premises environments, we expect Amazon EKS Anywhere on bare metal to run on most generic hardware that meets the above requirements.  Compatibility is determined by the host operating system selected when [Building Node Images](https://quip-amazon.com/6eLsAjMvL5NI/EKS-Anywhere-Validated-Hardware#temp:C:FZU2fe2764a2d3440bea304af090).  Installation may require you to [Customize HookOS for EKS Anywhere on Bare Metal](https://anywhere.eks.amazonaws.com/docs/getting-started/baremetal/customize/bare-custom-hookos/) to add drivers, or modify configuration specific to your environment.  [Bottlerocket support for bare metal was deprecated with the EKS Anywhere v0.19 release.](https://github.com/aws/eks-anywhere/issues/7754)
+
+The following is a list from collaboration with our hardware original equipment manufacturer (OEM) partners from previous validation testing.  (this list of examples will no longer be maintained)
 
 | Bare metal servers  | BMC   | NIC     |
 |---------------------|-------|---------|
