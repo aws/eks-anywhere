@@ -3223,7 +3223,7 @@ func TestVSphereKubernetes129To130StackedEtcdRedHatUpgrade(t *testing.T) {
 		test,
 		v1alpha1.Kube130,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube130)),
-		provider.WithProviderUpgrade(provider.Redhat129Template()),
+		provider.WithProviderUpgrade(provider.Redhat130Template()),
 	)
 }
 
