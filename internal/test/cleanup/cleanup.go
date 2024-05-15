@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/bmc-toolbox/bmclib/v2"
 	"github.com/go-logr/logr"
 	prismgoclient "github.com/nutanix-cloud-native/prism-go-client"
 	v3 "github.com/nutanix-cloud-native/prism-go-client/v3"
@@ -16,7 +17,6 @@ import (
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/internal/pkg/ec2"
 	"github.com/aws/eks-anywhere/internal/pkg/s3"
-	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/errors"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
@@ -196,18 +196,20 @@ func NutanixTestResources(clusterName, endpoint, port string, insecure, ignoreEr
 	return nil
 }
 
-// TinkerbellTestResources cleans up machines by powering them down.
-func TinkerbellTestResources(ctx context.Context, inventoryCSVFilePath string, ignoreErrors bool) error {
+// TinkerbellTestMachines cleans up machines by powering them down.
+func TinkerbellTestMachines(inventoryCSVFilePath string, ignoreErrors bool) error {
 	hardwarePool, err := api.NewHardwareMapFromFile(inventoryCSVFilePath)
 	if err != nil {
 		return fmt.Errorf("failed to create hardware map from inventory csv: %v", err)
 	}
 
 	logger.Info("Powering off hardware: %+v", hardwarePool)
-	return powerOffHardwarePool(ctx, hardwarePool, ignoreErrors)
+	return powerOffHardwarePool(hardwarePool, ignoreErrors)
 }
 
-func powerOffHardwarePool(ctx context.Context, hardware map[string]*hardware.Machine, ignoreErrors bool) error {
+func powerOffHardwarePool(hardware map[string]*hardware.Machine, ignoreErrors bool) error {
+	ctx, done := context.WithTimeout(context.Background(), 2*time.Minute)
+	defer done()
 	errList := []error{}
 	for _, h := range hardware {
 		if err := powerOffHardware(ctx, h, ignoreErrors); err != nil {
@@ -223,7 +225,7 @@ func powerOffHardwarePool(ctx context.Context, hardware map[string]*hardware.Mac
 }
 
 func powerOffHardware(ctx context.Context, h *hardware.Machine, ignoreErrors bool) (reterror error) {
-	bmcClient := test.NewBmclibClient(logr.Discard(), h.BMCIPAddress, h.BMCUsername, h.BMCPassword)
+	bmcClient := newBmclibClient(logr.Discard(), h.BMCIPAddress, h.BMCUsername, h.BMCPassword)
 
 	if err := bmcClient.Open(ctx); err != nil {
 		md := bmcClient.GetMetadata()
@@ -264,4 +266,15 @@ func handlePowerOffHardwareError(err error, ignoreErrors bool) error {
 		return err
 	}
 	return nil
+}
+
+// newBmclibClient creates a new BMClib client.
+func newBmclibClient(log logr.Logger, hostIP, username, password string) *bmclib.Client {
+	o := []bmclib.Option{}
+	log = log.WithValues("host", hostIP, "username", username)
+	o = append(o, bmclib.WithLogger(log))
+	client := bmclib.NewClient(hostIP, username, password, o...)
+	client.Registry.Drivers = client.Registry.PreferProtocol("redfish")
+
+	return client
 }

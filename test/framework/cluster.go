@@ -19,6 +19,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/bmc-toolbox/bmclib/v2"
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -29,7 +30,6 @@ import (
 
 	packagesv1 "github.com/aws/eks-anywhere-packages/api/v1alpha1"
 	"github.com/aws/eks-anywhere/internal/pkg/api"
-	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/cluster"
@@ -352,6 +352,16 @@ func (e *ClusterE2ETest) GenerateClusterConfig(opts ...CommandOpt) {
 	e.GenerateClusterConfigForVersion("", opts...)
 }
 
+func newBmclibClient(log logr.Logger, hostIP, username, password string) *bmclib.Client {
+	o := []bmclib.Option{}
+	log = log.WithValues("host", hostIP, "username", username)
+	o = append(o, bmclib.WithLogger(log))
+	client := bmclib.NewClient(hostIP, username, password, o...)
+	client.Registry.Drivers = client.Registry.PreferProtocol("redfish")
+
+	return client
+}
+
 // ValidateHardwareDecommissioned checks that the all hardware was powered off during the cluster deletion.
 // This function tests that the hardware was powered off during the cluster deletion.
 func (e *ClusterE2ETest) ValidateHardwareDecommissioned() {
@@ -359,7 +369,7 @@ func (e *ClusterE2ETest) ValidateHardwareDecommissioned() {
 	for _, h := range e.TestHardware {
 		ctx, done := context.WithTimeout(context.Background(), 2*time.Minute)
 		defer done()
-		bmcClient := test.NewBmclibClient(logr.Discard(), h.BMCIPAddress, h.BMCUsername, h.BMCPassword)
+		bmcClient := newBmclibClient(logr.Discard(), h.BMCIPAddress, h.BMCUsername, h.BMCPassword)
 
 		if err := bmcClient.Open(ctx); err != nil {
 			md := bmcClient.GetMetadata()
@@ -857,7 +867,7 @@ func (e *ClusterE2ETest) DeleteCluster(opts ...CommandOpt) {
 	e.deleteCluster(opts...)
 }
 
-// cleanupMachines is a helper to clean up test machines resources. It is a noop if the T_CLEANUP_MACHINES environment variable
+// cleanupMachines is a helper to clean up test machinesc resources. It is a noop if the T_CLEANUP_MACHINES environment variable
 // is false or unset.
 func (e *ClusterE2ETest) cleanupMachines() {
 	if !shouldCleanUpMachines() {
@@ -865,6 +875,7 @@ func (e *ClusterE2ETest) cleanupMachines() {
 		return
 	}
 
+	e.T.Logf("Cleaning up provider machine resources")
 	if err := e.Provider.CleanupMachines(e.ClusterName); err != nil {
 		e.T.Logf("failed to clean up %s test machine resouces: %v", e.Provider.Name(), err)
 	}

@@ -1,12 +1,10 @@
 package framework
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/internal/test/cleanup"
@@ -151,9 +149,7 @@ func (t *Tinkerbell) WithProviderUpgrade(fillers ...api.TinkerbellFiller) Cluste
 
 // CleanupMachines runs a clean up the Tinkerbell machines which simply powers them down.
 func (t *Tinkerbell) CleanupMachines(_ string) error {
-	ctx, done := context.WithTimeout(context.Background(), 2*time.Minute)
-	defer done()
-	return cleanup.TinkerbellTestResources(ctx, t.inventoryCsvFilePath, true)
+	return cleanup.TinkerbellTestMachines(t.inventoryCsvFilePath, true)
 }
 
 // WithKubeVersionAndOS returns a cluster config filler that sets the cluster kube version and the right image for all
