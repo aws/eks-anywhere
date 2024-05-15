@@ -133,8 +133,16 @@ sudo install -m 0755 ./kubectl /usr/local/bin/kubectl
 
 1. Create Docker Cluster. Note the following command may take several minutes to complete. You can run the command with -v 6 to increase logging verbosity to see the progress of the command. 
 
+      For a regular cluster create (with internet access), type the following:
+      
       ```bash
       eksctl anywhere create cluster -f $CLUSTER_NAME.yaml
+      ```
+
+      For an airgapped cluster create, follow [Preparation for airgapped deployments]({{< relref "../install#prepare-for-airgapped-deployments-optional" >}}) instructions, then type the following:
+
+      ```bash
+      eksctl anywhere create cluster -f $CLUSTER_NAME.yaml --bundles-override ./eks-anywhere-downloads/bundle-release.yaml
       ```
 
      Expand for sample output:

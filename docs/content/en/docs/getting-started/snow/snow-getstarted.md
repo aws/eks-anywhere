@@ -107,13 +107,15 @@ Make sure you use single quotes around the values so that your shell does not in
 
 1. Create cluster
 
-   a. For none air-gapped environment
+   For a regular cluster create (with internet access), type the following:
+
    ```bash
    eksctl anywhere create cluster \
       -f eksa-mgmt-cluster.yaml
    ```
 
-   b. For air-gapped environment
+   For an airgapped cluster create, follow [Preparation for airgapped deployments]({{< relref "../install#prepare-for-airgapped-deployments-optional" >}}) instructions, then type the following:
+   
    ```bash
    eksctl anywhere create cluster \
       -f eksa-mgmt-cluster.yaml \
