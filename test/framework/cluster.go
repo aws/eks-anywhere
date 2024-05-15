@@ -61,7 +61,7 @@ const (
 	BundlesOverrideVar                     = "T_BUNDLES_OVERRIDE"
 	ClusterIPPoolEnvVar                    = "T_CLUSTER_IP_POOL"
 	ClusterIPEnvVar                        = "T_CLUSTER_IP"
-	CleanupMachinesVar                     = "T_CLEANUP_MACHINES"
+	CleanupResourcesVar                    = "T_CLEANUP_RESOURCES"
 	hardwareYamlPath                       = "hardware.yaml"
 	hardwareCsvPath                        = "hardware.csv"
 	EksaPackagesInstallation               = "eks-anywhere-packages"
@@ -148,7 +148,7 @@ func NewClusterE2ETest(t T, provider Provider, opts ...ClusterE2ETestOpt) *Clust
 	provider.Setup()
 
 	e.T.Cleanup(func() {
-		e.cleanupMachines()
+		e.cleanupResources()
 
 		tinkerbellCIEnvironment := os.Getenv(TinkerbellCIEnvironment)
 		if e.Provider.Name() == tinkerbellProviderName && tinkerbellCIEnvironment == "true" {
@@ -341,7 +341,7 @@ type Provider interface {
 	// Prefer to call UpdateClusterConfig directly from the tests to make it more explicit.
 	ClusterConfigUpdates() []api.ClusterConfigFiller
 	Setup()
-	CleanupMachines(clusterName string) error
+	CleanupResources(clusterName string) error
 	UpdateKubeConfig(content *[]byte, clusterName string) error
 	ClusterStateValidations() []clusterf.StateValidation
 	WithKubeVersionAndOS(kubeVersion v1alpha1.KubernetesVersion, os OS, release *releasev1.EksARelease) api.ClusterConfigFiller
@@ -867,17 +867,17 @@ func (e *ClusterE2ETest) DeleteCluster(opts ...CommandOpt) {
 	e.deleteCluster(opts...)
 }
 
-// cleanupMachines is a helper to clean up test machinesc resources. It is a noop if the T_CLEANUP_MACHINES environment variable
+// cleanupResources is a helper to clean up test resources. It is a noop if the T_CLEANUP_RESOURCES environment variable
 // is false or unset.
-func (e *ClusterE2ETest) cleanupMachines() {
+func (e *ClusterE2ETest) cleanupResources() {
 	if !shouldCleanUpMachines() {
-		e.T.Logf("Skipping provider machine resource cleanup")
+		e.T.Logf("Skipping provider resource cleanup")
 		return
 	}
 
-	e.T.Logf("Cleaning up provider machine resources")
-	if err := e.Provider.CleanupMachines(e.ClusterName); err != nil {
-		e.T.Logf("failed to clean up %s test machine resouces: %v", e.Provider.Name(), err)
+	e.T.Logf("Cleaning up provider resources")
+	if err := e.Provider.CleanupResources(e.ClusterName); err != nil {
+		e.T.Logf("failed to clean up %s test resouces: %v", e.Provider.Name(), err)
 	}
 }
 
@@ -889,8 +889,8 @@ func (e *ClusterE2ETest) CleanupDockerEnvironment() {
 }
 
 func shouldCleanUpMachines() bool {
-	shouldCleanupMachines, err := getCleanupMachinesVar()
-	return err == nil && shouldCleanupMachines
+	shouldCleanupResources, err := getCleanupResourcesVar()
+	return err == nil && shouldCleanupResources
 }
 
 func (e *ClusterE2ETest) deleteCluster(opts ...CommandOpt) {
@@ -1073,8 +1073,8 @@ func getBundlesOverride() string {
 	return os.Getenv(BundlesOverrideVar)
 }
 
-func getCleanupMachinesVar() (bool, error) {
-	return strconv.ParseBool(os.Getenv(CleanupMachinesVar))
+func getCleanupResourcesVar() (bool, error) {
+	return strconv.ParseBool(os.Getenv(CleanupResourcesVar))
 }
 
 func setEksctlVersionEnvVar() error {

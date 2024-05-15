@@ -57,7 +57,7 @@ func newE2ESession(instanceId string, conf instanceRunConf) (*E2ESession, error)
 		ipPool:              conf.IPPool,
 		testEnvVars:         make(map[string]string),
 		bundlesOverride:     conf.BundlesOverride,
-		cleanup:             conf.CleanupMachines,
+		cleanup:             conf.CleanupResources,
 		requiredFiles:       requiredFiles,
 		branchName:          conf.BranchName,
 		hardware:            conf.Hardware,
@@ -187,7 +187,7 @@ func (e *E2ESession) setup(regex string) error {
 	// Adding JobId to Test Env variables
 	e.testEnvVars[e2etests.JobIdVar] = e.jobId
 	e.testEnvVars[e2etests.BundlesOverrideVar] = strconv.FormatBool(e.bundlesOverride)
-	e.testEnvVars[e2etests.CleanupMachinesVar] = strconv.FormatBool(e.cleanup)
+	e.testEnvVars[e2etests.CleanupResourcesVar] = strconv.FormatBool(e.cleanup)
 
 	if e.branchName != "" {
 		e.testEnvVars[e2etests.BranchNameEnvVar] = e.branchName

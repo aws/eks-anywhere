@@ -196,8 +196,8 @@ func NutanixTestResources(clusterName, endpoint, port string, insecure, ignoreEr
 	return nil
 }
 
-// TinkerbellTestMachines cleans up machines by powering them down.
-func TinkerbellTestMachines(inventoryCSVFilePath string, ignoreErrors bool) error {
+// TinkerbellTestResources cleans up machines by powering them down.
+func TinkerbellTestResources(inventoryCSVFilePath string, ignoreErrors bool) error {
 	hardwarePool, err := api.NewHardwareMapFromFile(inventoryCSVFilePath)
 	if err != nil {
 		return fmt.Errorf("failed to create hardware map from inventory csv: %v", err)

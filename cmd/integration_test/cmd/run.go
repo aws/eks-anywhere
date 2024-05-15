@@ -22,7 +22,7 @@ const (
 	maxConcurrentTestsFlagName = "max-concurrent-tests"
 	skipFlagName               = "skip"
 	bundlesOverrideFlagName    = "bundles-override"
-	cleanupMachinesFlagName    = "cleanup-machines"
+	cleanupMachinesFlagName    = "cleanup-resources"
 	testReportFolderFlagName   = "test-report-folder"
 	branchNameFlagName         = "branch-name"
 	instanceConfigFlagName     = "instance-config"
@@ -102,7 +102,7 @@ func runE2E(ctx context.Context) error {
 		Regex:                  testRegex,
 		TestsToSkip:            testsToSkip,
 		BundlesOverride:        bundlesOverride,
-		CleanupMachines:        cleanupMachines,
+		CleanupResources:       cleanupMachines,
 		TestReportFolder:       testReportFolder,
 		BranchName:             branchName,
 		TestInstanceConfigFile: instanceConfigFile,

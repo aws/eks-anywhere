@@ -158,8 +158,8 @@ func (n *Nutanix) UpdateKubeConfig(content *[]byte, clusterName string) error {
 	return nil
 }
 
-// CleanupMachines satisfies the test framework Provider.
-func (n *Nutanix) CleanupMachines(clustername string) error {
+// CleanupResources satisfies the test framework Provider.
+func (n *Nutanix) CleanupResources(clustername string) error {
 	return cleanup.NutanixTestResources(clustername, os.Getenv(nutanixEndpoint), os.Getenv(nutanixPort), true, true)
 }
 
