@@ -38,6 +38,8 @@ toc_hide: true
       
       The `copy packages` command uses the credentials in your docker config file. So you must `docker login` to the source registries and the destination registry before running the command.
       
+      When using self-signed certificates for your registry, you should run with the `--dst-insecure` command line argument to indicate skipping TLS verification while copying curated packages.
+
       ```bash
       eksctl anywhere copy packages \
         ${REGISTRY_MIRROR_URL}/curated-packages \
