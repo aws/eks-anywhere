@@ -17,7 +17,7 @@ import (
 const (
 	devRegionalECR       string = "067575901363.dkr.ecr.us-west-2.amazonaws.com"
 	devRegionalPublicECR string = "public.ecr.aws/x3k6m8v0"
-	stagingRegionalECR   string = "TODO.dkr.ecr.us-west-2.amazonaws.com"
+	stagingRegionalECR   string = "067575901363.dkr.ecr.us-west-2.amazonaws.com"
 )
 
 var prodRegionalECRMap = map[string]string{
