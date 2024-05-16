@@ -65,6 +65,7 @@ const (
 	hardwareYamlPath                       = "hardware.yaml"
 	hardwareCsvPath                        = "hardware.csv"
 	EksaPackagesInstallation               = "eks-anywhere-packages"
+	bundleReleasePathFromArtifacts         = "./eks-anywhere-downloads/bundle-release.yaml"
 )
 
 //go:embed testdata/oidc-roles.yaml
@@ -662,7 +663,7 @@ func (e *ClusterE2ETest) DownloadImages(opts ...CommandOpt) {
 	if getBundlesOverride() == "true" {
 		var bundleManifestLocation string
 		if _, err := os.Stat(defaultDownloadArtifactsOutputLocation); err == nil {
-			bundleManifestLocation = "eks-anywhere-downloads/bundle-release.yaml"
+			bundleManifestLocation = bundleReleasePathFromArtifacts
 		} else {
 			bundleManifestLocation = defaultBundleReleaseManifestFile
 		}
@@ -683,7 +684,7 @@ func (e *ClusterE2ETest) ImportImages(opts ...CommandOpt) {
 	registryMirrorHost := net.JoinHostPort(registyMirrorEndpoint, registryMirrorPort)
 	var bundleManifestLocation string
 	if _, err := os.Stat(defaultDownloadArtifactsOutputLocation); err == nil {
-		bundleManifestLocation = "eks-anywhere-downloads/bundle-release.yaml"
+		bundleManifestLocation = bundleReleasePathFromArtifacts
 	} else {
 		bundleManifestLocation = defaultBundleReleaseManifestFile
 	}
@@ -1293,6 +1294,21 @@ func (e *ClusterE2ETest) WithCluster(f func(e *ClusterE2ETest)) {
 	defer func() {
 		e.GenerateSupportBundleIfTestFailed()
 		e.DeleteCluster()
+	}()
+	f(e)
+}
+
+// WithClusterRegistryMirror helps with bringing up and tearing down E2E test clusters when using registry mirror.
+func (e *ClusterE2ETest) WithClusterRegistryMirror(f func(e *ClusterE2ETest)) {
+	e.GenerateClusterConfig()
+	e.DownloadArtifacts()
+	e.ExtractDownloadedArtifacts()
+	e.DownloadImages()
+	e.ImportImages()
+	e.CreateCluster(WithBundlesOverride(bundleReleasePathFromArtifacts))
+	defer func() {
+		e.GenerateSupportBundleIfTestFailed()
+		e.DeleteCluster(WithBundlesOverride(bundleReleasePathFromArtifacts))
 	}()
 	f(e)
 }

@@ -48,6 +48,10 @@ func runDisabledCuratedPackageInstallSimpleFlow(test *framework.ClusterE2ETest) 
 	test.WithCluster(runDisabledCuratedPackage)
 }
 
+func runCuratedPackageInstallSimpleFlowRegistryMirror(test *framework.ClusterE2ETest) {
+	test.WithClusterRegistryMirror(runCuratedPackageInstall)
+}
+
 func runCuratedPackageRemoteClusterInstallSimpleFlow(test *framework.MulticlusterE2ETest) {
 	test.CreateManagementClusterWithConfig()
 	test.RunInWorkloadClusters(func(e *framework.WorkloadCluster) {
