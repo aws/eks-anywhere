@@ -18,3 +18,4 @@ AWS offers comprehensive monitoring, logging, alarming, and dashboard capabiliti
 1. [Use the EKS Connector to view EKS Anywhere clusters and resources in the EKS console]({{< relref "./cluster-connect" >}})
 1. [Use Fluent Bit and Container Insights to send metrics and logs to CloudWatch]({{< relref "./fluentbit-logging" >}})
 1. [Use ADOT to send metrics to AMP and AMG](https://aws.amazon.com/blogs/mt/using-curated-packages-and-aws-managed-open-source-services-to-observe-your-on-premise-kubernetes-environment/)
+1. [Expose metrics for EKS Anywhere components]({{< relref "./expose-metrics" >}})
