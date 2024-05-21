@@ -31,6 +31,29 @@ description: >
 * When upgrading to a new minor version, a new OS image must be created using the new image-builder CLI pertaining to that release.
 {{% /alert %}}
 
+## [v0.19.6](https://github.com/aws/eks-anywhere/releases/tag/v0.19.6)
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+|    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+| Bottlerocket 1.19.2 |    ✔    |     ✔      |    —    |     —      |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+|      RHEL 9.x       |    —    |     —      |    ✔    |     ✔      |  —   |
+* [EKS Anywhere issue regarding deprecation of Bottlerocket bare metal variants](https://github.com/aws/eks-anywhere/issues/7754)
+
+### Changed
+- Backporting dependency bumps to fix vulnerabilities [#8118](https://github.com/aws/eks-anywhere/pull/8118)
+- Upgraded EKS-D:
+  - `v1-25-eks-37` to [`v1-25-eks-39`](https://distro.eks.amazonaws.com/releases/1-25/39/)
+  - `v1-26-eks-33` to [`v1-26-eks-35`](https://distro.eks.amazonaws.com/releases/1-26/35/)
+  - `v1-27-eks-27` to [`v1-27-eks-29`](https://distro.eks.amazonaws.com/releases/1-27/29/)
+  - `v1-28-eks-20` to [`v1-28-eks-22`](https://distro.eks.amazonaws.com/releases/1-28/22/)
+  - `v1-29-eks-9` to [`v1-29-eks-11`](https://distro.eks.amazonaws.com/releases/1-29/11/)
+
+### Fixed
+- Fixed cluster directory being created with root ownership [#8120](https://github.com/aws/eks-anywhere/pull/8120)
+
 ## [v0.19.5](https://github.com/aws/eks-anywhere/releases/tag/v0.19.5)
 ### Supported OS version details
 |                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
