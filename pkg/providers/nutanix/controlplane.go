@@ -27,6 +27,7 @@ type ControlPlane struct {
 	BaseControlPlane
 	ConfigMaps          []*corev1.ConfigMap
 	ClusterResourceSets []*addonsv1.ClusterResourceSet
+	Secrets				[]*corev1.Secret
 }
 
 // Objects returns the control plane objects associated with the Nutanix cluster.
@@ -34,6 +35,7 @@ func (p ControlPlane) Objects() []kubernetes.Object {
 	o := p.BaseControlPlane.Objects()
 	o = appendKubeObjects[*corev1.ConfigMap](o, p.ConfigMaps)
 	o = appendKubeObjects[*addonsv1.ClusterResourceSet](o, p.ClusterResourceSets)
+	o = appendKubeObjects[*corev1.Secret](o, p.Secrets)
 
 	return o
 }
@@ -154,6 +156,12 @@ func newControlPlaneParser(logger logr.Logger) (*yamlutil.Parser, *ControlPlaneB
 				return &addonsv1.ClusterResourceSet{}
 			},
 		),
+		yamlutil.NewMapping(
+			constants.SecretKind,
+			func() yamlutil.APIObject {
+				return &corev1.Secret{}
+			},
+		),
 	)
 
 	if err != nil {
@@ -183,6 +191,8 @@ func buildObjects(cp *ControlPlane, lookup yamlutil.ObjectLookup) {
 			cp.ConfigMaps = append(cp.ConfigMaps, obj.(*corev1.ConfigMap))
 		case constants.ClusterResourceSetKind:
 			cp.ClusterResourceSets = append(cp.ClusterResourceSets, obj.(*addonsv1.ClusterResourceSet))
+		case constants.SecretKind:
+			cp.Secrets = append(cp.Secrets, obj.(*corev1.Secret))
 		}
 	}
 }

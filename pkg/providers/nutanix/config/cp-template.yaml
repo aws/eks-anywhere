@@ -781,3 +781,31 @@ spec:
     name: user-ca-bundle
 {{- end }}
   strategy: Reconcile
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: "{{.clusterName}}-nutanix-ccm-secret"
+  namespace: "{{.eksaSystemNamespace}}"
+stringData:
+  nutanix-ccm-secret.yaml: |
+    apiVersion: v1
+    kind: Secret
+    metadata:
+      name: nutanix-creds
+      namespace: kube-system
+    stringData:
+      credentials: |-
+        [
+          {        
+            "type": "basic_auth",
+            "data": {
+              "prismCentral": {
+                "username": "{{ .nutanixPCUsername }}",
+                "password": "{{ .nutanixPCPassword }}"
+              },
+              "prismElements": null
+            }
+          }
+        ]
+type: addons.cluster.x-k8s.io/resource-set
