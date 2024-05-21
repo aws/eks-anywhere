@@ -146,6 +146,8 @@ func RunTestsInParallel(conf ParallelRunConf) error {
 	completedInstances := 0
 	for r := range results {
 		var result string
+		// This variable can be used in cloudwatch log insights query for e2e test success rate
+		succeeded := 0
 		// TODO: keeping the old logs temporarily for compatibility with the test tool
 		// Once the tool is updated to support the unified message, remove them
 		if r.err != nil {
@@ -158,6 +160,7 @@ func RunTestsInParallel(conf ParallelRunConf) error {
 			failedInstances++
 		} else {
 			result = testResultPass
+			succeeded = 1
 			conf.Logger.Info("Instance tests completed successfully", "jobId", r.conf.JobID, "instanceId", r.conf.InstanceID, "commandId", r.testCommandResult.CommandId, "tests", r.conf.Regex, "status", testResultPass)
 		}
 		completedInstances++
@@ -168,6 +171,7 @@ func RunTestsInParallel(conf ParallelRunConf) error {
 			"instanceId", r.conf.InstanceID,
 			"completedInstances", completedInstances,
 			"totalInstances", totalInstances,
+			"succeeded", succeeded,
 		)
 		putInstanceTestResultMetrics(r)
 	}
