@@ -27,7 +27,7 @@ type ControlPlane struct {
 	BaseControlPlane
 	ConfigMaps          []*corev1.ConfigMap
 	ClusterResourceSets []*addonsv1.ClusterResourceSet
-	Secrets				[]*corev1.Secret
+	Secrets             []*corev1.Secret
 }
 
 // Objects returns the control plane objects associated with the Nutanix cluster.

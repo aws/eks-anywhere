@@ -219,8 +219,8 @@ func buildTemplateMapCP(
 		"subnetName":                   controlPlaneMachineSpec.Subnet.Name,
 		"subnetUUID":                   controlPlaneMachineSpec.Subnet.UUID,
 		"apiServerCertSANs":            clusterSpec.Cluster.Spec.ControlPlaneConfiguration.CertSANs,
-		"nutanixPCUsername":        	creds.PrismCentral.BasicAuth.Username,
-		"nutanixPCPassword":        	creds.PrismCentral.BasicAuth.Password,
+		"nutanixPCUsername":            creds.PrismCentral.BasicAuth.Username,
+		"nutanixPCPassword":            creds.PrismCentral.BasicAuth.Password,
 	}
 
 	if controlPlaneMachineSpec.Project != nil {
