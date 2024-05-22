@@ -1,4 +1,13 @@
 skipped_tests:
+# Docker
+# Skipping 1.30 curated packages tests until we add support
+- TestDockerKubernetes130CuratedPackagesSimpleFlow
+- TestDockerKubernetes130CuratedPackagesAdotSimpleFlow
+- TestDockerKubernetes130CuratedPackagesEmissarySimpleFlow
+- TestDockerKubernetes130CuratedPackagesHarborSimpleFlow
+- TestDockerKubernetes130CuratedPackagesPrometheusSimpleFlow
+- TestDockerKubernetes130CuratedPackagesMetalLB
+
 # CloudStack
 #Airgapped tests
 - TestCloudStackKubernetes126RedhatAirgappedRegistryMirror
