@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"github.com/aws/eks-anywhere/release/cli/pkg/clients"
+	"github.com/aws/eks-anywhere/release/cli/pkg/constants"
 )
 
 // ReleaseConfig contains metadata fields for a release.
@@ -126,7 +127,7 @@ func (r *ReleaseConfig) BundlesManifestFilepath() string {
 		return fmt.Sprintf("releases/bundles/%d/manifest.yaml", r.BundleNumber)
 	}
 
-	if r.BuildRepoBranchName != "main" {
+	if r.BuildRepoBranchName != constants.MainBranchName {
 		return fmt.Sprintf("%s/%s/bundles.yaml", r.BuildRepoBranchName, r.DevReleaseUriVersion)
 	}
 
@@ -143,7 +144,7 @@ func (r *ReleaseConfig) ReleaseManifestFilepath() string {
 		return "releases/eks-a/manifest.yaml"
 	}
 
-	if r.BuildRepoBranchName != "main" {
+	if r.BuildRepoBranchName != constants.MainBranchName {
 		return fmt.Sprintf("%s/eks-a-release.yaml", r.BuildRepoBranchName)
 	}
 

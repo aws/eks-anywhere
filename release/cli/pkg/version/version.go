@@ -25,6 +25,7 @@ import (
 
 	"github.com/pkg/errors"
 
+	"github.com/aws/eks-anywhere/release/cli/pkg/constants"
 	"github.com/aws/eks-anywhere/release/cli/pkg/filereader"
 	"github.com/aws/eks-anywhere/release/cli/pkg/git"
 	releasetypes "github.com/aws/eks-anywhere/release/cli/pkg/types"
@@ -93,22 +94,27 @@ func NewMultiProjectVersionerWithGITTAG(repoSource, pathToRootFolder, pathToMain
 }
 
 func (v *VersionerWithGITTAG) patchVersion() (string, error) {
-	return filereader.ReadGitTag(v.folderWithGITTAG, v.releaseConfig.BuildRepoSource, v.sourcedFromBranch)
+	return filereader.ReadGitTag(v.folderWithGITTAG, v.releaseConfig.BuildRepoSource, v.sourcedFromBranch, v.releaseConfig.DryRun)
 }
 
 type cliVersioner struct {
 	Versioner
 	cliVersion string
+	dryRun     bool
 }
 
-func NewCliVersioner(cliVersion, pathToProject string) *cliVersioner {
+func NewCliVersioner(releaseConfig *releasetypes.ReleaseConfig) *cliVersioner {
 	return &cliVersioner{
-		cliVersion: cliVersion,
-		Versioner:  Versioner{pathToProject: pathToProject},
+		cliVersion: releaseConfig.ReleaseVersion,
+		Versioner:  Versioner{pathToProject: releaseConfig.CliRepoSource},
+		dryRun:     releaseConfig.DryRun,
 	}
 }
 
 func (v *cliVersioner) patchVersion() (string, error) {
+	if v.dryRun {
+		return constants.FakeGitTag, nil
+	}
 	return v.cliVersion, nil
 }
 

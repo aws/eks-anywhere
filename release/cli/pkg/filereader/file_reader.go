@@ -184,7 +184,7 @@ func GetNextEksADevBuildNumber(releaseVersion string, r *releasetypes.ReleaseCon
 
 	var latestReleaseKey, latestBuildVersion string
 	var currentEksaBuildNumber int
-	if r.BuildRepoBranchName == "main" {
+	if r.BuildRepoBranchName == constants.MainBranchName {
 		latestReleaseKey = "LATEST_RELEASE_VERSION"
 	} else {
 		latestReleaseKey = fmt.Sprintf("%s/LATEST_RELEASE_VERSION", r.BuildRepoBranchName)
@@ -263,7 +263,7 @@ func GetCurrentEksADevReleaseVersion(releaseVersion string, r *releasetypes.Rele
 
 func PutEksAReleaseVersion(version string, r *releasetypes.ReleaseConfig) error {
 	var currentReleaseKey string
-	if r.BuildRepoBranchName == "main" {
+	if r.BuildRepoBranchName == constants.MainBranchName {
 		currentReleaseKey = "LATEST_RELEASE_VERSION"
 	} else {
 		currentReleaseKey = fmt.Sprintf("%s/LATEST_RELEASE_VERSION", r.BuildRepoBranchName)
@@ -336,7 +336,10 @@ func ReadHttpFile(uri string) ([]byte, error) {
 	return data, nil
 }
 
-func ReadGitTag(projectPath, gitRootPath, branch string) (string, error) {
+func ReadGitTag(projectPath, gitRootPath, branch string, dryRun bool) (string, error) {
+	if dryRun {
+		return constants.FakeGitTag, nil
+	}
 	currentBranch, err := git.GetCurrentBranch(gitRootPath)
 	if err != nil {
 		return "", fmt.Errorf("error getting current branch: %v", err)
