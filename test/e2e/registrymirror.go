@@ -15,6 +15,7 @@ func runRegistryMirrorConfigFlow(test *framework.ClusterE2ETest) {
 	test.ImportImages()
 	test.CreateCluster(framework.WithBundlesOverride(bundleReleasePathFromArtifacts))
 	test.DeleteCluster(framework.WithBundlesOverride(bundleReleasePathFromArtifacts))
+	test.CleanupRegistryMirrorRepositories()
 }
 
 func runTinkerbellRegistryMirrorFlow(test *framework.ClusterE2ETest) {
@@ -29,4 +30,5 @@ func runTinkerbellRegistryMirrorFlow(test *framework.ClusterE2ETest) {
 	test.DeleteCluster(framework.WithBundlesOverride(bundleReleasePathFromArtifacts))
 	test.ValidateHardwareDecommissioned()
 	test.CleanupDownloadedArtifactsAndImages()
+	test.CleanupRegistryMirrorRepositories()
 }
