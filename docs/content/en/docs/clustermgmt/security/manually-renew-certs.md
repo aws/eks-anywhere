@@ -270,7 +270,7 @@ sudo sheltie
 cat /var/lib/kubeadm/admin.conf
 export KUBECONFIG="/var/lib/kubeadm/admin.conf"
 
-cat admin.conf > /run/host-containerd/io.containerd.runtime.v2.task/default/admin/rootfs/tmp/new-admin.kubeconfig
+cat /var/lib/kubeadm/admin.conf > /run/host-containerd/io.containerd.runtime.v2.task/default/admin/rootfs/tmp/new-admin.kubeconfig
 
 {{< /tab >}}
 {{< /tabpane >}}
