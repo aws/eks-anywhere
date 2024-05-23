@@ -85,7 +85,7 @@ ${IMAGE_ID} tmp-cert-renew \
 sudo etcdctl --cacert=/etc/etcd/pki/ca.crt --cert=/etc/etcd/pki/etcdctl-etcd-client.crt --key=/etc/etcd/pki/etcdctl-etcd-client.key member list
 {{< /tab >}}
 {{< tab header="Bottlerocket" lang="bash" >}}
-ETCD_CONTAINER_ID=$(ctr -n k8s.io c ls | grep -w "etcd-io" | cut -d " " -f1)
+ETCD_CONTAINER_ID=$(ctr -n k8s.io c ls | grep -w "etcd-io" | cut -d " " -f1 | tail -1)
 ctr -n k8s.io t exec -t --exec-id etcd ${ETCD_CONTAINER_ID} etcdctl \
      --cacert=/var/lib/etcd/pki/ca.crt \
      --cert=/var/lib/etcd/pki/server.crt \
@@ -151,7 +151,7 @@ ${IMAGE_ID} tmp-cert-renew \
 {{< /tab >}}
 {{< /tabpane >}}
 
-3. If you have external etcd nodes, manually replace the `api-server-etcd-client.crt` and `api-server-etcd-client.key` file in `/etc/kubernetes/pki` (or `/var/lib/kubeadm/pki` in Bottlerocket) folder with the files you saved from any etcd node.
+3. If you have external etcd nodes, manually replace the `server-etcd-client.crt` and `apiserver-etcd-client.key` file in `/etc/kubernetes/pki` (or `/var/lib/kubeadm/pki` in Bottlerocket) folder with the files you saved from any etcd node.
 
 4. Restart static control plane pods.
 
@@ -169,16 +169,16 @@ ${IMAGE_ID} tmp-cert-renew \
 
 You can similarly use the above steps to rotate a single certificate instead of all certificates.
 
-#### Update kubeconfig on Admin machine
+#### What do I do if my local kubeconfig has expired?
 
-Post completion of manual certificate rotation or if your Cluster was created more than a year ago, your kubeconfig file on Admin machine will have outdated certificates and would result in following error,
+Your local kubeconfig used to interact with the cluster contains a certificate that expires after 1 year. When you rotate cluster certificates a new kubeconfig with a new certificate is created as a Secret in the cluster. If you do not retrieve the new kubeconfig and your local kubeconfig certificate expires you will receive the following error:
 
 ```
 Error: Couldn't get current Server API group list: the server has asked for the client to provide credentials error: you must be logged in to the server.
 This error typically occurs when the cluster certificates have been renewed or extended during the upgrade process. To resolve this issue, you need to update your local kubeconfig file with the new cluster credentials.
 ```
 
-Follow below steps to update kubeconfig on Admin machine.
+You can extract your new kubeconfig using the following steps.
 
 1. SSH to one of the Control Plane nodes and run the following command to validate connection with API Server, export kubeconfig from `${CLUSTER_NAME}-kubeconfig` secret object (`eksa-system` namespace) using kubectl and copy kubeconfig file to `/tmp` directory.
 
@@ -194,12 +194,9 @@ export CLUSTER_NAME="<YOUR_CLUSTER_NAME_HERE>"
 cat /var/lib/kubeadm/admin.conf
 export KUBECONFIG="/var/lib/kubeadm/admin.conf"
 
-kubectl get nodes -o wide
-kubectl get secrets -A
-
 kubectl get secret ${CLUSTER_NAME}-kubeconfig -n eksa-system -o yaml > new-admin.kubeconfig
 
-cat new-admin.kubeconfig | base64 -d > /tmp/new-admin-decoded.kubeconfig
+cat new-admin.kubeconfig > /tmp/new-admin-decoded.kubeconfig
 
 {{< /tab >}}
 
@@ -208,31 +205,21 @@ cat new-admin.kubeconfig | base64 -d > /tmp/new-admin-decoded.kubeconfig
 # open a root shell
 sudo sheltie
 
-export CLUSTER_NAME="<YOUR_CLUSTER_NAME_HERE>"
-
 cat /var/lib/kubeadm/admin.conf
 export KUBECONFIG="/var/lib/kubeadm/admin.conf"
 
-kubectl get nodes -o wide
-kubectl get secrets -A
-
-cat new-admin.kubeconfig | base64 -d > /run/host-containerd/io.containerd.runtime.v2.task/default/admin/rootfs/tmp/new-admin-decoded.kubeconfig
+cat new-admin.kubeconfig > /run/host-containerd/io.containerd.runtime.v2.task/default/admin/rootfs/tmp/new-admin-decoded.kubeconfig
 
 {{< /tab >}}
 {{< /tabpane >}}
 
-
-2. **SSH to Admin Machine**, download the kubeconfig file from ControlPlane to your Admin machine and access Kubernetes Cluster
+2. From your admin machine, download the kubeconfig file from the ControlPlane node and use it to access your Kubernetes Cluster.
 
 ```
 ssh <ADMIN_MACHINE_IP>
 
 export CONTROLPLANE_IP=""
 scp -i <keypair>@${CONTROLPLANE_IP}:/tmp/new-admin-decoded.kubeconfig .
-
-# OR SFTP
-
-sftp -i <keypair>@${CONTROLPLANE_IP}:/tmp/new-admin-decoded.kubeconfig .
 
 ls -ltr 
 export KUBECONFIG="new-admin-decoded.kubeconfig"
