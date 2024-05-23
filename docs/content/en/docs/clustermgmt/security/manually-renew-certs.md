@@ -270,7 +270,7 @@ sudo sheltie
 cat /var/lib/kubeadm/admin.conf
 export KUBECONFIG="/var/lib/kubeadm/admin.conf"
 
-cat new-admin.kubeconfig > /run/host-containerd/io.containerd.runtime.v2.task/default/admin/rootfs/tmp/new-admin-decoded.kubeconfig
+cat admin.conf > /run/host-containerd/io.containerd.runtime.v2.task/default/admin/rootfs/tmp/new-admin.kubeconfig
 
 {{< /tab >}}
 {{< /tabpane >}}
@@ -281,9 +281,9 @@ cat new-admin.kubeconfig > /run/host-containerd/io.containerd.runtime.v2.task/de
 ssh <ADMIN_MACHINE_IP>
 
 export CONTROLPLANE_IP=""
-scp -i <keypair>@${CONTROLPLANE_IP}:/tmp/new-admin-decoded.kubeconfig .
+scp -i <keypair>@${CONTROLPLANE_IP}:/tmp/new-admin.kubeconfig .
 
 ls -ltr 
-export KUBECONFIG="new-admin-decoded.kubeconfig"
+export KUBECONFIG="new-admin.kubeconfig"
 
 kubectl get pods
