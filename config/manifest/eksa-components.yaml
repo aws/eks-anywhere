@@ -4242,7 +4242,8 @@ spec:
                             in the local registry
                           type: string
                         registry:
-                          description: Name refers to the name of the upstream registry
+                          description: Registry refers to the name of the upstream
+                            registry
                           type: string
                       required:
                       - namespace
@@ -7115,6 +7116,8 @@ rules:
   verbs:
   - create
   - delete
+  - get
+  - list
 - apiGroups:
   - ""
   resources:
@@ -7140,6 +7143,7 @@ rules:
   - delete
   - get
   - list
+  - patch
   - update
   - watch
 - apiGroups:
@@ -7172,6 +7176,7 @@ rules:
   - snowmachineconfigs
   - tinkerbelldatacenterconfigs
   - tinkerbellmachineconfigs
+  - tinkerbelltemplateconfigs
   - vspheredatacenterconfigs
   - vspheremachineconfigs
   verbs:
@@ -7193,6 +7198,7 @@ rules:
   - snowmachineconfigs/finalizers
   - tinkerbelldatacenterconfigs/finalizers
   - tinkerbellmachineconfigs/finalizers
+  - tinkerbelltemplateconfigs/finalizers
   - vspheredatacenterconfigs/finalizers
   - vspheremachineconfigs/finalizers
   verbs:
@@ -7209,6 +7215,7 @@ rules:
   - snowmachineconfigs/status
   - tinkerbelldatacenterconfigs/status
   - tinkerbellmachineconfigs/status
+  - tinkerbelltemplateconfigs/status
   - vspheredatacenterconfigs/status
   - vspheremachineconfigs/status
   verbs:

@@ -12,7 +12,7 @@ EKS Anywhere supports three different node operating systems:
 
 * Bottlerocket: For vSphere and Bare Metal providers
 * Ubuntu: For vSphere, Bare Metal, Nutanix, and Snow providers
-* Red Hat Enterprise Linux (RHEL): For vSphere, CloudStack, and Bare Metal providers
+* Red Hat Enterprise Linux (RHEL): For vSphere, CloudStack, Nutanix, and Bare Metal providers
 
 Bottlerocket OVAs and images are distributed by the EKS Anywhere project.
 To build your own Ubuntu-based or RHEL-based EKS Anywhere node, see [Building node images]({{< relref "#building-node-images">}}).
@@ -25,7 +25,7 @@ Several code snippets on this page use `curl` and `yq` commands. Refer to the [T
 
 Artifacts for EKS Anywhere Bare Metal clusters are listed below.
 If you like, you can download these images and serve them locally to speed up cluster creation.
-See descriptions of the [osImageURL]({{< relref "../getting-started/baremetal/bare-spec/#osimageurl" >}}) and [`hookImagesURLPath`]({{< relref "../getting-started/baremetal/bare-spec#hookimagesurlpath" >}}) fields for details.
+See descriptions of the [`osImageURL`]({{< relref "../getting-started/baremetal/bare-spec/#osimageurl-optional" >}}) and [`hookImagesURLPath`]({{< relref "../getting-started/baremetal/bare-spec#hookimagesurlpath-optional" >}}) fields for details.
 
 ### Ubuntu or RHEL OS images for Bare Metal
 
@@ -45,7 +45,7 @@ OR
 
 Using a specific EKS Anywhere version
 ```bash
-EKSA_RELEASE_VERSION=v0.18.0
+EKSA_RELEASE_VERSION=<EKS-A version>
 ```
 
 ```bash
@@ -63,7 +63,7 @@ OR
 
 Using a specific EKS Anywhere version
 ```bash
-EKSA_RELEASE_VERSION=v0.18.0
+EKSA_RELEASE_VERSION=<EKS-A version>
 ```
 
 kernel:
@@ -93,7 +93,7 @@ OR
 
 Using a specific EKS Anywhere version
 ```bash
-EKSA_RELEASE_VERSION=v0.18.0
+EKSA_RELEASE_VERSION=<EKS-A version>
 ```
 
 ```bash
@@ -118,7 +118,7 @@ OR
 
 Using a specific EKS Anywhere version
 ```bash
-EKSA_RELEASE_VERSION=v0.18.0
+EKSA_RELEASE_VERSION=<EKS-A version>
 ```
 
 ```bash
@@ -163,7 +163,7 @@ export KUBEVERSION="1.27"
 
    Using a specific EKS Anywhere version
    ```bash
-   EKSA_RELEASE_VERSION=v0.18.0
+   EKSA_RELEASE_VERSION=<EKS-A version>
    ```
 
    Set the Bottlerocket image format to the desired value (`ova` for the VMware variant or `raw` for the Baremetal variant)
@@ -324,6 +324,31 @@ Packer will require prior authentication with your AWS account to launch EC2 ins
 
 Prism Central Administrator permissions are required to build a Nutanix image using `image-builder`.
 
+### Downloading the `image-builder` CLI
+
+You will need to download the `image-builder` CLI corresponding to the version of EKS Anywhere you are using. The `image-builder` CLI can be downloaded using the commands provided below:
+
+Using the latest EKS Anywhere version
+```bash
+EKSA_RELEASE_VERSION=$(curl -sL https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml | yq ".spec.latestVersion")
+```
+
+OR
+
+Using a specific EKS Anywhere version
+```bash
+EKSA_RELEASE_VERSION=<EKS-A version>
+```
+
+```bash
+cd /tmp
+BUNDLE_MANIFEST_URL=$(curl -s https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml | yq ".spec.releases[] | select(.version==\"$EKSA_RELEASE_VERSION\").bundleManifestUrl")
+IMAGEBUILDER_TARBALL_URI=$(curl -s $BUNDLE_MANIFEST_URL | yq ".spec.versionsBundles[0].eksD.imagebuilder.uri")
+curl -s $IMAGEBUILDER_TARBALL_URI | tar xz ./image-builder
+sudo install -m 0755 ./image-builder /usr/local/bin/image-builder   
+cd -
+```
+
 ### Build vSphere OVA node images
 
 These steps use `image-builder` to create an Ubuntu-based or RHEL-based image for vSphere. Before proceeding, ensure that the above system-level, network-level and vSphere-specific [prerequisites]({{< relref "#prerequisites">}}) have been met.
@@ -379,29 +404,6 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
      ```bash
      python3 -m pip install --user ansible
      ```
-
-1. Get `image-builder`:
-
-   Using the latest EKS Anywhere version
-   ```bash
-   EKSA_RELEASE_VERSION=$(curl -sL https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml | yq ".spec.latestVersion")
-   ```
-
-   OR
-
-   Using a specific EKS Anywhere version
-   ```bash
-   EKSA_RELEASE_VERSION=v0.18.0
-   ```
-
-   ```bash
-   cd /tmp
-   BUNDLE_MANIFEST_URL=$(curl -s https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml | yq ".spec.releases[] | select(.version==\"$EKSA_RELEASE_VERSION\").bundleManifestUrl")
-   IMAGEBUILDER_TARBALL_URI=$(curl -s $BUNDLE_MANIFEST_URL | yq ".spec.versionsBundles[0].eksD.imagebuilder.uri")
-   curl -s $IMAGEBUILDER_TARBALL_URI | tar xz ./image-builder
-   sudo install -m 0755 ./image-builder /usr/local/bin/image-builder
-   cd -
-   ```
 1. Get the latest version of `govc`:
    ```bash
    curl -L -o - "https://github.com/vmware/govmomi/releases/latest/download/govc_$(uname -s)_$(uname -m).tar.gz" | sudo tar -C /usr/local/bin -xvzf - govc
@@ -490,11 +492,11 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
       * `--os`: `ubuntu`
       * `--os-version`: `20.04` or `22.04` (default: `20.04`)
       * `--hypervisor`: For vSphere use `vsphere`
-      * `--release-channel`: Supported EKS Distro releases include 1-24, 1-25, 1-26, 1-27 and 1-28.
+      * `--release-channel`: Supported EKS Distro releases include 1-25, 1-26, 1-27, 1-28 and 1-29.
       * `--vsphere-config`: vSphere configuration file (`vsphere.json` in this example)
 
       ```bash
-      image-builder build --os ubuntu --hypervisor vsphere --release-channel 1-28 --vsphere-config vsphere.json
+      image-builder build --os ubuntu --hypervisor vsphere --release-channel 1-29 --vsphere-config vsphere.json
       ```
 
    **Red Hat Enterprise Linux**
@@ -504,11 +506,11 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
       * `--os`: `redhat`
       * `--os-version`: `8` (default: `8`)
       * `--hypervisor`: For vSphere use `vsphere`
-      * `--release-channel`: Supported EKS Distro releases include 1-24, 1-25, 1-26, 1-27 and 1-28.
+      * `--release-channel`: Supported EKS Distro releases include 1-25, 1-26, 1-27, 1-28 and 1-29.
       * `--vsphere-config`: vSphere configuration file (`vsphere.json` in this example)
 
       ```bash
-      image-builder build --os redhat --hypervisor vsphere --release-channel 1-28 --vsphere-config vsphere.json
+      image-builder build --os redhat --hypervisor vsphere --release-channel 1-29 --vsphere-config vsphere.json
       ```
 
 ### Build Bare Metal node images
@@ -574,30 +576,6 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
      ```bash
      python3 -m pip install --user ansible
      ```
-
-1. Get `image-builder`:
-
-   Using the latest EKS Anywhere version
-   ```bash
-   EKSA_RELEASE_VERSION=$(curl -sL https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml | yq ".spec.latestVersion")
-   ```
-
-   OR
-
-   Using a specific EKS Anywhere version
-   ```bash
-   EKSA_RELEASE_VERSION=v0.18.0
-   ```
-
-   ```bash
-   cd /tmp
-   BUNDLE_MANIFEST_URL=$(curl -s https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml | yq ".spec.releases[] | select(.version==\"$EKSA_RELEASE_VERSION\").bundleManifestUrl")
-   IMAGEBUILDER_TARBALL_URI=$(curl -s $BUNDLE_MANIFEST_URL | yq ".spec.versionsBundles[0].eksD.imagebuilder.uri")
-   curl -s $IMAGEBUILDER_TARBALL_URI | tar xz ./image-builder
-   sudo install -m 0755 ./image-builder /usr/local/bin/image-builder   
-   cd -
-   ```
-
 1. Create an Ubuntu or Red Hat image:
 
    **Ubuntu**
@@ -607,12 +585,11 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
       * `--os`: `ubuntu`
       * `--os-version`: `20.04` or `22.04` (default: `20.04`)
       * `--hypervisor`: `baremetal`
-      * `--release-channel`: A [supported EKS Distro release](https://anywhere.eks.amazonaws.com/docs/reference/support/support-versions/)
-      formatted as "[major]-[minor]"; for example "1-27"
+      * `--release-channel`: Supported EKS Distro releases include 1-25, 1-26, 1-27, 1-28 and 1-29.
       * `--baremetal-config`: baremetal config file if using proxy
 
       ```bash
-      image-builder build --os ubuntu --hypervisor baremetal --release-channel 1-27
+      image-builder build --os ubuntu --hypervisor baremetal --release-channel 1-29
       ```
 
    **Red Hat Enterprise Linux (RHEL)**
@@ -637,14 +614,12 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
       * `--os`: `redhat`
       * `--os-version`: `8` (default: `8`)
       * `--hypervisor`: `baremetal`
-      * `--release-channel`: A [supported EKS Distro release](https://anywhere.eks.amazonaws.com/docs/reference/support/support-versions/)
-      formatted as "[major]-[minor]"; for example "1-27"
+      * `--release-channel`: Supported EKS Distro releases include 1-25, 1-26, 1-27, 1-28 and 1-29.
       * `--baremetal-config`: Bare metal config file
 
       ```bash
-      image-builder build --os redhat --hypervisor baremetal --release-channel 1-28 --baremetal-config baremetal.json
+      image-builder build --os redhat --hypervisor baremetal --release-channel 1-29 --baremetal-config baremetal.json
       ```
-
 1. To consume the image, serve it from an accessible web server, then create the [bare metal cluster spec]({{< relref "../getting-started/baremetal/bare-spec/" >}})
    configuring the `osImageURL` field URL of the image. For example:
 
@@ -652,7 +627,7 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
    osImageURL: "http://<artifact host address>/my-ubuntu-v1.23.9-eks-a-17-amd64.gz"
    ```
 
-   See descriptions of [osImageURL]({{< relref "../getting-started/baremetal/bare-spec/#osimageurl" >}}) for further information.
+   See descriptions of [`osImageURL`]({{< relref "../getting-started/baremetal/bare-spec/#osimageurl-optional" >}}) for further information.
 
 ### Build CloudStack node images
 
@@ -718,29 +693,6 @@ These steps use `image-builder` to create a RHEL-based image for CloudStack. Bef
      ```bash
      python3 -m pip install --user ansible
      ```
-
-1. Get `image-builder`:
-
-   Using the latest EKS Anywhere version
-   ```bash
-   EKSA_RELEASE_VERSION=$(curl -sL https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml | yq ".spec.latestVersion")
-   ```
-
-   OR
-
-   Using a specific EKS Anywhere version
-   ```bash
-   EKSA_RELEASE_VERSION=v0.18.0
-   ```
-
-   ```bash
-   cd /tmp
-   BUNDLE_MANIFEST_URL=$(curl -s https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml | yq ".spec.releases[] | select(.version==\"$EKSA_RELEASE_VERSION\").bundleManifestUrl")
-   IMAGEBUILDER_TARBALL_URI=$(curl -s $BUNDLE_MANIFEST_URL | yq ".spec.versionsBundles[0].eksD.imagebuilder.uri")
-   curl -s $IMAGEBUILDER_TARBALL_URI | tar xz ./image-builder
-   sudo install -m 0755 ./image-builder /usr/local/bin/image-builder
-   cd -
-   ```
 1. Create a CloudStack configuration file (for example, `cloudstack.json`) to provide the location of a Red Hat Enterprise Linux 8 ISO image and related checksum and Red Hat subscription information:
    ```json
    {
@@ -752,19 +704,17 @@ These steps use `image-builder` to create a RHEL-based image for CloudStack. Bef
    }
    ```
    >**_NOTE_**: To build the RHEL-based image, `image-builder` temporarily consumes a Red Hat subscription. That subscription is removed once the image is built.
-
 1. To create a RHEL-based image, run `image-builder` with the following options:
 
       * `--os`: `redhat`
       * `--os-version`: `8` (default: `8`)
       * `--hypervisor`: For CloudStack use `cloudstack`
-      * `--release-channel`: Supported EKS Distro releases include 1-24, 1-25, 1-26, 1-27 and 1-28.
+      * `--release-channel`: Supported EKS Distro releases include 1-25, 1-26, 1-27, 1-28 and 1-29.
       * `--cloudstack-config`: CloudStack configuration file (`cloudstack.json` in this example)
 
       ```bash
-      image-builder build --os redhat --hypervisor cloudstack --release-channel 1-28 --cloudstack-config cloudstack.json
+      image-builder build --os redhat --hypervisor cloudstack --release-channel 1-29 --cloudstack-config cloudstack.json
       ```
-
 1. To consume the resulting RHEL-based image, add it as a template to your CloudStack setup as described in [Preparing CloudStack]({{< relref "../getting-started/cloudstack/cloudstack-preparation" >}}).
 
 ### Build Snow node images
@@ -822,29 +772,6 @@ These steps use `image-builder` to create an Ubuntu-based Amazon Machine Image (
      ```bash
      python3 -m pip install --user ansible
      ```
-
-1. Get `image-builder`:
-
-   Using the latest EKS Anywhere version
-   ```bash
-   EKSA_RELEASE_VERSION=$(curl -sL https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml | yq ".spec.latestVersion")
-   ```
-
-   OR
-
-   Using a specific EKS Anywhere version
-   ```bash
-   EKSA_RELEASE_VERSION=v0.18.0
-   ```
-
-   ```bash
-   cd /tmp
-   BUNDLE_MANIFEST_URL=$(curl -s https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml | yq ".spec.releases[] | select(.version==\"$EKSA_RELEASE_VERSION\").bundleManifestUrl")
-   IMAGEBUILDER_TARBALL_URI=$(curl -s $BUNDLE_MANIFEST_URL | yq ".spec.versionsBundles[0].eksD.imagebuilder.uri")
-   curl -s $IMAGEBUILDER_TARBALL_URI | tar xz ./image-builder
-   sudo install -m 0755 ./image-builder /usr/local/bin/image-builder
-   cd /home/$USER
-   ```
 1. Create an AMI configuration file (for example, `ami.json`) that contains various AMI parameters. For example:
 
    ```json
@@ -900,19 +827,18 @@ These steps use `image-builder` to create an Ubuntu-based Amazon Machine Image (
 
    ##### **volume_type**
    The type of root EBS volume, such as gp2, gp3, io1, etc. (default: `gp3`).
-
 1. To create an Ubuntu-based image, run `image-builder` with the following options:
 
    * `--os`: `ubuntu`
    * `--os-version`: `20.04` or `22.04` (default: `20.04`)
    * `--hypervisor`: For AMI, use `ami`
-   * `--release-channel`: Supported EKS Distro releases include 1-24, 1-25, 1-26, 1-27 and 1-28.
+   * `--release-channel`: Supported EKS Distro releases include 1-25, 1-26, 1-27, 1-28 and 1-29.
    * `--ami-config`: AMI configuration file (`ami.json` in this example)
 
    ```bash
-   image-builder build --os ubuntu --hypervisor ami --release-channel 1-28 --ami-config ami.json
+   image-builder build --os ubuntu --hypervisor ami --release-channel 1-29 --ami-config ami.json
    ```
-1. After the build, the Ubuntu AMI will be available in your AWS account in the AWS region specified in your AMI configuration file. If you wish to export it as a Raw image, you can achieve this using the AWS CLI.
+1. After the build, the Ubuntu AMI will be available in your AWS account in the AWS region specified in your AMI configuration file. If you wish to export it as a raw image, you can achieve this using the AWS CLI.
    ```
    ARTIFACT_ID=$(cat <manifest output location> | jq -r '.builds[0].artifact_id')
    AMI_ID=$(echo $ARTIFACT_ID | cut -d: -f2)
@@ -929,7 +855,6 @@ These steps use `image-builder` to create an Ubuntu-based Amazon Machine Image (
 These steps use `image-builder` to create a Ubuntu-based image for Nutanix AHV and import it into the AOS Image Service. Before proceeding, ensure that the above system-level, network-level and Nutanix-specific [prerequisites]({{< relref "#prerequisites">}}) have been met.
 
 1. Download an [Ubuntu cloud image](https://cloud-images.ubuntu.com/releases) or [RHEL cloud image](https://access.redhat.com/downloads/content/rhel) pertaining to your desired OS and OS version and upload it to the AOS Image Service using Prism. You will need to specify the image's name in AOS as the `source_image_name` in the `nutanix.json` config file specified below. You can also skip this step and directly use the `image_url` field in the config file to provide the URL of a publicly accessible image as source.
-
 1. Create a Linux user for running image-builder.
    ```bash
    sudo adduser image-builder
@@ -981,29 +906,6 @@ These steps use `image-builder` to create a Ubuntu-based image for Nutanix AHV a
      ```bash
      python3 -m pip install --user ansible
      ``` 
-
-1. Get `image-builder`:
-
-   Using the latest EKS Anywhere version
-   ```bash
-   EKSA_RELEASE_VERSION=$(curl -sL https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml | yq ".spec.latestVersion")
-   ```
-
-   OR
-
-   Using a specific EKS Anywhere version
-   ```bash
-   EKSA_RELEASE_VERSION=v0.18.0
-   ```
-
-   ```bash
-   cd /tmp
-   BUNDLE_MANIFEST_URL=$(curl -s https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml | yq ".spec.releases[] | select(.version==\"$EKSA_RELEASE_VERSION\").bundleManifestUrl")
-   IMAGEBUILDER_TARBALL_URI=$(curl -s $BUNDLE_MANIFEST_URL | yq ".spec.versionsBundles[0].eksD.imagebuilder.uri")
-   curl -s $IMAGEBUILDER_TARBALL_URI | tar xz ./image-builder
-   sudo install -m 0755 ./image-builder /usr/local/bin/image-builder
-   cd -
-   ```
 1. Create a `nutanix.json` config file. More details on values can be found in the [image-builder documentation](https://image-builder.sigs.k8s.io/capi/providers/nutanix.html). See example below:
    ```json
    {
@@ -1037,11 +939,11 @@ These steps use `image-builder` to create a Ubuntu-based image for Nutanix AHV a
       * `--os`: `ubuntu`
       * `--os-version`: `20.04` or `22.04` (default: `20.04`)
       * `--hypervisor`: For Nutanix use `nutanix`
-      * `--release-channel`: Supported EKS Distro releases include 1-24, 1-25, 1-26, 1-27 and 1-28.
+      * `--release-channel`: Supported EKS Distro releases include 1-25, 1-26, 1-27, 1-28 and 1-29.
       * `--nutanix-config`: Nutanix configuration file (`nutanix.json` in this example)
 
       ```bash
-      image-builder build --os ubuntu --hypervisor nutanix --release-channel 1-28 --nutanix-config nutanix.json
+      image-builder build --os ubuntu --hypervisor nutanix --release-channel 1-29 --nutanix-config nutanix.json
       ```
 
    **Red Hat Enterprise Linux**
@@ -1051,11 +953,11 @@ These steps use `image-builder` to create a Ubuntu-based image for Nutanix AHV a
       * `--os`: `redhat`
       * `--os-version`: `8` or `9` (default: `8`)
       * `--hypervisor`: For Nutanix use `nutanix`
-      * `--release-channel`: Supported EKS Distro releases include 1-24, 1-25, 1-26, 1-27 and 1-28.
+      * `--release-channel`: Supported EKS Distro releases include 1-25, 1-26, 1-27, 1-28 and 1-29.
       * `--nutanix-config`: Nutanix configuration file (`nutanix.json` in this example)
 
       ```bash
-      image-builder build --os redhat --hypervisor nutanix --release-channel 1-28 --nutanix-config nutanix.json
+      image-builder build --os redhat --hypervisor nutanix --release-channel 1-29 --nutanix-config nutanix.json
       ```
 
 ### Configuring OS version
@@ -1094,12 +996,10 @@ These steps use `image-builder` to create a Ubuntu-based image for Nutanix AHV a
         <tr>
             <td>9.2</td>
             <td>9</td>
-            <td>Nutanix only</td>
+            <td>CloudStack and Nutanix only</td>
         </tr>
     </tbody>
 </table>
-
-Currently, Ubuntu is the only operating system that supports multiple `os-version` values.
 
 ### Building images for a specific EKS Anywhere version
 
@@ -1250,7 +1150,7 @@ In order to use Red Hat Satellite in the image build process follow the steps be
 
 #### Building node images in an air-gapped environment
 1. Identify the EKS-D release channel (generally aligning with Kubernetes version) to build. For example, 1.27 or 1.28
-2. Identify the latest release of EKS-A from [changelog]({{< ref "/docs/whatsnew/changelog" >}}). For example, v0.18.0
+2. Identify the latest release of EKS-A from [changelog]({{< ref "/docs/whatsnew/changelog" >}}). For example, <EKS-A version>
 3. Run `image-builder` CLI to download manifests in an environment with internet connectivity
    ```bash
    image-builder download manifests
@@ -1280,7 +1180,7 @@ In order to use Red Hat Satellite in the image build process follow the steps be
       fi
 
       if [ -z "${RELEASE_CHANNEL}" ]; then
-         echo "RELEASE_CHANNEL not set. Supported EKS Distro releases include 1-24, 1-25, 1-26, 1-27 and 1-28"
+         echo "RELEASE_CHANNEL not set. Supported EKS Distro releases include 1-25, 1-26, 1-27, 1-28 and 1-29"
          exit 1
       fi
 
@@ -1349,7 +1249,7 @@ In order to use Red Hat Satellite in the image build process follow the steps be
    ```
 5. Set EKS-A release version and EKS-D release channel as environment variables and execute the script
    ```bash
-   EKSA_RELEASE_VERSION=v0.18.0 RELEASE_CHANNEL=1-28 ./download-airgapped-artifacts.sh
+   EKSA_RELEASE_VERSION=<EKS-A version> RELEASE_CHANNEL=1-28 ./download-airgapped-artifacts.sh
    ```
    Executing this script will create a local directory `eks-a-d-artifacts` and download the required EKS-A and EKS-D artifacts.
 6. Create two repositories, one for EKS-A and one for EKS-D on the private artifacts server.
@@ -1367,7 +1267,7 @@ In order to use Red Hat Satellite in the image build process follow the steps be
     deb [trusted=yes] http://<private-artifacts-server>/debian focal-backports main restricted universe multiverse
     deb [trusted=yes] http://<private-artifacts-server>/debian focal-security main restricted universe multiverse
     ```
-    `focal` in the above file refers to the name of the Ubuntu OS for version 20.04. If using Ubuntu version 22.04 replace `focal` with `jammy`.
+    `focal` in the above file refers to the code name for the Ubuntu 20.04 release. If using Ubuntu version 22.04, replace `focal` with `jammy`.
 11. Create a provider or hypervisor configuration file and add the following fields
     ```json
     {
@@ -1378,7 +1278,7 @@ In order to use Red Hat Satellite in the image build process follow the steps be
        "extra_repos": "<full path of sources.list>",
        "disable_public_repos": "true",
        "iso_url": "http://<private-base-iso-url>/ubuntu-20.04.1-legacy-server-amd64.iso",
-       "iso_checksum": "<sha256 of the base iso",
+       "iso_checksum": "<sha256 of the base iso>",
        "iso_checksum_type": "sha256"
     }
     ```
@@ -1388,7 +1288,7 @@ In order to use Red Hat Satellite in the image build process follow the steps be
     ```
 
 
-## Images
+## Container Images
 
-The various images for EKS Anywhere can be found [in the EKS Anywhere ECR repository](https://gallery.ecr.aws/eks-anywhere/).
-The various images for EKS Distro can be found [in the EKS Distro ECR repository](https://gallery.ecr.aws/eks-distro/).
+* The container images distributed by EKS Anywhere can be found in the [EKS Anywhere ECR Public Gallery](https://gallery.ecr.aws/eks-anywhere).
+* The container images distributed by EKS Distro can be found in the [EKS Distro ECR Public Gallery](https://gallery.ecr.aws/eks-distro).

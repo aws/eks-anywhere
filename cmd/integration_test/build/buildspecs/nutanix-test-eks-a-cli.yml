@@ -55,10 +55,19 @@ phases:
       - source ${CODEBUILD_SRC_DIR}/cmd/integration_test/build/script/setup_profile.sh
       - source ${CODEBUILD_SRC_DIR}/cmd/integration_test/build/script/create_infra_config.sh
       - ${CODEBUILD_SRC_DIR}/cmd/integration_test/build/script/start_docker.sh
+      - export CLUSTER_NAME_PREFIX="${BRANCH_NAME//./-}"
       - |
         if ! [[ ${CODEBUILD_INITIATOR} =~ "codepipeline" ]]; then
           make build-eks-a-for-e2e build-integration-test-binary e2e-tests-binary E2E_TAGS="e2e nutanix" E2E_OUTPUT_FILE=bin/nutanix/e2e.test
         fi
+      - >
+        ./bin/test e2e cleanup nutanix
+        -n ${CLUSTER_NAME_PREFIX}
+        -e ${T_NUTANIX_ENDPOINT}
+        -p ${T_NUTANIX_PORT}
+        --insecure
+        --ignoreErrors
+        -v 4
   build:
     commands:
       - export JOB_ID=$CODEBUILD_BUILD_ID
@@ -85,6 +94,16 @@ phases:
         --test-report-folder=reports
         --branch-name=${BRANCH_NAME}
         --baremetal-branch=${BAREMETAL_BRANCH}
+  post_build:
+    commands:
+      - >
+        ./bin/test e2e cleanup nutanix
+        -n ${CLUSTER_NAME_PREFIX}
+        -e ${T_NUTANIX_ENDPOINT}
+        -p ${T_NUTANIX_PORT}
+        --insecure
+        --ignoreErrors
+        -v 4
 reports:
   e2e-reports:
     files:

@@ -94,15 +94,17 @@ ctr -n k8s.io t exec -t --exec-id etcd ${ETCD_CONTAINER_ID} etcdctl \
 {{< /tab >}}
 {{< /tabpane >}}
 
+- If the above command fails due to multiple etcd containers existing, then navigate to `/var/log/containers/etcd` and confirm which container was running during the issue timeframe (this container would be the 'stale' container). Delete this older etcd once you have renewed the certs and the new etcd container will be able to enter a functioning state. If you don’t do this, the two etcd containers will stay indefinitely and the etcd will not recover.
+
 3. Repeat the above steps for all etcd nodes.
 
-4. Save the `api-server-etcd-client` `crt` and `key` file as a Secret from one of the etcd nodes, so the `key` can be picked up by new control plane nodes. You will also need them when renewing the certificates on control plane nodes. See the [Kubernetes documentation](https://kubernetes.io/docs/tasks/configmap-secret/managing-secret-using-config-file/#edit-secret) for details on editing Secrets.
+4. Save the `apiserver-etcd-client` `crt` and `key` file as a Secret from one of the etcd nodes, so the `key` can be picked up by new control plane nodes. You will also need them when renewing the certificates on control plane nodes. See the [Kubernetes documentation](https://kubernetes.io/docs/tasks/configmap-secret/managing-secret-using-config-file/#edit-secret) for details on editing Secrets.
 ```bash
-kubectl edit secret ${cluster-name}-api-server-etcd-client -n eksa-system
+kubectl edit secret ${cluster-name}-apiserver-etcd-client -n eksa-system
 ```
 
 {{% alert title="Note" color="primary" %}}
-For Bottlerocket nodes, the `key` of `api-server-etcd-client` is `server-etcd.client.crt` instead of `api-server-etcd-client.crt`.
+For Bottlerocket nodes, the `key` of `apiserver-etcd-client` is `server-etcd.client.crt` instead of `apiserver-etcd-client.crt`.
 {{% /alert %}}
 
 #### Control plane nodes
@@ -169,8 +171,8 @@ ${IMAGE_ID} tmp-cert-renew \
 
    - **For Bottlerocket**: re-enable the static pods:
    ```
-   apiclient get | jq -r '.settings.kubernetes["static-pods"] | keys[]' | xargs -n 1 -I {} apiclient set settings.kubernetes.static-pods.{}.enabled=false 
-   apiclient get | jq -r '.settings.kubernetes["static-pods"] | keys[]' | xargs -n 1 -I {} apiclient set settings.kubernetes.static-pods.{}.enabled=true`
+   apiclient get | apiclient exec admin jq -r '.settings.kubernetes["static-pods"] | keys[]' | xargs -n 1 -I {} apiclient set settings.kubernetes.static-pods.{}.enabled=false 
+   apiclient get | apiclient exec admin jq -r '.settings.kubernetes["static-pods"] | keys[]' | xargs -n 1 -I {} apiclient set settings.kubernetes.static-pods.{}.enabled=true
    ```
 
    You can verify Pods restarting by running `kubectl` from your Admin machine.
@@ -178,6 +180,55 @@ ${IMAGE_ID} tmp-cert-renew \
 5. Repeat the above steps for all control plane nodes.
 
 You can similarly use the above steps to rotate a single certificate instead of all certificates.
+
+### Kubelet
+If `kubeadm certs check-expiration` is happy, but kubectl commands against the cluster fail with `x509: certificate has expired or is not yet valid`, then it's likely that the kubelet certs did not rotate. To rotate them, SSH back into one of the control plane nodes and do the following.
+
+```
+# backup certs
+cd /var/lib/kubelet
+cp -r pki pki.bak
+rm pki/*
+
+systemctl restart kubelet
+```
+
+In some cases, the certs might not regenerate and kubelet will fail to start due to a missing `kubelet-client-current.pem`. If this happens, run the following commands:
+
+{{< tabpane >}}
+{{< tab header="Ubuntu or RHEL" lang="bash" >}}
+cat /var/lib/kubeadm/admin.conf | grep client-certificate-data: | sed 's/^.*: //' | base64 -d > /var/lib/kubelet/pki/kubelet-client-current.pem
+
+cat /var/lib/kubeadm/admin.conf | grep client-key-data: | sed 's/^.*: //' | base64 -d >> /var/lib/kubelet/pki/kubelet-client-current.pem
+
+systemctl restart kubelet
+
+{{< /tab >}}
+{{< tab header="Bottlerocket" lang="bash" >}}
+cat /var/lib/kubeadm/admin.conf | grep client-certificate-data: | apiclient exec admin sed 's/^.*: //' | base64 -d > /var/lib/kubelet/pki/kubelet-client-current.pem
+
+cat /var/lib/kubeadm/admin.conf | grep client-key-data: | apiclient exec admin sed 's/^.*: //' | base64 -d >> /var/lib/kubelet/pki/kubelet-client-current.pem
+
+systemctl restart kubelet
+
+{{< /tab >}}
+{{< /tabpane >}}
+
+### Post Renewal
+Once all the certificates are valid, verify the kcp object on the affected cluster(s) is not paused by running `kubectl describe kcp -n eksa-system | grep cluster.x-k8s.io/paused`. If it is paused, then this usually indicates an issue with the etcd cluster. Check the logs for pods under the `etcdadm-controller-system` namespace for any errors. 
+If the logs indicate an issue with the etcd endpoints, then you need to update `spec.clusterConfiguration.etcd.endpoints` in the cluster's `kubeadmconfig` resource: `kubectl edit kcp -n eksa-system`
+
+Example:
+```
+etcd:
+   external:
+     caFile: /var/lib/kubeadm/pki/etcd/ca.crt
+      certFile: /var/lib/kubeadm/pki/server-etcd-client.crt
+      endpoints:
+      - https://xxx.xxx.xxx.xxx:2379
+      - https://xxx.xxx.xxx.xxx:2379
+      - https://xxx.xxx.xxx.xxx:2379
+```
 
 #### What do I do if my local kubeconfig has expired?
 
@@ -211,6 +262,7 @@ cat new-admin.kubeconfig > /tmp/new-admin-decoded.kubeconfig
 {{< /tab >}}
 
 {{< tab header="Bottlerocket" lang="bash" >}}
+
 # you would be in the admin container when you ssh to the Bottlerocket machine
 # open a root shell
 sudo sheltie
@@ -235,4 +287,3 @@ ls -ltr
 export KUBECONFIG="new-admin-decoded.kubeconfig"
 
 kubectl get pods
-```

@@ -35,6 +35,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/executables"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/git"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
@@ -59,17 +60,22 @@ const (
 	JobIdVar                               = "T_JOB_ID"
 	BundlesOverrideVar                     = "T_BUNDLES_OVERRIDE"
 	ClusterIPPoolEnvVar                    = "T_CLUSTER_IP_POOL"
+	ClusterIPEnvVar                        = "T_CLUSTER_IP"
 	CleanupVmsVar                          = "T_CLEANUP_VMS"
 	hardwareYamlPath                       = "hardware.yaml"
 	hardwareCsvPath                        = "hardware.csv"
 	EksaPackagesInstallation               = "eks-anywhere-packages"
+	bundleReleasePathFromArtifacts         = "./eks-anywhere-downloads/bundle-release.yaml"
 )
 
 //go:embed testdata/oidc-roles.yaml
 var oidcRoles []byte
 
-//go:embed testdata/hpa_busybox.yaml
-var hpaBusybox []byte
+//go:embed testdata/autoscaler_load.yaml
+var autoscalerLoad []byte
+
+//go:embed testdata/local-path-storage.yaml
+var localPathProvisioner []byte
 
 type ClusterE2ETest struct {
 	T                            T
@@ -657,7 +663,7 @@ func (e *ClusterE2ETest) DownloadImages(opts ...CommandOpt) {
 	if getBundlesOverride() == "true" {
 		var bundleManifestLocation string
 		if _, err := os.Stat(defaultDownloadArtifactsOutputLocation); err == nil {
-			bundleManifestLocation = "eks-anywhere-downloads/bundle-release.yaml"
+			bundleManifestLocation = bundleReleasePathFromArtifacts
 		} else {
 			bundleManifestLocation = defaultBundleReleaseManifestFile
 		}
@@ -678,7 +684,7 @@ func (e *ClusterE2ETest) ImportImages(opts ...CommandOpt) {
 	registryMirrorHost := net.JoinHostPort(registyMirrorEndpoint, registryMirrorPort)
 	var bundleManifestLocation string
 	if _, err := os.Stat(defaultDownloadArtifactsOutputLocation); err == nil {
-		bundleManifestLocation = "eks-anywhere-downloads/bundle-release.yaml"
+		bundleManifestLocation = bundleReleasePathFromArtifacts
 	} else {
 		bundleManifestLocation = defaultBundleReleaseManifestFile
 	}
@@ -954,6 +960,15 @@ func (e *ClusterE2ETest) GenerateSupportBundleOnCleanupIfTestFailed(opts ...Comm
 	})
 }
 
+// GenerateSupportBundleIfTestFailed runs generates a support bundle if the test failed.
+func (e *ClusterE2ETest) GenerateSupportBundleIfTestFailed(opts ...CommandOpt) {
+	if e.T.Failed() {
+		e.T.Log("Generating support bundle for failed test")
+		generateSupportBundleArgs := []string{"generate", "support-bundle", "-f", e.ClusterConfigLocation}
+		e.RunEKSA(generateSupportBundleArgs, opts...)
+	}
+}
+
 func (e *ClusterE2ETest) Run(name string, args ...string) {
 	cmd, err := prepareCommand(name, args...)
 	if err != nil {
@@ -1008,14 +1023,6 @@ func (e *ClusterE2ETest) StopIfFailed() {
 	if e.T.Failed() {
 		e.T.FailNow()
 	}
-}
-
-func (e *ClusterE2ETest) cleanup(f func()) {
-	e.T.Cleanup(func() {
-		if !e.T.Failed() {
-			f()
-		}
-	})
 }
 
 // Cluster builds a cluster obj using the ClusterE2ETest name and kubeconfig.
@@ -1274,9 +1281,7 @@ func (e *ClusterE2ETest) UninstallCuratedPackage(packagePrefix string, opts ...s
 
 func (e *ClusterE2ETest) InstallLocalStorageProvisioner() {
 	ctx := context.Background()
-	_, err := e.KubectlClient.ExecuteCommand(ctx, "apply", "-f",
-		"https://raw.githubusercontent.com/rancher/local-path-provisioner/v0.0.22/deploy/local-path-storage.yaml",
-		"--kubeconfig", e.KubeconfigFilePath())
+	err := e.KubectlClient.ApplyKubeSpecFromBytes(ctx, e.Cluster(), localPathProvisioner)
 	if err != nil {
 		e.T.Fatalf("Error installing local-path-provisioner: %v", err)
 	}
@@ -1286,7 +1291,25 @@ func (e *ClusterE2ETest) InstallLocalStorageProvisioner() {
 func (e *ClusterE2ETest) WithCluster(f func(e *ClusterE2ETest)) {
 	e.GenerateClusterConfig()
 	e.CreateCluster()
-	defer e.DeleteCluster()
+	defer func() {
+		e.GenerateSupportBundleIfTestFailed()
+		e.DeleteCluster()
+	}()
+	f(e)
+}
+
+// WithClusterRegistryMirror helps with bringing up and tearing down E2E test clusters when using registry mirror.
+func (e *ClusterE2ETest) WithClusterRegistryMirror(f func(e *ClusterE2ETest)) {
+	e.GenerateClusterConfig()
+	e.DownloadArtifacts()
+	e.ExtractDownloadedArtifacts()
+	e.DownloadImages()
+	e.ImportImages()
+	e.CreateCluster(WithBundlesOverride(bundleReleasePathFromArtifacts))
+	defer func() {
+		e.GenerateSupportBundleIfTestFailed()
+		e.DeleteCluster(WithBundlesOverride(bundleReleasePathFromArtifacts))
+	}()
 	f(e)
 }
 
@@ -1374,7 +1397,6 @@ func (e *ClusterE2ETest) printDeploymentSpec(ctx context.Context, ns string) {
 func (e *ClusterE2ETest) VerifyHelloPackageInstalled(packageName string, mgmtCluster *types.Cluster) {
 	ctx := context.Background()
 	packageMetadatNamespace := fmt.Sprintf("%s-%s", constants.EksaPackagesName, e.ClusterName)
-	e.GenerateSupportBundleOnCleanupIfTestFailed()
 
 	// Log Package/Deployment outputs
 	defer func() {
@@ -1407,7 +1429,6 @@ func (e *ClusterE2ETest) VerifyHelloPackageInstalled(packageName string, mgmtClu
 func (e *ClusterE2ETest) VerifyAdotPackageInstalled(packageName, targetNamespace string) {
 	ctx := context.Background()
 	packageMetadatNamespace := fmt.Sprintf("%s-%s", constants.EksaPackagesName, e.ClusterName)
-	e.GenerateSupportBundleOnCleanupIfTestFailed()
 
 	e.T.Log("Waiting for package", packageName, "to be installed")
 	err := e.KubectlClient.WaitForPackagesInstalled(ctx,
@@ -1610,7 +1631,7 @@ func (e *ClusterE2ETest) TestEmissaryPackageRouting(packageName, checkName strin
 	ctx := context.Background()
 	packageMetadatNamespace := fmt.Sprintf("%s-%s", constants.EksaPackagesName, e.ClusterName)
 
-	err := e.KubectlClient.ApplyKubeSpecFromBytes(ctx, e.Cluster(), emisarryPackage)
+	err := e.KubectlClient.ApplyKubeSpecFromBytesWithNamespace(ctx, e.Cluster(), emisarryPackage, packageMetadatNamespace)
 	if err != nil {
 		e.T.Errorf("Error upgrading emissary package: %v", err)
 		return
@@ -1634,6 +1655,8 @@ func (e *ClusterE2ETest) TestEmissaryPackageRouting(packageName, checkName strin
 		e.T.Errorf("Error applying roles for oids: %v", err)
 		return
 	}
+	e.T.Log("Waiting for hello service")
+	time.Sleep(60 * time.Second)
 
 	// Functional testing of Emissary Ingress
 	ingresssvcAddress := checkName + "." + constants.EksaPackagesName + ".svc.cluster.local"
@@ -1992,49 +2015,46 @@ func (e *ClusterE2ETest) InstallAutoScalerWithMetricServer(targetNamespace strin
 // CombinedAutoScalerMetricServerTest verifies that new nodes are spun up after using a HPA to scale a deployment.
 func (e *ClusterE2ETest) CombinedAutoScalerMetricServerTest(autoscalerName, metricServerName, targetNamespace string, mgmtCluster *types.Cluster) {
 	ctx := context.Background()
-	ns := "default"
-	name := "hpa-busybox-test"
 	machineDeploymentName := e.ClusterName + "-" + "md-0"
+	autoscalerDeploymentName := "cluster-autoscaler-clusterapi-cluster-autoscaler"
 
 	e.VerifyMetricServerPackageInstalled(metricServerName, targetNamespace, mgmtCluster)
 	e.VerifyAutoScalerPackageInstalled(autoscalerName, targetNamespace, mgmtCluster)
-
 	e.T.Log("Metrics Server and Cluster Autoscaler ready")
 
-	err := e.KubectlClient.ApplyKubeSpecFromBytes(ctx, mgmtCluster, hpaBusybox)
-	if err != nil {
-		e.T.Fatalf("Failed to apply hpa busybox load %s", err)
-	}
-
 	e.T.Log("Deploying test workload")
-
-	err = e.KubectlClient.WaitForDeployment(ctx,
-		e.Cluster(), "5m", "Available", name, ns)
+	err := e.KubectlClient.ApplyKubeSpecFromBytes(ctx, mgmtCluster, autoscalerLoad)
 	if err != nil {
-		e.T.Fatalf("Failed waiting for test workload deployent %s", err)
+		e.T.Fatalf("Failed to apply autoscaler load %s", err)
 	}
 
-	params := []string{"autoscale", "deployment", name, "--cpu-percent=50", "--min=1", "--max=20", "--kubeconfig", e.KubeconfigFilePath()}
-	_, err = e.KubectlClient.ExecuteCommand(ctx, params...)
+	// There is a bug in cluster autoscaler currently where it's not able to autoscale the cluster
+	// because of missing permissions on infrastructure machine template.
+	// Cluster Autoscaler does restart after ~10 min after which it starts functioning normally.
+	// We are force triggering a restart so the e2e doesn't have to wait 10 min for the restart.
+	// This can be removed once the following issue is resolve upstream.
+	// https://github.com/kubernetes/autoscaler/issues/6490
+	_, err = e.KubectlClient.ExecuteCommand(ctx, "rollout", "restart", "deployment", "-n", targetNamespace, autoscalerDeploymentName, "--kubeconfig", e.KubeconfigFilePath())
 	if err != nil {
-		e.T.Fatalf("Failed to autoscale deployent: %s", err)
+		e.T.Fatalf("Failed to rollout cluster autoscaler %s", err)
 	}
+	e.VerifyAutoScalerPackageInstalled(autoscalerName, targetNamespace, mgmtCluster)
 
 	e.T.Log("Waiting for machinedeployment to begin scaling up")
-	err = e.KubectlClient.WaitJSONPathLoop(ctx, mgmtCluster.KubeconfigFile, "20m", "status.phase", "ScalingUp",
+	err = e.KubectlClient.WaitJSONPathLoop(ctx, mgmtCluster.KubeconfigFile, "10m", "status.phase", "ScalingUp",
 		fmt.Sprintf("machinedeployments.cluster.x-k8s.io/%s", machineDeploymentName), constants.EksaSystemNamespace)
 	if err != nil {
 		e.T.Fatalf("Failed to get ScalingUp phase for machinedeployment: %s", err)
 	}
 
 	e.T.Log("Waiting for machinedeployment to finish scaling up")
-	err = e.KubectlClient.WaitJSONPathLoop(ctx, mgmtCluster.KubeconfigFile, "15m", "status.phase", "Running",
+	err = e.KubectlClient.WaitJSONPathLoop(ctx, mgmtCluster.KubeconfigFile, "20m", "status.phase", "Running",
 		fmt.Sprintf("machinedeployments.cluster.x-k8s.io/%s", machineDeploymentName), constants.EksaSystemNamespace)
 	if err != nil {
 		e.T.Fatalf("Failed to get Running phase for machinedeployment: %s", err)
 	}
 
-	err = e.KubectlClient.WaitForMachineDeploymentReady(ctx, mgmtCluster, "2m",
+	err = e.KubectlClient.WaitForMachineDeploymentReady(ctx, mgmtCluster, "5m",
 		machineDeploymentName)
 	if err != nil {
 		e.T.Fatalf("Machine deployment stuck in scaling up: %s", err)
@@ -2109,7 +2129,6 @@ func (e *ClusterE2ETest) MatchLogs(targetNamespace, targetPodName string,
 ) {
 	e.T.Logf("Match logs for pod %s, container %s in namespace %s", targetPodName,
 		targetContainerName, targetNamespace)
-	e.GenerateSupportBundleOnCleanupIfTestFailed()
 
 	err := retrier.New(timeout).Retry(func() error {
 		logs, err := e.KubectlClient.GetPodLogs(context.TODO(), targetNamespace,
@@ -2179,11 +2198,12 @@ func dumpFile(description, path string, t T) {
 func (e *ClusterE2ETest) setFeatureFlagForUnreleasedKubernetesVersion(version v1alpha1.KubernetesVersion) {
 	// Update this variable to equal the feature flagged k8s version when applicable.
 	// For example, if k8s 1.26 is under a feature flag, we would set this to v1alpha1.Kube126
-	var unreleasedK8sVersion v1alpha1.KubernetesVersion
+	unreleasedK8sVersion := v1alpha1.Kube130
 
 	if version == unreleasedK8sVersion {
 		// Set feature flag for the unreleased k8s version when applicable
 		e.T.Logf("Setting k8s version support feature flag...")
+		os.Setenv(features.K8s130SupportEnvVar, "true")
 	}
 }
 

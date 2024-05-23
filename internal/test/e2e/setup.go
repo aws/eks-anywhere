@@ -49,19 +49,19 @@ type E2ESession struct {
 
 func newE2ESession(instanceId string, conf instanceRunConf) (*E2ESession, error) {
 	e := &E2ESession{
-		session:             conf.session,
+		session:             conf.Session,
 		instanceId:          instanceId,
-		instanceProfileName: conf.instanceProfileName,
-		storageBucket:       conf.storageBucket,
-		jobId:               conf.jobId,
-		ipPool:              conf.ipPool,
+		instanceProfileName: conf.InstanceProfileName,
+		storageBucket:       conf.StorageBucket,
+		jobId:               conf.JobID,
+		ipPool:              conf.IPPool,
 		testEnvVars:         make(map[string]string),
-		bundlesOverride:     conf.bundlesOverride,
-		cleanupVms:          conf.cleanupVms,
+		bundlesOverride:     conf.BundlesOverride,
+		cleanupVms:          conf.CleanupVMs,
 		requiredFiles:       requiredFiles,
-		branchName:          conf.branchName,
-		hardware:            conf.hardware,
-		logger:              conf.logger,
+		branchName:          conf.BranchName,
+		hardware:            conf.Hardware,
+		logger:              conf.Logger,
 	}
 
 	return e, nil
@@ -179,6 +179,7 @@ func (e *E2ESession) setup(regex string) error {
 	}
 
 	ipPool := e.ipPool.ToString()
+
 	if ipPool != "" {
 		e.testEnvVars[e2etests.ClusterIPPoolEnvVar] = ipPool
 	}

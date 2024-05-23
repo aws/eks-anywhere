@@ -24,7 +24,7 @@ var initE2EDirCommand = "mkdir -p /home/e2e/bin && cd /home/e2e"
 
 // WaitForSSMReady waits for the SSM command to be ready.
 func WaitForSSMReady(session *session.Session, instanceID string, timeout time.Duration) error {
-	err := retrier.Retry(10, 20*time.Second, func() error {
+	err := retrier.Retry(20, 20*time.Second, func() error {
 		return Run(session, logr.Discard(), instanceID, "ls", timeout)
 	})
 	if err != nil {

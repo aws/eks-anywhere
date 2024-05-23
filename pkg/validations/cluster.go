@@ -10,6 +10,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/semver"
@@ -41,15 +42,6 @@ func ValidateOSForRegistryMirror(clusterSpec *cluster.Spec, provider providers.P
 	ociNamespaces := cluster.Spec.RegistryMirrorConfiguration.OCINamespaces
 	if len(ociNamespaces) == 0 {
 		return nil
-	}
-
-	for _, mc := range machineConfigs {
-		// BottleRocket accepts only one registry mirror and that is hardcoded for public.ecr.aws at this moment.
-		// Such a validation will be removed once CAPI is patched to support more than one endpoints for BottleRocket.
-		if mc.OSFamily() == v1alpha1.Bottlerocket &&
-			(len(ociNamespaces) != 1 || ociNamespaces[0].Registry != constants.DefaultCoreEKSARegistry) {
-			return fmt.Errorf("%s is the only registry supported in ociNamespaces for %s", constants.DefaultCoreEKSARegistry, v1alpha1.Bottlerocket)
-		}
 	}
 
 	return nil
@@ -273,6 +265,16 @@ func ValidateManagementComponentsVersionSkew(ctx context.Context, k KubectlClien
 
 	if majorVersionDifference != 0 || minorVersionDifference > supportedManagementComponentsMinorVersionIncrement {
 		return fmt.Errorf("management components version %s can only be one minor version greater than cluster version %s", newManagementComponentsSemVer, managementClusterSemVer)
+	}
+	return nil
+}
+
+// ValidateK8s130Support checks if the 1.30 feature flag is set when using k8s 1.30.
+func ValidateK8s130Support(clusterSpec *cluster.Spec) error {
+	if !features.IsActive(features.K8s130Support()) {
+		if clusterSpec.Cluster.Spec.KubernetesVersion == v1alpha1.Kube130 {
+			return fmt.Errorf("kubernetes version %s is not enabled. Please set the env variable %v", v1alpha1.Kube130, features.K8s130SupportEnvVar)
+		}
 	}
 	return nil
 }

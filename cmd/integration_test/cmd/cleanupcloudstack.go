@@ -37,11 +37,14 @@ func preRunCleanUpCloudstackSetup(cmd *cobra.Command, args []string) {
 	})
 }
 
+const deleteDuplicateNetworksFlag = "delete-duplicate-networks"
+
 var requiredCloudstackCleanUpFlags = []string{clusterNameFlagName}
 
 func init() {
 	cleanUpInstancesCmd.AddCommand(cleanUpCloudstackCmd)
 	cleanUpCloudstackCmd.Flags().StringP(clusterNameFlagName, "n", "", "Cluster name for associated vms")
+	cleanUpCloudstackCmd.Flags().Bool(deleteDuplicateNetworksFlag, false, "Delete duplicate isolated networks")
 
 	for _, flag := range requiredCloudstackCleanUpFlags {
 		if err := cleanUpCloudstackCmd.MarkFlagRequired(flag); err != nil {
@@ -52,7 +55,8 @@ func init() {
 
 func cleanUpCloudstackTestResources(ctx context.Context) error {
 	clusterName := viper.GetString(clusterNameFlagName)
-	err := cleanup.CleanUpCloudstackTestResources(ctx, clusterName, false)
+	deleteDuplicateNetworks := viper.IsSet(deleteDuplicateNetworksFlag)
+	err := cleanup.CloudstackTestResources(ctx, clusterName, false, deleteDuplicateNetworks)
 	if err != nil {
 		return fmt.Errorf("running cleanup for cloudstack vms: %v", err)
 	}

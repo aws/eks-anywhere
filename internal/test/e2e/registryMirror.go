@@ -56,7 +56,9 @@ func (e *E2ESession) setupRegistryMirrorEnv(testRegex string) error {
 	}
 
 	if endpoint != "" && port != "" && caCert != "" {
-		return e.mountRegistryCert(caCert, net.JoinHostPort(endpoint, port))
+		if err := e.mountRegistryCert(caCert, net.JoinHostPort(endpoint, port)); err != nil {
+			return err
+		}
 	}
 
 	re = regexp.MustCompile(`^.*Docker.*Airgapped.*$`)
@@ -68,6 +70,16 @@ func (e *E2ESession) setupRegistryMirrorEnv(testRegex string) error {
 		err = os.Setenv("AIRGAPPED_SECURITY_GROUP", e.testEnvVars[e2etests.RegistryMirrorAirgappedSecurityGroup])
 		if err != nil {
 			return fmt.Errorf("unable to set AIRGAPPED_SECURITY_GROUP: %v", err)
+		}
+	}
+
+	re = regexp.MustCompile(`^.*OciNamespaces.*$`)
+	if re.MatchString(testRegex) {
+		ociNamespacesEnvVar := e2etests.RequiredOciNamespacesEnvVars()
+		for _, eVar := range ociNamespacesEnvVar {
+			if val, ok := os.LookupEnv(eVar); ok {
+				e.testEnvVars[eVar] = val
+			}
 		}
 	}
 

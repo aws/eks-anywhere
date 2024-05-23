@@ -13,8 +13,9 @@ spec:
     - --uts
     - --ipc
     - --net
-    - /foo/eksa-upgrades/scripts/upgrade.sh
-    - print_status_and_cleanup
+    - /foo/eksa-upgrades/tools/upgrader
+    - upgrade
+    - status
     command:
     - nsenter
     image: public.ecr.aws/eks-anywhere/node-upgrader:latest
@@ -46,8 +47,9 @@ spec:
     - --uts
     - --ipc
     - --net
-    - /foo/eksa-upgrades/scripts/upgrade.sh
-    - upgrade_containerd
+    - /foo/eksa-upgrades/tools/upgrader
+    - upgrade
+    - containerd
     command:
     - nsenter
     image: public.ecr.aws/eks-anywhere/node-upgrader:latest
@@ -62,8 +64,9 @@ spec:
     - --uts
     - --ipc
     - --net
-    - /foo/eksa-upgrades/scripts/upgrade.sh
-    - cni_plugins
+    - /foo/eksa-upgrades/tools/upgrader
+    - upgrade
+    - cni-plugins
     command:
     - nsenter
     image: public.ecr.aws/eks-anywhere/node-upgrader:latest
@@ -78,9 +81,14 @@ spec:
     - --uts
     - --ipc
     - --net
-    - /foo/eksa-upgrades/scripts/upgrade.sh
-    - kubeadm_in_first_cp
+    - /foo/eksa-upgrades/tools/upgrader
+    - upgrade
+    - node
+    - --type
+    - FirstCP
+    - --k8sVersion
     - v1.28.3-eks-1-28-9
+    - --etcdVersion
     - v3.5.9-eks-1-28-9
     command:
     - nsenter
@@ -96,8 +104,9 @@ spec:
     - --uts
     - --ipc
     - --net
-    - /foo/eksa-upgrades/scripts/upgrade.sh
-    - kubelet_and_kubectl
+    - /foo/eksa-upgrades/tools/upgrader
+    - upgrade
+    - kubelet-kubectl
     command:
     - nsenter
     image: public.ecr.aws/eks-anywhere/node-upgrader:latest

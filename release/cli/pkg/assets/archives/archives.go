@@ -145,6 +145,60 @@ func KernelArtifactPathGetter(rc *releasetypes.ReleaseConfig, archive *assettype
 	return sourceS3Key, sourceS3Prefix, releaseName, releaseS3Path, nil
 }
 
+func RTOSArtifactPathGetter(rc *releasetypes.ReleaseConfig, archive *assettypes.Archive, projectPath, gitTag, eksDReleaseChannel, eksDReleaseNumber, kubeVersion, latestPath, arch string) (string, string, string, string, error) {
+	var sourceS3Key string
+	var sourceS3Prefix string
+	var releaseS3Path string
+	var releaseName string
+
+	imageExtensions := map[string]string{
+		"ami": "gz",
+		"ova": "ova",
+		"raw": "gz",
+	}
+	imageExtension := imageExtensions[archive.Format]
+
+	if rc.DevRelease || rc.ReleaseEnvironment == "development" {
+		sourceS3Key = fmt.Sprintf("%s.%s", archive.OSName, imageExtension)
+		sourceS3Prefix = fmt.Sprintf("%s/%s", projectPath, latestPath)
+	} else {
+		sourceS3Key = fmt.Sprintf("%s-%s-eks-a-%d-%s.%s",
+			archive.OSName,
+			eksDReleaseChannel,
+			rc.BundleNumber,
+			arch,
+			imageExtension,
+		)
+		sourceS3Prefix = fmt.Sprintf("releases/bundles/%d/artifacts/rtos/%s", rc.BundleNumber, eksDReleaseChannel)
+	}
+
+	if rc.DevRelease {
+		releaseName = fmt.Sprintf("%s-%s-eks-a-%s-%s.%s",
+			archive.OSName,
+			eksDReleaseChannel,
+			rc.DevReleaseUriVersion,
+			arch,
+			imageExtension,
+		)
+		releaseS3Path = fmt.Sprintf("artifacts/%s/rtos/%s/%s",
+			rc.DevReleaseUriVersion,
+			archive.Format,
+			eksDReleaseChannel,
+		)
+	} else {
+		releaseName = fmt.Sprintf("%s-%s-eks-a-%d-%s.%s",
+			archive.OSName,
+			eksDReleaseChannel,
+			rc.BundleNumber,
+			arch,
+			imageExtension,
+		)
+		releaseS3Path = fmt.Sprintf("releases/bundles/%d/artifacts/rtos/%s", rc.BundleNumber, eksDReleaseChannel)
+	}
+
+	return sourceS3Key, sourceS3Prefix, releaseName, releaseS3Path, nil
+}
+
 func GetArchiveAssets(rc *releasetypes.ReleaseConfig, archive *assettypes.Archive, projectPath, gitTag, eksDReleaseChannel, eksDReleaseNumber, kubeVersion string) (*releasetypes.ArchiveArtifact, error) {
 	os := "linux"
 	arch := "amd64"
@@ -181,6 +235,7 @@ func GetArchiveAssets(rc *releasetypes.ReleaseConfig, archive *assettypes.Archiv
 		ProjectPath:       projectPath,
 		SourcedFromBranch: sourcedFromBranch,
 		ImageFormat:       archive.Format,
+		PrivateUpload:     archive.Private,
 	}
 
 	return archiveArtifact, nil

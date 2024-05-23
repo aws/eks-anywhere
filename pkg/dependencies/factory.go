@@ -115,6 +115,7 @@ type Dependencies struct {
 	EksaInstaller               *clustermanager.EKSAInstaller
 	DeleteClusterDefaulter      cli.DeleteClusterDefaulter
 	ClusterDeleter              clustermanager.Deleter
+	ClusterMover                *clustermanager.Mover
 }
 
 // KubeClients defines super struct that exposes all behavior.
@@ -340,6 +341,12 @@ func (f *Factory) WithDockerLogin() *Factory {
 }
 
 func (f *Factory) WithExecutableBuilder() *Factory {
+	// Ensure the file writer is created before the tools container is launched. This is necessary
+	// because we bind mount the cluster directory into the tools container. If the directory
+	// doesn't exist, dockerd (running as root) creates the hostpath for the bind mount with root
+	// ownership. This prevents further files from being written to the cluster directory.
+	f.WithWriter()
+
 	if f.executablesConfig.useDockerContainer {
 		f.WithExecutableImage().WithDocker()
 		if f.registryMirror != nil && f.registryMirror.Auth {
@@ -1207,6 +1214,26 @@ func (f *Factory) WithClusterDeleter() *Factory {
 		}
 
 		f.dependencies.ClusterDeleter = clustermanager.NewDeleter(
+			f.dependencies.Logger,
+			f.dependencies.UnAuthKubeClient,
+			opts...,
+		)
+		return nil
+	})
+	return f
+}
+
+// WithClusterMover builds a cluster mover.
+func (f *Factory) WithClusterMover() *Factory {
+	f.WithLogger().WithUnAuthKubeClient().WithLogger()
+
+	f.buildSteps = append(f.buildSteps, func(_ context.Context) error {
+		var opts []clustermanager.MoverOpt
+		if f.config.noTimeouts {
+			opts = append(opts, clustermanager.WithMoverNoTimeouts())
+		}
+
+		f.dependencies.ClusterMover = clustermanager.NewMover(
 			f.dependencies.Logger,
 			f.dependencies.UnAuthKubeClient,
 			opts...,

@@ -291,6 +291,35 @@ func (c *Cmk) ValidateDomainAndGetId(ctx context.Context, profile string, domain
 	return domainId, nil
 }
 
+// EnsureNoDuplicateNetwork ensures that there are no duplicate networks with the name networkName.
+// If it finds duplicates that are not shared networks, it deletes them.
+func (c *Cmk) EnsureNoDuplicateNetwork(ctx context.Context, profile string, networkName string) error {
+	command := newCmkCommand(fmt.Sprintf("list networks filter=name,id,type keyword=%s", networkName))
+	result, err := c.exec(ctx, profile, command...)
+	if err != nil {
+		return fmt.Errorf("getting network info - %s: %v", result.String(), err)
+	}
+
+	response := struct {
+		CmkNetworks []cmkNetwork `json:"network"`
+	}{}
+	if err = json.Unmarshal(result.Bytes(), &response); err != nil {
+		return fmt.Errorf("parsing response into json: %v", err)
+	}
+
+	for _, network := range response.CmkNetworks {
+		if !strings.EqualFold(network.Type, "Shared") {
+			command := newCmkCommand(fmt.Sprintf("delete network id=%s force=true", network.ID))
+			result, err := c.exec(ctx, profile, command...)
+			if err != nil {
+				return fmt.Errorf("deleting duplicate network with ID %s - %s: %v", network, result.String(), err)
+			}
+		}
+	}
+
+	return nil
+}
+
 func (c *Cmk) ValidateNetworkPresent(ctx context.Context, profile string, domainId string, network v1alpha1.CloudStackResourceIdentifier, zoneId string, account string) error {
 	command := newCmkCommand("list networks")
 	// account must be specified within a domainId
@@ -436,10 +465,6 @@ func (c *Cmk) CleanupVms(ctx context.Context, profile string, clusterName string
 }
 
 func (c *Cmk) exec(ctx context.Context, profile string, args ...string) (stdout bytes.Buffer, err error) {
-	if err != nil {
-		return bytes.Buffer{}, fmt.Errorf("failed get environment map: %v", err)
-	}
-
 	configFile, err := c.buildCmkConfigFile(profile)
 	if err != nil {
 		return bytes.Buffer{}, fmt.Errorf("failed cmk validations: %v", err)
@@ -488,6 +513,12 @@ type cmkServiceOffering struct {
 	Memory    int    `json:"memory"`
 	Id        string `json:"id"`
 	Name      string `json:"name"`
+}
+
+type cmkNetwork struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+	Type string `json:"type"`
 }
 
 type cmkResourceIdentifier struct {

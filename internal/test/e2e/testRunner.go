@@ -2,6 +2,7 @@ package e2e
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"strconv"
@@ -132,10 +133,9 @@ func (v *VSphereTestRunner) setEnvironment() (map[string]string, error) {
 }
 
 func (v *VSphereTestRunner) createInstance(c instanceRunConf) (string, error) {
-	name := getTestRunnerName(v.logger, c.jobId)
-	v.logger.V(1).Info("Creating vSphere Test Runner instance", "name", name)
+	name := getTestRunnerName(v.logger, c.JobID)
 
-	ssmActivationInfo, err := ssm.CreateActivation(c.session, name, c.instanceProfileName)
+	ssmActivationInfo, err := ssm.CreateActivation(c.Session, name, c.InstanceProfileName)
 	if err != nil {
 		return "", fmt.Errorf("unable to create ssm activation: %v", err)
 	}
@@ -152,9 +152,14 @@ func (v *VSphereTestRunner) createInstance(c instanceRunConf) (string, error) {
 		PropertyMapping: []vsphere.OVFProperty{
 			{Key: ssmActivationCodeKey, Value: ssmActivationInfo.ActivationCode},
 			{Key: ssmActivationIdKey, Value: ssmActivationInfo.ActivationID},
-			{Key: ssmActivationRegionKey, Value: *c.session.Config.Region},
+			{Key: ssmActivationRegionKey, Value: *c.Session.Config.Region},
 		},
 	}
+	optsJSON, err := json.Marshal(opts)
+	if err != nil {
+		return "", err
+	}
+	v.logger.V(1).Info("Creating vSphere Test Runner instance", "name", name, "ovf_deployment_opts", optsJSON)
 
 	// deploy template
 	if err := vsphere.DeployTemplate(v.envMap, v.Library, v.Template, name, v.Folder, v.Datacenter, v.Datastore, v.ResourcePool, opts); err != nil {
@@ -163,7 +168,7 @@ func (v *VSphereTestRunner) createInstance(c instanceRunConf) (string, error) {
 
 	var ssmInstance *aws_ssm.InstanceInformation
 	err = retrier.Retry(10, 5*time.Second, func() error {
-		ssmInstance, err = ssm.GetInstanceByActivationId(c.session, ssmActivationInfo.ActivationID)
+		ssmInstance, err = ssm.GetInstanceByActivationId(c.Session, ssmActivationInfo.ActivationID)
 		if err != nil {
 			return fmt.Errorf("failed to get ssm instance info post ovf deployment: %v", err)
 		}
@@ -180,19 +185,19 @@ func (v *VSphereTestRunner) createInstance(c instanceRunConf) (string, error) {
 }
 
 func (e *Ec2TestRunner) createInstance(c instanceRunConf) (string, error) {
-	name := getTestRunnerName(e.logger, c.jobId)
+	name := getTestRunnerName(e.logger, c.JobID)
 	e.logger.V(1).Info("Creating ec2 Test Runner instance", "name", name)
-	instanceId, err := ec2.CreateInstance(c.session, e.AmiID, key, tag, c.instanceProfileName, e.SubnetID, name)
+	instanceID, err := ec2.CreateInstance(c.Session, e.AmiID, key, tag, c.InstanceProfileName, e.SubnetID, name)
 	if err != nil {
 		return "", fmt.Errorf("creating instance for e2e tests: %v", err)
 	}
-	e.logger.V(1).Info("Instance created", "instance-id", instanceId)
-	e.InstanceID = instanceId
-	return instanceId, nil
+	e.logger.V(1).Info("Instance created", "instance-id", instanceID)
+	e.InstanceID = instanceID
+	return instanceID, nil
 }
 
 func (v *VSphereTestRunner) tagInstance(c instanceRunConf, key, value string) error {
-	vmName := getTestRunnerName(v.logger, c.jobId)
+	vmName := getTestRunnerName(v.logger, c.JobID)
 	vmPath := fmt.Sprintf("/%s/vm/%s/%s", v.Datacenter, v.Folder, vmName)
 	tag := fmt.Sprintf("%s:%s", key, value)
 
@@ -203,7 +208,7 @@ func (v *VSphereTestRunner) tagInstance(c instanceRunConf, key, value string) er
 }
 
 func (e *Ec2TestRunner) tagInstance(c instanceRunConf, key, value string) error {
-	err := ec2.TagInstance(c.session, e.InstanceID, key, value)
+	err := ec2.TagInstance(c.Session, e.InstanceID, key, value)
 	if err != nil {
 		return fmt.Errorf("failed to tag Ec2 test runner: %v", err)
 	}
@@ -211,9 +216,9 @@ func (e *Ec2TestRunner) tagInstance(c instanceRunConf, key, value string) error 
 }
 
 func (v *VSphereTestRunner) decommInstance(c instanceRunConf) error {
-	_, deregisterError := ssm.DeregisterInstance(c.session, v.InstanceID)
-	_, deactivateError := ssm.DeleteActivation(c.session, v.ActivationId)
-	deleteError := cleanup.VsphereRmVms(context.Background(), getTestRunnerName(v.logger, c.jobId), executables.WithGovcEnvMap(v.envMap))
+	_, deregisterError := ssm.DeregisterInstance(c.Session, v.InstanceID)
+	_, deactivateError := ssm.DeleteActivation(c.Session, v.ActivationId)
+	deleteError := cleanup.VsphereRmVms(context.Background(), getTestRunnerName(v.logger, c.JobID), executables.WithGovcEnvMap(v.envMap))
 
 	if deregisterError != nil {
 		return fmt.Errorf("failed to decommission vsphere test runner ssm instance: %v", deregisterError)
@@ -231,9 +236,9 @@ func (v *VSphereTestRunner) decommInstance(c instanceRunConf) error {
 }
 
 func (e *Ec2TestRunner) decommInstance(c instanceRunConf) error {
-	runnerName := getTestRunnerName(e.logger, c.jobId)
+	runnerName := getTestRunnerName(e.logger, c.JobID)
 	e.logger.V(1).Info("Terminating ec2 Test Runner instance", "instanceID", e.InstanceID, "runner", runnerName)
-	if err := ec2.TerminateEc2Instances(c.session, aws.StringSlice([]string{e.InstanceID})); err != nil {
+	if err := ec2.TerminateEc2Instances(c.Session, aws.StringSlice([]string{e.InstanceID})); err != nil {
 		return fmt.Errorf("terminating instance %s for runner %s: %w", e.InstanceID, runnerName, err)
 	}
 

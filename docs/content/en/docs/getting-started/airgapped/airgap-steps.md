@@ -18,7 +18,7 @@ toc_hide: true
 
 1. Set up a local registry mirror to host the downloaded EKS Anywhere images and configure your Admin machine with the certificates and authentication information if your registry requires it. For details, refer to the [Registry Mirror Configuration documentation.]({{< relref "../../getting-started/optional/registrymirror/#configure-local-registry-mirror" >}})
 
-1. Import images to the local registry mirror using the following command. Set `REGISTRY_MIRROR_URL` to the url of the local registry mirror you created in the previous step. This command may take several minutes to complete. To monitor the progress of the command, you can run with the `-v 6` command line argument.  
+1. Import images to the local registry mirror using the following command. Set `REGISTRY_MIRROR_URL` to the url of the local registry mirror you created in the previous step. This command may take several minutes to complete. To monitor the progress of the command, you can run with the `-v 6` command line argument. When using self-signed certificates for your registry, you should run with the `--insecure` command line argument to indicate skipping TLS verification while pushing helm charts and bundles.
    ```bash
    export REGISTRY_MIRROR_URL=<registryurl>
    ```
@@ -38,6 +38,8 @@ toc_hide: true
       
       The `copy packages` command uses the credentials in your docker config file. So you must `docker login` to the source registries and the destination registry before running the command.
       
+      When using self-signed certificates for your registry, you should run with the `--dst-insecure` command line argument to indicate skipping TLS verification while copying curated packages.
+
       ```bash
       eksctl anywhere copy packages \
         ${REGISTRY_MIRROR_URL}/curated-packages \

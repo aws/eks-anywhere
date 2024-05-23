@@ -645,6 +645,18 @@ func TestFactoryBuildWithClusterDeleterNoTimeout(t *testing.T) {
 	tt.Expect(deps.ClusterApplier).NotTo(BeNil())
 }
 
+func TestFactoryBuildWithClusterMoverNoTimeout(t *testing.T) {
+	tt := newTest(t, vsphere)
+	deps, err := dependencies.NewFactory().
+		WithLocalExecutables().
+		WithNoTimeouts().
+		WithClusterMover().
+		Build(context.Background())
+
+	tt.Expect(err).To(BeNil())
+	tt.Expect(deps.ClusterApplier).NotTo(BeNil())
+}
+
 func TestFactoryBuildWithAwsIamAuthNoTimeout(t *testing.T) {
 	tt := newTest(t, vsphere)
 	deps, err := dependencies.NewFactory().

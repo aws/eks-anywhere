@@ -21,7 +21,6 @@ import (
 
 func runCuratedPackageInstall(test *framework.ClusterE2ETest) {
 	test.SetPackageBundleActive()
-	test.GenerateSupportBundleOnCleanupIfTestFailed()
 	err := WaitForPackageToBeInstalled(test, context.Background(), "eks-anywhere-packages", 3*time.Minute)
 	if err != nil {
 		test.T.Fatalf("packages controller not in installed state: %s", err)
@@ -47,6 +46,10 @@ func runDisabledCuratedPackage(test *framework.ClusterE2ETest) {
 
 func runDisabledCuratedPackageInstallSimpleFlow(test *framework.ClusterE2ETest) {
 	test.WithCluster(runDisabledCuratedPackage)
+}
+
+func runCuratedPackageInstallSimpleFlowRegistryMirror(test *framework.ClusterE2ETest) {
+	test.WithClusterRegistryMirror(runCuratedPackageInstall)
 }
 
 func runCuratedPackageRemoteClusterInstallSimpleFlow(test *framework.MulticlusterE2ETest) {

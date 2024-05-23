@@ -125,7 +125,7 @@ func RunTestsInParallel(conf ParallelRunConf) error {
 			for c := range work {
 				r := instanceTestsResults{conf: c}
 
-				r.conf.instanceId, r.testCommandResult, err = RunTests(c, invCatalogue)
+				r.conf.InstanceID, r.testCommandResult, err = RunTests(c, invCatalogue)
 				if err != nil {
 					r.err = err
 				}
@@ -146,29 +146,34 @@ func RunTestsInParallel(conf ParallelRunConf) error {
 	completedInstances := 0
 	for r := range results {
 		var result string
+		// This variable can be used in cloudwatch log insights query for e2e test success rate
+		succeeded := 0
 		// TODO: keeping the old logs temporarily for compatibility with the test tool
 		// Once the tool is updated to support the unified message, remove them
 		if r.err != nil {
 			result = testResultError
-			conf.Logger.Error(r.err, "Failed running e2e tests for instance", "jobId", r.conf.jobId, "instanceId", r.conf.instanceId, "tests", r.conf.regex, "status", testResultFail)
+			conf.Logger.Error(r.err, "Failed running e2e tests for instance", "jobId", r.conf.JobID, "instanceId", r.conf.InstanceID, "tests", r.conf.Regex, "status", testResultFail)
 			failedInstances++
 		} else if !r.testCommandResult.Successful() {
 			result = testResultFail
-			conf.Logger.Info("An e2e instance run has failed", "jobId", r.conf.jobId, "instanceId", r.conf.instanceId, "commandId", r.testCommandResult.CommandId, "tests", r.conf.regex, "status", testResultFail)
+			conf.Logger.Info("An e2e instance run has failed", "jobId", r.conf.JobID, "instanceId", r.conf.InstanceID, "commandId", r.testCommandResult.CommandId, "tests", r.conf.Regex, "status", testResultFail)
 			failedInstances++
 		} else {
 			result = testResultPass
-			conf.Logger.Info("Instance tests completed successfully", "jobId", r.conf.jobId, "instanceId", r.conf.instanceId, "commandId", r.testCommandResult.CommandId, "tests", r.conf.regex, "status", testResultPass)
+			succeeded = 1
+			conf.Logger.Info("Instance tests completed successfully", "jobId", r.conf.JobID, "instanceId", r.conf.InstanceID, "commandId", r.testCommandResult.CommandId, "tests", r.conf.Regex, "status", testResultPass)
 		}
 		completedInstances++
 		conf.Logger.Info("Instance tests run finished",
 			"result", result,
-			"tests", r.conf.regex,
-			"jobId", r.conf.jobId,
-			"instanceId", r.conf.instanceId,
+			"tests", r.conf.Regex,
+			"jobId", r.conf.JobID,
+			"instanceId", r.conf.InstanceID,
 			"completedInstances", completedInstances,
 			"totalInstances", totalInstances,
+			"succeeded", succeeded,
 		)
+		putInstanceTestResultMetrics(r)
 	}
 
 	if failedInstances > 0 {
@@ -179,29 +184,35 @@ func RunTestsInParallel(conf ParallelRunConf) error {
 }
 
 type instanceRunConf struct {
-	session                                                                   *session.Session
-	instanceProfileName, storageBucket, jobId, parentJobId, regex, instanceId string
-	testReportFolder, branchName                                              string
-	ipPool                                                                    networkutils.IPPool
-	hardware                                                                  []*api.Hardware
-	hardwareCount                                                             int
-	tinkerbellAirgappedTest                                                   bool
-	bundlesOverride                                                           bool
-	testRunnerType                                                            TestRunnerType
-	testRunnerConfig                                                          TestInfraConfig
-	cleanupVms                                                                bool
-	logger                                                                    logr.Logger
+	InstanceProfileName     string
+	StorageBucket           string
+	JobID                   string
+	ParentJobID             string
+	Regex                   string
+	InstanceID              string
+	TestReportFolder        string
+	BranchName              string
+	IPPool                  networkutils.IPPool
+	Hardware                []*api.Hardware
+	HardwareCount           int
+	TinkerbellAirgappedTest bool
+	BundlesOverride         bool
+	TestRunnerType          TestRunnerType
+	TestRunnerConfig        TestInfraConfig
+	CleanupVMs              bool
+	Logger                  logr.Logger
+	Session                 *session.Session
 }
 
 //nolint:gocyclo, revive // RunTests responsible launching test runner to run tests is complex.
 func RunTests(conf instanceRunConf, inventoryCatalogue map[string]*hardwareCatalogue) (testInstanceID string, testCommandResult *testCommandResult, err error) {
-	testRunner, err := newTestRunner(conf.testRunnerType, conf.testRunnerConfig)
+	testRunner, err := newTestRunner(conf.TestRunnerType, conf.TestRunnerConfig)
 	if err != nil {
 		return "", nil, err
 	}
-	if conf.hardwareCount > 0 {
+	if conf.HardwareCount > 0 {
 		var hardwareCatalogue *hardwareCatalogue
-		if conf.tinkerbellAirgappedTest {
+		if conf.TinkerbellAirgappedTest {
 			hardwareCatalogue = inventoryCatalogue[airgappedHardware]
 		} else {
 			hardwareCatalogue = inventoryCatalogue[nonAirgappedHardware]
@@ -214,16 +225,25 @@ func RunTests(conf instanceRunConf, inventoryCatalogue map[string]*hardwareCatal
 		defer releaseTinkerbellHardware(&conf, hardwareCatalogue)
 	}
 
+	conf.Logger.Info("Creating runner instance",
+		"instance_profile_name", conf.InstanceProfileName, "storage_bucket", conf.StorageBucket,
+		"parent_job_id", conf.ParentJobID, "regex", conf.Regex, "test_report_folder", conf.TestReportFolder,
+		"branch_name", conf.BranchName, "ip_pool", conf.IPPool.ToString(),
+		"hardware_count", conf.HardwareCount, "tinkerbell_airgapped_test", conf.TinkerbellAirgappedTest,
+		"bundles_override", conf.BundlesOverride, "test_runner_type", conf.TestRunnerType,
+		"cleanup_vms", conf.CleanupVMs)
+
 	instanceId, err := testRunner.createInstance(conf)
 	if err != nil {
 		return "", nil, err
 	}
-	conf.logger.V(1).Info("TestRunner instance has been created", "instanceId", instanceId)
+	conf.Logger = conf.Logger.WithValues("instance_id", instanceId)
+	conf.Logger.Info("TestRunner instance has been created")
 
 	defer func() {
 		err := testRunner.decommInstance(conf)
 		if err != nil {
-			conf.logger.V(1).Info("WARN: Failed to decomm e2e test runner instance", "error", err)
+			conf.Logger.V(1).Info("WARN: Failed to decomm e2e test runner instance", "error", err)
 		}
 	}()
 
@@ -232,12 +252,12 @@ func RunTests(conf instanceRunConf, inventoryCatalogue map[string]*hardwareCatal
 		return "", nil, err
 	}
 
-	err = session.setup(conf.regex)
+	err = session.setup(conf.Regex)
 	if err != nil {
 		return session.instanceId, nil, err
 	}
 
-	testCommandResult, err = session.runTests(conf.regex)
+	testCommandResult, err = session.runTests(conf.Regex)
 	if err != nil {
 		return session.instanceId, nil, err
 	}
@@ -288,13 +308,13 @@ func (e *E2ESession) runTests(regex string) (testCommandResult *testCommandResul
 }
 
 func (c instanceRunConf) runPostTestsProcessing(e *E2ESession, testCommandResult *testCommandResult) error {
-	regex := strings.Trim(c.regex, "\"")
+	regex := strings.Trim(c.Regex, "\"")
 	tests := strings.Split(regex, "|")
 
 	for _, testName := range tests {
 		e.uploadJUnitReportFromInstance(testName)
-		if c.testReportFolder != "" {
-			e.downloadJUnitReportToLocalDisk(testName, c.testReportFolder)
+		if c.TestReportFolder != "" {
+			e.downloadJUnitReportToLocalDisk(testName, c.TestReportFolder)
 		}
 
 		if !testCommandResult.Successful() {
@@ -486,30 +506,30 @@ func getTinkerbellTestsWithCount(tinkerbellTests []string, conf ParallelRunConf)
 func newInstanceRunConf(awsSession *session.Session, conf ParallelRunConf, jobNumber int, testRegex string, ipPool networkutils.IPPool, hardware []*api.Hardware, hardwareCount int, tinkerbellAirgappedTest bool, testRunnerType TestRunnerType, testRunnerConfig *TestInfraConfig) instanceRunConf {
 	jobID := fmt.Sprintf("%s-%d", conf.JobId, jobNumber)
 	return instanceRunConf{
-		session:                 awsSession,
-		instanceProfileName:     conf.InstanceProfileName,
-		storageBucket:           conf.StorageBucket,
-		jobId:                   jobID,
-		parentJobId:             conf.JobId,
-		regex:                   testRegex,
-		ipPool:                  ipPool,
-		hardware:                hardware,
-		hardwareCount:           hardwareCount,
-		tinkerbellAirgappedTest: tinkerbellAirgappedTest,
-		bundlesOverride:         conf.BundlesOverride,
-		testReportFolder:        conf.TestReportFolder,
-		branchName:              conf.BranchName,
-		cleanupVms:              conf.CleanupVms,
-		testRunnerType:          testRunnerType,
-		testRunnerConfig:        *testRunnerConfig,
-		logger:                  conf.Logger.WithValues("jobID", jobID, "test", testRegex),
+		Session:                 awsSession,
+		InstanceProfileName:     conf.InstanceProfileName,
+		StorageBucket:           conf.StorageBucket,
+		JobID:                   jobID,
+		ParentJobID:             conf.JobId,
+		Regex:                   testRegex,
+		IPPool:                  ipPool,
+		Hardware:                hardware,
+		HardwareCount:           hardwareCount,
+		TinkerbellAirgappedTest: tinkerbellAirgappedTest,
+		BundlesOverride:         conf.BundlesOverride,
+		TestReportFolder:        conf.TestReportFolder,
+		BranchName:              conf.BranchName,
+		CleanupVMs:              conf.CleanupVms,
+		TestRunnerType:          testRunnerType,
+		TestRunnerConfig:        *testRunnerConfig,
+		Logger:                  conf.Logger.WithValues("jobID", jobID, "test", testRegex),
 	}
 }
 
 func logTestGroups(logger logr.Logger, instancesConf []instanceRunConf) {
 	testGroups := make([]string, 0, len(instancesConf))
 	for _, i := range instancesConf {
-		testGroups = append(testGroups, i.regex)
+		testGroups = append(testGroups, i.Regex)
 	}
 	logger.V(1).Info("Running tests in parallel", "testsGroups", testGroups)
 }
@@ -551,24 +571,24 @@ func getAirgappedHardwarePool(storageBucket string) ([]*api.Hardware, error) {
 }
 
 func reserveTinkerbellHardware(conf *instanceRunConf, invCatalogue *hardwareCatalogue) error {
-	reservedTinkerbellHardware, err := invCatalogue.reserveHardware(conf.hardwareCount)
+	reservedTinkerbellHardware, err := invCatalogue.reserveHardware(conf.HardwareCount)
 	if err != nil {
 		return fmt.Errorf("timed out waiting for hardware")
 	}
-	conf.hardware = reservedTinkerbellHardware
+	conf.Hardware = reservedTinkerbellHardware
 	logTinkerbellTestHardwareInfo(conf, "Reserved")
 	return nil
 }
 
 func releaseTinkerbellHardware(conf *instanceRunConf, invCatalogue *hardwareCatalogue) {
 	logTinkerbellTestHardwareInfo(conf, "Releasing")
-	invCatalogue.releaseHardware(conf.hardware)
+	invCatalogue.releaseHardware(conf.Hardware)
 }
 
 func logTinkerbellTestHardwareInfo(conf *instanceRunConf, action string) {
 	var hardwareInfo []string
-	for _, hardware := range conf.hardware {
+	for _, hardware := range conf.Hardware {
 		hardwareInfo = append(hardwareInfo, hardware.Hostname)
 	}
-	conf.logger.V(1).Info(action+" hardware for TestRunner", "hardwarePool", strings.Join(hardwareInfo, ", "))
+	conf.Logger.V(1).Info(action+" hardware for TestRunner", "hardwarePool", strings.Join(hardwareInfo, ", "))
 }

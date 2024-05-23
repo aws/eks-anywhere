@@ -215,6 +215,79 @@ func TestCmkCleanupVms(t *testing.T) {
 	}
 }
 
+func TestCmkEnsureNoDuplicateNetwork(t *testing.T) {
+	_, writer := test.NewWriter(t)
+	configFilePath, _ := filepath.Abs(filepath.Join(writer.Dir(), "generated", cmkConfigFileName))
+	tests := []struct {
+		testName           string
+		argumentsExecCalls [][]string
+		jsonResponseFile   string
+		cmkFunc            func(cmk executables.Cmk, ctx context.Context) error
+		cmkResponseError   error
+		wantErr            bool
+	}{
+		{
+			testName:         "EnsureNoDuplicateNetwork success on no duplicate networks",
+			jsonResponseFile: "testdata/cmk_list_network_multiple.json",
+			argumentsExecCalls: [][]string{
+				{
+					"-c", configFilePath,
+					"list", "networks", "filter=name,id,type", "keyword=eksa-cloudstack-ci-net",
+				},
+			},
+			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
+				return cmk.EnsureNoDuplicateNetwork(ctx, execConfig.Profiles[0].Name, "eksa-cloudstack-ci-net")
+			},
+			cmkResponseError: nil,
+			wantErr:          false,
+		},
+		{
+			testName:         "EnsureNoDuplicateNetwork success on deleting duplicate networks",
+			jsonResponseFile: "testdata/cmk_list_network_duplicates.json",
+			argumentsExecCalls: [][]string{
+				{
+					"-c", configFilePath,
+					"list", "networks", "filter=name,id,type", "keyword=eksa-cloudstack-ci-net",
+				},
+				{
+					"-c", configFilePath,
+					"delete", "network", "id=fe1a7310-51d4-4299-b3d0-a627a57bb4b0", "force=true",
+				},
+				{
+					"-c", configFilePath,
+					"delete", "network", "id=24fd6849-3016-4afe-948d-4ce2bb396cf5", "force=true",
+				},
+			},
+			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
+				return cmk.EnsureNoDuplicateNetwork(ctx, execConfig.Profiles[0].Name, "eksa-cloudstack-ci-net")
+			},
+			cmkResponseError: nil,
+			wantErr:          false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.testName, func(t *testing.T) {
+			fileContent := test.ReadFile(t, tt.jsonResponseFile)
+
+			ctx := context.Background()
+			mockCtrl := gomock.NewController(t)
+
+			executable := mockexecutables.NewMockExecutable(mockCtrl)
+			for _, argsList := range tt.argumentsExecCalls {
+				executable.EXPECT().Execute(ctx, argsList).
+					Return(*bytes.NewBufferString(fileContent), tt.cmkResponseError)
+			}
+			cmk, _ := executables.NewCmk(executable, writer, execConfig)
+			err := tt.cmkFunc(*cmk, ctx)
+			if tt.wantErr && err != nil || !tt.wantErr && err == nil {
+				return
+			}
+			t.Fatalf("Cmk error: %v", err)
+		})
+	}
+}
+
 func TestNewCmkNilConfig(t *testing.T) {
 	_, err := executables.NewCmk(nil, nil, nil)
 	if err == nil {

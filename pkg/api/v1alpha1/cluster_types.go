@@ -241,7 +241,7 @@ type RegistryMirrorConfiguration struct {
 
 // OCINamespace represents an entity in a local reigstry to group related images.
 type OCINamespace struct {
-	// Name refers to the name of the upstream registry
+	// Registry refers to the name of the upstream registry
 	Registry string `json:"registry"`
 	// Namespace refers to the name of a namespace in the local registry
 	Namespace string `json:"namespace"`
@@ -824,6 +824,7 @@ const (
 	Kube127 KubernetesVersion = "1.27"
 	Kube128 KubernetesVersion = "1.28"
 	Kube129 KubernetesVersion = "1.29"
+	Kube130 KubernetesVersion = "1.30"
 )
 
 // KubeVersionToSemver converts kube version to semver for comparisons.
@@ -1043,6 +1044,14 @@ func (n *Ref) Equal(o *Ref) bool {
 		return false
 	}
 	return n.Kind == o.Kind && n.Name == o.Name
+}
+
+// IsEmpty checks if the given ref object is empty.
+func (n Ref) IsEmpty() bool {
+	if n.Kind == "" && n.Name == "" {
+		return true
+	}
+	return false
 }
 
 // +kubebuilder:object:generate=false
