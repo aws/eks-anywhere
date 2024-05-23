@@ -153,6 +153,16 @@ ${IMAGE_ID} tmp-cert-renew \
 
 3. If you have external etcd nodes, manually replace the `server-etcd-client.crt` and `apiserver-etcd-client.key` file in `/etc/kubernetes/pki` (or `/var/lib/kubeadm/pki` in Bottlerocket) folder with the files you saved from any etcd node.
 
+   - **For Bottlerocket**:
+
+   ```
+   cp apiserver-etcd-client.key /tmp/
+   cp server-etcd-client.crt /tmp/
+   sudo sheltie
+   cp /run/host-containerd/io.containerd.runtime.v2.task/default/admin/rootfs/tmp/apiserver-etcd-client.key /var/lib/kubeadm/pki/
+   cp /run/host-containerd/io.containerd.runtime.v2.task/default/admin/rootfs/tmp/server-etcd-client.crt /var/lib/kubeadm/pki/
+   ```
+
 4. Restart static control plane pods.
 
    - **For Ubuntu and RHEL**: temporarily move all manifest files from `/etc/kubernetes/manifests/` and wait for 20 seconds, then move the manifests back to this file location.
