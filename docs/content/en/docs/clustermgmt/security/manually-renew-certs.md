@@ -230,7 +230,7 @@ etcd:
       - https://xxx.xxx.xxx.xxx:2379
 ```
 
-#### What do I do if my local kubeconfig has expired?
+### What do I do if my local kubeconfig has expired?
 
 Your local kubeconfig used to interact with the cluster contains a certificate that expires after 1 year. When you rotate cluster certificates a new kubeconfig with a new certificate is created as a Secret in the cluster. If you do not retrieve the new kubeconfig and your local kubeconfig certificate expires you will receive the following error:
 
