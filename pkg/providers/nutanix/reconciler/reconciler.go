@@ -3,6 +3,7 @@ package reconciler
 import (
 	"context"
 	"fmt"
+	"os"
 	"reflect"
 
 	"github.com/go-logr/logr"
@@ -137,6 +138,7 @@ func (r *Reconciler) reconcileClusterSecret(ctx context.Context, log logr.Logger
 // Reconcile reconciles the cluster to the desired state.
 func (r *Reconciler) Reconcile(ctx context.Context, log logr.Logger, c *anywherev1.Cluster) (controller.Result, error) {
 	log = log.WithValues("provider", "nutanix")
+
 	clusterSpec, err := cluster.BuildSpec(ctx, clientutil.NewKubeClient(r.client), c)
 	if err != nil {
 		return controller.Result{}, err
@@ -182,6 +184,9 @@ func (r *Reconciler) ValidateClusterSpec(ctx context.Context, log logr.Logger, c
 		return controller.ResultWithReturn(), nil
 	}
 
+	os.Setenv(constants.EksaNutanixUsernameKey, creds.PrismCentral.Username)
+	os.Setenv(constants.EksaNutanixPasswordKey, creds.PrismCentral.Password)
+
 	return controller.Result{}, nil
 }
 
@@ -198,11 +203,14 @@ func (r *Reconciler) ReconcileControlPlane(ctx context.Context, log logr.Logger,
 }
 
 func toClientControlPlane(cp *nutanix.ControlPlane) *clusters.ControlPlane {
-	other := make([]client.Object, 0, len(cp.ConfigMaps)+len(cp.ClusterResourceSets)+1)
+	other := make([]client.Object, 0, len(cp.ConfigMaps)+len(cp.ClusterResourceSets)+len(cp.Secrets)+1)
 	for _, o := range cp.ClusterResourceSets {
 		other = append(other, o)
 	}
 	for _, o := range cp.ConfigMaps {
+		other = append(other, o)
+	}
+	for _, o := range cp.Secrets {
 		other = append(other, o)
 	}
 
