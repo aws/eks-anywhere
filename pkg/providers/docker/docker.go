@@ -12,6 +12,7 @@ import (
 	etcdv1 "github.com/aws/etcdadm-controller/api/v1beta1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
+	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
@@ -358,6 +359,16 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec) (map[string]interface{}, erro
 		values["maxSurge"] = clusterSpec.Cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy.RollingUpdate.MaxSurge
 	}
 
+	if clusterSpec.Cluster.Spec.ControlPlaneConfiguration.KubeletConfiguration != nil {
+		cpKubeletConfig := clusterSpec.Cluster.Spec.ControlPlaneConfiguration.KubeletConfiguration.Object
+		kcString, err := yaml.Marshal(cpKubeletConfig)
+		if err != nil {
+			return nil, fmt.Errorf("marshaling control plane node Kubelet Configuration while building CAPI template %v", err)
+		}
+
+		values["kubeletConfiguration"] = string(kcString)
+	}
+
 	return values, nil
 }
 
@@ -395,6 +406,16 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupConfiguration 
 		if err != nil {
 			return values, err
 		}
+	}
+
+	if workerNodeGroupConfiguration.KubeletConfiguration != nil {
+		wnKubeletConfig := workerNodeGroupConfiguration.KubeletConfiguration.Object
+		kcString, err := yaml.Marshal(wnKubeletConfig)
+		if err != nil {
+			return nil, fmt.Errorf("marshaling Kubelet Configuration for worker node %s: %v", workerNodeGroupConfiguration.Name, err)
+		}
+
+		values["kubeletConfiguration"] = string(kcString)
 	}
 
 	return values, nil

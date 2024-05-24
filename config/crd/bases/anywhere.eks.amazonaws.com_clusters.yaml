@@ -178,6 +178,11 @@ spec:
                     required:
                     - host
                     type: object
+                  kubeletConfiguration:
+                    description: KubeletConfiguration is a struct that exposes the
+                      Kubelet settings for the user to set on control plane nodes.
+                    type: object
+                    x-kubernetes-preserve-unknown-fields: true
                   labels:
                     additionalProperties:
                       type: string
@@ -572,8 +577,13 @@ spec:
                       description: Count defines the number of desired worker nodes.
                         Defaults to 1.
                       type: integer
+                    kubeletConfiguration:
+                      description: KubeletConfiguration is a struct that exposes the
+                        Kubelet settings for the user to set on worker nodes.
+                      type: object
+                      x-kubernetes-preserve-unknown-fields: true
                     kubernetesVersion:
-                      description: KuberenetesVersion defines the version for worker
+                      description: KubernetesVersion defines the version for worker
                         nodes. If not set, the top level spec kubernetesVersion will
                         be used.
                       type: string

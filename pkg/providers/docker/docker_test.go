@@ -14,6 +14,7 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 
@@ -812,10 +813,9 @@ func TestDockerTemplateBuilderGenerateCAPISpecControlPlane(t *testing.T) {
 		buildOptions []providers.BuildMapOption
 	}
 	tests := []struct {
-		name        string
-		args        args
-		wantContent []byte
-		wantErr     error
+		name    string
+		args    args
+		wantErr error
 	}{
 		{
 			name: "kube 119 test",
@@ -837,6 +837,28 @@ func TestDockerTemplateBuilderGenerateCAPISpecControlPlane(t *testing.T) {
 				buildOptions: nil,
 			},
 			wantErr: fmt.Errorf("error building template map for CP "),
+		},
+		{
+			name: "kubelet config specified",
+			args: args{
+				clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
+					s.Cluster.Name = "test-cluster"
+					s.Cluster.Spec.ControlPlaneConfiguration = v1alpha1.ControlPlaneConfiguration{
+						KubeletConfiguration: &unstructured.Unstructured{
+							Object: map[string]interface{}{
+								"maxPods":    20,
+								"apiVersion": "kubelet.config.k8s.io/v1beta1",
+								"kind":       "KubeletConfiguration",
+							},
+						},
+						Count: 1,
+						Endpoint: &v1alpha1.Endpoint{
+							Host: "1.1.1.1",
+						},
+					}
+				}),
+			},
+			wantErr: nil,
 		},
 	}
 	for _, tt := range tests {
@@ -896,10 +918,9 @@ func TestDockerTemplateBuilderGenerateCAPISpecWorkers(t *testing.T) {
 		clusterSpec *cluster.Spec
 	}
 	tests := []struct {
-		name        string
-		args        args
-		wantContent []byte
-		wantErr     error
+		name    string
+		args    args
+		wantErr error
 	}{
 		{
 			name: "kube version not specified",
@@ -910,6 +931,28 @@ func TestDockerTemplateBuilderGenerateCAPISpecWorkers(t *testing.T) {
 				}),
 			},
 			wantErr: fmt.Errorf("error building template map for MD "),
+		},
+		{
+			name: "kubelet config specified",
+			args: args{
+				clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
+					s.Cluster.Name = "test-cluster"
+					s.Cluster.Spec.WorkerNodeGroupConfigurations = []v1alpha1.WorkerNodeGroupConfiguration{
+						{
+							KubeletConfiguration: &unstructured.Unstructured{
+								Object: map[string]interface{}{
+									"maxPods":    20,
+									"apiVersion": "kubelet.config.k8s.io/v1beta1",
+									"kind":       "KubeletConfiguration",
+								},
+							},
+							Count: ptr.Int(1),
+							Name:  "test",
+						},
+					}
+				}),
+			},
+			wantErr: nil,
 		},
 	}
 	for _, tt := range tests {

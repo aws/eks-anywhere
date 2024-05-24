@@ -15,10 +15,12 @@ import (
 	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/validation"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	yamlutil "k8s.io/apimachinery/pkg/util/yaml"
+	"k8s.io/kubelet/config/v1beta1"
 	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/pkg/constants"
@@ -192,6 +194,8 @@ var clusterConfigValidations = []func(*Cluster) error{
 	validateControlPlaneCertSANs,
 	validateControlPlaneAPIServerExtraArgs,
 	validateControlPlaneAPIServerOIDCExtraArgs,
+	validateControlPlaneKubeletConfiguration,
+	validateWorkerNodeKubeletConfiguration,
 }
 
 // GetClusterConfig parses a Cluster object from a multiobject yaml file in disk
@@ -527,6 +531,51 @@ func validateControlPlaneAPIServerOIDCExtraArgs(clusterConfig *Cluster) error {
 			}
 		}
 	}
+	return nil
+}
+
+func validateControlPlaneKubeletConfiguration(clusterConfig *Cluster) error {
+	cpKubeletConfig := clusterConfig.Spec.ControlPlaneConfiguration.KubeletConfiguration
+
+	return validateKubeletConfiguration(cpKubeletConfig)
+}
+
+func validateWorkerNodeKubeletConfiguration(clusterConfig *Cluster) error {
+	workerNodeGroupConfigs := clusterConfig.Spec.WorkerNodeGroupConfigurations
+
+	for _, workerNodeGroupConfig := range workerNodeGroupConfigs {
+		wnKubeletConfig := workerNodeGroupConfig.KubeletConfiguration
+
+		if err := validateKubeletConfiguration(wnKubeletConfig); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func validateKubeletConfiguration(eksakubeconfig *unstructured.Unstructured) error {
+	if eksakubeconfig == nil {
+		return nil
+	}
+
+	var kubeletConfig v1beta1.KubeletConfiguration
+
+	kcString, err := yaml.Marshal(eksakubeconfig)
+	if err != nil {
+		return err
+	}
+
+	_, err = yaml.YAMLToJSONStrict([]byte(kcString))
+	if err != nil {
+		return fmt.Errorf("unmarshaling the yaml, malformed yaml %v", err)
+	}
+
+	err = yaml.UnmarshalStrict(kcString, &kubeletConfig)
+	if err != nil {
+		return fmt.Errorf("unmarshaling KubeletConfiguration for %v", err)
+	}
+
 	return nil
 }
 
