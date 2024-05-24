@@ -1,7 +1,6 @@
 module github.com/aws/eks-anywhere/release/cli
 
-go 1.21
-toolchain go1.22.2
+go 1.22.3
 
 require (
 	github.com/aws/aws-sdk-go v1.53.8
@@ -20,7 +19,7 @@ require (
 	helm.sh/helm/v3 v3.15.0
 	k8s.io/apimachinery v0.30.0
 	k8s.io/helm v2.17.0+incompatible
-	sigs.k8s.io/controller-runtime v0.16.6
+	sigs.k8s.io/controller-runtime v0.18.2
 	sigs.k8s.io/yaml v1.4.0
 )
 
@@ -55,7 +54,7 @@ require (
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/emicklei/go-restful/v3 v3.11.0 // indirect
 	github.com/evanphx/json-patch v5.7.0+incompatible // indirect
-	github.com/evanphx/json-patch/v5 v5.8.0 // indirect
+	github.com/evanphx/json-patch/v5 v5.9.0 // indirect
 	github.com/exponent-io/jsonpath v0.0.0-20151013193312-d6023ce2651d // indirect
 	github.com/fatih/color v1.14.1 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
