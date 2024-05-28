@@ -429,7 +429,7 @@ func (c *CloudStack) ClusterStateValidations() []clusterf.StateValidation {
 
 // WithKubeVersionAndOS returns a cluster config filler that sets the cluster kube version and the right template for all
 // cloudstack machine configs.
-func (c *CloudStack) WithKubeVersionAndOS(kubeVersion anywherev1.KubernetesVersion, os OS, release *releasev1.EksARelease) api.ClusterConfigFiller {
+func (c *CloudStack) WithKubeVersionAndOS(kubeVersion anywherev1.KubernetesVersion, os OS, release *releasev1.EksARelease, _ ...bool) api.ClusterConfigFiller {
 	return api.JoinClusterConfigFillers(
 		api.ClusterToConfigFiller(api.WithKubernetesVersion(kubeVersion)),
 		api.CloudStackToConfigFiller(
