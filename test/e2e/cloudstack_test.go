@@ -932,7 +932,7 @@ func TestCloudStackKubernetes129To130GitFluxUpgrade(t *testing.T) {
 		test,
 		v1alpha1.Kube130,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube130)),
-		provider.WithProviderUpgrade(provider.Redhat9Kubernetes126Template()),
+		provider.WithProviderUpgrade(provider.Redhat9Kubernetes130Template()),
 	)
 }
 
@@ -1766,7 +1766,7 @@ func TestCloudStackKubernetes129To130OIDCUpgrade(t *testing.T) {
 	)
 	runUpgradeFlowWithOIDC(
 		test,
-		v1alpha1.Kube126,
+		v1alpha1.Kube130,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube130)),
 		provider.WithProviderUpgrade(provider.Redhat9Kubernetes130Template()),
 	)
