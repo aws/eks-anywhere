@@ -150,7 +150,7 @@ func NewClusterE2ETest(t T, provider Provider, opts ...ClusterE2ETestOpt) *Clust
 	e.T.Cleanup(func() {
 		e.cleanupResources()
 
-		tinkerbellCIEnvironment := os.Getenv(TinkerbellCIEnvironment)
+		tinkerbellCIEnvironment := os.Getenv(tinkerbellCIEnvironmentEnvVar)
 		if e.Provider.Name() == tinkerbellProviderName && tinkerbellCIEnvironment == "true" {
 			e.CleanupDockerEnvironment()
 		}
@@ -344,7 +344,7 @@ type Provider interface {
 	CleanupResources(clusterName string) error
 	UpdateKubeConfig(content *[]byte, clusterName string) error
 	ClusterStateValidations() []clusterf.StateValidation
-	WithKubeVersionAndOS(kubeVersion v1alpha1.KubernetesVersion, os OS, release *releasev1.EksARelease) api.ClusterConfigFiller
+	WithKubeVersionAndOS(kubeVersion v1alpha1.KubernetesVersion, os OS, release *releasev1.EksARelease, rtos ...bool) api.ClusterConfigFiller
 	WithNewWorkerNodeGroup(name string, workerNodeGroup *WorkerNodeGroup) api.ClusterConfigFiller
 }
 
