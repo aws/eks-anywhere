@@ -870,7 +870,7 @@ func (e *ClusterE2ETest) DeleteCluster(opts ...CommandOpt) {
 // cleanupResources is a helper to clean up test resources. It is a noop if the T_CLEANUP_RESOURCES environment variable
 // is false or unset.
 func (e *ClusterE2ETest) cleanupResources() {
-	if !shouldCleanUpMachines() {
+	if !shouldCleanUpResources() {
 		e.T.Logf("Skipping provider resource cleanup")
 		return
 	}
@@ -888,7 +888,7 @@ func (e *ClusterE2ETest) CleanupDockerEnvironment() {
 	e.Run("docker", "rm", "-vf", "$(docker ps -a -q)", "||", "true")
 }
 
-func shouldCleanUpMachines() bool {
+func shouldCleanUpResources() bool {
 	shouldCleanupResources, err := getCleanupResourcesVar()
 	return err == nil && shouldCleanupResources
 }

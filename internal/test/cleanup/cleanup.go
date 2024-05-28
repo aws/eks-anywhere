@@ -208,11 +208,9 @@ func TinkerbellTestResources(inventoryCSVFilePath string, ignoreErrors bool) err
 }
 
 func powerOffHardwarePool(hardware map[string]*hardware.Machine, ignoreErrors bool) error {
-	ctx, done := context.WithTimeout(context.Background(), 2*time.Minute)
-	defer done()
 	errList := []error{}
 	for _, h := range hardware {
-		if err := powerOffHardware(ctx, h, ignoreErrors); err != nil {
+		if err := powerOffHardware(h, ignoreErrors); err != nil {
 			errList = append(errList, err)
 		}
 	}
@@ -224,7 +222,9 @@ func powerOffHardwarePool(hardware map[string]*hardware.Machine, ignoreErrors bo
 	return nil
 }
 
-func powerOffHardware(ctx context.Context, h *hardware.Machine, ignoreErrors bool) (reterror error) {
+func powerOffHardware(h *hardware.Machine, ignoreErrors bool) (reterror error) {
+	ctx, done := context.WithTimeout(context.Background(), 2*time.Minute)
+	defer done()
 	bmcClient := newBmclibClient(logr.Discard(), h.BMCIPAddress, h.BMCUsername, h.BMCPassword)
 
 	if err := bmcClient.Open(ctx); err != nil {
