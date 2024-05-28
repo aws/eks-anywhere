@@ -139,7 +139,7 @@ func TestTinkerbellKubernetes129UbuntuTo130UpgradeWorkerOnly(t *testing.T) {
 		t,
 		provider,
 		framework.WithClusterFiller(),
-		framework.WithClusterFiller(api.WithKubernetesVersion(kube129)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(kube130)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 		framework.WithClusterFiller(api.WithWorkerKubernetesVersion(nodeGroupLabel1, &kube129)),
@@ -1534,7 +1534,7 @@ func TestTinkerbellKubernetes130UbuntuWorkerNodeGroupsTaintsAndLabels(t *testing
 			framework.WithCustomTinkerbellMachineConfig(nodeGroupLabel2),
 		),
 		framework.WithClusterFiller(
-			api.WithKubernetesVersion(v1alpha1.Kube129),
+			api.WithKubernetesVersion(v1alpha1.Kube130),
 			api.WithControlPlaneLabel(cpKey1, cpVal1),
 			api.WithControlPlaneTaints([]corev1.Taint{framework.NoScheduleTaint()}),
 			api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
@@ -1587,7 +1587,7 @@ func TestTinkerbellAirgappedKubernetes130UbuntuProxyConfigFlow(t *testing.T) {
 func TestTinkerbellKubernetes130UbuntuOOB(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
-		framework.NewTinkerbell(t, framework.WithUbuntu129Tinkerbell()),
+		framework.NewTinkerbell(t, framework.WithUbuntu130Tinkerbell()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube130)),
 		framework.WithOOBConfiguration(),
 		framework.WithControlPlaneHardware(1),

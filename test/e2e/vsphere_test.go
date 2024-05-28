@@ -234,7 +234,7 @@ func TestVSphereKubernetes130BottleRocketAWSIamAuth(t *testing.T) {
 		t,
 		framework.NewVSphere(t, framework.WithBottleRocket130()),
 		framework.WithAWSIam(),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube130)),
 	)
 	runAWSIamAuthFlow(test)
 }
@@ -2030,23 +2030,6 @@ func TestVSphereKubernetes130BottlerocketRegistryMirrorOciNamespaces(t *testing.
 	runRegistryMirrorConfigFlow(test)
 }
 
-func TestVSphereKubernetes129UbuntuAuthenticatedRegistryMirrorCuratedPackagesSimpleFlow(t *testing.T) {
-	framework.CheckCuratedPackagesCredentials(t)
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewVSphere(t, framework.WithUbuntu129(), framework.WithPrivateNetwork()),
-		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube129)),
-		framework.WithAuthenticatedRegistryMirror(constants.VSphereProviderName),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube129),
-			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
-	)
-	runCuratedPackageInstallSimpleFlowRegistryMirror(test)
-}
-
 // Clone mode
 func TestVSphereKubernetes128FullClone(t *testing.T) {
 	diskSize := 30
@@ -2628,7 +2611,7 @@ func TestVSphereKubernetes130BottleRocketWithNTP(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewVSphere(
-			t, framework.WithBottleRocket129(),
+			t, framework.WithBottleRocket130(),
 			framework.WithNTPServersForAllMachines(),
 			framework.WithSSHAuthorizedKeyForAllMachines(""), // set SSH key to empty
 		),
@@ -3527,7 +3510,7 @@ func TestVSphereKubernetes130UbuntuControlPlaneNodeUpgrade(t *testing.T) {
 	)
 	runSimpleUpgradeFlow(
 		test,
-		v1alpha1.Kube129,
+		v1alpha1.Kube130,
 		framework.WithClusterUpgrade(api.WithControlPlaneCount(3)),
 	)
 }
@@ -4150,7 +4133,7 @@ func TestVSphereKubernetes129To130UbuntuInPlaceUpgradeFromLatestMinorRelease(t *
 	test.GenerateClusterConfigForVersion(release.Version, framework.ExecuteWithEksaRelease(release))
 	test.UpdateClusterConfig(
 		api.ClusterToConfigFiller(
-			api.WithKubernetesVersion(v1alpha1.Kube130),
+			api.WithKubernetesVersion(v1alpha1.Kube129),
 			api.WithStackedEtcdTopology(),
 		),
 		api.VSphereToConfigFiller(
