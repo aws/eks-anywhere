@@ -102,8 +102,8 @@ func (s *Snow) ClusterConfigUpdates() []api.ClusterConfigFiller {
 	return []api.ClusterConfigFiller{api.ClusterToConfigFiller(f...), api.SnowToConfigFiller(s.fillers...)}
 }
 
-// CleanupVMs  satisfies the test framework Provider.
-func (s *Snow) CleanupVMs(clusterName string) error {
+// CleanupResources  satisfies the test framework Provider.
+func (s *Snow) CleanupResources(clusterName string) error {
 	snowDeviceIPs := strings.Split(os.Getenv(snowDevices), ",")
 	s.t.Logf("Cleaning ec2 instances of %s in snow devices: %v", clusterName, snowDeviceIPs)
 

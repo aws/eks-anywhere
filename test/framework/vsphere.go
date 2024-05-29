@@ -441,8 +441,8 @@ func (v *VSphere) WithBottleRocket125() api.ClusterConfigFiller {
 	return v.WithKubeVersionAndOS(anywherev1.Kube125, Bottlerocket1, nil)
 }
 
-// CleanupVMs deletes all the VMs owned by the test EKS-A cluster. It satisfies the test framework Provider.
-func (v *VSphere) CleanupVMs(clusterName string) error {
+// CleanupResources deletes all the VMs owned by the test EKS-A cluster. It satisfies the test framework Provider.
+func (v *VSphere) CleanupResources(clusterName string) error {
 	return cleanup.CleanUpVsphereTestResources(context.Background(), clusterName)
 }
 
