@@ -264,7 +264,8 @@ func (c *CloudStack) ClusterConfigUpdates() []api.ClusterConfigFiller {
 	return []api.ClusterConfigFiller{api.ClusterToConfigFiller(f...), api.CloudStackToConfigFiller(c.fillers...)}
 }
 
-func (c *CloudStack) CleanupVMs(clusterName string) error {
+// CleanupResources satisfies the test framework Provider.
+func (c *CloudStack) CleanupResources(clusterName string) error {
 	return cleanup.CloudstackTestResources(context.Background(), clusterName, false, false)
 }
 
