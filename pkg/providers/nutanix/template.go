@@ -59,7 +59,7 @@ func (ntb *TemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *cluster.Sp
 		etcdMachineSpec = *ntb.etcdMachineSpec
 	}
 
-	values, err := buildTemplateMapCP(ntb.datacenterSpec, clusterSpec, *ntb.controlPlaneMachineSpec, etcdMachineSpec)
+	values, err := buildTemplateMapCP(ntb.datacenterSpec, clusterSpec, *ntb.controlPlaneMachineSpec, etcdMachineSpec, ntb.creds)
 	if err != nil {
 		return nil, err
 	}
@@ -156,6 +156,7 @@ func buildTemplateMapCP(
 	clusterSpec *cluster.Spec,
 	controlPlaneMachineSpec v1alpha1.NutanixMachineConfigSpec,
 	etcdMachineSpec v1alpha1.NutanixMachineConfigSpec,
+	creds credentials.BasicAuthCredential,
 ) (map[string]interface{}, error) {
 	versionsBundle := clusterSpec.RootVersionsBundle()
 	format := "cloud-config"
@@ -217,6 +218,8 @@ func buildTemplateMapCP(
 		"subnetName":                   controlPlaneMachineSpec.Subnet.Name,
 		"subnetUUID":                   controlPlaneMachineSpec.Subnet.UUID,
 		"apiServerCertSANs":            clusterSpec.Cluster.Spec.ControlPlaneConfiguration.CertSANs,
+		"nutanixPCUsername":            creds.PrismCentral.BasicAuth.Username,
+		"nutanixPCPassword":            creds.PrismCentral.BasicAuth.Password,
 	}
 
 	if controlPlaneMachineSpec.Project != nil {
