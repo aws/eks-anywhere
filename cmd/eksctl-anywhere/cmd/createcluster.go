@@ -255,7 +255,7 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 			deps.GitOpsFlux,
 			deps.Writer,
 			deps.EksdInstaller,
-			deps.PackageInstaller,
+			deps.PackageManager,
 			deps.ClusterCreator,
 			deps.UnAuthKubectlClient,
 		)
@@ -272,7 +272,7 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 			deps.GitOpsFlux,
 			deps.Writer,
 			deps.EksdInstaller,
-			deps.PackageInstaller,
+			deps.PackageManager,
 			deps.ClusterCreator,
 			deps.EksaInstaller,
 			deps.ClusterMover,
