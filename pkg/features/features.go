@@ -64,11 +64,3 @@ func APIServerExtraArgsEnabled() Feature {
 		IsActive: globalFeatures.isActiveForEnvVar(APIServerExtraArgsEnabledEnvVar),
 	}
 }
-
-// K8s130Support is the feature flag for Kubernetes 1.30 support.
-func K8s130Support() Feature {
-	return Feature{
-		Name:     "Kubernetes version 1.30 support",
-		IsActive: globalFeatures.isActiveForEnvVar(K8s130SupportEnvVar),
-	}
-}
