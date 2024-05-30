@@ -77,7 +77,7 @@ type ArchiveArtifact struct {
 	ProjectPath       string
 	SourcedFromBranch string
 	ImageFormat       string
-	PrivateUpload     bool
+	Private           bool
 }
 
 type ImageArtifact struct {
@@ -103,7 +103,7 @@ type ManifestArtifact struct {
 	ProjectPath       string
 	SourcedFromBranch string
 	Component         string
-	PrivateUpload     bool
+	Private           bool
 }
 
 type Artifact struct {

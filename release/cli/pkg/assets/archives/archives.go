@@ -235,7 +235,7 @@ func GetArchiveAssets(rc *releasetypes.ReleaseConfig, archive *assettypes.Archiv
 		ProjectPath:       projectPath,
 		SourcedFromBranch: sourcedFromBranch,
 		ImageFormat:       archive.Format,
-		PrivateUpload:     archive.Private,
+		Private:           archive.Private,
 	}
 
 	return archiveArtifact, nil

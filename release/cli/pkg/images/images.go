@@ -83,7 +83,7 @@ func PollForExistence(devRelease bool, authConfig *docker.AuthConfiguration, ima
 
 		bodyStr := string(body)
 		if strings.Contains(bodyStr, "MANIFEST_UNKNOWN") {
-			return fmt.Errorf("requested image not found")
+			return fmt.Errorf("requested image not found: %v", imageUri)
 		}
 
 		return nil
@@ -321,7 +321,12 @@ func GetPreviousReleaseImageSemver(r *releasetypes.ReleaseConfig, releaseImageUr
 		bundles := &anywherev1alpha1.Bundles{}
 		bundleReleaseManifestKey := r.BundlesManifestFilepath()
 		bundleManifestUrl := fmt.Sprintf("https://%s.s3.amazonaws.com/%s", r.ReleaseBucket, bundleReleaseManifestKey)
-		if s3.KeyExists(r.ReleaseBucket, bundleReleaseManifestKey) {
+
+		keyExists, err := s3.KeyExists(r.ReleaseClients.S3.Client, r.ReleaseBucket, bundleReleaseManifestKey, false)
+		if err != nil {
+			return "", fmt.Errorf("checking if object [%s] is present in S3 bucket: %v", bundleReleaseManifestKey, err)
+		}
+		if keyExists {
 			contents, err := filereader.ReadHttpFile(bundleManifestUrl)
 			if err != nil {
 				return "", fmt.Errorf("Error reading bundle manifest from S3: %v", err)
