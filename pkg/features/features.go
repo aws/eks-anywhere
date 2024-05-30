@@ -8,7 +8,6 @@ const (
 	UseControllerForCli             = "USE_CONTROLLER_FOR_CLI"
 	VSphereInPlaceEnvVar            = "VSPHERE_IN_PLACE_UPGRADE"
 	APIServerExtraArgsEnabledEnvVar = "API_SERVER_EXTRA_ARGS_ENABLED"
-	K8s130SupportEnvVar             = "K8S_1_30_SUPPORT"
 )
 
 func FeedGates(featureGates []string) {
