@@ -125,7 +125,7 @@ func GetKubeadmConfigTemplate(ctx context.Context, client kubernetes.Client, nam
 func KubeadmConfigTemplateEqual(new, old *kubeadmv1.KubeadmConfigTemplate) bool {
 	// DeepDerivative treats empty map (length == 0) as unset field. We need to manually compare certain fields
 	// such as taints, so that setting it to empty will trigger machine recreate
-	// The file check with deep equal has been added since the introduction of kubelet configuration in case users 
+	// The file check with deep equal has been added since the introduction of kubelet configuration in case users
 	// want to get rid of the files with that context.
 	return kubeadmConfigTemplateTaintsEqual(new, old) && kubeadmConfigTemplateExtraArgsEqual(new, old) &&
 		reflect.DeepEqual(new.Spec.Template.Spec.Files, old.Spec.Template.Spec.Files) &&
