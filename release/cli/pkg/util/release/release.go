@@ -40,7 +40,12 @@ func GetPreviousReleaseIfExists(r *releasetypes.ReleaseConfig) (*anywherev1alpha
 	release := &anywherev1alpha1.Release{}
 	eksAReleaseManifestKey := r.ReleaseManifestFilepath()
 
-	if !s3.KeyExists(r.ReleaseBucket, eksAReleaseManifestKey) {
+	keyExists, err := s3.KeyExists(r.ReleaseClients.S3.Client, r.ReleaseBucket, eksAReleaseManifestKey, false)
+	if err != nil {
+		return nil, fmt.Errorf("checking if object [%s] is present in S3 bucket: %v", eksAReleaseManifestKey, err)
+	}
+
+	if !keyExists {
 		return emptyRelease, nil
 	}
 

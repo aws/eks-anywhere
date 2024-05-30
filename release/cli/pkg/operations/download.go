@@ -21,6 +21,8 @@ import (
 	"strings"
 	"time"
 
+	s3sdk "github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/pkg/errors"
 	"golang.org/x/sync/errgroup"
 
@@ -42,6 +44,12 @@ func DownloadArtifacts(ctx context.Context, r *releasetypes.ReleaseConfig, eksaA
 		}
 		return false, 0
 	}))
+	var s3Client *s3sdk.S3
+	var s3Downloader *s3manager.Downloader
+	if !r.DryRun {
+		s3Client = r.SourceClients.S3.Client
+		s3Downloader = r.SourceClients.S3.Downloader
+	}
 	fmt.Println("==========================================================")
 	fmt.Println("                  Artifacts Download")
 	fmt.Println("==========================================================")
@@ -55,12 +63,12 @@ func DownloadArtifacts(ctx context.Context, r *releasetypes.ReleaseConfig, eksaA
 			errGroup.Go(func() error {
 				// Check if there is an archive to be downloaded
 				if artifact.Archive != nil {
-					return handleArchiveDownload(ctx, r, artifact, s3Retrier)
+					return handleArchiveDownload(ctx, r, artifact, s3Retrier, s3Client, s3Downloader)
 				}
 
 				// Check if there is a manifest to be downloaded
 				if artifact.Manifest != nil {
-					return handleManifestDownload(ctx, r, artifact, s3Retrier)
+					return handleManifestDownload(ctx, r, artifact, s3Retrier, s3Client, s3Downloader)
 				}
 
 				return nil
@@ -76,7 +84,7 @@ func DownloadArtifacts(ctx context.Context, r *releasetypes.ReleaseConfig, eksaA
 	return nil
 }
 
-func handleArchiveDownload(_ context.Context, r *releasetypes.ReleaseConfig, artifact releasetypes.Artifact, s3Retrier *retrier.Retrier) error {
+func handleArchiveDownload(_ context.Context, r *releasetypes.ReleaseConfig, artifact releasetypes.Artifact, s3Retrier *retrier.Retrier, s3Client *s3sdk.S3, s3Downloader *s3manager.Downloader) error {
 	sourceS3Prefix := artifact.Archive.SourceS3Prefix
 	sourceS3Key := artifact.Archive.SourceS3Key
 	artifactPath := artifact.Archive.ArtifactPath
@@ -87,8 +95,13 @@ func handleArchiveDownload(_ context.Context, r *releasetypes.ReleaseConfig, art
 		fmt.Println("Skipping OS image downloads in dry-run mode")
 	} else {
 		err := s3Retrier.Retry(func() error {
-			if !s3.KeyExists(r.SourceBucket, objectKey) {
-				return fmt.Errorf("requested object not found")
+			keyExists, err := s3.KeyExists(s3Client, r.SourceBucket, objectKey, artifact.Archive.Private)
+			if err != nil {
+				return fmt.Errorf("checking if object [%s] is present in S3 bucket: %v", objectKey, err)
+			}
+
+			if !keyExists {
+				return fmt.Errorf("requested object not found: %v", objectKey)
 			}
 			return nil
 		})
@@ -107,11 +120,11 @@ func handleArchiveDownload(_ context.Context, r *releasetypes.ReleaseConfig, art
 				}
 				objectKey = filepath.Join(latestSourceS3PrefixFromMain, sourceS3Key)
 			} else {
-				return fmt.Errorf("retries exhausted waiting for archive [%s] to be uploaded to source location: %v", objectKey, err)
+				return fmt.Errorf("retries exhausted waiting for source archive [%s] to be available for download: %v", objectKey, err)
 			}
 		}
 
-		err = s3.DownloadFile(objectLocalFilePath, r.SourceBucket, objectKey)
+		err = s3.DownloadFile(objectLocalFilePath, r.SourceBucket, objectKey, s3Downloader, artifact.Archive.Private)
 		if err != nil {
 			return errors.Cause(err)
 		}
@@ -136,8 +149,13 @@ func handleArchiveDownload(_ context.Context, r *releasetypes.ReleaseConfig, art
 			fmt.Printf("Checksum file - %s\n", objectShasumFileKey)
 
 			err := s3Retrier.Retry(func() error {
-				if !s3.KeyExists(r.SourceBucket, objectShasumFileKey) {
-					return fmt.Errorf("requested object not found")
+				keyExists, err := s3.KeyExists(s3Client, r.SourceBucket, objectShasumFileKey, artifact.Archive.Private)
+				if err != nil {
+					return fmt.Errorf("checking if object [%s] is present in S3 bucket: %v", objectShasumFileKey, err)
+				}
+
+				if !keyExists {
+					return fmt.Errorf("requested object not found: %v", objectShasumFileKey)
 				}
 				return nil
 			})
@@ -156,11 +174,11 @@ func handleArchiveDownload(_ context.Context, r *releasetypes.ReleaseConfig, art
 					}
 					objectShasumFileKey = filepath.Join(latestSourceS3PrefixFromMain, objectShasumFileName)
 				} else {
-					return fmt.Errorf("retries exhausted waiting for checksum file [%s] to be uploaded to source location: %v", objectShasumFileKey, err)
+					return fmt.Errorf("retries exhausted waiting for source checksum file [%s] to be available for download: %v", objectShasumFileKey, err)
 				}
 			}
 
-			err = s3.DownloadFile(objectShasumFileLocalFilePath, r.SourceBucket, objectShasumFileKey)
+			err = s3.DownloadFile(objectShasumFileLocalFilePath, r.SourceBucket, objectShasumFileKey, s3Downloader, artifact.Archive.Private)
 			if err != nil {
 				return errors.Cause(err)
 			}
@@ -170,7 +188,7 @@ func handleArchiveDownload(_ context.Context, r *releasetypes.ReleaseConfig, art
 	return nil
 }
 
-func handleManifestDownload(_ context.Context, r *releasetypes.ReleaseConfig, artifact releasetypes.Artifact, s3Retrier *retrier.Retrier) error {
+func handleManifestDownload(_ context.Context, r *releasetypes.ReleaseConfig, artifact releasetypes.Artifact, s3Retrier *retrier.Retrier, s3Client *s3sdk.S3, s3Downloader *s3manager.Downloader) error {
 	sourceS3Prefix := artifact.Manifest.SourceS3Prefix
 	sourceS3Key := artifact.Manifest.SourceS3Key
 	artifactPath := artifact.Manifest.ArtifactPath
@@ -179,8 +197,13 @@ func handleManifestDownload(_ context.Context, r *releasetypes.ReleaseConfig, ar
 	fmt.Printf("Manifest - %s\n", objectKey)
 
 	err := s3Retrier.Retry(func() error {
-		if !s3.KeyExists(r.SourceBucket, objectKey) {
-			return fmt.Errorf("requested object not found")
+		keyExists, err := s3.KeyExists(s3Client, r.SourceBucket, objectKey, artifact.Manifest.Private)
+		if err != nil {
+			return fmt.Errorf("checking if object [%s] is present in S3 bucket: %v", objectKey, err)
+		}
+
+		if !keyExists {
+			return fmt.Errorf("requested object not found: %v", objectKey)
 		}
 		return nil
 	})
@@ -194,11 +217,11 @@ func handleManifestDownload(_ context.Context, r *releasetypes.ReleaseConfig, ar
 			latestSourceS3PrefixFromMain := strings.NewReplacer(r.BuildRepoBranchName, "latest", artifact.Manifest.GitTag, gitTagFromMain).Replace(sourceS3Prefix)
 			objectKey = filepath.Join(latestSourceS3PrefixFromMain, sourceS3Key)
 		} else {
-			return fmt.Errorf("retries exhausted waiting for manifest [%s] to be uploaded to source location: %v", objectKey, err)
+			return fmt.Errorf("retries exhausted waiting for source manifest [%s] to be available for download: %v", objectKey, err)
 		}
 	}
 
-	err = s3.DownloadFile(objectLocalFilePath, r.SourceBucket, objectKey)
+	err = s3.DownloadFile(objectLocalFilePath, r.SourceBucket, objectKey, s3Downloader, artifact.Manifest.Private)
 	if err != nil {
 		return errors.Cause(err)
 	}

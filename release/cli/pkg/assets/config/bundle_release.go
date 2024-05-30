@@ -74,7 +74,7 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 		Archives: []*assettypes.Archive{
 			{
 				Name:                "rtos",
-				Format:              "ami",
+				Format:              "raw",
 				OSName:              "ubuntu",
 				OSVersion:           "22.04",
 				ArchiveS3PathGetter: archives.RTOSArtifactPathGetter,

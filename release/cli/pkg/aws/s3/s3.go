@@ -22,6 +22,7 @@ import (
 	"path/filepath"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/pkg/errors"
@@ -43,7 +44,7 @@ func Read(bucket, key string) (io.ReadCloser, error) {
 	return resp.Body, nil
 }
 
-func DownloadFile(filePath, bucket, key string) error {
+func DownloadFile(filePath, bucket, key string, s3Downloader *s3manager.Downloader, private bool) error {
 	if err := os.MkdirAll(filepath.Dir(filePath), 0o755); err != nil {
 		return errors.Cause(err)
 	}
@@ -54,15 +55,25 @@ func DownloadFile(filePath, bucket, key string) error {
 	}
 	defer fd.Close()
 
-	body, err := Read(bucket, key)
-	if err != nil {
-		return err
-	}
+	if private {
+		_, err = s3Downloader.Download(fd, &s3.GetObjectInput{
+			Bucket: aws.String(bucket),
+			Key:    aws.String(key),
+		})
+		if err != nil {
+			return err
+		}
+	} else {
+		body, err := Read(bucket, key)
+		if err != nil {
+			return err
+		}
 
-	defer body.Close()
+		defer body.Close()
 
-	if _, err = io.Copy(fd, body); err != nil {
-		return err
+		if _, err = io.Copy(fd, body); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -93,13 +104,30 @@ func UploadFile(filePath string, bucket, key *string, s3Uploader *s3manager.Uplo
 	return nil
 }
 
-func KeyExists(bucket, key string) bool {
-	objectUrl := fmt.Sprintf("https://%s.s3.amazonaws.com/%s", bucket, key)
+func KeyExists(s3Client *s3.S3, bucket, key string, private bool) (bool, error) {
+	if private {
+		_, err := s3Client.HeadObject(&s3.HeadObjectInput{
+			Bucket: aws.String(bucket),
+			Key:    aws.String(key),
+		})
+		if err != nil {
+			if aerr, ok := err.(awserr.Error); ok && aerr.Code() == "NotFound" {
+				return false, nil
+			}
+			return false, fmt.Errorf("calling S3 HeadObject API to check if object is present: %v", err)
+		}
+	} else {
+		objectUrl := fmt.Sprintf("https://%s.s3.amazonaws.com/%s", bucket, key)
 
-	resp, err := http.Head(objectUrl)
-	if err != nil || resp.StatusCode != http.StatusOK {
-		return false
+		resp, err := http.Head(objectUrl)
+		if err != nil {
+			return false, fmt.Errorf("making HTTP HEAD request to check if object is present: %v", err)
+		}
+
+		if resp.StatusCode != http.StatusOK {
+			return false, nil
+		}
 	}
 
-	return true
+	return true, nil
 }
