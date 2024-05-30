@@ -63,6 +63,11 @@ skipped_tests:
 - TestCloudStackKubernetes130RedhatCuratedPackagesCertManagerSimpleFlow
 - TestCloudStackKubernetes130RedhatWorkloadClusterCuratedPackagesEmissarySimpleFlow
 
+# UpgradeFromLatestTests for new K8s version (expected to work only after the release is out)
+- TestDockerKubernetes130AirgappedUpgradeFromLatestRegistryMirrorAndCert
+- TestDockerKubernetes129to130UpgradeFromLatestMinorReleaseAPI
+- TestCloudStackKubernetes130WithOIDCManagementClusterUpgradeFromLatestSideEffects
+
 # Snow
 - TestSnowKubernetes125SimpleFlow
 - TestSnowKubernetes126SimpleFlow
