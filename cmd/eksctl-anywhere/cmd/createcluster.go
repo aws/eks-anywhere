@@ -262,7 +262,7 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 		err = createWorkloadCluster.Run(ctx, clusterSpec, createValidations)
 
 	} else if clusterSpec.Cluster.IsSelfManaged() {
-		logger.Info("Using the new workflow using the controller for management cluster create")
+		logger.V(1).Info("Using the eksa controller to create the management cluster")
 
 		createMgmtCluster := management.NewCreate(
 			deps.Bootstrapper,
