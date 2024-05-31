@@ -2,7 +2,6 @@ package management
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/logger"
@@ -14,11 +13,7 @@ import (
 type createWorkloadClusterTask struct{}
 
 func (s *createWorkloadClusterTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
-	clusterType := "workload"
-	if commandContext.ClusterSpec.Config.Cluster.IsSelfManaged() {
-		clusterType = "management"
-	}
-	logger.Info(fmt.Sprintf("Creating new %s cluster", clusterType))
+	logger.Info("Creating new management cluster")
 
 	commandContext.ClusterSpec.Cluster.AddManagedByCLIAnnotation()
 	commandContext.ClusterSpec.Cluster.SetManagementComponentsVersion(commandContext.ClusterSpec.EKSARelease.Spec.Version)
@@ -50,7 +45,7 @@ func (s *createWorkloadClusterTask) Run(ctx context.Context, commandContext *tas
 		return &workflows.CollectDiagnosticsTask{}
 	}
 
-	logger.Info(fmt.Sprintf("Installing cluster-api providers on %s cluster", clusterType))
+	logger.Info("Installing cluster-api providers on management cluster")
 	managementComponents := cluster.ManagementComponentsFromBundles(commandContext.ClusterSpec.Bundles)
 	err = commandContext.ClusterManager.InstallCAPI(ctx, managementComponents, commandContext.ClusterSpec, commandContext.WorkloadCluster, commandContext.Provider)
 	if err != nil {
@@ -58,7 +53,7 @@ func (s *createWorkloadClusterTask) Run(ctx context.Context, commandContext *tas
 		return &workflows.CollectDiagnosticsTask{}
 	}
 
-	logger.Info(fmt.Sprintf("Installing EKS-A secrets on %s cluster", clusterType))
+	logger.Info("Installing EKS-A secrets on management cluster")
 	err = commandContext.Provider.UpdateSecrets(ctx, commandContext.WorkloadCluster, commandContext.ClusterSpec)
 	if err != nil {
 		commandContext.SetError(err)
