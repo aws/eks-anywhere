@@ -24,6 +24,7 @@ skipped_tests:
 - TestCloudStackKubernetes127MultiEndpointSimpleFlow
 - TestCloudStackKubernetes128MultiEndpointSimpleFlow
 - TestCloudStackKubernetes129MultiEndpointSimpleFlow
+- TestCloudStackKubernetes130MultiEndpointSimpleFlow
 
 # Side effects
 - TestCloudStackKubernetes129WithOIDCManagementClusterUpgradeFromLatestSideEffects
