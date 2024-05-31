@@ -244,11 +244,8 @@ You can extract your new kubeconfig using the following steps.
 1. SSH to one of the Control Plane nodes and run the following command to validate connection with API Server, export kubeconfig from `${CLUSTER_NAME}-kubeconfig` secret object (`eksa-system` namespace) using kubectl and copy kubeconfig file to `/tmp` directory.
 
 ```
-ssh -i <YOUR_PRIVATE_KEY> ec2-user@<YOUR_CONTROLPLANE_IP>
+ssh -i <YOUR_PRIVATE_KEY> <USER_NAME>@<YOUR_CONTROLPLANE_IP> # USER_NAME should be ec2-user for bottlerocket, ubuntu for Ubuntu ControlPlane machine Operating System
 
-OR
-
-ssh -i <YOUR_PRIVATE_KEY> ubuntu@<YOUR_CONTROLPLANE_IP>
 ```
 
 {{< tabpane >}}
