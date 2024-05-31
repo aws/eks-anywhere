@@ -329,7 +329,7 @@ func WithVSphereWorkerNodeGroup(name string, workerNodeGroup *WorkerNodeGroup, f
 }
 
 // WithMachineTemplate returns an api.ClusterConfigFiller that changes template in machine template.
-func (v *VSphere) WithMachineTemplate(machineName string, template string) api.ClusterConfigFiller {
+func (v *VSphere) WithMachineTemplate(machineName, template string) api.ClusterConfigFiller {
 	return api.JoinClusterConfigFillers(
 		api.VSphereToConfigFiller(api.WithMachineTemplate(machineName, template)),
 	)
@@ -391,7 +391,7 @@ func (v *VSphere) ClusterConfigUpdates() []api.ClusterConfigFiller {
 
 // WithKubeVersionAndOS returns a cluster config filler that sets the cluster kube version and the right template for all
 // vsphere machine configs.
-func (v *VSphere) WithKubeVersionAndOS(kubeVersion anywherev1.KubernetesVersion, os OS, release *releasev1.EksARelease) api.ClusterConfigFiller {
+func (v *VSphere) WithKubeVersionAndOS(kubeVersion anywherev1.KubernetesVersion, os OS, release *releasev1.EksARelease, _ ...bool) api.ClusterConfigFiller {
 	return api.JoinClusterConfigFillers(
 		api.ClusterToConfigFiller(api.WithKubernetesVersion(kubeVersion)),
 		api.VSphereToConfigFiller(
