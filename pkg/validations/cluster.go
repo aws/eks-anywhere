@@ -10,7 +10,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/constants"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/semver"
@@ -265,16 +264,6 @@ func ValidateManagementComponentsVersionSkew(ctx context.Context, k KubectlClien
 
 	if majorVersionDifference != 0 || minorVersionDifference > supportedManagementComponentsMinorVersionIncrement {
 		return fmt.Errorf("management components version %s can only be one minor version greater than cluster version %s", newManagementComponentsSemVer, managementClusterSemVer)
-	}
-	return nil
-}
-
-// ValidateK8s130Support checks if the 1.30 feature flag is set when using k8s 1.30.
-func ValidateK8s130Support(clusterSpec *cluster.Spec) error {
-	if !features.IsActive(features.K8s130Support()) {
-		if clusterSpec.Cluster.Spec.KubernetesVersion == v1alpha1.Kube130 {
-			return fmt.Errorf("kubernetes version %s is not enabled. Please set the env variable %v", v1alpha1.Kube130, features.K8s130SupportEnvVar)
-		}
 	}
 	return nil
 }
