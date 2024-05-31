@@ -93,6 +93,9 @@ func newCreateTest(t *testing.T) *createTestSetup {
 	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
 		s.Cluster.Name = "test-cluster"
 		s.Cluster.Namespace = "test-ns"
+		s.ManagementCluster = &types.Cluster{
+			Name: "test-cluster",
+		}
 	})
 	managementComponents := cluster.ManagementComponentsFromBundles(clusterSpec.Bundles)
 
