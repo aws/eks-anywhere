@@ -1,6 +1,6 @@
 quick_tests:
 # Docker
-- TestDocker.*128
+- TestDocker.*130
 # vSphere
 - ^TestVSphereKubernetes129To130RedHatUpgrade$
 - TestVSphereKubernetes129To130StackedEtcdRedHatUpgrade
@@ -15,12 +15,12 @@ quick_tests:
 - TestCloudStackKubernetes129To130RedhatMultipleFieldsUpgrade
 - TestCloudStackKubernetes129To130StackedEtcdRedhatMultipleFieldsUpgrade
 # Nutanix
-- TestNutanixKubernetes128to129RedHat9Upgrade
-- TestNutanixKubernetes128to129StackedEtcdRedHat9Upgrade
-- TestNutanixKubernetes128to129RedHat8Upgrade
-- TestNutanixKubernetes128to129StackedEtcdRedHat8Upgrade
-- TestNutanixKubernetes128To129UbuntuUpgrade
-- TestNutanixKubernetes128To129StackedEtcdUbuntuUpgrade
+- TestNutanixKubernetes129to130RedHat9Upgrade
+- TestNutanixKubernetes129to130StackedEtcdRedHat9Upgrade
+- TestNutanixKubernetes129to130RedHat8Upgrade
+- TestNutanixKubernetes129to130StackedEtcdRedHat8Upgrade
+- TestNutanixKubernetes129To130UbuntuUpgrade
+- TestNutanixKubernetes129To130StackedEtcdUbuntuUpgrade
 # Snow
 # - TestSnowKubernetes128SimpleFlow
 # - TestSnowKubernetes128StackedEtcdSimpleFlow
