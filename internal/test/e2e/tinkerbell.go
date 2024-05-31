@@ -23,6 +23,7 @@ const (
 	maxHardwarePerE2ETestEnvVar                = "T_TINKERBELL_MAX_HARDWARE_PER_TEST"
 	tinkerbellDefaultMaxHardwarePerE2ETest     = 4
 	tinkerbellBootstrapInterfaceEnvVar         = "T_TINKERBELL_BOOTSTRAP_INTERFACE"
+	tinkerbellCIEnvironmentEnvVar              = "T_TINKERBELL_CI_ENVIRONMENT"
 )
 
 // TinkerbellTest maps each Tinkbell test with the hardware count needed for the test.
@@ -80,7 +81,7 @@ func (e *E2ESession) setupTinkerbellEnv(testRegex string) error {
 	}
 
 	e.testEnvVars[tinkerbellInventoryCsvFilePathEnvVar] = inventoryFilePath
-	e.testEnvVars[e2etests.TinkerbellCIEnvironment] = "true"
+	e.testEnvVars[tinkerbellCIEnvironmentEnvVar] = "true"
 
 	return nil
 }
