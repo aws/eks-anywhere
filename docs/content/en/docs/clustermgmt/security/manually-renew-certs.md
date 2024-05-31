@@ -232,7 +232,7 @@ etcd:
 
 ### What do I do if my local kubeconfig has expired?
 
-Your local kubeconfig used to interact with the cluster contains a certificate that expires after 1 year. When you rotate cluster certificates a new kubeconfig with a new certificate is created as a Secret in the cluster. If you do not retrieve the new kubeconfig and your local kubeconfig certificate expires you will receive the following error:
+Your local kubeconfig used to interact with the cluster contains a certificate that expires after 1 year. When you rotate cluster certificates, a new kubeconfig with a new certificate is created as a Secret in the cluster. If you do not retrieve the new kubeconfig and your local kubeconfig certificate expires, you will receive the following error:
 
 ```
 Error: Couldn't get current Server API group list: the server has asked for the client to provide credentials error: you must be logged in to the server.
@@ -244,7 +244,11 @@ You can extract your new kubeconfig using the following steps.
 1. SSH to one of the Control Plane nodes and run the following command to validate connection with API Server, export kubeconfig from `${CLUSTER_NAME}-kubeconfig` secret object (`eksa-system` namespace) using kubectl and copy kubeconfig file to `/tmp` directory.
 
 ```
-ssh <YOUR_CONTROLPLANE_IP>
+ssh -i <YOUR_PRIVATE_KEY> ec2-user@<YOUR_CONTROLPLANE_IP>
+
+OR
+
+ssh -i <YOUR_PRIVATE_KEY> ubuntu@<YOUR_CONTROLPLANE_IP>
 ```
 
 {{< tabpane >}}
@@ -263,7 +267,7 @@ cat new-admin.kubeconfig > /tmp/new-admin-decoded.kubeconfig
 
 {{< tab header="Bottlerocket" lang="bash" >}}
 
-# you would be in the admin container when you ssh to the Bottlerocket machine
+# You would need to be in the admin container when you ssh to the Bottlerocket machine
 # open a root shell
 sudo sheltie
 
