@@ -234,7 +234,7 @@ func TestVSphereKubernetes130BottleRocketAWSIamAuth(t *testing.T) {
 		t,
 		framework.NewVSphere(t, framework.WithBottleRocket130()),
 		framework.WithAWSIam(),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube130)),
 	)
 	runAWSIamAuthFlow(test)
 }
@@ -2628,7 +2628,7 @@ func TestVSphereKubernetes130BottleRocketWithNTP(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewVSphere(
-			t, framework.WithBottleRocket129(),
+			t, framework.WithBottleRocket130(),
 			framework.WithNTPServersForAllMachines(),
 			framework.WithSSHAuthorizedKeyForAllMachines(""), // set SSH key to empty
 		),
@@ -3527,7 +3527,7 @@ func TestVSphereKubernetes130UbuntuControlPlaneNodeUpgrade(t *testing.T) {
 	)
 	runSimpleUpgradeFlow(
 		test,
-		v1alpha1.Kube129,
+		v1alpha1.Kube130,
 		framework.WithClusterUpgrade(api.WithControlPlaneCount(3)),
 	)
 }
@@ -3924,12 +3924,12 @@ func TestVSphereKubernetes127UbuntuTo128UpgradeWithCheckpoint(t *testing.T) {
 	)
 
 	clusterOpts = append(clusterOpts, framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube128)), framework.ExpectFailure(true),
-		provider.WithProviderUpgrade(provider.Ubuntu128Template(), api.WithResourcePoolforCPMachines(vsphereInvalidResourcePoolUpdateVar)), framework.WithEnvVar(features.CheckpointEnabledEnvVar, "true"), framework.WithEnvVar(framework.CleanupVmsVar, "false"))
+		provider.WithProviderUpgrade(provider.Ubuntu128Template(), api.WithResourcePoolforCPMachines(vsphereInvalidResourcePoolUpdateVar)), framework.WithEnvVar(features.CheckpointEnabledEnvVar, "true"), framework.WithEnvVar(framework.CleanupResourcesVar, "false"))
 
 	commandOpts := []framework.CommandOpt{framework.WithControlPlaneWaitTimeout("10m")}
 
 	clusterOpts2 = append(clusterOpts, framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube128)), framework.ExpectFailure(false),
-		provider.WithProviderUpgrade(provider.Ubuntu128Template(), api.WithResourcePoolForAllMachines(os.Getenv(vsphereResourcePoolVar))), framework.WithEnvVar(features.CheckpointEnabledEnvVar, "true"), framework.WithEnvVar(framework.CleanupVmsVar, "true"))
+		provider.WithProviderUpgrade(provider.Ubuntu128Template(), api.WithResourcePoolForAllMachines(os.Getenv(vsphereResourcePoolVar))), framework.WithEnvVar(features.CheckpointEnabledEnvVar, "true"), framework.WithEnvVar(framework.CleanupResourcesVar, "true"))
 
 	runUpgradeFlowWithCheckpoint(
 		test,
@@ -4150,7 +4150,7 @@ func TestVSphereKubernetes129To130UbuntuInPlaceUpgradeFromLatestMinorRelease(t *
 	test.GenerateClusterConfigForVersion(release.Version, framework.ExecuteWithEksaRelease(release))
 	test.UpdateClusterConfig(
 		api.ClusterToConfigFiller(
-			api.WithKubernetesVersion(v1alpha1.Kube130),
+			api.WithKubernetesVersion(v1alpha1.Kube129),
 			api.WithStackedEtcdTopology(),
 		),
 		api.VSphereToConfigFiller(

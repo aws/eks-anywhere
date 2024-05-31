@@ -192,7 +192,7 @@ func (e *ClusterE2ETest) PostClusterCreateEtcdEncryptionSetup() {
 	}
 
 	// register cleanup step to remove the keys from s3 after the test is done
-	e.T.Cleanup(e.cleanup)
+	e.T.Cleanup(e.cleanupKeysFromOIDCConfig)
 
 	if err := e.deployPodIdentityWebhook(ctx, envVars); err != nil {
 		e.T.Fatal(err)
@@ -203,7 +203,8 @@ func (e *ClusterE2ETest) PostClusterCreateEtcdEncryptionSetup() {
 	}
 }
 
-func (e *ClusterE2ETest) cleanup() {
+// cleanup removes the cluster's key from the IAM OIDC config.
+func (e *ClusterE2ETest) cleanupKeysFromOIDCConfig() {
 	e.T.Log("Removing cluster's key from the IAM OIDC config")
 	data, err := os.ReadFile(fmt.Sprintf(keyIDFilenameFormat, e.ClusterName))
 	if err != nil {

@@ -45,7 +45,7 @@ In order to use bundle overrides, take your bundle overrides yaml file and move 
 You will also need to set the environment variable `T_BUNDLES_OVERRIDE=true`
 
 ### Cleaning up VM's after a test run
-In order to clean up VM's after a test runs automatically, set `T_CLEANUP_VMS=true`
+In order to clean up VM's after a test runs automatically, set `T_CLEANUP_RESOURCES=true`
 
 ## VSphere tests requisites
 The following env variables need to be set:

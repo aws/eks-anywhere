@@ -102,8 +102,8 @@ func (s *Snow) ClusterConfigUpdates() []api.ClusterConfigFiller {
 	return []api.ClusterConfigFiller{api.ClusterToConfigFiller(f...), api.SnowToConfigFiller(s.fillers...)}
 }
 
-// CleanupVMs  satisfies the test framework Provider.
-func (s *Snow) CleanupVMs(clusterName string) error {
+// CleanupResources  satisfies the test framework Provider.
+func (s *Snow) CleanupResources(clusterName string) error {
 	snowDeviceIPs := strings.Split(os.Getenv(snowDevices), ",")
 	s.t.Logf("Cleaning ec2 instances of %s in snow devices: %v", clusterName, snowDeviceIPs)
 
@@ -330,7 +330,7 @@ func (s *Snow) withBottlerocketStaticIPForKubeVersion(kubeVersion anywherev1.Kub
 
 // WithKubeVersionAndOS returns a cluster config filler that sets the cluster kube version and the correct AMI ID
 // and devices for the Snow machine configs.
-func (s *Snow) WithKubeVersionAndOS(kubeVersion anywherev1.KubernetesVersion, os OS, release *releasev1.EksARelease) api.ClusterConfigFiller {
+func (s *Snow) WithKubeVersionAndOS(kubeVersion anywherev1.KubernetesVersion, os OS, _ *releasev1.EksARelease, _ ...bool) api.ClusterConfigFiller {
 	envar := fmt.Sprintf("T_SNOW_AMIID_%s_%s", strings.ToUpper(strings.ReplaceAll(string(os), "-", "_")), strings.ReplaceAll(string(kubeVersion), ".", "_"))
 
 	return api.JoinClusterConfigFillers(

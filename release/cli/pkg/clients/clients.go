@@ -41,7 +41,8 @@ type ReleaseClients struct {
 }
 
 type SourceS3Clients struct {
-	Client *s3.S3
+	Client     *s3.S3
+	Downloader *s3manager.Downloader
 }
 
 type ReleaseS3Clients struct {
@@ -88,6 +89,7 @@ func CreateDevReleaseClients(dryRun bool) (*SourceClients, *ReleaseClients, erro
 
 	// S3 client and uploader
 	s3Client := s3.New(pdxSession)
+	downloader := s3manager.NewDownloader(pdxSession)
 	uploader := s3manager.NewUploader(pdxSession)
 
 	// Get source ECR auth config
@@ -107,7 +109,8 @@ func CreateDevReleaseClients(dryRun bool) (*SourceClients, *ReleaseClients, erro
 	// Constructing source clients
 	sourceClients := &SourceClients{
 		S3: &SourceS3Clients{
-			Client: s3Client,
+			Client:     s3Client,
+			Downloader: downloader,
 		},
 		ECR: &SourceECRClient{
 			EcrClient:  ecrClient,
@@ -162,6 +165,7 @@ func CreateStagingReleaseClients() (*SourceClients, *ReleaseClients, error) {
 
 	// Release S3 client and uploader
 	releaseS3Client := s3.New(releaseSession)
+	downloader := s3manager.NewDownloader(releaseSession)
 	uploader := s3manager.NewUploader(releaseSession)
 
 	// Get source ECR auth config
@@ -181,7 +185,8 @@ func CreateStagingReleaseClients() (*SourceClients, *ReleaseClients, error) {
 	// Constructing source clients
 	sourceClients := &SourceClients{
 		S3: &SourceS3Clients{
-			Client: sourceS3Client,
+			Client:     sourceS3Client,
+			Downloader: downloader,
 		},
 		ECR: &SourceECRClient{
 			EcrClient:  ecrClient,
@@ -237,6 +242,7 @@ func CreateProdReleaseClients() (*SourceClients, *ReleaseClients, error) {
 
 	// Release S3 client and uploader
 	releaseS3Client := s3.New(releaseSession)
+	downloader := s3manager.NewDownloader(releaseSession)
 	uploader := s3manager.NewUploader(releaseSession)
 
 	// Get source ECR Public auth config
@@ -256,7 +262,8 @@ func CreateProdReleaseClients() (*SourceClients, *ReleaseClients, error) {
 	// Constructing release clients
 	sourceClients := &SourceClients{
 		S3: &SourceS3Clients{
-			Client: sourceS3Client,
+			Client:     sourceS3Client,
+			Downloader: downloader,
 		},
 		ECR: &SourceECRClient{
 			EcrPublicClient: sourceEcrPublicClient,
