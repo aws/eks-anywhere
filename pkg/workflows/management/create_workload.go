@@ -15,7 +15,7 @@ type createWorkloadClusterTask struct{}
 
 func (s *createWorkloadClusterTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
 	clusterType := "workload"
-	if commandContext.ClusterSpec.Cluster.Name == commandContext.ClusterSpec.ManagementCluster.Name {
+	if commandContext.ClusterSpec.Config.Cluster.IsSelfManaged() {
 		clusterType = "management"
 	}
 	logger.Info(fmt.Sprintf("Creating new %s cluster", clusterType))
