@@ -76,7 +76,9 @@ metadata:
 {{- end }}
 spec:
   clusterName: {{.clusterName}}
+{{- if not .autoscalingConfig }}
   replicas: {{.workerReplicas}}
+{{- end }}
   selector:
     matchLabels: null
   template:
