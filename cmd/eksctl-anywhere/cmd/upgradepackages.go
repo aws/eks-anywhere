@@ -55,6 +55,7 @@ var upgradePackagesCommand = &cobra.Command{
 		}
 		return nil
 	},
+	Deprecated: "refer to `https://anywhere.eks.amazonaws.com/docs/packages/packagebundles` for upgrading",
 }
 
 func upgradePackages(ctx context.Context) error {
