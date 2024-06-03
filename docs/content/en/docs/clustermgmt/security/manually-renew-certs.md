@@ -153,7 +153,7 @@ ${IMAGE_ID} tmp-cert-renew \
 {{< /tab >}}
 {{< /tabpane >}}
 
-3. If you have external etcd nodes, manually replace the `server-etcd-client.crt` and `apiserver-etcd-client.key` file in `/etc/kubernetes/pki` (or `/var/lib/kubeadm/pki` in Bottlerocket) folder with the files you saved from any etcd node.
+3. If you have external etcd nodes, manually replace the `server-etcd-client.crt` and `apiserver-etcd-client.key` files in the `/etc/kubernetes/pki` (or `/var/lib/kubeadm/pki` in Bottlerocket) folder with the files you saved from any etcd node.
 
    - **For Bottlerocket**:
 
@@ -232,7 +232,7 @@ etcd:
 
 ### What do I do if my local kubeconfig has expired?
 
-Your local kubeconfig used to interact with the cluster contains a certificate that expires after 1 year. When you rotate cluster certificates, a new kubeconfig with a new certificate is created as a Secret in the cluster. If you do not retrieve the new kubeconfig and your local kubeconfig certificate expires, you will receive the following error:
+Your local kubeconfig, used to interact with the cluster contains a certificate that expires after 1 year. When you rotate cluster certificates, a new kubeconfig with a new certificate is created as a Secret in the cluster. If you do not retrieve the new kubeconfig and your local kubeconfig certificate expires, you will receive the following error:
 
 ```
 Error: Couldn't get current Server API group list: the server has asked for the client to provide credentials error: you must be logged in to the server.
@@ -241,7 +241,7 @@ This error typically occurs when the cluster certificates have been renewed or e
 
 You can extract your new kubeconfig using the following steps.
 
-1. SSH to one of the Control Plane nodes and run the following command to validate connection with API Server, export kubeconfig from `${CLUSTER_NAME}-kubeconfig` secret object (`eksa-system` namespace) using kubectl and copy kubeconfig file to `/tmp` directory.
+1. You can extract your new kubeconfig by SSHing to one of the Control Plane nodes, exporting kubeconfig from the secret object, and copying kubeconfig file to `/tmp` directory, as shown here:
 
 ```
 ssh -i <YOUR_PRIVATE_KEY> <USER_NAME>@<YOUR_CONTROLPLANE_IP> # USER_NAME should be ec2-user for bottlerocket, ubuntu for Ubuntu ControlPlane machine Operating System
@@ -256,9 +256,7 @@ export CLUSTER_NAME="<YOUR_CLUSTER_NAME_HERE>"
 cat /var/lib/kubeadm/admin.conf
 export KUBECONFIG="/var/lib/kubeadm/admin.conf"
 
-kubectl get secret ${CLUSTER_NAME}-kubeconfig -n eksa-system -o yaml > new-admin.kubeconfig
-
-cat new-admin.kubeconfig > /tmp/new-admin-decoded.kubeconfig
+kubectl get secret ${CLUSTER_NAME}-kubeconfig -n eksa-system -o yaml > /tmp/new-admin-decoded.kubeconfig
 
 {{< /tab >}}
 
@@ -269,7 +267,6 @@ cat new-admin.kubeconfig > /tmp/new-admin-decoded.kubeconfig
 sudo sheltie
 
 cat /var/lib/kubeadm/admin.conf
-export KUBECONFIG="/var/lib/kubeadm/admin.conf"
 
 cat /var/lib/kubeadm/admin.conf > /run/host-containerd/io.containerd.runtime.v2.task/default/admin/rootfs/tmp/new-admin.kubeconfig
 
@@ -281,7 +278,7 @@ cat /var/lib/kubeadm/admin.conf > /run/host-containerd/io.containerd.runtime.v2.
 ```
 ssh <ADMIN_MACHINE_IP>
 
-export CONTROLPLANE_IP=""
+export CONTROLPLANE_IP="<CONTROLPLANE_IP_ADDR>"
 scp -i <keypair>@${CONTROLPLANE_IP}:/tmp/new-admin.kubeconfig .
 
 ls -ltr 
