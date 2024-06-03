@@ -1322,7 +1322,8 @@ func (f *Factory) WithGitOpsFlux(clusterConfig *v1alpha1.Cluster, fluxConfig *v1
 	return f
 }
 
-func (f *Factory) WithPackageInstaller(spec *cluster.Spec, packagesLocation, kubeConfig string) *Factory {
+// WithPackageManager builds a package manager.
+func (f *Factory) WithPackageManager(spec *cluster.Spec, packagesLocation, kubeConfig string) *Factory {
 	f.WithKubectl().WithPackageControllerClient(spec, kubeConfig).WithPackageClient()
 	f.buildSteps = append(f.buildSteps, func(_ context.Context) error {
 		if f.dependencies.PackageManager != nil {
@@ -1344,10 +1345,10 @@ func (f *Factory) WithPackageInstaller(spec *cluster.Spec, packagesLocation, kub
 	return f
 }
 
-// WithPackageInstallerWithoutWait builds a package installer that doesn't wait for active bundles.
-func (f *Factory) WithPackageInstallerWithoutWait(spec *cluster.Spec, packagesLocation, kubeConfig string) *Factory {
+// WithPackageManagerWithoutWait builds a package manager that doesn't wait for active bundles.
+func (f *Factory) WithPackageManagerWithoutWait(spec *cluster.Spec, packagesLocation, kubeConfig string) *Factory {
 	f.WithPackageControllerClient(spec, kubeConfig, curatedpackages.WithSkipWait()).
-		WithPackageInstaller(spec, packagesLocation, kubeConfig)
+		WithPackageManager(spec, packagesLocation, kubeConfig)
 	return f
 }
 

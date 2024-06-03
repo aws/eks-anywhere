@@ -433,7 +433,7 @@ func TestFactoryBuildWithPackageInstaller(t *testing.T) {
 		WithLocalExecutables().
 		WithHelm(helm.WithInsecure()).
 		WithKubectl().
-		WithPackageInstaller(spec, "/test/packages.yaml", "kubeconfig.kubeconfig").
+		WithPackageManager(spec, "/test/packages.yaml", "kubeconfig.kubeconfig").
 		Build(context.Background())
 	tt.Expect(err).To(BeNil())
 	tt.Expect(deps.PackageManager).NotTo(BeNil())
@@ -469,7 +469,7 @@ func TestFactoryBuildWithPackageInstallerWithoutWait(t *testing.T) {
 		WithLocalExecutables().
 		WithHelm(helm.WithInsecure()).
 		WithKubectl().
-		WithPackageInstallerWithoutWait(spec, "/test/packages.yaml", "kubeconfig.kubeconfig").
+		WithPackageManagerWithoutWait(spec, "/test/packages.yaml", "kubeconfig.kubeconfig").
 		Build(context.Background())
 	tt.Expect(err).To(BeNil())
 	tt.Expect(deps.PackageManager).NotTo(BeNil())
