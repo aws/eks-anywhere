@@ -279,7 +279,7 @@ cat /var/lib/kubeadm/admin.conf > /run/host-containerd/io.containerd.runtime.v2.
 ssh <ADMIN_MACHINE_IP>
 
 export CONTROLPLANE_IP="<CONTROLPLANE_IP_ADDR>"
-sftp -i <keypair> <USERNAME>@${CONTROLPLANE_IP}:/tmp/new-admin.kubeconfig .
+sftp -i <keypair> <USER_NAME>@${CONTROLPLANE_IP}:/tmp/new-admin.kubeconfig . # USER_NAME should be ec2-user for bottlerocket, ubuntu for Ubuntu ControlPlane machine 
 
 ls -ltr 
 export KUBECONFIG="new-admin.kubeconfig"
