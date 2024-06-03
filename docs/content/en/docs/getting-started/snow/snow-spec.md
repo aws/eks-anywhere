@@ -146,38 +146,38 @@ the existing nodes.
 This takes in a list of node groups that you can define for your workers.
 You may define one or more worker node groups.
 
-### workerNodeGroupConfigurations.count (required)
+### workerNodeGroupConfigurations[*].count (required)
 Number of worker nodes. Optional if autoscalingConfiguration is used, in which case count will default to `autoscalingConfiguration.minCount`.
 
 Refers to [troubleshooting machine health check remediation not allowed]({{< relref "../../troubleshooting/troubleshooting/#machine-health-check-shows-remediation-is-not-allowed" >}}) and choose a sufficient number to allow machine health check remediation.
 
-### workerNodeGroupConfigurations.machineGroupRef (required)
+### workerNodeGroupConfigurations[*].machineGroupRef (required)
 Refers to the Kubernetes object with Snow specific configuration for your nodes. See `SnowMachineConfig Fields` below.
 
-### workerNodeGroupConfigurations.name (required)
+### workerNodeGroupConfigurations[*].name (required)
 Name of the worker node group (default: md-0)
 
-### workerNodeGroupConfigurations.autoscalingConfiguration.minCount (optional)
+### workerNodeGroupConfigurations[*].autoscalingConfiguration.minCount (optional)
 Minimum number of nodes for this node group's autoscaling configuration.
 
-### workerNodeGroupConfigurations.autoscalingConfiguration.maxCount (optional)
+### workerNodeGroupConfigurations[*].autoscalingConfiguration.maxCount (optional)
 Maximum number of nodes for this node group's autoscaling configuration.
 
-### workerNodeGroupConfigurations.taints (optional)
+### workerNodeGroupConfigurations[*].taints (optional)
 A list of taints to apply to the nodes in the worker node group.
 
 Modifying the taints associated with a worker node group configuration will cause new nodes to be rolled-out, replacing the existing nodes associated with the configuration.
 
 At least one node group must not have `NoSchedule` or `NoExecute` taints applied to it.
 
-### workerNodeGroupConfigurations.labels (optional)
+### workerNodeGroupConfigurations[*].labels (optional)
 A list of labels to apply to the nodes in the worker node group. This is in addition to the labels that
 EKS Anywhere will add by default.
 
 Modifying the labels associated with a worker node group configuration will cause new nodes to be rolled out, replacing
 the existing nodes associated with the configuration.
 
-### workerNodeGroupConfigurations.kubernetesVersion (optional)
+### workerNodeGroupConfigurations[*].kubernetesVersion (optional)
 The Kubernetes version you want to use for this worker node group. Supported values: 1.28, 1.27, 1.26, 1.25, 1.24
 
 ### externalEtcdConfiguration.count (optional)
