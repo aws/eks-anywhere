@@ -15,7 +15,7 @@ const TinkerbellMachineConfigKind = "TinkerbellMachineConfig"
 type TinkerbellMachineConfigGenerateOpt func(config *TinkerbellMachineConfigGenerate)
 
 // Used for generating yaml for generate clusterconfig command.
-func NewTinkerbellMachineConfigGenerate(name string, opts ...TinkerbellMachineConfigGenerateOpt) *TinkerbellMachineConfigGenerate {
+func NewTinkerbellMachineConfigGenerate(clusterName, name, mtype, sshAuthorizedKey string, osFamily OSFamily, opts ...TinkerbellMachineConfigGenerateOpt) *TinkerbellMachineConfigGenerate {
 	machineConfig := &TinkerbellMachineConfigGenerate{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       TinkerbellMachineConfigKind,
@@ -25,12 +25,13 @@ func NewTinkerbellMachineConfigGenerate(name string, opts ...TinkerbellMachineCo
 			Name: name,
 		},
 		Spec: TinkerbellMachineConfigSpec{
-			HardwareSelector: HardwareSelector{},
-			OSFamily:         Ubuntu,
+			HardwareSelector: HardwareSelector{"type": mtype},
+			OSFamily:         GetOrDefaultOSFamily(osFamily, Bottlerocket),
+			TemplateRef:      Ref{Kind: "TinkerbellTemplateConfig", Name: clusterName},
 			Users: []UserConfiguration{
 				{
 					Name:              "ec2-user",
-					SshAuthorizedKeys: []string{"ssh-rsa AAAA..."},
+					SshAuthorizedKeys: []string{GetOrDefaultString(sshAuthorizedKey, "ssh-rsa AAAA...")},
 				},
 			},
 		},

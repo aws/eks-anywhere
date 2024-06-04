@@ -4008,7 +4008,7 @@ func TestClusterWorkerNodeConfigCount(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cg := NewClusterGenerate("test-cluster", WorkerNodeConfigCount(5))
+			cg := NewClusterGenerate("test-cluster", "test-cluster", "", []string{}, []string{}, WorkerNodeConfigCount(5))
 			g := NewWithT(t)
 			g.Expect(cg.Spec.WorkerNodeGroupConfigurations).To(Equal(tt.want))
 		})
@@ -4038,7 +4038,7 @@ func TestClusterCPUpgradeRolloutStrategyNil(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cg := NewClusterGenerate("test-cluster", ControlPlaneConfigCount(1))
+			cg := NewClusterGenerate("test-cluster", "test-cluster", "", []string{}, []string{}, ControlPlaneConfigCount(1))
 			g := NewWithT(t)
 			g.Expect(cg.Spec.ControlPlaneConfiguration).To(Equal(tt.want))
 		})
@@ -4068,7 +4068,7 @@ func TestClusterCPUpgradeRolloutStrategyNotNil(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cg := NewClusterGenerate("test-cluster", ControlPlaneConfigCount(1), WithCPUpgradeRolloutStrategy(5, 2))
+			cg := NewClusterGenerate("test-cluster", "test-cluster", "", []string{}, []string{}, ControlPlaneConfigCount(1), WithCPUpgradeRolloutStrategy(5, 2))
 			g := NewWithT(t)
 			g.Expect(cg.Spec.ControlPlaneConfiguration).To(Equal(tt.want))
 		})
@@ -4098,7 +4098,7 @@ func TestClusterMDUpgradeRolloutStrategyNil(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cg := NewClusterGenerate("test-cluster", WorkerNodeConfigCount(1))
+			cg := NewClusterGenerate("test-cluster", "test-cluster", "", []string{}, []string{}, WorkerNodeConfigCount(1))
 			g := NewWithT(t)
 			g.Expect(cg.Spec.WorkerNodeGroupConfigurations).To(Equal(tt.want))
 		})
@@ -4129,7 +4129,7 @@ func TestClusterMDUpgradeRolloutStrategyNotNil(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cg := NewClusterGenerate("test-cluster", WorkerNodeConfigCount(1), WithWorkerMachineUpgradeRolloutStrategy(5, 2))
+			cg := NewClusterGenerate("test-cluster", "test-cluster", "", []string{}, []string{}, WorkerNodeConfigCount(1), WithWorkerMachineUpgradeRolloutStrategy(5, 2))
 			g := NewWithT(t)
 			g.Expect(cg.Spec.WorkerNodeGroupConfigurations).To(Equal(tt.want))
 		})
@@ -4139,7 +4139,7 @@ func TestClusterMDUpgradeRolloutStrategyNotNil(t *testing.T) {
 func TestClusterCPUpgradeInPlace(t *testing.T) {
 	g := NewWithT(t)
 
-	cluster := NewClusterGenerate("test-cluster", WorkerNodeConfigCount(1))
+	cluster := NewClusterGenerate("test-cluster", "test-cluster", "", []string{}, []string{}, WorkerNodeConfigCount(1))
 	cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy = &ControlPlaneUpgradeRolloutStrategy{Type: InPlaceStrategyType}
 	cluster.Spec.WorkerNodeGroupConfigurations[0].UpgradeRolloutStrategy = &WorkerNodesUpgradeRolloutStrategy{Type: InPlaceStrategyType}
 
