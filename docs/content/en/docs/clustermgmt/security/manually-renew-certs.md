@@ -256,7 +256,7 @@ export CLUSTER_NAME="<YOUR_CLUSTER_NAME_HERE>"
 cat /var/lib/kubeadm/admin.conf
 export KUBECONFIG="/var/lib/kubeadm/admin.conf"
 
-kubectl get secret ${CLUSTER_NAME}-kubeconfig -n eksa-system -o yaml > /tmp/new-admin-decoded.kubeconfig
+kubectl get secret ${CLUSTER_NAME}-kubeconfig -n eksa-system -o yaml -o=jsonpath="{.data.value}" | base64 --decode > /tmp/user-admin.kubeconfig
 
 {{< /tab >}}
 
@@ -268,7 +268,17 @@ sudo sheltie
 
 cat /var/lib/kubeadm/admin.conf
 
-cat /var/lib/kubeadm/admin.conf > /run/host-containerd/io.containerd.runtime.v2.task/default/admin/rootfs/tmp/new-admin.kubeconfig
+cat /var/lib/kubeadm/admin.conf > /run/host-containerd/io.containerd.runtime.v2.task/default/admin/rootfs/tmp/kubernetes-admin.kubeconfig
+exit # exit from the sudo sheltie container
+
+export CLUSTER_NAME="<YOUR_CLUSTER_NAME_HERE>"
+export KUBECONFIG="/tmp/kubernetes-admin.kubeconfig"
+kubectl get secret ${CLUSTER_NAME}-kubeconfig -n eksa-system -o yaml -o=jsonpath="{.data.value}" | base64 --decode > /tmp/user-admin.kubeconfig
+exit # exit from the Control Plane Machine
+
+{{< /tab >}}
+{{< /tabpane >}}
+Note: Install kubectl on the Control Plane Machine using the instructions [here](https://anywhere.eks.amazonaws.com/docs/getting-started/install/#manually-macos-and-linux)
 
 {{< /tab >}}
 {{< /tabpane >}}
@@ -279,9 +289,9 @@ cat /var/lib/kubeadm/admin.conf > /run/host-containerd/io.containerd.runtime.v2.
 ssh <ADMIN_MACHINE_IP>
 
 export CONTROLPLANE_IP="<CONTROLPLANE_IP_ADDR>"
-sftp -i <keypair> <USER_NAME>@${CONTROLPLANE_IP}:/tmp/new-admin.kubeconfig . # USER_NAME should be ec2-user for bottlerocket, ubuntu for Ubuntu ControlPlane machine 
+sftp -i <keypair> <USER_NAME>@${CONTROLPLANE_IP}:/tmp/user-admin.kubeconfig . # USER_NAME should be ec2-user for bottlerocket, ubuntu for Ubuntu ControlPlane machine 
 
 ls -ltr 
-export KUBECONFIG="new-admin.kubeconfig"
+export KUBECONFIG="user-admin.kubeconfig"
 
 kubectl get pods
