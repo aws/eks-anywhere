@@ -111,6 +111,10 @@ spec:
 {{- end }}
         - hostnamectl set-hostname "{{`{{ ds.meta_data.hostname }}`}}"
       joinConfiguration:
+{{- if .kubeletConfiguration }}
+        patches: 
+          directory: /etc/kubernetes/patches
+{{- end }}
         nodeRegistration:
           kubeletExtraArgs:
             cloud-provider: external
@@ -139,8 +143,15 @@ spec:
           sudo: ALL=(ALL) NOPASSWD:ALL
           sshAuthorizedKeys:
             - "{{.workerSshAuthorizedKey}}"
-{{- if or .proxyConfig .registryMirrorMap }}
+{{- if or (or .proxyConfig .registryMirrorMap) .kubeletConfiguration }}
       files:
+{{- end }}
+{{- if .kubeletConfiguration }}
+      - content: |
+{{ .kubeletConfiguration | indent 10 }}
+        owner: root:root
+        permissions: "0644"
+        path: /etc/kubernetes/patches/kubeletconfiguration0+strategic.yaml
 {{- end }}
 {{- if .proxyConfig }}
       - content: |

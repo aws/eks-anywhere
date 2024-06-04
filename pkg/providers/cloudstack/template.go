@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"net"
 
+	"sigs.k8s.io/yaml"
+
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
@@ -257,6 +259,17 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec) (map[string]interface{}, erro
 		values["encryptionProviderConfig"] = conf
 	}
 
+	if clusterSpec.Cluster.Spec.ControlPlaneConfiguration.KubeletConfiguration != nil {
+		cpKubeletConfig := clusterSpec.Cluster.Spec.ControlPlaneConfiguration.KubeletConfiguration.Object
+
+		kcString, err := yaml.Marshal(cpKubeletConfig)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling %v", err)
+		}
+
+		values["kubeletConfiguration"] = string(kcString)
+	}
+
 	return values, nil
 }
 
@@ -387,6 +400,16 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupConfiguration 
 			return nil, err
 		}
 		fillProxyConfigurations(values, clusterSpec, endpoint)
+	}
+
+	if workerNodeGroupConfiguration.KubeletConfiguration != nil {
+		wnKubeletConfig := workerNodeGroupConfiguration.KubeletConfiguration.Object
+		kcString, err := yaml.Marshal(wnKubeletConfig)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling %v", err)
+		}
+
+		values["kubeletConfiguration"] = string(kcString)
 	}
 
 	return values, nil
