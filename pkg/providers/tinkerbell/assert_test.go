@@ -143,6 +143,18 @@ func TestAssertMachineConfigK8sVersionBRWorker_Error(t *testing.T) {
 	g.Expect(err).ToNot(gomega.Succeed())
 }
 
+func TestAssertMachineConfigK8sVersionBRModularWorker_Error(t *testing.T) {
+	g := gomega.NewWithT(t)
+	builder := NewDefaultValidClusterSpecBuilder()
+	clusterSpec := builder.Build()
+	kube129 := eksav1alpha1.Kube129
+	clusterSpec.Spec.Cluster.Spec.ExternalEtcdConfiguration = nil
+	clusterSpec.Spec.Cluster.Spec.WorkerNodeGroupConfigurations[0].KubernetesVersion = &kube129
+	clusterSpec.MachineConfigs[builder.WorkerNodeGroupMachineName].Spec.OSFamily = "bottlerocket"
+	err := tinkerbell.AssertOsFamilyValid(clusterSpec)
+	g.Expect(err).ToNot(gomega.Succeed())
+}
+
 func TestAssertMachineConfigK8sVersionBR_Success(t *testing.T) {
 	g := gomega.NewWithT(t)
 	builder := NewDefaultValidClusterSpecBuilder()

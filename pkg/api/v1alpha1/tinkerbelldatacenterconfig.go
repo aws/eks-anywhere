@@ -22,7 +22,9 @@ func NewTinkerbellDatacenterConfigGenerate(clusterName string) *TinkerbellDatace
 		ObjectMeta: ObjectMeta{
 			Name: clusterName,
 		},
-		Spec: TinkerbellDatacenterConfigSpec{},
+		Spec: TinkerbellDatacenterConfigSpec{
+			TinkerbellIP: "",
+		},
 	}
 }
 
