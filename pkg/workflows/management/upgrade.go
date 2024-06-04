@@ -24,6 +24,7 @@ type Upgrade struct {
 	eksdUpgrader      interfaces.EksdUpgrader
 	upgradeChangeDiff *types.ChangeDiff
 	clusterUpgrader   interfaces.ClusterUpgrader
+	packageManager    interfaces.PackageManager
 }
 
 // NewUpgrade builds a new upgrade construct.
@@ -35,6 +36,7 @@ func NewUpgrade(clientFactory interfaces.ClientFactory, provider providers.Provi
 	eksdUpgrader interfaces.EksdUpgrader,
 	eksdInstaller interfaces.EksdInstaller,
 	clusterUpgrade interfaces.ClusterUpgrader,
+	packageManager interfaces.PackageManager,
 ) *Upgrade {
 	upgradeChangeDiff := types.NewChangeDiff()
 	return &Upgrade{
@@ -48,6 +50,7 @@ func NewUpgrade(clientFactory interfaces.ClientFactory, provider providers.Provi
 		eksdInstaller:     eksdInstaller,
 		upgradeChangeDiff: upgradeChangeDiff,
 		clusterUpgrader:   clusterUpgrade,
+		packageManager:    packageManager,
 	}
 }
 
@@ -67,6 +70,7 @@ func (c *Upgrade) Run(ctx context.Context, clusterSpec *cluster.Spec, management
 		EksdUpgrader:      c.eksdUpgrader,
 		UpgradeChangeDiff: c.upgradeChangeDiff,
 		ClusterUpgrader:   c.clusterUpgrader,
+		PackageManager:    c.packageManager,
 	}
 	if features.IsActive(features.CheckpointEnabled()) {
 		return task.NewTaskRunner(&setupAndValidateUpgrade{}, c.writer, task.WithCheckpointFile()).RunTask(ctx, commandContext)

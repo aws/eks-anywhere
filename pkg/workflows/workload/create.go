@@ -19,7 +19,7 @@ type Create struct {
 	writer           filewriter.FileWriter
 	eksdInstaller    interfaces.EksdInstaller
 	clusterCreator   interfaces.ClusterCreator
-	packageInstaller interfaces.PackageInstaller
+	packageInstaller interfaces.PackageManager
 }
 
 // NewCreate builds a new create construct.
@@ -27,7 +27,7 @@ func NewCreate(provider providers.Provider,
 	clusterManager interfaces.ClusterManager, gitOpsManager interfaces.GitOpsManager,
 	writer filewriter.FileWriter,
 	eksdInstaller interfaces.EksdInstaller,
-	packageInstaller interfaces.PackageInstaller,
+	packageInstaller interfaces.PackageManager,
 	clusterCreator interfaces.ClusterCreator,
 	clientFactory interfaces.ClientFactory,
 ) *Create {

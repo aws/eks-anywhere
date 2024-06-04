@@ -9,7 +9,7 @@ import (
 type installCuratedPackagesTask struct{}
 
 func (s *installCuratedPackagesTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
-	commandContext.PackageInstaller.InstallCuratedPackages(ctx)
+	commandContext.PackageManager.InstallCuratedPackages(ctx)
 	return nil
 }
 

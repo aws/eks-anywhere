@@ -35,7 +35,7 @@ type createTestSetup struct {
 	writer               *writermocks.MockFileWriter
 	validator            *mocks.MockValidator
 	eksd                 *mocks.MockEksdInstaller
-	packageInstaller     *mocks.MockPackageInstaller
+	packageInstaller     *mocks.MockPackageManager
 	clusterCreator       *mocks.MockClusterCreator
 	datacenterConfig     providers.DatacenterConfig
 	machineConfigs       []providers.MachineConfig
@@ -56,7 +56,7 @@ func newCreateTest(t *testing.T) *createTestSetup {
 	provider := providermocks.NewMockProvider(mockCtrl)
 	writer := writermocks.NewMockFileWriter(mockCtrl)
 	eksd := mocks.NewMockEksdInstaller(mockCtrl)
-	packageInstaller := mocks.NewMockPackageInstaller(mockCtrl)
+	packageInstaller := mocks.NewMockPackageManager(mockCtrl)
 	eksdInstaller := mocks.NewMockEksdInstaller(mockCtrl)
 
 	datacenterConfig := &v1alpha1.VSphereDatacenterConfig{}

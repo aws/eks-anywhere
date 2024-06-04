@@ -10,12 +10,14 @@ import (
 
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
+	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/features"
 	writermocks "github.com/aws/eks-anywhere/pkg/filewriter/mocks"
 	"github.com/aws/eks-anywhere/pkg/providers"
@@ -48,6 +50,7 @@ type upgradeManagementTestSetup struct {
 	managementCluster           *types.Cluster
 	managementStatePath         string
 	management                  *management.Upgrade
+	packages                    *mocks.MockPackageManager
 }
 
 func newUpgradeManagementTest(t *testing.T) *upgradeManagementTestSetup {
@@ -65,6 +68,7 @@ func newUpgradeManagementTest(t *testing.T) *upgradeManagementTestSetup {
 	capiUpgrader := mocks.NewMockCAPIManager(mockCtrl)
 	machineConfigs := []providers.MachineConfig{&v1alpha1.VSphereMachineConfig{}}
 	clusterUpgrader := mocks.NewMockClusterUpgrader(mockCtrl)
+	packageUpgrader := mocks.NewMockPackageManager(mockCtrl)
 	management := management.NewUpgrade(
 		clientFactory,
 		provider,
@@ -75,6 +79,7 @@ func newUpgradeManagementTest(t *testing.T) *upgradeManagementTestSetup {
 		eksdUpgrader,
 		eksdInstaller,
 		clusterUpgrader,
+		packageUpgrader,
 	)
 
 	for _, e := range featureEnvVars {
@@ -111,6 +116,7 @@ func newUpgradeManagementTest(t *testing.T) *upgradeManagementTestSetup {
 		datacenterConfig:            datacenterConfig,
 		machineConfigs:              machineConfigs,
 		management:                  management,
+		packages:                    packageUpgrader,
 		ctx:                         context.Background(),
 		currentManagementComponents: cluster.ManagementComponentsFromBundles(currentClusterSpec.Bundles),
 		newManagementComponents:     cluster.ManagementComponentsFromBundles(newClusterSpec.Bundles),
@@ -306,6 +312,10 @@ func (c *upgradeManagementTestSetup) run() error {
 
 func (c *upgradeManagementTestSetup) expectPreflightValidationsToPass() {
 	c.validator.EXPECT().PreflightValidations(c.ctx).Return(nil)
+}
+
+func (c *upgradeManagementTestSetup) expectPackagesUpgrade() {
+	c.packages.EXPECT().UpgradeCuratedPackages(c.ctx)
 }
 
 func TestUpgradeManagementRunUpdateSetupFailed(t *testing.T) {
@@ -727,6 +737,45 @@ func TestUpgradeManagementRunResumeClusterResourcesReconcileFailed(t *testing.T)
 	err := test.run()
 	if err == nil {
 		t.Fatal("UpgradeManagement.Run() err = nil, want err not nil")
+	}
+}
+
+func TestUpgradeManagementRunUpgradeCuratedPackagesSuccess(t *testing.T) {
+	os.Unsetenv(features.CheckpointEnabledEnvVar)
+	features.ClearCache()
+	tt := newUpgradeManagementClusterTest(t)
+	tt.newClusterSpec.Cluster.Spec.RegistryMirrorConfiguration = &v1alpha1.RegistryMirrorConfiguration{}
+	packagesManager := &appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "eks-anywhere-packages",
+			Namespace: constants.EksaPackagesName,
+		},
+	}
+	tt.client = test.NewFakeKubeClient(tt.currentClusterSpec.Cluster, tt.currentClusterSpec.EKSARelease, tt.currentClusterSpec.Bundles, packagesManager)
+	tt.expectSetup()
+	tt.expectPreflightValidationsToPass()
+	tt.expectUpdateSecrets(nil)
+	tt.expectEnsureManagementEtcdCAPIComponentsExist(nil)
+	tt.expectUpgradeCoreComponents()
+	tt.expectPauseGitOpsReconcile(nil)
+	tt.expectBackupManagementFromCluster(nil)
+	tt.expectPauseCAPIWorkloadClusters(nil)
+	tt.expectDatacenterConfig()
+	tt.expectMachineConfigs()
+	tt.expectInstallEksdManifest(nil)
+	tt.expectApplyBundles(nil)
+	tt.expectApplyReleases(nil)
+	tt.expectUpgradeManagementCluster()
+	tt.expectResumeCAPIWorkloadClustersAPI(nil)
+	tt.expectUpdateGitEksaSpec(nil)
+	tt.expectForceReconcileGitRepo(nil)
+	tt.expectResumeGitOpsReconcile(nil)
+	tt.expectWriteManagementClusterConfig(nil)
+	tt.expectPackagesUpgrade()
+
+	err := tt.run()
+	if err != nil {
+		t.Fatalf("UpgradeManagement.Run() err = %v, want err = nil", err)
 	}
 }
 
