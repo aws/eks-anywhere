@@ -185,19 +185,19 @@ func (in *NutanixDatacenterConfig) Validate() error {
 	return nil
 }
 
-func createValidateNutanixResourceFunc(msgPrefix, entityName, mfstName string) (func (*NutanixResourceIdentifier) error) {
-	return func (ntnxRId *NutanixResourceIdentifier) error {
+func createValidateNutanixResourceFunc(msgPrefix, entityName, mfstName string) func(*NutanixResourceIdentifier) error {
+	return func(ntnxRId *NutanixResourceIdentifier) error {
 		if ntnxRId.Type != NutanixIdentifierName && ntnxRId.Type != NutanixIdentifierUUID {
 			return fmt.Errorf("%s: invalid identifier type for %s: %s", msgPrefix, entityName, ntnxRId.Type)
 		}
-	
+
 		if ntnxRId.Type == NutanixIdentifierName && (ntnxRId.Name == nil || *ntnxRId.Name == "") {
 			return fmt.Errorf("%s: missing %s name: %s", msgPrefix, entityName, mfstName)
 		} else if ntnxRId.Type == NutanixIdentifierUUID && (ntnxRId.UUID == nil || *ntnxRId.UUID == "") {
 			return fmt.Errorf("%s: missing %s UUID: %s", msgPrefix, entityName, mfstName)
 		}
-	
-		return nil	
+
+		return nil
 	}
 }
 

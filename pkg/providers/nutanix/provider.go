@@ -226,7 +226,17 @@ func (p *Provider) SetupAndValidateDeleteCluster(ctx context.Context, cluster *t
 }
 
 // SetupAndValidateUpgradeCluster - Performs necessary setup and validations for upgrade cluster operation.
-func (p *Provider) SetupAndValidateUpgradeCluster(ctx context.Context, _ *types.Cluster, clusterSpec *cluster.Spec, _ *cluster.Spec) error {
+func (p *Provider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, _ *cluster.Spec) error {
+	// Get current Nutanix Datacenter Config
+	curDc, err := p.kubectlClient.GetEksaNutanixDatacenterConfig(ctx, p.datacenterConfig.Name, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace)
+	if err != nil {
+		return fmt.Errorf("failed setup and validations: %v", err)
+	}
+
+	if len(curDc.Spec.FailureDomains) != len(p.datacenterConfig.Spec.FailureDomains) {
+		return fmt.Errorf("failed setup and validations: failure domains upgrade doesn't supported in current release")
+	}
+
 	if err := p.SetupAndValidateUpgradeManagementComponents(ctx, clusterSpec); err != nil {
 		return err
 	}
@@ -419,7 +429,6 @@ func needsNewEtcdTemplate(oldSpec, newSpec *cluster.Spec, oldNmc, newNmc *v1alph
 	if oldSpec.Bundles.Spec.Number != newSpec.Bundles.Spec.Number {
 		return true
 	}
-
 	return AnyImmutableFieldChanged(oldNmc, newNmc)
 }
 

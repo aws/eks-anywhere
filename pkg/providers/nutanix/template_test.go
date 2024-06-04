@@ -699,6 +699,9 @@ func TestTemplateBuilderFailureDomains(t *testing.T) {
 		clusterSpec := test.NewFullClusterSpec(t, tc.Input)
 
 		machineCfg := clusterSpec.NutanixMachineConfig(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name)
+
+		t.Setenv(constants.EksaNutanixUsernameKey, "admin")
+		t.Setenv(constants.EksaNutanixPasswordKey, "password")
 		creds := GetCredsFromEnv()
 
 		bldr := NewNutanixTemplateBuilder(&clusterSpec.NutanixDatacenter.Spec, &machineCfg.Spec, nil,
