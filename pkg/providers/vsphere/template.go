@@ -3,6 +3,8 @@ package vsphere
 import (
 	"fmt"
 
+	"sigs.k8s.io/yaml"
+
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
@@ -354,6 +356,17 @@ func buildTemplateMapCP(
 		values["encryptionProviderConfig"] = conf
 	}
 
+	if clusterSpec.Cluster.Spec.ControlPlaneConfiguration.KubeletConfiguration != nil {
+		cpKubeletConfig := clusterSpec.Cluster.Spec.ControlPlaneConfiguration.KubeletConfiguration.Object
+
+		kcString, err := yaml.Marshal(cpKubeletConfig)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling %v", err)
+		}
+
+		values["kubeletConfiguration"] = string(kcString)
+	}
+
 	if clusterSpec.Cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy != nil {
 		values["upgradeRolloutStrategy"] = true
 		if clusterSpec.Cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy.Type == anywherev1.InPlaceStrategyType {
@@ -486,6 +499,16 @@ func buildTemplateMapMD(
 			return nil, err
 		}
 		values["bottlerocketSettings"] = brSettings
+	}
+
+	if workerNodeGroupConfiguration.KubeletConfiguration != nil {
+		wnKubeletConfig := workerNodeGroupConfiguration.KubeletConfiguration.Object
+		kcString, err := yaml.Marshal(wnKubeletConfig)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling %v", err)
+		}
+
+		values["kubeletConfiguration"] = string(kcString)
 	}
 
 	return values, nil

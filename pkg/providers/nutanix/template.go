@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"sigs.k8s.io/yaml"
+
 	"github.com/nutanix-cloud-native/prism-go-client/environment/credentials"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -313,6 +315,17 @@ func buildTemplateMapCP(
 		values["encryptionProviderConfig"] = conf
 	}
 
+	if clusterSpec.Cluster.Spec.ControlPlaneConfiguration.KubeletConfiguration != nil {
+		cpKubeletConfig := clusterSpec.Cluster.Spec.ControlPlaneConfiguration.KubeletConfiguration.Object
+
+		kcString, err := yaml.Marshal(cpKubeletConfig)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling %v", err)
+		}
+
+		values["kubeletConfiguration"] = string(kcString)
+	}
+
 	return values, nil
 }
 
@@ -389,6 +402,15 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupMachineSpec v1
 		values["additionalCategories"] = workerNodeGroupMachineSpec.AdditionalCategories
 	}
 
+	if workerNodeGroupConfiguration.KubeletConfiguration != nil {
+		wnKubeletConfig := workerNodeGroupConfiguration.KubeletConfiguration.Object
+		kcString, err := yaml.Marshal(wnKubeletConfig)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling %v", err)
+		}
+
+		values["kubeletConfiguration"] = string(kcString)
+	}
 	return values, nil
 }
 

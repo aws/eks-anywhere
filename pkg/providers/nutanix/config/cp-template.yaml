@@ -147,6 +147,13 @@ spec:
           imageTag: {{.etcdImageTag}}
 {{- end }}
     files:
+{{- if .kubeletConfiguration }}
+    - content: |
+{{ .kubeletConfiguration | indent 8 }}
+      owner: root:root
+      permissions: "0644"
+      path: /etc/kubernetes/patches/kubeletconfiguration0+strategic.yaml
+{{- end }}
 {{- if .encryptionProviderConfig }}
     - content: |
 {{ .encryptionProviderConfig | indent 8}}
@@ -294,6 +301,10 @@ spec:
       owner: root:root
       path: /etc/kubernetes/audit-policy.yaml
     initConfiguration:
+{{- if .kubeletConfiguration }}
+      patches: 
+        directory: /etc/kubernetes/patches
+{{- end }}
       nodeRegistration:
         kubeletExtraArgs:
           cloud-provider: external
@@ -316,6 +327,10 @@ spec:
 {{- end }}
 {{- end }}
     joinConfiguration:
+{{- if .kubeletConfiguration }}
+      patches: 
+        directory: /etc/kubernetes/patches
+{{- end }}
       nodeRegistration:
         criSocket: /var/run/containerd/containerd.sock
         kubeletExtraArgs:

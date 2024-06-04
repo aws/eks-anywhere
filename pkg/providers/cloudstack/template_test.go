@@ -6,6 +6,7 @@ import (
 	"time"
 
 	. "github.com/onsi/gomega"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -168,4 +169,33 @@ func TestTemplateBuilder_CertSANs(t *testing.T) {
 
 		test.AssertContentToFile(t, string(data), tc.Output)
 	}
+}
+
+func TestVsphereTemplateBuilderGenerateCAPISpecControlPlaneValidKubeletConfigWN(t *testing.T) {
+	g := NewWithT(t)
+	spec := test.NewFullClusterSpec(t, path.Join(testDataDir, testClusterConfigMainFilename))
+	spec.Cluster.Spec.WorkerNodeGroupConfigurations[0].KubeletConfiguration = &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"maxPods": 20,
+		},
+	}
+	builder := cloudstack.NewTemplateBuilder(time.Now)
+	_, err := builder.GenerateCAPISpecWorkers(spec, nil, nil)
+	g.Expect(err).ToNot(HaveOccurred())
+}
+
+func TestVsphereTemplateBuilderGenerateCAPISpecControlPlaneValidKubeletConfigCP(t *testing.T) {
+	g := NewWithT(t)
+	spec := test.NewFullClusterSpec(t, path.Join(testDataDir, testClusterConfigMainFilename))
+	spec.Cluster.Spec.ControlPlaneConfiguration.KubeletConfiguration = &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"maxPods": 20,
+		},
+	}
+	spec.Cluster.Spec.ExternalEtcdConfiguration = nil
+	builder := cloudstack.NewTemplateBuilder(time.Now)
+	_, err := builder.GenerateCAPISpecControlPlane(spec, func(values map[string]interface{}) {
+		values["controlPlaneTemplateName"] = clusterapi.ControlPlaneMachineTemplateName(spec.Cluster)
+	})
+	g.Expect(err).ToNot(HaveOccurred())
 }
