@@ -13,8 +13,7 @@ spec:
     {{- if (eq $value.Cluster.Type "uuid") }}
       type: "uuid"
       uuid: "{{ $value.Cluster.UUID }}"
-    {{- end}}
-    {{- if (eq $value.Cluster.Type "name") }}
+    {{- else if (eq $value.Cluster.Type "name") }}
       type: "name"
       name: "{{ $value.Cluster.Name }}"
     {{- end}}
@@ -23,8 +22,7 @@ spec:
       {{- if (eq .Type "uuid") }}
     - type: "uuid"
       uuid: "{{ .UUID }}"
-      {{- end}}
-      {{- if (eq .Type "name") }}
+      {{- else if (eq .Type "name") }}
     - type: "name"
       name: "{{ .Name }}"
       {{- end}}
