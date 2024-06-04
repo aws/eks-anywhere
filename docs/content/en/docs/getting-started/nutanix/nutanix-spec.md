@@ -172,24 +172,24 @@ creation process are [here]({{< relref "./nutanix-prereq/#prepare-a-nutanix-envi
 ### workerNodeGroupConfigurations (required)
 This takes in a list of node groups that you can define for your workers. You may define one or more worker node groups.
 
-### workerNodeGroupConfigurations.count (required)
+### workerNodeGroupConfigurations[*].count (required)
 Number of worker nodes. Optional if `autoscalingConfiguration` is used, in which case count will default to `autoscalingConfiguration.minCount`.
 
 Refers to [troubleshooting machine health check remediation not allowed]({{< relref "../../troubleshooting/troubleshooting/#machine-health-check-shows-remediation-is-not-allowed" >}}) and choose a sufficient number to allow machine health check remediation.
 
-### workerNodeGroupConfigurations.machineGroupRef (required)
+### workerNodeGroupConfigurations[*].machineGroupRef (required)
 Refers to the Kubernetes object with Nutanix specific configuration for your nodes. See `NutanixMachineConfig` fields below.
 
-### workerNodeGroupConfigurations.name (required)
+### workerNodeGroupConfigurations[*].name (required)
 Name of the worker node group (default: `md-0`)
 
-### workerNodeGroupConfigurations.autoscalingConfiguration.minCount (optional)
-Minimum number of nodes for this node group’s autoscaling configuration.
+### workerNodeGroupConfigurations[*].autoscalingConfiguration.minCount (optional)
+Minimum number of nodes for this node group's autoscaling configuration.
 
-### workerNodeGroupConfigurations.autoscalingConfiguration.maxCount (optional)
-Maximum number of nodes for this node group’s autoscaling configuration.
+### workerNodeGroupConfigurations[*].autoscalingConfiguration.maxCount (optional)
+Maximum number of nodes for this node group's autoscaling configuration.
 
-### workerNodeGroupConfigurations.kubernetesVersion (optional)
+### workerNodeGroupConfigurations[*].kubernetesVersion (optional)
 The Kubernetes version you want to use for this worker node group. Supported values: 1.28, 1.27, 1.26, 1.25, 1.24
 
 ### datacenterRef (required)
