@@ -292,6 +292,6 @@ export CONTROLPLANE_IP="<CONTROLPLANE_IP_ADDR>"
 sftp -i <keypair> <USER_NAME>@${CONTROLPLANE_IP}:/tmp/user-admin.kubeconfig . # USER_NAME should be ec2-user for bottlerocket, ubuntu for Ubuntu ControlPlane machine 
 
 ls -ltr 
-export KUBECONFIG="new-admin.kubeconfig"
+export KUBECONFIG="user-admin.kubeconfig"
 
 kubectl get pods
