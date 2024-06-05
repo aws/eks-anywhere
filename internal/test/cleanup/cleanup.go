@@ -90,7 +90,7 @@ func CleanUpVsphereTestResources(ctx context.Context, clusterName string) error 
 }
 
 func VsphereRmVms(ctx context.Context, clusterName string, opts ...executables.GovcOpt) error {
-	logger.V(1).Info("Deleting vsphere vcenter vms")
+	logger.V(1).Info("Deleting vsphere vcenter vms", "clusterName", clusterName)
 	executableBuilder, close, err := executables.InitInDockerExecutablesBuilder(ctx, executables.DefaultEksaImage())
 	if err != nil {
 		return fmt.Errorf("unable to initialize executables: %v", err)

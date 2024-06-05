@@ -47,7 +47,7 @@ type E2ESession struct {
 	logger              logr.Logger
 }
 
-func newE2ESession(instanceId string, conf instanceRunConf) (*E2ESession, error) {
+func newE2ESession(instanceId string, conf *instanceRunConf) (*E2ESession, error) {
 	e := &E2ESession{
 		session:             conf.Session,
 		instanceId:          instanceId,

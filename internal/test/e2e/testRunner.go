@@ -35,9 +35,9 @@ const (
 )
 
 type TestRunner interface {
-	createInstance(instanceConf instanceRunConf) (string, error)
-	tagInstance(instanceConf instanceRunConf, key, value string) error
-	decommInstance(instanceRunConf) error
+	createInstance(instanceConf *instanceRunConf) (string, error)
+	tagInstance(instanceConf *instanceRunConf, key, value string) error
+	decommInstance(*instanceRunConf) error
 }
 
 type TestRunnerType string
@@ -132,7 +132,7 @@ func (v *VSphereTestRunner) setEnvironment() (map[string]string, error) {
 	return envMap, nil
 }
 
-func (v *VSphereTestRunner) createInstance(c instanceRunConf) (string, error) {
+func (v *VSphereTestRunner) createInstance(c *instanceRunConf) (string, error) {
 	name := getTestRunnerName(v.logger, c.JobID)
 
 	ssmActivationInfo, err := ssm.CreateActivation(c.Session, name, c.InstanceProfileName)
@@ -184,7 +184,7 @@ func (v *VSphereTestRunner) createInstance(c instanceRunConf) (string, error) {
 	return *ssmInstance.InstanceId, nil
 }
 
-func (e *Ec2TestRunner) createInstance(c instanceRunConf) (string, error) {
+func (e *Ec2TestRunner) createInstance(c *instanceRunConf) (string, error) {
 	name := getTestRunnerName(e.logger, c.JobID)
 	e.logger.V(1).Info("Creating ec2 Test Runner instance", "name", name)
 	instanceID, err := ec2.CreateInstance(c.Session, e.AmiID, key, tag, c.InstanceProfileName, e.SubnetID, name)
@@ -196,7 +196,7 @@ func (e *Ec2TestRunner) createInstance(c instanceRunConf) (string, error) {
 	return instanceID, nil
 }
 
-func (v *VSphereTestRunner) tagInstance(c instanceRunConf, key, value string) error {
+func (v *VSphereTestRunner) tagInstance(c *instanceRunConf, key, value string) error {
 	vmName := getTestRunnerName(v.logger, c.JobID)
 	vmPath := fmt.Sprintf("/%s/vm/%s/%s", v.Datacenter, v.Folder, vmName)
 	tag := fmt.Sprintf("%s:%s", key, value)
@@ -207,7 +207,7 @@ func (v *VSphereTestRunner) tagInstance(c instanceRunConf, key, value string) er
 	return nil
 }
 
-func (e *Ec2TestRunner) tagInstance(c instanceRunConf, key, value string) error {
+func (e *Ec2TestRunner) tagInstance(c *instanceRunConf, key, value string) error {
 	err := ec2.TagInstance(c.Session, e.InstanceID, key, value)
 	if err != nil {
 		return fmt.Errorf("failed to tag Ec2 test runner: %v", err)
@@ -215,7 +215,7 @@ func (e *Ec2TestRunner) tagInstance(c instanceRunConf, key, value string) error 
 	return nil
 }
 
-func (v *VSphereTestRunner) decommInstance(c instanceRunConf) error {
+func (v *VSphereTestRunner) decommInstance(c *instanceRunConf) error {
 	_, deregisterError := ssm.DeregisterInstance(c.Session, v.InstanceID)
 	_, deactivateError := ssm.DeleteActivation(c.Session, v.ActivationId)
 	deleteError := cleanup.VsphereRmVms(context.Background(), getTestRunnerName(v.logger, c.JobID), executables.WithGovcEnvMap(v.envMap))
@@ -235,7 +235,7 @@ func (v *VSphereTestRunner) decommInstance(c instanceRunConf) error {
 	return nil
 }
 
-func (e *Ec2TestRunner) decommInstance(c instanceRunConf) error {
+func (e *Ec2TestRunner) decommInstance(c *instanceRunConf) error {
 	runnerName := getTestRunnerName(e.logger, c.JobID)
 	e.logger.V(1).Info("Terminating ec2 Test Runner instance", "instanceID", e.InstanceID, "runner", runnerName)
 	if err := ec2.TerminateEc2Instances(c.Session, aws.StringSlice([]string{e.InstanceID})); err != nil {
