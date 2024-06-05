@@ -423,11 +423,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: haproxy
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/haproxy:v0.22.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/haproxy:v0.23.0-eks-a-v0.0.0-dev-build.1
     kindnetd:
       manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/kind/manifests/kindnetd/v0.22.0/kindnetd.yaml
-      version: v0.22.0+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/kind/manifests/kindnetd/v0.23.0/kindnetd.yaml
+      version: v0.23.0+abcdef1
     kubeVersion: "1.25"
     nutanix:
       cloudProvider:
@@ -540,11 +540,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-tinkerbell
         os: linux
-        uri: public.ecr.aws/release-container-registry/tinkerbell/cluster-api-provider-tinkerbell:v0.5.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/tinkerbell/cluster-api-provider-tinkerbell:v0.5.2-eks-a-v0.0.0-dev-build.1
       clusterTemplate:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.5.3/cluster-template.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.5.2/cluster-template.yaml
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.5.3/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.5.2/infrastructure-components.yaml
       envoy:
         arch:
         - amd64
@@ -564,7 +564,7 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.8.0-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.5.3/metadata.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.5.2/metadata.yaml
       tinkerbellStack:
         actions:
           cexec:
@@ -731,7 +731,7 @@ spec:
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: tinkerbell-chart
           uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.2.5-eks-a-v0.0.0-dev-build.1
-      version: v0.5.3+abcdef1
+      version: v0.5.2+abcdef1
     upgrader:
       upgrader:
         arch:
@@ -1201,11 +1201,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: haproxy
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/haproxy:v0.22.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/haproxy:v0.23.0-eks-a-v0.0.0-dev-build.1
     kindnetd:
       manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/kind/manifests/kindnetd/v0.22.0/kindnetd.yaml
-      version: v0.22.0+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/kind/manifests/kindnetd/v0.23.0/kindnetd.yaml
+      version: v0.23.0+abcdef1
     kubeVersion: "1.26"
     nutanix:
       cloudProvider:
@@ -1318,11 +1318,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-tinkerbell
         os: linux
-        uri: public.ecr.aws/release-container-registry/tinkerbell/cluster-api-provider-tinkerbell:v0.5.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/tinkerbell/cluster-api-provider-tinkerbell:v0.5.2-eks-a-v0.0.0-dev-build.1
       clusterTemplate:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.5.3/cluster-template.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.5.2/cluster-template.yaml
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.5.3/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.5.2/infrastructure-components.yaml
       envoy:
         arch:
         - amd64
@@ -1342,7 +1342,7 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.8.0-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.5.3/metadata.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.5.2/metadata.yaml
       tinkerbellStack:
         actions:
           cexec:
@@ -1509,7 +1509,7 @@ spec:
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: tinkerbell-chart
           uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.2.5-eks-a-v0.0.0-dev-build.1
-      version: v0.5.3+abcdef1
+      version: v0.5.2+abcdef1
     upgrader:
       upgrader:
         arch:
@@ -1979,11 +1979,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: haproxy
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/haproxy:v0.22.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/haproxy:v0.23.0-eks-a-v0.0.0-dev-build.1
     kindnetd:
       manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/kind/manifests/kindnetd/v0.22.0/kindnetd.yaml
-      version: v0.22.0+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/kind/manifests/kindnetd/v0.23.0/kindnetd.yaml
+      version: v0.23.0+abcdef1
     kubeVersion: "1.27"
     nutanix:
       cloudProvider:
@@ -2096,11 +2096,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-tinkerbell
         os: linux
-        uri: public.ecr.aws/release-container-registry/tinkerbell/cluster-api-provider-tinkerbell:v0.5.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/tinkerbell/cluster-api-provider-tinkerbell:v0.5.2-eks-a-v0.0.0-dev-build.1
       clusterTemplate:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.5.3/cluster-template.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.5.2/cluster-template.yaml
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.5.3/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.5.2/infrastructure-components.yaml
       envoy:
         arch:
         - amd64
@@ -2120,7 +2120,7 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.8.0-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.5.3/metadata.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.5.2/metadata.yaml
       tinkerbellStack:
         actions:
           cexec:
@@ -2287,7 +2287,7 @@ spec:
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: tinkerbell-chart
           uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.2.5-eks-a-v0.0.0-dev-build.1
-      version: v0.5.3+abcdef1
+      version: v0.5.2+abcdef1
     upgrader:
       upgrader:
         arch:
@@ -2757,11 +2757,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: haproxy
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/haproxy:v0.22.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/haproxy:v0.23.0-eks-a-v0.0.0-dev-build.1
     kindnetd:
       manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/kind/manifests/kindnetd/v0.22.0/kindnetd.yaml
-      version: v0.22.0+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/kind/manifests/kindnetd/v0.23.0/kindnetd.yaml
+      version: v0.23.0+abcdef1
     kubeVersion: "1.28"
     nutanix:
       cloudProvider:
@@ -2874,11 +2874,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-tinkerbell
         os: linux
-        uri: public.ecr.aws/release-container-registry/tinkerbell/cluster-api-provider-tinkerbell:v0.5.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/tinkerbell/cluster-api-provider-tinkerbell:v0.5.2-eks-a-v0.0.0-dev-build.1
       clusterTemplate:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.5.3/cluster-template.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.5.2/cluster-template.yaml
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.5.3/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.5.2/infrastructure-components.yaml
       envoy:
         arch:
         - amd64
@@ -2898,7 +2898,7 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.8.0-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.5.3/metadata.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.5.2/metadata.yaml
       tinkerbellStack:
         actions:
           cexec:
@@ -3065,7 +3065,7 @@ spec:
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: tinkerbell-chart
           uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.2.5-eks-a-v0.0.0-dev-build.1
-      version: v0.5.3+abcdef1
+      version: v0.5.2+abcdef1
     upgrader:
       upgrader:
         arch:
@@ -3535,11 +3535,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: haproxy
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/haproxy:v0.22.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/haproxy:v0.23.0-eks-a-v0.0.0-dev-build.1
     kindnetd:
       manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/kind/manifests/kindnetd/v0.22.0/kindnetd.yaml
-      version: v0.22.0+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/kind/manifests/kindnetd/v0.23.0/kindnetd.yaml
+      version: v0.23.0+abcdef1
     kubeVersion: "1.29"
     nutanix:
       cloudProvider:
@@ -3652,11 +3652,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-tinkerbell
         os: linux
-        uri: public.ecr.aws/release-container-registry/tinkerbell/cluster-api-provider-tinkerbell:v0.5.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/tinkerbell/cluster-api-provider-tinkerbell:v0.5.2-eks-a-v0.0.0-dev-build.1
       clusterTemplate:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.5.3/cluster-template.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.5.2/cluster-template.yaml
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.5.3/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.5.2/infrastructure-components.yaml
       envoy:
         arch:
         - amd64
@@ -3676,7 +3676,7 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.8.0-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.5.3/metadata.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.5.2/metadata.yaml
       tinkerbellStack:
         actions:
           cexec:
@@ -3843,7 +3843,7 @@ spec:
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: tinkerbell-chart
           uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.2.5-eks-a-v0.0.0-dev-build.1
-      version: v0.5.3+abcdef1
+      version: v0.5.2+abcdef1
     upgrader:
       upgrader:
         arch:
@@ -4313,11 +4313,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: haproxy
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/haproxy:v0.22.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/haproxy:v0.23.0-eks-a-v0.0.0-dev-build.1
     kindnetd:
       manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/kind/manifests/kindnetd/v0.22.0/kindnetd.yaml
-      version: v0.22.0+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/kind/manifests/kindnetd/v0.23.0/kindnetd.yaml
+      version: v0.23.0+abcdef1
     kubeVersion: "1.30"
     nutanix:
       cloudProvider:
@@ -4430,11 +4430,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-tinkerbell
         os: linux
-        uri: public.ecr.aws/release-container-registry/tinkerbell/cluster-api-provider-tinkerbell:v0.5.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/tinkerbell/cluster-api-provider-tinkerbell:v0.5.2-eks-a-v0.0.0-dev-build.1
       clusterTemplate:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.5.3/cluster-template.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.5.2/cluster-template.yaml
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.5.3/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.5.2/infrastructure-components.yaml
       envoy:
         arch:
         - amd64
@@ -4454,7 +4454,7 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.8.0-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.5.3/metadata.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.5.2/metadata.yaml
       tinkerbellStack:
         actions:
           cexec:
@@ -4621,7 +4621,7 @@ spec:
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: tinkerbell-chart
           uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.2.5-eks-a-v0.0.0-dev-build.1
-      version: v0.5.3+abcdef1
+      version: v0.5.2+abcdef1
     upgrader:
       upgrader:
         arch:
