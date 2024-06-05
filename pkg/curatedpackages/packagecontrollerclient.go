@@ -645,3 +645,10 @@ func WithRegistryAccessTester(registryTester RegistryAccessTester) func(client *
 		config.registryAccessTester = registryTester
 	}
 }
+
+// WithSkipWait sets skipWaitForPackageBundle.
+func WithSkipWait() func(client *PackageControllerClient) {
+	return func(config *PackageControllerClient) {
+		config.skipWaitForPackageBundle = true
+	}
+}

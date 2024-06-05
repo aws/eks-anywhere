@@ -20,7 +20,7 @@ type Upgrade struct {
 	writer           filewriter.FileWriter
 	eksdInstaller    interfaces.EksdInstaller
 	clusterUpgrader  interfaces.ClusterUpgrader
-	packageInstaller interfaces.PackageInstaller
+	packageInstaller interfaces.PackageManager
 }
 
 // NewUpgrade builds a new upgrade construct.
@@ -30,7 +30,7 @@ func NewUpgrade(clientFactory interfaces.ClientFactory,
 	writer filewriter.FileWriter,
 	clusterUpgrader interfaces.ClusterUpgrader,
 	eksdInstaller interfaces.EksdInstaller,
-	packageInstaller interfaces.PackageInstaller,
+	packageInstaller interfaces.PackageManager,
 ) *Upgrade {
 	return &Upgrade{
 		clientFactory:    clientFactory,

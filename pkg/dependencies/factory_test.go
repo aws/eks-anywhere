@@ -433,10 +433,46 @@ func TestFactoryBuildWithPackageInstaller(t *testing.T) {
 		WithLocalExecutables().
 		WithHelm(helm.WithInsecure()).
 		WithKubectl().
-		WithPackageInstaller(spec, "/test/packages.yaml", "kubeconfig.kubeconfig").
+		WithPackageManager(spec, "/test/packages.yaml", "kubeconfig.kubeconfig").
 		Build(context.Background())
 	tt.Expect(err).To(BeNil())
-	tt.Expect(deps.PackageInstaller).NotTo(BeNil())
+	tt.Expect(deps.PackageManager).NotTo(BeNil())
+}
+
+func TestFactoryBuildWithPackageInstallerWithoutWait(t *testing.T) {
+	spec := &cluster.Spec{
+		Config: &cluster.Config{
+			Cluster: &anywherev1.Cluster{
+				ObjectMeta: v1.ObjectMeta{
+					Name: "test-cluster",
+				},
+				Spec: anywherev1.ClusterSpec{
+					KubernetesVersion: "1.19",
+				},
+			},
+		},
+		VersionsBundles: map[anywherev1.KubernetesVersion]*cluster.VersionsBundle{
+			"1.19": {
+				VersionsBundle: &v1alpha1.VersionsBundle{
+					PackageController: v1alpha1.PackageBundle{
+						HelmChart: v1alpha1.Image{
+							URI:  "test_registry/test/eks-anywhere-packages:v1",
+							Name: "test_chart",
+						},
+					},
+				},
+			},
+		},
+	}
+	tt := newTest(t, vsphere)
+	deps, err := dependencies.NewFactory().
+		WithLocalExecutables().
+		WithHelm(helm.WithInsecure()).
+		WithKubectl().
+		WithPackageManagerWithoutWait(spec, "/test/packages.yaml", "kubeconfig.kubeconfig").
+		Build(context.Background())
+	tt.Expect(err).To(BeNil())
+	tt.Expect(deps.PackageManager).NotTo(BeNil())
 }
 
 func TestFactoryBuildWithCuratedPackagesCustomRegistry(t *testing.T) {
