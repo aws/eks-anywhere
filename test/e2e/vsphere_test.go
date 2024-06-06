@@ -862,6 +862,47 @@ func TestVSphereKubernetes130BottleRocketCuratedPackagesClusterAutoscalerSimpleF
 	runAutoscalerWithMetricsServerSimpleFlow(test)
 }
 
+func TestVSphereKubernetes129BottleRocketWorkloadClusterCuratedPackagesClusterAutoscalerUpgradeFlow(t *testing.T) {
+	minNodes := 1
+	maxNodes := 2
+	framework.CheckCuratedPackagesCredentials(t)
+	provider := framework.NewVSphere(t, framework.WithBottleRocket129())
+	test := framework.NewMulticlusterE2ETest(
+		t,
+		framework.NewClusterE2ETest(
+			t,
+			provider,
+			framework.WithClusterFiller(
+				api.WithKubernetesVersion(v1alpha1.Kube129),
+				api.WithControlPlaneCount(1),
+				api.WithWorkerNodeCount(1),
+				api.WithExternalEtcdTopology(1),
+			),
+		),
+		framework.NewClusterE2ETest(
+			t,
+			provider,
+			framework.WithClusterFiller(
+				api.WithKubernetesVersion(v1alpha1.Kube129),
+				api.WithControlPlaneCount(1),
+				api.WithWorkerNodeCount(1),
+				api.WithExternalEtcdTopology(1),
+				api.WithWorkerNodeAutoScalingConfig(minNodes, maxNodes),
+			),
+			framework.WithPackageConfig(
+				t,
+				packageBundleURI(v1alpha1.Kube129),
+				EksaPackageControllerHelmChartName,
+				EksaPackageControllerHelmURI,
+				EksaPackageControllerHelmVersion,
+				EksaPackageControllerHelmValues,
+				nil,
+			),
+		),
+	)
+	runAutoscalerUpgradeFlow(test)
+}
+
 func TestVSphereKubernetes126UbuntuCuratedPackagesPrometheusSimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
