@@ -175,6 +175,22 @@ func TestGetNutanixDatacenterConfigValidConfig(t *testing.T) {
 				assert.Contains(t, err.Error(), "NutanixDatacenterConfig credentialRef name is not set or is empty")
 			},
 		},
+		{
+			name:     "datacenterconfig-valid-failure-domains",
+			fileName: "testdata/nutanix/datacenterconfig-valid-failuredomains.yaml",
+			assertions: func(t *testing.T, dcConf *v1alpha1.NutanixDatacenterConfig) {
+				assert.NoError(t, dcConf.Validate())
+			},
+		},
+		{
+			name:     "datecenterconfig-invalid-failure-domains",
+			fileName: "testdata/nutanix/datacenterconfig-invalid-failuredomains.yaml",
+			assertions: func(t *testing.T, dcConf *v1alpha1.NutanixDatacenterConfig) {
+				err := dcConf.Validate()
+				assert.Error(t, err)
+				assert.Contains(t, err.Error(), "NutanixDatacenterConfig.Spec.FailureDomains.Subnets: missing subnet UUID: default/eksa-unit-test")
+			},
+		},
 	}
 
 	for _, test := range tests {
