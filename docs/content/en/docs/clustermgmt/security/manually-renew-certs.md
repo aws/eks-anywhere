@@ -232,7 +232,7 @@ etcd:
 
 ### What do I do if my local kubeconfig has expired?
 
-Your local kubeconfig, used to interact with the cluster contains a certificate that expires after 1 year. When you rotate cluster certificates, a new kubeconfig with a new certificate is created as a Secret in the cluster. If you do not retrieve the new kubeconfig and your local kubeconfig certificate expires, you will receive the following error:
+Your local kubeconfig, used to interact with the cluster, contains a certificate that expires after 1 year. When you rotate cluster certificates, a new kubeconfig with a new certificate is created as a Secret in the cluster. If you do not retrieve the new kubeconfig and your local kubeconfig certificate expires, you will receive the following error:
 
 ```
 Error: Couldn't get current Server API group list: the server has asked for the client to provide credentials error: you must be logged in to the server.
