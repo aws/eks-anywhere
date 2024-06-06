@@ -183,63 +183,63 @@ You can omit `workerNodeGroupConfigurations` when creating Bare Metal clusters. 
 
 >**_NOTE:_** Empty `workerNodeGroupConfigurations` is not supported when Kubernetes version <= 1.21.
 
-### workerNodeGroupConfigurations.count (optional)
+### workerNodeGroupConfigurations[*].count (optional)
 Number of worker nodes. Optional if autoscalingConfiguration is used, in which case count will default to `autoscalingConfiguration.minCount`.
 
 Refers to [troubleshooting machine health check remediation not allowed]({{< relref "../../troubleshooting/troubleshooting/#machine-health-check-shows-remediation-is-not-allowed" >}}) and choose a sufficient number to allow machine health check remediation.
 
-### workerNodeGroupConfigurations.machineGroupRef (required)
+### workerNodeGroupConfigurations[*].machineGroupRef (required)
 Refers to the Kubernetes object with Tinkerbell-specific configuration for your nodes. See `TinkerbellMachineConfig Fields` below.
 
-### workerNodeGroupConfigurations.name (required)
+### workerNodeGroupConfigurations[*].name (required)
 Name of the worker node group (default: md-0)
 
-### workerNodeGroupConfigurations.autoscalingConfiguration (optional)
+### workerNodeGroupConfigurations[*].autoscalingConfiguration (optional)
 Configuration parameters for Cluster Autoscaler.
 
 >**_NOTE:_** Autoscaling configuration is not supported when using the `InPlace` upgrade rollout strategy.
 
-### workerNodeGroupConfigurations.autoscalingConfiguration.minCount (optional)
+### workerNodeGroupConfigurations[*].autoscalingConfiguration.minCount (optional)
 Minimum number of nodes for this node group's autoscaling configuration.
 
-### workerNodeGroupConfigurations.autoscalingConfiguration.maxCount (optional)
+### workerNodeGroupConfigurations[*].autoscalingConfiguration.maxCount (optional)
 Maximum number of nodes for this node group's autoscaling configuration.
 
-### workerNodeGroupConfigurations.taints (optional)
+### workerNodeGroupConfigurations[*].taints (optional)
 A list of taints to apply to the nodes in the worker node group.
 
 Modifying the taints associated with a worker node group configuration will cause new nodes to be rolled-out, replacing the existing nodes associated with the configuration.
 
 At least one node group must not have `NoSchedule` or `NoExecute` taints applied to it.
 
-### workerNodeGroupConfigurations.labels (optional)
+### workerNodeGroupConfigurations[*].labels (optional)
 A list of labels to apply to the nodes in the worker node group. This is in addition to the labels that
 EKS Anywhere will add by default.
 
 Modifying the labels associated with a worker node group configuration will cause new nodes to be rolled out, replacing
 the existing nodes associated with the configuration.
 
-### workerNodeGroupConfigurations.kubernetesVersion (optional)
+### workerNodeGroupConfigurations[*].kubernetesVersion (optional)
 The Kubernetes version you want to use for this worker node group. [Supported values]({{< relref "../../concepts/support-versions/#kubernetes-versions" >}}): `1.28`, `1.27`, `1.26`, `1.25`, `1.24`
 
 Must be less than or equal to the cluster `kubernetesVersion` defined at the root level of the cluster spec. The worker node kubernetesVersion must be no more than two minor Kubernetes versions lower than the cluster control plane's Kubernetes version. Removing `workerNodeGroupConfiguration.kubernetesVersion` will trigger an upgrade of the node group to the `kubernetesVersion` defined at the root level of the cluster spec.
 
-#### workerNodeGroupConfigurations.upgradeRolloutStrategy (optional)
+#### workerNodeGroupConfigurations[*].upgradeRolloutStrategy (optional)
 Configuration parameters for upgrade strategy.
 
-#### workerNodeGroupConfigurations.upgradeRolloutStrategy.type (optional)
+#### workerNodeGroupConfigurations[*].upgradeRolloutStrategy.type (optional)
 Default: `RollingUpdate`
 
 Type of rollout strategy. Supported values: `RollingUpdate`,`InPlace`.
 
 >**_NOTE:_** The upgrade rollout strategy type must be the same for all control plane and worker nodes.
 
-#### workerNodeGroupConfigurations.upgradeRolloutStrategy.rollingUpdate (optional)
+#### workerNodeGroupConfigurations[*].upgradeRolloutStrategy.rollingUpdate (optional)
 Configuration parameters for customizing rolling upgrade behavior.
 
 >**_NOTE:_** The rolling update parameters can only be configured if `upgradeRolloutStrategy.type` is `RollingUpdate`.
 
-#### workerNodeGroupConfigurations.upgradeRolloutStrategy.rollingUpdate.maxSurge (optional)
+#### workerNodeGroupConfigurations[*].upgradeRolloutStrategy.rollingUpdate.maxSurge (optional)
 Default: 1
 
 This can not be 0 if maxUnavailable is 0.
@@ -248,7 +248,7 @@ The maximum number of machines that can be scheduled above the desired number of
 
 Example: When this is set to n, the new worker node group can be scaled up immediately by n when the rolling upgrade starts. Total number of machines in the cluster (old + new) never exceeds (desired number of machines + n). Once scale down happens and old machines are brought down, the new worker node group can be scaled up further ensuring that the total number of machines running at any time does not exceed the desired number of machines + n.
 
-#### workerNodeGroupConfigurations.upgradeRolloutStrategy.rollingUpdate.maxUnavailable (optional)
+#### workerNodeGroupConfigurations[*].upgradeRolloutStrategy.rollingUpdate.maxUnavailable (optional)
 Default: 0
 
 This can not be 0 if MaxSurge is 0.
