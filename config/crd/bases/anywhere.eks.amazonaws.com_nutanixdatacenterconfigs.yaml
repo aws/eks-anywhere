@@ -56,6 +56,70 @@ spec:
               endpoint:
                 description: Endpoint is the Endpoint of Nutanix Prism Central
                 type: string
+              failureDomains:
+                description: FailureDomains is the optional list of failure domains
+                  for the Nutanix Datacenter.
+                items:
+                  description: NutanixDatacenterFailureDomain defines the failure
+                    domain for the Nutanix Datacenter.
+                  properties:
+                    cluster:
+                      description: Cluster is the Prism Element cluster name or uuid
+                        that is connected to the Prism Central.
+                      properties:
+                        name:
+                          description: name is the resource name in the PC
+                          type: string
+                        type:
+                          description: Type is the identifier type to use for this
+                            resource.
+                          enum:
+                          - uuid
+                          - name
+                          type: string
+                        uuid:
+                          description: uuid is the UUID of the resource in the PC.
+                          type: string
+                      required:
+                      - type
+                      type: object
+                    name:
+                      description: Name is the unique name of the failure domain.
+                        Name must be between 1 and 64 characters long. It must consist
+                        of only lower case alphanumeric characters and hyphens (-).
+                        It must start and end with an alphanumeric character.
+                      maxLength: 64
+                      minLength: 1
+                      pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
+                      type: string
+                    subnets:
+                      description: Subnets holds the list of subnets identifiers cluster's
+                        network subnets.
+                      items:
+                        description: NutanixResourceIdentifier holds the identity
+                          of a Nutanix Prism resource (cluster, image, subnet, etc.)
+                        properties:
+                          name:
+                            description: name is the resource name in the PC
+                            type: string
+                          type:
+                            description: Type is the identifier type to use for this
+                              resource.
+                            enum:
+                            - uuid
+                            - name
+                            type: string
+                          uuid:
+                            description: uuid is the UUID of the resource in the PC.
+                            type: string
+                        required:
+                        - type
+                        type: object
+                      type: array
+                  required:
+                  - name
+                  type: object
+                type: array
               insecure:
                 description: Insecure is the optional flag to skip TLS verification.
                   Nutanix Prism Central installation by default ships with a self-signed

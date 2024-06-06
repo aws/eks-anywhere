@@ -419,7 +419,6 @@ func needsNewEtcdTemplate(oldSpec, newSpec *cluster.Spec, oldNmc, newNmc *v1alph
 	if oldSpec.Bundles.Spec.Number != newSpec.Bundles.Spec.Number {
 		return true
 	}
-
 	return AnyImmutableFieldChanged(oldNmc, newNmc)
 }
 

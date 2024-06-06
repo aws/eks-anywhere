@@ -530,7 +530,20 @@ func TestNutanixProviderSetupAndValidateDeleteCluster(t *testing.T) {
 }
 
 func TestNutanixProviderSetupAndValidateUpgradeCluster(t *testing.T) {
-	provider := testDefaultNutanixProvider(t)
+	ctrl := gomock.NewController(t)
+	executable := mockexecutables.NewMockExecutable(ctrl)
+	executable.EXPECT().ExecuteWithStdin(gomock.Any(), gomock.Any(), gomock.Any()).Return(bytes.Buffer{}, nil).AnyTimes()
+	executable.EXPECT().Execute(gomock.Any(), "get",
+		"--ignore-not-found", "-o", "json", "--kubeconfig", "testdata/kubeconfig.yaml", "nutanixdatacenterconfigs.anywhere.eks.amazonaws.com", "--namespace", "default", "eksa-unit-test").Return(*bytes.NewBufferString(nutanixDatacenterConfigSpecJSON), nil).AnyTimes()
+	kubectl := executables.NewKubectl(executable)
+	mockClient := mocknutanix.NewMockClient(ctrl)
+	mockCertValidator := mockCrypto.NewMockTlsValidator(ctrl)
+	mockTransport := mocknutanix.NewMockRoundTripper(ctrl)
+	mockTransport.EXPECT().RoundTrip(gomock.Any()).Return(&http.Response{}, nil).AnyTimes()
+	mockHTTPClient := &http.Client{Transport: mockTransport}
+	mockWriter := filewritermocks.NewMockFileWriter(ctrl)
+	provider := testNutanixProvider(t, mockClient, kubectl, mockCertValidator, mockHTTPClient, mockWriter)
+
 	tests := []struct {
 		name            string
 		clusterConfFile string
@@ -558,7 +571,8 @@ func TestNutanixProviderSetupAndValidateUpgradeCluster(t *testing.T) {
 
 	for _, tt := range tests {
 		clusterSpec := test.NewFullClusterSpec(t, tt.clusterConfFile)
-		err := provider.SetupAndValidateUpgradeCluster(context.Background(), &types.Cluster{Name: "eksa-unit-test"}, clusterSpec, clusterSpec)
+		cluster := &types.Cluster{Name: "eksa-unit-test", KubeconfigFile: "testdata/kubeconfig.yaml"}
+		err := provider.SetupAndValidateUpgradeCluster(context.Background(), cluster, clusterSpec, clusterSpec)
 		if tt.expectErr {
 			assert.Error(t, err, tt.name)
 			thenErrorExpected(t, tt.expectErrStr, err)

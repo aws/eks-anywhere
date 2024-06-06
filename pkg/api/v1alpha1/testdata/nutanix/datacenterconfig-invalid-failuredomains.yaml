@@ -1,0 +1,30 @@
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: NutanixDatacenterConfig
+metadata:
+  name: eksa-unit-test
+  namespace: default
+spec:
+  endpoint: "prism.nutanix.com"
+  port: 9440
+  credentialRef:
+    name: eksa-unit-test
+    kind: Secret
+  failureDomains:
+  - name: "pe1"
+    cluster:
+      type: name
+      name: "prism-cluster-1"
+    subnets:
+    - name: "prism-subnet-1"
+      type: "name"
+    - uuid: ""
+      type: "uuid"
+  - name: "pe2"
+    cluster:
+      type: "uuid"
+      uuid: "468b7b36-d15b-406a-90f7-46d1560c4f4e"
+    subnets:
+    - name: "prism-subnet-1"
+      type: "name"
+    - uuid: "3e716c09-0613-46f3-b46a-beb89aa02295"
+      type: "uuid"

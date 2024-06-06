@@ -5,7 +5,9 @@ import (
 	_ "embed"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -45,6 +47,18 @@ var nutanixDatacenterConfigSpecWithInvalidCredentialRefKind string
 //go:embed testdata/datacenterConfig_empty_credentialRef_name.yaml
 var nutanixDatacenterConfigSpecWithEmptyCredentialRefName string
 
+//go:embed testdata/datacenterConfig_with_failure_domains.yaml
+var nutanixDatacenterConfigSpecWithFailureDomain string
+
+//go:embed testdata/datacenterConfig_with_failure_domains_invalid_name.yaml
+var nutanixDatacenterConfigSpecWithFailureDomainInvalidName string
+
+//go:embed testdata/datacenterConfig_with_failure_domains_invalid_cluster.yaml
+var nutanixDatacenterConfigSpecWithFailureDomainInvalidCluster string
+
+//go:embed testdata/datacenterConfig_with_failure_domains_invalid_subnet.yaml
+var nutanixDatacenterConfigSpecWithFailureDomainInvalidSubnet string
+
 func fakeClusterList() *v3.ClusterListIntentResponse {
 	return &v3.ClusterListIntentResponse{
 		Entities: []*v3.ClusterIntentResponse{
@@ -80,6 +94,96 @@ func fakeSubnetList() *v3.SubnetListIntentResponse {
 			},
 		},
 	}
+}
+
+func fakeClusterListForDCTest(filter *string) (*v3.ClusterListIntentResponse, error) {
+	data := &v3.ClusterListIntentResponse{
+		Entities: []*v3.ClusterIntentResponse{
+			{
+				Metadata: &v3.Metadata{
+					UUID: utils.StringPtr("a15f6966-bfc7-4d1e-8575-224096fc1cdb"),
+				},
+				Spec: &v3.Cluster{
+					Name: utils.StringPtr("prism-cluster"),
+				},
+				Status: &v3.ClusterDefStatus{
+					Resources: &v3.ClusterObj{
+						Config: &v3.ClusterConfig{
+							ServiceList: []*string{utils.StringPtr("AOS")},
+						},
+					},
+				},
+			},
+			{
+				Metadata: &v3.Metadata{
+					UUID: utils.StringPtr("4d69ca7d-022f-49d1-a454-74535993bda4"),
+				},
+				Spec: &v3.Cluster{
+					Name: utils.StringPtr("prism-cluster-1"),
+				},
+				Status: &v3.ClusterDefStatus{
+					Resources: &v3.ClusterObj{
+						Config: &v3.ClusterConfig{
+							ServiceList: []*string{utils.StringPtr("AOS")},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	result := &v3.ClusterListIntentResponse{
+		Entities: []*v3.ClusterIntentResponse{},
+	}
+
+	if filter != nil && *filter != "" {
+		str := strings.Replace(*filter, "name==", "", -1)
+		for _, cluster := range data.Entities {
+			if str == *cluster.Spec.Name {
+				result.Entities = append(result.Entities, cluster)
+			}
+		}
+	}
+
+	return result, nil
+}
+
+func fakeSubnetListForDCTest(filter *string) (*v3.SubnetListIntentResponse, error) {
+	data := &v3.SubnetListIntentResponse{
+		Entities: []*v3.SubnetIntentResponse{
+			{
+				Metadata: &v3.Metadata{
+					UUID: utils.StringPtr("b15f6966-bfc7-4d1e-8575-224096fc1cdb"),
+				},
+				Spec: &v3.Subnet{
+					Name: utils.StringPtr("prism-subnet"),
+				},
+			},
+			{
+				Metadata: &v3.Metadata{
+					UUID: utils.StringPtr("2d166190-7759-4dc6-b835-923262d6b497"),
+				},
+				Spec: &v3.Subnet{
+					Name: utils.StringPtr("prism-subnet-1"),
+				},
+			},
+		},
+	}
+
+	result := &v3.SubnetListIntentResponse{
+		Entities: []*v3.SubnetIntentResponse{},
+	}
+
+	if filter != nil && *filter != "" {
+		str := strings.Replace(*filter, "name==", "", -1)
+		for _, subnet := range data.Entities {
+			if str == *subnet.Spec.Name {
+				result.Entities = append(result.Entities, subnet)
+			}
+		}
+	}
+
+	return result, nil
 }
 
 func fakeImageList() *v3.ImageListIntentResponse {
@@ -596,11 +700,45 @@ func TestNutanixValidatorValidateDatacenterConfig(t *testing.T) {
 			dcConfFile: nutanixDatacenterConfigSpecWithEmptyCredentialRefName,
 			expectErr:  true,
 		},
+		{
+			name:       "valid failure domains",
+			dcConfFile: nutanixDatacenterConfigSpecWithFailureDomain,
+			expectErr:  false,
+		},
+		{
+			name:       "failure domain with invalid name",
+			dcConfFile: nutanixDatacenterConfigSpecWithFailureDomainInvalidName,
+			expectErr:  true,
+		},
+		{
+			name:       "failure domain with invalid cluster",
+			dcConfFile: nutanixDatacenterConfigSpecWithFailureDomainInvalidCluster,
+			expectErr:  true,
+		},
+		{
+			name:       "failure domains with invalid subnet",
+			dcConfFile: nutanixDatacenterConfigSpecWithFailureDomainInvalidSubnet,
+			expectErr:  true,
+		},
 	}
 
 	ctrl := gomock.NewController(t)
 	mockClient := mocknutanix.NewMockClient(ctrl)
 	mockClient.EXPECT().GetCurrentLoggedInUser(gomock.Any()).Return(&v3.UserIntentResponse{}, nil).AnyTimes()
+	mockClient.EXPECT().ListCluster(gomock.Any(), gomock.Any()).DoAndReturn(
+		func(_ context.Context, filters *v3.DSMetadata) (*v3.ClusterListIntentResponse, error) {
+			return fakeClusterListForDCTest(filters.Filter)
+		},
+	).AnyTimes()
+	mockClient.EXPECT().ListSubnet(gomock.Any(), gomock.Any()).DoAndReturn(
+		func(_ context.Context, filters *v3.DSMetadata) (*v3.SubnetListIntentResponse, error) {
+			return fakeSubnetListForDCTest(filters.Filter)
+		},
+	).AnyTimes()
+	mockClient.EXPECT().GetSubnet(gomock.Any(), gomock.Eq("2d166190-7759-4dc6-b835-923262d6b497")).Return(nil, nil).AnyTimes()
+	mockClient.EXPECT().GetSubnet(gomock.Any(), gomock.Not("2d166190-7759-4dc6-b835-923262d6b497")).Return(nil, fmt.Errorf("")).AnyTimes()
+	mockClient.EXPECT().GetCluster(gomock.Any(), gomock.Eq("4d69ca7d-022f-49d1-a454-74535993bda4")).Return(nil, nil).AnyTimes()
+	mockClient.EXPECT().GetCluster(gomock.Any(), gomock.Not("4d69ca7d-022f-49d1-a454-74535993bda4")).Return(nil, fmt.Errorf("")).AnyTimes()
 
 	mockTLSValidator := mockCrypto.NewMockTlsValidator(ctrl)
 	mockTLSValidator.EXPECT().ValidateCert(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()

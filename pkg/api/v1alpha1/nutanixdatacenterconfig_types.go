@@ -43,6 +43,31 @@ type NutanixDatacenterConfigSpec struct {
 	// for the Nutanix Prism Central. The namespace for the secret is assumed to be a constant i.e. eksa-system.
 	// +optional
 	CredentialRef *Ref `json:"credentialRef,omitempty"`
+
+	// FailureDomains is the optional list of failure domains for the Nutanix Datacenter.
+	// +optional
+	FailureDomains []NutanixDatacenterFailureDomain `json:"failureDomains,omitempty"`
+}
+
+// NutanixDatacenterFailureDomain defines the failure domain for the Nutanix Datacenter.
+type NutanixDatacenterFailureDomain struct {
+	// Name is the unique name of the failure domain.
+	// Name must be between 1 and 64 characters long.
+	// It must consist of only lower case alphanumeric characters and hyphens (-).
+	// It must start and end with an alphanumeric character.
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=64
+	// +kubebuilder:validation:Pattern=^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
+	Name string `json:"name"`
+
+	// Cluster is the Prism Element cluster name or uuid that is connected to the Prism Central.
+	// +kubebuilder:validation:Required
+	Cluster NutanixResourceIdentifier `json:"cluster,omitempty"`
+
+	// Subnets holds the list of subnets identifiers cluster's network subnets.
+	// +kubebuilder:validation:Required
+	Subnets []NutanixResourceIdentifier `json:"subnets,omitempty"`
 }
 
 // NutanixDatacenterConfigStatus defines the observed state of NutanixDatacenterConfig.
@@ -140,7 +165,40 @@ func (in *NutanixDatacenterConfig) Validate() error {
 		}
 	}
 
+	if in.Spec.FailureDomains != nil && len(in.Spec.FailureDomains) != 0 {
+		dccName := in.Namespace + "/" + in.Name
+		validateClusterResourceIdentifier := createValidateNutanixResourceFunc("NutanixDatacenterConfig.Spec.FailureDomains.Cluster", "cluster", dccName)
+		validateSubnetResourceIdentifier := createValidateNutanixResourceFunc("NutanixDatacenterConfig.Spec.FailureDomains.Subnets", "subnet", dccName)
+		for _, fd := range in.Spec.FailureDomains {
+			if err := validateClusterResourceIdentifier(&fd.Cluster); err != nil {
+				return err
+			}
+
+			for _, subnet := range fd.Subnets {
+				if err := validateSubnetResourceIdentifier(&subnet); err != nil {
+					return err
+				}
+			}
+		}
+	}
+
 	return nil
+}
+
+func createValidateNutanixResourceFunc(msgPrefix, entityName, mfstName string) func(*NutanixResourceIdentifier) error {
+	return func(ntnxRId *NutanixResourceIdentifier) error {
+		if ntnxRId.Type != NutanixIdentifierName && ntnxRId.Type != NutanixIdentifierUUID {
+			return fmt.Errorf("%s: invalid identifier type for %s: %s", msgPrefix, entityName, ntnxRId.Type)
+		}
+
+		if ntnxRId.Type == NutanixIdentifierName && (ntnxRId.Name == nil || *ntnxRId.Name == "") {
+			return fmt.Errorf("%s: missing %s name: %s", msgPrefix, entityName, mfstName)
+		} else if ntnxRId.Type == NutanixIdentifierUUID && (ntnxRId.UUID == nil || *ntnxRId.UUID == "") {
+			return fmt.Errorf("%s: missing %s UUID: %s", msgPrefix, entityName, mfstName)
+		}
+
+		return nil
+	}
 }
 
 // SetDefaults sets default values for the NutanixDatacenterConfig object.

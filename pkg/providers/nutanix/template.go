@@ -7,6 +7,7 @@ import (
 
 	"sigs.k8s.io/yaml"
 
+	capxv1beta1 "github.com/nutanix-cloud-native/cluster-api-provider-nutanix/api/v1beta1"
 	"github.com/nutanix-cloud-native/prism-go-client/environment/credentials"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -176,6 +177,8 @@ func buildTemplateMapCP(
 		return nil, err
 	}
 
+	failureDomains := generateNutanixFailureDomains(datacenterSpec.FailureDomains)
+
 	values := map[string]interface{}{
 		"auditPolicy":                  auditPolicy,
 		"apiServerExtraArgs":           apiServerExtraArgs.ToPartialYaml(),
@@ -188,6 +191,7 @@ func buildTemplateMapCP(
 		"controlPlaneTaints":           clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Taints,
 		"eksaSystemNamespace":          constants.EksaSystemNamespace,
 		"format":                       format,
+		"failureDomains":               failureDomains,
 		"podCidrs":                     clusterSpec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks,
 		"serviceCidrs":                 clusterSpec.Cluster.Spec.ClusterNetwork.Services.CidrBlocks,
 		"kubernetesVersion":            versionsBundle.KubeDistro.Kubernetes.Tag,
@@ -459,4 +463,31 @@ func generateNoProxyList(clusterSpec *cluster.Spec) []string {
 	)
 
 	return noProxyList
+}
+
+func generateNutanixFailureDomains(eksNutanixFailureDomains []v1alpha1.NutanixDatacenterFailureDomain) []capxv1beta1.NutanixFailureDomain {
+	var failureDomains []capxv1beta1.NutanixFailureDomain
+	for _, fd := range eksNutanixFailureDomains {
+
+		subnets := []capxv1beta1.NutanixResourceIdentifier{}
+		for _, subnet := range fd.Subnets {
+			subnets = append(subnets, capxv1beta1.NutanixResourceIdentifier{
+				Type: capxv1beta1.NutanixIdentifierType(subnet.Type),
+				Name: subnet.Name,
+				UUID: subnet.UUID,
+			})
+		}
+
+		failureDomains = append(failureDomains, capxv1beta1.NutanixFailureDomain{
+			Name: fd.Name,
+			Cluster: capxv1beta1.NutanixResourceIdentifier{
+				Type: capxv1beta1.NutanixIdentifierType(fd.Cluster.Type),
+				Name: fd.Cluster.Name,
+				UUID: fd.Cluster.UUID,
+			},
+			Subnets:      subnets,
+			ControlPlane: true,
+		})
+	}
+	return failureDomains
 }

@@ -1,0 +1,87 @@
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: Cluster
+metadata:
+  name: test
+  namespace: default
+spec:
+  kubernetesVersion: "1.19"
+  controlPlaneConfiguration:
+    name: test
+    count: 1
+    endpoint:
+      host: test
+    machineGroupRef:
+      name: test
+      kind: NutanixMachineConfig
+  datacenterRef:
+    kind: NutanixDatacenterConfig
+    name: test
+  clusterNetwork:
+    cni: "cilium"
+    pods:
+      cidrBlocks:
+        - 192.168.0.0/16
+    services:
+      cidrBlocks:
+        - 10.96.0.0/12
+  workerNodeGroupConfigurations:
+  - count: 3
+    machineGroupRef:
+      kind: NutanixMachineConfig
+      name: test
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: NutanixDatacenterConfig
+metadata:
+  name: test
+  namespace: default
+spec:
+  endpoint: "prism.nutanix.com"
+  port: 9440
+  credentialRef:
+    kind: Secret
+    name: "nutanix-credentials"
+  failureDomains:
+  - name: "pe1"
+    cluster:
+      type: name
+      name: "prism-cluster-1"
+    subnets:
+    - name: "prism-subnet-1"
+      type: "name"
+    - uuid: "3e716c09-0613-46f3-b46a-beb89aa02295"
+      type: "uuid"
+  - name: "pe2"
+    cluster:
+      type: "uuid"
+      uuid: "468b7b36-d15b-406a-90f7-46d1560c4f4e"
+    subnets:
+    - name: "prism-subnet-1"
+      type: "name"
+    - uuid: "3e716c09-0613-46f3-b46a-beb89aa02295"
+      type: "uuid"
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: NutanixMachineConfig
+metadata:
+  name: test
+  namespace: default
+spec:
+  vcpusPerSocket: 1
+  vcpuSockets: 4
+  memorySize: 8Gi
+  image:
+    type: "name"
+    name: "prism-image-1-19"
+  cluster:
+    type: "name"
+    name: "prism-cluster"
+  subnet:
+    type: "name"
+    name: "prism-subnet"
+  systemDiskSize: 40Gi
+  osFamily: "ubuntu"
+  users:
+    - name: "mySshUsername"
+      sshAuthorizedKeys:
+        - "mySshAuthorizedKey"

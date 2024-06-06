@@ -5,7 +5,33 @@ metadata:
   name: "{{.clusterName}}"
   namespace: "{{.eksaSystemNamespace}}"
 spec:
+{{- if .failureDomains }}
+  failureDomains:
+  {{- range $index, $value := .failureDomains}}
+  - name: "{{ $value.Name }}"
+    cluster:
+    {{- if (eq $value.Cluster.Type "uuid") }}
+      type: "uuid"
+      uuid: "{{ $value.Cluster.UUID }}"
+    {{- else if (eq $value.Cluster.Type "name") }}
+      type: "name"
+      name: "{{ $value.Cluster.Name }}"
+    {{- end}}
+    subnets:
+    {{- range $value.Subnets}}
+      {{- if (eq .Type "uuid") }}
+    - type: "uuid"
+      uuid: "{{ .UUID }}"
+      {{- else if (eq .Type "name") }}
+    - type: "name"
+      name: "{{ .Name }}"
+      {{- end}}
+    {{- end}}
+    controlPlane: true
+  {{- end }}
+{{- else }}
   failureDomains: []
+{{- end}}
   prismCentral:
 {{- if .nutanixAdditionalTrustBundle }}
     additionalTrustBundle:
