@@ -29,7 +29,7 @@ import (
 
 type createTestSetup struct {
 	t                    *testing.T
-	packageInstaller     *mocks.MockPackageInstaller
+	packageInstaller     *mocks.MockPackageManager
 	clusterManager       *mocks.MockClusterManager
 	bootstrapper         *mocks.MockBootstrapper
 	gitOpsManager        *mocks.MockGitOpsManager
@@ -63,7 +63,7 @@ func newCreateTest(t *testing.T) *createTestSetup {
 	eksdInstaller := mocks.NewMockEksdInstaller(mockCtrl)
 	eksaInstaller := mocks.NewMockEksaInstaller(mockCtrl)
 
-	packageInstaller := mocks.NewMockPackageInstaller(mockCtrl)
+	packageInstaller := mocks.NewMockPackageManager(mockCtrl)
 
 	datacenterConfig := &v1alpha1.VSphereDatacenterConfig{}
 	machineConfigs := []providers.MachineConfig{&v1alpha1.VSphereMachineConfig{}}

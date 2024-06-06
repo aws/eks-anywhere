@@ -90,8 +90,10 @@ type EksdUpgrader interface {
 	Upgrade(ctx context.Context, cluster *types.Cluster, currentSpec, newSpec *cluster.Spec) error
 }
 
-type PackageInstaller interface {
+// PackageManager handles installation and upgrades of curated packages.
+type PackageManager interface {
 	InstallCuratedPackages(ctx context.Context)
+	UpgradeCuratedPackages(ctx context.Context)
 }
 
 // ClusterUpgrader upgrades the cluster and waits until it's ready.

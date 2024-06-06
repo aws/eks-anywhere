@@ -67,6 +67,23 @@ func (pi *Installer) InstallCuratedPackages(ctx context.Context) {
 	}
 }
 
+// UpgradeCuratedPackages upgrades curated packages as part of the cluster upgrade.
+func (pi *Installer) UpgradeCuratedPackages(ctx context.Context) {
+	if IsPackageControllerDisabled(pi.spec.Cluster) {
+		logger.Info("Package controller disabled")
+		return
+	}
+	PrintLicense()
+	if err := pi.installPackagesController(ctx); err != nil {
+		logger.MarkWarning("Failed to upgrade the optional EKS-A Curated Package Controller.", "warning", err)
+		return
+	}
+
+	if err := pi.installPackages(ctx); err != nil {
+		logger.MarkWarning("Failed upgrading curated packages on the cluster.", "error", err)
+	}
+}
+
 func (pi *Installer) installPackagesController(ctx context.Context) error {
 	logger.Info("Enabling curated packages on the cluster")
 	err := pi.packageController.Enable(ctx)

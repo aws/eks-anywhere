@@ -25,14 +25,14 @@ type Create struct {
 	gitOpsManager    interfaces.GitOpsManager
 	writer           filewriter.FileWriter
 	eksdInstaller    interfaces.EksdInstaller
-	packageInstaller interfaces.PackageInstaller
+	packageInstaller interfaces.PackageManager
 }
 
 // NewCreate returns a Create instance.
 func NewCreate(clientFactory interfaces.ClientFactory, bootstrapper interfaces.Bootstrapper, provider providers.Provider,
 	clusterManager interfaces.ClusterManager, gitOpsManager interfaces.GitOpsManager,
 	writer filewriter.FileWriter, eksdInstaller interfaces.EksdInstaller,
-	packageInstaller interfaces.PackageInstaller,
+	packageInstaller interfaces.PackageManager,
 ) *Create {
 	return &Create{
 		clientFactory:    clientFactory,
@@ -55,16 +55,16 @@ func (c *Create) Run(ctx context.Context, clusterSpec *cluster.Spec, validator i
 		}
 	}
 	commandContext := &task.CommandContext{
-		ClientFactory:    c.clientFactory,
-		Bootstrapper:     c.bootstrapper,
-		Provider:         c.provider,
-		ClusterManager:   c.clusterManager,
-		GitOpsManager:    c.gitOpsManager,
-		ClusterSpec:      clusterSpec,
-		Writer:           c.writer,
-		Validations:      validator,
-		EksdInstaller:    c.eksdInstaller,
-		PackageInstaller: c.packageInstaller,
+		ClientFactory:  c.clientFactory,
+		Bootstrapper:   c.bootstrapper,
+		Provider:       c.provider,
+		ClusterManager: c.clusterManager,
+		GitOpsManager:  c.gitOpsManager,
+		ClusterSpec:    clusterSpec,
+		Writer:         c.writer,
+		Validations:    validator,
+		EksdInstaller:  c.eksdInstaller,
+		PackageManager: c.packageInstaller,
 	}
 
 	if clusterSpec.ManagementCluster != nil {
@@ -486,7 +486,7 @@ func (s *DeleteBootstrapClusterTask) Name() string {
 }
 
 func (cp *InstallCuratedPackagesTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
-	commandContext.PackageInstaller.InstallCuratedPackages(ctx)
+	commandContext.PackageManager.InstallCuratedPackages(ctx)
 	return nil
 }
 

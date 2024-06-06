@@ -28,7 +28,7 @@ type createTestSetup struct {
 	t                    *testing.T
 	client               *clientmocks.MockClient
 	clientFactory        *mocks.MockClientFactory
-	packageInstaller     *mocks.MockPackageInstaller
+	packageInstaller     *mocks.MockPackageManager
 	bootstrapper         *mocks.MockBootstrapper
 	clusterManager       *mocks.MockClusterManager
 	gitOpsManager        *mocks.MockGitOpsManager
@@ -57,7 +57,7 @@ func newCreateTest(t *testing.T) *createTestSetup {
 	provider := providermocks.NewMockProvider(mockCtrl)
 	writer := writermocks.NewMockFileWriter(mockCtrl)
 	eksd := mocks.NewMockEksdInstaller(mockCtrl)
-	packageInstaller := mocks.NewMockPackageInstaller(mockCtrl)
+	packageInstaller := mocks.NewMockPackageManager(mockCtrl)
 
 	datacenterConfig := &v1alpha1.VSphereDatacenterConfig{}
 	machineConfigs := []providers.MachineConfig{&v1alpha1.VSphereMachineConfig{}}
