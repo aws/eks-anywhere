@@ -36,7 +36,7 @@ fi
 
 REPO_ROOT=$(git rev-parse --show-toplevel)
 BIN_FOLDER=$REPO_ROOT/bin
-TEST_REGEX="${1:-TestDockerKubernetes125SimpleFlow}"
+TEST_REGEX="${1:-TestDockerKubernetes130SimpleFlow}"
 BRANCH_NAME="${2:-main}"
 
 
