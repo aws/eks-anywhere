@@ -4,12 +4,9 @@
 package e2e
 
 import (
-	"fmt"
-	"path/filepath"
 	"time"
 
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
-	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
@@ -30,18 +27,11 @@ func runCertManagerRemoteClusterInstallSimpleFlow(test *framework.MulticlusterE2
 		packagePrefix := "test"
 		packageFile := e.BuildPackageConfigFile(packageName, packagePrefix, EksaPackagesNamespace)
 		test.ManagementCluster.InstallCuratedPackageFile(packageFile, kubeconfig.FromClusterName(test.ManagementCluster.ClusterName))
-		e.VerifyCertManagerPackageInstalled(packagePrefix, EksaPackagesNamespace, cmPackageName, withMgmtClusterSetup(test.ManagementCluster))
-		e.CleanupCerts(withMgmtClusterSetup(test.ManagementCluster))
+		e.VerifyCertManagerPackageInstalled(packagePrefix, EksaPackagesNamespace, cmPackageName, withCluster(test.ManagementCluster))
+		e.CleanupCerts(withCluster(test.ManagementCluster))
 		e.DeleteClusterWithKubectl()
 		e.ValidateClusterDelete()
 	})
 	time.Sleep(5 * time.Minute)
 	test.DeleteManagementCluster()
-}
-
-func withMgmtClusterSetup(cluster *framework.ClusterE2ETest) *types.Cluster {
-	return &types.Cluster{
-		Name:           cluster.ClusterName,
-		KubeconfigFile: filepath.Join(cluster.ClusterName, fmt.Sprintf("%s-eks-a-cluster.kubeconfig", cluster.ClusterName)),
-	}
 }

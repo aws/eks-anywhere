@@ -20,9 +20,9 @@ func runCuratedPackageEmissaryInstall(test *framework.ClusterE2ETest) {
 	test.SetPackageBundleActive()
 	packageFile := test.BuildPackageConfigFile(emissaryPackageName, emissaryPackagePrefix, EksaPackagesNamespace)
 	test.InstallCuratedPackageFile(packageFile, kubeconfig.FromClusterName(test.ClusterName))
-	test.VerifyEmissaryPackageInstalled(emissaryPackagePrefix+"-"+emissaryPackageName, withMgmtCluster(test))
+	test.VerifyEmissaryPackageInstalled(emissaryPackagePrefix+"-"+emissaryPackageName, withCluster(test))
 	if test.Provider.Name() == constants.DockerProviderName {
-		test.TestEmissaryPackageRouting(emissaryPackagePrefix+"-"+emissaryPackageName, "hello", withMgmtCluster(test))
+		test.TestEmissaryPackageRouting(emissaryPackagePrefix+"-"+emissaryPackageName, "hello", withCluster(test))
 	}
 }
 
@@ -41,7 +41,7 @@ func runCuratedPackageEmissaryRemoteClusterInstallSimpleFlow(test *framework.Mul
 		test.ManagementCluster.SetPackageBundleActive()
 		packageFile := e.BuildPackageConfigFile(emissaryPackageName, emissaryPackagePrefix, EksaPackagesNamespace)
 		test.ManagementCluster.InstallCuratedPackageFile(packageFile, kubeconfig.FromClusterName(test.ManagementCluster.ClusterName))
-		e.VerifyEmissaryPackageInstalled(emissaryPackagePrefix+"-"+emissaryPackageName, withMgmtCluster(test.ManagementCluster))
+		e.VerifyEmissaryPackageInstalled(emissaryPackagePrefix+"-"+emissaryPackageName, withCluster(test.ManagementCluster))
 		e.DeleteClusterWithKubectl()
 		e.ValidateClusterDelete()
 	})

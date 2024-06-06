@@ -13,7 +13,7 @@ func runAutoscalerWithMetricsServerSimpleFlow(test *framework.ClusterE2ETest) {
 		metricServerName := "metrics-server"
 		targetNamespace := "eksa-packages"
 		test.InstallAutoScalerWithMetricServer(targetNamespace)
-		test.CombinedAutoScalerMetricServerTest(autoscalerName, metricServerName, targetNamespace, withMgmtCluster(test))
+		test.CombinedAutoScalerMetricServerTest(autoscalerName, metricServerName, targetNamespace, withCluster(test))
 	})
 }
 
@@ -25,7 +25,7 @@ func runAutoscalerWithMetricsServerTinkerbellSimpleFlow(test *framework.ClusterE
 	metricServerName := "metrics-server"
 	targetNamespace := "eksa-packages"
 	test.InstallAutoScalerWithMetricServer(targetNamespace)
-	test.CombinedAutoScalerMetricServerTest(autoscalerName, metricServerName, targetNamespace, withMgmtCluster(test))
+	test.CombinedAutoScalerMetricServerTest(autoscalerName, metricServerName, targetNamespace, withCluster(test))
 	test.DeleteCluster()
 	test.ValidateHardwareDecommissioned()
 }
