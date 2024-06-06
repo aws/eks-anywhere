@@ -46,15 +46,14 @@ endif
 
 ifeq (,$(findstring $(BRANCH_NAME),main))
 ## use the branch-specific bundle manifest if the branch is not 'main'
-BUNDLE_MANIFEST_URL?=https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/${BRANCH_NAME}/bundle-release.yaml
 RELEASE_MANIFEST_URL?=$(RELEASE_MANIFEST_HOST)/${BRANCH_NAME}/eks-a-release.yaml
 LATEST=$(BRANCH_NAME)
 else
 ## use the standard bundle manifest if the branch is 'main'
-BUNDLE_MANIFEST_URL?=https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/bundle-release.yaml
 RELEASE_MANIFEST_URL?=$(RELEASE_MANIFEST_HOST)/eks-a-release.yaml
 LATEST=latest
 endif
+BUNDLE_MANIFEST_URL?=$(shell curl $(RELEASE_MANIFEST_URL) | yq ".spec.releases[-1].bundleManifestUrl")
 
 # DEV_GIT_VERSION should be something like v0.19.0-dev+latest, depending on the base branch
 # and if this is a local build or a CI build.
@@ -160,7 +159,7 @@ EKS_A_CROSS_PLATFORMS := $(foreach platform,$(EKS_A_PLATFORMS),eks-a-cross-platf
 E2E_CROSS_PLATFORMS := $(foreach platform,$(EKS_A_PLATFORMS),e2e-cross-platform-$(platform))
 EKS_A_RELEASE_CROSS_PLATFORMS := $(foreach platform,$(EKS_A_PLATFORMS),eks-a-release-cross-platform-$(platform))
 
-DOCKER_E2E_TEST := TestDockerKubernetes125SimpleFlow
+DOCKER_E2E_TEST := TestDockerKubernetes130SimpleFlow
 LOCAL_E2E_TESTS ?= $(DOCKER_E2E_TEST)
 
 EMBED_CONFIG_FOLDER = pkg/files/config
