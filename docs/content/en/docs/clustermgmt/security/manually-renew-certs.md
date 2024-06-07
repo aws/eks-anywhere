@@ -84,8 +84,9 @@ ${IMAGE_ID} tmp-cert-renew \
 {{< tab header="Ubuntu or RHEL" lang="bash" >}}
 sudo etcdctl --cacert=/etc/etcd/pki/ca.crt --cert=/etc/etcd/pki/etcdctl-etcd-client.crt --key=/etc/etcd/pki/etcdctl-etcd-client.key member list
 {{< /tab >}}
+
 {{< tab header="Bottlerocket" lang="bash" >}}
-ETCD_CONTAINER_ID=$(ctr -n k8s.io c ls | grep -w "etcd-io" | cut -d " " -f1)
+ETCD_CONTAINER_ID=$(ctr -n k8s.io c ls | grep -w "etcd-io" | cut -d " " -f1 | tail -1)
 ctr -n k8s.io t exec -t --exec-id etcd ${ETCD_CONTAINER_ID} etcdctl \
      --cacert=/var/lib/etcd/pki/ca.crt \
      --cert=/var/lib/etcd/pki/server.crt \
@@ -153,7 +154,17 @@ ${IMAGE_ID} tmp-cert-renew \
 {{< /tab >}}
 {{< /tabpane >}}
 
-3. If you have external etcd nodes, manually replace the `apiserver-etcd-client.crt` and `apiserver-etcd-client.key` file in `/etc/kubernetes/pki` (or `/var/lib/kubeadm/pki` in Bottlerocket) folder with the files you saved from any etcd node.
+3. If you have external etcd nodes, manually replace the `server-etcd-client.crt` and `apiserver-etcd-client.key` files in the `/etc/kubernetes/pki` (or `/var/lib/kubeadm/pki` in Bottlerocket) folder with the files you saved from any etcd node.
+
+   - **For Bottlerocket**:
+
+   ```
+   cp apiserver-etcd-client.key /tmp/
+   cp server-etcd-client.crt /tmp/
+   sudo sheltie
+   cp /run/host-containerd/io.containerd.runtime.v2.task/default/admin/rootfs/tmp/apiserver-etcd-client.key /var/lib/kubeadm/pki/
+   cp /run/host-containerd/io.containerd.runtime.v2.task/default/admin/rootfs/tmp/server-etcd-client.crt /var/lib/kubeadm/pki/
+   ```
 
 4. Restart static control plane pods.
 
@@ -219,3 +230,66 @@ etcd:
       - https://xxx.xxx.xxx.xxx:2379
       - https://xxx.xxx.xxx.xxx:2379
 ```
+
+### What do I do if my local kubeconfig has expired?
+
+Your local kubeconfig, used to interact with the cluster, contains a certificate that expires after 1 year. When you rotate cluster certificates, a new kubeconfig with a new certificate is created as a Secret in the cluster. If you do not retrieve the new kubeconfig and your local kubeconfig certificate expires, you will receive the following error:
+
+```
+Error: Couldn't get current Server API group list: the server has asked for the client to provide credentials error: you must be logged in to the server.
+This error typically occurs when the cluster certificates have been renewed or extended during the upgrade process. To resolve this issue, you need to update your local kubeconfig file with the new cluster credentials.
+```
+
+You can extract your new kubeconfig using the following steps.
+
+1. You can extract your new kubeconfig by SSHing to one of the Control Plane nodes, exporting kubeconfig from the secret object, and copying kubeconfig file to `/tmp` directory, as shown here:
+
+```
+ssh -i <YOUR_PRIVATE_KEY> <USER_NAME>@<YOUR_CONTROLPLANE_IP> # USER_NAME should be ec2-user for bottlerocket, ubuntu for Ubuntu ControlPlane machine Operating System
+
+```
+
+{{< tabpane >}}
+{{< tab header="Ubuntu or RHEL" lang="bash" >}}
+
+export CLUSTER_NAME="<YOUR_CLUSTER_NAME_HERE>"
+
+cat /var/lib/kubeadm/admin.conf
+export KUBECONFIG="/var/lib/kubeadm/admin.conf"
+
+kubectl get secret ${CLUSTER_NAME}-kubeconfig -n eksa-system -o yaml -o=jsonpath="{.data.value}" | base64 --decode > /tmp/user-admin.kubeconfig
+
+{{< /tab >}}
+
+{{< tab header="Bottlerocket" lang="bash" >}}
+
+# You would need to be in the admin container when you ssh to the Bottlerocket machine
+# open a root shell
+sudo sheltie
+
+cat /var/lib/kubeadm/admin.conf
+
+cat /var/lib/kubeadm/admin.conf > /run/host-containerd/io.containerd.runtime.v2.task/default/admin/rootfs/tmp/kubernetes-admin.kubeconfig
+exit # exit from the sudo sheltie container
+
+export CLUSTER_NAME="<YOUR_CLUSTER_NAME_HERE>"
+export KUBECONFIG="/tmp/kubernetes-admin.kubeconfig"
+kubectl get secret ${CLUSTER_NAME}-kubeconfig -n eksa-system -o yaml -o=jsonpath="{.data.value}" | base64 --decode > /tmp/user-admin.kubeconfig
+exit # exit from the Control Plane Machine
+
+{{< /tab >}}
+{{< /tabpane >}}
+Note: Install kubectl on the Control Plane Machine using the instructions [here](https://anywhere.eks.amazonaws.com/docs/getting-started/install/#manually-macos-and-linux)
+
+2. From your admin machine, download the kubeconfig file from the ControlPlane node and use it to access your Kubernetes Cluster.
+
+```
+ssh <ADMIN_MACHINE_IP>
+
+export CONTROLPLANE_IP="<CONTROLPLANE_IP_ADDR>"
+sftp -i <keypair> <USER_NAME>@${CONTROLPLANE_IP}:/tmp/user-admin.kubeconfig . # USER_NAME should be ec2-user for bottlerocket, ubuntu for Ubuntu ControlPlane machine 
+
+ls -ltr 
+export KUBECONFIG="user-admin.kubeconfig"
+
+kubectl get pods
