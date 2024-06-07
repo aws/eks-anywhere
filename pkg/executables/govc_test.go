@@ -20,6 +20,7 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/clients/vsphere"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	mockexecutables "github.com/aws/eks-anywhere/pkg/executables/mocks"
 	"github.com/aws/eks-anywhere/pkg/retrier"
@@ -1719,6 +1720,64 @@ func TestGovcGetResourcePoolInfo(t *testing.T) {
 				gt.Expect(err.Error()).To(Equal(tt.wantErr.Error()))
 			}
 			gt.Expect(poolMemInfo).To(Equal(tt.wantMemInfo))
+		})
+	}
+}
+
+func TestListVMs(t *testing.T) {
+	testCases := []struct {
+		name            string
+		folder          string
+		vsphereResponse string
+		want            []vsphere.VM
+	}{
+		{
+			name:            "null response",
+			folder:          "my-vms",
+			vsphereResponse: `null`,
+			want:            nil,
+		},
+		{
+			name:            "empty response",
+			folder:          "my-vms",
+			vsphereResponse: `null`,
+			want:            nil,
+		},
+		{
+			name:   "some vms",
+			folder: "my-vms",
+			vsphereResponse: `{
+     "elements": [
+		{
+			"name": "vm1",
+			"path": "/SDDC-Datacenter/vm/my-vms/vm1"
+	    },
+		{
+			"name": "vm2",
+			"path": "/SDDC-Datacenter/vm/my-vms/vm2"
+	    }
+	 ]
+}`,
+			want: []vsphere.VM{
+				{
+					Path: "/SDDC-Datacenter/vm/my-vms/vm1",
+				},
+				{
+					Path: "/SDDC-Datacenter/vm/my-vms/vm2",
+				},
+			},
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			ctx := context.Background()
+			g := NewWithT(t)
+
+			_, govc, executable, env := setup(t)
+			executable.EXPECT().ExecuteWithEnv(ctx, env, "ls", "-t", "VirtualMachine", "-json", tc.folder).Return(*bytes.NewBufferString(tc.vsphereResponse), nil)
+
+			// g.Expect(err).NotTo(HaveOccurred())
+			g.Expect(govc.ListVMs(ctx, tc.folder)).To(BeComparableTo(tc.want))
 		})
 	}
 }

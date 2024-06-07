@@ -203,6 +203,12 @@ phases:
         --insecure
         --ignoreErrors
         -v 4
+      - >
+        ./bin/test e2e cleanup tinkerbell
+        --storage-bucket ${INTEGRATION_TEST_STORAGE_BUCKET}
+        --instance-config ${INTEGRATION_TEST_INFRA_CONFIG}
+        --dry-run
+        -v 4
   build:
     commands:
       - export JOB_ID=$CODEBUILD_BUILD_ID

@@ -49,12 +49,8 @@ const (
 
 func newTestRunner(runnerType TestRunnerType, config TestInfraConfig) (TestRunner, error) {
 	if runnerType == VSphereTestRunnerType {
-		var err error
 		v := &config.VSphereTestRunner
-		v.envMap, err = v.setEnvironment()
-		if err != nil {
-			return nil, fmt.Errorf("failed to set env for vSphere test runner: %v", err)
-		}
+		v.setEnvironment()
 		return v, nil
 	} else {
 		return &config.Ec2TestRunner, nil
@@ -72,7 +68,10 @@ func NewTestRunnerConfigFromFile(logger logr.Logger, configFile string) (*TestIn
 		return nil, fmt.Errorf("failed to create test runner config from file: %v", err)
 	}
 
-	config := TestInfraConfig{}
+	config, err := ReadRunnerConfig(configFile)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create test runner config from file: %v", err)
+	}
 	config.VSphereTestRunner.logger = logger
 	config.Ec2TestRunner.logger = logger
 
@@ -81,7 +80,35 @@ func NewTestRunnerConfigFromFile(logger logr.Logger, configFile string) (*TestIn
 		return nil, fmt.Errorf("failed to create test runner config from file: %v", err)
 	}
 
-	return &config, nil
+	return config, nil
+}
+
+// ReadRunnerConfig reads the runner config from the given file.
+func ReadRunnerConfig(configFile string) (*TestInfraConfig, error) {
+	file, err := os.ReadFile(configFile)
+	if err != nil {
+		return nil, fmt.Errorf("reading runner config: %w", err)
+	}
+
+	config := &TestInfraConfig{}
+	err = yaml.Unmarshal(file, config)
+	if err != nil {
+		return nil, fmt.Errorf("unmarshalling runner config: %v", err)
+	}
+
+	if vSphereUsername, ok := os.LookupEnv(testRunnerVCUserEnvVar); ok && len(vSphereUsername) > 0 {
+		config.VSphereTestRunner.Username = vSphereUsername
+	} else {
+		return nil, fmt.Errorf("missing environment variable: %s", testRunnerVCUserEnvVar)
+	}
+
+	if vSpherePassword, ok := os.LookupEnv(testRunnerVCPasswordEnvVar); ok && len(vSpherePassword) > 0 {
+		config.VSphereTestRunner.Password = vSpherePassword
+	} else {
+		return nil, fmt.Errorf("missing environment variable: %s", testRunnerVCPasswordEnvVar)
+	}
+
+	return config, nil
 }
 
 type testRunner struct {
@@ -99,7 +126,8 @@ type VSphereTestRunner struct {
 	testRunner
 	ActivationId string
 	envMap       map[string]string
-	Url          string `yaml:"url"`
+
+	URL          string `yaml:"url"`
 	Insecure     bool   `yaml:"insecure"`
 	Library      string `yaml:"library"`
 	Template     string `yaml:"template"`
@@ -108,34 +136,28 @@ type VSphereTestRunner struct {
 	ResourcePool string `yaml:"resourcePool"`
 	Network      string `yaml:"network"`
 	Folder       string `yaml:"folder"`
+	Username     string
+	Password     string
 }
 
-func (v *VSphereTestRunner) setEnvironment() (map[string]string, error) {
-	envMap := make(map[string]string)
-	if vSphereUsername, ok := os.LookupEnv(testRunnerVCUserEnvVar); ok && len(vSphereUsername) > 0 {
-		envMap[govcUsernameKey] = vSphereUsername
-	} else {
-		return nil, fmt.Errorf("missing environment variable: %s", testRunnerVCUserEnvVar)
+func (v *VSphereTestRunner) setEnvironment() {
+	v.envMap = map[string]string{
+		govcUsernameKey:   v.Username,
+		govcPasswordKey:   v.Password,
+		govcURLKey:        v.URL,
+		govcInsecure:      strconv.FormatBool(v.Insecure),
+		govcDatacenterKey: v.Datacenter,
 	}
-
-	if vSpherePassword, ok := os.LookupEnv(testRunnerVCPasswordEnvVar); ok && len(vSpherePassword) > 0 {
-		envMap[govcPasswordKey] = vSpherePassword
-	} else {
-		return nil, fmt.Errorf("missing environment variable: %s", testRunnerVCPasswordEnvVar)
-	}
-
-	envMap[govcURLKey] = v.Url
-	envMap[govcInsecure] = strconv.FormatBool(v.Insecure)
-	envMap[govcDatacenterKey] = v.Datacenter
-
-	v.envMap = envMap
-	return envMap, nil
 }
 
 func (v *VSphereTestRunner) createInstance(c *instanceRunConf) (string, error) {
 	name := getTestRunnerName(v.logger, c.JobID)
 
-	ssmActivationInfo, err := ssm.CreateActivation(c.Session, name, c.InstanceProfileName)
+	ssmActivationInfo, err := ssm.CreateActivation(
+		// It's important to add the tinkerbell job tag since that's what we use to then search
+		// for lingering activations and instances to clean up.
+		c.Session, name, c.InstanceProfileName, ssm.Tag{tinkerbellJobTag, c.JobID},
+	)
 	if err != nil {
 		return "", fmt.Errorf("unable to create ssm activation: %v", err)
 	}
@@ -199,7 +221,12 @@ func (e *Ec2TestRunner) createInstance(c *instanceRunConf) (string, error) {
 func (v *VSphereTestRunner) tagInstance(c *instanceRunConf, key, value string) error {
 	vmName := getTestRunnerName(v.logger, c.JobID)
 	vmPath := fmt.Sprintf("/%s/vm/%s/%s", v.Datacenter, v.Folder, vmName)
-	tag := fmt.Sprintf("%s:%s", key, value)
+	var tag string
+	if value != "" {
+		tag = fmt.Sprintf("%s:%s", key, value)
+	} else {
+		tag = key
+	}
 
 	if err := vsphere.TagVirtualMachine(v.envMap, vmPath, tag); err != nil {
 		return fmt.Errorf("failed to tag vSphere test runner: %v", err)
@@ -216,8 +243,8 @@ func (e *Ec2TestRunner) tagInstance(c *instanceRunConf, key, value string) error
 }
 
 func (v *VSphereTestRunner) decommInstance(c *instanceRunConf) error {
-	_, deregisterError := ssm.DeregisterInstance(c.Session, v.InstanceID)
-	_, deactivateError := ssm.DeleteActivation(c.Session, v.ActivationId)
+	_, deregisterError := ssm.DeregisterInstances(c.Session, v.InstanceID)
+	_, deactivateError := ssm.DeleteActivations(c.Session, v.ActivationId)
 	deleteError := cleanup.VsphereRmVms(context.Background(), getTestRunnerName(v.logger, c.JobID), executables.WithGovcEnvMap(v.envMap))
 
 	if deregisterError != nil {

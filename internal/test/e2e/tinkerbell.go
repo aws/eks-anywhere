@@ -1,13 +1,16 @@
 package e2e
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"regexp"
 
+	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/go-logr/logr"
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
+	"github.com/aws/eks-anywhere/internal/pkg/s3"
 	"github.com/aws/eks-anywhere/internal/pkg/ssm"
 	e2etests "github.com/aws/eks-anywhere/test/framework"
 )
@@ -24,6 +27,9 @@ const (
 	tinkerbellDefaultMaxHardwarePerE2ETest     = 4
 	tinkerbellBootstrapInterfaceEnvVar         = "T_TINKERBELL_BOOTSTRAP_INTERFACE"
 	tinkerbellCIEnvironmentEnvVar              = "T_TINKERBELL_CI_ENVIRONMENT"
+
+	// tinkerbellJobTag is the tag used to map vm runners and SSM activations to an e2e job.
+	tinkerbellJobTag = "eksa-tinkerbell-e2e-job"
 )
 
 // TinkerbellTest maps each Tinkbell test with the hardware count needed for the test.
@@ -124,4 +130,75 @@ func getTinkerbellAirgappedTests(tests []string) []string {
 		}
 	}
 	return tinkerbellTests
+}
+
+// ReadTinkerbellMachinePool returns the list of baremetal machines designated for e2e tests.
+func ReadTinkerbellMachinePool(session *session.Session, bucketName string) ([]*api.Hardware, error) {
+	hardware := []*api.Hardware{}
+	machines, err := nonAirgappedHardwarePool(session, bucketName)
+	if err != nil {
+		return nil, err
+	}
+	hardware = append(hardware, machines...)
+
+	machines, err = airgappedHardwarePool(session, bucketName)
+	if err != nil {
+		return nil, err
+	}
+	hardware = append(hardware, machines...)
+
+	return hardware, nil
+}
+
+func nonAirgappedHardwarePool(session *session.Session, storageBucket string) ([]*api.Hardware, error) {
+	err := s3.DownloadToDisk(session, os.Getenv(tinkerbellHardwareS3FileKeyEnvVar), storageBucket, e2eHardwareCsvFilePath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to download tinkerbell hardware csv: %v", err)
+	}
+
+	hardware, err := api.ReadTinkerbellHardwareFromFile(e2eHardwareCsvFilePath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get Tinkerbell hardware: %v", err)
+	}
+	return hardware, nil
+}
+
+// airgappedHardwarePool returns the hardware pool for airgapped tinkerbell tests.
+// Airgapped tinkerbell tests have special hardware requirements that doesn't have internet connectivity.
+func airgappedHardwarePool(session *session.Session, storageBucket string) ([]*api.Hardware, error) {
+	err := s3.DownloadToDisk(session, os.Getenv(tinkerbellAirgappedHardwareS3FileKeyEnvVar), storageBucket, e2eAirgappedHardwareCsvFilePath)
+	if err != nil {
+		return nil, fmt.Errorf("downloading tinkerbell airgapped hardware csv: %v", err)
+	}
+
+	hardware, err := api.ReadTinkerbellHardwareFromFile(e2eAirgappedHardwareCsvFilePath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get Tinkerbell hardware: %v", err)
+	}
+
+	return hardware, nil
+}
+
+type TinkerbellSSMInstances struct {
+	// InstanceIDs is a list of SSM instance IDs created for the vm runners.
+	InstanceIDs []string
+	// ActivationIDs is a list of SSM activation IDs created for the vm runners.
+	ActivationIDs []string
+}
+
+// ListTinkerbellSSMInstances returns a list of SSM instances created for the tinkerbell vm runners.
+func ListTinkerbellSSMInstances(ctx context.Context, session *session.Session) (*TinkerbellSSMInstances, error) {
+	runnerInstances := &TinkerbellSSMInstances{}
+
+	instances, err := ssm.ListInstancesByTags(ctx, session, ssm.Tag{Key: tinkerbellJobTag, Value: "*"})
+	if err != nil {
+		return nil, fmt.Errorf("listing tinkerbell runners: %v", err)
+	}
+
+	for _, instance := range instances {
+		runnerInstances.ActivationIDs = append(runnerInstances.ActivationIDs, *instance.ActivationId)
+		runnerInstances.InstanceIDs = append(runnerInstances.InstanceIDs, *instance.InstanceId)
+	}
+
+	return runnerInstances, nil
 }

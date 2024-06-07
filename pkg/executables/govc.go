@@ -19,6 +19,7 @@ import (
 	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/clients/vsphere"
 	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
@@ -95,6 +96,26 @@ func NewGovc(executable Executable, writer filewriter.FileWriter, opts ...GovcOp
 func WithGovcEnvMap(envMap map[string]string) GovcOpt {
 	return func(g *Govc) {
 		g.envMap = envMap
+	}
+}
+
+type GovcConfig struct {
+	Username   string
+	Password   string
+	URL        string
+	Insecure   bool
+	Datacenter string
+}
+
+// Configure sets up the govc executable with the provided configuration.
+// This is not thread safe.
+func (g *Govc) Configure(config GovcConfig) {
+	g.envMap = map[string]string{
+		govcUsernameKey:   config.Username,
+		govcPasswordKey:   config.Password,
+		govcURLKey:        config.URL,
+		govcInsecure:      strconv.FormatBool(config.Insecure),
+		govcDatacenterKey: config.Datacenter,
 	}
 }
 
@@ -503,7 +524,7 @@ func (g *Govc) DeleteTemplate(ctx context.Context, resourcePool, templatePath st
 	if err := g.removeSnapshotsFromVM(ctx, templatePath); err != nil {
 		return err
 	}
-	if err := g.deleteVM(ctx, templatePath); err != nil {
+	if err := g.DeleteVM(ctx, templatePath); err != nil {
 		return err
 	}
 
@@ -524,7 +545,7 @@ func (g *Govc) removeSnapshotsFromVM(ctx context.Context, path string) error {
 	return nil
 }
 
-func (g *Govc) deleteVM(ctx context.Context, path string) error {
+func (g *Govc) DeleteVM(ctx context.Context, path string) error {
 	if _, err := g.exec(ctx, "vm.destroy", path); err != nil {
 		return fmt.Errorf("deleting vm: %v", err)
 	}
@@ -1217,4 +1238,28 @@ func getValueFromString(str string) (int, error) {
 		return 0, err
 	}
 	return numValue, nil
+}
+
+type vmsResponse struct {
+	Elements []vsphere.VM `json:"elements"`
+}
+
+// ListVMs returns the list of VMs in the provided folder.er
+func (g *Govc) ListVMs(ctx context.Context, folder string) ([]vsphere.VM, error) {
+	vmsOutput, err := g.exec(ctx, "ls", "-t", "VirtualMachine", "-json", folder)
+	if err != nil {
+		return nil, fmt.Errorf("govc returned error when listing vms: %w", err)
+	}
+
+	vmsJson := vmsOutput.String()
+	if vmsJson == "null" || vmsJson == "" {
+		return nil, nil
+	}
+
+	vms := &vmsResponse{}
+	if err = json.Unmarshal([]byte(vmsJson), vms); err != nil {
+		return nil, fmt.Errorf("failed unmarshalling govc response from list vms: %w", err)
+	}
+
+	return vms.Elements, nil
 }

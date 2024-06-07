@@ -13,7 +13,6 @@ import (
 	"github.com/go-logr/logr"
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
-	"github.com/aws/eks-anywhere/internal/pkg/s3"
 	"github.com/aws/eks-anywhere/internal/pkg/ssm"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
 	e2etest "github.com/aws/eks-anywhere/test/e2e"
@@ -256,7 +255,7 @@ func RunTests(conf *instanceRunConf) (testInstanceID string, testCommandResult *
 		return "", nil, err
 	}
 
-	if err := conf.reserveHardware(); err != nil {
+	if err = conf.reserveHardware(); err != nil {
 		return "", nil, err
 	}
 	defer conf.releaseHardware()
@@ -479,7 +478,7 @@ func nonAirgappedTinkerbellRunConfs(testsList []string, conf ParallelRunConf, ip
 	if err != nil {
 		return nil, err
 	}
-	hardware, err := getNonAirgappedHardwarePool(conf.StorageBucket)
+	hardware, err := nonAirgappedHardwarePool(conf.session, conf.StorageBucket)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get non-airgapped hardware inventory for Tinkerbell Tests: %v", err)
 	}
@@ -517,7 +516,7 @@ func airgappedTinkerbellRunConfs(testsList []string, conf ParallelRunConf, ipMan
 		return nil, err
 	}
 
-	hardware, err := getAirgappedHardwarePool(conf.StorageBucket)
+	hardware, err := airgappedHardwarePool(conf.session, conf.StorageBucket)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get airgapped hardware inventory for Tinkerbell Tests: %v", err)
 	}
@@ -591,42 +590,6 @@ func logTestGroups(logger logr.Logger, instancesConf []*instanceRunConf) {
 		testGroups = append(testGroups, i.Regex)
 	}
 	logger.V(1).Info("Running tests in parallel", "testsGroups", testGroups)
-}
-
-func getNonAirgappedHardwarePool(storageBucket string) ([]*api.Hardware, error) {
-	awsSession, err := session.NewSession()
-	if err != nil {
-		return nil, fmt.Errorf("creating aws session for tests: %v", err)
-	}
-	err = s3.DownloadToDisk(awsSession, os.Getenv(tinkerbellHardwareS3FileKeyEnvVar), storageBucket, e2eHardwareCsvFilePath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to download tinkerbell hardware csv: %v", err)
-	}
-
-	hardware, err := api.ReadTinkerbellHardwareFromFile(e2eHardwareCsvFilePath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get Tinkerbell hardware: %v", err)
-	}
-	return hardware, nil
-}
-
-// Airgapped tinkerbell tests have special hardware requirements that doesn't have internet connectivity.
-func getAirgappedHardwarePool(storageBucket string) ([]*api.Hardware, error) {
-	awsSession, err := session.NewSession()
-	if err != nil {
-		return nil, fmt.Errorf("creating aws session for tests: %v", err)
-	}
-	err = s3.DownloadToDisk(awsSession, os.Getenv(tinkerbellAirgappedHardwareS3FileKeyEnvVar), storageBucket, e2eAirgappedHardwareCsvFilePath)
-	if err != nil {
-		return nil, fmt.Errorf("downloading tinkerbell airgapped hardware csv: %v", err)
-	}
-
-	hardware, err := api.ReadTinkerbellHardwareFromFile(e2eAirgappedHardwareCsvFilePath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get Tinkerbell hardware: %v", err)
-	}
-
-	return hardware, nil
 }
 
 func logTinkerbellTestHardwareInfo(conf *instanceRunConf, action string) {

@@ -683,8 +683,10 @@ e2e-tests-binary:
 	GOOS=$(GO_OS) GOARCH=$(GO_ARCH) $(GO) test ./test/e2e -c -o "$(E2E_OUTPUT_FILE)" -tags "$(E2E_TAGS)" -ldflags "-X github.com/aws/eks-anywhere/pkg/version.gitVersion=$(DEV_GIT_VERSION) -X github.com/aws/eks-anywhere/pkg/manifests/releases.manifestURL=$(RELEASE_MANIFEST_URL)"
 
 .PHONY: build-integration-test-binary
+build-integration-test-binary: ALL_LINKER_FLAGS := $(LINKER_FLAGS) -X github.com/aws/eks-anywhere/pkg/version.gitVersion=$(DEV_GIT_VERSION) -X github.com/aws/eks-anywhere/pkg/manifests/releases.manifestURL=$(RELEASE_MANIFEST_URL) -s -w -buildid='' -extldflags -static
+build-integration-test-binary: LINKER_FLAGS_ARG := -ldflags "$(ALL_LINKER_FLAGS)"
 build-integration-test-binary:
-	GOOS=$(GO_OS) GOARCH=$(GO_ARCH) $(GO) build -o bin/test github.com/aws/eks-anywhere/cmd/integration_test
+	GOOS=$(GO_OS) GOARCH=$(GO_ARCH) $(GO) build $(LINKER_FLAGS_ARG) -o bin/test github.com/aws/eks-anywhere/cmd/integration_test
 
 .PHONY: conformance
 conformance:
