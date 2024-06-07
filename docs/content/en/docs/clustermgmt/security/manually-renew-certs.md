@@ -84,6 +84,7 @@ ${IMAGE_ID} tmp-cert-renew \
 {{< tab header="Ubuntu or RHEL" lang="bash" >}}
 sudo etcdctl --cacert=/etc/etcd/pki/ca.crt --cert=/etc/etcd/pki/etcdctl-etcd-client.crt --key=/etc/etcd/pki/etcdctl-etcd-client.key member list
 {{< /tab >}}
+
 {{< tab header="Bottlerocket" lang="bash" >}}
 ETCD_CONTAINER_ID=$(ctr -n k8s.io c ls | grep -w "etcd-io" | cut -d " " -f1 | tail -1)
 ctr -n k8s.io t exec -t --exec-id etcd ${ETCD_CONTAINER_ID} etcdctl \
