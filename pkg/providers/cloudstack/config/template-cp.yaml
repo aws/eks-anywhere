@@ -158,7 +158,7 @@ spec:
     files:
 {{- if .kubeletConfiguration }}
     - content: |
-{{ .kubeletConfiguration | indent 8}}
+{{ .kubeletConfiguration | indent 8 }}
       owner: root:root
       permissions: "0644"
       path: /etc/kubernetes/patches/kubeletconfiguration0+strategic.yaml
@@ -309,10 +309,15 @@ spec:
         criSocket: /var/run/containerd/containerd.sock
         kubeletExtraArgs:
           provider-id: cloudstack:///'{{`{{ ds.meta_data.instance_id }}`}}'
+{{- if not .kubeletConfiguration }}
           read-only-port: "0"
           anonymous-auth: "false"
 {{- if .kubeletExtraArgs }}
 {{ .kubeletExtraArgs.ToYaml | indent 10 }}
+{{- end }}
+{{- end }}
+{{- if .nodeLabelArgs }}
+{{ .nodeLabelArgs.ToYaml | indent 10 }}
 {{- end }}
         name: "{{`{{ ds.meta_data.hostname }}`}}"
 {{- if .controlPlaneTaints }}
@@ -335,10 +340,15 @@ spec:
         criSocket: /var/run/containerd/containerd.sock
         kubeletExtraArgs:
           provider-id: cloudstack:///'{{`{{ ds.meta_data.instance_id }}`}}'
+{{- if not .kubeletConfiguration }}
           read-only-port: "0"
           anonymous-auth: "false"
 {{- if .kubeletExtraArgs }}
 {{ .kubeletExtraArgs.ToYaml | indent 10 }}
+{{- end }}
+{{- end }}
+{{- if .nodeLabelArgs }}
+{{ .nodeLabelArgs.ToYaml | indent 10 }}
 {{- end }}
         name: "{{`{{ ds.meta_data.hostname }}`}}"
 {{- if .controlPlaneTaints }}

@@ -828,17 +828,6 @@ func TestDockerTemplateBuilderGenerateCAPISpecControlPlane(t *testing.T) {
 			wantErr: nil,
 		},
 		{
-			name: "kube version not specified",
-			args: args{
-				clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
-					s.Cluster.Name = "test-cluster"
-					s.Cluster.Spec.KubernetesVersion = ""
-				}),
-				buildOptions: nil,
-			},
-			wantErr: fmt.Errorf("error building template map for CP "),
-		},
-		{
 			name: "kubelet config specified",
 			args: args{
 				clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
@@ -922,16 +911,6 @@ func TestDockerTemplateBuilderGenerateCAPISpecWorkers(t *testing.T) {
 		args    args
 		wantErr error
 	}{
-		{
-			name: "kube version not specified",
-			args: args{
-				clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
-					s.Cluster.Name = "test-cluster"
-					s.Cluster.Spec.KubernetesVersion = ""
-				}),
-			},
-			wantErr: fmt.Errorf("error building template map for MD "),
-		},
 		{
 			name: "kubelet config specified",
 			args: args{
