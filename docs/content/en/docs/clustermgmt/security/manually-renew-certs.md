@@ -281,9 +281,6 @@ exit # exit from the Control Plane Machine
 {{< /tabpane >}}
 Note: Install kubectl on the Control Plane Machine using the instructions [here](https://anywhere.eks.amazonaws.com/docs/getting-started/install/#manually-macos-and-linux)
 
-{{< /tab >}}
-{{< /tabpane >}}
-
 2. From your admin machine, download the kubeconfig file from the ControlPlane node and use it to access your Kubernetes Cluster.
 
 ```
