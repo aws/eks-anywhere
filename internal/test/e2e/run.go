@@ -2,6 +2,7 @@ package e2e
 
 import (
 	"fmt"
+	"math/rand"
 	"os"
 	"regexp"
 	"runtime"
@@ -219,6 +220,9 @@ func RunTests(conf instanceRunConf, inventoryCatalogue map[string]*hardwareCatal
 		} else {
 			hardwareCatalogue = inventoryCatalogue[nonAirgappedHardware]
 		}
+		conf.Logger.Info("Shuffling hardware inventory for tinkerbell")
+		// shuffle hardware to introduce randomness during hardware reservation.
+		shuffleHardwareInventory(hardwareCatalogue)
 		err = reserveTinkerbellHardware(&conf, hardwareCatalogue)
 		if err != nil {
 			return "", nil, err
@@ -594,4 +598,11 @@ func logTinkerbellTestHardwareInfo(conf *instanceRunConf, action string) {
 		hardwareInfo = append(hardwareInfo, hardware.Hostname)
 	}
 	conf.Logger.V(1).Info(action+" hardware for TestRunner", "hardwarePool", strings.Join(hardwareInfo, ", "))
+}
+
+func shuffleHardwareInventory(invCatalogue *hardwareCatalogue) {
+	random := rand.New(rand.NewSource(time.Now().UnixNano()))
+	random.Shuffle(len(invCatalogue.hws), func(i, j int) {
+		invCatalogue.hws[i], invCatalogue.hws[j] = invCatalogue.hws[j], invCatalogue.hws[i]
+	})
 }
