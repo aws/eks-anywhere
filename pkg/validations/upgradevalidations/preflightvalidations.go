@@ -124,6 +124,36 @@ func (u *UpgradeValidations) PreflightValidations(ctx context.Context) []validat
 		},
 	}
 
+	if len(u.Opts.Spec.VSphereMachineConfigs) != 0 {
+		cpRef := u.Opts.Spec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
+		if u.Opts.Spec.VSphereMachineConfigs[cpRef].Spec.OSFamily == anywherev1.Bottlerocket {
+			upgradeValidations = append(upgradeValidations,
+				func() *validations.ValidationResult {
+					return &validations.ValidationResult{
+						Name:        "validate cluster's control plane kubelet configuration for Bottlerocket OS",
+						Remediation: "ensure that the settings configured for Kubelet Configuration are supported by Bottlerocket",
+						Err:         validations.ValidateBottlerocketKubeletConfig(u.Opts.Spec),
+					}
+				})
+		}
+
+		wnConfigs := u.Opts.Spec.Cluster.Spec.WorkerNodeGroupConfigurations
+		for i := range wnConfigs {
+			workerNodeRef := wnConfigs[i].MachineGroupRef.Name
+
+			if u.Opts.Spec.VSphereMachineConfigs[workerNodeRef].Spec.OSFamily == anywherev1.Bottlerocket {
+				upgradeValidations = append(upgradeValidations,
+					func() *validations.ValidationResult {
+						return &validations.ValidationResult{
+							Name:        "validate cluster's worker node kubelet configuration for Bottlerocket OS",
+							Remediation: "ensure that the settings configured for Kubelet Configuration are supported by Bottlerocket",
+							Err:         validations.ValidateBottlerocketKubeletConfig(u.Opts.Spec),
+						}
+					})
+			}
+		}
+	}
+
 	if u.Opts.Spec.Cluster.IsManaged() {
 		upgradeValidations = append(
 			upgradeValidations,
