@@ -49,4 +49,5 @@ var getPackageCommand = &cobra.Command{
 		}
 		return getResources(cmd.Context(), "packages", gpo.output, kubeConfig, gpo.clusterName, gpo.bundlesOverride, args)
 	},
+	Deprecated: "use `kubectl get packages` instead",
 }

@@ -57,10 +57,7 @@ eksa-packages   mgmt   v1-27-125     active
 eksa-packages   w01    v1-27-125     active 
 ```
 
-Use the EKS Anywhere packages CLI to upgrade the active package bundle of the target cluster. This command can also be used to downgrade to a previous package bundle version.
+To upgrade the active package bundle for the target cluster, edit the `packagebundlecontroller` object on the cluster and set the `activeBundle` field to the new bundle number that is available.
 ```
-export CLUSTER_NAME=mgmt
-eksctl anywhere upgrade packages --bundle-version v1-27-126 --cluster $CLUSTER_NAME
+kubectl edit packagebundlecontroller <cluster name> -n eksa-packages
 ```
-
-
