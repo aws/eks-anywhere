@@ -41,4 +41,5 @@ var getPackageBundleCommand = &cobra.Command{
 		}
 		return getResources(cmd.Context(), "packagebundles", gpbo.output, kubeConfig, "", gpbo.bundlesOverride, args)
 	},
+	Deprecated: "use `kubectl get packagebundle` instead",
 }

@@ -50,6 +50,7 @@ var createPackagesCommand = &cobra.Command{
 		}
 		return nil
 	},
+	Deprecated: "use `kubectl apply` instead",
 }
 
 func createPackages(ctx context.Context) error {
