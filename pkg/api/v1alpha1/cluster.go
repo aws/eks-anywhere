@@ -577,7 +577,7 @@ func validateKubeletConfiguration(eksakubeconfig *unstructured.Unstructured) err
 	}
 
 	if _, ok := eksakubeconfig.Object["providerID"]; ok {
-		return errors.New("can not override providerID and cloudProvider (set by EKS Anywhere)")
+		return errors.New("can not override providerID or cloudProvider (set by EKS Anywhere)")
 	}
 
 	return nil
