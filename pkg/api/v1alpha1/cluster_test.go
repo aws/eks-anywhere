@@ -1234,7 +1234,7 @@ func TestValidateClusterConfigContent(t *testing.T) {
 				}
 			}),
 			wantErr: true,
-			err:     "can not override providerID and cloudProvider",
+			err:     "can not override providerID or cloudProvider",
 		},
 		{
 			testName: "providerid error",
