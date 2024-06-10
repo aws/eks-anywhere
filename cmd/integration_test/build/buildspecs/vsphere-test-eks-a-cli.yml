@@ -79,11 +79,16 @@ env:
     T_PRIVATE_REGISTRY_MIRROR_USERNAME: "harbor-registry-data:authenticated_username"
     T_PRIVATE_REGISTRY_MIRROR_PASSWORD: "harbor-registry-data:authenticated_password"
     T_PRIVATE_REGISTRY_MIRROR_CA_CERT: "harbor-registry-data:authenticated_caCert"
+    T_REGISTRY_MIRROR_OCINAMESPACES_REGISTRY1: "harbor-registry-data:ocinamespace_registry1"
+    T_REGISTRY_MIRROR_OCINAMESPACES_NAMESPACE1: "harbor-registry-data:ocinamespace_namespace1"
+    T_REGISTRY_MIRROR_OCINAMESPACES_REGISTRY2: "harbor-registry-data:ocinamespace_registry2"
+    T_REGISTRY_MIRROR_OCINAMESPACES_NAMESPACE2: "harbor-registry-data:ocinamespace_namespace2"
     T_NTP_SERVERS: "ntp:servers"
     T_AWS_IAM_ROLE_ARN: "aws-iam-auth-role:ec2_role_arn"
     T_IRSA_S3_BUCKET: "etcd-encryption:irsa_s3_bucket"
     T_KMS_IAM_ROLE: "etcd-encryption:kms_iam_role_arn"
     T_KMS_IMAGE: "etcd-encryption:kms_image"
+    T_POD_IDENTITY_WEBHOOK_IMAGE: "etcd-encryption:pod_identity_webhook_image"
     T_KMS_KEY_ARN: "etcd-encryption:kms_key_arn"
     T_KMS_KEY_REGION: "etcd-encryption:region"
     T_KMS_SOCKET: "etcd-encryption:socket"
@@ -125,7 +130,7 @@ phases:
         -v 4
         --skip ${SKIPPED_TESTS}
         --bundles-override=${BUNDLES_OVERRIDE}
-        --cleanup-vms=true
+        --cleanup-resources=true
         --test-report-folder=reports
         --branch-name=${BRANCH_NAME}
         --baremetal-branch=${BAREMETAL_BRANCH}

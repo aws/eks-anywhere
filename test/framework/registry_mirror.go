@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
 )
 
@@ -33,6 +34,11 @@ const (
 	PrivateRegistryUsernameTinkerbellVar = "T_PRIVATE_REGISTRY_MIRROR_USERNAME_TINKERBELL"
 	PrivateRegistryPasswordTinkerbellVar = "T_PRIVATE_REGISTRY_MIRROR_PASSWORD_TINKERBELL"
 	PrivateRegistryCACertTinkerbellVar   = "T_PRIVATE_REGISTRY_MIRROR_CA_CERT_TINKERBELL"
+
+	RegistryMirrorOciNamespacesRegistry1Var  = "T_REGISTRY_MIRROR_OCINAMESPACES_REGISTRY1"
+	RegistryMirrorOciNamespacesNamespace1Var = "T_REGISTRY_MIRROR_OCINAMESPACES_NAMESPACE1"
+	RegistryMirrorOciNamespacesRegistry2Var  = "T_REGISTRY_MIRROR_OCINAMESPACES_REGISTRY2"
+	RegistryMirrorOciNamespacesNamespace2Var = "T_REGISTRY_MIRROR_OCINAMESPACES_NAMESPACE2"
 )
 
 var (
@@ -41,6 +47,7 @@ var (
 	registryMirrorDockerAirgappedRequiredEnvVars   = []string{RegistryMirrorDefaultSecurityGroup, RegistryMirrorAirgappedSecurityGroup}
 	privateRegistryMirrorRequiredEnvVars           = []string{PrivateRegistryEndpointVar, PrivateRegistryPortVar, PrivateRegistryUsernameVar, PrivateRegistryPasswordVar, PrivateRegistryCACertVar}
 	privateRegistryMirrorTinkerbellRequiredEnvVars = []string{PrivateRegistryEndpointTinkerbellVar, PrivateRegistryPortTinkerbellVar, PrivateRegistryUsernameTinkerbellVar, PrivateRegistryPasswordTinkerbellVar, PrivateRegistryCACertTinkerbellVar}
+	registryMirrorOciNamespacesRequiredEnvVars     = []string{RegistryMirrorOciNamespacesRegistry1Var, RegistryMirrorOciNamespacesNamespace1Var}
 )
 
 // WithRegistryMirrorInsecureSkipVerify sets up e2e for registry mirrors with InsecureSkipVerify option.
@@ -54,6 +61,30 @@ func WithRegistryMirrorInsecureSkipVerify(providerName string) ClusterE2ETestOpt
 func WithRegistryMirrorEndpointAndCert(providerName string) ClusterE2ETestOpt {
 	return func(e *ClusterE2ETest) {
 		setupRegistryMirrorEndpointAndCert(e, providerName, false)
+	}
+}
+
+// WithRegistryMirrorOciNamespaces sets up e2e for registry mirrors with ocinamespaces.
+func WithRegistryMirrorOciNamespaces(providerName string) ClusterE2ETestOpt {
+	return func(e *ClusterE2ETest) {
+		var ociNamespaces []v1alpha1.OCINamespace
+
+		checkRequiredEnvVars(e.T, registryMirrorOciNamespacesRequiredEnvVars)
+		ociNamespaces = append(ociNamespaces, v1alpha1.OCINamespace{
+			Registry:  os.Getenv(RegistryMirrorOciNamespacesRegistry1Var),
+			Namespace: os.Getenv(RegistryMirrorOciNamespacesNamespace1Var),
+		})
+
+		reg2val, reg2Found := os.LookupEnv(RegistryMirrorOciNamespacesRegistry2Var)
+		ns2val, ns2Found := os.LookupEnv(RegistryMirrorOciNamespacesNamespace2Var)
+		if reg2Found && ns2Found {
+			ociNamespaces = append(ociNamespaces, v1alpha1.OCINamespace{
+				Registry:  reg2val,
+				Namespace: ns2val,
+			})
+		}
+
+		setupRegistryMirrorEndpointAndCert(e, providerName, false, ociNamespaces...)
 	}
 }
 
@@ -116,7 +147,12 @@ func RequiredRegistryMirrorEnvVars() []string {
 	return append(registryMirrorRequiredEnvVars, registryMirrorDockerAirgappedRequiredEnvVars...)
 }
 
-func setupRegistryMirrorEndpointAndCert(e *ClusterE2ETest, providerName string, insecureSkipVerify bool) {
+// RequiredOciNamespacesEnvVars returns the Env variables to set for OCI Namespaces tests.
+func RequiredOciNamespacesEnvVars() []string {
+	return append(registryMirrorOciNamespacesRequiredEnvVars, RegistryMirrorOciNamespacesRegistry2Var, RegistryMirrorOciNamespacesNamespace2Var)
+}
+
+func setupRegistryMirrorEndpointAndCert(e *ClusterE2ETest, providerName string, insecureSkipVerify bool, ociNamespaces ...v1alpha1.OCINamespace) {
 	var endpoint, hostPort, username, password, registryCert string
 	port := "443"
 
@@ -150,7 +186,7 @@ func setupRegistryMirrorEndpointAndCert(e *ClusterE2ETest, providerName string, 
 	certificate, err := base64.StdEncoding.DecodeString(registryCert)
 	if err == nil {
 		e.clusterFillers = append(e.clusterFillers,
-			api.WithRegistryMirror(endpoint, port, string(certificate), false, insecureSkipVerify),
+			api.WithRegistryMirror(endpoint, port, string(certificate), false, insecureSkipVerify, ociNamespaces...),
 		)
 	}
 

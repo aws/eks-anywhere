@@ -11,8 +11,8 @@ or
 #
 # The makefile will include the .env file and export all the vars to the environment for you
 #
-# By default the local-e2e target will run TestDockerKubernetes125SimpleFlow. You can either 
-#   override LOCAL_E2E_TESTS in your .env file or pass it on the cli every time (i.e LOCAL_E2E_TESTS=TestDockerKubernetes125SimpleFlow)
+# By default the local-e2e target will run TestDockerKubernetes130SimpleFlow. You can either 
+#   override LOCAL_E2E_TESTS in your .env file or pass it on the cli every time (i.e LOCAL_E2E_TESTS=TestDockerKubernetes130SimpleFlow)
 make local-e2e
 ```
 or
@@ -45,7 +45,7 @@ In order to use bundle overrides, take your bundle overrides yaml file and move 
 You will also need to set the environment variable `T_BUNDLES_OVERRIDE=true`
 
 ### Cleaning up VM's after a test run
-In order to clean up VM's after a test runs automatically, set `T_CLEANUP_VMS=true`
+In order to clean up VM's after a test runs automatically, set `T_CLEANUP_RESOURCES=true`
 
 ## VSphere tests requisites
 The following env variables need to be set:

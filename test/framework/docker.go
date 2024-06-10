@@ -39,8 +39,8 @@ func (d *Docker) Name() string {
 // Setup implements the Provider interface.
 func (d *Docker) Setup() {}
 
-// CleanupVMs implements the Provider interface.
-func (d *Docker) CleanupVMs(_ string) error {
+// CleanupResources implements the Provider interface.
+func (d *Docker) CleanupResources(_ string) error {
 	return nil
 }
 
@@ -85,7 +85,7 @@ func (d *Docker) ClusterStateValidations() []clusterf.StateValidation {
 }
 
 // WithKubeVersionAndOS returns a cluster config filler that sets the cluster kube version.
-func (d *Docker) WithKubeVersionAndOS(kubeVersion anywherev1.KubernetesVersion, os OS, release *releasev1.EksARelease) api.ClusterConfigFiller {
+func (d *Docker) WithKubeVersionAndOS(kubeVersion anywherev1.KubernetesVersion, _ OS, _ *releasev1.EksARelease, _ ...bool) api.ClusterConfigFiller {
 	return api.JoinClusterConfigFillers(
 		api.ClusterToConfigFiller(api.WithKubernetesVersion(kubeVersion)),
 	)

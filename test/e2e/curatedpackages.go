@@ -21,7 +21,6 @@ import (
 
 func runCuratedPackageInstall(test *framework.ClusterE2ETest) {
 	test.SetPackageBundleActive()
-	test.GenerateSupportBundleOnCleanupIfTestFailed()
 	err := WaitForPackageToBeInstalled(test, context.Background(), "eks-anywhere-packages", 3*time.Minute)
 	if err != nil {
 		test.T.Fatalf("packages controller not in installed state: %s", err)
@@ -34,7 +33,7 @@ func runCuratedPackageInstall(test *framework.ClusterE2ETest) {
 	packagePrefix := "test"
 	packageFile := test.BuildPackageConfigFile(packageName, packagePrefix, EksaPackagesNamespace)
 	test.InstallCuratedPackageFile(packageFile, kubeconfig.FromClusterName(test.ClusterName))
-	test.VerifyHelloPackageInstalled(packagePrefix+"-"+packageName, withMgmtCluster(test))
+	test.VerifyHelloPackageInstalled(packagePrefix+"-"+packageName, withCluster(test))
 }
 
 func runCuratedPackageInstallSimpleFlow(test *framework.ClusterE2ETest) {
@@ -47,6 +46,10 @@ func runDisabledCuratedPackage(test *framework.ClusterE2ETest) {
 
 func runDisabledCuratedPackageInstallSimpleFlow(test *framework.ClusterE2ETest) {
 	test.WithCluster(runDisabledCuratedPackage)
+}
+
+func runCuratedPackageInstallSimpleFlowRegistryMirror(test *framework.ClusterE2ETest) {
+	test.WithClusterRegistryMirror(runCuratedPackageInstall)
 }
 
 func runCuratedPackageRemoteClusterInstallSimpleFlow(test *framework.MulticlusterE2ETest) {
@@ -62,7 +65,7 @@ func runCuratedPackageRemoteClusterInstallSimpleFlow(test *framework.Multicluste
 		packagePrefix := "test"
 		packageFile := e.BuildPackageConfigFile(packageName, packagePrefix, EksaPackagesNamespace)
 		test.ManagementCluster.InstallCuratedPackageFile(packageFile, kubeconfig.FromClusterName(test.ManagementCluster.ClusterName))
-		e.VerifyHelloPackageInstalled(packagePrefix+"-"+packageName, withMgmtCluster(test.ManagementCluster))
+		e.VerifyHelloPackageInstalled(packagePrefix+"-"+packageName, withCluster(test.ManagementCluster))
 		e.DeleteClusterWithKubectl()
 		e.ValidateClusterDelete()
 	})
@@ -216,7 +219,7 @@ func packageBundleURI(version v1alpha1.KubernetesVersion) string {
 	return fmt.Sprintf("%s:%s", EksaPackageBundleURI, tag)
 }
 
-func withMgmtCluster(cluster *framework.ClusterE2ETest) *types.Cluster {
+func withCluster(cluster *framework.ClusterE2ETest) *types.Cluster {
 	return &types.Cluster{
 		Name:           cluster.ClusterName,
 		KubeconfigFile: filepath.Join(cluster.ClusterName, fmt.Sprintf("%s-eks-a-cluster.kubeconfig", cluster.ClusterName)),

@@ -68,6 +68,7 @@ func GetManifestAssets(rc *releasetypes.ReleaseConfig, manifestComponent *assett
 		ProjectPath:       projectPath,
 		SourcedFromBranch: sourcedFromBranch,
 		Component:         componentName,
+		Private:           manifestComponent.Private,
 	}
 
 	return manifestArtifact, nil

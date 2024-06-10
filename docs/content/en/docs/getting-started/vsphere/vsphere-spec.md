@@ -22,45 +22,45 @@ spec:
       cniConfig:                     <a href="#clusternetworkcniconfig-required"># Cluster CNI plugin - default: cilium (required)</a>
          cilium: {}
       pods:
-         cidrBlocks:                 <a href="#clusternetworkpodscidrblocks0-required"># Subnet CIDR notation for pods (required)</a>
+         cidrBlocks:                 <a href="#clusternetworkpodscidrblocks0-required"># Internal Kubernetes subnet CIDR block for pods (required)</a>
             - 192.168.0.0/16
       services:
-         cidrBlocks:                 <a href="#clusternetworkservicescidrblocks0-required"># Subnet CIDR notation for services (required)</a>
+         cidrBlocks:                 <a href="#clusternetworkservicescidrblocks0-required"># Internal Kubernetes subnet CIDR block for services (required)</a>
             - 10.96.0.0/12
    controlPlaneConfiguration:        <a href="#controlplaneconfiguration-required"># Specific cluster control plane config (required)</a>
       count: <span style="color:green">2</span>                       <a href="#controlplaneconfigurationcount-required"># Number of control plane nodes (required)</a>
-      endpoint:                      <a href="#controlplaneconfigurationendpointhost-required"># IP for control plane endpoint (required)</a>
-         host: <span>"192.168.0.10"</span>
+      endpoint:                      <a href="#controlplaneconfigurationendpointhost-required"># IP for control plane endpoint on your network (required)</a>
+         host: <span>xxx.xxx.xxx.xxx</span>
       machineGroupRef:               <a href="#controlplaneconfigurationmachinegroupref-required"># vSphere-specific Kubernetes node config (required)</a>
         kind: VSphereMachineConfig
         name: my-cluster-machines
-      taints:                        <a href="#controlplaneconfigurationtaints"># Taints applied to control plane nodes </a>
+      taints:                        <a href="#controlplaneconfigurationtaints-optional"># Taints applied to control plane nodes </a>
       - key: <span>"key1"</span>
         value: <span>"value1"</span>
         effect: <span>"NoSchedule"</span>
-      labels:                        <a href="#controlplaneconfigurationlabels"># Labels applied to control plane nodes </a>
+      labels:                        <a href="#controlplaneconfigurationlabels-optional"># Labels applied to control plane nodes </a>
         <span>"key1"</span>: <span>"value1"</span>
         <span>"key2"</span>: <span>"value2"</span>
-   datacenterRef:                    <a href="#datacenterref"># Kubernetes object with vSphere-specific config </a>
+   datacenterRef:                    <a href="#datacenterref-required"># Kubernetes object with vSphere-specific config </a>
       kind: VSphereDatacenterConfig
       name: my-cluster-datacenter
    externalEtcdConfiguration:
-     count: <span style="color:green">3</span>                        <a href="#externaletcdconfigurationcount"># Number of etcd members </a>
-     machineGroupRef:                <a href="#externaletcdconfigurationmachinegroupref"># vSphere-specific Kubernetes etcd config</a>
+     count: <span style="color:green">3</span>                        <a href="#externaletcdconfigurationcount-optional"># Number of etcd members </a>
+     machineGroupRef:                <a href="#externaletcdconfigurationmachinegroupref-optional"># vSphere-specific Kubernetes etcd config</a>
         kind: VSphereMachineConfig
         name: my-cluster-machines
    kubernetesVersion: <span>"1.25"</span>         <a href="#kubernetesversion-required"># Kubernetes version to use for the cluster (required)</a>
    workerNodeGroupConfigurations:    <a href="#workernodegroupconfigurations-required"># List of node groups you can define for workers (required) </a>
-   - count: <span style="color:green">2</span>                        <a href="#workernodegroupconfigurationscount"># Number of worker nodes </a>
+   - count: <span style="color:green">2</span>                        <a href="#workernodegroupconfigurationscount-required"># Number of worker nodes </a>
      machineGroupRef:                <a href="#workernodegroupconfigurationsmachinegroupref-required"># vSphere-specific Kubernetes node objects (required) </a>
        kind: VSphereMachineConfig
        name: my-cluster-machines
      name: md-0                      <a href="#workernodegroupconfigurationsname-required"># Name of the worker nodegroup (required) </a>
-     taints:                         <a href="#workernodegroupconfigurationstaints"># Taints to apply to worker node group nodes </a>
+     taints:                         <a href="#workernodegroupconfigurationstaints-optional"># Taints to apply to worker node group nodes </a>
      - key: <span>"key1"</span>
        value: <span>"value1"</span>
        effect: <span>"NoSchedule"</span>
-     labels:                         <a href="#workernodegroupconfigurationslabels"># Labels to apply to worker node group nodes </a>
+     labels:                         <a href="#workernodegroupconfigurationslabels-optional"># Labels to apply to worker node group nodes </a>
        <span>"key1"</span>: <span>"value1"</span>
        <span">"key2"</span>: <span>"value2"</span>
 ---
@@ -110,7 +110,8 @@ The following additional optional configuration can also be included:
 * [Proxy]({{< relref "../optional/proxy.md" >}})
 * [Registry Mirror]({{< relref "../optional/registrymirror.md" >}})
 * [Host OS Config]({{< relref "../optional/hostOSConfig.md" >}})
-* [Machine Health Check Timeouts]({{< relref "../optional/healthchecks.md" >}})
+* [Machine Health Checks]({{< relref "../optional/healthchecks.md" >}})
+* [API Server Extra Args]({{< relref "../optional/api-server-extra-args.md" >}})
 
 ## Cluster Fields
 
@@ -136,7 +137,7 @@ range that does not conflict with other VMs.
 the control plane nodes for kube-apiserver loadbalancing. Suggestions on how to ensure this IP does not cause issues during cluster
 creation process are [here]({{< relref "../vsphere/vsphere-prereq/#prepare-a-vmware-vsphere-environment" >}})
 
-### controlPlaneConfiguration.taints
+### controlPlaneConfiguration.taints (optional)
 A list of taints to apply to the control plane nodes of the cluster.
 
 Replaces the default control plane taint. For k8s versions prior to 1.24, it replaces `node-role.kubernetes.io/master`. For k8s versions 1.24+, it replaces `node-role.kubernetes.io/control-plane`. The default control plane components will tolerate the provided taints.
@@ -147,7 +148,7 @@ Modifying the taints associated with the control plane configuration will cause 
 Any pods that you run on the control plane nodes must tolerate the taints you provide in the control plane configuration.
 >
 
-### controlPlaneConfiguration.labels
+### controlPlaneConfiguration.labels (optional)
 A list of labels to apply to the control plane nodes of the cluster. This is in addition to the labels that
 EKS Anywhere will add by default.
 
@@ -158,49 +159,49 @@ the existing nodes.
 This takes in a list of node groups that you can define for your workers.
 You may define one or more worker node groups.
 
-### workerNodeGroupConfigurations.count
+### workerNodeGroupConfigurations[*].count (required)
 Number of worker nodes. Optional if the [cluster autoscaler curated package]({{< relref "../../packages/cluster-autoscaler/addclauto" >}}) is installed and autoscalingConfiguration is used, in which case count will default to `autoscalingConfiguration.minCount`.
 
 Refers to [troubleshooting machine health check remediation not allowed]({{< relref "../../troubleshooting/troubleshooting/#machine-health-check-shows-remediation-is-not-allowed" >}}) and choose a sufficient number to allow machine health check remediation.
 
-### workerNodeGroupConfigurations.machineGroupRef (required)
+### workerNodeGroupConfigurations[*].machineGroupRef (required)
 Refers to the Kubernetes object with vsphere specific configuration for your nodes. See [VSphereMachineConfig Fields](#vspheremachineconfig-fields) below.
 
-### workerNodeGroupConfigurations.name (required)
+### workerNodeGroupConfigurations[*].name (required)
 Name of the worker node group (default: md-0)
 
-### workerNodeGroupConfigurations.autoscalingConfiguration.minCount
+### workerNodeGroupConfigurations[*].autoscalingConfiguration.minCount (optional)
 Minimum number of nodes for this node group's autoscaling configuration.
 
-### workerNodeGroupConfigurations.autoscalingConfiguration.maxCount
+### workerNodeGroupConfigurations[*].autoscalingConfiguration.maxCount (optional)
 Maximum number of nodes for this node group's autoscaling configuration.
 
-### workerNodeGroupConfigurations.taints
+### workerNodeGroupConfigurations[*].taints (optional)
 A list of taints to apply to the nodes in the worker node group.
 
 Modifying the taints associated with a worker node group configuration will cause new nodes to be rolled-out, replacing the existing nodes associated with the configuration.
 
 At least one node group must **NOT** have `NoSchedule` or `NoExecute` taints applied to it.
 
-### workerNodeGroupConfigurations.labels
+### workerNodeGroupConfigurations[*].labels (optional)
 A list of labels to apply to the nodes in the worker node group. This is in addition to the labels that
 EKS Anywhere will add by default.
 
 Modifying the labels associated with a worker node group configuration will cause new nodes to be rolled out, replacing
 the existing nodes associated with the configuration.
 
-### workerNodeGroupConfigurations.kubernetesVersion
+### workerNodeGroupConfigurations[*].kubernetesVersion (optional)
 The Kubernetes version you want to use for this worker node group. [Supported values]({{< relref "../../concepts/support-versions/#kubernetes-versions" >}}): `1.28`, `1.27`, `1.26`, `1.25`, `1.24`
 
 Must be less than or equal to the cluster `kubernetesVersion` defined at the root level of the cluster spec. The worker node kubernetesVersion must be no more than two minor Kubernetes versions lower than the cluster control plane's Kubernetes version. Removing `workerNodeGroupConfiguration.kubernetesVersion` will trigger an upgrade of the node group to the `kubernetesVersion` defined at the root level of the cluster spec.
 
-### externalEtcdConfiguration.count
+### externalEtcdConfiguration.count (optional)
 Number of etcd members
 
-### externalEtcdConfiguration.machineGroupRef
+### externalEtcdConfiguration.machineGroupRef (optional)
 Refers to the Kubernetes object with vsphere specific configuration for your etcd members.  See [VSphereMachineConfig Fields](#vspheremachineconfig-fields) below.
 
-### datacenterRef
+### datacenterRef (required)
 Refers to the Kubernetes object with vsphere environment specific configuration.  See [VSphereDatacenterConfig Fields](#vspheredatacenterconfig-fields) below.
 
 ### kubernetesVersion (required)

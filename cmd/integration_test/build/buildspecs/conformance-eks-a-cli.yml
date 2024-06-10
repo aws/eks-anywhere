@@ -4,7 +4,7 @@ env:
   variables:
     INTEGRATION_TEST_MAX_EC2_COUNT: 25
     INTEGRATION_TEST_MAX_CONCURRENT_TEST_COUNT: 25
-    T_TINKERBELL_MAX_HARDWARE_PER_TEST: 5
+    T_TINKERBELL_MAX_HARDWARE_PER_TEST: 2
     T_CLOUDSTACK_CIDR: "10.80.191.0/24"
     CLOUDSTACK_PROVIDER: true
     T_TINKERBELL_INVENTORY_CSV: "hardware-manifests/inventory.csv"
@@ -13,27 +13,26 @@ env:
     TEST_RUNNER_GOVC_TEMPLATE: "eks-a-admin-ci"
     INTEGRATION_TEST_INFRA_CONFIG: "/tmp/test-infra.yml"
     T_VSPHERE_TEMPLATE_FOLDER: "/SDDC-Datacenter/vm/Templates"
-    T_VSPHERE_TEMPLATE_UBUNTU_1_22: "/SDDC-Datacenter/vm/Templates/ubuntu-kube-v1-22"
-    T_VSPHERE_TEMPLATE_UBUNTU_1_23: "/SDDC-Datacenter/vm/Templates/ubuntu-kube-v1-23"
-    T_VSPHERE_TEMPLATE_UBUNTU_1_24: "/SDDC-Datacenter/vm/Templates/ubuntu-kube-v1-24"
     T_VSPHERE_TEMPLATE_UBUNTU_1_25: "/SDDC-Datacenter/vm/Templates/ubuntu-kube-v1-25"
     T_VSPHERE_TEMPLATE_UBUNTU_1_26: "/SDDC-Datacenter/vm/Templates/ubuntu-kube-v1-26"
     T_VSPHERE_TEMPLATE_UBUNTU_1_27: "/SDDC-Datacenter/vm/Templates/ubuntu-kube-v1-27"
     T_VSPHERE_TEMPLATE_UBUNTU_1_28: "/SDDC-Datacenter/vm/Templates/ubuntu-kube-v1-28"
-    T_VSPHERE_TEMPLATE_BR_1_22: "/SDDC-Datacenter/vm/Templates/bottlerocket-kube-v1-22"
-    T_VSPHERE_TEMPLATE_BR_1_23: "/SDDC-Datacenter/vm/Templates/bottlerocket-kube-v1-23"
-    T_VSPHERE_TEMPLATE_BR_1_24: "/SDDC-Datacenter/vm/Templates/bottlerocket-kube-v1-24"
+    T_VSPHERE_TEMPLATE_UBUNTU_1_29: "/SDDC-Datacenter/vm/Templates/ubuntu-kube-v1-29"
+    T_VSPHERE_TEMPLATE_UBUNTU_2204_1_25: "/SDDC-Datacenter/vm/Templates/ubuntu-2204-kube-v1-25"
+    T_VSPHERE_TEMPLATE_UBUNTU_2204_1_26: "/SDDC-Datacenter/vm/Templates/ubuntu-2204-kube-v1-26"
+    T_VSPHERE_TEMPLATE_UBUNTU_2204_1_27: "/SDDC-Datacenter/vm/Templates/ubuntu-2204-kube-v1-27"
+    T_VSPHERE_TEMPLATE_UBUNTU_2204_1_28: "/SDDC-Datacenter/vm/Templates/ubuntu-2204-kube-v1-28"
+    T_VSPHERE_TEMPLATE_UBUNTU_2204_1_29: "/SDDC-Datacenter/vm/Templates/ubuntu-2204-kube-v1-29"
     T_VSPHERE_TEMPLATE_BR_1_25: "/SDDC-Datacenter/vm/Templates/bottlerocket-kube-v1-25"
     T_VSPHERE_TEMPLATE_BR_1_26: "/SDDC-Datacenter/vm/Templates/bottlerocket-kube-v1-26"
     T_VSPHERE_TEMPLATE_BR_1_27: "/SDDC-Datacenter/vm/Templates/bottlerocket-kube-v1-27"
     T_VSPHERE_TEMPLATE_BR_1_28: "/SDDC-Datacenter/vm/Templates/bottlerocket-kube-v1-28"
-    T_VSPHERE_TEMPLATE_REDHAT_1_22: "/SDDC-Datacenter/vm/Templates/redhat-kube-v1-22"
-    T_VSPHERE_TEMPLATE_REDHAT_1_23: "/SDDC-Datacenter/vm/Templates/redhat-kube-v1-23"
-    T_VSPHERE_TEMPLATE_REDHAT_1_24: "/SDDC-Datacenter/vm/Templates/redhat-kube-v1-24"
+    T_VSPHERE_TEMPLATE_BR_1_29: "/SDDC-Datacenter/vm/Templates/bottlerocket-kube-v1-29"
     T_VSPHERE_TEMPLATE_REDHAT_1_25: "/SDDC-Datacenter/vm/Templates/redhat-kube-v1-25"
     T_VSPHERE_TEMPLATE_REDHAT_1_26: "/SDDC-Datacenter/vm/Templates/redhat-kube-v1-26"
     T_VSPHERE_TEMPLATE_REDHAT_1_27: "/SDDC-Datacenter/vm/Templates/redhat-kube-v1-27"
     T_VSPHERE_TEMPLATE_REDHAT_1_28: "/SDDC-Datacenter/vm/Templates/redhat-kube-v1-28"
+    T_VSPHERE_TEMPLATE_REDHAT_1_29: "/SDDC-Datacenter/vm/Templates/redhat-kube-v1-29"
     T_NUTANIX_MACHINE_VCPU_PER_SOCKET: 1
     T_NUTANIX_MACHINE_VCPU_SOCKET: 2
     T_NUTANIX_MACHINE_MEMORY_SIZE: "4Gi"
@@ -82,16 +81,16 @@ env:
     T_CLOUDSTACK_POD_CIDR: "cloudstack_ci_beta_connection:pod_cidr"
     T_CLOUDSTACK_SERVICE_CIDR: "cloudstack_ci_beta_connection:service_cidr"
     T_CLOUDSTACK_SSH_AUTHORIZED_KEY: "vsphere_ci_beta_connection:ssh_authorized_key"
-    T_TINKERBELL_IMAGE_UBUNTU_1_22: "tinkerbell_ci:image_ubuntu_1_22"
-    T_TINKERBELL_IMAGE_UBUNTU_1_23: "tinkerbell_ci:image_ubuntu_1_23"
-    T_TINKERBELL_IMAGE_UBUNTU_1_24: "tinkerbell_ci:image_ubuntu_1_24"
     T_TINKERBELL_IMAGE_UBUNTU_1_25: "tinkerbell_ci:image_ubuntu_1_25"
     T_TINKERBELL_IMAGE_UBUNTU_1_26: "tinkerbell_ci:image_ubuntu_1_26"
     T_TINKERBELL_IMAGE_UBUNTU_1_27: "tinkerbell_ci:image_ubuntu_1_27"
     T_TINKERBELL_IMAGE_UBUNTU_1_28: "tinkerbell_ci:image_ubuntu_1_28"
-    T_TINKERBELL_IMAGE_REDHAT_1_22: "tinkerbell_ci:image_redhat_1_22"
-    T_TINKERBELL_IMAGE_REDHAT_1_23: "tinkerbell_ci:image_redhat_1_23"
-    T_TINKERBELL_IMAGE_REDHAT_1_24: "tinkerbell_ci:image_redhat_1_24"
+    T_TINKERBELL_IMAGE_UBUNTU_1_29: "tinkerbell_ci:image_ubuntu_1_29"
+    T_TINKERBELL_IMAGE_UBUNTU_2204_1_25: "tinkerbell_ci:image_ubuntu_2204_1_25"
+    T_TINKERBELL_IMAGE_UBUNTU_2204_1_26: "tinkerbell_ci:image_ubuntu_2204_1_26"
+    T_TINKERBELL_IMAGE_UBUNTU_2204_1_27: "tinkerbell_ci:image_ubuntu_2204_1_27"
+    T_TINKERBELL_IMAGE_UBUNTU_2204_1_28: "tinkerbell_ci:image_ubuntu_2204_1_28"
+    T_TINKERBELL_IMAGE_UBUNTU_2204_1_29: "tinkerbell_ci:image_ubuntu_2204_1_29"
     T_TINKERBELL_IMAGE_REDHAT_1_25: "tinkerbell_ci:image_redhat_1_25"
     T_TINKERBELL_IMAGE_REDHAT_1_26: "tinkerbell_ci:image_redhat_1_26"
     T_TINKERBELL_IMAGE_REDHAT_1_27: "tinkerbell_ci:image_redhat_1_27"
@@ -99,6 +98,7 @@ env:
     T_TINKERBELL_SSH_AUTHORIZED_KEY: "vsphere_ci_beta_connection:ssh_authorized_key"
     T_TINKERBELL_CP_NETWORK_CIDR: "tinkerbell_ci:cp_network_cidr"
     T_TINKERBELL_S3_INVENTORY_CSV_KEY: "tinkerbell_ci:s3_inventory_csv"
+    T_TINKERBELL_S3_AG_INVENTORY_CSV_KEY: "tinkerbell_ci:s3_ag_inventory_csv"
     TEST_RUNNER_GOVC_USERNAME: "tinkerbell_ci:govc_username"
     TEST_RUNNER_GOVC_PASSWORD: "tinkerbell_ci:govc_password"
     TEST_RUNNER_GOVC_URL: "tinkerbell_ci:govc_url"
@@ -123,6 +123,18 @@ env:
     T_NUTANIX_TEMPLATE_NAME_UBUNTU_1_26: "nutanix_ci:nutanix_template_ubuntu_1_26"
     T_NUTANIX_TEMPLATE_NAME_UBUNTU_1_27: "nutanix_ci:nutanix_template_ubuntu_1_27"
     T_NUTANIX_TEMPLATE_NAME_UBUNTU_1_28: "nutanix_ci:nutanix_template_ubuntu_1_28"
+    T_NUTANIX_TEMPLATE_NAME_UBUNTU_1_29: "nutanix_ci:nutanix_template_ubuntu_1_29"
+    T_NUTANIX_TEMPLATE_NAME_REDHAT_1_25: "nutanix_ci:nutanix_template_rhel_8_1_25"
+    T_NUTANIX_TEMPLATE_NAME_REDHAT_1_26: "nutanix_ci:nutanix_template_rhel_8_1_26"
+    T_NUTANIX_TEMPLATE_NAME_REDHAT_1_27: "nutanix_ci:nutanix_template_rhel_8_1_27"
+    T_NUTANIX_TEMPLATE_NAME_REDHAT_1_28: "nutanix_ci:nutanix_template_rhel_8_1_28"
+    T_NUTANIX_TEMPLATE_NAME_REDHAT_1_29: "nutanix_ci:nutanix_template_rhel_8_1_29"
+    T_NUTANIX_TEMPLATE_NAME_REDHAT_9_1_25: "nutanix_ci:nutanix_template_rhel_9_1_25"
+    T_NUTANIX_TEMPLATE_NAME_REDHAT_9_1_26: "nutanix_ci:nutanix_template_rhel_9_1_26"
+    T_NUTANIX_TEMPLATE_NAME_REDHAT_9_1_27: "nutanix_ci:nutanix_template_rhel_9_1_27"
+    T_NUTANIX_TEMPLATE_NAME_REDHAT_9_1_28: "nutanix_ci:nutanix_template_rhel_9_1_28"
+    T_NUTANIX_TEMPLATE_NAME_REDHAT_9_1_29: "nutanix_ci:nutanix_template_rhel_9_1_29"
+
 phases:
   pre_build:
     commands:
@@ -151,7 +163,7 @@ phases:
         -v 4
         --skip ${SKIPPED_TESTS}
         --bundles-override=${BUNDLES_OVERRIDE}
-        --cleanup-vms=true
+        --cleanup-resources=true
         --test-report-folder=reports
 reports:
   e2e-reports:

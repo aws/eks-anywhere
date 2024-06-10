@@ -17,7 +17,8 @@ The following additional optional configuration can also be included:
 * [GitOps]({{< relref "../optional/gitops.md" >}})
 * [Proxy]({{< relref "../optional/proxy.md" >}})
 * [Registry Mirror]({{< relref "../optional/registrymirror.md" >}})
-* [Machine Health Check Timeouts]({{< relref "../optional/healthchecks.md" >}})
+* [Machine Health Checks]({{< relref "../optional/healthchecks.md" >}})
+* [API Server Extra Args]({{< relref "../optional/api-server-extra-args.md" >}})
 
 
 ```yaml
@@ -189,7 +190,7 @@ creation process are [here]({{< relref "./cloudstack-prereq/." >}})
 ### controlPlaneConfiguration.machineGroupRef (required)
 Refers to the Kubernetes object with CloudStack specific configuration for your nodes. See `CloudStackMachineConfig Fields` below.
 
-### controlPlaneConfiguration.taints
+### controlPlaneConfiguration.taints (optional)
 A list of taints to apply to the control plane nodes of the cluster.
 
 Replaces the default control plane taint, `node-role.kubernetes.io/master`. The default control plane components will tolerate the provided taints.
@@ -200,7 +201,7 @@ Modifying the taints associated with the control plane configuration will cause 
 Any pods that you run on the control plane nodes must tolerate the taints you provide in the control plane configuration.
 >
 
-### controlPlaneConfiguration.labels
+### controlPlaneConfiguration.labels (optional)
 A list of labels to apply to the control plane nodes of the cluster. This is in addition to the labels that
 EKS Anywhere will add by default.
 
@@ -214,13 +215,13 @@ The `ds.meta_data.failuredomain` value will be replaced with a failuredomain nam
 Modifying the labels associated with the control plane configuration will cause new nodes to be rolled out, replacing
 the existing nodes.
 
-### datacenterRef
+### datacenterRef (required)
 Refers to the Kubernetes object with CloudStack environment specific configuration. See `CloudStackDatacenterConfig Fields` below.
 
-### externalEtcdConfiguration.count
+### externalEtcdConfiguration.count (optional)
 Number of etcd members
 
-### externalEtcdConfiguration.machineGroupRef
+### externalEtcdConfiguration.machineGroupRef (optional)
 Refers to the Kubernetes object with CloudStack specific configuration for your etcd members. See `CloudStackMachineConfig Fields` below.
 
 ### kubernetesVersion (required)
@@ -234,31 +235,31 @@ If this is a standalone cluster or if it were serving as the management cluster 
 This takes in a list of node groups that you can define for your workers.
 You may define one or more worker node groups.
 
-### workerNodeGroupConfigurations.count
+### workerNodeGroupConfigurations[*].count (required)
 Number of worker nodes. Optional if autoscalingConfiguration is used, in which case count will default to `autoscalingConfiguration.minCount`.
 
 Refers to [troubleshooting machine health check remediation not allowed]({{< relref "../../troubleshooting/troubleshooting/#machine-health-check-shows-remediation-is-not-allowed" >}}) and choose a sufficient number to allow machine health check remediation.
 
-### workerNodeGroupConfigurations.machineGroupRef (required)
+### workerNodeGroupConfigurations[*].machineGroupRef (required)
 Refers to the Kubernetes object with CloudStack specific configuration for your nodes. See `CloudStackMachineConfig Fields` below.
 
-### workerNodeGroupConfigurations.name (required)
+### workerNodeGroupConfigurations[*].name (required)
 Name of the worker node group (default: md-0)
 
-### workerNodeGroupConfigurations.autoscalingConfiguration.minCount
+### workerNodeGroupConfigurations[*].autoscalingConfiguration.minCount (optional)
 Minimum number of nodes for this node group's autoscaling configuration.
 
-### workerNodeGroupConfigurations.autoscalingConfiguration.maxCount
+### workerNodeGroupConfigurations[*].autoscalingConfiguration.maxCount (optional)
 Maximum number of nodes for this node group's autoscaling configuration.
 
-### workerNodeGroupConfigurations.taints
+### workerNodeGroupConfigurations[*].taints (optional)
 A list of taints to apply to the nodes in the worker node group.
 
 Modifying the taints associated with a worker node group configuration will cause new nodes to be rolled-out, replacing the existing nodes associated with the configuration.
 
 At least one node group must not have `NoSchedule` or `NoExecute` taints applied to it.
 
-### workerNodeGroupConfigurations.labels
+### workerNodeGroupConfigurations[*].labels (optional)
 A list of labels to apply to the nodes in the worker node group. This is in addition to the labels that
 EKS Anywhere will add by default.
 A special label value is supported by the CAPC provider:
@@ -272,7 +273,7 @@ The `ds.meta_data.failuredomain` value will be replaced with a failuredomain nam
 Modifying the labels associated with a worker node group configuration will cause new nodes to be rolled out, replacing
 the existing nodes associated with the configuration.
 
-### workerNodeGroupConfigurations.kubernetesVersion
+### workerNodeGroupConfigurations[*].kubernetesVersion (optional)
 The Kubernetes version you want to use for this worker node group. Supported values: 1.28, 1.27, 1.26, 1.25, 1.24
 
 ## CloudStackDatacenterConfig

@@ -3,15 +3,9 @@ package management
 import (
 	"context"
 
-	"github.com/pkg/errors"
-
-	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
-	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/task"
-	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/workflows"
-	"github.com/aws/eks-anywhere/pkg/workflows/interfaces"
 )
 
 type installEksaComponentsOnBootstrapForDeleteTask struct{}
@@ -24,14 +18,32 @@ func (s *installEksaComponentsOnBootstrapForDeleteTask) Run(ctx context.Context,
 		return &workflows.CollectDiagnosticsTask{}
 	}
 
-	commandContext.ClusterSpec.Cluster.PauseReconcile()
-	commandContext.ClusterSpec.Cluster.AllowDeleteWhilePaused()
-	commandContext.ClusterSpec.Cluster.SetFinalizers([]string{"clusters.anywhere.eks.amazonaws.com/finalizer"})
-	commandContext.ClusterSpec.Cluster.AddManagedByCLIAnnotation()
-	err = applyClusterSpecOnBootstrapForDeleteTask(ctx, commandContext.ClusterSpec, commandContext.BootstrapCluster, commandContext.ClientFactory)
+	srcClient, err := commandContext.ClientFactory.BuildClientFromKubeconfig(commandContext.WorkloadCluster.KubeconfigFile)
+	if err != nil {
+		commandContext.SetError(err)
+		return &workflows.CollectMgmtClusterDiagnosticsTask{}
+	}
+
+	dstClient, err := commandContext.ClientFactory.BuildClientFromKubeconfig(commandContext.BootstrapCluster.KubeconfigFile)
+	if err != nil {
+		commandContext.SetError(err)
+		return &workflows.CollectMgmtClusterDiagnosticsTask{}
+	}
+
+	if err := workflows.CreateNamespaceIfNotPresent(ctx, commandContext.ClusterSpec.Cluster.Namespace, dstClient); err != nil {
+		commandContext.SetError(err)
+		return &workflows.CollectMgmtClusterDiagnosticsTask{}
+	}
+
+	err = commandContext.ClusterMover.Move(ctx, commandContext.ClusterSpec, srcClient, dstClient)
 	if err != nil {
 		commandContext.SetError(err)
 		return &workflows.CollectDiagnosticsTask{}
+	}
+
+	if err = commandContext.ClusterManager.AllowDeleteWhilePaused(ctx, commandContext.BootstrapCluster, commandContext.ClusterSpec); err != nil {
+		commandContext.SetError(err)
+		return &workflows.CollectMgmtClusterDiagnosticsTask{}
 	}
 
 	return &deleteManagementCluster{}
@@ -46,28 +58,5 @@ func (s *installEksaComponentsOnBootstrapForDeleteTask) Restore(ctx context.Cont
 }
 
 func (s *installEksaComponentsOnBootstrapForDeleteTask) Checkpoint() *task.CompletedTask {
-	return nil
-}
-
-func applyClusterSpecOnBootstrapForDeleteTask(ctx context.Context, spec *cluster.Spec, cluster *types.Cluster, clientFactory interfaces.ClientFactory) error {
-	if err := workflows.CreateNamespaceIfNotPresent(ctx, spec.Cluster.Namespace, cluster.KubeconfigFile, clientFactory); err != nil {
-		return errors.Wrapf(err, "creating namespace on bootstrap")
-	}
-
-	client, err := clientFactory.BuildClientFromKubeconfig(cluster.KubeconfigFile)
-	if err != nil {
-		return errors.Wrap(err, "building client to apply cluster spec changes")
-	}
-
-	for _, obj := range spec.ClusterAndChildren() {
-		if err := client.ApplyServerSide(ctx,
-			"eks-a-cli",
-			obj,
-			kubernetes.ApplyServerSideOptions{ForceOwnership: true},
-		); err != nil {
-			return errors.Wrapf(err, "applying cluster spec")
-		}
-	}
-
 	return nil
 }

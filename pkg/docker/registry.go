@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"runtime"
 	"strings"
+	"time"
 
 	"github.com/aws/eks-anywhere/pkg/logger"
+	"github.com/aws/eks-anywhere/pkg/retrier"
 )
 
 // These constants are temporary since currently there is a limitation on harbor
@@ -64,12 +66,14 @@ func (d *ImageRegistryDestination) Write(ctx context.Context, images ...string) 
 type ImageOriginalRegistrySource struct {
 	client    ImagePuller
 	processor *ConcurrentImageProcessor
+	Retrier   retrier.Retrier
 }
 
 func NewOriginalRegistrySource(client ImagePuller) *ImageOriginalRegistrySource {
 	return &ImageOriginalRegistrySource{
 		client:    client,
 		processor: NewConcurrentImageProcessor(runtime.GOMAXPROCS(0)),
+		Retrier:   *retrier.NewWithMaxRetries(5, 200*time.Second),
 	}
 }
 
@@ -79,7 +83,8 @@ func (s *ImageOriginalRegistrySource) Load(ctx context.Context, images ...string
 	logger.V(3).Info("Starting pull", "numberOfImages", len(images))
 
 	err := s.processor.Process(ctx, images, func(ctx context.Context, image string) error {
-		if err := s.client.PullImage(ctx, image); err != nil {
+		err := s.Retrier.Retry(func() error { return s.client.PullImage(ctx, image) })
+		if err != nil {
 			return err
 		}
 

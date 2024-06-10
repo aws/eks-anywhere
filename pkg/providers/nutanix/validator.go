@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -124,6 +125,37 @@ func (v *Validator) ValidateDatacenterConfig(ctx context.Context, client Client,
 
 	if err := v.validateCredentialRef(config); err != nil {
 		return err
+	}
+
+	if err := v.validateFailureDomains(ctx, client, config); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (v *Validator) validateFailureDomains(ctx context.Context, client Client, config *anywherev1.NutanixDatacenterConfig) error {
+	regexName, err := regexp.Compile("^[a-z0-9]([-a-z0-9]*[a-z0-9])?$")
+	if err != nil {
+		return err
+	}
+
+	for _, fd := range config.Spec.FailureDomains {
+		if res := regexName.MatchString(fd.Name); !res {
+			errorStr := `failure domain name should contains only small letters, digits, and hyphens.
+			It should start with small letter or digit`
+			return fmt.Errorf(errorStr)
+		}
+
+		if err := v.validateClusterConfig(ctx, client, fd.Cluster); err != nil {
+			return err
+		}
+
+		for _, subnet := range fd.Subnets {
+			if err := v.validateSubnetConfig(ctx, client, subnet); err != nil {
+				return err
+			}
+		}
 	}
 
 	return nil

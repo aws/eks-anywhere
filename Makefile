@@ -46,15 +46,14 @@ endif
 
 ifeq (,$(findstring $(BRANCH_NAME),main))
 ## use the branch-specific bundle manifest if the branch is not 'main'
-BUNDLE_MANIFEST_URL?=https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/${BRANCH_NAME}/bundle-release.yaml
 RELEASE_MANIFEST_URL?=$(RELEASE_MANIFEST_HOST)/${BRANCH_NAME}/eks-a-release.yaml
 LATEST=$(BRANCH_NAME)
 else
 ## use the standard bundle manifest if the branch is 'main'
-BUNDLE_MANIFEST_URL?=https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/bundle-release.yaml
 RELEASE_MANIFEST_URL?=$(RELEASE_MANIFEST_HOST)/eks-a-release.yaml
 LATEST=latest
 endif
+BUNDLE_MANIFEST_URL?=$(shell curl $(RELEASE_MANIFEST_URL) | yq ".spec.releases[-1].bundleManifestUrl")
 
 # DEV_GIT_VERSION should be something like v0.19.0-dev+latest, depending on the base branch
 # and if this is a local build or a CI build.
@@ -160,7 +159,7 @@ EKS_A_CROSS_PLATFORMS := $(foreach platform,$(EKS_A_PLATFORMS),eks-a-cross-platf
 E2E_CROSS_PLATFORMS := $(foreach platform,$(EKS_A_PLATFORMS),e2e-cross-platform-$(platform))
 EKS_A_RELEASE_CROSS_PLATFORMS := $(foreach platform,$(EKS_A_PLATFORMS),eks-a-release-cross-platform-$(platform))
 
-DOCKER_E2E_TEST := TestDockerKubernetes125SimpleFlow
+DOCKER_E2E_TEST := TestDockerKubernetes130SimpleFlow
 LOCAL_E2E_TESTS ?= $(DOCKER_E2E_TEST)
 
 EMBED_CONFIG_FOLDER = pkg/files/config
@@ -568,7 +567,7 @@ mocks: ## Generate mocks
 	${MOCKGEN} -destination=pkg/bootstrapper/mocks/bootstrapper.go -package=mocks "github.com/aws/eks-anywhere/pkg/bootstrapper" ClusterClient
 	${MOCKGEN} -destination=pkg/git/providers/github/mocks/github.go -package=mocks "github.com/aws/eks-anywhere/pkg/git/providers/github" GithubClient
 	${MOCKGEN} -destination=pkg/git/mocks/git.go -package=mocks "github.com/aws/eks-anywhere/pkg/git" Client,ProviderClient
-	${MOCKGEN} -destination=pkg/workflows/interfaces/mocks/clients.go -package=mocks "github.com/aws/eks-anywhere/pkg/workflows/interfaces" Bootstrapper,ClusterManager,GitOpsManager,Validator,CAPIManager,EksdInstaller,EksdUpgrader,PackageInstaller,ClusterUpgrader,ClusterCreator,ClientFactory,EksaInstaller,ClusterDeleter
+	${MOCKGEN} -destination=pkg/workflows/interfaces/mocks/clients.go -package=mocks "github.com/aws/eks-anywhere/pkg/workflows/interfaces" Bootstrapper,ClusterManager,GitOpsManager,Validator,CAPIManager,EksdInstaller,EksdUpgrader,PackageManager,ClusterUpgrader,ClusterCreator,ClientFactory,EksaInstaller,ClusterDeleter,ClusterMover
 	${MOCKGEN} -destination=pkg/git/gogithub/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/git/gogithub" Client
 	${MOCKGEN} -destination=pkg/git/gitclient/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/git/gitclient" GoGit
 	${MOCKGEN} -destination=pkg/validations/mocks/docker.go -package=mocks "github.com/aws/eks-anywhere/pkg/validations" DockerExecutable

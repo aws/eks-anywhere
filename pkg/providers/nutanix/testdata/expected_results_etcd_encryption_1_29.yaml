@@ -661,3 +661,31 @@ spec:
   - kind: Secret
     name: test-nutanix-ccm-secret
   strategy: Reconcile
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: "test-nutanix-ccm-secret"
+  namespace: "eksa-system"
+stringData:
+  nutanix-ccm-secret.yaml: |
+    apiVersion: v1
+    kind: Secret
+    metadata:
+      name: nutanix-creds
+      namespace: kube-system
+    stringData:
+      credentials: |-
+        [
+          {        
+            "type": "basic_auth",
+            "data": {
+              "prismCentral": {
+                "username": "admin",
+                "password": "password"
+              },
+              "prismElements": null
+            }
+          }
+        ]
+type: addons.cluster.x-k8s.io/resource-set

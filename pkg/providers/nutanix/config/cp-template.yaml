@@ -5,7 +5,33 @@ metadata:
   name: "{{.clusterName}}"
   namespace: "{{.eksaSystemNamespace}}"
 spec:
+{{- if .failureDomains }}
+  failureDomains:
+  {{- range $index, $value := .failureDomains}}
+  - name: "{{ $value.Name }}"
+    cluster:
+    {{- if (eq $value.Cluster.Type "uuid") }}
+      type: "uuid"
+      uuid: "{{ $value.Cluster.UUID }}"
+    {{- else if (eq $value.Cluster.Type "name") }}
+      type: "name"
+      name: "{{ $value.Cluster.Name }}"
+    {{- end}}
+    subnets:
+    {{- range $value.Subnets}}
+      {{- if (eq .Type "uuid") }}
+    - type: "uuid"
+      uuid: "{{ .UUID }}"
+      {{- else if (eq .Type "name") }}
+    - type: "name"
+      name: "{{ .Name }}"
+      {{- end}}
+    {{- end}}
+    controlPlane: true
+  {{- end }}
+{{- else }}
   failureDomains: []
+{{- end}}
   prismCentral:
 {{- if .nutanixAdditionalTrustBundle }}
     additionalTrustBundle:
@@ -147,6 +173,13 @@ spec:
           imageTag: {{.etcdImageTag}}
 {{- end }}
     files:
+{{- if .kubeletConfiguration }}
+    - content: |
+{{ .kubeletConfiguration | indent 8 }}
+      owner: root:root
+      permissions: "0644"
+      path: /etc/kubernetes/patches/kubeletconfiguration0+strategic.yaml
+{{- end }}
 {{- if .encryptionProviderConfig }}
     - content: |
 {{ .encryptionProviderConfig | indent 8}}
@@ -294,6 +327,10 @@ spec:
       owner: root:root
       path: /etc/kubernetes/audit-policy.yaml
     initConfiguration:
+{{- if .kubeletConfiguration }}
+      patches: 
+        directory: /etc/kubernetes/patches
+{{- end }}
       nodeRegistration:
         kubeletExtraArgs:
           cloud-provider: external
@@ -316,6 +353,10 @@ spec:
 {{- end }}
 {{- end }}
     joinConfiguration:
+{{- if .kubeletConfiguration }}
+      patches: 
+        directory: /etc/kubernetes/patches
+{{- end }}
       nodeRegistration:
         criSocket: /var/run/containerd/containerd.sock
         kubeletExtraArgs:
@@ -781,3 +822,31 @@ spec:
     name: user-ca-bundle
 {{- end }}
   strategy: Reconcile
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: "{{.clusterName}}-nutanix-ccm-secret"
+  namespace: "{{.eksaSystemNamespace}}"
+stringData:
+  nutanix-ccm-secret.yaml: |
+    apiVersion: v1
+    kind: Secret
+    metadata:
+      name: nutanix-creds
+      namespace: kube-system
+    stringData:
+      credentials: |-
+        [
+          {        
+            "type": "basic_auth",
+            "data": {
+              "prismCentral": {
+                "username": "{{ .nutanixPCUsername }}",
+                "password": "{{ .nutanixPCPassword }}"
+              },
+              "prismElements": null
+            }
+          }
+        ]
+type: addons.cluster.x-k8s.io/resource-set

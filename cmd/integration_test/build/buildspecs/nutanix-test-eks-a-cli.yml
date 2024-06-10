@@ -33,21 +33,21 @@ env:
     T_NUTANIX_POD_CIDR: "nutanix_ci:nutanix_pod_cidr"
     T_NUTANIX_SERVICE_CIDR: "nutanix_ci:nutanix_service_cidr"
     T_NUTANIX_ADDITIONAL_TRUST_BUNDLE: "nutanix_ci:nutanix_additional_trust_bundle"
-    T_NUTANIX_TEMPLATE_NAME_UBUNTU_1_25: "nutanix_ci:nutanix_template_ubuntu_1_25"
     T_NUTANIX_TEMPLATE_NAME_UBUNTU_1_26: "nutanix_ci:nutanix_template_ubuntu_1_26"
     T_NUTANIX_TEMPLATE_NAME_UBUNTU_1_27: "nutanix_ci:nutanix_template_ubuntu_1_27"
     T_NUTANIX_TEMPLATE_NAME_UBUNTU_1_28: "nutanix_ci:nutanix_template_ubuntu_1_28"
     T_NUTANIX_TEMPLATE_NAME_UBUNTU_1_29: "nutanix_ci:nutanix_template_ubuntu_1_29"
-    T_NUTANIX_TEMPLATE_NAME_REDHAT_1_25: "nutanix_ci:nutanix_template_rhel_8_1_25"
+    T_NUTANIX_TEMPLATE_NAME_UBUNTU_1_30: "nutanix_ci:nutanix_template_ubuntu_1_30"
     T_NUTANIX_TEMPLATE_NAME_REDHAT_1_26: "nutanix_ci:nutanix_template_rhel_8_1_26"
     T_NUTANIX_TEMPLATE_NAME_REDHAT_1_27: "nutanix_ci:nutanix_template_rhel_8_1_27"
     T_NUTANIX_TEMPLATE_NAME_REDHAT_1_28: "nutanix_ci:nutanix_template_rhel_8_1_28"
     T_NUTANIX_TEMPLATE_NAME_REDHAT_1_29: "nutanix_ci:nutanix_template_rhel_8_1_29"
-    T_NUTANIX_TEMPLATE_NAME_REDHAT_9_1_25: "nutanix_ci:nutanix_template_rhel_9_1_25"
+    T_NUTANIX_TEMPLATE_NAME_REDHAT_1_30: "nutanix_ci:nutanix_template_rhel_8_1_30"
     T_NUTANIX_TEMPLATE_NAME_REDHAT_9_1_26: "nutanix_ci:nutanix_template_rhel_9_1_26"
     T_NUTANIX_TEMPLATE_NAME_REDHAT_9_1_27: "nutanix_ci:nutanix_template_rhel_9_1_27"
     T_NUTANIX_TEMPLATE_NAME_REDHAT_9_1_28: "nutanix_ci:nutanix_template_rhel_9_1_28"
     T_NUTANIX_TEMPLATE_NAME_REDHAT_9_1_29: "nutanix_ci:nutanix_template_rhel_9_1_29"
+    T_NUTANIX_TEMPLATE_NAME_REDHAT_9_1_30: "nutanix_ci:nutanix_template_rhel_9_1_30"
 
 phases:
   pre_build:
@@ -55,10 +55,19 @@ phases:
       - source ${CODEBUILD_SRC_DIR}/cmd/integration_test/build/script/setup_profile.sh
       - source ${CODEBUILD_SRC_DIR}/cmd/integration_test/build/script/create_infra_config.sh
       - ${CODEBUILD_SRC_DIR}/cmd/integration_test/build/script/start_docker.sh
+      - export CLUSTER_NAME_PREFIX="${BRANCH_NAME//./-}"
       - |
         if ! [[ ${CODEBUILD_INITIATOR} =~ "codepipeline" ]]; then
           make build-eks-a-for-e2e build-integration-test-binary e2e-tests-binary E2E_TAGS="e2e nutanix" E2E_OUTPUT_FILE=bin/nutanix/e2e.test
         fi
+      - >
+        ./bin/test e2e cleanup nutanix
+        -n ${CLUSTER_NAME_PREFIX}
+        -e ${T_NUTANIX_ENDPOINT}
+        -p ${T_NUTANIX_PORT}
+        --insecure
+        --ignoreErrors
+        -v 4
   build:
     commands:
       - export JOB_ID=$CODEBUILD_BUILD_ID
@@ -81,10 +90,20 @@ phases:
         -v 4
         --skip ${SKIPPED_TESTS}
         --bundles-override=${BUNDLES_OVERRIDE}
-        --cleanup-vms=true
+        --cleanup-resources=true
         --test-report-folder=reports
         --branch-name=${BRANCH_NAME}
         --baremetal-branch=${BAREMETAL_BRANCH}
+  post_build:
+    commands:
+      - >
+        ./bin/test e2e cleanup nutanix
+        -n ${CLUSTER_NAME_PREFIX}
+        -e ${T_NUTANIX_ENDPOINT}
+        -p ${T_NUTANIX_PORT}
+        --insecure
+        --ignoreErrors
+        -v 4
 reports:
   e2e-reports:
     files:

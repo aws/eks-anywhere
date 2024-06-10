@@ -40,7 +40,7 @@ type E2ESession struct {
 	ipPool              networkutils.IPPool
 	testEnvVars         map[string]string
 	bundlesOverride     bool
-	cleanupVms          bool
+	cleanup             bool
 	requiredFiles       []string
 	branchName          string
 	hardware            []*api.Hardware
@@ -49,19 +49,19 @@ type E2ESession struct {
 
 func newE2ESession(instanceId string, conf instanceRunConf) (*E2ESession, error) {
 	e := &E2ESession{
-		session:             conf.session,
+		session:             conf.Session,
 		instanceId:          instanceId,
-		instanceProfileName: conf.instanceProfileName,
-		storageBucket:       conf.storageBucket,
-		jobId:               conf.jobId,
-		ipPool:              conf.ipPool,
+		instanceProfileName: conf.InstanceProfileName,
+		storageBucket:       conf.StorageBucket,
+		jobId:               conf.JobID,
+		ipPool:              conf.IPPool,
 		testEnvVars:         make(map[string]string),
-		bundlesOverride:     conf.bundlesOverride,
-		cleanupVms:          conf.cleanupVms,
+		bundlesOverride:     conf.BundlesOverride,
+		cleanup:             conf.CleanupResources,
 		requiredFiles:       requiredFiles,
-		branchName:          conf.branchName,
-		hardware:            conf.hardware,
-		logger:              conf.logger,
+		branchName:          conf.BranchName,
+		hardware:            conf.Hardware,
+		logger:              conf.Logger,
 	}
 
 	return e, nil
@@ -179,6 +179,7 @@ func (e *E2ESession) setup(regex string) error {
 	}
 
 	ipPool := e.ipPool.ToString()
+
 	if ipPool != "" {
 		e.testEnvVars[e2etests.ClusterIPPoolEnvVar] = ipPool
 	}
@@ -186,7 +187,7 @@ func (e *E2ESession) setup(regex string) error {
 	// Adding JobId to Test Env variables
 	e.testEnvVars[e2etests.JobIdVar] = e.jobId
 	e.testEnvVars[e2etests.BundlesOverrideVar] = strconv.FormatBool(e.bundlesOverride)
-	e.testEnvVars[e2etests.CleanupVmsVar] = strconv.FormatBool(e.cleanupVms)
+	e.testEnvVars[e2etests.CleanupResourcesVar] = strconv.FormatBool(e.cleanup)
 
 	if e.branchName != "" {
 		e.testEnvVars[e2etests.BranchNameEnvVar] = e.branchName

@@ -2,6 +2,7 @@ version: 0.2
 
 env:
   variables:
+    INTEGRATION_TEST_CLOUDWATCH_NAMESPACE_OVERRIDE: EksaQuickE2ETests
     INTEGRATION_TEST_MAX_EC2_COUNT: 180
     INTEGRATION_TEST_MAX_CONCURRENT_TEST_COUNT: 180
     EKSA_GIT_KNOWN_HOSTS: "/tmp/known_hosts"
@@ -115,16 +116,18 @@ env:
     T_NUTANIX_TEMPLATE_NAME_UBUNTU_1_27: "nutanix_ci:nutanix_template_ubuntu_1_27"
     T_NUTANIX_TEMPLATE_NAME_UBUNTU_1_28: "nutanix_ci:nutanix_template_ubuntu_1_28"
     T_NUTANIX_TEMPLATE_NAME_UBUNTU_1_29: "nutanix_ci:nutanix_template_ubuntu_1_29"
+    T_NUTANIX_TEMPLATE_NAME_UBUNTU_1_30: "nutanix_ci:nutanix_template_ubuntu_1_30"
     T_NUTANIX_TEMPLATE_NAME_REDHAT_1_25: "nutanix_ci:nutanix_template_rhel_8_1_25"
     T_NUTANIX_TEMPLATE_NAME_REDHAT_1_26: "nutanix_ci:nutanix_template_rhel_8_1_26"
     T_NUTANIX_TEMPLATE_NAME_REDHAT_1_27: "nutanix_ci:nutanix_template_rhel_8_1_27"
     T_NUTANIX_TEMPLATE_NAME_REDHAT_1_28: "nutanix_ci:nutanix_template_rhel_8_1_28"
     T_NUTANIX_TEMPLATE_NAME_REDHAT_1_29: "nutanix_ci:nutanix_template_rhel_8_1_29"
-    T_NUTANIX_TEMPLATE_NAME_REDHAT_9_1_25: "nutanix_ci:nutanix_template_rhel_9_1_25"
+    T_NUTANIX_TEMPLATE_NAME_REDHAT_1_30: "nutanix_ci:nutanix_template_rhel_8_1_30"
     T_NUTANIX_TEMPLATE_NAME_REDHAT_9_1_26: "nutanix_ci:nutanix_template_rhel_9_1_26"
     T_NUTANIX_TEMPLATE_NAME_REDHAT_9_1_27: "nutanix_ci:nutanix_template_rhel_9_1_27"
     T_NUTANIX_TEMPLATE_NAME_REDHAT_9_1_28: "nutanix_ci:nutanix_template_rhel_9_1_28"
     T_NUTANIX_TEMPLATE_NAME_REDHAT_9_1_29: "nutanix_ci:nutanix_template_rhel_9_1_29"
+    T_NUTANIX_TEMPLATE_NAME_REDHAT_9_1_30: "nutanix_ci:nutanix_template_rhel_9_1_30"
     # Snow secrets
     T_SNOW_DEVICES: "snow_ci:snow_devices"
     T_SNOW_CREDENTIALS_S3_PATH: "snow_ci:snow_credentials_s3_path"
@@ -137,18 +140,22 @@ env:
     T_TINKERBELL_IMAGE_UBUNTU_1_27: "tinkerbell_ci:image_ubuntu_1_27"
     T_TINKERBELL_IMAGE_UBUNTU_1_28: "tinkerbell_ci:image_ubuntu_1_28"
     T_TINKERBELL_IMAGE_UBUNTU_1_29: "tinkerbell_ci:image_ubuntu_1_29"
+    T_TINKERBELL_IMAGE_UBUNTU_1_30: "tinkerbell_ci:image_ubuntu_1_30"
     T_TINKERBELL_IMAGE_UBUNTU_2204_1_24: "tinkerbell_ci:image_ubuntu_2204_1_24"
     T_TINKERBELL_IMAGE_UBUNTU_2204_1_25: "tinkerbell_ci:image_ubuntu_2204_1_25"
     T_TINKERBELL_IMAGE_UBUNTU_2204_1_26: "tinkerbell_ci:image_ubuntu_2204_1_26"
     T_TINKERBELL_IMAGE_UBUNTU_2204_1_27: "tinkerbell_ci:image_ubuntu_2204_1_27"
     T_TINKERBELL_IMAGE_UBUNTU_2204_1_28: "tinkerbell_ci:image_ubuntu_2204_1_28"
     T_TINKERBELL_IMAGE_UBUNTU_2204_1_29: "tinkerbell_ci:image_ubuntu_2204_1_29"
+    T_TINKERBELL_IMAGE_UBUNTU_2204_1_29_RTOS: "tinkerbell_ci:image_ubuntu_2204_1_29_rtos"
+    T_TINKERBELL_IMAGE_UBUNTU_2204_1_30: "tinkerbell_ci:image_ubuntu_2204_1_30"
     T_TINKERBELL_IMAGE_REDHAT_1_24: "tinkerbell_ci:image_redhat_1_24"
     T_TINKERBELL_IMAGE_REDHAT_1_25: "tinkerbell_ci:image_redhat_1_25"
     T_TINKERBELL_IMAGE_REDHAT_1_26: "tinkerbell_ci:image_redhat_1_26"
     T_TINKERBELL_IMAGE_REDHAT_1_27: "tinkerbell_ci:image_redhat_1_27"
     T_TINKERBELL_IMAGE_REDHAT_1_28: "tinkerbell_ci:image_redhat_1_28"
     T_TINKERBELL_IMAGE_REDHAT_1_29: "tinkerbell_ci:image_redhat_1_29"
+    T_TINKERBELL_IMAGE_REDHAT_1_30: "tinkerbell_ci:image_redhat_1_30"
     T_TINKERBELL_SSH_AUTHORIZED_KEY: "vsphere_ci_beta_connection:ssh_authorized_key"
     T_TINKERBELL_CP_NETWORK_CIDR: "tinkerbell_ci:cp_network_cidr"
     T_TINKERBELL_S3_INVENTORY_CSV_KEY: "tinkerbell_ci:s3_inventory_csv"
@@ -177,6 +184,15 @@ phases:
       - >
         ./bin/test e2e cleanup cloudstack
         -n ${CLUSTER_NAME_PREFIX}
+        --delete-duplicate-networks
+        -v 6
+      - >
+        ./bin/test e2e cleanup nutanix
+        -n ${CLUSTER_NAME_PREFIX}
+        -e ${T_NUTANIX_ENDPOINT}
+        -p ${T_NUTANIX_PORT}
+        --insecure
+        --ignoreErrors
         -v 4
   build:
     commands:
@@ -203,7 +219,7 @@ phases:
         -v 4
         --skip ${SKIPPED_TESTS}
         --bundles-override=${BUNDLES_OVERRIDE}
-        --cleanup-vms=true
+        --cleanup-resources=true
         --test-report-folder=reports
         --branch-name=${BRANCH_NAME}
         --baremetal-branch=${BAREMETAL_BRANCH}
@@ -217,6 +233,14 @@ phases:
       - >
         ./bin/test e2e cleanup cloudstack
         -n ${CLUSTER_NAME_PREFIX}
+        -v 4
+      - >
+        ./bin/test e2e cleanup nutanix
+        -n ${CLUSTER_NAME_PREFIX}
+        -e ${T_NUTANIX_ENDPOINT}
+        -p ${T_NUTANIX_PORT}
+        --insecure
+        --ignoreErrors
         -v 4
 reports:
   e2e-reports:

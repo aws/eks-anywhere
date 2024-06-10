@@ -101,7 +101,7 @@ eksa-system  mycluster-md-0-1656099863422-vxh2-provision-task-2  47s
 The following shows snippets from the `tasks.bmc` output that represent the three tasks: Power Off, enable network boot, and Power On.
 
 ```bash
-kubectl describe tasks.bmc -n eksa-system eksa-system mycluster-md-0-1656099863422-vxh2-provision-task-0
+kubectl describe tasks.bmc -n eksa-system mycluster-md-0-1656099863422-vxh2-provision-task-0
 ```
 ```
 ...
@@ -115,7 +115,7 @@ Status:
 ```
         
 ```bash
-kubectl describe tasks.bmc -n eksa-system eksa-system mycluster-md-0-1656099863422-vxh2-provision-task-1
+kubectl describe tasks.bmc -n eksa-system mycluster-md-0-1656099863422-vxh2-provision-task-1
 ```
 ```
 ...
@@ -132,7 +132,7 @@ Status:
 ```
 
 ```bash
-kubectl describe tasks.bmc -n eksa-system eksa-system mycluster-md-0-1656099863422-vxh2-provision-task-2
+kubectl describe tasks.bmc -n eksa-system mycluster-md-0-1656099863422-vxh2-provision-task-2
 ```
 ```
   Task:
@@ -243,7 +243,7 @@ NAME        STATUS   ROLES                 AGE    VERSION               INTERNAL
 eksa-da04   Ready    control-plane,master  9m5s   v1.22.10-eks-7dc61e8  10.80.30.23
 ```
 ```bash
-kubectl get logs -n eksa-system | grep hegel
+kubectl get pods -n eksa-system | grep hegel
 ```
 ```
 hegel-n7ngs

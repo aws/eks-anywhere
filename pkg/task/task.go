@@ -36,7 +36,7 @@ type CommandContext struct {
 	Writer                filewriter.FileWriter
 	EksdInstaller         interfaces.EksdInstaller
 	EksaInstaller         interfaces.EksaInstaller
-	PackageInstaller      interfaces.PackageInstaller
+	PackageManager        interfaces.PackageManager
 	EksdUpgrader          interfaces.EksdUpgrader
 	ClusterUpgrader       interfaces.ClusterUpgrader
 	ClusterCreator        interfaces.ClusterCreator
@@ -52,6 +52,7 @@ type CommandContext struct {
 	OriginalError         error
 	BackupClusterStateDir string
 	ForceCleanup          bool
+	ClusterMover          interfaces.ClusterMover
 }
 
 func (c *CommandContext) SetError(err error) {

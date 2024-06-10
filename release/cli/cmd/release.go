@@ -236,7 +236,7 @@ var releaseCmd = &cobra.Command{
 				}
 
 				bundleReleaseManifestKey := releaseConfig.BundlesManifestFilepath()
-				err = s3.UploadFile(bundleReleaseManifestFile, aws.String(releaseConfig.ReleaseBucket), aws.String(bundleReleaseManifestKey), releaseConfig.ReleaseClients.S3.Uploader)
+				err = s3.UploadFile(bundleReleaseManifestFile, aws.String(releaseConfig.ReleaseBucket), aws.String(bundleReleaseManifestKey), releaseConfig.ReleaseClients.S3.Uploader, false)
 				if err != nil {
 					fmt.Printf("Error uploading bundle manifest to release bucket: %+v", err)
 					os.Exit(1)
@@ -328,7 +328,7 @@ var releaseCmd = &cobra.Command{
 			}
 
 			eksAReleaseManifestKey := releaseConfig.ReleaseManifestFilepath()
-			err = s3.UploadFile(eksAReleaseManifestFile, aws.String(releaseConfig.ReleaseBucket), aws.String(eksAReleaseManifestKey), releaseConfig.ReleaseClients.S3.Uploader)
+			err = s3.UploadFile(eksAReleaseManifestFile, aws.String(releaseConfig.ReleaseBucket), aws.String(eksAReleaseManifestKey), releaseConfig.ReleaseClients.S3.Uploader, false)
 			if err != nil {
 				fmt.Printf("Error uploading EKS-A release manifest to release bucket: %v", err)
 				os.Exit(1)

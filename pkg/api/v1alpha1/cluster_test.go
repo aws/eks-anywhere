@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/pkg/features"
@@ -79,13 +80,13 @@ func TestClusterNameLength(t *testing.T) {
 	}{
 		{
 			name:        "SuccessClusterNameLength",
-			clusterName: "qwertyuiopasdfghjklzxcvbnmqwertyuiopasdfghjklzxcvbnm",
+			clusterName: "cluster-name-less-than-36-chars",
 			wantErr:     nil,
 		},
 		{
 			name:        "FailureClusterNameLength",
-			clusterName: "qwertyuiopasdfghjklzxcvbnmqwertyuiopasdfghjklzxcvbnmqwertyuiopasdfghjklzxcvbnm12345",
-			wantErr:     errors.New("number of characters in qwertyuiopasdfghjklzxcvbnmqwertyuiopasdfghjklzxcvbnmqwertyuiopasdfghjklzxcvbnm12345 should be less than 81"),
+			clusterName: "cluster-name-equals-to-36-characters",
+			wantErr:     errors.New("number of characters in cluster-name-equals-to-36-characters should be less than 36"),
 		},
 	}
 
@@ -1091,6 +1092,138 @@ func TestGetAndValidateClusterConfig(t *testing.T) {
 			}
 			if !reflect.DeepEqual(got, tt.wantCluster) {
 				t.Fatalf("GetClusterConfig() = %#v, want %#v", got, tt.wantCluster)
+			}
+		})
+	}
+}
+
+type clusterOpt func(c *Cluster)
+
+func baseCluster(opts ...clusterOpt) *Cluster {
+	c := &Cluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test-cluster",
+		},
+		Spec: ClusterSpec{
+			ControlPlaneConfiguration: ControlPlaneConfiguration{
+				Count: 1,
+				Endpoint: &Endpoint{
+					Host: "1.1.1.1",
+				},
+				MachineGroupRef: &Ref{},
+			},
+			WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{
+				{
+					Count: ptr.Int(3),
+					MachineGroupRef: &Ref{
+						Kind: VSphereMachineConfigKind,
+						Name: "eksa-unit-test-1",
+					},
+					Name: "wn-1",
+				},
+			},
+			KubernetesVersion: Kube129,
+			ExternalEtcdConfiguration: &ExternalEtcdConfiguration{
+				MachineGroupRef: &Ref{
+					Kind: VSphereMachineConfigKind,
+					Name: "eksa-unit-test-etcd",
+				},
+				Count: 1,
+			},
+			DatacenterRef: Ref{
+				Kind: VSphereDatacenterKind,
+				Name: "eksa-unit-test",
+			},
+			ClusterNetwork: ClusterNetwork{
+				CNIConfig: &CNIConfig{Cilium: &CiliumConfig{}},
+				Pods: Pods{
+					CidrBlocks: []string{"192.168.0.0/16"},
+				},
+				Services: Services{
+					CidrBlocks: []string{"10.96.0.0/12"},
+				},
+			},
+		},
+	}
+
+	for _, opt := range opts {
+		opt(c)
+	}
+
+	return c
+}
+
+func TestValidateClusterConfigContent(t *testing.T) {
+	tests := []struct {
+		testName string
+		cluster  *Cluster
+		wantErr  bool
+		err      string
+	}{
+		{
+			testName: "valid cluster without kubelet",
+			cluster:  baseCluster(),
+			wantErr:  false,
+		},
+		{
+			testName: "valid cluster with kubelet config for cp and wn",
+			cluster: baseCluster(func(c *Cluster) {
+				c.Spec.ControlPlaneConfiguration.KubeletConfiguration = &unstructured.Unstructured{
+					Object: map[string]interface{}{
+						"maxPods":    20,
+						"apiVersion": "kubelet.config.k8s.io/v1beta1",
+						"kind":       "KubeletConfiguration",
+					},
+				}
+				c.Spec.WorkerNodeGroupConfigurations[0].KubeletConfiguration = &unstructured.Unstructured{
+					Object: map[string]interface{}{
+						"maxPods":    20,
+						"apiVersion": "kubelet.config.k8s.io/v1beta1",
+						"kind":       "KubeletConfiguration",
+					},
+				}
+			}),
+			wantErr: false,
+		},
+		{
+			testName: "invalid cluster with kubelet config for cp",
+			cluster: baseCluster(func(c *Cluster) {
+				c.Spec.ControlPlaneConfiguration.KubeletConfiguration = &unstructured.Unstructured{
+					Object: map[string]interface{}{
+						"maxPodss":   20,
+						"apiVersion": "kubelet.config.k8s.io/v1beta1",
+						"kind":       "KubeletConfiguration",
+					},
+				}
+			}),
+			wantErr: true,
+			err:     "unknown field",
+		},
+		{
+			testName: "invalid cluster with kubelet config for wn",
+			cluster: baseCluster(func(c *Cluster) {
+				c.Spec.WorkerNodeGroupConfigurations[0].KubeletConfiguration = &unstructured.Unstructured{
+					Object: map[string]interface{}{
+						"maxPodss":   20,
+						"apiVersion": "kubelet.config.k8s.io/v1beta1",
+						"kind":       "KubeletConfiguration",
+					},
+				}
+			}),
+			wantErr: true,
+			err:     "unknown field",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.testName, func(t *testing.T) {
+			err := ValidateClusterConfigContent(tt.cluster)
+			if (err != nil) != tt.wantErr {
+				t.Fatalf("ValidateClusterConfigContent() error = %v, wantErr %v", err, tt.wantErr)
+			}
+
+			if len(tt.err) > 0 && !strings.Contains(err.Error(), tt.err) {
+				t.Fatalf("ValidateClusterConfigContent() error = %s, wantErr %s", err.Error(), tt.err)
 			}
 		})
 	}
@@ -3847,7 +3980,7 @@ func TestValidateEksaVersion(t *testing.T) {
 
 func TestGetClusterDefaultKubernetesVersion(t *testing.T) {
 	g := NewWithT(t)
-	g.Expect(GetClusterDefaultKubernetesVersion()).To(Equal(Kube129))
+	g.Expect(GetClusterDefaultKubernetesVersion()).To(Equal(Kube130))
 }
 
 func TestClusterWorkerNodeConfigCount(t *testing.T) {

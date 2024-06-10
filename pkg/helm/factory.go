@@ -52,7 +52,8 @@ func (f *ClientFactory) Get(ctx context.Context, clus *anywherev1.Cluster) (Clie
 	}
 
 	r := registrymirror.FromCluster(managmentCluster)
-	helmClient := f.builder.BuildHelm(WithRegistryMirror(r), WithInsecure())
+	p := managmentCluster.ProxyConfiguration()
+	helmClient := f.builder.BuildHelm(WithRegistryMirror(r), WithInsecure(), WithProxyConfig(p))
 
 	if r != nil && managmentCluster.RegistryAuth() {
 		if err := helmClient.RegistryLogin(ctx, r.BaseRegistry, rUsername, rPassword); err != nil {

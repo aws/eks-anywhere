@@ -420,6 +420,26 @@ func TestSetManagerEnvVarsVSphereInPlaceUpgrade(t *testing.T) {
 	g.Expect(deploy).To(Equal(want))
 }
 
+func TestSetManagerEnvVarsAPIServerExtraArgs(t *testing.T) {
+	g := NewWithT(t)
+	features.ClearCache()
+	t.Setenv(features.APIServerExtraArgsEnabledEnvVar, "true")
+
+	deploy := deployment()
+	spec := test.NewClusterSpec()
+	want := deployment(func(d *appsv1.Deployment) {
+		d.Spec.Template.Spec.Containers[0].Env = []corev1.EnvVar{
+			{
+				Name:  "API_SERVER_EXTRA_ARGS_ENABLED",
+				Value: "true",
+			},
+		}
+	})
+
+	clustermanager.SetManagerEnvVars(deploy, spec)
+	g.Expect(deploy).To(Equal(want))
+}
+
 func TestEKSAInstallerNewUpgraderConfigMap(t *testing.T) {
 	tt := newInstallerTest(t)
 

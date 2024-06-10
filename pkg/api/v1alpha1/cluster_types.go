@@ -8,6 +8,7 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 
@@ -241,7 +242,7 @@ type RegistryMirrorConfiguration struct {
 
 // OCINamespace represents an entity in a local reigstry to group related images.
 type OCINamespace struct {
-	// Name refers to the name of the upstream registry
+	// Registry refers to the name of the upstream registry
 	Registry string `json:"registry"`
 	// Namespace refers to the name of a namespace in the local registry
 	Namespace string `json:"namespace"`
@@ -309,6 +310,9 @@ type ControlPlaneConfiguration struct {
 	MachineHealthCheck *MachineHealthCheck `json:"machineHealthCheck,omitempty"`
 	// APIServerExtraArgs defines the flags to configure for the API server.
 	APIServerExtraArgs map[string]string `json:"apiServerExtraArgs,omitempty"`
+	// KubeletConfiguration is a struct that exposes the Kubelet settings for the user to set on control plane nodes.
+	// +kubebuilder:pruning:PreserveUnknownFields
+	KubeletConfiguration *unstructured.Unstructured `json:"kubeletConfiguration,omitempty"`
 }
 
 // MachineHealthCheck allows to configure timeouts for machine health checks. Machine Health Checks are responsible for remediating unhealthy Machines.
@@ -453,10 +457,13 @@ type WorkerNodeGroupConfiguration struct {
 	// UpgradeRolloutStrategy determines the rollout strategy to use for rolling upgrades
 	// and related parameters/knobs
 	UpgradeRolloutStrategy *WorkerNodesUpgradeRolloutStrategy `json:"upgradeRolloutStrategy,omitempty"`
-	// KuberenetesVersion defines the version for worker nodes. If not set, the top level spec kubernetesVersion will be used.
+	// KubernetesVersion defines the version for worker nodes. If not set, the top level spec kubernetesVersion will be used.
 	KubernetesVersion *KubernetesVersion `json:"kubernetesVersion,omitempty"`
 	// MachineHealthCheck is a worker node level override for the timeouts and maxUnhealthy specified in the top-level MHC configuration. If not configured, the defaults in the top-level MHC configuration are used.
 	MachineHealthCheck *MachineHealthCheck `json:"machineHealthCheck,omitempty"`
+	// KubeletConfiguration is a struct that exposes the Kubelet settings for the user to set on worker nodes.
+	// +kubebuilder:pruning:PreserveUnknownFields
+	KubeletConfiguration *unstructured.Unstructured `json:"kubeletConfiguration,omitempty"`
 }
 
 // Equal compares two WorkerNodeGroupConfigurations.
@@ -824,6 +831,7 @@ const (
 	Kube127 KubernetesVersion = "1.27"
 	Kube128 KubernetesVersion = "1.28"
 	Kube129 KubernetesVersion = "1.29"
+	Kube130 KubernetesVersion = "1.30"
 )
 
 // KubeVersionToSemver converts kube version to semver for comparisons.
@@ -1043,6 +1051,14 @@ func (n *Ref) Equal(o *Ref) bool {
 		return false
 	}
 	return n.Kind == o.Kind && n.Name == o.Name
+}
+
+// IsEmpty checks if the given ref object is empty.
+func (n Ref) IsEmpty() bool {
+	if n.Kind == "" && n.Name == "" {
+		return true
+	}
+	return false
 }
 
 // +kubebuilder:object:generate=false

@@ -116,12 +116,23 @@ Make sure you use single quotes around the values so that your shell does not in
    Consider passing `--skip-validations vsphere-user-privilege` along with `eksctl` or upgrading the vSphere version (**recommended**).
    {{% /alert %}}
 
+   For a regular cluster create (with internet access), type the following:
+   
    ```bash
    eksctl anywhere create cluster \
       -f eksa-mgmt-cluster.yaml \
       # --install-packages packages.yaml \ # uncomment to install curated packages at cluster creation      
    ```
    
+
+   For an airgapped cluster create, follow [Preparation for airgapped deployments]({{< relref "../install#prepare-for-airgapped-deployments-optional" >}}) instructions, then type the following:
+
+   ```bash
+   eksctl anywhere create cluster \
+      -f eksa-mgmt-cluster.yaml \
+      --bundles-override ./eks-anywhere-downloads/bundle-release.yaml \
+      # --install-packages packages.yaml \ # uncomment to install curated packages at cluster creation      
+   ```
 
 1. Once the cluster is created you can use it with the generated `KUBECONFIG` file in your local directory:
 

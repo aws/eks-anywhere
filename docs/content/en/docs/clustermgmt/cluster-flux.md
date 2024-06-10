@@ -11,13 +11,13 @@ description: >
 
 ## GitOps Support (optional)
 
-EKS Anywhere supports a [GitOps](https://www.weave.works/technologies/gitops/) workflow for the management of your cluster.
+EKS Anywhere supports a [GitOps](https://www.gitops.tech/#what-is-gitops) workflow for the management of your cluster.
 
 When you create a cluster with GitOps enabled, EKS Anywhere will automatically commit your cluster configuration to the provided GitHub repository and install a GitOps toolkit on your cluster which watches that committed configuration file.
 You can then manage the scale of the cluster by making changes to the version controlled cluster configuration file and committing the changes.
 Once a change has been detected by the GitOps controller running in your cluster, the scale of the cluster will be adjusted to match the committed configuration file.
 
-If you'd like to learn more about GitOps, and the associated best practices, [check out this introduction from Weaveworks](https://www.weave.works/technologies/gitops/).
+If you'd like to learn more about GitOps, and the associated best practices, [check out this introduction from Weaveworks](https://www.gitops.tech/#what-is-gitops).
 
 >**_NOTE:_** Installing a GitOps controller can be done during cluster creation or through upgrade.
 In the event that GitOps installation fails, EKS Anywhere cluster creation will continue.

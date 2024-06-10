@@ -63,6 +63,7 @@ env:
     T_IRSA_S3_BUCKET: "etcd-encryption:irsa_s3_bucket"
     T_KMS_IAM_ROLE: "etcd-encryption:kms_iam_role_arn"
     T_KMS_IMAGE: "etcd-encryption:kms_image"
+    T_POD_IDENTITY_WEBHOOK_IMAGE: "etcd-encryption:pod_identity_webhook_image"
     T_KMS_KEY_ARN: "etcd-encryption:kms_key_arn"
     T_KMS_KEY_REGION: "etcd-encryption:region"
     T_KMS_SOCKET: "etcd-encryption:socket"
@@ -82,7 +83,8 @@ phases:
       - >
         ./bin/test e2e cleanup cloudstack
         -n ${CLUSTER_NAME_PREFIX}
-        -v 4
+        --delete-duplicate-networks
+        -v 6
   build:
     commands:
       - export JOB_ID=$CODEBUILD_BUILD_ID
@@ -105,7 +107,7 @@ phases:
         -v 4
         --skip ${SKIPPED_TESTS}
         --bundles-override=${BUNDLES_OVERRIDE}
-        --cleanup-vms=true
+        --cleanup-resources=true
         --test-report-folder=reports
         --branch-name=${BRANCH_NAME}
         --baremetal-branch=${BAREMETAL_BRANCH}

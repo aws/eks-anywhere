@@ -9,19 +9,141 @@ description: >
 ---
 
 {{% alert title="Announcements" color="warning" %}}
-* EKS Anywhere release `v0.19.0` introduces support for creating Kubernetes version v1.29 clusters. A conformance test was [promoted](https://github.com/kubernetes/kubernetes/pull/120069) in Kubernetes v1.29 that verifies that `Service`s serving different L4 protocols with the same port number can co-exist in a Kubernetes cluster. This is not supported in Cilium, the CNI deployed on EKS Anywhere clusters, because Cilium currently does not differentiate between TCP and UDP protocols for Kubernetes `Service`s. Hence EKS Anywhere v1.29 clusters will not pass this specific conformance test. This service protocol differentiation is being tracked in an upstream [issue](https://github.com/cilium/cilium/issues/9207) and will be supported in a future Cilium release. A future release of EKS Anywhere will include the patched Cilium version when it is available.
-* The Bottlerocket project [will not be releasing](https://github.com/bottlerocket-os/bottlerocket/issues/3794) bare metal variants for Kubernetes versions v1.29 and beyond. Hence Bottlerocket is not a supported operating system for creating EKS Anywhere bare metal clusters with Kubernetes versions v1.29 and above. However, Bottlerocket is still supported for bare metal clusters running Kubernetes versions v1.28 and below. Please refer to [this](https://github.com/aws/eks-anywhere/issues/7754) pinned issue for more information regarding the deprecation.
+* EKS Anywhere release `v0.19.0` introduces support for creating Kubernetes version v1.29 clusters. A conformance test was promoted in Kubernetes v1.29 that verifies that `Service`s serving different L4 protocols with the same port number can co-exist in a Kubernetes cluster. This is not supported in Cilium, the CNI deployed on EKS Anywhere clusters, because Cilium currently does not differentiate between TCP and UDP protocols for Kubernetes `Service`s. Hence EKS Anywhere v1.29 clusters will not pass this specific conformance test. This service protocol differentiation is being tracked in an upstream Cilium issue and will be supported in a future Cilium release. A future release of EKS Anywhere will include the patched Cilium version when it is available.<br>
+  Refer to the following links for more information regarding the conformance test:
+  * [PR promoting multi-protocol `Service` test in Kubernetes v1.29](https://github.com/kubernetes/kubernetes/pull/120069)
+  * [Cilium issue for the multi-protocol `Service` feature](https://github.com/cilium/cilium/issues/9207)
+  * [Cilium issue for the Kubernetes v1.29 conformance failures](https://github.com/cilium/cilium/issues/29913)
+* The Bottlerocket project will not be releasing bare metal variants for Kubernetes versions v1.29 and beyond. Hence Bottlerocket is not a supported operating system for creating EKS Anywhere bare metal clusters with Kubernetes versions v1.29 and above. However, Bottlerocket is still supported for bare metal clusters running Kubernetes versions v1.28 and below.<br>
+  Refer to the following links for more information regarding the deprecation:
+  * [Bottlerocket announcement regarding deprecation of bare metal variants](https://github.com/bottlerocket-os/bottlerocket/issues/3794)
+  * [EKS Anywhere issue regarding deprecation of Bottlerocket bare metal variants](https://github.com/aws/eks-anywhere/issues/7754)
 * On January 31, 2024, a **High**-severity vulnerability CVE-2024-21626 was published affecting all `runc` versions <= `v1.1.11`. This CVE has been fixed in runc version `v1.1.12`, which has been included in EKS Anywhere release `v0.18.6`. In order to fix this CVE in your new/existing EKS-A cluster, you **MUST** build or download new OS images pertaining to version `v0.18.6` and create/upgrade your cluster with these images.<br>
   Refer to the following links for more information on the steps to mitigate the CVE.
   * [AWS Security bulletin for the `runc` issue](https://aws.amazon.com/security/security-bulletins/AWS-2024-001)
   * [Building Ubuntu and Red Hat node images]({{< relref "../osmgmt/artifacts/#building-node-images" >}})
   * [Downloading Bottlerocket node images]({{< relref "../osmgmt/artifacts/#download-bottlerocket-node-images" >}})
   * [Upgrading an EKS Anywhere cluster]({{< relref "../clustermgmt/cluster-upgrades" >}})
+* EKS Anywhere version `v0.19.4` introduced a regression in the Curated Packages workflow due to a bug in the associated Packages controller version (`v0.4.2`). This will be fixed in the next patch release.
 {{% /alert %}}
 
 {{% alert title="General Information" color="info" %}}
 * When upgrading to a new minor version, a new OS image must be created using the new image-builder CLI pertaining to that release.
 {{% /alert %}}
+
+## [v0.19.6](https://github.com/aws/eks-anywhere/releases/tag/v0.19.6)
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+|    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+| Bottlerocket 1.19.2 |    ✔    |     \*      |    —    |     —      |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+|      RHEL 9.x       |    —    |     —      |    ✔    |     ✔      |  —   |
+
+\* [EKS Anywhere issue regarding deprecation of Bottlerocket bare metal variants](https://github.com/aws/eks-anywhere/issues/7754)
+
+### Changed
+- Backporting dependency bumps to fix vulnerabilities [#8118](https://github.com/aws/eks-anywhere/pull/8118)
+- Upgraded EKS-D:
+  - `v1-25-eks-37` to [`v1-25-eks-39`](https://distro.eks.amazonaws.com/releases/1-25/39/)
+  - `v1-26-eks-33` to [`v1-26-eks-35`](https://distro.eks.amazonaws.com/releases/1-26/35/)
+  - `v1-27-eks-27` to [`v1-27-eks-29`](https://distro.eks.amazonaws.com/releases/1-27/29/)
+  - `v1-28-eks-20` to [`v1-28-eks-22`](https://distro.eks.amazonaws.com/releases/1-28/22/)
+  - `v1-29-eks-9` to [`v1-29-eks-11`](https://distro.eks.amazonaws.com/releases/1-29/11/)
+
+### Fixed
+- Fixed cluster directory being created with root ownership [#8120](https://github.com/aws/eks-anywhere/pull/8120)
+
+## [v0.19.5](https://github.com/aws/eks-anywhere/releases/tag/v0.19.5)
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+|    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+| Bottlerocket 1.19.2 |    ✔    |     \*      |    —    |     —      |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+|      RHEL 9.x       |    —    |     —      |    ✔    |     ✔      |  —   |
+
+\* [EKS Anywhere issue regarding deprecation of Bottlerocket bare metal variants](https://github.com/aws/eks-anywhere/issues/7754)
+
+### Changed
+- Upgraded EKS-Anywhere Packages from `v0.4.2` to [`v0.4.3`](https://github.com/aws/eks-anywhere-packages/releases/tag/v0.4.3)
+
+### Fixed
+- Fixed registry mirror with authentication for EKS Anywhere packages
+
+## [v0.19.4](https://github.com/aws/eks-anywhere/releases/tag/v0.19.4)
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+|    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+| Bottlerocket 1.19.2 |    ✔    |     \*      |    —    |     —      |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+|      RHEL 9.x       |    —    |     —      |    ✔    |     ✔      |  —   |
+
+\* [EKS Anywhere issue regarding deprecation of Bottlerocket bare metal variants](https://github.com/aws/eks-anywhere/issues/7754)
+
+### Changed
+- Support Docs site for penultime EKS-A version [#8010](https://github.com/aws/eks-anywhere/pull/8010)
+- Update Ubuntu 22.04 ISO URLs to latest stable release [#3114](https://github.com/aws/eks-anywhere-build-tooling/pull/3114)
+- Upgraded EKS-D:
+  - `v1-25-eks-35` to [`v1-25-eks-37`](https://distro.eks.amazonaws.com/releases/1-25/37/)
+  - `v1-26-eks-31` to [`v1-26-eks-33`](https://distro.eks.amazonaws.com/releases/1-26/33/)
+  - `v1-27-eks-25` to [`v1-27-eks-27`](https://distro.eks.amazonaws.com/releases/1-27/27/)
+  - `v1-28-eks-18` to [`v1-28-eks-20`](https://distro.eks.amazonaws.com/releases/1-28/20/)
+  - `v1-29-eks-7` to [`v1-29-eks-9`](https://distro.eks.amazonaws.com/releases/1-29/9/)
+
+### Fixed
+- Added processor for Tinkerbell Template Config [#7816](https://github.com/aws/eks-anywhere/issues/7816)
+- Added nil check for eksa-version when setting etcd url [#8018](https://github.com/aws/eks-anywhere/pull/8018)
+- Fixed registry mirror secret credentials set to empty [#7933](https://github.com/aws/eks-anywhere/pull/7933)
+
+## [v0.19.3](https://github.com/aws/eks-anywhere/releases/tag/v0.19.3)
+
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+|    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+| Bottlerocket 1.19.2 |    ✔    |     \*      |    —    |     —      |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+|      RHEL 9.x       |    —    |     —      |    ✔    |     ✔      |  —   |
+
+\* [EKS Anywhere issue regarding deprecation of Bottlerocket bare metal variants](https://github.com/aws/eks-anywhere/issues/7754)
+
+### Changed
+- Updated helm to v3.14.3 [#3050](https://github.com/aws/eks-anywhere-build-tooling/pull/3050)
+
+### Fixed
+- Bumped golang.org/x/net that has a fix for [vulnerability GO-2024-2687](https://pkg.go.dev/vuln/GO-2024-2687)
+- Fixed proxy configurations for airgapped environments [#7913](https://github.com/aws/eks-anywhere/pull/7913)
+
+## [v0.19.2](https://github.com/aws/eks-anywhere/releases/tag/v0.19.2)
+
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+|    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+| Bottlerocket 1.19.2 |    ✔    |     \*      |    —    |     —      |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+|      RHEL 9.x       |    —    |     —      |    ✔    |     ✔      |  —   |
+
+\* [EKS Anywhere issue regarding deprecation of Bottlerocket bare metal variants](https://github.com/aws/eks-anywhere/issues/7754)
+
+### Changed
+- Update CAPC to 0.4.10-rc1 [#3105](https://github.com/aws/eks-anywhere-build-tooling/pull/3015)
+- Upgraded EKS-D:
+  - `v1-25-eks-34` to [`v1-25-eks-35`](https://distro.eks.amazonaws.com/releases/1-25/35/)
+  - `v1-26-eks-30` to [`v1-26-eks-31`](https://distro.eks.amazonaws.com/releases/1-26/31/)
+  - `v1-27-eks-24` to [`v1-27-eks-25`](https://distro.eks.amazonaws.com/releases/1-27/25/)
+  - `v1-28-eks-17` to [`v1-28-eks-18`](https://distro.eks.amazonaws.com/releases/1-28/18/)
+  - `v1-29-eks-6` to [`v1-29-eks-7`](https://distro.eks.amazonaws.com/releases/1-29/7/)
+
+### Fixed
+- Fixing tinkerbell action image URIs while using registry mirror with proxy cache.
 
 ## [v0.19.1](https://github.com/aws/eks-anywhere/releases/tag/v0.19.1)
 
@@ -30,9 +152,11 @@ description: >
 |:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
 |    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
 |    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
-| Bottlerocket 1.19.2 |    ✔    |     ✔      |    —    |     —      |  —   |
+| Bottlerocket 1.19.2 |    ✔    |     \*      |    —    |     —      |  —   |
 |      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
 |      RHEL 9.x       |    —    |     —      |    ✔    |     ✔      |  —   |
+
+\* [EKS Anywhere issue regarding deprecation of Bottlerocket bare metal variants](https://github.com/aws/eks-anywhere/issues/7754)
 
 ### Changed
 - Upgraded EKS-D:
@@ -58,14 +182,17 @@ description: >
 |:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
 |    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
 |    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
-| Bottlerocket 1.19.0 |    ✔    |     ✔      |    —    |     —      |  —   |
+| Bottlerocket 1.19.0 |    ✔    |     \*      |    —    |     —      |  —   |
 |      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
 |      RHEL 9.x       |    —    |     —      |    ✔    |     ✔      |  —   |
+
+\* [EKS Anywhere issue regarding deprecation of Bottlerocket bare metal variants](https://github.com/aws/eks-anywhere/issues/7754)
 
 ### Added
 - Support for Kubernetes v1.29
 - Support for in-place EKS Anywhere and Kubernetes version upgrades on Bare Metal clusters
 - Support for horizontally scaling `etcd` count in clusters with external `etcd` deployments ([#7127](https://github.com/aws/eks-anywhere/pull/7127))
+- External `etcd` support for Nutanix ([#7550](https://github.com/aws/eks-anywhere/pull/7550))
 - Etcd encryption for Nutanix ([#7565](https://github.com/aws/eks-anywhere/pull/7565))
 - Nutanix Cloud Controller Manager integration ([#7534](https://github.com/aws/eks-anywhere/pull/7534))
 - Enable image signing for all images used in cluster operations

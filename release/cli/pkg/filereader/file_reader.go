@@ -180,6 +180,9 @@ func GetEksDReleaseManifestUrl(releaseChannel, releaseNumber string, dev bool) s
 
 // GetNextEksADevBuildNumber computes next eksa dev build number for the current eks-a dev build
 func GetNextEksADevBuildNumber(releaseVersion string, r *releasetypes.ReleaseConfig) (int, error) {
+	if r.DryRun {
+		return 0, nil
+	}
 	tempFileName := "latest-dev-release-version"
 
 	var latestReleaseKey, latestBuildVersion string
@@ -189,8 +192,14 @@ func GetNextEksADevBuildNumber(releaseVersion string, r *releasetypes.ReleaseCon
 	} else {
 		latestReleaseKey = fmt.Sprintf("%s/LATEST_RELEASE_VERSION", r.BuildRepoBranchName)
 	}
-	if s3.KeyExists(r.ReleaseBucket, latestReleaseKey) {
-		err := s3.DownloadFile(tempFileName, r.ReleaseBucket, latestReleaseKey)
+
+	keyExists, err := s3.KeyExists(r.ReleaseClients.S3.Client, r.ReleaseBucket, latestReleaseKey, false)
+	if err != nil {
+		return -1, errors.Cause(err)
+	}
+
+	if keyExists {
+		err := s3.DownloadFile(tempFileName, r.ReleaseBucket, latestReleaseKey, r.SourceClients.S3.Downloader, false)
 		if err != nil {
 			return -1, errors.Cause(err)
 		}
@@ -286,7 +295,7 @@ func PutEksAReleaseVersion(version string, r *releasetypes.ReleaseConfig) error 
 
 	// Upload the file to S3
 	fmt.Println("Uploading latest release version file")
-	err = s3.UploadFile(currentReleaseKey, aws.String(r.ReleaseBucket), aws.String(currentReleaseKey), r.ReleaseClients.S3.Uploader)
+	err = s3.UploadFile(currentReleaseKey, aws.String(r.ReleaseBucket), aws.String(currentReleaseKey), r.ReleaseClients.S3.Uploader, false)
 	if err != nil {
 		return errors.Cause(err)
 	}

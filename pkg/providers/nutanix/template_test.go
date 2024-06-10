@@ -9,6 +9,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/internal/test"
@@ -85,6 +86,43 @@ func TestNewNutanixTemplateBuilder(t *testing.T) {
 	expectedSecret, err = os.ReadFile("testdata/templated_secret_eksa.yaml")
 	require.NoError(t, err)
 	assert.Equal(t, expectedSecret, secretSpec)
+}
+
+func TestNewNutanixTemplateBuilderKubeletConfiguration(t *testing.T) {
+	dcConf, machineConf, workerConfs := minimalNutanixConfigSpec(t)
+
+	t.Setenv(constants.EksaNutanixUsernameKey, "admin")
+	t.Setenv(constants.EksaNutanixPasswordKey, "password")
+	creds := GetCredsFromEnv()
+	builder := NewNutanixTemplateBuilder(&dcConf.Spec, &machineConf.Spec, &machineConf.Spec, workerConfs, creds, time.Now)
+	assert.NotNil(t, builder)
+
+	buildSpec := test.NewFullClusterSpec(t, "testdata/eksa-cluster.yaml")
+	buildSpec.Cluster.Spec.ControlPlaneConfiguration.KubeletConfiguration = &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"maxPods": 20,
+		},
+	}
+
+	buildSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].KubeletConfiguration = &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"maxPods": 20,
+		},
+	}
+
+	spec, err := builder.GenerateCAPISpecControlPlane(buildSpec)
+	assert.NoError(t, err)
+	assert.NotNil(t, spec)
+
+	workloadTemplateNames := map[string]string{
+		"eksa-unit-test": "eksa-unit-test",
+	}
+	kubeadmconfigTemplateNames := map[string]string{
+		"eksa-unit-test": "eksa-unit-test",
+	}
+	workerSpec, err := builder.GenerateCAPISpecWorkers(buildSpec, workloadTemplateNames, kubeadmconfigTemplateNames)
+	assert.NoError(t, err)
+	assert.NotNil(t, workerSpec)
 }
 
 func TestNewNutanixTemplateBuilderGenerateCAPISpecControlPlaneFailure(t *testing.T) {
@@ -549,6 +587,9 @@ func TestTemplateBuilder_CertSANs(t *testing.T) {
 		clusterSpec := test.NewFullClusterSpec(t, tc.Input)
 
 		machineCfg := clusterSpec.NutanixMachineConfig(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name)
+
+		t.Setenv(constants.EksaNutanixUsernameKey, "admin")
+		t.Setenv(constants.EksaNutanixPasswordKey, "password")
 		creds := GetCredsFromEnv()
 
 		bldr := NewNutanixTemplateBuilder(&clusterSpec.NutanixDatacenter.Spec, &machineCfg.Spec, nil,
@@ -574,6 +615,9 @@ func TestTemplateBuilder_additionalTrustBundle(t *testing.T) {
 		clusterSpec := test.NewFullClusterSpec(t, tc.Input)
 
 		machineCfg := clusterSpec.NutanixMachineConfig(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name)
+
+		t.Setenv(constants.EksaNutanixUsernameKey, "admin")
+		t.Setenv(constants.EksaNutanixPasswordKey, "password")
 		creds := GetCredsFromEnv()
 
 		bldr := NewNutanixTemplateBuilder(&clusterSpec.NutanixDatacenter.Spec, &machineCfg.Spec, nil,
@@ -599,6 +643,9 @@ func TestTemplateBuilderEtcdEncryption(t *testing.T) {
 		clusterSpec := test.NewFullClusterSpec(t, tc.Input)
 
 		machineCfg := clusterSpec.NutanixMachineConfig(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name)
+
+		t.Setenv(constants.EksaNutanixUsernameKey, "admin")
+		t.Setenv(constants.EksaNutanixPasswordKey, "password")
 		creds := GetCredsFromEnv()
 
 		bldr := NewNutanixTemplateBuilder(&clusterSpec.NutanixDatacenter.Spec, &machineCfg.Spec, nil,
@@ -624,6 +671,37 @@ func TestTemplateBuilderEtcdEncryptionKubernetes129(t *testing.T) {
 		clusterSpec := test.NewFullClusterSpec(t, tc.Input)
 
 		machineCfg := clusterSpec.NutanixMachineConfig(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name)
+
+		t.Setenv(constants.EksaNutanixUsernameKey, "admin")
+		t.Setenv(constants.EksaNutanixPasswordKey, "password")
+		creds := GetCredsFromEnv()
+
+		bldr := NewNutanixTemplateBuilder(&clusterSpec.NutanixDatacenter.Spec, &machineCfg.Spec, nil,
+			map[string]anywherev1.NutanixMachineConfigSpec{}, creds, time.Now)
+
+		data, err := bldr.GenerateCAPISpecControlPlane(clusterSpec)
+		assert.NoError(t, err)
+
+		test.AssertContentToFile(t, string(data), tc.Output)
+	}
+}
+
+func TestTemplateBuilderFailureDomains(t *testing.T) {
+	for _, tc := range []struct {
+		Input  string
+		Output string
+	}{
+		{
+			Input:  "testdata/cluster_nutanix_failure_domains.yaml",
+			Output: "testdata/expected_results_failure_domains.yaml",
+		},
+	} {
+		clusterSpec := test.NewFullClusterSpec(t, tc.Input)
+
+		machineCfg := clusterSpec.NutanixMachineConfig(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name)
+
+		t.Setenv(constants.EksaNutanixUsernameKey, "admin")
+		t.Setenv(constants.EksaNutanixPasswordKey, "password")
 		creds := GetCredsFromEnv()
 
 		bldr := NewNutanixTemplateBuilder(&clusterSpec.NutanixDatacenter.Spec, &machineCfg.Spec, nil,

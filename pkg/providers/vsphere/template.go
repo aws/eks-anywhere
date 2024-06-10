@@ -3,6 +3,8 @@ package vsphere
 import (
 	"fmt"
 
+	"sigs.k8s.io/yaml"
+
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
@@ -230,6 +232,12 @@ func buildTemplateMapCP(
 			values["registryCACert"] = registryMirror.CACertContent
 		}
 
+		if controlPlaneMachineSpec.OSFamily == anywherev1.Bottlerocket &&
+			len(registryMirror.NamespacedRegistryMap) == 1 &&
+			registryMirror.CoreEKSAMirror() != "" {
+			values["publicECRMirror"] = containerd.ToAPIEndpoint(registryMirror.CoreEKSAMirror())
+		}
+
 		if registryMirror.Auth {
 			values["registryAuth"] = registryMirror.Auth
 			username, password, err := config.ReadCredentials()
@@ -302,7 +310,7 @@ func buildTemplateMapCP(
 				}
 			}
 		}
-		etcdURL, _ := common.GetExternalEtcdReleaseURL(string(*clusterSpec.Cluster.Spec.EksaVersion), versionsBundle)
+		etcdURL, _ := common.GetExternalEtcdReleaseURL(clusterSpec.Cluster.Spec.EksaVersion, versionsBundle)
 		if etcdURL != "" {
 			values["externalEtcdReleaseUrl"] = etcdURL
 		}
@@ -346,6 +354,17 @@ func buildTemplateMapCP(
 			return nil, err
 		}
 		values["encryptionProviderConfig"] = conf
+	}
+
+	if clusterSpec.Cluster.Spec.ControlPlaneConfiguration.KubeletConfiguration != nil {
+		cpKubeletConfig := clusterSpec.Cluster.Spec.ControlPlaneConfiguration.KubeletConfiguration.Object
+
+		kcString, err := yaml.Marshal(cpKubeletConfig)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling %v", err)
+		}
+
+		values["kubeletConfiguration"] = string(kcString)
 	}
 
 	if clusterSpec.Cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy != nil {
@@ -419,6 +438,12 @@ func buildTemplateMapMD(
 			values["registryCACert"] = registryMirror.CACertContent
 		}
 
+		if workerNodeGroupMachineSpec.OSFamily == anywherev1.Bottlerocket &&
+			len(registryMirror.NamespacedRegistryMap) == 1 &&
+			registryMirror.CoreEKSAMirror() != "" {
+			values["publicECRMirror"] = containerd.ToAPIEndpoint(registryMirror.CoreEKSAMirror())
+		}
+
 		if registryMirror.Auth {
 			values["registryAuth"] = registryMirror.Auth
 			username, password, err := config.ReadCredentials()
@@ -474,6 +499,16 @@ func buildTemplateMapMD(
 			return nil, err
 		}
 		values["bottlerocketSettings"] = brSettings
+	}
+
+	if workerNodeGroupConfiguration.KubeletConfiguration != nil {
+		wnKubeletConfig := workerNodeGroupConfiguration.KubeletConfiguration.Object
+		kcString, err := yaml.Marshal(wnKubeletConfig)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling %v", err)
+		}
+
+		values["kubeletConfiguration"] = string(kcString)
 	}
 
 	return values, nil

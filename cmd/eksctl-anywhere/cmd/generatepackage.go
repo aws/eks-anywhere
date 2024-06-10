@@ -6,7 +6,11 @@ import (
 	"log"
 
 	"github.com/spf13/cobra"
+	"k8s.io/apimachinery/pkg/types"
 
+	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/curatedpackages"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 )
@@ -70,7 +74,22 @@ func generatePackages(ctx context.Context, args []string) error {
 		return err
 	}
 
-	deps, err := NewDependenciesForPackages(ctx, WithRegistryName(gpOptions.registry), WithKubeVersion(gpOptions.kubeVersion), WithMountPaths(kubeConfig), WithBundlesOverride(gpOptions.bundlesOverride))
+	k8sClient, err := kubernetes.NewRuntimeClientFromFileName(kubeConfig)
+	if err != nil {
+		return fmt.Errorf("unable to initalize k8s client: %v", err)
+	}
+
+	cluster := &anywherev1.Cluster{}
+	if err := k8sClient.Get(ctx, types.NamespacedName{Name: gpOptions.clusterName, Namespace: constants.DefaultNamespace}, cluster); err != nil {
+		return fmt.Errorf("unable to get cluster %s: %v", gpOptions.clusterName, err)
+	}
+
+	deps, err := NewDependenciesForPackages(ctx,
+		WithRegistryName(gpOptions.registry),
+		WithKubeVersion(gpOptions.kubeVersion),
+		WithMountPaths(kubeConfig),
+		WithBundlesOverride(gpOptions.bundlesOverride),
+		WithCluster(cluster))
 	if err != nil {
 		return fmt.Errorf("unable to initialize executables: %v", err)
 	}

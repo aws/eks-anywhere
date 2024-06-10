@@ -15,7 +15,7 @@ Set up an Administrative machine as described in [Install EKS Anywhere ]({{< rel
 
 ## Prepare a VMware vSphere environment
 To prepare a VMware vSphere environment to run EKS Anywhere, you need the following:
-* A vSphere 7+ environment running vCenter.
+* A vSphere 7 or 8 environment running vCenter.
 * Capacity to deploy 6-10 VMs.
 * DHCP service running in vSphere environment in the primary VM network for your workload cluster.
   * [Prepare DHCP IP addresses pool]({{< relref "../../clustermgmt/cluster-upgrades/vsphere-and-cloudstack-upgrades.md/#prepare-dhcp-ip-addresses-pool" >}})

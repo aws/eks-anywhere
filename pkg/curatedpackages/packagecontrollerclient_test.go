@@ -524,6 +524,55 @@ func TestEnableWithEmptyProxy(t *testing.T) {
 	}
 }
 
+func TestEnableWithSkipWait(t *testing.T) {
+	for _, tt := range newPackageControllerTests(t) {
+		tt.command = curatedpackages.NewPackageControllerClient(
+			tt.chartManager, tt.kubectl, "billy", tt.kubeConfig, tt.chart,
+			tt.registryMirror,
+			curatedpackages.WithEksaSecretAccessKey(tt.eksaAccessKey),
+			curatedpackages.WithEksaRegion(tt.eksaRegion),
+			curatedpackages.WithEksaAccessKeyId(tt.eksaAccessID),
+			curatedpackages.WithSkipWait(),
+			curatedpackages.WithManagementClusterName(tt.clusterName),
+			curatedpackages.WithValuesFileWriter(tt.writer),
+		)
+		clusterName := fmt.Sprintf("clusterName=%s", "billy")
+		valueFilePath := filepath.Join("billy", filewriter.DefaultTmpFolder, valueFileName)
+		ociURI := fmt.Sprintf("%s%s", "oci://", tt.registryMirror.ReplaceRegistry(tt.chart.Image()))
+		sourceRegistry, defaultRegistry, defaultImageRegistry := tt.command.GetCuratedPackagesRegistries(context.Background())
+		sourceRegistry = fmt.Sprintf("sourceRegistry=%s", sourceRegistry)
+		defaultRegistry = fmt.Sprintf("defaultRegistry=%s", defaultRegistry)
+		defaultImageRegistry = fmt.Sprintf("defaultImageRegistry=%s", defaultImageRegistry)
+		if tt.registryMirror != nil {
+			t.Setenv("REGISTRY_USERNAME", "username")
+			t.Setenv("REGISTRY_PASSWORD", "password")
+		} else {
+			if tt.eksaRegion == "" {
+				tt.eksaRegion = "us-west-2"
+			}
+			defaultImageRegistry = strings.ReplaceAll(defaultImageRegistry, "us-west-2", tt.eksaRegion)
+		}
+		values := []string{sourceRegistry, defaultRegistry, defaultImageRegistry, clusterName}
+		if (tt.eksaAccessID == "" || tt.eksaAccessKey == "") && tt.registryMirror == nil {
+			values = append(values, "cronjob.suspend=true")
+		}
+		tt.chartManager.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, constants.EksaPackagesName, valueFilePath, false, values).Return(nil)
+		tt.kubectl.EXPECT().
+			GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+			DoAndReturn(getPBCSuccess(t)).
+			AnyTimes()
+		tt.kubectl.EXPECT().
+			HasResource(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+			DoAndReturn(func(_, _, _, _, _ interface{}) (bool, error) { return true, nil }).
+			AnyTimes()
+
+		err := tt.command.Enable(tt.ctx)
+		if err != nil {
+			t.Errorf("Install Controller Should succeed when installation passes")
+		}
+	}
+}
+
 func TestEnableFail(t *testing.T) {
 	for _, tt := range newPackageControllerTests(t) {
 		clusterName := fmt.Sprintf("clusterName=%s", "billy")
@@ -1385,6 +1434,145 @@ func TestReconcile(s *testing.T) {
 		err := pcc.Reconcile(ctx, log, fakeClient, cluster)
 		if err == nil || !strings.Contains(err.Error(), "packages client error: test error") {
 			t.Errorf("expected packages client error, got %s", err)
+		}
+	})
+
+	s.Run("golden path with registry mirror", func(t *testing.T) {
+		ctx := context.Background()
+		log := testr.New(t)
+		cluster := newReconcileTestCluster()
+		ctrl := gomock.NewController(t)
+		k := mocks.NewMockKubectlRunner(ctrl)
+		cm := mocks.NewMockChartManager(ctrl)
+		bundles := createBundle(cluster)
+		bundles.Spec.VersionsBundles[0].KubeVersion = string(cluster.Spec.KubernetesVersion)
+		bundles.ObjectMeta.Name = cluster.Spec.BundlesRef.Name
+		bundles.ObjectMeta.Namespace = cluster.Spec.BundlesRef.Namespace
+		secret := &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: constants.EksaSystemNamespace,
+				Name:      cluster.Name + "-kubeconfig",
+			},
+		}
+		registrySecret := &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: constants.EksaSystemNamespace,
+				Name:      "registry-credentials",
+			},
+		}
+		eksaRelease := createEKSARelease(cluster, bundles)
+		cluster.Spec.BundlesRef = nil
+		cluster.Spec.RegistryMirrorConfiguration = &anywherev1.RegistryMirrorConfiguration{
+			Endpoint:     "1.2.3.4",
+			Port:         "443",
+			Authenticate: true,
+			OCINamespaces: []anywherev1.OCINamespace{
+				{
+					Namespace: "ecr-public",
+					Registry:  "public.ecr.aws",
+				},
+			},
+		}
+		t.Setenv("REGISTRY_USERNAME", "username")
+		t.Setenv("REGISTRY_PASSWORD", "password")
+
+		objs := []runtime.Object{cluster, bundles, secret, eksaRelease, registrySecret}
+		fakeClient := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
+		cm.EXPECT().RegistryLogin(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
+		cm.EXPECT().InstallChart(ctx, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
+
+		pcc := curatedpackages.NewPackageControllerClientFullLifecycle(log, cm, k, nil)
+		err := pcc.Reconcile(ctx, log, fakeClient, cluster)
+		if err != nil {
+			t.Errorf("expected nil error, got %s", err)
+		}
+	})
+
+	s.Run("registry mirror helm login fails", func(t *testing.T) {
+		ctx := context.Background()
+		log := testr.New(t)
+		cluster := newReconcileTestCluster()
+		ctrl := gomock.NewController(t)
+		k := mocks.NewMockKubectlRunner(ctrl)
+		cm := mocks.NewMockChartManager(ctrl)
+		bundles := createBundle(cluster)
+		bundles.Spec.VersionsBundles[0].KubeVersion = string(cluster.Spec.KubernetesVersion)
+		bundles.ObjectMeta.Name = cluster.Spec.BundlesRef.Name
+		bundles.ObjectMeta.Namespace = cluster.Spec.BundlesRef.Namespace
+		secret := &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: constants.EksaSystemNamespace,
+				Name:      cluster.Name + "-kubeconfig",
+			},
+		}
+		registrySecret := &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: constants.EksaSystemNamespace,
+				Name:      "registry-credentials",
+			},
+		}
+		eksaRelease := createEKSARelease(cluster, bundles)
+		cluster.Spec.BundlesRef = nil
+		cluster.Spec.RegistryMirrorConfiguration = &anywherev1.RegistryMirrorConfiguration{
+			Endpoint:     "1.2.3.4",
+			Port:         "443",
+			Authenticate: true,
+			OCINamespaces: []anywherev1.OCINamespace{
+				{
+					Namespace: "ecr-public",
+					Registry:  "public.ecr.aws",
+				},
+			},
+		}
+		t.Setenv("REGISTRY_USERNAME", "username")
+		t.Setenv("REGISTRY_PASSWORD", "password")
+
+		objs := []runtime.Object{cluster, bundles, secret, eksaRelease, registrySecret}
+		fakeClient := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
+		cm.EXPECT().RegistryLogin(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(fmt.Errorf("login error"))
+		pcc := curatedpackages.NewPackageControllerClientFullLifecycle(log, cm, k, nil)
+		err := pcc.Reconcile(ctx, log, fakeClient, cluster)
+		if err == nil {
+			t.Errorf("expected error, got %s", err)
+		}
+	})
+
+	s.Run("registry mirror secret not found error", func(t *testing.T) {
+		ctx := context.Background()
+		log := testr.New(t)
+		cluster := newReconcileTestCluster()
+		ctrl := gomock.NewController(t)
+		k := mocks.NewMockKubectlRunner(ctrl)
+		cm := mocks.NewMockChartManager(ctrl)
+		bundles := createBundle(cluster)
+		bundles.Spec.VersionsBundles[0].KubeVersion = string(cluster.Spec.KubernetesVersion)
+		bundles.ObjectMeta.Name = cluster.Spec.BundlesRef.Name
+		bundles.ObjectMeta.Namespace = cluster.Spec.BundlesRef.Namespace
+		secret := &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: constants.EksaSystemNamespace,
+				Name:      cluster.Name + "-kubeconfig",
+			},
+		}
+		eksaRelease := createEKSARelease(cluster, bundles)
+		cluster.Spec.BundlesRef = nil
+		cluster.Spec.RegistryMirrorConfiguration = &anywherev1.RegistryMirrorConfiguration{
+			Endpoint:     "1.2.3.4",
+			Port:         "443",
+			Authenticate: true,
+			OCINamespaces: []anywherev1.OCINamespace{
+				{
+					Namespace: "ecr-public",
+					Registry:  "public.ecr.aws",
+				},
+			},
+		}
+		objs := []runtime.Object{cluster, bundles, secret, eksaRelease}
+		fakeClient := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
+		pcc := curatedpackages.NewPackageControllerClientFullLifecycle(log, cm, k, nil)
+		err := pcc.Reconcile(ctx, log, fakeClient, cluster)
+		if err == nil || !strings.Contains(err.Error(), "not found") {
+			t.Errorf("expected error, got %s", err)
 		}
 	})
 }

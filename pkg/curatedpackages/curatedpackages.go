@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/go-logr/logr"
 	"oras.land/oras-go/pkg/content"
@@ -15,12 +16,13 @@ import (
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/logger"
+	"github.com/aws/eks-anywhere/pkg/retrier"
 	"github.com/aws/eks-anywhere/pkg/types"
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
 const (
-	license = `The Amazon EKS Anywhere Curated Packages are only available to customers with the 
+	license = `The Amazon EKS Anywhere Curated Packages are only available to customers with the
 Amazon EKS Anywhere Enterprise Subscription`
 	width = 86
 )
@@ -70,7 +72,15 @@ func PrintLicense() {
 func PullLatestBundle(ctx context.Context, log logr.Logger, artifact string) ([]byte, error) {
 	puller := artifacts.NewRegistryPuller(log)
 
-	data, err := puller.Pull(ctx, artifact, "")
+	var data []byte
+	err := retrier.Retry(5, 200*time.Millisecond, func() error {
+		d, err := puller.Pull(ctx, artifact, "")
+		if err != nil {
+			return err
+		}
+		data = d
+		return nil
+	})
 	if err != nil {
 		return nil, fmt.Errorf("unable to pull artifacts %v", err)
 	}

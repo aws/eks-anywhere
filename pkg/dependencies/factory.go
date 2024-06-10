@@ -94,7 +94,7 @@ type Dependencies struct {
 	closers                     []types.Closer
 	CliConfig                   *cliconfig.CliConfig
 	CreateCliConfig             *cliconfig.CreateClusterCLIConfig
-	PackageInstaller            interfaces.PackageInstaller
+	PackageManager              interfaces.PackageManager
 	BundleRegistry              curatedpackages.BundleRegistry
 	PackageControllerClient     *curatedpackages.PackageControllerClient
 	PackageClient               curatedpackages.PackageHandler
@@ -115,6 +115,7 @@ type Dependencies struct {
 	EksaInstaller               *clustermanager.EKSAInstaller
 	DeleteClusterDefaulter      cli.DeleteClusterDefaulter
 	ClusterDeleter              clustermanager.Deleter
+	ClusterMover                *clustermanager.Mover
 }
 
 // KubeClients defines super struct that exposes all behavior.
@@ -340,6 +341,12 @@ func (f *Factory) WithDockerLogin() *Factory {
 }
 
 func (f *Factory) WithExecutableBuilder() *Factory {
+	// Ensure the file writer is created before the tools container is launched. This is necessary
+	// because we bind mount the cluster directory into the tools container. If the directory
+	// doesn't exist, dockerd (running as root) creates the hostpath for the bind mount with root
+	// ownership. This prevents further files from being written to the cluster directory.
+	f.WithWriter()
+
 	if f.executablesConfig.useDockerContainer {
 		f.WithExecutableImage().WithDocker()
 		if f.registryMirror != nil && f.registryMirror.Auth {
@@ -1216,6 +1223,26 @@ func (f *Factory) WithClusterDeleter() *Factory {
 	return f
 }
 
+// WithClusterMover builds a cluster mover.
+func (f *Factory) WithClusterMover() *Factory {
+	f.WithLogger().WithUnAuthKubeClient().WithLogger()
+
+	f.buildSteps = append(f.buildSteps, func(_ context.Context) error {
+		var opts []clustermanager.MoverOpt
+		if f.config.noTimeouts {
+			opts = append(opts, clustermanager.WithMoverNoTimeouts())
+		}
+
+		f.dependencies.ClusterMover = clustermanager.NewMover(
+			f.dependencies.Logger,
+			f.dependencies.UnAuthKubeClient,
+			opts...,
+		)
+		return nil
+	})
+	return f
+}
+
 // WithValidatorClients builds KubeClients.
 func (f *Factory) WithValidatorClients() *Factory {
 	f.WithKubectl().WithUnAuthKubeClient()
@@ -1295,16 +1322,17 @@ func (f *Factory) WithGitOpsFlux(clusterConfig *v1alpha1.Cluster, fluxConfig *v1
 	return f
 }
 
-func (f *Factory) WithPackageInstaller(spec *cluster.Spec, packagesLocation, kubeConfig string) *Factory {
+// WithPackageManager builds a package manager.
+func (f *Factory) WithPackageManager(spec *cluster.Spec, packagesLocation, kubeConfig string) *Factory {
 	f.WithKubectl().WithPackageControllerClient(spec, kubeConfig).WithPackageClient()
-	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
-		if f.dependencies.PackageInstaller != nil {
+	f.buildSteps = append(f.buildSteps, func(_ context.Context) error {
+		if f.dependencies.PackageManager != nil {
 			return nil
 		}
 		managementClusterName := getManagementClusterName(spec)
 		mgmtKubeConfig := kubeconfig.ResolveFilename(kubeConfig, managementClusterName)
 
-		f.dependencies.PackageInstaller = curatedpackages.NewInstaller(
+		f.dependencies.PackageManager = curatedpackages.NewInstaller(
 			f.dependencies.Kubectl,
 			f.dependencies.PackageClient,
 			f.dependencies.PackageControllerClient,
@@ -1317,10 +1345,18 @@ func (f *Factory) WithPackageInstaller(spec *cluster.Spec, packagesLocation, kub
 	return f
 }
 
-func (f *Factory) WithPackageControllerClient(spec *cluster.Spec, kubeConfig string) *Factory {
+// WithPackageManagerWithoutWait builds a package manager that doesn't wait for active bundles.
+func (f *Factory) WithPackageManagerWithoutWait(spec *cluster.Spec, packagesLocation, kubeConfig string) *Factory {
+	f.WithPackageControllerClient(spec, kubeConfig, curatedpackages.WithSkipWait()).
+		WithPackageManager(spec, packagesLocation, kubeConfig)
+	return f
+}
+
+// WithPackageControllerClient builds a client for package controller.
+func (f *Factory) WithPackageControllerClient(spec *cluster.Spec, kubeConfig string, opts ...curatedpackages.PackageControllerClientOpt) *Factory {
 	f.WithHelm(helm.WithInsecure()).WithKubectl()
 
-	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+	f.buildSteps = append(f.buildSteps, func(_ context.Context) error {
 		if f.dependencies.PackageControllerClient != nil || spec == nil {
 			return nil
 		}
@@ -1347,13 +1383,8 @@ func (f *Factory) WithPackageControllerClient(spec *cluster.Spec, kubeConfig str
 		if bundle == nil {
 			return fmt.Errorf("could not find VersionsBundle")
 		}
-		f.dependencies.PackageControllerClient = curatedpackages.NewPackageControllerClient(
-			f.dependencies.Helm,
-			f.dependencies.Kubectl,
-			spec.Cluster.Name,
-			mgmtKubeConfig,
-			&bundle.PackageController.HelmChart,
-			f.registryMirror,
+
+		options := []curatedpackages.PackageControllerClientOpt{
 			curatedpackages.WithEksaAccessKeyId(eksaAccessKeyID),
 			curatedpackages.WithEksaSecretAccessKey(eksaSecretKey),
 			curatedpackages.WithEksaRegion(eksaRegion),
@@ -1364,6 +1395,18 @@ func (f *Factory) WithPackageControllerClient(spec *cluster.Spec, kubeConfig str
 			curatedpackages.WithManagementClusterName(managementClusterName),
 			curatedpackages.WithValuesFileWriter(writer),
 			curatedpackages.WithClusterSpec(spec),
+		}
+
+		options = append(options, opts...)
+
+		f.dependencies.PackageControllerClient = curatedpackages.NewPackageControllerClient(
+			f.dependencies.Helm,
+			f.dependencies.Kubectl,
+			spec.Cluster.Name,
+			mgmtKubeConfig,
+			&bundle.PackageController.HelmChart,
+			f.registryMirror,
+			options...,
 		)
 		return nil
 	})
