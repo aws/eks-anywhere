@@ -20,6 +20,7 @@ import (
 	_ "github.com/aws/eks-anywhere/internal/test/envtest"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/controller/clusters"
 	"github.com/aws/eks-anywhere/pkg/utils/ptr"
@@ -1009,7 +1010,6 @@ func TestUpdateClusterStatusForWorkers(t *testing.T) {
 				Message:  "Worker nodes not ready yet",
 			},
 		},
-
 		{
 			name: "workers ready",
 			workerNodeGroupConfigurations: []anywherev1.WorkerNodeGroupConfiguration{
@@ -1038,6 +1038,107 @@ func TestUpdateClusterStatusForWorkers(t *testing.T) {
 					md.Status.Replicas = 2
 					md.Status.ReadyReplicas = 2
 					md.Status.UpdatedReplicas = 2
+				}),
+			},
+			conditions: []anywherev1.Condition{
+				{
+					Type:   anywherev1.ControlPlaneInitializedCondition,
+					Status: "True",
+				},
+			},
+			wantCondition: &anywherev1.Condition{
+				Type:   anywherev1.WorkersReadyCondition,
+				Status: "True",
+			},
+		},
+		{
+			name: "workers not ready, autoscaler constraint not met",
+			workerNodeGroupConfigurations: []anywherev1.WorkerNodeGroupConfiguration{
+				{
+					Name:  "md-0",
+					Count: ptr.Int(1),
+				},
+				{
+					Name: "md-1",
+					AutoScalingConfiguration: &anywherev1.AutoScalingConfiguration{
+						MinCount: 3,
+						MaxCount: 5,
+					},
+				},
+			},
+			machineDeployments: []clusterv1.MachineDeployment{
+				*test.MachineDeployment(func(md *clusterv1.MachineDeployment) {
+					md.ObjectMeta.Name = "md-0"
+					md.ObjectMeta.Labels = map[string]string{
+						clusterv1.ClusterNameLabel: clusterName,
+					}
+					md.Status.Replicas = 1
+					md.Status.ReadyReplicas = 1
+					md.Status.UpdatedReplicas = 1
+				}),
+				*test.MachineDeployment(func(md *clusterv1.MachineDeployment) {
+					md.ObjectMeta.Name = "md-1"
+					md.ObjectMeta.Labels = map[string]string{
+						clusterv1.ClusterNameLabel: clusterName,
+					}
+					md.ObjectMeta.Annotations = map[string]string{
+						clusterapi.NodeGroupMinSizeAnnotation: "3",
+						clusterapi.NodeGroupMaxSizeAnnotation: "5",
+					}
+					md.Status.Replicas = 1
+					md.Status.ReadyReplicas = 1
+					md.Status.UpdatedReplicas = 1
+				}),
+			},
+			conditions: []anywherev1.Condition{
+				{
+					Type:   anywherev1.ControlPlaneInitializedCondition,
+					Status: "True",
+				},
+			},
+			wantCondition: &anywherev1.Condition{
+				Type:     anywherev1.WorkersReadyCondition,
+				Status:   "False",
+				Reason:   anywherev1.AutoscalerConstraintNotMetReason,
+				Severity: clusterv1.ConditionSeverityInfo,
+				Message:  "Worker nodes count for md-1 not between 3 and 5 yet (1 actual)",
+			},
+		},
+		{
+			name: "workers ready, autoscaler constraint met",
+			workerNodeGroupConfigurations: []anywherev1.WorkerNodeGroupConfiguration{
+				{
+					Count: ptr.Int(1),
+				},
+				{
+					AutoScalingConfiguration: &anywherev1.AutoScalingConfiguration{
+						MinCount: 1,
+						MaxCount: 5,
+					},
+				},
+			},
+			machineDeployments: []clusterv1.MachineDeployment{
+				*test.MachineDeployment(func(md *clusterv1.MachineDeployment) {
+					md.ObjectMeta.Name = "md-0"
+					md.ObjectMeta.Labels = map[string]string{
+						clusterv1.ClusterNameLabel: clusterName,
+					}
+					md.Status.Replicas = 1
+					md.Status.ReadyReplicas = 1
+					md.Status.UpdatedReplicas = 1
+				}),
+				*test.MachineDeployment(func(md *clusterv1.MachineDeployment) {
+					md.ObjectMeta.Name = "md-1"
+					md.ObjectMeta.Labels = map[string]string{
+						clusterv1.ClusterNameLabel: clusterName,
+					}
+					md.ObjectMeta.Annotations = map[string]string{
+						clusterapi.NodeGroupMinSizeAnnotation: "1",
+						clusterapi.NodeGroupMaxSizeAnnotation: "5",
+					}
+					md.Status.Replicas = 1
+					md.Status.ReadyReplicas = 1
+					md.Status.UpdatedReplicas = 1
 				}),
 			},
 			conditions: []anywherev1.Condition{
@@ -1080,6 +1181,7 @@ func TestUpdateClusterStatusForWorkers(t *testing.T) {
 			g.Expect(err).To(BeNil())
 
 			condition := conditions.Get(cluster, tt.wantCondition.Type)
+			fmt.Println(condition)
 			g.Expect(condition).ToNot(BeNil())
 
 			g.Expect(condition.Type).To(Equal(tt.wantCondition.Type))
