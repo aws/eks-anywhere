@@ -63,3 +63,12 @@ func TestWithProxyConfig(t *testing.T) {
 	config := helm.NewConfig(helm.WithProxyConfig(proxyConfigMap))
 	g.Expect(config.ProxyConfig).To(Equal(proxyConfigMap))
 }
+
+func TestWithExtraArgs(t *testing.T) {
+	g := NewWithT(t)
+	extraFlags := []string{
+		"--test-arg",
+	}
+	config := helm.NewConfig(helm.WithExtraFlags(extraFlags))
+	g.Expect(config.ExtraFlags).To(Equal(extraFlags))
+}

@@ -76,6 +76,18 @@ func TestProviderPreCoreComponentsUpgrade_StackUpgradeError(t *testing.T) {
 	tconfig := NewPreCoreComponentsUpgradeTestConfig(t)
 
 	expect := "foobar"
+	tconfig.Installer.EXPECT().HasLegacyChart(
+		gomock.Any(),
+		tconfig.managementComponents.Tinkerbell,
+		tconfig.Management.KubeconfigFile,
+	)
+	tconfig.Installer.EXPECT().
+		UpgradeInstallCRDs(
+			gomock.Any(),
+			tconfig.managementComponents.Tinkerbell,
+			tconfig.Management.KubeconfigFile,
+			gomock.Any(),
+		)
 	tconfig.Installer.EXPECT().
 		Upgrade(
 			gomock.Any(),
@@ -101,6 +113,18 @@ func TestProviderPreCoreComponentsUpgrade_StackUpgradeError(t *testing.T) {
 func TestProviderPreCoreComponentsUpgrade_HasBaseboardManagementCRDError(t *testing.T) {
 	tconfig := NewPreCoreComponentsUpgradeTestConfig(t)
 
+	tconfig.Installer.EXPECT().HasLegacyChart(
+		gomock.Any(),
+		tconfig.managementComponents.Tinkerbell,
+		tconfig.Management.KubeconfigFile,
+	)
+	tconfig.Installer.EXPECT().
+		UpgradeInstallCRDs(
+			gomock.Any(),
+			tconfig.managementComponents.Tinkerbell,
+			tconfig.Management.KubeconfigFile,
+			gomock.Any(),
+		)
 	tconfig.Installer.EXPECT().
 		Upgrade(
 			gomock.Any(),
@@ -135,6 +159,18 @@ func TestProviderPreCoreComponentsUpgrade_HasBaseboardManagementCRDError(t *test
 func TestProviderPreCoreComponentsUpgrade_NoBaseboardManagementCRD(t *testing.T) {
 	tconfig := NewPreCoreComponentsUpgradeTestConfig(t)
 
+	tconfig.Installer.EXPECT().HasLegacyChart(
+		gomock.Any(),
+		tconfig.managementComponents.Tinkerbell,
+		tconfig.Management.KubeconfigFile,
+	)
+	tconfig.Installer.EXPECT().
+		UpgradeInstallCRDs(
+			gomock.Any(),
+			tconfig.managementComponents.Tinkerbell,
+			tconfig.Management.KubeconfigFile,
+			gomock.Any(),
+		)
 	tconfig.Installer.EXPECT().
 		Upgrade(
 			gomock.Any(),
@@ -146,6 +182,68 @@ func TestProviderPreCoreComponentsUpgrade_NoBaseboardManagementCRD(t *testing.T)
 		).
 		Return(nil)
 
+	tconfig.KubeClient.EXPECT().
+		HasCRD(gomock.Any(), rufiounreleased.BaseboardManagementResourceName, tconfig.Management.KubeconfigFile).
+		Return(false, nil)
+
+	provider, err := tconfig.GetProvider()
+	if err != nil {
+		t.Fatalf("Couldn't create the provider: %v", err)
+	}
+
+	err = provider.PreCoreComponentsUpgrade(context.Background(), tconfig.Management, tconfig.managementComponents, tconfig.ClusterSpec)
+	if err != nil {
+		t.Fatalf("Received unexpected error: %v", err)
+	}
+}
+
+func TestProviderPreCoreComponentsUpgrade_HasLegacyChart(t *testing.T) {
+	tconfig := NewPreCoreComponentsUpgradeTestConfig(t)
+
+	tconfig.Installer.EXPECT().HasLegacyChart(
+		gomock.Any(),
+		tconfig.managementComponents.Tinkerbell,
+		tconfig.Management.KubeconfigFile,
+	).Return(true, nil)
+	tconfig.Installer.EXPECT().
+		UpgradeLegacy(
+			gomock.Any(),
+			tconfig.managementComponents.Tinkerbell,
+			tconfig.Management.KubeconfigFile,
+			gomock.Any(),
+		)
+	tconfig.Installer.EXPECT().
+		Uninstall(
+			gomock.Any(),
+			tconfig.managementComponents.Tinkerbell,
+			tconfig.Management.KubeconfigFile,
+		)
+	tconfig.KubeClient.EXPECT().
+		UpdateAnnotation(
+			gomock.Any(),
+			"customresourcedefinition",
+			gomock.Any(),
+			gomock.Any(),
+			gomock.Any(),
+			gomock.Any(),
+		).Times(6)
+	tconfig.Installer.EXPECT().
+		UpgradeInstallCRDs(
+			gomock.Any(),
+			tconfig.managementComponents.Tinkerbell,
+			tconfig.Management.KubeconfigFile,
+			gomock.Any(),
+		)
+	tconfig.Installer.EXPECT().
+		Upgrade(
+			gomock.Any(),
+			tconfig.managementComponents.Tinkerbell,
+			tconfig.TinkerbellIP,
+			tconfig.Management.KubeconfigFile,
+			tconfig.DatacenterConfig.Spec.HookImagesURLPath,
+			gomock.Any(),
+		).
+		Return(nil)
 	tconfig.KubeClient.EXPECT().
 		HasCRD(gomock.Any(), rufiounreleased.BaseboardManagementResourceName, tconfig.Management.KubeconfigFile).
 		Return(false, nil)
@@ -445,6 +543,18 @@ func TestProviderPreCoreComponentsUpgrade_RufioConversions(t *testing.T) {
 
 			// Configure the mocks to successfully upgrade the Tinkerbell stack using the installer
 			// and identify the need to convert deprecated Rufio custom resources.
+			tconfig.Installer.EXPECT().HasLegacyChart(
+				gomock.Any(),
+				tconfig.managementComponents.Tinkerbell,
+				tconfig.Management.KubeconfigFile,
+			).Return(false, nil)
+			tconfig.Installer.EXPECT().
+				UpgradeInstallCRDs(
+					gomock.Any(),
+					tconfig.managementComponents.Tinkerbell,
+					tconfig.Management.KubeconfigFile,
+					gomock.Any(),
+				)
 			tconfig.Installer.EXPECT().
 				Upgrade(
 					gomock.Any(),
