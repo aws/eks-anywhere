@@ -826,6 +826,9 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 		ProjectPath: "projects/tinkerbell/tink",
 		Images: []*assettypes.Image{
 			{
+				RepoName: "nginx",
+			},
+			{
 				RepoName: "tink-controller",
 			},
 			{
@@ -848,6 +851,42 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 		Images: []*assettypes.Image{
 			{
 				RepoName:             "tinkerbell-chart",
+				TrimVersionSignifier: true,
+				ImageTagConfiguration: assettypes.ImageTagConfiguration{
+					NonProdSourceImageTagFormat: "<gitTag>",
+				},
+			},
+		},
+		ImageRepoPrefix: "tinkerbell",
+		ImageTagOptions: []string{
+			"gitTag",
+			"projectPath",
+		},
+	},
+	{
+		ProjectName: "stack",
+		ProjectPath: "projects/tinkerbell/charts",
+		Images: []*assettypes.Image{
+			{
+				RepoName:             "stack",
+				TrimVersionSignifier: true,
+				ImageTagConfiguration: assettypes.ImageTagConfiguration{
+					NonProdSourceImageTagFormat: "<gitTag>",
+				},
+			},
+		},
+		ImageRepoPrefix: "tinkerbell",
+		ImageTagOptions: []string{
+			"gitTag",
+			"projectPath",
+		},
+	},
+	{
+		ProjectName: "tinkerbell-crds",
+		ProjectPath: "projects/tinkerbell/tinkerbell-crds",
+		Images: []*assettypes.Image{
+			{
+				RepoName:             "tinkerbell-crds",
 				TrimVersionSignifier: true,
 				ImageTagConfiguration: assettypes.ImageTagConfiguration{
 					NonProdSourceImageTagFormat: "<gitTag>",

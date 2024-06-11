@@ -148,6 +148,7 @@ func (vb *VersionsBundle) TinkerbellImages() []Image {
 		vb.Tinkerbell.TinkerbellStack.Tink.TinkController,
 		vb.Tinkerbell.TinkerbellStack.Tink.TinkServer,
 		vb.Tinkerbell.TinkerbellStack.Tink.TinkWorker,
+		vb.Tinkerbell.TinkerbellStack.Tink.Nginx,
 	}
 }
 
@@ -230,5 +231,7 @@ func (vb *VersionsBundle) Charts() map[string]*Image {
 		"cilium":                &vb.Cilium.HelmChart,
 		"eks-anywhere-packages": &vb.PackageController.HelmChart,
 		"tinkerbell-chart":      &vb.Tinkerbell.TinkerbellStack.TinkebellChart,
+		"tinkerbell-crds":       &vb.Tinkerbell.TinkerbellStack.TinkerbellCrds,
+		"tinkerbell-stack":      &vb.Tinkerbell.TinkerbellStack.Stack,
 	}
 }

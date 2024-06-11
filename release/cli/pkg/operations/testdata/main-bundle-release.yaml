@@ -698,7 +698,25 @@ spec:
           name: rufio
           os: linux
           uri: public.ecr.aws/release-container-registry/tinkerbell/rufio:v0.3.3-eks-a-v0.0.0-dev-build.1
+        stack:
+          arch:
+          - amd64
+          - arm64
+          description: Container image for stack image
+          imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          name: stack
+          os: linux
+          uri: public.ecr.aws/release-container-registry/tinkerbell/stack:0.4.4-eks-a-v0.0.0-dev-build.1
         tink:
+          nginx:
+            arch:
+            - amd64
+            - arm64
+            description: Container image for nginx image
+            imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+            name: nginx
+            os: linux
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/nginx:v0.10.0-eks-a-v0.0.0-dev-build.1
           tinkController:
             arch:
             - amd64
@@ -730,7 +748,16 @@ spec:
           description: Helm chart for tinkerbell-chart
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: tinkerbell-chart
-          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.2.5-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.2.6-eks-a-v0.0.0-dev-build.1
+        tinkerbellCrds:
+          arch:
+          - amd64
+          - arm64
+          description: Container image for tinkerbell-crds image
+          imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          name: tinkerbell-crds
+          os: linux
+          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-crds:0.2.5-eks-a-v0.0.0-dev-build.1
       version: v0.5.2+abcdef1
     upgrader:
       upgrader:
@@ -1476,7 +1503,25 @@ spec:
           name: rufio
           os: linux
           uri: public.ecr.aws/release-container-registry/tinkerbell/rufio:v0.3.3-eks-a-v0.0.0-dev-build.1
+        stack:
+          arch:
+          - amd64
+          - arm64
+          description: Container image for stack image
+          imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          name: stack
+          os: linux
+          uri: public.ecr.aws/release-container-registry/tinkerbell/stack:0.4.4-eks-a-v0.0.0-dev-build.1
         tink:
+          nginx:
+            arch:
+            - amd64
+            - arm64
+            description: Container image for nginx image
+            imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+            name: nginx
+            os: linux
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/nginx:v0.10.0-eks-a-v0.0.0-dev-build.1
           tinkController:
             arch:
             - amd64
@@ -1508,7 +1553,16 @@ spec:
           description: Helm chart for tinkerbell-chart
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: tinkerbell-chart
-          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.2.5-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.2.6-eks-a-v0.0.0-dev-build.1
+        tinkerbellCrds:
+          arch:
+          - amd64
+          - arm64
+          description: Container image for tinkerbell-crds image
+          imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          name: tinkerbell-crds
+          os: linux
+          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-crds:0.2.5-eks-a-v0.0.0-dev-build.1
       version: v0.5.2+abcdef1
     upgrader:
       upgrader:
@@ -2254,7 +2308,25 @@ spec:
           name: rufio
           os: linux
           uri: public.ecr.aws/release-container-registry/tinkerbell/rufio:v0.3.3-eks-a-v0.0.0-dev-build.1
+        stack:
+          arch:
+          - amd64
+          - arm64
+          description: Container image for stack image
+          imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          name: stack
+          os: linux
+          uri: public.ecr.aws/release-container-registry/tinkerbell/stack:0.4.4-eks-a-v0.0.0-dev-build.1
         tink:
+          nginx:
+            arch:
+            - amd64
+            - arm64
+            description: Container image for nginx image
+            imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+            name: nginx
+            os: linux
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/nginx:v0.10.0-eks-a-v0.0.0-dev-build.1
           tinkController:
             arch:
             - amd64
@@ -2286,7 +2358,16 @@ spec:
           description: Helm chart for tinkerbell-chart
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: tinkerbell-chart
-          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.2.5-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.2.6-eks-a-v0.0.0-dev-build.1
+        tinkerbellCrds:
+          arch:
+          - amd64
+          - arm64
+          description: Container image for tinkerbell-crds image
+          imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          name: tinkerbell-crds
+          os: linux
+          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-crds:0.2.5-eks-a-v0.0.0-dev-build.1
       version: v0.5.2+abcdef1
     upgrader:
       upgrader:
@@ -3032,7 +3113,25 @@ spec:
           name: rufio
           os: linux
           uri: public.ecr.aws/release-container-registry/tinkerbell/rufio:v0.3.3-eks-a-v0.0.0-dev-build.1
+        stack:
+          arch:
+          - amd64
+          - arm64
+          description: Container image for stack image
+          imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          name: stack
+          os: linux
+          uri: public.ecr.aws/release-container-registry/tinkerbell/stack:0.4.4-eks-a-v0.0.0-dev-build.1
         tink:
+          nginx:
+            arch:
+            - amd64
+            - arm64
+            description: Container image for nginx image
+            imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+            name: nginx
+            os: linux
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/nginx:v0.10.0-eks-a-v0.0.0-dev-build.1
           tinkController:
             arch:
             - amd64
@@ -3064,7 +3163,16 @@ spec:
           description: Helm chart for tinkerbell-chart
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: tinkerbell-chart
-          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.2.5-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.2.6-eks-a-v0.0.0-dev-build.1
+        tinkerbellCrds:
+          arch:
+          - amd64
+          - arm64
+          description: Container image for tinkerbell-crds image
+          imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          name: tinkerbell-crds
+          os: linux
+          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-crds:0.2.5-eks-a-v0.0.0-dev-build.1
       version: v0.5.2+abcdef1
     upgrader:
       upgrader:
@@ -3810,7 +3918,25 @@ spec:
           name: rufio
           os: linux
           uri: public.ecr.aws/release-container-registry/tinkerbell/rufio:v0.3.3-eks-a-v0.0.0-dev-build.1
+        stack:
+          arch:
+          - amd64
+          - arm64
+          description: Container image for stack image
+          imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          name: stack
+          os: linux
+          uri: public.ecr.aws/release-container-registry/tinkerbell/stack:0.4.4-eks-a-v0.0.0-dev-build.1
         tink:
+          nginx:
+            arch:
+            - amd64
+            - arm64
+            description: Container image for nginx image
+            imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+            name: nginx
+            os: linux
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/nginx:v0.10.0-eks-a-v0.0.0-dev-build.1
           tinkController:
             arch:
             - amd64
@@ -3842,7 +3968,16 @@ spec:
           description: Helm chart for tinkerbell-chart
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: tinkerbell-chart
-          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.2.5-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.2.6-eks-a-v0.0.0-dev-build.1
+        tinkerbellCrds:
+          arch:
+          - amd64
+          - arm64
+          description: Container image for tinkerbell-crds image
+          imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          name: tinkerbell-crds
+          os: linux
+          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-crds:0.2.5-eks-a-v0.0.0-dev-build.1
       version: v0.5.2+abcdef1
     upgrader:
       upgrader:
@@ -4588,7 +4723,25 @@ spec:
           name: rufio
           os: linux
           uri: public.ecr.aws/release-container-registry/tinkerbell/rufio:v0.3.3-eks-a-v0.0.0-dev-build.1
+        stack:
+          arch:
+          - amd64
+          - arm64
+          description: Container image for stack image
+          imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          name: stack
+          os: linux
+          uri: public.ecr.aws/release-container-registry/tinkerbell/stack:0.4.4-eks-a-v0.0.0-dev-build.1
         tink:
+          nginx:
+            arch:
+            - amd64
+            - arm64
+            description: Container image for nginx image
+            imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+            name: nginx
+            os: linux
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/nginx:v0.10.0-eks-a-v0.0.0-dev-build.1
           tinkController:
             arch:
             - amd64
@@ -4620,7 +4773,16 @@ spec:
           description: Helm chart for tinkerbell-chart
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: tinkerbell-chart
-          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.2.5-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.2.6-eks-a-v0.0.0-dev-build.1
+        tinkerbellCrds:
+          arch:
+          - amd64
+          - arm64
+          description: Container image for tinkerbell-crds image
+          imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          name: tinkerbell-crds
+          os: linux
+          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-crds:0.2.5-eks-a-v0.0.0-dev-build.1
       version: v0.5.2+abcdef1
     upgrader:
       upgrader:
