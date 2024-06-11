@@ -68,8 +68,8 @@ const (
 //go:embed testdata/oidc-roles.yaml
 var oidcRoles []byte
 
-//go:embed testdata/hpa_busybox.yaml
-var hpaBusybox []byte
+//go:embed testdata/autoscaler_load.yaml
+var autoscalerLoad []byte
 
 type ClusterE2ETest struct {
 	T                            T
@@ -1992,49 +1992,46 @@ func (e *ClusterE2ETest) InstallAutoScalerWithMetricServer(targetNamespace strin
 // CombinedAutoScalerMetricServerTest verifies that new nodes are spun up after using a HPA to scale a deployment.
 func (e *ClusterE2ETest) CombinedAutoScalerMetricServerTest(autoscalerName, metricServerName, targetNamespace string, mgmtCluster *types.Cluster) {
 	ctx := context.Background()
-	ns := "default"
-	name := "hpa-busybox-test"
 	machineDeploymentName := e.ClusterName + "-" + "md-0"
+	autoscalerDeploymentName := "cluster-autoscaler-clusterapi-cluster-autoscaler"
 
 	e.VerifyMetricServerPackageInstalled(metricServerName, targetNamespace, mgmtCluster)
 	e.VerifyAutoScalerPackageInstalled(autoscalerName, targetNamespace, mgmtCluster)
-
 	e.T.Log("Metrics Server and Cluster Autoscaler ready")
 
-	err := e.KubectlClient.ApplyKubeSpecFromBytes(ctx, mgmtCluster, hpaBusybox)
-	if err != nil {
-		e.T.Fatalf("Failed to apply hpa busybox load %s", err)
-	}
-
 	e.T.Log("Deploying test workload")
-
-	err = e.KubectlClient.WaitForDeployment(ctx,
-		e.Cluster(), "5m", "Available", name, ns)
+	err := e.KubectlClient.ApplyKubeSpecFromBytes(ctx, mgmtCluster, autoscalerLoad)
 	if err != nil {
-		e.T.Fatalf("Failed waiting for test workload deployent %s", err)
+		e.T.Fatalf("Failed to apply autoscaler load %s", err)
 	}
 
-	params := []string{"autoscale", "deployment", name, "--cpu-percent=50", "--min=1", "--max=20", "--kubeconfig", e.KubeconfigFilePath()}
-	_, err = e.KubectlClient.ExecuteCommand(ctx, params...)
+	// There is a bug in cluster autoscaler currently where it's not able to autoscale the cluster
+	// because of missing permissions on infrastructure machine template.
+	// Cluster Autoscaler does restart after ~10 min after which it starts functioning normally.
+	// We are force triggering a restart so the e2e doesn't have to wait 10 min for the restart.
+	// This can be removed once the following issue is resolve upstream.
+	// https://github.com/kubernetes/autoscaler/issues/6490
+	_, err = e.KubectlClient.ExecuteCommand(ctx, "rollout", "restart", "deployment", "-n", targetNamespace, autoscalerDeploymentName, "--kubeconfig", e.KubeconfigFilePath())
 	if err != nil {
-		e.T.Fatalf("Failed to autoscale deployent: %s", err)
+		e.T.Fatalf("Failed to rollout cluster autoscaler %s", err)
 	}
+	e.VerifyAutoScalerPackageInstalled(autoscalerName, targetNamespace, mgmtCluster)
 
 	e.T.Log("Waiting for machinedeployment to begin scaling up")
-	err = e.KubectlClient.WaitJSONPathLoop(ctx, mgmtCluster.KubeconfigFile, "20m", "status.phase", "ScalingUp",
+	err = e.KubectlClient.WaitJSONPathLoop(ctx, mgmtCluster.KubeconfigFile, "10m", "status.phase", "ScalingUp",
 		fmt.Sprintf("machinedeployments.cluster.x-k8s.io/%s", machineDeploymentName), constants.EksaSystemNamespace)
 	if err != nil {
 		e.T.Fatalf("Failed to get ScalingUp phase for machinedeployment: %s", err)
 	}
 
 	e.T.Log("Waiting for machinedeployment to finish scaling up")
-	err = e.KubectlClient.WaitJSONPathLoop(ctx, mgmtCluster.KubeconfigFile, "15m", "status.phase", "Running",
+	err = e.KubectlClient.WaitJSONPathLoop(ctx, mgmtCluster.KubeconfigFile, "20m", "status.phase", "Running",
 		fmt.Sprintf("machinedeployments.cluster.x-k8s.io/%s", machineDeploymentName), constants.EksaSystemNamespace)
 	if err != nil {
 		e.T.Fatalf("Failed to get Running phase for machinedeployment: %s", err)
 	}
 
-	err = e.KubectlClient.WaitForMachineDeploymentReady(ctx, mgmtCluster, "2m",
+	err = e.KubectlClient.WaitForMachineDeploymentReady(ctx, mgmtCluster, "5m",
 		machineDeploymentName)
 	if err != nil {
 		e.T.Fatalf("Machine deployment stuck in scaling up: %s", err)
