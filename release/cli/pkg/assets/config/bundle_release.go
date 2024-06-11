@@ -869,6 +869,7 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 		Images: []*assettypes.Image{
 			{
 				RepoName:             "stack",
+				AssetName:            "stack-helm",
 				TrimVersionSignifier: true,
 				ImageTagConfiguration: assettypes.ImageTagConfiguration{
 					NonProdSourceImageTagFormat: "<gitTag>",
@@ -887,6 +888,7 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 		Images: []*assettypes.Image{
 			{
 				RepoName:             "tinkerbell-crds",
+				AssetName:            "tinkerbell-crds-helm",
 				TrimVersionSignifier: true,
 				ImageTagConfiguration: assettypes.ImageTagConfiguration{
 					NonProdSourceImageTagFormat: "<gitTag>",
