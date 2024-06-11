@@ -77,7 +77,10 @@ Conditions provide a high-level status report representing an assessment of clus
   * `DefaultCNIConfigured` - reports the configuration state of the default CNI specified in the cluster specifications. It will be marked as `True` once the default CNI has been successfully configured on the cluster. 
   However, if the EKS Anywhere default cilium CNI has been [configured to skip upgrades]({{< relref "../getting-started/optional/cni/#use-a-custom-cni" >}}) in the cluster specification, then this condition will be marked as `False` with the reason `SkipUpgradesForDefaultCNIConfigured`.
 
-  * `WorkersReady` - reports that the condition of the current state of worker machines versus the desired state specified in the Cluster specification. This condition is marked `True` once the number of worker nodes in the cluster match the expected number of worker nodes as defined in the cluster specifications and all the worker nodes are up to date and ready.
+  * `WorkersReady` - reports that the condition of the current state of worker machines versus the desired state specified in the Cluster specification. This condition is marked `True` once the following conditions are met:
+    * For worker node groups with [autoscaling]({{< relref "../getting-started/optional/autoscaling" >}}) configured, number of worker nodes in that group lies between the minCount and maxCount number of worker nodes as defined in the cluster specification.
+    * For fixed worker node groups, number of worker nodes in that group matches the expected number of worker nodes in those groups as defined in the cluster specification.
+    * All the worker nodes are up to date and ready.
 
   * `Ready` - reports a summary of the following conditions: `ControlPlaneInitialized`, `ControlPlaneReady`, and `WorkersReady`. It indicates an overall operational state of the EKS Anywhere cluster. It will be marked `True` once the current state of the cluster has fully reached the desired state specified in the Cluster spec.
 

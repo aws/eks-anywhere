@@ -10,7 +10,6 @@ metadata:
     cluster.x-k8s.io/cluster-api-autoscaler-node-group-max-size: "5"
 spec:
   clusterName: "eksa-unit-test"
-  replicas: 3
   selector:
     matchLabels: {}
   template:

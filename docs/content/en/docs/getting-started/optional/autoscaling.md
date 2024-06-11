@@ -35,10 +35,9 @@ Configure an EKS Anywhere worker node group to be picked up by a Cluster Autosca
           machineGroupRef:
             kind: VSphereMachineConfig
             name: worker-machine-b
-          count: 1
 ```
 
-Note that if no `count` is specified for the worker node group it will default to the `autoscalingConfiguration.minCount` value.
+Note that if `count` is specified for the worker node group, it's value will be ignored during cluster creation as well as cluster upgrade. If only one of `minCount` or `maxCount` is specified, then the other will have a default value of `0` and `count` will have a default value of `minCount`.
 
 EKS Anywhere automatically applies the following annotations to your `MachineDeployment` objects for worker node groups with autoscaling enabled. The Cluster Autoscaler component uses these annotations to identify which node groups to autoscale. If a node group is not autoscaling as expected, check for these annotations on the `MachineDeployment` to troubleshoot.
 ```

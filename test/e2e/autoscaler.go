@@ -29,3 +29,23 @@ func runAutoscalerWithMetricsServerTinkerbellSimpleFlow(test *framework.ClusterE
 	test.DeleteCluster()
 	test.ValidateHardwareDecommissioned()
 }
+
+func runAutoscalerUpgradeFlow(test *framework.MulticlusterE2ETest) {
+	test.CreateManagementClusterWithConfig()
+	test.RunInWorkloadClusters(func(e *framework.WorkloadCluster) {
+		e.GenerateClusterConfig()
+		e.CreateCluster()
+		autoscalerName := "cluster-autoscaler"
+		targetNamespace := "eksa-system"
+		mgmtCluster := withCluster(test.ManagementCluster)
+		workloadCluster := withCluster(e.ClusterE2ETest)
+		test.ManagementCluster.InstallAutoScaler(e.ClusterName, targetNamespace)
+		test.ManagementCluster.VerifyAutoScalerPackageInstalled(autoscalerName, targetNamespace, mgmtCluster)
+		e.T.Log("Cluster Autoscaler ready")
+		e.DeployTestWorkload(workloadCluster)
+		test.ManagementCluster.RestartClusterAutoscaler(targetNamespace)
+		e.VerifyWorkerNodesScaleUp(mgmtCluster)
+		e.DeleteCluster()
+	})
+	test.DeleteManagementCluster()
+}

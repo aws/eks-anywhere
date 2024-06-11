@@ -55,6 +55,9 @@ const (
 
 	// ExternalEtcdNotAvailable reports the Cluster status is waiting for Etcd to be available.
 	ExternalEtcdNotAvailable = "ExternalEtcdNotAvailable"
+
+	// AutoscalerConstraintNotMetReason reports the Cluster status is waiting for autoscaler constraint to be met.
+	AutoscalerConstraintNotMetReason = "AutoscalerConstraintNotMet"
 )
 
 const (

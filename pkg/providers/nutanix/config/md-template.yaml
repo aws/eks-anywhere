@@ -5,14 +5,16 @@ metadata:
     cluster.x-k8s.io/cluster-name: "{{.clusterName}}"
   name: "{{.workerNodeGroupName}}"
   namespace: "{{.eksaSystemNamespace}}"
-  {{- if .autoscalingConfig }}
+{{- if .autoscalingConfig }}
   annotations:
     cluster.x-k8s.io/cluster-api-autoscaler-node-group-min-size: "{{ .autoscalingConfig.MinCount }}"
     cluster.x-k8s.io/cluster-api-autoscaler-node-group-max-size: "{{ .autoscalingConfig.MaxCount }}"
-  {{- end }}
+{{- end }}
 spec:
   clusterName: "{{.clusterName}}"
+{{- if not .autoscalingConfig }}
   replicas: {{.workerReplicas}}
+{{- end }}
   selector:
     matchLabels: {}
   template:
