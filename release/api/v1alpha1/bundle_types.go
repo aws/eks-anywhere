@@ -287,6 +287,8 @@ type TinkerbellStackBundle struct {
 	Hook           HookBundle    `json:"hook"`
 	Rufio          Image         `json:"rufio"`
 	Tink           TinkBundle    `json:"tink"`
+	TinkerbellCrds Image         `json:"tinkerbellCrds"`
+	Stack          Image         `json:"stack"`
 }
 
 // Tinkerbell Template Actions.
@@ -303,6 +305,7 @@ type TinkBundle struct {
 	TinkController Image `json:"tinkController"`
 	TinkServer     Image `json:"tinkServer"`
 	TinkWorker     Image `json:"tinkWorker"`
+	Nginx          Image `json:"nginx"`
 }
 
 // Tinkerbell hook OS.
