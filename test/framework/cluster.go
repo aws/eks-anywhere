@@ -1996,6 +1996,8 @@ func (e *ClusterE2ETest) CombinedAutoScalerMetricServerTest(autoscalerName, metr
 	e.VerifyAutoScalerPackageInstalled(autoscalerName, targetNamespace, mgmtCluster)
 	e.T.Log("Metrics Server and Cluster Autoscaler ready")
 	e.DeployTestWorkload(mgmtCluster)
+	e.RestartClusterAutoscaler(targetNamespace)
+	e.VerifyAutoScalerPackageInstalled(autoscalerName, targetNamespace, mgmtCluster)
 	e.VerifyWorkerNodesScaleUp(mgmtCluster)
 }
 
