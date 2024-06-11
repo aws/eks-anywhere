@@ -43,7 +43,7 @@ spec:
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: VSphereMachineTemplate
 metadata:
-  name: test-control-plane-template-1234567890000
+  name: test-control-plane-1
   namespace: eksa-system
 spec:
   template:
@@ -75,7 +75,7 @@ spec:
     infrastructureRef:
       apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
       kind: VSphereMachineTemplate
-      name: test-control-plane-template-1234567890000
+      name: test-control-plane-1
   kubeadmConfigSpec:
     clusterConfiguration:
       imageRepository: public.ecr.aws/eks-distro/kubernetes
@@ -119,6 +119,15 @@ spec:
           profiling: "false"
           tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
     files:
+    - content: |
+        maxPods: 20
+        resolvConf: test-path
+        tlsCipherSuites:
+        - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+        
+      owner: root:root
+      permissions: "0644"
+      path: /etc/kubernetes/patches/kubeletconfiguration0+strategic.yaml
     - content: |
         apiVersion: v1
         kind: Pod
@@ -332,24 +341,20 @@ spec:
       owner: root:root
       path: /etc/kubernetes/audit-policy.yaml
     initConfiguration:
+      patches: 
+        directory: /etc/kubernetes/patches
       nodeRegistration:
         criSocket: /var/run/containerd/containerd.sock
         kubeletExtraArgs:
           cloud-provider: external
-          read-only-port: "0"
-          anonymous-auth: "false"
-          tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
-          node-labels: label1=foo,label2=bar
         name: '{{ ds.meta_data.hostname }}'
     joinConfiguration:
+      patches: 
+        directory: /etc/kubernetes/patches
       nodeRegistration:
         criSocket: /var/run/containerd/containerd.sock
         kubeletExtraArgs:
           cloud-provider: external
-          read-only-port: "0"
-          anonymous-auth: "false"
-          tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
-          node-labels: label1=foo,label2=bar
         name: '{{ ds.meta_data.hostname }}'
     preKubeadmCommands:
     - hostname "{{ ds.meta_data.hostname }}"
@@ -416,12 +421,12 @@ spec:
   infrastructureTemplate:
     apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
     kind: VSphereMachineTemplate
-    name: test-etcd-template-1234567890000
+    name: <no value>
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: VSphereMachineTemplate
 metadata:
-  name: test-etcd-template-1234567890000
+  name: <no value>
   namespace: 'eksa-system'
 spec:
   template:
@@ -431,7 +436,7 @@ spec:
       datastore: /SDDC-Datacenter/datastore/WorkloadDatastore
       diskGiB: 25
       folder: '/SDDC-Datacenter/vm'
-      memoryMiB: 8192
+      memoryMiB: 4096
       network:
         devices:
           - dhcp4: true
@@ -451,8 +456,8 @@ metadata:
   labels:
     clusterctl.cluster.x-k8s.io/move: "true"
 data:
-  username: dnNwaGVyZV91c2VybmFtZQ==
-  password: dnNwaGVyZV9wYXNzd29yZA==
+  username: 
+  password: 
 ---
 apiVersion: v1
 kind: Secret
@@ -481,8 +486,8 @@ stringData:
       name: cloud-provider-vsphere-credentials
       namespace: kube-system
     data:
-      vsphere_server.password: dnNwaGVyZV9wYXNzd29yZA==
-      vsphere_server.username: dnNwaGVyZV91c2VybmFtZQ==
+      vsphere_server.password: 
+      vsphere_server.username: 
     type: Opaque
 type: addons.cluster.x-k8s.io/resource-set
 ---

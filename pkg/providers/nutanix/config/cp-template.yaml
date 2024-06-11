@@ -337,9 +337,14 @@ spec:
           # We have to pin the cgroupDriver to cgroupfs as kubeadm >=1.21 defaults to systemd
           # kind will implement systemd support in: https://github.com/kubernetes-sigs/kind/issues/1726
           #cgroup-driver: cgroupfs
+{{- if not .kubeletConfiguration }}
           eviction-hard: nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%
 {{- if .kubeletExtraArgs }}
 {{ .kubeletExtraArgs.ToYaml | indent 10 }}
+{{- end }}
+{{- end }}
+{{- if .nodeLabelArgs }}
+{{ .nodeLabelArgs.ToYaml | indent 10 }}
 {{- end }}
 {{- if .controlPlaneTaints }}
         taints:
@@ -361,10 +366,15 @@ spec:
         criSocket: /var/run/containerd/containerd.sock
         kubeletExtraArgs:
           cloud-provider: external
+{{- if not .kubeletConfiguration }}
           read-only-port: "0"
           anonymous-auth: "false"
 {{- if .kubeletExtraArgs }}
 {{ .kubeletExtraArgs.ToYaml | indent 10 }}
+{{- end }}
+{{- end }}
+{{- if .nodeLabelArgs }}
+{{ .nodeLabelArgs.ToYaml | indent 10 }}
 {{- end }}
 {{- if .controlPlaneTaints }}
         taints:

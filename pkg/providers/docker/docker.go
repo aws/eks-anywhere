@@ -281,17 +281,6 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec) (map[string]interface{}, erro
 	versionsBundle := clusterSpec.RootVersionsBundle()
 	etcdExtraArgs := clusterapi.SecureEtcdTlsCipherSuitesExtraArgs()
 	sharedExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs()
-	kubeletExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs().
-		Append(clusterapi.ResolvConfExtraArgs(clusterSpec.Cluster.Spec.ClusterNetwork.DNS.ResolvConf)).
-		Append(clusterapi.ControlPlaneNodeLabelsExtraArgs(clusterSpec.Cluster.Spec.ControlPlaneConfiguration))
-
-	cgroupDriverArgs, err := kubeletCgroupDriverExtraArgs(clusterSpec.Cluster.Spec.KubernetesVersion)
-	if err != nil {
-		return nil, err
-	}
-	if cgroupDriverArgs != nil {
-		kubeletExtraArgs.Append(cgroupDriverArgs)
-	}
 
 	apiServerExtraArgs := clusterapi.OIDCToExtraArgs(clusterSpec.OIDCConfig).
 		Append(clusterapi.AwsIamAuthExtraArgs(clusterSpec.AWSIamConfig)).
@@ -316,7 +305,6 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec) (map[string]interface{}, erro
 		"apiserverExtraArgs":            apiServerExtraArgs.ToPartialYaml(),
 		"controllermanagerExtraArgs":    controllerManagerExtraArgs.ToPartialYaml(),
 		"schedulerExtraArgs":            sharedExtraArgs.ToPartialYaml(),
-		"kubeletExtraArgs":              kubeletExtraArgs.ToPartialYaml(),
 		"externalEtcdVersion":           versionsBundle.KubeDistro.EtcdVersion,
 		"eksaSystemNamespace":           constants.EksaSystemNamespace,
 		"podCidrs":                      clusterSpec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks,
@@ -361,40 +349,53 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec) (map[string]interface{}, erro
 
 	if clusterSpec.Cluster.Spec.ControlPlaneConfiguration.KubeletConfiguration != nil {
 		cpKubeletConfig := clusterSpec.Cluster.Spec.ControlPlaneConfiguration.KubeletConfiguration.Object
+		if _, ok := cpKubeletConfig["tlsCipherSuites"]; !ok {
+			cpKubeletConfig["tlsCipherSuites"] = crypto.SecureCipherSuiteNames()
+		}
+
+		if _, ok := cpKubeletConfig["resolvConf"]; !ok {
+			if clusterSpec.Cluster.Spec.ClusterNetwork.DNS.ResolvConf != nil {
+				cpKubeletConfig["resolvConf"] = clusterSpec.Cluster.Spec.ClusterNetwork.DNS.ResolvConf.Path
+			}
+		}
 		kcString, err := yaml.Marshal(cpKubeletConfig)
 		if err != nil {
 			return nil, fmt.Errorf("marshaling control plane node Kubelet Configuration while building CAPI template %v", err)
 		}
 
 		values["kubeletConfiguration"] = string(kcString)
+
+	} else {
+		kubeletExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs().
+			Append(clusterapi.ResolvConfExtraArgs(clusterSpec.Cluster.Spec.ClusterNetwork.DNS.ResolvConf))
+
+		cgroupDriverArgs, err := kubeletCgroupDriverExtraArgs(clusterSpec.Cluster.Spec.KubernetesVersion)
+		if err != nil {
+			return nil, err
+		}
+		if cgroupDriverArgs != nil {
+			kubeletExtraArgs.Append(cgroupDriverArgs)
+		}
+
+		values["kubeletExtraArgs"] = kubeletExtraArgs.ToPartialYaml()
+	}
+
+	nodeLabelArgs := clusterapi.ControlPlaneNodeLabelsExtraArgs(clusterSpec.Cluster.Spec.ControlPlaneConfiguration)
+	if len(nodeLabelArgs) != 0 {
+		values["nodeLabelArgs"] = nodeLabelArgs.ToPartialYaml()
 	}
 
 	return values, nil
 }
 
 func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupConfiguration v1alpha1.WorkerNodeGroupConfiguration) (map[string]interface{}, error) {
-	kubeVersion := clusterSpec.Cluster.Spec.KubernetesVersion
-	if workerNodeGroupConfiguration.KubernetesVersion != nil {
-		kubeVersion = *workerNodeGroupConfiguration.KubernetesVersion
-	}
 	versionsBundle := clusterSpec.WorkerNodeGroupVersionsBundle(workerNodeGroupConfiguration)
-	kubeletExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs().
-		Append(clusterapi.WorkerNodeLabelsExtraArgs(workerNodeGroupConfiguration)).
-		Append(clusterapi.ResolvConfExtraArgs(clusterSpec.Cluster.Spec.ClusterNetwork.DNS.ResolvConf))
 
-	cgroupDriverArgs, err := kubeletCgroupDriverExtraArgs(kubeVersion)
-	if err != nil {
-		return nil, err
-	}
-	if cgroupDriverArgs != nil {
-		kubeletExtraArgs.Append(cgroupDriverArgs)
-	}
 	values := map[string]interface{}{
 		"clusterName":           clusterSpec.Cluster.Name,
 		"kubernetesVersion":     versionsBundle.KubeDistro.Kubernetes.Tag,
 		"kindNodeImage":         versionsBundle.EksD.KindNode.VersionedImage(),
 		"eksaSystemNamespace":   constants.EksaSystemNamespace,
-		"kubeletExtraArgs":      kubeletExtraArgs.ToPartialYaml(),
 		"workerReplicas":        *workerNodeGroupConfiguration.Count,
 		"workerNodeGroupName":   fmt.Sprintf("%s-%s", clusterSpec.Cluster.Name, workerNodeGroupConfiguration.Name),
 		"workerNodeGroupTaints": workerNodeGroupConfiguration.Taints,
@@ -410,12 +411,43 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupConfiguration 
 
 	if workerNodeGroupConfiguration.KubeletConfiguration != nil {
 		wnKubeletConfig := workerNodeGroupConfiguration.KubeletConfiguration.Object
+		if _, ok := wnKubeletConfig["tlsCipherSuites"]; !ok {
+			wnKubeletConfig["tlsCipherSuites"] = crypto.SecureCipherSuiteNames()
+		}
+
+		if _, ok := wnKubeletConfig["resolvConf"]; !ok {
+			if clusterSpec.Cluster.Spec.ClusterNetwork.DNS.ResolvConf != nil {
+				wnKubeletConfig["resolvConf"] = clusterSpec.Cluster.Spec.ClusterNetwork.DNS.ResolvConf.Path
+			}
+		}
 		kcString, err := yaml.Marshal(wnKubeletConfig)
 		if err != nil {
 			return nil, fmt.Errorf("marshaling Kubelet Configuration for worker node %s: %v", workerNodeGroupConfiguration.Name, err)
 		}
 
 		values["kubeletConfiguration"] = string(kcString)
+	} else {
+		kubeVersion := clusterSpec.Cluster.Spec.KubernetesVersion
+		if workerNodeGroupConfiguration.KubernetesVersion != nil {
+			kubeVersion = *workerNodeGroupConfiguration.KubernetesVersion
+		}
+		kubeletExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs().
+			Append(clusterapi.ResolvConfExtraArgs(clusterSpec.Cluster.Spec.ClusterNetwork.DNS.ResolvConf))
+
+		cgroupDriverArgs, err := kubeletCgroupDriverExtraArgs(kubeVersion)
+		if err != nil {
+			return nil, err
+		}
+		if cgroupDriverArgs != nil {
+			kubeletExtraArgs.Append(cgroupDriverArgs)
+		}
+
+		values["kubeletExtraArgs"] = kubeletExtraArgs.ToPartialYaml()
+	}
+
+	nodeLabelArgs := clusterapi.WorkerNodeLabelsExtraArgs(workerNodeGroupConfiguration)
+	if len(nodeLabelArgs) != 0 {
+		values["nodeLabelArgs"] = nodeLabelArgs.ToPartialYaml()
 	}
 
 	return values, nil

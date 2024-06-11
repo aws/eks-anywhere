@@ -1,22 +1,30 @@
 apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
 kind: KubeadmConfigTemplate
 metadata:
-  name: test-md-0-template-1234567890000
+  name: 
   namespace: eksa-system
 spec:
   template:
     spec:
       joinConfiguration:
+        patches: 
+          directory: /etc/kubernetes/patches
         nodeRegistration:
           criSocket: /var/run/containerd/containerd.sock
           taints: []
           kubeletExtraArgs:
             provider-id: cloudstack:///'{{ ds.meta_data.instance_id }}'
-            read-only-port: "0"
-            anonymous-auth: "false"
-            tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
-            node-labels: label1=foo,label2=bar
           name: "{{ ds.meta_data.hostname }}"
+      files:
+      - content: |
+          maxPods: 20
+          resolvConf: temp-path
+          tlsCipherSuites:
+          - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+          
+        owner: root:root
+        permissions: "0644"
+        path: /etc/kubernetes/patches/kubeletconfiguration0+strategic.yaml
       preKubeadmCommands:
       - swapoff -a
       - hostname "{{ ds.meta_data.hostname }}"
@@ -24,6 +32,20 @@ spec:
       - echo "127.0.0.1   localhost" >>/etc/hosts
       - echo "127.0.0.1   {{ ds.meta_data.hostname }}" >>/etc/hosts
       - echo "{{ ds.meta_data.hostname }}" >/etc/hostname
+      - >-
+        if [ ! -L /var/log/containers ] ;
+          then
+            mv /var/log/containers /var/log/containers-$(tr -dc A-Za-z0-9 < /dev/urandom | head -c 10) ;
+            mkdir -p /data-small/var/log/containers && ln -s /data-small/var/log/containers /var/log/containers ;
+          else echo "/var/log/containers already symlnk" ;
+        fi
+      - >-
+        if [ ! -L /var/log/pods ] ;
+          then
+            mv /var/log/pods /var/log/pods-$(tr -dc A-Za-z0-9 < /dev/urandom | head -c 10) ;
+            mkdir -p /data-small/var/log/pods && ln -s /data-small/var/log/pods /var/log/pods ;
+          else echo "/var/log/pods already symlnk" ;
+        fi
       diskSetup:
         filesystems:
           - device: /dev/vdb1
@@ -69,12 +91,12 @@ spec:
         configRef:
           apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
           kind: KubeadmConfigTemplate
-          name: test-md-0-template-1234567890000
+          name: 
       clusterName: test
       infrastructureRef:
         apiVersion: infrastructure.cluster.x-k8s.io/v1beta3
         kind: CloudStackMachineTemplate
-        name: test-md-0-1234567890000
+        name: 
       version: v1.21.2-eks-1-21-4
 
 ---
@@ -86,8 +108,8 @@ metadata:
     filesystem.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: ext4
     label.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: data_disk
     mountpath.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: /data-small
+    symlinks.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: /var/log/containers:/data-small/var/log/containers,/var/log/pods:/data-small/var/log/pods
   creationTimestamp: null
-  name: test-md-0-1234567890000
   namespace: eksa-system
 spec:
   template:
