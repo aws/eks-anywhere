@@ -5,6 +5,10 @@ import (
 	"errors"
 	"fmt"
 
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
+	"sigs.k8s.io/yaml"
+
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/cluster"
@@ -266,4 +270,68 @@ func ValidateManagementComponentsVersionSkew(ctx context.Context, k KubectlClien
 		return fmt.Errorf("management components version %s can only be one minor version greater than cluster version %s", newManagementComponentsSemVer, managementClusterSemVer)
 	}
 	return nil
+}
+
+// ValidateBottlerocketKubeletConfig validates bottlerocket settings for Kubelet Configuration.
+func ValidateBottlerocketKubeletConfig(spec *cluster.Spec) error {
+	cpKubeletConfig := spec.Cluster.Spec.ControlPlaneConfiguration.KubeletConfiguration
+	if err := validateKubeletConfiguration(cpKubeletConfig); err != nil {
+		return err
+	}
+
+	workerNodeGroupConfigs := spec.Cluster.Spec.WorkerNodeGroupConfigurations
+	for _, workerNodeGroupConfig := range workerNodeGroupConfigs {
+		wnKubeletConfig := workerNodeGroupConfig.KubeletConfiguration
+		if err := validateKubeletConfiguration(wnKubeletConfig); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func validateKubeletConfiguration(kubeletConfig *unstructured.Unstructured) error {
+	if kubeletConfig == nil {
+		return nil
+	}
+	kubeletConfigCopy, err := copyObject(kubeletConfig)
+	if err != nil {
+		return err
+	}
+
+	delete(kubeletConfigCopy.Object, "kind")
+	delete(kubeletConfigCopy.Object, "apiVersion")
+	kcString, err := yaml.Marshal(kubeletConfigCopy)
+	if err != nil {
+		return err
+	}
+
+	_, err = yaml.YAMLToJSONStrict([]byte(kcString))
+	if err != nil {
+		return fmt.Errorf("unmarshaling the yaml, malformed yaml %v", err)
+	}
+
+	var bottlerocketKC *v1beta1.BottlerocketKubernetesSettings
+	err = yaml.UnmarshalStrict(kcString, &bottlerocketKC)
+	if err != nil {
+		return fmt.Errorf("unmarshaling KubeletConfiguration for %v", err)
+	}
+
+	return nil
+}
+
+func copyObject(kubeletConfig *unstructured.Unstructured) (*unstructured.Unstructured, error) {
+	var kubeletConfigBackup *unstructured.Unstructured
+
+	kcString, err := yaml.Marshal(kubeletConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	err = yaml.UnmarshalStrict(kcString, &kubeletConfigBackup)
+	if err != nil {
+		return nil, fmt.Errorf("unmarshaling KubeletConfiguration for %v", err)
+	}
+
+	return kubeletConfigBackup, nil
 }

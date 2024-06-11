@@ -10,6 +10,7 @@ import (
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/aws/eks-anywhere/internal/test"
@@ -738,6 +739,125 @@ func TestValidateManagementComponentsVersionSkew(t *testing.T) {
 				tt.Expect(err.Error()).To(ContainSubstring(tc.wantErr.Error()))
 			} else {
 				tt.Expect(tc.wantErr).To(BeNil())
+			}
+		})
+	}
+}
+
+func TestValidateBottlerocketKC(t *testing.T) {
+	tests := []struct {
+		name   string
+		spec   *cluster.Spec
+		subErr error
+	}{
+		{
+			name: "cp config",
+			spec: &cluster.Spec{
+				Config: &cluster.Config{
+					Cluster: &anywherev1.Cluster{
+						Spec: anywherev1.ClusterSpec{
+							ControlPlaneConfiguration: anywherev1.ControlPlaneConfiguration{
+								KubeletConfiguration: &unstructured.Unstructured{
+									Object: map[string]interface{}{
+										"kind":    "KubeletConfiguration",
+										"maxPods": 50,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			subErr: nil,
+		},
+		{
+			name: "worker config",
+			spec: &cluster.Spec{
+				Config: &cluster.Config{
+					Cluster: &anywherev1.Cluster{
+						Spec: anywherev1.ClusterSpec{
+							WorkerNodeGroupConfigurations: []anywherev1.WorkerNodeGroupConfiguration{
+								{
+									KubeletConfiguration: &unstructured.Unstructured{
+										Object: map[string]interface{}{
+											"maxPods": 50,
+											"kind":    "KubeletConfiguration",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			subErr: nil,
+		},
+		{
+			name: "nil kc config",
+			spec: &cluster.Spec{
+				Config: &cluster.Config{
+					Cluster: &anywherev1.Cluster{
+						Spec: anywherev1.ClusterSpec{
+							ControlPlaneConfiguration: anywherev1.ControlPlaneConfiguration{},
+						},
+					},
+				},
+			},
+			subErr: nil,
+		},
+		{
+			name: "invalid cp config",
+			spec: &cluster.Spec{
+				Config: &cluster.Config{
+					Cluster: &anywherev1.Cluster{
+						Spec: anywherev1.ClusterSpec{
+							ControlPlaneConfiguration: anywherev1.ControlPlaneConfiguration{
+								KubeletConfiguration: &unstructured.Unstructured{
+									Object: map[string]interface{}{
+										"maxPodss": 50,
+										"kind":     "KubeletConfiguration",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			subErr: errors.New("unknown field \"maxPodss\""),
+		},
+		{
+			name: "invalid worker config",
+			spec: &cluster.Spec{
+				Config: &cluster.Config{
+					Cluster: &anywherev1.Cluster{
+						Spec: anywherev1.ClusterSpec{
+							WorkerNodeGroupConfigurations: []anywherev1.WorkerNodeGroupConfiguration{
+								{
+									KubeletConfiguration: &unstructured.Unstructured{
+										Object: map[string]interface{}{
+											"maxPodss": 50,
+											"kind":     "KubeletConfiguration",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			subErr: errors.New("unknown field \"maxPodss\""),
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			tt := newTest(t, withKubectl())
+
+			err := validations.ValidateBottlerocketKubeletConfig(tc.spec)
+			if err != nil {
+				t.Log(err.Error())
+				tt.Expect(err.Error()).To(ContainSubstring(tc.subErr.Error()))
+			} else {
+				tt.Expect(tc.subErr).To(BeNil())
 			}
 		})
 	}

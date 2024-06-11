@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/aws/eks-anywhere/internal/test"
@@ -446,6 +447,54 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 		modifyDefaultSpecFunc  func(s *cluster.Spec)
 		additionalKubectlMocks func(k *mocks.MockKubectlClient)
 	}{
+		{
+			name:               "ValidationBottlerocketKC",
+			clusterVersion:     "v1.19.16-eks-1-19-4",
+			upgradeVersion:     string(anywherev1.Kube119),
+			getClusterResponse: goodClusterResponse,
+			cpResponse:         nil,
+			workerResponse:     nil,
+			nodeResponse:       nil,
+			crdResponse:        nil,
+			wantErr:            nil,
+			modifyDefaultSpecFunc: func(s *cluster.Spec) {
+				s.VSphereMachineConfigs = map[string]*anywherev1.VSphereMachineConfig{
+					"test": {
+						Spec: anywherev1.VSphereMachineConfigSpec{
+							OSFamily: anywherev1.Bottlerocket,
+							Users: []anywherev1.UserConfiguration{{
+								Name:              "mySshUsername",
+								SshAuthorizedKeys: []string{"mySshAuthorizedKey"},
+							}},
+						},
+					},
+					"wnRef": {
+						Spec: anywherev1.VSphereMachineConfigSpec{
+							OSFamily: anywherev1.Bottlerocket,
+							Users: []anywherev1.UserConfiguration{{
+								Name:              "mySshUsername",
+								SshAuthorizedKeys: []string{"mySshAuthorizedKey"},
+							}},
+						},
+					},
+				}
+				s.Cluster.Spec.ControlPlaneConfiguration.KubeletConfiguration = &unstructured.Unstructured{
+					Object: map[string]interface{}{
+						"clusterDNSIPs": []string{"ip1"},
+						"kind":          "KubeletConfiguration",
+					},
+				}
+				s.Cluster.Spec.WorkerNodeGroupConfigurations[0].KubeletConfiguration = &unstructured.Unstructured{
+					Object: map[string]interface{}{
+						"clusterDNSIPs": []string{"ip1"},
+						"kind":          "KubeletConfiguration",
+					},
+				}
+				s.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef = &anywherev1.Ref{
+					Name: "wnRef",
+				}
+			},
+		},
 		{
 			name:               "ValidationSucceeds",
 			clusterVersion:     "v1.19.16-eks-1-19-4",
