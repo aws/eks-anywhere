@@ -106,37 +106,37 @@ type ProviderGovcClient interface {
 	AddTag(ctx context.Context, path, tag string) error
 	ListCategories(ctx context.Context) ([]string, error)
 	CreateCategoryForVM(ctx context.Context, name string) error
-	CreateUser(ctx context.Context, username string, password string) error
+	CreateUser(ctx context.Context, username, password string) error
 	UserExists(ctx context.Context, username string) (bool, error)
 	CreateGroup(ctx context.Context, name string) error
 	GroupExists(ctx context.Context, name string) (bool, error)
-	AddUserToGroup(ctx context.Context, name string, username string) error
+	AddUserToGroup(ctx context.Context, name, username string) error
 	RoleExists(ctx context.Context, name string) (bool, error)
 	CreateRole(ctx context.Context, name string, privileges []string) error
-	SetGroupRoleOnObject(ctx context.Context, principal string, role string, object string, domain string) error
+	SetGroupRoleOnObject(ctx context.Context, principal, role, object, domain string) error
 	GetHardDiskSize(ctx context.Context, vm, datacenter string) (map[string]float64, error)
 	GetResourcePoolInfo(ctx context.Context, datacenter, resourcepool string, args ...string) (map[string]int, error)
 }
 
 type ProviderKubectlClient interface {
 	ApplyKubeSpecFromBytes(ctx context.Context, cluster *types.Cluster, data []byte) error
-	CreateNamespaceIfNotPresent(ctx context.Context, kubeconfig string, namespace string) error
-	LoadSecret(ctx context.Context, secretObject string, secretObjType string, secretObjectName string, kubeConfFile string) error
+	CreateNamespaceIfNotPresent(ctx context.Context, kubeconfig, namespace string) error
+	LoadSecret(ctx context.Context, secretObject, secretObjType, secretObjectName, kubeConfFile string) error
 	GetEksaCluster(ctx context.Context, cluster *types.Cluster, clusterName string) (*v1alpha1.Cluster, error)
-	GetEksaVSphereDatacenterConfig(ctx context.Context, vsphereDatacenterConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.VSphereDatacenterConfig, error)
-	GetEksaVSphereMachineConfig(ctx context.Context, vsphereMachineConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.VSphereMachineConfig, error)
+	GetEksaVSphereDatacenterConfig(ctx context.Context, vsphereDatacenterConfigName, kubeconfigFile, namespace string) (*v1alpha1.VSphereDatacenterConfig, error)
+	GetEksaVSphereMachineConfig(ctx context.Context, vsphereMachineConfigName, kubeconfigFile, namespace string) (*v1alpha1.VSphereMachineConfig, error)
 	GetMachineDeployment(ctx context.Context, machineDeploymentName string, opts ...executables.KubectlOpt) (*clusterv1.MachineDeployment, error)
 	GetKubeadmControlPlane(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...executables.KubectlOpt) (*controlplanev1.KubeadmControlPlane, error)
 	GetEtcdadmCluster(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...executables.KubectlOpt) (*etcdv1.EtcdadmCluster, error)
 	GetSecretFromNamespace(ctx context.Context, kubeconfigFile, name, namespace string) (*corev1.Secret, error)
 	UpdateAnnotation(ctx context.Context, resourceType, objectName string, annotations map[string]string, opts ...executables.KubectlOpt) error
 	RemoveAnnotationInNamespace(ctx context.Context, resourceType, objectName, key string, cluster *types.Cluster, namespace string) error
-	SearchVsphereMachineConfig(ctx context.Context, name string, kubeconfigFile string, namespace string) ([]*v1alpha1.VSphereMachineConfig, error)
-	SearchVsphereDatacenterConfig(ctx context.Context, name string, kubeconfigFile string, namespace string) ([]*v1alpha1.VSphereDatacenterConfig, error)
+	SearchVsphereMachineConfig(ctx context.Context, name, kubeconfigFile, namespace string) ([]*v1alpha1.VSphereMachineConfig, error)
+	SearchVsphereDatacenterConfig(ctx context.Context, name, kubeconfigFile, namespace string) ([]*v1alpha1.VSphereDatacenterConfig, error)
 	SetDaemonSetImage(ctx context.Context, kubeconfigFile, name, namespace, container, image string) error
-	DeleteEksaDatacenterConfig(ctx context.Context, vsphereDatacenterResourceType string, vsphereDatacenterConfigName string, kubeconfigFile string, namespace string) error
-	DeleteEksaMachineConfig(ctx context.Context, vsphereMachineResourceType string, vsphereMachineConfigName string, kubeconfigFile string, namespace string) error
-	ApplyTolerationsFromTaintsToDaemonSet(ctx context.Context, oldTaints []corev1.Taint, newTaints []corev1.Taint, dsName string, kubeconfigFile string) error
+	DeleteEksaDatacenterConfig(ctx context.Context, vsphereDatacenterResourceType, vsphereDatacenterConfigName, kubeconfigFile, namespace string) error
+	DeleteEksaMachineConfig(ctx context.Context, vsphereMachineResourceType, vsphereMachineConfigName, kubeconfigFile, namespace string) error
+	ApplyTolerationsFromTaintsToDaemonSet(ctx context.Context, oldTaints, newTaints []corev1.Taint, dsName, kubeconfigFile string) error
 }
 
 // IPValidator is an interface that defines methods to validate the control plane IP.
@@ -376,7 +376,7 @@ func (p *vsphereProvider) SetupAndValidateCreateCluster(ctx context.Context, clu
 	return nil
 }
 
-func (p *vsphereProvider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, _ *cluster.Spec) error {
+func (p *vsphereProvider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *types.Cluster, clusterSpec, _ *cluster.Spec) error {
 	if err := SetupEnvVars(clusterSpec.VSphereDatacenter); err != nil {
 		return fmt.Errorf("failed setup and validations: %v", err)
 	}
@@ -545,7 +545,11 @@ func (p *vsphereProvider) validateDatastoreUsageForUpgrade(ctx context.Context, 
 
 	etcdMachineConfig := currentClusterSpec.etcdMachineConfig()
 	if etcdMachineConfig != nil {
-		if err := p.calculateDatastoreUsage(ctx, etcdMachineConfig, cluster, usage, prevEksaCluster.Spec.ExternalEtcdConfiguration.Count, currentClusterSpec.Cluster.Spec.ExternalEtcdConfiguration.Count); err != nil {
+		prevCount := 0
+		if prevEksaCluster.Spec.ExternalEtcdConfiguration != nil {
+			prevCount = prevEksaCluster.Spec.ExternalEtcdConfiguration.Count
+		}
+		if err := p.calculateDatastoreUsage(ctx, etcdMachineConfig, cluster, usage, prevCount, currentClusterSpec.Cluster.Spec.ExternalEtcdConfiguration.Count); err != nil {
 			return fmt.Errorf("calculating datastore usage: %v", err)
 		}
 	}
@@ -652,7 +656,7 @@ func (p *vsphereProvider) validateMemoryUsage(ctx context.Context, clusterSpec *
 	}
 	for resourcePool, remaniningMiB := range memoryUsage {
 		if remaniningMiB != -1 && remaniningMiB < 0 {
-			return fmt.Errorf("not enough memory avaialable in resource pool %v for given memoryMiB and count for respective machine groups", resourcePool)
+			return fmt.Errorf("not enough memory available in resource pool %v for given memoryMiB and count for respective machine groups", resourcePool)
 		}
 	}
 	logger.V(5).Info("Memory availability for machine configs in requested resource pool validated")
@@ -737,7 +741,7 @@ func NeedsNewWorkloadTemplate(oldSpec, newSpec *cluster.Spec, oldVdc, newVdc *v1
 	return AnyImmutableFieldChanged(oldVdc, newVdc, oldVmc, newVmc)
 }
 
-func NeedsNewKubeadmConfigTemplate(newWorkerNodeGroup *v1alpha1.WorkerNodeGroupConfiguration, oldWorkerNodeGroup *v1alpha1.WorkerNodeGroupConfiguration, oldWorkerNodeVmc *v1alpha1.VSphereMachineConfig, newWorkerNodeVmc *v1alpha1.VSphereMachineConfig) bool {
+func NeedsNewKubeadmConfigTemplate(newWorkerNodeGroup, oldWorkerNodeGroup *v1alpha1.WorkerNodeGroupConfiguration, oldWorkerNodeVmc, newWorkerNodeVmc *v1alpha1.VSphereMachineConfig) bool {
 	return !v1alpha1.TaintsSliceEqual(newWorkerNodeGroup.Taints, oldWorkerNodeGroup.Taints) || !v1alpha1.MapEqual(newWorkerNodeGroup.Labels, oldWorkerNodeGroup.Labels) ||
 		!v1alpha1.UsersSliceEqual(oldWorkerNodeVmc.Spec.Users, newWorkerNodeVmc.Spec.Users)
 }
@@ -1125,7 +1129,7 @@ func (p *vsphereProvider) getWorkerNodeMachineConfigs(ctx context.Context, workl
 	return nil, nil, nil
 }
 
-func (p *vsphereProvider) needsNewMachineTemplate(currentSpec, newClusterSpec *cluster.Spec, workerNodeGroupConfiguration v1alpha1.WorkerNodeGroupConfiguration, vdc *v1alpha1.VSphereDatacenterConfig, prevWorkerNodeGroupConfigs map[string]v1alpha1.WorkerNodeGroupConfiguration, oldWorkerMachineConfig *v1alpha1.VSphereMachineConfig, newWorkerMachineConfig *v1alpha1.VSphereMachineConfig) (bool, error) {
+func (p *vsphereProvider) needsNewMachineTemplate(currentSpec, newClusterSpec *cluster.Spec, workerNodeGroupConfiguration v1alpha1.WorkerNodeGroupConfiguration, vdc *v1alpha1.VSphereDatacenterConfig, prevWorkerNodeGroupConfigs map[string]v1alpha1.WorkerNodeGroupConfiguration, oldWorkerMachineConfig, newWorkerMachineConfig *v1alpha1.VSphereMachineConfig) (bool, error) {
 	if prevWorkerNode, ok := prevWorkerNodeGroupConfigs[workerNodeGroupConfiguration.Name]; ok {
 		needsNewWorkloadTemplate := NeedsNewWorkloadTemplate(currentSpec, newClusterSpec, vdc, newClusterSpec.VSphereDatacenter, oldWorkerMachineConfig, newWorkerMachineConfig, prevWorkerNode, workerNodeGroupConfiguration)
 		return needsNewWorkloadTemplate, nil
@@ -1133,7 +1137,7 @@ func (p *vsphereProvider) needsNewMachineTemplate(currentSpec, newClusterSpec *c
 	return true, nil
 }
 
-func (p *vsphereProvider) needsNewKubeadmConfigTemplate(workerNodeGroupConfiguration v1alpha1.WorkerNodeGroupConfiguration, prevWorkerNodeGroupConfigs map[string]v1alpha1.WorkerNodeGroupConfiguration, oldWorkerNodeVmc *v1alpha1.VSphereMachineConfig, newWorkerNodeVmc *v1alpha1.VSphereMachineConfig) (bool, error) {
+func (p *vsphereProvider) needsNewKubeadmConfigTemplate(workerNodeGroupConfiguration v1alpha1.WorkerNodeGroupConfiguration, prevWorkerNodeGroupConfigs map[string]v1alpha1.WorkerNodeGroupConfiguration, oldWorkerNodeVmc, newWorkerNodeVmc *v1alpha1.VSphereMachineConfig) (bool, error) {
 	if _, ok := prevWorkerNodeGroupConfigs[workerNodeGroupConfiguration.Name]; ok {
 		existingWorkerNodeGroupConfig := prevWorkerNodeGroupConfigs[workerNodeGroupConfiguration.Name]
 		return NeedsNewKubeadmConfigTemplate(&workerNodeGroupConfiguration, &existingWorkerNodeGroupConfig, oldWorkerNodeVmc, newWorkerNodeVmc), nil
@@ -1210,7 +1214,7 @@ func (p *vsphereProvider) Version(components *cluster.ManagementComponents) stri
 	return components.VSphere.Version
 }
 
-func (p *vsphereProvider) RunPostControlPlaneUpgrade(_ context.Context, _ *cluster.Spec, _ *cluster.Spec, _ *types.Cluster, _ *types.Cluster) error {
+func (p *vsphereProvider) RunPostControlPlaneUpgrade(_ context.Context, _, _ *cluster.Spec, _, _ *types.Cluster) error {
 	return nil
 }
 
