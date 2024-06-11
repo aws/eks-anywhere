@@ -1,0 +1,15 @@
+apiVersion: packages.eks.amazonaws.com/v1alpha1
+kind: Package
+metadata:
+  name: cluster-autoscaler
+spec:
+  packageName: cluster-autoscaler
+  targetNamespace: {{.targetNamespace}}
+  config: |-
+    cloudProvider: "clusterapi"
+    clusterAPIMode: "kubeconfig-incluster"
+    clusterAPIKubeconfigSecret: "{{.workloadClusterName}}-kubeconfig"
+    autoDiscovery:
+      clusterName: {{.workloadClusterName}}
+
+---
