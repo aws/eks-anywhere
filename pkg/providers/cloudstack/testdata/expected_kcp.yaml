@@ -22,10 +22,6 @@ spec:
     apiVersion: infrastructure.cluster.x-k8s.io/v1beta3
     kind: CloudStackCluster
     name: test
-  managedExternalEtcdRef:
-    apiVersion: etcdcluster.cluster.x-k8s.io/v1beta1
-    kind: EtcdadmCluster
-    name: test-etcd
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta3
 kind: CloudStackCluster
@@ -60,16 +56,16 @@ spec:
     infrastructureRef:
       apiVersion: infrastructure.cluster.x-k8s.io/v1beta3
       kind: CloudStackMachineTemplate
-      name: test-control-plane-template-1234567890000
+      name: test-control-plane-1
   kubeadmConfigSpec:
     clusterConfiguration:
       imageRepository: public.ecr.aws/eks-distro/kubernetes
       etcd:
-        external:
-          endpoints: []
-          caFile: "/etc/kubernetes/pki/etcd/ca.crt"
-          certFile: "/etc/kubernetes/pki/apiserver-etcd-client.crt"
-          keyFile: "/etc/kubernetes/pki/apiserver-etcd-client.key"
+        local:
+          imageRepository: public.ecr.aws/eks-distro/etcd-io
+          imageTag: v3.4.16-eks-1-21-4
+          extraArgs:
+            cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
       dns:
         imageRepository: public.ecr.aws/eks-distro/coredns
         imageTag: v1.8.3-eks-1-21-4
@@ -104,6 +100,15 @@ spec:
           profiling: "false"
           tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
     files:
+    - content: |
+        maxPods: 20
+        resolvConf: temp-path
+        tlsCipherSuites:
+        - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+        
+      owner: root:root
+      permissions: "0644"
+      path: /etc/kubernetes/patches/kubeletconfiguration0+strategic.yaml
     - content: |
         apiVersion: v1
         kind: Pod
@@ -317,24 +322,20 @@ spec:
       owner: root:root
       path: /etc/kubernetes/audit-policy.yaml
     initConfiguration:
+      patches: 
+        directory: /etc/kubernetes/patches
       nodeRegistration:
         criSocket: /var/run/containerd/containerd.sock
         kubeletExtraArgs:
           provider-id: cloudstack:///'{{ ds.meta_data.instance_id }}'
-          read-only-port: "0"
-          anonymous-auth: "false"
-          tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
-          node-labels: label1=foo,label2=bar
         name: "{{ ds.meta_data.hostname }}"
     joinConfiguration:
+      patches: 
+        directory: /etc/kubernetes/patches
       nodeRegistration:
         criSocket: /var/run/containerd/containerd.sock
         kubeletExtraArgs:
           provider-id: cloudstack:///'{{ ds.meta_data.instance_id }}'
-          read-only-port: "0"
-          anonymous-auth: "false"
-          tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
-          node-labels: label1=foo,label2=bar
         name: "{{ ds.meta_data.hostname }}"
     preKubeadmCommands:
     - swapoff -a
@@ -343,6 +344,13 @@ spec:
     - echo "127.0.0.1   localhost" >>/etc/hosts
     - echo "127.0.0.1   {{ ds.meta_data.hostname }}" >>/etc/hosts
     - echo "{{ ds.meta_data.hostname }}" >/etc/hostname
+    - >-
+      if [ ! -L /var/log/kubernetes ] ;
+        then
+          mv /var/log/kubernetes /var/log/kubernetes-$(tr -dc A-Za-z0-9 < /dev/urandom | head -c 10) ;
+          mkdir -p /data-small/var/log/kubernetes && ln -s /data-small/var/log/kubernetes /var/log/kubernetes ;
+        else echo "/var/log/kubernetes already symlnk";
+      fi
     diskSetup:
       filesystems:
         - device: /dev/vdb1
@@ -370,49 +378,6 @@ spec:
   replicas: 3
   version: v1.21.2-eks-1-21-4
 ---
-kind: EtcdadmCluster
-apiVersion: etcdcluster.cluster.x-k8s.io/v1beta1
-metadata:
-  name: test-etcd
-  namespace: eksa-system
-spec:
-  replicas: 3
-  etcdadmConfigSpec:
-    etcdadmBuiltin: false
-    format: cloud-config
-    cloudInitConfig:
-      version: 3.4.16
-      installDir: "/usr/bin"
-      etcdReleaseURL: https://distro.eks.amazonaws.com/kubernetes-1-21/releases/4/artifacts/etcd/v3.4.16/etcd-linux-amd64-v3.4.16.tar.gz
-    etcdadmInstallCommands:
-      - echo this line exists so that etcdadmInstallCommands is not empty
-      - echo etcdadmInstallCommands can be removed once etcdadm bootstrap and controller fix the bug
-      - echo that preEtcdadmCommands not run unless etcdadmBuiltin is false
-      - echo https://github.com/mrajashree/etcdadm-bootstrap-provider/issues/13
-    preEtcdadmCommands:
-    - swapoff -a
-    - hostname "{{ ds.meta_data.hostname }}"
-    - echo "::1         ipv6-localhost ipv6-loopback" >/etc/hosts
-    - echo "127.0.0.1   localhost" >>/etc/hosts
-    - echo "127.0.0.1   {{ ds.meta_data.hostname }}" >>/etc/hosts
-    - echo "{{ ds.meta_data.hostname }}" >/etc/hostname
-    - >-
-      echo "type=83" | sfdisk /dev/vdb &&
-      mkfs -t ext4 /dev/vdb1 &&
-      mkdir -p /data-small &&
-      echo /dev/vdb1 /data-small ext4 defaults 0 2 >> /etc/fstab &&
-      mount /data-small
-    cipherSuites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
-    users:
-    - name: mySshUsername
-      sshAuthorizedKeys:
-      - 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC1BK73XhIzjX+meUr7pIYh6RHbvI3tmHeQIXY5lv7aztN1UoX+bhPo3dwo2sfSQn5kuxgQdnxIZ/CTzy0p0GkEYVv3gwspCeurjmu0XmrdmaSGcGxCEWT/65NtvYrQtUE5ELxJ+N/aeZNlK2B7IWANnw/82913asXH4VksV1NYNduP0o1/G4XcwLLSyVFB078q/oEnmvdNIoS61j4/o36HVtENJgYr0idcBvwJdvcGxGnPaqOhx477t+kfJAa5n5dSA5wilIaoXH5i1Tf/HsTCM52L+iNCARvQzJYZhzbWI1MDQwzILtIBEQCJsl2XSqIupleY8CxqQ6jCXt2mhae+wPc3YmbO5rFvr2/EvC57kh3yDs1Nsuj8KOvD78KeeujbR8n8pScm3WDp62HFQ8lEKNdeRNj6kB8WnuaJvPnyZfvzOhwG65/9w13IBl7B1sWxbFnq2rMpm5uHVK7mAmjL0Tt8zoDhcE1YJEnp9xte3/pvmKPkST5Q/9ZtR9P5sI+02jY0fvPkPyC03j2gsPixG7rpOCwpOdbny4dcj0TDeeXJX8er+oVfJuLYz0pNWJcT2raDdFfcqvYA0B0IyNYlj5nWX4RuEcyT3qocLReWPnZojetvAG/H8XwOh7fEVGqHAKOVSnPXCSQJPl6s0H12jPJBDJMTydtYPEszl4/CeQ=='
-      sudo: ALL=(ALL) NOPASSWD:ALL
-  infrastructureTemplate:
-    apiVersion: infrastructure.cluster.x-k8s.io/v1beta3
-    kind: CloudStackMachineTemplate
-    name: test-etcd-template-1234567890000
----
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta3
 kind: CloudStackMachineTemplate
 metadata:
@@ -421,44 +386,15 @@ metadata:
     filesystem.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: ext4
     label.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: data_disk
     mountpath.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: /data-small
+    symlinks.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: /var/log/kubernetes:/data-small/var/log/kubernetes
   creationTimestamp: null
-  name: test-control-plane-template-1234567890000
+  name: test-control-plane-1
   namespace: eksa-system
 spec:
   template:
     spec:
       affinityGroupIDs:
       - control-plane-anti-affinity
-      diskOffering:
-        customSizeInGB: 0
-        device: /dev/vdb
-        filesystem: ext4
-        label: data_disk
-        mountPath: /data-small
-        name: Small
-      offering:
-        name: m4-large
-      sshKey: ""
-      template:
-        name: kubernetes_1_21
-
----
-apiVersion: infrastructure.cluster.x-k8s.io/v1beta3
-kind: CloudStackMachineTemplate
-metadata:
-  annotations:
-    device.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: /dev/vdb
-    filesystem.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: ext4
-    label.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: data_disk
-    mountpath.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: /data-small
-  creationTimestamp: null
-  name: test-etcd-template-1234567890000
-  namespace: eksa-system
-spec:
-  template:
-    spec:
-      affinityGroupIDs:
-      - etcd-affinity
       diskOffering:
         customSizeInGB: 0
         device: /dev/vdb
