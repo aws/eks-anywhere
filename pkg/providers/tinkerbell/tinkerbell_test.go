@@ -589,12 +589,20 @@ func TestPreCAPIInstallOnBootstrapSuccess(t *testing.T) {
 
 	bundle := clusterSpec.RootVersionsBundle()
 
+	stackInstaller.EXPECT().UpgradeInstallCRDs(
+		ctx,
+		bundle.Tinkerbell,
+		"test.kubeconfig",
+	)
+
 	stackInstaller.EXPECT().Install(
 		ctx,
 		bundle.Tinkerbell,
 		testIP,
 		"test.kubeconfig",
 		"",
+		gomock.Any(),
+		gomock.Any(),
 		gomock.Any(),
 		gomock.Any(),
 	)
@@ -625,6 +633,12 @@ func TestPostWorkloadInitSuccess(t *testing.T) {
 	provider.stackInstaller = stackInstaller
 
 	bundle := clusterSpec.RootVersionsBundle()
+
+	stackInstaller.EXPECT().UpgradeInstallCRDs(
+		ctx,
+		bundle.Tinkerbell,
+		"test.kubeconfig",
+	)
 
 	stackInstaller.EXPECT().Install(
 		ctx,

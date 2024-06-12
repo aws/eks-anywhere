@@ -7,6 +7,7 @@ type Config struct {
 	RegistryMirror *registrymirror.RegistryMirror
 	ProxyConfig    map[string]string
 	Insecure       bool
+	ExtraFlags     []string
 }
 
 // NewConfig retuns a new helm Config.
@@ -47,5 +48,12 @@ func WithInsecure() Opt {
 func WithProxyConfig(proxyConfig map[string]string) Opt {
 	return func(c *Config) {
 		c.ProxyConfig = proxyConfig
+	}
+}
+
+// WithExtraFlags configures the extra flags to pass to helm.
+func WithExtraFlags(extraFlags []string) Opt {
+	return func(c *Config) {
+		c.ExtraFlags = extraFlags
 	}
 }
