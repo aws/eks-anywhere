@@ -182,9 +182,9 @@ func TestVSphereKubernetes129AWSIamAuth(t *testing.T) {
 func TestVSphereKubernetes130AWSIamAuth(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
-		framework.NewVSphere(t, framework.WithUbuntu125()),
+		framework.NewVSphere(t, framework.WithUbuntu130()),
 		framework.WithAWSIam(),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube130)),
 	)
 	runAWSIamAuthFlow(test)
 }
@@ -307,7 +307,7 @@ func TestVSphereKubernetes129CuratedPackagesSimpleFlow(t *testing.T) {
 func TestVSphereKubernetes130CuratedPackagesSimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
-		framework.NewVSphere(t, framework.WithUbuntu125()),
+		framework.NewVSphere(t, framework.WithUbuntu130()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube130)),
 		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube130),
 			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
@@ -2996,21 +2996,6 @@ func TestVSphereKubernetes127UbuntuWorkloadClusterTaintsFlow(t *testing.T) {
 }
 
 // Upgrade
-func TestVSphereKubernetes125UbuntuTo126Upgrade(t *testing.T) {
-	provider := framework.NewVSphere(t, framework.WithUbuntu125())
-	test := framework.NewClusterE2ETest(
-		t,
-		provider,
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
-	)
-	runSimpleUpgradeFlow(
-		test,
-		v1alpha1.Kube126,
-		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube126)),
-		provider.WithProviderUpgrade(provider.Ubuntu126Template()),
-	)
-}
-
 func TestVSphereKubernetes126UbuntuTo127Upgrade(t *testing.T) {
 	provider := framework.NewVSphere(t, framework.WithUbuntu126())
 	test := framework.NewClusterE2ETest(
@@ -4012,60 +3997,6 @@ func TestVSphereKubernetes126WithOIDCManagementClusterUpgradeFromLatestSideEffec
 	runTestManagementClusterUpgradeSideEffects(t, provider, framework.Ubuntu2004, v1alpha1.Kube126)
 }
 
-func TestVSphereKubernetes125UbuntuUpgradeFromLatestMinorReleaseAlwaysNetworkPolicy(t *testing.T) {
-	release := latestMinorRelease(t)
-	provider := framework.NewVSphere(t,
-		framework.WithVSphereFillers(
-			api.WithOsFamilyForAllMachines(v1alpha1.Ubuntu),
-		),
-		framework.WithKubeVersionAndOSForRelease(v1alpha1.Kube125, framework.Ubuntu2004, release),
-	)
-	test := framework.NewClusterE2ETest(
-		t,
-		provider,
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
-		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
-		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-	)
-	runUpgradeFromReleaseFlow(
-		test,
-		release,
-		v1alpha1.Kube125,
-		framework.WithClusterFiller(api.WithCiliumPolicyEnforcementMode(v1alpha1.CiliumPolicyModeAlways)),
-		provider.WithProviderUpgrade(
-			provider.Ubuntu125Template(), // Set the template so it doesn't get autoimported
-		),
-	)
-}
-
-func TestVSphereKubernetes125To126UbuntuUpgradeFromLatestMinorRelease(t *testing.T) {
-	release := latestMinorRelease(t)
-	provider := framework.NewVSphere(t,
-		framework.WithVSphereFillers(
-			api.WithOsFamilyForAllMachines(v1alpha1.Ubuntu),
-		),
-		framework.WithKubeVersionAndOSForRelease(v1alpha1.Kube125, framework.Ubuntu2004, release),
-	)
-	test := framework.NewClusterE2ETest(
-		t,
-		provider,
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
-		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
-		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-	)
-	runUpgradeFromReleaseFlow(
-		test,
-		release,
-		v1alpha1.Kube126,
-		provider.WithProviderUpgrade(
-			provider.Ubuntu126Template(), // Set the template so it doesn't get autoimported
-		),
-		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube126)),
-	)
-}
-
 func TestVSphereKubernetes126To127UbuntuUpgradeFromLatestMinorRelease(t *testing.T) {
 	release := latestMinorRelease(t)
 	provider := framework.NewVSphere(t,
@@ -4330,13 +4261,13 @@ func TestVSphereKubernetes129To130RedhatUpgradeFromLatestMinorRelease(t *testing
 	)
 }
 
-func TestVSphereKubernetes125UbuntuUpgradeAndRemoveWorkerNodeGroupsAPI(t *testing.T) {
+func TestVSphereKubernetes130UbuntuUpgradeAndRemoveWorkerNodeGroupsAPI(t *testing.T) {
 	provider := framework.NewVSphere(t)
 	test := framework.NewClusterE2ETest(
 		t, provider,
 	).WithClusterConfig(
 		api.ClusterToConfigFiller(
-			api.WithKubernetesVersion(v1alpha1.Kube125),
+			api.WithKubernetesVersion(v1alpha1.Kube130),
 			api.WithExternalEtcdTopology(1),
 			api.WithControlPlaneCount(1),
 			api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
@@ -4344,7 +4275,7 @@ func TestVSphereKubernetes125UbuntuUpgradeAndRemoveWorkerNodeGroupsAPI(t *testin
 		provider.WithNewWorkerNodeGroup("worker-1", framework.WithWorkerNodeGroup("worker-1", api.WithCount(2))),
 		provider.WithNewWorkerNodeGroup("worker-2", framework.WithWorkerNodeGroup("worker-2", api.WithCount(1))),
 		provider.WithNewWorkerNodeGroup("worker-3", framework.WithWorkerNodeGroup("worker-3", api.WithCount(1), api.WithLabel("tier", "frontend"))),
-		provider.WithUbuntu125(),
+		provider.WithUbuntu130(),
 	)
 
 	runUpgradeFlowWithAPI(
@@ -4902,17 +4833,6 @@ func TestVSphereMulticlusterWorkloadClusterAPI(t *testing.T) {
 				api.WithWorkerNodeCount(1),
 				api.WithStackedEtcdTopology(),
 			),
-			vsphere.WithUbuntu125(),
-		),
-		framework.NewClusterE2ETest(
-			t, vsphere, framework.WithClusterName(test.NewWorkloadClusterName()),
-		).WithClusterConfig(
-			api.ClusterToConfigFiller(
-				api.WithManagementCluster(managementCluster.ClusterName),
-				api.WithControlPlaneCount(1),
-				api.WithWorkerNodeCount(1),
-				api.WithStackedEtcdTopology(),
-			),
 			vsphere.WithUbuntu126(),
 		),
 		framework.NewClusterE2ETest(
@@ -4939,89 +4859,6 @@ func TestVSphereMulticlusterWorkloadClusterAPI(t *testing.T) {
 	test.DeleteManagementCluster()
 }
 
-func TestVSphereUpgradeLabelsTaintsUbuntuAPI(t *testing.T) {
-	vsphere := framework.NewVSphere(t)
-
-	managementCluster := framework.NewClusterE2ETest(
-		t, vsphere,
-	).WithClusterConfig(
-		api.ClusterToConfigFiller(
-			api.WithControlPlaneCount(1),
-			api.WithWorkerNodeCount(1),
-			api.WithStackedEtcdTopology(),
-		),
-		vsphere.WithUbuntu125(),
-	)
-
-	test := framework.NewMulticlusterE2ETest(t, managementCluster)
-	test.WithWorkloadClusters(
-		framework.NewClusterE2ETest(
-			t, vsphere, framework.WithClusterName(test.NewWorkloadClusterName()),
-		).WithClusterConfig(
-			api.ClusterToConfigFiller(
-				api.WithManagementCluster(managementCluster.ClusterName),
-				api.WithExternalEtcdTopology(1),
-				api.WithControlPlaneCount(1),
-				api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
-			),
-			vsphere.WithNewWorkerNodeGroup("worker-0", framework.WithWorkerNodeGroup("worker-0", api.WithCount(2), api.WithLabel("key1", "val2"), api.WithTaint(framework.NoScheduleTaint()))),
-			vsphere.WithNewWorkerNodeGroup("worker-1", framework.WithWorkerNodeGroup("worker-1", api.WithCount(1))),
-			vsphere.WithNewWorkerNodeGroup("worker-2", framework.WithWorkerNodeGroup("worker-2", api.WithCount(1), api.WithLabel("key2", "val2"), api.WithTaint(framework.PreferNoScheduleTaint()))),
-			vsphere.WithUbuntu125(),
-		),
-	)
-
-	runWorkloadClusterUpgradeFlowAPI(test,
-		api.ClusterToConfigFiller(
-			api.WithWorkerNodeGroup("worker-0", api.WithLabel("key1", "val1"), api.WithTaint(framework.NoExecuteTaint())),
-			api.WithWorkerNodeGroup("worker-1", api.WithLabel("key2", "val2"), api.WithTaint(framework.NoExecuteTaint())),
-			api.WithWorkerNodeGroup("worker-2", api.WithNoTaints()),
-			api.WithControlPlaneLabel("cpKey1", "cpVal1"),
-			api.WithControlPlaneTaints([]corev1.Taint{framework.PreferNoScheduleTaint()}),
-		),
-	)
-}
-
-func TestVSphereUpgradeWorkerNodeGroupsUbuntuAPI(t *testing.T) {
-	vsphere := framework.NewVSphere(t)
-
-	managementCluster := framework.NewClusterE2ETest(
-		t, vsphere,
-	).WithClusterConfig(
-		api.ClusterToConfigFiller(
-			api.WithControlPlaneCount(1),
-			api.WithWorkerNodeCount(1),
-			api.WithStackedEtcdTopology(),
-		),
-		vsphere.WithUbuntu125(),
-	)
-
-	test := framework.NewMulticlusterE2ETest(t, managementCluster)
-	test.WithWorkloadClusters(
-		framework.NewClusterE2ETest(
-			t, vsphere, framework.WithClusterName(test.NewWorkloadClusterName()),
-		).WithClusterConfig(
-			api.ClusterToConfigFiller(
-				api.WithManagementCluster(managementCluster.ClusterName),
-				api.WithExternalEtcdTopology(1),
-				api.WithControlPlaneCount(1),
-				api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
-			),
-			vsphere.WithNewWorkerNodeGroup("worker-0", framework.WithWorkerNodeGroup("worker-0", api.WithCount(1))),
-			vsphere.WithNewWorkerNodeGroup("worker-1", framework.WithWorkerNodeGroup("worker-1", api.WithCount(1))),
-			vsphere.WithUbuntu125(),
-		),
-	)
-
-	runWorkloadClusterUpgradeFlowAPI(test,
-		api.ClusterToConfigFiller(
-			api.WithWorkerNodeGroup("worker-0", api.WithCount(2)),
-			api.RemoveWorkerNodeGroup("worker-1"),
-		),
-		vsphere.WithWorkerNodeGroupConfiguration("worker-1", framework.WithWorkerNodeGroup("worker-2", api.WithCount(1))),
-	)
-}
-
 func TestVSphereMulticlusterWorkloadClusterGitHubFluxAPI(t *testing.T) {
 	vsphere := framework.NewVSphere(t)
 	managementCluster := framework.NewClusterE2ETest(
@@ -5033,7 +4870,7 @@ func TestVSphereMulticlusterWorkloadClusterGitHubFluxAPI(t *testing.T) {
 			api.WithStackedEtcdTopology(),
 		),
 		framework.WithFluxGithubConfig(),
-		vsphere.WithUbuntu125(),
+		vsphere.WithUbuntu130(),
 	)
 	test := framework.NewMulticlusterE2ETest(t, managementCluster)
 	test.WithWorkloadClusters(
@@ -5046,7 +4883,7 @@ func TestVSphereMulticlusterWorkloadClusterGitHubFluxAPI(t *testing.T) {
 				api.WithWorkerNodeCount(1),
 				api.WithStackedEtcdTopology(),
 			),
-			vsphere.WithUbuntu128(),
+			vsphere.WithUbuntu130(),
 		),
 		framework.NewClusterE2ETest(
 			t, vsphere, framework.WithClusterName(test.NewWorkloadClusterName()),
@@ -5057,7 +4894,7 @@ func TestVSphereMulticlusterWorkloadClusterGitHubFluxAPI(t *testing.T) {
 				api.WithWorkerNodeCount(1),
 				api.WithExternalEtcdTopology(1),
 			),
-			vsphere.WithUbuntu125(),
+			vsphere.WithUbuntu130(),
 		),
 	)
 
@@ -5108,99 +4945,6 @@ func TestVSphereUpgradeKubernetes127to128UbuntuWorkloadClusterAPI(t *testing.T) 
 	)
 }
 
-func TestVSphereCiliumUbuntuAPI(t *testing.T) {
-	vsphere := framework.NewVSphere(t)
-
-	managementCluster := framework.NewClusterE2ETest(
-		t, vsphere,
-	).WithClusterConfig(
-		api.ClusterToConfigFiller(
-			api.WithControlPlaneCount(1),
-			api.WithWorkerNodeCount(1),
-			api.WithStackedEtcdTopology(),
-		),
-		vsphere.WithUbuntu125(),
-	)
-
-	test := framework.NewMulticlusterE2ETest(t, managementCluster)
-	test.WithWorkloadClusters(
-		framework.NewClusterE2ETest(
-			t, vsphere, framework.WithClusterName(test.NewWorkloadClusterName()),
-		).WithClusterConfig(
-			api.ClusterToConfigFiller(
-				api.WithManagementCluster(managementCluster.ClusterName),
-				api.WithExternalEtcdTopology(1),
-				api.WithControlPlaneCount(1),
-				api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
-			),
-			vsphere.WithNewWorkerNodeGroup("worker-0", framework.WithWorkerNodeGroup("worker-0", api.WithCount(1))),
-			vsphere.WithUbuntu125(),
-		),
-	)
-
-	test.CreateManagementCluster()
-	test.RunConcurrentlyInWorkloadClusters(func(wc *framework.WorkloadCluster) {
-		wc.ApplyClusterManifest()
-		wc.WaitForKubeconfig()
-		wc.ValidateClusterState()
-		wc.UpdateClusterConfig(
-			api.ClusterToConfigFiller(
-				api.WithCiliumPolicyEnforcementMode(v1alpha1.CiliumPolicyModeAlways),
-			),
-		)
-		wc.ApplyClusterManifest()
-		wc.ValidateClusterState()
-		wc.DeleteClusterWithKubectl()
-		wc.ValidateClusterDelete()
-	})
-	test.ManagementCluster.StopIfFailed()
-	test.DeleteManagementCluster()
-}
-
-func TestVSphereUpgradeLabelsTaintsBottleRocketGitHubFluxAPI(t *testing.T) {
-	vsphere := framework.NewVSphere(t)
-
-	managementCluster := framework.NewClusterE2ETest(
-		t, vsphere, framework.WithFluxGithubEnvVarCheck(), framework.WithFluxGithubCleanup(),
-	).WithClusterConfig(
-		api.ClusterToConfigFiller(
-			api.WithControlPlaneCount(1),
-			api.WithWorkerNodeCount(1),
-			api.WithStackedEtcdTopology(),
-		),
-		vsphere.WithBottleRocket125(),
-		framework.WithFluxGithubConfig(),
-	)
-
-	test := framework.NewMulticlusterE2ETest(t, managementCluster)
-	test.WithWorkloadClusters(
-		framework.NewClusterE2ETest(
-			t, vsphere, framework.WithClusterName(test.NewWorkloadClusterName()),
-		).WithClusterConfig(
-			api.ClusterToConfigFiller(
-				api.WithManagementCluster(managementCluster.ClusterName),
-				api.WithExternalEtcdTopology(1),
-				api.WithControlPlaneCount(1),
-				api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
-			),
-			vsphere.WithNewWorkerNodeGroup("worker-0", framework.WithWorkerNodeGroup("worker-0", api.WithCount(2), api.WithLabel("key1", "val2"), api.WithTaint(framework.NoScheduleTaint()))),
-			vsphere.WithNewWorkerNodeGroup("worker-1", framework.WithWorkerNodeGroup("worker-1", api.WithCount(1))),
-			vsphere.WithNewWorkerNodeGroup("worker-2", framework.WithWorkerNodeGroup("worker-2", api.WithCount(1), api.WithLabel("key2", "val2"), api.WithTaint(framework.PreferNoScheduleTaint()))),
-			vsphere.WithBottleRocket125(),
-		),
-	)
-
-	runWorkloadClusterUpgradeFlowAPIWithFlux(test,
-		api.ClusterToConfigFiller(
-			api.WithWorkerNodeGroup("worker-0", api.WithLabel("key1", "val1"), api.WithTaint(framework.NoExecuteTaint())),
-			api.WithWorkerNodeGroup("worker-1", api.WithLabel("key2", "val2"), api.WithTaint(framework.NoExecuteTaint())),
-			api.WithWorkerNodeGroup("worker-2", api.WithNoTaints()),
-			api.WithControlPlaneLabel("cpKey1", "cpVal1"),
-			api.WithControlPlaneTaints([]corev1.Taint{framework.PreferNoScheduleTaint()}),
-		),
-	)
-}
-
 func TestVSphereUpgradeWorkerNodeGroupsUbuntuGitHubFluxAPI(t *testing.T) {
 	vsphere := framework.NewVSphere(t)
 
@@ -5212,7 +4956,7 @@ func TestVSphereUpgradeWorkerNodeGroupsUbuntuGitHubFluxAPI(t *testing.T) {
 			api.WithWorkerNodeCount(1),
 			api.WithStackedEtcdTopology(),
 		),
-		vsphere.WithUbuntu125(),
+		vsphere.WithUbuntu130(),
 		framework.WithFluxGithubConfig(),
 	)
 
@@ -5229,7 +4973,7 @@ func TestVSphereUpgradeWorkerNodeGroupsUbuntuGitHubFluxAPI(t *testing.T) {
 			),
 			vsphere.WithNewWorkerNodeGroup("worker-0", framework.WithWorkerNodeGroup("worker-0", api.WithCount(1))),
 			vsphere.WithNewWorkerNodeGroup("worker-1", framework.WithWorkerNodeGroup("worker-1", api.WithCount(1))),
-			vsphere.WithUbuntu125(),
+			vsphere.WithUbuntu130(),
 		),
 	)
 
@@ -5253,7 +4997,7 @@ func TestVSphereUpgradeKubernetesCiliumUbuntuGitHubFluxAPI(t *testing.T) {
 			api.WithWorkerNodeCount(1),
 			api.WithStackedEtcdTopology(),
 		),
-		vsphere.WithUbuntu125(),
+		vsphere.WithUbuntu130(),
 		framework.WithFluxGithubConfig(),
 	)
 
@@ -5269,7 +5013,7 @@ func TestVSphereUpgradeKubernetesCiliumUbuntuGitHubFluxAPI(t *testing.T) {
 				api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
 			),
 			vsphere.WithNewWorkerNodeGroup("worker-0", framework.WithWorkerNodeGroup("worker-0", api.WithCount(1))),
-			vsphere.WithUbuntu125(),
+			vsphere.WithUbuntu130(),
 		),
 	)
 
@@ -5282,7 +5026,7 @@ func TestVSphereUpgradeKubernetesCiliumUbuntuGitHubFluxAPI(t *testing.T) {
 			api.ClusterToConfigFiller(
 				api.WithCiliumPolicyEnforcementMode(v1alpha1.CiliumPolicyModeAlways),
 			),
-			vsphere.WithUbuntu126(),
+			vsphere.WithUbuntu130(),
 		)
 		wc.ValidateClusterState()
 		test.DeleteWorkloadClusterFromGit(wc)

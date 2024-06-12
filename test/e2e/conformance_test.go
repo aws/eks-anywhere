@@ -29,16 +29,6 @@ func runTinkerbellConformanceFlow(test *framework.ClusterE2ETest) {
 	test.ValidateHardwareDecommissioned()
 }
 
-func TestDockerKubernetes125ThreeWorkersConformanceFlow(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewDocker(t),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(3)),
-	)
-	runConformanceFlow(test)
-}
-
 func TestDockerKubernetes126ThreeWorkersConformanceFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
@@ -74,16 +64,6 @@ func TestDockerKubernetes129ThreeWorkersConformanceFlow(t *testing.T) {
 		t,
 		framework.NewDocker(t),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube129)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(3)),
-	)
-	runConformanceFlow(test)
-}
-
-func TestVSphereKubernetes125ThreeWorkersConformanceFlow(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewVSphere(t, framework.WithUbuntu125()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(3)),
 	)
 	runConformanceFlow(test)
@@ -129,16 +109,6 @@ func TestVSphereKubernetes129ThreeWorkersConformanceFlow(t *testing.T) {
 	runConformanceFlow(test)
 }
 
-func TestVSphereKubernetes125BottleRocketThreeWorkersConformanceFlow(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewVSphere(t, framework.WithBottleRocket125()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(3)),
-	)
-	runConformanceFlow(test)
-}
-
 func TestVSphereKubernetes126BottleRocketThreeWorkersConformanceFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
@@ -177,19 +147,6 @@ func TestVSphereKubernetes129BottleRocketThreeWorkersConformanceFlow(t *testing.
 		framework.WithClusterFiller(api.WithWorkerNodeCount(3)),
 	)
 	runConformanceFlow(test)
-}
-
-func TestTinkerbellKubernetes125ThreeReplicasTwoWorkersConformanceFlow(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewTinkerbell(t, framework.WithUbuntu125Tinkerbell()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(2)),
-		framework.WithClusterFiller(api.WithControlPlaneCount(3)),
-		framework.WithControlPlaneHardware(3),
-		framework.WithWorkerHardware(2),
-	)
-	runTinkerbellConformanceFlow(test)
 }
 
 func TestTinkerbellKubernetes126ThreeReplicasTwoWorkersConformanceFlow(t *testing.T) {
@@ -244,19 +201,6 @@ func TestTinkerbellKubernetes129ThreeReplicasTwoWorkersConformanceFlow(t *testin
 	runTinkerbellConformanceFlow(test)
 }
 
-func TestTinkerbellKubernetes125BottleRocketThreeReplicasTwoWorkersConformanceFlow(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(2)),
-		framework.WithClusterFiller(api.WithControlPlaneCount(3)),
-		framework.WithControlPlaneHardware(3),
-		framework.WithWorkerHardware(2),
-	)
-	runTinkerbellConformanceFlow(test)
-}
-
 func TestTinkerbellKubernetes126BottleRocketThreeReplicasTwoWorkersConformanceFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
@@ -268,16 +212,6 @@ func TestTinkerbellKubernetes126BottleRocketThreeReplicasTwoWorkersConformanceFl
 		framework.WithWorkerHardware(2),
 	)
 	runTinkerbellConformanceFlow(test)
-}
-
-func TestNutanixKubernetes125ThreeWorkersConformanceFlow(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewNutanix(t, framework.WithUbuntu125Nutanix()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(3)),
-	)
-	runConformanceFlow(test)
 }
 
 func TestNutanixKubernetes126ThreeWorkersConformanceFlow(t *testing.T) {

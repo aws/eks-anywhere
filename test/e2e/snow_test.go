@@ -124,15 +124,6 @@ func TestSnowKubernetes128UbuntuProxyConfig(t *testing.T) {
 }
 
 // Simpleflow
-func TestSnowKubernetes125SimpleFlow(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewSnow(t, framework.WithSnowUbuntu125()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
-	)
-	runSimpleFlow(test)
-}
-
 func TestSnowKubernetes126SimpleFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
@@ -283,13 +274,6 @@ func TestSnowKubernetes127UbuntuTo128Upgrade(t *testing.T) {
 	runSnowUpgradeTest(test, snow, snow.WithUbuntu127(), snow.WithUbuntu128())
 }
 
-func TestSnowKubernetes125UbuntuTo126Upgrade(t *testing.T) {
-	snow := framework.NewSnow(t)
-	test := framework.NewClusterE2ETest(t, snow)
-
-	runSnowUpgradeTest(test, snow, snow.WithUbuntu125(), snow.WithUbuntu126())
-}
-
 func TestSnowKubernetes126UbuntuTo127Upgrade(t *testing.T) {
 	snow := framework.NewSnow(t)
 	test := framework.NewClusterE2ETest(t, snow)
@@ -304,13 +288,6 @@ func TestSnowKubernetes127BottlerocketTo128Upgrade(t *testing.T) {
 	runSnowUpgradeTest(test, snow, snow.WithBottlerocket127(), snow.WithBottlerocket128())
 }
 
-func TestSnowKubernetes125BottlerocketTo126Upgrade(t *testing.T) {
-	snow := framework.NewSnow(t)
-	test := framework.NewClusterE2ETest(t, snow)
-
-	runSnowUpgradeTest(test, snow, snow.WithBottlerocket125(), snow.WithBottlerocket126())
-}
-
 func TestSnowKubernetes126BottlerocketTo127Upgrade(t *testing.T) {
 	snow := framework.NewSnow(t)
 	test := framework.NewClusterE2ETest(t, snow)
@@ -323,13 +300,6 @@ func TestSnowKubernetes127To128BottlerocketStaticIPUpgrade(t *testing.T) {
 	test := framework.NewClusterE2ETest(t, snow)
 
 	runSnowUpgradeTest(test, snow, snow.WithBottlerocketStaticIP127(), snow.WithBottlerocketStaticIP128())
-}
-
-func TestSnowKubernetes125To126BottlerocketStaticIPUpgrade(t *testing.T) {
-	snow := framework.NewSnow(t)
-	test := framework.NewClusterE2ETest(t, snow)
-
-	runSnowUpgradeTest(test, snow, snow.WithBottlerocketStaticIP125(), snow.WithBottlerocketStaticIP126())
 }
 
 func TestSnowKubernetes126To127BottlerocketStaticIPUpgrade(t *testing.T) {
@@ -354,17 +324,6 @@ func TestSnowMulticlusterWorkloadClusterAPI(t *testing.T) {
 	)
 	test := framework.NewMulticlusterE2ETest(t, managementCluster)
 	test.WithWorkloadClusters(
-		framework.NewClusterE2ETest(
-			t, snow, framework.WithClusterName(test.NewWorkloadClusterName()),
-		).WithClusterConfig(
-			api.ClusterToConfigFiller(
-				api.WithManagementCluster(managementCluster.ClusterName),
-				api.WithControlPlaneCount(1),
-				api.WithWorkerNodeCount(1),
-				api.WithStackedEtcdTopology(),
-			),
-			snow.WithBottlerocket125(),
-		),
 		framework.NewClusterE2ETest(
 			t, snow, framework.WithClusterName(test.NewWorkloadClusterName()),
 		).WithClusterConfig(
