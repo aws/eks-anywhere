@@ -207,7 +207,7 @@ replace (
 	github.com/aws/eks-anywhere/internal/aws-sdk-go-v2/service/snowballdevice => ./internal/aws-sdk-go-v2/service/snowballdevice
 
 	// need the modifications eksa made to the capi api structs
-	sigs.k8s.io/cluster-api => github.com/abhay-krishna/cluster-api v1.6.0-eksa.1
+	sigs.k8s.io/cluster-api => github.com/abhay-krishna/cluster-api v1.6.0-eksa.2
 
 	// Temporary until capc is updated to use a newer version of cluster-api and thus
 	// a new version of controller-runtime.
