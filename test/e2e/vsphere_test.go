@@ -182,9 +182,9 @@ func TestVSphereKubernetes129AWSIamAuth(t *testing.T) {
 func TestVSphereKubernetes130AWSIamAuth(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
-		framework.NewVSphere(t, framework.WithUbuntu125()),
+		framework.NewVSphere(t, framework.WithUbuntu130()),
 		framework.WithAWSIam(),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube130)),
 	)
 	runAWSIamAuthFlow(test)
 }
