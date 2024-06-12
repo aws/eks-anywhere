@@ -131,15 +131,19 @@ func (p *Provider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *
 			}
 			p.stackInstaller.AddNoProxyIP(managementCluster.Spec.ControlPlaneConfiguration.Endpoint.Host)
 		}
+	}
 
-		if err := p.applyHardwareUpgrade(ctx, clusterSpec.ManagementCluster); err != nil {
-			return err
-		}
-		if p.catalogue.TotalHardware() > 0 && p.catalogue.AllHardware()[0].Spec.BMCRef != nil {
-			err = p.providerKubectlClient.WaitForRufioMachines(ctx, cluster, "5m", "Contactable", constants.EksaSystemNamespace)
-			if err != nil {
-				return fmt.Errorf("waiting for baseboard management to be contactable: %v", err)
-			}
+	if err := p.applyHardwareUpgrade(ctx, cluster); err != nil {
+		return err
+	}
+
+	// Check if the hardware in the catalogue have a BMCRef. Since we only allow either all hardware with bmc
+	// or no hardware with bmc, its sufficient to check the first hardware.
+	if p.catalogue.TotalHardware() > 0 && p.catalogue.AllHardware()[0].Spec.BMCRef != nil {
+		// Waiting to ensure all the new and exisiting baseboardmanagement connections are valid.
+		err = p.providerKubectlClient.WaitForRufioMachines(ctx, cluster, "5m", "Contactable", constants.EksaSystemNamespace)
+		if err != nil {
+			return fmt.Errorf("waiting for baseboard management to be contactable: %v", err)
 		}
 	}
 
