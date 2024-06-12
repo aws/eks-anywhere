@@ -155,7 +155,7 @@ func GetTinkerbellBundle(r *releasetypes.ReleaseConfig, imageDigests releasetype
 				},
 			},
 			Rufio: bundleImageArtifacts["rufio"],
-			Stack: bundleImageArtifacts["stack"],
+			Stack: bundleImageArtifacts["stack-helm"],
 			Tink: anywherev1alpha1.TinkBundle{
 				Nginx:          bundleImageArtifacts["nginx"],
 				TinkController: bundleImageArtifacts["tink-controller"],
@@ -163,7 +163,7 @@ func GetTinkerbellBundle(r *releasetypes.ReleaseConfig, imageDigests releasetype
 				TinkWorker:     bundleImageArtifacts["tink-worker"],
 			},
 			TinkebellChart: bundleImageArtifacts["tinkerbell-chart"],
-			TinkerbellCrds: bundleImageArtifacts["tinkerbell-crds"],
+			TinkerbellCrds: bundleImageArtifacts["tinkerbell-crds-helm"],
 		},
 	}
 
