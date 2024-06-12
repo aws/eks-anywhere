@@ -1,40 +1,52 @@
-boots:
-  args:
-  - -dhcp-addr=0.0.0.0:67
-  - -osie-path-override=https://anywhere-assests.eks.amazonaws.com/tinkerbell/hook
-  deploy: false
-  env:
+hegel:
+  image: public.ecr.aws/eks-anywhere/hegel:latest
+  trustedProxies:
+  - 192.168.0.0/16
+rufio:
+  additionalArgs:
+  - -metrics-bind-address=127.0.0.1:8080
+  image: public.ecr.aws/eks-anywhere/rufio:latest
+smee:
+  additionalEnv:
   - name: DATA_MODEL_VERSION
     value: kubernetes
   - name: TINKERBELL_TLS
     value: "false"
-  - name: TINKERBELL_GRPC_AUTHORITY
-    value: 1.2.3.4:42113
-  - name: BOOTS_EXTRA_KERNEL_ARGS
+  - name: SMEE_EXTRA_KERNEL_ARGS
     value: tink_worker_image=public.ecr.aws/eks-anywhere/tink-worker:latest
+  deploy: false
+  hostNetwork: true
+  http:
+    osieUrl:
+      host: anywhere-assests.eks.amazonaws.com
+      path: /tinkerbell/hook
+      port: ""
+      scheme: https
+    tinkServer:
+      ip: 1.2.3.4
+      port: "42113"
   image: public.ecr.aws/eks-anywhere/boots:latest
-createNamespace: false
-envoy:
-  deploy: false
-  externalIp: 1.2.3.4
-  image: public.ecr.aws/eks-anywhere/envoy:latest
-hegel:
-  env:
-  - name: HEGEL_TRUSTED_PROXIES
-    value: 192.168.0.0/16
-  image: public.ecr.aws/eks-anywhere/hegel:latest
-  port:
-    hostPortEnabled: false
-kubevip:
-  deploy: false
-  image: public.ecr.aws/eks-anywhere/kube-vip:latest
-namespace: eksa-system
-rufio:
-  image: public.ecr.aws/eks-anywhere/rufio:latest
-tinkController:
-  image: public.ecr.aws/eks-anywhere/tink-controller:latest
-tinkServer:
-  args: []
-  image: public.ecr.aws/eks-anywhere/tink-server:latest
-  port:
-    hostPortEnabled: false
+  publicIP: 1.2.3.4
+  tinkWorkerImage: public.ecr.aws/eks-anywhere/tink-worker:latest
+  trustedProxies:
+  - 192.168.0.0/16
+stack:
+  hook:
+    enabled: false
+  hostNetwork: false
+  kubevip:
+    additionalEnv:
+    - name: prometheus_server
+      value: :2213
+    enabled: false
+    image: public.ecr.aws/eks-anywhere/kube-vip:latest
+  loadBalancerIP: 1.2.3.4
+  relay:
+    enabled: false
+  service:
+    enabled: false
+tink:
+  controller:
+    image: public.ecr.aws/eks-anywhere/tink-controller:latest
+  server:
+    image: public.ecr.aws/eks-anywhere/tink-server:latest

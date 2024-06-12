@@ -63,33 +63,19 @@ func (mr *MockClientMockRecorder) InstallChart(ctx, chart, ociURI, version, kube
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InstallChart", reflect.TypeOf((*MockClient)(nil).InstallChart), ctx, chart, ociURI, version, kubeconfigFilePath, namespace, valueFilePath, skipCRDs, values)
 }
 
-// InstallChartWithValuesFile mocks base method.
-func (m *MockClient) InstallChartWithValuesFile(ctx context.Context, chart, ociURI, version, kubeconfigFilePath, valuesFilePath string) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "InstallChartWithValuesFile", ctx, chart, ociURI, version, kubeconfigFilePath, valuesFilePath)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// InstallChartWithValuesFile indicates an expected call of InstallChartWithValuesFile.
-func (mr *MockClientMockRecorder) InstallChartWithValuesFile(ctx, chart, ociURI, version, kubeconfigFilePath, valuesFilePath interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InstallChartWithValuesFile", reflect.TypeOf((*MockClient)(nil).InstallChartWithValuesFile), ctx, chart, ociURI, version, kubeconfigFilePath, valuesFilePath)
-}
-
 // ListCharts mocks base method.
-func (m *MockClient) ListCharts(ctx context.Context, kubeconfigFilePath string) ([]string, error) {
+func (m *MockClient) ListCharts(ctx context.Context, kubeconfigFilePath, filter string) ([]string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListCharts", ctx, kubeconfigFilePath)
+	ret := m.ctrl.Call(m, "ListCharts", ctx, kubeconfigFilePath, filter)
 	ret0, _ := ret[0].([]string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ListCharts indicates an expected call of ListCharts.
-func (mr *MockClientMockRecorder) ListCharts(ctx, kubeconfigFilePath interface{}) *gomock.Call {
+func (mr *MockClientMockRecorder) ListCharts(ctx, kubeconfigFilePath, filter interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListCharts", reflect.TypeOf((*MockClient)(nil).ListCharts), ctx, kubeconfigFilePath)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListCharts", reflect.TypeOf((*MockClient)(nil).ListCharts), ctx, kubeconfigFilePath, filter)
 }
 
 // PullChart mocks base method.
@@ -163,21 +149,40 @@ func (mr *MockClientMockRecorder) Template(ctx, ociURI, version, namespace, valu
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Template", reflect.TypeOf((*MockClient)(nil).Template), ctx, ociURI, version, namespace, values, kubeVersion)
 }
 
-// UpgradeChartWithValuesFile mocks base method.
-func (m *MockClient) UpgradeChartWithValuesFile(ctx context.Context, chart, ociURI, version, kubeconfigFilePath, valuesFilePath string, opts ...helm.Opt) error {
+// Uninstall mocks base method.
+func (m *MockClient) Uninstall(ctx context.Context, chart, kubeconfigFilePath, namespace string, opts ...helm.Opt) error {
 	m.ctrl.T.Helper()
-	varargs := []interface{}{ctx, chart, ociURI, version, kubeconfigFilePath, valuesFilePath}
+	varargs := []interface{}{ctx, chart, kubeconfigFilePath, namespace}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
-	ret := m.ctrl.Call(m, "UpgradeChartWithValuesFile", varargs...)
+	ret := m.ctrl.Call(m, "Uninstall", varargs...)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// UpgradeChartWithValuesFile indicates an expected call of UpgradeChartWithValuesFile.
-func (mr *MockClientMockRecorder) UpgradeChartWithValuesFile(ctx, chart, ociURI, version, kubeconfigFilePath, valuesFilePath interface{}, opts ...interface{}) *gomock.Call {
+// Uninstall indicates an expected call of Uninstall.
+func (mr *MockClientMockRecorder) Uninstall(ctx, chart, kubeconfigFilePath, namespace interface{}, opts ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{ctx, chart, ociURI, version, kubeconfigFilePath, valuesFilePath}, opts...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpgradeChartWithValuesFile", reflect.TypeOf((*MockClient)(nil).UpgradeChartWithValuesFile), varargs...)
+	varargs := append([]interface{}{ctx, chart, kubeconfigFilePath, namespace}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Uninstall", reflect.TypeOf((*MockClient)(nil).Uninstall), varargs...)
+}
+
+// UpgradeInstallChartWithValuesFile mocks base method.
+func (m *MockClient) UpgradeInstallChartWithValuesFile(ctx context.Context, chart, ociURI, version, kubeconfigFilePath, namespace, valuesFilePath string, opts ...helm.Opt) error {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, chart, ociURI, version, kubeconfigFilePath, namespace, valuesFilePath}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "UpgradeInstallChartWithValuesFile", varargs...)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpgradeInstallChartWithValuesFile indicates an expected call of UpgradeInstallChartWithValuesFile.
+func (mr *MockClientMockRecorder) UpgradeInstallChartWithValuesFile(ctx, chart, ociURI, version, kubeconfigFilePath, namespace, valuesFilePath interface{}, opts ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, chart, ociURI, version, kubeconfigFilePath, namespace, valuesFilePath}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpgradeInstallChartWithValuesFile", reflect.TypeOf((*MockClient)(nil).UpgradeInstallChartWithValuesFile), varargs...)
 }

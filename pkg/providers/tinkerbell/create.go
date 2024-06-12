@@ -33,14 +33,25 @@ func (p *Provider) PreCAPIInstallOnBootstrap(ctx context.Context, cluster *types
 	clusterSpec.Cluster.AddTinkerbellIPAnnotation(p.tinkerbellIP)
 	versionsBundle := clusterSpec.RootVersionsBundle()
 
-	err := p.stackInstaller.Install(
+	err := p.stackInstaller.UpgradeInstallCRDs(
+		ctx,
+		versionsBundle.Tinkerbell,
+		cluster.KubeconfigFile,
+	)
+	if err != nil {
+		return fmt.Errorf("installing tinkerbell crds on bootstrap cluster: %v", err)
+	}
+
+	err = p.stackInstaller.Install(
 		ctx,
 		versionsBundle.Tinkerbell,
 		p.tinkerbellIP,
 		cluster.KubeconfigFile,
 		p.datacenterConfig.Spec.HookImagesURLPath,
 		stack.WithBootsOnDocker(),
-		stack.WithHostPortEnabled(true), // enable host port on bootstrap cluster
+		stack.WithHostNetworkEnabled(true), // enable host network on bootstrap cluster
+		stack.WithLoadBalancerEnabled(false),
+		stack.WithStackServiceEnabled(false),
 	)
 	if err != nil {
 		return fmt.Errorf("install Tinkerbell stack on bootstrap cluster: %v", err)
@@ -81,15 +92,24 @@ func (p *Provider) PostWorkloadInit(ctx context.Context, cluster *types.Cluster,
 
 	versionsBundle := clusterSpec.RootVersionsBundle()
 
-	err := p.stackInstaller.Install(
+	err := p.stackInstaller.UpgradeInstallCRDs(
+		ctx,
+		versionsBundle.Tinkerbell,
+		cluster.KubeconfigFile,
+	)
+	if err != nil {
+		return fmt.Errorf("installing tinkerbell crds on workload cluster: %v", err)
+	}
+
+	err = p.stackInstaller.Install(
 		ctx,
 		versionsBundle.Tinkerbell,
 		p.templateBuilder.datacenterSpec.TinkerbellIP,
 		cluster.KubeconfigFile,
 		p.datacenterConfig.Spec.HookImagesURLPath,
 		stack.WithBootsOnKubernetes(),
-		stack.WithHostPortEnabled(false), // disable host port on workload cluster
-		stack.WithEnvoyEnabled(true),     // use envoy on workload cluster
+		stack.WithHostNetworkEnabled(false), // disable host network on workload cluster
+		stack.WithStackServiceEnabled(true), // use stack service on workload cluster
 		stack.WithLoadBalancerEnabled(
 			len(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations) != 0 && // load balancer is handled by kube-vip in control plane nodes
 				!p.datacenterConfig.Spec.SkipLoadBalancerDeployment), // configure load balancer based on datacenterConfig.Spec.SkipLoadBalancerDeployment

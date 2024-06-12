@@ -153,15 +153,6 @@ func (h *Helm) InstallChart(ctx context.Context, chart, ociURI, version, kubecon
 	return err
 }
 
-// InstallChartWithValuesFile installs a helm chart with the provided values file and waits for the chart deployment to be ready
-// The default timeout for the chart to reach ready state is 5m.
-func (h *Helm) InstallChartWithValuesFile(ctx context.Context, chart, ociURI, version, kubeconfigFilePath, valuesFilePath string) error {
-	params := []string{"upgrade", "--install", chart, ociURI, "--version", version, "--values", valuesFilePath, "--kubeconfig", kubeconfigFilePath, "--wait"}
-	params = h.addInsecureFlagIfProvided(params)
-	_, err := h.executable.Command(ctx, params...).WithEnvVars(h.env).Run()
-	return err
-}
-
 // Delete removes an installation.
 func (h *Helm) Delete(ctx context.Context, kubeconfigFilePath, installName, namespace string) error {
 	params := []string{
@@ -181,8 +172,14 @@ func (h *Helm) Delete(ctx context.Context, kubeconfigFilePath, installName, name
 	return nil
 }
 
-func (h *Helm) ListCharts(ctx context.Context, kubeconfigFilePath string) ([]string, error) {
+// ListCharts lists helm charts filtered on the given regex filter.
+func (h *Helm) ListCharts(ctx context.Context, kubeconfigFilePath, filter string) ([]string, error) {
 	params := []string{"list", "-q", "--kubeconfig", kubeconfigFilePath}
+
+	if len(filter) > 0 {
+		params = append(params, "--filter", filter)
+	}
+
 	out, err := h.executable.Command(ctx, params...).WithEnvVars(h.env).Run()
 	if err != nil {
 		return nil, err
@@ -214,17 +211,22 @@ func GetHelmValueArgs(values []string) []string {
 	return valueArgs
 }
 
-// UpgradeChartWithValuesFile tuns a helm upgrade with the provided values file and waits for the
-// chart deployment to be ready.
-func (h *Helm) UpgradeChartWithValuesFile(ctx context.Context, chart, ociURI, version, kubeconfigFilePath, valuesFilePath string, opts ...helm.Opt) error {
+// UpgradeInstallChartWithValuesFile runs a helm upgrade --install with the provided values file and waits for the
+// chart deployment to be ready. This will upgrade the chart if it exists and install if it does not.
+func (h *Helm) UpgradeInstallChartWithValuesFile(ctx context.Context, chart, ociURI, version, kubeconfigFilePath, namespace, valuesFilePath string, opts ...helm.Opt) error {
 	params := []string{
-		"upgrade", chart, ociURI,
+		"upgrade",
+		"--install",
+		chart, ociURI,
 		"--version", version,
 		"--values", valuesFilePath,
 		"--kubeconfig", kubeconfigFilePath,
 		"--wait",
 	}
 
+	if len(namespace) > 0 {
+		params = append(params, "--namespace", namespace)
+	}
 	// TODO: we should not update the receiver here, so this needs to change.
 	// This is not thread safe.
 	// https://github.com/aws/eks-anywhere/issues/7176
@@ -235,6 +237,31 @@ func (h *Helm) UpgradeChartWithValuesFile(ctx context.Context, chart, ociURI, ve
 	mergeMaps(h.env, h.helmConfig.ProxyConfig)
 
 	params = h.addInsecureFlagIfProvided(params)
+	params = append(params, h.helmConfig.ExtraFlags...)
+	_, err := h.executable.Command(ctx, params...).WithEnvVars(h.env).Run()
+	return err
+}
+
+// Uninstall runs a helm uninstall for the given chart in given namespace.
+func (h *Helm) Uninstall(ctx context.Context, chart, kubeconfigFilePath, namespace string, opts ...helm.Opt) error {
+	params := []string{
+		"uninstall", chart,
+		"--kubeconfig", kubeconfigFilePath,
+		"--wait",
+	}
+
+	if len(namespace) > 0 {
+		params = append(params, "--namespace", namespace)
+	}
+
+	for _, opt := range opts {
+		opt(h.helmConfig)
+	}
+
+	params = h.addInsecureFlagIfProvided(params)
+	params = append(params, h.helmConfig.ExtraFlags...)
+
+	logger.Info("Uninstalling helm chart on cluster", "chart", chart)
 	_, err := h.executable.Command(ctx, params...).WithEnvVars(h.env).Run()
 	return err
 }

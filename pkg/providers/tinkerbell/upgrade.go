@@ -15,6 +15,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/collection"
 	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/rufiounreleased"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/stack"
@@ -461,14 +462,65 @@ func (p *Provider) PreCoreComponentsUpgrade(
 		return nil
 	}
 
-	// Attempt the upgrade. This should upgrade the stack in the mangement cluster by updating
+	// Attempt the upgrade. This should upgrade the stack in the management cluster by updating
 	// images, installing new CRDs and possibly removing old ones.
-	err := p.stackInstaller.Upgrade(
+
+	// Check if cluster has legacy chart installed
+	hasLegacy, err := p.stackInstaller.HasLegacyChart(ctx, managementComponents.Tinkerbell, cluster.KubeconfigFile)
+	if err != nil {
+		return fmt.Errorf("getting legacy chart: %v", err)
+	}
+
+	if hasLegacy {
+		// Upgrade legacy chart to add resource policy keep to the CRDs
+		err = p.stackInstaller.UpgradeLegacy(
+			ctx,
+			managementComponents.Tinkerbell,
+			cluster.KubeconfigFile,
+			stack.WithLoadBalancerEnabled(
+				len(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations) != 0 && // load balancer is handled by kube-vip in control plane nodes
+					!p.datacenterConfig.Spec.SkipLoadBalancerDeployment), // configure load balancer based on datacenterConfig.Spec.SkipLoadBalancerDeployment
+		)
+		if err != nil {
+			return fmt.Errorf("upgrading legacy chart: %v", err)
+		}
+
+		// Uninstall legacy chart
+		err = p.stackInstaller.Uninstall(
+			ctx,
+			managementComponents.Tinkerbell,
+			cluster.KubeconfigFile,
+		)
+		if err != nil {
+			return fmt.Errorf("uninstalling legacy chart: %v", err)
+		}
+
+		// annotate existing CRDs to point to new CRDs chart
+		err = p.annotateCRDs(ctx, cluster)
+		if err != nil {
+			return fmt.Errorf("annotating crds: %v", err)
+		}
+	}
+
+	// upgrade install CRDs chart
+	err = p.stackInstaller.UpgradeInstallCRDs(
+		ctx,
+		managementComponents.Tinkerbell,
+		cluster.KubeconfigFile,
+	)
+	if err != nil {
+		return fmt.Errorf("upgrading crds chart: %v", err)
+	}
+
+	// upgrade install tink stack chart
+	err = p.stackInstaller.Upgrade(
 		ctx,
 		managementComponents.Tinkerbell,
 		p.datacenterConfig.Spec.TinkerbellIP,
 		cluster.KubeconfigFile,
 		p.datacenterConfig.Spec.HookImagesURLPath,
+		stack.WithBootsOnKubernetes(),
+		stack.WithStackServiceEnabled(true),
 		stack.WithLoadBalancerEnabled(
 			len(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations) != 0 && // load balancer is handled by kube-vip in control plane nodes
 				!p.datacenterConfig.Spec.SkipLoadBalancerDeployment), // configure load balancer based on datacenterConfig.Spec.SkipLoadBalancerDeployment
@@ -589,4 +641,61 @@ func toRufioMachines(items []rufiounreleased.BaseboardManagement) []rufiov1.Mach
 		})
 	}
 	return machines
+}
+
+func (p *Provider) annotateCRDs(ctx context.Context, cluster *types.Cluster) error {
+	annotation := map[string]string{
+		"meta.helm.sh/release-name":      "tinkerbell-crds",
+		"meta.helm.sh/release-namespace": "eksa-system",
+	}
+
+	// machine
+	err := p.providerKubectlClient.UpdateAnnotation(ctx, "customresourcedefinition", "machines.bmc.tinkerbell.org", annotation,
+		executables.WithCluster(cluster),
+		executables.WithOverwrite())
+	if err != nil {
+		return fmt.Errorf("annotating rufio machines: %v", err)
+	}
+
+	// task
+	err = p.providerKubectlClient.UpdateAnnotation(ctx, "customresourcedefinition", "tasks.bmc.tinkerbell.org", annotation,
+		executables.WithCluster(cluster),
+		executables.WithOverwrite())
+	if err != nil {
+		return fmt.Errorf("annotating rufio tasks: %v", err)
+	}
+
+	// job
+	err = p.providerKubectlClient.UpdateAnnotation(ctx, "customresourcedefinition", "jobs.bmc.tinkerbell.org", annotation,
+		executables.WithCluster(cluster),
+		executables.WithOverwrite())
+	if err != nil {
+		return fmt.Errorf("annotating rufio jobs: %v", err)
+	}
+
+	// hardware
+	err = p.providerKubectlClient.UpdateAnnotation(ctx, "customresourcedefinition", "hardware.tinkerbell.org", annotation,
+		executables.WithCluster(cluster),
+		executables.WithOverwrite())
+	if err != nil {
+		return fmt.Errorf("annotating tinkerbell hardware: %v", err)
+	}
+
+	// template
+	err = p.providerKubectlClient.UpdateAnnotation(ctx, "customresourcedefinition", "templates.tinkerbell.org", annotation,
+		executables.WithCluster(cluster),
+		executables.WithOverwrite())
+	if err != nil {
+		return fmt.Errorf("annotating tinkerbell templates: %v", err)
+	}
+
+	// workflow
+	err = p.providerKubectlClient.UpdateAnnotation(ctx, "customresourcedefinition", "workflows.tinkerbell.org", annotation,
+		executables.WithCluster(cluster),
+		executables.WithOverwrite())
+	if err != nil {
+		return fmt.Errorf("annotating tinkerbell workflows: %v", err)
+	}
+
+	return nil
 }

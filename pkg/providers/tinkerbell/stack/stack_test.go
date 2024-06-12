@@ -58,9 +58,17 @@ func getTinkBundle() releasev1alpha1.TinkerbellBundle {
 			Rufio: releasev1alpha1.Image{
 				URI: "public.ecr.aws/eks-anywhere/rufio:latest",
 			},
+			Stack: releasev1alpha1.Image{
+				Name: "stack",
+				URI:  "public.ecr.aws/eks-anywhere/tinkerbell/stack:0.1.0",
+			},
 			TinkebellChart: releasev1alpha1.Image{
 				Name: helmChartName,
 				URI:  helmChartURI,
+			},
+			TinkerbellCrds: releasev1alpha1.Image{
+				Name: "tinkerbellCrds",
+				URI:  "public.ecr.aws/eks-anywhere/tinkerbell/tinkerbell-crds:0.1.0",
 			},
 		},
 		KubeVip: releasev1alpha1.Image{
@@ -113,16 +121,6 @@ func TestTinkerbellStackInstallWithDifferentOptions(t *testing.T) {
 		opts              []stack.InstallOption
 	}{
 		{
-			name:         "with_namespace_create_true",
-			expectedFile: "testdata/expected_with_namespace_create_true.yaml",
-			opts:         []stack.InstallOption{stack.WithNamespaceCreate(true)},
-		},
-		{
-			name:         "with_namespace_create_false",
-			expectedFile: "testdata/expected_with_namespace_create_false.yaml",
-			opts:         []stack.InstallOption{stack.WithNamespaceCreate(false)},
-		},
-		{
 			name:            "with_boots_on_docker",
 			expectedFile:    "testdata/expected_with_boots_on_docker.yaml",
 			installOnDocker: true,
@@ -136,22 +134,12 @@ func TestTinkerbellStackInstallWithDifferentOptions(t *testing.T) {
 		{
 			name:         "with_host_port_enabled_true",
 			expectedFile: "testdata/expected_with_host_port_enabled_true.yaml",
-			opts:         []stack.InstallOption{stack.WithHostPortEnabled(true)},
+			opts:         []stack.InstallOption{stack.WithHostNetworkEnabled(true)},
 		},
 		{
 			name:         "with_host_port_enabled_false",
 			expectedFile: "testdata/expected_with_host_port_enabled_false.yaml",
-			opts:         []stack.InstallOption{stack.WithHostPortEnabled(false)},
-		},
-		{
-			name:         "with_envoy_enabled_true",
-			expectedFile: "testdata/expected_with_envoy_enabled_true.yaml",
-			opts:         []stack.InstallOption{stack.WithEnvoyEnabled(true)},
-		},
-		{
-			name:         "with_envoy_enabled_false",
-			expectedFile: "testdata/expected_with_envoy_enabled_false.yaml",
-			opts:         []stack.InstallOption{stack.WithEnvoyEnabled(false)},
+			opts:         []stack.InstallOption{stack.WithHostNetworkEnabled(false)},
 		},
 		{
 			name:         "with_load_balancer_enabled_true",
@@ -167,9 +155,7 @@ func TestTinkerbellStackInstallWithDifferentOptions(t *testing.T) {
 			name:         "with_kubernetes_options",
 			expectedFile: "testdata/expected_with_kubernetes_options.yaml",
 			opts: []stack.InstallOption{
-				stack.WithNamespaceCreate(true),
 				stack.WithBootsOnKubernetes(),
-				stack.WithEnvoyEnabled(true),
 				stack.WithLoadBalancerEnabled(true),
 			},
 		},
@@ -178,10 +164,8 @@ func TestTinkerbellStackInstallWithDifferentOptions(t *testing.T) {
 			expectedFile:    "testdata/expected_with_docker_options.yaml",
 			installOnDocker: true,
 			opts: []stack.InstallOption{
-				stack.WithNamespaceCreate(false),
 				stack.WithBootsOnDocker(),
-				stack.WithHostPortEnabled(true),
-				stack.WithEnvoyEnabled(false),
+				stack.WithHostNetworkEnabled(true),
 				stack.WithLoadBalancerEnabled(false),
 			},
 		},
@@ -229,19 +213,17 @@ func TestTinkerbellStackInstallWithDifferentOptions(t *testing.T) {
 				t.Setenv("REGISTRY_USERNAME", "username")
 				t.Setenv("REGISTRY_PASSWORD", "password")
 				helm.EXPECT().RegistryLogin(ctx, "1.2.3.4:443", "username", "password")
-				helm.EXPECT().InstallChartWithValuesFile(ctx, helmChartName, "oci://1.2.3.4:443/custom/eks-anywhere/tinkerbell/tinkerbell-chart", helmChartVersion, cluster.KubeconfigFile, generatedOverridesPath)
-
+				helm.EXPECT().UpgradeInstallChartWithValuesFile(ctx, "stack", fmt.Sprintf("oci://%s", "1.2.3.4:443/custom/eks-anywhere/tinkerbell/stack"), helmChartVersion, cluster.KubeconfigFile, constants.EksaSystemNamespace, generatedOverridesPath, gomock.Any())
 			} else {
-				helm.EXPECT().InstallChartWithValuesFile(ctx, helmChartName, fmt.Sprintf("oci://%s", helmChartPath), helmChartVersion, cluster.KubeconfigFile, generatedOverridesPath)
+				helm.EXPECT().UpgradeInstallChartWithValuesFile(ctx, "stack", fmt.Sprintf("oci://%s", "public.ecr.aws/eks-anywhere/tinkerbell/stack"), helmChartVersion, cluster.KubeconfigFile, constants.EksaSystemNamespace, generatedOverridesPath, gomock.Any())
 			}
 
 			if stackTest.installOnDocker {
 				docker.EXPECT().Run(ctx, "public.ecr.aws/eks-anywhere/boots:latest",
 					boots,
-					[]string{"-kubeconfig", "/kubeconfig", "-dhcp-addr", "0.0.0.0:67", "-osie-path-override", "https://anywhere-assests.eks.amazonaws.com/tinkerbell/hook"},
+					[]string{"-backend-kube-config", "/kubeconfig", "-dhcp-addr", "0.0.0.0:67", "-osie-url", "https://anywhere-assests.eks.amazonaws.com/tinkerbell/hook", "-tink-server", "1.2.3.4:42113"},
 					"-v", gomock.Any(),
 					"--network", "host",
-					"-e", gomock.Any(),
 					"-e", gomock.Any(),
 					"-e", gomock.Any(),
 					"-e", gomock.Any(),
@@ -359,8 +341,8 @@ func TestUpgrade(t *testing.T) {
 	ctx := context.Background()
 
 	helm.EXPECT().
-		UpgradeChartWithValuesFile(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
-			gomock.Any(), gomock.Any(), gomock.Any())
+		UpgradeInstallChartWithValuesFile(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any())
 	s := stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace, "192.168.0.0/16", nil, nil)
 
 	err := s.Upgrade(ctx, getTinkBundle(), testIP, cluster.KubeconfigFile, "")
@@ -435,7 +417,7 @@ func TestUpgradeWithProxy(t *testing.T) {
 		ctx        = context.Background()
 	)
 
-	helm.EXPECT().UpgradeChartWithValuesFile(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any())
+	helm.EXPECT().UpgradeInstallChartWithValuesFile(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any())
 
 	proxyConfiguration := &v1alpha1.ProxyConfiguration{
 		HttpProxy:  "1.2.3.4",
@@ -451,4 +433,78 @@ func TestUpgradeWithProxy(t *testing.T) {
 	assert.NoError(t, err)
 
 	assertYamlFilesEqual(t, "testdata/expected_upgrade_with_proxy.yaml", valuesFile)
+}
+
+func TestUpgradeCRDsChart(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	docker := mocks.NewMockDocker(mockCtrl)
+	helm := mocks.NewMockHelm(mockCtrl)
+
+	_, writer := test.NewWriter(t)
+	cluster := &types.Cluster{Name: "test"}
+	ctx := context.Background()
+
+	helm.EXPECT().
+		UpgradeInstallChartWithValuesFile(ctx, "tinkerbellCrds", fmt.Sprintf("oci://%s", "public.ecr.aws/eks-anywhere/tinkerbell/tinkerbell-crds"), helmChartVersion,
+			cluster.KubeconfigFile, constants.EksaSystemNamespace, "", gomock.Any())
+	s := stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace, "192.168.0.0/16", nil, nil)
+
+	err := s.UpgradeInstallCRDs(ctx, getTinkBundle(), cluster.KubeconfigFile)
+	assert.NoError(t, err)
+}
+
+func TestLegacyUpgrade(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	docker := mocks.NewMockDocker(mockCtrl)
+	helm := mocks.NewMockHelm(mockCtrl)
+
+	_, writer := test.NewWriter(t)
+	cluster := &types.Cluster{Name: "test"}
+	ctx := context.Background()
+
+	helm.EXPECT().
+		UpgradeInstallChartWithValuesFile(ctx, "tinkerbell-chart", fmt.Sprintf("oci://%s", "public.ecr.aws/eks-anywhere/tinkerbell/tinkerbell-chart"), helmChartVersion,
+			cluster.KubeconfigFile, "", "", gomock.Any())
+	s := stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace, "192.168.0.0/16", nil, nil)
+
+	err := s.UpgradeLegacy(ctx, getTinkBundle(), cluster.KubeconfigFile)
+	assert.NoError(t, err)
+}
+
+func TestUninstall(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	docker := mocks.NewMockDocker(mockCtrl)
+	helm := mocks.NewMockHelm(mockCtrl)
+
+	_, writer := test.NewWriter(t)
+	cluster := &types.Cluster{Name: "test"}
+	ctx := context.Background()
+
+	helm.EXPECT().UpgradeInstallChartWithValuesFile(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any())
+	helm.EXPECT().
+		Uninstall(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+			gomock.Any())
+	s := stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace, "192.168.0.0/16", nil, nil)
+
+	err := s.Upgrade(ctx, getTinkBundle(), testIP, cluster.KubeconfigFile, "")
+	assert.NoError(t, err)
+
+	err = s.Uninstall(ctx, getTinkBundle(), cluster.KubeconfigFile)
+	assert.NoError(t, err)
+}
+
+func TestHasLegacyChart(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	docker := mocks.NewMockDocker(mockCtrl)
+	helm := mocks.NewMockHelm(mockCtrl)
+
+	_, writer := test.NewWriter(t)
+	cluster := &types.Cluster{Name: "test"}
+	ctx := context.Background()
+
+	s := stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace, "192.168.0.0/16", nil, nil)
+	helm.EXPECT().ListCharts(ctx, cluster.KubeconfigFile, "tinkerbell-chart")
+
+	_, err := s.HasLegacyChart(ctx, getTinkBundle(), cluster.KubeconfigFile)
+	assert.NoError(t, err)
 }
