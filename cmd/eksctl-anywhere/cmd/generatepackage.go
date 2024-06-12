@@ -58,10 +58,6 @@ var generatePackageCommand = &cobra.Command{
 
 func runGeneratePackages(cmd *cobra.Command, args []string) error {
 	clusterName := gpOptions.clusterName
-	if len(gpOptions.kubeVersion) > 0 {
-		// allow both
-		clusterName = ""
-	}
 	if err := curatedpackages.ValidateKubeVersion(gpOptions.kubeVersion, clusterName); err != nil {
 		return err
 	}

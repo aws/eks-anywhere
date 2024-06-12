@@ -6,7 +6,11 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+	"k8s.io/apimachinery/pkg/types"
 
+	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/curatedpackages"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 )
@@ -33,7 +37,7 @@ func init() {
 	listPackagesCommand.Flags().StringVar(&lpo.kubeConfig, "kubeconfig", "",
 		"Path to a kubeconfig file to use when source is a cluster.")
 	listPackagesCommand.Flags().StringVar(&lpo.clusterName, "cluster", "",
-		"Name of cluster for package list.")
+		"Name of cluster for package list. Required for airgapped environments.")
 	listPackagesCommand.Flags().StringVar(&lpo.bundlesOverride, "bundles-override", "",
 		"Override default Bundles manifest (not recommended)")
 }
@@ -60,7 +64,27 @@ func listPackages(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	deps, err := NewDependenciesForPackages(ctx, WithRegistryName(lpo.registry), WithKubeVersion(lpo.kubeVersion), WithMountPaths(kubeConfig), WithBundlesOverride(lpo.bundlesOverride))
+
+	depOpts := []PackageOpt{
+		WithRegistryName(lpo.registry),
+		WithKubeVersion(lpo.kubeVersion),
+		WithMountPaths(kubeConfig),
+		WithBundlesOverride(lpo.bundlesOverride),
+	}
+	cluster := &anywherev1.Cluster{}
+	if len(lpo.clusterName) > 0 {
+		k8sClient, err := kubernetes.NewRuntimeClientFromFileName(kubeConfig)
+		if err != nil {
+			return fmt.Errorf("unable to initalize k8s client: %v", err)
+		}
+
+		if err := k8sClient.Get(ctx, types.NamespacedName{Name: lpo.clusterName, Namespace: constants.DefaultNamespace}, cluster); err != nil {
+			return fmt.Errorf("unable to get cluster %s: %v", lpo.clusterName, err)
+		}
+		depOpts = append(depOpts, WithCluster(cluster))
+	}
+
+	deps, err := NewDependenciesForPackages(ctx, depOpts...)
 	if err != nil {
 		return fmt.Errorf("unable to initialize executables: %v", err)
 	}

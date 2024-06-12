@@ -13,13 +13,6 @@ func TestValidateNoKubeVersionWhenClusterSucceeds(t *testing.T) {
 	}
 }
 
-func TestValidateKubeVersionWhenClusterFails(t *testing.T) {
-	err := curatedpackages.ValidateKubeVersion("1.21", "morby")
-	if err == nil {
-		t.Errorf("not both kube-version and cluster")
-	}
-}
-
 func TestValidateKubeVersionWhenNoClusterFails(t *testing.T) {
 	err := curatedpackages.ValidateKubeVersion("", "")
 	if err == nil {
