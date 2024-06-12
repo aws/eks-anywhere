@@ -496,15 +496,19 @@ func buildTemplateMapCP(
 		if controlPlaneMachineSpec.HostOSConfiguration.CertBundles != nil {
 			values["certBundles"] = controlPlaneMachineSpec.HostOSConfiguration.CertBundles
 		}
+	}
 
-		brSettings, err := common.GetCAPIBottlerocketSettingsConfig(controlPlaneMachineSpec.HostOSConfiguration.BottlerocketConfiguration)
+	if controlPlaneMachineSpec.HostOSConfiguration != nil && controlPlaneMachineSpec.HostOSConfiguration.BottlerocketConfiguration != nil {
+		brSettings, err := common.GetCAPIBottlerocketSettingsConfig(controlPlaneMachineSpec.HostOSConfiguration, controlPlaneMachineSpec.HostOSConfiguration.BottlerocketConfiguration.Kubernetes)
 		if err != nil {
 			return nil, err
 		}
-		values["bottlerocketSettings"] = brSettings
+		if len(brSettings) != 0 {
+			values["bottlerocketSettings"] = brSettings
+		}
 	}
 
-	if clusterSpec.Cluster.Spec.ControlPlaneConfiguration.KubeletConfiguration != nil {
+	if clusterSpec.Cluster.Spec.ControlPlaneConfiguration.KubeletConfiguration != nil && controlPlaneMachineSpec.OSFamily != v1alpha1.Bottlerocket {
 		cpKubeletConfig := clusterSpec.Cluster.Spec.ControlPlaneConfiguration.KubeletConfiguration.Object
 
 		if _, ok := cpKubeletConfig["tlsCipherSuites"]; !ok {
@@ -588,7 +592,6 @@ func buildTemplateMapMD(
 	}
 
 	values["workertemplateOverride"] = workerTemplateOverride
-
 	if workerNodeGroupMachineSpec.HostOSConfiguration != nil {
 		if workerNodeGroupMachineSpec.HostOSConfiguration.NTPConfiguration != nil {
 			values["ntpServers"] = workerNodeGroupMachineSpec.HostOSConfiguration.NTPConfiguration.Servers
@@ -597,15 +600,17 @@ func buildTemplateMapMD(
 		if workerNodeGroupMachineSpec.HostOSConfiguration.CertBundles != nil {
 			values["certBundles"] = workerNodeGroupMachineSpec.HostOSConfiguration.CertBundles
 		}
+	}
 
-		brSettings, err := common.GetCAPIBottlerocketSettingsConfig(workerNodeGroupMachineSpec.HostOSConfiguration.BottlerocketConfiguration)
+	if workerNodeGroupMachineSpec.HostOSConfiguration != nil && workerNodeGroupMachineSpec.HostOSConfiguration.BottlerocketConfiguration != nil {
+		brSettings, err := common.GetCAPIBottlerocketSettingsConfig(workerNodeGroupMachineSpec.HostOSConfiguration, workerNodeGroupMachineSpec.HostOSConfiguration.BottlerocketConfiguration.Kubernetes)
 		if err != nil {
 			return nil, err
 		}
 		values["bottlerocketSettings"] = brSettings
 	}
 
-	if workerNodeGroupConfiguration.KubeletConfiguration != nil {
+	if workerNodeGroupConfiguration.KubeletConfiguration != nil && workerNodeGroupMachineSpec.OSFamily != v1alpha1.Bottlerocket {
 		wnKubeletConfig := workerNodeGroupConfiguration.KubeletConfiguration.Object
 		if _, ok := wnKubeletConfig["tlsCipherSuites"]; !ok {
 			wnKubeletConfig["tlsCipherSuites"] = crypto.SecureCipherSuiteNames()
@@ -621,7 +626,6 @@ func buildTemplateMapMD(
 		if err != nil {
 			return nil, fmt.Errorf("marshaling Kubelet Configuration for worker node %s: %v", workerNodeGroupConfiguration.Name, err)
 		}
-
 		values["kubeletConfiguration"] = string(kcString)
 	} else {
 		kubeletExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs().

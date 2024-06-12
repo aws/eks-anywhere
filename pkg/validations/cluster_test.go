@@ -751,61 +751,6 @@ func TestValidateBottlerocketKC(t *testing.T) {
 		subErr error
 	}{
 		{
-			name: "cp config",
-			spec: &cluster.Spec{
-				Config: &cluster.Config{
-					Cluster: &anywherev1.Cluster{
-						Spec: anywherev1.ClusterSpec{
-							ControlPlaneConfiguration: anywherev1.ControlPlaneConfiguration{
-								KubeletConfiguration: &unstructured.Unstructured{
-									Object: map[string]interface{}{
-										"kind":    "KubeletConfiguration",
-										"maxPods": 50,
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-			subErr: nil,
-		},
-		{
-			name: "worker config",
-			spec: &cluster.Spec{
-				Config: &cluster.Config{
-					Cluster: &anywherev1.Cluster{
-						Spec: anywherev1.ClusterSpec{
-							WorkerNodeGroupConfigurations: []anywherev1.WorkerNodeGroupConfiguration{
-								{
-									KubeletConfiguration: &unstructured.Unstructured{
-										Object: map[string]interface{}{
-											"maxPods": 50,
-											"kind":    "KubeletConfiguration",
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-			subErr: nil,
-		},
-		{
-			name: "nil kc config",
-			spec: &cluster.Spec{
-				Config: &cluster.Config{
-					Cluster: &anywherev1.Cluster{
-						Spec: anywherev1.ClusterSpec{
-							ControlPlaneConfiguration: anywherev1.ControlPlaneConfiguration{},
-						},
-					},
-				},
-			},
-			subErr: nil,
-		},
-		{
 			name: "invalid cp config",
 			spec: &cluster.Spec{
 				Config: &cluster.Config{
@@ -846,6 +791,36 @@ func TestValidateBottlerocketKC(t *testing.T) {
 				},
 			},
 			subErr: errors.New("unknown field \"maxPodss\""),
+		},
+		{
+			name: "cp and worker config",
+			spec: &cluster.Spec{
+				Config: &cluster.Config{
+					Cluster: &anywherev1.Cluster{
+						Spec: anywherev1.ClusterSpec{
+							WorkerNodeGroupConfigurations: []anywherev1.WorkerNodeGroupConfiguration{
+								{
+									KubeletConfiguration: &unstructured.Unstructured{
+										Object: map[string]interface{}{
+											"maxPods": 50,
+											"kind":    "KubeletConfiguration",
+										},
+									},
+								},
+							},
+							ControlPlaneConfiguration: anywherev1.ControlPlaneConfiguration{
+								KubeletConfiguration: &unstructured.Unstructured{
+									Object: map[string]interface{}{
+										"maxPods": 50,
+										"kind":    "KubeletConfiguration",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			subErr: nil,
 		},
 	}
 	for _, tc := range tests {

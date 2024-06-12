@@ -3,6 +3,7 @@ package vsphere
 import (
 	"fmt"
 
+	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
 	"sigs.k8s.io/yaml"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -313,12 +314,21 @@ func buildTemplateMapCP(
 		}
 	}
 
+	var bottlerocketKubernetesSettings *bootstrapv1.BottlerocketKubernetesSettings
 	if controlPlaneMachineSpec.OSFamily == anywherev1.Bottlerocket {
 		values["format"] = string(anywherev1.Bottlerocket)
 		values["pauseRepository"] = versionsBundle.KubeDistro.Pause.Image()
 		values["pauseVersion"] = versionsBundle.KubeDistro.Pause.Tag()
 		values["bottlerocketBootstrapRepository"] = versionsBundle.BottleRocketHostContainers.KubeadmBootstrap.Image()
 		values["bottlerocketBootstrapVersion"] = versionsBundle.BottleRocketHostContainers.KubeadmBootstrap.Tag()
+
+		if clusterSpec.Cluster.Spec.ControlPlaneConfiguration.KubeletConfiguration != nil {
+			br, err := common.ConvertToBottlerocketKubernetesSettings(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.KubeletConfiguration)
+			if err != nil {
+				return nil, err
+			}
+			bottlerocketKubernetesSettings = br
+		}
 	}
 
 	if len(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Taints) > 0 {
@@ -338,11 +348,9 @@ func buildTemplateMapCP(
 			values["certBundles"] = controlPlaneMachineSpec.HostOSConfiguration.CertBundles
 		}
 
-		brSettings, err := common.GetCAPIBottlerocketSettingsConfig(controlPlaneMachineSpec.HostOSConfiguration.BottlerocketConfiguration)
-		if err != nil {
-			return nil, err
+		if bottlerocketKubernetesSettings == nil && controlPlaneMachineSpec.HostOSConfiguration.BottlerocketConfiguration != nil {
+			bottlerocketKubernetesSettings = controlPlaneMachineSpec.HostOSConfiguration.BottlerocketConfiguration.Kubernetes
 		}
-		values["bottlerocketSettings"] = brSettings
 	}
 
 	if clusterSpec.Cluster.Spec.EtcdEncryption != nil && len(*clusterSpec.Cluster.Spec.EtcdEncryption) != 0 {
@@ -353,7 +361,17 @@ func buildTemplateMapCP(
 		values["encryptionProviderConfig"] = conf
 	}
 
-	if clusterSpec.Cluster.Spec.ControlPlaneConfiguration.KubeletConfiguration != nil {
+	if bottlerocketKubernetesSettings != nil || controlPlaneMachineSpec.HostOSConfiguration != nil {
+		brSettings, err := common.GetCAPIBottlerocketSettingsConfig(controlPlaneMachineSpec.HostOSConfiguration, bottlerocketKubernetesSettings)
+		if err != nil {
+			return nil, err
+		}
+		if len(brSettings) != 0 {
+			values["bottlerocketSettings"] = brSettings
+		}
+	}
+
+	if clusterSpec.Cluster.Spec.ControlPlaneConfiguration.KubeletConfiguration != nil && controlPlaneMachineSpec.OSFamily != anywherev1.Bottlerocket {
 		cpKubeletConfig := clusterSpec.Cluster.Spec.ControlPlaneConfiguration.KubeletConfiguration.Object
 
 		if _, ok := cpKubeletConfig["tlsCipherSuites"]; !ok {
@@ -487,12 +505,21 @@ func buildTemplateMapMD(
 		values["noProxy"] = noProxyList
 	}
 
+	var bottlerocketKubernetesSettings *bootstrapv1.BottlerocketKubernetesSettings
 	if workerNodeGroupMachineSpec.OSFamily == anywherev1.Bottlerocket {
 		values["format"] = string(anywherev1.Bottlerocket)
 		values["pauseRepository"] = bundle.KubeDistro.Pause.Image()
 		values["pauseVersion"] = bundle.KubeDistro.Pause.Tag()
 		values["bottlerocketBootstrapRepository"] = bundle.BottleRocketHostContainers.KubeadmBootstrap.Image()
 		values["bottlerocketBootstrapVersion"] = bundle.BottleRocketHostContainers.KubeadmBootstrap.Tag()
+
+		if workerNodeGroupConfiguration.KubeletConfiguration != nil {
+			br, err := common.ConvertToBottlerocketKubernetesSettings(workerNodeGroupConfiguration.KubeletConfiguration)
+			if err != nil {
+				return nil, err
+			}
+			bottlerocketKubernetesSettings = br
+		}
 	}
 
 	if workerNodeGroupMachineSpec.HostOSConfiguration != nil {
@@ -504,14 +531,20 @@ func buildTemplateMapMD(
 			values["certBundles"] = workerNodeGroupMachineSpec.HostOSConfiguration.CertBundles
 		}
 
-		brSettings, err := common.GetCAPIBottlerocketSettingsConfig(workerNodeGroupMachineSpec.HostOSConfiguration.BottlerocketConfiguration)
+		if bottlerocketKubernetesSettings == nil && workerNodeGroupMachineSpec.HostOSConfiguration.BottlerocketConfiguration != nil {
+			bottlerocketKubernetesSettings = workerNodeGroupMachineSpec.HostOSConfiguration.BottlerocketConfiguration.Kubernetes
+		}
+	}
+
+	if bottlerocketKubernetesSettings != nil || workerNodeGroupMachineSpec.HostOSConfiguration != nil {
+		brSettings, err := common.GetCAPIBottlerocketSettingsConfig(workerNodeGroupMachineSpec.HostOSConfiguration, bottlerocketKubernetesSettings)
 		if err != nil {
 			return nil, err
 		}
 		values["bottlerocketSettings"] = brSettings
 	}
 
-	if workerNodeGroupConfiguration.KubeletConfiguration != nil {
+	if workerNodeGroupConfiguration.KubeletConfiguration != nil && workerNodeGroupMachineSpec.OSFamily != anywherev1.Bottlerocket {
 		wnKubeletConfig := workerNodeGroupConfiguration.KubeletConfiguration.Object
 
 		if _, ok := wnKubeletConfig["tlsCipherSuites"]; !ok {
