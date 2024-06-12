@@ -37,18 +37,18 @@ spec:
         arch:
         - amd64
         description: Container image for bottlerocket-admin image
-        imageDigest: sha256:2f884ebc34c0f54b6d75493ba2ad645f42525d6c90fe2099ae50708de6f86152
+        imageDigest: sha256:1419f652e102bb07510f1c15a67681963fa1605166fd0fc1b782aac529ad5603
         name: bottlerocket-admin
         os: linux
-        uri: public.ecr.aws/bottlerocket/bottlerocket-admin:v0.11.6
+        uri: public.ecr.aws/bottlerocket/bottlerocket-admin:v0.11.8
       control:
         arch:
         - amd64
         description: Container image for bottlerocket-control image
-        imageDigest: sha256:0ed73c9a2e35fab4287f3cbf18de084b740cace3234628c5e215adc407e52750
+        imageDigest: sha256:17c6a413ae5e9e81449fe5770409970e548803e19a47867d12bd1afd0fcad5fa
         name: bottlerocket-control
         os: linux
-        uri: public.ecr.aws/bottlerocket/bottlerocket-control:v0.7.10
+        uri: public.ecr.aws/bottlerocket/bottlerocket-control:v0.7.12
       kubeadmBootstrap:
         arch:
         - amd64
@@ -540,11 +540,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-tinkerbell
         os: linux
-        uri: public.ecr.aws/release-container-registry/tinkerbell/cluster-api-provider-tinkerbell:v0.5.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/tinkerbell/cluster-api-provider-tinkerbell:v0.5.3-eks-a-v0.0.0-dev-build.1
       clusterTemplate:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.5.2/cluster-template.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.5.3/cluster-template.yaml
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.5.2/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.5.3/infrastructure-components.yaml
       envoy:
         arch:
         - amd64
@@ -564,7 +564,7 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.8.0-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.5.2/metadata.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.5.3/metadata.yaml
       tinkerbellStack:
         actions:
           cexec:
@@ -629,7 +629,7 @@ spec:
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: boots
           os: linux
-          uri: public.ecr.aws/release-container-registry/tinkerbell/boots:v0.8.1-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/boots:v0.11.0-eks-a-v0.0.0-dev-build.1
         hegel:
           arch:
           - amd64
@@ -702,7 +702,7 @@ spec:
           description: Helm chart for stack-helm
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: stack-helm
-          uri: public.ecr.aws/release-container-registry/tinkerbell/stack:0.4.4-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/stack:0.4.5-eks-a-v0.0.0-dev-build.1
         tink:
           nginx:
             arch:
@@ -750,7 +750,7 @@ spec:
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: tinkerbell-crds-helm
           uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-crds:0.2.5-eks-a-v0.0.0-dev-build.1
-      version: v0.5.2+abcdef1
+      version: v0.5.3+abcdef1
     upgrader:
       upgrader:
         arch:
@@ -834,18 +834,18 @@ spec:
         arch:
         - amd64
         description: Container image for bottlerocket-admin image
-        imageDigest: sha256:2f884ebc34c0f54b6d75493ba2ad645f42525d6c90fe2099ae50708de6f86152
+        imageDigest: sha256:1419f652e102bb07510f1c15a67681963fa1605166fd0fc1b782aac529ad5603
         name: bottlerocket-admin
         os: linux
-        uri: public.ecr.aws/bottlerocket/bottlerocket-admin:v0.11.6
+        uri: public.ecr.aws/bottlerocket/bottlerocket-admin:v0.11.8
       control:
         arch:
         - amd64
         description: Container image for bottlerocket-control image
-        imageDigest: sha256:0ed73c9a2e35fab4287f3cbf18de084b740cace3234628c5e215adc407e52750
+        imageDigest: sha256:17c6a413ae5e9e81449fe5770409970e548803e19a47867d12bd1afd0fcad5fa
         name: bottlerocket-control
         os: linux
-        uri: public.ecr.aws/bottlerocket/bottlerocket-control:v0.7.10
+        uri: public.ecr.aws/bottlerocket/bottlerocket-control:v0.7.12
       kubeadmBootstrap:
         arch:
         - amd64
@@ -1337,11 +1337,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-tinkerbell
         os: linux
-        uri: public.ecr.aws/release-container-registry/tinkerbell/cluster-api-provider-tinkerbell:v0.5.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/tinkerbell/cluster-api-provider-tinkerbell:v0.5.3-eks-a-v0.0.0-dev-build.1
       clusterTemplate:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.5.2/cluster-template.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.5.3/cluster-template.yaml
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.5.2/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.5.3/infrastructure-components.yaml
       envoy:
         arch:
         - amd64
@@ -1361,7 +1361,7 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.8.0-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.5.2/metadata.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.5.3/metadata.yaml
       tinkerbellStack:
         actions:
           cexec:
@@ -1426,7 +1426,7 @@ spec:
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: boots
           os: linux
-          uri: public.ecr.aws/release-container-registry/tinkerbell/boots:v0.8.1-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/boots:v0.11.0-eks-a-v0.0.0-dev-build.1
         hegel:
           arch:
           - amd64
@@ -1499,7 +1499,7 @@ spec:
           description: Helm chart for stack-helm
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: stack-helm
-          uri: public.ecr.aws/release-container-registry/tinkerbell/stack:0.4.4-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/stack:0.4.5-eks-a-v0.0.0-dev-build.1
         tink:
           nginx:
             arch:
@@ -1547,7 +1547,7 @@ spec:
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: tinkerbell-crds-helm
           uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-crds:0.2.5-eks-a-v0.0.0-dev-build.1
-      version: v0.5.2+abcdef1
+      version: v0.5.3+abcdef1
     upgrader:
       upgrader:
         arch:
@@ -1631,18 +1631,18 @@ spec:
         arch:
         - amd64
         description: Container image for bottlerocket-admin image
-        imageDigest: sha256:2f884ebc34c0f54b6d75493ba2ad645f42525d6c90fe2099ae50708de6f86152
+        imageDigest: sha256:1419f652e102bb07510f1c15a67681963fa1605166fd0fc1b782aac529ad5603
         name: bottlerocket-admin
         os: linux
-        uri: public.ecr.aws/bottlerocket/bottlerocket-admin:v0.11.6
+        uri: public.ecr.aws/bottlerocket/bottlerocket-admin:v0.11.8
       control:
         arch:
         - amd64
         description: Container image for bottlerocket-control image
-        imageDigest: sha256:0ed73c9a2e35fab4287f3cbf18de084b740cace3234628c5e215adc407e52750
+        imageDigest: sha256:17c6a413ae5e9e81449fe5770409970e548803e19a47867d12bd1afd0fcad5fa
         name: bottlerocket-control
         os: linux
-        uri: public.ecr.aws/bottlerocket/bottlerocket-control:v0.7.10
+        uri: public.ecr.aws/bottlerocket/bottlerocket-control:v0.7.12
       kubeadmBootstrap:
         arch:
         - amd64
@@ -2134,11 +2134,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-tinkerbell
         os: linux
-        uri: public.ecr.aws/release-container-registry/tinkerbell/cluster-api-provider-tinkerbell:v0.5.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/tinkerbell/cluster-api-provider-tinkerbell:v0.5.3-eks-a-v0.0.0-dev-build.1
       clusterTemplate:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.5.2/cluster-template.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.5.3/cluster-template.yaml
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.5.2/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.5.3/infrastructure-components.yaml
       envoy:
         arch:
         - amd64
@@ -2158,7 +2158,7 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.8.0-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.5.2/metadata.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.5.3/metadata.yaml
       tinkerbellStack:
         actions:
           cexec:
@@ -2223,7 +2223,7 @@ spec:
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: boots
           os: linux
-          uri: public.ecr.aws/release-container-registry/tinkerbell/boots:v0.8.1-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/boots:v0.11.0-eks-a-v0.0.0-dev-build.1
         hegel:
           arch:
           - amd64
@@ -2296,7 +2296,7 @@ spec:
           description: Helm chart for stack-helm
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: stack-helm
-          uri: public.ecr.aws/release-container-registry/tinkerbell/stack:0.4.4-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/stack:0.4.5-eks-a-v0.0.0-dev-build.1
         tink:
           nginx:
             arch:
@@ -2344,7 +2344,7 @@ spec:
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: tinkerbell-crds-helm
           uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-crds:0.2.5-eks-a-v0.0.0-dev-build.1
-      version: v0.5.2+abcdef1
+      version: v0.5.3+abcdef1
     upgrader:
       upgrader:
         arch:
@@ -2428,18 +2428,18 @@ spec:
         arch:
         - amd64
         description: Container image for bottlerocket-admin image
-        imageDigest: sha256:2f884ebc34c0f54b6d75493ba2ad645f42525d6c90fe2099ae50708de6f86152
+        imageDigest: sha256:1419f652e102bb07510f1c15a67681963fa1605166fd0fc1b782aac529ad5603
         name: bottlerocket-admin
         os: linux
-        uri: public.ecr.aws/bottlerocket/bottlerocket-admin:v0.11.6
+        uri: public.ecr.aws/bottlerocket/bottlerocket-admin:v0.11.8
       control:
         arch:
         - amd64
         description: Container image for bottlerocket-control image
-        imageDigest: sha256:0ed73c9a2e35fab4287f3cbf18de084b740cace3234628c5e215adc407e52750
+        imageDigest: sha256:17c6a413ae5e9e81449fe5770409970e548803e19a47867d12bd1afd0fcad5fa
         name: bottlerocket-control
         os: linux
-        uri: public.ecr.aws/bottlerocket/bottlerocket-control:v0.7.10
+        uri: public.ecr.aws/bottlerocket/bottlerocket-control:v0.7.12
       kubeadmBootstrap:
         arch:
         - amd64
@@ -2931,11 +2931,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-tinkerbell
         os: linux
-        uri: public.ecr.aws/release-container-registry/tinkerbell/cluster-api-provider-tinkerbell:v0.5.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/tinkerbell/cluster-api-provider-tinkerbell:v0.5.3-eks-a-v0.0.0-dev-build.1
       clusterTemplate:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.5.2/cluster-template.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.5.3/cluster-template.yaml
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.5.2/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.5.3/infrastructure-components.yaml
       envoy:
         arch:
         - amd64
@@ -2955,7 +2955,7 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.8.0-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.5.2/metadata.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.5.3/metadata.yaml
       tinkerbellStack:
         actions:
           cexec:
@@ -3020,7 +3020,7 @@ spec:
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: boots
           os: linux
-          uri: public.ecr.aws/release-container-registry/tinkerbell/boots:v0.8.1-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/boots:v0.11.0-eks-a-v0.0.0-dev-build.1
         hegel:
           arch:
           - amd64
@@ -3093,7 +3093,7 @@ spec:
           description: Helm chart for stack-helm
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: stack-helm
-          uri: public.ecr.aws/release-container-registry/tinkerbell/stack:0.4.4-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/stack:0.4.5-eks-a-v0.0.0-dev-build.1
         tink:
           nginx:
             arch:
@@ -3141,7 +3141,7 @@ spec:
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: tinkerbell-crds-helm
           uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-crds:0.2.5-eks-a-v0.0.0-dev-build.1
-      version: v0.5.2+abcdef1
+      version: v0.5.3+abcdef1
     upgrader:
       upgrader:
         arch:
@@ -3225,18 +3225,18 @@ spec:
         arch:
         - amd64
         description: Container image for bottlerocket-admin image
-        imageDigest: sha256:2f884ebc34c0f54b6d75493ba2ad645f42525d6c90fe2099ae50708de6f86152
+        imageDigest: sha256:1419f652e102bb07510f1c15a67681963fa1605166fd0fc1b782aac529ad5603
         name: bottlerocket-admin
         os: linux
-        uri: public.ecr.aws/bottlerocket/bottlerocket-admin:v0.11.6
+        uri: public.ecr.aws/bottlerocket/bottlerocket-admin:v0.11.8
       control:
         arch:
         - amd64
         description: Container image for bottlerocket-control image
-        imageDigest: sha256:0ed73c9a2e35fab4287f3cbf18de084b740cace3234628c5e215adc407e52750
+        imageDigest: sha256:17c6a413ae5e9e81449fe5770409970e548803e19a47867d12bd1afd0fcad5fa
         name: bottlerocket-control
         os: linux
-        uri: public.ecr.aws/bottlerocket/bottlerocket-control:v0.7.10
+        uri: public.ecr.aws/bottlerocket/bottlerocket-control:v0.7.12
       kubeadmBootstrap:
         arch:
         - amd64
@@ -3728,11 +3728,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-tinkerbell
         os: linux
-        uri: public.ecr.aws/release-container-registry/tinkerbell/cluster-api-provider-tinkerbell:v0.5.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/tinkerbell/cluster-api-provider-tinkerbell:v0.5.3-eks-a-v0.0.0-dev-build.1
       clusterTemplate:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.5.2/cluster-template.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.5.3/cluster-template.yaml
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.5.2/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.5.3/infrastructure-components.yaml
       envoy:
         arch:
         - amd64
@@ -3752,7 +3752,7 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.8.0-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.5.2/metadata.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.5.3/metadata.yaml
       tinkerbellStack:
         actions:
           cexec:
@@ -3817,7 +3817,7 @@ spec:
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: boots
           os: linux
-          uri: public.ecr.aws/release-container-registry/tinkerbell/boots:v0.8.1-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/boots:v0.11.0-eks-a-v0.0.0-dev-build.1
         hegel:
           arch:
           - amd64
@@ -3890,7 +3890,7 @@ spec:
           description: Helm chart for stack-helm
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: stack-helm
-          uri: public.ecr.aws/release-container-registry/tinkerbell/stack:0.4.4-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/stack:0.4.5-eks-a-v0.0.0-dev-build.1
         tink:
           nginx:
             arch:
@@ -3938,7 +3938,7 @@ spec:
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: tinkerbell-crds-helm
           uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-crds:0.2.5-eks-a-v0.0.0-dev-build.1
-      version: v0.5.2+abcdef1
+      version: v0.5.3+abcdef1
     upgrader:
       upgrader:
         arch:
