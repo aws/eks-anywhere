@@ -558,6 +558,7 @@ func (s *Installer) createValuesOverride(bundle releasev1alpha1.TinkerbellBundle
 			},
 		},
 		stack: map[string]interface{}{
+			image: bundle.TinkerbellStack.Tink.Nginx.URI,
 			kubevip: map[string]interface{}{
 				image:   bundle.KubeVip.URI,
 				enabled: s.loadBalancer,
