@@ -47,6 +47,7 @@ var describePackagesCommand = &cobra.Command{
 		}
 		return nil
 	},
+	Deprecated: "use `kubectl describe packages` instead",
 }
 
 func describeResources(ctx context.Context, args []string) error {

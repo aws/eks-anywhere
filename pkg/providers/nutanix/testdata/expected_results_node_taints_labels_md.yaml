@@ -69,8 +69,8 @@ spec:
             # kind will implement systemd support in: https://github.com/kubernetes-sigs/kind/issues/1726
             #cgroup-driver: cgroupfs
             eviction-hard: nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%
-            node-labels: key1-md=value1-md,key2-md=value2-md
             tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+            node-labels: key1-md=value1-md,key2-md=value2-md
           taints:
             - key: key1
               value: val1

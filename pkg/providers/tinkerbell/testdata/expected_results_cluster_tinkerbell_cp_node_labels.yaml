@@ -63,8 +63,8 @@ spec:
           provider-id: PROVIDER_ID
           read-only-port: "0"
           anonymous-auth: "false"
-          node-labels: key1-cp=value1-cp,key2-cp=value2-cp
           tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+          node-labels: key1-cp=value1-cp,key2-cp=value2-cp
     joinConfiguration:
       nodeRegistration:
         ignorePreflightErrors:
@@ -73,8 +73,8 @@ spec:
           provider-id: PROVIDER_ID
           read-only-port: "0"
           anonymous-auth: "false"
-          node-labels: key1-cp=value1-cp,key2-cp=value2-cp
           tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+          node-labels: key1-cp=value1-cp,key2-cp=value2-cp
     files:
       - content: |
           apiVersion: v1

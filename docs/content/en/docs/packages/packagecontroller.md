@@ -41,14 +41,14 @@ If you created a cluster without the package controller or if the package contro
     aws sts get-caller-identity
     ```
 
-4. Authenticate docker to the private AWS ECR registry on account `783794618700` with your AWS credentials. It houses the EKS Anywhere packages artifacts. Authentication is required to pull images from it.
+4. Authenticate docker to the private AWS ECR registry with your AWS credentials. Reference prerequisites to identity the AWS account that houses the EKS Anywhere packages artifacts. Authentication is required to pull images from it.
     ```bash
-    aws ecr get-login-password | docker login --username AWS --password-stdin 783794618700.dkr.ecr.us-west-2.amazonaws.com
+    aws ecr get-login-password | docker login --username AWS --password-stdin $ECR_PACKAGES_ACCOUNT.dkr.ecr.$EKSA_AWS_REGION.amazonaws.com
     ```
 
 5. Verify you can pull an image from the packages registry:
     ```bash
-    docker pull 783794618700.dkr.ecr.us-west-2.amazonaws.com/emissary-ingress/emissary:v3.5.1-bf70150bcdfe3a5383ec8ad9cd7eea801a0cb074
+    docker pull $ECR_PACKAGES_ACCOUNT.dkr.ecr.$EKSA_AWS_REGION.amazonaws.com/emissary-ingress/emissary:v3.9.1-828e7d186ded23e54f6bd95a5ce1319150f7e325
     ```
     If the image downloads successfully, it worked!
 

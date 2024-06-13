@@ -27,10 +27,15 @@ spec:
 {{- end }}
           kubeletExtraArgs:
             provider-id: cloudstack:///'{{`{{ ds.meta_data.instance_id }}`}}'
+{{- if not .kubeletConfiguration }}
             read-only-port: "0"
             anonymous-auth: "false"
 {{- if .kubeletExtraArgs }}
 {{ .kubeletExtraArgs.ToYaml | indent 12 }}
+{{- end }}
+{{- end }}
+{{- if .nodeLabelArgs }}
+{{ .nodeLabelArgs.ToYaml | indent 12 }}
 {{- end }}
           name: "{{`{{ ds.meta_data.hostname }}`}}"
 {{- if or (or .proxyConfig .registryMirrorMap) .kubeletConfiguration }}
@@ -133,14 +138,16 @@ metadata:
     cluster.x-k8s.io/cluster-name: {{.clusterName}}
   name: {{.workerNodeGroupName}}
   namespace: {{.eksaSystemNamespace}}
-  {{- if .autoscalingConfig }}
+{{- if .autoscalingConfig }}
   annotations:
     cluster.x-k8s.io/cluster-api-autoscaler-node-group-min-size: "{{ .autoscalingConfig.MinCount }}"
     cluster.x-k8s.io/cluster-api-autoscaler-node-group-max-size: "{{ .autoscalingConfig.MaxCount }}"
 {{- end }}
 spec:
   clusterName: {{.clusterName}}
+{{- if not .autoscalingConfig }}
   replicas: {{.workerReplicas}}
+{{- end }}
   selector:
     matchLabels: {}
   template:

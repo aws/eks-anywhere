@@ -168,9 +168,6 @@ func buildTemplateMapCP(
 		Append(clusterapi.APIServerExtraArgs(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.APIServerExtraArgs)).
 		Append(clusterapi.EtcdEncryptionExtraArgs(clusterSpec.Cluster.Spec.EtcdEncryption))
 	clusterapi.SetPodIAMAuthExtraArgs(clusterSpec.Cluster.Spec.PodIAMConfig, apiServerExtraArgs)
-	kubeletExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs().
-		Append(clusterapi.ResolvConfExtraArgs(clusterSpec.Cluster.Spec.ClusterNetwork.DNS.ResolvConf)).
-		Append(clusterapi.ControlPlaneNodeLabelsExtraArgs(clusterSpec.Cluster.Spec.ControlPlaneConfiguration))
 
 	auditPolicy, err := common.GetAuditPolicy(clusterSpec.Cluster.Spec.KubernetesVersion)
 	if err != nil {
@@ -200,7 +197,6 @@ func buildTemplateMapCP(
 		"corednsVersion":               versionsBundle.KubeDistro.CoreDNS.Tag,
 		"etcdRepository":               versionsBundle.KubeDistro.Etcd.Repository,
 		"etcdImageTag":                 versionsBundle.KubeDistro.Etcd.Tag,
-		"kubeletExtraArgs":             kubeletExtraArgs.ToPartialYaml(),
 		"kubeVipImage":                 versionsBundle.Nutanix.KubeVip.VersionedImage(),
 		"kubeVipSvcEnable":             false,
 		"kubeVipLBEnable":              false,
@@ -321,13 +317,30 @@ func buildTemplateMapCP(
 
 	if clusterSpec.Cluster.Spec.ControlPlaneConfiguration.KubeletConfiguration != nil {
 		cpKubeletConfig := clusterSpec.Cluster.Spec.ControlPlaneConfiguration.KubeletConfiguration.Object
+		if _, ok := cpKubeletConfig["tlsCipherSuites"]; !ok {
+			cpKubeletConfig["tlsCipherSuites"] = crypto.SecureCipherSuiteNames()
+		}
 
+		if _, ok := cpKubeletConfig["resolvConf"]; !ok {
+			if clusterSpec.Cluster.Spec.ClusterNetwork.DNS.ResolvConf != nil {
+				cpKubeletConfig["resolvConf"] = clusterSpec.Cluster.Spec.ClusterNetwork.DNS.ResolvConf.Path
+			}
+		}
 		kcString, err := yaml.Marshal(cpKubeletConfig)
 		if err != nil {
 			return nil, fmt.Errorf("error marshaling %v", err)
 		}
 
 		values["kubeletConfiguration"] = string(kcString)
+	} else {
+		kubeletExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs().
+			Append(clusterapi.ResolvConfExtraArgs(clusterSpec.Cluster.Spec.ClusterNetwork.DNS.ResolvConf))
+		values["kubeletExtraArgs"] = kubeletExtraArgs.ToPartialYaml()
+	}
+
+	nodeLabelArgs := clusterapi.ControlPlaneNodeLabelsExtraArgs(clusterSpec.Cluster.Spec.ControlPlaneConfiguration)
+	if len(nodeLabelArgs) != 0 {
+		values["nodeLabelArgs"] = nodeLabelArgs.ToPartialYaml()
 	}
 
 	return values, nil
@@ -337,9 +350,6 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupMachineSpec v1
 	versionsBundle := clusterSpec.WorkerNodeGroupVersionsBundle(workerNodeGroupConfiguration)
 	format := "cloud-config"
 
-	kubeletExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs().
-		Append(clusterapi.ResolvConfExtraArgs(clusterSpec.Cluster.Spec.ClusterNetwork.DNS.ResolvConf)).
-		Append(clusterapi.WorkerNodeLabelsExtraArgs(workerNodeGroupConfiguration))
 	values := map[string]interface{}{
 		"clusterName":            clusterSpec.Cluster.Name,
 		"eksaSystemNamespace":    constants.EksaSystemNamespace,
@@ -356,7 +366,6 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupMachineSpec v1
 		"imageIDType":            workerNodeGroupMachineSpec.Image.Type,
 		"imageName":              workerNodeGroupMachineSpec.Image.Name,
 		"imageUUID":              workerNodeGroupMachineSpec.Image.UUID,
-		"kubeletExtraArgs":       kubeletExtraArgs.ToPartialYaml(),
 		"nutanixPEClusterIDType": workerNodeGroupMachineSpec.Cluster.Type,
 		"nutanixPEClusterName":   workerNodeGroupMachineSpec.Cluster.Name,
 		"nutanixPEClusterUUID":   workerNodeGroupMachineSpec.Cluster.UUID,
@@ -408,13 +417,32 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupMachineSpec v1
 
 	if workerNodeGroupConfiguration.KubeletConfiguration != nil {
 		wnKubeletConfig := workerNodeGroupConfiguration.KubeletConfiguration.Object
+		if _, ok := wnKubeletConfig["tlsCipherSuites"]; !ok {
+			wnKubeletConfig["tlsCipherSuites"] = crypto.SecureCipherSuiteNames()
+		}
+
+		if _, ok := wnKubeletConfig["resolvConf"]; !ok {
+			if clusterSpec.Cluster.Spec.ClusterNetwork.DNS.ResolvConf != nil {
+				wnKubeletConfig["resolvConf"] = clusterSpec.Cluster.Spec.ClusterNetwork.DNS.ResolvConf.Path
+			}
+		}
 		kcString, err := yaml.Marshal(wnKubeletConfig)
 		if err != nil {
 			return nil, fmt.Errorf("error marshaling %v", err)
 		}
 
 		values["kubeletConfiguration"] = string(kcString)
+	} else {
+		kubeletExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs().
+			Append(clusterapi.ResolvConfExtraArgs(clusterSpec.Cluster.Spec.ClusterNetwork.DNS.ResolvConf))
+		values["kubeletExtraArgs"] = kubeletExtraArgs.ToPartialYaml()
 	}
+
+	nodeLabelArgs := clusterapi.WorkerNodeLabelsExtraArgs(workerNodeGroupConfiguration)
+	if len(nodeLabelArgs) != 0 {
+		values["nodeLabelArgs"] = nodeLabelArgs.ToPartialYaml()
+	}
+
 	return values, nil
 }
 

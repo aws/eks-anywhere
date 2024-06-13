@@ -31,6 +31,31 @@ Before installing any curated packages for EKS Anywhere, do the following:
 
 To request a free trial, talk to your Amazon representative or connect with one [here](https://aws.amazon.com/contact-us/sales-support-eks/).
 
+### Identify AWS account ID for ECR packages registry
+
+The AWS account ID for ECR packages registry depends on the EKS Anywhere Enterprise Subscription.
+
+* For EKS Anywhere Enterprise Subscriptions purchased through the AWS console or APIs the AWS account ID for ECR packages registry varies depending on the region the Enterprise Subscription was purchased. Reference the table in the expanded output below for a mapping of AWS Regions to ECR package registries.
+<details>
+  <summary>Expand for packages registry to AWS Region table</summary>
+  <br /> 
+  {{% content "../clustermgmt/support/packages-registries.md" %}}
+</details>
+  <br/>
+
+* For EKS Anywhere Curated Packages trials or EKS Anywhere Enterprise Subscriptions purchased before October 2023 the AWS account ID for ECR packages registry is `783794618700`. This supports pulling images from the following regions.
+<details>
+  <summary>Expand for AWS Regions table</summary>
+  <br />
+  {{% content "./legacypackagesregions.md" %}}
+</details>
+<br/>
+
+After identifying the AWS account ID; export it for further reference. Example
+```bash
+export ECR_PACKAGES_ACCOUNT=346438352937
+```
+
 ### Setup authentication to use curated packages
 
 When you have been notified that your account has been given access to curated packages, create an IAM user in your account with a policy that only allows ECR read access to the Curated Packages repository; similar to this:
@@ -55,7 +80,7 @@ When you have been notified that your account has been given access to curated p
                 "ecr:DescribeRepositories",
                 "ecr:BatchCheckLayerAvailability"
             ],
-            "Resource": "arn:aws:ecr:*:783794618700:repository/*"
+            "Resource": "arn:aws:ecr:*:<ECR_PACKAGES_ACCOUNT>:repository/*"
         },
         {
             "Sid": "ECRLogin",
@@ -69,32 +94,13 @@ When you have been notified that your account has been given access to curated p
 }
 ```
 
-**Note** Curated Packages now supports pulling images from the following regions. Use the corresponding `EKSA_AWS_REGION` prior to cluster creation to choose which region to pull form, if not set it will default to pull from `us-west-2`.
-```
-"us-east-2",
-"us-east-1",
-"us-west-1",
-"us-west-2",
-"ap-northeast-3",
-"ap-northeast-2",
-"ap-southeast-1",
-"ap-southeast-2",
-"ap-northeast-1",
-"ca-central-1",
-"eu-central-1",
-"eu-west-1",
-"eu-west-2",
-"eu-west-3",
-"eu-north-1",
-"sa-east-1"
-```
-
+**Note** Use the corresponding `EKSA_AWS_REGION` prior to cluster creation to choose which region to pull form.
 
 Create credentials for this user and set and export the following environment variables:
 ```bash
 export EKSA_AWS_ACCESS_KEY_ID="your*access*id"
 export EKSA_AWS_SECRET_ACCESS_KEY="your*secret*key"
-export EKSA_AWS_REGION="us-west-2"
+export EKSA_AWS_REGION="aws*region"
 ```
 Make sure you are authenticated with the AWS CLI
 
@@ -107,12 +113,12 @@ aws sts get-caller-identity
 Login to docker
 
 ```bash
-aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin 783794618700.dkr.ecr.us-west-2.amazonaws.com
+aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin $ECR_PACKAGES_ACCOUNT.dkr.ecr.$EKSA_AWS_REGION.amazonaws.com
 ```
 
 Verify you can pull an image
 ```bash
-docker pull 783794618700.dkr.ecr.us-west-2.amazonaws.com/emissary-ingress/emissary:v3.5.1-bf70150bcdfe3a5383ec8ad9cd7eea801a0cb074
+docker pull $ECR_PACKAGES_ACCOUNT.dkr.ecr.$EKSA_AWS_REGION.amazonaws.com/emissary-ingress/emissary:v3.9.1-828e7d186ded23e54f6bd95a5ce1319150f7e325
 ```
 If the image downloads successfully, it worked!
 

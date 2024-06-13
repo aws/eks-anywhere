@@ -463,6 +463,49 @@ func TestKubeadmConfigTemplateEqual(t *testing.T) {
 			},
 			want: false,
 		},
+		{
+			name: "diff spec files",
+			new: &kubeadmv1.KubeadmConfigTemplate{
+				Spec: kubeadmv1.KubeadmConfigTemplateSpec{
+					Template: kubeadmv1.KubeadmConfigTemplateResource{
+						Spec: kubeadmv1.KubeadmConfigSpec{
+							JoinConfiguration: &kubeadmv1.JoinConfiguration{
+								NodeRegistration: kubeadmv1.NodeRegistrationOptions{
+									Taints: []corev1.Taint{
+										{
+											Key: "key",
+										},
+									},
+								},
+							},
+							Files: []kubeadmv1.File{
+								{
+									Owner: "me",
+								},
+							},
+						},
+					},
+				},
+			},
+			old: &kubeadmv1.KubeadmConfigTemplate{
+				Spec: kubeadmv1.KubeadmConfigTemplateSpec{
+					Template: kubeadmv1.KubeadmConfigTemplateResource{
+						Spec: kubeadmv1.KubeadmConfigSpec{
+							JoinConfiguration: &kubeadmv1.JoinConfiguration{
+								NodeRegistration: kubeadmv1.NodeRegistrationOptions{
+									Taints: []corev1.Taint{
+										{
+											Key: "key",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			want: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

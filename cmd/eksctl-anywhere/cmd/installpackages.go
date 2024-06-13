@@ -64,6 +64,7 @@ var installPackageCommand = &cobra.Command{
 		}
 		return fmt.Errorf("The name of the package to install must be specified as an argument")
 	},
+	Deprecated: "use `kubectl apply` instead",
 }
 
 func runInstallPackages(cmd *cobra.Command, args []string) error {

@@ -185,7 +185,7 @@ You can omit `workerNodeGroupConfigurations` when creating Bare Metal clusters. 
 >**_NOTE:_** Empty `workerNodeGroupConfigurations` is not supported when Kubernetes version <= 1.21.
 
 ### workerNodeGroupConfigurations[*].count (optional)
-Number of worker nodes. Optional if autoscalingConfiguration is used, in which case count will default to `autoscalingConfiguration.minCount`.
+Number of worker nodes. (default: `1`) It will be ignored if the [cluster autoscaler curated package]({{< relref "../../packages/cluster-autoscaler/addclauto" >}}) is installed and `autoscalingConfiguration` is used to specify the desired range of replicas.
 
 Refers to [troubleshooting machine health check remediation not allowed]({{< relref "../../troubleshooting/troubleshooting/#machine-health-check-shows-remediation-is-not-allowed" >}}) and choose a sufficient number to allow machine health check remediation.
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/constants"
@@ -49,6 +50,36 @@ func (v *CreateValidations) PreflightValidations(ctx context.Context) []validati
 				Err:         validations.ValidateEksaVersion(ctx, v.Opts.CliVersion, v.Opts.Spec),
 			}
 		},
+	}
+
+	if len(v.Opts.Spec.VSphereMachineConfigs) != 0 {
+		cpRef := v.Opts.Spec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
+		if v.Opts.Spec.VSphereMachineConfigs[cpRef].Spec.OSFamily == v1alpha1.Bottlerocket {
+			createValidations = append(createValidations,
+				func() *validations.ValidationResult {
+					return &validations.ValidationResult{
+						Name:        "validate cluster's kubelet configuration for Bottlerocket OS",
+						Remediation: "ensure that the settings configured for Kubelet Configuration are supported by Bottlerocket",
+						Err:         validations.ValidateBottlerocketKubeletConfig(v.Opts.Spec),
+					}
+				})
+		}
+
+		wnConfigs := v.Opts.Spec.Cluster.Spec.WorkerNodeGroupConfigurations
+		for i := range wnConfigs {
+			workerNodeRef := wnConfigs[i].MachineGroupRef.Name
+
+			if v.Opts.Spec.VSphereMachineConfigs[workerNodeRef].Spec.OSFamily == anywherev1.Bottlerocket {
+				createValidations = append(createValidations,
+					func() *validations.ValidationResult {
+						return &validations.ValidationResult{
+							Name:        "validate cluster's worker node kubelet configuration for Bottlerocket OS",
+							Remediation: "ensure that the settings configured for Kubelet Configuration are supported by Bottlerocket",
+							Err:         validations.ValidateBottlerocketKubeletConfig(v.Opts.Spec),
+						}
+					})
+			}
+		}
 	}
 
 	if v.Opts.Spec.Cluster.IsManaged() {

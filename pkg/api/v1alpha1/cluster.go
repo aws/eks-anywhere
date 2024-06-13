@@ -554,14 +554,14 @@ func validateWorkerNodeKubeletConfiguration(clusterConfig *Cluster) error {
 	return nil
 }
 
-func validateKubeletConfiguration(eksakubeconfig *unstructured.Unstructured) error {
-	if eksakubeconfig == nil {
+func validateKubeletConfiguration(kubeletConfig *unstructured.Unstructured) error {
+	if kubeletConfig == nil {
 		return nil
 	}
 
-	var kubeletConfig v1beta1.KubeletConfiguration
+	var kubeletConfiguration v1beta1.KubeletConfiguration
 
-	kcString, err := yaml.Marshal(eksakubeconfig)
+	kcString, err := yaml.Marshal(kubeletConfig)
 	if err != nil {
 		return err
 	}
@@ -571,9 +571,13 @@ func validateKubeletConfiguration(eksakubeconfig *unstructured.Unstructured) err
 		return fmt.Errorf("unmarshaling the yaml, malformed yaml %v", err)
 	}
 
-	err = yaml.UnmarshalStrict(kcString, &kubeletConfig)
+	err = yaml.UnmarshalStrict(kcString, &kubeletConfiguration)
 	if err != nil {
 		return fmt.Errorf("unmarshaling KubeletConfiguration for %v", err)
+	}
+
+	if _, ok := kubeletConfig.Object["providerID"]; ok {
+		return errors.New("can not override providerID or cloudProvider (set by EKS Anywhere)")
 	}
 
 	return nil

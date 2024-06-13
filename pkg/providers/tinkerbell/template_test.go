@@ -5,9 +5,12 @@ import (
 	"time"
 
 	. "github.com/onsi/gomega"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/clusterapi"
+	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
 
 func TestGenerateTemplateBuilder(t *testing.T) {
@@ -159,7 +162,6 @@ func TestTemplateBuilder_CertSANs(t *testing.T) {
 
 		data, err := bldr.GenerateCAPISpecControlPlane(clusterSpec)
 		g.Expect(err).ToNot(HaveOccurred())
-
 		test.AssertContentToFile(t, string(data), tc.Output)
 
 	}
@@ -193,5 +195,102 @@ func TestTemplateBuilder(t *testing.T) {
 
 		test.AssertContentToFile(t, string(data), tc.Output)
 
+	}
+}
+
+func TestTemplateBuilderCPKubeletConfig(t *testing.T) {
+	for _, tc := range []struct {
+		Input  string
+		Output string
+	}{
+		{
+			Input:  "testdata/cluster_tinkerbell_api_server_cert_san_ip.yaml",
+			Output: "testdata/expected_kcp.yaml",
+		},
+	} {
+		g := NewWithT(t)
+		clusterSpec := test.NewFullClusterSpec(t, tc.Input)
+		cpMachineCfg, _ := getControlPlaneMachineSpec(clusterSpec)
+		wngMachineCfgs, _ := getWorkerNodeGroupMachineSpec(clusterSpec)
+		tinkIPBefore := "0.0.0.0"
+		bldr := NewTemplateBuilder(&clusterSpec.TinkerbellDatacenter.Spec, cpMachineCfg, nil, wngMachineCfgs, tinkIPBefore, time.Now)
+
+		clusterSpec.Cluster.Spec.ControlPlaneConfiguration.KubeletConfiguration = &unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"maxPods":    20,
+				"apiVersion": "kubelet.config.k8s.io/v1beta1",
+				"kind":       "KubeletConfiguration",
+			},
+		}
+
+		clusterSpec.Cluster.Spec.ClusterNetwork.DNS = v1alpha1.DNS{
+			ResolvConf: &v1alpha1.ResolvConf{
+				Path: "test-path",
+			},
+		}
+
+		data, err := bldr.GenerateCAPISpecControlPlane(clusterSpec)
+		g.Expect(err).ToNot(HaveOccurred())
+		g.Expect(data).To(ContainSubstring("maxPods"))
+		test.AssertContentToFile(t, string(data), tc.Output)
+	}
+}
+
+func TestTemplateBuilderWNKubeletConfig(t *testing.T) {
+	for _, tc := range []struct {
+		Input  string
+		Output string
+	}{
+		{
+			Input:  "testdata/cluster_tinkerbell_api_server_cert_san_ip.yaml",
+			Output: "testdata/expected_kct.yaml",
+		},
+	} {
+		g := NewWithT(t)
+		clusterSpec := test.NewFullClusterSpec(t, tc.Input)
+		clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations = []v1alpha1.WorkerNodeGroupConfiguration{
+			{
+				Name:  "test",
+				Count: ptr.Int(1),
+				KubeletConfiguration: &unstructured.Unstructured{
+					Object: map[string]interface{}{
+						"maxPods":    20,
+						"apiVersion": "kubelet.config.k8s.io/v1beta1",
+						"kind":       "KubeletConfiguration",
+					},
+				},
+				MachineGroupRef: &v1alpha1.Ref{
+					Name: "wn-ref",
+					Kind: v1alpha1.TinkerbellMachineConfigKind,
+				},
+			},
+		}
+		clusterSpec.TinkerbellMachineConfigs = map[string]*v1alpha1.TinkerbellMachineConfig{
+			"wn-ref": {
+				Spec: v1alpha1.TinkerbellMachineConfigSpec{
+					Users: []v1alpha1.UserConfiguration{
+						{
+							SshAuthorizedKeys: []string{"ssh abcdef..."},
+							Name:              "user",
+						},
+					},
+				},
+			},
+		}
+
+		clusterSpec.Cluster.Spec.ClusterNetwork.DNS = v1alpha1.DNS{
+			ResolvConf: &v1alpha1.ResolvConf{
+				Path: "test-path",
+			},
+		}
+
+		cpMachineCfg, _ := getControlPlaneMachineSpec(clusterSpec)
+		wngMachineCfgs, _ := getWorkerNodeGroupMachineSpec(clusterSpec)
+		tinkIPBefore := "0.0.0.0"
+		bldr := NewTemplateBuilder(&clusterSpec.TinkerbellDatacenter.Spec, cpMachineCfg, nil, wngMachineCfgs, tinkIPBefore, time.Now)
+		workerTemplateNames, kubeadmTemplateNames := clusterapi.InitialTemplateNamesForWorkers(clusterSpec)
+		data, err := bldr.GenerateCAPISpecWorkers(clusterSpec, workerTemplateNames, kubeadmTemplateNames)
+		g.Expect(err).ToNot(HaveOccurred())
+		test.AssertContentToFile(t, string(data), tc.Output)
 	}
 }

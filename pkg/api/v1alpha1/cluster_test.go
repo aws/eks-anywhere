@@ -1177,7 +1177,7 @@ func TestValidateClusterConfigContent(t *testing.T) {
 				}
 				c.Spec.WorkerNodeGroupConfigurations[0].KubeletConfiguration = &unstructured.Unstructured{
 					Object: map[string]interface{}{
-						"maxPods":    20,
+						"maxPods":    25,
 						"apiVersion": "kubelet.config.k8s.io/v1beta1",
 						"kind":       "KubeletConfiguration",
 					},
@@ -1212,6 +1212,52 @@ func TestValidateClusterConfigContent(t *testing.T) {
 			}),
 			wantErr: true,
 			err:     "unknown field",
+		},
+		{
+			testName: "providerid error",
+			cluster: baseCluster(func(c *Cluster) {
+				c.Spec.WorkerNodeGroupConfigurations[0].KubeletConfiguration = &unstructured.Unstructured{
+					Object: map[string]interface{}{
+						"maxPods":    20,
+						"apiVersion": "kubelet.config.k8s.io/v1beta1",
+						"kind":       "KubeletConfiguration",
+						"providerID": "provider id",
+					},
+				}
+				c.Spec.ControlPlaneConfiguration.KubeletConfiguration = &unstructured.Unstructured{
+					Object: map[string]interface{}{
+						"maxPods":    20,
+						"apiVersion": "kubelet.config.k8s.io/v1beta1",
+						"kind":       "KubeletConfiguration",
+						"providerID": "provider id",
+					},
+				}
+			}),
+			wantErr: true,
+			err:     "can not override providerID or cloudProvider",
+		},
+		{
+			testName: "providerid error",
+			cluster: baseCluster(func(c *Cluster) {
+				c.Spec.WorkerNodeGroupConfigurations[0].KubeletConfiguration = &unstructured.Unstructured{
+					Object: map[string]interface{}{
+						"maxPods":       20,
+						"apiVersion":    "kubelet.config.k8s.io/v1beta1",
+						"kind":          "KubeletConfiguration",
+						"cloudProvider": "external",
+					},
+				}
+				c.Spec.ControlPlaneConfiguration.KubeletConfiguration = &unstructured.Unstructured{
+					Object: map[string]interface{}{
+						"maxPods":       20,
+						"apiVersion":    "kubelet.config.k8s.io/v1beta1",
+						"kind":          "KubeletConfiguration",
+						"cloudProvider": "external",
+					},
+				}
+			}),
+			wantErr: true,
+			err:     "unknown field \"cloudProvider\"",
 		},
 	}
 

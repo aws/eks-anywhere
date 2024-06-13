@@ -71,6 +71,7 @@ spec:
 {{- end }}
           kubeletExtraArgs:
             cloud-provider: external
+{{- if not .kubeletConfiguration }}
             read-only-port: "0"
             anonymous-auth: "false"
 {{- if .cgroupDriverSystemd}}
@@ -78,6 +79,10 @@ spec:
 {{- end }}
 {{- if .kubeletExtraArgs }}
 {{ .kubeletExtraArgs.ToYaml | indent 12 }}
+{{- end }}
+{{- end }}
+{{- if .nodeLabelArgs }}
+{{ .nodeLabelArgs.ToYaml | indent 12 }}
 {{- end }}
           name: '{{"{{"}} ds.meta_data.hostname {{"}}"}}'
 {{- if or (and (ne .format "bottlerocket") (or .proxyConfig .registryMirrorMap)) .kubeletConfiguration }}
@@ -172,7 +177,9 @@ metadata:
 {{- end }}
 spec:
   clusterName: {{.clusterName}}
+{{- if not .autoscalingConfig }}
   replicas: {{.workerReplicas}}
+{{- end }}
   selector:
     matchLabels: {}
   template:

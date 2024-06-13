@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/url"
 	"path/filepath"
 	"strings"
 
@@ -20,23 +21,29 @@ import (
 
 const (
 	args              = "args"
-	createNamespace   = "createNamespace"
 	deploy            = "deploy"
-	env               = "env"
+	additionalEnv     = "additionalEnv"
 	hostPortEnabled   = "hostPortEnabled"
 	image             = "image"
 	namespace         = "namespace"
 	overridesFileName = "tinkerbell-chart-overrides.yaml"
 	port              = "port"
+	addr              = "addr"
+	enabled           = "enabled"
 
-	boots          = "boots"
-	hegel          = "hegel"
-	tinkController = "tinkController"
-	tinkServer     = "tinkServer"
-	rufio          = "rufio"
-	grpcPort       = "42113"
-	kubevip        = "kubevip"
-	envoy          = "envoy"
+	boots      = "boots"
+	smee       = "smee"
+	hegel      = "hegel"
+	tink       = "tink"
+	controller = "controller"
+	server     = "server"
+	rufio      = "rufio"
+	grpcPort   = "42113"
+	kubevip    = "kubevip"
+	stack      = "stack"
+	hook       = "hook"
+	service    = "service"
+	relay      = "relay"
 )
 
 type Docker interface {
@@ -47,8 +54,9 @@ type Docker interface {
 
 type Helm interface {
 	RegistryLogin(ctx context.Context, endpoint, username, password string) error
-	InstallChartWithValuesFile(ctx context.Context, chart, ociURI, version, kubeconfigFilePath, valuesFilePath string) error
-	UpgradeChartWithValuesFile(ctx context.Context, chart, ociURI, version, kubeconfigFilePath, valuesFilePath string, opts ...helm.Opt) error
+	UpgradeInstallChartWithValuesFile(ctx context.Context, chart, ociURI, version, kubeconfigFilePath, namespace, valuesFilePath string, opts ...helm.Opt) error
+	Uninstall(ctx context.Context, chart, kubeconfigFilePath, namespace string, opts ...helm.Opt) error
+	ListCharts(ctx context.Context, kubeconfigFilePath, filter string) ([]string, error)
 }
 
 // StackInstaller deploys a Tinkerbell stack.
@@ -58,34 +66,31 @@ type StackInstaller interface {
 	CleanupLocalBoots(ctx context.Context, forceCleanup bool) error
 	Install(ctx context.Context, bundle releasev1alpha1.TinkerbellBundle, tinkerbellIP, kubeconfig, hookOverride string, opts ...InstallOption) error
 	UninstallLocal(ctx context.Context) error
+	Uninstall(ctx context.Context, bundle releasev1alpha1.TinkerbellBundle, kubeconfig string) error
 	Upgrade(_ context.Context, _ releasev1alpha1.TinkerbellBundle, tinkerbellIP, kubeconfig, hookOverride string, opts ...InstallOption) error
+	UpgradeInstallCRDs(ctx context.Context, bundle releasev1alpha1.TinkerbellBundle, kubeconfig string, opts ...InstallOption) error
+	UpgradeLegacy(ctx context.Context, bundle releasev1alpha1.TinkerbellBundle, kubeconfig string, opts ...InstallOption) error
 	AddNoProxyIP(IP string)
 	GetNamespace() string
+	HasLegacyChart(ctx context.Context, bundle releasev1alpha1.TinkerbellBundle, kubeconfig string) (bool, error)
 }
 
 type Installer struct {
-	docker          Docker
-	filewriter      filewriter.FileWriter
-	helm            Helm
-	podCidrRange    string
-	registryMirror  *registrymirror.RegistryMirror
-	proxyConfig     *v1alpha1.ProxyConfiguration
-	namespace       string
-	createNamespace bool
-	bootsOnDocker   bool
-	hostPort        bool
-	loadBalancer    bool
-	envoy           bool
+	docker         Docker
+	filewriter     filewriter.FileWriter
+	helm           Helm
+	podCidrRange   string
+	registryMirror *registrymirror.RegistryMirror
+	proxyConfig    *v1alpha1.ProxyConfiguration
+	namespace      string
+	bootsOnDocker  bool
+	hostNetwork    bool
+	loadBalancer   bool
+	stackService   bool
+	dhcpRelay      bool
 }
 
 type InstallOption func(s *Installer)
-
-// WithNamespaceCreate is an InstallOption is lets you specify whether to create the namespace needed for Tinkerbell stack.
-func WithNamespaceCreate(create bool) InstallOption {
-	return func(s *Installer) {
-		s.createNamespace = create
-	}
-}
 
 // WithBootsOnDocker is an InstallOption to run Boots as a Docker container.
 func WithBootsOnDocker() InstallOption {
@@ -101,23 +106,31 @@ func WithBootsOnKubernetes() InstallOption {
 	}
 }
 
-// WithHostPortEnabled is an InstallOption that allows you to enable/disable host port for Tinkerbell deployments.
-func WithHostPortEnabled(enabled bool) InstallOption {
+// WithHostNetworkEnabled is an InstallOption that allows you to enable/disable host network for Tinkerbell deployments.
+func WithHostNetworkEnabled(enabled bool) InstallOption {
 	return func(s *Installer) {
-		s.hostPort = enabled
+		s.hostNetwork = enabled
 	}
 }
 
-func WithEnvoyEnabled(enabled bool) InstallOption {
-	return func(s *Installer) {
-		s.envoy = enabled
-	}
-}
-
-// WithLoadBalancer is an InstallOption that allows you to setup a LoadBalancer to expose hegel and tink-server.
+// WithLoadBalancerEnabled is an InstallOption that allows you to setup a LoadBalancer to expose hegel and tink-server.
 func WithLoadBalancerEnabled(enabled bool) InstallOption {
 	return func(s *Installer) {
 		s.loadBalancer = enabled
+	}
+}
+
+// WithStackServiceEnabled is an InstallOption that allows you to enable the nginx service as a reverse proxy.
+func WithStackServiceEnabled(enabled bool) InstallOption {
+	return func(s *Installer) {
+		s.stackService = enabled
+	}
+}
+
+// WithDHCPRelayEnabled is an InstallOption that allows you to enable DHCP Relay.
+func WithDHCPRelayEnabled(enabled bool) InstallOption {
+	return func(s *Installer) {
+		s.dhcpRelay = enabled
 	}
 }
 
@@ -150,62 +163,21 @@ func (s *Installer) Install(ctx context.Context, bundle releasev1alpha1.Tinkerbe
 
 	bootEnv := s.getBootsEnv(bundle.TinkerbellStack, tinkerbellIP)
 
-	osiePath, err := getURIDir(bundle.TinkerbellStack.Hook.Initramfs.Amd.URI)
+	osieURI, err := getURIDir(bundle.TinkerbellStack.Hook.Initramfs.Amd.URI)
 	if err != nil {
 		return fmt.Errorf("getting directory path from hook uri: %v", err)
 	}
 
 	if hookOverride != "" {
-		osiePath = hookOverride
+		osieURI = hookOverride
 	}
 
-	valuesMap := map[string]interface{}{
-		namespace:       s.namespace,
-		createNamespace: s.createNamespace,
-		tinkController: map[string]interface{}{
-			image: bundle.TinkerbellStack.Tink.TinkController.URI,
-		},
-		tinkServer: map[string]interface{}{
-			image: bundle.TinkerbellStack.Tink.TinkServer.URI,
-			args:  []string{},
-			port: map[string]bool{
-				hostPortEnabled: s.hostPort,
-			},
-		},
-		hegel: map[string]interface{}{
-			image: bundle.TinkerbellStack.Hegel.URI,
-			port: map[string]bool{
-				hostPortEnabled: s.hostPort,
-			},
-			env: []map[string]string{
-				{
-					"name":  "HEGEL_TRUSTED_PROXIES",
-					"value": s.podCidrRange,
-				},
-			},
-		},
-		boots: map[string]interface{}{
-			deploy: !s.bootsOnDocker,
-			image:  bundle.TinkerbellStack.Boots.URI,
-			env:    bootEnv,
-			args: []string{
-				"-dhcp-addr=0.0.0.0:67",
-				fmt.Sprintf("-osie-path-override=%s", osiePath),
-			},
-		},
-		rufio: map[string]interface{}{
-			image: bundle.TinkerbellStack.Rufio.URI,
-		},
-		kubevip: map[string]interface{}{
-			image:  bundle.KubeVip.URI,
-			deploy: s.loadBalancer,
-		},
-		envoy: map[string]interface{}{
-			image:        bundle.Envoy.URI,
-			deploy:       s.envoy,
-			"externalIp": tinkerbellIP,
-		},
+	osiePath, err := url.ParseRequestURI(osieURI)
+	if err != nil {
+		return fmt.Errorf("parsing hookOverride: %v", err)
 	}
+
+	valuesMap := s.createValuesOverride(bundle, bootEnv, tinkerbellIP, osiePath)
 
 	values, err := yaml.Marshal(valuesMap)
 	if err != nil {
@@ -221,13 +193,19 @@ func (s *Installer) Install(ctx context.Context, bundle releasev1alpha1.Tinkerbe
 		return err
 	}
 
-	err = s.helm.InstallChartWithValuesFile(
+	additionalArgs := []string{
+		"--skip-crds",
+	}
+
+	err = s.helm.UpgradeInstallChartWithValuesFile(
 		ctx,
-		bundle.TinkerbellStack.TinkebellChart.Name,
-		fmt.Sprintf("oci://%s", s.localRegistryURL(bundle.TinkerbellStack.TinkebellChart.Image())),
-		bundle.TinkerbellStack.TinkebellChart.Tag(),
+		bundle.TinkerbellStack.Stack.Name,
+		fmt.Sprintf("oci://%s", s.localRegistryURL(bundle.TinkerbellStack.Stack.Image())),
+		bundle.TinkerbellStack.Stack.Tag(),
 		kubeconfig,
+		s.namespace,
 		valuesPath,
+		helm.WithExtraFlags(additionalArgs),
 	)
 	if err != nil {
 		return fmt.Errorf("installing Tinkerbell helm chart: %v", err)
@@ -268,9 +246,10 @@ func (s *Installer) installBootsOnDocker(ctx context.Context, bundle releasev1al
 	}
 
 	cmd := []string{
-		"-kubeconfig", "/kubeconfig",
+		"-backend-kube-config", "/kubeconfig",
 		"-dhcp-addr", "0.0.0.0:67",
-		"-osie-path-override", osiePath,
+		"-osie-url", osiePath,
+		"-tink-server", fmt.Sprintf("%s:%s", tinkServerIP, grpcPort),
 	}
 	if err := s.docker.Run(ctx, s.localRegistryURL(bundle.Boots.URI), boots, cmd, flags...); err != nil {
 		return fmt.Errorf("running boots with docker: %v", err)
@@ -283,7 +262,6 @@ func (s *Installer) getBootsEnv(bundle releasev1alpha1.TinkerbellStackBundle, ti
 	env := []map[string]string{
 		toEnvEntry("DATA_MODEL_VERSION", "kubernetes"),
 		toEnvEntry("TINKERBELL_TLS", "false"),
-		toEnvEntry("TINKERBELL_GRPC_AUTHORITY", fmt.Sprintf("%s:%s", tinkServerIP, grpcPort)),
 	}
 
 	extraKernelArgs := fmt.Sprintf("tink_worker_image=%s", s.localRegistryURL(bundle.Tink.TinkWorker.URI))
@@ -304,7 +282,7 @@ func (s *Installer) getBootsEnv(bundle releasev1alpha1.TinkerbellStackBundle, ti
 		extraKernelArgs = fmt.Sprintf("%s HTTP_PROXY=%s HTTPS_PROXY=%s NO_PROXY=%s", extraKernelArgs, s.proxyConfig.HttpProxy, s.proxyConfig.HttpsProxy, noProxy)
 	}
 
-	return append(env, toEnvEntry("BOOTS_EXTRA_KERNEL_ARGS", extraKernelArgs))
+	return append(env, toEnvEntry("SMEE_EXTRA_KERNEL_ARGS", extraKernelArgs))
 }
 
 func toEnvEntry(k, v string) map[string]string {
@@ -387,51 +365,21 @@ func (s *Installer) Upgrade(ctx context.Context, bundle releasev1alpha1.Tinkerbe
 
 	bootEnv := s.getBootsEnv(bundle.TinkerbellStack, tinkerbellIP)
 
-	osiePath, err := getURIDir(bundle.TinkerbellStack.Hook.Initramfs.Amd.URI)
+	osieURI, err := getURIDir(bundle.TinkerbellStack.Hook.Initramfs.Amd.URI)
 	if err != nil {
 		return fmt.Errorf("getting directory path from hook uri: %v", err)
 	}
+
 	if hookOverride != "" {
-		osiePath = hookOverride
+		osieURI = hookOverride
 	}
-	valuesMap := map[string]interface{}{
-		namespace:       s.namespace,
-		createNamespace: false,
-		tinkController: map[string]interface{}{
-			image: bundle.TinkerbellStack.Tink.TinkController.URI,
-		},
-		tinkServer: map[string]interface{}{
-			image: bundle.TinkerbellStack.Tink.TinkServer.URI,
-			args:  []string{},
-		},
-		hegel: map[string]interface{}{
-			image: bundle.TinkerbellStack.Hegel.URI,
-			env: []map[string]string{
-				{
-					"name":  "HEGEL_TRUSTED_PROXIES",
-					"value": s.podCidrRange,
-				},
-			},
-		},
-		boots: map[string]interface{}{
-			image: bundle.TinkerbellStack.Boots.URI,
-			env:   bootEnv,
-			args: []string{
-				"-dhcp-addr=0.0.0.0:67",
-				fmt.Sprintf("-osie-path-override=%s", osiePath),
-			},
-		},
-		rufio: map[string]interface{}{
-			image: bundle.TinkerbellStack.Rufio.URI,
-		},
-		kubevip: map[string]interface{}{
-			image:  bundle.KubeVip.URI,
-			deploy: s.loadBalancer,
-		},
-		envoy: map[string]interface{}{
-			image: bundle.Envoy.URI,
-		},
+
+	osiePath, err := url.ParseRequestURI(osieURI)
+	if err != nil {
+		return fmt.Errorf("parsing hookOverride: %v", err)
 	}
+
+	valuesMap := s.createValuesOverride(bundle, bootEnv, tinkerbellIP, osiePath)
 
 	values, err := yaml.Marshal(valuesMap)
 	if err != nil {
@@ -451,18 +399,188 @@ func (s *Installer) Upgrade(ctx context.Context, bundle releasev1alpha1.Tinkerbe
 	if s.proxyConfig != nil {
 		envMap["NO_PROXY"] = strings.Join(s.proxyConfig.NoProxy, ",")
 	}
-	return s.helm.UpgradeChartWithValuesFile(
+
+	additionalArgs := []string{
+		"--skip-crds",
+	}
+	return s.helm.UpgradeInstallChartWithValuesFile(
 		ctx,
-		bundle.TinkerbellStack.TinkebellChart.Name,
-		fmt.Sprintf("oci://%s", s.localRegistryURL(bundle.TinkerbellStack.TinkebellChart.Image())),
-		bundle.TinkerbellStack.TinkebellChart.Tag(),
+		bundle.TinkerbellStack.Stack.Name,
+		fmt.Sprintf("oci://%s", s.localRegistryURL(bundle.TinkerbellStack.Stack.Image())),
+		bundle.TinkerbellStack.Stack.Tag(),
 		kubeconfig,
+		s.namespace,
 		valuesPath,
 		helm.WithProxyConfig(envMap),
+		helm.WithExtraFlags(additionalArgs),
+	)
+}
+
+// UpgradeInstallCRDs the Tinkerbell CRDs using images specified in bundle.
+func (s *Installer) UpgradeInstallCRDs(ctx context.Context, bundle releasev1alpha1.TinkerbellBundle, kubeconfig string, opts ...InstallOption) error {
+	logger.V(6).Info("Upgrading Tinkerbell CRDs helm chart")
+
+	for _, option := range opts {
+		option(s)
+	}
+
+	if err := s.authenticateHelmRegistry(ctx); err != nil {
+		return err
+	}
+
+	envMap := map[string]string{}
+	if s.proxyConfig != nil {
+		envMap["NO_PROXY"] = strings.Join(s.proxyConfig.NoProxy, ",")
+	}
+	return s.helm.UpgradeInstallChartWithValuesFile(
+		ctx,
+		bundle.TinkerbellStack.TinkerbellCrds.Name,
+		fmt.Sprintf("oci://%s", s.localRegistryURL(bundle.TinkerbellStack.TinkerbellCrds.Image())),
+		bundle.TinkerbellStack.TinkerbellCrds.Tag(),
+		kubeconfig,
+		s.namespace,
+		"",
+		helm.WithProxyConfig(envMap),
+	)
+}
+
+// Uninstall uninstalls a tinkerbell chart of a certain name.
+func (s *Installer) Uninstall(ctx context.Context, bundle releasev1alpha1.TinkerbellBundle, kubeconfig string) error {
+	logger.V(6).Info("Uninstalling old Tinkerbell helm chart")
+
+	additionalArgs := []string{
+		"--ignore-not-found",
+	}
+
+	return s.helm.Uninstall(
+		ctx,
+		bundle.TinkerbellStack.TinkebellChart.Name,
+		kubeconfig,
+		"",
+		helm.WithExtraFlags(additionalArgs),
 	)
 }
 
 // GetNamespace retrieves the namespace the installer is using for stack deployment.
 func (s *Installer) GetNamespace() string {
 	return s.namespace
+}
+
+// UpgradeLegacy upgrades the legacy Tinkerbell stack using images specified in bundle.
+func (s *Installer) UpgradeLegacy(ctx context.Context, bundle releasev1alpha1.TinkerbellBundle, kubeconfig string, opts ...InstallOption) error {
+	logger.V(6).Info("Upgrading legacy Tinkerbell helm chart")
+
+	for _, option := range opts {
+		option(s)
+	}
+
+	if err := s.authenticateHelmRegistry(ctx); err != nil {
+		return err
+	}
+
+	envMap := map[string]string{}
+	if s.proxyConfig != nil {
+		envMap["NO_PROXY"] = strings.Join(s.proxyConfig.NoProxy, ",")
+	}
+
+	return s.helm.UpgradeInstallChartWithValuesFile(
+		ctx,
+		bundle.TinkerbellStack.TinkebellChart.Name,
+		fmt.Sprintf("oci://%s", s.localRegistryURL(bundle.TinkerbellStack.TinkebellChart.Image())),
+		bundle.TinkerbellStack.TinkebellChart.Tag(),
+		kubeconfig,
+		"",
+		"",
+		helm.WithProxyConfig(envMap),
+	)
+}
+
+// HasLegacyChart returns whether or not the legacy tinkerbell-chart exists on the cluster.
+func (s *Installer) HasLegacyChart(ctx context.Context, bundle releasev1alpha1.TinkerbellBundle, kubeconfig string) (bool, error) {
+	logger.V(6).Info("Checking if legacy chart exists")
+
+	charts, err := s.helm.ListCharts(ctx, kubeconfig, bundle.TinkerbellStack.TinkebellChart.Name)
+	if err != nil {
+		return false, err
+	}
+
+	if len(charts) > 0 {
+		return true, nil
+	}
+
+	return false, nil
+}
+
+// createValuesOverride generates the values override file to send to helm.
+func (s *Installer) createValuesOverride(bundle releasev1alpha1.TinkerbellBundle, bootEnv []map[string]string, tinkerbellIP string, osiePath *url.URL) map[string]interface{} {
+	valuesMap := map[string]interface{}{
+		tink: map[string]interface{}{
+			controller: map[string]interface{}{
+				image: bundle.TinkerbellStack.Tink.TinkController.URI,
+			},
+			server: map[string]interface{}{
+				image: bundle.TinkerbellStack.Tink.TinkServer.URI,
+			},
+		},
+		hegel: map[string]interface{}{
+			image: bundle.TinkerbellStack.Hegel.URI,
+			"trustedProxies": []string{
+				s.podCidrRange,
+			},
+		},
+		smee: map[string]interface{}{
+			deploy:        !s.bootsOnDocker,
+			image:         bundle.TinkerbellStack.Boots.URI,
+			additionalEnv: bootEnv,
+			"publicIP":    tinkerbellIP,
+			"trustedProxies": []string{
+				s.podCidrRange,
+			},
+			"http": map[string]interface{}{
+				"tinkServer": map[string]interface{}{
+					"ip": tinkerbellIP,
+					port: grpcPort,
+				},
+				"osieUrl": map[string]interface{}{
+					"scheme": osiePath.Scheme,
+					"host":   osiePath.Hostname(),
+					"port":   osiePath.Port(),
+					"path":   osiePath.Path,
+				},
+			},
+			"hostNetwork":     true,
+			"tinkWorkerImage": s.localRegistryURL(bundle.TinkerbellStack.Tink.TinkWorker.URI),
+		},
+		rufio: map[string]interface{}{
+			image: bundle.TinkerbellStack.Rufio.URI,
+			"additionalArgs": []string{
+				"-metrics-bind-address=127.0.0.1:8080",
+			},
+		},
+		stack: map[string]interface{}{
+			kubevip: map[string]interface{}{
+				image:   bundle.KubeVip.URI,
+				enabled: s.loadBalancer,
+				additionalEnv: []map[string]string{
+					{
+						"name":  "prometheus_server",
+						"value": ":2213",
+					},
+				},
+			},
+			hook: map[string]interface{}{
+				enabled: false,
+			},
+			service: map[string]interface{}{
+				enabled: s.stackService,
+			},
+			relay: map[string]interface{}{
+				enabled: false,
+			},
+			"loadBalancerIP": tinkerbellIP,
+			"hostNetwork":    s.hostNetwork,
+		},
+	}
+
+	return valuesMap
 }

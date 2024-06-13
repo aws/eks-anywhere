@@ -98,18 +98,6 @@ func TestControlPlaneSpecNewCluster(t *testing.T) {
 	g.Expect(cp.EtcdMachineTemplate).To(Equal(wantEtcdMachineTemplate))
 }
 
-func TestControlPlaneSpecNoKubeVersion(t *testing.T) {
-	g := NewWithT(t)
-	logger := test.NewNullLogger()
-	ctx := context.Background()
-	client := test.NewFakeKubeClient()
-	spec := testClusterSpec()
-	spec.Cluster.Spec.KubernetesVersion = ""
-
-	_, err := docker.ControlPlaneSpec(ctx, logger, client, spec)
-	g.Expect(err).To(MatchError(ContainSubstring("generating docker control plane yaml spec")))
-}
-
 func TestControlPlaneSpecUpdateMachineTemplates(t *testing.T) {
 	g := NewWithT(t)
 	logger := test.NewNullLogger()

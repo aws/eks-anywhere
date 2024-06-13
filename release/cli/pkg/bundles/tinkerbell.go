@@ -28,7 +28,7 @@ import (
 )
 
 func GetTinkerbellBundle(r *releasetypes.ReleaseConfig, imageDigests releasetypes.ImageDigestsTable) (anywherev1alpha1.TinkerbellBundle, error) {
-	projectsInBundle := []string{"cluster-api-provider-tinkerbell", "kube-vip", "envoy", "tink", "hegel", "boots", "hub", "hook", "rufio", "tinkerbell-chart"}
+	projectsInBundle := []string{"cluster-api-provider-tinkerbell", "kube-vip", "envoy", "tink", "hegel", "boots", "hub", "hook", "rufio", "stack", "tinkerbell-chart", "tinkerbell-crds"}
 	tinkerbellBundleArtifacts := map[string][]releasetypes.Artifact{}
 	for _, project := range projectsInBundle {
 		projectArtifacts, err := r.BundleArtifactsTable.Load(project)
@@ -58,7 +58,9 @@ func GetTinkerbellBundle(r *releasetypes.ReleaseConfig, imageDigests releasetype
 				if err != nil {
 					return anywherev1alpha1.TinkerbellBundle{}, fmt.Errorf("loading digest from image digests table: %v", err)
 				}
-				if strings.HasSuffix(imageArtifact.AssetName, "chart") {
+				// If the artifact is a helm chart, handle differently. Helm charts can have both suffix "-chart" and "-helm",
+				// so we need to handle both cases.
+				if strings.HasSuffix(imageArtifact.AssetName, "chart") || strings.HasSuffix(imageArtifact.AssetName, "helm") {
 					bundleImageArtifact = anywherev1alpha1.Image{
 						Name:        imageArtifact.AssetName,
 						Description: fmt.Sprintf("Helm chart for %s", imageArtifact.AssetName),
@@ -153,12 +155,15 @@ func GetTinkerbellBundle(r *releasetypes.ReleaseConfig, imageDigests releasetype
 				},
 			},
 			Rufio: bundleImageArtifacts["rufio"],
+			Stack: bundleImageArtifacts["stack-helm"],
 			Tink: anywherev1alpha1.TinkBundle{
+				Nginx:          bundleImageArtifacts["nginx"],
 				TinkController: bundleImageArtifacts["tink-controller"],
 				TinkServer:     bundleImageArtifacts["tink-server"],
 				TinkWorker:     bundleImageArtifacts["tink-worker"],
 			},
 			TinkebellChart: bundleImageArtifacts["tinkerbell-chart"],
+			TinkerbellCrds: bundleImageArtifacts["tinkerbell-crds-helm"],
 		},
 	}
 

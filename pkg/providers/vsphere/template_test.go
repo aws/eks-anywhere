@@ -8,6 +8,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/aws/eks-anywhere/internal/test"
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
@@ -57,7 +58,7 @@ func TestVsphereTemplateBuilderGenerateCAPISpecControlPlaneInvalidEtcdSSHKey(t *
 	)
 }
 
-func TestVsphereTemplateBuilderGenerateCAPISpecControlPlaneInvalidKubeletConfigWN(t *testing.T) {
+func TestVsphereTemplateBuilderGenerateCAPISpecControlPlaneValidKubeletConfigWN(t *testing.T) {
 	g := NewWithT(t)
 	spec := test.NewFullClusterSpec(t, "testdata/cluster_main.yaml")
 	spec.Cluster.Spec.WorkerNodeGroupConfigurations[0].KubeletConfiguration = &unstructured.Unstructured{
@@ -65,12 +66,18 @@ func TestVsphereTemplateBuilderGenerateCAPISpecControlPlaneInvalidKubeletConfigW
 			"maxPods": 20,
 		},
 	}
+	spec.Cluster.Spec.ClusterNetwork.DNS = v1alpha1.DNS{
+		ResolvConf: &v1alpha1.ResolvConf{
+			Path: "test-path",
+		},
+	}
 	builder := vsphere.NewVsphereTemplateBuilder(time.Now)
-	_, err := builder.GenerateCAPISpecWorkers(spec, nil, nil)
+	data, err := builder.GenerateCAPISpecWorkers(spec, nil, nil)
 	g.Expect(err).ToNot(HaveOccurred())
+	test.AssertContentToFile(t, string(data), "testdata/expected_kct.yaml")
 }
 
-func TestVsphereTemplateBuilderGenerateCAPISpecControlPlaneInvalidKubeletConfigCP(t *testing.T) {
+func TestVsphereTemplateBuilderGenerateCAPISpecControlPlaneValidKubeletConfigCP(t *testing.T) {
 	g := NewWithT(t)
 	spec := test.NewFullClusterSpec(t, "testdata/cluster_main.yaml")
 	spec.Cluster.Spec.ControlPlaneConfiguration.KubeletConfiguration = &unstructured.Unstructured{
@@ -78,11 +85,17 @@ func TestVsphereTemplateBuilderGenerateCAPISpecControlPlaneInvalidKubeletConfigC
 			"maxPods": 20,
 		},
 	}
+	spec.Cluster.Spec.ClusterNetwork.DNS = v1alpha1.DNS{
+		ResolvConf: &v1alpha1.ResolvConf{
+			Path: "test-path",
+		},
+	}
 	builder := vsphere.NewVsphereTemplateBuilder(time.Now)
-	_, err := builder.GenerateCAPISpecControlPlane(spec, func(values map[string]interface{}) {
+	data, err := builder.GenerateCAPISpecControlPlane(spec, func(values map[string]interface{}) {
 		values["controlPlaneTemplateName"] = clusterapi.ControlPlaneMachineTemplateName(spec.Cluster)
 	})
 	g.Expect(err).ToNot(HaveOccurred())
+	test.AssertContentToFile(t, string(data), "testdata/expected_kcp.yaml")
 }
 
 func TestTemplateBuilder_CertSANs(t *testing.T) {

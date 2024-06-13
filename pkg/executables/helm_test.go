@@ -251,7 +251,7 @@ func TestHelmInstallChartWithValuesFileSuccess(t *testing.T) {
 		tt.e, tt.ctx, "upgrade", "--install", chart, url, "--version", version, "--values", valuesFileName, "--kubeconfig", kubeconfig, "--wait",
 	).withEnvVars(tt.envVars).to().Return(bytes.Buffer{}, nil)
 
-	tt.Expect(tt.h.InstallChartWithValuesFile(tt.ctx, chart, url, version, kubeconfig, valuesFileName)).To(Succeed())
+	tt.Expect(tt.h.UpgradeInstallChartWithValuesFile(tt.ctx, chart, url, version, kubeconfig, "", valuesFileName)).To(Succeed())
 }
 
 func TestHelmInstallChartWithValuesFileSuccessWithInsecure(t *testing.T) {
@@ -265,7 +265,22 @@ func TestHelmInstallChartWithValuesFileSuccessWithInsecure(t *testing.T) {
 		tt.e, tt.ctx, "upgrade", "--install", chart, url, "--version", version, "--values", valuesFileName, "--kubeconfig", kubeconfig, "--wait", "--insecure-skip-tls-verify",
 	).withEnvVars(tt.envVars).to().Return(bytes.Buffer{}, nil)
 
-	tt.Expect(tt.h.InstallChartWithValuesFile(tt.ctx, chart, url, version, kubeconfig, valuesFileName)).To(Succeed())
+	tt.Expect(tt.h.UpgradeInstallChartWithValuesFile(tt.ctx, chart, url, version, kubeconfig, "", valuesFileName)).To(Succeed())
+}
+
+func TestHelmInstallChartWithValuesFileSuccessWithNamespace(t *testing.T) {
+	tt := newHelmTest(t)
+	chart := "chart"
+	url := "url"
+	version := "1.1"
+	kubeconfig := "/root/.kube/config"
+	valuesFileName := "values.yaml"
+	namespace := "test"
+	expectCommand(
+		tt.e, tt.ctx, "upgrade", "--install", chart, url, "--version", version, "--values", valuesFileName, "--kubeconfig", kubeconfig, "--wait", "--namespace", namespace,
+	).withEnvVars(tt.envVars).to().Return(bytes.Buffer{}, nil)
+
+	tt.Expect(tt.h.UpgradeInstallChartWithValuesFile(tt.ctx, chart, url, version, kubeconfig, namespace, valuesFileName)).To(Succeed())
 }
 
 func TestHelmListCharts(t *testing.T) {
@@ -275,20 +290,28 @@ func TestHelmListCharts(t *testing.T) {
 		output := []byte("eks-anywhere-packages\n")
 		expected := []string{"eks-anywhere-packages"}
 		expectCommand(tt.e, tt.ctx, "list", "-q", "--kubeconfig", kubeconfig).withEnvVars(tt.envVars).to().Return(*bytes.NewBuffer(output), nil)
-		tt.Expect(tt.h.ListCharts(tt.ctx, kubeconfig)).To(Equal(expected))
+		tt.Expect(tt.h.ListCharts(tt.ctx, kubeconfig, "")).To(Equal(expected))
+	})
+
+	t.Run("With selectors", func(_ *testing.T) {
+		filter := "--test=123"
+		output := []byte("eks-anywhere-packages\n")
+		expected := []string{"eks-anywhere-packages"}
+		expectCommand(tt.e, tt.ctx, "list", "-q", "--kubeconfig", kubeconfig, "--filter", "--test=123").withEnvVars(tt.envVars).to().Return(*bytes.NewBuffer(output), nil)
+		tt.Expect(tt.h.ListCharts(tt.ctx, kubeconfig, filter)).To(Equal(expected))
 	})
 
 	t.Run("Empty output", func(t *testing.T) {
 		expected := []string{}
 		expectCommand(tt.e, tt.ctx, "list", "-q", "--kubeconfig", kubeconfig).withEnvVars(tt.envVars).to().Return(bytes.Buffer{}, nil)
-		tt.Expect(tt.h.ListCharts(tt.ctx, kubeconfig)).To(Equal(expected))
+		tt.Expect(tt.h.ListCharts(tt.ctx, kubeconfig, "")).To(Equal(expected))
 	})
 
 	t.Run("Errored out", func(t *testing.T) {
 		output := errors.New("Error")
 		var expected []string
 		expectCommand(tt.e, tt.ctx, "list", "-q", "--kubeconfig", kubeconfig).withEnvVars(tt.envVars).to().Return(bytes.Buffer{}, output)
-		result, err := tt.h.ListCharts(tt.ctx, kubeconfig)
+		result, err := tt.h.ListCharts(tt.ctx, kubeconfig, "")
 		tt.Expect(err).To(HaveOccurred())
 		tt.Expect(result).To(Equal(expected))
 	})
@@ -349,4 +372,97 @@ func TestHelmRegistryLoginSuccessWithInsecure(t *testing.T) {
 
 	expectCommand(tt.e, tt.ctx, "registry", "login", registry, "--username", username, "--password-stdin", "--insecure").withEnvVars(tt.envVars).withStdIn([]byte(password)).to().Return(bytes.Buffer{}, nil)
 	tt.Expect(tt.h.RegistryLogin(tt.ctx, registry, username, password)).To(Succeed())
+}
+
+func TestHelmUpgradeChartWithValues(s *testing.T) {
+	url := "url"
+	version := "1.1"
+	kubeconfig := "/root/.kube/config"
+	valuesFileName := "values.yaml"
+
+	s.Run("Success", func(t *testing.T) {
+		tt := newHelmTest(t)
+		installName := "test-install"
+		expectCommand(tt.e, tt.ctx, "upgrade", "--install", installName, url, "--version", version, "--values", valuesFileName, "--kubeconfig", kubeconfig, "--wait").withEnvVars(tt.envVars).to().Return(bytes.Buffer{}, nil)
+		err := tt.h.UpgradeInstallChartWithValuesFile(tt.ctx, installName, url, version, kubeconfig, "", valuesFileName)
+		tt.Expect(err).NotTo(HaveOccurred())
+	})
+
+	s.Run("passes the namespace, if present", func(t *testing.T) {
+		tt := newHelmTest(t)
+		testNamespace := "testing"
+		installName := "test-install"
+		expectCommand(tt.e, tt.ctx, "upgrade", "--install", installName, url, "--version", version, "--values", valuesFileName, "--kubeconfig", kubeconfig, "--wait", "--namespace", testNamespace).withEnvVars(tt.envVars).to().Return(bytes.Buffer{}, nil)
+		err := tt.h.UpgradeInstallChartWithValuesFile(tt.ctx, installName, url, version, kubeconfig, testNamespace, valuesFileName)
+		tt.Expect(err).NotTo(HaveOccurred())
+	})
+
+	s.Run("passes the insecure skip flag", func(t *testing.T) {
+		tt := newHelmTest(t, helm.WithInsecure())
+		installName := "test-install"
+		expectCommand(tt.e, tt.ctx, "upgrade", "--install", installName, url, "--version", version, "--values", valuesFileName, "--kubeconfig", kubeconfig, "--wait", "--insecure-skip-tls-verify").withEnvVars(tt.envVars).to().Return(bytes.Buffer{}, nil)
+		err := tt.h.UpgradeInstallChartWithValuesFile(tt.ctx, installName, url, version, kubeconfig, "", valuesFileName)
+		tt.Expect(err).NotTo(HaveOccurred())
+	})
+
+	s.Run("passes extra flags", func(t *testing.T) {
+		tt := newHelmTest(t, helm.WithExtraFlags([]string{"--test"}))
+		installName := "test-install"
+		expectCommand(tt.e, tt.ctx, "upgrade", "--install", installName, url, "--version", version, "--values", valuesFileName, "--kubeconfig", kubeconfig, "--wait", "--test").withEnvVars(tt.envVars).to().Return(bytes.Buffer{}, nil)
+		err := tt.h.UpgradeInstallChartWithValuesFile(tt.ctx, installName, url, version, kubeconfig, "", valuesFileName)
+		tt.Expect(err).NotTo(HaveOccurred())
+	})
+
+	s.Run("returns errors from the helm executable", func(t *testing.T) {
+		tt := newHelmTest(t)
+		installName := "test-install"
+		expectCommand(tt.e, tt.ctx, "upgrade", "--install", installName, url, "--version", version, "--values", valuesFileName, "--kubeconfig", kubeconfig, "--wait").withEnvVars(tt.envVars).to().Return(bytes.Buffer{}, fmt.Errorf("test error"))
+		err := tt.h.UpgradeInstallChartWithValuesFile(tt.ctx, installName, url, version, kubeconfig, "", valuesFileName)
+		tt.Expect(err).To(HaveOccurred())
+	})
+}
+
+func TestHelmUninstall(s *testing.T) {
+	kubeconfig := "/root/.kube/config"
+
+	s.Run("Success", func(t *testing.T) {
+		tt := newHelmTest(t)
+		installName := "test-install"
+		expectCommand(tt.e, tt.ctx, "uninstall", installName, "--kubeconfig", kubeconfig, "--wait").withEnvVars(tt.envVars).to().Return(bytes.Buffer{}, nil)
+		err := tt.h.Uninstall(tt.ctx, installName, kubeconfig, "")
+		tt.Expect(err).NotTo(HaveOccurred())
+	})
+
+	s.Run("passes the namespace, if present", func(t *testing.T) {
+		tt := newHelmTest(t)
+		testNamespace := "testing"
+		installName := "test-install"
+		expectCommand(tt.e, tt.ctx, "uninstall", installName, "--kubeconfig", kubeconfig, "--wait", "--namespace", testNamespace).withEnvVars(tt.envVars).to().Return(bytes.Buffer{}, nil)
+		err := tt.h.Uninstall(tt.ctx, installName, kubeconfig, testNamespace)
+		tt.Expect(err).NotTo(HaveOccurred())
+	})
+
+	s.Run("passes the insecure skip flag", func(t *testing.T) {
+		tt := newHelmTest(t, helm.WithInsecure())
+		installName := "test-install"
+		expectCommand(tt.e, tt.ctx, "uninstall", installName, "--kubeconfig", kubeconfig, "--wait", "--insecure-skip-tls-verify").withEnvVars(tt.envVars).to().Return(bytes.Buffer{}, nil)
+		err := tt.h.Uninstall(tt.ctx, installName, kubeconfig, "")
+		tt.Expect(err).NotTo(HaveOccurred())
+	})
+
+	s.Run("passes extra flags", func(t *testing.T) {
+		tt := newHelmTest(t, helm.WithExtraFlags([]string{"--test"}))
+		installName := "test-install"
+		expectCommand(tt.e, tt.ctx, "uninstall", installName, "--kubeconfig", kubeconfig, "--wait", "--test").withEnvVars(tt.envVars).to().Return(bytes.Buffer{}, nil)
+		err := tt.h.Uninstall(tt.ctx, installName, kubeconfig, "")
+		tt.Expect(err).NotTo(HaveOccurred())
+	})
+
+	s.Run("returns errors from the helm executable", func(t *testing.T) {
+		tt := newHelmTest(t)
+		installName := "test-install"
+		expectCommand(tt.e, tt.ctx, "uninstall", installName, "--kubeconfig", kubeconfig, "--wait").withEnvVars(tt.envVars).to().Return(bytes.Buffer{}, fmt.Errorf("test error"))
+		err := tt.h.Uninstall(tt.ctx, installName, kubeconfig, "")
+		tt.Expect(err).To(HaveOccurred())
+	})
 }

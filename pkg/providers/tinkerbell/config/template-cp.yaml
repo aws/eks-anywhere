@@ -161,13 +161,22 @@ spec:
       certificatesDir: /var/lib/kubeadm/pki
 {{- end }}
     initConfiguration:
+{{- if .kubeletConfiguration }}
+      patches:
+        directory: /etc/kubernetes/patches
+{{- end }}
       nodeRegistration:
         kubeletExtraArgs:
           provider-id: PROVIDER_ID
+{{- if not .kubeletConfiguration }}
           read-only-port: "0"
           anonymous-auth: "false"
 {{- if .kubeletExtraArgs }}
 {{ .kubeletExtraArgs.ToYaml | indent 10 }}
+{{- end }}
+{{- end }}
+{{- if .cpNodeLabelArgs }}
+{{ .cpNodeLabelArgs.ToYaml | indent 10 }}
 {{- end }}
 {{- if not .workerNodeGroupConfigurations }}
         taints: []
@@ -184,6 +193,10 @@ spec:
 {{- end }}
 {{- end }}
     joinConfiguration:
+{{- if .kubeletConfiguration }}
+      patches:
+        directory: /etc/kubernetes/patches
+{{- end }}
 {{- if (eq .format "bottlerocket") }}
       pause:
         imageRepository: {{.pauseRepository}}
@@ -223,10 +236,15 @@ spec:
         - DirAvailable--etc-kubernetes-manifests
         kubeletExtraArgs:
           provider-id: PROVIDER_ID
+{{- if not .kubeletConfiguration }}
           read-only-port: "0"
           anonymous-auth: "false"
 {{- if .kubeletExtraArgs }}
 {{ .kubeletExtraArgs.ToYaml | indent 10 }}
+{{- end }}
+{{- end }}
+{{- if .cpNodeLabelArgs }}
+{{ .cpNodeLabelArgs.ToYaml | indent 10 }}
 {{- end }}
 {{- if not .workerNodeGroupConfigurations }}
         taints: []
@@ -243,6 +261,13 @@ spec:
 {{- end }}
 {{- end }}
     files:
+{{- if .kubeletConfiguration }}
+      - content: |
+{{ .kubeletConfiguration | indent 10 }}
+        owner: root:root
+        permissions: "0644"
+        path: /etc/kubernetes/patches/kubeletconfiguration0+strategic.yaml
+{{- end }}
 {{- if not .cpSkipLoadBalancerDeployment }}
       - content: |
           apiVersion: v1

@@ -12,6 +12,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/controller"
 )
 
@@ -198,11 +199,17 @@ func updateWorkersReadyCondition(cluster *anywherev1.Cluster, machineDeployments
 	}
 
 	totalExpected := 0
+	wngWithAutoScalingConfigurationMap := make(map[string]anywherev1.AutoScalingConfiguration)
 	for _, wng := range cluster.Spec.WorkerNodeGroupConfigurations {
-		totalExpected += *wng.Count
+		// We want to consider only the worker node groups which don't have autoscaling configuration for expected worker nodes count.
+		if wng.AutoScalingConfiguration == nil {
+			totalExpected += *wng.Count
+		} else {
+			wngWithAutoScalingConfigurationMap[wng.Name] = *wng.AutoScalingConfiguration
+		}
 	}
 
-	// First, we need aggregate the number of nodes across worker node groups  to be able to assess the condition of the workers
+	// First, we need to aggregate the number of nodes across worker node groups to be able to assess the condition of the workers
 	// as a whole.
 	totalReadyReplicas := 0
 	totalUpdatedReplicas := 0
@@ -213,6 +220,13 @@ func updateWorkersReadyCondition(cluster *anywherev1.Cluster, machineDeployments
 		if md.Status.ObservedGeneration != md.ObjectMeta.Generation {
 			conditions.MarkFalse(cluster, anywherev1.WorkersReadyCondition, anywherev1.OutdatedInformationReason, clusterv1.ConditionSeverityInfo, "Worker node group %s status not up to date yet", md.Name)
 			return
+		}
+
+		// Skip updating the replicas for the machine deployments which have autoscaling configuration annotation
+		if md.ObjectMeta.Annotations != nil {
+			if _, ok := md.ObjectMeta.Annotations[clusterapi.NodeGroupMinSizeAnnotation]; ok {
+				continue
+			}
 		}
 
 		totalReadyReplicas += int(md.Status.ReadyReplicas)
@@ -251,6 +265,20 @@ func updateWorkersReadyCondition(cluster *anywherev1.Cluster, machineDeployments
 	if totalReadyReplicas != totalExpected {
 		conditions.MarkFalse(cluster, anywherev1.WorkersReadyCondition, anywherev1.NodesNotReadyReason, clusterv1.ConditionSeverityInfo, "Worker nodes not ready yet, %d expected (%d ready)", totalExpected, totalReadyReplicas)
 		return
+	}
+
+	// Iterating through the machine deployments which have autoscaling configured to check if the number of worker nodes replicas
+	// are between min count and max count specified in the cluster spec.
+	for _, md := range machineDeployments {
+		if wng, exists := wngWithAutoScalingConfigurationMap[md.ObjectMeta.Name]; exists {
+			minCount := wng.MinCount
+			maxCount := wng.MaxCount
+			replicas := int(md.Status.Replicas)
+			if replicas < minCount || replicas > maxCount {
+				conditions.MarkFalse(cluster, anywherev1.WorkersReadyCondition, anywherev1.AutoscalerConstraintNotMetReason, clusterv1.ConditionSeverityInfo, "Worker nodes count for %s not between %d and %d yet (%d actual)", md.ObjectMeta.Name, minCount, maxCount, replicas)
+				return
+			}
+		}
 	}
 
 	conditions.MarkTrue(cluster, anywherev1.WorkersReadyCondition)

@@ -323,8 +323,8 @@ spec:
           provider-id: cloudstack:///'{{ ds.meta_data.instance_id }}'
           read-only-port: "0"
           anonymous-auth: "false"
-          node-labels: label1=foo,label2=bar
           tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+          node-labels: label1=foo,label2=bar
         name: "{{ ds.meta_data.hostname }}"
     joinConfiguration:
       nodeRegistration:
@@ -333,8 +333,8 @@ spec:
           provider-id: cloudstack:///'{{ ds.meta_data.instance_id }}'
           read-only-port: "0"
           anonymous-auth: "false"
-          node-labels: label1=foo,label2=bar
           tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+          node-labels: label1=foo,label2=bar
         name: "{{ ds.meta_data.hostname }}"
     preKubeadmCommands:
     - swapoff -a

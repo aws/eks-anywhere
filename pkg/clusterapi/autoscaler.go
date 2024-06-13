@@ -8,9 +8,10 @@ import (
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 )
 
+// Autoscaler annotation constants.
 const (
-	nodeGroupMinSizeAnnotation = "cluster.x-k8s.io/cluster-api-autoscaler-node-group-min-size"
-	nodeGroupMaxSizeAnnotation = "cluster.x-k8s.io/cluster-api-autoscaler-node-group-max-size"
+	NodeGroupMinSizeAnnotation = "cluster.x-k8s.io/cluster-api-autoscaler-node-group-min-size"
+	NodeGroupMaxSizeAnnotation = "cluster.x-k8s.io/cluster-api-autoscaler-node-group-max-size"
 )
 
 func ConfigureAutoscalingInMachineDeployment(md *clusterv1.MachineDeployment, autoscalingConfig *anywherev1.AutoScalingConfiguration) {
@@ -22,6 +23,6 @@ func ConfigureAutoscalingInMachineDeployment(md *clusterv1.MachineDeployment, au
 		md.ObjectMeta.Annotations = map[string]string{}
 	}
 
-	md.ObjectMeta.Annotations[nodeGroupMinSizeAnnotation] = strconv.Itoa(autoscalingConfig.MinCount)
-	md.ObjectMeta.Annotations[nodeGroupMaxSizeAnnotation] = strconv.Itoa(autoscalingConfig.MaxCount)
+	md.ObjectMeta.Annotations[NodeGroupMinSizeAnnotation] = strconv.Itoa(autoscalingConfig.MinCount)
+	md.ObjectMeta.Annotations[NodeGroupMaxSizeAnnotation] = strconv.Itoa(autoscalingConfig.MaxCount)
 }

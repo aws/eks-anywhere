@@ -25,10 +25,15 @@ spec:
 {{- else}}
           taints: []
 {{- end }}
+{{- if not .kubeletConfiguration }}
           kubeletExtraArgs:
             eviction-hard: nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%
 {{- if .kubeletExtraArgs }}
 {{ .kubeletExtraArgs.ToYaml | indent 12 }}
+{{- end }}
+{{- end }}
+{{- if .nodeLabelArgs }}
+{{ .nodeLabelArgs.ToYaml | indent 12 }}
 {{- end }}
 {{- if or .registryMirrorMap .kubeletConfiguration }}
       files:
@@ -87,7 +92,9 @@ metadata:
 {{- end }}
 spec:
   clusterName: {{.clusterName}}
+{{- if not .autoscalingConfig }}
   replicas: {{.workerReplicas}}
+{{- end }}
   selector:
     matchLabels: null
   template:

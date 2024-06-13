@@ -13,7 +13,9 @@ metadata:
 {{- end }}
 spec:
   clusterName: {{.clusterName}}
+{{- if not .autoscalingConfig }}
   replicas: {{.workerReplicas}}
+{{- end }}
   selector:
     matchLabels: {}
   template:
@@ -75,6 +77,10 @@ spec:
   template:
     spec:
       joinConfiguration:
+{{- if .kubeletConfiguration }}
+        patches:
+          directory: /etc/kubernetes/patches
+{{- end }}
 {{- if (eq .format "bottlerocket") }}
         pause:
           imageRepository: {{.pauseRepository}}
@@ -123,13 +129,25 @@ spec:
 {{- end }}
           kubeletExtraArgs:
             provider-id: PROVIDER_ID
+{{- if not .kubeletConfiguration }}
             read-only-port: "0"
             anonymous-auth: "false"
 {{- if .kubeletExtraArgs }}
 {{ .kubeletExtraArgs.ToYaml | indent 12 }}
 {{- end }}
-{{- if and (ne .format "bottlerocket") (or .proxyConfig .registryMirrorMap) }}
+{{- end }}
+{{- if .wnNodeLabelArgs }}
+{{ .wnNodeLabelArgs.ToYaml | indent 12 }}
+{{- end }}
+{{- if or (and (ne .format "bottlerocket") (or .proxyConfig .registryMirrorMap)) .kubeletConfiguration }}
       files:
+{{- end }}
+{{- if .kubeletConfiguration }}
+        - content: |
+{{ .kubeletConfiguration | indent 12 }}
+          owner: root:root
+          permissions: "0644"
+          path: /etc/kubernetes/patches/kubeletconfiguration0+strategic.yaml
 {{- end }}
 {{- if and .proxyConfig (ne .format "bottlerocket") }}
         - content: |

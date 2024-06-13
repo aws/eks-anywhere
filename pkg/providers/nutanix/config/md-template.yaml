@@ -5,14 +5,16 @@ metadata:
     cluster.x-k8s.io/cluster-name: "{{.clusterName}}"
   name: "{{.workerNodeGroupName}}"
   namespace: "{{.eksaSystemNamespace}}"
-  {{- if .autoscalingConfig }}
+{{- if .autoscalingConfig }}
   annotations:
     cluster.x-k8s.io/cluster-api-autoscaler-node-group-min-size: "{{ .autoscalingConfig.MinCount }}"
     cluster.x-k8s.io/cluster-api-autoscaler-node-group-max-size: "{{ .autoscalingConfig.MaxCount }}"
-  {{- end }}
+{{- end }}
 spec:
   clusterName: "{{.clusterName}}"
+{{- if not .autoscalingConfig }}
   replicas: {{.workerReplicas}}
+{{- end }}
   selector:
     matchLabels: {}
   template:
@@ -121,9 +123,14 @@ spec:
             # We have to pin the cgroupDriver to cgroupfs as kubeadm >=1.21 defaults to systemd
             # kind will implement systemd support in: https://github.com/kubernetes-sigs/kind/issues/1726
             #cgroup-driver: cgroupfs
+{{- if not .kubeletConfiguration }}
             eviction-hard: nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%
 {{- if .kubeletExtraArgs }}
 {{ .kubeletExtraArgs.ToYaml | indent 12 }}
+{{- end }}
+{{- end }}
+{{- if .nodeLabelArgs }}
+{{ .nodeLabelArgs.ToYaml | indent 12 }}
 {{- end }}
 {{- if .workerNodeGroupTaints }}
           taints:

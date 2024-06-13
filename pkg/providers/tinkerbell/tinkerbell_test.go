@@ -589,12 +589,20 @@ func TestPreCAPIInstallOnBootstrapSuccess(t *testing.T) {
 
 	bundle := clusterSpec.RootVersionsBundle()
 
+	stackInstaller.EXPECT().UpgradeInstallCRDs(
+		ctx,
+		bundle.Tinkerbell,
+		"test.kubeconfig",
+	)
+
 	stackInstaller.EXPECT().Install(
 		ctx,
 		bundle.Tinkerbell,
 		testIP,
 		"test.kubeconfig",
 		"",
+		gomock.Any(),
+		gomock.Any(),
 		gomock.Any(),
 		gomock.Any(),
 	)
@@ -625,6 +633,12 @@ func TestPostWorkloadInitSuccess(t *testing.T) {
 	provider.stackInstaller = stackInstaller
 
 	bundle := clusterSpec.RootVersionsBundle()
+
+	stackInstaller.EXPECT().UpgradeInstallCRDs(
+		ctx,
+		bundle.Tinkerbell,
+		"test.kubeconfig",
+	)
 
 	stackInstaller.EXPECT().Install(
 		ctx,
@@ -1554,7 +1568,7 @@ func TestSetupAndValidateUpgradeWorkloadClusterErrorApplyHardware(t *testing.T) 
 	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
 	stackInstaller := stackmocks.NewMockStackInstaller(mockCtrl)
 	writer := filewritermocks.NewMockFileWriter(mockCtrl)
-	cluster := &types.Cluster{Name: "test"}
+	cluster := &types.Cluster{Name: "management-cluster"}
 	forceCleanup := false
 
 	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
@@ -1591,7 +1605,7 @@ func TestSetupAndValidateUpgradeWorkloadClusterErrorBMC(t *testing.T) {
 	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
 	stackInstaller := stackmocks.NewMockStackInstaller(mockCtrl)
 	writer := filewritermocks.NewMockFileWriter(mockCtrl)
-	cluster := &types.Cluster{Name: "test"}
+	cluster := &types.Cluster{Name: "management-cluster"}
 	forceCleanup := false
 
 	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
@@ -2128,6 +2142,12 @@ func TestTinkerbellProvider_GenerateCAPISpecForUpgrade_RegistryMirror(t *testing
 	kubectl.EXPECT().
 		GetMachineDeployment(gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(machineDeployment, nil)
+	kubectl.EXPECT().
+		ApplyKubeSpecFromBytesForce(ctx, cluster, gomock.Any()).
+		Return(nil)
+	kubectl.EXPECT().
+		WaitForRufioMachines(ctx, cluster, "5m", "Contactable", gomock.Any()).
+		Return(nil)
 
 	provider := newProvider(datacenterConfig, machineConfigs, updatedClusterSpec.Cluster, writer, docker, helm, kubectl, false)
 	provider.stackInstaller = stackInstaller
@@ -2305,6 +2325,12 @@ func TestTinkerbellProvider_GenerateCAPISpecForUpgrade_CertBundles(t *testing.T)
 	kubectl.EXPECT().
 		GetMachineDeployment(gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(machineDeployment, nil)
+	kubectl.EXPECT().
+		ApplyKubeSpecFromBytesForce(ctx, cluster, gomock.Any()).
+		Return(nil)
+	kubectl.EXPECT().
+		WaitForRufioMachines(ctx, cluster, "5m", "Contactable", gomock.Any()).
+		Return(nil)
 
 	provider := newProvider(datacenterConfig, machineConfigs, updatedClusterSpec.Cluster, writer, docker, helm, kubectl, false)
 	provider.stackInstaller = stackInstaller

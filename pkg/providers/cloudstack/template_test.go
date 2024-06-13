@@ -179,9 +179,17 @@ func TestVsphereTemplateBuilderGenerateCAPISpecControlPlaneValidKubeletConfigWN(
 			"maxPods": 20,
 		},
 	}
+	spec.Cluster.Spec.ClusterNetwork.DNS = v1alpha1.DNS{
+		ResolvConf: &v1alpha1.ResolvConf{
+			Path: "temp-path",
+		},
+	}
 	builder := cloudstack.NewTemplateBuilder(time.Now)
-	_, err := builder.GenerateCAPISpecWorkers(spec, nil, nil)
+	data, err := builder.GenerateCAPISpecWorkers(spec, nil, nil)
 	g.Expect(err).ToNot(HaveOccurred())
+	g.Expect(data).To(ContainSubstring("maxPods"))
+	t.Logf("\n data \n%v\n", string(data))
+	test.AssertContentToFile(t, string(data), "testdata/expected_kct.yaml")
 }
 
 func TestVsphereTemplateBuilderGenerateCAPISpecControlPlaneValidKubeletConfigCP(t *testing.T) {
@@ -192,10 +200,18 @@ func TestVsphereTemplateBuilderGenerateCAPISpecControlPlaneValidKubeletConfigCP(
 			"maxPods": 20,
 		},
 	}
+	spec.Cluster.Spec.ClusterNetwork.DNS = v1alpha1.DNS{
+		ResolvConf: &v1alpha1.ResolvConf{
+			Path: "temp-path",
+		},
+	}
 	spec.Cluster.Spec.ExternalEtcdConfiguration = nil
 	builder := cloudstack.NewTemplateBuilder(time.Now)
-	_, err := builder.GenerateCAPISpecControlPlane(spec, func(values map[string]interface{}) {
+	data, err := builder.GenerateCAPISpecControlPlane(spec, func(values map[string]interface{}) {
 		values["controlPlaneTemplateName"] = clusterapi.ControlPlaneMachineTemplateName(spec.Cluster)
 	})
 	g.Expect(err).ToNot(HaveOccurred())
+	g.Expect(data).To(ContainSubstring("maxPods"))
+	t.Logf("\n data \n%v\n", string(data))
+	test.AssertContentToFile(t, string(data), "testdata/expected_kcp.yaml")
 }
