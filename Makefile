@@ -29,7 +29,7 @@ UNIT_TEST_PACKAGE_EXCLUSION_REGEX ?=mocks$
 UNIT_TEST_PACKAGES ?= $$($(GO) list ./... | grep -vE "$(UNIT_TEST_PACKAGE_EXCLUSION_REGEX)")
 
 ## ensure local execution uses the 'main' branch bundle
-BRANCH_NAME?=main
+BRANCH_NAME?=release-0.20
 # DEV_GIT_VERSION should be something like v0.19.0-dev+latest, depending on the base branch
 # https://github.com/aws/eks-anywhere/blob/main/docs/developer/manifests.md#locally-building-the-cli
 ifneq ($(PULL_BASE_REF),) # PULL_BASE_REF originates from prow
