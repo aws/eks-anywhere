@@ -211,15 +211,6 @@ func (s *Snow) WithProviderUpgrade(fillers ...api.SnowFiller) ClusterE2ETestOpt 
 	}
 }
 
-// WithBottlerocket125 returns a cluster config filler that sets the kubernetes version of the cluster to 1.25
-// as well as the right devices and osFamily for all SnowMachineConfigs. It also sets any
-// necessary machine config default required for BR, like the container volume size. If the env var is set, this will
-// also set the AMI ID. Otherwise, it will leave it empty and let CAPAS select one.
-func (s *Snow) WithBottlerocket125() api.ClusterConfigFiller {
-	s.t.Helper()
-	return s.withBottlerocketForKubeVersion(anywherev1.Kube125)
-}
-
 // WithBottlerocket126 returns a cluster config filler that sets the kubernetes version of the cluster to 1.26
 // as well as the right devices and osFamily for all SnowMachineConfigs. It also sets any
 // necessary machine config default required for BR, like the container volume size. If the env var is set, this will
@@ -247,14 +238,6 @@ func (s *Snow) WithBottlerocket128() api.ClusterConfigFiller {
 	return s.withBottlerocketForKubeVersion(anywherev1.Kube128)
 }
 
-// WithBottlerocketStaticIP125 returns a cluster config filler that sets the kubernetes version of the cluster to 1.25
-// as well as the right devices, osFamily and static ip config for all SnowMachineConfigs. Comparing to WithBottlerocket125,
-// this method also adds a snow ip pool to support static ip configuration.
-func (s *Snow) WithBottlerocketStaticIP125() api.ClusterConfigFiller {
-	s.t.Helper()
-	return s.withBottlerocketStaticIPForKubeVersion(anywherev1.Kube125)
-}
-
 // WithBottlerocketStaticIP126 returns a cluster config filler that sets the kubernetes version of the cluster to 1.26
 // as well as the right devices, osFamily and static ip config for all SnowMachineConfigs. Comparing to WithBottlerocket126,
 // this method also adds a snow ip pool to support static ip configuration.
@@ -277,14 +260,6 @@ func (s *Snow) WithBottlerocketStaticIP127() api.ClusterConfigFiller {
 func (s *Snow) WithBottlerocketStaticIP128() api.ClusterConfigFiller {
 	s.t.Helper()
 	return s.withBottlerocketStaticIPForKubeVersion(anywherev1.Kube128)
-}
-
-// WithUbuntu125 returns a cluster config filler that sets the kubernetes version of the cluster to 1.25
-// as well as the right devices and osFamily for all SnowMachineConfigs. If the env var is set, this will
-// also set the AMI ID. Otherwise, it will leave it empty and let CAPAS select one.
-func (s *Snow) WithUbuntu125() api.ClusterConfigFiller {
-	s.t.Helper()
-	return s.WithKubeVersionAndOS(anywherev1.Kube125, Ubuntu2004, nil)
 }
 
 // WithUbuntu126 returns a cluster config filler that sets the kubernetes version of the cluster to 1.26
@@ -376,19 +351,6 @@ func WithSnowUbuntu124() SnowOpt {
 	return func(s *Snow) {
 		s.fillers = append(s.fillers,
 			s.withAMIIDFromEnvVar(snowAMIIDUbuntu124),
-			api.WithSnowStringFromEnvVar(snowDevices, api.WithSnowDevicesForAllMachines),
-			api.WithOsFamilyForAllSnowMachines(anywherev1.Ubuntu),
-		)
-	}
-}
-
-// WithSnowUbuntu125 returns SnowOpt that sets the right devices and osFamily for all SnowMachineConfigs.
-// If the env var is set, this will also set the AMI ID.
-// Otherwise, it will leave it empty and let CAPAS select one.
-func WithSnowUbuntu125() SnowOpt {
-	return func(s *Snow) {
-		s.fillers = append(s.fillers,
-			api.WithSnowStringFromEnvVar(snowAMIIDUbuntu125, api.WithSnowAMIIDForAllMachines),
 			api.WithSnowStringFromEnvVar(snowDevices, api.WithSnowDevicesForAllMachines),
 			api.WithOsFamilyForAllSnowMachines(anywherev1.Ubuntu),
 		)

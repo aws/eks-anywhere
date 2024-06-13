@@ -537,7 +537,7 @@ capd-test-%: build-all-test-binaries ## Run CAPD tests
 	./bin/e2e.test -test.v -test.run TestDockerKubernetes$*SimpleFlow
 
 
-PACKAGES_E2E_TESTS ?= TestDockerKubernetes125CuratedPackagesSimpleFlow
+PACKAGES_E2E_TESTS ?= TestDockerKubernetes126CuratedPackagesSimpleFlow
 ifeq ($(PACKAGES_E2E_TESTS),all)
 PACKAGES_E2E_TESTS='Test.*CuratedPackages'
 endif

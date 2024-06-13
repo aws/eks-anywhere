@@ -487,7 +487,7 @@ func TestDockerKubernetes130AWSIamAuth(t *testing.T) {
 }
 
 // Flux
-func TestDockerKubernetes125UpgradeWorkloadClusterWithGithubFlux(t *testing.T) {
+func TestDockerKubernetes130UpgradeWorkloadClusterWithGithubFlux(t *testing.T) {
 	provider := framework.NewDocker(t)
 	test := framework.NewMulticlusterE2ETest(
 		t,
@@ -496,7 +496,7 @@ func TestDockerKubernetes125UpgradeWorkloadClusterWithGithubFlux(t *testing.T) {
 			provider,
 			framework.WithFluxGithub(),
 			framework.WithClusterFiller(
-				api.WithKubernetesVersion(v1alpha1.Kube125),
+				api.WithKubernetesVersion(v1alpha1.Kube129),
 				api.WithControlPlaneCount(1),
 				api.WithWorkerNodeCount(1),
 			),
@@ -506,7 +506,7 @@ func TestDockerKubernetes125UpgradeWorkloadClusterWithGithubFlux(t *testing.T) {
 			provider,
 			framework.WithFluxGithub(),
 			framework.WithClusterFiller(
-				api.WithKubernetesVersion(v1alpha1.Kube125),
+				api.WithKubernetesVersion(v1alpha1.Kube129),
 				api.WithControlPlaneCount(1),
 				api.WithWorkerNodeCount(1),
 			),
@@ -515,7 +515,7 @@ func TestDockerKubernetes125UpgradeWorkloadClusterWithGithubFlux(t *testing.T) {
 	runWorkloadClusterFlowWithGitOps(
 		test,
 		framework.WithClusterUpgradeGit(
-			api.WithKubernetesVersion(v1alpha1.Kube126),
+			api.WithKubernetesVersion(v1alpha1.Kube130),
 			api.WithControlPlaneCount(2),
 			api.WithWorkerNodeCount(2),
 		),
