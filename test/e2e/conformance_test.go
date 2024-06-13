@@ -234,7 +234,7 @@ func TestTinkerbellKubernetes129ThreeReplicasTwoWorkersConformanceFlow(t *testin
 func TestTinkerbellKubernetes130ThreeReplicasTwoWorkersConformanceFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
-		framework.NewTinkerbell(t, framework.WithUbuntu129Tinkerbell()),
+		framework.NewTinkerbell(t, framework.WithUbuntu130Tinkerbell()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube130)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(2)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(3)),
