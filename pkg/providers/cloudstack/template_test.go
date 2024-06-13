@@ -188,7 +188,6 @@ func TestVsphereTemplateBuilderGenerateCAPISpecControlPlaneValidKubeletConfigWN(
 	data, err := builder.GenerateCAPISpecWorkers(spec, nil, nil)
 	g.Expect(err).ToNot(HaveOccurred())
 	g.Expect(data).To(ContainSubstring("maxPods"))
-	t.Logf("\n data \n%v\n", string(data))
 	test.AssertContentToFile(t, string(data), "testdata/expected_kct.yaml")
 }
 
@@ -212,6 +211,5 @@ func TestVsphereTemplateBuilderGenerateCAPISpecControlPlaneValidKubeletConfigCP(
 	})
 	g.Expect(err).ToNot(HaveOccurred())
 	g.Expect(data).To(ContainSubstring("maxPods"))
-	t.Logf("\n data \n%v\n", string(data))
 	test.AssertContentToFile(t, string(data), "testdata/expected_kcp.yaml")
 }

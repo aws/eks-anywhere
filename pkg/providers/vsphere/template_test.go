@@ -98,6 +98,28 @@ func TestVsphereTemplateBuilderGenerateCAPISpecControlPlaneValidKubeletConfigCP(
 	test.AssertContentToFile(t, string(data), "testdata/expected_kcp.yaml")
 }
 
+func TestVsphereGenerateCAPISpecControlPlaneValidKubeletConfigCPBR(t *testing.T) {
+	g := NewWithT(t)
+	spec := test.NewFullClusterSpec(t, "testdata/cluster_main_br.yaml")
+	spec.Cluster.Spec.ControlPlaneConfiguration.KubeletConfiguration = &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"kind":    "KubeletConfiguration",
+			"maxPods": 20,
+		},
+	}
+	spec.Cluster.Spec.ClusterNetwork.DNS = v1alpha1.DNS{
+		ResolvConf: &v1alpha1.ResolvConf{
+			Path: "test-path",
+		},
+	}
+	builder := vsphere.NewVsphereTemplateBuilder(time.Now)
+	data, err := builder.GenerateCAPISpecControlPlane(spec, func(values map[string]interface{}) {
+		values["controlPlaneTemplateName"] = clusterapi.ControlPlaneMachineTemplateName(spec.Cluster)
+	})
+	g.Expect(err).ToNot(HaveOccurred())
+	test.AssertContentToFile(t, string(data), "testdata/expected_kcp_br.yaml")
+}
+
 func TestTemplateBuilder_CertSANs(t *testing.T) {
 	t.Setenv(config.EksavSphereUsernameKey, expectedVSphereUsername)
 	t.Setenv(config.EksavSpherePasswordKey, expectedVSpherePassword)
