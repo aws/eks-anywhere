@@ -1097,7 +1097,7 @@ The table below shows the possible firmware options for the hypervisor and OS co
 
 |            |       vSphere       |      Baremetal      | CloudStack | Nutanix | Snow |
 |:----------:|:-------------------:|:-------------------:|:----------:|:-------:|:----:|
-| **Ubuntu** | bios (default), efi | bios, efi (default) |    bios    |   bios  | bios |
+| **Ubuntu** | bios (default), efi |         efi         |    bios    |   bios  | bios |
 |  **RHEL**  |         bios        |         bios        |    bios    |   bios  | bios |
 
 ### Mounting additional files
