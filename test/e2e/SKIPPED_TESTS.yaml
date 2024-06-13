@@ -54,11 +54,9 @@ skipped_tests:
 # Tinkerbell
 # Skipping Workload upgrade tests due to hardware limitation
 - TestTinkerbellUpgradeMulticlusterWorkloadClusterK8sUpgrade
-- TestTinkerbellUpgradeMulticlusterWorkloadClusterK8sUpgrade125To126
 - TestTinkerbellUpgrade126MulticlusterWorkloadClusterWorkerScaleup
 - TestTinkerbellUpgrade126MulticlusterWorkloadClusterCPScaleup
 - TestTinkerbellUpgrade126MulticlusterWorkloadClusterWorkerScaleDown
-- TestTinkerbellUpgrade125MulticlusterWorkloadClusterWorkerScaleupWithAPI
 - TestTinkerbellUpgrade126MulticlusterWorkloadClusterWorkerScaleupWithFluxAPI
 - TestTinkerbellUpgrade127MulticlusterWorkloadClusterWorkerScaleupGitFluxWithAPI
 - TestTinkerbellUpgrade128MulticlusterWorkloadClusterWorkerScaleupGitFluxWithAPI
@@ -78,7 +76,6 @@ skipped_tests:
 - TestTinkerbellKubernetes126To127Ubuntu2204Upgrade
 - TestTinkerbellKubernetes126Ubuntu2004To2204Upgrade
 - TestTinkerbellKubernetes127Ubuntu2004To2204Upgrade
-- TestTinkerbellSingleNode125ManagementScaleupWorkloadWithAPI
 #Skip single K8s version upgrade tests as the same is covered by multiple K8s version upgrade from 1.25 to 1.29 to save on hardware resources and running time
 - TestTinkerbellKubernetes126UbuntuTo127Upgrade
 - TestTinkerbellKubernetes127UbuntuTo128Upgrade

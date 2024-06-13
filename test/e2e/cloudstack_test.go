@@ -3578,8 +3578,75 @@ func TestCloudStackKubernetes128RedhatAirgappedProxy(t *testing.T) {
 }
 
 // Workload API
+func TestCloudStackKubernetes130MulticlusterWorkloadClusterAPI(t *testing.T) {
+	cloudstack := framework.NewCloudStack(t)
+	managementCluster := framework.NewClusterE2ETest(
+		t, cloudstack,
+	).WithClusterConfig(
+		api.ClusterToConfigFiller(
+			api.WithControlPlaneCount(1),
+			api.WithWorkerNodeCount(1),
+			api.WithStackedEtcdTopology(),
+		),
+		cloudstack.WithRedhat9Kubernetes130(),
+	)
 
-func TestCloudStackMulticlusterWorkloadClusterNewCredentialsSecretsAPI(t *testing.T) {
+	test := framework.NewMulticlusterE2ETest(t, managementCluster)
+	test.WithWorkloadClusters(
+		framework.NewClusterE2ETest(
+			t,
+			cloudstack,
+			framework.WithClusterName(test.NewWorkloadClusterName()),
+		).WithClusterConfig(
+			api.ClusterToConfigFiller(
+				api.WithManagementCluster(managementCluster.ClusterName),
+				api.WithStackedEtcdTopology(),
+				api.WithControlPlaneCount(1),
+			),
+			cloudstack.WithRedhat9Kubernetes130(),
+		),
+	)
+
+	test.WithWorkloadClusters(
+		framework.NewClusterE2ETest(
+			t,
+			cloudstack,
+			framework.WithClusterName(test.NewWorkloadClusterName()),
+		).WithClusterConfig(
+			api.ClusterToConfigFiller(
+				api.WithManagementCluster(managementCluster.ClusterName),
+				api.WithExternalEtcdTopology(1),
+				api.WithControlPlaneCount(1),
+			),
+			cloudstack.WithRedhat9Kubernetes130(),
+		),
+	)
+
+	test.CreateManagementCluster()
+
+	// Create workload clusters
+	test.RunConcurrentlyInWorkloadClusters(func(wc *framework.WorkloadCluster) {
+		wc.ApplyClusterManifest()
+		wc.WaitForKubeconfig()
+		wc.ValidateClusterState()
+
+		tests := cloudStackAPIWorkloadUpgradeTests(wc, cloudstack)
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				runCloudStackAPIWorkloadUpgradeTest(t, wc, tt)
+			})
+		}
+
+		wc.DeleteClusterWithKubectl()
+		wc.ValidateClusterDelete()
+	})
+
+	test.ManagementCluster.StopIfFailed()
+	test.DeleteManagementCluster()
+}
+
+func TestCloudStackKubernetes130MulticlusterWorkloadClusterNewCredentialsSecretsAPI(t *testing.T) {
 	cloudstack := framework.NewCloudStack(t)
 	managementCluster := framework.NewClusterE2ETest(
 		t, cloudstack,
@@ -3642,7 +3709,80 @@ func TestCloudStackMulticlusterWorkloadClusterNewCredentialsSecretsAPI(t *testin
 	test.DeleteManagementCluster()
 }
 
-func TestCloudStackMulticlusterWorkloadClusterNewCredentialsSecretGitHubFluxAPI(t *testing.T) {
+// Workload GitOps API
+func TestCloudStackKubernetes130MulticlusterWorkloadClusterGitHubFluxAPI(t *testing.T) {
+	cloudstack := framework.NewCloudStack(t)
+	managementCluster := framework.NewClusterE2ETest(
+		t,
+		cloudstack,
+
+		framework.WithFluxGithubEnvVarCheck(),
+		framework.WithFluxGithubCleanup(),
+	).WithClusterConfig(
+		api.ClusterToConfigFiller(
+			api.WithControlPlaneCount(1),
+			api.WithWorkerNodeCount(1),
+			api.WithStackedEtcdTopology(),
+		),
+		cloudstack.WithRedhat9Kubernetes130(),
+		framework.WithFluxGithubConfig(),
+	)
+
+	test := framework.NewMulticlusterE2ETest(t, managementCluster)
+	test.WithWorkloadClusters(
+		framework.NewClusterE2ETest(
+			t,
+			cloudstack,
+			framework.WithClusterName(test.NewWorkloadClusterName()),
+		).WithClusterConfig(
+			api.ClusterToConfigFiller(
+				api.WithManagementCluster(managementCluster.ClusterName),
+				api.WithExternalEtcdTopology(1),
+				api.WithControlPlaneCount(1),
+			),
+			cloudstack.WithRedhat9Kubernetes130(),
+		),
+	)
+
+	test.WithWorkloadClusters(
+		framework.NewClusterE2ETest(
+			t,
+			cloudstack,
+			framework.WithClusterName(test.NewWorkloadClusterName()),
+		).WithClusterConfig(
+			api.ClusterToConfigFiller(
+				api.WithManagementCluster(managementCluster.ClusterName),
+				api.WithStackedEtcdTopology(),
+				api.WithControlPlaneCount(1),
+			),
+			cloudstack.WithRedhat9Kubernetes130(),
+		),
+	)
+
+	test.CreateManagementCluster()
+
+	// Create workload clusters
+	test.RunConcurrentlyInWorkloadClusters(func(wc *framework.WorkloadCluster) {
+		test.PushWorkloadClusterToGit(wc)
+		wc.WaitForKubeconfig()
+		wc.ValidateClusterState()
+		tests := cloudStackAPIWorkloadUpgradeTests(wc, cloudstack)
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				runCloudStackAPIWorkloadUpgradeTestWithFlux(t, test, wc, tt)
+			})
+		}
+
+		test.DeleteWorkloadClusterFromGit(wc)
+		wc.ValidateClusterDelete()
+	})
+
+	test.ManagementCluster.StopIfFailed()
+	test.DeleteManagementCluster()
+}
+
+func TestCloudStackKubernetes130MulticlusterWorkloadClusterNewCredentialsSecretGitHubFluxAPI(t *testing.T) {
 	cloudstack := framework.NewCloudStack(t)
 	managementCluster := framework.NewClusterE2ETest(
 		t,
@@ -3710,7 +3850,7 @@ func TestCloudStackMulticlusterWorkloadClusterNewCredentialsSecretGitHubFluxAPI(
 	test.DeleteManagementCluster()
 }
 
-func TestCloudStackWorkloadClusterAWSIamAuthAPI(t *testing.T) {
+func TestCloudStackKubernetes130WorkloadClusterAWSIamAuthAPI(t *testing.T) {
 	cloudstack := framework.NewCloudStack(t)
 	managementCluster := framework.NewClusterE2ETest(
 		t, cloudstack,
@@ -3758,7 +3898,7 @@ func TestCloudStackWorkloadClusterAWSIamAuthAPI(t *testing.T) {
 	test.DeleteManagementCluster()
 }
 
-func TestCloudStackWorkloadClusterAWSIamAuthGithubFluxAPI(t *testing.T) {
+func TestCloudStackKubernetes130WorkloadClusterAWSIamAuthGithubFluxAPI(t *testing.T) {
 	cloudstack := framework.NewCloudStack(t)
 	managementCluster := framework.NewClusterE2ETest(
 		t,
@@ -3811,7 +3951,7 @@ func TestCloudStackWorkloadClusterAWSIamAuthGithubFluxAPI(t *testing.T) {
 	test.DeleteManagementCluster()
 }
 
-func TestCloudStackWorkloadClusterOIDCAuthAPI(t *testing.T) {
+func TestCloudStackKubernetes130WorkloadClusterOIDCAuthAPI(t *testing.T) {
 	cloudstack := framework.NewCloudStack(t)
 	managementCluster := framework.NewClusterE2ETest(
 		t, cloudstack,
@@ -3859,7 +3999,7 @@ func TestCloudStackWorkloadClusterOIDCAuthAPI(t *testing.T) {
 	test.DeleteManagementCluster()
 }
 
-func TestCloudStackWorkloadClusterOIDCAuthGithubFluxAPI(t *testing.T) {
+func TestCloudStackKubernetes130WorkloadClusterOIDCAuthGithubFluxAPI(t *testing.T) {
 	cloudstack := framework.NewCloudStack(t)
 	managementCluster := framework.NewClusterE2ETest(
 		t,

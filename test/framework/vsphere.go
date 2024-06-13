@@ -419,6 +419,12 @@ func (v *VSphere) WithUbuntu130() api.ClusterConfigFiller {
 	return v.WithKubeVersionAndOS(anywherev1.Kube130, Ubuntu2004, nil)
 }
 
+// WithBottleRocket130 returns a cluster config filler that sets the kubernetes version of the cluster to 1.30
+// as well as the right botllerocket template and osFamily for all VSphereMachineConfigs.
+func (v *VSphere) WithBottleRocket130() api.ClusterConfigFiller {
+	return v.WithKubeVersionAndOS(anywherev1.Kube130, Bottlerocket1, nil)
+}
+
 // CleanupResources deletes all the VMs owned by the test EKS-A cluster. It satisfies the test framework Provider.
 func (v *VSphere) CleanupResources(clusterName string) error {
 	return cleanup.CleanUpVsphereTestResources(context.Background(), clusterName)
