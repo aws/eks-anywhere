@@ -118,7 +118,6 @@ func TestNewNutanixTemplateBuilderKubeletConfiguration(t *testing.T) {
 	spec, err := builder.GenerateCAPISpecControlPlane(buildSpec)
 	assert.NoError(t, err)
 	assert.NotNil(t, spec)
-	t.Logf("data\n %v\n", string(spec))
 
 	cpSpec, err := os.ReadFile("testdata/expected_cp.yaml")
 	assert.NoError(t, err)
@@ -133,7 +132,6 @@ func TestNewNutanixTemplateBuilderKubeletConfiguration(t *testing.T) {
 	workerSpec, err := builder.GenerateCAPISpecWorkers(buildSpec, workloadTemplateNames, kubeadmconfigTemplateNames)
 	assert.NoError(t, err)
 	assert.NotNil(t, workerSpec)
-	t.Logf("data\n %v\n", string(workerSpec))
 
 	wnSpec, err := os.ReadFile("testdata/expected_wn.yaml")
 	assert.NoError(t, err)
@@ -495,7 +493,6 @@ func TestNewNutanixTemplateBuilderNodeTaintsAndLabels(t *testing.T) {
 	expectedControlPlaneSpec, err := os.ReadFile("testdata/expected_results_node_taints_labels.yaml")
 	require.NoError(t, err)
 	assert.Equal(t, expectedControlPlaneSpec, cpSpec)
-	t.Logf("data \n %v\n", string(cpSpec))
 	workloadTemplateNames := map[string]string{
 		"eksa-unit-test": "eksa-unit-test",
 	}
