@@ -42,6 +42,7 @@ func getTinkBundle() releasev1alpha1.TinkerbellBundle {
 	return releasev1alpha1.TinkerbellBundle{
 		TinkerbellStack: releasev1alpha1.TinkerbellStackBundle{
 			Tink: releasev1alpha1.TinkBundle{
+				Nginx:          releasev1alpha1.Image{URI: "public.ecr.aws/eks-anywhere/nginx:latest"},
 				TinkController: releasev1alpha1.Image{URI: "public.ecr.aws/eks-anywhere/tink-controller:latest"},
 				TinkServer:     releasev1alpha1.Image{URI: "public.ecr.aws/eks-anywhere/tink-server:latest"},
 				TinkWorker:     releasev1alpha1.Image{URI: "public.ecr.aws/eks-anywhere/tink-worker:latest"},

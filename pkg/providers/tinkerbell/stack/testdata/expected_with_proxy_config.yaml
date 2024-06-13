@@ -35,6 +35,7 @@ stack:
   hook:
     enabled: false
   hostNetwork: false
+  image: public.ecr.aws/eks-anywhere/nginx:latest
   kubevip:
     additionalEnv:
     - name: prometheus_server
