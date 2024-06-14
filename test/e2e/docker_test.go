@@ -1050,6 +1050,7 @@ func TestDockerKubernetes129to130UpgradeFromLatestMinorReleaseAPI(t *testing.T) 
 	runMulticlusterUpgradeFromReleaseFlowAPI(
 		test,
 		release,
+		wc.ClusterConfig.Cluster.Spec.KubernetesVersion,
 		v1alpha1.Kube130,
 		"",
 	)
