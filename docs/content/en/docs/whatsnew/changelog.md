@@ -31,6 +31,36 @@ description: >
 * When upgrading to a new minor version, a new OS image must be created using the new image-builder CLI pertaining to that release.
 {{% /alert %}}
 
+## [v0.19.7](https://github.com/aws/eks-anywhere/releases/tag/v0.19.7)
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+|    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+| Bottlerocket 1.19.2 |    ✔    |     \*      |    —    |     —      |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+|      RHEL 9.x       |    —    |     —      |    ✔    |     ✔      |  —   |
+
+\* [EKS Anywhere issue regarding deprecation of Bottlerocket bare metal variants](https://github.com/aws/eks-anywhere/issues/7754)
+
+### Upgraded
+- Cluster API Provider Nutanix: `v1.3.3` to `v1.3.5`
+- Image Builder: `v0.1.24` to `v0.1.26`
+- EKS Distro:
+  - `v1-25-eks-39` to [`v1-25-eks-40`](https://distro.eks.amazonaws.com/releases/1-25/40/)
+  - `v1-26-eks-35` to [`v1-26-eks-38`](https://distro.eks.amazonaws.com/releases/1-26/38/)
+  - `v1-27-eks-29` to [`v1-27-eks-32`](https://distro.eks.amazonaws.com/releases/1-27/32/)
+  - `v1-28-eks-22` to [`v1-28-eks-25`](https://distro.eks.amazonaws.com/releases/1-28/25/)
+  - `v1-29-eks-11` to [`v1-29-eks-14`](https://distro.eks.amazonaws.com/releases/1-29/14/)
+
+### Changed
+- Updated cluster status reconciliation logic for worker node groups with [autoscaling](https://anywhere.eks.amazonaws.com/docs/getting-started/optional/autoscaling/) configuration [#8254](https://github.com/aws/eks-anywhere/pull/8254)
+- Added logic to apply new hardware on baremetal cluster upgrades [#8288](https://github.com/aws/eks-anywhere/pull/8288)
+
+### Fixed
+- Fixed bug when installer does not create CCM secret for Nutanix workload cluster [#8191](https://github.com/aws/eks-anywhere/pull/8191)
+- Fixed upgrade workflow for registry mirror certificates in EKS Anywhere packages [#7114](https://github.com/aws/eks-anywhere/issues/7114)
+
 ## [v0.19.6](https://github.com/aws/eks-anywhere/releases/tag/v0.19.6)
 ### Supported OS version details
 |                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
