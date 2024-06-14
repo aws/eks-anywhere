@@ -4329,6 +4329,7 @@ func TestVSphereKubernetes127to128UpgradeFromLatestMinorReleaseBottleRocketAPI(t
 	runMulticlusterUpgradeFromReleaseFlowAPI(
 		test,
 		release,
+		wc.ClusterConfig.Cluster.Spec.KubernetesVersion,
 		v1alpha1.Kube128,
 		framework.Bottlerocket1,
 	)
