@@ -684,7 +684,7 @@ e2e-tests-binary:
 
 .PHONY: build-integration-test-binary
 build-integration-test-binary:
-	GOOS=$(GO_OS) GOARCH=$(GO_ARCH) $(GO) build -o bin/test github.com/aws/eks-anywhere/cmd/integration_test
+	GOOS=$(GO_OS) GOARCH=$(GO_ARCH) $(GO) build -o bin/test -tags "$(E2E_TAGS)" github.com/aws/eks-anywhere/cmd/integration_test 
 
 .PHONY: conformance
 conformance:

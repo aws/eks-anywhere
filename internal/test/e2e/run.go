@@ -281,14 +281,15 @@ func RunTests(conf instanceRunConf, inventoryCatalogue map[string]*hardwareCatal
 }
 
 func (e *E2ESession) runTests(regex string) (testCommandResult *testCommandResult, err error) {
-	e.logger.V(1).Info("Running e2e tests", "regex", regex)
 	command := "GOVERSION=go1.16.6 gotestsum --junitfile=junit-testing.xml --raw-command --format=standard-verbose --hide-summary=all --ignore-non-json-output-lines -- test2json -t -p e2e ./bin/e2e.test -test.v"
 
 	if regex != "" {
-		command = fmt.Sprintf("%s -test.run \"^(%s)$\" -test.timeout %s", command, regex, e2eTimeout)
+		command = fmt.Sprintf("%s -test.run \"^%s$\" -test.timeout %s", command, regex, e2eTimeout)
 	}
 
 	command = e.commandWithEnvVars(command)
+
+	e.logger.V(1).Info("Running e2e tests", "regex", regex, "command", command)
 
 	opt := ssm.WithOutputToCloudwatch()
 

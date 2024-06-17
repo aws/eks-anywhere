@@ -9,6 +9,7 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/types"
+	e2etest "github.com/aws/eks-anywhere/test/e2e"
 )
 
 func listTests(regex string, testsToSkip []string) (tests, skippedTests []string, err error) {
@@ -29,7 +30,18 @@ func listTests(regex string, testsToSkip []string) (tests, skippedTests []string
 		}
 
 		if strings.HasPrefix(line, "Test") {
-			tests = append(tests, line)
+			if strings.HasSuffix(line, "Suite") {
+				for k, s := range e2etest.Suites {
+					if strings.HasSuffix(line, k) {
+						for _, st := range s {
+							tests = append(tests, line+"/"+st.GetName())
+						}
+						break
+					}
+				}
+			} else {
+				tests = append(tests, line)
+			}
 		}
 	}
 

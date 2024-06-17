@@ -1459,3 +1459,16 @@ func TestDockerKubernetes129to130EtcdScaleDown(t *testing.T) {
 		),
 	)
 }
+
+func TestDockerKubernetesSimpleFlowSuite(t *testing.T) {
+	for _, ts := range Suites[simpleFlowSubtest.GetSuiteSuffix()] {
+		t.Run(ts.GetName(), func(t *testing.T) {
+			test := framework.NewClusterE2ETest(
+				t,
+				framework.NewDocker(t),
+				framework.WithClusterFiller(api.WithKubernetesVersion(ts.(*SimpleFlowSubtest).KubeVersion)),
+			)
+			runSimpleFlow(test)
+		})
+	}
+}

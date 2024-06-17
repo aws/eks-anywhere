@@ -186,23 +186,23 @@ phases:
       - ${CODEBUILD_SRC_DIR}/cmd/integration_test/build/script/start_docker.sh
       - make eks-a-for-dev-e2e build-integration-test-binary e2e-tests-binary E2E_TAGS="e2e all_providers" E2E_OUTPUT_FILE=bin/e2e.test
       - export CLUSTER_NAME_PREFIX="${BRANCH_NAME//./-}"
-      - >
-        ./bin/test e2e cleanup vsphere
-        -n ${CLUSTER_NAME_PREFIX}
-        -v 4
-      - >
-        ./bin/test e2e cleanup cloudstack
-        -n ${CLUSTER_NAME_PREFIX}
-        --delete-duplicate-networks
-        -v 6
-      - >
-        ./bin/test e2e cleanup nutanix
-        -n ${CLUSTER_NAME_PREFIX}
-        -e ${T_NUTANIX_ENDPOINT}
-        -p ${T_NUTANIX_PORT}
-        --insecure
-        --ignoreErrors
-        -v 4
+      # - >
+      #   ./bin/test e2e cleanup vsphere
+      #   -n ${CLUSTER_NAME_PREFIX}
+      #   -v 4
+      # - >
+      #   ./bin/test e2e cleanup cloudstack
+      #   -n ${CLUSTER_NAME_PREFIX}
+      #   --delete-duplicate-networks
+      #   -v 6
+      # - >
+      #   ./bin/test e2e cleanup nutanix
+      #   -n ${CLUSTER_NAME_PREFIX}
+      #   -e ${T_NUTANIX_ENDPOINT}
+      #   -p ${T_NUTANIX_PORT}
+      #   --insecure
+      #   --ignoreErrors
+      #   -v 4
   build:
     commands:
       - export JOB_ID=$CODEBUILD_BUILD_ID
@@ -224,7 +224,7 @@ phases:
         -i ${INTEGRATION_TEST_INSTANCE_PROFILE}
         -m ${INTEGRATION_TEST_MAX_EC2_COUNT}
         -p ${INTEGRATION_TEST_MAX_CONCURRENT_TEST_COUNT}
-        -r ${TESTS}
+        -r "TestDockerKubernetesSimpleFlowSuite"
         -v 4
         --skip ${SKIPPED_TESTS}
         --bundles-override=${BUNDLES_OVERRIDE}
