@@ -699,9 +699,9 @@ spec:
           os: linux
           uri: public.ecr.aws/release-container-registry/tinkerbell/rufio:v0.3.3-eks-a-v0.0.0-dev-build.1
         stack:
-          description: Helm chart for stack-helm
+          description: Helm chart for stack
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-          name: stack-helm
+          name: stack
           uri: public.ecr.aws/release-container-registry/tinkerbell/stack:0.4.5-eks-a-v0.0.0-dev-build.1
         tink:
           nginx:
@@ -746,9 +746,9 @@ spec:
           name: tinkerbell-chart
           uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.2.6-eks-a-v0.0.0-dev-build.1
         tinkerbellCrds:
-          description: Helm chart for tinkerbell-crds-helm
+          description: Helm chart for tinkerbell-crds
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-          name: tinkerbell-crds-helm
+          name: tinkerbell-crds
           uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-crds:0.2.5-eks-a-v0.0.0-dev-build.1
       version: v0.5.3+abcdef1
     upgrader:
@@ -1496,9 +1496,9 @@ spec:
           os: linux
           uri: public.ecr.aws/release-container-registry/tinkerbell/rufio:v0.3.3-eks-a-v0.0.0-dev-build.1
         stack:
-          description: Helm chart for stack-helm
+          description: Helm chart for stack
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-          name: stack-helm
+          name: stack
           uri: public.ecr.aws/release-container-registry/tinkerbell/stack:0.4.5-eks-a-v0.0.0-dev-build.1
         tink:
           nginx:
@@ -1543,9 +1543,9 @@ spec:
           name: tinkerbell-chart
           uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.2.6-eks-a-v0.0.0-dev-build.1
         tinkerbellCrds:
-          description: Helm chart for tinkerbell-crds-helm
+          description: Helm chart for tinkerbell-crds
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-          name: tinkerbell-crds-helm
+          name: tinkerbell-crds
           uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-crds:0.2.5-eks-a-v0.0.0-dev-build.1
       version: v0.5.3+abcdef1
     upgrader:
@@ -2293,9 +2293,9 @@ spec:
           os: linux
           uri: public.ecr.aws/release-container-registry/tinkerbell/rufio:v0.3.3-eks-a-v0.0.0-dev-build.1
         stack:
-          description: Helm chart for stack-helm
+          description: Helm chart for stack
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-          name: stack-helm
+          name: stack
           uri: public.ecr.aws/release-container-registry/tinkerbell/stack:0.4.5-eks-a-v0.0.0-dev-build.1
         tink:
           nginx:
@@ -2340,9 +2340,9 @@ spec:
           name: tinkerbell-chart
           uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.2.6-eks-a-v0.0.0-dev-build.1
         tinkerbellCrds:
-          description: Helm chart for tinkerbell-crds-helm
+          description: Helm chart for tinkerbell-crds
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-          name: tinkerbell-crds-helm
+          name: tinkerbell-crds
           uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-crds:0.2.5-eks-a-v0.0.0-dev-build.1
       version: v0.5.3+abcdef1
     upgrader:
@@ -3090,9 +3090,9 @@ spec:
           os: linux
           uri: public.ecr.aws/release-container-registry/tinkerbell/rufio:v0.3.3-eks-a-v0.0.0-dev-build.1
         stack:
-          description: Helm chart for stack-helm
+          description: Helm chart for stack
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-          name: stack-helm
+          name: stack
           uri: public.ecr.aws/release-container-registry/tinkerbell/stack:0.4.5-eks-a-v0.0.0-dev-build.1
         tink:
           nginx:
@@ -3137,9 +3137,9 @@ spec:
           name: tinkerbell-chart
           uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.2.6-eks-a-v0.0.0-dev-build.1
         tinkerbellCrds:
-          description: Helm chart for tinkerbell-crds-helm
+          description: Helm chart for tinkerbell-crds
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-          name: tinkerbell-crds-helm
+          name: tinkerbell-crds
           uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-crds:0.2.5-eks-a-v0.0.0-dev-build.1
       version: v0.5.3+abcdef1
     upgrader:
@@ -3887,9 +3887,9 @@ spec:
           os: linux
           uri: public.ecr.aws/release-container-registry/tinkerbell/rufio:v0.3.3-eks-a-v0.0.0-dev-build.1
         stack:
-          description: Helm chart for stack-helm
+          description: Helm chart for stack
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-          name: stack-helm
+          name: stack
           uri: public.ecr.aws/release-container-registry/tinkerbell/stack:0.4.5-eks-a-v0.0.0-dev-build.1
         tink:
           nginx:
@@ -3934,9 +3934,9 @@ spec:
           name: tinkerbell-chart
           uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.2.6-eks-a-v0.0.0-dev-build.1
         tinkerbellCrds:
-          description: Helm chart for tinkerbell-crds-helm
+          description: Helm chart for tinkerbell-crds
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-          name: tinkerbell-crds-helm
+          name: tinkerbell-crds
           uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-crds:0.2.5-eks-a-v0.0.0-dev-build.1
       version: v0.5.3+abcdef1
     upgrader:
