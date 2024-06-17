@@ -61,9 +61,10 @@ func GetTinkerbellBundle(r *releasetypes.ReleaseConfig, imageDigests releasetype
 				// If the artifact is a helm chart, handle differently. Helm charts can have both suffix "-chart" and "-helm",
 				// so we need to handle both cases.
 				if strings.HasSuffix(imageArtifact.AssetName, "chart") || strings.HasSuffix(imageArtifact.AssetName, "helm") {
+					assetName := strings.TrimSuffix(imageArtifact.AssetName, "-helm")
 					bundleImageArtifact = anywherev1alpha1.Image{
-						Name:        imageArtifact.AssetName,
-						Description: fmt.Sprintf("Helm chart for %s", imageArtifact.AssetName),
+						Name:        assetName,
+						Description: fmt.Sprintf("Helm chart for %s", assetName),
 						URI:         imageArtifact.ReleaseImageURI,
 						ImageDigest: imageDigest,
 					}
