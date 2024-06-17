@@ -432,6 +432,7 @@ func (s *Installer) UpgradeInstallCRDs(ctx context.Context, bundle releasev1alph
 	if s.proxyConfig != nil {
 		envMap["NO_PROXY"] = strings.Join(s.proxyConfig.NoProxy, ",")
 	}
+
 	return s.helm.UpgradeInstallChartWithValuesFile(
 		ctx,
 		bundle.TinkerbellStack.TinkerbellCrds.Name,
@@ -441,6 +442,7 @@ func (s *Installer) UpgradeInstallCRDs(ctx context.Context, bundle releasev1alph
 		s.namespace,
 		"",
 		helm.WithProxyConfig(envMap),
+		helm.WithExtraFlags([]string{}),
 	)
 }
 
