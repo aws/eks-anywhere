@@ -133,7 +133,8 @@ func handleManifestUpload(_ context.Context, r *releasetypes.ReleaseConfig, arti
 func handleImageUpload(_ context.Context, r *releasetypes.ReleaseConfig, packagesArtifacts map[string][]releasetypes.Artifact, artifact releasetypes.Artifact, sourceEcrAuthConfig, releaseEcrAuthConfig *docker.AuthConfiguration) error {
 	// If the artifact is a helm chart, skip the skopeo copy. Instead, modify the Chart.yaml to match the release tag
 	// and then use Helm package and push commands to upload chart to ECR Public
-	if !r.DryRun && ((strings.HasSuffix(artifact.Image.AssetName, "helm") && !r.DevRelease) || strings.HasSuffix(artifact.Image.AssetName, "chart")) {
+	// Packages Helm chart modification for dev-release is handled elsewhere, so we are checking for that case and skipping
+	if !r.DryRun && ((strings.HasSuffix(artifact.Image.AssetName, "helm") || strings.HasSuffix(artifact.Image.AssetName, "chart")) && !(artifact.Image.AssetName == "eks-anywhere-packages-helm" && r.DevRelease)) {
 		// Trim -helm on the packages helm chart, but don't need to trim tinkerbell chart since the AssetName is the same as the repoName
 		trimmedAsset := strings.TrimSuffix(artifact.Image.AssetName, "-helm")
 
