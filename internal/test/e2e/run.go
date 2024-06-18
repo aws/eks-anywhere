@@ -172,6 +172,7 @@ func RunTestsInParallel(conf ParallelRunConf) error {
 			"completedInstances", completedInstances,
 			"totalInstances", totalInstances,
 			"succeeded", succeeded,
+			"ssmStatusDetails", r.testCommandResult.StatusDetails(),
 		)
 		putInstanceTestResultMetrics(r)
 	}

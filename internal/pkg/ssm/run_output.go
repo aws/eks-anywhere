@@ -20,3 +20,8 @@ func buildRunOutput(commandOut *ssm.GetCommandInvocationOutput) *RunOutput {
 func (r *RunOutput) Successful() bool {
 	return *r.commandOut.Status == ssm.CommandInvocationStatusSuccess
 }
+
+// StatusDetails returns the status details of the ssm command.
+func (r *RunOutput) StatusDetails() string {
+	return *r.commandOut.StatusDetails
+}
