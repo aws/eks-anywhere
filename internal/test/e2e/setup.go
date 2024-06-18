@@ -285,10 +285,6 @@ func clusterPrefix(branch, instanceId string) (clusterPrefix string) {
 		sanitizedBranch = strings.ReplaceAll(sanitizedBranch, char, "-")
 	}
 
-	if len(sanitizedBranch) > 7 {
-		sanitizedBranch = sanitizedBranch[:7]
-	}
-
 	if len(instanceId) > 7 {
 		instanceId = instanceId[:7]
 	}
@@ -299,9 +295,9 @@ func clusterPrefix(branch, instanceId string) (clusterPrefix string) {
 
 func (e *E2ESession) clusterName(branch, instanceId, testName string) (clusterName string) {
 	clusterName = fmt.Sprintf("%s-%s", clusterPrefix(branch, instanceId), e2etests.GetTestNameHash(testName))
-	if len(clusterName) > 63 {
-		e.logger.Info("Cluster name is longer than 63 characters; truncating to 63 characters.", "original cluster name", clusterName, "truncated cluster name", clusterName[:63])
-		clusterName = clusterName[:63]
+	if len(clusterName) > 35 {
+		e.logger.Info("Cluster name is longer than 35 characters; truncating to 35 characters.", "original cluster name", clusterName, "truncated cluster name", clusterName[:35])
+		clusterName = clusterName[:35]
 	}
 	return clusterName
 }
