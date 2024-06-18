@@ -5,11 +5,14 @@ import (
 	"bytes"
 	"context"
 	"crypto/sha1"
+	"crypto/tls"
 	_ "embed"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net"
+	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -21,6 +24,10 @@ import (
 
 	"github.com/bmc-toolbox/bmclib/v2"
 	"github.com/go-logr/logr"
+	openapiclient "github.com/go-openapi/runtime/client"
+	harborclient "github.com/goharbor/go-client/pkg/sdk/v2.0/client"
+	"github.com/goharbor/go-client/pkg/sdk/v2.0/client/project"
+	"github.com/goharbor/go-client/pkg/sdk/v2.0/client/repository"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -2253,4 +2260,76 @@ func (e *ClusterE2ETest) CreateCloudStackCredentialsSecretFromEnvVar(name, profi
 
 func (e *ClusterE2ETest) addClusterConfigFillers(fillers ...api.ClusterConfigFiller) {
 	e.clusterConfigFillers = append(e.clusterConfigFillers, fillers...)
+}
+
+// CleanupRegistryMirrorRepositories cleans up the registry mirror repositories.
+func (e *ClusterE2ETest) CleanupRegistryMirrorRepositories() {
+	e.T.Log("Cleaning up registry mirror repositories")
+	var endpoint, hostPort, username, password string
+	ctx := context.Background()
+	providerName := e.Provider.Name()
+	switch providerName {
+	case constants.TinkerbellProviderName:
+		if os.Getenv(RegistryEndpointTinkerbellVar) != "" {
+			endpoint = os.Getenv(RegistryEndpointTinkerbellVar)
+			hostPort = net.JoinHostPort(endpoint, os.Getenv(RegistryPortTinkerbellVar))
+			username = os.Getenv(RegistryUsernameTinkerbellVar)
+			password = os.Getenv(RegistryPasswordTinkerbellVar)
+		} else {
+			endpoint = os.Getenv(PrivateRegistryEndpointTinkerbellVar)
+			hostPort = net.JoinHostPort(endpoint, os.Getenv(PrivateRegistryPortTinkerbellVar))
+			username = os.Getenv(PrivateRegistryUsernameTinkerbellVar)
+			password = os.Getenv(PrivateRegistryPasswordTinkerbellVar)
+		}
+	default:
+		if os.Getenv(RegistryEndpointTinkerbellVar) != "" {
+			endpoint = os.Getenv(RegistryEndpointVar)
+			hostPort = net.JoinHostPort(endpoint, os.Getenv(RegistryPortVar))
+			username = os.Getenv(RegistryUsernameVar)
+			password = os.Getenv(RegistryPasswordVar)
+		} else {
+			endpoint = os.Getenv(PrivateRegistryEndpointVar)
+			hostPort = net.JoinHostPort(endpoint, os.Getenv(PrivateRegistryPortVar))
+			username = os.Getenv(PrivateRegistryUsernameVar)
+			password = os.Getenv(PrivateRegistryPasswordVar)
+		}
+	}
+	registry := fmt.Sprintf("https://%s", hostPort)
+	registryURL, _ := url.Parse(fmt.Sprintf("https://%s/api/v2.0", hostPort))
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	config := harborclient.Config{
+		URL:       registryURL,
+		Transport: tr,
+		AuthInfo:  openapiclient.BasicAuth(username, password),
+	}
+	harborAPIClient := harborclient.New(config)
+	projectClient := *harborAPIClient.Project
+	projects, err := projectClient.ListProjects(ctx, project.NewListProjectsParams())
+	if err != nil {
+		e.T.Fatalf("Error getting list of projects in the %s registry: %v", registry, err)
+	}
+	for _, proj := range projects.Payload {
+		projectName := proj.Name
+		repositoryClient := *harborAPIClient.Repository
+		listRepositoriesParams := repository.NewListRepositoriesParams().WithProjectName(projectName)
+		repositories, err := repositoryClient.ListRepositories(ctx, listRepositoriesParams)
+		if err != nil {
+			e.T.Fatalf("Error getting list of repositories in the %s project: %v", projectName, err)
+		}
+		for _, repo := range repositories.Payload {
+			var repositoryName string
+			_, repositoryName, found := strings.Cut(repo.Name, "/")
+			if !found {
+				repositoryName = repo.Name
+			}
+			encodedRepositoryName := strings.ReplaceAll(repositoryName, "/", "%2F")
+			deleteRepositoryParams := repository.NewDeleteRepositoryParams().WithProjectName(projectName).WithRepositoryName(encodedRepositoryName)
+			_, err := repositoryClient.DeleteRepository(ctx, deleteRepositoryParams)
+			if err != nil {
+				e.T.Fatalf("Error deleting %s repository in the %s project: %v", repositoryName, projectName, err)
+			}
+		}
+	}
 }
