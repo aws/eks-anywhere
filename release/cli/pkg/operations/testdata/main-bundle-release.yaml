@@ -744,7 +744,7 @@ spec:
           description: Helm chart for tinkerbell-chart
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: tinkerbell-chart
-          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.2.6-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.2.7-eks-a-v0.0.0-dev-build.1
         tinkerbellCrds:
           description: Helm chart for tinkerbell-crds
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
@@ -1541,7 +1541,7 @@ spec:
           description: Helm chart for tinkerbell-chart
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: tinkerbell-chart
-          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.2.6-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.2.7-eks-a-v0.0.0-dev-build.1
         tinkerbellCrds:
           description: Helm chart for tinkerbell-crds
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
@@ -2338,7 +2338,7 @@ spec:
           description: Helm chart for tinkerbell-chart
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: tinkerbell-chart
-          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.2.6-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.2.7-eks-a-v0.0.0-dev-build.1
         tinkerbellCrds:
           description: Helm chart for tinkerbell-crds
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
@@ -3135,7 +3135,7 @@ spec:
           description: Helm chart for tinkerbell-chart
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: tinkerbell-chart
-          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.2.6-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.2.7-eks-a-v0.0.0-dev-build.1
         tinkerbellCrds:
           description: Helm chart for tinkerbell-crds
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
@@ -3932,7 +3932,7 @@ spec:
           description: Helm chart for tinkerbell-chart
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: tinkerbell-chart
-          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.2.6-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.2.7-eks-a-v0.0.0-dev-build.1
         tinkerbellCrds:
           description: Helm chart for tinkerbell-crds
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
