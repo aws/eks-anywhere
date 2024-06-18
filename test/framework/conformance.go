@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strings"
 
+	versionutil "k8s.io/apimachinery/pkg/util/version"
+
 	"github.com/aws/eks-anywhere/internal/pkg/conformance"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/manifests"
@@ -12,7 +14,11 @@ import (
 	"github.com/aws/eks-anywhere/pkg/version"
 )
 
-const kubeConformanceImage = "registry.k8s.io/conformance"
+const (
+	kubeConformanceImage                  = "registry.k8s.io/conformance"
+	minKubernetesVersionRequiringTestSkip = "v1.29.0"
+	skippedTestName                       = "Services should serve endpoints on same port and different protocols"
+)
 
 func (e *ClusterE2ETest) RunConformanceTests() {
 	ctx := context.Background()
@@ -28,6 +34,17 @@ func (e *ClusterE2ETest) RunConformanceTests() {
 		e.T.Errorf("Error getting EKS-D release KubeVersion from bundle: %v", err)
 		return
 	}
+	kubeVersionSemver, err := versionutil.ParseSemantic(kubeVersion)
+	if err != nil {
+		e.T.Errorf("Error getting semver for Kubernetes version %s: %v", kubeVersion, err)
+		return
+	}
+	k8s129Compare, err := kubeVersionSemver.Compare(minKubernetesVersionRequiringTestSkip)
+	if err != nil {
+		e.T.Errorf("Error comparing cluster Kubernetes version with %s", minKubernetesVersionRequiringTestSkip)
+		return
+	}
+
 	e.T.Log("Downloading Sonobuoy binary for testing")
 	err = conformance.Download()
 	if err != nil {
@@ -36,6 +53,15 @@ func (e *ClusterE2ETest) RunConformanceTests() {
 	}
 	kubeConformanceImageTagged := fmt.Sprintf("%s:%s", kubeConformanceImage, kubeVersion)
 	args := []string{"--kube-conformance-image", kubeConformanceImageTagged}
+	// If running conformance tests for Kubernetes 1.29 or above, skip this particular test
+	// because it will not pass with our deployment of Cilium.
+	// References:
+	// 1. https://github.com/kubernetes/kubernetes/pull/120069
+	// 2. https://github.com/cilium/cilium/issues/29913
+	// 3. https://github.com/cncf/k8s-conformance/pull/3049
+	if k8s129Compare != -1 {
+		args = append(args, fmt.Sprintf("--e2e-skip='%s'", skippedTestName))
+	}
 	e.T.Logf("Running k8s conformance tests with Image: %s", kubeConformanceImageTagged)
 	output, err := conformance.RunTests(ctx, contextName, args...)
 	if err != nil {
