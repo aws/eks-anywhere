@@ -1,0 +1,3 @@
+AMI_OWNER_ID_FILTER=857151390494
+AMI_NAME_FILTER=eksa-integration-test-AL2-*
+AMI_DESCRIPTION_FILTER="*Kernel version 5.X*"
