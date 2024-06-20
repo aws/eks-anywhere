@@ -161,7 +161,7 @@ func (s *Installer) Install(ctx context.Context, bundle releasev1alpha1.Tinkerbe
 		option(s)
 	}
 
-	bootEnv := s.getBootsEnv(bundle.TinkerbellStack, tinkerbellIP)
+	bootEnv := s.getSmeeKernelArgs(bundle.TinkerbellStack)
 
 	osieURI, err := getURIDir(bundle.TinkerbellStack.Hook.Initramfs.Amd.URI)
 	if err != nil {
@@ -232,9 +232,9 @@ func (s *Installer) installBootsOnDocker(ctx context.Context, bundle releasev1al
 		"-e", fmt.Sprintf("BOOTS_KUBE_NAMESPACE=%v", s.namespace),
 	}
 
-	for _, e := range s.getBootsEnv(bundle, tinkServerIP) {
-		flags = append(flags, "-e", fmt.Sprintf("%s=%s", e["name"], e["value"]))
-	}
+	extraKernelArgList := s.getSmeeKernelArgs(bundle)
+	extraKernelArgs := strings.Join(extraKernelArgList, " ")
+	flags = append(flags, "-e", fmt.Sprintf("%s=%s", "SMEE_EXTRA_KERNEL_ARGS", extraKernelArgs))
 
 	osiePath, err := getURIDir(bundle.Hook.Initramfs.Amd.URI)
 	if err != nil {
@@ -258,38 +258,32 @@ func (s *Installer) installBootsOnDocker(ctx context.Context, bundle releasev1al
 	return nil
 }
 
-func (s *Installer) getBootsEnv(bundle releasev1alpha1.TinkerbellStackBundle, tinkServerIP string) []map[string]string {
-	env := []map[string]string{
-		toEnvEntry("DATA_MODEL_VERSION", "kubernetes"),
-		toEnvEntry("TINKERBELL_TLS", "false"),
+func (s *Installer) getSmeeKernelArgs(bundle releasev1alpha1.TinkerbellStackBundle) []string {
+	extraKernelArgs := []string{}
+	if s.bootsOnDocker {
+		extraKernelArgs = append(extraKernelArgs, fmt.Sprintf("tink_worker_image=%s", s.localRegistryURL(bundle.Tink.TinkWorker.URI)))
 	}
-
-	extraKernelArgs := fmt.Sprintf("tink_worker_image=%s", s.localRegistryURL(bundle.Tink.TinkWorker.URI))
 
 	if s.registryMirror != nil {
 		localRegistry := s.registryMirror.BaseRegistry
-		extraKernelArgs = fmt.Sprintf("%s insecure_registries=%s", extraKernelArgs, localRegistry)
+		extraKernelArgs = append(extraKernelArgs, fmt.Sprintf("insecure_registries=%s", localRegistry))
 		if s.registryMirror.Auth {
 			username, password, _ := config.ReadCredentials()
-			env = append(env,
-				toEnvEntry("REGISTRY_USERNAME", username),
-				toEnvEntry("REGISTRY_PASSWORD", password))
+			username = fmt.Sprintf("registry_username=%s", username)
+			password = fmt.Sprintf("registry_password=%s", password)
+			extraKernelArgs = append(extraKernelArgs, username, password)
 		}
 	}
 
 	if s.proxyConfig != nil {
 		noProxy := strings.Join(s.proxyConfig.NoProxy, ",")
-		extraKernelArgs = fmt.Sprintf("%s HTTP_PROXY=%s HTTPS_PROXY=%s NO_PROXY=%s", extraKernelArgs, s.proxyConfig.HttpProxy, s.proxyConfig.HttpsProxy, noProxy)
+		httpProxy := fmt.Sprintf("HTTP_PROXY=%s", s.proxyConfig.HttpProxy)
+		httpsProxy := fmt.Sprintf("HTTPS_PROXY=%s", s.proxyConfig.HttpsProxy)
+		noProxy = fmt.Sprintf("NO_PROXY=%s", noProxy)
+		extraKernelArgs = append(extraKernelArgs, httpProxy, httpsProxy, noProxy)
 	}
 
-	return append(env, toEnvEntry("SMEE_EXTRA_KERNEL_ARGS", extraKernelArgs))
-}
-
-func toEnvEntry(k, v string) map[string]string {
-	return map[string]string{
-		"name":  k,
-		"value": v,
-	}
+	return extraKernelArgs
 }
 
 // UninstallLocal currently removes local docker container running Boots.
@@ -363,7 +357,7 @@ func (s *Installer) Upgrade(ctx context.Context, bundle releasev1alpha1.Tinkerbe
 		option(s)
 	}
 
-	bootEnv := s.getBootsEnv(bundle.TinkerbellStack, tinkerbellIP)
+	bootEnv := s.getSmeeKernelArgs(bundle.TinkerbellStack)
 
 	osieURI, err := getURIDir(bundle.TinkerbellStack.Hook.Initramfs.Amd.URI)
 	if err != nil {
@@ -514,7 +508,7 @@ func (s *Installer) HasLegacyChart(ctx context.Context, bundle releasev1alpha1.T
 }
 
 // createValuesOverride generates the values override file to send to helm.
-func (s *Installer) createValuesOverride(bundle releasev1alpha1.TinkerbellBundle, bootEnv []map[string]string, tinkerbellIP string, osiePath *url.URL) map[string]interface{} {
+func (s *Installer) createValuesOverride(bundle releasev1alpha1.TinkerbellBundle, bootEnv []string, tinkerbellIP string, osiePath *url.URL) map[string]interface{} {
 	valuesMap := map[string]interface{}{
 		tink: map[string]interface{}{
 			controller: map[string]interface{}{
@@ -531,10 +525,9 @@ func (s *Installer) createValuesOverride(bundle releasev1alpha1.TinkerbellBundle
 			},
 		},
 		smee: map[string]interface{}{
-			deploy:        !s.bootsOnDocker,
-			image:         bundle.TinkerbellStack.Boots.URI,
-			additionalEnv: bootEnv,
-			"publicIP":    tinkerbellIP,
+			deploy:     !s.bootsOnDocker,
+			image:      bundle.TinkerbellStack.Boots.URI,
+			"publicIP": tinkerbellIP,
 			"trustedProxies": []string{
 				s.podCidrRange,
 			},
@@ -549,6 +542,7 @@ func (s *Installer) createValuesOverride(bundle releasev1alpha1.TinkerbellBundle
 					"port":   osiePath.Port(),
 					"path":   osiePath.Path,
 				},
+				"additionalKernelArgs": bootEnv,
 			},
 			"hostNetwork":     true,
 			"tinkWorkerImage": s.localRegistryURL(bundle.TinkerbellStack.Tink.TinkWorker.URI),

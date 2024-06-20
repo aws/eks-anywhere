@@ -229,8 +229,6 @@ func TestTinkerbellStackInstallWithDifferentOptions(t *testing.T) {
 					"-e", gomock.Any(),
 					"-e", gomock.Any(),
 					"-e", gomock.Any(),
-					"-e", gomock.Any(),
-					"-e", gomock.Any(),
 				)
 			}
 
