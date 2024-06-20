@@ -7,17 +7,13 @@ rufio:
   - -metrics-bind-address=127.0.0.1:8080
   image: public.ecr.aws/eks-anywhere/rufio:latest
 smee:
-  additionalEnv:
-  - name: DATA_MODEL_VERSION
-    value: kubernetes
-  - name: TINKERBELL_TLS
-    value: "false"
-  - name: SMEE_EXTRA_KERNEL_ARGS
-    value: tink_worker_image=public.ecr.aws/eks-anywhere/tink-worker:latest HTTP_PROXY=1.2.3.4:3128
-      HTTPS_PROXY=1.2.3.4:3128 NO_PROXY=
   deploy: true
   hostNetwork: true
   http:
+    additionalKernelArgs:
+    - HTTP_PROXY=1.2.3.4:3128
+    - HTTPS_PROXY=1.2.3.4:3128
+    - NO_PROXY=
     osieUrl:
       host: anywhere-assests.eks.amazonaws.com
       path: /tinkerbell/hook
