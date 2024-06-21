@@ -57,7 +57,8 @@ func (n *CloudStackIsolatedNetwork) Network() *Network {
 	return &Network{
 		Name: n.Spec.Name,
 		Type: "IsolatedNetwork",
-		ID:   n.Spec.ID}
+		ID:   n.Spec.ID,
+	}
 }
 
 //+kubebuilder:object:root=true
