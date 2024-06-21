@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
@@ -137,6 +138,13 @@ func WithControlPlaneAPIServerExtraArgs() ClusterFiller {
 	}
 }
 
+// WithControlPlaneKubeletConfig adds the Kubelet config to the control plane in cluster spec.
+func WithControlPlaneKubeletConfig(kc *unstructured.Unstructured) ClusterFiller {
+	return func(c *anywherev1.Cluster) {
+		c.Spec.ControlPlaneConfiguration.KubeletConfiguration = kc
+	}
+}
+
 // RemoveAllAPIServerExtraArgs removes all the API server flags from the cluster spec.
 func RemoveAllAPIServerExtraArgs() ClusterFiller {
 	return func(c *anywherev1.Cluster) {
@@ -183,6 +191,16 @@ func workerNodeWithKubernetesVersion(name string, version *anywherev1.Kubernetes
 		Name:              name,
 		Count:             ptr.Int(1),
 		KubernetesVersion: version,
+	}
+}
+
+// WithWorkerNodeKubeletConfig adds the Kubelet config to the worker node groups in cluster spec.
+func WithWorkerNodeKubeletConfig(kc *unstructured.Unstructured) ClusterFiller {
+	return func(c *anywherev1.Cluster) {
+		if len(c.Spec.WorkerNodeGroupConfigurations) == 0 {
+			c.Spec.WorkerNodeGroupConfigurations = []anywherev1.WorkerNodeGroupConfiguration{{}}
+		}
+		c.Spec.WorkerNodeGroupConfigurations[0].KubeletConfiguration = kc
 	}
 }
 

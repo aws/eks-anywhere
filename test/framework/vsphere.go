@@ -413,6 +413,12 @@ func (v *VSphere) WithUbuntu128() api.ClusterConfigFiller {
 	return v.WithKubeVersionAndOS(anywherev1.Kube128, Ubuntu2004, nil)
 }
 
+// WithUbuntu129 returns a cluster config filler that sets the kubernetes version of the cluster to 1.29
+// as well as the right ubuntu template and osFamily for all VSphereMachineConfigs.
+func (v *VSphere) WithUbuntu129() api.ClusterConfigFiller {
+	return v.WithKubeVersionAndOS(anywherev1.Kube129, Ubuntu2004, nil)
+}
+
 // WithUbuntu130 returns a cluster config filler that sets the kubernetes version of the cluster to 1.30
 // as well as the right ubuntu template and osFamily for all VSphereMachineConfigs.
 func (v *VSphere) WithUbuntu130() api.ClusterConfigFiller {
