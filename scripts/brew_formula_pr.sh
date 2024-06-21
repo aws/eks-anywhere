@@ -32,8 +32,6 @@ By submitting this pull request, I confirm that you can use, modify, copy, and r
 EOF
 )
 
-cd ${SCRIPT_ROOT}/
-cd ../../
 gh auth login --with-token < /secrets/github-secrets/token
 
 cd ${SCRIPT_ROOT}
@@ -44,7 +42,7 @@ then
   exit 1
 fi
 
-LATEST_VERSION=$(echo $(/home/prow/go/src/github.com/aws/eks-anywhere/scripts/$BREW_UPDATE_SCRIPT))
+LATEST_VERSION=$(echo $($SCRIPT_ROOT/$BREW_UPDATE_SCRIPT))
 
 cd ${SCRIPT_ROOT}/../../../${ORIGIN_ORG}/${REPO}
 git config --global push.default current
@@ -62,7 +60,7 @@ PR_BRANCH="eks-anywhere-formula-update"
 git checkout -b $PR_BRANCH
 
 git diff
-git add Formula/eks-anywhere.rb
+git add Formula/eks-anywhere*.rb
 # If some other files get modified, the changes should be ignored
 git restore .
 FILES_ADDED=$(git diff --staged --name-only)
