@@ -23,5 +23,9 @@ func (r *RunOutput) Successful() bool {
 
 // StatusDetails returns the status details of the ssm command.
 func (r *RunOutput) StatusDetails() string {
+	// handle nil pointer
+	if r.commandOut == nil {
+		return "NoCommandOutput"
+	}
 	return *r.commandOut.StatusDetails
 }
