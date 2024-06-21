@@ -54,7 +54,7 @@ func GetIP(cidr, ipEnvVar string) (string, error) {
 	} else {
 		ip, err = GenerateUniqueIp(cidr)
 		if err != nil {
-			return "", fmt.Errorf("failed to generate ip for cidr %s: %v", cidr, err)
+			return "", fmt.Errorf("GenerateUniqueIp() failed to generate ip for cidr %s: %v", cidr, err)
 		}
 	}
 	return ip, nil
