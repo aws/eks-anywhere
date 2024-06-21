@@ -209,3 +209,35 @@ function build::common::re_quote() {
     local -r to_escape=$1
     sed 's/[][()\.^$\/?*+]/\\&/g' <<< "$to_escape"
 }
+
+# This function returns all release branches of EKS Anywhere from GitHub.
+function build::common::get_release_branches() {
+  echo "$(git ls-remote https://github.com/aws/eks-anywhere.git | grep -oE 'refs/heads/release-[0-9]+\.[0-9]+' | xargs -I_ echo _ | cut -d/ -f3)"
+}
+
+# This function returns the two latest release branches of EKS Anywhere,
+# that is, release branches for versions N and N-1 in that order.
+function build::common::get_latest_release_branches() {
+  local -r release_branches=("$@")
+
+  latest_minor=0
+  for branch in "${release_branches[@]}"; do
+    minor_version=${branch##release-0.}
+    if [ $minor_version -gt $latest_minor ] && [ "$(get_latest_release_for_release_branch $branch)" != "" ]; then
+      latest_minor=$minor_version
+    fi
+  done
+
+  echo "release-0.${latest_minor} release-0.$(($latest_minor-1))"
+}
+
+# This function returns the latest release version for the given release branch
+# by parsing the EKS Anywhere releases manifest.
+function build::common::get_latest_release_for_release_branch() {
+  release_branch=$1
+
+  minor_version="v${release_branch##release-}"
+  latest_release=$(curl --silent "https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml" | yq ".spec.releases[].version" | grep $minor_version | tail -1)
+
+  echo $latest_release
+}
