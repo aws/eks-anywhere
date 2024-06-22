@@ -68,21 +68,21 @@ func runInPlaceUpgradeFromReleaseFlow(test *framework.ClusterE2ETest, latestRele
 
 // runMulticlusterUpgradeFromReleaseFlowAPI tests the ability to create workload clusters with an old Bundle in a management cluster
 // that has been updated to a new Bundle. It follows the following steps:
-// 1. Create a management cluster with the old Bundle.
-// 2. Create workload clusters with the old Bundle.
-// 3. Upgrade the management cluster to the new Bundle and new Kubernetes version (newVersion).
-// 4. Upgrade the workload clusters to the new Bundle and new Kubernetes version (newVersion).
-// 5. Delete the workload clusters.
-// 6. Re-create the workload clusters with the old Bundle and previous Kubernetes version (oldVersion). It's necessary to sometimes
-//    use a different kube version because the old Bundle might not support the new kubernetes version.
-// 7. Delete the workload clusters.
-// 8. Delete the management cluster.
+//  1. Create a management cluster with the old Bundle.
+//  2. Create workload clusters with the old Bundle.
+//  3. Upgrade the management cluster to the new Bundle and new Kubernetes version (newVersion).
+//  4. Upgrade the workload clusters to the new Bundle and new Kubernetes version (newVersion).
+//  5. Delete the workload clusters.
+//  6. Re-create the workload clusters with the old Bundle and previous Kubernetes version (oldVersion). It's necessary to sometimes
+//     use a different kube version because the old Bundle might not support the new kubernetes version.
+//  7. Delete the workload clusters.
+//  8. Delete the management cluster.
 func runMulticlusterUpgradeFromReleaseFlowAPI(test *framework.MulticlusterE2ETest, release *releasev1.EksARelease, oldVersion, newVersion anywherev1.KubernetesVersion, os framework.OS) {
 	provider := test.ManagementCluster.Provider
 	// 1. Create management cluster
 	test.CreateManagementCluster(framework.ExecuteWithEksaRelease(release))
 
-	// 2. Create workload clusters with the old Bundle  
+	// 2. Create workload clusters with the old Bundle
 	test.RunConcurrentlyInWorkloadClusters(func(wc *framework.WorkloadCluster) {
 		wc.CreateCluster(framework.ExecuteWithEksaRelease(release))
 		wc.ValidateCluster(wc.ClusterConfig.Cluster.Spec.KubernetesVersion)
