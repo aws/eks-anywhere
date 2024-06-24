@@ -165,7 +165,7 @@ func CreateStagingReleaseClients() (*SourceClients, *ReleaseClients, error) {
 
 	// Release S3 client and uploader
 	releaseS3Client := s3.New(releaseSession)
-	downloader := s3manager.NewDownloader(releaseSession)
+	downloader := s3manager.NewDownloader(sourceSession)
 	uploader := s3manager.NewUploader(releaseSession)
 
 	// Get source ECR auth config
@@ -242,7 +242,7 @@ func CreateProdReleaseClients() (*SourceClients, *ReleaseClients, error) {
 
 	// Release S3 client and uploader
 	releaseS3Client := s3.New(releaseSession)
-	downloader := s3manager.NewDownloader(releaseSession)
+	downloader := s3manager.NewDownloader(sourceSession)
 	uploader := s3manager.NewUploader(releaseSession)
 
 	// Get source ECR Public auth config
