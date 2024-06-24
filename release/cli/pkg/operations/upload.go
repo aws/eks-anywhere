@@ -22,7 +22,6 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	docker "github.com/fsouza/go-dockerclient"
-	"github.com/pkg/errors"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/aws/eks-anywhere/release/cli/pkg/aws/s3"
@@ -94,7 +93,7 @@ func handleArchiveUpload(_ context.Context, r *releasetypes.ReleaseConfig, artif
 	key := filepath.Join(artifact.Archive.ReleaseS3Path, artifact.Archive.ReleaseName)
 	err := s3.UploadFile(archiveFile, aws.String(r.ReleaseBucket), aws.String(key), r.ReleaseClients.S3.Uploader, artifact.Archive.Private)
 	if err != nil {
-		return errors.Cause(err)
+		return fmt.Errorf("uploading archive file [%s] to S3: %v", key, err)
 	}
 
 	checksumExtensions := []string{".sha256", ".sha512"}
@@ -111,7 +110,7 @@ func handleArchiveUpload(_ context.Context, r *releasetypes.ReleaseConfig, artif
 		key := filepath.Join(artifact.Archive.ReleaseS3Path, artifact.Archive.ReleaseName) + extension
 		err := s3.UploadFile(checksumFile, aws.String(r.ReleaseBucket), aws.String(key), r.ReleaseClients.S3.Uploader, artifact.Archive.Private)
 		if err != nil {
-			return errors.Cause(err)
+			return fmt.Errorf("uploading checksum file [%s] to S3: %v", key, err)
 		}
 	}
 
@@ -124,7 +123,7 @@ func handleManifestUpload(_ context.Context, r *releasetypes.ReleaseConfig, arti
 	key := filepath.Join(artifact.Manifest.ReleaseS3Path, artifact.Manifest.ReleaseName)
 	err := s3.UploadFile(manifestFile, aws.String(r.ReleaseBucket), aws.String(key), r.ReleaseClients.S3.Uploader, artifact.Manifest.Private)
 	if err != nil {
-		return errors.Cause(err)
+		return fmt.Errorf("uploading manifest file [%s] to S3: %v", key, err)
 	}
 
 	return nil
@@ -161,7 +160,7 @@ func handleImageUpload(_ context.Context, r *releasetypes.ReleaseConfig, package
 		fmt.Printf("Destination Image - %s\n", releaseImageUri)
 		err := images.CopyToDestination(sourceEcrAuthConfig, releaseEcrAuthConfig, sourceImageUri, releaseImageUri)
 		if err != nil {
-			return fmt.Errorf("copying image from source to destination: %v", err)
+			return fmt.Errorf("copying image from source [%s] to destination [%s]: %v", sourceImageUri, releaseImageUri, err)
 		}
 	}
 

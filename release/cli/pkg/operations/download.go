@@ -126,7 +126,7 @@ func handleArchiveDownload(_ context.Context, r *releasetypes.ReleaseConfig, art
 
 		err = s3.DownloadFile(objectLocalFilePath, r.SourceBucket, objectKey, s3Downloader, artifact.Archive.Private)
 		if err != nil {
-			return errors.Cause(err)
+			return fmt.Errorf("downloading archive file [%s] from S3: %v", objectKey, err)
 		}
 
 		// Download checksum files for the archive
@@ -180,7 +180,7 @@ func handleArchiveDownload(_ context.Context, r *releasetypes.ReleaseConfig, art
 
 			err = s3.DownloadFile(objectShasumFileLocalFilePath, r.SourceBucket, objectShasumFileKey, s3Downloader, artifact.Archive.Private)
 			if err != nil {
-				return errors.Cause(err)
+				return fmt.Errorf("downloading checksum file [%s] from S3: %v", objectShasumFileKey, err)
 			}
 		}
 	}
@@ -223,7 +223,7 @@ func handleManifestDownload(_ context.Context, r *releasetypes.ReleaseConfig, ar
 
 	err = s3.DownloadFile(objectLocalFilePath, r.SourceBucket, objectKey, s3Downloader, artifact.Manifest.Private)
 	if err != nil {
-		return errors.Cause(err)
+		return fmt.Errorf("downloading manifest file [%s] from S3: %v", objectKey, err)
 	}
 
 	return nil
