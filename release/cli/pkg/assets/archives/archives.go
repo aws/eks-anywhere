@@ -150,6 +150,7 @@ func RTOSArtifactPathGetter(rc *releasetypes.ReleaseConfig, archive *assettypes.
 	var sourceS3Prefix string
 	var releaseS3Path string
 	var releaseName string
+	eksDReleaseChannel = "1-29" // hardcoding because we vend RTOS artifacts only for 1-29 release branch
 
 	imageExtensions := map[string]string{
 		"ami": "gz",
