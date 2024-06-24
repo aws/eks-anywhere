@@ -123,7 +123,6 @@ func (p *Provider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *
 	}
 
 	if p.clusterConfig.IsManaged() {
-
 		// Update stack helm enviorment variable NO_PROXY value and append management cluster's Control plane Endpoint IP in case of workload cluster upgrade
 		if clusterSpec.Cluster.Spec.ProxyConfiguration != nil {
 			managementCluster, err := p.providerKubectlClient.GetEksaCluster(ctx, clusterSpec.ManagementCluster, clusterSpec.Cluster.Spec.ManagementCluster.Name)
