@@ -73,7 +73,7 @@ func handleArchiveRename(_ context.Context, r *releasetypes.ReleaseConfig, artif
 		fmt.Printf("Renaming archive - %s\n", newArtifactFile)
 		err := os.Rename(oldArtifactFile, newArtifactFile)
 		if err != nil {
-			return errors.Cause(err)
+			return fmt.Errorf("renaming archive file [%s] to [%s]: %v", oldArtifactFile, newArtifactFile, err)
 		}
 
 		// Change the names of the checksum files
@@ -92,7 +92,7 @@ func handleArchiveRename(_ context.Context, r *releasetypes.ReleaseConfig, artif
 			fmt.Printf("Renaming checksum file - %s\n", newChecksumFile)
 			err = os.Rename(oldChecksumFile, newChecksumFile)
 			if err != nil {
-				return errors.Cause(err)
+				return fmt.Errorf("renaming checksum file [%s] to [%s]: %v", oldChecksumFile, newChecksumFile, err)
 			}
 		}
 	}
@@ -107,7 +107,7 @@ func handleManifestRename(_ context.Context, r *releasetypes.ReleaseConfig, arti
 	fmt.Printf("Renaming manifest - %s\n", newArtifactFile)
 	err := os.Rename(oldArtifactFile, newArtifactFile)
 	if err != nil {
-		return errors.Cause(err)
+		return fmt.Errorf("renaming manifest file [%s] to [%s]: %v", oldArtifactFile, newArtifactFile, err)
 	}
 
 	for _, imageTagOverride := range manifestArtifact.ImageTagOverrides {
