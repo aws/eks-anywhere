@@ -79,6 +79,7 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 				OSVersion:           "22.04",
 				ArchiveS3PathGetter: archives.RTOSArtifactPathGetter,
 				Private:             true,
+				UploadToRTOSBucket:  true,
 			},
 		},
 	},
