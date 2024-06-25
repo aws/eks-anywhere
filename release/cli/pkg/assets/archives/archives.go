@@ -223,20 +223,21 @@ func GetArchiveAssets(rc *releasetypes.ReleaseConfig, archive *assettypes.Archiv
 	}
 
 	archiveArtifact := &releasetypes.ArchiveArtifact{
-		SourceS3Key:       sourceS3Key,
-		SourceS3Prefix:    sourceS3Prefix,
-		ArtifactPath:      filepath.Join(rc.ArtifactDir, fmt.Sprintf("%s-%s", archive.Name, archive.Format), eksDReleaseChannel, rc.BuildRepoHead),
-		ReleaseName:       releaseName,
-		ReleaseS3Path:     releaseS3Path,
-		ReleaseCdnURI:     cdnURI,
-		OS:                os,
-		OSName:            archive.OSName,
-		Arch:              []string{arch},
-		GitTag:            gitTag,
-		ProjectPath:       projectPath,
-		SourcedFromBranch: sourcedFromBranch,
-		ImageFormat:       archive.Format,
-		Private:           archive.Private,
+		SourceS3Key:        sourceS3Key,
+		SourceS3Prefix:     sourceS3Prefix,
+		ArtifactPath:       filepath.Join(rc.ArtifactDir, fmt.Sprintf("%s-%s", archive.Name, archive.Format), eksDReleaseChannel, rc.BuildRepoHead),
+		ReleaseName:        releaseName,
+		ReleaseS3Path:      releaseS3Path,
+		ReleaseCdnURI:      cdnURI,
+		OS:                 os,
+		OSName:             archive.OSName,
+		Arch:               []string{arch},
+		GitTag:             gitTag,
+		ProjectPath:        projectPath,
+		SourcedFromBranch:  sourcedFromBranch,
+		ImageFormat:        archive.Format,
+		Private:            archive.Private,
+		UploadToRTOSBucket: archive.UploadToRTOSBucket,
 	}
 
 	return archiveArtifact, nil
