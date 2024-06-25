@@ -5995,7 +5995,7 @@ func TestVSphereKubernetes129to130UbuntuEtcdScaleDown(t *testing.T) {
 }
 
 // Kubelet Configuration e2e tests
-func TestVSphereKubernetes129KubeletConfigurationSimpleFlow(t *testing.T) {
+func TestVSphereKubernetes129UbuntuKubeletConfiguration(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewVSphere(t, framework.WithUbuntu129()),
@@ -6005,10 +6005,30 @@ func TestVSphereKubernetes129KubeletConfigurationSimpleFlow(t *testing.T) {
 	runKubeletConfigurationFlow(test)
 }
 
-func TestVSphereKubernetes130KubeletConfigurationSimpleFlow(t *testing.T) {
+func TestVSphereKubernetes130UbuntuKubeletConfiguration(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewVSphere(t, framework.WithUbuntu130()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube130)),
+		framework.WithKubeletConfig(),
+	)
+	runKubeletConfigurationFlow(test)
+}
+
+func TestVSphereKubernetes129BottlerocketKubeletConfiguration(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewVSphere(t, framework.WithBottleRocket129()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube129)),
+		framework.WithKubeletConfig(),
+	)
+	runKubeletConfigurationFlow(test)
+}
+
+func TestVSphereKubernetes130BottlerocketKubeletConfiguration(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewVSphere(t, framework.WithBottleRocket130()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube130)),
 		framework.WithKubeletConfig(),
 	)
