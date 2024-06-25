@@ -43,6 +43,8 @@ func (w *WorkloadCluster) DeleteCluster(opts ...CommandOpt) {
 func (w *WorkloadCluster) ApplyClusterManifest() {
 	ctx := context.Background()
 	w.T.Logf("Applying workload cluster %s spec located at %s", w.ClusterName, w.ClusterConfigLocation)
+	dumpFile("Workload cluster file content:", w.ClusterConfigLocation, w.T)
+
 	if err := w.KubectlClient.ApplyManifest(ctx, w.ManagementClusterKubeconfigFile(), w.ClusterConfigLocation); err != nil {
 		w.T.Fatalf("Failed to apply workload cluster config: %s", err)
 	}
