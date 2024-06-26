@@ -54,6 +54,19 @@ func CliGitTagAssigner(rc *releasetypes.ReleaseConfig, gitTagPath, overrideBranc
 	return gitTag, nil
 }
 
+func RTOSReleaseDateAssigner(rc *releasetypes.ReleaseConfig, rtosImageDatePath, overrideBranch string) (string, error) {
+	branchName := rc.BuildRepoBranchName
+	if overrideBranch != "" {
+		branchName = overrideBranch
+	}
+	releaseDate, err := filereader.ReadRTOSImageDate(rtosImageDatePath, rc.BuildRepoSource, branchName)
+	if err != nil {
+		return "", errors.Cause(err)
+	}
+
+	return releaseDate, nil
+}
+
 func NonExistentTagAssigner(rc *releasetypes.ReleaseConfig, gitTagPath, overrideBranch string) (string, error) {
 	return "non-existent", nil
 }
