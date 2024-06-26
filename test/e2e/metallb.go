@@ -222,8 +222,10 @@ spec:
 			ipTwo := "10.100.0.1"
 			ipTwoSub := ipTwo + "/32"
 			t.Cleanup(func() {
-				test.UninstallCuratedPackage(packagePrefix)
-				test.UninstallCuratedPackage(packageCrdName)
+				if !t.Failed() {
+					test.UninstallCuratedPackage(packagePrefix)
+					test.UninstallCuratedPackage(packageCrdName)
+				}
 			})
 			test.CreateResource(ctx, fmt.Sprintf(
 				`
@@ -317,7 +319,7 @@ spec:
 				t.Fatal(err)
 			}
 
-			expectedBGPPeer := `{"keepaliveTime":"30s","myASN":123,"peerASN":55001,"peerAddress":"12.2.4.2","peerPort":179}`
+			expectedBGPPeer := `{"disableMP":false,"keepaliveTime":"30s","myASN":123,"peerASN":55001,"peerAddress":"12.2.4.2","peerPort":179}`
 			err = WaitForResource(
 				test,
 				ctx,
