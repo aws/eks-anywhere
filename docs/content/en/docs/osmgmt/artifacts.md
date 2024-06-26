@@ -29,8 +29,10 @@ See descriptions of the [`osImageURL`]({{< relref "../getting-started/baremetal/
 
 ### Ubuntu or RHEL OS images for Bare Metal
 
-EKS Anywhere does not distribute Ubuntu or RHEL OS images.
-However, see [Building node images]({{< relref "#building-node-images">}}) for information on how to build EKS Anywhere images from those Linux distributions.  Note:  if you utilize your Admin Host to build images, you will need to review  the DHCP integration provided by Libvirtd and ensure it is disabled.  If the Libvirtd DHCP is enabled, the "boots container" will detect a port conflict and terminate.
+Generally speaking, EKS Anywhere does not distribute Ubuntu or RHEL OS images<sup>*</sup>.
+However, see [Building node images]({{< relref "#building-node-images">}}) for information on how to build EKS Anywhere images from those Linux distributions. Note: if you utilize your Admin Host to build images, you will need to review the DHCP integration provided by Libvirtd and ensure it is disabled. If the Libvirtd DHCP is enabled, the "boots container" will detect a port conflict and terminate.
+
+<sup>*</sup>Starting from version v0.20.0, EKS Anywhere will distribute Real-time Ubuntu images. Refer to the [Ubuntu RTOS]({{< relref "rtos" >}}) documentation to learn more.
 
 ### Bottlerocket OS images for Bare Metal
 
@@ -345,7 +347,7 @@ cd /tmp
 BUNDLE_MANIFEST_URL=$(curl -s https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml | yq ".spec.releases[] | select(.version==\"$EKSA_RELEASE_VERSION\").bundleManifestUrl")
 IMAGEBUILDER_TARBALL_URI=$(curl -s $BUNDLE_MANIFEST_URL | yq ".spec.versionsBundles[0].eksD.imagebuilder.uri")
 curl -s $IMAGEBUILDER_TARBALL_URI | tar xz ./image-builder
-sudo install -m 0755 ./image-builder /usr/local/bin/image-builder   
+sudo install -m 0755 ./image-builder /usr/local/bin/image-builder
 cd -
 ```
 
@@ -905,7 +907,7 @@ These steps use `image-builder` to create a Ubuntu-based image for Nutanix AHV a
    * Once you have Python 3.9, you can install Ansible using `pip`.
      ```bash
      python3 -m pip install --user ansible
-     ``` 
+     ```
 1. Create a `nutanix.json` config file. More details on values can be found in the [image-builder documentation](https://image-builder.sigs.k8s.io/capi/providers/nutanix.html). See example below:
    ```json
    {
@@ -1110,7 +1112,7 @@ Run `image-builder` CLI with the hypervisor configuration file
 
 While building Red Hat node images, `image-builder` uses public Red Hat subscription endpoints to register the build virtual machine with the provided Red Hat account and download required packages.
 
-Alternatively, `image-builder` can also use a private Red Hat Satellite to register the build virtual machine and pull packages from the Satellite. 
+Alternatively, `image-builder` can also use a private Red Hat Satellite to register the build virtual machine and pull packages from the Satellite.
 In order to use Red Hat Satellite in the image build process follow the steps below.
 
 #### Prerequisites
@@ -1143,10 +1145,10 @@ In order to use Red Hat Satellite in the image build process follow the steps be
 
 #### Prerequisites
 1. Air-gapped image building requires
-   - private artifacts server e.g. artifactory from JFrog 
-   - private git server. 
-3. Ensure the host running `image-builder` has bi-directional network connectivity with the artifacts server and git server 
-4. Artifacts server should have the ability to host and serve, standalone artifacts and Ubuntu OS packages 
+   - private artifacts server e.g. artifactory from JFrog
+   - private git server.
+3. Ensure the host running `image-builder` has bi-directional network connectivity with the artifacts server and git server
+4. Artifacts server should have the ability to host and serve, standalone artifacts and Ubuntu OS packages
 
 #### Building node images in an air-gapped environment
 1. Identify the EKS-D release channel (generally aligning with Kubernetes version) to build. For example, 1.27 or 1.28
