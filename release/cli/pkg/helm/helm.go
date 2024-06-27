@@ -246,7 +246,7 @@ func PushHelmChart(packaged, URI string) error {
 	fmt.Println(out)
 
 	if err != nil {
-		return fmt.Errorf("running Helm push command on URI %s: %v", URI, err)
+		return fmt.Errorf("running Helm push command on chart %s with destination URI %s: %v", packaged, URI, err)
 	}
 	return nil
 }
