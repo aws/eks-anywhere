@@ -75,4 +75,4 @@ Installing new eksa components
 🎉 Management components upgraded!
 ```
 
-At this point, a new `eksaVersion` custom resource will be available in your management cluster, which means new cluster components that correspond to the `eksaVersion` are available for cluster upgrades. You can subsequently run a workload cluster upgrade with the `eksctl anywhere upgrade cluster command`, or by updating `eksaVersion` field in your workload cluster's spec and applying it to your management cluster with Kubernetes API-compatible tooling such as kubectl, GitOps, or Terraform.
+At this point, a new `EKSARelease` custom resource will be available in your management cluster, which means new cluster components that correspond to the `eksaVersion` are available for cluster upgrades. You can subsequently run a workload cluster upgrade with the `eksctl anywhere upgrade cluster command`, or by updating `eksaVersion` field in your workload cluster's spec and applying it to your management cluster with Kubernetes API-compatible tooling such as kubectl, GitOps, or Terraform.
