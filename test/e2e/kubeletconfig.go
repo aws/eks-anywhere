@@ -9,6 +9,7 @@ import (
 
 func runKubeletConfigurationFlow(test *framework.ClusterE2ETest) {
 	test.GenerateClusterConfig()
+	test.GenerateHardwareConfig()
 	test.CreateCluster()
 	test.ValidateKubeletConfig()
 	test.StopIfFailed()
