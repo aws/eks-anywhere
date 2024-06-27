@@ -150,6 +150,7 @@ func RTOSArtifactPathGetter(rc *releasetypes.ReleaseConfig, archive *assettypes.
 	var sourceS3Prefix string
 	var releaseS3Path string
 	var releaseName string
+	releaseDate := gitTag
 	eksDReleaseChannel = "1-29" // hardcoding because we vend RTOS artifacts only for 1-29 release branch
 
 	imageExtensions := map[string]string{
@@ -163,20 +164,22 @@ func RTOSArtifactPathGetter(rc *releasetypes.ReleaseConfig, archive *assettypes.
 		sourceS3Key = fmt.Sprintf("%s.%s", archive.OSName, imageExtension)
 		sourceS3Prefix = fmt.Sprintf("%s/%s", projectPath, latestPath)
 	} else {
-		sourceS3Key = fmt.Sprintf("%s-%s-eks-a-%d-%s.%s",
+		sourceS3Key = fmt.Sprintf("%s-%s-%s-eks-a-%d-%s.%s",
 			archive.OSName,
 			eksDReleaseChannel,
+			releaseDate,
 			rc.BundleNumber,
 			arch,
 			imageExtension,
 		)
-		sourceS3Prefix = fmt.Sprintf("releases/bundles/%d/artifacts/rtos/%s", rc.BundleNumber, eksDReleaseChannel)
+		sourceS3Prefix = fmt.Sprintf("releases/canonical/%s/artifacts/rtos/%s", releaseDate, eksDReleaseChannel)
 	}
 
 	if rc.DevRelease {
-		releaseName = fmt.Sprintf("%s-%s-eks-a-%s-%s.%s",
+		releaseName = fmt.Sprintf("%s-%s-%s-eks-a-%s-%s.%s",
 			archive.OSName,
 			eksDReleaseChannel,
+			releaseDate,
 			rc.DevReleaseUriVersion,
 			arch,
 			imageExtension,
@@ -187,14 +190,15 @@ func RTOSArtifactPathGetter(rc *releasetypes.ReleaseConfig, archive *assettypes.
 			eksDReleaseChannel,
 		)
 	} else {
-		releaseName = fmt.Sprintf("%s-%s-eks-a-%d-%s.%s",
+		releaseName = fmt.Sprintf("%s-%s-%s-eks-a-%d-%s.%s",
 			archive.OSName,
 			eksDReleaseChannel,
+			releaseDate,
 			rc.BundleNumber,
 			arch,
 			imageExtension,
 		)
-		releaseS3Path = fmt.Sprintf("releases/bundles/%d/artifacts/rtos/%s", rc.BundleNumber, eksDReleaseChannel)
+		releaseS3Path = fmt.Sprintf("releases/canonical/%s/artifacts/rtos/%s", releaseDate, eksDReleaseChannel)
 	}
 
 	return sourceS3Key, sourceS3Prefix, releaseName, releaseS3Path, nil

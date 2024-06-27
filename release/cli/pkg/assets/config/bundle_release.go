@@ -70,7 +70,7 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 	{
 		ProjectName:    "ubuntu-rtos",
 		ProjectPath:    "projects/canonical/ubuntu",
-		GitTagAssigner: tagger.NonExistentTagAssigner,
+		GitTagAssigner: tagger.RTOSReleaseDateAssigner,
 		Archives: []*assettypes.Archive{
 			{
 				Name:                "rtos",
