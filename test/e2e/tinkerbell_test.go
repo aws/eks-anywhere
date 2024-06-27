@@ -1729,7 +1729,7 @@ func TestTinkerbellKubernetes129KubeletConfigurationSimpleFlow(t *testing.T) {
 		framework.WithWorkerHardware(1),
 		framework.WithKubeletConfig(),
 	)
-	runKubeletConfigurationFlow(test)
+	runKubeletConfigurationTinkerbellFlow(test)
 }
 
 func TestTinkerbellKubernetes130KubeletConfigurationSimpleFlow(t *testing.T) {
@@ -1741,5 +1741,5 @@ func TestTinkerbellKubernetes130KubeletConfigurationSimpleFlow(t *testing.T) {
 		framework.WithWorkerHardware(1),
 		framework.WithKubeletConfig(),
 	)
-	runKubeletConfigurationFlow(test)
+	runKubeletConfigurationTinkerbellFlow(test)
 }
