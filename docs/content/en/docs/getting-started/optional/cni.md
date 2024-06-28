@@ -212,7 +212,7 @@ immediately install a CNI after uninstalling EKS Anywhere Cilium.
 {{% /alert %}}
 
 {{% alert title="Warning" color="warning" %}}
-Clusters created using using Kubernetes API-compatible tooling such as kubectl, Terraform, or GitOps prior to v0.15.0 that have removed the EKS Anywhere Cilium CNI must manually populate their `cluster.anywhere.eks.amazonaws.com` object with the following annotation to ensure EKS Anywhere does not attempt to re-install EKS Anywhere Cilium.
+Prior to v0.15.0, clusters created using Kubernetes API-compatible tooling such as kubectl, Terraform, or GitOps that removed the EKS Anywhere Cilium CNI must manually populate their `cluster.anywhere.eks.amazonaws.com` object with the following annotation to ensure EKS Anywhere does not attempt to re-install EKS Anywhere Cilium.
 
 ```
 anywhere.eks.amazonaws.com/eksa-cilium: ""
