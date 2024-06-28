@@ -13,7 +13,7 @@ import (
 type createWorkloadClusterTask struct{}
 
 func (s *createWorkloadClusterTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
-	logger.Info("Creating new workload cluster")
+	logger.Info("Creating new management cluster")
 
 	commandContext.ClusterSpec.Cluster.AddManagedByCLIAnnotation()
 	commandContext.ClusterSpec.Cluster.SetManagementComponentsVersion(commandContext.ClusterSpec.EKSARelease.Spec.Version)
@@ -45,7 +45,7 @@ func (s *createWorkloadClusterTask) Run(ctx context.Context, commandContext *tas
 		return &workflows.CollectDiagnosticsTask{}
 	}
 
-	logger.Info("Installing cluster-api providers on workload cluster")
+	logger.Info("Installing cluster-api providers on management cluster")
 	managementComponents := cluster.ManagementComponentsFromBundles(commandContext.ClusterSpec.Bundles)
 	err = commandContext.ClusterManager.InstallCAPI(ctx, managementComponents, commandContext.ClusterSpec, commandContext.WorkloadCluster, commandContext.Provider)
 	if err != nil {
@@ -53,7 +53,7 @@ func (s *createWorkloadClusterTask) Run(ctx context.Context, commandContext *tas
 		return &workflows.CollectDiagnosticsTask{}
 	}
 
-	logger.Info("Installing EKS-A secrets on workload cluster")
+	logger.Info("Installing EKS-A secrets on management cluster")
 	err = commandContext.Provider.UpdateSecrets(ctx, commandContext.WorkloadCluster, commandContext.ClusterSpec)
 	if err != nil {
 		commandContext.SetError(err)

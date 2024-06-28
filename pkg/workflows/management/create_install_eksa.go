@@ -47,7 +47,7 @@ func (s *installEksaComponentsOnWorkloadTask) Run(ctx context.Context, commandCo
 		commandContext.ClusterSpec.Cluster.ClearTinkerbellIPAnnotation()
 	}
 
-	logger.Info("Installing EKS-A custom components on workload cluster")
+	logger.Info("Installing EKS-A custom components on the management cluster")
 
 	err := installEKSAComponents(ctx, commandContext, commandContext.WorkloadCluster)
 	if err != nil {
