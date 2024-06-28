@@ -222,8 +222,8 @@ anywhere.eks.amazonaws.com/eksa-cilium: ""
 ### Node IPs configuration option
 
 Starting with release v0.10.0, the `node-cidr-mask-size` [flag](https://kubernetes.io/docs/reference/command-line-tools-reference/kube-controller-manager/#options)
-for Kubernetes controller manager (kube-controller-manager) is configurable via the EKS anywhere cluster yaml spec. The `clusterNetwork.nodes` being an optional field,
-is not generated in the EKS Anywhere spec using `generate clusterconfig` command. The block for `nodes` will need to be manually added to the cluster yaml spec under the
+for Kubernetes controller manager (kube-controller-manager) is configurable via the EKS anywhere cluster YAML spec. The `clusterNetwork.nodes` being an optional field,
+is not generated in the EKS Anywhere spec using `generate clusterconfig` command. The block for `nodes` will need to be manually added to the cluster YAML spec under the
 `clusterNetwork` section:
 
 ```yaml
