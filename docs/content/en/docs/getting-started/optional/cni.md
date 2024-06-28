@@ -8,7 +8,7 @@ description: >
  EKS Anywhere cluster yaml CNI plugin specification reference
 ---
 
-### Specifying CNI Plugin in EKS Anywhere cluster yaml spec
+### Specifying CNI Plugin in EKS Anywhere cluster YAML spec
 
 #### Provider support details
 |                | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
