@@ -46,10 +46,9 @@ description: >
 
 ### Added
 - Support for Kubernetes v1.30
-- Support for configuring api server flags in cluster spec ([#7755](https://github.com/aws/eks-anywhere/pull/7755))
+- Support for configuring kube-apiserver flags in cluster spec ([#7755](https://github.com/aws/eks-anywhere/pull/7755))
 - Redhat 9 support for Bare Metal ([#3032](https://github.com/aws/eks-anywhere-build-tooling/pull/3032))
 - Support for configuring kubelet settings in cluster spec ([#8265](https://github.com/aws/eks-anywhere/pull/8265))
-- Support for kubelet settings on BottleRocket nodes ([#3266](https://github.com/aws/eks-anywhere-build-tooling/pull/3266))
 - Support for control plane failure domains on Nutanix ([#8192](https://github.com/aws/eks-anywhere/pull/8192))
 
 ### Changed
@@ -59,12 +58,22 @@ description: >
 - Cilium: `v1.13.9` to `v1.13.16`
 - Cluster API: `v1.6.1` to `v1.7.2`
 - Cluster API Provider vSphere: `v1.8.5` to `v1.10.0`
-- Cluster API Provider Nutanix: `v1.2.3` to `v1.3.1`
+- Cluster API Provider Nutanix: `v1.2.3` to `v1.3.5`
 - Flux: `v2.2.3` to `v2.3.0`
 - Kube-vip: `v0.7.0` to `v0.8.0`
 - Image-builder: `v0.1.24` to `v0.1.26`
 - Kind: `v0.22.0` to `v0.23.0`
 - Etcdadm Controller: `v1.0.17` to `v1.0.21`
+- Tinkerbell Stack:
+  - Cluster API Provider Tinkerbell: `v0.4.0` to `v0.5.3`
+  - Hegel: `v0.10.1` to `v0.12.0`
+  - Rufio: `afd7cd82fa08dae8f9f3ffac96eb030176f3abbd` to `v0.3.3`
+  - Tink: `v0.8.0` to `v0.10.0`
+  - Boots/Smee: `v0.8.1` to `v0.11.0`
+  - Hook: `9d54933a03f2f4c06322969b06caa18702d17f66` to `v0.8.1`
+  - Charts: `v0.4.5`
+
+**Note:** The Boots service has been renamed to Smee by the upstream tinkerbell community with this version upgrade. Any reference to Boots or Smee in our docs refer to the same service.
 
 ### Removed
 - Support for Kubernetes v1.25
