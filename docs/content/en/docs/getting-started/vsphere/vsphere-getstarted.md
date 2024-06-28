@@ -108,7 +108,13 @@ Make sure you use single quotes around the values so that your shell does not in
    {{% /alert %}}
 
      
-1. Create cluster
+1. Create cluster  
+   {{% alert title="Important" color="warning" %}}
+  
+   If your vSphere version is 7.0.2, then few user privileges don't exist
+   that are required for cluster creation. (See [Issue #4746](https://github.com/aws/eks-anywhere/issues/4746) for details.) 
+   Consider passing `--skip-validations vsphere-user-privilege` along with `eksctl` or upgrading the vSphere version (**recommended**).
+   {{% /alert %}}
 
    For a regular cluster create (with internet access), type the following:
    
@@ -117,6 +123,7 @@ Make sure you use single quotes around the values so that your shell does not in
       -f eksa-mgmt-cluster.yaml \
       # --install-packages packages.yaml \ # uncomment to install curated packages at cluster creation      
    ```
+   
 
    For an airgapped cluster create, follow [Preparation for airgapped deployments]({{< relref "../install#prepare-for-airgapped-deployments-optional" >}}) instructions, then type the following:
 
