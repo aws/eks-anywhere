@@ -48,7 +48,7 @@ description: >
 - Support for Kubernetes v1.30
 - Support for configuring kube-apiserver flags in cluster spec ([#7755](https://github.com/aws/eks-anywhere/pull/7755))
 - Redhat 9 support for Bare Metal ([#3032](https://github.com/aws/eks-anywhere-build-tooling/pull/3032))
-- Support for configuring kubelet settings in cluster spec ([#8265](https://github.com/aws/eks-anywhere/pull/8265))
+- Support for configuring kubelet settings in cluster spec ([#7708](https://github.com/aws/eks-anywhere/issues/7708))
 - Support for control plane failure domains on Nutanix ([#8192](https://github.com/aws/eks-anywhere/pull/8192))
 
 ### Changed
