@@ -15,7 +15,7 @@ description: >
 |:--------------:|:-------:|:----------:|:-------:|:----------:|:----:|
 | **Supported?** |   ✓	    |     ✓      |   	 ✓   |     ✓      |  ✓   |
 
-EKS Anywhere officially supports Cilium for each provider as a CNI plugin. The plugin cannot be changed via upgrades to the `cniConfig` field. However, EKS Anywhere Cilium can be replaced with a custom CNI after the cluster has been created. See [Use a custom CNI](#use-a-custom-cni) for more information. 
+EKS Anywhere supports Cilium as a CNI plugin on all providers. The plugin cannot be changed by modifying the `cniConfig` field. However, EKS Anywhere Cilium can be replaced with a custom CNI after the cluster has been created. See [Use a custom CNI](#use-a-custom-cni) for more information. 
 Up until the 0.7.x release, the plugin had to be specified using the `cni` field on cluster yaml spec.
 Starting with release 0.8.0, the plugin should be specified using the new `cniConfig` field as follows:
 
