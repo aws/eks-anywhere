@@ -108,7 +108,7 @@ spec:
       ...
 ```
 
->**_NOTE:_** If you have a custom machine image for your nodes in your cluster config yaml or to upgrade a node or group of nodes to a new operating system version (ie. RHEL 8.7 to RHEL 8.8), you may also need to update your [`TinkerbellDatacenterConfig`]({{< relref "../../getting-started/baremetal/bare-spec/#tinkerbelldatacenterconfig-fields" >}}) or [`TinkerbellMachineConfig`]({{< relref "../../getting-started/baremetal/bare-spec/#tinkerbellmachineconfig-fields" >}}) with the new operating system image URL [`osImageURL`]({{< relref "../../getting-started/baremetal/bare-spec/#osimageurl-optional" >}}). 
+>**_NOTE:_** If you have a custom machine image for your nodes in your cluster config yaml or to upgrade a node or group of nodes to a new operating system version (ie. RHEL 8.7 to RHEL 8.8), you may also need to update your [`TinkerbellDatacenterConfig`]({{< relref "../../getting-started/baremetal/bare-spec/#tinkerbelldatacenterconfig-fields" >}}) or [`TinkerbellMachineConfig`]({{< relref "../../getting-started/baremetal/bare-spec/#tinkerbellmachineconfig-fields" >}}) with the new operating system image URL [`osImageURL`]({{< relref "../../getting-started/baremetal/bare-spec/#osimageurl-required" >}}). 
 
 and then you will run the [upgrade cluster command]({{< relref "baremetal-upgrades/#upgrade-cluster-command" >}}).
 

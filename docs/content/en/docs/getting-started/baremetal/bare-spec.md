@@ -266,9 +266,11 @@ This IP address must be a unique IP in the network range that does not conflict 
 Once the Tinkerbell services move from the Admin machine to run on the target cluster, this IP address makes it possible for the stack to be used for future provisioning needs.
 When separate management and workload clusters are supported in Bare Metal, the IP address becomes a necessity.
 
-### osImageURL (optional)
-Optional field to replace the default Bottlerocket operating system. EKS Anywhere can only auto-import Bottlerocket. In order to use Ubuntu or RHEL see [building baremetal node images]({{< relref "../../osmgmt/artifacts/#build-bare-metal-node-images" >}}). This field is also useful if you want to provide a customized operating system image or simply host the standard image locally. To upgrade a node or group of nodes to a new operating system version (ie. RHEL 8.7 to RHEL 8.8), modify this field to point to the new operating system image URL and run [upgrade cluster command]({{< relref "../../clustermgmt/cluster-upgrades/baremetal-upgrades/#upgrade-cluster-command" >}}).
+### osImageURL (required)
+Required field to set the operating system. In order to use Ubuntu or RHEL see [building baremetal node images]({{< relref "../../osmgmt/artifacts/#build-bare-metal-node-images" >}}). This field is also useful if you want to provide a customized operating system image or simply host the standard image locally. To upgrade a node or group of nodes to a new operating system version (ie. RHEL 8.7 to RHEL 8.8), modify this field to point to the new operating system image URL and run [upgrade cluster command]({{< relref "../../clustermgmt/cluster-upgrades/baremetal-upgrades/#upgrade-cluster-command" >}}).
 The `osImageURL` must contain the `Cluster.Spec.KubernetesVersion` or `Cluster.Spec.WorkerNodeGroupConfiguration[].KubernetesVersion` version (in case of modular upgrade). For example, if the Kubernetes version is 1.24, the `osImageURL` name should include 1.24, 1_24, 1-24 or 124.
+
+>**_NOTE:_** osImageURL field cannot be set both in the `TinkerbellDatacenterConfig` and `TinkerbellMachineConfig` objects. If this value is set for `TinkerbellDatacenterConfig`, osImageURL has to be set to empty string `""` for all the `TinkerbellMachineConfigs`.
 
 ### hookImagesURLPath (optional)
 Optional field to replace the HookOS image.
@@ -320,11 +322,10 @@ spec:
 ### osFamily (required)
 Operating system on the machine. Permitted values: `bottlerocket`, `ubuntu`, `redhat` (Default: `bottlerocket`).
 
-### osImageURL (optional)
-Optional field to replace the default Bottlerocket operating system. EKS Anywhere can only auto-import Bottlerocket. In order to use Ubuntu or RHEL see [building baremetal node images]({{< relref "../../osmgmt/artifacts/#build-bare-metal-node-images" >}}). This field is also useful if you want to provide a customized operating system image or simply host the standard image locally. To upgrade a node or group of nodes to a new operating system version (ie. RHEL 8.7 to RHEL 8.8), modify this field to point to the new operating system image URL and run [upgrade cluster command]({{< relref "../../clustermgmt/cluster-upgrades/baremetal-upgrades/#upgrade-cluster-command" >}}).
+### osImageURL (required)
+Required field to set the operating system. In order to use Ubuntu or RHEL see [building baremetal node images]({{< relref "../../osmgmt/artifacts/#build-bare-metal-node-images" >}}). This field is also useful if you want to provide a customized operating system image or simply host the standard image locally. To upgrade a node or group of nodes to a new operating system version (ie. RHEL 8.7 to RHEL 8.8), modify this field to point to the new operating system image URL and run [upgrade cluster command]({{< relref "../../clustermgmt/cluster-upgrades/baremetal-upgrades/#upgrade-cluster-command" >}}). The `osImageURL` must contain the `Cluster.Spec.KubernetesVersion` or `Cluster.Spec.WorkerNodeGroupConfiguration[].KubernetesVersion` version (in case of modular upgrade). For example, if the Kubernetes version is 1.24, the `osImageURL` name should include 1.24, 1_24, 1-24 or 124.
 
->**_NOTE:_** If specified for a single `TinkerbellMachineConfig`, osImageURL has to be specified for all the `TinkerbellMachineConfigs`.
-osImageURL field cannot be specified both in the `TinkerbellDatacenterConfig` and `TinkerbellMachineConfig` objects.
+>**_NOTE:_** If this value is set for a single `TinkerbellMachineConfig`, osImageURL has to be set for all the `TinkerbellMachineConfigs`. osImageURL field cannot be set both in the `TinkerbellDatacenterConfig` and `TinkerbellMachineConfig` objects. If set for `TinkerbellMachineConfig`, the value must be set to empty string `""` for `TinkerbellDatacenterConfig`
 
 ### templateRef (optional)
 Identifies the template that defines the actions that will be applied to the TinkerbellMachineConfig.

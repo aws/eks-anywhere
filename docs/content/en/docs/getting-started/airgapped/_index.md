@@ -39,7 +39,7 @@ The process for preparing your airgapped environment for EKS Anywhere is summari
 
 If the previous steps succeeded, all of the required EKS Anywhere dependencies are now present in your local registry. Before you create your EKS Anywhere cluster, configure `registryMirrorConfiguration` in your EKS Anywhere cluster specification with the information for your local registry. For details see the [Registry Mirror Configuration documentation.]({{< relref "../../getting-started/optional/registrymirror/#registry-mirror-cluster-spec" >}})
 
->**_NOTE:_** If you are running EKS Anywhere on bare metal, you must configure `osImageURL` and `hookImagesURLPath` in your EKS Anywhere cluster specification with the location of your node operating system image and the hook OS image. For details, reference the [bare metal configuration documentation.]({{< relref "../baremetal/bare-spec/#osimageurl-optional" >}})
+>**_NOTE:_** If you are running EKS Anywhere on bare metal, you must configure `osImageURL` and `hookImagesURLPath` in your EKS Anywhere cluster specification with the location of your node operating system image and the hook OS image. For details, reference the [bare metal configuration documentation.]({{< relref "../baremetal/bare-spec/#osimageurl-required" >}})
 
 ### Next Steps
 - Review EKS Anywhere [cluster networking requirements]({{< relref "../ports" >}})

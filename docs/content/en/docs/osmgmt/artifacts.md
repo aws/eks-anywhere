@@ -25,7 +25,7 @@ Several code snippets on this page use `curl` and `yq` commands. Refer to the [T
 
 Artifacts for EKS Anywhere Bare Metal clusters are listed below.
 If you like, you can download these images and serve them locally to speed up cluster creation.
-See descriptions of the [`osImageURL`]({{< relref "../getting-started/baremetal/bare-spec/#osimageurl-optional" >}}) and [`hookImagesURLPath`]({{< relref "../getting-started/baremetal/bare-spec#hookimagesurlpath-optional" >}}) fields for details.
+See descriptions of the [`osImageURL`]({{< relref "../getting-started/baremetal/bare-spec/#osimageurl-required" >}}) and [`hookImagesURLPath`]({{< relref "../getting-started/baremetal/bare-spec#hookimagesurlpath-optional" >}}) fields for details.
 
 ### Ubuntu or RHEL OS images for Bare Metal
 
@@ -627,7 +627,7 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
    osImageURL: "http://<artifact host address>/my-ubuntu-v1.23.9-eks-a-17-amd64.gz"
    ```
 
-   See descriptions of [`osImageURL`]({{< relref "../getting-started/baremetal/bare-spec/#osimageurl-optional" >}}) for further information.
+   See descriptions of [`osImageURL`]({{< relref "../getting-started/baremetal/bare-spec/#osimageurl-required" >}}) for further information.
 
 ### Build CloudStack node images
 

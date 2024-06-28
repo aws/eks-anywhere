@@ -22,7 +22,7 @@ The procedure to upgrade EKS Anywhere clusters in airgapped environments is simi
 
 If the previous steps succeeded, all of the required EKS Anywhere dependencies are now present in your local registry. Before you upgrade your EKS Anywhere cluster, configure `registryMirrorConfiguration` in your EKS Anywhere cluster specification with the information for your local registry. For details see the [Registry Mirror Configuration documentation.]({{< relref "../../getting-started/optional/registrymirror/#registry-mirror-cluster-spec" >}})
 
->**_NOTE:_** If you are running EKS Anywhere on bare metal, you must configure `osImageURL` and `hookImagesURLPath` in your EKS Anywhere cluster specification with the location of the upgraded node operating system image and hook OS image. For details, reference the [bare metal configuration documentation.]({{< relref "../../getting-started/baremetal/bare-spec/#osimageurl-optional" >}})
+>**_NOTE:_** If you are running EKS Anywhere on bare metal, you must configure `osImageURL` and `hookImagesURLPath` in your EKS Anywhere cluster specification with the location of the upgraded node operating system image and hook OS image. For details, reference the [bare metal configuration documentation.]({{< relref "../../getting-started/baremetal/bare-spec/#osimageurl-required" >}})
 
 ### Next Steps
 - [Build upgraded node operating system images for your cluster]({{< relref "../../osmgmt/artifacts/#building-images-for-a-specific-eks-anywhere-version" >}})
