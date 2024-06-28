@@ -130,6 +130,7 @@ sudo install -m 0755 ./kubectl /usr/local/bin/kubectl
    spec: {}
 
    ```
+   > Note: You can also use [`kindnetd`](https://www.tkng.io/cni/kindnet/) as an alternative to `cilium` under the `cniConfig` field. Kindnetd can only be used with the Docker provider.
 
 1. Create Docker Cluster. Note the following command may take several minutes to complete. You can run the command with -v 6 to increase logging verbosity to see the progress of the command. 
 
