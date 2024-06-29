@@ -180,13 +180,13 @@ icon = "fab fa-github"
 desc = "Development takes place here!"
 
 [[params.versions]]
-fullversion = "v0.19"
-version = "v0.19"
+fullversion = "v0.20"
+version = "v0.20"
 docsbranch = "main"
 url = "https://anywhere.eks.amazonaws.com"
 
 [[params.versions]]
-fullversion = "v0.18"
-version = "v0.18"
-docsbranch = "release-0.18"
-url = "https://release-0-18.anywhere.eks.amazonaws.com"
+fullversion = "v0.19"
+version = "v0.19"
+docsbranch = "release-0.19"
+url = "https://anywhere.eks.amazonaws.com"
