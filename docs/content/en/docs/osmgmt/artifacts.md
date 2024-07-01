@@ -594,7 +594,7 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
 
    **Red Hat Enterprise Linux (RHEL)**
 
-   RHEL images require a configuration file to identify the location of the RHEL 8 ISO image and
+   RHEL images require a configuration file to identify the location of the RHEL 8 or RHEL 9 ISO image and
    Red Hat subscription information. The `image-builder` command will temporarily consume a Red
    Hat subscription that is removed once the image is built.
 
@@ -612,10 +612,13 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
    Run the `image-builder` with the following options:
 
       * `--os`: `redhat`
-      * `--os-version`: `8` (default: `8`)
+      * `--os-version`: `8` or `9` (default: `8`)
       * `--hypervisor`: `baremetal`
       * `--release-channel`: Supported EKS Distro releases include 1-25, 1-26, 1-27, 1-28 and 1-29.
       * `--baremetal-config`: Bare metal config file
+
+
+   Image builder only supports building RHEL 9 raw images with EFI firmware. Refer [UEFI Support]({{< relref "#uefi-support">}}) to enable image builds with EFI firmware.
 
       ```bash
       image-builder build --os redhat --hypervisor baremetal --release-channel 1-29 --baremetal-config baremetal.json
@@ -1043,7 +1046,7 @@ In both these above approaches, the artifacts embedded into the images will be o
 
 ### UEFI support
 
-`image-builder` supports UEFI-enabled images for Ubuntu OVA and Raw images. UEFI is turned on by default for Ubuntu Raw image builds, but the default firmware for Ubuntu OVAs is BIOS. This can be toggled with the `firmware` option.
+`image-builder` supports UEFI-enabled images for Ubuntu OVA, Ubuntu Raw and RHEL 9 Raw images. UEFI is turned on by default for Ubuntu Raw image builds, but the default firmware for Ubuntu OVAs and RHEL Raw images is BIOS. This can be toggled with the `firmware` option.
 
 For example, to build a Kubernetes v1.27 Ubuntu 22.04 OVA with UEFI enabled, you can run the following command.
    ```bash
@@ -1052,10 +1055,10 @@ For example, to build a Kubernetes v1.27 Ubuntu 22.04 OVA with UEFI enabled, you
 
 The table below shows the possible firmware options for the hypervisor and OS combinations that `image-builder` supports.
 
-|            |       vSphere       |      Baremetal      | CloudStack | Nutanix | Snow |
-|:----------:|:-------------------:|:-------------------:|:----------:|:-------:|:----:|
-| **Ubuntu** | bios (default), efi |         efi         |    bios    |   bios  | bios |
-|  **RHEL**  |         bios        |         bios        |    bios    |   bios  | bios |
+|            |       vSphere       |          Baremetal          | CloudStack | Nutanix | Snow |
+|:----------:|:-------------------:|:---------------------------:|:----------:|:-------:|:----:|
+| **Ubuntu** | bios (default), efi |             efi             |    bios    |   bios  | bios |
+|  **RHEL**  |         bios        | bios (RHEL 8), efi (RHEL 9) |    bios    |   bios  | bios |
 
 ### Mounting additional files
 
