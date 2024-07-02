@@ -369,7 +369,7 @@ The following shows three `TinkerbellTemplateConfig` examples that you can add t
 Most actions used differ for different operating systems.
 
 >**_NOTE:_** For the `stream-image` action, `DEST_DISK` points to the device representing the entire hard disk (for example, `/dev/sda`).
-For UEFI-enabled images, such as Ubuntu and RHEL 9 write actions use `DEST_DISK` to point to the second partition (for example, `/dev/sda2`), with the first being the EFI partition.
+For UEFI-enabled images, such as Ubuntu and RHEL 9, write actions use `DEST_DISK` to point to the second partition (for example, `/dev/sda2`), with the first being the EFI partition.
 For the Bottlerocket image, which has 12 partitions, `DEST_DISK` is partition 12 (for example, `/dev/sda12`).
 Device names will be different for different disk types.
 >
