@@ -223,7 +223,7 @@ function build::common::get_latest_release_branches() {
   latest_minor=0
   for branch in "${release_branches[@]}"; do
     minor_version=${branch##release-0.}
-    if [ $minor_version -gt $latest_minor ] && [ "$(get_latest_release_for_release_branch $branch)" != "" ]; then
+    if [ $minor_version -gt $latest_minor ] && [ "$(build::common::get_latest_release_for_release_branch $branch)" != "" ]; then
       latest_minor=$minor_version
     fi
   done
