@@ -17,8 +17,7 @@ set -e
 set -x
 set -o pipefail
 
-REPO_ROOT=$(git rev-parse --show-toplevel)
-source $REPO_ROOT/test/e2e/E2E_AMI_FILTER_VARS
+source ${CODEBUILD_SRC_DIR}/test/e2e/E2E_AMI_FILTER_VARS
 
 INTEGRATION_TEST_AMI_ID=$(aws ec2 describe-images \
   --profile ${AWS_PROFILE} \
