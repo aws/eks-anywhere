@@ -30,7 +30,7 @@ curl --silent $EKS_ANYWHERE_RELEASES_MANIFEST_URL -o release.yaml
 
 BRANCH_NAME=$PULL_BASE_REF
 ALL_RELEASE_BRANCHES=($(build::common::get_release_branches))
-LATEST_RELEASE_BRANCHES=($(get_latest_release_branches "${ALL_RELEASE_BRANCHES[@]}"))
+LATEST_RELEASE_BRANCHES=($(build::common::get_latest_release_branches "${ALL_RELEASE_BRANCHES[@]}"))
 
 # Get the latest release version corresponding to this release branch
 if [[ "$BRANCH_NAME" == "${LATEST_RELEASE_BRANCHES[0]}" ]]; then
