@@ -1055,7 +1055,7 @@ For example, to build a Kubernetes v1.27 Ubuntu 22.04 OVA with UEFI enabled, you
 
 The table below shows the possible firmware options for the hypervisor and OS combinations that `image-builder` supports.
 
-|            |       vSphere       |          Baremetal          | CloudStack | Nutanix | Snow |
+|            |       vSphere       |          Bare Metal          | CloudStack | Nutanix | Snow |
 |:----------:|:-------------------:|:---------------------------:|:----------:|:-------:|:----:|
 | **Ubuntu** | bios (default), efi |             efi             |    bios    |   bios  | bios |
 |  **RHEL**  |         bios        | bios (RHEL 8), efi (RHEL 9) |    bios    |   bios  | bios |
