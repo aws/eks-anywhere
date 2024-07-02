@@ -93,7 +93,7 @@ Top level object used for host OS configurations.
   * #### `bottlerocketConfiguration`
     Key used for configuring Bottlerocket-specific settings on EKS Anywhere cluster nodes. These settings are _only valid_ for Bottlerocket.
 
-    * ##### `kubernetes`
+    * ##### `kubernetes` - DEPRECATED 
       Key used for configuring Bottlerocket Kubernetes settings.
 
       * ##### `allowedUnsafeSysctls`
