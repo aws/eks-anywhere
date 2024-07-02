@@ -32,3 +32,4 @@ artifacts:
   - "cmd/integration_test/build/**/*"
   - "test/e2e/SKIPPED_TESTS.yaml"
   - "ATTRIBUTION.txt"
+  - "test/e2e/E2E_AMI_FILTER_VARS"
