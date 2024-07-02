@@ -45,6 +45,7 @@ type ParallelRunConf struct {
 	StorageBucket          string
 	JobId                  string
 	Regex                  string
+	TestsToSelect          []string
 	TestsToSkip            []string
 	BundlesOverride        bool
 	CleanupResources       bool
@@ -65,7 +66,7 @@ type (
 
 // RunTestsInParallel Run Tests in parallel by spawning multiple admin machines.
 func RunTestsInParallel(conf ParallelRunConf) error {
-	testsList, skippedTests, err := listTests(conf.Regex, conf.TestsToSkip)
+	testsList, skippedTests, err := listTests(conf.Regex, conf.TestsToSelect, conf.TestsToSkip)
 	if err != nil {
 		return err
 	}
@@ -282,14 +283,15 @@ func RunTests(conf instanceRunConf, inventoryCatalogue map[string]*hardwareCatal
 }
 
 func (e *E2ESession) runTests(regex string) (testCommandResult *testCommandResult, err error) {
-	e.logger.V(1).Info("Running e2e tests", "regex", regex)
 	command := "GOVERSION=go1.16.6 gotestsum --junitfile=junit-testing.xml --raw-command --format=standard-verbose --hide-summary=all --ignore-non-json-output-lines -- test2json -t -p e2e ./bin/e2e.test -test.v"
 
 	if regex != "" {
-		command = fmt.Sprintf("%s -test.run \"^(%s)$\" -test.timeout %s", command, regex, e2eTimeout)
+		command = fmt.Sprintf("%s -test.run \"^%s$\" -test.timeout %s", command, regex, e2eTimeout)
 	}
 
 	command = e.commandWithEnvVars(command)
+
+	e.logger.V(1).Info("Running e2e tests", "regex", regex, "command", command)
 
 	opt := ssm.WithOutputToCloudwatch()
 
