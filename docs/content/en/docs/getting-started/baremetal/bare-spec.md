@@ -24,7 +24,7 @@ The following additional optional configuration can also be included:
 To generate your own cluster configuration, follow instructions from the [Create Bare Metal cluster]({{< relref "./baremetal-getstarted" >}}) section and modify it using descriptions below.
 For information on how to add cluster configuration settings to this file for advanced node configuration, see [Advanced Bare Metal cluster configuration]({{< relref "#advanced-bare-metal-cluster-configuration" >}}).
 
->**_NOTE_**: Bare metal cluster creation with RHEL 9 raw OS images requires advanced cluster configurations to be set. To create bare metal RHEL 9 clusters modify the cluster configurations using descriptions below and follow [Advanced Bare Metal cluster configuration]({{< relref "#advanced-bare-metal-cluster-configuration" >}}).
+>**_NOTE_**: Bare Metal cluster creation with RHEL 9 raw OS images requires advanced cluster configurations to be set. To create Bare Metal RHEL 9 clusters, modify the cluster configurations using descriptions below and follow [Advanced Bare Metal cluster configuration]({{< relref "#advanced-bare-metal-cluster-configuration" >}}).
 ```yaml
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: Cluster
