@@ -618,7 +618,7 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
       * `--baremetal-config`: Bare metal config file
 
 
-   Image builder only supports building RHEL 9 raw images with EFI firmware. Refer [UEFI Support]({{< relref "#uefi-support">}}) to enable image builds with EFI firmware.
+   Image builder only supports building RHEL 9 raw images with EFI firmware. Refer to [UEFI Support]({{< relref "#uefi-support">}}) to enable image builds with EFI firmware.
 
       ```bash
       image-builder build --os redhat --hypervisor baremetal --release-channel 1-29 --baremetal-config baremetal.json
