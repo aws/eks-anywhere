@@ -181,6 +181,8 @@ env:
 phases:
   pre_build:
     commands:
+      - pip3 install boto3
+      - until python3 ${CODEBUILD_SRC_DIR}/cmd/integration_test/build/script/check_concurrent_pipelines.py; do echo "Wait for other test pipelines"; sleep 60; done
       - source ${CODEBUILD_SRC_DIR}/cmd/integration_test/build/script/setup_profile.sh
       - source ${CODEBUILD_SRC_DIR}/cmd/integration_test/build/script/create_infra_config.sh
       - ${CODEBUILD_SRC_DIR}/cmd/integration_test/build/script/start_docker.sh
