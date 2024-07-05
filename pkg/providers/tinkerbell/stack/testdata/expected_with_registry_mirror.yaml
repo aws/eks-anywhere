@@ -7,20 +7,13 @@ rufio:
   - -metrics-bind-address=127.0.0.1:8080
   image: public.ecr.aws/eks-anywhere/rufio:latest
 smee:
-  additionalEnv:
-  - name: DATA_MODEL_VERSION
-    value: kubernetes
-  - name: TINKERBELL_TLS
-    value: "false"
-  - name: REGISTRY_USERNAME
-    value: username
-  - name: REGISTRY_PASSWORD
-    value: password
-  - name: SMEE_EXTRA_KERNEL_ARGS
-    value: tink_worker_image=1.2.3.4:443/custom/eks-anywhere/tink-worker:latest insecure_registries=1.2.3.4:443
   deploy: true
   hostNetwork: true
   http:
+    additionalKernelArgs:
+    - insecure_registries=1.2.3.4:443
+    - registry_username=username
+    - registry_password=password
     osieUrl:
       host: anywhere-assests.eks.amazonaws.com
       path: /tinkerbell/hook
@@ -38,6 +31,7 @@ stack:
   hook:
     enabled: false
   hostNetwork: false
+  image: public.ecr.aws/eks-anywhere/nginx:latest
   kubevip:
     additionalEnv:
     - name: prometheus_server

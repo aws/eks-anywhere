@@ -17,11 +17,26 @@ set -e
 set -x
 set -o pipefail
 
+source ${CODEBUILD_SRC_DIR}/test/e2e/E2E_AMI_FILTER_VARS
+
+INTEGRATION_TEST_AMI_ID=$(aws ec2 describe-images \
+  --profile ${AWS_PROFILE} \
+  --owners ${AMI_OWNER_ID_FILTER} \
+  --filters "Name=name,Values=${AMI_NAME_FILTER}" "Name=description,Values=${AMI_DESCRIPTION_FILTER}" \
+  --query 'sort_by(Images, &CreationDate)[-1].[ImageId]' \
+  --output text
+)
+
+if [ -z "$INTEGRATION_TEST_AMI_ID" ]; then
+  echo "INTEGRATION_TEST_AMI_ID cannot be empty. Exiting"
+  exit 1
+fi
+
 cat << EOF > ${INTEGRATION_TEST_INFRA_CONFIG}
 ---
 
 ec2:
-  amiId: ${INTEGRATION_TEST_AL2_AMI_ID}
+  amiId: ${INTEGRATION_TEST_AMI_ID}
   subnetId: ${INTEGRATION_TEST_SUBNET_ID}
 
 vSphere:

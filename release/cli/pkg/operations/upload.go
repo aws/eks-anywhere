@@ -17,12 +17,12 @@ package operations
 import (
 	"context"
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
 	docker "github.com/fsouza/go-dockerclient"
-	"github.com/pkg/errors"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/aws/eks-anywhere/release/cli/pkg/aws/s3"
@@ -89,12 +89,16 @@ func UploadArtifacts(ctx context.Context, r *releasetypes.ReleaseConfig, eksaArt
 }
 
 func handleArchiveUpload(_ context.Context, r *releasetypes.ReleaseConfig, artifact releasetypes.Artifact) error {
+	releaseBucket := r.ReleaseBucket
+	if artifact.Archive.UploadToRTOSBucket && r.ReleaseEnvironment == "production" {
+		releaseBucket = os.Getenv(constants.RTOSArtifactsBucketEnvvar)
+	}
 	archiveFile := filepath.Join(artifact.Archive.ArtifactPath, artifact.Archive.ReleaseName)
 	fmt.Printf("Archive - %s\n", archiveFile)
 	key := filepath.Join(artifact.Archive.ReleaseS3Path, artifact.Archive.ReleaseName)
-	err := s3.UploadFile(archiveFile, aws.String(r.ReleaseBucket), aws.String(key), r.ReleaseClients.S3.Uploader, artifact.Archive.Private)
+	err := s3.UploadFile(archiveFile, aws.String(releaseBucket), aws.String(key), r.ReleaseClients.S3.Uploader, artifact.Archive.Private)
 	if err != nil {
-		return errors.Cause(err)
+		return fmt.Errorf("uploading archive file [%s] to S3: %v", key, err)
 	}
 
 	checksumExtensions := []string{".sha256", ".sha512"}
@@ -109,9 +113,9 @@ func handleArchiveUpload(_ context.Context, r *releasetypes.ReleaseConfig, artif
 		checksumFile := filepath.Join(artifact.Archive.ArtifactPath, artifact.Archive.ReleaseName) + extension
 		fmt.Printf("Checksum - %s\n", checksumFile)
 		key := filepath.Join(artifact.Archive.ReleaseS3Path, artifact.Archive.ReleaseName) + extension
-		err := s3.UploadFile(checksumFile, aws.String(r.ReleaseBucket), aws.String(key), r.ReleaseClients.S3.Uploader, artifact.Archive.Private)
+		err := s3.UploadFile(checksumFile, aws.String(releaseBucket), aws.String(key), r.ReleaseClients.S3.Uploader, artifact.Archive.Private)
 		if err != nil {
-			return errors.Cause(err)
+			return fmt.Errorf("uploading checksum file [%s] to S3: %v", key, err)
 		}
 	}
 
@@ -124,7 +128,7 @@ func handleManifestUpload(_ context.Context, r *releasetypes.ReleaseConfig, arti
 	key := filepath.Join(artifact.Manifest.ReleaseS3Path, artifact.Manifest.ReleaseName)
 	err := s3.UploadFile(manifestFile, aws.String(r.ReleaseBucket), aws.String(key), r.ReleaseClients.S3.Uploader, artifact.Manifest.Private)
 	if err != nil {
-		return errors.Cause(err)
+		return fmt.Errorf("uploading manifest file [%s] to S3: %v", key, err)
 	}
 
 	return nil
@@ -133,7 +137,8 @@ func handleManifestUpload(_ context.Context, r *releasetypes.ReleaseConfig, arti
 func handleImageUpload(_ context.Context, r *releasetypes.ReleaseConfig, packagesArtifacts map[string][]releasetypes.Artifact, artifact releasetypes.Artifact, sourceEcrAuthConfig, releaseEcrAuthConfig *docker.AuthConfiguration) error {
 	// If the artifact is a helm chart, skip the skopeo copy. Instead, modify the Chart.yaml to match the release tag
 	// and then use Helm package and push commands to upload chart to ECR Public
-	if !r.DryRun && ((strings.HasSuffix(artifact.Image.AssetName, "helm") && !r.DevRelease) || strings.HasSuffix(artifact.Image.AssetName, "chart")) {
+	// Packages Helm chart modification for dev-release is handled elsewhere, so we are checking for that case and skipping
+	if !r.DryRun && ((strings.HasSuffix(artifact.Image.AssetName, "helm") || strings.HasSuffix(artifact.Image.AssetName, "chart")) && !(artifact.Image.AssetName == "eks-anywhere-packages-helm" && r.DevRelease)) {
 		// Trim -helm on the packages helm chart, but don't need to trim tinkerbell chart since the AssetName is the same as the repoName
 		trimmedAsset := strings.TrimSuffix(artifact.Image.AssetName, "-helm")
 
@@ -160,7 +165,7 @@ func handleImageUpload(_ context.Context, r *releasetypes.ReleaseConfig, package
 		fmt.Printf("Destination Image - %s\n", releaseImageUri)
 		err := images.CopyToDestination(sourceEcrAuthConfig, releaseEcrAuthConfig, sourceImageUri, releaseImageUri)
 		if err != nil {
-			return fmt.Errorf("copying image from source to destination: %v", err)
+			return fmt.Errorf("copying image from source [%s] to destination [%s]: %v", sourceImageUri, releaseImageUri, err)
 		}
 	}
 

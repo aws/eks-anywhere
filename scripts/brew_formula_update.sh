@@ -16,7 +16,9 @@ SCRIPT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 REPO="homebrew-tap"
 ORIGIN_ORG="eks-anywhere-brew-pr-bot"
 UPSTREAM_ORG="aws"
+EKS_ANYWHERE_RELEASES_MANIFEST_URL="https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml"
 YQ_LATEST_RELEASE_URL="https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64"
+source "$SCRIPT_ROOT/common.sh"
 
 if ! command -v yq &> /dev/null
 then
@@ -24,9 +26,21 @@ then
   chmod a+x /usr/local/bin/yq
 fi
 
-curl --silent 'https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml' -o release.yaml
+curl --silent $EKS_ANYWHERE_RELEASES_MANIFEST_URL -o release.yaml
 
-latest_release_version=$(cat release.yaml | yq e '.spec.latestVersion')
+BRANCH_NAME=$PULL_BASE_REF
+ALL_RELEASE_BRANCHES=($(build::common::get_release_branches))
+LATEST_RELEASE_BRANCHES=($(build::common::get_latest_release_branches "${ALL_RELEASE_BRANCHES[@]}"))
+
+# Get the latest release version corresponding to this release branch
+if [[ "$BRANCH_NAME" == "${LATEST_RELEASE_BRANCHES[0]}" ]]; then
+  latest_release_version=$(cat release.yaml | yq e '.spec.latestVersion')
+elif [[ "$BRANCH_NAME" == "${LATEST_RELEASE_BRANCHES[1]}" ]]; then
+  latest_release_version=$(build::common::get_latest_release_for_release_branch $BRANCH_NAME)
+else
+  echo "Unsupported EKS Anywhere release branch $BRANCH_NAME!"
+  exit 1
+fi
 
 latest_release=$(cat release.yaml | yq e '.spec.releases[] | select(.version == "'$latest_release_version'")' >> latest_release.yaml)
 
@@ -46,7 +60,14 @@ latest_release_version="${latest_release_version:1}"
 export VERSION=$latest_release_version
 
 EKSA_TEMPLATE="eks-anywhere.rb.tmpl"
-EKSA_FORMULA="${SCRIPT_ROOT}/../../../${ORIGIN_ORG}/${REPO}/Formula/eks-anywhere.rb"
+if [[ "$BRANCH_NAME" == "${LATEST_RELEASE_BRANCHES[0]}" ]]; then
+  EKSA_FORMULA="${SCRIPT_ROOT}/../../../${ORIGIN_ORG}/${REPO}/Formula/eks-anywhere.rb"
+  export VERSION_SUFFIX=""
+elif [[ "$BRANCH_NAME" == "${LATEST_RELEASE_BRANCHES[1]}" ]]; then
+  minor_version="${BRANCH_NAME##release-}"
+  EKSA_FORMULA="${SCRIPT_ROOT}/../../../${ORIGIN_ORG}/${REPO}/Formula/eks-anywhere@$minor_version.rb"
+  export VERSION_SUFFIX="AT${minor_version/.}"
+fi
 
 if [ ! -f "$EKSA_TEMPLATE" ]
 then
@@ -54,13 +75,7 @@ then
   exit 1
 fi
 
-if [ ! -f "$EKSA_FORMULA" ]
-then
-  echo "Can not find the ${EKSA_FORMULA} file, exiting.."
-  exit 1
-fi
-
-envsubst '$VERSION:$darwin_arm64_url:$darwin_arm64_sha256:$darwin_amd64_url:$darwin_amd64_sha256:$linux_arm64_url:$linux_arm64_sha256:$linux_amd64_url:$linux_amd64_sha256' \
+envsubst '$VERSION:$VERSION_SUFFIX:$darwin_arm64_url:$darwin_arm64_sha256:$darwin_amd64_url:$darwin_amd64_sha256:$linux_arm64_url:$linux_arm64_sha256:$linux_amd64_url:$linux_amd64_sha256' \
  < "${EKSA_TEMPLATE}" \
  > "${EKSA_FORMULA}"
 

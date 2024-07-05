@@ -66,10 +66,23 @@ func runInPlaceUpgradeFromReleaseFlow(test *framework.ClusterE2ETest, latestRele
 	test.DeleteCluster()
 }
 
-func runMulticlusterUpgradeFromReleaseFlowAPI(test *framework.MulticlusterE2ETest, release *releasev1.EksARelease, kubeVersion anywherev1.KubernetesVersion, os framework.OS) {
+// runMulticlusterUpgradeFromReleaseFlowAPI tests the ability to create workload clusters with an old Bundle in a management cluster
+// that has been updated to a new Bundle. It follows the following steps:
+//  1. Create a management cluster with the old Bundle.
+//  2. Create workload clusters with the old Bundle.
+//  3. Upgrade the management cluster to the new Bundle and new Kubernetes version (newVersion).
+//  4. Upgrade the workload clusters to the new Bundle and new Kubernetes version (newVersion).
+//  5. Delete the workload clusters.
+//  6. Re-create the workload clusters with the old Bundle and previous Kubernetes version (oldVersion). It's necessary to sometimes
+//     use a different kube version because the old Bundle might not support the new kubernetes version.
+//  7. Delete the workload clusters.
+//  8. Delete the management cluster.
+func runMulticlusterUpgradeFromReleaseFlowAPI(test *framework.MulticlusterE2ETest, release *releasev1.EksARelease, oldVersion, newVersion anywherev1.KubernetesVersion, os framework.OS) {
 	provider := test.ManagementCluster.Provider
+	// 1. Create management cluster
 	test.CreateManagementCluster(framework.ExecuteWithEksaRelease(release))
 
+	// 2. Create workload clusters with the old Bundle
 	test.RunConcurrentlyInWorkloadClusters(func(wc *framework.WorkloadCluster) {
 		wc.CreateCluster(framework.ExecuteWithEksaRelease(release))
 		wc.ValidateCluster(wc.ClusterConfig.Cluster.Spec.KubernetesVersion)
@@ -79,18 +92,19 @@ func runMulticlusterUpgradeFromReleaseFlowAPI(test *framework.MulticlusterE2ETes
 	oldCluster := test.ManagementCluster.GetEKSACluster()
 
 	test.ManagementCluster.UpdateClusterConfig(
-		provider.WithKubeVersionAndOS(kubeVersion, os, nil),
+		provider.WithKubeVersionAndOS(newVersion, os, nil),
 	)
+	// 3. Upgrade management cluster to new Bundle and new Kubernetes version
 	test.ManagementCluster.UpgradeCluster()
 	test.ManagementCluster.ValidateCluster(test.ManagementCluster.ClusterConfig.Cluster.Spec.KubernetesVersion)
 	test.ManagementCluster.StopIfFailed()
 
 	cluster := test.ManagementCluster.GetEKSACluster()
 
-	// Upgrade bundle workload clusters now because they still have the old versions of the bundle.
 	test.RunConcurrentlyInWorkloadClusters(func(wc *framework.WorkloadCluster) {
+		// 4. Upgrade the workload clusters to the new Bundle and new Kubernetes version (newVersion).
 		wc.UpdateClusterConfig(
-			provider.WithKubeVersionAndOS(kubeVersion, os, nil),
+			provider.WithKubeVersionAndOS(newVersion, os, nil),
 			api.ClusterToConfigFiller(
 				api.WithEksaVersion(cluster.Spec.EksaVersion),
 			),
@@ -98,28 +112,36 @@ func runMulticlusterUpgradeFromReleaseFlowAPI(test *framework.MulticlusterE2ETes
 		wc.ApplyClusterManifest()
 		wc.ValidateClusterState()
 		wc.StopIfFailed()
+		// 5. Delete the workload clusters.
 		wc.DeleteClusterWithKubectl()
 		wc.ValidateClusterDelete()
 		wc.StopIfFailed()
 	})
 
-	// Create workload cluster with old bundle
 	test.RunConcurrentlyInWorkloadClusters(func(wc *framework.WorkloadCluster) {
 		wc.UpdateClusterConfig(
-			provider.WithKubeVersionAndOS(kubeVersion, os, release),
+			provider.WithKubeVersionAndOS(oldVersion, os, release),
 			api.ClusterToConfigFiller(
 				api.WithEksaVersion(oldCluster.Spec.EksaVersion),
 			),
 		)
+		// 6. Re-create the workload clusters with the old Bundle and previous Kubernetes version (oldVersion).
 		wc.ApplyClusterManifest()
 		wc.WaitForKubeconfig()
 		wc.ValidateClusterState()
 		wc.StopIfFailed()
+		// 7. Delete the workload clusters.
 		wc.DeleteClusterWithKubectl()
 		wc.ValidateClusterDelete()
+	})
+
+	// It's necessary to call stop here because if any of the workload clusters failed,
+	// their panic was thrown in a go routine, which doesn't stop the main test routine.
+	test.RunInWorkloadClusters(func(wc *framework.WorkloadCluster) {
 		wc.StopIfFailed()
 	})
 
+	// 8. Delete the management cluster.
 	test.DeleteManagementCluster()
 }
 

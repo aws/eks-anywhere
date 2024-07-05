@@ -112,26 +112,26 @@ spec:
         arch:
         - amd64
         description: Container image for cilium image
-        imageDigest: sha256:8d5876112cd6de92c2d4cf9de3281d942ba3cc7df08b2109f94271bdfcb17f25
+        imageDigest: sha256:d13453a013480c568b6640c3536f978e855b89c8f5eec31df1036a368ba78363
         name: cilium
         os: linux
-        uri: public.ecr.aws/isovalent/cilium:v1.13.16-eksa.2
+        uri: public.ecr.aws/isovalent/cilium:v1.13.17-eksa.1
       helmChart:
         description: Helm chart for cilium-chart
-        imageDigest: sha256:482c1d609f03993d254e5799bb267cfb5b7bf2950760db3709c307d6fc6a2c4c
+        imageDigest: sha256:e6719b1e2761b65066d5eba1f43159a495cbd0b159cb1282d18622ff944d55a3
         name: cilium-chart
-        uri: public.ecr.aws/isovalent/cilium:1.13.16-eksa.2
+        uri: public.ecr.aws/isovalent/cilium:1.13.17-eksa.1
       manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.13.16-eksa.2/cilium.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.13.17-eksa.1/cilium.yaml
       operator:
         arch:
         - amd64
         description: Container image for operator-generic image
-        imageDigest: sha256:3a4eaf8cf250e816635ae8e49b3b622b9ab7b83af41a00dc811408c347bceb51
+        imageDigest: sha256:583b8934a58f762ec7564a057fa0e8b3e648938a1818b17f5ea1e201ddeb8798
         name: operator-generic
         os: linux
-        uri: public.ecr.aws/isovalent/operator-generic:v1.13.16-eksa.2
-      version: v1.13.16-eksa.2
+        uri: public.ecr.aws/isovalent/operator-generic:v1.13.17-eksa.1
+      version: v1.13.17-eksa.1
     cloudStack:
       clusterAPIController:
         arch:
@@ -161,7 +161,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
         os: linux
-        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.8.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.8.1-eks-a-v0.0.0-dev-build.1
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.10-rc1/metadata.yaml
       version: v0.4.10-rc1+abcdef1
@@ -306,7 +306,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cli-tools
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cli-tools:v0.19.6-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cli-tools:v0.20.0-eks-a-v0.0.0-dev-build.1
       clusterController:
         arch:
         - amd64
@@ -315,9 +315,9 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cluster-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.19.6-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.20.0-eks-a-v0.0.0-dev-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-anywhere/manifests/cluster-controller/v0.19.6/eksa-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-anywhere/manifests/cluster-controller/v0.20.0/eksa-components.yaml
       diagnosticCollector:
         arch:
         - amd64
@@ -326,7 +326,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-diagnostic-collector
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-diagnostic-collector:v0.19.6-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-diagnostic-collector:v0.20.0-eks-a-v0.0.0-dev-build.1
       version: v0.0.0-dev+build.0+abcdef1
     etcdadmBootstrap:
       components:
@@ -460,7 +460,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
         os: linux
-        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.8.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.8.1-eks-a-v0.0.0-dev-build.1
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.3.5/metadata.yaml
       version: v1.3.5+abcdef1
@@ -518,7 +518,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
         os: linux
-        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.8.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.8.1-eks-a-v0.0.0-dev-build.1
       manager:
         arch:
         - amd64
@@ -562,7 +562,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
         os: linux
-        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.8.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.8.1-eks-a-v0.0.0-dev-build.1
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.5.3/metadata.yaml
       tinkerbellStack:
@@ -699,9 +699,9 @@ spec:
           os: linux
           uri: public.ecr.aws/release-container-registry/tinkerbell/rufio:v0.3.3-eks-a-v0.0.0-dev-build.1
         stack:
-          description: Helm chart for stack-helm
+          description: Helm chart for stack
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-          name: stack-helm
+          name: stack
           uri: public.ecr.aws/release-container-registry/tinkerbell/stack:0.4.5-eks-a-v0.0.0-dev-build.1
         tink:
           nginx:
@@ -744,11 +744,11 @@ spec:
           description: Helm chart for tinkerbell-chart
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: tinkerbell-chart
-          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.2.6-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.2.7-eks-a-v0.0.0-dev-build.1
         tinkerbellCrds:
-          description: Helm chart for tinkerbell-crds-helm
+          description: Helm chart for tinkerbell-crds
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-          name: tinkerbell-crds-helm
+          name: tinkerbell-crds
           uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-crds:0.2.5-eks-a-v0.0.0-dev-build.1
       version: v0.5.3+abcdef1
     upgrader:
@@ -792,7 +792,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
         os: linux
-        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.8.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.8.1-eks-a-v0.0.0-dev-build.1
       manager:
         arch:
         - amd64
@@ -909,26 +909,26 @@ spec:
         arch:
         - amd64
         description: Container image for cilium image
-        imageDigest: sha256:8d5876112cd6de92c2d4cf9de3281d942ba3cc7df08b2109f94271bdfcb17f25
+        imageDigest: sha256:d13453a013480c568b6640c3536f978e855b89c8f5eec31df1036a368ba78363
         name: cilium
         os: linux
-        uri: public.ecr.aws/isovalent/cilium:v1.13.16-eksa.2
+        uri: public.ecr.aws/isovalent/cilium:v1.13.17-eksa.1
       helmChart:
         description: Helm chart for cilium-chart
-        imageDigest: sha256:482c1d609f03993d254e5799bb267cfb5b7bf2950760db3709c307d6fc6a2c4c
+        imageDigest: sha256:e6719b1e2761b65066d5eba1f43159a495cbd0b159cb1282d18622ff944d55a3
         name: cilium-chart
-        uri: public.ecr.aws/isovalent/cilium:1.13.16-eksa.2
+        uri: public.ecr.aws/isovalent/cilium:1.13.17-eksa.1
       manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.13.16-eksa.2/cilium.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.13.17-eksa.1/cilium.yaml
       operator:
         arch:
         - amd64
         description: Container image for operator-generic image
-        imageDigest: sha256:3a4eaf8cf250e816635ae8e49b3b622b9ab7b83af41a00dc811408c347bceb51
+        imageDigest: sha256:583b8934a58f762ec7564a057fa0e8b3e648938a1818b17f5ea1e201ddeb8798
         name: operator-generic
         os: linux
-        uri: public.ecr.aws/isovalent/operator-generic:v1.13.16-eksa.2
-      version: v1.13.16-eksa.2
+        uri: public.ecr.aws/isovalent/operator-generic:v1.13.17-eksa.1
+      version: v1.13.17-eksa.1
     cloudStack:
       clusterAPIController:
         arch:
@@ -958,7 +958,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
         os: linux
-        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.8.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.8.1-eks-a-v0.0.0-dev-build.1
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.10-rc1/metadata.yaml
       version: v0.4.10-rc1+abcdef1
@@ -1103,7 +1103,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cli-tools
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cli-tools:v0.19.6-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cli-tools:v0.20.0-eks-a-v0.0.0-dev-build.1
       clusterController:
         arch:
         - amd64
@@ -1112,9 +1112,9 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cluster-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.19.6-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.20.0-eks-a-v0.0.0-dev-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-anywhere/manifests/cluster-controller/v0.19.6/eksa-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-anywhere/manifests/cluster-controller/v0.20.0/eksa-components.yaml
       diagnosticCollector:
         arch:
         - amd64
@@ -1123,7 +1123,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-diagnostic-collector
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-diagnostic-collector:v0.19.6-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-diagnostic-collector:v0.20.0-eks-a-v0.0.0-dev-build.1
       version: v0.0.0-dev+build.0+abcdef1
     etcdadmBootstrap:
       components:
@@ -1257,7 +1257,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
         os: linux
-        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.8.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.8.1-eks-a-v0.0.0-dev-build.1
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.3.5/metadata.yaml
       version: v1.3.5+abcdef1
@@ -1315,7 +1315,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
         os: linux
-        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.8.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.8.1-eks-a-v0.0.0-dev-build.1
       manager:
         arch:
         - amd64
@@ -1359,7 +1359,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
         os: linux
-        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.8.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.8.1-eks-a-v0.0.0-dev-build.1
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.5.3/metadata.yaml
       tinkerbellStack:
@@ -1496,9 +1496,9 @@ spec:
           os: linux
           uri: public.ecr.aws/release-container-registry/tinkerbell/rufio:v0.3.3-eks-a-v0.0.0-dev-build.1
         stack:
-          description: Helm chart for stack-helm
+          description: Helm chart for stack
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-          name: stack-helm
+          name: stack
           uri: public.ecr.aws/release-container-registry/tinkerbell/stack:0.4.5-eks-a-v0.0.0-dev-build.1
         tink:
           nginx:
@@ -1541,11 +1541,11 @@ spec:
           description: Helm chart for tinkerbell-chart
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: tinkerbell-chart
-          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.2.6-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.2.7-eks-a-v0.0.0-dev-build.1
         tinkerbellCrds:
-          description: Helm chart for tinkerbell-crds-helm
+          description: Helm chart for tinkerbell-crds
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-          name: tinkerbell-crds-helm
+          name: tinkerbell-crds
           uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-crds:0.2.5-eks-a-v0.0.0-dev-build.1
       version: v0.5.3+abcdef1
     upgrader:
@@ -1589,7 +1589,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
         os: linux
-        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.8.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.8.1-eks-a-v0.0.0-dev-build.1
       manager:
         arch:
         - amd64
@@ -1706,26 +1706,26 @@ spec:
         arch:
         - amd64
         description: Container image for cilium image
-        imageDigest: sha256:8d5876112cd6de92c2d4cf9de3281d942ba3cc7df08b2109f94271bdfcb17f25
+        imageDigest: sha256:d13453a013480c568b6640c3536f978e855b89c8f5eec31df1036a368ba78363
         name: cilium
         os: linux
-        uri: public.ecr.aws/isovalent/cilium:v1.13.16-eksa.2
+        uri: public.ecr.aws/isovalent/cilium:v1.13.17-eksa.1
       helmChart:
         description: Helm chart for cilium-chart
-        imageDigest: sha256:482c1d609f03993d254e5799bb267cfb5b7bf2950760db3709c307d6fc6a2c4c
+        imageDigest: sha256:e6719b1e2761b65066d5eba1f43159a495cbd0b159cb1282d18622ff944d55a3
         name: cilium-chart
-        uri: public.ecr.aws/isovalent/cilium:1.13.16-eksa.2
+        uri: public.ecr.aws/isovalent/cilium:1.13.17-eksa.1
       manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.13.16-eksa.2/cilium.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.13.17-eksa.1/cilium.yaml
       operator:
         arch:
         - amd64
         description: Container image for operator-generic image
-        imageDigest: sha256:3a4eaf8cf250e816635ae8e49b3b622b9ab7b83af41a00dc811408c347bceb51
+        imageDigest: sha256:583b8934a58f762ec7564a057fa0e8b3e648938a1818b17f5ea1e201ddeb8798
         name: operator-generic
         os: linux
-        uri: public.ecr.aws/isovalent/operator-generic:v1.13.16-eksa.2
-      version: v1.13.16-eksa.2
+        uri: public.ecr.aws/isovalent/operator-generic:v1.13.17-eksa.1
+      version: v1.13.17-eksa.1
     cloudStack:
       clusterAPIController:
         arch:
@@ -1755,7 +1755,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
         os: linux
-        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.8.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.8.1-eks-a-v0.0.0-dev-build.1
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.10-rc1/metadata.yaml
       version: v0.4.10-rc1+abcdef1
@@ -1900,7 +1900,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cli-tools
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cli-tools:v0.19.6-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cli-tools:v0.20.0-eks-a-v0.0.0-dev-build.1
       clusterController:
         arch:
         - amd64
@@ -1909,9 +1909,9 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cluster-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.19.6-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.20.0-eks-a-v0.0.0-dev-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-anywhere/manifests/cluster-controller/v0.19.6/eksa-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-anywhere/manifests/cluster-controller/v0.20.0/eksa-components.yaml
       diagnosticCollector:
         arch:
         - amd64
@@ -1920,7 +1920,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-diagnostic-collector
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-diagnostic-collector:v0.19.6-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-diagnostic-collector:v0.20.0-eks-a-v0.0.0-dev-build.1
       version: v0.0.0-dev+build.0+abcdef1
     etcdadmBootstrap:
       components:
@@ -2054,7 +2054,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
         os: linux
-        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.8.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.8.1-eks-a-v0.0.0-dev-build.1
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.3.5/metadata.yaml
       version: v1.3.5+abcdef1
@@ -2112,7 +2112,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
         os: linux
-        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.8.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.8.1-eks-a-v0.0.0-dev-build.1
       manager:
         arch:
         - amd64
@@ -2156,7 +2156,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
         os: linux
-        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.8.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.8.1-eks-a-v0.0.0-dev-build.1
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.5.3/metadata.yaml
       tinkerbellStack:
@@ -2293,9 +2293,9 @@ spec:
           os: linux
           uri: public.ecr.aws/release-container-registry/tinkerbell/rufio:v0.3.3-eks-a-v0.0.0-dev-build.1
         stack:
-          description: Helm chart for stack-helm
+          description: Helm chart for stack
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-          name: stack-helm
+          name: stack
           uri: public.ecr.aws/release-container-registry/tinkerbell/stack:0.4.5-eks-a-v0.0.0-dev-build.1
         tink:
           nginx:
@@ -2338,11 +2338,11 @@ spec:
           description: Helm chart for tinkerbell-chart
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: tinkerbell-chart
-          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.2.6-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.2.7-eks-a-v0.0.0-dev-build.1
         tinkerbellCrds:
-          description: Helm chart for tinkerbell-crds-helm
+          description: Helm chart for tinkerbell-crds
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-          name: tinkerbell-crds-helm
+          name: tinkerbell-crds
           uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-crds:0.2.5-eks-a-v0.0.0-dev-build.1
       version: v0.5.3+abcdef1
     upgrader:
@@ -2386,7 +2386,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
         os: linux
-        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.8.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.8.1-eks-a-v0.0.0-dev-build.1
       manager:
         arch:
         - amd64
@@ -2503,26 +2503,26 @@ spec:
         arch:
         - amd64
         description: Container image for cilium image
-        imageDigest: sha256:8d5876112cd6de92c2d4cf9de3281d942ba3cc7df08b2109f94271bdfcb17f25
+        imageDigest: sha256:d13453a013480c568b6640c3536f978e855b89c8f5eec31df1036a368ba78363
         name: cilium
         os: linux
-        uri: public.ecr.aws/isovalent/cilium:v1.13.16-eksa.2
+        uri: public.ecr.aws/isovalent/cilium:v1.13.17-eksa.1
       helmChart:
         description: Helm chart for cilium-chart
-        imageDigest: sha256:482c1d609f03993d254e5799bb267cfb5b7bf2950760db3709c307d6fc6a2c4c
+        imageDigest: sha256:e6719b1e2761b65066d5eba1f43159a495cbd0b159cb1282d18622ff944d55a3
         name: cilium-chart
-        uri: public.ecr.aws/isovalent/cilium:1.13.16-eksa.2
+        uri: public.ecr.aws/isovalent/cilium:1.13.17-eksa.1
       manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.13.16-eksa.2/cilium.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.13.17-eksa.1/cilium.yaml
       operator:
         arch:
         - amd64
         description: Container image for operator-generic image
-        imageDigest: sha256:3a4eaf8cf250e816635ae8e49b3b622b9ab7b83af41a00dc811408c347bceb51
+        imageDigest: sha256:583b8934a58f762ec7564a057fa0e8b3e648938a1818b17f5ea1e201ddeb8798
         name: operator-generic
         os: linux
-        uri: public.ecr.aws/isovalent/operator-generic:v1.13.16-eksa.2
-      version: v1.13.16-eksa.2
+        uri: public.ecr.aws/isovalent/operator-generic:v1.13.17-eksa.1
+      version: v1.13.17-eksa.1
     cloudStack:
       clusterAPIController:
         arch:
@@ -2552,7 +2552,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
         os: linux
-        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.8.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.8.1-eks-a-v0.0.0-dev-build.1
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.10-rc1/metadata.yaml
       version: v0.4.10-rc1+abcdef1
@@ -2697,7 +2697,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cli-tools
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cli-tools:v0.19.6-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cli-tools:v0.20.0-eks-a-v0.0.0-dev-build.1
       clusterController:
         arch:
         - amd64
@@ -2706,9 +2706,9 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cluster-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.19.6-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.20.0-eks-a-v0.0.0-dev-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-anywhere/manifests/cluster-controller/v0.19.6/eksa-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-anywhere/manifests/cluster-controller/v0.20.0/eksa-components.yaml
       diagnosticCollector:
         arch:
         - amd64
@@ -2717,7 +2717,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-diagnostic-collector
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-diagnostic-collector:v0.19.6-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-diagnostic-collector:v0.20.0-eks-a-v0.0.0-dev-build.1
       version: v0.0.0-dev+build.0+abcdef1
     etcdadmBootstrap:
       components:
@@ -2851,7 +2851,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
         os: linux
-        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.8.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.8.1-eks-a-v0.0.0-dev-build.1
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.3.5/metadata.yaml
       version: v1.3.5+abcdef1
@@ -2909,7 +2909,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
         os: linux
-        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.8.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.8.1-eks-a-v0.0.0-dev-build.1
       manager:
         arch:
         - amd64
@@ -2953,7 +2953,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
         os: linux
-        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.8.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.8.1-eks-a-v0.0.0-dev-build.1
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.5.3/metadata.yaml
       tinkerbellStack:
@@ -3090,9 +3090,9 @@ spec:
           os: linux
           uri: public.ecr.aws/release-container-registry/tinkerbell/rufio:v0.3.3-eks-a-v0.0.0-dev-build.1
         stack:
-          description: Helm chart for stack-helm
+          description: Helm chart for stack
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-          name: stack-helm
+          name: stack
           uri: public.ecr.aws/release-container-registry/tinkerbell/stack:0.4.5-eks-a-v0.0.0-dev-build.1
         tink:
           nginx:
@@ -3135,11 +3135,11 @@ spec:
           description: Helm chart for tinkerbell-chart
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: tinkerbell-chart
-          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.2.6-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.2.7-eks-a-v0.0.0-dev-build.1
         tinkerbellCrds:
-          description: Helm chart for tinkerbell-crds-helm
+          description: Helm chart for tinkerbell-crds
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-          name: tinkerbell-crds-helm
+          name: tinkerbell-crds
           uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-crds:0.2.5-eks-a-v0.0.0-dev-build.1
       version: v0.5.3+abcdef1
     upgrader:
@@ -3183,7 +3183,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
         os: linux
-        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.8.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.8.1-eks-a-v0.0.0-dev-build.1
       manager:
         arch:
         - amd64
@@ -3300,26 +3300,26 @@ spec:
         arch:
         - amd64
         description: Container image for cilium image
-        imageDigest: sha256:8d5876112cd6de92c2d4cf9de3281d942ba3cc7df08b2109f94271bdfcb17f25
+        imageDigest: sha256:d13453a013480c568b6640c3536f978e855b89c8f5eec31df1036a368ba78363
         name: cilium
         os: linux
-        uri: public.ecr.aws/isovalent/cilium:v1.13.16-eksa.2
+        uri: public.ecr.aws/isovalent/cilium:v1.13.17-eksa.1
       helmChart:
         description: Helm chart for cilium-chart
-        imageDigest: sha256:482c1d609f03993d254e5799bb267cfb5b7bf2950760db3709c307d6fc6a2c4c
+        imageDigest: sha256:e6719b1e2761b65066d5eba1f43159a495cbd0b159cb1282d18622ff944d55a3
         name: cilium-chart
-        uri: public.ecr.aws/isovalent/cilium:1.13.16-eksa.2
+        uri: public.ecr.aws/isovalent/cilium:1.13.17-eksa.1
       manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.13.16-eksa.2/cilium.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.13.17-eksa.1/cilium.yaml
       operator:
         arch:
         - amd64
         description: Container image for operator-generic image
-        imageDigest: sha256:3a4eaf8cf250e816635ae8e49b3b622b9ab7b83af41a00dc811408c347bceb51
+        imageDigest: sha256:583b8934a58f762ec7564a057fa0e8b3e648938a1818b17f5ea1e201ddeb8798
         name: operator-generic
         os: linux
-        uri: public.ecr.aws/isovalent/operator-generic:v1.13.16-eksa.2
-      version: v1.13.16-eksa.2
+        uri: public.ecr.aws/isovalent/operator-generic:v1.13.17-eksa.1
+      version: v1.13.17-eksa.1
     cloudStack:
       clusterAPIController:
         arch:
@@ -3349,7 +3349,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
         os: linux
-        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.8.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.8.1-eks-a-v0.0.0-dev-build.1
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.10-rc1/metadata.yaml
       version: v0.4.10-rc1+abcdef1
@@ -3494,7 +3494,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cli-tools
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cli-tools:v0.19.6-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cli-tools:v0.20.0-eks-a-v0.0.0-dev-build.1
       clusterController:
         arch:
         - amd64
@@ -3503,9 +3503,9 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cluster-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.19.6-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.20.0-eks-a-v0.0.0-dev-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-anywhere/manifests/cluster-controller/v0.19.6/eksa-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-anywhere/manifests/cluster-controller/v0.20.0/eksa-components.yaml
       diagnosticCollector:
         arch:
         - amd64
@@ -3514,7 +3514,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-diagnostic-collector
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-diagnostic-collector:v0.19.6-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-diagnostic-collector:v0.20.0-eks-a-v0.0.0-dev-build.1
       version: v0.0.0-dev+build.0+abcdef1
     etcdadmBootstrap:
       components:
@@ -3648,7 +3648,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
         os: linux
-        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.8.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.8.1-eks-a-v0.0.0-dev-build.1
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.3.5/metadata.yaml
       version: v1.3.5+abcdef1
@@ -3706,7 +3706,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
         os: linux
-        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.8.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.8.1-eks-a-v0.0.0-dev-build.1
       manager:
         arch:
         - amd64
@@ -3750,7 +3750,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
         os: linux
-        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.8.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.8.1-eks-a-v0.0.0-dev-build.1
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.5.3/metadata.yaml
       tinkerbellStack:
@@ -3887,9 +3887,9 @@ spec:
           os: linux
           uri: public.ecr.aws/release-container-registry/tinkerbell/rufio:v0.3.3-eks-a-v0.0.0-dev-build.1
         stack:
-          description: Helm chart for stack-helm
+          description: Helm chart for stack
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-          name: stack-helm
+          name: stack
           uri: public.ecr.aws/release-container-registry/tinkerbell/stack:0.4.5-eks-a-v0.0.0-dev-build.1
         tink:
           nginx:
@@ -3932,11 +3932,11 @@ spec:
           description: Helm chart for tinkerbell-chart
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: tinkerbell-chart
-          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.2.6-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.2.7-eks-a-v0.0.0-dev-build.1
         tinkerbellCrds:
-          description: Helm chart for tinkerbell-crds-helm
+          description: Helm chart for tinkerbell-crds
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-          name: tinkerbell-crds-helm
+          name: tinkerbell-crds
           uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-crds:0.2.5-eks-a-v0.0.0-dev-build.1
       version: v0.5.3+abcdef1
     upgrader:
@@ -3980,7 +3980,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
         os: linux
-        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.8.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.8.1-eks-a-v0.0.0-dev-build.1
       manager:
         arch:
         - amd64

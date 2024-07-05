@@ -38,36 +38,50 @@ REPO_ROOT=$(git rev-parse --show-toplevel)
 BIN_FOLDER=$REPO_ROOT/bin
 TEST_REGEX="${1:-TestDockerKubernetes130SimpleFlow}"
 BRANCH_NAME="${2:-main}"
+source $REPO_ROOT/test/e2e/E2E_AMI_FILTER_VARS
 
+export AWS_SDK_LOAD_CONFIG=true
+export AWS_CONFIG_FILE=$(pwd)/config_file
+export AWS_PROFILE=e2e-docker-test
 
-cat << EOF > config_file
+cat << EOF > ${AWS_CONFIG_FILE}
 [default]
 output=json
 region=${AWS_REGION:-${AWS_DEFAULT_REGION:-us-west-2}}
 role_arn=$AWS_ROLE_ARN
 web_identity_token_file=/var/run/secrets/eks.amazonaws.com/serviceaccount/token
-[profile e2e-docker-test]
+[profile ${AWS_PROFILE}]
 role_arn=$TEST_ROLE_ARN
 region=${AWS_REGION:-${AWS_DEFAULT_REGION:-us-west-2}}
 source_profile=default
 EOF
 
+unset AWS_ROLE_ARN AWS_WEB_IDENTITY_TOKEN_FILE
+
 INTEGRATION_TEST_INFRA_CONFIG="/tmp/test-infra.yml"
 export T_TINKERBELL_S3_INVENTORY_CSV_KEY="inventory/den80/den80-hardware.csv"
+
+INTEGRATION_TEST_AMI_ID=$(aws ec2 describe-images \
+  --profile ${AWS_PROFILE} \
+  --owners ${AMI_OWNER_ID_FILTER} \
+  --filters "Name=name,Values=${AMI_NAME_FILTER}" "Name=description,Values=${AMI_DESCRIPTION_FILTER}" \
+  --query 'sort_by(Images, &CreationDate)[-1].[ImageId]' \
+  --output text
+)
+
+if [ -z $INTEGRATION_TEST_AMI_ID ]; then
+  echo "INTEGRATION_TEST_AMI_ID cannot be empty. Exiting"
+  exit 1
+fi
 
 cat << EOF > ${INTEGRATION_TEST_INFRA_CONFIG}
 ---
 
 ec2:
-  amiId: ${INTEGRATION_TEST_AL2_AMI_ID}
+  amiId: ${INTEGRATION_TEST_AMI_ID}
   subnetId:
 
 EOF
-
-export AWS_SDK_LOAD_CONFIG=true
-export AWS_CONFIG_FILE=$(pwd)/config_file
-export AWS_PROFILE=e2e-docker-test
-unset AWS_ROLE_ARN AWS_WEB_IDENTITY_TOKEN_FILE
 
 BUNDLES_OVERRIDE=false
 if [ -f "$BIN_FOLDER/local-bundle-release.yaml" ]; then

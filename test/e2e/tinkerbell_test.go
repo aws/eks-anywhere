@@ -1718,3 +1718,28 @@ func TestTinkerbellKubernetes126UbuntuTo130MultipleUpgrade(t *testing.T) {
 		kube130clusterOpts,
 	)
 }
+
+// Kubelet Configuration e2e tests
+func TestTinkerbellKubernetes129KubeletConfigurationSimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewTinkerbell(t, framework.WithUbuntu129Tinkerbell()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube129)),
+		framework.WithControlPlaneHardware(1),
+		framework.WithWorkerHardware(1),
+		framework.WithKubeletConfig(),
+	)
+	runKubeletConfigurationTinkerbellFlow(test)
+}
+
+func TestTinkerbellKubernetes130KubeletConfigurationSimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewTinkerbell(t, framework.WithUbuntu130Tinkerbell()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube130)),
+		framework.WithControlPlaneHardware(1),
+		framework.WithWorkerHardware(1),
+		framework.WithKubeletConfig(),
+	)
+	runKubeletConfigurationTinkerbellFlow(test)
+}

@@ -70,7 +70,7 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 	{
 		ProjectName:    "ubuntu-rtos",
 		ProjectPath:    "projects/canonical/ubuntu",
-		GitTagAssigner: tagger.NonExistentTagAssigner,
+		GitTagAssigner: tagger.RTOSReleaseDateAssigner,
 		Archives: []*assettypes.Archive{
 			{
 				Name:                "rtos",
@@ -79,6 +79,7 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 				OSVersion:           "22.04",
 				ArchiveS3PathGetter: archives.RTOSArtifactPathGetter,
 				Private:             true,
+				UploadToRTOSBucket:  true,
 			},
 		},
 	},

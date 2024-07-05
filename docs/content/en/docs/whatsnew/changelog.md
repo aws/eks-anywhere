@@ -9,7 +9,7 @@ description: >
 ---
 
 {{% alert title="Announcements" color="warning" %}}
-* EKS Anywhere release `v0.19.0` introduces support for creating Kubernetes version v1.29 clusters. A conformance test was promoted in Kubernetes v1.29 that verifies that `Service`s serving different L4 protocols with the same port number can co-exist in a Kubernetes cluster. This is not supported in Cilium, the CNI deployed on EKS Anywhere clusters, because Cilium currently does not differentiate between TCP and UDP protocols for Kubernetes `Service`s. Hence EKS Anywhere v1.29 clusters will not pass this specific conformance test. This service protocol differentiation is being tracked in an upstream Cilium issue and will be supported in a future Cilium release. A future release of EKS Anywhere will include the patched Cilium version when it is available.<br>
+* EKS Anywhere release `v0.19.0` introduces support for creating Kubernetes version v1.29 clusters. A conformance test was promoted in Kubernetes v1.29 that verifies that `Service`s serving different L4 protocols with the same port number can co-exist in a Kubernetes cluster. This is not supported in Cilium, the CNI deployed on EKS Anywhere clusters, because Cilium currently does not differentiate between TCP and UDP protocols for Kubernetes `Service`s. Hence EKS Anywhere v1.29 and above clusters will not pass this specific conformance test. This service protocol differentiation is being tracked in an upstream Cilium issue and will be supported in a future Cilium release. A future release of EKS Anywhere will include the patched Cilium version when it is available.<br>
   Refer to the following links for more information regarding the conformance test:
   * [PR promoting multi-protocol `Service` test in Kubernetes v1.29](https://github.com/kubernetes/kubernetes/pull/120069)
   * [Cilium issue for the multi-protocol `Service` feature](https://github.com/cilium/cilium/issues/9207)
@@ -24,12 +24,93 @@ description: >
   * [Building Ubuntu and Red Hat node images]({{< relref "../osmgmt/artifacts/#building-node-images" >}})
   * [Downloading Bottlerocket node images]({{< relref "../osmgmt/artifacts/#download-bottlerocket-node-images" >}})
   * [Upgrading an EKS Anywhere cluster]({{< relref "../clustermgmt/cluster-upgrades" >}})
-* EKS Anywhere version `v0.19.4` introduced a regression in the Curated Packages workflow due to a bug in the associated Packages controller version (`v0.4.2`). This will be fixed in the next patch release.
 {{% /alert %}}
 
 {{% alert title="General Information" color="info" %}}
 * When upgrading to a new minor version, a new OS image must be created using the new image-builder CLI pertaining to that release.
 {{% /alert %}}
+
+## [v0.20.0](https://github.com/aws/eks-anywhere/releases/tag/v0.20.0)
+
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+|    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+| Bottlerocket 1.20.0 |    ✔    |     -      |    —    |     —      |  —   |
+| Bottlerocket 1.19.4 |    -    |     \*      |    —    |     —      |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+|      RHEL 9.x       |    —    |     ✔      |    ✔    |     ✔      |  —   |
+
+\* [EKS Anywhere issue regarding deprecation of Bottlerocket bare metal variants](https://github.com/aws/eks-anywhere/issues/7754)
+
+### Added
+- Support for Kubernetes v1.30
+- Support for configuring kube-apiserver flags in cluster spec ([#7755](https://github.com/aws/eks-anywhere/pull/7755))
+- Redhat 9 support for Bare Metal ([#3032](https://github.com/aws/eks-anywhere-build-tooling/pull/3032))
+- Support for configuring kubelet settings in cluster spec ([#7708](https://github.com/aws/eks-anywhere/issues/7708))
+- Support for control plane failure domains on Nutanix ([#8192](https://github.com/aws/eks-anywhere/pull/8192))
+
+### Changed
+- Generate cluster config command includes OSImageURL in tinkerbell machine config objects ([#8226](https://github.com/aws/eks-anywhere/pull/8226))
+- Added EKS-D for 1-30:
+  - [`v1-30-eks-7`](https://distro.eks.amazonaws.com/releases/1-30/7/)
+- Cilium: `v1.13.9` to `v1.13.16`
+- Cluster API: `v1.6.1` to `v1.7.2`
+- Cluster API Provider vSphere: `v1.8.5` to `v1.10.0`
+- Cluster API Provider Nutanix: `v1.2.3` to `v1.3.5`
+- Flux: `v2.2.3` to `v2.3.0`
+- Kube-vip: `v0.7.0` to `v0.8.0`
+- Image-builder: `v0.1.24` to `v0.1.26`
+- Kind: `v0.22.0` to `v0.23.0`
+- Etcdadm Controller: `v1.0.17` to `v1.0.21`
+- Tinkerbell Stack:
+  - Cluster API Provider Tinkerbell: `v0.4.0` to `v0.5.3`
+  - Hegel: `v0.10.1` to `v0.12.0`
+  - Rufio: `afd7cd82fa08dae8f9f3ffac96eb030176f3abbd` to `v0.3.3`
+  - Tink: `v0.8.0` to `v0.10.0`
+  - Boots/Smee: `v0.8.1` to `v0.11.0`
+  - Hook: `9d54933a03f2f4c06322969b06caa18702d17f66` to `v0.8.1`
+  - Charts: `v0.4.5`
+
+**Note:** The Boots service has been renamed to Smee by the upstream tinkerbell community with this version upgrade. Any reference to Boots or Smee in our docs refer to the same service.
+
+### Removed
+- Support for Kubernetes v1.25
+- Support for certain curated packages CLI commands ([#8240](https://github.com/aws/eks-anywhere/pull/8240))
+
+### Fixed
+- CLI commands for packages to honor the registry mirror setup in cluster spec ([#8026](https://github.com/aws/eks-anywhere/pull/8026))
+
+## [v0.19.7](https://github.com/aws/eks-anywhere/releases/tag/v0.19.7)
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+|    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+| Bottlerocket 1.19.2 |    ✔    |     \*      |    —    |     —      |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+|      RHEL 9.x       |    —    |     —      |    ✔    |     ✔      |  —   |
+
+\* [EKS Anywhere issue regarding deprecation of Bottlerocket bare metal variants](https://github.com/aws/eks-anywhere/issues/7754)
+
+### Upgraded
+- Cluster API Provider Nutanix: `v1.3.3` to `v1.3.5`
+- Image Builder: `v0.1.24` to `v0.1.26`
+- EKS Distro:
+  - `v1-25-eks-39` to [`v1-25-eks-40`](https://distro.eks.amazonaws.com/releases/1-25/40/)
+  - `v1-26-eks-35` to [`v1-26-eks-38`](https://distro.eks.amazonaws.com/releases/1-26/38/)
+  - `v1-27-eks-29` to [`v1-27-eks-32`](https://distro.eks.amazonaws.com/releases/1-27/32/)
+  - `v1-28-eks-22` to [`v1-28-eks-25`](https://distro.eks.amazonaws.com/releases/1-28/25/)
+  - `v1-29-eks-11` to [`v1-29-eks-14`](https://distro.eks.amazonaws.com/releases/1-29/14/)
+
+### Changed
+- Updated cluster status reconciliation logic for worker node groups with [autoscaling](https://anywhere.eks.amazonaws.com/docs/getting-started/optional/autoscaling/) configuration [#8254](https://github.com/aws/eks-anywhere/pull/8254)
+- Added logic to apply new hardware on baremetal cluster upgrades [#8288](https://github.com/aws/eks-anywhere/pull/8288)
+
+### Fixed
+- Fixed bug when installer does not create CCM secret for Nutanix workload cluster [#8191](https://github.com/aws/eks-anywhere/pull/8191)
+- Fixed upgrade workflow for registry mirror certificates in EKS Anywhere packages [#7114](https://github.com/aws/eks-anywhere/issues/7114)
 
 ## [v0.19.6](https://github.com/aws/eks-anywhere/releases/tag/v0.19.6)
 ### Supported OS version details

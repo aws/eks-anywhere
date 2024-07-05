@@ -42,6 +42,7 @@ func getTinkBundle() releasev1alpha1.TinkerbellBundle {
 	return releasev1alpha1.TinkerbellBundle{
 		TinkerbellStack: releasev1alpha1.TinkerbellStackBundle{
 			Tink: releasev1alpha1.TinkBundle{
+				Nginx:          releasev1alpha1.Image{URI: "public.ecr.aws/eks-anywhere/nginx:latest"},
 				TinkController: releasev1alpha1.Image{URI: "public.ecr.aws/eks-anywhere/tink-controller:latest"},
 				TinkServer:     releasev1alpha1.Image{URI: "public.ecr.aws/eks-anywhere/tink-server:latest"},
 				TinkWorker:     releasev1alpha1.Image{URI: "public.ecr.aws/eks-anywhere/tink-worker:latest"},
@@ -224,8 +225,6 @@ func TestTinkerbellStackInstallWithDifferentOptions(t *testing.T) {
 					[]string{"-backend-kube-config", "/kubeconfig", "-dhcp-addr", "0.0.0.0:67", "-osie-url", "https://anywhere-assests.eks.amazonaws.com/tinkerbell/hook", "-tink-server", "1.2.3.4:42113"},
 					"-v", gomock.Any(),
 					"--network", "host",
-					"-e", gomock.Any(),
-					"-e", gomock.Any(),
 					"-e", gomock.Any(),
 					"-e", gomock.Any(),
 					"-e", gomock.Any(),

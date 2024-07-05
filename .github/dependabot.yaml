@@ -10,16 +10,21 @@ updates:
   labels:
     - "dependabot"
     - "ok-to-test"
-# Main Go module
+# Main Go module and release module
+# grouped together since frequently updates
+# in main cascade down to the release module.
 - package-ecosystem: "gomod"
-  directory: "/"
+  directories:
+  - "/"
+  - "/release/cli"
   schedule:
     interval: "weekly"
     day: "monday"
-  ## group all dependencies with a k8s.io prefix into a single PR.
+  ## group all dependencies in one PR to avoid churn.
   groups:
-    kubernetes:
-      patterns: [ "k8s.io/*" ]
+    all-go-mod-patch-and-minor:
+      patterns: [ "*" ]
+      update-types: [ "patch", "minor" ]
   ignore:
   # Ignore controller-runtime as its upgraded manually.
   - dependency-name: "sigs.k8s.io/controller-runtime"
@@ -27,26 +32,6 @@ updates:
     # Ignore k8s and its transitives modules as they are upgraded manually together with controller-runtime.
   - dependency-name: "k8s.io/*"
     update-types: [ "version-update:semver-major", "version-update:semver-minor" ]
-  labels:
-    - "dependabot"
-    - "ok-to-test"
-# Release Go module
-- package-ecosystem: "gomod"
-  directory: "/release/cli"
-  schedule:
-    interval: "weekly"
-    day: "tuesday"
-  ## group all dependencies with a k8s.io prefix into a single PR.
-  groups:
-    kubernetes:
-      patterns: [ "k8s.io/*" ]
-  ignore:
-    # Ignore controller-runtime as its upgraded manually.
-    - dependency-name: "sigs.k8s.io/controller-runtime"
-      update-types: [ "version-update:semver-major", "version-update:semver-minor" ]
-    # Ignore k8s and its transitives modules as they are upgraded manually together with controller-runtime.
-    - dependency-name: "k8s.io/*"
-      update-types: [ "version-update:semver-major", "version-update:semver-minor" ]
   labels:
     - "dependabot"
     - "ok-to-test"
