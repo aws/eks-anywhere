@@ -18,8 +18,8 @@ import (
 
 // UpdateClusterStatusForControlPlane checks the current state of the Cluster's control plane and updates the
 // Cluster status information.
-// There is a posibility that UpdateClusterStatusForControlPlane does not update the
-// controleplane status specially in case where it still waiting for cluster objects to be created.
+// There is a possibility that UpdateClusterStatusForControlPlane does not update the
+// controlplane status specially in case where it is still waiting for cluster objects to be created.
 func UpdateClusterStatusForControlPlane(ctx context.Context, client client.Client, cluster *anywherev1.Cluster) error {
 	kcp, err := controller.GetKubeadmControlPlane(ctx, client, cluster)
 	if err != nil {
@@ -114,8 +114,8 @@ func updateControlPlaneReadyCondition(cluster *anywherev1.Cluster, kcp *controlp
 	totalReplicas := int(kcp.Status.Replicas)
 
 	// First, in the case of a rolling upgrade, we get the number of outdated nodes, and as long as there are some,
-	// we want to reflect in the message that the Cluster is in progres upgdating the old nodes with the
-	// the new machine spec.
+	// we want to reflect in the message that the Cluster is in progress updating the old nodes with the
+	// new machine spec.
 	updatedReplicas := int(kcp.Status.UpdatedReplicas)
 	totalOutdated := totalReplicas - updatedReplicas
 
@@ -243,7 +243,7 @@ func updateWorkersReadyCondition(cluster *anywherev1.Cluster, machineDeployments
 	}
 
 	// There may be worker nodes that are not up to date yet in the case of a rolling upgrade,
-	// so reflect that on the conditon with an appropriate message.
+	// so reflect that on the condition with an appropriate message.
 	totalOutdated := totalReplicas - totalUpdatedReplicas
 	if totalOutdated > 0 {
 		upgradeReason := anywherev1.RollingUpgradeInProgress
