@@ -2,6 +2,7 @@ package e2e
 
 import (
 	"fmt"
+	"math/rand"
 	"sync"
 	"time"
 
@@ -39,6 +40,15 @@ func (hwQu *hardwareCatalogue) reserveHardware(count int) ([]*api.Hardware, erro
 func (hwQu *hardwareCatalogue) releaseHardware(hws []*api.Hardware) {
 	hwQu.mu.Lock()
 	hwQu.hws = append(hwQu.hws, hws...)
+	hwQu.mu.Unlock()
+}
+
+func (hwQu *hardwareCatalogue) shuffleHardware() {
+	hwQu.mu.Lock()
+	random := rand.New(rand.NewSource(time.Now().UnixNano()))
+	random.Shuffle(len(hwQu.hws), func(i, j int) {
+		hwQu.hws[i], hwQu.hws[j] = hwQu.hws[j], hwQu.hws[i]
+	})
 	hwQu.mu.Unlock()
 }
 
