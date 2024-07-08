@@ -156,6 +156,14 @@ func updateControlPlaneReadyCondition(cluster *anywherev1.Cluster, kcp *controlp
 		return
 	}
 
+	// We check for the Ready condition on the kubeadm control plane as a final validation. Usually, the kcp objects
+	// should be ready at this point but if that is not the case, we report it as an error.
+	kubeadmControlPlaneReadyCondition := conditions.Get(kcp, clusterv1.ReadyCondition)
+	if kubeadmControlPlaneReadyCondition != nil && kubeadmControlPlaneReadyCondition.Status == v1.ConditionFalse {
+		conditions.MarkFalse(cluster, anywherev1.ControlPlaneReadyCondition, anywherev1.KubeadmControlPlaneNotReadyReason, clusterv1.ConditionSeverityError, "Kubeadm control plane %s not ready yet", kcp.ObjectMeta.Name)
+		return
+	}
+
 	conditions.MarkTrue(cluster, anywherev1.ControlPlaneReadyCondition)
 }
 
@@ -278,6 +286,25 @@ func updateWorkersReadyCondition(cluster *anywherev1.Cluster, machineDeployments
 				conditions.MarkFalse(cluster, anywherev1.WorkersReadyCondition, anywherev1.AutoscalerConstraintNotMetReason, clusterv1.ConditionSeverityInfo, "Worker nodes count for %s not between %d and %d yet (%d actual)", md.ObjectMeta.Name, minCount, maxCount, replicas)
 				return
 			}
+		}
+	}
+
+	// We check for the Ready condition on the machine deployments as a final validation. Usually, the md objects
+	// should be ready at this point but if that is not the case, we report it as an error.
+	for _, md := range machineDeployments {
+		mdConditions := md.GetConditions()
+		if mdConditions == nil {
+			continue
+		}
+		var machineDeploymentReadyCondition *clusterv1.Condition
+		for _, condition := range mdConditions {
+			if condition.Type == clusterv1.ReadyCondition {
+				machineDeploymentReadyCondition = &condition
+			}
+		}
+		if machineDeploymentReadyCondition != nil && machineDeploymentReadyCondition.Status == v1.ConditionFalse {
+			conditions.MarkFalse(cluster, anywherev1.WorkersReadyCondition, anywherev1.MachineDeploymentNotReadyReason, clusterv1.ConditionSeverityError, "Machine deployment %s not ready yet", md.ObjectMeta.Name)
+			return
 		}
 	}
 
