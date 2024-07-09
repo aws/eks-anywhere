@@ -18,8 +18,8 @@ import (
 
 // UpdateClusterStatusForControlPlane checks the current state of the Cluster's control plane and updates the
 // Cluster status information.
-// There is a posibility that UpdateClusterStatusForControlPlane does not update the
-// controleplane status specially in case where it still waiting for cluster objects to be created.
+// There is a possibility that UpdateClusterStatusForControlPlane does not update the
+// controlplane status specially in case where it is still waiting for cluster objects to be created.
 func UpdateClusterStatusForControlPlane(ctx context.Context, client client.Client, cluster *anywherev1.Cluster) error {
 	kcp, err := controller.GetKubeadmControlPlane(ctx, client, cluster)
 	if err != nil {
@@ -114,8 +114,8 @@ func updateControlPlaneReadyCondition(cluster *anywherev1.Cluster, kcp *controlp
 	totalReplicas := int(kcp.Status.Replicas)
 
 	// First, in the case of a rolling upgrade, we get the number of outdated nodes, and as long as there are some,
-	// we want to reflect in the message that the Cluster is in progres upgdating the old nodes with the
-	// the new machine spec.
+	// we want to reflect in the message that the Cluster is in progress updating the old nodes with the
+	// new machine spec.
 	updatedReplicas := int(kcp.Status.UpdatedReplicas)
 	totalOutdated := totalReplicas - updatedReplicas
 
@@ -153,6 +153,14 @@ func updateControlPlaneReadyCondition(cluster *anywherev1.Cluster, kcp *controlp
 	kcpControlPlaneHealthyCondition := conditions.Get(kcp, controlplanev1.ControlPlaneComponentsHealthyCondition)
 	if kcpControlPlaneHealthyCondition != nil && kcpControlPlaneHealthyCondition.Status == v1.ConditionFalse {
 		conditions.MarkFalse(cluster, anywherev1.ControlPlaneReadyCondition, anywherev1.ControlPlaneComponentsUnhealthyReason, clusterv1.ConditionSeverityError, kcpControlPlaneHealthyCondition.Message)
+		return
+	}
+
+	// We check for the Ready condition on the kubeadm control plane as a final validation. Usually, the kcp objects
+	// should be ready at this point but if that is not the case, we report it as an error.
+	kubeadmControlPlaneReadyCondition := conditions.Get(kcp, clusterv1.ReadyCondition)
+	if kubeadmControlPlaneReadyCondition != nil && kubeadmControlPlaneReadyCondition.Status == v1.ConditionFalse {
+		conditions.MarkFalse(cluster, anywherev1.ControlPlaneReadyCondition, anywherev1.KubeadmControlPlaneNotReadyReason, clusterv1.ConditionSeverityError, "Kubeadm control plane %s not ready yet", kcp.ObjectMeta.Name)
 		return
 	}
 
@@ -235,7 +243,7 @@ func updateWorkersReadyCondition(cluster *anywherev1.Cluster, machineDeployments
 	}
 
 	// There may be worker nodes that are not up to date yet in the case of a rolling upgrade,
-	// so reflect that on the conditon with an appropriate message.
+	// so reflect that on the condition with an appropriate message.
 	totalOutdated := totalReplicas - totalUpdatedReplicas
 	if totalOutdated > 0 {
 		upgradeReason := anywherev1.RollingUpgradeInProgress
@@ -278,6 +286,25 @@ func updateWorkersReadyCondition(cluster *anywherev1.Cluster, machineDeployments
 				conditions.MarkFalse(cluster, anywherev1.WorkersReadyCondition, anywherev1.AutoscalerConstraintNotMetReason, clusterv1.ConditionSeverityInfo, "Worker nodes count for %s not between %d and %d yet (%d actual)", md.ObjectMeta.Name, minCount, maxCount, replicas)
 				return
 			}
+		}
+	}
+
+	// We check for the Ready condition on the machine deployments as a final validation. Usually, the md objects
+	// should be ready at this point but if that is not the case, we report it as an error.
+	for _, md := range machineDeployments {
+		mdConditions := md.GetConditions()
+		if mdConditions == nil {
+			continue
+		}
+		var machineDeploymentReadyCondition *clusterv1.Condition
+		for _, condition := range mdConditions {
+			if condition.Type == clusterv1.ReadyCondition {
+				machineDeploymentReadyCondition = &condition
+			}
+		}
+		if machineDeploymentReadyCondition != nil && machineDeploymentReadyCondition.Status == v1.ConditionFalse {
+			conditions.MarkFalse(cluster, anywherev1.WorkersReadyCondition, anywherev1.MachineDeploymentNotReadyReason, clusterv1.ConditionSeverityError, "Machine deployment %s not ready yet", md.ObjectMeta.Name)
+			return
 		}
 	}
 
