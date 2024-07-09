@@ -401,6 +401,37 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 			},
 		},
 		{
+			name: "kcp not ready yet",
+			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
+				kcp.Status.Replicas = 3
+				kcp.Status.ReadyReplicas = 3
+				kcp.Status.UpdatedReplicas = 3
+
+				kcp.Status.Conditions = []clusterv1.Condition{
+					{
+						Type:   clusterv1.ReadyCondition,
+						Status: "False",
+					},
+				}
+			}),
+			controlPlaneCount: 3,
+			conditions: []anywherev1.Condition{
+				{
+					Type:   anywherev1.ControlPlaneInitializedCondition,
+					Status: "True",
+				},
+			},
+			externalEtcdCount:   0,
+			externalEtcdCluster: nil,
+			wantCondition: &anywherev1.Condition{
+				Type:     anywherev1.ControlPlaneReadyCondition,
+				Status:   "False",
+				Reason:   anywherev1.KubeadmControlPlaneNotReadyReason,
+				Severity: clusterv1.ConditionSeverityError,
+				Message:  "Kubeadm control plane test-cluster not ready yet",
+			},
+		},
+		{
 			name: "control plane ready",
 			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
 				kcp.Status.Replicas = 3
@@ -1011,13 +1042,10 @@ func TestUpdateClusterStatusForWorkers(t *testing.T) {
 			},
 		},
 		{
-			name: "workers ready",
+			name: "workers not ready, md not ready yet",
 			workerNodeGroupConfigurations: []anywherev1.WorkerNodeGroupConfiguration{
 				{
 					Count: ptr.Int(1),
-				},
-				{
-					Count: ptr.Int(2),
 				},
 			},
 			machineDeployments: []clusterv1.MachineDeployment{
@@ -1026,18 +1054,16 @@ func TestUpdateClusterStatusForWorkers(t *testing.T) {
 					md.ObjectMeta.Labels = map[string]string{
 						clusterv1.ClusterNameLabel: clusterName,
 					}
-					md.Status.Replicas = 1
 					md.Status.ReadyReplicas = 1
+					md.Status.Replicas = 1
 					md.Status.UpdatedReplicas = 1
-				}),
-				*test.MachineDeployment(func(md *clusterv1.MachineDeployment) {
-					md.ObjectMeta.Name = "md-1"
-					md.ObjectMeta.Labels = map[string]string{
-						clusterv1.ClusterNameLabel: clusterName,
+
+					md.Status.Conditions = []clusterv1.Condition{
+						{
+							Type:   clusterv1.ReadyCondition,
+							Status: "False",
+						},
 					}
-					md.Status.Replicas = 2
-					md.Status.ReadyReplicas = 2
-					md.Status.UpdatedReplicas = 2
 				}),
 			},
 			conditions: []anywherev1.Condition{
@@ -1047,8 +1073,11 @@ func TestUpdateClusterStatusForWorkers(t *testing.T) {
 				},
 			},
 			wantCondition: &anywherev1.Condition{
-				Type:   anywherev1.WorkersReadyCondition,
-				Status: "True",
+				Type:     anywherev1.WorkersReadyCondition,
+				Status:   "False",
+				Reason:   anywherev1.MachineDeploymentNotReadyReason,
+				Severity: clusterv1.ConditionSeverityError,
+				Message:  "Machine deployment md-0 not ready yet",
 			},
 		},
 		{
@@ -1139,6 +1168,47 @@ func TestUpdateClusterStatusForWorkers(t *testing.T) {
 					md.Status.Replicas = 1
 					md.Status.ReadyReplicas = 1
 					md.Status.UpdatedReplicas = 1
+				}),
+			},
+			conditions: []anywherev1.Condition{
+				{
+					Type:   anywherev1.ControlPlaneInitializedCondition,
+					Status: "True",
+				},
+			},
+			wantCondition: &anywherev1.Condition{
+				Type:   anywherev1.WorkersReadyCondition,
+				Status: "True",
+			},
+		},
+		{
+			name: "workers ready",
+			workerNodeGroupConfigurations: []anywherev1.WorkerNodeGroupConfiguration{
+				{
+					Count: ptr.Int(1),
+				},
+				{
+					Count: ptr.Int(2),
+				},
+			},
+			machineDeployments: []clusterv1.MachineDeployment{
+				*test.MachineDeployment(func(md *clusterv1.MachineDeployment) {
+					md.ObjectMeta.Name = "md-0"
+					md.ObjectMeta.Labels = map[string]string{
+						clusterv1.ClusterNameLabel: clusterName,
+					}
+					md.Status.Replicas = 1
+					md.Status.ReadyReplicas = 1
+					md.Status.UpdatedReplicas = 1
+				}),
+				*test.MachineDeployment(func(md *clusterv1.MachineDeployment) {
+					md.ObjectMeta.Name = "md-1"
+					md.ObjectMeta.Labels = map[string]string{
+						clusterv1.ClusterNameLabel: clusterName,
+					}
+					md.Status.Replicas = 2
+					md.Status.ReadyReplicas = 2
+					md.Status.UpdatedReplicas = 2
 				}),
 			},
 			conditions: []anywherev1.Condition{
