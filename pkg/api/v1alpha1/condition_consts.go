@@ -58,6 +58,12 @@ const (
 
 	// AutoscalerConstraintNotMetReason reports the Cluster status is waiting for autoscaler constraint to be met.
 	AutoscalerConstraintNotMetReason = "AutoscalerConstraintNotMet"
+
+	// KubeadmControlPlaneNotReadyReason reports that the kubeadm control plane is not ready.
+	KubeadmControlPlaneNotReadyReason = "KubeadmControlPlaneNotReady"
+
+	// MachineDeploymentNotReadyReason reports that the machine deployment is not ready.
+	MachineDeploymentNotReadyReason = "MachineDeploymentNotReady"
 )
 
 const (
