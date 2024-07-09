@@ -26,10 +26,22 @@ updates:
       patterns: [ "*" ]
       update-types: [ "patch", "minor" ]
   ignore:
+  # Ignore CAPI since we have our own fork with a replace.
+  - dependency-name: "sigs.k8s.io/cluster-api"
+    update-types: [ "version-update:semver-major", "version-update:semver-minor",  "version-update:semver-patch" ]
+  # Ignore CAPI test since it should be updated in tandem with CAPI.
+  - dependency-name: "sigs.k8s.io/cluster-api/test"
+    update-types: [ "version-update:semver-major", "version-update:semver-minor" ]
+  # Ignore CAPC since we have the API structs in tree to reduce dependencies.
+  - dependency-name: "sigs.k8s.io/cluster-api-provider-cloudstack"
+    update-types: [ "version-update:semver-major", "version-update:semver-minor", "version-update:semver-patch" ]
+  # Ignore tinkerbell since minor versions usually come with breaking changes.
+  - dependency-name: "github.com/tinkerbell/cluster-api-provider-tinkerbell"
+    update-types: [ "version-update:semver-major", "version-update:semver-minor" ]
   # Ignore controller-runtime as its upgraded manually.
   - dependency-name: "sigs.k8s.io/controller-runtime"
     update-types: [ "version-update:semver-major", "version-update:semver-minor" ]
-    # Ignore k8s and its transitives modules as they are upgraded manually together with controller-runtime.
+   # Ignore k8s and its transitives modules as they are upgraded manually together with controller-runtime.
   - dependency-name: "k8s.io/*"
     update-types: [ "version-update:semver-major", "version-update:semver-minor" ]
   labels:
