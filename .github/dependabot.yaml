@@ -35,8 +35,16 @@ updates:
   # Ignore CAPC since we have the API structs in tree to reduce dependencies.
   - dependency-name: "sigs.k8s.io/cluster-api-provider-cloudstack"
     update-types: [ "version-update:semver-major", "version-update:semver-minor", "version-update:semver-patch" ]
-  # Ignore tinkerbell since minor versions usually come with breaking changes.
+  # Ignore tinkerbell since minor versions usually come with breaking changes and it depends on controller-runtime.
   - dependency-name: "github.com/tinkerbell/cluster-api-provider-tinkerbell"
+    update-types: [ "version-update:semver-major", "version-update:semver-minor" ]
+  - dependency-name: "github.com/tinkerbell/tink"
+    update-types: [ "version-update:semver-major", "version-update:semver-minor" ]
+  # Ignore nutanix provider to avoid issues with controller-runtime.
+  - dependency-name: "github.com/nutanix-cloud-native/cluster-api-provider-nutanix"
+    update-types: [ "version-update:semver-major", "version-update:semver-minor" ]
+  # Ignore vsphere provider to avoid issues with controller-runtime.
+  - dependency-name: "sigs.k8s.io/cluster-api-provider-vsphere"
     update-types: [ "version-update:semver-major", "version-update:semver-minor" ]
   # Ignore controller-runtime as its upgraded manually.
   - dependency-name: "sigs.k8s.io/controller-runtime"
