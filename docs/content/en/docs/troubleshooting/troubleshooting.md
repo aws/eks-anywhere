@@ -733,6 +733,9 @@ Make sure your DHCP server is up and working.
 For more troubleshooting tips, see the [CAPV Troubleshooting](https://github.com/kubernetes-sigs/cluster-api-provider-vsphere/blob/master/docs/troubleshooting.md#debugging-issues) guide.
 
 ### Machine objects stuck on provisioning state
+
+>**_NOTE_**: This issue has been resolved with EKS-Anywhere v0.20.x
+
 There is a known issue where connection is lost to vCenter and machine provisioning stops working. 
 For more context, see the related Github [issue](https://github.com/kubernetes-sigs/cluster-api-provider-vsphere/issues/2832) in upstream CAPV repo that is tracking this.
 
