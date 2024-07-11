@@ -66,7 +66,7 @@ func NewHelm() (*helmDriver, error) {
 	}, nil
 }
 
-func GetHelmDest(d *helmDriver, r *releasetypes.ReleaseConfig, ReleaseImageURI, assetName string) (string, error) {
+func GetHelmDest(d *helmDriver, r *releasetypes.ReleaseConfig, sourceImageURI, assetName string) (string, error) {
 	var chartPath string
 	var err error
 
@@ -75,9 +75,9 @@ func GetHelmDest(d *helmDriver, r *releasetypes.ReleaseConfig, ReleaseImageURI, 
 		return "", fmt.Errorf("logging into the source registry: %w", err)
 	}
 
-	helmChart := strings.Split(ReleaseImageURI, ":")
+	helmChart := strings.Split(sourceImageURI, ":")
 	fmt.Printf("Starting to modifying helm chart %s\n", helmChart[0])
-	fmt.Printf("Pulling helm chart %s\n", ReleaseImageURI)
+	fmt.Printf("Pulling helm chart %s\n", sourceImageURI)
 	chartPath, err = d.PullHelmChart(helmChart[0], helmChart[1])
 	if err != nil {
 		return "", fmt.Errorf("pulling the helm chart: %w", err)

@@ -153,13 +153,12 @@ func GetPackagesBundle(r *releasetypes.ReleaseConfig, imageDigests releasetypes.
 							return anywherev1alpha1.PackageBundle{}, errors.Wrap(err, "creating helm client")
 						}
 						fmt.Printf("Modifying helm chart for %s\n", trimmedAsset)
-						helmDest, err := helm.GetHelmDest(helmDriver, r, imageArtifact.ReleaseImageURI, trimmedAsset)
+						helmDest, err := helm.GetHelmDest(helmDriver, r, imageArtifact.SourceImageURI, trimmedAsset)
 						if err != nil {
 							return anywherev1alpha1.PackageBundle{}, errors.Wrap(err, "getting Helm destination:")
 						}
 						fmt.Printf("helmDest=%v\n", helmDest)
 						fmt.Printf("Pulled helm chart locally to %s\n", helmDest)
-						fmt.Printf("r.sourceClients")
 						err = helm.ModifyAndPushChartYaml(*imageArtifact, r, helmDriver, helmDest, packagesArtifacts, bundleImageArtifacts)
 						if err != nil {
 							return anywherev1alpha1.PackageBundle{}, errors.Wrap(err, "modifying Chart.yaml and pushing Helm chart to destination:")
