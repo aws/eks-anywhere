@@ -30,6 +30,31 @@ description: >
 * When upgrading to a new minor version, a new OS image must be created using the new image-builder CLI pertaining to that release.
 {{% /alert %}}
 
+## [v0.20.1](https://github.com/aws/eks-anywhere/releases/tag/v0.20.1)
+
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+|    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+| Bottlerocket 1.20.0 |    ✔    |     -      |    —    |     —      |  —   |
+| Bottlerocket 1.19.4 |    -    |     \*      |    —    |     —      |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+|      RHEL 9.x       |    —    |     ✔      |    ✔    |     ✔      |  —   |
+
+\* [EKS Anywhere issue regarding deprecation of Bottlerocket bare metal variants](https://github.com/aws/eks-anywhere/issues/7754)
+
+### Changed
+- EKS Distro:
+  - `v1-26-eks-38` to [`v1-26-eks-39`](https://distro.eks.amazonaws.com/releases/1-26/38/)
+  - `v1-27-eks-32` to [`v1-27-eks-34`](https://distro.eks.amazonaws.com/releases/1-27/32/)
+  - `v1-28-eks-25` to [`v1-28-eks-27`](https://distro.eks.amazonaws.com/releases/1-28/25/)
+  - `v1-29-eks-14` to [`v1-29-eks-16`](https://distro.eks.amazonaws.com/releases/1-29/14/)
+  - `v1-30-eks-7`  to [`v1-30-eks-9`](https://distro.eks.amazonaws.com/releases/1-30/14/)
+
+### Fixed
+- Fix cluster status reconciliation for control plane and worker nodes ([8455](https://github.com/aws/eks-anywhere/pull/8455))
+
 ## [v0.20.0](https://github.com/aws/eks-anywhere/releases/tag/v0.20.0)
 
 ### Supported OS version details
