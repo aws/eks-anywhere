@@ -46,11 +46,11 @@ description: >
 
 ### Changed
 - EKS Distro:
-  - `v1-26-eks-38` to [`v1-26-eks-39`](https://distro.eks.amazonaws.com/releases/1-26/38/)
-  - `v1-27-eks-32` to [`v1-27-eks-34`](https://distro.eks.amazonaws.com/releases/1-27/32/)
-  - `v1-28-eks-25` to [`v1-28-eks-27`](https://distro.eks.amazonaws.com/releases/1-28/25/)
-  - `v1-29-eks-14` to [`v1-29-eks-16`](https://distro.eks.amazonaws.com/releases/1-29/14/)
-  - `v1-30-eks-7`  to [`v1-30-eks-9`](https://distro.eks.amazonaws.com/releases/1-30/14/)
+  - `v1-26-eks-38` to [`v1-26-eks-39`](https://distro.eks.amazonaws.com/releases/1-26/39/)
+  - `v1-27-eks-32` to [`v1-27-eks-34`](https://distro.eks.amazonaws.com/releases/1-27/34/)
+  - `v1-28-eks-25` to [`v1-28-eks-27`](https://distro.eks.amazonaws.com/releases/1-28/27/)
+  - `v1-29-eks-14` to [`v1-29-eks-16`](https://distro.eks.amazonaws.com/releases/1-29/16/)
+  - `v1-30-eks-7`  to [`v1-30-eks-9`](https://distro.eks.amazonaws.com/releases/1-30/9/)
 
 ### Fixed
 - Fix cluster status reconciliation for control plane and worker nodes ([8455](https://github.com/aws/eks-anywhere/pull/8455))
