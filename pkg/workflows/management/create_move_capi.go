@@ -18,7 +18,7 @@ func (s *moveClusterManagementTask) Run(ctx context.Context, commandContext *tas
 		return &workflows.CollectDiagnosticsTask{}
 	}
 
-	logger.Info("Moving cluster management from bootstrap to workload cluster")
+	logger.Info("Moving the cluster management components from the bootstrap cluster to the management cluster")
 	err = commandContext.ClusterManager.MoveCAPI(ctx, commandContext.BootstrapCluster, commandContext.WorkloadCluster, commandContext.WorkloadCluster.Name, commandContext.ClusterSpec, types.WithNodeRef())
 	if err != nil {
 		commandContext.SetError(err)
