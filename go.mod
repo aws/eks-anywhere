@@ -15,7 +15,7 @@ require (
 	github.com/aws/eks-anywhere/internal/aws-sdk-go-v2/service/snowballdevice v0.0.0-00010101000000-000000000000
 	github.com/aws/eks-distro-build-tooling/release v0.0.0-20211103003257-a7e2379eae5e
 	github.com/aws/etcdadm-bootstrap-provider v1.0.12
-	github.com/aws/etcdadm-controller v1.0.19
+	github.com/aws/etcdadm-controller v1.0.21
 	github.com/aws/smithy-go v1.20.3
 	github.com/bmc-toolbox/bmclib/v2 v2.1.1-0.20231206130132-1063371b9ed6
 	github.com/docker/cli v27.0.3+incompatible

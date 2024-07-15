@@ -158,8 +158,8 @@ github.com/aws/eks-distro-build-tooling/release v0.0.0-20211103003257-a7e2379eae
 github.com/aws/eks-distro-build-tooling/release v0.0.0-20211103003257-a7e2379eae5e/go.mod h1:p/KHVJAMv3kofnUnShkZ6pUnZYzm+LK2G7bIi8nnTKA=
 github.com/aws/etcdadm-bootstrap-provider v1.0.12 h1:jSUKR+2wETNpjmYmtEC2a/SBbulG/ER7HchdweasX74=
 github.com/aws/etcdadm-bootstrap-provider v1.0.12/go.mod h1:6hc4wSlAkioU7EAGCW8fg2F+w42OTgLxjs4/nVzxPQw=
-github.com/aws/etcdadm-controller v1.0.19 h1:AC6LLHb6hb02Fus3RanUvzJeRoiORGZQ3/d/UjKbsHY=
-github.com/aws/etcdadm-controller v1.0.19/go.mod h1:L710y0if8mrJhCmOQSUJF+9QcEOiemd4jXkKIc5Oeok=
+github.com/aws/etcdadm-controller v1.0.21 h1:dcw0NZUkZCIqb/Z57cYAGHmiYkdruYa7mGHRpCmZl8Q=
+github.com/aws/etcdadm-controller v1.0.21/go.mod h1:D27oTyQjeV/ds1wIBiKx8+8eoNIZSVR4MyspDhNG9bg=
 github.com/aws/smithy-go v1.20.3 h1:ryHwveWzPV5BIof6fyDvor6V3iUL7nTfiTKXHiW05nE=
 github.com/aws/smithy-go v1.20.3/go.mod h1:krry+ya/rV9RDcV/Q16kpu6ypI4K2czasz0NC3qS14E=
 github.com/benbjohnson/clock v1.1.0/go.mod h1:J11/hYXuz8f4ySSvYwY0FKfm+ezbsZBKZxNJlLklBHA=
