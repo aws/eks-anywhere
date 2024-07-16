@@ -146,7 +146,7 @@ func (t *Tinkerbell) WithProviderUpgrade(fillers ...api.TinkerbellFiller) Cluste
 
 // CleanupResources runs a clean up the Tinkerbell machines which simply powers them down.
 func (t *Tinkerbell) CleanupResources(_ string) error {
-	return cleanup.TinkerbellTestResources(t.inventoryCsvFilePath, true)
+	return cleanup.PowerOffTinkerbellMachinesFromFile(t.inventoryCsvFilePath, true)
 }
 
 // WithKubeVersionAndOS returns a cluster config filler that sets the cluster kube version and the right image for all

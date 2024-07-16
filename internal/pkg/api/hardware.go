@@ -25,7 +25,7 @@ const (
 // Alias for backwards compatibility.
 type Hardware = hardware.Machine
 
-func NewHardwareSlice(r io.Reader) ([]*Hardware, error) {
+func ReadTinkerbellHardware(r io.Reader) ([]*Hardware, error) {
 	hardware := []*Hardware{}
 
 	if err := gocsv.Unmarshal(r, &hardware); err != nil {
@@ -35,16 +35,16 @@ func NewHardwareSlice(r io.Reader) ([]*Hardware, error) {
 	return hardware, nil
 }
 
-func NewHardwareSliceFromFile(file string) ([]*Hardware, error) {
+func ReadTinkerbellHardwareFromFile(file string) ([]*Hardware, error) {
 	hardwareFile, err := os.OpenFile(file, os.O_RDONLY, os.ModePerm)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create hardware slice from hardware file: %v", err)
 	}
-	return NewHardwareSlice(hardwareFile)
+	return ReadTinkerbellHardware(hardwareFile)
 }
 
 func NewHardwareMapFromFile(file string) (map[string]*Hardware, error) {
-	slice, err := NewHardwareSliceFromFile(file)
+	slice, err := ReadTinkerbellHardwareFromFile(file)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create hardware map from hardware file: %v", err)
 	}
