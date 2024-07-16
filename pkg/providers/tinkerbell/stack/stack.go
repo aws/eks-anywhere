@@ -562,7 +562,8 @@ func (s *Installer) createValuesOverride(bundle releasev1alpha1.TinkerbellBundle
 					{
 						"name":  "prometheus_server",
 						"value": ":2213",
-					}, {
+					},
+					{
 						"name":  "lb_class_only",
 						"value": "true",
 					},
