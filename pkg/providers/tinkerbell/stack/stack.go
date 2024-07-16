@@ -563,6 +563,12 @@ func (s *Installer) createValuesOverride(bundle releasev1alpha1.TinkerbellBundle
 						"name":  "prometheus_server",
 						"value": ":2213",
 					},
+					// The Tinkerbell stack needs a load balancer to work properly.
+					// We bundle Kube-vip in, as the load balancer, when we deploy the stack.
+					// We don't want this load balancer to be used by any other workloads.
+					// It allows us greater confidence in successful lifecycle events for the Tinkerbell stack, amongst other things.
+					// Also, the user should be free from Tinkerbell stack constraints
+					// and free to deploy a load balancer of their choosing and not be coupled to ours.
 					{
 						"name":  "lb_class_only",
 						"value": "true",
