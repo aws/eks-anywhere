@@ -9,7 +9,7 @@ description: >
 >**_NOTE_**: The Boots service has been renamed to Smee by the upstream Tinkerbell community. Any reference to Boots or Smee refer to the same service. The commands for the logs and
 > expected pods mentioned in this doc are still the proper commands to run.
 
-EKS Anywhere uses [Tinkerbell](https://docs.tinkerbell.org/) to provision machines for a Bare Metal cluster.
+EKS Anywhere uses [Tinkerbell](https://tinkerbell.org/docs/) to provision machines for a Bare Metal cluster.
 Understanding what Tinkerbell is and how it works with EKS Anywhere can help you take advantage of advanced provisioning features or overcome provisioning problems you encounter.
 
 As someone deploying an EKS Anywhere cluster on Bare Metal, you have several opportunities to interact with Tinkerbell:
