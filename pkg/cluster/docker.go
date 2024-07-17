@@ -2,7 +2,9 @@ package cluster
 
 import (
 	"context"
+	"fmt"
 
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 )
 
@@ -20,6 +22,8 @@ func dockerEntry() *ConfigManagerEntry {
 			func(c *Config) error {
 				if c.DockerDatacenter != nil {
 					return c.DockerDatacenter.Validate()
+				} else if c.Cluster.Spec.DatacenterRef.Kind == v1alpha1.DockerDatacenterKind { // We need this conditional check as DockerDatacenter will be nil for other providers
+					return fmt.Errorf("DockerDatacenterConfig %s not found", c.Cluster.Spec.DatacenterRef.Name)
 				}
 				return nil
 			},
