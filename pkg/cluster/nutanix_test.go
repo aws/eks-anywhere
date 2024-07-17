@@ -57,6 +57,11 @@ func TestValidateNutanixEntry(t *testing.T) {
 
 	err = cm.Validate(config)
 	assert.NoError(t, err)
+
+	config.NutanixDatacenter = nil
+	err = cm.Validate(config)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "NutanixDatacenterConfig eksa-unit-test not found")
 }
 
 func TestNutanixConfigClientBuilder(t *testing.T) {
