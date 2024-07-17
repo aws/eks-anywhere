@@ -2,7 +2,9 @@ package cluster
 
 import (
 	"context"
+	"fmt"
 
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 )
 
@@ -32,6 +34,8 @@ func tinkerbellEntry() *ConfigManagerEntry {
 					if err := validateSameNamespace(c, c.TinkerbellDatacenter); err != nil {
 						return err
 					}
+				} else if c.Cluster.Spec.DatacenterRef.Kind == v1alpha1.TinkerbellDatacenterKind { // We need this conditional check as TinkerbellDatacenter will be nil for other providers
+					return fmt.Errorf("TinkerbellDatacenterConfig %s not found", c.Cluster.Spec.DatacenterRef.Name)
 				}
 				return nil
 			},

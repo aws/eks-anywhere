@@ -22,6 +22,16 @@ func TestParseConfigMissingDockerDatacenter(t *testing.T) {
 	g.Expect(got.DockerDatacenter).To(BeNil())
 }
 
+func TestValidateDockerDatacenterNotFoundError(t *testing.T) {
+	g := NewWithT(t)
+	got, _ := cluster.ParseConfigFromFile("testdata/cluster_docker_missing_datacenter.yaml")
+	g.Expect(got.DockerDatacenter).To(BeNil())
+
+	cm, _ := cluster.NewDefaultConfigManager()
+	err := cm.Validate(got)
+	g.Expect(err).To(MatchError(ContainSubstring("DockerDatacenterConfig eksa-unit-test not found")))
+}
+
 func TestDefaultConfigClientBuilderDockerCluster(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
