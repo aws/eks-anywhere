@@ -2,7 +2,9 @@ package cluster
 
 import (
 	"context"
+	"fmt"
 
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 )
 
@@ -24,6 +26,8 @@ func nutanixEntry() *ConfigManagerEntry {
 			func(c *Config) error {
 				if c.NutanixDatacenter != nil {
 					return c.NutanixDatacenter.Validate()
+				} else if c.Cluster.Spec.DatacenterRef.Kind == v1alpha1.NutanixDatacenterKind { // We need this conditional check as NutanixDatacenter will be nil for other providers
+					return fmt.Errorf("NutanixDatacenterConfig %s not found", c.Cluster.Spec.DatacenterRef.Name)
 				}
 				return nil
 			},

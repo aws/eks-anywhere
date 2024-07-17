@@ -163,6 +163,16 @@ func TestParseConfigFromFileTinkerbellCluster(t *testing.T) {
 	)
 }
 
+func TestValidateTinkerbellDatacenterNotFoundError(t *testing.T) {
+	g := NewWithT(t)
+	got, err := cluster.ParseConfigFromFile("testdata/cluster_tinkerbell_1_19.yaml")
+	g.Expect(err).NotTo(HaveOccurred())
+	got.TinkerbellDatacenter = nil
+	cm, _ := cluster.NewDefaultConfigManager()
+	err = cm.Validate(got)
+	g.Expect(err).To(MatchError(ContainSubstring("TinkerbellDatacenterConfig test not found")))
+}
+
 func TestDefaultConfigClientBuilderTinkerbellCluster(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
