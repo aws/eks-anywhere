@@ -152,7 +152,7 @@ func (v *Validator) validateFailureDomains(ctx context.Context, client Client, c
 		}
 
 		for _, subnet := range fd.Subnets {
-			if err := v.validateSubnetConfig(ctx, client, subnet); err != nil {
+			if err := v.validateSubnetConfig(ctx, client, fd.Cluster, subnet); err != nil {
 				return err
 			}
 		}
@@ -254,7 +254,7 @@ func (v *Validator) ValidateMachineConfig(ctx context.Context, client Client, co
 		return err
 	}
 
-	if err := v.validateSubnetConfig(ctx, client, config.Spec.Subnet); err != nil {
+	if err := v.validateSubnetConfig(ctx, client, config.Spec.Cluster, config.Spec.Subnet); err != nil {
 		return err
 	}
 
@@ -362,28 +362,33 @@ func (v *Validator) validateTemplateMatchesKubernetesVersion(ctx context.Context
 	return nil
 }
 
-func (v *Validator) validateSubnetConfig(ctx context.Context, client Client, identifier anywherev1.NutanixResourceIdentifier) error {
-	switch identifier.Type {
+func (v *Validator) validateSubnetConfig(ctx context.Context, client Client, cluster, subnet anywherev1.NutanixResourceIdentifier) error {
+	clusterUUID, err := getClusterUUID(ctx, client, cluster)
+	if err != nil {
+		return err
+	}
+
+	switch subnet.Type {
 	case anywherev1.NutanixIdentifierName:
-		if identifier.Name == nil || *identifier.Name == "" {
+		if subnet.Name == nil || *subnet.Name == "" {
 			return fmt.Errorf("missing subnet name")
 		} else {
-			subnetName := *identifier.Name
-			if _, err := findSubnetUUIDByName(ctx, client, subnetName); err != nil {
+			subnetName := *subnet.Name
+			if _, err = findSubnetUUIDByName(ctx, client, clusterUUID, subnetName); err != nil {
 				return fmt.Errorf("failed to find subnet with name %s: %v", subnetName, err)
 			}
 		}
 	case anywherev1.NutanixIdentifierUUID:
-		if identifier.UUID == nil || *identifier.UUID == "" {
+		if subnet.UUID == nil || *subnet.UUID == "" {
 			return fmt.Errorf("missing subnet uuid")
 		} else {
-			subnetUUID := *identifier.UUID
-			if _, err := client.GetSubnet(ctx, subnetUUID); err != nil {
+			subnetUUID := *subnet.UUID
+			if _, err = client.GetSubnet(ctx, subnetUUID); err != nil {
 				return fmt.Errorf("failed to find subnet with uuid %s: %v", subnetUUID, err)
 			}
 		}
 	default:
-		return fmt.Errorf("invalid subnet identifier type: %s; valid types are: %q and %q", identifier.Type, anywherev1.NutanixIdentifierName, anywherev1.NutanixIdentifierUUID)
+		return fmt.Errorf("invalid subnet identifier type: %s; valid types are: %q and %q", subnet.Type, anywherev1.NutanixIdentifierName, anywherev1.NutanixIdentifierUUID)
 	}
 
 	return nil
@@ -437,19 +442,41 @@ func (v *Validator) validateAdditionalCategories(ctx context.Context, client Cli
 }
 
 // findSubnetUUIDByName retrieves the subnet uuid by the given subnet name.
-func findSubnetUUIDByName(ctx context.Context, v3Client Client, subnetName string) (*string, error) {
+func findSubnetUUIDByName(ctx context.Context, v3Client Client, clusterUUID, subnetName string) (*string, error) {
 	res, err := v3Client.ListSubnet(ctx, &v3.DSMetadata{
-		Filter: utils.StringPtr(fmt.Sprintf("name==%s", subnetName)),
+		Filter: utils.StringPtr(fmt.Sprintf("name==%s;cluster_uuid==%s", subnetName, clusterUUID)),
 	})
 	if err != nil || len(res.Entities) == 0 {
 		return nil, fmt.Errorf("failed to find subnet by name %q: %v", subnetName, err)
 	}
 
 	if len(res.Entities) > 1 {
-		return nil, fmt.Errorf("found more than one (%v) subnet with name %q", len(res.Entities), subnetName)
+		return nil, fmt.Errorf("found more than one (%v) subnet with name %q and cluster uuid %v", len(res.Entities), subnetName, clusterUUID)
 	}
 
 	return res.Entities[0].Metadata.UUID, nil
+}
+
+// getClusterUUID retrieves the cluster uuid by the given cluster identifier.
+func getClusterUUID(ctx context.Context, v3Client Client, cluster anywherev1.NutanixResourceIdentifier) (string, error) {
+	var clusterUUID string
+	var err error
+	if cluster.Type == anywherev1.NutanixIdentifierUUID {
+		if cluster.UUID == nil || *cluster.UUID == "" {
+			return "", fmt.Errorf("missing cluster uuid")
+		}
+		clusterUUID = *cluster.UUID
+	}
+
+	if cluster.Type == anywherev1.NutanixIdentifierName {
+		clusterName := *cluster.Name
+		var uuid *string
+		if uuid, err = findClusterUUIDByName(ctx, v3Client, clusterName); err != nil {
+			return "", fmt.Errorf("failed to find cluster with name %q: %v", clusterName, err)
+		}
+		clusterUUID = *uuid
+	}
+	return clusterUUID, nil
 }
 
 // findClusterUUIDByName retrieves the cluster uuid by the given cluster name.
