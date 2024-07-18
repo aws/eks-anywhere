@@ -1835,7 +1835,7 @@ func (e *ClusterE2ETest) VerifyPrometheusPrometheusServerStates(packageName, tar
 	}
 
 	e.T.Log("Reading package", packageName, "pod prometheus-server logs")
-	podName, err := e.KubectlClient.GetPodNameByLabel(context.TODO(), targetNamespace, "app=prometheus,component=server", e.KubeconfigFilePath())
+	podName, err := e.KubectlClient.GetPodNameByLabel(context.TODO(), targetNamespace, "app.kubernetes.io/name=prometheus,app.kubernetes.io/component=server", e.KubeconfigFilePath())
 	if err != nil {
 		e.T.Fatalf("unable to get name of the prometheus-server pod: %s", err)
 	}
