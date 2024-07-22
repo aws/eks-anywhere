@@ -62,11 +62,13 @@ require (
 	oras.land/oras-go/v2 v2.4.0
 	sigs.k8s.io/cluster-api v1.6.2
 	sigs.k8s.io/cluster-api-provider-cloudstack v0.4.9-rc7
-	sigs.k8s.io/cluster-api-provider-vsphere v1.9.2
+	sigs.k8s.io/cluster-api-provider-vsphere v1.9.4
 	sigs.k8s.io/cluster-api/test v1.6.2
 	sigs.k8s.io/controller-runtime v0.16.5
 	sigs.k8s.io/yaml v1.4.0
 )
+
+require go.uber.org/goleak v1.3.0 // indirect
 
 require (
 	dario.cat/mergo v1.0.0 // indirect
