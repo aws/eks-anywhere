@@ -6,7 +6,7 @@ description: >
   Overview of Tinkerbell and network booting for EKS Anywhere on Bare Metal
 ---
 
-EKS Anywhere uses [Tinkerbell](https://docs.tinkerbell.org/) to provision machines for a Bare Metal cluster.
+EKS Anywhere uses [Tinkerbell](https://tinkerbell.org/docs/) to provision machines for a Bare Metal cluster.
 Understanding what Tinkerbell is and how it works with EKS Anywhere can help you take advantage of advanced provisioning features or overcome provisioning problems you encounter.
 
 As someone deploying an EKS Anywhere cluster on Bare Metal, you have several opportunities to interact with Tinkerbell:
