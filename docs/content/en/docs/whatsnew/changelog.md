@@ -120,6 +120,13 @@ description: >
 \* [EKS Anywhere issue regarding deprecation of Bottlerocket bare metal variants](https://github.com/aws/eks-anywhere/issues/7754)
 
 ### Upgraded
+- Kube-rbac-proxy: `v0.16.0` to `v0.16.1`
+- Containerd: `v1.7.13` to `v1.7.20`
+- Kube VIP: `v0.7.0` to `v0.7.2`
+- Helm: `v3.14.3` to `v3.14.4`
+- Cluster API Provider vSphere: `v1.8.5` to `v1.8.10`
+- Runc: `v1.1.12` to `v1.1.13`
+
 - EKS Distro:
   - `v1-26-eks-38` to [`v1-26-eks-39`](https://distro.eks.amazonaws.com/releases/1-26/39/)
   - `v1-27-eks-32` to [`v1-27-eks-35`](https://distro.eks.amazonaws.com/releases/1-27/35/)
