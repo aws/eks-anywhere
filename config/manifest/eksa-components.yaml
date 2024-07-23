@@ -7,7 +7,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.6.1
+    controller-gen.kubebuilder.io/version: v0.8.0
   creationTimestamp: null
   name: awsdatacenterconfigs.anywhere.eks.amazonaws.com
 spec:
@@ -67,7 +67,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.6.1
+    controller-gen.kubebuilder.io/version: v0.8.0
   creationTimestamp: null
   name: awsiamconfigs.anywhere.eks.amazonaws.com
 spec:
@@ -3393,7 +3393,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.6.1
+    controller-gen.kubebuilder.io/version: v0.8.0
   creationTimestamp: null
   name: cloudstackdatacenterconfigs.anywhere.eks.amazonaws.com
 spec:
@@ -3604,7 +3604,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.6.1
+    controller-gen.kubebuilder.io/version: v0.8.0
   creationTimestamp: null
   name: cloudstackmachineconfigs.anywhere.eks.amazonaws.com
 spec:
@@ -3789,7 +3789,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: eksa-system/eksa-serving-cert
-    controller-gen.kubebuilder.io/version: v0.6.1
+    controller-gen.kubebuilder.io/version: v0.8.0
   name: clusters.anywhere.eks.amazonaws.com
 spec:
   conversion:
@@ -4609,7 +4609,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.6.1
+    controller-gen.kubebuilder.io/version: v0.8.0
   creationTimestamp: null
   name: controlplaneupgrades.anywhere.eks.amazonaws.com
 spec:
@@ -4729,27 +4729,27 @@ spec:
                   description: "ObjectReference contains enough information to let
                     you inspect or modify the referred object. --- New uses of this
                     type are discouraged because of difficulty describing its usage
-                    when embedded in APIs.  1. Ignored fields.  It includes many fields
+                    when embedded in APIs. 1. Ignored fields.  It includes many fields
                     which are not generally honored.  For instance, ResourceVersion
-                    and FieldPath are both very rarely valid in actual usage.  2.
-                    Invalid usage help.  It is impossible to add specific help for
-                    individual usage.  In most embedded usages, there are particular
-                    \    restrictions like, \"must refer only to types A and B\" or
-                    \"UID not honored\" or \"name must be restricted\".     Those
-                    cannot be well described when embedded.  3. Inconsistent validation.
-                    \ Because the usages are different, the validation rules are different
-                    by usage, which makes it hard for users to predict what will happen.
-                    \ 4. The fields are both imprecise and overly precise.  Kind is
-                    not a precise mapping to a URL. This can produce ambiguity     during
-                    interpretation and require a REST mapping.  In most cases, the
-                    dependency is on the group,resource tuple     and the version
-                    of the actual struct is irrelevant.  5. We cannot easily change
-                    it.  Because this type is embedded in many locations, updates
-                    to this type     will affect numerous schemas.  Don't make new
-                    APIs embed an underspecified API type they do not control. \n
-                    Instead of using this type, create a locally provided and used
-                    type that is well-focused on your reference. For example, ServiceReferences
-                    for admission registration: https://github.com/kubernetes/api/blob/release-1.17/admissionregistration/v1/types.go#L533
+                    and FieldPath are both very rarely valid in actual usage. 2. Invalid
+                    usage help.  It is impossible to add specific help for individual
+                    usage.  In most embedded usages, there are particular restrictions
+                    like, \"must refer only to types A and B\" or \"UID not honored\"
+                    or \"name must be restricted\". Those cannot be well described
+                    when embedded. 3. Inconsistent validation.  Because the usages
+                    are different, the validation rules are different by usage, which
+                    makes it hard for users to predict what will happen. 4. The fields
+                    are both imprecise and overly precise.  Kind is not a precise
+                    mapping to a URL. This can produce ambiguity during interpretation
+                    and require a REST mapping.  In most cases, the dependency is
+                    on the group,resource tuple and the version of the actual struct
+                    is irrelevant. 5. We cannot easily change it.  Because this type
+                    is embedded in many locations, updates to this type will affect
+                    numerous schemas.  Don't make new APIs embed an underspecified
+                    API type they do not control. \n Instead of using this type, create
+                    a locally provided and used type that is well-focused on your
+                    reference. For example, ServiceReferences for admission registration:
+                    https://github.com/kubernetes/api/blob/release-1.17/admissionregistration/v1/types.go#L533
                     ."
                   properties:
                     apiVersion:
@@ -4826,7 +4826,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.6.1
+    controller-gen.kubebuilder.io/version: v0.8.0
   creationTimestamp: null
   name: dockerdatacenterconfigs.anywhere.eks.amazonaws.com
 spec:
@@ -4966,7 +4966,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.6.1
+    controller-gen.kubebuilder.io/version: v0.8.0
   creationTimestamp: null
   name: fluxconfigs.anywhere.eks.amazonaws.com
 spec:
@@ -5066,7 +5066,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.6.1
+    controller-gen.kubebuilder.io/version: v0.8.0
   creationTimestamp: null
   name: gitopsconfigs.anywhere.eks.amazonaws.com
 spec:
@@ -5154,7 +5154,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.6.1
+    controller-gen.kubebuilder.io/version: v0.8.0
   creationTimestamp: null
   name: machinedeploymentupgrades.anywhere.eks.amazonaws.com
 spec:
@@ -5268,27 +5268,27 @@ spec:
                   description: "ObjectReference contains enough information to let
                     you inspect or modify the referred object. --- New uses of this
                     type are discouraged because of difficulty describing its usage
-                    when embedded in APIs.  1. Ignored fields.  It includes many fields
+                    when embedded in APIs. 1. Ignored fields.  It includes many fields
                     which are not generally honored.  For instance, ResourceVersion
-                    and FieldPath are both very rarely valid in actual usage.  2.
-                    Invalid usage help.  It is impossible to add specific help for
-                    individual usage.  In most embedded usages, there are particular
-                    \    restrictions like, \"must refer only to types A and B\" or
-                    \"UID not honored\" or \"name must be restricted\".     Those
-                    cannot be well described when embedded.  3. Inconsistent validation.
-                    \ Because the usages are different, the validation rules are different
-                    by usage, which makes it hard for users to predict what will happen.
-                    \ 4. The fields are both imprecise and overly precise.  Kind is
-                    not a precise mapping to a URL. This can produce ambiguity     during
-                    interpretation and require a REST mapping.  In most cases, the
-                    dependency is on the group,resource tuple     and the version
-                    of the actual struct is irrelevant.  5. We cannot easily change
-                    it.  Because this type is embedded in many locations, updates
-                    to this type     will affect numerous schemas.  Don't make new
-                    APIs embed an underspecified API type they do not control. \n
-                    Instead of using this type, create a locally provided and used
-                    type that is well-focused on your reference. For example, ServiceReferences
-                    for admission registration: https://github.com/kubernetes/api/blob/release-1.17/admissionregistration/v1/types.go#L533
+                    and FieldPath are both very rarely valid in actual usage. 2. Invalid
+                    usage help.  It is impossible to add specific help for individual
+                    usage.  In most embedded usages, there are particular restrictions
+                    like, \"must refer only to types A and B\" or \"UID not honored\"
+                    or \"name must be restricted\". Those cannot be well described
+                    when embedded. 3. Inconsistent validation.  Because the usages
+                    are different, the validation rules are different by usage, which
+                    makes it hard for users to predict what will happen. 4. The fields
+                    are both imprecise and overly precise.  Kind is not a precise
+                    mapping to a URL. This can produce ambiguity during interpretation
+                    and require a REST mapping.  In most cases, the dependency is
+                    on the group,resource tuple and the version of the actual struct
+                    is irrelevant. 5. We cannot easily change it.  Because this type
+                    is embedded in many locations, updates to this type will affect
+                    numerous schemas.  Don't make new APIs embed an underspecified
+                    API type they do not control. \n Instead of using this type, create
+                    a locally provided and used type that is well-focused on your
+                    reference. For example, ServiceReferences for admission registration:
+                    https://github.com/kubernetes/api/blob/release-1.17/admissionregistration/v1/types.go#L533
                     ."
                   properties:
                     apiVersion:
@@ -5366,7 +5366,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.6.1
+    controller-gen.kubebuilder.io/version: v0.8.0
   creationTimestamp: null
   name: nodeupgrades.anywhere.eks.amazonaws.com
 spec:
@@ -5547,7 +5547,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.6.1
+    controller-gen.kubebuilder.io/version: v0.8.0
   creationTimestamp: null
   name: nutanixdatacenterconfigs.anywhere.eks.amazonaws.com
 spec:
@@ -5700,7 +5700,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.6.1
+    controller-gen.kubebuilder.io/version: v0.8.0
   creationTimestamp: null
   name: nutanixmachineconfigs.anywhere.eks.amazonaws.com
 spec:
@@ -6019,7 +6019,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.6.1
+    controller-gen.kubebuilder.io/version: v0.8.0
   creationTimestamp: null
   name: oidcconfigs.anywhere.eks.amazonaws.com
 spec:
@@ -6109,7 +6109,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.6.1
+    controller-gen.kubebuilder.io/version: v0.8.0
   creationTimestamp: null
   name: snowdatacenterconfigs.anywhere.eks.amazonaws.com
 spec:
@@ -6172,7 +6172,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.6.1
+    controller-gen.kubebuilder.io/version: v0.8.0
   creationTimestamp: null
   name: snowippools.anywhere.eks.amazonaws.com
 spec:
@@ -6251,7 +6251,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.6.1
+    controller-gen.kubebuilder.io/version: v0.8.0
   creationTimestamp: null
   name: snowmachineconfigs.anywhere.eks.amazonaws.com
 spec:
@@ -6361,10 +6361,149 @@ spec:
                             items:
                               type: string
                             type: array
+                          clusterDomain:
+                            description: ClusterDomain defines the DNS domain for
+                              the cluster, allowing all Kubernetes-run containers
+                              to search this domain before the host’s search domains
+                            type: string
+                          containerLogMaxFiles:
+                            description: ContainerLogMaxFiles specifies the maximum
+                              number of container log files that can be present for
+                              a container
+                            type: integer
+                          containerLogMaxSize:
+                            description: ContainerLogMaxSize is a quantity defining
+                              the maximum size of the container log file before it
+                              is rotated
+                            type: string
+                          cpuCFSQuota:
+                            description: CPUCFSQuota enables CPU CFS quota enforcement
+                              for containers that specify CPU limits
+                            type: boolean
+                          cpuManagerPolicy:
+                            description: CPUManagerPolicy is the name of the policy
+                              to use.
+                            type: string
+                          cpuManagerPolicyOptions:
+                            additionalProperties:
+                              type: string
+                            description: CPUManagerPolicyOptions is a set of key=value
+                              which allows to set extra options to fine tune the behaviour
+                              of the cpu manager policies
+                            type: object
+                          cpuManagerReconcilePeriod:
+                            description: CPUManagerReconcilePeriod is the reconciliation
+                              period for the CPU Manager.
+                            type: string
+                          eventBurst:
+                            description: EventBurst is the maximum size of a burst
+                              of event creations.
+                            type: integer
+                          eventRecordQPS:
+                            description: EventRecordQPS is the maximum event creations
+                              per second.
+                            type: integer
+                          evictionHard:
+                            additionalProperties:
+                              type: string
+                            description: EvictionHard is a map of signal names to
+                              quantities that defines hard eviction thresholds.
+                            type: object
+                          evictionMaxPodGracePeriod:
+                            description: EvictionMaxPodGracePeriod is the maximum
+                              allowed grace period (in seconds) to use when terminating
+                              pods in response to a soft eviction threshold being
+                              met.
+                            type: integer
+                          evictionSoft:
+                            additionalProperties:
+                              type: string
+                            description: EvictionSoft is a map of signal names to
+                              quantities that defines soft eviction thresholds.
+                            type: object
+                          evictionSoftGracePeriod:
+                            additionalProperties:
+                              type: string
+                            description: EvictionSoftGracePeriod is a map of signal
+                              names to quantities that defines grace periods for each
+                              soft eviction signal.
+                            type: object
+                          imageGCHighThresholdPercent:
+                            description: ImageGCHighThresholdPercent is the percent
+                              of disk usage after which image garbage collection is
+                              always run.
+                            type: integer
+                          imageGCLowThresholdPercent:
+                            description: ImageGCLowThresholdPercent is the percent
+                              of disk usage before which image garbage collection
+                              is never run.
+                            type: integer
+                          kubeAPIBurst:
+                            description: KubeAPIBurst  is the burst to allow while
+                              talking with kubernetes API server.
+                            type: integer
+                          kubeAPIQPS:
+                            description: KubeAPIQPS is the QPS to use while talking
+                              with kubernetes apiserver.
+                            type: integer
+                          kubeReserved:
+                            additionalProperties:
+                              type: string
+                            description: KubeReserved is a set of ResourceName=ResourceQuantity
+                              pairs that describe resources reserved for kubernetes
+                              system components
+                            type: object
                           maxPods:
                             description: MaxPods defines the maximum number of pods
                               that can run on a node.
                             type: integer
+                          memoryManagerPolicy:
+                            description: MemoryManagerPolicy is the name of the policy
+                              to use by memory manager.
+                            type: string
+                          podPidsLimit:
+                            description: PodPidsLimit is the maximum number of PIDs
+                              in any pod.
+                            format: int64
+                            type: integer
+                          providerID:
+                            description: ProviderID sets the unique ID of the instance
+                              that an external provider.
+                            type: string
+                          registryBurst:
+                            description: RegistryBurst is the maximum size of bursty
+                              pulls.
+                            type: integer
+                          registryPullQPS:
+                            description: RegistryPullQPS is the limit of registry
+                              pulls per second.
+                            type: integer
+                          shutdownGracePeriod:
+                            description: ShutdownGracePeriod specifies the total duration
+                              that the node should delay the shutdown and total grace
+                              period for pod termination during a node shutdown.
+                            type: string
+                          shutdownGracePeriodCriticalPods:
+                            description: ShutdownGracePeriodCriticalPods specifies
+                              the duration used to terminate critical pods during
+                              a node shutdown.
+                            type: string
+                          systemReserved:
+                            additionalProperties:
+                              type: string
+                            description: SystemReserved is a set of ResourceName=ResourceQuantity
+                              pairs that describe resources reserved for non-kubernetes
+                              components.
+                            type: object
+                          topologyManagerPolicy:
+                            description: TopologyManagerPolicy is the name of the
+                              topology manager policy to use.
+                            type: string
+                          topologyManagerScope:
+                            description: TopologyManagerScope represents the scope
+                              of topology hint generation that topology manager requests
+                              and hint providers generate.
+                            type: string
                         type: object
                     type: object
                   certBundles:
@@ -6520,7 +6659,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.6.1
+    controller-gen.kubebuilder.io/version: v0.8.0
   creationTimestamp: null
   name: tinkerbelldatacenterconfigs.anywhere.eks.amazonaws.com
 spec:
@@ -6602,7 +6741,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.6.1
+    controller-gen.kubebuilder.io/version: v0.8.0
   creationTimestamp: null
   name: tinkerbellmachineconfigs.anywhere.eks.amazonaws.com
 spec:
@@ -6687,10 +6826,149 @@ spec:
                             items:
                               type: string
                             type: array
+                          clusterDomain:
+                            description: ClusterDomain defines the DNS domain for
+                              the cluster, allowing all Kubernetes-run containers
+                              to search this domain before the host’s search domains
+                            type: string
+                          containerLogMaxFiles:
+                            description: ContainerLogMaxFiles specifies the maximum
+                              number of container log files that can be present for
+                              a container
+                            type: integer
+                          containerLogMaxSize:
+                            description: ContainerLogMaxSize is a quantity defining
+                              the maximum size of the container log file before it
+                              is rotated
+                            type: string
+                          cpuCFSQuota:
+                            description: CPUCFSQuota enables CPU CFS quota enforcement
+                              for containers that specify CPU limits
+                            type: boolean
+                          cpuManagerPolicy:
+                            description: CPUManagerPolicy is the name of the policy
+                              to use.
+                            type: string
+                          cpuManagerPolicyOptions:
+                            additionalProperties:
+                              type: string
+                            description: CPUManagerPolicyOptions is a set of key=value
+                              which allows to set extra options to fine tune the behaviour
+                              of the cpu manager policies
+                            type: object
+                          cpuManagerReconcilePeriod:
+                            description: CPUManagerReconcilePeriod is the reconciliation
+                              period for the CPU Manager.
+                            type: string
+                          eventBurst:
+                            description: EventBurst is the maximum size of a burst
+                              of event creations.
+                            type: integer
+                          eventRecordQPS:
+                            description: EventRecordQPS is the maximum event creations
+                              per second.
+                            type: integer
+                          evictionHard:
+                            additionalProperties:
+                              type: string
+                            description: EvictionHard is a map of signal names to
+                              quantities that defines hard eviction thresholds.
+                            type: object
+                          evictionMaxPodGracePeriod:
+                            description: EvictionMaxPodGracePeriod is the maximum
+                              allowed grace period (in seconds) to use when terminating
+                              pods in response to a soft eviction threshold being
+                              met.
+                            type: integer
+                          evictionSoft:
+                            additionalProperties:
+                              type: string
+                            description: EvictionSoft is a map of signal names to
+                              quantities that defines soft eviction thresholds.
+                            type: object
+                          evictionSoftGracePeriod:
+                            additionalProperties:
+                              type: string
+                            description: EvictionSoftGracePeriod is a map of signal
+                              names to quantities that defines grace periods for each
+                              soft eviction signal.
+                            type: object
+                          imageGCHighThresholdPercent:
+                            description: ImageGCHighThresholdPercent is the percent
+                              of disk usage after which image garbage collection is
+                              always run.
+                            type: integer
+                          imageGCLowThresholdPercent:
+                            description: ImageGCLowThresholdPercent is the percent
+                              of disk usage before which image garbage collection
+                              is never run.
+                            type: integer
+                          kubeAPIBurst:
+                            description: KubeAPIBurst  is the burst to allow while
+                              talking with kubernetes API server.
+                            type: integer
+                          kubeAPIQPS:
+                            description: KubeAPIQPS is the QPS to use while talking
+                              with kubernetes apiserver.
+                            type: integer
+                          kubeReserved:
+                            additionalProperties:
+                              type: string
+                            description: KubeReserved is a set of ResourceName=ResourceQuantity
+                              pairs that describe resources reserved for kubernetes
+                              system components
+                            type: object
                           maxPods:
                             description: MaxPods defines the maximum number of pods
                               that can run on a node.
                             type: integer
+                          memoryManagerPolicy:
+                            description: MemoryManagerPolicy is the name of the policy
+                              to use by memory manager.
+                            type: string
+                          podPidsLimit:
+                            description: PodPidsLimit is the maximum number of PIDs
+                              in any pod.
+                            format: int64
+                            type: integer
+                          providerID:
+                            description: ProviderID sets the unique ID of the instance
+                              that an external provider.
+                            type: string
+                          registryBurst:
+                            description: RegistryBurst is the maximum size of bursty
+                              pulls.
+                            type: integer
+                          registryPullQPS:
+                            description: RegistryPullQPS is the limit of registry
+                              pulls per second.
+                            type: integer
+                          shutdownGracePeriod:
+                            description: ShutdownGracePeriod specifies the total duration
+                              that the node should delay the shutdown and total grace
+                              period for pod termination during a node shutdown.
+                            type: string
+                          shutdownGracePeriodCriticalPods:
+                            description: ShutdownGracePeriodCriticalPods specifies
+                              the duration used to terminate critical pods during
+                              a node shutdown.
+                            type: string
+                          systemReserved:
+                            additionalProperties:
+                              type: string
+                            description: SystemReserved is a set of ResourceName=ResourceQuantity
+                              pairs that describe resources reserved for non-kubernetes
+                              components.
+                            type: object
+                          topologyManagerPolicy:
+                            description: TopologyManagerPolicy is the name of the
+                              topology manager policy to use.
+                            type: string
+                          topologyManagerScope:
+                            description: TopologyManagerScope represents the scope
+                              of topology hint generation that topology manager requests
+                              and hint providers generate.
+                            type: string
                         type: object
                     type: object
                   certBundles:
@@ -6778,7 +7056,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.6.1
+    controller-gen.kubebuilder.io/version: v0.8.0
   creationTimestamp: null
   name: tinkerbelltemplateconfigs.anywhere.eks.amazonaws.com
 spec:
@@ -6917,7 +7195,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.6.1
+    controller-gen.kubebuilder.io/version: v0.8.0
   creationTimestamp: null
   name: vspheredatacenterconfigs.anywhere.eks.amazonaws.com
 spec:
@@ -7002,7 +7280,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.6.1
+    controller-gen.kubebuilder.io/version: v0.8.0
   creationTimestamp: null
   name: vspheremachineconfigs.anywhere.eks.amazonaws.com
 spec:
@@ -7093,10 +7371,149 @@ spec:
                             items:
                               type: string
                             type: array
+                          clusterDomain:
+                            description: ClusterDomain defines the DNS domain for
+                              the cluster, allowing all Kubernetes-run containers
+                              to search this domain before the host’s search domains
+                            type: string
+                          containerLogMaxFiles:
+                            description: ContainerLogMaxFiles specifies the maximum
+                              number of container log files that can be present for
+                              a container
+                            type: integer
+                          containerLogMaxSize:
+                            description: ContainerLogMaxSize is a quantity defining
+                              the maximum size of the container log file before it
+                              is rotated
+                            type: string
+                          cpuCFSQuota:
+                            description: CPUCFSQuota enables CPU CFS quota enforcement
+                              for containers that specify CPU limits
+                            type: boolean
+                          cpuManagerPolicy:
+                            description: CPUManagerPolicy is the name of the policy
+                              to use.
+                            type: string
+                          cpuManagerPolicyOptions:
+                            additionalProperties:
+                              type: string
+                            description: CPUManagerPolicyOptions is a set of key=value
+                              which allows to set extra options to fine tune the behaviour
+                              of the cpu manager policies
+                            type: object
+                          cpuManagerReconcilePeriod:
+                            description: CPUManagerReconcilePeriod is the reconciliation
+                              period for the CPU Manager.
+                            type: string
+                          eventBurst:
+                            description: EventBurst is the maximum size of a burst
+                              of event creations.
+                            type: integer
+                          eventRecordQPS:
+                            description: EventRecordQPS is the maximum event creations
+                              per second.
+                            type: integer
+                          evictionHard:
+                            additionalProperties:
+                              type: string
+                            description: EvictionHard is a map of signal names to
+                              quantities that defines hard eviction thresholds.
+                            type: object
+                          evictionMaxPodGracePeriod:
+                            description: EvictionMaxPodGracePeriod is the maximum
+                              allowed grace period (in seconds) to use when terminating
+                              pods in response to a soft eviction threshold being
+                              met.
+                            type: integer
+                          evictionSoft:
+                            additionalProperties:
+                              type: string
+                            description: EvictionSoft is a map of signal names to
+                              quantities that defines soft eviction thresholds.
+                            type: object
+                          evictionSoftGracePeriod:
+                            additionalProperties:
+                              type: string
+                            description: EvictionSoftGracePeriod is a map of signal
+                              names to quantities that defines grace periods for each
+                              soft eviction signal.
+                            type: object
+                          imageGCHighThresholdPercent:
+                            description: ImageGCHighThresholdPercent is the percent
+                              of disk usage after which image garbage collection is
+                              always run.
+                            type: integer
+                          imageGCLowThresholdPercent:
+                            description: ImageGCLowThresholdPercent is the percent
+                              of disk usage before which image garbage collection
+                              is never run.
+                            type: integer
+                          kubeAPIBurst:
+                            description: KubeAPIBurst  is the burst to allow while
+                              talking with kubernetes API server.
+                            type: integer
+                          kubeAPIQPS:
+                            description: KubeAPIQPS is the QPS to use while talking
+                              with kubernetes apiserver.
+                            type: integer
+                          kubeReserved:
+                            additionalProperties:
+                              type: string
+                            description: KubeReserved is a set of ResourceName=ResourceQuantity
+                              pairs that describe resources reserved for kubernetes
+                              system components
+                            type: object
                           maxPods:
                             description: MaxPods defines the maximum number of pods
                               that can run on a node.
                             type: integer
+                          memoryManagerPolicy:
+                            description: MemoryManagerPolicy is the name of the policy
+                              to use by memory manager.
+                            type: string
+                          podPidsLimit:
+                            description: PodPidsLimit is the maximum number of PIDs
+                              in any pod.
+                            format: int64
+                            type: integer
+                          providerID:
+                            description: ProviderID sets the unique ID of the instance
+                              that an external provider.
+                            type: string
+                          registryBurst:
+                            description: RegistryBurst is the maximum size of bursty
+                              pulls.
+                            type: integer
+                          registryPullQPS:
+                            description: RegistryPullQPS is the limit of registry
+                              pulls per second.
+                            type: integer
+                          shutdownGracePeriod:
+                            description: ShutdownGracePeriod specifies the total duration
+                              that the node should delay the shutdown and total grace
+                              period for pod termination during a node shutdown.
+                            type: string
+                          shutdownGracePeriodCriticalPods:
+                            description: ShutdownGracePeriodCriticalPods specifies
+                              the duration used to terminate critical pods during
+                              a node shutdown.
+                            type: string
+                          systemReserved:
+                            additionalProperties:
+                              type: string
+                            description: SystemReserved is a set of ResourceName=ResourceQuantity
+                              pairs that describe resources reserved for non-kubernetes
+                              components.
+                            type: object
+                          topologyManagerPolicy:
+                            description: TopologyManagerPolicy is the name of the
+                              topology manager policy to use.
+                            type: string
+                          topologyManagerScope:
+                            description: TopologyManagerScope represents the scope
+                              of topology hint generation that topology manager requests
+                              and hint providers generate.
+                            type: string
                         type: object
                     type: object
                   certBundles:
