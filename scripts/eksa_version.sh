@@ -15,7 +15,6 @@
 
 # get_closest_ancestor_branch returns the branch that is the closest ancestor of the current branch.
 # only main and release-* branches are considered as ancestors.
-set -x
 function eksa-version::get_closest_ancestor_branch() {
     # Get the name of the current branch
     local current_branch=$(git rev-parse --abbrev-ref HEAD)
