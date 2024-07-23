@@ -40,9 +40,15 @@ func tinkerbellEntry() *ConfigManagerEntry {
 				return nil
 			},
 			func(c *Config) error {
-				for _, t := range c.TinkerbellMachineConfigs {
-					if err := validateSameNamespace(c, t); err != nil {
-						return err
+				if c.TinkerbellMachineConfigs != nil { // We need this conditional check as TinkerbellMachineConfigs will be nil for other providers
+					for _, mcRef := range c.Cluster.MachineConfigRefs() {
+						m, ok := c.TinkerbellMachineConfigs[mcRef.Name]
+						if !ok {
+							return fmt.Errorf("TinkerbellMachineConfig %s not found", mcRef.Name)
+						}
+						if err := validateSameNamespace(c, m); err != nil {
+							return err
+						}
 					}
 				}
 				return nil

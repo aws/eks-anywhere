@@ -39,6 +39,16 @@ func nutanixEntry() *ConfigManagerEntry {
 				}
 				return nil
 			},
+			func(c *Config) error {
+				if c.NutanixMachineConfigs != nil { // We need this conditional check as NutanixMachineConfigs will be nil for other providers
+					for _, mcRef := range c.Cluster.MachineConfigRefs() {
+						if _, ok := c.NutanixMachineConfigs[mcRef.Name]; !ok {
+							return fmt.Errorf("NutanixMachineConfig %s not found", mcRef.Name)
+						}
+					}
+				}
+				return nil
+			},
 		},
 	}
 }

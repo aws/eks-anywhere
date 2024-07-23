@@ -88,7 +88,7 @@ func TestParseConfigFromFileTinkerbellCluster(t *testing.T) {
 		},
 	))
 
-	g.Expect(got.TinkerbellMachineConfigs).To(HaveLen(1))
+	g.Expect(got.TinkerbellMachineConfigs).To(HaveLen(2))
 	g.Expect(got.TinkerbellMachineConfigs["test-cp"]).To(
 		BeComparableTo(
 			&anywherev1.TinkerbellMachineConfig{
@@ -98,6 +98,33 @@ func TestParseConfigFromFileTinkerbellCluster(t *testing.T) {
 				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "test-cp",
+					Namespace: "test-namespace",
+				},
+				Spec: anywherev1.TinkerbellMachineConfigSpec{
+					TemplateRef: anywherev1.Ref{
+						Kind: "TinkerbellTemplateConfig",
+						Name: "tink-test",
+					},
+					OSFamily: "ubuntu",
+					Users: []anywherev1.UserConfiguration{
+						{
+							Name:              "tink-user",
+							SshAuthorizedKeys: []string{"ssh-rsa AAAAB3"},
+						},
+					},
+				},
+			},
+		),
+	)
+	g.Expect(got.TinkerbellMachineConfigs["test-md"]).To(
+		BeComparableTo(
+			&anywherev1.TinkerbellMachineConfig{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "TinkerbellMachineConfig",
+					APIVersion: "anywhere.eks.amazonaws.com/v1alpha1",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-md",
 					Namespace: "test-namespace",
 				},
 				Spec: anywherev1.TinkerbellMachineConfigSpec{
@@ -171,6 +198,16 @@ func TestValidateTinkerbellDatacenterNotFoundError(t *testing.T) {
 	cm, _ := cluster.NewDefaultConfigManager()
 	err = cm.Validate(got)
 	g.Expect(err).To(MatchError(ContainSubstring("TinkerbellDatacenterConfig test not found")))
+}
+
+func TestValidateTinkerbellMachineConfigNotFoundError(t *testing.T) {
+	g := NewWithT(t)
+	got, _ := cluster.ParseConfigFromFile("testdata/cluster_tinkerbell_1_19.yaml")
+	got.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name = "dummy-machine-config"
+
+	cm, _ := cluster.NewDefaultConfigManager()
+	err := cm.Validate(got)
+	g.Expect(err).To(MatchError(ContainSubstring("TinkerbellMachineConfig dummy-machine-config not found")))
 }
 
 func TestDefaultConfigClientBuilderTinkerbellCluster(t *testing.T) {
