@@ -47,9 +47,15 @@ func vsphereEntry() *ConfigManagerEntry {
 				return nil
 			},
 			func(c *Config) error {
-				for _, m := range c.VSphereMachineConfigs {
-					if err := m.Validate(); err != nil {
-						return err
+				if c.VSphereMachineConfigs != nil { // We need this conditional check as VSphereMachineConfigs will be nil for other providers
+					for _, mcRef := range c.Cluster.MachineConfigRefs() {
+						m, ok := c.VSphereMachineConfigs[mcRef.Name]
+						if !ok {
+							return fmt.Errorf("VSphereMachineConfig %s not found", mcRef.Name)
+						}
+						if err := m.Validate(); err != nil {
+							return err
+						}
 					}
 				}
 				return nil
