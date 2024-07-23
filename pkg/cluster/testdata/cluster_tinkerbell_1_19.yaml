@@ -58,6 +58,22 @@ spec:
 
 ---
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: TinkerbellMachineConfig
+metadata:
+  name: test-md
+  namespace: test-namespace
+spec:
+  osFamily: ubuntu
+  templateRef:
+    kind: TinkerbellTemplateConfig
+    name: tink-test
+  users:
+    - name: tink-user
+      sshAuthorizedKeys:
+        - "ssh-rsa AAAAB3"
+
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: TinkerbellTemplateConfig
 metadata:
   name: tink-test

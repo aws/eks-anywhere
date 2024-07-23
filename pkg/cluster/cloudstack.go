@@ -46,9 +46,15 @@ func cloudstackEntry() *ConfigManagerEntry {
 				return nil
 			},
 			func(c *Config) error {
-				for _, m := range c.CloudStackMachineConfigs {
-					if err := m.Validate(); err != nil {
-						return err
+				if c.CloudStackMachineConfigs != nil { // We need this conditional check as CloudStackMachineConfigs will be nil for other providers
+					for _, mcRef := range c.Cluster.MachineConfigRefs() {
+						m, ok := c.CloudStackMachineConfigs[mcRef.Name]
+						if !ok {
+							return fmt.Errorf("CloudStackMachineConfig %s not found", mcRef.Name)
+						}
+						if err := m.Validate(); err != nil {
+							return err
+						}
 					}
 				}
 				return nil
