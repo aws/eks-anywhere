@@ -569,6 +569,8 @@ func (s *Installer) createValuesOverride(bundle releasev1alpha1.TinkerbellBundle
 					// It allows us greater confidence in successful lifecycle events for the Tinkerbell stack, amongst other things.
 					// Also, the user should be free from Tinkerbell stack constraints
 					// and free to deploy a load balancer of their choosing and not be coupled to ours.
+					// setting lb_class_only=true means that k8s services must explicitly populate
+					// the kube-vip loadBalancerClass with the kube-vip value for kube-vip to serve an IP.
 					{
 						"name":  "lb_class_only",
 						"value": "true",
