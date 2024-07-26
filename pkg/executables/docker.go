@@ -15,7 +15,7 @@ const (
 	dockerPath        = "docker"
 	defaultRegistry   = "public.ecr.aws"
 	packageProdDomain = "783794618700.dkr.ecr.us-west-2.amazonaws.com"
-	packageDevDomain  = "857151390494.dkr.ecr.us-west-2.amazonaws.com"
+	packageDevDomain  = "067575901363.dkr.ecr.us-west-2.amazonaws.com"
 )
 
 type Docker struct {
