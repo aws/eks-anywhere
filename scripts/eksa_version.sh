@@ -65,7 +65,16 @@ function eksa-version::get_next_eksa_version_for_ancestor() {
         # bump one minor version and use patch 0
         
         latest_tag=$(git describe --tags "$(git rev-list --tags='v*.*.*' --max-count=1)")
-        
+
+        # Query to check if the latest_tag is of n'th branch.
+        # For ex, if the latest release is of n-1 branch, we need to ignore that tag and find the next branch.
+        latest_minor=$(echo "${latest_tag}" | cut -d "." -f 2)
+        ((latest_minor=latest_minor+1))
+        latest_n_tag="$(git rev-list --tags="v*."${latest_minor}".*" --max-count=1)"
+        if [ ! -z "$latest_n_tag" ]
+        then
+        latest_tag=$(git describe --tags ${latest_n_tag})
+        fi
         release_version=$(echo "${latest_tag}" | awk -F. -v OFS=. '{$2++; $3=0; print}')
     else
         # For a release branch, get the latest tag for the release minor version and bump the patch version
