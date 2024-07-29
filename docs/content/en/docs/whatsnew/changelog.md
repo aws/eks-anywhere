@@ -30,6 +30,32 @@ description: >
 * When upgrading to a new minor version, a new OS image must be created using the new image-builder CLI pertaining to that release.
 {{% /alert %}}
 
+## [v0.20.2](https://github.com/aws/eks-anywhere/releases/tag/v0.20.2)
+
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+|    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+| Bottlerocket 1.20.0 |    ✔    |     —      |    —    |     —      |  —   |
+| Bottlerocket 1.19.4 |    —    |     \*      |    —    |     —      |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+|      RHEL 9.x       |    —    |     ✔      |    ✔    |     ✔      |  —   |
+
+\* [EKS Anywhere issue regarding deprecation of Bottlerocket bare metal variants](https://github.com/aws/eks-anywhere/issues/7754)
+
+### Changed
+- EKS Distro:
+  - `v1-27-eks-34` to [`v1-27-eks-35`](https://distro.eks.amazonaws.com/releases/1-27/35/)
+  - `v1-28-eks-27` to [`v1-28-eks-28`](https://distro.eks.amazonaws.com/releases/1-28/28/)
+  - `v1-29-eks-16` to [`v1-29-eks-17`](https://distro.eks.amazonaws.com/releases/1-29/17/)
+  - `v1-30-eks-9`  to [`v1-30-eks-10`](https://distro.eks.amazonaws.com/releases/1-30/10/)
+
+### Fixed
+- Fix panic when datacenter obj is not found ([8495](https://github.com/aws/eks-anywhere/pull/8495))
+- Fix Subnet Validation Bug for Nutanix provider ([8499](https://github.com/aws/eks-anywhere/pull/8499))
+- Fix machine config panic when ref object not found ([8533](https://github.com/aws/eks-anywhere/pull/8533))
+
 ## [v0.20.1](https://github.com/aws/eks-anywhere/releases/tag/v0.20.1)
 
 ### Supported OS version details
@@ -37,8 +63,8 @@ description: >
 |:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
 |    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
 |    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
-| Bottlerocket 1.20.0 |    ✔    |     -      |    —    |     —      |  —   |
-| Bottlerocket 1.19.4 |    -    |     \*      |    —    |     —      |  —   |
+| Bottlerocket 1.20.0 |    ✔    |     —      |    —    |     —      |  —   |
+| Bottlerocket 1.19.4 |    —    |     \*      |    —    |     —      |  —   |
 |      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
 |      RHEL 9.x       |    —    |     ✔      |    ✔    |     ✔      |  —   |
 
@@ -62,8 +88,8 @@ description: >
 |:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
 |    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
 |    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
-| Bottlerocket 1.20.0 |    ✔    |     -      |    —    |     —      |  —   |
-| Bottlerocket 1.19.4 |    -    |     \*      |    —    |     —      |  —   |
+| Bottlerocket 1.20.0 |    ✔    |     —      |    —    |     —      |  —   |
+| Bottlerocket 1.19.4 |    —    |     \*      |    —    |     —      |  —   |
 |      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
 |      RHEL 9.x       |    —    |     ✔      |    ✔    |     ✔      |  —   |
 
