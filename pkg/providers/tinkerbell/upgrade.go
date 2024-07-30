@@ -505,7 +505,7 @@ func (p *Provider) validateMachineCfg(ctx context.Context, cluster *types.Cluste
 	return nil
 }
 
-// PreCoreComponentsUpgrade staisfies the Provider interface.
+// PreCoreComponentsUpgrade satisfies the Provider interface.
 func (p *Provider) PreCoreComponentsUpgrade(
 	ctx context.Context,
 	cluster *types.Cluster,
@@ -584,6 +584,7 @@ func (p *Provider) PreCoreComponentsUpgrade(
 		p.datacenterConfig.Spec.TinkerbellIP,
 		cluster.KubeconfigFile,
 		p.datacenterConfig.Spec.HookImagesURLPath,
+		stack.WithLoadBalancerInterface(p.datacenterConfig.Spec.LoadBalancerInterface),
 		stack.WithBootsOnKubernetes(),
 		stack.WithStackServiceEnabled(true),
 		stack.WithDHCPRelayEnabled(true),
