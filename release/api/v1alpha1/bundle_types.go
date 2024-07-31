@@ -302,6 +302,8 @@ type ActionsBundle struct {
 }
 
 type TinkBundle struct {
+	TinkRelay      Image `json:"tinkRelay"`
+	TinkRelayInit  Image `json:"tinkRelayInit"`
 	TinkController Image `json:"tinkController"`
 	TinkServer     Image `json:"tinkServer"`
 	TinkWorker     Image `json:"tinkWorker"`
