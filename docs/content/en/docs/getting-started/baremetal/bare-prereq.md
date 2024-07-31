@@ -69,6 +69,14 @@ Here are other network requirements:
 
   * `d2glxqk2uabbnd.cloudfront.net`: for EKS Anywhere and EKS Distro ECR container images
 
+  * `api.ecr.us-west-2.amazonaws.com`: for EKS Anywhere package authentication matching your region)
+
+  * `d5l0dvt14r5h8.cloudfront.net`: for EKS Anywhere package ECR container images
+
+  * `api.github.com`: only if GitOps is enabled
+
+  * `sts.amazonaws.com`: only if AWS IAM Authenticator is enabled
+
 * Two IP addresses routable from the cluster, but excluded from DHCP offering. One IP address is to be used as the Control Plane Endpoint IP. The other is for the Tinkerbell IP address on the target cluster. Below are some suggestions to ensure that these IP addresses are never handed out by your DHCP server. You may need to contact your network engineer to manage these addresses.
 
   * Pick IP addresses reachable from the cluster subnet that are excluded from the DHCP range or

@@ -9,3 +9,4 @@ toc_hide: true
 * api.ecr.us-west-2.amazonaws.com (for EKS Anywhere package authentication matching your region)
 * d5l0dvt14r5h8.cloudfront.net (for EKS Anywhere package ECR container images)
 * api.github.com (only if GitOps is enabled)
+* sts.amazonaws.com (only if AWS IAM Authenticator is enabled)

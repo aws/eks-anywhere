@@ -45,6 +45,7 @@ The administrative machine and the target workload environment will need network
 * api.ecr.us-west-2.amazonaws.com (http://api.ecr.us-west-2.amazonaws.com/) (for EKS Anywhere package authentication matching your region)
 * d5l0dvt14r5h8.cloudfront.net (http://d5l0dvt14r5h8.cloudfront.net/) (for EKS Anywhere package ECR container images)
 * api.github.com (http://api.github.com/) (only if GitOps is enabled)
+* sts.amazonaws.com (only if AWS IAM Authenticator is enabled)
 
 ## CloudStack information needed before creating the cluster
 

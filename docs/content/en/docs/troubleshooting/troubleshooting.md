@@ -582,6 +582,14 @@ kubectl get nodes --no-headers -l '!node-role.kubernetes.io/master' -o jsonpath=
 kubectl get nodes --no-headers -l '!node-role.kubernetes.io/control-plane' -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}' | xargs -I{} kubectl label node {} node-role.kubernetes.io/worker=''
 ```
 
+### No static pods is running in container runtime on control plane nodes
+When the kubelet systemd service is running on a control plane node and you notice that no static pods are running, this could be due to a certificate issue. Check the kubelet service logs. If you see error messages like the ones below, renew the kubelet-client-current.pem certificate by following [these steps]({{< relref "../clustermgmt/security/manually-renew-certs/#kubelet" >}}):
+```
+part of the existing bootstrap client certificate in /etc/kubernetes/kubelet/kubeconfig
+Loading cert/key pair from "/var/lib/kubelet/pki/kubelet-client-current.pem
+"Failed to connect to apiserver" err="Get \"https://10.150.223.2:6443/healthz?timeout=1s\": net/http: request canceled while waiting for connection (Client.Timeout exceeded while awaiting headers)"
+```
+
 ## Bare Metal troubleshooting
 
 ### Creating new workload cluster hangs or fails
