@@ -114,6 +114,10 @@ eksa:
 #                        when there is no EKS-A release in the eksa array above. Mutually exclusive
 #                        with `endOfLifeIn`.
 kube:
+- version: '1.30'
+  releasedIn: '0.20'
+  expectedEndOfLifeDate: 2025-06-23
+
 - version: '1.29'
   releasedIn: '0.19'
   expectedEndOfLifeDate: 2025-03-23
