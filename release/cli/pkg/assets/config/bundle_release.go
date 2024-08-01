@@ -830,6 +830,12 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 				RepoName: "nginx",
 			},
 			{
+				RepoName: "tink-relay",
+			},
+			{
+				RepoName: "tink-relay-init",
+			},
+			{
 				RepoName: "tink-controller",
 			},
 			{

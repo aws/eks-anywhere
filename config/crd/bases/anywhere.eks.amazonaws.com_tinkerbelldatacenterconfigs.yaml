@@ -3,8 +3,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.8.0
-  creationTimestamp: null
+    controller-gen.kubebuilder.io/version: v0.14.0
   name: tinkerbelldatacenterconfigs.anywhere.eks.amazonaws.com
 spec:
   group: anywhere.eks.amazonaws.com
@@ -22,14 +21,19 @@ spec:
           API.
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
@@ -42,20 +46,18 @@ spec:
                   Hook images path to pull from a local server.
                 type: string
               osImageURL:
-                description: OSImageURL can be used to override the default OS image
-                  path to pull from a local server. OSImageURL is a URL to the OS
-                  image used during provisioning. To perform modular upgrades the
-                  OSImageURL must be specified on the TinkerbellMachineConfig objects.
-                  You cannot specify an OSImageURL on the TinkerbellDatacenterConfig
-                  and TinkerbellMachineConfigs simultaneously. It must include the
-                  Kubernetes version(s). For example, a URL used for Kubernetes 1.27
-                  could be http://localhost:8080/ubuntu-2204-1.27.tgz
+                description: |-
+                  OSImageURL can be used to override the default OS image path to pull from a local server.
+                  OSImageURL is a URL to the OS image used during provisioning. To perform modular upgrades
+                  the OSImageURL must be specified on the TinkerbellMachineConfig objects. You cannot specify
+                  an OSImageURL on the TinkerbellDatacenterConfig and TinkerbellMachineConfigs simultaneously.
+                  It must include the Kubernetes version(s). For example, a URL used for Kubernetes 1.27 could
+                  be http://localhost:8080/ubuntu-2204-1.27.tgz
                 type: string
               skipLoadBalancerDeployment:
-                description: SkipLoadBalancerDeployment when set to "true" can be
-                  used to skip deploying a load balancer to expose Tinkerbell stack.
-                  Users will need to deploy and configure a load balancer manually
-                  after the cluster is created.
+                description: |-
+                  SkipLoadBalancerDeployment when set to "true" can be used to skip deploying a load balancer to expose Tinkerbell stack.
+                  Users will need to deploy and configure a load balancer manually after the cluster is created.
                 type: boolean
               tinkerbellIP:
                 description: TinkerbellIP is used to configure a VIP for hosting the
@@ -65,18 +67,14 @@ spec:
             - tinkerbellIP
             type: object
           status:
-            description: "TinkerbellDatacenterConfigStatus defines the observed state
-              of TinkerbellDatacenterConfig \n Important: Run \"make generate\" to
-              regenerate code after modifying this file."
+            description: |-
+              TinkerbellDatacenterConfigStatus defines the observed state of TinkerbellDatacenterConfig
+
+
+              Important: Run "make generate" to regenerate code after modifying this file.
             type: object
         type: object
     served: true
     storage: true
     subresources:
       status: {}
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: []
-  storedVersions: []

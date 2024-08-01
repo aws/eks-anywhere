@@ -3,8 +3,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.8.0
-  creationTimestamp: null
+    controller-gen.kubebuilder.io/version: v0.14.0
   name: clusters.anywhere.eks.amazonaws.com
 spec:
   group: anywhere.eks.amazonaws.com
@@ -21,14 +20,19 @@ spec:
         description: Cluster is the Schema for the clusters API.
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
@@ -36,9 +40,9 @@ spec:
             description: ClusterSpec defines the desired state of Cluster.
             properties:
               bundlesRef:
-                description: 'BundlesRef contains a reference to the Bundles containing
-                  the desired dependencies for the cluster. DEPRECATED: Use EksaVersion
-                  instead.'
+                description: |-
+                  BundlesRef contains a reference to the Bundles containing the desired dependencies for the cluster.
+                  DEPRECATED: Use EksaVersion instead.
                 properties:
                   apiVersion:
                     description: APIVersion refers to the Bundles APIVersion
@@ -74,21 +78,20 @@ spec:
                               values are a valid interface name or interface prefix.
                             type: string
                           ipv4NativeRoutingCIDR:
-                            description: IPv4NativeRoutingCIDR specifies the CIDR
-                              to use when RoutingMode is set to direct. When specified,
-                              Cilium assumes networking for this CIDR is preconfigured
-                              and hands traffic destined for that range to the Linux
-                              network stack without applying any SNAT. If this is
-                              not set autoDirectNodeRoutes will be set to true
+                            description: |-
+                              IPv4NativeRoutingCIDR specifies the CIDR to use when RoutingMode is set to direct.
+                              When specified, Cilium assumes networking for this CIDR is preconfigured and
+                              hands traffic destined for that range to the Linux network stack without
+                              applying any SNAT.
+                              If this is not set autoDirectNodeRoutes will be set to true
                             type: string
                           ipv6NativeRoutingCIDR:
-                            description: IPv6NativeRoutingCIDR specifies the IPv6
-                              CIDR to use when RoutingMode is set to direct. When
-                              specified, Cilium assumes networking for this CIDR is
-                              preconfigured and hands traffic destined for that range
-                              to the Linux network stack without applying any SNAT.
-                              If this is not set autoDirectNodeRoutes will be set
-                              to true
+                            description: |-
+                              IPv6NativeRoutingCIDR specifies the IPv6 CIDR to use when RoutingMode is set to direct.
+                              When specified, Cilium assumes networking for this CIDR is preconfigured and
+                              hands traffic destined for that range to the Linux network stack without
+                              applying any SNAT.
+                              If this is not set autoDirectNodeRoutes will be set to true
                             type: string
                           policyEnforcementMode:
                             description: PolicyEnforcementMode determines communication
@@ -96,15 +99,15 @@ spec:
                               never.
                             type: string
                           routingMode:
-                            description: RoutingMode indicates the routing tunnel
-                              mode to use for Cilium. Accepted values are overlay
-                              (geneve tunnel with overlay) or direct (tunneling disabled
-                              with direct routing) Defaults to overlay.
+                            description: |-
+                              RoutingMode indicates the routing tunnel mode to use for Cilium. Accepted values are overlay (geneve tunnel with overlay)
+                              or direct (tunneling disabled with direct routing)
+                              Defaults to overlay.
                             type: string
                           skipUpgrade:
-                            description: SkipUpgrade indicicates that Cilium maintenance
-                              should be skipped during upgrades. This can be used
-                              when operators wish to self manage the Cilium installation.
+                            description: |-
+                              SkipUpgrade indicicates that Cilium maintenance should be skipped during upgrades. This can
+                              be used when operators wish to self manage the Cilium installation.
                             type: boolean
                         type: object
                       kindnetd:
@@ -132,8 +135,9 @@ spec:
                         type: integer
                     type: object
                   pods:
-                    description: Comma-separated list of CIDR blocks to use for pod
-                      and service subnets. Defaults to 192.168.0.0/16 for pod subnet.
+                    description: |-
+                      Comma-separated list of CIDR blocks to use for pod and service subnets.
+                      Defaults to 192.168.0.0/16 for pod subnet.
                     properties:
                       cidrBlocks:
                         items:
@@ -157,8 +161,9 @@ spec:
                       for the API server.
                     type: object
                   certSans:
-                    description: CertSANs is a slice of domain names or IPs to be
-                      added as Subject Name Alternatives of the Kube API Servers Certificate.
+                    description: |-
+                      CertSANs is a slice of domain names or IPs to be added as Subject Name Alternatives of the
+                      Kube API Servers Certificate.
                     items:
                       type: string
                     type: array
@@ -233,29 +238,32 @@ spec:
                         type: string
                     type: object
                   skipLoadBalancerDeployment:
-                    description: SkipLoadBalancerDeployment skip deploying control
-                      plane load balancer. Make sure your infrastructure can handle
-                      control plane load balancing when you set this field to true.
+                    description: |-
+                      SkipLoadBalancerDeployment skip deploying control plane load balancer.
+                      Make sure your infrastructure can handle control plane load balancing when you set this field to true.
                     type: boolean
                   taints:
                     description: Taints define the set of taints to be applied on
                       control plane nodes
                     items:
-                      description: The node this Taint is attached to has the "effect"
-                        on any pod that does not tolerate the Taint.
+                      description: |-
+                        The node this Taint is attached to has the "effect" on
+                        any pod that does not tolerate the Taint.
                       properties:
                         effect:
-                          description: Required. The effect of the taint on pods that
-                            do not tolerate the taint. Valid effects are NoSchedule,
-                            PreferNoSchedule and NoExecute.
+                          description: |-
+                            Required. The effect of the taint on pods
+                            that do not tolerate the taint.
+                            Valid effects are NoSchedule, PreferNoSchedule and NoExecute.
                           type: string
                         key:
                           description: Required. The taint key to be applied to a
                             node.
                           type: string
                         timeAdded:
-                          description: TimeAdded represents the time at which the
-                            taint was added. It is only written for NoExecute taints.
+                          description: |-
+                            TimeAdded represents the time at which the taint was added.
+                            It is only written for NoExecute taints.
                           format: date-time
                           type: string
                         value:
@@ -268,8 +276,9 @@ spec:
                       type: object
                     type: array
                   upgradeRolloutStrategy:
-                    description: UpgradeRolloutStrategy determines the rollout strategy
-                      to use for rolling upgrades and related parameters/knobs
+                    description: |-
+                      UpgradeRolloutStrategy determines the rollout strategy to use for rolling upgrades
+                      and related parameters/knobs
                     properties:
                       rollingUpdate:
                         description: ControlPlaneRollingUpdateParams is API for rolling
@@ -303,19 +312,18 @@ spec:
                   properties:
                     providers:
                       items:
-                        description: EtcdEncryptionProvider defines the configuration
-                          for ETCD encryption providers. Currently only KMS provider
-                          is supported.
+                        description: |-
+                          EtcdEncryptionProvider defines the configuration for ETCD encryption providers.
+                          Currently only KMS provider is supported.
                         properties:
                           kms:
                             description: KMS defines the configuration for KMS Encryption
                               provider.
                             properties:
                               cachesize:
-                                description: CacheSize defines the maximum number
-                                  of encrypted objects to be cached in memory. The
-                                  default value is 1000. You can set this to a negative
-                                  value to disable caching.
+                                description: |-
+                                  CacheSize defines the maximum number of encrypted objects to be cached in memory. The default value is 1000.
+                                  You can set this to a negative value to disable caching.
                                 format: int32
                                 type: integer
                               name:
@@ -384,11 +392,9 @@ spec:
               kubernetesVersion:
                 type: string
               machineHealthCheck:
-                description: MachineHealthCheck allows to configure timeouts for machine
-                  health checks. Machine Health Checks are responsible for remediating
-                  unhealthy Machines. Configuring these values will decide how long
-                  to wait to remediate unhealthy machine or determine health of nodes'
-                  machines.
+                description: |-
+                  MachineHealthCheck allows to configure timeouts for machine health checks. Machine Health Checks are responsible for remediating unhealthy Machines.
+                  Configuring these values will decide how long to wait to remediate unhealthy machine or determine health of nodes' machines.
                 properties:
                   maxUnhealthy:
                     anyOf:
@@ -526,14 +532,14 @@ spec:
                       use for pulling images
                     type: string
                   insecureSkipVerify:
-                    description: InsecureSkipVerify skips the registry certificate
-                      verification. Only use this solution for isolated testing or
-                      in a tightly controlled, air-gapped environment.
+                    description: |-
+                      InsecureSkipVerify skips the registry certificate verification.
+                      Only use this solution for isolated testing or in a tightly controlled, air-gapped environment.
                     type: boolean
                   ociNamespaces:
-                    description: OCINamespaces defines the mapping from an upstream
-                      registry to a local namespace where upstream artifacts are placed
-                      into
+                    description: |-
+                      OCINamespaces defines the mapping from an upstream registry to a local namespace where upstream
+                      artifacts are placed into
                     items:
                       description: OCINamespace represents an entity in a local reigstry
                         to group related images.
@@ -644,21 +650,24 @@ spec:
                       description: Taints define the set of taints to be applied on
                         worker nodes
                       items:
-                        description: The node this Taint is attached to has the "effect"
-                          on any pod that does not tolerate the Taint.
+                        description: |-
+                          The node this Taint is attached to has the "effect" on
+                          any pod that does not tolerate the Taint.
                         properties:
                           effect:
-                            description: Required. The effect of the taint on pods
-                              that do not tolerate the taint. Valid effects are NoSchedule,
-                              PreferNoSchedule and NoExecute.
+                            description: |-
+                              Required. The effect of the taint on pods
+                              that do not tolerate the taint.
+                              Valid effects are NoSchedule, PreferNoSchedule and NoExecute.
                             type: string
                           key:
                             description: Required. The taint key to be applied to
                               a node.
                             type: string
                           timeAdded:
-                            description: TimeAdded represents the time at which the
-                              taint was added. It is only written for NoExecute taints.
+                            description: |-
+                              TimeAdded represents the time at which the taint was added.
+                              It is only written for NoExecute taints.
                             format: date-time
                             type: string
                           value:
@@ -671,8 +680,9 @@ spec:
                         type: object
                       type: array
                     upgradeRolloutStrategy:
-                      description: UpgradeRolloutStrategy determines the rollout strategy
-                        to use for rolling upgrades and related parameters/knobs
+                      description: |-
+                        UpgradeRolloutStrategy determines the rollout strategy to use for rolling upgrades
+                        and related parameters/knobs
                       properties:
                         rollingUpdate:
                           description: WorkerNodesRollingUpdateParams is API for rolling
@@ -698,12 +708,13 @@ spec:
             description: ClusterStatus defines the observed state of Cluster.
             properties:
               childrenReconciledGeneration:
-                description: 'ChildrenReconciledGeneration represents the sum of the
-                  .metadata.generation for all the linked objects for the cluster,
-                  observed the last time the cluster was successfully reconciled.
-                  NOTE: This field was added for internal use and we do not provide
-                  guarantees to its behavior if changed externally. Its meaning and
-                  implementation are subject to change in the future.'
+                description: |-
+                  ChildrenReconciledGeneration represents the sum of the .metadata.generation
+                  for all the linked objects for the cluster, observed the last time the
+                  cluster was successfully reconciled.
+                  NOTE: This field was added for internal use and we do not provide guarantees
+                  to its behavior if changed externally. Its meaning and implementation are
+                  subject to change in the future.
                 format: int64
                 type: integer
               conditions:
@@ -712,37 +723,37 @@ spec:
                     operational state.
                   properties:
                     lastTransitionTime:
-                      description: Last time the condition transitioned from one status
-                        to another. This should be when the underlying condition changed.
-                        If that is not known, then using the time when the API field
-                        changed is acceptable.
+                      description: |-
+                        Last time the condition transitioned from one status to another.
+                        This should be when the underlying condition changed. If that is not known, then using the time when
+                        the API field changed is acceptable.
                       format: date-time
                       type: string
                     message:
-                      description: A human readable message indicating details about
-                        the transition. This field may be empty.
+                      description: |-
+                        A human readable message indicating details about the transition.
+                        This field may be empty.
                       type: string
                     reason:
-                      description: The reason for the condition's last transition
-                        in CamelCase. The specific API may choose whether or not this
-                        field is considered a guaranteed API. This field may not be
-                        empty.
+                      description: |-
+                        The reason for the condition's last transition in CamelCase.
+                        The specific API may choose whether or not this field is considered a guaranteed API.
+                        This field may not be empty.
                       type: string
                     severity:
-                      description: Severity provides an explicit classification of
-                        Reason code, so the users or machines can immediately understand
-                        the current situation and act accordingly. The Severity field
-                        MUST be set only when Status=False.
+                      description: |-
+                        Severity provides an explicit classification of Reason code, so the users or machines can immediately
+                        understand the current situation and act accordingly.
+                        The Severity field MUST be set only when Status=False.
                       type: string
                     status:
                       description: Status of the condition, one of True, False, Unknown.
                       type: string
                     type:
-                      description: Type of condition in CamelCase or in foo.example.com/CamelCase.
-                        Many .condition.type values are consistent across resources
-                        like Available, but because arbitrary conditions can be useful
-                        (see .node.status.conditions), the ability to deconflict is
-                        important.
+                      description: |-
+                        Type of condition in CamelCase or in foo.example.com/CamelCase.
+                        Many .condition.type values are consistent across resources like Available, but because arbitrary conditions
+                        can be useful (see .node.status.conditions), the ability to deconflict is important.
                       type: string
                   required:
                   - lastTransitionTime
@@ -779,8 +790,9 @@ spec:
                   a cluster
                 type: string
               failureReason:
-                description: Machine readable value about a terminal problem while
-                  reconciling the cluster set at the same time as failureMessage
+                description: |-
+                  Machine readable value about a terminal problem while reconciling the cluster
+                  set at the same time as failureMessage
                 type: string
               observedGeneration:
                 description: ObservedGeneration is the latest generation observed
@@ -788,12 +800,13 @@ spec:
                 format: int64
                 type: integer
               reconciledGeneration:
-                description: 'ReconciledGeneration represents the .metadata.generation
-                  the last time the cluster was successfully reconciled. It is the
-                  latest generation observed by the controller. NOTE: This field was
-                  added for internal use and we do not provide guarantees to its behavior
-                  if changed externally. Its meaning and implementation are subject
-                  to change in the future.'
+                description: |-
+                  ReconciledGeneration represents the .metadata.generation the last time the
+                  cluster was successfully reconciled. It is the latest generation observed
+                  by the controller.
+                  NOTE: This field was added for internal use and we do not provide guarantees
+                  to its behavior if changed externally. Its meaning and implementation are
+                  subject to change in the future.
                 format: int64
                 type: integer
             type: object
@@ -802,9 +815,3 @@ spec:
     storage: true
     subresources:
       status: {}
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: []
-  storedVersions: []

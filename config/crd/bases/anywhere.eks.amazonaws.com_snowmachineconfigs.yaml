@@ -3,8 +3,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.8.0
-  creationTimestamp: null
+    controller-gen.kubebuilder.io/version: v0.14.0
   name: snowmachineconfigs.anywhere.eks.amazonaws.com
 spec:
   group: anywhere.eks.amazonaws.com
@@ -21,14 +20,19 @@ spec:
         description: SnowMachineConfig is the Schema for the SnowMachineConfigs API.
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
@@ -46,9 +50,9 @@ spec:
                     description: Device name
                     type: string
                   size:
-                    description: Size specifies size (in Gi) of the storage device.
-                      Must be greater than the image snapshot size or 8 (whichever
-                      is greater).
+                    description: |-
+                      Size specifies size (in Gi) of the storage device.
+                      Must be greater than the image snapshot size or 8 (whichever is greater).
                     format: int64
                     minimum: 8
                     type: integer
@@ -73,9 +77,9 @@ spec:
                   for the machine
                 properties:
                   bottlerocketConfiguration:
-                    description: BottlerocketConfiguration defines the Bottlerocket
-                      configuration on the host OS. These settings only take effect
-                      when the `osFamily` is bottlerocket.
+                    description: |-
+                      BottlerocketConfiguration defines the Bottlerocket configuration on the host OS.
+                      These settings only take effect when the `osFamily` is bottlerocket.
                     properties:
                       boot:
                         description: Boot defines the boot settings for bottlerocket.
@@ -114,19 +118,19 @@ spec:
                               type: string
                             type: array
                           clusterDomain:
-                            description: ClusterDomain defines the DNS domain for
-                              the cluster, allowing all Kubernetes-run containers
+                            description: |-
+                              ClusterDomain defines the DNS domain for the cluster, allowing all Kubernetes-run containers
                               to search this domain before the host’s search domains
                             type: string
                           containerLogMaxFiles:
-                            description: ContainerLogMaxFiles specifies the maximum
-                              number of container log files that can be present for
-                              a container
+                            description: |-
+                              ContainerLogMaxFiles specifies the maximum number of container log
+                              files that can be present for a container
                             type: integer
                           containerLogMaxSize:
-                            description: ContainerLogMaxSize is a quantity defining
-                              the maximum size of the container log file before it
-                              is rotated
+                            description: |-
+                              ContainerLogMaxSize is a quantity defining the maximum size of
+                              the container log file before it is rotated
                             type: string
                           cpuCFSQuota:
                             description: CPUCFSQuota enables CPU CFS quota enforcement
@@ -139,9 +143,9 @@ spec:
                           cpuManagerPolicyOptions:
                             additionalProperties:
                               type: string
-                            description: CPUManagerPolicyOptions is a set of key=value
-                              which allows to set extra options to fine tune the behaviour
-                              of the cpu manager policies
+                            description: |-
+                              CPUManagerPolicyOptions is a set of key=value which allows to set extra options to
+                              fine tune the behaviour of the cpu manager policies
                             type: object
                           cpuManagerReconcilePeriod:
                             description: CPUManagerReconcilePeriod is the reconciliation
@@ -162,10 +166,9 @@ spec:
                               quantities that defines hard eviction thresholds.
                             type: object
                           evictionMaxPodGracePeriod:
-                            description: EvictionMaxPodGracePeriod is the maximum
-                              allowed grace period (in seconds) to use when terminating
-                              pods in response to a soft eviction threshold being
-                              met.
+                            description: |-
+                              EvictionMaxPodGracePeriod is the maximum allowed grace period (in seconds) to use
+                              when terminating pods in response to a soft eviction threshold being met.
                             type: integer
                           evictionSoft:
                             additionalProperties:
@@ -176,14 +179,14 @@ spec:
                           evictionSoftGracePeriod:
                             additionalProperties:
                               type: string
-                            description: EvictionSoftGracePeriod is a map of signal
-                              names to quantities that defines grace periods for each
-                              soft eviction signal.
+                            description: |-
+                              EvictionSoftGracePeriod is a map of signal names to quantities that defines grace periods
+                              for each soft eviction signal.
                             type: object
                           imageGCHighThresholdPercent:
-                            description: ImageGCHighThresholdPercent is the percent
-                              of disk usage after which image garbage collection is
-                              always run.
+                            description: |-
+                              ImageGCHighThresholdPercent is the percent of disk usage after which image garbage
+                              collection is always run.
                             type: integer
                           imageGCLowThresholdPercent:
                             description: ImageGCLowThresholdPercent is the percent
@@ -201,9 +204,9 @@ spec:
                           kubeReserved:
                             additionalProperties:
                               type: string
-                            description: KubeReserved is a set of ResourceName=ResourceQuantity
-                              pairs that describe resources reserved for kubernetes
-                              system components
+                            description: |-
+                              KubeReserved is a set of ResourceName=ResourceQuantity pairs that describe resources
+                              reserved for kubernetes system components
                             type: object
                           maxPods:
                             description: MaxPods defines the maximum number of pods
@@ -231,30 +234,30 @@ spec:
                               pulls per second.
                             type: integer
                           shutdownGracePeriod:
-                            description: ShutdownGracePeriod specifies the total duration
-                              that the node should delay the shutdown and total grace
-                              period for pod termination during a node shutdown.
+                            description: |-
+                              ShutdownGracePeriod specifies the total duration that the node should delay
+                              the shutdown and total grace period for pod termination during a node shutdown.
                             type: string
                           shutdownGracePeriodCriticalPods:
-                            description: ShutdownGracePeriodCriticalPods specifies
-                              the duration used to terminate critical pods during
-                              a node shutdown.
+                            description: |-
+                              ShutdownGracePeriodCriticalPods specifies the duration used to terminate
+                              critical pods during a node shutdown.
                             type: string
                           systemReserved:
                             additionalProperties:
                               type: string
-                            description: SystemReserved is a set of ResourceName=ResourceQuantity
-                              pairs that describe resources reserved for non-kubernetes
-                              components.
+                            description: |-
+                              SystemReserved is a set of ResourceName=ResourceQuantity pairs that describe
+                              resources reserved for non-kubernetes components.
                             type: object
                           topologyManagerPolicy:
                             description: TopologyManagerPolicy is the name of the
                               topology manager policy to use.
                             type: string
                           topologyManagerScope:
-                            description: TopologyManagerScope represents the scope
-                              of topology hint generation that topology manager requests
-                              and hint providers generate.
+                            description: |-
+                              TopologyManagerScope represents the scope of topology hint generation
+                              that topology manager requests and hint providers generate.
                             type: string
                         type: object
                     type: object
@@ -312,10 +315,9 @@ spec:
                           minimum: 1
                           type: integer
                         ipPoolRef:
-                          description: IPPool contains a reference to a snow ip pool
-                            which provides a range of ip addresses. When specified,
-                            an ip address selected from the pool is allocated to this
-                            DNI.
+                          description: |-
+                            IPPool contains a reference to a snow ip pool which provides a range of ip addresses.
+                            When specified, an ip address selected from the pool is allocated to this DNI.
                           properties:
                             kind:
                               type: string
@@ -342,17 +344,17 @@ spec:
                 description: NonRootVolumes provides the configuration options for
                   the non root storage volumes.
                 items:
-                  description: 'Volume encapsulates the configuration options for
-                    the storage device TODO: Trim the fields that do not apply for
-                    Snow.'
+                  description: |-
+                    Volume encapsulates the configuration options for the storage device
+                    TODO: Trim the fields that do not apply for Snow.
                   properties:
                     deviceName:
                       description: Device name
                       type: string
                     size:
-                      description: Size specifies size (in Gi) of the storage device.
-                        Must be greater than the image snapshot size or 8 (whichever
-                        is greater).
+                      description: |-
+                        Size specifies size (in Gi) of the storage device.
+                        Must be greater than the image snapshot size or 8 (whichever is greater).
                       format: int64
                       minimum: 8
                       type: integer
@@ -368,13 +370,14 @@ spec:
                   type: object
                 type: array
               osFamily:
-                description: 'OSFamily is the node instance OS. Valid values: "bottlerocket"
-                  and "ubuntu".'
+                description: |-
+                  OSFamily is the node instance OS.
+                  Valid values: "bottlerocket" and "ubuntu".
                 type: string
               physicalNetworkConnector:
-                description: 'PhysicalNetworkConnector is the physical network connector
-                  type to use for creating direct network interfaces (DNI). Valid
-                  values: "SFP_PLUS" (default), "QSFP" and "RJ45".'
+                description: |-
+                  PhysicalNetworkConnector is the physical network connector type to use for creating direct network interfaces (DNI).
+                  Valid values: "SFP_PLUS" (default), "QSFP" and "RJ45".
                 type: string
               sshKeyName:
                 description: SSHKeyName is the name of the ssh key defined in the
@@ -387,8 +390,9 @@ spec:
             description: SnowMachineConfigStatus defines the observed state of SnowMachineConfig.
             properties:
               failureMessage:
-                description: FailureMessage indicates that there is a fatal problem
-                  reconciling the state, and will be set to a descriptive error message.
+                description: |-
+                  FailureMessage indicates that there is a fatal problem reconciling the
+                  state, and will be set to a descriptive error message.
                 type: string
               specValid:
                 description: SpecValid is set to true if vspheredatacenterconfig is
@@ -400,9 +404,3 @@ spec:
     storage: true
     subresources:
       status: {}
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: []
-  storedVersions: []
