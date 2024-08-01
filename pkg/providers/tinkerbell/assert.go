@@ -231,7 +231,7 @@ func MinimumHardwareAvailableAssertionForCreate(catalogue *hardware.Catalogue) C
 
 		// Build a set of required hardware counts per machine group. minimumHardwareRequirements
 		// will account for the same selector being specified on different groups.
-		requirements := minimumHardwareRequirements{}
+		requirements := MinimumHardwareRequirements{}
 
 		err := requirements.Add(
 			spec.ControlPlaneMachineConfig().Spec.HardwareSelector,
@@ -380,7 +380,7 @@ func AssertionsForScaleUpDown(catalogue *hardware.Catalogue, current Validatable
 		}
 		// Build a set of required hardware counts per machine group. minimumHardwareRequirements
 		// will account for the same selector being specified on different groups.
-		requirements := minimumHardwareRequirements{}
+		requirements := MinimumHardwareRequirements{}
 
 		if current.ControlPlaneReplicaCount() != spec.Cluster.Spec.ControlPlaneConfiguration.Count {
 			if rollingUpgrade {
@@ -452,10 +452,10 @@ func ExtraHardwareAvailableAssertionForRollingUpgrade(catalogue *hardware.Catalo
 
 		// Build a set of required hardware counts per machine group. minimumHardwareRequirements
 		// will account for the same selector being specified on different groups.
-		requirements := minimumHardwareRequirements{}
+		requirements := MinimumHardwareRequirements{}
 
 		if spec.Cluster.Spec.KubernetesVersion != current.ClusterK8sVersion() || eksaVersionUpgrade {
-			if err := ensureCPHardwareAvailability(spec, current, requirements); err != nil {
+			if err := ensureCPHardwareAvailability(spec, requirements); err != nil {
 				return err
 			}
 		}
@@ -475,7 +475,7 @@ func ExtraHardwareAvailableAssertionForRollingUpgrade(catalogue *hardware.Catalo
 	}
 }
 
-func ensureCPHardwareAvailability(spec *ClusterSpec, current ValidatableCluster, hwReq minimumHardwareRequirements) error {
+func ensureCPHardwareAvailability(spec *ClusterSpec, hwReq MinimumHardwareRequirements) error {
 	maxSurge := 1
 
 	rolloutStrategy := spec.Cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy
@@ -492,7 +492,7 @@ func ensureCPHardwareAvailability(spec *ClusterSpec, current ValidatableCluster,
 	return nil
 }
 
-func ensureWorkerHardwareAvailability(spec *ClusterSpec, current ValidatableCluster, hwReq minimumHardwareRequirements, eksaVersionUpgrade bool) error {
+func ensureWorkerHardwareAvailability(spec *ClusterSpec, current ValidatableCluster, hwReq MinimumHardwareRequirements, eksaVersionUpgrade bool) error {
 	currentWngK8sversion := current.WorkerNodeGroupK8sVersion()
 	desiredWngK8sVersion := WorkerNodeGroupWithK8sVersion(spec.Spec)
 	for _, nodeGroup := range spec.WorkerNodeGroupConfigurations() {
@@ -541,6 +541,17 @@ func ensureHardwareSelectorsSpecified(spec *ClusterSpec) error {
 	}
 
 	return nil
+}
+
+// ExtraHardwareAvailableAssertionForNodeRollOut asserts catalogue has sufficient hardware to meet minimum requirement
+// and is component agnostic between Control Plane and worker nodes.
+func ExtraHardwareAvailableAssertionForNodeRollOut(catalogue *hardware.Catalogue, hwReq MinimumHardwareRequirements) ClusterSpecAssertion {
+	return func(_ *ClusterSpec) error {
+		if err := validateMinimumHardwareRequirements(hwReq, catalogue); err != nil {
+			return fmt.Errorf("for node rollout, %v", err)
+		}
+		return nil
+	}
 }
 
 type missingHardwareSelectorErr struct {

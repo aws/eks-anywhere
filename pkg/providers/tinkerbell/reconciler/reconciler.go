@@ -3,7 +3,7 @@ package reconciler
 import (
 	"context"
 	"fmt"
-	"reflect"
+	"strings"
 
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
@@ -155,11 +155,6 @@ func (r *Reconciler) GenerateSpec(ctx context.Context, log logr.Logger, tinkerbe
 	}
 	tinkerbellScope.Workers = w
 
-	err = r.omitTinkerbellMachineTemplates(ctx, tinkerbellScope)
-	if err != nil {
-		return controller.Result{}, err
-	}
-
 	return controller.Result{}, nil
 }
 
@@ -194,50 +189,6 @@ func (r *Reconciler) DetectOperation(ctx context.Context, log logr.Logger, tinke
 	}
 	log.Info("Operation detected", "operation", NoChange)
 	return NoChange, nil
-}
-
-func (r *Reconciler) omitTinkerbellMachineTemplates(ctx context.Context, tinkerbellScope *Scope) error { //nolint:gocyclo
-	currentKCP, err := controller.GetKubeadmControlPlane(ctx, r.client, tinkerbellScope.ClusterSpec.Cluster)
-	if err != nil {
-		return errors.Wrap(err, "failed to get kubeadmcontrolplane")
-	}
-
-	if currentKCP == nil || currentKCP.Spec.Version != tinkerbellScope.ControlPlane.KubeadmControlPlane.Spec.Version {
-		return nil
-	}
-
-	cpMachineTemplate, err := tinkerbell.GetMachineTemplate(ctx, clientutil.NewKubeClient(r.client), currentKCP.Spec.MachineTemplate.InfrastructureRef.Name, currentKCP.GetNamespace())
-	if err != nil && !apierrors.IsNotFound(err) {
-		return errors.Wrap(err, "failed to get controlplane machinetemplate")
-	}
-
-	if cpMachineTemplate != nil {
-		tinkerbellScope.ControlPlane.ControlPlaneMachineTemplate = nil
-		tinkerbellScope.ControlPlane.KubeadmControlPlane.Spec.MachineTemplate.InfrastructureRef.Name = cpMachineTemplate.GetName()
-	}
-
-	for i, wg := range tinkerbellScope.Workers.Groups {
-		machineDeployment, err := controller.GetMachineDeployment(ctx, r.client, wg.MachineDeployment.GetName())
-		if err != nil {
-			return errors.Wrap(err, "failed to get workernode group machinedeployment")
-		}
-		if machineDeployment == nil ||
-			!reflect.DeepEqual(machineDeployment.Spec.Template.Spec.Version, tinkerbellScope.Workers.Groups[i].MachineDeployment.Spec.Template.Spec.Version) {
-			continue
-		}
-
-		workerMachineTemplate, err := tinkerbell.GetMachineTemplate(ctx, clientutil.NewKubeClient(r.client), machineDeployment.Spec.Template.Spec.InfrastructureRef.Name, machineDeployment.GetNamespace())
-		if err != nil && !apierrors.IsNotFound(err) {
-			return errors.Wrap(err, "failed to get workernode group machinetemplate")
-		}
-
-		if workerMachineTemplate != nil {
-			tinkerbellScope.Workers.Groups[i].ProviderMachineTemplate = nil
-			tinkerbellScope.Workers.Groups[i].MachineDeployment.Spec.Template.Spec.InfrastructureRef.Name = workerMachineTemplate.GetName()
-		}
-	}
-
-	return nil
 }
 
 // ReconcileControlPlane applies the control plane CAPI objects to the cluster.
@@ -350,6 +301,7 @@ func (r *Reconciler) ValidateHardware(ctx context.Context, log logr.Logger, tink
 		return controller.ResultWithReturn(), nil
 	}
 
+	// var hwReq tinkerbell.MinimumHardwareRequirements
 	var v tinkerbell.ClusterSpecValidator
 	v.Register(tinkerbell.HardwareSatisfiesOnlyOneSelectorAssertion(kubeReader.GetCatalogue()))
 
@@ -378,6 +330,24 @@ func (r *Reconciler) ValidateHardware(ctx context.Context, log logr.Logger, tink
 			return controller.Result{}, err
 		}
 		v.Register(tinkerbell.AssertionsForScaleUpDown(kubeReader.GetCatalogue(), validatableCAPI, false))
+
+		hardwareReq, err := r.validateHardwareReqForKCP(validatableCAPI, tinkerbellScope)
+		if err != nil {
+			return controller.Result{}, err
+		}
+
+		workerHardwareReq, err := r.validateHardwareReqForMachineDeployments(ctx, tinkerbellScope)
+		if err != nil {
+			return controller.Result{}, err
+		}
+
+		// Hardware selectors for controlPlane and worker nodes are mutually exclusive, so its safe to copy
+		// as no keys are going to be overwritten
+		for k, v := range workerHardwareReq {
+			hardwareReq[k] = v
+		}
+		v.Register(tinkerbell.ExtraHardwareAvailableAssertionForNodeRollOut(kubeReader.GetCatalogue(), hardwareReq))
+
 	}
 
 	tinkClusterSpec := tinkerbell.NewClusterSpec(
@@ -421,6 +391,68 @@ func (r *Reconciler) getValidatableCAPI(ctx context.Context, cluster *anywherev1
 		WorkerGroups:        wgs,
 	}
 	return validatableCAPI, nil
+}
+
+// validateHardwareReqForKCP returns minium hardware requirements for the KCP to rollout new control plane nodes
+// CAPI rolls out a new control-plane node whenever the associated MachineTemplate changes in the kcp object
+// There will be no rollout if the template stays the same.
+func (r *Reconciler) validateHardwareReqForKCP(validatableCAPI *tinkerbell.ValidatableTinkerbellCAPI, tinkerbellScope *Scope) (tinkerbell.MinimumHardwareRequirements, error) {
+	currentKCP := validatableCAPI.KubeadmControlPlane
+	newKCP := tinkerbellScope.ControlPlane.KubeadmControlPlane
+	tinkerbellClusterSpec := tinkerbell.NewClusterSpec(tinkerbellScope.ClusterSpec, tinkerbellScope.ClusterSpec.TinkerbellMachineConfigs, tinkerbellScope.ClusterSpec.TinkerbellDatacenter)
+	maxSurge := 1
+	requirements := tinkerbell.MinimumHardwareRequirements{}
+	if currentKCP.Spec.MachineTemplate.InfrastructureRef.Name != newKCP.Spec.MachineTemplate.InfrastructureRef.Name {
+		upgradeStrategy := tinkerbellScope.ClusterSpec.Cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy
+		if upgradeStrategy != nil && upgradeStrategy.Type == anywherev1.RollingUpdateStrategyType {
+			maxSurge = upgradeStrategy.RollingUpdate.MaxSurge
+		}
+		if err := requirements.Add(tinkerbellClusterSpec.ControlPlaneMachineConfig().Spec.HardwareSelector, maxSurge); err != nil {
+			return nil, err
+		}
+	}
+	return requirements, nil
+}
+
+// validateHardwareReqForMachineDeployments returns minium hardware requirements for the md's to rollout new worker nodes
+// CAPI rolls out a new worker node only whenever the associated MachineTemplate changes in the md object
+// A single cluster can have multiple MachineDeployment objects and in case of modular upgrades
+// only few of those worker groups might need a rollout
+func (r *Reconciler) validateHardwareReqForMachineDeployments(ctx context.Context, tinkerbellScope *Scope) (requirements tinkerbell.MinimumHardwareRequirements, err error) {
+	newWorkers := tinkerbellScope.Workers
+
+	tinkerbellClusterSpec := tinkerbell.NewClusterSpec(tinkerbellScope.ClusterSpec, tinkerbellScope.ClusterSpec.TinkerbellMachineConfigs, tinkerbellScope.ClusterSpec.TinkerbellDatacenter)
+	requirements = tinkerbell.MinimumHardwareRequirements{}
+	for _, wg := range newWorkers.Groups {
+		maxSurge := 1
+		currentMachineDeployment, err := controller.GetMachineDeployment(ctx, r.client, wg.MachineDeployment.GetName())
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to get workernode group machinedeployment")
+		}
+		clusterName := tinkerbellClusterSpec.Cluster.Name
+
+		// EKS-A names MachineDeployment with the clusterName prefix followed by the WorkerNodeGroup name provider concatenated by '-'
+		// We just need the workerNodeGroup name to fetch the corresponding workerNodeGroup config from the spec
+		workerNodeGroupName := strings.ReplaceAll(wg.MachineDeployment.GetName(), clusterName, "")[1:]
+		var workerNodeGroup anywherev1.WorkerNodeGroupConfiguration
+		for _, wng := range tinkerbellClusterSpec.WorkerNodeGroupConfigurations() {
+			if wng.Name == workerNodeGroupName {
+				workerNodeGroup = wng
+				break
+			}
+		}
+		if currentMachineDeployment != nil && currentMachineDeployment.Spec.Template.Spec.InfrastructureRef.Name != wg.MachineDeployment.Spec.Template.Spec.InfrastructureRef.Name {
+			upgradeStrategy := wg.MachineDeployment.Spec.Strategy
+			if upgradeStrategy != nil && upgradeStrategy.Type == clusterv1.RollingUpdateMachineDeploymentStrategyType {
+				maxSurge = int(upgradeStrategy.RollingUpdate.MaxSurge.IntVal)
+			}
+			if err := requirements.Add(tinkerbellClusterSpec.WorkerNodeGroupMachineConfig(workerNodeGroup).Spec.HardwareSelector, maxSurge); err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	return requirements, nil
 }
 
 // ValidateRufioMachines checks to ensure all the Rufio machines condition contactable is True.
