@@ -1127,6 +1127,48 @@ func TestAssertAutoScalerDisabledForInPlace(t *testing.T) {
 	g.Expect(tinkerbell.AssertAutoScalerDisabledForInPlace(clusterSpec)).To(gomega.MatchError(gomega.ContainSubstring("austoscaler configuration not supported with InPlace")))
 }
 
+func TestAssertExtraHardwareAvailableAssertionForNodeRollOutSuccess(t *testing.T) {
+	g := gomega.NewWithT(t)
+	clusterSpec := NewDefaultValidClusterSpecBuilder().Build()
+	req := tinkerbell.MinimumHardwareRequirements{}
+	err := req.Add(map[string]string{"type": "cp"}, 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	catalogue := hardware.NewCatalogue()
+	// Add something for the control plane.
+	g.Expect(catalogue.InsertHardware(&v1alpha1.Hardware{
+		ObjectMeta: v1.ObjectMeta{
+			Labels: clusterSpec.ControlPlaneMachineConfig().Spec.HardwareSelector,
+		},
+	})).To(gomega.Succeed())
+
+	assertion := tinkerbell.ExtraHardwareAvailableAssertionForNodeRollOut(catalogue, req)
+	g.Expect(assertion(clusterSpec)).To(gomega.Succeed())
+}
+
+func TestAssertExtraHardwareAvailableAssertionForNodeRollOutError(t *testing.T) {
+	g := gomega.NewWithT(t)
+	clusterSpec := NewDefaultValidClusterSpecBuilder().Build()
+	req := tinkerbell.MinimumHardwareRequirements{}
+	err := req.Add(map[string]string{"type": "cp"}, 2)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	catalogue := hardware.NewCatalogue()
+	// Add something for the control plane.
+	g.Expect(catalogue.InsertHardware(&v1alpha1.Hardware{
+		ObjectMeta: v1.ObjectMeta{
+			Labels: clusterSpec.ControlPlaneMachineConfig().Spec.HardwareSelector,
+		},
+	})).To(gomega.Succeed())
+
+	assertion := tinkerbell.ExtraHardwareAvailableAssertionForNodeRollOut(catalogue, req)
+	g.Expect(assertion(clusterSpec)).To(gomega.MatchError(gomega.ContainSubstring("minimum hardware count not met for selector '{\"type\":\"cp\"}'")))
+}
+
 // mergeHardwareSelectors merges m1 with m2. Values already in m1 will be overwritten by m2.
 func mergeHardwareSelectors(m1, m2 map[string]string) map[string]string {
 	for name, value := range m2 {
