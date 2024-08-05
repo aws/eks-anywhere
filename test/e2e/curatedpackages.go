@@ -29,6 +29,9 @@ func runCuratedPackageInstall(test *framework.ClusterE2ETest) {
 	if err != nil {
 		test.T.Fatalf("packages controller crds not in installed state: %s", err)
 	}
+
+	test.ValidateIfRegionalCuratedPackage()
+
 	packageName := "hello-eks-anywhere"
 	packagePrefix := "test"
 	packageFile := test.BuildPackageConfigFile(packageName, packagePrefix, EksaPackagesNamespace)
