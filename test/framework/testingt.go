@@ -105,7 +105,7 @@ func (t LoggingOnlyT) Logf(format string, args ...any) {
 
 // Name implements T.
 func (t LoggingOnlyT) Name() string {
-	panic("LoggingOnlyT implements only the logging methods of T")
+	return (&testing.T{}).Name()
 }
 
 // Parallel implements T.
