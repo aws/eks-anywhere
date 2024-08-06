@@ -16,9 +16,9 @@ import (
 // doesn't have support for root level.
 const (
 	packageProdDomain = "783794618700.dkr.ecr.us-west-2.amazonaws.com"
-	packageDevDomain  = "857151390494.dkr.ecr.us-west-2.amazonaws.com"
+	packageDevDomain  = "067575901363.dkr.ecr.us-west-2.amazonaws.com"
 	publicProdECRName = "eks-anywhere"
-	publicDevECRName  = "l0g8r8j6"
+	publicDevECRName  = "x3k6m8v0"
 )
 
 // ImageRegistryDestination implements the ImageDestination interface, writing images and tags from

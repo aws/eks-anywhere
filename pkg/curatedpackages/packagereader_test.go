@@ -82,6 +82,22 @@ func TestPackageReader_ReadImagesFromBundles(t *testing.T) {
 	tt.Expect(images).NotTo(BeEmpty())
 }
 
+func TestPackageReader_ReadImagesFromBundlesStaging(t *testing.T) {
+	tt := newPackageReaderTest(t)
+	artifact := registry.NewArtifactFromURI("public.ecr.aws/w9m0f3l5/eks-anywhere-packages-bundles:v1-21-latest")
+	repo, err := remote.NewRepository("owner/name")
+	assert.NoError(t, err)
+	tt.storageClient.EXPECT().GetStorage(tt.ctx, gomock.Any()).Return(repo, nil)
+	tt.storageClient.EXPECT().FetchBytes(tt.ctx, gomock.Any(), artifact).Return(desc, imageManifest, nil)
+	tt.storageClient.EXPECT().FetchBlob(tt.ctx, gomock.Any(), gomock.Any()).Return(packageBundle, nil)
+	tt.bundles.Spec.VersionsBundles[0].PackageController.Controller.URI = tt.registryName + "/w9m0f3l5/ctrl:v1"
+
+	images, err := tt.command.ReadImagesFromBundles(tt.ctx, tt.bundles)
+
+	tt.Expect(err).To(BeNil())
+	tt.Expect(images).NotTo(BeEmpty())
+}
+
 func TestPackageReader_ReadImagesFromBundlesProduction(t *testing.T) {
 	tt := newPackageReaderTest(t)
 	artifact := registry.NewArtifactFromURI("public.ecr.aws/eks-anywhere/eks-anywhere-packages-bundles:v1-21-latest")
@@ -153,6 +169,21 @@ func TestPackageReader_ReadChartsFromBundles(t *testing.T) {
 	tt.storageClient.EXPECT().GetStorage(tt.ctx, gomock.Any()).Return(repo, nil)
 	tt.storageClient.EXPECT().FetchBytes(tt.ctx, gomock.Any(), artifact).Return(desc, imageManifest, nil)
 	tt.storageClient.EXPECT().FetchBlob(tt.ctx, gomock.Any(), gomock.Any()).Return(packageBundle, nil)
+
+	images := tt.command.ReadChartsFromBundles(tt.ctx, tt.bundles)
+
+	tt.Expect(images).NotTo(BeEmpty())
+}
+
+func TestPackageReader_ReadChartsFromBundlesStaging(t *testing.T) {
+	tt := newPackageReaderTest(t)
+	artifact := registry.NewArtifactFromURI("public.ecr.aws/w9m0f3l5/eks-anywhere-packages-bundles:v1-21-latest")
+	repo, err := remote.NewRepository("owner/name")
+	assert.NoError(t, err)
+	tt.storageClient.EXPECT().GetStorage(tt.ctx, gomock.Any()).Return(repo, nil)
+	tt.storageClient.EXPECT().FetchBytes(tt.ctx, gomock.Any(), artifact).Return(desc, imageManifest, nil)
+	tt.storageClient.EXPECT().FetchBlob(tt.ctx, gomock.Any(), gomock.Any()).Return(packageBundle, nil)
+	tt.bundles.Spec.VersionsBundles[0].PackageController.Controller.URI = tt.registryName + "/w9m0f3l5/ctrl:v1"
 
 	images := tt.command.ReadChartsFromBundles(tt.ctx, tt.bundles)
 
