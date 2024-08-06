@@ -12,6 +12,7 @@ func runAutoscalerWithMetricsServerSimpleFlow(test *framework.ClusterE2ETest) {
 		autoscalerName := "cluster-autoscaler"
 		metricServerName := "metrics-server"
 		targetNamespace := "eksa-packages"
+		test.ValidateIfRegionalCuratedPackage()
 		test.InstallAutoScalerWithMetricServer(targetNamespace)
 		test.CombinedAutoScalerMetricServerTest(autoscalerName, metricServerName, targetNamespace, withCluster(test))
 	})

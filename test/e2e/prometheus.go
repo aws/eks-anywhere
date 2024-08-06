@@ -19,6 +19,7 @@ func runCuratedPackagesPrometheusInstall(test *framework.ClusterE2ETest) {
 	test.InstallLocalStorageProvisioner()
 	test.CreateNamespace(prometheusPackageTargetNamespace)
 	test.SetPackageBundleActive()
+	test.ValidateIfRegionalCuratedPackage()
 	test.InstallCuratedPackage(prometheusPackageName, packageFullName,
 		kubeconfig.FromClusterName(test.ClusterName),
 		"--set server.persistentVolume.storageClass=local-path")
