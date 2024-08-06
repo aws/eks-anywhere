@@ -145,6 +145,8 @@ func (vb *VersionsBundle) TinkerbellImages() []Image {
 		vb.Tinkerbell.TinkerbellStack.Hook.Docker,
 		vb.Tinkerbell.TinkerbellStack.Hook.Kernel,
 		vb.Tinkerbell.TinkerbellStack.Rufio,
+		vb.Tinkerbell.TinkerbellStack.Tink.TinkRelay,
+		vb.Tinkerbell.TinkerbellStack.Tink.TinkRelayInit,
 		vb.Tinkerbell.TinkerbellStack.Tink.TinkController,
 		vb.Tinkerbell.TinkerbellStack.Tink.TinkServer,
 		vb.Tinkerbell.TinkerbellStack.Tink.TinkWorker,
