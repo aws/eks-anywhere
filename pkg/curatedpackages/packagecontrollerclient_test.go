@@ -1287,7 +1287,7 @@ func TestGetCuratedPackagesRegistries(s *testing.T) {
 		}
 	})
 
-	s.Run("get regional registries", func(t *testing.T) {
+	s.Run("get prod regional registries", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		k := mocks.NewMockKubectlRunner(ctrl)
 		cm := mocks.NewMockChartManager(ctrl)
@@ -1306,6 +1306,35 @@ func TestGetCuratedPackagesRegistries(s *testing.T) {
 		)
 
 		expected := "346438352937.dkr.ecr.us-west-2.amazonaws.com"
+		_, actualDefaultRegistry, actualImageRegistry := client.GetCuratedPackagesRegistries(context.Background())
+
+		if actualDefaultRegistry != expected {
+			t.Errorf("expected %q, got %q", expected, actualDefaultRegistry)
+		}
+		if actualImageRegistry != expected {
+			t.Errorf("expected %q, got %q", expected, actualImageRegistry)
+		}
+	})
+
+	s.Run("get staging regional registries", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		k := mocks.NewMockKubectlRunner(ctrl)
+		cm := mocks.NewMockChartManager(ctrl)
+		kubeConfig := "kubeconfig.kubeconfig"
+		chart := &artifactsv1.Image{
+			Name: "test_controller",
+			URI:  "test_registry/w9m0f3l5/eks-anywhere-packages:v1",
+		}
+		clusterName := "billy"
+		writer, _ := filewriter.NewWriter(clusterName)
+		client := curatedpackages.NewPackageControllerClient(
+			cm, k, clusterName, kubeConfig, chart, nil,
+			curatedpackages.WithManagementClusterName(clusterName),
+			curatedpackages.WithValuesFileWriter(writer),
+			curatedpackages.WithRegistryAccessTester(&stubRegistryAccessTester{}),
+		)
+
+		expected := "724423470321.dkr.ecr.us-west-2.amazonaws.com"
 		_, actualDefaultRegistry, actualImageRegistry := client.GetCuratedPackagesRegistries(context.Background())
 
 		if actualDefaultRegistry != expected {
