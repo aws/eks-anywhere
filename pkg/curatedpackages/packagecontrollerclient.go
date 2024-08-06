@@ -241,26 +241,26 @@ func (pc *PackageControllerClient) Enable(ctx context.Context) error {
 
 // GetCuratedPackagesRegistries gets value for configurable registries from PBC.
 func (pc *PackageControllerClient) GetCuratedPackagesRegistries(ctx context.Context) (sourceRegistry, defaultRegistry, defaultImageRegistry string) {
-	sourceRegistry = publicProdECR
-	defaultImageRegistry = packageProdDomain
-	accountName := prodAccount
-	if strings.Contains(pc.chart.Image(), devAccount) {
-		accountName = devAccount
-		defaultImageRegistry = packageDevDomain
-		sourceRegistry = publicDevECR
+	sourceRegistry = prodPublicRegistryURI
+	defaultImageRegistry = prodNonRegionalPrivateRegistryURI
+	registry := prodPublicRegistryAlias
+	if strings.Contains(pc.chart.Image(), devNonRegionalPublicRegistryAlias) {
+		registry = devRegionalPublicRegistryAlias
+		defaultImageRegistry = devRegionalPrivateRegistryURI
+		sourceRegistry = devRegionalPublicRegistryURI
 	}
-	if strings.Contains(pc.chart.Image(), stagingAccount) {
-		accountName = stagingAccount
-		defaultImageRegistry = packageProdDomain
-		sourceRegistry = publicStagingECR
+	if strings.Contains(pc.chart.Image(), stagingPublicRegistryAlias) {
+		registry = stagingPublicRegistryAlias
+		defaultImageRegistry = devRegionalPrivateRegistryURI
+		sourceRegistry = stagingPublicRegistryURI
 	}
 	defaultRegistry = sourceRegistry
 
 	if pc.registryMirror != nil {
-		// account is added as part of registry name in package controller helm chart
+		// registry name is added as part of sourceRegistry field in package controller helm chart
 		// https://github.com/aws/eks-anywhere-packages/blob/main/charts/eks-anywhere-packages/values.yaml#L15-L18
-		sourceRegistry = fmt.Sprintf("%s/%s", pc.registryMirror.CoreEKSAMirror(), accountName)
-		defaultRegistry = fmt.Sprintf("%s/%s", pc.registryMirror.CoreEKSAMirror(), accountName)
+		sourceRegistry = fmt.Sprintf("%s/%s", pc.registryMirror.CoreEKSAMirror(), registry)
+		defaultRegistry = fmt.Sprintf("%s/%s", pc.registryMirror.CoreEKSAMirror(), registry)
 		if gatedOCINamespace := pc.registryMirror.CuratedPackagesMirror(); gatedOCINamespace != "" {
 			defaultImageRegistry = gatedOCINamespace
 		}
@@ -273,12 +273,6 @@ func (pc *PackageControllerClient) GetCuratedPackagesRegistries(ctx context.Cont
 		if err := pc.registryAccessTester.Test(ctx, pc.eksaAccessKeyID, pc.eksaSecretAccessKey, pc.eksaRegion, pc.eksaAwsConfig, regionalRegistry); err == nil {
 			// use regional registry when the above credential is good
 			logger.V(6).Info("Using regional registry")
-			// In the dev case, we use a separate public ECR registry in the
-			// beta packages account to source the packages controller and
-			// credential provider package
-			if regionalRegistry == devRegionalECR {
-				sourceRegistry = devRegionalPublicECR
-			}
 			defaultRegistry = regionalRegistry
 			defaultImageRegistry = regionalRegistry
 		} else {

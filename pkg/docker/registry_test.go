@@ -53,8 +53,8 @@ func TestNewRegistryDestinationWhenPackagesDevProvided(t *testing.T) {
 	client := mocks.NewMockImageTaggerPusher(ctrl)
 
 	registry := "https://registry"
-	expectedRegistry := "https://registry/l0g8r8j6"
-	image := "857151390494.dkr.ecr.us-west-2.amazonaws.com:v1"
+	expectedRegistry := "https://registry/x3k6m8v0"
+	image := "067575901363.dkr.ecr.us-west-2.amazonaws.com:v1"
 	ctx := context.Background()
 	dstLoader := docker.NewRegistryDestination(client, registry)
 	client.EXPECT().TagImage(test.AContext(), image, expectedRegistry)

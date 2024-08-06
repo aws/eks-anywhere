@@ -14,19 +14,6 @@ import (
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
-// Temporary: Curated packages dev and prod accounts are currently hard coded
-// This is because there is no mechanism to extract these values as of now.
-const (
-	prodAccount       = "eks-anywhere"
-	devAccount        = "l0g8r8j6"
-	stagingAccount    = "w9m0f3l5"
-	publicProdECR     = "public.ecr.aws/" + prodAccount
-	publicDevECR      = "public.ecr.aws/" + devAccount
-	publicStagingECR  = "public.ecr.aws/" + stagingAccount
-	packageProdDomain = "783794618700.dkr.ecr.us-west-2.amazonaws.com"
-	packageDevDomain  = "857151390494.dkr.ecr.us-west-2.amazonaws.com"
-)
-
 type PackageReader struct {
 	cache           *registry.Cache
 	credentialStore *registry.CredentialStore
@@ -146,15 +133,21 @@ func removeDuplicateImages(images []registry.Artifact) []registry.Artifact {
 }
 
 func getChartRegistry(uri string) string {
-	if strings.Contains(uri, publicProdECR) {
-		return publicProdECR
+	if strings.Contains(uri, prodPublicRegistryURI) {
+		return prodPublicRegistryURI
 	}
-	return publicDevECR
+	if strings.Contains(uri, stagingPublicRegistryURI) {
+		return stagingPublicRegistryURI
+	}
+	return devRegionalPublicRegistryURI
 }
 
 func getImageRegistry(uri, awsRegion string) string {
-	if strings.Contains(uri, publicProdECR) {
-		return strings.ReplaceAll(packageProdDomain, eksaDefaultRegion, awsRegion)
+	if strings.Contains(uri, prodPublicRegistryURI) {
+		return strings.ReplaceAll(prodNonRegionalPrivateRegistryURI, eksaDefaultRegion, awsRegion)
 	}
-	return strings.ReplaceAll(packageDevDomain, eksaDefaultRegion, awsRegion)
+	if strings.Contains(uri, stagingPublicRegistryURI) {
+		return strings.ReplaceAll(stagingRegionalPrivateRegistryURI, eksaDefaultRegion, awsRegion)
+	}
+	return strings.ReplaceAll(devRegionalPrivateRegistryURI, eksaDefaultRegion, awsRegion)
 }
