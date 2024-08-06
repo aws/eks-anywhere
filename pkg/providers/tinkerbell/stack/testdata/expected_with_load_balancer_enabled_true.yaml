@@ -8,7 +8,6 @@ rufio:
   image: public.ecr.aws/eks-anywhere/rufio:latest
 smee:
   deploy: true
-  hostNetwork: true
   http:
     additionalKernelArgs: []
     osieUrl:
@@ -40,6 +39,10 @@ stack:
   loadBalancerIP: 1.2.3.4
   relay:
     enabled: false
+    image:
+      uri: public.ecr.aws/eks-anywhere/tink-relay:latest
+    initImage:
+      uri: public.ecr.aws/eks-anywhere/tink-relay-init:latest
   service:
     enabled: false
 tink:

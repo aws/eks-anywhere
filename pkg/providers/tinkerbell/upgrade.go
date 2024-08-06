@@ -520,6 +520,7 @@ func (p *Provider) PreCoreComponentsUpgrade(
 		p.datacenterConfig.Spec.HookImagesURLPath,
 		stack.WithBootsOnKubernetes(),
 		stack.WithStackServiceEnabled(true),
+		stack.WithDHCPRelayEnabled(true),
 		stack.WithLoadBalancerEnabled(
 			len(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations) != 0 && // load balancer is handled by kube-vip in control plane nodes
 				!p.datacenterConfig.Spec.SkipLoadBalancerDeployment), // configure load balancer based on datacenterConfig.Spec.SkipLoadBalancerDeployment
