@@ -177,9 +177,10 @@ prometheus              2.41.0-b53c8be243a6cc3ac2553de24ab9f726d9b851ca
 
 ### Generate curated packages configuration
 
-The example shows how to install the `harbor` package from the [curated package list]({{< relref "./packagelist/" >}}).
+The example shows how to generate the package manifest, then create `harbor` package from the [curated package list]({{< relref "./packagelist/" >}}).
 
 ```bash
 export CLUSTER_NAME=<your-cluster-name>
 eksctl anywhere generate package harbor --cluster ${CLUSTER_NAME} --kube-version 1.27 > harbor-spec.yaml
+eksctl anywhere create packages -f harbor-spec.yaml
 ```
