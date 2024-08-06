@@ -544,7 +544,6 @@ func (s *Installer) createValuesOverride(bundle releasev1alpha1.TinkerbellBundle
 				},
 				"additionalKernelArgs": bootEnv,
 			},
-			"hostNetwork":     true,
 			"tinkWorkerImage": s.localRegistryURL(bundle.TinkerbellStack.Tink.TinkWorker.URI),
 		},
 		rufio: map[string]interface{}{
@@ -572,7 +571,9 @@ func (s *Installer) createValuesOverride(bundle releasev1alpha1.TinkerbellBundle
 				enabled: s.stackService,
 			},
 			relay: map[string]interface{}{
-				enabled: false,
+				enabled:     s.dhcpRelay,
+				image:       bundle.TinkerbellStack.Tink.TinkRelay,
+				"initImage": bundle.TinkerbellStack.Tink.TinkRelayInit,
 			},
 			"loadBalancerIP": tinkerbellIP,
 			"hostNetwork":    s.hostNetwork,

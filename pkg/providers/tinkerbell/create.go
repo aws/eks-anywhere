@@ -110,6 +110,7 @@ func (p *Provider) PostWorkloadInit(ctx context.Context, cluster *types.Cluster,
 		stack.WithBootsOnKubernetes(),
 		stack.WithHostNetworkEnabled(false), // disable host network on workload cluster
 		stack.WithStackServiceEnabled(true), // use stack service on workload cluster
+		stack.WithDHCPRelayEnabled(true),
 		stack.WithLoadBalancerEnabled(
 			len(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations) != 0 && // load balancer is handled by kube-vip in control plane nodes
 				!p.datacenterConfig.Spec.SkipLoadBalancerDeployment), // configure load balancer based on datacenterConfig.Spec.SkipLoadBalancerDeployment
