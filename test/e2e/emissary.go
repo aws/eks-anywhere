@@ -18,6 +18,7 @@ const (
 
 func runCuratedPackageEmissaryInstall(test *framework.ClusterE2ETest) {
 	test.SetPackageBundleActive()
+	test.ValidateIfRegionalCuratedPackage()
 	packageFile := test.BuildPackageConfigFile(emissaryPackageName, emissaryPackagePrefix, EksaPackagesNamespace)
 	test.InstallCuratedPackageFile(packageFile, kubeconfig.FromClusterName(test.ClusterName))
 	test.VerifyEmissaryPackageInstalled(emissaryPackagePrefix+"-"+emissaryPackageName, withCluster(test))

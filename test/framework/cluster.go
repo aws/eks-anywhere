@@ -13,6 +13,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -1170,6 +1171,20 @@ func (e *ClusterE2ETest) InstallCuratedPackageFile(packageFile, kubeconfig strin
 	e.RunEKSA([]string{
 		"apply", "package", "-f", packageFile, "-v=9", strings.Join(opts, " "),
 	})
+}
+
+// ValidateIfRegionalCuratedPackage checks if the current e2e test is a Regional Curated packages test and runs a validation.
+func (e *ClusterE2ETest) ValidateIfRegionalCuratedPackage() {
+	regionalPackagesRegex := `^.*RegionalCuratedPackages.*$`
+	if regexp.MustCompile(regionalPackagesRegex).MatchString(e.T.Name()) {
+		pbc, err := e.KubectlClient.GetPackageBundleController(context.Background(), e.KubeconfigFilePath(), e.ClusterName)
+		if err != nil {
+			e.T.Fatalf("cannot get PackageBundleController: %v", err)
+		}
+		if pbc.Spec.DefaultImageRegistry != pbc.Spec.DefaultRegistry {
+			e.T.Fatal("in regional pbc, DefaultImageRegistry should equal to DefaultRegistry")
+		}
+	}
 }
 
 func (e *ClusterE2ETest) generatePackageConfig(ns, targetns, prefix, packageName string) []byte {
