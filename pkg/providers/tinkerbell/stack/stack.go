@@ -572,8 +572,8 @@ func (s *Installer) createValuesOverride(bundle releasev1alpha1.TinkerbellBundle
 			},
 			relay: map[string]interface{}{
 				enabled:     s.dhcpRelay,
-				image:       bundle.TinkerbellStack.Tink.TinkRelay,
-				"initImage": bundle.TinkerbellStack.Tink.TinkRelayInit,
+				image:       bundle.TinkerbellStack.Tink.TinkRelay.URI,
+				"initImage": bundle.TinkerbellStack.Tink.TinkRelayInit.URI,
 			},
 			"loadBalancerIP": tinkerbellIP,
 			"hostNetwork":    s.hostNetwork,
