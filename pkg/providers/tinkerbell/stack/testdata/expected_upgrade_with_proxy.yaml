@@ -35,6 +35,8 @@ stack:
     additionalEnv:
     - name: prometheus_server
       value: :2213
+    - name: lb_class_only
+      value: "true"    
     enabled: false
     image: public.ecr.aws/eks-anywhere/kube-vip:latest
   loadBalancerIP: 1.2.3.4
