@@ -61,6 +61,11 @@ func (e *ClusterE2ETest) RunConformanceTests() {
 	// 3. https://github.com/cncf/k8s-conformance/pull/3049
 	if k8s129Compare != -1 {
 		args = append(args, fmt.Sprintf("--e2e-skip='%s'", skippedTestName))
+	} else {
+		// Only mode or --e2e-skip can be used at a time. Because we are using --e2e-skip
+		// for k8s 1.29 and higher, we need to skip --mode=certified-conformance for those versions.
+		// Once we stop skipping e2e, we can add the mode back to k8s 1.29 and higher.
+		args = append(args, "--mode=certified-conformance")
 	}
 	e.T.Logf("Running k8s conformance tests with Image: %s", kubeConformanceImageTagged)
 	output, err := conformance.RunTests(ctx, contextName, args...)
