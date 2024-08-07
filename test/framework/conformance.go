@@ -60,7 +60,7 @@ func (e *ClusterE2ETest) RunConformanceTests() {
 	// 2. https://github.com/cilium/cilium/issues/29913
 	// 3. https://github.com/cncf/k8s-conformance/pull/3049
 	if k8s129Compare != -1 {
-		args = append(args, fmt.Sprintf("--e2e-skip='%s'", skippedTestName))
+		args = append(args, fmt.Sprintf(`--e2e-skip="%s"`, skippedTestName))
 	}
 	e.T.Logf("Running k8s conformance tests with Image: %s", kubeConformanceImageTagged)
 	output, err := conformance.RunTests(ctx, contextName, args...)
