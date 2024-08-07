@@ -354,7 +354,7 @@ spec:
       version: v1.0.13+abcdef1
     etcdadmController:
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.21/bootstrap-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.22/bootstrap-components.yaml
       controller:
         arch:
         - amd64
@@ -363,7 +363,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: etcdadm-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/aws/etcdadm-controller:v1.0.21-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/aws/etcdadm-controller:v1.0.22-eks-a-v0.0.0-dev-build.1
       kubeProxy:
         arch:
         - amd64
@@ -374,8 +374,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.18.0-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.21/metadata.yaml
-      version: v1.0.21+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.22/metadata.yaml
+      version: v1.0.22+abcdef1
     flux:
       helmController:
         arch:
@@ -722,6 +722,24 @@ spec:
             name: tink-controller
             os: linux
             uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-controller:v0.10.0-eks-a-v0.0.0-dev-build.1
+          tinkRelay:
+            arch:
+            - amd64
+            - arm64
+            description: Container image for tink-relay image
+            imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+            name: tink-relay
+            os: linux
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-relay:v0.10.0-eks-a-v0.0.0-dev-build.1
+          tinkRelayInit:
+            arch:
+            - amd64
+            - arm64
+            description: Container image for tink-relay-init image
+            imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+            name: tink-relay-init
+            os: linux
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-relay-init:v0.10.0-eks-a-v0.0.0-dev-build.1
           tinkServer:
             arch:
             - amd64
@@ -1151,7 +1169,7 @@ spec:
       version: v1.0.13+abcdef1
     etcdadmController:
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.21/bootstrap-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.22/bootstrap-components.yaml
       controller:
         arch:
         - amd64
@@ -1160,7 +1178,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: etcdadm-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/aws/etcdadm-controller:v1.0.21-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/aws/etcdadm-controller:v1.0.22-eks-a-v0.0.0-dev-build.1
       kubeProxy:
         arch:
         - amd64
@@ -1171,8 +1189,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.18.0-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.21/metadata.yaml
-      version: v1.0.21+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.22/metadata.yaml
+      version: v1.0.22+abcdef1
     flux:
       helmController:
         arch:
@@ -1519,6 +1537,24 @@ spec:
             name: tink-controller
             os: linux
             uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-controller:v0.10.0-eks-a-v0.0.0-dev-build.1
+          tinkRelay:
+            arch:
+            - amd64
+            - arm64
+            description: Container image for tink-relay image
+            imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+            name: tink-relay
+            os: linux
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-relay:v0.10.0-eks-a-v0.0.0-dev-build.1
+          tinkRelayInit:
+            arch:
+            - amd64
+            - arm64
+            description: Container image for tink-relay-init image
+            imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+            name: tink-relay-init
+            os: linux
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-relay-init:v0.10.0-eks-a-v0.0.0-dev-build.1
           tinkServer:
             arch:
             - amd64
@@ -1948,7 +1984,7 @@ spec:
       version: v1.0.13+abcdef1
     etcdadmController:
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.21/bootstrap-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.22/bootstrap-components.yaml
       controller:
         arch:
         - amd64
@@ -1957,7 +1993,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: etcdadm-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/aws/etcdadm-controller:v1.0.21-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/aws/etcdadm-controller:v1.0.22-eks-a-v0.0.0-dev-build.1
       kubeProxy:
         arch:
         - amd64
@@ -1968,8 +2004,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.18.0-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.21/metadata.yaml
-      version: v1.0.21+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.22/metadata.yaml
+      version: v1.0.22+abcdef1
     flux:
       helmController:
         arch:
@@ -2316,6 +2352,24 @@ spec:
             name: tink-controller
             os: linux
             uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-controller:v0.10.0-eks-a-v0.0.0-dev-build.1
+          tinkRelay:
+            arch:
+            - amd64
+            - arm64
+            description: Container image for tink-relay image
+            imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+            name: tink-relay
+            os: linux
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-relay:v0.10.0-eks-a-v0.0.0-dev-build.1
+          tinkRelayInit:
+            arch:
+            - amd64
+            - arm64
+            description: Container image for tink-relay-init image
+            imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+            name: tink-relay-init
+            os: linux
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-relay-init:v0.10.0-eks-a-v0.0.0-dev-build.1
           tinkServer:
             arch:
             - amd64
@@ -2745,7 +2799,7 @@ spec:
       version: v1.0.13+abcdef1
     etcdadmController:
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.21/bootstrap-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.22/bootstrap-components.yaml
       controller:
         arch:
         - amd64
@@ -2754,7 +2808,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: etcdadm-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/aws/etcdadm-controller:v1.0.21-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/aws/etcdadm-controller:v1.0.22-eks-a-v0.0.0-dev-build.1
       kubeProxy:
         arch:
         - amd64
@@ -2765,8 +2819,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.18.0-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.21/metadata.yaml
-      version: v1.0.21+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.22/metadata.yaml
+      version: v1.0.22+abcdef1
     flux:
       helmController:
         arch:
@@ -3113,6 +3167,24 @@ spec:
             name: tink-controller
             os: linux
             uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-controller:v0.10.0-eks-a-v0.0.0-dev-build.1
+          tinkRelay:
+            arch:
+            - amd64
+            - arm64
+            description: Container image for tink-relay image
+            imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+            name: tink-relay
+            os: linux
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-relay:v0.10.0-eks-a-v0.0.0-dev-build.1
+          tinkRelayInit:
+            arch:
+            - amd64
+            - arm64
+            description: Container image for tink-relay-init image
+            imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+            name: tink-relay-init
+            os: linux
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-relay-init:v0.10.0-eks-a-v0.0.0-dev-build.1
           tinkServer:
             arch:
             - amd64
@@ -3542,7 +3614,7 @@ spec:
       version: v1.0.13+abcdef1
     etcdadmController:
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.21/bootstrap-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.22/bootstrap-components.yaml
       controller:
         arch:
         - amd64
@@ -3551,7 +3623,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: etcdadm-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/aws/etcdadm-controller:v1.0.21-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/aws/etcdadm-controller:v1.0.22-eks-a-v0.0.0-dev-build.1
       kubeProxy:
         arch:
         - amd64
@@ -3562,8 +3634,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.18.0-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.21/metadata.yaml
-      version: v1.0.21+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.22/metadata.yaml
+      version: v1.0.22+abcdef1
     flux:
       helmController:
         arch:
@@ -3910,6 +3982,24 @@ spec:
             name: tink-controller
             os: linux
             uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-controller:v0.10.0-eks-a-v0.0.0-dev-build.1
+          tinkRelay:
+            arch:
+            - amd64
+            - arm64
+            description: Container image for tink-relay image
+            imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+            name: tink-relay
+            os: linux
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-relay:v0.10.0-eks-a-v0.0.0-dev-build.1
+          tinkRelayInit:
+            arch:
+            - amd64
+            - arm64
+            description: Container image for tink-relay-init image
+            imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+            name: tink-relay-init
+            os: linux
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-relay-init:v0.10.0-eks-a-v0.0.0-dev-build.1
           tinkServer:
             arch:
             - amd64

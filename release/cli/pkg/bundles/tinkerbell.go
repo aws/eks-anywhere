@@ -159,6 +159,8 @@ func GetTinkerbellBundle(r *releasetypes.ReleaseConfig, imageDigests releasetype
 			Stack: bundleImageArtifacts["stack-helm"],
 			Tink: anywherev1alpha1.TinkBundle{
 				Nginx:          bundleImageArtifacts["nginx"],
+				TinkRelay:      bundleImageArtifacts["tink-relay"],
+				TinkRelayInit:  bundleImageArtifacts["tink-relay-init"],
 				TinkController: bundleImageArtifacts["tink-controller"],
 				TinkServer:     bundleImageArtifacts["tink-server"],
 				TinkWorker:     bundleImageArtifacts["tink-worker"],
