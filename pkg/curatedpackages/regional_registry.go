@@ -65,7 +65,7 @@ func TestRegistryWithAuthToken(authToken, registry string, do Do) error {
 
 // GetRegionalRegistry get the regional registry corresponding to defaultRegistry in a specific region.
 func GetRegionalRegistry(defaultRegistry, region string) string {
-	if strings.Contains(defaultRegistry, devNonRegionalPublicRegistryAlias) {
+	if strings.Contains(defaultRegistry, devRegionalPublicRegistryAlias) {
 		return devRegionalPrivateRegistryURI
 	}
 	if strings.Contains(defaultRegistry, stagingPublicRegistryAlias) {
