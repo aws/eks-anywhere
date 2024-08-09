@@ -112,26 +112,26 @@ spec:
         arch:
         - amd64
         description: Container image for cilium image
-        imageDigest: sha256:d13453a013480c568b6640c3536f978e855b89c8f5eec31df1036a368ba78363
+        imageDigest: sha256:cfa08cb82ca8b01955d544745d093694fb8f55f648faabebc21f40eb017acbaf
         name: cilium
         os: linux
-        uri: public.ecr.aws/isovalent/cilium:v1.13.17-eksa.1
+        uri: public.ecr.aws/isovalent/cilium:v1.13.18-eksa.1
       helmChart:
         description: Helm chart for cilium-chart
-        imageDigest: sha256:e6719b1e2761b65066d5eba1f43159a495cbd0b159cb1282d18622ff944d55a3
+        imageDigest: sha256:b736e114add07ba2bbd3b2b3c2a9dfaed2324fcbc8911ffb541c868d52041c28
         name: cilium-chart
-        uri: public.ecr.aws/isovalent/cilium:1.13.17-eksa.1
+        uri: public.ecr.aws/isovalent/cilium:1.13.18-eksa.1
       manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.13.17-eksa.1/cilium.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.13.18-eksa.1/cilium.yaml
       operator:
         arch:
         - amd64
         description: Container image for operator-generic image
-        imageDigest: sha256:583b8934a58f762ec7564a057fa0e8b3e648938a1818b17f5ea1e201ddeb8798
+        imageDigest: sha256:8762be81f0fba2295fb2345cc55505b394b28846a60bf7d91187fad944f7d819
         name: operator-generic
         os: linux
-        uri: public.ecr.aws/isovalent/operator-generic:v1.13.17-eksa.1
-      version: v1.13.17-eksa.1
+        uri: public.ecr.aws/isovalent/operator-generic:v1.13.18-eksa.1
+      version: v1.13.18-eksa.1
     cloudStack:
       clusterAPIController:
         arch:
@@ -438,7 +438,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cloud-provider-nutanix
         os: linux
-        uri: public.ecr.aws/release-container-registry/nutanix-cloud-native/cloud-provider-nutanix/controller:v0.3.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/nutanix-cloud-native/cloud-provider-nutanix/controller:v0.4.0-eks-a-v0.0.0-dev-build.1
       clusterAPIController:
         arch:
         - amd64
@@ -927,26 +927,26 @@ spec:
         arch:
         - amd64
         description: Container image for cilium image
-        imageDigest: sha256:d13453a013480c568b6640c3536f978e855b89c8f5eec31df1036a368ba78363
+        imageDigest: sha256:cfa08cb82ca8b01955d544745d093694fb8f55f648faabebc21f40eb017acbaf
         name: cilium
         os: linux
-        uri: public.ecr.aws/isovalent/cilium:v1.13.17-eksa.1
+        uri: public.ecr.aws/isovalent/cilium:v1.13.18-eksa.1
       helmChart:
         description: Helm chart for cilium-chart
-        imageDigest: sha256:e6719b1e2761b65066d5eba1f43159a495cbd0b159cb1282d18622ff944d55a3
+        imageDigest: sha256:b736e114add07ba2bbd3b2b3c2a9dfaed2324fcbc8911ffb541c868d52041c28
         name: cilium-chart
-        uri: public.ecr.aws/isovalent/cilium:1.13.17-eksa.1
+        uri: public.ecr.aws/isovalent/cilium:1.13.18-eksa.1
       manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.13.17-eksa.1/cilium.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.13.18-eksa.1/cilium.yaml
       operator:
         arch:
         - amd64
         description: Container image for operator-generic image
-        imageDigest: sha256:583b8934a58f762ec7564a057fa0e8b3e648938a1818b17f5ea1e201ddeb8798
+        imageDigest: sha256:8762be81f0fba2295fb2345cc55505b394b28846a60bf7d91187fad944f7d819
         name: operator-generic
         os: linux
-        uri: public.ecr.aws/isovalent/operator-generic:v1.13.17-eksa.1
-      version: v1.13.17-eksa.1
+        uri: public.ecr.aws/isovalent/operator-generic:v1.13.18-eksa.1
+      version: v1.13.18-eksa.1
     cloudStack:
       clusterAPIController:
         arch:
@@ -1253,7 +1253,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cloud-provider-nutanix
         os: linux
-        uri: public.ecr.aws/release-container-registry/nutanix-cloud-native/cloud-provider-nutanix/controller:v0.3.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/nutanix-cloud-native/cloud-provider-nutanix/controller:v0.4.0-eks-a-v0.0.0-dev-build.1
       clusterAPIController:
         arch:
         - amd64
@@ -1742,26 +1742,26 @@ spec:
         arch:
         - amd64
         description: Container image for cilium image
-        imageDigest: sha256:d13453a013480c568b6640c3536f978e855b89c8f5eec31df1036a368ba78363
+        imageDigest: sha256:cfa08cb82ca8b01955d544745d093694fb8f55f648faabebc21f40eb017acbaf
         name: cilium
         os: linux
-        uri: public.ecr.aws/isovalent/cilium:v1.13.17-eksa.1
+        uri: public.ecr.aws/isovalent/cilium:v1.13.18-eksa.1
       helmChart:
         description: Helm chart for cilium-chart
-        imageDigest: sha256:e6719b1e2761b65066d5eba1f43159a495cbd0b159cb1282d18622ff944d55a3
+        imageDigest: sha256:b736e114add07ba2bbd3b2b3c2a9dfaed2324fcbc8911ffb541c868d52041c28
         name: cilium-chart
-        uri: public.ecr.aws/isovalent/cilium:1.13.17-eksa.1
+        uri: public.ecr.aws/isovalent/cilium:1.13.18-eksa.1
       manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.13.17-eksa.1/cilium.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.13.18-eksa.1/cilium.yaml
       operator:
         arch:
         - amd64
         description: Container image for operator-generic image
-        imageDigest: sha256:583b8934a58f762ec7564a057fa0e8b3e648938a1818b17f5ea1e201ddeb8798
+        imageDigest: sha256:8762be81f0fba2295fb2345cc55505b394b28846a60bf7d91187fad944f7d819
         name: operator-generic
         os: linux
-        uri: public.ecr.aws/isovalent/operator-generic:v1.13.17-eksa.1
-      version: v1.13.17-eksa.1
+        uri: public.ecr.aws/isovalent/operator-generic:v1.13.18-eksa.1
+      version: v1.13.18-eksa.1
     cloudStack:
       clusterAPIController:
         arch:
@@ -2068,7 +2068,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cloud-provider-nutanix
         os: linux
-        uri: public.ecr.aws/release-container-registry/nutanix-cloud-native/cloud-provider-nutanix/controller:v0.3.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/nutanix-cloud-native/cloud-provider-nutanix/controller:v0.4.0-eks-a-v0.0.0-dev-build.1
       clusterAPIController:
         arch:
         - amd64
@@ -2557,26 +2557,26 @@ spec:
         arch:
         - amd64
         description: Container image for cilium image
-        imageDigest: sha256:d13453a013480c568b6640c3536f978e855b89c8f5eec31df1036a368ba78363
+        imageDigest: sha256:cfa08cb82ca8b01955d544745d093694fb8f55f648faabebc21f40eb017acbaf
         name: cilium
         os: linux
-        uri: public.ecr.aws/isovalent/cilium:v1.13.17-eksa.1
+        uri: public.ecr.aws/isovalent/cilium:v1.13.18-eksa.1
       helmChart:
         description: Helm chart for cilium-chart
-        imageDigest: sha256:e6719b1e2761b65066d5eba1f43159a495cbd0b159cb1282d18622ff944d55a3
+        imageDigest: sha256:b736e114add07ba2bbd3b2b3c2a9dfaed2324fcbc8911ffb541c868d52041c28
         name: cilium-chart
-        uri: public.ecr.aws/isovalent/cilium:1.13.17-eksa.1
+        uri: public.ecr.aws/isovalent/cilium:1.13.18-eksa.1
       manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.13.17-eksa.1/cilium.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.13.18-eksa.1/cilium.yaml
       operator:
         arch:
         - amd64
         description: Container image for operator-generic image
-        imageDigest: sha256:583b8934a58f762ec7564a057fa0e8b3e648938a1818b17f5ea1e201ddeb8798
+        imageDigest: sha256:8762be81f0fba2295fb2345cc55505b394b28846a60bf7d91187fad944f7d819
         name: operator-generic
         os: linux
-        uri: public.ecr.aws/isovalent/operator-generic:v1.13.17-eksa.1
-      version: v1.13.17-eksa.1
+        uri: public.ecr.aws/isovalent/operator-generic:v1.13.18-eksa.1
+      version: v1.13.18-eksa.1
     cloudStack:
       clusterAPIController:
         arch:
@@ -2883,7 +2883,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cloud-provider-nutanix
         os: linux
-        uri: public.ecr.aws/release-container-registry/nutanix-cloud-native/cloud-provider-nutanix/controller:v0.3.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/nutanix-cloud-native/cloud-provider-nutanix/controller:v0.4.0-eks-a-v0.0.0-dev-build.1
       clusterAPIController:
         arch:
         - amd64
@@ -3372,26 +3372,26 @@ spec:
         arch:
         - amd64
         description: Container image for cilium image
-        imageDigest: sha256:d13453a013480c568b6640c3536f978e855b89c8f5eec31df1036a368ba78363
+        imageDigest: sha256:cfa08cb82ca8b01955d544745d093694fb8f55f648faabebc21f40eb017acbaf
         name: cilium
         os: linux
-        uri: public.ecr.aws/isovalent/cilium:v1.13.17-eksa.1
+        uri: public.ecr.aws/isovalent/cilium:v1.13.18-eksa.1
       helmChart:
         description: Helm chart for cilium-chart
-        imageDigest: sha256:e6719b1e2761b65066d5eba1f43159a495cbd0b159cb1282d18622ff944d55a3
+        imageDigest: sha256:b736e114add07ba2bbd3b2b3c2a9dfaed2324fcbc8911ffb541c868d52041c28
         name: cilium-chart
-        uri: public.ecr.aws/isovalent/cilium:1.13.17-eksa.1
+        uri: public.ecr.aws/isovalent/cilium:1.13.18-eksa.1
       manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.13.17-eksa.1/cilium.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.13.18-eksa.1/cilium.yaml
       operator:
         arch:
         - amd64
         description: Container image for operator-generic image
-        imageDigest: sha256:583b8934a58f762ec7564a057fa0e8b3e648938a1818b17f5ea1e201ddeb8798
+        imageDigest: sha256:8762be81f0fba2295fb2345cc55505b394b28846a60bf7d91187fad944f7d819
         name: operator-generic
         os: linux
-        uri: public.ecr.aws/isovalent/operator-generic:v1.13.17-eksa.1
-      version: v1.13.17-eksa.1
+        uri: public.ecr.aws/isovalent/operator-generic:v1.13.18-eksa.1
+      version: v1.13.18-eksa.1
     cloudStack:
       clusterAPIController:
         arch:
@@ -3698,7 +3698,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cloud-provider-nutanix
         os: linux
-        uri: public.ecr.aws/release-container-registry/nutanix-cloud-native/cloud-provider-nutanix/controller:v0.3.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/nutanix-cloud-native/cloud-provider-nutanix/controller:v0.4.0-eks-a-v0.0.0-dev-build.1
       clusterAPIController:
         arch:
         - amd64
