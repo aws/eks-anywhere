@@ -64,21 +64,20 @@ type ImageTagOverride struct {
 }
 
 type ArchiveArtifact struct {
-	SourceS3Key        string
-	SourceS3Prefix     string
-	ArtifactPath       string
-	ReleaseName        string
-	ReleaseS3Path      string
-	ReleaseCdnURI      string
-	OS                 string
-	OSName             string
-	Arch               []string
-	GitTag             string
-	ProjectPath        string
-	SourcedFromBranch  string
-	ImageFormat        string
-	Private            bool
-	UploadToRTOSBucket bool
+	SourceS3Key       string
+	SourceS3Prefix    string
+	ArtifactPath      string
+	ReleaseName       string
+	ReleaseS3Path     string
+	ReleaseCdnURI     string
+	OS                string
+	OSName            string
+	Arch              []string
+	GitTag            string
+	ProjectPath       string
+	SourcedFromBranch string
+	ImageFormat       string
+	Private           bool
 }
 
 type ImageArtifact struct {

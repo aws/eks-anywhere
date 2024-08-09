@@ -49,7 +49,6 @@ type Archive struct {
 	ArchitectureOverride string
 	ArchiveS3PathGetter  ArchiveS3PathGenerator
 	Private              bool
-	UploadToRTOSBucket   bool
 }
 
 type AssetConfig struct {

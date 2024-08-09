@@ -66,23 +66,6 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 		},
 		HasReleaseBranches: true,
 	},
-	// Canonical Ubuntu RTOS artifacts
-	{
-		ProjectName:    "ubuntu-rtos",
-		ProjectPath:    "projects/canonical/ubuntu",
-		GitTagAssigner: tagger.RTOSReleaseDateAssigner,
-		Archives: []*assettypes.Archive{
-			{
-				Name:                "rtos",
-				Format:              "raw",
-				OSName:              "ubuntu",
-				OSVersion:           "22.04",
-				ArchiveS3PathGetter: archives.RTOSArtifactPathGetter,
-				Private:             true,
-				UploadToRTOSBucket:  true,
-			},
-		},
-	},
 	// Cert-manager artifacts
 	{
 		ProjectName: "cert-manager",
