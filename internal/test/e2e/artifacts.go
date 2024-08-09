@@ -3,6 +3,7 @@ package e2e
 import (
 	"fmt"
 	"path/filepath"
+	"strings"
 
 	"github.com/go-logr/logr"
 
@@ -58,7 +59,8 @@ func (e *E2ESession) uploadJUnitReportFromInstance(testName string) {
 func (e *E2ESession) downloadJUnitReportToLocalDisk(testName, destinationFolder string) {
 	junitFile := "junit-testing.xml"
 	key := filepath.Join(e.generatedArtifactsPath(), testName, junitFile)
-	dst := filepath.Join(destinationFolder, fmt.Sprintf("junit-testing-%s.xml", testName))
+	// Subtest contains '/' in the name.
+	dst := filepath.Join(destinationFolder, fmt.Sprintf("junit-testing-%s.xml", strings.Replace(testName, "/", "-", -1)))
 
 	e.logger.V(1).Info("Downloading JUnit report to disk", "dst", dst)
 	if err := s3.DownloadToDisk(e.session, key, e.storageBucket, dst); err != nil {

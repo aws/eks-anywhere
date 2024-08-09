@@ -226,8 +226,9 @@ phases:
         -i ${INTEGRATION_TEST_INSTANCE_PROFILE}
         -m ${INTEGRATION_TEST_MAX_EC2_COUNT}
         -p ${INTEGRATION_TEST_MAX_CONCURRENT_TEST_COUNT}
-        -r ${TESTS}
+        -r 'Test'
         -v 4
+        --select ${TESTS}
         --skip ${SKIPPED_TESTS}
         --bundles-override=${BUNDLES_OVERRIDE}
         --cleanup-resources=true
