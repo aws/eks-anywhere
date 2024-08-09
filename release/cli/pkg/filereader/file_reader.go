@@ -365,24 +365,3 @@ func ReadGitTag(projectPath, gitRootPath, branch string) (string, error) {
 
 	return gitTag, nil
 }
-
-func ReadRTOSImageDate(projectPath, gitRootPath, branch string) (string, error) {
-	currentBranch, err := git.GetCurrentBranch(gitRootPath)
-	if err != nil {
-		return "", fmt.Errorf("error getting current branch: %v", err)
-	}
-	if currentBranch != branch {
-		_, err = git.CheckoutRepo(gitRootPath, branch)
-		if err != nil {
-			return "", fmt.Errorf("error checking out repo: %v", err)
-		}
-	}
-
-	dateFile := filepath.Join(gitRootPath, projectPath, "RTOS_IMAGE_DATE")
-	releaseDate, err := ReadFileContentsTrimmed(dateFile)
-	if err != nil {
-		return "", fmt.Errorf("error reading RTOS image date: %v", err)
-	}
-
-	return releaseDate, nil
-}

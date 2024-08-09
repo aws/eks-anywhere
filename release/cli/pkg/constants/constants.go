@@ -52,6 +52,5 @@ const (
 	//	01/02 03:04:05PM '06 -0700
 	//
 	// (January 2, 15:04:05, 2006, in time zone seven hours west of GMT).
-	YYYYMMDD                  = "2006-01-02"
-	RTOSArtifactsBucketEnvvar = "RTOS_ARTIFACTS_BUCKET"
+	YYYYMMDD = "2006-01-02"
 )

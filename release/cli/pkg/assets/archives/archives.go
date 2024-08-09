@@ -145,65 +145,6 @@ func KernelArtifactPathGetter(rc *releasetypes.ReleaseConfig, archive *assettype
 	return sourceS3Key, sourceS3Prefix, releaseName, releaseS3Path, nil
 }
 
-func RTOSArtifactPathGetter(rc *releasetypes.ReleaseConfig, archive *assettypes.Archive, projectPath, gitTag, eksDReleaseChannel, eksDReleaseNumber, kubeVersion, latestPath, arch string) (string, string, string, string, error) {
-	var sourceS3Key string
-	var sourceS3Prefix string
-	var releaseS3Path string
-	var releaseName string
-	releaseDate := gitTag
-	eksDReleaseChannel = "1-29" // hardcoding because we vend RTOS artifacts only for 1-29 release branch
-
-	imageExtensions := map[string]string{
-		"ami": "gz",
-		"ova": "ova",
-		"raw": "gz",
-	}
-	imageExtension := imageExtensions[archive.Format]
-
-	if rc.DevRelease || rc.ReleaseEnvironment == "development" {
-		sourceS3Key = fmt.Sprintf("%s.%s", archive.OSName, imageExtension)
-		sourceS3Prefix = fmt.Sprintf("%s/%s", projectPath, latestPath)
-	} else {
-		sourceS3Key = fmt.Sprintf("%s-%s-%s-eks-a-%d-%s.%s",
-			archive.OSName,
-			eksDReleaseChannel,
-			releaseDate,
-			rc.BundleNumber,
-			arch,
-			imageExtension,
-		)
-		sourceS3Prefix = fmt.Sprintf("releases/canonical/%s/artifacts/rtos/%s", releaseDate, eksDReleaseChannel)
-	}
-
-	if rc.DevRelease {
-		releaseName = fmt.Sprintf("%s-%s-%s-eks-a-%s-%s.%s",
-			archive.OSName,
-			eksDReleaseChannel,
-			releaseDate,
-			rc.DevReleaseUriVersion,
-			arch,
-			imageExtension,
-		)
-		releaseS3Path = fmt.Sprintf("artifacts/%s/rtos/%s/%s",
-			rc.DevReleaseUriVersion,
-			archive.Format,
-			eksDReleaseChannel,
-		)
-	} else {
-		releaseName = fmt.Sprintf("%s-%s-%s-eks-a-%d-%s.%s",
-			archive.OSName,
-			eksDReleaseChannel,
-			releaseDate,
-			rc.BundleNumber,
-			arch,
-			imageExtension,
-		)
-		releaseS3Path = fmt.Sprintf("releases/canonical/%s/artifacts/rtos/%s", releaseDate, eksDReleaseChannel)
-	}
-
-	return sourceS3Key, sourceS3Prefix, releaseName, releaseS3Path, nil
-}
-
 func GetArchiveAssets(rc *releasetypes.ReleaseConfig, archive *assettypes.Archive, projectPath, gitTag, eksDReleaseChannel, eksDReleaseNumber, kubeVersion string) (*releasetypes.ArchiveArtifact, error) {
 	os := "linux"
 	arch := "amd64"
@@ -227,21 +168,20 @@ func GetArchiveAssets(rc *releasetypes.ReleaseConfig, archive *assettypes.Archiv
 	}
 
 	archiveArtifact := &releasetypes.ArchiveArtifact{
-		SourceS3Key:        sourceS3Key,
-		SourceS3Prefix:     sourceS3Prefix,
-		ArtifactPath:       filepath.Join(rc.ArtifactDir, fmt.Sprintf("%s-%s", archive.Name, archive.Format), eksDReleaseChannel, rc.BuildRepoHead),
-		ReleaseName:        releaseName,
-		ReleaseS3Path:      releaseS3Path,
-		ReleaseCdnURI:      cdnURI,
-		OS:                 os,
-		OSName:             archive.OSName,
-		Arch:               []string{arch},
-		GitTag:             gitTag,
-		ProjectPath:        projectPath,
-		SourcedFromBranch:  sourcedFromBranch,
-		ImageFormat:        archive.Format,
-		Private:            archive.Private,
-		UploadToRTOSBucket: archive.UploadToRTOSBucket,
+		SourceS3Key:       sourceS3Key,
+		SourceS3Prefix:    sourceS3Prefix,
+		ArtifactPath:      filepath.Join(rc.ArtifactDir, fmt.Sprintf("%s-%s", archive.Name, archive.Format), eksDReleaseChannel, rc.BuildRepoHead),
+		ReleaseName:       releaseName,
+		ReleaseS3Path:     releaseS3Path,
+		ReleaseCdnURI:     cdnURI,
+		OS:                os,
+		OSName:            archive.OSName,
+		Arch:              []string{arch},
+		GitTag:            gitTag,
+		ProjectPath:       projectPath,
+		SourcedFromBranch: sourcedFromBranch,
+		ImageFormat:       archive.Format,
+		Private:           archive.Private,
 	}
 
 	return archiveArtifact, nil

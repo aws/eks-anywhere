@@ -17,7 +17,6 @@ package operations
 import (
 	"context"
 	"fmt"
-	"os"
 	"path/filepath"
 	"strings"
 
@@ -89,14 +88,10 @@ func UploadArtifacts(ctx context.Context, r *releasetypes.ReleaseConfig, eksaArt
 }
 
 func handleArchiveUpload(_ context.Context, r *releasetypes.ReleaseConfig, artifact releasetypes.Artifact) error {
-	releaseBucket := r.ReleaseBucket
-	if artifact.Archive.UploadToRTOSBucket && r.ReleaseEnvironment == "production" {
-		releaseBucket = os.Getenv(constants.RTOSArtifactsBucketEnvvar)
-	}
 	archiveFile := filepath.Join(artifact.Archive.ArtifactPath, artifact.Archive.ReleaseName)
 	fmt.Printf("Archive - %s\n", archiveFile)
 	key := filepath.Join(artifact.Archive.ReleaseS3Path, artifact.Archive.ReleaseName)
-	err := s3.UploadFile(archiveFile, aws.String(releaseBucket), aws.String(key), r.ReleaseClients.S3.Uploader, artifact.Archive.Private)
+	err := s3.UploadFile(archiveFile, aws.String(r.ReleaseBucket), aws.String(key), r.ReleaseClients.S3.Uploader, artifact.Archive.Private)
 	if err != nil {
 		return fmt.Errorf("uploading archive file [%s] to S3: %v", key, err)
 	}
@@ -113,7 +108,7 @@ func handleArchiveUpload(_ context.Context, r *releasetypes.ReleaseConfig, artif
 		checksumFile := filepath.Join(artifact.Archive.ArtifactPath, artifact.Archive.ReleaseName) + extension
 		fmt.Printf("Checksum - %s\n", checksumFile)
 		key := filepath.Join(artifact.Archive.ReleaseS3Path, artifact.Archive.ReleaseName) + extension
-		err := s3.UploadFile(checksumFile, aws.String(releaseBucket), aws.String(key), r.ReleaseClients.S3.Uploader, artifact.Archive.Private)
+		err := s3.UploadFile(checksumFile, aws.String(r.ReleaseBucket), aws.String(key), r.ReleaseClients.S3.Uploader, artifact.Archive.Private)
 		if err != nil {
 			return fmt.Errorf("uploading checksum file [%s] to S3: %v", key, err)
 		}
