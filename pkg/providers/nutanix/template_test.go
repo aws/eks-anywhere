@@ -726,6 +726,52 @@ func TestTemplateBuilderFailureDomains(t *testing.T) {
 	}
 }
 
+func TestTemplateBuilderGPUs(t *testing.T) {
+	for _, tc := range []struct {
+		Input    string
+		Output   string
+		OutputMD string
+	}{
+		{
+			Input:    "testdata/eksa-cluster-gpus.yaml",
+			Output:   "testdata/expected_results_gpus.yaml",
+			OutputMD: "testdata/expected_results_gpus_md.yaml",
+		},
+	} {
+		clusterSpec := test.NewFullClusterSpec(t, tc.Input)
+
+		machineCfg := clusterSpec.NutanixMachineConfig(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name)
+		workerConfs := map[string]anywherev1.NutanixMachineConfigSpec{
+			"eksa-unit-test": machineCfg.Spec,
+		}
+
+		t.Setenv(constants.EksaNutanixUsernameKey, "admin")
+		t.Setenv(constants.EksaNutanixPasswordKey, "password")
+		creds := GetCredsFromEnv()
+
+		bldr := NewNutanixTemplateBuilder(&clusterSpec.NutanixDatacenter.Spec, &machineCfg.Spec, &machineCfg.Spec,
+			workerConfs, creds, time.Now)
+
+		cpSpec, err := bldr.GenerateCAPISpecControlPlane(clusterSpec)
+		assert.NoError(t, err)
+		assert.NotNil(t, cpSpec)
+		test.AssertContentToFile(t, string(cpSpec), tc.Output)
+
+		workloadTemplateNames := map[string]string{
+			"eksa-unit-test": "eksa-unit-test",
+		}
+		kubeadmconfigTemplateNames := map[string]string{
+			"eksa-unit-test": "eksa-unit-test",
+		}
+
+		data, err := bldr.GenerateCAPISpecWorkers(clusterSpec, workloadTemplateNames, kubeadmconfigTemplateNames)
+
+		assert.NoError(t, err)
+
+		test.AssertContentToFile(t, string(data), tc.OutputMD)
+	}
+}
+
 func minimalNutanixConfigSpec(t *testing.T) (*anywherev1.NutanixDatacenterConfig, *anywherev1.NutanixMachineConfig, map[string]anywherev1.NutanixMachineConfigSpec) {
 	dcConf := &anywherev1.NutanixDatacenterConfig{}
 	err := yaml.Unmarshal([]byte(nutanixDatacenterConfigSpec), dcConf)

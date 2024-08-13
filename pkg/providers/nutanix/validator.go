@@ -67,6 +67,10 @@ func (v *Validator) ValidateClusterSpec(ctx context.Context, spec *cluster.Spec,
 		}
 	}
 
+	if err := v.validateFreeGPU(ctx, client, spec); err != nil {
+		return err
+	}
+
 	return v.checkImageNameMatchesKubernetesVersion(ctx, spec, client)
 }
 
@@ -274,6 +278,14 @@ func (v *Validator) ValidateMachineConfig(ctx context.Context, client Client, co
 		}
 	}
 
+	if config.Spec.GPUs != nil {
+		for _, gpu := range config.Spec.GPUs {
+			if err := v.validateGPUConfig(gpu); err != nil {
+				return err
+			}
+		}
+	}
+
 	return nil
 }
 
@@ -441,6 +453,243 @@ func (v *Validator) validateAdditionalCategories(ctx context.Context, client Cli
 	return nil
 }
 
+func (v *Validator) validateGPUConfig(gpu anywherev1.NutanixGPUIdentifier) error {
+	if gpu.Type == "" {
+		return fmt.Errorf("missing GPU type")
+	}
+
+	if gpu.Type != anywherev1.NutanixGPUIdentifierDeviceID && gpu.Type != anywherev1.NutanixGPUIdentifierName {
+		return fmt.Errorf("invalid GPU identifier type: %s; valid types are: %q and %q", gpu.Type, anywherev1.NutanixGPUIdentifierDeviceID, anywherev1.NutanixGPUIdentifierName)
+	}
+
+	if gpu.Type == anywherev1.NutanixGPUIdentifierDeviceID {
+		if gpu.DeviceID == nil {
+			return fmt.Errorf("missing GPU device ID")
+		}
+	} else {
+		if gpu.Name == "" {
+			return fmt.Errorf("missing GPU name")
+		}
+	}
+
+	return nil
+}
+
+func getRequestedGPUsForAllMachines(machineCount int, requestedGpus []anywherev1.NutanixGPUIdentifier) []anywherev1.NutanixGPUIdentifier {
+	allMachinesRequestedGPUs := make([]anywherev1.NutanixGPUIdentifier, 0)
+	for i := 0; i < machineCount; i++ {
+		allMachinesRequestedGPUs = append(allMachinesRequestedGPUs, requestedGpus...)
+	}
+	return allMachinesRequestedGPUs
+}
+
+func (v *Validator) tryAssignGPUsToMachineConfig(machineCount int, requestedGpus []anywherev1.NutanixGPUIdentifier, clusterGpuList []v3.GPU, cluster anywherev1.NutanixResourceIdentifier) ([]v3.GPU, error) {
+	allMachinesRequestedGPUs := getRequestedGPUsForAllMachines(machineCount, requestedGpus)
+
+	for _, requestedGpu := range allMachinesRequestedGPUs {
+		found := -1
+		for index, gpu := range clusterGpuList {
+			if isRequestedGPUAssignable(gpu, requestedGpu) {
+				found = index
+				break
+			}
+		}
+
+		if found == -1 {
+			return nil, errorGPUNotFound(requestedGpu, cluster)
+		}
+
+		clusterGpuList = append(clusterGpuList[:found], clusterGpuList[found+1:]...)
+	}
+
+	return clusterGpuList, nil
+}
+
+func (v *Validator) isGPURequested(configs map[string]*anywherev1.NutanixMachineConfig) bool {
+	for _, machineConfig := range configs {
+		if machineConfig.Spec.GPUs != nil {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (v *Validator) initAvailableGPUsMap(hosts []*v3.HostResponse) map[string][]v3.GPU {
+	availableGpu := make(map[string][]v3.GPU)
+	for _, host := range hosts {
+		if host.Status != nil &&
+			host.Status.Resources != nil &&
+			host.Status.ClusterReference != nil &&
+			host.Status.ClusterReference.UUID != "" {
+			clusterUUID := host.Status.ClusterReference.UUID
+
+			availableGpu[clusterUUID] = make([]v3.GPU, 0)
+		}
+	}
+	return availableGpu
+}
+
+func (v *Validator) getAvailableGPUs(hosts []*v3.HostResponse) (map[string][]v3.GPU, error) {
+	availableGpu := v.initAvailableGPUsMap(hosts)
+
+	for _, host := range hosts {
+		if host.Status != nil &&
+			host.Status.Resources != nil &&
+			host.Status.Resources.GPUList != nil &&
+			host.Status.ClusterReference != nil &&
+			host.Status.ClusterReference.UUID != "" {
+			clusterUUID := host.Status.ClusterReference.UUID
+
+			for _, gpu := range host.Status.Resources.GPUList {
+				availableGpu[clusterUUID] = append(availableGpu[clusterUUID], *gpu)
+			}
+		}
+	}
+
+	return availableGpu, nil
+}
+
+func (v *Validator) tryAssignGPUsToAllMachineConfigs(ctx context.Context, v3Client Client, cluster *cluster.Spec, availableGpu map[string][]v3.GPU) error {
+	configs := cluster.NutanixMachineConfigs
+	machineCount := v.getMachineCountForAllMachineConfigs(cluster)
+
+	for _, machineConfig := range configs {
+		clusterUUID, err := getClusterUUID(ctx, v3Client, machineConfig.Spec.Cluster)
+		if err != nil {
+			return err
+		}
+
+		if machineConfig.Spec.GPUs != nil {
+			if _, ok := machineCount[machineConfig.Name]; ok {
+				availableGpu[clusterUUID], err = v.tryAssignGPUsToMachineConfig(machineCount[machineConfig.Name], machineConfig.Spec.GPUs, availableGpu[clusterUUID], machineConfig.Spec.Cluster)
+				if err != nil {
+					return err
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
+func (v *Validator) getMachineCountForAllMachineConfigs(clusterSpec *cluster.Spec) map[string]int {
+	machineCountMap := make(map[string]int)
+	cluster := clusterSpec.Cluster.Spec
+	if cluster.ControlPlaneConfiguration.MachineGroupRef.Kind == constants.NutanixMachineConfigKind {
+		machineCountMap[cluster.ControlPlaneConfiguration.MachineGroupRef.Name] = cluster.ControlPlaneConfiguration.Count
+	}
+
+	if cluster.ExternalEtcdConfiguration != nil &&
+		cluster.ExternalEtcdConfiguration.MachineGroupRef.Kind == constants.NutanixMachineConfigKind {
+		machineCountMap[cluster.ExternalEtcdConfiguration.MachineGroupRef.Name] = cluster.ExternalEtcdConfiguration.Count
+	}
+
+	for _, workerNodeGroupConfiguration := range cluster.WorkerNodeGroupConfigurations {
+		if workerNodeGroupConfiguration.MachineGroupRef.Kind == constants.NutanixMachineConfigKind &&
+			workerNodeGroupConfiguration.Count != nil {
+			machineCountMap[workerNodeGroupConfiguration.MachineGroupRef.Name] = *workerNodeGroupConfiguration.Count
+		}
+	}
+	return machineCountMap
+}
+
+func (v *Validator) getGPUModeMapping(hosts []*v3.HostResponse) (map[int64]string, map[string]string, error) {
+	gpuDeviceIDToMode := make(map[int64]string)
+	gpuNameToMode := make(map[string]string)
+
+	for _, host := range hosts {
+		if host.Status != nil &&
+			host.Status.Resources != nil &&
+			host.Status.Resources.GPUList != nil {
+			for _, gpu := range host.Status.Resources.GPUList {
+				if gpu.DeviceID != nil {
+					gpuDeviceIDToMode[*gpu.DeviceID] = gpu.Mode
+				}
+				if gpu.Name != "" {
+					gpuNameToMode[gpu.Name] = gpu.Mode
+				}
+			}
+		}
+	}
+
+	return gpuDeviceIDToMode, gpuNameToMode, nil
+}
+
+func (v *Validator) validateGPUModeNotMixed(hosts []*v3.HostResponse, cluster *cluster.Spec) error {
+	configs := cluster.NutanixMachineConfigs
+
+	gpuDeviceIDToMode, gpuNameToMode, err := v.getGPUModeMapping(hosts)
+	if err != nil {
+		return err
+	}
+
+	gpuMode := ""
+	getGpuModeFunc := createGetGpuModeFunc(gpuDeviceIDToMode, gpuNameToMode)
+	for _, machineConfig := range configs {
+		if machineConfig.Spec.GPUs != nil {
+			for _, gpu := range machineConfig.Spec.GPUs {
+				if gpuMode == "" {
+					gpuMode = getGpuModeFunc(gpu)
+				} else {
+					if gpuMode != getGpuModeFunc(gpu) {
+						return fmt.Errorf("all GPUs in a machine config must be of the same mode, vGPU or passthrough")
+					}
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
+func createGetGpuModeFunc(gpuDeviceIDToMode map[int64]string, gpuNameToMode map[string]string) func(gpu anywherev1.NutanixGPUIdentifier) string {
+	return func(gpu anywherev1.NutanixGPUIdentifier) string {
+		if gpu.Type == anywherev1.NutanixGPUIdentifierDeviceID {
+			return gpuDeviceIDToMode[*gpu.DeviceID]
+		}
+
+		return gpuNameToMode[gpu.Name]
+	}
+}
+
+func (v *Validator) validateFreeGPU(ctx context.Context, v3Client Client, cluster *cluster.Spec) error {
+	res, err := v3Client.ListAllHost(ctx)
+	if err != nil || len(res.Entities) == 0 {
+		return fmt.Errorf("No GPUs found: %v", err)
+	}
+
+	if v.isGPURequested(cluster.NutanixMachineConfigs) {
+		err := v.validateGPUModeNotMixed(res.Entities, cluster)
+		if err != nil {
+			return err
+		}
+
+		availableGpu, err := v.getAvailableGPUs(res.Entities)
+		if err != nil {
+			return err
+		}
+
+		if err = v.tryAssignGPUsToAllMachineConfigs(ctx, v3Client, cluster, availableGpu); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (v *Validator) validateUpgradeRolloutStrategy(clusterSpec *cluster.Spec) error {
+	if clusterSpec.Cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy != nil {
+		return fmt.Errorf("Upgrade rollout strategy customization is not supported for nutanix provider")
+	}
+	for _, workerNodeGroupConfiguration := range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
+		if workerNodeGroupConfiguration.UpgradeRolloutStrategy != nil {
+			return fmt.Errorf("Upgrade rollout strategy customization is not supported for nutanix provider")
+		}
+	}
+	return nil
+}
+
 // findSubnetUUIDByName retrieves the subnet uuid by the given subnet name.
 func findSubnetUUIDByName(ctx context.Context, v3Client Client, clusterUUID, subnetName string) (*string, error) {
 	res, err := v3Client.ListSubnet(ctx, &v3.DSMetadata{
@@ -546,14 +795,29 @@ func findProjectUUIDByName(ctx context.Context, v3Client Client, projectName str
 	return res.Entities[0].Metadata.UUID, nil
 }
 
-func (v *Validator) validateUpgradeRolloutStrategy(clusterSpec *cluster.Spec) error {
-	if clusterSpec.Cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy != nil {
-		return fmt.Errorf("Upgrade rollout strategy customization is not supported for nutanix provider")
+func isRequestedGPUAssignable(gpu v3.GPU, requestedGpu anywherev1.NutanixGPUIdentifier) bool {
+	if requestedGpu.Type == anywherev1.NutanixGPUIdentifierDeviceID {
+		return (*gpu.DeviceID == *requestedGpu.DeviceID) && gpu.Assignable
 	}
-	for _, workerNodeGroupConfiguration := range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
-		if workerNodeGroupConfiguration.UpgradeRolloutStrategy != nil {
-			return fmt.Errorf("Upgrade rollout strategy customization is not supported for nutanix provider")
+
+	return (gpu.Name == requestedGpu.Name) && gpu.Assignable
+}
+
+func errorGPUNotFound(gpu anywherev1.NutanixGPUIdentifier, cluster anywherev1.NutanixResourceIdentifier) error {
+	clusterAddonString := ""
+	if cluster.Type == anywherev1.NutanixIdentifierUUID {
+		if cluster.UUID != nil {
+			clusterAddonString = fmt.Sprintf("on cluster with UUID %s", *cluster.UUID)
+		}
+	} else {
+		if cluster.Name != nil {
+			clusterAddonString = fmt.Sprintf("on cluster with name %s", *cluster.Name)
 		}
 	}
-	return nil
+
+	if gpu.Type == anywherev1.NutanixGPUIdentifierDeviceID {
+		return fmt.Errorf("GPU with device ID %d not found %s", *gpu.DeviceID, clusterAddonString)
+	}
+
+	return fmt.Errorf("GPU with name %s not found %s", gpu.Name, clusterAddonString)
 }

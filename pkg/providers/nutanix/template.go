@@ -415,6 +415,10 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupMachineSpec v1
 		values["additionalCategories"] = workerNodeGroupMachineSpec.AdditionalCategories
 	}
 
+	if len(workerNodeGroupMachineSpec.GPUs) > 0 {
+		values["GPUs"] = workerNodeGroupMachineSpec.GPUs
+	}
+
 	if workerNodeGroupConfiguration.KubeletConfiguration != nil {
 		wnKubeletConfig := workerNodeGroupConfiguration.KubeletConfiguration.Object
 		if _, ok := wnKubeletConfig["tlsCipherSuites"]; !ok {
