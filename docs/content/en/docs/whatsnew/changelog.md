@@ -30,6 +30,38 @@ description: >
 * When upgrading to a new minor version, a new OS image must be created using the new image-builder CLI pertaining to that release.
 {{% /alert %}}
 
+## [v0.20.3](https://github.com/aws/eks-anywhere/releases/tag/v0.20.3)
+
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+|    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+| Bottlerocket 1.20.5 |    ✔    |     —      |    —    |     —      |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+|      RHEL 9.x       |    —    |     ✔      |    ✔    |     ✔      |  —   |
+
+### Changed
+- EKS Distro:
+  - `v1-27-eks-35` to [`v1-27-eks-36`](https://distro.eks.amazonaws.com/releases/1-27/36/)
+  - `v1-28-eks-28` to [`v1-28-eks-29`](https://distro.eks.amazonaws.com/releases/1-28/29/)
+  - `v1-29-eks-17` to [`v1-29-eks-18`](https://distro.eks.amazonaws.com/releases/1-29/18/)
+  - `v1-30-eks-10`  to [`v1-30-eks-11`](https://distro.eks.amazonaws.com/releases/1-30/11/)
+
+### Added
+- Enable Tinkerbell stack to use dhcprelay instead of using smee in hostNetwork mode. ([#8568](https://github.com/aws/eks-anywhere/pull/8568))
+
+### Fixed
+- Enable `lb_class_only` env var on kube-vip so that it only manages IP for services with `LoadBalancerClass` set to `kube-vip.io/kube-vip-class` on the service. ([#8493](https://github.com/aws/eks-anywhere/pull/8493))
+- Nil pointer panic for etcdadm-controller when `apiserver-etcd-client` secret got deleted. ([#62](https://github.com/aws/etcdadm-controller/pull/62))
+
+### Changed
+- kube-vip: `v0.8.1` to `v0.8.2`
+- cilium: `v1.13.16` to `v1.13.18`
+- cert-manager: `v1.14.5` to `v1.14.7`
+- etcdadm-controller: `v1.0.21` to `v1.0.22`
+- local-path-provisioner: `v0.0.27` to `v0.0.28`
+
 ## [v0.20.2](https://github.com/aws/eks-anywhere/releases/tag/v0.20.2)
 
 ### Supported OS version details
