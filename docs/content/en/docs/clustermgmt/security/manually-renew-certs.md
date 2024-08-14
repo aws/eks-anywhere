@@ -9,7 +9,7 @@ description: >
   How to rotate certificates for etcd and control plane nodes
 ---
 
-Certificates for external etcd and control plane nodes expire after 1 year in EKS Anywhere. EKS Anywhere automatically rotates these certificates when new machines are rolled out in the cluster. New machines are rolled out during cluster lifecycle operations such as `upgrade`. If you upgrade your cluster at least once a year, you do not have to manually rotate the cluster certificates. 
+Certificates for external etcd and control plane nodes expire after 1 year in EKS Anywhere. EKS Anywhere automatically rotates these certificates when new machines are rolled out in the cluster. New machines are rolled out during cluster lifecycle operations such as `upgrade`. If you upgrade your cluster at least once a year, as recommended, manual rotation of cluster certificates will not be necessary.
 
 This page shows the process for manually rotating certificates if you have not upgraded your cluster in 1 year.
 
@@ -25,6 +25,16 @@ The following table lists the cluster certificate files:
 |                       | apiserver-kubelet-client |
 |                       | apiserver                |
 |                       | front-proxy-client       |
+
+Commands below can be used for quickly checking your certificates expiring date:
+
+```bash
+# The expiry time of api-server certificate on you cp node
+echo | openssl s_client -connect ${CONTROL_PLANE_IP}:6443 2>/dev/null | openssl x509 -noout -dates
+
+# The expiry time of certificate used by your external etcd server, if you configured one
+echo | openssl s_client -connect ${EXTERNAL_ETCD_IP}:2379 2>/dev/null | openssl x509 -noout -dates
+```
 
 You can rotate certificates by following the steps given below. You cannot rotate the `ca` certificate because it is the root certificate. Note that the commands used for Bottlerocket nodes are different than those for Ubuntu and RHEL nodes.
 
