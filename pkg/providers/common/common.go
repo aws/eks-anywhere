@@ -108,7 +108,7 @@ func KubeadmConfigTemplateName(clusterName, workerNodeGroupName string, now type
 
 // GetCAPIBottlerocketSettingsConfig returns the formatted CAPI Bottlerocket settings config as a YAML marshaled string.
 func GetCAPIBottlerocketSettingsConfig(config *v1alpha1.HostOSConfiguration, brKubeSettings *bootstrapv1.BottlerocketKubernetesSettings) (string, error) {
-	if config == nil && brKubeSettings == nil {
+	if (config == nil || config.BottlerocketConfiguration == nil) && brKubeSettings == nil {
 		return "", nil
 	}
 
@@ -118,22 +118,21 @@ func GetCAPIBottlerocketSettingsConfig(config *v1alpha1.HostOSConfiguration, brK
 	}
 
 	if config != nil {
-		if config.BottlerocketConfiguration == nil {
-			return "", nil
-		}
+		if config.BottlerocketConfiguration != nil {
 
-		if config.BottlerocketConfiguration.Kernel != nil {
-			if config.BottlerocketConfiguration.Kernel.SysctlSettings != nil {
-				b.Kernel = &bootstrapv1.BottlerocketKernelSettings{
-					SysctlSettings: config.BottlerocketConfiguration.Kernel.SysctlSettings,
+			if config.BottlerocketConfiguration.Kernel != nil {
+				if config.BottlerocketConfiguration.Kernel.SysctlSettings != nil {
+					b.Kernel = &bootstrapv1.BottlerocketKernelSettings{
+						SysctlSettings: config.BottlerocketConfiguration.Kernel.SysctlSettings,
+					}
 				}
 			}
-		}
 
-		if config.BottlerocketConfiguration.Boot != nil {
-			if config.BottlerocketConfiguration.Boot.BootKernelParameters != nil {
-				b.Boot = &bootstrapv1.BottlerocketBootSettings{
-					BootKernelParameters: config.BottlerocketConfiguration.Boot.BootKernelParameters,
+			if config.BottlerocketConfiguration.Boot != nil {
+				if config.BottlerocketConfiguration.Boot.BootKernelParameters != nil {
+					b.Boot = &bootstrapv1.BottlerocketBootSettings{
+						BootKernelParameters: config.BottlerocketConfiguration.Boot.BootKernelParameters,
+					}
 				}
 			}
 		}
