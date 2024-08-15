@@ -80,7 +80,7 @@ Make sure to setup the [admin environment variables]({{< relref "#admin-machine-
     {{< /tab >}}
 
     {{< tab header="Using etcd >= v3.5.x" lang="bash" >}}
-    ctr -n k8s.io t exec -t --exec-id etcd ${ETCD_CONTAINER_ID} etcdutl \
+    ctr -n k8s.io t exec -t --exec-id etcd ${ETCD_CONTAINER_ID} etcdctl \
         --endpoints=${ETCD_ENDPOINT} \
         --cacert=/var/lib/etcd/pki/ca.crt \
         --cert=/var/lib/etcd/pki/server.crt \
@@ -204,7 +204,7 @@ ctr -n k8s.io t exec -t --exec-id etcd ${ETCD_CONTAINER_ID} etcdctl \
 
     {{< tab header="Using etcd >= v3.5.x" lang="bash" >}}
 # run the restore command
-ctr -n k8s.io t exec -t --exec-id etcd ${ETCD_CONTAINER_ID} etcdutl \
+ctr -n k8s.io t exec -t --exec-id etcd ${ETCD_CONTAINER_ID} etcdctl \
     snapshot restore /var/lib/etcd/data/etcd-snapshot.db \
     --name=${ETCD_NAME} \
     --initial-cluster=${ETCD_INITIAL_CLUSTER} \
