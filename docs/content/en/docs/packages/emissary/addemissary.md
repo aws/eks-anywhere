@@ -13,6 +13,7 @@ Be sure to refer to the [troubleshooting guide]({{< relref "../troubleshoot" >}}
   {{% alert title="Important" color="warning" %}}
    * Starting at `eksctl anywhere` version `v0.12.0`, packages on workload clusters are remotely managed by the management cluster.
    * While following this guide to install packages on a workload cluster, please make sure the `kubeconfig` is pointing to the management cluster that was used to create the workload cluster. The only exception is the `kubectl create namespace` command below, which should be run with `kubeconfig` pointing to the workload cluster.
+   * The `emissary-apiext` service has a known issue where its TLS certificate expires after one year and does not auto-renew. To resolve this, manually renew the certificate by running `kubectl delete --all secrets --namespace=emissary-system` followed by `kubectl rollout restart deploy/emissary-apiext -n emissary-system`.
    {{% /alert %}}
 
 ## Install
