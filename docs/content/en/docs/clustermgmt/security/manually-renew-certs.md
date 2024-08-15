@@ -105,7 +105,7 @@ kubectl edit secret ${cluster-name}-apiserver-etcd-client -n eksa-system
 ```
 
 {{% alert title="Note" color="primary" %}}
-For Bottlerocket nodes, the `key` of `apiserver-etcd-client` is `server-etcd.client.crt` instead of `apiserver-etcd-client.crt`.
+On Bottlerocket control plane nodes, the `certificate` filename of `apiserver-etcd-client` is `server-etcd.client.crt` instead of `apiserver-etcd-client.crt`.
 {{% /alert %}}
 
 #### Control plane nodes
