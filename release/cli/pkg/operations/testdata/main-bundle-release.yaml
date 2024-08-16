@@ -473,12 +473,12 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: credential-provider-package
         os: linux
-        uri: public.ecr.aws/release-container-registry/credential-provider-package:v0.4.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/credential-provider-package:v0.4.4-eks-a-v0.0.0-dev-build.1
       helmChart:
         description: Helm chart for eks-anywhere-packages
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.4.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.4.4-eks-a-v0.0.0-dev-build.1
       packageController:
         arch:
         - amd64
@@ -487,7 +487,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.4.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.4.4-eks-a-v0.0.0-dev-build.1
       tokenRefresher:
         arch:
         - amd64
@@ -496,8 +496,8 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: ecr-token-refresher
         os: linux
-        uri: public.ecr.aws/release-container-registry/ecr-token-refresher:v0.4.3-eks-a-v0.0.0-dev-build.1
-      version: v0.4.3+abcdef1
+        uri: public.ecr.aws/release-container-registry/ecr-token-refresher:v0.4.4-eks-a-v0.0.0-dev-build.1
+      version: v0.4.4+abcdef1
     snow:
       bottlerocketBootstrapSnow:
         arch:
@@ -1288,12 +1288,12 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: credential-provider-package
         os: linux
-        uri: public.ecr.aws/release-container-registry/credential-provider-package:v0.4.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/credential-provider-package:v0.4.4-eks-a-v0.0.0-dev-build.1
       helmChart:
         description: Helm chart for eks-anywhere-packages
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.4.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.4.4-eks-a-v0.0.0-dev-build.1
       packageController:
         arch:
         - amd64
@@ -1302,7 +1302,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.4.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.4.4-eks-a-v0.0.0-dev-build.1
       tokenRefresher:
         arch:
         - amd64
@@ -1311,8 +1311,8 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: ecr-token-refresher
         os: linux
-        uri: public.ecr.aws/release-container-registry/ecr-token-refresher:v0.4.3-eks-a-v0.0.0-dev-build.1
-      version: v0.4.3+abcdef1
+        uri: public.ecr.aws/release-container-registry/ecr-token-refresher:v0.4.4-eks-a-v0.0.0-dev-build.1
+      version: v0.4.4+abcdef1
     snow:
       bottlerocketBootstrapSnow:
         arch:
@@ -2103,12 +2103,12 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: credential-provider-package
         os: linux
-        uri: public.ecr.aws/release-container-registry/credential-provider-package:v0.4.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/credential-provider-package:v0.4.4-eks-a-v0.0.0-dev-build.1
       helmChart:
         description: Helm chart for eks-anywhere-packages
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.4.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.4.4-eks-a-v0.0.0-dev-build.1
       packageController:
         arch:
         - amd64
@@ -2117,7 +2117,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.4.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.4.4-eks-a-v0.0.0-dev-build.1
       tokenRefresher:
         arch:
         - amd64
@@ -2126,8 +2126,8 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: ecr-token-refresher
         os: linux
-        uri: public.ecr.aws/release-container-registry/ecr-token-refresher:v0.4.3-eks-a-v0.0.0-dev-build.1
-      version: v0.4.3+abcdef1
+        uri: public.ecr.aws/release-container-registry/ecr-token-refresher:v0.4.4-eks-a-v0.0.0-dev-build.1
+      version: v0.4.4+abcdef1
     snow:
       bottlerocketBootstrapSnow:
         arch:
@@ -2918,12 +2918,12 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: credential-provider-package
         os: linux
-        uri: public.ecr.aws/release-container-registry/credential-provider-package:v0.4.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/credential-provider-package:v0.4.4-eks-a-v0.0.0-dev-build.1
       helmChart:
         description: Helm chart for eks-anywhere-packages
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.4.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.4.4-eks-a-v0.0.0-dev-build.1
       packageController:
         arch:
         - amd64
@@ -2932,7 +2932,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.4.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.4.4-eks-a-v0.0.0-dev-build.1
       tokenRefresher:
         arch:
         - amd64
@@ -2941,8 +2941,8 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: ecr-token-refresher
         os: linux
-        uri: public.ecr.aws/release-container-registry/ecr-token-refresher:v0.4.3-eks-a-v0.0.0-dev-build.1
-      version: v0.4.3+abcdef1
+        uri: public.ecr.aws/release-container-registry/ecr-token-refresher:v0.4.4-eks-a-v0.0.0-dev-build.1
+      version: v0.4.4+abcdef1
     snow:
       bottlerocketBootstrapSnow:
         arch:
@@ -3733,12 +3733,12 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: credential-provider-package
         os: linux
-        uri: public.ecr.aws/release-container-registry/credential-provider-package:v0.4.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/credential-provider-package:v0.4.4-eks-a-v0.0.0-dev-build.1
       helmChart:
         description: Helm chart for eks-anywhere-packages
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.4.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.4.4-eks-a-v0.0.0-dev-build.1
       packageController:
         arch:
         - amd64
@@ -3747,7 +3747,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.4.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.4.4-eks-a-v0.0.0-dev-build.1
       tokenRefresher:
         arch:
         - amd64
@@ -3756,8 +3756,8 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: ecr-token-refresher
         os: linux
-        uri: public.ecr.aws/release-container-registry/ecr-token-refresher:v0.4.3-eks-a-v0.0.0-dev-build.1
-      version: v0.4.3+abcdef1
+        uri: public.ecr.aws/release-container-registry/ecr-token-refresher:v0.4.4-eks-a-v0.0.0-dev-build.1
+      version: v0.4.4+abcdef1
     snow:
       bottlerocketBootstrapSnow:
         arch:
