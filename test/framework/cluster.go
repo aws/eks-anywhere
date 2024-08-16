@@ -1837,7 +1837,17 @@ func (e *ClusterE2ETest) VerifyPrometheusPrometheusServerStates(packageName, tar
 	}
 
 	e.T.Log("Reading package", packageName, "pod prometheus-server logs")
-	podName, err := e.KubectlClient.GetPodNameByLabel(context.TODO(), targetNamespace, "app.kubernetes.io/name=prometheus,app.kubernetes.io/component=server", e.KubeconfigFilePath())
+	var podName string
+
+	// The prometheus pod labels changed from app=prometheus,component=server to app.kubernetes.io/name=prometheus,app.kubernetes.io/component=server
+	// once we bumped prometheus to v2.52.0. The newer prometheus images weren't built for 1.25 as we deprecated the kubernetes version
+	// Keep this conditional check to support 1.25 tests on n-1 branch.
+	if e.ClusterConfig.Cluster.Spec.KubernetesVersion == v1alpha1.Kube125 {
+		podName, err = e.KubectlClient.GetPodNameByLabel(context.TODO(), targetNamespace, "app=prometheus,component=server", e.KubeconfigFilePath())
+	} else {
+		podName, err = e.KubectlClient.GetPodNameByLabel(context.TODO(), targetNamespace, "app.kubernetes.io/name=prometheus,app.kubernetes.io/component=server", e.KubeconfigFilePath())
+	}
+
 	if err != nil {
 		e.T.Fatalf("unable to get name of the prometheus-server pod: %s", err)
 	}
