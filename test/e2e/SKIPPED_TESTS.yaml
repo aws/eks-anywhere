@@ -7,10 +7,6 @@ skipped_tests:
 
 # Proxy API tests skipped due to being unable to run in cloudstack CI env. We should probably revisit these and see if we can unskip them now
 # as we have a proxy env set up in the cloudstack CI env now.
-- TestCloudStackKubernetes126RedhatProxyConfigAPI
-- TestCloudStackKubernetes127RedhatProxyConfigAPI
-- TestCloudStackKubernetes128RedhatProxyConfigAPI
-- TestCloudStackKubernetes130RedhatProxyConfigAPI
 
 # MultiEndpoint
 - TestCloudStackKubernetes126MultiEndpointSimpleFlow
