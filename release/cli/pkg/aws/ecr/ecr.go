@@ -184,34 +184,6 @@ func getLastestOCIShaTag(details []*ecr.ImageDetail) (string, string, error) {
 	return *latest.ImageTags[0], *latest.ImageDigest, nil
 }
 
-func GetLatestImageSha(ecrClient *ecr.ECR, repoName string) (string, error) {
-	imageDetails, err := DescribeImagesPaginated(ecrClient, &ecr.DescribeImagesInput{
-		RepositoryName: aws.String(repoName),
-	})
-	if len(imageDetails) == 0 {
-		return "", fmt.Errorf("no image details obtained: %v", err)
-	}
-	if err != nil {
-		return "", errors.Cause(err)
-	}
-
-	latest := &ecr.ImageDetail{}
-	latest.ImagePushedAt = &time.Time{}
-	for _, detail := range imageDetails {
-		if detail.ImagePushedAt == nil || detail.ImageDigest == nil || detail.ImageTags == nil || len(detail.ImageTags) == 0 || *detail.ImageManifestMediaType != "application/vnd.oci.image.manifest.v1+json" {
-			continue
-		}
-		if detail.ImagePushedAt != nil && latest.ImagePushedAt.Before(*detail.ImagePushedAt) {
-			latest = detail
-		}
-	}
-	// Check if latest is empty, and return error if that's the case.
-	if *latest.ImageTags[0] == "" {
-		return "", fmt.Errorf("error no images found")
-	}
-	return *latest.ImageTags[0], nil
-}
-
 // removeStringSlice removes a named string from a slice, without knowing it's index or it being ordered.
 func removeStringSlice(l []*string, item string) []*string {
 	for i, other := range l {

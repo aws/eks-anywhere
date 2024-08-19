@@ -3,6 +3,7 @@
     "transports": {
             "docker": {
                     "857151390494.dkr.ecr.us-west-2.amazonaws.com": [{"type": "insecureAcceptAnything"}],
+                    "067575901363.dkr.ecr.us-west-2.amazonaws.com": [{"type": "insecureAcceptAnything"}],
                     "public.ecr.aws": [{"type": "insecureAcceptAnything"}]
             }
     }

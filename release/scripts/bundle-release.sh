@@ -30,12 +30,13 @@ BUNDLE_NUMBER="${5?Specify fifth argument - Bundle number}"
 CLI_MIN_VERSION="${6?Specify sixth argument - CLI min version}"
 CLI_MAX_VERSION="${7?Specify seventh argument - CLI max version}"
 SOURCE_CONTAINER_REGISTRY="${8?Specify eighth argument - source container registry}"
-RELEASE_CONTAINER_REGISTRY="${9?Specify ninth argument - release container registry}"
-RELEASE_ENVIRONMENT="${10?Specify tenth argument - Release environment}"
-BUILD_REPO_BRANCH_NAME="${11?Specify eleventh argument - Build repo branch name}"
-CLI_REPO_BRANCH_NAME="${12?Specify twelfth argument - CLI repo branch name}"
-BUILD_REPO_URL="${13?Specify thirteenth argument - Build repo URL}"
-CLI_REPO_URL="${14?Specify fourteenth argument - CLI repo URL}"
+PACKAGES_SOURCE_CONTAINER_REGISTRY="${9?Specify ninth argument - packages source container registry}"
+RELEASE_CONTAINER_REGISTRY="${10?Specify tenth argument - release container registry}"
+RELEASE_ENVIRONMENT="${11?Specify eleventh argument - Release environment}"
+BUILD_REPO_BRANCH_NAME="${12?Specify twelfth argument - Build repo branch name}"
+CLI_REPO_BRANCH_NAME="${13?Specify thirteenth argument - CLI repo branch name}"
+BUILD_REPO_URL="${14?Specify fourteenth argument - Build repo URL}"
+CLI_REPO_URL="${15?Specify fifteenth argument - CLI repo URL}"
 
 set_aws_config "$RELEASE_ENVIRONMENT"
 
@@ -50,6 +51,7 @@ ${BASE_DIRECTORY}/release/bin/eks-anywhere-release release \
     --artifact-dir "${ARTIFACTS_DIR}" \
     --source-bucket "${SOURCE_BUCKET}" \
     --source-container-registry "${SOURCE_CONTAINER_REGISTRY}" \
+    --packages-source-container-registry "${PACKAGES_SOURCE_CONTAINER_REGISTRY}" \
     --cdn "${CDN}" \
     --release-bucket "${RELEASE_BUCKET}" \
     --release-container-registry "${RELEASE_CONTAINER_REGISTRY}" \
