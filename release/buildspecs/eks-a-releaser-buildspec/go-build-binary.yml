@@ -10,5 +10,5 @@ phases:
     - make dev-release -C release
 
   artifacts:
-  files:
-    - release/bin/eks-anywhere-release
+    files:
+      - release/bin/eks-anywhere-release
