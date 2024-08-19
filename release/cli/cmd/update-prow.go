@@ -51,19 +51,17 @@ var updateProwCmd = &cobra.Command{
 
 func updateProw() {
 
-	latestRelease := os.Getenv("LATEST_RELEASE")
-
 	// Step 1: Create a folder on the user's desktop
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
-		fmt.Printf("error getting user home directory: %v", err)
+		log.Printf("error getting user home directory: %v", err)
 		return
 	}
 	desktopPath := filepath.Join(homeDir, "Desktop")
 	newFolderPath := filepath.Join(desktopPath, "ProwJobsRepo")
 	err = os.Mkdir(newFolderPath, 0755)
 	if err != nil {
-		fmt.Println("Error creating folder:", err)
+		log.Println("Error creating folder:", err)
 		return
 	}
 	fmt.Println("Folder created successfully at:", newFolderPath)
@@ -72,19 +70,19 @@ func updateProw() {
 	clonedRepoDestination := filepath.Join(homeDir, "Desktop", "ProwJobsRepo")
 	repo, err := cloneRepo("https://github.com/ibix16/eks-anywhere-prow-jobs", clonedRepoDestination)
 	if err != nil {
-		fmt.Printf("error cloning repo: %v", err)
+		log.Printf("error cloning repo: %v", err)
 		return
 	}
 
 	// Step 2: Rename the file with the latest version
 	originalFilePath, err := retrieveFilePath(clonedRepoDestination + "/templater/jobs/periodic/eks-anywhere-build-tooling")
 	if err != nil {
-		fmt.Printf("error fetching path to file on cloned repo: %v", err)
+		log.Printf("error fetching path to file on cloned repo: %v", err)
 	}
 	newFilePath := clonedRepoDestination + "/templater/jobs/periodic/eks-anywhere-build-tooling/eks-anywhere-attribution-periodics-" + latestRelease + ".yaml"
 	err = os.Rename(originalFilePath, newFilePath)
 	if err != nil {
-		fmt.Printf("error renaming file: %v", err)
+		log.Printf("error renaming file: %v", err)
 		return
 	}
 
@@ -102,12 +100,12 @@ func updateProw() {
 	if err != nil {
 		log.Fatalf("Failed to write file: %v", err)
 	}
-	fmt.Println("File updated successfully.")
+	log.Println("File updated successfully.")
 
 	// Execute make command
 	err = makeCommand()
 	if err != nil {
-		fmt.Printf("error running make command: %v", err)
+		log.Printf("error running make command: %v", err)
 		return
 	}
 	fmt.Println("Make command executed successfully.")
@@ -115,14 +113,14 @@ func updateProw() {
 	// Create a branch in the user's forked repo
 	err = createProwBranch(usersForkedRepoAccount, prowRepo)
 	if err != nil {
-		fmt.Printf("error creating branch: %v", err)
+		log.Printf("error creating branch: %v", err)
 		return
 	}
 
 	// Commit and push changes to the branch
 	err = commitAndPushChanges(repo, latestRelease+"-releaser")
 	if err != nil {
-		fmt.Printf("error pushing changes to branch: %v", err)
+		log.Printf("error pushing changes to branch: %v", err)
 		return
 	}
 	fmt.Println("Changes pushed successfully.")
@@ -130,17 +128,17 @@ func updateProw() {
 	// Create PR
 	err = createProwPr()
 	if err != nil {
-		fmt.Printf("error creating PR: %v", err)
+		log.Printf("error creating PR: %v", err)
 		return
 	}
 
 	// delete folder
 	err = os.RemoveAll(clonedRepoDestination)
 	if err != nil {
-		fmt.Printf("error deleting folder: %s", err)
+		log.Printf("error deleting folder: %s", err)
 	}
 
-	fmt.Println("Folder deleted successfully from desktop.")
+	log.Println("Folder deleted successfully from desktop.")
 
 }
 
@@ -190,7 +188,7 @@ func cloneRepo(cloneURL, destination string) (*git.Repository, error) {
 func makeCommand() error {
 	desktopPath, err := os.UserHomeDir()
 	if err != nil {
-		fmt.Printf("error getting user home directory: %v", err)
+		log.Printf("error getting user home directory: %v", err)
 		return nil
 	}
 	clonedRepoPath := filepath.Join(desktopPath, "Desktop", "ProwJobsRepo")
@@ -206,8 +204,6 @@ func makeCommand() error {
 
 func createProwBranch(owner, repo string) error {
 
-	latestRelease := os.Getenv("LATEST_RELEASE")
-	accessToken := os.Getenv("SECRET_PAT")
 	ctx := context.Background()
 	client := github.NewClient(nil).WithAuthToken(accessToken)
 
@@ -278,10 +274,8 @@ func commitAndPushChanges(repo *git.Repository, branchName string) error {
 
 // Function to create the PR
 func createProwPr() error {
-
-	latestRelease := os.Getenv("LATEST_RELEASE")
+	
 	// Create a GitHub client
-	accessToken := os.Getenv("SECRET_PAT")
 	ctx := context.Background()
 	client := github.NewClient(nil).WithAuthToken(accessToken)
 
