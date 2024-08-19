@@ -14,7 +14,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"os"
 	"strings"
 
 	"github.com/google/go-github/v62/github"
@@ -41,12 +40,9 @@ var updateMakefileCmd = &cobra.Command{
 func updateMakefile() error {
 
 	// create client
-	accessToken := os.Getenv("SECRET_PAT")
 	ctx := context.Background()
 	client := github.NewClient(nil).WithAuthToken(accessToken)
 
-	// string variable holding latest release from env "release-0.xx"
-	latestRelease := os.Getenv("LATEST_RELEASE")
 
 	opts := &github.RepositoryContentGetOptions{
 		Ref: "main", // branch that will be accessed
@@ -55,12 +51,12 @@ func updateMakefile() error {
 	// access makefile in forked repo and retrieve entire file contents
 	triggerFileContentBundleNumber, _, _, err := client.Repositories.GetContents(ctx, usersForkedRepoAccount, EKSAnyrepoName, makeFilePath, opts)
 	if err != nil {
-		fmt.Print("first breakpoint", err)
+		return fmt.Errorf("error accessing file : %s", err)
 	}
 	// holds makefile
 	content, err := triggerFileContentBundleNumber.GetContent()
 	if err != nil {
-		fmt.Print("second breakpoint", err)
+		return fmt.Errorf("error fetching file content : %s", err)
 	}
 
 	// stores entire updated Makefile as a string
@@ -85,7 +81,7 @@ func updateMakefile() error {
 
 	// create new commit, update email address
 	author := &github.CommitAuthor{
-		Name:  github.String("ibix16"),
+		Name:  github.String("eks-a-releaser"),
 		Email: github.String("fake@wtv.com"),
 	}
 
