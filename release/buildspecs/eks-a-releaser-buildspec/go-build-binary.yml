@@ -1,7 +1,5 @@
 version: 0.2
-env: 
-  variables:
-    GOLANG_VERSION: "1.22"
+
 phases:
   pre_build:
     commands:
