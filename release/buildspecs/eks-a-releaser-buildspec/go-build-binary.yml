@@ -1,14 +1,12 @@
+---
 version: 0.2
-
 phases:
   pre_build:
     commands:
-    - ./release/scripts/setup.sh
-
+      - ./release/scripts/setup.sh
   build:
     commands:
-    - make dev-release -C release
-
+      - make dev-release -C release
   artifacts:
     files:
       - release/bin/eks-anywhere-release
