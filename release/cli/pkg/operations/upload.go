@@ -43,6 +43,7 @@ func UploadArtifacts(ctx context.Context, r *releasetypes.ReleaseConfig, eksaArt
 	errGroup, ctx := errgroup.WithContext(ctx)
 
 	sourceEcrAuthConfig := r.SourceClients.ECR.AuthConfig
+	packagesSourceEcrAuthConfig := r.SourceClients.Packages.AuthConfig
 	releaseEcrAuthConfig := r.ReleaseClients.ECRPublic.AuthConfig
 
 	packagesArtifacts := map[string][]releasetypes.Artifact{}
@@ -60,7 +61,7 @@ func UploadArtifacts(ctx context.Context, r *releasetypes.ReleaseConfig, eksaArt
 	eksaArtifacts.Range(func(k, v interface{}) bool {
 		artifacts := v.([]releasetypes.Artifact)
 		for _, artifact := range artifacts {
-			r, packagesArtifacts, artifact, sourceEcrAuthConfig, releaseEcrAuthConfig := r, packagesArtifacts, artifact, sourceEcrAuthConfig, releaseEcrAuthConfig
+			r, packagesArtifacts, artifact, sourceEcrAuthConfig, packagesSourceEcrAuthConfig, releaseEcrAuthConfig := r, packagesArtifacts, artifact, sourceEcrAuthConfig, packagesSourceEcrAuthConfig, releaseEcrAuthConfig
 			errGroup.Go(func() error {
 				if artifact.Archive != nil {
 					return handleArchiveUpload(ctx, r, artifact)
@@ -71,7 +72,7 @@ func UploadArtifacts(ctx context.Context, r *releasetypes.ReleaseConfig, eksaArt
 				}
 
 				if artifact.Image != nil {
-					return handleImageUpload(ctx, r, packagesArtifacts, artifact, sourceEcrAuthConfig, releaseEcrAuthConfig)
+					return handleImageUpload(ctx, r, packagesArtifacts, artifact, sourceEcrAuthConfig, packagesSourceEcrAuthConfig, releaseEcrAuthConfig)
 				}
 
 				return nil
@@ -129,7 +130,7 @@ func handleManifestUpload(_ context.Context, r *releasetypes.ReleaseConfig, arti
 	return nil
 }
 
-func handleImageUpload(_ context.Context, r *releasetypes.ReleaseConfig, packagesArtifacts map[string][]releasetypes.Artifact, artifact releasetypes.Artifact, sourceEcrAuthConfig, releaseEcrAuthConfig *docker.AuthConfiguration) error {
+func handleImageUpload(_ context.Context, r *releasetypes.ReleaseConfig, packagesArtifacts map[string][]releasetypes.Artifact, artifact releasetypes.Artifact, defaultSourceEcrAuthConfig, packagesSourceEcrAuthConfig, releaseEcrAuthConfig *docker.AuthConfiguration) error {
 	// If the artifact is a helm chart, skip the skopeo copy. Instead, modify the Chart.yaml to match the release tag
 	// and then use Helm package and push commands to upload chart to ECR Public
 	if !r.DryRun && ((strings.HasSuffix(artifact.Image.AssetName, "helm") && !r.DevRelease) || strings.HasSuffix(artifact.Image.AssetName, "chart")) {
@@ -155,6 +156,10 @@ func handleImageUpload(_ context.Context, r *releasetypes.ReleaseConfig, package
 	} else {
 		sourceImageUri := artifact.Image.SourceImageURI
 		releaseImageUri := artifact.Image.ReleaseImageURI
+		sourceEcrAuthConfig := defaultSourceEcrAuthConfig
+		if strings.Contains(sourceImageUri, "eks-anywhere-packages") || strings.Contains(sourceImageUri, "ecr-token-refresher") || strings.Contains(sourceImageUri, "credential-provider-package") {
+			sourceEcrAuthConfig = packagesSourceEcrAuthConfig
+		}
 		fmt.Printf("Source Image - %s\n", sourceImageUri)
 		fmt.Printf("Destination Image - %s\n", releaseImageUri)
 		err := images.CopyToDestination(sourceEcrAuthConfig, releaseEcrAuthConfig, sourceImageUri, releaseImageUri)
