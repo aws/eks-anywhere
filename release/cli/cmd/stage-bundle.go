@@ -28,8 +28,7 @@ var (
 	bundleNumPath     = "release/triggers/bundle-release/development/BUNDLE_NUMBER"
 	cliMaxVersionPath = "release/triggers/bundle-release/development/CLI_MAX_VERSION"
 	cliMinVersionPath = "release/triggers/bundle-release/development/CLI_MIN_VERSION"
-	//triggerFilePath         = "release/triggers/eks-a-releaser-trigger"
-	usersForkedRepoAccount = getAuthenticatedUsername()
+	usersForkedRepoAccount, _ = getAuthenticatedUsername()
 )
 
 // stageBundleCmd represents the stageBundle command
@@ -50,8 +49,6 @@ var stageBundleCmd = &cobra.Command{
 
 func runAllStagebundle() error {
 
-	RELEASE_TYPE := os.Getenv("RELEASE_TYPE")
-
 	commitSHA, err := updateFilesStageBundle(RELEASE_TYPE)
 	if err != nil {
 		return err
@@ -69,14 +66,8 @@ func runAllStagebundle() error {
 func updateFilesStageBundle(releaseType string) (string, error) {
 
 	// create client
-	accessToken := os.Getenv("SECRET_PAT")
 	ctx := context.Background()
 	client := github.NewClient(nil).WithAuthToken(accessToken)
-
-	// env variables
-	bundleNumber := os.Getenv("RELEASE_NUMBER")
-	latestVersion := os.Getenv("LATEST_VERSION")
-	latestRelease := os.Getenv("LATEST_RELEASE")
 
 	// Get the latest commit SHA from the appropriate branch, patch vs minor
 	ref, _, err := client.Git.GetRef(ctx, usersForkedRepoAccount, EKSAnyrepoName, "heads/"+getBranchName(releaseType, latestRelease))
@@ -86,7 +77,7 @@ func updateFilesStageBundle(releaseType string) (string, error) {
 	latestCommitSha := ref.Object.GetSHA()
 
 	entries := []*github.TreeEntry{}
-	entries = append(entries, &github.TreeEntry{Path: github.String(strings.TrimPrefix(bundleNumPath, "/")), Type: github.String("blob"), Content: github.String(string(bundleNumber)), Mode: github.String("100644")})
+	entries = append(entries, &github.TreeEntry{Path: github.String(strings.TrimPrefix(bundleNumPath, "/")), Type: github.String("blob"), Content: github.String(string(releaseNumber)), Mode: github.String("100644")})
 	entries = append(entries, &github.TreeEntry{Path: github.String(strings.TrimPrefix(cliMaxVersionPath, "/")), Type: github.String("blob"), Content: github.String(string(latestVersion)), Mode: github.String("100644")})
 	entries = append(entries, &github.TreeEntry{Path: github.String(strings.TrimPrefix(cliMinVersionPath, "/")), Type: github.String("blob"), Content: github.String(string(latestVersion)), Mode: github.String("100644")})
 
@@ -99,7 +90,7 @@ func updateFilesStageBundle(releaseType string) (string, error) {
 
 	// Create a new commit with all the changes
 	author := &github.CommitAuthor{
-		Name:  github.String("ibix16"),
+		Name:  github.String("eks-a-releaser"),
 		Email: github.String("fake@wtv.com"),
 	}
 
@@ -128,10 +119,8 @@ func updateFilesStageBundle(releaseType string) (string, error) {
 }
 
 func createPullRequestStageBundleTwo(releaseType string) error {
-	latestRelease := os.Getenv("LATEST_RELEASE")
 
 	// Create client
-	accessToken := os.Getenv("SECRET_PAT")
 	ctx := context.Background()
 	client := github.NewClient(nil).WithAuthToken(accessToken)
 
@@ -200,7 +189,7 @@ type User struct {
 	UpdatedAt         string `json:"updated_at"`
 }
 
-func getAuthenticatedUsername() string {
+func getAuthenticatedUsername() (string, error) {
 
 	// username is fetched using gh PAT
 	accessToken := os.Getenv("SECRET_PAT")
@@ -212,7 +201,7 @@ func getAuthenticatedUsername() string {
 	// Create a new HTTP request
 	req, err := http.NewRequest("GET", "https://api.github.com/user", nil)
 	if err != nil {
-		return "error creating HTTP request"
+		return "", fmt.Errorf("error creating HTTP requests: %v", err)
 	}
 
 	// Set the authorization header with the personal access token
@@ -221,28 +210,28 @@ func getAuthenticatedUsername() string {
 	// Send the HTTP request
 	resp, err := client.Do(req)
 	if err != nil {
-		return "error sending HTTP request"
+		return "", fmt.Errorf("error sending HTTP requests: %v", err)
 	}
 	defer resp.Body.Close()
 
 	// Read the response body
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return "error reading response body"
+		return "", fmt.Errorf("error reading response body: %v", err)
 	}
 
 	// Check if the request was successful
 	if resp.StatusCode != http.StatusOK {
-		return "failed to retrieve user information"
+		return "failed to retrieve user information", nil
 	}
 
 	// Unmarshal the response body into a User struct
 	var user User
 	err = json.Unmarshal(body, &user)
 	if err != nil {
-		return "error unmarshalling"
+		return "", fmt.Errorf("error unmarshalling: %v", err)
 	}
 
 	stringUser := user.Login
-	return stringUser
+	return stringUser, nil
 }
