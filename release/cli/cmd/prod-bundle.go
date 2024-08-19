@@ -42,7 +42,6 @@ var prodBundleCmd = &cobra.Command{
 }
 
 func updateAllProdBundleFiles() error {
-	RELEASE_TYPE := os.Getenv("RELEASE_TYPE")
 
 	_, err := updateProdBundleFiles(RELEASE_TYPE)
 	if err != nil {
@@ -58,13 +57,11 @@ func updateAllProdBundleFiles() error {
 }
 
 func updateProdBundleFiles(releaseType string) (string, error) {
-	accessToken := os.Getenv("SECRET_PAT")
+
 	ctx := context.Background()
 	client := github.NewClient(nil).WithAuthToken(accessToken)
 
 	bundleNumber := os.Getenv("RELEASE_NUMBER")
-	latestVersion := os.Getenv("LATEST_VERSION")
-	latestRelease := os.Getenv("LATEST_RELEASE")
 
 	// Get the latest commit SHA from the appropriate branch
 	ref, _, err := client.Git.GetRef(ctx, usersForkedRepoAccount, EKSAnyrepoName, "heads/"+getBranchName(releaseType, latestRelease))
@@ -116,10 +113,8 @@ func updateProdBundleFiles(releaseType string) (string, error) {
 }
 
 func createProdBundlePullRequest(releaseType string) error {
-	latestRelease := os.Getenv("LATEST_RELEASE")
 
 	// Create client
-	accessToken := os.Getenv("SECRET_PAT")
 	ctx := context.Background()
 	client := github.NewClient(nil).WithAuthToken(accessToken)
 
