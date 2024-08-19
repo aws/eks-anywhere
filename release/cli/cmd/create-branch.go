@@ -16,6 +16,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/google/go-github/v62/github"
@@ -25,6 +26,11 @@ import (
 var (
 	buildToolingRepoName = "eks-anywhere-build-tooling"
 	upStreamRepoOwner    = "testerIbix" // will eventually be replaced by actual upstream owner, aws
+	latestRelease        = os.Getenv("LATEST_RELEASE")
+	RELEASE_TYPE         = os.Getenv("RELEASE_TYPE")
+	latestVersion        = os.Getenv("LATEST_VERSION")
+	releaseNumber        = os.Getenv("RELEASE_NUMBER")
+	accessToken          = os.Getenv("SECRET_PAT")
 )
 
 // createBranchCmd represents the createBranch command
@@ -38,32 +44,31 @@ and usage of using your command.`,
 
 		err := releaseDecision()
 		if err != nil {
-			fmt.Printf("error creating branch %s", err)
+			log.Printf("error creating branch %s", err)
 		}
 	},
 }
 
 func releaseDecision() error {
-	RELEASE_TYPE := os.Getenv("RELEASE_TYPE")
 
 	if RELEASE_TYPE == "minor" {
 		err := createMinorBranches()
 		if err != nil {
-			fmt.Printf("error calling createMinorBranches %s", err)
+			log.Printf("error calling createMinorBranches %s", err)
+			return err
 		}
 		return nil
 	}
 	// else
 	err := createPatchBranch()
 	if err != nil {
-		fmt.Printf("error calling createPatchBranch %s", err)
+		log.Printf("error calling createPatchBranch %s", err)
+		return err
 	}
 	return nil
 }
 
 func createMinorBranches() error {
-
-	latestRelease := os.Getenv("LATEST_RELEASE")
 
 	//create client
 	accessToken := os.Getenv("SECRET_PAT")
@@ -92,7 +97,7 @@ func createMinorBranches() error {
 	}
 
 	// branch created upstream
-	fmt.Printf("New release branch '%s' created upstream successfully\n", *newBranchRef.Ref)
+	log.Printf("New release branch '%s' created upstream successfully\n", *newBranchRef.Ref)
 
 	// create branch in forked repo based off upstream
 	ref = "refs/heads/" + latestRelease
@@ -116,7 +121,7 @@ func createMinorBranches() error {
 	}
 
 	// branch created upstream
-	fmt.Printf("New user fork branch '%s' created successfully\n", *newBranchRef.Ref)
+	log.Printf("New user fork branch '%s' created successfully\n", *newBranchRef.Ref)
 
 	// create branch in upstream build tooling repo based off main branch
 	ref = "refs/heads/" + latestRelease
@@ -140,14 +145,12 @@ func createMinorBranches() error {
 	}
 
 	// branch created upstream
-	fmt.Printf("New build tooling branch '%s' created successfully\n", *newBranchRef.Ref)
+	log.Printf("New build tooling branch '%s' created successfully\n", *newBranchRef.Ref)
 
 	return nil
 }
 
 func createPatchBranch() error {
-
-	latestRelease := os.Getenv("LATEST_RELEASE")
 
 	//create client
 	accessToken := os.Getenv("SECRET_PAT")
@@ -176,7 +179,7 @@ func createPatchBranch() error {
 	}
 
 	// branch created upstream
-	fmt.Printf("New branch '%s' created successfully\n", *newBranchRef.Ref)
+	log.Printf("New branch '%s' created successfully\n", *newBranchRef.Ref)
 
 	return nil
 }
