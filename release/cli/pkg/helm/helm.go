@@ -67,10 +67,14 @@ func NewHelm() (*helmDriver, error) {
 }
 
 func GetHelmDest(d *helmDriver, r *releasetypes.ReleaseConfig, ReleaseImageURI, assetName string) (string, error) {
+	fmt.Printf("Getting Helm destination folder for %s\n", assetName)
 	var chartPath string
-	var err error
 
-	err = d.HelmRegistryLogin(r, "source")
+	sourceRemoteType := "source"
+	if assetName == "eks-anywhere-packages" || assetName == "ecr-token-refresher" || assetName == "credential-provider-package" {
+		sourceRemoteType = "packages"
+	}
+	err := d.HelmRegistryLogin(r, sourceRemoteType)
 	if err != nil {
 		return "", fmt.Errorf("logging into the source registry: %w", err)
 	}
@@ -83,9 +87,9 @@ func GetHelmDest(d *helmDriver, r *releasetypes.ReleaseConfig, ReleaseImageURI, 
 		return "", fmt.Errorf("pulling the helm chart: %w", err)
 	}
 
-	err = d.HelmRegistryLogout(r, "source")
+	err = d.HelmRegistryLogout(r, sourceRemoteType)
 	if err != nil {
-		return "", fmt.Errorf("logging out of the source registry: %w", err)
+		return "", fmt.Errorf("logging out of the %s registry: %w", sourceRemoteType, err)
 	}
 
 	pwd, err := os.Getwd()
@@ -189,6 +193,9 @@ func (d *helmDriver) HelmRegistryLogin(r *releasetypes.ReleaseConfig, remoteType
 	if remoteType == "source" {
 		authConfig = r.SourceClients.ECR.AuthConfig
 		remote = r.SourceContainerRegistry
+	} else if remoteType == "packages" {
+		authConfig = r.SourceClients.Packages.AuthConfig
+		remote = r.PackagesSourceContainerRegistry
 	} else if remoteType == "destination" {
 		authConfig = r.ReleaseClients.ECRPublic.AuthConfig
 		remote = r.ReleaseContainerRegistry
@@ -206,6 +213,8 @@ func (d *helmDriver) HelmRegistryLogout(r *releasetypes.ReleaseConfig, remoteTyp
 	var remote string
 	if remoteType == "source" {
 		remote = r.SourceContainerRegistry
+	} else if remoteType == "packages" {
+		remote = r.PackagesSourceContainerRegistry
 	} else if remoteType == "destination" {
 		remote = r.ReleaseContainerRegistry
 	}

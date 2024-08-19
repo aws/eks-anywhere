@@ -26,7 +26,6 @@ type ManifestComponent struct {
 }
 
 type ImageTagConfiguration struct {
-	SourceLatestTagFromECR      bool
 	NonProdSourceImageTagFormat string
 	ProdSourceImageTagFormat    string
 	ReleaseImageTagFormat       string
