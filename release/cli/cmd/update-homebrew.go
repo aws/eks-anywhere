@@ -13,7 +13,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"os"
 	"strings"
 
 	"github.com/google/go-github/v62/github"
@@ -37,8 +36,7 @@ and usage of using your command.`,
 }
 
 func runAllHomebrew() {
-	RELEASE_TYPE := os.Getenv("RELEASE_TYPE")
-
+	
 	_, err := updateHomebrew(RELEASE_TYPE)
 	if err != nil {
 		log.Panic(err)
@@ -52,12 +50,7 @@ func runAllHomebrew() {
 
 func updateHomebrew(releaseType string) (string, error) {
 
-	// env variables
-	latestVersionValue := os.Getenv("LATEST_VERSION")
-	latestRelease := os.Getenv("LATEST_RELEASE")
-
 	// Create client
-	accessToken := os.Getenv("SECRET_PAT")
 	ctx := context.Background()
 	client := github.NewClient(nil).WithAuthToken(accessToken)
 
@@ -68,17 +61,17 @@ func updateHomebrew(releaseType string) (string, error) {
 	// Access homebrew file
 	FileContentBundleNumber, _, _, err := client.Repositories.GetContents(ctx, usersForkedRepoAccount, EKSAnyrepoName, homebrewPath, opts)
 	if err != nil {
-		fmt.Print("first breakpoint", err)
+		return "", fmt.Errorf("error accessing homebrew file %s", err)
 	}
 
 	// Holds content of homebrew cli version file
 	content, err := FileContentBundleNumber.GetContent()
 	if err != nil {
-		fmt.Print("second breakpoint", err)
+		return "", fmt.Errorf("error fetching file contents %s", err)
 	}
 
 	// Update instances of previous release with new
-	updatedFile := strings.ReplaceAll(content, content, latestVersionValue)
+	updatedFile := strings.ReplaceAll(content, content, latestVersion)
 
 	// Get the latest commit SHA from the appropriate branch
 	ref, _, err := client.Git.GetRef(ctx, usersForkedRepoAccount, EKSAnyrepoName, "heads/"+getBranchName(releaseType, latestRelease))
@@ -98,7 +91,7 @@ func updateHomebrew(releaseType string) (string, error) {
 
 	// Create a new commit
 	author := &github.CommitAuthor{
-		Name:  github.String("ibix16"),
+		Name:  github.String("eks-a-releaser"),
 		Email: github.String("fake@wtv.com"),
 	}
 
@@ -127,10 +120,8 @@ func updateHomebrew(releaseType string) (string, error) {
 }
 
 func createPullRequestHomebrew(releaseType string) error {
-	latestRelease := os.Getenv("LATEST_RELEASE")
 
 	// Create client
-	accessToken := os.Getenv("SECRET_PAT")
 	ctx := context.Background()
 	client := github.NewClient(nil).WithAuthToken(accessToken)
 
