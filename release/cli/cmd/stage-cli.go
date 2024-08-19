@@ -13,7 +13,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"os"
 	"strings"
 
 	"github.com/google/go-github/v62/github"
@@ -39,7 +38,6 @@ var stageCliCmd = &cobra.Command{
 
 // runs both update functions
 func updateAllStageCliFiles() {
-	RELEASE_TYPE := os.Getenv("RELEASE_TYPE")
 
 	commitSHA, err := updateFilesStageCli(RELEASE_TYPE)
 	if err != nil {
@@ -54,13 +52,9 @@ func updateAllStageCliFiles() {
 }
 
 func updateFilesStageCli(releaseType string) (string, error) {
-	accessToken := os.Getenv("SECRET_PAT")
+
 	ctx := context.Background()
 	client := github.NewClient(nil).WithAuthToken(accessToken)
-
-	releaseNumber := os.Getenv("RELEASE_NUMBER")
-	latestVersion := os.Getenv("LATEST_VERSION")
-	latestRelease := os.Getenv("LATEST_RELEASE")
 
 	// Get the latest commit SHA from the appropriate branch
 	ref, _, err := client.Git.GetRef(ctx, usersForkedRepoAccount, EKSAnyrepoName, "heads/"+getBranchName(releaseType, latestRelease))
@@ -82,7 +76,7 @@ func updateFilesStageCli(releaseType string) (string, error) {
 
 	// Create a new commit with all the changes
 	author := &github.CommitAuthor{
-		Name:  github.String("ibix16"),
+		Name:  github.String("eks-a-releaser"),
 		Email: github.String("fake@wtv.com"),
 	}
 
@@ -111,10 +105,8 @@ func updateFilesStageCli(releaseType string) (string, error) {
 }
 
 func createPullRequestStageCli(releaseType string) error {
-	latestRelease := os.Getenv("LATEST_RELEASE")
-
+	
 	// Create client
-	accessToken := os.Getenv("SECRET_PAT")
 	ctx := context.Background()
 	client := github.NewClient(nil).WithAuthToken(accessToken)
 
