@@ -61,10 +61,10 @@ BUNDLE_MANIFEST_URL?=$(shell curl $(RELEASE_MANIFEST_URL) | yq ".spec.releases[-
 ifneq ($(PULL_BASE_REF),)
 # PULL_BASE_REF originates from prow
 # If prow presubmit, ping to the latest available version
-	DEV_GIT_VERSION ?= $(shell source ./scripts/eksa_version.sh && eksa-version::latest_release_verison_in_manifest "$(RELEASE_MANIFEST_URL)")
+	DEV_GIT_VERSION ?= $(shell source ./scripts/eksa_version.sh && eksa-version::latest_release_version_in_manifest "$(RELEASE_MANIFEST_URL)")
 else ifeq ($(CODEBUILD_CI),true)
 # If codebuild e2e tests, ping to the latest available version
-	DEV_GIT_VERSION ?= $(shell source ./scripts/eksa_version.sh && eksa-version::latest_release_verison_in_manifest "$(RELEASE_MANIFEST_URL)")
+	DEV_GIT_VERSION ?= $(shell source ./scripts/eksa_version.sh && eksa-version::latest_release_version_in_manifest "$(RELEASE_MANIFEST_URL)")
 else
 # Else, this is a local buid, so use "dev+latest" to always select the latest
 # version in the manifest in runtime.
@@ -679,7 +679,7 @@ build-eks-a-for-e2e:
 
 .PHONY: eks-a-for-dev-e2e
 eks-a-for-dev-e2e:
-	DEV_GIT_VERSION=$(shell source ./scripts/eksa_version.sh && eksa-version::latest_release_verison_in_manifest "$(RELEASE_MANIFEST_URL)") $(MAKE) eks-a;
+	DEV_GIT_VERSION=$(shell source ./scripts/eksa_version.sh && eksa-version::latest_release_version_in_manifest "$(RELEASE_MANIFEST_URL)") $(MAKE) eks-a;
 
 .PHONY: e2e-tests-binary
 e2e-tests-binary: E2E_TAGS ?= e2e
