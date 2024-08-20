@@ -141,7 +141,7 @@ func createGitHubRelease(releaseTag *github.RepositoryRelease) (*github.Reposito
 	client := github.NewClient(nil).WithAuthToken(accessToken)
 
 	release, _, err := client.Repositories.GetReleaseByTag(ctx, upStreamRepoOwner, EKSAnyrepoName, latestVersion)
-	if err != nil {
+	if err == nil {
 		log.Printf("Release %s already exists!\n", latestVersion)
 		return release, nil
 	}
