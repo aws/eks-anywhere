@@ -10,3 +10,4 @@ phases:
 artifacts:
   files:
     - release/bin/eks-anywhere-release
+    - release/buildspecs/**/*
