@@ -18,9 +18,6 @@ skipped_tests:
 # Side effects
 - TestCloudStackKubernetes129WithOIDCManagementClusterUpgradeFromLatestSideEffects
 
-# Temporary disables to stabilize tests. Owners should work on fixes and enable these test along with their fix's PR
-- TestTinkerbellAirgappedKubernetes129UbuntuProxyConfigFlow
-
 # Nutanix
 
 # UpgradeFromLatestTests for new K8s version (expected to work only after the release is out)
