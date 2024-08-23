@@ -78,8 +78,6 @@ skipped_tests:
 - TestTinkerbellKubernetes127UbuntuTo128Upgrade
 - TestTinkerbellKubernetes128UbuntuTo129Upgrade
 
-#Skip single upgrade all the way test until debugging upgrade as they have been failing consistently 
-- TestTinkerbellKubernetes126UbuntuTo130MultipleUpgrade
 
 # Tinkerbell Packages
 # Skip test cases for packages other than hello-eks-anywhere and not for K 1.28.
