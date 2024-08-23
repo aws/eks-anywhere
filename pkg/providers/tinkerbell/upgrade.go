@@ -27,8 +27,7 @@ func needsNewControlPlaneTemplate(oldSpec, newSpec *cluster.Spec) bool {
 	// Another option is to generate MachineTemplates based on the old and new eksa spec,
 	// remove the name field and compare them with DeepEqual
 	// We plan to approach this way since it's more flexible to add/remove fields and test out for validation
-	if oldSpec.Cluster.Spec.KubernetesVersion != newSpec.Cluster.Spec.KubernetesVersion ||
-		oldSpec.TinkerbellDatacenter.Spec.OSImageURL != newSpec.TinkerbellDatacenter.Spec.OSImageURL {
+	if oldSpec.Cluster.Spec.KubernetesVersion != newSpec.Cluster.Spec.KubernetesVersion {
 		return true
 	}
 
@@ -36,11 +35,7 @@ func needsNewControlPlaneTemplate(oldSpec, newSpec *cluster.Spec) bool {
 		return true
 	}
 
-	// Check if OSImageURL changed without a eks-a/kube version change.
-	oldCPImageURL := oldSpec.TinkerbellMachineConfigs[oldSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec.OSImageURL
-	newCPImageURL := newSpec.TinkerbellMachineConfigs[newSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec.OSImageURL
-
-	return oldCPImageURL != newCPImageURL
+	return false
 }
 
 func needsNewWorkloadTemplate(oldSpec, newSpec *cluster.Spec, oldWorker, newWorker v1alpha1.WorkerNodeGroupConfiguration) bool {
@@ -54,13 +49,7 @@ func needsNewWorkloadTemplate(oldSpec, newSpec *cluster.Spec, oldWorker, newWork
 		return true
 	}
 
-	// Check if OSImageURL changed without a eks-a/kube version change.
-	oldWorkerNodeGroupName := fmt.Sprintf("%s-%s", oldWorker.MachineGroupRef.Name, oldWorker.Name)
-	newWorkerNodeGroupName := fmt.Sprintf("%s-%s", newWorker.MachineGroupRef.Name, newWorker.Name)
-	oldWorkerImageURL := oldSpec.TinkerbellMachineConfigs[oldWorkerNodeGroupName].Spec.OSImageURL
-	newWorkerImageURL := newSpec.TinkerbellMachineConfigs[newWorkerNodeGroupName].Spec.OSImageURL
-
-	return oldWorkerImageURL != newWorkerImageURL
+	return false
 }
 
 func needsNewKubeadmConfigTemplate(newWorkerNodeGroup, oldWorkerNodeGroup *v1alpha1.WorkerNodeGroupConfiguration) bool {

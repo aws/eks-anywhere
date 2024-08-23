@@ -314,12 +314,11 @@ func (p *Provider) generateCAPISpecForUpgrade(ctx context.Context, bootstrapClus
 }
 
 func (p *Provider) GenerateCAPISpecForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, currentSpec, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
-	// controlPlaneSpec, workersSpec, err = p.generateCAPISpecForUpgrade(ctx, bootstrapCluster, workloadCluster, currentSpec, clusterSpec)
-	// if err != nil {
-	// 	return nil, nil, fmt.Errorf("error generating cluster api spec contents: %v", err)
-	// }
-	// return controlPlaneSpec, workersSpec, nil
-	return nil, nil, nil
+	controlPlaneSpec, workersSpec, err = p.generateCAPISpecForUpgrade(ctx, bootstrapCluster, workloadCluster, currentSpec, clusterSpec)
+	if err != nil {
+		return nil, nil, fmt.Errorf("error generating cluster api spec contents: %v", err)
+	}
+	return controlPlaneSpec, workersSpec, nil
 }
 
 func (p *Provider) GenerateCAPISpecForCreate(ctx context.Context, _ *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
