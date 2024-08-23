@@ -301,7 +301,6 @@ func (r *Reconciler) ValidateHardware(ctx context.Context, log logr.Logger, tink
 		return controller.ResultWithReturn(), nil
 	}
 
-	// var hwReq tinkerbell.MinimumHardwareRequirements
 	var v tinkerbell.ClusterSpecValidator
 	v.Register(tinkerbell.HardwareSatisfiesOnlyOneSelectorAssertion(kubeReader.GetCatalogue()))
 
@@ -417,7 +416,7 @@ func (r *Reconciler) validateHardwareReqForKCP(validatableCAPI *tinkerbell.Valid
 // validateHardwareReqForMachineDeployments returns minium hardware requirements for the md's to rollout new worker nodes
 // CAPI rolls out a new worker node only whenever the associated MachineTemplate changes in the md object
 // A single cluster can have multiple MachineDeployment objects and in case of modular upgrades
-// only few of those worker groups might need a rollout
+// only few of those worker groups might need a rollout.
 func (r *Reconciler) validateHardwareReqForMachineDeployments(ctx context.Context, tinkerbellScope *Scope) (requirements tinkerbell.MinimumHardwareRequirements, err error) {
 	newWorkers := tinkerbellScope.Workers
 
