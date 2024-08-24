@@ -547,6 +547,12 @@ func TestReconcilerValidateHardwareControlPlaneOSImageChangeError(t *testing.T) 
 	logger := test.NewNullLogger()
 	scope := tt.buildScope()
 	cpRef := scope.ClusterSpec.Config.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
+	scope.ClusterSpec.Config.Cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy = &anywherev1.ControlPlaneUpgradeRolloutStrategy{
+		Type: anywherev1.RollingUpdateStrategyType,
+		RollingUpdate: &anywherev1.ControlPlaneRollingUpdateParams{
+			MaxSurge: 1,
+		},
+	}
 	scope.ClusterSpec.Config.TinkerbellMachineConfigs[cpRef].Spec.OSImageURL = "new-os-image"
 
 	_, err := tt.reconciler().GenerateSpec(tt.ctx, logger, scope)
@@ -573,6 +579,12 @@ func TestReconcilerValidateHardwareControlPlaneOSImageChangeSuccess(t *testing.T
 	logger := test.NewNullLogger()
 	scope := tt.buildScope()
 	cpRef := scope.ClusterSpec.Config.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
+	scope.ClusterSpec.Config.Cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy = &anywherev1.ControlPlaneUpgradeRolloutStrategy{
+		Type: anywherev1.RollingUpdateStrategyType,
+		RollingUpdate: &anywherev1.ControlPlaneRollingUpdateParams{
+			MaxSurge: 1,
+		},
+	}
 	scope.ClusterSpec.Config.TinkerbellMachineConfigs[cpRef].Spec.OSImageURL = "new-os-image"
 
 	_, err := tt.reconciler().GenerateSpec(tt.ctx, logger, scope)
@@ -595,6 +607,13 @@ func TestReconcilerValidateHardwareWorkerNodeGroupOSImageChangeError(t *testing.
 	logger := test.NewNullLogger()
 	scope := tt.buildScope()
 	wngRef := scope.ClusterSpec.Config.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
+	scope.ClusterSpec.Config.Cluster.Spec.WorkerNodeGroupConfigurations[0].UpgradeRolloutStrategy = &anywherev1.WorkerNodesUpgradeRolloutStrategy{
+		Type: anywherev1.RollingUpdateStrategyType,
+		RollingUpdate: &anywherev1.WorkerNodesRollingUpdateParams{
+			MaxSurge:       1,
+			MaxUnavailable: 0,
+		},
+	}
 	scope.ClusterSpec.Config.TinkerbellMachineConfigs[wngRef].Spec.OSImageURL = "new-os-image"
 	_, err := tt.reconciler().GenerateSpec(tt.ctx, logger, scope)
 	tt.Expect(err).NotTo(HaveOccurred())
@@ -617,6 +636,13 @@ func TestReconcilerValidateHardwareWorkerNodeGroupOSImageChangeSuccess(t *testin
 	logger := test.NewNullLogger()
 	scope := tt.buildScope()
 	wngRef := scope.ClusterSpec.Config.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
+	scope.ClusterSpec.Config.Cluster.Spec.WorkerNodeGroupConfigurations[0].UpgradeRolloutStrategy = &anywherev1.WorkerNodesUpgradeRolloutStrategy{
+		Type: anywherev1.RollingUpdateStrategyType,
+		RollingUpdate: &anywherev1.WorkerNodesRollingUpdateParams{
+			MaxSurge:       1,
+			MaxUnavailable: 0,
+		},
+	}
 	scope.ClusterSpec.Config.TinkerbellMachineConfigs[wngRef].Spec.OSImageURL = "new-os-image"
 	_, err := tt.reconciler().GenerateSpec(tt.ctx, logger, scope)
 	tt.Expect(err).NotTo(HaveOccurred())
