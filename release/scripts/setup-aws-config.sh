@@ -20,7 +20,8 @@ set -o pipefail
 
 function set_aws_config() {
     release_environment="$1"
-    if [ "$release_environment" = "" ] || [ "$release_environment" = "development" ]; then
+    release_type="$2"
+    if [ "$release_environment" = "" ] || ([ "$release_environment" = "development" ] && [ "$release_type" = "bundle" ]); then
         cat << EOF > awscliconfig
 [profile packages-beta]
 role_arn=$PACKAGES_ECR_ROLE

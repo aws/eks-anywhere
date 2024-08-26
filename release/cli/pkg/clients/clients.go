@@ -157,7 +157,7 @@ func CreateDevReleaseClients(dryRun bool) (*SourceClients, *ReleaseClients, erro
 }
 
 // Function to create clients for staging release.
-func CreateStagingReleaseClients() (*SourceClients, *ReleaseClients, error) {
+func CreateStagingReleaseClients(bundleRelease bool) (*SourceClients, *ReleaseClients, error) {
 	fmt.Println("\n==========================================================")
 	fmt.Println("              Staging Release Clients Creation")
 	fmt.Println("==========================================================")
@@ -167,17 +167,6 @@ func CreateStagingReleaseClients() (*SourceClients, *ReleaseClients, error) {
 		Config: aws.Config{
 			Region: aws.String("us-west-2"),
 		},
-	})
-	if err != nil {
-		return nil, nil, errors.Cause(err)
-	}
-
-	// Session for beta-pdx-packages
-	packagesSession, err := session.NewSessionWithOptions(session.Options{
-		Config: aws.Config{
-			Region: aws.String("us-west-2"),
-		},
-		Profile: "packages-beta",
 	})
 	if err != nil {
 		return nil, nil, errors.Cause(err)
@@ -209,18 +198,33 @@ func CreateStagingReleaseClients() (*SourceClients, *ReleaseClients, error) {
 		return nil, nil, errors.Cause(err)
 	}
 
-	// Get packages source ECR auth config
-	packagesECRClient := ecrsdk.New(packagesSession)
-	packagesSourceAuthConfig, err := ecr.GetAuthConfig(packagesECRClient)
-	if err != nil {
-		return nil, nil, errors.Cause(err)
-	}
-
 	// Get release ECR Public auth config
 	ecrPublicClient := ecrpublicsdk.New(releaseSession)
 	releaseAuthConfig, err := ecrpublic.GetAuthConfig(ecrPublicClient)
 	if err != nil {
 		return nil, nil, errors.Cause(err)
+	}
+
+	var packagesECRClient *ecrsdk.ECR
+	var packagesSourceAuthConfig *docker.AuthConfiguration
+	if bundleRelease {
+		// Session for beta-pdx-packages
+		packagesSession, err := session.NewSessionWithOptions(session.Options{
+			Config: aws.Config{
+				Region: aws.String("us-west-2"),
+			},
+			Profile: "packages-beta",
+		})
+		if err != nil {
+			return nil, nil, errors.Cause(err)
+		}
+
+		// Get packages source ECR auth config
+		packagesECRClient = ecrsdk.New(packagesSession)
+		packagesSourceAuthConfig, err = ecr.GetAuthConfig(packagesECRClient)
+		if err != nil {
+			return nil, nil, errors.Cause(err)
+		}
 	}
 
 	// Constructing source clients
