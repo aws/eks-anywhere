@@ -139,7 +139,7 @@ var releaseCmd = &cobra.Command{
 			fmt.Printf("%s Successfully created dev release clients\n", constants.SuccessIcon)
 		}
 		if releaseEnvironment == "development" {
-			sourceClients, releaseClients, err = clients.CreateStagingReleaseClients()
+			sourceClients, releaseClients, err = clients.CreateStagingReleaseClients(bundleRelease)
 			if err != nil {
 				fmt.Printf("Error creating clients: %v\n", err)
 				os.Exit(1)
