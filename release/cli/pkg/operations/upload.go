@@ -161,7 +161,7 @@ func handleImageUpload(_ context.Context, r *releasetypes.ReleaseConfig, package
 		sourceImageUri := artifact.Image.SourceImageURI
 		releaseImageUri := artifact.Image.ReleaseImageURI
 		sourceEcrAuthConfig := defaultSourceEcrAuthConfig
-		if packagesutils.NeedsPackagesAccountArtifacts(r) && strings.Contains(sourceImageUri, "eks-anywhere-packages") || strings.Contains(sourceImageUri, "ecr-token-refresher") || strings.Contains(sourceImageUri, "credential-provider-package") {
+		if packagesutils.NeedsPackagesAccountArtifacts(r) && (strings.Contains(sourceImageUri, "eks-anywhere-packages") || strings.Contains(sourceImageUri, "ecr-token-refresher") || strings.Contains(sourceImageUri, "credential-provider-package")) {
 			sourceEcrAuthConfig = packagesSourceEcrAuthConfig
 		}
 		fmt.Printf("Source Image - %s\n", sourceImageUri)
