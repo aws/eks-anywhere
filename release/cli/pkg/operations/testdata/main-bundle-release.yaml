@@ -67,7 +67,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cert-manager-acmesolver
         os: linux
-        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-acmesolver:v1.14.5-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-acmesolver:v1.14.7-eks-a-v0.0.0-dev-build.1
       cainjector:
         arch:
         - amd64
@@ -76,7 +76,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cert-manager-cainjector
         os: linux
-        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-cainjector:v1.14.5-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-cainjector:v1.14.7-eks-a-v0.0.0-dev-build.1
       controller:
         arch:
         - amd64
@@ -85,7 +85,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cert-manager-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-controller:v1.14.5-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-controller:v1.14.7-eks-a-v0.0.0-dev-build.1
       ctl:
         arch:
         - amd64
@@ -94,10 +94,10 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cert-manager-ctl
         os: linux
-        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-ctl:v1.14.5-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-ctl:v1.14.7-eks-a-v0.0.0-dev-build.1
       manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cert-manager/manifests/v1.14.5/cert-manager.yaml
-      version: v1.14.5+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cert-manager/manifests/v1.14.7/cert-manager.yaml
+      version: v1.14.7+abcdef1
       webhook:
         arch:
         - amd64
@@ -106,7 +106,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cert-manager-webhook
         os: linux
-        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-webhook:v1.14.5-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-webhook:v1.14.7-eks-a-v0.0.0-dev-build.1
     cilium:
       cilium:
         arch:
@@ -882,7 +882,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cert-manager-acmesolver
         os: linux
-        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-acmesolver:v1.14.5-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-acmesolver:v1.14.7-eks-a-v0.0.0-dev-build.1
       cainjector:
         arch:
         - amd64
@@ -891,7 +891,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cert-manager-cainjector
         os: linux
-        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-cainjector:v1.14.5-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-cainjector:v1.14.7-eks-a-v0.0.0-dev-build.1
       controller:
         arch:
         - amd64
@@ -900,7 +900,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cert-manager-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-controller:v1.14.5-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-controller:v1.14.7-eks-a-v0.0.0-dev-build.1
       ctl:
         arch:
         - amd64
@@ -909,10 +909,10 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cert-manager-ctl
         os: linux
-        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-ctl:v1.14.5-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-ctl:v1.14.7-eks-a-v0.0.0-dev-build.1
       manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cert-manager/manifests/v1.14.5/cert-manager.yaml
-      version: v1.14.5+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cert-manager/manifests/v1.14.7/cert-manager.yaml
+      version: v1.14.7+abcdef1
       webhook:
         arch:
         - amd64
@@ -921,7 +921,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cert-manager-webhook
         os: linux
-        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-webhook:v1.14.5-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-webhook:v1.14.7-eks-a-v0.0.0-dev-build.1
     cilium:
       cilium:
         arch:
@@ -1697,7 +1697,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cert-manager-acmesolver
         os: linux
-        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-acmesolver:v1.14.5-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-acmesolver:v1.14.7-eks-a-v0.0.0-dev-build.1
       cainjector:
         arch:
         - amd64
@@ -1706,7 +1706,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cert-manager-cainjector
         os: linux
-        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-cainjector:v1.14.5-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-cainjector:v1.14.7-eks-a-v0.0.0-dev-build.1
       controller:
         arch:
         - amd64
@@ -1715,7 +1715,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cert-manager-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-controller:v1.14.5-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-controller:v1.14.7-eks-a-v0.0.0-dev-build.1
       ctl:
         arch:
         - amd64
@@ -1724,10 +1724,10 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cert-manager-ctl
         os: linux
-        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-ctl:v1.14.5-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-ctl:v1.14.7-eks-a-v0.0.0-dev-build.1
       manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cert-manager/manifests/v1.14.5/cert-manager.yaml
-      version: v1.14.5+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cert-manager/manifests/v1.14.7/cert-manager.yaml
+      version: v1.14.7+abcdef1
       webhook:
         arch:
         - amd64
@@ -1736,7 +1736,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cert-manager-webhook
         os: linux
-        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-webhook:v1.14.5-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-webhook:v1.14.7-eks-a-v0.0.0-dev-build.1
     cilium:
       cilium:
         arch:
@@ -2512,7 +2512,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cert-manager-acmesolver
         os: linux
-        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-acmesolver:v1.14.5-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-acmesolver:v1.14.7-eks-a-v0.0.0-dev-build.1
       cainjector:
         arch:
         - amd64
@@ -2521,7 +2521,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cert-manager-cainjector
         os: linux
-        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-cainjector:v1.14.5-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-cainjector:v1.14.7-eks-a-v0.0.0-dev-build.1
       controller:
         arch:
         - amd64
@@ -2530,7 +2530,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cert-manager-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-controller:v1.14.5-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-controller:v1.14.7-eks-a-v0.0.0-dev-build.1
       ctl:
         arch:
         - amd64
@@ -2539,10 +2539,10 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cert-manager-ctl
         os: linux
-        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-ctl:v1.14.5-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-ctl:v1.14.7-eks-a-v0.0.0-dev-build.1
       manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cert-manager/manifests/v1.14.5/cert-manager.yaml
-      version: v1.14.5+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cert-manager/manifests/v1.14.7/cert-manager.yaml
+      version: v1.14.7+abcdef1
       webhook:
         arch:
         - amd64
@@ -2551,7 +2551,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cert-manager-webhook
         os: linux
-        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-webhook:v1.14.5-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-webhook:v1.14.7-eks-a-v0.0.0-dev-build.1
     cilium:
       cilium:
         arch:
@@ -3327,7 +3327,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cert-manager-acmesolver
         os: linux
-        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-acmesolver:v1.14.5-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-acmesolver:v1.14.7-eks-a-v0.0.0-dev-build.1
       cainjector:
         arch:
         - amd64
@@ -3336,7 +3336,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cert-manager-cainjector
         os: linux
-        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-cainjector:v1.14.5-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-cainjector:v1.14.7-eks-a-v0.0.0-dev-build.1
       controller:
         arch:
         - amd64
@@ -3345,7 +3345,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cert-manager-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-controller:v1.14.5-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-controller:v1.14.7-eks-a-v0.0.0-dev-build.1
       ctl:
         arch:
         - amd64
@@ -3354,10 +3354,10 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cert-manager-ctl
         os: linux
-        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-ctl:v1.14.5-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-ctl:v1.14.7-eks-a-v0.0.0-dev-build.1
       manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cert-manager/manifests/v1.14.5/cert-manager.yaml
-      version: v1.14.5+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cert-manager/manifests/v1.14.7/cert-manager.yaml
+      version: v1.14.7+abcdef1
       webhook:
         arch:
         - amd64
@@ -3366,7 +3366,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cert-manager-webhook
         os: linux
-        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-webhook:v1.14.5-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-webhook:v1.14.7-eks-a-v0.0.0-dev-build.1
     cilium:
       cilium:
         arch:
