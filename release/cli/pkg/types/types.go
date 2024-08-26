@@ -48,6 +48,7 @@ type ReleaseConfig struct {
 	ReleaseDate                     string
 	ReleaseTime                     time.Time
 	DevRelease                      bool
+	BundleRelease                   bool
 	DryRun                          bool
 	Weekly                          bool
 	ReleaseEnvironment              string

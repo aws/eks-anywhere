@@ -36,6 +36,7 @@ import (
 	"github.com/aws/eks-anywhere/release/cli/pkg/constants"
 	releasetypes "github.com/aws/eks-anywhere/release/cli/pkg/types"
 	commandutils "github.com/aws/eks-anywhere/release/cli/pkg/util/command"
+	packagesutils "github.com/aws/eks-anywhere/release/cli/pkg/util/packages"
 )
 
 var HelmLog = ctrl.Log.WithName("HelmLog")
@@ -71,7 +72,7 @@ func GetHelmDest(d *helmDriver, r *releasetypes.ReleaseConfig, sourceImageURI, a
 	var chartPath string
 
 	sourceRemoteType := "source"
-	if assetName == "eks-anywhere-packages" || assetName == "ecr-token-refresher" || assetName == "credential-provider-package" {
+	if packagesutils.NeedsPackagesAccountArtifacts(r) && (assetName == "eks-anywhere-packages" || assetName == "ecr-token-refresher" || assetName == "credential-provider-package") {
 		sourceRemoteType = "packages"
 	}
 	err := d.HelmRegistryLogin(r, sourceRemoteType)

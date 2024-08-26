@@ -115,6 +115,7 @@ var releaseCmd = &cobra.Command{
 			ReleaseDate:                     releaseDate,
 			ReleaseTime:                     releaseTime,
 			DevRelease:                      devRelease,
+			BundleRelease:                   bundleRelease,
 			DryRun:                          dryRun,
 			Weekly:                          weekly,
 			ReleaseEnvironment:              releaseEnvironment,
