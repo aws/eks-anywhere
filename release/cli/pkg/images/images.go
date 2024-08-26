@@ -40,6 +40,7 @@ import (
 	releasetypes "github.com/aws/eks-anywhere/release/cli/pkg/types"
 	artifactutils "github.com/aws/eks-anywhere/release/cli/pkg/util/artifacts"
 	commandutils "github.com/aws/eks-anywhere/release/cli/pkg/util/command"
+	packagesutils "github.com/aws/eks-anywhere/release/cli/pkg/util/packages"
 )
 
 func PollForExistence(devRelease bool, authConfig *docker.AuthConfiguration, imageUri, imageContainerRegistry, releaseEnvironment, branchName string) error {
@@ -129,7 +130,7 @@ func GetSourceImageURI(r *releasetypes.ReleaseConfig, name, repoName string, tag
 	var latestTag string
 	sourcedFromBranch := r.BuildRepoBranchName
 	sourceContainerRegistry := r.SourceContainerRegistry
-	if repoName == "eks-anywhere-packages" || repoName == "ecr-token-refresher" || repoName == "credential-provider-package" {
+	if packagesutils.NeedsPackagesAccountArtifacts(r) && (repoName == "eks-anywhere-packages" || repoName == "ecr-token-refresher" || repoName == "credential-provider-package") {
 		sourceContainerRegistry = r.PackagesSourceContainerRegistry
 	}
 	if r.DevRelease || r.ReleaseEnvironment == "development" {
@@ -157,7 +158,7 @@ func GetSourceImageURI(r *releasetypes.ReleaseConfig, name, repoName string, tag
 		}
 		if !r.DryRun {
 			sourceEcrAuthConfig := r.SourceClients.ECR.AuthConfig
-			if repoName == "eks-anywhere-packages" || repoName == "ecr-token-refresher" || repoName == "credential-provider-package" {
+			if packagesutils.NeedsPackagesAccountArtifacts(r) && (repoName == "eks-anywhere-packages" || repoName == "ecr-token-refresher" || repoName == "credential-provider-package") {
 				sourceEcrAuthConfig = r.SourceClients.Packages.AuthConfig
 			}
 			err := PollForExistence(r.DevRelease, sourceEcrAuthConfig, sourceImageUri, sourceContainerRegistry, r.ReleaseEnvironment, r.BuildRepoBranchName)
