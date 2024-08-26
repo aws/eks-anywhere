@@ -204,7 +204,10 @@ rm pki/*
 systemctl restart kubelet
 ```
 
-In some cases, the certs might not regenerate and kubelet will fail to start due to a missing `kubelet-client-current.pem`. If this happens, run the following commands:
+{{% alert title="Note" color="primary" %}}
+When the control plane endpoint is unavailable because the API server pod is not running, the kubelet service may fail to start all static pods in the container runtime. Its logs may contain `failed to connect to apiserver`.
+
+If this occurs, update `kubelet-client-current.pem` by running the following commands:
 
 {{< tabpane >}}
 {{< tab header="Ubuntu or RHEL" lang="bash" >}}
@@ -224,6 +227,8 @@ systemctl restart kubelet
 
 {{< /tab >}}
 {{< /tabpane >}}
+{{% /alert %}}
+
 
 ### Post Renewal
 Once all the certificates are valid, verify the kcp object on the affected cluster(s) is not paused by running `kubectl describe kcp -n eksa-system | grep cluster.x-k8s.io/paused`. If it is paused, then this usually indicates an issue with the etcd cluster. Check the logs for pods under the `etcdadm-controller-system` namespace for any errors. 
