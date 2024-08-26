@@ -38,7 +38,7 @@ CLI_REPO_BRANCH_NAME="${13?Specify thirteenth argument - CLI repo branch name}"
 BUILD_REPO_URL="${14?Specify fourteenth argument - Build repo URL}"
 CLI_REPO_URL="${15?Specify fifteenth argument - CLI repo URL}"
 
-set_aws_config "$RELEASE_ENVIRONMENT"
+set_aws_config "$RELEASE_ENVIRONMENT" "bundle"
 
 mkdir -p "${ARTIFACTS_DIR}"
 
