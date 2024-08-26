@@ -29,6 +29,7 @@ import (
 	"github.com/aws/eks-anywhere/release/cli/pkg/helm"
 	"github.com/aws/eks-anywhere/release/cli/pkg/images"
 	releasetypes "github.com/aws/eks-anywhere/release/cli/pkg/types"
+	packagesutils "github.com/aws/eks-anywhere/release/cli/pkg/util/packages"
 )
 
 func UploadArtifacts(ctx context.Context, r *releasetypes.ReleaseConfig, eksaArtifacts releasetypes.ArtifactsTable, isBundleRelease bool) error {
@@ -43,8 +44,11 @@ func UploadArtifacts(ctx context.Context, r *releasetypes.ReleaseConfig, eksaArt
 	errGroup, ctx := errgroup.WithContext(ctx)
 
 	sourceEcrAuthConfig := r.SourceClients.ECR.AuthConfig
-	packagesSourceEcrAuthConfig := r.SourceClients.Packages.AuthConfig
 	releaseEcrAuthConfig := r.ReleaseClients.ECRPublic.AuthConfig
+	var packagesSourceEcrAuthConfig *docker.AuthConfiguration
+	if packagesutils.NeedsPackagesAccountArtifacts(r) {
+		packagesSourceEcrAuthConfig = r.SourceClients.Packages.AuthConfig
+	}
 
 	packagesArtifacts := map[string][]releasetypes.Artifact{}
 	if isBundleRelease {
@@ -157,7 +161,7 @@ func handleImageUpload(_ context.Context, r *releasetypes.ReleaseConfig, package
 		sourceImageUri := artifact.Image.SourceImageURI
 		releaseImageUri := artifact.Image.ReleaseImageURI
 		sourceEcrAuthConfig := defaultSourceEcrAuthConfig
-		if strings.Contains(sourceImageUri, "eks-anywhere-packages") || strings.Contains(sourceImageUri, "ecr-token-refresher") || strings.Contains(sourceImageUri, "credential-provider-package") {
+		if packagesutils.NeedsPackagesAccountArtifacts(r) && strings.Contains(sourceImageUri, "eks-anywhere-packages") || strings.Contains(sourceImageUri, "ecr-token-refresher") || strings.Contains(sourceImageUri, "credential-provider-package") {
 			sourceEcrAuthConfig = packagesSourceEcrAuthConfig
 		}
 		fmt.Printf("Source Image - %s\n", sourceImageUri)
