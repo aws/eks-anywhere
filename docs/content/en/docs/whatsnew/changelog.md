@@ -30,6 +30,29 @@ description: >
 * When upgrading to a new minor version, a new OS image must be created using the new image-builder CLI pertaining to that release.
 {{% /alert %}}
 
+## [v0.20.4](https://github.com/aws/eks-anywhere/releases/tag/v0.20.4)
+
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+|    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+| Bottlerocket 1.20.5 |    ✔    |     —      |    —    |     —      |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+|      RHEL 9.x       |    —    |     ✔      |    ✔    |     ✔      |  —   |
+
+### Changed
+- EKS Distro:
+  - `v1-27-eks-36` to [`v1-27-eks-37`](https://distro.eks.amazonaws.com/releases/1-27/37/)
+  - `v1-28-eks-29` to [`v1-28-eks-30`](https://distro.eks.amazonaws.com/releases/1-28/30/)
+  - `v1-29-eks-18` to [`v1-29-eks-19`](https://distro.eks.amazonaws.com/releases/1-29/19/)
+  - `v1-30-eks-11`  to [`v1-30-eks-12`](https://distro.eks.amazonaws.com/releases/1-30/12/)
+- EKS Anywhere Packages Controller: `v0.4.3` to `v0.4.4`
+- Helm: `v3.15.3` to `v3.15.4`
+
+### Fixed
+- Fix Kubelet Configuration apply when host OS config is specified. ([#8606](https://github.com/aws/eks-anywhere/pull/8606))
+
 ## [v0.20.3](https://github.com/aws/eks-anywhere/releases/tag/v0.20.3)
 
 ### Supported OS version details
