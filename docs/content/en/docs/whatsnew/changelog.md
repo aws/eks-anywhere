@@ -50,6 +50,9 @@ description: >
 - EKS Anywhere Packages Controller: `v0.4.3` to `v0.4.4`
 - Helm: `v3.15.3` to `v3.15.4`
 
+### Fixed
+- Fix Kubelet Configuration apply when host OS config is specified. ([#8606](https://github.com/aws/eks-anywhere/pull/8606))
+
 ## [v0.20.3](https://github.com/aws/eks-anywhere/releases/tag/v0.20.3)
 
 ### Supported OS version details
