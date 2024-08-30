@@ -688,12 +688,21 @@ func (v *VSphere) searchTemplate(ctx context.Context, template string) (string, 
 
 func readVersionsBundles(t testing.TB, release *releasev1.EksARelease, kubeVersion anywherev1.KubernetesVersion) *releasev1.VersionsBundle {
 	reader := newFileReader()
-	b, err := releases.ReadBundlesForRelease(reader, release)
-	if err != nil {
-		t.Fatal(err)
+	var allBundles *releasev1.Bundles
+	var err error
+	if getBundlesOverride() == "true" {
+		allBundles, err = bundles.Read(reader, defaultBundleReleaseManifestFile)
+		if err != nil {
+			t.Fatal(err)
+		}
+	} else {
+		allBundles, err = releases.ReadBundlesForRelease(reader, release)
+		if err != nil {
+			t.Fatal(err)
+		}
 	}
 
-	return bundles.VersionsBundleForKubernetesVersion(b, string(kubeVersion))
+	return bundles.VersionsBundleForKubernetesVersion(allBundles, string(kubeVersion))
 }
 
 func readVSphereConfig() (vsphereConfig, error) {
