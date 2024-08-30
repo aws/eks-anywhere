@@ -621,52 +621,6 @@ func TestDockerKubernetes130RegistryMirrorInsecureSkipVerify(t *testing.T) {
 	runRegistryMirrorConfigFlow(test)
 }
 
-// Simple flow
-func TestDockerKubernetes126SimpleFlow(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewDocker(t),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube126)),
-	)
-	runSimpleFlow(test)
-}
-
-func TestDockerKubernetes127SimpleFlow(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewDocker(t),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127)),
-	)
-	runSimpleFlow(test)
-}
-
-func TestDockerKubernetes128SimpleFlow(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewDocker(t),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube128)),
-	)
-	runSimpleFlow(test)
-}
-
-func TestDockerKubernetes129SimpleFlow(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewDocker(t),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube129)),
-	)
-	runSimpleFlow(test)
-}
-
-func TestDockerKubernetes130SimpleFlow(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewDocker(t),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube130)),
-	)
-	runSimpleFlow(test)
-}
-
 // Stacked etcd
 func TestDockerKubernetesStackedEtcd(t *testing.T) {
 	test := framework.NewClusterE2ETest(t,
@@ -1469,4 +1423,17 @@ func TestDockerKubernetes130KubeletConfigurationSimpleFlow(t *testing.T) {
 		framework.WithKubeletConfig(),
 	)
 	runKubeletConfigurationFlow(test)
+}
+
+func TestDockerKubernetesSimpleFlowSuite(t *testing.T) {
+	for _, ts := range Suites[simpleFlowSubtest.GetSuiteSuffix()] {
+		t.Run(ts.GetName(), func(t *testing.T) {
+			test := framework.NewClusterE2ETest(
+				t,
+				framework.NewDocker(t),
+				framework.WithClusterFiller(api.WithKubernetesVersion(ts.(*SimpleFlowSubtest).KubeVersion)),
+			)
+			runSimpleFlow(test)
+		})
+	}
 }
