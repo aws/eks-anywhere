@@ -1,6 +1,7 @@
 package e2e
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -9,6 +10,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/go-logr/logr"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/internal/pkg/s3"
@@ -232,11 +234,21 @@ func (e *E2ESession) uploadRequiredFiles() error {
 			return err
 		}
 	}
+
+	errGroup, _ := errgroup.WithContext(context.Background())
 	for _, file := range e.requiredFiles {
-		err := e.uploadRequiredFile(file)
-		if err != nil {
-			return err
-		}
+		e, file := e, file
+		errGroup.Go(func() error {
+			err := e.uploadRequiredFile(file)
+			if err != nil {
+				return err
+			}
+
+			return nil
+		})
+	}
+	if err := errGroup.Wait(); err != nil {
+		return err
 	}
 
 	return nil
@@ -255,12 +267,22 @@ func (e *E2ESession) downloadRequiredFileInInstance(file string) error {
 }
 
 func (e *E2ESession) downloadRequiredFilesInInstance() error {
+	errGroup, _ := errgroup.WithContext(context.Background())
 	for _, file := range e.requiredFiles {
-		err := e.downloadRequiredFileInInstance(file)
-		if err != nil {
-			return err
-		}
+		e, file := e, file
+		errGroup.Go(func() error {
+			err := e.downloadRequiredFileInInstance(file)
+			if err != nil {
+				return err
+			}
+
+			return nil
+		})
 	}
+	if err := errGroup.Wait(); err != nil {
+		return err
+	}
+
 	return nil
 }
 
