@@ -188,6 +188,31 @@ description: >
 ### Fixed
 - CLI commands for packages to honor the registry mirror setup in cluster spec ([#8026](https://github.com/aws/eks-anywhere/pull/8026))
 
+## [v0.19.8](https://github.com/aws/eks-anywhere/releases/tag/v0.19.8)
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+|    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+| Bottlerocket 1.19.2 |    ✔    |     \*      |    —    |     —      |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+|      RHEL 9.x       |    —    |     —      |    ✔    |     ✔      |  —   |
+
+\* [EKS Anywhere issue regarding deprecation of Bottlerocket bare metal variants](https://github.com/aws/eks-anywhere/issues/7754)
+
+### Upgraded
+- EKS Distro:
+  - `v1-26-eks-38` to [`v1-26-eks-39`](https://distro.eks.amazonaws.com/releases/1-26/39/)
+  - `v1-27-eks-32` to [`v1-27-eks-35`](https://distro.eks.amazonaws.com/releases/1-27/35/)
+  - `v1-28-eks-25` to [`v1-28-eks-28`](https://distro.eks.amazonaws.com/releases/1-28/28/)
+  - `v1-29-eks-14` to [`v1-29-eks-17`](https://distro.eks.amazonaws.com/releases/1-29/17/)
+
+### Changed
+- Added additional validation before marking controlPlane and workers ready [#8455](https://github.com/aws/eks-anywhere/pull/8455)
+
+### Fixed
+- Fix panic when datacenter obj is not found [#8494](https://github.com/aws/eks-anywhere/pull/8494)
+
 ## [v0.19.7](https://github.com/aws/eks-anywhere/releases/tag/v0.19.7)
 ### Supported OS version details
 |                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
