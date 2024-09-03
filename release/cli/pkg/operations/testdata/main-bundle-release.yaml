@@ -261,7 +261,7 @@ spec:
         os: linux
         sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cri-tools/v1.30.1/cri-tools-v0.0.0-dev-build.0-linux-amd64.tar.gz
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cri-tools/v1.31.1/cri-tools-v0.0.0-dev-build.0-linux-amd64.tar.gz
       etcdadm:
         arch:
         - amd64
@@ -712,7 +712,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: nginx
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/nginx:v0.10.0-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/nginx:v0.10.1-eks-a-v0.0.0-dev-build.1
           tinkController:
             arch:
             - amd64
@@ -721,7 +721,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-controller
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-controller:v0.10.0-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-controller:v0.10.1-eks-a-v0.0.0-dev-build.1
           tinkRelay:
             arch:
             - amd64
@@ -730,7 +730,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-relay
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-relay:v0.10.0-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-relay:v0.10.1-eks-a-v0.0.0-dev-build.1
           tinkRelayInit:
             arch:
             - amd64
@@ -739,7 +739,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-relay-init
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-relay-init:v0.10.0-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-relay-init:v0.10.1-eks-a-v0.0.0-dev-build.1
           tinkServer:
             arch:
             - amd64
@@ -748,7 +748,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-server
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-server:v0.10.0-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-server:v0.10.1-eks-a-v0.0.0-dev-build.1
           tinkWorker:
             arch:
             - amd64
@@ -757,7 +757,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-worker
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-worker:v0.10.0-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-worker:v0.10.1-eks-a-v0.0.0-dev-build.1
         tinkerbellChart:
           description: Helm chart for tinkerbell-chart
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
@@ -1076,7 +1076,7 @@ spec:
         os: linux
         sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cri-tools/v1.30.1/cri-tools-v0.0.0-dev-build.0-linux-amd64.tar.gz
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cri-tools/v1.31.1/cri-tools-v0.0.0-dev-build.0-linux-amd64.tar.gz
       etcdadm:
         arch:
         - amd64
@@ -1527,7 +1527,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: nginx
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/nginx:v0.10.0-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/nginx:v0.10.1-eks-a-v0.0.0-dev-build.1
           tinkController:
             arch:
             - amd64
@@ -1536,7 +1536,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-controller
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-controller:v0.10.0-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-controller:v0.10.1-eks-a-v0.0.0-dev-build.1
           tinkRelay:
             arch:
             - amd64
@@ -1545,7 +1545,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-relay
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-relay:v0.10.0-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-relay:v0.10.1-eks-a-v0.0.0-dev-build.1
           tinkRelayInit:
             arch:
             - amd64
@@ -1554,7 +1554,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-relay-init
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-relay-init:v0.10.0-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-relay-init:v0.10.1-eks-a-v0.0.0-dev-build.1
           tinkServer:
             arch:
             - amd64
@@ -1563,7 +1563,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-server
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-server:v0.10.0-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-server:v0.10.1-eks-a-v0.0.0-dev-build.1
           tinkWorker:
             arch:
             - amd64
@@ -1572,7 +1572,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-worker
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-worker:v0.10.0-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-worker:v0.10.1-eks-a-v0.0.0-dev-build.1
         tinkerbellChart:
           description: Helm chart for tinkerbell-chart
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
@@ -1891,7 +1891,7 @@ spec:
         os: linux
         sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cri-tools/v1.30.1/cri-tools-v0.0.0-dev-build.0-linux-amd64.tar.gz
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cri-tools/v1.31.1/cri-tools-v0.0.0-dev-build.0-linux-amd64.tar.gz
       etcdadm:
         arch:
         - amd64
@@ -2342,7 +2342,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: nginx
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/nginx:v0.10.0-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/nginx:v0.10.1-eks-a-v0.0.0-dev-build.1
           tinkController:
             arch:
             - amd64
@@ -2351,7 +2351,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-controller
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-controller:v0.10.0-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-controller:v0.10.1-eks-a-v0.0.0-dev-build.1
           tinkRelay:
             arch:
             - amd64
@@ -2360,7 +2360,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-relay
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-relay:v0.10.0-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-relay:v0.10.1-eks-a-v0.0.0-dev-build.1
           tinkRelayInit:
             arch:
             - amd64
@@ -2369,7 +2369,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-relay-init
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-relay-init:v0.10.0-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-relay-init:v0.10.1-eks-a-v0.0.0-dev-build.1
           tinkServer:
             arch:
             - amd64
@@ -2378,7 +2378,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-server
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-server:v0.10.0-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-server:v0.10.1-eks-a-v0.0.0-dev-build.1
           tinkWorker:
             arch:
             - amd64
@@ -2387,7 +2387,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-worker
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-worker:v0.10.0-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-worker:v0.10.1-eks-a-v0.0.0-dev-build.1
         tinkerbellChart:
           description: Helm chart for tinkerbell-chart
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
@@ -2706,7 +2706,7 @@ spec:
         os: linux
         sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cri-tools/v1.30.1/cri-tools-v0.0.0-dev-build.0-linux-amd64.tar.gz
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cri-tools/v1.31.1/cri-tools-v0.0.0-dev-build.0-linux-amd64.tar.gz
       etcdadm:
         arch:
         - amd64
@@ -3157,7 +3157,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: nginx
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/nginx:v0.10.0-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/nginx:v0.10.1-eks-a-v0.0.0-dev-build.1
           tinkController:
             arch:
             - amd64
@@ -3166,7 +3166,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-controller
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-controller:v0.10.0-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-controller:v0.10.1-eks-a-v0.0.0-dev-build.1
           tinkRelay:
             arch:
             - amd64
@@ -3175,7 +3175,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-relay
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-relay:v0.10.0-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-relay:v0.10.1-eks-a-v0.0.0-dev-build.1
           tinkRelayInit:
             arch:
             - amd64
@@ -3184,7 +3184,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-relay-init
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-relay-init:v0.10.0-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-relay-init:v0.10.1-eks-a-v0.0.0-dev-build.1
           tinkServer:
             arch:
             - amd64
@@ -3193,7 +3193,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-server
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-server:v0.10.0-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-server:v0.10.1-eks-a-v0.0.0-dev-build.1
           tinkWorker:
             arch:
             - amd64
@@ -3202,7 +3202,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-worker
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-worker:v0.10.0-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-worker:v0.10.1-eks-a-v0.0.0-dev-build.1
         tinkerbellChart:
           description: Helm chart for tinkerbell-chart
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
@@ -3521,7 +3521,7 @@ spec:
         os: linux
         sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cri-tools/v1.30.1/cri-tools-v0.0.0-dev-build.0-linux-amd64.tar.gz
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cri-tools/v1.31.1/cri-tools-v0.0.0-dev-build.0-linux-amd64.tar.gz
       etcdadm:
         arch:
         - amd64
@@ -3972,7 +3972,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: nginx
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/nginx:v0.10.0-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/nginx:v0.10.1-eks-a-v0.0.0-dev-build.1
           tinkController:
             arch:
             - amd64
@@ -3981,7 +3981,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-controller
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-controller:v0.10.0-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-controller:v0.10.1-eks-a-v0.0.0-dev-build.1
           tinkRelay:
             arch:
             - amd64
@@ -3990,7 +3990,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-relay
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-relay:v0.10.0-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-relay:v0.10.1-eks-a-v0.0.0-dev-build.1
           tinkRelayInit:
             arch:
             - amd64
@@ -3999,7 +3999,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-relay-init
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-relay-init:v0.10.0-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-relay-init:v0.10.1-eks-a-v0.0.0-dev-build.1
           tinkServer:
             arch:
             - amd64
@@ -4008,7 +4008,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-server
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-server:v0.10.0-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-server:v0.10.1-eks-a-v0.0.0-dev-build.1
           tinkWorker:
             arch:
             - amd64
@@ -4017,7 +4017,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-worker
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-worker:v0.10.0-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-worker:v0.10.1-eks-a-v0.0.0-dev-build.1
         tinkerbellChart:
           description: Helm chart for tinkerbell-chart
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
