@@ -36,6 +36,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/executables"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/git"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
@@ -2202,11 +2203,12 @@ func dumpFile(description, path string, t T) {
 func (e *ClusterE2ETest) setFeatureFlagForUnreleasedKubernetesVersion(version v1alpha1.KubernetesVersion) {
 	// Update this variable to equal the feature flagged k8s version when applicable.
 	// For example, if k8s 1.26 is under a feature flag, we would set this to v1alpha1.Kube126
-	var unreleasedK8sVersion v1alpha1.KubernetesVersion
+	unreleasedK8sVersion := v1alpha1.Kube131
 
 	if version == unreleasedK8sVersion {
 		// Set feature flag for the unreleased k8s version when applicable
 		e.T.Logf("Setting k8s version support feature flag...")
+		os.Setenv(features.K8s131SupportEnvVar, "true")
 	}
 }
 
