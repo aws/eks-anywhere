@@ -21,8 +21,8 @@ ARTIFACTS_BUCKET?=my-s3-bucket
 GIT_VERSION?=$(shell git describe --tag)
 GIT_TAG?=$(shell git tag -l "v*.*.*" --sort -v:refname | head -1)
 GOLANG_VERSION?="1.21"
-GO_VERSION ?= $(shell source ./scripts/common.sh && build::common::get_go_path $(GOLANG_VERSION))
-GO ?= $(GO_VERSION)/go
+GO_PATH?= $(shell source ./scripts/common.sh && build::common::get_go_path $(GOLANG_VERSION))
+GO ?= $(GO_PATH)/go
 GO_TEST ?= $(GO) test
 # A regular expression defining what packages to exclude from the unit-test recipe.
 UNIT_TEST_PACKAGE_EXCLUSION_REGEX ?=mocks$
@@ -545,7 +545,7 @@ packages-e2e-test: build-all-test-binaries ## Run Curated Packages tests
 	./bin/e2e.test -test.v -test.run $(PACKAGES_E2E_TESTS)
 
 .PHONY: mocks
-mocks: export PATH := $(GO_VERSION):$(PATH)
+mocks: export PATH := $(GO_PATH):$(PATH)
 mocks: MOCKGEN := ${GOPATH}/bin/mockgen --build_flags=--mod=mod
 mocks: ## Generate mocks
 	$(GO) install github.com/golang/mock/mockgen@v1.6.0
