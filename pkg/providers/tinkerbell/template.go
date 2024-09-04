@@ -323,7 +323,6 @@ func (p *Provider) GenerateCAPISpecForUpgrade(ctx context.Context, bootstrapClus
 
 func (p *Provider) GenerateCAPISpecForCreate(ctx context.Context, _ *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
 	controlPlaneSpec, workersSpec, err = p.generateCAPISpecForCreate(ctx, clusterSpec)
-
 	if err != nil {
 		return nil, nil, fmt.Errorf("generating cluster api spec contents: %v", err)
 	}
