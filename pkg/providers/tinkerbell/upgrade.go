@@ -155,6 +155,9 @@ func (p *Provider) SetupAndValidateUpgradeManagementComponents(_ context.Context
 	return nil
 }
 
+// validateAvailableHardwareForUpgrade adds the necessary hardware assertions for an upgrade
+// these includes both rollingUpgrades across control-plane and worker nodes
+// and modular upgrades pertaining to only control-plane or worker components.
 func (p *Provider) validateAvailableHardwareForUpgrade(ctx context.Context, currentSpec, newClusterSpec *cluster.Spec) (err error) {
 	clusterSpecValidator := NewClusterSpecValidator(
 		HardwareSatisfiesOnlyOneSelectorAssertion(p.catalogue),
@@ -167,6 +170,22 @@ func (p *Provider) validateAvailableHardwareForUpgrade(ctx context.Context, curr
 	if rollingUpgrade || eksaVersionUpgrade {
 		clusterSpecValidator.Register(ExtraHardwareAvailableAssertionForRollingUpgrade(p.catalogue, currentCluster, eksaVersionUpgrade))
 	}
+	requirements, err := p.validateHardwareReqForControlPlaneRollOut(currentSpec, newClusterSpec)
+	if err != nil {
+		return err
+	}
+
+	workerRequirements, err := p.validateHardwareReqForWorkerNodeGroupsRollOut(currentSpec, newClusterSpec)
+	if err != nil {
+		return err
+	}
+
+	// Hardware selectors for controlPlane and worker nodes are mutually exclusive, so its safe to copy
+	// as no keys are going to be overwritten
+	for k, v := range workerRequirements {
+		requirements[k] = v
+	}
+	clusterSpecValidator.Register(ExtraHardwareAvailableAssertionForNodeRollOut(p.catalogue, requirements))
 	// ScaleUpDown should not be supported in case of either rolling upgrade or eksa version upgrade.
 	clusterSpecValidator.Register(AssertionsForScaleUpDown(p.catalogue, currentCluster, rollingUpgrade || eksaVersionUpgrade))
 
@@ -177,6 +196,52 @@ func (p *Provider) validateAvailableHardwareForUpgrade(ctx context.Context, curr
 	}
 
 	return nil
+}
+
+// validateHardwareReqForControlPlaneRollOut checks if new ControlPlane nodes need to be rolled out
+// and returns the HardwareRequirements for ControlPlane HardwareSelector
+// as we open up more feature gates in our spec this function can be used to
+// validate against the features that affect control plane only ex. API server extra args, etc.
+func (p *Provider) validateHardwareReqForControlPlaneRollOut(currentSpec, newClusterSpec *cluster.Spec) (MinimumHardwareRequirements, error) {
+	oldCP := currentSpec.TinkerbellMachineConfigs[currentSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name]
+	newCP := newClusterSpec.TinkerbellMachineConfigs[currentSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name]
+
+	maxSurge := 1
+	requirements := MinimumHardwareRequirements{}
+	rolloutStrategy := newClusterSpec.Cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy
+	if rolloutStrategy != nil && rolloutStrategy.Type == "RollingUpdate" {
+		maxSurge = newClusterSpec.Cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy.RollingUpdate.MaxSurge
+	}
+	if oldCP.Spec.OSImageURL != newCP.Spec.OSImageURL {
+		if err := requirements.Add(newCP.Spec.HardwareSelector, maxSurge); err != nil {
+			return nil, fmt.Errorf("validating hardware requirements for control-plane nodes roll out: %v", err)
+		}
+	}
+	return requirements, nil
+}
+
+// validateHardwareReqForWorkerNodeGroupsRollOut checks if new Worker nodes need to be rolled out for a given worker node group configuration
+// and returns the HardwareRequirements for Worker node group HardwareSelector
+// as we open up more feature gates in our spec this function can be used to
+// validate against the features that affect worker groups only.
+func (p *Provider) validateHardwareReqForWorkerNodeGroupsRollOut(currentSpec, newClusterSpec *cluster.Spec) (MinimumHardwareRequirements, error) {
+	requirements := MinimumHardwareRequirements{}
+	for _, newWngConfig := range newClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
+		oldWng := currentSpec.TinkerbellMachineConfigs[newWngConfig.MachineGroupRef.Name]
+		newWng := newClusterSpec.TinkerbellMachineConfigs[newWngConfig.MachineGroupRef.Name]
+		if oldWng != nil && oldWng.Spec.OSImageURL != newWng.Spec.OSImageURL {
+			maxSurge := 1
+			rolloutStrategy := newWngConfig.UpgradeRolloutStrategy
+			if rolloutStrategy != nil && rolloutStrategy.Type == "RollingUpdate" {
+				maxSurge = rolloutStrategy.RollingUpdate.MaxSurge
+			}
+			if err := requirements.Add(newWng.Spec.HardwareSelector, maxSurge); err != nil {
+				return nil, fmt.Errorf("validating hardware requirements for worker node groups roll out: %v", err)
+			}
+		}
+	}
+
+	return requirements, nil
 }
 
 // PostBootstrapDeleteForUpgrade runs any provider-specific operations after bootstrap cluster has been deleted.
@@ -386,7 +451,7 @@ func (p *Provider) isScaleUpDown(oldCluster *v1alpha1.Cluster, newCluster *v1alp
 }
 
 func (p *Provider) isRollingUpgrade(currentSpec, newClusterSpec *cluster.Spec) bool {
-	if currentSpec.Cluster.Spec.KubernetesVersion != newClusterSpec.Cluster.Spec.KubernetesVersion {
+	if currentSpec.Cluster.Spec.KubernetesVersion != newClusterSpec.Cluster.Spec.KubernetesVersion || currentSpec.TinkerbellDatacenter.Spec.OSImageURL != newClusterSpec.TinkerbellDatacenter.Spec.OSImageURL {
 		return true
 	}
 	currentWNGSwithK8sVersion := WorkerNodeGroupWithK8sVersion(currentSpec)
@@ -397,6 +462,7 @@ func (p *Provider) isRollingUpgrade(currentSpec, newClusterSpec *cluster.Spec) b
 			return true
 		}
 	}
+
 	return false
 }
 
