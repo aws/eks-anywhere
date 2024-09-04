@@ -96,20 +96,6 @@ func WithOsFamilyForAllTinkerbellMachines(value anywherev1.OSFamily) TinkerbellF
 	}
 }
 
-func WithImageUrlForAllTinkerbellMachines(value string) TinkerbellFiller {
-	return func(config TinkerbellConfig) {
-		for _, t := range config.templateConfigs {
-			for _, task := range t.Spec.Template.Tasks {
-				for _, action := range task.Actions {
-					if action.Name == "stream-image" {
-						action.Environment["IMG_URL"] = value
-					}
-				}
-			}
-		}
-	}
-}
-
 func WithSSHAuthorizedKeyForAllTinkerbellMachines(key string) TinkerbellFiller {
 	return func(config TinkerbellConfig) {
 		for _, m := range config.machineConfigs {

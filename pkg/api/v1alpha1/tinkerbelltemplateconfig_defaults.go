@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1/thirdparty/tinkerbell"
-	"github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
 const (
@@ -19,11 +18,16 @@ manage_etc_hosts: localhost
 warnings:
   dsid_missing_source: off
 `
+
+	// HookOS embeds container images from the bundle.
+	// The container images are tagged as follows:
+	actionImage2Disk = "127.0.0.1/embedded/image2disk"
+	actionWriteFile  = "127.0.0.1/embedded/writefile"
+	actionReboot     = "127.0.0.1/embedded/reboot"
 )
 
-// GetDefaultActionsFromBundle constructs a set of default actions for the given osFamily using the
-// bundle as the source of action images.
-func GetDefaultActionsFromBundle(clusterSpec *Cluster, b v1alpha1.VersionsBundle, osImageOverride, tinkerbellLocalIP, tinkerbellLBIP string, osFamily OSFamily) []ActionOpt {
+// DefaultActions constructs a set of default actions for the given osFamily.
+func DefaultActions(clusterSpec *Cluster, osImageOverride, tinkerbellLocalIP, tinkerbellLBIP string, osFamily OSFamily) []ActionOpt {
 	// The metadata string will have two URLs:
 	// 1. one that will be used initially for bootstrap and will point to hegel running on kind.
 	// 2. one that will be used when the workload cluster is up and will point to hegel running on
@@ -56,19 +60,19 @@ func GetDefaultActionsFromBundle(clusterSpec *Cluster, b v1alpha1.VersionsBundle
 	devicePath := "{{ index .Hardware.Disks 0 }}"
 	paritionPathFmt := "{{ formatPartition ( index .Hardware.Disks 0 ) %s }}"
 
-	actions := []ActionOpt{withStreamImageAction(b, devicePath, osImageOverride, additionalEnvVar)}
+	actions := []ActionOpt{withStreamImageAction(devicePath, osImageOverride, additionalEnvVar)}
 
 	switch osFamily {
 	case Bottlerocket:
 		partitionPath := fmt.Sprintf(paritionPathFmt, "12")
 
 		actions = append(actions,
-			withBottlerocketBootconfigAction(b, partitionPath),
-			withBottlerocketUserDataAction(b, partitionPath, strings.Join(metadataURLs, ",")),
+			withBottlerocketBootconfigAction(partitionPath),
+			withBottlerocketUserDataAction(partitionPath, strings.Join(metadataURLs, ",")),
 			// Order matters. This action needs to append to an existing user-data.toml file so
 			// must be after withBottlerocketUserDataAction().
-			withNetplanAction(b, partitionPath, osFamily),
-			withRebootAction(b),
+			withNetplanAction(partitionPath, osFamily),
+			withRebootAction(),
 		)
 	case RedHat:
 		var mu []string
@@ -79,28 +83,28 @@ func GetDefaultActionsFromBundle(clusterSpec *Cluster, b v1alpha1.VersionsBundle
 		partitionPath := fmt.Sprintf(paritionPathFmt, "1")
 
 		actions = append(actions,
-			withNetplanAction(b, partitionPath, osFamily),
-			withDisableCloudInitNetworkCapabilities(b, partitionPath),
-			withTinkCloudInitAction(b, partitionPath, strings.Join(mu, ",")),
-			withDsCloudInitAction(b, partitionPath),
-			withRebootAction(b),
+			withNetplanAction(partitionPath, osFamily),
+			withDisableCloudInitNetworkCapabilities(partitionPath),
+			withTinkCloudInitAction(partitionPath, strings.Join(mu, ",")),
+			withDsCloudInitAction(partitionPath),
+			withRebootAction(),
 		)
 	default:
 		partitionPath := fmt.Sprintf(paritionPathFmt, "2")
 
 		actions = append(actions,
-			withNetplanAction(b, partitionPath, osFamily),
-			withDisableCloudInitNetworkCapabilities(b, partitionPath),
-			withTinkCloudInitAction(b, partitionPath, strings.Join(metadataURLs, ",")),
-			withDsCloudInitAction(b, partitionPath),
-			withRebootAction(b),
+			withNetplanAction(partitionPath, osFamily),
+			withDisableCloudInitNetworkCapabilities(partitionPath),
+			withTinkCloudInitAction(partitionPath, strings.Join(metadataURLs, ",")),
+			withDsCloudInitAction(partitionPath),
+			withRebootAction(),
 		)
 	}
 
 	return actions
 }
 
-func withStreamImageAction(b v1alpha1.VersionsBundle, disk, imageURL string, additionalEnvVar map[string]string) ActionOpt {
+func withStreamImageAction(disk, imageURL string, additionalEnvVar map[string]string) ActionOpt {
 	return func(a *[]tinkerbell.Action) {
 		env := map[string]string{
 			"DEST_DISK":  disk,
@@ -113,19 +117,19 @@ func withStreamImageAction(b v1alpha1.VersionsBundle, disk, imageURL string, add
 		}
 
 		*a = append(*a, tinkerbell.Action{
-			Name:        "stream-image",
-			Image:       b.Tinkerbell.TinkerbellStack.Actions.ImageToDisk.URI,
+			Name:        "stream image to disk",
+			Image:       actionImage2Disk,
 			Timeout:     600,
 			Environment: env,
 		})
 	}
 }
 
-func withNetplanAction(b v1alpha1.VersionsBundle, disk string, osFamily OSFamily) ActionOpt {
+func withNetplanAction(disk string, osFamily OSFamily) ActionOpt {
 	return func(a *[]tinkerbell.Action) {
 		netplanAction := tinkerbell.Action{
-			Name:    "write-netplan",
-			Image:   b.Tinkerbell.TinkerbellStack.Actions.WriteFile.URI,
+			Name:    "write netplan config",
+			Image:   actionWriteFile,
 			Timeout: 90,
 			Environment: map[string]string{
 				"DEST_DISK": disk,
@@ -151,11 +155,11 @@ func withNetplanAction(b v1alpha1.VersionsBundle, disk string, osFamily OSFamily
 	}
 }
 
-func withDisableCloudInitNetworkCapabilities(b v1alpha1.VersionsBundle, disk string) ActionOpt {
+func withDisableCloudInitNetworkCapabilities(disk string) ActionOpt {
 	return func(a *[]tinkerbell.Action) {
 		*a = append(*a, tinkerbell.Action{
-			Name:    "disable-cloud-init-network-capabilities",
-			Image:   b.Tinkerbell.TinkerbellStack.Actions.WriteFile.URI,
+			Name:    "disable cloud-init network capabilities",
+			Image:   actionWriteFile,
 			Timeout: 90,
 			Environment: map[string]string{
 				"CONTENTS":  "network: {config: disabled}",
@@ -171,11 +175,11 @@ func withDisableCloudInitNetworkCapabilities(b v1alpha1.VersionsBundle, disk str
 	}
 }
 
-func withTinkCloudInitAction(b v1alpha1.VersionsBundle, disk string, metadataURLs string) ActionOpt {
+func withTinkCloudInitAction(disk, metadataURLs string) ActionOpt {
 	return func(a *[]tinkerbell.Action) {
 		*a = append(*a, tinkerbell.Action{
-			Name:    "add-tink-cloud-init-config",
-			Image:   b.Tinkerbell.TinkerbellStack.Actions.WriteFile.URI,
+			Name:    "add cloud-init config",
+			Image:   actionWriteFile,
 			Timeout: 90,
 			Environment: map[string]string{
 				"DEST_DISK": disk,
@@ -191,11 +195,11 @@ func withTinkCloudInitAction(b v1alpha1.VersionsBundle, disk string, metadataURL
 	}
 }
 
-func withDsCloudInitAction(b v1alpha1.VersionsBundle, disk string) ActionOpt {
+func withDsCloudInitAction(disk string) ActionOpt {
 	return func(a *[]tinkerbell.Action) {
 		*a = append(*a, tinkerbell.Action{
-			Name:    "add-tink-cloud-init-ds-config",
-			Image:   b.Tinkerbell.TinkerbellStack.Actions.WriteFile.URI,
+			Name:    "add cloud-init ds config",
+			Image:   actionWriteFile,
 			Timeout: 90,
 			Environment: map[string]string{
 				"DEST_DISK": disk,
@@ -211,11 +215,11 @@ func withDsCloudInitAction(b v1alpha1.VersionsBundle, disk string) ActionOpt {
 	}
 }
 
-func withRebootAction(b v1alpha1.VersionsBundle) ActionOpt {
+func withRebootAction() ActionOpt {
 	return func(a *[]tinkerbell.Action) {
 		*a = append(*a, tinkerbell.Action{
-			Name:    "reboot-image",
-			Image:   b.Tinkerbell.TinkerbellStack.Actions.Reboot.URI,
+			Name:    "reboot",
+			Image:   actionReboot,
 			Timeout: 90,
 			Pid:     "host",
 			Volumes: []string{"/worker:/worker"},
@@ -223,11 +227,11 @@ func withRebootAction(b v1alpha1.VersionsBundle) ActionOpt {
 	}
 }
 
-func withBottlerocketBootconfigAction(b v1alpha1.VersionsBundle, disk string) ActionOpt {
+func withBottlerocketBootconfigAction(disk string) ActionOpt {
 	return func(a *[]tinkerbell.Action) {
 		*a = append(*a, tinkerbell.Action{
-			Name:    "write-bootconfig",
-			Image:   b.Tinkerbell.TinkerbellStack.Actions.WriteFile.URI,
+			Name:    "write Bottlerocket bootconfig",
+			Image:   actionWriteFile,
 			Timeout: 90,
 			Pid:     "host",
 			Environment: map[string]string{
@@ -244,11 +248,11 @@ func withBottlerocketBootconfigAction(b v1alpha1.VersionsBundle, disk string) Ac
 	}
 }
 
-func withBottlerocketUserDataAction(b v1alpha1.VersionsBundle, disk string, metadataURLs string) ActionOpt {
+func withBottlerocketUserDataAction(disk, metadataURLs string) ActionOpt {
 	return func(a *[]tinkerbell.Action) {
 		*a = append(*a, tinkerbell.Action{
-			Name:    "write-user-data",
-			Image:   b.Tinkerbell.TinkerbellStack.Actions.WriteFile.URI,
+			Name:    "write Bottlerocket user data",
+			Image:   actionWriteFile,
 			Timeout: 90,
 			Pid:     "host",
 			Environment: map[string]string{
