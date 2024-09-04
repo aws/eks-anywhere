@@ -66,7 +66,6 @@ func TestProviderPreCoreComponentsUpgrade_NilCluster(t *testing.T) {
 		tconfig.managementComponents,
 		tconfig.ClusterSpec,
 	)
-
 	if err != nil {
 		t.Fatalf("Received unexpected error: %v", err)
 	}
@@ -1122,6 +1121,73 @@ func TestProviderValidateAvailableHardwareOnlyCPUpgradeError(t *testing.T) {
 	}
 }
 
+func TestProviderValidateAvailableHardwareOnlyCPOSImageURLUpgradeSuccess(t *testing.T) {
+	clusterSpecManifest := "cluster_osimage_machine_config.yaml"
+	mockCtrl := gomock.NewController(t)
+	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
+	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
+	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
+	docker := stackmocks.NewMockDocker(mockCtrl)
+	helm := stackmocks.NewMockHelm(mockCtrl)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	stackInstaller := stackmocks.NewMockStackInstaller(mockCtrl)
+	writer := filewritermocks.NewMockFileWriter(mockCtrl)
+	ctx := context.Background()
+	provider := newTinkerbellProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl)
+	provider.stackInstaller = stackInstaller
+
+	clusterSpec.ManagementCluster = &types.Cluster{Name: "test", KubeconfigFile: "kubeconfig-file"}
+	clusterSpec.Cluster.Spec.ManagementCluster = v1alpha1.ManagementCluster{Name: "test-mgmt"}
+	catalogue := hardware.NewCatalogue()
+	newCluster := clusterSpec.DeepCopy()
+	// newCluster.Cluster.Spec.KubernetesVersion = v1alpha1.Kube122
+	cpRef := newCluster.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
+	machineConfigs[cpRef].Spec.OSImageURL = "https://ubuntu-1-21-patch.gz"
+	_ = catalogue.InsertHardware(&tinkv1.Hardware{ObjectMeta: metav1.ObjectMeta{
+		Labels: map[string]string{"type": "cp"},
+	}})
+	provider.catalogue = catalogue
+	err := provider.validateAvailableHardwareForUpgrade(ctx, clusterSpec, newCluster)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestProviderValidateAvailableHardwareOnlyCPOSImageURLUpgradeError(t *testing.T) {
+	clusterSpecManifest := "cluster_osimage_machine_config.yaml"
+	mockCtrl := gomock.NewController(t)
+	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
+	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
+	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
+	docker := stackmocks.NewMockDocker(mockCtrl)
+	helm := stackmocks.NewMockHelm(mockCtrl)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	stackInstaller := stackmocks.NewMockStackInstaller(mockCtrl)
+	writer := filewritermocks.NewMockFileWriter(mockCtrl)
+	ctx := context.Background()
+	provider := newTinkerbellProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl)
+	provider.stackInstaller = stackInstaller
+
+	clusterSpec.ManagementCluster = &types.Cluster{Name: "test", KubeconfigFile: "kubeconfig-file"}
+	clusterSpec.Cluster.Spec.ManagementCluster = v1alpha1.ManagementCluster{Name: "test-mgmt"}
+	catalogue := hardware.NewCatalogue()
+	newCluster := clusterSpec.DeepCopy()
+	newMachineConfigs := make(map[string]*v1alpha1.TinkerbellMachineConfig, len(machineConfigs))
+	for k, v := range machineConfigs {
+		newMachineConfigs[k] = v
+	}
+	// newCluster.Cluster.Spec.KubernetesVersion = v1alpha1.Kube122
+	cpRef := newCluster.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
+	newMachineConfigs[cpRef].Spec.OSImageURL = "https://ubuntu-1-21-patch.gz"
+	newCluster.TinkerbellMachineConfigs = newMachineConfigs
+	provider.catalogue = catalogue
+	err := provider.validateAvailableHardwareForUpgrade(ctx, clusterSpec, newCluster)
+	if err == nil || !strings.Contains(err.Error(), "for node rollout, minimum hardware count not met for selector '{\"type\":\"cp\"}'") {
+		fmt.Println(err)
+		t.Fatal(err)
+	}
+}
+
 func TestProviderValidateAvailableHardwareOnlyWorkerUpgradeSuccess(t *testing.T) {
 	clusterSpecManifest := "cluster_osimage_machine_config.yaml"
 	mockCtrl := gomock.NewController(t)
@@ -1181,6 +1247,85 @@ func TestProviderValidateAvailableHardwareOnlyWorkerUpgradeError(t *testing.T) {
 	provider.catalogue = catalogue
 	err := provider.validateAvailableHardwareForUpgrade(ctx, clusterSpec, newCluster)
 	if err == nil || !strings.Contains(err.Error(), "for rolling upgrade, minimum hardware count not met for selector '{\"type\":\"worker\"}'") {
+		t.Fatal(err)
+	}
+}
+
+func TestProviderValidateAvailableHardwareOnlyWorkerOSImageURLUpgradeSuccess(t *testing.T) {
+	clusterSpecManifest := "cluster_osimage_machine_config.yaml"
+	mockCtrl := gomock.NewController(t)
+	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
+	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
+	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
+	docker := stackmocks.NewMockDocker(mockCtrl)
+	helm := stackmocks.NewMockHelm(mockCtrl)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	stackInstaller := stackmocks.NewMockStackInstaller(mockCtrl)
+	writer := filewritermocks.NewMockFileWriter(mockCtrl)
+	ctx := context.Background()
+	provider := newTinkerbellProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl)
+	provider.stackInstaller = stackInstaller
+
+	clusterSpec.ManagementCluster = &types.Cluster{Name: "test", KubeconfigFile: "kubeconfig-file"}
+	clusterSpec.Cluster.Spec.ManagementCluster = v1alpha1.ManagementCluster{Name: "test-mgmt"}
+	catalogue := hardware.NewCatalogue()
+	newCluster := clusterSpec.DeepCopy()
+	newMachineConfigs := make(map[string]*v1alpha1.TinkerbellMachineConfig, len(machineConfigs))
+	for k, v := range machineConfigs {
+		newMachineConfigs[k] = v
+	}
+
+	_ = catalogue.InsertHardware(&tinkv1.Hardware{ObjectMeta: metav1.ObjectMeta{
+		Labels: map[string]string{"type": "worker"},
+	}})
+	wngRef := newCluster.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
+	newMachineConfigs[wngRef].Spec.OSImageURL = "https://ubuntu-1-21-patch.gz"
+	provider.catalogue = catalogue
+	newCluster.TinkerbellMachineConfigs = newMachineConfigs
+	err := provider.validateAvailableHardwareForUpgrade(ctx, clusterSpec, newCluster)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestProviderValidateAvailableHardwareOnlyWorkerOSImageURLUpgradeError(t *testing.T) {
+	clusterSpecManifest := "cluster_osimage_machine_config.yaml"
+	mockCtrl := gomock.NewController(t)
+	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
+	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
+	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
+	docker := stackmocks.NewMockDocker(mockCtrl)
+	helm := stackmocks.NewMockHelm(mockCtrl)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	stackInstaller := stackmocks.NewMockStackInstaller(mockCtrl)
+	writer := filewritermocks.NewMockFileWriter(mockCtrl)
+	ctx := context.Background()
+	provider := newTinkerbellProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl)
+	provider.stackInstaller = stackInstaller
+
+	clusterSpec.ManagementCluster = &types.Cluster{Name: "test", KubeconfigFile: "kubeconfig-file"}
+	clusterSpec.Cluster.Spec.ManagementCluster = v1alpha1.ManagementCluster{Name: "test-mgmt"}
+	catalogue := hardware.NewCatalogue()
+	newCluster := clusterSpec.DeepCopy()
+	newMachineConfigs := make(map[string]*v1alpha1.TinkerbellMachineConfig, len(machineConfigs))
+	for k, v := range machineConfigs {
+		newMachineConfigs[k] = v
+	}
+
+	wngRef := newCluster.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
+	newCluster.Cluster.Spec.WorkerNodeGroupConfigurations[0].UpgradeRolloutStrategy = &v1alpha1.WorkerNodesUpgradeRolloutStrategy{
+		Type: v1alpha1.RollingUpdateStrategyType,
+		RollingUpdate: &v1alpha1.WorkerNodesRollingUpdateParams{
+			MaxSurge:       1,
+			MaxUnavailable: 0,
+		},
+	}
+
+	newMachineConfigs[wngRef].Spec.OSImageURL = "https://ubuntu-1-21-patch.gz"
+	provider.catalogue = catalogue
+	newCluster.TinkerbellMachineConfigs = newMachineConfigs
+	err := provider.validateAvailableHardwareForUpgrade(ctx, clusterSpec, newCluster)
+	if err == nil || !strings.Contains(err.Error(), "for node rollout, minimum hardware count not met for selector '{\"type\":\"worker\"}'") {
 		t.Fatal(err)
 	}
 }

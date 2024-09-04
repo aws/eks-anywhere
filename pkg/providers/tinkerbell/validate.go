@@ -259,13 +259,13 @@ type minimumHardwareRequirement struct {
 	count int
 }
 
-// minimumHardwareRequirements is a collection of minimumHardwareRequirement instances.
+// MinimumHardwareRequirements is a collection of minimumHardwareRequirement instances.
 // it stores requirements in a map where the key is derived from selectors. This ensures selectors
 // specifying the same key-value pairs are combined.
-type minimumHardwareRequirements map[string]*minimumHardwareRequirement
+type MinimumHardwareRequirements map[string]*minimumHardwareRequirement
 
 // Add a minimumHardwareRequirement to r.
-func (r *minimumHardwareRequirements) Add(selector v1alpha1.HardwareSelector, min int) error {
+func (r *MinimumHardwareRequirements) Add(selector v1alpha1.HardwareSelector, min int) error {
 	name, err := selector.ToString()
 	if err != nil {
 		return err
@@ -281,7 +281,7 @@ func (r *minimumHardwareRequirements) Add(selector v1alpha1.HardwareSelector, mi
 
 // validateMinimumHardwareRequirements validates all requirements can be satisfied using hardware
 // registered with catalogue.
-func validateMinimumHardwareRequirements(requirements minimumHardwareRequirements, catalogue *hardware.Catalogue) error {
+func validateMinimumHardwareRequirements(requirements MinimumHardwareRequirements, catalogue *hardware.Catalogue) error {
 	// Count all hardware that meets the selector requirements for each requirement.
 	// This does not consider whether or not a piece of hardware is selectable by multiple
 	// selectors. That requires a different validation ideally run before this one.
