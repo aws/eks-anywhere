@@ -281,11 +281,6 @@ If creating a role with these privileges via the UI, refer to the table below.
 
 | Category | UI Privilege | Programmatic Privilege |
 | --- | ----------- | ---- |
-| Content Library | Add library item | ContentLibrary.AddLibraryItem |
-| Content Library | Delete library item | ContentLibrary.DeleteLibraryItem |
-| Content Library | Download files | ContentLibrary.DownloadSession |
-| Content Library | Evict library item | ContentLibrary.EvictLibraryItem |
-| Content Library | Update library item | ContentLibrary.UpdateLibraryItem |
 | Datastore | Allocate space | Datastore.AllocateSpace |
 | Datastore | Browse datastore | Datastore.Browse |
 | Datastore | Low level file operations | Datastore.FileManagement |
@@ -408,10 +403,6 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
    ```bash
    curl -L -o - "https://github.com/vmware/govmomi/releases/latest/download/govc_$(uname -s)_$(uname -m).tar.gz" | sudo tar -C /usr/local/bin -xvzf - govc
    ```
-1. Create a content library on vSphere:
-   ```bash
-   govc library.create "<library name>"
-   ```
 1. Create a vSphere configuration file (for example, `vsphere.json`):
    ```json
    {
@@ -428,7 +419,6 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
      "resource_pool": "",
      "username": "",
      "vcenter_server": "",
-     "vsphere_library_name": ""
    }
    ```
    ##### **[cluster](https://developer.hashicorp.com/packer/integrations/hashicorp/vsphere/latest/components/builder/vsphere-iso#location-configuration)**
@@ -469,9 +459,6 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
 
    ##### **[vcenter_server](https://developer.hashicorp.com/packer/integrations/hashicorp/vsphere/latest/components/builder/vsphere-iso#connection-configuration)**
    The vCenter Server hostname.
-
-   ##### **[vsphere_library_name](https://developer.hashicorp.com/packer/integrations/hashicorp/vsphere/latest/components/builder/vsphere-iso#content-library-import-configuration)**
-   Name of the library in which the new library item containing the template should be updated.
 
    For RHEL images, add the following fields:
    ```json
