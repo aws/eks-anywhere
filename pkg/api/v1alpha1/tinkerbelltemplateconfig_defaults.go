@@ -20,7 +20,7 @@ warnings:
 `
 
 	// HookOS embeds container images from the bundle.
-	// The container images are tagged as follows:
+	// The container images are tagged as below.
 	actionImage2Disk = "127.0.0.1/embedded/image2disk"
 	actionWriteFile  = "127.0.0.1/embedded/writefile"
 	actionReboot     = "127.0.0.1/embedded/reboot"
