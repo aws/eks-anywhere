@@ -125,7 +125,7 @@ func TestControlPlaneSpecUpdateMachineTemplates(t *testing.T) {
 	expectedKCP.Spec.MachineTemplate.InfrastructureRef.Name = "test-control-plane-1"
 
 	expectedCPTemplate.Name = "test-control-plane-1"
-	expectedCPTemplate.Spec.Template.Spec.TemplateOverride = "global_timeout: 6000\nid: \"\"\nname: tink-test\ntasks:\n- actions:\n  - environment:\n      COMPRESSED: \"true\"\n      DEST_DISK: /dev/sda\n      IMG_URL: \"\"\n    image: image2disk:v1.0.0\n    name: stream-image\n    timeout: 360\n  - environment:\n      BLOCK_DEVICE: /dev/sda2\n      CHROOT: \"y\"\n      CMD_LINE: apt -y update && apt -y install openssl\n      DEFAULT_INTERPRETER: /bin/sh -c\n      FS_TYPE: ext4\n    image: cexec:v1.0.0\n    name: install-openssl\n    timeout: 90\n  - environment:\n      CONTENTS: |\n        network:\n          version: 2\n          renderer: networkd\n          ethernets:\n              eno1:\n                  dhcp4: true\n              eno2:\n                  dhcp4: true\n              eno3:\n                  dhcp4: true\n              eno4:\n                  dhcp4: true\n      DEST_DISK: /dev/sda2\n      DEST_PATH: /etc/netplan/config.yaml\n      DIRMODE: \"0755\"\n      FS_TYPE: ext4\n      GID: \"0\"\n      MODE: \"0644\"\n      UID: \"0\"\n    image: writefile:v1.0.0\n    name: write-netplan\n    timeout: 90\n  - environment:\n      CONTENTS: |\n        datasource:\n          Ec2:\n            metadata_urls: []\n            strict_id: false\n        system_info:\n          default_user:\n            name: tink\n            groups: [wheel, adm]\n            sudo: [\"ALL=(ALL) NOPASSWD:ALL\"]\n            shell: /bin/bash\n        manage_etc_hosts: localhost\n        warnings:\n          dsid_missing_source: off\n      DEST_DISK: /dev/sda2\n      DEST_PATH: /etc/cloud/cloud.cfg.d/10_tinkerbell.cfg\n      DIRMODE: \"0700\"\n      FS_TYPE: ext4\n      GID: \"0\"\n      MODE: \"0600\"\n    image: writefile:v1.0.0\n    name: add-tink-cloud-init-config\n    timeout: 90\n  - environment:\n      CONTENTS: |\n        datasource: Ec2\n      DEST_DISK: /dev/sda2\n      DEST_PATH: /etc/cloud/ds-identify.cfg\n      DIRMODE: \"0700\"\n      FS_TYPE: ext4\n      GID: \"0\"\n      MODE: \"0600\"\n      UID: \"0\"\n    image: writefile:v1.0.0\n    name: add-tink-cloud-init-ds-config\n    timeout: 90\n  - environment:\n      BLOCK_DEVICE: /dev/sda2\n      FS_TYPE: ext4\n    image: kexec:v1.0.0\n    name: kexec-image\n    pid: host\n    timeout: 90\n  name: tink-test\n  volumes:\n  - /dev:/dev\n  - /dev/console:/dev/console\n  - /lib/firmware:/lib/firmware:ro\n  worker: '{{.device_1}}'\nversion: \"0.1\"\n"
+	expectedCPTemplate.Spec.Template.Spec.TemplateOverride = testTemplateOverride
 	expectedCPTemplate.Spec.Template.Spec.HardwareAffinity = &tinkerbellv1.HardwareAffinity{
 		Required: []tinkerbellv1.HardwareAffinityTerm{
 			{
@@ -924,6 +924,104 @@ status:
 	return kcp
 }
 
+var testTemplateOverride = `global_timeout: 6000
+id: ""
+name: tink-test
+tasks:
+- actions:
+  - environment:
+      COMPRESSED: "true"
+      DEST_DISK: /dev/sda
+      IMG_URL: ""
+    image: image2disk:v1.0.0
+    name: stream-image
+    timeout: 360
+  - environment:
+      BLOCK_DEVICE: /dev/sda2
+      CHROOT: "y"
+      CMD_LINE: apt -y update && apt -y install openssl
+      DEFAULT_INTERPRETER: /bin/sh -c
+      FS_TYPE: ext4
+    image: cexec:v1.0.0
+    name: install-openssl
+    timeout: 90
+  - environment:
+      CONTENTS: |
+        network:
+          version: 2
+          renderer: networkd
+          ethernets:
+              eno1:
+                  dhcp4: true
+              eno2:
+                  dhcp4: true
+              eno3:
+                  dhcp4: true
+              eno4:
+                  dhcp4: true
+      DEST_DISK: /dev/sda2
+      DEST_PATH: /etc/netplan/config.yaml
+      DIRMODE: "0755"
+      FS_TYPE: ext4
+      GID: "0"
+      MODE: "0644"
+      UID: "0"
+    image: writefile:v1.0.0
+    name: write-netplan
+    timeout: 90
+  - environment:
+      CONTENTS: |
+        datasource:
+          Ec2:
+            metadata_urls: []
+            strict_id: false
+        system_info:
+          default_user:
+            name: tink
+            groups: [wheel, adm]
+            sudo: ["ALL=(ALL) NOPASSWD:ALL"]
+            shell: /bin/bash
+        manage_etc_hosts: localhost
+        warnings:
+          dsid_missing_source: off
+      DEST_DISK: /dev/sda2
+      DEST_PATH: /etc/cloud/cloud.cfg.d/10_tinkerbell.cfg
+      DIRMODE: "0700"
+      FS_TYPE: ext4
+      GID: "0"
+      MODE: "0600"
+    image: writefile:v1.0.0
+    name: add-tink-cloud-init-config
+    timeout: 90
+  - environment:
+      CONTENTS: |
+        datasource: Ec2
+      DEST_DISK: /dev/sda2
+      DEST_PATH: /etc/cloud/ds-identify.cfg
+      DIRMODE: "0700"
+      FS_TYPE: ext4
+      GID: "0"
+      MODE: "0600"
+      UID: "0"
+    image: writefile:v1.0.0
+    name: add-tink-cloud-init-ds-config
+    timeout: 90
+  - environment:
+      BLOCK_DEVICE: /dev/sda2
+      FS_TYPE: ext4
+    image: kexec:v1.0.0
+    name: kexec-image
+    pid: host
+    timeout: 90
+  name: tink-test
+  volumes:
+  - /dev:/dev
+  - /dev/console:/dev/console
+  - /lib/firmware:/lib/firmware:ro
+  worker: '{{.device_1}}'
+version: "0.1"
+`
+
 func tinkerbellMachineTemplate(name string) *tinkerbellv1.TinkerbellMachineTemplate {
 	return &tinkerbellv1.TinkerbellMachineTemplate{
 		TypeMeta: metav1.TypeMeta{
@@ -937,7 +1035,7 @@ func tinkerbellMachineTemplate(name string) *tinkerbellv1.TinkerbellMachineTempl
 		Spec: tinkerbellv1.TinkerbellMachineTemplateSpec{
 			Template: tinkerbellv1.TinkerbellMachineTemplateResource{
 				Spec: tinkerbellv1.TinkerbellMachineSpec{
-					TemplateOverride: "global_timeout: 6000\nid: \"\"\nname: tink-test\ntasks:\n- actions:\n  - environment:\n      COMPRESSED: \"true\"\n      DEST_DISK: /dev/sda\n      IMG_URL: \"\"\n    image: image2disk:v1.0.0\n    name: stream-image\n    timeout: 360\n  - environment:\n      BLOCK_DEVICE: /dev/sda2\n      CHROOT: \"y\"\n      CMD_LINE: apt -y update && apt -y install openssl\n      DEFAULT_INTERPRETER: /bin/sh -c\n      FS_TYPE: ext4\n    image: cexec:v1.0.0\n    name: install-openssl\n    timeout: 90\n  - environment:\n      CONTENTS: |\n        network:\n          version: 2\n          renderer: networkd\n          ethernets:\n              eno1:\n                  dhcp4: true\n              eno2:\n                  dhcp4: true\n              eno3:\n                  dhcp4: true\n              eno4:\n                  dhcp4: true\n      DEST_DISK: /dev/sda2\n      DEST_PATH: /etc/netplan/config.yaml\n      DIRMODE: \"0755\"\n      FS_TYPE: ext4\n      GID: \"0\"\n      MODE: \"0644\"\n      UID: \"0\"\n    image: writefile:v1.0.0\n    name: write-netplan\n    timeout: 90\n  - environment:\n      CONTENTS: |\n        datasource:\n          Ec2:\n            metadata_urls: []\n            strict_id: false\n        system_info:\n          default_user:\n            name: tink\n            groups: [wheel, adm]\n            sudo: [\"ALL=(ALL) NOPASSWD:ALL\"]\n            shell: /bin/bash\n        manage_etc_hosts: localhost\n        warnings:\n          dsid_missing_source: off\n      DEST_DISK: /dev/sda2\n      DEST_PATH: /etc/cloud/cloud.cfg.d/10_tinkerbell.cfg\n      DIRMODE: \"0700\"\n      FS_TYPE: ext4\n      GID: \"0\"\n      MODE: \"0600\"\n    image: writefile:v1.0.0\n    name: add-tink-cloud-init-config\n    timeout: 90\n  - environment:\n      CONTENTS: |\n        datasource: Ec2\n      DEST_DISK: /dev/sda2\n      DEST_PATH: /etc/cloud/ds-identify.cfg\n      DIRMODE: \"0700\"\n      FS_TYPE: ext4\n      GID: \"0\"\n      MODE: \"0600\"\n      UID: \"0\"\n    image: writefile:v1.0.0\n    name: add-tink-cloud-init-ds-config\n    timeout: 90\n  - environment:\n      BLOCK_DEVICE: /dev/sda2\n      FS_TYPE: ext4\n    image: kexec:v1.0.0\n    name: kexec-image\n    pid: host\n    timeout: 90\n  name: tink-test\n  volumes:\n  - /dev:/dev\n  - /dev/console:/dev/console\n  - /lib/firmware:/lib/firmware:ro\n  worker: '{{.device_1}}'\nversion: \"0.1\"\n",
+					TemplateOverride: testTemplateOverride,
 					HardwareAffinity: &tinkerbellv1.HardwareAffinity{
 						Required: []tinkerbellv1.HardwareAffinityTerm{
 							{

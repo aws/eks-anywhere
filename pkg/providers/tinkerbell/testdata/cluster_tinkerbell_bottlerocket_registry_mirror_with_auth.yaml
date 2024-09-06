@@ -195,7 +195,7 @@ spec:
             timeout: 90
           - environment:
             image: reboot:v1.0.0
-            name: reboot-image
+            name: reboot
             pid: host
             timeout: 90
             volumes:

@@ -449,7 +449,7 @@ spec:
             name: write-user-data
             timeout: 90
           - image: reboot:v1.0.0
-            name: reboot-image
+            name: reboot
             pid: host
             timeout: 90
             volumes:

@@ -7,11 +7,9 @@ import (
 	"github.com/google/go-cmp/cmp"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1/thirdparty/tinkerbell"
-	"github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
 func TestWithDefaultActionsFromBundle(t *testing.T) {
-	vBundle := givenVersionBundle()
 	tinkerbellLocalIp := "127.0.0.1"
 	tinkerbellLBIP := "1.2.3.4"
 	metadataString := fmt.Sprintf("http://%s:50061,http://%s:50061", tinkerbellLocalIp, tinkerbellLBIP)
@@ -38,8 +36,8 @@ warnings:
 			clusterSpec:     &Cluster{},
 			wantActions: []tinkerbell.Action{
 				{
-					Name:    "stream-image",
-					Image:   "public.ecr.aws/eks-anywhere/image2disk:latest",
+					Name:    "stream image to disk",
+					Image:   "127.0.0.1/embedded/image2disk",
 					Timeout: 600,
 					Environment: map[string]string{
 						"IMG_URL":    "http://tinkerbell-example:8080/bottlerocket-2004-kube-v1.21.5.gz",
@@ -48,8 +46,8 @@ warnings:
 					},
 				},
 				{
-					Name:    "write-bootconfig",
-					Image:   "public.ecr.aws/eks-anywhere/writefile:latest",
+					Name:    "write Bottlerocket bootconfig",
+					Image:   "127.0.0.1/embedded/writefile",
 					Timeout: 90,
 					Pid:     "host",
 					Environment: map[string]string{
@@ -64,8 +62,8 @@ warnings:
 					},
 				},
 				{
-					Name:    "write-user-data",
-					Image:   "public.ecr.aws/eks-anywhere/writefile:latest",
+					Name:    "write Bottlerocket user data",
+					Image:   "127.0.0.1/embedded/writefile",
 					Timeout: 90,
 					Pid:     "host",
 					Environment: map[string]string{
@@ -80,8 +78,8 @@ warnings:
 					},
 				},
 				{
-					Name:    "write-netplan",
-					Image:   "public.ecr.aws/eks-anywhere/writefile:latest",
+					Name:    "write netplan config",
+					Image:   "127.0.0.1/embedded/writefile",
 					Timeout: 90,
 					Pid:     "host",
 					Environment: map[string]string{
@@ -97,8 +95,8 @@ warnings:
 					},
 				},
 				{
-					Name:    "reboot-image",
-					Image:   "public.ecr.aws/eks-anywhere/reboot:latest",
+					Name:    "reboot",
+					Image:   "127.0.0.1/embedded/reboot",
 					Timeout: 90,
 					Volumes: []string{"/worker:/worker"},
 					Pid:     "host",
@@ -112,8 +110,8 @@ warnings:
 			clusterSpec:     &Cluster{},
 			wantActions: []tinkerbell.Action{
 				{
-					Name:    "stream-image",
-					Image:   "public.ecr.aws/eks-anywhere/image2disk:latest",
+					Name:    "stream image to disk",
+					Image:   "127.0.0.1/embedded/image2disk",
 					Timeout: 600,
 					Environment: map[string]string{
 						"IMG_URL":    "http://tinkerbell-example:8080/bottlerocket-2004-kube-v1.21.5.gz",
@@ -122,8 +120,8 @@ warnings:
 					},
 				},
 				{
-					Name:    "write-bootconfig",
-					Image:   "public.ecr.aws/eks-anywhere/writefile:latest",
+					Name:    "write Bottlerocket bootconfig",
+					Image:   "127.0.0.1/embedded/writefile",
 					Timeout: 90,
 					Pid:     "host",
 					Environment: map[string]string{
@@ -138,8 +136,8 @@ warnings:
 					},
 				},
 				{
-					Name:    "write-user-data",
-					Image:   "public.ecr.aws/eks-anywhere/writefile:latest",
+					Name:    "write Bottlerocket user data",
+					Image:   "127.0.0.1/embedded/writefile",
 					Timeout: 90,
 					Pid:     "host",
 					Environment: map[string]string{
@@ -154,8 +152,8 @@ warnings:
 					},
 				},
 				{
-					Name:    "write-netplan",
-					Image:   "public.ecr.aws/eks-anywhere/writefile:latest",
+					Name:    "write netplan config",
+					Image:   "127.0.0.1/embedded/writefile",
 					Timeout: 90,
 					Pid:     "host",
 					Environment: map[string]string{
@@ -171,8 +169,8 @@ warnings:
 					},
 				},
 				{
-					Name:    "reboot-image",
-					Image:   "public.ecr.aws/eks-anywhere/reboot:latest",
+					Name:    "reboot",
+					Image:   "127.0.0.1/embedded/reboot",
 					Timeout: 90,
 					Volumes: []string{"/worker:/worker"},
 					Pid:     "host",
@@ -186,8 +184,8 @@ warnings:
 			osImageOverride: "http://tinkerbell-example:8080/redhat-8.4-kube-v1.21.5.gz",
 			wantActions: []tinkerbell.Action{
 				{
-					Name:    "stream-image",
-					Image:   "public.ecr.aws/eks-anywhere/image2disk:latest",
+					Name:    "stream image to disk",
+					Image:   "127.0.0.1/embedded/image2disk",
 					Timeout: 600,
 					Environment: map[string]string{
 						"IMG_URL":    "http://tinkerbell-example:8080/redhat-8.4-kube-v1.21.5.gz",
@@ -196,8 +194,8 @@ warnings:
 					},
 				},
 				{
-					Name:    "write-netplan",
-					Image:   "public.ecr.aws/eks-anywhere/writefile:latest",
+					Name:    "write netplan config",
+					Image:   "127.0.0.1/embedded/writefile",
 					Timeout: 90,
 					Environment: map[string]string{
 						"DEST_DISK":      "{{ formatPartition ( index .Hardware.Disks 0 ) 1 }}",
@@ -212,8 +210,8 @@ warnings:
 					Pid: "host",
 				},
 				{
-					Name:    "disable-cloud-init-network-capabilities",
-					Image:   "public.ecr.aws/eks-anywhere/writefile:latest",
+					Name:    "disable cloud-init network capabilities",
+					Image:   "127.0.0.1/embedded/writefile",
 					Timeout: 90,
 					Environment: map[string]string{
 						"CONTENTS":  "network: {config: disabled}",
@@ -227,8 +225,8 @@ warnings:
 					},
 				},
 				{
-					Name:    "add-tink-cloud-init-config",
-					Image:   "public.ecr.aws/eks-anywhere/writefile:latest",
+					Name:    "add cloud-init config",
+					Image:   "127.0.0.1/embedded/writefile",
 					Timeout: 90,
 					Environment: map[string]string{
 						"DEST_DISK": "{{ formatPartition ( index .Hardware.Disks 0 ) 1 }}",
@@ -242,8 +240,8 @@ warnings:
 					},
 				},
 				{
-					Name:    "add-tink-cloud-init-ds-config",
-					Image:   "public.ecr.aws/eks-anywhere/writefile:latest",
+					Name:    "add cloud-init ds config",
+					Image:   "127.0.0.1/embedded/writefile",
 					Timeout: 90,
 					Environment: map[string]string{
 						"DEST_DISK": "{{ formatPartition ( index .Hardware.Disks 0 ) 1 }}",
@@ -257,8 +255,8 @@ warnings:
 					},
 				},
 				{
-					Name:    "reboot-image",
-					Image:   "public.ecr.aws/eks-anywhere/reboot:latest",
+					Name:    "reboot",
+					Image:   "127.0.0.1/embedded/reboot",
 					Timeout: 90,
 					Pid:     "host",
 					Volumes: []string{"/worker:/worker"},
@@ -272,8 +270,8 @@ warnings:
 			osImageOverride: "http://tinkerbell-example:8080/ubuntu-kube-v1.21.5.gz",
 			wantActions: []tinkerbell.Action{
 				{
-					Name:    "stream-image",
-					Image:   "public.ecr.aws/eks-anywhere/image2disk:latest",
+					Name:    "stream image to disk",
+					Image:   "127.0.0.1/embedded/image2disk",
 					Timeout: 600,
 					Environment: map[string]string{
 						"IMG_URL":    "http://tinkerbell-example:8080/ubuntu-kube-v1.21.5.gz",
@@ -282,8 +280,8 @@ warnings:
 					},
 				},
 				{
-					Name:    "write-netplan",
-					Image:   "public.ecr.aws/eks-anywhere/writefile:latest",
+					Name:    "write netplan config",
+					Image:   "127.0.0.1/embedded/writefile",
 					Timeout: 90,
 					Environment: map[string]string{
 						"DEST_DISK":      "{{ formatPartition ( index .Hardware.Disks 0 ) 2 }}",
@@ -298,8 +296,8 @@ warnings:
 					Pid: "host",
 				},
 				{
-					Name:    "disable-cloud-init-network-capabilities",
-					Image:   "public.ecr.aws/eks-anywhere/writefile:latest",
+					Name:    "disable cloud-init network capabilities",
+					Image:   "127.0.0.1/embedded/writefile",
 					Timeout: 90,
 					Environment: map[string]string{
 						"CONTENTS":  "network: {config: disabled}",
@@ -313,8 +311,8 @@ warnings:
 					},
 				},
 				{
-					Name:    "add-tink-cloud-init-config",
-					Image:   "public.ecr.aws/eks-anywhere/writefile:latest",
+					Name:    "add cloud-init config",
+					Image:   "127.0.0.1/embedded/writefile",
 					Timeout: 90,
 					Environment: map[string]string{
 						"DEST_DISK": "{{ formatPartition ( index .Hardware.Disks 0 ) 2 }}",
@@ -328,8 +326,8 @@ warnings:
 					},
 				},
 				{
-					Name:    "add-tink-cloud-init-ds-config",
-					Image:   "public.ecr.aws/eks-anywhere/writefile:latest",
+					Name:    "add cloud-init ds config",
+					Image:   "127.0.0.1/embedded/writefile",
 					Timeout: 90,
 					Environment: map[string]string{
 						"DEST_DISK": "{{ formatPartition ( index .Hardware.Disks 0 ) 2 }}",
@@ -343,8 +341,8 @@ warnings:
 					},
 				},
 				{
-					Name:    "reboot-image",
-					Image:   "public.ecr.aws/eks-anywhere/reboot:latest",
+					Name:    "reboot",
+					Image:   "127.0.0.1/embedded/reboot",
 					Timeout: 90,
 					Pid:     "host",
 					Volumes: []string{"/worker:/worker"},
@@ -358,8 +356,8 @@ warnings:
 			osImageOverride: "http://tinkerbell-example:8080/ubuntu-kube-v1.21.5.gz",
 			wantActions: []tinkerbell.Action{
 				{
-					Name:    "stream-image",
-					Image:   "public.ecr.aws/eks-anywhere/image2disk:latest",
+					Name:    "stream image to disk",
+					Image:   "127.0.0.1/embedded/image2disk",
 					Timeout: 600,
 					Environment: map[string]string{
 						"IMG_URL":    "http://tinkerbell-example:8080/ubuntu-kube-v1.21.5.gz",
@@ -368,8 +366,8 @@ warnings:
 					},
 				},
 				{
-					Name:    "write-netplan",
-					Image:   "public.ecr.aws/eks-anywhere/writefile:latest",
+					Name:    "write netplan config",
+					Image:   "127.0.0.1/embedded/writefile",
 					Timeout: 90,
 					Environment: map[string]string{
 						"DEST_DISK":      "{{ formatPartition ( index .Hardware.Disks 0 ) 2 }}",
@@ -384,8 +382,8 @@ warnings:
 					Pid: "host",
 				},
 				{
-					Name:    "disable-cloud-init-network-capabilities",
-					Image:   "public.ecr.aws/eks-anywhere/writefile:latest",
+					Name:    "disable cloud-init network capabilities",
+					Image:   "127.0.0.1/embedded/writefile",
 					Timeout: 90,
 					Environment: map[string]string{
 						"CONTENTS":  "network: {config: disabled}",
@@ -399,8 +397,8 @@ warnings:
 					},
 				},
 				{
-					Name:    "add-tink-cloud-init-config",
-					Image:   "public.ecr.aws/eks-anywhere/writefile:latest",
+					Name:    "add cloud-init config",
+					Image:   "127.0.0.1/embedded/writefile",
 					Timeout: 90,
 					Environment: map[string]string{
 						"DEST_DISK": "{{ formatPartition ( index .Hardware.Disks 0 ) 2 }}",
@@ -414,8 +412,8 @@ warnings:
 					},
 				},
 				{
-					Name:    "add-tink-cloud-init-ds-config",
-					Image:   "public.ecr.aws/eks-anywhere/writefile:latest",
+					Name:    "add cloud-init ds config",
+					Image:   "127.0.0.1/embedded/writefile",
 					Timeout: 90,
 					Environment: map[string]string{
 						"DEST_DISK": "{{ formatPartition ( index .Hardware.Disks 0 ) 2 }}",
@@ -429,8 +427,8 @@ warnings:
 					},
 				},
 				{
-					Name:    "reboot-image",
-					Image:   "public.ecr.aws/eks-anywhere/reboot:latest",
+					Name:    "reboot",
+					Image:   "127.0.0.1/embedded/reboot",
 					Timeout: 90,
 					Pid:     "host",
 					Volumes: []string{"/worker:/worker"},
@@ -456,8 +454,8 @@ warnings:
 			osImageOverride: "http://tinkerbell-example:8080/ubuntu-kube-v1.21.5.gz",
 			wantActions: []tinkerbell.Action{
 				{
-					Name:    "stream-image",
-					Image:   "public.ecr.aws/eks-anywhere/image2disk:latest",
+					Name:    "stream image to disk",
+					Image:   "127.0.0.1/embedded/image2disk",
 					Timeout: 600,
 					Environment: map[string]string{
 						"IMG_URL":     "http://tinkerbell-example:8080/ubuntu-kube-v1.21.5.gz",
@@ -469,8 +467,8 @@ warnings:
 					},
 				},
 				{
-					Name:    "write-netplan",
-					Image:   "public.ecr.aws/eks-anywhere/writefile:latest",
+					Name:    "write netplan config",
+					Image:   "127.0.0.1/embedded/writefile",
 					Timeout: 90,
 					Environment: map[string]string{
 						"DEST_DISK":      "{{ formatPartition ( index .Hardware.Disks 0 ) 2 }}",
@@ -485,8 +483,8 @@ warnings:
 					Pid: "host",
 				},
 				{
-					Name:    "disable-cloud-init-network-capabilities",
-					Image:   "public.ecr.aws/eks-anywhere/writefile:latest",
+					Name:    "disable cloud-init network capabilities",
+					Image:   "127.0.0.1/embedded/writefile",
 					Timeout: 90,
 					Environment: map[string]string{
 						"CONTENTS":  "network: {config: disabled}",
@@ -500,8 +498,8 @@ warnings:
 					},
 				},
 				{
-					Name:    "add-tink-cloud-init-config",
-					Image:   "public.ecr.aws/eks-anywhere/writefile:latest",
+					Name:    "add cloud-init config",
+					Image:   "127.0.0.1/embedded/writefile",
 					Timeout: 90,
 					Environment: map[string]string{
 						"DEST_DISK": "{{ formatPartition ( index .Hardware.Disks 0 ) 2 }}",
@@ -515,8 +513,8 @@ warnings:
 					},
 				},
 				{
-					Name:    "add-tink-cloud-init-ds-config",
-					Image:   "public.ecr.aws/eks-anywhere/writefile:latest",
+					Name:    "add cloud-init ds config",
+					Image:   "127.0.0.1/embedded/writefile",
 					Timeout: 90,
 					Environment: map[string]string{
 						"DEST_DISK": "{{ formatPartition ( index .Hardware.Disks 0 ) 2 }}",
@@ -530,8 +528,8 @@ warnings:
 					},
 				},
 				{
-					Name:    "reboot-image",
-					Image:   "public.ecr.aws/eks-anywhere/reboot:latest",
+					Name:    "reboot",
+					Image:   "127.0.0.1/embedded/reboot",
 					Timeout: 90,
 					Pid:     "host",
 					Volumes: []string{"/worker:/worker"},
@@ -543,7 +541,7 @@ warnings:
 	for _, tt := range tests {
 		t.Run(tt.testName, func(t *testing.T) {
 			givenActions := []tinkerbell.Action{}
-			opts := GetDefaultActionsFromBundle(tt.clusterSpec, vBundle, tt.osImageOverride, tinkerbellLocalIp, tinkerbellLBIP, tt.osFamily)
+			opts := DefaultActions(tt.clusterSpec, tt.osImageOverride, tinkerbellLocalIp, tinkerbellLBIP, tt.osFamily)
 			for _, opt := range opts {
 				opt(&givenActions)
 			}
@@ -551,35 +549,5 @@ warnings:
 				t.Fatalf("Expected file mismatch (-want +got):\n%s", diff)
 			}
 		})
-	}
-}
-
-func givenVersionBundle() v1alpha1.VersionsBundle {
-	return v1alpha1.VersionsBundle{
-		EksD: v1alpha1.EksDRelease{
-			Raw: v1alpha1.OSImageBundle{
-				Bottlerocket: v1alpha1.Archive{
-					URI: "http://tinkerbell-example:8080/bottlerocket-2004-kube-v1.21.5.gz",
-				},
-			},
-		},
-		Tinkerbell: v1alpha1.TinkerbellBundle{
-			TinkerbellStack: v1alpha1.TinkerbellStackBundle{
-				Actions: v1alpha1.ActionsBundle{
-					ImageToDisk: v1alpha1.Image{
-						URI: "public.ecr.aws/eks-anywhere/image2disk:latest",
-					},
-					WriteFile: v1alpha1.Image{
-						URI: "public.ecr.aws/eks-anywhere/writefile:latest",
-					},
-					Kexec: v1alpha1.Image{
-						URI: "public.ecr.aws/eks-anywhere/kexec:latest",
-					},
-					Reboot: v1alpha1.Image{
-						URI: "public.ecr.aws/eks-anywhere/reboot:latest",
-					},
-				},
-			},
-		},
 	}
 }

@@ -94,16 +94,10 @@ func NewGenerateTinkerbellTemplateConfig() *cobra.Command {
 			controlPlaneMachineConfigName := cs.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
 			controlPlaneMachineConfig := cs.TinkerbellMachineConfigs[controlPlaneMachineConfigName]
 			osFamily := controlPlaneMachineConfig.OSFamily()
-
-			// For modular upgrades the version bundle is retrieve per worker node group. However,
-			// because Tinkerbell action images are the same for every Kubernetes version within
-			// the same bundle manifest, its OK to just use the root version bundle.
-			bundle := *cs.RootVersionsBundle().VersionsBundle
-
 			osImageURL := cs.TinkerbellDatacenter.Spec.OSImageURL
 			tinkerbellIP := cs.TinkerbellDatacenter.Spec.TinkerbellIP
 
-			cfg := v1alpha1.NewDefaultTinkerbellTemplateConfigCreate(cs.Cluster, bundle, osImageURL,
+			cfg := v1alpha1.NewDefaultTinkerbellTemplateConfigCreate(cs.Cluster, osImageURL,
 				opts.BootstrapTinkerbellIP, tinkerbellIP, osFamily)
 
 			return yaml.NewK8sEncoder(os.Stdout).Encode(cfg)
