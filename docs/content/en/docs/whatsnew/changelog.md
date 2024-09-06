@@ -30,6 +30,32 @@ description: >
 * When upgrading to a new minor version, a new OS image must be created using the new image-builder CLI pertaining to that release.
 {{% /alert %}}
 
+## [v0.20.5](https://github.com/aws/eks-anywhere/releases/tag/v0.20.5)
+
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+|    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+| Bottlerocket 1.20.5 |    ✔    |     —      |    —    |     —      |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+|      RHEL 9.x       |    —    |     ✔      |    ✔    |     ✔      |  —   |
+
+### Changed
+- EKS Distro:
+  - `v1-27-eks-37` to [`v1-27-eks-38`](https://distro.eks.amazonaws.com/releases/1-27/38/)
+  - `v1-28-eks-30` to [`v1-28-eks-31`](https://distro.eks.amazonaws.com/releases/1-28/31/)
+  - `v1-29-eks-19` to [`v1-29-eks-20`](https://distro.eks.amazonaws.com/releases/1-29/20/)
+  - `v1-30-eks-12`  to [`v1-30-eks-13`](https://distro.eks.amazonaws.com/releases/1-30/13/)
+- Tinkerbell Stack:
+  - tink `v0.10.0` to `v0.10.1`
+- runc `v1.1.13` to `v1.1.14`
+- containerd `v1.7.20` to `v.1.7.21`
+- local-path-provisioner `v0.0.28` to `v0.0.29`
+
+### Fixed
+- Rollout new nodes for OSImageURL change on spec without changing K8s version ([#8656](https://github.com/aws/eks-anywhere/pull/8656))
+
 ## [v0.20.4](https://github.com/aws/eks-anywhere/releases/tag/v0.20.4)
 
 ### Supported OS version details
