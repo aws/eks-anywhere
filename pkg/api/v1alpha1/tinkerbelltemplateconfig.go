@@ -4,7 +4,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1/thirdparty/tinkerbell"
-	"github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
 const TinkerbellTemplateConfigKind = "TinkerbellTemplateConfig"
@@ -12,9 +11,8 @@ const TinkerbellTemplateConfigKind = "TinkerbellTemplateConfig"
 // +kubebuilder:object:generate=false
 type ActionOpt func(action *[]tinkerbell.Action)
 
-// NewDefaultTinkerbellTemplateConfigCreate returns a default TinkerbellTemplateConfig with the
-// required Tasks and Actions.
-func NewDefaultTinkerbellTemplateConfigCreate(clusterSpec *Cluster, versionBundle v1alpha1.VersionsBundle, osImageOverride, tinkerbellLocalIP, tinkerbellLBIP string, osFamily OSFamily) *TinkerbellTemplateConfig {
+// NewDefaultTinkerbellTemplateConfigCreate returns a default TinkerbellTemplateConfig with the required Tasks and Actions.
+func NewDefaultTinkerbellTemplateConfigCreate(clusterSpec *Cluster, osImageOverride, tinkerbellLocalIP, tinkerbellLBIP string, osFamily OSFamily) *TinkerbellTemplateConfig {
 	config := &TinkerbellTemplateConfig{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       TinkerbellTemplateConfigKind,
@@ -41,7 +39,7 @@ func NewDefaultTinkerbellTemplateConfigCreate(clusterSpec *Cluster, versionBundl
 		},
 	}
 
-	defaultActions := GetDefaultActionsFromBundle(clusterSpec, versionBundle, osImageOverride, tinkerbellLocalIP, tinkerbellLBIP, osFamily)
+	defaultActions := DefaultActions(clusterSpec, osImageOverride, tinkerbellLocalIP, tinkerbellLBIP, osFamily)
 	for _, action := range defaultActions {
 		action(&config.Spec.Template.Tasks[0].Actions)
 	}

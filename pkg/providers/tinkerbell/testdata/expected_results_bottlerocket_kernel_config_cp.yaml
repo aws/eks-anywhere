@@ -379,8 +379,8 @@ spec:
               COMPRESSED: "true"
               DEST_DISK: '{{ index .Hardware.Disks 0 }}'
               IMG_URL: https://bottlerocket-1-21.gz
-            image: ""
-            name: stream-image
+            image: 127.0.0.1/embedded/image2disk
+            name: stream image to disk
             timeout: 600
           - environment:
               BOOTCONFIG_CONTENTS: kernel {}
@@ -391,8 +391,8 @@ spec:
               GID: "0"
               MODE: "0644"
               UID: "0"
-            image: ""
-            name: write-bootconfig
+            image: 127.0.0.1/embedded/writefile
+            name: write Bottlerocket bootconfig
             pid: host
             timeout: 90
           - environment:
@@ -404,8 +404,8 @@ spec:
               HEGEL_URLS: http://5.6.7.8:50061,http://5.6.7.8:50061
               MODE: "0644"
               UID: "0"
-            image: ""
-            name: write-user-data
+            image: 127.0.0.1/embedded/writefile
+            name: write Bottlerocket user data
             pid: host
             timeout: 90
           - environment:
@@ -418,12 +418,12 @@ spec:
               MODE: "0644"
               STATIC_BOTTLEROCKET: "true"
               UID: "0"
-            image: ""
-            name: write-netplan
+            image: 127.0.0.1/embedded/writefile
+            name: write netplan config
             pid: host
             timeout: 90
-          - image: ""
-            name: reboot-image
+          - image: 127.0.0.1/embedded/reboot
+            name: reboot
             pid: host
             timeout: 90
             volumes:
