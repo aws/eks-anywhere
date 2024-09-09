@@ -3918,7 +3918,7 @@ func TestVSphereKubernetes129UbuntuTo130InPlaceUpgradeWorkerOnly(t *testing.T) {
 		framework.WithEnvVar(features.VSphereInPlaceEnvVar, "true"),
 	).WithClusterConfig(
 		api.ClusterToConfigFiller(
-			api.WithKubernetesVersion(kube129),
+			api.WithKubernetesVersion(kube130),
 			api.WithControlPlaneCount(1),
 			api.WithWorkerNodeCount(1),
 			api.WithWorkerKubernetesVersion(nodeGroupLabel1, &kube129),
