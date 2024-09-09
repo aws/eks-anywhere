@@ -21,8 +21,8 @@ ARTIFACTS_BUCKET?=my-s3-bucket
 GIT_VERSION?=$(shell git describe --tag)
 GIT_TAG?=$(shell git tag -l "v*.*.*" --sort -v:refname | head -1)
 GOLANG_VERSION?="1.21"
-GO_VERSION ?= $(shell source ./scripts/common.sh && build::common::get_go_path $(GOLANG_VERSION))
-GO ?= $(GO_VERSION)/go
+GO_PATH?= $(shell source ./scripts/common.sh && build::common::get_go_path $(GOLANG_VERSION))
+GO ?= $(GO_PATH)/go
 GO_TEST ?= $(GO) test
 # A regular expression defining what packages to exclude from the unit-test recipe.
 UNIT_TEST_PACKAGE_EXCLUSION_REGEX ?=mocks$
@@ -61,10 +61,10 @@ BUNDLE_MANIFEST_URL?=$(shell curl $(RELEASE_MANIFEST_URL) | yq ".spec.releases[-
 ifneq ($(PULL_BASE_REF),)
 # PULL_BASE_REF originates from prow
 # If prow presubmit, ping to the latest available version
-	DEV_GIT_VERSION ?= $(shell source ./scripts/eksa_version.sh && eksa-version::latest_release_verison_in_manifest "$(RELEASE_MANIFEST_URL)")
+	DEV_GIT_VERSION ?= $(shell source ./scripts/eksa_version.sh && eksa-version::latest_release_version_in_manifest "$(RELEASE_MANIFEST_URL)")
 else ifeq ($(CODEBUILD_CI),true)
 # If codebuild e2e tests, ping to the latest available version
-	DEV_GIT_VERSION ?= $(shell source ./scripts/eksa_version.sh && eksa-version::latest_release_verison_in_manifest "$(RELEASE_MANIFEST_URL)")
+	DEV_GIT_VERSION ?= $(shell source ./scripts/eksa_version.sh && eksa-version::latest_release_version_in_manifest "$(RELEASE_MANIFEST_URL)")
 else
 # Else, this is a local buid, so use "dev+latest" to always select the latest
 # version in the manifest in runtime.
@@ -285,7 +285,7 @@ $(KUBEBUILDER): $(TOOLS_BIN_DIR)
 	chmod +x $(KUBEBUILDER)
 
 $(CONTROLLER_GEN): $(TOOLS_BIN_DIR)
-	GOBIN=$(TOOLS_BIN_DIR_ABS) $(GO) install sigs.k8s.io/controller-tools/cmd/controller-gen@v0.6.1
+	GOBIN=$(TOOLS_BIN_DIR_ABS) $(GO) install sigs.k8s.io/controller-tools/cmd/controller-gen@v0.8.0
 
 $(GO_VULNCHECK): $(TOOLS_BIN_DIR)
 	GOBIN=$(TOOLS_BIN_DIR_ABS) $(GO) install golang.org/x/vuln/cmd/govulncheck@latest
@@ -545,7 +545,7 @@ packages-e2e-test: build-all-test-binaries ## Run Curated Packages tests
 	./bin/e2e.test -test.v -test.run $(PACKAGES_E2E_TESTS)
 
 .PHONY: mocks
-mocks: export PATH := $(GO_VERSION):$(PATH)
+mocks: export PATH := $(GO_PATH):$(PATH)
 mocks: MOCKGEN := ${GOPATH}/bin/mockgen --build_flags=--mod=mod
 mocks: ## Generate mocks
 	$(GO) install github.com/golang/mock/mockgen@v1.6.0
@@ -674,7 +674,7 @@ build-eks-a-for-e2e:
 
 .PHONY: eks-a-for-dev-e2e
 eks-a-for-dev-e2e:
-	DEV_GIT_VERSION=$(shell source ./scripts/eksa_version.sh && eksa-version::latest_release_verison_in_manifest "$(RELEASE_MANIFEST_URL)") $(MAKE) eks-a;
+	DEV_GIT_VERSION=$(shell source ./scripts/eksa_version.sh && eksa-version::latest_release_version_in_manifest "$(RELEASE_MANIFEST_URL)") $(MAKE) eks-a;
 
 .PHONY: e2e-tests-binary
 e2e-tests-binary: E2E_TAGS ?= e2e

@@ -20,30 +20,40 @@ set -o pipefail
 
 function set_aws_config() {
     release_environment="$1"
-    if [ "$STAGING_ARTIFACT_DEPLOYMENT_ROLE" = "" ]; then
-        echo "Empty STAGING_ARTIFACT_DEPLOYMENT_ROLE"
-        exit 1
+    release_type="$2"
+    if [ "$release_environment" = "" ] || ([ "$release_environment" = "development" ] && [ "$release_type" = "bundle" ]); then
+        cat << EOF > awscliconfig
+[profile packages-beta]
+role_arn=$PACKAGES_ECR_ROLE
+region=us-west-2
+credential_source=EcsContainer
+EOF
     fi
-    cat << EOF > awscliconfig
+    if [ "$release_environment" = "development" ] || [ "$release_environment" = "production" ]; then
+        if [ "$STAGING_ARTIFACT_DEPLOYMENT_ROLE" = "" ]; then
+            echo "Empty STAGING_ARTIFACT_DEPLOYMENT_ROLE"
+            exit 1
+        fi
+        cat << EOF >> awscliconfig
 [profile artifacts-staging]
 role_arn=$STAGING_ARTIFACT_DEPLOYMENT_ROLE
 region=us-east-1
 credential_source=EcsContainer
-
 EOF
 
-    if [ "$release_environment" = "production" ]; then
-        if [ "$PROD_ARTIFACT_DEPLOYMENT_ROLE" = "" ]; then
-            echo "Empty PROD_ARTIFACT_DEPLOYMENT_ROLE"
-            exit 1
-        fi
-        cat << EOF >> awscliconfig
+        if [ "$release_environment" = "production" ]; then
+            if [ "$PROD_ARTIFACT_DEPLOYMENT_ROLE" = "" ]; then
+                echo "Empty PROD_ARTIFACT_DEPLOYMENT_ROLE"
+                exit 1
+            fi
+            cat << EOF >> awscliconfig
 [profile artifacts-production]
 role_arn=$PROD_ARTIFACT_DEPLOYMENT_ROLE
 region=us-east-1
 credential_source=EcsContainer
 EOF
-    fi
+        fi
+fi
 
     export AWS_CONFIG_FILE=$(pwd)/awscliconfig
 }

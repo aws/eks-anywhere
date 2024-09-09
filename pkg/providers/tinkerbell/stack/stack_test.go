@@ -46,6 +46,8 @@ func getTinkBundle() releasev1alpha1.TinkerbellBundle {
 				TinkController: releasev1alpha1.Image{URI: "public.ecr.aws/eks-anywhere/tink-controller:latest"},
 				TinkServer:     releasev1alpha1.Image{URI: "public.ecr.aws/eks-anywhere/tink-server:latest"},
 				TinkWorker:     releasev1alpha1.Image{URI: "public.ecr.aws/eks-anywhere/tink-worker:latest"},
+				TinkRelay:      releasev1alpha1.Image{URI: "public.ecr.aws/eks-anywhere/tink-relay:latest"},
+				TinkRelayInit:  releasev1alpha1.Image{URI: "public.ecr.aws/eks-anywhere/tink-relay-init:latest"},
 			},
 			Boots: releasev1alpha1.Image{URI: "public.ecr.aws/eks-anywhere/boots:latest"},
 			Hegel: releasev1alpha1.Image{URI: "public.ecr.aws/eks-anywhere/hegel:latest"},

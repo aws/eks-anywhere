@@ -40,6 +40,7 @@ import (
 	releasetypes "github.com/aws/eks-anywhere/release/cli/pkg/types"
 	artifactutils "github.com/aws/eks-anywhere/release/cli/pkg/util/artifacts"
 	commandutils "github.com/aws/eks-anywhere/release/cli/pkg/util/command"
+	packagesutils "github.com/aws/eks-anywhere/release/cli/pkg/util/packages"
 )
 
 func PollForExistence(devRelease bool, authConfig *docker.AuthConfiguration, imageUri, imageContainerRegistry, releaseEnvironment, branchName string) error {
@@ -127,31 +128,24 @@ func CopyToDestination(sourceAuthConfig, releaseAuthConfig *docker.AuthConfigura
 func GetSourceImageURI(r *releasetypes.ReleaseConfig, name, repoName string, tagOptions map[string]string, imageTagConfiguration assettypes.ImageTagConfiguration, trimVersionSignifier, hasSeparateTagPerReleaseBranch bool) (string, string, error) {
 	var sourceImageUri string
 	var latestTag string
-	var err error
 	sourcedFromBranch := r.BuildRepoBranchName
+	sourceContainerRegistry := r.SourceContainerRegistry
+	if packagesutils.NeedsPackagesAccountArtifacts(r) && (repoName == "eks-anywhere-packages" || repoName == "ecr-token-refresher" || repoName == "credential-provider-package") {
+		sourceContainerRegistry = r.PackagesSourceContainerRegistry
+	}
 	if r.DevRelease || r.ReleaseEnvironment == "development" {
 		latestTag = artifactutils.GetLatestUploadDestination(r.BuildRepoBranchName)
-		if imageTagConfiguration.SourceLatestTagFromECR && !r.DryRun {
-			if (strings.Contains(name, "eks-anywhere-packages") || strings.Contains(name, "ecr-token-refresher")) && r.BuildRepoBranchName != "main" {
-				latestTag, _, err = ecr.FilterECRRepoByTagPrefix(r.SourceClients.ECR.EcrClient, repoName, "v0.0.0", false)
-			} else {
-				latestTag, err = ecr.GetLatestImageSha(r.SourceClients.ECR.EcrClient, repoName)
-			}
-			if err != nil {
-				return "", "", errors.Cause(err)
-			}
-		}
 		if imageTagConfiguration.NonProdSourceImageTagFormat != "" {
 			sourceImageTagPrefix := generateFormattedTagPrefix(imageTagConfiguration.NonProdSourceImageTagFormat, tagOptions)
 			sourceImageUri = fmt.Sprintf("%s/%s:%s-%s",
-				r.SourceContainerRegistry,
+				sourceContainerRegistry,
 				repoName,
 				sourceImageTagPrefix,
 				latestTag,
 			)
 		} else {
 			sourceImageUri = fmt.Sprintf("%s/%s:%s",
-				r.SourceContainerRegistry,
+				sourceContainerRegistry,
 				repoName,
 				latestTag,
 			)
@@ -164,7 +158,10 @@ func GetSourceImageURI(r *releasetypes.ReleaseConfig, name, repoName string, tag
 		}
 		if !r.DryRun {
 			sourceEcrAuthConfig := r.SourceClients.ECR.AuthConfig
-			err := PollForExistence(r.DevRelease, sourceEcrAuthConfig, sourceImageUri, r.SourceContainerRegistry, r.ReleaseEnvironment, r.BuildRepoBranchName)
+			if packagesutils.NeedsPackagesAccountArtifacts(r) && (repoName == "eks-anywhere-packages" || repoName == "ecr-token-refresher" || repoName == "credential-provider-package") {
+				sourceEcrAuthConfig = r.SourceClients.Packages.AuthConfig
+			}
+			err := PollForExistence(r.DevRelease, sourceEcrAuthConfig, sourceImageUri, sourceContainerRegistry, r.ReleaseEnvironment, r.BuildRepoBranchName)
 			if err != nil {
 				if r.BuildRepoBranchName != "main" {
 					fmt.Printf("Tag corresponding to %s branch not found for %s image. Using image artifact from main\n", r.BuildRepoBranchName, repoName)

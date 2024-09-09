@@ -8,7 +8,6 @@ rufio:
   image: public.ecr.aws/eks-anywhere/rufio:latest
 smee:
   deploy: false
-  hostNetwork: true
   http:
     additionalKernelArgs:
     - tink_worker_image=public.ecr.aws/eks-anywhere/tink-worker:latest
@@ -34,11 +33,15 @@ stack:
     additionalEnv:
     - name: prometheus_server
       value: :2213
+    - name: lb_class_only
+      value: "true"
     enabled: false
     image: public.ecr.aws/eks-anywhere/kube-vip:latest
   loadBalancerIP: 1.2.3.4
   relay:
     enabled: false
+    image: public.ecr.aws/eks-anywhere/tink-relay:latest
+    initImage: public.ecr.aws/eks-anywhere/tink-relay-init:latest
   service:
     enabled: false
 tink:

@@ -536,6 +536,125 @@ func TestReconcilerValidateHardwareNoHardware(t *testing.T) {
 	tt.cleanup()
 }
 
+func TestReconcilerValidateHardwareControlPlaneOSImageChangeError(t *testing.T) {
+	tt := newReconcilerTest(t)
+	worker := tinkWorker(tt.cluster.Name, func(w *tinkerbell.Workers) {
+		w.Groups[0].MachineDeployment.Name = "workload-cluster-md-0"
+	})
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, worker.Groups[0].MachineDeployment)
+	tt.createAllObjs()
+
+	logger := test.NewNullLogger()
+	scope := tt.buildScope()
+	cpRef := scope.ClusterSpec.Config.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
+	scope.ClusterSpec.Config.Cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy = &anywherev1.ControlPlaneUpgradeRolloutStrategy{
+		Type: anywherev1.RollingUpdateStrategyType,
+		RollingUpdate: &anywherev1.ControlPlaneRollingUpdateParams{
+			MaxSurge: 1,
+		},
+	}
+	scope.ClusterSpec.Config.TinkerbellMachineConfigs[cpRef].Spec.OSImageURL = "new-os-image"
+
+	_, err := tt.reconciler().GenerateSpec(tt.ctx, logger, scope)
+	tt.Expect(err).NotTo(HaveOccurred())
+	_, err = tt.reconciler().DetectOperation(tt.ctx, logger, scope)
+	tt.Expect(err).NotTo(HaveOccurred())
+	result, err := tt.reconciler().ValidateHardware(tt.ctx, logger, scope)
+
+	tt.Expect(err).ToNot(BeNil())
+	tt.Expect(result).To(Equal(controller.Result{}), "result should not stop reconciliation")
+	tt.Expect(*tt.cluster.Status.FailureMessage).To(ContainSubstring("minimum hardware count not met for selector '{\"type\":\"cp\"}'"))
+	tt.Expect(tt.cluster.Status.FailureReason).To(HaveValue(Equal(anywherev1.HardwareInvalidReason)))
+	tt.cleanup()
+}
+
+func TestReconcilerValidateHardwareControlPlaneOSImageChangeSuccess(t *testing.T) {
+	tt := newReconcilerTest(t)
+	worker := tinkWorker(tt.cluster.Name, func(w *tinkerbell.Workers) {
+		w.Groups[0].MachineDeployment.Name = "workload-cluster-md-0"
+	})
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, tinkHardware("hw1", "cp"), worker.Groups[0].MachineDeployment)
+	tt.createAllObjs()
+
+	logger := test.NewNullLogger()
+	scope := tt.buildScope()
+	cpRef := scope.ClusterSpec.Config.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
+	scope.ClusterSpec.Config.Cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy = &anywherev1.ControlPlaneUpgradeRolloutStrategy{
+		Type: anywherev1.RollingUpdateStrategyType,
+		RollingUpdate: &anywherev1.ControlPlaneRollingUpdateParams{
+			MaxSurge: 1,
+		},
+	}
+	scope.ClusterSpec.Config.TinkerbellMachineConfigs[cpRef].Spec.OSImageURL = "new-os-image"
+
+	_, err := tt.reconciler().GenerateSpec(tt.ctx, logger, scope)
+	tt.Expect(err).NotTo(HaveOccurred())
+	_, err = tt.reconciler().DetectOperation(tt.ctx, logger, scope)
+	tt.Expect(err).NotTo(HaveOccurred())
+	result, err := tt.reconciler().ValidateHardware(tt.ctx, logger, scope)
+
+	tt.Expect(err).NotTo(HaveOccurred())
+	tt.Expect(result).To(Equal(controller.Result{}))
+	tt.cleanup()
+}
+
+func TestReconcilerValidateHardwareWorkerNodeGroupOSImageChangeError(t *testing.T) {
+	tt := newReconcilerTest(t)
+	// tt.eksaSupportObjs = append(tt.eksaSupportObjs, tinkHardware("hw1", "cp"))
+
+	tt.createAllObjs()
+
+	logger := test.NewNullLogger()
+	scope := tt.buildScope()
+	wngRef := scope.ClusterSpec.Config.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
+	scope.ClusterSpec.Config.Cluster.Spec.WorkerNodeGroupConfigurations[0].UpgradeRolloutStrategy = &anywherev1.WorkerNodesUpgradeRolloutStrategy{
+		Type: anywherev1.RollingUpdateStrategyType,
+		RollingUpdate: &anywherev1.WorkerNodesRollingUpdateParams{
+			MaxSurge:       1,
+			MaxUnavailable: 0,
+		},
+	}
+	scope.ClusterSpec.Config.TinkerbellMachineConfigs[wngRef].Spec.OSImageURL = "new-os-image"
+	_, err := tt.reconciler().GenerateSpec(tt.ctx, logger, scope)
+	tt.Expect(err).NotTo(HaveOccurred())
+	_, err = tt.reconciler().DetectOperation(tt.ctx, logger, scope)
+	tt.Expect(err).NotTo(HaveOccurred())
+	result, err := tt.reconciler().ValidateHardware(tt.ctx, logger, scope)
+
+	tt.Expect(err).ToNot(BeNil())
+	tt.Expect(result).To(Equal(controller.Result{}), "result should not stop reconciliation")
+	tt.Expect(*tt.cluster.Status.FailureMessage).To(ContainSubstring("minimum hardware count not met for selector '{\"type\":\"worker\"}'"))
+	tt.Expect(tt.cluster.Status.FailureReason).To(HaveValue(Equal(anywherev1.HardwareInvalidReason)))
+	tt.cleanup()
+}
+
+func TestReconcilerValidateHardwareWorkerNodeGroupOSImageChangeSuccess(t *testing.T) {
+	tt := newReconcilerTest(t)
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, tinkHardware("hw2", "worker"))
+	tt.createAllObjs()
+
+	logger := test.NewNullLogger()
+	scope := tt.buildScope()
+	wngRef := scope.ClusterSpec.Config.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
+	scope.ClusterSpec.Config.Cluster.Spec.WorkerNodeGroupConfigurations[0].UpgradeRolloutStrategy = &anywherev1.WorkerNodesUpgradeRolloutStrategy{
+		Type: anywherev1.RollingUpdateStrategyType,
+		RollingUpdate: &anywherev1.WorkerNodesRollingUpdateParams{
+			MaxSurge:       1,
+			MaxUnavailable: 0,
+		},
+	}
+	scope.ClusterSpec.Config.TinkerbellMachineConfigs[wngRef].Spec.OSImageURL = "new-os-image"
+	_, err := tt.reconciler().GenerateSpec(tt.ctx, logger, scope)
+	tt.Expect(err).NotTo(HaveOccurred())
+	_, err = tt.reconciler().DetectOperation(tt.ctx, logger, scope)
+	tt.Expect(err).NotTo(HaveOccurred())
+	result, err := tt.reconciler().ValidateHardware(tt.ctx, logger, scope)
+
+	tt.Expect(err).NotTo(HaveOccurred())
+	tt.Expect(result).To(Equal(controller.Result{}))
+	tt.cleanup()
+}
+
 func TestReconcilerValidateRufioMachinesFail(t *testing.T) {
 	tt := newReconcilerTest(t)
 	logger := test.NewNullLogger()
@@ -1073,6 +1192,73 @@ func tinkHardware(hardwareName, labelType string) *tinkv1alpha1.Hardware {
 
 type cpOpt func(plane *tinkerbell.ControlPlane)
 
+var testTemplateOverride = `global_timeout: 6000
+id: ""
+name: workload-cluster
+tasks:
+- actions:
+  - environment:
+      COMPRESSED: "true"
+      DEST_DISK: '{{ index .Hardware.Disks 0 }}'
+      IMG_URL: ""
+    image: 127.0.0.1/embedded/image2disk
+    name: stream image to disk
+    timeout: 600
+  - environment:
+      BOOTCONFIG_CONTENTS: kernel {}
+      DEST_DISK: '{{ formatPartition ( index .Hardware.Disks 0 ) 12 }}'
+      DEST_PATH: /bootconfig.data
+      DIRMODE: "0700"
+      FS_TYPE: ext4
+      GID: "0"
+      MODE: "0644"
+      UID: "0"
+    image: 127.0.0.1/embedded/writefile
+    name: write Bottlerocket bootconfig
+    pid: host
+    timeout: 90
+  - environment:
+      DEST_DISK: '{{ formatPartition ( index .Hardware.Disks 0 ) 12 }}'
+      DEST_PATH: /user-data.toml
+      DIRMODE: "0700"
+      FS_TYPE: ext4
+      GID: "0"
+      HEGEL_URLS: http://2.2.2.2:50061,http://2.2.2.2:50061
+      MODE: "0644"
+      UID: "0"
+    image: 127.0.0.1/embedded/writefile
+    name: write Bottlerocket user data
+    pid: host
+    timeout: 90
+  - environment:
+      DEST_DISK: '{{ formatPartition ( index .Hardware.Disks 0 ) 12 }}'
+      DEST_PATH: /net.toml
+      DIRMODE: "0755"
+      FS_TYPE: ext4
+      GID: "0"
+      IFNAME: eno1
+      MODE: "0644"
+      STATIC_BOTTLEROCKET: "true"
+      UID: "0"
+    image: 127.0.0.1/embedded/writefile
+    name: write netplan config
+    pid: host
+    timeout: 90
+  - image: 127.0.0.1/embedded/reboot
+    name: reboot
+    pid: host
+    timeout: 90
+    volumes:
+    - /worker:/worker
+  name: workload-cluster
+  volumes:
+  - /dev:/dev
+  - /dev/console:/dev/console
+  - /lib/firmware:/lib/firmware:ro
+  worker: '{{.device_1}}'
+version: "0.1"
+`
+
 func tinkerbellCP(clusterName string, opts ...cpOpt) *tinkerbell.ControlPlane {
 	cp := &tinkerbell.ControlPlane{
 		BaseControlPlane: tinkerbell.BaseControlPlane{
@@ -1433,7 +1619,7 @@ rules:
 				Spec: tinkerbellv1.TinkerbellMachineTemplateSpec{
 					Template: tinkerbellv1.TinkerbellMachineTemplateResource{
 						Spec: tinkerbellv1.TinkerbellMachineSpec{
-							TemplateOverride: "global_timeout: 6000\nid: \"\"\nname: workload-cluster\ntasks:\n- actions:\n  - environment:\n      COMPRESSED: \"true\"\n      DEST_DISK: '{{ index .Hardware.Disks 0 }}'\n      IMG_URL: \"\"\n    image: \"\"\n    name: stream-image\n    timeout: 600\n  - environment:\n      BOOTCONFIG_CONTENTS: kernel {}\n      DEST_DISK: '{{ formatPartition ( index .Hardware.Disks 0 ) 12 }}'\n      DEST_PATH: /bootconfig.data\n      DIRMODE: \"0700\"\n      FS_TYPE: ext4\n      GID: \"0\"\n      MODE: \"0644\"\n      UID: \"0\"\n    image: \"\"\n    name: write-bootconfig\n    pid: host\n    timeout: 90\n  - environment:\n      DEST_DISK: '{{ formatPartition ( index .Hardware.Disks 0 ) 12 }}'\n      DEST_PATH: /user-data.toml\n      DIRMODE: \"0700\"\n      FS_TYPE: ext4\n      GID: \"0\"\n      HEGEL_URLS: http://2.2.2.2:50061,http://2.2.2.2:50061\n      MODE: \"0644\"\n      UID: \"0\"\n    image: \"\"\n    name: write-user-data\n    pid: host\n    timeout: 90\n  - environment:\n      DEST_DISK: '{{ formatPartition ( index .Hardware.Disks 0 ) 12 }}'\n      DEST_PATH: /net.toml\n      DIRMODE: \"0755\"\n      FS_TYPE: ext4\n      GID: \"0\"\n      IFNAME: eno1\n      MODE: \"0644\"\n      STATIC_BOTTLEROCKET: \"true\"\n      UID: \"0\"\n    image: \"\"\n    name: write-netplan\n    pid: host\n    timeout: 90\n  - image: \"\"\n    name: reboot-image\n    pid: host\n    timeout: 90\n    volumes:\n    - /worker:/worker\n  name: workload-cluster\n  volumes:\n  - /dev:/dev\n  - /dev/console:/dev/console\n  - /lib/firmware:/lib/firmware:ro\n  worker: '{{.device_1}}'\nversion: \"0.1\"\n",
+							TemplateOverride: testTemplateOverride,
 							HardwareAffinity: &tinkerbellv1.HardwareAffinity{
 								Required: []tinkerbellv1.HardwareAffinityTerm{
 									{LabelSelector: metav1.LabelSelector{
@@ -1573,7 +1759,7 @@ func tinkWorker(clusterName string, opts ...workerOpt) *tinkerbell.Workers {
 					},
 					Spec: tinkerbellv1.TinkerbellMachineTemplateSpec{
 						Template: tinkerbellv1.TinkerbellMachineTemplateResource{Spec: tinkerbellv1.TinkerbellMachineSpec{
-							TemplateOverride: "global_timeout: 6000\nid: \"\"\nname: " + clusterName + "\ntasks:\n- actions:\n  - environment:\n      COMPRESSED: \"true\"\n      DEST_DISK: '{{ index .Hardware.Disks 0 }}'\n      IMG_URL: \"\"\n    image: \"\"\n    name: stream-image\n    timeout: 600\n  - environment:\n      BOOTCONFIG_CONTENTS: kernel {}\n      DEST_DISK: '{{ formatPartition ( index .Hardware.Disks 0 ) 12 }}'\n      DEST_PATH: /bootconfig.data\n      DIRMODE: \"0700\"\n      FS_TYPE: ext4\n      GID: \"0\"\n      MODE: \"0644\"\n      UID: \"0\"\n    image: \"\"\n    name: write-bootconfig\n    pid: host\n    timeout: 90\n  - environment:\n      DEST_DISK: '{{ formatPartition ( index .Hardware.Disks 0 ) 12 }}'\n      DEST_PATH: /user-data.toml\n      DIRMODE: \"0700\"\n      FS_TYPE: ext4\n      GID: \"0\"\n      HEGEL_URLS: http://2.2.2.2:50061,http://2.2.2.2:50061\n      MODE: \"0644\"\n      UID: \"0\"\n    image: \"\"\n    name: write-user-data\n    pid: host\n    timeout: 90\n  - environment:\n      DEST_DISK: '{{ formatPartition ( index .Hardware.Disks 0 ) 12 }}'\n      DEST_PATH: /net.toml\n      DIRMODE: \"0755\"\n      FS_TYPE: ext4\n      GID: \"0\"\n      IFNAME: eno1\n      MODE: \"0644\"\n      STATIC_BOTTLEROCKET: \"true\"\n      UID: \"0\"\n    image: \"\"\n    name: write-netplan\n    pid: host\n    timeout: 90\n  - image: \"\"\n    name: reboot-image\n    pid: host\n    timeout: 90\n    volumes:\n    - /worker:/worker\n  name: workload-cluster\n  volumes:\n  - /dev:/dev\n  - /dev/console:/dev/console\n  - /lib/firmware:/lib/firmware:ro\n  worker: '{{.device_1}}'\nversion: \"0.1\"\n",
+							TemplateOverride: testTemplateOverride,
 							HardwareAffinity: &tinkerbellv1.HardwareAffinity{
 								Required: []tinkerbellv1.HardwareAffinityTerm{
 									{

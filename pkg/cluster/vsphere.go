@@ -2,7 +2,9 @@ package cluster
 
 import (
 	"context"
+	"fmt"
 
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 )
 
@@ -39,13 +41,21 @@ func vsphereEntry() *ConfigManagerEntry {
 			func(c *Config) error {
 				if c.VSphereDatacenter != nil {
 					return c.VSphereDatacenter.Validate()
+				} else if c.Cluster.Spec.DatacenterRef.Kind == v1alpha1.VSphereDatacenterKind { // We need this conditional check as VSphereDatacenter will be nil for other providers
+					return fmt.Errorf("VSphereDatacenterConfig %s not found", c.Cluster.Spec.DatacenterRef.Name)
 				}
 				return nil
 			},
 			func(c *Config) error {
-				for _, m := range c.VSphereMachineConfigs {
-					if err := m.Validate(); err != nil {
-						return err
+				if c.VSphereMachineConfigs != nil { // We need this conditional check as VSphereMachineConfigs will be nil for other providers
+					for _, mcRef := range c.Cluster.MachineConfigRefs() {
+						m, ok := c.VSphereMachineConfigs[mcRef.Name]
+						if !ok {
+							return fmt.Errorf("VSphereMachineConfig %s not found", mcRef.Name)
+						}
+						if err := m.Validate(); err != nil {
+							return err
+						}
 					}
 				}
 				return nil

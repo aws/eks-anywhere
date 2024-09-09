@@ -31,8 +31,9 @@ import (
 )
 
 type SourceClients struct {
-	S3  *SourceS3Clients
-	ECR *SourceECRClient
+	S3       *SourceS3Clients
+	ECR      *SourceECRClient
+	Packages *SourceECRClient
 }
 
 type ReleaseClients struct {
@@ -87,6 +88,17 @@ func CreateDevReleaseClients(dryRun bool) (*SourceClients, *ReleaseClients, erro
 		return nil, nil, errors.Cause(err)
 	}
 
+	// Session for beta-pdx-packages
+	packagesSession, err := session.NewSessionWithOptions(session.Options{
+		Config: aws.Config{
+			Region: aws.String("us-west-2"),
+		},
+		Profile: "packages-beta",
+	})
+	if err != nil {
+		return nil, nil, errors.Cause(err)
+	}
+
 	// S3 client and uploader
 	s3Client := s3.New(pdxSession)
 	downloader := s3manager.NewDownloader(pdxSession)
@@ -95,6 +107,13 @@ func CreateDevReleaseClients(dryRun bool) (*SourceClients, *ReleaseClients, erro
 	// Get source ECR auth config
 	ecrClient := ecrsdk.New(pdxSession)
 	sourceAuthConfig, err := ecr.GetAuthConfig(ecrClient)
+	if err != nil {
+		return nil, nil, errors.Cause(err)
+	}
+
+	// Get packages source ECR auth config
+	packagesECRClient := ecrsdk.New(packagesSession)
+	packagesSourceAuthConfig, err := ecr.GetAuthConfig(packagesECRClient)
 	if err != nil {
 		return nil, nil, errors.Cause(err)
 	}
@@ -116,6 +135,10 @@ func CreateDevReleaseClients(dryRun bool) (*SourceClients, *ReleaseClients, erro
 			EcrClient:  ecrClient,
 			AuthConfig: sourceAuthConfig,
 		},
+		Packages: &SourceECRClient{
+			EcrClient:  packagesECRClient,
+			AuthConfig: packagesSourceAuthConfig,
+		},
 	}
 
 	// Constructing release clients
@@ -134,7 +157,7 @@ func CreateDevReleaseClients(dryRun bool) (*SourceClients, *ReleaseClients, erro
 }
 
 // Function to create clients for staging release.
-func CreateStagingReleaseClients() (*SourceClients, *ReleaseClients, error) {
+func CreateStagingReleaseClients(bundleRelease bool) (*SourceClients, *ReleaseClients, error) {
 	fmt.Println("\n==========================================================")
 	fmt.Println("              Staging Release Clients Creation")
 	fmt.Println("==========================================================")
@@ -182,6 +205,28 @@ func CreateStagingReleaseClients() (*SourceClients, *ReleaseClients, error) {
 		return nil, nil, errors.Cause(err)
 	}
 
+	var packagesECRClient *ecrsdk.ECR
+	var packagesSourceAuthConfig *docker.AuthConfiguration
+	if bundleRelease {
+		// Session for beta-pdx-packages
+		packagesSession, err := session.NewSessionWithOptions(session.Options{
+			Config: aws.Config{
+				Region: aws.String("us-west-2"),
+			},
+			Profile: "packages-beta",
+		})
+		if err != nil {
+			return nil, nil, errors.Cause(err)
+		}
+
+		// Get packages source ECR auth config
+		packagesECRClient = ecrsdk.New(packagesSession)
+		packagesSourceAuthConfig, err = ecr.GetAuthConfig(packagesECRClient)
+		if err != nil {
+			return nil, nil, errors.Cause(err)
+		}
+	}
+
 	// Constructing source clients
 	sourceClients := &SourceClients{
 		S3: &SourceS3Clients{
@@ -191,6 +236,10 @@ func CreateStagingReleaseClients() (*SourceClients, *ReleaseClients, error) {
 		ECR: &SourceECRClient{
 			EcrClient:  ecrClient,
 			AuthConfig: sourceAuthConfig,
+		},
+		Packages: &SourceECRClient{
+			EcrClient:  packagesECRClient,
+			AuthConfig: packagesSourceAuthConfig,
 		},
 	}
 

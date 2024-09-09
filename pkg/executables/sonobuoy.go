@@ -27,7 +27,6 @@ func (k *Sonobuoy) Run(ctx context.Context, contextName string, args ...string) 
 		"--context",
 		contextName,
 		"run",
-		"--mode=certified-conformance",
 		"--wait",
 	}
 	executionArgs = append(executionArgs, args...)

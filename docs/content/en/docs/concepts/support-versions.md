@@ -37,10 +37,9 @@ Each EKS Anywhere version includes all components required to create and manage 
 - Management components (Cluster API controller, EKS Anywhere controller, provider-specific controllers)
 - Cluster components (Kubernetes, Cilium)
 
-You can find details about each EKS Anywhere releases in the [EKS Anywhere release manifest.](https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml) The release manifest contains references to the corresponding bundle manifest for each EKS Anywhere version. Within the bundle manifest, you will find the components included in a specific EKS Anywhere version. The images running in your deployment use the same URI values specified in the bundle manifest for that component. For example, see the [bundle manifest](https://anywhere-assets.eks.amazonaws.com/releases/bundles/59/manifest.yaml) for EKS Anywhere version `v0.18.7`.
+You can find details about each EKS Anywhere release in the [EKS Anywhere release manifest](https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml). The release manifest contains references to the corresponding bundle manifest for each EKS Anywhere version. Within the bundle manifest, you will find the components included in a specific EKS Anywhere version. The images running in your deployment use the same URI values specified in the bundle manifest for that component. For example, see the [bundle manifest](https://anywhere-assets.eks.amazonaws.com/releases/bundles/71/manifest.yaml) for EKS Anywhere version `v0.20.2`.
 
-Starting in 2024, EKS Anywhere follows a 4-month release cadence for minor versions. EKS Anywhere has a 2-week cadence for patch versions. Common vulnerabilities and exposures (CVE) patches and bug fixes, including those for the supported Kubernetes versions, are included in the latest EKS Anywhere minor version (version N). If you are interested in patch support for EKS Anywhere N-1 versions, please upvote or comment on [EKS Anywhere GitHub Issue #7397.](https://github.com/aws/eks-anywhere/issues/7397)
-
+Starting in 2024, EKS Anywhere follows a 4-month release cadence for minor versions and a 2-week cadence for patch versions. Common vulnerabilities and exposures (CVE) patches and bug fixes, including those for the supported Kubernetes versions, are included in the latest EKS Anywhere minor version (version N). High and critical CVE fixes and bug fixes are also backported to the penultimate EKS Anywhere minor version (version N-1), which follows a monthly patch release cadence.
 
 Reference the table below for release dates and patch support for each EKS Anywhere version. This table shows the Kubernetes versions that are supported in each EKS Anywhere version.
 <!-- See /docs/data/version_support.yml -->
@@ -65,7 +64,7 @@ Bottlerocket, Ubuntu, and Red Hat Enterprise Linux (RHEL) can be used as operati
 | RHEL          | 9.x<sup>*</sup>	      | 0.18
 | RHEL          | 8.x	      | 0.12 and above
 
-<sup>*</sup>CloudStack and Nutanix only
+<sup>*</sup>Bare Metal, CloudStack and Nutanix only
 
 * For details on supported operating systems for Admin machines, [see the Admin Machine page.]({{< relref "../getting-started/install/" >}})
 * Older Bottlerocket versions are omitted from this table for brevity
@@ -90,7 +89,7 @@ Unlike Amazon EKS, there are no forced upgrades in EKS Anywhere. On the end of s
 
 ### What EKS Anywhere versions are supported if you have the EKS Anywhere Enterprise Subscription?
 
-If you have purchased an EKS Anywhere Enterprise Subscription, AWS will provide troubleshooting support, configuration guidance, and upgrade assistance for your licensed clusters, irrespective of the EKS Anywhere version it's running on. However, as the CVE patches and bug fixes are only included in the latest EKS Anywhere version, it is recommended to keep your deployments updated with the latest EKS Anywhere release. With an EKS Anywhere Enterprise Subscription, AWS will assist you in upgrading your licensed clusters to the latest EKS Anywhere version.
+If you have purchased an EKS Anywhere Enterprise Subscription, AWS will provide troubleshooting support, configuration guidance, and upgrade assistance for your licensed clusters, irrespective of the EKS Anywhere version it's running on. However, as the CVE patches and bug fixes are only included in the latest and penultimate EKS Anywhere versions, it is recommended to use either of these releases to manage your deployments and keep them up to date. With an EKS Anywhere Enterprise Subscription, AWS will assist you in upgrading your licensed clusters to the latest EKS Anywhere version.
 
 ### Can I use different EKS Anywhere minor versions for my management cluster and workload clusters?
 
@@ -105,11 +104,15 @@ No. We perform regular upgrade reliability testing for sequential version upgrad
 
 ### What is the difference between an EKS Anywhere minor version versus a patch version?
 
-An EKS Anywhere minor version includes new EKS Anywhere capabilities, bug fixes, security patches, and new Kubernetes minor versions if they are available. An EKS Anywhere patch version generally includes only bug fixes, security patches, and Kubernetes patch version increments. EKS Anywhere patch versions are released more frequently than EKS Anywhere minor versions so you can receive the latest security and bug fixes sooner.
+An EKS Anywhere minor version includes new EKS Anywhere capabilities, bug fixes, security patches, and new Kubernetes minor versions if they are available. An EKS Anywhere patch version generally includes only bug fixes, security patches, and Kubernetes patch version increments. EKS Anywhere patch versions are released more frequently than EKS Anywhere minor versions so you can receive the latest security and bug fixes sooner. For example, patch releases for the latest version follow a biweekly release cadence and those for the penultimate EKS Anywhere version follow a monthly cadence.
 
 ### What kind of fixes are patched in the latest EKS Anywhere minor version?
 
-Patches include CVE patches and bug fixes for EKS Anywhere components and the Kubernetes versions that are supported by the corresponding EKS Anywhere version.
+The latest EKS Anywhere minor version will receive CVE patches and bug fixes for EKS Anywhere components and the Kubernetes versions that are supported by the corresponding EKS Anywhere version. New curated packages versions, if any, will be made available as upgrades for this minor version.
+
+### What kind of fixes are patched in the penultimate EKS Anywhere minor version?
+
+The penultimate EKS Anywhere minor version will receive only high and critical CVE patches and updates only to those Kubernetes versions that are supported by both the corresponding EKS Anywhere version as well as EKS Distro. New curated packages versions, if any, will be made available as upgrades for this minor version.
 
 ### Will I get notified when support is ending for a Kubernetes version on EKS Anywhere?
 

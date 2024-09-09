@@ -24,7 +24,7 @@ set_aws_config "production"
 
 EKSA_RELEASE_MANIFEST_URL="${1?Specify first argument - EKS-A release manifest URL}"
 
-LATEST_EKSA_VERSION=$(curl $EKSA_RELEASE_MANIFEST_URL | yq e '.spec.latestVersion')
+LATEST_EKSA_VERSION=$(curl $EKSA_RELEASE_MANIFEST_URL | yq e '.spec.releases[-1].version')
 LATEST_EKSA_RELEASE_NUMBER=$(curl $EKSA_RELEASE_MANIFEST_URL | yq e '.spec.releases[] | select(.version == '\"$LATEST_EKSA_VERSION\"') | .number')
 LATEST_BUNDLE_RELEASE_MANIFEST_URI=$(curl $EKSA_RELEASE_MANIFEST_URL | yq e '.spec.releases[] | select(.version == '\"$LATEST_EKSA_VERSION\"') | .bundleManifestUrl')
 LATEST_EKSA_ADMIN_AMI_URI="https://anywhere-assets.eks.amazonaws.com/releases/eks-a/$LATEST_EKSA_RELEASE_NUMBER/artifacts/eks-a-admin-ami/$LATEST_EKSA_VERSION/eks-anywhere-admin-ami-$LATEST_EKSA_VERSION-eks-a-$LATEST_EKSA_RELEASE_NUMBER.raw"

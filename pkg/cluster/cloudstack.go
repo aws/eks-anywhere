@@ -2,7 +2,9 @@ package cluster
 
 import (
 	"context"
+	"fmt"
 
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 )
 
@@ -38,13 +40,21 @@ func cloudstackEntry() *ConfigManagerEntry {
 			func(c *Config) error {
 				if c.CloudStackDatacenter != nil {
 					return c.CloudStackDatacenter.Validate()
+				} else if c.Cluster.Spec.DatacenterRef.Kind == v1alpha1.CloudStackDatacenterKind { // We need this conditional check as CloudStackDatacenter will be nil for other providers
+					return fmt.Errorf("CloudStackDatacenterConfig %s not found", c.Cluster.Spec.DatacenterRef.Name)
 				}
 				return nil
 			},
 			func(c *Config) error {
-				for _, m := range c.CloudStackMachineConfigs {
-					if err := m.Validate(); err != nil {
-						return err
+				if c.CloudStackMachineConfigs != nil { // We need this conditional check as CloudStackMachineConfigs will be nil for other providers
+					for _, mcRef := range c.Cluster.MachineConfigRefs() {
+						m, ok := c.CloudStackMachineConfigs[mcRef.Name]
+						if !ok {
+							return fmt.Errorf("CloudStackMachineConfig %s not found", mcRef.Name)
+						}
+						if err := m.Validate(); err != nil {
+							return err
+						}
 					}
 				}
 				return nil

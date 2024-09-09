@@ -73,6 +73,7 @@ var releaseCmd = &cobra.Command{
 		sourceBucket := viper.GetString("source-bucket")
 		releaseBucket := viper.GetString("release-bucket")
 		sourceContainerRegistry := viper.GetString("source-container-registry")
+		packagesSourceContainerRegistry := viper.GetString("packages-source-container-registry")
 		releaseContainerRegistry := viper.GetString("release-container-registry")
 		cdn := viper.GetString("cdn")
 		devRelease := viper.GetBool("dev-release")
@@ -95,29 +96,31 @@ var releaseCmd = &cobra.Command{
 		}
 
 		releaseConfig := &releasetypes.ReleaseConfig{
-			CliRepoSource:            cliRepoDir,
-			BuildRepoSource:          buildRepoDir,
-			CliRepoUrl:               cliRepoUrl,
-			BuildRepoUrl:             buildRepoUrl,
-			BuildRepoBranchName:      buildRepoBranchName,
-			CliRepoBranchName:        cliRepoBranchName,
-			ArtifactDir:              artifactDir,
-			SourceBucket:             sourceBucket,
-			ReleaseBucket:            releaseBucket,
-			SourceContainerRegistry:  sourceContainerRegistry,
-			ReleaseContainerRegistry: releaseContainerRegistry,
-			CDN:                      cdn,
-			BundleNumber:             bundleNumber,
-			ReleaseNumber:            releaseNumber,
-			ReleaseVersion:           releaseVersion,
-			ReleaseDate:              releaseDate,
-			ReleaseTime:              releaseTime,
-			DevRelease:               devRelease,
-			DryRun:                   dryRun,
-			Weekly:                   weekly,
-			ReleaseEnvironment:       releaseEnvironment,
-			AwsSignerProfileArn:      awsSignerProfileArn,
-			MaxReleasesInManifest:    -1,
+			CliRepoSource:                   cliRepoDir,
+			BuildRepoSource:                 buildRepoDir,
+			CliRepoUrl:                      cliRepoUrl,
+			BuildRepoUrl:                    buildRepoUrl,
+			BuildRepoBranchName:             buildRepoBranchName,
+			CliRepoBranchName:               cliRepoBranchName,
+			ArtifactDir:                     artifactDir,
+			SourceBucket:                    sourceBucket,
+			ReleaseBucket:                   releaseBucket,
+			SourceContainerRegistry:         sourceContainerRegistry,
+			PackagesSourceContainerRegistry: packagesSourceContainerRegistry,
+			ReleaseContainerRegistry:        releaseContainerRegistry,
+			CDN:                             cdn,
+			BundleNumber:                    bundleNumber,
+			ReleaseNumber:                   releaseNumber,
+			ReleaseVersion:                  releaseVersion,
+			ReleaseDate:                     releaseDate,
+			ReleaseTime:                     releaseTime,
+			DevRelease:                      devRelease,
+			BundleRelease:                   bundleRelease,
+			DryRun:                          dryRun,
+			Weekly:                          weekly,
+			ReleaseEnvironment:              releaseEnvironment,
+			AwsSignerProfileArn:             awsSignerProfileArn,
+			MaxReleasesInManifest:           -1,
 		}
 
 		err := operations.SetRepoHeads(releaseConfig)
@@ -137,7 +140,7 @@ var releaseCmd = &cobra.Command{
 			fmt.Printf("%s Successfully created dev release clients\n", constants.SuccessIcon)
 		}
 		if releaseEnvironment == "development" {
-			sourceClients, releaseClients, err = clients.CreateStagingReleaseClients()
+			sourceClients, releaseClients, err = clients.CreateStagingReleaseClients(bundleRelease)
 			if err != nil {
 				fmt.Printf("Error creating clients: %v\n", err)
 				os.Exit(1)
@@ -365,6 +368,7 @@ func init() {
 	releaseCmd.Flags().String("source-bucket", "eks-a-source-bucket", "The bucket name where the built/staging artifacts are located to download")
 	releaseCmd.Flags().String("release-bucket", "eks-a-release-bucket", "The bucket name where released artifacts live")
 	releaseCmd.Flags().String("source-container-registry", "", "The container registry to pull images from for a dev release")
+	releaseCmd.Flags().String("packages-source-container-registry", "", "The container registry to pull packages images from for a dev release")
 	releaseCmd.Flags().String("release-container-registry", "", "The container registry that images wll be pushed to")
 	releaseCmd.Flags().Bool("dev-release", true, "Flag to indicate a dev release")
 	releaseCmd.Flags().Bool("bundle-release", true, "Flag to indicate a bundle release")

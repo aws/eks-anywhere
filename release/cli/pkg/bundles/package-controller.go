@@ -55,11 +55,11 @@ func GetPackagesBundle(r *releasetypes.ReleaseConfig, imageDigests releasetypes.
 	// If we can't find the build starting with our substring, we default to the original dev tag.
 	// If we do find the Tag in Private ECR, but it doesn't exist in Public ECR Copy the image over so the helm chart will work correctly.
 	if r.DevRelease && !r.DryRun {
-		Helmtag, Helmsha, err = ecr.FilterECRRepoByTagPrefix(r.SourceClients.ECR.EcrClient, "eks-anywhere-packages", "0.0.0", true)
+		Helmtag, Helmsha, err = ecr.FilterECRRepoByTagPrefix(r.SourceClients.Packages.EcrClient, "eks-anywhere-packages", "0.0.0", true)
 		if err != nil {
 			fmt.Printf("Error getting dev version helm tag EKS Anywhere package controller, using latest version %v", err)
 		}
-		Imagetag, Imagesha, err = ecr.FilterECRRepoByTagPrefix(r.SourceClients.ECR.EcrClient, "eks-anywhere-packages", "v0.0.0", true)
+		Imagetag, Imagesha, err = ecr.FilterECRRepoByTagPrefix(r.SourceClients.Packages.EcrClient, "eks-anywhere-packages", "v0.0.0", true)
 		if err != nil {
 			fmt.Printf("Error getting dev version Image tag EKS Anywhere package controller, using latest version %v", err)
 		}
@@ -69,12 +69,12 @@ func GetPackagesBundle(r *releasetypes.ReleaseConfig, imageDigests releasetypes.
 		}
 		if !PackageImage {
 			fmt.Printf("Did not find the required helm image in Public ECR... copying image: %v\n", fmt.Sprintf("%s/%s:%s", r.ReleaseContainerRegistry, "eks-anywhere-packages", Imagetag))
-			err := images.CopyToDestination(r.SourceClients.ECR.AuthConfig, r.ReleaseClients.ECRPublic.AuthConfig, fmt.Sprintf("%s/%s:%s", r.SourceContainerRegistry, "eks-anywhere-packages", Imagetag), fmt.Sprintf("%s/%s:%s", r.ReleaseContainerRegistry, "eks-anywhere-packages", Imagetag))
+			err := images.CopyToDestination(r.SourceClients.Packages.AuthConfig, r.ReleaseClients.ECRPublic.AuthConfig, fmt.Sprintf("%s/%s:%s", r.PackagesSourceContainerRegistry, "eks-anywhere-packages", Imagetag), fmt.Sprintf("%s/%s:%s", r.ReleaseContainerRegistry, "eks-anywhere-packages", Imagetag))
 			if err != nil {
 				fmt.Printf("Error copying dev EKS Anywhere package controller image, to ECR Public: %v", err)
 			}
 		}
-		Tokentag, TokenSha, err = ecr.FilterECRRepoByTagPrefix(r.SourceClients.ECR.EcrClient, "ecr-token-refresher", "v0.0.0", true)
+		Tokentag, TokenSha, err = ecr.FilterECRRepoByTagPrefix(r.SourceClients.Packages.EcrClient, "ecr-token-refresher", "v0.0.0", true)
 		if err != nil {
 			fmt.Printf("Error getting dev version Image tag EKS Anywhere package token refresher, using latest version %v", err)
 		}
@@ -84,7 +84,7 @@ func GetPackagesBundle(r *releasetypes.ReleaseConfig, imageDigests releasetypes.
 		}
 		if !TokenImage {
 			fmt.Printf("Did not find the required helm image in Public ECR... copying image: %v\n", fmt.Sprintf("%s/%s:%s", r.ReleaseContainerRegistry, "ecr-token-refresher", Tokentag))
-			err := images.CopyToDestination(r.SourceClients.ECR.AuthConfig, r.ReleaseClients.ECRPublic.AuthConfig, fmt.Sprintf("%s/%s:%s", r.SourceContainerRegistry, "ecr-token-refresher", Tokentag), fmt.Sprintf("%s/%s:%s", r.ReleaseContainerRegistry, "ecr-token-refresher", Tokentag))
+			err := images.CopyToDestination(r.SourceClients.Packages.AuthConfig, r.ReleaseClients.ECRPublic.AuthConfig, fmt.Sprintf("%s/%s:%s", r.PackagesSourceContainerRegistry, "ecr-token-refresher", Tokentag), fmt.Sprintf("%s/%s:%s", r.ReleaseContainerRegistry, "ecr-token-refresher", Tokentag))
 			if err != nil {
 				fmt.Printf("Error copying dev EKS Anywhere package token refresher image, to ECR Public: %v", err)
 			}
@@ -153,13 +153,12 @@ func GetPackagesBundle(r *releasetypes.ReleaseConfig, imageDigests releasetypes.
 							return anywherev1alpha1.PackageBundle{}, errors.Wrap(err, "creating helm client")
 						}
 						fmt.Printf("Modifying helm chart for %s\n", trimmedAsset)
-						helmDest, err := helm.GetHelmDest(helmDriver, r, imageArtifact.ReleaseImageURI, trimmedAsset)
+						helmDest, err := helm.GetHelmDest(helmDriver, r, imageArtifact.SourceImageURI, trimmedAsset)
 						if err != nil {
 							return anywherev1alpha1.PackageBundle{}, errors.Wrap(err, "getting Helm destination:")
 						}
 						fmt.Printf("helmDest=%v\n", helmDest)
 						fmt.Printf("Pulled helm chart locally to %s\n", helmDest)
-						fmt.Printf("r.sourceClients")
 						err = helm.ModifyAndPushChartYaml(*imageArtifact, r, helmDriver, helmDest, packagesArtifacts, bundleImageArtifacts)
 						if err != nil {
 							return anywherev1alpha1.PackageBundle{}, errors.Wrap(err, "modifying Chart.yaml and pushing Helm chart to destination:")

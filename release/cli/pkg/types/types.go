@@ -24,38 +24,40 @@ import (
 
 // ReleaseConfig contains metadata fields for a release.
 type ReleaseConfig struct {
-	ReleaseVersion           string
-	DevReleaseUriVersion     string
-	BundleNumber             int
-	CliMinVersion            string
-	CliMaxVersion            string
-	CliRepoUrl               string
-	CliRepoSource            string
-	CliRepoHead              string
-	CliRepoBranchName        string
-	BuildRepoUrl             string
-	BuildRepoSource          string
-	BuildRepoHead            string
-	BuildRepoBranchName      string
-	ArtifactDir              string
-	SourceBucket             string
-	ReleaseBucket            string
-	SourceContainerRegistry  string
-	ReleaseContainerRegistry string
-	CDN                      string
-	ReleaseNumber            int
-	ReleaseDate              string
-	ReleaseTime              time.Time
-	DevRelease               bool
-	DryRun                   bool
-	Weekly                   bool
-	ReleaseEnvironment       string
-	SourceClients            *clients.SourceClients
-	ReleaseClients           *clients.ReleaseClients
-	BundleArtifactsTable     ArtifactsTable
-	EksAArtifactsTable       ArtifactsTable
-	AwsSignerProfileArn      string
-	MaxReleasesInManifest    int
+	ReleaseVersion                  string
+	DevReleaseUriVersion            string
+	BundleNumber                    int
+	CliMinVersion                   string
+	CliMaxVersion                   string
+	CliRepoUrl                      string
+	CliRepoSource                   string
+	CliRepoHead                     string
+	CliRepoBranchName               string
+	BuildRepoUrl                    string
+	BuildRepoSource                 string
+	BuildRepoHead                   string
+	BuildRepoBranchName             string
+	ArtifactDir                     string
+	SourceBucket                    string
+	ReleaseBucket                   string
+	SourceContainerRegistry         string
+	PackagesSourceContainerRegistry string
+	ReleaseContainerRegistry        string
+	CDN                             string
+	ReleaseNumber                   int
+	ReleaseDate                     string
+	ReleaseTime                     time.Time
+	DevRelease                      bool
+	BundleRelease                   bool
+	DryRun                          bool
+	Weekly                          bool
+	ReleaseEnvironment              string
+	SourceClients                   *clients.SourceClients
+	ReleaseClients                  *clients.ReleaseClients
+	BundleArtifactsTable            ArtifactsTable
+	EksAArtifactsTable              ArtifactsTable
+	AwsSignerProfileArn             string
+	MaxReleasesInManifest           int
 }
 
 type ImageTagOverride struct {
@@ -64,21 +66,20 @@ type ImageTagOverride struct {
 }
 
 type ArchiveArtifact struct {
-	SourceS3Key        string
-	SourceS3Prefix     string
-	ArtifactPath       string
-	ReleaseName        string
-	ReleaseS3Path      string
-	ReleaseCdnURI      string
-	OS                 string
-	OSName             string
-	Arch               []string
-	GitTag             string
-	ProjectPath        string
-	SourcedFromBranch  string
-	ImageFormat        string
-	Private            bool
-	UploadToRTOSBucket bool
+	SourceS3Key       string
+	SourceS3Prefix    string
+	ArtifactPath      string
+	ReleaseName       string
+	ReleaseS3Path     string
+	ReleaseCdnURI     string
+	OS                string
+	OSName            string
+	Arch              []string
+	GitTag            string
+	ProjectPath       string
+	SourcedFromBranch string
+	ImageFormat       string
+	Private           bool
 }
 
 type ImageArtifact struct {

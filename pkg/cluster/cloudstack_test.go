@@ -21,6 +21,26 @@ func TestParseConfigMissingCloudstackDatacenter(t *testing.T) {
 	g.Expect(got.CloudStackDatacenter).To(BeNil())
 }
 
+func TestValidateCloudStackDatacenterNotFoundError(t *testing.T) {
+	g := NewWithT(t)
+	got, _ := cluster.ParseConfigFromFile("testdata/cluster_cloudstack_missing_datacenter.yaml")
+	g.Expect(got.CloudStackDatacenter).To(BeNil())
+
+	cm, _ := cluster.NewDefaultConfigManager()
+	err := cm.Validate(got)
+	g.Expect(err).To(MatchError(ContainSubstring("CloudStackDatacenterConfig eksa-unit-test not found")))
+}
+
+func TestValidateCloudStackMachineConfigNotFoundError(t *testing.T) {
+	g := NewWithT(t)
+	got, _ := cluster.ParseConfigFromFile("testdata/cluster_1_20_cloudstack.yaml")
+	got.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name = "dummy-machine-config"
+
+	cm, _ := cluster.NewDefaultConfigManager()
+	err := cm.Validate(got)
+	g.Expect(err).To(MatchError(ContainSubstring("CloudStackMachineConfig dummy-machine-config not found")))
+}
+
 func TestDefaultConfigClientBuilderBuildCloudStackClusterSuccess(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()

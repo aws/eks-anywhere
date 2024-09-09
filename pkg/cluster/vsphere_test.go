@@ -23,6 +23,26 @@ func TestParseConfigMissingVSphereDatacenter(t *testing.T) {
 	g.Expect(got.VSphereDatacenter).To(BeNil())
 }
 
+func TestValidateVSphereDatacenterNotFoundError(t *testing.T) {
+	g := NewWithT(t)
+	got, _ := cluster.ParseConfigFromFile("testdata/cluster_vsphere_missing_datacenter.yaml")
+	g.Expect(got.VSphereDatacenter).To(BeNil())
+
+	cm, _ := cluster.NewDefaultConfigManager()
+	err := cm.Validate(got)
+	g.Expect(err).To(MatchError(ContainSubstring("VSphereDatacenterConfig eksa-unit-test2 not found")))
+}
+
+func TestValidateVsphereMachineConfigNotFoundError(t *testing.T) {
+	g := NewWithT(t)
+	got, _ := cluster.ParseConfigFromFile("testdata/cluster_1_19.yaml")
+	got.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name = "dummy-machine-config"
+
+	cm, _ := cluster.NewDefaultConfigManager()
+	err := cm.Validate(got)
+	g.Expect(err).To(MatchError(ContainSubstring("VSphereMachineConfig dummy-machine-config not found")))
+}
+
 func TestDefaultConfigClientBuilderVSphereCluster(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()

@@ -17,7 +17,6 @@ package operations
 import (
 	"context"
 	"fmt"
-	"os"
 	"path/filepath"
 	"strings"
 
@@ -30,6 +29,7 @@ import (
 	"github.com/aws/eks-anywhere/release/cli/pkg/helm"
 	"github.com/aws/eks-anywhere/release/cli/pkg/images"
 	releasetypes "github.com/aws/eks-anywhere/release/cli/pkg/types"
+	packagesutils "github.com/aws/eks-anywhere/release/cli/pkg/util/packages"
 )
 
 func UploadArtifacts(ctx context.Context, r *releasetypes.ReleaseConfig, eksaArtifacts releasetypes.ArtifactsTable, isBundleRelease bool) error {
@@ -45,6 +45,10 @@ func UploadArtifacts(ctx context.Context, r *releasetypes.ReleaseConfig, eksaArt
 
 	sourceEcrAuthConfig := r.SourceClients.ECR.AuthConfig
 	releaseEcrAuthConfig := r.ReleaseClients.ECRPublic.AuthConfig
+	var packagesSourceEcrAuthConfig *docker.AuthConfiguration
+	if packagesutils.NeedsPackagesAccountArtifacts(r) {
+		packagesSourceEcrAuthConfig = r.SourceClients.Packages.AuthConfig
+	}
 
 	packagesArtifacts := map[string][]releasetypes.Artifact{}
 	if isBundleRelease {
@@ -61,7 +65,7 @@ func UploadArtifacts(ctx context.Context, r *releasetypes.ReleaseConfig, eksaArt
 	eksaArtifacts.Range(func(k, v interface{}) bool {
 		artifacts := v.([]releasetypes.Artifact)
 		for _, artifact := range artifacts {
-			r, packagesArtifacts, artifact, sourceEcrAuthConfig, releaseEcrAuthConfig := r, packagesArtifacts, artifact, sourceEcrAuthConfig, releaseEcrAuthConfig
+			r, packagesArtifacts, artifact, sourceEcrAuthConfig, packagesSourceEcrAuthConfig, releaseEcrAuthConfig := r, packagesArtifacts, artifact, sourceEcrAuthConfig, packagesSourceEcrAuthConfig, releaseEcrAuthConfig
 			errGroup.Go(func() error {
 				if artifact.Archive != nil {
 					return handleArchiveUpload(ctx, r, artifact)
@@ -72,7 +76,7 @@ func UploadArtifacts(ctx context.Context, r *releasetypes.ReleaseConfig, eksaArt
 				}
 
 				if artifact.Image != nil {
-					return handleImageUpload(ctx, r, packagesArtifacts, artifact, sourceEcrAuthConfig, releaseEcrAuthConfig)
+					return handleImageUpload(ctx, r, packagesArtifacts, artifact, sourceEcrAuthConfig, packagesSourceEcrAuthConfig, releaseEcrAuthConfig)
 				}
 
 				return nil
@@ -89,14 +93,10 @@ func UploadArtifacts(ctx context.Context, r *releasetypes.ReleaseConfig, eksaArt
 }
 
 func handleArchiveUpload(_ context.Context, r *releasetypes.ReleaseConfig, artifact releasetypes.Artifact) error {
-	releaseBucket := r.ReleaseBucket
-	if artifact.Archive.UploadToRTOSBucket && r.ReleaseEnvironment == "production" {
-		releaseBucket = os.Getenv(constants.RTOSArtifactsBucketEnvvar)
-	}
 	archiveFile := filepath.Join(artifact.Archive.ArtifactPath, artifact.Archive.ReleaseName)
 	fmt.Printf("Archive - %s\n", archiveFile)
 	key := filepath.Join(artifact.Archive.ReleaseS3Path, artifact.Archive.ReleaseName)
-	err := s3.UploadFile(archiveFile, aws.String(releaseBucket), aws.String(key), r.ReleaseClients.S3.Uploader, artifact.Archive.Private)
+	err := s3.UploadFile(archiveFile, aws.String(r.ReleaseBucket), aws.String(key), r.ReleaseClients.S3.Uploader, artifact.Archive.Private)
 	if err != nil {
 		return fmt.Errorf("uploading archive file [%s] to S3: %v", key, err)
 	}
@@ -113,7 +113,7 @@ func handleArchiveUpload(_ context.Context, r *releasetypes.ReleaseConfig, artif
 		checksumFile := filepath.Join(artifact.Archive.ArtifactPath, artifact.Archive.ReleaseName) + extension
 		fmt.Printf("Checksum - %s\n", checksumFile)
 		key := filepath.Join(artifact.Archive.ReleaseS3Path, artifact.Archive.ReleaseName) + extension
-		err := s3.UploadFile(checksumFile, aws.String(releaseBucket), aws.String(key), r.ReleaseClients.S3.Uploader, artifact.Archive.Private)
+		err := s3.UploadFile(checksumFile, aws.String(r.ReleaseBucket), aws.String(key), r.ReleaseClients.S3.Uploader, artifact.Archive.Private)
 		if err != nil {
 			return fmt.Errorf("uploading checksum file [%s] to S3: %v", key, err)
 		}
@@ -134,7 +134,7 @@ func handleManifestUpload(_ context.Context, r *releasetypes.ReleaseConfig, arti
 	return nil
 }
 
-func handleImageUpload(_ context.Context, r *releasetypes.ReleaseConfig, packagesArtifacts map[string][]releasetypes.Artifact, artifact releasetypes.Artifact, sourceEcrAuthConfig, releaseEcrAuthConfig *docker.AuthConfiguration) error {
+func handleImageUpload(_ context.Context, r *releasetypes.ReleaseConfig, packagesArtifacts map[string][]releasetypes.Artifact, artifact releasetypes.Artifact, defaultSourceEcrAuthConfig, packagesSourceEcrAuthConfig, releaseEcrAuthConfig *docker.AuthConfiguration) error {
 	// If the artifact is a helm chart, skip the skopeo copy. Instead, modify the Chart.yaml to match the release tag
 	// and then use Helm package and push commands to upload chart to ECR Public
 	// Packages Helm chart modification for dev-release is handled elsewhere, so we are checking for that case and skipping
@@ -161,6 +161,10 @@ func handleImageUpload(_ context.Context, r *releasetypes.ReleaseConfig, package
 	} else {
 		sourceImageUri := artifact.Image.SourceImageURI
 		releaseImageUri := artifact.Image.ReleaseImageURI
+		sourceEcrAuthConfig := defaultSourceEcrAuthConfig
+		if packagesutils.NeedsPackagesAccountArtifacts(r) && (strings.Contains(sourceImageUri, "eks-anywhere-packages") || strings.Contains(sourceImageUri, "ecr-token-refresher") || strings.Contains(sourceImageUri, "credential-provider-package")) {
+			sourceEcrAuthConfig = packagesSourceEcrAuthConfig
+		}
 		fmt.Printf("Source Image - %s\n", sourceImageUri)
 		fmt.Printf("Destination Image - %s\n", releaseImageUri)
 		err := images.CopyToDestination(sourceEcrAuthConfig, releaseEcrAuthConfig, sourceImageUri, releaseImageUri)

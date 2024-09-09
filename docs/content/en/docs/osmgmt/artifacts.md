@@ -30,11 +30,11 @@ See descriptions of the [`osImageURL`]({{< relref "../getting-started/baremetal/
 ### Ubuntu or RHEL OS images for Bare Metal
 
 EKS Anywhere does not distribute Ubuntu or RHEL OS images.
-However, see [Building node images]({{< relref "#building-node-images">}}) for information on how to build EKS Anywhere images from those Linux distributions.  Note:  if you utilize your Admin Host to build images, you will need to review  the DHCP integration provided by Libvirtd and ensure it is disabled.  If the Libvirtd DHCP is enabled, the "boots container" will detect a port conflict and terminate.
+However, see [Building node images]({{< relref "#building-node-images">}}) for information on how to build EKS Anywhere images from those Linux distributions.  Note:  if you utilize your Admin Host to build images, you will need to review the DHCP integration provided by Libvirtd and ensure it is disabled.  If the Libvirtd DHCP is enabled, the "boots container" will detect a port conflict and terminate.
 
 ### Bottlerocket OS images for Bare Metal
 
-Bottlerocket vends its Baremetal variant Images using a secure distribution tool called `tuftool`. Please refer to [Download Bottlerocket node images]({{< relref "#download-bottlerocket-node-images">}}) to download Bottlerocket image. You can also get the download URIs for Bottlerocket Baremetal images from the bundle release by running the following commands:
+Bottlerocket vends its Baremetal variant Images using a secure distribution tool called `tuftool`. Please refer to [Download Bottlerocket node images]({{< relref "#download-bottlerocket-node-images">}}) for instructions on downloading Bottlerocket Baremetal images. You can also get the download URIs for EKS Anywhere-vended Bottlerocket Baremetal images from the bundle release by running the following commands:
 
 Using the latest EKS Anywhere version
 ```bash
@@ -49,8 +49,10 @@ EKSA_RELEASE_VERSION=<EKS-A version>
 ```
 
 ```bash
+KUBEVERSION=1.30 # Replace this with the Kubernetes version you wish to use
+
 BUNDLE_MANIFEST_URL=$(curl -sL https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml | yq ".spec.releases[] | select(.version==\"$EKSA_RELEASE_VERSION\").bundleManifestUrl")
-curl -s $BUNDLE_MANIFEST_URL | yq ".spec.versionsBundles[].eksD.raw.bottlerocket.uri"
+curl -s $BUNDLE_MANIFEST_URL | yq ".spec.versionsBundles[] | select(.kubeVersion==\"$KUBEVERSION\").eksD.raw.bottlerocket.uri"
 ```
 
 ### HookOS (kernel and initial ramdisk) for Bare Metal
@@ -82,7 +84,7 @@ curl -s $BUNDLE_MANIFEST_URL | yq ".spec.versionsBundles[0].tinkerbell.tinkerbel
 
 ### Bottlerocket OVAs
 
-Bottlerocket vends its VMware variant OVAs using a secure distribution tool called `tuftool`. Please refer [Download Bottlerocket node images]({{< relref "#download-bottlerocket-node-images">}}) to download Bottlerocket OVA. You can also get the download URIs for Bottlerocket OVAs from the bundle release by running the following commands:
+Bottlerocket vends its VMware variant OVAs using a secure distribution tool called `tuftool`. Please refer to [Download Bottlerocket node images]({{< relref "#download-bottlerocket-node-images">}}) for instructions on downloading Bottlerocket OVAs. You can also get the download URIs for EKS Anywhere-vended Bottlerocket OVAs from the bundle release by running the following commands:
 
 Using the latest EKS Anywhere version
 ```bash
@@ -97,15 +99,21 @@ EKSA_RELEASE_VERSION=<EKS-A version>
 ```
 
 ```bash
+KUBEVERSION=1.30 # Replace this with the Kubernetes version you wish to use
+
 BUNDLE_MANIFEST_URL=$(curl -sL https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml | yq ".spec.releases[] | select(.version==\"$EKSA_RELEASE_VERSION\").bundleManifestUrl")
-curl -s $BUNDLE_MANIFEST_URL | yq ".spec.versionsBundles[].eksD.ova.bottlerocket.uri"
+curl -s $BUNDLE_MANIFEST_URL | yq ".spec.versionsBundles[] | select(.kubeVersion==\"$KUBEVERSION\").eksD.ova.bottlerocket.uri"
 ```
 
-#### Bottlerocket Template Tags
+### Ubuntu or RHEL OVAs
+EKS Anywhere no longer distributes Ubuntu or RHEL OVAs for use with EKS Anywhere clusters.
+Building your own Ubuntu or RHEL-based OVAs as described in [Building node images]({{< relref "#building-node-images">}}) is the only supported way to get that functionality.
 
-There are two categories of tags to be attached to the Bottlerocket templates in vCenter.
+### OVA Template Tags
 
-**os:** This category represents the OS corresponding to this template. The value for this tag must be `os:bottlerocket`.
+There are two categories of tags to be attached to the OVA templates in vCenter.
+
+**os:** This category represents the OS corresponding to this template. The possible values for this tag are `os:bottlerocket`, `os:redhat` and `os:ubuntu`.
 
 **eksdRelease:** This category represents the EKS Distro release corresponding to this template. The value for this tag can be obtained programmatically as follows.
 
@@ -122,15 +130,11 @@ EKSA_RELEASE_VERSION=<EKS-A version>
 ```
 
 ```bash
-KUBEVERSION=1.27 # Replace this with the Kubernetes version you wish to use
+KUBEVERSION=1.30 # Replace this with the Kubernetes version you wish to use
 
 BUNDLE_MANIFEST_URL=$(curl -sL https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml | yq ".spec.releases[] | select(.version==\"$EKSA_RELEASE_VERSION\").bundleManifestUrl")
 curl -sL $BUNDLE_MANIFEST_URL | yq ".spec.versionsBundles[] | select(.kubeVersion==\"$KUBEVERSION\").eksD.name"
 ```
-
-### Ubuntu OVAs
-EKS Anywhere no longer distributes Ubuntu OVAs for use with EKS Anywhere clusters.
-Building your own Ubuntu-based nodes as described in [Building node images]({{< relref "#building-node-images">}}) is the only supported way to get that functionality.
 
 ## Download Bottlerocket node images
 Bottlerocket vends its VMware variant OVAs and Baremetal variants images using a secure distribution tool called `tuftool`. Please follow instructions down below to
@@ -281,11 +285,6 @@ If creating a role with these privileges via the UI, refer to the table below.
 
 | Category | UI Privilege | Programmatic Privilege |
 | --- | ----------- | ---- |
-| Content Library | Add library item | ContentLibrary.AddLibraryItem |
-| Content Library | Delete library item | ContentLibrary.DeleteLibraryItem |
-| Content Library | Download files | ContentLibrary.DownloadSession |
-| Content Library | Evict library item | ContentLibrary.EvictLibraryItem |
-| Content Library | Update library item | ContentLibrary.UpdateLibraryItem |
 | Datastore | Allocate space | Datastore.AllocateSpace |
 | Datastore | Browse datastore | Datastore.Browse |
 | Datastore | Low level file operations | Datastore.FileManagement |
@@ -408,10 +407,6 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
    ```bash
    curl -L -o - "https://github.com/vmware/govmomi/releases/latest/download/govc_$(uname -s)_$(uname -m).tar.gz" | sudo tar -C /usr/local/bin -xvzf - govc
    ```
-1. Create a content library on vSphere:
-   ```bash
-   govc library.create "<library name>"
-   ```
 1. Create a vSphere configuration file (for example, `vsphere.json`):
    ```json
    {
@@ -428,7 +423,6 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
      "resource_pool": "",
      "username": "",
      "vcenter_server": "",
-     "vsphere_library_name": ""
    }
    ```
    ##### **[cluster](https://developer.hashicorp.com/packer/integrations/hashicorp/vsphere/latest/components/builder/vsphere-iso#location-configuration)**
@@ -469,9 +463,6 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
 
    ##### **[vcenter_server](https://developer.hashicorp.com/packer/integrations/hashicorp/vsphere/latest/components/builder/vsphere-iso#connection-configuration)**
    The vCenter Server hostname.
-
-   ##### **[vsphere_library_name](https://developer.hashicorp.com/packer/integrations/hashicorp/vsphere/latest/components/builder/vsphere-iso#content-library-import-configuration)**
-   Name of the library in which the new library item containing the template should be updated.
 
    For RHEL images, add the following fields:
    ```json

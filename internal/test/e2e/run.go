@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"runtime"
 	"sort"
 	"strings"
 	"sync"
@@ -218,6 +219,13 @@ func RunTests(conf instanceRunConf, inventoryCatalogue map[string]*hardwareCatal
 		} else {
 			hardwareCatalogue = inventoryCatalogue[nonAirgappedHardware]
 		}
+		conf.Logger.Info("Shuffling hardware inventory for tinkerbell")
+		// shuffle hardware to introduce randomness during hardware reservation.
+		// we do not want quick e2e runs to always pick the first few available hardware from the list and over-populate the boot entries
+		// this will quickly break the booting process as the hardware runs out of boot space to store these entries.
+		// randomly picking the hardware will distribute the boot entries across these hardware during each run
+		// ideally for long term we want a clear cleanup of the boot entries in the hardware
+		hardwareCatalogue.shuffleHardware()
 		err = reserveTinkerbellHardware(&conf, hardwareCatalogue)
 		if err != nil {
 			return "", nil, err
@@ -283,7 +291,8 @@ func RunTests(conf instanceRunConf, inventoryCatalogue map[string]*hardwareCatal
 
 func (e *E2ESession) runTests(regex string) (testCommandResult *testCommandResult, err error) {
 	e.logger.V(1).Info("Running e2e tests", "regex", regex)
-	command := "GOVERSION=go1.16.6 gotestsum --junitfile=junit-testing.xml --raw-command --format=standard-verbose --hide-summary=all --ignore-non-json-output-lines -- test2json -t -p e2e ./bin/e2e.test -test.v"
+	goVersion := runtime.Version()
+	command := fmt.Sprintf("GOVERSION=%s gotestsum --junitfile=junit-testing.xml --raw-command --format=standard-verbose --hide-summary=all --ignore-non-json-output-lines -- test2json -t -p e2e ./bin/e2e.test -test.v", goVersion)
 
 	if regex != "" {
 		command = fmt.Sprintf("%s -test.run \"^(%s)$\" -test.timeout %s", command, regex, e2eTimeout)
@@ -429,23 +438,25 @@ func splitTests(testsList []string, conf ParallelRunConf) ([]instanceRunConf, er
 //nolint:gocyclo // This legacy function is complex but the team too busy to simplify it
 func appendNonAirgappedTinkerbellRunConfs(awsSession *session.Session, testsList []string, conf ParallelRunConf, testRunnerConfig *TestInfraConfig, runConfs []instanceRunConf, ipManager *E2EIPManager) ([]instanceRunConf, error) {
 	nonAirgappedTinkerbellTests := getTinkerbellNonAirgappedTests(testsList)
-	conf.Logger.V(1).Info("INFO:", "tinkerbellTests", len(nonAirgappedTinkerbellTests))
+	conf.Logger.V(1).Info("INFO:", "tinkerbellTests", len(nonAirgappedTinkerbellTests), "MaxInstances", conf.MaxInstances, "ConcurrentInstances", conf.MaxConcurrentTests)
 
-	testPerInstance := len(nonAirgappedTinkerbellTests) / conf.MaxInstances
-	if testPerInstance == 0 {
-		testPerInstance = 1
-	}
-	testsInVSphereInstance := make([]string, 0, testPerInstance)
 	nonAirgappedTinkerbellTestsWithCount, err := getTinkerbellTestsWithCount(nonAirgappedTinkerbellTests, conf)
 	if err != nil {
 		return nil, err
 	}
-	for i, test := range nonAirgappedTinkerbellTestsWithCount {
-		testsInVSphereInstance = append(testsInVSphereInstance, test.Name)
+	end := len(nonAirgappedTinkerbellTestsWithCount) - 1
+	for start := range nonAirgappedTinkerbellTestsWithCount {
+		if start > end/2 {
+			break
+		}
 		ipPool := ipManager.reserveIPPool(tinkerbellIPPoolSize)
-		if len(testsInVSphereInstance) == testPerInstance || (len(testsList)-1) == i {
-			runConfs = append(runConfs, newInstanceRunConf(awsSession, conf, len(runConfs), strings.Join(testsInVSphereInstance, "|"), ipPool, []*api.Hardware{}, test.Count, false, VSphereTestRunnerType, testRunnerConfig))
-			testsInVSphereInstance = make([]string, 0, testPerInstance)
+		runConfs = append(runConfs, newInstanceRunConf(awsSession, conf, len(runConfs), nonAirgappedTinkerbellTestsWithCount[start].Name, ipPool, []*api.Hardware{}, nonAirgappedTinkerbellTestsWithCount[start].Count, false, VSphereTestRunnerType, testRunnerConfig))
+
+		// Pop from both ends to run a longer count tests and shorter count tests together
+		// to efficiently use the available hardware.
+		if end-start > start {
+			ipPool := ipManager.reserveIPPool(tinkerbellIPPoolSize)
+			runConfs = append(runConfs, newInstanceRunConf(awsSession, conf, len(runConfs), nonAirgappedTinkerbellTestsWithCount[end-start].Name, ipPool, []*api.Hardware{}, nonAirgappedTinkerbellTestsWithCount[end-start].Count, false, VSphereTestRunnerType, testRunnerConfig))
 		}
 	}
 

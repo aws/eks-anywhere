@@ -866,9 +866,9 @@ func TestDockerKubernetes127to128GithubFluxEnabledUpgradeFromLatestMinorRelease(
 	)
 }
 
-func TestDockerKubernetes126WithOIDCManagementClusterUpgradeFromLatestSideEffects(t *testing.T) {
+func TestDockerKubernetes130WithOIDCManagementClusterUpgradeFromLatestSideEffects(t *testing.T) {
 	provider := framework.NewDocker(t)
-	runTestManagementClusterUpgradeSideEffects(t, provider, framework.DockerOS, v1alpha1.Kube126)
+	runTestManagementClusterUpgradeSideEffects(t, provider, framework.DockerOS, v1alpha1.Kube130)
 }
 
 func TestDockerKubernetes128UpgradeAndRemoveWorkerNodeGroupsAPI(t *testing.T) {
@@ -1352,17 +1352,7 @@ func TestDockerKubernetesRegionalCuratedPackages(t *testing.T) {
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube128)),
 	)
 
-	test.WithCluster(func(e *framework.ClusterE2ETest) {
-		runCuratedPackageInstall(e)
-
-		pbc, err := test.KubectlClient.GetPackageBundleController(context.Background(), test.KubeconfigFilePath(), test.ClusterName)
-		if err != nil {
-			e.T.Fatalf("cannot get PackageBundleController: %v", err)
-		}
-		if pbc.Spec.DefaultImageRegistry != pbc.Spec.DefaultRegistry {
-			e.T.Fatal("in regional pbc, DefaultImageRegistry should equal to DefaultRegistry")
-		}
-	})
+	runCuratedPackageInstallSimpleFlow(test)
 }
 
 func TestDockerKubernetesUpgradeManagementComponents(t *testing.T) {

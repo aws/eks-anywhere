@@ -9,7 +9,7 @@ description: >
   How to rotate certificates for etcd and control plane nodes
 ---
 
-Certificates for external etcd and control plane nodes expire after 1 year in EKS Anywhere. EKS Anywhere automatically rotates these certificates when new machines are rolled out in the cluster. New machines are rolled out during cluster lifecycle operations such as `upgrade`. If you upgrade your cluster at least once a year, you do not have to manually rotate the cluster certificates. 
+Certificates for external etcd and control plane nodes expire after 1 year in EKS Anywhere. EKS Anywhere automatically rotates these certificates when new machines are rolled out in the cluster. New machines are rolled out during cluster lifecycle operations such as `upgrade`. If you upgrade your cluster at least once a year, as recommended, manual rotation of cluster certificates will not be necessary.
 
 This page shows the process for manually rotating certificates if you have not upgraded your cluster in 1 year.
 
@@ -25,6 +25,16 @@ The following table lists the cluster certificate files:
 |                       | apiserver-kubelet-client |
 |                       | apiserver                |
 |                       | front-proxy-client       |
+
+Commands below can be used for quickly checking your certificates expiring date:
+
+```bash
+# The expiry time of api-server certificate on you cp node
+echo | openssl s_client -connect ${CONTROL_PLANE_IP}:6443 2>/dev/null | openssl x509 -noout -dates
+
+# The expiry time of certificate used by your external etcd server, if you configured one
+echo | openssl s_client -connect ${EXTERNAL_ETCD_IP}:2379 2>/dev/null | openssl x509 -noout -dates
+```
 
 You can rotate certificates by following the steps given below. You cannot rotate the `ca` certificate because it is the root certificate. Note that the commands used for Bottlerocket nodes are different than those for Ubuntu and RHEL nodes.
 
@@ -105,7 +115,7 @@ kubectl edit secret ${cluster-name}-apiserver-etcd-client -n eksa-system
 ```
 
 {{% alert title="Note" color="primary" %}}
-For Bottlerocket nodes, the `key` of `apiserver-etcd-client` is `server-etcd.client.crt` instead of `apiserver-etcd-client.crt`.
+On Bottlerocket control plane nodes, the `certificate` filename of `apiserver-etcd-client` is `server-etcd.client.crt` instead of `apiserver-etcd-client.crt`.
 {{% /alert %}}
 
 #### Control plane nodes
@@ -194,7 +204,10 @@ rm pki/*
 systemctl restart kubelet
 ```
 
-In some cases, the certs might not regenerate and kubelet will fail to start due to a missing `kubelet-client-current.pem`. If this happens, run the following commands:
+{{% alert title="Note" color="primary" %}}
+When the control plane endpoint is unavailable because the API server pod is not running, the kubelet service may fail to start all static pods in the container runtime. Its logs may contain `failed to connect to apiserver`.
+
+If this occurs, update `kubelet-client-current.pem` by running the following commands:
 
 {{< tabpane >}}
 {{< tab header="Ubuntu or RHEL" lang="bash" >}}
@@ -214,6 +227,54 @@ systemctl restart kubelet
 
 {{< /tab >}}
 {{< /tabpane >}}
+{{% /alert %}}
+
+#### Worker nodes
+If worker nodes are in `Not Ready` state and the kubelet fails to bootstrap then it's likely that the kubelet client-cert `kubelet-client-current.pem` did not automatically rotate. If this rotation process fails you might see errors such as `x509: certificate has expired or is not yet valid` in kube-apiserver logs. To fix the issue, do the following:
+
+1. Backup and delete `/etc/kubernetes/kubelet.conf` (ignore this file for BottleRocket) and `/var/lib/kubelet/pki/kubelet-client*` from the failed node.
+
+2. From a working control plane node in the cluster that has /etc/kubernetes/pki/ca.key execute `kubeadm kubeconfig user --org system:nodes --client-name system:node:$NODE > kubelet.conf`. `$NODE` must be set to the name of the existing failed node in the cluster.  Modify the resulted kubelet.conf manually to adjust the cluster name and server endpoint, or pass `kubeconfig user --config` (modifying `kubelet.conf` file can be ignored for BottleRocket).
+
+3. For Ubuntu or RHEL nodes, Copy this resulted `kubelet.conf` to `/etc/kubernetes/kubelet.conf` on the failed node. Restart the kubelet (`systemctl restart kubelet`) on the failed node and wait for `/var/lib/kubelet/pki/kubelet-client-current.pem` to be recreated. Manually edit the `kubelet.conf` to point to the rotated kubelet client certificates  by replacing client-certificate-data and client-key-data with `/var/lib/kubelet/pki/kubelet-client-current.pem` and `/var/lib/kubelet/pki/kubelet-client-current.pem`. For BottleRocket, manually copy over the base64 decoded values of `client-certificate-data` and `client-key-data` into the `kubelet-client-current.pem` on worker node. 
+
+{{< tabpane >}}
+{{< tab header="Ubuntu or RHEL" lang="bash" >}}
+kubeadm kubeconfig user --org system:nodes --client-name system:node:$NODE > kubelet.conf (from control plane node with renewed `/etc/kubernetes/pki/ca.key`)
+cp kubelet.conf /etc/kubernetes/kubelet.conf (on failed worker node)
+
+{{< /tab >}}
+{{< tab header="Bottlerocket" lang="bash" >}}
+# From control plane node with renewed certs
+# you would be in the admin container when you ssh to the Bottlerocket machine
+# open root shell
+sudo sheltie
+
+# pull the image
+IMAGE_ID=$(apiclient get | apiclient exec admin jq -r '.settings["host-containers"]["kubeadm-bootstrap"].source')
+ctr image pull ${IMAGE_ID}
+
+# set NODE value to the failed worker node name.
+ctr run \
+--mount type=bind,src=/var/lib/kubeadm,dst=/var/lib/kubeadm,options=rbind:rw \
+--mount type=bind,src=/var/lib/kubeadm,dst=/etc/kubernetes,options=rbind:rw \
+--rm \
+${IMAGE_ID} tmp-cert-renew \
+/opt/bin/kubeadm kubeconfig user --org system:nodes --client-name system:node:$NODE 
+
+# from the stdout base64 decode `client-certificate-data` and `client-key-data`
+# copy client-cert to kubelet-client-current.pem on worker node
+echo -n `<base64 decoded client-certificate-data value>` > kubelet-client-current.pem
+
+# append client key to kubelet-client-current.pem on worker node
+echo -n `<base64 decoded client-key-data value>` >> kubelet-client-current.pem
+
+{{< /tab >}}
+{{< /tabpane >}}
+
+4. Restart the kubelet. Make sure the node becomes `Ready`.
+
+See the [Kubernetes documentation](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/troubleshooting-kubeadm/#kubelet-client-cert) for more details on manually updating kubelet client certificate.
 
 ### Post Renewal
 Once all the certificates are valid, verify the kcp object on the affected cluster(s) is not paused by running `kubectl describe kcp -n eksa-system | grep cluster.x-k8s.io/paused`. If it is paused, then this usually indicates an issue with the etcd cluster. Check the logs for pods under the `etcdadm-controller-system` namespace for any errors. 

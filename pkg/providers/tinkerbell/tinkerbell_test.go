@@ -650,6 +650,7 @@ func TestPostWorkloadInitSuccess(t *testing.T) {
 		gomock.Any(),
 		gomock.Any(),
 		gomock.Any(),
+		gomock.Any(),
 	)
 	stackInstaller.EXPECT().UninstallLocal(ctx)
 

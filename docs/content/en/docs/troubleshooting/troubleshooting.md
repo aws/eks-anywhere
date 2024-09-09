@@ -582,6 +582,14 @@ kubectl get nodes --no-headers -l '!node-role.kubernetes.io/master' -o jsonpath=
 kubectl get nodes --no-headers -l '!node-role.kubernetes.io/control-plane' -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}' | xargs -I{} kubectl label node {} node-role.kubernetes.io/worker=''
 ```
 
+### No static pods is running in container runtime on control plane nodes
+When the kubelet systemd service is running on a control plane node and you notice that no [static pods](https://kubernetes.io/docs/concepts/workloads/pods/#static-pods) are running, this could be due to a certificate issue. Check the kubelet service logs. If you see error messages like the ones below, renew the kubelet-client-current.pem certificate by following [these steps]({{< relref "../clustermgmt/security/manually-renew-certs/#kubelet" >}}):
+```
+part of the existing bootstrap client certificate in /etc/kubernetes/kubelet/kubeconfig
+Loading cert/key pair from "/var/lib/kubelet/pki/kubelet-client-current.pem
+"Failed to connect to apiserver" err="Get \"https://10.150.223.2:6443/healthz?timeout=1s\": net/http: request canceled while waiting for connection (Client.Timeout exceeded while awaiting headers)"
+```
+
 ## Bare Metal troubleshooting
 
 ### Creating new workload cluster hangs or fails
@@ -733,6 +741,9 @@ Make sure your DHCP server is up and working.
 For more troubleshooting tips, see the [CAPV Troubleshooting](https://github.com/kubernetes-sigs/cluster-api-provider-vsphere/blob/master/docs/troubleshooting.md#debugging-issues) guide.
 
 ### Machine objects stuck on provisioning state
+
+>**_NOTE_**: This issue has been resolved with EKS-Anywhere v0.20.x
+
 There is a known issue where connection is lost to vCenter and machine provisioning stops working. 
 For more context, see the related Github [issue](https://github.com/kubernetes-sigs/cluster-api-provider-vsphere/issues/2832) in upstream CAPV repo that is tracking this.
 
