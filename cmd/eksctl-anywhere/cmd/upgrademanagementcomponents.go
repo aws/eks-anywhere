@@ -27,7 +27,7 @@ func init() {
 var upgradeManagementComponentsCmd = &cobra.Command{
 	Use:          "management-components",
 	Short:        "Upgrade management components in a management cluster",
-	Long:         "The term 'management components' encompasses all Kubernetes controllers and their CRDs present in the management cluster that are responsible for reconciling your EKS Anywhere (EKS-A) cluster. This command is specifically designed to facilitate the upgrade of these management components. Post this upgrade, the cluster itself can be upgraded by updating the 'eksaRelease' field in your eksa cluster object.",
+	Long:         "The term 'management components' encompasses all Kubernetes controllers and their CRDs present in the management cluster that are responsible for reconciling your EKS Anywhere (EKS-A) cluster. This command is specifically designed to facilitate the upgrade of these management components. Post this upgrade, the cluster itself can be upgraded by updating the 'eksaVersion' field in your EKS-A Cluster object.",
 	PreRunE:      bindFlagsToViper,
 	SilenceUsage: true,
 	Args:         cobra.MaximumNArgs(1),
