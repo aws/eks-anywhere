@@ -48,5 +48,5 @@ const (
 
 var (
 	EksaPackageControllerHelmValues = []string{"sourceRegistry=public.ecr.aws/l0g8r8j6"}
-	KubeVersions                    = []v1alpha1.KubernetesVersion{v1alpha1.Kube126, v1alpha1.Kube127, v1alpha1.Kube128, v1alpha1.Kube129, v1alpha1.Kube130}
+	KubeVersions                    = []v1alpha1.KubernetesVersion{v1alpha1.Kube126, v1alpha1.Kube127, v1alpha1.Kube128, v1alpha1.Kube129, v1alpha1.Kube130, v1alpha1.Kube131}
 )
