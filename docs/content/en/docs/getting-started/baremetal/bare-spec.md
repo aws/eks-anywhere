@@ -306,7 +306,7 @@ In the example, there are `TinkerbellMachineConfig` sections for control plane (
 The following fields identify information needed to configure the nodes in each of those groups.
 >**_NOTE:_** Currently, you can only have one machine group for all machines in the control plane, although you can have multiple machine groups for the workers.
 >
-### hardwareSelector (optional)
+### hardwareSelector (required)
 Use fields under `hardwareSelector` to add key/value pair labels to match particular machines that you identified in the CSV file where you defined the machines in your cluster.
 Choose any label name you like.
 For example, if you had added the label `node=cp-machine` to the machines listed in your CSV file that you want to be control plane nodes, the following `hardwareSelector` field would cause those machines to be added to the control plane:
@@ -365,12 +365,20 @@ When you generate a Bare Metal cluster configuration, the `TinkerbellTemplateCon
 Advanced users can override the default values set for `TinkerbellTemplateConfig`.
 They can also add their own [Tinkerbell actions](https://docs.tinkerbell.org/actions/action-architecture/) to make personalized modifications to EKS Anywhere nodes.
 
+A default `TinkerbellTemplateConfig` can be generated from cluster config template using eksctl:
+```bash
+eksctl anywhere generate tinkerbelltemplateconfig -f eksa-mgmt-cluster.yaml
+```
+
 The following shows three `TinkerbellTemplateConfig` examples that you can add to your cluster configuration file to override the values that EKS Anywhere sets: one for Ubuntu, one for RHEL and one for Bottlerocket.
 Most actions used differ for different operating systems.
 
 >**_NOTE:_** For the `stream-image` action, `DEST_DISK` points to the device representing the entire hard disk (for example, `/dev/sda`).
-For UEFI-enabled images, such as Ubuntu and RHEL 9, write actions use `DEST_DISK` to point to the second partition (for example, `/dev/sda2`), with the first being the EFI partition.
-For the Bottlerocket image, which has 12 partitions, `DEST_DISK` is partition 12 (for example, `/dev/sda12`).
+For all the write actions, `DEST_DISK` must be set to point to the root partition.
+For RHEL 8 and RHEL 9, `DEST_DISK` points to partition 1 (for example, `/dev/sda1`).
+For Ubuntu, `DEST_DISK` points to partition 2 (for example, `/dev/sda2`), with the first partition being the EFI partition.
+For the Bottlerocket image, which has 12 partitions, `DEST_DISK` points to partition 12 (for example, `/dev/sda12`).
+Note that these partition index values may vary depending on how user built their OS image, user can always override these partitions using `TinkerbellTemplateConfig`.
 Device names will be different for different disk types.
 >
 
@@ -487,13 +495,13 @@ spec:
     - actions:
       - environment:
           COMPRESSED: "true"
-          DEST_DISK: /dev/sda
+          DEST_DISK: '{{ index .Hardware.Disks 0 }}'
           IMG_URL: https://my-file-server/rhel-9-uefi-amd64.gz
         image: public.ecr.aws/eks-anywhere/tinkerbell/hub/image2disk:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-15
         name: stream-image
         timeout: 360
       - environment:
-          DEST_DISK: /dev/sda2
+          DEST_DISK: '{{ formatPartition ( index .Hardware.Disks 0 ) 1 }}'
           DEST_PATH: /etc/netplan/config.yaml
           STATIC_NETPLAN: true
           DIRMODE: "0755"
@@ -503,17 +511,18 @@ spec:
           UID: "0"
         image: public.ecr.aws/eks-anywhere/tinkerbell/hub/writefile:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-15
         name: write-netplan
+        pid: host
         timeout: 90
       - environment:
           CONTENTS: |
             datasource:
               Ec2:
-                metadata_urls: [<admin-machine-ip>, <tinkerbell-ip-from-cluster-config>]
+                metadata_urls: [<admin-machine-ip>:50061, <tinkerbell-ip-from-cluster-config>:50061]
                 strict_id: false
             manage_etc_hosts: localhost
             warnings:
               dsid_missing_source: off
-          DEST_DISK: /dev/sda2
+          DEST_DISK: '{{ formatPartition ( index .Hardware.Disks 0 ) 1 }}'
           DEST_PATH: /etc/cloud/cloud.cfg.d/10_tinkerbell.cfg
           DIRMODE: "0700"
           FS_TYPE: ext4
@@ -527,7 +536,7 @@ spec:
           CONTENTS: |
             network:
               config: disabled
-          DEST_DISK: /dev/sda2
+          DEST_DISK: '{{ formatPartition ( index .Hardware.Disks 0 ) 1 }}'
           DEST_PATH: /etc/cloud/cloud.cfg.d/99-disable-network-config.cfg
           DIRMODE: "0700"
           FS_TYPE: ext4
@@ -540,7 +549,7 @@ spec:
       - environment:
           CONTENTS: |
             datasource: Ec2
-          DEST_DISK: /dev/sda2
+          DEST_DISK: '{{ formatPartition ( index .Hardware.Disks 0 ) 1 }}'
           DEST_PATH: /etc/cloud/ds-identify.cfg
           DIRMODE: "0700"
           FS_TYPE: ext4
@@ -550,8 +559,9 @@ spec:
         image: public.ecr.aws/eks-anywhere/tinkerbell/hub/writefile:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-15
         name: add-tink-cloud-init-ds-config
         timeout: 90
-      - name: "reboot"
+      - name: "reboot-image"
         image: public.ecr.aws/eks-anywhere/tinkerbell/hub/reboot:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-15
+        pid: host
         timeout: 90
         volumes:
           - /worker:/worker

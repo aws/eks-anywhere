@@ -34,6 +34,11 @@ const (
 	tinkerbellImageRedHat128EnvVar                   = "T_TINKERBELL_IMAGE_REDHAT_1_28"
 	tinkerbellImageRedHat129EnvVar                   = "T_TINKERBELL_IMAGE_REDHAT_1_29"
 	tinkerbellImageRedHat130EnvVar                   = "T_TINKERBELL_IMAGE_REDHAT_1_30"
+	tinkerbellImageRedHat9126EnvVar                  = "T_TINKERBELL_IMAGE_REDHAT_9_1_26"
+	tinkerbellImageRedHat9127EnvVar                  = "T_TINKERBELL_IMAGE_REDHAT_9_1_27"
+	tinkerbellImageRedHat9128EnvVar                  = "T_TINKERBELL_IMAGE_REDHAT_9_1_28"
+	tinkerbellImageRedHat9129EnvVar                  = "T_TINKERBELL_IMAGE_REDHAT_9_1_29"
+	tinkerbellImageRedHat9130EnvVar                  = "T_TINKERBELL_IMAGE_REDHAT_9_1_30"
 	tinkerbellInventoryCsvFilePathEnvVar             = "T_TINKERBELL_INVENTORY_CSV"
 	tinkerbellSSHAuthorizedKey                       = "T_TINKERBELL_SSH_AUTHORIZED_KEY"
 	tinkerbellCIEnvironmentEnvVar                    = "T_TINKERBELL_CI_ENVIRONMENT"
@@ -59,6 +64,11 @@ var requiredTinkerbellEnvVars = []string{
 	tinkerbellImageRedHat128EnvVar,
 	tinkerbellImageRedHat129EnvVar,
 	tinkerbellImageRedHat130EnvVar,
+	tinkerbellImageRedHat9126EnvVar,
+	tinkerbellImageRedHat9127EnvVar,
+	tinkerbellImageRedHat9128EnvVar,
+	tinkerbellImageRedHat9129EnvVar,
+	tinkerbellImageRedHat9130EnvVar,
 	tinkerbellInventoryCsvFilePathEnvVar,
 	tinkerbellSSHAuthorizedKey,
 }
@@ -262,6 +272,31 @@ func WithRedHat129Tinkerbell() TinkerbellOpt {
 // WithRedHat130Tinkerbell tink test with redhat 1.30.
 func WithRedHat130Tinkerbell() TinkerbellOpt {
 	return withKubeVersionAndOS(anywherev1.Kube130, RedHat8, "", nil)
+}
+
+// WithRedHat9126Tinkerbell tink test with redhat9 efi 1.26.
+func WithRedHat9126Tinkerbell() TinkerbellOpt {
+	return withKubeVersionAndOS(anywherev1.Kube126, RedHat9, "", nil)
+}
+
+// WithRedHat9127Tinkerbell tink test with redhat9 efi 1.27.
+func WithRedHat9127Tinkerbell() TinkerbellOpt {
+	return withKubeVersionAndOS(anywherev1.Kube127, RedHat9, "", nil)
+}
+
+// WithRedHat9128Tinkerbell tink test with redhat9 efi 1.28.
+func WithRedHat9128Tinkerbell() TinkerbellOpt {
+	return withKubeVersionAndOS(anywherev1.Kube128, RedHat9, "", nil)
+}
+
+// WithRedHat9129Tinkerbell tink test with redhat9 efi 1.29.
+func WithRedHat9129Tinkerbell() TinkerbellOpt {
+	return withKubeVersionAndOS(anywherev1.Kube129, RedHat9, "", nil)
+}
+
+// WithRedHat9130Tinkerbell tink test with redhat9 efi 1.30.
+func WithRedHat9130Tinkerbell() TinkerbellOpt {
+	return withKubeVersionAndOS(anywherev1.Kube130, RedHat9, "", nil)
 }
 
 func WithBottleRocketTinkerbell() TinkerbellOpt {
