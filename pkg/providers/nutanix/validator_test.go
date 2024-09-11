@@ -1124,12 +1124,12 @@ func TestNutanixValidatorValidateFreeGPU(t *testing.T) {
 						DeviceID: utils.Int64Ptr(8757),
 					},
 					{
-						Type: "name",
-						Name: "Ampere 40",
+						Type:     "deviceID",
+						DeviceID: utils.Int64Ptr(8757),
 					},
 					{
-						Type: "name",
-						Name: "Ampere 40",
+						Type:     "deviceID",
+						DeviceID: utils.Int64Ptr(8757),
 					},
 				}
 				clientCache := &ClientCache{clients: map[string]Client{"test": mockClient}}
