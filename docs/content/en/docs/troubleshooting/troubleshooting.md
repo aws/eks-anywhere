@@ -866,6 +866,49 @@ To clean up the resources in order to recover from this deleting state:
     kubectl delete node <node-name>
     ```
 
+### BottleRocket OS Etcd endpoints have inadvertent IP change
+
+If a cluster becomes inaccessible after etcd VMs IP address change but Control Plane is still reachable,,
+
+`ssh` into one of the control plane node, check kube-api server container logs in `/var/log/containers`.
+
+If the api server is having this error where the etcd endpoint is not reachable, the issue can be resolved by 2 ways.
+```
+2024-09-06T00:48:14.965194255Z stderr F W0906 00:48:14.965078       1 logging.go:59] [core] [Channel #5 SubChannel #6] grpc: addrConn.createTransport failed to connect to {Addr: "198.18.134.22:2379", ServerName: "198.18.134.22", }. Err: connection error: desc = "transport: Error while dialing: dial tcp 198.18.134.22:2379: operation was canceled
+```
+
+If you have an access to DHCP server and can reboot VMs manually, create DHCP reservations for the etcd VMs using their original IP addresses. Then, reboot the etcd nodes to ensure they obtain the correct IPs.
+
+If you do not have an access to the DHCP server or cannot reboot VMs manually, perform below steps to manually assign old IPs to VMs.
+1. `ssh` into etcd VM using a new IP.
+
+2. Find the correct old IP associated with this VM by looking at the etcd container log file located under `/var/log/containers`.
+
+3. Run below commands to manually change the new IP to the old IP. You will loose connection to this VM when you delete the new IP from the interface.
+    ```
+    sudo sheltie
+
+    # old IP will get added as a secondary IP on eth0 interface
+    ip addr change <old-ip/cidr> dev eth0
+
+    # add a default ip route in this VM using the old IP as the source
+    ip route add default via <router-ip> dev eth0 proto dhcp src <old-ip>
+
+    # setup the interface so it will promote the secondary IP address when we remove the first
+    sysctl net.ipv4.conf.eth0.promote_secondaries=1
+
+    # remove the new IP address and confirm
+    ip addr del <new-ip/cidr> dev eth0
+    ```
+
+5. `ssh` into the VM using old IP, confirm the IP has been changed by running `ip a` command.
+
+6. Perform the above steps for all etcd machines.
+
+The cluster should be accessible again in some time.
+>**_NOTE:_** Make sure to roll out new ETCD VMs based on DHCP lease expiration time to avoid this issue in future. 
+
+
 ## Troubleshooting GitOps integration
 ### Cluster creation failure leaves outdated cluster configuration in GitHub.com repository
 Failed cluster creation can sometimes leave behind cluster configuration files committed to your GitHub.com repository.
