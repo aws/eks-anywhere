@@ -53,7 +53,7 @@ var upgradeManagementComponentsCmd = &cobra.Command{
 			WithCliConfig(cliConfig).
 			WithClusterManager(clusterSpec.Cluster, nil).
 			WithClusterApplier().
-			WithProvider(umco.fileName, clusterSpec.Cluster, false, "", false, "", nil, nil).
+			WithProvider(umco.fileName, clusterSpec.Cluster, false, "", false, "", "", nil, nil).
 			WithGitOpsFlux(clusterSpec.Cluster, clusterSpec.FluxConfig, cliConfig).
 			WithWriter().
 			WithCAPIManager().

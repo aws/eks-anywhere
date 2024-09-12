@@ -48,6 +48,7 @@ func (p *Provider) PreCAPIInstallOnBootstrap(ctx context.Context, cluster *types
 		p.tinkerbellIP,
 		cluster.KubeconfigFile,
 		p.datacenterConfig.Spec.HookImagesURLPath,
+		p.smeeBindIp,
 		stack.WithBootsOnDocker(),
 		stack.WithHostNetworkEnabled(true), // enable host network on bootstrap cluster
 		stack.WithLoadBalancerEnabled(false),
@@ -107,6 +108,7 @@ func (p *Provider) PostWorkloadInit(ctx context.Context, cluster *types.Cluster,
 		p.templateBuilder.datacenterSpec.TinkerbellIP,
 		cluster.KubeconfigFile,
 		p.datacenterConfig.Spec.HookImagesURLPath,
+		p.smeeBindIp,
 		stack.WithBootsOnKubernetes(),
 		stack.WithHostNetworkEnabled(false), // disable host network on workload cluster
 		stack.WithStackServiceEnabled(true), // use stack service on workload cluster
