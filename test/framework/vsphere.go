@@ -375,7 +375,7 @@ func (v *VSphere) ClusterConfigUpdates() []api.ClusterConfigFiller {
 
 // WithKubeVersionAndOS returns a cluster config filler that sets the cluster kube version and the right template for all
 // vsphere machine configs.
-func (v *VSphere) WithKubeVersionAndOS(kubeVersion anywherev1.KubernetesVersion, os OS, release *releasev1.EksARelease, _ ...bool) api.ClusterConfigFiller {
+func (v *VSphere) WithKubeVersionAndOS(kubeVersion anywherev1.KubernetesVersion, os OS, release *releasev1.EksARelease, _ ...string) api.ClusterConfigFiller {
 	return api.JoinClusterConfigFillers(
 		api.ClusterToConfigFiller(api.WithKubernetesVersion(kubeVersion)),
 		api.VSphereToConfigFiller(

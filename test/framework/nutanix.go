@@ -197,7 +197,7 @@ func (n *Nutanix) WithProviderUpgrade(fillers ...api.NutanixFiller) ClusterE2ETe
 
 // WithKubeVersionAndOS returns a cluster config filler that sets the cluster kube version and the right template for all
 // nutanix machine configs.
-func (n *Nutanix) WithKubeVersionAndOS(_ anywherev1.KubernetesVersion, _ OS, _ *releasev1.EksARelease, _ ...bool) api.ClusterConfigFiller {
+func (n *Nutanix) WithKubeVersionAndOS(_ anywherev1.KubernetesVersion, _ OS, _ *releasev1.EksARelease, _ ...string) api.ClusterConfigFiller {
 	// TODO: Update tests to use this
 	panic("Not implemented for Nutanix yet")
 }

@@ -159,7 +159,7 @@ func WithCloudStackWorkerNodeGroup(name string, workerNodeGroup *WorkerNodeGroup
 	}
 }
 
-// WithKubeVersionAndOS returns a CloudStack Opt that adds API fillers to use a CloudStack template for
+// withKubeVersionAndOS returns a CloudStack Opt that adds API fillers to use a CloudStack template for
 // the specified OS family and version (default if not provided), corresponding to a particular
 // Kubernetes version, in addition to configuring all machine configs to use this OS family.
 func withCloudStackKubeVersionAndOS(kubeVersion anywherev1.KubernetesVersion, os OS, release *releasev1.EksARelease) CloudStackOpt {
@@ -410,7 +410,7 @@ func (c *CloudStack) ClusterStateValidations() []clusterf.StateValidation {
 
 // WithKubeVersionAndOS returns a cluster config filler that sets the cluster kube version and the right template for all
 // cloudstack machine configs.
-func (c *CloudStack) WithKubeVersionAndOS(kubeVersion anywherev1.KubernetesVersion, os OS, release *releasev1.EksARelease, _ ...bool) api.ClusterConfigFiller {
+func (c *CloudStack) WithKubeVersionAndOS(kubeVersion anywherev1.KubernetesVersion, os OS, release *releasev1.EksARelease, _ ...string) api.ClusterConfigFiller {
 	return api.JoinClusterConfigFillers(
 		api.ClusterToConfigFiller(api.WithKubernetesVersion(kubeVersion)),
 		api.CloudStackToConfigFiller(
