@@ -305,7 +305,7 @@ func (s *Snow) withBottlerocketStaticIPForKubeVersion(kubeVersion anywherev1.Kub
 
 // WithKubeVersionAndOS returns a cluster config filler that sets the cluster kube version and the correct AMI ID
 // and devices for the Snow machine configs.
-func (s *Snow) WithKubeVersionAndOS(kubeVersion anywherev1.KubernetesVersion, os OS, _ *releasev1.EksARelease, _ ...bool) api.ClusterConfigFiller {
+func (s *Snow) WithKubeVersionAndOS(kubeVersion anywherev1.KubernetesVersion, os OS, _ *releasev1.EksARelease, _ ...string) api.ClusterConfigFiller {
 	envar := fmt.Sprintf("T_SNOW_AMIID_%s_%s", strings.ToUpper(strings.ReplaceAll(string(os), "-", "_")), strings.ReplaceAll(string(kubeVersion), ".", "_"))
 
 	return api.JoinClusterConfigFillers(
