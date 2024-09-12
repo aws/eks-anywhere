@@ -3,6 +3,7 @@ package tinkerbell
 import (
 	"context"
 	"fmt"
+	"net"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
@@ -188,6 +189,19 @@ func (p *Provider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpe
 			return fmt.Errorf("TinkerbellIP %v does not match management cluster ip %v", p.datacenterConfig.Spec.TinkerbellIP, managementDatacenterConfig.Spec.TinkerbellIP)
 		}
 	}
+
+	// Checking if smeeBindIp is within available ips of the host
+	if p.smeeBindIp != "" {
+		ips, err := getAllPublicIPv4()
+		if err != nil {
+			return err
+		}
+
+		if !smeeIpAvailable(p.smeeBindIp, ips) {
+			return fmt.Errorf("IP %s provided in --smee-bind-ip is not bound to any network interface", p.smeeBindIp)
+		}
+	}
+
 	// TODO(chrisdoherty4) Look to inject the validator. Possibly look to use a builder for
 	// constructing the validations rather than injecting flags into the provider.
 	clusterSpecValidator := NewClusterSpecValidator(
@@ -266,4 +280,42 @@ func (p *Provider) readCSVToCatalogue() error {
 	}
 
 	return hardware.TranslateAll(machines, catalogueWriter, machineValidator)
+}
+
+func getAllPublicIPv4() ([]net.IP, error) {
+	v4s := []net.IP{}
+	addrs, err := net.InterfaceAddrs()
+	if err != nil {
+		return nil, fmt.Errorf("unable to auto-detect public IPv4: %w", err)
+	}
+	for _, addr := range addrs {
+		ip, ok := addr.(*net.IPNet)
+		if !ok {
+			continue
+		}
+		v4 := ip.IP.To4()
+		if v4 == nil || !v4.IsGlobalUnicast() {
+			continue
+		}
+
+		v4s = append(v4s, v4)
+	}
+	if len(v4s) > 0 {
+		return v4s, nil
+	}
+
+	return nil, fmt.Errorf("unable to auto-detect public IPv4")
+}
+
+func smeeIpAvailable(ipStr string, v4s []net.IP) bool {
+	ip := net.ParseIP(ipStr)
+	if ip == nil {
+		return false
+	}
+	for _, v := range v4s {
+		if ipStr == v.String() {
+			return true
+		}
+	}
+	return false
 }
