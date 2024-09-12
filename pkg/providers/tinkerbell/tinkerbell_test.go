@@ -34,6 +34,7 @@ import (
 const (
 	testDataDir = "testdata"
 	testIP      = "5.6.7.8"
+	smeeBindIp  = "192.168.0.50"
 )
 
 func givenClusterSpec(t *testing.T, fileName string) *cluster.Spec {
@@ -106,7 +107,7 @@ func newProviderTest(t *testing.T) *providerTest {
 	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
 	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 
-	p := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+	p := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup, smeeBindIp)
 	p.stackInstaller = stackInstaller
 
 	return &providerTest{
@@ -115,7 +116,7 @@ func newProviderTest(t *testing.T) *providerTest {
 	}
 }
 
-func newProvider(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig, clusterConfig *v1alpha1.Cluster, writer filewriter.FileWriter, docker stack.Docker, helm stack.Helm, kubectl ProviderKubectlClient, forceCleanup bool) *Provider {
+func newProvider(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig, clusterConfig *v1alpha1.Cluster, writer filewriter.FileWriter, docker stack.Docker, helm stack.Helm, kubectl ProviderKubectlClient, forceCleanup bool, smeeBindIp string) *Provider {
 	hardwareFile := "./testdata/hardware.csv"
 	provider, err := NewProvider(
 		datacenterConfig,
@@ -130,6 +131,7 @@ func newProvider(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineC
 		test.FakeNow,
 		forceCleanup,
 		false,
+        smeeBindIp,
 	)
 	if err != nil {
 		panic(err)
@@ -155,7 +157,7 @@ func TestTinkerbellProviderGenerateDeploymentFileWithExternalEtcd(t *testing.T) 
 	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 	ctx := context.Background()
 
-	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup, smeeBindIp)
 	provider.stackInstaller = stackInstaller
 
 	stackInstaller.EXPECT().CleanupLocalBoots(ctx, forceCleanup)
@@ -189,7 +191,7 @@ func TestTinkerbellProviderSetupAndValidateInPlaceBottlerocketNotSupported(t *te
 	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 	ctx := context.Background()
 
-	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup, smeeBindIp)
 	provider.stackInstaller = stackInstaller
 
 	stackInstaller.EXPECT().CleanupLocalBoots(ctx, forceCleanup)
@@ -215,7 +217,7 @@ func TestGenerateDeploymentFileWithMachineConfigOSImageExternalEtcd(t *testing.T
 	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 	ctx := context.Background()
 
-	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup, smeeBindIp)
 	provider.stackInstaller = stackInstaller
 
 	stackInstaller.EXPECT().CleanupLocalBoots(ctx, forceCleanup)
@@ -249,7 +251,7 @@ func TestTinkerbellProviderWithExternalEtcdFail(t *testing.T) {
 	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 	ctx := context.Background()
 
-	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup, smeeBindIp)
 	provider.stackInstaller = stackInstaller
 
 	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
@@ -279,7 +281,7 @@ func TestTinkerbellProviderMachineConfigsMissingUserSshKeys(t *testing.T) {
 	const sshKey = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC1BK73XhIzjX+meUr7pIYh6RHbvI3tmHeQIXY5lv7aztN1UoX+bhPo3dwo2sfSQn5kuxgQdnxIZ/CTzy0p0GkEYVv3gwspCeurjmu0XmrdmaSGcGxCEWT/65NtvYrQtUE5ELxJ+N/aeZNlK2B7IWANnw/82913asXH4VksV1NYNduP0o1/G4XcwLLSyVFB078q/oEnmvdNIoS61j4/o36HVtENJgYr0idcBvwJdvcGxGnPaqOhx477t+kfJAa5n5dSA5wilIaoXH5i1Tf/HsTCM52L+iNCARvQzJYZhzbWI1MDQwzILtIBEQCJsl2XSqIupleY8CxqQ6jCXt2mhae+wPc3YmbO5rFvr2/EvC57kh3yDs1Nsuj8KOvD78KeeujbR8n8pScm3WDp62HFQ8lEKNdeRNj6kB8WnuaJvPnyZfvzOhwG65/9w13IBl7B1sWxbFnq2rMpm5uHVK7mAmjL0Tt8zoDhcE1YJEnp9xte3/pvmKPkST5Q/9ZtR9P5sI+02jY0fvPkPyC03j2gsPixG7rpOCwpOdbny4dcj0TDeeXJX8er+oVfJuLYz0pNWJcT2raDdFfcqvYA0B0IyNYlj5nWX4RuEcyT3qocLReWPnZojetvAG/H8XwOh7fEVGqHAKOVSnPXCSQJPl6s0H12jPJBDJMTydtYPEszl4/CeQ=="
 	keyGenerator.EXPECT().GenerateSSHAuthKey(gomock.Any()).Return(sshKey, nil)
 
-	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup, smeeBindIp)
 
 	// Hack: monkey patch the key generator and the stack installer directly for determinism.
 	provider.keyGenerator = keyGenerator
@@ -315,7 +317,7 @@ func TestTinkerbellProviderGenerateDeploymentFileWithStackedEtcd(t *testing.T) {
 	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 	ctx := context.Background()
 
-	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup, smeeBindIp)
 	provider.stackInstaller = stackInstaller
 
 	stackInstaller.EXPECT().CleanupLocalBoots(ctx, forceCleanup)
@@ -349,7 +351,7 @@ func TestGenerateDeploymentFileWithMachineConfigOSImage(t *testing.T) {
 	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 	ctx := context.Background()
 
-	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup, smeeBindIp)
 	provider.stackInstaller = stackInstaller
 
 	stackInstaller.EXPECT().CleanupLocalBoots(ctx, forceCleanup)
@@ -382,7 +384,7 @@ func TestGenerateDeploymentFileWithMachineConfigOSImageError(t *testing.T) {
 	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 	ctx := context.Background()
 
-	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup, smeeBindIp)
 	provider.stackInstaller = stackInstaller
 
 	stackInstaller.EXPECT().CleanupLocalBoots(ctx, forceCleanup)
@@ -414,7 +416,7 @@ func TestTinkerbellProviderGenerateDeploymentFileWithAutoscalerConfiguration(t *
 	wng.AutoScalingConfiguration = ca
 	ctx := context.Background()
 
-	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup, smeeBindIp)
 	provider.stackInstaller = stackInstaller
 
 	stackInstaller.EXPECT().CleanupLocalBoots(ctx, forceCleanup)
@@ -448,7 +450,7 @@ func TestTinkerbellProviderGenerateDeploymentFileWithNodeLabels(t *testing.T) {
 	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 	ctx := context.Background()
 
-	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup, smeeBindIp)
 	provider.stackInstaller = stackInstaller
 
 	stackInstaller.EXPECT().CleanupLocalBoots(ctx, forceCleanup)
@@ -482,7 +484,7 @@ func TestTinkerbellProviderGenerateDeploymentFileWithWorkerVersion(t *testing.T)
 	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 	ctx := context.Background()
 
-	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup, smeeBindIp)
 	provider.stackInstaller = stackInstaller
 
 	stackInstaller.EXPECT().CleanupLocalBoots(ctx, forceCleanup)
@@ -516,7 +518,7 @@ func TestTinkerbellProviderGenerateDeploymentFileWithNodeTaints(t *testing.T) {
 	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 	ctx := context.Background()
 
-	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup, smeeBindIp)
 	provider.stackInstaller = stackInstaller
 
 	stackInstaller.EXPECT().CleanupLocalBoots(ctx, forceCleanup)
@@ -550,7 +552,7 @@ func TestTinkerbellProviderGenerateDeploymentFileMultipleWorkerNodeGroups(t *tes
 	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 	ctx := context.Background()
 
-	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup, smeeBindIp)
 	provider.stackInstaller = stackInstaller
 
 	stackInstaller.EXPECT().CleanupLocalBoots(ctx, forceCleanup)
@@ -584,7 +586,7 @@ func TestPreCAPIInstallOnBootstrapSuccess(t *testing.T) {
 	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
 	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 
-	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup, smeeBindIp)
 	provider.stackInstaller = stackInstaller
 
 	bundle := clusterSpec.RootVersionsBundle()
@@ -629,7 +631,7 @@ func TestPostWorkloadInitSuccess(t *testing.T) {
 	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
 	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 
-	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup, smeeBindIp)
 	provider.stackInstaller = stackInstaller
 
 	bundle := clusterSpec.RootVersionsBundle()
@@ -678,7 +680,7 @@ func TestPostBootstrapSetupSuccess(t *testing.T) {
 	kubectl.EXPECT().ApplyKubeSpecFromBytesForce(ctx, cluster, gomock.Any())
 	kubectl.EXPECT().WaitForRufioMachines(ctx, cluster, "5m", "Contactable", gomock.Any()).MaxTimes(2)
 
-	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup, smeeBindIp)
 	if err := provider.readCSVToCatalogue(); err != nil {
 		t.Fatalf("failed to read hardware csv: %v", err)
 	}
@@ -708,7 +710,7 @@ func TestPostBootstrapSetupWaitForRufioMachinesFail(t *testing.T) {
 	kubectl.EXPECT().ApplyKubeSpecFromBytesForce(ctx, cluster, gomock.Any())
 	kubectl.EXPECT().WaitForRufioMachines(ctx, cluster, "5m", "Contactable", gomock.Any()).Return(wantError)
 
-	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup, smeeBindIp)
 	if err := provider.readCSVToCatalogue(); err != nil {
 		t.Fatalf("failed to read hardware csv: %v", err)
 	}
@@ -750,7 +752,7 @@ func TestPostMoveManagementToBootstrapSuccess(t *testing.T) {
 
 	for _, test := range tt {
 		t.Run(test.name, func(t *testing.T) {
-			provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+			provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup, smeeBindIp)
 			provider.hardwareCSVFile = test.hardwareCSVFile
 			if err := provider.readCSVToCatalogue(); err != nil {
 				t.Fatalf("failed to read hardware csv: %v", err)
@@ -779,7 +781,7 @@ func TestPostMoveManagementToBootstrapWaitForRufioMachinesFail(t *testing.T) {
 	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
 	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
 	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
-	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup, smeeBindIp)
 
 	kubectl.EXPECT().WaitForRufioMachines(ctx, cluster, "5m", "Contactable", gomock.Any()).Return(wantError)
 	if err := provider.readCSVToCatalogue(); err != nil {
@@ -806,7 +808,7 @@ func TestTinkerbellProviderGenerateDeploymentFileWithFullOIDC(t *testing.T) {
 	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 	ctx := context.Background()
 
-	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup, smeeBindIp)
 	provider.stackInstaller = stackInstaller
 
 	stackInstaller.EXPECT().CleanupLocalBoots(ctx, forceCleanup)
@@ -840,7 +842,7 @@ func TestTinkerbellProviderGenerateDeploymentFileWithMinimalOIDC(t *testing.T) {
 	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 	ctx := context.Background()
 
-	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup, smeeBindIp)
 	provider.stackInstaller = stackInstaller
 
 	stackInstaller.EXPECT().CleanupLocalBoots(ctx, forceCleanup)
@@ -874,7 +876,7 @@ func TestTinkerbellProviderGenerateDeploymentFileWithAWSIamConfig(t *testing.T) 
 	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 	ctx := context.Background()
 
-	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup, smeeBindIp)
 	provider.stackInstaller = stackInstaller
 
 	stackInstaller.EXPECT().CleanupLocalBoots(ctx, forceCleanup)
@@ -908,7 +910,7 @@ func TestProviderGenerateDeploymentFileForWithMinimalRegistryMirror(t *testing.T
 	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 	ctx := context.Background()
 
-	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup, smeeBindIp)
 	provider.stackInstaller = stackInstaller
 
 	stackInstaller.EXPECT().CleanupLocalBoots(ctx, forceCleanup)
@@ -942,7 +944,7 @@ func TestProviderGenerateDeploymentFileForWithRegistryMirrorWithCert(t *testing.
 	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 	ctx := context.Background()
 
-	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup, smeeBindIp)
 	provider.stackInstaller = stackInstaller
 
 	stackInstaller.EXPECT().CleanupLocalBoots(ctx, forceCleanup)
@@ -982,7 +984,7 @@ func TestProviderGenerateDeploymentFileForWithRegistryMirrorWithAuth(t *testing.
 	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 	ctx := context.Background()
 
-	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup, smeeBindIp)
 	provider.stackInstaller = stackInstaller
 
 	stackInstaller.EXPECT().CleanupLocalBoots(ctx, forceCleanup)
@@ -1017,7 +1019,7 @@ func TestProviderGenerateDeploymentFileForWithBottlerocketMinimalRegistryMirror(
 	ctx := context.Background()
 	clusterSpec.VersionsBundles[clusterSpec.Cluster.Spec.KubernetesVersion] = getVersionBundle()
 
-	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup, smeeBindIp)
 	provider.stackInstaller = stackInstaller
 
 	stackInstaller.EXPECT().CleanupLocalBoots(ctx, forceCleanup)
@@ -1051,7 +1053,7 @@ func TestProviderGenerateDeploymentFileForWithBottlerocketRegistryMirrorWithCert
 	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 	ctx := context.Background()
 	clusterSpec.VersionsBundles[clusterSpec.Cluster.Spec.KubernetesVersion] = getVersionBundle()
-	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup, smeeBindIp)
 	provider.stackInstaller = stackInstaller
 
 	stackInstaller.EXPECT().CleanupLocalBoots(ctx, forceCleanup)
@@ -1088,7 +1090,7 @@ func TestProviderGenerateDeploymentFileForWithBottlerocketRegistryMirrorWithAuth
 	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 	ctx := context.Background()
 	clusterSpec.VersionsBundles[clusterSpec.Cluster.Spec.KubernetesVersion] = getVersionBundle()
-	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup, smeeBindIp)
 	provider.stackInstaller = stackInstaller
 
 	stackInstaller.EXPECT().CleanupLocalBoots(ctx, forceCleanup)
@@ -1122,7 +1124,7 @@ func TestProviderGenerateDeploymentFileForSingleNodeCluster(t *testing.T) {
 	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 	ctx := context.Background()
 
-	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup, smeeBindIp)
 	provider.stackInstaller = stackInstaller
 
 	stackInstaller.EXPECT().CleanupLocalBoots(ctx, forceCleanup)
@@ -1161,7 +1163,7 @@ func TestProviderGenerateDeploymentFileForInPlaceSingleNodeCluster(t *testing.T)
 	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 	ctx := context.Background()
 
-	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup, smeeBindIp)
 	provider.stackInstaller = stackInstaller
 
 	stackInstaller.EXPECT().CleanupLocalBoots(ctx, forceCleanup)
@@ -1197,7 +1199,7 @@ func TestProviderGenerateDeploymentFileForSingleNodeClusterSkipLB(t *testing.T) 
 	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 	ctx := context.Background()
 
-	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup, smeeBindIp)
 	provider.stackInstaller = stackInstaller
 
 	stackInstaller.EXPECT().CleanupLocalBoots(ctx, forceCleanup)
@@ -1233,7 +1235,7 @@ func TestTinkerbellTemplate_isScaleUpDownSuccess(t *testing.T) {
 	newClusterSpec := clusterSpec.DeepCopy()
 	newClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].Count = ptr.Int(2)
 
-	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup, smeeBindIp)
 	assert.True(t, provider.isScaleUpDown(clusterSpec.Cluster, newClusterSpec.Cluster), "expected scale up down true")
 }
 
@@ -1253,7 +1255,7 @@ func TestSetupAndValidateCreateWorkloadClusterSuccess(t *testing.T) {
 	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 	ctx := context.Background()
 
-	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup, smeeBindIp)
 	provider.stackInstaller = stackInstaller
 
 	stackInstaller.EXPECT().CleanupLocalBoots(ctx, forceCleanup)
@@ -1301,7 +1303,7 @@ func TestSetupAndValidateCreateWorkloadClusterDifferentNamespaceSuccess(t *testi
 	managementCluster.Namespace = "different-namespace"
 	ctx := context.Background()
 
-	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup, smeeBindIp)
 	provider.stackInstaller = stackInstaller
 
 	stackInstaller.EXPECT().CleanupLocalBoots(ctx, forceCleanup)
@@ -1347,7 +1349,7 @@ func TestSetupAndValidateCreateWorkloadClusterFailsIfMachineExists(t *testing.T)
 	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 	ctx := context.Background()
 
-	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup, smeeBindIp)
 	provider.stackInstaller = stackInstaller
 
 	stackInstaller.EXPECT().CleanupLocalBoots(ctx, forceCleanup)
@@ -1392,7 +1394,7 @@ func TestSetupAndValidateCreateWorkloadClusterFailsIfDatacenterExists(t *testing
 	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 	ctx := context.Background()
 
-	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup, smeeBindIp)
 	provider.stackInstaller = stackInstaller
 
 	stackInstaller.EXPECT().CleanupLocalBoots(ctx, forceCleanup)
@@ -1430,7 +1432,7 @@ func TestSetupAndValidateCreateWorkloadClusterFailsIfDatacenterConfigError(t *te
 	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 	ctx := context.Background()
 
-	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup, smeeBindIp)
 	provider.stackInstaller = stackInstaller
 
 	stackInstaller.EXPECT().CleanupLocalBoots(ctx, forceCleanup)
@@ -1467,7 +1469,7 @@ func TestSetupAndValidateCreateWorkloadClusterErrorUnprovisionedHardware(t *test
 	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 	ctx := context.Background()
 
-	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup, smeeBindIp)
 	provider.stackInstaller = stackInstaller
 
 	stackInstaller.EXPECT().CleanupLocalBoots(ctx, forceCleanup)
@@ -1505,7 +1507,7 @@ func TestSetupAndValidateCreateWorkloadClusterErrorProvisionedHardware(t *testin
 	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 	ctx := context.Background()
 
-	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup, smeeBindIp)
 	provider.stackInstaller = stackInstaller
 
 	stackInstaller.EXPECT().CleanupLocalBoots(ctx, forceCleanup)
@@ -1545,7 +1547,7 @@ func TestSetupAndValidateUpgradeClusterErrorValidateClusterSpec(t *testing.T) {
 	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 	ctx := context.Background()
 
-	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup, smeeBindIp)
 	provider.stackInstaller = stackInstaller
 	provider.providerKubectlClient = kubectl
 
@@ -1577,7 +1579,7 @@ func TestSetupAndValidateUpgradeWorkloadClusterErrorApplyHardware(t *testing.T) 
 	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 	ctx := context.Background()
 
-	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup, smeeBindIp)
 	provider.stackInstaller = stackInstaller
 	provider.providerKubectlClient = kubectl
 
@@ -1614,7 +1616,7 @@ func TestSetupAndValidateUpgradeWorkloadClusterErrorBMC(t *testing.T) {
 	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 	ctx := context.Background()
 
-	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup, smeeBindIp)
 	provider.stackInstaller = stackInstaller
 	provider.providerKubectlClient = kubectl
 	provider.hardwareCSVFile = "testdata/hardware.csv"
@@ -1654,7 +1656,7 @@ func TestSetupAndValidateCreateWorkloadClusterErrorManagementCluster(t *testing.
 	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 	ctx := context.Background()
 
-	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup, smeeBindIp)
 	provider.stackInstaller = stackInstaller
 
 	stackInstaller.EXPECT().CleanupLocalBoots(ctx, forceCleanup)
@@ -1699,7 +1701,7 @@ func TestSetupAndValidateCreateWorkloadClusterErrorUnspecifiedTinkerbellIP(t *te
 	clusterDatacenterConfig := datacenterConfig.DeepCopy()
 	clusterDatacenterConfig.Spec.TinkerbellIP = ""
 
-	provider := newProvider(clusterDatacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+	provider := newProvider(clusterDatacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup, smeeBindIp)
 	provider.stackInstaller = stackInstaller
 
 	stackInstaller.EXPECT().CleanupLocalBoots(ctx, forceCleanup)
@@ -1740,7 +1742,7 @@ func TestSetupAndValidateCreateWorkloadClusterErrorManagementClusterTinkerbellIP
 	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 	ctx := context.Background()
 
-	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup, smeeBindIp)
 	provider.stackInstaller = stackInstaller
 
 	stackInstaller.EXPECT().CleanupLocalBoots(ctx, forceCleanup)
@@ -1784,7 +1786,7 @@ func TestSetupAndValidateCreateWorkloadClusterErrorDifferentTinkerbellIP(t *test
 	managementDatacenterConfig := datacenterConfig.DeepCopy()
 	managementDatacenterConfig.Spec.TinkerbellIP = "different.ip"
 
-	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup, smeeBindIp)
 	provider.stackInstaller = stackInstaller
 
 	stackInstaller.EXPECT().CleanupLocalBoots(ctx, forceCleanup)
@@ -1825,7 +1827,7 @@ func TestProviderGenerateDeploymentFileForWithProxy(t *testing.T) {
 	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 	ctx := context.Background()
 
-	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup, smeeBindIp)
 	provider.stackInstaller = stackInstaller
 
 	stackInstaller.EXPECT().CleanupLocalBoots(ctx, forceCleanup)
@@ -1859,7 +1861,7 @@ func TestProviderGenerateDeploymentFileForBottleRocketWithNTPConfig(t *testing.T
 	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 	ctx := context.Background()
 
-	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup, smeeBindIp)
 	provider.stackInstaller = stackInstaller
 
 	stackInstaller.EXPECT().CleanupLocalBoots(ctx, forceCleanup)
@@ -1893,7 +1895,7 @@ func TestProviderGenerateDeploymentFileForUbuntuWithNTPConfig(t *testing.T) {
 	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 	ctx := context.Background()
 
-	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup, smeeBindIp)
 	provider.stackInstaller = stackInstaller
 
 	stackInstaller.EXPECT().CleanupLocalBoots(ctx, forceCleanup)
@@ -1927,7 +1929,7 @@ func TestProviderGenerateDeploymentFileForBottlerocketWithBottlerocketSettingsCo
 	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 	ctx := context.Background()
 
-	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup, smeeBindIp)
 	provider.stackInstaller = stackInstaller
 
 	stackInstaller.EXPECT().CleanupLocalBoots(ctx, forceCleanup)
@@ -1963,7 +1965,7 @@ func TestTinkerbellProviderGenerateCAPISpecForCreateWithPodIAMConfig(t *testing.
 	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 	ctx := context.Background()
 
-	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup, smeeBindIp)
 	provider.stackInstaller = stackInstaller
 
 	stackInstaller.EXPECT().CleanupLocalBoots(ctx, forceCleanup)
@@ -1995,7 +1997,7 @@ func TestProviderGenerateDeploymentFileForBottlerocketWithKernelSettingsConfig(t
 	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 	ctx := context.Background()
 
-	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup, smeeBindIp)
 	provider.stackInstaller = stackInstaller
 
 	stackInstaller.EXPECT().CleanupLocalBoots(ctx, forceCleanup)
@@ -2029,7 +2031,7 @@ func TestProviderGenerateDeploymentFileForWhenKubeVipDisabled(t *testing.T) {
 	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 	ctx := context.Background()
 
-	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup, smeeBindIp)
 	provider.stackInstaller = stackInstaller
 
 	stackInstaller.EXPECT().CleanupLocalBoots(ctx, forceCleanup)
@@ -2062,7 +2064,7 @@ func TestProviderGenerateDeploymentFileForBottlerocketWithCertBundlesConfig(t *t
 	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 	ctx := context.Background()
 
-	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup, smeeBindIp)
 	provider.stackInstaller = stackInstaller
 
 	stackInstaller.EXPECT().CleanupLocalBoots(ctx, forceCleanup)
@@ -2150,7 +2152,7 @@ func TestTinkerbellProvider_GenerateCAPISpecForUpgrade_RegistryMirror(t *testing
 		WaitForRufioMachines(ctx, cluster, "5m", "Contactable", gomock.Any()).
 		Return(nil)
 
-	provider := newProvider(datacenterConfig, machineConfigs, updatedClusterSpec.Cluster, writer, docker, helm, kubectl, false)
+	provider := newProvider(datacenterConfig, machineConfigs, updatedClusterSpec.Cluster, writer, docker, helm, kubectl, false, smeeBindIp)
 	provider.stackInstaller = stackInstaller
 
 	if err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, updatedClusterSpec, clusterSpec); err != nil {
@@ -2192,6 +2194,7 @@ func TestTinkerbellProviderGetMachineConfigsWithMismatchedAndExternalEtcd(t *tes
 		test.FakeNow,
 		forceCleanup,
 		false,
+        smeeBindIp,
 	)
 
 	expectedErrorMessage := fmt.Sprintf(referrencedMachineConfigsAvailabilityErrMsg, "test-etcd")
@@ -2213,7 +2216,7 @@ func TestTinkerbellProviderGetMachineConfigsWithMatchedAndExternalEtcd(t *testin
 	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
 	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 
-	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup, smeeBindIp)
 	provider.stackInstaller = stackInstaller
 
 	numberOfMatchingMachineConfigs := 3
@@ -2256,6 +2259,7 @@ func TestTinkerbellProviderGetMachineConfigsWithMismatchedMachineConfig(t *testi
 		test.FakeNow,
 		forceCleanup,
 		false,
+        smeeBindIp,
 	)
 
 	expectedErrorMessage := fmt.Sprintf(referrencedMachineConfigsAvailabilityErrMsg, "single-node-cp")
@@ -2333,7 +2337,7 @@ func TestTinkerbellProvider_GenerateCAPISpecForUpgrade_CertBundles(t *testing.T)
 		WaitForRufioMachines(ctx, cluster, "5m", "Contactable", gomock.Any()).
 		Return(nil)
 
-	provider := newProvider(datacenterConfig, machineConfigs, updatedClusterSpec.Cluster, writer, docker, helm, kubectl, false)
+	provider := newProvider(datacenterConfig, machineConfigs, updatedClusterSpec.Cluster, writer, docker, helm, kubectl, false, smeeBindIp)
 	provider.stackInstaller = stackInstaller
 
 	if err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, updatedClusterSpec, clusterSpec); err != nil {
@@ -2436,7 +2440,7 @@ func TestGetInfrastructureBundle(t *testing.T) {
 	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
 	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 
-	p := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+	p := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup, smeeBindIp)
 	p.stackInstaller = stackInstaller
 
 	managementComponents := givenManagementComponents()

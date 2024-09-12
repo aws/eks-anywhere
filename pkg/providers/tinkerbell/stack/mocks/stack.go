@@ -254,7 +254,7 @@ func (mr *MockStackInstallerMockRecorder) HasLegacyChart(ctx, bundle, kubeconfig
 }
 
 // Install mocks base method.
-func (m *MockStackInstaller) Install(ctx context.Context, bundle v1alpha1.TinkerbellBundle, tinkerbellIP, kubeconfig, hookOverride string, opts ...stack.InstallOption) error {
+func (m *MockStackInstaller) Install(ctx context.Context, bundle v1alpha1.TinkerbellBundle, tinkerbellIP, kubeconfig, hookOverride, smeeBindIp string, opts ...stack.InstallOption) error {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, bundle, tinkerbellIP, kubeconfig, hookOverride}
 	for _, a := range opts {
