@@ -357,6 +357,7 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
    sudo adduser image-builder
    ```
    Follow the prompt to provide a password for the image-builder user.
+   If it does not prompt you for a password, then run `sudo passwd image-builder`
 1. Add image-builder user to the sudo group and change user as image-builder providing in the password from previous step when prompted.
    ```bash
    sudo usermod -aG sudo image-builder
@@ -401,7 +402,7 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
    * Starting with `image-builder` version `v0.3.0`, the minimum required Python version is Python 3.9. However, many Linux distros ship only up to Python 3.8, so you will need to install Python 3.9 from external sources. Refer to the `pyenv` [installation](https://github.com/pyenv/pyenv#installation) and [usage](https://github.com/pyenv/pyenv#usage) documentation to install Python 3.9 and make it the default Python version.
    * Once you have Python 3.9, you can install Ansible using `pip`.
      ```bash
-     python3 -m pip install --user ansible
+     python3 -m pip install --user ansible==8.7.0 ansible-core==2.15.10
      ```
 1. Get the latest version of `govc`:
    ```bash
@@ -487,6 +488,7 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
       * `--vsphere-config`: vSphere configuration file (`vsphere.json` in this example)
 
       ```bash
+      export PATH="$PATH:/home/image-builder/.local/bin"
       image-builder build --os ubuntu --hypervisor vsphere --release-channel 1-29 --vsphere-config vsphere.json
       ```
 
@@ -501,6 +503,7 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
       * `--vsphere-config`: vSphere configuration file (`vsphere.json` in this example)
 
       ```bash
+      export PATH="$PATH:/home/image-builder/.local/bin"
       image-builder build --os redhat --hypervisor vsphere --release-channel 1-29 --vsphere-config vsphere.json
       ```
 
@@ -512,6 +515,7 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
    sudo adduser image-builder
    ```
    Follow the prompt to provide a password for the image-builder user.
+   If it does not prompt you for a password, then run `sudo passwd image-builder`
 2. Add image-builder user to the sudo group and change user as image-builder providing in the password from previous step when prompted.
    ```bash
    sudo usermod -aG sudo image-builder
@@ -565,7 +569,7 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
    * Starting with `image-builder` version `v0.3.0`, the minimum required Python version is Python 3.9. However, many Linux distros ship only up to Python 3.8, so you will need to install Python 3.9 from external sources. Refer to the `pyenv` [installation](https://github.com/pyenv/pyenv#installation) and [usage](https://github.com/pyenv/pyenv#usage) documentation to install Python 3.9 and make it the default Python version.
    * Once you have Python 3.9, you can install Ansible using `pip`.
      ```bash
-     python3 -m pip install --user ansible
+     python3 -m pip install --user ansible==8.7.0 ansible-core==2.15.10
      ```
 1. Create an Ubuntu or Red Hat image:
 
@@ -580,6 +584,7 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
       * `--baremetal-config`: baremetal config file if using proxy
 
       ```bash
+      export PATH="$PATH:/home/image-builder/.local/bin"
       image-builder build --os ubuntu --hypervisor baremetal --release-channel 1-29
       ```
 
@@ -612,6 +617,7 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
    Image builder only supports building RHEL 9 raw images with EFI firmware. Refer to [UEFI Support]({{< relref "#uefi-support">}}) to enable image builds with EFI firmware.
 
       ```bash
+      export PATH="$PATH:/home/image-builder/.local/bin"
       image-builder build --os redhat --hypervisor baremetal --release-channel 1-29 --baremetal-config baremetal.json
       ```
 1. To consume the image, serve it from an accessible web server, then create the [bare metal cluster spec]({{< relref "../getting-started/baremetal/bare-spec/" >}})
@@ -632,6 +638,7 @@ These steps use `image-builder` to create a RHEL-based image for CloudStack. Bef
    sudo adduser image-builder
    ```
    Follow the prompt to provide a password for the image-builder user.
+   If it does not prompt you for a password, then run `sudo passwd image-builder`
 1. Add image-builder user to the sudo group and change user as image-builder providing in the password from previous step when prompted.
    ```bash
    sudo usermod -aG sudo image-builder
@@ -685,7 +692,7 @@ These steps use `image-builder` to create a RHEL-based image for CloudStack. Bef
    * Starting with `image-builder` version `v0.3.0`, the minimum required Python version is Python 3.9. However, many Linux distros ship only up to Python 3.8, so you will need to install Python 3.9 from external sources. Refer to the `pyenv` [installation](https://github.com/pyenv/pyenv#installation) and [usage](https://github.com/pyenv/pyenv#usage) documentation to install Python 3.9 and make it the default Python version.
    * Once you have Python 3.9, you can install Ansible using `pip`.
      ```bash
-     python3 -m pip install --user ansible
+     python3 -m pip install --user ansible==8.7.0 ansible-core==2.15.10
      ```
 1. Create a CloudStack configuration file (for example, `cloudstack.json`) to provide the location of a Red Hat Enterprise Linux 8 ISO image and related checksum and Red Hat subscription information:
    ```json
@@ -707,6 +714,7 @@ These steps use `image-builder` to create a RHEL-based image for CloudStack. Bef
       * `--cloudstack-config`: CloudStack configuration file (`cloudstack.json` in this example)
 
       ```bash
+      export PATH="$PATH:/home/image-builder/.local/bin"
       image-builder build --os redhat --hypervisor cloudstack --release-channel 1-29 --cloudstack-config cloudstack.json
       ```
 1. To consume the resulting RHEL-based image, add it as a template to your CloudStack setup as described in [Preparing CloudStack]({{< relref "../getting-started/cloudstack/cloudstack-preparation" >}}).
@@ -720,6 +728,7 @@ These steps use `image-builder` to create an Ubuntu-based Amazon Machine Image (
    sudo adduser image-builder
    ```
    Follow the prompt to provide a password for the image-builder user.
+   If it does not prompt you for a password, then run `sudo passwd image-builder`
 1. Add the `image-builder` user to the `sudo` group and switch user to `image-builder`, providing in the password from previous step when prompted.
    ```bash
    sudo usermod -aG sudo image-builder
@@ -764,7 +773,7 @@ These steps use `image-builder` to create an Ubuntu-based Amazon Machine Image (
    * Starting with `image-builder` version `v0.3.0`, the minimum required Python version is Python 3.9. However, many Linux distros ship only up to Python 3.8, so you will need to install Python 3.9 from external sources. Refer to the `pyenv` [installation](https://github.com/pyenv/pyenv#installation) and [usage](https://github.com/pyenv/pyenv#usage) documentation to install Python 3.9 and make it the default Python version.
    * Once you have Python 3.9, you can install Ansible using `pip`.
      ```bash
-     python3 -m pip install --user ansible
+     python3 -m pip install --user ansible==8.7.0 ansible-core==2.15.10
      ```
 1. Create an AMI configuration file (for example, `ami.json`) that contains various AMI parameters. For example:
 
@@ -830,7 +839,8 @@ These steps use `image-builder` to create an Ubuntu-based Amazon Machine Image (
    * `--ami-config`: AMI configuration file (`ami.json` in this example)
 
    ```bash
-   image-builder build --os ubuntu --hypervisor ami --release-channel 1-29 --ami-config ami.json
+   export PATH="$PATH:/home/image-builder/.local/bin"
+      image-builder build --os ubuntu --hypervisor ami --release-channel 1-29 --ami-config ami.json
    ```
 1. After the build, the Ubuntu AMI will be available in your AWS account in the AWS region specified in your AMI configuration file. If you wish to export it as a raw image, you can achieve this using the AWS CLI.
    ```
@@ -854,6 +864,7 @@ These steps use `image-builder` to create a Ubuntu-based image for Nutanix AHV a
    sudo adduser image-builder
    ```
    Follow the prompt to provide a password for the image-builder user.
+   If it does not prompt you for a password, then run `sudo passwd image-builder`
 1. Add image-builder user to the sudo group and change user as image-builder providing in the password from previous step when prompted.
    ```bash
    sudo usermod -aG sudo image-builder
@@ -898,7 +909,7 @@ These steps use `image-builder` to create a Ubuntu-based image for Nutanix AHV a
    * Starting with `image-builder` version `v0.3.0`, the minimum required Python version is Python 3.9. However, many Linux distros ship only up to Python 3.8, so you will need to install Python 3.9 from external sources. Refer to the `pyenv` [installation](https://github.com/pyenv/pyenv#installation) and [usage](https://github.com/pyenv/pyenv#usage) documentation to install Python 3.9 and make it the default Python version.
    * Once you have Python 3.9, you can install Ansible using `pip`.
      ```bash
-     python3 -m pip install --user ansible
+     python3 -m pip install --user ansible==8.7.0 ansible-core==2.15.10
      ``` 
 1. Create a `nutanix.json` config file. More details on values can be found in the [image-builder documentation](https://image-builder.sigs.k8s.io/capi/providers/nutanix.html). See example below:
    ```json
@@ -937,6 +948,7 @@ These steps use `image-builder` to create a Ubuntu-based image for Nutanix AHV a
       * `--nutanix-config`: Nutanix configuration file (`nutanix.json` in this example)
 
       ```bash
+      export PATH="$PATH:/home/image-builder/.local/bin"
       image-builder build --os ubuntu --hypervisor nutanix --release-channel 1-29 --nutanix-config nutanix.json
       ```
 
@@ -951,6 +963,7 @@ These steps use `image-builder` to create a Ubuntu-based image for Nutanix AHV a
       * `--nutanix-config`: Nutanix configuration file (`nutanix.json` in this example)
 
       ```bash
+      export PATH="$PATH:/home/image-builder/.local/bin"
       image-builder build --os redhat --hypervisor nutanix --release-channel 1-29 --nutanix-config nutanix.json
       ```
 
@@ -1005,12 +1018,14 @@ This was improved in `image-builder` released with EKS-A `v0.16.3` to `v0.16.5`.
 For example, if you want to build an image for EKS-A version `v0.16.5`, you can run the following command.
    ```bash
    export EKSA_RELEASE_VERSION=v0.16.5
-   image-builder build --os <OS> --hypervisor <hypervisor> --release-channel <release channel> --<hypervisor>-config config.json
+   export PATH="$PATH:/home/image-builder/.local/bin"
+      image-builder build --os <OS> --hypervisor <hypervisor> --release-channel <release channel> --<hypervisor>-config config.json
    ```
 
 With `image-builder` versions `v0.2.1` and above (released with EKS-A version `v0.17.0`), the `image-builder` CLI has the EKS-A version baked into it, so it will build images pertaining to that release of EKS Anywhere by default. You can override the default version using the `eksa-release` option.
    ```bash
-   image-builder build --os <OS> --hypervisor <hypervisor> --release-channel <release channel> --<hypervisor>-config config.json --eksa-release v0.16.5
+   export PATH="$PATH:/home/image-builder/.local/bin"
+      image-builder build --os <OS> --hypervisor <hypervisor> --release-channel <release channel> --<hypervisor>-config config.json --eksa-release v0.16.5
    ```
 
 #### Building images corresponding to dev versions of EKS-A
@@ -1025,12 +1040,14 @@ This can be achieved using an `image-builder` CLI that has the dev version of EK
    **`image-builder` obtained from a production EKS-A release:**
    ```bash
    export EKSA_USE_DEV_RELEASE=true
-   image-builder build --os <OS> --hypervisor <hypervisor> --release-channel <release channel> --<hypervisor>-config config.json --eksa-release v0.0.0-dev
+   export PATH="$PATH:/home/image-builder/.local/bin"
+      image-builder build --os <OS> --hypervisor <hypervisor> --release-channel <release channel> --<hypervisor>-config config.json --eksa-release v0.0.0-dev
    ```
    **`image-builder` obtained from a dev EKS-A release:**
    ```bash
    export EKSA_USE_DEV_RELEASE=true
-   image-builder build --os <OS> --hypervisor <hypervisor> --release-channel <release channel> --<hypervisor>-config config.json
+   export PATH="$PATH:/home/image-builder/.local/bin"
+      image-builder build --os <OS> --hypervisor <hypervisor> --release-channel <release channel> --<hypervisor>-config config.json
    ```
 
 In both these above approaches, the artifacts embedded into the images will be obtained from the dev release bundle manifest instead of production. This manifest contains the latest artifacts built from the `main` branch, and is generally more up-to-date than production release artifact versions.
@@ -1041,7 +1058,8 @@ In both these above approaches, the artifacts embedded into the images will be o
 
 For example, to build a Kubernetes v1.27 Ubuntu 22.04 OVA with UEFI enabled, you can run the following command.
    ```bash
-   image-builder build --os ubuntu --hypervisor vsphere --os-version 22.04 --release-channel 1.27 --vsphere-config config.json --firmware efi
+   export PATH="$PATH:/home/image-builder/.local/bin"
+      image-builder build --os ubuntu --hypervisor vsphere --os-version 22.04 --release-channel 1.27 --vsphere-config config.json --firmware efi
    ```
 
 The table below shows the possible firmware options for the hypervisor and OS combinations that `image-builder` supports.
@@ -1073,7 +1091,8 @@ To do this, create a configuration file (say, `files.json`) containing the list 
 
 You can now run the `image-builder` CLI with the `files-config` option, with this configuration file as input.
    ```bash
-   image-builder build --os <OS> --hypervisor <hypervisor> --release-channel <release channel> --<hypervisor>-config config.json --files-config files.json
+   export PATH="$PATH:/home/image-builder/.local/bin"
+      image-builder build --os <OS> --hypervisor <hypervisor> --release-channel <release channel> --<hypervisor>-config config.json --files-config files.json
    ```
 
 ### Using Proxy Server
@@ -1097,7 +1116,8 @@ In a proxy-enabled environment, `image-builder` uses `wget` to download artifact
 
 Run `image-builder` CLI with the hypervisor configuration file
   ```bash
-  image-builder build --os <OS> --hypervisor <hypervisor> --release-channel <release channel> --<hypervisor>-config config.json
+  export PATH="$PATH:/home/image-builder/.local/bin"
+      image-builder build --os <OS> --hypervisor <hypervisor> --release-channel <release channel> --<hypervisor>-config config.json
   ```
 
 ### Red Hat Satellite Support
@@ -1129,7 +1149,8 @@ In order to use Red Hat Satellite in the image build process follow the steps be
    `rhsm_server_release_version` should always point to the latest 8.x or 9.x minor Red Hat release synced and available on Red Hat Satellite
 2. Run `image-builder` CLI with the hypervisor configuration file
    ```bash
-   image-builder build --os <OS> --hypervisor <hypervisor> --release-channel <release channel> --<hypervisor>-config config.json
+   export PATH="$PATH:/home/image-builder/.local/bin"
+      image-builder build --os <OS> --hypervisor <hypervisor> --release-channel <release channel> --<hypervisor>-config config.json
    ```
 
 ### Air Gapped Image Building
@@ -1278,7 +1299,8 @@ In order to use Red Hat Satellite in the image build process follow the steps be
     ```
 12. Run `image-builder` CLI with the hypervisor configuration file and the downloaded manifest tarball
     ```bash
-    image-builder build -os <OS> --hypervisor <hypervisor> --release-channel <release channel> --<hypervisor>-config config.json --airgapped --manifest-tarball <path to eks-a-manifests.tar>
+    export PATH="$PATH:/home/image-builder/.local/bin"
+      image-builder build -os <OS> --hypervisor <hypervisor> --release-channel <release channel> --<hypervisor>-config config.json --airgapped --manifest-tarball <path to eks-a-manifests.tar>
     ```
 
 
