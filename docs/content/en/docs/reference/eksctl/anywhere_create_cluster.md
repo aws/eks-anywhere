@@ -32,6 +32,7 @@ anywhere create cluster -f <cluster-config-file> [flags]
       --skip-ip-check                       Skip check for whether cluster control plane ip is in use
       --skip-validations stringArray        Bypass create validations by name. Valid arguments you can pass are --skip-validations=vsphere-user-privilege
       --tinkerbell-bootstrap-ip string      The IP used to expose the Tinkerbell stack from the bootstrap cluster
+      --smee-bind-ip string                 IP of the interface on which smee will bind it's services
       --unhealthy-machine-timeout string    (DEPRECATED) Override the default unhealthy machine timeout (default "5m0s")
 ```
 
