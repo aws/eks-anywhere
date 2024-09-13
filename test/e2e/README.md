@@ -123,9 +123,9 @@ T_TINKERBELL_SSH_AUTHORIZED_KEY # ssh public key for connectioning to machines
 ```
 ### Tinkerbell hardware-inventory.csv example
 ```csv
-guid,ip_address,gateway,nameservers,netmask,mac,hostname,vendor,bmc_ip,bmc_username,bmc_password,labels,disk
-bb341bc6-546f-4b38-s584-bb4f0e5f8934,10.24.32.110,10.24.32.1,8.8.8.8,255.255.255.0,3c:ec:ef:6e:a4:82,eksa-node01,supermicro,10.24.32.10,admin,password,type=cp,/dev/sda
-cc5619b8-a894-4db0-bf1a-fd04d5964d54,10.24.32.111,10.24.32.1,8.8.8.8,,255.255.255.0,3c:ec:ef:6e:a5:7c,eksa-node02,supermicro,10.24.32.11,admin,password,type=worker,/dev/sda
+ip_address,gateway,nameservers,netmask,mac,hostname,vendor,bmc_ip,bmc_username,bmc_password,labels,disk
+10.24.32.110,10.24.32.1,8.8.8.8,255.255.255.0,3c:ec:ef:6e:a4:82,eksa-node01,supermicro,10.24.32.10,admin,password,type=cp,/dev/sda
+10.24.32.111,10.24.32.1,8.8.8.8,,255.255.255.0,3c:ec:ef:6e:a5:7c,eksa-node02,supermicro,10.24.32.11,admin,password,type=worker,/dev/sda
 ```
 
 ## CloudStack tests requisites
