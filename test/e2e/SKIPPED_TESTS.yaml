@@ -2,14 +2,12 @@ skipped_tests:
 
 # CloudStack
 # Airgapped tests due to an airgapped network not being setup properly on the cloudstack CI env.
-- TestCloudStackKubernetes126RedhatAirgappedRegistryMirror
 - TestCloudStackKubernetes128RedhatAirgappedProxy
 
 # Proxy API tests skipped due to being unable to run in cloudstack CI env. We should probably revisit these and see if we can unskip them now
 # as we have a proxy env set up in the cloudstack CI env now.
 
 # MultiEndpoint
-- TestCloudStackKubernetes126MultiEndpointSimpleFlow
 - TestCloudStackKubernetes127MultiEndpointSimpleFlow
 - TestCloudStackKubernetes128MultiEndpointSimpleFlow
 - TestCloudStackKubernetes129MultiEndpointSimpleFlow
