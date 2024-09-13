@@ -122,7 +122,7 @@ func TestKubeClientUpdate(t *testing.T) {
 	client := clientutil.NewKubeClient(cl)
 
 	updatedCluster := cluster.DeepCopy()
-	updatedCluster.Spec.KubernetesVersion = anywherev1.Kube126
+	updatedCluster.Spec.KubernetesVersion = anywherev1.Kube127
 	g.Expect(client.Update(ctx, updatedCluster)).To(Succeed())
 
 	api := envtest.NewAPIExpecter(t, cl)
