@@ -133,18 +133,6 @@ func TestDockerKubernetes131UpgradeWorkloadClusterWithGithubFlux(t *testing.T) {
 }
 
 // Curated Packages
-func TestDockerKubernetes126CuratedPackagesSimpleFlow(t *testing.T) {
-	framework.CheckCuratedPackagesCredentials(t)
-	test := framework.NewClusterE2ETest(t,
-		framework.NewDocker(t),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube126)),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube126),
-			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
-	)
-	runCuratedPackageInstallSimpleFlow(test)
-}
-
 func TestDockerKubernetes127CuratedPackagesSimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
@@ -206,18 +194,6 @@ func TestDockerKubernetes131CuratedPackagesSimpleFlow(t *testing.T) {
 }
 
 // Emissary
-func TestDockerKubernetes126CuratedPackagesEmissarySimpleFlow(t *testing.T) {
-	framework.CheckCuratedPackagesCredentials(t)
-	test := framework.NewClusterE2ETest(t,
-		framework.NewDocker(t),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube126)),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube126),
-			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
-	)
-	runCuratedPackageEmissaryInstallSimpleFlow(test)
-}
-
 func TestDockerKubernetes127CuratedPackagesEmissarySimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
@@ -279,18 +255,6 @@ func TestDockerKubernetes131CuratedPackagesEmissarySimpleFlow(t *testing.T) {
 }
 
 // Harbor
-func TestDockerKubernetes126CuratedPackagesHarborSimpleFlow(t *testing.T) {
-	framework.CheckCuratedPackagesCredentials(t)
-	test := framework.NewClusterE2ETest(t,
-		framework.NewDocker(t),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube126)),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube126),
-			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
-	)
-	runCuratedPackageHarborInstallSimpleFlowLocalStorageProvisioner(test)
-}
-
 func TestDockerKubernetes127CuratedPackagesHarborSimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
@@ -352,17 +316,6 @@ func TestDockerKubernetes131CuratedPackagesHarborSimpleFlow(t *testing.T) {
 }
 
 // ADOT
-func TestDockerKubernetes126CuratedPackagesAdotSimpleFlow(t *testing.T) {
-	framework.CheckCuratedPackagesCredentials(t)
-	test := framework.NewClusterE2ETest(t, framework.NewDocker(t),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube126)),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube126),
-			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
-	)
-	runCuratedPackagesAdotInstallSimpleFlow(test) // other args as necessary
-}
-
 func TestDockerKubernetes127CuratedPackagesAdotSimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t, framework.NewDocker(t),
@@ -419,17 +372,6 @@ func TestDockerKubernetes131CuratedPackagesAdotSimpleFlow(t *testing.T) {
 }
 
 // Prometheus
-func TestDockerKubernetes126CuratedPackagesPrometheusSimpleFlow(t *testing.T) {
-	framework.CheckCuratedPackagesCredentials(t)
-	test := framework.NewClusterE2ETest(t, framework.NewDocker(t),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube126)),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube126),
-			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
-	)
-	runCuratedPackagesPrometheusInstallSimpleFlow(test)
-}
-
 func TestDockerKubernetes127CuratedPackagesPrometheusSimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t, framework.NewDocker(t),
@@ -486,18 +428,6 @@ func TestDockerKubernetes131CuratedPackagesPrometheusSimpleFlow(t *testing.T) {
 }
 
 // Curated Packages Disabled
-func TestDockerKubernetes126CuratedPackagesDisabled(t *testing.T) {
-	framework.CheckCuratedPackagesCredentials(t)
-	test := framework.NewClusterE2ETest(t, framework.NewDocker(t),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube126)),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube126),
-			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues,
-			&v1alpha1.PackageConfiguration{Disable: true}),
-	)
-	runDisabledCuratedPackageInstallSimpleFlow(test) // other args as necessary
-}
-
 func TestDockerKubernetes127CuratedPackagesDisabled(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t, framework.NewDocker(t),
@@ -559,10 +489,6 @@ func TestDockerKubernetes131CuratedPackagesDisabled(t *testing.T) {
 }
 
 // MetalLB
-func TestDockerKubernetes126CuratedPackagesMetalLB(t *testing.T) {
-	RunMetalLBDockerTestsForKubeVersion(t, v1alpha1.Kube126)
-}
-
 func TestDockerKubernetes127CuratedPackagesMetalLB(t *testing.T) {
 	RunMetalLBDockerTestsForKubeVersion(t, v1alpha1.Kube127)
 }
@@ -584,15 +510,6 @@ func TestDockerKubernetes131CuratedPackagesMetalLB(t *testing.T) {
 }
 
 // AWS IAM Auth
-func TestDockerKubernetes126AWSIamAuth(t *testing.T) {
-	test := framework.NewClusterE2ETest(t,
-		framework.NewDocker(t),
-		framework.WithAWSIam(),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube126)),
-	)
-	runAWSIamAuthFlow(test)
-}
-
 func TestDockerKubernetes127AWSIamAuth(t *testing.T) {
 	test := framework.NewClusterE2ETest(t,
 		framework.NewDocker(t),
@@ -639,15 +556,6 @@ func TestDockerKubernetes131AWSIamAuth(t *testing.T) {
 }
 
 // OIDC
-func TestDockerKubernetes126OIDC(t *testing.T) {
-	test := framework.NewClusterE2ETest(t,
-		framework.NewDocker(t),
-		framework.WithOIDC(),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube126)),
-	)
-	runOIDCFlow(test)
-}
-
 func TestDockerKubernetes127OIDC(t *testing.T) {
 	test := framework.NewClusterE2ETest(t,
 		framework.NewDocker(t),
@@ -744,15 +652,6 @@ func TestDockerKubernetes131RegistryMirrorInsecureSkipVerify(t *testing.T) {
 }
 
 // Simple Flow
-func TestDockerKubernetes126SimpleFlow(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewDocker(t),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube126)),
-	)
-	runSimpleFlow(test)
-}
-
 func TestDockerKubernetes127SimpleFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
@@ -933,25 +832,6 @@ func TestDockerKubernetes130To131ExternalEtcdUpgrade(t *testing.T) {
 }
 
 // Upgrade From Latest Minor Release
-func TestDockerKubernetes126to127UpgradeFromLatestMinorRelease(t *testing.T) {
-	release := latestMinorRelease(t)
-	provider := framework.NewDocker(t)
-	test := framework.NewClusterE2ETest(
-		t,
-		provider,
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube126)),
-		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
-		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-	)
-	runUpgradeFromReleaseFlow(
-		test,
-		release,
-		v1alpha1.Kube127,
-		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube127)),
-	)
-}
-
 func TestDockerKubernetes127to128UpgradeFromLatestMinorRelease(t *testing.T) {
 	release := latestMinorRelease(t)
 	provider := framework.NewDocker(t)
