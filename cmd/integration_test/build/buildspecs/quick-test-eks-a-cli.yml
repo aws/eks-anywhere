@@ -163,6 +163,7 @@ env:
     T_TINKERBELL_IMAGE_UBUNTU_2204_1_28: "tinkerbell_ci:image_ubuntu_2204_1_28"
     T_TINKERBELL_IMAGE_UBUNTU_2204_1_29: "tinkerbell_ci:image_ubuntu_2204_1_29"
     T_TINKERBELL_IMAGE_UBUNTU_2204_1_29_RTOS: "tinkerbell_ci:image_ubuntu_2204_1_29_rtos"
+    T_TINKERBELL_IMAGE_UBUNTU_2204_1_29_GENERIC: "tinkerbell_ci:image_ubuntu_2204_1_29_generic"
     T_TINKERBELL_IMAGE_UBUNTU_2204_1_30: "tinkerbell_ci:image_ubuntu_2204_1_30"
     T_TINKERBELL_IMAGE_UBUNTU_2204_1_31: "tinkerbell_ci:image_ubuntu_2204_1_31"
     T_TINKERBELL_IMAGE_REDHAT_1_26: "tinkerbell_ci:image_redhat_1_26"
