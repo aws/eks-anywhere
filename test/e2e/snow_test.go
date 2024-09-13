@@ -109,7 +109,7 @@ func TestSnowKubernetes128OIDC(t *testing.T) {
 	runOIDCFlow(test)
 }
 
-// Proxy config
+// Proxy Config
 func TestSnowKubernetes128UbuntuProxyConfig(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
@@ -123,16 +123,7 @@ func TestSnowKubernetes128UbuntuProxyConfig(t *testing.T) {
 	runProxyConfigFlow(test)
 }
 
-// Simpleflow
-func TestSnowKubernetes126SimpleFlow(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewSnow(t, framework.WithSnowUbuntu126()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube126)),
-	)
-	runSimpleFlow(test)
-}
-
+// Simple Flow
 func TestSnowKubernetes127SimpleFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
@@ -274,13 +265,6 @@ func TestSnowKubernetes127UbuntuTo128Upgrade(t *testing.T) {
 	runSnowUpgradeTest(test, snow, snow.WithUbuntu127(), snow.WithUbuntu128())
 }
 
-func TestSnowKubernetes126UbuntuTo127Upgrade(t *testing.T) {
-	snow := framework.NewSnow(t)
-	test := framework.NewClusterE2ETest(t, snow)
-
-	runSnowUpgradeTest(test, snow, snow.WithUbuntu126(), snow.WithUbuntu127())
-}
-
 func TestSnowKubernetes127BottlerocketTo128Upgrade(t *testing.T) {
 	snow := framework.NewSnow(t)
 	test := framework.NewClusterE2ETest(t, snow)
@@ -288,81 +272,9 @@ func TestSnowKubernetes127BottlerocketTo128Upgrade(t *testing.T) {
 	runSnowUpgradeTest(test, snow, snow.WithBottlerocket127(), snow.WithBottlerocket128())
 }
 
-func TestSnowKubernetes126BottlerocketTo127Upgrade(t *testing.T) {
-	snow := framework.NewSnow(t)
-	test := framework.NewClusterE2ETest(t, snow)
-
-	runSnowUpgradeTest(test, snow, snow.WithBottlerocket126(), snow.WithBottlerocket127())
-}
-
 func TestSnowKubernetes127To128BottlerocketStaticIPUpgrade(t *testing.T) {
 	snow := framework.NewSnow(t)
 	test := framework.NewClusterE2ETest(t, snow)
 
 	runSnowUpgradeTest(test, snow, snow.WithBottlerocketStaticIP127(), snow.WithBottlerocketStaticIP128())
-}
-
-func TestSnowKubernetes126To127BottlerocketStaticIPUpgrade(t *testing.T) {
-	snow := framework.NewSnow(t)
-	test := framework.NewClusterE2ETest(t, snow)
-
-	runSnowUpgradeTest(test, snow, snow.WithBottlerocketStaticIP126(), snow.WithBottlerocketStaticIP127())
-}
-
-// Workload API
-func TestSnowMulticlusterWorkloadClusterAPI(t *testing.T) {
-	snow := framework.NewSnow(t)
-	managementCluster := framework.NewClusterE2ETest(
-		t, snow,
-	).WithClusterConfig(
-		api.ClusterToConfigFiller(
-			api.WithControlPlaneCount(1),
-			api.WithWorkerNodeCount(1),
-			api.WithStackedEtcdTopology(),
-		),
-		snow.WithBottlerocket126(),
-	)
-	test := framework.NewMulticlusterE2ETest(t, managementCluster)
-	test.WithWorkloadClusters(
-		framework.NewClusterE2ETest(
-			t, snow, framework.WithClusterName(test.NewWorkloadClusterName()),
-		).WithClusterConfig(
-			api.ClusterToConfigFiller(
-				api.WithManagementCluster(managementCluster.ClusterName),
-				api.WithControlPlaneCount(1),
-				api.WithWorkerNodeCount(1),
-				api.WithStackedEtcdTopology(),
-			),
-			snow.WithBottlerocket126(),
-		),
-		framework.NewClusterE2ETest(
-			t, snow, framework.WithClusterName(test.NewWorkloadClusterName()),
-		).WithClusterConfig(
-			api.ClusterToConfigFiller(
-				api.WithManagementCluster(managementCluster.ClusterName),
-				api.WithControlPlaneCount(1),
-				api.WithWorkerNodeCount(1),
-				api.WithStackedEtcdTopology(),
-			),
-			snow.WithBottlerocket127(),
-		),
-		framework.NewClusterE2ETest(
-			t, snow, framework.WithClusterName(test.NewWorkloadClusterName()),
-		).WithClusterConfig(
-			api.ClusterToConfigFiller(
-				api.WithManagementCluster(managementCluster.ClusterName),
-				api.WithControlPlaneCount(1),
-				api.WithWorkerNodeCount(1),
-				api.WithStackedEtcdTopology(),
-			),
-			snow.WithBottlerocket128(),
-		),
-	)
-	test.CreateManagementCluster()
-	test.RunConcurrentlyInWorkloadClusters(func(wc *framework.WorkloadCluster) {
-		wc.ApplyClusterManifest()
-		wc.DeleteClusterWithKubectl()
-	})
-	test.ManagementCluster.StopIfFailed()
-	test.DeleteManagementCluster()
 }
