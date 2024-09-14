@@ -17,13 +17,11 @@ const (
 	tinkerbellProviderName                              = "tinkerbell"
 	tinkerbellBootstrapIPEnvVar                         = "T_TINKERBELL_BOOTSTRAP_IP"
 	tinkerbellControlPlaneNetworkCidrEnvVar             = "T_TINKERBELL_CP_NETWORK_CIDR"
-	tinkerbellImageUbuntu126EnvVar                      = "T_TINKERBELL_IMAGE_UBUNTU_1_26"
 	tinkerbellImageUbuntu127EnvVar                      = "T_TINKERBELL_IMAGE_UBUNTU_1_27"
 	tinkerbellImageUbuntu128EnvVar                      = "T_TINKERBELL_IMAGE_UBUNTU_1_28"
 	tinkerbellImageUbuntu129EnvVar                      = "T_TINKERBELL_IMAGE_UBUNTU_1_29"
 	tinkerbellImageUbuntu130EnvVar                      = "T_TINKERBELL_IMAGE_UBUNTU_1_30"
 	tinkerbellImageUbuntu131EnvVar                      = "T_TINKERBELL_IMAGE_UBUNTU_1_31"
-	tinkerbellImageUbuntu2204Kubernetes126EnvVar        = "T_TINKERBELL_IMAGE_UBUNTU_2204_1_26"
 	tinkerbellImageUbuntu2204Kubernetes127EnvVar        = "T_TINKERBELL_IMAGE_UBUNTU_2204_1_27"
 	tinkerbellImageUbuntu2204Kubernetes128EnvVar        = "T_TINKERBELL_IMAGE_UBUNTU_2204_1_28"
 	tinkerbellImageUbuntu2204Kubernetes129EnvVar        = "T_TINKERBELL_IMAGE_UBUNTU_2204_1_29"
@@ -31,14 +29,11 @@ const (
 	tinkerbellImageUbuntu2204Kubernetes129GenericEnvVar = "T_TINKERBELL_IMAGE_UBUNTU_2204_1_29_GENERIC"
 	tinkerbellImageUbuntu2204Kubernetes130EnvVar        = "T_TINKERBELL_IMAGE_UBUNTU_2204_1_30"
 	tinkerbellImageUbuntu2204Kubernetes131EnvVar        = "T_TINKERBELL_IMAGE_UBUNTU_2204_1_31"
-	tinkerbellImageRedHat125EnvVar                      = "T_TINKERBELL_IMAGE_REDHAT_1_25"
-	tinkerbellImageRedHat126EnvVar                      = "T_TINKERBELL_IMAGE_REDHAT_1_26"
 	tinkerbellImageRedHat127EnvVar                      = "T_TINKERBELL_IMAGE_REDHAT_1_27"
 	tinkerbellImageRedHat128EnvVar                      = "T_TINKERBELL_IMAGE_REDHAT_1_28"
 	tinkerbellImageRedHat129EnvVar                      = "T_TINKERBELL_IMAGE_REDHAT_1_29"
 	tinkerbellImageRedHat130EnvVar                      = "T_TINKERBELL_IMAGE_REDHAT_1_30"
 	tinkerbellImageRedHat131EnvVar                      = "T_TINKERBELL_IMAGE_REDHAT_1_31"
-	tinkerbellImageRedHat9126EnvVar                     = "T_TINKERBELL_IMAGE_REDHAT_9_1_26"
 	tinkerbellImageRedHat9127EnvVar                     = "T_TINKERBELL_IMAGE_REDHAT_9_1_27"
 	tinkerbellImageRedHat9128EnvVar                     = "T_TINKERBELL_IMAGE_REDHAT_9_1_28"
 	tinkerbellImageRedHat9129EnvVar                     = "T_TINKERBELL_IMAGE_REDHAT_9_1_29"
@@ -53,13 +48,11 @@ const (
 
 var requiredTinkerbellEnvVars = []string{
 	tinkerbellControlPlaneNetworkCidrEnvVar,
-	tinkerbellImageUbuntu126EnvVar,
 	tinkerbellImageUbuntu127EnvVar,
 	tinkerbellImageUbuntu128EnvVar,
 	tinkerbellImageUbuntu129EnvVar,
 	tinkerbellImageUbuntu130EnvVar,
 	tinkerbellImageUbuntu131EnvVar,
-	tinkerbellImageUbuntu2204Kubernetes126EnvVar,
 	tinkerbellImageUbuntu2204Kubernetes127EnvVar,
 	tinkerbellImageUbuntu2204Kubernetes128EnvVar,
 	tinkerbellImageUbuntu2204Kubernetes129EnvVar,
@@ -67,13 +60,11 @@ var requiredTinkerbellEnvVars = []string{
 	tinkerbellImageUbuntu2204Kubernetes129GenericEnvVar,
 	tinkerbellImageUbuntu2204Kubernetes130EnvVar,
 	tinkerbellImageUbuntu2204Kubernetes131EnvVar,
-	tinkerbellImageRedHat126EnvVar,
 	tinkerbellImageRedHat127EnvVar,
 	tinkerbellImageRedHat128EnvVar,
 	tinkerbellImageRedHat129EnvVar,
 	tinkerbellImageRedHat130EnvVar,
 	tinkerbellImageRedHat131EnvVar,
-	tinkerbellImageRedHat9126EnvVar,
 	tinkerbellImageRedHat9127EnvVar,
 	tinkerbellImageRedHat9128EnvVar,
 	tinkerbellImageRedHat9129EnvVar,
@@ -234,11 +225,6 @@ func withKubeVersionAndOS(kubeVersion anywherev1.KubernetesVersion, os OS, machi
 	}
 }
 
-// WithUbuntu126Tinkerbell tink test with ubuntu 1.26.
-func WithUbuntu126Tinkerbell() TinkerbellOpt {
-	return withKubeVersionAndOS(anywherev1.Kube126, Ubuntu2004, "", nil)
-}
-
 // WithUbuntu127Tinkerbell tink test with ubuntu 1.27.
 func WithUbuntu127Tinkerbell() TinkerbellOpt {
 	return withKubeVersionAndOS(anywherev1.Kube127, Ubuntu2004, "", nil)
@@ -264,11 +250,6 @@ func WithUbuntu131Tinkerbell() TinkerbellOpt {
 	return withKubeVersionAndOS(anywherev1.Kube131, Ubuntu2004, "", nil)
 }
 
-// WithRedHat126Tinkerbell tink test with redhat 1.26.
-func WithRedHat126Tinkerbell() TinkerbellOpt {
-	return withKubeVersionAndOS(anywherev1.Kube126, RedHat8, "", nil)
-}
-
 // WithRedHat127Tinkerbell tink test with redhat 1.27.
 func WithRedHat127Tinkerbell() TinkerbellOpt {
 	return withKubeVersionAndOS(anywherev1.Kube127, RedHat8, "", nil)
@@ -292,11 +273,6 @@ func WithRedHat130Tinkerbell() TinkerbellOpt {
 // WithRedHat131Tinkerbell tink test with redhat 1.31.
 func WithRedHat131Tinkerbell() TinkerbellOpt {
 	return withKubeVersionAndOS(anywherev1.Kube131, RedHat8, "", nil)
-}
-
-// WithRedHat9126Tinkerbell tink test with redhat9 efi 1.26.
-func WithRedHat9126Tinkerbell() TinkerbellOpt {
-	return withKubeVersionAndOS(anywherev1.Kube126, RedHat9, "", nil)
 }
 
 // WithRedHat9127Tinkerbell tink test with redhat9 efi 1.27.
@@ -381,11 +357,6 @@ func imageForKubeVersionAndOS(kubeVersion anywherev1.KubernetesVersion, operatin
 	return tinkerbellFiller
 }
 
-// Ubuntu126Image represents an Ubuntu raw image corresponding to Kubernetes 1.26.
-func Ubuntu126Image() api.TinkerbellFiller {
-	return imageForKubeVersionAndOS(anywherev1.Kube126, Ubuntu2004, "")
-}
-
 // Ubuntu127Image represents an Ubuntu raw image corresponding to Kubernetes 1.27.
 func Ubuntu127Image() api.TinkerbellFiller {
 	return imageForKubeVersionAndOS(anywherev1.Kube127, Ubuntu2004, "")
@@ -409,11 +380,6 @@ func Ubuntu130Image() api.TinkerbellFiller {
 // Ubuntu131Image represents an Ubuntu raw image corresponding to Kubernetes 1.31.
 func Ubuntu131Image() api.TinkerbellFiller {
 	return imageForKubeVersionAndOS(anywherev1.Kube131, Ubuntu2004, "")
-}
-
-// Ubuntu126ImageForCP represents an Ubuntu raw image corresponding to Kubernetes 1.26 and is set for CP machine config.
-func Ubuntu126ImageForCP() api.TinkerbellFiller {
-	return imageForKubeVersionAndOS(anywherev1.Kube126, Ubuntu2004, controlPlaneIdentifier)
 }
 
 // Ubuntu127ImageForCP represents an Ubuntu raw image corresponding to Kubernetes 1.27 and is set for CP machine config.
@@ -441,11 +407,6 @@ func Ubuntu131ImageForCP() api.TinkerbellFiller {
 	return imageForKubeVersionAndOS(anywherev1.Kube131, Ubuntu2004, controlPlaneIdentifier)
 }
 
-// Ubuntu126ImageForWorker represents an Ubuntu raw image corresponding to Kubernetes 1.26 and is set for worker machine config.
-func Ubuntu126ImageForWorker() api.TinkerbellFiller {
-	return imageForKubeVersionAndOS(anywherev1.Kube126, Ubuntu2004, workerIdentifier)
-}
-
 // Ubuntu127ImageForWorker represents an Ubuntu raw image corresponding to Kubernetes 1.27 and is set for worker machine config.
 func Ubuntu127ImageForWorker() api.TinkerbellFiller {
 	return imageForKubeVersionAndOS(anywherev1.Kube127, Ubuntu2004, workerIdentifier)
@@ -469,11 +430,6 @@ func Ubuntu130ImageForWorker() api.TinkerbellFiller {
 // Ubuntu131ImageForWorker represents an Ubuntu raw image corresponding to Kubernetes 1.31 and is set for worker machine config.
 func Ubuntu131ImageForWorker() api.TinkerbellFiller {
 	return imageForKubeVersionAndOS(anywherev1.Kube131, Ubuntu2004, workerIdentifier)
-}
-
-// Ubuntu2204Kubernetes126Image represents an Ubuntu 22.04 raw image corresponding to Kubernetes 1.26.
-func Ubuntu2204Kubernetes126Image() api.TinkerbellFiller {
-	return imageForKubeVersionAndOS(anywherev1.Kube126, Ubuntu2204, "")
 }
 
 // Ubuntu2204Kubernetes127Image represents an Ubuntu 22.04 raw image corresponding to Kubernetes 1.27.
