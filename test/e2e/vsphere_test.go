@@ -1287,7 +1287,7 @@ func TestVSphereKubernetes131BottleRocketWorkloadClusterRegionalCuratedPackagesC
 	runCertManagerRemoteClusterInstallSimpleFlow(test)
 }
 
-// Download artifacts
+// Download Artifacts
 func TestVSphereDownloadArtifacts(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
