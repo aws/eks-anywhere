@@ -50,7 +50,7 @@ spec:
   datacenterRef:
     kind: TinkerbellDatacenterConfig
     name: my-cluster-name
-  kubernetesVersion: "1.28"
+  kubernetesVersion: "1.31"
   managementCluster:
     name: my-cluster-name
   workerNodeGroupConfigurations:
@@ -172,7 +172,7 @@ Optional field to skip deploying the control plane load balancer. Make sure your
 Refers to the Kubernetes object with Tinkerbell-specific configuration. See `TinkerbellDatacenterConfig Fields` below.
 
 ### kubernetesVersion (required)
-The Kubernetes version you want to use for your cluster. Supported values: `1.28`, `1.27`, `1.26`, `1.25`, `1.24`
+The Kubernetes version you want to use for your cluster. Supported values: `1.31`, `1.30`, `1.29`, `1.28`, `1.27`
 
 ### managementCluster (required)
 Identifies the name of the management cluster.
@@ -222,7 +222,7 @@ Modifying the labels associated with a worker node group configuration will caus
 the existing nodes associated with the configuration.
 
 ### workerNodeGroupConfigurations[*].kubernetesVersion (optional)
-The Kubernetes version you want to use for this worker node group. [Supported values]({{< relref "../../concepts/support-versions/#kubernetes-versions" >}}): `1.28`, `1.27`, `1.26`, `1.25`, `1.24`
+The Kubernetes version you want to use for this worker node group. [Supported values]({{< relref "../../concepts/support-versions/#kubernetes-versions" >}}): `1.31`, `1.30`, `1.29`, `1.28`, `1.27`
 
 Must be less than or equal to the cluster `kubernetesVersion` defined at the root level of the cluster spec. The worker node kubernetesVersion must be no more than two minor Kubernetes versions lower than the cluster control plane's Kubernetes version. Removing `workerNodeGroupConfiguration.kubernetesVersion` will trigger an upgrade of the node group to the `kubernetesVersion` defined at the root level of the cluster spec.
 
@@ -269,7 +269,7 @@ When separate management and workload clusters are supported in Bare Metal, the 
 
 ### osImageURL (required)
 Required field to set the operating system. In order to use Ubuntu or RHEL see [building baremetal node images]({{< relref "../../osmgmt/artifacts/#build-bare-metal-node-images" >}}). This field is also useful if you want to provide a customized operating system image or simply host the standard image locally. To upgrade a node or group of nodes to a new operating system version (ie. RHEL 8.7 to RHEL 8.8), modify this field to point to the new operating system image URL and run [upgrade cluster command]({{< relref "../../clustermgmt/cluster-upgrades/baremetal-upgrades/#upgrade-cluster-command" >}}).
-The `osImageURL` must contain the `Cluster.Spec.KubernetesVersion` or `Cluster.Spec.WorkerNodeGroupConfiguration[].KubernetesVersion` version (in case of modular upgrade). For example, if the Kubernetes version is 1.24, the `osImageURL` name should include 1.24, 1_24, 1-24 or 124.
+The `osImageURL` must contain the `Cluster.Spec.KubernetesVersion` or `Cluster.Spec.WorkerNodeGroupConfiguration[].KubernetesVersion` version (in case of modular upgrade). For example, if the Kubernetes version is 1.31, the `osImageURL` name should include 1.31, 1_31, 1-31 or 131.
 
 >**_NOTE:_** osImageURL field cannot be set both in the `TinkerbellDatacenterConfig` and `TinkerbellMachineConfig` objects. If this value is set for `TinkerbellDatacenterConfig`, osImageURL has to be set to empty string `""` for all the `TinkerbellMachineConfigs`.
 
@@ -324,7 +324,7 @@ spec:
 Operating system on the machine. Permitted values: `bottlerocket`, `ubuntu`, `redhat` (Default: `bottlerocket`).
 
 ### osImageURL (required)
-Required field to set the operating system. In order to use Ubuntu or RHEL see [building baremetal node images]({{< relref "../../osmgmt/artifacts/#build-bare-metal-node-images" >}}). This field is also useful if you want to provide a customized operating system image or simply host the standard image locally. To upgrade a node or group of nodes to a new operating system version (ie. RHEL 8.7 to RHEL 8.8), modify this field to point to the new operating system image URL and run [upgrade cluster command]({{< relref "../../clustermgmt/cluster-upgrades/baremetal-upgrades/#upgrade-cluster-command" >}}). The `osImageURL` must contain the `Cluster.Spec.KubernetesVersion` or `Cluster.Spec.WorkerNodeGroupConfiguration[].KubernetesVersion` version (in case of modular upgrade). For example, if the Kubernetes version is 1.24, the `osImageURL` name should include 1.24, 1_24, 1-24 or 124.
+Required field to set the operating system. In order to use Ubuntu or RHEL see [building baremetal node images]({{< relref "../../osmgmt/artifacts/#build-bare-metal-node-images" >}}). This field is also useful if you want to provide a customized operating system image or simply host the standard image locally. To upgrade a node or group of nodes to a new operating system version (ie. RHEL 8.7 to RHEL 8.8), modify this field to point to the new operating system image URL and run [upgrade cluster command]({{< relref "../../clustermgmt/cluster-upgrades/baremetal-upgrades/#upgrade-cluster-command" >}}). The `osImageURL` must contain the `Cluster.Spec.KubernetesVersion` or `Cluster.Spec.WorkerNodeGroupConfiguration[].KubernetesVersion` version (in case of modular upgrade). For example, if the Kubernetes version is 1.31, the `osImageURL` name should include 1.31, 1_31, 1-31 or 131.
 
 >**_NOTE:_** If this value is set for a single `TinkerbellMachineConfig`, osImageURL has to be set for all the `TinkerbellMachineConfigs`. osImageURL field cannot be set both in the `TinkerbellDatacenterConfig` and `TinkerbellMachineConfig` objects. If set for `TinkerbellMachineConfig`, the value must be set to empty string `""` for `TinkerbellDatacenterConfig`
 

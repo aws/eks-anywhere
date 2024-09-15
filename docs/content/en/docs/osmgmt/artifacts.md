@@ -49,7 +49,7 @@ EKSA_RELEASE_VERSION=<EKS-A version>
 ```
 
 ```bash
-KUBEVERSION=1.30 # Replace this with the Kubernetes version you wish to use
+KUBEVERSION=1.31 # Replace this with the Kubernetes version you wish to use
 
 BUNDLE_MANIFEST_URL=$(curl -sL https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml | yq ".spec.releases[] | select(.version==\"$EKSA_RELEASE_VERSION\").bundleManifestUrl")
 curl -s $BUNDLE_MANIFEST_URL | yq ".spec.versionsBundles[] | select(.kubeVersion==\"$KUBEVERSION\").eksD.raw.bottlerocket.uri"
@@ -99,7 +99,7 @@ EKSA_RELEASE_VERSION=<EKS-A version>
 ```
 
 ```bash
-KUBEVERSION=1.30 # Replace this with the Kubernetes version you wish to use
+KUBEVERSION=1.31 # Replace this with the Kubernetes version you wish to use
 
 BUNDLE_MANIFEST_URL=$(curl -sL https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml | yq ".spec.releases[] | select(.version==\"$EKSA_RELEASE_VERSION\").bundleManifestUrl")
 curl -s $BUNDLE_MANIFEST_URL | yq ".spec.versionsBundles[] | select(.kubeVersion==\"$KUBEVERSION\").eksD.ova.bottlerocket.uri"
@@ -130,7 +130,7 @@ EKSA_RELEASE_VERSION=<EKS-A version>
 ```
 
 ```bash
-KUBEVERSION=1.30 # Replace this with the Kubernetes version you wish to use
+KUBEVERSION=1.31 # Replace this with the Kubernetes version you wish to use
 
 BUNDLE_MANIFEST_URL=$(curl -sL https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml | yq ".spec.releases[] | select(.version==\"$EKSA_RELEASE_VERSION\").bundleManifestUrl")
 curl -sL $BUNDLE_MANIFEST_URL | yq ".spec.versionsBundles[] | select(.kubeVersion==\"$KUBEVERSION\").eksD.name"
@@ -152,9 +152,9 @@ CARGO_NET_GIT_FETCH_WITH_CLI=true cargo install --force tuftool
 curl -O "https://cache.bottlerocket.aws/root.json"
 sha512sum -c <<<"a3c58bc73999264f6f28f3ed9bfcb325a5be943a782852c7d53e803881968e0a4698bd54c2f125493f4669610a9da83a1787eb58a8303b2ee488fa2a3f7d802f  root.json"
 ```
-4. Export the desired Kubernetes version. EKS Anywhere currently supports 1.23, 1.24, 1.25, 1.26, 1.27, and 1.28.
+4. Export the desired Kubernetes version. EKS Anywhere currently supports 1.27, 1.28, 1.29, 1.30, and 1.31.
 ```bash
-export KUBEVERSION="1.27"
+export KUBEVERSION="1.31"
 ```
 5. Programmatically retrieve the Bottlerocket version corresponding to this release of EKS-A and Kubernetes version and export it.
 
@@ -483,11 +483,11 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
       * `--os`: `ubuntu`
       * `--os-version`: `20.04` or `22.04` (default: `20.04`)
       * `--hypervisor`: For vSphere use `vsphere`
-      * `--release-channel`: Supported EKS Distro releases include 1-25, 1-26, 1-27, 1-28 and 1-29.
+      * `--release-channel`: Supported EKS Distro releases include 1-27, 1-28, 1-29, 1-30 and 1-31.
       * `--vsphere-config`: vSphere configuration file (`vsphere.json` in this example)
 
       ```bash
-      image-builder build --os ubuntu --hypervisor vsphere --release-channel 1-29 --vsphere-config vsphere.json
+      image-builder build --os ubuntu --hypervisor vsphere --release-channel 1-31 --vsphere-config vsphere.json
       ```
 
    **Red Hat Enterprise Linux**
@@ -497,11 +497,11 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
       * `--os`: `redhat`
       * `--os-version`: `8` (default: `8`)
       * `--hypervisor`: For vSphere use `vsphere`
-      * `--release-channel`: Supported EKS Distro releases include 1-25, 1-26, 1-27, 1-28 and 1-29.
+      * `--release-channel`: Supported EKS Distro releases include 1-27, 1-28, 1-29, 1-30 and 1-31.
       * `--vsphere-config`: vSphere configuration file (`vsphere.json` in this example)
 
       ```bash
-      image-builder build --os redhat --hypervisor vsphere --release-channel 1-29 --vsphere-config vsphere.json
+      image-builder build --os redhat --hypervisor vsphere --release-channel 1-31 --vsphere-config vsphere.json
       ```
 
 ### Build Bare Metal node images
@@ -576,11 +576,11 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
       * `--os`: `ubuntu`
       * `--os-version`: `20.04` or `22.04` (default: `20.04`)
       * `--hypervisor`: `baremetal`
-      * `--release-channel`: Supported EKS Distro releases include 1-25, 1-26, 1-27, 1-28 and 1-29.
+      * `--release-channel`: Supported EKS Distro releases include 1-27, 1-28, 1-29, 1-30 and 1-31.
       * `--baremetal-config`: baremetal config file if using proxy
 
       ```bash
-      image-builder build --os ubuntu --hypervisor baremetal --release-channel 1-29
+      image-builder build --os ubuntu --hypervisor baremetal --release-channel 1-31
       ```
 
    **Red Hat Enterprise Linux (RHEL)**
@@ -605,14 +605,14 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
       * `--os`: `redhat`
       * `--os-version`: `8` or `9` (default: `8`)
       * `--hypervisor`: `baremetal`
-      * `--release-channel`: Supported EKS Distro releases include 1-25, 1-26, 1-27, 1-28 and 1-29.
+      * `--release-channel`: Supported EKS Distro releases include 1-27, 1-28, 1-29, 1-30 and 1-31.
       * `--baremetal-config`: Bare metal config file
 
 
    Image builder only supports building RHEL 9 raw images with EFI firmware. Refer to [UEFI Support]({{< relref "#uefi-support">}}) to enable image builds with EFI firmware.
 
       ```bash
-      image-builder build --os redhat --hypervisor baremetal --release-channel 1-29 --baremetal-config baremetal.json
+      image-builder build --os redhat --hypervisor baremetal --release-channel 1-31 --baremetal-config baremetal.json
       ```
 1. To consume the image, serve it from an accessible web server, then create the [bare metal cluster spec]({{< relref "../getting-started/baremetal/bare-spec/" >}})
    configuring the `osImageURL` field URL of the image. For example:
@@ -703,11 +703,11 @@ These steps use `image-builder` to create a RHEL-based image for CloudStack. Bef
       * `--os`: `redhat`
       * `--os-version`: `8` (default: `8`)
       * `--hypervisor`: For CloudStack use `cloudstack`
-      * `--release-channel`: Supported EKS Distro releases include 1-25, 1-26, 1-27, 1-28 and 1-29.
+      * `--release-channel`: Supported EKS Distro releases include 1-27, 1-28, 1-29, 1-30 and 1-31.
       * `--cloudstack-config`: CloudStack configuration file (`cloudstack.json` in this example)
 
       ```bash
-      image-builder build --os redhat --hypervisor cloudstack --release-channel 1-29 --cloudstack-config cloudstack.json
+      image-builder build --os redhat --hypervisor cloudstack --release-channel 1-31 --cloudstack-config cloudstack.json
       ```
 1. To consume the resulting RHEL-based image, add it as a template to your CloudStack setup as described in [Preparing CloudStack]({{< relref "../getting-started/cloudstack/cloudstack-preparation" >}}).
 
@@ -826,11 +826,11 @@ These steps use `image-builder` to create an Ubuntu-based Amazon Machine Image (
    * `--os`: `ubuntu`
    * `--os-version`: `20.04` or `22.04` (default: `20.04`)
    * `--hypervisor`: For AMI, use `ami`
-   * `--release-channel`: Supported EKS Distro releases include 1-25, 1-26, 1-27, 1-28 and 1-29.
+   * `--release-channel`: Supported EKS Distro releases include 1-27, 1-28, 1-29, 1-30 and 1-31.
    * `--ami-config`: AMI configuration file (`ami.json` in this example)
 
    ```bash
-   image-builder build --os ubuntu --hypervisor ami --release-channel 1-29 --ami-config ami.json
+   image-builder build --os ubuntu --hypervisor ami --release-channel 1-31 --ami-config ami.json
    ```
 1. After the build, the Ubuntu AMI will be available in your AWS account in the AWS region specified in your AMI configuration file. If you wish to export it as a raw image, you can achieve this using the AWS CLI.
    ```
@@ -933,11 +933,11 @@ These steps use `image-builder` to create a Ubuntu-based image for Nutanix AHV a
       * `--os`: `ubuntu`
       * `--os-version`: `20.04` or `22.04` (default: `20.04`)
       * `--hypervisor`: For Nutanix use `nutanix`
-      * `--release-channel`: Supported EKS Distro releases include 1-25, 1-26, 1-27, 1-28 and 1-29.
+      * `--release-channel`: Supported EKS Distro releases include 1-27, 1-28, 1-29, 1-30 and 1-31.
       * `--nutanix-config`: Nutanix configuration file (`nutanix.json` in this example)
 
       ```bash
-      image-builder build --os ubuntu --hypervisor nutanix --release-channel 1-29 --nutanix-config nutanix.json
+      image-builder build --os ubuntu --hypervisor nutanix --release-channel 1-31 --nutanix-config nutanix.json
       ```
 
    **Red Hat Enterprise Linux**
@@ -947,11 +947,11 @@ These steps use `image-builder` to create a Ubuntu-based image for Nutanix AHV a
       * `--os`: `redhat`
       * `--os-version`: `8` or `9` (default: `8`)
       * `--hypervisor`: For Nutanix use `nutanix`
-      * `--release-channel`: Supported EKS Distro releases include 1-25, 1-26, 1-27, 1-28 and 1-29.
+      * `--release-channel`: Supported EKS Distro releases include 1-27, 1-28, 1-29, 1-30 and 1-31.
       * `--nutanix-config`: Nutanix configuration file (`nutanix.json` in this example)
 
       ```bash
-      image-builder build --os redhat --hypervisor nutanix --release-channel 1-29 --nutanix-config nutanix.json
+      image-builder build --os redhat --hypervisor nutanix --release-channel 1-31 --nutanix-config nutanix.json
       ```
 
 ### Configuring OS version
@@ -1039,9 +1039,9 @@ In both these above approaches, the artifacts embedded into the images will be o
 
 `image-builder` supports UEFI-enabled images for Ubuntu OVA, Ubuntu Raw and RHEL 9 Raw images. UEFI is turned on by default for Ubuntu Raw image builds, but the default firmware for Ubuntu OVAs and RHEL Raw images is BIOS. This can be toggled with the `firmware` option.
 
-For example, to build a Kubernetes v1.27 Ubuntu 22.04 OVA with UEFI enabled, you can run the following command.
+For example, to build a Kubernetes v1.31 Ubuntu 22.04 OVA with UEFI enabled, you can run the following command.
    ```bash
-   image-builder build --os ubuntu --hypervisor vsphere --os-version 22.04 --release-channel 1.27 --vsphere-config config.json --firmware efi
+   image-builder build --os ubuntu --hypervisor vsphere --os-version 22.04 --release-channel 1.31 --vsphere-config config.json --firmware efi
    ```
 
 The table below shows the possible firmware options for the hypervisor and OS combinations that `image-builder` supports.
@@ -1143,7 +1143,7 @@ In order to use Red Hat Satellite in the image build process follow the steps be
 4. Artifacts server should have the ability to host and serve, standalone artifacts and Ubuntu OS packages 
 
 #### Building node images in an air-gapped environment
-1. Identify the EKS-D release channel (generally aligning with Kubernetes version) to build. For example, 1.27 or 1.28
+1. Identify the EKS-D release channel (generally aligning with Kubernetes version) to build. For example, 1.30 or 1.31
 2. Identify the latest release of EKS-A from [changelog]({{< ref "/docs/whatsnew/changelog" >}}). For example, <EKS-A version>
 3. Run `image-builder` CLI to download manifests in an environment with internet connectivity
    ```bash
@@ -1174,7 +1174,7 @@ In order to use Red Hat Satellite in the image build process follow the steps be
       fi
 
       if [ -z "${RELEASE_CHANNEL}" ]; then
-         echo "RELEASE_CHANNEL not set. Supported EKS Distro releases include 1-25, 1-26, 1-27, 1-28 and 1-29"
+         echo "RELEASE_CHANNEL not set. Supported EKS Distro releases include 1-27, 1-28, 1-29, 1-30 and 1-31"
          exit 1
       fi
 
@@ -1243,7 +1243,7 @@ In order to use Red Hat Satellite in the image build process follow the steps be
    ```
 5. Set EKS-A release version and EKS-D release channel as environment variables and execute the script
    ```bash
-   EKSA_RELEASE_VERSION=<EKS-A version> RELEASE_CHANNEL=1-28 ./download-airgapped-artifacts.sh
+   EKSA_RELEASE_VERSION=<EKS-A version> RELEASE_CHANNEL=1-31 ./download-airgapped-artifacts.sh
    ```
    Executing this script will create a local directory `eks-a-d-artifacts` and download the required EKS-A and EKS-D artifacts.
 6. Create two repositories, one for EKS-A and one for EKS-D on the private artifacts server.

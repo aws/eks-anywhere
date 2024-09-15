@@ -49,7 +49,7 @@ spec:
      machineGroupRef:                <a href="#externaletcdconfigurationmachinegroupref-optional"># vSphere-specific Kubernetes etcd config</a>
         kind: VSphereMachineConfig
         name: my-cluster-machines
-   kubernetesVersion: <span>"1.25"</span>         <a href="#kubernetesversion-required"># Kubernetes version to use for the cluster (required)</a>
+   kubernetesVersion: <span>"1.31"</span>         <a href="#kubernetesversion-required"># Kubernetes version to use for the cluster (required)</a>
    workerNodeGroupConfigurations:    <a href="#workernodegroupconfigurations-required"># List of node groups you can define for workers (required) </a>
    - count: <span style="color:green">2</span>                        <a href="#workernodegroupconfigurationscount-optional"># Number of worker nodes </a>
      machineGroupRef:                <a href="#workernodegroupconfigurationsmachinegroupref-required"># vSphere-specific Kubernetes node objects (required) </a>
@@ -89,7 +89,7 @@ spec:
   osFamily: <span>"bottlerocket"</span>             <a href="#osfamily-optional"># Operating system on VMs</a>
   resourcePool: <span>"resourcePool1"</span>        <a href="#resourcepool-required"># vSphere resource pool for EKS Anywhere VMs (required)</a>
   storagePolicyName: <span>"storagePolicy1"</span>  <a href="#storagepolicyname-optional"># Storage policy name associated with VMs</a>
-  template: <span>"bottlerocket-kube-v1-25"</span>  <a href="#template-optional"># VM template for EKS Anywhere (required for RHEL/Ubuntu-based OVAs)</a>
+  template: <span>"bottlerocket-kube-v1-31"</span>  <a href="#template-optional"># VM template for EKS Anywhere (required for RHEL/Ubuntu-based OVAs)</a>
   cloneMode: <span>"fullClone"</span>               <a href="#clonemode-optional"># Clone mode to use when cloning VMs from the template</a>
   users:                               <a href="#users-optional"># Add users to access VMs via SSH</a>
   - name: <span>"ec2-user"</span>                   <a href="#users0name-optional"># Name of each user set to access VMs</a>
@@ -191,7 +191,7 @@ Modifying the labels associated with a worker node group configuration will caus
 the existing nodes associated with the configuration.
 
 ### workerNodeGroupConfigurations[*].kubernetesVersion (optional)
-The Kubernetes version you want to use for this worker node group. [Supported values]({{< relref "../../concepts/support-versions/#kubernetes-versions" >}}): `1.28`, `1.27`, `1.26`, `1.25`, `1.24`
+The Kubernetes version you want to use for this worker node group. [Supported values]({{< relref "../../concepts/support-versions/#kubernetes-versions" >}}): `1.31`, `1.30`, `1.29`, `1.28`, `1.27`
 
 Must be less than or equal to the cluster `kubernetesVersion` defined at the root level of the cluster spec. The worker node kubernetesVersion must be no more than two minor Kubernetes versions lower than the cluster control plane's Kubernetes version. Removing `workerNodeGroupConfiguration.kubernetesVersion` will trigger an upgrade of the node group to the `kubernetesVersion` defined at the root level of the cluster spec.
 
@@ -205,7 +205,7 @@ Refers to the Kubernetes object with vsphere specific configuration for your etc
 Refers to the Kubernetes object with vsphere environment specific configuration.  See [VSphereDatacenterConfig Fields](#vspheredatacenterconfig-fields) below.
 
 ### kubernetesVersion (required)
-The Kubernetes version you want to use for your cluster. [Supported values]({{< relref "../../concepts/support-versions/#kubernetes-versions" >}}): `1.28`, `1.27`, `1.26`, `1.25`, `1.24`
+The Kubernetes version you want to use for your cluster. [Supported values]({{< relref "../../concepts/support-versions/#kubernetes-versions" >}}): `1.31`, `1.30`, `1.29`, `1.28`, `1.27`
 
 ## VSphereDatacenterConfig Fields
 
@@ -285,7 +285,7 @@ The default is generating a key in your `$(pwd)/<cluster-name>` folder when not 
 The VM template to use for your EKS Anywhere cluster. This template was created when you
 [imported the OVA file into vSphere]({{< relref "../vsphere/customize/vsphere-ovas.md" >}}).
 This is a required field if you are using Ubuntu-based or RHEL-based OVAs.
-The `template` must contain the `Cluster.Spec.KubernetesVersion` or `Cluster.Spec.WorkerNodeGroupConfiguration[].KubernetesVersion` version (in case of modular upgrade). For example, if the Kubernetes version is 1.24, `template` must include 1.24, 1_24, 1-24 or 124.
+The `template` must contain the `Cluster.Spec.KubernetesVersion` or `Cluster.Spec.WorkerNodeGroupConfiguration[].KubernetesVersion` version (in case of modular upgrade). For example, if the Kubernetes version is 1.31, `template` must include 1.31, 1_31, 1-31 or 131.
 
 ### cloneMode (optional)
 `cloneMode` defines the clone mode to use when creating the cluster VMs from the template. Allowed values are:

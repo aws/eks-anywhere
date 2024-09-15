@@ -225,7 +225,7 @@ Number of etcd members
 Refers to the Kubernetes object with CloudStack specific configuration for your etcd members. See `CloudStackMachineConfig Fields` below.
 
 ### kubernetesVersion (required)
-The Kubernetes version you want to use for your cluster. Supported values: `1.28`, `1.27`, `1.26`, `1.25`, `1.24`
+The Kubernetes version you want to use for your cluster. Supported values: `1.31`, `1.30`, `1.29`, `1.28`, `1.27`
 
 ### managementCluster (required)
 Identifies the name of the management cluster.
@@ -274,7 +274,7 @@ Modifying the labels associated with a worker node group configuration will caus
 the existing nodes associated with the configuration.
 
 ### workerNodeGroupConfigurations[*].kubernetesVersion (optional)
-The Kubernetes version you want to use for this worker node group. Supported values: 1.28, 1.27, 1.26, 1.25, 1.24
+The Kubernetes version you want to use for this worker node group. Supported values: 1.31, 1.30, 1.29, 1.28, 1.27
 
 ## CloudStackDatacenterConfig
 
@@ -327,7 +327,7 @@ The default is generating a key in your `$(pwd)/<cluster-name>` folder when not 
 ### template.{id,name} (required)
 The VM template to use for your EKS Anywhere cluster. Currently, a VM based on RHEL 8.6 is required.
 This can be a name or ID.
-The `template.name` must contain the `Cluster.Spec.KubernetesVersion` or `Cluster.Spec.WorkerNodeGroupConfiguration[].KubernetesVersion` version (in case of modular upgrade). For example, if the Kubernetes version is 1.24, the `template.name` field name should include 1.24, 1_24, 1-24 or 124.
+The `template.name` must contain the `Cluster.Spec.KubernetesVersion` or `Cluster.Spec.WorkerNodeGroupConfiguration[].KubernetesVersion` version (in case of modular upgrade). For example, if the Kubernetes version is 1.31, the `template.name` field name should include 1.31, 1_31, 1-31 or 131.
 See the [Artifacts]({{< relref "../../osmgmt/artifacts" >}}) page for instructions for building RHEL-based images.
 
 ### diskOffering (optional)

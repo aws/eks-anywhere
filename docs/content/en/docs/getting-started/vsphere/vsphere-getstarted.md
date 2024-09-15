@@ -162,7 +162,7 @@ Make sure you use single quotes around the values so that your shell does not in
    Example command output
    ```
    ...
-   kubernetesVersion: "1.28"
+   kubernetesVersion: "1.31"
    managementCluster:
      name: mgmt
    workerNodeGroupConfigurations:

@@ -53,7 +53,7 @@ spec:
    machineGroupRef:
      kind: NutanixMachineConfig
      name: mgmt-etcd
- kubernetesVersion: "1.28"
+ kubernetesVersion: "1.31"
  workerNodeGroupConfigurations:
    - count: 1
      machineGroupRef:
@@ -85,7 +85,7 @@ spec:
    name: nx-cluster-01
    type: name
  image:
-   name: eksa-ubuntu-2004-kube-v1.28
+   name: eksa-ubuntu-2004-kube-v1.31
    type: name
  memorySize: 4Gi
  osFamily: ubuntu
@@ -116,7 +116,7 @@ spec:
    name: nx-cluster-01
    type: name
  image:
-   name: eksa-ubuntu-2004-kube-v1.28
+   name: eksa-ubuntu-2004-kube-v1.31
    type: name
  memorySize: 4Gi
  osFamily: ubuntu
@@ -144,7 +144,7 @@ spec:
    name: nx-cluster-01
    type: name
  image:
-   name: eksa-ubuntu-2004-kube-v1.28
+   name: eksa-ubuntu-2004-kube-v1.31
    type: name
  memorySize: 4Gi
  osFamily: ubuntu
@@ -208,7 +208,7 @@ Minimum number of nodes for this node group's autoscaling configuration.
 Maximum number of nodes for this node group's autoscaling configuration.
 
 ### workerNodeGroupConfigurations[*].kubernetesVersion (optional)
-The Kubernetes version you want to use for this worker node group. Supported values: 1.28, 1.27, 1.26, 1.25, 1.24
+The Kubernetes version you want to use for this worker node group. Supported values: `1.31`, `1.30`, `1.29`, `1.28`, `1.27`
 
 ### externalEtcdConfiguration.count (optional)
 Number of etcd members
@@ -220,7 +220,7 @@ Refers to the Kubernetes object with Nutanix specific configuration for your etc
 Refers to the Kubernetes object with Nutanix environment specific configuration. See `NutanixDatacenterConfig` fields below.
 
 ### kubernetesVersion (required)
-The Kubernetes version you want to use for your cluster. Supported values: `1.28`, `1.27`, `1.26`, `1.25`, `1.24`
+The Kubernetes version you want to use for your cluster. Supported values: `1.31`, `1.30`, `1.29`, `1.28`, `1.27`
 
 ## NutanixDatacenterConfig Fields
 
@@ -274,11 +274,11 @@ Type to identify the OS image. (Permitted values: `name` or `uuid`)
 
 ### image.name (`name` or `UUID` required)
 Name of the image
-The `image.name` must contain the `Cluster.Spec.KubernetesVersion` or `Cluster.Spec.WorkerNodeGroupConfiguration[].KubernetesVersion` version (in case of modular upgrade). For example, if the Kubernetes version is 1.24, `image.name` must include 1.24, 1_24, 1-24 or 124.
+The `image.name` must contain the `Cluster.Spec.KubernetesVersion` or `Cluster.Spec.WorkerNodeGroupConfiguration[].KubernetesVersion` version (in case of modular upgrade). For example, if the Kubernetes version is 1.31, `image.name` must include 1.31, 1_31, 1-31 or 131.
 
 ### image.uuid (`name` or `UUID` required)
 UUID of the image
-The name of the image associated with the `uuid` must contain the `Cluster.Spec.KubernetesVersion` or `Cluster.Spec.WorkerNodeGroupConfiguration[].KubernetesVersion` version (in case of modular upgrade). For example, if the Kubernetes version is 1.24, the name associated with `image.uuid` field must include 1.24, 1_24, 1-24 or 124.
+The name of the image associated with the `uuid` must contain the `Cluster.Spec.KubernetesVersion` or `Cluster.Spec.WorkerNodeGroupConfiguration[].KubernetesVersion` version (in case of modular upgrade). For example, if the Kubernetes version is 1.31, the name associated with `image.uuid` field must include 1.31, 1_31, 1-31 or 131.
 
 ### memorySize (optional)
 Size of RAM on virtual machines (Default: `4Gi`)
