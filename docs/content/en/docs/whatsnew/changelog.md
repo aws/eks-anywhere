@@ -30,6 +30,32 @@ description: >
 {{% alert title="General Information" color="info" %}}
 * When upgrading to a new minor version, a new OS image must be created using the new image-builder CLI pertaining to that release.
 {{% /alert %}}
+
+## [v0.19.10](https://github.com/aws/eks-anywhere/releases/tag/v0.19.10)
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+|    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+| Bottlerocket 1.22.0 |    ✔    |     \*      |    —    |     —      |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+|      RHEL 9.x       |    —    |     —      |    ✔    |     ✔      |  —   |
+
+\* [EKS Anywhere issue regarding deprecation of Bottlerocket bare metal variants](https://github.com/aws/eks-anywhere/issues/7754)
+
+### Upgraded
+- EKS Distro:
+  - `v1-27-eks-36` to [`v1-27-eks-38`](https://distro.eks.amazonaws.com/releases/1-27/38/)
+  - `v1-28-eks-29` to [`v1-28-eks-31`](https://distro.eks.amazonaws.com/releases/1-28/31/)
+  - `v1-29-eks-18` to [`v1-29-eks-20`](https://distro.eks.amazonaws.com/releases/1-29/20/)
+- EKS Anywhere Packages: `v0.4.3` to `v0.4.4`
+- Cilium: `v1.13.18` to `v1.13.19`
+- containerd: `v1.7.20` to `v1.7.22`
+- runc: `v1.1.13` to `v1.1.14`
+- local-path-provisioner: `v0.0.28` to `v0.0.29`
+- etcdadm-controller: `v1.0.22` to `v1.0.23`
+- New base images with CVE fixes for Amazon Linux 2
+
 ## [v0.19.9](https://github.com/aws/eks-anywhere/releases/tag/v0.19.9)
 ### Supported OS version details
 |                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
@@ -39,6 +65,8 @@ description: >
 | Bottlerocket 1.19.2 |    ✔    |     \*      |    —    |     —      |  —   |
 |      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
 |      RHEL 9.x       |    —    |     —      |    ✔    |     ✔      |  —   |
+
+\* [EKS Anywhere issue regarding deprecation of Bottlerocket bare metal variants](https://github.com/aws/eks-anywhere/issues/7754)
 
 ### Upgraded
 - EKS Distro:
