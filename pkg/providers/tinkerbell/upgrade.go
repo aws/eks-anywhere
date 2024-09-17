@@ -113,7 +113,7 @@ func (p *Provider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *
 		return err
 	}
 
-	upgradeStrategy := currentClusterSpec.Cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy
+	upgradeStrategy := clusterSpec.Cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy
 	// skip extra hardware validation for InPlace upgrades
 	if upgradeStrategy == nil || upgradeStrategy.Type != v1alpha1.InPlaceStrategyType {
 		if err := p.validateAvailableHardwareForUpgrade(ctx, currentClusterSpec, clusterSpec); err != nil {
