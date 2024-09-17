@@ -39,6 +39,8 @@ If you provide a support bundle configuration file using the `--bundle-config` f
 for example one generated with `generate support-bundle-config`, 
 `generate support-bundle` will use the provided configuration when collecting information from your cluster and analyzing the results.
 
+If you want to generate support bundle in an airgapped environment, the `--bundles-manifest` flag must be set to the local path
+of your eks-a bundles manifest yaml file.
 ```
 Flags:
       --bundle-config string   Bundle Config file to use when generating support bundle
@@ -47,6 +49,7 @@ Flags:
       --since string           Collect pod logs in the latest duration like 5s, 2m, or 3h.
       --since-time string      Collect pod logs after a specific datetime(RFC3339) like 2021-06-28T15:04:05Z
   -w, --w-config string        Kubeconfig file to use when creating support bundle for a workload cluster
+      --bundles-manifest       Bundles manifest to use when generating support bundle (required for generating support bundle in airgap environment)
 ```
 
 ### Collecting and analyzing a bundle

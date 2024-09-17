@@ -24,6 +24,7 @@ anywhere generate support-bundle -f my-cluster.yaml [flags]
       --since string           Collect pod logs in the latest duration like 5s, 2m, or 3h.
       --since-time string      Collect pod logs after a specific datetime(RFC3339) like 2021-06-28T15:04:05Z
   -w, --w-config string        Kubeconfig file to use when creating support bundle for a workload cluster
+      --bundles-manifest       Bundles manifest to use when generating support bundle (required for generating support bundle in airgap environment)
 ```
 
 ### Options inherited from parent commands
