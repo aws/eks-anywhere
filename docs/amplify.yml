@@ -7,7 +7,7 @@ applications:
             - make release
         postBuild:
           commands:
-            - make upload-checksum
+            - make upload-checksum invalidate-docs-cdn
       artifacts:
         baseDirectory: public
         files:
