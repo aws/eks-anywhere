@@ -51,34 +51,38 @@ No, EKS Anywhere Enterprise Subscriptions purchased manually before October 2023
 
 You can cancel your subscription within the first 7 days of purchase by filing an AWS Support ticket. When you cancel your subscription within the first 7 days, you are not charged for the subscription. To cancel your subscription outside of the 7-day time period, contact your AWS account team.
 
-**5. In which AWS Regions can I purchase subscriptions?**
+**5. Can I cancel my subscription after I use it to file an AWS Support ticket?**
+
+No, if you have used your subscription to file an AWS Support ticket requesting EKS Anywhere support, then we are unable to cancel the subscription or refund the purchase regardless of the 7-day grace period, since you have leveraged support as part of the subscription.
+
+**6. In which AWS Regions can I purchase subscriptions?**
 
 You can purchase subscriptions in US East (Ohio), US East (N. Virginia), US West (N. California), US West (Oregon), Africa (Cape Town), Asia Pacific (Hong Kong), Asia Pacific (Hyderabad), Asia Pacific (Jakarta), Asia Pacific (Melbourne), Asia Pacific (Mumbai), Asia Pacific (Osaka), Asia Pacific (Seoul), Asia Pacific (Singapore), Asia Pacific (Sydney), Asia Pacific (Tokyo), Canada (Central), Europe (Frankfurt), Europe (Ireland), Europe (London), Europe (Milan), Europe (Paris), Europe (Stockholm), Europe (Zurich), Israel (Tel Aviv), Middle East (Bahrain), Middle East (UAE), and South America (Sao Paulo).
 
-**6. Can I renew my subscription through the EKS console, APIs, and AWS CLI?**
+**7. Can I renew my subscription through the EKS console, APIs, and AWS CLI?**
 
 Yes, you can configure auto renewal during subscription creation or at any time during your subscription term. When auto renewal is enabled for your subscription, the subscription and associated licenses will be automatically renewed for the term of the existing subscription (1-year or 3-years). The 7-day cancellation period does not apply to renewals. You do not need to reapply licenses to your EKS Anywhere clusters when subscriptions are automatically renewed.
 
-**7. Can I edit my subscription through the EKS console, APIs, and AWS CLI?**
+**8. Can I edit my subscription through the EKS console, APIs, and AWS CLI?**
 
 You can edit the auto renewal and tags configurations for your subscription with the EKS console, APIs, and AWS CLI. To change the term or license quantity for a subscription, you must create a new subscription.
 
-**8. What happens when a subscription expires?**
+**9. What happens when a subscription expires?**
 
 When subscriptions expire, licenses associated with the subscription can no longer be used for new support tickets, access to EKS Anywhere Curated Packages is revoked, and you are no longer billed for the subscription. Support tickets created during the active subscription period will continue to be serviced. You will receive emails 3 months, 1 month, and 1 week before subscriptions expire, and an alert is presented in the EKS console for approaching expiration dates. Subscriptions can be viewed with the EKS console, APIs, and AWS CLI after expiration.
 
-**9. Can I share access to curated packages with other AWS accounts?**
+**10. Can I share access to curated packages with other AWS accounts?**
 
 Yes, reference the [Share curated packages access]({{< relref "../clustermgmt/support/share-packages" >}}) documentation for instructions on how to share access to curated packages with other AWS accounts in your organization.
 
-**10. How do I apply licenses to my EKS Anywhere clusters?**
+**11. How do I apply licenses to my EKS Anywhere clusters?**
 
 Reference the [License cluster]({{< relref "../clustermgmt/support/cluster-license" >}}) documentation for instructions on how to apply licenses your EKS Anywhere clusters.
 
-**11. Is there an option to pay for subscriptions upfront?**
+**12. Is there an option to pay for subscriptions upfront?**
 
 If you need to pay upfront for subscriptions, please contact your AWS account team.
 
-**12. Is there a free-trial option for subscriptions?**
+**13. Is there a free-trial option for subscriptions?**
 
 To request a free-trial, please contact your AWS account team.
