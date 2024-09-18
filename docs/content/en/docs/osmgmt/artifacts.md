@@ -178,7 +178,7 @@ export KUBEVERSION="1.31"
    ```bash
    BUNDLE_MANIFEST_URL=$(curl -sL https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml | yq ".spec.releases[] | select(.version==\"$EKSA_RELEASE_VERSION\").bundleManifestUrl")
    BUILD_TOOLING_COMMIT=$(curl -s $BUNDLE_MANIFEST_URL | yq ".spec.versionsBundles[0].eksD.gitCommit")
-   export BOTTLEROCKET_VERSION=$(curl -sL https://raw.githubusercontent.com/aws/eks-anywhere-build-tooling/$BUILD_TOOLING_COMMIT/projects/kubernetes-sigs/image-builder/BOTTLEROCKET_RELEASES | yq ".$(echo $KUBEVERSION | tr '.' '-').$BOTTLEROCKET_IMAGE_FORMAT-release-version")
+   export BOTTLEROCKET_VERSION=$(curl -sL https://raw.githubusercontent.com/aws/eks-anywhere-build-tooling/$BUILD_TOOLING_COMMIT/projects/kubernetes-sigs/image-builder/BOTTLEROCKET_RELEASES | yq ".$(echo $KUBEVERSION | tr '.' '-').ami-release-version")
    ```
 
 6. Download Bottlerocket node image
