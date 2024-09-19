@@ -395,6 +395,9 @@ The completed tasks are stored in the `generated` folder as a file named `<clust
 This feature is experimental. To enable this feature, export the following environment variable:<br/>
 `export CHECKPOINT_ENABLED=true`
 
+### Update vSphere credential
+{{% content "vsphere-credential-update.md" %}}
+
 ### Troubleshooting
 
 Attempting to upgrade a cluster with more than 1 minor release will result in receiving the following error.
