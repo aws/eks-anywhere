@@ -28,7 +28,6 @@ const (
 	tinkerbellImageUbuntu2204Kubernetes129EnvVar     = "T_TINKERBELL_IMAGE_UBUNTU_2204_1_29"
 	tinkerbellImageUbuntu2204Kubernetes129RTOSEnvVar = "T_TINKERBELL_IMAGE_UBUNTU_2204_1_29_RTOS"
 	tinkerbellImageUbuntu2204Kubernetes130EnvVar     = "T_TINKERBELL_IMAGE_UBUNTU_2204_1_30"
-	tinkerbellImageRedHat125EnvVar                   = "T_TINKERBELL_IMAGE_REDHAT_1_25"
 	tinkerbellImageRedHat126EnvVar                   = "T_TINKERBELL_IMAGE_REDHAT_1_26"
 	tinkerbellImageRedHat127EnvVar                   = "T_TINKERBELL_IMAGE_REDHAT_1_27"
 	tinkerbellImageRedHat128EnvVar                   = "T_TINKERBELL_IMAGE_REDHAT_1_28"

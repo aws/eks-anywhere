@@ -19,9 +19,6 @@ import (
 )
 
 const (
-	snowAMIIDUbuntu123   = "T_SNOW_AMIID_UBUNTU_1_23"
-	snowAMIIDUbuntu124   = "T_SNOW_AMIID_UBUNTU_1_24"
-	snowAMIIDUbuntu125   = "T_SNOW_AMIID_UBUNTU_1_25"
 	snowAMIIDUbuntu126   = "T_SNOW_AMIID_UBUNTU_1_26"
 	snowAMIIDUbuntu127   = "T_SNOW_AMIID_UBUNTU_1_27"
 	snowAMIIDUbuntu128   = "T_SNOW_AMIID_UBUNTU_1_28"
@@ -334,29 +331,6 @@ func (s *Snow) withIPPoolFromEnvVar(name string) api.SnowFiller {
 	return api.WithSnowIPPool(name, os.Getenv(snowIPPoolIPStart), os.Getenv(snowIPPoolIPEnd), os.Getenv(snowIPPoolGateway), os.Getenv(snowIPPoolSubnet))
 }
 
-func WithSnowUbuntu123() SnowOpt {
-	return func(s *Snow) {
-		s.fillers = append(s.fillers,
-			api.WithSnowStringFromEnvVar(snowAMIIDUbuntu123, api.WithSnowAMIIDForAllMachines),
-			api.WithSnowStringFromEnvVar(snowDevices, api.WithSnowDevicesForAllMachines),
-			api.WithOsFamilyForAllSnowMachines(anywherev1.Ubuntu),
-		)
-	}
-}
-
-// WithSnowUbuntu124 returns SnowOpt that sets the right devices and osFamily for all SnowMachineConfigs.
-// If the env var is set, this will also set the AMI ID.
-// Otherwise, it will leave it empty and let CAPAS select one.
-func WithSnowUbuntu124() SnowOpt {
-	return func(s *Snow) {
-		s.fillers = append(s.fillers,
-			s.withAMIIDFromEnvVar(snowAMIIDUbuntu124),
-			api.WithSnowStringFromEnvVar(snowDevices, api.WithSnowDevicesForAllMachines),
-			api.WithOsFamilyForAllSnowMachines(anywherev1.Ubuntu),
-		)
-	}
-}
-
 // WithSnowUbuntu126 returns SnowOpt that sets the right devices and osFamily for all SnowMachineConfigs.
 // If the env var is set, this will also set the AMI ID.
 // Otherwise, it will leave it empty and let CAPAS select one.
@@ -449,10 +423,6 @@ func buildSnowWorkerNodeGroupClusterFiller(machineConfigName string, workerNodeG
 	workerNodeGroup.MachineConfigKind = anywherev1.SnowMachineConfigKind
 	workerNodeGroup.MachineConfigName = machineConfigName
 	return workerNodeGroup.ClusterFiller()
-}
-
-func UpdateSnowUbuntuTemplate123Var() api.SnowFiller {
-	return api.WithSnowStringFromEnvVar(snowAMIIDUbuntu123, api.WithSnowAMIIDForAllMachines)
 }
 
 // ClusterStateValidations returns a list of provider specific validations.
