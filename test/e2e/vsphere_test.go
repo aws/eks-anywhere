@@ -4931,11 +4931,12 @@ func TestVSphereKubernetes127UbuntuTo128UpgradeWithCheckpoint(t *testing.T) {
 
 func TestVSphereKubernetes131RedhatUpgradeFromLatestMinorRelease(t *testing.T) {
 	release := latestMinorRelease(t)
+	useBundlesOverride := false
 	provider := framework.NewVSphere(t,
 		framework.WithVSphereFillers(
 			api.WithOsFamilyForAllMachines(v1alpha1.RedHat),
 		),
-		framework.WithKubeVersionAndOSForRelease(v1alpha1.Kube131, framework.RedHat8, release),
+		framework.WithKubeVersionAndOSForRelease(v1alpha1.Kube131, framework.RedHat8, release, useBundlesOverride),
 	)
 	test := framework.NewClusterE2ETest(
 		t,
@@ -4962,11 +4963,12 @@ func TestVSphereKubernetes131WithOIDCManagementClusterUpgradeFromLatestSideEffec
 
 func TestVSphereKubernetes127To128UbuntuUpgradeFromLatestMinorRelease(t *testing.T) {
 	release := latestMinorRelease(t)
+	useBundlesOverride := false
 	provider := framework.NewVSphere(t,
 		framework.WithVSphereFillers(
 			api.WithOsFamilyForAllMachines(v1alpha1.Ubuntu),
 		),
-		framework.WithKubeVersionAndOSForRelease(v1alpha1.Kube127, framework.Ubuntu2004, release),
+		framework.WithKubeVersionAndOSForRelease(v1alpha1.Kube127, framework.Ubuntu2004, release, useBundlesOverride),
 	)
 	test := framework.NewClusterE2ETest(
 		t,
@@ -4989,11 +4991,12 @@ func TestVSphereKubernetes127To128UbuntuUpgradeFromLatestMinorRelease(t *testing
 
 func TestVSphereKubernetes128To129UbuntuUpgradeFromLatestMinorRelease(t *testing.T) {
 	release := latestMinorRelease(t)
+	useBundlesOverride := false
 	provider := framework.NewVSphere(t,
 		framework.WithVSphereFillers(
 			api.WithOsFamilyForAllMachines(v1alpha1.Ubuntu),
 		),
-		framework.WithKubeVersionAndOSForRelease(v1alpha1.Kube128, framework.Ubuntu2004, release),
+		framework.WithKubeVersionAndOSForRelease(v1alpha1.Kube128, framework.Ubuntu2004, release, useBundlesOverride),
 	)
 	test := framework.NewClusterE2ETest(
 		t,
@@ -5016,11 +5019,12 @@ func TestVSphereKubernetes128To129UbuntuUpgradeFromLatestMinorRelease(t *testing
 
 func TestVSphereKubernetes129To130UbuntuUpgradeFromLatestMinorRelease(t *testing.T) {
 	release := latestMinorRelease(t)
+	useBundlesOverride := false
 	provider := framework.NewVSphere(t,
 		framework.WithVSphereFillers(
 			api.WithOsFamilyForAllMachines(v1alpha1.Ubuntu),
 		),
-		framework.WithKubeVersionAndOSForRelease(v1alpha1.Kube129, framework.Ubuntu2004, release),
+		framework.WithKubeVersionAndOSForRelease(v1alpha1.Kube129, framework.Ubuntu2004, release, useBundlesOverride),
 	)
 	test := framework.NewClusterE2ETest(
 		t,
@@ -5043,11 +5047,12 @@ func TestVSphereKubernetes129To130UbuntuUpgradeFromLatestMinorRelease(t *testing
 
 func TestVSphereKubernetes130To131UbuntuUpgradeFromLatestMinorRelease(t *testing.T) {
 	release := latestMinorRelease(t)
+	useBundlesOverride := false
 	provider := framework.NewVSphere(t,
 		framework.WithVSphereFillers(
 			api.WithOsFamilyForAllMachines(v1alpha1.Ubuntu),
 		),
-		framework.WithKubeVersionAndOSForRelease(v1alpha1.Kube130, framework.Ubuntu2004, release),
+		framework.WithKubeVersionAndOSForRelease(v1alpha1.Kube130, framework.Ubuntu2004, release, useBundlesOverride),
 	)
 	test := framework.NewClusterE2ETest(
 		t,
@@ -5070,12 +5075,13 @@ func TestVSphereKubernetes130To131UbuntuUpgradeFromLatestMinorRelease(t *testing
 
 func TestVSphereKubernetes130To131UbuntuInPlaceUpgradeFromLatestMinorRelease(t *testing.T) {
 	release := latestMinorRelease(t)
+	useBundlesOverride := false
 	provider := framework.NewVSphere(
 		t,
 		framework.WithVSphereFillers(
 			api.WithOsFamilyForAllMachines(v1alpha1.Ubuntu),
 		),
-		framework.WithKubeVersionAndOSForRelease(v1alpha1.Kube130, framework.Ubuntu2004, release),
+		framework.WithKubeVersionAndOSForRelease(v1alpha1.Kube130, framework.Ubuntu2004, release, useBundlesOverride),
 	)
 	test := framework.NewClusterE2ETest(
 		t,
@@ -5145,11 +5151,12 @@ func TestVSphereKubernetes128BottlerocketAndRemoveWorkerNodeGroups(t *testing.T)
 
 func TestVSphereKubernetes127To128RedhatUpgradeFromLatestMinorRelease(t *testing.T) {
 	release := latestMinorRelease(t)
+	useBundlesOverride := false
 	provider := framework.NewVSphere(t,
 		framework.WithVSphereFillers(
 			api.WithOsFamilyForAllMachines(v1alpha1.RedHat),
 		),
-		framework.WithKubeVersionAndOSForRelease(v1alpha1.Kube127, framework.RedHat8, release),
+		framework.WithKubeVersionAndOSForRelease(v1alpha1.Kube127, framework.RedHat8, release, useBundlesOverride),
 	)
 	test := framework.NewClusterE2ETest(
 		t,
@@ -5172,11 +5179,12 @@ func TestVSphereKubernetes127To128RedhatUpgradeFromLatestMinorRelease(t *testing
 
 func TestVSphereKubernetes128To129RedhatUpgradeFromLatestMinorRelease(t *testing.T) {
 	release := latestMinorRelease(t)
+	useBundlesOverride := false
 	provider := framework.NewVSphere(t,
 		framework.WithVSphereFillers(
 			api.WithOsFamilyForAllMachines(v1alpha1.RedHat),
 		),
-		framework.WithKubeVersionAndOSForRelease(v1alpha1.Kube128, framework.RedHat8, release),
+		framework.WithKubeVersionAndOSForRelease(v1alpha1.Kube128, framework.RedHat8, release, useBundlesOverride),
 	)
 	test := framework.NewClusterE2ETest(
 		t,
@@ -5199,11 +5207,12 @@ func TestVSphereKubernetes128To129RedhatUpgradeFromLatestMinorRelease(t *testing
 
 func TestVSphereKubernetes129To130RedhatUpgradeFromLatestMinorRelease(t *testing.T) {
 	release := latestMinorRelease(t)
+	useBundlesOverride := false
 	provider := framework.NewVSphere(t,
 		framework.WithVSphereFillers(
 			api.WithOsFamilyForAllMachines(v1alpha1.RedHat),
 		),
-		framework.WithKubeVersionAndOSForRelease(v1alpha1.Kube129, framework.RedHat8, release),
+		framework.WithKubeVersionAndOSForRelease(v1alpha1.Kube129, framework.RedHat8, release, useBundlesOverride),
 	)
 	test := framework.NewClusterE2ETest(
 		t,
@@ -5226,11 +5235,12 @@ func TestVSphereKubernetes129To130RedhatUpgradeFromLatestMinorRelease(t *testing
 
 func TestVSphereKubernetes130To131RedhatUpgradeFromLatestMinorRelease(t *testing.T) {
 	release := latestMinorRelease(t)
+	useBundlesOverride := false
 	provider := framework.NewVSphere(t,
 		framework.WithVSphereFillers(
 			api.WithOsFamilyForAllMachines(v1alpha1.RedHat),
 		),
-		framework.WithKubeVersionAndOSForRelease(v1alpha1.Kube130, framework.RedHat8, release),
+		framework.WithKubeVersionAndOSForRelease(v1alpha1.Kube130, framework.RedHat8, release, useBundlesOverride),
 	)
 	test := framework.NewClusterE2ETest(
 		t,
@@ -5284,6 +5294,7 @@ func TestVSphereKubernetes131UbuntuUpgradeAndRemoveWorkerNodeGroupsAPI(t *testin
 func TestVSphereKubernetes130to131UpgradeFromLatestMinorReleaseBottleRocketAPI(t *testing.T) {
 	release := latestMinorRelease(t)
 	provider := framework.NewVSphere(t)
+	useBundlesOverride := false
 	managementCluster := framework.NewClusterE2ETest(
 		t, provider,
 	)
@@ -5295,7 +5306,7 @@ func TestVSphereKubernetes130to131UpgradeFromLatestMinorReleaseBottleRocketAPI(t
 		api.VSphereToConfigFiller(
 			api.WithOsFamilyForAllMachines(v1alpha1.Bottlerocket),
 		),
-		provider.WithKubeVersionAndOSForRelease(v1alpha1.Kube130, framework.Bottlerocket1, release),
+		provider.WithKubeVersionAndOSForRelease(v1alpha1.Kube130, framework.Bottlerocket1, release, useBundlesOverride),
 	)
 
 	test := framework.NewMulticlusterE2ETest(t, managementCluster)
@@ -5311,7 +5322,7 @@ func TestVSphereKubernetes130to131UpgradeFromLatestMinorReleaseBottleRocketAPI(t
 		api.VSphereToConfigFiller(
 			api.WithOsFamilyForAllMachines(v1alpha1.Bottlerocket),
 		),
-		provider.WithKubeVersionAndOSForRelease(v1alpha1.Kube130, framework.Bottlerocket1, release),
+		provider.WithKubeVersionAndOSForRelease(v1alpha1.Kube130, framework.Bottlerocket1, release, useBundlesOverride),
 	)
 
 	test.WithWorkloadClusters(wc)
