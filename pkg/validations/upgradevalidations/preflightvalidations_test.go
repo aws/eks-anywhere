@@ -424,6 +424,7 @@ func newProvider(datacenterConfig anywherev1.TinkerbellDatacenterConfig, machine
 		test.FakeNow,
 		forceCleanup,
 		false,
+		"192.168.0.50",
 	)
 	if err != nil {
 		panic(err)
