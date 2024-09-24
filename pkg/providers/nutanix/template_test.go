@@ -577,9 +577,10 @@ func TestNewNutanixTemplateBuilderProxy(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, workerSpec)
 
-	expectedWorkersSpec, err := os.ReadFile("testdata/expected_results_proxy_md.yaml")
+	resultMdFileName := "testdata/expected_results_proxy_md.yaml"
+	expectedWorkersSpec, err := os.ReadFile(resultMdFileName)
 	require.NoError(t, err)
-	assert.Equal(t, expectedWorkersSpec, workerSpec)
+	test.AssertContentToFile(t, string(expectedWorkersSpec), resultMdFileName)
 }
 
 func TestTemplateBuilder_CertSANs(t *testing.T) {
@@ -723,6 +724,53 @@ func TestTemplateBuilderFailureDomains(t *testing.T) {
 		assert.NoError(t, err)
 
 		test.AssertContentToFile(t, string(data), tc.Output)
+	}
+}
+
+func TestTemplateBuilderWorkersFailureDomains(t *testing.T) {
+	for _, tc := range []struct {
+		Input    string
+		OutputCP string
+		OutputMD string
+	}{
+		{
+			Input:    "testdata/eksa-cluster-worker-fds.yaml",
+			OutputCP: "testdata/expected_results_worker_fds.yaml",
+			OutputMD: "testdata/expected_results_worker_fds_md.yaml",
+		},
+	} {
+		clusterSpec := test.NewFullClusterSpec(t, tc.Input)
+		machineConf := clusterSpec.NutanixMachineConfig(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name)
+		workerConfs := make(map[string]anywherev1.NutanixMachineConfigSpec)
+		for _, worker := range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
+			workerConf := clusterSpec.NutanixMachineConfig(worker.MachineGroupRef.Name)
+			workerConfs[worker.MachineGroupRef.Name] = workerConf.Spec
+		}
+		dcConf := clusterSpec.NutanixDatacenter
+
+		t.Setenv(constants.EksaNutanixUsernameKey, "admin")
+		t.Setenv(constants.EksaNutanixPasswordKey, "password")
+		creds := GetCredsFromEnv()
+		builder := NewNutanixTemplateBuilder(&dcConf.Spec, &machineConf.Spec, &machineConf.Spec, workerConfs, creds, time.Now)
+		assert.NotNil(t, builder)
+
+		buildSpec := test.NewFullClusterSpec(t, tc.Input)
+
+		cpSpec, err := builder.GenerateCAPISpecControlPlane(buildSpec)
+		assert.NoError(t, err)
+		assert.NotNil(t, cpSpec)
+		test.AssertContentToFile(t, string(cpSpec), tc.OutputCP)
+
+		workloadTemplateNames := map[string]string{
+			"eksa-unit-test": "eksa-unit-test",
+		}
+		kubeadmconfigTemplateNames := map[string]string{
+			"eksa-unit-test": "eksa-unit-test",
+		}
+		workerSpec, err := builder.GenerateCAPISpecWorkers(buildSpec, workloadTemplateNames, kubeadmconfigTemplateNames)
+		assert.NoError(t, err)
+		assert.NotNil(t, workerSpec)
+		test.AssertContentToFile(t, string(workerSpec), tc.OutputMD)
 	}
 }
 

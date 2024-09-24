@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -57,7 +58,7 @@ func (v *Validator) ValidateClusterSpec(ctx context.Context, spec *cluster.Spec,
 		return err
 	}
 
-	if err := v.ValidateDatacenterConfig(ctx, client, spec.NutanixDatacenter); err != nil {
+	if err := v.ValidateDatacenterConfig(ctx, client, spec); err != nil {
 		return err
 	}
 
@@ -110,7 +111,8 @@ func (v *Validator) checkImageNameMatchesKubernetesVersion(ctx context.Context, 
 }
 
 // ValidateDatacenterConfig validates the datacenter config.
-func (v *Validator) ValidateDatacenterConfig(ctx context.Context, client Client, config *anywherev1.NutanixDatacenterConfig) error {
+func (v *Validator) ValidateDatacenterConfig(ctx context.Context, client Client, spec *cluster.Spec) error {
+	config := spec.NutanixDatacenter
 	if config.Spec.Insecure {
 		logger.Info("Warning: Skipping TLS validation for insecure connection to Nutanix Prism Central; this is not recommended for production use")
 	}
@@ -131,14 +133,16 @@ func (v *Validator) ValidateDatacenterConfig(ctx context.Context, client Client,
 		return err
 	}
 
-	if err := v.validateFailureDomains(ctx, client, config); err != nil {
+	if err := v.validateFailureDomains(ctx, client, spec); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (v *Validator) validateFailureDomains(ctx context.Context, client Client, config *anywherev1.NutanixDatacenterConfig) error {
+func (v *Validator) validateFailureDomains(ctx context.Context, client Client, spec *cluster.Spec) error {
+	config := spec.NutanixDatacenter
+
 	regexName, err := regexp.Compile("^[a-z0-9]([-a-z0-9]*[a-z0-9])?$")
 	if err != nil {
 		return err
@@ -147,7 +151,7 @@ func (v *Validator) validateFailureDomains(ctx context.Context, client Client, c
 	for _, fd := range config.Spec.FailureDomains {
 		if res := regexName.MatchString(fd.Name); !res {
 			errorStr := `failure domain name should contains only small letters, digits, and hyphens.
-			It should start with small letter or digit`
+			it should start with small letter or digit`
 			return fmt.Errorf(errorStr)
 		}
 
@@ -160,6 +164,22 @@ func (v *Validator) validateFailureDomains(ctx context.Context, client Client, c
 				return err
 			}
 		}
+
+		for _, workerMachineGroupName := range fd.WorkerMachineGroups {
+			if err := v.validateWorkerMachineGroup(spec, workerMachineGroupName); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func (v *Validator) validateWorkerMachineGroup(spec *cluster.Spec, workerMachineGroupName string) error {
+	workerMachineGroupNames := getWorkerMachineGroupNames(spec)
+
+	if !slices.Contains(workerMachineGroupNames, workerMachineGroupName) {
+		return fmt.Errorf("worker machine group %s not found in the cluster worker node group definitions", workerMachineGroupName)
 	}
 
 	return nil
@@ -734,6 +754,17 @@ func findSubnetUUIDByName(ctx context.Context, v3Client Client, clusterUUID, sub
 	}
 
 	return res.Entities[0].Metadata.UUID, nil
+}
+
+// getWorkerMachineGroupNames retrieves the worker machine group names from the cluster spec.
+func getWorkerMachineGroupNames(spec *cluster.Spec) []string {
+	result := make([]string, 0)
+
+	for _, workerNodeGroupConf := range spec.Cluster.Spec.WorkerNodeGroupConfigurations {
+		result = append(result, workerNodeGroupConf.Name)
+	}
+
+	return result
 }
 
 // getClusterUUID retrieves the cluster uuid by the given cluster identifier.

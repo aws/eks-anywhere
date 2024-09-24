@@ -1,3 +1,105 @@
+{{- if .failureDomains }}{{- range $index, $fd := .failureDomains }}
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: MachineDeployment
+metadata:
+  labels:
+    cluster.x-k8s.io/cluster-name: "{{$.clusterName}}"
+  name: "{{$.workerNodeGroupName}}-{{$fd.Name}}"
+  namespace: "{{$.eksaSystemNamespace}}"
+{{- if $.autoscalingConfig }}
+  annotations:
+    cluster.x-k8s.io/cluster-api-autoscaler-node-group-min-size: "{{ $.autoscalingConfig.MinCount }}"
+    cluster.x-k8s.io/cluster-api-autoscaler-node-group-max-size: "{{ $.autoscalingConfig.MaxCount }}"
+{{- end }}
+spec:
+  clusterName: "{{$.clusterName}}"
+{{- if not $.autoscalingConfig }}
+  replicas: {{ index $.failureDomainsReplicas $fd.Name }}
+{{- end }}
+  selector:
+    matchLabels: {}
+  template:
+    metadata:
+      labels:
+        cluster.x-k8s.io/cluster-name: "{{$.clusterName}}"
+    spec:
+      failureDomain: "{{$fd.Name}}"
+      bootstrap:
+        configRef:
+          apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+          kind: KubeadmConfigTemplate
+          name: "{{$.workloadkubeadmconfigTemplateName}}"
+      clusterName: "{{$.clusterName}}"
+      infrastructureRef:
+        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+        kind: NutanixMachineTemplate
+        name: "{{$.workloadTemplateName}}-{{$fd.Name}}"
+      version: "{{$.kubernetesVersion}}"
+{{- if $.upgradeRolloutStrategy }}
+  strategy:
+    rollingUpdate:
+      maxSurge: {{$.maxSurge}}
+      maxUnavailable: {{$.maxUnavailable}}
+{{- end }}
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: NutanixMachineTemplate
+metadata:
+  name: "{{$.workloadTemplateName}}-{{$fd.Name}}"
+  namespace: "{{$.eksaSystemNamespace}}"
+spec:
+  template:
+    spec:
+      providerID: "nutanix://{{$.clusterName}}-m1"
+      vcpusPerSocket: {{$.vcpusPerSocket}}
+      vcpuSockets: {{$.vcpuSockets}}
+      memorySize: {{$.memorySize}}
+      systemDiskSize: {{$.systemDiskSize}}
+      image:
+{{- if (eq $.imageIDType "name") }}
+        type: name
+        name: "{{$.imageName}}"
+{{ else if (eq $.imageIDType "uuid") }}
+        type: uuid
+        uuid: "{{$.imageUUID}}"
+{{ end }}
+      cluster:
+{{- if (eq $fd.Cluster.Type "name") }}
+        type: name
+        name: "{{ $fd.Cluster.Name }}"
+{{- else if (eq $fd.Cluster.Type "uuid") }}
+        type: uuid
+        uuid: "{{ $fd.Cluster.UUID }}"
+{{ end }}
+      subnet:
+{{- range $subnet := $fd.Subnets }}
+{{- if (eq $subnet.Type "name") }}
+        - type: name
+          name: "{{ $subnet.Name }}"
+{{- else if (eq $subnet.Type "uuid") }}
+        - type: uuid
+          uuid: "{{ $subnet.UUID }}"
+{{- end }}
+{{- end }}
+{{- if $.projectIDType}}
+      project:
+{{- if (eq $.projectIDType "name") }}
+        type: name
+        name: "{{$.projectName}}"
+{{- else if (eq $.projectIDType "uuid") }}
+        type: uuid
+        uuid: "{{$.projectUUID}}"
+{{ end }}
+{{ end }}
+{{- if $.additionalCategories}}
+      additionalCategories:
+{{- range $.additionalCategories}}
+        - key:   "{{ $.Key }}"
+          value: "{{ $.Value }}"
+{{- end }}
+{{- end }}
+---
+{{- end }}{{- else }}
 apiVersion: cluster.x-k8s.io/v1beta1
 kind: MachineDeployment
 metadata:
@@ -107,6 +209,7 @@ spec:
 {{- end }}
 {{- end }}
 ---
+{{- end }}
 apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
 kind: KubeadmConfigTemplate
 metadata:
