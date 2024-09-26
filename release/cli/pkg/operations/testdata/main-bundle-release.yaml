@@ -112,26 +112,26 @@ spec:
         arch:
         - amd64
         description: Container image for cilium image
-        imageDigest: sha256:10516f91694a3725da3096d76996664caac74c7e92b504833394fbd8525c37e7
+        imageDigest: sha256:f34fa718a4c95406dec577e97116fbde27a39a85d63255fe0bd2e04f2f553f86
         name: cilium
         os: linux
-        uri: public.ecr.aws/isovalent/cilium:v1.13.19-eksa.1
+        uri: public.ecr.aws/isovalent/cilium:v1.14.12-eksa.2
       helmChart:
         description: Helm chart for cilium-chart
-        imageDigest: sha256:d82873e0cda61c69e87b5ff6985c3f9c997054e67ed9020d7b964e133f7880a8
+        imageDigest: sha256:095ebe9a3c3e9d7a0a8c2b89be7f83c1c1c6c0a2ea1deab2fc10e7ff0bb02347
         name: cilium-chart
-        uri: public.ecr.aws/isovalent/cilium:1.13.19-eksa.1
+        uri: public.ecr.aws/isovalent/cilium:1.14.12-eksa.2
       manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.13.19-eksa.1/cilium.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.14.12-eksa.2/cilium.yaml
       operator:
         arch:
         - amd64
         description: Container image for operator-generic image
-        imageDigest: sha256:8e69bd6c5f56400ab13ae8347a47919f848b289e8c6cca43b2c311177fca802a
+        imageDigest: sha256:77c44314281d8d547fe5237a8020cabddf49b05a2810ef17e5763b46413a3df3
         name: operator-generic
         os: linux
-        uri: public.ecr.aws/isovalent/operator-generic:v1.13.19-eksa.1
-      version: v1.13.19-eksa.1
+        uri: public.ecr.aws/isovalent/operator-generic:v1.14.12-eksa.2
+      version: v1.14.12-eksa.2
     cloudStack:
       clusterAPIController:
         arch:
@@ -412,7 +412,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: source-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/source-controller:v1.3.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/fluxcd/source-controller:v1.4.0-eks-a-v0.0.0-dev-build.1
       version: v2.3.0+abcdef1
     haproxy:
       image:
@@ -788,11 +788,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-vsphere
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api-provider-vsphere/release/manager:v1.11.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api-provider-vsphere/release/manager:v1.11.1-eks-a-v0.0.0-dev-build.1
       clusterTemplate:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.11.0/cluster-template.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.11.1/cluster-template.yaml
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.11.0/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.11.1/infrastructure-components.yaml
       kubeProxy:
         arch:
         - amd64
@@ -821,8 +821,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/kubernetes/cloud-provider-vsphere/cpi/manager:v1.27.0-eks-d-1-27-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.11.0/metadata.yaml
-      version: v1.11.0+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.11.1/metadata.yaml
+      version: v1.11.1+abcdef1
   - bootstrap:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/bootstrap-kubeadm/v1.7.2/bootstrap-components.yaml
@@ -927,26 +927,26 @@ spec:
         arch:
         - amd64
         description: Container image for cilium image
-        imageDigest: sha256:10516f91694a3725da3096d76996664caac74c7e92b504833394fbd8525c37e7
+        imageDigest: sha256:f34fa718a4c95406dec577e97116fbde27a39a85d63255fe0bd2e04f2f553f86
         name: cilium
         os: linux
-        uri: public.ecr.aws/isovalent/cilium:v1.13.19-eksa.1
+        uri: public.ecr.aws/isovalent/cilium:v1.14.12-eksa.2
       helmChart:
         description: Helm chart for cilium-chart
-        imageDigest: sha256:d82873e0cda61c69e87b5ff6985c3f9c997054e67ed9020d7b964e133f7880a8
+        imageDigest: sha256:095ebe9a3c3e9d7a0a8c2b89be7f83c1c1c6c0a2ea1deab2fc10e7ff0bb02347
         name: cilium-chart
-        uri: public.ecr.aws/isovalent/cilium:1.13.19-eksa.1
+        uri: public.ecr.aws/isovalent/cilium:1.14.12-eksa.2
       manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.13.19-eksa.1/cilium.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.14.12-eksa.2/cilium.yaml
       operator:
         arch:
         - amd64
         description: Container image for operator-generic image
-        imageDigest: sha256:8e69bd6c5f56400ab13ae8347a47919f848b289e8c6cca43b2c311177fca802a
+        imageDigest: sha256:77c44314281d8d547fe5237a8020cabddf49b05a2810ef17e5763b46413a3df3
         name: operator-generic
         os: linux
-        uri: public.ecr.aws/isovalent/operator-generic:v1.13.19-eksa.1
-      version: v1.13.19-eksa.1
+        uri: public.ecr.aws/isovalent/operator-generic:v1.14.12-eksa.2
+      version: v1.14.12-eksa.2
     cloudStack:
       clusterAPIController:
         arch:
@@ -1227,7 +1227,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: source-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/source-controller:v1.3.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/fluxcd/source-controller:v1.4.0-eks-a-v0.0.0-dev-build.1
       version: v2.3.0+abcdef1
     haproxy:
       image:
@@ -1603,11 +1603,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-vsphere
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api-provider-vsphere/release/manager:v1.11.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api-provider-vsphere/release/manager:v1.11.1-eks-a-v0.0.0-dev-build.1
       clusterTemplate:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.11.0/cluster-template.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.11.1/cluster-template.yaml
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.11.0/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.11.1/infrastructure-components.yaml
       kubeProxy:
         arch:
         - amd64
@@ -1636,8 +1636,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/kubernetes/cloud-provider-vsphere/cpi/manager:v1.28.1-eks-d-1-28-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.11.0/metadata.yaml
-      version: v1.11.0+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.11.1/metadata.yaml
+      version: v1.11.1+abcdef1
   - bootstrap:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/bootstrap-kubeadm/v1.7.2/bootstrap-components.yaml
@@ -1742,26 +1742,26 @@ spec:
         arch:
         - amd64
         description: Container image for cilium image
-        imageDigest: sha256:10516f91694a3725da3096d76996664caac74c7e92b504833394fbd8525c37e7
+        imageDigest: sha256:f34fa718a4c95406dec577e97116fbde27a39a85d63255fe0bd2e04f2f553f86
         name: cilium
         os: linux
-        uri: public.ecr.aws/isovalent/cilium:v1.13.19-eksa.1
+        uri: public.ecr.aws/isovalent/cilium:v1.14.12-eksa.2
       helmChart:
         description: Helm chart for cilium-chart
-        imageDigest: sha256:d82873e0cda61c69e87b5ff6985c3f9c997054e67ed9020d7b964e133f7880a8
+        imageDigest: sha256:095ebe9a3c3e9d7a0a8c2b89be7f83c1c1c6c0a2ea1deab2fc10e7ff0bb02347
         name: cilium-chart
-        uri: public.ecr.aws/isovalent/cilium:1.13.19-eksa.1
+        uri: public.ecr.aws/isovalent/cilium:1.14.12-eksa.2
       manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.13.19-eksa.1/cilium.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.14.12-eksa.2/cilium.yaml
       operator:
         arch:
         - amd64
         description: Container image for operator-generic image
-        imageDigest: sha256:8e69bd6c5f56400ab13ae8347a47919f848b289e8c6cca43b2c311177fca802a
+        imageDigest: sha256:77c44314281d8d547fe5237a8020cabddf49b05a2810ef17e5763b46413a3df3
         name: operator-generic
         os: linux
-        uri: public.ecr.aws/isovalent/operator-generic:v1.13.19-eksa.1
-      version: v1.13.19-eksa.1
+        uri: public.ecr.aws/isovalent/operator-generic:v1.14.12-eksa.2
+      version: v1.14.12-eksa.2
     cloudStack:
       clusterAPIController:
         arch:
@@ -2042,7 +2042,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: source-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/source-controller:v1.3.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/fluxcd/source-controller:v1.4.0-eks-a-v0.0.0-dev-build.1
       version: v2.3.0+abcdef1
     haproxy:
       image:
@@ -2418,11 +2418,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-vsphere
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api-provider-vsphere/release/manager:v1.11.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api-provider-vsphere/release/manager:v1.11.1-eks-a-v0.0.0-dev-build.1
       clusterTemplate:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.11.0/cluster-template.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.11.1/cluster-template.yaml
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.11.0/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.11.1/infrastructure-components.yaml
       kubeProxy:
         arch:
         - amd64
@@ -2451,8 +2451,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/kubernetes/cloud-provider-vsphere/cpi/manager:v1.29.1-eks-d-1-29-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.11.0/metadata.yaml
-      version: v1.11.0+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.11.1/metadata.yaml
+      version: v1.11.1+abcdef1
   - bootstrap:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/bootstrap-kubeadm/v1.7.2/bootstrap-components.yaml
@@ -2557,26 +2557,26 @@ spec:
         arch:
         - amd64
         description: Container image for cilium image
-        imageDigest: sha256:10516f91694a3725da3096d76996664caac74c7e92b504833394fbd8525c37e7
+        imageDigest: sha256:f34fa718a4c95406dec577e97116fbde27a39a85d63255fe0bd2e04f2f553f86
         name: cilium
         os: linux
-        uri: public.ecr.aws/isovalent/cilium:v1.13.19-eksa.1
+        uri: public.ecr.aws/isovalent/cilium:v1.14.12-eksa.2
       helmChart:
         description: Helm chart for cilium-chart
-        imageDigest: sha256:d82873e0cda61c69e87b5ff6985c3f9c997054e67ed9020d7b964e133f7880a8
+        imageDigest: sha256:095ebe9a3c3e9d7a0a8c2b89be7f83c1c1c6c0a2ea1deab2fc10e7ff0bb02347
         name: cilium-chart
-        uri: public.ecr.aws/isovalent/cilium:1.13.19-eksa.1
+        uri: public.ecr.aws/isovalent/cilium:1.14.12-eksa.2
       manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.13.19-eksa.1/cilium.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.14.12-eksa.2/cilium.yaml
       operator:
         arch:
         - amd64
         description: Container image for operator-generic image
-        imageDigest: sha256:8e69bd6c5f56400ab13ae8347a47919f848b289e8c6cca43b2c311177fca802a
+        imageDigest: sha256:77c44314281d8d547fe5237a8020cabddf49b05a2810ef17e5763b46413a3df3
         name: operator-generic
         os: linux
-        uri: public.ecr.aws/isovalent/operator-generic:v1.13.19-eksa.1
-      version: v1.13.19-eksa.1
+        uri: public.ecr.aws/isovalent/operator-generic:v1.14.12-eksa.2
+      version: v1.14.12-eksa.2
     cloudStack:
       clusterAPIController:
         arch:
@@ -2857,7 +2857,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: source-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/source-controller:v1.3.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/fluxcd/source-controller:v1.4.0-eks-a-v0.0.0-dev-build.1
       version: v2.3.0+abcdef1
     haproxy:
       image:
@@ -3233,11 +3233,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-vsphere
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api-provider-vsphere/release/manager:v1.11.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api-provider-vsphere/release/manager:v1.11.1-eks-a-v0.0.0-dev-build.1
       clusterTemplate:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.11.0/cluster-template.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.11.1/cluster-template.yaml
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.11.0/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.11.1/infrastructure-components.yaml
       kubeProxy:
         arch:
         - amd64
@@ -3266,8 +3266,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/kubernetes/cloud-provider-vsphere/cpi/manager:v1.30.1-eks-d-1-30-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.11.0/metadata.yaml
-      version: v1.11.0+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.11.1/metadata.yaml
+      version: v1.11.1+abcdef1
   - bootstrap:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/bootstrap-kubeadm/v1.7.2/bootstrap-components.yaml
@@ -3372,26 +3372,26 @@ spec:
         arch:
         - amd64
         description: Container image for cilium image
-        imageDigest: sha256:10516f91694a3725da3096d76996664caac74c7e92b504833394fbd8525c37e7
+        imageDigest: sha256:f34fa718a4c95406dec577e97116fbde27a39a85d63255fe0bd2e04f2f553f86
         name: cilium
         os: linux
-        uri: public.ecr.aws/isovalent/cilium:v1.13.19-eksa.1
+        uri: public.ecr.aws/isovalent/cilium:v1.14.12-eksa.2
       helmChart:
         description: Helm chart for cilium-chart
-        imageDigest: sha256:d82873e0cda61c69e87b5ff6985c3f9c997054e67ed9020d7b964e133f7880a8
+        imageDigest: sha256:095ebe9a3c3e9d7a0a8c2b89be7f83c1c1c6c0a2ea1deab2fc10e7ff0bb02347
         name: cilium-chart
-        uri: public.ecr.aws/isovalent/cilium:1.13.19-eksa.1
+        uri: public.ecr.aws/isovalent/cilium:1.14.12-eksa.2
       manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.13.19-eksa.1/cilium.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.14.12-eksa.2/cilium.yaml
       operator:
         arch:
         - amd64
         description: Container image for operator-generic image
-        imageDigest: sha256:8e69bd6c5f56400ab13ae8347a47919f848b289e8c6cca43b2c311177fca802a
+        imageDigest: sha256:77c44314281d8d547fe5237a8020cabddf49b05a2810ef17e5763b46413a3df3
         name: operator-generic
         os: linux
-        uri: public.ecr.aws/isovalent/operator-generic:v1.13.19-eksa.1
-      version: v1.13.19-eksa.1
+        uri: public.ecr.aws/isovalent/operator-generic:v1.14.12-eksa.2
+      version: v1.14.12-eksa.2
     cloudStack:
       clusterAPIController:
         arch:
@@ -3672,7 +3672,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: source-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/source-controller:v1.3.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/fluxcd/source-controller:v1.4.0-eks-a-v0.0.0-dev-build.1
       version: v2.3.0+abcdef1
     haproxy:
       image:
@@ -4048,11 +4048,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-vsphere
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api-provider-vsphere/release/manager:v1.11.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api-provider-vsphere/release/manager:v1.11.1-eks-a-v0.0.0-dev-build.1
       clusterTemplate:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.11.0/cluster-template.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.11.1/cluster-template.yaml
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.11.0/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.11.1/infrastructure-components.yaml
       kubeProxy:
         arch:
         - amd64
@@ -4081,6 +4081,6 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/kubernetes/cloud-provider-vsphere/cpi/manager:v1.31.0-eks-d-1-31-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.11.0/metadata.yaml
-      version: v1.11.0+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.11.1/metadata.yaml
+      version: v1.11.1+abcdef1
 status: {}
