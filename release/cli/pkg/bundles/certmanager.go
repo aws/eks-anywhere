@@ -88,13 +88,13 @@ func GetCertManagerBundle(r *releasetypes.ReleaseConfig, imageDigests releasetyp
 	}
 
 	bundle := anywherev1alpha1.CertManagerBundle{
-		Version:    version,
-		Acmesolver: bundleImageArtifacts["cert-manager-acmesolver"],
-		Cainjector: bundleImageArtifacts["cert-manager-cainjector"],
-		Controller: bundleImageArtifacts["cert-manager-controller"],
-		Ctl:        bundleImageArtifacts["cert-manager-ctl"],
-		Webhook:    bundleImageArtifacts["cert-manager-webhook"],
-		Manifest:   bundleManifestArtifacts["cert-manager.yaml"],
+		Version:         version,
+		Acmesolver:      bundleImageArtifacts["cert-manager-acmesolver"],
+		Cainjector:      bundleImageArtifacts["cert-manager-cainjector"],
+		Controller:      bundleImageArtifacts["cert-manager-controller"],
+		Startupapicheck: bundleImageArtifacts["cert-manager-startupapicheck"],
+		Webhook:         bundleImageArtifacts["cert-manager-webhook"],
+		Manifest:        bundleManifestArtifacts["cert-manager.yaml"],
 	}
 
 	return bundle, nil
