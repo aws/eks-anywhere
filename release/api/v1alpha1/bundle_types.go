@@ -151,13 +151,15 @@ type BottlerocketHostContainersBundle struct {
 }
 
 type CertManagerBundle struct {
-	Version    string   `json:"version,omitempty"`
-	Acmesolver Image    `json:"acmesolver"`
-	Cainjector Image    `json:"cainjector"`
-	Controller Image    `json:"controller"`
-	Ctl        Image    `json:"ctl"`
-	Webhook    Image    `json:"webhook"`
-	Manifest   Manifest `json:"manifest"`
+	Version    string `json:"version,omitempty"`
+	Acmesolver Image  `json:"acmesolver"`
+	Cainjector Image  `json:"cainjector"`
+	Controller Image  `json:"controller"`
+	// This field has been deprecated
+	Ctl             *Image   `json:"ctl,omitempty"`
+	Startupapicheck Image    `json:"startupapicheck"`
+	Webhook         Image    `json:"webhook"`
+	Manifest        Manifest `json:"manifest"`
 }
 
 type CoreClusterAPI struct {

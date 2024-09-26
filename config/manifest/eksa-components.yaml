@@ -172,7 +172,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.6.1
+    controller-gen.kubebuilder.io/version: v0.8.0
   creationTimestamp: null
   name: bundles.anywhere.eks.amazonaws.com
 spec:
@@ -567,7 +567,13 @@ spec:
                               description: The image repository, name, and tag
                               type: string
                           type: object
-                        ctl:
+                        manifest:
+                          properties:
+                            uri:
+                              description: URI points to the manifest yaml file
+                              type: string
+                          type: object
+                        startupapicheck:
                           properties:
                             arch:
                               description: Architectures of the asset
@@ -594,12 +600,6 @@ spec:
                               type: string
                             uri:
                               description: The image repository, name, and tag
-                              type: string
-                          type: object
-                        manifest:
-                          properties:
-                            uri:
-                              description: URI points to the manifest yaml file
                               type: string
                           type: object
                         version:
@@ -637,8 +637,8 @@ spec:
                       - acmesolver
                       - cainjector
                       - controller
-                      - ctl
                       - manifest
+                      - startupapicheck
                       - webhook
                       type: object
                     cilium:
@@ -4943,7 +4943,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.6.1
+    controller-gen.kubebuilder.io/version: v0.8.0
   creationTimestamp: null
   name: eksareleases.anywhere.eks.amazonaws.com
 spec:

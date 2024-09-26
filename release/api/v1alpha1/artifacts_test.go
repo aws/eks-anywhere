@@ -125,3 +125,80 @@ func TestVersionsBundleSnowImages(t *testing.T) {
 		})
 	}
 }
+
+func TestVersionsBundleSharedImages(t *testing.T) {
+	expectedSharedImages := make([]v1alpha1.Image, 27)
+	expectedSharedImages = append(
+		expectedSharedImages[:5],
+		append(
+			[]v1alpha1.Image{
+				{
+					Name: "acmesolver",
+					URI:  "uri1",
+				},
+				{
+					Name: "cainjector",
+					URI:  "uri2",
+				},
+				{
+					Name: "controller",
+					URI:  "uri3",
+				},
+				{
+					Name: "startupapicheck",
+					URI:  "uri4",
+				},
+				{
+					Name: "webhook",
+					URI:  "uri5",
+				},
+			},
+			expectedSharedImages[5:]...,
+		)...,
+	)
+	tests := []struct {
+		name           string
+		versionsBundle *v1alpha1.VersionsBundle
+		want           []v1alpha1.Image
+	}{
+		{
+			name:           "no images",
+			versionsBundle: &v1alpha1.VersionsBundle{},
+			want:           make([]v1alpha1.Image, 32),
+		},
+		{
+			name: "cert-manager images",
+			versionsBundle: &v1alpha1.VersionsBundle{
+				CertManager: v1alpha1.CertManagerBundle{
+					Acmesolver: v1alpha1.Image{
+						Name: "acmesolver",
+						URI:  "uri1",
+					},
+					Cainjector: v1alpha1.Image{
+						Name: "cainjector",
+						URI:  "uri2",
+					},
+					Controller: v1alpha1.Image{
+						Name: "controller",
+						URI:  "uri3",
+					},
+					Startupapicheck: v1alpha1.Image{
+						Name: "startupapicheck",
+						URI:  "uri4",
+					},
+					Webhook: v1alpha1.Image{
+						Name: "webhook",
+						URI:  "uri5",
+					},
+				},
+			},
+			want: expectedSharedImages,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			g.Expect(tt.versionsBundle.SharedImages()).To(Equal(tt.want))
+		})
+	}
+}

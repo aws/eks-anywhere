@@ -81,7 +81,7 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 				RepoName: "cert-manager-controller",
 			},
 			{
-				RepoName: "cert-manager-ctl",
+				RepoName: "cert-manager-startupapicheck",
 			},
 			{
 				RepoName: "cert-manager-webhook",
