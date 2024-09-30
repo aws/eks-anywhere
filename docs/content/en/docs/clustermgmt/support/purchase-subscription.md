@@ -7,19 +7,21 @@ description: >
   Steps to purchase an EKS Anywhere Enterprise Subscription
 ---
 
-You can purchase EKS Anywhere Enterprise Subscriptions with the Amazon EKS console, API, or AWS CLI. When you purchase a subscription, you can choose a 1-year term or a 3-year term, and you are billed monthly throughout the term. You can configure your subscription to automatically renew at the end of the term, and you can cancel your subscription within the first 7 days of purchase at no charge. When the status of your subscription is Active, the subscription term starts, licenses are available in AWS License Manager for your EKS Anywhere clusters, and your AWS account has access to Amazon EKS Anywhere Curated Packages. 
+You can purchase EKS Anywhere Enterprise Subscriptions with the Amazon EKS console, API, or AWS CLI. When you purchase a subscription, you can choose a 1-year term or a 3-year term, and you are billed monthly throughout the term. You can configure your subscription to automatically renew at the end of the term, and you can cancel your subscription within the first 7 days of purchase at no charge. When the status of your subscription is Active, the subscription term starts, licenses are available in AWS License Manager for your EKS Anywhere clusters, and your AWS account has access to Amazon EKS Anywhere Curated Packages.
 
 For pricing, reference the [EKS Anywhere Pricing Page.](https://aws.amazon.com/eks/eks-anywhere/pricing/)
 
 ## Create Subscriptions
 
->**_NOTE_** When you purchase the subscription, you have a 7-day grace period to cancel the contract by creating a ticket at [AWS Support Center.](https://console.aws.amazon.com/support/home) After the 7-day grace period, if you do not cancel the contract, your AWS account ID is invoiced. Payment is charged monthly. 
+>**_NOTE_**: When you purchase the subscription, you have a 7-day grace period to cancel the contract by creating a ticket at [AWS Support Center](https://console.aws.amazon.com/support/home). After the 7-day grace period, if you do not cancel the contract, your AWS account ID is invoiced. Payment is charged monthly.
+>
+>However, if you use your subscription to file an AWS Support ticket requesting EKS Anywhere support, then we are unable to cancel the subscription or refund the purchase regardless of the 7-day grace period, since you have leveraged support as part of the subscription.
 
 ### Prerequisites
 
 - Before you create a subscription, you must onboard to use AWS License Manager. See the [AWS License Manager](https://docs.aws.amazon.com/license-manager/latest/userguide/getting-started.html) documentation for instructions.
 - Only auto renewal and tags can be changed after subscription creation. Other attributes such as the subscription name, number of licenses, or term length cannot be modified after subscription creation.
-- You can purchase Amazon EKS Anywhere Enterprise Subscriptions in the following AWS Regions: US East (Ohio), US East (N. Virginia), US West (N. California), US West (Oregon), Africa (Cape Town), Asia Pacific (Hong Kong), Asia Pacific (Hyderabad), Asia Pacific (Jakarta), Asia Pacific (Melbourne), Asia Pacific (Mumbai), Asia Pacific (Osaka), Asia Pacific (Seoul), Asia Pacific (Singapore), Asia Pacific (Sydney), Asia Pacific (Tokyo), Canada (Central), Europe (Frankfurt), Europe (Ireland), Europe (London), Europe (Milan), Europe (Paris), Europe (Stockholm), Europe (Zurich), Israel (Tel Aviv), Middle East (Bahrain), Middle East (UAE), and South America (Sao Paulo). 
+- You can purchase Amazon EKS Anywhere Enterprise Subscriptions in the following AWS Regions: US East (Ohio), US East (N. Virginia), US West (N. California), US West (Oregon), Africa (Cape Town), Asia Pacific (Hong Kong), Asia Pacific (Hyderabad), Asia Pacific (Jakarta), Asia Pacific (Melbourne), Asia Pacific (Mumbai), Asia Pacific (Osaka), Asia Pacific (Seoul), Asia Pacific (Singapore), Asia Pacific (Sydney), Asia Pacific (Tokyo), Canada (Central), Europe (Frankfurt), Europe (Ireland), Europe (London), Europe (Milan), Europe (Paris), Europe (Stockholm), Europe (Zurich), Israel (Tel Aviv), Middle East (Bahrain), Middle East (UAE), and South America (Sao Paulo).
 - An individual subscription can have up to 100 licenses.
 - An individual account can have up to 10 subscriptions.
 - You can create a single subscription at a time.
@@ -38,7 +40,7 @@ For pricing, reference the [EKS Anywhere Pricing Page.](https://aws.amazon.com/e
 5. (Optional) **Configure tags**. A tag is a label that you assign to an EKS Anywhere subscription. Each tag consists of a key and an optional value. You can use tags to search and filter your resources.
 6. Click **Next**.
 7. On the **Review and purchase** page, confirm the specifications for your subscription are correct.
-8. Click **Purchase** on the bottom right hand side of the screen to purchase your subscription. 
+8. Click **Purchase** on the bottom right hand side of the screen to purchase your subscription.
 
 After the subscription is created, the next step is to apply the licenses to your EKS Anywhere clusters. Reference the [License cluster]({{< relref "./cluster-license">}}) page for instructions.
 
@@ -68,10 +70,10 @@ aws eks create-eks-anywhere-subscription \
 
 <details>
   <summary>Expand for sample command output</summary>
-  <br /> 
+  <br />
   {{% content "create-subscription-output.md" %}}
 </details>
-<br /> 
+<br />
 
 It may take several minutes for the subscription to become `ACTIVE`. You can query the status of your subscription with the following command. Replace `my-subscription-id` with the `id` of your subscription. Do not proceed to license your EKS Anywhere clusters until the output of the command returns `ACTIVE`.
 
@@ -108,15 +110,15 @@ aws eks list-eks-anywhere-subscriptions --region 'region-code'
 
 <details>
   <summary>Expand for sample command output</summary>
-  <br /> 
+  <br />
   {{% content "list-subscription-output.md" %}}
 </details>
-<br /> 
+<br />
 
 **Describe EKS Anywhere subscriptions**
 
 - Replace `region-code` with the AWS Region that hosts your subscription (for example `us-west-2`).
-- Replace `my-subscription-id` with the `id` for your subscription (for example `e29fd0d2-d8a8-4ed4-be54-c6c0dd0f7964`). 
+- Replace `my-subscription-id` with the `id` for your subscription (for example `e29fd0d2-d8a8-4ed4-be54-c6c0dd0f7964`).
 - Replace `my-subscription` with the `name` for your subscription.
 
 Get subscription details for a single subscription.
@@ -129,10 +131,10 @@ aws eks describe-eks-anywhere-subscription \
 
 <details>
   <summary>Expand for sample command output</summary>
-  <br /> 
+  <br />
   {{% content "describe-subscription-output.md" %}}
 </details>
-<br /> 
+<br />
 
 Get subscription `id` with subscription `name`.
 
@@ -153,7 +155,7 @@ aws eks list-eks-anywhere-subscriptions \
 **Update EKS Anywhere subscriptions**
 
 - Replace `region-code` with the AWS Region that hosts your subscription (for example `us-west-2`).
-- Replace `my-subscription-id` with the `id` for your subscription (for example `e29fd0d2-d8a8-4ed4-be54-c6c0dd0f7964`). 
+- Replace `my-subscription-id` with the `id` for your subscription (for example `e29fd0d2-d8a8-4ed4-be54-c6c0dd0f7964`).
 
 Disable auto renewal
 
@@ -184,7 +186,7 @@ aws eks tag-resource \
 
 ## Delete Subscriptions
 
->**_NOTE_** Only inactive subscriptions can be deleted. Deleting inactive subscriptions removes them from the AWS Management Console view and API responses. To delete any Active Subscriptions, please create a Support Case with AWS Support team.
+>**_NOTE_**: Only inactive subscriptions can be deleted. Deleting inactive subscriptions removes them from the AWS Management Console view and API responses. To delete any Active Subscriptions, please create a Support Case with AWS Support team.
 
 ### AWS Management Console
 
@@ -196,7 +198,7 @@ aws eks tag-resource \
 ### AWS CLI
 
 - Replace `region-code` with the AWS Region that hosts your subscription (for example `us-west-2`).
-- Replace `my-subscription-id` with the `id` for your subscription (for example `e29fd0d2-d8a8-4ed4-be54-c6c0dd0f7964`). 
+- Replace `my-subscription-id` with the `id` for your subscription (for example `e29fd0d2-d8a8-4ed4-be54-c6c0dd0f7964`).
 
 ```bash
 aws eks delete-eks-anywhere-subscription \

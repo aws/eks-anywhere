@@ -30,6 +30,36 @@ description: >
 * When upgrading to a new minor version, a new OS image must be created using the new image-builder CLI pertaining to that release.
 {{% /alert %}}
 
+## [v0.20.6](https://github.com/aws/eks-anywhere/releases/tag/v0.20.6)
+
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+|    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+| Bottlerocket 1.20.5 |    ✔    |     —      |    —    |     —      |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+|      RHEL 9.x       |    —    |     ✔      |    ✔    |     ✔      |  —   |
+
+### Changed
+- EKS Distro:
+  - `v1-27-eks-38` to [`v1-27-eks-39`](https://distro.eks.amazonaws.com/releases/1-27/39/)
+  - `v1-28-eks-31` to [`v1-28-eks-32`](https://distro.eks.amazonaws.com/releases/1-28/32/)
+  - `v1-29-eks-20` to [`v1-29-eks-21`](https://distro.eks.amazonaws.com/releases/1-29/21/)
+  - `v1-30-eks-13`  to [`v1-30-eks-14`](https://distro.eks.amazonaws.com/releases/1-30/14/)
+- cilium: `v1.13.18` to `v1.13.19`
+- containerd `v1.7.21` to `v.1.7.22`
+- etcdadm-controller: `v1.0.22` to `v1.0.23`
+- kube-vip: `v0.8.2` to `v0.8.3`
+- Kube-rbac-proxy: `v0.18.0` to `v0.18.1`
+
+### Added
+- Enable EFI boot support on RHEL9 images for bare-meal. ([#3684](https://github.com/aws/eks-anywhere-build-tooling/pull/3684))
+
+### Fixed
+- Status reconciliation of etcdadm cluster in etcdadm-controller when `etcd-machines` are unhealthy. ([#63](https://github.com/aws/etcdadm-controller/pull/63))
+- Skip hardware validation logic for InPlace upgrades. ([#8779]https://github.com/aws/eks-anywhere/pull/8779))
+
 ## [v0.20.5](https://github.com/aws/eks-anywhere/releases/tag/v0.20.5)
 
 ### Supported OS version details

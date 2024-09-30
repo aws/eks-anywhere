@@ -1287,7 +1287,7 @@ func TestVSphereKubernetes131BottleRocketWorkloadClusterRegionalCuratedPackagesC
 	runCertManagerRemoteClusterInstallSimpleFlow(test)
 }
 
-// Download artifacts
+// Download Artifacts
 func TestVSphereDownloadArtifacts(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
@@ -2047,7 +2047,7 @@ func TestVSphereKubernetes131OIDC(t *testing.T) {
 }
 
 func TestVSphereKubernetes130To131OIDCUpgrade(t *testing.T) {
-	provider := framework.NewVSphere(t, framework.WithUbuntu129())
+	provider := framework.NewVSphere(t, framework.WithUbuntu130())
 	test := framework.NewClusterE2ETest(
 		t,
 		provider,
@@ -4174,7 +4174,7 @@ func TestVSphereKubernetes128UbuntuTo129InPlaceUpgradeCPOnly(t *testing.T) {
 }
 
 func TestVSphereKubernetes130UbuntuTo131InPlaceUpgradeWorkerOnly(t *testing.T) {
-	provider := framework.NewVSphere(t, framework.WithUbuntu129())
+	provider := framework.NewVSphere(t, framework.WithUbuntu130())
 	kube130 := v1alpha1.Kube130
 	kube131 := v1alpha1.Kube131
 	test := framework.NewClusterE2ETest(
@@ -6169,7 +6169,7 @@ func TestVSphereUpgradeKubernetes131CiliumUbuntuGitHubFluxAPI(t *testing.T) {
 			api.ClusterToConfigFiller(
 				api.WithCiliumPolicyEnforcementMode(v1alpha1.CiliumPolicyModeAlways),
 			),
-			vsphere.WithUbuntu130(),
+			vsphere.WithUbuntu131(),
 		)
 		wc.ValidateClusterState()
 		test.DeleteWorkloadClusterFromGit(wc)
