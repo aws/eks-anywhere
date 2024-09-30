@@ -6791,6 +6791,10 @@ spec:
                 description: HookImagesURLPath can be used to override the default
                   Hook images path to pull from a local server.
                 type: string
+              loadBalancerInterface:
+                description: LoadBalancerInterface can be used to configure a load
+                  balancer interface for the Tinkerbell stack.
+                type: string
               osImageURL:
                 description: OSImageURL can be used to override the default OS image
                   path to pull from a local server. OSImageURL is a URL to the OS

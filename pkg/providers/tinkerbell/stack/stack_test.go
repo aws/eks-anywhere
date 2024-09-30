@@ -155,6 +155,11 @@ func TestTinkerbellStackInstallWithDifferentOptions(t *testing.T) {
 			opts:         []stack.InstallOption{stack.WithLoadBalancerEnabled(false)},
 		},
 		{
+			name:         "with_load_balancer_interface",
+			expectedFile: "testdata/expected_with_load_balancer_interface.yaml",
+			opts:         []stack.InstallOption{stack.WithLoadBalancerInterface("test-interface")},
+		},
+		{
 			name:         "with_kubernetes_options",
 			expectedFile: "testdata/expected_with_kubernetes_options.yaml",
 			opts: []stack.InstallOption{
