@@ -301,6 +301,9 @@ EKS Anywhere for Bare Metal uses `kube-vip` load balancer by default to expose t
 You can disable this feature by setting this field to `true`.
 >**_NOTE:_** If you skip load balancer deployment, you will have to ensure that the Tinkerbell stack is available at [tinkerbellIP]({{< relref "#tinkerbellip-required" >}}) once the cluster creation is finished. One way to achieve this is by using the [MetalLB]({{< relref "../../packages/metallb" >}}) package.
 
+### loadBalancerInterface (optional)
+Optional field to configure a custom load balancer interface for Tinkerbell stack.
+
 ## TinkerbellMachineConfig Fields
 In the example, there are `TinkerbellMachineConfig` sections for control plane (`my-cluster-name-cp`) and worker (`my-cluster-name`) machine groups.
 The following fields identify information needed to configure the nodes in each of those groups.
