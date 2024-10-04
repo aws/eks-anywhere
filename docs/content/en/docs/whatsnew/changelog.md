@@ -30,6 +30,32 @@ description: >
 * When upgrading to a new minor version, a new OS image must be created using the new image-builder CLI pertaining to that release.
 {{% /alert %}}
 
+## [v0.20.7](https://github.com/aws/eks-anywhere/releases/tag/v0.20.)
+
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+|    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+| Bottlerocket 1.20.5 |    ✔    |     —      |    —    |     —      |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+|      RHEL 9.x       |    —    |     ✔      |    ✔    |     ✔      |  —   |
+
+### Changed
+- EKS Distro:
+  - `v1-27-eks-39` to [`v1-27-eks-40`](https://distro.eks.amazonaws.com/releases/1-27/40/)
+  - `v1-28-eks-32` to [`v1-28-eks-33`](https://distro.eks.amazonaws.com/releases/1-28/33/)
+  - `v1-29-eks-21` to [`v1-29-eks-22`](https://distro.eks.amazonaws.com/releases/1-29/22/)
+  - `v1-30-eks-14`  to [`v1-30-eks-15`](https://distro.eks.amazonaws.com/releases/1-30/14/)
+- cilium: `v1.13.19` to `v1.13.20`
+- image-builder: `v0.1.30` to `v0.1.36`
+- cluster-api-provider-vsphere(CAPV): `v1.10.2` to `v1.10.3`
+- Flux: `v2.3.0` to `v2.4.0`
+
+### Fixed
+- Fixed support for efi on rhel 9 raw builds. ([3819](https://github.com/aws/eks-anywhere-build-tooling/pull/3819))
+
+
 ## [v0.20.6](https://github.com/aws/eks-anywhere/releases/tag/v0.20.6)
 
 ### Supported OS version details
