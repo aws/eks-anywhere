@@ -50,10 +50,9 @@ description: >
 - cilium: `v1.13.19` to `v1.13.20`
 - image-builder: `v0.1.30` to `v0.1.36`
 - cluster-api-provider-vsphere(CAPV): `v1.10.2` to `v1.10.3`
-- Flux: `v2.3.0` to `v2.4.0`
 
 ### Fixed
-- Fixed support for efi on rhel 9 raw builds. ([3819](https://github.com/aws/eks-anywhere-build-tooling/pull/3819))
+- Fixed support for efi on rhel 9 raw builds. ([3824](https://github.com/aws/eks-anywhere-build-tooling/pull/3824))
 
 
 ## [v0.20.6](https://github.com/aws/eks-anywhere/releases/tag/v0.20.6)
