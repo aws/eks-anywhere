@@ -30,7 +30,7 @@ description: >
 * When upgrading to a new minor version, a new OS image must be created using the new image-builder CLI pertaining to that release.
 {{% /alert %}}
 
-## [v0.20.7](https://github.com/aws/eks-anywhere/releases/tag/v0.20.)
+## [v0.20.7](https://github.com/aws/eks-anywhere/releases/tag/v0.20.7)
 
 ### Supported OS version details
 |                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
