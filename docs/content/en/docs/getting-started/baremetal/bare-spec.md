@@ -642,7 +642,7 @@ The `oci2disk` Action provides the capability of streaming a raw (compressed) di
 | Env variable | Type | Default Value | Required | Description |
 |--------------|------|---------------|----------|-------------|
 | IMG_URL | string | "" | yes | URL of the image to be streamed |
-| DEST_DISK | string | "" | yes | Block device to which to write the image |
+| DEST_DISK | string | "" | yes | Block device to which the image is written |
 | COMPRESSED | bool | false | no | Decompress the image before writing it to the disk |
 
 ### kexec
