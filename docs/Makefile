@@ -70,7 +70,8 @@ container-serve: ## Boot the development server using container. Run `make conta
 		--bind 0.0.0.0 \
 		--destination /tmp/hugo \
 		--cleanDestinationDir \
-		--baseURL http://0.0.0.0
+		--baseURL http://0.0.0.0 \
+		--enableGitInfo=false
 
 container-server: container-serve
 
