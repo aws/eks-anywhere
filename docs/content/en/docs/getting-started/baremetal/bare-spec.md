@@ -651,12 +651,6 @@ The `oci2disk` Action provides the capability of streaming a raw (compressed) di
 
 The `kexec` Action makes use of the [Linux kexec function](https://en.wikipedia.org/wiki/Kexec) to boot directly into a kernel.
 
-BLOCK_DEVICE: /dev/sda3
-      FS_TYPE: ext4
-      KERNEL_PATH: /boot/vmlinuz
-      INITRD_PATH: /boot/initrd
-      CMD_LINE: "root=/dev/sda3 ro"
-
 | Env variable | Type | Default Value | Required | Description |
 |--------------|------|---------------|----------|-------------|
 | BLOCK_DEVICE | string | "" | yes | The block device to mount. |
