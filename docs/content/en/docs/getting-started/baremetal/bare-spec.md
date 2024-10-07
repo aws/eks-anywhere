@@ -468,7 +468,7 @@ spec:
     version: "0.1"
 ```
 
-### Redhat
+### Red Hat Enterprise Linux
 
 ```yaml
 ---
@@ -685,7 +685,7 @@ volumes:
 
 ## Custom Tinkerbell action examples
 
-The following example shows how to add a .deb package (`openssl`) to a Redhat installation:
+The following example shows how to add a .deb package (`openssl`) to a Red Hat Enterprise Linux installation:
 
 ```yaml
 - environment:
