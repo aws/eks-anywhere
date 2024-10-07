@@ -576,7 +576,7 @@ The following describes the embedded Action images that are available in HookOS 
 
 `127.0.0.1/embedded/cexec`
 
-The `cexec` Action performs execution either within a chroot environment or within the HookOS filesystem. The primary use-case is being able to provision files/an Operating System to disk and then being able to execute something that resides within that filesystem.
+The `cexec` Action executes either within a chroot environment or within the HookOS filesystem. The primary use case is to provision files and an Operating System to disk, and then execute something that resides within that filesystem.
 
 All options can be set either via environment variables or CLI flags.
 CLI flags take precedence over environment variables, which take precedence over default values.
