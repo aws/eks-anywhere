@@ -626,7 +626,7 @@ The `image2disk` Action will stream either a compressed or not compressed remote
 | Env variable | Type | Default Value | Required | Description |
 |--------------|------|---------------|----------|-------------|
 | IMG_URL | string | "" | yes | URL of the image to be streamed |
-| DEST_DISK | string | "" | yes | Block device to which to write the image |
+| DEST_DISK | string | "" | yes | Block device to which the image is written |
 | COMPRESSED | bool | false | no | Decompress the image before writing it to the disk |
 | RETRY_ENABLED | bool | false | no | Retry the Action, using exponential backoff, for the duration specified in `RETRY_DURATION_MINUTES` before failing |
 | RETRY_DURATION_MINUTES | int | 10 | no | Duration for which the Action will retry before failing |
