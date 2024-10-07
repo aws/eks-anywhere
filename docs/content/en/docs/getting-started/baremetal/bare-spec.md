@@ -637,7 +637,7 @@ The `image2disk` Action will stream either a compressed or not compressed remote
 
 `127.0.0.1/embedded/oci2disk`
 
-The `oci2disk` Action provides the capability of streaming a raw (compressed) disk image from an OCI compliant registry to a local block device.
+The `oci2disk` Action provides the capability of streaming a raw (compressed) disk image from an OCI compliant-registry to a local block device.
 
 | Env variable | Type | Default Value | Required | Description |
 |--------------|------|---------------|----------|-------------|
