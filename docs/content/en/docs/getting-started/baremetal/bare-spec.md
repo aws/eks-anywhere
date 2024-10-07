@@ -592,7 +592,7 @@ CLI flags take precedence over environment variables, which take precedence over
 | `JSON_OUTPUT` | `--json-output` | boolean | true | no | If set to `true`, the cexec Action will log output in JSON format. This defaults to `true`. If set to `false`, the cexec Action will log output in plain text format. |
 
 Any environment variables you set on the Action will be available to the command you execute.
-For example, if you set `DEBIAN_FRONTEND: noninteractive` as an environment variable, it will be available to the command you execute.
+For example, if you set `DEBIAN_FRONTEND: noninteractive` as an environment variable (`DEBIAN_FRONTEND=noninteractive`), it will be available to the command you execute.
 
 ### writefile
 
