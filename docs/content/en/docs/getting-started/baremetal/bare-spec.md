@@ -663,7 +663,7 @@ BLOCK_DEVICE: /dev/sda3
 | FS_TYPE | string | "" | yes | The filesystem type of the block device. |
 | KERNEL_PATH | string | "" | no | The path to the kernel to boot. When not supplied the kernel path will discovered from `/boot/grub/grub.cfg` on the `BLOCK_DEVICE`. |
 | INITRD_PATH | string | "" | yes | The path to the initial ramdisk to boot. |
-| CMD_LINE | string | "" | no | The command line to pass to the kernel. When not supplied the kernel cmdline parameters will discovered from `/boot/grub/grub.cfg` on the `BLOCK_DEVICE`. |
+| CMD_LINE | string | "" | no | The command line to pass to the kernel. When not supplied, the kernel cmdline parameters will discovered from `/boot/grub/grub.cfg` on the `BLOCK_DEVICE`. |
 
 >**_NOTE:_**
 There are known issues related to drivers with some hardware that may make it necessary to replace the `kexec` Action image with the `reboot` Action image.
