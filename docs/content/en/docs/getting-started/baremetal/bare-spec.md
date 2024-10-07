@@ -567,7 +567,7 @@ spec:
 Each Action has its own set of environment variables that are used to configure the Action. EKS Anywhere embeds a set of images into HookOS. This means that when these images are used in an Action they will not be pulled from any external registry. No external network communication is needed to use them. These Actions are prefixed with `127.0.0.1/embedded`. 
 
 >**_NOTE:_**
-Actions are user-defined and can be any container image that is available to HookOS. You can create your own Action images if the embedded Action images do not meet your requirements.
+Actions are user-defined and can include any container image that is available to HookOS. You can create your own Action images if the embedded Action images do not meet your requirements.
 >
 
 The following describes the embedded Action images that are available in HookOS and their configuration options.
