@@ -62,7 +62,7 @@ func (v *Validator) ValidateClusterSpec(ctx context.Context, spec *cluster.Spec,
 	}
 
 	for _, conf := range spec.NutanixMachineConfigs {
-		if err := v.ValidateMachineConfig(ctx, client, conf); err != nil {
+		if err := v.ValidateMachineConfig(ctx, client, spec.Cluster, conf); err != nil {
 			return fmt.Errorf("failed to validate machine config: %v", err)
 		}
 	}
@@ -249,7 +249,7 @@ func (v *Validator) validateMachineSpecs(machineSpec anywherev1.NutanixMachineCo
 }
 
 // ValidateMachineConfig validates the Prism Element cluster, subnet, and image for the machine.
-func (v *Validator) ValidateMachineConfig(ctx context.Context, client Client, config *anywherev1.NutanixMachineConfig) error {
+func (v *Validator) ValidateMachineConfig(ctx context.Context, client Client, cluster *anywherev1.Cluster, config *anywherev1.NutanixMachineConfig) error {
 	if err := v.validateMachineSpecs(config.Spec); err != nil {
 		return err
 	}
@@ -278,7 +278,19 @@ func (v *Validator) ValidateMachineConfig(ctx context.Context, client Client, co
 		}
 	}
 
+	if err := v.validateGPUInMachineConfig(cluster, config); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (v *Validator) validateGPUInMachineConfig(cluster *anywherev1.Cluster, config *anywherev1.NutanixMachineConfig) error {
 	if config.Spec.GPUs != nil {
+		if err := checkMachineConfigIsForWorker(config, cluster); err != nil {
+			return err
+		}
+
 		for _, gpu := range config.Spec.GPUs {
 			if err := v.validateGPUConfig(gpu); err != nil {
 				return err
@@ -654,13 +666,13 @@ func createGetGpuModeFunc(gpuDeviceIDToMode map[int64]string, gpuNameToMode map[
 }
 
 func (v *Validator) validateFreeGPU(ctx context.Context, v3Client Client, cluster *cluster.Spec) error {
-	res, err := v3Client.ListAllHost(ctx)
-	if err != nil || len(res.Entities) == 0 {
-		return fmt.Errorf("No GPUs found: %v", err)
-	}
-
 	if v.isGPURequested(cluster.NutanixMachineConfigs) {
-		err := v.validateGPUModeNotMixed(res.Entities, cluster)
+		res, err := v3Client.ListAllHost(ctx)
+		if err != nil || len(res.Entities) == 0 {
+			return fmt.Errorf("no GPUs found: %v", err)
+		}
+
+		err = v.validateGPUModeNotMixed(res.Entities, cluster)
 		if err != nil {
 			return err
 		}
@@ -688,6 +700,24 @@ func (v *Validator) validateUpgradeRolloutStrategy(clusterSpec *cluster.Spec) er
 		}
 	}
 	return nil
+}
+
+func checkMachineConfigIsForWorker(config *anywherev1.NutanixMachineConfig, cluster *anywherev1.Cluster) error {
+	if config.Name == cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name {
+		return fmt.Errorf("GPUs are not supported for control plane machine")
+	}
+
+	if cluster.Spec.ExternalEtcdConfiguration != nil && config.Name == cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name {
+		return fmt.Errorf("GPUs are not supported for external etcd machine")
+	}
+
+	for _, workerNodeGroupConfiguration := range cluster.Spec.WorkerNodeGroupConfigurations {
+		if config.Name == workerNodeGroupConfiguration.MachineGroupRef.Name {
+			return nil
+		}
+	}
+
+	return fmt.Errorf("machine config %s is not associated with any worker node group", config.Name)
 }
 
 // findSubnetUUIDByName retrieves the subnet uuid by the given subnet name.

@@ -16,6 +16,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/internal/test"
@@ -25,7 +26,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/constants"
 	mockCrypto "github.com/aws/eks-anywhere/pkg/crypto/mocks"
 	mocknutanix "github.com/aws/eks-anywhere/pkg/providers/nutanix/mocks"
-	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
 
 //go:embed testdata/datacenterConfig_with_trust_bundle.yaml
@@ -525,7 +525,7 @@ func TestNutanixValidatorValidateMachineConfig(t *testing.T) {
 				mockClient.EXPECT().ListProject(gomock.Any(), gomock.Any()).Return(nil, errors.New("project not found"))
 				machineConf.Spec.Project = &anywherev1.NutanixResourceIdentifier{
 					Type: anywherev1.NutanixIdentifierName,
-					Name: ptr.String("notaproject"),
+					Name: utils.StringPtr("notaproject"),
 				}
 				clientCache := &ClientCache{clients: map[string]Client{"test": mockClient}}
 				return NewValidator(clientCache, validator, &http.Client{Transport: transport})
@@ -541,7 +541,7 @@ func TestNutanixValidatorValidateMachineConfig(t *testing.T) {
 				mockClient.EXPECT().ListProject(gomock.Any(), gomock.Any()).Return(&v3.ProjectListResponse{}, nil)
 				machineConf.Spec.Project = &anywherev1.NutanixResourceIdentifier{
 					Type: anywherev1.NutanixIdentifierName,
-					Name: ptr.String("notaproject"),
+					Name: utils.StringPtr("notaproject"),
 				}
 				clientCache := &ClientCache{clients: map[string]Client{"test": mockClient}}
 				return NewValidator(clientCache, validator, &http.Client{Transport: transport})
@@ -559,7 +559,7 @@ func TestNutanixValidatorValidateMachineConfig(t *testing.T) {
 				mockClient.EXPECT().ListProject(gomock.Any(), gomock.Any()).Return(projects, nil)
 				machineConf.Spec.Project = &anywherev1.NutanixResourceIdentifier{
 					Type: anywherev1.NutanixIdentifierName,
-					Name: ptr.String("project"),
+					Name: utils.StringPtr("project"),
 				}
 				clientCache := &ClientCache{clients: map[string]Client{"test": mockClient}}
 				return NewValidator(clientCache, validator, &http.Client{Transport: transport})
@@ -625,7 +625,7 @@ func TestNutanixValidatorValidateMachineConfig(t *testing.T) {
 				mockClient.EXPECT().ListSubnet(gomock.Any(), gomock.Any()).Return(fakeSubnetList(), nil)
 				mockClient.EXPECT().ListImage(gomock.Any(), gomock.Any()).Return(fakeImageList(), nil)
 				categoryKey := v3.CategoryKeyStatus{
-					Name: ptr.String("key"),
+					Name: utils.StringPtr("key"),
 				}
 				mockClient.EXPECT().GetCategoryKey(gomock.Any(), gomock.Any()).Return(&categoryKey, nil)
 				mockClient.EXPECT().GetCategoryValue(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, errors.New("category value not found"))
@@ -704,17 +704,112 @@ func TestNutanixValidatorValidateMachineConfig(t *testing.T) {
 			},
 			expectedError: "missing GPU name",
 		},
+		{
+			name: "machine config is not associated with any worker node group",
+			setup: func(machineConf *anywherev1.NutanixMachineConfig, mockClient *mocknutanix.MockClient, validator *mockCrypto.MockTlsValidator, transport *mocknutanix.MockRoundTripper) *Validator {
+				mockClient.EXPECT().ListCluster(gomock.Any(), gomock.Any()).Return(fakeClusterList(), nil).Times(2)
+				mockClient.EXPECT().ListSubnet(gomock.Any(), gomock.Any()).Return(fakeSubnetList(), nil)
+				mockClient.EXPECT().ListImage(gomock.Any(), gomock.Any()).Return(fakeImageList(), nil)
+				machineConf.Name = "test-wn"
+				machineConf.Spec.GPUs = []anywherev1.NutanixGPUIdentifier{
+					{
+						Type: "name",
+						Name: "NVIDIA A40-1Q",
+					},
+				}
+				return NewValidator(&ClientCache{}, validator, &http.Client{Transport: transport})
+			},
+			expectedError: "not associated with any worker node group",
+		},
+		{
+			name: "GPUs are not supported for control plane machine",
+			setup: func(machineConf *anywherev1.NutanixMachineConfig, mockClient *mocknutanix.MockClient, validator *mockCrypto.MockTlsValidator, transport *mocknutanix.MockRoundTripper) *Validator {
+				mockClient.EXPECT().ListCluster(gomock.Any(), gomock.Any()).Return(fakeClusterList(), nil).Times(2)
+				mockClient.EXPECT().ListSubnet(gomock.Any(), gomock.Any()).Return(fakeSubnetList(), nil)
+				mockClient.EXPECT().ListImage(gomock.Any(), gomock.Any()).Return(fakeImageList(), nil)
+				machineConf.Name = "test-cp"
+				machineConf.Spec.GPUs = []anywherev1.NutanixGPUIdentifier{
+					{
+						Type: "name",
+						Name: "NVIDIA A40-1Q",
+					},
+				}
+				return NewValidator(&ClientCache{}, validator, &http.Client{Transport: transport})
+			},
+			expectedError: "GPUs are not supported for control plane machine",
+		},
+		{
+			name: "GPUs are not supported for external etcd machine",
+			setup: func(machineConf *anywherev1.NutanixMachineConfig, mockClient *mocknutanix.MockClient, validator *mockCrypto.MockTlsValidator, transport *mocknutanix.MockRoundTripper) *Validator {
+				mockClient.EXPECT().ListCluster(gomock.Any(), gomock.Any()).Return(fakeClusterList(), nil).Times(2)
+				mockClient.EXPECT().ListSubnet(gomock.Any(), gomock.Any()).Return(fakeSubnetList(), nil)
+				mockClient.EXPECT().ListImage(gomock.Any(), gomock.Any()).Return(fakeImageList(), nil)
+				machineConf.Name = "test-etcd"
+				machineConf.Spec.GPUs = []anywherev1.NutanixGPUIdentifier{
+					{
+						Type: "name",
+						Name: "NVIDIA A40-1Q",
+					},
+				}
+				return NewValidator(&ClientCache{}, validator, &http.Client{Transport: transport})
+			},
+			expectedError: "GPUs are not supported for external etcd machine",
+		},
+		{
+			name: "validation pass",
+			setup: func(machineConf *anywherev1.NutanixMachineConfig, mockClient *mocknutanix.MockClient, validator *mockCrypto.MockTlsValidator, transport *mocknutanix.MockRoundTripper) *Validator {
+				mockClient.EXPECT().ListCluster(gomock.Any(), gomock.Any()).Return(fakeClusterList(), nil).Times(2)
+				mockClient.EXPECT().ListSubnet(gomock.Any(), gomock.Any()).Return(fakeSubnetList(), nil)
+				mockClient.EXPECT().ListImage(gomock.Any(), gomock.Any()).Return(fakeImageList(), nil)
+				machineConf.Name = "eksa-unit-test"
+				machineConf.Spec.GPUs = []anywherev1.NutanixGPUIdentifier{
+					{
+						Type: "name",
+						Name: "NVIDIA A40-1Q",
+					},
+				}
+				return NewValidator(&ClientCache{}, validator, &http.Client{Transport: transport})
+			},
+			expectedError: "",
+		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
+			cluster := &anywherev1.Cluster{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test",
+				},
+				Spec: anywherev1.ClusterSpec{
+					ControlPlaneConfiguration: anywherev1.ControlPlaneConfiguration{
+						MachineGroupRef: &anywherev1.Ref{
+							Kind: "NutanixMachineConfig",
+							Name: "test-cp",
+						},
+					},
+					ExternalEtcdConfiguration: &anywherev1.ExternalEtcdConfiguration{
+						MachineGroupRef: &anywherev1.Ref{
+							Kind: "NutanixMachineConfig",
+							Name: "test-etcd",
+						},
+					},
+					WorkerNodeGroupConfigurations: []anywherev1.WorkerNodeGroupConfiguration{
+						{
+							MachineGroupRef: &anywherev1.Ref{
+								Kind: "NutanixMachineConfig",
+								Name: "eksa-unit-test",
+							},
+						},
+					},
+				},
+			}
 			machineConfig := &anywherev1.NutanixMachineConfig{}
 			err := yaml.Unmarshal([]byte(nutanixMachineConfigSpec), machineConfig)
 			require.NoError(t, err)
 
 			mockClient := mocknutanix.NewMockClient(ctrl)
 			validator := tc.setup(machineConfig, mockClient, mockCrypto.NewMockTlsValidator(ctrl), mocknutanix.NewMockRoundTripper(ctrl))
-			err = validator.ValidateMachineConfig(context.Background(), mockClient, machineConfig)
+			err = validator.ValidateMachineConfig(context.Background(), mockClient, cluster, machineConfig)
 			if tc.expectedError != "" {
 				assert.Contains(t, err.Error(), tc.expectedError)
 			} else {
@@ -1163,7 +1258,7 @@ func TestNutanixValidatorValidateFreeGPU(t *testing.T) {
 				clientCache := &ClientCache{clients: map[string]Client{"test": mockClient}}
 				return NewValidator(clientCache, validator, &http.Client{Transport: transport})
 			},
-			expectedError: "No GPUs found",
+			expectedError: "no GPUs found",
 		},
 		{
 			name: "no GPU resources found: ListAllHost failed",
@@ -1191,7 +1286,7 @@ func TestNutanixValidatorValidateFreeGPU(t *testing.T) {
 				clientCache := &ClientCache{clients: map[string]Client{"test": mockClient}}
 				return NewValidator(clientCache, validator, &http.Client{Transport: transport})
 			},
-			expectedError: "No GPUs found",
+			expectedError: "no GPUs found",
 		},
 		{
 			name: "mixed passthrough and vGPU mode GPUs in a machine config",
