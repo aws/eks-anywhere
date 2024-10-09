@@ -416,7 +416,7 @@ func TestTinkerbellKubernetes131Ubuntu2004To2204Upgrade(t *testing.T) {
 }
 
 func TestTinkerbellKubernetes131UbuntuWorkerNodeUpgrade(t *testing.T) {
-	provider := framework.NewTinkerbell(t, framework.WithUbuntu130Tinkerbell())
+	provider := framework.NewTinkerbell(t, framework.WithUbuntu131Tinkerbell())
 	test := framework.NewClusterE2ETest(
 		t,
 		provider,
