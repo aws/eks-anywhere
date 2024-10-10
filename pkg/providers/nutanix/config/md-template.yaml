@@ -94,6 +94,18 @@ spec:
           value: "{{ .Value }}"
 {{- end }}
 {{- end }}
+{{- if .GPUs }}
+      gpus:
+{{- range .GPUs }}
+{{- if (eq .Type "deviceID") }}
+        - type: deviceID
+          deviceID: {{ .DeviceID }}
+{{- else if (eq .Type "name") }}
+        - type: name
+          name: "{{ .Name }}"
+{{- end }}
+{{- end }}
+{{- end }}
 ---
 apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
 kind: KubeadmConfigTemplate

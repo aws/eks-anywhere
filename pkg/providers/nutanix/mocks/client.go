@@ -155,6 +155,21 @@ func (mr *MockClientMockRecorder) GetSubnet(ctx, uuid interface{}) *gomock.Call 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSubnet", reflect.TypeOf((*MockClient)(nil).GetSubnet), ctx, uuid)
 }
 
+// ListAllHost mocks base method.
+func (m *MockClient) ListAllHost(ctx context.Context) (*v3.HostListResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListAllHost", ctx)
+	ret0, _ := ret[0].(*v3.HostListResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListAllHost indicates an expected call of ListAllHost.
+func (mr *MockClientMockRecorder) ListAllHost(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListAllHost", reflect.TypeOf((*MockClient)(nil).ListAllHost), ctx)
+}
+
 // ListCategories mocks base method.
 func (m *MockClient) ListCategories(ctx context.Context, getEntitiesRequest *v3.CategoryListMetadata) (*v3.CategoryKeyListResponse, error) {
 	m.ctrl.T.Helper()
