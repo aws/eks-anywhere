@@ -59,6 +59,10 @@ type NutanixMachineConfigSpec struct {
 	// Categories must be created in Prism Central before they can be used.
 	// +kubebuilder:validation:Optional
 	AdditionalCategories []NutanixCategoryIdentifier `json:"additionalCategories,omitempty"`
+
+	// List of GPU devices that should be added to the VMs.
+	// +kubebuilder:validation:Optional
+	GPUs []NutanixGPUIdentifier `json:"gpus,omitempty"`
 }
 
 // SetDefaults sets defaults to NutanixMachineConfig if user has not provided.

@@ -90,6 +90,8 @@ const (
 	ConfigMapKind          = "ConfigMap"
 	ClusterResourceSetKind = "ClusterResourceSet"
 
+	NutanixMachineConfigKind = "NutanixMachineConfig"
+
 	BottlerocketDefaultUser = "ec2-user"
 	UbuntuDefaultUser       = "capv"
 

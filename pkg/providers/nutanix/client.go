@@ -8,6 +8,7 @@ import (
 
 type Client interface {
 	GetSubnet(ctx context.Context, uuid string) (*v3.SubnetIntentResponse, error)
+	ListAllHost(ctx context.Context) (*v3.HostListResponse, error)
 	ListSubnet(ctx context.Context, getEntitiesRequest *v3.DSMetadata) (*v3.SubnetListIntentResponse, error)
 	GetImage(ctx context.Context, uuid string) (*v3.ImageIntentResponse, error)
 	ListImage(ctx context.Context, getEntitiesRequest *v3.DSMetadata) (*v3.ImageListIntentResponse, error)

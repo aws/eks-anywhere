@@ -418,6 +418,7 @@ func TestNutanixProviderSetupAndValidateCreate(t *testing.T) {
 		},
 	}
 	mockClient.EXPECT().ListImage(gomock.Any(), gomock.Any()).Return(images, nil).AnyTimes()
+	mockClient.EXPECT().ListAllHost(gomock.Any()).Return(fakeHostList(), nil).AnyTimes()
 	mockCertValidator := mockCrypto.NewMockTlsValidator(ctrl)
 	mockCertValidator.EXPECT().ValidateCert(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
 	mockCertValidator.EXPECT().ValidateCert(gomock.Any(), gomock.Any(), gomock.Any()).Return(errors.New("invalid cert"))
