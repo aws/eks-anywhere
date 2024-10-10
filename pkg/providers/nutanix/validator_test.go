@@ -61,6 +61,9 @@ var nutanixDatacenterConfigSpecWithFailureDomainInvalidCluster string
 //go:embed testdata/datacenterConfig_with_failure_domains_invalid_subnet.yaml
 var nutanixDatacenterConfigSpecWithFailureDomainInvalidSubnet string
 
+//go:embed testdata/datacenterConfig_with_failure_domains_invalid_wg.yaml
+var nutanixDatacenterConfigSpecWithFailureDomainInvalidWorkerMachineGroups string
+
 func fakeClusterList() *v3.ClusterListIntentResponse {
 	return &v3.ClusterListIntentResponse{
 		Entities: []*v3.ClusterIntentResponse{
@@ -216,6 +219,40 @@ func fakeProjectList() *v3.ProjectListResponse {
 				},
 			},
 		},
+	}
+}
+
+func TestSliceContainsFunc(t *testing.T) {
+	tests := []struct {
+		name     string
+		slice    []string
+		value    string
+		expected bool
+	}{
+		{
+			name:     "empty slice",
+			slice:    []string{},
+			value:    "test",
+			expected: false,
+		},
+		{
+			name:     "slice contains value",
+			slice:    []string{"test", "test1", "test2"},
+			value:    "test",
+			expected: true,
+		},
+		{
+			name:     "slice does not contain value",
+			slice:    []string{"test", "test2", "test3"},
+			value:    "test1",
+			expected: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.expected, sliceContains(tt.slice, tt.value))
+		})
 	}
 }
 
@@ -1458,6 +1495,11 @@ func TestNutanixValidatorValidateDatacenterConfig(t *testing.T) {
 		{
 			name:       "failure domains with invalid subnet",
 			dcConfFile: nutanixDatacenterConfigSpecWithFailureDomainInvalidSubnet,
+			expectErr:  true,
+		},
+		{
+			name:       "failure domains with invalid workerMachineGroups",
+			dcConfFile: nutanixDatacenterConfigSpecWithFailureDomainInvalidWorkerMachineGroups,
 			expectErr:  true,
 		},
 	}

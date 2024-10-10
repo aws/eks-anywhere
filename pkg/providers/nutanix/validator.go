@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
-	"slices"
 	"strconv"
 	"strings"
 
@@ -178,7 +177,7 @@ func (v *Validator) validateFailureDomains(ctx context.Context, client Client, s
 func (v *Validator) validateWorkerMachineGroup(spec *cluster.Spec, workerMachineGroupName string) error {
 	workerMachineGroupNames := getWorkerMachineGroupNames(spec)
 
-	if !slices.Contains(workerMachineGroupNames, workerMachineGroupName) {
+	if !sliceContains(workerMachineGroupNames, workerMachineGroupName) {
 		return fmt.Errorf("worker machine group %s not found in the cluster worker node group definitions", workerMachineGroupName)
 	}
 
@@ -854,6 +853,15 @@ func findProjectUUIDByName(ctx context.Context, v3Client Client, projectName str
 	}
 
 	return res.Entities[0].Metadata.UUID, nil
+}
+
+func sliceContains(slice []string, element string) bool {
+	for _, sliceElement := range slice {
+		if sliceElement == element {
+			return true
+		}
+	}
+	return false
 }
 
 func isRequestedGPUAssignable(gpu v3.GPU, requestedGpu anywherev1.NutanixGPUIdentifier) bool {
