@@ -729,29 +729,54 @@ func TestTemplateBuilderFailureDomains(t *testing.T) {
 
 func TestTemplateBuilderWorkersFailureDomains(t *testing.T) {
 	for _, tc := range []struct {
-		Input    string
-		OutputCP string
-		OutputMD string
+		Input                      string
+		OutputCP                   string
+		OutputMD                   string
+		workloadTemplateNames      map[string]string
+		kubeadmconfigTemplateNames map[string]string
 	}{
 		{
 			Input:    "testdata/eksa-cluster-worker-fds.yaml",
 			OutputCP: "testdata/expected_results_worker_fds.yaml",
 			OutputMD: "testdata/expected_results_worker_fds_md.yaml",
+			workloadTemplateNames: map[string]string{
+				"eksa-unit-test": "eksa-unit-test",
+			},
+			kubeadmconfigTemplateNames: map[string]string{
+				"eksa-unit-test": "eksa-unit-test",
+			},
+		},
+		{
+			Input:    "testdata/eksa-cluster-multi-worker-fds.yaml",
+			OutputCP: "testdata/expected_results_multi_worker_fds.yaml",
+			OutputMD: "testdata/expected_results_multi_worker_fds_md.yaml",
+			workloadTemplateNames: map[string]string{
+				"eksa-unit-test-1": "eksa-unit-test-1",
+				"eksa-unit-test-2": "eksa-unit-test-2",
+				"eksa-unit-test-3": "eksa-unit-test-3",
+			},
+			kubeadmconfigTemplateNames: map[string]string{
+				"eksa-unit-test-1": "eksa-unit-test",
+				"eksa-unit-test-2": "eksa-unit-test",
+				"eksa-unit-test-3": "eksa-unit-test",
+			},
 		},
 	} {
 		clusterSpec := test.NewFullClusterSpec(t, tc.Input)
 		machineConf := clusterSpec.NutanixMachineConfig(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name)
-		workerConfs := make(map[string]anywherev1.NutanixMachineConfigSpec)
+		workerConfSpecs := make(map[string]anywherev1.NutanixMachineConfigSpec)
 		for _, worker := range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
 			workerConf := clusterSpec.NutanixMachineConfig(worker.MachineGroupRef.Name)
-			workerConfs[worker.MachineGroupRef.Name] = workerConf.Spec
+			workerConfSpecs[worker.MachineGroupRef.Name] = workerConf.Spec
 		}
 		dcConf := clusterSpec.NutanixDatacenter
+
+		// workerMachineConfigs := clusterSpec.NutanixMachineConfigs
 
 		t.Setenv(constants.EksaNutanixUsernameKey, "admin")
 		t.Setenv(constants.EksaNutanixPasswordKey, "password")
 		creds := GetCredsFromEnv()
-		builder := NewNutanixTemplateBuilder(&dcConf.Spec, &machineConf.Spec, &machineConf.Spec, workerConfs, creds, time.Now)
+		builder := NewNutanixTemplateBuilder(&dcConf.Spec, &machineConf.Spec, &machineConf.Spec, workerConfSpecs, creds, time.Now)
 		assert.NotNil(t, builder)
 
 		buildSpec := test.NewFullClusterSpec(t, tc.Input)
@@ -761,13 +786,16 @@ func TestTemplateBuilderWorkersFailureDomains(t *testing.T) {
 		assert.NotNil(t, cpSpec)
 		test.AssertContentToFile(t, string(cpSpec), tc.OutputCP)
 
-		workloadTemplateNames := map[string]string{
-			"eksa-unit-test": "eksa-unit-test",
-		}
-		kubeadmconfigTemplateNames := map[string]string{
-			"eksa-unit-test": "eksa-unit-test",
-		}
-		workerSpec, err := builder.GenerateCAPISpecWorkers(buildSpec, workloadTemplateNames, kubeadmconfigTemplateNames)
+		// workloadTemplateNames, kubeadmconfigTemplateNames := getTemplateNames(clusterSpec, builder, workerMachineConfigs)
+		// workloadTemplateNames := map[string]string{
+		// 	"eksa-unit-test-1": "eksa-unit-test-1",
+		// 	"eksa-unit-test-2": "eksa-unit-test-2",
+		// 	"eksa-unit-test-3": "eksa-unit-test-3",
+		// }
+		// kubeadmconfigTemplateNames := map[string]string{
+		// 	"eksa-unit-test": "eksa-unit-test",
+		// }
+		workerSpec, err := builder.GenerateCAPISpecWorkers(buildSpec, tc.workloadTemplateNames, tc.kubeadmconfigTemplateNames)
 		assert.NoError(t, err)
 		assert.NotNil(t, workerSpec)
 		test.AssertContentToFile(t, string(workerSpec), tc.OutputMD)

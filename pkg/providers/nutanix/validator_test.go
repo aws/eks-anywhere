@@ -222,40 +222,6 @@ func fakeProjectList() *v3.ProjectListResponse {
 	}
 }
 
-func TestSliceContainsFunc(t *testing.T) {
-	tests := []struct {
-		name     string
-		slice    []string
-		value    string
-		expected bool
-	}{
-		{
-			name:     "empty slice",
-			slice:    []string{},
-			value:    "test",
-			expected: false,
-		},
-		{
-			name:     "slice contains value",
-			slice:    []string{"test", "test1", "test2"},
-			value:    "test",
-			expected: true,
-		},
-		{
-			name:     "slice does not contain value",
-			slice:    []string{"test", "test2", "test3"},
-			value:    "test1",
-			expected: false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.expected, sliceContains(tt.slice, tt.value))
-		})
-	}
-}
-
 func TestNutanixValidatorValidateMachineConfig(t *testing.T) {
 	ctrl := gomock.NewController(t)
 
@@ -1791,5 +1757,46 @@ func TestValidateClusterMachineConfigsSuccess(t *testing.T) {
 	err := validator.checkImageNameMatchesKubernetesVersion(ctx, clusterSpec, clientCache.clients["test"])
 	if err != nil {
 		t.Fatalf("validation should pass: %v", err)
+	}
+}
+
+func TestValidateMachineConfigFailureDomainsWrongCount(t *testing.T) {
+	ctx := context.Background()
+	clusterConfigFile := "testdata/eksa-cluster-multi-worker-fds.yaml"
+	clusterSpec := test.NewFullClusterSpec(t, clusterConfigFile)
+
+	ctrl := gomock.NewController(t)
+	mockClient := mocknutanix.NewMockClient(ctrl)
+	mockClient.EXPECT().GetCurrentLoggedInUser(gomock.Any()).Return(&v3.UserIntentResponse{}, nil).AnyTimes()
+	mockClient.EXPECT().ListCluster(gomock.Any(), gomock.Any()).DoAndReturn(
+		func(_ context.Context, filters *v3.DSMetadata) (*v3.ClusterListIntentResponse, error) {
+			return fakeClusterListForDCTest(filters.Filter)
+		},
+	).AnyTimes()
+	mockClient.EXPECT().ListSubnet(gomock.Any(), gomock.Any()).DoAndReturn(
+		func(_ context.Context, filters *v3.DSMetadata) (*v3.SubnetListIntentResponse, error) {
+			return fakeSubnetListForDCTest(filters.Filter)
+		},
+	).AnyTimes()
+	mockClient.EXPECT().GetSubnet(gomock.Any(), gomock.Eq("2d166190-7759-4dc6-b835-923262d6b497")).Return(nil, nil).AnyTimes()
+	mockClient.EXPECT().GetCluster(gomock.Any(), gomock.Eq("4d69ca7d-022f-49d1-a454-74535993bda4")).Return(nil, nil).AnyTimes()
+
+	mockTLSValidator := mockCrypto.NewMockTlsValidator(ctrl)
+	mockTLSValidator.EXPECT().ValidateCert(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+
+	mockTransport := mocknutanix.NewMockRoundTripper(ctrl)
+	mockTransport.EXPECT().RoundTrip(gomock.Any()).Return(&http.Response{}, nil).AnyTimes()
+
+	mockHTTPClient := &http.Client{Transport: mockTransport}
+	clientCache := &ClientCache{clients: map[string]Client{"test": mockClient}}
+	validator := NewValidator(clientCache, mockTLSValidator, mockHTTPClient)
+
+	for i := 0; i < len(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations); i++ {
+		clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[i].Count = utils.IntPtr(20)
+	}
+
+	err := validator.validateFailureDomains(ctx, clientCache.clients["test"], clusterSpec)
+	if err == nil {
+		t.Fatalf("validation should not pass: %v", err)
 	}
 }

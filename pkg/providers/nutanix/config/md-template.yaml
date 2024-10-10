@@ -1,4 +1,4 @@
-{{- if .failureDomains }}{{- range $index, $fd := .failureDomains }}
+{{- if $.failureDomains -}}{{ range $fd := $.failureDomains -}}
 apiVersion: cluster.x-k8s.io/v1beta1
 kind: MachineDeployment
 metadata:
@@ -99,7 +99,8 @@ spec:
 {{- end }}
 {{- end }}
 ---
-{{- end }}{{- else }}
+{{ end -}}
+{{- else -}}
 apiVersion: cluster.x-k8s.io/v1beta1
 kind: MachineDeployment
 metadata:
@@ -209,7 +210,7 @@ spec:
 {{- end }}
 {{- end }}
 ---
-{{- end }}
+{{ end -}}
 apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
 kind: KubeadmConfigTemplate
 metadata:

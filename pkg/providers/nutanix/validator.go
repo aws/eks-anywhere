@@ -147,6 +147,7 @@ func (v *Validator) validateFailureDomains(ctx context.Context, client Client, s
 		return err
 	}
 
+	failureDomainCount := len(config.Spec.FailureDomains)
 	for _, fd := range config.Spec.FailureDomains {
 		if res := regexName.MatchString(fd.Name); !res {
 			errorStr := `failure domain name should contains only small letters, digits, and hyphens.
@@ -164,8 +165,9 @@ func (v *Validator) validateFailureDomains(ctx context.Context, client Client, s
 			}
 		}
 
+		workerMachineGroups := getWorkerMachineGroups(spec)
 		for _, workerMachineGroupName := range fd.WorkerMachineGroups {
-			if err := v.validateWorkerMachineGroup(spec, workerMachineGroupName); err != nil {
+			if err := v.validateWorkerMachineGroup(workerMachineGroups, workerMachineGroupName, failureDomainCount); err != nil {
 				return err
 			}
 		}
@@ -174,11 +176,13 @@ func (v *Validator) validateFailureDomains(ctx context.Context, client Client, s
 	return nil
 }
 
-func (v *Validator) validateWorkerMachineGroup(spec *cluster.Spec, workerMachineGroupName string) error {
-	workerMachineGroupNames := getWorkerMachineGroupNames(spec)
-
-	if !sliceContains(workerMachineGroupNames, workerMachineGroupName) {
+func (v *Validator) validateWorkerMachineGroup(workerMachineGroups map[string]anywherev1.WorkerNodeGroupConfiguration, workerMachineGroupName string, fdCount int) error {
+	if _, ok := workerMachineGroups[workerMachineGroupName]; !ok {
 		return fmt.Errorf("worker machine group %s not found in the cluster worker node group definitions", workerMachineGroupName)
+	}
+
+	if workerMachineGroups[workerMachineGroupName].Count != nil && *workerMachineGroups[workerMachineGroupName].Count > fdCount {
+		return fmt.Errorf("count %d of machines in workerNodeGroupConfiguration %s shouldn't be greater than the failure domain count %d where those machines should be spreaded accross", *workerMachineGroups[workerMachineGroupName].Count, workerMachineGroupName, fdCount)
 	}
 
 	return nil
@@ -711,11 +715,11 @@ func (v *Validator) validateFreeGPU(ctx context.Context, v3Client Client, cluste
 
 func (v *Validator) validateUpgradeRolloutStrategy(clusterSpec *cluster.Spec) error {
 	if clusterSpec.Cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy != nil {
-		return fmt.Errorf("Upgrade rollout strategy customization is not supported for nutanix provider")
+		return fmt.Errorf("upgrade rollout strategy customization is not supported for nutanix provider")
 	}
 	for _, workerNodeGroupConfiguration := range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
 		if workerNodeGroupConfiguration.UpgradeRolloutStrategy != nil {
-			return fmt.Errorf("Upgrade rollout strategy customization is not supported for nutanix provider")
+			return fmt.Errorf("upgrade rollout strategy customization is not supported for nutanix provider")
 		}
 	}
 	return nil
@@ -755,12 +759,12 @@ func findSubnetUUIDByName(ctx context.Context, v3Client Client, clusterUUID, sub
 	return res.Entities[0].Metadata.UUID, nil
 }
 
-// getWorkerMachineGroupNames retrieves the worker machine group names from the cluster spec.
-func getWorkerMachineGroupNames(spec *cluster.Spec) []string {
-	result := make([]string, 0)
+// getWorkerMachineGroups retrieves the worker machine group names from the cluster spec.
+func getWorkerMachineGroups(spec *cluster.Spec) map[string]anywherev1.WorkerNodeGroupConfiguration {
+	result := make(map[string]anywherev1.WorkerNodeGroupConfiguration)
 
 	for _, workerNodeGroupConf := range spec.Cluster.Spec.WorkerNodeGroupConfigurations {
-		result = append(result, workerNodeGroupConf.Name)
+		result[workerNodeGroupConf.MachineGroupRef.Name] = workerNodeGroupConf
 	}
 
 	return result
@@ -853,15 +857,6 @@ func findProjectUUIDByName(ctx context.Context, v3Client Client, projectName str
 	}
 
 	return res.Entities[0].Metadata.UUID, nil
-}
-
-func sliceContains(slice []string, element string) bool {
-	for _, sliceElement := range slice {
-		if sliceElement == element {
-			return true
-		}
-	}
-	return false
 }
 
 func isRequestedGPUAssignable(gpu v3.GPU, requestedGpu anywherev1.NutanixGPUIdentifier) bool {
