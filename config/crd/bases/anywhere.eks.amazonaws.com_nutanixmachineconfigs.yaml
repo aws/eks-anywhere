@@ -74,6 +74,28 @@ spec:
                 required:
                 - type
                 type: object
+              gpus:
+                description: List of GPU devices that should be added to the VMs.
+                items:
+                  description: NutanixGPUIdentifier holds VM GPU device configuration.
+                  properties:
+                    deviceID:
+                      description: deviceID is the device ID of the GPU device.
+                      format: int64
+                      type: integer
+                    name:
+                      description: vendorID is the vendor ID of the GPU device.
+                      type: string
+                    type:
+                      description: type is the type of the GPU device.
+                      enum:
+                      - deviceID
+                      - name
+                      type: string
+                  required:
+                  - type
+                  type: object
+                type: array
               image:
                 description: image is to identify the OS image uploaded to the Prism
                   Central (PC) The image identifier (uuid or name) can be obtained
