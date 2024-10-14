@@ -61,6 +61,9 @@ var nutanixDatacenterConfigSpecWithFailureDomainInvalidCluster string
 //go:embed testdata/datacenterConfig_with_failure_domains_invalid_subnet.yaml
 var nutanixDatacenterConfigSpecWithFailureDomainInvalidSubnet string
 
+//go:embed testdata/datacenterConfig_with_failure_domains_invalid_wg.yaml
+var nutanixDatacenterConfigSpecWithFailureDomainInvalidWorkerMachineGroups string
+
 func fakeClusterList() *v3.ClusterListIntentResponse {
 	return &v3.ClusterListIntentResponse{
 		Entities: []*v3.ClusterIntentResponse{
@@ -1460,6 +1463,11 @@ func TestNutanixValidatorValidateDatacenterConfig(t *testing.T) {
 			dcConfFile: nutanixDatacenterConfigSpecWithFailureDomainInvalidSubnet,
 			expectErr:  true,
 		},
+		{
+			name:       "failure domains with invalid workerMachineGroups",
+			dcConfFile: nutanixDatacenterConfigSpecWithFailureDomainInvalidWorkerMachineGroups,
+			expectErr:  true,
+		},
 	}
 
 	ctrl := gomock.NewController(t)
@@ -1494,10 +1502,13 @@ func TestNutanixValidatorValidateDatacenterConfig(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			dcConf := &anywherev1.NutanixDatacenterConfig{}
+			clusterSpec := test.NewFullClusterSpec(t, "testdata/eksa-cluster.yaml")
+			clusterSpec.NutanixDatacenter = dcConf
+
 			err := yaml.Unmarshal([]byte(tc.dcConfFile), dcConf)
 			require.NoError(t, err)
 
-			err = validator.ValidateDatacenterConfig(context.Background(), clientCache.clients["test"], dcConf)
+			err = validator.ValidateDatacenterConfig(context.Background(), clientCache.clients["test"], clusterSpec)
 			if tc.expectErr {
 				assert.Error(t, err, tc.name)
 			} else {
@@ -1538,10 +1549,13 @@ func TestNutanixValidatorValidateDatacenterConfigWithInvalidCreds(t *testing.T) 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			dcConf := &anywherev1.NutanixDatacenterConfig{}
+			clusterSpec := test.NewFullClusterSpec(t, "testdata/eksa-cluster.yaml")
+			clusterSpec.NutanixDatacenter = dcConf
+
 			err := yaml.Unmarshal([]byte(tc.dcConfFile), dcConf)
 			require.NoError(t, err)
 
-			err = validator.ValidateDatacenterConfig(context.Background(), clientCache.clients["test"], dcConf)
+			err = validator.ValidateDatacenterConfig(context.Background(), clientCache.clients["test"], clusterSpec)
 			if tc.expectErr {
 				assert.Error(t, err, tc.name)
 			} else {
@@ -1743,5 +1757,46 @@ func TestValidateClusterMachineConfigsSuccess(t *testing.T) {
 	err := validator.checkImageNameMatchesKubernetesVersion(ctx, clusterSpec, clientCache.clients["test"])
 	if err != nil {
 		t.Fatalf("validation should pass: %v", err)
+	}
+}
+
+func TestValidateMachineConfigFailureDomainsWrongCount(t *testing.T) {
+	ctx := context.Background()
+	clusterConfigFile := "testdata/eksa-cluster-multi-worker-fds.yaml"
+	clusterSpec := test.NewFullClusterSpec(t, clusterConfigFile)
+
+	ctrl := gomock.NewController(t)
+	mockClient := mocknutanix.NewMockClient(ctrl)
+	mockClient.EXPECT().GetCurrentLoggedInUser(gomock.Any()).Return(&v3.UserIntentResponse{}, nil).AnyTimes()
+	mockClient.EXPECT().ListCluster(gomock.Any(), gomock.Any()).DoAndReturn(
+		func(_ context.Context, filters *v3.DSMetadata) (*v3.ClusterListIntentResponse, error) {
+			return fakeClusterListForDCTest(filters.Filter)
+		},
+	).AnyTimes()
+	mockClient.EXPECT().ListSubnet(gomock.Any(), gomock.Any()).DoAndReturn(
+		func(_ context.Context, filters *v3.DSMetadata) (*v3.SubnetListIntentResponse, error) {
+			return fakeSubnetListForDCTest(filters.Filter)
+		},
+	).AnyTimes()
+	mockClient.EXPECT().GetSubnet(gomock.Any(), gomock.Eq("2d166190-7759-4dc6-b835-923262d6b497")).Return(nil, nil).AnyTimes()
+	mockClient.EXPECT().GetCluster(gomock.Any(), gomock.Eq("4d69ca7d-022f-49d1-a454-74535993bda4")).Return(nil, nil).AnyTimes()
+
+	mockTLSValidator := mockCrypto.NewMockTlsValidator(ctrl)
+	mockTLSValidator.EXPECT().ValidateCert(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+
+	mockTransport := mocknutanix.NewMockRoundTripper(ctrl)
+	mockTransport.EXPECT().RoundTrip(gomock.Any()).Return(&http.Response{}, nil).AnyTimes()
+
+	mockHTTPClient := &http.Client{Transport: mockTransport}
+	clientCache := &ClientCache{clients: map[string]Client{"test": mockClient}}
+	validator := NewValidator(clientCache, mockTLSValidator, mockHTTPClient)
+
+	for i := 0; i < len(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations); i++ {
+		clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[i].Count = utils.IntPtr(20)
+	}
+
+	err := validator.validateFailureDomains(ctx, clientCache.clients["test"], clusterSpec)
+	if err == nil {
+		t.Fatalf("validation should not pass: %v", err)
 	}
 }

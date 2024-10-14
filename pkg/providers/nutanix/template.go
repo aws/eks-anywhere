@@ -346,9 +346,52 @@ func buildTemplateMapCP(
 	return values, nil
 }
 
+func calcFailureDomainReplicas(workerNodeGroupConfiguration v1alpha1.WorkerNodeGroupConfiguration, failureDomains []v1alpha1.NutanixDatacenterFailureDomain) map[string]int {
+	replicasPerFailureDomain := make(map[string]int)
+	failureDomainCount := len(failureDomains)
+
+	if workerNodeGroupConfiguration.AutoScalingConfiguration != nil {
+		return replicasPerFailureDomain
+	}
+
+	if failureDomainCount == 0 {
+		return replicasPerFailureDomain
+	}
+
+	workerNodeGroupCount := failureDomainCount
+	if workerNodeGroupConfiguration.Count != nil {
+		workerNodeGroupCount = int(*workerNodeGroupConfiguration.Count)
+	}
+
+	minCount := int(workerNodeGroupCount / failureDomainCount)
+
+	for i := 0; i < len(failureDomains); i++ {
+		replicasPerFailureDomain[failureDomains[i].Name] = minCount
+	}
+	replicasPerFailureDomain[failureDomains[0].Name] = workerNodeGroupCount - (failureDomainCount-1)*minCount
+
+	return replicasPerFailureDomain
+}
+
+func getFailureDomainsForWorkerNodeGroup(allFailureDomains []v1alpha1.NutanixDatacenterFailureDomain, workerNodeGroupConfigurationName string) []v1alpha1.NutanixDatacenterFailureDomain {
+	result := make([]v1alpha1.NutanixDatacenterFailureDomain, 0)
+	for _, fd := range allFailureDomains {
+		for _, workerMachineGroup := range fd.WorkerMachineGroups {
+			if workerMachineGroup == workerNodeGroupConfigurationName {
+				result = append(result, fd)
+			}
+		}
+	}
+
+	return result
+}
+
 func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupMachineSpec v1alpha1.NutanixMachineConfigSpec, workerNodeGroupConfiguration v1alpha1.WorkerNodeGroupConfiguration) (map[string]interface{}, error) {
 	versionsBundle := clusterSpec.WorkerNodeGroupVersionsBundle(workerNodeGroupConfiguration)
 	format := "cloud-config"
+
+	failureDomainsForWorkerNodeGroup := getFailureDomainsForWorkerNodeGroup(clusterSpec.NutanixDatacenter.Spec.FailureDomains, workerNodeGroupConfiguration.Name)
+	replicasPerFailureDomain := calcFailureDomainReplicas(workerNodeGroupConfiguration, failureDomainsForWorkerNodeGroup)
 
 	values := map[string]interface{}{
 		"clusterName":            clusterSpec.Cluster.Name,
@@ -374,6 +417,8 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupMachineSpec v1
 		"subnetUUID":             workerNodeGroupMachineSpec.Subnet.UUID,
 		"workerNodeGroupName":    fmt.Sprintf("%s-%s", clusterSpec.Cluster.Name, workerNodeGroupConfiguration.Name),
 		"workerNodeGroupTaints":  workerNodeGroupConfiguration.Taints,
+		"failureDomains":         failureDomainsForWorkerNodeGroup,
+		"failureDomainsReplicas": replicasPerFailureDomain,
 	}
 
 	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration != nil {

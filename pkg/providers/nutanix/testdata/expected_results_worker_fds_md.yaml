@@ -1,0 +1,137 @@
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: MachineDeployment
+metadata:
+  labels:
+    cluster.x-k8s.io/cluster-name: "eksa-unit-test"
+  name: "eksa-unit-test-eksa-unit-test-pe1"
+  namespace: "eksa-system"
+spec:
+  clusterName: "eksa-unit-test"
+  replicas: 2
+  selector:
+    matchLabels: {}
+  template:
+    metadata:
+      labels:
+        cluster.x-k8s.io/cluster-name: "eksa-unit-test"
+    spec:
+      failureDomain: "pe1"
+      bootstrap:
+        configRef:
+          apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+          kind: KubeadmConfigTemplate
+          name: "eksa-unit-test"
+      clusterName: "eksa-unit-test"
+      infrastructureRef:
+        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+        kind: NutanixMachineTemplate
+        name: "eksa-unit-test-pe1"
+      version: "v1.19.8-eks-1-19-4"
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: NutanixMachineTemplate
+metadata:
+  name: "eksa-unit-test-pe1"
+  namespace: "eksa-system"
+spec:
+  template:
+    spec:
+      providerID: "nutanix://eksa-unit-test-m1"
+      vcpusPerSocket: 1
+      vcpuSockets: 4
+      memorySize: 8Gi
+      systemDiskSize: 40Gi
+      image:
+        type: name
+        name: "prism-image"
+
+      cluster:
+        type: name
+        name: "prism-cluster"
+      subnet:
+        - type: uuid
+          uuid: "2d166190-7759-4dc6-b835-923262d6b497"
+---
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: MachineDeployment
+metadata:
+  labels:
+    cluster.x-k8s.io/cluster-name: "eksa-unit-test"
+  name: "eksa-unit-test-eksa-unit-test-pe2"
+  namespace: "eksa-system"
+spec:
+  clusterName: "eksa-unit-test"
+  replicas: 2
+  selector:
+    matchLabels: {}
+  template:
+    metadata:
+      labels:
+        cluster.x-k8s.io/cluster-name: "eksa-unit-test"
+    spec:
+      failureDomain: "pe2"
+      bootstrap:
+        configRef:
+          apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+          kind: KubeadmConfigTemplate
+          name: "eksa-unit-test"
+      clusterName: "eksa-unit-test"
+      infrastructureRef:
+        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+        kind: NutanixMachineTemplate
+        name: "eksa-unit-test-pe2"
+      version: "v1.19.8-eks-1-19-4"
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: NutanixMachineTemplate
+metadata:
+  name: "eksa-unit-test-pe2"
+  namespace: "eksa-system"
+spec:
+  template:
+    spec:
+      providerID: "nutanix://eksa-unit-test-m1"
+      vcpusPerSocket: 1
+      vcpuSockets: 4
+      memorySize: 8Gi
+      systemDiskSize: 40Gi
+      image:
+        type: name
+        name: "prism-image"
+
+      cluster:
+        type: uuid
+        uuid: "4d69ca7d-022f-49d1-a454-74535993bda4"
+
+      subnet:
+        - type: name
+          name: "prism-subnet"
+---
+apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+kind: KubeadmConfigTemplate
+metadata:
+  name: "eksa-unit-test"
+  namespace: "eksa-system"
+spec:
+  template:
+    spec:
+      preKubeadmCommands:
+        - hostnamectl set-hostname "{{ ds.meta_data.hostname }}"
+      joinConfiguration:
+        nodeRegistration:
+          kubeletExtraArgs:
+            cloud-provider: external
+            # We have to pin the cgroupDriver to cgroupfs as kubeadm >=1.21 defaults to systemd
+            # kind will implement systemd support in: https://github.com/kubernetes-sigs/kind/issues/1726
+            #cgroup-driver: cgroupfs
+            eviction-hard: nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%
+            tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+          name: '{{ ds.meta_data.hostname }}'
+      users:
+        - name: "mySshUsername"
+          lockPassword: false
+          sudo: ALL=(ALL) NOPASSWD:ALL
+          sshAuthorizedKeys:
+            - "mySshAuthorizedKey"
+
+---

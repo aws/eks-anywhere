@@ -115,6 +115,12 @@ spec:
                         - type
                         type: object
                       type: array
+                    workerMachineGroups:
+                      description: Worker Machine Groups holds the list of worker
+                        machine group names that will use this failure domain.
+                      items:
+                        type: string
+                      type: array
                   required:
                   - name
                   type: object
