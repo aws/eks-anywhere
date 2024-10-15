@@ -37,18 +37,18 @@ spec:
         arch:
         - amd64
         description: Container image for bottlerocket-admin image
-        imageDigest: sha256:0af31983e8c0f6696e0c85c43d9b775e401b1cecd2e0fe5bd46137a16e619ad9
+        imageDigest: sha256:6ce62f001785c7bb696768174129ff2720e2ec0b5509b31d5dc2f373ea4b00bf
         name: bottlerocket-admin
         os: linux
-        uri: public.ecr.aws/bottlerocket/bottlerocket-admin:v0.11.11
+        uri: public.ecr.aws/bottlerocket/bottlerocket-admin:v0.11.12
       control:
         arch:
         - amd64
         description: Container image for bottlerocket-control image
-        imageDigest: sha256:cf4c175e4865b89a05dffea63ee2fb2bfb99df8d8ca9590a2898f10fc2e4dfb7
+        imageDigest: sha256:3275b61e798941c92edde5b0a4d1ec584a18fb0dcd061445f4e0c74c6b704828
         name: bottlerocket-control
         os: linux
-        uri: public.ecr.aws/bottlerocket/bottlerocket-control:v0.7.15
+        uri: public.ecr.aws/bottlerocket/bottlerocket-control:v0.7.16
       kubeadmBootstrap:
         arch:
         - amd64
@@ -252,7 +252,7 @@ spec:
         os: linux
         sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/containerd/v1.7.22/containerd-v0.0.0-dev-build.0-linux-amd64.tar.gz
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/containerd/v1.7.23/containerd-v0.0.0-dev-build.0-linux-amd64.tar.gz
       crictl:
         arch:
         - amd64
@@ -852,18 +852,18 @@ spec:
         arch:
         - amd64
         description: Container image for bottlerocket-admin image
-        imageDigest: sha256:0af31983e8c0f6696e0c85c43d9b775e401b1cecd2e0fe5bd46137a16e619ad9
+        imageDigest: sha256:6ce62f001785c7bb696768174129ff2720e2ec0b5509b31d5dc2f373ea4b00bf
         name: bottlerocket-admin
         os: linux
-        uri: public.ecr.aws/bottlerocket/bottlerocket-admin:v0.11.11
+        uri: public.ecr.aws/bottlerocket/bottlerocket-admin:v0.11.12
       control:
         arch:
         - amd64
         description: Container image for bottlerocket-control image
-        imageDigest: sha256:cf4c175e4865b89a05dffea63ee2fb2bfb99df8d8ca9590a2898f10fc2e4dfb7
+        imageDigest: sha256:3275b61e798941c92edde5b0a4d1ec584a18fb0dcd061445f4e0c74c6b704828
         name: bottlerocket-control
         os: linux
-        uri: public.ecr.aws/bottlerocket/bottlerocket-control:v0.7.15
+        uri: public.ecr.aws/bottlerocket/bottlerocket-control:v0.7.16
       kubeadmBootstrap:
         arch:
         - amd64
@@ -1067,7 +1067,7 @@ spec:
         os: linux
         sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/containerd/v1.7.22/containerd-v0.0.0-dev-build.0-linux-amd64.tar.gz
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/containerd/v1.7.23/containerd-v0.0.0-dev-build.0-linux-amd64.tar.gz
       crictl:
         arch:
         - amd64
@@ -1667,18 +1667,18 @@ spec:
         arch:
         - amd64
         description: Container image for bottlerocket-admin image
-        imageDigest: sha256:0af31983e8c0f6696e0c85c43d9b775e401b1cecd2e0fe5bd46137a16e619ad9
+        imageDigest: sha256:6ce62f001785c7bb696768174129ff2720e2ec0b5509b31d5dc2f373ea4b00bf
         name: bottlerocket-admin
         os: linux
-        uri: public.ecr.aws/bottlerocket/bottlerocket-admin:v0.11.11
+        uri: public.ecr.aws/bottlerocket/bottlerocket-admin:v0.11.12
       control:
         arch:
         - amd64
         description: Container image for bottlerocket-control image
-        imageDigest: sha256:cf4c175e4865b89a05dffea63ee2fb2bfb99df8d8ca9590a2898f10fc2e4dfb7
+        imageDigest: sha256:3275b61e798941c92edde5b0a4d1ec584a18fb0dcd061445f4e0c74c6b704828
         name: bottlerocket-control
         os: linux
-        uri: public.ecr.aws/bottlerocket/bottlerocket-control:v0.7.15
+        uri: public.ecr.aws/bottlerocket/bottlerocket-control:v0.7.16
       kubeadmBootstrap:
         arch:
         - amd64
@@ -1882,7 +1882,7 @@ spec:
         os: linux
         sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/containerd/v1.7.22/containerd-v0.0.0-dev-build.0-linux-amd64.tar.gz
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/containerd/v1.7.23/containerd-v0.0.0-dev-build.0-linux-amd64.tar.gz
       crictl:
         arch:
         - amd64
@@ -2482,18 +2482,18 @@ spec:
         arch:
         - amd64
         description: Container image for bottlerocket-admin image
-        imageDigest: sha256:0af31983e8c0f6696e0c85c43d9b775e401b1cecd2e0fe5bd46137a16e619ad9
+        imageDigest: sha256:6ce62f001785c7bb696768174129ff2720e2ec0b5509b31d5dc2f373ea4b00bf
         name: bottlerocket-admin
         os: linux
-        uri: public.ecr.aws/bottlerocket/bottlerocket-admin:v0.11.11
+        uri: public.ecr.aws/bottlerocket/bottlerocket-admin:v0.11.12
       control:
         arch:
         - amd64
         description: Container image for bottlerocket-control image
-        imageDigest: sha256:cf4c175e4865b89a05dffea63ee2fb2bfb99df8d8ca9590a2898f10fc2e4dfb7
+        imageDigest: sha256:3275b61e798941c92edde5b0a4d1ec584a18fb0dcd061445f4e0c74c6b704828
         name: bottlerocket-control
         os: linux
-        uri: public.ecr.aws/bottlerocket/bottlerocket-control:v0.7.15
+        uri: public.ecr.aws/bottlerocket/bottlerocket-control:v0.7.16
       kubeadmBootstrap:
         arch:
         - amd64
@@ -2697,7 +2697,7 @@ spec:
         os: linux
         sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/containerd/v1.7.22/containerd-v0.0.0-dev-build.0-linux-amd64.tar.gz
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/containerd/v1.7.23/containerd-v0.0.0-dev-build.0-linux-amd64.tar.gz
       crictl:
         arch:
         - amd64
@@ -3297,18 +3297,18 @@ spec:
         arch:
         - amd64
         description: Container image for bottlerocket-admin image
-        imageDigest: sha256:0af31983e8c0f6696e0c85c43d9b775e401b1cecd2e0fe5bd46137a16e619ad9
+        imageDigest: sha256:6ce62f001785c7bb696768174129ff2720e2ec0b5509b31d5dc2f373ea4b00bf
         name: bottlerocket-admin
         os: linux
-        uri: public.ecr.aws/bottlerocket/bottlerocket-admin:v0.11.11
+        uri: public.ecr.aws/bottlerocket/bottlerocket-admin:v0.11.12
       control:
         arch:
         - amd64
         description: Container image for bottlerocket-control image
-        imageDigest: sha256:cf4c175e4865b89a05dffea63ee2fb2bfb99df8d8ca9590a2898f10fc2e4dfb7
+        imageDigest: sha256:3275b61e798941c92edde5b0a4d1ec584a18fb0dcd061445f4e0c74c6b704828
         name: bottlerocket-control
         os: linux
-        uri: public.ecr.aws/bottlerocket/bottlerocket-control:v0.7.15
+        uri: public.ecr.aws/bottlerocket/bottlerocket-control:v0.7.16
       kubeadmBootstrap:
         arch:
         - amd64
@@ -3512,7 +3512,7 @@ spec:
         os: linux
         sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/containerd/v1.7.22/containerd-v0.0.0-dev-build.0-linux-amd64.tar.gz
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/containerd/v1.7.23/containerd-v0.0.0-dev-build.0-linux-amd64.tar.gz
       crictl:
         arch:
         - amd64
