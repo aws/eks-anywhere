@@ -20,6 +20,7 @@ func (s *writeClusterConfig) Run(ctx context.Context, commandContext *task.Comma
 
 	}
 
+	// Generate AWS IAM kubeconfig only for cluster creation step
 	if commandContext.CurrentClusterSpec == nil && commandContext.ClusterSpec.AWSIamConfig != nil {
 		logger.Info("Generating the aws iam kubeconfig file")
 		err = commandContext.ClusterManager.GenerateAWSIAMKubeconfig(ctx, commandContext.ManagementCluster)
