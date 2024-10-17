@@ -207,7 +207,7 @@ func TestUpgradeRunWithAWSIAMSuccess(t *testing.T) {
 	test.expectUpgradeWorkloadCluster(nil)
 	test.expectBuildClientFromKubeconfig(nil)
 	test.expectWriteWorkloadClusterConfig(nil)
-	test.expectAWSIAMAuthKubeconfig(nil)
+	test.expectWithoutAWSIAMAuthKubeconfig(nil)
 	err := test.run()
 	if err != nil {
 		t.Fatalf("Upgrade.Run() err = %v, want err = nil", err)
