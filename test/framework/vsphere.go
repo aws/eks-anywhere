@@ -460,17 +460,19 @@ func (v *VSphere) WithNewVSphereWorkerNodeGroup(name string, workerNodeGroup *Wo
 // templateForKubeVersionAndOS returns a vSphere filler for the given OS and Kubernetes version.
 func (v *VSphere) templateForKubeVersionAndOS(kubeVersion anywherev1.KubernetesVersion, os OS, release *releasev1.EksARelease) api.VSphereFiller {
 	var template string
+	useBundlesOverride := getBundlesOverride() == "true"
 	if release == nil {
-		template = v.templateForDevRelease(kubeVersion, os)
+		template = v.templateForDevRelease(kubeVersion, os, useBundlesOverride)
 	} else {
-		template = v.templatesRegistry.templateForRelease(v.t, release, kubeVersion, os)
+		template = v.templatesRegistry.templateForRelease(v.t, release, kubeVersion, os, useBundlesOverride)
 	}
 	return api.WithTemplateForAllMachines(template)
 }
 
 // templateForKubeVersionAndOSMachineConfig returns a vSphere filler for the given OS and Kubernetes version for a specific machine config.
 func (v *VSphere) templateForKubeVersionAndOSMachineConfig(name string, kubeVersion anywherev1.KubernetesVersion, os OS) api.VSphereFiller {
-	template := v.templateForDevRelease(kubeVersion, os)
+	useBundlesOverride := getBundlesOverride() == "true"
+	template := v.templateForDevRelease(kubeVersion, os, useBundlesOverride)
 	return api.WithMachineTemplate(name, template)
 }
 
@@ -588,9 +590,9 @@ func (v *VSphere) getDevRelease() *releasev1.EksARelease {
 	return v.devRelease
 }
 
-func (v *VSphere) templateForDevRelease(kubeVersion anywherev1.KubernetesVersion, os OS) string {
+func (v *VSphere) templateForDevRelease(kubeVersion anywherev1.KubernetesVersion, os OS, useBundlesOverride bool) string {
 	v.t.Helper()
-	return v.templatesRegistry.templateForRelease(v.t, v.getDevRelease(), kubeVersion, os)
+	return v.templatesRegistry.templateForRelease(v.t, v.getDevRelease(), kubeVersion, os, useBundlesOverride)
 }
 
 func RequiredVsphereEnvVars() []string {
@@ -631,22 +633,22 @@ func buildVSphereWorkerNodeGroupClusterFiller(machineConfigName string, workerNo
 
 // WithKubeVersionAndOSForRelease returns a vSphereOpt that sets the cluster kube version and the right template for all
 // vsphere machine configs based on the EKS-A release.
-func WithKubeVersionAndOSForRelease(kubeVersion anywherev1.KubernetesVersion, os OS, release *releasev1.EksARelease) VSphereOpt {
-	return optionToSetTemplateForRelease(kubeVersion, os, release)
+func WithKubeVersionAndOSForRelease(kubeVersion anywherev1.KubernetesVersion, os OS, release *releasev1.EksARelease, useBundlesOverride bool) VSphereOpt {
+	return optionToSetTemplateForRelease(kubeVersion, os, release, useBundlesOverride)
 }
 
 // WithKubeVersionAndOSForRelease returns a cluster config filler that sets the cluster kube version and the right template for all
 // vsphere machine configs based on the EKS-A release.
-func (v *VSphere) WithKubeVersionAndOSForRelease(kubeVersion anywherev1.KubernetesVersion, os OS, release *releasev1.EksARelease) api.ClusterConfigFiller {
+func (v *VSphere) WithKubeVersionAndOSForRelease(kubeVersion anywherev1.KubernetesVersion, os OS, release *releasev1.EksARelease, useBundlesOverride bool) api.ClusterConfigFiller {
 	return api.VSphereToConfigFiller(
-		api.WithTemplateForAllMachines(v.templatesRegistry.templateForRelease(v.t, release, kubeVersion, os)),
+		api.WithTemplateForAllMachines(v.templatesRegistry.templateForRelease(v.t, release, kubeVersion, os, useBundlesOverride)),
 	)
 }
 
-func optionToSetTemplateForRelease(kubeVersion anywherev1.KubernetesVersion, os OS, release *releasev1.EksARelease) VSphereOpt {
+func optionToSetTemplateForRelease(kubeVersion anywherev1.KubernetesVersion, os OS, release *releasev1.EksARelease, useBundlesOverride bool) VSphereOpt {
 	return func(v *VSphere) {
 		v.fillers = append(v.fillers,
-			api.WithTemplateForAllMachines(v.templatesRegistry.templateForRelease(v.t, release, kubeVersion, os)),
+			api.WithTemplateForAllMachines(v.templatesRegistry.templateForRelease(v.t, release, kubeVersion, os, useBundlesOverride)),
 		)
 	}
 }
@@ -686,11 +688,11 @@ func (v *VSphere) searchTemplate(ctx context.Context, template string) (string, 
 	return foundTemplate, nil
 }
 
-func readVersionsBundles(t testing.TB, release *releasev1.EksARelease, kubeVersion anywherev1.KubernetesVersion) *releasev1.VersionsBundle {
+func readVersionsBundles(t testing.TB, release *releasev1.EksARelease, kubeVersion anywherev1.KubernetesVersion, useBundlesOverride bool) *releasev1.VersionsBundle {
 	reader := newFileReader()
 	var allBundles *releasev1.Bundles
 	var err error
-	if getBundlesOverride() == "true" {
+	if useBundlesOverride {
 		allBundles, err = bundles.Read(reader, defaultBundleReleaseManifestFile)
 		if err != nil {
 			t.Fatal(err)
