@@ -135,6 +135,11 @@ func (c *upgradeTestSetup) expectWriteWorkloadClusterConfig(err error) {
 	)
 }
 
+func (c *upgradeTestSetup) expectWithoutAWSIAMAuthKubeconfig(err error) {
+	c.clusterManager.EXPECT().GenerateAWSIAMKubeconfig(
+		c.ctx, c.clusterSpec.ManagementCluster).Return(err).Times(0)
+}
+
 func (c *upgradeTestSetup) expectDatacenterConfig() {
 	gomock.InOrder(
 		c.provider.EXPECT().DatacenterConfig(c.clusterSpec).Return(c.datacenterConfig).AnyTimes(),
@@ -183,6 +188,26 @@ func TestUpgradeRunSuccess(t *testing.T) {
 	test.expectBuildClientFromKubeconfig(nil)
 	test.expectWriteWorkloadClusterConfig(nil)
 
+	err := test.run()
+	if err != nil {
+		t.Fatalf("Upgrade.Run() err = %v, want err = nil", err)
+	}
+}
+
+func TestUpgradeRunWithAWSIAMSuccess(t *testing.T) {
+	features.ClearCache()
+	os.Setenv(features.UseControllerForCli, "true")
+	test := newUpgradeTest(t)
+	test.clusterSpec.AWSIamConfig = &v1alpha1.AWSIamConfig{}
+	test.expectSetup()
+	test.expectPreflightValidationsToPass()
+	test.expectDatacenterConfig()
+	test.expectMachineConfigs()
+	test.expectBackupWorkloadFromCluster(nil)
+	test.expectUpgradeWorkloadCluster(nil)
+	test.expectBuildClientFromKubeconfig(nil)
+	test.expectWriteWorkloadClusterConfig(nil)
+	test.expectWithoutAWSIAMAuthKubeconfig(nil)
 	err := test.run()
 	if err != nil {
 		t.Fatalf("Upgrade.Run() err = %v, want err = nil", err)
