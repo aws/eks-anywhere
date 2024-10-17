@@ -38,9 +38,9 @@ type templateRegistry struct {
 // 3. If the template doesn't exist, default to the value of the default template env vars: eg. "T_CLOUDSTACK_TEMPLATE_REDHAT_1_23".
 // This is a catch all condition. Mostly for edge cases where the bundle has been updated with a new eks-d version, but the
 // the new template hasn't been imported yet. It also preserves backwards compatibility.
-func (tc *templateRegistry) templateForRelease(t *testing.T, release *releasev1.EksARelease, kubeVersion anywherev1.KubernetesVersion, operatingSystem OS) string {
+func (tc *templateRegistry) templateForRelease(t *testing.T, release *releasev1.EksARelease, kubeVersion anywherev1.KubernetesVersion, operatingSystem OS, useBundlesOverride bool) string {
 	t.Helper()
-	versionsBundle := readVersionsBundles(t, release, kubeVersion)
+	versionsBundle := readVersionsBundles(t, release, kubeVersion, useBundlesOverride)
 	eksDName := versionsBundle.EksD.Name
 
 	templateEnvVarName := tc.generator.envVarForTemplate(operatingSystem, eksDName)
