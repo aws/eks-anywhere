@@ -995,7 +995,7 @@ e ESXi hosts using vMotion while ensuring cluster stability.
 
 #### Considerations for EKS-A Node Migration using vMotion
 
-When migrating EKS-A nodes with vMotion, several considerations must be kept in mind, particularly around configuration values defined in the [EKS-A vSphere cluster spec file](http
+When migrating EKS-A nodes with vMotion, several considerations must be kept in mind, particularly around configuration values defined in the [EKS-A vSphere cluster spec file](https://anywhere.eks.amazonaws.com/docs/getting-started/vsphere/vsphere-spec/)
 s://anywhere.eks.amazonaws.com/docs/getting-started/vsphere/vsphere-spec/). These configurations must remain unchanged during the migration and the infrastructure these configurati
 ons represent should also not change.
 
