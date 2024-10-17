@@ -316,7 +316,8 @@ func WithRedHat9Kubernetes130Nutanix() NutanixOpt {
 // to use this OS family.
 func withNutanixKubeVersionAndOSForUUID(kubeVersion anywherev1.KubernetesVersion, os OS, release *releasev1.EksARelease) NutanixOpt {
 	return func(n *Nutanix) {
-		name := n.templateForDevRelease(kubeVersion, os)
+		useBundlesOverride := getBundlesOverride() == "true"
+		name := n.templateForDevRelease(kubeVersion, os, useBundlesOverride)
 		n.fillers = append(n.fillers, n.withNutanixUUID(name, osFamiliesForOS[os])...)
 	}
 }
@@ -449,10 +450,11 @@ func WithNutanixSubnetUUID() NutanixOpt {
 // templateForKubeVersionAndOS returns a Nutanix filler for the given OS and Kubernetes version.
 func (n *Nutanix) templateForKubeVersionAndOS(kubeVersion anywherev1.KubernetesVersion, os OS, release *releasev1.EksARelease) api.NutanixFiller {
 	var template string
+	useBundlesOverride := getBundlesOverride() == "true"
 	if release == nil {
-		template = n.templateForDevRelease(kubeVersion, os)
+		template = n.templateForDevRelease(kubeVersion, os, useBundlesOverride)
 	} else {
-		template = n.templatesRegistry.templateForRelease(n.t, release, kubeVersion, os)
+		template = n.templatesRegistry.templateForRelease(n.t, release, kubeVersion, os, useBundlesOverride)
 	}
 	return api.WithNutanixMachineTemplateImageName(template)
 }
@@ -566,9 +568,9 @@ func (n *Nutanix) getDevRelease() *releasev1.EksARelease {
 	return n.devRelease
 }
 
-func (n *Nutanix) templateForDevRelease(kubeVersion anywherev1.KubernetesVersion, os OS) string {
+func (n *Nutanix) templateForDevRelease(kubeVersion anywherev1.KubernetesVersion, os OS, useBundlesOverride bool) string {
 	n.t.Helper()
-	return n.templatesRegistry.templateForRelease(n.t, n.getDevRelease(), kubeVersion, os)
+	return n.templatesRegistry.templateForRelease(n.t, n.getDevRelease(), kubeVersion, os, useBundlesOverride)
 }
 
 // envVarForTemplate looks for explicit configuration through an env var: "T_NUTANIX_TEMPLATE_{osFamily}_{eks-d version}"

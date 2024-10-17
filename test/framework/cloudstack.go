@@ -332,10 +332,11 @@ func cloudStackMachineConfig(name string, fillers ...api.CloudStackMachineConfig
 // templateForKubeVersionAndOS returns a CloudStack filler for the given OS and Kubernetes version.
 func (c *CloudStack) templateForKubeVersionAndOS(kubeVersion anywherev1.KubernetesVersion, os OS, release *releasev1.EksARelease) api.CloudStackFiller {
 	var template string
+	useBundlesOverride := getBundlesOverride() == "true"
 	if release == nil {
-		template = c.templateForDevRelease(kubeVersion, os)
+		template = c.templateForDevRelease(kubeVersion, os, useBundlesOverride)
 	} else {
-		template = c.templatesRegistry.templateForRelease(c.t, release, kubeVersion, os)
+		template = c.templatesRegistry.templateForRelease(c.t, release, kubeVersion, os, useBundlesOverride)
 	}
 
 	return api.WithCloudStackTemplateForAllMachines(template)
@@ -511,9 +512,9 @@ func (c *CloudStack) getDevRelease() *releasev1.EksARelease {
 	return c.devRelease
 }
 
-func (c *CloudStack) templateForDevRelease(kubeVersion anywherev1.KubernetesVersion, os OS) string {
+func (c *CloudStack) templateForDevRelease(kubeVersion anywherev1.KubernetesVersion, os OS, useBundlesOverride bool) string {
 	c.t.Helper()
-	return c.templatesRegistry.templateForRelease(c.t, c.getDevRelease(), kubeVersion, os)
+	return c.templatesRegistry.templateForRelease(c.t, c.getDevRelease(), kubeVersion, os, useBundlesOverride)
 }
 
 // envVarForTemplate Looks for explicit configuration through an env var: "T_CLOUDSTACK_TEMPLATE_{osFamily}_{eks-d version}"
