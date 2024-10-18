@@ -78,6 +78,6 @@ To verify cluster health and node stability,  monitor the EKS-A nodes and pods b
   * After vMotion activity is completed, run the command again to verify that the nodes and pods are still operational and healthy.
 
 
-4. **Infrastructure Maintenance During vMotion**
+* **Infrastructure maintenance during vMotion**
 
 It is recommended that no other infrastructure maintenance activities be performed during the vMotion operation. The underlying datacenter infrastructure supporting the network, storage, and server resources utilized by VMware vSphere must remain stable during the vMotion process. Any interruptions in these services could lead to partial or complete failures in the vMotion process, potentially causing the EKS-A nodes to lose connectivity or experience disruptions in normal operations.
