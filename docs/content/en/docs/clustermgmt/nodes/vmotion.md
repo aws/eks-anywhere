@@ -1,5 +1,5 @@
 ---
-title: "VMware vSphere vMotion "
+title: "Manage vSphere VMs with vMotion "
 linkTitle: "VMware vSphere vMotion"
 weight: 20
 description: >
