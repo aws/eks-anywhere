@@ -1,5 +1,5 @@
 ---
-title: "anywhere delete package(s)"
+title: "(deprecated) anywhere delete package(s)"
 linkTitle: "anywhere delete package(s)"
 ---
 
@@ -9,6 +9,7 @@ Delete package(s)
 
 ### Synopsis
 
+Command "package" is deprecated, use `kubectl delete package` instead
 This command is used to delete the curated packages custom resources installed in the cluster
 
 ```

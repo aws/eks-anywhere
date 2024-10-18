@@ -1,5 +1,5 @@
 ---
-title: "anywhere get package(s)"
+title: "(deprecated) anywhere get package(s)"
 linkTitle: "anywhere get package(s)"
 ---
 
@@ -9,6 +9,7 @@ Get package(s)
 
 ### Synopsis
 
+Command "package" is deprecated, use `kubectl get packages` instead
 This command is used to display the curated packages installed in the cluster
 
 ```
