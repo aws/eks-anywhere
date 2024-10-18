@@ -72,7 +72,7 @@ To verify cluster health and node stability,  monitor the EKS-A nodes and pods b
 
 ```
   kubectl get nodes
-    kubectl get pods -a
+  kubectl get pods -a
 ```
 
 * After vMotion activity is completed, run the command agains to verify that the nodes and pods are still operational and healthy.
