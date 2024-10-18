@@ -1,5 +1,5 @@
 ---
-title: "anywhere create package(s)"
+title: "(deprecated) anywhere create package(s)"
 linkTitle: "anywhere create package(s)"
 ---
 
@@ -9,6 +9,7 @@ Create curated packages
 
 ### Synopsis
 
+Command "package" is deprecated, use `kubectl apply` instead
 Create Curated Packages Custom Resources to the cluster
 
 ```
