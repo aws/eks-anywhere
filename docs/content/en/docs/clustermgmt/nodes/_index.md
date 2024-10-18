@@ -4,5 +4,5 @@ linkTitle: "Nodes"
 date: 2017-01-05
 weight: 30
 description: >
-  Managing EKS-A nodes
+  Managing EKS Anywhere nodes
 ---
