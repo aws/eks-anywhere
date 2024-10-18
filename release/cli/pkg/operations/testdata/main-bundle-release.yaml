@@ -638,7 +638,7 @@ spec:
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: hegel
           os: linux
-          uri: public.ecr.aws/release-container-registry/tinkerbell/hegel:v0.12.0-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/hegel:v0.13.0-eks-a-v0.0.0-dev-build.1
         hook:
           bootkit:
             arch:
@@ -697,7 +697,7 @@ spec:
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: rufio
           os: linux
-          uri: public.ecr.aws/release-container-registry/tinkerbell/rufio:v0.4.0-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/rufio:v0.4.1-eks-a-v0.0.0-dev-build.1
         stack:
           description: Helm chart for stack
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
@@ -788,11 +788,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-vsphere
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api-provider-vsphere/release/manager:v1.11.1-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api-provider-vsphere/release/manager:v1.11.2-eks-a-v0.0.0-dev-build.1
       clusterTemplate:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.11.1/cluster-template.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.11.2/cluster-template.yaml
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.11.1/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.11.2/infrastructure-components.yaml
       kubeProxy:
         arch:
         - amd64
@@ -821,8 +821,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/kubernetes/cloud-provider-vsphere/cpi/manager:v1.27.0-eks-d-1-27-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.11.1/metadata.yaml
-      version: v1.11.1+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.11.2/metadata.yaml
+      version: v1.11.2+abcdef1
   - bootstrap:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/bootstrap-kubeadm/v1.8.3/bootstrap-components.yaml
@@ -1453,7 +1453,7 @@ spec:
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: hegel
           os: linux
-          uri: public.ecr.aws/release-container-registry/tinkerbell/hegel:v0.12.0-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/hegel:v0.13.0-eks-a-v0.0.0-dev-build.1
         hook:
           bootkit:
             arch:
@@ -1512,7 +1512,7 @@ spec:
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: rufio
           os: linux
-          uri: public.ecr.aws/release-container-registry/tinkerbell/rufio:v0.4.0-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/rufio:v0.4.1-eks-a-v0.0.0-dev-build.1
         stack:
           description: Helm chart for stack
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
@@ -1603,11 +1603,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-vsphere
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api-provider-vsphere/release/manager:v1.11.1-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api-provider-vsphere/release/manager:v1.11.2-eks-a-v0.0.0-dev-build.1
       clusterTemplate:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.11.1/cluster-template.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.11.2/cluster-template.yaml
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.11.1/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.11.2/infrastructure-components.yaml
       kubeProxy:
         arch:
         - amd64
@@ -1636,8 +1636,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/kubernetes/cloud-provider-vsphere/cpi/manager:v1.28.1-eks-d-1-28-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.11.1/metadata.yaml
-      version: v1.11.1+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.11.2/metadata.yaml
+      version: v1.11.2+abcdef1
   - bootstrap:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/bootstrap-kubeadm/v1.8.3/bootstrap-components.yaml
@@ -2268,7 +2268,7 @@ spec:
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: hegel
           os: linux
-          uri: public.ecr.aws/release-container-registry/tinkerbell/hegel:v0.12.0-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/hegel:v0.13.0-eks-a-v0.0.0-dev-build.1
         hook:
           bootkit:
             arch:
@@ -2327,7 +2327,7 @@ spec:
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: rufio
           os: linux
-          uri: public.ecr.aws/release-container-registry/tinkerbell/rufio:v0.4.0-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/rufio:v0.4.1-eks-a-v0.0.0-dev-build.1
         stack:
           description: Helm chart for stack
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
@@ -2418,11 +2418,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-vsphere
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api-provider-vsphere/release/manager:v1.11.1-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api-provider-vsphere/release/manager:v1.11.2-eks-a-v0.0.0-dev-build.1
       clusterTemplate:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.11.1/cluster-template.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.11.2/cluster-template.yaml
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.11.1/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.11.2/infrastructure-components.yaml
       kubeProxy:
         arch:
         - amd64
@@ -2451,8 +2451,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/kubernetes/cloud-provider-vsphere/cpi/manager:v1.29.1-eks-d-1-29-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.11.1/metadata.yaml
-      version: v1.11.1+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.11.2/metadata.yaml
+      version: v1.11.2+abcdef1
   - bootstrap:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/bootstrap-kubeadm/v1.8.3/bootstrap-components.yaml
@@ -3083,7 +3083,7 @@ spec:
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: hegel
           os: linux
-          uri: public.ecr.aws/release-container-registry/tinkerbell/hegel:v0.12.0-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/hegel:v0.13.0-eks-a-v0.0.0-dev-build.1
         hook:
           bootkit:
             arch:
@@ -3142,7 +3142,7 @@ spec:
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: rufio
           os: linux
-          uri: public.ecr.aws/release-container-registry/tinkerbell/rufio:v0.4.0-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/rufio:v0.4.1-eks-a-v0.0.0-dev-build.1
         stack:
           description: Helm chart for stack
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
@@ -3233,11 +3233,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-vsphere
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api-provider-vsphere/release/manager:v1.11.1-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api-provider-vsphere/release/manager:v1.11.2-eks-a-v0.0.0-dev-build.1
       clusterTemplate:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.11.1/cluster-template.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.11.2/cluster-template.yaml
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.11.1/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.11.2/infrastructure-components.yaml
       kubeProxy:
         arch:
         - amd64
@@ -3266,8 +3266,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/kubernetes/cloud-provider-vsphere/cpi/manager:v1.30.1-eks-d-1-30-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.11.1/metadata.yaml
-      version: v1.11.1+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.11.2/metadata.yaml
+      version: v1.11.2+abcdef1
   - bootstrap:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/bootstrap-kubeadm/v1.8.3/bootstrap-components.yaml
@@ -3898,7 +3898,7 @@ spec:
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: hegel
           os: linux
-          uri: public.ecr.aws/release-container-registry/tinkerbell/hegel:v0.12.0-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/hegel:v0.13.0-eks-a-v0.0.0-dev-build.1
         hook:
           bootkit:
             arch:
@@ -3957,7 +3957,7 @@ spec:
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: rufio
           os: linux
-          uri: public.ecr.aws/release-container-registry/tinkerbell/rufio:v0.4.0-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/rufio:v0.4.1-eks-a-v0.0.0-dev-build.1
         stack:
           description: Helm chart for stack
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
@@ -4048,11 +4048,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-vsphere
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api-provider-vsphere/release/manager:v1.11.1-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api-provider-vsphere/release/manager:v1.11.2-eks-a-v0.0.0-dev-build.1
       clusterTemplate:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.11.1/cluster-template.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.11.2/cluster-template.yaml
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.11.1/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.11.2/infrastructure-components.yaml
       kubeProxy:
         arch:
         - amd64
@@ -4081,6 +4081,6 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/kubernetes/cloud-provider-vsphere/cpi/manager:v1.31.0-eks-d-1-31-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.11.1/metadata.yaml
-      version: v1.11.1+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.11.2/metadata.yaml
+      version: v1.11.2+abcdef1
 status: {}
