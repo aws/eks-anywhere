@@ -1,5 +1,5 @@
 ---
-title: "anywhere get packagebundle(s)"
+title: "(deprecated) anywhere get packagebundle(s)"
 linkTitle: "anywhere get packagebundle(s)"
 ---
 
@@ -9,6 +9,7 @@ Get packagebundle(s)
 
 ### Synopsis
 
+Command "packagebundle" is deprecated, use `kubectl get packagebundle` instead
 This command is used to display the currently supported packagebundles
 
 ```

@@ -1,5 +1,5 @@
 ---
-title: "anywhere get packagebundlecontroller(s)"
+title: "(deprecated) anywhere get packagebundlecontroller(s)"
 linkTitle: "anywhere get packagebundlecontroller(s)"
 ---
 
@@ -9,6 +9,7 @@ Get packagebundlecontroller(s)
 
 ### Synopsis
 
+Command "packagebundlecontroller" is deprecated, use `kubectl get packagebundlecontroller` instead
 This command is used to display the current packagebundlecontrollers
 
 ```

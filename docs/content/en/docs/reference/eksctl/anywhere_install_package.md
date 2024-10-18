@@ -1,5 +1,5 @@
 ---
-title: "anywhere install package"
+title: "(deprecated) anywhere install package"
 linkTitle: "anywhere install package"
 ---
 
@@ -9,6 +9,7 @@ Install package
 
 ### Synopsis
 
+Command "package" is deprecated, use `kubectl apply` instead
 This command is used to Install a curated package. Use list to discover curated packages
 
 ```

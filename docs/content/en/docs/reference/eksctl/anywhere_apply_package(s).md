@@ -1,5 +1,5 @@
 ---
-title: "anywhere apply package(s)"
+title: "(deprecated) anywhere apply package(s)"
 linkTitle: "anywhere apply package(s)"
 ---
 
@@ -9,6 +9,7 @@ Apply curated packages
 
 ### Synopsis
 
+Command "package" is deprecated, use `kubectl apply` instead
 Apply Curated Packages Custom Resources to the cluster
 
 ```

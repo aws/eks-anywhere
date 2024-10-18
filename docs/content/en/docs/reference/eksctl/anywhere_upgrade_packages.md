@@ -1,10 +1,11 @@
 ---
-title: "anywhere upgrade packages"
+title: "(deprecated) anywhere upgrade packages"
 linkTitle: "anywhere upgrade packages"
 ---
 
 ## anywhere upgrade packages
 
+Command "packages" is deprecated, refer to `https://anywhere.eks.amazonaws.com/docs/packages/packagebundles` for upgrading
 Upgrade all curated packages to the latest version
 
 ```

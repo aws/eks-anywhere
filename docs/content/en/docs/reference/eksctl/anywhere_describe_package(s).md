@@ -1,10 +1,11 @@
 ---
-title: "anywhere describe package(s)"
+title: "(deprecated) anywhere describe package(s)"
 linkTitle: "anywhere describe package(s)"
 ---
 
 ## anywhere describe package(s)
 
+Command "package" is deprecated, use `kubectl describe packages` instead
 Describe curated packages in the cluster
 
 ```
