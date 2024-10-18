@@ -3,7 +3,7 @@ title: "Manage vSphere VMs with vMotion "
 linkTitle: "Manage vSphere VMs"
 weight: 20
 description: >
-  Using vMotion with  EKS Anywhere clusters
+  Using vMotion to manage vSphere VMs used in clusters
 aliases:
 ---
 
