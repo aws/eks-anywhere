@@ -25,11 +25,43 @@ description: >
   * [Downloading Bottlerocket node images]({{< relref "../osmgmt/artifacts/#download-bottlerocket-node-images" >}})
   * [Upgrading an EKS Anywhere cluster]({{< relref "../clustermgmt/cluster-upgrades" >}})
 * EKS Anywhere version `v0.19.4` introduced a regression in the Curated Packages workflow due to a bug in the associated Packages controller version (`v0.4.2`). This will be fixed in the next patch release.
+* On October 11, 2024, a security issue CVE-2024-9594 was discovered in the Kubernetes Image Builder where default credentials are enabled during the image build process when using the Nutanix, OVA, QEMU or raw providers. The credentials can be used to gain root access. The credentials are disabled at the conclusion of the image build process. Kubernetes clusters are only affected if their nodes use VM images created via the Image Builder project. Clusters using virtual machine images built with [Kubernetes Image Builder](https://github.com/kubernetes-sigs/image-builder) version `v0.1.37` or earlier are affected if built with the Nutanix, OVA, QEMU or raw providers. These images built using previous versions of image-builder will be vulnerable only during the image build process, if an attacker was able to reach the VM where the image build was happening, login using these default credentials and modify the image at the time the image build was occurring. This CVE has been fixed in image-builder versions >= `v0.1.38`, which has been included in EKS Anywhere release `v0.19.11`.
+  * [CVE-2024-9594: VM images built with Image Builder with some providers use default credentials during builds](https://github.com/kubernetes/kubernetes/issues/128007)
 {{% /alert %}}
 
 {{% alert title="General Information" color="info" %}}
 * When upgrading to a new minor version, a new OS image must be created using the new image-builder CLI pertaining to that release.
 {{% /alert %}}
+
+## [v0.19.11](https://github.com/aws/eks-anywhere/releases/tag/v0.19.11)
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+|    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+| Bottlerocket 1.20.5 |    ✔    |     \*      |    —    |     —      |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+|      RHEL 9.x       |    —    |     —      |    ✔    |     ✔      |  —   |
+
+\* [EKS Anywhere issue regarding deprecation of Bottlerocket bare metal variants](https://github.com/aws/eks-anywhere/issues/7754)
+
+### Upgraded
+- EKS Distro:
+  - `v1-27-eks-38` to [`v1-27-eks-40`](https://distro.eks.amazonaws.com/releases/1-27/40/)
+  - `v1-28-eks-31` to [`v1-28-eks-34`](https://distro.eks.amazonaws.com/releases/1-28/34/)
+  - `v1-29-eks-20` to [`v1-29-eks-23`](https://distro.eks.amazonaws.com/releases/1-29/23/)
+- Image-builder: `v0.1.36` to `v0.1.39` ([CVE-2024-9594](https://github.com/kubernetes/kubernetes/issues/128007))
+- containerd: `v1.7.22` to `v1.7.23`
+- Cilium: `v1.13.19` to `v1.13.20`
+- etcdadm-controller: `v1.0.23` to `v1.0.24`
+- etcdadm-bootstrap-provider:  `v1.0.13` to `v1.0.14`
+- local-path-provisioner: `v0.0.29` to `v0.0.30`
+- runc: `v1.1.14` to `v1.1.15`
+
+### Fixed
+- Skip hardware validation logic for InPlace upgrades. [#8779](https://github.com/aws/eks-anywhere/pull/8779)
+- Status reconciliation of etcdadm cluster in etcdadm-controller when etcd-machines are unhealthy. [#63](https://github.com/aws/etcdadm-controller/pull/63)
+- Skip generating AWS IAM Kubeconfig on cluster upgrade. [#8851](https://github.com/aws/eks-anywhere/pull/8851)
 
 ## [v0.19.10](https://github.com/aws/eks-anywhere/releases/tag/v0.19.10)
 ### Supported OS version details
