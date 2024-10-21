@@ -159,7 +159,7 @@ EKS_A_CROSS_PLATFORMS := $(foreach platform,$(EKS_A_PLATFORMS),eks-a-cross-platf
 E2E_CROSS_PLATFORMS := $(foreach platform,$(EKS_A_PLATFORMS),e2e-cross-platform-$(platform))
 EKS_A_RELEASE_CROSS_PLATFORMS := $(foreach platform,$(EKS_A_PLATFORMS),eks-a-release-cross-platform-$(platform))
 
-DOCKER_E2E_TEST := TestDockerKubernetes130SimpleFlow
+DOCKER_E2E_TEST := TestDockerKubernetes131SimpleFlow
 LOCAL_E2E_TESTS ?= $(DOCKER_E2E_TEST)
 
 EMBED_CONFIG_FOLDER = pkg/files/config
