@@ -68,7 +68,7 @@ EKS Anywhere nodes cannot be migrated between different vCenter environments usi
 
   To verify cluster health and node stability,  monitor the EKS-A nodes and pods before and after the vMotion migration:
 
-* Before migration, run the following commands to check the current health and status of the EKS-A nodes and pods.
+  * Before migration, run the following commands to check the current health and status of the EKS-A nodes and pods.
 
 ```
   kubectl get nodes
