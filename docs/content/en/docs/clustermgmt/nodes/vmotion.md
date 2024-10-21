@@ -70,7 +70,6 @@ EKS Anywhere nodes cannot be migrated between different vCenter environments usi
 
   * Before migration, run the following commands to check the current health and status of the EKS-A nodes and pods.
 
-```
   kubectl get nodes
   kubectl get pods -a
 ```
