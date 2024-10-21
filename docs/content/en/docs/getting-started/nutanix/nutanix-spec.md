@@ -72,6 +72,28 @@ spec:
  credentialRef:
    kind: Secret
    name: nutanix-credentials
+ failureDomains:
+   - name: failure-domain-01 
+     cluster:
+       name: nx-cluster-01
+       type: name
+     subnets:
+       - name: vm-network-01
+         type: name
+   - name: failure-domain-02 
+     cluster:
+       name: nx-cluster-02
+       type: name
+     subnets:
+       - name: vm-network-02
+         type: name
+   - name: failure-domain-03 
+     cluster:
+       name: nx-cluster-03
+       type: name
+     subnets:
+       - name: vm-network-03
+         type: name
 ---
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: NutanixMachineConfig
@@ -251,6 +273,36 @@ __Example__:</br>
     <certificate string>
     -----END CERTIFICATE-----
 ```
+### failureDomains (optional)
+The list of failure domains used for the control plane nodes. Three failure domains are recommended. 
+>**_NOTE:_** All the failure domain subnets must be on the same L2 network.
+
+### failureDomains[0].name
+The name of the failure domain.
+
+### failureDomains[0].cluster (required)
+Reference to the failure domain Prism Element cluster.
+
+### failureDomains[0].cluster.type (required)
+Type to identify the failure domain Prism Element cluster. (Permitted values: `name` or `uuid`)
+
+### failureDomains[0].cluster.name (`failureDomains[0].cluster.name` or `failureDomains[0].cluster.uuid` required)
+Name of the failure domain Prism Element cluster.
+
+### failureDomains[0].cluster.uuid (`failureDomains[0].cluster.name` or `failureDomains[0].cluster.uuid` required)
+UUID of the failure domain Prism Element cluster.
+
+### failureDomains[0].subnets (required)
+Reference to the failure domain subnets to be assigned to the VMs.
+
+### failureDomains[0].subnets[0].name (`failureDomains[0].subnets[0].name` or `failureDomains[0].subnets[0].uuid` required)
+Name of the failure domain subnet.
+
+### failureDomains[0].subnets[0].type (required)
+Type to identify the failure domain subnet. (Permitted values: `name` or `uuid`)
+
+### failureDomains[0].subnets[0].uuid (`failureDomains[0].subnets[0].name` or `failureDomains[0].subnets[0].uuid` required)
+UUID of the failure domain subnet.
 
 ## NutanixMachineConfig Fields
 
@@ -260,10 +312,10 @@ Reference to the Prism Element cluster.
 ### cluster.type (required)
 Type to identify the Prism Element cluster. (Permitted values: `name` or `uuid`)
 
-### cluster.name (required)
+### cluster.name (`cluster.name` or `cluster.uuid` required)
 Name of the Prism Element cluster.
 
-### cluster.uuid (required)
+### cluster.uuid (`cluster.name` or `cluster.uuid` required)
 UUID of the Prism Element cluster.
 
 ### image (required)
@@ -272,11 +324,11 @@ Reference to the OS image used for the system disk.
 ### image.type (required)
 Type to identify the OS image. (Permitted values: `name` or `uuid`)
 
-### image.name (`name` or `UUID` required)
+### image.name (`image.name` or `image.uuid` required)
 Name of the image
 The `image.name` must contain the `Cluster.Spec.KubernetesVersion` or `Cluster.Spec.WorkerNodeGroupConfiguration[].KubernetesVersion` version (in case of modular upgrade). For example, if the Kubernetes version is 1.31, `image.name` must include 1.31, 1_31, 1-31 or 131.
 
-### image.uuid (`name` or `UUID` required)
+### image.uuid (`image.name` or `image.uuid` required)
 UUID of the image
 The name of the image associated with the `uuid` must contain the `Cluster.Spec.KubernetesVersion` or `Cluster.Spec.WorkerNodeGroupConfiguration[].KubernetesVersion` version (in case of modular upgrade). For example, if the Kubernetes version is 1.31, the name associated with `image.uuid` field must include 1.31, 1_31, 1-31 or 131.
 
@@ -289,13 +341,13 @@ Operating System on virtual machines. Permitted values: `ubuntu` and `redhat`. (
 ### subnet (required)
 Reference to the subnet to be assigned to the VMs.
 
-### subnet.name (`name` or `UUID` required)
+### subnet.name (`subnet.name` or `subnet.uuid` required)
 Name of the subnet.
 
 ### subnet.type (required)
 Type to identify the subnet. (Permitted values: `name` or `uuid`)
 
-### subnet.uuid (`name` or `UUID` required)
+### subnet.uuid (`subnet.name` or `subnet.uuid` required)
 UUID of the subnet.
 
 ### systemDiskSize (optional)
@@ -313,10 +365,10 @@ Reference to an existing project used for the virtual machines.
 ### project.type (required)
 Type to identify the project. (Permitted values: `name` or `uuid`)
 
-### project.name (`name` or `UUID` required)
+### project.name (`project.name` or `project.uuid` required)
 Name of the project
 
-### project.uuid (`name` or `UUID` required)
+### project.uuid (`project.name` or `project.uuid` required)
 UUID of the project
 
 ### additionalCategories (optional)
