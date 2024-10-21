@@ -19,7 +19,7 @@ When migrating EKS Anywhere nodes with vMotion, several considerations must be k
 
 * **No cross-vCenter vMotion**
 
-EKS-A nodes cannot be migrated between different vCenter environments using vMotion. The nodes must remain within the same vCenter instance for proper EKS-A operation. The vCenter Server managing the EKS-A cluster is specified in the `VSphereDatacenterConfig` section of the EKS-A cluster spec file, under the `spec.server` field and cannot be changed.
+EKS Anywhere nodes cannot be migrated between different vCenter environments using vMotion. The nodes must remain within the same vCenter instance for proper EKS Anywhere operation. The vCenter Server managing the EKS Anywhere cluster is specified in the `VSphereDatacenterConfig` section of the EKS Anywhere [vSphere cluster spec file]({{< relref "/docs/getting-started/vsphere/vsphere-spec" >}}), under the `spec.server` field, and cannot be changed.
 
 
 2. **vSphere Infrastructure Settings in** `VSphereDatacenterConfig`
