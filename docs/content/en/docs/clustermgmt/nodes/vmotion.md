@@ -38,7 +38,7 @@ EKS Anywhere nodes cannot be migrated between different vCenter environments usi
   datastore `(spec.datastore)` - Defined in the `VSphereMachineConfig` section of the EKS Anywhere cluster spec file is immutable.  This value refers to the vSphere datastore that holds EKS Anywhere node vm backing store. Modifying the datastore during vMotion (storage vMotion) would require a change to this value, which is not supported.
 
 
-4. **Node Network Configuration Stability**
+* **Node network configuration stability**
 
 The IP address, subnet mask, and default gateway of each EKS-A node must remain unchanged during the vMotion process. Any modifications to the IP address configuration can cause communication failures between the EKS-A nodes, pods, and the control plane, leading to disruptions in EKS-A cluster operations.
 
