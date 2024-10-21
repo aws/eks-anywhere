@@ -64,7 +64,7 @@ EKS Anywhere nodes cannot be migrated between different vCenter environments usi
   Shared storage is a requirement for vmotion of EKS-A clusters.  Storage such as vSAN, Fiber Channel SAN, or NFS should be shared between the supporting vSphere ESXi hosts for maintaining access to the VM's backing data without relying on storage vMotion, which is not supported in EKS-A environments.
 
 
-3. **Monitoring Before and After Migration**
+* **Monitoring before and after migration**
 
 To verify cluster health and node stability,  monitor the EKS-A nodes and pods before and after the vMotion migration:
 
