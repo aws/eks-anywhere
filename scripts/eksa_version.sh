@@ -81,7 +81,7 @@ function eksa-version::get_next_eksa_version_for_ancestor() {
         minor_release=$(echo $ancestor_branch | grep -Eo "[[:digit:]]+.[[:digit:]]+")
         latest_tag=$(git tag -l "v${minor_release}.*" | sort -V | tail -n 1)
         if [[ -z "$latest_tag" ]]; then
-            latest_tag=$(git describe --tags "$(git rev-list --tags='v*.*.*' --max-count=1)")
+            latest_tag=$(git describe --tags "$(git tag -l "v*" --sort -v:refname | head -1)")
             release_version=$(echo "${latest_tag}" | awk -F. -v OFS=. '{$2++; $3=0; print}')
         else
             release_version=$(echo "${latest_tag}" | awk -F. -v OFS=. '{$3++; print}')
