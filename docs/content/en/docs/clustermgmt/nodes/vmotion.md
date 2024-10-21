@@ -35,7 +35,7 @@ EKS Anywhere nodes cannot be migrated between different vCenter environments usi
 
 * **VMware Storage vMotion is not supported for EKS Anywhere nodes**
 
-datastore `(spec.datastore)` - Defined in the `VSphereMachineConfig` section of the EKS-A cluster spec file is immutable.  This value refers to the vSphere datastore that holds EKS-A node vm backing store. Modifying the datastore during vMotion (storage vMotion) would require a change to this value, which is not supported.
+  datastore `(spec.datastore)` - Defined in the `VSphereMachineConfig` section of the EKS Anywhere cluster spec file is immutable.  This value refers to the vSphere datastore that holds EKS Anywhere node vm backing store. Modifying the datastore during vMotion (storage vMotion) would require a change to this value, which is not supported.
 
 
 4. **Node Network Configuration Stability**
