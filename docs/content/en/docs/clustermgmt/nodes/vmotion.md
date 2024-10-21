@@ -52,7 +52,7 @@ EKS Anywhere nodes cannot be migrated between different vCenter environments usi
 
 * **Follow VMware vMotion best practices**
 
-Review VMware's general guidelines for optimal vMotion performance, such as ensuring sufficient CPU, memory, and network resources, and minimizing load on the ESXi hosts during the migration. Refer to the [VMware vMotion documentation](https://docs.vmware.com/) for details.
+  * General best practices: Review VMware's general guidelines for optimal vMotion performance, such as ensuring sufficient CPU, memory, and network resources, and minimizing load on the ESXi hosts during the migration. Refer to the [VMware vMotion documentation](https://docs.vmware.com/) for details.
 
   * VMware vMotion Networking Best Practices: Whenever possible, follow the [Networking Best Practices for VMware vMotion](https://docs.vmware.com/en/VMware-vSphere/7.0/com.vmware.vsphere.vcenterhost.doc/GUID-7DAD15D4-7F41-4913-9F16-567289E22977.html) to optimize performance and reduce the risk of issues during the migration process.
 
