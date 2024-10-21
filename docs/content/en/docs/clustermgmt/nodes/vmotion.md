@@ -17,7 +17,7 @@ VMware vMotion is a feature within vSphere that allows live migration of virtual
 When migrating EKS Anywhere nodes with vMotion, several considerations must be kept in mind, particularly around configuration values defined in the [vSphere cluster spec file]({{< relref "/docs/getting-started/vsphere/vsphere-spec" >}}) . These configurations must remain unchanged during the migration and the infrastructure these configurations represent should also not change.
 
 
-1. **No Cross-vCenter vMotion**
+* **No cross-vCenter vMotion**
 
 EKS-A nodes cannot be migrated between different vCenter environments using vMotion. The nodes must remain within the same vCenter instance for proper EKS-A operation. The vCenter Server managing the EKS-A cluster is specified in the `VSphereDatacenterConfig` section of the EKS-A cluster spec file, under the `spec.server` field and cannot be changed.
 
