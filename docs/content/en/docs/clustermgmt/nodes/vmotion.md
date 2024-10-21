@@ -12,7 +12,7 @@ aliases:
 
 VMware vMotion is a feature within vSphere that allows live migration of virtual machines (VMs) between ESXi hypervisor hosts. This document outlines the guidelines for using vMotion to migrate EKS Anywhere nodes between vSphere ESXi hosts using vMotion while ensuring cluster stability.
 
-#### Considerations for EKS-A Node Migration using vMotion
+### Considerations for node migration using vMotion
 
 When migrating EKS-A nodes with vMotion, several considerations must be kept in mind, particularly around configuration values defined in the [EKS-A vSphere cluster spec file](https://anywhere.eks.amazonaws.com/docs/getting-started/vsphere/vsphere-spec/). These configurations must remain unchanged during the migration and the infrastructure these configurations represent should also not change.
 
