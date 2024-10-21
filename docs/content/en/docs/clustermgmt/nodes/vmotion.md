@@ -43,7 +43,7 @@ EKS Anywhere nodes cannot be migrated between different vCenter environments usi
   The IP address, subnet mask, and default gateway of each EKS Anywhere node must remain unchanged during the vMotion process. Any modifications to the IP address configuration can cause communication failures between the EKS Anywhere nodes, pods, and the control plane, leading to disruptions in EKS Anywhere  cluster operations.
 
 
-5. **EKS-A Configuration Stabiltiy**
+* **EKS Anywhere configuration stabiltiy**
 
 EKS-A environment itself should remain unchanged during vmotion.  Do not perform or trigger any EKS-A changes or life cycle events while performing vmotion.
 
