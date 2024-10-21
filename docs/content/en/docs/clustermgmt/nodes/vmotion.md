@@ -30,7 +30,7 @@ EKS Anywhere nodes cannot be migrated between different vCenter environments usi
   * datacenter `(spec.datacenter)` - The datacenter specified in the EKS Anywhere cluster spec file must not change during the vMotion migration. This value refers to the vSphere datacenter that hosts the EKS Anywhere nodes.
 
 
-* network `(spec.network)` - The network defined in the EKS-A cluster spec file must not change during the vMotion migration. This value refers the vSphere network in which the EKS -A nodes are operating. Any changes to this network configuration would disrupt node connectivity and lead to outages in the EKS-A cluster.
+  * network `(spec.network)` - The network defined in the EKS Anywhere cluster spec file must not change during the vMotion migration. This value refers the vSphere network in which the EKS Anywhere nodes are operating. Any changes to this network configuration would disrupt node connectivity and lead to outages in the EKS Anywhere cluster.
 
 
 3.  **VMware Storage vMotion is not supported for EKS-A nodes**
