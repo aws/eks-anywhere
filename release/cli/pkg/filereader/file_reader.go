@@ -351,7 +351,8 @@ func ReadGitTag(projectPath, gitRootPath, branch string) (string, error) {
 		return "", fmt.Errorf("error getting current branch: %v", err)
 	}
 	if currentBranch != branch {
-		_, err = git.CheckoutRepo(gitRootPath, branch)
+		out, err := git.CheckoutRepo(gitRootPath, branch)
+		fmt.Println(out)
 		if err != nil {
 			return "", fmt.Errorf("error checking out repo: %v", err)
 		}
