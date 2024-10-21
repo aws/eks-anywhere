@@ -10,7 +10,7 @@ aliases:
 ## vMotion with EKS Anywhere
 
 
-EKS Anywhere (EKS-A) enables organizations to deploy and manage Kubernetes clusters on-premises, including in VMware vSphere environments. VMware vMotion is a feature within vSphere that allows live migration of virtual machines (VMs) between ESXi hypervisor hosts. This document outlines the guidelines for using vMotion to migrate EKS-A nodes between vSphere ESXi hosts using vMotion while ensuring cluster stability.
+VMware vMotion is a feature within vSphere that allows live migration of virtual machines (VMs) between ESXi hypervisor hosts. This document outlines the guidelines for using vMotion to migrate EKS Anywhere nodes between vSphere ESXi hosts using vMotion while ensuring cluster stability.
 
 #### Considerations for EKS-A Node Migration using vMotion
 
