@@ -59,7 +59,7 @@ EKS Anywhere nodes cannot be migrated between different vCenter environments usi
   * Use High-Speed Networks: A 10GbE or higher speed network is recommended to ensure smooth vMotion operations for EKS-A nodes, particularly those with large memory footprints.
 
 
-2. **Shared Storage**
+* **Shared Storage**
 
 Shared storage is a requirement for vmotion of EKS-A clusters.  Storage such as vSAN, Fiber Channel SAN, or NFS should be shared between the supporting vSphere ESXi hosts for maintaining access to the VM's backing data without relying on storage vMotion, which is not supported in EKS-A environments.
 
