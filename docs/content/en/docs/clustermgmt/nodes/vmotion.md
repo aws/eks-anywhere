@@ -48,7 +48,7 @@ EKS Anywhere nodes cannot be migrated between different vCenter environments usi
   The EKS Anywhere environment itself should remain unchanged during vmotion.  Do not perform or trigger any EKS Anywhere changes or life cycle events while performing vmotion.
 
 
-#### Best Practices for vMotion with EKS-A Clusters
+### Best practices for vMotion with EKS Anywhere clusters
 
 1. **Follow VMware vMotion Best Practices**
 
