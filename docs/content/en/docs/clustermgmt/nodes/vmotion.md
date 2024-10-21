@@ -50,7 +50,7 @@ EKS Anywhere nodes cannot be migrated between different vCenter environments usi
 
 ### Best practices for vMotion with EKS Anywhere clusters
 
-1. **Follow VMware vMotion Best Practices**
+* **Follow VMware vMotion best practices**
 
 Review VMware's general guidelines for optimal vMotion performance, such as ensuring sufficient CPU, memory, and network resources, and minimizing load on the ESXi hosts during the migration. Refer to the [VMware vMotion documentation](https://docs.vmware.com/) for details.
 
