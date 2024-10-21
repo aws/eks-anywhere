@@ -24,7 +24,7 @@ EKS Anywhere nodes cannot be migrated between different vCenter environments usi
 
 * **vSphere infrastructure settings in** `VSphereDatacenterConfig`
 
-In addition to the vCenter element, two additional elements defined in the `VSphereDatacenterConfig` section of the EKS-A cluster spec file are immutable must remain unchanged during the vMotion process:
+  In addition to the vCenter element, two additional elements defined in the `VSphereDatacenterConfig` section of the EKS Anywhere cluster spec file are immutable must remain unchanged during the vMotion process:
 
 
   * datacenter `(spec.datacenter)` - The datacenter specified in the EKS Anywhere cluster spec file must not change during the vMotion migration. This value refers to the vSphere datacenter that hosts the EKS Anywhere nodes.
