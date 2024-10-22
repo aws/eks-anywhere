@@ -66,7 +66,7 @@ When migrating EKS Anywhere nodes with vMotion, several considerations must be k
 
 * **Monitoring before and after migration**
 
-  To verify cluster health and node stability,  monitor the EKS-A nodes and pods before and after the vMotion migration:
+  To verify cluster health and node stability,  monitor the EKS Anywhere nodes and pods before and after the vMotion migration:
 
   * Before migration, run the following commands to check the current health and status of the EKS-A nodes and pods.
   * After vMotion activity is completed, run the commands again to verify that the nodes and pods are still operational and healthy.
