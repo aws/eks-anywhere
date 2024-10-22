@@ -45,7 +45,7 @@ EKS Anywhere nodes cannot be migrated between different vCenter environments usi
 
 * **EKS Anywhere configuration stabiltiy**
 
-  The EKS Anywhere environment itself should remain unchanged during vmotion.  Do not perform or trigger any EKS Anywhere changes or life cycle events while performing vmotion.
+  The EKS Anywhere environment itself should remain unchanged during vMotion.  Do not perform or trigger any EKS Anywhere changes or life cycle events while performing vmotion.
 
 
 ### Best practices for vMotion with EKS Anywhere clusters
@@ -69,12 +69,13 @@ EKS Anywhere nodes cannot be migrated between different vCenter environments usi
   To verify cluster health and node stability,  monitor the EKS-A nodes and pods before and after the vMotion migration:
 
   * Before migration, run the following commands to check the current health and status of the EKS-A nodes and pods.
+  * After vMotion activity is completed, run the commands again to verify that the nodes and pods are still operational and healthy.
 
+```
   kubectl get nodes
   kubectl get pods -a
 ```
 
-  * After vMotion activity is completed, run the command again to verify that the nodes and pods are still operational and healthy.
 
 
 * **Infrastructure maintenance during vMotion**
