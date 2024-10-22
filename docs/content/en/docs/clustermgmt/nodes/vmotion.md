@@ -56,7 +56,7 @@ When migrating EKS Anywhere nodes with vMotion, several considerations must be k
 
   * VMware vMotion Networking Best Practices: Whenever possible, follow the [Networking Best Practices for VMware vMotion](https://docs.vmware.com/en/VMware-vSphere/7.0/com.vmware.vsphere.vcenterhost.doc/GUID-7DAD15D4-7F41-4913-9F16-567289E22977.html) to optimize performance and reduce the risk of issues during the migration process.
 
-  * Use High-Speed Networks: A 10GbE or higher speed network is recommended to ensure smooth vMotion operations for EKS-A nodes, particularly those with large memory footprints.
+  * Use High-Speed Networks: A 10GbE or higher speed network is recommended to ensure smooth vMotion operations for EKS Anywhere nodes, particularly those with large memory footprints.
 
 
 * **Shared Storage**
