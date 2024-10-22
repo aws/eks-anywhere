@@ -61,7 +61,7 @@ When migrating EKS Anywhere nodes with vMotion, several considerations must be k
 
 * **Shared Storage**
 
-  Shared storage is a requirement for vmotion of EKS-A clusters.  Storage such as vSAN, Fiber Channel SAN, or NFS should be shared between the supporting vSphere ESXi hosts for maintaining access to the VM's backing data without relying on storage vMotion, which is not supported in EKS-A environments.
+  Shared storage is a requirement for vmotion of EKS Anywhere clusters.  Storage such as vSAN, Fiber Channel SAN, or NFS should be shared between the supporting vSphere ESXi hosts for maintaining access to the VM's backing data without relying on storage vMotion, which is not supported in EKS Anywhere environments.
 
 
 * **Monitoring before and after migration**
