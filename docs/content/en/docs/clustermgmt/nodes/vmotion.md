@@ -73,7 +73,6 @@ When migrating EKS Anywhere nodes with vMotion, several considerations must be k
 
   kubectl get nodes
   kubectl get pods -a
-```
 
 
 
