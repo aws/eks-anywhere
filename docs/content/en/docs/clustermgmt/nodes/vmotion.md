@@ -71,9 +71,11 @@ When migrating EKS Anywhere nodes with vMotion, several considerations must be k
   * Before migration, run the following commands to check the current health and status of the EKS Anywhere nodes and pods.
   * After vMotion activity is completed, run the commands again to verify that the nodes and pods are still operational and healthy.
 
+
+```
   kubectl get nodes
   kubectl get pods -a
-
+```
 
 
 * **Infrastructure maintenance during vMotion**
