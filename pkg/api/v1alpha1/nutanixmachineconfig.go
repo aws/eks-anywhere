@@ -10,7 +10,14 @@ import (
 // NutanixIdentifierType is an enumeration of different resource identifier types.
 type NutanixIdentifierType string
 
+// NutanixGPUIdentifierType is an enumeration of different GPU identifier types.
+type NutanixGPUIdentifierType string
+
 func (c NutanixIdentifierType) String() string {
+	return string(c)
+}
+
+func (c NutanixGPUIdentifierType) String() string {
 	return string(c)
 }
 
@@ -22,6 +29,11 @@ const (
 	NutanixIdentifierUUID NutanixIdentifierType = "uuid"
 	// NutanixIdentifierName is a resource identifier identifying the object by Name.
 	NutanixIdentifierName NutanixIdentifierType = "name"
+
+	// NutanixGPUIdentifierDeviceID is a GPU identifier identifying the object by DeviceID.
+	NutanixGPUIdentifierDeviceID NutanixGPUIdentifierType = "deviceID"
+	// NutanixGPUIdentifierName is a GPU identifier identifying the object by Name.
+	NutanixGPUIdentifierName NutanixGPUIdentifierType = "name"
 
 	defaultNutanixOSFamily         = Ubuntu
 	defaultNutanixSystemDiskSizeGi = "40Gi"
@@ -60,6 +72,22 @@ type NutanixCategoryIdentifier struct {
 	// value is the category value linked to the key in the Prism Central.
 	// +kubebuilder:validation:Required
 	Value string `json:"value,omitempty"`
+}
+
+// NutanixGPUIdentifier holds VM GPU device configuration.
+type NutanixGPUIdentifier struct {
+	// deviceID is the device ID of the GPU device.
+	// +optional
+	DeviceID *int64 `json:"deviceID,omitempty"`
+
+	// vendorID is the vendor ID of the GPU device.
+	// +optional
+	Name string `json:"name,omitempty"`
+
+	// type is the type of the GPU device.
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:Enum:=deviceID;name
+	Type NutanixGPUIdentifierType `json:"type"`
 }
 
 // NutanixMachineConfigGenerateOpt is a functional option that can be passed to NewNutanixMachineConfigGenerate to

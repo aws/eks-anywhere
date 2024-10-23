@@ -37,6 +37,8 @@ spec:
         uri: public.ecr.aws/l0g8r8j6/cert-manager/cert-manager-cainjector:v1.1.0-17655eca4c3db6708da08de4e04ea646d1cfd0c9
       controller:
         uri: public.ecr.aws/l0g8r8j6/cert-manager/cert-manager-controller:v1.1.0-17655eca4c3db6708da08de4e04ea646d1cfd0c9
+      startupapicheck:
+        uri: public.ecr.aws/l0g8r8j6/cert-manager/cert-manager-startupapicheck:v1.1.0-17655eca4c3db6708da08de4e04ea646d1cfd0c9
       webhook:
         uri: public.ecr.aws/l0g8r8j6/cert-manager/cert-manager-webhook:v1.1.0-17655eca4c3db6708da08de4e04ea646d1cfd0c9
     cilium:

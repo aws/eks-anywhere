@@ -116,7 +116,7 @@ sudo install -m 0755 ./kubectl /usr/local/bin/kubectl
          name: mgmt
       externalEtcdConfiguration:
          count: 1
-      kubernetesVersion: "1.28"
+      kubernetesVersion: "1.31"
       managementCluster:
          name: mgmt
       workerNodeGroupConfigurations:

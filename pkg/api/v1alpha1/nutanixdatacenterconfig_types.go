@@ -68,6 +68,10 @@ type NutanixDatacenterFailureDomain struct {
 	// Subnets holds the list of subnets identifiers cluster's network subnets.
 	// +kubebuilder:validation:Required
 	Subnets []NutanixResourceIdentifier `json:"subnets,omitempty"`
+
+	// Worker Machine Groups holds the list of worker machine group names that will use this failure domain.
+	// +optional
+	WorkerMachineGroups []string `json:"workerMachineGroups,omitempty"`
 }
 
 // NutanixDatacenterConfigStatus defines the observed state of NutanixDatacenterConfig.
@@ -165,7 +169,7 @@ func (in *NutanixDatacenterConfig) Validate() error {
 		}
 	}
 
-	if in.Spec.FailureDomains != nil && len(in.Spec.FailureDomains) != 0 {
+	if len(in.Spec.FailureDomains) != 0 {
 		dccName := in.Namespace + "/" + in.Name
 		validateClusterResourceIdentifier := createValidateNutanixResourceFunc("NutanixDatacenterConfig.Spec.FailureDomains.Cluster", "cluster", dccName)
 		validateSubnetResourceIdentifier := createValidateNutanixResourceFunc("NutanixDatacenterConfig.Spec.FailureDomains.Subnets", "subnet", dccName)

@@ -47,7 +47,7 @@ zip: clean build ## Create zip file of assets to upload
 	cd public && zip -r --quiet ../$(DOCS_ARCHIVE) ./
 
 deploy: zip ## Deploy docs to Amplify
-	bash ./deploy-docs.sh public.zip
+	bash ./scripts/deploy-docs.sh public.zip
 
 serve: submodule build ## Boot the development server.
 	hugo server --buildFuture --baseURL http://127.0.0.1
@@ -70,7 +70,8 @@ container-serve: ## Boot the development server using container. Run `make conta
 		--bind 0.0.0.0 \
 		--destination /tmp/hugo \
 		--cleanDestinationDir \
-		--baseURL http://0.0.0.0
+		--baseURL http://0.0.0.0 \
+		--enableGitInfo=false
 
 container-server: container-serve
 
@@ -82,3 +83,6 @@ compute-checksum: ## Compute docs checksum
 
 upload-checksum: compute-checksum ## Upload the checksum to artifacts bucket
 	aws s3 cp DOCS_CHECKSUM s3://$(ARTIFACTS_BUCKET) --acl public-read
+
+invalidate-docs-cdn:
+	scripts/invalidate_docs_cdn.sh

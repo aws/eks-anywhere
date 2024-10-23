@@ -30,6 +30,7 @@ const (
 	port              = "port"
 	addr              = "addr"
 	enabled           = "enabled"
+	kubevipInterface  = "interface"
 
 	boots      = "boots"
 	smee       = "smee"
@@ -76,21 +77,29 @@ type StackInstaller interface {
 }
 
 type Installer struct {
-	docker         Docker
-	filewriter     filewriter.FileWriter
-	helm           Helm
-	podCidrRange   string
-	registryMirror *registrymirror.RegistryMirror
-	proxyConfig    *v1alpha1.ProxyConfiguration
-	namespace      string
-	bootsOnDocker  bool
-	hostNetwork    bool
-	loadBalancer   bool
-	stackService   bool
-	dhcpRelay      bool
+	docker                Docker
+	filewriter            filewriter.FileWriter
+	helm                  Helm
+	podCidrRange          string
+	registryMirror        *registrymirror.RegistryMirror
+	proxyConfig           *v1alpha1.ProxyConfiguration
+	namespace             string
+	loadBalancerInterface string
+	bootsOnDocker         bool
+	hostNetwork           bool
+	loadBalancer          bool
+	stackService          bool
+	dhcpRelay             bool
 }
 
 type InstallOption func(s *Installer)
+
+// WithLoadBalancerInterface is an InstallOption that allows you to configure load balancer interface for the tinkerbell stack.
+func WithLoadBalancerInterface(loadBalancerInterface string) InstallOption {
+	return func(s *Installer) {
+		s.loadBalancerInterface = loadBalancerInterface
+	}
+}
 
 // WithBootsOnDocker is an InstallOption to run Boots as a Docker container.
 func WithBootsOnDocker() InstallOption {
@@ -141,7 +150,7 @@ func (s *Installer) AddNoProxyIP(IP string) {
 }
 
 // NewInstaller returns a Tinkerbell StackInstaller which can be used to install or uninstall the Tinkerbell stack.
-func NewInstaller(docker Docker, filewriter filewriter.FileWriter, helm Helm, namespace string, podCidrRange string, registryMirror *registrymirror.RegistryMirror, proxyConfig *v1alpha1.ProxyConfiguration) StackInstaller {
+func NewInstaller(docker Docker, filewriter filewriter.FileWriter, helm Helm, namespace, podCidrRange string, registryMirror *registrymirror.RegistryMirror, proxyConfig *v1alpha1.ProxyConfiguration) StackInstaller {
 	return &Installer{
 		docker:         docker,
 		filewriter:     filewriter,
@@ -177,7 +186,7 @@ func (s *Installer) Install(ctx context.Context, bundle releasev1alpha1.Tinkerbe
 		return fmt.Errorf("parsing hookOverride: %v", err)
 	}
 
-	valuesMap := s.createValuesOverride(bundle, bootEnv, tinkerbellIP, osiePath)
+	valuesMap := s.createValuesOverride(bundle, bootEnv, tinkerbellIP, s.loadBalancerInterface, osiePath)
 
 	values, err := yaml.Marshal(valuesMap)
 	if err != nil {
@@ -387,7 +396,7 @@ func (s *Installer) Upgrade(ctx context.Context, bundle releasev1alpha1.Tinkerbe
 		return fmt.Errorf("parsing hookOverride: %v", err)
 	}
 
-	valuesMap := s.createValuesOverride(bundle, bootEnv, tinkerbellIP, osiePath)
+	valuesMap := s.createValuesOverride(bundle, bootEnv, tinkerbellIP, s.loadBalancerInterface, osiePath)
 
 	values, err := yaml.Marshal(valuesMap)
 	if err != nil {
@@ -522,7 +531,7 @@ func (s *Installer) HasLegacyChart(ctx context.Context, bundle releasev1alpha1.T
 }
 
 // createValuesOverride generates the values override file to send to helm.
-func (s *Installer) createValuesOverride(bundle releasev1alpha1.TinkerbellBundle, bootEnv []string, tinkerbellIP string, osiePath *url.URL) map[string]interface{} {
+func (s *Installer) createValuesOverride(bundle releasev1alpha1.TinkerbellBundle, bootEnv []string, tinkerbellIP, loadBalancerInterface string, osiePath *url.URL) map[string]interface{} {
 	valuesMap := map[string]interface{}{
 		tink: map[string]interface{}{
 			controller: map[string]interface{}{
@@ -604,6 +613,10 @@ func (s *Installer) createValuesOverride(bundle releasev1alpha1.TinkerbellBundle
 			"loadBalancerIP": tinkerbellIP,
 			"hostNetwork":    s.hostNetwork,
 		},
+	}
+
+	if loadBalancerInterface != "" {
+		valuesMap[stack].(map[string]interface{})[kubevip].(map[string]interface{})[kubevipInterface] = loadBalancerInterface
 	}
 
 	return valuesMap

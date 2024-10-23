@@ -312,13 +312,13 @@ func TestNutanixProviderSetupAndValidateCreate(t *testing.T) {
 			name:            "cluster config with unsupported upgrade strategy configuration for cp",
 			clusterConfFile: "testdata/cluster_nutanix_with_upgrade_strategy_cp.yaml",
 			expectErr:       true,
-			expectErrStr:    "failed setup and validations: Upgrade rollout strategy customization is not supported for nutanix provider",
+			expectErrStr:    "failed setup and validations: upgrade rollout strategy customization is not supported for nutanix provider",
 		},
 		{
 			name:            "cluster config with unsupported upgrade strategy configuration for md",
 			clusterConfFile: "testdata/cluster_nutanix_with_upgrade_strategy_md.yaml",
 			expectErr:       true,
-			expectErrStr:    "failed setup and validations: Upgrade rollout strategy customization is not supported for nutanix provider",
+			expectErrStr:    "failed setup and validations: upgrade rollout strategy customization is not supported for nutanix provider",
 		},
 	}
 
@@ -418,6 +418,7 @@ func TestNutanixProviderSetupAndValidateCreate(t *testing.T) {
 		},
 	}
 	mockClient.EXPECT().ListImage(gomock.Any(), gomock.Any()).Return(images, nil).AnyTimes()
+	mockClient.EXPECT().ListAllHost(gomock.Any()).Return(fakeHostList(), nil).AnyTimes()
 	mockCertValidator := mockCrypto.NewMockTlsValidator(ctrl)
 	mockCertValidator.EXPECT().ValidateCert(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
 	mockCertValidator.EXPECT().ValidateCert(gomock.Any(), gomock.Any(), gomock.Any()).Return(errors.New("invalid cert"))
@@ -507,13 +508,13 @@ func TestNutanixProviderSetupAndValidateDeleteCluster(t *testing.T) {
 			name:            "cluster config with unsupported upgrade strategy configuration for cp",
 			clusterConfFile: "testdata/cluster_nutanix_with_upgrade_strategy_cp.yaml",
 			expectErr:       true,
-			expectErrStr:    "failed setup and validations: Upgrade rollout strategy customization is not supported for nutanix provider",
+			expectErrStr:    "failed setup and validations: upgrade rollout strategy customization is not supported for nutanix provider",
 		},
 		{
 			name:            "cluster config with unsupported upgrade strategy configuration for md",
 			clusterConfFile: "testdata/cluster_nutanix_with_upgrade_strategy_md.yaml",
 			expectErr:       true,
-			expectErrStr:    "failed setup and validations: Upgrade rollout strategy customization is not supported for nutanix provider",
+			expectErrStr:    "failed setup and validations: upgrade rollout strategy customization is not supported for nutanix provider",
 		},
 	}
 
@@ -559,13 +560,13 @@ func TestNutanixProviderSetupAndValidateUpgradeCluster(t *testing.T) {
 			name:            "cluster config with unsupported upgrade strategy configuration for cp",
 			clusterConfFile: "testdata/cluster_nutanix_with_upgrade_strategy_cp.yaml",
 			expectErr:       true,
-			expectErrStr:    "failed setup and validations: Upgrade rollout strategy customization is not supported for nutanix provider",
+			expectErrStr:    "failed setup and validations: upgrade rollout strategy customization is not supported for nutanix provider",
 		},
 		{
 			name:            "cluster config with unsupported upgrade strategy configuration for md",
 			clusterConfFile: "testdata/cluster_nutanix_with_upgrade_strategy_md.yaml",
 			expectErr:       true,
-			expectErrStr:    "failed setup and validations: Upgrade rollout strategy customization is not supported for nutanix provider",
+			expectErrStr:    "failed setup and validations: upgrade rollout strategy customization is not supported for nutanix provider",
 		},
 	}
 

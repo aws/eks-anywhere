@@ -8,6 +8,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/diagnostics"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
@@ -22,6 +23,7 @@ type createSupportBundleOptions struct {
 	bundleConfig          string
 	hardwareFileName      string
 	tinkerbellBootstrapIP string
+	bundlesManifest       string
 }
 
 var csbo = &createSupportBundleOptions{}
@@ -36,7 +38,7 @@ var supportbundleCmd = &cobra.Command{
 		if err := csbo.validate(cmd.Context()); err != nil {
 			return err
 		}
-		if err := csbo.createBundle(cmd.Context(), csbo.since, csbo.sinceTime, csbo.bundleConfig); err != nil {
+		if err := csbo.createBundle(cmd.Context(), csbo.since, csbo.sinceTime, csbo.bundleConfig, csbo.bundlesManifest); err != nil {
 			return fmt.Errorf("failed to create support bundle: %v", err)
 		}
 		return nil
@@ -50,6 +52,7 @@ func init() {
 	supportbundleCmd.Flags().StringVarP(&csbo.bundleConfig, "bundle-config", "", "", "Bundle Config file to use when generating support bundle")
 	supportbundleCmd.Flags().StringVarP(&csbo.fileName, "filename", "f", "", "Filename that contains EKS-A cluster configuration")
 	supportbundleCmd.Flags().StringVarP(&csbo.wConfig, "w-config", "w", "", "Kubeconfig file to use when creating support bundle for a workload cluster")
+	supportbundleCmd.Flags().StringVarP(&csbo.bundlesManifest, "bundles-manifest", "", "", "Bundles manifest to use when generating support bundle (required for generating support bundle in airgap environment)")
 	err := supportbundleCmd.MarkFlagRequired("filename")
 	if err != nil {
 		log.Fatalf("Error marking flag as required: %v", err)
@@ -70,8 +73,12 @@ func (csbo *createSupportBundleOptions) validate(ctx context.Context) error {
 	return nil
 }
 
-func (csbo *createSupportBundleOptions) createBundle(ctx context.Context, since, sinceTime, bundleConfig string) error {
-	clusterSpec, err := readAndValidateClusterSpec(csbo.fileName, version.Get())
+func (csbo *createSupportBundleOptions) createBundle(ctx context.Context, since, sinceTime, bundleConfig string, bundlesManifest string) error {
+	var opts []cluster.FileSpecBuilderOpt
+	if bundlesManifest != "" {
+		opts = append(opts, cluster.WithOverrideBundlesManifest(bundlesManifest))
+	}
+	clusterSpec, err := readAndValidateClusterSpec(csbo.fileName, version.Get(), opts...)
 	if err != nil {
 		return fmt.Errorf("unable to get cluster config from file: %v", err)
 	}

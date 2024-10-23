@@ -24,6 +24,8 @@ type TinkerbellDatacenterConfigSpec struct {
 	// SkipLoadBalancerDeployment when set to "true" can be used to skip deploying a load balancer to expose Tinkerbell stack.
 	// Users will need to deploy and configure a load balancer manually after the cluster is created.
 	SkipLoadBalancerDeployment bool `json:"skipLoadBalancerDeployment,omitempty"`
+	// LoadBalancerInterface can be used to configure a load balancer interface for the Tinkerbell stack.
+	LoadBalancerInterface string `json:"loadBalancerInterface,omitempty"`
 }
 
 // TinkerbellDatacenterConfigStatus defines the observed state of TinkerbellDatacenterConfig
