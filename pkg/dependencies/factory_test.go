@@ -31,6 +31,7 @@ type factoryTest struct {
 	ctx                   context.Context
 	hardwareConfigFile    string
 	tinkerbellBootstrapIP string
+	smeeBindIP            string
 	cliConfig             config.CliConfig
 	createCLIConfig       config.CreateClusterCLIConfig
 	upgradeCLIConfig      config.UpgradeClusterCLIConfig
@@ -62,6 +63,7 @@ func newTest(t *testing.T, p provider) *factoryTest {
 		deleteCLIConfig: config.DeleteClusterCLIConfig{
 			ClusterNamespace: "test-ns",
 		},
+		smeeBindIP: "192.168.0.50",
 	}
 
 	switch p {
@@ -159,7 +161,7 @@ func TestFactoryBuildWithProvidervSphere(t *testing.T) {
 	tt := newTest(t, vsphere)
 	deps, err := dependencies.NewFactory().
 		WithLocalExecutables().
-		WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, tt.hardwareConfigFile, false, tt.tinkerbellBootstrapIP, map[string]bool{}, tt.providerOptions).
+		WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, tt.hardwareConfigFile, false, tt.tinkerbellBootstrapIP, tt.smeeBindIP, map[string]bool{}, tt.providerOptions).
 		Build(context.Background())
 
 	tt.Expect(err).To(BeNil())
@@ -171,7 +173,7 @@ func TestFactoryBuildWithProviderTinkerbell(t *testing.T) {
 	tt := newTest(t, tinkerbell)
 	deps, err := dependencies.NewFactory().
 		WithLocalExecutables().
-		WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, tt.hardwareConfigFile, false, tt.tinkerbellBootstrapIP, map[string]bool{}, tt.providerOptions).
+		WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, tt.hardwareConfigFile, false, tt.tinkerbellBootstrapIP, tt.smeeBindIP, map[string]bool{}, tt.providerOptions).
 		Build(context.Background())
 
 	tt.Expect(err).To(BeNil())
@@ -187,7 +189,7 @@ func TestFactoryBuildWithProviderSnow(t *testing.T) {
 
 	deps, err := dependencies.NewFactory().
 		WithLocalExecutables().
-		WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, tt.hardwareConfigFile, false, tt.tinkerbellBootstrapIP, map[string]bool{}, tt.providerOptions).
+		WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, tt.hardwareConfigFile, false, tt.tinkerbellBootstrapIP, tt.smeeBindIP, map[string]bool{}, tt.providerOptions).
 		Build(context.Background())
 
 	tt.Expect(err).To(BeNil())
@@ -220,7 +222,7 @@ func TestFactoryBuildWithProviderNutanix(t *testing.T) {
 
 		deps, err := dependencies.NewFactory().
 			WithLocalExecutables().
-			WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, tt.hardwareConfigFile, false, tt.tinkerbellBootstrapIP, map[string]bool{}, tt.providerOptions).
+			WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, tt.hardwareConfigFile, false, tt.tinkerbellBootstrapIP, tt.smeeBindIP, map[string]bool{}, tt.providerOptions).
 			WithNutanixValidator().
 			Build(context.Background())
 
@@ -241,7 +243,7 @@ func TestFactoryBuildWithInvalidProvider(t *testing.T) {
 
 	deps, err := dependencies.NewFactory().
 		WithLocalExecutables().
-		WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, tt.hardwareConfigFile, false, tt.tinkerbellBootstrapIP, map[string]bool{}, tt.providerOptions).
+		WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, tt.hardwareConfigFile, false, tt.tinkerbellBootstrapIP, tt.smeeBindIP, map[string]bool{}, tt.providerOptions).
 		Build(context.Background())
 
 	tt.Expect(err).NotTo(BeNil())
@@ -306,7 +308,7 @@ func TestFactoryBuildWithMultipleDependencies(t *testing.T) {
 		WithBootstrapper().
 		WithCliConfig(&tt.cliConfig).
 		WithClusterManager(tt.clusterSpec.Cluster, timeoutOpts).
-		WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, tt.hardwareConfigFile, false, tt.tinkerbellBootstrapIP, map[string]bool{}, tt.providerOptions).
+		WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, tt.hardwareConfigFile, false, tt.tinkerbellBootstrapIP, tt.smeeBindIP, map[string]bool{}, tt.providerOptions).
 		WithGitOpsFlux(tt.clusterSpec.Cluster, tt.clusterSpec.FluxConfig, nil).
 		WithWriter().
 		WithEksdInstaller().

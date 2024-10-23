@@ -717,6 +717,7 @@ func (t *PreCoreComponentsUpgradeTestConfig) GetProvider() (*Provider, error) {
 		test.FakeNow,
 		false,
 		false,
+        smeeBindIp,
 	)
 	if err != nil {
 		return nil, err
@@ -742,6 +743,7 @@ func newTinkerbellProvider(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig
 		test.FakeNow,
 		forceCleanup,
 		false,
+        smeeBindIp,
 	)
 	if err != nil {
 		panic(err)

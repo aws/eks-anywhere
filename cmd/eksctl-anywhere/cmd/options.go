@@ -291,7 +291,6 @@ func buildCreateCliConfig(clusterOptions *createClusterOptions) (*config.CreateC
 	createCliConfig.UnhealthyMachineTimeout = unhealthyMachineTimeout
 	createCliConfig.MaxUnhealthy = intstr.Parse(constants.DefaultMaxUnhealthy)
 	createCliConfig.WorkerMaxUnhealthy = intstr.Parse(constants.DefaultWorkerMaxUnhealthy)
-
 	return createCliConfig, nil
 }
 
