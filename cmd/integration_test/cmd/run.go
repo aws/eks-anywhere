@@ -18,7 +18,6 @@ const (
 	jobIdFlagName              = "job-id"
 	instanceProfileFlagName    = "instance-profile-name"
 	regexFlagName              = "regex"
-	maxInstancesFlagName       = "max-instances"
 	maxConcurrentTestsFlagName = "max-concurrent-tests"
 	skipFlagName               = "skip"
 	bundlesOverrideFlagName    = "bundles-override"
@@ -62,7 +61,6 @@ func init() {
 	runE2ECmd.Flags().StringP(jobIdFlagName, "j", "", "Id of the job being run")
 	runE2ECmd.Flags().StringP(instanceProfileFlagName, "i", "", "IAM instance profile name to attach to ssm instances")
 	runE2ECmd.Flags().StringP(regexFlagName, "r", "", "Run only those tests and examples matching the regular expression. Equivalent to go test -run")
-	runE2ECmd.Flags().IntP(maxInstancesFlagName, "m", 1, "Run tests in parallel on same instance within the max EC2 instance count")
 	runE2ECmd.Flags().IntP(maxConcurrentTestsFlagName, "p", 1, "Maximum number of parallel tests that can be run at a time")
 	runE2ECmd.Flags().StringSlice(skipFlagName, nil, "List of tests to skip")
 	runE2ECmd.Flags().Bool(bundlesOverrideFlagName, false, "Flag to indicate if the tests should run with a bundles override")
@@ -84,7 +82,6 @@ func runE2E(ctx context.Context) error {
 	jobId := viper.GetString(jobIdFlagName)
 	instanceProfileName := viper.GetString(instanceProfileFlagName)
 	testRegex := viper.GetString(regexFlagName)
-	maxInstances := viper.GetInt(maxInstancesFlagName)
 	maxConcurrentTests := viper.GetInt(maxConcurrentTestsFlagName)
 	testsToSkip := viper.GetStringSlice(skipFlagName)
 	bundlesOverride := viper.GetBool(bundlesOverrideFlagName)
@@ -94,7 +91,6 @@ func runE2E(ctx context.Context) error {
 	baremetalBranchName := viper.GetString(baremetalBranchFlagName)
 
 	runConf := e2e.ParallelRunConf{
-		MaxInstances:           maxInstances,
 		MaxConcurrentTests:     maxConcurrentTests,
 		InstanceProfileName:    instanceProfileName,
 		StorageBucket:          storageBucket,

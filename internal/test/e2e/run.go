@@ -40,7 +40,6 @@ const (
 
 type ParallelRunConf struct {
 	TestInstanceConfigFile string
-	MaxInstances           int
 	MaxConcurrentTests     int
 	InstanceProfileName    string
 	StorageBucket          string
@@ -351,11 +350,6 @@ func (e *E2ESession) commandWithEnvVars(command string) string {
 }
 
 func splitTests(testsList []string, conf ParallelRunConf) ([]instanceRunConf, error) {
-	testPerInstance := len(testsList) / conf.MaxInstances
-	if testPerInstance == 0 {
-		testPerInstance = 1
-	}
-
 	vsphereTestsRe := regexp.MustCompile(vsphereRegex)
 	tinkerbellTestsRe := regexp.MustCompile(tinkerbellTestsRe)
 	cloudstackTestRe := regexp.MustCompile(cloudstackRegex)
@@ -363,7 +357,7 @@ func splitTests(testsList []string, conf ParallelRunConf) ([]instanceRunConf, er
 	privateNetworkTestsRe := regexp.MustCompile(`^.*(Proxy|RegistryMirror).*$`)
 	multiClusterTestsRe := regexp.MustCompile(`^.*Multicluster.*$`)
 
-	runConfs := make([]instanceRunConf, 0, conf.MaxInstances)
+	runConfs := make([]instanceRunConf, 0, conf.MaxConcurrentTests)
 	vsphereIPMan := newE2EIPManager(conf.Logger, os.Getenv(vsphereCidrVar))
 	vspherePrivateIPMan := newE2EIPManager(conf.Logger, os.Getenv(vspherePrivateNetworkCidrVar))
 	cloudstackIPMan := newE2EIPManager(conf.Logger, os.Getenv(cloudstackCidrVar))
@@ -379,13 +373,10 @@ func splitTests(testsList []string, conf ParallelRunConf) ([]instanceRunConf, er
 		return nil, fmt.Errorf("creating test runner config for tests: %v", err)
 	}
 
-	testsInEC2Instance := make([]string, 0, testPerInstance)
-	for i, testName := range testsList {
+	for _, testName := range testsList {
 		if tinkerbellTestsRe.MatchString(testName) {
 			continue
 		}
-
-		testsInEC2Instance = append(testsInEC2Instance, testName)
 		multiClusterTest := multiClusterTestsRe.MatchString(testName)
 
 		var ips networkutils.IPPool
@@ -413,10 +404,7 @@ func splitTests(testsList []string, conf ParallelRunConf) ([]instanceRunConf, er
 			}
 		}
 
-		if len(testsInEC2Instance) == testPerInstance || (len(testsList)-1) == i {
-			runConfs = append(runConfs, newInstanceRunConf(awsSession, conf, len(runConfs), strings.Join(testsInEC2Instance, "|"), ips, []*api.Hardware{}, 0, false, Ec2TestRunnerType, testRunnerConfig))
-			testsInEC2Instance = make([]string, 0, testPerInstance)
-		}
+		runConfs = append(runConfs, newInstanceRunConf(awsSession, conf, len(runConfs), testName, ips, []*api.Hardware{}, 0, false, Ec2TestRunnerType, testRunnerConfig))
 	}
 
 	if strings.EqualFold(conf.BranchName, conf.BaremetalBranchName) {
@@ -438,7 +426,7 @@ func splitTests(testsList []string, conf ParallelRunConf) ([]instanceRunConf, er
 //nolint:gocyclo // This legacy function is complex but the team too busy to simplify it
 func appendNonAirgappedTinkerbellRunConfs(awsSession *session.Session, testsList []string, conf ParallelRunConf, testRunnerConfig *TestInfraConfig, runConfs []instanceRunConf, ipManager *E2EIPManager) ([]instanceRunConf, error) {
 	nonAirgappedTinkerbellTests := getTinkerbellNonAirgappedTests(testsList)
-	conf.Logger.V(1).Info("INFO:", "tinkerbellTests", len(nonAirgappedTinkerbellTests), "MaxInstances", conf.MaxInstances, "ConcurrentInstances", conf.MaxConcurrentTests)
+	conf.Logger.V(1).Info("INFO:", "tinkerbellTests", len(nonAirgappedTinkerbellTests), "ConcurrentInstances", conf.MaxConcurrentTests)
 
 	nonAirgappedTinkerbellTestsWithCount, err := getTinkerbellTestsWithCount(nonAirgappedTinkerbellTests, conf)
 	if err != nil {
@@ -470,22 +458,14 @@ func appendAirgappedTinkerbellRunConfs(awsSession *session.Session, testsList []
 		return runConfs, nil
 	}
 	conf.Logger.V(1).Info("INFO:", "tinkerbellAirGappedTests", len(airgappedTinkerbellTests))
-	testPerInstance := len(airgappedTinkerbellTests) / conf.MaxInstances
-	if testPerInstance == 0 {
-		testPerInstance = 1
-	}
-	testsInVSphereInstance := make([]string, 0, testPerInstance)
+
 	airgappedTinkerbellTestsWithCount, err := getTinkerbellTestsWithCount(airgappedTinkerbellTests, conf)
 	if err != nil {
 		return nil, err
 	}
-	for i, test := range airgappedTinkerbellTestsWithCount {
-		testsInVSphereInstance = append(testsInVSphereInstance, test.Name)
+	for _, test := range airgappedTinkerbellTestsWithCount {
 		ipPool := ipManager.reserveIPPool(tinkerbellIPPoolSize)
-		if len(testsInVSphereInstance) == testPerInstance || (len(testsList)-1) == i {
-			runConfs = append(runConfs, newInstanceRunConf(awsSession, conf, len(runConfs), strings.Join(testsInVSphereInstance, "|"), ipPool, []*api.Hardware{}, test.Count, true, VSphereTestRunnerType, testRunnerConfig))
-			testsInVSphereInstance = make([]string, 0, testPerInstance)
-		}
+		runConfs = append(runConfs, newInstanceRunConf(awsSession, conf, len(runConfs), test.Name, ipPool, []*api.Hardware{}, test.Count, true, VSphereTestRunnerType, testRunnerConfig))
 	}
 
 	return runConfs, nil
