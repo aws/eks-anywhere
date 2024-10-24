@@ -438,23 +438,25 @@ func splitTests(testsList []string, conf ParallelRunConf) ([]instanceRunConf, er
 //nolint:gocyclo // This legacy function is complex but the team too busy to simplify it
 func appendNonAirgappedTinkerbellRunConfs(awsSession *session.Session, testsList []string, conf ParallelRunConf, testRunnerConfig *TestInfraConfig, runConfs []instanceRunConf, ipManager *E2EIPManager) ([]instanceRunConf, error) {
 	nonAirgappedTinkerbellTests := getTinkerbellNonAirgappedTests(testsList)
-	conf.Logger.V(1).Info("INFO:", "tinkerbellTests", len(nonAirgappedTinkerbellTests))
+	conf.Logger.V(1).Info("INFO:", "tinkerbellTests", len(nonAirgappedTinkerbellTests), "MaxInstances", conf.MaxInstances, "ConcurrentInstances", conf.MaxConcurrentTests)
 
-	testPerInstance := len(nonAirgappedTinkerbellTests) / conf.MaxInstances
-	if testPerInstance == 0 {
-		testPerInstance = 1
-	}
-	testsInVSphereInstance := make([]string, 0, testPerInstance)
 	nonAirgappedTinkerbellTestsWithCount, err := getTinkerbellTestsWithCount(nonAirgappedTinkerbellTests, conf)
 	if err != nil {
 		return nil, err
 	}
-	for i, test := range nonAirgappedTinkerbellTestsWithCount {
-		testsInVSphereInstance = append(testsInVSphereInstance, test.Name)
+	end := len(nonAirgappedTinkerbellTestsWithCount) - 1
+	for start := range nonAirgappedTinkerbellTestsWithCount {
+		if start > end/2 {
+			break
+		}
 		ipPool := ipManager.reserveIPPool(tinkerbellIPPoolSize)
-		if len(testsInVSphereInstance) == testPerInstance || (len(testsList)-1) == i {
-			runConfs = append(runConfs, newInstanceRunConf(awsSession, conf, len(runConfs), strings.Join(testsInVSphereInstance, "|"), ipPool, []*api.Hardware{}, test.Count, false, VSphereTestRunnerType, testRunnerConfig))
-			testsInVSphereInstance = make([]string, 0, testPerInstance)
+		runConfs = append(runConfs, newInstanceRunConf(awsSession, conf, len(runConfs), nonAirgappedTinkerbellTestsWithCount[start].Name, ipPool, []*api.Hardware{}, nonAirgappedTinkerbellTestsWithCount[start].Count, false, VSphereTestRunnerType, testRunnerConfig))
+
+		// Pop from both ends to run a longer count tests and shorter count tests together
+		// to efficiently use the available hardware.
+		if end-start > start {
+			ipPool := ipManager.reserveIPPool(tinkerbellIPPoolSize)
+			runConfs = append(runConfs, newInstanceRunConf(awsSession, conf, len(runConfs), nonAirgappedTinkerbellTestsWithCount[end-start].Name, ipPool, []*api.Hardware{}, nonAirgappedTinkerbellTestsWithCount[end-start].Count, false, VSphereTestRunnerType, testRunnerConfig))
 		}
 	}
 
