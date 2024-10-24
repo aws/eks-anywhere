@@ -219,6 +219,13 @@ func RunTests(conf instanceRunConf, inventoryCatalogue map[string]*hardwareCatal
 		} else {
 			hardwareCatalogue = inventoryCatalogue[nonAirgappedHardware]
 		}
+		conf.Logger.Info("Shuffling hardware inventory for tinkerbell")
+		// shuffle hardware to introduce randomness during hardware reservation.
+		// we do not want quick e2e runs to always pick the first few available hardware from the list and over-populate the boot entries
+		// this will quickly break the booting process as the hardware runs out of boot space to store these entries.
+		// randomly picking the hardware will distribute the boot entries across these hardware during each run
+		// ideally for long term we want a clear cleanup of the boot entries in the hardware
+		hardwareCatalogue.shuffleHardware()
 		err = reserveTinkerbellHardware(&conf, hardwareCatalogue)
 		if err != nil {
 			return "", nil, err
