@@ -71,7 +71,6 @@ type Provider struct {
 	forceCleanup bool
 	skipIpCheck  bool
 	retrier      *retrier.Retrier
-	smeeBindIp   string
 }
 
 type ProviderKubectlClient interface {
@@ -117,7 +116,6 @@ func NewProvider(
 	now types.NowFunc,
 	forceCleanup bool,
 	skipIpCheck bool,
-	smeeBindIp string,
 ) (*Provider, error) {
 	var controlPlaneMachineSpec, workerNodeGroupMachineSpec, etcdMachineSpec *v1alpha1.TinkerbellMachineConfigSpec
 
@@ -193,7 +191,6 @@ func NewProvider(
 		// Behavioral flags.
 		forceCleanup: forceCleanup,
 		skipIpCheck:  skipIpCheck,
-		smeeBindIp:   smeeBindIp,
 	}, nil
 }
 

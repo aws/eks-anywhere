@@ -117,7 +117,6 @@ func TestTinkerbellStackInstallWithDifferentOptions(t *testing.T) {
 	stackTests := []struct {
 		name              string
 		hookImageOverride string
-        smeeBindIp        string
 		expectedFile      string
 		installOnDocker   bool
 		registryMirror    *registrymirror.RegistryMirror
@@ -128,13 +127,6 @@ func TestTinkerbellStackInstallWithDifferentOptions(t *testing.T) {
 			name:            "with_boots_on_docker",
 			expectedFile:    "testdata/expected_with_boots_on_docker.yaml",
 			installOnDocker: true,
-			opts:            []stack.InstallOption{stack.WithBootsOnDocker()},
-		},
-		{
-			name:            "with_boots_on_docker_smee_ip_provided",
-			expectedFile:    "testdata/expected_with_boots_on_docker.yaml",
-			installOnDocker: true,
-            smeeBindIp:      "192.168.0.50",
 			opts:            []stack.InstallOption{stack.WithBootsOnDocker()},
 		},
 		{
@@ -244,33 +236,7 @@ func TestTinkerbellStackInstallWithDifferentOptions(t *testing.T) {
 					"-e", gomock.Any(),
 					"-e", gomock.Any(),
 					"-e", gomock.Any(),
-				).AnyTimes()
-			}
-
-			if stackTest.installOnDocker && stackTest.smeeBindIp != "" {
-				docker.EXPECT().Run(ctx, "public.ecr.aws/eks-anywhere/boots:latest",
-					boots,
-					[]string{
-						"-backend-kube-config", "/kubeconfig",
-						"-dhcp-addr", "0.0.0.0:67",
-						"-osie-url", "https://anywhere-assests.eks.amazonaws.com/tinkerbell/hook",
-						"-tink-server", "1.2.3.4:42113",
-						"--syslog-addr", fmt.Sprintf("%s:514", stackTest.smeeBindIp),
-						"--tftp-addr", fmt.Sprintf("%s:69", stackTest.smeeBindIp),
-						"--http-addr", fmt.Sprintf("%s:80", stackTest.smeeBindIp),
-						"--dhcp-ip-for-packet", fmt.Sprintf("%s", stackTest.smeeBindIp),
-						"--dhcp-syslog-ip", fmt.Sprintf("%s", stackTest.smeeBindIp),
-						"--dhcp-tftp-ip", fmt.Sprintf("%s:69", stackTest.smeeBindIp),
-						"--dhcp-http-ipxe-binary-url", fmt.Sprintf("http://%s:8080/ipxe/", stackTest.smeeBindIp),
-						"--dhcp-http-ipxe-script-url", fmt.Sprintf("http://%s/auto.ipxe", stackTest.smeeBindIp),
-					},
-					"-v", gomock.Any(),
-					"--network", "host",
-					"-e", gomock.Any(),
-					"-e", gomock.Any(),
-					"-e", gomock.Any(),
-					"-e", gomock.Any(),
-				).AnyTimes()
+				)
 			}
 
 			if err := s.Install(
@@ -279,7 +245,6 @@ func TestTinkerbellStackInstallWithDifferentOptions(t *testing.T) {
 				testIP,
 				cluster.KubeconfigFile,
 				stackTest.hookImageOverride,
-                stackTest.smeeBindIp,
 				stackTest.opts...,
 			); err != nil {
 				t.Fatalf("failed to install Tinkerbell stack: %v", err)

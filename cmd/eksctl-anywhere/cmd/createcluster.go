@@ -36,7 +36,6 @@ type createClusterOptions struct {
 	installPackages       string
 	skipValidations       []string
 	providerOptions       *dependencies.ProviderOptions
-	smeeBindIp            string
 }
 
 var cc = &createClusterOptions{
@@ -68,7 +67,6 @@ func init() {
 	hideForceCleanup(createClusterCmd.Flags())
 	createClusterCmd.Flags().BoolVar(&cc.skipIpCheck, "skip-ip-check", false, "Skip check for whether cluster control plane ip is in use")
 	createClusterCmd.Flags().StringVar(&cc.installPackages, "install-packages", "", "Location of curated packages configuration files to install to the cluster")
-	createClusterCmd.Flags().StringVar(&cc.smeeBindIp, "smee-bind-ip", "", "IP of the interface on which smee will bind it's services")
 	createClusterCmd.Flags().StringArrayVar(&cc.skipValidations, "skip-validations", []string{}, fmt.Sprintf("Bypass create validations by name. Valid arguments you can pass are --skip-validations=%s", strings.Join(createvalidations.SkippableValidations[:], ",")))
 	tinkerbellFlags(createClusterCmd.Flags(), cc.providerOptions.Tinkerbell.BMCOptions.RPC)
 
@@ -183,7 +181,7 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 		WithBootstrapper().
 		WithCliConfig(cliConfig).
 		WithClusterManager(clusterSpec.Cluster, clusterManagerTimeoutOpts).
-		WithProvider(cc.fileName, clusterSpec.Cluster, cc.skipIpCheck, cc.hardwareCSVPath, cc.forceClean, cc.tinkerbellBootstrapIP, cc.smeeBindIp, skippedValidations, cc.providerOptions).
+		WithProvider(cc.fileName, clusterSpec.Cluster, cc.skipIpCheck, cc.hardwareCSVPath, cc.forceClean, cc.tinkerbellBootstrapIP, skippedValidations, cc.providerOptions).
 		WithGitOpsFlux(clusterSpec.Cluster, clusterSpec.FluxConfig, cliConfig).
 		WithWriter().
 		WithEksdInstaller().

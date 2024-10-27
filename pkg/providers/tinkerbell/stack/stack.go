@@ -65,7 +65,7 @@ type Helm interface {
 //nolint:revive // Stutter and the interface shouldn't exist. Will clean up (chrisdoherty4)
 type StackInstaller interface {
 	CleanupLocalBoots(ctx context.Context, forceCleanup bool) error
-	Install(ctx context.Context, bundle releasev1alpha1.TinkerbellBundle, tinkerbellIP, kubeconfig, hookOverride, smeeBindIp string, opts ...InstallOption) error
+	Install(ctx context.Context, bundle releasev1alpha1.TinkerbellBundle, tinkerbellIP, kubeconfig, hookOverride string, opts ...InstallOption) error
 	UninstallLocal(ctx context.Context) error
 	Uninstall(ctx context.Context, bundle releasev1alpha1.TinkerbellBundle, kubeconfig string) error
 	Upgrade(_ context.Context, _ releasev1alpha1.TinkerbellBundle, tinkerbellIP, kubeconfig, hookOverride string, opts ...InstallOption) error
@@ -163,7 +163,7 @@ func NewInstaller(docker Docker, filewriter filewriter.FileWriter, helm Helm, na
 }
 
 // Install installs the Tinkerbell stack on a target cluster using a helm chart and providing the necessary values overrides.
-func (s *Installer) Install(ctx context.Context, bundle releasev1alpha1.TinkerbellBundle, tinkerbellIP, kubeconfig, hookOverride, smeeBindIp string, opts ...InstallOption) error {
+func (s *Installer) Install(ctx context.Context, bundle releasev1alpha1.TinkerbellBundle, tinkerbellIP, kubeconfig, hookOverride string, opts ...InstallOption) error {
 	logger.V(6).Info("Installing Tinkerbell helm chart")
 
 	for _, option := range opts {
@@ -220,10 +220,10 @@ func (s *Installer) Install(ctx context.Context, bundle releasev1alpha1.Tinkerbe
 		return fmt.Errorf("installing Tinkerbell helm chart: %v", err)
 	}
 
-	return s.installBootsOnDocker(ctx, bundle.TinkerbellStack, tinkerbellIP, kubeconfig, hookOverride, smeeBindIp)
+	return s.installBootsOnDocker(ctx, bundle.TinkerbellStack, tinkerbellIP, kubeconfig, hookOverride)
 }
 
-func (s *Installer) installBootsOnDocker(ctx context.Context, bundle releasev1alpha1.TinkerbellStackBundle, tinkServerIP, kubeconfig, hookOverride, smeeBindIp string) error {
+func (s *Installer) installBootsOnDocker(ctx context.Context, bundle releasev1alpha1.TinkerbellStackBundle, tinkServerIP, kubeconfig, hookOverride string) error {
 	if !s.bootsOnDocker {
 		return nil
 	}
@@ -260,20 +260,6 @@ func (s *Installer) installBootsOnDocker(ctx context.Context, bundle releasev1al
 		"-osie-url", osiePath,
 		"-tink-server", fmt.Sprintf("%s:%s", tinkServerIP, grpcPort),
 	}
-
-	if smeeBindIp != "" {
-		cmd = append(cmd,
-			"--syslog-addr", fmt.Sprintf("%s:514", smeeBindIp),
-			"--tftp-addr", fmt.Sprintf("%s:69", smeeBindIp),
-			"--http-addr", fmt.Sprintf("%s:80", smeeBindIp),
-			"--dhcp-ip-for-packet", fmt.Sprintf("%s", smeeBindIp),
-			"--dhcp-syslog-ip", fmt.Sprintf("%s", smeeBindIp),
-			"--dhcp-tftp-ip", fmt.Sprintf("%s:69", smeeBindIp),
-			"--dhcp-http-ipxe-binary-url", fmt.Sprintf("http://%s:8080/ipxe/", smeeBindIp),
-			"--dhcp-http-ipxe-script-url", fmt.Sprintf("http://%s/auto.ipxe", smeeBindIp),
-		)
-	}
-
 	if err := s.docker.Run(ctx, s.localRegistryURL(bundle.Boots.URI), boots, cmd, flags...); err != nil {
 		return fmt.Errorf("running boots with docker: %v", err)
 	}

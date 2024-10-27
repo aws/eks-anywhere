@@ -56,7 +56,7 @@ func (uc *upgradeClusterOptions) upgradePlanManagementComponents(ctx context.Con
 
 	deps, err := dependencies.ForSpec(newClusterSpec).
 		WithClusterManager(newClusterSpec.Cluster, nil).
-		WithProvider(uc.fileName, newClusterSpec.Cluster, false, uc.hardwareCSVPath, uc.forceClean, uc.tinkerbellBootstrapIP, "", map[string]bool{}, uc.providerOptions).
+		WithProvider(uc.fileName, newClusterSpec.Cluster, false, uc.hardwareCSVPath, uc.forceClean, uc.tinkerbellBootstrapIP, map[string]bool{}, uc.providerOptions).
 		WithGitOpsFlux(newClusterSpec.Cluster, newClusterSpec.FluxConfig, nil).
 		WithCAPIManager().
 		Build(ctx)

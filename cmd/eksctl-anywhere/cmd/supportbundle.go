@@ -84,7 +84,7 @@ func (csbo *createSupportBundleOptions) createBundle(ctx context.Context, since,
 	}
 
 	deps, err := dependencies.ForSpec(clusterSpec).
-		WithProvider(csbo.fileName, clusterSpec.Cluster, cc.skipIpCheck, csbo.hardwareFileName, false, csbo.tinkerbellBootstrapIP, "", map[string]bool{}, nil).
+		WithProvider(csbo.fileName, clusterSpec.Cluster, cc.skipIpCheck, csbo.hardwareFileName, false, csbo.tinkerbellBootstrapIP, map[string]bool{}, nil).
 		WithDiagnosticBundleFactory().
 		Build(ctx)
 	if err != nil {

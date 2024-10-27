@@ -426,7 +426,7 @@ type TinkerbellOptions struct {
 }
 
 // WithProvider initializes the provider dependency and adds to the build steps.
-func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1.Cluster, skipIPCheck bool, hardwareCSVPath string, force bool, tinkerbellBootstrapIP string, smeeBindIp string, skippedValidations map[string]bool, opts *ProviderOptions) *Factory { // nolint:gocyclo
+func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1.Cluster, skipIPCheck bool, hardwareCSVPath string, force bool, tinkerbellBootstrapIP string, skippedValidations map[string]bool, opts *ProviderOptions) *Factory { // nolint:gocyclo
 	switch clusterConfig.Spec.DatacenterRef.Kind {
 	case v1alpha1.VSphereDatacenterKind:
 		f.WithKubectl().WithGovc().WithWriter().WithIPValidator()
@@ -529,7 +529,6 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 				time.Now,
 				force,
 				skipIPCheck,
-				smeeBindIp,
 			)
 			if err != nil {
 				return err

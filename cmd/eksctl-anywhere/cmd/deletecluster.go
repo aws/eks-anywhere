@@ -118,7 +118,7 @@ func (dc *deleteClusterOptions) deleteCluster(ctx context.Context) error {
 		WithBootstrapper().
 		WithCliConfig(cliConfig).
 		WithClusterManager(clusterSpec.Cluster, nil).
-		WithProvider(dc.fileName, clusterSpec.Cluster, cc.skipIpCheck, dc.hardwareFileName, false, dc.tinkerbellBootstrapIP, "", map[string]bool{}, dc.providerOptions).
+		WithProvider(dc.fileName, clusterSpec.Cluster, cc.skipIpCheck, dc.hardwareFileName, false, dc.tinkerbellBootstrapIP, map[string]bool{}, dc.providerOptions).
 		WithGitOpsFlux(clusterSpec.Cluster, clusterSpec.FluxConfig, cliConfig).
 		WithWriter().
 		WithDeleteClusterDefaulter(deleteCLIConfig).

@@ -21,7 +21,6 @@ type validateOptions struct {
 	clusterOptions
 	hardwareCSVPath       string
 	tinkerbellBootstrapIP string
-	smeeBindIp            string
 	providerOptions       *dependencies.ProviderOptions
 }
 
@@ -85,7 +84,7 @@ func (valOpt *validateOptions) validateCreateCluster(cmd *cobra.Command, _ []str
 		WithWriterFolder(tmpPath).
 		WithDocker().
 		WithKubectl().
-		WithProvider(valOpt.fileName, clusterSpec.Cluster, false, valOpt.hardwareCSVPath, true, valOpt.tinkerbellBootstrapIP, valOpt.smeeBindIp, map[string]bool{}, valOpt.providerOptions).
+		WithProvider(valOpt.fileName, clusterSpec.Cluster, false, valOpt.hardwareCSVPath, true, valOpt.tinkerbellBootstrapIP, map[string]bool{}, valOpt.providerOptions).
 		WithGitOpsFlux(clusterSpec.Cluster, clusterSpec.FluxConfig, cliConfig).
 		WithUnAuthKubeClient().
 		WithValidatorClients().
