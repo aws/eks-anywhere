@@ -229,14 +229,28 @@ func TestTinkerbellStackInstallWithDifferentOptions(t *testing.T) {
 			if stackTest.installOnDocker {
 				docker.EXPECT().Run(ctx, "public.ecr.aws/eks-anywhere/boots:latest",
 					boots,
-					[]string{"-backend-kube-config", "/kubeconfig", "-dhcp-addr", "0.0.0.0:67", "-osie-url", "https://anywhere-assests.eks.amazonaws.com/tinkerbell/hook", "-tink-server", "1.2.3.4:42113"},
+					[]string{
+						"-backend-kube-config",
+						"/kubeconfig",
+						"-dhcp-addr", "0.0.0.0:67",
+						"-osie-url", "https://anywhere-assests.eks.amazonaws.com/tinkerbell/hook",
+						"-tink-server", "1.2.3.4:42113",
+						"--syslog-addr", fmt.Sprintf("%s:514", testIP),
+						"--tftp-addr", fmt.Sprintf("%s:69", testIP),
+						"--http-addr", fmt.Sprintf("%s:80", testIP),
+						"--dhcp-ip-for-packet", fmt.Sprintf("%s", testIP),
+						"--dhcp-syslog-ip", fmt.Sprintf("%s", testIP),
+						"--dhcp-tftp-ip", fmt.Sprintf("%s:69", testIP),
+						"--dhcp-http-ipxe-binary-url", fmt.Sprintf("http://%s:8080/ipxe/", testIP),
+						"--dhcp-http-ipxe-script-url", fmt.Sprintf("http://%s/auto.ipxe", testIP),
+					},
 					"-v", gomock.Any(),
 					"--network", "host",
 					"-e", gomock.Any(),
 					"-e", gomock.Any(),
 					"-e", gomock.Any(),
 					"-e", gomock.Any(),
-				)
+				).AnyTimes()
 			}
 
 			if err := s.Install(

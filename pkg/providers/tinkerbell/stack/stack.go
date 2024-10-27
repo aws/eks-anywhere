@@ -259,6 +259,14 @@ func (s *Installer) installBootsOnDocker(ctx context.Context, bundle releasev1al
 		"-dhcp-addr", "0.0.0.0:67",
 		"-osie-url", osiePath,
 		"-tink-server", fmt.Sprintf("%s:%s", tinkServerIP, grpcPort),
+		"--syslog-addr", fmt.Sprintf("%s:514", tinkServerIP),
+		"--tftp-addr", fmt.Sprintf("%s:69", tinkServerIP),
+		"--http-addr", fmt.Sprintf("%s:80", tinkServerIP),
+		"--dhcp-ip-for-packet", fmt.Sprintf("%s", tinkServerIP),
+		"--dhcp-syslog-ip", fmt.Sprintf("%s", tinkServerIP),
+		"--dhcp-tftp-ip", fmt.Sprintf("%s:69", tinkServerIP),
+		"--dhcp-http-ipxe-binary-url", fmt.Sprintf("http://%s:8080/ipxe/", tinkServerIP),
+		"--dhcp-http-ipxe-script-url", fmt.Sprintf("http://%s/auto.ipxe", tinkServerIP),
 	}
 	if err := s.docker.Run(ctx, s.localRegistryURL(bundle.Boots.URI), boots, cmd, flags...); err != nil {
 		return fmt.Errorf("running boots with docker: %v", err)
