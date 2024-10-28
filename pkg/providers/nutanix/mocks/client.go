@@ -9,6 +9,7 @@ import (
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
+	prismgoclient "github.com/nutanix-cloud-native/prism-go-client"
 	v3 "github.com/nutanix-cloud-native/prism-go-client/v3"
 )
 
@@ -155,6 +156,21 @@ func (mr *MockClientMockRecorder) GetSubnet(ctx, uuid interface{}) *gomock.Call 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSubnet", reflect.TypeOf((*MockClient)(nil).GetSubnet), ctx, uuid)
 }
 
+// ListAllCluster mocks base method.
+func (m *MockClient) ListAllCluster(ctx context.Context, filter string) (*v3.ClusterListIntentResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListAllCluster", ctx, filter)
+	ret0, _ := ret[0].(*v3.ClusterListIntentResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListAllCluster indicates an expected call of ListAllCluster.
+func (mr *MockClientMockRecorder) ListAllCluster(ctx, filter interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListAllCluster", reflect.TypeOf((*MockClient)(nil).ListAllCluster), ctx, filter)
+}
+
 // ListAllHost mocks base method.
 func (m *MockClient) ListAllHost(ctx context.Context) (*v3.HostListResponse, error) {
 	m.ctrl.T.Helper()
@@ -168,6 +184,51 @@ func (m *MockClient) ListAllHost(ctx context.Context) (*v3.HostListResponse, err
 func (mr *MockClientMockRecorder) ListAllHost(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListAllHost", reflect.TypeOf((*MockClient)(nil).ListAllHost), ctx)
+}
+
+// ListAllImage mocks base method.
+func (m *MockClient) ListAllImage(ctx context.Context, filter string) (*v3.ImageListIntentResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListAllImage", ctx, filter)
+	ret0, _ := ret[0].(*v3.ImageListIntentResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListAllImage indicates an expected call of ListAllImage.
+func (mr *MockClientMockRecorder) ListAllImage(ctx, filter interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListAllImage", reflect.TypeOf((*MockClient)(nil).ListAllImage), ctx, filter)
+}
+
+// ListAllProject mocks base method.
+func (m *MockClient) ListAllProject(ctx context.Context, filter string) (*v3.ProjectListResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListAllProject", ctx, filter)
+	ret0, _ := ret[0].(*v3.ProjectListResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListAllProject indicates an expected call of ListAllProject.
+func (mr *MockClientMockRecorder) ListAllProject(ctx, filter interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListAllProject", reflect.TypeOf((*MockClient)(nil).ListAllProject), ctx, filter)
+}
+
+// ListAllSubnet mocks base method.
+func (m *MockClient) ListAllSubnet(ctx context.Context, filter string, clientSideFilters []*prismgoclient.AdditionalFilter) (*v3.SubnetListIntentResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListAllSubnet", ctx, filter, clientSideFilters)
+	ret0, _ := ret[0].(*v3.SubnetListIntentResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListAllSubnet indicates an expected call of ListAllSubnet.
+func (mr *MockClientMockRecorder) ListAllSubnet(ctx, filter, clientSideFilters interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListAllSubnet", reflect.TypeOf((*MockClient)(nil).ListAllSubnet), ctx, filter, clientSideFilters)
 }
 
 // ListCategories mocks base method.
@@ -198,64 +259,4 @@ func (m *MockClient) ListCategoryValues(ctx context.Context, name string, getEnt
 func (mr *MockClientMockRecorder) ListCategoryValues(ctx, name, getEntitiesRequest interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListCategoryValues", reflect.TypeOf((*MockClient)(nil).ListCategoryValues), ctx, name, getEntitiesRequest)
-}
-
-// ListCluster mocks base method.
-func (m *MockClient) ListCluster(ctx context.Context, getEntitiesRequest *v3.DSMetadata) (*v3.ClusterListIntentResponse, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListCluster", ctx, getEntitiesRequest)
-	ret0, _ := ret[0].(*v3.ClusterListIntentResponse)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ListCluster indicates an expected call of ListCluster.
-func (mr *MockClientMockRecorder) ListCluster(ctx, getEntitiesRequest interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListCluster", reflect.TypeOf((*MockClient)(nil).ListCluster), ctx, getEntitiesRequest)
-}
-
-// ListImage mocks base method.
-func (m *MockClient) ListImage(ctx context.Context, getEntitiesRequest *v3.DSMetadata) (*v3.ImageListIntentResponse, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListImage", ctx, getEntitiesRequest)
-	ret0, _ := ret[0].(*v3.ImageListIntentResponse)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ListImage indicates an expected call of ListImage.
-func (mr *MockClientMockRecorder) ListImage(ctx, getEntitiesRequest interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListImage", reflect.TypeOf((*MockClient)(nil).ListImage), ctx, getEntitiesRequest)
-}
-
-// ListProject mocks base method.
-func (m *MockClient) ListProject(ctx context.Context, getEntitiesRequest *v3.DSMetadata) (*v3.ProjectListResponse, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListProject", ctx, getEntitiesRequest)
-	ret0, _ := ret[0].(*v3.ProjectListResponse)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ListProject indicates an expected call of ListProject.
-func (mr *MockClientMockRecorder) ListProject(ctx, getEntitiesRequest interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListProject", reflect.TypeOf((*MockClient)(nil).ListProject), ctx, getEntitiesRequest)
-}
-
-// ListSubnet mocks base method.
-func (m *MockClient) ListSubnet(ctx context.Context, getEntitiesRequest *v3.DSMetadata) (*v3.SubnetListIntentResponse, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListSubnet", ctx, getEntitiesRequest)
-	ret0, _ := ret[0].(*v3.SubnetListIntentResponse)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ListSubnet indicates an expected call of ListSubnet.
-func (mr *MockClientMockRecorder) ListSubnet(ctx, getEntitiesRequest interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListSubnet", reflect.TypeOf((*MockClient)(nil).ListSubnet), ctx, getEntitiesRequest)
 }
