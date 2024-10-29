@@ -259,6 +259,20 @@ func ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ChangeDiff {
 
 func ciliumChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ChangeDiff {
 	currentVersionsBundle := currentSpec.RootVersionsBundle()
+
+	newCiliumCfg := newSpec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium
+	if !newCiliumCfg.IsManaged() {
+		return &types.ChangeDiff{
+			ComponentReports: []types.ComponentChangeDiff{
+				{
+					ComponentName: "cilium",
+					OldVersion:    currentVersionsBundle.Cilium.Version,
+					NewVersion:    "Upgrade skipped (skipUpgrade: true)",
+				},
+			},
+		}
+	}
+
 	newVersionsBundle := newSpec.RootVersionsBundle()
 	if currentVersionsBundle.Cilium.Version == newVersionsBundle.Cilium.Version {
 		return nil
