@@ -268,7 +268,7 @@ func TestVSphereKubernetes126CuratedPackagesSimpleFlow(t *testing.T) {
 	runCuratedPackageInstallSimpleFlow(test)
 }
 
-func TestVSphereKubernetes127CuratedPackagesSimpleFlow(t *testing.T) {
+func TestVSphereKubernetes127RegionalCuratedPackagesSimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewVSphere(t, framework.WithUbuntu127()),
@@ -292,7 +292,7 @@ func TestVSphereKubernetes128CuratedPackagesSimpleFlow(t *testing.T) {
 	runCuratedPackageInstallSimpleFlow(test)
 }
 
-func TestVSphereKubernetes129CuratedPackagesSimpleFlow(t *testing.T) {
+func TestVSphereKubernetes129RegionalCuratedPackagesSimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewVSphere(t, framework.WithUbuntu129()),
@@ -328,7 +328,7 @@ func TestVSphereKubernetes126BottleRocketCuratedPackagesSimpleFlow(t *testing.T)
 	runCuratedPackageInstallSimpleFlow(test)
 }
 
-func TestVSphereKubernetes127BottleRocketCuratedPackagesSimpleFlow(t *testing.T) {
+func TestVSphereKubernetes127BottleRocketRegionalCuratedPackagesSimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewVSphere(t, framework.WithBottleRocket127()),
@@ -352,7 +352,7 @@ func TestVSphereKubernetes128BottleRocketCuratedPackagesSimpleFlow(t *testing.T)
 	runCuratedPackageInstallSimpleFlow(test)
 }
 
-func TestVSphereKubernetes129BottleRocketCuratedPackagesSimpleFlow(t *testing.T) {
+func TestVSphereKubernetes129BottleRocketRegionalCuratedPackagesSimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewVSphere(t, framework.WithBottleRocket129()),
@@ -388,7 +388,7 @@ func TestVSphereKubernetes126CuratedPackagesEmissarySimpleFlow(t *testing.T) {
 	runCuratedPackageEmissaryInstallSimpleFlow(test)
 }
 
-func TestVSphereKubernetes127CuratedPackagesEmissarySimpleFlow(t *testing.T) {
+func TestVSphereKubernetes127RegionalCuratedPackagesEmissarySimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewVSphere(t, framework.WithUbuntu127()),
@@ -412,7 +412,7 @@ func TestVSphereKubernetes128CuratedPackagesEmissarySimpleFlow(t *testing.T) {
 	runCuratedPackageEmissaryInstallSimpleFlow(test)
 }
 
-func TestVSphereKubernetes129CuratedPackagesEmissarySimpleFlow(t *testing.T) {
+func TestVSphereKubernetes129RegionalCuratedPackagesEmissarySimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewVSphere(t, framework.WithUbuntu129()),
@@ -448,7 +448,7 @@ func TestVSphereKubernetes126BottleRocketCuratedPackagesEmissarySimpleFlow(t *te
 	runCuratedPackageEmissaryInstallSimpleFlow(test)
 }
 
-func TestVSphereKubernetes127BottleRocketCuratedPackagesEmissarySimpleFlow(t *testing.T) {
+func TestVSphereKubernetes127BottleRocketRegionalCuratedPackagesEmissarySimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewVSphere(t, framework.WithBottleRocket127()),
@@ -472,7 +472,7 @@ func TestVSphereKubernetes128BottleRocketCuratedPackagesEmissarySimpleFlow(t *te
 	runCuratedPackageEmissaryInstallSimpleFlow(test)
 }
 
-func TestVSphereKubernetes129BottleRocketCuratedPackagesEmissarySimpleFlow(t *testing.T) {
+func TestVSphereKubernetes129BottleRocketRegionalCuratedPackagesEmissarySimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewVSphere(t, framework.WithBottleRocket129()),
@@ -508,7 +508,7 @@ func TestVSphereKubernetes126CuratedPackagesHarborSimpleFlow(t *testing.T) {
 	runCuratedPackageHarborInstallSimpleFlowLocalStorageProvisioner(test)
 }
 
-func TestVSphereKubernetes127CuratedPackagesHarborSimpleFlow(t *testing.T) {
+func TestVSphereKubernetes127RegionalCuratedPackagesHarborSimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewVSphere(t, framework.WithUbuntu127()),
@@ -532,7 +532,7 @@ func TestVSphereKubernetes128CuratedPackagesHarborSimpleFlow(t *testing.T) {
 	runCuratedPackageHarborInstallSimpleFlowLocalStorageProvisioner(test)
 }
 
-func TestVSphereKubernetes129CuratedPackagesHarborSimpleFlow(t *testing.T) {
+func TestVSphereKubernetes129RegionalCuratedPackagesHarborSimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewVSphere(t, framework.WithUbuntu129()),
@@ -568,7 +568,7 @@ func TestVSphereKubernetes126BottleRocketCuratedPackagesHarborSimpleFlow(t *test
 	runCuratedPackageHarborInstallSimpleFlowLocalStorageProvisioner(test)
 }
 
-func TestVSphereKubernetes127BottleRocketCuratedPackagesHarborSimpleFlow(t *testing.T) {
+func TestVSphereKubernetes127BottleRocketRegionalCuratedPackagesHarborSimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewVSphere(t, framework.WithBottleRocket127()),
@@ -592,7 +592,7 @@ func TestVSphereKubernetes128BottleRocketCuratedPackagesHarborSimpleFlow(t *test
 	runCuratedPackageHarborInstallSimpleFlowLocalStorageProvisioner(test)
 }
 
-func TestVSphereKubernetes129BottleRocketCuratedPackagesHarborSimpleFlow(t *testing.T) {
+func TestVSphereKubernetes129BottleRocketRegionalCuratedPackagesHarborSimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewVSphere(t, framework.WithBottleRocket129()),
@@ -628,7 +628,7 @@ func TestVSphereKubernetes126CuratedPackagesAdotUpdateFlow(t *testing.T) {
 	runCuratedPackagesAdotInstallUpdateFlow(test)
 }
 
-func TestVSphereKubernetes127CuratedPackagesAdotUpdateFlow(t *testing.T) {
+func TestVSphereKubernetes127RegionalCuratedPackagesAdotUpdateFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewVSphere(t, framework.WithUbuntu127()),
@@ -652,7 +652,7 @@ func TestVSphereKubernetes128CuratedPackagesAdotUpdateFlow(t *testing.T) {
 	runCuratedPackagesAdotInstallUpdateFlow(test)
 }
 
-func TestVSphereKubernetes129CuratedPackagesAdotUpdateFlow(t *testing.T) {
+func TestVSphereKubernetes129RegionalCuratedPackagesAdotUpdateFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewVSphere(t, framework.WithUbuntu129()),
@@ -688,7 +688,7 @@ func TestVSphereKubernetes126BottleRocketCuratedPackagesAdotUpdateFlow(t *testin
 	runCuratedPackagesAdotInstallUpdateFlow(test)
 }
 
-func TestVSphereKubernetes127BottleRocketCuratedPackagesAdotUpdateFlow(t *testing.T) {
+func TestVSphereKubernetes127BottleRocketRegionalCuratedPackagesAdotUpdateFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewVSphere(t, framework.WithBottleRocket127()),
@@ -712,7 +712,7 @@ func TestVSphereKubernetes128BottleRocketCuratedPackagesAdotUpdateFlow(t *testin
 	runCuratedPackagesAdotInstallUpdateFlow(test)
 }
 
-func TestVSphereKubernetes129BottleRocketCuratedPackagesAdotUpdateFlow(t *testing.T) {
+func TestVSphereKubernetes129BottleRocketRegionalCuratedPackagesAdotUpdateFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewVSphere(t, framework.WithBottleRocket129()),
@@ -750,7 +750,7 @@ func TestVSphereKubernetes126UbuntuCuratedPackagesClusterAutoscalerSimpleFlow(t 
 	runAutoscalerWithMetricsServerSimpleFlow(test)
 }
 
-func TestVSphereKubernetes127UbuntuCuratedPackagesClusterAutoscalerSimpleFlow(t *testing.T) {
+func TestVSphereKubernetes127UbuntuRegionalCuratedPackagesClusterAutoscalerSimpleFlow(t *testing.T) {
 	minNodes := 1
 	maxNodes := 2
 	framework.CheckCuratedPackagesCredentials(t)
@@ -778,7 +778,7 @@ func TestVSphereKubernetes128UbuntuCuratedPackagesClusterAutoscalerSimpleFlow(t 
 	runAutoscalerWithMetricsServerSimpleFlow(test)
 }
 
-func TestVSphereKubernetes129UbuntuCuratedPackagesClusterAutoscalerSimpleFlow(t *testing.T) {
+func TestVSphereKubernetes129UbuntuRegionalCuratedPackagesClusterAutoscalerSimpleFlow(t *testing.T) {
 	minNodes := 1
 	maxNodes := 2
 	framework.CheckCuratedPackagesCredentials(t)
@@ -820,7 +820,7 @@ func TestVSphereKubernetes126BottleRocketCuratedPackagesClusterAutoscalerSimpleF
 	runAutoscalerWithMetricsServerSimpleFlow(test)
 }
 
-func TestVSphereKubernetes127BottleRocketCuratedPackagesClusterAutoscalerSimpleFlow(t *testing.T) {
+func TestVSphereKubernetes127BottleRocketRegionalCuratedPackagesClusterAutoscalerSimpleFlow(t *testing.T) {
 	minNodes := 1
 	maxNodes := 2
 	framework.CheckCuratedPackagesCredentials(t)
@@ -929,7 +929,7 @@ func TestVSphereKubernetes126UbuntuCuratedPackagesPrometheusSimpleFlow(t *testin
 	runCuratedPackagesPrometheusInstallSimpleFlow(test)
 }
 
-func TestVSphereKubernetes127UbuntuCuratedPackagesPrometheusSimpleFlow(t *testing.T) {
+func TestVSphereKubernetes127UbuntuRegionalCuratedPackagesPrometheusSimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewVSphere(t, framework.WithUbuntu127()),
@@ -953,7 +953,7 @@ func TestVSphereKubernetes128UbuntuCuratedPackagesPrometheusSimpleFlow(t *testin
 	runCuratedPackagesPrometheusInstallSimpleFlow(test)
 }
 
-func TestVSphereKubernetes129UbuntuCuratedPackagesPrometheusSimpleFlow(t *testing.T) {
+func TestVSphereKubernetes129UbuntuRegionalCuratedPackagesPrometheusSimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewVSphere(t, framework.WithUbuntu129()),
@@ -989,7 +989,7 @@ func TestVSphereKubernetes126BottleRocketCuratedPackagesPrometheusSimpleFlow(t *
 	runCuratedPackagesPrometheusInstallSimpleFlow(test)
 }
 
-func TestVSphereKubernetes127BottleRocketCuratedPackagesPrometheusSimpleFlow(t *testing.T) {
+func TestVSphereKubernetes127BottleRocketRegionalCuratedPackagesPrometheusSimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewVSphere(t, framework.WithBottleRocket127()),
