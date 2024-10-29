@@ -27,7 +27,7 @@ func runCuratedPackagesAdotInstall(test *framework.ClusterE2ETest) {
 
 func runCuratedPackagesAdotInstallWithUpdate(test *framework.ClusterE2ETest) {
 	test.SetPackageBundleActive()
-	test.ValidateIfRegionalCuratedPackage()
+	test.ValidatePackageBundleControllerRegistry()
 	test.CreateNamespace(adotTargetNamespace)
 	test.InstallCuratedPackage(adotPackageName, adotPackagePrefix+"-"+adotPackageName,
 		kubeconfig.FromClusterName(test.ClusterName),

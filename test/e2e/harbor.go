@@ -10,7 +10,7 @@ import (
 
 func runCuratedPackageHarborInstallSimpleFlowLocalStorageProvisioner(test *framework.ClusterE2ETest) {
 	test.WithCluster(func(test *framework.ClusterE2ETest) {
-		test.ValidateIfRegionalCuratedPackage()
+		test.ValidatePackageBundleControllerRegistry()
 		test.InstallLocalStorageProvisioner()
 
 		packagePrefix := "test"

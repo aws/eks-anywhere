@@ -1377,7 +1377,7 @@ func TestDockerCiliumSkipUpgrade_ControllerUpgrade(t *testing.T) {
 	test.DeleteManagementCluster()
 }
 
-func TestDockerKubernetesRegionalCuratedPackages(t *testing.T) {
+func TestDockerKubernetesNonRegionalCuratedPackages(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewDocker(t),
