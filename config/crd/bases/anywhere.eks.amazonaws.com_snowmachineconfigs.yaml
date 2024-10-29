@@ -114,10 +114,149 @@ spec:
                             items:
                               type: string
                             type: array
+                          clusterDomain:
+                            description: ClusterDomain defines the DNS domain for
+                              the cluster, allowing all Kubernetes-run containers
+                              to search this domain before the host’s search domains
+                            type: string
+                          containerLogMaxFiles:
+                            description: ContainerLogMaxFiles specifies the maximum
+                              number of container log files that can be present for
+                              a container
+                            type: integer
+                          containerLogMaxSize:
+                            description: ContainerLogMaxSize is a quantity defining
+                              the maximum size of the container log file before it
+                              is rotated
+                            type: string
+                          cpuCFSQuota:
+                            description: CPUCFSQuota enables CPU CFS quota enforcement
+                              for containers that specify CPU limits
+                            type: boolean
+                          cpuManagerPolicy:
+                            description: CPUManagerPolicy is the name of the policy
+                              to use.
+                            type: string
+                          cpuManagerPolicyOptions:
+                            additionalProperties:
+                              type: string
+                            description: CPUManagerPolicyOptions is a set of key=value
+                              which allows to set extra options to fine tune the behaviour
+                              of the cpu manager policies
+                            type: object
+                          cpuManagerReconcilePeriod:
+                            description: CPUManagerReconcilePeriod is the reconciliation
+                              period for the CPU Manager.
+                            type: string
+                          eventBurst:
+                            description: EventBurst is the maximum size of a burst
+                              of event creations.
+                            type: integer
+                          eventRecordQPS:
+                            description: EventRecordQPS is the maximum event creations
+                              per second.
+                            type: integer
+                          evictionHard:
+                            additionalProperties:
+                              type: string
+                            description: EvictionHard is a map of signal names to
+                              quantities that defines hard eviction thresholds.
+                            type: object
+                          evictionMaxPodGracePeriod:
+                            description: EvictionMaxPodGracePeriod is the maximum
+                              allowed grace period (in seconds) to use when terminating
+                              pods in response to a soft eviction threshold being
+                              met.
+                            type: integer
+                          evictionSoft:
+                            additionalProperties:
+                              type: string
+                            description: EvictionSoft is a map of signal names to
+                              quantities that defines soft eviction thresholds.
+                            type: object
+                          evictionSoftGracePeriod:
+                            additionalProperties:
+                              type: string
+                            description: EvictionSoftGracePeriod is a map of signal
+                              names to quantities that defines grace periods for each
+                              soft eviction signal.
+                            type: object
+                          imageGCHighThresholdPercent:
+                            description: ImageGCHighThresholdPercent is the percent
+                              of disk usage after which image garbage collection is
+                              always run.
+                            type: integer
+                          imageGCLowThresholdPercent:
+                            description: ImageGCLowThresholdPercent is the percent
+                              of disk usage before which image garbage collection
+                              is never run.
+                            type: integer
+                          kubeAPIBurst:
+                            description: KubeAPIBurst  is the burst to allow while
+                              talking with kubernetes API server.
+                            type: integer
+                          kubeAPIQPS:
+                            description: KubeAPIQPS is the QPS to use while talking
+                              with kubernetes apiserver.
+                            type: integer
+                          kubeReserved:
+                            additionalProperties:
+                              type: string
+                            description: KubeReserved is a set of ResourceName=ResourceQuantity
+                              pairs that describe resources reserved for kubernetes
+                              system components
+                            type: object
                           maxPods:
                             description: MaxPods defines the maximum number of pods
                               that can run on a node.
                             type: integer
+                          memoryManagerPolicy:
+                            description: MemoryManagerPolicy is the name of the policy
+                              to use by memory manager.
+                            type: string
+                          podPidsLimit:
+                            description: PodPidsLimit is the maximum number of PIDs
+                              in any pod.
+                            format: int64
+                            type: integer
+                          providerID:
+                            description: ProviderID sets the unique ID of the instance
+                              that an external provider.
+                            type: string
+                          registryBurst:
+                            description: RegistryBurst is the maximum size of bursty
+                              pulls.
+                            type: integer
+                          registryPullQPS:
+                            description: RegistryPullQPS is the limit of registry
+                              pulls per second.
+                            type: integer
+                          shutdownGracePeriod:
+                            description: ShutdownGracePeriod specifies the total duration
+                              that the node should delay the shutdown and total grace
+                              period for pod termination during a node shutdown.
+                            type: string
+                          shutdownGracePeriodCriticalPods:
+                            description: ShutdownGracePeriodCriticalPods specifies
+                              the duration used to terminate critical pods during
+                              a node shutdown.
+                            type: string
+                          systemReserved:
+                            additionalProperties:
+                              type: string
+                            description: SystemReserved is a set of ResourceName=ResourceQuantity
+                              pairs that describe resources reserved for non-kubernetes
+                              components.
+                            type: object
+                          topologyManagerPolicy:
+                            description: TopologyManagerPolicy is the name of the
+                              topology manager policy to use.
+                            type: string
+                          topologyManagerScope:
+                            description: TopologyManagerScope represents the scope
+                              of topology hint generation that topology manager requests
+                              and hint providers generate.
+                            type: string
                         type: object
                     type: object
                   certBundles:

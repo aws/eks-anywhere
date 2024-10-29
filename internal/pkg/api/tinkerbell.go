@@ -88,6 +88,7 @@ func WithStringFromEnvVarTinkerbell(envVar string, opt func(string) TinkerbellFi
 	return opt(os.Getenv(envVar))
 }
 
+// WithOsFamilyForAllTinkerbellMachines sets the OSFamily.
 func WithOsFamilyForAllTinkerbellMachines(value anywherev1.OSFamily) TinkerbellFiller {
 	return func(config TinkerbellConfig) {
 		for _, m := range config.machineConfigs {
@@ -96,7 +97,8 @@ func WithOsFamilyForAllTinkerbellMachines(value anywherev1.OSFamily) TinkerbellF
 	}
 }
 
-func WithImageUrlForAllTinkerbellMachines(value string) TinkerbellFiller {
+// WithImageURLForAllTinkerbellMachines sets the IMG_URL in the stream-image tinkerbell action.
+func WithImageURLForAllTinkerbellMachines(value string) TinkerbellFiller {
 	return func(config TinkerbellConfig) {
 		for _, t := range config.templateConfigs {
 			for _, task := range t.Spec.Template.Tasks {

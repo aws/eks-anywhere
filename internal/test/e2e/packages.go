@@ -9,7 +9,7 @@ import (
 
 const (
 	packagesRegex         = `^.*CuratedPackages.*$`
-	regionalPackagesRegex = `^.*RegionalCuratedPackages.*$`
+	nonRegionalPackagesRegex = `^.*NonRegionalCuratedPackages.*$`
 	certManagerRegex      = "^.*CuratedPackagesCertManager.*$"
 )
 
@@ -27,9 +27,9 @@ func (e *E2ESession) setupPackagesEnv(testRegex string) error {
 	}
 
 	// overwrite envs for regional curated packages test
-	if regexp.MustCompile(regionalPackagesRegex).MatchString(testRegex) {
+	if regexp.MustCompile(nonRegionalPackagesRegex).MatchString(testRegex) {
 		for _, eVar := range requiredEnvVars {
-			if val, ok := os.LookupEnv("REGIONAL_" + eVar); ok {
+			if val, ok := os.LookupEnv("NON_REGIONAL_" + eVar); ok {
 				e.testEnvVars[eVar] = val
 			}
 		}

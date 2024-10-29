@@ -13,7 +13,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -1173,17 +1172,14 @@ func (e *ClusterE2ETest) InstallCuratedPackageFile(packageFile, kubeconfig strin
 	})
 }
 
-// ValidateIfRegionalCuratedPackage checks if the current e2e test is a Regional Curated packages test and runs a validation.
-func (e *ClusterE2ETest) ValidateIfRegionalCuratedPackage() {
-	regionalPackagesRegex := `^.*RegionalCuratedPackages.*$`
-	if regexp.MustCompile(regionalPackagesRegex).MatchString(e.T.Name()) {
-		pbc, err := e.KubectlClient.GetPackageBundleController(context.Background(), e.KubeconfigFilePath(), e.ClusterName)
-		if err != nil {
-			e.T.Fatalf("cannot get PackageBundleController: %v", err)
-		}
-		if pbc.Spec.DefaultImageRegistry != pbc.Spec.DefaultRegistry {
-			e.T.Fatal("in regional pbc, DefaultImageRegistry should equal to DefaultRegistry")
-		}
+// ValidatePackageBundleControllerRegistry checks if the registries for helm charts and images match for curated packages tests.
+func (e *ClusterE2ETest) ValidatePackageBundleControllerRegistry() {
+	pbc, err := e.KubectlClient.GetPackageBundleController(context.Background(), e.KubeconfigFilePath(), e.ClusterName)
+	if err != nil {
+		e.T.Fatalf("cannot get PackageBundleController: %v", err)
+	}
+	if pbc.Spec.DefaultImageRegistry != pbc.Spec.DefaultRegistry {
+		e.T.Fatal("DefaultImageRegistry should match DefaultRegistry in pbc configuration")
 	}
 }
 
