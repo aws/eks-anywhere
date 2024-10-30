@@ -12,7 +12,7 @@ import (
 	mockexecutables "github.com/aws/eks-anywhere/pkg/executables/mocks"
 )
 
-func TestValidateIfRegionalCuratedPackage(t *testing.T) {
+func TestValidatePackageBundleControllerRegistry(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	executable := mockexecutables.NewMockExecutable(ctrl)
 	testPbc := &packagesv1.PackageBundleController{
@@ -27,7 +27,7 @@ func TestValidateIfRegionalCuratedPackage(t *testing.T) {
 	}
 	ret := bytes.NewBuffer(respJSON)
 	expectedParam := []string{"get", "packagebundlecontroller.packages.eks.amazonaws.com", "test", "-o", "json", "--kubeconfig", "test/test-eks-a-cluster.kubeconfig", "--namespace", "eksa-packages", "--ignore-not-found=true"}
-	t.Run("IsARegionalCuratedPackagesTest", func(t *testing.T) {
+	t.Run("CuratedPackagesTest", func(t *testing.T) {
 		e := &ClusterE2ETest{
 			T:                   t,
 			ClusterConfigFolder: "test",
@@ -36,6 +36,6 @@ func TestValidateIfRegionalCuratedPackage(t *testing.T) {
 		}
 
 		executable.EXPECT().Execute(gomock.Any(), gomock.Eq(expectedParam)).Return(*ret, nil).AnyTimes()
-		e.ValidateIfRegionalCuratedPackage()
+		e.ValidatePackageBundleControllerRegistry()
 	})
 }
