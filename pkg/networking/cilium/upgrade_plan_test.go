@@ -14,6 +14,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/networking/cilium"
 	"github.com/aws/eks-anywhere/pkg/types"
+	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
 
 func TestBuildUpgradePlan(t *testing.T) {
@@ -563,7 +564,7 @@ func daemonSet(image string, opts ...dsOpt) *appsv1.DaemonSet {
 
 type cmOpt func(*corev1.ConfigMap)
 
-func ciliumConfigMap(enforcementMode string, egressMasqueradeInterface string, opts ...cmOpt) *corev1.ConfigMap {
+func ciliumConfigMap(enforcementMode, egressMasqueradeInterface string, opts ...cmOpt) *corev1.ConfigMap {
 	cm := &corev1.ConfigMap{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "v1",
@@ -914,6 +915,30 @@ func TestChangeDiff(t *testing.T) {
 						ComponentName: "cilium",
 						OldVersion:    "v1.9.10-eksa.1",
 						NewVersion:    "v1.13.5-eksa.1",
+					},
+				},
+			},
+		},
+		{
+			name: "cilium upgrade skipped",
+			currentSpec: test.NewClusterSpec(func(s *cluster.Spec) {
+				s.Cluster.Spec.KubernetesVersion = "1.22"
+				s.VersionsBundles["1.22"] = test.VersionBundle()
+				s.VersionsBundles["1.22"].Cilium.Version = "v1.9.10-eksa.1"
+				s.Cluster.Spec.ClusterNetwork.CNIConfig = &v1alpha1.CNIConfig{Cilium: &v1alpha1.CiliumConfig{}}
+			}),
+			newSpec: test.NewClusterSpec(func(s *cluster.Spec) {
+				s.Cluster.Spec.KubernetesVersion = "1.22"
+				s.VersionsBundles["1.22"] = test.VersionBundle()
+				s.VersionsBundles["1.22"].Cilium.Version = "v1.9.10-eksa.1"
+				s.Cluster.Spec.ClusterNetwork.CNIConfig = &v1alpha1.CNIConfig{Cilium: &v1alpha1.CiliumConfig{SkipUpgrade: ptr.Bool(true)}}
+			}),
+			want: &types.ChangeDiff{
+				ComponentReports: []types.ComponentChangeDiff{
+					{
+						ComponentName: "cilium",
+						OldVersion:    "v1.9.10-eksa.1",
+						NewVersion:    "Upgrade skipped (skipUpgrade: true)",
 					},
 				},
 			},
