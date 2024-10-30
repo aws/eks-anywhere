@@ -33,6 +33,48 @@ description: >
 {{% /alert %}}
 
 
+## [v0.21.0](https://github.com/aws/eks-anywhere/releases/tag/v0.21.0)
+
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+|    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+| Bottlerocket 1.26.1 |    ✔    |     *      |    —    |     —      |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+|      RHEL 9.x       |    —    |     ✔      |    ✔    |     ✔      |  —   |
+
+\* [EKS Anywhere issue regarding deprecation of Bottlerocket bare metal variants](https://github.com/aws/eks-anywhere/issues/7754)
+
+### Added
+- Support for Kubernetes v1.31
+- Support for configuring tinkerbell stack load balancer interface in cluster spec ([#8805](https://github.com/aws/eks-anywhere/pull/8805))
+- GPU support for Nutanix provider ([#8745](https://github.com/aws/eks-anywhere/pull/8745))
+- Support for worker nodes failure domains on Nutanix ([#8837](https://github.com/aws/eks-anywhere/pull/8837))
+
+### Changed
+- Added EKS-D for 1-31:
+  - [`v1-31-eks-6`](https://distro.eks.amazonaws.com/releases/1-31/6/)
+- Cert Manager: `v1.14.7` to `v1.15.3`
+- Cilium: `v1.13.20` to `v1.14.12`
+- Cluster API: `v1.7.2` to `v1.8.3`
+- Cluster API Provider CloudStack: `v0.4.10-rc.1` to `v0.5.0`
+- Cluster API Provider Nutanix: `v1.3.5` to `v1.4.0`
+- Cluster API Provider vSphere: `v1.10.4` to `v1.11.2`
+- Cri-tools: `v1.30.1` to `v1.31.1`
+- Flux: `v2.3.0` to `v2.4.0`
+- Govmomi: `v0.37.3` to `v0.44.1`
+- Kind: `v0.23.0` to `v0.24.0`
+- Kube-vip: `v0.7.0` to `v0.8.0`
+- Tinkerbell Stack:
+  - Rufio: `v0.3.3` to `v0.4.1`
+  - Hook: `v0.8.1` to `v0.9.1`
+- Troubleshoot: `v0.93.2` to `v0.107.4`
+
+### Removed
+- Support for Kubernetes v1.26
+
+
 ## [v0.20.8](https://github.com/aws/eks-anywhere/releases/tag/v0.20.8)
 
 ### Supported OS version details
