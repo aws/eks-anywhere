@@ -1,8 +1,15 @@
-From 4b1e548ac02422f8953aa2effa86af581bceeb47 Mon Sep 17 00:00:00 2001
-From: Terry Howe <tlhowe@amazon.com>
-Date: Tue, 1 Feb 2022 11:38:52 -0700
-Subject: [PATCH] Make docsy js files static
+From f97e20029a8b34b66eb5356764b268fc527741f7 Mon Sep 17 00:00:00 2001
+From: Jacob Weinstock <jakobweinstock@gmail.com>
+Date: Thu, 31 Oct 2024 10:24:12 -0600
+Subject: [PATCH] Security update:
 
+For security reasons, Amazon does not allow
+Webpage loads resources from CDN or domain with
+public access or elevated risk via link(s).
+For this reason we host the javascript files locally
+and reference them in the theme.
+
+Signed-off-by: Jacob Weinstock <jakobweinstock@gmail.com>
 ---
  layouts/partials/head.html    | 4 ++--
  layouts/partials/scripts.html | 4 ++--
@@ -53,5 +60,5 @@ index ae881ac..8c3d1bf 100644
 -!function(){if("undefined"!=typeof self&&self.Prism&&self.document)if(Prism.plugins.toolbar){var i=window.ClipboardJS||void 0;i||"function"!=typeof require||(i=require("clipboard"));var c=[];if(!i){var o=document.createElement("script"),t=document.querySelector("head");o.onload=function(){if(i=window.ClipboardJS)for(;c.length;)c.pop()()},o.src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js",t.appendChild(o)}Prism.plugins.toolbar.registerButton("copy-to-clipboard",function(o){var t=document.createElement("button");t.textContent="Copy";var e=o.element;return i?n():c.push(n),t;function n(){var o=new i(t,{text:function(){return e.textContent}});o.on("success",function(){t.textContent="Copied!",r()}),o.on("error",function(){t.textContent="Press Ctrl+C to copy",r()})}function r(){setTimeout(function(){t.textContent="Copy"},5e3)}})}else console.warn("Copy to Clipboard plugin loaded before Toolbar plugin.")}();
 +!function(){if("undefined"!=typeof self&&self.Prism&&self.document)if(Prism.plugins.toolbar){var i=window.ClipboardJS||void 0;i||"function"!=typeof require||(i=require("clipboard"));var c=[];if(!i){var o=document.createElement("script"),t=document.querySelector("head");o.onload=function(){if(i=window.ClipboardJS)for(;c.length;)c.pop()()},o.src="/js/clipboard.min.js",t.appendChild(o)}Prism.plugins.toolbar.registerButton("copy-to-clipboard",function(o){var t=document.createElement("button");t.textContent="Copy";var e=o.element;return i?n():c.push(n),t;function n(){var o=new i(t,{text:function(){return e.textContent}});o.on("success",function(){t.textContent="Copied!",r()}),o.on("error",function(){t.textContent="Press Ctrl+C to copy",r()})}function r(){setTimeout(function(){t.textContent="Copy"},5e3)}})}else console.warn("Copy to Clipboard plugin loaded before Toolbar plugin.")}();
 -- 
-2.29.2
+2.44.0
 
