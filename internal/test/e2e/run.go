@@ -249,9 +249,13 @@ func RunTests(conf instanceRunConf, inventoryCatalogue map[string]*hardwareCatal
 	conf.Logger.Info("TestRunner instance has been created")
 
 	defer func() {
-		err := testRunner.decommInstance(conf)
-		if err != nil {
-			conf.Logger.V(1).Info("WARN: Failed to decomm e2e test runner instance", "error", err)
+		if conf.CleanupResources {
+			err := testRunner.decommInstance(conf)
+			if err != nil {
+				conf.Logger.V(1).Info("WARN: Failed to decomm e2e test runner instance", "error", err)
+			}
+		} else {
+			conf.Logger.V(1).Info("Skipping to terminate instance. cleanup-resources set to false")
 		}
 	}()
 
