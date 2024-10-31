@@ -52,7 +52,7 @@ description: >
 - GPU support for Nutanix provider ([#8745](https://github.com/aws/eks-anywhere/pull/8745))
 - Support for worker nodes failure domains on Nutanix ([#8837](https://github.com/aws/eks-anywhere/pull/8837))
 
-### Changed
+### Upgraded
 - Added EKS-D for 1-31:
   - [`v1-31-eks-6`](https://distro.eks.amazonaws.com/releases/1-31/6/)
 - Cert Manager: `v1.14.7` to `v1.15.3`
@@ -70,6 +70,9 @@ description: >
   - Rufio: `v0.3.3` to `v0.4.1`
   - Hook: `v0.8.1` to `v0.9.1`
 - Troubleshoot: `v0.93.2` to `v0.107.4`
+
+### Changed
+- Use HookOS embedded images in Tinkerbell Templates by default ([#8708](https://github.com/aws/eks-anywhere/pull/8708) and [#3471](https://github.com/aws/eks-anywhere-build-tooling/pull/3471))
 
 ### Removed
 - Support for Kubernetes v1.26
