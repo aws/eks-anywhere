@@ -190,3 +190,9 @@ fullversion = "v0.20"
 version = "v0.20"
 docsbranch = "release-0.20"
 url = "https://release-0-20.anywhere.eks.amazonaws.com"
+
+[[params.versions]]
+fullversion = "v0.19"
+version = "v0.19"
+docsbranch = "release-0.19"
+url = "https://release-0-19.anywhere.eks.amazonaws.com"
