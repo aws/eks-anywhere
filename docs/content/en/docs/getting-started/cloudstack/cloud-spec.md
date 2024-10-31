@@ -58,7 +58,7 @@ spec:
     machineGroupRef:
       kind: CloudStackMachineConfig
       name: my-cluster-name-etcd
-  kubernetesVersion: "1.28"
+  kubernetesVersion: "1.31"
   managementCluster:
     name: my-cluster-name
   workerNodeGroupConfigurations:
