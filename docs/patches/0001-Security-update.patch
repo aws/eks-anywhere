@@ -1,0 +1,64 @@
+From f97e20029a8b34b66eb5356764b268fc527741f7 Mon Sep 17 00:00:00 2001
+From: Jacob Weinstock <jakobweinstock@gmail.com>
+Date: Thu, 31 Oct 2024 10:24:12 -0600
+Subject: [PATCH] Security update:
+
+For security reasons, Amazon does not allow
+Webpage loads resources from CDN or domain with
+public access or elevated risk via link(s).
+For this reason we host the javascript files locally
+and reference them in the theme.
+
+Signed-off-by: Jacob Weinstock <jakobweinstock@gmail.com>
+---
+ layouts/partials/head.html    | 4 ++--
+ layouts/partials/scripts.html | 4 ++--
+ static/js/prism.js            | 2 +-
+ 3 files changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/layouts/partials/head.html b/layouts/partials/head.html
+index a40f447..db9ae40 100644
+--- a/layouts/partials/head.html
++++ b/layouts/partials/head.html
+@@ -28,12 +28,12 @@
+ {{ template "_internal/twitter_cards.html" . -}}
+ {{ partialCached "head-css.html" . "asdf" -}}
+ <script
+-  src="https://code.jquery.com/jquery-3.6.0.min.js"
++  src="/js/jquery-3.6.0.min.js"
+   integrity="sha384-vtXRMe3mGCbOeY7l30aIg8H9p3GdeSe4IFlP6G8JMa7o7lXvnz3GFKzPxzJdPfGK"
+   crossorigin="anonymous"></script>
+ {{ if .Site.Params.offlineSearch -}}
+ <script
+-  src="https://unpkg.com/lunr@2.3.9/lunr.min.js"
++  src="/js/lunr.min.js"
+   integrity="sha384-203J0SNzyqHby3iU6hzvzltrWi/M41wOP5Gu+BiJMz5nwKykbkUx8Kp7iti0Lpli"
+   crossorigin="anonymous"></script>
+ {{ end -}}
+diff --git a/layouts/partials/scripts.html b/layouts/partials/scripts.html
+index 0e3177e..d129b10 100644
+--- a/layouts/partials/scripts.html
++++ b/layouts/partials/scripts.html
+@@ -1,7 +1,7 @@
+-<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"
++<script src="/js/popper.min.js"
+     integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN"
+     crossorigin="anonymous"></script>
+-<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/js/bootstrap.min.js"
++<script src="/js/bootstrap.min.js"
+     integrity="sha512-UR25UO94eTnCVwjbXozyeVd6ZqpaAE9naiEUBK/A+QDbfSTQFhPGj5lOR6d8tsgbBk84Ggb5A3EkjsOgPRPcKA=="
+     crossorigin="anonymous"></script>
+ 
+diff --git a/static/js/prism.js b/static/js/prism.js
+index ae881ac..8c3d1bf 100644
+--- a/static/js/prism.js
++++ b/static/js/prism.js
+@@ -18,4 +18,4 @@ Prism.languages.sql={comment:{pattern:/(^|[^\\])(?:\/\*[\s\S]*?\*\/|(?:--|\/\/|#
+ !function(e){function n(e){return e.replace(/__/g,function(){return"(?:[\\w-]+|'[^'\n\r]*'|\"(?:\\\\.|[^\\\\\"\r\n])*\")"})}e.languages.toml={comment:{pattern:/#.*/,greedy:!0},table:{pattern:RegExp(n("(^\\s*\\[\\s*(?:\\[\\s*)?)__(?:\\s*\\.\\s*__)*(?=\\s*\\])"),"m"),lookbehind:!0,greedy:!0,alias:"class-name"},key:{pattern:RegExp(n("(^\\s*|[{,]\\s*)__(?:\\s*\\.\\s*__)*(?=\\s*=)"),"m"),lookbehind:!0,greedy:!0,alias:"property"},string:{pattern:/"""(?:\\[\s\S]|[^\\])*?"""|'''[\s\S]*?'''|'[^'\n\r]*'|"(?:\\.|[^\\"\r\n])*"/,greedy:!0},date:[{pattern:/\b\d{4}-\d{2}-\d{2}(?:[T\s]\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})?)?\b/i,alias:"number"},{pattern:/\b\d{2}:\d{2}:\d{2}(?:\.\d+)?\b/,alias:"number"}],number:/(?:\b0(?:x[\da-zA-Z]+(?:_[\da-zA-Z]+)*|o[0-7]+(?:_[0-7]+)*|b[10]+(?:_[10]+)*))\b|[-+]?\b\d+(?:_\d+)*(?:\.\d+(?:_\d+)*)?(?:[eE][+-]?\d+(?:_\d+)*)?\b|[-+]?\b(?:inf|nan)\b/,boolean:/\b(?:true|false)\b/,punctuation:/[.,=[\]{}]/}}(Prism);
+ !function(n){var t=/[*&][^\s[\]{},]+/,e=/!(?:<[\w\-%#;/?:@&=+$,.!~*'()[\]]+>|(?:[a-zA-Z\d-]*!)?[\w\-%#;/?:@&=+$.~*'()]+)?/,r="(?:"+e.source+"(?:[ \t]+"+t.source+")?|"+t.source+"(?:[ \t]+"+e.source+")?)";function a(n,t){t=(t||"").replace(/m/g,"")+"m";var e="([:\\-,[{]\\s*(?:\\s<<prop>>[ \t]+)?)(?:<<value>>)(?=[ \t]*(?:$|,|]|}|\\s*#))".replace(/<<prop>>/g,function(){return r}).replace(/<<value>>/g,function(){return n});return RegExp(e,t)}n.languages.yaml={scalar:{pattern:RegExp("([\\-:]\\s*(?:\\s<<prop>>[ \t]+)?[|>])[ \t]*(?:((?:\r?\n|\r)[ \t]+)[^\r\n]+(?:\\2[^\r\n]+)*)".replace(/<<prop>>/g,function(){return r})),lookbehind:!0,alias:"string"},comment:/#.*/,key:{pattern:RegExp("((?:^|[:\\-,[{\r\n?])[ \t]*(?:<<prop>>[ \t]+)?)[^\r\n{[\\]},#\\s]+?(?=\\s*:\\s)".replace(/<<prop>>/g,function(){return r})),lookbehind:!0,alias:"atrule"},directive:{pattern:/(^[ \t]*)%.+/m,lookbehind:!0,alias:"important"},datetime:{pattern:a("\\d{4}-\\d\\d?-\\d\\d?(?:[tT]|[ \t]+)\\d\\d?:\\d{2}:\\d{2}(?:\\.\\d*)?[ \t]*(?:Z|[-+]\\d\\d?(?::\\d{2})?)?|\\d{4}-\\d{2}-\\d{2}|\\d\\d?:\\d{2}(?::\\d{2}(?:\\.\\d*)?)?"),lookbehind:!0,alias:"number"},boolean:{pattern:a("true|false","i"),lookbehind:!0,alias:"important"},null:{pattern:a("null|~","i"),lookbehind:!0,alias:"important"},string:{pattern:a("(\"|')(?:(?!\\2)[^\\\\\r\n]|\\\\.)*\\2"),lookbehind:!0,greedy:!0},number:{pattern:a("[+-]?(?:0x[\\da-f]+|0o[0-7]+|(?:\\d+\\.?\\d*|\\.?\\d+)(?:e[+-]?\\d+)?|\\.inf|\\.nan)","i"),lookbehind:!0},tag:e,important:t,punctuation:/---|[:[\]{}\-,|>?]|\.\.\./},n.languages.yml=n.languages.yaml}(Prism);
+ !function(){if("undefined"!=typeof self&&self.Prism&&self.document){var i=[],l={},c=function(){};Prism.plugins.toolbar={};var e=Prism.plugins.toolbar.registerButton=function(e,n){var t;t="function"==typeof n?n:function(e){var t;return"function"==typeof n.onClick?((t=document.createElement("button")).type="button",t.addEventListener("click",function(){n.onClick.call(this,e)})):"string"==typeof n.url?(t=document.createElement("a")).href=n.url:t=document.createElement("span"),n.className&&t.classList.add(n.className),t.textContent=n.text,t},e in l?console.warn('There is a button with the key "'+e+'" registered already.'):i.push(l[e]=t)},t=Prism.plugins.toolbar.hook=function(a){var e=a.element.parentNode;if(e&&/pre/i.test(e.nodeName)&&!e.parentNode.classList.contains("code-toolbar")){var t=document.createElement("div");t.classList.add("code-toolbar"),e.parentNode.insertBefore(t,e),t.appendChild(e);var r=document.createElement("div");r.classList.add("toolbar");var n=i,o=function(e){for(;e;){var t=e.getAttribute("data-toolbar-order");if(null!=t)return(t=t.trim()).length?t.split(/\s*,\s*/g):[];e=e.parentElement}}(a.element);o&&(n=o.map(function(e){return l[e]||c})),n.forEach(function(e){var t=e(a);if(t){var n=document.createElement("div");n.classList.add("toolbar-item"),n.appendChild(t),r.appendChild(n)}}),t.appendChild(r)}};e("label",function(e){var t=e.element.parentNode;if(t&&/pre/i.test(t.nodeName)&&t.hasAttribute("data-label")){var n,a,r=t.getAttribute("data-label");try{a=document.querySelector("template#"+r)}catch(e){}return a?n=a.content:(t.hasAttribute("data-url")?(n=document.createElement("a")).href=t.getAttribute("data-url"):n=document.createElement("span"),n.textContent=r),n}}),Prism.hooks.add("complete",t)}}();
+-!function(){if("undefined"!=typeof self&&self.Prism&&self.document)if(Prism.plugins.toolbar){var i=window.ClipboardJS||void 0;i||"function"!=typeof require||(i=require("clipboard"));var c=[];if(!i){var o=document.createElement("script"),t=document.querySelector("head");o.onload=function(){if(i=window.ClipboardJS)for(;c.length;)c.pop()()},o.src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js",t.appendChild(o)}Prism.plugins.toolbar.registerButton("copy-to-clipboard",function(o){var t=document.createElement("button");t.textContent="Copy";var e=o.element;return i?n():c.push(n),t;function n(){var o=new i(t,{text:function(){return e.textContent}});o.on("success",function(){t.textContent="Copied!",r()}),o.on("error",function(){t.textContent="Press Ctrl+C to copy",r()})}function r(){setTimeout(function(){t.textContent="Copy"},5e3)}})}else console.warn("Copy to Clipboard plugin loaded before Toolbar plugin.")}();
++!function(){if("undefined"!=typeof self&&self.Prism&&self.document)if(Prism.plugins.toolbar){var i=window.ClipboardJS||void 0;i||"function"!=typeof require||(i=require("clipboard"));var c=[];if(!i){var o=document.createElement("script"),t=document.querySelector("head");o.onload=function(){if(i=window.ClipboardJS)for(;c.length;)c.pop()()},o.src="/js/clipboard.min.js",t.appendChild(o)}Prism.plugins.toolbar.registerButton("copy-to-clipboard",function(o){var t=document.createElement("button");t.textContent="Copy";var e=o.element;return i?n():c.push(n),t;function n(){var o=new i(t,{text:function(){return e.textContent}});o.on("success",function(){t.textContent="Copied!",r()}),o.on("error",function(){t.textContent="Press Ctrl+C to copy",r()})}function r(){setTimeout(function(){t.textContent="Copy"},5e3)}})}else console.warn("Copy to Clipboard plugin loaded before Toolbar plugin.")}();
+-- 
+2.44.0
+
