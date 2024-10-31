@@ -20,7 +20,7 @@ help: ## Show this help. Requires locally installed npm and hugo.
 
 build: build-docs htmltest
 
-build-docs: submodule ## Generate the static site into the /public folder
+build-docs: submodule-apply-patches ## Generate the static site into the /public folder
 	npm install
 	hugo --environment production --cleanDestinationDir
 
@@ -30,7 +30,7 @@ submodule: ## Initialize the docsy theme submodule
 	git submodule update --init --recursive
 
 submodule-apply-patches: submodule ## Apply submodule patches
-	cd themes/docsy; git am ../../patches/0001-Make-docsy-js-files-static.patch; cd ../..
+	cd themes/docsy; git am < ../../patches/0001-Security-update.patch; cd ../..
 
 submodule-reset: ## Reset submodules to tracked commit
 	git submodule update --init --recursive --force
@@ -57,6 +57,7 @@ server: serve
 container-build: submodule-apply-patches ## Build a container image for the preview of the website
 	docker build -t $(CONTAINER_IMAGE) .
 	$(MAKE) submodule-reset
+	$(MAKE) submodule-apply-patches
 
 container-serve: ## Boot the development server using container. Run `make container-build` before this.
 	docker run \
