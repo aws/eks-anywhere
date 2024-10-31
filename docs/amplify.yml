@@ -4,7 +4,7 @@ applications:
       phases:
         build:
           commands:
-            - make release
+            - git config --global user.email "none@none.com"; git config --global user.name "none"; make release
         postBuild:
           commands:
             - make upload-checksum invalidate-docs-cdn
