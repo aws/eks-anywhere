@@ -16,21 +16,6 @@ skipped_tests:
 
 # Nutanix
 
-# UpgradeFromLatestTests for new K8s version (expected to work only after the release is out)
-- TestDockerKubernetes130to131UpgradeFromLatestMinorRelease
-- TestDockerKubernetes130to131UpgradeFromLatestMinorReleaseAPI
-- TestDockerKubernetes131AirgappedUpgradeFromLatestRegistryMirrorAndCert
-- TestDockerKubernetes131WithOIDCManagementClusterUpgradeFromLatestSideEffects
-
-- TestVSphereKubernetes130To131UbuntuUpgradeFromLatestMinorRelease
-- TestVSphereKubernetes131RedhatUpgradeFromLatestMinorRelease
-- TestVSphereKubernetes130To131RedhatUpgradeFromLatestMinorRelease
-- TestVSphereKubernetes130To131UbuntuInPlaceUpgradeFromLatestMinorRelease
-- TestVSphereKubernetes130to131UpgradeFromLatestMinorReleaseBottleRocketAPI
-- TestVSphereKubernetes131WithOIDCManagementClusterUpgradeFromLatestSideEffects
-
-- TestCloudStackKubernetes131WithOIDCManagementClusterUpgradeFromLatestSideEffects
-
 # Snow
 - TestSnowKubernetes127SimpleFlow
 - TestSnowKubernetes128SimpleFlow
