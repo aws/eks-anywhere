@@ -30,7 +30,7 @@ submodule: ## Initialize the docsy theme submodule
 	git submodule update --init --recursive
 
 submodule-apply-patches: submodule ## Apply submodule patches
-	cd themes/docsy; git am < ../../patches/0001-Security-update.patch; cd ../..
+	cd themes/docsy; git -c user.name="none" -c user.email="none@none.org" am ../../patches/0001-Security-update.patch && cd ../..
 
 submodule-reset: ## Reset submodules to tracked commit
 	git submodule update --init --recursive --force
