@@ -174,7 +174,6 @@ env:
     T_TINKERBELL_CP_NETWORK_CIDR: "tinkerbell_ci:cp_network_cidr"
     T_TINKERBELL_S3_INVENTORY_CSV_KEY: "tinkerbell_ci:s3_inventory_csv"
     T_TINKERBELL_S3_AG_INVENTORY_CSV_KEY: "tinkerbell_ci:s3_ag_inventory_csv"
-    BAREMETAL_BRANCH: "tinkerbell_ci:baremetal_branch"
     TEST_RUNNER_GOVC_USERNAME: "tinkerbell_ci:govc_username"
     TEST_RUNNER_GOVC_PASSWORD: "tinkerbell_ci:govc_password"
     TEST_RUNNER_GOVC_URL: "tinkerbell_ci:govc_url"
@@ -237,7 +236,6 @@ phases:
         --cleanup-resources=true
         --test-report-folder=reports
         --branch-name=${BRANCH_NAME}
-        --baremetal-branch=${BAREMETAL_BRANCH}
   post_build:
     commands:
       - unset AWS_SDK_LOAD_CONFIG AWS_PROFILE
