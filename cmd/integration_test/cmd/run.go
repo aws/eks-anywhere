@@ -25,7 +25,6 @@ const (
 	testReportFolderFlagName   = "test-report-folder"
 	branchNameFlagName         = "branch-name"
 	instanceConfigFlagName     = "instance-config"
-	baremetalBranchFlagName    = "baremetal-branch"
 )
 
 var runE2ECmd = &cobra.Command{
@@ -67,7 +66,6 @@ func init() {
 	runE2ECmd.Flags().Bool(cleanupResourcesFlagName, false, "Flag to indicate if test resources should be cleaned up automatically as tests complete")
 	runE2ECmd.Flags().String(testReportFolderFlagName, "", "Folder destination for JUnit tests reports")
 	runE2ECmd.Flags().String(branchNameFlagName, "main", "EKS-A origin branch from where the tests are being run")
-	runE2ECmd.Flags().String(baremetalBranchFlagName, "main", "Branch for baremetal tests to run on")
 
 	for _, flag := range requiredFlags {
 		if err := runE2ECmd.MarkFlagRequired(flag); err != nil {
@@ -88,7 +86,6 @@ func runE2E(ctx context.Context) error {
 	cleanupResources := viper.GetBool(cleanupResourcesFlagName)
 	testReportFolder := viper.GetString(testReportFolderFlagName)
 	branchName := viper.GetString(branchNameFlagName)
-	baremetalBranchName := viper.GetString(baremetalBranchFlagName)
 
 	runConf := e2e.ParallelRunConf{
 		MaxConcurrentTests:     maxConcurrentTests,
@@ -102,7 +99,6 @@ func runE2E(ctx context.Context) error {
 		TestReportFolder:       testReportFolder,
 		BranchName:             branchName,
 		TestInstanceConfigFile: instanceConfigFile,
-		BaremetalBranchName:    baremetalBranchName,
 		Logger:                 logger.Get(),
 	}
 
