@@ -57,7 +57,6 @@ phases:
         --bundles-override=${BUNDLES_OVERRIDE}
         --test-report-folder=reports
         --branch-name=${BRANCH_NAME}
-        --baremetal-branch=${BAREMETAL_BRANCH}
 reports:
   e2e-reports:
     files:
