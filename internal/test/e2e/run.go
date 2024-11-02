@@ -50,7 +50,6 @@ type ParallelRunConf struct {
 	CleanupResources       bool
 	TestReportFolder       string
 	BranchName             string
-	BaremetalBranchName    string
 	Logger                 logr.Logger
 }
 
@@ -89,7 +88,7 @@ func RunTestsInParallel(conf ParallelRunConf) error {
 
 	// For Tinkerbell tests, get hardware inventory pool
 	var invCatalogue map[string]*hardwareCatalogue
-	if strings.EqualFold(conf.BranchName, conf.BaremetalBranchName) {
+	if containsTinkerbellTest(testsList) {
 		nonAirgappedHardwareInv, err := getNonAirgappedHardwarePool(conf.StorageBucket)
 		if err != nil {
 			return fmt.Errorf("failed to get non-airgapped hardware inventory for Tinkerbell Tests: %v", err)
@@ -411,7 +410,7 @@ func splitTests(testsList []string, conf ParallelRunConf) ([]instanceRunConf, er
 		runConfs = append(runConfs, newInstanceRunConf(awsSession, conf, len(runConfs), testName, ips, []*api.Hardware{}, 0, false, Ec2TestRunnerType, testRunnerConfig))
 	}
 
-	if strings.EqualFold(conf.BranchName, conf.BaremetalBranchName) {
+	if containsTinkerbellTest(testsList) {
 		tinkerbellIPManager := newE2EIPManager(conf.Logger, os.Getenv(tinkerbellControlPlaneNetworkCidrEnvVar))
 		runConfs, err = appendNonAirgappedTinkerbellRunConfs(awsSession, testsList, conf, testRunnerConfig, runConfs, tinkerbellIPManager)
 		if err != nil {
@@ -587,4 +586,14 @@ func logTinkerbellTestHardwareInfo(conf *instanceRunConf, action string) {
 		hardwareInfo = append(hardwareInfo, hardware.Hostname)
 	}
 	conf.Logger.V(1).Info(action+" hardware for TestRunner", "hardwarePool", strings.Join(hardwareInfo, ", "))
+}
+
+func containsTinkerbellTest(testsList []string) bool {
+	tinkerbellTestsRe := regexp.MustCompile(tinkerbellTestsRe)
+	for _, testName := range testsList {
+		if tinkerbellTestsRe.MatchString(testName) {
+			return true
+		}
+	}
+	return false
 }
