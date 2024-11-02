@@ -86,7 +86,6 @@ $BIN_FOLDER/test e2e run \
     -r ${TEST_REGEX} \
     --bundles-override=${BUNDLES_OVERRIDE} \
     --test-report-folder=${TEST_REPORT_FOLDER} \
-    --baremetal-branch="" \
     -v4
 
 # Faking cross-platform versioned folders for dry-run
