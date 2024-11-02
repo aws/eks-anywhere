@@ -16,9 +16,9 @@ You can purchase EKS Anywhere Enterprise Subscriptions for 24/7 support from AWS
 
 EKS Anywhere Enterprise Subscriptions include support for the following components:
 
-- EKS Distro (see [documentation](https://distro.eks.aws.com/) for components)
+- EKS Distro (see [documentation](https://distro.eks.amazonaws.com/) for components)
 - EKS Anywhere core components such as the Cilium CNI, Flux GitOps controller, kube-vip, EKS Anywhere CLI, EKS Anywhere controllers, image builder, and EKS Connector
-- EKS Anywhere Curated Packages (see [curated packages list]({{< relref "../concepts/packages/#curated-package-list" >}}) for list of packages) 
+- EKS Anywhere Curated Packages (see [curated packages list]({{< relref "../packages/packagelist/" >}}) for list of packages) 
 - EKS Anywhere cluster lifecycle operations such as creating, scaling, and upgrading
 - EKS Anywhere troubleshooting, general guidance, and best practices
 - Bottlerocket node operating system
