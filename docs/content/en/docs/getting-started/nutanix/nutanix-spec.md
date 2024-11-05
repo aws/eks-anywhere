@@ -183,6 +183,11 @@ spec:
        - ssh-rsa AAAA…
  vcpuSockets: 2
  vcpusPerSocket: 1
+ gpus:
+   - type: deviceID
+     deviceID: 1234
+   - type: name
+     name: my-gpu
 ---
 ```
 
@@ -400,3 +405,15 @@ ssh -i <private-key-file> <user>@<VM-IP>
 ```
 
 The default is generating a key in your `$(pwd)/<cluster-name>` folder when not specifying a value
+
+### gpus (optional)
+Reference to the GPUs to be assigned to the VMs.
+
+### gpus[0].name (`gpus[0].name` or `gpus[0].deviceID` required)
+Name of the GPU.
+
+### gpus[0].deviceID (`gpus[0].name` or `gpus[0].deviceID` required)
+Device ID of the GPU.
+
+### gpus[0].type (required)
+Type to identify the GPU. (Permitted values: `name` or `deviceID`)
