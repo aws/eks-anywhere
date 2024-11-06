@@ -3,27 +3,23 @@ package kubernetes
 import (
 	"context"
 	"fmt"
-	"strings"
 
-	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/utils/pointer"
-	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 )
 
 // UnAuthClient is a generic kubernetes API client that takes a kubeconfig
 // file on every call in order to authenticate.
 type UnAuthClient struct {
 	kubectl Kubectl
-	scheme  *runtime.Scheme
+	scheme  *Scheme
 }
 
 // NewUnAuthClient builds a new UnAuthClient.
 func NewUnAuthClient(kubectl Kubectl) *UnAuthClient {
 	return &UnAuthClient{
 		kubectl: kubectl,
-		scheme:  runtime.NewScheme(),
+		scheme:  &Scheme{runtime.NewScheme()},
 	}
 }
 
@@ -31,7 +27,7 @@ func NewUnAuthClient(kubectl Kubectl) *UnAuthClient {
 // It has always be invoked at least once before making any API call
 // It is not thread safe.
 func (c *UnAuthClient) Init() error {
-	return addToScheme(c.scheme, schemeAdders...)
+	return InitScheme(c.scheme.Scheme)
 }
 
 // Get performs a GET call to the kube API server authenticating with a kubeconfig file
@@ -90,7 +86,10 @@ func (c *UnAuthClient) ApplyServerSide(ctx context.Context, kubeconfig, fieldMan
 
 // List retrieves list of objects. On a successful call, Items field
 // in the list will be populated with the result returned from the server.
-func (c *UnAuthClient) List(ctx context.Context, kubeconfig string, list ObjectList) error {
+func (c *UnAuthClient) List(ctx context.Context, kubeconfig string, list ObjectList, opts ...ListOption) error {
+	if len(opts) > 0 {
+		return fmt.Errorf("list options are not supported for unauthenticated clients")
+	}
 	resourceType, err := c.resourceTypeForObj(list)
 	if err != nil {
 		return fmt.Errorf("getting kubernetes resource: %v", err)
@@ -142,24 +141,5 @@ func (c *UnAuthClient) DeleteAllOf(ctx context.Context, kubeconfig string, obj O
 }
 
 func (c *UnAuthClient) resourceTypeForObj(obj runtime.Object) (string, error) {
-	groupVersionKind, err := apiutil.GVKForObject(obj, c.scheme)
-	if err != nil {
-		return "", err
-	}
-
-	if meta.IsListType(obj) && strings.HasSuffix(groupVersionKind.Kind, "List") {
-		// if obj is a list, treat it as a request for the "individual" item's resource
-		groupVersionKind.Kind = groupVersionKind.Kind[:len(groupVersionKind.Kind)-4]
-	}
-
-	return groupVersionToKubectlResourceType(groupVersionKind), nil
-}
-
-func groupVersionToKubectlResourceType(g schema.GroupVersionKind) string {
-	if g.Group == "" {
-		// if Group is not set, this probably an obj from "core", which api group is just v1
-		return g.Kind
-	}
-
-	return fmt.Sprintf("%s.%s.%s", g.Kind, g.Version, g.Group)
+	return c.scheme.KubectlResourceTypeForObj(obj)
 }

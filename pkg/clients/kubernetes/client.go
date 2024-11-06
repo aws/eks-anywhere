@@ -3,6 +3,7 @@ package kubernetes
 import (
 	"context"
 
+	"k8s.io/apimachinery/pkg/labels"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -25,7 +26,7 @@ type Reader interface {
 
 	// List retrieves list of objects. On a successful call, Items field
 	// in the list will be populated with the result returned from the server.
-	List(ctx context.Context, list ObjectList) error
+	List(ctx context.Context, list ObjectList, opt ...ListOption) error
 }
 
 // Writer knows how to create, delete, and update Kubernetes objects.
@@ -93,5 +94,24 @@ var _ ApplyServerSideOption = ApplyServerSideOptions{}
 func (o ApplyServerSideOptions) ApplyToApplyServerSide(do *ApplyServerSideOptions) {
 	if o.ForceOwnership {
 		do.ForceOwnership = true
+	}
+}
+
+// ListOptions contains options for list requests.
+type ListOptions struct {
+	// LabelSelector filters results by label. Use labels.Parse() to
+	// set from raw string form.
+	LabelSelector labels.Selector
+}
+
+// ListOption is some configuration that modifies options for a List request.
+type ListOption interface {
+	ApplyToList(*ListOptions)
+}
+
+// ApplyToList implements ListOption.
+func (o ListOptions) ApplyToList(lo *ListOptions) {
+	if o.LabelSelector != nil {
+		lo.LabelSelector = o.LabelSelector
 	}
 }

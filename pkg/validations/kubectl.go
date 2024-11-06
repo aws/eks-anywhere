@@ -16,7 +16,7 @@ import (
 )
 
 type KubectlClient interface {
-	List(ctx context.Context, kubeconfig string, list kubernetes.ObjectList) error
+	List(ctx context.Context, kubeconfig string, list kubernetes.ObjectList, opts ...kubernetes.ListOption) error
 	ValidateControlPlaneNodes(ctx context.Context, cluster *types.Cluster, clusterName string) error
 	ValidateWorkerNodes(ctx context.Context, clusterName string, kubeconfig string) error
 	ValidateNodes(ctx context.Context, kubeconfig string) error
