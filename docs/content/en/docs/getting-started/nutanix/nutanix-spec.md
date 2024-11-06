@@ -55,7 +55,7 @@ spec:
      name: mgmt-etcd
  kubernetesVersion: "1.31"
  workerNodeGroupConfigurations:
-   - count: 1
+   - count: 3
      machineGroupRef:
        kind: NutanixMachineConfig
        name: mgmt-machine
@@ -72,6 +72,34 @@ spec:
  credentialRef:
    kind: Secret
    name: nutanix-credentials
+ failureDomains:
+   - name: failure-domain-01 
+     cluster:
+       name: nx-cluster-01
+       type: name
+     subnets:
+       - name: vm-network-01
+         type: name
+     workerMachineGroups:
+       - md-0
+   - name: failure-domain-02 
+     cluster:
+       name: nx-cluster-02
+       type: name
+     subnets:
+       - name: vm-network-02
+         type: name
+     workerMachineGroups:
+       - md-0
+   - name: failure-domain-03 
+     cluster:
+       name: nx-cluster-03
+       type: name
+     subnets:
+       - name: vm-network-03
+         type: name
+     workerMachineGroups:
+       - md-0
 ---
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: NutanixMachineConfig
@@ -256,6 +284,9 @@ __Example__:</br>
     <certificate string>
     -----END CERTIFICATE-----
 ```
+
+### failureDomains[0].workerMachineGroups (optional)
+List of worker machine group names that belong to a specific failure domain. See `Cluster.Spec.WorkerNodeGroupConfiguration` for more information.
 
 ## NutanixMachineConfig Fields
 
