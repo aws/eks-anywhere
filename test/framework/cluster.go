@@ -13,6 +13,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -1174,6 +1175,10 @@ func (e *ClusterE2ETest) InstallCuratedPackageFile(packageFile, kubeconfig strin
 
 // ValidatePackageBundleControllerRegistry checks if the registries for helm charts and images match for curated packages tests.
 func (e *ClusterE2ETest) ValidatePackageBundleControllerRegistry() {
+	nonRegionalPackagesRegex := `^.*NonRegionalCuratedPackages.*$`
+	if regexp.MustCompile(nonRegionalPackagesRegex).MatchString(e.T.Name()) {
+		return
+	}
 	pbc, err := e.KubectlClient.GetPackageBundleController(context.Background(), e.KubeconfigFilePath(), e.ClusterName)
 	if err != nil {
 		e.T.Fatalf("cannot get PackageBundleController: %v", err)
