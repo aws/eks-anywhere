@@ -53,4 +53,7 @@ const (
 	//
 	// (January 2, 15:04:05, 2006, in time zone seven hours west of GMT).
 	YYYYMMDD = "2006-01-02"
+
+	MAX_IMAGES_PER_REPOSITORY = 10000
+	MAX_TAGS_PER_IMAGE        = 1000
 )
