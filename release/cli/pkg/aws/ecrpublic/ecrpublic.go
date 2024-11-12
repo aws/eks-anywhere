@@ -83,6 +83,65 @@ func GetAuthConfig(ecrPublicClient *ecrpublic.ECRPublic) (*docker.AuthConfigurat
 	return authConfig, nil
 }
 
+func GetAllImagesCount(imageRepository string, ecrPublicClient *ecrpublic.ECRPublic) (int, error) {
+	allImages := []*ecrpublic.ImageDetail{}
+
+	describeImagesOutput, err := ecrPublicClient.DescribeImages(
+		&ecrpublic.DescribeImagesInput{
+			RepositoryName: aws.String(imageRepository),
+			MaxResults:     aws.Int64(1000),
+		},
+	)
+	if err != nil {
+		return 0, errors.Cause(err)
+	}
+	allImages = append(allImages, describeImagesOutput.ImageDetails...)
+	nextToken := describeImagesOutput.NextToken
+
+	for nextToken != nil {
+		describeImagesOutput, err = ecrPublicClient.DescribeImages(
+			&ecrpublic.DescribeImagesInput{
+				RepositoryName: aws.String(imageRepository),
+				MaxResults:     aws.Int64(1000),
+				NextToken:      nextToken,
+			},
+		)
+		if err != nil {
+			return 0, errors.Cause(err)
+		}
+		allImages = append(allImages, describeImagesOutput.ImageDetails...)
+		nextToken = describeImagesOutput.NextToken
+	}
+
+	return len(allImages), nil
+}
+
+func GetTagsCountForImage(imageRepository, imageDigest string, ecrPublicClient *ecrpublic.ECRPublic) (int, error) {
+	describeImagesOutput, err := ecrPublicClient.DescribeImages(
+		&ecrpublic.DescribeImagesInput{
+			RepositoryName: aws.String(imageRepository),
+			ImageIds: []*ecrpublic.ImageIdentifier{
+				{
+					ImageDigest: aws.String(imageDigest),
+				},
+			},
+		},
+	)
+	if err != nil {
+		if strings.Contains(err.Error(), ecrpublic.ErrCodeImageNotFoundException) {
+			return 0, nil
+		} else {
+			return 0, errors.Cause(err)
+		}
+	}
+
+	if len(describeImagesOutput.ImageDetails) == 0 {
+		return 0, nil
+	}
+
+	return len(describeImagesOutput.ImageDetails[0].ImageTags), nil
+}
+
 func CheckImageExistence(imageUri, imageContainerRegistry string, ecrPublicClient *ecrpublic.ECRPublic) (bool, error) {
 	repository, tag := artifactutils.SplitImageUri(imageUri, imageContainerRegistry)
 	_, err := ecrPublicClient.DescribeImages(
