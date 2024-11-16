@@ -16,7 +16,7 @@ The steps below are based on the [guide for configuring IRSA for DIY Kubernetes,
 
 ### Create an OIDC provider and make its discovery document publicly accessible
 
-You must use a single OIDC provider per EKS Anywhere cluster, which is the best practice to prevent a token from one cluster being used with another cluster. These steps describe the process of using a [public S3 bucket](https://docs.aws.amazon.com/AmazonS3/latest/userguide/configuring-block-public-access-bucket.html) to host the OIDC `discovery.json` and `keys.json` documents.
+You must use a single OIDC provider per EKS Anywhere cluster, which is the best practice to prevent a token from one cluster being used with another cluster. These steps describe the process of using a S3 bucket to host the OIDC `discovery.json` and `keys.json` documents.
 
 1. [Create an S3 bucket to host the public signing keys and OIDC discovery document for your cluster](https://github.com/aws/amazon-eks-pod-identity-webhook/blob/master/SELF_HOSTED_SETUP.md#create-an-s3-bucket). Make a note of the `$HOSTNAME` and `$ISSUER_HOSTPATH`.
 
@@ -47,7 +47,7 @@ You must use a single OIDC provider per EKS Anywhere cluster, which is the best 
 
 1. Upload the `discovery.json` file to the S3 bucket:
     ```bash
-    aws s3 cp --acl public-read ./discovery.json s3://$S3_BUCKET/.well-known/openid-configuration
+    aws s3 cp ./discovery.json s3://$S3_BUCKET/.well-known/openid-configuration
     ```
 
 1. Create an [OIDC provider](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_providers_create_oidc.html) for your cluster. Set the _Provider URL_ to `https://$ISSUER_HOSTPATH` and _Audience_ to `sts.amazonaws.com`.
@@ -129,8 +129,26 @@ Set the remaining fields in cluster spec as required and create the cluster.
 
 1. Upload the `keys.json` document to the S3 bucket.
     ```bash
-    aws s3 cp --acl public-read ./keys.json s3://$S3_BUCKET/keys.json
+    aws s3 cp ./keys.json s3://$S3_BUCKET/keys.json
     ```
+
+1. Use a [bucket policy](https://docs.aws.amazon.com/AmazonS3/latest/userguide/add-bucket-policy.html) to grant public read access to the `discovery.json` and `keys.json` documents:
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": "*",
+      "Action": "s3:GetObject",
+      "Resource": [
+        "arn:aws:s3:::$S3_BUCKET/.well-known/openid-configuration",
+        "arn:aws:s3:::$S3_BUCKET/keys.json"
+      ]
+    }
+  ]
+}
+```
 
 ### Deploy pod identity webhook
 
@@ -192,7 +210,7 @@ In order to grant certain service accounts access to the desired AWS resources, 
     "$ISSUER_HOSTPATH:aud": "sts.amazonaws.com"
     ```
 
-1. Change the line to look like the following line. Replace `aud` with `sub` and replace `KUBERNETES_SERVICE_ACCOUNT_NAMESPACE` and `KUBERNETES_SERVICE_ACCOUNT_NAME` with the name of your Kubernetes service account and the Kubernetes namespace that the account exists in.
+1. Add another condition after that line which looks like the following line. Replace `KUBERNETES_SERVICE_ACCOUNT_NAMESPACE` and `KUBERNETES_SERVICE_ACCOUNT_NAME` with the name of your Kubernetes service account and the Kubernetes namespace that the account exists in.
     ```
     "$ISSUER_HOSTPATH:sub": "system:serviceaccount:KUBERNETES_SERVICE_ACCOUNT_NAMESPACE:KUBERNETES_SERVICE_ACCOUNT_NAME"
     ```
@@ -209,6 +227,7 @@ In order to grant certain service accounts access to the desired AWS resources, 
                 "Action": "sts:AssumeRoleWithWebIdentity",
                 "Condition": {
                     "StringLike": {
+                        "s3.us-west-2.amazonaws.com/$S3_BUCKET:aud": "sts.amazonaws.com",
                         "s3.us-west-2.amazonaws.com/$S3_BUCKET:sub": [
                                 "system:serviceaccount:default:my-serviceaccount",
                                 "system:serviceaccount:amazon-cloudwatch:*"
