@@ -32,6 +32,29 @@ description: >
 * When upgrading to a new minor version, a new OS image must be created using the new image-builder CLI pertaining to that release.
 {{% /alert %}}
 
+## [v0.21.1](https://github.com/aws/eks-anywhere/releases/tag/v0.21.1)
+
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+|    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+| Bottlerocket 1.26.1 |    ✔    |     *      |    —    |     —      |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+|      RHEL 9.x       |    —    |     ✔      |    ✔    |     ✔      |  —   |
+
+\* [EKS Anywhere issue regarding deprecation of Bottlerocket bare metal variants](https://github.com/aws/eks-anywhere/issues/7754)
+
+### Upgraded
+- Bumped EKS-D:
+  - [`v1-31-eks-7`](https://distro.eks.amazonaws.com/releases/1-31/7/)
+  - [`v1-30-eks-18`](https://distro.eks.amazonaws.com/releases/1-30/18/)
+  - [`v1-29-eks-25`](https://distro.eks.amazonaws.com/releases/1-29/25/)
+  - [`v1-28-eks-36`](https://distro.eks.amazonaws.com/releases/1-28/36/)
+- Cluster API Provider vSphere: `v1.11.2` to `v1.11.3`
+- Govmomi: `v0.44.1` to `v0.46.1`
+- Helm: `v3.16.2` to `v3.16.3`
+- Troubleshoot: `v0.107.4` to `v0.107.5`
 
 ## [v0.21.0](https://github.com/aws/eks-anywhere/releases/tag/v0.21.0)
 
