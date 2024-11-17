@@ -388,14 +388,24 @@ func ComputeImageDigestFromManifest(ecrPublicClient *ecrpublicsdk.ECRPublic, reg
 	return fmt.Sprintf("%x", digest), nil
 }
 
-func CheckRepositoryImagesAndTagsCountLimit(sourceImageUri, releaseImageUri, sourceContainerRegistry, releaseContainerRegistry string, ecrClient *ecrsdk.ECR, ecrPublicClient *ecrpublicsdk.ECRPublic) error {
+func CheckRepositoryImagesAndTagsCountLimit(sourceImageUri, releaseImageUri, sourceContainerRegistry, releaseContainerRegistry string, ecrClient interface{}, ecrPublicClient *ecrpublicsdk.ECRPublic) error {
 	repository, _ := artifactutils.SplitImageUri(releaseImageUri, releaseContainerRegistry)
 
 	fmt.Printf("Checking if image %s can be pushed to repository %s\n", releaseImageUri, repository)
 
-	sourceImageDigest, err := ecr.GetImageDigest(sourceImageUri, sourceContainerRegistry, ecrClient)
-	if err != nil {
-		return errors.Cause(err)
+	var sourceImageDigest string
+	var err error
+	switch ecrClient.(type) {
+	case *ecrsdk.ECR:
+		sourceImageDigest, err = ecr.GetImageDigest(sourceImageUri, sourceContainerRegistry, ecrClient.(*ecrsdk.ECR))
+		if err != nil {
+			return errors.Cause(err)
+		}
+	case *ecrpublicsdk.ECRPublic:
+		sourceImageDigest, err = ecrpublic.GetImageDigest(sourceImageUri, sourceContainerRegistry, ecrClient.(*ecrpublicsdk.ECRPublic))
+		if err != nil {
+			return errors.Cause(err)
+		}
 	}
 
 	allImagesCount, err := ecrpublic.GetAllImagesCount(repository, ecrPublicClient)
