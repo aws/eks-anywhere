@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
+	prismgoclient "github.com/nutanix-cloud-native/prism-go-client"
 	"github.com/nutanix-cloud-native/prism-go-client/utils"
 	v3 "github.com/nutanix-cloud-native/prism-go-client/v3"
 	"github.com/stretchr/testify/assert"
@@ -95,13 +96,18 @@ func fakeSubnetList() *v3.SubnetListIntentResponse {
 				},
 				Spec: &v3.Subnet{
 					Name: utils.StringPtr("prism-subnet"),
+					ClusterReference: &v3.Reference{
+						Kind: utils.StringPtr("cluster"),
+						UUID: utils.StringPtr("a15f6966-bfc7-4d1e-8575-224096fc1cdb"),
+						Name: utils.StringPtr("prism-cluster"),
+					},
 				},
 			},
 		},
 	}
 }
 
-func fakeClusterListForDCTest(filter *string) (*v3.ClusterListIntentResponse, error) {
+func fakeClusterListForDCTest(filter string) (*v3.ClusterListIntentResponse, error) {
 	data := &v3.ClusterListIntentResponse{
 		Entities: []*v3.ClusterIntentResponse{
 			{
@@ -141,19 +147,21 @@ func fakeClusterListForDCTest(filter *string) (*v3.ClusterListIntentResponse, er
 		Entities: []*v3.ClusterIntentResponse{},
 	}
 
-	if filter != nil && *filter != "" {
-		str := strings.Replace(*filter, "name==", "", -1)
+	if filter != "" {
+		str := strings.Replace(filter, "name==", "", -1)
 		for _, cluster := range data.Entities {
 			if str == *cluster.Spec.Name {
 				result.Entities = append(result.Entities, cluster)
 			}
 		}
+	} else {
+		result.Entities = data.Entities
 	}
 
 	return result, nil
 }
 
-func fakeSubnetListForDCTest(filter *string) (*v3.SubnetListIntentResponse, error) {
+func fakeSubnetListForDCTest(filter string) (*v3.SubnetListIntentResponse, error) {
 	data := &v3.SubnetListIntentResponse{
 		Entities: []*v3.SubnetIntentResponse{
 			{
@@ -162,6 +170,11 @@ func fakeSubnetListForDCTest(filter *string) (*v3.SubnetListIntentResponse, erro
 				},
 				Spec: &v3.Subnet{
 					Name: utils.StringPtr("prism-subnet"),
+					ClusterReference: &v3.Reference{
+						Kind: utils.StringPtr("cluster"),
+						UUID: utils.StringPtr("4d69ca7d-022f-49d1-a454-74535993bda4"),
+						Name: utils.StringPtr("prism-cluster-1"),
+					},
 				},
 			},
 			{
@@ -170,6 +183,11 @@ func fakeSubnetListForDCTest(filter *string) (*v3.SubnetListIntentResponse, erro
 				},
 				Spec: &v3.Subnet{
 					Name: utils.StringPtr("prism-subnet-1"),
+					ClusterReference: &v3.Reference{
+						Kind: utils.StringPtr("cluster"),
+						UUID: utils.StringPtr("a15f6966-bfc7-4d1e-8575-224096fc1cdb"),
+						Name: utils.StringPtr("prism-cluster"),
+					},
 				},
 			},
 		},
@@ -179,14 +197,16 @@ func fakeSubnetListForDCTest(filter *string) (*v3.SubnetListIntentResponse, erro
 		Entities: []*v3.SubnetIntentResponse{},
 	}
 
-	if filter != nil && *filter != "" {
-		filters := strings.Split(*filter, ";")
+	if filter != "" {
+		filters := strings.Split(filter, ";")
 		str := strings.Replace(filters[0], "name==", "", -1)
 		for _, subnet := range data.Entities {
 			if str == *subnet.Spec.Name {
 				result.Entities = append(result.Entities, subnet)
 			}
 		}
+	} else {
+		result.Entities = data.Entities
 	}
 
 	return result, nil
@@ -215,7 +235,7 @@ func fakeProjectList() *v3.ProjectListResponse {
 					UUID: utils.StringPtr("5c9a0641-1025-40ed-9e1d-0d0a23043e57"),
 				},
 				Spec: &v3.ProjectSpec{
-					Name: "prism-image",
+					Name: "project",
 				},
 			},
 		},
@@ -297,16 +317,16 @@ func TestNutanixValidatorValidateMachineConfig(t *testing.T) {
 		{
 			name: "list cluster request failed",
 			setup: func(machineConf *anywherev1.NutanixMachineConfig, mockClient *mocknutanix.MockClient, validator *mockCrypto.MockTlsValidator, transport *mocknutanix.MockRoundTripper) *Validator {
-				mockClient.EXPECT().ListCluster(gomock.Any(), gomock.Any()).Return(nil, errors.New("cluster not found"))
+				mockClient.EXPECT().ListAllCluster(gomock.Any(), gomock.Any()).Return(nil, errors.New("cluster not found"))
 				clientCache := &ClientCache{clients: map[string]Client{"test": mockClient}}
 				return NewValidator(clientCache, validator, &http.Client{Transport: transport})
 			},
-			expectedError: "failed to find cluster by name",
+			expectedError: "failed to list clusters",
 		},
 		{
 			name: "list cluster request did not find match",
 			setup: func(machineConf *anywherev1.NutanixMachineConfig, mockClient *mocknutanix.MockClient, validator *mockCrypto.MockTlsValidator, transport *mocknutanix.MockRoundTripper) *Validator {
-				mockClient.EXPECT().ListCluster(gomock.Any(), gomock.Any()).Return(&v3.ClusterListIntentResponse{}, nil)
+				mockClient.EXPECT().ListAllCluster(gomock.Any(), gomock.Any()).Return(&v3.ClusterListIntentResponse{}, nil)
 				clientCache := &ClientCache{clients: map[string]Client{"test": mockClient}}
 				return NewValidator(clientCache, validator, &http.Client{Transport: transport})
 			},
@@ -317,7 +337,7 @@ func TestNutanixValidatorValidateMachineConfig(t *testing.T) {
 			setup: func(machineConf *anywherev1.NutanixMachineConfig, mockClient *mocknutanix.MockClient, validator *mockCrypto.MockTlsValidator, transport *mocknutanix.MockRoundTripper) *Validator {
 				clusters := fakeClusterList()
 				clusters.Entities = append(clusters.Entities, clusters.Entities[0])
-				mockClient.EXPECT().ListCluster(gomock.Any(), gomock.Any()).Return(clusters, nil)
+				mockClient.EXPECT().ListAllCluster(gomock.Any(), gomock.Any()).Return(clusters, nil)
 				clientCache := &ClientCache{clients: map[string]Client{"test": mockClient}}
 				return NewValidator(clientCache, validator, &http.Client{Transport: transport})
 			},
@@ -326,7 +346,7 @@ func TestNutanixValidatorValidateMachineConfig(t *testing.T) {
 		{
 			name: "empty subnet name",
 			setup: func(machineConf *anywherev1.NutanixMachineConfig, mockClient *mocknutanix.MockClient, validator *mockCrypto.MockTlsValidator, transport *mocknutanix.MockRoundTripper) *Validator {
-				mockClient.EXPECT().ListCluster(gomock.Any(), gomock.Any()).Return(fakeClusterList(), nil).Times(2)
+				mockClient.EXPECT().ListAllCluster(gomock.Any(), gomock.Any()).Return(fakeClusterList(), nil).Times(2)
 				machineConf.Spec.Subnet.Name = nil
 				clientCache := &ClientCache{clients: map[string]Client{"test": mockClient}}
 				return NewValidator(clientCache, validator, &http.Client{Transport: transport})
@@ -336,7 +356,7 @@ func TestNutanixValidatorValidateMachineConfig(t *testing.T) {
 		{
 			name: "empty subnet uuid",
 			setup: func(machineConf *anywherev1.NutanixMachineConfig, mockClient *mocknutanix.MockClient, validator *mockCrypto.MockTlsValidator, transport *mocknutanix.MockRoundTripper) *Validator {
-				mockClient.EXPECT().ListCluster(gomock.Any(), gomock.Any()).Return(fakeClusterList(), nil).Times(2)
+				mockClient.EXPECT().ListAllCluster(gomock.Any(), gomock.Any()).Return(fakeClusterList(), nil).Times(2)
 				machineConf.Spec.Subnet.Type = anywherev1.NutanixIdentifierUUID
 				machineConf.Spec.Subnet.UUID = nil
 				clientCache := &ClientCache{clients: map[string]Client{"test": mockClient}}
@@ -347,7 +367,7 @@ func TestNutanixValidatorValidateMachineConfig(t *testing.T) {
 		{
 			name: "invalid subnet identifier type",
 			setup: func(machineConf *anywherev1.NutanixMachineConfig, mockClient *mocknutanix.MockClient, validator *mockCrypto.MockTlsValidator, transport *mocknutanix.MockRoundTripper) *Validator {
-				mockClient.EXPECT().ListCluster(gomock.Any(), gomock.Any()).Return(fakeClusterList(), nil).Times(2)
+				mockClient.EXPECT().ListAllCluster(gomock.Any(), gomock.Any()).Return(fakeClusterList(), nil).Times(2)
 				machineConf.Spec.Subnet.Type = "notanidentifier"
 				clientCache := &ClientCache{clients: map[string]Client{"test": mockClient}}
 				return NewValidator(clientCache, validator, &http.Client{Transport: transport})
@@ -357,18 +377,18 @@ func TestNutanixValidatorValidateMachineConfig(t *testing.T) {
 		{
 			name: "list subnet request failed",
 			setup: func(machineConf *anywherev1.NutanixMachineConfig, mockClient *mocknutanix.MockClient, validator *mockCrypto.MockTlsValidator, transport *mocknutanix.MockRoundTripper) *Validator {
-				mockClient.EXPECT().ListCluster(gomock.Any(), gomock.Any()).Return(fakeClusterList(), nil).Times(2)
-				mockClient.EXPECT().ListSubnet(gomock.Any(), gomock.Any()).Return(nil, errors.New("subnet not found"))
+				mockClient.EXPECT().ListAllCluster(gomock.Any(), gomock.Any()).Return(fakeClusterList(), nil).Times(2)
+				mockClient.EXPECT().ListAllSubnet(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, errors.New("subnet not found"))
 				clientCache := &ClientCache{clients: map[string]Client{"test": mockClient}}
 				return NewValidator(clientCache, validator, &http.Client{Transport: transport})
 			},
-			expectedError: "failed to find subnet by name",
+			expectedError: "failed to list subnets",
 		},
 		{
 			name: "list subnet request did not find match",
 			setup: func(machineConf *anywherev1.NutanixMachineConfig, mockClient *mocknutanix.MockClient, validator *mockCrypto.MockTlsValidator, transport *mocknutanix.MockRoundTripper) *Validator {
-				mockClient.EXPECT().ListCluster(gomock.Any(), gomock.Any()).Return(fakeClusterList(), nil).Times(2)
-				mockClient.EXPECT().ListSubnet(gomock.Any(), gomock.Any()).Return(&v3.SubnetListIntentResponse{}, nil)
+				mockClient.EXPECT().ListAllCluster(gomock.Any(), gomock.Any()).Return(fakeClusterList(), nil).Times(2)
+				mockClient.EXPECT().ListAllSubnet(gomock.Any(), gomock.Any(), gomock.Any()).Return(&v3.SubnetListIntentResponse{}, nil)
 				clientCache := &ClientCache{clients: map[string]Client{"test": mockClient}}
 				return NewValidator(clientCache, validator, &http.Client{Transport: transport})
 			},
@@ -377,10 +397,10 @@ func TestNutanixValidatorValidateMachineConfig(t *testing.T) {
 		{
 			name: "duplicate subnets found",
 			setup: func(machineConf *anywherev1.NutanixMachineConfig, mockClient *mocknutanix.MockClient, validator *mockCrypto.MockTlsValidator, transport *mocknutanix.MockRoundTripper) *Validator {
-				mockClient.EXPECT().ListCluster(gomock.Any(), gomock.Any()).Return(fakeClusterList(), nil).Times(2)
+				mockClient.EXPECT().ListAllCluster(gomock.Any(), gomock.Any()).Return(fakeClusterList(), nil).Times(2)
 				subnets := fakeSubnetList()
 				subnets.Entities = append(subnets.Entities, subnets.Entities[0])
-				mockClient.EXPECT().ListSubnet(gomock.Any(), gomock.Any()).Return(subnets, nil)
+				mockClient.EXPECT().ListAllSubnet(gomock.Any(), gomock.Any(), gomock.Any()).Return(subnets, nil)
 				clientCache := &ClientCache{clients: map[string]Client{"test": mockClient}}
 				return NewValidator(clientCache, validator, &http.Client{Transport: transport})
 			},
@@ -389,8 +409,8 @@ func TestNutanixValidatorValidateMachineConfig(t *testing.T) {
 		{
 			name: "empty image name",
 			setup: func(machineConf *anywherev1.NutanixMachineConfig, mockClient *mocknutanix.MockClient, validator *mockCrypto.MockTlsValidator, transport *mocknutanix.MockRoundTripper) *Validator {
-				mockClient.EXPECT().ListCluster(gomock.Any(), gomock.Any()).Return(fakeClusterList(), nil).Times(2)
-				mockClient.EXPECT().ListSubnet(gomock.Any(), gomock.Any()).Return(fakeSubnetList(), nil)
+				mockClient.EXPECT().ListAllCluster(gomock.Any(), gomock.Any()).Return(fakeClusterList(), nil).Times(2)
+				mockClient.EXPECT().ListAllSubnet(gomock.Any(), gomock.Any(), gomock.Any()).Return(fakeSubnetList(), nil)
 				machineConf.Spec.Image.Name = nil
 				clientCache := &ClientCache{clients: map[string]Client{"test": mockClient}}
 				return NewValidator(clientCache, validator, &http.Client{Transport: transport})
@@ -400,8 +420,8 @@ func TestNutanixValidatorValidateMachineConfig(t *testing.T) {
 		{
 			name: "empty image uuid",
 			setup: func(machineConf *anywherev1.NutanixMachineConfig, mockClient *mocknutanix.MockClient, validator *mockCrypto.MockTlsValidator, transport *mocknutanix.MockRoundTripper) *Validator {
-				mockClient.EXPECT().ListCluster(gomock.Any(), gomock.Any()).Return(fakeClusterList(), nil).Times(2)
-				mockClient.EXPECT().ListSubnet(gomock.Any(), gomock.Any()).Return(fakeSubnetList(), nil)
+				mockClient.EXPECT().ListAllCluster(gomock.Any(), gomock.Any()).Return(fakeClusterList(), nil).Times(2)
+				mockClient.EXPECT().ListAllSubnet(gomock.Any(), gomock.Any(), gomock.Any()).Return(fakeSubnetList(), nil)
 				machineConf.Spec.Image.Type = anywherev1.NutanixIdentifierUUID
 				machineConf.Spec.Image.UUID = nil
 				clientCache := &ClientCache{clients: map[string]Client{"test": mockClient}}
@@ -412,8 +432,8 @@ func TestNutanixValidatorValidateMachineConfig(t *testing.T) {
 		{
 			name: "invalid image identifier type",
 			setup: func(machineConf *anywherev1.NutanixMachineConfig, mockClient *mocknutanix.MockClient, validator *mockCrypto.MockTlsValidator, transport *mocknutanix.MockRoundTripper) *Validator {
-				mockClient.EXPECT().ListCluster(gomock.Any(), gomock.Any()).Return(fakeClusterList(), nil).Times(2)
-				mockClient.EXPECT().ListSubnet(gomock.Any(), gomock.Any()).Return(fakeSubnetList(), nil)
+				mockClient.EXPECT().ListAllCluster(gomock.Any(), gomock.Any()).Return(fakeClusterList(), nil).Times(2)
+				mockClient.EXPECT().ListAllSubnet(gomock.Any(), gomock.Any(), gomock.Any()).Return(fakeSubnetList(), nil)
 				machineConf.Spec.Image.Type = "notanidentifier"
 				clientCache := &ClientCache{clients: map[string]Client{"test": mockClient}}
 				return NewValidator(clientCache, validator, &http.Client{Transport: transport})
@@ -423,20 +443,20 @@ func TestNutanixValidatorValidateMachineConfig(t *testing.T) {
 		{
 			name: "list image request failed",
 			setup: func(machineConf *anywherev1.NutanixMachineConfig, mockClient *mocknutanix.MockClient, validator *mockCrypto.MockTlsValidator, transport *mocknutanix.MockRoundTripper) *Validator {
-				mockClient.EXPECT().ListCluster(gomock.Any(), gomock.Any()).Return(fakeClusterList(), nil).Times(2)
-				mockClient.EXPECT().ListSubnet(gomock.Any(), gomock.Any()).Return(fakeSubnetList(), nil)
-				mockClient.EXPECT().ListImage(gomock.Any(), gomock.Any()).Return(nil, errors.New("image not found"))
+				mockClient.EXPECT().ListAllCluster(gomock.Any(), gomock.Any()).Return(fakeClusterList(), nil).Times(2)
+				mockClient.EXPECT().ListAllSubnet(gomock.Any(), gomock.Any(), gomock.Any()).Return(fakeSubnetList(), nil)
+				mockClient.EXPECT().ListAllImage(gomock.Any(), gomock.Any()).Return(nil, errors.New("image not found"))
 				clientCache := &ClientCache{clients: map[string]Client{"test": mockClient}}
 				return NewValidator(clientCache, validator, &http.Client{Transport: transport})
 			},
-			expectedError: "failed to find image by name",
+			expectedError: "failed to list images",
 		},
 		{
 			name: "list image request did not find match",
 			setup: func(machineConf *anywherev1.NutanixMachineConfig, mockClient *mocknutanix.MockClient, validator *mockCrypto.MockTlsValidator, transport *mocknutanix.MockRoundTripper) *Validator {
-				mockClient.EXPECT().ListCluster(gomock.Any(), gomock.Any()).Return(fakeClusterList(), nil).Times(2)
-				mockClient.EXPECT().ListSubnet(gomock.Any(), gomock.Any()).Return(fakeSubnetList(), nil)
-				mockClient.EXPECT().ListImage(gomock.Any(), gomock.Any()).Return(&v3.ImageListIntentResponse{}, nil)
+				mockClient.EXPECT().ListAllCluster(gomock.Any(), gomock.Any()).Return(fakeClusterList(), nil).Times(2)
+				mockClient.EXPECT().ListAllSubnet(gomock.Any(), gomock.Any(), gomock.Any()).Return(fakeSubnetList(), nil)
+				mockClient.EXPECT().ListAllImage(gomock.Any(), gomock.Any()).Return(&v3.ImageListIntentResponse{}, nil)
 				clientCache := &ClientCache{clients: map[string]Client{"test": mockClient}}
 				return NewValidator(clientCache, validator, &http.Client{Transport: transport})
 			},
@@ -445,11 +465,11 @@ func TestNutanixValidatorValidateMachineConfig(t *testing.T) {
 		{
 			name: "duplicate image found",
 			setup: func(machineConf *anywherev1.NutanixMachineConfig, mockClient *mocknutanix.MockClient, validator *mockCrypto.MockTlsValidator, transport *mocknutanix.MockRoundTripper) *Validator {
-				mockClient.EXPECT().ListCluster(gomock.Any(), gomock.Any()).Return(fakeClusterList(), nil).Times(2)
-				mockClient.EXPECT().ListSubnet(gomock.Any(), gomock.Any()).Return(fakeSubnetList(), nil)
+				mockClient.EXPECT().ListAllCluster(gomock.Any(), gomock.Any()).Return(fakeClusterList(), nil).Times(2)
+				mockClient.EXPECT().ListAllSubnet(gomock.Any(), gomock.Any(), gomock.Any()).Return(fakeSubnetList(), nil)
 				images := fakeImageList()
 				images.Entities = append(images.Entities, images.Entities[0])
-				mockClient.EXPECT().ListImage(gomock.Any(), gomock.Any()).Return(images, nil)
+				mockClient.EXPECT().ListAllImage(gomock.Any(), gomock.Any()).Return(images, nil)
 				clientCache := &ClientCache{clients: map[string]Client{"test": mockClient}}
 				return NewValidator(clientCache, validator, &http.Client{Transport: transport})
 			},
@@ -466,9 +486,9 @@ func TestNutanixValidatorValidateMachineConfig(t *testing.T) {
 				assert.NoError(t, err)
 				cluster.Status.Resources.Config.ServiceList = []*string{utils.StringPtr("PRISM_CENTRAL")}
 				clusters.Entities = append(clusters.Entities, &cluster)
-				mockClient.EXPECT().ListCluster(gomock.Any(), gomock.Any()).Return(clusters, nil).Times(2)
-				mockClient.EXPECT().ListSubnet(gomock.Any(), gomock.Any()).Return(fakeSubnetList(), nil)
-				mockClient.EXPECT().ListImage(gomock.Any(), gomock.Any()).Return(fakeImageList(), nil)
+				mockClient.EXPECT().ListAllCluster(gomock.Any(), gomock.Any()).Return(clusters, nil).Times(2)
+				mockClient.EXPECT().ListAllSubnet(gomock.Any(), gomock.Any(), gomock.Any()).Return(fakeSubnetList(), nil)
+				mockClient.EXPECT().ListAllImage(gomock.Any(), gomock.Any()).Return(fakeImageList(), nil)
 				clientCache := &ClientCache{clients: map[string]Client{"test": mockClient}}
 				return NewValidator(clientCache, validator, &http.Client{Transport: transport})
 			},
@@ -477,9 +497,9 @@ func TestNutanixValidatorValidateMachineConfig(t *testing.T) {
 		{
 			name: "empty project name",
 			setup: func(machineConf *anywherev1.NutanixMachineConfig, mockClient *mocknutanix.MockClient, validator *mockCrypto.MockTlsValidator, transport *mocknutanix.MockRoundTripper) *Validator {
-				mockClient.EXPECT().ListCluster(gomock.Any(), gomock.Any()).Return(fakeClusterList(), nil).Times(2)
-				mockClient.EXPECT().ListSubnet(gomock.Any(), gomock.Any()).Return(fakeSubnetList(), nil)
-				mockClient.EXPECT().ListImage(gomock.Any(), gomock.Any()).Return(fakeImageList(), nil)
+				mockClient.EXPECT().ListAllCluster(gomock.Any(), gomock.Any()).Return(fakeClusterList(), nil).Times(2)
+				mockClient.EXPECT().ListAllSubnet(gomock.Any(), gomock.Any(), gomock.Any()).Return(fakeSubnetList(), nil)
+				mockClient.EXPECT().ListAllImage(gomock.Any(), gomock.Any()).Return(fakeImageList(), nil)
 				machineConf.Spec.Project = &anywherev1.NutanixResourceIdentifier{
 					Type: anywherev1.NutanixIdentifierName,
 					Name: nil,
@@ -492,9 +512,9 @@ func TestNutanixValidatorValidateMachineConfig(t *testing.T) {
 		{
 			name: "empty project uuid",
 			setup: func(machineConf *anywherev1.NutanixMachineConfig, mockClient *mocknutanix.MockClient, validator *mockCrypto.MockTlsValidator, transport *mocknutanix.MockRoundTripper) *Validator {
-				mockClient.EXPECT().ListCluster(gomock.Any(), gomock.Any()).Return(fakeClusterList(), nil).Times(2)
-				mockClient.EXPECT().ListSubnet(gomock.Any(), gomock.Any()).Return(fakeSubnetList(), nil)
-				mockClient.EXPECT().ListImage(gomock.Any(), gomock.Any()).Return(fakeImageList(), nil)
+				mockClient.EXPECT().ListAllCluster(gomock.Any(), gomock.Any()).Return(fakeClusterList(), nil).Times(2)
+				mockClient.EXPECT().ListAllSubnet(gomock.Any(), gomock.Any(), gomock.Any()).Return(fakeSubnetList(), nil)
+				mockClient.EXPECT().ListAllImage(gomock.Any(), gomock.Any()).Return(fakeImageList(), nil)
 				machineConf.Spec.Project = &anywherev1.NutanixResourceIdentifier{
 					Type: anywherev1.NutanixIdentifierUUID,
 					UUID: nil,
@@ -507,9 +527,9 @@ func TestNutanixValidatorValidateMachineConfig(t *testing.T) {
 		{
 			name: "invalid project identifier type",
 			setup: func(machineConf *anywherev1.NutanixMachineConfig, mockClient *mocknutanix.MockClient, validator *mockCrypto.MockTlsValidator, transport *mocknutanix.MockRoundTripper) *Validator {
-				mockClient.EXPECT().ListCluster(gomock.Any(), gomock.Any()).Return(fakeClusterList(), nil).Times(2)
-				mockClient.EXPECT().ListSubnet(gomock.Any(), gomock.Any()).Return(fakeSubnetList(), nil)
-				mockClient.EXPECT().ListImage(gomock.Any(), gomock.Any()).Return(fakeImageList(), nil)
+				mockClient.EXPECT().ListAllCluster(gomock.Any(), gomock.Any()).Return(fakeClusterList(), nil).Times(2)
+				mockClient.EXPECT().ListAllSubnet(gomock.Any(), gomock.Any(), gomock.Any()).Return(fakeSubnetList(), nil)
+				mockClient.EXPECT().ListAllImage(gomock.Any(), gomock.Any()).Return(fakeImageList(), nil)
 				machineConf.Spec.Project = &anywherev1.NutanixResourceIdentifier{
 					Type: "notatype",
 					UUID: nil,
@@ -522,10 +542,10 @@ func TestNutanixValidatorValidateMachineConfig(t *testing.T) {
 		{
 			name: "list project request failed",
 			setup: func(machineConf *anywherev1.NutanixMachineConfig, mockClient *mocknutanix.MockClient, validator *mockCrypto.MockTlsValidator, transport *mocknutanix.MockRoundTripper) *Validator {
-				mockClient.EXPECT().ListCluster(gomock.Any(), gomock.Any()).Return(fakeClusterList(), nil).Times(2)
-				mockClient.EXPECT().ListSubnet(gomock.Any(), gomock.Any()).Return(fakeSubnetList(), nil)
-				mockClient.EXPECT().ListImage(gomock.Any(), gomock.Any()).Return(fakeImageList(), nil)
-				mockClient.EXPECT().ListProject(gomock.Any(), gomock.Any()).Return(nil, errors.New("project not found"))
+				mockClient.EXPECT().ListAllCluster(gomock.Any(), gomock.Any()).Return(fakeClusterList(), nil).Times(2)
+				mockClient.EXPECT().ListAllSubnet(gomock.Any(), gomock.Any(), gomock.Any()).Return(fakeSubnetList(), nil)
+				mockClient.EXPECT().ListAllImage(gomock.Any(), gomock.Any()).Return(fakeImageList(), nil)
+				mockClient.EXPECT().ListAllProject(gomock.Any(), gomock.Any()).Return(nil, errors.New("project not found"))
 				machineConf.Spec.Project = &anywherev1.NutanixResourceIdentifier{
 					Type: anywherev1.NutanixIdentifierName,
 					Name: utils.StringPtr("notaproject"),
@@ -533,15 +553,15 @@ func TestNutanixValidatorValidateMachineConfig(t *testing.T) {
 				clientCache := &ClientCache{clients: map[string]Client{"test": mockClient}}
 				return NewValidator(clientCache, validator, &http.Client{Transport: transport})
 			},
-			expectedError: "failed to find project by name",
+			expectedError: "failed to list projects",
 		},
 		{
 			name: "list project request did not find match",
 			setup: func(machineConf *anywherev1.NutanixMachineConfig, mockClient *mocknutanix.MockClient, validator *mockCrypto.MockTlsValidator, transport *mocknutanix.MockRoundTripper) *Validator {
-				mockClient.EXPECT().ListCluster(gomock.Any(), gomock.Any()).Return(fakeClusterList(), nil).Times(2)
-				mockClient.EXPECT().ListSubnet(gomock.Any(), gomock.Any()).Return(fakeSubnetList(), nil)
-				mockClient.EXPECT().ListImage(gomock.Any(), gomock.Any()).Return(fakeImageList(), nil)
-				mockClient.EXPECT().ListProject(gomock.Any(), gomock.Any()).Return(&v3.ProjectListResponse{}, nil)
+				mockClient.EXPECT().ListAllCluster(gomock.Any(), gomock.Any()).Return(fakeClusterList(), nil).Times(2)
+				mockClient.EXPECT().ListAllSubnet(gomock.Any(), gomock.Any(), gomock.Any()).Return(fakeSubnetList(), nil)
+				mockClient.EXPECT().ListAllImage(gomock.Any(), gomock.Any()).Return(fakeImageList(), nil)
+				mockClient.EXPECT().ListAllProject(gomock.Any(), gomock.Any()).Return(&v3.ProjectListResponse{}, nil)
 				machineConf.Spec.Project = &anywherev1.NutanixResourceIdentifier{
 					Type: anywherev1.NutanixIdentifierName,
 					Name: utils.StringPtr("notaproject"),
@@ -554,12 +574,12 @@ func TestNutanixValidatorValidateMachineConfig(t *testing.T) {
 		{
 			name: "duplicate project found",
 			setup: func(machineConf *anywherev1.NutanixMachineConfig, mockClient *mocknutanix.MockClient, validator *mockCrypto.MockTlsValidator, transport *mocknutanix.MockRoundTripper) *Validator {
-				mockClient.EXPECT().ListCluster(gomock.Any(), gomock.Any()).Return(fakeClusterList(), nil).Times(2)
-				mockClient.EXPECT().ListSubnet(gomock.Any(), gomock.Any()).Return(fakeSubnetList(), nil)
-				mockClient.EXPECT().ListImage(gomock.Any(), gomock.Any()).Return(fakeImageList(), nil)
+				mockClient.EXPECT().ListAllCluster(gomock.Any(), gomock.Any()).Return(fakeClusterList(), nil).Times(2)
+				mockClient.EXPECT().ListAllSubnet(gomock.Any(), gomock.Any(), gomock.Any()).Return(fakeSubnetList(), nil)
+				mockClient.EXPECT().ListAllImage(gomock.Any(), gomock.Any()).Return(fakeImageList(), nil)
 				projects := fakeProjectList()
 				projects.Entities = append(projects.Entities, projects.Entities[0])
-				mockClient.EXPECT().ListProject(gomock.Any(), gomock.Any()).Return(projects, nil)
+				mockClient.EXPECT().ListAllProject(gomock.Any(), gomock.Any()).Return(projects, nil)
 				machineConf.Spec.Project = &anywherev1.NutanixResourceIdentifier{
 					Type: anywherev1.NutanixIdentifierName,
 					Name: utils.StringPtr("project"),
@@ -572,9 +592,9 @@ func TestNutanixValidatorValidateMachineConfig(t *testing.T) {
 		{
 			name: "empty category key",
 			setup: func(machineConf *anywherev1.NutanixMachineConfig, mockClient *mocknutanix.MockClient, validator *mockCrypto.MockTlsValidator, transport *mocknutanix.MockRoundTripper) *Validator {
-				mockClient.EXPECT().ListCluster(gomock.Any(), gomock.Any()).Return(fakeClusterList(), nil).Times(2)
-				mockClient.EXPECT().ListSubnet(gomock.Any(), gomock.Any()).Return(fakeSubnetList(), nil)
-				mockClient.EXPECT().ListImage(gomock.Any(), gomock.Any()).Return(fakeImageList(), nil)
+				mockClient.EXPECT().ListAllCluster(gomock.Any(), gomock.Any()).Return(fakeClusterList(), nil).Times(2)
+				mockClient.EXPECT().ListAllSubnet(gomock.Any(), gomock.Any(), gomock.Any()).Return(fakeSubnetList(), nil)
+				mockClient.EXPECT().ListAllImage(gomock.Any(), gomock.Any()).Return(fakeImageList(), nil)
 				machineConf.Spec.AdditionalCategories = []anywherev1.NutanixCategoryIdentifier{
 					{
 						Key:   "",
@@ -589,9 +609,9 @@ func TestNutanixValidatorValidateMachineConfig(t *testing.T) {
 		{
 			name: "empty category value",
 			setup: func(machineConf *anywherev1.NutanixMachineConfig, mockClient *mocknutanix.MockClient, validator *mockCrypto.MockTlsValidator, transport *mocknutanix.MockRoundTripper) *Validator {
-				mockClient.EXPECT().ListCluster(gomock.Any(), gomock.Any()).Return(fakeClusterList(), nil).Times(2)
-				mockClient.EXPECT().ListSubnet(gomock.Any(), gomock.Any()).Return(fakeSubnetList(), nil)
-				mockClient.EXPECT().ListImage(gomock.Any(), gomock.Any()).Return(fakeImageList(), nil)
+				mockClient.EXPECT().ListAllCluster(gomock.Any(), gomock.Any()).Return(fakeClusterList(), nil).Times(2)
+				mockClient.EXPECT().ListAllSubnet(gomock.Any(), gomock.Any(), gomock.Any()).Return(fakeSubnetList(), nil)
+				mockClient.EXPECT().ListAllImage(gomock.Any(), gomock.Any()).Return(fakeImageList(), nil)
 				machineConf.Spec.AdditionalCategories = []anywherev1.NutanixCategoryIdentifier{
 					{
 						Key:   "key",
@@ -606,9 +626,9 @@ func TestNutanixValidatorValidateMachineConfig(t *testing.T) {
 		{
 			name: "get category key failed",
 			setup: func(machineConf *anywherev1.NutanixMachineConfig, mockClient *mocknutanix.MockClient, validator *mockCrypto.MockTlsValidator, transport *mocknutanix.MockRoundTripper) *Validator {
-				mockClient.EXPECT().ListCluster(gomock.Any(), gomock.Any()).Return(fakeClusterList(), nil).Times(2)
-				mockClient.EXPECT().ListSubnet(gomock.Any(), gomock.Any()).Return(fakeSubnetList(), nil)
-				mockClient.EXPECT().ListImage(gomock.Any(), gomock.Any()).Return(fakeImageList(), nil)
+				mockClient.EXPECT().ListAllCluster(gomock.Any(), gomock.Any()).Return(fakeClusterList(), nil).Times(2)
+				mockClient.EXPECT().ListAllSubnet(gomock.Any(), gomock.Any(), gomock.Any()).Return(fakeSubnetList(), nil)
+				mockClient.EXPECT().ListAllImage(gomock.Any(), gomock.Any()).Return(fakeImageList(), nil)
 				mockClient.EXPECT().GetCategoryKey(gomock.Any(), gomock.Any()).Return(nil, errors.New("category key not found"))
 				machineConf.Spec.AdditionalCategories = []anywherev1.NutanixCategoryIdentifier{
 					{
@@ -624,9 +644,9 @@ func TestNutanixValidatorValidateMachineConfig(t *testing.T) {
 		{
 			name: "get category value failed",
 			setup: func(machineConf *anywherev1.NutanixMachineConfig, mockClient *mocknutanix.MockClient, validator *mockCrypto.MockTlsValidator, transport *mocknutanix.MockRoundTripper) *Validator {
-				mockClient.EXPECT().ListCluster(gomock.Any(), gomock.Any()).Return(fakeClusterList(), nil).Times(2)
-				mockClient.EXPECT().ListSubnet(gomock.Any(), gomock.Any()).Return(fakeSubnetList(), nil)
-				mockClient.EXPECT().ListImage(gomock.Any(), gomock.Any()).Return(fakeImageList(), nil)
+				mockClient.EXPECT().ListAllCluster(gomock.Any(), gomock.Any()).Return(fakeClusterList(), nil).Times(2)
+				mockClient.EXPECT().ListAllSubnet(gomock.Any(), gomock.Any(), gomock.Any()).Return(fakeSubnetList(), nil)
+				mockClient.EXPECT().ListAllImage(gomock.Any(), gomock.Any()).Return(fakeImageList(), nil)
 				categoryKey := v3.CategoryKeyStatus{
 					Name: utils.StringPtr("key"),
 				}
@@ -646,9 +666,9 @@ func TestNutanixValidatorValidateMachineConfig(t *testing.T) {
 		{
 			name: "invalid gpu identifier type",
 			setup: func(machineConf *anywherev1.NutanixMachineConfig, mockClient *mocknutanix.MockClient, validator *mockCrypto.MockTlsValidator, transport *mocknutanix.MockRoundTripper) *Validator {
-				mockClient.EXPECT().ListCluster(gomock.Any(), gomock.Any()).Return(fakeClusterList(), nil).Times(2)
-				mockClient.EXPECT().ListSubnet(gomock.Any(), gomock.Any()).Return(fakeSubnetList(), nil)
-				mockClient.EXPECT().ListImage(gomock.Any(), gomock.Any()).Return(fakeImageList(), nil)
+				mockClient.EXPECT().ListAllCluster(gomock.Any(), gomock.Any()).Return(fakeClusterList(), nil).Times(2)
+				mockClient.EXPECT().ListAllSubnet(gomock.Any(), gomock.Any(), gomock.Any()).Return(fakeSubnetList(), nil)
+				mockClient.EXPECT().ListAllImage(gomock.Any(), gomock.Any()).Return(fakeImageList(), nil)
 				machineConf.Spec.GPUs = []anywherev1.NutanixGPUIdentifier{
 					{
 						Type: "invalid",
@@ -662,9 +682,9 @@ func TestNutanixValidatorValidateMachineConfig(t *testing.T) {
 		{
 			name: "missing GPU type",
 			setup: func(machineConf *anywherev1.NutanixMachineConfig, mockClient *mocknutanix.MockClient, validator *mockCrypto.MockTlsValidator, transport *mocknutanix.MockRoundTripper) *Validator {
-				mockClient.EXPECT().ListCluster(gomock.Any(), gomock.Any()).Return(fakeClusterList(), nil).Times(2)
-				mockClient.EXPECT().ListSubnet(gomock.Any(), gomock.Any()).Return(fakeSubnetList(), nil)
-				mockClient.EXPECT().ListImage(gomock.Any(), gomock.Any()).Return(fakeImageList(), nil)
+				mockClient.EXPECT().ListAllCluster(gomock.Any(), gomock.Any()).Return(fakeClusterList(), nil).Times(2)
+				mockClient.EXPECT().ListAllSubnet(gomock.Any(), gomock.Any(), gomock.Any()).Return(fakeSubnetList(), nil)
+				mockClient.EXPECT().ListAllImage(gomock.Any(), gomock.Any()).Return(fakeImageList(), nil)
 				machineConf.Spec.GPUs = []anywherev1.NutanixGPUIdentifier{
 					{
 						Type: "",
@@ -678,9 +698,9 @@ func TestNutanixValidatorValidateMachineConfig(t *testing.T) {
 		{
 			name: "missing GPU device ID",
 			setup: func(machineConf *anywherev1.NutanixMachineConfig, mockClient *mocknutanix.MockClient, validator *mockCrypto.MockTlsValidator, transport *mocknutanix.MockRoundTripper) *Validator {
-				mockClient.EXPECT().ListCluster(gomock.Any(), gomock.Any()).Return(fakeClusterList(), nil).Times(2)
-				mockClient.EXPECT().ListSubnet(gomock.Any(), gomock.Any()).Return(fakeSubnetList(), nil)
-				mockClient.EXPECT().ListImage(gomock.Any(), gomock.Any()).Return(fakeImageList(), nil)
+				mockClient.EXPECT().ListAllCluster(gomock.Any(), gomock.Any()).Return(fakeClusterList(), nil).Times(2)
+				mockClient.EXPECT().ListAllSubnet(gomock.Any(), gomock.Any(), gomock.Any()).Return(fakeSubnetList(), nil)
+				mockClient.EXPECT().ListAllImage(gomock.Any(), gomock.Any()).Return(fakeImageList(), nil)
 				machineConf.Spec.GPUs = []anywherev1.NutanixGPUIdentifier{
 					{
 						Type: "deviceID",
@@ -694,9 +714,9 @@ func TestNutanixValidatorValidateMachineConfig(t *testing.T) {
 		{
 			name: "missing GPU name",
 			setup: func(machineConf *anywherev1.NutanixMachineConfig, mockClient *mocknutanix.MockClient, validator *mockCrypto.MockTlsValidator, transport *mocknutanix.MockRoundTripper) *Validator {
-				mockClient.EXPECT().ListCluster(gomock.Any(), gomock.Any()).Return(fakeClusterList(), nil).Times(2)
-				mockClient.EXPECT().ListSubnet(gomock.Any(), gomock.Any()).Return(fakeSubnetList(), nil)
-				mockClient.EXPECT().ListImage(gomock.Any(), gomock.Any()).Return(fakeImageList(), nil)
+				mockClient.EXPECT().ListAllCluster(gomock.Any(), gomock.Any()).Return(fakeClusterList(), nil).Times(2)
+				mockClient.EXPECT().ListAllSubnet(gomock.Any(), gomock.Any(), gomock.Any()).Return(fakeSubnetList(), nil)
+				mockClient.EXPECT().ListAllImage(gomock.Any(), gomock.Any()).Return(fakeImageList(), nil)
 				machineConf.Spec.GPUs = []anywherev1.NutanixGPUIdentifier{
 					{
 						Type: "name",
@@ -710,9 +730,9 @@ func TestNutanixValidatorValidateMachineConfig(t *testing.T) {
 		{
 			name: "machine config is not associated with any worker node group",
 			setup: func(machineConf *anywherev1.NutanixMachineConfig, mockClient *mocknutanix.MockClient, validator *mockCrypto.MockTlsValidator, transport *mocknutanix.MockRoundTripper) *Validator {
-				mockClient.EXPECT().ListCluster(gomock.Any(), gomock.Any()).Return(fakeClusterList(), nil).Times(2)
-				mockClient.EXPECT().ListSubnet(gomock.Any(), gomock.Any()).Return(fakeSubnetList(), nil)
-				mockClient.EXPECT().ListImage(gomock.Any(), gomock.Any()).Return(fakeImageList(), nil)
+				mockClient.EXPECT().ListAllCluster(gomock.Any(), gomock.Any()).Return(fakeClusterList(), nil).Times(2)
+				mockClient.EXPECT().ListAllSubnet(gomock.Any(), gomock.Any(), gomock.Any()).Return(fakeSubnetList(), nil)
+				mockClient.EXPECT().ListAllImage(gomock.Any(), gomock.Any()).Return(fakeImageList(), nil)
 				machineConf.Name = "test-wn"
 				machineConf.Spec.GPUs = []anywherev1.NutanixGPUIdentifier{
 					{
@@ -727,9 +747,9 @@ func TestNutanixValidatorValidateMachineConfig(t *testing.T) {
 		{
 			name: "GPUs are not supported for control plane machine",
 			setup: func(machineConf *anywherev1.NutanixMachineConfig, mockClient *mocknutanix.MockClient, validator *mockCrypto.MockTlsValidator, transport *mocknutanix.MockRoundTripper) *Validator {
-				mockClient.EXPECT().ListCluster(gomock.Any(), gomock.Any()).Return(fakeClusterList(), nil).Times(2)
-				mockClient.EXPECT().ListSubnet(gomock.Any(), gomock.Any()).Return(fakeSubnetList(), nil)
-				mockClient.EXPECT().ListImage(gomock.Any(), gomock.Any()).Return(fakeImageList(), nil)
+				mockClient.EXPECT().ListAllCluster(gomock.Any(), gomock.Any()).Return(fakeClusterList(), nil).Times(2)
+				mockClient.EXPECT().ListAllSubnet(gomock.Any(), gomock.Any(), gomock.Any()).Return(fakeSubnetList(), nil)
+				mockClient.EXPECT().ListAllImage(gomock.Any(), gomock.Any()).Return(fakeImageList(), nil)
 				machineConf.Name = "test-cp"
 				machineConf.Spec.GPUs = []anywherev1.NutanixGPUIdentifier{
 					{
@@ -744,9 +764,9 @@ func TestNutanixValidatorValidateMachineConfig(t *testing.T) {
 		{
 			name: "GPUs are not supported for external etcd machine",
 			setup: func(machineConf *anywherev1.NutanixMachineConfig, mockClient *mocknutanix.MockClient, validator *mockCrypto.MockTlsValidator, transport *mocknutanix.MockRoundTripper) *Validator {
-				mockClient.EXPECT().ListCluster(gomock.Any(), gomock.Any()).Return(fakeClusterList(), nil).Times(2)
-				mockClient.EXPECT().ListSubnet(gomock.Any(), gomock.Any()).Return(fakeSubnetList(), nil)
-				mockClient.EXPECT().ListImage(gomock.Any(), gomock.Any()).Return(fakeImageList(), nil)
+				mockClient.EXPECT().ListAllCluster(gomock.Any(), gomock.Any()).Return(fakeClusterList(), nil).Times(2)
+				mockClient.EXPECT().ListAllSubnet(gomock.Any(), gomock.Any(), gomock.Any()).Return(fakeSubnetList(), nil)
+				mockClient.EXPECT().ListAllImage(gomock.Any(), gomock.Any()).Return(fakeImageList(), nil)
 				machineConf.Name = "test-etcd"
 				machineConf.Spec.GPUs = []anywherev1.NutanixGPUIdentifier{
 					{
@@ -761,9 +781,9 @@ func TestNutanixValidatorValidateMachineConfig(t *testing.T) {
 		{
 			name: "validation pass",
 			setup: func(machineConf *anywherev1.NutanixMachineConfig, mockClient *mocknutanix.MockClient, validator *mockCrypto.MockTlsValidator, transport *mocknutanix.MockRoundTripper) *Validator {
-				mockClient.EXPECT().ListCluster(gomock.Any(), gomock.Any()).Return(fakeClusterList(), nil).Times(2)
-				mockClient.EXPECT().ListSubnet(gomock.Any(), gomock.Any()).Return(fakeSubnetList(), nil)
-				mockClient.EXPECT().ListImage(gomock.Any(), gomock.Any()).Return(fakeImageList(), nil)
+				mockClient.EXPECT().ListAllCluster(gomock.Any(), gomock.Any()).Return(fakeClusterList(), nil).Times(2)
+				mockClient.EXPECT().ListAllSubnet(gomock.Any(), gomock.Any(), gomock.Any()).Return(fakeSubnetList(), nil)
+				mockClient.EXPECT().ListAllImage(gomock.Any(), gomock.Any()).Return(fakeImageList(), nil)
 				machineConf.Name = "eksa-unit-test"
 				machineConf.Spec.GPUs = []anywherev1.NutanixGPUIdentifier{
 					{
@@ -1084,7 +1104,7 @@ func TestNutanixValidatorValidateFreeGPU(t *testing.T) {
 		{
 			name: "not enough GPU resources available by name",
 			setup: func(machineConfigs map[string]*anywherev1.NutanixMachineConfig, mockClient *mocknutanix.MockClient, validator *mockCrypto.MockTlsValidator, transport *mocknutanix.MockRoundTripper) *Validator {
-				mockClient.EXPECT().ListCluster(gomock.Any(), gomock.Any()).Return(fakeClusterListForFreeGPUTest(), nil).AnyTimes()
+				mockClient.EXPECT().ListAllCluster(gomock.Any(), gomock.Any()).Return(fakeClusterListForFreeGPUTest(), nil).AnyTimes()
 				mockClient.EXPECT().ListAllHost(gomock.Any()).Return(fakeHostList(), nil)
 				machineConfigs["cp"].Spec.Cluster = anywherev1.NutanixResourceIdentifier{
 					Type: anywherev1.NutanixIdentifierUUID,
@@ -1122,7 +1142,7 @@ func TestNutanixValidatorValidateFreeGPU(t *testing.T) {
 		{
 			name: "not enough GPU resources available by name in different PE (UUID)",
 			setup: func(machineConfigs map[string]*anywherev1.NutanixMachineConfig, mockClient *mocknutanix.MockClient, validator *mockCrypto.MockTlsValidator, transport *mocknutanix.MockRoundTripper) *Validator {
-				mockClient.EXPECT().ListCluster(gomock.Any(), gomock.Any()).Return(fakeClusterListForFreeGPUTest(), nil).AnyTimes()
+				mockClient.EXPECT().ListAllCluster(gomock.Any(), gomock.Any()).Return(fakeClusterListForFreeGPUTest(), nil).AnyTimes()
 				mockClient.EXPECT().ListAllHost(gomock.Any()).Return(fakeHostList(), nil)
 				machineConfigs["cp"].Spec.Cluster = anywherev1.NutanixResourceIdentifier{
 					Type: anywherev1.NutanixIdentifierUUID,
@@ -1159,7 +1179,7 @@ func TestNutanixValidatorValidateFreeGPU(t *testing.T) {
 		{
 			name: "not enough GPU resources available by deviceID in different PE (UUID)",
 			setup: func(machineConfigs map[string]*anywherev1.NutanixMachineConfig, mockClient *mocknutanix.MockClient, validator *mockCrypto.MockTlsValidator, transport *mocknutanix.MockRoundTripper) *Validator {
-				mockClient.EXPECT().ListCluster(gomock.Any(), gomock.Any()).Return(fakeClusterListForFreeGPUTest(), nil).AnyTimes()
+				mockClient.EXPECT().ListAllCluster(gomock.Any(), gomock.Any()).Return(fakeClusterListForFreeGPUTest(), nil).AnyTimes()
 				mockClient.EXPECT().ListAllHost(gomock.Any()).Return(fakeHostList(), nil)
 				machineConfigs["cp"].Spec.Cluster = anywherev1.NutanixResourceIdentifier{
 					Type: anywherev1.NutanixIdentifierUUID,
@@ -1192,7 +1212,7 @@ func TestNutanixValidatorValidateFreeGPU(t *testing.T) {
 		{
 			name: "not enough GPU resources available by deviceID",
 			setup: func(machineConfigs map[string]*anywherev1.NutanixMachineConfig, mockClient *mocknutanix.MockClient, validator *mockCrypto.MockTlsValidator, transport *mocknutanix.MockRoundTripper) *Validator {
-				mockClient.EXPECT().ListCluster(gomock.Any(), gomock.Any()).Return(fakeClusterListForFreeGPUTest(), nil).AnyTimes()
+				mockClient.EXPECT().ListAllCluster(gomock.Any(), gomock.Any()).Return(fakeClusterListForFreeGPUTest(), nil).AnyTimes()
 				mockClient.EXPECT().ListAllHost(gomock.Any()).Return(fakeHostList(), nil)
 				machineConfigs["cp"].Spec.Cluster = anywherev1.NutanixResourceIdentifier{
 					Type: anywherev1.NutanixIdentifierUUID,
@@ -1238,7 +1258,7 @@ func TestNutanixValidatorValidateFreeGPU(t *testing.T) {
 		{
 			name: "no GPU resources found",
 			setup: func(machineConfigs map[string]*anywherev1.NutanixMachineConfig, mockClient *mocknutanix.MockClient, validator *mockCrypto.MockTlsValidator, transport *mocknutanix.MockRoundTripper) *Validator {
-				mockClient.EXPECT().ListCluster(gomock.Any(), gomock.Any()).Return(fakeClusterListForFreeGPUTest(), nil).AnyTimes()
+				mockClient.EXPECT().ListAllCluster(gomock.Any(), gomock.Any()).Return(fakeClusterListForFreeGPUTest(), nil).AnyTimes()
 				mockClient.EXPECT().ListAllHost(gomock.Any()).Return(fakeEmptyHostList(), nil)
 				machineConfigs["worker"].Spec.GPUs = []anywherev1.NutanixGPUIdentifier{
 					{
@@ -1266,7 +1286,7 @@ func TestNutanixValidatorValidateFreeGPU(t *testing.T) {
 		{
 			name: "no GPU resources found: ListAllHost failed",
 			setup: func(machineConfigs map[string]*anywherev1.NutanixMachineConfig, mockClient *mocknutanix.MockClient, validator *mockCrypto.MockTlsValidator, transport *mocknutanix.MockRoundTripper) *Validator {
-				mockClient.EXPECT().ListCluster(gomock.Any(), gomock.Any()).Return(fakeClusterListForFreeGPUTest(), nil).AnyTimes()
+				mockClient.EXPECT().ListAllCluster(gomock.Any(), gomock.Any()).Return(fakeClusterListForFreeGPUTest(), nil).AnyTimes()
 				mockClient.EXPECT().ListAllHost(gomock.Any()).Return(nil, fmt.Errorf("failed to list hosts"))
 				machineConfigs["worker"].Spec.GPUs = []anywherev1.NutanixGPUIdentifier{
 					{
@@ -1294,7 +1314,7 @@ func TestNutanixValidatorValidateFreeGPU(t *testing.T) {
 		{
 			name: "mixed passthrough and vGPU mode GPUs in a machine config",
 			setup: func(machineConfigs map[string]*anywherev1.NutanixMachineConfig, mockClient *mocknutanix.MockClient, validator *mockCrypto.MockTlsValidator, transport *mocknutanix.MockRoundTripper) *Validator {
-				mockClient.EXPECT().ListCluster(gomock.Any(), gomock.Any()).Return(fakeClusterListForFreeGPUTest(), nil).AnyTimes()
+				mockClient.EXPECT().ListAllCluster(gomock.Any(), gomock.Any()).Return(fakeClusterListForFreeGPUTest(), nil).AnyTimes()
 				mockClient.EXPECT().ListAllHost(gomock.Any()).Return(fakeHostList(), nil)
 				machineConfigs["worker"].Spec.GPUs = []anywherev1.NutanixGPUIdentifier{
 					{
@@ -1314,7 +1334,7 @@ func TestNutanixValidatorValidateFreeGPU(t *testing.T) {
 		{
 			name: "GPUs validation successful",
 			setup: func(machineConfigs map[string]*anywherev1.NutanixMachineConfig, mockClient *mocknutanix.MockClient, validator *mockCrypto.MockTlsValidator, transport *mocknutanix.MockRoundTripper) *Validator {
-				mockClient.EXPECT().ListCluster(gomock.Any(), gomock.Any()).Return(fakeClusterListForFreeGPUTest(), nil).AnyTimes()
+				mockClient.EXPECT().ListAllCluster(gomock.Any(), gomock.Any()).Return(fakeClusterListForFreeGPUTest(), nil).AnyTimes()
 				mockClient.EXPECT().ListAllHost(gomock.Any()).Return(fakeHostList(), nil)
 				machineConfigs["cp"].Spec.Cluster = anywherev1.NutanixResourceIdentifier{
 					Type: anywherev1.NutanixIdentifierUUID,
@@ -1473,14 +1493,14 @@ func TestNutanixValidatorValidateDatacenterConfig(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	mockClient := mocknutanix.NewMockClient(ctrl)
 	mockClient.EXPECT().GetCurrentLoggedInUser(gomock.Any()).Return(&v3.UserIntentResponse{}, nil).AnyTimes()
-	mockClient.EXPECT().ListCluster(gomock.Any(), gomock.Any()).DoAndReturn(
-		func(_ context.Context, filters *v3.DSMetadata) (*v3.ClusterListIntentResponse, error) {
-			return fakeClusterListForDCTest(filters.Filter)
+	mockClient.EXPECT().ListAllCluster(gomock.Any(), gomock.Any()).DoAndReturn(
+		func(_ context.Context, filter string) (*v3.ClusterListIntentResponse, error) {
+			return fakeClusterListForDCTest(filter)
 		},
 	).AnyTimes()
-	mockClient.EXPECT().ListSubnet(gomock.Any(), gomock.Any()).DoAndReturn(
-		func(_ context.Context, filters *v3.DSMetadata) (*v3.SubnetListIntentResponse, error) {
-			return fakeSubnetListForDCTest(filters.Filter)
+	mockClient.EXPECT().ListAllSubnet(gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
+		func(_ context.Context, filter string, _ []*prismgoclient.AdditionalFilter) (*v3.SubnetListIntentResponse, error) {
+			return fakeSubnetListForDCTest(filter)
 		},
 	).AnyTimes()
 	mockClient.EXPECT().GetSubnet(gomock.Any(), gomock.Eq("2d166190-7759-4dc6-b835-923262d6b497")).Return(nil, nil).AnyTimes()
@@ -1768,14 +1788,14 @@ func TestValidateMachineConfigFailureDomainsWrongCount(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	mockClient := mocknutanix.NewMockClient(ctrl)
 	mockClient.EXPECT().GetCurrentLoggedInUser(gomock.Any()).Return(&v3.UserIntentResponse{}, nil).AnyTimes()
-	mockClient.EXPECT().ListCluster(gomock.Any(), gomock.Any()).DoAndReturn(
-		func(_ context.Context, filters *v3.DSMetadata) (*v3.ClusterListIntentResponse, error) {
-			return fakeClusterListForDCTest(filters.Filter)
+	mockClient.EXPECT().ListAllCluster(gomock.Any(), gomock.Any()).DoAndReturn(
+		func(_ context.Context, filter string) (*v3.ClusterListIntentResponse, error) {
+			return fakeClusterListForDCTest(filter)
 		},
 	).AnyTimes()
-	mockClient.EXPECT().ListSubnet(gomock.Any(), gomock.Any()).DoAndReturn(
-		func(_ context.Context, filters *v3.DSMetadata) (*v3.SubnetListIntentResponse, error) {
-			return fakeSubnetListForDCTest(filters.Filter)
+	mockClient.EXPECT().ListAllSubnet(gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
+		func(_ context.Context, filter string) (*v3.SubnetListIntentResponse, error) {
+			return fakeSubnetListForDCTest(filter)
 		},
 	).AnyTimes()
 	mockClient.EXPECT().GetSubnet(gomock.Any(), gomock.Eq("2d166190-7759-4dc6-b835-923262d6b497")).Return(nil, nil).AnyTimes()
