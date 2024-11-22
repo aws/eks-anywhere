@@ -391,7 +391,7 @@ func TestNutanixProviderSetupAndValidateCreate(t *testing.T) {
 			},
 		},
 	}
-	mockClient.EXPECT().ListCluster(gomock.Any(), gomock.Any()).Return(clusters, nil).AnyTimes()
+	mockClient.EXPECT().ListAllCluster(gomock.Any(), gomock.Any()).Return(clusters, nil).AnyTimes()
 	subnets := &v3.SubnetListIntentResponse{
 		Entities: []*v3.SubnetIntentResponse{
 			{
@@ -400,11 +400,16 @@ func TestNutanixProviderSetupAndValidateCreate(t *testing.T) {
 				},
 				Spec: &v3.Subnet{
 					Name: utils.StringPtr("prism-subnet"),
+					ClusterReference: &v3.Reference{
+						Kind: utils.StringPtr("cluster"),
+						UUID: utils.StringPtr("a15f6966-bfc7-4d1e-8575-224096fc1cda"),
+						Name: utils.StringPtr("prism-cluster"),
+					},
 				},
 			},
 		},
 	}
-	mockClient.EXPECT().ListSubnet(gomock.Any(), gomock.Any()).Return(subnets, nil).AnyTimes()
+	mockClient.EXPECT().ListAllSubnet(gomock.Any(), gomock.Any(), nil).Return(subnets, nil).AnyTimes()
 	images := &v3.ImageListIntentResponse{
 		Entities: []*v3.ImageIntentResponse{
 			{
@@ -415,9 +420,17 @@ func TestNutanixProviderSetupAndValidateCreate(t *testing.T) {
 					Name: utils.StringPtr("prism-image"),
 				},
 			},
+			{
+				Metadata: &v3.Metadata{
+					UUID: utils.StringPtr("a15f6966-bfc7-4d1e-8575-224096fc1cdd"),
+				},
+				Spec: &v3.Image{
+					Name: utils.StringPtr("prism-image-1-19"),
+				},
+			},
 		},
 	}
-	mockClient.EXPECT().ListImage(gomock.Any(), gomock.Any()).Return(images, nil).AnyTimes()
+	mockClient.EXPECT().ListAllImage(gomock.Any(), gomock.Any()).Return(images, nil).AnyTimes()
 	mockClient.EXPECT().ListAllHost(gomock.Any()).Return(fakeHostList(), nil).AnyTimes()
 	mockCertValidator := mockCrypto.NewMockTlsValidator(ctrl)
 	mockCertValidator.EXPECT().ValidateCert(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
