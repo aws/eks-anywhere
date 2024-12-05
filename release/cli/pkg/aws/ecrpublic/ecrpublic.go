@@ -16,6 +16,7 @@ package ecrpublic
 
 import (
 	"encoding/base64"
+	"fmt"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -39,7 +40,7 @@ func GetImageDigest(imageUri, imageContainerRegistry string, ecrPublicClient *ec
 		},
 	)
 	if err != nil {
-		return "", errors.Cause(err)
+		return "", fmt.Errorf("describing image with tag [%s] in repository [%s]: %v", tag, repository, err)
 	}
 
 	imageDigest := describeImagesOutput.ImageDetails[0].ImageDigest

@@ -42,7 +42,7 @@ func GetImageDigest(imageUri, imageContainerRegistry string, ecrClient *ecr.ECR)
 		},
 	)
 	if err != nil {
-		return "", errors.Cause(err)
+		return "", fmt.Errorf("describing image with tag [%s] in repository [%s]: %v", tag, repository, err)
 	}
 
 	imageDigest := imageDetails[0].ImageDigest
@@ -179,7 +179,7 @@ func getLastestOCIShaTag(details []*ecr.ImageDetail) (string, string, error) {
 		}
 	}
 	if reflect.DeepEqual(latest, ecr.ImageDetail{}) {
-		return "", "", fmt.Errorf("error no images found")
+		return "", "", fmt.Errorf("latest image search returned empty")
 	}
 	return *latest.ImageTags[0], *latest.ImageDigest, nil
 }
