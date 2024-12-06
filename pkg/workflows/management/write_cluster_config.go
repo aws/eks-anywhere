@@ -52,7 +52,7 @@ func (s *writeCreateClusterConfig) Run(ctx context.Context, commandContext *task
 
 	if commandContext.ClusterSpec.AWSIamConfig != nil {
 		logger.Info("Generating the aws iam kubeconfig file")
-		err = commandContext.ClusterManager.GenerateAWSIAMKubeconfig(ctx, commandContext.WorkloadCluster)
+		err = commandContext.ClusterManager.GenerateManagementAWSIAMKubeconfig(ctx, commandContext.WorkloadCluster)
 		if err != nil {
 			commandContext.SetError(err)
 			return &workflows.CollectDiagnosticsTask{}
