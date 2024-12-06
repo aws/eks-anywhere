@@ -197,18 +197,32 @@ func (mr *MockClusterManagerMockRecorder) CreateRegistryCredSecret(arg0, arg1 in
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateRegistryCredSecret", reflect.TypeOf((*MockClusterManager)(nil).CreateRegistryCredSecret), arg0, arg1)
 }
 
-// GenerateAWSIAMKubeconfig mocks base method.
-func (m *MockClusterManager) GenerateAWSIAMKubeconfig(arg0 context.Context, arg1 *types.Cluster) error {
+// GenerateManagementAWSIAMKubeconfig mocks base method.
+func (m *MockClusterManager) GenerateManagementAWSIAMKubeconfig(arg0 context.Context, arg1 *types.Cluster) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GenerateAWSIAMKubeconfig", arg0, arg1)
+	ret := m.ctrl.Call(m, "GenerateManagementAWSIAMKubeconfig", arg0, arg1)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// GenerateAWSIAMKubeconfig indicates an expected call of GenerateAWSIAMKubeconfig.
-func (mr *MockClusterManagerMockRecorder) GenerateAWSIAMKubeconfig(arg0, arg1 interface{}) *gomock.Call {
+// GenerateManagementAWSIAMKubeconfig indicates an expected call of GenerateManagementAWSIAMKubeconfig.
+func (mr *MockClusterManagerMockRecorder) GenerateManagementAWSIAMKubeconfig(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateAWSIAMKubeconfig", reflect.TypeOf((*MockClusterManager)(nil).GenerateAWSIAMKubeconfig), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateManagementAWSIAMKubeconfig", reflect.TypeOf((*MockClusterManager)(nil).GenerateManagementAWSIAMKubeconfig), arg0, arg1)
+}
+
+// GenerateWorkloadAWSIAMKubeconfig mocks base method.
+func (m *MockClusterManager) GenerateWorkloadAWSIAMKubeconfig(arg0 context.Context, arg1, arg2 *types.Cluster, arg3 *cluster.Spec) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GenerateWorkloadAWSIAMKubeconfig", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// GenerateWorkloadAWSIAMKubeconfig indicates an expected call of GenerateWorkloadAWSIAMKubeconfig.
+func (mr *MockClusterManagerMockRecorder) GenerateWorkloadAWSIAMKubeconfig(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateWorkloadAWSIAMKubeconfig", reflect.TypeOf((*MockClusterManager)(nil).GenerateWorkloadAWSIAMKubeconfig), arg0, arg1, arg2, arg3)
 }
 
 // GetCurrentClusterSpec mocks base method.
