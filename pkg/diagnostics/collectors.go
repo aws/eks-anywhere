@@ -293,6 +293,36 @@ func (c *EKSACollectorFactory) packagesLogCollectors() []*Collect {
 				Name:      logpath(constants.EksaPackagesName),
 			},
 		},
+		{
+			Logs: &logs{
+				Namespace: constants.AdotPrometheusNamespace,
+				Name:      logpath(constants.AdotPrometheusNamespace),
+			},
+		},
+		{
+			Logs: &logs{
+				Namespace: constants.MetallbNamespace,
+				Name:      logpath(constants.MetallbNamespace),
+			},
+		},
+		{
+			Logs: &logs{
+				Namespace: constants.EmissaryNamespace,
+				Name:      logpath(constants.EmissaryNamespace),
+			},
+		},
+		{
+			Logs: &logs{
+				Namespace: constants.CertManagerNamespace,
+				Name:      logpath(constants.CertManagerNamespace),
+			},
+		},
+		{
+			Logs: &logs{
+				Namespace: constants.HarborNamespace,
+				Name:      logpath(constants.HarborNamespace),
+			},
+		},
 	}
 }
 
