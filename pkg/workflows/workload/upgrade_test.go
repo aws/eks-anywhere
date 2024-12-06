@@ -136,8 +136,8 @@ func (c *upgradeTestSetup) expectWriteWorkloadClusterConfig(err error) {
 }
 
 func (c *upgradeTestSetup) expectWithoutAWSIAMAuthKubeconfig(err error) {
-	c.clusterManager.EXPECT().GenerateAWSIAMKubeconfig(
-		c.ctx, c.clusterSpec.ManagementCluster).Return(err).Times(0)
+	c.clusterManager.EXPECT().GenerateWorkloadAWSIAMKubeconfig(
+		c.ctx, c.clusterSpec.ManagementCluster, c.workloadCluster, c.clusterSpec).Return(err).Times(0)
 }
 
 func (c *upgradeTestSetup) expectDatacenterConfig() {

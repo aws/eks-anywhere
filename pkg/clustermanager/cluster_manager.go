@@ -395,8 +395,8 @@ func (c *ClusterManager) waitForDeployments(ctx context.Context, deploymentsByNa
 	return nil
 }
 
-// GenerateIamAuthKubeconfig generates a kubeconfig for interacting with the cluster with aws-iam-authenticator client.
-func (c *ClusterManager) GenerateIamAuthKubeconfig(ctx context.Context, management, workload *types.Cluster, spec *cluster.Spec) error {
+// GenerateWorkloadAWSIAMKubeconfig generates a kubeconfig for interacting with the cluster with aws-iam-authenticator client.
+func (c *ClusterManager) GenerateWorkloadAWSIAMKubeconfig(ctx context.Context, management, workload *types.Cluster, spec *cluster.Spec) error {
 	return c.awsIamAuth.GenerateKubeconfig(ctx, management, workload, spec)
 }
 
@@ -835,8 +835,8 @@ func (c *ClusterManager) pauseReconcileForCluster(ctx context.Context, clusterCr
 	return nil
 }
 
-// GenerateAWSIAMKubeconfig generates a kubeconfig for interacting with the cluster with aws-iam-authenticator client.
-func (c *ClusterManager) GenerateAWSIAMKubeconfig(ctx context.Context, cluster *types.Cluster) error {
+// GenerateManagementAWSIAMKubeconfig generates a kubeconfig for interacting with the cluster with aws-iam-authenticator client.
+func (c *ClusterManager) GenerateManagementAWSIAMKubeconfig(ctx context.Context, cluster *types.Cluster) error {
 	return c.awsIamAuth.GenerateManagementAWSIAMKubeconfig(ctx, cluster)
 }
 

@@ -41,7 +41,8 @@ type ClusterManager interface {
 	GetCurrentClusterSpec(ctx context.Context, cluster *types.Cluster, clusterName string) (*cluster.Spec, error)
 	Upgrade(ctx context.Context, cluster *types.Cluster, currentManagementComponents, newManagementComponents *cluster.ManagementComponents, newSpec *cluster.Spec) (*types.ChangeDiff, error)
 	CreateRegistryCredSecret(ctx context.Context, mgmt *types.Cluster) error
-	GenerateAWSIAMKubeconfig(ctx context.Context, cluster *types.Cluster) error
+	GenerateWorkloadAWSIAMKubeconfig(ctx context.Context, management, workload *types.Cluster, spec *cluster.Spec) error
+	GenerateManagementAWSIAMKubeconfig(ctx context.Context, cluster *types.Cluster) error
 	ResumeEKSAControllerReconcile(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, provider providers.Provider) error
 	AllowDeleteWhilePaused(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error
 }
@@ -106,4 +107,10 @@ type ClusterDeleter interface {
 // ClusterMover moves the EKS-A cluster.
 type ClusterMover interface {
 	Move(ctx context.Context, spec *cluster.Spec, srcClient, dstClient kubernetes.Client) error
+}
+
+// AwsIamAuth is responsible for managing iam kubeconfigs.
+type AwsIamAuth interface {
+	GenerateKubeconfig(ctx context.Context, management, workload *types.Cluster, spec *cluster.Spec) error
+	GenerateManagementAWSIAMKubeconfig(ctx context.Context, cluster *types.Cluster) error
 }

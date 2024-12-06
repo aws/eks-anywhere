@@ -176,8 +176,8 @@ func (c *createTestSetup) expectInstallGitOpsManager(err error) {
 }
 
 func (c *createTestSetup) expectAWSIAMAuthKubeconfig(err error) {
-	c.clusterManager.EXPECT().GenerateAWSIAMKubeconfig(
-		c.ctx, c.clusterSpec.ManagementCluster).Return(err)
+	c.clusterManager.EXPECT().GenerateWorkloadAWSIAMKubeconfig(
+		c.ctx, c.clusterSpec.ManagementCluster, c.workloadCluster, c.clusterSpec).Return(err)
 }
 
 func (c *createTestSetup) expectWrite() {
