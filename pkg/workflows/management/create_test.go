@@ -908,7 +908,7 @@ func TestCreateWriteConfigAWSIAMFailure(t *testing.T) {
 	test.expectDatacenterConfig()
 	test.expectMachineConfigs()
 
-	test.clusterManager.EXPECT().GenerateAWSIAMKubeconfig(test.ctx, test.workloadCluster).Return(errors.New("test"))
+	test.clusterManager.EXPECT().GenerateManagementAWSIAMKubeconfig(test.ctx, test.workloadCluster).Return(errors.New("test"))
 
 	test.clusterManager.EXPECT().SaveLogsManagementCluster(
 		test.ctx, test.clusterSpec, test.bootstrapCluster,
