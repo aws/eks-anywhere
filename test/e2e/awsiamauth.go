@@ -4,6 +4,8 @@
 package e2e
 
 import (
+	"time"
+
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/test/framework"
 )
@@ -35,4 +37,17 @@ func runTinkerbellAWSIamAuthFlow(test *framework.ClusterE2ETest) {
 	test.StopIfFailed()
 	test.DeleteCluster()
 	test.ValidateHardwareDecommissioned()
+}
+
+func runAWSIamAuthFlowWorkload(test *framework.MulticlusterE2ETest) {
+	test.CreateManagementClusterWithConfig()
+	test.RunInWorkloadClusters(func(w *framework.WorkloadCluster) {
+		w.GenerateClusterConfig()
+		w.CreateCluster()
+		w.ValidateAWSIamAuth()
+		w.StopIfFailed()
+		w.DeleteCluster()
+	})
+	time.Sleep(5 * time.Minute)
+	test.DeleteManagementCluster()
 }

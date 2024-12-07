@@ -1024,7 +1024,6 @@ func newTest(t *testing.T, opts ...clustermanager.ClusterManagerOpt) *testSetup 
 
 type clusterManagerMocks struct {
 	writer             *mockswriter.MockFileWriter
-	awsIamAuth         *mocksmanager.MockAwsIamAuth
 	client             *mocksmanager.MockClusterClient
 	provider           *mocksprovider.MockProvider
 	diagnosticsBundle  *mocksdiagnostics.MockDiagnosticBundle
@@ -1036,7 +1035,6 @@ func newClusterManager(t *testing.T, opts ...clustermanager.ClusterManagerOpt) (
 	mockCtrl := gomock.NewController(t)
 	m := &clusterManagerMocks{
 		writer:             mockswriter.NewMockFileWriter(mockCtrl),
-		awsIamAuth:         mocksmanager.NewMockAwsIamAuth(mockCtrl),
 		client:             mocksmanager.NewMockClusterClient(mockCtrl),
 		provider:           mocksprovider.NewMockProvider(mockCtrl),
 		diagnosticsFactory: mocksdiagnostics.NewMockDiagnosticBundleFactory(mockCtrl),
@@ -1068,7 +1066,7 @@ func newClusterManager(t *testing.T, opts ...clustermanager.ClusterManagerOpt) (
 	fakeClient := test.NewFakeKubeClient(dc, oc, b, r, ac, gc, er)
 	cf := mocksmanager.NewMockClientFactory(mockCtrl)
 	cf.EXPECT().BuildClientFromKubeconfig("").Return(fakeClient, nil).AnyTimes()
-	c := clustermanager.New(cf, m.client, m.writer, m.diagnosticsFactory, m.awsIamAuth, m.eksaComponents, opts...)
+	c := clustermanager.New(cf, m.client, m.writer, m.diagnosticsFactory, m.eksaComponents, opts...)
 
 	return c, m
 }
