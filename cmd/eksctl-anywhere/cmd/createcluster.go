@@ -191,7 +191,8 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 		WithClusterApplier().
 		WithKubeconfigWriter(clusterSpec.Cluster).
 		WithClusterCreator(clusterSpec.Cluster).
-		WithClusterMover()
+		WithClusterMover().
+		WithAwsIamAuth(clusterSpec.Cluster)
 
 	if cc.timeoutOptions.noTimeouts {
 		factory.WithNoTimeouts()
@@ -258,12 +259,12 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 			deps.PackageManager,
 			deps.ClusterCreator,
 			deps.UnAuthKubectlClient,
+			deps.AwsIamAuth,
 		)
 		err = createWorkloadCluster.Run(ctx, clusterSpec, createValidations)
 
 	} else if clusterSpec.Cluster.IsSelfManaged() {
 		logger.V(1).Info("Using the eksa controller to create the management cluster")
-
 		createMgmtCluster := management.NewCreate(
 			deps.Bootstrapper,
 			deps.UnAuthKubeClient,
@@ -276,6 +277,7 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 			deps.ClusterCreator,
 			deps.EksaInstaller,
 			deps.ClusterMover,
+			deps.AwsIamAuth,
 		)
 
 		err = createMgmtCluster.Run(ctx, clusterSpec, createValidations)

@@ -81,7 +81,7 @@ func (i *Installer) InstallAWSIAMAuth(
 		return fmt.Errorf("applying aws-iam-authenticator manifest: %v", err)
 	}
 
-	if err = i.GenerateKubeconfig(ctx, management, workload, spec); err != nil {
+	if err = i.GenerateWorkloadKubeconfig(ctx, management, workload, spec); err != nil {
 		return err
 	}
 	return nil
@@ -118,8 +118,8 @@ func (i *Installer) generateInstallerKubeconfig(clusterSpec *cluster.Spec, serve
 	return i.templateBuilder.GenerateKubeconfig(clusterSpec, i.clusterID, serverURL, tlsCert)
 }
 
-// GenerateKubeconfig generates the AWS IAM auth kubeconfig.
-func (i *Installer) GenerateKubeconfig(
+// GenerateWorkloadKubeconfig generates the AWS IAM auth kubeconfig.
+func (i *Installer) GenerateWorkloadKubeconfig(
 	ctx context.Context,
 	management, workload *types.Cluster,
 	spec *cluster.Spec,
@@ -160,8 +160,8 @@ func (i *Installer) GenerateKubeconfig(
 	return nil
 }
 
-// GenerateManagementAWSIAMKubeconfig generates the AWS IAM auth kubeconfig.
-func (i *Installer) GenerateManagementAWSIAMKubeconfig(
+// GenerateManagementKubeconfig generates the AWS IAM auth kubeconfig.
+func (i *Installer) GenerateManagementKubeconfig(
 	ctx context.Context,
 	cluster *types.Cluster,
 ) error {

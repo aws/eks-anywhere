@@ -21,6 +21,7 @@ type Upgrade struct {
 	eksdInstaller    interfaces.EksdInstaller
 	clusterUpgrader  interfaces.ClusterUpgrader
 	packageInstaller interfaces.PackageManager
+	iamAuth          interfaces.AwsIamAuth
 }
 
 // NewUpgrade builds a new upgrade construct.
@@ -31,8 +32,9 @@ func NewUpgrade(clientFactory interfaces.ClientFactory,
 	clusterUpgrader interfaces.ClusterUpgrader,
 	eksdInstaller interfaces.EksdInstaller,
 	packageInstaller interfaces.PackageManager,
+	iamAuth interfaces.AwsIamAuth,
 ) *Upgrade {
-	return &Upgrade{
+	upgradeWorkflow := &Upgrade{
 		clientFactory:    clientFactory,
 		provider:         provider,
 		clusterManager:   clusterManager,
@@ -41,7 +43,10 @@ func NewUpgrade(clientFactory interfaces.ClientFactory,
 		eksdInstaller:    eksdInstaller,
 		clusterUpgrader:  clusterUpgrader,
 		packageInstaller: packageInstaller,
+		iamAuth:          iamAuth,
 	}
+
+	return upgradeWorkflow
 }
 
 // Run Upgrade implements upgrade functionality for workload cluster's upgrade operation.
@@ -57,6 +62,7 @@ func (c *Upgrade) Run(ctx context.Context, cluster *types.Cluster, clusterSpec *
 		ManagementCluster: clusterSpec.ManagementCluster,
 		WorkloadCluster:   cluster,
 		ClusterUpgrader:   c.clusterUpgrader,
+		IamAuth:           c.iamAuth,
 	}
 
 	return task.NewTaskRunner(&setAndValidateUpgradeWorkloadTask{}, c.writer).RunTask(ctx, commandContext)

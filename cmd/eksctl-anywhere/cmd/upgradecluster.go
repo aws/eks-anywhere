@@ -160,7 +160,8 @@ func (uc *upgradeClusterOptions) upgradeCluster(cmd *cobra.Command, args []strin
 		WithKubectl().
 		WithValidatorClients().
 		WithPackageManagerWithoutWait(clusterSpec, "", uc.managementKubeconfig).
-		WithUpgradeClusterDefaulter(upgradeCLIConfig)
+		WithUpgradeClusterDefaulter(upgradeCLIConfig).
+		WithAwsIamAuth(clusterSpec.Cluster)
 
 	if uc.timeoutOptions.noTimeouts {
 		factory.WithNoTimeouts()
@@ -214,6 +215,7 @@ func (uc *upgradeClusterOptions) upgradeCluster(cmd *cobra.Command, args []strin
 			deps.EksdInstaller,
 			deps.ClusterApplier,
 			deps.PackageManager,
+			deps.AwsIamAuth,
 		)
 
 		err = upgrade.Run(ctx, clusterSpec, managementCluster, upgradeValidations)
@@ -228,6 +230,7 @@ func (uc *upgradeClusterOptions) upgradeCluster(cmd *cobra.Command, args []strin
 			deps.ClusterApplier,
 			deps.EksdInstaller,
 			deps.PackageManager,
+			deps.AwsIamAuth,
 		)
 		err = upgradeWorkloadCluster.Run(ctx, workloadCluster, clusterSpec, upgradeValidations)
 	}

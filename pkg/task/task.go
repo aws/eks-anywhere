@@ -53,6 +53,7 @@ type CommandContext struct {
 	BackupClusterStateDir string
 	ForceCleanup          bool
 	ClusterMover          interfaces.ClusterMover
+	IamAuth               interfaces.AwsIamAuth
 }
 
 func (c *CommandContext) SetError(err error) {

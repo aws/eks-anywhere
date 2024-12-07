@@ -20,6 +20,7 @@ type Create struct {
 	eksdInstaller    interfaces.EksdInstaller
 	clusterCreator   interfaces.ClusterCreator
 	packageInstaller interfaces.PackageManager
+	iamAuth          interfaces.AwsIamAuth
 }
 
 // NewCreate builds a new create construct.
@@ -30,8 +31,9 @@ func NewCreate(provider providers.Provider,
 	packageInstaller interfaces.PackageManager,
 	clusterCreator interfaces.ClusterCreator,
 	clientFactory interfaces.ClientFactory,
+	iamAuth interfaces.AwsIamAuth,
 ) *Create {
-	return &Create{
+	createWorkflow := &Create{
 		provider:         provider,
 		clusterManager:   clusterManager,
 		gitOpsManager:    gitOpsManager,
@@ -40,7 +42,10 @@ func NewCreate(provider providers.Provider,
 		clusterCreator:   clusterCreator,
 		packageInstaller: packageInstaller,
 		clientFactory:    clientFactory,
+		iamAuth:          iamAuth,
 	}
+
+	return createWorkflow
 }
 
 // Run executes the tasks to create a workload cluster.
@@ -55,6 +60,7 @@ func (c *Create) Run(ctx context.Context, clusterSpec *cluster.Spec, validator i
 		Validations:       validator,
 		ManagementCluster: clusterSpec.ManagementCluster,
 		ClusterCreator:    c.clusterCreator,
+		IamAuth:           c.iamAuth,
 	}
 
 	return task.NewTaskRunner(&setAndValidateCreateWorkloadTask{}, c.writer).RunTask(ctx, commandContext)

@@ -355,7 +355,7 @@ func TestGenerateManagementAWSIAMKubeconfig(t *testing.T) {
 	installer := awsiamauth.NewInstaller(certs, clusterID, k8s, writer, kwriter)
 	kwriter.EXPECT().WriteKubeconfigContent(ctx, cluster.Name, secretValue, fileWriter)
 
-	err := installer.GenerateManagementAWSIAMKubeconfig(context.Background(), cluster)
+	err := installer.GenerateManagementKubeconfig(context.Background(), cluster)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -381,7 +381,7 @@ func TestGenerateManagementAWSIAMKubeconfigError(t *testing.T) {
 	kwriter := kubeconfigmocks.NewMockWriter(ctrl)
 	installer := awsiamauth.NewInstaller(certs, clusterID, k8s, writer, kwriter)
 
-	err := installer.GenerateManagementAWSIAMKubeconfig(context.Background(), cluster)
+	err := installer.GenerateManagementKubeconfig(context.Background(), cluster)
 	if err == nil {
 		t.Fatal(err)
 	}
@@ -410,7 +410,7 @@ func TestGenerateAWSIAMKubeconfigError(t *testing.T) {
 	installer := awsiamauth.NewInstaller(certs, clusterID, k8s, writer, kwriter)
 	kwriter.EXPECT().WriteKubeconfigContent(ctx, cluster.Name, secretValue, fileWriter).Return(errors.New("test"))
 
-	err := installer.GenerateManagementAWSIAMKubeconfig(context.Background(), cluster)
+	err := installer.GenerateManagementKubeconfig(context.Background(), cluster)
 	if err == nil {
 		t.Fatal(err)
 	}

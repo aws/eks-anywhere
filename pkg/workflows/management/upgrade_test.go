@@ -51,6 +51,7 @@ type upgradeManagementTestSetup struct {
 	managementStatePath         string
 	management                  *management.Upgrade
 	packages                    *mocks.MockPackageManager
+	iamAuth                     *mocks.MockAwsIamAuth
 }
 
 func newUpgradeManagementTest(t *testing.T) *upgradeManagementTestSetup {
@@ -69,6 +70,7 @@ func newUpgradeManagementTest(t *testing.T) *upgradeManagementTestSetup {
 	machineConfigs := []providers.MachineConfig{&v1alpha1.VSphereMachineConfig{}}
 	clusterUpgrader := mocks.NewMockClusterUpgrader(mockCtrl)
 	packageUpgrader := mocks.NewMockPackageManager(mockCtrl)
+	iam := mocks.NewMockAwsIamAuth(mockCtrl)
 	management := management.NewUpgrade(
 		clientFactory,
 		provider,
@@ -80,6 +82,7 @@ func newUpgradeManagementTest(t *testing.T) *upgradeManagementTestSetup {
 		eksdInstaller,
 		clusterUpgrader,
 		packageUpgrader,
+		iam,
 	)
 
 	for _, e := range featureEnvVars {
@@ -123,6 +126,7 @@ func newUpgradeManagementTest(t *testing.T) *upgradeManagementTestSetup {
 		currentClusterSpec:          currentClusterSpec,
 		newClusterSpec:              newClusterSpec,
 		managementStatePath:         fmt.Sprintf("%s-backup-%s", "management", time.Now().Format("2006-01-02T15_04_05")),
+		iamAuth:                     iam,
 	}
 }
 
