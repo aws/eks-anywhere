@@ -25,6 +25,7 @@ type Upgrade struct {
 	upgradeChangeDiff *types.ChangeDiff
 	clusterUpgrader   interfaces.ClusterUpgrader
 	packageManager    interfaces.PackageManager
+	iamAuth           interfaces.AwsIamAuth
 }
 
 // NewUpgrade builds a new upgrade construct.
@@ -37,9 +38,10 @@ func NewUpgrade(clientFactory interfaces.ClientFactory, provider providers.Provi
 	eksdInstaller interfaces.EksdInstaller,
 	clusterUpgrade interfaces.ClusterUpgrader,
 	packageManager interfaces.PackageManager,
+	iamAuth interfaces.AwsIamAuth,
 ) *Upgrade {
 	upgradeChangeDiff := types.NewChangeDiff()
-	return &Upgrade{
+	upgradeWorkflow := &Upgrade{
 		clientFactory:     clientFactory,
 		provider:          provider,
 		clusterManager:    clusterManager,
@@ -51,7 +53,10 @@ func NewUpgrade(clientFactory interfaces.ClientFactory, provider providers.Provi
 		upgradeChangeDiff: upgradeChangeDiff,
 		clusterUpgrader:   clusterUpgrade,
 		packageManager:    packageManager,
+		iamAuth:           iamAuth,
 	}
+
+	return upgradeWorkflow
 }
 
 // Run Upgrade implements upgrade functionality for management cluster's upgrade operation.
@@ -71,6 +76,7 @@ func (c *Upgrade) Run(ctx context.Context, clusterSpec *cluster.Spec, management
 		UpgradeChangeDiff: c.upgradeChangeDiff,
 		ClusterUpgrader:   c.clusterUpgrader,
 		PackageManager:    c.packageManager,
+		IamAuth:           c.iamAuth,
 	}
 	if features.IsActive(features.CheckpointEnabled()) {
 		return task.NewTaskRunner(&setupAndValidateUpgrade{}, c.writer, task.WithCheckpointFile()).RunTask(ctx, commandContext)
