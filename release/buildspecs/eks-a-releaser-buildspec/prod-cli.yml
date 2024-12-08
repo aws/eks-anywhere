@@ -1,0 +1,8 @@
+version: 0.2
+env:
+  secrets-manager:
+    SECRET_PAT: "github-eks-distro-pr-bot:github-token"
+phases:
+  build:
+    commands:
+      - ${CODEBUILD_SRC_DIR}/release/bin/eks-anywhere-release trigger prod-cli
