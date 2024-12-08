@@ -265,7 +265,7 @@ func (s *Installer) installBootsOnDocker(ctx context.Context, bundle releasev1al
 		"--dhcp-ip-for-packet", tinkServerIP,
 		"--dhcp-syslog-ip", tinkServerIP,
 		"--dhcp-tftp-ip", fmt.Sprintf("%s:69", tinkServerIP),
-		"--dhcp-http-ipxe-binary-url", fmt.Sprintf("http://%s:8080/ipxe/", tinkServerIP),
+		"--dhcp-http-ipxe-binary-url", fmt.Sprintf("http://%s:80/ipxe/", tinkServerIP),
 		"--dhcp-http-ipxe-script-url", fmt.Sprintf("http://%s/auto.ipxe", tinkServerIP),
 	}
 	if err := s.docker.Run(ctx, s.localRegistryURL(bundle.Boots.URI), boots, cmd, flags...); err != nil {
