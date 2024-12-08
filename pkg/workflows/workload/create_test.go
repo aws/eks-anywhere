@@ -46,6 +46,7 @@ type createTestSetup struct {
 	managementComponents *cluster.ManagementComponents
 	client               *clientmocks.MockClient
 	clientFactory        *mocks.MockClientFactory
+	iamAuth              *mocks.MockAwsIamAuth
 }
 
 func newCreateTest(t *testing.T) *createTestSetup {
@@ -66,6 +67,7 @@ func newCreateTest(t *testing.T) *createTestSetup {
 	clientFactory := mocks.NewMockClientFactory(mockCtrl)
 
 	validator := mocks.NewMockValidator(mockCtrl)
+	iam := mocks.NewMockAwsIamAuth(mockCtrl)
 
 	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
 		s.Cluster.Name = "test-cluster"
@@ -81,6 +83,7 @@ func newCreateTest(t *testing.T) *createTestSetup {
 		packageInstaller,
 		clusterUpgrader,
 		clientFactory,
+		iam,
 	)
 
 	for _, e := range featureEnvVars {
@@ -111,6 +114,7 @@ func newCreateTest(t *testing.T) *createTestSetup {
 		managementComponents: managementComponents,
 		clientFactory:        clientFactory,
 		client:               client,
+		iamAuth:              iam,
 	}
 }
 
@@ -176,8 +180,8 @@ func (c *createTestSetup) expectInstallGitOpsManager(err error) {
 }
 
 func (c *createTestSetup) expectAWSIAMAuthKubeconfig(err error) {
-	c.clusterManager.EXPECT().GenerateAWSIAMKubeconfig(
-		c.ctx, c.clusterSpec.ManagementCluster).Return(err)
+	c.iamAuth.EXPECT().GenerateWorkloadKubeconfig(
+		c.ctx, c.clusterSpec.ManagementCluster, c.workloadCluster, c.clusterSpec).Return(err)
 }
 
 func (c *createTestSetup) expectWrite() {

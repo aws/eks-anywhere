@@ -162,12 +162,29 @@ func handleImageUpload(_ context.Context, r *releasetypes.ReleaseConfig, package
 		sourceImageUri := artifact.Image.SourceImageURI
 		releaseImageUri := artifact.Image.ReleaseImageURI
 		sourceEcrAuthConfig := defaultSourceEcrAuthConfig
+		sourceContainerRegistry := r.SourceContainerRegistry
+		var sourceEcrClient interface{}
+		if r.ReleaseEnvironment == "production" && r.BundleRelease {
+			sourceEcrClient = r.SourceClients.ECR.EcrPublicClient
+		} else {
+			sourceEcrClient = r.SourceClients.ECR.EcrClient
+		}
 		if packagesutils.NeedsPackagesAccountArtifacts(r) && (strings.Contains(sourceImageUri, "eks-anywhere-packages") || strings.Contains(sourceImageUri, "ecr-token-refresher") || strings.Contains(sourceImageUri, "credential-provider-package")) {
 			sourceEcrAuthConfig = packagesSourceEcrAuthConfig
+			sourceContainerRegistry = r.PackagesSourceContainerRegistry
+			sourceEcrClient = r.SourceClients.Packages.EcrClient
 		}
+		releaseContainerRegistry := r.ReleaseContainerRegistry
+		releaseEcrPublicClient := r.ReleaseClients.ECRPublic.Client
 		fmt.Printf("Source Image - %s\n", sourceImageUri)
 		fmt.Printf("Destination Image - %s\n", releaseImageUri)
-		err := images.CopyToDestination(sourceEcrAuthConfig, releaseEcrAuthConfig, sourceImageUri, releaseImageUri)
+
+		err := images.CheckRepositoryImagesAndTagsCountLimit(sourceImageUri, releaseImageUri, sourceContainerRegistry, releaseContainerRegistry, sourceEcrClient, releaseEcrPublicClient)
+		if err != nil {
+			return fmt.Errorf("checking pushability of image [%s] based on destination repository images or tags limits: %v", releaseImageUri, err)
+		}
+
+		err = images.CopyToDestination(sourceEcrAuthConfig, releaseEcrAuthConfig, sourceImageUri, releaseImageUri)
 		if err != nil {
 			return fmt.Errorf("copying image from source [%s] to destination [%s]: %v", sourceImageUri, releaseImageUri, err)
 		}

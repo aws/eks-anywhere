@@ -16,9 +16,9 @@ You can purchase EKS Anywhere Enterprise Subscriptions for 24/7 support from AWS
 
 EKS Anywhere Enterprise Subscriptions include support for the following components:
 
-- EKS Distro (see [documentation](https://distro.eks.aws.com/) for components)
+- EKS Distro (see [documentation](https://distro.eks.amazonaws.com/) for components)
 - EKS Anywhere core components such as the Cilium CNI, Flux GitOps controller, kube-vip, EKS Anywhere CLI, EKS Anywhere controllers, image builder, and EKS Connector
-- EKS Anywhere Curated Packages (see [curated packages list]({{< relref "../concepts/packages/#curated-package-list" >}}) for list of packages) 
+- EKS Anywhere Curated Packages (see [curated packages list]({{< relref "../packages/packagelist/" >}}) for list of packages) 
 - EKS Anywhere cluster lifecycle operations such as creating, scaling, and upgrading
 - EKS Anywhere troubleshooting, general guidance, and best practices
 - Bottlerocket node operating system
@@ -31,7 +31,7 @@ Visit the following links for more information on EKS Anywhere Enterprise Subscr
 - [Steps to license your cluster]({{< relref "../clustermgmt/support/cluster-license" >}})
 - [Steps to share curated packages with another account]({{< relref "../clustermgmt/support/share-packages" >}})
 
-If you are using EKS Anywhere and have not purchased a subscription, you can file an [issue](https://github.com/aws/eks-anywhere/issues) in the EKS Anywhere GitHub Repository, and someone will get back to you as soon as possible. If you discover a potential security issue in this project, we ask that you notify AWS/Amazon Security via the [vulnerability reporting page.](http://aws..com/security/vulnerability-reporting/) Please do not create a public GitHub issue for security problems.
+If you are using EKS Anywhere and have not purchased a subscription, you can file an [issue](https://github.com/aws/eks-anywhere/issues) in the EKS Anywhere GitHub Repository, and someone will get back to you as soon as possible. If you discover a potential security issue in this project, we ask that you notify AWS/Amazon Security via the [vulnerability reporting page.](https://aws.amazon.com/security/vulnerability-reporting/) Please do not create a public GitHub issue for security problems.
 
 ### FAQs
 

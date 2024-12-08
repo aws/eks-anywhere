@@ -48,6 +48,7 @@ type createTestSetup struct {
 	client               *clientmocks.MockClient
 	clientFactory        *mocks.MockClientFactory
 	mover                *mocks.MockClusterMover
+	iamAuth              *mocks.MockAwsIamAuth
 }
 
 func newCreateTest(t *testing.T) *createTestSetup {
@@ -71,6 +72,7 @@ func newCreateTest(t *testing.T) *createTestSetup {
 	client := clientmocks.NewMockClient(mockCtrl)
 	clientFactory := mocks.NewMockClientFactory(mockCtrl)
 	mover := mocks.NewMockClusterMover(mockCtrl)
+	iam := mocks.NewMockAwsIamAuth(mockCtrl)
 
 	workflow := management.NewCreate(
 		bootstrapper,
@@ -84,6 +86,7 @@ func newCreateTest(t *testing.T) *createTestSetup {
 		clusterCreator,
 		eksaInstaller,
 		mover,
+		iam,
 	)
 
 	for _, e := range featureEnvVars {
@@ -121,6 +124,7 @@ func newCreateTest(t *testing.T) *createTestSetup {
 		clusterSpec:          clusterSpec,
 		client:               client,
 		mover:                mover,
+		iamAuth:              iam,
 	}
 }
 
@@ -908,7 +912,7 @@ func TestCreateWriteConfigAWSIAMFailure(t *testing.T) {
 	test.expectDatacenterConfig()
 	test.expectMachineConfigs()
 
-	test.clusterManager.EXPECT().GenerateAWSIAMKubeconfig(test.ctx, test.workloadCluster).Return(errors.New("test"))
+	test.iamAuth.EXPECT().GenerateManagementKubeconfig(test.ctx, test.workloadCluster).Return(errors.New("test"))
 
 	test.clusterManager.EXPECT().SaveLogsManagementCluster(
 		test.ctx, test.clusterSpec, test.bootstrapCluster,

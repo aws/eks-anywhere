@@ -44,6 +44,7 @@ type upgradeTestSetup struct {
 	workloadCluster       *types.Cluster
 	workload              *workload.Upgrade
 	backupClusterStateDir string
+	iamAuth               *mocks.MockAwsIamAuth
 }
 
 func newUpgradeTest(t *testing.T) *upgradeTestSetup {
@@ -63,6 +64,7 @@ func newUpgradeTest(t *testing.T) *upgradeTestSetup {
 	clusterUpgrader := mocks.NewMockClusterUpgrader(mockCtrl)
 
 	validator := mocks.NewMockValidator(mockCtrl)
+	iam := mocks.NewMockAwsIamAuth(mockCtrl)
 
 	workload := workload.NewUpgrade(
 		clientFactory,
@@ -73,6 +75,7 @@ func newUpgradeTest(t *testing.T) *upgradeTestSetup {
 		clusterUpgrader,
 		eksdInstaller,
 		packageInstaller,
+		iam,
 	)
 
 	for _, e := range featureEnvVars {
@@ -111,6 +114,7 @@ func newUpgradeTest(t *testing.T) *upgradeTestSetup {
 		}),
 		workloadCluster:       &types.Cluster{Name: "workload"},
 		backupClusterStateDir: fmt.Sprintf("%s-backup-%s", "workload", time.Now().Format("2006-01-02T15_04_05")),
+		iamAuth:               iam,
 	}
 }
 
@@ -136,8 +140,8 @@ func (c *upgradeTestSetup) expectWriteWorkloadClusterConfig(err error) {
 }
 
 func (c *upgradeTestSetup) expectWithoutAWSIAMAuthKubeconfig(err error) {
-	c.clusterManager.EXPECT().GenerateAWSIAMKubeconfig(
-		c.ctx, c.clusterSpec.ManagementCluster).Return(err).Times(0)
+	c.iamAuth.EXPECT().GenerateWorkloadKubeconfig(
+		c.ctx, c.clusterSpec.ManagementCluster, c.workloadCluster, c.clusterSpec).Return(err).Times(0)
 }
 
 func (c *upgradeTestSetup) expectDatacenterConfig() {

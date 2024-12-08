@@ -1,14 +1,42 @@
-From 4b1e548ac02422f8953aa2effa86af581bceeb47 Mon Sep 17 00:00:00 2001
-From: Terry Howe <tlhowe@amazon.com>
-Date: Tue, 1 Feb 2022 11:38:52 -0700
-Subject: [PATCH] Make docsy js files static
+From 510caead5e2dacbf6df5491926a13f609174416c Mon Sep 17 00:00:00 2001
+From: Jacob Weinstock <jakobweinstock@gmail.com>
+Date: Fri, 1 Nov 2024 09:16:06 -0600
+Subject: [PATCH] Security update:
 
+For security reasons, Amazon does not allow
+Webpage loads resources from CDN or domain with
+public access or elevated risk via link(s).
+For this reason we host the javascript files locally
+and reference them in the theme.
+
+Signed-off-by: Jacob Weinstock <jakobweinstock@gmail.com>
 ---
+ assets/scss/rtl/_main.scss    | 4 ++--
  layouts/partials/head.html    | 4 ++--
  layouts/partials/scripts.html | 4 ++--
  static/js/prism.js            | 2 +-
- 3 files changed, 5 insertions(+), 5 deletions(-)
+ 4 files changed, 7 insertions(+), 7 deletions(-)
 
+diff --git a/assets/scss/rtl/_main.scss b/assets/scss/rtl/_main.scss
+index ffe9577..d7ddaff 100644
+--- a/assets/scss/rtl/_main.scss
++++ b/assets/scss/rtl/_main.scss
+@@ -31,7 +31,7 @@ body:lang(ur) {
+ }
+ 
+ body:lang(fa) {
+-    @import url('https://cdn.jsdelivr.net/gh/rastikerdar/vazir-font@v27.0.1/dist/font-face.css');
++    @import url('/font/font-face.css');
+     font-family: 'Vazir', "Open Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+ }
+ 
+@@ -43,4 +43,4 @@ body:lang(he) {
+ body:lang(ar) {
+     @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&display=swap');
+     font-family: 'Tajawal', "Open Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+-}
+\ No newline at end of file
++}
 diff --git a/layouts/partials/head.html b/layouts/partials/head.html
 index a40f447..db9ae40 100644
 --- a/layouts/partials/head.html
@@ -53,5 +81,5 @@ index ae881ac..8c3d1bf 100644
 -!function(){if("undefined"!=typeof self&&self.Prism&&self.document)if(Prism.plugins.toolbar){var i=window.ClipboardJS||void 0;i||"function"!=typeof require||(i=require("clipboard"));var c=[];if(!i){var o=document.createElement("script"),t=document.querySelector("head");o.onload=function(){if(i=window.ClipboardJS)for(;c.length;)c.pop()()},o.src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js",t.appendChild(o)}Prism.plugins.toolbar.registerButton("copy-to-clipboard",function(o){var t=document.createElement("button");t.textContent="Copy";var e=o.element;return i?n():c.push(n),t;function n(){var o=new i(t,{text:function(){return e.textContent}});o.on("success",function(){t.textContent="Copied!",r()}),o.on("error",function(){t.textContent="Press Ctrl+C to copy",r()})}function r(){setTimeout(function(){t.textContent="Copy"},5e3)}})}else console.warn("Copy to Clipboard plugin loaded before Toolbar plugin.")}();
 +!function(){if("undefined"!=typeof self&&self.Prism&&self.document)if(Prism.plugins.toolbar){var i=window.ClipboardJS||void 0;i||"function"!=typeof require||(i=require("clipboard"));var c=[];if(!i){var o=document.createElement("script"),t=document.querySelector("head");o.onload=function(){if(i=window.ClipboardJS)for(;c.length;)c.pop()()},o.src="/js/clipboard.min.js",t.appendChild(o)}Prism.plugins.toolbar.registerButton("copy-to-clipboard",function(o){var t=document.createElement("button");t.textContent="Copy";var e=o.element;return i?n():c.push(n),t;function n(){var o=new i(t,{text:function(){return e.textContent}});o.on("success",function(){t.textContent="Copied!",r()}),o.on("error",function(){t.textContent="Press Ctrl+C to copy",r()})}function r(){setTimeout(function(){t.textContent="Copy"},5e3)}})}else console.warn("Copy to Clipboard plugin loaded before Toolbar plugin.")}();
 -- 
-2.29.2
+2.44.0
 

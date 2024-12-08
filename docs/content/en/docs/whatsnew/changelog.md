@@ -32,6 +32,101 @@ description: >
 * When upgrading to a new minor version, a new OS image must be created using the new image-builder CLI pertaining to that release.
 {{% /alert %}}
 
+## [v0.21.1](https://github.com/aws/eks-anywhere/releases/tag/v0.21.1)
+
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+|    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+| Bottlerocket 1.26.1 |    ✔    |     *      |    —    |     —      |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+|      RHEL 9.x       |    —    |     ✔      |    ✔    |     ✔      |  —   |
+
+\* [EKS Anywhere issue regarding deprecation of Bottlerocket bare metal variants](https://github.com/aws/eks-anywhere/issues/7754)
+
+### Upgraded
+- Bumped EKS-D:
+  - [`v1-31-eks-7`](https://distro.eks.amazonaws.com/releases/1-31/7/)
+  - [`v1-30-eks-18`](https://distro.eks.amazonaws.com/releases/1-30/18/)
+  - [`v1-29-eks-25`](https://distro.eks.amazonaws.com/releases/1-29/25/)
+  - [`v1-28-eks-36`](https://distro.eks.amazonaws.com/releases/1-28/36/)
+- Cluster API Provider vSphere: `v1.11.2` to `v1.11.3`
+- Govmomi: `v0.44.1` to `v0.46.1`
+- Helm: `v3.16.2` to `v3.16.3`
+- Troubleshoot: `v0.107.4` to `v0.107.5`
+
+## [v0.21.0](https://github.com/aws/eks-anywhere/releases/tag/v0.21.0)
+
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+|    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+| Bottlerocket 1.26.1 |    ✔    |     *      |    —    |     —      |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+|      RHEL 9.x       |    —    |     ✔      |    ✔    |     ✔      |  —   |
+
+\* [EKS Anywhere issue regarding deprecation of Bottlerocket bare metal variants](https://github.com/aws/eks-anywhere/issues/7754)
+
+### Added
+- Support for Kubernetes v1.31
+- Support for configuring tinkerbell stack load balancer interface in cluster spec ([#8805](https://github.com/aws/eks-anywhere/pull/8805))
+- GPU support for Nutanix provider ([#8745](https://github.com/aws/eks-anywhere/pull/8745))
+- Support for worker nodes failure domains on Nutanix ([#8837](https://github.com/aws/eks-anywhere/pull/8837))
+
+### Upgraded
+- Added EKS-D for 1-31:
+  - [`v1-31-eks-6`](https://distro.eks.amazonaws.com/releases/1-31/6/)
+- Cert Manager: `v1.14.7` to `v1.15.3`
+- Cilium: `v1.13.20` to `v1.14.12`
+- Cluster API: `v1.7.2` to `v1.8.3`
+- Cluster API Provider CloudStack: `v0.4.10-rc.1` to `v0.5.0`
+- Cluster API Provider Nutanix: `v1.3.5` to `v1.4.0`
+- Cluster API Provider vSphere: `v1.10.4` to `v1.11.2`
+- Cri-tools: `v1.30.1` to `v1.31.1`
+- Flux: `v2.3.0` to `v2.4.0`
+- Govmomi: `v0.37.3` to `v0.44.1`
+- Kind: `v0.23.0` to `v0.24.0`
+- Kube-vip: `v0.7.0` to `v0.8.0`
+- Tinkerbell Stack:
+  - Rufio: `v0.3.3` to `v0.4.1`
+  - Hook: `v0.8.1` to `v0.9.1`
+- Troubleshoot: `v0.93.2` to `v0.107.4`
+
+### Changed
+- Use HookOS embedded images in Tinkerbell Templates by default ([#8708](https://github.com/aws/eks-anywhere/pull/8708) and [#3471](https://github.com/aws/eks-anywhere-build-tooling/pull/3471))
+
+### Removed
+- Support for Kubernetes v1.26
+
+
+## [v0.20.9](https://github.com/aws/eks-anywhere/releases/tag/v0.20.9)
+
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+|    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+| Bottlerocket 1.20.5 |    ✔    |     —      |    —    |     —      |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+|      RHEL 9.x       |    —    |     ✔      |    ✔    |     ✔      |  —   |
+
+### Changed
+- cilium: `v1.13.20-eksa.1` to `v1.13.21-eksa.5`
+- cloud-provider-vsphere
+  - `v1.29.1` to `v1.29.2`
+  - `v1.30.1` to `v1.30.2`
+- EKS Distro:
+  - `v1-28-eks-34` to [`v1-28-eks-35`](https://distro.eks.amazonaws.com/releases/1-28/35/)
+  - `v1-29-eks-23` to [`v1-29-eks-24`](https://distro.eks.amazonaws.com/releases/1-29/24/)
+  - `v1-30-eks-16`  to [`v1-30-eks-17`](https://distro.eks.amazonaws.com/releases/1-30/17/)
+- cluster-api-provider-vsphere(CAPV): `v1.10.3` to `v1.10.4`
+- etcdadm-bootstrap-provider:  `v1.0.14` to `v1.0.15`
+- kube-vip: `v0.8.4` to `v0.8.6`
+
+### Fixed
+- Release init-lock when the owner machine fails to launch. ([#41](https://github.com/aws/etcdadm-bootstrap-provider/pull/41))
 
 ## [v0.20.8](https://github.com/aws/eks-anywhere/releases/tag/v0.20.8)
 
@@ -58,6 +153,11 @@ description: >
 - runc: `v1.1.14` to `v1.1.15`
 - local-path-provisioner: `v0.0.29` to `v0.0.30`
 
+### Fixed
+- Skip hardware validation logic for InPlace upgrades. [#8779](https://github.com/aws/eks-anywhere/pull/8779)
+- Status reconciliation of etcdadm cluster in etcdadm-controller when etcd-machines are unhealthy. [#63](https://github.com/aws/etcdadm-controller/pull/63)
+- Skip generating AWS IAM Kubeconfig on cluster upgrade. [#8851](https://github.com/aws/eks-anywhere/pull/8851)
+
 ## [v0.20.7](https://github.com/aws/eks-anywhere/releases/tag/v0.20.7)
 
 ### Supported OS version details
@@ -80,7 +180,7 @@ description: >
 - cluster-api-provider-vsphere(CAPV): `v1.10.2` to `v1.10.3`
 
 ### Fixed
-- Fixed support for efi on rhel 9 raw builds. ([3824](https://github.com/aws/eks-anywhere-build-tooling/pull/3824))
+- Fixed support for efi on rhel 9 raw builds. ([#3824](https://github.com/aws/eks-anywhere-build-tooling/pull/3824))
 
 
 ## [v0.20.6](https://github.com/aws/eks-anywhere/releases/tag/v0.20.6)

@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/nutanix-cloud-native/prism-go-client/environment/credentials"
-	"github.com/nutanix-cloud-native/prism-go-client/utils"
 	v3 "github.com/nutanix-cloud-native/prism-go-client/v3"
 	"k8s.io/apimachinery/pkg/api/resource"
 
@@ -745,18 +744,29 @@ func checkMachineConfigIsForWorker(config *anywherev1.NutanixMachineConfig, clus
 
 // findSubnetUUIDByName retrieves the subnet uuid by the given subnet name.
 func findSubnetUUIDByName(ctx context.Context, v3Client Client, clusterUUID, subnetName string) (*string, error) {
-	res, err := v3Client.ListSubnet(ctx, &v3.DSMetadata{
-		Filter: utils.StringPtr(fmt.Sprintf("name==%s;cluster_uuid==%s", subnetName, clusterUUID)),
-	})
-	if err != nil || len(res.Entities) == 0 {
+	res, err := v3Client.ListAllSubnet(ctx, "", nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list subnets: %v", err)
+	}
+
+	subnets := make([]*v3.SubnetIntentResponse, 0)
+	for _, subnet := range res.Entities {
+		if subnet.Spec.ClusterReference != nil && *subnet.Spec.ClusterReference.UUID != "" {
+			if *subnet.Spec.ClusterReference.UUID == clusterUUID && subnet.Spec.Name != nil && *subnet.Spec.Name == subnetName {
+				subnets = append(subnets, subnet)
+			}
+		}
+	}
+
+	if len(subnets) == 0 {
 		return nil, fmt.Errorf("failed to find subnet by name %q: %v", subnetName, err)
 	}
 
-	if len(res.Entities) > 1 {
-		return nil, fmt.Errorf("found more than one (%v) subnet with name %q and cluster uuid %v", len(res.Entities), subnetName, clusterUUID)
+	if len(subnets) > 1 {
+		return nil, fmt.Errorf("found more than one (%v) subnet with name %q and cluster uuid %v", len(subnets), subnetName, clusterUUID)
 	}
 
-	return res.Entities[0].Metadata.UUID, nil
+	return subnets[0].Metadata.UUID, nil
 }
 
 // getWorkerMachineGroups retrieves the worker machine group names from the cluster spec.
@@ -794,12 +804,11 @@ func getClusterUUID(ctx context.Context, v3Client Client, cluster anywherev1.Nut
 
 // findClusterUUIDByName retrieves the cluster uuid by the given cluster name.
 func findClusterUUIDByName(ctx context.Context, v3Client Client, clusterName string) (*string, error) {
-	res, err := v3Client.ListCluster(ctx, &v3.DSMetadata{
-		Filter: utils.StringPtr(fmt.Sprintf("name==%s", clusterName)),
-	})
+	res, err := v3Client.ListAllCluster(ctx, "")
 	if err != nil {
-		return nil, fmt.Errorf("failed to find cluster by name %q: %v", clusterName, err)
+		return nil, fmt.Errorf("failed to list clusters: %v", err)
 	}
+
 	entities := make([]*v3.ClusterIntentResponse, 0)
 	for _, entity := range res.Entities {
 		if entity.Status != nil && entity.Status.Resources != nil && entity.Status.Resources.Config != nil {
@@ -816,6 +825,7 @@ func findClusterUUIDByName(ctx context.Context, v3Client Client, clusterName str
 			}
 		}
 	}
+
 	if len(entities) == 0 {
 		return nil, fmt.Errorf("failed to find cluster by name %q: %v", clusterName, err)
 	}
@@ -829,34 +839,52 @@ func findClusterUUIDByName(ctx context.Context, v3Client Client, clusterName str
 
 // findImageUUIDByName retrieves the image uuid by the given image name.
 func findImageUUIDByName(ctx context.Context, v3Client Client, imageName string) (*string, error) {
-	res, err := v3Client.ListImage(ctx, &v3.DSMetadata{
-		Filter: utils.StringPtr(fmt.Sprintf("name==%s", imageName)),
-	})
-	if err != nil || len(res.Entities) == 0 {
+	res, err := v3Client.ListAllImage(ctx, "")
+	if err != nil {
+		return nil, fmt.Errorf("failed to list images: %v", err)
+	}
+
+	images := make([]*v3.ImageIntentResponse, 0)
+	for _, image := range res.Entities {
+		if image.Spec.Name != nil && *image.Spec.Name == imageName {
+			images = append(images, image)
+		}
+	}
+
+	if len(images) == 0 {
 		return nil, fmt.Errorf("failed to find image by name %q: %v", imageName, err)
 	}
 
-	if len(res.Entities) > 1 {
-		return nil, fmt.Errorf("found more than one (%v) image with name %q", len(res.Entities), imageName)
+	if len(images) > 1 {
+		return nil, fmt.Errorf("found more than one (%v) image with name %q", len(images), imageName)
 	}
 
-	return res.Entities[0].Metadata.UUID, nil
+	return images[0].Metadata.UUID, nil
 }
 
 // findProjectUUIDByName retrieves the project uuid by the given image name.
 func findProjectUUIDByName(ctx context.Context, v3Client Client, projectName string) (*string, error) {
-	res, err := v3Client.ListProject(ctx, &v3.DSMetadata{
-		Filter: utils.StringPtr(fmt.Sprintf("name==%s", projectName)),
-	})
-	if err != nil || len(res.Entities) == 0 {
+	res, err := v3Client.ListAllProject(ctx, "")
+	if err != nil {
+		return nil, fmt.Errorf("failed to list projects: %v", err)
+	}
+
+	projects := make([]*v3.Project, 0)
+	for _, project := range res.Entities {
+		if project.Spec.Name == projectName {
+			projects = append(projects, project)
+		}
+	}
+
+	if len(projects) == 0 {
 		return nil, fmt.Errorf("failed to find project by name %q: %v", projectName, err)
 	}
 
-	if len(res.Entities) > 1 {
+	if len(projects) > 1 {
 		return nil, fmt.Errorf("found more than one (%v) project with name %q", len(res.Entities), projectName)
 	}
 
-	return res.Entities[0].Metadata.UUID, nil
+	return projects[0].Metadata.UUID, nil
 }
 
 func isRequestedGPUAssignable(gpu v3.GPU, requestedGpu anywherev1.NutanixGPUIdentifier) bool {

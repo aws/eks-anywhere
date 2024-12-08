@@ -71,7 +71,6 @@ type ClusterManager struct {
 	retrier            *retrier.Retrier
 	writer             filewriter.FileWriter
 	diagnosticsFactory diagnostics.DiagnosticBundleFactory
-	awsIamAuth         AwsIamAuth
 
 	machineMaxWait                   time.Duration
 	machineBackoff                   time.Duration
@@ -100,14 +99,6 @@ type CAPIClient interface {
 	GetWorkloadKubeconfig(ctx context.Context, clusterName string, cluster *types.Cluster) ([]byte, error)
 }
 
-type AwsIamAuth interface {
-	CreateAndInstallAWSIAMAuthCASecret(ctx context.Context, managementCluster *types.Cluster, workloadClusterName string) error
-	InstallAWSIAMAuth(ctx context.Context, management, workload *types.Cluster, spec *cluster.Spec) error
-	UpgradeAWSIAMAuth(ctx context.Context, cluster *types.Cluster, spec *cluster.Spec) error
-	GenerateKubeconfig(ctx context.Context, management, workload *types.Cluster, spec *cluster.Spec) error
-	GenerateManagementAWSIAMKubeconfig(ctx context.Context, cluster *types.Cluster) error
-}
-
 // EKSAComponents allows to manage the eks-a components installation in a cluster.
 type EKSAComponents interface {
 	Install(ctx context.Context, log logr.Logger, cluster *types.Cluster, managementComponents *cluster.ManagementComponents, spec *cluster.Spec) error
@@ -122,7 +113,7 @@ func DefaultRetrier() *retrier.Retrier {
 }
 
 // New constructs a new ClusterManager.
-func New(client ClientFactory, clusterClient ClusterClient, writer filewriter.FileWriter, diagnosticBundleFactory diagnostics.DiagnosticBundleFactory, awsIamAuth AwsIamAuth, eksaComponents EKSAComponents, opts ...ClusterManagerOpt) *ClusterManager {
+func New(client ClientFactory, clusterClient ClusterClient, writer filewriter.FileWriter, diagnosticBundleFactory diagnostics.DiagnosticBundleFactory, eksaComponents EKSAComponents, opts ...ClusterManagerOpt) *ClusterManager {
 	c := &ClusterManager{
 		eksaComponents:                   eksaComponents,
 		ClientFactory:                    client,
@@ -133,7 +124,6 @@ func New(client ClientFactory, clusterClient ClusterClient, writer filewriter.Fi
 		machineMaxWait:                   DefaultMaxWaitPerMachine,
 		machineBackoff:                   machineBackoff,
 		machinesMinWait:                  defaultMachinesMinWait,
-		awsIamAuth:                       awsIamAuth,
 		controlPlaneWaitTimeout:          DefaultControlPlaneWait,
 		controlPlaneWaitAfterMoveTimeout: DefaultControlPlaneWaitAfterMove,
 		externalEtcdWaitTimeout:          DefaultEtcdWait,
@@ -393,11 +383,6 @@ func (c *ClusterManager) waitForDeployments(ctx context.Context, deploymentsByNa
 		}
 	}
 	return nil
-}
-
-// GenerateIamAuthKubeconfig generates a kubeconfig for interacting with the cluster with aws-iam-authenticator client.
-func (c *ClusterManager) GenerateIamAuthKubeconfig(ctx context.Context, management, workload *types.Cluster, spec *cluster.Spec) error {
-	return c.awsIamAuth.GenerateKubeconfig(ctx, management, workload, spec)
 }
 
 func (c *ClusterManager) SaveLogsManagementCluster(ctx context.Context, spec *cluster.Spec, cluster *types.Cluster) error {
@@ -833,11 +818,6 @@ func (c *ClusterManager) pauseReconcileForCluster(ctx context.Context, clusterCr
 		return fmt.Errorf("updating managed by cli annotation in cluster when pausing cluster reconciliation: %v", err)
 	}
 	return nil
-}
-
-// GenerateAWSIAMKubeconfig generates a kubeconfig for interacting with the cluster with aws-iam-authenticator client.
-func (c *ClusterManager) GenerateAWSIAMKubeconfig(ctx context.Context, cluster *types.Cluster) error {
-	return c.awsIamAuth.GenerateManagementAWSIAMKubeconfig(ctx, cluster)
 }
 
 func (c *ClusterManager) GetCurrentClusterSpec(ctx context.Context, clus *types.Cluster, clusterName string) (*cluster.Spec, error) {

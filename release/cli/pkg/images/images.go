@@ -25,6 +25,7 @@ import (
 	"strings"
 	"time"
 
+	ecrsdk "github.com/aws/aws-sdk-go/service/ecr"
 	ecrpublicsdk "github.com/aws/aws-sdk-go/service/ecrpublic"
 	docker "github.com/fsouza/go-dockerclient"
 	"github.com/pkg/errors"
@@ -35,6 +36,7 @@ import (
 	"github.com/aws/eks-anywhere/release/cli/pkg/aws/ecr"
 	"github.com/aws/eks-anywhere/release/cli/pkg/aws/ecrpublic"
 	"github.com/aws/eks-anywhere/release/cli/pkg/aws/s3"
+	"github.com/aws/eks-anywhere/release/cli/pkg/constants"
 	"github.com/aws/eks-anywhere/release/cli/pkg/filereader"
 	"github.com/aws/eks-anywhere/release/cli/pkg/retrier"
 	releasetypes "github.com/aws/eks-anywhere/release/cli/pkg/types"
@@ -384,4 +386,43 @@ func ComputeImageDigestFromManifest(ecrPublicClient *ecrpublicsdk.ECRPublic, reg
 	digest := h.Sum(nil)
 
 	return fmt.Sprintf("%x", digest), nil
+}
+
+func CheckRepositoryImagesAndTagsCountLimit(sourceImageUri, releaseImageUri, sourceContainerRegistry, releaseContainerRegistry string, ecrClient interface{}, ecrPublicClient *ecrpublicsdk.ECRPublic) error {
+	repository, _ := artifactutils.SplitImageUri(releaseImageUri, releaseContainerRegistry)
+
+	fmt.Printf("Checking if image %s can be pushed to repository %s\n", releaseImageUri, repository)
+
+	var sourceImageDigest string
+	var err error
+	switch ecrClient.(type) {
+	case *ecrsdk.ECR:
+		sourceImageDigest, err = ecr.GetImageDigest(sourceImageUri, sourceContainerRegistry, ecrClient.(*ecrsdk.ECR))
+		if err != nil {
+			return errors.Cause(err)
+		}
+	case *ecrpublicsdk.ECRPublic:
+		sourceImageDigest, err = ecrpublic.GetImageDigest(sourceImageUri, sourceContainerRegistry, ecrClient.(*ecrpublicsdk.ECRPublic))
+		if err != nil {
+			return errors.Cause(err)
+		}
+	}
+
+	allImagesCount, err := ecrpublic.GetAllImagesCount(repository, ecrPublicClient)
+	if err != nil {
+		return errors.Cause(err)
+	}
+	if allImagesCount >= constants.MAX_IMAGES_PER_REPOSITORY {
+		return fmt.Errorf("cannot push image [%s] since the repository %s already has the maximum allowed number of images which is '%d'", releaseImageUri, repository, constants.MAX_IMAGES_PER_REPOSITORY)
+	}
+
+	tagsForImageCount, err := ecrpublic.GetTagsCountForImage(repository, sourceImageDigest, ecrPublicClient)
+	if err != nil {
+		return errors.Cause(err)
+	}
+	if tagsForImageCount >= constants.MAX_TAGS_PER_IMAGE {
+		return fmt.Errorf("cannot push image [%s] since the image with digest [%s] in repository %s already has the maximum allowed number of tags per image which is '%d'", releaseImageUri, sourceImageDigest, repository, constants.MAX_TAGS_PER_IMAGE)
+	}
+
+	return nil
 }

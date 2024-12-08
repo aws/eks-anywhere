@@ -108,7 +108,6 @@ phases:
         --cleanup-resources=true
         --test-report-folder=reports
         --branch-name=${BRANCH_NAME}
-        --baremetal-branch=${BAREMETAL_BRANCH}
   post_build:
     commands:
       - unset AWS_SDK_LOAD_CONFIG AWS_PROFILE

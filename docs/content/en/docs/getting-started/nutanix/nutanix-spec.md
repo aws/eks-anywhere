@@ -55,7 +55,7 @@ spec:
      name: mgmt-etcd
  kubernetesVersion: "1.31"
  workerNodeGroupConfigurations:
-   - count: 1
+   - count: 3
      machineGroupRef:
        kind: NutanixMachineConfig
        name: mgmt-machine
@@ -80,6 +80,8 @@ spec:
      subnets:
        - name: vm-network-01
          type: name
+     workerMachineGroups:
+       - md-0
    - name: failure-domain-02 
      cluster:
        name: nx-cluster-02
@@ -87,6 +89,8 @@ spec:
      subnets:
        - name: vm-network-02
          type: name
+     workerMachineGroups:
+       - md-0
    - name: failure-domain-03 
      cluster:
        name: nx-cluster-03
@@ -94,6 +98,8 @@ spec:
      subnets:
        - name: vm-network-03
          type: name
+     workerMachineGroups:
+       - md-0
 ---
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: NutanixMachineConfig
@@ -183,6 +189,11 @@ spec:
        - ssh-rsa AAAA…
  vcpuSockets: 2
  vcpusPerSocket: 1
+ gpus:
+   - type: deviceID
+     deviceID: 1234
+   - type: name
+     name: my-gpu
 ---
 ```
 
@@ -304,6 +315,9 @@ Type to identify the failure domain subnet. (Permitted values: `name` or `uuid`)
 ### failureDomains[0].subnets[0].uuid (`failureDomains[0].subnets[0].name` or `failureDomains[0].subnets[0].uuid` required)
 UUID of the failure domain subnet.
 
+### failureDomains[0].workerMachineGroups (optional)
+List of worker machine group names that belong to a specific failure domain. See `Cluster.Spec.WorkerNodeGroupConfiguration` for more information.
+
 ## NutanixMachineConfig Fields
 
 ### cluster (required)
@@ -400,3 +414,15 @@ ssh -i <private-key-file> <user>@<VM-IP>
 ```
 
 The default is generating a key in your `$(pwd)/<cluster-name>` folder when not specifying a value
+
+### gpus (optional)
+Reference to the GPUs to be assigned to the VMs.
+
+### gpus[0].name (`gpus[0].name` or `gpus[0].deviceID` required)
+Name of the GPU.
+
+### gpus[0].deviceID (`gpus[0].name` or `gpus[0].deviceID` required)
+Device ID of the GPU.
+
+### gpus[0].type (required)
+Type to identify the GPU. (Permitted values: `name` or `deviceID`)

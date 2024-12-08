@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"math/rand"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -61,7 +62,7 @@ func CreateInstance(session *session.Session, amiId, key, tag, instanceProfileNa
 			IamInstanceProfile: &ec2.IamInstanceProfileSpecification{
 				Name: aws.String(instanceProfileName),
 			},
-			SubnetId: aws.String(subnetId),
+			SubnetId: aws.String(getRandomSubnetID(subnetId)),
 			TagSpecifications: []*ec2.TagSpecification{
 				{
 					ResourceType: aws.String("instance"),
@@ -110,4 +111,9 @@ func isThrottleError(err error) bool {
 	}
 
 	return false
+}
+
+func getRandomSubnetID(subnetIDsStr string) string {
+	subnetIDs := strings.Split(subnetIDsStr, ",")
+	return subnetIDs[rand.Intn(len(subnetIDs))]
 }

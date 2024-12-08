@@ -2,7 +2,7 @@ version: 0.2
 
 env:
   variables:
-    INTEGRATION_TEST_MAX_CONCURRENT_TEST_COUNT: 80
+    INTEGRATION_TEST_MAX_CONCURRENT_TEST_COUNT: 60
     EKSA_GIT_KNOWN_HOSTS: "/tmp/known_hosts"
     EKSA_GIT_PRIVATE_KEY: "/tmp/private-key"
     INTEGRATION_TEST_INFRA_CONFIG: "/tmp/test-infra.yml"
@@ -126,7 +126,6 @@ phases:
         --cleanup-resources=true
         --test-report-folder=reports
         --branch-name=${BRANCH_NAME}
-        --baremetal-branch=${BAREMETAL_BRANCH}
   post_build:
     commands:
       - unset AWS_SDK_LOAD_CONFIG AWS_PROFILE
