@@ -32,6 +32,33 @@ description: >
 * When upgrading to a new minor version, a new OS image must be created using the new image-builder CLI pertaining to that release.
 {{% /alert %}}
 
+## [v0.21.2](https://github.com/aws/eks-anywhere/releases/tag/v0.21.2)
+
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+|    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+| Bottlerocket 1.26.1 |    ✔    |     *      |    —    |     —      |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+|      RHEL 9.x       |    —    |     ✔      |    ✔    |     ✔      |  —   |
+
+\* [EKS Anywhere issue regarding deprecation of Bottlerocket bare metal variants](https://github.com/aws/eks-anywhere/issues/7754)
+
+### Upgraded
+- Bumped EKS-D:
+  - [`v1-31-eks-8`](https://distro.eks.amazonaws.com/releases/1-31/8/)
+  - [`v1-30-eks-19`](https://distro.eks.amazonaws.com/releases/1-30/19/)
+  - [`v1-29-eks-26`](https://distro.eks.amazonaws.com/releases/1-29/26/)
+  - [`v1-28-eks-37`](https://distro.eks.amazonaws.com/releases/1-28/37/)
+- Kube-rbac-proxy: `v0.18.1` to `v0.18.2`
+- Kube-vip: `v0.8.6` to `v0.8.7`
+
+### Fixed
+- Fix iam kubeconfig generation in workload clusters [#9048](https://github.com/aws/eks-anywhere/pull/9048)
+- Update collectors for curated packages namespaces [#9044](https://github.com/aws/eks-anywhere/pull/9044)
+- Fixed redhat image builds for ansible version v10.0.0 and up [#4109](https://github.com/aws/eks-anywhere-build-tooling/pull/4109)
+
 ## [v0.21.1](https://github.com/aws/eks-anywhere/releases/tag/v0.21.1)
 
 ### Supported OS version details
