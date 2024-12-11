@@ -42,6 +42,25 @@ spec:
   credentialRef:
     kind: Secret
     name: "nutanix-credentials"
+  failureDomains:
+  - name: "pe1"
+    workerMachineGroups:
+    - eksa-unit-test
+    cluster:
+      type: name
+      name: "prism-cluster"
+    subnets:
+    - type: uuid
+      uuid: "2d166190-7759-4dc6-b835-923262d6b497"
+  - name: "pe2"
+    workerMachineGroups:
+    - eksa-unit-test
+    cluster:
+      type: uuid
+      uuid: "4d69ca7d-022f-49d1-a454-74535993bda4"
+    subnets:
+    - type: name
+      name: "prism-subnet"
 ---
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: NutanixMachineConfig
@@ -54,10 +73,10 @@ spec:
   memorySize: 8Gi
   image:
     type: "name"
-    name: "prism-image-1-19"
+    name: "prism-image"
   cluster:
     type: "name"
-    name: "non-existent-cluster"
+    name: "prism-cluster"
   subnet:
     type: "name"
     name: "prism-subnet"
@@ -67,3 +86,4 @@ spec:
     - name: "mySshUsername"
       sshAuthorizedKeys:
         - "mySshAuthorizedKey"
+---

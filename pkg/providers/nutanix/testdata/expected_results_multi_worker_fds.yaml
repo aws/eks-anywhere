@@ -4,7 +4,23 @@ metadata:
   name: "eksa-unit-test"
   namespace: "eksa-system"
 spec:
-  failureDomains: []
+  failureDomains:
+  - name: "pe1"
+    cluster:
+      type: "name"
+      name: "prism-cluster"
+    subnets:
+    - type: "uuid"
+      uuid: "2d166190-7759-4dc6-b835-923262d6b497"
+    controlPlane: true
+  - name: "pe2"
+    cluster:
+      type: "uuid"
+      uuid: "4d69ca7d-022f-49d1-a454-74535993bda4"
+    subnets:
+    - type: "name"
+      name: "prism-subnet"
+    controlPlane: true
   prismCentral:
     address: "prism.nutanix.com"
     port: 9440
@@ -150,13 +166,6 @@ spec:
         status: {}
       owner: root:root
       path: /etc/kubernetes/manifests/kube-vip.yaml
-    - content: |
-        [Service]
-        Environment="HTTP_PROXY=proxy.nutanix.com:8888"
-        Environment="HTTPS_PROXY=proxy.nutanix.com:8888"
-        Environment="NO_PROXY=192.168.0.0/16,10.96.0.0/12,noproxy1.nutanix.com,noproxy2.nutanix.com,noproxy3.nutanix.com,localhost,127.0.0.1,.svc,prism.nutanix.com,10.199.199.1"
-      owner: root:root
-      path: /etc/systemd/system/containerd.service.d/http-proxy.conf
     - content: |
         apiVersion: audit.k8s.io/v1beta1
         kind: Policy
@@ -340,8 +349,6 @@ spec:
         sshAuthorizedKeys:
           - "mySshAuthorizedKey"
     preKubeadmCommands:
-      - sudo systemctl daemon-reload
-      - sudo systemctl restart containerd
       - hostnamectl set-hostname "{{ ds.meta_data.hostname }}"
       - echo "::1         ipv6-localhost ipv6-loopback" >/etc/hosts
       - echo "127.0.0.1   localhost" >>/etc/hosts

@@ -47,6 +47,11 @@ type NutanixDatacenterConfigSpec struct {
 	// FailureDomains is the optional list of failure domains for the Nutanix Datacenter.
 	// +optional
 	FailureDomains []NutanixDatacenterFailureDomain `json:"failureDomains,omitempty"`
+
+	// CcmExcludeIPs is the optional list of IP addresses that should be excluded from the CCM IP pool for nodes.
+	// List should be valid IP addresses and IP address ranges.
+	// +optional
+	CcmExcludeNodeIPs []string `json:"ccmExcludeNodeIPs,omitempty"`
 }
 
 // NutanixDatacenterFailureDomain defines the failure domain for the Nutanix Datacenter.

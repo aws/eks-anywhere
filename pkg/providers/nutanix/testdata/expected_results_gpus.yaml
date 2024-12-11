@@ -151,13 +151,6 @@ spec:
       owner: root:root
       path: /etc/kubernetes/manifests/kube-vip.yaml
     - content: |
-        [Service]
-        Environment="HTTP_PROXY=proxy.nutanix.com:8888"
-        Environment="HTTPS_PROXY=proxy.nutanix.com:8888"
-        Environment="NO_PROXY=192.168.0.0/16,10.96.0.0/12,noproxy1.nutanix.com,noproxy2.nutanix.com,noproxy3.nutanix.com,localhost,127.0.0.1,.svc,prism.nutanix.com,10.199.199.1"
-      owner: root:root
-      path: /etc/systemd/system/containerd.service.d/http-proxy.conf
-    - content: |
         apiVersion: audit.k8s.io/v1beta1
         kind: Policy
         rules:
@@ -340,8 +333,6 @@ spec:
         sshAuthorizedKeys:
           - "mySshAuthorizedKey"
     preKubeadmCommands:
-      - sudo systemctl daemon-reload
-      - sudo systemctl restart containerd
       - hostnamectl set-hostname "{{ ds.meta_data.hostname }}"
       - echo "::1         ipv6-localhost ipv6-loopback" >/etc/hosts
       - echo "127.0.0.1   localhost" >>/etc/hosts
