@@ -3,6 +3,7 @@ package nutanix
 import (
 	"context"
 	"fmt"
+	"net"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -134,6 +135,62 @@ func (v *Validator) ValidateDatacenterConfig(ctx context.Context, client Client,
 
 	if err := v.validateFailureDomains(ctx, client, spec); err != nil {
 		return err
+	}
+
+	if config.Spec.CcmExcludeNodeIPs != nil {
+		if err := v.validateCcmExcludeNodeIPs(config.Spec.CcmExcludeNodeIPs); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (v *Validator) validateIPRangeForCcmExcludeNodeIPs(ipRange string) error {
+	ipRangeStr := strings.TrimSpace(ipRange)
+	rangeParts := strings.Split(ipRangeStr, "-")
+	if len(rangeParts) != 2 {
+		return fmt.Errorf("invalid IP range %s", ipRangeStr)
+	}
+	startIP := net.ParseIP(strings.TrimSpace(rangeParts[0]))
+	if startIP == nil {
+		return fmt.Errorf("invalid start IP address %s", rangeParts[0])
+	}
+	endIP := net.ParseIP(strings.TrimSpace(rangeParts[1]))
+	if endIP == nil {
+		return fmt.Errorf("invalid end IP address %s", rangeParts[1])
+	}
+	cmp, err := compareIP(startIP, endIP)
+	if err != nil {
+		return err
+	}
+	if cmp > 0 {
+		return fmt.Errorf("start IP address %s is greater than end IP address %s", startIP.String(), endIP.String())
+	}
+
+	return nil
+}
+
+func (v *Validator) validateCcmExcludeNodeIPs(ccmExcludeNodeIPs []string) error {
+	for _, ipOrIPRange := range ccmExcludeNodeIPs {
+		if strings.Contains(ipOrIPRange, "/") {
+			cidrStr := strings.TrimSpace(ipOrIPRange)
+			_, _, err := net.ParseCIDR(cidrStr)
+			if err != nil {
+				return fmt.Errorf("invalid CIDR %s: %v", cidrStr, err)
+			}
+		} else if strings.Contains(ipOrIPRange, "-") {
+			err := v.validateIPRangeForCcmExcludeNodeIPs(ipOrIPRange)
+			if err != nil {
+				return err
+			}
+		} else {
+			ipStr := strings.TrimSpace(ipOrIPRange)
+			ip := net.ParseIP(ipStr)
+			if ip == nil {
+				return fmt.Errorf("invalid IP address %s", ipStr)
+			}
+		}
 	}
 
 	return nil
