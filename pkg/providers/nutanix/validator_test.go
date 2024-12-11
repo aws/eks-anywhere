@@ -65,6 +65,24 @@ var nutanixDatacenterConfigSpecWithFailureDomainInvalidSubnet string
 //go:embed testdata/datacenterConfig_with_failure_domains_invalid_wg.yaml
 var nutanixDatacenterConfigSpecWithFailureDomainInvalidWorkerMachineGroups string
 
+//go:embed testdata/datacenterConfig_with_ccm_exclude_node_ips.yaml
+var nutanixDatacenterConfigSpecWithCCMExcludeNodeIPs string
+
+//go:embed testdata/datacenterConfig_with_ccm_exclude_node_ips_invalid_cidr.yaml
+var nutanixDatacenterConfigSpecWithCCMExcludeNodeIPsInvalidCIDR string
+
+//go:embed testdata/datacenterConfig_with_ccm_exclude_node_ips_invalid_ip.yaml
+var nutanixDatacenterConfigSpecWithCCMExcludeNodeIPsInvalidIP string
+
+//go:embed testdata/datacenterConfig_with_ccm_exclude_node_ips_invalid_ip_range1.yaml
+var nutanixDatacenterConfigSpecWithCCMExcludeNodeIPsInvalidIPRange1 string
+
+//go:embed testdata/datacenterConfig_with_ccm_exclude_node_ips_invalid_ip_range2.yaml
+var nutanixDatacenterConfigSpecWithCCMExcludeNodeIPsInvalidIPRange2 string
+
+//go:embed testdata/datacenterConfig_with_ccm_exclude_node_ips_invalid_ip_range3.yaml
+var nutanixDatacenterConfigSpecWithCCMExcludeNodeIPsInvalidIPRange3 string
+
 func fakeClusterList() *v3.ClusterListIntentResponse {
 	return &v3.ClusterListIntentResponse{
 		Entities: []*v3.ClusterIntentResponse{
@@ -1486,6 +1504,36 @@ func TestNutanixValidatorValidateDatacenterConfig(t *testing.T) {
 		{
 			name:       "failure domains with invalid workerMachineGroups",
 			dcConfFile: nutanixDatacenterConfigSpecWithFailureDomainInvalidWorkerMachineGroups,
+			expectErr:  true,
+		},
+		{
+			name:       "valid ccmExcludeNodeIPs",
+			dcConfFile: nutanixDatacenterConfigSpecWithCCMExcludeNodeIPs,
+			expectErr:  false,
+		},
+		{
+			name:       "ccmExcludeNodeIPs invalid CIDR",
+			dcConfFile: nutanixDatacenterConfigSpecWithCCMExcludeNodeIPsInvalidCIDR,
+			expectErr:  true,
+		},
+		{
+			name:       "ccmExcludeNodeIPs invalid IP",
+			dcConfFile: nutanixDatacenterConfigSpecWithCCMExcludeNodeIPsInvalidIP,
+			expectErr:  true,
+		},
+		{
+			name:       "ccmExcludeNodeIPs invalid IP range: wrong number of IPs",
+			dcConfFile: nutanixDatacenterConfigSpecWithCCMExcludeNodeIPsInvalidIPRange1,
+			expectErr:  true,
+		},
+		{
+			name:       "ccmExcludeNodeIPs invalid IP range: wrong IP range",
+			dcConfFile: nutanixDatacenterConfigSpecWithCCMExcludeNodeIPsInvalidIPRange2,
+			expectErr:  true,
+		},
+		{
+			name:       "ccmExcludeNodeIPs invalid IP range: wrong IP types",
+			dcConfFile: nutanixDatacenterConfigSpecWithCCMExcludeNodeIPsInvalidIPRange3,
 			expectErr:  true,
 		},
 	}

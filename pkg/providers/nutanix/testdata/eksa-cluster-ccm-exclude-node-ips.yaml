@@ -42,6 +42,10 @@ spec:
   credentialRef:
     kind: Secret
     name: "nutanix-credentials"
+  ccmExcludeNodeIps:
+    - "127.100.200.101"
+    - "10.10.10.10-10.10.10.13"
+    - "10.123.0.0/29"
 ---
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: NutanixMachineConfig
@@ -57,7 +61,7 @@ spec:
     name: "prism-image-1-19"
   cluster:
     type: "name"
-    name: "non-existent-cluster"
+    name: "prism-cluster"
   subnet:
     type: "name"
     name: "prism-subnet"
