@@ -50,10 +50,10 @@ func NewValidator(clientCache *ClientCache, certValidator crypto.TlsValidator, h
 	}
 }
 
-func (v *Validator) validateControlPlaneIp(ip string) error {
+func (v *Validator) validateControlPlaneIP(ip string) error {
 	// check if controlPlaneEndpointIp is valid
-	parsedIp := net.ParseIP(ip)
-	if parsedIp == nil {
+	parsedIP := net.ParseIP(ip)
+	if parsedIP == nil {
 		return fmt.Errorf("cluster controlPlaneConfiguration.Endpoint.Host is invalid: %s", ip)
 	}
 	return nil
@@ -71,7 +71,7 @@ func (v *Validator) ValidateClusterSpec(ctx context.Context, spec *cluster.Spec,
 		return err
 	}
 
-	if err := v.validateControlPlaneIp(spec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host); err != nil {
+	if err := v.validateControlPlaneIP(spec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host); err != nil {
 		return err
 	}
 
