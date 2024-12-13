@@ -728,8 +728,8 @@ func TestTemplateBuilderFailureDomains(t *testing.T) {
 
 func TestTemplateBuilderCcmExcludeNodeIPs(t *testing.T) {
 	for _, tc := range []struct {
-		Input    string
-		Output   string
+		Input  string
+		Output string
 	}{
 		{
 			Input:  "testdata/eksa-cluster-ccm-exclude-node-ips.yaml",
