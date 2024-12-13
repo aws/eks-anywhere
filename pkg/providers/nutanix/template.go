@@ -4,8 +4,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"log"
-	"net"
 
 	"sigs.k8s.io/yaml"
 
@@ -525,25 +523,8 @@ func generateNutanixFailureDomains(eksNutanixFailureDomains []v1alpha1.NutanixDa
 	return failureDomains
 }
 
-func addKubeVipToIgnoredNodeIPsList(clusterSpec *cluster.Spec, result []string) []string {
-	kubeVipStr := clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host
-	if kubeVipStr != "" {
-		kubeVip, err := net.ResolveIPAddr("ip", kubeVipStr)
-		if err != nil {
-			// log error and continue
-			log.Printf("error resolving kube-vip IP address %s: %v", kubeVipStr, err)
-		} else {
-			result = append(result, kubeVip.IP.String())
-		}
-	}
-
-	return result
-}
-
 func generateCcmIgnoredNodeIPsList(clusterSpec *cluster.Spec) []string {
-	result := make([]string, 0)
+	ignoredIPs := []string{clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host}
 
-	result = addKubeVipToIgnoredNodeIPsList(clusterSpec, result)
-
-	return result
+	return ignoredIPs
 }

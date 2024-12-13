@@ -3,6 +3,7 @@ package nutanix
 import (
 	"context"
 	"fmt"
+	"net"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -49,6 +50,15 @@ func NewValidator(clientCache *ClientCache, certValidator crypto.TlsValidator, h
 	}
 }
 
+func (v *Validator) validateControlPlaneIp(ip string) error {
+	// check if controlPlaneEndpointIp is valid
+	parsedIp := net.ParseIP(ip)
+	if parsedIp == nil {
+		return fmt.Errorf("cluster controlPlaneConfiguration.Endpoint.Host is invalid: %s", ip)
+	}
+	return nil
+}
+
 // ValidateClusterSpec validates the cluster spec.
 func (v *Validator) ValidateClusterSpec(ctx context.Context, spec *cluster.Spec, creds credentials.BasicAuthCredential) error {
 	logger.Info("ValidateClusterSpec for Nutanix datacenter", "NutanixDatacenter", spec.NutanixDatacenter.Name)
@@ -58,6 +68,10 @@ func (v *Validator) ValidateClusterSpec(ctx context.Context, spec *cluster.Spec,
 	}
 
 	if err := v.ValidateDatacenterConfig(ctx, client, spec.NutanixDatacenter); err != nil {
+		return err
+	}
+
+	if err := v.validateControlPlaneIp(spec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host); err != nil {
 		return err
 	}
 
