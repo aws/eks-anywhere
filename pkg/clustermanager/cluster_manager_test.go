@@ -532,6 +532,62 @@ func TestClusterManagerMoveCAPIRetrySuccess(t *testing.T) {
 	}
 }
 
+func TestClusterManagerMoveKubectlWaitRetrySuccess(t *testing.T) {
+	from := &types.Cluster{
+		Name: "from-cluster",
+	}
+	to := &types.Cluster{
+		Name: "to-cluster",
+	}
+	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
+		s.Cluster.Name = to.Name
+		s.Cluster.Spec.ControlPlaneConfiguration.Count = 3
+		s.Cluster.Spec.WorkerNodeGroupConfigurations = []v1alpha1.WorkerNodeGroupConfiguration{{Count: ptr.Int(3), MachineGroupRef: &v1alpha1.Ref{Name: "test-wn"}}}
+	})
+	ctx := context.Background()
+
+	c, m := newClusterManager(t)
+	kcp, mds := getKcpAndMdsForNodeCount(0)
+	m.client.EXPECT().GetKubeadmControlPlane(ctx,
+		from,
+		to.Name,
+		gomock.AssignableToTypeOf(executables.WithCluster(from)),
+		gomock.AssignableToTypeOf(executables.WithNamespace(constants.EksaSystemNamespace)),
+	).Return(kcp, nil)
+	m.client.EXPECT().GetMachineDeploymentsForCluster(ctx,
+		to.Name,
+		gomock.AssignableToTypeOf(executables.WithCluster(from)),
+		gomock.AssignableToTypeOf(executables.WithNamespace(constants.EksaSystemNamespace)),
+	).Return(mds, nil)
+	m.client.EXPECT().GetMachines(ctx, from, to.Name)
+	m.client.EXPECT().WaitForClusterReady(ctx, from, "1h0m0s", to.Name)
+	m.client.EXPECT().MoveManagement(ctx, from, to, to.Name)
+	firstTry := m.client.EXPECT().WaitForControlPlaneReady(ctx, to, "15m0s", to.Name).Return(errors.New("executing wait: error: the server doesn't have a resource type \"clusters\""))
+	secondTry := m.client.EXPECT().WaitForControlPlaneReady(ctx, to, "15m0s", to.Name).Return(nil)
+	gomock.InOrder(
+		firstTry,
+		secondTry,
+	)
+	m.client.EXPECT().ValidateControlPlaneNodes(ctx, to, to.Name)
+	m.client.EXPECT().CountMachineDeploymentReplicasReady(ctx, to.Name, to.KubeconfigFile)
+	m.client.EXPECT().GetKubeadmControlPlane(ctx,
+		to,
+		to.Name,
+		gomock.AssignableToTypeOf(executables.WithCluster(from)),
+		gomock.AssignableToTypeOf(executables.WithNamespace(constants.EksaSystemNamespace)),
+	).Return(kcp, nil)
+	m.client.EXPECT().GetMachineDeploymentsForCluster(ctx,
+		to.Name,
+		gomock.AssignableToTypeOf(executables.WithCluster(from)),
+		gomock.AssignableToTypeOf(executables.WithNamespace(constants.EksaSystemNamespace)),
+	).Return(mds, nil)
+	m.client.EXPECT().GetMachines(ctx, to, to.Name)
+
+	if err := c.MoveCAPI(ctx, from, to, to.Name, clusterSpec); err != nil {
+		t.Errorf("ClusterManager.MoveCAPI() error = %v, wantErr nil", err)
+	}
+}
+
 func TestClusterManagerMoveCAPIErrorMove(t *testing.T) {
 	from := &types.Cluster{
 		Name: "from-cluster",

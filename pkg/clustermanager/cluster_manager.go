@@ -61,6 +61,7 @@ const (
 var (
 	clusterctlNetworkErrorRegex              = regexp.MustCompile(`.*failed to connect to the management cluster:.*`)
 	clusterctlMoveProvisionedInfraErrorRegex = regexp.MustCompile(`.*failed to check for provisioned infrastructure*`)
+	kubectlResourceNotFoundRegex             = regexp.MustCompile(`.*the server doesn't have a resource type "(.*)".*`)
 	eksaClusterResourceType                  = fmt.Sprintf("clusters.%s", v1alpha1.GroupVersion.Group)
 )
 
@@ -221,7 +222,7 @@ func WithNoTimeouts() ClusterManagerOpt {
 func clusterctlMoveWaitForInfrastructureRetryPolicy(totalRetries int, err error) (retry bool, wait time.Duration) {
 	// Retry both network and cluster move errors.
 	if match := (clusterctlNetworkErrorRegex.MatchString(err.Error()) || clusterctlMoveProvisionedInfraErrorRegex.MatchString(err.Error())); match {
-		return true, clusterctlMoveRetryWaitTime(totalRetries)
+		return true, exponentialRetryWaitTime(totalRetries)
 	}
 	return false, 0
 }
@@ -229,12 +230,24 @@ func clusterctlMoveWaitForInfrastructureRetryPolicy(totalRetries int, err error)
 func clusterctlMoveRetryPolicy(totalRetries int, err error) (retry bool, wait time.Duration) {
 	// Retry only network errors.
 	if match := clusterctlNetworkErrorRegex.MatchString(err.Error()); match {
-		return true, clusterctlMoveRetryWaitTime(totalRetries)
+		return true, exponentialRetryWaitTime(totalRetries)
 	}
 	return false, 0
 }
 
-func clusterctlMoveRetryWaitTime(totalRetries int) time.Duration {
+func kubectlWaitRetryPolicy(totalRetries int, err error) (retry bool, wait time.Duration) {
+	// Sometimes it is possible that the clusterctl move is successful,
+	// but the clusters.cluster.x-k8s.io resource is not available on the cluster yet.
+	//
+	// Retry on transient 'server doesn't have a resource type' errors.
+	// Use existing exponential backoff implementation for retry on these errors.
+	if match := kubectlResourceNotFoundRegex.MatchString(err.Error()); match {
+		return true, exponentialRetryWaitTime(totalRetries)
+	}
+	return false, 0
+}
+
+func exponentialRetryWaitTime(totalRetries int) time.Duration {
 	// Exponential backoff on errors.  Retrier built-in backoff is linear, so implementing here.
 
 	// Retrier first calls the policy before retry #1.  We want it zero-based for exponentiation.
@@ -307,7 +320,10 @@ func (c *ClusterManager) MoveCAPI(ctx context.Context, from, to *types.Cluster, 
 	}
 
 	logger.V(3).Info("Waiting for workload cluster control plane to be ready after move")
-	err = c.clusterClient.WaitForControlPlaneReady(ctx, to, c.controlPlaneWaitAfterMoveTimeout.String(), clusterName)
+	r = retrier.New(c.clusterctlMoveTimeout, retrier.WithRetryPolicy(kubectlWaitRetryPolicy))
+	err = r.Retry(func() error {
+		return c.clusterClient.WaitForControlPlaneReady(ctx, to, c.controlPlaneWaitAfterMoveTimeout.String(), clusterName)
+	})
 	if err != nil {
 		return err
 	}
