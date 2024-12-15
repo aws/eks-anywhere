@@ -19,6 +19,7 @@ smee:
     tinkServer:
       ip: 1.2.3.4
       port: "42113"
+      insecureTLS: true
   image: public.ecr.aws/eks-anywhere/boots:latest
   publicIP: 1.2.3.4
   tinkWorkerImage: public.ecr.aws/eks-anywhere/tink-worker:latest
