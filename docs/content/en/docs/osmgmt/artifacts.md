@@ -344,9 +344,37 @@ cd /tmp
 BUNDLE_MANIFEST_URL=$(curl -s https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml | yq ".spec.releases[] | select(.version==\"$EKSA_RELEASE_VERSION\").bundleManifestUrl")
 IMAGEBUILDER_TARBALL_URI=$(curl -s $BUNDLE_MANIFEST_URL | yq ".spec.versionsBundles[0].eksD.imagebuilder.uri")
 curl -s $IMAGEBUILDER_TARBALL_URI | tar xz ./image-builder
-sudo install -m 0755 ./image-builder /usr/local/bin/image-builder   
+sudo install -m 0755 ./image-builder /usr/local/bin/image-builder
 cd -
 ```
+
+### Required versions of dependencies
+
+EKS Anywhere aligns with the versions of build dependencies (Packer, Packer plugins, Ansible, etc.) that the upstream [image-builder](https://github.com/kubernetes-sigs/image-builder) project uses for its builds. These are the versions tested by EKS-A and hence are the recommended versions for users to install for image-building in order to minimize the drift from the tested dependency matrix. The By default, the `image-builder` CLI runs a validation that checks that users of the CLI adopt the same build toolchain as EKS-A. Thus, if users use a different version of dependencies than what EKS-A recommends, the validation will fail. However if users still wish to use their own versions of dependencies, they may bypass the validation by setting the environment variable `EKSA_SKIP_VALIDATE_DEPENDENCIES` to `true`.
+
+You can obtain the required dependency versions for your version of EKS-A by running the following commands:
+
+Using the latest EKS Anywhere version
+```bash
+EKSA_RELEASE_VERSION=$(curl -sL https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml | yq ".spec.latestVersion")
+```
+
+OR
+
+Using a specific EKS Anywhere version
+```bash
+EKSA_RELEASE_VERSION=<EKS-A version>
+```
+
+```bash
+   BUNDLE_MANIFEST_URL=$(curl -sL https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml | yq ".spec.releases[] | select(.version==\"$EKSA_RELEASE_VERSION\").bundleManifestUrl")
+   BUILD_TOOLING_COMMIT=$(curl -s $BUNDLE_MANIFEST_URL | yq ".spec.versionsBundles[0].eksD.gitCommit")
+   curl -sL https://raw.githubusercontent.com/aws/eks-anywhere-build-tooling/$BUILD_TOOLING_COMMIT/projects/kubernetes-sigs/image-builder/REQUIRED_DEPENDENCY_VERSIONS.yaml
+```
+
+The output of these commands is a YAML with versions of different build dependencies like Ansible, Packer and its different plugins, Python, etc. You can use these versions as the source of truth for the installation of these dependencies.
+
+>**_NOTE_**: Users may also skip downloading these dependencies themselves and instead allow upstream image-builder to handle their installation. Since the validation that `image-builder` runs is itself based on versions from upstream image-builder, this will ensure that the validation always passes.
 
 ### Build vSphere OVA node images
 
@@ -401,7 +429,7 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
    * Starting with `image-builder` version `v0.3.0`, the minimum required Python version is Python 3.9. However, many Linux distros ship only up to Python 3.8, so you will need to install Python 3.9 from external sources. Refer to the `pyenv` [installation](https://github.com/pyenv/pyenv#installation) and [usage](https://github.com/pyenv/pyenv#usage) documentation to install Python 3.9 and make it the default Python version.
    * Once you have Python 3.9, you can install Ansible using `pip`.
      ```bash
-     python3 -m pip install --user ansible
+     python3 -m pip install --user "ansible-core==<Ansible version from required dependency file>"
      ```
 1. Get the latest version of `govc`:
    ```bash
@@ -565,7 +593,7 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
    * Starting with `image-builder` version `v0.3.0`, the minimum required Python version is Python 3.9. However, many Linux distros ship only up to Python 3.8, so you will need to install Python 3.9 from external sources. Refer to the `pyenv` [installation](https://github.com/pyenv/pyenv#installation) and [usage](https://github.com/pyenv/pyenv#usage) documentation to install Python 3.9 and make it the default Python version.
    * Once you have Python 3.9, you can install Ansible using `pip`.
      ```bash
-     python3 -m pip install --user ansible
+     python3 -m pip install --user "ansible-core==<Ansible version from required dependency file>"
      ```
 1. Create an Ubuntu or Red Hat image:
 
@@ -607,7 +635,6 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
       * `--hypervisor`: `baremetal`
       * `--release-channel`: Supported EKS Distro releases include 1-27, 1-28, 1-29, 1-30 and 1-31.
       * `--baremetal-config`: Bare metal config file
-
 
    Image builder only supports building RHEL 9 raw images with EFI firmware. Refer to [UEFI Support]({{< relref "#uefi-support">}}) to enable image builds with EFI firmware.
 
@@ -685,7 +712,7 @@ These steps use `image-builder` to create a RHEL-based image for CloudStack. Bef
    * Starting with `image-builder` version `v0.3.0`, the minimum required Python version is Python 3.9. However, many Linux distros ship only up to Python 3.8, so you will need to install Python 3.9 from external sources. Refer to the `pyenv` [installation](https://github.com/pyenv/pyenv#installation) and [usage](https://github.com/pyenv/pyenv#usage) documentation to install Python 3.9 and make it the default Python version.
    * Once you have Python 3.9, you can install Ansible using `pip`.
      ```bash
-     python3 -m pip install --user ansible
+     python3 -m pip install --user "ansible-core==<Ansible version from required dependency file>"
      ```
 1. Create a CloudStack configuration file (for example, `cloudstack.json`) to provide the location of a Red Hat Enterprise Linux 8 ISO image and related checksum and Red Hat subscription information:
    ```json
@@ -764,7 +791,7 @@ These steps use `image-builder` to create an Ubuntu-based Amazon Machine Image (
    * Starting with `image-builder` version `v0.3.0`, the minimum required Python version is Python 3.9. However, many Linux distros ship only up to Python 3.8, so you will need to install Python 3.9 from external sources. Refer to the `pyenv` [installation](https://github.com/pyenv/pyenv#installation) and [usage](https://github.com/pyenv/pyenv#usage) documentation to install Python 3.9 and make it the default Python version.
    * Once you have Python 3.9, you can install Ansible using `pip`.
      ```bash
-     python3 -m pip install --user ansible
+     python3 -m pip install --user "ansible-core==<Ansible version from required dependency file>"
      ```
 1. Create an AMI configuration file (for example, `ami.json`) that contains various AMI parameters. For example:
 
@@ -898,8 +925,8 @@ These steps use `image-builder` to create a Ubuntu-based image for Nutanix AHV a
    * Starting with `image-builder` version `v0.3.0`, the minimum required Python version is Python 3.9. However, many Linux distros ship only up to Python 3.8, so you will need to install Python 3.9 from external sources. Refer to the `pyenv` [installation](https://github.com/pyenv/pyenv#installation) and [usage](https://github.com/pyenv/pyenv#usage) documentation to install Python 3.9 and make it the default Python version.
    * Once you have Python 3.9, you can install Ansible using `pip`.
      ```bash
-     python3 -m pip install --user ansible
-     ``` 
+     python3 -m pip install --user "ansible-core==<Ansible version from required dependency file>"
+     ```
 1. Create a `nutanix.json` config file. More details on values can be found in the [image-builder documentation](https://image-builder.sigs.k8s.io/capi/providers/nutanix.html). See example below:
    ```json
    {
@@ -1104,7 +1131,7 @@ Run `image-builder` CLI with the hypervisor configuration file
 
 While building Red Hat node images, `image-builder` uses public Red Hat subscription endpoints to register the build virtual machine with the provided Red Hat account and download required packages.
 
-Alternatively, `image-builder` can also use a private Red Hat Satellite to register the build virtual machine and pull packages from the Satellite. 
+Alternatively, `image-builder` can also use a private Red Hat Satellite to register the build virtual machine and pull packages from the Satellite.
 In order to use Red Hat Satellite in the image build process follow the steps below.
 
 #### Prerequisites
@@ -1137,10 +1164,10 @@ In order to use Red Hat Satellite in the image build process follow the steps be
 
 #### Prerequisites
 1. Air-gapped image building requires
-   - private artifacts server e.g. artifactory from JFrog 
-   - private git server. 
-3. Ensure the host running `image-builder` has bi-directional network connectivity with the artifacts server and git server 
-4. Artifacts server should have the ability to host and serve, standalone artifacts and Ubuntu OS packages 
+   - private artifacts server e.g. artifactory from JFrog
+   - private git server.
+3. Ensure the host running `image-builder` has bi-directional network connectivity with the artifacts server and git server
+4. Artifacts server should have the ability to host and serve, standalone artifacts and Ubuntu OS packages
 
 #### Building node images in an air-gapped environment
 1. Identify the EKS-D release channel (generally aligning with Kubernetes version) to build. For example, 1.30 or 1.31
@@ -1280,7 +1307,6 @@ In order to use Red Hat Satellite in the image build process follow the steps be
     ```bash
     image-builder build -os <OS> --hypervisor <hypervisor> --release-channel <release channel> --<hypervisor>-config config.json --airgapped --manifest-tarball <path to eks-a-manifests.tar>
     ```
-
 
 ## Container Images
 

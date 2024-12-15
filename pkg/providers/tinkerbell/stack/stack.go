@@ -236,7 +236,11 @@ func (s *Installer) installBootsOnDocker(ctx context.Context, bundle releasev1al
 	flags := []string{
 		"-v", fmt.Sprintf("%s:/kubeconfig", kubeconfig),
 		"--network", "host",
-		"-e", fmt.Sprintf("PUBLIC_IP=%s", tinkServerIP),
+		"-e", fmt.Sprintf("SMEE_DHCP_SYSLOG_IP=%s", tinkServerIP),
+		"-e", fmt.Sprintf("SMEE_DHCP_IP_FOR_PACKET=%s", tinkServerIP),
+		"-e", fmt.Sprintf("SMEE_DHCP_TFTP_IP=%s", tinkServerIP),
+		"-e", fmt.Sprintf("SMEE_DHCP_HTTP_IPXE_BINARY_HOST=%s", tinkServerIP),
+		"-e", fmt.Sprintf("SMEE_DHCP_HTTP_IPXE_SCRIPT_HOST=%s", tinkServerIP),
 		"-e", fmt.Sprintf("PUBLIC_SYSLOG_IP=%s", tinkServerIP),
 		"-e", fmt.Sprintf("BOOTS_KUBE_NAMESPACE=%v", s.namespace),
 	}
@@ -550,8 +554,9 @@ func (s *Installer) createValuesOverride(bundle releasev1alpha1.TinkerbellBundle
 			},
 			"http": map[string]interface{}{
 				"tinkServer": map[string]interface{}{
-					"ip": tinkerbellIP,
-					port: grpcPort,
+					"ip":          tinkerbellIP,
+					port:          grpcPort,
+					"insecureTLS": true,
 				},
 				"osieUrl": map[string]interface{}{
 					"scheme": osiePath.Scheme,

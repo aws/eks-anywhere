@@ -250,7 +250,12 @@ func TestTinkerbellStackInstallWithDifferentOptions(t *testing.T) {
 					"-e", gomock.Any(),
 					"-e", gomock.Any(),
 					"-e", gomock.Any(),
-				).AnyTimes()
+					"-e", gomock.Any(),
+					"-e", gomock.Any(),
+					"-e", gomock.Any(),
+					"-e", gomock.Any(),
+				)
+
 			}
 
 			if err := s.Install(
@@ -516,7 +521,7 @@ func TestUninstall(t *testing.T) {
 func TestHasLegacyChart(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	docker := mocks.NewMockDocker(mockCtrl)
-	helm := mocks.NewMockHelm(mockCtrl)
+	helm := mocks.NewMockHelm(mockCtrl)pkg/providers/tinkerbell/create.go
 
 	_, writer := test.NewWriter(t)
 	cluster := &types.Cluster{Name: "test"}
