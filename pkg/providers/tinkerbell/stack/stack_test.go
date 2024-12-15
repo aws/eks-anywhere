@@ -241,7 +241,7 @@ func TestTinkerbellStackInstallWithDifferentOptions(t *testing.T) {
 						"--dhcp-ip-for-packet", testIP,
 						"--dhcp-syslog-ip", testIP,
 						"--dhcp-tftp-ip", fmt.Sprintf("%s:69", testIP),
-						"--dhcp-http-ipxe-binary-url", fmt.Sprintf("http://%s:8080/ipxe/", testIP),
+						"--dhcp-http-ipxe-binary-url", fmt.Sprintf("http://%s:80/ipxe/", testIP),
 						"--dhcp-http-ipxe-script-url", fmt.Sprintf("http://%s/auto.ipxe", testIP),
 					},
 					"-v", gomock.Any(),
@@ -521,7 +521,7 @@ func TestUninstall(t *testing.T) {
 func TestHasLegacyChart(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	docker := mocks.NewMockDocker(mockCtrl)
-	helm := mocks.NewMockHelm(mockCtrl)pkg/providers/tinkerbell/create.go
+	helm := mocks.NewMockHelm(mockCtrl)
 
 	_, writer := test.NewWriter(t)
 	cluster := &types.Cluster{Name: "test"}
