@@ -601,21 +601,6 @@ func compareIP(ip1, ip2 net.IP) (int, error) {
 	return 0, nil
 }
 
-func addKubeVipToIgnoredNodeIPsList(clusterSpec *cluster.Spec, result []string) []string {
-	kubeVipStr := clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host
-	if kubeVipStr != "" {
-		kubeVip, err := net.ResolveIPAddr("ip", kubeVipStr)
-		if err != nil {
-			// log error and continue
-			log.Printf("error resolving kube-vip IP address %s: %v", kubeVipStr, err)
-		} else {
-			result = append(result, kubeVip.IP.String())
-		}
-	}
-
-	return result
-}
-
 func addCIDRToIgnoredNodeIPsList(cidr string, result []string) []string {
 	ip, ipNet, err := net.ParseCIDR(cidr)
 	if err != nil {
@@ -687,11 +672,10 @@ func addIPAddressToIgnoredNodeIPsList(ipAddrStr string, result []string) []strin
 }
 
 func generateCcmIgnoredNodeIPsList(clusterSpec *cluster.Spec) []string {
-	result := make([]string, 0)
+	// Add the kube-vip IP address to the list
+	result := []string{clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host}
 
-	// Add kube-vip to the list
-	result = addKubeVipToIgnoredNodeIPsList(clusterSpec, result)
-
+	// Add the IP addresses, IP ranges and CIDRs to the list from the NutanixDatacenter spec CcmExcludeNodeIPs
 	for _, IPAddrOrRange := range clusterSpec.NutanixDatacenter.Spec.CcmExcludeNodeIPs {
 		addrOrRange := strings.TrimSpace(IPAddrOrRange)
 		if strings.Contains(addrOrRange, "/") {
