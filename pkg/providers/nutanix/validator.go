@@ -49,6 +49,15 @@ func NewValidator(clientCache *ClientCache, certValidator crypto.TlsValidator, h
 	}
 }
 
+func (v *Validator) validateControlPlaneIP(ip string) error {
+	// check if controlPlaneEndpointIp is valid
+	parsedIP := net.ParseIP(ip)
+	if parsedIP == nil {
+		return fmt.Errorf("cluster controlPlaneConfiguration.Endpoint.Host is invalid: %s", ip)
+	}
+	return nil
+}
+
 // ValidateClusterSpec validates the cluster spec.
 func (v *Validator) ValidateClusterSpec(ctx context.Context, spec *cluster.Spec, creds credentials.BasicAuthCredential) error {
 	logger.Info("ValidateClusterSpec for Nutanix datacenter", "NutanixDatacenter", spec.NutanixDatacenter.Name)
@@ -58,6 +67,10 @@ func (v *Validator) ValidateClusterSpec(ctx context.Context, spec *cluster.Spec,
 	}
 
 	if err := v.ValidateDatacenterConfig(ctx, client, spec); err != nil {
+		return err
+	}
+
+	if err := v.validateControlPlaneIP(spec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host); err != nil {
 		return err
 	}
 
