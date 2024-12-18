@@ -28,6 +28,7 @@ Exposing metrics securely for the following components:
 * kube-controller-manager
 * kube-scheduler
 * kube-proxy
+* etcd
 
 2. EKS Anywhere components
 
@@ -149,6 +150,13 @@ data:
       default_backend kube-scheduler
     backend kube-scheduler
       server kube-scheduler 127.0.0.1:10259 ssl verify none check
+
+    frontend etcd
+      bind \${NODE_IP}:2381
+      http-request deny if !{ path /metrics }
+      default_backend etcd
+    backend etcd
+      server etcd 127.0.0.1:2381 check
 ```
 
 4. Create a Daemonset object to deploy the proxy so that metrics are exposed on all the nodes
@@ -192,6 +200,8 @@ spec:
               containerPort: 10257
             - name: kube-scheduler
               containerPort: 10259
+            - name: etcd
+              containerPort: 2381
           volumeMounts:
             - mountPath: "/usr/local/etc/haproxy"
               name: haproxy-config
