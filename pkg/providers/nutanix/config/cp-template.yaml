@@ -647,7 +647,8 @@ data:
           "enableCustomLabeling": false,
           "topologyDiscovery": {
             "type": "Prism"
-          }
+          },
+          "ignoredNodeIPs": [{{ range $i, $ip := .ccmIgnoredNodeIPs }}{{ if $i }}, {{ end }}"{{ $ip }}"{{ end }}]
         }
     ---
     apiVersion: rbac.authorization.k8s.io/v1

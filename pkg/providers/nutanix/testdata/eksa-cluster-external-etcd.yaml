@@ -9,7 +9,7 @@ spec:
     name: eksa-unit-test-cp
     count: 3
     endpoint:
-      host: test-ip
+      host: 10.199.199.1
     machineGroupRef:
       name: eksa-unit-test
       kind: NutanixMachineConfig
