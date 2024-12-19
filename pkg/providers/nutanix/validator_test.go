@@ -65,6 +65,24 @@ var nutanixDatacenterConfigSpecWithFailureDomainInvalidSubnet string
 //go:embed testdata/datacenterConfig_with_failure_domains_invalid_wg.yaml
 var nutanixDatacenterConfigSpecWithFailureDomainInvalidWorkerMachineGroups string
 
+//go:embed testdata/datacenterConfig_with_ccm_exclude_node_ips.yaml
+var nutanixDatacenterConfigSpecWithCCMExcludeNodeIPs string
+
+//go:embed testdata/datacenterConfig_with_ccm_exclude_node_ips_invalid_cidr.yaml
+var nutanixDatacenterConfigSpecWithCCMExcludeNodeIPsInvalidCIDR string
+
+//go:embed testdata/datacenterConfig_with_ccm_exclude_node_ips_invalid_ip.yaml
+var nutanixDatacenterConfigSpecWithCCMExcludeNodeIPsInvalidIP string
+
+//go:embed testdata/datacenterConfig_with_ccm_exclude_node_ips_invalid_ip_range1.yaml
+var nutanixDatacenterConfigSpecWithCCMExcludeNodeIPsInvalidIPRange1 string
+
+//go:embed testdata/datacenterConfig_with_ccm_exclude_node_ips_invalid_ip_range2.yaml
+var nutanixDatacenterConfigSpecWithCCMExcludeNodeIPsInvalidIPRange2 string
+
+//go:embed testdata/datacenterConfig_with_ccm_exclude_node_ips_invalid_ip_range3.yaml
+var nutanixDatacenterConfigSpecWithCCMExcludeNodeIPsInvalidIPRange3 string
+
 func fakeClusterList() *v3.ClusterListIntentResponse {
 	return &v3.ClusterListIntentResponse{
 		Entities: []*v3.ClusterIntentResponse{
@@ -1488,6 +1506,36 @@ func TestNutanixValidatorValidateDatacenterConfig(t *testing.T) {
 			dcConfFile: nutanixDatacenterConfigSpecWithFailureDomainInvalidWorkerMachineGroups,
 			expectErr:  true,
 		},
+		{
+			name:       "valid ccmExcludeNodeIPs",
+			dcConfFile: nutanixDatacenterConfigSpecWithCCMExcludeNodeIPs,
+			expectErr:  false,
+		},
+		{
+			name:       "ccmExcludeNodeIPs invalid CIDR",
+			dcConfFile: nutanixDatacenterConfigSpecWithCCMExcludeNodeIPsInvalidCIDR,
+			expectErr:  true,
+		},
+		{
+			name:       "ccmExcludeNodeIPs invalid IP",
+			dcConfFile: nutanixDatacenterConfigSpecWithCCMExcludeNodeIPsInvalidIP,
+			expectErr:  true,
+		},
+		{
+			name:       "ccmExcludeNodeIPs invalid IP range: wrong number of IPs",
+			dcConfFile: nutanixDatacenterConfigSpecWithCCMExcludeNodeIPsInvalidIPRange1,
+			expectErr:  true,
+		},
+		{
+			name:       "ccmExcludeNodeIPs invalid IP range: wrong IP range",
+			dcConfFile: nutanixDatacenterConfigSpecWithCCMExcludeNodeIPsInvalidIPRange2,
+			expectErr:  true,
+		},
+		{
+			name:       "ccmExcludeNodeIPs invalid IP range: wrong IP types",
+			dcConfFile: nutanixDatacenterConfigSpecWithCCMExcludeNodeIPsInvalidIPRange3,
+			expectErr:  true,
+		},
 	}
 
 	ctrl := gomock.NewController(t)
@@ -1818,5 +1866,73 @@ func TestValidateMachineConfigFailureDomainsWrongCount(t *testing.T) {
 	err := validator.validateFailureDomains(ctx, clientCache.clients["test"], clusterSpec)
 	if err == nil {
 		t.Fatalf("validation should not pass: %v", err)
+	}
+}
+
+func TestValidateControlPlaneIP(t *testing.T) {
+	tests := []struct {
+		name          string
+		clusterConfig string
+		setIPfunc     func(*cluster.Spec) *cluster.Spec
+		expectErr     bool
+	}{
+		{
+			name:          "valid control plane IP",
+			clusterConfig: "testdata/eksa-cluster.yaml",
+			setIPfunc: func(clusterSpec *cluster.Spec) *cluster.Spec {
+				clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host = "10.199.198.12"
+				return clusterSpec
+			},
+			expectErr: false,
+		},
+		{
+			name:          "invalid control plane IP",
+			clusterConfig: "testdata/eksa-cluster.yaml",
+			setIPfunc: func(clusterSpec *cluster.Spec) *cluster.Spec {
+				clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host = "not-an-ip"
+				return clusterSpec
+			},
+			expectErr: true,
+		},
+	}
+
+	ctrl := gomock.NewController(t)
+	mockClient := mocknutanix.NewMockClient(ctrl)
+	mockClient.EXPECT().GetCurrentLoggedInUser(gomock.Any()).Return(&v3.UserIntentResponse{}, nil).AnyTimes()
+	mockClient.EXPECT().ListAllCluster(gomock.Any(), gomock.Any()).DoAndReturn(
+		func(_ context.Context, filter string) (*v3.ClusterListIntentResponse, error) {
+			return fakeClusterListForDCTest(filter)
+		},
+	).AnyTimes()
+	mockClient.EXPECT().ListAllSubnet(gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
+		func(_ context.Context, filter string) (*v3.SubnetListIntentResponse, error) {
+			return fakeSubnetListForDCTest(filter)
+		},
+	).AnyTimes()
+	mockClient.EXPECT().GetSubnet(gomock.Any(), gomock.Eq("2d166190-7759-4dc6-b835-923262d6b497")).Return(nil, nil).AnyTimes()
+	mockClient.EXPECT().GetCluster(gomock.Any(), gomock.Eq("4d69ca7d-022f-49d1-a454-74535993bda4")).Return(nil, nil).AnyTimes()
+
+	mockTLSValidator := mockCrypto.NewMockTlsValidator(ctrl)
+	mockTLSValidator.EXPECT().ValidateCert(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+
+	mockTransport := mocknutanix.NewMockRoundTripper(ctrl)
+	mockTransport.EXPECT().RoundTrip(gomock.Any()).Return(&http.Response{}, nil).AnyTimes()
+
+	mockHTTPClient := &http.Client{Transport: mockTransport}
+	clientCache := &ClientCache{clients: map[string]Client{"test": mockClient}}
+	validator := NewValidator(clientCache, mockTLSValidator, mockHTTPClient)
+
+	// Run tests
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			clusterSpec := test.NewFullClusterSpec(t, tc.clusterConfig)
+			clusterSpec = tc.setIPfunc(clusterSpec)
+			err := validator.validateControlPlaneIP(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host)
+			if tc.expectErr {
+				assert.Error(t, err, tc.name)
+			} else {
+				assert.NoError(t, err, tc.name)
+			}
+		})
 	}
 }
