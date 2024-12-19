@@ -100,6 +100,7 @@ type CAPIClient interface {
 	GetWorkloadKubeconfig(ctx context.Context, clusterName string, cluster *types.Cluster) ([]byte, error)
 }
 
+// AwsIamAuth performs operations with AWS IAM.
 type AwsIamAuth interface {
 	CreateAndInstallAWSIAMAuthCASecret(ctx context.Context, managementCluster *types.Cluster, workloadClusterName string) error
 	InstallAWSIAMAuth(ctx context.Context, management, workload *types.Cluster, spec *cluster.Spec) error

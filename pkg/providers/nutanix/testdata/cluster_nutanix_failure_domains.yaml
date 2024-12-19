@@ -9,7 +9,7 @@ spec:
     name: test
     count: 1
     endpoint:
-      host: test
+      host: 10.199.199.1
     machineGroupRef:
       name: test
       kind: NutanixMachineConfig
