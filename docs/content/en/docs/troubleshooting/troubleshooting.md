@@ -590,6 +590,106 @@ Loading cert/key pair from "/var/lib/kubelet/pki/kubelet-client-current.pem
 "Failed to connect to apiserver" err="Get \"https://10.150.223.2:6443/healthz?timeout=1s\": net/http: request canceled while waiting for connection (Client.Timeout exceeded while awaiting headers)"
 ```
 
+### Troubleshooting DNS issues in EKSA cluster
+
+DNS resolution is managed by coreDNS, a DNS server deployed as a pod within the cluster, it helps resolve service names to corresponding IP Addresses. If DNS resolution fails, applications maybe unable to connect to services or external endpoints.
+
+#### Common errors related to DNS issues:
+- Pods are unable to resolve the DNS names of other services.
+    ```
+    Error: Get http://example-service: no such host
+    ```
+- Delay in DNS resolution leading to timeouts and slow application responses.
+    ```
+    [ERROR] plugin/errors: 2 example-service.default.svc.cluster.local. A: read udp 10.0.0.2:59857->10.96.0.10:53: i/o timeout
+    ```
+- Incorrect DNS server can cause issues in cluster lifecycle workflows like create and update.
+
+#### DNS Debugging
+
+##### Verify CoreDNS deployment
+1. Check if CoreDNS pods are running
+    ```
+    kubectl get pods --namespace=kube-system -l k8s-app=kube-dns
+    ```
+    Expected Output:
+    ```
+    NAME                       READY     STATUS    RESTARTS   AGE
+    ...
+    coredns-7b96bf9f76-5hsxb   1/1       Running   0           1h
+    coredns-7b96bf9f76-mvmmt   1/1       Running   0           1h
+    ...
+    ```
+2. Check for errors in the DNS pod
+
+    ```
+    kubectl logs --namespace=kube-system -l k8s-app=kube-dns
+    ```
+    See if there are any suspicious or unexpected messages in the logs.
+3. Verify CoreDNS configuration and ensure it matches with cluster requirement, also verify if forward plugin points to correct DNS servers
+
+    ```
+    kubectl get configmap coredns -n kube-system -o yaml
+    ```
+    Example configmap output
+
+    ```yaml
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+    name: coredns
+    namespace: kube-system
+    data:
+    Corefile: |
+        .:53 {
+            errors
+            health
+            kubernetes cluster.local in-addr.arpa ip6.arpa {
+            pods insecure
+            upstream
+            fallthrough in-addr.arpa ip6.arpa
+            }
+            prometheus :9153
+            forward . /etc/resolv.conf
+            cache 30
+            loop
+            reload
+            loadbalance
+        }
+    ```
+
+##### Test DNS resolution from the cluster
+- Create a debug pod
+    ```bash
+    kubectl apply -f https://k8s.io/examples/admin/dns/dnsutils.yaml
+    ```
+- Once that Pod is running, you can exec nslookup in that environment.
+    ```bash
+    kubectl exec -i -t dnsutils -- nslookup <service-name>
+    ```
+- If the DNS server address is missing, check pod's `/etc/resolv.conf`
+    ```bash
+    kubectl exec -ti dnsutils -- cat /etc/resolv.conf
+    ```
+
+##### Correcting Incorrect DNS Resolution
+If DNS queries return incorrect or outdated IP addresses
+1. Ensure that endpoints for service are correct and up-to-date.
+
+    ```
+    kubectl get endpoints <service-name>
+    ```
+2. If CoreDNS is caching DNS responses, ensure the cache TTL is appropriate for your environment. You can edit the cache TTL in CoreDNS ConfigMap.
+
+    ```
+    kubectl -n kube-system edit configmap coredns
+    ```
+
+##### Restart the CoreDNS deployment
+```
+kubectl rollout restart deployment coredns -n kube-system
+```
+
 ## Bare Metal troubleshooting
 
 ### Creating new workload cluster hangs or fails
