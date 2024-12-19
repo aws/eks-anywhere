@@ -13,7 +13,7 @@ spec:
       name: "capx-eksa-unit-test"
       kind: Secret
   controlPlaneEndpoint:
-    host: "test-ip"
+    host: "10.199.199.1"
     port: 6443
 ---
 apiVersion: cluster.x-k8s.io/v1beta1
@@ -108,7 +108,7 @@ spec:
                 - name: vip_arp
                   value: "true"
                 - name: address
-                  value: "test-ip"
+                  value: "10.199.199.1"
                 - name: port
                   value: "6443"
                 - name: vip_cidr
@@ -405,7 +405,8 @@ data:
           "enableCustomLabeling": false,
           "topologyDiscovery": {
             "type": "Prism"
-          }
+          },
+          "ignoredNodeIPs": ["10.199.199.1"]
         }
     ---
     apiVersion: rbac.authorization.k8s.io/v1

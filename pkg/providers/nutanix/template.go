@@ -4,6 +4,8 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"net"
+	"strings"
 
 	"sigs.k8s.io/yaml"
 
@@ -176,9 +178,12 @@ func buildTemplateMapCP(
 
 	failureDomains := generateNutanixFailureDomains(datacenterSpec.FailureDomains)
 
+	ccmIgnoredNodeIPs := generateCcmIgnoredNodeIPsList(clusterSpec)
+
 	values := map[string]interface{}{
 		"auditPolicy":                  auditPolicy,
 		"apiServerExtraArgs":           apiServerExtraArgs.ToPartialYaml(),
+		"ccmIgnoredNodeIPs":            ccmIgnoredNodeIPs,
 		"cloudProviderImage":           versionsBundle.Nutanix.CloudProvider.VersionedImage(),
 		"clusterName":                  clusterSpec.Cluster.Name,
 		"controlPlaneEndpointIp":       clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host,
@@ -567,4 +572,91 @@ func generateNutanixFailureDomains(eksNutanixFailureDomains []v1alpha1.NutanixDa
 		})
 	}
 	return failureDomains
+}
+
+func incrementIP(ip net.IP) {
+	for i := len(ip) - 1; i >= 0; i-- {
+		ip[i]++
+		if ip[i] > 0 {
+			break
+		}
+	}
+}
+
+func compareIP(ip1, ip2 net.IP) (int, error) {
+	if len(ip1) != len(ip2) {
+		return -1, fmt.Errorf("IP addresses are not the same protocol")
+	}
+
+	for i := 0; i < len(ip1); i++ {
+		if ip1[i] < ip2[i] {
+			return -1, nil
+		}
+		if ip1[i] > ip2[i] {
+			return 1, nil
+		}
+	}
+
+	return 0, nil
+}
+
+func addCIDRToIgnoredNodeIPsList(cidr string, result []string) []string {
+	ip, ipNet, _ := net.ParseCIDR(cidr)
+
+	// Add all ip addresses in the range to the list
+	for ip := ip.Mask(ipNet.Mask); ipNet.Contains(ip); incrementIP(ip) {
+		if ip != nil {
+			result = append(result, ip.String())
+		}
+	}
+
+	return result
+}
+
+func addIPRangeToIgnoredNodeIPsList(ipRangeStr string, result []string) []string {
+	// Parse the range
+	ipRange := strings.Split(ipRangeStr, "-")
+
+	// Parse the start and end of the range
+	start := net.ParseIP(strings.TrimSpace(ipRange[0]))
+	end := net.ParseIP(strings.TrimSpace(ipRange[1]))
+
+	cmp, _ := compareIP(start, end)
+	if cmp >= 0 {
+		// swap start and end if start is greater than end
+		start, end = end, start
+	}
+
+	// Add all ip addresses in the range to the list
+	for ip := start; !ip.Equal(end); incrementIP(ip) {
+		result = append(result, ip.String())
+	}
+
+	result = append(result, end.String())
+
+	return result
+}
+
+func addIPAddressToIgnoredNodeIPsList(ipAddrStr string, result []string) []string {
+	result = append(result, ipAddrStr)
+	return result
+}
+
+func generateCcmIgnoredNodeIPsList(clusterSpec *cluster.Spec) []string {
+	// Add the kube-vip IP address to the list
+	result := []string{clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host}
+
+	// Add the IP addresses, IP ranges and CIDRs to the list from the NutanixDatacenter spec CcmExcludeNodeIPs
+	for _, IPAddrOrRange := range clusterSpec.NutanixDatacenter.Spec.CcmExcludeNodeIPs {
+		addrOrRange := strings.TrimSpace(IPAddrOrRange)
+		if strings.Contains(addrOrRange, "/") {
+			result = addCIDRToIgnoredNodeIPsList(addrOrRange, result)
+		} else if strings.Contains(addrOrRange, "-") {
+			result = addIPRangeToIgnoredNodeIPsList(addrOrRange, result)
+		} else {
+			result = addIPAddressToIgnoredNodeIPsList(addrOrRange, result)
+		}
+	}
+
+	return result
 }
