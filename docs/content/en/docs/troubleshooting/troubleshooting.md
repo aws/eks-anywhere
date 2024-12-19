@@ -603,6 +603,7 @@ DNS resolution is managed by coreDNS, a DNS server deployed as a pod within the 
     ```
     [ERROR] plugin/errors: 2 example-service.default.svc.cluster.local. A: read udp 10.0.0.2:59857->10.96.0.10:53: i/o timeout
     ```
+- Incorrect DNS server can cause issues in cluster lifecycle workflows like create and update.
 
 #### DNS Debugging
 
