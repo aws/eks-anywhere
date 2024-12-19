@@ -1,0 +1,16 @@
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: NutanixDatacenterConfig
+metadata:
+  name: eksa-unit-test
+  namespace: default
+spec:
+  endpoint: "prism.nutanix.com"
+  port: 9440
+  credentialRef:
+    kind: Secret
+    name: "nutanix-credentials"
+  ccmExcludeNodeIPs:
+    - 10.0.0.1
+    - 10.0.0.0/24
+    - 10.0.0.10-10.0.0.30
+    - 10.100.0.0//16
