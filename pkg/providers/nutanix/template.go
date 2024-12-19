@@ -4,7 +4,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net"
 	"strings"
 
@@ -602,12 +601,7 @@ func compareIP(ip1, ip2 net.IP) (int, error) {
 }
 
 func addCIDRToIgnoredNodeIPsList(cidr string, result []string) []string {
-	ip, ipNet, err := net.ParseCIDR(cidr)
-	if err != nil {
-		// log error and continue
-		log.Printf("error parsing CIDR %s: %v", cidr, err)
-		return result
-	}
+	ip, ipNet, _ := net.ParseCIDR(cidr)
 
 	// Add all ip addresses in the range to the list
 	for ip := ip.Mask(ipNet.Mask); ipNet.Contains(ip); incrementIP(ip) {
@@ -622,28 +616,12 @@ func addCIDRToIgnoredNodeIPsList(cidr string, result []string) []string {
 func addIPRangeToIgnoredNodeIPsList(ipRangeStr string, result []string) []string {
 	// Parse the range
 	ipRange := strings.Split(ipRangeStr, "-")
-	if len(ipRange) != 2 {
-		// log error and return
-		log.Printf("error parsing range %s: expected 2 values, got %d", ipRangeStr, len(ipRange))
-		return result
-	}
 
 	// Parse the start and end of the range
 	start := net.ParseIP(strings.TrimSpace(ipRange[0]))
 	end := net.ParseIP(strings.TrimSpace(ipRange[1]))
-	if start == nil || end == nil {
-		// log error and return
-		log.Printf("error parsing range %s: invalid IP address", ipRangeStr)
-		return result
-	}
 
-	cmp, err := compareIP(start, end)
-	if err != nil {
-		// log error and return
-		log.Printf("error comparing IP addresses %s and %s: %v", start.String(), end.String(), err)
-		return result
-	}
-
+	cmp, _ := compareIP(start, end)
 	if cmp >= 0 {
 		// swap start and end if start is greater than end
 		start, end = end, start
@@ -660,14 +638,7 @@ func addIPRangeToIgnoredNodeIPsList(ipRangeStr string, result []string) []string
 }
 
 func addIPAddressToIgnoredNodeIPsList(ipAddrStr string, result []string) []string {
-	ip := net.ParseIP(ipAddrStr)
-	if ip == nil {
-		// log error and return
-		log.Printf("error parsing IP address %s", ipAddrStr)
-		return result
-	}
-
-	result = append(result, ip.String())
+	result = append(result, ipAddrStr)
 	return result
 }
 

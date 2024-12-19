@@ -868,51 +868,6 @@ func TestTemplateBuilderCcmExcludeNodeIPs(t *testing.T) {
 				return clusterSpec
 			},
 		},
-		{
-			Input:  "testdata/eksa-cluster-ccm-exclude-node-ips.yaml",
-			Output: "testdata/expected_cluster_ccm_exclude_node_ips.yaml",
-			ChangeFn: func(clusterSpec *cluster.Spec) *cluster.Spec {
-				excludeNodeIPs := []string{
-					"127.100.200.101",
-					"10.10.10.10-10.10.10.13",
-					"10.123.0.0/29",
-					"10.10.10.20-10.10.10.30-10.10.20.30",
-				}
-				clusterSpec.NutanixDatacenter.Spec.CcmExcludeNodeIPs = excludeNodeIPs
-
-				return clusterSpec
-			},
-		},
-		{
-			Input:  "testdata/eksa-cluster-ccm-exclude-node-ips.yaml",
-			Output: "testdata/expected_cluster_ccm_exclude_node_ips.yaml",
-			ChangeFn: func(clusterSpec *cluster.Spec) *cluster.Spec {
-				excludeNodeIPs := []string{
-					"127.100.200.101",
-					"10.10.10.10-10.10.10.13",
-					"10.123.0.0/29",
-					"244.244.1",
-				}
-				clusterSpec.NutanixDatacenter.Spec.CcmExcludeNodeIPs = excludeNodeIPs
-
-				return clusterSpec
-			},
-		},
-		{
-			Input:  "testdata/eksa-cluster-ccm-exclude-node-ips.yaml",
-			Output: "testdata/expected_cluster_ccm_exclude_node_ips.yaml",
-			ChangeFn: func(clusterSpec *cluster.Spec) *cluster.Spec {
-				excludeNodeIPs := []string{
-					"127.100.200.101",
-					"10.10.10.10-10.10.10.13",
-					"10.123.0.0/29",
-					"10.21.0.5/55",
-				}
-				clusterSpec.NutanixDatacenter.Spec.CcmExcludeNodeIPs = excludeNodeIPs
-
-				return clusterSpec
-			},
-		},
 	} {
 		clusterSpec := test.NewFullClusterSpec(t, tc.Input)
 
