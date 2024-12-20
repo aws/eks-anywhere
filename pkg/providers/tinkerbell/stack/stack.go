@@ -241,8 +241,7 @@ func (s *Installer) installBootsOnDocker(ctx context.Context, bundle releasev1al
 		"-e", fmt.Sprintf("SMEE_DHCP_TFTP_IP=%s", tinkServerIP),
 		"-e", fmt.Sprintf("SMEE_DHCP_HTTP_IPXE_BINARY_HOST=%s", tinkServerIP),
 		"-e", fmt.Sprintf("SMEE_DHCP_HTTP_IPXE_SCRIPT_HOST=%s", tinkServerIP),
-		"-e", fmt.Sprintf("PUBLIC_SYSLOG_IP=%s", tinkServerIP),
-		"-e", fmt.Sprintf("BOOTS_KUBE_NAMESPACE=%v", s.namespace),
+		"-e", fmt.Sprintf("SMEE_BACKEND_KUBE_NAMESPACE=%v", s.namespace),
 	}
 
 	extraKernelArgList := s.getSmeeKernelArgs(bundle)
