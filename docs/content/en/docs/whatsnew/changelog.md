@@ -32,6 +32,30 @@ description: >
 * When upgrading to a new minor version, a new OS image must be created using the new image-builder CLI pertaining to that release.
 {{% /alert %}}
 
+## [v0.21.3](https://github.com/aws/eks-anywhere/releases/tag/v0.21.3)
+
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+|    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+| Bottlerocket 1.20.5 |    ✔    |     —      |    —    |     —      |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+|      RHEL 9.x       |    —    |     ✔      |    ✔    |     ✔      |  —   |
+
+### Changed
+- EKS Distro:
+  - [`v1-31-eks-9`](https://distro.eks.amazonaws.com/releases/1-31/9/)
+  - [`v1-30-eks-20`](https://distro.eks.amazonaws.com/releases/1-30/20/)
+  - [`v1-29-eks-27`](https://distro.eks.amazonaws.com/releases/1-29/27/)
+  - [`v1-28-eks-38`](https://distro.eks.amazonaws.com/releases/1-28/38/)
+- Helm: `v3.16.3` to `v3.16.4`
+- Metallb: `v0.14.8` to `v0.14.9`
+- New base images with CVE fixes for Amazon Linux 2
+
+### Fixed
+- Add kube-vip and optional list of ip addresses to CCM node ip addresses ignore list for Nutanix Provider. ([#9072](https://github.com/aws/eks-anywhere/pull/9072))
+
 ## [v0.20.10](https://github.com/aws/eks-anywhere/releases/tag/v0.20.10)
 
 ### Supported OS version details
