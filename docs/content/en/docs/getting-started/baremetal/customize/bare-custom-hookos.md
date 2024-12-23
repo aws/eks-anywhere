@@ -41,7 +41,7 @@ Be sure to install all the following dependencies.
     cd hook/
     ```
 
-1. Run the Linux kernel [menuconfig](https://en.wikipedia.org/wiki/Menuconfig) TUI and configuring the kernel as needed. Be sure to save the config before exiting.
+1. Run the Linux kernel [menuconfig](https://en.wikipedia.org/wiki/Menuconfig) TUI and configure the kernel as needed. Save the config before you exit.
 The result of this step will be a modified kernel configuration file (`./kernel/configs/generic-6.6.y-x86_64`).
 
     ```bash
