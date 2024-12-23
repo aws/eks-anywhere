@@ -54,7 +54,7 @@ The result of this step will be a modified kernel configuration file (`./kernel/
     ./build.sh kernel hook-latest-lts-amd64
     ```
 
-1. Add the embedded Action images. This creates the file, `images.txt`, in the `images/hook-embedded` directory and runs the script, `images/hook-embedded/pull-images.sh`, to pull and embedded the images in the HookOS initramfs.
+1. Add the embedded Action images. This creates the file, `images.txt`, in the `images/hook-embedded` directory and runs the script, `images/hook-embedded/pull-images.sh`, to pull and embed the images in the HookOS initramfs.
 The result of this step will be a populated images file: `images/hook-embedded/images.txt` and a Docker directory cache of images: `images/hook-embedded/images/`.
 
     ```bash
