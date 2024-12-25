@@ -4273,6 +4273,8 @@ spec:
                 type: array
               kubernetesVersion:
                 type: string
+              licenseToken:
+                type: string
               machineHealthCheck:
                 description: MachineHealthCheck allows to configure timeouts for machine
                   health checks. Machine Health Checks are responsible for remediating
@@ -5680,6 +5682,13 @@ spec:
                   bundle for users that configured their Prism Central with certificates
                   from non-publicly trusted CAs
                 type: string
+              ccmExcludeNodeIPs:
+                description: CcmExcludeIPs is the optional list of IP addresses that
+                  should be excluded from the CCM IP pool for nodes. List should be
+                  valid IP addresses and IP address ranges.
+                items:
+                  type: string
+                type: array
               credentialRef:
                 description: CredentialRef is the reference to the secret name that
                   contains the credentials for the Nutanix Prism Central. The namespace
