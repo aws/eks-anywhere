@@ -332,6 +332,8 @@ spec:
         - labelSelector:
             matchLabels: 
               type: node
+      bootOptions:
+        bootMode: netboot
       templateOverride: |
         global_timeout: 0
         id: ""
