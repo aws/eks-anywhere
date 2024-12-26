@@ -560,6 +560,8 @@ spec:
             matchLabels: {{ range $key, $value := .hardwareSelector}}
               {{ $key }}: {{ $value}}
             {{- end }}
+      bootOptions:
+        bootMode: netboot
       templateOverride: |
 {{.controlPlanetemplateOverride | indent 8}}
     {{- end }}
