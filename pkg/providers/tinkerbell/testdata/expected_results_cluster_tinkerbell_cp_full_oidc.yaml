@@ -323,6 +323,8 @@ spec:
         - labelSelector:
             matchLabels: 
               type: cp
+      bootOptions:
+        bootMode: netboot
       templateOverride: |
         global_timeout: 6000
         id: ""
