@@ -5,9 +5,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/aws/smithy-go/logging"
-
 	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/smithy-go/logging"
 )
 
 // DefaultKey is a compound map key of a variant and other values.

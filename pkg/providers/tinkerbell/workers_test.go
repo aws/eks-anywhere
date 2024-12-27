@@ -6,7 +6,6 @@ import (
 	"time"
 
 	. "github.com/onsi/gomega"
-	tinkerbellv1 "github.com/tinkerbell/cluster-api-provider-tinkerbell/api/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -15,6 +14,7 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/test"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	tinkerbellv1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1/thirdparty/tinkerbell/capt/v1beta1"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell"
 	"github.com/aws/eks-anywhere/pkg/utils/ptr"
@@ -500,6 +500,7 @@ func machineTemplate(opts ...func(*tinkerbellv1.TinkerbellMachineTemplate)) *tin
 		Spec: tinkerbellv1.TinkerbellMachineTemplateSpec{
 			Template: tinkerbellv1.TinkerbellMachineTemplateResource{
 				Spec: tinkerbellv1.TinkerbellMachineSpec{
+					BootOptions:      tinkerbellv1.BootOptions{BootMode: tinkerbellv1.BootMode("netboot")},
 					TemplateOverride: testTemplateOverride,
 					HardwareAffinity: &tinkerbellv1.HardwareAffinity{
 						Required: []tinkerbellv1.HardwareAffinityTerm{

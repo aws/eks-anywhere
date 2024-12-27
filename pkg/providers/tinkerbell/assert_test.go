@@ -9,7 +9,6 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/onsi/gomega"
-	"github.com/tinkerbell/cluster-api-provider-tinkerbell/api/v1beta1"
 	"github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -18,6 +17,7 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/test"
 	eksav1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	tinkerbellv1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1/thirdparty/tinkerbell/capt/v1beta1"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/networkutils/mocks"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell"
@@ -1189,8 +1189,8 @@ func validatableTinkerbellCAPI() *tinkerbell.ValidatableTinkerbellCAPI {
 	}
 }
 
-func workerGroups() []*clusterapi.WorkerGroup[*v1beta1.TinkerbellMachineTemplate] {
-	return []*clusterapi.WorkerGroup[*v1beta1.TinkerbellMachineTemplate]{
+func workerGroups() []*clusterapi.WorkerGroup[*tinkerbellv1.TinkerbellMachineTemplate] {
+	return []*clusterapi.WorkerGroup[*tinkerbellv1.TinkerbellMachineTemplate]{
 		{
 			MachineDeployment: machineDeployment(func(md *clusterv1.MachineDeployment) {
 				md.Name = "cluster-worker-node-group-0"

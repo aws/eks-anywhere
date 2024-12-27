@@ -14,7 +14,6 @@ import (
 
 	eksdv1alpha1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
 	etcdv1 "github.com/aws/etcdadm-controller/api/v1beta1"
-	tinkerbellv1 "github.com/tinkerbell/cluster-api-provider-tinkerbell/api/v1beta1"
 	tinkv1alpha1 "github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
 	admissionv1beta1 "k8s.io/api/admission/v1beta1"
 	corev1 "k8s.io/api/core/v1"
@@ -39,6 +38,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	tinkerbellv1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1/thirdparty/tinkerbell/capt/v1beta1"
 	rufiov1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1/thirdparty/tinkerbell/rufio"
 	snowv1 "github.com/aws/eks-anywhere/pkg/providers/snow/api/v1beta1"
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
@@ -48,7 +48,6 @@ const (
 	capiPackage         = "sigs.k8s.io/cluster-api"
 	capdPackage         = "sigs.k8s.io/cluster-api/test"
 	capvPackage         = "sigs.k8s.io/cluster-api-provider-vsphere"
-	captPackage         = "github.com/tinkerbell/cluster-api-provider-tinkerbell"
 	tinkerbellPackage   = "github.com/tinkerbell/tink"
 	etcdProviderPackage = "github.com/aws/etcdadm-controller"
 	capcPackage         = "sigs.k8s.io/cluster-api-provider-cloudstack"
@@ -83,9 +82,6 @@ var packages = []moduleWithCRD{
 		withAdditionalCustomCRDPath("bootstrap/kubeadm/config/crd/bases"),
 		withAdditionalCustomCRDPath("controlplane/kubeadm/config/crd/bases"),
 	),
-	mustBuildModuleWithCRDs(captPackage,
-		withMainCustomCRDPath("config/crd/bases/infrastructure.cluster.x-k8s.io_tinkerbellclusters.yaml"),
-		withAdditionalCustomCRDPath("config/crd/bases/infrastructure.cluster.x-k8s.io_tinkerbellmachinetemplates.yaml")),
 	mustBuildModuleWithCRDs(tinkerbellPackage),
 	mustBuildModuleWithCRDs(capvPackage,
 		withMainCustomCRDPath("config/default/crd/bases"),
@@ -153,6 +149,7 @@ func newEnvironment(ctx context.Context) (*Environment, error) {
 		filepath.Join(currentDir, "config", "eks-d-crds.yaml"),
 		filepath.Join(currentDir, "config", "snow-crds.yaml"),
 		filepath.Join(currentDir, "config", "rufio-crds.yaml"),
+		filepath.Join(currentDir, "config", "capt-crds.yaml"),
 		filepath.Join(root, "internal", "thirdparty", "capc", "config", "crd", "bases"),
 	)
 	extraCRDPaths, err := getPathsToPackagesCRDs(root, packages...)
