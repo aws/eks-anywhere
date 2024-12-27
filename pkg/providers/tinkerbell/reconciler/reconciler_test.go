@@ -9,7 +9,6 @@ import (
 
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
-	tinkerbellv1 "github.com/tinkerbell/cluster-api-provider-tinkerbell/api/v1beta1"
 	tinkv1alpha1 "github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -24,6 +23,7 @@ import (
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/internal/test/envtest"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	tinkerbellv1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1/thirdparty/tinkerbell/capt/v1beta1"
 	rufiov1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1/thirdparty/tinkerbell/rufio"
 	clusterspec "github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
@@ -1154,6 +1154,7 @@ func controlPlaneMachineTemplate() *tinkerbellv1.TinkerbellMachineTemplate {
 		Spec: tinkerbellv1.TinkerbellMachineTemplateSpec{
 			Template: tinkerbellv1.TinkerbellMachineTemplateResource{
 				Spec: tinkerbellv1.TinkerbellMachineSpec{
+					BootOptions: tinkerbellv1.BootOptions{BootMode: tinkerbellv1.BootMode("netboot")},
 					HardwareAffinity: &tinkerbellv1.HardwareAffinity{
 						Required: []tinkerbellv1.HardwareAffinityTerm{
 							{
@@ -1619,6 +1620,7 @@ rules:
 				Spec: tinkerbellv1.TinkerbellMachineTemplateSpec{
 					Template: tinkerbellv1.TinkerbellMachineTemplateResource{
 						Spec: tinkerbellv1.TinkerbellMachineSpec{
+							BootOptions:      tinkerbellv1.BootOptions{BootMode: tinkerbellv1.BootMode("netboot")},
 							TemplateOverride: testTemplateOverride,
 							HardwareAffinity: &tinkerbellv1.HardwareAffinity{
 								Required: []tinkerbellv1.HardwareAffinityTerm{
@@ -1759,6 +1761,7 @@ func tinkWorker(clusterName string, opts ...workerOpt) *tinkerbell.Workers {
 					},
 					Spec: tinkerbellv1.TinkerbellMachineTemplateSpec{
 						Template: tinkerbellv1.TinkerbellMachineTemplateResource{Spec: tinkerbellv1.TinkerbellMachineSpec{
+							BootOptions:      tinkerbellv1.BootOptions{BootMode: tinkerbellv1.BootMode("netboot")},
 							TemplateOverride: testTemplateOverride,
 							HardwareAffinity: &tinkerbellv1.HardwareAffinity{
 								Required: []tinkerbellv1.HardwareAffinityTerm{

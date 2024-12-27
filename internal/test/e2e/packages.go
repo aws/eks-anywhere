@@ -8,9 +8,9 @@ import (
 )
 
 const (
-	packagesRegex         = `^.*CuratedPackages.*$`
+	packagesRegex            = `^.*CuratedPackages.*$`
 	nonRegionalPackagesRegex = `^.*NonRegionalCuratedPackages.*$`
-	certManagerRegex      = "^.*CuratedPackagesCertManager.*$"
+	certManagerRegex         = "^.*CuratedPackagesCertManager.*$"
 )
 
 func (e *E2ESession) setupPackagesEnv(testRegex string) error {

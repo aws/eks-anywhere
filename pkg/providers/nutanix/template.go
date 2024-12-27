@@ -7,10 +7,9 @@ import (
 	"net"
 	"strings"
 
-	"sigs.k8s.io/yaml"
-
 	capxv1beta1 "github.com/nutanix-cloud-native/cluster-api-provider-nutanix/api/v1beta1"
 	"github.com/nutanix-cloud-native/prism-go-client/environment/credentials"
+	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
