@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/pkg/errors"
-	tinkerbellv1 "github.com/tinkerbell/cluster-api-provider-tinkerbell/api/v1beta1"
 	"k8s.io/apimachinery/pkg/api/equality"
 
+	tinkerbellv1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1/thirdparty/tinkerbell/capt/v1beta1"
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 )
 

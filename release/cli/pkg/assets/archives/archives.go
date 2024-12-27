@@ -17,9 +17,9 @@ package archives
 import (
 	"fmt"
 	"path/filepath"
-	"slices"
 
 	"github.com/pkg/errors"
+	"slices"
 
 	assettypes "github.com/aws/eks-anywhere/release/cli/pkg/assets/types"
 	"github.com/aws/eks-anywhere/release/cli/pkg/filereader"

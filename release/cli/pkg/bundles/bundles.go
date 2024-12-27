@@ -16,12 +16,12 @@ package bundles
 
 import (
 	"fmt"
-	"slices"
 	"strconv"
 	"strings"
 
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"slices"
 
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 	"github.com/aws/eks-anywhere/release/cli/pkg/constants"
