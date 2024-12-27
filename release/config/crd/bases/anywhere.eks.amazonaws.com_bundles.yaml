@@ -1384,6 +1384,8 @@ spec:
                       - components
                       - diagnosticCollector
                       type: object
+                    endOfStandardSupport:
+                      type: string
                     etcdadmBootstrap:
                       properties:
                         components:

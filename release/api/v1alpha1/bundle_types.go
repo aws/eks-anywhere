@@ -61,6 +61,7 @@ func init() {
 
 type VersionsBundle struct {
 	KubeVersion                string                           `json:"kubeVersion"`
+	EndOfStandardSupport       string                           `json:"endOfStandardSupport,omitempty"`
 	EksD                       EksDRelease                      `json:"eksD"`
 	CertManager                CertManagerBundle                `json:"certManager"`
 	ClusterAPI                 CoreClusterAPI                   `json:"clusterAPI"`
