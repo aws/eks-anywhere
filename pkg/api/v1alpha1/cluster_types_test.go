@@ -1494,6 +1494,56 @@ func TestClusterEqualDifferentBundlesRef(t *testing.T) {
 	g.Expect(cluster1.Equal(cluster2)).To(BeFalse())
 }
 
+func TestClusterEqualLicenseToken(t *testing.T) {
+	testCases := []struct {
+		testName                                   string
+		cluster1LicenseToken, cluster2LicenseToken string
+		want                                       bool
+	}{
+		{
+			testName:             "both empty",
+			cluster1LicenseToken: "",
+			cluster2LicenseToken: "",
+			want:                 true,
+		},
+		{
+			testName:             "one empty, one exists",
+			cluster1LicenseToken: "",
+			cluster2LicenseToken: "test-token",
+			want:                 false,
+		},
+		{
+			testName:             "both exists, diff",
+			cluster1LicenseToken: "test-token1",
+			cluster2LicenseToken: "test-token2",
+			want:                 false,
+		},
+		{
+			testName:             "both exists, same",
+			cluster1LicenseToken: "test-token",
+			cluster2LicenseToken: "test-token",
+			want:                 true,
+		},
+	}
+	for _, tt := range testCases {
+		t.Run(tt.testName, func(t *testing.T) {
+			cluster1 := &v1alpha1.Cluster{
+				Spec: v1alpha1.ClusterSpec{
+					LicenseToken: tt.cluster1LicenseToken,
+				},
+			}
+			cluster2 := &v1alpha1.Cluster{
+				Spec: v1alpha1.ClusterSpec{
+					LicenseToken: tt.cluster2LicenseToken,
+				},
+			}
+
+			g := NewWithT(t)
+			g.Expect(cluster1.Equal(cluster2)).To(Equal(tt.want))
+		})
+	}
+}
+
 func TestControlPlaneConfigurationEqual(t *testing.T) {
 	var emptyTaints []corev1.Taint
 	taint1 := corev1.Taint{Key: "key1"}
