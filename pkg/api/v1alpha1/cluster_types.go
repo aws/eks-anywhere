@@ -87,6 +87,7 @@ type ClusterSpec struct {
 	EksaVersion        *EksaVersion        `json:"eksaVersion,omitempty"`
 	MachineHealthCheck *MachineHealthCheck `json:"machineHealthCheck,omitempty"`
 	EtcdEncryption     *[]EtcdEncryption   `json:"etcdEncryption,omitempty"`
+	LicenseToken       string              `json:"licenseToken,omitempty"`
 }
 
 // EksaVersion is the semver identifying the release of eks-a used to populate the cluster components.
@@ -183,6 +184,9 @@ func (n *Cluster) Equal(o *Cluster) bool {
 		return false
 	}
 	if !reflect.DeepEqual(n.Spec.EtcdEncryption, o.Spec.EtcdEncryption) {
+		return false
+	}
+	if n.Spec.LicenseToken != o.Spec.LicenseToken {
 		return false
 	}
 
