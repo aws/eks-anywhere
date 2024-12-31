@@ -7,7 +7,7 @@ description: >
   Expose metrics for EKS Anywhere components
 ---
 
-Some Kubernetes system components like kube-controller-manager, kube-scheduler and kube-proxy expose metrics only on the localhost by default. In order to expose metrics for these components so that other monitoring systems like Prometheus can scrape them, you can deploy a proxy as a Daemonset on the host network of the nodes. The proxy pods also need to be configured with control plane tolerations so that they can be scheduled on the control plane nodes.
+Some Kubernetes system components like kube-controller-manager, kube-scheduler, kube-proxy and etcd (Stacked) expose metrics only on the localhost by default. In order to expose metrics for these components so that other monitoring systems like Prometheus can scrape them, you can deploy a proxy as a Daemonset on the host network of the nodes. The proxy pods also need to be configured with control plane tolerations so that they can be scheduled on the control plane nodes. For Unstacked/External etcd, metrics are already exposed on `https://<etcd-machine-ip>:2379/metrics` endpoint and can be scraped by Prometheus directly without deploying anything.
 
 ### Configure Proxy
 
@@ -51,6 +51,13 @@ To configure a proxy for exposing metrics on an EKS Anywhere cluster, you can pe
           default_backend kube-scheduler
         backend kube-scheduler
           server kube-scheduler 127.0.0.1:10259 ssl verify none check
+
+        frontend etcd
+          bind \${NODE_IP}:2381
+          http-request deny if !{ path /metrics }
+          default_backend etcd
+        backend etcd
+          server etcd 127.0.0.1:2381 check
     EOF
     ```
 
@@ -93,6 +100,8 @@ To configure a proxy for exposing metrics on an EKS Anywhere cluster, you can pe
                   containerPort: 10257
                 - name: kube-scheduler
                   containerPort: 10259
+                - name: etcd
+                  containerPort: 2381
               volumeMounts:
                 - mountPath: "/usr/local/etc/haproxy"
                   name: haproxy-config
@@ -172,4 +181,5 @@ To configure a proxy for exposing metrics on an EKS Anywhere cluster, you can pe
     curl -H "Authorization: Bearer ${TOKEN}" "http://${NODE_IP}:10257/metrics"
     curl -H "Authorization: Bearer ${TOKEN}" "http://${NODE_IP}:10259/metrics"
     curl -H "Authorization: Bearer ${TOKEN}" "http://${NODE_IP}:10249/metrics"
+    curl -H "Authorization: Bearer ${TOKEN}" "http://${NODE_IP}:2381/metrics"
     ```
