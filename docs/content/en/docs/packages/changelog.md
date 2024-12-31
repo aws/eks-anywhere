@@ -6,6 +6,18 @@ description: >
   Changelog for Curated packages release
 ---
 
+## Package Bundle Release (12-26-2024)
+
+#### Changed
+
+- cert-manager `1.15.3` to `1.16.1`
+  - **Updated helm patch to include properties for eksa-packages in values.schema.json** [#4171](https://github.com/aws/eks-anywhere-build-tooling/pull/4171)
+- cluster-autoscaler `9.43.0` to `9.43.2`
+- credential-provider-package `0.4.4` to `0.4.5`
+  - **Added support to update both legacy and default path for kubelet-extra-args for ubuntu** [#1177](https://github.com/aws/eks-anywhere-packages/pull/1177)
+- metallb `0.14.8` to `0.14.9`
+- prometheus `2.54.1` to `2.55.1`
+
 ## Package Bundle Release (10-18-2024)
 
 #### Changed
