@@ -151,6 +151,7 @@ func GetVersionsBundles(r *releasetypes.ReleaseConfig, imageDigests releasetypes
 		number := strconv.Itoa(release.Number)
 		dev := release.Dev
 		kubeVersion := release.KubeVersion
+		endOfStandardSupport := release.EndOfStandardSupport
 		shortKubeVersion := strings.Join(strings.SplitN(kubeVersion[1:], ".", 3)[:2], ".")
 
 		if !slices.Contains(supportedK8sVersions, channel) {
@@ -205,6 +206,9 @@ func GetVersionsBundles(r *releasetypes.ReleaseConfig, imageDigests releasetypes
 			Snow:                       snowBundle,
 			Nutanix:                    nutanixBundle,
 			Upgrader:                   upgraderBundle,
+		}
+		if endOfStandardSupport != "" {
+			versionsBundle.EndOfStandardSupport = endOfStandardSupport
 		}
 		versionsBundles = append(versionsBundles, versionsBundle)
 	}

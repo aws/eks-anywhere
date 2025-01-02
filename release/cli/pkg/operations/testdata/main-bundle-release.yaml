@@ -1143,6 +1143,7 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/eks-anywhere-diagnostic-collector:v0.21.3-eks-a-v0.0.0-dev-build.1
       version: v0.0.0-dev+build.0+abcdef1
+    endOfStandardSupport: "2024-12-31"
     etcdadmBootstrap:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-bootstrap-provider/manifests/bootstrap-etcdadm-bootstrap/v1.0.15/bootstrap-components.yaml
@@ -1958,6 +1959,7 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/eks-anywhere-diagnostic-collector:v0.21.3-eks-a-v0.0.0-dev-build.1
       version: v0.0.0-dev+build.0+abcdef1
+    endOfStandardSupport: "2025-04-30"
     etcdadmBootstrap:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-bootstrap-provider/manifests/bootstrap-etcdadm-bootstrap/v1.0.15/bootstrap-components.yaml
@@ -2773,6 +2775,7 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/eks-anywhere-diagnostic-collector:v0.21.3-eks-a-v0.0.0-dev-build.1
       version: v0.0.0-dev+build.0+abcdef1
+    endOfStandardSupport: "2025-08-31"
     etcdadmBootstrap:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-bootstrap-provider/manifests/bootstrap-etcdadm-bootstrap/v1.0.15/bootstrap-components.yaml
@@ -3588,6 +3591,7 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/eks-anywhere-diagnostic-collector:v0.21.3-eks-a-v0.0.0-dev-build.1
       version: v0.0.0-dev+build.0+abcdef1
+    endOfStandardSupport: "2025-12-31"
     etcdadmBootstrap:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-bootstrap-provider/manifests/bootstrap-etcdadm-bootstrap/v1.0.15/bootstrap-components.yaml
