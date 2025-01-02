@@ -1553,6 +1553,8 @@ spec:
                       - components
                       - diagnosticCollector
                       type: object
+                    endOfStandardSupport:
+                      type: string
                     etcdadmBootstrap:
                       properties:
                         components:
@@ -3453,6 +3455,7 @@ spec:
                   - docker
                   - eksD
                   - eksa
+                  - endOfStandardSupport
                   - etcdadmBootstrap
                   - etcdadmController
                   - flux
