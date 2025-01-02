@@ -33,8 +33,6 @@ func (m *TinkerbellMachineTemplate) SetupWebhookWithManager(mgr ctrl.Manager) er
 	return ctrl.NewWebhookManagedBy(mgr).For(m).Complete() //nolint:wrapcheck
 }
 
-// +kubebuilder:webhook:verbs=create;update,path=/validate-infrastructure-cluster-x-k8s-io-v1beta1-tinkerbellmachinetemplate,mutating=false,failurePolicy=fail,matchPolicy=Equivalent,groups=infrastructure.cluster.x-k8s.io,resources=tinkerbellmachinetemplates,versions=v1beta1,name=validation.tinkerbellmachinetemplate.infrastructure.x-k8s.io,sideEffects=None,admissionReviewVersions=v1;v1beta1
-
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
 func (m *TinkerbellMachineTemplate) ValidateCreate() (admission.Warnings, error) {
 	var allErrs field.ErrorList

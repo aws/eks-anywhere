@@ -25,10 +25,6 @@ type TinkerbellMachineTemplateSpec struct {
 	Template TinkerbellMachineTemplateResource `json:"template"`
 }
 
-// +kubebuilder:object:root=true
-// +kubebuilder:resource:path=tinkerbellmachinetemplates,scope=Namespaced,categories=cluster-api
-// +kubebuilder:storageversion
-
 // TinkerbellMachineTemplate is the Schema for the tinkerbellmachinetemplates API.
 type TinkerbellMachineTemplate struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -36,8 +32,6 @@ type TinkerbellMachineTemplate struct {
 
 	Spec TinkerbellMachineTemplateSpec `json:"spec,omitempty"`
 }
-
-// +kubebuilder:object:root=true
 
 // TinkerbellMachineTemplateList contains a list of TinkerbellMachineTemplate.
 type TinkerbellMachineTemplateList struct {

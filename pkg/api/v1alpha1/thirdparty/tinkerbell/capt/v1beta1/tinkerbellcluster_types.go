@@ -33,8 +33,6 @@ type TinkerbellClusterSpec struct {
 	//
 	// See https://cluster-api.sigs.k8s.io/developer/architecture/controllers/cluster.html
 	// for more details.
-	//
-	// +optional
 	ControlPlaneEndpoint clusterv1.APIEndpoint `json:"controlPlaneEndpoint,omitempty"`
 
 	// ImageLookupFormat is the URL naming format to use for machine images when
@@ -49,24 +47,18 @@ type TinkerbellClusterSpec struct {
 	// kubernetes/release: v1.13.0, v1.12.5-mybuild.1, or v1.17.3. For example, the default
 	// image format of {{.BaseRegistry}}/{{.OSDistro}}-{{.OSVersion}}:{{.KubernetesVersion}}.gz will
 	// attempt to pull the image from that location. See also: https://golang.org/pkg/text/template/
-	// +optional
 	ImageLookupFormat string `json:"imageLookupFormat,omitempty"`
 
 	// ImageLookupBaseRegistry is the base Registry URL that is used for pulling images,
 	// if not set, the default will be to use ghcr.io/tinkerbell/cluster-api-provider-tinkerbell.
-	// +optional
-	// +kubebuilder:default=ghcr.io/tinkerbell/cluster-api-provider-tinkerbell
 	ImageLookupBaseRegistry string `json:"imageLookupBaseRegistry,omitempty"`
 
 	// ImageLookupOSDistro is the name of the OS distro to use when fetching machine images,
 	// if not set it will default to ubuntu.
-	// +optional
-	// +kubebuilder:default=ubuntu
 	ImageLookupOSDistro string `json:"imageLookupOSDistro,omitempty"`
 
 	// ImageLookupOSVersion is the version of the OS distribution to use when fetching machine
 	// images. If not set it will default based on ImageLookupOSDistro.
-	// +optional
 	ImageLookupOSVersion string `json:"imageLookupOSVersion,omitempty"`
 }
 
@@ -76,15 +68,8 @@ type TinkerbellClusterStatus struct {
 	// Important: Run "make" to regenerate code after modifying this file.
 
 	// Ready denotes that the cluster (infrastructure) is ready.
-	// +optional
 	Ready bool `json:"ready"`
 }
-
-// +kubebuilder:subresource:status
-// +kubebuilder:resource:path=tinkerbellclusters,scope=Namespaced,categories=cluster-api
-// +kubebuilder:object:root=true
-// +kubebuilder:printcolumn:name="Cluster",type="string",JSONPath=".metadata.labels.cluster\\.x-k8s\\.io/cluster-name",description="Cluster to which this TinkerbellCluster belongs"
-// +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.ready",description="TinkerbellCluster ready status"
 
 // TinkerbellCluster is the Schema for the tinkerbellclusters API.
 type TinkerbellCluster struct {
@@ -94,8 +79,6 @@ type TinkerbellCluster struct {
 	Spec   TinkerbellClusterSpec   `json:"spec,omitempty"`
 	Status TinkerbellClusterStatus `json:"status,omitempty"`
 }
-
-// +kubebuilder:object:root=true
 
 // TinkerbellClusterList contains a list of TinkerbellCluster.
 type TinkerbellClusterList struct {
