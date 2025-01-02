@@ -45,35 +45,28 @@ type TinkerbellMachineSpec struct {
 	// kubernetes/release: v1.13.0, v1.12.5-mybuild.1, or v1.17.3. For example, the default
 	// image format of {{.BaseRegistry}}/{{.OSDistro}}-{{.OSVersion}}:{{.KubernetesVersion}}.gz will
 	// attempt to pull the image from that location. See also: https://golang.org/pkg/text/template/
-	// +optional
 	ImageLookupFormat string `json:"imageLookupFormat,omitempty"`
 
 	// ImageLookupBaseRegistry is the base Registry URL that is used for pulling images,
 	// if not set, the default will be to use ghcr.io/tinkerbell/cluster-api-provider-tinkerbell.
-	// +optional
 	ImageLookupBaseRegistry string `json:"imageLookupBaseRegistry,omitempty"`
 
 	// ImageLookupOSDistro is the name of the OS distro to use when fetching machine images,
 	// if not set it will default to ubuntu.
-	// +optional
 	ImageLookupOSDistro string `json:"imageLookupOSDistro,omitempty"`
 
 	// ImageLookupOSVersion is the version of the OS distribution to use when fetching machine
 	// images. If not set it will default based on ImageLookupOSDistro.
-	// +optional
 	ImageLookupOSVersion string `json:"imageLookupOSVersion,omitempty"`
 
 	// TemplateOverride overrides the default Tinkerbell template used by CAPT.
 	// You can learn more about Tinkerbell templates here: https://tinkerbell.org/docs/concepts/templates/
-	// +optional
 	TemplateOverride string `json:"templateOverride,omitempty"`
 
 	// HardwareAffinity allows filtering for hardware.
-	// +optional
 	HardwareAffinity *HardwareAffinity `json:"hardwareAffinity,omitempty"`
 
 	// BootOptions are options that control the booting of Hardware.
-	// +optional
 	BootOptions BootOptions `json:"bootOptions,omitempty"`
 
 	// Those fields are set programmatically, but they cannot be re-constructed from "state of the world", so
@@ -95,14 +88,10 @@ type BootOptions struct {
 	// as this is where the ISO patching endpoint lives.
 	// The ":macAddress" is a placeholder for the MAC address of the hardware and
 	// should be provided exactly as is: ":macAddress".
-	// +optional
-	// +kubebuilder:validation:Format=url
 	ISOURL string `json:"isoURL,omitempty"`
 
 	// BootMode is the type of booting that will be done.
 	// Must be one of "none", "netboot", or "iso".
-	// +optional
-	// +kubebuilder:validation:Enum=none;netboot;iso
 	BootMode BootMode `json:"bootMode,omitempty"`
 }
 
@@ -110,11 +99,9 @@ type BootOptions struct {
 type HardwareAffinity struct {
 	// Required are the required hardware affinity terms.  The terms are OR'd together, hardware must match one term to
 	// be considered.
-	// +optional
 	Required []HardwareAffinityTerm `json:"required,omitempty"`
 	// Preferred are the preferred hardware affinity terms. Hardware matching these terms are preferred according to the
 	// weights provided, but are not required.
-	// +optional
 	Preferred []WeightedHardwareAffinityTerm `json:"preferred,omitempty"`
 }
 
@@ -128,8 +115,6 @@ type HardwareAffinityTerm struct {
 // WeightedHardwareAffinityTerm fields are added per-hardware to find the most preferred hardware.
 type WeightedHardwareAffinityTerm struct {
 	// Weight associated with matching the corresponding hardwareAffinityTerm, in the range 1-100.
-	// +kubebuilder:validation:Minimum=1
-	// +kubebuilder:validation:Maximum=100
 	Weight int32 `json:"weight"`
 	// HardwareAffinityTerm is the term associated with the corresponding weight.
 	HardwareAffinityTerm HardwareAffinityTerm `json:"hardwareAffinityTerm"`
@@ -141,20 +126,17 @@ type TinkerbellMachineStatus struct {
 	// Important: Run "make" to regenerate code after modifying this file
 
 	// Ready is true when the provider resource is ready.
-	// +optional
 	Ready bool `json:"ready"`
 
 	// Addresses contains the Tinkerbell device associated addresses.
 	Addresses []corev1.NodeAddress `json:"addresses,omitempty"`
 
 	// InstanceStatus is the status of the Tinkerbell device instance for this machine.
-	// +optional
 	InstanceStatus *TinkerbellResourceStatus `json:"instanceStatus,omitempty"`
 
 	// Any transient errors that occur during the reconciliation of Machines
 	// can be added as events to the Machine object and/or logged in the
 	// controller's output.
-	// +optional
 	ErrorReason *capierrors.MachineStatusError `json:"errorReason,omitempty"`
 
 	// ErrorMessage will be set in the event that there is a terminal problem
@@ -173,19 +155,8 @@ type TinkerbellMachineStatus struct {
 	// Any transient errors that occur during the reconciliation of Machines
 	// can be added as events to the Machine object and/or logged in the
 	// controller's output.
-	// +optional
 	ErrorMessage *string `json:"errorMessage,omitempty"`
 }
-
-// +kubebuilder:subresource:status
-// +kubebuilder:object:root=true
-// +kubebuilder:resource:path=tinkerbellmachines,scope=Namespaced,categories=cluster-api
-// +kubebuilder:storageversion
-// +kubebuilder:printcolumn:name="Cluster",type="string",JSONPath=".metadata.labels.cluster\\.x-k8s\\.io/cluster-name",description="Cluster to which this TinkerbellMachine belongs"
-// +kubebuilder:printcolumn:name="State",type="string",JSONPath=".status.instanceState",description="Tinkerbell instance state"
-// +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.ready",description="Machine ready status"
-// +kubebuilder:printcolumn:name="InstanceID",type="string",JSONPath=".spec.providerID",description="Tinkerbell instance ID"
-// +kubebuilder:printcolumn:name="Machine",type="string",JSONPath=".metadata.ownerReferences[?(@.kind==\"Machine\")].name",description="Machine object which owns with this TinkerbellMachine"
 
 // TinkerbellMachine is the Schema for the tinkerbellmachines API.
 type TinkerbellMachine struct {
@@ -195,8 +166,6 @@ type TinkerbellMachine struct {
 	Spec   TinkerbellMachineSpec   `json:"spec,omitempty"`
 	Status TinkerbellMachineStatus `json:"status,omitempty"`
 }
-
-// +kubebuilder:object:root=true
 
 // TinkerbellMachineList contains a list of TinkerbellMachine.
 type TinkerbellMachineList struct {
