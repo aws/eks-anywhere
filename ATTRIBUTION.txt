@@ -41,7 +41,7 @@ https://github.com/aws/aws-sdk-go-v2/service/ssooidc
 ** github.com/aws/aws-sdk-go-v2/service/sts; version v1.28.4 --
 https://github.com/aws/aws-sdk-go-v2/service/sts
 
-** github.com/aws/eks-anywhere; version 586f904fb0ecfffc60026da1aec8830e95df21f2 --
+** github.com/aws/eks-anywhere; version 3e179a16dd176dc8c5a22a4e02f7125d932e9443 --
 https://github.com/aws/eks-anywhere
 
 ** github.com/aws/eks-distro-build-tooling/release/api/v1alpha1; version v0.0.0-20211103003257-a7e2379eae5e --
@@ -172,9 +172,6 @@ https://github.com/spf13/afero
 
 ** github.com/spf13/cobra; version v1.8.0 --
 https://github.com/spf13/cobra
-
-** github.com/tinkerbell/cluster-api-provider-tinkerbell/api/v1beta1; version v0.1.1-0.20220615214617-9e9c2a397288 --
-https://github.com/tinkerbell/cluster-api-provider-tinkerbell
 
 ** github.com/tinkerbell/tink/pkg/apis/core/v1alpha1; version v0.8.0 --
 https://github.com/tinkerbell/tink
