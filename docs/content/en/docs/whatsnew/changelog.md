@@ -32,6 +32,24 @@ description: >
 * When upgrading to a new minor version, a new OS image must be created using the new image-builder CLI pertaining to that release.
 {{% /alert %}}
 
+## [v0.21.4](https://github.com/aws/eks-anywhere/releases/tag/v0.21.4)
+
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+|    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+| Bottlerocket 1.20.5 |    ✔    |     —      |    —    |     —      |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+|      RHEL 9.x       |    —    |     ✔      |    ✔    |     ✔      |  —   |
+
+### Changed
+- EKS Distro:
+  - [`v1-31-eks-10`](https://distro.eks.amazonaws.com/releases/1-31/10/)
+  - [`v1-30-eks-21`](https://distro.eks.amazonaws.com/releases/1-30/21/)
+  - [`v1-29-eks-28`](https://distro.eks.amazonaws.com/releases/1-29/28/)
+  - [`v1-28-eks-39`](https://distro.eks.amazonaws.com/releases/1-28/39/)
+
 ## [v0.21.3](https://github.com/aws/eks-anywhere/releases/tag/v0.21.3)
 
 ### Supported OS version details
