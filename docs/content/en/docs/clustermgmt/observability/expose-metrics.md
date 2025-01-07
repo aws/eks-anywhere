@@ -7,7 +7,9 @@ description: >
   Expose metrics for EKS Anywhere components
 ---
 
-Some Kubernetes system components like kube-controller-manager, kube-scheduler, kube-proxy and etcd (Stacked) expose metrics only on the localhost by default. In order to expose metrics for these components so that other monitoring systems like Prometheus can scrape them, you can deploy a proxy as a Daemonset on the host network of the nodes. The proxy pods also need to be configured with control plane tolerations so that they can be scheduled on the control plane nodes. For Unstacked/External etcd, metrics are already exposed on `https://<etcd-machine-ip>:2379/metrics` endpoint and can be scraped by Prometheus directly without deploying anything.
+Some Kubernetes system components like kube-controller-manager, kube-scheduler, kube-proxy and etcd (Stacked) expose metrics only on the localhost by default. In order to expose metrics for these components so that other monitoring systems like Prometheus can scrape them, you can deploy a proxy as a Daemonset on the host network of the nodes. The proxy pods also need to be configured with control plane tolerations so that they can be scheduled on the control plane nodes. 
+
+For etcd metrics, the steps outlined below are applicable only for stacked etcd setup. For Unstacked/External etcd, metrics are already exposed on `https://<etcd-machine-ip>:2379/metrics` endpoint and can be scraped by Prometheus directly without deploying a proxy.
 
 ### Configure Proxy
 
