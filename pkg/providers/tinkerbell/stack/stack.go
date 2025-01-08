@@ -32,19 +32,20 @@ const (
 	enabled           = "enabled"
 	kubevipInterface  = "interface"
 
-	boots      = "boots"
-	smee       = "smee"
-	hegel      = "hegel"
-	tink       = "tink"
-	controller = "controller"
-	server     = "server"
-	rufio      = "rufio"
-	grpcPort   = "42113"
-	kubevip    = "kubevip"
-	stack      = "stack"
-	hook       = "hook"
-	service    = "service"
-	relay      = "relay"
+	boots        = "boots"
+	smee         = "smee"
+	hegel        = "hegel"
+	tink         = "tink"
+	controller   = "controller"
+	server       = "server"
+	rufio        = "rufio"
+	grpcPort     = "42113"
+	kubevip      = "kubevip"
+	stack        = "stack"
+	hook         = "hook"
+	service      = "service"
+	relay        = "relay"
+	smeeHTTPPort = "7171"
 )
 
 type Docker interface {
@@ -85,6 +86,7 @@ type Installer struct {
 	proxyConfig           *v1alpha1.ProxyConfiguration
 	namespace             string
 	loadBalancerInterface string
+	hookIsoURL            string
 	bootsOnDocker         bool
 	hostNetwork           bool
 	loadBalancer          bool
@@ -143,6 +145,13 @@ func WithDHCPRelayEnabled(enabled bool) InstallOption {
 	}
 }
 
+// WithHookIsoOverride is an InstallOption allows you to set a URL of the HookOS ISO image.
+func WithHookIsoOverride(url string) InstallOption {
+	return func(s *Installer) {
+		s.hookIsoURL = url
+	}
+}
+
 // AddNoProxyIP is for workload cluster upgrade, we have to pass
 // controlPlaneEndpoint IP of managemement cluster if proxy is configured.
 func (s *Installer) AddNoProxyIP(IP string) {
@@ -150,13 +159,14 @@ func (s *Installer) AddNoProxyIP(IP string) {
 }
 
 // NewInstaller returns a Tinkerbell StackInstaller which can be used to install or uninstall the Tinkerbell stack.
-func NewInstaller(docker Docker, filewriter filewriter.FileWriter, helm Helm, namespace, podCidrRange string, registryMirror *registrymirror.RegistryMirror, proxyConfig *v1alpha1.ProxyConfiguration) StackInstaller {
+func NewInstaller(docker Docker, filewriter filewriter.FileWriter, helm Helm, hookIsoURL, namespace, podCidrRange string, registryMirror *registrymirror.RegistryMirror, proxyConfig *v1alpha1.ProxyConfiguration) StackInstaller {
 	return &Installer{
 		docker:         docker,
 		filewriter:     filewriter,
 		helm:           helm,
 		registryMirror: registryMirror,
 		proxyConfig:    proxyConfig,
+		hookIsoURL:     hookIsoURL,
 		namespace:      namespace,
 		podCidrRange:   podCidrRange,
 	}
@@ -186,7 +196,11 @@ func (s *Installer) Install(ctx context.Context, bundle releasev1alpha1.Tinkerbe
 		return fmt.Errorf("parsing hookOverride: %v", err)
 	}
 
-	valuesMap := s.createValuesOverride(bundle, bootEnv, tinkerbellIP, s.loadBalancerInterface, osiePath)
+	if s.hookIsoURL == "" {
+		s.hookIsoURL = bundle.TinkerbellStack.Hook.ISO.Amd.URI
+	}
+
+	valuesMap := s.createValuesOverride(bundle, bootEnv, tinkerbellIP, s.loadBalancerInterface, s.hookIsoURL, osiePath)
 
 	values, err := yaml.Marshal(valuesMap)
 	if err != nil {
@@ -220,10 +234,10 @@ func (s *Installer) Install(ctx context.Context, bundle releasev1alpha1.Tinkerbe
 		return fmt.Errorf("installing Tinkerbell helm chart: %v", err)
 	}
 
-	return s.installBootsOnDocker(ctx, bundle.TinkerbellStack, tinkerbellIP, kubeconfig, hookOverride)
+	return s.installBootsOnDocker(ctx, bundle.TinkerbellStack, tinkerbellIP, kubeconfig, hookOverride, s.hookIsoURL)
 }
 
-func (s *Installer) installBootsOnDocker(ctx context.Context, bundle releasev1alpha1.TinkerbellStackBundle, tinkServerIP, kubeconfig, hookOverride string) error {
+func (s *Installer) installBootsOnDocker(ctx context.Context, bundle releasev1alpha1.TinkerbellStackBundle, tinkServerIP, kubeconfig, hookOverride, isoOverride string) error {
 	if !s.bootsOnDocker {
 		return nil
 	}
@@ -240,8 +254,14 @@ func (s *Installer) installBootsOnDocker(ctx context.Context, bundle releasev1al
 		"-e", fmt.Sprintf("SMEE_DHCP_IP_FOR_PACKET=%s", tinkServerIP),
 		"-e", fmt.Sprintf("SMEE_DHCP_TFTP_IP=%s", tinkServerIP),
 		"-e", fmt.Sprintf("SMEE_DHCP_HTTP_IPXE_BINARY_HOST=%s", tinkServerIP),
+		"-e", fmt.Sprintf("SMEE_DHCP_HTTP_IPXE_BINARY_PORT=%s", smeeHTTPPort),
 		"-e", fmt.Sprintf("SMEE_DHCP_HTTP_IPXE_SCRIPT_HOST=%s", tinkServerIP),
+		"-e", fmt.Sprintf("SMEE_DHCP_HTTP_IPXE_SCRIPT_PORT=%s", smeeHTTPPort),
+		"-e", fmt.Sprintf("SMEE_HTTP_PORT=%s", smeeHTTPPort),
 		"-e", fmt.Sprintf("SMEE_BACKEND_KUBE_NAMESPACE=%v", s.namespace),
+		"-e", fmt.Sprintf("SMEE_ISO_ENABLED=%v", true),
+		"-e", fmt.Sprintf("SMEE_ISO_STATIC_IPAM_ENABLED=%v", true),
+		"-e", fmt.Sprintf("SMEE_ISO_URL=%v", isoOverride),
 	}
 
 	extraKernelArgList := s.getSmeeKernelArgs(bundle)
@@ -362,7 +382,7 @@ func (s *Installer) authenticateHelmRegistry(ctx context.Context) error {
 }
 
 // Upgrade the Tinkerbell stack using images specified in bundle.
-func (s *Installer) Upgrade(ctx context.Context, bundle releasev1alpha1.TinkerbellBundle, tinkerbellIP, kubeconfig string, hookOverride string, opts ...InstallOption) error {
+func (s *Installer) Upgrade(ctx context.Context, bundle releasev1alpha1.TinkerbellBundle, tinkerbellIP, kubeconfig, hookOverride string, opts ...InstallOption) error {
 	logger.V(6).Info("Upgrading Tinkerbell helm chart")
 
 	for _, option := range opts {
@@ -385,7 +405,11 @@ func (s *Installer) Upgrade(ctx context.Context, bundle releasev1alpha1.Tinkerbe
 		return fmt.Errorf("parsing hookOverride: %v", err)
 	}
 
-	valuesMap := s.createValuesOverride(bundle, bootEnv, tinkerbellIP, s.loadBalancerInterface, osiePath)
+	if s.hookIsoURL == "" {
+		s.hookIsoURL = bundle.TinkerbellStack.Hook.ISO.Amd.URI
+	}
+
+	valuesMap := s.createValuesOverride(bundle, bootEnv, tinkerbellIP, s.loadBalancerInterface, s.hookIsoURL, osiePath)
 
 	values, err := yaml.Marshal(valuesMap)
 	if err != nil {
@@ -520,7 +544,7 @@ func (s *Installer) HasLegacyChart(ctx context.Context, bundle releasev1alpha1.T
 }
 
 // createValuesOverride generates the values override file to send to helm.
-func (s *Installer) createValuesOverride(bundle releasev1alpha1.TinkerbellBundle, bootEnv []string, tinkerbellIP, loadBalancerInterface string, osiePath *url.URL) map[string]interface{} {
+func (s *Installer) createValuesOverride(bundle releasev1alpha1.TinkerbellBundle, bootEnv []string, tinkerbellIP, loadBalancerInterface, isoURL string, osiePath *url.URL) map[string]interface{} {
 	valuesMap := map[string]interface{}{
 		tink: map[string]interface{}{
 			controller: map[string]interface{}{
@@ -558,6 +582,13 @@ func (s *Installer) createValuesOverride(bundle releasev1alpha1.TinkerbellBundle
 				"additionalKernelArgs": bootEnv,
 			},
 			"tinkWorkerImage": s.localRegistryURL(bundle.TinkerbellStack.Tink.TinkWorker.URI),
+			"iso": map[string]interface{}{
+				// it's safe to populate the URL and default to true as rufio jobs for mounting and booting
+				// from iso happens only when bootmode is set to iso on tinkerbellmachinetemplate
+				enabled:             true,
+				"staticIPAMEnabled": true,
+				"url":               isoURL,
+			},
 		},
 		rufio: map[string]interface{}{
 			image: bundle.TinkerbellStack.Rufio.URI,

@@ -23,7 +23,7 @@ smee:
   iso:
     enabled: true
     staticIPAMEnabled: true
-    url: https://anywhere-assests.eks.amazonaws.com/tinkerbell/hook/hook-x86_64-efi-initrd.iso
+    url: https://my-local-web-server/hook.iso
   publicIP: 1.2.3.4
   tinkWorkerImage: public.ecr.aws/eks-anywhere/tink-worker:latest
   trustedProxies:
@@ -31,7 +31,7 @@ smee:
 stack:
   hook:
     enabled: false
-  hostNetwork: true
+  hostNetwork: false
   image: public.ecr.aws/eks-anywhere/nginx:latest
   kubevip:
     additionalEnv:
