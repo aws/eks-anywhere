@@ -162,12 +162,12 @@ var releaseCmd = &cobra.Command{
 		if devRelease {
 			buildNumber, err := filereader.GetNextEksADevBuildNumber(releaseVersion, releaseConfig)
 			if err != nil {
-				fmt.Printf("Error getting previous EKS-A dev release number: %v\n", err)
+				fmt.Printf("Error getting next EKS-A dev release build number: %v\n", err)
 				os.Exit(1)
 			}
 			releaseVersion, err = filereader.GetCurrentEksADevReleaseVersion(releaseVersion, releaseConfig, buildNumber)
 			if err != nil {
-				fmt.Printf("Error getting previous EKS-A dev release number: %v\n", err)
+				fmt.Printf("Error getting current EKS-A dev release version: %v\n", err)
 				os.Exit(1)
 			}
 			releaseConfig.BundleNumber = buildNumber
@@ -221,6 +221,12 @@ var releaseCmd = &cobra.Command{
 			err = operations.GenerateBundleSpec(releaseConfig, bundle, imageDigests)
 			if err != nil {
 				fmt.Printf("Error generating bundles manifest: %+v\n", err)
+				os.Exit(1)
+			}
+
+			err = operations.SignBundleManifest(context.Background(), bundle)
+			if err != nil {
+				fmt.Printf("Error signing bundles manifest: %+v\n", err)
 				os.Exit(1)
 			}
 
