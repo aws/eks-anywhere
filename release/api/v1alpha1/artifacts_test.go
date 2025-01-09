@@ -14,6 +14,7 @@
 
 package v1alpha1_test
 
+//nolint:revive
 import (
 	"testing"
 
