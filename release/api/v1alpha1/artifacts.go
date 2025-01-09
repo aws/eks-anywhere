@@ -14,6 +14,7 @@
 
 package v1alpha1
 
+// Manifests returns a map of manifests for different components in a VersionsBundle.
 func (vb *VersionsBundle) Manifests() map[string][]*string {
 	return map[string][]*string{
 		"core-cluster-api": {
@@ -83,12 +84,14 @@ func (vb *VersionsBundle) Manifests() map[string][]*string {
 	}
 }
 
+// Ovas returns a list of OVA archives in a VersionsBundle.
 func (vb *VersionsBundle) Ovas() []Archive {
 	return []Archive{
 		vb.EksD.Ova.Bottlerocket,
 	}
 }
 
+// CloudStackImages returns images needed for the CloudStack provider in a VersionsBundle.
 func (vb *VersionsBundle) CloudStackImages() []Image {
 	return []Image{
 		vb.CloudStack.ClusterAPIController,
@@ -97,6 +100,7 @@ func (vb *VersionsBundle) CloudStackImages() []Image {
 	}
 }
 
+// VsphereImages returns images needed for the vSphere provider in a VersionsBundle.
 func (vb *VersionsBundle) VsphereImages() []Image {
 	return []Image{
 		vb.VSphere.ClusterAPIController,
@@ -106,6 +110,7 @@ func (vb *VersionsBundle) VsphereImages() []Image {
 	}
 }
 
+// DockerImages returns images needed for the Docker provider in a VersionsBundle.
 func (vb *VersionsBundle) DockerImages() []Image {
 	return []Image{
 		vb.Docker.KubeProxy,
@@ -113,6 +118,7 @@ func (vb *VersionsBundle) DockerImages() []Image {
 	}
 }
 
+// SnowImages returns images needed for the Snow provider in a VersionsBundle.
 func (vb *VersionsBundle) SnowImages() []Image {
 	i := make([]Image, 0, 2)
 	if vb.Snow.KubeVip.URI != "" {
@@ -128,6 +134,7 @@ func (vb *VersionsBundle) SnowImages() []Image {
 	return i
 }
 
+// TinkerbellImages returns images needed for the Tinkerbell provider in a VersionsBundle.
 func (vb *VersionsBundle) TinkerbellImages() []Image {
 	return []Image{
 		vb.Tinkerbell.ClusterAPIController,
@@ -154,6 +161,7 @@ func (vb *VersionsBundle) TinkerbellImages() []Image {
 	}
 }
 
+// NutanixImages returns images needed for the Nutanix provider in a VersionsBundle.
 func (vb *VersionsBundle) NutanixImages() []Image {
 	i := make([]Image, 0, 2)
 	if vb.Nutanix.ClusterAPIController.URI != "" {
@@ -167,6 +175,7 @@ func (vb *VersionsBundle) NutanixImages() []Image {
 	return i
 }
 
+// SharedImages returns images that are shared across different providers in a VersionsBundle.
 func (vb *VersionsBundle) SharedImages() []Image {
 	return []Image{
 		vb.Bootstrap.Controller,
@@ -204,6 +213,7 @@ func (vb *VersionsBundle) SharedImages() []Image {
 	}
 }
 
+// Images returns all images from the VersionsBundle by aggregating those from different providers.
 func (vb *VersionsBundle) Images() []Image {
 	groupedImages := [][]Image{
 		vb.SharedImages(),
@@ -228,6 +238,7 @@ func (vb *VersionsBundle) Images() []Image {
 	return images
 }
 
+// Charts returns a map of Helm chart images used by different components in a VersionsBundle.
 func (vb *VersionsBundle) Charts() map[string]*Image {
 	return map[string]*Image{
 		"cilium":                &vb.Cilium.HelmChart,
