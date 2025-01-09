@@ -422,7 +422,7 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
      "password": "",
      "resource_pool": "",
      "username": "",
-     "vcenter_server": "",
+     "vcenter_server": ""
    }
    ```
    ##### **[cluster](https://developer.hashicorp.com/packer/integrations/hashicorp/vsphere/latest/components/builder/vsphere-iso#location-configuration)**
