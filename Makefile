@@ -372,7 +372,7 @@ cluster-controller-binaries: $(OUTPUT_BIN_DIR)
 	$(MAKE) create-cluster-controller-binaries
 	$(MAKE) update-kustomization-yaml
 	$(MAKE) release-manifests RELEASE_DIR=.
-	source ./scripts/common.sh && build::gather_licenses $(OUTPUT_DIR) "./manager"
+	source ./scripts/common.sh && build::gather_licenses $(GOLANG_VERSION) $(OUTPUT_DIR) "./manager"
 
 .PHONY: cluster-controller-tarballs
 cluster-controller-tarballs:  cluster-controller-binaries
