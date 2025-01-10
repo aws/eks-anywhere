@@ -20,7 +20,7 @@ SHELL := /bin/bash
 ARTIFACTS_BUCKET?=my-s3-bucket
 GIT_VERSION?=$(shell git describe --tag)
 GIT_TAG?=$(shell git tag -l "v*.*.*" --sort -v:refname | head -1)
-GOLANG_VERSION?="1.21"
+GOLANG_VERSION?="1.23"
 GO_PATH?= $(shell source ./scripts/common.sh && build::common::get_go_path $(GOLANG_VERSION))
 GO ?= $(GO_PATH)/go
 GO_TEST ?= $(GO) test
@@ -285,7 +285,7 @@ $(KUBEBUILDER): $(TOOLS_BIN_DIR)
 	chmod +x $(KUBEBUILDER)
 
 $(CONTROLLER_GEN): $(TOOLS_BIN_DIR)
-	GOBIN=$(TOOLS_BIN_DIR_ABS) $(GO) install sigs.k8s.io/controller-tools/cmd/controller-gen@v0.8.0
+	GOBIN=$(TOOLS_BIN_DIR_ABS) $(GO) install sigs.k8s.io/controller-tools/cmd/controller-gen@v0.16.5
 
 $(GO_VULNCHECK): $(TOOLS_BIN_DIR)
 	GOBIN=$(TOOLS_BIN_DIR_ABS) $(GO) install golang.org/x/vuln/cmd/govulncheck@latest
