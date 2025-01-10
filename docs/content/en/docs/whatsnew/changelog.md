@@ -32,6 +32,29 @@ description: >
 * When upgrading to a new minor version, a new OS image must be created using the new image-builder CLI pertaining to that release.
 {{% /alert %}}
 
+## [v0.20.11](https://github.com/aws/eks-anywhere/releases/tag/v0.20.11)
+
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+|    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+| Bottlerocket 1.20.5 |    ✔    |     —      |    —    |     —      |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+|      RHEL 9.x       |    —    |     ✔      |    ✔    |     ✔      |  —   |
+
+### Upgraded
+- EKS Distro:
+  - `v1-28-eks-38` to [`v1-28-eks-40`](https://distro.eks.amazonaws.com/releases/1-28/40/)
+  - `v1-29-eks-27` to [`v1-29-eks-29`](https://distro.eks.amazonaws.com/releases/1-29/29/)
+  - `v1-30-eks-20`  to [`v1-30-eks-22`](https://distro.eks.amazonaws.com/releases/1-30/22/)
+- eks-anywhere-packages: `v0.4.4` to `v0.4.5`
+- image-builder: `v0.1.39` to `v0.1.40`
+- containerd: `v1.7.23` to `v1.7.24`
+
+### Fixed
+- Dependabot critical/high security fixes ([#9157](https://github.com/aws/eks-anywhere/pull/9157))
+
 ## [v0.20.10](https://github.com/aws/eks-anywhere/releases/tag/v0.20.10)
 
 ### Supported OS version details
