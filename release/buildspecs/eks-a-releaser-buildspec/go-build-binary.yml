@@ -1,0 +1,13 @@
+---
+version: 0.2
+phases:
+  pre_build:
+    commands:
+      - ./release/scripts/setup.sh
+  build:
+    commands:
+      - make build -C release
+artifacts:
+  files:
+    - release/bin/eks-anywhere-release
+    - release/buildspecs/**/*
