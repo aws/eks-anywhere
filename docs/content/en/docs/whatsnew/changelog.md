@@ -74,29 +74,6 @@ description: >
 ### Fixed
 - Add kube-vip and optional list of ip addresses to CCM node ip addresses ignore list for Nutanix Provider. ([#9072](https://github.com/aws/eks-anywhere/pull/9072))
 
-## [v0.20.10](https://github.com/aws/eks-anywhere/releases/tag/v0.20.10)
-
-### Supported OS version details
-|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
-|:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
-|    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
-|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
-| Bottlerocket 1.20.5 |    ✔    |     —      |    —    |     —      |  —   |
-|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
-|      RHEL 9.x       |    —    |     ✔      |    ✔    |     ✔      |  —   |
-
-### Changed
-- EKS Distro:
-  - `v1-28-eks-35` to [`v1-28-eks-38`](https://distro.eks.amazonaws.com/releases/1-28/38/)
-  - `v1-29-eks-24` to [`v1-29-eks-27`](https://distro.eks.amazonaws.com/releases/1-29/27/)
-  - `v1-30-eks-17`  to [`v1-30-eks-20`](https://distro.eks.amazonaws.com/releases/1-30/20/)
-- cloud-provider-nutanix: `v0.3.2` to `v0.4.1`
-- kube-rbac-proxy: `v0.18.1` to `v0.18.2`
-- kube-vip: `v0.8.6` to `v0.8.7`
-
-### Fixed
-- Add retries for transient error `server doesn't have a Resource type errors` after `clusterctl move`. ([#9065](https://github.com/aws/eks-anywhere/pull/9065))
-
 ## [v0.21.2](https://github.com/aws/eks-anywhere/releases/tag/v0.21.2)
 
 ### Supported OS version details
@@ -192,6 +169,51 @@ description: >
 ### Removed
 - Support for Kubernetes v1.26
 
+## [v0.20.11](https://github.com/aws/eks-anywhere/releases/tag/v0.20.11)
+
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+|    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+| Bottlerocket 1.20.5 |    ✔    |     —      |    —    |     —      |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+|      RHEL 9.x       |    —    |     ✔      |    ✔    |     ✔      |  —   |
+
+### Upgraded
+- EKS Distro:
+  - `v1-28-eks-38` to [`v1-28-eks-40`](https://distro.eks.amazonaws.com/releases/1-28/40/)
+  - `v1-29-eks-27` to [`v1-29-eks-29`](https://distro.eks.amazonaws.com/releases/1-29/29/)
+  - `v1-30-eks-20`  to [`v1-30-eks-22`](https://distro.eks.amazonaws.com/releases/1-30/22/)
+- eks-anywhere-packages: `v0.4.4` to `v0.4.5`
+- image-builder: `v0.1.39` to `v0.1.40`
+- containerd: `v1.7.23` to `v1.7.24`
+
+### Fixed
+- Dependabot critical/high security fixes ([#9157](https://github.com/aws/eks-anywhere/pull/9157))
+
+## [v0.20.10](https://github.com/aws/eks-anywhere/releases/tag/v0.20.10)
+
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+|    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+| Bottlerocket 1.20.5 |    ✔    |     —      |    —    |     —      |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+|      RHEL 9.x       |    —    |     ✔      |    ✔    |     ✔      |  —   |
+
+### Changed
+- EKS Distro:
+  - `v1-28-eks-35` to [`v1-28-eks-38`](https://distro.eks.amazonaws.com/releases/1-28/38/)
+  - `v1-29-eks-24` to [`v1-29-eks-27`](https://distro.eks.amazonaws.com/releases/1-29/27/)
+  - `v1-30-eks-17`  to [`v1-30-eks-20`](https://distro.eks.amazonaws.com/releases/1-30/20/)
+- cloud-provider-nutanix: `v0.3.2` to `v0.4.1`
+- kube-rbac-proxy: `v0.18.1` to `v0.18.2`
+- kube-vip: `v0.8.6` to `v0.8.7`
+
+### Fixed
+- Add retries for transient error `server doesn't have a Resource type errors` after `clusterctl move`. ([#9065](https://github.com/aws/eks-anywhere/pull/9065))
 
 ## [v0.20.9](https://github.com/aws/eks-anywhere/releases/tag/v0.20.9)
 
