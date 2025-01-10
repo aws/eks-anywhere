@@ -20,11 +20,9 @@ import (
 
 // ReleaseSpec defines the desired state of Release.
 type ReleaseSpec struct {
-	// +kubebuilder:validation:Required
 	// EKS-A Latest Release version following semver
 	LatestVersion string `json:"latestVersion"`
 
-	// +kubebuilder:validation:Required
 	// List of all eks-a releases
 	Releases []EksARelease `json:"releases"`
 }
@@ -59,58 +57,47 @@ func init() {
 
 // EksARelease defines each release of EKS-Anywhere.
 type EksARelease struct {
-	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:Type=string
 	// +kubebuilder:validation:Format=date-time
 	Date string `json:"date"`
 
-	// +kubebuilder:validation:Required
 	// EKS-A release version
 	Version string `json:"version"`
 
-	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:Minimum=1
 	// Monotonically increasing release number
 	Number int `json:"number"`
 
-	// +kubebuilder:validation:Required
 	// Git commit the component is built from, before any patches
 	GitCommit string `json:"gitCommit"`
 
 	// Git tag the component is built from, before any patches
 	GitTag string `json:"gitTag"`
 
-	// +kubebuilder:validation:Required
 	// Manifest url to parse bundle information from for this EKS-A release
 	BundleManifestUrl string `json:"bundleManifestUrl"` //nolint:revive
 
-	// +kubebuilder:validation:Required
 	// EKS Anywhere binary bundle
 	EksABinary BinaryBundle `json:"eksABinary"`
 
-	// +kubebuilder:validation:Required
 	// EKS Anywhere CLI bundle
 	EksACLI PlatformBundle `json:"eksACLI"`
 }
 
 // BinaryBundle defines the EKS Anywhere Linux and Darwin binaries for each release.
 type BinaryBundle struct {
-	// +kubebuilder:validation:Required
 	// EKS Anywhere Linux binary
 	LinuxBinary Archive `json:"linux"`
 
-	// +kubebuilder:validation:Required
 	// EKS Anywhere Darwin binary
 	DarwinBinary Archive `json:"darwin"`
 }
 
 // PlatformBundle defines the EKS Anywhere binaries by operating system.
 type PlatformBundle struct {
-	// +kubebuilder:validation:Required
 	// EKS Anywhere Linux binary
 	LinuxBinary ArchitectureBundle `json:"linux"`
 
-	// +kubebuilder:validation:Required
 	// EKS Anywhere Darwin binary
 	DarwinBinary ArchitectureBundle `json:"darwin"`
 }

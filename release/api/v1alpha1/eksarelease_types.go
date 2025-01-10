@@ -14,20 +14,16 @@ type EKSARelease struct {
 
 // EKSAReleaseSpec defines the desired state of EKSARelease.
 type EKSAReleaseSpec struct {
-	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:Type=string
 	// Date of EKS-A Release
 	ReleaseDate string `json:"releaseDate"`
 
-	// +kubebuilder:validation:Required
 	// EKS-A release semantic version
 	Version string `json:"version"`
 
-	// +kubebuilder:validation:Required
 	// Git commit the component is built from, before any patches
 	GitCommit string `json:"gitCommit"`
 
-	// +kubebuilder:validation:Required
 	// Manifest url to parse bundle information from for this EKS-A release
 	BundleManifestURL string `json:"bundleManifestUrl"`
 

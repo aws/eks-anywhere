@@ -91,23 +91,18 @@ type VersionsBundle struct {
 
 // EksDRelease defines the EKS-D specific release information.
 type EksDRelease struct {
-	// +kubebuilder:validation:Required
 	Name string `json:"name,omitempty"`
 
-	// +kubebuilder:validation:Required
 	// Release branch of the EKS-D release like 1-19, 1-20
 	ReleaseChannel string `json:"channel,omitempty"`
 
-	// +kubebuilder:validation:Required
 	// Release number of EKS-D release
 	KubeVersion string `json:"kubeVersion,omitempty"`
 
-	// +kubebuilder:validation:Required
 	// Url pointing to the EKS-D release manifest using which
 	// assets where created
 	EksDReleaseUrl string `json:"manifestUrl,omitempty"` //nolint:revive
 
-	// +kubebuilder:validation:Required
 	// Git commit the component is built from, before any patches
 	GitCommit string `json:"gitCommit,omitempty"`
 
