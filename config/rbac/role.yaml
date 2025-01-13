@@ -2,7 +2,6 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  creationTimestamp: null
   name: manager-role
 rules:
 - apiGroups:
@@ -105,7 +104,10 @@ rules:
   - cloudstackdatacenterconfigs/finalizers
   - cloudstackmachineconfigs/finalizers
   - clusters/finalizers
+  - controlplaneupgrades/finalizers
   - dockerdatacenterconfigs/finalizers
+  - machinedeploymentupgrades/finalizers
+  - nodeupgrades/finalizers
   - snowippools/finalizers
   - snowmachineconfigs/finalizers
   - tinkerbelldatacenterconfigs/finalizers
@@ -122,7 +124,10 @@ rules:
   - cloudstackdatacenterconfigs/status
   - cloudstackmachineconfigs/status
   - clusters/status
+  - controlplaneupgrades/status
   - dockerdatacenterconfigs/status
+  - machinedeploymentupgrades/status
+  - nodeupgrades/status
   - snowippools/status
   - snowmachineconfigs/status
   - tinkerbelldatacenterconfigs/status
@@ -138,39 +143,6 @@ rules:
   - anywhere.eks.amazonaws.com
   resources:
   - bundles
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - anywhere.eks.amazonaws.com
-  resources:
-  - controlplaneupgrades
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - anywhere.eks.amazonaws.com
-  resources:
-  - controlplaneupgrades/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - anywhere.eks.amazonaws.com
-  resources:
-  - controlplaneupgrades/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - anywhere.eks.amazonaws.com
-  resources:
   - eksareleases
   verbs:
   - get
@@ -179,32 +151,8 @@ rules:
 - apiGroups:
   - anywhere.eks.amazonaws.com
   resources:
+  - controlplaneupgrades
   - machinedeploymentupgrades
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - anywhere.eks.amazonaws.com
-  resources:
-  - machinedeploymentupgrades/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - anywhere.eks.amazonaws.com
-  resources:
-  - machinedeploymentupgrades/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - anywhere.eks.amazonaws.com
-  resources:
   - nodeupgrades
   verbs:
   - create
@@ -214,20 +162,6 @@ rules:
   - patch
   - update
   - watch
-- apiGroups:
-  - anywhere.eks.amazonaws.com
-  resources:
-  - nodeupgrades/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - anywhere.eks.amazonaws.com
-  resources:
-  - nodeupgrades/status
-  verbs:
-  - get
-  - patch
-  - update
 - apiGroups:
   - bmc.tinkerbell.org
   resources:
@@ -260,6 +194,7 @@ rules:
   - cluster.x-k8s.io
   resources:
   - clusters
+  - machinedeployments
   verbs:
   - create
   - delete
@@ -272,6 +207,8 @@ rules:
   - cluster.x-k8s.io
   resources:
   - machinedeployment
+  - machines
+  - machinesets
   verbs:
   - get
   - list
@@ -287,44 +224,12 @@ rules:
 - apiGroups:
   - cluster.x-k8s.io
   resources:
-  - machinedeployments
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - cluster.x-k8s.io
-  resources:
   - machinehealthchecks
   verbs:
   - create
   - get
   - list
   - patch
-  - watch
-- apiGroups:
-  - cluster.x-k8s.io
-  resources:
-  - machines
-  verbs:
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - cluster.x-k8s.io
-  resources:
-  - machinesets
-  verbs:
-  - get
-  - list
-  - patch
-  - update
   - watch
 - apiGroups:
   - clusterctl.cluster.x-k8s.io
@@ -449,7 +354,6 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  creationTimestamp: null
   name: manager-role
   namespace: eksa-system
 rules:
