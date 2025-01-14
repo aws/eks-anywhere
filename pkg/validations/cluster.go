@@ -10,6 +10,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/providers/common"
@@ -284,5 +285,15 @@ func ValidateBottlerocketKubeletConfig(spec *cluster.Spec) error {
 		}
 	}
 
+	return nil
+}
+
+// ValidateK8s132Support checks if the 1.32 feature flag is set when using k8s 1.32.
+func ValidateK8s132Support(clusterSpec *cluster.Spec) error {
+	if !features.IsActive(features.K8s132Support()) {
+		if clusterSpec.Cluster.Spec.KubernetesVersion == v1alpha1.Kube132 {
+			return fmt.Errorf("kubernetes version %s is not enabled. Please set the env variable %v", v1alpha1.Kube132, features.K8s132SupportEnvVar)
+		}
+	}
 	return nil
 }

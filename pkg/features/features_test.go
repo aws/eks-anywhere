@@ -85,3 +85,11 @@ func TestAPIServerExtraArgsEnabledFeatureFlag(t *testing.T) {
 	g.Expect(os.Setenv(APIServerExtraArgsEnabledEnvVar, "true")).To(Succeed())
 	g.Expect(IsActive(APIServerExtraArgsEnabled())).To(BeTrue())
 }
+
+func TestWithK8s132FeatureFlag(t *testing.T) {
+	g := NewWithT(t)
+	setupContext(t)
+
+	g.Expect(os.Setenv(K8s132SupportEnvVar, "true")).To(Succeed())
+	g.Expect(IsActive(K8s132Support())).To(BeTrue())
+}
