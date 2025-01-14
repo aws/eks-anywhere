@@ -79,50 +79,25 @@ part of internal status reporting.
 
 ## Validating Connectivity
 
-Cilium includes a connectivity check YAML that can be deployed into a test namespace in order to validate proper installation and connectivity within a Kubernetes cluster.   If the connectivity check passes, all pods created by the YAML manifest will reach “Running” and ready (1/1) state.    We recommend running this test only once you have multiple worker nodes in your environment to ensure you are validating cross-node connectivity.
+Install the latest version of [Cilium CLI](https://docs.cilium.io/en/stable/gettingstarted/k8s-install-default/#install-the-cilium-cli).
+The Cilium CLI has connectivity test functionality to validate proper installation and connectivity within a Kubernetes cluster.
 
-It is important that this test is run in a dedicated namespace, with no existing network policy.   For example:
-
-```bash
-kubectl create ns cilium-test
-```
+By default, Cilium CLI will run tests in the `cilium-test-1` namespace which can be changed by using `--test-namespace` flag.   For example:
 
 ```bash
-kubectl apply -n cilium-test -f https://docs.isovalent.com/v1.10/public/connectivity-check-eksa.yaml
+cilium connectivity test
 ```
 
-Once all pods have started, simply checking the status of pods in this namespace will indicate whether the tests have passed:
-
-```bash
-kubectl get pods -n cilium-test
-```
-
-Successful test output will show all pods in a "Running" and ready (1/1) state:
+Successful test output will show all tests in a "successful" (some tests might be in "skipped") state.   For example:
 
 ```
-NAME                                                     READY   STATUS    RESTARTS   AGE
-echo-a-d576c5f8b-zlfsk                                   1/1     Running   0          59s
-echo-b-787dc99778-sxlcc                                  1/1     Running   0          59s
-echo-b-host-675cd8cfff-qvvv8                             1/1     Running   0          59s
-host-to-b-multi-node-clusterip-6fd884bcf7-pvj5d          1/1     Running   0          58s
-host-to-b-multi-node-headless-79f7df47b9-8mzbp           1/1     Running   0          58s
-pod-to-a-57695cc7ff-6tqpv                                1/1     Running   0          59s
-pod-to-a-allowed-cnp-7b6d5ff99f-4rhrs                    1/1     Running   0          59s
-pod-to-a-denied-cnp-6887b57579-zbs2t                     1/1     Running   0          59s
-pod-to-b-intra-node-hostport-7d656d7bb9-6zjrl            1/1     Running   0          57s
-pod-to-b-intra-node-nodeport-569d7c647-76gn5             1/1     Running   0          58s
-pod-to-b-multi-node-clusterip-fdf45bbbc-8l4zz            1/1     Running   0          59s
-pod-to-b-multi-node-headless-64b6cbdd49-9hcqg            1/1     Running   0          59s
-pod-to-b-multi-node-hostport-57fc8854f5-9d8m8            1/1     Running   0          58s
-pod-to-b-multi-node-nodeport-54446bdbb9-5xhfd            1/1     Running   0          58s
-pod-to-external-1111-56548587dc-rmj9f                    1/1     Running   0          59s
-pod-to-external-fqdn-allow-google-cnp-5ff4986c89-z4h9j   1/1     Running   0          59s
+✅ [cilium-test-1] All 12 tests (139 actions) successful, 72 tests skipped, 0 scenarios skipped.
 ```
 
 Afterward, simply delete the namespace to clean-up the connectivity test:
 
 ```bash
-kubectl delete ns cilium-test
+kubectl delete ns cilium-test-1
 ```
 
 ## Kubernetes Network Policy
