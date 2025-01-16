@@ -241,7 +241,9 @@ Minimum number of nodes for this node group's autoscaling configuration.
 Maximum number of nodes for this node group's autoscaling configuration.
 
 ### workerNodeGroupConfigurations[*].kubernetesVersion (optional)
-The Kubernetes version you want to use for this worker node group. Supported values: `1.31`, `1.30`, `1.29`, `1.28`, `1.27`
+The Kubernetes version you want to use for this worker node group. If the Kubernetes minor version is a multiple of 10 (for example, `1.30`), the version must be enclosed in either single or double quotes (see related [issue](https://github.com/aws/eks-anywhere/issues/9184)). The Kubernetes versions supported by your EKS Anywhere version are tabulated in [this]({{< relref "../../concepts/support-versions/#kubernetes-versions" >}}) section.
+
+Must be less than or equal to the cluster `kubernetesVersion` defined at the root level of the cluster spec. The worker node Kubernetes version must be no more than two minor Kubernetes versions lower than the cluster control plane's Kubernetes version. Removing `workerNodeGroupConfiguration.kubernetesVersion` will trigger an upgrade of the node group to the `kubernetesVersion` defined at the root level of the cluster spec.
 
 ### externalEtcdConfiguration.count (optional)
 Number of etcd members
@@ -253,7 +255,7 @@ Refers to the Kubernetes object with Nutanix specific configuration for your etc
 Refers to the Kubernetes object with Nutanix environment specific configuration. See `NutanixDatacenterConfig` fields below.
 
 ### kubernetesVersion (required)
-The Kubernetes version you want to use for your cluster. Supported values: `1.31`, `1.30`, `1.29`, `1.28`, `1.27`
+The Kubernetes version you want to use for your cluster. If the Kubernetes minor version is a multiple of 10 (for example, `1.30`), the version must be enclosed in either single or double quotes (see related [issue](https://github.com/aws/eks-anywhere/issues/9184)). The Kubernetes versions supported by your EKS Anywhere version are tabulated in [this]({{< relref "../../concepts/support-versions/#kubernetes-versions" >}}) section.
 
 ## NutanixDatacenterConfig Fields
 

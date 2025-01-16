@@ -179,7 +179,9 @@ Modifying the labels associated with a worker node group configuration will caus
 the existing nodes associated with the configuration.
 
 ### workerNodeGroupConfigurations[*].kubernetesVersion (optional)
-The Kubernetes version you want to use for this worker node group. Supported values: 1.28, 1.27, 1.26, 1.25, 1.24
+The Kubernetes version you want to use for this worker node group. If the Kubernetes minor version is a multiple of 10 (for example, `1.30`), the version must be enclosed in either single or double quotes (see related [issue](https://github.com/aws/eks-anywhere/issues/9184)). The Kubernetes versions supported by your EKS Anywhere version are tabulated in [this]({{< relref "../../concepts/support-versions/#kubernetes-versions" >}}) section.
+
+Must be less than or equal to the cluster `kubernetesVersion` defined at the root level of the cluster spec. The worker node Kubernetes version must be no more than two minor Kubernetes versions lower than the cluster control plane's Kubernetes version. Removing `workerNodeGroupConfiguration.kubernetesVersion` will trigger an upgrade of the node group to the `kubernetesVersion` defined at the root level of the cluster spec.
 
 ### externalEtcdConfiguration.count (optional)
 Number of etcd members.
@@ -191,7 +193,7 @@ Refers to the Kubernetes object with Snow specific configuration for your etcd m
 Refers to the Kubernetes object with Snow environment specific configuration. See `SnowDatacenterConfig Fields` below.
 
 ### kubernetesVersion (required)
-The Kubernetes version you want to use for your cluster. Supported values: `1.28`, `1.27`, `1.26`, `1.25`, `1.24`
+The Kubernetes version you want to use for your cluster. If the Kubernetes minor version is a multiple of 10 (for example, `1.30`), the version must be enclosed in either single or double quotes (see related [issue](https://github.com/aws/eks-anywhere/issues/9184)). The Kubernetes versions supported by your EKS Anywhere version are tabulated in [this]({{< relref "../../concepts/support-versions/#kubernetes-versions" >}}) section.
 
 ## SnowDatacenterConfig Fields
 
