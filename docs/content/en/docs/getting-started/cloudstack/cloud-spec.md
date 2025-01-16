@@ -225,7 +225,9 @@ Number of etcd members
 Refers to the Kubernetes object with CloudStack specific configuration for your etcd members. See `CloudStackMachineConfig Fields` below.
 
 ### kubernetesVersion (required)
-The Kubernetes version you want to use for your cluster. Supported values: `1.31`, `1.30`, `1.29`, `1.28`, `1.27`
+The Kubernetes version you want to use for your cluster. The Kubernetes versions supported by your EKS Anywhere version are tabulated in [this]({{< relref "../../concepts/support-versions/#kubernetes-versions" >}}) section.
+
+[Known issue related to Kubernetes versions whose minor version is a multiple of 10]({{< relref "../../troubleshooting/troubleshooting/#error-unable-to-get-cluster-config-from-file-kubernetes-version-13-is-not-supported-by-bundles-manifest-" >}})
 
 ### managementCluster (required)
 Identifies the name of the management cluster.
@@ -274,7 +276,13 @@ Modifying the labels associated with a worker node group configuration will caus
 the existing nodes associated with the configuration.
 
 ### workerNodeGroupConfigurations[*].kubernetesVersion (optional)
-The Kubernetes version you want to use for this worker node group. Supported values: 1.31, 1.30, 1.29, 1.28, 1.27
+The Kubernetes version you want to use for your cluster. The Kubernetes versions supported by your EKS Anywhere version are tabulated in [this]({{< relref "../../concepts/support-versions/#kubernetes-versions" >}}) section.
+
+[Known issue related to Kubernetes versions whose minor version is a multiple of 10]({{< relref "../../troubleshooting/troubleshooting/#error-unable-to-get-cluster-config-from-file-kubernetes-version-13-is-not-supported-by-bundles-manifest-" >}})
+
+Must be less than or equal to the cluster `kubernetesVersion` defined at the root level of the cluster spec. The worker node Kubernetes version must be no more than two minor Kubernetes versions lower than the cluster control plane's Kubernetes version. Removing `workerNodeGroupConfiguration.kubernetesVersion` will trigger an upgrade of the node group to the `kubernetesVersion` defined at the root level of the cluster spec.
+
+[Known issue related to Kubernetes versions whose minor version is a multiple of 10]({{< relref "../../troubleshooting/troubleshooting/#error-unable-to-get-cluster-config-from-file-kubernetes-version-13-is-not-supported-by-bundles-manifest-" >}})
 
 ## CloudStackDatacenterConfig
 
