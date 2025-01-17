@@ -37,18 +37,18 @@ spec:
         arch:
         - amd64
         description: Container image for bottlerocket-admin image
-        imageDigest: sha256:a018f71d46e2a5d029d9a82badbb2aea63dab47e9228cfb93145e8dcdac22c95
+        imageDigest: sha256:c266104f992109f3c5a12e1d5645eda39f5fb1724c644d59c345b0f838d08798
         name: bottlerocket-admin
         os: linux
-        uri: public.ecr.aws/bottlerocket/bottlerocket-admin:v0.11.14
+        uri: public.ecr.aws/bottlerocket/bottlerocket-admin:v0.11.15
       control:
         arch:
         - amd64
         description: Container image for bottlerocket-control image
-        imageDigest: sha256:3c42eaa7e4598558ff832754634c55a98c510824dfc00b23fb51e744f5e4aa2c
+        imageDigest: sha256:3448cdbfc17d6da04270f7f530e4855030614a5ddef5855de22fcb087c1c5ac7
         name: bottlerocket-control
         os: linux
-        uri: public.ecr.aws/bottlerocket/bottlerocket-control:v0.7.18
+        uri: public.ecr.aws/bottlerocket/bottlerocket-control:v0.7.19
       kubeadmBootstrap:
         arch:
         - amd64
@@ -629,7 +629,7 @@ spec:
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: boots
           os: linux
-          uri: public.ecr.aws/release-container-registry/tinkerbell/boots:v0.15.1-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/boots:v0.15.2-eks-a-v0.0.0-dev-build.1
         hegel:
           arch:
           - amd64
@@ -697,7 +697,7 @@ spec:
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: rufio
           os: linux
-          uri: public.ecr.aws/release-container-registry/tinkerbell/rufio:v0.6.2-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/rufio:v0.6.3-eks-a-v0.0.0-dev-build.1
         stack:
           description: Helm chart for stack
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
@@ -852,18 +852,18 @@ spec:
         arch:
         - amd64
         description: Container image for bottlerocket-admin image
-        imageDigest: sha256:a018f71d46e2a5d029d9a82badbb2aea63dab47e9228cfb93145e8dcdac22c95
+        imageDigest: sha256:c266104f992109f3c5a12e1d5645eda39f5fb1724c644d59c345b0f838d08798
         name: bottlerocket-admin
         os: linux
-        uri: public.ecr.aws/bottlerocket/bottlerocket-admin:v0.11.14
+        uri: public.ecr.aws/bottlerocket/bottlerocket-admin:v0.11.15
       control:
         arch:
         - amd64
         description: Container image for bottlerocket-control image
-        imageDigest: sha256:3c42eaa7e4598558ff832754634c55a98c510824dfc00b23fb51e744f5e4aa2c
+        imageDigest: sha256:3448cdbfc17d6da04270f7f530e4855030614a5ddef5855de22fcb087c1c5ac7
         name: bottlerocket-control
         os: linux
-        uri: public.ecr.aws/bottlerocket/bottlerocket-control:v0.7.18
+        uri: public.ecr.aws/bottlerocket/bottlerocket-control:v0.7.19
       kubeadmBootstrap:
         arch:
         - amd64
@@ -1445,7 +1445,7 @@ spec:
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: boots
           os: linux
-          uri: public.ecr.aws/release-container-registry/tinkerbell/boots:v0.15.1-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/boots:v0.15.2-eks-a-v0.0.0-dev-build.1
         hegel:
           arch:
           - amd64
@@ -1513,7 +1513,7 @@ spec:
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: rufio
           os: linux
-          uri: public.ecr.aws/release-container-registry/tinkerbell/rufio:v0.6.2-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/rufio:v0.6.3-eks-a-v0.0.0-dev-build.1
         stack:
           description: Helm chart for stack
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
@@ -1668,18 +1668,18 @@ spec:
         arch:
         - amd64
         description: Container image for bottlerocket-admin image
-        imageDigest: sha256:a018f71d46e2a5d029d9a82badbb2aea63dab47e9228cfb93145e8dcdac22c95
+        imageDigest: sha256:c266104f992109f3c5a12e1d5645eda39f5fb1724c644d59c345b0f838d08798
         name: bottlerocket-admin
         os: linux
-        uri: public.ecr.aws/bottlerocket/bottlerocket-admin:v0.11.14
+        uri: public.ecr.aws/bottlerocket/bottlerocket-admin:v0.11.15
       control:
         arch:
         - amd64
         description: Container image for bottlerocket-control image
-        imageDigest: sha256:3c42eaa7e4598558ff832754634c55a98c510824dfc00b23fb51e744f5e4aa2c
+        imageDigest: sha256:3448cdbfc17d6da04270f7f530e4855030614a5ddef5855de22fcb087c1c5ac7
         name: bottlerocket-control
         os: linux
-        uri: public.ecr.aws/bottlerocket/bottlerocket-control:v0.7.18
+        uri: public.ecr.aws/bottlerocket/bottlerocket-control:v0.7.19
       kubeadmBootstrap:
         arch:
         - amd64
@@ -2261,7 +2261,7 @@ spec:
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: boots
           os: linux
-          uri: public.ecr.aws/release-container-registry/tinkerbell/boots:v0.15.1-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/boots:v0.15.2-eks-a-v0.0.0-dev-build.1
         hegel:
           arch:
           - amd64
@@ -2329,7 +2329,7 @@ spec:
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: rufio
           os: linux
-          uri: public.ecr.aws/release-container-registry/tinkerbell/rufio:v0.6.2-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/rufio:v0.6.3-eks-a-v0.0.0-dev-build.1
         stack:
           description: Helm chart for stack
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
@@ -2484,18 +2484,18 @@ spec:
         arch:
         - amd64
         description: Container image for bottlerocket-admin image
-        imageDigest: sha256:a018f71d46e2a5d029d9a82badbb2aea63dab47e9228cfb93145e8dcdac22c95
+        imageDigest: sha256:c266104f992109f3c5a12e1d5645eda39f5fb1724c644d59c345b0f838d08798
         name: bottlerocket-admin
         os: linux
-        uri: public.ecr.aws/bottlerocket/bottlerocket-admin:v0.11.14
+        uri: public.ecr.aws/bottlerocket/bottlerocket-admin:v0.11.15
       control:
         arch:
         - amd64
         description: Container image for bottlerocket-control image
-        imageDigest: sha256:3c42eaa7e4598558ff832754634c55a98c510824dfc00b23fb51e744f5e4aa2c
+        imageDigest: sha256:3448cdbfc17d6da04270f7f530e4855030614a5ddef5855de22fcb087c1c5ac7
         name: bottlerocket-control
         os: linux
-        uri: public.ecr.aws/bottlerocket/bottlerocket-control:v0.7.18
+        uri: public.ecr.aws/bottlerocket/bottlerocket-control:v0.7.19
       kubeadmBootstrap:
         arch:
         - amd64
@@ -3077,7 +3077,7 @@ spec:
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: boots
           os: linux
-          uri: public.ecr.aws/release-container-registry/tinkerbell/boots:v0.15.1-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/boots:v0.15.2-eks-a-v0.0.0-dev-build.1
         hegel:
           arch:
           - amd64
@@ -3145,7 +3145,7 @@ spec:
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: rufio
           os: linux
-          uri: public.ecr.aws/release-container-registry/tinkerbell/rufio:v0.6.2-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/rufio:v0.6.3-eks-a-v0.0.0-dev-build.1
         stack:
           description: Helm chart for stack
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
@@ -3300,18 +3300,18 @@ spec:
         arch:
         - amd64
         description: Container image for bottlerocket-admin image
-        imageDigest: sha256:a018f71d46e2a5d029d9a82badbb2aea63dab47e9228cfb93145e8dcdac22c95
+        imageDigest: sha256:c266104f992109f3c5a12e1d5645eda39f5fb1724c644d59c345b0f838d08798
         name: bottlerocket-admin
         os: linux
-        uri: public.ecr.aws/bottlerocket/bottlerocket-admin:v0.11.14
+        uri: public.ecr.aws/bottlerocket/bottlerocket-admin:v0.11.15
       control:
         arch:
         - amd64
         description: Container image for bottlerocket-control image
-        imageDigest: sha256:3c42eaa7e4598558ff832754634c55a98c510824dfc00b23fb51e744f5e4aa2c
+        imageDigest: sha256:3448cdbfc17d6da04270f7f530e4855030614a5ddef5855de22fcb087c1c5ac7
         name: bottlerocket-control
         os: linux
-        uri: public.ecr.aws/bottlerocket/bottlerocket-control:v0.7.18
+        uri: public.ecr.aws/bottlerocket/bottlerocket-control:v0.7.19
       kubeadmBootstrap:
         arch:
         - amd64
@@ -3893,7 +3893,7 @@ spec:
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: boots
           os: linux
-          uri: public.ecr.aws/release-container-registry/tinkerbell/boots:v0.15.1-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/boots:v0.15.2-eks-a-v0.0.0-dev-build.1
         hegel:
           arch:
           - amd64
@@ -3961,7 +3961,7 @@ spec:
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: rufio
           os: linux
-          uri: public.ecr.aws/release-container-registry/tinkerbell/rufio:v0.6.2-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/rufio:v0.6.3-eks-a-v0.0.0-dev-build.1
         stack:
           description: Helm chart for stack
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
@@ -4116,18 +4116,18 @@ spec:
         arch:
         - amd64
         description: Container image for bottlerocket-admin image
-        imageDigest: sha256:a018f71d46e2a5d029d9a82badbb2aea63dab47e9228cfb93145e8dcdac22c95
+        imageDigest: sha256:c266104f992109f3c5a12e1d5645eda39f5fb1724c644d59c345b0f838d08798
         name: bottlerocket-admin
         os: linux
-        uri: public.ecr.aws/bottlerocket/bottlerocket-admin:v0.11.14
+        uri: public.ecr.aws/bottlerocket/bottlerocket-admin:v0.11.15
       control:
         arch:
         - amd64
         description: Container image for bottlerocket-control image
-        imageDigest: sha256:3c42eaa7e4598558ff832754634c55a98c510824dfc00b23fb51e744f5e4aa2c
+        imageDigest: sha256:3448cdbfc17d6da04270f7f530e4855030614a5ddef5855de22fcb087c1c5ac7
         name: bottlerocket-control
         os: linux
-        uri: public.ecr.aws/bottlerocket/bottlerocket-control:v0.7.18
+        uri: public.ecr.aws/bottlerocket/bottlerocket-control:v0.7.19
       kubeadmBootstrap:
         arch:
         - amd64
@@ -4709,7 +4709,7 @@ spec:
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: boots
           os: linux
-          uri: public.ecr.aws/release-container-registry/tinkerbell/boots:v0.15.1-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/boots:v0.15.2-eks-a-v0.0.0-dev-build.1
         hegel:
           arch:
           - amd64
@@ -4777,7 +4777,7 @@ spec:
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: rufio
           os: linux
-          uri: public.ecr.aws/release-container-registry/tinkerbell/rufio:v0.6.2-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/rufio:v0.6.3-eks-a-v0.0.0-dev-build.1
         stack:
           description: Helm chart for stack
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
@@ -4899,7 +4899,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cloud-provider-vsphere
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes/cloud-provider-vsphere/cpi/manager:v1.32.1-eks-d-1-32-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes/cloud-provider-vsphere/cpi/manager:v1.32.2-eks-d-1-32-eks-a-v0.0.0-dev-build.1
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.11.3/metadata.yaml
       version: v1.11.3+abcdef1
