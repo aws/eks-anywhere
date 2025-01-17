@@ -265,7 +265,9 @@ type kindObject struct {
 // ParseClusterConfigFromContent unmarshalls an API object implementing the KindAccessor interface
 // from a multiobject yaml content. It doesn't set defaults nor validates the object.
 func ParseClusterConfigFromContent(content []byte, clusterConfig KindAccessor) error {
-	r := yamlutil.NewYAMLReader(bufio.NewReader(bytes.NewReader(content)))
+	normalizedConfig := NormalizeKubernetesVersion(string(content))
+
+	r := yamlutil.NewYAMLReader(bufio.NewReader(bytes.NewReader([]byte(normalizedConfig))))
 	for {
 		d, err := r.Read()
 		if err == io.EOF {
@@ -408,6 +410,17 @@ func ValidateClusterNameLength(clusterName string) error {
 		return fmt.Errorf("number of characters in %v should be less than 36", clusterName)
 	}
 	return nil
+}
+
+// NormalizeKubernetesVersion searches the YAML content for the specific string
+// `kubernetesVersion: <>` and adds double quotes around the version so that it
+// is always interpreted as a string instead of a float64 value.
+// Ref: https://github.com/aws/eks-anywhere/issues/9184
+func NormalizeKubernetesVersion(yamlContent string) string {
+	kubernetesVersionRegex := `(?m)(.*kubernetesVersion:\s*)['"]?(1\.[0-9]{2,})['"]?(.*)$`
+	quotedKubernetesVersionReplacement := `${1}"${2}"${3}`
+	compiledKubernetesVersionRegex := regexp.MustCompile(kubernetesVersionRegex)
+	return compiledKubernetesVersionRegex.ReplaceAllString(yamlContent, quotedKubernetesVersionReplacement)
 }
 
 func validateClusterConfigName(clusterConfig *Cluster) error {

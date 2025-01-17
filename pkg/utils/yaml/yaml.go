@@ -1,12 +1,9 @@
 package yaml
 
 import (
-	"bufio"
 	"bytes"
 	"fmt"
-	"io"
 
-	apiyaml "k8s.io/apimachinery/pkg/util/yaml"
 	"sigs.k8s.io/yaml"
 )
 
@@ -27,24 +24,4 @@ func Serialize[T any](objs ...T) ([][]byte, error) {
 		r = append(r, b)
 	}
 	return r, nil
-}
-
-// SplitDocuments function splits content into individual document parts represented as byte slices.
-func SplitDocuments(r io.Reader) ([][]byte, error) {
-	resources := make([][]byte, 0)
-
-	yr := apiyaml.NewYAMLReader(bufio.NewReader(r))
-	for {
-		d, err := yr.Read()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			return nil, err
-		}
-
-		resources = append(resources, d)
-	}
-
-	return resources, nil
 }
