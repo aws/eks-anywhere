@@ -10,6 +10,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	apiyaml "k8s.io/apimachinery/pkg/util/yaml"
 	"sigs.k8s.io/yaml"
+
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 )
 
 type (
@@ -95,7 +97,8 @@ type Builder interface {
 // Parse reads yaml manifest content with the registered mappings and passes
 // the result to the Builder for further processing.
 func (p *Parser) Parse(yamlManifest []byte, b Builder) error {
-	return p.Read(bytes.NewReader(yamlManifest), b)
+	normalizedYamlManifest := v1alpha1.NormalizeKubernetesVersion(string(yamlManifest))
+	return p.Read(bytes.NewReader([]byte(normalizedYamlManifest)), b)
 }
 
 // Read reads yaml manifest content with the registered mappings and passes

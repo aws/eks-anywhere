@@ -21,7 +21,7 @@ spec:
   datacenterRef:
     kind: CloudStackDatacenterConfig
     name: eksa-unit-test
-  kubernetesVersion: "1.20"
+  kubernetesVersion: 1.20
   workerNodeGroupConfigurations:
     - count: 3
       machineGroupRef:
