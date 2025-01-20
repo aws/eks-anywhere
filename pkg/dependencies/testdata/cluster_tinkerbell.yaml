@@ -22,7 +22,7 @@ spec:
   datacenterRef:
     kind: TinkerbellDatacenterConfig
     name: eksa-unit-test
-  kubernetesVersion: "1.20"
+  kubernetesVersion: 1.20
   managementCluster:
     name: eksa-unit-test
   workerNodeGroupConfigurations:

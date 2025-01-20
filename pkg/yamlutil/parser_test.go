@@ -45,6 +45,7 @@ func TestParserParse(t *testing.T) {
 apiVersion: v1
 data:
   Corefile: "d"
+  kubernetesVersion: 1.30
 kind: ConfigMap
 metadata:
   name: aws-iam-authenticator 
@@ -77,6 +78,7 @@ data:
 	g.Expect(parser.Parse([]byte(yaml), holder)).To(Succeed())
 	g.Expect(holder).NotTo(BeNil())
 	g.Expect(holder.configMap.Data).To(HaveKeyWithValue("Corefile", "d"))
+	g.Expect(holder.configMap.Data).To(HaveKeyWithValue("kubernetesVersion", "1.30"))
 	g.Expect(holder.secret.Data["username"]).To(Equal([]byte("admin")))
 }
 

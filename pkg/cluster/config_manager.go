@@ -122,9 +122,9 @@ func (c *ConfigManager) unmarshal(yamlManifest []byte) (*parsed, error) {
 	yamlObjs := separatorRegex.Split(string(yamlManifest), -1)
 
 	for _, yamlObj := range yamlObjs {
-		trimmedYamlObj := strings.TrimSuffix(yamlObj, "\n")
+		normalizedYamlObj := anywherev1.NormalizeKubernetesVersion(strings.TrimSuffix(yamlObj, "\n"))
 		k := &basicAPIObject{}
-		err := yaml.Unmarshal([]byte(trimmedYamlObj), k)
+		err := yaml.Unmarshal([]byte(normalizedYamlObj), k)
 		if err != nil {
 			return nil, err
 		}
@@ -154,7 +154,7 @@ func (c *ConfigManager) unmarshal(yamlManifest []byte) (*parsed, error) {
 			continue
 		}
 
-		if err := yaml.Unmarshal([]byte(trimmedYamlObj), obj); err != nil {
+		if err := yaml.Unmarshal([]byte(normalizedYamlObj), obj); err != nil {
 			return nil, err
 		}
 		parsed.objects.add(obj)

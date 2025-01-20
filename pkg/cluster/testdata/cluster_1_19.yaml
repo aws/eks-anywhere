@@ -30,7 +30,7 @@ spec:
         kind: VSphereMachineConfig
         name: eksa-unit-test
     - name: workers-2
-      kubernetesVersion: "1.20"
+      kubernetesVersion: 1.20
       count: 1
       machineGroupRef:
         kind: VSphereMachineConfig

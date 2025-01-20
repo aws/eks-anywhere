@@ -4,7 +4,7 @@ metadata:
   name: eksa-unit-test
   namespace: default
 spec:
-  kubernetesVersion: "1.20"
+  kubernetesVersion: 1.20
   controlPlaneConfiguration:
     name: eksa-unit-test-cp
     count: 3

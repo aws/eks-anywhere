@@ -31,7 +31,7 @@ spec:
   workerNodeGroupConfigurations:
   - count: 3
     name: md-0
-    kubernetesVersion: "1.20"
+    kubernetesVersion: 1.20
     machineGroupRef:
       kind: CloudStackMachineConfig
       name: test-md-0

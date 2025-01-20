@@ -18,11 +18,11 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
+	"slices"
 	"strconv"
 
 	"github.com/pkg/errors"
 	"golang.org/x/sync/errgroup"
-	"slices"
 
 	"github.com/aws/eks-anywhere/release/cli/pkg/assets/archives"
 	assetconfig "github.com/aws/eks-anywhere/release/cli/pkg/assets/config"
