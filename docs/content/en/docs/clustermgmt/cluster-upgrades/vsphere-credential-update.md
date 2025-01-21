@@ -12,6 +12,10 @@ Currently EKS Anywhere does not support updating vSphere credential when upgradi
     - `vsphere-credentials` under `eksa-system` namespace - Update `password`, `passwordCP`, `passwordCSI` field under data.
     - If annotation `kubectl.kubernetes.io/last-applied-configuration` exists on any of the above Secret object, update password in `kubectl.kubernetes.io/last-applied-configuration` field.
     -  `{CLUSTER_NAME}-csi-vsphere-config` under `eksa-system` namespace - If annotation `kubectl.kubernetes.io/last-applied-configuration` exists on the secret object, update password in `kubectl.kubernetes.io/last-applied-configuration` field.
+- Alternatively you can use the vSphere credential update script `update_vsphere_creds.sh` to update vSphere credential.
+```bash
+./update_vsphere_creds.sh CLUSTER_NAME VSPHERE_SERVER_NAME
+```
 
 2. Only update Secret `vsphere-credentials` under `eksa-system` namespace then trigger a full EKS-A CAPI cluster upgrade by modifying the cluster spec:
 - Update `EKSA_VSPHERE_PASSWORD` environment variable to the new password and get the base64 encoded string of the password using `echo -n "<YOUR_PASSWORD>" | base64`
