@@ -17,11 +17,9 @@ package v1alpha1
 import "strings"
 
 type Image struct {
-	// +kubebuilder:validation:Required
 	// The asset name
 	Name string `json:"name,omitempty"`
 
-	// +kubebuilder:validation:Required
 	Description string `json:"description,omitempty"`
 
 	// +kubebuilder:validation:Enum=linux;darwin;windows
@@ -117,11 +115,9 @@ func (i *Image) Version() string {
 }
 
 type Archive struct {
-	// +kubebuilder:validation:Required
 	// The asset name
 	Name string `json:"name,omitempty"`
 
-	// +kubebuilder:validation:Required
 	Description string `json:"description,omitempty"`
 
 	// +kubebuilder:validation:Enum=linux;darwin;windows
@@ -135,19 +131,17 @@ type Archive struct {
 	// Architectures of the asset
 	Arch []string `json:"arch,omitempty"`
 
-	// +kubebuilder:validation:Required
 	// The URI where the asset is located
 	URI string `json:"uri,omitempty"`
-	// +kubebuilder:validation:Required
+
 	// The sha512 of the asset, only applies for 'file' store
 	SHA512 string `json:"sha512,omitempty"`
-	// +kubebuilder:validation:Required
+
 	// The sha256 of the asset, only applies for 'file' store
 	SHA256 string `json:"sha256,omitempty"`
 }
 
 type Manifest struct {
-	// +kubebuilder:validation:Required
 	// URI points to the manifest yaml file
 	URI string `json:"uri,omitempty"`
 }
