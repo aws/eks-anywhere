@@ -35,7 +35,7 @@ spec:
     name: test
   workerNodeGroupConfigurations:
   - count: 1
-    kubernetesVersion: "1.20"
+    kubernetesVersion: 1.20
     name: md-0
     machineGroupRef:
       name: test-md
