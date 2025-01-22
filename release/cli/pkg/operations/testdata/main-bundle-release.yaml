@@ -4407,7 +4407,7 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/eks-anywhere-diagnostic-collector:v0.21.4-eks-a-v0.0.0-dev-build.1
       version: v0.0.0-dev+build.0+abcdef1
-    endOfStandardSupport: "2026-4-30"
+    endOfStandardSupport: "2026-04-30"
     etcdadmBootstrap:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-bootstrap-provider/manifests/bootstrap-etcdadm-bootstrap/v1.0.15/bootstrap-components.yaml
