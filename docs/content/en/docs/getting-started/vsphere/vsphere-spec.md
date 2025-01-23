@@ -197,8 +197,6 @@ The Kubernetes version you want to use for this worker node group. The Kubernete
 
 Must be less than or equal to the cluster `kubernetesVersion` defined at the root level of the cluster spec. The worker node Kubernetes version must be no more than two minor Kubernetes versions lower than the cluster control plane's Kubernetes version. Removing `workerNodeGroupConfiguration.kubernetesVersion` will trigger an upgrade of the node group to the `kubernetesVersion` defined at the root level of the cluster spec.
 
-[Known issue related to Kubernetes versions whose minor version is a multiple of 10]({{< relref "../../troubleshooting/troubleshooting/#error-unable-to-get-cluster-config-from-file-kubernetes-version-13-is-not-supported-by-bundles-manifest-" >}})
-
 ### externalEtcdConfiguration.count (optional)
 Number of etcd members
 
