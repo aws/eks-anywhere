@@ -234,15 +234,15 @@ func SignBundleManifest(ctx context.Context, bundle *anywherev1alpha1.Bundles) e
 	if bundle.Annotations == nil {
 		bundle.Annotations = make(map[string]string, 1)
 	}
-	bundle.Annotations[sig.ExcludesAnnotation] = sig.Excludes
+	bundle.Annotations[constants.ExcludesAnnotation] = constants.Excludes
 
-	fmt.Printf("Generating bundle signature with key: %s\n", sig.KmsKey)
+	fmt.Printf("Generating bundle signature with key: %s\n", constants.KmsKey)
 
-	signature, err := sig.GetBundleSignature(ctx, bundle, sig.KmsKey)
+	signature, err := sig.GetBundleSignature(ctx, bundle, constants.KmsKey)
 	if err != nil {
 		return err
 	}
-	bundle.Annotations[sig.SignatureAnnotation] = signature
+	bundle.Annotations[constants.SignatureAnnotation] = signature
 
 	fmt.Printf("%s Successfully signed bundle manifest\n", constants.SuccessIcon)
 	return nil

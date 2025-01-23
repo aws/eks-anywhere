@@ -25,31 +25,15 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/kms"
 	"github.com/aws/aws-sdk-go-v2/service/kms/types"
 	"github.com/itchyny/gojq"
 	"sigs.k8s.io/yaml"
 
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
+	"github.com/aws/eks-anywhere/release/cli/pkg/clients"
+	"github.com/aws/eks-anywhere/release/cli/pkg/constants"
 )
-
-// Default region used to create KMS client
-const defaultRegion = "us-west-2"
-
-// KMS key alias
-const KmsKey = "arn:aws:kms:us-west-2:857151390494:alias/signingEKSABundlesKey"
-
-// Annotations applied to the bundle during bundle manifest signing
-const (
-	SignatureAnnotation = "anywhere.eks.amazonaws.com/signature"
-	ExcludesAnnotation  = "anywhere.eks.amazonaws.com/excludes"
-)
-
-// Excludes is a base64-encoded, newline-delimited list of JSON/YAML paths to remove
-// from the Bundles manifest prior to computing the digest. You can add or remove
-// fields depending on your signing requirements.
-const Excludes = "LnNwZWMudmVyc2lvbnNCdW5kbGVzW10uYm9vdHN0cmFwCi5zcGVjLnZlcnNpb25zQnVuZGxlc1tdLmJvdHRsZXJvY2tldEhvc3RDb250YWluZXJzCi5zcGVjLnZlcnNpb25zQnVuZGxlc1tdLmNlcnRNYW5hZ2VyCi5zcGVjLnZlcnNpb25zQnVuZGxlc1tdLmNpbGl1bQouc3BlYy52ZXJzaW9uc0J1bmRsZXNbXS5jbG91ZFN0YWNrCi5zcGVjLnZlcnNpb25zQnVuZGxlc1tdLmNsdXN0ZXJBUEkKLnNwZWMudmVyc2lvbnNCdW5kbGVzW10uY29udHJvbFBsYW5lCi5zcGVjLnZlcnNpb25zQnVuZGxlc1tdLmRvY2tlcgouc3BlYy52ZXJzaW9uc0J1bmRsZXNbXS5la3NhCi5zcGVjLnZlcnNpb25zQnVuZGxlc1tdLmV0Y2RhZG1Cb290c3RyYXAKLnNwZWMudmVyc2lvbnNCdW5kbGVzW10uZXRjZGFkbUNvbnRyb2xsZXIKLnNwZWMudmVyc2lvbnNCdW5kbGVzW10uZmx1eAouc3BlYy52ZXJzaW9uc0J1bmRsZXNbXS5oYXByb3h5Ci5zcGVjLnZlcnNpb25zQnVuZGxlc1tdLmtpbmRuZXRkCi5zcGVjLnZlcnNpb25zQnVuZGxlc1tdLm51dGFuaXgKLnNwZWMudmVyc2lvbnNCdW5kbGVzW10ucGFja2FnZUNvbnRyb2xsZXIKLnNwZWMudmVyc2lvbnNCdW5kbGVzW10uc25vdwouc3BlYy52ZXJzaW9uc0J1bmRsZXNbXS50aW5rZXJiZWxsCi5zcGVjLnZlcnNpb25zQnVuZGxlc1tdLnVwZ3JhZGVyCi5zcGVjLnZlcnNpb25zQnVuZGxlc1tdLnZTcGhlcmU="
 
 // AlwaysExcluded are fields we always exclude from signature generation.
 var AlwaysExcluded = []string{
@@ -81,11 +65,11 @@ func GetBundleSignature(ctx context.Context, bundle *anywherev1alpha1.Bundles, k
 		return "", fmt.Errorf("computing digest: %v", err)
 	}
 
-	conf, err := config.LoadDefaultConfig(ctx, config.WithRegion(defaultRegion))
+	// Create KMS Client for bundle manifest signing
+	kmsClient, err := clients.CreateKMSClient(ctx)
 	if err != nil {
-		return "", fmt.Errorf("loading AWS config in region %q: %v", defaultRegion, err)
+		return "", fmt.Errorf("creating kms client: %v", err)
 	}
-	client := kms.NewFromConfig(conf)
 
 	// The KMS service expects you to send the raw hash in the `Message` field
 	// when using `MessageType: DIGEST`.
@@ -95,7 +79,7 @@ func GetBundleSignature(ctx context.Context, bundle *anywherev1alpha1.Bundles, k
 		MessageType:      types.MessageTypeDigest,
 		SigningAlgorithm: types.SigningAlgorithmSpecEcdsaSha256,
 	}
-	out, err := client.Sign(ctx, input)
+	out, err := kmsClient.Sign(ctx, input)
 	if err != nil {
 		return "", fmt.Errorf("signing bundle with KMS Sign API: %v", err)
 	}
@@ -138,7 +122,7 @@ func getDigest(bundle *anywherev1alpha1.Bundles) ([32]byte, []byte, error) {
 // representation of the Bundles object using gojq.
 func filterExcludes(jsonBytes []byte) ([]byte, error) {
 	// Decode the base64-encoded excludes
-	exclBytes, err := base64.StdEncoding.DecodeString(Excludes)
+	exclBytes, err := base64.StdEncoding.DecodeString(constants.Excludes)
 	if err != nil {
 		return nil, fmt.Errorf("decoding Excludes: %v", err)
 	}
