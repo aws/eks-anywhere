@@ -54,6 +54,21 @@ const (
 	// (January 2, 15:04:05, 2006, in time zone seven hours west of GMT).
 	YYYYMMDD = "2006-01-02"
 
-	MAX_IMAGES_PER_REPOSITORY = 10000
-	MAX_TAGS_PER_IMAGE        = 1000
+	MaxImagesPerRepository = 10000
+	MaxTagsPerImage        = 1000
+
+	// Default region used to create KMS client
+	DefaultRegion = "us-west-2"
+
+	// KMS key alias
+	KmsKey = "arn:aws:kms:us-west-2:857151390494:alias/signingEKSABundlesKey"
+
+	// Annotations applied to the bundle during bundle manifest signing
+	SignatureAnnotation = "anywhere.eks.amazonaws.com/signature"
+	ExcludesAnnotation  = "anywhere.eks.amazonaws.com/excludes"
+
+	// Excludes is a base64-encoded, newline-delimited list of JSON/YAML paths to remove
+	// from the Bundles manifest prior to computing the digest. You can add or remove
+	// fields depending on your signing requirements.
+	Excludes = "LnNwZWMudmVyc2lvbnNCdW5kbGVzW10uYm9vdHN0cmFwCi5zcGVjLnZlcnNpb25zQnVuZGxlc1tdLmJvdHRsZXJvY2tldEhvc3RDb250YWluZXJzCi5zcGVjLnZlcnNpb25zQnVuZGxlc1tdLmNlcnRNYW5hZ2VyCi5zcGVjLnZlcnNpb25zQnVuZGxlc1tdLmNpbGl1bQouc3BlYy52ZXJzaW9uc0J1bmRsZXNbXS5jbG91ZFN0YWNrCi5zcGVjLnZlcnNpb25zQnVuZGxlc1tdLmNsdXN0ZXJBUEkKLnNwZWMudmVyc2lvbnNCdW5kbGVzW10uY29udHJvbFBsYW5lCi5zcGVjLnZlcnNpb25zQnVuZGxlc1tdLmRvY2tlcgouc3BlYy52ZXJzaW9uc0J1bmRsZXNbXS5la3NhCi5zcGVjLnZlcnNpb25zQnVuZGxlc1tdLmV0Y2RhZG1Cb290c3RyYXAKLnNwZWMudmVyc2lvbnNCdW5kbGVzW10uZXRjZGFkbUNvbnRyb2xsZXIKLnNwZWMudmVyc2lvbnNCdW5kbGVzW10uZmx1eAouc3BlYy52ZXJzaW9uc0J1bmRsZXNbXS5oYXByb3h5Ci5zcGVjLnZlcnNpb25zQnVuZGxlc1tdLmtpbmRuZXRkCi5zcGVjLnZlcnNpb25zQnVuZGxlc1tdLm51dGFuaXgKLnNwZWMudmVyc2lvbnNCdW5kbGVzW10ucGFja2FnZUNvbnRyb2xsZXIKLnNwZWMudmVyc2lvbnNCdW5kbGVzW10uc25vdwouc3BlYy52ZXJzaW9uc0J1bmRsZXNbXS50aW5rZXJiZWxsCi5zcGVjLnZlcnNpb25zQnVuZGxlc1tdLnVwZ3JhZGVyCi5zcGVjLnZlcnNpb25zQnVuZGxlc1tdLnZTcGhlcmU="
 )
