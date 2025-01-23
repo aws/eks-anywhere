@@ -8,7 +8,7 @@ import (
 // EKSAReleaseKind is the Kind of EKSARelease.
 const EKSAReleaseKind = "EKSARelease"
 
-// Generates the naming convention of EKSARelease from a version.
+// GenerateEKSAReleaseName generates the naming convention of EKSARelease from a version.
 func GenerateEKSAReleaseName(version string) string {
 	version = strings.ReplaceAll(version, "+", "-plus-")
 	return fmt.Sprintf("eksa-%s", strings.ReplaceAll(version, ".", "-"))

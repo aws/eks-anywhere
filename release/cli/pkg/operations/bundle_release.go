@@ -30,6 +30,7 @@ import (
 	"github.com/aws/eks-anywhere/release/cli/pkg/constants"
 	"github.com/aws/eks-anywhere/release/cli/pkg/filereader"
 	"github.com/aws/eks-anywhere/release/cli/pkg/images"
+	sig "github.com/aws/eks-anywhere/release/cli/pkg/signature"
 	releasetypes "github.com/aws/eks-anywhere/release/cli/pkg/types"
 	artifactutils "github.com/aws/eks-anywhere/release/cli/pkg/util/artifacts"
 	commandutils "github.com/aws/eks-anywhere/release/cli/pkg/util/command"
@@ -219,6 +220,31 @@ func GenerateBundleSpec(r *releasetypes.ReleaseConfig, bundle *anywherev1alpha1.
 	bundle.Spec.VersionsBundles = versionsBundles
 
 	fmt.Printf("%s Successfully generated bundle manifest spec\n", constants.SuccessIcon)
+	return nil
+}
+
+// SignBundleManifest is the top-level function that computes the Bundles
+// manifest signature using AWS KMS and attaches that signature as an
+// annotation on the Bundles object.
+func SignBundleManifest(ctx context.Context, bundle *anywherev1alpha1.Bundles) error {
+	fmt.Println("\n==========================================================")
+	fmt.Println("               Bundles Manifest Signing")
+	fmt.Println("==========================================================")
+
+	if bundle.Annotations == nil {
+		bundle.Annotations = make(map[string]string, 1)
+	}
+	bundle.Annotations[constants.ExcludesAnnotation] = constants.Excludes
+
+	fmt.Printf("Generating bundle signature with key: %s\n", constants.KmsKey)
+
+	signature, err := sig.GetBundleSignature(ctx, bundle, constants.KmsKey)
+	if err != nil {
+		return err
+	}
+	bundle.Annotations[constants.SignatureAnnotation] = signature
+
+	fmt.Printf("%s Successfully signed bundle manifest\n", constants.SuccessIcon)
 	return nil
 }
 

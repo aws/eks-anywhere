@@ -1,12 +1,6 @@
 run:
   timeout: 5m
-  skip-files:
-    - "zz_generated.*\\.go$"
-  skip-dirs:
-    - ".*/mocks"
-    - "manager/tilt_modules"
-    - "internal/aws-sdk-go-v2"
-    - "pkg/providers/snow/api/v1beta1"
+
 linters:
   enable:
     - gofumpt
@@ -15,6 +9,7 @@ linters:
     - nakedret
     - gocyclo
     - revive
+
 linters-settings:
   gci:
     sections:
@@ -34,9 +29,20 @@ linters-settings:
   gocyclo:
     # Minimal code complexity to report.
     min-complexity: 10
+
 issues:
   max-same-issues: 0
   max-issues-per-linter: 0
+
+  exclude-files:
+    - "zz_generated.*\\.go$"
+
+  exclude-dirs:
+    - ".*/mocks"
+    - "manager/tilt_modules"
+    - "internal/aws-sdk-go-v2"
+    - "pkg/providers/snow/api/v1beta1"
+
   include:
     - EXC0012 # EXC0012 revive: exported (.+) should have comment( \(or a comment on this block\))? or be unexported
     - EXC0014 # EXC0014 revive: comment on exported (.+) should be of the form "(.+)..."

@@ -42,6 +42,7 @@ type Bundles struct {
 	Status BundlesStatus `json:"status,omitempty"`
 }
 
+// DefaultEksAToolsImage returns the default EKS Anywhere Tools image.
 func (b *Bundles) DefaultEksAToolsImage() Image {
 	return b.Spec.VersionsBundles[0].Eksa.CliTools
 }
@@ -59,6 +60,7 @@ func init() {
 	SchemeBuilder.Register(&Bundles{}, &BundlesList{})
 }
 
+// VersionsBundle defines the versions of each component for a specific Kubernetes version in the Bundles CRD.
 type VersionsBundle struct {
 	KubeVersion                string                           `json:"kubeVersion"`
 	EndOfStandardSupport       string                           `json:"endOfStandardSupport,omitempty"`
@@ -87,6 +89,7 @@ type VersionsBundle struct {
 	Aws *AwsBundle `json:"aws,omitempty"`
 }
 
+// EksDRelease defines the EKS-D specific release information.
 type EksDRelease struct {
 	// +kubebuilder:validation:Required
 	Name string `json:"name,omitempty"`
@@ -102,7 +105,7 @@ type EksDRelease struct {
 	// +kubebuilder:validation:Required
 	// Url pointing to the EKS-D release manifest using which
 	// assets where created
-	EksDReleaseUrl string `json:"manifestUrl,omitempty"`
+	EksDReleaseUrl string `json:"manifestUrl,omitempty"` //nolint:revive
 
 	// +kubebuilder:validation:Required
 	// Git commit the component is built from, before any patches
@@ -136,21 +139,24 @@ type EksDRelease struct {
 	Containerd Archive `json:"containerd,omitempty"`
 }
 
-// UpgraderBundle is a In-place Kubernetes version upgrader bundle.
+// UpgraderBundle is a bundle for in-place Kubernetes version upgrader images.
 type UpgraderBundle struct {
 	Upgrader Image `json:"upgrader"`
 }
 
+// OSImageBundle defines a set of OS images (e.g., Bottlerocket) for this bundle.
 type OSImageBundle struct {
 	Bottlerocket Archive `json:"bottlerocket,omitempty"`
 }
 
+// BottlerocketHostContainersBundle defines the Bottlerocket host containers used by the bundle.
 type BottlerocketHostContainersBundle struct {
 	Admin            Image `json:"admin"`
 	Control          Image `json:"control"`
 	KubeadmBootstrap Image `json:"kubeadmBootstrap"`
 }
 
+// CertManagerBundle defines the Cert Manager version and images for this bundle.
 type CertManagerBundle struct {
 	Version    string `json:"version,omitempty"`
 	Acmesolver Image  `json:"acmesolver"`
@@ -163,6 +169,7 @@ type CertManagerBundle struct {
 	Manifest        Manifest `json:"manifest"`
 }
 
+// CoreClusterAPI defines the Core Cluster API version and images used in this bundle.
 type CoreClusterAPI struct {
 	Version    string   `json:"version"`
 	Controller Image    `json:"controller"`
@@ -171,6 +178,7 @@ type CoreClusterAPI struct {
 	Metadata   Manifest `json:"metadata"`
 }
 
+// KubeadmBootstrapBundle defines the bootstrap controller images and version for this bundle.
 type KubeadmBootstrapBundle struct {
 	Version    string   `json:"version"`
 	Controller Image    `json:"controller"`
@@ -179,6 +187,7 @@ type KubeadmBootstrapBundle struct {
 	Metadata   Manifest `json:"metadata"`
 }
 
+// KubeadmControlPlaneBundle defines the control plane controller images and version for this bundle.
 type KubeadmControlPlaneBundle struct {
 	Version    string   `json:"version"`
 	Controller Image    `json:"controller"`
@@ -187,6 +196,7 @@ type KubeadmControlPlaneBundle struct {
 	Metadata   Manifest `json:"metadata"`
 }
 
+// AwsBundle defines the AWS-related images and configurations for this bundle.
 type AwsBundle struct {
 	Version         string   `json:"version"`
 	Controller      Image    `json:"controller"`
@@ -196,6 +206,7 @@ type AwsBundle struct {
 	Metadata        Manifest `json:"metadata"`
 }
 
+// VSphereBundle defines the vSphere provider images and version for this bundle.
 type VSphereBundle struct {
 	Version              string   `json:"version"`
 	ClusterAPIController Image    `json:"clusterAPIController"`
@@ -211,6 +222,7 @@ type VSphereBundle struct {
 	Syncer *Image `json:"syncer,omitempty"`
 }
 
+// DockerBundle defines the Docker provider images and version for this bundle.
 type DockerBundle struct {
 	Version         string   `json:"version"`
 	Manager         Image    `json:"manager"`
@@ -220,6 +232,7 @@ type DockerBundle struct {
 	Metadata        Manifest `json:"metadata"`
 }
 
+// CloudStackBundle defines the CloudStack provider images and version for this bundle.
 type CloudStackBundle struct {
 	Version              string   `json:"version"`
 	ClusterAPIController Image    `json:"clusterAPIController"`
@@ -229,6 +242,7 @@ type CloudStackBundle struct {
 	Metadata             Manifest `json:"metadata"`
 }
 
+// CiliumBundle defines the Cilium version and images used for CNI in this bundle.
 type CiliumBundle struct {
 	Version   string   `json:"version,omitempty"`
 	Cilium    Image    `json:"cilium"`
@@ -237,11 +251,13 @@ type CiliumBundle struct {
 	HelmChart Image    `json:"helmChart,omitempty"`
 }
 
+// KindnetdBundle defines the Kindnetd version and manifest for this bundle.
 type KindnetdBundle struct {
 	Version  string   `json:"version,omitempty"`
 	Manifest Manifest `json:"manifest"`
 }
 
+// FluxBundle defines the Flux components and versions used in this bundle.
 type FluxBundle struct {
 	Version                string `json:"version,omitempty"`
 	SourceController       Image  `json:"sourceController"`
@@ -250,6 +266,7 @@ type FluxBundle struct {
 	NotificationController Image  `json:"notificationController"`
 }
 
+// PackageBundle defines the EKS Anywhere package controller and related images for this bundle.
 type PackageBundle struct {
 	Version                   string `json:"version,omitempty"`
 	Controller                Image  `json:"packageController"`
@@ -258,6 +275,7 @@ type PackageBundle struct {
 	HelmChart                 Image  `json:"helmChart,omitempty"`
 }
 
+// EksaBundle defines EKS Anywhere-specific images and configurations for this bundle.
 type EksaBundle struct {
 	Version             string   `json:"version,omitempty"`
 	CliTools            Image    `json:"cliTools"`
@@ -266,6 +284,7 @@ type EksaBundle struct {
 	Components          Manifest `json:"components"`
 }
 
+// EtcdadmBootstrapBundle defines the bootstrap mechanism for external etcd in this bundle.
 type EtcdadmBootstrapBundle struct {
 	Version    string   `json:"version"`
 	Controller Image    `json:"controller"`
@@ -274,6 +293,7 @@ type EtcdadmBootstrapBundle struct {
 	Metadata   Manifest `json:"metadata"`
 }
 
+// EtcdadmControllerBundle defines the external etcd controller images and version for this bundle.
 type EtcdadmControllerBundle struct {
 	Version    string   `json:"version"`
 	Controller Image    `json:"controller"`
@@ -282,6 +302,7 @@ type EtcdadmControllerBundle struct {
 	Metadata   Manifest `json:"metadata"`
 }
 
+// TinkerbellStackBundle defines the Tinkerbell stack components for provisioning bare metal.
 type TinkerbellStackBundle struct {
 	Actions        ActionsBundle `json:"actions"`
 	Boots          Image         `json:"boots"`
@@ -294,7 +315,7 @@ type TinkerbellStackBundle struct {
 	Stack          Image         `json:"stack"`
 }
 
-// Tinkerbell Template Actions.
+// ActionsBundle defines the Tinkerbell template actions.
 type ActionsBundle struct {
 	Cexec       Image `json:"cexec"`
 	Kexec       Image `json:"kexec"`
@@ -304,6 +325,7 @@ type ActionsBundle struct {
 	Reboot      Image `json:"reboot"`
 }
 
+// TinkBundle defines the images required for Tinkerbell controller and worker processes.
 type TinkBundle struct {
 	TinkRelay      Image `json:"tinkRelay"`
 	TinkRelayInit  Image `json:"tinkRelayInit"`
@@ -313,7 +335,7 @@ type TinkBundle struct {
 	Nginx          Image `json:"nginx"`
 }
 
-// Tinkerbell hook OS.
+// HookBundle defines the Tinkerbell hook OS images used for provisioning.
 type HookBundle struct {
 	Bootkit   Image    `json:"bootkit"`
 	Docker    Image    `json:"docker"`
@@ -322,11 +344,13 @@ type HookBundle struct {
 	Vmlinuz   HookArch `json:"vmlinuz"`
 }
 
+// HookArch defines the Tinkerbell hook architecture-specific artifacts.
 type HookArch struct {
 	Arm Archive `json:"arm"`
 	Amd Archive `json:"amd"`
 }
 
+// TinkerbellBundle defines Tinkerbell provider images and configurations for this bundle.
 type TinkerbellBundle struct {
 	Version              string                `json:"version"`
 	ClusterAPIController Image                 `json:"clusterAPIController"`
@@ -338,10 +362,12 @@ type TinkerbellBundle struct {
 	TinkerbellStack      TinkerbellStackBundle `json:"tinkerbellStack,omitempty"`
 }
 
+// HaproxyBundle defines the HAProxy image used for this bundle.
 type HaproxyBundle struct {
 	Image Image `json:"image"`
 }
 
+// SnowBundle defines the Snow provider images and configurations for this bundle.
 type SnowBundle struct {
 	Version                   string   `json:"version"`
 	Manager                   Image    `json:"manager"`
@@ -351,6 +377,7 @@ type SnowBundle struct {
 	BottlerocketBootstrapSnow Image    `json:"bottlerocketBootstrapSnow"`
 }
 
+// NutanixBundle defines the Nutanix provider images and configurations for this bundle.
 type NutanixBundle struct {
 	ClusterAPIController Image    `json:"clusterAPIController"`
 	CloudProvider        Image    `json:"cloudProvider,omitempty"`

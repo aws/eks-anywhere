@@ -412,16 +412,16 @@ func CheckRepositoryImagesAndTagsCountLimit(sourceImageUri, releaseImageUri, sou
 	if err != nil {
 		return errors.Cause(err)
 	}
-	if allImagesCount >= constants.MAX_IMAGES_PER_REPOSITORY {
-		return fmt.Errorf("cannot push image [%s] since the repository %s already has the maximum allowed number of images which is '%d'", releaseImageUri, repository, constants.MAX_IMAGES_PER_REPOSITORY)
+	if allImagesCount >= constants.MaxImagesPerRepository {
+		return fmt.Errorf("cannot push image [%s] since the repository %s already has the maximum allowed number of images which is '%d'", releaseImageUri, repository, constants.MaxImagesPerRepository)
 	}
 
 	tagsForImageCount, err := ecrpublic.GetTagsCountForImage(repository, sourceImageDigest, ecrPublicClient)
 	if err != nil {
 		return errors.Cause(err)
 	}
-	if tagsForImageCount >= constants.MAX_TAGS_PER_IMAGE {
-		return fmt.Errorf("cannot push image [%s] since the image with digest [%s] in repository %s already has the maximum allowed number of tags per image which is '%d'", releaseImageUri, sourceImageDigest, repository, constants.MAX_TAGS_PER_IMAGE)
+	if tagsForImageCount >= constants.MaxTagsPerImage {
+		return fmt.Errorf("cannot push image [%s] since the image with digest [%s] in repository %s already has the maximum allowed number of tags per image which is '%d'", releaseImageUri, sourceImageDigest, repository, constants.MaxTagsPerImage)
 	}
 
 	return nil
