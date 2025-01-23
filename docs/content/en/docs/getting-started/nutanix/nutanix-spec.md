@@ -241,7 +241,7 @@ Minimum number of nodes for this node group's autoscaling configuration.
 Maximum number of nodes for this node group's autoscaling configuration.
 
 ### workerNodeGroupConfigurations[*].kubernetesVersion (optional)
-The Kubernetes version you want to use for your cluster. The Kubernetes versions supported by your EKS Anywhere version are tabulated in [this]({{< relref "../../concepts/support-versions/#kubernetes-versions" >}}) section.
+The Kubernetes version you want to use for this worker node group. The Kubernetes versions supported by your EKS Anywhere version are tabulated in [this]({{< relref "../../concepts/support-versions/#kubernetes-versions" >}}) section.
 
 [Known issue related to Kubernetes versions whose minor version is a multiple of 10]({{< relref "../../troubleshooting/troubleshooting/#error-unable-to-get-cluster-config-from-file-kubernetes-version-13-is-not-supported-by-bundles-manifest-" >}})
 
