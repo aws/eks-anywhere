@@ -9,6 +9,12 @@ description: >
 ---
 
 {{% alert title="Announcements" color="warning" %}}
+* Due to a bug in the `sigs.k8s.io/yaml` module that EKS Anywhere uses, Kubernetes versions whose minor versions are multiples of 10, such as `1.30`, `1.40`, etc, will be parsed as `float64` instead of `string` if specified without quotes in the cluster config file. This causes the trailing zero to get dropped and be evaluated as `1.3` and `1.4` respectively. This issue has been fixed in EKS Anywhere release `v0.21.5` so we recommend you to upgrade to that version for a better user experience. If you are unable to upgrade to `v0.21.5`, you must use single or double quotes around Kubernetes version(s) whose minor versions are multiples of 10.
+  Refer to the following links for more information regarding this issue:
+  * [EKS Anywhere issue regarding truncation of trailing zeros in Kubernetes version](https://github.com/aws/eks-anywhere/issues/9184)
+  * [Kubernetes SIGs YAML parser issue](https://github.com/kubernetes-sigs/yaml/issues/45)
+  * [Go YAML parser issue #1](https://github.com/go-yaml/yaml/issues/430)
+  * [Go YAML parser issue #2](https://github.com/go-yaml/yaml/issues/671)
 * EKS Anywhere release `v0.19.0` introduces support for creating Kubernetes version v1.29 clusters. A conformance test was promoted in Kubernetes v1.29 that verifies that `Service`s serving different L4 protocols with the same port number can co-exist in a Kubernetes cluster. This is not supported in Cilium, the CNI deployed on EKS Anywhere clusters, because Cilium currently does not differentiate between TCP and UDP protocols for Kubernetes `Service`s. Hence EKS Anywhere v1.29 and above clusters will not pass this specific conformance test. This service protocol differentiation is being tracked in an upstream Cilium issue and will be supported in a future Cilium release. A future release of EKS Anywhere will include the patched Cilium version when it is available.<br>
   Refer to the following links for more information regarding the conformance test:
   * [PR promoting multi-protocol `Service` test in Kubernetes v1.29](https://github.com/kubernetes/kubernetes/pull/120069)

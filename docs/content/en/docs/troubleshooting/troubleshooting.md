@@ -150,6 +150,41 @@ Error: old cluster config file exists under my-cluster, please use a different c
 The `my-cluster` directory already exists in the current directory.
 Either use a different cluster name or move the directory.
 
+### Error: unable to get cluster config from file: kubernetes version 1.3 is not supported by bundles manifest ...
+
+>**_NOTE_**: This issue has been resolved with EKS-Anywhere v0.21.5
+
+```
+Error: unable to get cluster config from file: kubernetes version 1.3 is not supported by bundles manifest ...
+```
+If the Kubernetes minor version is a multiple of 10 (`1.30`, `1.40` and so on) and is not quoted, it is parsed as a float64 instead of a string due to a bug in the underlying Go YAML parser and hence trailing zeros are truncated.
+To avoid this issue, make sure you use single or double quotes around your top-level and worker-node-level Kubernetes versions if the minor version is a multiple of 10.
+For more context, see the related Github [issue](https://github.com/aws/eks-anywhere/issues/9184).
+
+<table>
+<thead><tr><th><center>Bad</center></th><th><center>Good</center></th></tr></thead>
+<tbody>
+<tr><td>
+
+```yaml
+spec:
+  ...
+  kubernetesVersion: 1.30
+  ...
+```
+
+</td><td>
+
+```yaml
+spec:
+  ...
+  kubernetesVersion: "1.30"
+  ...
+```
+
+</td></tr>
+</tbody></table>
+
 ### At least one WorkerNodeGroupConfiguration must not have NoExecute and/or NoSchedule taints
 
 ```
