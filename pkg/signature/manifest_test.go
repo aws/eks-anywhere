@@ -21,7 +21,6 @@ import (
 	. "github.com/onsi/gomega"
 
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
-	"github.com/aws/eks-anywhere/release/cli/pkg/constants"
 )
 
 func TestGetBundleSignature(t *testing.T) {
@@ -34,7 +33,7 @@ func TestGetBundleSignature(t *testing.T) {
 		{
 			testName:        "Nil bundle",
 			bundle:          nil,
-			key:             constants.KmsKey,
+			key:             KmsKey,
 			expectErrSubstr: "computing digest:",
 		},
 		{
@@ -48,7 +47,7 @@ func TestGetBundleSignature(t *testing.T) {
 					},
 				},
 			},
-			key:             constants.KmsKey,
+			key:             KmsKey,
 			expectErrSubstr: "",
 		},
 		{
@@ -102,7 +101,7 @@ func TestGetBundleSignature(t *testing.T) {
 					},
 				},
 			},
-			key:             constants.KmsKey,
+			key:             KmsKey,
 			expectErrSubstr: "",
 		},
 	}

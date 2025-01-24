@@ -23,6 +23,7 @@ import (
 	"github.com/pkg/errors"
 	"golang.org/x/sync/errgroup"
 
+	sig "github.com/aws/eks-anywhere/pkg/signature"
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 	"github.com/aws/eks-anywhere/release/cli/pkg/assets"
 	"github.com/aws/eks-anywhere/release/cli/pkg/aws/ecrpublic"
@@ -30,7 +31,6 @@ import (
 	"github.com/aws/eks-anywhere/release/cli/pkg/constants"
 	"github.com/aws/eks-anywhere/release/cli/pkg/filereader"
 	"github.com/aws/eks-anywhere/release/cli/pkg/images"
-	sig "github.com/aws/eks-anywhere/release/cli/pkg/signature"
 	releasetypes "github.com/aws/eks-anywhere/release/cli/pkg/types"
 	artifactutils "github.com/aws/eks-anywhere/release/cli/pkg/util/artifacts"
 	commandutils "github.com/aws/eks-anywhere/release/cli/pkg/util/command"
@@ -234,15 +234,15 @@ func SignBundleManifest(ctx context.Context, bundle *anywherev1alpha1.Bundles) e
 	if bundle.Annotations == nil {
 		bundle.Annotations = make(map[string]string, 1)
 	}
-	bundle.Annotations[constants.ExcludesAnnotation] = constants.Excludes
+	bundle.Annotations[sig.ExcludesAnnotation] = sig.Excludes
 
-	fmt.Printf("Generating bundle signature with key: %s\n", constants.KmsKey)
+	fmt.Printf("Generating bundle signature with key: %s\n", sig.KmsKey)
 
-	signature, err := sig.GetBundleSignature(ctx, bundle, constants.KmsKey)
+	signature, err := sig.GetBundleSignature(ctx, bundle, sig.KmsKey)
 	if err != nil {
 		return err
 	}
-	bundle.Annotations[constants.SignatureAnnotation] = signature
+	bundle.Annotations[sig.SignatureAnnotation] = signature
 
 	fmt.Printf("%s Successfully signed bundle manifest\n", constants.SuccessIcon)
 	return nil

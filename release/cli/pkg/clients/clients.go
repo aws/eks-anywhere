@@ -15,11 +15,8 @@
 package clients
 
 import (
-	"context"
 	"fmt"
 
-	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/service/kms"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	ecrsdk "github.com/aws/aws-sdk-go/service/ecr"
@@ -31,7 +28,6 @@ import (
 
 	"github.com/aws/eks-anywhere/release/cli/pkg/aws/ecr"
 	"github.com/aws/eks-anywhere/release/cli/pkg/aws/ecrpublic"
-	"github.com/aws/eks-anywhere/release/cli/pkg/constants"
 )
 
 type SourceClients struct {
@@ -337,15 +333,4 @@ func CreateProdReleaseClients() (*SourceClients, *ReleaseClients, error) {
 	}
 
 	return sourceClients, releaseClients, nil
-}
-
-// Function to create KMS client for bundle manifest signing.
-func CreateKMSClient(ctx context.Context) (*kms.Client, error) {
-	conf, err := config.LoadDefaultConfig(ctx, config.WithRegion(constants.DefaultRegion))
-	if err != nil {
-		return nil, fmt.Errorf("loading AWS config in region %q: %v", constants.DefaultRegion, err)
-	}
-	client := kms.NewFromConfig(conf)
-
-	return client, nil
 }
