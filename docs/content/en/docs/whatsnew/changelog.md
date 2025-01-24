@@ -38,6 +38,34 @@ description: >
 * When upgrading to a new minor version, a new OS image must be created using the new image-builder CLI pertaining to that release.
 {{% /alert %}}
 
+## [v0.21.5](https://github.com/aws/eks-anywhere/releases/tag/v0.21.5)
+
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+|    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+| Bottlerocket 1.26.2 |    ✔    |     —      |    —    |     —      |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+|      RHEL 9.x       |    —    |     ✔      |    ✔    |     ✔      |  —   |
+
+### Changed
+- EKS Distro:
+  - [`v1-31-eks-11`](https://distro.eks.amazonaws.com/releases/1-31/11/)
+  - [`v1-30-eks-22`](https://distro.eks.amazonaws.com/releases/1-30/22/)
+  - [`v1-29-eks-29`](https://distro.eks.amazonaws.com/releases/1-29/29/)
+  - [`v1-28-eks-40`](https://distro.eks.amazonaws.com/releases/1-28/40/)
+- Cert Manager: `v1.15.3` to `v1.15.5`
+- containerd: `v1.7.23` to `v1.7.25`
+- kube-vip: `v0.8.7` to `v0.8.9`
+- linuxkit: `v1.5.2` to `v1.5.3`
+- hook: `v0.9.1` to `v0.9.2`
+- New base images with CVE fixes for Amazon Linux 2
+
+### Fixed
+
+- Ensure Kubernetes version is always parsed as string ([#9188](https://github.com/aws/eks-anywhere/pull/9188))
+
 ## [v0.21.4](https://github.com/aws/eks-anywhere/releases/tag/v0.21.4)
 
 ### Supported OS version details
@@ -45,7 +73,7 @@ description: >
 |:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
 |    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
 |    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
-| Bottlerocket 1.20.5 |    ✔    |     —      |    —    |     —      |  —   |
+| Bottlerocket 1.26.2 |    ✔    |     —      |    —    |     —      |  —   |
 |      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
 |      RHEL 9.x       |    —    |     ✔      |    ✔    |     ✔      |  —   |
 
@@ -63,7 +91,7 @@ description: >
 |:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
 |    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
 |    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
-| Bottlerocket 1.20.5 |    ✔    |     —      |    —    |     —      |  —   |
+| Bottlerocket 1.26.2 |    ✔    |     —      |    —    |     —      |  —   |
 |      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
 |      RHEL 9.x       |    —    |     ✔      |    ✔    |     ✔      |  —   |
 
@@ -79,29 +107,6 @@ description: >
 
 ### Fixed
 - Add kube-vip and optional list of ip addresses to CCM node ip addresses ignore list for Nutanix Provider. ([#9072](https://github.com/aws/eks-anywhere/pull/9072))
-
-## [v0.20.10](https://github.com/aws/eks-anywhere/releases/tag/v0.20.10)
-
-### Supported OS version details
-|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
-|:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
-|    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
-|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
-| Bottlerocket 1.20.5 |    ✔    |     —      |    —    |     —      |  —   |
-|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
-|      RHEL 9.x       |    —    |     ✔      |    ✔    |     ✔      |  —   |
-
-### Changed
-- EKS Distro:
-  - `v1-28-eks-35` to [`v1-28-eks-38`](https://distro.eks.amazonaws.com/releases/1-28/38/)
-  - `v1-29-eks-24` to [`v1-29-eks-27`](https://distro.eks.amazonaws.com/releases/1-29/27/)
-  - `v1-30-eks-17`  to [`v1-30-eks-20`](https://distro.eks.amazonaws.com/releases/1-30/20/)
-- cloud-provider-nutanix: `v0.3.2` to `v0.4.1`
-- kube-rbac-proxy: `v0.18.1` to `v0.18.2`
-- kube-vip: `v0.8.6` to `v0.8.7`
-
-### Fixed
-- Add retries for transient error `server doesn't have a Resource type errors` after `clusterctl move`. ([#9065](https://github.com/aws/eks-anywhere/pull/9065))
 
 ## [v0.21.2](https://github.com/aws/eks-anywhere/releases/tag/v0.21.2)
 
@@ -198,6 +203,48 @@ description: >
 ### Removed
 - Support for Kubernetes v1.26
 
+## [v0.20.11](https://github.com/aws/eks-anywhere/releases/tag/v0.20.11)
+
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+|    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+| Bottlerocket 1.20.5 |    ✔    |     —      |    —    |     —      |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+|      RHEL 9.x       |    —    |     ✔      |    ✔    |     ✔      |  —   |
+
+### Upgraded
+- EKS Distro:
+  - `v1-28-eks-38` to [`v1-28-eks-40`](https://distro.eks.amazonaws.com/releases/1-28/40/)
+  - `v1-29-eks-27` to [`v1-29-eks-29`](https://distro.eks.amazonaws.com/releases/1-29/29/)
+  - `v1-30-eks-20`  to [`v1-30-eks-22`](https://distro.eks.amazonaws.com/releases/1-30/22/)
+- eks-anywhere-packages: `v0.4.4` to `v0.4.5`
+- image-builder: `v0.1.39` to `v0.1.40`
+- containerd: `v1.7.23` to `v1.7.24`
+
+## [v0.20.10](https://github.com/aws/eks-anywhere/releases/tag/v0.20.10)
+
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+|    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+| Bottlerocket 1.20.5 |    ✔    |     —      |    —    |     —      |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+|      RHEL 9.x       |    —    |     ✔      |    ✔    |     ✔      |  —   |
+
+### Changed
+- EKS Distro:
+  - `v1-28-eks-35` to [`v1-28-eks-38`](https://distro.eks.amazonaws.com/releases/1-28/38/)
+  - `v1-29-eks-24` to [`v1-29-eks-27`](https://distro.eks.amazonaws.com/releases/1-29/27/)
+  - `v1-30-eks-17`  to [`v1-30-eks-20`](https://distro.eks.amazonaws.com/releases/1-30/20/)
+- cloud-provider-nutanix: `v0.3.2` to `v0.4.1`
+- kube-rbac-proxy: `v0.18.1` to `v0.18.2`
+- kube-vip: `v0.8.6` to `v0.8.7`
+
+### Fixed
+- Add retries for transient error `server doesn't have a Resource type errors` after `clusterctl move`. ([#9065](https://github.com/aws/eks-anywhere/pull/9065))
 
 ## [v0.20.9](https://github.com/aws/eks-anywhere/releases/tag/v0.20.9)
 
@@ -885,7 +932,7 @@ description: >
 
 ## [v0.18.4](https://github.com/aws/eks-anywhere/releases/tag/v0.18.4)
 
-### Feature 
+### Feature
 * Nutanix: Enable api-server audit logging for Nutanix ([#2664](https://github.com/aws/eks-anywhere/pull/7190))
 
 ### Bug
