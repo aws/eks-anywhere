@@ -38,6 +38,34 @@ description: >
 * When upgrading to a new minor version, a new OS image must be created using the new image-builder CLI pertaining to that release.
 {{% /alert %}}
 
+## [v0.21.5](https://github.com/aws/eks-anywhere/releases/tag/v0.21.5)
+
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+|    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+| Bottlerocket 1.26.2 |    ✔    |     —      |    —    |     —      |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+|      RHEL 9.x       |    —    |     ✔      |    ✔    |     ✔      |  —   |
+
+### Changed
+- EKS Distro:
+  - [`v1-31-eks-11`](https://distro.eks.amazonaws.com/releases/1-31/11/)
+  - [`v1-30-eks-22`](https://distro.eks.amazonaws.com/releases/1-30/22/)
+  - [`v1-29-eks-29`](https://distro.eks.amazonaws.com/releases/1-29/29/)
+  - [`v1-28-eks-40`](https://distro.eks.amazonaws.com/releases/1-28/40/)
+- Cert Manager: `v1.15.3` to `v1.15.5`
+- containerd: `v1.7.23` to `v1.7.25`
+- kube-vip: `v0.8.7` to `v0.8.9`
+- linuxkit: `v1.5.2` to `v1.5.3`
+- hook: `v0.9.1` to `v0.9.2`
+- New base images with CVE fixes for Amazon Linux 2
+
+### Fixed
+
+- Ensure Kubernetes version is always parsed as string ([#9188](https://github.com/aws/eks-anywhere/pull/9188))
+
 ## [v0.21.4](https://github.com/aws/eks-anywhere/releases/tag/v0.21.4)
 
 ### Supported OS version details
@@ -45,7 +73,7 @@ description: >
 |:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
 |    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
 |    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
-| Bottlerocket 1.20.5 |    ✔    |     —      |    —    |     —      |  —   |
+| Bottlerocket 1.26.2 |    ✔    |     —      |    —    |     —      |  —   |
 |      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
 |      RHEL 9.x       |    —    |     ✔      |    ✔    |     ✔      |  —   |
 
@@ -63,7 +91,7 @@ description: >
 |:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
 |    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
 |    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
-| Bottlerocket 1.20.5 |    ✔    |     —      |    —    |     —      |  —   |
+| Bottlerocket 1.26.2 |    ✔    |     —      |    —    |     —      |  —   |
 |      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
 |      RHEL 9.x       |    —    |     ✔      |    ✔    |     ✔      |  —   |
 
