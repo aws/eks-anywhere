@@ -669,6 +669,17 @@ spec:
                 component
               name: initramfs-aarch64
               uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/v0.10.0/initramfs-aarch64
+          iso:
+            amd:
+              description: Tinkerbell operating system installation environment (osie)
+                component
+              name: hook-x86_64-efi-initrd.iso
+              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/v0.10.0/hook-x86_64-efi-initrd.iso
+            arm:
+              description: Tinkerbell operating system installation environment (osie)
+                component
+              name: hook-aarch64-efi-initrd.iso
+              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/v0.10.0/hook-aarch64-efi-initrd.iso
           kernel:
             arch:
             - amd64
@@ -1485,6 +1496,17 @@ spec:
                 component
               name: initramfs-aarch64
               uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/v0.10.0/initramfs-aarch64
+          iso:
+            amd:
+              description: Tinkerbell operating system installation environment (osie)
+                component
+              name: hook-x86_64-efi-initrd.iso
+              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/v0.10.0/hook-x86_64-efi-initrd.iso
+            arm:
+              description: Tinkerbell operating system installation environment (osie)
+                component
+              name: hook-aarch64-efi-initrd.iso
+              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/v0.10.0/hook-aarch64-efi-initrd.iso
           kernel:
             arch:
             - amd64
@@ -2301,6 +2323,17 @@ spec:
                 component
               name: initramfs-aarch64
               uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/v0.10.0/initramfs-aarch64
+          iso:
+            amd:
+              description: Tinkerbell operating system installation environment (osie)
+                component
+              name: hook-x86_64-efi-initrd.iso
+              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/v0.10.0/hook-x86_64-efi-initrd.iso
+            arm:
+              description: Tinkerbell operating system installation environment (osie)
+                component
+              name: hook-aarch64-efi-initrd.iso
+              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/v0.10.0/hook-aarch64-efi-initrd.iso
           kernel:
             arch:
             - amd64
@@ -3117,6 +3150,17 @@ spec:
                 component
               name: initramfs-aarch64
               uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/v0.10.0/initramfs-aarch64
+          iso:
+            amd:
+              description: Tinkerbell operating system installation environment (osie)
+                component
+              name: hook-x86_64-efi-initrd.iso
+              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/v0.10.0/hook-x86_64-efi-initrd.iso
+            arm:
+              description: Tinkerbell operating system installation environment (osie)
+                component
+              name: hook-aarch64-efi-initrd.iso
+              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/v0.10.0/hook-aarch64-efi-initrd.iso
           kernel:
             arch:
             - amd64
@@ -3933,6 +3977,17 @@ spec:
                 component
               name: initramfs-aarch64
               uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/v0.10.0/initramfs-aarch64
+          iso:
+            amd:
+              description: Tinkerbell operating system installation environment (osie)
+                component
+              name: hook-x86_64-efi-initrd.iso
+              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/v0.10.0/hook-x86_64-efi-initrd.iso
+            arm:
+              description: Tinkerbell operating system installation environment (osie)
+                component
+              name: hook-aarch64-efi-initrd.iso
+              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/v0.10.0/hook-aarch64-efi-initrd.iso
           kernel:
             arch:
             - amd64
@@ -4749,6 +4804,17 @@ spec:
                 component
               name: initramfs-aarch64
               uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/v0.10.0/initramfs-aarch64
+          iso:
+            amd:
+              description: Tinkerbell operating system installation environment (osie)
+                component
+              name: hook-x86_64-efi-initrd.iso
+              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/v0.10.0/hook-x86_64-efi-initrd.iso
+            arm:
+              description: Tinkerbell operating system installation environment (osie)
+                component
+              name: hook-aarch64-efi-initrd.iso
+              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/v0.10.0/hook-aarch64-efi-initrd.iso
           kernel:
             arch:
             - amd64

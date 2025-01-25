@@ -342,6 +342,7 @@ type HookBundle struct {
 	Kernel    Image    `json:"kernel"`
 	Initramfs HookArch `json:"initramfs"`
 	Vmlinuz   HookArch `json:"vmlinuz"`
+	ISO       HookArch `json:"iso"`
 }
 
 // HookArch defines the Tinkerbell hook architecture-specific artifacts.

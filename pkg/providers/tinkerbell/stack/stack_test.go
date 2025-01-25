@@ -57,6 +57,11 @@ func getTinkBundle() releasev1alpha1.TinkerbellBundle {
 						URI: "https://anywhere-assests.eks.amazonaws.com/tinkerbell/hook/initramfs-x86-64",
 					},
 				},
+				ISO: releasev1alpha1.HookArch{
+					Amd: releasev1alpha1.Archive{
+						URI: "https://anywhere-assests.eks.amazonaws.com/tinkerbell/hook/hook-x86_64-efi-initrd.iso",
+					},
+				},
 			},
 			Rufio: releasev1alpha1.Image{
 				URI: "public.ecr.aws/eks-anywhere/rufio:latest",
