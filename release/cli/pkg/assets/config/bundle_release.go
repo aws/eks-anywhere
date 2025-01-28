@@ -565,6 +565,17 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 				ArchiveS3PathGetter: archives.KernelArtifactPathGetter,
 			},
 			{
+				Name:                 "hook-aarch64-efi-initrd.iso",
+				Format:               "iso",
+				ArchitectureOverride: "arm64",
+				ArchiveS3PathGetter:  archives.KernelArtifactPathGetter,
+			},
+			{
+				Name:                "hook-x86_64-efi-initrd.iso",
+				Format:              "iso",
+				ArchiveS3PathGetter: archives.KernelArtifactPathGetter,
+			},
+			{
 				Name:                 "vmlinuz-aarch64",
 				Format:               "kernel",
 				ArchitectureOverride: "arm64",

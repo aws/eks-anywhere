@@ -150,6 +150,10 @@ func GetTinkerbellBundle(r *releasetypes.ReleaseConfig, imageDigests releasetype
 					Arm: bundleArchiveArtifacts["initramfs-aarch64"],
 					Amd: bundleArchiveArtifacts["initramfs-x86_64"],
 				},
+				ISO: anywherev1alpha1.HookArch{
+					Arm: bundleArchiveArtifacts["hook-aarch64-efi-initrd.iso"],
+					Amd: bundleArchiveArtifacts["hook-x86_64-efi-initrd.iso"],
+				},
 				Vmlinuz: anywherev1alpha1.HookArch{
 					Arm: bundleArchiveArtifacts["vmlinuz-aarch64"],
 					Amd: bundleArchiveArtifacts["vmlinuz-x86_64"],
