@@ -509,7 +509,7 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap-snow:v1-27-40-eks-a-v0.0.0-dev-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.27/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.30/infrastructure-components.yaml
       kubeVip:
         arch:
         - amd64
@@ -527,10 +527,10 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-snow-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/aws/cluster-api-provider-aws-snow/manager:v0.1.27-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/aws/cluster-api-provider-aws-snow/manager:v0.1.30-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.27/metadata.yaml
-      version: v0.1.27+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.30/metadata.yaml
+      version: v0.1.30+abcdef1
     tinkerbell:
       clusterAPIController:
         arch:
@@ -648,7 +648,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: hook-bootkit
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/hook-bootkit:v0.9.1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/hook-bootkit:v0.10.0-eks-a-v0.0.0-dev-build.1
           docker:
             arch:
             - amd64
@@ -657,18 +657,18 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: hook-docker
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/hook-docker:v0.9.1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/hook-docker:v0.10.0-eks-a-v0.0.0-dev-build.1
           initramfs:
             amd:
               description: Tinkerbell operating system installation environment (osie)
                 component
               name: initramfs-x86_64
-              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/v0.9.1/initramfs-x86_64
+              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/v0.10.0/initramfs-x86_64
             arm:
               description: Tinkerbell operating system installation environment (osie)
                 component
               name: initramfs-aarch64
-              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/v0.9.1/initramfs-aarch64
+              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/v0.10.0/initramfs-aarch64
           kernel:
             arch:
             - amd64
@@ -677,18 +677,18 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: hook-kernel
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/hook-kernel:v0.9.1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/hook-kernel:v0.10.0-eks-a-v0.0.0-dev-build.1
           vmlinuz:
             amd:
               description: Tinkerbell operating system installation environment (osie)
                 component
               name: vmlinuz-x86_64
-              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/v0.9.1/vmlinuz-x86_64
+              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/v0.10.0/vmlinuz-x86_64
             arm:
               description: Tinkerbell operating system installation environment (osie)
                 component
               name: vmlinuz-aarch64
-              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/v0.9.1/vmlinuz-aarch64
+              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/v0.10.0/vmlinuz-aarch64
         rufio:
           arch:
           - amd64
@@ -1325,7 +1325,7 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap-snow:v1-28-41-eks-a-v0.0.0-dev-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.27/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.30/infrastructure-components.yaml
       kubeVip:
         arch:
         - amd64
@@ -1343,10 +1343,10 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-snow-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/aws/cluster-api-provider-aws-snow/manager:v0.1.27-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/aws/cluster-api-provider-aws-snow/manager:v0.1.30-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.27/metadata.yaml
-      version: v0.1.27+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.30/metadata.yaml
+      version: v0.1.30+abcdef1
     tinkerbell:
       clusterAPIController:
         arch:
@@ -1464,7 +1464,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: hook-bootkit
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/hook-bootkit:v0.9.1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/hook-bootkit:v0.10.0-eks-a-v0.0.0-dev-build.1
           docker:
             arch:
             - amd64
@@ -1473,18 +1473,18 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: hook-docker
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/hook-docker:v0.9.1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/hook-docker:v0.10.0-eks-a-v0.0.0-dev-build.1
           initramfs:
             amd:
               description: Tinkerbell operating system installation environment (osie)
                 component
               name: initramfs-x86_64
-              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/v0.9.1/initramfs-x86_64
+              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/v0.10.0/initramfs-x86_64
             arm:
               description: Tinkerbell operating system installation environment (osie)
                 component
               name: initramfs-aarch64
-              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/v0.9.1/initramfs-aarch64
+              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/v0.10.0/initramfs-aarch64
           kernel:
             arch:
             - amd64
@@ -1493,18 +1493,18 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: hook-kernel
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/hook-kernel:v0.9.1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/hook-kernel:v0.10.0-eks-a-v0.0.0-dev-build.1
           vmlinuz:
             amd:
               description: Tinkerbell operating system installation environment (osie)
                 component
               name: vmlinuz-x86_64
-              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/v0.9.1/vmlinuz-x86_64
+              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/v0.10.0/vmlinuz-x86_64
             arm:
               description: Tinkerbell operating system installation environment (osie)
                 component
               name: vmlinuz-aarch64
-              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/v0.9.1/vmlinuz-aarch64
+              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/v0.10.0/vmlinuz-aarch64
         rufio:
           arch:
           - amd64
@@ -2141,7 +2141,7 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap-snow:v1-29-30-eks-a-v0.0.0-dev-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.27/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.30/infrastructure-components.yaml
       kubeVip:
         arch:
         - amd64
@@ -2159,10 +2159,10 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-snow-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/aws/cluster-api-provider-aws-snow/manager:v0.1.27-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/aws/cluster-api-provider-aws-snow/manager:v0.1.30-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.27/metadata.yaml
-      version: v0.1.27+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.30/metadata.yaml
+      version: v0.1.30+abcdef1
     tinkerbell:
       clusterAPIController:
         arch:
@@ -2280,7 +2280,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: hook-bootkit
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/hook-bootkit:v0.9.1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/hook-bootkit:v0.10.0-eks-a-v0.0.0-dev-build.1
           docker:
             arch:
             - amd64
@@ -2289,18 +2289,18 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: hook-docker
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/hook-docker:v0.9.1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/hook-docker:v0.10.0-eks-a-v0.0.0-dev-build.1
           initramfs:
             amd:
               description: Tinkerbell operating system installation environment (osie)
                 component
               name: initramfs-x86_64
-              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/v0.9.1/initramfs-x86_64
+              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/v0.10.0/initramfs-x86_64
             arm:
               description: Tinkerbell operating system installation environment (osie)
                 component
               name: initramfs-aarch64
-              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/v0.9.1/initramfs-aarch64
+              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/v0.10.0/initramfs-aarch64
           kernel:
             arch:
             - amd64
@@ -2309,18 +2309,18 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: hook-kernel
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/hook-kernel:v0.9.1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/hook-kernel:v0.10.0-eks-a-v0.0.0-dev-build.1
           vmlinuz:
             amd:
               description: Tinkerbell operating system installation environment (osie)
                 component
               name: vmlinuz-x86_64
-              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/v0.9.1/vmlinuz-x86_64
+              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/v0.10.0/vmlinuz-x86_64
             arm:
               description: Tinkerbell operating system installation environment (osie)
                 component
               name: vmlinuz-aarch64
-              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/v0.9.1/vmlinuz-aarch64
+              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/v0.10.0/vmlinuz-aarch64
         rufio:
           arch:
           - amd64
@@ -2957,7 +2957,7 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap-snow:v1-30-23-eks-a-v0.0.0-dev-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.27/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.30/infrastructure-components.yaml
       kubeVip:
         arch:
         - amd64
@@ -2975,10 +2975,10 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-snow-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/aws/cluster-api-provider-aws-snow/manager:v0.1.27-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/aws/cluster-api-provider-aws-snow/manager:v0.1.30-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.27/metadata.yaml
-      version: v0.1.27+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.30/metadata.yaml
+      version: v0.1.30+abcdef1
     tinkerbell:
       clusterAPIController:
         arch:
@@ -3096,7 +3096,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: hook-bootkit
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/hook-bootkit:v0.9.1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/hook-bootkit:v0.10.0-eks-a-v0.0.0-dev-build.1
           docker:
             arch:
             - amd64
@@ -3105,18 +3105,18 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: hook-docker
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/hook-docker:v0.9.1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/hook-docker:v0.10.0-eks-a-v0.0.0-dev-build.1
           initramfs:
             amd:
               description: Tinkerbell operating system installation environment (osie)
                 component
               name: initramfs-x86_64
-              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/v0.9.1/initramfs-x86_64
+              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/v0.10.0/initramfs-x86_64
             arm:
               description: Tinkerbell operating system installation environment (osie)
                 component
               name: initramfs-aarch64
-              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/v0.9.1/initramfs-aarch64
+              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/v0.10.0/initramfs-aarch64
           kernel:
             arch:
             - amd64
@@ -3125,18 +3125,18 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: hook-kernel
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/hook-kernel:v0.9.1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/hook-kernel:v0.10.0-eks-a-v0.0.0-dev-build.1
           vmlinuz:
             amd:
               description: Tinkerbell operating system installation environment (osie)
                 component
               name: vmlinuz-x86_64
-              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/v0.9.1/vmlinuz-x86_64
+              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/v0.10.0/vmlinuz-x86_64
             arm:
               description: Tinkerbell operating system installation environment (osie)
                 component
               name: vmlinuz-aarch64
-              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/v0.9.1/vmlinuz-aarch64
+              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/v0.10.0/vmlinuz-aarch64
         rufio:
           arch:
           - amd64
@@ -3773,7 +3773,7 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap-snow:v1-31-12-eks-a-v0.0.0-dev-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.27/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.30/infrastructure-components.yaml
       kubeVip:
         arch:
         - amd64
@@ -3791,10 +3791,10 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-snow-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/aws/cluster-api-provider-aws-snow/manager:v0.1.27-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/aws/cluster-api-provider-aws-snow/manager:v0.1.30-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.27/metadata.yaml
-      version: v0.1.27+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.30/metadata.yaml
+      version: v0.1.30+abcdef1
     tinkerbell:
       clusterAPIController:
         arch:
@@ -3912,7 +3912,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: hook-bootkit
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/hook-bootkit:v0.9.1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/hook-bootkit:v0.10.0-eks-a-v0.0.0-dev-build.1
           docker:
             arch:
             - amd64
@@ -3921,18 +3921,18 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: hook-docker
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/hook-docker:v0.9.1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/hook-docker:v0.10.0-eks-a-v0.0.0-dev-build.1
           initramfs:
             amd:
               description: Tinkerbell operating system installation environment (osie)
                 component
               name: initramfs-x86_64
-              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/v0.9.1/initramfs-x86_64
+              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/v0.10.0/initramfs-x86_64
             arm:
               description: Tinkerbell operating system installation environment (osie)
                 component
               name: initramfs-aarch64
-              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/v0.9.1/initramfs-aarch64
+              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/v0.10.0/initramfs-aarch64
           kernel:
             arch:
             - amd64
@@ -3941,18 +3941,18 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: hook-kernel
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/hook-kernel:v0.9.1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/hook-kernel:v0.10.0-eks-a-v0.0.0-dev-build.1
           vmlinuz:
             amd:
               description: Tinkerbell operating system installation environment (osie)
                 component
               name: vmlinuz-x86_64
-              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/v0.9.1/vmlinuz-x86_64
+              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/v0.10.0/vmlinuz-x86_64
             arm:
               description: Tinkerbell operating system installation environment (osie)
                 component
               name: vmlinuz-aarch64
-              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/v0.9.1/vmlinuz-aarch64
+              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/v0.10.0/vmlinuz-aarch64
         rufio:
           arch:
           - amd64
@@ -4589,7 +4589,7 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap-snow:v1-32-4-eks-a-v0.0.0-dev-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.27/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.30/infrastructure-components.yaml
       kubeVip:
         arch:
         - amd64
@@ -4607,10 +4607,10 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-snow-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/aws/cluster-api-provider-aws-snow/manager:v0.1.27-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/aws/cluster-api-provider-aws-snow/manager:v0.1.30-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.27/metadata.yaml
-      version: v0.1.27+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.30/metadata.yaml
+      version: v0.1.30+abcdef1
     tinkerbell:
       clusterAPIController:
         arch:
@@ -4728,7 +4728,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: hook-bootkit
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/hook-bootkit:v0.9.1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/hook-bootkit:v0.10.0-eks-a-v0.0.0-dev-build.1
           docker:
             arch:
             - amd64
@@ -4737,18 +4737,18 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: hook-docker
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/hook-docker:v0.9.1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/hook-docker:v0.10.0-eks-a-v0.0.0-dev-build.1
           initramfs:
             amd:
               description: Tinkerbell operating system installation environment (osie)
                 component
               name: initramfs-x86_64
-              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/v0.9.1/initramfs-x86_64
+              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/v0.10.0/initramfs-x86_64
             arm:
               description: Tinkerbell operating system installation environment (osie)
                 component
               name: initramfs-aarch64
-              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/v0.9.1/initramfs-aarch64
+              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/v0.10.0/initramfs-aarch64
           kernel:
             arch:
             - amd64
@@ -4757,18 +4757,18 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: hook-kernel
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/hook-kernel:v0.9.1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/hook-kernel:v0.10.0-eks-a-v0.0.0-dev-build.1
           vmlinuz:
             amd:
               description: Tinkerbell operating system installation environment (osie)
                 component
               name: vmlinuz-x86_64
-              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/v0.9.1/vmlinuz-x86_64
+              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/v0.10.0/vmlinuz-x86_64
             arm:
               description: Tinkerbell operating system installation environment (osie)
                 component
               name: vmlinuz-aarch64
-              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/v0.9.1/vmlinuz-aarch64
+              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/v0.10.0/vmlinuz-aarch64
         rufio:
           arch:
           - amd64
