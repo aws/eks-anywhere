@@ -23,6 +23,7 @@ import (
 	"github.com/pkg/errors"
 	"golang.org/x/sync/errgroup"
 
+	anywhereconstants "github.com/aws/eks-anywhere/pkg/constants"
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 	"github.com/aws/eks-anywhere/release/cli/pkg/assets"
 	"github.com/aws/eks-anywhere/release/cli/pkg/aws/ecrpublic"
@@ -234,7 +235,7 @@ func SignBundleManifest(ctx context.Context, bundle *anywherev1alpha1.Bundles) e
 	if bundle.Annotations == nil {
 		bundle.Annotations = make(map[string]string, 1)
 	}
-	bundle.Annotations[constants.ExcludesAnnotation] = constants.Excludes
+	bundle.Annotations[anywhereconstants.ExcludesAnnotation] = anywhereconstants.Excludes
 
 	fmt.Printf("Generating bundle signature with key: %s\n", constants.KmsKey)
 
@@ -242,7 +243,7 @@ func SignBundleManifest(ctx context.Context, bundle *anywherev1alpha1.Bundles) e
 	if err != nil {
 		return err
 	}
-	bundle.Annotations[constants.SignatureAnnotation] = signature
+	bundle.Annotations[anywhereconstants.SignatureAnnotation] = signature
 
 	fmt.Printf("%s Successfully signed bundle manifest\n", constants.SuccessIcon)
 	return nil

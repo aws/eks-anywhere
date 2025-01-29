@@ -34,15 +34,11 @@ func TestClusterReconcilerEnsureOwnerReferences(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
 	version := test.DevEksaVersion()
-	bundlesRef := &anywherev1.BundlesRef{
-		Name:      "my-bundles-ref",
-		Namespace: "my-namespace",
-	}
 
 	managementCluster := &anywherev1.Cluster{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "my-management-cluster",
-			Namespace: "my-namespace",
+			Namespace: "default",
 		},
 		Spec: anywherev1.ClusterSpec{
 			EksaVersion: &version,
@@ -55,7 +51,7 @@ func TestClusterReconcilerEnsureOwnerReferences(t *testing.T) {
 	cluster := &anywherev1.Cluster{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "my-cluster",
-			Namespace: "my-namespace",
+			Namespace: "default",
 		},
 		Spec: anywherev1.ClusterSpec{
 			KubernetesVersion: "v1.25",
@@ -96,29 +92,16 @@ func TestClusterReconcilerEnsureOwnerReferences(t *testing.T) {
 			},
 		},
 	}
-	bundles := &v1alpha1.Bundles{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "my-bundles-ref",
-			Namespace: cluster.Namespace,
-		},
-		Spec: v1alpha1.BundlesSpec{
-			VersionsBundles: []v1alpha1.VersionsBundle{
-				{
-					KubeVersion: "v1.25",
-					PackageController: v1alpha1.PackageBundle{
-						HelmChart: v1alpha1.Image{},
-					},
-				},
-			},
-		},
-	}
+	bundles := createBundle()
 	secret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "my-cluster-kubeconfig",
 			Namespace: constants.EksaSystemNamespace,
 		},
 	}
-	objs := []runtime.Object{cluster, managementCluster, oidc, awsIAM, bundles, secret, test.EKSARelease()}
+	eksaRelease := test.EKSARelease()
+
+	objs := []runtime.Object{cluster, managementCluster, oidc, awsIAM, bundles, secret, eksaRelease}
 	cb := fake.NewClientBuilder()
 	cl := cb.WithRuntimeObjects(objs...).
 		WithStatusSubresource(cluster).
@@ -140,7 +123,7 @@ func TestClusterReconcilerEnsureOwnerReferences(t *testing.T) {
 	r := controllers.NewClusterReconciler(cl, newRegistryForDummyProviderReconciler(), iam, validator, pcc, mhc)
 	_, err := r.Reconcile(ctx, clusterRequest(cluster))
 
-	g.Expect(cl.Get(ctx, client.ObjectKey{Namespace: bundlesRef.Namespace, Name: bundlesRef.Name}, bundles)).To(Succeed())
+	g.Expect(cl.Get(ctx, client.ObjectKey{Namespace: bundles.Namespace, Name: bundles.Name}, bundles)).To(Succeed())
 	g.Expect(cl.Get(ctx, client.ObjectKey{Namespace: constants.EksaSystemNamespace, Name: cluster.Name + "-kubeconfig"}, secret)).To(Succeed())
 
 	g.Expect(err).NotTo(HaveOccurred())
@@ -296,11 +279,14 @@ func TestClusterReconcilerSetBundlesRef(t *testing.T) {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "my-bundles-ref",
 			Namespace: cluster.Spec.BundlesRef.Namespace,
+			Annotations: map[string]string{
+				constants.SignatureAnnotation: "MEYCIQDA40Bizd/0mdCwRCIKq10gjLdJMT0s0y57RPW/zOyWZwIhALPOFS+NZZ7QCwI7wiC1TiArMHMq4TbzIJcx85H/zjU4",
+			},
 		},
 		Spec: v1alpha1.BundlesSpec{
 			VersionsBundles: []v1alpha1.VersionsBundle{
 				{
-					KubeVersion: "v1.25",
+					KubeVersion: "v1.30",
 					PackageController: v1alpha1.PackageBundle{
 						HelmChart: v1alpha1.Image{},
 					},
@@ -344,7 +330,8 @@ func TestClusterReconcilerSetDefaultEksaVersion(t *testing.T) {
 
 	managementCluster := &anywherev1.Cluster{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "my-management-cluster",
+			Name:      "my-management-cluster",
+			Namespace: "default",
 		},
 		Spec: anywherev1.ClusterSpec{
 			EksaVersion: &version,
@@ -356,7 +343,8 @@ func TestClusterReconcilerSetDefaultEksaVersion(t *testing.T) {
 
 	cluster := &anywherev1.Cluster{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "my-cluster",
+			Name:      "my-cluster",
+			Namespace: "default",
 		},
 		Spec: anywherev1.ClusterSpec{
 			KubernetesVersion: "v1.25",
@@ -365,9 +353,10 @@ func TestClusterReconcilerSetDefaultEksaVersion(t *testing.T) {
 			ReconciledGeneration: 1,
 		},
 	}
+	bundles := createBundle()
 	cluster.SetManagedBy("my-management-cluster")
 
-	objs := []runtime.Object{cluster, managementCluster, test.EKSARelease()}
+	objs := []runtime.Object{cluster, managementCluster, test.EKSARelease(), bundles}
 	cb := fake.NewClientBuilder()
 	cl := cb.WithRuntimeObjects(objs...).
 		WithStatusSubresource(cluster).
@@ -447,6 +436,81 @@ func TestClusterReconcilerWorkloadClusterMgmtClusterNameFail(t *testing.T) {
 		g.Expect(c.Status.FailureMessage).To(HaveValue(Equal("test error")))
 		g.Expect(c.Status.FailureReason).To(HaveValue(Equal(anywherev1.ManagementClusterRefInvalidReason)))
 	})
+}
+
+func TestClusterReconcilerNoBundleFound(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+	version := test.DevEksaVersion()
+
+	cluster := &anywherev1.Cluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "my-cluster",
+		},
+		Spec: anywherev1.ClusterSpec{
+			EksaVersion: &version,
+		},
+		Status: anywherev1.ClusterStatus{
+			ReconciledGeneration: 1,
+		},
+	}
+
+	kcp := testKubeadmControlPlaneFromCluster(cluster)
+
+	controller := gomock.NewController(t)
+	providerReconciler := mocks.NewMockProviderClusterReconciler(controller)
+	iam := mocks.NewMockAWSIamConfigReconciler(controller)
+	mhcReconciler := mocks.NewMockMachineHealthCheckReconciler(controller)
+
+	clusterValidator := mocks.NewMockClusterValidator(controller)
+	registry := newRegistryMock(providerReconciler)
+	c := fake.NewClientBuilder().WithRuntimeObjects(cluster, kcp, test.EKSARelease()).
+		WithStatusSubresource(cluster).
+		Build()
+	mockPkgs := mocks.NewMockPackagesClient(controller)
+
+	r := controllers.NewClusterReconciler(c, registry, iam, clusterValidator, mockPkgs, mhcReconciler)
+	_, err := r.Reconcile(ctx, clusterRequest(cluster))
+	g.Expect(err).To(MatchError(ContainSubstring("getting bundle for cluster")))
+}
+
+func TestClusterReconcilerFailSignatureValidation(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+	version := test.DevEksaVersion()
+
+	cluster := &anywherev1.Cluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "my-cluster",
+		},
+		Spec: anywherev1.ClusterSpec{
+			EksaVersion: &version,
+		},
+		Status: anywherev1.ClusterStatus{
+			ReconciledGeneration: 1,
+		},
+	}
+	eksaRelease := test.EKSARelease()
+	bundles := createBundle()
+	bundles.Spec.VersionsBundles[0].KubeVersion = "1.25"
+
+	kcp := testKubeadmControlPlaneFromCluster(cluster)
+
+	controller := gomock.NewController(t)
+	providerReconciler := mocks.NewMockProviderClusterReconciler(controller)
+	iam := mocks.NewMockAWSIamConfigReconciler(controller)
+	mhcReconciler := mocks.NewMockMachineHealthCheckReconciler(controller)
+
+	clusterValidator := mocks.NewMockClusterValidator(controller)
+	registry := newRegistryMock(providerReconciler)
+	c := fake.NewClientBuilder().WithRuntimeObjects(cluster, kcp, eksaRelease, bundles).
+		WithStatusSubresource(cluster).
+		Build()
+	mockPkgs := mocks.NewMockPackagesClient(controller)
+
+	r := controllers.NewClusterReconciler(c, registry, iam, clusterValidator, mockPkgs, mhcReconciler)
+	_, err := r.Reconcile(ctx, clusterRequest(cluster))
+	g.Expect(err).To(MatchError(ContainSubstring("validating bundle signature")))
 }
 
 func newRegistryForDummyProviderReconciler() controllers.ProviderClusterReconcilerRegistry {
