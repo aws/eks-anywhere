@@ -109,7 +109,8 @@ data:
   #   - disabled
   #   - vxlan (default)
   #   - geneve
-  tunnel: geneve
+  routing-mode: "tunnel"
+  tunnel-protocol: "geneve"
   # Enables L7 proxy for L7 policy enforcement and visibility
   enable-l7-proxy: "true"
 
