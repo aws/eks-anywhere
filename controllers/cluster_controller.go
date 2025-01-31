@@ -650,7 +650,7 @@ func validateExtendedK8sVersionSupport(ctx context.Context, client client.Client
 		return fmt.Errorf("getting bundle for cluster: %w", err)
 	}
 	if err = validations.ValidateExtendedK8sVersionSupport(ctx, cluster, bundle, clientutil.NewKubeClient(client)); err != nil {
-		reason := anywherev1.K8sVersionNotSupportedReason
+		reason := anywherev1.ExtendedK8sVersionSupportNotSupportedReason
 		cluster.Status.FailureMessage = ptr.String(err.Error())
 		cluster.Status.FailureReason = &reason
 		return err
