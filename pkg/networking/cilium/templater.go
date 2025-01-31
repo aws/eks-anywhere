@@ -205,7 +205,8 @@ func templateValues(spec *cluster.Spec, versionsBundle *cluster.VersionsBundle) 
 			"enabled": true,
 		},
 		"rollOutCiliumPods": true,
-		"tunnel":            "geneve",
+		"routing-mode":      "tunnel",
+		"tunnel-protocol":   "geneve",
 		"image": values{
 			"repository": versionsBundle.Cilium.Cilium.Image(),
 			"tag":        versionsBundle.Cilium.Cilium.Tag(),
@@ -236,7 +237,8 @@ func templateValues(spec *cluster.Spec, versionsBundle *cluster.VersionsBundle) 
 	}
 
 	if spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.RoutingMode == anywherev1.CiliumRoutingModeDirect {
-		val["tunnel"] = "disabled"
+		val["routing-mode"] = "native"
+		delete(val, "tunnel-protocol")
 
 		if spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.IPv4NativeRoutingCIDR == "" &&
 			spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.IPv6NativeRoutingCIDR == "" {
