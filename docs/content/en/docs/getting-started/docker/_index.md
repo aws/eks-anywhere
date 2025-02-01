@@ -63,7 +63,7 @@ Install the `eksctl-anywhere` plugin
 ```bash
 OS_NAME=$(uname -s | tr A-Z a-z)
 RELEASE_VERSION=$(curl https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml --silent --location | yq ".spec.latestVersion")
-EKS_ANYWHERE_TARBALL_URL=$(curl https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml --silent --location | yq ".spec.releases[] | select(.version==$RELEASE_VERSION).eksABinary.$OS_NAME.uri")
+EKS_ANYWHERE_TARBALL_URL=$(curl https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml --silent --location | yq ".spec.releases[] | select(.version==$RELEASE_VERSION).eksABinary.$OS_NAME.uri" | sed 's/"//g')
 curl $EKS_ANYWHERE_TARBALL_URL \
     --silent --location \
     | tar xz ./eksctl-anywhere
