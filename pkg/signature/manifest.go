@@ -16,8 +16,9 @@ package signature
 
 import (
 	"bytes"
-	"context"
+	"crypto/ecdsa"
 	"crypto/sha256"
+	"crypto/x509"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -25,59 +26,46 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/aws/aws-sdk-go-v2/service/kms"
-	"github.com/aws/aws-sdk-go-v2/service/kms/types"
 	"github.com/itchyny/gojq"
 	"sigs.k8s.io/yaml"
 
-	anywhereconstants "github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
-	"github.com/aws/eks-anywhere/release/cli/pkg/clients"
 )
 
-// GojqTemplate is used to build a gojq filter expression that deletes the desired fields.
-var GojqTemplate = template.Must(template.New("gojq_query").Funcs(
-	template.FuncMap{
-		"StringsJoin": strings.Join,
-		"Escape": func(in string) string {
-			// We need to escape '.' for certain gojq path usage
-			// to avoid ambiguities in the path expressions.
-			return strings.ReplaceAll(in, ".", "\\\\.")
-		},
-	},
-).Parse(`
-del({{ StringsJoin .Excludes ", " }})
-`))
+// ValidateSignature validates the signature annotation of the bundles object using KMS public key.
+func ValidateSignature(bundle *anywherev1alpha1.Bundles, pubKey string) (valid bool, err error) {
+	bundleSig := bundle.Annotations[constants.SignatureAnnotation]
+	if bundleSig == "" {
+		return false, errors.New("missing signature annotation")
+	}
 
-// GetBundleSignature calls KMS and retrieves a signature, then base64-encodes it
-// to store in the Bundles manifest annotation.
-func GetBundleSignature(ctx context.Context, bundle *anywherev1alpha1.Bundles, key string) (string, error) {
-	// Compute the digest from the Bundles manifest after excluding certain fields.
 	digest, _, err := getDigest(bundle)
 	if err != nil {
-		return "", fmt.Errorf("computing digest: %v", err)
+		return false, err
 	}
 
-	// Create KMS Client for bundle manifest signing
-	kmsClient, err := clients.CreateKMSClient(ctx)
+	sig, err := base64.StdEncoding.DecodeString(bundleSig)
 	if err != nil {
-		return "", fmt.Errorf("creating kms client: %v", err)
+		return false, fmt.Errorf("signature in metadata isn't base64 encoded: %w", err)
 	}
 
-	// The KMS service expects you to send the raw hash in the `Message` field
-	// when using `MessageType: DIGEST`.
-	input := &kms.SignInput{
-		KeyId:            &key,
-		Message:          digest[:],
-		MessageType:      types.MessageTypeDigest,
-		SigningAlgorithm: types.SigningAlgorithmSpecEcdsaSha256,
-	}
-	out, err := kmsClient.Sign(ctx, input)
+	pubdecoded, err := base64.StdEncoding.DecodeString(pubKey)
 	if err != nil {
-		return "", fmt.Errorf("signing bundle with KMS Sign API: %v", err)
+		return false, fmt.Errorf("decoding the public key as string: %w", err)
 	}
-	// Return the base64-encoded signature bytes.
-	return base64.StdEncoding.EncodeToString(out.Signature), nil
+
+	pubparsed, err := x509.ParsePKIXPublicKey(pubdecoded)
+	if err != nil {
+		return false, fmt.Errorf("parsing the public key (not PKIX): %w", err)
+	}
+
+	pubkey, ok := pubparsed.(*ecdsa.PublicKey)
+	if !ok {
+		return false, fmt.Errorf("parsing the public key (not ECDSA): %T", pubparsed)
+	}
+
+	return ecdsa.VerifyASN1(pubkey, digest[:], sig), nil
 }
 
 // getDigest converts the Bundles manifest to JSON, excludes certain fields, then
@@ -89,20 +77,21 @@ func getDigest(bundle *anywherev1alpha1.Bundles) ([32]byte, []byte, error) {
 	// Marshal Bundles object to YAML
 	yamlBytes, err := yaml.Marshal(bundle)
 	if err != nil {
-		return zero, nil, fmt.Errorf("marshalling bundle to YAML: %v", err)
+		return zero, nil, fmt.Errorf("marshalling bundle to YAML: %w", err)
 	}
 
 	// Convert YAML to JSON for easier gojq processing
 	jsonBytes, err := yaml.YAMLToJSON(yamlBytes)
 	if err != nil {
-		return zero, nil, fmt.Errorf("converting YAML to JSON: %v", err)
+		return zero, nil, fmt.Errorf("converting YAML to JSON: %w", err)
 	}
 
 	// Build and execute the gojq filter that deletes excluded fields
 	filtered, err := filterExcludes(jsonBytes)
 	if err != nil {
-		return zero, nil, fmt.Errorf("filtering excluded fields: %v", err)
+		return zero, nil, fmt.Errorf("filtering excluded fields: %w", err)
 	}
+
 	// Compute the SHA256 sum of the filtered JSON
 	digest := sha256.Sum256(filtered)
 
@@ -111,36 +100,49 @@ func getDigest(bundle *anywherev1alpha1.Bundles) ([32]byte, []byte, error) {
 
 // filterExcludes applies the default and user-specified excludes to the JSON
 // representation of the Bundles object using gojq.
+// This function has dependency on constants.AlwaysExcludedFields and constants.Excludes fields.
 func filterExcludes(jsonBytes []byte) ([]byte, error) {
 	// Decode the base64-encoded excludes
-	exclBytes, err := base64.StdEncoding.DecodeString(anywhereconstants.Excludes)
+	exclBytes, err := base64.StdEncoding.DecodeString(constants.Excludes)
 	if err != nil {
-		return nil, fmt.Errorf("decoding Excludes: %v", err)
+		return nil, fmt.Errorf("decoding Excludes: %w", err)
 	}
 	// Convert them into slice of strings
 	userExcludes := strings.Split(string(exclBytes), "\n")
 
 	// Combine AlwaysExcluded with userExcludes
-	allExcludes := append(anywhereconstants.AlwaysExcludedFields, userExcludes...)
+	allExcludes := append(constants.AlwaysExcludedFields, userExcludes...)
 
 	// Build the argument to the gojq template
 	var tmplBuf bytes.Buffer
-	if err := GojqTemplate.Execute(&tmplBuf, map[string]interface{}{
+	gojqTemplate := template.Must(template.New("gojq_query").Funcs(
+		template.FuncMap{
+			"StringsJoin": strings.Join,
+			"Escape": func(in string) string {
+				// We need to escape '.' for certain gojq path usage
+				// to avoid ambiguities in the path expressions.
+				return strings.ReplaceAll(in, ".", "\\\\.")
+			},
+		},
+	).Parse(`
+	del({{ StringsJoin .Excludes ", " }})
+	`))
+	if err := gojqTemplate.Execute(&tmplBuf, map[string]interface{}{
 		"Excludes": allExcludes,
 	}); err != nil {
-		return nil, fmt.Errorf("executing gojq template: %v", err)
+		return nil, fmt.Errorf("executing gojq template: %w", err)
 	}
 
 	// Parse the final gojq query
 	query, err := gojq.Parse(tmplBuf.String())
 	if err != nil {
-		return nil, fmt.Errorf("gojq parse error: %v", err)
+		return nil, fmt.Errorf("gojq parse error: %w", err)
 	}
 
 	// Unmarshal the JSON into a generic interface so gojq can operate
 	var input interface{}
 	if err := json.Unmarshal(jsonBytes, &input); err != nil {
-		return nil, fmt.Errorf("unmarshalling JSON: %v", err)
+		return nil, fmt.Errorf("unmarshalling JSON: %w", err)
 	}
 
 	// Run the query
@@ -150,13 +152,13 @@ func filterExcludes(jsonBytes []byte) ([]byte, error) {
 		return nil, errors.New("gojq produced no result")
 	}
 	if errVal, ok := finalVal.(error); ok {
-		return nil, fmt.Errorf("gojq execution error: %v", errVal)
+		return nil, fmt.Errorf("gojq execution error: %w", errVal)
 	}
 
 	// Marshal the filtered result back to JSON
 	filtered, err := json.Marshal(finalVal)
 	if err != nil {
-		return nil, fmt.Errorf("marshalling final result to JSON: %v", err)
+		return nil, fmt.Errorf("marshalling final result to JSON: %w", err)
 	}
 	return filtered, nil
 }

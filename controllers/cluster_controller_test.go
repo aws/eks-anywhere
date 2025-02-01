@@ -151,9 +151,6 @@ func TestClusterReconcilerReconcileSelfManagedCluster(t *testing.T) {
 			Name: "my-management-cluster",
 		},
 		Spec: anywherev1.ClusterSpec{
-			BundlesRef: &anywherev1.BundlesRef{
-				Name: "my-bundles-ref",
-			},
 			EksaVersion: &version,
 			ClusterNetwork: anywherev1.ClusterNetwork{
 				CNIConfig: &anywherev1.CNIConfig{
@@ -183,7 +180,9 @@ func TestClusterReconcilerReconcileSelfManagedCluster(t *testing.T) {
 
 	clusterValidator := mocks.NewMockClusterValidator(controller)
 	registry := newRegistryMock(providerReconciler)
-	c := fake.NewClientBuilder().WithRuntimeObjects(selfManagedCluster, kcp, test.EKSARelease()).
+	eksaRelease := test.EKSARelease()
+	bundles := createBundle()
+	c := fake.NewClientBuilder().WithRuntimeObjects(selfManagedCluster, kcp, eksaRelease, bundles).
 		WithStatusSubresource(selfManagedCluster).
 		Build()
 	mockPkgs := mocks.NewMockPackagesClient(controller)
@@ -1083,9 +1082,6 @@ func TestClusterReconcilerReconcileSelfManagedClusterRegAuthFailNoSecret(t *test
 			Name: "my-management-cluster",
 		},
 		Spec: anywherev1.ClusterSpec{
-			BundlesRef: &anywherev1.BundlesRef{
-				Name: "my-bundles-ref",
-			},
 			ClusterNetwork: anywherev1.ClusterNetwork{
 				CNIConfig: &anywherev1.CNIConfig{
 					Cilium: &anywherev1.CiliumConfig{},
@@ -1108,7 +1104,9 @@ func TestClusterReconcilerReconcileSelfManagedClusterRegAuthFailNoSecret(t *test
 	mhcReconciler := mocks.NewMockMachineHealthCheckReconciler(controller)
 
 	registry := newRegistryMock(providerReconciler)
-	c := fake.NewClientBuilder().WithRuntimeObjects(selfManagedCluster, test.EKSARelease()).Build()
+	eksaRelease := test.EKSARelease()
+	bundles := createBundle()
+	c := fake.NewClientBuilder().WithRuntimeObjects(selfManagedCluster, eksaRelease, bundles).Build()
 
 	r := controllers.NewClusterReconciler(c, registry, iam, clusterValidator, nil, mhcReconciler)
 	_, err := r.Reconcile(ctx, clusterRequest(selfManagedCluster))
@@ -1126,7 +1124,7 @@ func TestClusterReconcilerDeleteExistingCAPIClusterSuccess(t *testing.T) {
 	cluster.Finalizers = []string{"my-finalizer"}
 
 	datacenterConfig := vsphereDataCenter(cluster)
-	bundle := createBundle(managementCluster)
+	bundle := createBundle()
 	machineConfigCP := vsphereCPMachineConfig()
 	machineConfigWN := vsphereWorkerMachineConfig()
 
@@ -1225,7 +1223,7 @@ func TestClusterReconcilerDeleteNoCAPIClusterSuccess(t *testing.T) {
 	controllerutil.AddFinalizer(cluster, controllers.ClusterFinalizerName)
 
 	datacenterConfig := vsphereDataCenter(cluster)
-	bundle := createBundle(managementCluster)
+	bundle := createBundle()
 	machineConfigCP := vsphereCPMachineConfig()
 	machineConfigWN := vsphereWorkerMachineConfig()
 
@@ -1251,14 +1249,10 @@ func TestClusterReconcilerSkipDontInstallPackagesOnSelfManaged(t *testing.T) {
 	cluster := &anywherev1.Cluster{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "my-cluster",
-			Namespace: "my-namespace",
+			Namespace: "default",
 		},
 		Spec: anywherev1.ClusterSpec{
 			KubernetesVersion: "v1.25",
-			BundlesRef: &anywherev1.BundlesRef{
-				Name:      "my-bundles-ref",
-				Namespace: "my-namespace",
-			},
 			ClusterNetwork: anywherev1.ClusterNetwork{
 				CNIConfig: &anywherev1.CNIConfig{
 					Cilium: &anywherev1.CiliumConfig{},
@@ -1273,7 +1267,8 @@ func TestClusterReconcilerSkipDontInstallPackagesOnSelfManaged(t *testing.T) {
 			ReconciledGeneration: 1,
 		},
 	}
-	objs := []runtime.Object{cluster, test.EKSARelease()}
+	bundles := createBundle()
+	objs := []runtime.Object{cluster, test.EKSARelease(), bundles}
 	cb := fake.NewClientBuilder()
 	mockClient := cb.WithRuntimeObjects(objs...).
 		WithStatusSubresource(cluster).
@@ -1404,14 +1399,10 @@ func TestClusterReconcilerPackagesInstall(s *testing.T) {
 		return &anywherev1.Cluster{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "my-workload-cluster",
-				Namespace: "my-namespace",
+				Namespace: "default",
 			},
 			Spec: anywherev1.ClusterSpec{
 				KubernetesVersion: "v1.25",
-				BundlesRef: &anywherev1.BundlesRef{
-					Name:      "my-bundles-ref",
-					Namespace: "my-namespace",
-				},
 				ClusterNetwork: anywherev1.ClusterNetwork{
 					CNIConfig: &anywherev1.CNIConfig{
 						Cilium: &anywherev1.CiliumConfig{},
@@ -1443,10 +1434,8 @@ func TestClusterReconcilerPackagesInstall(s *testing.T) {
 		cluster := newTestCluster()
 		cluster.Spec.Packages = &anywherev1.PackageConfiguration{Disable: true}
 		ctrl := gomock.NewController(t)
-		bundles := createBundle(cluster)
-		bundles.Spec.VersionsBundles[0].KubeVersion = string(cluster.Spec.KubernetesVersion)
-		bundles.ObjectMeta.Name = cluster.Spec.BundlesRef.Name
-		bundles.ObjectMeta.Namespace = cluster.Spec.BundlesRef.Namespace
+		bundles := createBundle()
+
 		secret := &apiv1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: constants.EksaSystemNamespace,
@@ -1672,20 +1661,23 @@ func vsphereCPMachineConfig() *anywherev1.VSphereMachineConfig {
 	}
 }
 
-func createBundle(cluster *anywherev1.Cluster) *releasev1.Bundles {
+func createBundle() *releasev1.Bundles {
 	return &releasev1.Bundles{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      cluster.Name,
+			Name:      "bundles-1",
 			Namespace: "default",
+			Annotations: map[string]string{
+				constants.SignatureAnnotation: "MEUCIQDbVAB+yy+pdCOFet/vWMoHQA2FYiiQtq1zltBRRhRo2QIgGQopCHraD/HpvpSh4Q7rVdesXeVriJv2ucEnoidoZlg=",
+			},
 		},
 		Spec: releasev1.BundlesSpec{
 			VersionsBundles: []releasev1.VersionsBundle{
 				{
-					KubeVersion: "1.20",
+					KubeVersion: "1.30",
 					EksD: releasev1.EksDRelease{
 						Name:           "test",
 						EksDReleaseUrl: "testdata/release.yaml",
-						KubeVersion:    "1.20",
+						KubeVersion:    "1.30",
 					},
 					CertManager:                releasev1.CertManagerBundle{},
 					ClusterAPI:                 releasev1.CoreClusterAPI{},
@@ -1876,11 +1868,14 @@ func baseTestVsphereCluster() (*cluster.Config, *releasev1.Bundles) {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "my-bundles-ref",
 			Namespace: config.Cluster.Namespace,
+			Annotations: map[string]string{
+				constants.SignatureAnnotation: "MEYCIQDA40Bizd/0mdCwRCIKq10gjLdJMT0s0y57RPW/zOyWZwIhALPOFS+NZZ7QCwI7wiC1TiArMHMq4TbzIJcx85H/zjU4",
+			},
 		},
 		Spec: releasev1.BundlesSpec{
 			VersionsBundles: []releasev1.VersionsBundle{
 				{
-					KubeVersion: "v1.25",
+					KubeVersion: "v1.30",
 					PackageController: releasev1.PackageBundle{
 						HelmChart: releasev1.Image{},
 					},
