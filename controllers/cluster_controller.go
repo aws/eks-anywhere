@@ -389,6 +389,10 @@ func (r *ClusterReconciler) preClusterProviderReconcile(ctx context.Context, log
 		return controller.Result{}, err
 	}
 
+	if err := validateExtendedK8sVersionSupport(ctx, r.client, cluster); err != nil {
+		return controller.Result{}, err
+	}
+
 	if cluster.RegistryAuth() {
 		rUsername, rPassword, err := config.ReadCredentialsFromSecret(ctx, r.client)
 		if err != nil {
@@ -633,6 +637,24 @@ func validateEksaRelease(ctx context.Context, client client.Client, cluster *any
 		return err
 	} else if err != nil {
 		return err
+	}
+	return nil
+}
+
+func validateExtendedK8sVersionSupport(ctx context.Context, client client.Client, cluster *anywherev1.Cluster) error {
+	bundle, err := c.BundlesForCluster(ctx, clientutil.NewKubeClient(client), cluster)
+	if err != nil {
+		reason := anywherev1.BundleNotFoundReason
+		cluster.Status.FailureMessage = ptr.String(err.Error())
+		cluster.Status.FailureReason = &reason
+		return fmt.Errorf("getting bundle for cluster: %w", err)
+	}
+	if err = validations.ValidateExtendedK8sVersionSupport(ctx, cluster, bundle, clientutil.NewKubeClient(client)); err != nil {
+		reason := anywherev1.ExtendedK8sVersionSupportNotSupportedReason
+		cluster.Status.FailureMessage = ptr.String(err.Error())
+		cluster.Status.FailureReason = &reason
+		return err
+
 	}
 	return nil
 }

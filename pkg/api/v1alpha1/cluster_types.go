@@ -969,6 +969,12 @@ const (
 
 	// EksaVersionInvalidReason reports that the Cluster eksaVersion validation has failed.
 	EksaVersionInvalidReason FailureReasonType = "EksaVersionInvalid"
+
+	// BundleNotFoundReason reports that the bundle related to the cluster not found.
+	BundleNotFoundReason FailureReasonType = "BundleNotFoundForCluster"
+
+	// ExtendedK8sVersionSupportNotSupportedReason reports that validation for supporting extended kubernetes version failed.
+	ExtendedK8sVersionSupportNotSupportedReason FailureReasonType = "ExtendedKubernetesVersionSupportNotSupported"
 )
 
 // Reasons for the terminal failures while reconciling the Cluster object specific for Tinkerbell.
