@@ -151,7 +151,8 @@ func TestClusterReconcilerReconcileSelfManagedCluster(t *testing.T) {
 			Name: "my-management-cluster",
 		},
 		Spec: anywherev1.ClusterSpec{
-			EksaVersion: &version,
+			KubernetesVersion: anywherev1.Kube132,
+			EksaVersion:       &version,
 			ClusterNetwork: anywherev1.ClusterNetwork{
 				CNIConfig: &anywherev1.CNIConfig{
 					Cilium: &anywherev1.CiliumConfig{},
@@ -1082,6 +1083,7 @@ func TestClusterReconcilerReconcileSelfManagedClusterRegAuthFailNoSecret(t *test
 			Name: "my-management-cluster",
 		},
 		Spec: anywherev1.ClusterSpec{
+			KubernetesVersion: anywherev1.Kube132,
 			ClusterNetwork: anywherev1.ClusterNetwork{
 				CNIConfig: &anywherev1.CNIConfig{
 					Cilium: &anywherev1.CiliumConfig{},
@@ -1252,7 +1254,7 @@ func TestClusterReconcilerSkipDontInstallPackagesOnSelfManaged(t *testing.T) {
 			Namespace: "default",
 		},
 		Spec: anywherev1.ClusterSpec{
-			KubernetesVersion: "v1.25",
+			KubernetesVersion: anywherev1.Kube132,
 			ClusterNetwork: anywherev1.ClusterNetwork{
 				CNIConfig: &anywherev1.CNIConfig{
 					Cilium: &anywherev1.CiliumConfig{},
@@ -1402,7 +1404,7 @@ func TestClusterReconcilerPackagesInstall(s *testing.T) {
 				Namespace: "default",
 			},
 			Spec: anywherev1.ClusterSpec{
-				KubernetesVersion: "v1.25",
+				KubernetesVersion: anywherev1.Kube132,
 				ClusterNetwork: anywherev1.ClusterNetwork{
 					CNIConfig: &anywherev1.CNIConfig{
 						Cilium: &anywherev1.CiliumConfig{},
@@ -1667,17 +1669,17 @@ func createBundle() *releasev1.Bundles {
 			Name:      "bundles-1",
 			Namespace: "default",
 			Annotations: map[string]string{
-				constants.SignatureAnnotation: "MEUCIQDbVAB+yy+pdCOFet/vWMoHQA2FYiiQtq1zltBRRhRo2QIgGQopCHraD/HpvpSh4Q7rVdesXeVriJv2ucEnoidoZlg=",
+				constants.SignatureAnnotation: "MEQCIG8DZfnqQtx1fF5x2assfSUEvuJ9BqaCN8jaoBHxKU8SAiBwR2B/T2BC3nzmnT2uEvwyemOy+A7V/K+PkGuKGX0E1Q==",
 			},
 		},
 		Spec: releasev1.BundlesSpec{
 			VersionsBundles: []releasev1.VersionsBundle{
 				{
-					KubeVersion: "1.30",
+					KubeVersion: "1.32",
 					EksD: releasev1.EksDRelease{
 						Name:           "test",
 						EksDReleaseUrl: "testdata/release.yaml",
-						KubeVersion:    "1.30",
+						KubeVersion:    "1.32",
 					},
 					CertManager:                releasev1.CertManagerBundle{},
 					ClusterAPI:                 releasev1.CoreClusterAPI{},
@@ -1693,6 +1695,7 @@ func createBundle() *releasev1.Bundles {
 					ExternalEtcdBootstrap:      releasev1.EtcdadmBootstrapBundle{},
 					ExternalEtcdController:     releasev1.EtcdadmControllerBundle{},
 					Tinkerbell:                 releasev1.TinkerbellBundle{},
+					EndOfStandardSupport:       "2030-06-30",
 				},
 			},
 		},
@@ -1745,7 +1748,7 @@ func vsphereCluster() *anywherev1.Cluster {
 				Kind: "VSphereDatacenterConfig",
 				Name: "datacenter",
 			},
-			KubernetesVersion: "1.20",
+			KubernetesVersion: anywherev1.Kube132,
 			ControlPlaneConfiguration: anywherev1.ControlPlaneConfiguration{
 				Count: 1,
 				Endpoint: &anywherev1.Endpoint{
@@ -1864,26 +1867,7 @@ func baseTestVsphereCluster() (*cluster.Config, *releasev1.Bundles) {
 	config.AWSIAMConfigs[awsIAM.Name] = awsIAM
 	config.OIDCConfigs[oidc.Name] = oidc
 
-	bundles := &releasev1.Bundles{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "my-bundles-ref",
-			Namespace: config.Cluster.Namespace,
-			Annotations: map[string]string{
-				constants.SignatureAnnotation: "MEYCIQDA40Bizd/0mdCwRCIKq10gjLdJMT0s0y57RPW/zOyWZwIhALPOFS+NZZ7QCwI7wiC1TiArMHMq4TbzIJcx85H/zjU4",
-			},
-		},
-		Spec: releasev1.BundlesSpec{
-			VersionsBundles: []releasev1.VersionsBundle{
-				{
-					KubeVersion: "v1.30",
-					PackageController: releasev1.PackageBundle{
-						HelmChart: releasev1.Image{},
-					},
-				},
-			},
-		},
-	}
-
+	bundles := createBundle()
 	config.Cluster.Spec.BundlesRef = &anywherev1.BundlesRef{
 		Name:      bundles.Name,
 		Namespace: bundles.Namespace,

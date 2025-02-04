@@ -19,16 +19,17 @@ import (
 func TestValidateExtendedK8sVersionSupport(t *testing.T) {
 	ctx := context.Background()
 	client := test.NewFakeKubeClient()
+
 	tests := []struct {
 		name    string
-		cluster *anywherev1.Cluster
+		cluster anywherev1.Cluster
 		bundle  *v1alpha1.Bundles
 		client  kubernetes.Client
 		wantErr error
 	}{
 		{
-			name:    "No bundle signature",
-			cluster: &anywherev1.Cluster{},
+			name:    "no bundle signature",
+			cluster: anywherev1.Cluster{},
 			bundle: &v1alpha1.Bundles{
 				ObjectMeta: v1.ObjectMeta{
 					Annotations: map[string]string{
@@ -39,8 +40,22 @@ func TestValidateExtendedK8sVersionSupport(t *testing.T) {
 			wantErr: fmt.Errorf("missing signature annotation"),
 		},
 		{
-			name:    "bundle verification succeeded",
-			cluster: &anywherev1.Cluster{},
+			name: "kubernetes version not supported",
+			cluster: anywherev1.Cluster{
+				Spec: anywherev1.ClusterSpec{
+					KubernetesVersion: "1.22",
+				},
+			},
+			bundle:  validBundle(),
+			wantErr: fmt.Errorf("getting versions bundle for 1.22 kubernetes version"),
+		},
+		{
+			name: "unsupported EndOfStandardSupport format",
+			cluster: anywherev1.Cluster{
+				Spec: anywherev1.ClusterSpec{
+					KubernetesVersion: "1.28",
+				},
+			},
 			bundle: &v1alpha1.Bundles{
 				TypeMeta: v1.TypeMeta{
 					Kind:       "Bundles",
@@ -48,19 +63,42 @@ func TestValidateExtendedK8sVersionSupport(t *testing.T) {
 				},
 				ObjectMeta: v1.ObjectMeta{
 					Annotations: map[string]string{
-						constants.SignatureAnnotation: "MEYCIQCiWwxw/Nchkgtan47FzagXHgB45Op7YWxvSZjFzHau8wIhALG2kbm+H8HJEfN/rUQ0ldo298MnzyhukBptUm0jCtZZ",
+						constants.SignatureAnnotation: "MEYCIQCYJwrDjICgUQImFpJdOLjQlC7OSQutCsqBk+0jUheZTQIhALSj7peTLSTSy9rvNfYwyqbP0fOi3elggWwPcAz89csc",
 					},
 				},
 				Spec: v1alpha1.BundlesSpec{
 					Number: 1,
 					VersionsBundles: []v1alpha1.VersionsBundle{
 						{
-							KubeVersion: "1.31",
+							KubeVersion:          "1.28",
+							EndOfStandardSupport: "2024-31-12",
 						},
 					},
 				},
 			},
-			wantErr: fmt.Errorf("missing signature annotation"),
+			wantErr: fmt.Errorf("parsing EndOfStandardSupport field format"),
+		},
+		{
+			name: "missing license token",
+			cluster: anywherev1.Cluster{
+				Spec: anywherev1.ClusterSpec{
+					KubernetesVersion: "1.28",
+					LicenseToken:      "",
+				},
+			},
+			bundle:  validBundle(),
+			wantErr: fmt.Errorf("licenseToken is required for extended kubernetes support"),
+		},
+		{
+			name: "invalid licenseKey",
+			cluster: anywherev1.Cluster{
+				Spec: anywherev1.ClusterSpec{
+					KubernetesVersion: "1.28",
+					LicenseToken:      "invalid-token",
+				},
+			},
+			bundle:  validBundle(),
+			wantErr: fmt.Errorf("getting licenseToken"),
 		},
 	}
 
@@ -71,5 +109,28 @@ func TestValidateExtendedK8sVersionSupport(t *testing.T) {
 				t.Errorf("%v got = %v, \nwant %v", tc.name, err, tc.wantErr)
 			}
 		})
+	}
+}
+
+func validBundle() *v1alpha1.Bundles {
+	return &v1alpha1.Bundles{
+		TypeMeta: v1.TypeMeta{
+			Kind:       "Bundles",
+			APIVersion: v1alpha1.GroupVersion.String(),
+		},
+		ObjectMeta: v1.ObjectMeta{
+			Annotations: map[string]string{
+				constants.SignatureAnnotation: "MEYCIQC8Fuo81dxibtkvrOFZpbFXZGmJnhLN6bkJjx4YB0fGIQIhAJIxIAl3s26eXqcmS6kAyjDd0NXDlBbM0d/GCHcL2Xoo",
+			},
+		},
+		Spec: v1alpha1.BundlesSpec{
+			Number: 1,
+			VersionsBundles: []v1alpha1.VersionsBundle{
+				{
+					KubeVersion:          "1.28",
+					EndOfStandardSupport: "2024-12-31",
+				},
+			},
+		},
 	}
 }
