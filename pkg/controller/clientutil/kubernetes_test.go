@@ -80,6 +80,73 @@ func TestKubeClientList(t *testing.T) {
 	g.Expect(receiveClusters.Items).To(ConsistOf(*cluster1, *cluster2))
 }
 
+func TestKubeClientListOpts(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+	cluster1 := &anywherev1.Cluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "my-cluster",
+			Namespace: "default",
+		},
+		TypeMeta: metav1.TypeMeta{
+			Kind:       anywherev1.ClusterKind,
+			APIVersion: anywherev1.GroupVersion.String(),
+		},
+	}
+	cluster2 := &anywherev1.Cluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "my-cluster-2",
+			Namespace: "eksa-system",
+		},
+		TypeMeta: metav1.TypeMeta{
+			Kind:       anywherev1.ClusterKind,
+			APIVersion: anywherev1.GroupVersion.String(),
+		},
+	}
+	cb := fake.NewClientBuilder()
+	cl := cb.WithRuntimeObjects(cluster1, cluster2).Build()
+
+	client := clientutil.NewKubeClient(cl)
+	receiveClusters := &anywherev1.ClusterList{}
+	opts := kubernetes.ListOptions{}
+	g.Expect(client.List(ctx, receiveClusters, opts)).To(Succeed())
+	g.Expect(receiveClusters.Items).To(ConsistOf(*cluster1, *cluster2))
+}
+
+func TestKubeClientListOptsWithNamespace(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+	cluster1 := &anywherev1.Cluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "my-cluster",
+			Namespace: "default",
+		},
+		TypeMeta: metav1.TypeMeta{
+			Kind:       anywherev1.ClusterKind,
+			APIVersion: anywherev1.GroupVersion.String(),
+		},
+	}
+	cluster2 := &anywherev1.Cluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "my-cluster-2",
+			Namespace: "eksa-system",
+		},
+		TypeMeta: metav1.TypeMeta{
+			Kind:       anywherev1.ClusterKind,
+			APIVersion: anywherev1.GroupVersion.String(),
+		},
+	}
+	cb := fake.NewClientBuilder()
+	cl := cb.WithRuntimeObjects(cluster1, cluster2).Build()
+
+	client := clientutil.NewKubeClient(cl)
+	receiveClusters := &anywherev1.ClusterList{}
+	opts := kubernetes.ListOptions{Namespace: "eksa-system"}
+	g.Expect(client.List(ctx, receiveClusters, opts)).To(Succeed())
+	g.Expect(receiveClusters.Items).To(ConsistOf(*cluster2))
+	g.Expect(receiveClusters.Items).NotTo(ConsistOf(*cluster1))
+}
+
 func TestKubeClientCreate(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
