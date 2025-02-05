@@ -17,10 +17,14 @@ smee:
       port: ""
       scheme: https
     tinkServer:
+      insecureTLS: true
       ip: 1.2.3.4
       port: "42113"
-      insecureTLS: true
   image: public.ecr.aws/eks-anywhere/boots:latest
+  iso:
+    enabled: true
+    staticIPAMEnabled: true
+    url: https://anywhere-assests.eks.amazonaws.com/tinkerbell/hook/hook-x86_64-efi-initrd.iso
   publicIP: 1.2.3.4
   tinkWorkerImage: public.ecr.aws/eks-anywhere/tink-worker:latest
   trustedProxies:

@@ -1,6 +1,7 @@
 package tinkerbell
 
 import (
+	"strings"
 	"testing"
 	"time"
 
@@ -287,6 +288,73 @@ func TestTemplateBuilderWNKubeletConfig(t *testing.T) {
 		cpMachineCfg, _ := getControlPlaneMachineSpec(clusterSpec)
 		wngMachineCfgs, _ := getWorkerNodeGroupMachineSpec(clusterSpec)
 		tinkIPBefore := "0.0.0.0"
+		bldr := NewTemplateBuilder(&clusterSpec.TinkerbellDatacenter.Spec, cpMachineCfg, nil, wngMachineCfgs, tinkIPBefore, time.Now)
+		workerTemplateNames, kubeadmTemplateNames := clusterapi.InitialTemplateNamesForWorkers(clusterSpec)
+		data, err := bldr.GenerateCAPISpecWorkers(clusterSpec, workerTemplateNames, kubeadmTemplateNames)
+		g.Expect(err).ToNot(HaveOccurred())
+		test.AssertContentToFile(t, string(data), tc.Output)
+	}
+}
+
+func TestTemplateBuilderCPHookIso(t *testing.T) {
+	for _, tc := range []struct {
+		Input  string
+		Output string
+	}{
+		{
+			Input:  "testdata/cluster_hook_iso_boot.yaml",
+			Output: "testdata/expected_kcp_with_hook_iso_boot.yaml",
+		},
+		{
+			Input:  "testdata/cluster_hook_iso_boot.yaml",
+			Output: "testdata/expected_kcp_with_hook_iso_boot_bootstrap.yaml",
+		},
+	} {
+		g := NewWithT(t)
+		clusterSpec := test.NewFullClusterSpec(t, tc.Input)
+		tinkIPBefore := "0.0.0.0"
+		cpMachineCfg, err := getControlPlaneMachineSpec(clusterSpec)
+		g.Expect(err).ToNot(HaveOccurred())
+
+		wngMachineCfgs, err := getWorkerNodeGroupMachineSpec(clusterSpec)
+		g.Expect(err).ToNot(HaveOccurred())
+		if strings.Contains(tc.Output, "bootstrap") {
+			clusterSpec.Cluster.AddTinkerbellIPAnnotation(tinkIPBefore)
+		}
+		bldr := NewTemplateBuilder(&clusterSpec.TinkerbellDatacenter.Spec, cpMachineCfg, nil, wngMachineCfgs, tinkIPBefore, time.Now)
+
+		data, err := bldr.GenerateCAPISpecControlPlane(clusterSpec)
+		g.Expect(err).ToNot(HaveOccurred())
+
+		test.AssertContentToFile(t, string(data), tc.Output)
+	}
+}
+
+func TestTemplateBuilderMDHookIso(t *testing.T) {
+	for _, tc := range []struct {
+		Input  string
+		Output string
+	}{
+		{
+			Input:  "testdata/cluster_hook_iso_boot.yaml",
+			Output: "testdata/expected_md_with_hook_iso_boot.yaml",
+		},
+		{
+			Input:  "testdata/cluster_hook_iso_boot.yaml",
+			Output: "testdata/expected_md_with_hook_iso_boot_bootstrap.yaml",
+		},
+	} {
+		g := NewWithT(t)
+		clusterSpec := test.NewFullClusterSpec(t, tc.Input)
+		tinkIPBefore := "0.0.0.0"
+		cpMachineCfg, err := getControlPlaneMachineSpec(clusterSpec)
+		g.Expect(err).ToNot(HaveOccurred())
+
+		wngMachineCfgs, err := getWorkerNodeGroupMachineSpec(clusterSpec)
+		g.Expect(err).ToNot(HaveOccurred())
+		if strings.Contains(tc.Output, "bootstrap") {
+			clusterSpec.Cluster.AddTinkerbellIPAnnotation(tinkIPBefore)
+		}
 		bldr := NewTemplateBuilder(&clusterSpec.TinkerbellDatacenter.Spec, cpMachineCfg, nil, wngMachineCfgs, tinkIPBefore, time.Now)
 		workerTemplateNames, kubeadmTemplateNames := clusterapi.InitialTemplateNamesForWorkers(clusterSpec)
 		data, err := bldr.GenerateCAPISpecWorkers(clusterSpec, workerTemplateNames, kubeadmTemplateNames)

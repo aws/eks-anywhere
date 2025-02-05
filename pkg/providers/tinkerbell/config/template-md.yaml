@@ -62,7 +62,10 @@ spec:
               {{ $key }}: {{ $value}}
             {{- end }}
       bootOptions:
-        bootMode: netboot
+        bootMode: {{.bootMode}}
+        {{- if .isoUrl }}
+        isoURL: {{.isoUrl}}
+        {{- end }}
       templateOverride: |
 {{.workertemplateOverride | indent 8}}
     {{- end}}

@@ -536,7 +536,10 @@ spec:
               {{ $key }}: {{ $value}}
             {{- end }}
       bootOptions:
-        bootMode: netboot
+        bootMode: {{.bootMode}}
+        {{- if .isoUrl }}
+        isoURL: {{.isoUrl}}
+        {{- end }}
       templateOverride: |
 {{.etcdTemplateOverride | indent 8}}
     {{- end }}
@@ -561,7 +564,10 @@ spec:
               {{ $key }}: {{ $value}}
             {{- end }}
       bootOptions:
-        bootMode: netboot
+        bootMode: {{.bootMode}}
+        {{- if .isoUrl }}
+        isoURL: {{.isoUrl}}
+        {{- end }}
       templateOverride: |
 {{.controlPlanetemplateOverride | indent 8}}
     {{- end }}

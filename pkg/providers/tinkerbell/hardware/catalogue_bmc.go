@@ -11,6 +11,9 @@ import (
 	"github.com/aws/eks-anywhere/pkg/constants"
 )
 
+// GofishProviderOption is the provider name for Redfish Provider in Rufio.
+const GofishProviderOption = "gofish"
+
 // IndexBMCs indexes BMC instances on index by extracfting the key using fn.
 func (c *Catalogue) IndexBMCs(index string, fn KeyExtractorFunc) {
 	c.bmcIndex.IndexField(index, fn)
@@ -97,12 +100,16 @@ func toRufioMachine(m Machine) *v1alpha1.Machine {
 			Namespace: constants.EksaSystemNamespace,
 		},
 		InsecureTLS: true,
+		// Redfish bmc client generally seems to be more reliable in bmc interactions
+		// compared to other clients. Prefer Redfish client if available
+		ProviderOptions: &v1alpha1.ProviderOptions{
+			PreferredOrder: []v1alpha1.ProviderName{GofishProviderOption},
+		},
 	}
 	if m.BMCOptions != nil && m.BMCOptions.RPC.ConsumerURL != "" {
-		conn.ProviderOptions = &v1alpha1.ProviderOptions{
-			RPC: toRPCOptions(m.BMCOptions.RPC, m),
-		}
+		conn.ProviderOptions.RPC = toRPCOptions(m.BMCOptions.RPC, m)
 	}
+
 	return &v1alpha1.Machine{
 		TypeMeta: newMachineTypeMeta(),
 		ObjectMeta: v1.ObjectMeta{

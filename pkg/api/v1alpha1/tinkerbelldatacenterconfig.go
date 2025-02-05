@@ -74,6 +74,18 @@ func validateDatacenterConfig(config *TinkerbellDatacenterConfig) error {
 		return fmt.Errorf("TinkerbellDatacenterConfig: invalid tinkerbell ip: %v", err)
 	}
 
+	if config.Spec.IsoBoot {
+		if config.Spec.HookIsoURL != "" {
+			if _, err := url.ParseRequestURI(config.Spec.HookIsoURL); err != nil {
+				return fmt.Errorf("parsing hookIsoURL: %v, please provide a valid URL", err)
+			}
+		}
+	} else {
+		if config.Spec.HookIsoURL != "" {
+			return fmt.Errorf("isoURL can be set, only when isoBoot is set to true")
+		}
+	}
+
 	return nil
 }
 

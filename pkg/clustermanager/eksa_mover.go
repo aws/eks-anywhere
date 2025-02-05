@@ -85,6 +85,13 @@ func (m *Mover) Move(ctx context.Context, spec *cluster.Spec, fromClient, toClie
 
 		// pause cluster on bootstrap
 		cluster.PauseReconcile()
+
+		// For baremetal provider we need to clear this annotation once we move to management cluster
+		// at this point all the hardware is provisioned and tink stack is up on the management cluster.
+		// We don't need the Bootstrap IP anymore.
+		// ideally this logic should be outside of move but the current code structure needs refactor
+		// to be able to do that.
+		cluster.ClearTinkerbellIPAnnotation()
 		if err := fromClient.Update(ctx, cluster); err != nil {
 			return errors.Wrapf(err, "updating cluster on source")
 		}

@@ -105,6 +105,11 @@ func AssertOSImageURL(spec *ClusterSpec) error {
 	return validateOSImageURL(spec)
 }
 
+// AssertISOURL ensures that the ISOURL value set is in the expected file format that the smee deployment expects.
+func AssertISOURL(spec *ClusterSpec) error {
+	return validateISOURL(spec)
+}
+
 // AssertcontrolPlaneIPNotInUse ensures the endpoint host for the control plane isn't in use.
 // The check may be unreliable due to its implementation.
 func NewIPNotInUseAssertion(client networkutils.NetClient) ClusterSpecAssertion {

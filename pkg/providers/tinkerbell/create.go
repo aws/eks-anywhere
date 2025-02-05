@@ -53,6 +53,7 @@ func (p *Provider) PreCAPIInstallOnBootstrap(ctx context.Context, cluster *types
 		stack.WithHostNetworkEnabled(true), // enable host network on bootstrap cluster
 		stack.WithLoadBalancerEnabled(false),
 		stack.WithStackServiceEnabled(false),
+		stack.WithHookIsoOverride(p.datacenterConfig.Spec.HookIsoURL),
 	)
 	if err != nil {
 		return fmt.Errorf("install Tinkerbell stack on bootstrap cluster: %v", err)
@@ -116,6 +117,7 @@ func (p *Provider) PostWorkloadInit(ctx context.Context, cluster *types.Cluster,
 		stack.WithLoadBalancerEnabled(
 			len(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations) != 0 && // load balancer is handled by kube-vip in control plane nodes
 				!p.datacenterConfig.Spec.SkipLoadBalancerDeployment), // configure load balancer based on datacenterConfig.Spec.SkipLoadBalancerDeployment
+		stack.WithHookIsoOverride(p.datacenterConfig.Spec.HookIsoURL),
 	)
 	if err != nil {
 		return fmt.Errorf("installing stack on workload cluster: %v", err)

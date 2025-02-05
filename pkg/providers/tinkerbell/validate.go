@@ -3,6 +3,7 @@ package tinkerbell
 import (
 	"errors"
 	"fmt"
+	"path"
 	"strings"
 
 	tinkv1alpha1 "github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
@@ -194,6 +195,15 @@ func containsK8sVersion(imageURL, k8sVersion string) bool {
 	// For ex if the kubernetes version is 1.23,
 	// the image url should include 1.23 or 1-23, 1_23 or 123 i.e. ubuntu-1-23.gz or similar in the string.
 	return strings.Contains(osImageURL, kubeVersion)
+}
+
+func validateISOURL(spec *ClusterSpec) error {
+	if spec.DatacenterConfig.Spec.HookIsoURL != "" {
+		if path.Ext(spec.DatacenterConfig.Spec.HookIsoURL) != ".iso" {
+			return fmt.Errorf("incorrect iso url specified: please specify the iso url with '.iso' extension")
+		}
+	}
+	return nil
 }
 
 func validateMachineRefExists(

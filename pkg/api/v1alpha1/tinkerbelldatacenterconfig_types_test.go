@@ -37,6 +37,21 @@ func TestTinkerbellDatacenterConfigValidateFail(t *testing.T) {
 			wantErr: "parsing osImageOverride: parse \"test\": invalid URI for request",
 		},
 		{
+			name: "ISO URL set, isoBoot not enabled",
+			tinkDC: newTinkerbellDatacenterConfig(func(dc *v1alpha1.TinkerbellDatacenterConfig) {
+				dc.Spec.HookIsoURL = "127.0.0.1:8080/hook.iso"
+			}),
+			wantErr: "isoURL can be set, only when isoBoot is set to true",
+		},
+		{
+			name: "Invalid ISO URL",
+			tinkDC: newTinkerbellDatacenterConfig(func(dc *v1alpha1.TinkerbellDatacenterConfig) {
+				dc.Spec.IsoBoot = true
+				dc.Spec.HookIsoURL = "test"
+			}),
+			wantErr: "parsing hookIsoURL: parse \"test\": invalid URI for request",
+		},
+		{
 			name: "Invalid hook Image URL",
 			tinkDC: newTinkerbellDatacenterConfig(func(dc *v1alpha1.TinkerbellDatacenterConfig) {
 				dc.Spec.HookImagesURLPath = "test"
@@ -61,6 +76,23 @@ func TestTinkerbellDatacenterConfigValidateFail(t *testing.T) {
 
 func TestTinkerbellDatacenterConfigValidateSuccess(t *testing.T) {
 	tinkDC := createTinkerbellDatacenterConfig()
+
+	g := NewWithT(t)
+	g.Expect(tinkDC.Validate()).To(Succeed())
+}
+
+func TestTinkerbellDatacenterConfigIsoBootValidateSuccess(t *testing.T) {
+	tinkDC := createTinkerbellDatacenterConfig()
+	tinkDC.Spec.IsoBoot = true
+
+	g := NewWithT(t)
+	g.Expect(tinkDC.Validate()).To(Succeed())
+}
+
+func TestTinkerbellDatacenterConfigIsoURLValidateSuccess(t *testing.T) {
+	tinkDC := createTinkerbellDatacenterConfig()
+	tinkDC.Spec.IsoBoot = true
+	tinkDC.Spec.HookIsoURL = "http://127.0.0.1:8080/hook.iso"
 
 	g := NewWithT(t)
 	g.Expect(tinkDC.Validate()).To(Succeed())

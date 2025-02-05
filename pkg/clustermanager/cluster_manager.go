@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"net/url"
 	"os"
 	"regexp"
 	"strings"
@@ -18,8 +19,10 @@ import (
 	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	tinkerbellv1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1/thirdparty/tinkerbell/capt/v1beta1"
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/clustermanager/internal"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/diagnostics"
@@ -27,6 +30,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers"
+	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell"
 	"github.com/aws/eks-anywhere/pkg/retrier"
 	"github.com/aws/eks-anywhere/pkg/types"
 )
@@ -294,6 +298,20 @@ func (c *ClusterManager) MoveCAPI(ctx context.Context, from, to *types.Cluster, 
 		return err
 	}
 
+	bootStrapClient, err := c.ClientFactory.BuildClientFromKubeconfig(from.KubeconfigFile)
+	if err != nil {
+		return fmt.Errorf("building bootstrap cluster client: %w", err)
+	}
+	if clusterSpec.Cluster.Spec.DatacenterRef.Kind == v1alpha1.TinkerbellDatacenterKind {
+		r := retrier.New(c.clusterctlMoveTimeout, retrier.WithRetryPolicy(clusterctlMoveRetryPolicy))
+		err = r.Retry(func() error {
+			return updateTinkerbellIPInBootstrapTinkerbellMachineTemplate(ctx, clusterSpec, bootStrapClient)
+		})
+		if err != nil {
+			return fmt.Errorf("updating Tinkerbell IP in tinkerbell machine templates: %w", err)
+		}
+	}
+
 	// Network errors, most commonly connection refused or timeout, can occur if either source or target
 	// cluster becomes inaccessible during the move operation.  If this occurs without retries, clusterctl
 	// abandons the move operation, leaving an unpredictable subset of the CAPI components copied to target
@@ -302,7 +320,7 @@ func (c *ClusterManager) MoveCAPI(ctx context.Context, from, to *types.Cluster, 
 	// wait out the network disruption and complete the move.
 
 	r := retrier.New(c.clusterctlMoveTimeout, retrier.WithRetryPolicy(clusterctlMoveRetryPolicy))
-	err := r.Retry(func() error {
+	err = r.Retry(func() error {
 		return c.clusterClient.MoveManagement(ctx, from, to, clusterName)
 	})
 	if err != nil {
@@ -890,4 +908,82 @@ func newUpgraderConfigMap(m map[string]string) *corev1.ConfigMap {
 		},
 		Data: m,
 	}
+}
+
+// As the Tink stack gets redeployed in the management cluster tinkerbell IP changes from bootstrap IP
+// to the actual Tinkerbell IP specified in datacenter spec. We will need to update this IP in the
+// TinkerbellMachineTemplate as the previous bootStrap IP is no longer serving the Tink stack.
+// Also there is a new rollout once the eks-a controller comes up on the management cluster as it sees
+// the IP change in the template as a diff in spec. To prevent this from happening update the objects
+// in-place before the move. Since TinkerbellMachineTemplate is immutable we get the object, update
+// the IP, delete and recreate the object.
+// For long term, we want to revisit how we handle the bootstrap vs management cluster case in eks-a
+// controller specific to baremetal provider as the source of truth gets changed due to the nature of
+// tink stack being moved.
+// nolint:gocyclo
+func updateTinkerbellIPInBootstrapTinkerbellMachineTemplate(ctx context.Context, spec *cluster.Spec, client kubernetes.Client) error {
+	logger.Info("Updating Tinkerbell stack IP from bootstrap to management cluster tinkerbell stack IP")
+	tinkerbellMachineTemplates := tinkerbellv1.TinkerbellMachineTemplateList{}
+	if err := client.List(ctx, &tinkerbellMachineTemplates); err != nil {
+		return fmt.Errorf("retrieving tinkerbell machine templates: %w", err)
+	}
+
+	tinkIP := spec.TinkerbellDatacenter.Spec.TinkerbellIP
+
+	for _, tinkMachineTemplate := range tinkerbellMachineTemplates.Items {
+		isoURL := url.URL{
+			Scheme: "http",
+			Host:   fmt.Sprintf("%s:%s", tinkIP, tinkerbell.SmeeHTTPPort),
+			// isoURL path is only served in the top level /iso path.
+			Path: "/iso/hook.iso",
+		}
+		err := client.Delete(ctx, &tinkMachineTemplate)
+		if err != nil {
+			return fmt.Errorf("deleting tinkerebell machine template: %w", err)
+		}
+		tinkMachineTemplate.Spec.Template.Spec.BootOptions.ISOURL = isoURL.String()
+		osImageURL := spec.TinkerbellDatacenter.Spec.OSImageURL
+
+		// When an templateOverride is specified in the spec, we do not want to modify it.
+		cpMachineCfg := spec.TinkerbellMachineConfigs[spec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name]
+		if cpMachineCfg.Spec.TemplateRef.Name == "" && strings.Contains(tinkMachineTemplate.Name, clusterapi.ControlPlaneMachineTemplateName(spec.Cluster)) {
+			if cpMachineCfg.Spec.OSImageURL != "" {
+				osImageURL = cpMachineCfg.Spec.OSImageURL
+			}
+			tinkMachineTemplate, err = updateTemplateOverride(spec.Cluster, tinkMachineTemplate, osImageURL, tinkIP, cpMachineCfg.OSFamily())
+			if err != nil {
+				return err
+			}
+		}
+
+		// When an templateOverride is specified in the spec, we do not want to modify it.
+		// We update the tinkebelltemplate config only for the corresponding worker node group.
+		for _, wng := range spec.Cluster.Spec.WorkerNodeGroupConfigurations {
+			wngMachineCfg := spec.TinkerbellMachineConfigs[wng.MachineGroupRef.Name]
+			if wngMachineCfg.Spec.TemplateRef.Name == "" && strings.Contains(tinkMachineTemplate.Name, clusterapi.MachineDeploymentName(spec.Cluster, wng)) {
+				if wngMachineCfg.Spec.OSImageURL != "" {
+					osImageURL = wngMachineCfg.Spec.OSImageURL
+				}
+				tinkMachineTemplate, err = updateTemplateOverride(spec.Cluster, tinkMachineTemplate, osImageURL, tinkIP, wngMachineCfg.OSFamily())
+				if err != nil {
+					return err
+				}
+			}
+		}
+		err = client.Create(ctx, &tinkMachineTemplate)
+		if err != nil {
+			return fmt.Errorf("creating tinkerebell machine template: %w", err)
+		}
+	}
+	return nil
+}
+
+func updateTemplateOverride(clusterSpec *v1alpha1.Cluster, template tinkerbellv1.TinkerbellMachineTemplate, osImageOverride, tinkIP string, osFamily v1alpha1.OSFamily) (tinkerbellv1.TinkerbellMachineTemplate, error) {
+	newOverride := v1alpha1.NewDefaultTinkerbellTemplateConfigCreate(clusterSpec, osImageOverride, tinkIP, tinkIP, osFamily)
+	var err error
+	template.Spec.Template.Spec.TemplateOverride, err = newOverride.ToTemplateString()
+	if err != nil {
+		return tinkerbellv1.TinkerbellMachineTemplate{}, fmt.Errorf("failed to get TinkerbellTemplateConfig: %w", err)
+	}
+	return template, nil
 }

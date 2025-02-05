@@ -3,7 +3,6 @@ package management
 import (
 	"context"
 
-	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clustermarshaller"
 	"github.com/aws/eks-anywhere/pkg/logger"
@@ -40,13 +39,6 @@ func (s *installEksaComponentsOnBootstrapTask) Checkpoint() *task.CompletedTask 
 type installEksaComponentsOnWorkloadTask struct{}
 
 func (s *installEksaComponentsOnWorkloadTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
-	// Removes the tinkerbell IP annotation added to the spec for controller based cluster creation. This
-	// helps use the right admin machine URL for hegel URLS.
-	if commandContext.ClusterSpec.Cluster.Spec.DatacenterRef.Kind == v1alpha1.TinkerbellDatacenterKind {
-		logger.Info("Removing Tinkerbell IP annotation")
-		commandContext.ClusterSpec.Cluster.ClearTinkerbellIPAnnotation()
-	}
-
 	logger.Info("Installing EKS-A custom components on the management cluster")
 
 	err := installEKSAComponents(ctx, commandContext, commandContext.WorkloadCluster)

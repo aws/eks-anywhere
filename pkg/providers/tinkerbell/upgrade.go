@@ -591,6 +591,7 @@ func (p *Provider) PreCoreComponentsUpgrade(
 		stack.WithLoadBalancerEnabled(
 			len(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations) != 0 && // load balancer is handled by kube-vip in control plane nodes
 				!p.datacenterConfig.Spec.SkipLoadBalancerDeployment), // configure load balancer based on datacenterConfig.Spec.SkipLoadBalancerDeployment
+		stack.WithHookIsoOverride(p.datacenterConfig.Spec.HookIsoURL),
 	)
 	if err != nil {
 		return fmt.Errorf("upgrading stack: %v", err)

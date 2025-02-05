@@ -122,6 +122,7 @@ func TestTinkerbellStackInstallWithDifferentOptions(t *testing.T) {
 	stackTests := []struct {
 		name              string
 		hookImageOverride string
+		hookIsoOverride   string
 		expectedFile      string
 		installOnDocker   bool
 		registryMirror    *registrymirror.RegistryMirror
@@ -189,6 +190,12 @@ func TestTinkerbellStackInstallWithDifferentOptions(t *testing.T) {
 			opts:              []stack.InstallOption{},
 		},
 		{
+			name:            "with_hook_iso_override",
+			hookIsoOverride: "https://my-local-web-server/hook.iso",
+			expectedFile:    "testdata/expected_with_hook_iso_override.yaml",
+			opts:            []stack.InstallOption{},
+		},
+		{
 			name:         "with_registry_mirror",
 			expectedFile: "testdata/expected_with_registry_mirror.yaml",
 			registryMirror: &registrymirror.RegistryMirror{
@@ -219,7 +226,7 @@ func TestTinkerbellStackInstallWithDifferentOptions(t *testing.T) {
 			folder, writer := test.NewWriter(t)
 			cluster := &types.Cluster{Name: "test"}
 			ctx := context.Background()
-			s := stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace, "192.168.0.0/16", stackTest.registryMirror, stackTest.proxyConfig)
+			s := stack.NewInstaller(docker, writer, helm, stackTest.hookIsoOverride, constants.EksaSystemNamespace, "192.168.0.0/16", stackTest.registryMirror, stackTest.proxyConfig)
 
 			generatedOverridesPath := filepath.Join(folder, "generated", overridesFileName)
 			if stackTest.registryMirror != nil && stackTest.registryMirror.Auth {
@@ -237,6 +244,12 @@ func TestTinkerbellStackInstallWithDifferentOptions(t *testing.T) {
 					[]string{"-backend-kube-config", "/kubeconfig", "-dhcp-addr", "0.0.0.0:67", "-osie-url", "https://anywhere-assests.eks.amazonaws.com/tinkerbell/hook", "-tink-server", "1.2.3.4:42113"},
 					"-v", gomock.Any(),
 					"--network", "host",
+					"-e", gomock.Any(),
+					"-e", gomock.Any(),
+					"-e", gomock.Any(),
+					"-e", gomock.Any(),
+					"-e", gomock.Any(),
+					"-e", gomock.Any(),
 					"-e", gomock.Any(),
 					"-e", gomock.Any(),
 					"-e", gomock.Any(),
@@ -270,7 +283,7 @@ func TestTinkerbellStackUninstallLocalSucess(t *testing.T) {
 	writer := filewritermocks.NewMockFileWriter(mockCtrl)
 	ctx := context.Background()
 
-	s := stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace, "192.168.0.0/16", nil, nil)
+	s := stack.NewInstaller(docker, writer, helm, "", constants.EksaSystemNamespace, "192.168.0.0/16", nil, nil)
 
 	docker.EXPECT().ForceRemove(ctx, boots)
 
@@ -287,7 +300,7 @@ func TestTinkerbellStackUninstallLocalFailure(t *testing.T) {
 	writer := filewritermocks.NewMockFileWriter(mockCtrl)
 	ctx := context.Background()
 
-	s := stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace, "192.168.0.0/16", nil, nil)
+	s := stack.NewInstaller(docker, writer, helm, "", constants.EksaSystemNamespace, "192.168.0.0/16", nil, nil)
 
 	dockerError := "docker error"
 	expectedError := fmt.Sprintf("removing local boots container: %s", dockerError)
@@ -304,7 +317,7 @@ func TestTinkerbellStackCheckLocalBootsExistenceDoesNotExist(t *testing.T) {
 	writer := filewritermocks.NewMockFileWriter(mockCtrl)
 	ctx := context.Background()
 
-	s := stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace, "192.168.0.0/16", nil, nil)
+	s := stack.NewInstaller(docker, writer, helm, "", constants.EksaSystemNamespace, "192.168.0.0/16", nil, nil)
 
 	docker.EXPECT().CheckContainerExistence(ctx, "boots").Return(true, nil)
 	docker.EXPECT().ForceRemove(ctx, "boots")
@@ -320,7 +333,7 @@ func TestTinkerbellStackCheckLocalBootsExistenceDoesExist(t *testing.T) {
 	writer := filewritermocks.NewMockFileWriter(mockCtrl)
 	ctx := context.Background()
 
-	s := stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace, "192.168.0.0/16", nil, nil)
+	s := stack.NewInstaller(docker, writer, helm, "", constants.EksaSystemNamespace, "192.168.0.0/16", nil, nil)
 	expectedErrorMsg := "boots container already exists, delete the container manually"
 
 	docker.EXPECT().CheckContainerExistence(ctx, "boots").Return(true, nil)
@@ -336,7 +349,7 @@ func TestTinkerbellStackCheckLocalBootsExistenceDockerError(t *testing.T) {
 	writer := filewritermocks.NewMockFileWriter(mockCtrl)
 	ctx := context.Background()
 
-	s := stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace, "192.168.0.0/16", nil, nil)
+	s := stack.NewInstaller(docker, writer, helm, "", constants.EksaSystemNamespace, "192.168.0.0/16", nil, nil)
 
 	docker.EXPECT().CheckContainerExistence(ctx, "boots").Return(false, nil)
 
@@ -357,7 +370,7 @@ func TestUpgrade(t *testing.T) {
 	helm.EXPECT().
 		UpgradeInstallChartWithValuesFile(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any())
-	s := stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace, "192.168.0.0/16", nil, nil)
+	s := stack.NewInstaller(docker, writer, helm, "", constants.EksaSystemNamespace, "192.168.0.0/16", nil, nil)
 
 	err := s.Upgrade(ctx, getTinkBundle(), testIP, cluster.KubeconfigFile, "")
 	assert.NoError(t, err)
@@ -388,7 +401,7 @@ func TestUpgradeWithRegistryMirrorAuthError(t *testing.T) {
 	expectedErrorMsg := "invalid registry credentials"
 	helm.EXPECT().RegistryLogin(ctx, "1.2.3.4:443", "username", "password").Return(fmt.Errorf(expectedErrorMsg))
 
-	s := stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace, "192.168.0.0/16", registryMirror, nil)
+	s := stack.NewInstaller(docker, writer, helm, "", constants.EksaSystemNamespace, "192.168.0.0/16", registryMirror, nil)
 
 	err := s.Upgrade(ctx, getTinkBundle(), testIP, cluster.KubeconfigFile, "")
 	assert.EqualError(t, err, expectedErrorMsg, "Error should be: %v, got: %v", expectedErrorMsg, err)
@@ -410,7 +423,7 @@ func TestUpdateStackInstallerNoProxyError(t *testing.T) {
 		NoProxy:    noProxy,
 	}
 
-	s := stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace, "192.168.0.0/16", nil, proxyConfiguration)
+	s := stack.NewInstaller(docker, writer, helm, "", constants.EksaSystemNamespace, "192.168.0.0/16", nil, proxyConfiguration)
 	s.AddNoProxyIP("2.3.4.5")
 
 	noProxy = append(noProxy, "2.3.4.5")
@@ -441,7 +454,7 @@ func TestUpgradeWithProxy(t *testing.T) {
 		},
 	}
 
-	s := stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace, "192.168.0.0/16", nil, proxyConfiguration)
+	s := stack.NewInstaller(docker, writer, helm, "", constants.EksaSystemNamespace, "192.168.0.0/16", nil, proxyConfiguration)
 
 	err := s.Upgrade(ctx, getTinkBundle(), testIP, cluster.KubeconfigFile, "https://my-local-web-server/hook")
 	assert.NoError(t, err)
@@ -461,7 +474,7 @@ func TestUpgradeCRDsChart(t *testing.T) {
 	helm.EXPECT().
 		UpgradeInstallChartWithValuesFile(ctx, "tinkerbellCrds", fmt.Sprintf("oci://%s", "public.ecr.aws/eks-anywhere/tinkerbell/tinkerbell-crds"), helmChartVersion,
 			cluster.KubeconfigFile, constants.EksaSystemNamespace, "", gomock.Any())
-	s := stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace, "192.168.0.0/16", nil, nil)
+	s := stack.NewInstaller(docker, writer, helm, "", constants.EksaSystemNamespace, "192.168.0.0/16", nil, nil)
 
 	err := s.UpgradeInstallCRDs(ctx, getTinkBundle(), cluster.KubeconfigFile)
 	assert.NoError(t, err)
@@ -479,7 +492,7 @@ func TestLegacyUpgrade(t *testing.T) {
 	helm.EXPECT().
 		UpgradeInstallChartWithValuesFile(ctx, "tinkerbell-chart", fmt.Sprintf("oci://%s", "public.ecr.aws/eks-anywhere/tinkerbell/tinkerbell-chart"), helmChartVersion,
 			cluster.KubeconfigFile, "", "", gomock.Any())
-	s := stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace, "192.168.0.0/16", nil, nil)
+	s := stack.NewInstaller(docker, writer, helm, "", constants.EksaSystemNamespace, "192.168.0.0/16", nil, nil)
 
 	err := s.UpgradeLegacy(ctx, getTinkBundle(), cluster.KubeconfigFile)
 	assert.NoError(t, err)
@@ -498,7 +511,7 @@ func TestUninstall(t *testing.T) {
 	helm.EXPECT().
 		Uninstall(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 			gomock.Any())
-	s := stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace, "192.168.0.0/16", nil, nil)
+	s := stack.NewInstaller(docker, writer, helm, "", constants.EksaSystemNamespace, "192.168.0.0/16", nil, nil)
 
 	err := s.Upgrade(ctx, getTinkBundle(), testIP, cluster.KubeconfigFile, "")
 	assert.NoError(t, err)
@@ -516,7 +529,7 @@ func TestHasLegacyChart(t *testing.T) {
 	cluster := &types.Cluster{Name: "test"}
 	ctx := context.Background()
 
-	s := stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace, "192.168.0.0/16", nil, nil)
+	s := stack.NewInstaller(docker, writer, helm, "", constants.EksaSystemNamespace, "192.168.0.0/16", nil, nil)
 	helm.EXPECT().ListCharts(ctx, cluster.KubeconfigFile, "tinkerbell-chart")
 
 	_, err := s.HasLegacyChart(ctx, getTinkBundle(), cluster.KubeconfigFile)
