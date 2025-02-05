@@ -100,6 +100,10 @@ spec:
          type: name
      workerMachineGroups:
        - md-0
+  ccmExcludeNodeIPs:
+  - 10.10.10.23
+  - 10.10.10.24-10.10.10.30
+  - 10.10.20.0/28
 ---
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: NutanixMachineConfig
@@ -323,6 +327,11 @@ UUID of the failure domain subnet.
 
 ### failureDomains[0].workerMachineGroups (optional)
 List of worker machine group names that belong to a specific failure domain. See `Cluster.Spec.WorkerNodeGroupConfiguration` for more information.
+
+### ccmExcludeNodeIPs (optional)
+Optional list of valid and properly formatted IP addresses and IP address ranges that should be excluded from the CCM IP pool for nodes. Examples of valid entries include single IP addresses like `10.10.10.23`, IP ranges like `10.10.10.24-10.10.10.30`, and CIDR blocks like `10.10.20.0/28`.
+
+> **_NOTE:_** Do not include [`Cluster.Spec.controlPlaneConfiguration.endpoint.host`]({{< relref "#controlplaneconfigurationendpointhost-required" >}}) IP address, it will be ignored by default.
 
 ## NutanixMachineConfig Fields
 
