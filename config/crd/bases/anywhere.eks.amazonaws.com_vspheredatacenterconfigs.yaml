@@ -47,6 +47,41 @@ spec:
                 type: string
               thumbprint:
                 type: string
+              failureDomains:
+                description: FailureDomains is the optional list of failure domains
+                  to distribute VMs across.
+                items:
+                  description: VsphereDatacenterFailureDomain defines the failure
+                    domain for the Vsphere Datacenter.   
+                  properties:
+                    name:
+                      description: Name is used as a unique identifier for each failure domain.
+                      type: string
+                    computeCluster:     
+                      description: ComputeCluster is the name or inventory path of the computecluster in which the
+                       the VM is created/located
+                      type: string       
+                    resourcePool:
+                      description: ResourcePool is the name or inventory path of the resource pool in which the VM is created/located
+                      type: string
+                    datastore:
+                      description: Datastore is the name or inventory path of the datastore in which the VM is created/located
+                      type: string                           
+                    folder:
+                      description: Folder is the name or inventory path of the folder in which the the VM is created/located
+                      type: string 
+                    network:
+                      description: Network is the name or inventory path of the network which will be added to the VM
+                      type: string                             
+                  required:
+                  - name
+                  - computeCluster
+                  - resourcePool
+                  - datastore
+                  - folder
+                  - network                      
+                  type: object                  
+                type: array
             required:
             - datacenter
             - insecure

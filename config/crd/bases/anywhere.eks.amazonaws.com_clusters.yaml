@@ -693,6 +693,11 @@ spec:
                             of upgrade rollout strategies.
                           type: string
                       type: object
+                    failureDomains:
+                      description: List of failure domains to distribute worker nodes across
+                      items:
+                        type: string
+                      type: array                      
                   type: object
                 type: array
             type: object

@@ -14,11 +14,33 @@ import (
 type VSphereDatacenterConfigSpec struct {
 	// Important: Run "make generate" to regenerate code after modifying this file
 
-	Datacenter string `json:"datacenter"`
-	Network    string `json:"network"`
-	Server     string `json:"server"`
-	Thumbprint string `json:"thumbprint"`
-	Insecure   bool   `json:"insecure"`
+	Datacenter     string          `json:"datacenter"`
+	Network        string          `json:"network"`
+	Server         string          `json:"server"`
+	Thumbprint     string          `json:"thumbprint"`
+	Insecure       bool            `json:"insecure"`
+	FailureDomains []FailureDomain `json:"failureDomains,omitempty"`
+}
+
+// Failuredomains defines the list of failure domains to spread the VMs across.
+type FailureDomain struct {
+	// +kubebuilder:validation:Required
+	Name string `json:"name"`
+
+	// +kubebuilder:validation:Required
+	ComputeCluster string `json:"computeCluster"`
+
+	// +kubebuilder:validation:Required
+	ResourcePool string `json:"resourcePool"`
+
+	// +kubebuilder:validation:Required
+	Datastore string `json:"datastore"`
+
+	// +kubebuilder:validation:Required
+	Folder string `json:"folder"`
+
+	// +kubebuilder:validation:Required
+	Network string `json:"network"`
 }
 
 // VSphereDatacenterConfigStatus defines the observed state of VSphereDatacenterConfig.
@@ -98,6 +120,10 @@ func (v *VSphereDatacenterConfig) Validate() error {
 
 	if err := validatePath(networkFolderType, v.Spec.Network, v.Spec.Datacenter); err != nil {
 		return err
+	}
+
+	if len(v.Spec.FailureDomains) > 0 {
+		return validateFailureDomains(v)
 	}
 
 	return nil
