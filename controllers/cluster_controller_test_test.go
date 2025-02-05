@@ -27,7 +27,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/controller"
 	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
 	"github.com/aws/eks-anywhere/pkg/controller/clusters"
-	"github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
 func TestClusterReconcilerEnsureOwnerReferences(t *testing.T) {
@@ -54,7 +53,7 @@ func TestClusterReconcilerEnsureOwnerReferences(t *testing.T) {
 			Namespace: "default",
 		},
 		Spec: anywherev1.ClusterSpec{
-			KubernetesVersion: "v1.25",
+			KubernetesVersion: anywherev1.Kube132,
 			EksaVersion:       &version,
 		},
 		Status: anywherev1.ClusterStatus{
@@ -244,8 +243,8 @@ func TestClusterReconcilerSetBundlesRef(t *testing.T) {
 		},
 		Spec: anywherev1.ClusterSpec{
 			BundlesRef: &anywherev1.BundlesRef{
-				Name:      "my-bundles-ref",
-				Namespace: "my-namespace",
+				Name:      "bundles-1",
+				Namespace: "default",
 			},
 		},
 		Status: anywherev1.ClusterStatus{
@@ -258,10 +257,10 @@ func TestClusterReconcilerSetBundlesRef(t *testing.T) {
 			Name: "my-cluster",
 		},
 		Spec: anywherev1.ClusterSpec{
-			KubernetesVersion: "v1.25",
+			KubernetesVersion: anywherev1.Kube132,
 			BundlesRef: &anywherev1.BundlesRef{
-				Name:      "my-bundles-ref",
-				Namespace: "my-namespace",
+				Name:      "bundles-1",
+				Namespace: "default",
 			},
 		},
 		Status: anywherev1.ClusterStatus{
@@ -275,25 +274,7 @@ func TestClusterReconcilerSetBundlesRef(t *testing.T) {
 			Namespace: constants.EksaSystemNamespace,
 		},
 	}
-	bundles := &v1alpha1.Bundles{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "my-bundles-ref",
-			Namespace: cluster.Spec.BundlesRef.Namespace,
-			Annotations: map[string]string{
-				constants.SignatureAnnotation: "MEYCIQDA40Bizd/0mdCwRCIKq10gjLdJMT0s0y57RPW/zOyWZwIhALPOFS+NZZ7QCwI7wiC1TiArMHMq4TbzIJcx85H/zjU4",
-			},
-		},
-		Spec: v1alpha1.BundlesSpec{
-			VersionsBundles: []v1alpha1.VersionsBundle{
-				{
-					KubeVersion: "v1.30",
-					PackageController: v1alpha1.PackageBundle{
-						HelmChart: v1alpha1.Image{},
-					},
-				},
-			},
-		},
-	}
+	bundles := createBundle()
 
 	objs := []runtime.Object{cluster, managementCluster, secret, bundles}
 	cb := fake.NewClientBuilder()
@@ -347,7 +328,7 @@ func TestClusterReconcilerSetDefaultEksaVersion(t *testing.T) {
 			Namespace: "default",
 		},
 		Spec: anywherev1.ClusterSpec{
-			KubernetesVersion: "v1.25",
+			KubernetesVersion: anywherev1.Kube132,
 		},
 		Status: anywherev1.ClusterStatus{
 			ReconciledGeneration: 1,
