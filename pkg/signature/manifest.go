@@ -26,6 +26,7 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/itchyny/gojq"
 	"sigs.k8s.io/yaml"
 
@@ -50,19 +51,9 @@ func ValidateSignature(bundle *anywherev1alpha1.Bundles, pubKey string) (valid b
 		return false, fmt.Errorf("signature in metadata isn't base64 encoded: %w", err)
 	}
 
-	pubdecoded, err := base64.StdEncoding.DecodeString(pubKey)
+	pubkey, err := parsePublicKey(pubKey)
 	if err != nil {
-		return false, fmt.Errorf("decoding the public key as string: %w", err)
-	}
-
-	pubparsed, err := x509.ParsePKIXPublicKey(pubdecoded)
-	if err != nil {
-		return false, fmt.Errorf("parsing the public key (not PKIX): %w", err)
-	}
-
-	pubkey, ok := pubparsed.(*ecdsa.PublicKey)
-	if !ok {
-		return false, fmt.Errorf("parsing the public key (not ECDSA): %T", pubparsed)
+		return false, err
 	}
 
 	return ecdsa.VerifyASN1(pubkey, digest[:], sig), nil
@@ -161,4 +152,46 @@ func filterExcludes(jsonBytes []byte) ([]byte, error) {
 		return nil, fmt.Errorf("marshalling final result to JSON: %w", err)
 	}
 	return filtered, nil
+}
+
+func parsePublicKey(key string) (*ecdsa.PublicKey, error) {
+	pubdecoded, err := base64.StdEncoding.DecodeString(key)
+	if err != nil {
+		return nil, fmt.Errorf("decoding the public key as string: %w", err)
+	}
+
+	pubparsed, err := x509.ParsePKIXPublicKey(pubdecoded)
+	if err != nil {
+		return nil, fmt.Errorf("parsing the public key (not PKIX): %w", err)
+	}
+
+	pubkey, ok := pubparsed.(*ecdsa.PublicKey)
+	if !ok {
+		return nil, fmt.Errorf("parsing the public key (not ECDSA): %T", pubparsed)
+	}
+	return pubkey, nil
+}
+
+// ParseLicense parses licenseKey jwt token using the public key and returns token fields.
+func ParseLicense(licenseToken string, key string) (*jwt.Token, error) {
+	tokenKey, err := parsePublicKey(key)
+	if err != nil {
+		return nil, err
+	}
+
+	token, err := jwt.Parse(licenseToken, func(t *jwt.Token) (interface{}, error) {
+		if _, ok := t.Method.(*jwt.SigningMethodECDSA); !ok {
+			return nil, fmt.Errorf("signing method not supported: %v", t.Header["alg"])
+		}
+		return tokenKey, nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("parsing licenseToken: %w", err)
+	}
+
+	if !token.Valid {
+		return nil, errors.New("licenseToken is not valid")
+	}
+
+	return token, nil
 }

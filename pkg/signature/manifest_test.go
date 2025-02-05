@@ -1,10 +1,17 @@
 package signature
 
 import (
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
+	"crypto/x509"
+	"encoding/base64"
 	"fmt"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/onsi/gomega"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -157,7 +164,6 @@ func TestValidateSignature(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(_ *testing.T) {
 			valid, err := ValidateSignature(tc.bundle, tc.publicKey)
-			fmt.Println(err)
 			if err != nil && !strings.Contains(err.Error(), tc.wantErr.Error()) {
 				t.Errorf("%v got = %v, \nwant %v", tc.name, err, tc.wantErr)
 			}
@@ -334,5 +340,81 @@ func TestFilterExcludes(t *testing.T) {
 					"Error should contain substring %q", tt.expectErrSubstr)
 			}
 		})
+	}
+}
+
+func TestParseLicense(t *testing.T) {
+	tests := []struct {
+		name       string
+		licenseKey string
+		key        string
+		wantErr    error
+	}{
+		{
+			name:       "malformed token",
+			licenseKey: "invalid.token.string",
+			key:        constants.LincesePublicKey,
+			wantErr:    fmt.Errorf("parsing licenseToken"),
+		},
+		{
+			name:       "invalid public key",
+			licenseKey: "invalid.token.string",
+			key:        "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA7XtGi5M5nUyoXZpZWg5e9YgQaVbUq4DbxFkGn7yM9rIg+45dQ1pJwYQd/Z9RDZ3umTZHfdmVfaMT8E/2jpa6vYh5AroOn75tN8qaGmG2OqEBoA8k84zK98qNdOJow7CcIWjHQGk6Tr/dSfdTC6ydmBdRMX/7bBYcKylOFf2P65HOMQCB5YdZJAYzvlXEXzoc1o7DD3pT68BOHHTJp6h7+GGXZoNlHJeq1+AKq38Ra6tuI8EUV2S/5+75FFJzMTLVlJ20Jlhh3fuWJtn6a2hGeD/fbZ1w6CMi0dCTGEX6wUOmL5FJ4RFSVthqZCZ7Ap0G2/5Mu3pxVR9glAxThOw61QIDAQAB",
+			wantErr:    fmt.Errorf("parsing the public key (not ECDSA)"),
+		},
+		{
+			name:       "signing method not supported",
+			licenseKey: "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJleGFtcGxlIjoiZGF0YSJ9.UKzt6DArjTtHk_Nch6TwbdgVni6FwLJ1fdbVNYikE_kFGTzMZC82m_0qY7l27LtN0J6b_5D8hLLFk3pTZHYGBX5kB2XKH5e5syRkGh6uZHDkGtRjTMoD5sPMZJ0rG4m80k8cgI37UsIt66hoK_45FzSMlTwxogJ2nJk5G1dH10",
+			key:        constants.LincesePublicKey,
+			wantErr:    fmt.Errorf("signing method not supported"),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			_, err := ParseLicense(tc.licenseKey, tc.key)
+			if err != nil && !strings.Contains(err.Error(), tc.wantErr.Error()) {
+				t.Errorf("%v got = %v, \nwant %v", tc.name, err, tc.wantErr)
+			}
+		})
+	}
+}
+
+func generateTestKeys() (string, *ecdsa.PrivateKey, error) {
+	privateKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	if err != nil {
+		return "", nil, fmt.Errorf("failed to generate private key: %w", err)
+	}
+	publicKey := &privateKey.PublicKey
+
+	publicKeyBytes, err := x509.MarshalPKIXPublicKey(publicKey)
+	if err != nil {
+		return "", nil, fmt.Errorf("failed to marshal public key: %w", err)
+	}
+	publicKeyBase64 := base64.StdEncoding.EncodeToString(publicKeyBytes)
+
+	return publicKeyBase64, privateKey, nil
+}
+
+func TestParseLicense_Success(t *testing.T) {
+	publicKeyBase64, privateKey, err := generateTestKeys()
+	if err != nil {
+		t.Errorf("Failed to generate test keys: %v", err)
+	}
+
+	claims := jwt.MapClaims{
+		"iss": "test",
+		"sub": "12345",
+		"exp": time.Now().Add(time.Hour * 24).Unix(),
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodES256, claims)
+	signedToken, err := token.SignedString(privateKey)
+	if err != nil {
+		t.Errorf("Failed to sign token: %v", err)
+	}
+
+	_, err = ParseLicense(signedToken, publicKeyBase64)
+	if err != nil {
+		t.Errorf("ParseLicense failed: %v", err)
 	}
 }
