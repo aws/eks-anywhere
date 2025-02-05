@@ -130,6 +130,7 @@ func TestBMCMachineWithOptions(t *testing.T) {
 						DotPath:              "data.relationships.author.data",
 					},
 				},
+				PreferredOrder: []v1alpha1.ProviderName{hardware.GofishProviderOption},
 			},
 		},
 	}}

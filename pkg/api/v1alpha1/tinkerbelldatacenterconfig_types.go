@@ -26,6 +26,14 @@ type TinkerbellDatacenterConfigSpec struct {
 	SkipLoadBalancerDeployment bool `json:"skipLoadBalancerDeployment,omitempty"`
 	// LoadBalancerInterface can be used to configure a load balancer interface for the Tinkerbell stack.
 	LoadBalancerInterface string `json:"loadBalancerInterface,omitempty"`
+	// IsoBoot can be used to indicate that the hardware should boot using an ISO.
+	//+optional
+	IsoBoot bool `json:"isoBoot,omitempty"`
+	// HookIsoURL is the URL of ISO image that will be used to provision the hardware
+	// during one time boot process.
+	// It can be used to override the default Hook OS ISO image to pull from a local server.
+	//+optional
+	HookIsoURL string `json:"hookIsoURL,omitempty"`
 }
 
 // TinkerbellDatacenterConfigStatus defines the observed state of TinkerbellDatacenterConfig

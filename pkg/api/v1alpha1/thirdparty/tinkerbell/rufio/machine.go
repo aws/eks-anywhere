@@ -17,8 +17,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// These types are the Rufio v1alpha1 APIs/types copied from https://github.com/tinkerbell/rufio/tree/main/api/v1alpha1
-
 import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -47,8 +45,6 @@ const (
 	Off PowerState = "off"
 	// Unknown represents that a Machine's power state is unknown.
 	Unknown PowerState = "unknown"
-	// PXE is the boot device name for PXE booting a machine.
-	PXE string = "pxe"
 )
 
 // MachineConditionType represents the condition of the Machine.
@@ -75,23 +71,37 @@ type MachineSpec struct {
 	Connection Connection `json:"connection"`
 }
 
-// ProviderOptions contains all the provider specific options.
+// ProviderName is the bmclib specific provider name. Names are case insensitive.
+// +kubebuilder:validation:Pattern=(?i)^(ipmitool|asrockrack|gofish|IntelAMT|dell|supermicro|openbmc)$
+type ProviderName string
+
+func (p ProviderName) String() string {
+	return string(p)
+}
+
+// ProviderOptions hold provider specific configurable options.
 type ProviderOptions struct {
+	// PreferredOrder allows customizing the order that BMC providers are called.
+	// Providers added to this list will be moved to the front of the default order.
+	// Provider names are case insensitive.
+	// The default order is: ipmitool, asrockrack, gofish, intelamt, dell, supermicro, openbmc.
+	// +optional
+	PreferredOrder []ProviderName `json:"preferredOrder,omitempty"`
 	// IntelAMT contains the options to customize the IntelAMT provider.
 	// +optional
-	IntelAMT *IntelAMTOptions `json:"intelAMT"`
+	IntelAMT *IntelAMTOptions `json:"intelAMT,omitempty"`
 
 	// IPMITOOL contains the options to customize the Ipmitool provider.
 	// +optional
-	IPMITOOL *IPMITOOLOptions `json:"ipmitool"`
+	IPMITOOL *IPMITOOLOptions `json:"ipmitool,omitempty"`
 
 	// Redfish contains the options to customize the Redfish provider.
 	// +optional
-	Redfish *RedfishOptions `json:"redfish"`
+	Redfish *RedfishOptions `json:"redfish,omitempty"`
 
 	// RPC contains the options to customize the RPC provider.
 	// +optional
-	RPC *RPCOptions `json:"rpc"`
+	RPC *RPCOptions `json:"rpc,omitempty"`
 }
 
 // Connection contains connection data for a Baseboard Management Controller.
@@ -147,7 +157,6 @@ type MachineCondition struct {
 	Message string `json:"message,omitempty"`
 }
 
-// MachineSetConditionOption is a function that manipulates a MachineCondition.
 // +kubebuilder:object:generate=false
 type MachineSetConditionOption func(*MachineCondition)
 
@@ -192,6 +201,8 @@ func WithMachineConditionMessage(m string) MachineSetConditionOption {
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 //+kubebuilder:resource:path=machines,scope=Namespaced,categories=tinkerbell,singular=machine
+// +kubebuilder:metadata:labels=clusterctl.cluster.x-k8s.io=
+// +kubebuilder:metadata:labels=clusterctl.cluster.x-k8s.io/move=
 
 // Machine is the Schema for the machines API.
 type Machine struct {
