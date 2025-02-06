@@ -88,6 +88,7 @@ func (valOpt *validateOptions) validateCreateCluster(cmd *cobra.Command, _ []str
 		WithGitOpsFlux(clusterSpec.Cluster, clusterSpec.FluxConfig, cliConfig).
 		WithUnAuthKubeClient().
 		WithValidatorClients().
+		WithManifestReader().
 		Build(ctx)
 	if err != nil {
 		cleanupDirectory(tmpPath)
@@ -105,8 +106,8 @@ func (valOpt *validateOptions) validateCreateCluster(cmd *cobra.Command, _ []str
 		ManagementCluster: getManagementCluster(clusterSpec),
 		Provider:          deps.Provider,
 		CliConfig:         cliConfig,
+		ManifestReader:    deps.ManifestReader,
 	}
-
 	createValidations := createvalidations.New(validationOpts)
 
 	commandVal := createcluster.NewValidations(clusterSpec, deps.Provider, deps.GitOpsFlux, createValidations, deps.DockerClient)

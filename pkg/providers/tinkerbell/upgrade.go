@@ -341,7 +341,7 @@ func (p *Provider) ValidateNewSpec(ctx context.Context, cluster *types.Cluster, 
 	// for any operation other than k8s version change, hookImageURL is immutable
 	if currentClstr.Spec.KubernetesVersion == desiredClstrSpec.Cluster.Spec.KubernetesVersion {
 		if desiredDCCfgSpec.HookImagesURLPath != currentDCCfg.Spec.HookImagesURLPath {
-			return fmt.Errorf("spec.hookImagesURLPath is immutable. previoius = %s, new = %s",
+			return fmt.Errorf("spec.hookImagesURLPath is immutable. previous = %s, new = %s",
 				currentDCCfg.Spec.HookImagesURLPath, desiredDCCfgSpec.HookImagesURLPath)
 		}
 	}

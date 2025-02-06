@@ -50,7 +50,7 @@ func validateBundleSignature(bundle *v1alpha1.Bundles) error {
 		return err
 	}
 	if !valid {
-		return fmt.Errorf("signature on the bundle is invalid, error: %w", err)
+		return errors.New("signature on the bundle is invalid")
 	}
 	return nil
 }
