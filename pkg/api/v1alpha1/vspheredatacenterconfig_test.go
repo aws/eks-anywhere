@@ -146,7 +146,7 @@ func TestGetVSphereDatacenterConfig(t *testing.T) {
 					},
 				},
 			},
-			wantErr:        false,
+			wantErr: false,
 		},
 	}
 	for _, tt := range tests {
@@ -164,9 +164,9 @@ func TestGetVSphereDatacenterConfig(t *testing.T) {
 
 func TestValidateVSphereDatacenterConfig(t *testing.T) {
 	tests := []struct {
-		testName              string
+		testName          string
 		vSphereDatacenter *VSphereDatacenterConfig
-		expectedError string
+		expectedError     string
 	}{
 		{
 			testName: "valid VSphereDatacenterConfig without FailureDomain",
@@ -263,11 +263,11 @@ func TestValidateVSphereDatacenterConfig(t *testing.T) {
 					Insecure:   false,
 					FailureDomains: []FailureDomain{
 						{
-							Name:           "fd-1",
-							ResourcePool:   "myResourcePool",
-							Datastore:      "myDatastore",
-							Folder:         "myFolder",
-							Network:        "/myDatacenter/network/myNetwork",
+							Name:         "fd-1",
+							ResourcePool: "myResourcePool",
+							Datastore:    "myDatastore",
+							Folder:       "myFolder",
+							Network:      "/myDatacenter/network/myNetwork",
 						},
 					},
 				},
@@ -383,7 +383,7 @@ func TestValidateVSphereDatacenterConfig(t *testing.T) {
 							ComputeCluster: "myComputeCluster",
 							ResourcePool:   "myResourcePool",
 							Datastore:      "myDatastore",
-							Folder: "myFolder",
+							Folder:         "myFolder",
 						},
 					},
 				},
@@ -412,7 +412,7 @@ func TestValidateVSphereDatacenterConfig(t *testing.T) {
 							ComputeCluster: "myComputeCluster",
 							ResourcePool:   "myResourcePool",
 							Datastore:      "myDatastore",
-							Folder: "myFolder",
+							Folder:         "myFolder",
 							Network:        "network",
 						},
 					},
@@ -424,7 +424,7 @@ func TestValidateVSphereDatacenterConfig(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.testName, func(t *testing.T) {
 			err := tt.vSphereDatacenter.Validate()
-			if (err != nil) {
+			if err != nil {
 				assert.Contains(t, err.Error(), tt.expectedError)
 			}
 		})

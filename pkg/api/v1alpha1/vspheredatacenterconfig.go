@@ -87,7 +87,7 @@ func validateFailureDomains(vdc *VSphereDatacenterConfig) error {
 		if len(fd.ComputeCluster) <= 0 {
 			return fmt.Errorf("in the FailureDomain: %v, computeCluster is not set or is empty", fd)
 		}
-	
+
 		if len(fd.ResourcePool) <= 0 {
 			return fmt.Errorf("in the FailureDomain: %v, resourcePool is not set or is empty", fd)
 		}
@@ -103,7 +103,7 @@ func validateFailureDomains(vdc *VSphereDatacenterConfig) error {
 		if len(fd.Network) <= 0 {
 			return fmt.Errorf("in the FailureDomain: %v, network is not set or is empty", fd)
 		}
-	
+
 		if err := validatePath(networkFolderType, fd.Network, vdc.Spec.Datacenter); err != nil {
 			return err
 		}

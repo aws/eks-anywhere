@@ -22,7 +22,7 @@ type VSphereDatacenterConfigSpec struct {
 	FailureDomains []FailureDomain `json:"failureDomains,omitempty"`
 }
 
-// Failuredomains defines the list of failure domains to spread the VMs across.
+// FailureDomain defines the list of failure domains to spread the VMs across.
 type FailureDomain struct {
 	// +kubebuilder:validation:Required
 	// Name is used as a unique identifier for each failure domain.
