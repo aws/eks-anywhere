@@ -29,8 +29,16 @@ func (c *KubeClient) Get(ctx context.Context, name, namespace string, obj kubern
 
 // List retrieves list of objects. On a successful call, Items field
 // in the list will be populated with the result returned from the server.
-func (c *KubeClient) List(ctx context.Context, list kubernetes.ObjectList) error {
-	return c.client.List(ctx, list)
+func (c *KubeClient) List(ctx context.Context, list kubernetes.ObjectList, opts ...kubernetes.ListOption) error {
+	o := &kubernetes.ListOptions{}
+	for _, opt := range opts {
+		opt.ApplyToList(o)
+	}
+
+	clientOptions := &client.ListOptions{}
+	clientOptions.Namespace = o.Namespace
+
+	return c.client.List(ctx, list, clientOptions)
 }
 
 // Create saves the object obj in the Kubernetes cluster.

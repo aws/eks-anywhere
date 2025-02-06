@@ -25,7 +25,26 @@ type Reader interface {
 
 	// List retrieves list of objects. On a successful call, Items field
 	// in the list will be populated with the result returned from the server.
-	List(ctx context.Context, list ObjectList) error
+	List(ctx context.Context, list ObjectList, opts ...ListOption) error
+}
+
+// ListOption is some configuration that modifies options for an apply request.
+type ListOption interface {
+	ApplyToList(*ListOptions)
+}
+
+// ListOptions contains options for listing object.
+type ListOptions struct {
+	// Namespace represents the namespace to list for, or empty for
+	// non-namespaced objects, or to list across all namespaces.
+	Namespace string
+}
+
+// ApplyToList implements ApplyToList.
+func (o ListOptions) ApplyToList(do *ListOptions) {
+	if o.Namespace != "" {
+		do.Namespace = o.Namespace
+	}
 }
 
 // Writer knows how to create, delete, and update Kubernetes objects.

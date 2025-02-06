@@ -70,7 +70,7 @@ func TestValidatePodDisruptionBudgets(t *testing.T) {
 	}
 	for _, tt := range tests {
 		podDisruptionBudgets := &policy.PodDisruptionBudgetList{}
-		k.EXPECT().List(tt.args.ctx, tt.args.cluster.KubeconfigFile, podDisruptionBudgets).DoAndReturn(func(_ context.Context, _ string, objs kubernetes.ObjectList) error {
+		k.EXPECT().List(tt.args.ctx, tt.args.cluster.KubeconfigFile, podDisruptionBudgets).DoAndReturn(func(_ context.Context, _ string, objs kubernetes.ObjectList, _ ...kubernetes.ListOption) error {
 			tt.args.pdbList.DeepCopyInto(objs.(*policy.PodDisruptionBudgetList))
 			return nil
 		})

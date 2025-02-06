@@ -205,17 +205,22 @@ func (mr *MockKubectlClientMockRecorder) GetObject(ctx, resourceType, name, name
 }
 
 // List mocks base method.
-func (m *MockKubectlClient) List(ctx context.Context, kubeconfig string, list kubernetes.ObjectList) error {
+func (m *MockKubectlClient) List(ctx context.Context, kubeconfig string, list kubernetes.ObjectList, opts ...kubernetes.ListOption) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "List", ctx, kubeconfig, list)
+	varargs := []interface{}{ctx, kubeconfig, list}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "List", varargs...)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // List indicates an expected call of List.
-func (mr *MockKubectlClientMockRecorder) List(ctx, kubeconfig, list interface{}) *gomock.Call {
+func (mr *MockKubectlClientMockRecorder) List(ctx, kubeconfig, list interface{}, opts ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "List", reflect.TypeOf((*MockKubectlClient)(nil).List), ctx, kubeconfig, list)
+	varargs := append([]interface{}{ctx, kubeconfig, list}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "List", reflect.TypeOf((*MockKubectlClient)(nil).List), varargs...)
 }
 
 // SearchIdentityProviderConfig mocks base method.
