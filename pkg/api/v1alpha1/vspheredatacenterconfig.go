@@ -77,36 +77,3 @@ func validatePath(foldType folderType, folderPath string, datacenter string) err
 
 	return nil
 }
-
-func validateFailureDomains(vdc *VSphereDatacenterConfig) error {
-	failureDomains := vdc.Spec.FailureDomains
-	for _, fd := range failureDomains {
-		if len(fd.Name) <= 0 {
-			return fmt.Errorf("in the FailureDomain: %v, name is not set or is empty", fd)
-		}
-		if len(fd.ComputeCluster) <= 0 {
-			return fmt.Errorf("in the FailureDomain: %v, computeCluster is not set or is empty", fd)
-		}
-
-		if len(fd.ResourcePool) <= 0 {
-			return fmt.Errorf("in the FailureDomain: %v, resourcePool is not set or is empty", fd)
-		}
-
-		if len(fd.Datastore) <= 0 {
-			return fmt.Errorf("in the FailureDomain: %v, datastore is not set or is empty", fd)
-		}
-
-		if len(fd.Folder) <= 0 {
-			return fmt.Errorf("in the FailureDomain: %v, folder is not set or is empty", fd)
-		}
-
-		if len(fd.Network) <= 0 {
-			return fmt.Errorf("in the FailureDomain: %v, network is not set or is empty", fd)
-		}
-
-		if err := validatePath(networkFolderType, fd.Network, vdc.Spec.Datacenter); err != nil {
-			return err
-		}
-	}
-	return nil
-}

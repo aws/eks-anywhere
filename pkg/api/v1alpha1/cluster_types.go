@@ -468,7 +468,7 @@ type WorkerNodeGroupConfiguration struct {
 	// KubeletConfiguration is a struct that exposes the Kubelet settings for the user to set on worker nodes.
 	// +kubebuilder:pruning:PreserveUnknownFields
 	KubeletConfiguration *unstructured.Unstructured `json:"kubeletConfiguration,omitempty"`
-	// FailureDomains is the optional list of failure domains to distribute work nodes across the infrastructure.
+	// FailureDomains is the optional list of failure domains to distribute worker nodes across the infrastructure.
 	FailureDomains []string `json:"failureDomains,omitempty"`
 }
 

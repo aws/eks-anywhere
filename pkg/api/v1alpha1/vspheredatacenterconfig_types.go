@@ -2,6 +2,7 @@ package v1alpha1
 
 import (
 	"errors"
+	"fmt"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -129,7 +130,35 @@ func (v *VSphereDatacenterConfig) Validate() error {
 	}
 
 	if len(v.Spec.FailureDomains) > 0 {
-		return validateFailureDomains(v)
+		failureDomains := v.Spec.FailureDomains
+		for _, fd := range failureDomains {
+			if len(fd.Name) <= 0 {
+				return fmt.Errorf("name is not set or is empty in FailureDomain %v", fd)
+			}
+			if len(fd.ComputeCluster) <= 0 {
+				return fmt.Errorf("computeCluster is not set or is empty in the FailureDomain: %v", fd)
+			}
+
+			if len(fd.ResourcePool) <= 0 {
+				return fmt.Errorf("resourcePool is not set or is empty in the FailureDomain: %v", fd)
+			}
+
+			if len(fd.Datastore) <= 0 {
+				return fmt.Errorf("datastore is not set or is empty in the FailureDomain: %v", fd)
+			}
+
+			if len(fd.Folder) <= 0 {
+				return fmt.Errorf("folder is not set or is empty in the FailureDomain: %v", fd)
+			}
+
+			if len(fd.Network) <= 0 {
+				return fmt.Errorf("network is not set or is empty in the FailureDomain: %v", fd)
+			}
+
+			if err := validatePath(networkFolderType, fd.Network, v.Spec.Datacenter); err != nil {
+				return err
+			}
+		}
 	}
 
 	return nil

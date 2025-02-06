@@ -4559,7 +4559,7 @@ spec:
                       type: integer
                     failureDomains:
                       description: FailureDomains is the optional list of failure
-                        domains to distribute work nodes across the infrastructure.
+                        domains to distribute worker nodes across the infrastructure.
                       items:
                         type: string
                       type: array
@@ -7463,8 +7463,8 @@ spec:
                 type: string
               failureDomains:
                 items:
-                  description: Failuredomains defines the list of failure domains
-                    to spread the VMs across.
+                  description: FailureDomain defines the list of failure domains to
+                    spread the VMs across.
                   properties:
                     computeCluster:
                       description: ComputeCluster is the name or inventory path of
