@@ -8,6 +8,30 @@ import (
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 )
 
+func TestListOptionsApplyToList(t *testing.T) {
+	tests := []struct {
+		name         string
+		option, want *kubernetes.ListOptions
+	}{
+		{
+			name: "with namespace",
+			option: &kubernetes.ListOptions{
+				Namespace: "test",
+			},
+			want: &kubernetes.ListOptions{
+				Namespace: "test",
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			tt.option.ApplyToList(tt.option)
+			g.Expect(tt.option).To(BeComparableTo(tt.want))
+		})
+	}
+}
+
 func TestDeleteAllOfOptionsApplyToDeleteAllOf(t *testing.T) {
 	tests := []struct {
 		name             string

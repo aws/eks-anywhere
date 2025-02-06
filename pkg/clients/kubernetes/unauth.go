@@ -90,7 +90,7 @@ func (c *UnAuthClient) ApplyServerSide(ctx context.Context, kubeconfig, fieldMan
 
 // List retrieves list of objects. On a successful call, Items field
 // in the list will be populated with the result returned from the server.
-func (c *UnAuthClient) List(ctx context.Context, kubeconfig string, list ObjectList) error {
+func (c *UnAuthClient) List(ctx context.Context, kubeconfig string, list ObjectList, _ ...ListOption) error {
 	resourceType, err := c.resourceTypeForObj(list)
 	if err != nil {
 		return fmt.Errorf("getting kubernetes resource: %v", err)

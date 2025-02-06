@@ -116,17 +116,22 @@ func (mr *MockClientMockRecorder) Get(ctx, name, namespace, obj interface{}) *go
 }
 
 // List mocks base method.
-func (m *MockClient) List(ctx context.Context, list kubernetes.ObjectList) error {
+func (m *MockClient) List(ctx context.Context, list kubernetes.ObjectList, opts ...kubernetes.ListOption) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "List", ctx, list)
+	varargs := []interface{}{ctx, list}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "List", varargs...)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // List indicates an expected call of List.
-func (mr *MockClientMockRecorder) List(ctx, list interface{}) *gomock.Call {
+func (mr *MockClientMockRecorder) List(ctx, list interface{}, opts ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "List", reflect.TypeOf((*MockClient)(nil).List), ctx, list)
+	varargs := append([]interface{}{ctx, list}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "List", reflect.TypeOf((*MockClient)(nil).List), varargs...)
 }
 
 // Update mocks base method.
@@ -181,17 +186,57 @@ func (mr *MockReaderMockRecorder) Get(ctx, name, namespace, obj interface{}) *go
 }
 
 // List mocks base method.
-func (m *MockReader) List(ctx context.Context, list kubernetes.ObjectList) error {
+func (m *MockReader) List(ctx context.Context, list kubernetes.ObjectList, opts ...kubernetes.ListOption) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "List", ctx, list)
+	varargs := []interface{}{ctx, list}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "List", varargs...)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // List indicates an expected call of List.
-func (mr *MockReaderMockRecorder) List(ctx, list interface{}) *gomock.Call {
+func (mr *MockReaderMockRecorder) List(ctx, list interface{}, opts ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "List", reflect.TypeOf((*MockReader)(nil).List), ctx, list)
+	varargs := append([]interface{}{ctx, list}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "List", reflect.TypeOf((*MockReader)(nil).List), varargs...)
+}
+
+// MockListOption is a mock of ListOption interface.
+type MockListOption struct {
+	ctrl     *gomock.Controller
+	recorder *MockListOptionMockRecorder
+}
+
+// MockListOptionMockRecorder is the mock recorder for MockListOption.
+type MockListOptionMockRecorder struct {
+	mock *MockListOption
+}
+
+// NewMockListOption creates a new mock instance.
+func NewMockListOption(ctrl *gomock.Controller) *MockListOption {
+	mock := &MockListOption{ctrl: ctrl}
+	mock.recorder = &MockListOptionMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockListOption) EXPECT() *MockListOptionMockRecorder {
+	return m.recorder
+}
+
+// ApplyToList mocks base method.
+func (m *MockListOption) ApplyToList(arg0 *kubernetes.ListOptions) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "ApplyToList", arg0)
+}
+
+// ApplyToList indicates an expected call of ApplyToList.
+func (mr *MockListOptionMockRecorder) ApplyToList(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ApplyToList", reflect.TypeOf((*MockListOption)(nil).ApplyToList), arg0)
 }
 
 // MockWriter is a mock of Writer interface.
