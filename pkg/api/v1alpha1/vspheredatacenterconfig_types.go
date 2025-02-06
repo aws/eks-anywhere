@@ -25,21 +25,27 @@ type VSphereDatacenterConfigSpec struct {
 // Failuredomains defines the list of failure domains to spread the VMs across.
 type FailureDomain struct {
 	// +kubebuilder:validation:Required
+	// Name is used as a unique identifier for each failure domain.
 	Name string `json:"name"`
 
 	// +kubebuilder:validation:Required
+	// ComputeCluster is the name or inventory path of the computecluster in which the VM is created/located
 	ComputeCluster string `json:"computeCluster"`
 
 	// +kubebuilder:validation:Required
+	// ResourcePool is the name or inventory path of the resource pool in which the VM is created/located
 	ResourcePool string `json:"resourcePool"`
 
 	// +kubebuilder:validation:Required
+	// Datastore is the name or inventory path of the datastore in which the VM is created/located
 	Datastore string `json:"datastore"`
 
 	// +kubebuilder:validation:Required
+	// Folder is the name or inventory path of the folder in which the the VM is created/located
 	Folder string `json:"folder"`
 
 	// +kubebuilder:validation:Required
+	// Network is the name or inventory path of the network which will be added to the VM
 	Network string `json:"network"`
 }
 

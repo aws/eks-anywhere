@@ -2752,8 +2752,13 @@ spec:
                                   - arm
                                   type: object
                                 iso:
+                                  description: HookArch defines the Tinkerbell hook
+                                    architecture-specific artifacts.
                                   properties:
                                     amd:
+                                      description: Archive represents an archive asset
+                                        (e.g. tarball) along with its OS/architecture
+                                        metadata, and checksums for file integrity.
                                       properties:
                                         arch:
                                           description: Architectures of the asset
@@ -2790,6 +2795,9 @@ spec:
                                           type: string
                                       type: object
                                     arm:
+                                      description: Archive represents an archive asset
+                                        (e.g. tarball) along with its OS/architecture
+                                        metadata, and checksums for file integrity.
                                       properties:
                                         arch:
                                           description: Architectures of the asset
@@ -3534,7 +3542,6 @@ spec:
                   - docker
                   - eksD
                   - eksa
-                  - endOfStandardSupport
                   - etcdadmBootstrap
                   - etcdadmController
                   - flux
@@ -4550,6 +4557,12 @@ spec:
                       description: Count defines the number of desired worker nodes.
                         Defaults to 1.
                       type: integer
+                    failureDomains:
+                      description: FailureDomains is the optional list of failure
+                        domains to distribute work nodes across the infrastructure.
+                      items:
+                        type: string
+                      type: array
                     kubeletConfiguration:
                       description: KubeletConfiguration is a struct that exposes the
                         Kubelet settings for the user to set on worker nodes.
@@ -7448,6 +7461,44 @@ spec:
             properties:
               datacenter:
                 type: string
+              failureDomains:
+                items:
+                  description: Failuredomains defines the list of failure domains
+                    to spread the VMs across.
+                  properties:
+                    computeCluster:
+                      description: ComputeCluster is the name or inventory path of
+                        the computecluster in which the VM is created/located
+                      type: string
+                    datastore:
+                      description: Datastore is the name or inventory path of the
+                        datastore in which the VM is created/located
+                      type: string
+                    folder:
+                      description: Folder is the name or inventory path of the folder
+                        in which the the VM is created/located
+                      type: string
+                    name:
+                      description: Name is used as a unique identifier for each failure
+                        domain.
+                      type: string
+                    network:
+                      description: Network is the name or inventory path of the network
+                        which will be added to the VM
+                      type: string
+                    resourcePool:
+                      description: ResourcePool is the name or inventory path of the
+                        resource pool in which the VM is created/located
+                      type: string
+                  required:
+                  - computeCluster
+                  - datastore
+                  - folder
+                  - name
+                  - network
+                  - resourcePool
+                  type: object
+                type: array
               insecure:
                 type: boolean
               network:

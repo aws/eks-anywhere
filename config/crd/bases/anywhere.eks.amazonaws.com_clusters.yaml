@@ -578,6 +578,12 @@ spec:
                       description: Count defines the number of desired worker nodes.
                         Defaults to 1.
                       type: integer
+                    failureDomains:
+                      description: FailureDomains is the optional list of failure
+                        domains to distribute work nodes across the infrastructure.
+                      items:
+                        type: string
+                      type: array
                     kubeletConfiguration:
                       description: KubeletConfiguration is a struct that exposes the
                         Kubelet settings for the user to set on worker nodes.
@@ -693,11 +699,6 @@ spec:
                             of upgrade rollout strategies.
                           type: string
                       type: object
-                    failureDomains:
-                      description: List of failure domains to distribute worker nodes across
-                      items:
-                        type: string
-                      type: array                      
                   type: object
                 type: array
             type: object
