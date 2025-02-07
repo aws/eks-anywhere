@@ -26,7 +26,7 @@ func (c *KubeconfigClient) Get(ctx context.Context, name, namespace string, obj 
 
 // List retrieves list of objects. On a successful call, Items field
 // in the list will be populated with the result returned from the server.
-func (c *KubeconfigClient) List(ctx context.Context, list ObjectList) error {
+func (c *KubeconfigClient) List(ctx context.Context, list ObjectList, _ ...ListOption) error {
 	return c.client.List(ctx, c.kubeconfig, list)
 }
 

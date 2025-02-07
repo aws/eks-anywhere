@@ -210,6 +210,9 @@ spec:
     host: 192.168.0.10
     insecureTLS: true
     port: 0
+    providerOptions:
+      preferredOrder:
+      - gofish
 status: {}
 ---
 apiVersion: v1

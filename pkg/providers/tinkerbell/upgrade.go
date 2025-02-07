@@ -341,7 +341,7 @@ func (p *Provider) ValidateNewSpec(ctx context.Context, cluster *types.Cluster, 
 	// for any operation other than k8s version change, hookImageURL is immutable
 	if currentClstr.Spec.KubernetesVersion == desiredClstrSpec.Cluster.Spec.KubernetesVersion {
 		if desiredDCCfgSpec.HookImagesURLPath != currentDCCfg.Spec.HookImagesURLPath {
-			return fmt.Errorf("spec.hookImagesURLPath is immutable. previoius = %s, new = %s",
+			return fmt.Errorf("spec.hookImagesURLPath is immutable. previous = %s, new = %s",
 				currentDCCfg.Spec.HookImagesURLPath, desiredDCCfgSpec.HookImagesURLPath)
 		}
 	}
@@ -591,6 +591,7 @@ func (p *Provider) PreCoreComponentsUpgrade(
 		stack.WithLoadBalancerEnabled(
 			len(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations) != 0 && // load balancer is handled by kube-vip in control plane nodes
 				!p.datacenterConfig.Spec.SkipLoadBalancerDeployment), // configure load balancer based on datacenterConfig.Spec.SkipLoadBalancerDeployment
+		stack.WithHookIsoOverride(p.datacenterConfig.Spec.HookIsoURL),
 	)
 	if err != nil {
 		return fmt.Errorf("upgrading stack: %v", err)

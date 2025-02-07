@@ -112,26 +112,26 @@ spec:
         arch:
         - amd64
         description: Container image for cilium image
-        imageDigest: sha256:f34fa718a4c95406dec577e97116fbde27a39a85d63255fe0bd2e04f2f553f86
+        imageDigest: sha256:916cc3aa7d5604b4a14efc1f969ffdbe0ec276af17816c08aee8db00240061aa
         name: cilium
         os: linux
-        uri: public.ecr.aws/isovalent/cilium:v1.14.12-eksa.2
+        uri: public.ecr.aws/isovalent/cilium:v1.15.13-eksa.1
       helmChart:
         description: Helm chart for cilium-chart
-        imageDigest: sha256:095ebe9a3c3e9d7a0a8c2b89be7f83c1c1c6c0a2ea1deab2fc10e7ff0bb02347
+        imageDigest: sha256:b9195cf31f713db2f0e0f3000fd22bbdceae35702fd724f80bb3b46c68d4ca4f
         name: cilium-chart
-        uri: public.ecr.aws/isovalent/cilium:1.14.12-eksa.2
+        uri: public.ecr.aws/isovalent/cilium:1.15.13-eksa.1
       manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.14.12-eksa.2/cilium.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.15.13-eksa.1/cilium.yaml
       operator:
         arch:
         - amd64
         description: Container image for operator-generic image
-        imageDigest: sha256:77c44314281d8d547fe5237a8020cabddf49b05a2810ef17e5763b46413a3df3
+        imageDigest: sha256:f55207a3a0c631923e4ccdd45391d5c5a81d39f24bb857ff6e965c79ef60540c
         name: operator-generic
         os: linux
-        uri: public.ecr.aws/isovalent/operator-generic:v1.14.12-eksa.2
-      version: v1.14.12-eksa.2
+        uri: public.ecr.aws/isovalent/operator-generic:v1.15.13-eksa.1
+      version: v1.15.13-eksa.1
     cloudStack:
       clusterAPIController:
         arch:
@@ -540,11 +540,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-tinkerbell
         os: linux
-        uri: public.ecr.aws/release-container-registry/tinkerbell/cluster-api-provider-tinkerbell:v0.6.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/tinkerbell/cluster-api-provider-tinkerbell:v0.6.4-eks-a-v0.0.0-dev-build.1
       clusterTemplate:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.6.2/cluster-template.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.6.4/cluster-template.yaml
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.6.2/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.6.4/infrastructure-components.yaml
       envoy:
         arch:
         - amd64
@@ -564,7 +564,7 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.8.9-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.6.2/metadata.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.6.4/metadata.yaml
       tinkerbellStack:
         actions:
           cexec:
@@ -723,7 +723,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: nginx
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/nginx:v0.12.1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/nginx:v0.12.2-eks-a-v0.0.0-dev-build.1
           tinkController:
             arch:
             - amd64
@@ -732,7 +732,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-controller
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-controller:v0.12.1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-controller:v0.12.2-eks-a-v0.0.0-dev-build.1
           tinkRelay:
             arch:
             - amd64
@@ -741,7 +741,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-relay
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-relay:v0.12.1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-relay:v0.12.2-eks-a-v0.0.0-dev-build.1
           tinkRelayInit:
             arch:
             - amd64
@@ -750,7 +750,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-relay-init
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-relay-init:v0.12.1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-relay-init:v0.12.2-eks-a-v0.0.0-dev-build.1
           tinkServer:
             arch:
             - amd64
@@ -759,7 +759,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-server
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-server:v0.12.1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-server:v0.12.2-eks-a-v0.0.0-dev-build.1
           tinkWorker:
             arch:
             - amd64
@@ -768,7 +768,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-worker
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-worker:v0.12.1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-worker:v0.12.2-eks-a-v0.0.0-dev-build.1
         tinkerbellChart:
           description: Helm chart for tinkerbell-chart
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
@@ -779,7 +779,7 @@ spec:
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: tinkerbell-crds
           uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-crds:0.2.6-eks-a-v0.0.0-dev-build.1
-      version: v0.6.2+abcdef1
+      version: v0.6.4+abcdef1
     upgrader:
       upgrader:
         arch:
@@ -938,26 +938,26 @@ spec:
         arch:
         - amd64
         description: Container image for cilium image
-        imageDigest: sha256:f34fa718a4c95406dec577e97116fbde27a39a85d63255fe0bd2e04f2f553f86
+        imageDigest: sha256:916cc3aa7d5604b4a14efc1f969ffdbe0ec276af17816c08aee8db00240061aa
         name: cilium
         os: linux
-        uri: public.ecr.aws/isovalent/cilium:v1.14.12-eksa.2
+        uri: public.ecr.aws/isovalent/cilium:v1.15.13-eksa.1
       helmChart:
         description: Helm chart for cilium-chart
-        imageDigest: sha256:095ebe9a3c3e9d7a0a8c2b89be7f83c1c1c6c0a2ea1deab2fc10e7ff0bb02347
+        imageDigest: sha256:b9195cf31f713db2f0e0f3000fd22bbdceae35702fd724f80bb3b46c68d4ca4f
         name: cilium-chart
-        uri: public.ecr.aws/isovalent/cilium:1.14.12-eksa.2
+        uri: public.ecr.aws/isovalent/cilium:1.15.13-eksa.1
       manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.14.12-eksa.2/cilium.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.15.13-eksa.1/cilium.yaml
       operator:
         arch:
         - amd64
         description: Container image for operator-generic image
-        imageDigest: sha256:77c44314281d8d547fe5237a8020cabddf49b05a2810ef17e5763b46413a3df3
+        imageDigest: sha256:f55207a3a0c631923e4ccdd45391d5c5a81d39f24bb857ff6e965c79ef60540c
         name: operator-generic
         os: linux
-        uri: public.ecr.aws/isovalent/operator-generic:v1.14.12-eksa.2
-      version: v1.14.12-eksa.2
+        uri: public.ecr.aws/isovalent/operator-generic:v1.15.13-eksa.1
+      version: v1.15.13-eksa.1
     cloudStack:
       clusterAPIController:
         arch:
@@ -1367,11 +1367,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-tinkerbell
         os: linux
-        uri: public.ecr.aws/release-container-registry/tinkerbell/cluster-api-provider-tinkerbell:v0.6.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/tinkerbell/cluster-api-provider-tinkerbell:v0.6.4-eks-a-v0.0.0-dev-build.1
       clusterTemplate:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.6.2/cluster-template.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.6.4/cluster-template.yaml
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.6.2/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.6.4/infrastructure-components.yaml
       envoy:
         arch:
         - amd64
@@ -1391,7 +1391,7 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.8.9-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.6.2/metadata.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.6.4/metadata.yaml
       tinkerbellStack:
         actions:
           cexec:
@@ -1550,7 +1550,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: nginx
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/nginx:v0.12.1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/nginx:v0.12.2-eks-a-v0.0.0-dev-build.1
           tinkController:
             arch:
             - amd64
@@ -1559,7 +1559,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-controller
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-controller:v0.12.1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-controller:v0.12.2-eks-a-v0.0.0-dev-build.1
           tinkRelay:
             arch:
             - amd64
@@ -1568,7 +1568,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-relay
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-relay:v0.12.1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-relay:v0.12.2-eks-a-v0.0.0-dev-build.1
           tinkRelayInit:
             arch:
             - amd64
@@ -1577,7 +1577,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-relay-init
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-relay-init:v0.12.1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-relay-init:v0.12.2-eks-a-v0.0.0-dev-build.1
           tinkServer:
             arch:
             - amd64
@@ -1586,7 +1586,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-server
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-server:v0.12.1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-server:v0.12.2-eks-a-v0.0.0-dev-build.1
           tinkWorker:
             arch:
             - amd64
@@ -1595,7 +1595,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-worker
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-worker:v0.12.1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-worker:v0.12.2-eks-a-v0.0.0-dev-build.1
         tinkerbellChart:
           description: Helm chart for tinkerbell-chart
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
@@ -1606,7 +1606,7 @@ spec:
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: tinkerbell-crds
           uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-crds:0.2.6-eks-a-v0.0.0-dev-build.1
-      version: v0.6.2+abcdef1
+      version: v0.6.4+abcdef1
     upgrader:
       upgrader:
         arch:
@@ -1765,26 +1765,26 @@ spec:
         arch:
         - amd64
         description: Container image for cilium image
-        imageDigest: sha256:f34fa718a4c95406dec577e97116fbde27a39a85d63255fe0bd2e04f2f553f86
+        imageDigest: sha256:916cc3aa7d5604b4a14efc1f969ffdbe0ec276af17816c08aee8db00240061aa
         name: cilium
         os: linux
-        uri: public.ecr.aws/isovalent/cilium:v1.14.12-eksa.2
+        uri: public.ecr.aws/isovalent/cilium:v1.15.13-eksa.1
       helmChart:
         description: Helm chart for cilium-chart
-        imageDigest: sha256:095ebe9a3c3e9d7a0a8c2b89be7f83c1c1c6c0a2ea1deab2fc10e7ff0bb02347
+        imageDigest: sha256:b9195cf31f713db2f0e0f3000fd22bbdceae35702fd724f80bb3b46c68d4ca4f
         name: cilium-chart
-        uri: public.ecr.aws/isovalent/cilium:1.14.12-eksa.2
+        uri: public.ecr.aws/isovalent/cilium:1.15.13-eksa.1
       manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.14.12-eksa.2/cilium.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.15.13-eksa.1/cilium.yaml
       operator:
         arch:
         - amd64
         description: Container image for operator-generic image
-        imageDigest: sha256:77c44314281d8d547fe5237a8020cabddf49b05a2810ef17e5763b46413a3df3
+        imageDigest: sha256:f55207a3a0c631923e4ccdd45391d5c5a81d39f24bb857ff6e965c79ef60540c
         name: operator-generic
         os: linux
-        uri: public.ecr.aws/isovalent/operator-generic:v1.14.12-eksa.2
-      version: v1.14.12-eksa.2
+        uri: public.ecr.aws/isovalent/operator-generic:v1.15.13-eksa.1
+      version: v1.15.13-eksa.1
     cloudStack:
       clusterAPIController:
         arch:
@@ -2194,11 +2194,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-tinkerbell
         os: linux
-        uri: public.ecr.aws/release-container-registry/tinkerbell/cluster-api-provider-tinkerbell:v0.6.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/tinkerbell/cluster-api-provider-tinkerbell:v0.6.4-eks-a-v0.0.0-dev-build.1
       clusterTemplate:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.6.2/cluster-template.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.6.4/cluster-template.yaml
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.6.2/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.6.4/infrastructure-components.yaml
       envoy:
         arch:
         - amd64
@@ -2218,7 +2218,7 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.8.9-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.6.2/metadata.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.6.4/metadata.yaml
       tinkerbellStack:
         actions:
           cexec:
@@ -2377,7 +2377,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: nginx
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/nginx:v0.12.1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/nginx:v0.12.2-eks-a-v0.0.0-dev-build.1
           tinkController:
             arch:
             - amd64
@@ -2386,7 +2386,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-controller
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-controller:v0.12.1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-controller:v0.12.2-eks-a-v0.0.0-dev-build.1
           tinkRelay:
             arch:
             - amd64
@@ -2395,7 +2395,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-relay
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-relay:v0.12.1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-relay:v0.12.2-eks-a-v0.0.0-dev-build.1
           tinkRelayInit:
             arch:
             - amd64
@@ -2404,7 +2404,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-relay-init
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-relay-init:v0.12.1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-relay-init:v0.12.2-eks-a-v0.0.0-dev-build.1
           tinkServer:
             arch:
             - amd64
@@ -2413,7 +2413,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-server
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-server:v0.12.1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-server:v0.12.2-eks-a-v0.0.0-dev-build.1
           tinkWorker:
             arch:
             - amd64
@@ -2422,7 +2422,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-worker
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-worker:v0.12.1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-worker:v0.12.2-eks-a-v0.0.0-dev-build.1
         tinkerbellChart:
           description: Helm chart for tinkerbell-chart
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
@@ -2433,7 +2433,7 @@ spec:
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: tinkerbell-crds
           uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-crds:0.2.6-eks-a-v0.0.0-dev-build.1
-      version: v0.6.2+abcdef1
+      version: v0.6.4+abcdef1
     upgrader:
       upgrader:
         arch:
@@ -2592,26 +2592,26 @@ spec:
         arch:
         - amd64
         description: Container image for cilium image
-        imageDigest: sha256:f34fa718a4c95406dec577e97116fbde27a39a85d63255fe0bd2e04f2f553f86
+        imageDigest: sha256:916cc3aa7d5604b4a14efc1f969ffdbe0ec276af17816c08aee8db00240061aa
         name: cilium
         os: linux
-        uri: public.ecr.aws/isovalent/cilium:v1.14.12-eksa.2
+        uri: public.ecr.aws/isovalent/cilium:v1.15.13-eksa.1
       helmChart:
         description: Helm chart for cilium-chart
-        imageDigest: sha256:095ebe9a3c3e9d7a0a8c2b89be7f83c1c1c6c0a2ea1deab2fc10e7ff0bb02347
+        imageDigest: sha256:b9195cf31f713db2f0e0f3000fd22bbdceae35702fd724f80bb3b46c68d4ca4f
         name: cilium-chart
-        uri: public.ecr.aws/isovalent/cilium:1.14.12-eksa.2
+        uri: public.ecr.aws/isovalent/cilium:1.15.13-eksa.1
       manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.14.12-eksa.2/cilium.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.15.13-eksa.1/cilium.yaml
       operator:
         arch:
         - amd64
         description: Container image for operator-generic image
-        imageDigest: sha256:77c44314281d8d547fe5237a8020cabddf49b05a2810ef17e5763b46413a3df3
+        imageDigest: sha256:f55207a3a0c631923e4ccdd45391d5c5a81d39f24bb857ff6e965c79ef60540c
         name: operator-generic
         os: linux
-        uri: public.ecr.aws/isovalent/operator-generic:v1.14.12-eksa.2
-      version: v1.14.12-eksa.2
+        uri: public.ecr.aws/isovalent/operator-generic:v1.15.13-eksa.1
+      version: v1.15.13-eksa.1
     cloudStack:
       clusterAPIController:
         arch:
@@ -3021,11 +3021,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-tinkerbell
         os: linux
-        uri: public.ecr.aws/release-container-registry/tinkerbell/cluster-api-provider-tinkerbell:v0.6.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/tinkerbell/cluster-api-provider-tinkerbell:v0.6.4-eks-a-v0.0.0-dev-build.1
       clusterTemplate:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.6.2/cluster-template.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.6.4/cluster-template.yaml
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.6.2/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.6.4/infrastructure-components.yaml
       envoy:
         arch:
         - amd64
@@ -3045,7 +3045,7 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.8.9-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.6.2/metadata.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.6.4/metadata.yaml
       tinkerbellStack:
         actions:
           cexec:
@@ -3204,7 +3204,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: nginx
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/nginx:v0.12.1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/nginx:v0.12.2-eks-a-v0.0.0-dev-build.1
           tinkController:
             arch:
             - amd64
@@ -3213,7 +3213,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-controller
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-controller:v0.12.1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-controller:v0.12.2-eks-a-v0.0.0-dev-build.1
           tinkRelay:
             arch:
             - amd64
@@ -3222,7 +3222,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-relay
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-relay:v0.12.1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-relay:v0.12.2-eks-a-v0.0.0-dev-build.1
           tinkRelayInit:
             arch:
             - amd64
@@ -3231,7 +3231,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-relay-init
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-relay-init:v0.12.1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-relay-init:v0.12.2-eks-a-v0.0.0-dev-build.1
           tinkServer:
             arch:
             - amd64
@@ -3240,7 +3240,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-server
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-server:v0.12.1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-server:v0.12.2-eks-a-v0.0.0-dev-build.1
           tinkWorker:
             arch:
             - amd64
@@ -3249,7 +3249,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-worker
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-worker:v0.12.1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-worker:v0.12.2-eks-a-v0.0.0-dev-build.1
         tinkerbellChart:
           description: Helm chart for tinkerbell-chart
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
@@ -3260,7 +3260,7 @@ spec:
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: tinkerbell-crds
           uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-crds:0.2.6-eks-a-v0.0.0-dev-build.1
-      version: v0.6.2+abcdef1
+      version: v0.6.4+abcdef1
     upgrader:
       upgrader:
         arch:
@@ -3419,26 +3419,26 @@ spec:
         arch:
         - amd64
         description: Container image for cilium image
-        imageDigest: sha256:f34fa718a4c95406dec577e97116fbde27a39a85d63255fe0bd2e04f2f553f86
+        imageDigest: sha256:916cc3aa7d5604b4a14efc1f969ffdbe0ec276af17816c08aee8db00240061aa
         name: cilium
         os: linux
-        uri: public.ecr.aws/isovalent/cilium:v1.14.12-eksa.2
+        uri: public.ecr.aws/isovalent/cilium:v1.15.13-eksa.1
       helmChart:
         description: Helm chart for cilium-chart
-        imageDigest: sha256:095ebe9a3c3e9d7a0a8c2b89be7f83c1c1c6c0a2ea1deab2fc10e7ff0bb02347
+        imageDigest: sha256:b9195cf31f713db2f0e0f3000fd22bbdceae35702fd724f80bb3b46c68d4ca4f
         name: cilium-chart
-        uri: public.ecr.aws/isovalent/cilium:1.14.12-eksa.2
+        uri: public.ecr.aws/isovalent/cilium:1.15.13-eksa.1
       manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.14.12-eksa.2/cilium.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.15.13-eksa.1/cilium.yaml
       operator:
         arch:
         - amd64
         description: Container image for operator-generic image
-        imageDigest: sha256:77c44314281d8d547fe5237a8020cabddf49b05a2810ef17e5763b46413a3df3
+        imageDigest: sha256:f55207a3a0c631923e4ccdd45391d5c5a81d39f24bb857ff6e965c79ef60540c
         name: operator-generic
         os: linux
-        uri: public.ecr.aws/isovalent/operator-generic:v1.14.12-eksa.2
-      version: v1.14.12-eksa.2
+        uri: public.ecr.aws/isovalent/operator-generic:v1.15.13-eksa.1
+      version: v1.15.13-eksa.1
     cloudStack:
       clusterAPIController:
         arch:
@@ -3848,11 +3848,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-tinkerbell
         os: linux
-        uri: public.ecr.aws/release-container-registry/tinkerbell/cluster-api-provider-tinkerbell:v0.6.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/tinkerbell/cluster-api-provider-tinkerbell:v0.6.4-eks-a-v0.0.0-dev-build.1
       clusterTemplate:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.6.2/cluster-template.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.6.4/cluster-template.yaml
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.6.2/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.6.4/infrastructure-components.yaml
       envoy:
         arch:
         - amd64
@@ -3872,7 +3872,7 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.8.9-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.6.2/metadata.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.6.4/metadata.yaml
       tinkerbellStack:
         actions:
           cexec:
@@ -4031,7 +4031,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: nginx
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/nginx:v0.12.1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/nginx:v0.12.2-eks-a-v0.0.0-dev-build.1
           tinkController:
             arch:
             - amd64
@@ -4040,7 +4040,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-controller
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-controller:v0.12.1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-controller:v0.12.2-eks-a-v0.0.0-dev-build.1
           tinkRelay:
             arch:
             - amd64
@@ -4049,7 +4049,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-relay
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-relay:v0.12.1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-relay:v0.12.2-eks-a-v0.0.0-dev-build.1
           tinkRelayInit:
             arch:
             - amd64
@@ -4058,7 +4058,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-relay-init
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-relay-init:v0.12.1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-relay-init:v0.12.2-eks-a-v0.0.0-dev-build.1
           tinkServer:
             arch:
             - amd64
@@ -4067,7 +4067,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-server
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-server:v0.12.1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-server:v0.12.2-eks-a-v0.0.0-dev-build.1
           tinkWorker:
             arch:
             - amd64
@@ -4076,7 +4076,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-worker
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-worker:v0.12.1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-worker:v0.12.2-eks-a-v0.0.0-dev-build.1
         tinkerbellChart:
           description: Helm chart for tinkerbell-chart
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
@@ -4087,7 +4087,7 @@ spec:
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: tinkerbell-crds
           uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-crds:0.2.6-eks-a-v0.0.0-dev-build.1
-      version: v0.6.2+abcdef1
+      version: v0.6.4+abcdef1
     upgrader:
       upgrader:
         arch:
@@ -4246,26 +4246,26 @@ spec:
         arch:
         - amd64
         description: Container image for cilium image
-        imageDigest: sha256:f34fa718a4c95406dec577e97116fbde27a39a85d63255fe0bd2e04f2f553f86
+        imageDigest: sha256:916cc3aa7d5604b4a14efc1f969ffdbe0ec276af17816c08aee8db00240061aa
         name: cilium
         os: linux
-        uri: public.ecr.aws/isovalent/cilium:v1.14.12-eksa.2
+        uri: public.ecr.aws/isovalent/cilium:v1.15.13-eksa.1
       helmChart:
         description: Helm chart for cilium-chart
-        imageDigest: sha256:095ebe9a3c3e9d7a0a8c2b89be7f83c1c1c6c0a2ea1deab2fc10e7ff0bb02347
+        imageDigest: sha256:b9195cf31f713db2f0e0f3000fd22bbdceae35702fd724f80bb3b46c68d4ca4f
         name: cilium-chart
-        uri: public.ecr.aws/isovalent/cilium:1.14.12-eksa.2
+        uri: public.ecr.aws/isovalent/cilium:1.15.13-eksa.1
       manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.14.12-eksa.2/cilium.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.15.13-eksa.1/cilium.yaml
       operator:
         arch:
         - amd64
         description: Container image for operator-generic image
-        imageDigest: sha256:77c44314281d8d547fe5237a8020cabddf49b05a2810ef17e5763b46413a3df3
+        imageDigest: sha256:f55207a3a0c631923e4ccdd45391d5c5a81d39f24bb857ff6e965c79ef60540c
         name: operator-generic
         os: linux
-        uri: public.ecr.aws/isovalent/operator-generic:v1.14.12-eksa.2
-      version: v1.14.12-eksa.2
+        uri: public.ecr.aws/isovalent/operator-generic:v1.15.13-eksa.1
+      version: v1.15.13-eksa.1
     cloudStack:
       clusterAPIController:
         arch:
@@ -4675,11 +4675,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-tinkerbell
         os: linux
-        uri: public.ecr.aws/release-container-registry/tinkerbell/cluster-api-provider-tinkerbell:v0.6.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/tinkerbell/cluster-api-provider-tinkerbell:v0.6.4-eks-a-v0.0.0-dev-build.1
       clusterTemplate:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.6.2/cluster-template.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.6.4/cluster-template.yaml
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.6.2/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.6.4/infrastructure-components.yaml
       envoy:
         arch:
         - amd64
@@ -4699,7 +4699,7 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.8.9-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.6.2/metadata.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.6.4/metadata.yaml
       tinkerbellStack:
         actions:
           cexec:
@@ -4858,7 +4858,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: nginx
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/nginx:v0.12.1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/nginx:v0.12.2-eks-a-v0.0.0-dev-build.1
           tinkController:
             arch:
             - amd64
@@ -4867,7 +4867,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-controller
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-controller:v0.12.1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-controller:v0.12.2-eks-a-v0.0.0-dev-build.1
           tinkRelay:
             arch:
             - amd64
@@ -4876,7 +4876,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-relay
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-relay:v0.12.1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-relay:v0.12.2-eks-a-v0.0.0-dev-build.1
           tinkRelayInit:
             arch:
             - amd64
@@ -4885,7 +4885,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-relay-init
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-relay-init:v0.12.1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-relay-init:v0.12.2-eks-a-v0.0.0-dev-build.1
           tinkServer:
             arch:
             - amd64
@@ -4894,7 +4894,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-server
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-server:v0.12.1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-server:v0.12.2-eks-a-v0.0.0-dev-build.1
           tinkWorker:
             arch:
             - amd64
@@ -4903,7 +4903,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-worker
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-worker:v0.12.1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-worker:v0.12.2-eks-a-v0.0.0-dev-build.1
         tinkerbellChart:
           description: Helm chart for tinkerbell-chart
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
@@ -4914,7 +4914,7 @@ spec:
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: tinkerbell-crds
           uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-crds:0.2.6-eks-a-v0.0.0-dev-build.1
-      version: v0.6.2+abcdef1
+      version: v0.6.4+abcdef1
     upgrader:
       upgrader:
         arch:

@@ -17,7 +17,7 @@ import (
 )
 
 // ValidateExtendedK8sVersionSupport validates all the validations needed for the support of extended kubernetes support.
-func ValidateExtendedK8sVersionSupport(_ context.Context, clusterSpec anywherev1.Cluster, bundle *v1alpha1.Bundles, _ kubernetes.Client) error {
+func ValidateExtendedK8sVersionSupport(ctx context.Context, clusterSpec anywherev1.Cluster, bundle *v1alpha1.Bundles, k kubernetes.Client) error {
 	// Validate EKS-A bundle has not been modified by verifying the signature in the bundle annotation
 	if err := validateBundleSignature(bundle); err != nil {
 		return fmt.Errorf("validating bundle signature: %w", err)
@@ -36,6 +36,9 @@ func ValidateExtendedK8sVersionSupport(_ context.Context, clusterSpec anywherev1
 		if err = validateLicense(token); err != nil {
 			return fmt.Errorf("validating licenseToken: %w", err)
 		}
+		if err := validateLicenseKeyIsUnique(ctx, clusterSpec.Name, clusterSpec.Spec.LicenseToken, k); err != nil {
+			return fmt.Errorf("validating licenseToken is unique for cluster %s: %w", clusterSpec.Name, err)
+		}
 	}
 	return nil
 }
@@ -47,7 +50,7 @@ func validateBundleSignature(bundle *v1alpha1.Bundles) error {
 		return err
 	}
 	if !valid {
-		return fmt.Errorf("signature on the bundle is invalid, error: %w", err)
+		return errors.New("signature on the bundle is invalid")
 	}
 	return nil
 }
@@ -103,4 +106,18 @@ func validateLicense(token *jwt.Token) error {
 func isPastDateThanToday(dateToCompare time.Time) bool {
 	today := time.Now().Truncate(24 * time.Hour)
 	return dateToCompare.Before(today)
+}
+
+func validateLicenseKeyIsUnique(ctx context.Context, clusterName string, licenseToken string, k kubernetes.Client) error {
+	eksaClusters := &anywherev1.ClusterList{}
+	err := k.List(ctx, eksaClusters, kubernetes.ListOptions{})
+	if err != nil {
+		return fmt.Errorf("listing all EKS-A clusters: %w", err)
+	}
+	for _, eksaCluster := range eksaClusters.Items {
+		if eksaCluster.Name != clusterName && eksaCluster.Spec.LicenseToken == licenseToken {
+			return fmt.Errorf("license key %s is already in use by cluster %s", licenseToken, eksaCluster.Name)
+		}
+	}
+	return nil
 }

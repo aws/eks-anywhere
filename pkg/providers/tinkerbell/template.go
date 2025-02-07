@@ -7,6 +7,7 @@ import (
 	_ "embed"
 	"fmt"
 	"io"
+	"net/url"
 	"strings"
 	"time"
 
@@ -41,6 +42,10 @@ var defaultClusterConfigMD string
 const (
 	TinkerbellMachineTemplateKind = "TinkerbellMachineTemplate"
 	defaultRegistry               = "public.ecr.aws"
+	netbootMode                   = "netboot"
+	isobootMode                   = "iso"
+	// SmeeHTTPPort is the port in Smee that serves HTTP requests.
+	SmeeHTTPPort = "7171"
 )
 
 type TemplateBuilder struct {
@@ -532,6 +537,23 @@ func buildTemplateMapCP(
 		values["cpNodeLabelArgs"] = cpNodeLabelArgs.ToPartialYaml()
 	}
 
+	if !datacenterSpec.IsoBoot {
+		values["bootMode"] = netbootMode
+	} else {
+		values["bootMode"] = isobootMode
+		tinkerbellIP := datacenterSpec.TinkerbellIP
+		if t := clusterSpec.Cluster.HasTinkerbellIPAnnotation(); t != "" {
+			tinkerbellIP = t
+		}
+		isoURL := url.URL{
+			Scheme: "http",
+			Host:   fmt.Sprintf("%s:%s", tinkerbellIP, SmeeHTTPPort),
+			// isoURL path is only served in the top level /iso path.
+			Path: "/iso/hook.iso",
+		}
+		values["isoUrl"] = isoURL.String()
+	}
+
 	return values, nil
 }
 
@@ -630,6 +652,23 @@ func buildTemplateMapMD(
 	wnNodeLabelArgs := clusterapi.WorkerNodeLabelsExtraArgs(workerNodeGroupConfiguration)
 	if len(wnNodeLabelArgs) != 0 {
 		values["wnNodeLabelArgs"] = wnNodeLabelArgs.ToPartialYaml()
+	}
+
+	if !datacenterSpec.IsoBoot {
+		values["bootMode"] = netbootMode
+	} else {
+		values["bootMode"] = isobootMode
+		tinkerbellIP := datacenterSpec.TinkerbellIP
+		if t := clusterSpec.Cluster.HasTinkerbellIPAnnotation(); t != "" {
+			tinkerbellIP = t
+		}
+		isoURL := url.URL{
+			Scheme: "http",
+			Host:   fmt.Sprintf("%s:%s", tinkerbellIP, SmeeHTTPPort),
+			// isoURL path is only served in the top level /iso path.
+			Path: "/iso/hook.iso",
+		}
+		values["isoUrl"] = isoURL.String()
 	}
 
 	return values, nil
