@@ -84,6 +84,20 @@ func WithHookImagesURLPath(value string) TinkerbellFiller {
 	}
 }
 
+// WithHookIsoBoot sets IsoBoot to true.
+func WithHookIsoBoot() TinkerbellFiller {
+	return func(config TinkerbellConfig) {
+		config.datacenterConfig.Spec.IsoBoot = true
+	}
+}
+
+// WithHookIsoURLPath helps in setting the HookOS ISO URL value.
+func WithHookIsoURLPath(url string) TinkerbellFiller {
+	return func(config TinkerbellConfig) {
+		config.datacenterConfig.Spec.HookIsoURL = url
+	}
+}
+
 func WithStringFromEnvVarTinkerbell(envVar string, opt func(string) TinkerbellFiller) TinkerbellFiller {
 	return opt(os.Getenv(envVar))
 }
