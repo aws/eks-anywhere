@@ -223,6 +223,7 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 		CliConfig:          cliConfig,
 		SkippedValidations: skippedValidations,
 		KubeClient:         deps.UnAuthKubeClient.KubeconfigClient(mgmt.KubeconfigFile),
+		ManifestReader:     deps.ManifestReader,
 	}
 	createValidations := createvalidations.New(validationOpts)
 

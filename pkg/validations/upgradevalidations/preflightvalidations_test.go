@@ -12,12 +12,15 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/aws/eks-anywhere/internal/test"
+	internalmocks "github.com/aws/eks-anywhere/internal/test/mocks"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	filewritermocks "github.com/aws/eks-anywhere/pkg/filewriter/mocks"
+	"github.com/aws/eks-anywhere/pkg/manifests"
+	"github.com/aws/eks-anywhere/pkg/manifests/releases"
 	mockproviders "github.com/aws/eks-anywhere/pkg/providers/mocks"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell"
 	tinkerbellmocks "github.com/aws/eks-anywhere/pkg/providers/tinkerbell/mocks"
@@ -52,8 +55,8 @@ func TestPreflightValidationsTinkerbell(t *testing.T) {
 	}{
 		{
 			name:               "ValidationSucceeds",
-			clusterVersion:     "v1.19.16-eks-1-19-4",
-			upgradeVersion:     "1.19",
+			clusterVersion:     "1.30",
+			upgradeVersion:     "1.30",
 			getClusterResponse: goodClusterResponse,
 			cpResponse:         nil,
 			workerResponse:     nil,
@@ -63,8 +66,8 @@ func TestPreflightValidationsTinkerbell(t *testing.T) {
 		},
 		{
 			name:               "ValidationFailsClusterDoesNotExist",
-			clusterVersion:     "v1.19.16-eks-1-19-4",
-			upgradeVersion:     "1.19",
+			clusterVersion:     "1.30",
+			upgradeVersion:     "1.30",
 			getClusterResponse: []types.CAPICluster{{Metadata: types.Metadata{Name: "thisIsNotTheClusterYourLookingFor"}}},
 			cpResponse:         nil,
 			workerResponse:     nil,
@@ -74,8 +77,8 @@ func TestPreflightValidationsTinkerbell(t *testing.T) {
 		},
 		{
 			name:               "ValidationFailsNoClusters",
-			clusterVersion:     "v1.19.16-eks-1-19-4",
-			upgradeVersion:     "1.19",
+			clusterVersion:     "1.30",
+			upgradeVersion:     "1.30",
 			getClusterResponse: []types.CAPICluster{},
 			cpResponse:         nil,
 			workerResponse:     nil,
@@ -85,8 +88,8 @@ func TestPreflightValidationsTinkerbell(t *testing.T) {
 		},
 		{
 			name:               "ValidationFailsCpNotReady",
-			clusterVersion:     "v1.19.16-eks-1-19-4",
-			upgradeVersion:     "1.19",
+			clusterVersion:     "1.30",
+			upgradeVersion:     "1.30",
 			getClusterResponse: goodClusterResponse,
 			cpResponse:         errors.New("control plane nodes are not ready"),
 			workerResponse:     nil,
@@ -96,8 +99,8 @@ func TestPreflightValidationsTinkerbell(t *testing.T) {
 		},
 		{
 			name:               "ValidationFailsWorkerNodesNotReady",
-			clusterVersion:     "v1.19.16-eks-1-19-4",
-			upgradeVersion:     "1.19",
+			clusterVersion:     "1.30",
+			upgradeVersion:     "1.30",
 			getClusterResponse: goodClusterResponse,
 			cpResponse:         nil,
 			workerResponse:     errors.New("2 worker nodes are not ready"),
@@ -107,8 +110,8 @@ func TestPreflightValidationsTinkerbell(t *testing.T) {
 		},
 		{
 			name:               "ValidationFailsNodesNotReady",
-			clusterVersion:     "v1.19.16-eks-1-19-4",
-			upgradeVersion:     "1.19",
+			clusterVersion:     "1.30",
+			upgradeVersion:     "1.30",
 			getClusterResponse: goodClusterResponse,
 			cpResponse:         nil,
 			workerResponse:     nil,
@@ -118,8 +121,8 @@ func TestPreflightValidationsTinkerbell(t *testing.T) {
 		},
 		{
 			name:               "ValidationFailsNoCrds",
-			clusterVersion:     "v1.19.16-eks-1-19-4",
-			upgradeVersion:     "1.19",
+			clusterVersion:     "1.30",
+			upgradeVersion:     "1.30",
 			getClusterResponse: goodClusterResponse,
 			cpResponse:         nil,
 			workerResponse:     nil,
@@ -129,8 +132,8 @@ func TestPreflightValidationsTinkerbell(t *testing.T) {
 		},
 		{
 			name:               "ValidationFailsExplodingCluster",
-			clusterVersion:     "v1.18.16-eks-1-18-4",
-			upgradeVersion:     "1.20",
+			clusterVersion:     "1.28",
+			upgradeVersion:     "1.30",
 			getClusterResponse: []types.CAPICluster{{Metadata: types.Metadata{Name: "thisIsNotTheClusterYourLookingFor"}}},
 			cpResponse:         errors.New("control plane nodes are not ready"),
 			workerResponse:     errors.New("2 worker nodes are not ready"),
@@ -140,8 +143,8 @@ func TestPreflightValidationsTinkerbell(t *testing.T) {
 		},
 		{
 			name:               "ValidationControlPlaneImmutable",
-			clusterVersion:     "v1.19.16-eks-1-19-4",
-			upgradeVersion:     "1.19",
+			clusterVersion:     "1.30",
+			upgradeVersion:     "1.30",
 			getClusterResponse: goodClusterResponse,
 			cpResponse:         nil,
 			workerResponse:     nil,
@@ -154,8 +157,8 @@ func TestPreflightValidationsTinkerbell(t *testing.T) {
 		},
 		{
 			name:               "ValidationClusterNetworkPodsImmutable",
-			clusterVersion:     "v1.19.16-eks-1-19-4",
-			upgradeVersion:     "1.19",
+			clusterVersion:     "1.30",
+			upgradeVersion:     "1.30",
 			getClusterResponse: goodClusterResponse,
 			cpResponse:         nil,
 			workerResponse:     nil,
@@ -168,8 +171,8 @@ func TestPreflightValidationsTinkerbell(t *testing.T) {
 		},
 		{
 			name:               "ValidationClusterNetworkServicesImmutable",
-			clusterVersion:     "v1.19.16-eks-1-19-4",
-			upgradeVersion:     "1.19",
+			clusterVersion:     "1.30",
+			upgradeVersion:     "1.30",
 			getClusterResponse: goodClusterResponse,
 			cpResponse:         nil,
 			workerResponse:     nil,
@@ -182,8 +185,8 @@ func TestPreflightValidationsTinkerbell(t *testing.T) {
 		},
 		{
 			name:               "ValidationManagementImmutable",
-			clusterVersion:     "v1.19.16-eks-1-19-4",
-			upgradeVersion:     "1.19",
+			clusterVersion:     "1.30",
+			upgradeVersion:     "1.30",
 			getClusterResponse: goodClusterResponse,
 			cpResponse:         nil,
 			workerResponse:     nil,
@@ -196,8 +199,8 @@ func TestPreflightValidationsTinkerbell(t *testing.T) {
 		},
 		{
 			name:               "ValidationTinkerbellIPImmutable",
-			clusterVersion:     "v1.19.16-eks-1-19-4",
-			upgradeVersion:     "1.19",
+			clusterVersion:     "1.30",
+			upgradeVersion:     "1.30",
 			getClusterResponse: goodClusterResponse,
 			cpResponse:         nil,
 			workerResponse:     nil,
@@ -210,8 +213,8 @@ func TestPreflightValidationsTinkerbell(t *testing.T) {
 		},
 		{
 			name:               "ValidationOSImageURLMutable",
-			clusterVersion:     "v1.19.16-eks-1-19-4",
-			upgradeVersion:     "1.19",
+			clusterVersion:     "1.30",
+			upgradeVersion:     "1.30",
 			getClusterResponse: goodClusterResponse,
 			cpResponse:         nil,
 			workerResponse:     nil,
@@ -224,22 +227,22 @@ func TestPreflightValidationsTinkerbell(t *testing.T) {
 		},
 		{
 			name:               "ValidationHookImageURLImmutable",
-			clusterVersion:     "v1.19.16-eks-1-19-4",
-			upgradeVersion:     "1.19",
+			clusterVersion:     "1.30",
+			upgradeVersion:     "1.30",
 			getClusterResponse: goodClusterResponse,
 			cpResponse:         nil,
 			workerResponse:     nil,
 			nodeResponse:       nil,
 			crdResponse:        nil,
-			wantErr:            composeError("spec.HookImagesURLPath is immutable. Previous value http://old-hook-image-url,   New value http://hook-image-url"),
+			wantErr:            composeError("spec.hookImagesURLPath is immutable. previous = http://old-hook-image-url, new = http://hook-image-url"),
 			modifyDatacenterFunc: func(s *anywherev1.TinkerbellDatacenterConfig) {
 				s.Spec.HookImagesURLPath = "http://old-hook-image-url"
 			},
 		},
 		{
 			name:               "ValidationSSHUsernameImmutable",
-			clusterVersion:     "v1.19.16-eks-1-19-4",
-			upgradeVersion:     "1.19",
+			clusterVersion:     "1.30",
+			upgradeVersion:     "1.30",
 			getClusterResponse: goodClusterResponse,
 			cpResponse:         nil,
 			workerResponse:     nil,
@@ -252,8 +255,8 @@ func TestPreflightValidationsTinkerbell(t *testing.T) {
 		},
 		{
 			name:               "ValidationSSHAuthorizedKeysImmutable",
-			clusterVersion:     "v1.19.16-eks-1-19-4",
-			upgradeVersion:     "1.19",
+			clusterVersion:     "1.30",
+			upgradeVersion:     "1.30",
 			getClusterResponse: goodClusterResponse,
 			cpResponse:         nil,
 			workerResponse:     nil,
@@ -266,8 +269,8 @@ func TestPreflightValidationsTinkerbell(t *testing.T) {
 		},
 		{
 			name:               "ValidationHardwareSelectorImmutable",
-			clusterVersion:     "v1.19.16-eks-1-19-4",
-			upgradeVersion:     "1.19",
+			clusterVersion:     "1.30",
+			upgradeVersion:     "1.30",
 			getClusterResponse: goodClusterResponse,
 			cpResponse:         nil,
 			workerResponse:     nil,
@@ -353,7 +356,7 @@ func TestPreflightValidationsTinkerbell(t *testing.T) {
 			helm := stackmocks.NewMockHelm(mockCtrl)
 			writer := filewritermocks.NewMockFileWriter(mockCtrl)
 			tlsValidator := mocks.NewMockTlsValidator(mockCtrl)
-
+			version := test.DevEksaVersion()
 			provider := newProvider(defaultDatacenterSpec, givenTinkerbellMachineConfigs(t), clusterSpec.Cluster, writer, docker, helm, kubectl, false)
 			opts := &validations.Opts{
 				Kubectl:           k,
@@ -362,7 +365,8 @@ func TestPreflightValidationsTinkerbell(t *testing.T) {
 				ManagementCluster: workloadCluster,
 				Provider:          provider,
 				TLSValidator:      tlsValidator,
-				CliVersion:        "v0.19.0-dev+latest",
+				CliVersion:        string(version),
+				ManifestReader:    addManifestReaderMock(t, version),
 			}
 
 			clusterSpec.Cluster.Spec.KubernetesVersion = anywherev1.KubernetesVersion(tc.upgradeVersion)
@@ -449,8 +453,8 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 	}{
 		{
 			name:               "ValidationBottlerocketKC",
-			clusterVersion:     "v1.19.16-eks-1-19-4",
-			upgradeVersion:     string(anywherev1.Kube119),
+			clusterVersion:     string(anywherev1.Kube130),
+			upgradeVersion:     string(anywherev1.Kube130),
 			getClusterResponse: goodClusterResponse,
 			cpResponse:         nil,
 			workerResponse:     nil,
@@ -497,8 +501,8 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 		},
 		{
 			name:               "ValidationSucceeds",
-			clusterVersion:     "v1.19.16-eks-1-19-4",
-			upgradeVersion:     "1.19",
+			clusterVersion:     string(anywherev1.Kube130),
+			upgradeVersion:     string(anywherev1.Kube130),
 			getClusterResponse: goodClusterResponse,
 			cpResponse:         nil,
 			workerResponse:     nil,
@@ -508,8 +512,8 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 		},
 		{
 			name:               "ValidationFailsClusterDoesNotExist",
-			clusterVersion:     "v1.19.16-eks-1-19-4",
-			upgradeVersion:     "1.19",
+			clusterVersion:     string(anywherev1.Kube130),
+			upgradeVersion:     string(anywherev1.Kube130),
 			getClusterResponse: []types.CAPICluster{{Metadata: types.Metadata{Name: "thisIsNotTheClusterYourLookingFor"}}},
 			cpResponse:         nil,
 			workerResponse:     nil,
@@ -519,8 +523,8 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 		},
 		{
 			name:               "ValidationFailsNoClusters",
-			clusterVersion:     "v1.19.16-eks-1-19-4",
-			upgradeVersion:     "1.19",
+			clusterVersion:     string(anywherev1.Kube130),
+			upgradeVersion:     string(anywherev1.Kube130),
 			getClusterResponse: []types.CAPICluster{},
 			cpResponse:         nil,
 			workerResponse:     nil,
@@ -530,8 +534,8 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 		},
 		{
 			name:               "ValidationFailsCpNotReady",
-			clusterVersion:     "v1.19.16-eks-1-19-4",
-			upgradeVersion:     "1.19",
+			clusterVersion:     string(anywherev1.Kube130),
+			upgradeVersion:     string(anywherev1.Kube130),
 			getClusterResponse: goodClusterResponse,
 			cpResponse:         errors.New("control plane nodes are not ready"),
 			workerResponse:     nil,
@@ -541,8 +545,8 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 		},
 		{
 			name:               "ValidationFailsWorkerNodesNotReady",
-			clusterVersion:     "v1.19.16-eks-1-19-4",
-			upgradeVersion:     "1.19",
+			clusterVersion:     string(anywherev1.Kube130),
+			upgradeVersion:     string(anywherev1.Kube130),
 			getClusterResponse: goodClusterResponse,
 			cpResponse:         nil,
 			workerResponse:     errors.New("2 worker nodes are not ready"),
@@ -552,8 +556,8 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 		},
 		{
 			name:               "ValidationFailsNodesNotReady",
-			clusterVersion:     "v1.19.16-eks-1-19-4",
-			upgradeVersion:     "1.19",
+			clusterVersion:     string(anywherev1.Kube130),
+			upgradeVersion:     string(anywherev1.Kube130),
 			getClusterResponse: goodClusterResponse,
 			cpResponse:         nil,
 			workerResponse:     nil,
@@ -563,8 +567,8 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 		},
 		{
 			name:               "ValidationFailsNoCrds",
-			clusterVersion:     "v1.19.16-eks-1-19-4",
-			upgradeVersion:     "1.19",
+			clusterVersion:     string(anywherev1.Kube130),
+			upgradeVersion:     string(anywherev1.Kube130),
 			getClusterResponse: goodClusterResponse,
 			cpResponse:         nil,
 			workerResponse:     nil,
@@ -574,8 +578,8 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 		},
 		{
 			name:               "ValidationFailsExplodingCluster",
-			clusterVersion:     "v1.18.16-eks-1-18-4",
-			upgradeVersion:     "1.20",
+			clusterVersion:     string(anywherev1.Kube128),
+			upgradeVersion:     string(anywherev1.Kube130),
 			getClusterResponse: []types.CAPICluster{{Metadata: types.Metadata{Name: "thisIsNotTheClusterYourLookingFor"}}},
 			cpResponse:         errors.New("control plane nodes are not ready"),
 			workerResponse:     errors.New("2 worker nodes are not ready"),
@@ -585,8 +589,8 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 		},
 		{
 			name:               "ValidationControlPlaneImmutable",
-			clusterVersion:     "v1.19.16-eks-1-19-4",
-			upgradeVersion:     "1.19",
+			clusterVersion:     string(anywherev1.Kube130),
+			upgradeVersion:     string(anywherev1.Kube130),
 			getClusterResponse: goodClusterResponse,
 			cpResponse:         nil,
 			workerResponse:     nil,
@@ -599,8 +603,8 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 		},
 		{
 			name:               "ValidationAwsIamRegionImmutable",
-			clusterVersion:     "v1.19.16-eks-1-19-4",
-			upgradeVersion:     "1.19",
+			clusterVersion:     string(anywherev1.Kube130),
+			upgradeVersion:     string(anywherev1.Kube130),
 			getClusterResponse: goodClusterResponse,
 			cpResponse:         nil,
 			workerResponse:     nil,
@@ -613,8 +617,8 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 		},
 		{
 			name:               "ValidationAwsIamBackEndModeImmutable",
-			clusterVersion:     "v1.19.16-eks-1-19-4",
-			upgradeVersion:     "1.19",
+			clusterVersion:     string(anywherev1.Kube130),
+			upgradeVersion:     string(anywherev1.Kube130),
 			getClusterResponse: goodClusterResponse,
 			cpResponse:         nil,
 			workerResponse:     nil,
@@ -627,8 +631,8 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 		},
 		{
 			name:               "ValidationAwsIamPartitionImmutable",
-			clusterVersion:     "v1.19.16-eks-1-19-4",
-			upgradeVersion:     "1.19",
+			clusterVersion:     string(anywherev1.Kube130),
+			upgradeVersion:     string(anywherev1.Kube130),
 			getClusterResponse: goodClusterResponse,
 			cpResponse:         nil,
 			workerResponse:     nil,
@@ -641,8 +645,8 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 		},
 		{
 			name:               "ValidationAwsIamNameImmutable",
-			clusterVersion:     "v1.19.16-eks-1-19-4",
-			upgradeVersion:     "1.19",
+			clusterVersion:     string(anywherev1.Kube130),
+			upgradeVersion:     string(anywherev1.Kube130),
 			getClusterResponse: goodClusterResponse,
 			cpResponse:         nil,
 			workerResponse:     nil,
@@ -658,8 +662,8 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 		},
 		{
 			name:               "ValidationAwsIamKindImmutable",
-			clusterVersion:     "v1.19.16-eks-1-19-4",
-			upgradeVersion:     "1.19",
+			clusterVersion:     string(anywherev1.Kube130),
+			upgradeVersion:     string(anywherev1.Kube130),
 			getClusterResponse: goodClusterResponse,
 			cpResponse:         nil,
 			workerResponse:     nil,
@@ -675,8 +679,8 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 		},
 		{
 			name:               "ValidationAwsIamKindImmutableSwapOrder",
-			clusterVersion:     "v1.19.16-eks-1-19-4",
-			upgradeVersion:     "1.19",
+			clusterVersion:     string(anywherev1.Kube130),
+			upgradeVersion:     string(anywherev1.Kube130),
 			getClusterResponse: goodClusterResponse,
 			cpResponse:         nil,
 			workerResponse:     nil,
@@ -696,8 +700,8 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 		},
 		{
 			name:               "ValidationGitOpsNamespaceImmutable",
-			clusterVersion:     "v1.19.16-eks-1-19-4",
-			upgradeVersion:     "1.19",
+			clusterVersion:     string(anywherev1.Kube130),
+			upgradeVersion:     string(anywherev1.Kube130),
 			getClusterResponse: goodClusterResponse,
 			cpResponse:         nil,
 			workerResponse:     nil,
@@ -710,8 +714,8 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 		},
 		{
 			name:               "ValidationGitOpsBranchImmutable",
-			clusterVersion:     "v1.19.16-eks-1-19-4",
-			upgradeVersion:     "1.19",
+			clusterVersion:     string(anywherev1.Kube130),
+			upgradeVersion:     string(anywherev1.Kube130),
 			getClusterResponse: goodClusterResponse,
 			cpResponse:         nil,
 			workerResponse:     nil,
@@ -724,8 +728,8 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 		},
 		{
 			name:               "ValidationGitOpsOwnerImmutable",
-			clusterVersion:     "v1.19.16-eks-1-19-4",
-			upgradeVersion:     "1.19",
+			clusterVersion:     string(anywherev1.Kube130),
+			upgradeVersion:     string(anywherev1.Kube130),
 			getClusterResponse: goodClusterResponse,
 			cpResponse:         nil,
 			workerResponse:     nil,
@@ -738,8 +742,8 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 		},
 		{
 			name:               "ValidationGitOpsRepositoryImmutable",
-			clusterVersion:     "v1.19.16-eks-1-19-4",
-			upgradeVersion:     "1.19",
+			clusterVersion:     string(anywherev1.Kube130),
+			upgradeVersion:     string(anywherev1.Kube130),
 			getClusterResponse: goodClusterResponse,
 			cpResponse:         nil,
 			workerResponse:     nil,
@@ -752,8 +756,8 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 		},
 		{
 			name:               "ValidationGitOpsPathImmutable",
-			clusterVersion:     "v1.19.16-eks-1-19-4",
-			upgradeVersion:     "1.19",
+			clusterVersion:     string(anywherev1.Kube130),
+			upgradeVersion:     string(anywherev1.Kube130),
 			getClusterResponse: goodClusterResponse,
 			cpResponse:         nil,
 			workerResponse:     nil,
@@ -766,8 +770,8 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 		},
 		{
 			name:               "ValidationGitOpsPersonalImmutable",
-			clusterVersion:     "v1.19.16-eks-1-19-4",
-			upgradeVersion:     "1.19",
+			clusterVersion:     string(anywherev1.Kube130),
+			upgradeVersion:     string(anywherev1.Kube130),
 			getClusterResponse: goodClusterResponse,
 			cpResponse:         nil,
 			workerResponse:     nil,
@@ -780,8 +784,8 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 		},
 		{
 			name:               "ValidationOIDCClientIdMutable",
-			clusterVersion:     "v1.19.16-eks-1-19-4",
-			upgradeVersion:     "1.19",
+			clusterVersion:     string(anywherev1.Kube130),
+			upgradeVersion:     string(anywherev1.Kube130),
 			getClusterResponse: goodClusterResponse,
 			cpResponse:         nil,
 			workerResponse:     nil,
@@ -794,8 +798,8 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 		},
 		{
 			name:               "ValidationOIDCGroupsClaimMutable",
-			clusterVersion:     "v1.19.16-eks-1-19-4",
-			upgradeVersion:     "1.19",
+			clusterVersion:     string(anywherev1.Kube130),
+			upgradeVersion:     string(anywherev1.Kube130),
 			getClusterResponse: goodClusterResponse,
 			cpResponse:         nil,
 			workerResponse:     nil,
@@ -808,8 +812,8 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 		},
 		{
 			name:               "ValidationOIDCGroupsPrefixMutable",
-			clusterVersion:     "v1.19.16-eks-1-19-4",
-			upgradeVersion:     "1.19",
+			clusterVersion:     string(anywherev1.Kube130),
+			upgradeVersion:     string(anywherev1.Kube130),
 			getClusterResponse: goodClusterResponse,
 			cpResponse:         nil,
 			workerResponse:     nil,
@@ -822,8 +826,8 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 		},
 		{
 			name:               "ValidationOIDCIssuerUrlMutable",
-			clusterVersion:     "v1.19.16-eks-1-19-4",
-			upgradeVersion:     "1.19",
+			clusterVersion:     string(anywherev1.Kube130),
+			upgradeVersion:     string(anywherev1.Kube130),
 			getClusterResponse: goodClusterResponse,
 			cpResponse:         nil,
 			workerResponse:     nil,
@@ -836,8 +840,8 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 		},
 		{
 			name:               "ValidationOIDCUsernameClaimMutable",
-			clusterVersion:     "v1.19.16-eks-1-19-4",
-			upgradeVersion:     "1.19",
+			clusterVersion:     string(anywherev1.Kube130),
+			upgradeVersion:     string(anywherev1.Kube130),
 			getClusterResponse: goodClusterResponse,
 			cpResponse:         nil,
 			workerResponse:     nil,
@@ -850,8 +854,8 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 		},
 		{
 			name:               "ValidationOIDCUsernamePrefixMutable",
-			clusterVersion:     "v1.19.16-eks-1-19-4",
-			upgradeVersion:     "1.19",
+			clusterVersion:     string(anywherev1.Kube130),
+			upgradeVersion:     string(anywherev1.Kube130),
 			getClusterResponse: goodClusterResponse,
 			cpResponse:         nil,
 			workerResponse:     nil,
@@ -864,8 +868,8 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 		},
 		{
 			name:               "ValidationOIDCRequiredClaimsMutable",
-			clusterVersion:     "v1.19.16-eks-1-19-4",
-			upgradeVersion:     "1.19",
+			clusterVersion:     string(anywherev1.Kube130),
+			upgradeVersion:     string(anywherev1.Kube130),
 			getClusterResponse: goodClusterResponse,
 			cpResponse:         nil,
 			workerResponse:     nil,
@@ -878,8 +882,8 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 		},
 		{
 			name:               "ValidationClusterNetworkPodsImmutable",
-			clusterVersion:     "v1.19.16-eks-1-19-4",
-			upgradeVersion:     "1.19",
+			clusterVersion:     string(anywherev1.Kube130),
+			upgradeVersion:     string(anywherev1.Kube130),
 			getClusterResponse: goodClusterResponse,
 			cpResponse:         nil,
 			workerResponse:     nil,
@@ -892,8 +896,8 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 		},
 		{
 			name:               "ValidationClusterNetworkServicesImmutable",
-			clusterVersion:     "v1.19.16-eks-1-19-4",
-			upgradeVersion:     "1.19",
+			clusterVersion:     string(anywherev1.Kube130),
+			upgradeVersion:     string(anywherev1.Kube130),
 			getClusterResponse: goodClusterResponse,
 			cpResponse:         nil,
 			workerResponse:     nil,
@@ -906,8 +910,8 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 		},
 		{
 			name:               "ValidationClusterNetworkDNSImmutable",
-			clusterVersion:     "v1.19.16-eks-1-19-4",
-			upgradeVersion:     "1.19",
+			clusterVersion:     string(anywherev1.Kube130),
+			upgradeVersion:     string(anywherev1.Kube130),
 			getClusterResponse: goodClusterResponse,
 			cpResponse:         nil,
 			workerResponse:     nil,
@@ -920,8 +924,8 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 		},
 		{
 			name:               "ValidationProxyConfigurationImmutable",
-			clusterVersion:     "v1.19.16-eks-1-19-4",
-			upgradeVersion:     "1.19",
+			clusterVersion:     string(anywherev1.Kube130),
+			upgradeVersion:     string(anywherev1.Kube130),
 			getClusterResponse: goodClusterResponse,
 			cpResponse:         nil,
 			workerResponse:     nil,
@@ -940,8 +944,8 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 		},
 		{
 			name:               "ValidationEtcdConfigPreviousSpecEmpty",
-			clusterVersion:     "v1.19.16-eks-1-19-4",
-			upgradeVersion:     "1.19",
+			clusterVersion:     string(anywherev1.Kube130),
+			upgradeVersion:     string(anywherev1.Kube130),
 			getClusterResponse: goodClusterResponse,
 			cpResponse:         nil,
 			workerResponse:     nil,
@@ -958,8 +962,8 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 		},
 		{
 			name:               "ValidationManagementImmutable",
-			clusterVersion:     "v1.19.16-eks-1-19-4",
-			upgradeVersion:     string(anywherev1.Kube119),
+			clusterVersion:     string(anywherev1.Kube130),
+			upgradeVersion:     string(anywherev1.Kube130),
 			getClusterResponse: goodClusterResponse,
 			cpResponse:         nil,
 			workerResponse:     nil,
@@ -972,8 +976,8 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 		},
 		{
 			name:               "ValidationManagementClusterNameImmutable",
-			clusterVersion:     "v1.19.16-eks-1-19-4",
-			upgradeVersion:     string(anywherev1.Kube119),
+			clusterVersion:     string(anywherev1.Kube130),
+			upgradeVersion:     string(anywherev1.Kube130),
 			getClusterResponse: goodClusterResponse,
 			cpResponse:         nil,
 			workerResponse:     nil,
@@ -1137,6 +1141,7 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 				tc.modifyDefaultSpecFunc(clusterSpec)
 			}
 			objects := []client.Object{test.EKSARelease()}
+			version := test.DevEksaVersion()
 			opts := &validations.Opts{
 				Kubectl:           k,
 				Spec:              clusterSpec,
@@ -1144,8 +1149,9 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 				ManagementCluster: workloadCluster,
 				Provider:          provider,
 				TLSValidator:      tlsValidator,
-				CliVersion:        "v0.19.0-dev+latest",
+				CliVersion:        string(version),
 				KubeClient:        test.NewFakeKubeClient(objects...),
+				ManifestReader:    addManifestReaderMock(t, version),
 			}
 
 			clusterSpec.Cluster.Spec.KubernetesVersion = anywherev1.KubernetesVersion(tc.upgradeVersion)
@@ -1193,7 +1199,7 @@ var explodingClusterError = composeError(
 	"node test-node is not ready, currently in Unknown state",
 	"error getting clusters crd: crd not found",
 	"couldn't find CAPI cluster object for cluster with name testcluster",
-	"spec: Invalid value: \"1.20\": only +1 minor version skew is supported, minor version skew detected 2",
+	"spec: Invalid value: \"1.30\": only +1 minor version skew is supported, minor version skew detected 2",
 )
 
 func TestPreFlightValidationsGit(t *testing.T) {
@@ -1211,8 +1217,8 @@ func TestPreFlightValidationsGit(t *testing.T) {
 	}{
 		{
 			name:               "ValidationFluxSshKeyAlgoImmutable",
-			clusterVersion:     "v1.19.16-eks-1-19-4",
-			upgradeVersion:     "1.19",
+			clusterVersion:     string(anywherev1.Kube130),
+			upgradeVersion:     string(anywherev1.Kube130),
 			getClusterResponse: goodClusterResponse,
 			cpResponse:         nil,
 			workerResponse:     nil,
@@ -1225,8 +1231,8 @@ func TestPreFlightValidationsGit(t *testing.T) {
 		},
 		{
 			name:               "ValidationFluxRepoUrlImmutable",
-			clusterVersion:     "v1.19.16-eks-1-19-4",
-			upgradeVersion:     "1.19",
+			clusterVersion:     string(anywherev1.Kube130),
+			upgradeVersion:     string(anywherev1.Kube130),
 			getClusterResponse: goodClusterResponse,
 			cpResponse:         nil,
 			workerResponse:     nil,
@@ -1376,6 +1382,7 @@ func TestPreFlightValidationsGit(t *testing.T) {
 			}
 
 			provider := mockproviders.NewMockProvider(mockCtrl)
+			version := test.DevEksaVersion()
 			opts := &validations.Opts{
 				Kubectl:           k,
 				Spec:              clusterSpec,
@@ -1384,7 +1391,8 @@ func TestPreFlightValidationsGit(t *testing.T) {
 				Provider:          provider,
 				TLSValidator:      tlsValidator,
 				CliConfig:         cliConfig,
-				CliVersion:        "v0.19.0-dev+latest",
+				CliVersion:        string(version),
+				ManifestReader:    addManifestReaderMock(t, version),
 			}
 
 			clusterSpec.Cluster.Spec.KubernetesVersion = anywherev1.KubernetesVersion(tc.upgradeVersion)
@@ -1414,4 +1422,37 @@ func TestPreFlightValidationsGit(t *testing.T) {
 			}
 		})
 	}
+}
+
+func addManifestReaderMock(t *testing.T, version anywherev1.EksaVersion) *manifests.Reader {
+	ctrl := gomock.NewController(t)
+	reader := internalmocks.NewMockReader(ctrl)
+	releasesURL := releases.ManifestURL()
+
+	releasesManifest := fmt.Sprintf(`apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: Release
+metadata:
+  name: release-1
+spec:
+  releases:
+  - bundleManifestUrl: "https://bundles/bundles.yaml"
+    version: %s`, string(version))
+	reader.EXPECT().ReadFile(releasesURL).Return([]byte(releasesManifest), nil)
+
+	bundlesManifest := `apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: Bundles
+metadata:
+  annotations:
+    anywhere.eks.amazonaws.com/signature: MEYCIQDgmE8oY9xUyFO3uOHRkpRWjTxoej8Wf7Ty5HQcbs9ouQIhANV2kylPXjcpLY2xu7vD6ktXqm7yrnLUgiehSdbL8JUJ
+  name: bundles-1
+spec:
+  number: 1
+  versionsBundles:
+  - kubeversion: "1.30"
+    endOfStandardSupport: "2026-12-31"`
+
+	reader.EXPECT().ReadFile("https://bundles/bundles.yaml").Return([]byte(bundlesManifest), nil)
+
+	return manifests.NewReader(reader)
 }
