@@ -71,6 +71,7 @@ env:
     T_TINKERBELL_BMC_HMAC_SECRETS: "tinkerbell_ci:bmc_hmac_secrets"
     T_TINKERBELL_BMC_TIMESTAMP_HEADER: "tinkerbell_ci:bmc_timestamp_header"
     T_TINKERBELL_BMC_INCLUDED_PAYLOAD_HEADERS: "tinkerbell_ci:bmc_included_payload_headers"
+    T_TINKERBELL_HOOK_ISO_URL: "tinkerbell_ci:hook_iso_url"
 phases:
   pre_build:
     commands:
