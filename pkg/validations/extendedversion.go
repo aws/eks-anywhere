@@ -36,8 +36,10 @@ func ValidateExtendedK8sVersionSupport(ctx context.Context, clusterSpec anywhere
 		if err = validateLicense(token); err != nil {
 			return fmt.Errorf("validating licenseToken: %w", err)
 		}
-		if err := validateLicenseKeyIsUnique(ctx, clusterSpec.Name, clusterSpec.Spec.LicenseToken, k); err != nil {
-			return fmt.Errorf("validating licenseToken is unique for cluster %s: %w", clusterSpec.Name, err)
+		if clusterSpec.IsManaged() {
+			if err := validateLicenseKeyIsUnique(ctx, clusterSpec.Name, clusterSpec.Spec.LicenseToken, k); err != nil {
+				return fmt.Errorf("validating licenseToken is unique for cluster %s: %w", clusterSpec.Name, err)
+			}
 		}
 	}
 	return nil
@@ -73,7 +75,7 @@ func getLicense(licenseToken string) (*jwt.Token, error) {
 	if licenseToken == "" {
 		return nil, errors.New("licenseToken is required for extended kubernetes support")
 	}
-	token, err := signature.ParseLicense(licenseToken, constants.LincesePublicKey)
+	token, err := signature.ParseLicense(licenseToken, constants.LicensePublicKey)
 	if err != nil {
 		return nil, fmt.Errorf("parsing licenseToken: %w", err)
 	}
