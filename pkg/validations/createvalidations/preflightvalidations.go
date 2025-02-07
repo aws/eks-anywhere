@@ -59,6 +59,13 @@ func (v *CreateValidations) PreflightValidations(ctx context.Context) []validati
 				Silent:      true,
 			}
 		},
+		func() *validations.ValidationResult {
+			return &validations.ValidationResult{
+				Name:        "validate extended kubernetes version support is supported",
+				Remediation: "ensure you have a valid license for extended Kubernetes version support",
+				Err:         validations.ValidateExtendedKubernetesSupport(ctx, *v.Opts.Spec.Cluster, v.Opts.ManifestReader, v.Opts.KubeClient),
+			}
+		},
 	}
 
 	if len(v.Opts.Spec.VSphereMachineConfigs) != 0 {

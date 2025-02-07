@@ -12,6 +12,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/logger"
+	"github.com/aws/eks-anywhere/pkg/manifests"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/providers/common"
 	"github.com/aws/eks-anywhere/pkg/semver"
@@ -296,4 +297,18 @@ func ValidateK8s132Support(clusterSpec *cluster.Spec) error {
 		}
 	}
 	return nil
+}
+
+// ValidateExtendedKubernetesSupport validates the extended kubernetes version support for create and upgrade operations.
+func ValidateExtendedKubernetesSupport(ctx context.Context, clusterSpec v1alpha1.Cluster, reader *manifests.Reader, k kubernetes.Client) error {
+	eksaVersion := clusterSpec.Spec.EksaVersion
+	if eksaVersion == nil {
+		return nil
+	}
+
+	bundles, err := reader.ReadBundlesForVersion(string(*eksaVersion))
+	if err != nil {
+		return fmt.Errorf("getting bundle for existing cluster : %w", err)
+	}
+	return ValidateExtendedK8sVersionSupport(ctx, clusterSpec, bundles, k)
 }

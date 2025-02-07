@@ -14,9 +14,13 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/aws/eks-anywhere/internal/test"
+	internalmocks "github.com/aws/eks-anywhere/internal/test/mocks"
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/features"
+	"github.com/aws/eks-anywhere/pkg/manifests"
+	"github.com/aws/eks-anywhere/pkg/manifests/releases"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	providermocks "github.com/aws/eks-anywhere/pkg/providers/mocks"
 	"github.com/aws/eks-anywhere/pkg/types"
@@ -852,4 +856,97 @@ func TestValidateK8s132SupportActive(t *testing.T) {
 	features.ClearCache()
 	os.Setenv(features.K8s132SupportEnvVar, "true")
 	tt.Expect(validations.ValidateK8s132Support(tt.clusterSpec)).To(Succeed())
+}
+
+func TestValidateExtendedKubernetesVersionSupportCLINoError(t *testing.T) {
+	ctx := context.Background()
+
+	cluster := &v1alpha1.Cluster{
+		Spec: v1alpha1.ClusterSpec{
+			EksaVersion: nil,
+		},
+	}
+	objs := []client.Object{}
+	objs = append(objs, cluster)
+	fakeClient := test.NewFakeKubeClient(objs...)
+
+	ctrl := gomock.NewController(t)
+	reader := internalmocks.NewMockReader(ctrl)
+
+	err := validations.ValidateExtendedKubernetesSupport(ctx, *cluster, manifests.NewReader(reader), fakeClient)
+	if err != nil {
+		t.Errorf("got = %v, \nwant nil", err)
+	}
+}
+
+func TestValidateExtendedKubernetesVersionSupportCLIError(t *testing.T) {
+	ctx := context.Background()
+	version := test.DevEksaVersion()
+	cluster := &v1alpha1.Cluster{
+		Spec: v1alpha1.ClusterSpec{
+			EksaVersion: &version,
+		},
+	}
+
+	objs := []client.Object{}
+	objs = append(objs, cluster)
+	fakeClient := test.NewFakeKubeClient(objs...)
+
+	ctrl := gomock.NewController(t)
+	reader := internalmocks.NewMockReader(ctrl)
+	releasesURL := releases.ManifestURL()
+	reader.EXPECT().ReadFile(releasesURL)
+
+	err := validations.ValidateExtendedKubernetesSupport(ctx, *cluster, manifests.NewReader(reader), fakeClient)
+	if err == nil {
+		t.Errorf("got = nil, \nwant error: getting bundle for existing cluster")
+	}
+}
+
+func TestValidateExtendedKubernetesVersionSupportCLICheckExtendedSupport(t *testing.T) {
+	ctx := context.Background()
+	version := test.DevEksaVersion()
+	cluster := &v1alpha1.Cluster{
+		Spec: v1alpha1.ClusterSpec{
+			EksaVersion:       &version,
+			KubernetesVersion: anywherev1.Kube130,
+		},
+	}
+
+	objs := []client.Object{}
+	objs = append(objs, cluster)
+	fakeClient := test.NewFakeKubeClient(objs...)
+
+	ctrl := gomock.NewController(t)
+	reader := internalmocks.NewMockReader(ctrl)
+	releasesURL := releases.ManifestURL()
+	releasesManifest := fmt.Sprintf(`apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: Release
+metadata:
+  name: release-1
+spec:
+  releases:
+  - bundleManifestUrl: "https://bundles/bundles.yaml"
+    version: %s`, string(version))
+	reader.EXPECT().ReadFile(releasesURL).Return([]byte(releasesManifest), nil)
+
+	bundlesManifest := `apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: Bundles
+metadata:
+  annotations:
+    anywhere.eks.amazonaws.com/signature: MEYCIQDgmE8oY9xUyFO3uOHRkpRWjTxoej8Wf7Ty5HQcbs9ouQIhANV2kylPXjcpLY2xu7vD6ktXqm7yrnLUgiehSdbL8JUJ
+  name: bundles-1
+spec:
+  number: 1
+  versionsBundles:
+  - kubeversion: "1.30"
+    endOfStandardSupport: "2026-12-31"`
+
+	reader.EXPECT().ReadFile("https://bundles/bundles.yaml").Return([]byte(bundlesManifest), nil)
+
+	err := validations.ValidateExtendedKubernetesSupport(ctx, *cluster, manifests.NewReader(reader), fakeClient)
+	if err != nil {
+		t.Errorf("got = %v, \nwant nil", err)
+	}
 }
