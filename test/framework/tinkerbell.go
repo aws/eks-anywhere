@@ -44,6 +44,7 @@ const (
 	tinkerbellCIEnvironmentEnvVar                       = "T_TINKERBELL_CI_ENVIRONMENT"
 	controlPlaneIdentifier                              = "cp"
 	workerIdentifier                                    = "worker"
+	tinkerbellHookIsoURLEnvVar                          = "T_TINKERBELL_HOOK_ISO_URL"
 )
 
 var requiredTinkerbellEnvVars = []string{
@@ -72,6 +73,7 @@ var requiredTinkerbellEnvVars = []string{
 	tinkerbellImageRedHat9131EnvVar,
 	tinkerbellInventoryCsvFilePathEnvVar,
 	tinkerbellSSHAuthorizedKey,
+	tinkerbellHookIsoURLEnvVar,
 }
 
 func RequiredTinkerbellEnvVars() []string {
@@ -344,6 +346,24 @@ func WithHookImagesURLPath(url string) TinkerbellOpt {
 	}
 }
 
+// WithHookIsoBoot sets IsoBoot to true.
+func WithHookIsoBoot() TinkerbellOpt {
+	return func(t *Tinkerbell) {
+		t.fillers = append(t.fillers,
+			api.WithHookIsoBoot(),
+		)
+	}
+}
+
+// WithHookIsoURLPath helps in setting the HookOS ISO URL value.
+func WithHookIsoURLPath(url string) TinkerbellOpt {
+	return func(t *Tinkerbell) {
+		t.fillers = append(t.fillers,
+			api.WithHookIsoURLPath(url),
+		)
+	}
+}
+
 // imageForKubeVersionAndOS sets osImageURL on the appropriate field in the Machine Config based on the machineConfigType string provided else sets it at Data Center config.
 func imageForKubeVersionAndOS(kubeVersion anywherev1.KubernetesVersion, operatingSystem OS, machineConfigType string, kernelVariant ...string) api.TinkerbellFiller {
 	var tinkerbellFiller api.TinkerbellFiller
@@ -465,4 +485,9 @@ func Ubuntu2204Kubernetes130Image() api.TinkerbellFiller {
 // Ubuntu2204Kubernetes131Image represents an Ubuntu 22.04 raw image corresponding to Kubernetes 1.31.
 func Ubuntu2204Kubernetes131Image() api.TinkerbellFiller {
 	return imageForKubeVersionAndOS(anywherev1.Kube131, Ubuntu2204, "")
+}
+
+// HookIsoURLOverride returns the env var value set for 'T_TINKERBELL_HOOK_ISO_URL'.
+func HookIsoURLOverride() string {
+	return os.Getenv(tinkerbellHookIsoURLEnvVar)
 }

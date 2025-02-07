@@ -852,6 +852,42 @@ func TestTinkerbellKubernetes131UbuntuSingleNodeSimpleFlow(t *testing.T) {
 	runTinkerbellSingleNodeFlow(test)
 }
 
+// ISO booting tests
+func TestTinkerbellKubernetes131UbuntuHookIsoSimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewTinkerbell(t,
+			framework.WithUbuntu131Tinkerbell(),
+			framework.WithHookIsoBoot(),
+		),
+		framework.WithClusterFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube131),
+			api.WithControlPlaneCount(1),
+			api.WithEtcdCountIfExternal(0),
+			api.RemoveAllWorkerNodeGroups(),
+		),
+		framework.WithControlPlaneHardware(1),
+	)
+	runTinkerbellSimpleFlow(test)
+}
+
+func TestTinkerbellKubernetes131UbuntuHookIsoOverrideSimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewTinkerbell(t, framework.WithUbuntu131Tinkerbell(),
+			framework.WithHookIsoBoot(),
+			framework.WithHookIsoURLPath(framework.HookIsoURLOverride())),
+		framework.WithClusterFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube131),
+			api.WithControlPlaneCount(1),
+			api.WithEtcdCountIfExternal(0),
+			api.RemoveAllWorkerNodeGroups(),
+		),
+		framework.WithControlPlaneHardware(1),
+	)
+	runTinkerbellSimpleFlow(test)
+}
+
 // Multicluster
 func TestTinkerbellKubernetes131UbuntuWorkloadCluster(t *testing.T) {
 	provider := framework.NewTinkerbell(t, framework.WithUbuntu131Tinkerbell())
