@@ -20,6 +20,11 @@
 #
 # receiving_patches: Whether or not the release is receiving patches.
 eksa:
+- version: '0.22'
+  released: 2025-02-28
+  kube_versions: ['1.32', '1.31', '1.30', '1.29', '1.28']
+  receiving_patches: true
+
 - version: '0.21'
   released: 2024-10-30
   kube_versions: ['1.31', '1.30', '1.29', '1.28', '1.27']
@@ -28,7 +33,7 @@ eksa:
 - version: '0.20'
   released: 2024-06-28
   kube_versions: ['1.30', '1.29', '1.28', '1.27', '1.26']
-  receiving_patches: true
+  receiving_patches: false
 
 - version: '0.19'
   released: 2024-02-29
@@ -60,36 +65,36 @@ eksa:
   kube_versions: ['1.25', '1.24', '1.23', '1.22', '1.21']
   receiving_patches: false
 
-- version: '0.13'
-  released: 2022-12-15
-  kube_versions: ['1.24', '1.23', '1.22', '1.21']
-  receiving_patches: false
-
-- version: '0.12'
-  released: 2022-10-20
-  kube_versions: ['1.24', '1.23', '1.22', '1.21', '1.20']
-  receiving_patches: false
-
-- version: '0.11'
-  released: 2022-08-18
-  kube_versions: ['1.23', '1.22', '1.21', '1.20']
-  receiving_patches: false
-
-- version: '0.10'
-  released: 2022-06-30
-  kube_versions: ['1.22', '1.21', '1.20']
-  receiving_patches: false
-
-- version: '0.9'
-  released: 2022-05-12
-  kube_versions: ['1.22', '1.21', '1.20']
-  receiving_patches: false
-
-- version: '0.8'
-  released: 2022-03-31
-  kube_versions: ['1.22', '1.21', '1.20']
-  receiving_patches: false
-
+#- version: '0.13'
+#  released: 2022-12-15
+#  kube_versions: ['1.24', '1.23', '1.22', '1.21']
+#  receiving_patches: false
+#
+#- version: '0.12'
+#  released: 2022-10-20
+#  kube_versions: ['1.24', '1.23', '1.22', '1.21', '1.20']
+#  receiving_patches: false
+#
+#- version: '0.11'
+#  released: 2022-08-18
+#  kube_versions: ['1.23', '1.22', '1.21', '1.20']
+#  receiving_patches: false
+#
+#- version: '0.10'
+#  released: 2022-06-30
+#  kube_versions: ['1.22', '1.21', '1.20']
+#  receiving_patches: false
+#
+#- version: '0.9'
+#  released: 2022-05-12
+#  kube_versions: ['1.22', '1.21', '1.20']
+#  receiving_patches: false
+#
+#- version: '0.8'
+#  released: 2022-03-31
+#  kube_versions: ['1.22', '1.21', '1.20']
+#  receiving_patches: false
+#
 #- version: '0.7'
 #  released: 2022-01-27
 #  kube_versions: ['1.21', '1.20']
@@ -115,49 +120,62 @@ eksa:
 # endOfLifeIn: The EKS-A version the Kubernetes version end of lifed. Mutually exclusive with
 #              `expectedEndOfLifeDate`.
 #
-# expectedEndOfLifeDate: The expected end of life date for the Kubernetes release. This is necessary
+# endOfStandardSupport: The end of standard support for the Kubernetes release. This is necessary
+#                        when there is no EKS-A release in the eksa array above. Mutually exclusive
+#                        with `endOfLifeIn`.
+#
+# endOfExtendedSupport: The end of extended support for the Kubernetes release. This is necessary
 #                        when there is no EKS-A release in the eksa array above. Mutually exclusive
 #                        with `endOfLifeIn`.
 kube:
+- version: '1.32'
+  releasedIn: '0.22'
+  endOfStandardSupport: 2026-04-30
+  endOfExtendedSupport: 2027-04-30
+
 - version: '1.31'
   releasedIn: '0.21'
-  expectedEndOfLifeDate: 2025-12-31
+  endOfStandardSupport: 2025-12-31
+  endOfExtendedSupport: 2026-12-31
 
 - version: '1.30'
   releasedIn: '0.20'
-  expectedEndOfLifeDate: 2025-08-31
+  endOfStandardSupport: 2025-08-31
+  endOfExtendedSupport: 2026-08-31
 
 - version: '1.29'
   releasedIn: '0.19'
-  expectedEndOfLifeDate: 2025-04-30
+  endOfStandardSupport: 2025-04-30
+  endOfExtendedSupport: 2026-04-30
 
 - version: '1.28'
   releasedIn: '0.18'
-  expectedEndOfLifeDate: 2024-12-31
+  endOfStandardSupport: 2024-12-31
+  endOfExtendedSupport: 2025-12-31
 
 - version: '1.27'
   releasedIn: '0.16'
-  expectedEndOfLifeDate: 2024-08-31
+  endOfLifeIn: '0.22'
 
 - version: '1.26'
   releasedIn: '0.15'
-  expectedEndOfLifeDate: 2024-05-31
+  endOfLifeIn: '0.21'
 
 - version: '1.25'
   releasedIn: '0.14'
-  expectedEndOfLifeDate: 2024-03-31
+  endOfLifeIn: '0.20'
 
-- version: '1.24'
-  releasedIn: '0.12'
-  endOfLifeIn: '0.19'
-
-- version: '1.23'
-  releasedIn: '0.11'
-  endOfLifeIn: '0.18'
-
-- version: '1.22'
-  releasedIn: '0.8'
-  endOfLifeIn: '0.16'
+#- version: '1.24'
+#  releasedIn: '0.12'
+#  endOfLifeIn: '0.19'
+#
+#- version: '1.23'
+#  releasedIn: '0.11'
+#  endOfLifeIn: '0.18'
+#
+#- version: '1.22'
+#  releasedIn: '0.8'
+#  endOfLifeIn: '0.16'
 #
 #- version: '1.21'
 #  releasedIn: '0.5'

@@ -4,24 +4,26 @@ linkTitle: "Purchase subscriptions"
 weight: 5
 date: 2023-09-21
 description: >
-  Steps to purchase an EKS Anywhere Enterprise Subscription
+  Steps to purchase EKS Anywhere Enterprise Subscriptions
 ---
 
-You can purchase EKS Anywhere Enterprise Subscriptions with the Amazon EKS console, API, or AWS CLI. When you purchase a subscription, you can choose a 1-year term or a 3-year term, and you are billed monthly throughout the term. You can configure your subscription to automatically renew at the end of the term, and you can cancel your subscription within the first 7 days of purchase at no charge. When the status of your subscription is Active, the subscription term starts, licenses are available in AWS License Manager for your EKS Anywhere clusters, and your AWS account has access to Amazon EKS Anywhere Curated Packages.
+You can purchase EKS Anywhere Enterprise Subscriptions with the Amazon EKS console, API, or AWS CLI. When you purchase a subscription, you can choose a 1-year term or a 3-year term, and you are billed monthly throughout the term. You can configure your subscription to automatically renew at the end of the term, and you can cancel your subscription within the first 7 days of purchase at no charge. When the status of your subscription is `ACTIVE`, the subscription term starts, licenses are available for your EKS Anywhere clusters, and the AWS account you used to create the subscription has access to Amazon EKS Anywhere Curated Packages.
 
-For pricing, reference the [EKS Anywhere Pricing Page.](https://aws.amazon.com/eks/eks-anywhere/pricing/)
+For pricing, see the [EKS Anywhere Pricing Page](https://aws.amazon.com/eks/eks-anywhere/pricing/)
+
+For more information on subscriptions, see [Overview of EKS Anywhere Enterprise Subscriptions]({{< relref "../../concepts/support-scope">}})
 
 ## Create Subscriptions
 
->**_NOTE_**: When you purchase the subscription, you have a 7-day grace period to cancel the contract by creating a ticket at [AWS Support Center](https://console.aws.amazon.com/support/home). After the 7-day grace period, if you do not cancel the contract, your AWS account ID is invoiced. Payment is charged monthly.
->
->However, if you use your subscription to file an AWS Support ticket requesting EKS Anywhere support, then we are unable to cancel the subscription or refund the purchase regardless of the 7-day grace period, since you have leveraged support as part of the subscription.
+>**NOTE**: When you purchase a subscription, you have a 7-day grace period to cancel by creating a case at [AWS Support Center.](https://console.aws.amazon.com/support/home) After the 7-day grace period, if you do not cancel, your AWS account is invoiced for the subscription charges. If you use your subscription to file an AWS Support case to receive support for your EKS Anywhere clusters, then the subscription can not be cancelled or refunded, since you have leveraged support as part of the subscription.
+
+>**NOTE**: It is recommended to create subscriptions with the AWS account that will be used to operate the EKS Anywhere clusters. EKS Anywhere subscriptions and the licenses associated with them cannot currently be shared with other AWS accounts via AWS Resource Access Manager (RAM).
 
 ### Prerequisites
 
 - Before you create a subscription, you must onboard to use AWS License Manager. See the [AWS License Manager](https://docs.aws.amazon.com/license-manager/latest/userguide/getting-started.html) documentation for instructions.
 - Only auto renewal and tags can be changed after subscription creation. Other attributes such as the subscription name, number of licenses, or term length cannot be modified after subscription creation.
-- You can purchase Amazon EKS Anywhere Enterprise Subscriptions in the following AWS Regions: US East (Ohio), US East (N. Virginia), US West (N. California), US West (Oregon), Africa (Cape Town), Asia Pacific (Hong Kong), Asia Pacific (Hyderabad), Asia Pacific (Jakarta), Asia Pacific (Melbourne), Asia Pacific (Mumbai), Asia Pacific (Osaka), Asia Pacific (Seoul), Asia Pacific (Singapore), Asia Pacific (Sydney), Asia Pacific (Tokyo), Canada (Central), Europe (Frankfurt), Europe (Ireland), Europe (London), Europe (Milan), Europe (Paris), Europe (Stockholm), Europe (Zurich), Israel (Tel Aviv), Middle East (Bahrain), Middle East (UAE), and South America (Sao Paulo).
+- You can purchase subscriptions in all [AWS Regions,](https://aws.amazon.com/about-aws/global-infrastructure/regional-product-services/) except the Asia Pacific (Thailand), Mexico (Central), AWS GovCloud (US) Regions, and the China Regions.
 - An individual subscription can have up to 100 licenses.
 - An individual account can have up to 10 subscriptions.
 - You can create a single subscription at a time.
@@ -186,7 +188,7 @@ aws eks tag-resource \
 
 ## Delete Subscriptions
 
->**_NOTE_**: Only inactive subscriptions can be deleted. Deleting inactive subscriptions removes them from the AWS Management Console view and API responses. To delete any Active Subscriptions, please create a Support Case with AWS Support team.
+>**NOTE**: Only inactive subscriptions can be deleted. Deleting inactive subscriptions removes them from the AWS Management Console view and API responses. To delete any Active Subscriptions, please create a Support Case with AWS Support team.
 
 ### AWS Management Console
 

@@ -8,99 +8,87 @@ description: >
   Frequently asked questions about EKS Anywhere
 ---
 
-## AuthN / AuthZ
+## General
 
-### How do my applications running on EKS Anywhere authenticate with AWS services using IAM credentials?
+#### Where can I deploy EKS Anywhere?
+EKS Anywhere is designed to run on customer-managed infrastructure in customer-managed environments. EKS Anywhere supports different types of infrastructure including VMware vSphere, bare metal, Nutanix, AWS Snowball Edge, and Apache CloudStack. 
 
-You can now leverage the [IAM Role for Service Account (IRSA)](https://aws.amazon.com/blogs/opensource/introducing-fine-grained-iam-roles-service-accounts/) feature 
-by following the [IRSA reference]({{< relref "../../getting-started/optional/irsa.md" >}}) guide for details.
+#### Can I run EKS Anywhere in the cloud?
+No, EKS Anywhere is not supported to run in AWS or other clouds, and EC2 instances cannot be used as the infrastructure for EKS Anywhere clusters. This includes EC2 instances running in AWS Regions, Local Zones, and Outposts.
 
+#### What operating systems can I use with EKS Anywhere?
+EKS Anywhere provides Bottlerocket, a Linux-based container-native operating system built by AWS, as the default node operating system for clusters on VMware vSphere. You can alternatively use Ubuntu and Red Hat Enterprise Linux (RHEL) as the node operating system. You can only use a single node operating system per cluster. Bottlerocket is the only operating system distributed and fully supported by AWS. If you are using the other operating systems, you must build the operating system images and configure EKS Anywhere to use the images you built when installing or updating clusters. AWS will assist with troubleshooting and configuration guidance for Ubuntu and RHEL as part of EKS Anywhere Enterprise Subscriptions. For official support for Ubuntu and RHEL operating systems, you must purchase support through their respective vendors.
 
-### Does EKS Anywhere support OIDC (including Azure AD and AD FS)?
+#### Does EKS Anywhere require a connection to AWS?
+EKS Anywhere can run connected to an AWS Region or disconnected from an AWS Region, including in air-gapped environments. If you run EKS Anywhere connected to an AWS Region, you can view your clusters in the Amazon EKS console with the EKS Connector and can optionally use AWS IAM for cluster authentication, AWS IAM Roles for Service Accounts (IRSA), cert-manager with Amazon Certificate Manager, the AWS Distro for OpenTelemetry (ADOT) collector with Amazon Managed Prometheus, and FluentBit with Amazon CloudWatch Logs.
 
-Yes, EKS Anywhere can create clusters that support API server OIDC authentication.
-This means you can federate authentication through AD FS locally or through Azure AD, along with other IDPs that support the OIDC standard.
-In order to add OIDC support to your EKS Anywhere clusters, you need to configure your cluster by updating the configuration file before creating the cluster.
-Please see the [OIDC reference]({{< relref "../../getting-started/optional/oidc.md" >}}) for details.
+#### What are the differences between EKS Anywhere and EKS Hybrid Nodes?
 
-### Does EKS Anywhere support LDAP?
-EKS Anywhere does not support LDAP out of the box.
-However, you can look into the [Dex LDAP Connector](https://dexidp.io/docs/connectors/ldap/).
+[EKS Hybrid Nodes](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-overview.html) is a feature of Amazon EKS, a managed Kubernetes service, whereas EKS Anywhere is AWS-supported Kubernetes management software that you manage. EKS Hybrid Nodes is a fit for customers with on-premises environments that can be connected to the cloud, whereas EKS Anywhere is a fit for customers with isolated or air-gapped on-premises environments. 
 
-### Can I use AWS IAM for Kubernetes resource access control on EKS Anywhere?
-Yes, you can install the [aws-iam-authenticator](https://github.com/kubernetes-sigs/aws-iam-authenticator) on your EKS Anywhere cluster to achieve this.
+With EKS Hybrid Nodes, AWS manages the security, availability, and scalability of the Kubernetes control plane, which is hosted in AWS Cloud, and only nodes run on your infrastructure. With EKS Anywhere, you are responsible for managing the Kubernetes clusters that run entirely on your infrastructure. EKS Hybrid Nodes uses a "bring-your-own-infrastructure" approach where you are responsible for the provisioning and management of the infrastructure used for your hybrid nodes compute with your own choice of tooling whereas EKS Anywhere integrates with Cluster API (CAPI) to provision and manage the infrastructure used as nodes in EKS Anywhere clusters.
 
-## Miscellaneous
+With EKS Hybrid Nodes, there are no upfront commitments or minimum fees and you pay for the hourly use of your cluster and nodes as you use them. The EKS Hybrid Nodes fee is based on vCPU of the connected hybrid nodes. With EKS Anywhere, you can purchase EKS Anywhere Enterprise Subscriptions for a one-year or three-year term on a per cluster basis.
 
-### How much does EKS Anywhere cost?
+#### What are the differences between EKS Anywhere and ECS Anywhere?
 
-EKS Anywhere is free, open source software that you can download, install on your existing hardware, and run in your own data centers.
-It includes management and CLI tooling for all supported [cluster topologies]({{< relref "../../concepts/architecture" >}}) on all supported [providers]({{< relref "../../getting-started/chooseprovider" >}}).
-You are responsible for providing infrastructure where EKS Anywhere runs (e.g. VMware, bare metal), and some providers require third party hardware and software contracts.
+[ECS Anywhere](https://aws.amazon.com/ecs/anywhere/) is a feature of Amazon ECS that can be used to run containers on your on-premises infrastructure. ECS Anywhere is similar to EKS Hybrid Nodes, where the ECS control plane runs in an AWS Region, managed by ECS, and you connect your on-premises hosts as instances to your ECS clusters to enable tasks to be scheduled on your on-premises ECS instances. With EKS Anywhere, you are responsible for managing the Kubernetes clusters that run entirely on your infrastructure.
 
-The [EKS Anywhere Enterprise Subscription](https://aws.amazon.com/eks/eks-anywhere/pricing/) provides access to curated packages and enterprise support.
-This is an optional—but recommended—cost based on how many clusters and how many years of support you need.
+## Architecture
 
-### Can I connect my EKS Anywhere cluster to EKS?
+#### What infrastructure do I need to get started with EKS Anywhere?
+To get started with EKS Anywhere, you need 1 [admin machine]({{< relref "../../getting-started/install" >}}) and at least 1 VM for the control plane and 1 VM for the worker node if you are running on VMware vSphere, Nutanix, AWS Snowball Edge, or Apache CloudStack. If you are running on bare metal, you need at least 1 [admin machine]({{< relref "../../getting-started/install" >}}) and 1 physical server for the co-located control plane and worker node.
 
-Yes, you can install EKS Connector to connect your EKS Anywhere cluster to AWS EKS.
-EKS Connector is a software agent that you can install on the EKS Anywhere cluster that enables the cluster to communicate back to AWS.
-Once connected, you can immediately see a read-only view of the EKS Anywhere cluster with workload and cluster configuration information on the EKS console, alongside your EKS clusters.
+#### What infrastructure do I need to run EKS Anywhere in production?
+To use EKS Anywhere in production, it is generally recommended to run separate management and workload clusters, see [EKS Anywhere Architecture]({{< relref "../../concepts/architecture" >}}) for more information. It is recommended to run both the management cluster and workload clusters in a highly available fashion with the Kubernetes control plane instances spread across multiple virtual or physical hosts. For management clusters, management components are run on worker nodes that are separate from the Kubernetes control plane machines. For workload clusters, application workloads are run on worker nodes that are separate from the Kubernetes control plane machines, unless you are running on bare metal which allows for co-locating the Kubernetes control plane and worker nodes on the same physical machines. 
 
-#### How does the EKS Connector authenticate with AWS?
+If you are using VMware vSphere, Nutanix, AWS Snowball Edge, or Apache CloudStack for your infrastructure, it is recommended to run at least 3 separate virtual machines for the etcd instances of the Kubernetes control plane, which can be configured with the `externalEctdConfiguration` setting of the EKS Anywhere cluster specification. For more information, see the installation [Overview]({{< relref "../../getting-started/overview" >}}) and the requirements for using EKS Anywhere for each infrastructure provider below.
 
-During start-up, the EKS Connector generates and stores an RSA key-pair as Kubernetes secrets.
-It also registers with AWS using the public key and the activation details from the cluster registration configuration file.
-The EKS Connector needs AWS credentials to receive commands from AWS and to send the response back.
-Whenever it requires AWS credentials, it uses its private key to sign the request and invokes AWS APIs to request the credentials.
+- [Requirements for VMware vSphere]({{< relref "../../getting-started/vsphere/vsphere-prereq">}})
+- [Requirements for bare metal]({{< relref "../../getting-started/baremetal/bare-prereq">}})
+- [Requirements for Nutanix]({{< relref "../../getting-started/nutanix/nutanix-prereq">}})
+- [Requirements for Snow]({{< relref "../../getting-started/snow/snow-getstarted/#prerequisite-checklist">}})
+- [Requirements for Apache CloudStack]({{< relref "../../getting-started/cloudstack/cloudstack-prereq">}})
 
-#### How does the EKS Connector authenticate with my Kubernetes cluster?
+#### What permissions does EKS Anywhere need to manage infrastructure used for the cluster?
+EKS Anywhere needs permissions to create the virtual machines that are used as nodes in EKS Anywhere clusters. If you are running EKS Anywhere on bare metal, EKS Anywhere needs to be able to remotely manage your bare metal servers for network booting. You must configure these permissions before creating EKS Anywhere clusters.
 
-The EKS Connector acts as a proxy and forwards the EKS console requests to the Kubernetes API server on your cluster.
-In the initial release, the connector uses [impersonation](https://kubernetes.io/docs/reference/access-authn-authz/authentication/#user-impersonation) with its service account secrets to interact with the API server.
-Therefore, you need to associate the connector’s service account with a ClusterRole,
-which gives permission to impersonate AWS IAM entities.
+- [Prepare VMware vSphere]({{< relref "../../getting-started/vsphere/vsphere-prereq">}})
+- [Prepare hardware for bare metal]({{< relref "../../getting-started/baremetal/bare-preparation">}})
+- [Prepare Nutanix]({{< relref "../../getting-started/nutanix/nutanix-preparation">}})
+- [Prepare Snow]({{< relref "../../getting-started/snow/snow-getstarted">}})
+- [Prepare Apache CloudStack]({{< relref "../../getting-started/cloudstack/cloudstack-preparation">}})
 
-#### How do I enable an AWS user account to view my connected cluster through the EKS console?
+#### What components does EKS Anywhere use?
+EKS Anywhere is built on the Kubernetes sub-project called [Cluster API](https://cluster-api.sigs.k8s.io/) (CAPI), which is focused on providing declarative APIs and tooling to simplify the provisioning, upgrading, and operating of multiple Kubernetes clusters. EKS Anywhere inherits many of the same architectural patterns and concepts that exist in CAPI. Reference the [CAPI documentation](https://cluster-api.sigs.k8s.io/user/concepts) to learn more about the core CAPI concepts.
 
-For each AWS user or other IAM identity, you should add cluster role binding to the Kubernetes cluster with the appropriate permission for that IAM identity.
-Additionally, each of these IAM entities should be associated with the IAM policy
-to invoke the EKS Connector on the cluster.
+EKS Anywhere has four categories of components, all based on open source software: 
 
-### Can I use Amazon Controllers for Kubernetes (ACK) on EKS Anywhere?
+- Administrative / CLI components: Responsible for lifecycle operations of management or standalone clusters, building images, and collecting support diagnostics. Admin / CLI components run on Admin machines or image building machines.
+- Management components: Responsible for infrastructure and cluster lifecycle management (create, update, upgrade, scale, delete). Management components run on standalone or management clusters.
+- Cluster components: Components that make up a Kubernetes cluster where applications run. Cluster components run on standalone, management, and workload clusters.
+- Curated packages: Amazon-curated software packages that extend the core functionalities of Kubernetes on your EKS Anywhere clusters
 
-Yes, you can leverage AWS services from your EKS Anywhere clusters on-premises through [Amazon Controllers for Kubernetes (ACK)](https://aws.amazon.com/blogs/containers/aws-controllers-for-kubernetes-ack/).
+For more information on EKS Anywhere components, reference [EKS Anywhere Architecture.]({{< relref "../../concepts/architecture" >}})
 
+#### What interfaces can I use to manage EKS Anywhere clusters?
 
-### Can I deploy EKS Anywhere on other clouds?
+The tools available for cluster lifecycle operations (create, update, upgrade, scale, delete) vary based on the EKS Anywhere architecture you run. You must use the eksctl CLI for cluster lifecycle operations with standalone clusters and management clusters. If you are running a management / workload cluster architecture, you can use the management cluster to manage one-to-many downstream workload clusters. With the management cluster architecture, you can use the eksctl CLI, any Kubernetes API-compatible client, or Infrastructure as Code (IAC) tooling such as Terraform and GitOps to manage the lifecycle of workload clusters. For details on the differences between the architecture options, reference the Architecture page .
 
-EKS Anywhere can be installed on any infrastructure with the required Bare Metal, Cloudstack, or VMware vSphere components.
-See EKS Anywhere [Baremetal]({{< relref "../../getting-started/baremetal" >}}), [CloudStack]({{< relref "../../getting-started/cloudstack" >}}), or [vSphere]({{< relref "../../getting-started/vsphere" >}}) documentation.
+To perform cluster lifecycle operations for standalone, management, or workload clusters, you modify the EKS Anywhere Cluster specification, which is a Kubernetes Custom Resource for EKS Anywhere clusters. When you modify a field in an existing Cluster specification, EKS Anywhere reconciles the infrastructure and Kubernetes components until they match the new desired state you defined. 
 
-### How is EKS Anywhere different from ECS Anywhere?
+## EKS Anywhere Enterprise Subscriptions
 
-[Amazon ECS Anywhere](https://aws.amazon.com/ecs/anywhere/) is an option for [Amazon Elastic Container Service (ECS)](https://aws.amazon.com/ecs/) to run containers on your on-premises infrastructure.
-The ECS Anywhere Control Plane runs in an AWS region and allows you to install the ECS agent on worker nodes that run outside of an AWS region.
-Workloads that run on ECS Anywhere nodes are scheduled by ECS.
-You are not responsible for running, managing, or upgrading the ECS Control Plane.
+For more information on EKS Anywhere Enterprise Subscriptions, see the [Overview of support for EKS Anywhere.]({{< relref "../../concepts/support-scope" >}})
 
-EKS Anywhere runs the Kubernetes Control Plane and worker nodes on your infrastructure.
-You are responsible for managing the EKS Anywhere Control Plane and worker nodes.
-There is no requirement to have an AWS account to run EKS Anywhere.
+#### What is included in EKS Anywhere Enterprise Subscriptions?
+EKS Anywhere Enterprise Subscriptions include support for EKS Anywhere clusters, access to EKS Anywhere Curated Packages, and access to extended support for Kubernetes versions. If you do not have an EKS Anywhere Enterprise Subscription, you cannot get support for EKS Anywhere clusters through AWS Support. 
 
-If you'd like to see how EKS Anywhere compares to EKS please see the [information here.]({{< relref "../../concepts/eksafeatures.md" >}})
+#### How much do EKS Anywhere Enterprise Subscriptions cost?
+For pricing information, visit the [EKS Anywhere Pricing](https://aws.amazon.com/eks/eks-anywhere/pricing/) page.
 
-### How can I manage EKS Anywhere at scale?
+#### How can I purchase an EKS Anywhere Enterprise Subscription?
+Reference the [Purchase Subscriptions]({{< relref "../../clustermgmt/support/purchase-subscription" >}}) documentation for instructions on how to purchase.
 
-You can perform cluster life cycle and configuration management at scale through GitOps-based tools.
-EKS Anywhere offers git-driven cluster management through the integrated Flux Controller.
-See [Manage cluster with GitOps]({{< relref "../../clustermgmt/cluster-flux.md" >}}) documentation for details.
-
-### Can I run EKS Anywhere on ESXi?
-
-No. EKS Anywhere is only supported on providers listed on the [EKS Anywhere providers]({{< relref "../../getting-started/chooseprovider/" >}}) page.
-There would need to be a change to the upstream project to support ESXi.
-
-### Can I deploy EKS Anywhere on a single node?
-
-Yes. Single node cluster deployment is supported for Bare Metal. See [workerNodeGroupConfigurations]({{< relref "../../getting-started/baremetal/bare-spec/#workernodegroupconfigurations-optional">}})
+#### Is there a free trial for EKS Anywhere Enterprise Subscriptions?
+Free trial access to EKS Anywhere Curated Packages is available upon request. Free trial access to EKS Anywhere Curated Packages does not include troubleshooting support for your EKS Anywhere deployments. Contact your AWS account team for more information.
