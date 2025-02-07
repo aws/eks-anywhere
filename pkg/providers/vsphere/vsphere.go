@@ -60,6 +60,9 @@ var defaultClusterConfigMD string
 //go:embed config/secret.yaml
 var defaultSecretObject string
 
+//go:embed config/template-failuredomain.yaml
+var defaultFailureDomainConfig string
+
 var (
 	eksaVSphereDatacenterResourceType = fmt.Sprintf("vspheredatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
 	eksaVSphereMachineResourceType    = fmt.Sprintf("vspheremachineconfigs.%s", v1alpha1.GroupVersion.Group)

@@ -1,0 +1,34 @@
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: VSphereFailureDomain
+metadata:
+  name: {{.failureDomainTemplateName}}
+  namespace: {{.eksaSystemNamespace}}
+spec:
+  region:
+    name: {{.regionName}}
+    type: {{.regionType}}
+    tagCategory: k8s-region
+  zone:
+    name: {{.zoneName}}
+    type: {{.zoneType}}
+    tagCategory: k8s-zone
+  topology:
+    datacenter: {{.datacenter}}
+    computeCluster: {{.computeCluster}}
+    datastore: {{.datastore}}
+    networks:
+    - {{.network}}
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: VSphereDeploymentZone
+metadata:
+  name: {{.failureDomainTemplateName}}
+  labels:
+    cluster: {{.clusterName}}
+    vsphere-datacenter-name: {{.vsphereDataCenterConfigName}}
+spec:
+  server: {{.server}}
+  failureDomain: {{.failureDomainTemplateName}}
+  placementConstraint:
+    resourcePool: {{.resourcePool}}
+    folder: {{.folder}}

@@ -54,14 +54,14 @@ func (o *ObjectLookupBuilder) Build() ObjectLookup {
 }
 
 func keyForRef(ref corev1.ObjectReference) string {
-	return key(ref.APIVersion, ref.Kind, ref.Name)
+	return Key(ref.APIVersion, ref.Kind, ref.Name)
 }
 
-func key(apiVersion, kind, name string) string {
+func Key(apiVersion, kind, name string) string {
 	// this assumes we don't allow to have objects in multiple namespaces
 	return fmt.Sprintf("%s%s%s", apiVersion, kind, name)
 }
 
 func keyForObject(o APIObject) string {
-	return key(o.GetObjectKind().GroupVersionKind().GroupVersion().String(), o.GetObjectKind().GroupVersionKind().Kind, o.GetName())
+	return Key(o.GetObjectKind().GroupVersionKind().GroupVersion().String(), o.GetObjectKind().GroupVersionKind().Kind, o.GetName())
 }

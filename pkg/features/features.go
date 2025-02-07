@@ -2,13 +2,14 @@ package features
 
 // These are environment variables used as flags to enable/disable features.
 const (
-	CloudStackKubeVipDisabledEnvVar = "CLOUDSTACK_KUBE_VIP_DISABLED"
-	CheckpointEnabledEnvVar         = "CHECKPOINT_ENABLED"
-	UseNewWorkflowsEnvVar           = "USE_NEW_WORKFLOWS"
-	UseControllerForCli             = "USE_CONTROLLER_FOR_CLI"
-	VSphereInPlaceEnvVar            = "VSPHERE_IN_PLACE_UPGRADE"
-	APIServerExtraArgsEnabledEnvVar = "API_SERVER_EXTRA_ARGS_ENABLED"
-	K8s132SupportEnvVar             = "K8S_1_32_SUPPORT"
+	CloudStackKubeVipDisabledEnvVar   = "CLOUDSTACK_KUBE_VIP_DISABLED"
+	CheckpointEnabledEnvVar           = "CHECKPOINT_ENABLED"
+	UseNewWorkflowsEnvVar             = "USE_NEW_WORKFLOWS"
+	UseControllerForCli               = "USE_CONTROLLER_FOR_CLI"
+	VSphereInPlaceEnvVar              = "VSPHERE_IN_PLACE_UPGRADE"
+	APIServerExtraArgsEnabledEnvVar   = "API_SERVER_EXTRA_ARGS_ENABLED"
+	K8s132SupportEnvVar               = "K8S_1_32_SUPPORT"
+	VSPhereFailureDomainEnabledEnvVar = "VSPHERE_FAILURE_DOMAIN_ENABLED"
 )
 
 func FeedGates(featureGates []string) {
@@ -71,5 +72,12 @@ func K8s132Support() Feature {
 	return Feature{
 		Name:     "Kubernetes version 1.32 support",
 		IsActive: globalFeatures.isActiveForEnvVar(K8s132SupportEnvVar),
+	}
+}
+
+func VsphereFailureDomainEnabled() Feature {
+	return Feature{
+		Name:     "Vsphere Failure Domains Enabled",
+		IsActive: globalFeatures.isActiveForEnvVar(VSPhereFailureDomainEnabledEnvVar),
 	}
 }

@@ -18,6 +18,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
 	"github.com/aws/eks-anywhere/pkg/controller/clusters"
 	"github.com/aws/eks-anywhere/pkg/controller/serverside"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
 )
 
@@ -165,6 +166,17 @@ func (r *Reconciler) ValidateMachineConfigs(ctx context.Context, log logr.Logger
 		return controller.ResultWithReturn(), nil
 	}
 	return controller.Result{}, nil
+}
+
+// ReconcileFailureDomains applies the Vsphere FailureDomain objects to the cluster.
+func (r *Reconciler) ReconcileFailureDomains(ctx context.Context, log logr.Logger, spec *c.Spec) (controller.Result, error) {
+	if !features.IsActive(features.VsphereFailureDomainEnabled()) {
+		return controller.Result{}, nil
+	}
+	log = log.WithValues("phase", "reconcileFailureDomains")
+	log.Info("Applying Vsphere FailureDomain objects")
+
+	return ReconcileFailureDomains(ctx, log, r.client, spec)
 }
 
 // ReconcileControlPlane applies the control plane CAPI objects to the cluster.
