@@ -2,6 +2,7 @@ package v1alpha1
 
 import (
 	"errors"
+	"fmt"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -14,11 +15,39 @@ import (
 type VSphereDatacenterConfigSpec struct {
 	// Important: Run "make generate" to regenerate code after modifying this file
 
-	Datacenter string `json:"datacenter"`
-	Network    string `json:"network"`
-	Server     string `json:"server"`
-	Thumbprint string `json:"thumbprint"`
-	Insecure   bool   `json:"insecure"`
+	Datacenter     string          `json:"datacenter"`
+	Network        string          `json:"network"`
+	Server         string          `json:"server"`
+	Thumbprint     string          `json:"thumbprint"`
+	Insecure       bool            `json:"insecure"`
+	FailureDomains []FailureDomain `json:"failureDomains,omitempty"`
+}
+
+// FailureDomain defines the list of failure domains to spread the VMs across.
+type FailureDomain struct {
+	// +kubebuilder:validation:Required
+	// Name is used as a unique identifier for each failure domain.
+	Name string `json:"name"`
+
+	// +kubebuilder:validation:Required
+	// ComputeCluster is the name or inventory path of the computecluster in which the VM is created/located
+	ComputeCluster string `json:"computeCluster"`
+
+	// +kubebuilder:validation:Required
+	// ResourcePool is the name or inventory path of the resource pool in which the VM is created/located
+	ResourcePool string `json:"resourcePool"`
+
+	// +kubebuilder:validation:Required
+	// Datastore is the name or inventory path of the datastore in which the VM is created/located
+	Datastore string `json:"datastore"`
+
+	// +kubebuilder:validation:Required
+	// Folder is the name or inventory path of the folder in which the the VM is created/located
+	Folder string `json:"folder"`
+
+	// +kubebuilder:validation:Required
+	// Network is the name or inventory path of the network which will be added to the VM
+	Network string `json:"network"`
 }
 
 // VSphereDatacenterConfigStatus defines the observed state of VSphereDatacenterConfig.
@@ -98,6 +127,38 @@ func (v *VSphereDatacenterConfig) Validate() error {
 
 	if err := validatePath(networkFolderType, v.Spec.Network, v.Spec.Datacenter); err != nil {
 		return err
+	}
+
+	if len(v.Spec.FailureDomains) > 0 {
+		failureDomains := v.Spec.FailureDomains
+		for _, fd := range failureDomains {
+			if len(fd.Name) <= 0 {
+				return fmt.Errorf("name is not set or is empty in FailureDomain %v", fd)
+			}
+			if len(fd.ComputeCluster) <= 0 {
+				return fmt.Errorf("computeCluster is not set or is empty in the FailureDomain: %v", fd)
+			}
+
+			if len(fd.ResourcePool) <= 0 {
+				return fmt.Errorf("resourcePool is not set or is empty in the FailureDomain: %v", fd)
+			}
+
+			if len(fd.Datastore) <= 0 {
+				return fmt.Errorf("datastore is not set or is empty in the FailureDomain: %v", fd)
+			}
+
+			if len(fd.Folder) <= 0 {
+				return fmt.Errorf("folder is not set or is empty in the FailureDomain: %v", fd)
+			}
+
+			if len(fd.Network) <= 0 {
+				return fmt.Errorf("network is not set or is empty in the FailureDomain: %v", fd)
+			}
+
+			if err := validatePath(networkFolderType, fd.Network, v.Spec.Datacenter); err != nil {
+				return err
+			}
+		}
 	}
 
 	return nil
