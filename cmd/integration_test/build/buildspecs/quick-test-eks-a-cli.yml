@@ -38,6 +38,7 @@ env:
     T_TINKERBELL_MAX_HARDWARE_PER_TEST: 4
     T_TINKERBELL_INVENTORY_CSV: "hardware-manifests/inventory.csv"
     T_TINKERBELL_BOOTSTRAP_INTERFACE: "ens192"
+    T_TINKERBELL_HOOK_ISO_URL: "tinkerbell_ci:hook_iso_url"
     TEST_RUNNER_GOVC_LIBRARY: "eks-a-templates"
     TEST_RUNNER_GOVC_TEMPLATE: "eks-a-admin-ci"
   secrets-manager:
