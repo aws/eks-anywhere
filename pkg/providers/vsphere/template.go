@@ -12,7 +12,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/crypto"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/providers/common"
 	"github.com/aws/eks-anywhere/pkg/registrymirror"
@@ -114,7 +113,7 @@ func (vs *VsphereTemplateBuilder) GenerateCAPISpecWorkers(
 
 		values["cgroupDriverSystemd"] = cgroupDriverSystemd
 
-		if features.IsActive(features.VsphereFailureDomainEnabled()) {
+		if len(workerNodeGroupConfiguration.FailureDomains) > 0 {
 			workerNodeGroupFailureDomain := workerNodeGroupConfiguration.FailureDomains[0]
 			values["failureDomain"] = BuildFailureDomainTemplateName(clusterSpec, workerNodeGroupFailureDomain)
 		}
@@ -144,8 +143,11 @@ func (vs *VsphereTemplateBuilder) GenerateCAPISpecWorkers(
 func (vs *VsphereTemplateBuilder) GenerateVsphereFailureDomainsSpec(spec *cluster.Spec, templateNames map[string]string) (content []byte, err error) {
 	failureDomainSpecs := make([][]byte, 0, len(spec.VSphereDatacenter.Spec.FailureDomains))
 	for _, failureDomain := range spec.VSphereDatacenter.Spec.FailureDomains {
+		if _, exists := templateNames[failureDomain.Name]; !exists {
+			continue
+		}
 		values := buildTemplateMapFailureDomain(spec, failureDomain)
-		values[""] = templateNames[failureDomain.Name]
+		values["failureDomainTemplateName"] = templateNames[failureDomain.Name]
 
 		bytes, err := templater.Execute(defaultFailureDomainConfig, values)
 		if err != nil {
@@ -602,23 +604,24 @@ func buildTemplateMapMD(
 
 func buildTemplateMapFailureDomain(
 	clusterSpec *cluster.Spec,
-	failureDomain anywherev1.FailureDomain) (map[string]interface{}) {
+	failureDomain anywherev1.FailureDomain,
+) map[string]interface{} {
 	regionType, regionName := getFailureDomainRegionTypeAndName(clusterSpec.VSphereDatacenter.Spec)
 	zoneType, zoneName := getFailureDomainZoneTypeAndName(failureDomain)
 	values := map[string]interface{}{
-		"server":                          	clusterSpec.VSphereDatacenter.Spec.Server,
-		"datacenter":                          	clusterSpec.VSphereDatacenter.Spec.Datacenter,
-		"computeCluster":               failureDomain.ComputeCluster,
-		"resourcePool":                 failureDomain.ResourcePool,
-		"datastore":                 failureDomain.Datastore,
-		"folder":                 failureDomain.Folder,
-		"network":                failureDomain.Network,
-		"clusterName":            clusterSpec.Cluster.Name,  
-		"vsphereDataCenterConfigName":                clusterSpec.VSphereDatacenter.Name,
-		"regionType":                regionType,
-		"regionName":                regionName,
-		"zoneType":                zoneType,
-		"zoneName":                zoneName,
+		"server":                      clusterSpec.VSphereDatacenter.Spec.Server,
+		"datacenter":                  clusterSpec.VSphereDatacenter.Spec.Datacenter,
+		"computeCluster":              failureDomain.ComputeCluster,
+		"resourcePool":                failureDomain.ResourcePool,
+		"datastore":                   failureDomain.Datastore,
+		"folder":                      failureDomain.Folder,
+		"network":                     failureDomain.Network,
+		"clusterName":                 clusterSpec.Cluster.Name,
+		"vsphereDataCenterConfigName": clusterSpec.VSphereDatacenter.Name,
+		"regionType":                  regionType,
+		"regionName":                  regionName,
+		"zoneType":                    zoneType,
+		"zoneName":                    zoneName,
 	}
 	return values
 }

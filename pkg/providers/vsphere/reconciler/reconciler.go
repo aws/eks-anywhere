@@ -18,8 +18,11 @@ import (
 	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
 	"github.com/aws/eks-anywhere/pkg/controller/clusters"
 	"github.com/aws/eks-anywhere/pkg/controller/serverside"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
+	utilerrors "k8s.io/apimachinery/pkg/util/errors"
+	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
+	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
+	"github.com/aws/eks-anywhere/pkg/collection"
 )
 
 // CNIReconciler is an interface for reconciling CNI in the VSphere cluster reconciler.
@@ -119,6 +122,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, log logr.Logger, cluster *an
 		r.ValidateDatacenterConfig,
 		r.ValidateMachineConfigs,
 		clusters.CleanupStatusAfterValidate,
+		r.ReconcileFailureDomains,
 		r.ReconcileControlPlane,
 		r.CheckControlPlaneReady,
 		r.ReconcileCNI,
@@ -169,14 +173,48 @@ func (r *Reconciler) ValidateMachineConfigs(ctx context.Context, log logr.Logger
 }
 
 // ReconcileFailureDomains applies the Vsphere FailureDomain objects to the cluster.
+// It also takes care of  deleting the old Vsphere FailureDomains that are not in in the cluster spec anymore.
 func (r *Reconciler) ReconcileFailureDomains(ctx context.Context, log logr.Logger, spec *c.Spec) (controller.Result, error) {
-	if !features.IsActive(features.VsphereFailureDomainEnabled()) {
-		return controller.Result{}, nil
-	}
-	log = log.WithValues("phase", "reconcileFailureDomains")
-	log.Info("Applying Vsphere FailureDomain objects")
+	var desiredFailureDeploymentNames collection.Set[string]
+	if len(spec.VSphereDatacenter.Spec.FailureDomains) > 0 {
+		log = log.WithValues("phase", "reconcileFailureDomains")
+		log.Info("Applying Vsphere FailureDomain objects")
 
-	return ReconcileFailureDomains(ctx, log, r.client, spec)
+		fd, err := vsphere.FailureDomainsSpec(log, spec)
+		if err != nil {
+			return controller.Result{}, err
+		}
+		if err := serverside.ReconcileObjects(ctx, r.client, fd.Objects()); err != nil {
+			return controller.Result{}, errors.Wrap(err, "applying Vsphere Failure Domain objects")
+		}
+		desiredFailureDeploymentNames = collection.MapSet(fd.Groups, func(g vsphere.FailureDomainGroup) string {
+			return g.VsphereDeploymentZone.Name
+		})
+
+	}
+	
+	vSphereDeploymentZones := &vspherev1.VSphereDeploymentZoneList{}
+	if err := r.client.List(ctx, vSphereDeploymentZones,
+		ctrlClient.MatchingLabels{vsphere.VsphereDataCenterConfigNameLabel: spec.VSphereDatacenter.Name, vsphere.ClusterNameLabel: spec.Cluster.Name}); err != nil {
+		return controller.Result{}, errors.Wrap(err, "listing current Vsphere Deployment Zones")
+	}
+	
+	var allErrs []error
+
+	for _, m := range vSphereDeploymentZones.Items {
+		if !desiredFailureDeploymentNames.Contains(m.Name) {
+			if err := r.client.Delete(ctx, &m); err != nil {
+				allErrs = append(allErrs, err)
+			}
+		}
+	}
+
+	if len(allErrs) > 0 {
+		aggregate := utilerrors.NewAggregate(allErrs)
+		return controller.Result{}, errors.Wrap(aggregate, "deleting failure deployments during failure deployment reconciliation")
+	}
+
+	return controller.Result{}, nil
 }
 
 // ReconcileControlPlane applies the control plane CAPI objects to the cluster.

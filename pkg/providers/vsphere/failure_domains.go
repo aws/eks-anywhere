@@ -6,11 +6,11 @@ import (
 
 	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
 
-	"github.com/go-logr/logr"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/yamlutil"
+	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"github.com/aws/eks-anywhere/pkg/yamlutil"
 )
 
 // FailureDomains represents the list of failure domain groups.
@@ -20,15 +20,19 @@ type FailureDomains struct {
 
 // FailureDomainGroup represents the Vsphere failure domains objects group.
 type FailureDomainGroup struct {
-	VsphereDeploymentZone   *vspherev1.VSphereDeploymentZone
-	VsphereFailureDomain    *vspherev1.VSphereFailureDomain
+	VsphereDeploymentZone *vspherev1.VSphereDeploymentZone
+	VsphereFailureDomain  *vspherev1.VSphereFailureDomain
 }
+
+const(
+	VsphereDataCenterConfigNameLabel = "infrastructure.cluster.x-k8s.io/vsphere-datacenter-config-name"
+	ClusterNameLabel = "infrastructure.cluster.x-k8s.io/cluster-name"
+)
 
 // objects returns a list of API objects for a collection of failure domain groups.
 func (f *FailureDomains) Objects() []client.Object {
 	objs := make([]client.Object, 0, len(f.Groups)*2)
 	for _, g := range f.Groups {
-
 		objs = append(objs, g.objects()...)
 	}
 	return objs
@@ -53,10 +57,9 @@ func BuildFailureDomainTemplateName(spec *cluster.Spec, failureDomainName string
 }
 
 // FailureDomainsSpec generates a vSphere Failure domains spec for the cluster.
-func FailureDomainsSpec(logger logr.Logger, spec *cluster.Spec) (*FailureDomains, error){
+func FailureDomainsSpec(logger logr.Logger, spec *cluster.Spec) (*FailureDomains, error) {
 	templateBuilder := NewVsphereTemplateBuilder(time.Now)
 	templateNames := templateNamesForFailureDomains(spec)
-
 	failureDomainYaml, err := templateBuilder.GenerateVsphereFailureDomainsSpec(spec, templateNames)
 	if err != nil {
 		return nil, err
@@ -74,8 +77,6 @@ func FailureDomainsSpec(logger logr.Logger, spec *cluster.Spec) (*FailureDomains
 
 	return failureDomains, nil
 }
-
-
 
 func newFailureDomainsParserAndBuilder(logger logr.Logger) (*yamlutil.Parser, *FailureDomainsBuilder, error) {
 	parser, builder, err := NewFailureDomainsParserAndBuilder(logger)

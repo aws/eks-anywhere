@@ -320,6 +320,10 @@ func (p *vsphereProvider) SetupAndValidateCreateCluster(ctx context.Context, clu
 		return err
 	}
 
+	if err := p.validator.ValidateFailureDomains(ctx, vSphereClusterSpec.VSphereDatacenter); err != nil {
+		return err
+	}
+
 	if err := p.defaulter.setDefaultsForMachineConfig(ctx, vSphereClusterSpec); err != nil {
 		return fmt.Errorf("failed setting default values for vsphere machine configs: %v", err)
 	}
@@ -395,6 +399,10 @@ func (p *vsphereProvider) SetupAndValidateUpgradeCluster(ctx context.Context, cl
 	}
 
 	if err := p.validator.ValidateVCenterConfig(ctx, vSphereClusterSpec.VSphereDatacenter); err != nil {
+		return err
+	}
+
+	if err := p.validator.ValidateFailureDomains(ctx, vSphereClusterSpec.VSphereDatacenter); err != nil {
 		return err
 	}
 
