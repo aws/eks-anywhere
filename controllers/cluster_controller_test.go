@@ -1669,7 +1669,7 @@ func createBundle() *releasev1.Bundles {
 			Name:      "bundles-1",
 			Namespace: "default",
 			Annotations: map[string]string{
-				constants.SignatureAnnotation: "MEQCIG8DZfnqQtx1fF5x2assfSUEvuJ9BqaCN8jaoBHxKU8SAiBwR2B/T2BC3nzmnT2uEvwyemOy+A7V/K+PkGuKGX0E1Q==",
+				constants.SignatureAnnotation: "MEYCIQCSLDg1EbWKa2LrjsdeoIzo41taesybeClIbd0X8szXvAIhAKAPz5IA7OVQ/RnMaRAusr0gH20JouGEE3RsEXEbh1Se",
 			},
 		},
 		Spec: releasev1.BundlesSpec{
