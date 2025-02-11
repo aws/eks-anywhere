@@ -6923,15 +6923,16 @@ spec:
                 description: HookImagesURLPath can be used to override the default
                   Hook images path to pull from a local server.
                 type: string
+              hookIsoURL:
+                description: HookIsoURL is the URL of ISO image that will be used
+                  to provision the hardware during one time boot process. It can be
+                  used to override the default Hook OS ISO image to pull from a local
+                  server.
+                type: string
               isoBoot:
-                description: IsoBoot can be used to indicate that the hardware must
+                description: IsoBoot can be used to indicate that the hardware should
                   boot using an ISO.
                 type: boolean
-              hookIsoURL:
-                description: HookIsoURL is the URL of ISO image that will one time boot.
-                  It can be used to override the default Hook OS ISO image to pull
-                  from a local server.
-                type: string
               loadBalancerInterface:
                 description: LoadBalancerInterface can be used to configure a load
                   balancer interface for the Tinkerbell stack.

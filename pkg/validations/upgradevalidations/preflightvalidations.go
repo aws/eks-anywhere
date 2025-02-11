@@ -135,7 +135,7 @@ func (u *UpgradeValidations) PreflightValidations(ctx context.Context) []validat
 			return &validations.ValidationResult{
 				Name:        "validate extended kubernetes version support is supported",
 				Remediation: "ensure you have a valid license for extended Kubernetes version support",
-				Err:         validations.ValidateExtendedKubernetesSupport(ctx, *u.Opts.Spec.Cluster, u.Opts.ManifestReader, u.Opts.KubeClient),
+				Err:         validations.ValidateExtendedKubernetesSupport(ctx, *u.Opts.Spec.Cluster, u.Opts.ManifestReader, u.Opts.KubeClient, u.Opts.BundlesOverride),
 			}
 		},
 	}

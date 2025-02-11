@@ -27,6 +27,4 @@ jobs:
         with:
           version: v1.56.2
           only-new-issues: true
-          # Disable package caching to avoid a double cache with setup-go.
-          skip-pkg-cache: true
           args: --timeout 10m
