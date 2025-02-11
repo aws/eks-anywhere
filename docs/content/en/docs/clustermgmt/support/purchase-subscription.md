@@ -9,9 +9,9 @@ description: >
 
 You can purchase EKS Anywhere Enterprise Subscriptions with the Amazon EKS console, API, or AWS CLI. When you purchase a subscription, you can choose a 1-year term or a 3-year term, and you are billed monthly throughout the term. You can configure your subscription to automatically renew at the end of the term, and you can cancel your subscription within the first 7 days of purchase at no charge. When the status of your subscription is `ACTIVE`, the subscription term starts, licenses are available for your EKS Anywhere clusters, and the AWS account you used to create the subscription has access to Amazon EKS Anywhere Curated Packages.
 
-For pricing, see the [EKS Anywhere Pricing Page](https://aws.amazon.com/eks/eks-anywhere/pricing/)
+For pricing, see the [EKS Anywhere Pricing Page.](https://aws.amazon.com/eks/eks-anywhere/pricing/)
 
-For more information on subscriptions, see [Overview of EKS Anywhere Enterprise Subscriptions]({{< relref "../../concepts/support-scope">}})
+For more information on subscriptions, see [Overview of EKS Anywhere Enterprise Subscriptions.]({{< relref "../../concepts/support-scope">}})
 
 ## Create Subscriptions
 

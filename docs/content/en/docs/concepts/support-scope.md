@@ -26,7 +26,7 @@ EKS Anywhere Enterprise Subscriptions include support for the following componen
 - EKS Anywhere extended support for Kubernetes versions (see [Version lifecycle]({{< relref "support-versions">}}) for more information)
 - Bottlerocket node operating system
 
-Visit the following links for more information on EKS Anywhere Enterprise Subscriptions
+See the following links for more information on EKS Anywhere Enterprise Subscriptions
 
 - [EKS Anywhere Pricing Page](https://aws.amazon.com/eks/eks-anywhere/pricing/)
 - [EKS Anywhere FAQ Page](https://aws.amazon.com/eks/eks-anywhere/faqs/)
@@ -72,13 +72,13 @@ You can edit the auto renewal and tags configurations for your subscription with
 
 **9. What happens when a subscription expires?**
 
-When subscriptions expire, licenses associated with the subscription can no longer be used for new support cases, access to EKS Anywhere Curated Packages is revoked, and you are no longer billed for the subscription. Support caes created during the active subscription period will continue to be serviced. You will receive emails 3 months, 1 month, and 1 week before subscriptions expire, and an alert is presented in the EKS console for approaching expiration dates. Subscriptions can be viewed with the EKS console, APIs, and AWS CLI after expiration.
+When subscriptions expire, licenses associated with the subscription can no longer be used for new support cases, access to EKS Anywhere Curated Packages is revoked, clusters cannot be created or upgraded with Kubernetes versions under extended support, and billing for the subscription stops. Support cases created during the active subscription period will continue to be serviced. You will receive emails 3 months, 1 month, and 1 week before subscriptions expire, and an alert is presented in the EKS console for approaching expiration dates. Subscriptions can be viewed with the EKS console, APIs, and AWS CLI after expiration.
 
 **10. How do I use the licenses for my subscription?**
 
-When you create a subscription, licenses are created based on the quantity you pass when you create the subscription and the licenses can be viewed in the EKS console. There are two key parts of the license, the license ID string and the license token. In EKS Anywhere versions v0.21 and older, the license ID string was applied as a Kubernetes Secret to EKS Anywhere clusters and used when support cases are created to validate the cluster is eligible for support. The license token was introduced in EKS Anywhere version v0.22 and all existing EKS Anywhere subscriptions have been updated with a license token for each license. 
+When you create a subscription, licenses are created based on the quantity you pass when you create the subscription and the licenses can be viewed in the EKS console. There are two key parts of the license, the license ID string and the license token. In EKS Anywhere versions `v0.21.x` and below, the license ID string was applied as a Kubernetes Secret to EKS Anywhere clusters and used when support cases are created to validate the cluster is eligible for support. The license token was introduced in EKS Anywhere version `v0.22.0` and all existing EKS Anywhere subscriptions have been updated with a license token for each license. 
 
-You can use either the license ID string or the license token when you create AWS Support cases for your EKS Anywhere clusters. To use extended support for Kubernetes versions in EKS Anywhere, available for EKS Anywhere version v0.22 and above, your clusters must have a valid and active license token to be able to create and upgrade clusters using the Kubernetes extended support versions.
+You can use either the license ID string or the license token when you create AWS Support cases for your EKS Anywhere clusters. To use extended support for Kubernetes versions in EKS Anywhere, available for EKS Anywhere version `v0.22.0` and above, your clusters must have a valid and unexpired license token to be able to create and upgrade clusters using the Kubernetes extended support versions.
 
 **11. How do I apply licenses to my EKS Anywhere clusters?**
 
@@ -86,7 +86,7 @@ Reference the [License cluster]({{< relref "../clustermgmt/support/cluster-licen
 
 **12. Can I share licenses with other AWS accounts?**
 
-The licenses created for your subscriptions cannot be shared with AWS Resource Access Manager but they can be shared through your own manual, secure mechanisms. It is generally recommended to create the subscription with the AWS account that will be used to operate the EKS Anywhere clusters. 
+The licenses created for your subscriptions cannot be shared with AWS Resource Access Manager (RAM) but they can be shared through your own manual, secure mechanisms. It is generally recommended to create the subscription with the AWS account that will be used to operate the EKS Anywhere clusters. 
 
 **13. Can I share access to curated packages with other AWS accounts?**
 

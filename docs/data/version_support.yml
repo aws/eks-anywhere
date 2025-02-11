@@ -117,7 +117,7 @@ eksa:
 # releasedIn: The EKS-A release the Kubernetes version first appeared. It must be present in the
 #                 eksa array above.
 #
-# endOfLifeIn: The EKS-A version the Kubernetes version end of lifed. Mutually exclusive with
+# endOfLifeIn: The EKS-A version for the Kubernetes version end of life. Mutually exclusive with
 #              `expectedEndOfLifeDate`.
 #
 # endOfStandardSupport: The end of standard support for the Kubernetes release. This is necessary
