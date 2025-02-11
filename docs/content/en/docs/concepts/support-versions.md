@@ -34,7 +34,7 @@ Reference the table below for release dates and patch support for each EKS Anywh
 
 The release and support schedule for Kubernetes versions in EKS Anywhere aligns with the Amazon EKS release and support schedule, including both standard and extended support Kubernetes versions, as documented on the [Amazon EKS Kubernetes release calendar.](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html#kubernetes-release-calendar) 
 
-A Kubernetes version is under standard support in EKS Anywhere for 14 months after it's released in EKS Anywhere. Extended support for Kubernetes versions was released in EKS Anywhere version v0.22 and adds an additional 12 months of CVE and critical bug fix patches for the Kubernetes version. To use Kubernetes versions under extended support with EKS Anywhere clusters, you must have a valid and active license for each cluster you will create or upgrade with extended support Kubernetes versions. The patch releases for Kubernetes versions are included in EKS Anywhere according to the EKS Anywhere version release schedule defined in the previous section.
+A Kubernetes version is under standard support in EKS Anywhere for 14 months after it's released in EKS Anywhere. Extended support for Kubernetes versions was released in EKS Anywhere version `v0.22.0` and adds an additional 12 months of CVE and critical bug fix patches for the Kubernetes version. To use Kubernetes versions under extended support with EKS Anywhere clusters, you must have a valid and active license for each cluster you will create or upgrade with extended support Kubernetes versions. The patch releases for Kubernetes versions are included in EKS Anywhere according to the EKS Anywhere version release schedule defined in the previous section.
 
 Unlike Amazon EKS in the cloud, there are no automatic upgrades in EKS Anywhere and you have full control over when you upgrade. On the end of the extended support date, you can still create new EKS Anywhere clusters with that Kubernetes version if the EKS Anywhere version includes it. Any existing EKS Anywhere clusters with the unsupported Kubernetes version continue to function. As new Kubernetes versions become available in EKS Anywhere, we recommend that you proactively update your clusters to use the latest available Kubernetes version to remain on versions that receive CVE patches and bug fixes. You can continue to get troubleshooting support for your EKS Anywhere clusters running on unsupported Kuberentes versions if you have an EKS Anywhere Enterprise Subscription. However, if there is an issue that requires code changes, the only resolution is to upgrade as patches are no longer made available for Kubernetes versions that have exited extended support.
 
@@ -78,7 +78,7 @@ To configure notifications for new EKS Anywhere versions, follow the instruction
 
 **3. Does EKS Anywhere have extended support for Kubernetes versions?**
 
-Yes. Extended support for Kubernetes versions was released in EKS Anywhere version v0.22 and adds an additional 12 months of CVE and critical bug fix patches for the Kubernetes version. To use Kubernetes versions under extended support with EKS Anywhere clusters, you must an EKS Anywhere Enterprise Subscription, and a valid and active license for each cluster you will create or upgrade with extended support Kubernetes versions. You must use EKS Anywhere version v0.22 or above to use extended support for Kubernetes versions.
+Yes. Extended support for Kubernetes versions was released in EKS Anywhere version `v0.22.0` and adds an additional 12 months of CVE and critical bug fix patches for the Kubernetes version. To use Kubernetes versions under extended support with EKS Anywhere clusters, you must an EKS Anywhere Enterprise Subscription, and a valid and active license for each cluster you will create or upgrade with extended support Kubernetes versions. You must use EKS Anywhere version `v0.22.0` or above to use extended support for Kubernetes versions.
 
 **4. What happens on the end of support date for a Kubernetes version?**
 
@@ -95,7 +95,7 @@ Yes, the management cluster can be upgraded to newer EKS Anywhere versions than 
 > **NOTE**: Workload clusters can only be created with or upgraded to the same EKS Anywhere version that the management cluster was created with.
 For example, if you create your management cluster with `v0.22.0`, you can only create workload clusters with `v0.22.0`. However, if you create your management cluster with version `v0.21.0` and then upgrade to `v0.22.0`, you can create workload clusters with either EKS Anywhere version `v0.21.0` or `v0.22.0`.
 
-**7. Can I skip EKS Anywhere minor versions during upgrades (such as going from v0.20.x directly to v0.22.x)?**
+**7. Can I skip EKS Anywhere minor versions during upgrades (such as going from `v0.20.x` directly to `v0.22.x`)?**
 
 No, it is not recommended to skip EKS Anywhere versions during upgrade. Regular upgrade reliability testing is only performed for sequential version upgrades (ie. going from version `0.20.x` to `0.21.x`, then from version `0.21.x` to `0.22.x`). However, you can choose to skip EKS Anywhere patch versions (ie. upgrade from `v0.21.3` to `v0.21.5`).
 

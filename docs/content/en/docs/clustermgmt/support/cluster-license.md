@@ -66,7 +66,7 @@ If you are applying a license to an EKS Anywhere cluster using EKS Anywhere vers
 
 ## Apply license to EKS Anywhere cluster
 
-A license can only be bound to one EKS Anywhere cluster at a time, and you can only receive support for your EKS Anywhere cluster if it has a valid and active license. You can only create or update EKS Anywhere clusters with extended support for Kubernetes versions if there is a valid and active license token available for the cluster. Extended support for Kubernetes versions is available in EKS Anywhere versions v0.22 and above.
+A license can only be bound to one EKS Anywhere cluster at a time, and you can only receive support for your EKS Anywhere cluster if it has a valid and active license. You can only create or update EKS Anywhere clusters with extended support for Kubernetes versions if there is a valid and active license token available for the cluster. Extended support for Kubernetes versions is available in EKS Anywhere versions `v0.22.0` and above.
 
 #### Apply license to EKS Anywhere cluster with version `v0.22.0` or above
 
