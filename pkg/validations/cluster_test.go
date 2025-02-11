@@ -873,7 +873,7 @@ func TestValidateExtendedKubernetesVersionSupportCLINoError(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	reader := internalmocks.NewMockReader(ctrl)
 
-	err := validations.ValidateExtendedKubernetesSupport(ctx, *cluster, manifests.NewReader(reader), fakeClient)
+	err := validations.ValidateExtendedKubernetesSupport(ctx, *cluster, manifests.NewReader(reader), fakeClient, "")
 	if err != nil {
 		t.Errorf("got = %v, \nwant nil", err)
 	}
@@ -897,9 +897,9 @@ func TestValidateExtendedKubernetesVersionSupportCLIError(t *testing.T) {
 	releasesURL := releases.ManifestURL()
 	reader.EXPECT().ReadFile(releasesURL)
 
-	err := validations.ValidateExtendedKubernetesSupport(ctx, *cluster, manifests.NewReader(reader), fakeClient)
+	err := validations.ValidateExtendedKubernetesSupport(ctx, *cluster, manifests.NewReader(reader), fakeClient, "")
 	if err == nil {
-		t.Errorf("got = nil, \nwant error: getting bundle for existing cluster")
+		t.Errorf("got = nil, \nwant error: getting bundle for cluster")
 	}
 }
 
@@ -945,7 +945,7 @@ spec:
 
 	reader.EXPECT().ReadFile("https://bundles/bundles.yaml").Return([]byte(bundlesManifest), nil)
 
-	err := validations.ValidateExtendedKubernetesSupport(ctx, *cluster, manifests.NewReader(reader), fakeClient)
+	err := validations.ValidateExtendedKubernetesSupport(ctx, *cluster, manifests.NewReader(reader), fakeClient, "")
 	if err != nil {
 		t.Errorf("got = %v, \nwant nil", err)
 	}
