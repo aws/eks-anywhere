@@ -23,6 +23,7 @@ type Opts struct {
 	CliVersion         string
 	KubeClient         kubernetes.Client
 	ManifestReader     *manifests.Reader
+	BundlesOverride    string
 }
 
 func (o *Opts) SetDefaults() {

@@ -15,7 +15,6 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/test"
 	internalmocks "github.com/aws/eks-anywhere/internal/test/mocks"
-	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/features"
@@ -27,6 +26,23 @@ import (
 	"github.com/aws/eks-anywhere/pkg/validations"
 	"github.com/aws/eks-anywhere/pkg/validations/mocks"
 )
+
+type fakeFileReader struct {
+	content string
+}
+
+func (f *fakeFileReader) ReadFile(url string) ([]byte, error) {
+	if url == "bundles-override.yaml" {
+		return []byte(f.content), nil
+	}
+	return nil, fmt.Errorf("unexpected url: %s", url)
+}
+
+type fakeFileReaderError struct{}
+
+func (f *fakeFileReaderError) ReadFile(_ string) ([]byte, error) {
+	return nil, fmt.Errorf("failed to read file")
+}
 
 type clusterTest struct {
 	*WithT
@@ -861,8 +877,8 @@ func TestValidateK8s132SupportActive(t *testing.T) {
 func TestValidateExtendedKubernetesVersionSupportCLINoError(t *testing.T) {
 	ctx := context.Background()
 
-	cluster := &v1alpha1.Cluster{
-		Spec: v1alpha1.ClusterSpec{
+	cluster := &anywherev1.Cluster{
+		Spec: anywherev1.ClusterSpec{
 			EksaVersion: nil,
 		},
 	}
@@ -873,7 +889,7 @@ func TestValidateExtendedKubernetesVersionSupportCLINoError(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	reader := internalmocks.NewMockReader(ctrl)
 
-	err := validations.ValidateExtendedKubernetesSupport(ctx, *cluster, manifests.NewReader(reader), fakeClient)
+	err := validations.ValidateExtendedKubernetesSupport(ctx, *cluster, manifests.NewReader(reader), fakeClient, "")
 	if err != nil {
 		t.Errorf("got = %v, \nwant nil", err)
 	}
@@ -882,8 +898,8 @@ func TestValidateExtendedKubernetesVersionSupportCLINoError(t *testing.T) {
 func TestValidateExtendedKubernetesVersionSupportCLIError(t *testing.T) {
 	ctx := context.Background()
 	version := test.DevEksaVersion()
-	cluster := &v1alpha1.Cluster{
-		Spec: v1alpha1.ClusterSpec{
+	cluster := &anywherev1.Cluster{
+		Spec: anywherev1.ClusterSpec{
 			EksaVersion: &version,
 		},
 	}
@@ -897,17 +913,17 @@ func TestValidateExtendedKubernetesVersionSupportCLIError(t *testing.T) {
 	releasesURL := releases.ManifestURL()
 	reader.EXPECT().ReadFile(releasesURL)
 
-	err := validations.ValidateExtendedKubernetesSupport(ctx, *cluster, manifests.NewReader(reader), fakeClient)
+	err := validations.ValidateExtendedKubernetesSupport(ctx, *cluster, manifests.NewReader(reader), fakeClient, "")
 	if err == nil {
-		t.Errorf("got = nil, \nwant error: getting bundle for existing cluster")
+		t.Errorf("got = nil, \nwant error: getting bundle for cluster")
 	}
 }
 
 func TestValidateExtendedKubernetesVersionSupportCLICheckExtendedSupport(t *testing.T) {
 	ctx := context.Background()
 	version := test.DevEksaVersion()
-	cluster := &v1alpha1.Cluster{
-		Spec: v1alpha1.ClusterSpec{
+	cluster := &anywherev1.Cluster{
+		Spec: anywherev1.ClusterSpec{
 			EksaVersion:       &version,
 			KubernetesVersion: anywherev1.Kube130,
 		},
@@ -945,8 +961,60 @@ spec:
 
 	reader.EXPECT().ReadFile("https://bundles/bundles.yaml").Return([]byte(bundlesManifest), nil)
 
-	err := validations.ValidateExtendedKubernetesSupport(ctx, *cluster, manifests.NewReader(reader), fakeClient)
+	err := validations.ValidateExtendedKubernetesSupport(ctx, *cluster, manifests.NewReader(reader), fakeClient, "")
 	if err != nil {
 		t.Errorf("got = %v, \nwant nil", err)
 	}
+}
+
+func TestValidateExtendedKubernetesSupportWithBundlesOverrideSuccess(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+	version := test.DevEksaVersion()
+	cluster := &anywherev1.Cluster{
+		Spec: anywherev1.ClusterSpec{
+			EksaVersion:       &version,
+			KubernetesVersion: anywherev1.Kube130,
+		},
+	}
+
+	bundlesManifest := `apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: Bundles
+metadata:
+  annotations:
+    anywhere.eks.amazonaws.com/signature: MEYCIQDgmE8oY9xUyFO3uOHRkpRWjTxoej8Wf7Ty5HQcbs9ouQIhANV2kylPXjcpLY2xu7vD6ktXqm7yrnLUgiehSdbL8JUJ
+  name: bundles-1
+spec:
+  number: 1
+  versionsBundles:
+  - kubeversion: "1.30"
+    endOfStandardSupport: "2026-12-31"`
+
+	fr := &fakeFileReader{content: bundlesManifest}
+	reader := manifests.NewReader(fr)
+	bundlesOverride := "bundles-override.yaml"
+
+	fakeClient := test.NewFakeKubeClient(cluster)
+
+	err := validations.ValidateExtendedKubernetesSupport(ctx, *cluster, reader, fakeClient, bundlesOverride)
+	g.Expect(err).To(BeNil())
+}
+
+func TestValidateExtendedKubernetesSupportWithBundlesOverrideError(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+	version := test.DevEksaVersion()
+	cluster := &anywherev1.Cluster{
+		Spec: anywherev1.ClusterSpec{
+			EksaVersion: &version,
+		},
+	}
+
+	reader := manifests.NewReader(&fakeFileReaderError{})
+	bundlesOverride := "bundles-override.yaml"
+	fakeClient := test.NewFakeKubeClient(cluster)
+
+	err := validations.ValidateExtendedKubernetesSupport(ctx, *cluster, reader, fakeClient, bundlesOverride)
+	g.Expect(err).To(MatchError(ContainSubstring("getting bundle for cluster:")))
 }
