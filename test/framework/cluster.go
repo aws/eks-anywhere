@@ -63,11 +63,11 @@ const (
 	ClusterIPPoolEnvVar                    = "T_CLUSTER_IP_POOL"
 	ClusterIPEnvVar                        = "T_CLUSTER_IP"
 	CleanupResourcesVar                    = "T_CLEANUP_RESOURCES"
+	LicenseTokenEnvVar                     = "LICENSE_TOKEN"
 	hardwareYamlPath                       = "hardware.yaml"
 	hardwareCsvPath                        = "hardware.csv"
 	EksaPackagesInstallation               = "eks-anywhere-packages"
 	bundleReleasePathFromArtifacts         = "./eks-anywhere-downloads/bundle-release.yaml"
-	licenseToken                           = "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJsaWNlbnNlSWQiOiJsLWJkMmYxZDNkNDhmOTRiYzU4M2QyZDkwNDAxN2NkM2M5IiwibGljZW5zZVZlcnNpb24iOiIxIiwiYmVnaW5WYWxpZGl0eSI6IjIwMjQtMDMtMjBUMjA6NDc6MTMuMDAwWiIsImVuZFZhbGlkaXR5IjoiMjAyNS0wMy0yMVQyMDo0NzoxMy4wMDBaIiwic3Vic2NyaXB0aW9uSWQiOiI5ZjhhMDdhYS1hNTZiLTQ4OWQtYWQwNS1jMmIzMGM1MzljMDU6ZGNiYjE5NTQiLCJzdWJzY3JpcHRpb25OYW1lIjoiSW50ZWdyYXRpb24tVGVzdC05MWYzY2UzYi1jMGVlLTQzOGMtODEwMS1lODdhNDg5MTIwNDAiLCJhY2NvdW50SWQiOiI0MTI2ODc5NDgzOTgiLCJyZWdpb24iOiJ1cy13ZXN0LTIifQ.AiheXFAjEe5NdumVOcGKsJhRthpny_Lnjpotqvghb2Qq8QS-_iZRnVG146uVyQlzX99sLvDtVE5V48x9xAxMGA"
 )
 
 //go:embed testdata/oidc-roles.yaml
@@ -143,7 +143,10 @@ func NewClusterE2ETest(t T, provider Provider, opts ...ClusterE2ETestOpt) *Clust
 
 	e.ClusterConfigLocation = filepath.Join(e.ClusterConfigFolder, e.ClusterName+"-eks-a.yaml")
 
-	e.clusterFillers = append(e.clusterFillers, api.WithLicenseToken(licenseToken))
+	licenseToken := getLicenseToken()
+	if licenseToken != "" {
+		e.clusterFillers = append(e.clusterFillers, api.WithLicenseToken(licenseToken))
+	}
 
 	if err := os.MkdirAll(e.ClusterConfigFolder, os.ModePerm); err != nil {
 		t.Fatalf("Failed creating cluster config folder for test: %s", err)
@@ -1075,6 +1078,10 @@ func getClusterName(t T) string {
 
 func getBundlesOverride() string {
 	return os.Getenv(BundlesOverrideVar)
+}
+
+func getLicenseToken() string {
+	return os.Getenv(LicenseTokenEnvVar)
 }
 
 func getCleanupResourcesVar() (bool, error) {

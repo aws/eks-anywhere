@@ -87,6 +87,7 @@ env:
     T_KMS_KEY_REGION: "etcd-encryption:region"
     T_KMS_SOCKET: "etcd-encryption:socket"
     T_SSH_PRIVATE_KEY: "vsphere_ci_beta_connection:base64_encoded_ssh_private_key"
+    LICENSE_TOKEN: "extended_support:license_token"
 phases:
   pre_build:
     commands:
