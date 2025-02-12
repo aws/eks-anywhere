@@ -89,9 +89,10 @@ func (v *Validator) ValidateVCenterConfig(ctx context.Context, datacenterConfig 
 	return nil
 }
 
-func(v *Validator) ValidateFailureDomains(ctx context.Context, datacenterConfig *anywherev1.VSphereDatacenterConfig) error {
+// ValidateFailureDomains validates the provided list of failure domains.
+func (v *Validator) ValidateFailureDomains(datacenterConfig *anywherev1.VSphereDatacenterConfig) error {
 	if !features.IsActive(features.VsphereFailureDomainEnabled()) && len(datacenterConfig.Spec.FailureDomains) > 0 {
-		return fmt.Errorf("Failure Domains feature is not enabled. Please set the env variable %v", features.VSPhereFailureDomainEnabledEnvVar)
+		return fmt.Errorf("Failure Domains feature is not enabled. Please set the env variable %v", features.VSphereFailureDomainEnabledEnvVar)
 	}
 	return nil
 }

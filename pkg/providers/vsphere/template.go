@@ -3,6 +3,7 @@ package vsphere
 import (
 	"fmt"
 
+	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
 	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
 	"sigs.k8s.io/yaml"
 
@@ -19,7 +20,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/semver"
 	"github.com/aws/eks-anywhere/pkg/templater"
 	"github.com/aws/eks-anywhere/pkg/types"
-	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
 )
 
 func NewVsphereTemplateBuilder(
@@ -139,7 +139,7 @@ func (vs *VsphereTemplateBuilder) GenerateCAPISpecWorkers(
 }
 
 // GenerateVsphereFailureDomainsSpec generates a yaml spec with the Vsphere failure domains objects.
-// It uses the provided template names for the VsphereFailureDomain and VsphereDeploymentZone
+// It uses the provided template names for the VsphereFailureDomain and VsphereDeploymentZone.
 func (vs *VsphereTemplateBuilder) GenerateVsphereFailureDomainsSpec(spec *cluster.Spec, templateNames map[string]string) (content []byte, err error) {
 	failureDomainSpecs := make([][]byte, 0, len(spec.VSphereDatacenter.Spec.FailureDomains))
 	for _, failureDomain := range spec.VSphereDatacenter.Spec.FailureDomains {
@@ -628,14 +628,14 @@ func buildTemplateMapFailureDomain(
 
 // Currently, we only support compute cluster topology in failure domain
 // In future, when we add supports for other topologies, update this get region type and name based on topology type.
-// For example, if topology type is host group, region will be one level above host group i.e ComputeCluster
+// For example, if topology type is host group, region will be one level above host group i.e ComputeCluster.
 func getFailureDomainRegionTypeAndName(datacenterSpec anywherev1.VSphereDatacenterConfigSpec) (string, string) {
 	return string(vspherev1.DatacenterFailureDomain), datacenterSpec.Datacenter
 }
 
 // Currently, we only support compute cluster topology in failure domain
 // In future, when we add supports for other topologies, update this get zone type and name based on topology type.
-// For example, if topology type is host group, zone type = HostGroup and name = host group name
+// For example, if topology type is host group, zone type = HostGroup and name = host group name.
 func getFailureDomainZoneTypeAndName(failureDomain anywherev1.FailureDomain) (string, string) {
 	return string(vspherev1.ComputeClusterFailureDomain), failureDomain.ComputeCluster
 }

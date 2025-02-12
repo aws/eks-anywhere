@@ -1,9 +1,11 @@
 package v1alpha1
 
 import (
+	"os"
 	"reflect"
 	"testing"
 
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -422,11 +424,13 @@ func TestValidateVSphereDatacenterConfig(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
+		t.Setenv(features.VSphereFailureDomainEnabledEnvVar, "true")
 		t.Run(tt.testName, func(t *testing.T) {
 			err := tt.vSphereDatacenter.Validate()
-			if err != nil {
+			if tt.expectedError != "" {
 				assert.Contains(t, err.Error(), tt.expectedError)
 			}
 		})
 	}
+	os.Clearenv()
 }

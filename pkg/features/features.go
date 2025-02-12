@@ -9,7 +9,7 @@ const (
 	VSphereInPlaceEnvVar              = "VSPHERE_IN_PLACE_UPGRADE"
 	APIServerExtraArgsEnabledEnvVar   = "API_SERVER_EXTRA_ARGS_ENABLED"
 	K8s132SupportEnvVar               = "K8S_1_32_SUPPORT"
-	VSPhereFailureDomainEnabledEnvVar = "VSPHERE_FAILURE_DOMAIN_ENABLED"
+	VSphereFailureDomainEnabledEnvVar = "VSPHERE_FAILURE_DOMAIN_ENABLED"
 )
 
 func FeedGates(featureGates []string) {
@@ -75,9 +75,10 @@ func K8s132Support() Feature {
 	}
 }
 
+// VsphereFailureDomainEnabled is the feature flag for Vsphere failure domains.
 func VsphereFailureDomainEnabled() Feature {
 	return Feature{
 		Name:     "Vsphere Failure Domains Enabled",
-		IsActive: globalFeatures.isActiveForEnvVar(VSPhereFailureDomainEnabledEnvVar),
+		IsActive: globalFeatures.isActiveForEnvVar(VSphereFailureDomainEnabledEnvVar),
 	}
 }

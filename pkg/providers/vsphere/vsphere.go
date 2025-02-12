@@ -320,7 +320,7 @@ func (p *vsphereProvider) SetupAndValidateCreateCluster(ctx context.Context, clu
 		return err
 	}
 
-	if err := p.validator.ValidateFailureDomains(ctx, vSphereClusterSpec.VSphereDatacenter); err != nil {
+	if err := p.validator.ValidateFailureDomains(vSphereClusterSpec.VSphereDatacenter); err != nil {
 		return err
 	}
 
@@ -402,7 +402,7 @@ func (p *vsphereProvider) SetupAndValidateUpgradeCluster(ctx context.Context, cl
 		return err
 	}
 
-	if err := p.validator.ValidateFailureDomains(ctx, vSphereClusterSpec.VSphereDatacenter); err != nil {
+	if err := p.validator.ValidateFailureDomains(vSphereClusterSpec.VSphereDatacenter); err != nil {
 		return err
 	}
 

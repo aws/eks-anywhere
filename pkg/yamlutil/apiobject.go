@@ -53,13 +53,14 @@ func (o *ObjectLookupBuilder) Build() ObjectLookup {
 	return l
 }
 
-func keyForRef(ref corev1.ObjectReference) string {
-	return Key(ref.APIVersion, ref.Kind, ref.Name)
-}
-
+// Key builds the yaml object key.
 func Key(apiVersion, kind, name string) string {
 	// this assumes we don't allow to have objects in multiple namespaces
 	return fmt.Sprintf("%s%s%s", apiVersion, kind, name)
+}
+
+func keyForRef(ref corev1.ObjectReference) string {
+	return Key(ref.APIVersion, ref.Kind, ref.Name)
 }
 
 func keyForObject(o APIObject) string {
