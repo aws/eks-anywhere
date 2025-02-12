@@ -40,6 +40,13 @@ func WithKubernetesVersion(v anywherev1.KubernetesVersion) ClusterFiller {
 	}
 }
 
+// WithLicenseToken sets LicenseToken with the provided token value to use.
+func WithLicenseToken(licenseToken string) ClusterFiller {
+	return func(c *anywherev1.Cluster) {
+		c.Spec.LicenseToken = licenseToken
+	}
+}
+
 // WithBundlesRef sets BundlesRef with the provided name to use.
 func WithBundlesRef(name string, namespace string, apiVersion string) ClusterFiller {
 	return func(c *anywherev1.Cluster) {
