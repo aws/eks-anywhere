@@ -9,11 +9,13 @@ import (
 
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/executables"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/govmomi"
 	"github.com/aws/eks-anywhere/pkg/govmomi/mocks"
 	govcmocks "github.com/aws/eks-anywhere/pkg/providers/vsphere/mocks"
@@ -364,6 +366,31 @@ func TestValidatorValidateMachineConfigTemplateDoesNotExist(t *testing.T) {
 	govc.EXPECT().SearchTemplate(ctx, "", "").Return("", fmt.Errorf("not found"))
 	_, err = v.getTemplatePath(ctx, "", "")
 	g.Expect(err).To(MatchError("validating template: not found"))
+}
+
+func TestValidateFailureDomainsFailure(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	govc := govcmocks.NewMockProviderGovcClient(ctrl)
+
+	v := Validator{
+		govc: govc,
+	}
+
+	datacenterConfig := &v1alpha1.VSphereDatacenterConfig{
+		Spec: v1alpha1.VSphereDatacenterConfigSpec{
+			Datacenter: "SDDC-Datacenter",
+			FailureDomains: []v1alpha1.FailureDomain{
+				{
+					Name: "fd-1",
+				},
+			},
+		},
+	}
+	t.Setenv(features.VSphereFailureDomainEnabledEnvVar, "false")
+
+	err := v.ValidateFailureDomains(datacenterConfig)
+	assert.NotNil(t, err)
+	features.ClearCache()
 }
 
 func TestValidateBRHardDiskSize(t *testing.T) {

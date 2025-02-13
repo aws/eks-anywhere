@@ -44,14 +44,14 @@ func templateNamesForFailureDomains(spec *cluster.Spec) map[string]string {
 	failureDomainsLen := len(spec.VSphereDatacenter.Spec.FailureDomains)
 	templateNames := make(map[string]string, failureDomainsLen)
 	for _, failureDomain := range spec.VSphereDatacenter.Spec.FailureDomains {
-		failureDomainTemplateName := BuildFailureDomainTemplateName(spec, failureDomain.Name)
+		failureDomainTemplateName := FailureDomainTemplateName(spec, failureDomain.Name)
 		templateNames[failureDomain.Name] = failureDomainTemplateName
 	}
 	return templateNames
 }
 
-// BuildFailureDomainTemplateName generates the template name for failure domain.
-func BuildFailureDomainTemplateName(spec *cluster.Spec, failureDomainName string) string {
+// FailureDomainTemplateName generates the template name for failure domain.
+func FailureDomainTemplateName(spec *cluster.Spec, failureDomainName string) string {
 	return fmt.Sprintf("%s-%s-%s", spec.Cluster.Name, spec.VSphereDatacenter.Name, failureDomainName)
 }
 

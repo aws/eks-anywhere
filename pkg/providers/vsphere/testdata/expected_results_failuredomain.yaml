@@ -1,0 +1,36 @@
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: VSphereFailureDomain
+metadata:
+  name: test-test-fd-1
+spec:
+  region:
+    name: SDDC-Datacenter
+    type: Datacenter
+    tagCategory: k8s-region
+    autoConfigure: true
+  zone:
+    name: 
+    type: ComputeCluster
+    tagCategory: k8s-zone
+    autoConfigure: true
+  topology:
+    datacenter: SDDC-Datacenter
+    computeCluster: 
+    datastore: 
+    networks:
+    - 
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: VSphereDeploymentZone
+metadata:
+  name: test-test-fd-1
+  labels:
+    infrastructure.cluster.x-k8s.io/cluster-name: test
+    infrastructure.cluster.x-k8s.io/vsphere-datacenter-config-name: test
+spec:
+  server: vsphere_server
+  failureDomain: test-test-fd-1
+  placementConstraint:
+    resourcePool: 
+    folder: 
+---

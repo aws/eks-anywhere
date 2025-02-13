@@ -133,8 +133,6 @@ func (v *VSphereDatacenterConfig) Validate() error {
 	if !features.IsActive(features.VsphereFailureDomainEnabled()) && len(v.Spec.FailureDomains) > 0 {
 		return fmt.Errorf("Failure Domains feature is not enabled. Please set the env variable %v", features.VSphereFailureDomainEnabledEnvVar)
 	}
-
-
 	if len(v.Spec.FailureDomains) > 0 {
 		failureDomains := v.Spec.FailureDomains
 		for _, fd := range failureDomains {

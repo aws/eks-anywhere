@@ -71,13 +71,6 @@ func (fbp *FailureDomainsYamlProcessor) registerFailureDomainMappings() error {
 	return nil
 }
 
-// NewFailureDomainsBuilder builds a NewFailureDomainsBuilder.
-func NewFailureDomainsBuilder() *FailureDomainsBuilder {
-	return &FailureDomainsBuilder{
-		FailureDomains: new(FailureDomains),
-	}
-}
-
 // BuildFromParsed reads parsed objects in ObjectLookup and sets them in the FailureDomains.
 func (fb *FailureDomainsBuilder) BuildFromParsed(lookup yamlutil.ObjectLookup) error {
 	fb.ProcessFailureDomainObjects(fb.FailureDomains, lookup)

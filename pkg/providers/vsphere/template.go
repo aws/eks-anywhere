@@ -115,7 +115,7 @@ func (vs *VsphereTemplateBuilder) GenerateCAPISpecWorkers(
 
 		if len(workerNodeGroupConfiguration.FailureDomains) > 0 {
 			workerNodeGroupFailureDomain := workerNodeGroupConfiguration.FailureDomains[0]
-			values["failureDomain"] = BuildFailureDomainTemplateName(clusterSpec, workerNodeGroupFailureDomain)
+			values["failureDomain"] = FailureDomainTemplateName(clusterSpec, workerNodeGroupFailureDomain)
 		}
 
 		if workerNodeGroupConfiguration.UpgradeRolloutStrategy != nil {

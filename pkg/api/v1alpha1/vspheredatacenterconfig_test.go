@@ -1,13 +1,14 @@
 package v1alpha1
 
 import (
-	"os"
 	"reflect"
+	"strconv"
 	"testing"
 
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/aws/eks-anywhere/pkg/features"
 )
 
 func TestGetVSphereDatacenterConfig(t *testing.T) {
@@ -166,9 +167,10 @@ func TestGetVSphereDatacenterConfig(t *testing.T) {
 
 func TestValidateVSphereDatacenterConfig(t *testing.T) {
 	tests := []struct {
-		testName          string
-		vSphereDatacenter *VSphereDatacenterConfig
-		expectedError     string
+		testName              string
+		vSphereDatacenter     *VSphereDatacenterConfig
+		expectedError         string
+		failureDomainsEnabled bool
 	}{
 		{
 			testName: "valid VSphereDatacenterConfig without FailureDomain",
@@ -190,7 +192,8 @@ func TestValidateVSphereDatacenterConfig(t *testing.T) {
 			},
 		},
 		{
-			testName: "valid VSphereDatacenterConfig with FailureDomain",
+			testName:              "valid VSphereDatacenterConfig with FailureDomain",
+			failureDomainsEnabled: true,
 			vSphereDatacenter: &VSphereDatacenterConfig{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       VSphereDatacenterKind,
@@ -219,7 +222,39 @@ func TestValidateVSphereDatacenterConfig(t *testing.T) {
 			},
 		},
 		{
-			testName: "Invalid VSphereDatacenterConfig with missing name in FailureDomain",
+			testName:              "Valid VSphereDatacenterConfig without FailureDomain",
+			failureDomainsEnabled: false,
+			expectedError:         "Failure Domains feature is not enabled",
+			vSphereDatacenter: &VSphereDatacenterConfig{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       VSphereDatacenterKind,
+					APIVersion: SchemeBuilder.GroupVersion.String(),
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "eksa-unit-test",
+				},
+				Spec: VSphereDatacenterConfigSpec{
+					Datacenter: "myDatacenter",
+					Network:    "/myDatacenter/network/myNetwork",
+					Server:     "myServer",
+					Thumbprint: "myTlsThumbprint",
+					Insecure:   false,
+					FailureDomains: []FailureDomain{
+						{
+							Name:           "fd-1",
+							ComputeCluster: "myComputeCluster",
+							ResourcePool:   "myResourcePool",
+							Datastore:      "myDatastore",
+							Folder:         "myFolder",
+							Network:        "/myDatacenter/network/myNetwork",
+						},
+					},
+				},
+			},
+		},
+		{
+			testName:              "Invalid VSphereDatacenterConfig with missing name in FailureDomain",
+			failureDomainsEnabled: true,
 			vSphereDatacenter: &VSphereDatacenterConfig{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       VSphereDatacenterKind,
@@ -248,7 +283,8 @@ func TestValidateVSphereDatacenterConfig(t *testing.T) {
 			expectedError: "name is not set or is empty",
 		},
 		{
-			testName: "Invalid VSphereDatacenterConfig with missing computeCluster in FailureDomain",
+			testName:              "Invalid VSphereDatacenterConfig with missing computeCluster in FailureDomain",
+			failureDomainsEnabled: true,
 			vSphereDatacenter: &VSphereDatacenterConfig{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       VSphereDatacenterKind,
@@ -277,7 +313,8 @@ func TestValidateVSphereDatacenterConfig(t *testing.T) {
 			expectedError: "computeCluster is not set or is empty",
 		},
 		{
-			testName: "Invalid VSphereDatacenterConfig with missing resourcePool in FailureDomain",
+			testName:              "Invalid VSphereDatacenterConfig with missing resourcePool in FailureDomain",
+			failureDomainsEnabled: true,
 			vSphereDatacenter: &VSphereDatacenterConfig{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       VSphereDatacenterKind,
@@ -306,7 +343,8 @@ func TestValidateVSphereDatacenterConfig(t *testing.T) {
 			expectedError: "resourcePool is not set or is empty",
 		},
 		{
-			testName: "Invalid VSphereDatacenterConfig with missing datastore in FailureDomain",
+			testName:              "Invalid VSphereDatacenterConfig with missing datastore in FailureDomain",
+			failureDomainsEnabled: true,
 			vSphereDatacenter: &VSphereDatacenterConfig{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       VSphereDatacenterKind,
@@ -335,7 +373,8 @@ func TestValidateVSphereDatacenterConfig(t *testing.T) {
 			expectedError: "datastore is not set or is empty",
 		},
 		{
-			testName: "Invalid VSphereDatacenterConfig with missing folder in FailureDomain",
+			testName:              "Invalid VSphereDatacenterConfig with missing folder in FailureDomain",
+			failureDomainsEnabled: true,
 			vSphereDatacenter: &VSphereDatacenterConfig{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       VSphereDatacenterKind,
@@ -364,7 +403,8 @@ func TestValidateVSphereDatacenterConfig(t *testing.T) {
 			expectedError: "folder is not set or is empty",
 		},
 		{
-			testName: "Invalid VSphereDatacenterConfig with missing network in FailureDomain",
+			testName:              "Invalid VSphereDatacenterConfig with missing network in FailureDomain",
+			failureDomainsEnabled: true,
 			vSphereDatacenter: &VSphereDatacenterConfig{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       VSphereDatacenterKind,
@@ -393,7 +433,8 @@ func TestValidateVSphereDatacenterConfig(t *testing.T) {
 			expectedError: "network is not set or is empty",
 		},
 		{
-			testName: "Invalid VSphereDatacenterConfig with invalid network in FailureDomain",
+			testName:              "Invalid VSphereDatacenterConfig with invalid network in FailureDomain",
+			failureDomainsEnabled: true,
 			vSphereDatacenter: &VSphereDatacenterConfig{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       VSphereDatacenterKind,
@@ -424,13 +465,13 @@ func TestValidateVSphereDatacenterConfig(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		t.Setenv(features.VSphereFailureDomainEnabledEnvVar, "true")
+		t.Setenv(features.VSphereFailureDomainEnabledEnvVar, strconv.FormatBool(tt.failureDomainsEnabled))
 		t.Run(tt.testName, func(t *testing.T) {
 			err := tt.vSphereDatacenter.Validate()
 			if tt.expectedError != "" {
 				assert.Contains(t, err.Error(), tt.expectedError)
 			}
 		})
+		features.ClearCache()
 	}
-	os.Clearenv()
 }

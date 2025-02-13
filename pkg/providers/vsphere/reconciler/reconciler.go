@@ -191,15 +191,18 @@ func (r *Reconciler) ReconcileFailureDomains(ctx context.Context, log logr.Logge
 		desiredFailureDeploymentNames := collection.MapSet(fd.Groups, func(g vsphere.FailureDomainGroup) string {
 			return g.VsphereDeploymentZone.Name
 		})
-	
+
+		// CAPV by default deletes VSphereFailureDomain if its corresponding VSphereDeploymentZone is deleted
+		// Hence we are only deleting the VsphereDeploymentZones
+		// https://github.com/kubernetes-sigs/cluster-api-provider-vsphere/blob/d7af9d7199f21b442402714ca00d0a9801237f5d/controllers/vspheredeploymentzone_controller.go#L274.
 		existingVSphereDeploymentZones := &vspherev1.VSphereDeploymentZoneList{}
 		if err := r.client.List(ctx, existingVSphereDeploymentZones,
 			ctrlClient.MatchingLabels{vsphere.VsphereDataCenterConfigNameLabel: spec.VSphereDatacenter.Name, vsphere.ClusterNameLabel: spec.Cluster.Name}); err != nil {
 			return controller.Result{}, errors.Wrap(err, "listing current Vsphere Deployment Zones")
 		}
-	
+
 		var allErrs []error
-	
+
 		for _, m := range existingVSphereDeploymentZones.Items {
 			if !desiredFailureDeploymentNames.Contains(m.Name) {
 				if err := r.client.Delete(ctx, &m); err != nil {
@@ -207,7 +210,7 @@ func (r *Reconciler) ReconcileFailureDomains(ctx context.Context, log logr.Logge
 				}
 			}
 		}
-	
+
 		if len(allErrs) > 0 {
 			aggregate := utilerrors.NewAggregate(allErrs)
 			return controller.Result{}, errors.Wrap(aggregate, "deleting failure deployments during failure deployment reconciliation")
