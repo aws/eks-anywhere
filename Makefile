@@ -71,6 +71,20 @@ else
 	DEV_GIT_VERSION ?= $(shell source ./scripts/eksa_version.sh && eksa-version::get_next_eksa_version)-dev+latest
 endif
 
+
+# Default to non-production public key
+LICENSE_PUBLIC_KEY="MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE96Xb67YUq+at8gFOioYlf1kxOIPio7i3Y8sFrG3a3sn/MzqQmTO9K82psqOuN+E4NdE8VajOtbyfcLo+Ojax/w=="
+
+ifneq ($(findstring codepipeline/aws-staging-bundle-release,$(CODEBUILD_INITIATOR)),)
+    ## For staging controller builds, use the prod license public key
+    LICENSE_PUBLIC_KEY="MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEDToK2AfV5Wt/mO889a5alzx00NksjZonDCvRP+I8WgQP3BkcG7c/XNXf65bjH001ccFu6jgycN7f7jtsgu59Mg=="
+endif
+
+ifneq ($(findstring aws-staging-eks-a-build,$(CODEBUILD_BUILD_ID)),)
+    ## For staging CLI builds, use the prod license public key
+    LICENSE_PUBLIC_KEY="MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEDToK2AfV5Wt/mO889a5alzx00NksjZonDCvRP+I8WgQP3BkcG7c/XNXf65bjH001ccFu6jgycN7f7jtsgu59Mg=="
+endif
+
 CUSTOM_GIT_VERSION:=v0.0.0-custom
 
 AWS_ACCOUNT_ID?=$(shell aws sts get-caller-identity --query Account --output text)
@@ -178,7 +192,7 @@ build: eks-a eks-a-tool unit-test ## Generate binaries and run unit tests
 release: eks-a-release unit-test ## Generate release binary and run unit tests
 
 .PHONY: eks-a-binary
-eks-a-binary: ALL_LINKER_FLAGS := $(LINKER_FLAGS) -X github.com/aws/eks-anywhere/pkg/version.gitVersion=$(GIT_VERSION) -X github.com/aws/eks-anywhere/pkg/manifests/releases.manifestURL=$(RELEASE_MANIFEST_URL) -s -w -buildid='' -extldflags -static
+eks-a-binary: ALL_LINKER_FLAGS := $(LINKER_FLAGS) -X github.com/aws/eks-anywhere/pkg/version.gitVersion=$(GIT_VERSION) -X github.com/aws/eks-anywhere/pkg/manifests/releases.manifestURL=$(RELEASE_MANIFEST_URL) -X github.com/aws/eks-anywhere/pkg/validations.LicensePublicKey=$(LICENSE_PUBLIC_KEY) -s -w -buildid='' -extldflags -static
 eks-a-binary: LINKER_FLAGS_ARG := -ldflags "$(ALL_LINKER_FLAGS)"
 eks-a-binary: BUILD_TAGS_ARG := -tags "$(BUILD_TAGS)"
 eks-a-binary: OUTPUT_FILE ?= bin/eksctl-anywhere
@@ -335,7 +349,7 @@ docgen: eks-a-tool ## generate eksctl anywhere commands doc from code
 
 .PHONY: eks-a-cluster-controller
 eks-a-cluster-controller: ## Build eks-a-cluster-controller
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GO) build -ldflags "-s -w -buildid='' -extldflags -static" -trimpath -o bin/manager github.com/aws/eks-anywhere/manager
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GO) build -ldflags "-X github.com/aws/eks-anywhere/pkg/validations.LicensePublicKey=$(LICENSE_PUBLIC_KEY) -s -w -buildid='' -extldflags -static" -trimpath -o bin/manager github.com/aws/eks-anywhere/manager
 
 .PHONY: build-cluster-controller-binaries
 build-cluster-controller-binaries: eks-a-cluster-controller
