@@ -16,6 +16,10 @@ import (
 	"github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
+// LicensePublicKey is the public key for verifying license token signature.
+// this is injected at build time.
+var LicensePublicKey string
+
 // ValidateExtendedK8sVersionSupport validates all the validations needed for the support of extended kubernetes support.
 func ValidateExtendedK8sVersionSupport(ctx context.Context, clusterSpec anywherev1.Cluster, bundle *v1alpha1.Bundles, k kubernetes.Client) error {
 	// Validate EKS-A bundle has not been modified by verifying the signature in the bundle annotation
@@ -75,7 +79,7 @@ func getLicense(licenseToken string) (*jwt.Token, error) {
 	if licenseToken == "" {
 		return nil, errors.New("licenseToken is required for extended kubernetes support")
 	}
-	token, err := signature.ParseLicense(licenseToken, constants.LicensePublicKey)
+	token, err := signature.ParseLicense(licenseToken, LicensePublicKey)
 	if err != nil {
 		return nil, fmt.Errorf("parsing licenseToken: %w", err)
 	}

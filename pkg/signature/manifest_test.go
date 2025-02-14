@@ -353,7 +353,7 @@ func TestParseLicense(t *testing.T) {
 		{
 			name:       "malformed token",
 			licenseKey: "invalid.token.string",
-			key:        constants.LicensePublicKey,
+			key:        "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE96Xb67YUq+at8gFOioYlf1kxOIPio7i3Y8sFrG3a3sn/MzqQmTO9K82psqOuN+E4NdE8VajOtbyfcLo+Ojax/w==",
 			wantErr:    fmt.Errorf("parsing licenseToken"),
 		},
 		{
@@ -365,7 +365,7 @@ func TestParseLicense(t *testing.T) {
 		{
 			name:       "signing method not supported",
 			licenseKey: "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJleGFtcGxlIjoiZGF0YSJ9.UKzt6DArjTtHk_Nch6TwbdgVni6FwLJ1fdbVNYikE_kFGTzMZC82m_0qY7l27LtN0J6b_5D8hLLFk3pTZHYGBX5kB2XKH5e5syRkGh6uZHDkGtRjTMoD5sPMZJ0rG4m80k8cgI37UsIt66hoK_45FzSMlTwxogJ2nJk5G1dH10",
-			key:        constants.LicensePublicKey,
+			key:        "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE96Xb67YUq+at8gFOioYlf1kxOIPio7i3Y8sFrG3a3sn/MzqQmTO9K82psqOuN+E4NdE8VajOtbyfcLo+Ojax/w==",
 			wantErr:    fmt.Errorf("signing method not supported"),
 		},
 	}
