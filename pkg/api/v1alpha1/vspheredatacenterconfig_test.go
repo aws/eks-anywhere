@@ -168,298 +168,159 @@ func TestGetVSphereDatacenterConfig(t *testing.T) {
 func TestValidateVSphereDatacenterConfig(t *testing.T) {
 	tests := []struct {
 		testName              string
-		vSphereDatacenter     *VSphereDatacenterConfig
 		expectedError         string
 		failureDomainsEnabled bool
+		modifyFunc            func(*VSphereDatacenterConfig)
 	}{
 		{
 			testName: "valid VSphereDatacenterConfig without FailureDomain",
-			vSphereDatacenter: &VSphereDatacenterConfig{
-				TypeMeta: metav1.TypeMeta{
-					Kind:       VSphereDatacenterKind,
-					APIVersion: SchemeBuilder.GroupVersion.String(),
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "eksa-unit-test",
-				},
-				Spec: VSphereDatacenterConfigSpec{
-					Datacenter: "myDatacenter",
-					Network:    "/myDatacenter/network/myNetwork",
-					Server:     "myServer",
-					Thumbprint: "myTlsThumbprint",
-					Insecure:   false,
-				},
+			modifyFunc: func(v *VSphereDatacenterConfig) {
+				v.Spec.FailureDomains = nil
 			},
 		},
 		{
 			testName:              "valid VSphereDatacenterConfig with FailureDomain",
 			failureDomainsEnabled: true,
-			vSphereDatacenter: &VSphereDatacenterConfig{
-				TypeMeta: metav1.TypeMeta{
-					Kind:       VSphereDatacenterKind,
-					APIVersion: SchemeBuilder.GroupVersion.String(),
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "eksa-unit-test",
-				},
-				Spec: VSphereDatacenterConfigSpec{
-					Datacenter: "myDatacenter",
-					Network:    "/myDatacenter/network/myNetwork",
-					Server:     "myServer",
-					Thumbprint: "myTlsThumbprint",
-					Insecure:   false,
-					FailureDomains: []FailureDomain{
-						{
-							Name:           "fd-1",
-							ComputeCluster: "myComputeCluster",
-							ResourcePool:   "myResourcePool",
-							Datastore:      "myDatastore",
-							Folder:         "myFolder",
-							Network:        "/myDatacenter/network/myNetwork",
-						},
+			modifyFunc: func(v *VSphereDatacenterConfig) {
+				v.Spec.FailureDomains = []FailureDomain{
+					{
+						Name:           "fd-1",
+						ComputeCluster: "myComputeCluster",
+						ResourcePool:   "myResourcePool",
+						Datastore:      "myDatastore",
+						Folder:         "myFolder",
+						Network:        "/myDatacenter/network/myNetwork",
 					},
-				},
+				}
 			},
 		},
 		{
 			testName:              "Valid VSphereDatacenterConfig without FailureDomain",
 			failureDomainsEnabled: false,
 			expectedError:         "Failure Domains feature is not enabled",
-			vSphereDatacenter: &VSphereDatacenterConfig{
-				TypeMeta: metav1.TypeMeta{
-					Kind:       VSphereDatacenterKind,
-					APIVersion: SchemeBuilder.GroupVersion.String(),
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "eksa-unit-test",
-				},
-				Spec: VSphereDatacenterConfigSpec{
-					Datacenter: "myDatacenter",
-					Network:    "/myDatacenter/network/myNetwork",
-					Server:     "myServer",
-					Thumbprint: "myTlsThumbprint",
-					Insecure:   false,
-					FailureDomains: []FailureDomain{
-						{
-							Name:           "fd-1",
-							ComputeCluster: "myComputeCluster",
-							ResourcePool:   "myResourcePool",
-							Datastore:      "myDatastore",
-							Folder:         "myFolder",
-							Network:        "/myDatacenter/network/myNetwork",
-						},
+			modifyFunc: func(v *VSphereDatacenterConfig) {
+				v.Spec.FailureDomains = []FailureDomain{
+					{
+						Name:           "fd-1",
+						ComputeCluster: "myComputeCluster",
+						ResourcePool:   "myResourcePool",
+						Datastore:      "myDatastore",
+						Folder:         "myFolder",
+						Network:        "/myDatacenter/network/myNetwork",
 					},
-				},
+				}
 			},
 		},
 		{
 			testName:              "Invalid VSphereDatacenterConfig with missing name in FailureDomain",
 			failureDomainsEnabled: true,
-			vSphereDatacenter: &VSphereDatacenterConfig{
-				TypeMeta: metav1.TypeMeta{
-					Kind:       VSphereDatacenterKind,
-					APIVersion: SchemeBuilder.GroupVersion.String(),
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "eksa-unit-test",
-				},
-				Spec: VSphereDatacenterConfigSpec{
-					Datacenter: "myDatacenter",
-					Network:    "/myDatacenter/network/myNetwork",
-					Server:     "myServer",
-					Thumbprint: "myTlsThumbprint",
-					Insecure:   false,
-					FailureDomains: []FailureDomain{
-						{
-							ComputeCluster: "myComputeCluster",
-							ResourcePool:   "myResourcePool",
-							Datastore:      "myDatastore",
-							Folder:         "myFolder",
-							Network:        "/myDatacenter/network/myNetwork",
-						},
+			modifyFunc: func(v *VSphereDatacenterConfig) {
+				v.Spec.FailureDomains = []FailureDomain{
+					{
+						ComputeCluster: "myComputeCluster",
+						ResourcePool:   "myResourcePool",
+						Datastore:      "myDatastore",
+						Folder:         "myFolder",
+						Network:        "/myDatacenter/network/myNetwork",
 					},
-				},
+				}
 			},
 			expectedError: "name is not set or is empty",
 		},
 		{
 			testName:              "Invalid VSphereDatacenterConfig with missing computeCluster in FailureDomain",
 			failureDomainsEnabled: true,
-			vSphereDatacenter: &VSphereDatacenterConfig{
-				TypeMeta: metav1.TypeMeta{
-					Kind:       VSphereDatacenterKind,
-					APIVersion: SchemeBuilder.GroupVersion.String(),
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "eksa-unit-test",
-				},
-				Spec: VSphereDatacenterConfigSpec{
-					Datacenter: "myDatacenter",
-					Network:    "/myDatacenter/network/myNetwork",
-					Server:     "myServer",
-					Thumbprint: "myTlsThumbprint",
-					Insecure:   false,
-					FailureDomains: []FailureDomain{
-						{
-							Name:         "fd-1",
-							ResourcePool: "myResourcePool",
-							Datastore:    "myDatastore",
-							Folder:       "myFolder",
-							Network:      "/myDatacenter/network/myNetwork",
-						},
+			modifyFunc: func(v *VSphereDatacenterConfig) {
+				v.Spec.FailureDomains = []FailureDomain{
+					{
+						Name:         "fd-1",
+						ResourcePool: "myResourcePool",
+						Datastore:    "myDatastore",
+						Folder:       "myFolder",
+						Network:      "/myDatacenter/network/myNetwork",
 					},
-				},
+				}
 			},
 			expectedError: "computeCluster is not set or is empty",
 		},
 		{
 			testName:              "Invalid VSphereDatacenterConfig with missing resourcePool in FailureDomain",
 			failureDomainsEnabled: true,
-			vSphereDatacenter: &VSphereDatacenterConfig{
-				TypeMeta: metav1.TypeMeta{
-					Kind:       VSphereDatacenterKind,
-					APIVersion: SchemeBuilder.GroupVersion.String(),
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "eksa-unit-test",
-				},
-				Spec: VSphereDatacenterConfigSpec{
-					Datacenter: "myDatacenter",
-					Network:    "/myDatacenter/network/myNetwork",
-					Server:     "myServer",
-					Thumbprint: "myTlsThumbprint",
-					Insecure:   false,
-					FailureDomains: []FailureDomain{
-						{
-							Name:           "fd-1",
-							ComputeCluster: "myComputeCluster",
-							Datastore:      "myDatastore",
-							Folder:         "myFolder",
-							Network:        "/myDatacenter/network/myNetwork",
-						},
+			modifyFunc: func(v *VSphereDatacenterConfig) {
+				v.Spec.FailureDomains = []FailureDomain{
+					{
+						Name:           "fd-1",
+						ComputeCluster: "myComputeCluster",
+						Datastore:      "myDatastore",
+						Folder:         "myFolder",
+						Network:        "/myDatacenter/network/myNetwork",
 					},
-				},
+				}
 			},
 			expectedError: "resourcePool is not set or is empty",
 		},
 		{
 			testName:              "Invalid VSphereDatacenterConfig with missing datastore in FailureDomain",
 			failureDomainsEnabled: true,
-			vSphereDatacenter: &VSphereDatacenterConfig{
-				TypeMeta: metav1.TypeMeta{
-					Kind:       VSphereDatacenterKind,
-					APIVersion: SchemeBuilder.GroupVersion.String(),
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "eksa-unit-test",
-				},
-				Spec: VSphereDatacenterConfigSpec{
-					Datacenter: "myDatacenter",
-					Network:    "/myDatacenter/network/myNetwork",
-					Server:     "myServer",
-					Thumbprint: "myTlsThumbprint",
-					Insecure:   false,
-					FailureDomains: []FailureDomain{
-						{
-							Name:           "fd-1",
-							ComputeCluster: "myComputeCluster",
-							ResourcePool:   "myResourcePool",
-							Folder:         "myFolder",
-							Network:        "/myDatacenter/network/myNetwork",
-						},
+			modifyFunc: func(v *VSphereDatacenterConfig) {
+				v.Spec.FailureDomains = []FailureDomain{
+					{
+						Name:           "fd-1",
+						ComputeCluster: "myComputeCluster",
+						ResourcePool:   "myResourcePool",
+						Folder:         "myFolder",
+						Network:        "/myDatacenter/network/myNetwork",
 					},
-				},
+				}
 			},
 			expectedError: "datastore is not set or is empty",
 		},
 		{
 			testName:              "Invalid VSphereDatacenterConfig with missing folder in FailureDomain",
 			failureDomainsEnabled: true,
-			vSphereDatacenter: &VSphereDatacenterConfig{
-				TypeMeta: metav1.TypeMeta{
-					Kind:       VSphereDatacenterKind,
-					APIVersion: SchemeBuilder.GroupVersion.String(),
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "eksa-unit-test",
-				},
-				Spec: VSphereDatacenterConfigSpec{
-					Datacenter: "myDatacenter",
-					Network:    "/myDatacenter/network/myNetwork",
-					Server:     "myServer",
-					Thumbprint: "myTlsThumbprint",
-					Insecure:   false,
-					FailureDomains: []FailureDomain{
-						{
-							Name:           "fd-1",
-							ComputeCluster: "myComputeCluster",
-							ResourcePool:   "myResourcePool",
-							Datastore:      "myDatastore",
-							Network:        "/myDatacenter/network/myNetwork",
-						},
+			modifyFunc: func(v *VSphereDatacenterConfig) {
+				v.Spec.FailureDomains = []FailureDomain{
+					{
+						Name:           "fd-1",
+						ComputeCluster: "myComputeCluster",
+						ResourcePool:   "myResourcePool",
+						Datastore:      "myDatastore",
+						Network:        "/myDatacenter/network/myNetwork",
 					},
-				},
+				}
 			},
 			expectedError: "folder is not set or is empty",
 		},
 		{
 			testName:              "Invalid VSphereDatacenterConfig with missing network in FailureDomain",
 			failureDomainsEnabled: true,
-			vSphereDatacenter: &VSphereDatacenterConfig{
-				TypeMeta: metav1.TypeMeta{
-					Kind:       VSphereDatacenterKind,
-					APIVersion: SchemeBuilder.GroupVersion.String(),
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "eksa-unit-test",
-				},
-				Spec: VSphereDatacenterConfigSpec{
-					Datacenter: "myDatacenter",
-					Network:    "/myDatacenter/network/myNetwork",
-					Server:     "myServer",
-					Thumbprint: "myTlsThumbprint",
-					Insecure:   false,
-					FailureDomains: []FailureDomain{
-						{
-							Name:           "fd-1",
-							ComputeCluster: "myComputeCluster",
-							ResourcePool:   "myResourcePool",
-							Datastore:      "myDatastore",
-							Folder:         "myFolder",
-						},
+			modifyFunc: func(v *VSphereDatacenterConfig) {
+				v.Spec.FailureDomains = []FailureDomain{
+					{
+						Name:           "fd-1",
+						ComputeCluster: "myComputeCluster",
+						ResourcePool:   "myResourcePool",
+						Datastore:      "myDatastore",
+						Folder:         "myFolder",
 					},
-				},
+				}
 			},
 			expectedError: "network is not set or is empty",
 		},
 		{
 			testName:              "Invalid VSphereDatacenterConfig with invalid network in FailureDomain",
 			failureDomainsEnabled: true,
-			vSphereDatacenter: &VSphereDatacenterConfig{
-				TypeMeta: metav1.TypeMeta{
-					Kind:       VSphereDatacenterKind,
-					APIVersion: SchemeBuilder.GroupVersion.String(),
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "eksa-unit-test",
-				},
-				Spec: VSphereDatacenterConfigSpec{
-					Datacenter: "myDatacenter",
-					Network:    "/myDatacenter/network/myNetwork",
-					Server:     "myServer",
-					Thumbprint: "myTlsThumbprint",
-					Insecure:   false,
-					FailureDomains: []FailureDomain{
-						{
-							Name:           "fd-1",
-							ComputeCluster: "myComputeCluster",
-							ResourcePool:   "myResourcePool",
-							Datastore:      "myDatastore",
-							Folder:         "myFolder",
-							Network:        "network",
-						},
+			modifyFunc: func(v *VSphereDatacenterConfig) {
+				v.Spec.FailureDomains = []FailureDomain{
+					{
+						Name:           "fd-1",
+						ComputeCluster: "myComputeCluster",
+						ResourcePool:   "myResourcePool",
+						Datastore:      "myDatastore",
+						Folder:         "myFolder",
+						Network:        "network",
 					},
-				},
+				}
 			},
 			expectedError: "invalid path",
 		},
@@ -467,11 +328,42 @@ func TestValidateVSphereDatacenterConfig(t *testing.T) {
 	for _, tt := range tests {
 		t.Setenv(features.VSphereFailureDomainEnabledEnvVar, strconv.FormatBool(tt.failureDomainsEnabled))
 		t.Run(tt.testName, func(t *testing.T) {
-			err := tt.vSphereDatacenter.Validate()
+			vSphereDatacenter := generateVSphereDataCenterConfig()
+			tt.modifyFunc(vSphereDatacenter)
+			err := vSphereDatacenter.Validate()
 			if tt.expectedError != "" {
 				assert.Contains(t, err.Error(), tt.expectedError)
 			}
 		})
 		features.ClearCache()
+	}
+}
+
+func generateVSphereDataCenterConfig() *VSphereDatacenterConfig {
+	return &VSphereDatacenterConfig{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       VSphereDatacenterKind,
+			APIVersion: SchemeBuilder.GroupVersion.String(),
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "eksa-unit-test",
+		},
+		Spec: VSphereDatacenterConfigSpec{
+			Datacenter: "myDatacenter",
+			Network:    "/myDatacenter/network/myNetwork",
+			Server:     "myServer",
+			Thumbprint: "myTlsThumbprint",
+			Insecure:   false,
+			FailureDomains: []FailureDomain{
+				{
+					Name:           "fd-1",
+					ComputeCluster: "myComputeCluster",
+					ResourcePool:   "myResourcePool",
+					Datastore:      "myDatastore",
+					Folder:         "myFolder",
+					Network:        "/myDatacenter/network/myNetwork",
+				},
+			},
+		},
 	}
 }

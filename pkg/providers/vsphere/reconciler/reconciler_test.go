@@ -188,6 +188,73 @@ func TestReconcilerFailureDomainsSuccess(t *testing.T) {
 	features.ClearCache()
 }
 
+func TestValidateFailureDomainsSuccess(t *testing.T) {
+	features.ClearCache()
+	t.Setenv(features.VSphereFailureDomainEnabledEnvVar, "true")
+	tt := newReconcilerTest(t)
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, test.CAPICluster(func(c *clusterv1.Cluster) {
+		c.Name = tt.cluster.Name
+	}))
+	tt.createAllObjs()
+
+	spec := tt.buildSpec()
+	spec.VSphereDatacenter.Spec.Server = "myServer"
+	spec.VSphereDatacenter.Spec.Datacenter = "myDatacenter"
+	spec.VSphereDatacenter.Spec.Network = "/myDatacenter/network/myNetwork"
+	spec.VSphereDatacenter.Spec.FailureDomains = []anywherev1.FailureDomain{
+		{
+			Name:           "fd-1",
+			ComputeCluster: "myComputeCluster",
+			ResourcePool:   "myResourcePool",
+			Datastore:      "myDatastore",
+			Folder:         "myFolder",
+			Network:        "/myDatacenter/network/myNetwork",
+		},
+	}
+
+	result, err := tt.reconciler().ValidateFailureDomains(tt.ctx, test.NewNullLogger(), spec)
+
+	tt.Expect(err).NotTo(HaveOccurred())
+	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
+	tt.Expect(tt.cluster.Status.FailureReason).To(BeZero())
+	tt.Expect(result).To(Equal(controller.Result{}))
+	features.ClearCache()
+}
+
+func TestValidateFailureDomainsFailure(t *testing.T) {
+	features.ClearCache()
+	t.Setenv(features.VSphereFailureDomainEnabledEnvVar, "true")
+	tt := newReconcilerTest(t)
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, test.CAPICluster(func(c *clusterv1.Cluster) {
+		c.Name = tt.cluster.Name
+	}))
+	tt.createAllObjs()
+
+	spec := tt.buildSpec()
+	spec.Cluster.Spec.WorkerNodeGroupConfigurations[0].FailureDomains = []string{"fd-2"}
+	spec.VSphereDatacenter.Spec.Server = "myServer"
+	spec.VSphereDatacenter.Spec.Datacenter = "myDatacenter"
+	spec.VSphereDatacenter.Spec.Network = "/myDatacenter/network/myNetwork"
+	spec.VSphereDatacenter.Spec.FailureDomains = []anywherev1.FailureDomain{
+		{
+			Name:           "fd-1",
+			ComputeCluster: "myComputeCluster",
+			ResourcePool:   "myResourcePool",
+			Datastore:      "myDatastore",
+			Folder:         "myFolder",
+			Network:        "/myDatacenter/network/myNetwork",
+		},
+	}
+
+	result, err := tt.reconciler().ValidateFailureDomains(tt.ctx, test.NewNullLogger(), spec)
+
+	tt.Expect(err).To(BeNil(), "error should be nil to prevent requeue")
+	tt.Expect(result).To(Equal(controller.Result{Result: &reconcile.Result{}}), "result should stop reconciliation")
+	tt.Expect(tt.cluster.Status.FailureMessage).To(HaveValue(ContainSubstring("provided invalid failure domain")))
+	tt.Expect(tt.cluster.Status.FailureReason).To(HaveValue(Equal(anywherev1.FailureDomainInvalidReason)))
+	features.ClearCache()
+}
+
 func TestReconcilerReconcileInvalidDatacenterConfig(t *testing.T) {
 	tt := newReconcilerTest(t)
 	logger := test.NewNullLogger()

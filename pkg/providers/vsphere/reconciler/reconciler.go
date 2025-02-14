@@ -122,6 +122,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, log logr.Logger, cluster *an
 		r.ipValidator.ValidateControlPlaneIP,
 		r.ValidateDatacenterConfig,
 		r.ValidateMachineConfigs,
+		r.ValidateFailureDomains,
 		clusters.CleanupStatusAfterValidate,
 		r.ReconcileFailureDomains,
 		r.ReconcileControlPlane,
@@ -169,6 +170,23 @@ func (r *Reconciler) ValidateMachineConfigs(ctx context.Context, log logr.Logger
 		failureMessage := err.Error()
 		clusterSpec.Cluster.SetFailure(anywherev1.MachineConfigInvalidReason, failureMessage)
 		return controller.ResultWithReturn(), nil
+	}
+	return controller.Result{}, nil
+}
+
+// ValidateFailureDomains performs validations for the provided failure domains and the assigned failure domains in worker node group.
+func (r *Reconciler) ValidateFailureDomains(_ context.Context, log logr.Logger, clusterSpec *c.Spec) (controller.Result, error) {
+	if features.IsActive(features.VsphereFailureDomainEnabled()) {
+		log = log.WithValues("phase", "validateFailureDomains")
+
+		vsphereClusterSpec := vsphere.NewSpec(clusterSpec)
+
+		if err := r.validator.ValidateFailureDomains(vsphereClusterSpec); err != nil {
+			log.Error(err, "Invalid Failure domain setup")
+			failureMessage := err.Error()
+			clusterSpec.Cluster.SetFailure(anywherev1.FailureDomainInvalidReason, failureMessage)
+			return controller.ResultWithReturn(), nil
+		}
 	}
 	return controller.Result{}, nil
 }

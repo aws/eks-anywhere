@@ -12,6 +12,7 @@ import (
 	"gopkg.in/yaml.v2"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/collection"
 	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/govmomi"
@@ -90,10 +91,36 @@ func (v *Validator) ValidateVCenterConfig(ctx context.Context, datacenterConfig 
 }
 
 // ValidateFailureDomains validates the provided list of failure domains.
-func (v *Validator) ValidateFailureDomains(datacenterConfig *anywherev1.VSphereDatacenterConfig) error {
-	if !features.IsActive(features.VsphereFailureDomainEnabled()) && len(datacenterConfig.Spec.FailureDomains) > 0 {
-		return fmt.Errorf("Failure Domains feature is not enabled. Please set the env variable %v", features.VSphereFailureDomainEnabledEnvVar)
+func (v *Validator) ValidateFailureDomains(vsphereClusterSpec *Spec) error {
+	if !features.IsActive(features.VsphereFailureDomainEnabled()) {
+		if len(vsphereClusterSpec.VSphereDatacenter.Spec.FailureDomains) > 0 {
+			return fmt.Errorf("Failure Domains feature is not enabled. Please set the env variable %v", features.VSphereFailureDomainEnabledEnvVar)
+		}
+		return nil
 	}
+
+	providedFailureDomains := collection.MapSet(vsphereClusterSpec.VSphereDatacenter.Spec.FailureDomains, func(fd anywherev1.FailureDomain) string {
+		return fd.Name
+	})
+
+	for _, wng := range vsphereClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
+
+		if len(wng.FailureDomains) == 0 {
+			continue
+		}
+
+		if len(wng.FailureDomains) > 1 {
+			return fmt.Errorf("multiple failure domains provided in the worker node group: %s. Please provide only one failure domain", wng.Name)
+		}
+
+		assignedFailureDomain := wng.FailureDomains[0]
+
+		if !providedFailureDomains.Contains(assignedFailureDomain) {
+			return fmt.Errorf("provided invalid failure domain %s in the worker node group %s", assignedFailureDomain, wng.Name)
+		}
+
+	}
+
 	return nil
 }
 
