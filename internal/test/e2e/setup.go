@@ -95,6 +95,11 @@ func (e *E2ESession) setup(regex string) error {
 		return err
 	}
 
+	err = e.setupCommonEnv()
+	if err != nil {
+		return err
+	}
+
 	err = e.setupOIDC(regex)
 	if err != nil {
 		return err
