@@ -407,6 +407,8 @@ rules:
   - tinkerbellclusters
   - tinkerbellmachinetemplates
   - vsphereclusters
+  - vspheredeploymentzones
+  - vspherefailuredomains
   - vspheremachinetemplates
   verbs:
   - create

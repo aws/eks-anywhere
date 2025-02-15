@@ -627,6 +627,10 @@ func validateWorkerNodeGroups(clusterConfig *Cluster) error {
 			return fmt.Errorf("validating upgrade rollout strategy configuration: %v", err)
 		}
 
+		if err := validateFailureDomain(&workerNodeGroupConfig, clusterConfig.Spec.DatacenterRef.Kind); err != nil {
+			return fmt.Errorf("validating failure domain: %v", err)
+		}
+
 		if workerNodeGroupNames[workerNodeGroupConfig.Name] {
 			return errors.New("worker node group names must be unique")
 		}
@@ -1070,5 +1074,14 @@ func validateEksaVersion(clusterConfig *Cluster) error {
 		}
 	}
 
+	return nil
+}
+
+func validateFailureDomain(w *WorkerNodeGroupConfiguration, datacenterRefKind string) error {
+	if datacenterRefKind == VSphereDatacenterKind {
+		if !features.IsActive(features.VsphereFailureDomainEnabled()) && len(w.FailureDomains) > 0 {
+			return fmt.Errorf("Failure Domains feature is not enabled. Please set the env variable %v", features.VSphereFailureDomainEnabledEnvVar)
+		}
+	}
 	return nil
 }

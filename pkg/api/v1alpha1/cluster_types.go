@@ -966,6 +966,9 @@ const (
 	// MachineConfigInvalidReason reports that the Cluster machineconfig validation has failed.
 	MachineConfigInvalidReason FailureReasonType = "MachineConfigInvalid"
 
+	// FailureDomainInvalidReason reports that the Cluster failure domain validation has failed.
+	FailureDomainInvalidReason FailureReasonType = "FailureDomainInvalid"
+
 	// UnavailableControlPlaneIPReason reports that the Cluster controlPlaneIP is already in use.
 	UnavailableControlPlaneIPReason FailureReasonType = "UnavailableControlPlaneIP"
 

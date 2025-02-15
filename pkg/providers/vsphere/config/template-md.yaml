@@ -198,6 +198,9 @@ spec:
         kind: VSphereMachineTemplate
         name: {{.workloadTemplateName}}
       version: {{.kubernetesVersion}}
+{{- if .failureDomain }}
+      failureDomain: {{.failureDomain}}
+{{- end }}
 {{- if .upgradeRolloutStrategy }}
   strategy:
 {{- if (eq .upgradeRolloutStrategyType "InPlace") }}
