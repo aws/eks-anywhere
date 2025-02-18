@@ -241,6 +241,7 @@ func capiCluster() *clusterv1.Cluster {
 			ManagedExternalEtcdRef: &corev1.ObjectReference{
 				Kind:       "EtcdadmCluster",
 				Name:       "test-etcd",
+				Namespace:  constants.EksaSystemNamespace,
 				APIVersion: "etcdcluster.cluster.x-k8s.io/v1beta1",
 			},
 			InfrastructureRef: &corev1.ObjectReference{
