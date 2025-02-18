@@ -62,16 +62,6 @@ func TestCloudStackKubernetes131Redhat8APIServerExtraArgsUpgradeFlow(t *testing.
 }
 
 // AWS IAM Auth
-func TestCloudStackKubernetes127AWSIamAuth(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes127()),
-		framework.WithAWSIam(),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127)),
-	)
-	runAWSIamAuthFlow(test)
-}
-
 func TestCloudStackKubernetes128AWSIamAuth(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
@@ -110,22 +100,6 @@ func TestCloudStackKubernetes131AWSIamAuth(t *testing.T) {
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube131)),
 	)
 	runAWSIamAuthFlow(test)
-}
-
-func TestCloudStackKubernetes127to128AWSIamAuthUpgrade(t *testing.T) {
-	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes127())
-	test := framework.NewClusterE2ETest(
-		t,
-		provider,
-		framework.WithAWSIam(),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127)),
-	)
-	runUpgradeFlowWithAWSIamAuth(
-		test,
-		v1alpha1.Kube128,
-		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube128)),
-		provider.WithProviderUpgrade(provider.Redhat9Kubernetes128Template()),
-	)
 }
 
 func TestCloudStackKubernetes128to129AWSIamAuthUpgrade(t *testing.T) {
@@ -177,19 +151,6 @@ func TestCloudStackKubernetes130to131AWSIamAuthUpgrade(t *testing.T) {
 }
 
 // Curated Packages
-func TestCloudStackKubernetes127RedhatCuratedPackagesSimpleFlow(t *testing.T) {
-	framework.CheckCuratedPackagesCredentials(t)
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes127()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127)),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube127),
-			"my-packages-test", EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
-	)
-	runCuratedPackageInstallSimpleFlow(test)
-}
-
 func TestCloudStackKubernetes128RedhatCuratedPackagesSimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(
@@ -243,19 +204,6 @@ func TestCloudStackKubernetes131RedhatCuratedPackagesSimpleFlow(t *testing.T) {
 }
 
 // Emissary
-func TestCloudStackKubernetes127RedhatCuratedPackagesEmissarySimpleFlow(t *testing.T) {
-	framework.CheckCuratedPackagesCredentials(t)
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes127()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127)),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube127),
-			"my-packages-test", EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
-	)
-	runCuratedPackageEmissaryInstallSimpleFlow(test)
-}
-
 func TestCloudStackKubernetes128RedhatCuratedPackagesEmissarySimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(
@@ -309,18 +257,6 @@ func TestCloudStackKubernetes131RedhatCuratedPackagesEmissarySimpleFlow(t *testi
 }
 
 // Harbor
-func TestCloudStackKubernetes127RedhatCuratedPackagesHarborSimpleFlow(t *testing.T) {
-	framework.CheckCuratedPackagesCredentials(t)
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes127()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127)),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube127),
-			"my-packages-test", EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
-	)
-	runCuratedPackageHarborInstallSimpleFlowLocalStorageProvisioner(test)
-}
 
 func TestCloudStackKubernetes128RedhatCuratedPackagesHarborSimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
@@ -375,13 +311,6 @@ func TestCloudStackKubernetes131RedhatCuratedPackagesHarborSimpleFlow(t *testing
 }
 
 // Workload Cluster Curated Packages
-func TestCloudStackKubernetes127RedhatWorkloadClusterCuratedPackagesSimpleFlow(t *testing.T) {
-	framework.CheckCuratedPackagesCredentials(t)
-	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes127())
-	test := SetupSimpleMultiCluster(t, provider, v1alpha1.Kube127)
-	runCuratedPackageRemoteClusterInstallSimpleFlow(test)
-}
-
 func TestCloudStackKubernetes128RedhatWorkloadClusterCuratedPackagesSimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes128())
@@ -408,13 +337,6 @@ func TestCloudStackKubernetes131RedhatWorkloadClusterCuratedPackagesSimpleFlow(t
 	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes131())
 	test := SetupSimpleMultiCluster(t, provider, v1alpha1.Kube131)
 	runCuratedPackageRemoteClusterInstallSimpleFlow(test)
-}
-
-func TestCloudStackKubernetes127RedhatWorkloadClusterCuratedPackagesEmissarySimpleFlow(t *testing.T) {
-	framework.CheckCuratedPackagesCredentials(t)
-	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes127())
-	test := SetupSimpleMultiCluster(t, provider, v1alpha1.Kube127)
-	runCuratedPackageEmissaryRemoteClusterInstallSimpleFlow(test)
 }
 
 func TestCloudStackKubernetes128RedhatWorkloadClusterCuratedPackagesEmissarySimpleFlow(t *testing.T) {
@@ -446,14 +368,6 @@ func TestCloudStackKubernetes131RedhatWorkloadClusterCuratedPackagesEmissarySimp
 }
 
 // Cert Manager
-func TestCloudStackKubernetes127RedhatCuratedPackagesCertManagerSimpleFlow(t *testing.T) {
-	framework.CheckCuratedPackagesCredentials(t)
-	framework.CheckCertManagerCredentials(t)
-	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes127())
-	test := SetupSimpleMultiCluster(t, provider, v1alpha1.Kube127)
-	runCertManagerRemoteClusterInstallSimpleFlow(test)
-}
-
 func TestCloudStackKubernetes128RedhatCuratedPackagesCertManagerSimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	framework.CheckCertManagerCredentials(t)
@@ -487,17 +401,6 @@ func TestCloudStackKubernetes131RedhatCuratedPackagesCertManagerSimpleFlow(t *te
 }
 
 // ADOT
-func TestCloudStackKubernetes127RedhatCuratedPackagesAdotSimpleFlow(t *testing.T) {
-	framework.CheckCuratedPackagesCredentials(t)
-	test := framework.NewClusterE2ETest(t,
-		framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes127()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127)),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube127),
-			"my-packages-test", EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
-	)
-	runCuratedPackagesAdotInstallSimpleFlow(test)
-}
 
 func TestCloudStackKubernetes128RedhatCuratedPackagesAdotSimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
@@ -545,18 +448,6 @@ func TestCloudStackKubernetes131RedhatCuratedPackagesAdotSimpleFlow(t *testing.T
 			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runCuratedPackagesAdotInstallSimpleFlow(test)
-}
-
-func TestCloudStackKubernetes127RedhatCuratedPackagesAdotUpdateFlow(t *testing.T) {
-	framework.CheckCuratedPackagesCredentials(t)
-	test := framework.NewClusterE2ETest(t,
-		framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes127()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127)),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube127),
-			"my-packages-test", EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
-	)
-	runCuratedPackagesAdotInstallUpdateFlow(test)
 }
 
 func TestCloudStackKubernetes128RedhatCuratedPackagesAdotUpdateFlow(t *testing.T) {
@@ -608,21 +499,6 @@ func TestCloudStackKubernetes131RedhatCuratedPackagesAdotUpdateFlow(t *testing.T
 }
 
 // Cluster Autoscaler
-func TestCloudStackKubernetes127RedHatCuratedPackagesClusterAutoscalerSimpleFlow(t *testing.T) {
-	minNodes := 1
-	maxNodes := 2
-	framework.CheckCuratedPackagesCredentials(t)
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes127()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127), api.WithWorkerNodeAutoScalingConfig(minNodes, maxNodes)),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube127),
-			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
-	)
-	runAutoscalerWithMetricsServerSimpleFlow(test)
-}
-
 func TestCloudStackKubernetes128RedHatCuratedPackagesClusterAutoscalerSimpleFlow(t *testing.T) {
 	minNodes := 1
 	maxNodes := 2
@@ -684,18 +560,6 @@ func TestCloudStackKubernetes131RedHatCuratedPackagesClusterAutoscalerSimpleFlow
 }
 
 // Prometheus
-func TestCloudStackKubernetes127RedhatCuratedPackagesPrometheusSimpleFlow(t *testing.T) {
-	framework.CheckCuratedPackagesCredentials(t)
-	test := framework.NewClusterE2ETest(t,
-		framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes127()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127)),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube127),
-			"my-packages-test", EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
-	)
-	runCuratedPackagesPrometheusInstallSimpleFlow(test)
-}
-
 func TestCloudStackKubernetes128RedhatCuratedPackagesPrometheusSimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
@@ -770,18 +634,6 @@ func TestCloudStackRedhat9DownloadArtifacts(t *testing.T) {
 }
 
 // Flux
-func TestCloudStackKubernetes127GithubFlux(t *testing.T) {
-	test := framework.NewClusterE2ETest(t,
-		framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes127()),
-		framework.WithFluxGithub(),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127)),
-		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
-		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-	)
-	runFluxFlow(test)
-}
-
 func TestCloudStackKubernetes128GithubFlux(t *testing.T) {
 	test := framework.NewClusterE2ETest(t,
 		framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes128()),
@@ -823,18 +675,6 @@ func TestCloudStackKubernetes131GithubFlux(t *testing.T) {
 		framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes131()),
 		framework.WithFluxGithub(),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube131)),
-		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
-		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-	)
-	runFluxFlow(test)
-}
-
-func TestCloudStackKubernetes127GitFlux(t *testing.T) {
-	test := framework.NewClusterE2ETest(t,
-		framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes127()),
-		framework.WithFluxGit(),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127)),
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
@@ -890,24 +730,6 @@ func TestCloudStackKubernetes131GitFlux(t *testing.T) {
 	runFluxFlow(test)
 }
 
-func TestCloudStackKubernetes127To128GitFluxUpgrade(t *testing.T) {
-	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes127())
-	test := framework.NewClusterE2ETest(t,
-		provider,
-		framework.WithFluxGit(),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127)),
-		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
-		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-	)
-	runUpgradeFlowWithFlux(
-		test,
-		v1alpha1.Kube128,
-		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube128)),
-		provider.WithProviderUpgrade(provider.Redhat9Kubernetes128Template()),
-	)
-}
-
 func TestCloudStackKubernetes129To130GitFluxUpgrade(t *testing.T) {
 	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes129())
 	test := framework.NewClusterE2ETest(t,
@@ -941,23 +763,6 @@ func TestCloudStackKubernetes130To131GitFluxUpgrade(t *testing.T) {
 		v1alpha1.Kube131,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube131)),
 		provider.WithProviderUpgrade(provider.Redhat9Kubernetes131Template()),
-	)
-}
-
-func TestCloudStackKubernetes127InstallGitFluxDuringUpgrade(t *testing.T) {
-	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes127())
-	test := framework.NewClusterE2ETest(t,
-		provider,
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127)),
-		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
-		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-	)
-	runUpgradeFlowWithFlux(
-		test,
-		v1alpha1.Kube127,
-		framework.WithFluxGit(),
-		framework.WithClusterUpgrade(api.WithGitOpsRef(framework.DefaultFluxConfigName, v1alpha1.FluxConfigKind)),
 	)
 }
 
@@ -1036,28 +841,6 @@ func TestCloudStackKubernetes128UpgradeManagementComponents(t *testing.T) {
 }
 
 // Labels
-func TestCloudStackKubernetes127LabelsAndNodeNameRedhat(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewCloudStack(t,
-			framework.WithCloudStackRedhat9Kubernetes127(),
-		),
-		framework.WithClusterFiller(
-			api.WithKubernetesVersion(v1alpha1.Kube127),
-			api.WithControlPlaneLabel(constants.FailureDomainLabelName, constants.CloudstackFailureDomainPlaceholder),
-			api.WithWorkerNodeGroup(constants.DefaultWorkerNodeGroupName,
-				api.WithCount(1),
-				api.WithLabel(constants.FailureDomainLabelName, constants.CloudstackFailureDomainPlaceholder),
-			),
-		),
-	)
-	test.GenerateClusterConfig()
-	test.CreateCluster()
-	test.ValidateControlPlaneNodes(framework.ValidateControlPlaneFailureDomainLabels, framework.ValidateControlPlaneNodeNameMatchCAPIMachineName)
-	test.ValidateWorkerNodes(framework.ValidateWorkerNodeFailureDomainLabels, framework.ValidateWorkerNodeNameMatchCAPIMachineName)
-	test.DeleteCluster()
-}
-
 func TestCloudStackKubernetes128LabelsAndNodeNameRedhat(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
@@ -1144,32 +927,6 @@ func TestCloudStackKubernetes131LabelsAndNodeNameRedhat(t *testing.T) {
 	test.ValidateControlPlaneNodes(framework.ValidateControlPlaneFailureDomainLabels, framework.ValidateControlPlaneNodeNameMatchCAPIMachineName)
 	test.ValidateWorkerNodes(framework.ValidateWorkerNodeFailureDomainLabels, framework.ValidateWorkerNodeNameMatchCAPIMachineName)
 	test.DeleteCluster()
-}
-
-func TestCloudStackKubernetes127RedhatLabelsUpgradeFlow(t *testing.T) {
-	provider := redhat127ProviderWithLabels(t)
-
-	test := framework.NewClusterE2ETest(
-		t,
-		provider,
-		framework.WithClusterFiller(
-			api.WithKubernetesVersion(v1alpha1.Kube127),
-			api.WithExternalEtcdTopology(1),
-			api.WithControlPlaneCount(1),
-			api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
-		),
-	)
-
-	runLabelsUpgradeFlow(
-		test,
-		v1alpha1.Kube127,
-		framework.WithClusterUpgrade(
-			api.WithWorkerNodeGroup(worker0, api.WithLabel(key1, val1)),
-			api.WithWorkerNodeGroup(worker1, api.WithLabel(key2, val2)),
-			api.WithWorkerNodeGroup(worker2),
-			api.WithControlPlaneLabel(cpKey1, cpVal1),
-		),
-	)
 }
 
 func TestCloudStackKubernetes128RedhatLabelsUpgradeFlow(t *testing.T) {
@@ -1276,26 +1033,6 @@ func TestCloudStackKubernetes131RedhatLabelsUpgradeFlow(t *testing.T) {
 	)
 }
 
-func redhat127ProviderWithLabels(t *testing.T) *framework.CloudStack {
-	return framework.NewCloudStack(t,
-		framework.WithCloudStackWorkerNodeGroup(
-			worker0,
-			framework.WithWorkerNodeGroup(worker0, api.WithCount(2),
-				api.WithLabel(key1, val2)),
-		),
-		framework.WithCloudStackWorkerNodeGroup(
-			worker1,
-			framework.WithWorkerNodeGroup(worker1, api.WithCount(1)),
-		),
-		framework.WithCloudStackWorkerNodeGroup(
-			worker2,
-			framework.WithWorkerNodeGroup(worker2, api.WithCount(1),
-				api.WithLabel(key2, val2)),
-		),
-		framework.WithCloudStackRedhat9Kubernetes127(),
-	)
-}
-
 func redhat128ProviderWithLabels(t *testing.T) *framework.CloudStack {
 	return framework.NewCloudStack(t,
 		framework.WithCloudStackWorkerNodeGroup(
@@ -1377,34 +1114,6 @@ func redhat131ProviderWithLabels(t *testing.T) *framework.CloudStack {
 }
 
 // Multicluster
-func TestCloudStackKubernetes127MulticlusterWorkloadCluster(t *testing.T) {
-	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes127())
-	test := framework.NewMulticlusterE2ETest(
-		t,
-		framework.NewClusterE2ETest(
-			t,
-			provider,
-			framework.WithClusterFiller(
-				api.WithKubernetesVersion(v1alpha1.Kube127),
-				api.WithControlPlaneCount(1),
-				api.WithWorkerNodeCount(1),
-				api.WithStackedEtcdTopology(),
-			),
-		),
-		framework.NewClusterE2ETest(
-			t,
-			provider,
-			framework.WithClusterFiller(
-				api.WithKubernetesVersion(v1alpha1.Kube127),
-				api.WithControlPlaneCount(1),
-				api.WithWorkerNodeCount(1),
-				api.WithStackedEtcdTopology(),
-			),
-		),
-	)
-	runWorkloadClusterFlow(test)
-}
-
 func TestCloudStackKubernetes128MulticlusterWorkloadCluster(t *testing.T) {
 	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes128())
 	test := framework.NewMulticlusterE2ETest(
@@ -1515,46 +1224,6 @@ func TestCloudStackKubernetes131MulticlusterWorkloadCluster(t *testing.T) {
 		),
 	)
 	runWorkloadClusterFlow(test)
-}
-
-func TestCloudStackUpgradeKubernetes128MulticlusterWorkloadClusterWithGithubFlux(t *testing.T) {
-	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes127())
-	test := framework.NewMulticlusterE2ETest(
-		t,
-		framework.NewClusterE2ETest(
-			t,
-			provider,
-			framework.WithFluxGithub(),
-			framework.WithClusterFiller(
-				api.WithKubernetesVersion(v1alpha1.Kube127),
-				api.WithControlPlaneCount(1),
-				api.WithWorkerNodeCount(1),
-				api.WithStackedEtcdTopology(),
-			),
-		),
-		framework.NewClusterE2ETest(
-			t,
-			provider,
-			framework.WithFluxGithub(),
-			framework.WithClusterFiller(
-				api.WithKubernetesVersion(v1alpha1.Kube127),
-				api.WithControlPlaneCount(1),
-				api.WithWorkerNodeCount(1),
-				api.WithStackedEtcdTopology(),
-			),
-		),
-	)
-	runWorkloadClusterFlowWithGitOps(
-		test,
-		framework.WithClusterUpgradeGit(
-			api.WithKubernetesVersion(v1alpha1.Kube128),
-			api.WithControlPlaneCount(3),
-			api.WithWorkerNodeCount(3),
-		),
-		provider.WithProviderUpgradeGit(
-			provider.Redhat9Kubernetes128Template(),
-		),
-	)
 }
 
 func TestCloudStackUpgradeKubernetes129MulticlusterWorkloadClusterWithGithubFlux(t *testing.T) {
@@ -1678,11 +1347,6 @@ func TestCloudStackUpgradeKubernetes131MulticlusterWorkloadClusterWithGithubFlux
 }
 
 // OIDC
-func TestCloudStackKubernetes127WithOIDCManagementClusterUpgradeFromLatestSideEffects(t *testing.T) {
-	cloudstack := framework.NewCloudStack(t)
-	runTestManagementClusterUpgradeSideEffects(t, cloudstack, framework.RedHat9, anywherev1.Kube127)
-}
-
 func TestCloudStackKubernetes128WithOIDCManagementClusterUpgradeFromLatestSideEffects(t *testing.T) {
 	cloudstack := framework.NewCloudStack(t)
 	runTestManagementClusterUpgradeSideEffects(t, cloudstack, framework.RedHat9, anywherev1.Kube128)
@@ -1701,19 +1365,6 @@ func TestCloudStackKubernetes130WithOIDCManagementClusterUpgradeFromLatestSideEf
 func TestCloudStackKubernetes131WithOIDCManagementClusterUpgradeFromLatestSideEffects(t *testing.T) {
 	cloudstack := framework.NewCloudStack(t)
 	runTestManagementClusterUpgradeSideEffects(t, cloudstack, framework.RedHat9, anywherev1.Kube131)
-}
-
-func TestCloudStackKubernetes127OIDC(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes127()),
-		framework.WithOIDC(),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127)),
-		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
-		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-	)
-	runOIDCFlow(test)
 }
 
 func TestCloudStackKubernetes128OIDC(t *testing.T) {
@@ -1788,19 +1439,6 @@ func TestCloudStackKubernetes130To131OIDCUpgrade(t *testing.T) {
 }
 
 // Proxy Config
-func TestCloudStackKubernetes127RedhatProxyConfig(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes127()),
-		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
-		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127)),
-		framework.WithProxy(framework.CloudstackProxyRequiredEnvVars),
-	)
-	runProxyConfigFlow(test)
-}
-
 func TestCloudStackKubernetes128RedhatProxyConfig(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
@@ -1854,50 +1492,6 @@ func TestCloudStackKubernetes131RedhatProxyConfig(t *testing.T) {
 }
 
 // Proxy Config Multicluster
-func TestCloudStackKubernetes127RedhatProxyConfigAPI(t *testing.T) {
-	cloudstack := framework.NewCloudStack(t)
-	managementCluster := framework.NewClusterE2ETest(
-		t,
-		cloudstack,
-	).WithClusterConfig(
-		api.ClusterToConfigFiller(
-			api.WithControlPlaneCount(1),
-			api.WithWorkerNodeCount(1),
-		),
-		cloudstack.WithRedhat9Kubernetes127(),
-	)
-
-	test := framework.NewMulticlusterE2ETest(t, managementCluster)
-	test.WithWorkloadClusters(
-		framework.NewClusterE2ETest(
-			t,
-			cloudstack,
-			framework.WithClusterName(test.NewWorkloadClusterName()),
-			framework.WithProxy(framework.CloudstackProxyRequiredEnvVars),
-		).WithClusterConfig(
-			api.ClusterToConfigFiller(
-				api.WithManagementCluster(managementCluster.ClusterName),
-			),
-			cloudstack.WithRedhat9Kubernetes127(),
-		),
-	)
-
-	test.CreateManagementCluster()
-
-	// Create workload clusters
-	test.RunConcurrentlyInWorkloadClusters(func(wc *framework.WorkloadCluster) {
-		wc.ApplyClusterManifest()
-		wc.WaitForKubeconfig()
-		wc.ValidateClusterState()
-
-		wc.DeleteClusterWithKubectl()
-		wc.ValidateClusterDelete()
-	})
-
-	test.ManagementCluster.StopIfFailed()
-	test.DeleteManagementCluster()
-}
-
 func TestCloudStackKubernetes128RedhatProxyConfigAPI(t *testing.T) {
 	cloudstack := framework.NewCloudStack(t)
 	managementCluster := framework.NewClusterE2ETest(
@@ -2075,19 +1669,6 @@ func TestCloudStackKubernetes131RedhatProxyConfigAPI(t *testing.T) {
 }
 
 // Registry Mirror
-func TestCloudStackKubernetes127RedhatRegistryMirrorInsecureSkipVerify(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes127()),
-		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127)),
-		framework.WithRegistryMirrorInsecureSkipVerify(constants.CloudStackProviderName),
-	)
-	runRegistryMirrorConfigFlow(test)
-}
-
 func TestCloudStackKubernetes128RedhatRegistryMirrorInsecureSkipVerify(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
@@ -2136,19 +1717,6 @@ func TestCloudStackKubernetes131RedhatRegistryMirrorInsecureSkipVerify(t *testin
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube131)),
 		framework.WithRegistryMirrorInsecureSkipVerify(constants.CloudStackProviderName),
-	)
-	runRegistryMirrorConfigFlow(test)
-}
-
-func TestCloudStackKubernetes127RedhatRegistryMirrorAndCert(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes127()),
-		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127)),
-		framework.WithRegistryMirrorEndpointAndCert(constants.CloudStackProviderName),
 	)
 	runRegistryMirrorConfigFlow(test)
 }
@@ -2205,19 +1773,6 @@ func TestCloudStackKubernetes131RedhatRegistryMirrorAndCert(t *testing.T) {
 	runRegistryMirrorConfigFlow(test)
 }
 
-func TestCloudStackKubernetes127RedhatAuthenticatedRegistryMirror(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes127()),
-		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127)),
-		framework.WithAuthenticatedRegistryMirror(constants.CloudStackProviderName),
-	)
-	runRegistryMirrorConfigFlow(test)
-}
-
 func TestCloudStackKubernetes128RedhatAuthenticatedRegistryMirror(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
@@ -2232,15 +1787,6 @@ func TestCloudStackKubernetes128RedhatAuthenticatedRegistryMirror(t *testing.T) 
 }
 
 // Simple Flow
-func TestCloudStackKubernetes127RedHat8SimpleFlow(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewCloudStack(t, framework.WithCloudStackRedhat127()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127)),
-	)
-	runSimpleFlow(test)
-}
-
 func TestCloudStackKubernetes128RedHat8SimpleFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
@@ -2277,15 +1823,6 @@ func TestCloudStackKubernetes131RedHat8SimpleFlow(t *testing.T) {
 	runSimpleFlow(test)
 }
 
-func TestCloudStackKubernetes127RedHat9SimpleFlow(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes127()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127)),
-	)
-	runSimpleFlow(test)
-}
-
 func TestCloudStackKubernetes128RedHat9SimpleFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
@@ -2318,17 +1855,6 @@ func TestCloudStackKubernetes131RedHat9SimpleFlow(t *testing.T) {
 		t,
 		framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes131()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube131)),
-	)
-	runSimpleFlow(test)
-}
-
-func TestCloudStackKubernetes127ThreeReplicasFiveWorkersSimpleFlow(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes127()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127)),
-		framework.WithClusterFiller(api.WithControlPlaneCount(3)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(5)),
 	)
 	runSimpleFlow(test)
 }
@@ -2377,16 +1903,6 @@ func TestCloudStackKubernetes131ThreeReplicasFiveWorkersSimpleFlow(t *testing.T)
 	runSimpleFlow(test)
 }
 
-func TestCloudStackKubernetes127MultiEndpointSimpleFlow(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes127(),
-			framework.WithCloudStackFillers(framework.UpdateAddCloudStackAz2())),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127)),
-	)
-	runSimpleFlow(test)
-}
-
 func TestCloudStackKubernetes128MultiEndpointSimpleFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
@@ -2423,18 +1939,6 @@ func TestCloudStackKubernetes131MultiEndpointSimpleFlow(t *testing.T) {
 		framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes131(),
 			framework.WithCloudStackFillers(framework.UpdateAddCloudStackAz2())),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube131)),
-	)
-	runSimpleFlow(test)
-}
-
-func TestCloudStackKubernetes127DifferentNamespaceSimpleFlow(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes127(),
-			framework.WithCloudStackFillers(api.WithCloudStackConfigNamespace(clusterNamespace),
-				api.WithCloudStackConfigNamespaceForAllMachinesAndDatacenter(clusterNamespace))),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127)),
-		framework.WithClusterFiller(api.WithClusterNamespace(clusterNamespace)),
 	)
 	runSimpleFlow(test)
 }
@@ -2488,16 +1992,6 @@ func TestCloudStackKubernetes131DifferentNamespaceSimpleFlow(t *testing.T) {
 }
 
 // Cilium Policy
-func TestCloudStackKubernetes127CiliumAlwaysPolicyEnforcementModeSimpleFlow(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes127()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127)),
-		framework.WithClusterFiller(api.WithCiliumPolicyEnforcementMode(v1alpha1.CiliumPolicyModeAlways)),
-	)
-	runSimpleFlow(test)
-}
-
 func TestCloudStackKubernetes128CiliumAlwaysPolicyEnforcementModeSimpleFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
@@ -2539,15 +2033,6 @@ func TestCloudStackKubernetes131CiliumAlwaysPolicyEnforcementModeSimpleFlow(t *t
 }
 
 // Stacked Etcd
-func TestCloudStackKubernetes127StackedEtcdRedhat(t *testing.T) {
-	test := framework.NewClusterE2ETest(t,
-		framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes127()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127)),
-		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
-		framework.WithClusterFiller(api.WithStackedEtcdTopology()))
-	runStackedEtcdFlow(test)
-}
-
 func TestCloudStackKubernetes128StackedEtcdRedhat(t *testing.T) {
 	test := framework.NewClusterE2ETest(t,
 		framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes128()),
@@ -2585,32 +2070,6 @@ func TestCloudStackKubernetes131StackedEtcdRedhat(t *testing.T) {
 }
 
 // Taints
-func TestCloudStackKubernetes127RedhatTaintsUpgradeFlow(t *testing.T) {
-	provider := redhat127ProviderWithTaints(t)
-
-	test := framework.NewClusterE2ETest(
-		t,
-		provider,
-		framework.WithClusterFiller(
-			api.WithKubernetesVersion(v1alpha1.Kube127),
-			api.WithExternalEtcdTopology(1),
-			api.WithControlPlaneCount(1),
-			api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
-		),
-	)
-
-	runTaintsUpgradeFlow(
-		test,
-		v1alpha1.Kube127,
-		framework.WithClusterUpgrade(
-			api.WithWorkerNodeGroup(worker0, api.WithTaint(framework.NoExecuteTaint())),
-			api.WithWorkerNodeGroup(worker1, api.WithTaint(framework.NoExecuteTaint())),
-			api.WithWorkerNodeGroup(worker2, api.WithNoTaints()),
-			api.WithControlPlaneTaints([]corev1.Taint{framework.PreferNoScheduleTaint()}),
-		),
-	)
-}
-
 func TestCloudStackKubernetes128RedhatTaintsUpgradeFlow(t *testing.T) {
 	provider := redhat128ProviderWithTaints(t)
 
@@ -2715,24 +2174,6 @@ func TestCloudStackKubernetes131RedhatTaintsUpgradeFlow(t *testing.T) {
 	)
 }
 
-func redhat127ProviderWithTaints(t *testing.T) *framework.CloudStack {
-	return framework.NewCloudStack(t,
-		framework.WithCloudStackWorkerNodeGroup(
-			worker0,
-			framework.NoScheduleWorkerNodeGroup(worker0, 2),
-		),
-		framework.WithCloudStackWorkerNodeGroup(
-			worker1,
-			framework.WithWorkerNodeGroup(worker1, api.WithCount(1)),
-		),
-		framework.WithCloudStackWorkerNodeGroup(
-			worker2,
-			framework.PreferNoScheduleWorkerNodeGroup(worker2, 1),
-		),
-		framework.WithCloudStackRedhat9Kubernetes127(),
-	)
-}
-
 func redhat128ProviderWithTaints(t *testing.T) *framework.CloudStack {
 	return framework.NewCloudStack(t,
 		framework.WithCloudStackWorkerNodeGroup(
@@ -2806,46 +2247,6 @@ func redhat131ProviderWithTaints(t *testing.T) *framework.CloudStack {
 }
 
 // Upgrade
-func TestCloudStackKubernetes127RedhatAndRemoveWorkerNodeGroups(t *testing.T) {
-	provider := framework.NewCloudStack(t,
-		framework.WithCloudStackWorkerNodeGroup(
-			"worker-1",
-			framework.WithWorkerNodeGroup("workers-1", api.WithCount(2)),
-		),
-		framework.WithCloudStackWorkerNodeGroup(
-			"worker-2",
-			framework.WithWorkerNodeGroup("workers-2", api.WithCount(1)),
-		),
-		framework.WithCloudStackRedhat9Kubernetes127(),
-	)
-	test := framework.NewClusterE2ETest(
-		t,
-		provider,
-		framework.WithClusterFiller(
-			api.WithKubernetesVersion(v1alpha1.Kube127),
-			api.WithExternalEtcdTopology(1),
-			api.WithControlPlaneCount(1),
-			api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
-		),
-	)
-
-	runSimpleUpgradeFlow(
-		test,
-		v1alpha1.Kube127,
-		framework.WithClusterUpgrade(
-			api.RemoveWorkerNodeGroup("workers-2"),
-			api.WithWorkerNodeGroup("workers-1", api.WithCount(1)),
-		),
-		provider.WithNewCloudStackWorkerNodeGroup(
-			"worker-1",
-			framework.WithWorkerNodeGroup(
-				"workers-3",
-				api.WithCount(1),
-			),
-		),
-	)
-}
-
 func TestCloudStackKubernetes128RedhatAndRemoveWorkerNodeGroups(t *testing.T) {
 	provider := framework.NewCloudStack(t,
 		framework.WithCloudStackWorkerNodeGroup(
@@ -3006,25 +2407,6 @@ func TestCloudStackKubernetes131RedhatAndRemoveWorkerNodeGroups(t *testing.T) {
 	)
 }
 
-func TestCloudStackKubernetes127To128Redhat8UnstackedEtcdUpgrade(t *testing.T) {
-	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat127())
-	test := framework.NewClusterE2ETest(
-		t,
-		provider,
-		framework.WithClusterFiller(api.WithStackedEtcdTopology()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127)),
-		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-	)
-	runSimpleUpgradeFlow(
-		test,
-		v1alpha1.Kube128,
-		framework.WithClusterFiller(api.WithStackedEtcdTopology()),
-		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube128)),
-		provider.WithProviderUpgrade(provider.Redhat128Template()),
-	)
-}
-
 func TestCloudStackKubernetes128To129Redhat8UnstackedEtcdUpgrade(t *testing.T) {
 	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat128())
 	test := framework.NewClusterE2ETest(
@@ -3079,25 +2461,6 @@ func TestCloudStackKubernetes130To131Redhat8UnstackedEtcdUpgrade(t *testing.T) {
 		framework.WithClusterFiller(api.WithStackedEtcdTopology()),
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube131)),
 		provider.WithProviderUpgrade(provider.Redhat131Template()),
-	)
-}
-
-func TestCloudStackKubernetes127To128Redhat8StackedEtcdUpgrade(t *testing.T) {
-	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat127())
-	test := framework.NewClusterE2ETest(
-		t,
-		provider,
-		framework.WithClusterFiller(api.WithStackedEtcdTopology()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127)),
-		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-	)
-	runSimpleUpgradeFlow(
-		test,
-		v1alpha1.Kube128,
-		framework.WithClusterFiller(api.WithStackedEtcdTopology()),
-		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube128)),
-		provider.WithProviderUpgrade(provider.Redhat128Template()),
 	)
 }
 
@@ -3158,23 +2521,6 @@ func TestCloudStackKubernetes130To131Redhat8StackedEtcdUpgrade(t *testing.T) {
 	)
 }
 
-func TestCloudStackKubernetes127To128Redhat9UnstackedEtcdUpgrade(t *testing.T) {
-	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes127())
-	test := framework.NewClusterE2ETest(
-		t,
-		provider,
-		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127)),
-		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
-	)
-	runSimpleUpgradeFlow(
-		test,
-		v1alpha1.Kube128,
-		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube128)),
-		provider.WithProviderUpgrade(provider.Redhat9Kubernetes128Template()),
-	)
-}
-
 func TestCloudStackKubernetes128To129Redhat9UnstackedEtcdUpgrade(t *testing.T) {
 	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes128())
 	test := framework.NewClusterE2ETest(
@@ -3223,24 +2569,6 @@ func TestCloudStackKubernetes130To131Redhat9UnstackedEtcdUpgrade(t *testing.T) {
 		v1alpha1.Kube131,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube131)),
 		provider.WithProviderUpgrade(provider.Redhat9Kubernetes131Template()),
-	)
-}
-
-func TestCloudStackKubernetes127To128Redhat9StackedEtcdUpgrade(t *testing.T) {
-	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes127())
-	test := framework.NewClusterE2ETest(
-		t,
-		provider,
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127)),
-		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithClusterFiller(api.WithStackedEtcdTopology()),
-	)
-	runSimpleUpgradeFlow(
-		test,
-		v1alpha1.Kube128,
-		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube128)),
-		provider.WithProviderUpgrade(provider.Redhat9Kubernetes128Template()),
 	)
 }
 
@@ -3295,24 +2623,6 @@ func TestCloudStackKubernetes130To131Redhat9StackedEtcdUpgrade(t *testing.T) {
 		v1alpha1.Kube131,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube131)),
 		provider.WithProviderUpgrade(provider.Redhat9Kubernetes131Template()),
-	)
-}
-
-func TestCloudStackKubernetes127Redhat8ToRedhat9Upgrade(t *testing.T) {
-	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat127())
-	test := framework.NewClusterE2ETest(
-		t,
-		provider,
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127)),
-		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
-	)
-	runSimpleUpgradeFlow(
-		test,
-		v1alpha1.Kube127,
-		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube127)),
-		provider.WithProviderUpgrade(provider.Redhat9Kubernetes127Template()),
 	)
 }
 
@@ -3389,36 +2699,6 @@ func TestCloudStackKubernetes131Redhat8ToRedhat9Upgrade(t *testing.T) {
 }
 
 // TODO: investigate these tests further as they pass even without the expected behavior(upgrade should fail the first time and continue from the checkpoint on second upgrade)
-func TestCloudStackKubernetes127RedhatTo128UpgradeWithCheckpoint(t *testing.T) {
-	var clusterOpts []framework.ClusterE2ETestOpt
-	var clusterOpts2 []framework.ClusterE2ETestOpt
-
-	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes127())
-	test := framework.NewClusterE2ETest(
-		t,
-		provider,
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127)),
-		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-	)
-
-	clusterOpts = append(clusterOpts, framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube128)), framework.ExpectFailure(true),
-		provider.WithProviderUpgrade(provider.Redhat9Kubernetes127Template()), framework.WithEnvVar(features.CheckpointEnabledEnvVar, "true"), framework.WithEnvVar(framework.CleanupResourcesVar, "false"))
-
-	commandOpts := []framework.CommandOpt{framework.WithExternalEtcdWaitTimeout("10m")}
-
-	clusterOpts2 = append(clusterOpts, framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube128)), framework.ExpectFailure(false),
-		provider.WithProviderUpgrade(provider.Redhat9Kubernetes128Template()), framework.WithEnvVar(features.CheckpointEnabledEnvVar, "true"), framework.WithEnvVar(framework.CleanupResourcesVar, "true"))
-
-	runUpgradeFlowWithCheckpoint(
-		test,
-		v1alpha1.Kube128,
-		clusterOpts,
-		clusterOpts2,
-		commandOpts,
-	)
-}
-
 func TestCloudStackKubernetes128RedhatTo129UpgradeWithCheckpoint(t *testing.T) {
 	var clusterOpts []framework.ClusterE2ETestOpt
 	var clusterOpts2 []framework.ClusterE2ETestOpt
@@ -3509,22 +2789,6 @@ func TestCloudStackKubernetes130RedhatTo131UpgradeWithCheckpoint(t *testing.T) {
 	)
 }
 
-func TestCloudStackKubernetes127RedhatControlPlaneNodeUpgrade(t *testing.T) {
-	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes127())
-	test := framework.NewClusterE2ETest(
-		t,
-		provider,
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127)),
-		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(3)),
-	)
-	runSimpleUpgradeFlow(
-		test,
-		v1alpha1.Kube127,
-		framework.WithClusterUpgrade(api.WithControlPlaneCount(3)),
-	)
-}
-
 func TestCloudStackKubernetes128RedhatControlPlaneNodeUpgrade(t *testing.T) {
 	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes128())
 	test := framework.NewClusterE2ETest(
@@ -3589,22 +2853,6 @@ func TestCloudStackKubernetes131RedhatControlPlaneNodeUpgrade(t *testing.T) {
 	)
 }
 
-func TestCloudStackKubernetes127RedhatWorkerNodeUpgrade(t *testing.T) {
-	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes127())
-	test := framework.NewClusterE2ETest(
-		t,
-		provider,
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127)),
-		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(3)),
-	)
-	runSimpleUpgradeFlow(
-		test,
-		v1alpha1.Kube127,
-		framework.WithClusterUpgrade(api.WithWorkerNodeCount(5)),
-	)
-}
-
 func TestCloudStackKubernetes128RedhatWorkerNodeUpgrade(t *testing.T) {
 	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes128())
 	test := framework.NewClusterE2ETest(
@@ -3666,25 +2914,6 @@ func TestCloudStackKubernetes131RedhatWorkerNodeUpgrade(t *testing.T) {
 		test,
 		v1alpha1.Kube131,
 		framework.WithClusterUpgrade(api.WithWorkerNodeCount(5)),
-	)
-}
-
-func TestCloudStackKubernetes127To128RedhatMultipleFieldsUpgrade(t *testing.T) {
-	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes127())
-	test := framework.NewClusterE2ETest(
-		t,
-		provider,
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127)),
-	)
-	runSimpleUpgradeFlow(
-		test,
-		v1alpha1.Kube128,
-		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube128)),
-		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
-		provider.WithProviderUpgrade(
-			provider.Redhat9Kubernetes128Template(),
-			framework.UpdateLargerCloudStackComputeOffering(),
-		),
 	)
 }
 
@@ -4285,27 +3514,6 @@ func TestCloudStackKubernetes129EtcdEncryption(t *testing.T) {
 	test.DeleteCluster()
 }
 
-func TestCloudStackKubernetes127To128RedHatManagementCPUpgradeAPI(t *testing.T) {
-	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes127())
-	test := framework.NewClusterE2ETest(
-		t, provider,
-	).WithClusterConfig(
-		api.ClusterToConfigFiller(
-			api.WithKubernetesVersion(v1alpha1.Kube127),
-			api.WithControlPlaneCount(1),
-			api.WithWorkerNodeCount(1),
-		),
-	)
-	runUpgradeFlowWithAPI(
-		test,
-		api.ClusterToConfigFiller(
-			api.WithKubernetesVersion(v1alpha1.Kube128),
-			api.WithControlPlaneCount(3),
-		),
-		provider.WithKubeVersionAndOS(v1alpha1.Kube128, framework.RedHat9, nil),
-	)
-}
-
 func TestCloudStackKubernetes128ValidateDomainFourLevelsSimpleFlow(t *testing.T) {
 	provider := framework.NewCloudStack(
 		t,
@@ -4365,54 +3573,6 @@ func TestCloudStackKubernetes128EtcdScaleDown(t *testing.T) {
 		framework.WithClusterUpgrade(
 			api.WithExternalEtcdTopology(1),
 		),
-	)
-}
-
-func TestCloudStackKubernetes127to128EtcdScaleUp(t *testing.T) {
-	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes127())
-	test := framework.NewClusterE2ETest(
-		t,
-		provider,
-		framework.WithClusterFiller(
-			api.WithKubernetesVersion(v1alpha1.Kube127),
-			api.WithExternalEtcdTopology(1),
-			api.WithControlPlaneCount(1),
-			api.WithWorkerNodeCount(1),
-		),
-	)
-
-	runSimpleUpgradeFlow(
-		test,
-		v1alpha1.Kube128,
-		framework.WithClusterUpgrade(
-			api.WithKubernetesVersion(v1alpha1.Kube128),
-			api.WithExternalEtcdTopology(3),
-		),
-		provider.WithProviderUpgrade(provider.Redhat9Kubernetes128Template()),
-	)
-}
-
-func TestCloudStackKubernetes127to128EtcdScaleDown(t *testing.T) {
-	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes127())
-	test := framework.NewClusterE2ETest(
-		t,
-		provider,
-		framework.WithClusterFiller(
-			api.WithKubernetesVersion(v1alpha1.Kube127),
-			api.WithExternalEtcdTopology(3),
-			api.WithControlPlaneCount(1),
-			api.WithWorkerNodeCount(1),
-		),
-	)
-
-	runSimpleUpgradeFlow(
-		test,
-		v1alpha1.Kube128,
-		framework.WithClusterUpgrade(
-			api.WithKubernetesVersion(v1alpha1.Kube128),
-			api.WithExternalEtcdTopology(1),
-		),
-		provider.WithProviderUpgrade(provider.Redhat9Kubernetes128Template()),
 	)
 }
 
