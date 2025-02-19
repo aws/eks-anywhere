@@ -183,6 +183,9 @@ env:
     TEST_RUNNER_GOVC_RESOURCE_POOL: "tinkerbell_ci:govc_resource_pool"
     TEST_RUNNER_GOVC_NETWORK: "tinkerbell_ci:govc_network"
     TEST_RUNNER_GOVC_FOLDER: "tinkerbell_ci:govc_folder"
+    # Extended kubernetes version support secrets
+    LICENSE_TOKEN: "extended_support:license_token"
+    LICENSE_TOKEN2: "extended_support:license_token2"
 phases:
   pre_build:
     commands:

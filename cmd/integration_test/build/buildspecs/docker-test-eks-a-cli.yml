@@ -25,6 +25,7 @@ env:
     T_REGISTRY_MIRROR_AIRGAPPED_SECURITY_GROUP: "harbor-registry-data:airgapped_sg_id"
     T_AWS_IAM_ROLE_ARN: "aws-iam-auth-role:ec2_role_arn"
     LICENSE_TOKEN: "extended_support:license_token"
+    LICENSE_TOKEN2: "extended_support:license_token2"
 phases:
   pre_build:
     commands:

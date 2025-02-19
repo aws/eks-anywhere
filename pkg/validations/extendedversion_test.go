@@ -160,7 +160,7 @@ func TestValidateLicenseKeyIsUnique(t *testing.T) {
 					LicenseToken: "valid-token",
 				},
 			},
-			wantErr: fmt.Errorf("license key valid-token is already in use by cluster"),
+			wantErr: fmt.Errorf("license token valid-token is already in use by cluster"),
 		},
 	}
 	for _, tc := range tests {

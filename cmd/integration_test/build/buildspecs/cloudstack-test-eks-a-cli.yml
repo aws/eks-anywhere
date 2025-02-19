@@ -69,6 +69,7 @@ env:
     T_CLOUDSTACK_SSH_AUTHORIZED_KEY: "vsphere_ci_beta_connection:ssh_authorized_key"
     T_SSH_PRIVATE_KEY: "vsphere_ci_beta_connection:base64_encoded_ssh_private_key"
     LICENSE_TOKEN: "extended_support:license_token"
+    LICENSE_TOKEN2: "extended_support:license_token2"
 phases:
   pre_build:
     commands:

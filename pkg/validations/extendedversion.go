@@ -122,7 +122,7 @@ func validateLicenseKeyIsUnique(ctx context.Context, clusterName string, license
 	}
 	for _, eksaCluster := range eksaClusters.Items {
 		if eksaCluster.Name != clusterName && eksaCluster.Spec.LicenseToken == licenseToken {
-			return fmt.Errorf("license key %s is already in use by cluster %s", licenseToken, eksaCluster.Name)
+			return fmt.Errorf("license token %s is already in use by cluster %s", licenseToken, eksaCluster.Name)
 		}
 	}
 	return nil

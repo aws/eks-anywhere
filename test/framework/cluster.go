@@ -64,6 +64,7 @@ const (
 	ClusterIPEnvVar                        = "T_CLUSTER_IP"
 	CleanupResourcesVar                    = "T_CLEANUP_RESOURCES"
 	LicenseTokenEnvVar                     = "LICENSE_TOKEN"
+	LicenseToken2EnvVar                    = "LICENSE_TOKEN2"
 	hardwareYamlPath                       = "hardware.yaml"
 	hardwareCsvPath                        = "hardware.csv"
 	EksaPackagesInstallation               = "eks-anywhere-packages"
@@ -1082,6 +1083,10 @@ func getBundlesOverride() string {
 
 func getLicenseToken() string {
 	return os.Getenv(LicenseTokenEnvVar)
+}
+
+func getLicenseToken2() string {
+	return os.Getenv(LicenseToken2EnvVar)
 }
 
 func getCleanupResourcesVar() (bool, error) {

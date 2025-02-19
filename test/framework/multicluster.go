@@ -28,8 +28,10 @@ func NewMulticlusterE2ETest(t *testing.T, managementCluster *ClusterE2ETest, wor
 	}
 
 	m.WorkloadClusters = make(WorkloadClusters, len(workloadClusters))
+	licenseToken2 := getLicenseToken2()
 	for _, c := range workloadClusters {
 		c.clusterFillers = append(c.clusterFillers, api.WithManagementCluster(managementCluster.ClusterName))
+		c.clusterFillers = append(c.clusterFillers, api.WithLicenseToken(licenseToken2))
 		c.UpdateClusterName(m.NewWorkloadClusterName())
 		m.WithWorkloadClusters(c)
 	}
