@@ -181,3 +181,15 @@ func TestVsphereGenerateCAPISpecControlPlaneValidKubeletConfigNTPCPBR(t *testing
 	g.Expect(err).ToNot(HaveOccurred())
 	test.AssertContentToFile(t, string(data), "testdata/expected_kcp_br_ntp.yaml")
 }
+
+func TestVsphereTemplateBuilderGenerateFailureDomainYaml(t *testing.T) {
+	g := NewWithT(t)
+	spec := test.NewFullClusterSpec(t, "testdata/cluster_vsphere_failuredomain.yaml")
+	templateNames := map[string]string{
+		"fd-1": "test-test-fd-1",
+	}
+	builder := vsphere.NewVsphereTemplateBuilder(time.Now)
+	data, err := builder.GenerateVsphereFailureDomainsSpec(spec, templateNames)
+	g.Expect(err).ToNot(HaveOccurred())
+	test.AssertContentToFile(t, string(data), "testdata/expected_results_failuredomain.yaml")
+}

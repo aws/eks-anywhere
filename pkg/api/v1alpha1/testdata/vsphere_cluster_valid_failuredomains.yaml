@@ -17,6 +17,8 @@ spec:
         name: eksa-unit-test
         kind: VSphereMachineConfig
       name: "md-0"
+      failureDomains:
+      - fd-1
   datacenterRef:
     kind: VSphereDatacenterConfig
     name: eksa-unit-test

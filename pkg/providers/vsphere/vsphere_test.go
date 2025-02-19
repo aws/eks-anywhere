@@ -61,6 +61,7 @@ const (
 	ubuntuOSTag                              = "os:ubuntu"
 	bottlerocketOSTag                        = "os:bottlerocket"
 	testTemplate                             = "/SDDC-Datacenter/vm/Templates/ubuntu-1804-kube-v1.19.6"
+	testVsphereClusterConfigMainFailueDomainFilename            = "cluster_vsphere_failuredomain.yaml"
 )
 
 type DummyProviderGovcClient struct {
@@ -1615,6 +1616,29 @@ func TestSetupAndValidateCreateWorkloadClusterSuccess(t *testing.T) {
 	assert.NoError(t, err, "No error should be returned")
 }
 
+func TestSetupAndValidateVsphereClusterFailureWithFailureDomainNotEnabled(t *testing.T) {
+	ctx := context.Background()
+	provider := givenProvider(t)
+	clusterSpec := givenClusterSpec(t, testVsphereClusterConfigMainFailueDomainFilename)
+	setupContext(t)
+
+	mockCtrl := gomock.NewController(t)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	provider.providerKubectlClient = kubectl
+
+	ipValidator := mocks.NewMockIPValidator(mockCtrl)
+	provider.ipValidator = ipValidator
+
+	clusterSpec.Cluster.SetManagedBy("management-cluster")
+	clusterSpec.ManagementCluster = &types.Cluster{
+		Name:           "management-cluster",
+		KubeconfigFile: "kc.kubeconfig",
+	}
+
+	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
+	assert.Contains(t, err.Error(), "Failure Domains feature is not enabled")
+}
+
 func TestSetupAndValidateCreateWorkloadClusterFailsIfMachineExists(t *testing.T) {
 	ctx := context.Background()
 	provider := givenProvider(t)
@@ -1767,6 +1791,20 @@ func TestSetupAndValidateUpgradeCluster(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected failure %v", err)
 	}
+}
+
+func TestSetupAndValidateUpgradeClusterWithFailureDomainNotEnabled(t *testing.T) {
+	ctx := context.Background()
+	clusterSpec := givenClusterSpec(t, testVsphereClusterConfigMainFailueDomainFilename)
+	cluster := &types.Cluster{}
+	provider := givenProvider(t)
+	mockCtrl := gomock.NewController(t)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	provider.providerKubectlClient = kubectl
+	setupContext(t)
+
+	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec, clusterSpec)
+	assert.Contains(t, err.Error(), "Failure Domains feature is not enabled")
 }
 
 func TestSetupAndValidateUpgradeClusterNoUsername(t *testing.T) {

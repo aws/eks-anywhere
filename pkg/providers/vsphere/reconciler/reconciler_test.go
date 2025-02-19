@@ -32,6 +32,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/controller"
 	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
 	"github.com/aws/eks-anywhere/pkg/executables"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/govmomi"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere/mocks"
@@ -160,6 +161,98 @@ func TestReconcilerReconcileWorkersSuccess(t *testing.T) {
 	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
 	tt.Expect(tt.cluster.Status.FailureReason).To(BeZero())
 	tt.Expect(result).To(Equal(controller.Result{}))
+}
+
+func TestReconcilerFailureDomainsSuccess(t *testing.T) {
+	features.ClearCache()
+	t.Setenv(features.VSphereFailureDomainEnabledEnvVar, "true")
+	tt := newReconcilerTest(t)
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, test.CAPICluster(func(c *clusterv1.Cluster) {
+		c.Name = tt.cluster.Name
+	}))
+	tt.createAllObjs()
+
+	spec := tt.buildSpec()
+	spec.VSphereDatacenter.Spec.FailureDomains = []anywherev1.FailureDomain{
+		{
+			Name: "fd-1",
+		},
+	}
+
+	result, err := tt.reconciler().ReconcileFailureDomains(tt.ctx, test.NewNullLogger(), spec)
+
+	tt.Expect(err).NotTo(HaveOccurred())
+	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
+	tt.Expect(tt.cluster.Status.FailureReason).To(BeZero())
+	tt.Expect(result).To(Equal(controller.Result{}))
+	features.ClearCache()
+}
+
+func TestValidateFailureDomainsSuccess(t *testing.T) {
+	features.ClearCache()
+	t.Setenv(features.VSphereFailureDomainEnabledEnvVar, "true")
+	tt := newReconcilerTest(t)
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, test.CAPICluster(func(c *clusterv1.Cluster) {
+		c.Name = tt.cluster.Name
+	}))
+	tt.createAllObjs()
+
+	spec := tt.buildSpec()
+	spec.VSphereDatacenter.Spec.Server = "myServer"
+	spec.VSphereDatacenter.Spec.Datacenter = "myDatacenter"
+	spec.VSphereDatacenter.Spec.Network = "/myDatacenter/network/myNetwork"
+	spec.VSphereDatacenter.Spec.FailureDomains = []anywherev1.FailureDomain{
+		{
+			Name:           "fd-1",
+			ComputeCluster: "myComputeCluster",
+			ResourcePool:   "myResourcePool",
+			Datastore:      "myDatastore",
+			Folder:         "myFolder",
+			Network:        "/myDatacenter/network/myNetwork",
+		},
+	}
+
+	result, err := tt.reconciler().ValidateFailureDomains(tt.ctx, test.NewNullLogger(), spec)
+
+	tt.Expect(err).NotTo(HaveOccurred())
+	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
+	tt.Expect(tt.cluster.Status.FailureReason).To(BeZero())
+	tt.Expect(result).To(Equal(controller.Result{}))
+	features.ClearCache()
+}
+
+func TestValidateFailureDomainsFailure(t *testing.T) {
+	features.ClearCache()
+	t.Setenv(features.VSphereFailureDomainEnabledEnvVar, "true")
+	tt := newReconcilerTest(t)
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, test.CAPICluster(func(c *clusterv1.Cluster) {
+		c.Name = tt.cluster.Name
+	}))
+	tt.createAllObjs()
+
+	spec := tt.buildSpec()
+	spec.Cluster.Spec.WorkerNodeGroupConfigurations[0].FailureDomains = []string{"fd-2"}
+	spec.VSphereDatacenter.Spec.Server = "myServer"
+	spec.VSphereDatacenter.Spec.Datacenter = "myDatacenter"
+	spec.VSphereDatacenter.Spec.Network = "/myDatacenter/network/myNetwork"
+	spec.VSphereDatacenter.Spec.FailureDomains = []anywherev1.FailureDomain{
+		{
+			Name:           "fd-1",
+			ComputeCluster: "myComputeCluster",
+			ResourcePool:   "myResourcePool",
+			Datastore:      "myDatastore",
+			Folder:         "myFolder",
+			Network:        "/myDatacenter/network/myNetwork",
+		},
+	}
+
+	result, err := tt.reconciler().ValidateFailureDomains(tt.ctx, test.NewNullLogger(), spec)
+
+	tt.Expect(err).To(BeNil(), "error should be nil to prevent requeue")
+	tt.Expect(result).To(Equal(controller.Result{Result: &reconcile.Result{}}), "result should stop reconciliation")
+	tt.Expect(tt.cluster.Status.FailureMessage).To(HaveValue(ContainSubstring("provided invalid failure domain")))
+	tt.Expect(tt.cluster.Status.FailureReason).To(HaveValue(Equal(anywherev1.FailureDomainInvalidReason)))
+	features.ClearCache()
 }
 
 func TestReconcilerReconcileInvalidDatacenterConfig(t *testing.T) {
@@ -300,6 +393,7 @@ type reconcilerTest struct {
 	machineConfigWorker       *anywherev1.VSphereMachineConfig
 	ipValidator               *vspherereconcilermocks.MockIPValidator
 	kcp                       *controlplanev1.KubeadmControlPlane
+	vsphereDeploymentZone     *vspherev1.VSphereDeploymentZone
 }
 
 func newReconcilerTest(t testing.TB) *reconcilerTest {
@@ -408,6 +502,8 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 		}
 	})
 
+	vsphereDeploymentZone := VSphereDeploymentZone(strings.ToLower(t.Name()), workloadClusterDatacenter.Name)
+
 	tt := &reconcilerTest{
 		t:                    t,
 		WithT:                NewWithT(t),
@@ -437,6 +533,7 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 		machineConfigControlPlane: machineConfigCP,
 		machineConfigWorker:       machineConfigWN,
 		kcp:                       kcp,
+		vsphereDeploymentZone:     vsphereDeploymentZone,
 	}
 
 	t.Cleanup(tt.cleanup)
@@ -475,7 +572,28 @@ func (tt *reconcilerTest) createAllObjs() {
 func (tt *reconcilerTest) allObjs() []client.Object {
 	objs := make([]client.Object, 0, len(tt.eksaSupportObjs)+3)
 	objs = append(objs, tt.eksaSupportObjs...)
-	objs = append(objs, tt.cluster, tt.machineConfigControlPlane, tt.machineConfigWorker)
+	objs = append(objs, tt.cluster, tt.machineConfigControlPlane, tt.machineConfigWorker, tt.vsphereDeploymentZone)
 
 	return objs
+}
+
+// VSphereCredentialsSecret builds a new Secret follwoing the format expected for vSphere credentials.
+func VSphereDeploymentZone(clusterName string, datacenterConfigName string) *vspherev1.VSphereDeploymentZone {
+	return &vspherev1.VSphereDeploymentZone{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: constants.EksaSystemNamespace,
+			Name:      "deploymentzone-1",
+			Labels: map[string]string{
+				vsphere.VsphereDataCenterConfigNameLabel: datacenterConfigName,
+				vsphere.ClusterNameLabel:                 clusterName,
+			},
+		},
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "VSphereDeploymentZone",
+			APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
+		},
+		Spec: vspherev1.VSphereDeploymentZoneSpec{
+			FailureDomain: "fd-1",
+		},
+	}
 }
