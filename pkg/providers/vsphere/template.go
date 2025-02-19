@@ -3,6 +3,7 @@ package vsphere
 import (
 	"fmt"
 
+	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
 	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
 	"sigs.k8s.io/yaml"
 
@@ -112,6 +113,11 @@ func (vs *VsphereTemplateBuilder) GenerateCAPISpecWorkers(
 
 		values["cgroupDriverSystemd"] = cgroupDriverSystemd
 
+		if len(workerNodeGroupConfiguration.FailureDomains) > 0 {
+			workerNodeGroupFailureDomain := workerNodeGroupConfiguration.FailureDomains[0]
+			values["failureDomain"] = FailureDomainTemplateName(clusterSpec, workerNodeGroupFailureDomain)
+		}
+
 		if workerNodeGroupConfiguration.UpgradeRolloutStrategy != nil {
 			values["upgradeRolloutStrategy"] = true
 			if workerNodeGroupConfiguration.UpgradeRolloutStrategy.Type == anywherev1.InPlaceStrategyType {
@@ -130,6 +136,26 @@ func (vs *VsphereTemplateBuilder) GenerateCAPISpecWorkers(
 	}
 
 	return templater.AppendYamlResources(workerSpecs...), nil
+}
+
+// GenerateVsphereFailureDomainsSpec generates a yaml spec with the Vsphere failure domains objects.
+// It uses the provided template names for the VsphereFailureDomain and VsphereDeploymentZone.
+func (vs *VsphereTemplateBuilder) GenerateVsphereFailureDomainsSpec(spec *cluster.Spec, templateNames map[string]string) (content []byte, err error) {
+	failureDomainSpecs := make([][]byte, 0, len(spec.VSphereDatacenter.Spec.FailureDomains))
+	for _, failureDomain := range spec.VSphereDatacenter.Spec.FailureDomains {
+		if _, exists := templateNames[failureDomain.Name]; !exists {
+			continue
+		}
+		values := buildTemplateMapFailureDomain(spec, failureDomain)
+		values["failureDomainTemplateName"] = templateNames[failureDomain.Name]
+
+		bytes, err := templater.Execute(defaultFailureDomainConfig, values)
+		if err != nil {
+			return nil, err
+		}
+		failureDomainSpecs = append(failureDomainSpecs, bytes)
+	}
+	return templater.AppendYamlResources(failureDomainSpecs...), nil
 }
 
 func buildTemplateMapCP(
@@ -574,4 +600,42 @@ func buildTemplateMapMD(
 	}
 
 	return values, nil
+}
+
+func buildTemplateMapFailureDomain(
+	clusterSpec *cluster.Spec,
+	failureDomain anywherev1.FailureDomain,
+) map[string]interface{} {
+	regionType, regionName := getFailureDomainRegionTypeAndName(clusterSpec.VSphereDatacenter.Spec)
+	zoneType, zoneName := getFailureDomainZoneTypeAndName(failureDomain)
+	values := map[string]interface{}{
+		"server":                      clusterSpec.VSphereDatacenter.Spec.Server,
+		"datacenter":                  clusterSpec.VSphereDatacenter.Spec.Datacenter,
+		"computeCluster":              failureDomain.ComputeCluster,
+		"resourcePool":                failureDomain.ResourcePool,
+		"datastore":                   failureDomain.Datastore,
+		"folder":                      failureDomain.Folder,
+		"network":                     failureDomain.Network,
+		"clusterName":                 clusterSpec.Cluster.Name,
+		"vsphereDataCenterConfigName": clusterSpec.VSphereDatacenter.Name,
+		"regionType":                  regionType,
+		"regionName":                  regionName,
+		"zoneType":                    zoneType,
+		"zoneName":                    zoneName,
+	}
+	return values
+}
+
+// Currently, we only support compute cluster topology in failure domain
+// In future, when we add supports for other topologies, update this get region type and name based on topology type.
+// For example, if topology type is host group, region will be one level above host group i.e ComputeCluster.
+func getFailureDomainRegionTypeAndName(datacenterSpec anywherev1.VSphereDatacenterConfigSpec) (string, string) {
+	return string(vspherev1.DatacenterFailureDomain), datacenterSpec.Datacenter
+}
+
+// Currently, we only support compute cluster topology in failure domain
+// In future, when we add supports for other topologies, update this get zone type and name based on topology type.
+// For example, if topology type is host group, zone type = HostGroup and name = host group name.
+func getFailureDomainZoneTypeAndName(failureDomain anywherev1.FailureDomain) (string, string) {
+	return string(vspherev1.ComputeClusterFailureDomain), failureDomain.ComputeCluster
 }

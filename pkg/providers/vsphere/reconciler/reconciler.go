@@ -8,16 +8,21 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	apiv1 "k8s.io/api/core/v1"
+	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/klog/v2"
+	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	c "github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/collection"
 	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/controller"
 	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
 	"github.com/aws/eks-anywhere/pkg/controller/clusters"
 	"github.com/aws/eks-anywhere/pkg/controller/serverside"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
 )
 
@@ -117,7 +122,9 @@ func (r *Reconciler) Reconcile(ctx context.Context, log logr.Logger, cluster *an
 		r.ipValidator.ValidateControlPlaneIP,
 		r.ValidateDatacenterConfig,
 		r.ValidateMachineConfigs,
+		r.ValidateFailureDomains,
 		clusters.CleanupStatusAfterValidate,
+		r.ReconcileFailureDomains,
 		r.ReconcileControlPlane,
 		r.CheckControlPlaneReady,
 		r.ReconcileCNI,
@@ -164,6 +171,70 @@ func (r *Reconciler) ValidateMachineConfigs(ctx context.Context, log logr.Logger
 		clusterSpec.Cluster.SetFailure(anywherev1.MachineConfigInvalidReason, failureMessage)
 		return controller.ResultWithReturn(), nil
 	}
+	return controller.Result{}, nil
+}
+
+// ValidateFailureDomains performs validations for the provided failure domains and the assigned failure domains in worker node group.
+func (r *Reconciler) ValidateFailureDomains(_ context.Context, log logr.Logger, clusterSpec *c.Spec) (controller.Result, error) {
+	if features.IsActive(features.VsphereFailureDomainEnabled()) {
+		log = log.WithValues("phase", "validateFailureDomains")
+
+		vsphereClusterSpec := vsphere.NewSpec(clusterSpec)
+
+		if err := r.validator.ValidateFailureDomains(vsphereClusterSpec); err != nil {
+			log.Error(err, "Invalid Failure domain setup")
+			failureMessage := err.Error()
+			clusterSpec.Cluster.SetFailure(anywherev1.FailureDomainInvalidReason, failureMessage)
+			return controller.ResultWithReturn(), nil
+		}
+	}
+	return controller.Result{}, nil
+}
+
+// ReconcileFailureDomains applies the Vsphere FailureDomain objects to the cluster.
+// It also takes care of  deleting the old Vsphere FailureDomains that are not in in the cluster spec anymore.
+func (r *Reconciler) ReconcileFailureDomains(ctx context.Context, log logr.Logger, spec *c.Spec) (controller.Result, error) {
+	if features.IsActive(features.VsphereFailureDomainEnabled()) && len(spec.VSphereDatacenter.Spec.FailureDomains) > 0 {
+		log = log.WithValues("phase", "reconcileFailureDomains")
+		log.Info("Applying Vsphere FailureDomain objects")
+
+		fd, err := vsphere.FailureDomainsSpec(log, spec)
+		if err != nil {
+			return controller.Result{}, err
+		}
+		if err := serverside.ReconcileObjects(ctx, r.client, fd.Objects()); err != nil {
+			return controller.Result{}, errors.Wrap(err, "applying Vsphere Failure Domain objects")
+		}
+
+		desiredFailureDeploymentNames := collection.MapSet(fd.Groups, func(g vsphere.FailureDomainGroup) string {
+			return g.VsphereDeploymentZone.Name
+		})
+
+		// CAPV by default deletes VSphereFailureDomain if its corresponding VSphereDeploymentZone is deleted
+		// Hence we are only deleting the VsphereDeploymentZones
+		// https://github.com/kubernetes-sigs/cluster-api-provider-vsphere/blob/d7af9d7199f21b442402714ca00d0a9801237f5d/controllers/vspheredeploymentzone_controller.go#L274.
+		existingVSphereDeploymentZones := &vspherev1.VSphereDeploymentZoneList{}
+		if err := r.client.List(ctx, existingVSphereDeploymentZones,
+			ctrlClient.MatchingLabels{vsphere.VsphereDataCenterConfigNameLabel: spec.VSphereDatacenter.Name, vsphere.ClusterNameLabel: spec.Cluster.Name}); err != nil {
+			return controller.Result{}, errors.Wrap(err, "listing current Vsphere Deployment Zones")
+		}
+
+		var allErrs []error
+
+		for _, m := range existingVSphereDeploymentZones.Items {
+			if !desiredFailureDeploymentNames.Contains(m.Name) {
+				if err := r.client.Delete(ctx, &m); err != nil {
+					allErrs = append(allErrs, err)
+				}
+			}
+		}
+
+		if len(allErrs) > 0 {
+			aggregate := utilerrors.NewAggregate(allErrs)
+			return controller.Result{}, errors.Wrap(aggregate, "deleting failure deployments during failure deployment reconciliation")
+		}
+	}
+
 	return controller.Result{}, nil
 }
 

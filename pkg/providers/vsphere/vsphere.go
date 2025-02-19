@@ -60,6 +60,9 @@ var defaultClusterConfigMD string
 //go:embed config/secret.yaml
 var defaultSecretObject string
 
+//go:embed config/template-failuredomain.yaml
+var defaultFailureDomainConfig string
+
 var (
 	eksaVSphereDatacenterResourceType = fmt.Sprintf("vspheredatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
 	eksaVSphereMachineResourceType    = fmt.Sprintf("vspheremachineconfigs.%s", v1alpha1.GroupVersion.Group)
@@ -317,6 +320,10 @@ func (p *vsphereProvider) SetupAndValidateCreateCluster(ctx context.Context, clu
 		return err
 	}
 
+	if err := p.validator.ValidateFailureDomains(vSphereClusterSpec); err != nil {
+		return err
+	}
+
 	if err := p.defaulter.setDefaultsForMachineConfig(ctx, vSphereClusterSpec); err != nil {
 		return fmt.Errorf("failed setting default values for vsphere machine configs: %v", err)
 	}
@@ -392,6 +399,10 @@ func (p *vsphereProvider) SetupAndValidateUpgradeCluster(ctx context.Context, cl
 	}
 
 	if err := p.validator.ValidateVCenterConfig(ctx, vSphereClusterSpec.VSphereDatacenter); err != nil {
+		return err
+	}
+
+	if err := p.validator.ValidateFailureDomains(vSphereClusterSpec); err != nil {
 		return err
 	}
 
