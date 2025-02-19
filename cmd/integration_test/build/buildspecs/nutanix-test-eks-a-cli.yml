@@ -48,6 +48,7 @@ env:
     T_NUTANIX_TEMPLATE_NAME_REDHAT_9_1_30: "nutanix_ci:nutanix_template_rhel_9_1_30"
     T_NUTANIX_TEMPLATE_NAME_REDHAT_9_1_31: "nutanix_ci:nutanix_template_rhel_9_1_31"
     LICENSE_TOKEN: "extended_support:license_token"
+    LICENSE_TOKEN2: "extended_support:license_token2"
 phases:
   pre_build:
     commands:
