@@ -33,21 +33,21 @@ const (
 	nutanixControlPlaneCidrVar       = "T_NUTANIX_CONTROL_PLANE_CIDR"
 	nutanixPodCidrVar                = "T_NUTANIX_POD_CIDR"
 	nutanixServiceCidrVar            = "T_NUTANIX_SERVICE_CIDR"
-	nutanixTemplateNameUbuntu127Var  = "T_NUTANIX_TEMPLATE_NAME_UBUNTU_1_27"
 	nutanixTemplateNameUbuntu128Var  = "T_NUTANIX_TEMPLATE_NAME_UBUNTU_1_28"
 	nutanixTemplateNameUbuntu129Var  = "T_NUTANIX_TEMPLATE_NAME_UBUNTU_1_29"
 	nutanixTemplateNameUbuntu130Var  = "T_NUTANIX_TEMPLATE_NAME_UBUNTU_1_30"
 	nutanixTemplateNameUbuntu131Var  = "T_NUTANIX_TEMPLATE_NAME_UBUNTU_1_31"
-	nutanixTemplateNameRedHat127Var  = "T_NUTANIX_TEMPLATE_NAME_REDHAT_1_27"
+	nutanixTemplateNameUbuntu132Var  = "T_NUTANIX_TEMPLATE_NAME_UBUNTU_1_32"
 	nutanixTemplateNameRedHat128Var  = "T_NUTANIX_TEMPLATE_NAME_REDHAT_1_28"
 	nutanixTemplateNameRedHat129Var  = "T_NUTANIX_TEMPLATE_NAME_REDHAT_1_29"
 	nutanixTemplateNameRedHat130Var  = "T_NUTANIX_TEMPLATE_NAME_REDHAT_1_30"
 	nutanixTemplateNameRedHat131Var  = "T_NUTANIX_TEMPLATE_NAME_REDHAT_1_31"
-	nutanixTemplateNameRedHat9127Var = "T_NUTANIX_TEMPLATE_NAME_REDHAT_9_1_27"
+	nutanixTemplateNameRedHat132Var  = "T_NUTANIX_TEMPLATE_NAME_REDHAT_1_32"
 	nutanixTemplateNameRedHat9128Var = "T_NUTANIX_TEMPLATE_NAME_REDHAT_9_1_28"
 	nutanixTemplateNameRedHat9129Var = "T_NUTANIX_TEMPLATE_NAME_REDHAT_9_1_29"
 	nutanixTemplateNameRedHat9130Var = "T_NUTANIX_TEMPLATE_NAME_REDHAT_9_1_30"
 	nutanixTemplateNameRedHat9131Var = "T_NUTANIX_TEMPLATE_NAME_REDHAT_9_1_31"
+	nutanixTemplateNameRedHat9132Var = "T_NUTANIX_TEMPLATE_NAME_REDHAT_9_1_32"
 )
 
 var requiredNutanixEnvVars = []string{
@@ -66,21 +66,21 @@ var requiredNutanixEnvVars = []string{
 	nutanixSubnetName,
 	nutanixPodCidrVar,
 	nutanixServiceCidrVar,
-	nutanixTemplateNameUbuntu127Var,
 	nutanixTemplateNameUbuntu128Var,
 	nutanixTemplateNameUbuntu129Var,
 	nutanixTemplateNameUbuntu130Var,
 	nutanixTemplateNameUbuntu131Var,
-	nutanixTemplateNameRedHat127Var,
+	nutanixTemplateNameUbuntu132Var,
 	nutanixTemplateNameRedHat128Var,
 	nutanixTemplateNameRedHat129Var,
 	nutanixTemplateNameRedHat130Var,
 	nutanixTemplateNameRedHat131Var,
-	nutanixTemplateNameRedHat9127Var,
+	nutanixTemplateNameRedHat132Var,
 	nutanixTemplateNameRedHat9128Var,
 	nutanixTemplateNameRedHat9129Var,
 	nutanixTemplateNameRedHat9130Var,
 	nutanixTemplateNameRedHat9131Var,
+	nutanixTemplateNameRedHat9132Var,
 	nutanixInsecure,
 }
 
@@ -221,12 +221,6 @@ func withNutanixKubeVersionAndOS(kubeVersion anywherev1.KubernetesVersion, os OS
 	}
 }
 
-// WithUbuntu127Nutanix returns a NutanixOpt that adds API fillers to use a Ubuntu Nutanix template for k8s 1.27
-// and the "ubuntu" osFamily in all machine configs.
-func WithUbuntu127Nutanix() NutanixOpt {
-	return withNutanixKubeVersionAndOS(anywherev1.Kube127, Ubuntu2004, nil)
-}
-
 // WithUbuntu128Nutanix returns a NutanixOpt that adds API fillers to use a Ubuntu Nutanix template for k8s 1.28
 // and the "ubuntu" osFamily in all machine configs.
 func WithUbuntu128Nutanix() NutanixOpt {
@@ -251,10 +245,10 @@ func WithUbuntu131Nutanix() NutanixOpt {
 	return withNutanixKubeVersionAndOS(anywherev1.Kube131, Ubuntu2004, nil)
 }
 
-// WithRedHat127Nutanix returns a NutanixOpt that adds API fillers to use a RedHat 8 Nutanix template for k8s 1.27
-// and the "redhat" osFamily in all machine configs.
-func WithRedHat127Nutanix() NutanixOpt {
-	return withNutanixKubeVersionAndOS(anywherev1.Kube127, RedHat8, nil)
+// WithUbuntu132Nutanix returns a NutanixOpt that adds API fillers to use a Ubuntu Nutanix template for k8s 1.32
+// and the "ubuntu" osFamily in all machine configs.
+func WithUbuntu132Nutanix() NutanixOpt {
+	return withNutanixKubeVersionAndOS(anywherev1.Kube132, Ubuntu2004, nil)
 }
 
 // WithRedHat128Nutanix returns a NutanixOpt that adds API fillers to use a RedHat 8 Nutanix template for k8s 1.28
@@ -281,10 +275,10 @@ func WithRedHat131Nutanix() NutanixOpt {
 	return withNutanixKubeVersionAndOS(anywherev1.Kube131, RedHat8, nil)
 }
 
-// WithRedHat9Kubernetes127Nutanix returns a NutanixOpt that adds API fillers to use a RedHat 9 Nutanix template for k8s 1.27
+// WithRedHat132Nutanix returns a NutanixOpt that adds API fillers to use a RedHat 8 Nutanix template for k8s 1.32
 // and the "redhat" osFamily in all machine configs.
-func WithRedHat9Kubernetes127Nutanix() NutanixOpt {
-	return withNutanixKubeVersionAndOS(anywherev1.Kube127, RedHat9, nil)
+func WithRedHat132Nutanix() NutanixOpt {
+	return withNutanixKubeVersionAndOS(anywherev1.Kube132, RedHat8, nil)
 }
 
 // WithRedHat9Kubernetes128Nutanix returns a NutanixOpt that adds API fillers to use a RedHat 9 Nutanix template for k8s 1.28
@@ -311,6 +305,12 @@ func WithRedHat9Kubernetes131Nutanix() NutanixOpt {
 	return withNutanixKubeVersionAndOS(anywherev1.Kube131, RedHat9, nil)
 }
 
+// WithRedHat9Kubernetes132Nutanix returns a NutanixOpt that adds API fillers to use a RedHat 9 Nutanix template for k8s 1.32
+// and the "redhat" osFamily in all machine configs.
+func WithRedHat9Kubernetes132Nutanix() NutanixOpt {
+	return withNutanixKubeVersionAndOS(anywherev1.Kube132, RedHat9, nil)
+}
+
 // withNutanixKubeVersionAndOSForUUID returns a NutanixOpt that adds API fillers to use a Nutanix template UUID
 // corresponding to the provided OS family and Kubernetes version, in addition to configuring all machine configs
 // to use this OS family.
@@ -320,12 +320,6 @@ func withNutanixKubeVersionAndOSForUUID(kubeVersion anywherev1.KubernetesVersion
 		name := n.templateForDevRelease(kubeVersion, os, useBundlesOverride)
 		n.fillers = append(n.fillers, n.withNutanixUUID(name, osFamiliesForOS[os])...)
 	}
-}
-
-// WithUbuntu127NutanixUUID returns a NutanixOpt that adds API fillers to use a Ubuntu Nutanix template UUID for k8s 1.27
-// and the "ubuntu" osFamily in all machine configs.
-func WithUbuntu127NutanixUUID() NutanixOpt {
-	return withNutanixKubeVersionAndOSForUUID(anywherev1.Kube127, Ubuntu2004, nil)
 }
 
 // WithUbuntu128NutanixUUID returns a NutanixOpt that adds API fillers to use a Ubuntu Nutanix template UUID for k8s 1.28
@@ -352,10 +346,10 @@ func WithUbuntu131NutanixUUID() NutanixOpt {
 	return withNutanixKubeVersionAndOSForUUID(anywherev1.Kube131, Ubuntu2004, nil)
 }
 
-// WithRedHat127NutanixUUID returns a NutanixOpt that adds API fillers to use a RedHat Nutanix template UUID for k8s 1.27
-// and the "redhat" osFamily in all machine configs.
-func WithRedHat127NutanixUUID() NutanixOpt {
-	return withNutanixKubeVersionAndOSForUUID(anywherev1.Kube127, RedHat8, nil)
+// WithUbuntu132NutanixUUID returns a NutanixOpt that adds API fillers to use a Ubuntu Nutanix template UUID for k8s 1.32
+// and the "ubuntu" osFamily in all machine configs.
+func WithUbuntu132NutanixUUID() NutanixOpt {
+	return withNutanixKubeVersionAndOSForUUID(anywherev1.Kube132, Ubuntu2004, nil)
 }
 
 // WithRedHat128NutanixUUID returns a NutanixOpt that adds API fillers to use a RedHat Nutanix template UUID for k8s 1.28
@@ -382,10 +376,10 @@ func WithRedHat131NutanixUUID() NutanixOpt {
 	return withNutanixKubeVersionAndOSForUUID(anywherev1.Kube131, RedHat8, nil)
 }
 
-// WithRedHat9Kubernetes127NutanixUUID returns a NutanixOpt that adds API fillers to use a RedHat 9 Nutanix template UUID for k8s 1.27
+// WithRedHat132NutanixUUID returns a NutanixOpt that adds API fillers to use a RedHat Nutanix template UUID for k8s 1.32
 // and the "redhat" osFamily in all machine configs.
-func WithRedHat9Kubernetes127NutanixUUID() NutanixOpt {
-	return withNutanixKubeVersionAndOSForUUID(anywherev1.Kube127, RedHat9, nil)
+func WithRedHat132NutanixUUID() NutanixOpt {
+	return withNutanixKubeVersionAndOSForUUID(anywherev1.Kube132, RedHat8, nil)
 }
 
 // WithRedHat9Kubernetes128NutanixUUID returns a NutanixOpt that adds API fillers to use a RedHat 9 Nutanix template UUID for k8s 1.28
@@ -410,6 +404,12 @@ func WithRedHat9Kubernetes130NutanixUUID() NutanixOpt {
 // and the "redhat" osFamily in all machine configs.
 func WithRedHat9Kubernetes131NutanixUUID() NutanixOpt {
 	return withNutanixKubeVersionAndOSForUUID(anywherev1.Kube131, RedHat9, nil)
+}
+
+// WithRedHat9Kubernetes132NutanixUUID returns a NutanixOpt that adds API fillers to use a RedHat 9 Nutanix template UUID for k8s 1.32
+// and the "redhat" osFamily in all machine configs.
+func WithRedHat9Kubernetes132NutanixUUID() NutanixOpt {
+	return withNutanixKubeVersionAndOSForUUID(anywherev1.Kube132, RedHat9, nil)
 }
 
 func (n *Nutanix) withNutanixUUID(name string, osFamily anywherev1.OSFamily) []api.NutanixFiller {
@@ -459,12 +459,6 @@ func (n *Nutanix) templateForKubeVersionAndOS(kubeVersion anywherev1.KubernetesV
 	return api.WithNutanixMachineTemplateImageName(template)
 }
 
-// Ubuntu127Template returns NutanixFiller by reading the env var and setting machine config's
-// image name parameter in the spec.
-func (n *Nutanix) Ubuntu127Template() api.NutanixFiller {
-	return n.templateForKubeVersionAndOS(anywherev1.Kube127, Ubuntu2004, nil)
-}
-
 // Ubuntu128Template returns NutanixFiller by reading the env var and setting machine config's
 // image name parameter in the spec.
 func (n *Nutanix) Ubuntu128Template() api.NutanixFiller {
@@ -489,10 +483,10 @@ func (n *Nutanix) Ubuntu131Template() api.NutanixFiller {
 	return n.templateForKubeVersionAndOS(anywherev1.Kube131, Ubuntu2004, nil)
 }
 
-// RedHat127Template returns NutanixFiller by reading the env var and setting machine config's
+// Ubuntu132Template returns NutanixFiller by reading the env var and setting machine config's
 // image name parameter in the spec.
-func (n *Nutanix) RedHat127Template() api.NutanixFiller {
-	return n.templateForKubeVersionAndOS(anywherev1.Kube127, RedHat8, nil)
+func (n *Nutanix) Ubuntu132Template() api.NutanixFiller {
+	return n.templateForKubeVersionAndOS(anywherev1.Kube132, Ubuntu2004, nil)
 }
 
 // RedHat128Template returns NutanixFiller by reading the env var and setting machine config's
@@ -519,10 +513,10 @@ func (n *Nutanix) RedHat131Template() api.NutanixFiller {
 	return n.templateForKubeVersionAndOS(anywherev1.Kube131, RedHat8, nil)
 }
 
-// RedHat9Kubernetes127Template returns NutanixFiller by reading the env var and setting machine config's
+// RedHat132Template returns NutanixFiller by reading the env var and setting machine config's
 // image name parameter in the spec.
-func (n *Nutanix) RedHat9Kubernetes127Template() api.NutanixFiller {
-	return n.templateForKubeVersionAndOS(anywherev1.Kube127, RedHat9, nil)
+func (n *Nutanix) RedHat132Template() api.NutanixFiller {
+	return n.templateForKubeVersionAndOS(anywherev1.Kube132, RedHat8, nil)
 }
 
 // RedHat9Kubernetes128Template returns NutanixFiller by reading the env var and setting machine config's
@@ -547,6 +541,12 @@ func (n *Nutanix) RedHat9Kubernetes130Template() api.NutanixFiller {
 // image name parameter in the spec.
 func (n *Nutanix) RedHat9Kubernetes131Template() api.NutanixFiller {
 	return n.templateForKubeVersionAndOS(anywherev1.Kube131, RedHat9, nil)
+}
+
+// RedHat9Kubernetes132Template returns NutanixFiller by reading the env var and setting machine config's
+// image name parameter in the spec.
+func (n *Nutanix) RedHat9Kubernetes132Template() api.NutanixFiller {
+	return n.templateForKubeVersionAndOS(anywherev1.Kube132, RedHat9, nil)
 }
 
 // ClusterStateValidations returns a list of provider specific ClusterStateValidations.
