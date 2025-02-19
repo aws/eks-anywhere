@@ -10,7 +10,7 @@
     <tr>
         <td>{{ .version }}</td>
         <td>{{ delimit .kube_versions ", " }}</td>
-        <td>{{ .released | time.Format "January 1, 2006" }} </td>
+        <td>{{ .released | time.Format "January 2, 2006" }} </td>
         <td>{{ if .receiving_patches }}Yes{{ else }}No{{end}}</td>
     </tr>
     {{ end }}
