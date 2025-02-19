@@ -69,6 +69,7 @@ const (
 	hardwareCsvPath                        = "hardware.csv"
 	EksaPackagesInstallation               = "eks-anywhere-packages"
 	bundleReleasePathFromArtifacts         = "./eks-anywhere-downloads/bundle-release.yaml"
+	releaseV022                            = "v0.22.0"
 )
 
 //go:embed testdata/oidc-roles.yaml
@@ -143,11 +144,6 @@ func NewClusterE2ETest(t T, provider Provider, opts ...ClusterE2ETestOpt) *Clust
 	}
 
 	e.ClusterConfigLocation = filepath.Join(e.ClusterConfigFolder, e.ClusterName+"-eks-a.yaml")
-
-	licenseToken := getLicenseToken()
-	if licenseToken != "" {
-		e.clusterFillers = append(e.clusterFillers, api.WithLicenseToken(licenseToken))
-	}
 
 	if err := os.MkdirAll(e.ClusterConfigFolder, os.ModePerm); err != nil {
 		t.Fatalf("Failed creating cluster config folder for test: %s", err)
@@ -357,6 +353,10 @@ type Provider interface {
 }
 
 func (e *ClusterE2ETest) GenerateClusterConfig(opts ...CommandOpt) {
+	licenseToken := getLicenseToken()
+	if licenseToken != "" {
+		e.clusterFillers = append(e.clusterFillers, api.WithLicenseToken(licenseToken))
+	}
 	e.GenerateClusterConfigForVersion("", opts...)
 }
 
@@ -481,9 +481,23 @@ func (e *ClusterE2ETest) generateHardwareConfig(opts ...CommandOpt) {
 func (e *ClusterE2ETest) GenerateClusterConfigForVersion(eksaVersion string, opts ...CommandOpt) {
 	e.generateClusterConfigObjects(opts...)
 	if eksaVersion != "" {
-		err := cleanUpClusterForVersion(e.ClusterConfig, eksaVersion)
+		// LicenseToken field was introduced in cluster spec only in release-22
+		// attempting to populate the field for any prior versions would break the api.
+		// We will need the conditional check as long as the latest minor is 'v0.21.*'.
+		currentSemver, err := semver.New(eksaVersion)
 		if err != nil {
-			e.T.Fatal(err)
+			e.T.Fatal("parsing esk-a version", err)
+		}
+		semverV022, err := semver.New(releaseV022)
+		if err != nil {
+			e.T.Fatal("parsing esk-a version", err)
+		}
+
+		if currentSemver.Compare(semverV022) != -1 {
+			licenseToken := getLicenseToken()
+			if licenseToken != "" {
+				e.clusterFillers = append(e.clusterFillers, api.WithLicenseToken(licenseToken))
+			}
 		}
 	}
 
