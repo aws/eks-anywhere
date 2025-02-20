@@ -407,6 +407,11 @@ func Ubuntu131Image() api.TinkerbellFiller {
 	return imageForKubeVersionAndOS(anywherev1.Kube131, Ubuntu2004, "")
 }
 
+// Ubuntu132Image represents an Ubuntu raw image corresponding to Kubernetes 1.32.
+func Ubuntu132Image() api.TinkerbellFiller {
+	return imageForKubeVersionAndOS(anywherev1.Kube132, Ubuntu2004, "")
+}
+
 // Ubuntu127ImageForCP represents an Ubuntu raw image corresponding to Kubernetes 1.27 and is set for CP machine config.
 func Ubuntu127ImageForCP() api.TinkerbellFiller {
 	return imageForKubeVersionAndOS(anywherev1.Kube127, Ubuntu2004, controlPlaneIdentifier)
@@ -432,6 +437,11 @@ func Ubuntu131ImageForCP() api.TinkerbellFiller {
 	return imageForKubeVersionAndOS(anywherev1.Kube131, Ubuntu2004, controlPlaneIdentifier)
 }
 
+// Ubuntu132ImageForCP represents an Ubuntu raw image corresponding to Kubernetes 1.32 and is set for CP machine config.
+func Ubuntu132ImageForCP() api.TinkerbellFiller {
+	return imageForKubeVersionAndOS(anywherev1.Kube132, Ubuntu2004, controlPlaneIdentifier)
+}
+
 // Ubuntu127ImageForWorker represents an Ubuntu raw image corresponding to Kubernetes 1.27 and is set for worker machine config.
 func Ubuntu127ImageForWorker() api.TinkerbellFiller {
 	return imageForKubeVersionAndOS(anywherev1.Kube127, Ubuntu2004, workerIdentifier)
@@ -455,6 +465,11 @@ func Ubuntu130ImageForWorker() api.TinkerbellFiller {
 // Ubuntu131ImageForWorker represents an Ubuntu raw image corresponding to Kubernetes 1.31 and is set for worker machine config.
 func Ubuntu131ImageForWorker() api.TinkerbellFiller {
 	return imageForKubeVersionAndOS(anywherev1.Kube131, Ubuntu2004, workerIdentifier)
+}
+
+// Ubuntu132ImageForWorker represents an Ubuntu raw image corresponding to Kubernetes 1.32 and is set for worker machine config.
+func Ubuntu132ImageForWorker() api.TinkerbellFiller {
+	return imageForKubeVersionAndOS(anywherev1.Kube132, Ubuntu2004, workerIdentifier)
 }
 
 // Ubuntu2204Kubernetes127Image represents an Ubuntu 22.04 raw image corresponding to Kubernetes 1.27.
@@ -490,6 +505,11 @@ func Ubuntu2204Kubernetes130Image() api.TinkerbellFiller {
 // Ubuntu2204Kubernetes131Image represents an Ubuntu 22.04 raw image corresponding to Kubernetes 1.31.
 func Ubuntu2204Kubernetes131Image() api.TinkerbellFiller {
 	return imageForKubeVersionAndOS(anywherev1.Kube131, Ubuntu2204, "")
+}
+
+// Ubuntu2204Kubernetes132Image represents an Ubuntu 22.04 raw image corresponding to Kubernetes 1.32.
+func Ubuntu2204Kubernetes132Image() api.TinkerbellFiller {
+	return imageForKubeVersionAndOS(anywherev1.Kube132, Ubuntu2204, "")
 }
 
 // HookIsoURLOverride returns the env var value set for 'T_TINKERBELL_HOOK_ISO_URL'.
