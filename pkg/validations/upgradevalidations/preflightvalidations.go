@@ -9,7 +9,6 @@ import (
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/constants"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validation"
@@ -121,14 +120,6 @@ func (u *UpgradeValidations) PreflightValidations(ctx context.Context) []validat
 				Name:        "validate eksa controller is not paused",
 				Remediation: fmt.Sprintf("remove cluster controller reconciler pause annotation %s before upgrading the cluster %s", u.Opts.Spec.Cluster.PausedAnnotation(), targetCluster.Name),
 				Err:         validations.ValidatePauseAnnotation(ctx, k, targetCluster, targetCluster.Name),
-			}
-		},
-		func() *validations.ValidationResult {
-			return &validations.ValidationResult{
-				Name:        "validate kubernetes version 1.32 support",
-				Remediation: fmt.Sprintf("ensure %v env variable is set", features.K8s132SupportEnvVar),
-				Err:         validations.ValidateK8s132Support(u.Opts.Spec),
-				Silent:      true,
 			}
 		},
 		func() *validations.ValidationResult {
