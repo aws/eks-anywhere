@@ -169,11 +169,6 @@ func withCloudStackKubeVersionAndOS(kubeVersion anywherev1.KubernetesVersion, os
 	}
 }
 
-// WithCloudStackRedhat127 returns a function which can be invoked to configure the Cloudstack object to be compatible with K8s 1.27.
-func WithCloudStackRedhat127() CloudStackOpt {
-	return withCloudStackKubeVersionAndOS(anywherev1.Kube127, RedHat8, nil)
-}
-
 // WithCloudStackRedhat128 returns a function which can be invoked to configure the Cloudstack object to be compatible with K8s 1.28.
 func WithCloudStackRedhat128() CloudStackOpt {
 	return withCloudStackKubeVersionAndOS(anywherev1.Kube128, RedHat8, nil)
@@ -194,9 +189,9 @@ func WithCloudStackRedhat131() CloudStackOpt {
 	return withCloudStackKubeVersionAndOS(anywherev1.Kube131, RedHat8, nil)
 }
 
-// WithCloudStackRedhat9Kubernetes127 returns a function which can be invoked to configure the Cloudstack object to be compatible with K8s 1.27.
-func WithCloudStackRedhat9Kubernetes127() CloudStackOpt {
-	return withCloudStackKubeVersionAndOS(anywherev1.Kube127, RedHat9, nil)
+// WithCloudStackRedhat132 returns a function which can be invoked to configure the Cloudstack object to be compatible with K8s 1.32.
+func WithCloudStackRedhat132() CloudStackOpt {
+	return withCloudStackKubeVersionAndOS(anywherev1.Kube132, RedHat8, nil)
 }
 
 // WithCloudStackRedhat9Kubernetes128 returns a function which can be invoked to configure the Cloudstack object to be compatible with K8s 1.28.
@@ -217,6 +212,11 @@ func WithCloudStackRedhat9Kubernetes130() CloudStackOpt {
 // WithCloudStackRedhat9Kubernetes131 returns a function which can be invoked to configure the Cloudstack object to be compatible with K8s 1.31.
 func WithCloudStackRedhat9Kubernetes131() CloudStackOpt {
 	return withCloudStackKubeVersionAndOS(anywherev1.Kube131, RedHat9, nil)
+}
+
+// WithCloudStackRedhat9Kubernetes132 returns a function which can be invoked to configure the Cloudstack object to be compatible with K8s 1.32.
+func WithCloudStackRedhat9Kubernetes132() CloudStackOpt {
+	return withCloudStackKubeVersionAndOS(anywherev1.Kube132, RedHat9, nil)
 }
 
 func WithCloudStackFillers(fillers ...api.CloudStackFiller) CloudStackOpt {
@@ -341,11 +341,6 @@ func (c *CloudStack) templateForKubeVersionAndOS(kubeVersion anywherev1.Kubernet
 	return api.WithCloudStackTemplateForAllMachines(template)
 }
 
-// Redhat127Template returns cloudstack filler for 1.27 RedHat.
-func (c *CloudStack) Redhat127Template() api.CloudStackFiller {
-	return c.templateForKubeVersionAndOS(anywherev1.Kube127, RedHat8, nil)
-}
-
 // Redhat128Template returns cloudstack filler for 1.28 RedHat.
 func (c *CloudStack) Redhat128Template() api.CloudStackFiller {
 	return c.templateForKubeVersionAndOS(anywherev1.Kube128, RedHat8, nil)
@@ -366,9 +361,9 @@ func (c *CloudStack) Redhat131Template() api.CloudStackFiller {
 	return c.templateForKubeVersionAndOS(anywherev1.Kube131, RedHat8, nil)
 }
 
-// Redhat9Kubernetes127Template returns cloudstack filler for 1.27 RedHat.
-func (c *CloudStack) Redhat9Kubernetes127Template() api.CloudStackFiller {
-	return c.templateForKubeVersionAndOS(anywherev1.Kube127, RedHat9, nil)
+// Redhat132Template returns cloudstack filler for 1.32 RedHat.
+func (c *CloudStack) Redhat132Template() api.CloudStackFiller {
+	return c.templateForKubeVersionAndOS(anywherev1.Kube132, RedHat8, nil)
 }
 
 // Redhat9Kubernetes128Template returns cloudstack filler for 1.28 RedHat.
@@ -389,6 +384,11 @@ func (c *CloudStack) Redhat9Kubernetes130Template() api.CloudStackFiller {
 // Redhat9Kubernetes131Template returns cloudstack filler for 1.31 RedHat.
 func (c *CloudStack) Redhat9Kubernetes131Template() api.CloudStackFiller {
 	return c.templateForKubeVersionAndOS(anywherev1.Kube131, RedHat9, nil)
+}
+
+// Redhat9Kubernetes132Template returns cloudstack filler for 1.32 RedHat.
+func (c *CloudStack) Redhat9Kubernetes132Template() api.CloudStackFiller {
+	return c.templateForKubeVersionAndOS(anywherev1.Kube132, RedHat9, nil)
 }
 
 func buildCloudStackWorkerNodeGroupClusterFiller(machineConfigName string, workerNodeGroup *WorkerNodeGroup) api.ClusterFiller {
@@ -419,12 +419,6 @@ func (c *CloudStack) WithKubeVersionAndOS(kubeVersion anywherev1.KubernetesVersi
 	)
 }
 
-// WithRedhat127 returns a cluster config filler that sets the kubernetes version of the cluster to 1.27
-// as well as the right redhat template for all CloudStackMachineConfigs.
-func (c *CloudStack) WithRedhat127() api.ClusterConfigFiller {
-	return c.WithKubeVersionAndOS(anywherev1.Kube127, RedHat8, nil)
-}
-
 // WithRedhat128 returns a cluster config filler that sets the kubernetes version of the cluster to 1.28
 // as well as the right redhat template for all CloudStackMachineConfigs.
 func (c *CloudStack) WithRedhat128() api.ClusterConfigFiller {
@@ -449,10 +443,10 @@ func (c *CloudStack) WithRedhat131() api.ClusterConfigFiller {
 	return c.WithKubeVersionAndOS(anywherev1.Kube131, RedHat8, nil)
 }
 
-// WithRedhat9Kubernetes127 returns a cluster config filler that sets the kubernetes version of the cluster to 1.27
+// WithRedhat132 returns a cluster config filler that sets the kubernetes version of the cluster to 1.32
 // as well as the right redhat template for all CloudStackMachineConfigs.
-func (c *CloudStack) WithRedhat9Kubernetes127() api.ClusterConfigFiller {
-	return c.WithKubeVersionAndOS(anywherev1.Kube127, RedHat9, nil)
+func (c *CloudStack) WithRedhat132() api.ClusterConfigFiller {
+	return c.WithKubeVersionAndOS(anywherev1.Kube132, RedHat8, nil)
 }
 
 // WithRedhat9Kubernetes128 returns a cluster config filler that sets the kubernetes version of the cluster to 1.28
@@ -479,12 +473,16 @@ func (c *CloudStack) WithRedhat9Kubernetes131() api.ClusterConfigFiller {
 	return c.WithKubeVersionAndOS(anywherev1.Kube131, RedHat9, nil)
 }
 
+// WithRedhat9Kubernetes132 returns a cluster config filler that sets the kubernetes version of the cluster to 1.32
+// as well as the right redhat template for all CloudStackMachineConfigs.
+func (c *CloudStack) WithRedhat9Kubernetes132() api.ClusterConfigFiller {
+	return c.WithKubeVersionAndOS(anywherev1.Kube132, RedHat9, nil)
+}
+
 // WithRedhatVersion returns a cluster config filler that sets the kubernetes version of the cluster to the k8s
 // version provider, as well as the right redhat template for all CloudStackMachineConfigs.
 func (c *CloudStack) WithRedhatVersion(version anywherev1.KubernetesVersion) api.ClusterConfigFiller {
 	switch version {
-	case anywherev1.Kube127:
-		return c.WithRedhat127()
 	case anywherev1.Kube128:
 		return c.WithRedhat128()
 	case anywherev1.Kube129:
@@ -493,6 +491,8 @@ func (c *CloudStack) WithRedhatVersion(version anywherev1.KubernetesVersion) api
 		return c.WithRedhat130()
 	case anywherev1.Kube131:
 		return c.WithRedhat131()
+	case anywherev1.Kube132:
+		return c.WithRedhat132()
 	default:
 		return nil
 	}
