@@ -41,6 +41,11 @@ func runFlowUpgradeManagementClusterCheckForSideEffects(test *framework.Multiclu
 	printStateOfMachines(test.ManagementCluster.ClusterConfig.Cluster, preUpgradeWorkloadClustersState)
 
 	test.T.Logf("Upgrading management cluster with EKS-A version %s", newEKSA.Version())
+
+	// Since we do not generate cluster config from the new binary and update the existing cluster config,
+	// we will need to manually add the license token for upgrade tests as long as the latest minor is 'v0.21.*'.
+	licenseToken := os.Getenv(framework.LicenseTokenEnvVar)
+	test.ManagementCluster.ClusterConfig.Cluster.Spec.LicenseToken = licenseToken
 	test.ManagementCluster.UpgradeClusterWithNewConfig(clusterOpts, framework.ExecuteWithBinary(newEKSA))
 
 	checker := machineSideEffectChecker{
