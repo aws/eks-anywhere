@@ -18,12 +18,12 @@ import (
 )
 
 // AWS IAM Auth
-func TestTinkerbellKubernetes131AWSIamAuth(t *testing.T) {
+func TestTinkerbellKubernetes132AWSIamAuth(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
-		framework.NewTinkerbell(t, framework.WithUbuntu131Tinkerbell()),
+		framework.NewTinkerbell(t, framework.WithUbuntu132Tinkerbell()),
 		framework.WithAWSIam(),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube131)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube132)),
 		framework.WithControlPlaneHardware(1),
 		framework.WithWorkerHardware(1),
 	)

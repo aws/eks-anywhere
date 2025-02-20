@@ -252,6 +252,11 @@ func WithUbuntu131Tinkerbell() TinkerbellOpt {
 	return withKubeVersionAndOS(anywherev1.Kube131, Ubuntu2004, "", nil)
 }
 
+// WithUbuntu132Tinkerbell tink test with ubuntu 1.32.
+func WithUbuntu132Tinkerbell() TinkerbellOpt {
+	return withKubeVersionAndOS(anywherev1.Kube132, Ubuntu2004, "", nil)
+}
+
 // WithRedHat127Tinkerbell tink test with redhat 1.27.
 func WithRedHat127Tinkerbell() TinkerbellOpt {
 	return withKubeVersionAndOS(anywherev1.Kube127, RedHat8, "", nil)

@@ -1,4 +1,4 @@
-TestTinkerbellKubernetes131AWSIamAuth: 2
+TestTinkerbellKubernetes132AWSIamAuth: 2
 TestTinkerbellKubernetes128BottleRocketAWSIamAuth: 2
 TestTinkerbellKubernetes131UbuntuWorkerNodeUpgrade: 3
 TestTinkerbellKubernetes131UbuntuWorkerNodeScaleUpWithAPI: 3
