@@ -17,7 +17,7 @@ spec:
     upgradeRolloutStrategy:
       type: InPlace
   datacenterRef: {}
-  kubernetesVersion: "1.31"
+  kubernetesVersion: "1.32"
   managementCluster:
     name: test-cluster
   workerNodeGroupConfigurations:
