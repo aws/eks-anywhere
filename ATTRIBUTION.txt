@@ -41,7 +41,7 @@ https://github.com/aws/aws-sdk-go-v2/service/ssooidc
 ** github.com/aws/aws-sdk-go-v2/service/sts; version v1.28.4 --
 https://github.com/aws/aws-sdk-go-v2/service/sts
 
-** github.com/aws/eks-anywhere; version 721e3fc72ec86f8be52858f3caf1c67ad7500e44 --
+** github.com/aws/eks-anywhere; version 36a5783f8fd8e082b7b3b770f5d1f10b6b1fd5ec --
 https://github.com/aws/eks-anywhere
 
 ** github.com/aws/eks-distro-build-tooling/release/api/v1alpha1; version v0.0.0-20211103003257-a7e2379eae5e --
@@ -1739,9 +1739,22 @@ Copyright (c) 2019 Mark Bates
 https://github.com/gocarina/gocsv
 Copyright (c) 2014 Jonathan Picques
 
+** github.com/golang-jwt/jwt/v5; version v5.2.1 --
+https://github.com/golang-jwt/jwt/v5
+Copyright (c) 2012 Dave Grijalva
+Copyright (c) 2021 golang-jwt maintainers
+
 ** github.com/huandu/xstrings; version v1.4.0 --
 https://github.com/huandu/xstrings
 Copyright (c) 2015 Huan Du
+
+** github.com/itchyny/gojq; version v0.12.17 --
+https://github.com/itchyny/gojq
+Copyright (c) 2019-2024 itchyny
+
+** github.com/itchyny/timefmt-go; version v0.1.6 --
+https://github.com/itchyny/timefmt-go
+Copyright (c) 2020-2022 itchyny
 
 ** github.com/jbenet/go-context/io; version v0.0.0-20150711004518-d14ea06fba99 --
 https://github.com/jbenet/go-context
