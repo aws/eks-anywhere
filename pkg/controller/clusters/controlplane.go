@@ -79,33 +79,35 @@ const skipCAPIAutoPauseKCPForExternalEtcdAnnotation = "cluster.x-k8s.io/skip-pau
 
 // ReconcileControlPlane orchestrates the ControlPlane reconciliation logic.
 func ReconcileControlPlane(ctx context.Context, log logr.Logger, c client.Client, cp *ControlPlane) (controller.Result, error) {
+	cluster, kcp, etcdadmCluster, err := readCurrentControlPlane(ctx, c, cp)
+	if err != nil {
+		return controller.Result{}, err
+	}
+
+	if cp.EtcdCluster != nil {
+		// always add skip pause annotation since we want to have full control over the kcp-etcd orchestration
+		clientutil.AddAnnotation(cp.KubeadmControlPlane, skipCAPIAutoPauseKCPForExternalEtcdAnnotation, "true")
+	}
+
+	if cluster == nil {
+		log.Info("Creating cluster")
+		// If the CAPI cluster doesn't exist, this is a new cluster, create all objects, no need for extra orchestration.
+		return controller.Result{}, applyAllControlPlaneObjects(ctx, c, cp)
+	}
+
+	currentCPEndpoint := cluster.Spec.ControlPlaneEndpoint
+	desiredCPEndpoint := cp.Cluster.Spec.ControlPlaneEndpoint
+	if desiredCPEndpoint.IsZero() && !currentCPEndpoint.IsZero() {
+		// If the control plane endpoint is not set in the desired cluster, we want to keep the current one.
+		// In practice, this condition will always be hit because:
+		// * We don't set the endpoint in the cluster object in our code, we let CAPI do that
+		// * The endpoint never changes once the cluster has been created
+		cp.Cluster.Spec.ControlPlaneEndpoint = currentCPEndpoint
+	}
+
 	if cp.EtcdCluster == nil {
 		// For stacked etcd, we don't need orchestration, apply directly
 		return controller.Result{}, applyAllControlPlaneObjects(ctx, c, cp)
-	}
-
-	// always add skip pause annotation since we want to have full control over the kcp-etcd orchestration
-	clientutil.AddAnnotation(cp.KubeadmControlPlane, skipCAPIAutoPauseKCPForExternalEtcdAnnotation, "true")
-
-	cluster := &clusterv1.Cluster{}
-	err := c.Get(ctx, client.ObjectKeyFromObject(cp.Cluster), cluster)
-	if apierrors.IsNotFound(err) {
-		log.Info("Creating cluster with external etcd")
-		// If the CAPI cluster doesn't exist, this is a new cluster, create all objects
-		return controller.Result{}, applyAllControlPlaneObjects(ctx, c, cp)
-	}
-	if err != nil {
-		return controller.Result{}, errors.Wrap(err, "reading CAPI cluster")
-	}
-
-	etcdadmCluster, err := getEtcdadmCluster(ctx, c, cluster)
-	if err != nil {
-		return controller.Result{}, errors.Wrap(err, "reading CAPI cluster")
-	}
-
-	kcp := &controlplanev1.KubeadmControlPlane{}
-	if err = c.Get(ctx, objKeyForRef(cluster.Spec.ControlPlaneRef), kcp); err != nil {
-		return controller.Result{}, errors.Wrap(err, "reading kubeadm control plane")
 	}
 
 	// If there are changes for etcd, we only apply those changes for now and we wait.
@@ -121,6 +123,39 @@ func ReconcileControlPlane(ctx context.Context, log logr.Logger, c client.Client
 	}
 
 	return reconcileControlPlaneNodeChanges(ctx, log, c, cp, kcp)
+}
+
+func readCurrentControlPlane(ctx context.Context, c client.Client, cp *ControlPlane) (*clusterv1.Cluster, *controlplanev1.KubeadmControlPlane, *etcdv1.EtcdadmCluster, error) {
+	cluster := &clusterv1.Cluster{}
+	err := c.Get(ctx, client.ObjectKeyFromObject(cp.Cluster), cluster)
+	if apierrors.IsNotFound(err) {
+		// If the CAPI cluster doesn't exist, this is a new cluster, no need to read the rest of the objects.
+		return nil, nil, nil, nil
+	}
+	if err != nil {
+		return nil, nil, nil, errors.Wrap(err, "reading CAPI cluster")
+	}
+
+	kcp := &controlplanev1.KubeadmControlPlane{}
+	// We default to the cluster's namespace if the reference is incomplete because some
+	// providers (at least tinkerbell) are not correctly setting it when generating the spec.
+	// After we have updated all of them and we are confident all clusters object have been updates,
+	// this fallback could be removed.
+	key := keyWithFallbackNamespace(objKeyForRef(cluster.Spec.ControlPlaneRef), cluster)
+	if err = c.Get(ctx, key, kcp); err != nil {
+		return nil, nil, nil, errors.Wrap(err, "reading kubeadm control plane")
+	}
+
+	if cp.EtcdCluster == nil {
+		return cluster, kcp, nil, nil
+	}
+
+	etcdadmCluster, err := getEtcdadmCluster(ctx, c, cluster)
+	if err != nil {
+		return nil, nil, nil, errors.Wrap(err, "reading etcdadm cluster")
+	}
+
+	return cluster, kcp, etcdadmCluster, nil
 }
 
 func applyAllControlPlaneObjects(ctx context.Context, c client.Client, cp *ControlPlane) error {
@@ -225,4 +260,15 @@ func objKeyForRef(ref *corev1.ObjectReference) client.ObjectKey {
 		Name:      ref.Name,
 		Namespace: ref.Namespace,
 	}
+}
+
+// keyWithFallbackNamespace returns the provided key with the namespace of the provided
+// object as a fallback if the provided key's namespace is empty.
+// Useful for incomplete references that are missing the namespace but where it can be
+// inferred from another object.
+func keyWithFallbackNamespace(key client.ObjectKey, obj client.Object) client.ObjectKey {
+	if key.Namespace == "" {
+		key.Namespace = obj.GetNamespace()
+	}
+	return key
 }

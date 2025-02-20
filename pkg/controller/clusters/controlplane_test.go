@@ -41,6 +41,38 @@ func TestReconcileControlPlaneStackedEtcd(t *testing.T) {
 	api.ShouldEventuallyExist(ctx, cp.ProviderCluster)
 }
 
+func TestReconcileControlPlaneUpdateAfterClusterCreation(t *testing.T) {
+	g := NewWithT(t)
+	c := env.Client()
+	api := envtest.NewAPIExpecter(t, c)
+	ctx := context.Background()
+	ns := env.CreateNamespaceForTest(ctx, t)
+	log := test.NewNullLogger()
+	cp := controlPlaneStackedEtcd(ns)
+
+	originalCPEndpoint := clusterv1.APIEndpoint{
+		Host: "my-server.example.com",
+		Port: 6443,
+	}
+	cp.Cluster.Spec.ControlPlaneEndpoint = originalCPEndpoint
+	cp.Cluster.Spec.ControlPlaneRef.Namespace = "" // this mimics what a lot of providers do
+
+	envtest.CreateObjs(ctx, t, c, cp.AllObjects()...)
+
+	// We never set the endpoint ourselves, so we mimic that here
+	// we want to test the original one set by capi is preserved
+	cp.Cluster.Spec.ControlPlaneEndpoint = clusterv1.APIEndpoint{}
+
+	g.Expect(clusters.ReconcileControlPlane(ctx, log, c, cp)).To(Equal(controller.Result{}))
+	api.ShouldEventuallyExist(ctx, cp.Cluster)
+	api.ShouldEventuallyMatch(ctx, cp.Cluster, func(g Gomega) {
+		g.Expect(cp.Cluster.Spec.ControlPlaneEndpoint).To(Equal(originalCPEndpoint))
+	})
+	api.ShouldEventuallyExist(ctx, cp.KubeadmControlPlane)
+	api.ShouldEventuallyExist(ctx, cp.ControlPlaneMachineTemplate)
+	api.ShouldEventuallyExist(ctx, cp.ProviderCluster)
+}
+
 func TestReconcileControlPlaneExternalEtcdNewCluster(t *testing.T) {
 	g := NewWithT(t)
 	c := env.Client()
