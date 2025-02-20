@@ -165,6 +165,11 @@ func WithRedHat131VSphere() VSphereOpt {
 	return withVSphereKubeVersionAndOS(anywherev1.Kube131, RedHat8, nil)
 }
 
+// WithRedHat132VSphere vsphere test with Redhat 8 for Kubernetes 1.32.
+func WithRedHat132VSphere() VSphereOpt {
+	return withVSphereKubeVersionAndOS(anywherev1.Kube132, RedHat8, nil)
+}
+
 // WithUbuntu127 returns a VSphereOpt that adds API fillers to use a Ubuntu vSphere template for k8s 1.27
 // and the "ubuntu" osFamily in all machine configs.
 func WithUbuntu127() VSphereOpt {
@@ -195,6 +200,12 @@ func WithUbuntu131() VSphereOpt {
 	return withVSphereKubeVersionAndOS(anywherev1.Kube131, Ubuntu2004, nil)
 }
 
+// WithUbuntu132 returns a VSphereOpt that adds API fillers to use a Ubuntu vSphere template for k8s 1.32
+// and the "ubuntu" osFamily in all machine configs.
+func WithUbuntu132() VSphereOpt {
+	return withVSphereKubeVersionAndOS(anywherev1.Kube131, Ubuntu2004, nil)
+}
+
 // WithBottleRocket127 returns br 1.27 var.
 func WithBottleRocket127() VSphereOpt {
 	return withVSphereKubeVersionAndOS(anywherev1.Kube127, Bottlerocket1, nil)
@@ -218,6 +229,11 @@ func WithBottleRocket130() VSphereOpt {
 // WithBottleRocket131 returns br 1.31 var.
 func WithBottleRocket131() VSphereOpt {
 	return withVSphereKubeVersionAndOS(anywherev1.Kube131, Bottlerocket1, nil)
+}
+
+// WithBottleRocket132 returns br 1.32 var.
+func WithBottleRocket132() VSphereOpt {
+	return withVSphereKubeVersionAndOS(anywherev1.Kube132, Bottlerocket1, nil)
 }
 
 func WithPrivateNetwork() VSphereOpt {
@@ -425,10 +441,22 @@ func (v *VSphere) WithUbuntu131() api.ClusterConfigFiller {
 	return v.WithKubeVersionAndOS(anywherev1.Kube131, Ubuntu2004, nil)
 }
 
+// WithUbuntu132 returns a cluster config filler that sets the kubernetes version of the cluster to 1.32
+// as well as the right ubuntu template and osFamily for all VSphereMachineConfigs.
+func (v *VSphere) WithUbuntu132() api.ClusterConfigFiller {
+	return v.WithKubeVersionAndOS(anywherev1.Kube132, Ubuntu2004, nil)
+}
+
 // WithBottleRocket131 returns a cluster config filler that sets the kubernetes version of the cluster to 1.31
 // as well as the right botllerocket template and osFamily for all VSphereMachineConfigs.
 func (v *VSphere) WithBottleRocket131() api.ClusterConfigFiller {
 	return v.WithKubeVersionAndOS(anywherev1.Kube131, Bottlerocket1, nil)
+}
+
+// WithBottleRocket132 returns a cluster config filler that sets the kubernetes version of the cluster to 1.32
+// as well as the right botllerocket template and osFamily for all VSphereMachineConfigs.
+func (v *VSphere) WithBottleRocket132() api.ClusterConfigFiller {
+	return v.WithKubeVersionAndOS(anywherev1.Kube132, Bottlerocket1, nil)
 }
 
 // CleanupResources deletes all the VMs owned by the test EKS-A cluster. It satisfies the test framework Provider.
@@ -501,6 +529,11 @@ func (v *VSphere) Ubuntu131Template() api.VSphereFiller {
 	return v.templateForKubeVersionAndOS(anywherev1.Kube131, Ubuntu2004, nil)
 }
 
+// Ubuntu132Template returns vsphere filler for 1.32 Ubuntu.
+func (v *VSphere) Ubuntu132Template() api.VSphereFiller {
+	return v.templateForKubeVersionAndOS(anywherev1.Kube132, Ubuntu2004, nil)
+}
+
 // Ubuntu129TemplateForMachineConfig returns vsphere filler for 1.29 Ubuntu for a specific machine config.
 func (v *VSphere) Ubuntu129TemplateForMachineConfig(name string) api.VSphereFiller {
 	return v.templateForKubeVersionAndOSMachineConfig(name, anywherev1.Kube129, Ubuntu2004)
@@ -531,6 +564,11 @@ func (v *VSphere) Ubuntu2204Kubernetes131Template() api.VSphereFiller {
 	return v.templateForKubeVersionAndOS(anywherev1.Kube131, Ubuntu2204, nil)
 }
 
+// Ubuntu2204Kubernetes132Template returns vsphere filler for 1.32 Ubuntu 22.04.
+func (v *VSphere) Ubuntu2204Kubernetes132Template() api.VSphereFiller {
+	return v.templateForKubeVersionAndOS(anywherev1.Kube132, Ubuntu2204, nil)
+}
+
 // Bottlerocket127Template returns vsphere filler for 1.27 BR.
 func (v *VSphere) Bottlerocket127Template() api.VSphereFiller {
 	return v.templateForKubeVersionAndOS(anywherev1.Kube127, Bottlerocket1, nil)
@@ -556,6 +594,11 @@ func (v *VSphere) Bottlerocket131Template() api.VSphereFiller {
 	return v.templateForKubeVersionAndOS(anywherev1.Kube131, Bottlerocket1, nil)
 }
 
+// Bottlerocket132Template returns vsphere filler for 1.32 BR.
+func (v *VSphere) Bottlerocket132Template() api.VSphereFiller {
+	return v.templateForKubeVersionAndOS(anywherev1.Kube132, Bottlerocket1, nil)
+}
+
 // Redhat127Template returns vsphere filler for 1.27 Redhat.
 func (v *VSphere) Redhat127Template() api.VSphereFiller {
 	return v.templateForKubeVersionAndOS(anywherev1.Kube127, RedHat8, nil)
@@ -579,6 +622,11 @@ func (v *VSphere) Redhat130Template() api.VSphereFiller {
 // Redhat131Template returns vsphere filler for 1.31 Redhat.
 func (v *VSphere) Redhat131Template() api.VSphereFiller {
 	return v.templateForKubeVersionAndOS(anywherev1.Kube131, RedHat8, nil)
+}
+
+// Redhat132Template returns vsphere filler for 1.32 Redhat.
+func (v *VSphere) Redhat132Template() api.VSphereFiller {
+	return v.templateForKubeVersionAndOS(anywherev1.Kube132, RedHat8, nil)
 }
 
 func (v *VSphere) getDevRelease() *releasev1.EksARelease {
