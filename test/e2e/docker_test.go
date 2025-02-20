@@ -1462,7 +1462,7 @@ func TestDockerKubernetes131to132EtcdScaleUp(t *testing.T) {
 
 	runSimpleUpgradeFlow(
 		test,
-		v1alpha1.Kube131,
+		v1alpha1.Kube132,
 		framework.WithClusterUpgrade(
 			api.WithKubernetesVersion(v1alpha1.Kube132),
 			api.WithExternalEtcdTopology(3),
@@ -1485,7 +1485,7 @@ func TestDockerKubernetes131to132EtcdScaleDown(t *testing.T) {
 
 	runSimpleUpgradeFlow(
 		test,
-		v1alpha1.Kube131,
+		v1alpha1.Kube132,
 		framework.WithClusterUpgrade(
 			api.WithKubernetesVersion(v1alpha1.Kube132),
 			api.WithExternalEtcdTopology(1),
