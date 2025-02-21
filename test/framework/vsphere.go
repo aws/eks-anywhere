@@ -203,7 +203,7 @@ func WithUbuntu131() VSphereOpt {
 // WithUbuntu132 returns a VSphereOpt that adds API fillers to use a Ubuntu vSphere template for k8s 1.32
 // and the "ubuntu" osFamily in all machine configs.
 func WithUbuntu132() VSphereOpt {
-	return withVSphereKubeVersionAndOS(anywherev1.Kube131, Ubuntu2004, nil)
+	return withVSphereKubeVersionAndOS(anywherev1.Kube132, Ubuntu2004, nil)
 }
 
 // WithBottleRocket127 returns br 1.27 var.
