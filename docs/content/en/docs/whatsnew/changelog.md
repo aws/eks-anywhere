@@ -38,6 +38,31 @@ description: >
 * When upgrading to a new minor version, a new OS image must be created using the new image-builder CLI pertaining to that release.
 {{% /alert %}}
 
+## [v0.21.7](https://github.com/aws/eks-anywhere/releases/tag/v0.21.7)
+
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+|    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+| Bottlerocket 1.26.2 |    ✔    |     —      |    —    |     —      |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+|      RHEL 9.x       |    —    |     ✔      |    ✔    |     ✔      |  —   |
+
+### Changed
+- EKS Distro:
+  - [`v1-31-eks-14`](https://distro.eks.amazonaws.com/releases/1-31/14/)
+  - [`v1-30-eks-25`](https://distro.eks.amazonaws.com/releases/1-30/25/)
+  - [`v1-29-eks-32`](https://distro.eks.amazonaws.com/releases/1-29/32/)
+  - [`v1-28-eks-43`](https://distro.eks.amazonaws.com/releases/1-28/43/)
+- Cilium: `v1.14.12-eksa.2` to `v1.14.12-eksa.3`
+- cluster-api-provider-aws-snow: `v0.1.27` to `v0.1.30` 
+- New base images with CVE fixes for Amazon Linux 2
+
+### Fixed
+- Update cilium 1.14 to fix issue with hostport functionality ([#4330](https://github.com/aws/eks-anywhere-build-tooling/pull/4330))
+- Add namespace to external etcd ref ([#9252](https://github.com/aws/eks-anywhere/pull/9252))
+
 ## [v0.21.6](https://github.com/aws/eks-anywhere/releases/tag/v0.21.6)
 
 ### Supported OS version details
