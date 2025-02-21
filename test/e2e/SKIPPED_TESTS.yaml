@@ -36,7 +36,7 @@ skipped_tests:
 
 # Tinkerbell
 # Skipping Workload upgrade tests due to hardware limitation
-- TestTinkerbellKubernetes131UbuntuAddWorkerNodeGroupWithAPI
+- TestTinkerbellKubernetes132UbuntuAddWorkerNodeGroupWithAPI
 # Skipping skip power action tests - Not going to work because e2e test powers on CP and worker node at the same time and worker node times out early waiting for ipxe
 # Skipping a few redundant tests
 # For RHEL 9 Tinkerbell tests, only enable test case for latest kubernetes version 1.31 due to limited testing resources.
@@ -44,7 +44,7 @@ skipped_tests:
 - TestTinkerbellKubernetes128RedHatSimpleFlow
 - TestTinkerbellKubernetes129RedHatSimpleFlow
 - TestTinkerbellKubernetes130RedHatSimpleFlow
-- TestTinkerbellKubernetes131RedHatSimpleFlow
+- TestTinkerbellKubernetes132RedHatSimpleFlow
 - TestTinkerbellKubernetes127RedHat9SimpleFlow
 - TestTinkerbellKubernetes128RedHat9SimpleFlow
 - TestTinkerbellKubernetes129RedHat9SimpleFlow
