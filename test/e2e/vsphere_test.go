@@ -7424,12 +7424,12 @@ func TestVSphereKubernetes128to129BottlerocketEtcdScaleUp(t *testing.T) {
 
 	runSimpleUpgradeFlow(
 		test,
-		v1alpha1.Kube128,
+		v1alpha1.Kube129,
 		framework.WithClusterUpgrade(
 			api.WithKubernetesVersion(v1alpha1.Kube129),
 			api.WithExternalEtcdTopology(3),
 		),
-		provider.WithProviderUpgrade(provider.Bottlerocket128Template()),
+		provider.WithProviderUpgrade(provider.Bottlerocket129Template()),
 	)
 }
 
@@ -7439,7 +7439,7 @@ func TestVSphereKubernetes128to129BottlerocketEtcdScaleDown(t *testing.T) {
 		t,
 		provider,
 		framework.WithClusterFiller(
-			api.WithKubernetesVersion(v1alpha1.Kube129),
+			api.WithKubernetesVersion(v1alpha1.Kube128),
 			api.WithExternalEtcdTopology(3),
 			api.WithControlPlaneCount(1),
 			api.WithWorkerNodeCount(1),
@@ -7448,12 +7448,12 @@ func TestVSphereKubernetes128to129BottlerocketEtcdScaleDown(t *testing.T) {
 
 	runSimpleUpgradeFlow(
 		test,
-		v1alpha1.Kube128,
+		v1alpha1.Kube129,
 		framework.WithClusterUpgrade(
-			api.WithKubernetesVersion(v1alpha1.Kube128),
+			api.WithKubernetesVersion(v1alpha1.Kube129),
 			api.WithExternalEtcdTopology(1),
 		),
-		provider.WithProviderUpgrade(provider.Bottlerocket128Template()),
+		provider.WithProviderUpgrade(provider.Bottlerocket129Template()),
 	)
 }
 
