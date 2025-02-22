@@ -17,28 +17,28 @@ const (
 	tinkerbellProviderName                              = "tinkerbell"
 	tinkerbellBootstrapIPEnvVar                         = "T_TINKERBELL_BOOTSTRAP_IP"
 	tinkerbellControlPlaneNetworkCidrEnvVar             = "T_TINKERBELL_CP_NETWORK_CIDR"
-	tinkerbellImageUbuntu127EnvVar                      = "T_TINKERBELL_IMAGE_UBUNTU_1_27"
 	tinkerbellImageUbuntu128EnvVar                      = "T_TINKERBELL_IMAGE_UBUNTU_1_28"
 	tinkerbellImageUbuntu129EnvVar                      = "T_TINKERBELL_IMAGE_UBUNTU_1_29"
 	tinkerbellImageUbuntu130EnvVar                      = "T_TINKERBELL_IMAGE_UBUNTU_1_30"
 	tinkerbellImageUbuntu131EnvVar                      = "T_TINKERBELL_IMAGE_UBUNTU_1_31"
-	tinkerbellImageUbuntu2204Kubernetes127EnvVar        = "T_TINKERBELL_IMAGE_UBUNTU_2204_1_27"
+	tinkerbellImageUbuntu132EnvVar                      = "T_TINKERBELL_IMAGE_UBUNTU_1_32"
 	tinkerbellImageUbuntu2204Kubernetes128EnvVar        = "T_TINKERBELL_IMAGE_UBUNTU_2204_1_28"
 	tinkerbellImageUbuntu2204Kubernetes129EnvVar        = "T_TINKERBELL_IMAGE_UBUNTU_2204_1_29"
 	tinkerbellImageUbuntu2204Kubernetes129RTOSEnvVar    = "T_TINKERBELL_IMAGE_UBUNTU_2204_1_29_RTOS"
 	tinkerbellImageUbuntu2204Kubernetes129GenericEnvVar = "T_TINKERBELL_IMAGE_UBUNTU_2204_1_29_GENERIC"
 	tinkerbellImageUbuntu2204Kubernetes130EnvVar        = "T_TINKERBELL_IMAGE_UBUNTU_2204_1_30"
 	tinkerbellImageUbuntu2204Kubernetes131EnvVar        = "T_TINKERBELL_IMAGE_UBUNTU_2204_1_31"
-	tinkerbellImageRedHat127EnvVar                      = "T_TINKERBELL_IMAGE_REDHAT_1_27"
+	tinkerbellImageUbuntu2204Kubernetes132EnvVar        = "T_TINKERBELL_IMAGE_UBUNTU_2204_1_32"
 	tinkerbellImageRedHat128EnvVar                      = "T_TINKERBELL_IMAGE_REDHAT_1_28"
 	tinkerbellImageRedHat129EnvVar                      = "T_TINKERBELL_IMAGE_REDHAT_1_29"
 	tinkerbellImageRedHat130EnvVar                      = "T_TINKERBELL_IMAGE_REDHAT_1_30"
 	tinkerbellImageRedHat131EnvVar                      = "T_TINKERBELL_IMAGE_REDHAT_1_31"
-	tinkerbellImageRedHat9127EnvVar                     = "T_TINKERBELL_IMAGE_REDHAT_9_1_27"
+	tinkerbellImageRedHat132EnvVar                      = "T_TINKERBELL_IMAGE_REDHAT_1_32"
 	tinkerbellImageRedHat9128EnvVar                     = "T_TINKERBELL_IMAGE_REDHAT_9_1_28"
 	tinkerbellImageRedHat9129EnvVar                     = "T_TINKERBELL_IMAGE_REDHAT_9_1_29"
 	tinkerbellImageRedHat9130EnvVar                     = "T_TINKERBELL_IMAGE_REDHAT_9_1_30"
 	tinkerbellImageRedHat9131EnvVar                     = "T_TINKERBELL_IMAGE_REDHAT_9_1_31"
+	tinkerbellImageRedHat9132EnvVar                     = "T_TINKERBELL_IMAGE_REDHAT_9_1_32"
 	tinkerbellInventoryCsvFilePathEnvVar                = "T_TINKERBELL_INVENTORY_CSV"
 	tinkerbellSSHAuthorizedKey                          = "T_TINKERBELL_SSH_AUTHORIZED_KEY"
 	tinkerbellCIEnvironmentEnvVar                       = "T_TINKERBELL_CI_ENVIRONMENT"
@@ -49,28 +49,28 @@ const (
 
 var requiredTinkerbellEnvVars = []string{
 	tinkerbellControlPlaneNetworkCidrEnvVar,
-	tinkerbellImageUbuntu127EnvVar,
 	tinkerbellImageUbuntu128EnvVar,
 	tinkerbellImageUbuntu129EnvVar,
 	tinkerbellImageUbuntu130EnvVar,
 	tinkerbellImageUbuntu131EnvVar,
-	tinkerbellImageUbuntu2204Kubernetes127EnvVar,
+	tinkerbellImageUbuntu132EnvVar,
 	tinkerbellImageUbuntu2204Kubernetes128EnvVar,
 	tinkerbellImageUbuntu2204Kubernetes129EnvVar,
 	tinkerbellImageUbuntu2204Kubernetes129RTOSEnvVar,
 	tinkerbellImageUbuntu2204Kubernetes129GenericEnvVar,
 	tinkerbellImageUbuntu2204Kubernetes130EnvVar,
 	tinkerbellImageUbuntu2204Kubernetes131EnvVar,
-	tinkerbellImageRedHat127EnvVar,
+	tinkerbellImageUbuntu2204Kubernetes132EnvVar,
 	tinkerbellImageRedHat128EnvVar,
 	tinkerbellImageRedHat129EnvVar,
 	tinkerbellImageRedHat130EnvVar,
 	tinkerbellImageRedHat131EnvVar,
-	tinkerbellImageRedHat9127EnvVar,
+	tinkerbellImageRedHat132EnvVar,
 	tinkerbellImageRedHat9128EnvVar,
 	tinkerbellImageRedHat9129EnvVar,
 	tinkerbellImageRedHat9130EnvVar,
 	tinkerbellImageRedHat9131EnvVar,
+	tinkerbellImageRedHat9132EnvVar,
 	tinkerbellInventoryCsvFilePathEnvVar,
 	tinkerbellSSHAuthorizedKey,
 	tinkerbellHookIsoURLEnvVar,
