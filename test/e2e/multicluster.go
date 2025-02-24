@@ -14,8 +14,9 @@ import (
 
 func runWorkloadClusterFlow(test *framework.MulticlusterE2ETest) {
 	test.CreateManagementClusterWithConfig()
+	licenseToken2 := framework.GetLicenseToken2()
 	test.RunInWorkloadClusters(func(w *framework.WorkloadCluster) {
-		w.GenerateClusterConfig()
+		w.GenerateClusterConfigWithLicenseToken(licenseToken2)
 		w.CreateCluster()
 		w.DeleteCluster()
 	})

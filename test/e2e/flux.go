@@ -11,6 +11,7 @@ import (
 func runFluxFlow(test *framework.ClusterE2ETest) {
 	test.GenerateClusterConfig()
 	test.CreateCluster()
+	test.GenerateSupportBundleIfTestFailed()
 	test.ValidateFlux()
 	test.StopIfFailed()
 	test.DeleteCluster()
@@ -20,6 +21,7 @@ func runUpgradeFlowWithFlux(test *framework.ClusterE2ETest, updateVersion v1alph
 	test.GenerateClusterConfig()
 	test.CreateCluster()
 	test.UpgradeClusterWithNewConfig(clusterOpts)
+	test.GenerateSupportBundleIfTestFailed()
 	test.ValidateCluster(updateVersion)
 	test.ValidateFlux()
 	test.StopIfFailed()
