@@ -90,8 +90,9 @@ func runWorkloadClusterGitOpsAPIUpgradeFlowForBareMetal(test *framework.Multiclu
 func runTinkerbellWorkloadClusterFlow(test *framework.MulticlusterE2ETest) {
 	test.ManagementCluster.GenerateClusterConfig()
 	test.CreateTinkerbellManagementCluster()
+	licenseToken2 := framework.GetLicenseToken2()
 	test.RunInWorkloadClusters(func(w *framework.WorkloadCluster) {
-		w.GenerateClusterConfig()
+		w.GenerateClusterConfigWithLicenseToken(licenseToken2)
 		w.CreateCluster(framework.WithControlPlaneWaitTimeout("20m"))
 		w.StopIfFailed()
 		w.DeleteCluster()

@@ -224,6 +224,7 @@ func TestTinkerbellKubernetes128To129Ubuntu2204Upgrade(t *testing.T) {
 }
 
 func TestTinkerbellKubernetes128To129Ubuntu2204RTOSUpgrade(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
 	provider := framework.NewTinkerbell(t)
 	test := framework.NewClusterE2ETest(
 		t,
@@ -234,6 +235,9 @@ func TestTinkerbellKubernetes128To129Ubuntu2204RTOSUpgrade(t *testing.T) {
 		framework.WithWorkerHardware(2),
 	).WithClusterConfig(
 		provider.WithKubeVersionAndOS(v1alpha1.Kube128, framework.Ubuntu2204, nil),
+		api.ClusterToConfigFiller(
+			api.WithLicenseToken(licenseToken),
+		),
 	)
 	runSimpleUpgradeFlowForBaremetalWithoutClusterConfigGeneration(
 		test,
@@ -244,6 +248,7 @@ func TestTinkerbellKubernetes128To129Ubuntu2204RTOSUpgrade(t *testing.T) {
 }
 
 func TestTinkerbellKubernetes128To129Ubuntu2204GenericUpgrade(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
 	provider := framework.NewTinkerbell(t)
 	test := framework.NewClusterE2ETest(
 		t,
@@ -254,6 +259,9 @@ func TestTinkerbellKubernetes128To129Ubuntu2204GenericUpgrade(t *testing.T) {
 		framework.WithWorkerHardware(2),
 	).WithClusterConfig(
 		provider.WithKubeVersionAndOS(v1alpha1.Kube128, framework.Ubuntu2204, nil),
+		api.ClusterToConfigFiller(
+			api.WithLicenseToken(licenseToken),
+		),
 	)
 	runSimpleUpgradeFlowForBaremetalWithoutClusterConfigGeneration(
 		test,
@@ -364,6 +372,7 @@ func TestTinkerbellKubernetes129Ubuntu2004To2204Upgrade(t *testing.T) {
 }
 
 func TestTinkerbellKubernetes129Ubuntu2004To2204RTOSUpgrade(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
 	provider := framework.NewTinkerbell(t)
 	test := framework.NewClusterE2ETest(
 		t,
@@ -374,6 +383,9 @@ func TestTinkerbellKubernetes129Ubuntu2004To2204RTOSUpgrade(t *testing.T) {
 		framework.WithWorkerHardware(2),
 	).WithClusterConfig(
 		provider.WithKubeVersionAndOS(v1alpha1.Kube129, framework.Ubuntu2004, nil),
+		api.ClusterToConfigFiller(
+			api.WithLicenseToken(licenseToken),
+		),
 	)
 	runSimpleUpgradeFlowForBaremetalWithoutClusterConfigGeneration(
 		test,
@@ -384,6 +396,7 @@ func TestTinkerbellKubernetes129Ubuntu2004To2204RTOSUpgrade(t *testing.T) {
 }
 
 func TestTinkerbellKubernetes129Ubuntu2004To2204GenericUpgrade(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
 	provider := framework.NewTinkerbell(t)
 	test := framework.NewClusterE2ETest(
 		t,
@@ -394,6 +407,9 @@ func TestTinkerbellKubernetes129Ubuntu2004To2204GenericUpgrade(t *testing.T) {
 		framework.WithWorkerHardware(2),
 	).WithClusterConfig(
 		provider.WithKubeVersionAndOS(v1alpha1.Kube129, framework.Ubuntu2004, nil),
+		api.ClusterToConfigFiller(
+			api.WithLicenseToken(licenseToken),
+		),
 	)
 	runSimpleUpgradeFlowForBaremetalWithoutClusterConfigGeneration(
 		test,
@@ -528,6 +544,7 @@ func TestTinkerbellKubernetes132UbuntuAddWorkerNodeGroupWithAPI(t *testing.T) {
 }
 
 func TestTinkerbellKubernetes128UbuntuTo129InPlaceUpgrade_1CP_1Worker(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
 	provider := framework.NewTinkerbell(t)
 	test := framework.NewClusterE2ETest(
 		t,
@@ -540,6 +557,9 @@ func TestTinkerbellKubernetes128UbuntuTo129InPlaceUpgrade_1CP_1Worker(t *testing
 		framework.WithWorkerHardware(1),
 	).WithClusterConfig(
 		provider.WithKubeVersionAndOS(v1alpha1.Kube128, framework.Ubuntu2004, nil),
+		api.ClusterToConfigFiller(
+			api.WithLicenseToken(licenseToken),
+		),
 	)
 	runInPlaceUpgradeFlowForBareMetal(
 		test,
@@ -549,6 +569,7 @@ func TestTinkerbellKubernetes128UbuntuTo129InPlaceUpgrade_1CP_1Worker(t *testing
 }
 
 func TestTinkerbellKubernetes129UbuntuTo130InPlaceUpgrade_1CP_1Worker(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
 	provider := framework.NewTinkerbell(t)
 	test := framework.NewClusterE2ETest(
 		t,
@@ -561,6 +582,9 @@ func TestTinkerbellKubernetes129UbuntuTo130InPlaceUpgrade_1CP_1Worker(t *testing
 		framework.WithWorkerHardware(1),
 	).WithClusterConfig(
 		provider.WithKubeVersionAndOS(v1alpha1.Kube129, framework.Ubuntu2004, nil),
+		api.ClusterToConfigFiller(
+			api.WithLicenseToken(licenseToken),
+		),
 	)
 	runInPlaceUpgradeFlowForBareMetal(
 		test,
@@ -569,7 +593,33 @@ func TestTinkerbellKubernetes129UbuntuTo130InPlaceUpgrade_1CP_1Worker(t *testing
 	)
 }
 
+func TestTinkerbellKubernetes130UbuntuTo131InPlaceUpgrade_1CP_1Worker(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
+	provider := framework.NewTinkerbell(t)
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube130)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
+		framework.WithClusterFiller(api.WithInPlaceUpgradeStrategy()),
+		framework.WithControlPlaneHardware(1),
+		framework.WithWorkerHardware(1),
+	).WithClusterConfig(
+		provider.WithKubeVersionAndOS(v1alpha1.Kube130, framework.Ubuntu2004, nil),
+		api.ClusterToConfigFiller(
+			api.WithLicenseToken(licenseToken),
+		),
+	)
+	runInPlaceUpgradeFlowForBareMetal(
+		test,
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube131), api.WithInPlaceUpgradeStrategy()),
+		provider.WithProviderUpgrade(framework.Ubuntu131Image()),
+	)
+}
+
 func TestTinkerbellKubernetes131UbuntuTo132InPlaceUpgrade_1CP_1Worker(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
 	provider := framework.NewTinkerbell(t)
 	test := framework.NewClusterE2ETest(
 		t,
@@ -582,6 +632,9 @@ func TestTinkerbellKubernetes131UbuntuTo132InPlaceUpgrade_1CP_1Worker(t *testing
 		framework.WithWorkerHardware(1),
 	).WithClusterConfig(
 		provider.WithKubeVersionAndOS(v1alpha1.Kube131, framework.Ubuntu2004, nil),
+		api.ClusterToConfigFiller(
+			api.WithLicenseToken(licenseToken),
+		),
 	)
 	runInPlaceUpgradeFlowForBareMetal(
 		test,
@@ -591,6 +644,7 @@ func TestTinkerbellKubernetes131UbuntuTo132InPlaceUpgrade_1CP_1Worker(t *testing
 }
 
 func TestTinkerbellKubernetes128UbuntuTo129SingleNodeInPlaceUpgrade(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
 	provider := framework.NewTinkerbell(t)
 	test := framework.NewClusterE2ETest(
 		t,
@@ -603,6 +657,9 @@ func TestTinkerbellKubernetes128UbuntuTo129SingleNodeInPlaceUpgrade(t *testing.T
 		framework.WithControlPlaneHardware(1),
 	).WithClusterConfig(
 		provider.WithKubeVersionAndOS(v1alpha1.Kube128, framework.Ubuntu2004, nil),
+		api.ClusterToConfigFiller(
+			api.WithLicenseToken(licenseToken),
+		),
 	)
 	runInPlaceUpgradeFlowForBareMetal(
 		test,
@@ -620,6 +677,7 @@ func TestTinkerbellKubernetes128UbuntuTo129SingleNodeInPlaceUpgrade(t *testing.T
 }
 
 func TestTinkerbellKubernetes129UbuntuTo130SingleNodeInPlaceUpgrade(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
 	provider := framework.NewTinkerbell(t)
 	test := framework.NewClusterE2ETest(
 		t,
@@ -632,6 +690,9 @@ func TestTinkerbellKubernetes129UbuntuTo130SingleNodeInPlaceUpgrade(t *testing.T
 		framework.WithControlPlaneHardware(1),
 	).WithClusterConfig(
 		provider.WithKubeVersionAndOS(v1alpha1.Kube129, framework.Ubuntu2004, nil),
+		api.ClusterToConfigFiller(
+			api.WithLicenseToken(licenseToken),
+		),
 	)
 	runInPlaceUpgradeFlowForBareMetal(
 		test,
@@ -648,7 +709,41 @@ func TestTinkerbellKubernetes129UbuntuTo130SingleNodeInPlaceUpgrade(t *testing.T
 	)
 }
 
+func TestTinkerbellKubernetes130UbuntuTo131SingleNodeInPlaceUpgrade(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
+	provider := framework.NewTinkerbell(t)
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterSingleNode(v1alpha1.Kube130),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithEtcdCountIfExternal(0)),
+		framework.WithClusterFiller(api.RemoveAllWorkerNodeGroups()),
+		framework.WithClusterFiller(api.WithInPlaceUpgradeStrategy()),
+		framework.WithControlPlaneHardware(1),
+	).WithClusterConfig(
+		provider.WithKubeVersionAndOS(v1alpha1.Kube130, framework.Ubuntu2004, nil),
+		api.ClusterToConfigFiller(
+			api.WithLicenseToken(licenseToken),
+		),
+	)
+	runInPlaceUpgradeFlowForBareMetal(
+		test,
+		framework.WithUpgradeClusterConfig(
+			api.ClusterToConfigFiller(
+				api.WithKubernetesVersion(v1alpha1.Kube131),
+				api.WithInPlaceUpgradeStrategy(),
+			),
+			api.TinkerbellToConfigFiller(
+				api.RemoveTinkerbellWorkerMachineConfig(),
+			),
+		),
+		provider.WithProviderUpgrade(framework.Ubuntu131Image()),
+	)
+}
+
 func TestTinkerbellKubernetes131UbuntuTo132SingleNodeInPlaceUpgrade(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
 	provider := framework.NewTinkerbell(t)
 	test := framework.NewClusterE2ETest(
 		t,
@@ -661,6 +756,9 @@ func TestTinkerbellKubernetes131UbuntuTo132SingleNodeInPlaceUpgrade(t *testing.T
 		framework.WithControlPlaneHardware(1),
 	).WithClusterConfig(
 		provider.WithKubeVersionAndOS(v1alpha1.Kube131, framework.Ubuntu2004, nil),
+		api.ClusterToConfigFiller(
+			api.WithLicenseToken(licenseToken),
+		),
 	)
 	runInPlaceUpgradeFlowForBareMetal(
 		test,
@@ -993,6 +1091,8 @@ func TestTinkerbellKubernetes128BottlerocketWorkloadClusterSimpleFlow(t *testing
 }
 
 func TestTinkerbellKubernetes128BottlerocketWorkloadClusterWithAPI(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
+	licenseToken2 := framework.GetLicenseToken2()
 	provider := framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell())
 	managementCluster := framework.NewClusterE2ETest(
 		t,
@@ -1002,6 +1102,7 @@ func TestTinkerbellKubernetes128BottlerocketWorkloadClusterWithAPI(t *testing.T)
 	).WithClusterConfig(
 		api.ClusterToConfigFiller(
 			api.WithKubernetesVersion(v1alpha1.Kube128),
+			api.WithLicenseToken(licenseToken),
 		),
 	)
 	test := framework.NewMulticlusterE2ETest(
@@ -1017,6 +1118,7 @@ func TestTinkerbellKubernetes128BottlerocketWorkloadClusterWithAPI(t *testing.T)
 			api.ClusterToConfigFiller(
 				api.WithKubernetesVersion(v1alpha1.Kube128),
 				api.WithManagementCluster(managementCluster.ClusterName),
+				api.WithLicenseToken(licenseToken2),
 			),
 		),
 	)
@@ -1693,13 +1795,15 @@ func TestTinkerbellKubernetes128UpgradeManagementComponents(t *testing.T) {
 	test.DeleteCluster()
 }
 
-// TestTinkerbellKubernetes128UbuntuTo131MultipleUpgrade creates a single 1.28 cluster and upgrades it
-// all the way until 1.31. This tests each K8s version upgrade in a single test and saves up
+// TestTinkerbellKubernetes128UbuntuTo132MultipleUpgrade creates a single 1.28 cluster and upgrades it
+// all the way until 1.32. This tests each K8s version upgrade in a single test and saves up
 // hardware which would otherwise be needed for each test as part of both create and upgrade.
-func TestTinkerbellKubernetes128UbuntuTo131MultipleUpgrade(t *testing.T) {
+func TestTinkerbellKubernetes128UbuntuTo132MultipleUpgrade(t *testing.T) {
 	var kube129clusterOpts []framework.ClusterE2ETestOpt
 	var kube130clusterOpts []framework.ClusterE2ETestOpt
 	var kube131clusterOpts []framework.ClusterE2ETestOpt
+	var kube132clusterOpts []framework.ClusterE2ETestOpt
+	licenseToken := framework.GetLicenseToken()
 	provider := framework.NewTinkerbell(t, framework.WithUbuntu128Tinkerbell())
 	test := framework.NewClusterE2ETest(
 		t,
@@ -1711,6 +1815,9 @@ func TestTinkerbellKubernetes128UbuntuTo131MultipleUpgrade(t *testing.T) {
 		framework.WithWorkerHardware(2),
 	).WithClusterConfig(
 		provider.WithKubeVersionAndOS(v1alpha1.Kube128, framework.Ubuntu2004, nil),
+		api.ClusterToConfigFiller(
+			api.WithLicenseToken(licenseToken),
+		),
 	)
 	kube129clusterOpts = append(
 		kube129clusterOpts,
@@ -1733,11 +1840,19 @@ func TestTinkerbellKubernetes128UbuntuTo131MultipleUpgrade(t *testing.T) {
 		),
 		provider.WithProviderUpgrade(framework.Ubuntu131Image()),
 	)
+	kube132clusterOpts = append(
+		kube132clusterOpts,
+		framework.WithClusterUpgrade(
+			api.WithKubernetesVersion(v1alpha1.Kube132),
+		),
+		provider.WithProviderUpgrade(framework.Ubuntu132Image()),
+	)
 	runMultipleUpgradesFlowForBareMetal(
 		test,
 		kube129clusterOpts,
 		kube130clusterOpts,
 		kube131clusterOpts,
+		kube132clusterOpts,
 	)
 }
 
