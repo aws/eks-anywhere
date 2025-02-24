@@ -4483,7 +4483,7 @@ func TestVSphereKubernetes130UbuntuTo131InPlaceUpgradeWorkerOnly(t *testing.T) {
 
 func TestVSphereKubernetes131UbuntuTo132InPlaceUpgradeWorkerOnly(t *testing.T) {
 	licenseToken := framework.GetLicenseToken()
-	provider := framework.NewVSphere(t, framework.WithUbuntu130())
+	provider := framework.NewVSphere(t, framework.WithUbuntu131())
 	kube131 := v1alpha1.Kube131
 	kube132 := v1alpha1.Kube132
 	test := framework.NewClusterE2ETest(
