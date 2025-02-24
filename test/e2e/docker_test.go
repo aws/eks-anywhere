@@ -1259,7 +1259,7 @@ func TestDockerUpgradeFromLatestMinorReleaseCiliumSkipUpgrade_CLIUpgrade(t *test
 
 	test.ValidateCiliumCLIAvailable()
 
-	test.GenerateClusterConfig(framework.ExecuteWithEksaRelease(release))
+	test.GenerateClusterConfigForVersion(release.Version, framework.ExecuteWithEksaRelease(release))
 	test.CreateCluster(framework.ExecuteWithEksaRelease(release))
 	test.ReplaceCiliumWithOSSCilium()
 
