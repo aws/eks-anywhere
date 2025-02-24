@@ -1875,6 +1875,8 @@ func TestCloudStackKubernetes132RedhatProxyConfig(t *testing.T) {
 // Proxy Config Multicluster
 func TestCloudStackKubernetes128RedhatProxyConfigAPI(t *testing.T) {
 	cloudstack := framework.NewCloudStack(t)
+	licenseToken := framework.GetLicenseToken()
+	licenseToken2 := framework.GetLicenseToken2()
 	managementCluster := framework.NewClusterE2ETest(
 		t,
 		cloudstack,
@@ -1882,6 +1884,7 @@ func TestCloudStackKubernetes128RedhatProxyConfigAPI(t *testing.T) {
 		api.ClusterToConfigFiller(
 			api.WithControlPlaneCount(1),
 			api.WithWorkerNodeCount(1),
+			api.WithLicenseToken(licenseToken),
 		),
 		cloudstack.WithRedhat9Kubernetes128(),
 	)
@@ -1896,6 +1899,7 @@ func TestCloudStackKubernetes128RedhatProxyConfigAPI(t *testing.T) {
 		).WithClusterConfig(
 			api.ClusterToConfigFiller(
 				api.WithManagementCluster(managementCluster.ClusterName),
+				api.WithLicenseToken(licenseToken2),
 			),
 			cloudstack.WithRedhat9Kubernetes128(),
 		),
@@ -1919,6 +1923,8 @@ func TestCloudStackKubernetes128RedhatProxyConfigAPI(t *testing.T) {
 
 func TestCloudStackKubernetes129RedhatProxyConfigAPI(t *testing.T) {
 	cloudstack := framework.NewCloudStack(t)
+	licenseToken := framework.GetLicenseToken()
+	licenseToken2 := framework.GetLicenseToken2()
 	managementCluster := framework.NewClusterE2ETest(
 		t,
 		cloudstack,
@@ -1926,6 +1932,7 @@ func TestCloudStackKubernetes129RedhatProxyConfigAPI(t *testing.T) {
 		api.ClusterToConfigFiller(
 			api.WithControlPlaneCount(1),
 			api.WithWorkerNodeCount(1),
+			api.WithLicenseToken(licenseToken),
 		),
 		cloudstack.WithRedhat9Kubernetes129(),
 	)
@@ -1940,6 +1947,7 @@ func TestCloudStackKubernetes129RedhatProxyConfigAPI(t *testing.T) {
 		).WithClusterConfig(
 			api.ClusterToConfigFiller(
 				api.WithManagementCluster(managementCluster.ClusterName),
+				api.WithLicenseToken(licenseToken2),
 			),
 			cloudstack.WithRedhat9Kubernetes129(),
 		),
@@ -1963,6 +1971,8 @@ func TestCloudStackKubernetes129RedhatProxyConfigAPI(t *testing.T) {
 
 func TestCloudStackKubernetes130RedhatProxyConfigAPI(t *testing.T) {
 	cloudstack := framework.NewCloudStack(t)
+	licenseToken := framework.GetLicenseToken()
+	licenseToken2 := framework.GetLicenseToken2()
 	managementCluster := framework.NewClusterE2ETest(
 		t,
 		cloudstack,
@@ -1970,6 +1980,7 @@ func TestCloudStackKubernetes130RedhatProxyConfigAPI(t *testing.T) {
 		api.ClusterToConfigFiller(
 			api.WithControlPlaneCount(1),
 			api.WithWorkerNodeCount(1),
+			api.WithLicenseToken(licenseToken),
 		),
 		cloudstack.WithRedhat9Kubernetes130(),
 	)
@@ -1984,6 +1995,7 @@ func TestCloudStackKubernetes130RedhatProxyConfigAPI(t *testing.T) {
 		).WithClusterConfig(
 			api.ClusterToConfigFiller(
 				api.WithManagementCluster(managementCluster.ClusterName),
+				api.WithLicenseToken(licenseToken2),
 			),
 			cloudstack.WithRedhat9Kubernetes130(),
 		),
@@ -2007,6 +2019,8 @@ func TestCloudStackKubernetes130RedhatProxyConfigAPI(t *testing.T) {
 
 func TestCloudStackKubernetes131RedhatProxyConfigAPI(t *testing.T) {
 	cloudstack := framework.NewCloudStack(t)
+	licenseToken := framework.GetLicenseToken()
+	licenseToken2 := framework.GetLicenseToken2()
 	managementCluster := framework.NewClusterE2ETest(
 		t,
 		cloudstack,
@@ -2014,6 +2028,7 @@ func TestCloudStackKubernetes131RedhatProxyConfigAPI(t *testing.T) {
 		api.ClusterToConfigFiller(
 			api.WithControlPlaneCount(1),
 			api.WithWorkerNodeCount(1),
+			api.WithLicenseToken(licenseToken),
 		),
 		cloudstack.WithRedhat9Kubernetes131(),
 	)
@@ -2028,6 +2043,7 @@ func TestCloudStackKubernetes131RedhatProxyConfigAPI(t *testing.T) {
 		).WithClusterConfig(
 			api.ClusterToConfigFiller(
 				api.WithManagementCluster(managementCluster.ClusterName),
+				api.WithLicenseToken(licenseToken2),
 			),
 			cloudstack.WithRedhat9Kubernetes131(),
 		),
@@ -2051,6 +2067,8 @@ func TestCloudStackKubernetes131RedhatProxyConfigAPI(t *testing.T) {
 
 func TestCloudStackKubernetes132RedhatProxyConfigAPI(t *testing.T) {
 	cloudstack := framework.NewCloudStack(t)
+	licenseToken := framework.GetLicenseToken()
+	licenseToken2 := framework.GetLicenseToken2()
 	managementCluster := framework.NewClusterE2ETest(
 		t,
 		cloudstack,
@@ -2058,6 +2076,7 @@ func TestCloudStackKubernetes132RedhatProxyConfigAPI(t *testing.T) {
 		api.ClusterToConfigFiller(
 			api.WithControlPlaneCount(1),
 			api.WithWorkerNodeCount(1),
+			api.WithLicenseToken(licenseToken),
 		),
 		cloudstack.WithRedhat9Kubernetes132(),
 	)
@@ -2072,6 +2091,7 @@ func TestCloudStackKubernetes132RedhatProxyConfigAPI(t *testing.T) {
 		).WithClusterConfig(
 			api.ClusterToConfigFiller(
 				api.WithManagementCluster(managementCluster.ClusterName),
+				api.WithLicenseToken(licenseToken2),
 			),
 			cloudstack.WithRedhat9Kubernetes132(),
 		),
