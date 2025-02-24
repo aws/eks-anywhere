@@ -19,6 +19,7 @@ import (
 
 // APIServerExtraArgs
 func TestVSphereKubernetes132BottlerocketAPIServerExtraArgsSimpleFlow(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewVSphere(t, framework.WithBottleRocket132()),
@@ -27,6 +28,7 @@ func TestVSphereKubernetes132BottlerocketAPIServerExtraArgsSimpleFlow(t *testing
 		api.ClusterToConfigFiller(
 			api.WithKubernetesVersion(v1alpha1.Kube132),
 			api.WithControlPlaneAPIServerExtraArgs(),
+			api.WithLicenseToken(licenseToken),
 		),
 	)
 	runSimpleFlowWithoutClusterConfigGeneration(test)
@@ -3074,56 +3076,76 @@ func TestVSphereKubernetes132Ubuntu2004SimpleFlow(t *testing.T) {
 }
 
 func TestVSphereKubernetes128Ubuntu2204SimpleFlow(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
 	provider := framework.NewVSphere(t)
 	test := framework.NewClusterE2ETest(
 		t,
 		provider,
 	).WithClusterConfig(
 		provider.WithKubeVersionAndOS(v1alpha1.Kube128, framework.Ubuntu2204, nil),
+		api.ClusterToConfigFiller(
+			api.WithLicenseToken(licenseToken),
+		),
 	)
 	runSimpleFlowWithoutClusterConfigGeneration(test)
 }
 
 func TestVSphereKubernetes129Ubuntu2204SimpleFlow(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
 	provider := framework.NewVSphere(t)
 	test := framework.NewClusterE2ETest(
 		t,
 		provider,
 	).WithClusterConfig(
 		provider.WithKubeVersionAndOS(v1alpha1.Kube129, framework.Ubuntu2204, nil),
+		api.ClusterToConfigFiller(
+			api.WithLicenseToken(licenseToken),
+		),
 	)
 	runSimpleFlowWithoutClusterConfigGeneration(test)
 }
 
 func TestVSphereKubernetes130Ubuntu2204SimpleFlow(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
 	provider := framework.NewVSphere(t)
 	test := framework.NewClusterE2ETest(
 		t,
 		provider,
 	).WithClusterConfig(
 		provider.WithKubeVersionAndOS(v1alpha1.Kube130, framework.Ubuntu2204, nil),
+		api.ClusterToConfigFiller(
+			api.WithLicenseToken(licenseToken),
+		),
 	)
 	runSimpleFlowWithoutClusterConfigGeneration(test)
 }
 
 func TestVSphereKubernetes131Ubuntu2204SimpleFlow(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
 	provider := framework.NewVSphere(t)
 	test := framework.NewClusterE2ETest(
 		t,
 		provider,
 	).WithClusterConfig(
 		provider.WithKubeVersionAndOS(v1alpha1.Kube131, framework.Ubuntu2204, nil),
+		api.ClusterToConfigFiller(
+			api.WithLicenseToken(licenseToken),
+		),
 	)
 	runSimpleFlowWithoutClusterConfigGeneration(test)
 }
 
 func TestVSphereKubernetes132Ubuntu2204SimpleFlow(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
 	provider := framework.NewVSphere(t)
 	test := framework.NewClusterE2ETest(
 		t,
 		provider,
 	).WithClusterConfig(
 		provider.WithKubeVersionAndOS(v1alpha1.Kube132, framework.Ubuntu2204, nil),
+		api.ClusterToConfigFiller(
+			api.WithLicenseToken(licenseToken),
+		),
 	)
 	runSimpleFlowWithoutClusterConfigGeneration(test)
 }
@@ -4068,12 +4090,16 @@ func TestVSphereKubernetes128To129Ubuntu2204Upgrade(t *testing.T) {
 }
 
 func TestVSphereKubernetes129To130Ubuntu2204Upgrade(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
 	provider := framework.NewVSphere(t)
 	test := framework.NewClusterE2ETest(
 		t,
 		provider,
 	).WithClusterConfig(
 		provider.WithKubeVersionAndOS(v1alpha1.Kube129, framework.Ubuntu2204, nil),
+		api.ClusterToConfigFiller(
+			api.WithLicenseToken(licenseToken),
+		),
 	)
 	runSimpleUpgradeFlowWithoutClusterConfigGeneration(
 		test,
@@ -4084,12 +4110,16 @@ func TestVSphereKubernetes129To130Ubuntu2204Upgrade(t *testing.T) {
 }
 
 func TestVSphereKubernetes130To131Ubuntu2204Upgrade(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
 	provider := framework.NewVSphere(t)
 	test := framework.NewClusterE2ETest(
 		t,
 		provider,
 	).WithClusterConfig(
 		provider.WithKubeVersionAndOS(v1alpha1.Kube130, framework.Ubuntu2204, nil),
+		api.ClusterToConfigFiller(
+			api.WithLicenseToken(licenseToken),
+		),
 	)
 	runSimpleUpgradeFlowWithoutClusterConfigGeneration(
 		test,
@@ -4100,12 +4130,16 @@ func TestVSphereKubernetes130To131Ubuntu2204Upgrade(t *testing.T) {
 }
 
 func TestVSphereKubernetes131To132Ubuntu2204Upgrade(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
 	provider := framework.NewVSphere(t)
 	test := framework.NewClusterE2ETest(
 		t,
 		provider,
 	).WithClusterConfig(
 		provider.WithKubeVersionAndOS(v1alpha1.Kube131, framework.Ubuntu2204, nil),
+		api.ClusterToConfigFiller(
+			api.WithLicenseToken(licenseToken),
+		),
 	)
 	runSimpleUpgradeFlowWithoutClusterConfigGeneration(
 		test,
@@ -4137,6 +4171,7 @@ func TestVSphereKubernetes128To129Ubuntu2204StackedEtcdUpgrade(t *testing.T) {
 }
 
 func TestVSphereKubernetes129To130Ubuntu2204StackedEtcdUpgrade(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
 	provider := framework.NewVSphere(t)
 	test := framework.NewClusterE2ETest(
 		t,
@@ -4145,6 +4180,7 @@ func TestVSphereKubernetes129To130Ubuntu2204StackedEtcdUpgrade(t *testing.T) {
 		provider.WithKubeVersionAndOS(v1alpha1.Kube129, framework.Ubuntu2204, nil),
 		api.ClusterToConfigFiller(
 			api.WithStackedEtcdTopology(),
+			api.WithLicenseToken(licenseToken),
 		),
 	)
 	runSimpleUpgradeFlowWithoutClusterConfigGeneration(
@@ -4156,6 +4192,7 @@ func TestVSphereKubernetes129To130Ubuntu2204StackedEtcdUpgrade(t *testing.T) {
 }
 
 func TestVSphereKubernetes130To131Ubuntu2204StackedEtcdUpgrade(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
 	provider := framework.NewVSphere(t)
 	test := framework.NewClusterE2ETest(
 		t,
@@ -4164,6 +4201,7 @@ func TestVSphereKubernetes130To131Ubuntu2204StackedEtcdUpgrade(t *testing.T) {
 		provider.WithKubeVersionAndOS(v1alpha1.Kube130, framework.Ubuntu2204, nil),
 		api.ClusterToConfigFiller(
 			api.WithStackedEtcdTopology(),
+			api.WithLicenseToken(licenseToken),
 		),
 	)
 	runSimpleUpgradeFlowWithoutClusterConfigGeneration(
@@ -4175,6 +4213,7 @@ func TestVSphereKubernetes130To131Ubuntu2204StackedEtcdUpgrade(t *testing.T) {
 }
 
 func TestVSphereKubernetes131To132Ubuntu2204StackedEtcdUpgrade(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
 	provider := framework.NewVSphere(t)
 	test := framework.NewClusterE2ETest(
 		t,
@@ -4183,6 +4222,7 @@ func TestVSphereKubernetes131To132Ubuntu2204StackedEtcdUpgrade(t *testing.T) {
 		provider.WithKubeVersionAndOS(v1alpha1.Kube131, framework.Ubuntu2204, nil),
 		api.ClusterToConfigFiller(
 			api.WithStackedEtcdTopology(),
+			api.WithLicenseToken(licenseToken),
 		),
 	)
 	runSimpleUpgradeFlowWithoutClusterConfigGeneration(
@@ -5587,6 +5627,7 @@ func TestVSphereKubernetes131To132RedhatUpgradeFromLatestMinorRelease(t *testing
 }
 
 func TestVSphereKubernetes132UbuntuUpgradeAndRemoveWorkerNodeGroupsAPI(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
 	provider := framework.NewVSphere(t)
 	test := framework.NewClusterE2ETest(
 		t, provider,
@@ -5596,6 +5637,7 @@ func TestVSphereKubernetes132UbuntuUpgradeAndRemoveWorkerNodeGroupsAPI(t *testin
 			api.WithExternalEtcdTopology(1),
 			api.WithControlPlaneCount(1),
 			api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
+			api.WithLicenseToken(licenseToken),
 		),
 		provider.WithNewWorkerNodeGroup("worker-1", framework.WithWorkerNodeGroup("worker-1", api.WithCount(2))),
 		provider.WithNewWorkerNodeGroup("worker-2", framework.WithWorkerNodeGroup("worker-2", api.WithCount(1))),
@@ -5956,6 +5998,8 @@ func TestVSphereKubernetes128UpgradeManagementComponents(t *testing.T) {
 }
 
 func TestVSphereInPlaceUpgradeMulticlusterWorkloadClusterK8sUpgrade128To129(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
+	licenseToken2 := framework.GetLicenseToken2()
 	provider := framework.NewVSphere(t, framework.WithUbuntu128())
 	managementCluster := framework.NewClusterE2ETest(
 		t,
@@ -5966,6 +6010,7 @@ func TestVSphereInPlaceUpgradeMulticlusterWorkloadClusterK8sUpgrade128To129(t *t
 			api.WithKubernetesVersion(v1alpha1.Kube128),
 			api.WithStackedEtcdTopology(),
 			api.WithInPlaceUpgradeStrategy(),
+			api.WithLicenseToken(licenseToken),
 		),
 		api.VSphereToConfigFiller(
 			api.RemoveEtcdVsphereMachineConfig(),
@@ -5985,6 +6030,7 @@ func TestVSphereInPlaceUpgradeMulticlusterWorkloadClusterK8sUpgrade128To129(t *t
 				api.WithKubernetesVersion(v1alpha1.Kube128),
 				api.WithStackedEtcdTopology(),
 				api.WithInPlaceUpgradeStrategy(),
+				api.WithLicenseToken(licenseToken2),
 			),
 			api.VSphereToConfigFiller(
 				api.RemoveEtcdVsphereMachineConfig(),
@@ -6003,6 +6049,8 @@ func TestVSphereInPlaceUpgradeMulticlusterWorkloadClusterK8sUpgrade128To129(t *t
 }
 
 func TestVSphereInPlaceUpgradeMulticlusterWorkloadClusterK8sUpgrade129To130(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
+	licenseToken2 := framework.GetLicenseToken2()
 	provider := framework.NewVSphere(t, framework.WithUbuntu129())
 	managementCluster := framework.NewClusterE2ETest(
 		t,
@@ -6013,6 +6061,7 @@ func TestVSphereInPlaceUpgradeMulticlusterWorkloadClusterK8sUpgrade129To130(t *t
 			api.WithKubernetesVersion(v1alpha1.Kube129),
 			api.WithStackedEtcdTopology(),
 			api.WithInPlaceUpgradeStrategy(),
+			api.WithLicenseToken(licenseToken),
 		),
 		api.VSphereToConfigFiller(
 			api.RemoveEtcdVsphereMachineConfig(),
@@ -6032,6 +6081,7 @@ func TestVSphereInPlaceUpgradeMulticlusterWorkloadClusterK8sUpgrade129To130(t *t
 				api.WithKubernetesVersion(v1alpha1.Kube129),
 				api.WithStackedEtcdTopology(),
 				api.WithInPlaceUpgradeStrategy(),
+				api.WithLicenseToken(licenseToken2),
 			),
 			api.VSphereToConfigFiller(
 				api.RemoveEtcdVsphereMachineConfig(),
@@ -6050,6 +6100,8 @@ func TestVSphereInPlaceUpgradeMulticlusterWorkloadClusterK8sUpgrade129To130(t *t
 }
 
 func TestVSphereInPlaceUpgradeMulticlusterWorkloadClusterK8sUpgrade130To131(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
+	licenseToken2 := framework.GetLicenseToken2()
 	provider := framework.NewVSphere(t, framework.WithUbuntu130())
 	managementCluster := framework.NewClusterE2ETest(
 		t,
@@ -6060,6 +6112,7 @@ func TestVSphereInPlaceUpgradeMulticlusterWorkloadClusterK8sUpgrade130To131(t *t
 			api.WithKubernetesVersion(v1alpha1.Kube130),
 			api.WithStackedEtcdTopology(),
 			api.WithInPlaceUpgradeStrategy(),
+			api.WithLicenseToken(licenseToken),
 		),
 		api.VSphereToConfigFiller(
 			api.RemoveEtcdVsphereMachineConfig(),
@@ -6079,6 +6132,7 @@ func TestVSphereInPlaceUpgradeMulticlusterWorkloadClusterK8sUpgrade130To131(t *t
 				api.WithKubernetesVersion(v1alpha1.Kube130),
 				api.WithStackedEtcdTopology(),
 				api.WithInPlaceUpgradeStrategy(),
+				api.WithLicenseToken(licenseToken2),
 			),
 			api.VSphereToConfigFiller(
 				api.RemoveEtcdVsphereMachineConfig(),
@@ -6097,6 +6151,8 @@ func TestVSphereInPlaceUpgradeMulticlusterWorkloadClusterK8sUpgrade130To131(t *t
 }
 
 func TestVSphereInPlaceUpgradeMulticlusterWorkloadClusterK8sUpgrade131To132(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
+	licenseToken2 := framework.GetLicenseToken2()
 	provider := framework.NewVSphere(t, framework.WithUbuntu131())
 	managementCluster := framework.NewClusterE2ETest(
 		t,
@@ -6107,6 +6163,7 @@ func TestVSphereInPlaceUpgradeMulticlusterWorkloadClusterK8sUpgrade131To132(t *t
 			api.WithKubernetesVersion(v1alpha1.Kube131),
 			api.WithStackedEtcdTopology(),
 			api.WithInPlaceUpgradeStrategy(),
+			api.WithLicenseToken(licenseToken),
 		),
 		api.VSphereToConfigFiller(
 			api.RemoveEtcdVsphereMachineConfig(),
@@ -6126,6 +6183,7 @@ func TestVSphereInPlaceUpgradeMulticlusterWorkloadClusterK8sUpgrade131To132(t *t
 				api.WithKubernetesVersion(v1alpha1.Kube131),
 				api.WithStackedEtcdTopology(),
 				api.WithInPlaceUpgradeStrategy(),
+				api.WithLicenseToken(licenseToken2),
 			),
 			api.VSphereToConfigFiller(
 				api.RemoveEtcdVsphereMachineConfig(),
@@ -6216,6 +6274,8 @@ func TestVSphereKubernetes132MulticlusterWorkloadClusterAPI(t *testing.T) {
 }
 
 func TestVSphereKubernetes132UpgradeLabelsTaintsUbuntuAPI(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
+	licenseToken2 := framework.GetLicenseToken2()
 	vsphere := framework.NewVSphere(t)
 
 	managementCluster := framework.NewClusterE2ETest(
@@ -6225,6 +6285,7 @@ func TestVSphereKubernetes132UpgradeLabelsTaintsUbuntuAPI(t *testing.T) {
 			api.WithControlPlaneCount(1),
 			api.WithWorkerNodeCount(1),
 			api.WithStackedEtcdTopology(),
+			api.WithLicenseToken(licenseToken),
 		),
 		vsphere.WithUbuntu132(),
 	)
@@ -6239,6 +6300,7 @@ func TestVSphereKubernetes132UpgradeLabelsTaintsUbuntuAPI(t *testing.T) {
 				api.WithExternalEtcdTopology(1),
 				api.WithControlPlaneCount(1),
 				api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
+				api.WithLicenseToken(licenseToken2),
 			),
 			vsphere.WithNewWorkerNodeGroup("worker-0", framework.WithWorkerNodeGroup("worker-0", api.WithCount(2), api.WithLabel("key1", "val2"), api.WithTaint(framework.NoScheduleTaint()))),
 			vsphere.WithNewWorkerNodeGroup("worker-1", framework.WithWorkerNodeGroup("worker-1", api.WithCount(1))),
@@ -6259,6 +6321,8 @@ func TestVSphereKubernetes132UpgradeLabelsTaintsUbuntuAPI(t *testing.T) {
 }
 
 func TestVSphereKubernetes132UpgradeWorkerNodeGroupsUbuntuAPI(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
+	licenseToken2 := framework.GetLicenseToken2()
 	vsphere := framework.NewVSphere(t)
 
 	managementCluster := framework.NewClusterE2ETest(
@@ -6268,6 +6332,7 @@ func TestVSphereKubernetes132UpgradeWorkerNodeGroupsUbuntuAPI(t *testing.T) {
 			api.WithControlPlaneCount(1),
 			api.WithWorkerNodeCount(1),
 			api.WithStackedEtcdTopology(),
+			api.WithLicenseToken(licenseToken),
 		),
 		vsphere.WithUbuntu132(),
 	)
@@ -6282,6 +6347,7 @@ func TestVSphereKubernetes132UpgradeWorkerNodeGroupsUbuntuAPI(t *testing.T) {
 				api.WithExternalEtcdTopology(1),
 				api.WithControlPlaneCount(1),
 				api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
+				api.WithLicenseToken(licenseToken2),
 			),
 			vsphere.WithNewWorkerNodeGroup("worker-0", framework.WithWorkerNodeGroup("worker-0", api.WithCount(1))),
 			vsphere.WithNewWorkerNodeGroup("worker-1", framework.WithWorkerNodeGroup("worker-1", api.WithCount(1))),
@@ -6350,6 +6416,8 @@ func TestVSphereKubernetes132MulticlusterWorkloadClusterGitHubFluxAPI(t *testing
 }
 
 func TestVSphereKubernetes132CiliumUbuntuAPI(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
+	licenseToken2 := framework.GetLicenseToken2()
 	vsphere := framework.NewVSphere(t)
 
 	managementCluster := framework.NewClusterE2ETest(
@@ -6359,6 +6427,7 @@ func TestVSphereKubernetes132CiliumUbuntuAPI(t *testing.T) {
 			api.WithControlPlaneCount(1),
 			api.WithWorkerNodeCount(1),
 			api.WithStackedEtcdTopology(),
+			api.WithLicenseToken(licenseToken),
 		),
 		vsphere.WithUbuntu132(),
 	)
@@ -6373,6 +6442,7 @@ func TestVSphereKubernetes132CiliumUbuntuAPI(t *testing.T) {
 				api.WithExternalEtcdTopology(1),
 				api.WithControlPlaneCount(1),
 				api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
+				api.WithLicenseToken(licenseToken2),
 			),
 			vsphere.WithNewWorkerNodeGroup("worker-0", framework.WithWorkerNodeGroup("worker-0", api.WithCount(1))),
 			vsphere.WithUbuntu132(),
@@ -6399,6 +6469,8 @@ func TestVSphereKubernetes132CiliumUbuntuAPI(t *testing.T) {
 }
 
 func TestVSphereKubernetes132UpgradeLabelsTaintsBottleRocketGitHubFluxAPI(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
+	licenseToken2 := framework.GetLicenseToken2()
 	vsphere := framework.NewVSphere(t)
 
 	managementCluster := framework.NewClusterE2ETest(
@@ -6408,6 +6480,7 @@ func TestVSphereKubernetes132UpgradeLabelsTaintsBottleRocketGitHubFluxAPI(t *tes
 			api.WithControlPlaneCount(1),
 			api.WithWorkerNodeCount(1),
 			api.WithStackedEtcdTopology(),
+			api.WithLicenseToken(licenseToken),
 		),
 		vsphere.WithBottleRocket132(),
 		framework.WithFluxGithubConfig(),
@@ -6423,6 +6496,7 @@ func TestVSphereKubernetes132UpgradeLabelsTaintsBottleRocketGitHubFluxAPI(t *tes
 				api.WithExternalEtcdTopology(1),
 				api.WithControlPlaneCount(1),
 				api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
+				api.WithLicenseToken(licenseToken2),
 			),
 			vsphere.WithNewWorkerNodeGroup("worker-0", framework.WithWorkerNodeGroup("worker-0", api.WithCount(2), api.WithLabel("key1", "val2"), api.WithTaint(framework.NoScheduleTaint()))),
 			vsphere.WithNewWorkerNodeGroup("worker-1", framework.WithWorkerNodeGroup("worker-1", api.WithCount(1))),
@@ -6443,6 +6517,8 @@ func TestVSphereKubernetes132UpgradeLabelsTaintsBottleRocketGitHubFluxAPI(t *tes
 }
 
 func TestVSphereKubernetes132UpgradeWorkerNodeGroupsUbuntuGitHubFluxAPI(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
+	licenseToken2 := framework.GetLicenseToken2()
 	vsphere := framework.NewVSphere(t)
 
 	managementCluster := framework.NewClusterE2ETest(
@@ -6452,6 +6528,7 @@ func TestVSphereKubernetes132UpgradeWorkerNodeGroupsUbuntuGitHubFluxAPI(t *testi
 			api.WithControlPlaneCount(1),
 			api.WithWorkerNodeCount(1),
 			api.WithStackedEtcdTopology(),
+			api.WithLicenseToken(licenseToken),
 		),
 		vsphere.WithUbuntu132(),
 		framework.WithFluxGithubConfig(),
@@ -6467,6 +6544,7 @@ func TestVSphereKubernetes132UpgradeWorkerNodeGroupsUbuntuGitHubFluxAPI(t *testi
 				api.WithExternalEtcdTopology(1),
 				api.WithControlPlaneCount(1),
 				api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
+				api.WithLicenseToken(licenseToken2),
 			),
 			vsphere.WithNewWorkerNodeGroup("worker-0", framework.WithWorkerNodeGroup("worker-0", api.WithCount(1))),
 			vsphere.WithNewWorkerNodeGroup("worker-1", framework.WithWorkerNodeGroup("worker-1", api.WithCount(1))),
@@ -6484,6 +6562,8 @@ func TestVSphereKubernetes132UpgradeWorkerNodeGroupsUbuntuGitHubFluxAPI(t *testi
 }
 
 func TestVSphereUpgradeKubernetes132CiliumUbuntuGitHubFluxAPI(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
+	licenseToken2 := framework.GetLicenseToken2()
 	vsphere := framework.NewVSphere(t)
 
 	managementCluster := framework.NewClusterE2ETest(
@@ -6493,6 +6573,7 @@ func TestVSphereUpgradeKubernetes132CiliumUbuntuGitHubFluxAPI(t *testing.T) {
 			api.WithControlPlaneCount(1),
 			api.WithWorkerNodeCount(1),
 			api.WithStackedEtcdTopology(),
+			api.WithLicenseToken(licenseToken),
 		),
 		vsphere.WithUbuntu132(),
 		framework.WithFluxGithubConfig(),
@@ -6508,6 +6589,7 @@ func TestVSphereUpgradeKubernetes132CiliumUbuntuGitHubFluxAPI(t *testing.T) {
 				api.WithExternalEtcdTopology(1),
 				api.WithControlPlaneCount(1),
 				api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
+				api.WithLicenseToken(licenseToken2),
 			),
 			vsphere.WithNewWorkerNodeGroup("worker-0", framework.WithWorkerNodeGroup("worker-0", api.WithCount(1))),
 			vsphere.WithUbuntu132(),
