@@ -413,7 +413,7 @@ spec:
         name: source-controller
         os: linux
         uri: public.ecr.aws/release-container-registry/fluxcd/source-controller:v1.5.0-eks-a-v0.0.0-dev-build.1
-      version: v2.4.0+abcdef1
+      version: v2.5.0+abcdef1
     haproxy:
       image:
         arch:
@@ -1240,7 +1240,7 @@ spec:
         name: source-controller
         os: linux
         uri: public.ecr.aws/release-container-registry/fluxcd/source-controller:v1.5.0-eks-a-v0.0.0-dev-build.1
-      version: v2.4.0+abcdef1
+      version: v2.5.0+abcdef1
     haproxy:
       image:
         arch:
@@ -2067,7 +2067,7 @@ spec:
         name: source-controller
         os: linux
         uri: public.ecr.aws/release-container-registry/fluxcd/source-controller:v1.5.0-eks-a-v0.0.0-dev-build.1
-      version: v2.4.0+abcdef1
+      version: v2.5.0+abcdef1
     haproxy:
       image:
         arch:
@@ -2894,7 +2894,7 @@ spec:
         name: source-controller
         os: linux
         uri: public.ecr.aws/release-container-registry/fluxcd/source-controller:v1.5.0-eks-a-v0.0.0-dev-build.1
-      version: v2.4.0+abcdef1
+      version: v2.5.0+abcdef1
     haproxy:
       image:
         arch:
@@ -3721,7 +3721,7 @@ spec:
         name: source-controller
         os: linux
         uri: public.ecr.aws/release-container-registry/fluxcd/source-controller:v1.5.0-eks-a-v0.0.0-dev-build.1
-      version: v2.4.0+abcdef1
+      version: v2.5.0+abcdef1
     haproxy:
       image:
         arch:
@@ -4548,7 +4548,7 @@ spec:
         name: source-controller
         os: linux
         uri: public.ecr.aws/release-container-registry/fluxcd/source-controller:v1.5.0-eks-a-v0.0.0-dev-build.1
-      version: v2.4.0+abcdef1
+      version: v2.5.0+abcdef1
     haproxy:
       image:
         arch:
