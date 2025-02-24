@@ -1464,6 +1464,7 @@ func TestNutanixKubernetes132AWSIamAuth(t *testing.T) {
 }
 
 func TestNutanixKubernetes132UbuntuManagementCPUpgradeAPI(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
 	provider := framework.NewNutanix(t, framework.WithUbuntu132Nutanix())
 	test := framework.NewClusterE2ETest(
 		t, provider,
@@ -1473,6 +1474,7 @@ func TestNutanixKubernetes132UbuntuManagementCPUpgradeAPI(t *testing.T) {
 			api.WithControlPlaneCount(1),
 			api.WithEtcdCountIfExternal(1),
 			api.WithWorkerNodeCount(1),
+			api.WithLicenseToken(licenseToken),
 		),
 	)
 	runUpgradeFlowWithAPI(
