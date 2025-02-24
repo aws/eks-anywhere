@@ -747,6 +747,8 @@ func TestDockerKubernetes132Taints(t *testing.T) {
 }
 
 func TestDockerKubernetes132WorkloadClusterTaints(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
+	licenseToken2 := framework.GetLicenseToken2()
 	provider := framework.NewDocker(t)
 
 	managementCluster := framework.NewClusterE2ETest(
@@ -757,6 +759,7 @@ func TestDockerKubernetes132WorkloadClusterTaints(t *testing.T) {
 			api.WithControlPlaneCount(1),
 			api.WithWorkerNodeCount(1),
 			api.WithExternalEtcdTopology(1),
+			api.WithLicenseToken(licenseToken),
 		),
 	)
 
@@ -774,6 +777,7 @@ func TestDockerKubernetes132WorkloadClusterTaints(t *testing.T) {
 				api.WithWorkerNodeGroup("worker-0", api.WithCount(1), api.WithTaint(framework.NoScheduleTaint())),
 				api.WithWorkerNodeGroup("worker-1", api.WithCount(1), api.WithTaint(framework.NoExecuteTaint())),
 				api.WithStackedEtcdTopology(),
+				api.WithLicenseToken(licenseToken2),
 			),
 		),
 	)
@@ -783,6 +787,7 @@ func TestDockerKubernetes132WorkloadClusterTaints(t *testing.T) {
 
 // Upgrade
 func TestDockerKubernetes132UpgradeAndRemoveWorkerNodeGroupsAPI(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
 	provider := framework.NewDocker(t)
 	test := framework.NewClusterE2ETest(
 		t, provider,
@@ -792,6 +797,7 @@ func TestDockerKubernetes132UpgradeAndRemoveWorkerNodeGroupsAPI(t *testing.T) {
 			api.WithExternalEtcdTopology(1),
 			api.WithControlPlaneCount(1),
 			api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
+			api.WithLicenseToken(licenseToken),
 		),
 		provider.WithNewWorkerNodeGroup("", framework.WithWorkerNodeGroup("worker-1", api.WithCount(2))),
 		provider.WithNewWorkerNodeGroup("", framework.WithWorkerNodeGroup("worker-2", api.WithCount(1))),
@@ -945,6 +951,8 @@ func TestDockerKubernetes132WithOIDCManagementClusterUpgradeFromLatestSideEffect
 
 // Workload Cluster API
 func TestDockerUpgradeKubernetes131to132WorkloadClusterScaleupAPI(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
+	licenseToken2 := framework.GetLicenseToken2()
 	provider := framework.NewDocker(t)
 	managementCluster := framework.NewClusterE2ETest(
 		t, provider,
@@ -954,6 +962,7 @@ func TestDockerUpgradeKubernetes131to132WorkloadClusterScaleupAPI(t *testing.T) 
 			api.WithControlPlaneCount(1),
 			api.WithWorkerNodeCount(1),
 			api.WithExternalEtcdTopology(1),
+			api.WithLicenseToken(licenseToken),
 		),
 	)
 	test := framework.NewMulticlusterE2ETest(t, managementCluster)
@@ -968,6 +977,7 @@ func TestDockerUpgradeKubernetes131to132WorkloadClusterScaleupAPI(t *testing.T) 
 				api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
 				api.WithWorkerNodeGroup("worker-0", api.WithCount(1)),
 				api.WithStackedEtcdTopology(),
+				api.WithLicenseToken(licenseToken2),
 			),
 		),
 	)
@@ -982,6 +992,8 @@ func TestDockerUpgradeKubernetes131to132WorkloadClusterScaleupAPI(t *testing.T) 
 }
 
 func TestDockerUpgradeWorkloadClusterLabelsAndTaintsAPI(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
+	licenseToken2 := framework.GetLicenseToken2()
 	provider := framework.NewDocker(t)
 	managementCluster := framework.NewClusterE2ETest(
 		t, provider,
@@ -991,6 +1003,7 @@ func TestDockerUpgradeWorkloadClusterLabelsAndTaintsAPI(t *testing.T) {
 			api.WithControlPlaneCount(1),
 			api.WithWorkerNodeCount(1),
 			api.WithExternalEtcdTopology(1),
+			api.WithLicenseToken(licenseToken),
 		),
 	)
 	test := framework.NewMulticlusterE2ETest(t, managementCluster)
@@ -1007,6 +1020,7 @@ func TestDockerUpgradeWorkloadClusterLabelsAndTaintsAPI(t *testing.T) {
 				api.WithWorkerNodeGroup("worker-1", api.WithCount(1)),
 				api.WithWorkerNodeGroup("worker-2", api.WithCount(1), api.WithTaint(framework.PreferNoScheduleTaint())),
 				api.WithStackedEtcdTopology(),
+				api.WithLicenseToken(licenseToken2),
 			),
 		),
 	)
@@ -1024,6 +1038,8 @@ func TestDockerUpgradeWorkloadClusterLabelsAndTaintsAPI(t *testing.T) {
 }
 
 func TestDockerUpgradeWorkloadClusterScaleAddRemoveWorkerNodeGroupsAPI(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
+	licenseToken2 := framework.GetLicenseToken2()
 	provider := framework.NewDocker(t)
 	managementCluster := framework.NewClusterE2ETest(
 		t, provider,
@@ -1033,6 +1049,7 @@ func TestDockerUpgradeWorkloadClusterScaleAddRemoveWorkerNodeGroupsAPI(t *testin
 			api.WithControlPlaneCount(1),
 			api.WithWorkerNodeCount(1),
 			api.WithExternalEtcdTopology(1),
+			api.WithLicenseToken(licenseToken),
 		),
 	)
 	test := framework.NewMulticlusterE2ETest(t, managementCluster)
@@ -1049,6 +1066,7 @@ func TestDockerUpgradeWorkloadClusterScaleAddRemoveWorkerNodeGroupsAPI(t *testin
 				api.WithWorkerNodeGroup("worker-1", api.WithCount(1)),
 				api.WithWorkerNodeGroup("worker-2", api.WithCount(1)),
 				api.WithExternalEtcdTopology(1),
+				api.WithLicenseToken(licenseToken2),
 			),
 		),
 	)
@@ -1099,6 +1117,8 @@ func TestDockerKubernetes131to132UpgradeFromLatestMinorReleaseAPI(t *testing.T) 
 }
 
 func TestDockerUpgradeKubernetes131to132WorkloadClusterScaleupGitHubFluxAPI(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
+	licenseToken2 := framework.GetLicenseToken2()
 	provider := framework.NewDocker(t)
 	managementCluster := framework.NewClusterE2ETest(
 		t, provider, framework.WithFluxGithubEnvVarCheck(), framework.WithFluxGithubCleanup(),
@@ -1108,6 +1128,7 @@ func TestDockerUpgradeKubernetes131to132WorkloadClusterScaleupGitHubFluxAPI(t *t
 			api.WithControlPlaneCount(1),
 			api.WithWorkerNodeCount(1),
 			api.WithExternalEtcdTopology(1),
+			api.WithLicenseToken(licenseToken),
 		),
 		framework.WithFluxGithubConfig(),
 	)
@@ -1123,6 +1144,7 @@ func TestDockerUpgradeKubernetes131to132WorkloadClusterScaleupGitHubFluxAPI(t *t
 				api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
 				api.WithWorkerNodeGroup("worker-0", api.WithCount(1)),
 				api.WithStackedEtcdTopology(),
+				api.WithLicenseToken(licenseToken2),
 			),
 		),
 	)
@@ -1137,6 +1159,8 @@ func TestDockerUpgradeKubernetes131to132WorkloadClusterScaleupGitHubFluxAPI(t *t
 }
 
 func TestDockerKubernetes132UpgradeWorkloadClusterLabelsAndTaintsGitHubFluxAPI(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
+	licenseToken2 := framework.GetLicenseToken2()
 	provider := framework.NewDocker(t)
 	managementCluster := framework.NewClusterE2ETest(
 		t, provider, framework.WithFluxGithubEnvVarCheck(), framework.WithFluxGithubCleanup(),
@@ -1146,6 +1170,7 @@ func TestDockerKubernetes132UpgradeWorkloadClusterLabelsAndTaintsGitHubFluxAPI(t
 			api.WithControlPlaneCount(1),
 			api.WithWorkerNodeCount(1),
 			api.WithExternalEtcdTopology(1),
+			api.WithLicenseToken(licenseToken),
 		),
 		framework.WithFluxGithubConfig(),
 	)
@@ -1163,6 +1188,7 @@ func TestDockerKubernetes132UpgradeWorkloadClusterLabelsAndTaintsGitHubFluxAPI(t
 				api.WithWorkerNodeGroup("worker-1", api.WithCount(1)),
 				api.WithWorkerNodeGroup("worker-2", api.WithCount(1), api.WithTaint(framework.PreferNoScheduleTaint())),
 				api.WithStackedEtcdTopology(),
+				api.WithLicenseToken(licenseToken2),
 			),
 		),
 	)
@@ -1180,6 +1206,8 @@ func TestDockerKubernetes132UpgradeWorkloadClusterLabelsAndTaintsGitHubFluxAPI(t
 }
 
 func TestDockerKubernetes132UpgradeWorkloadClusterScaleAddRemoveWorkerNodeGroupsGitHubFluxAPI(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
+	licenseToken2 := framework.GetLicenseToken2()
 	provider := framework.NewDocker(t)
 	managementCluster := framework.NewClusterE2ETest(
 		t, provider, framework.WithFluxGithubEnvVarCheck(), framework.WithFluxGithubCleanup(),
@@ -1189,6 +1217,7 @@ func TestDockerKubernetes132UpgradeWorkloadClusterScaleAddRemoveWorkerNodeGroups
 			api.WithControlPlaneCount(1),
 			api.WithWorkerNodeCount(1),
 			api.WithExternalEtcdTopology(1),
+			api.WithLicenseToken(licenseToken),
 		),
 		framework.WithFluxGithubConfig(
 			api.WithClusterConfigPath("test"),
@@ -1209,6 +1238,7 @@ func TestDockerKubernetes132UpgradeWorkloadClusterScaleAddRemoveWorkerNodeGroups
 				api.WithWorkerNodeGroup("worker-1", api.WithCount(1)),
 				api.WithWorkerNodeGroup("worker-2", api.WithCount(1)),
 				api.WithExternalEtcdTopology(1),
+				api.WithLicenseToken(licenseToken2),
 			),
 		),
 	)
@@ -1281,12 +1311,15 @@ func TestDockerUpgradeFromLatestMinorReleaseCiliumSkipUpgrade_CLIUpgrade(t *test
 }
 
 func TestDockerCiliumSkipUpgrade_ControllerCreate(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
+	licenseToken2 := framework.GetLicenseToken2()
 	provider := framework.NewDocker(t)
 	management := framework.NewClusterE2ETest(t, provider).WithClusterConfig(
 		api.ClusterToConfigFiller(
 			api.WithControlPlaneCount(1),
 			api.WithWorkerNodeCount(1),
 			api.WithStackedEtcdTopology(),
+			api.WithLicenseToken(licenseToken),
 		),
 	)
 
@@ -1303,6 +1336,7 @@ func TestDockerCiliumSkipUpgrade_ControllerCreate(t *testing.T) {
 				api.WithWorkerNodeCount(1),
 				api.WithStackedEtcdTopology(),
 				api.WithCiliumSkipUpgrade(),
+				api.WithLicenseToken(licenseToken2),
 			),
 		),
 	)
@@ -1327,12 +1361,15 @@ func TestDockerCiliumSkipUpgrade_ControllerCreate(t *testing.T) {
 }
 
 func TestDockerCiliumSkipUpgrade_ControllerUpgrade(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
+	licenseToken2 := framework.GetLicenseToken2()
 	provider := framework.NewDocker(t)
 	management := framework.NewClusterE2ETest(t, provider).WithClusterConfig(
 		api.ClusterToConfigFiller(
 			api.WithControlPlaneCount(1),
 			api.WithWorkerNodeCount(1),
 			api.WithStackedEtcdTopology(),
+			api.WithLicenseToken(licenseToken),
 		),
 	)
 
@@ -1348,6 +1385,7 @@ func TestDockerCiliumSkipUpgrade_ControllerUpgrade(t *testing.T) {
 				api.WithControlPlaneCount(1),
 				api.WithWorkerNodeCount(1),
 				api.WithStackedEtcdTopology(),
+				api.WithLicenseToken(licenseToken2),
 			),
 		),
 	)
